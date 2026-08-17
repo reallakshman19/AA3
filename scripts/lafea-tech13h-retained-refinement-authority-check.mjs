@@ -96,8 +96,6 @@ const acceptance = evaluateLafea4ShellProductRefinementAcceptance({
 });
 requireLafea4ShellProductRefinementCandidatePass(acceptance);
 
-// The candidate artifact is valid V2 evidence, but candidate-only TECH-13
-// authority must never be replayable through the generic retained-mesh route.
 assert.throws(
   () => requireLafea4ShellProductRefinementGenericRecoveryAllowed(adapter.productEvidence),
   new RegExp(LAFEA4_SHELL_PRODUCT_REFINEMENT_GENERIC_RECOVERY_FORBIDDEN, 'u'),
@@ -111,8 +109,6 @@ assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId)?.artifactHa
 assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId)?.meshHash,
   parentMeshHash);
 
-// Exercise only the pure promotion-time rewrap contract. This does not inject
-// authority into production; the code-owned trust root remains null.
 assert.equal(LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD, null);
 const promotionRecord = createLafea4ShellProductRefinementPromotionRecord({
   schema: LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_SCHEMA,
@@ -151,13 +147,30 @@ assert.equal(JSON.stringify(retained.evidence.mesh), JSON.stringify(adapter.prod
 assert.notEqual(retained.evidence.artifactHash, adapter.productEvidence.artifactHash);
 assert.equal(retained.evidence.authority.producerRef,
   LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_PRODUCER_REF);
+assert.equal(retained.evidence.authority.capabilityHash,
+  retained.retainedCapability.capabilityHash);
+assert.equal(retained.evidence.authority.qualificationHash,
+  retained.retainedQualification.qualificationHash);
+assert.equal(retained.evidence.authority.planHash,
+  retained.retentionPlan.planHash);
+assert.notEqual(retained.evidence.authority.capabilityHash,
+  adapter.productEvidence.authority.capabilityHash);
 assert.notEqual(retained.evidence.authority.qualificationHash,
   adapter.productEvidence.authority.qualificationHash);
 assert.notEqual(retained.evidence.authority.planHash,
   adapter.productEvidence.authority.planHash);
+assert.equal(retained.retainedCapability.candidateCapabilityHash,
+  LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.capabilityHash);
+assert.equal(retained.retainedCapability.productBindingAuthorized, true);
+assert.equal(retained.retainedCapability.uiBindingAuthorized, true);
+assert.equal(retained.retainedCapability.releaseQualified, false);
+assert.equal(retained.retainedQualification.retainedCapabilityHash,
+  retained.retainedCapability.capabilityHash);
 assert.equal(retained.retainedQualification.productBindingAuthorized, true);
 assert.equal(retained.retainedQualification.uiBindingAuthorized, true);
 assert.equal(retained.retainedQualification.releaseQualified, false);
+assert.equal(retained.retentionPlan.retainedCapabilityHash,
+  retained.retainedCapability.capabilityHash);
 assert.equal(retained.retentionPlan.productBindingAuthorized, true);
 assert.equal(retained.retentionPlan.uiBindingAuthorized, true);
 assert.equal(retained.retentionPlan.releaseQualified, false);
@@ -172,8 +185,6 @@ assert.equal(parentNormal.qualification, 'PASS');
 assert.equal(parentNormal.blockedElementCount, 0);
 assert.ok(parentNormal.minimumParentDirectedJacobian > parentNormal.witness.roundoffEnvelope);
 
-// Promoted TECH-13 artifacts also use dedicated custody; generic replay is not
-// silently granted merely because a prior promotion once existed.
 assert.throws(
   () => requireLafea4ShellProductRefinementGenericRecoveryAllowed(retained.evidence),
   new RegExp(LAFEA4_SHELL_PRODUCT_REFINEMENT_GENERIC_RECOVERY_FORBIDDEN, 'u'),
@@ -189,16 +200,20 @@ console.log(JSON.stringify({
     artifactHash: adapter.productEvidence.artifactHash,
     meshHash: adapter.productEvidence.meshHash,
     producerRef: adapter.productEvidence.authority.producerRef,
+    capabilityHash: adapter.productEvidence.authority.capabilityHash,
     qualificationHash: adapter.productEvidence.authority.qualificationHash,
+    planHash: adapter.productEvidence.authority.planHash,
   },
   promotedRetention: {
     artifactHash: retained.evidence.artifactHash,
     meshHash: retained.evidence.meshHash,
     producerRef: retained.evidence.authority.producerRef,
+    capabilityHash: retained.evidence.authority.capabilityHash,
     qualificationHash: retained.evidence.authority.qualificationHash,
     planHash: retained.evidence.authority.planHash,
     sameMeshBytesAsCandidate: true,
     distinctAuthorityArtifact: true,
+    distinctCapabilityQualificationPlan: true,
     parentNormalQualification: parentNormal.qualification,
   },
   genericPromotedReplayBlockedPendingDedicatedReplayContract: true,

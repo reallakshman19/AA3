@@ -67,6 +67,10 @@ export class LfeaPipelineShellController {
     return this.view.getLoadCaseHost();
   }
 
+  getVerificationDrawerHost() {
+    return this.view.getVerificationDrawerHost();
+  }
+
   setStepStatus(stepId, status) {
     return this.session.setStepStatus(stepId, status);
   }

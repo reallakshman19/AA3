@@ -167,7 +167,14 @@ export function bootstrapAnalysisWorkspace(rootElement) {
     mockDocumentFactory: createLafeaMockDocument,
     benchmarkPanelFactory: (hostElement) => new FeaBenchmarkPanel(hostElement, { surface: 'LAFEA' }),
   });
-  const lfeaWorkbenchController = new LfeaWorkbenchController(lfeaRoot,undefined);
+  // The F LFEA tab's unified pipeline shell (main.js) owns a persistent
+  // Verification/ACCDB-QA drawer now, reachable from any pipeline step --
+  // this Workbench instance's own inline benchmark-panel composition would
+  // otherwise duplicate that same QA surface a second time on the same tab.
+  // runBenchmark()/getBenchmarkReport() stay available regardless (the
+  // standalone lfea.html app's own LfeaWorkbenchController instance is
+  // unaffected -- a separate object, constructed in src/lfea/standalone-runtime.js).
+  const lfeaWorkbenchController = new LfeaWorkbenchController(lfeaRoot, { composeQaBenchmarkPanels: false });
   const empiricalWorkbenchController = new LafeaWorkbenchController(empiricalRoot, {
     presentationMode: 'ANALYTICAL_CALC',
     analyticalOnly: true,

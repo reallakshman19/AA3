@@ -863,3 +863,17 @@
   color: var(--workspace-text);
   font-weight: 500;
 }
+
+/* Demoted/collapsed by default: reviews the separate Workspace tab's own
+   dataset, not the LFEA pipeline shell above it -- see the LFEA revamp
+   plan's Phase 6 note. */
+.lfea-preflight-disclosure {
+  border-top: 1px solid var(--workspace-border);
+  padding: 6px 12px;
+}
+
+.lfea-preflight-disclosure > summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--workspace-muted);
+}

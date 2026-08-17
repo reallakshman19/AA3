@@ -1,4 +1,5 @@
 import { LFEA_PIPELINE_STEPS, lfeaPipelineHostGroupFor } from './lfea-pipeline-step-registry.js';
+import { installLfeaPipelineIconSprite, lfeaPipelineIcon } from './lfea-pipeline-icon-manifest.js';
 
 /** Renders the unified LFEA pipeline stepper chrome around existing panel hosts. */
 export class LfeaPipelineShellView {
@@ -13,6 +14,8 @@ export class LfeaPipelineShellView {
     const shell = doc.createElement('section');
     shell.className = 'lfea-pipeline-shell';
     shell.dataset.role = 'lfea-pipeline-shell';
+
+    installLfeaPipelineIconSprite(shell);
 
     const toolbar = doc.createElement('div');
     toolbar.className = 'lfea-pipeline-shell__toolbar';
@@ -52,6 +55,23 @@ export class LfeaPipelineShellView {
     assembleStatus.dataset.role = 'lfea-pipeline-assemble-status';
     toolbar.append(assembleStatus);
 
+    // QA for this application itself (a benchmark suite + a frozen ACCDB
+    // comparison), not an output of the user's own analysis -- reachable
+    // from any step via this one persistent toggle, not gated behind the
+    // step sequence like sourceHost/loadCaseHost/resultsHost are.
+    const verificationDrawerToggle = doc.createElement('button');
+    verificationDrawerToggle.type = 'button';
+    verificationDrawerToggle.className = 'lfea-pipeline-shell__verification-toggle';
+    verificationDrawerToggle.dataset.action = 'lfea-pipeline-toggle-verification-drawer';
+    verificationDrawerToggle.title = 'Verification / ACCDB-QA — benchmark suite and CAESAR II ACCDB comparison for this application itself.';
+    verificationDrawerToggle.append(lfeaPipelineIcon(doc, 'icon-verification'));
+    const verificationDrawerToggleLabel = doc.createElement('span');
+    verificationDrawerToggleLabel.textContent = 'Verification / QA';
+    verificationDrawerToggle.append(verificationDrawerToggleLabel);
+    verificationDrawerToggle.setAttribute('aria-expanded', 'false');
+    verificationDrawerToggle.addEventListener('click', () => this.toggleVerificationDrawer());
+    toolbar.append(verificationDrawerToggle);
+
     const nav = doc.createElement('nav');
     nav.className = 'lfea-pipeline-shell__stepper';
     nav.setAttribute('aria-label', 'LFEA pipeline steps');
@@ -81,13 +101,26 @@ export class LfeaPipelineShellView {
     resultsHost.dataset.hostGroup = 'RESULTS';
     content.append(sourceHost, loadCaseHost, resultsHost);
 
-    shell.append(toolbar, nav, content);
+    const verificationDrawerHost = doc.createElement('div');
+    verificationDrawerHost.className = 'lfea-pipeline-shell__verification-drawer';
+    verificationDrawerHost.dataset.role = 'lfea-pipeline-verification-drawer-host';
+    verificationDrawerHost.hidden = true;
+
+    shell.append(toolbar, nav, content, verificationDrawerHost);
     this.rootElement.append(shell);
     this.elements = {
       shell, toolbar, loadSample, nav, stepButtons, content, sourceHost, loadCaseHost, resultsHost,
       authorityInput, authorityText, assembleButton, assembleStatus,
+      verificationDrawerToggle, verificationDrawerHost,
     };
     return this;
+  }
+
+  toggleVerificationDrawer() {
+    const host = this.elements.verificationDrawerHost;
+    host.hidden = !host.hidden;
+    this.elements.verificationDrawerToggle.setAttribute('aria-expanded', host.hidden ? 'false' : 'true');
+    this.elements.verificationDrawerToggle.classList.toggle('lfea-pipeline-shell__verification-toggle--open', !host.hidden);
   }
 
   setAuthoritySupplementStatus(text) {
@@ -127,6 +160,10 @@ export class LfeaPipelineShellView {
 
   getResultsHost() {
     return this.elements.resultsHost;
+  }
+
+  getVerificationDrawerHost() {
+    return this.elements.verificationDrawerHost;
   }
 
   destroy() {

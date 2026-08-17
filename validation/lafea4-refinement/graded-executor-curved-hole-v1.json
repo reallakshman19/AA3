@@ -1,0 +1,55 @@
+{
+  "schema": "lafea4-graded-refinement-executor-definition/v1",
+  "qualificationId": "LAFEA4-GRADED-REFINEMENT-EXECUTOR-001",
+  "stageId": "LAFEA.4",
+  "formulation": "CST_DKT_TRI3_THIN_SHELL_V1",
+  "scope": "QUALIFICATION_ONLY_CURVED_RECTANGULAR_HOLE_GRADED_REFINEMENT",
+  "geometry": {
+    "radiusMm": 100,
+    "uMinMm": -78.53981633974483,
+    "uMaxMm": 78.53981633974483,
+    "vMinMm": 0,
+    "vMaxMm": 120,
+    "hole": { "uMinMm": -20, "uMaxMm": 20, "vMinMm": 45, "vMaxMm": 75 }
+  },
+  "mesh": {
+    "globalTargetMm": 15,
+    "localTargetMm": 3.75,
+    "adjacentSizeRatioMax": 1.5,
+    "aspectRatioWarning": 5,
+    "aspectRatioBlock": 10,
+    "scaledJacobianWarning": 0.5,
+    "scaledJacobianBlock": 0.2,
+    "expectedTransitionLevelsMm": [3.75, 5.625, 8.4375, 12.65625, 15],
+    "expectedTransitionCount": 4
+  },
+  "target": {
+    "selection": "RETAINED_ELEMENT_NEAREST_FIXED_UV",
+    "uMm": 25,
+    "vMm": 60
+  },
+  "acceptance": {
+    "childMeshMustDifferFromParent": true,
+    "childNodeCountMustIncrease": true,
+    "childElementCountMustIncrease": true,
+    "gradedPointCountMinimum": 1,
+    "boundaryMustMatchSubdividedPlanExactly": true,
+    "holeBoundaryMustGainSegments": true,
+    "maximumAdjacentSizeRatio": 1.5,
+    "minimumScaledJacobianExclusive": 0.2,
+    "orientationTopologyStatus": "OK",
+    "maximumSurfaceRoundTripUvErrorMm": 1e-8,
+    "maximumCylinderRadiusErrorMm": 1e-10,
+    "deterministicReplayRequired": true
+  },
+  "prohibitions": [
+    "NO_PRODUCTION_BINDING",
+    "NO_WORKBENCH_EXECUTION_AUTHORITY",
+    "NO_HANGING_NODES",
+    "NO_APPROXIMATE_CHORD_CHILD_NODES",
+    "NO_ACCEPTANCE_FROM_PLANNED_SIZE_RATIOS_ALONE",
+    "NO_THRESHOLD_RELAXATION_AFTER_OBSERVING_RESULT"
+  ],
+  "benchmarkQualified": false,
+  "releaseQualified": false
+}

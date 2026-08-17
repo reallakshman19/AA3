@@ -21,6 +21,7 @@ for (const name of [
   'WRC537_ED4_EXECUTABLE_PLAN.json',
   'WRC537_ED4_QUALIFICATION_SUITE.json',
   'WRC537_ED4_QUALIFICATION_EVIDENCE.json',
+  'WRC537_ED4_BENCHMARK_BINDINGS.json',
   'WRC537_ED4_LITERAL_BINDINGS.json',
   'WRC537_ED4_NUMERICAL_RELEASE_CANDIDATE.json',
 ]) {
@@ -48,6 +49,7 @@ console.log(JSON.stringify({
   currentEngineeringState: 'BLOCKED_AS_DESIGNED',
   failedGateIds: readiness.failedGateIds,
   realEngineeringArtifactsAbsent: true,
+  benchmarkBindingArtifactAbsent: true,
   literalBindingArtifactAbsent: true,
   numericalReleaseCandidateAbsent: true,
   textEvaluationAbsent: true,

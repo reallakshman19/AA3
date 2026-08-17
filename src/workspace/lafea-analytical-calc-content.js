@@ -1,4 +1,4 @@
-/** Analytical-only presentation for retained LAFEA.1/LAFEA.2 calculators. */
+/** Analytical presentation for retained LAFEA.1/LAFEA.2 calculators. */
 import { actionButton, card, element } from './lafea-workbench-dom.js';
 import { renderDocumentTableEditor } from './lafea-document-table.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
@@ -16,7 +16,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   shell.dataset.backingStageId = stageId;
   shell.dataset.routeFamily = 'ANALYTICAL';
 
-  const route = card(root, 'Analytical route');
+  const route = card(root, 'Analytical stage');
   route.section.dataset.guidedTarget = 'analytical-route';
   const selector = element(root, 'div', 'lafea-guided-summary');
   selector.dataset.role = 'lafea-analytical-route-selector';
@@ -34,7 +34,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   heading.dataset.role = 'lafea-analytical-route-heading';
   route.body.append(selector, heading,
     element(root, 'p', 'lafea-workbench__section-intro',
-      'Analytical Calc owns LAFEA.1 and LAFEA.2. This tab is not a finite-element stage and does not create or display an FE mesh.'));
+      'LAFEA.1 and LAFEA.2 are analytical LAFEA stages. They do not create or display an FE mesh; LAFEA.3 and later stages provide the registered finite-element routes.'));
 
   const source = card(root, 'Analytical inputs');
   source.section.dataset.guidedTarget = 'source';

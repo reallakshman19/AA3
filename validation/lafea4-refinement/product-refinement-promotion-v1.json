@@ -14,12 +14,16 @@
   "runtimeParentNormalGateStillRequiredAfterPromotion": true,
   "runtimeExactParentCustodyStillRequiredAfterPromotion": true,
   "runtimeMeshQualityThresholdsMayChangeOnPromotion": false,
+  "productionAuthorityArgumentAccepted": false,
+  "callerSuppliedPromotionRecordMayActivate": false,
   "productionRecordMayBeSynthetic": false,
   "productionRecordMayBeInferred": false,
   "releaseQualifiedOnPromotion": false,
   "productRetentionAuthorizedNow": false,
   "uiBindingAuthorizedNow": false,
   "refineControlEnabledNow": false,
+  "activationRequiresActualActivePathCheck": true,
+  "activationActivePathCheck": "scripts/lafea-tech13g-active-promotion-path-check.mjs",
   "futurePromotionChangePolicy": "QUALIFIED_BASE_PLUS_TRUST_ROOT_RECORD_ONLY_ACTIVATION_DIFF",
-  "qualificationSeamPolicy": "SYNTHETIC_VALID_RECORD_MAY_EXERCISE_FUTURE_ACTIVE_BRANCH_WITHOUT_CHANGING_PRODUCTION_NULL_TRUST_ROOT"
+  "qualificationSeamPolicy": "CALLER_SUPPLIED_PROMOTION_RECORDS_MUST_BE_IGNORED_BY_PRODUCTION_UI_AND_RETENTION_PATHS"
 }

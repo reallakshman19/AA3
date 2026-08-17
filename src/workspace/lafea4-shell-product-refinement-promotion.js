@@ -8,48 +8,27 @@ export const LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_SCHEMA =
   'lafea4-shell-product-refinement-promotion-record/v1';
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_EXACT_HEAD_QUALIFICATION_ID =
   'LAFEA4-TECH13-PRODUCT-REFINEMENT-EXACT-HEAD-001';
-// Preserve the TECH-13A/C/D public diagnostic while the implementation behind
-// that dormant boundary becomes promotion-aware. Activation removes the reason;
-// no consumer has to migrate merely because the dormant gate is more precise.
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_PENDING_CODE =
   'LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_TECH13E_QUALIFICATION';
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_BLOCK_CODE =
   'LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_NOT_AUTHORIZED';
 
-/**
- * Code-owned production trust root for TECH-13F.
- *
- * This remains null until a canonical TECH-13 exact-head bundle is PASS and
- * independently accepted by the bundle verifier. A future promotion PR must
- * change only this reviewed record plus any explicitly required evidence
- * ledger update; authoring TECH-13F itself grants no product authority.
- */
+/** Code-owned production trust root. No caller-supplied authority is accepted. */
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD = null;
 
 const INPUT_KEYS = Object.freeze([
-  'schema',
-  'stageId',
-  'exactHeadQualificationId',
-  'qualifiedHead',
-  'bundleEvidenceSha256',
-  'bundlePlanSha256',
-  'bundleRunnerSha256',
-  'capabilityHash',
-  'qualificationHash',
-  'qualificationClassification',
-  'qualificationComplete',
-  'futurePromotionReviewEligible',
-  'productRetentionAuthorized',
-  'uiBindingAuthorized',
-  'releaseQualified',
+  'schema', 'stageId', 'exactHeadQualificationId', 'qualifiedHead',
+  'bundleEvidenceSha256', 'bundlePlanSha256', 'bundleRunnerSha256',
+  'capabilityHash', 'qualificationHash', 'qualificationClassification',
+  'qualificationComplete', 'futurePromotionReviewEligible',
+  'productRetentionAuthorized', 'uiBindingAuthorized', 'releaseQualified',
 ]);
 
 export function createLafea4ShellProductRefinementPromotionRecord(value) {
   exactKeys(value, INPUT_KEYS, 'LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_KEYS_INVALID');
   if (value.schema !== LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_SCHEMA
     || value.stageId !== 'LAFEA.4'
-    || value.exactHeadQualificationId
-      !== LAFEA4_SHELL_PRODUCT_REFINEMENT_EXACT_HEAD_QUALIFICATION_ID
+    || value.exactHeadQualificationId !== LAFEA4_SHELL_PRODUCT_REFINEMENT_EXACT_HEAD_QUALIFICATION_ID
     || value.capabilityHash !== LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.capabilityHash
     || value.qualificationHash !== LAFEA4_SHELL_PRODUCT_REFINEMENT_QUALIFICATION.qualificationHash
     || value.qualificationClassification !== 'PASS'
@@ -87,14 +66,11 @@ export function validateLafea4ShellProductRefinementPromotionRecord(value) {
 }
 
 /**
- * Resolve production promotion authority. The optional record parameter is a
- * qualification seam only: production callers omit it and therefore consume
- * the code-owned null trust root. Tests may inject a structurally valid record
- * to exercise the future-active branch without changing production authority.
+ * Resolve production authority from the source-controlled trust root only.
+ * Extra JavaScript arguments are intentionally ignored; there is no injection seam.
  */
-export function evaluateLafea4ShellProductRefinementPromotion(
-  record = LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD,
-) {
+export function evaluateLafea4ShellProductRefinementPromotion() {
+  const record = LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD;
   if (record === null) {
     return freeze({
       schema: 'lafea4-shell-product-refinement-promotion-state/v1',
@@ -124,10 +100,8 @@ export function evaluateLafea4ShellProductRefinementPromotion(
   });
 }
 
-export function requireLafea4ShellProductRefinementPromotionAuthorized(
-  record = LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD,
-) {
-  const state = evaluateLafea4ShellProductRefinementPromotion(record);
+export function requireLafea4ShellProductRefinementPromotionAuthorized() {
+  const state = evaluateLafea4ShellProductRefinementPromotion();
   if (!state.active
     || state.productRetentionAuthorized !== true
     || state.uiBindingAuthorized !== true) {

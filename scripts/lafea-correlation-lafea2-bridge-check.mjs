@@ -9,10 +9,12 @@ import {
   validateCorrelationGeometryEvidence,
 } from '../src/core/local-attachment-correlation/index.js';
 
-const screeningResult = calculateLocalAttachmentScreening(screeningRequestFixture());
+const screeningRequest = screeningRequestFixture();
+const screeningResult = calculateLocalAttachmentScreening(screeningRequest);
 assert.equal(screeningResult.qualification.state, 'ACCEPTED');
 
 const geometryEvidence = createCorrelationGeometryEvidenceFromLafea2({
+  screeningRequest,
   screeningResult,
   geometryIdentity: 'ATTACHMENT-GEOMETRY-001',
   attachmentDiameter: 250,
@@ -24,6 +26,14 @@ assert.equal(geometryEvidence.attachmentDiameter, 250);
 assert.equal(
   geometryEvidence.sourceEvidenceHash,
   screeningResult.semanticHashes.sourceEvidenceSemanticHash,
+);
+assert.equal(
+  geometryEvidence.foundationModelHash,
+  screeningRequest.sourceEvidence.foundationModel.semanticHash,
+);
+assert.equal(
+  geometryEvidence.foundationResultHash,
+  screeningRequest.sourceEvidence.foundationResult.semanticHashes.resultPayloadSemanticHash,
 );
 assert.match(geometryEvidence.semanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
 assert.deepEqual(validateCorrelationGeometryEvidence(geometryEvidence), geometryEvidence);
@@ -88,9 +98,25 @@ tamperedGeometry.attachmentDiameter = 251;
 assert.throws(() => validateCorrelationGeometryEvidence(tamperedGeometry),
   (error) => error?.code === 'CORRELATION_GEOMETRY_HASH_MISMATCH');
 
+const forgedRequest = structuredClone(screeningRequest);
+forgedRequest.sourceEvidence.foundationModel.modelVersion = 'FORGED';
+assert.throws(() => createCorrelationGeometryEvidenceFromLafea2({
+  screeningRequest: forgedRequest,
+  screeningResult,
+  geometryIdentity: 'FORGED-ATTACHMENT-GEOMETRY',
+  attachmentDiameter: 250,
+  attachmentSourceReference: 'QUALIFICATION_FIXTURE/ATTACHMENT_DIAMETER',
+}), (error) => [
+  'REQUEST_HASH_MISMATCH',
+  'INVALID_FOUNDATION_EVIDENCE',
+  'CORRELATION_LAFEA2_REQUEST_RESULT_MISMATCH',
+].includes(error?.code));
+
 console.log(JSON.stringify({
   check: 'lafea2-to-local-attachment-correlation-bridge',
   status: 'PASS',
+  foundationModelHash: geometryEvidence.foundationModelHash,
+  foundationResultHash: geometryEvidence.foundationResultHash,
   geometryEvidenceHash: geometryEvidence.semanticHash,
   sourceCustody: request.sourceCustody,
   geometry: request.geometry,
@@ -99,6 +125,7 @@ console.log(JSON.stringify({
   syntheticProfileDisposition: empirical.qualification.state,
   rejectedDomain: empirical.diagnostics[0].domain,
   geometryTamperRejected: true,
+  screeningRequestForgeryRejected: true,
   extrapolationPerformed: false,
 }));
 

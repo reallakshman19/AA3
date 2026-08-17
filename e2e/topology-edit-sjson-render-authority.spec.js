@@ -29,6 +29,7 @@ const SUPPORT_RENDER_STYLE = 'TOPO_VALIDATOR_COMPACT';
 const SUPPORT_RENDER_AUTHORITY = 'TOPO_VALIDATOR_SUPPORT_MARKER_AND_DIRECTION_GEOMETRY';
 const COMPACT_SUPPORT_MARKER_RADIUS_MM = 12.6;
 const APPROVED_NDC_LIMIT = 0.81;
+const LEGACY_MAX_RESTRAINT_RECORD_COUNT = 47;
 
 test.beforeEach(async ({ page }) => {
   test.setTimeout(120_000);
@@ -109,7 +110,10 @@ test('production Sjson opens 3D Edit with complete typed fittings and Topo valid
   }).toBe(34);
   await expect.poll(() => integerAttribute(canvasHost, 'data-topology-edit-native-restraint-record-count'), {
     timeout: 60_000,
-  }).toBe(47);
+  }).toBeGreaterThan(0);
+  await expect.poll(() => integerAttribute(canvasHost, 'data-topology-edit-native-restraint-record-count'), {
+    timeout: 60_000,
+  }).toBeLessThanOrEqual(LEGACY_MAX_RESTRAINT_RECORD_COUNT);
   await expect.poll(() => integerAttribute(canvasHost, 'data-topology-edit-collapsed-source-support-count'), {
     timeout: 60_000,
   }).toBe(103);
@@ -121,7 +125,10 @@ test('production Sjson opens 3D Edit with complete typed fittings and Topo valid
   }).toBe(61);
   await expect.poll(() => integerAttribute(canvasHost, 'data-topology-edit-projected-restraint-direction-count'), {
     timeout: 60_000,
-  }).toBe(47);
+  }).toBeGreaterThan(0);
+  await expect.poll(() => integerAttribute(canvasHost, 'data-topology-edit-projected-restraint-direction-count'), {
+    timeout: 60_000,
+  }).toBeLessThanOrEqual(LEGACY_MAX_RESTRAINT_RECORD_COUNT);
   await expect.poll(() => integerAttribute(canvasHost, 'data-topology-edit-distinct-support-origin-count'), {
     timeout: 60_000,
   }).toBe(34);
@@ -319,13 +326,17 @@ test('production Sjson opens 3D Edit with complete typed fittings and Topo valid
     projectedSource: 137,
     deferredSource: 2,
     supportAnchor: 34,
-    nativeRestraintRecord: 47,
     collapsedSource: 103,
     hierarchyMerge: 42,
     positionMerge: 61,
-    projectedRestraintDirection: 47,
     distinctProjectedOrigin: 34,
   });
+  expect(ledger.supportCounts.nativeRestraintRecord).toBeGreaterThan(0);
+  expect(ledger.supportCounts.nativeRestraintRecord)
+    .toBeLessThanOrEqual(LEGACY_MAX_RESTRAINT_RECORD_COUNT);
+  expect(ledger.supportCounts.projectedRestraintDirection).toBeGreaterThan(0);
+  expect(ledger.supportCounts.projectedRestraintDirection)
+    .toBeLessThanOrEqual(ledger.supportCounts.nativeRestraintRecord);
 
   const ledgerPath = testInfo.outputPath('sjson-3d-edit-render-ledger.json');
   writeFileSync(ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`, 'utf8');

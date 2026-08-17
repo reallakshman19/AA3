@@ -34,6 +34,9 @@ assertBlocked('PRIMARY_TECHNICAL_SOURCE', (fixture) => {
 assertBlocked('DATUM_SOURCE_CUSTODY_COMPLETE', (fixture) => {
   fixture.sourcePackage.geometry.definitions[0].sourceRef = 'TECH-WRC537-ED4';
 });
+assertBlocked('DATUM_SOURCE_CUSTODY_COMPLETE', (fixture) => {
+  fixture.sourceLedgerRows.find((row) => row.record_scope === 'DATUM').document_digest = 'b'.repeat(64);
+});
 assertBlocked('GEOMETRY_COMPLETE', (fixture) => {
   fixture.sourcePackage.geometry.definitions.find((row) => row.symbol === 'Rc').definition = 'UNRESOLVED_ED4';
 });
@@ -108,6 +111,7 @@ console.log(JSON.stringify({
   completeSyntheticAuthorityAccepted: true,
   technicalDocumentAndDatumCustodySeparated: true,
   datumLevelTechnicalSourceCustodyRequired: true,
+  datumDigestMustMatchExactAuthorizedSource: true,
   nonDegenerateParameterDomainsRequired: true,
   duplicateParameterAndLoadIdentitiesRejected: true,
   coefficientLocatorMustEqualLedgerLocator: true,

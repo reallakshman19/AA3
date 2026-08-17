@@ -7,6 +7,12 @@
  * rather than an exception escaping into the view.
  */
 import { createLafeaLifecycleEvent } from './lafea-lifecycle.js';
+import {
+  createLafea4RetainedMeshParentNormalCompanion,
+  isLafea4ParentNormalCompanionSurfaceQualified,
+  requireCurrentLafea4RetainedMeshParentNormalCompanion,
+  validateLafea4RetainedMeshParentNormalCompanion,
+} from './lafea4-shell-retained-mesh-parent-normal-companion.js';
 
 export function createLafeaMeshGenerationActions(context) {
   const {
@@ -70,8 +76,21 @@ export function createLafeaMeshGenerationActions(context) {
   }
 
   function generateAnalysisMesh(overrides = {}, stageId = getRetainedState().activeStageId) {
-    return attempt(stageId, 'LAFEA_ANALYSIS_MESH_GENERATION_REJECTED',
-      () => meshGeneration.generateMesh(readStageState(stageId), overrides), true);
+    return attempt(stageId, 'LAFEA_ANALYSIS_MESH_GENERATION_REJECTED', () => {
+      const currentMidsurface = stageId === 'LAFEA.4'
+        ? meshGeneration.selectShellMidsurface(stageId)
+        : null;
+      const result = meshGeneration.generateMesh(readStageState(stageId), overrides);
+      try {
+        const parentNormalCompanion = parentNormalCompanionForEvidence(stageId, result.evidence);
+        return parentNormalCompanion
+          ? freeze({ ...result, parentNormalCompanion })
+          : result;
+      } catch (error) {
+        rollbackCompanionCustody(stageId, currentMidsurface);
+        throw error;
+      }
+    }, true);
   }
 
   /**
@@ -89,28 +108,48 @@ export function createLafeaMeshGenerationActions(context) {
    * generation. Rebind only when the embedded semantic profile differs from
    * the currently retained profile; identical recovery must not manufacture a
    * lifecycle change before conflict detection.
+   *
+   * For TECH-11-qualified LAFEA.4 surfaces, the parent-normal companion is
+   * built before custody mutation. A stale/missing midsurface or incompatible
+   * companion therefore cannot be hidden by retaining the mesh first.
    */
   function recoverAnalysisMeshEvidenceV2(
     value,
     stageId = value?.stageId ?? getRetainedState().activeStageId,
   ) {
     requireGenerationAuthorized(stageId);
+    const currentMidsurface = stageId === 'LAFEA.4'
+      ? meshGeneration.selectShellMidsurface(stageId)
+      : null;
     try {
       const validated = meshGeneration.validateEvidence(value);
       if (validated.stageId !== stageId) {
         throw storeError('LAFEA_ANALYSIS_MESH_V2_RECOVERY_STAGE_MISMATCH');
       }
+      const prevalidatedCompanion = parentNormalCompanionForEvidence(stageId, validated);
       const currentProfile = meshGeneration.selectMeshProfile(stageId);
       const binding = currentProfile?.semanticHash === validated.meshProfileHash
         ? freeze({ changed: false, meshProfile: currentProfile })
         : bindAnalysisMeshProfile(validated.meshProfile, stageId);
       if (getRetainedState().status === 'FAILED') return null;
       const result = meshGeneration.recoverEvidence(validated, stageId);
+      let retainedCompanion;
+      try {
+        retainedCompanion = parentNormalCompanionForEvidence(stageId, result.evidence);
+        if (prevalidatedCompanion && retainedCompanion
+          && prevalidatedCompanion.semanticHash !== retainedCompanion.semanticHash) {
+          throw storeError('LAFEA4_PARENT_NORMAL_COMPANION_RECOVERY_REPLAY_MISMATCH');
+        }
+      } catch (error) {
+        rollbackCompanionCustody(stageId, currentMidsurface);
+        throw error;
+      }
       continuumPreflight.clear(stageId);
       clearDomainFirstExecution(stageId);
       clearOrchestratorDiagnostic();
       return freeze({
         ...result,
+        parentNormalCompanion: retainedCompanion,
         profileChanged: binding.changed,
         stage: publish().stages[stageId],
       });
@@ -119,6 +158,65 @@ export function createLafeaMeshGenerationActions(context) {
       publish();
       return null;
     }
+  }
+
+  /**
+   * Select/export the companion from the *currently retained* mesh and
+   * midsurface. No independently mutable companion cache exists, so stale
+   * copies cannot silently survive a mesh/profile/source change.
+   */
+  function selectRetainedAnalysisMeshParentNormalCompanion(
+    stageId = getRetainedState().activeStageId,
+  ) {
+    const retained = meshGeneration.selectEvidence(stageId);
+    if (!retained) return null;
+    return parentNormalCompanionForEvidence(stageId, retained);
+  }
+
+  function exportRetainedAnalysisMeshParentNormalCompanion(
+    stageId = getRetainedState().activeStageId,
+  ) {
+    return selectRetainedAnalysisMeshParentNormalCompanion(stageId);
+  }
+
+  function validateRetainedAnalysisMeshParentNormalCompanion(
+    value,
+    stageId = value?.stageId ?? getRetainedState().activeStageId,
+  ) {
+    const candidate = validateLafea4RetainedMeshParentNormalCompanion(value);
+    const retained = meshGeneration.selectEvidence(stageId);
+    const midsurface = meshGeneration.selectShellMidsurface(stageId);
+    if (!retained || !midsurface) {
+      throw storeError('LAFEA4_PARENT_NORMAL_COMPANION_CURRENT_PARENTS_REQUIRED');
+    }
+    return requireCurrentLafea4RetainedMeshParentNormalCompanion(candidate, {
+      meshEvidence: retained,
+      midsurfaceEvidence: midsurface,
+    });
+  }
+
+  function parentNormalCompanionForEvidence(stageId, meshEvidence) {
+    if (stageId !== 'LAFEA.4') return null;
+    const midsurface = meshGeneration.selectShellMidsurface(stageId);
+    if (!midsurface) {
+      throw storeError('LAFEA4_PARENT_NORMAL_COMPANION_MIDSURFACE_REQUIRED');
+    }
+    if (!isLafea4ParentNormalCompanionSurfaceQualified(midsurface)) return null;
+    return createLafea4RetainedMeshParentNormalCompanion({
+      meshEvidence,
+      midsurfaceEvidence: midsurface,
+    });
+  }
+
+  /**
+   * A TECH-12B companion failure must never leave a newly generated/recovered
+   * mesh externally retainable without its required companion. Invalidation
+   * clears the child; the unchanged current midsurface parent is then restored.
+   */
+  function rollbackCompanionCustody(stageId, midsurface) {
+    if (stageId !== 'LAFEA.4' || !midsurface) return;
+    meshGeneration.invalidate(stageId);
+    meshGeneration.registerShellMidsurface(midsurface, readStageState(stageId));
   }
 
   function attempt(stageId, fallbackCode, action, invalidatesExecution) {
@@ -166,6 +264,9 @@ export function createLafeaMeshGenerationActions(context) {
     generateAnalysisMesh,
     refineAnalysisMesh,
     recoverAnalysisMeshEvidenceV2,
+    selectRetainedAnalysisMeshParentNormalCompanion,
+    exportRetainedAnalysisMeshParentNormalCompanion,
+    validateRetainedAnalysisMeshParentNormalCompanion,
   });
 }
 

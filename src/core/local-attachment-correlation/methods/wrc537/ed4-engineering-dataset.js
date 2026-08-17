@@ -22,7 +22,9 @@ export function createWrc537Ed4EngineeringDatasetCandidate(input) {
     coefficientRows: input.coefficientRows,
   });
   if (readiness.state !== WRC537_ED4_PACKAGE_READY) {
-    const error = fail('WRC537_ED4_SOURCE_PACKAGE_NOT_READY', 'input.sourcePackage');
+    const error = new Error('WRC537_ED4_SOURCE_PACKAGE_NOT_READY');
+    error.code = 'WRC537_ED4_SOURCE_PACKAGE_NOT_READY';
+    error.path = 'input.sourcePackage';
     error.failedGateIds = [...readiness.failedGateIds];
     throw error;
   }
@@ -123,7 +125,9 @@ export function engineeringDatasetCandidateCanActivateMethod(candidateInput) {
 function validatePromotion(value) {
   requireObject(value, 'promotion');
   exactKeys(value, ['schema', 'candidateIdentity', 'candidateVersion', 'preparedBy', 'preparationReference'], 'promotion');
-  if (value.schema !== WRC537_ED4_PROMOTION_SCHEMA) fail('WRC537_ED4_PROMOTION_SCHEMA_MISMATCH', 'promotion.schema');
+  if (value.schema !== WRC537_ED4_PROMOTION_SCHEMA) {
+    fail('WRC537_ED4_PROMOTION_SCHEMA_MISMATCH', 'promotion.schema');
+  }
   requiredString(value.candidateIdentity, 'promotion.candidateIdentity');
   requiredString(value.candidateVersion, 'promotion.candidateVersion');
   requiredString(value.preparedBy, 'promotion.preparedBy');
@@ -180,5 +184,5 @@ function fail(code, path) {
   const error = new Error(code);
   error.code = code;
   error.path = path;
-  return error;
+  throw error;
 }

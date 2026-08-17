@@ -57,24 +57,30 @@ export function renderMasterDataUI(documentRef) {
     delete stateRef.current.masterDraftDirty[masterKey];
   };
 
-  const updateVisibleStatus = (message, masterKey = null) => {
+  const updateVisibleStatus = (message) => {
     stateRef.current.importMastersWriteBackStatus = message;
     const status = container.querySelector('.xml-cii-master-actions .xml-cii-phase-help');
     if (status) status.textContent = message;
-    if (masterKey) {
-      const draftStatus = container.querySelector(`[data-master-draft-status="${masterKey}"]`);
-      if (draftStatus) {
-        draftStatus.textContent = 'Draft mapping modified — not applied. Preview and calculations still use the last applied mapping.';
-        draftStatus.style.color = '#fbbf24';
-      }
-    }
+  };
+
+  const projectDraftIntoControls = (body, masterKey) => {
+    const applyButton = body.querySelector(`[data-action="save-master-mapping"][data-master-key="${masterKey}"]`);
+    if (applyButton) applyButton.textContent = '✓ Apply Mapping';
+
+    const draft = stateRef.current.masterDraftMappings[masterKey];
+    if (!draft || !stateRef.current.masterDraftDirty[masterKey]) return;
+    const selects = body.querySelectorAll(`select[data-master-field-map][data-master-key="${masterKey}"]`);
+    selects.forEach((select) => {
+      select.value = draft[select.dataset.masterFieldMap] || '';
+    });
   };
 
   const render = () => {
     container.innerHTML = '';
 
-    // Pass the authoritative legacy context to the adapted UI. Draft mapping is
-    // supplied separately so Preview/calculation never consumes unapplied edits.
+    // Pass only the authoritative legacy context to Preview/calculation. Draft
+    // mapping edits are projected into controls separately and cannot invalidate
+    // engineering authority until Apply Mapping succeeds.
     stateRef.current.masterContext = masterDataController.getLegacyContext();
     stateRef.current.supportConfigJson = JSON.stringify(stateRef.current.masterContext.config || {});
 
@@ -106,27 +112,25 @@ export function renderMasterDataUI(documentRef) {
       header.appendChild(btn);
     });
 
-    // Action buttons
     const actionsRight = documentRef.createElement('div');
     actionsRight.style.cssText = 'margin-left:auto; display:flex; gap:10px; align-items:center;';
 
     header.appendChild(actionsRight);
     container.appendChild(header);
 
-    // Body Container
     const body = documentRef.createElement('div');
     body.style.cssText = 'flex:1; overflow-y:auto; padding:20px;';
 
     renderStandaloneImportMastersPanel(body, stateRef.current, stateRef.current.activeMainTab);
+    projectDraftIntoControls(body, stateRef.current.activeMainTab);
 
-    // Attach master action events (Upload File, Auto-Map, Save Mapping)
+    // Attach master action events (Upload File, Auto-Map, Apply Mapping)
     body.addEventListener('click', async (e) => {
       const target = e.target.closest('[data-action]');
       if (!target) return;
       const action = target.dataset.action;
 
       if (action === 'load-import-masters') {
-        // No-op for now, MasterDataController initializes state automatically
         render();
       } else if (action === 'clear-master-context') {
         masterDataController.clear();
@@ -139,8 +143,8 @@ export function renderMasterDataUI(documentRef) {
         if (rawRows.length) {
           const mapping = autoMapMasterColumns(rawRows, masterKey);
           setDraftMapping(masterKey, mapping);
-          stateRef.current.importMastersWriteBackStatus = `Auto-mapped columns for ${masterKey}. Review the draft and select Apply Mapping.`;
-          render();
+          projectDraftIntoControls(body, masterKey);
+          updateVisibleStatus(`Auto-mapped columns for ${masterKey}. Draft only — select Apply Mapping to validate and commit.`);
         }
       } else if (action === 'save-master-mapping') {
         const masterKey = target.dataset.masterKey;
@@ -153,8 +157,7 @@ export function renderMasterDataUI(documentRef) {
         const rawRows = masterDataController.getMasterData()[masterKey]?.rawRows || [];
         const fileName = masterDataController.getMasterData()[masterKey]?.fileName;
         if (!fileName) {
-          stateRef.current.importMastersWriteBackStatus = `Cannot apply ${masterKey} mapping before an authoritative file is loaded.`;
-          render();
+          updateVisibleStatus(`Cannot apply ${masterKey} mapping before an authoritative file is loaded.`);
           return;
         }
 
@@ -186,8 +189,8 @@ export function renderMasterDataUI(documentRef) {
           const mapping = savedMappings[selectedMappingName];
           if (mapping) {
             setDraftMapping(masterKey, mapping);
-            stateRef.current.importMastersWriteBackStatus = `Loaded saved mapping "${selectedMappingName}" as a draft for ${masterKey}. Select Apply Mapping to make it authoritative.`;
-            render();
+            projectDraftIntoControls(body, masterKey);
+            updateVisibleStatus(`Loaded saved mapping "${selectedMappingName}" as a draft for ${masterKey}. Select Apply Mapping to make it authoritative.`);
           }
         }
         return;
@@ -202,10 +205,7 @@ export function renderMasterDataUI(documentRef) {
         if (val) currentMap[fieldName] = val;
         else delete currentMap[fieldName];
         setDraftMapping(masterKey, currentMap);
-        updateVisibleStatus(
-          `Mapping modified for ${masterKey}; select Apply Mapping to validate and commit it.`,
-          masterKey,
-        );
+        updateVisibleStatus(`Mapping modified for ${masterKey}; draft only — select Apply Mapping to validate and commit.`);
         return;
       }
 
@@ -254,8 +254,6 @@ export function renderMasterDataUI(documentRef) {
     container.appendChild(body);
   };
 
-  // Init
   render();
-
   return container;
 }

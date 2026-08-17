@@ -15,26 +15,19 @@
 export const LAFEA_MESH_PRODUCER_REGISTRY_SCHEMA = 'lafea-mesh-producer-registry/v1';
 
 export const LAFEA_MESH_PRODUCER_ENGINE_ID = 'LAFEA_CORE_MESHER';
-export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.SHELL.POLAR.UVREFINE.V11';
+export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.SHELL.POLAR.V10';
 export const LAFEA_MESH_PRODUCER_QUALIFICATION_ID = 'LAFEA-MESH-Q1';
-export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R12';
+export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R11';
 export const LAFEA_MESH_PRODUCER_GOVERNANCE_REF = 'npm run check:lafea-meshing';
 export const LAFEA_MESH_PRODUCER_QUALITY_POLICY_ID = 'LAFEA_MESH_PROFILE_QUALITY_GATES_V1';
 export const LAFEA_MESH_PRODUCER_REF =
   `${LAFEA_MESH_PRODUCER_ENGINE_ID}/${LAFEA_MESH_PRODUCER_ENGINE_REVISION}/${LAFEA_MESH_PRODUCER_QUALIFICATION_ID}`;
 
 /**
- * Automatic generation plus retained-mesh refinement regeneration.
- *
- * Local refinement scopes are stage/family specific:
- * - LAFEA.3: T3/T6 planar continuum regeneration;
- * - LAFEA.4: CST+DKT TRI3 non-periodic cylindrical UV-space regeneration,
- *   with exact midsurface remapping and parent boundary-edge preservation;
- * - LAFEA.5: no retained-mesh local refinement authority.
- *
- * LAFEA.4 shell refinement is intentionally narrower than automatic shell
- * generation: periodic cylinders and caller-authored LAFEA.5 source meshes
- * remain outside the local-refinement qualification.
+ * Automatic generation plus retained-mesh refinement regeneration. Local
+ * refinement remains qualified only for LAFEA.3 T3/T6 parents. LAFEA.4 shell
+ * UV refinement has a separate capability/qualification record so this core
+ * producer contract is not silently broadened.
  */
 export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
   'AUTOMATIC_MESH', 'REFINEMENT_REGENERATION',
@@ -42,10 +35,6 @@ export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
 export const LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED = true;
 export const LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_FAMILIES = Object.freeze(['T3', 'T6']);
 
-/**
- * Ceilings the producer services and the qualification authorizes. A request
- * above them is reported as a BLOCK resource disposition, never truncated.
- */
 export const LAFEA_MESH_PRODUCER_MAXIMUM_NODES = 200_000;
 export const LAFEA_MESH_PRODUCER_MAXIMUM_ELEMENTS = 100_000;
 export const LAFEA_MESH_PRODUCER_MAXIMUM_ESTIMATED_DOFS = 400_000;
@@ -55,11 +44,6 @@ const BOUND_SCOPES = Object.freeze({
   'LAFEA.3': Object.freeze(['Q8', 'T3', 'T6']),
   'LAFEA.4': Object.freeze([SHELL_TRI3]),
   'LAFEA.5': Object.freeze([SHELL_TRI3]),
-});
-const LOCAL_REFINEMENT_SCOPES = Object.freeze({
-  'LAFEA.3': Object.freeze(['T3', 'T6']),
-  'LAFEA.4': Object.freeze([SHELL_TRI3]),
-  'LAFEA.5': Object.freeze([]),
 });
 
 export function lafeaMeshProducerBound(stageId, elementFamily = null) {
@@ -73,7 +57,9 @@ export function lafeaMeshProducerElementFamilies(stageId) {
 }
 
 export function lafeaMeshProducerLocalRefinementFamilies(stageId) {
-  return [...(LOCAL_REFINEMENT_SCOPES[stageId] ?? [])];
+  return stageId === 'LAFEA.3'
+    ? [...LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_FAMILIES]
+    : [];
 }
 
 export function lafeaMeshProducerScopes() {

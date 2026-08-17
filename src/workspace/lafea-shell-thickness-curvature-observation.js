@@ -2,11 +2,11 @@ import {
   LAFEA_SHELL_SURFACE_KINDS,
   shellMidsurfaceKind,
 } from './lafea-shell-midsurface-dispatch.js';
-import { LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES } from './lafea-shell-mesh-producer.js';
 import { createLafea4ShellThicknessBasis } from './lafea-shell-thickness-basis.js';
 
 export const LAFEA4_THICKNESS_CURVATURE_OBSERVATION_SCHEMA =
   'lafea4-thickness-curvature-observation/v1';
+export const LAFEA4_CURVATURE_CEILING_ANGLE_DEGREES = 15;
 
 const CURVED_KINDS = new Set([
   LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL,
@@ -20,8 +20,9 @@ const CURVED_KINDS = new Set([
  * This is deliberately not a qualification gate. It binds the source element
  * thickness to the same source hash as the retained midsurface and reports the
  * sagitta/thickness consequence of the current target plus the qualified 15°
- * curvature ceiling. A later qualification programme may convert a declared
- * ratio into a gate; this module does not invent that threshold.
+ * curvature ceiling. A regression locks this ceiling to the shell producer's
+ * current source-controlled constant without importing the producer into the
+ * presentation dependency graph.
  */
 export function buildLafea4ThicknessCurvatureObservation(stage) {
   if (stage?.stageId !== 'LAFEA.4') return null;
@@ -47,7 +48,7 @@ export function buildLafea4ThicknessCurvatureObservation(stage) {
     sourceHash: currentSourceHash,
     document,
   });
-  const curvatureCeilingRadians = LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES * Math.PI / 180;
+  const curvatureCeilingRadians = LAFEA4_CURVATURE_CEILING_ANGLE_DEGREES * Math.PI / 180;
   const curvatureTargetElementLength = radius * curvatureCeilingRadians;
   const effectiveTargetElementLength = Math.min(
     requestedTargetElementLength,
@@ -78,7 +79,7 @@ export function buildLafea4ThicknessCurvatureObservation(stage) {
     uniformThickness,
     radius,
     requestedTargetElementLength,
-    curvatureCeilingAngleDegrees: LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES,
+    curvatureCeilingAngleDegrees: LAFEA4_CURVATURE_CEILING_ANGLE_DEGREES,
     curvatureTargetElementLength,
     effectiveTargetElementLength,
     effectiveCurvatureAngleDegrees,

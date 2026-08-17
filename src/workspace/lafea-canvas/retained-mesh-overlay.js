@@ -1,4 +1,6 @@
 /** Read-only SVG overlays for canonical retained analysis-mesh evidence. */
+import { lafeaRetainedMeshDisplayBoundary } from './retained-mesh-display-topology.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export function renderLafeaRetainedMeshOverlay(input) {
@@ -16,14 +18,14 @@ export function renderLafeaRetainedMeshOverlay(input) {
   group.setAttribute('class', 'lafea-retained-mesh'); group.dataset.role = 'lafea-retained-mesh-overlay';
   group.dataset.custodyState = input.custodyState ?? 'UNKNOWN'; group.setAttribute('aria-label', 'Retained authorized analysis mesh');
   for (const element of mesh.elements) {
-    const points = element.nodeIds.map((id) => nodeMap.get(id)).filter(Boolean); if (points.length < 2) continue;
-    const shape = svg.ownerDocument.createElementNS(SVG_NS, points.length > 2 ? 'polygon' : 'polyline');
-    shape.setAttribute('points', points.map((point) => screenPoint(point, transform).join(',')).join(' '));
+    const boundary = lafeaRetainedMeshDisplayBoundary(element, nodeMap);
+    const shape = createBoundaryShape(svg.ownerDocument, boundary, transform);
     const id = String(element.elementId), classes = ['lafea-retained-mesh__element'];
     if (warning.has(element.elementId)) classes.push('lafea-retained-mesh__element--warning');
     if (blocking.has(element.elementId)) classes.push('lafea-retained-mesh__element--block');
     if (id === focused) classes.push('lafea-retained-mesh__element--focused');
     shape.setAttribute('class', classes.join(' ')); shape.dataset.meshElementId = id;
+    shape.dataset.meshElementType = element.elementType ?? '';
     shape.setAttribute('tabindex', '0'); shape.setAttribute('role', 'button'); shape.setAttribute('aria-label', `Analysis mesh element ${id}`);
     const focus = () => input.onFocusElement?.(element.elementId);
     shape.addEventListener('click', (event) => { event.stopPropagation(); focus(); });
@@ -63,6 +65,29 @@ export function focusLafeaRetainedMeshElement(target, elementId) {
   const id = String(elementId), nodes = target?.querySelectorAll?.('[data-mesh-element-id]') ?? []; let found = null;
   nodes.forEach((node) => { const selected = node.dataset.meshElementId === id; node.classList.toggle('lafea-retained-mesh__element--focused', selected); if (selected) found = node; });
   found?.focus?.({ preventScroll: true }); return found !== null;
+}
+
+function createBoundaryShape(documentRef, boundary, transform) {
+  if (boundary.kind === 'QUADRATIC_LOOP') {
+    const shape = documentRef.createElementNS(SVG_NS, 'path');
+    shape.setAttribute('d', quadraticLoopPath(boundary, transform));
+    return shape;
+  }
+  const shape = documentRef.createElementNS(SVG_NS, boundary.kind === 'POLYGON' ? 'polygon' : 'polyline');
+  shape.setAttribute('points', boundary.points.map((point) => screenPoint(point, transform).join(',')).join(' '));
+  return shape;
+}
+
+function quadraticLoopPath(boundary, transform) {
+  const first = screenPoint(boundary.edges[0].start, transform);
+  const commands = [`M ${first[0]},${first[1]}`];
+  for (const edge of boundary.edges) {
+    const control = screenPoint(edge.control, transform);
+    const end = screenPoint(edge.end, transform);
+    commands.push(`Q ${control[0]},${control[1]} ${end[0]},${end[1]}`);
+  }
+  commands.push('Z');
+  return commands.join(' ');
 }
 
 function glyphLocation(glyph, nodes, elements) {

@@ -1,0 +1,181 @@
+{
+  "schema": "lafea-independent-qualification-plan/v1",
+  "qualificationId": "LAFEA4-INDEPENDENT-QUALIFICATION-V1",
+  "requiredNodeMajor": 22,
+  "dependencyInstall": {
+    "id": "DEPENDENCY_INSTALL",
+    "classification": "INFRASTRUCTURE",
+    "required": true,
+    "executable": "npm",
+    "args": ["ci"]
+  },
+  "browserProvision": {
+    "id": "BROWSER_PROVISION",
+    "classification": "INFRASTRUCTURE",
+    "required": true,
+    "browser": true,
+    "executable": "npx",
+    "args": ["playwright", "install", "chromium"]
+  },
+  "browserArtifactPaths": ["test-results", "playwright-report"],
+  "steps": [
+    {
+      "id": "TECH3_CURVATURE_ANALYTICAL",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech3-curvature-qualification-check.mjs"]
+    },
+    {
+      "id": "TECH4_CURVED_HOLE_CONVERGENCE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech4-curved-hole-convergence-check.mjs"]
+    },
+    {
+      "id": "TECH5_EXACT_UV_LOCAL_REFINEMENT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech5-shell-local-refinement-check.mjs"]
+    },
+    {
+      "id": "TECH6_GRADED_TRANSITION_PLAN",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech6-graded-transition-plan-check.mjs"]
+    },
+    {
+      "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech7-graded-refinement-executor-check.mjs"]
+    },
+    {
+      "id": "SHELL_SAMPLE_PARENT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-shell-sample-parent-check.mjs"]
+    },
+    {
+      "id": "SHELL_WORKBENCH_ROUTE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-shell-workbench-route-check.mjs"]
+    },
+    {
+      "id": "SHELL_COMPILED_EXECUTION",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-shell-compiled-execution-check.mjs"]
+    },
+    {
+      "id": "SHELL_RESPONSE_ACCEPTANCE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-shell-response-acceptance-check.mjs"]
+    },
+    {
+      "id": "ENGINEERING_OVERVIEW_PROJECTION",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["tests/lafea-engineering-overview.test.mjs"]
+    },
+    {
+      "id": "UI_ANALYSIS_SETTINGS_CONTRACT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-ui-analysis-settings-check.mjs"]
+    },
+    {
+      "id": "LAFEA3_SAMPLE_GENERATE_MESH",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea3-sample-generate-mesh-enable-check.mjs"]
+    },
+    {
+      "id": "LAFEA3_SAMPLE_GENERATE_RETAIN",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea3-sample-generate-retain-check.mjs"]
+    },
+    {
+      "id": "RETAINED_MESH_DISPLAY_TOPOLOGY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-retained-mesh-display-topology-check.mjs"]
+    },
+    {
+      "id": "LAFEA3_VISIBLE_CONTINUUM_PREFLIGHT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea3-visible-continuum-preflight-check.mjs"]
+    },
+    {
+      "id": "MESHING_SUITE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "npm",
+      "args": ["run", "check:lafea-meshing"]
+    },
+    {
+      "id": "LAFEA_CORE_SUITE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "npm",
+      "args": ["run", "check:lafea-core"]
+    },
+    {
+      "id": "STANDALONE_BOUNDARY_BASELINE",
+      "kind": "BASELINE_COMPARATOR",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-standalone-boundary-check.mjs"],
+      "qualificationBase": "162c88ee4715bc46c3c768c1086e74e7165bd3fb",
+      "inheritedErrorPrefix": "Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:"
+    },
+    {
+      "id": "STANDALONE_VITE_BUILD",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "npx",
+      "args": ["vite", "build", "--config", "vite.lafea.config.js"]
+    },
+    {
+      "id": "STANDALONE_BUILD_ARTIFACT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-standalone-build-artifact-check.mjs"]
+    },
+    {
+      "id": "PRODUCTION_BUILD",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "npm",
+      "args": ["run", "build"]
+    },
+    {
+      "id": "VISIBLE_WORKBENCH_CHROMIUM",
+      "classification": "ENGINEERING",
+      "required": true,
+      "browser": true,
+      "executable": "node",
+      "args": ["scripts/lafea-stage17-browser-run.mjs"]
+    }
+  ]
+}

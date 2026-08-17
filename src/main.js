@@ -35,6 +35,7 @@ import { EventBus } from './workspace/event-bus.js';
 import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping-analyzer-integration.js';
 import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-piping-inputxml-source-workflow.js';
 import { mountLfeaPipelineStagedJsonInputPanel } from './workspace/lfea-pipeline-stagedjson-input-panel.js';
+import { mountLfeaPipelineAccdbInputPanel } from './workspace/lfea-pipeline-accdb-input-panel.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
 import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
 import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety-workbench.js';
@@ -66,6 +67,13 @@ const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipel
     { fallbackUnit: 'mm' },
   ),
   onClear: () => linearPipingInputXmlSource.clear(),
+});
+// ACCDB has no InputXML-text conversion precedent to reuse (see
+// accdb-to-canonical-geometry.js's header) so, unlike StagedJSON, this
+// panel does not hand off into linearPipingInputXmlSource -- it renders
+// its own model-health/representability verdict directly.
+const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
+  documentRef: applicationRoot.ownerDocument,
 });
 // Both source and results panels historically mounted into the same
 // `linear-piping-consumer-root` container (they only ever appended sibling
@@ -226,6 +234,7 @@ const workspace = Object.freeze({
   getLinearPipingInputXmlAnalyzerIntegrationPolicy() { return linearPipingAnalyzerIntegration; },
   clearLinearPipingInputXmlSource() { linearPipingInputXmlSource.clear(); },
   getLfeaStagedJsonInputPanelState() { return lfeaStagedJsonInputPanel.getSnapshot(); },
+  getLfeaAccdbInputPanelState() { return lfeaAccdbInputPanel.getSnapshot(); },
   importLinearPipingResultPackage(value) { return linearPipingResults.loadPackage(value); },
   checkLinearPipingRunRequest(value) { return linearPipingResults.checkRequest(value); },
   getLinearPipingPreRunCheck() { return linearPipingResults.getPreRunCheck(); },
@@ -273,7 +282,7 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
+  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
 });
 
 globalThis.AnalysisWorkspace = workspace;

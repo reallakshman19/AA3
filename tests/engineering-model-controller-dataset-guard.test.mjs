@@ -123,7 +123,7 @@ test('same-reference snapshots retain distribution freshness checks', () => {
   } finally { state.restore(); }
 });
 
-test('project-data change without initialized dependency basis conservatively rebuilds and marks topology check unaffected', () => {
+test('project-data change without initialized dependency basis conservatively rebuilds and requests topology refresh', () => {
   const dataset = { datasetId: 'dataset:1', version: 4 };
   const state = harness(dataset);
   try {
@@ -134,7 +134,7 @@ test('project-data change without initialized dependency basis conservatively re
     assert.equal(state.calls.refresh, 2);
     assert.deepEqual(state.calls.published, [[ENGINEERING_MODEL_EVENTS.CHANGED, {
       reason: 'project-data-changed',
-      topologyCheckAffected: false,
+      topologyCheckAffected: true,
       topologyModelRebuilt: true,
     }]]);
   } finally { state.restore(); }
@@ -158,7 +158,7 @@ test('load-only Project Data change skips support-route rebuild but still stales
   } finally { state.restore(); }
 });
 
-test('topology-policy Project Data change rebuilds support-route models exactly once', () => {
+test('topology-policy Project Data change rebuilds support-route models once and requests topology refresh', () => {
   const dataset = { datasetId: 'dataset:1', version: 4 };
   const base = projectProfile();
   const state = harness(dataset);
@@ -170,7 +170,7 @@ test('topology-policy Project Data change rebuilds support-route models exactly 
     assert.equal(state.calls.refresh, 1);
     assert.deepEqual(state.calls.published, [[ENGINEERING_MODEL_EVENTS.CHANGED, {
       reason: 'project-data-changed',
-      topologyCheckAffected: false,
+      topologyCheckAffected: true,
       topologyModelRebuilt: true,
     }]]);
   } finally { state.restore(); }

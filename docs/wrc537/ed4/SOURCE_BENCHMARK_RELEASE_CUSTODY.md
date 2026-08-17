@@ -4,24 +4,26 @@
 
 This contract closes the boundary between **numerical qualification evidence** and a **numerical release candidate**.
 
-A qualification case may be useful for diagnostics, hand-calculation development, sign checks, isolated equation checks, or supplemental numerical coverage. A self-consistent qualification PASS by itself is therefore not sufficient evidence that the implementation reproduces an authoritative WRC537 Edition 4 source benchmark.
+A qualification case may be useful for diagnostics, hand-calculation development, sign checks, isolated equation checks, or supplemental numerical coverage. A self-consistent qualification PASS by itself is not sufficient evidence that the implementation reproduces an authoritative WRC537 Edition 4 source benchmark.
 
-Before a numerical release candidate can exist, the software must prove that every benchmark retained in the source-qualified Edition 4 dataset has been reproduced by a specific qualification case with exact input and result custody.
+Before a numerical release candidate can exist, the software must prove that every benchmark retained in the source-qualified Edition 4 dataset has been reproduced by a specific qualification case with exact source-qualified input and result custody.
 
 This contract does not supply WRC537 technical data and does not grant engineering authority.
 
-## Authority boundary
-
-The sequence is:
+## Authority sequence
 
 ```text
-source-qualified benchmark retained in dataset
+source benchmark extracted from authorized Edition 4 source
+        ↓
+source-qualified benchmark inputEvidence[]
+        ↓
+source-package READY
         ↓
 term-complete qualification case
         ↓
 qualification PASS
         ↓
-source-benchmark binding verification
+source-benchmark release binding
         ↓
 numeric literal/coefficient custody
         ↓
@@ -40,21 +42,25 @@ engineeringUseAuthorized = false
 
 Without a separate benchmark-custody gate, a caller could construct inputs and expected values that are internally consistent with the executable graph, attach them to a valid Edition 4 datum row, and obtain numerical PASS without proving that any benchmark retained from the authorized source was actually reproduced.
 
-The release gate therefore distinguishes:
+The release gate therefore distinguishes supplemental qualification evidence from source-benchmark reproduction required for numerical release.
+
+## Why numeric benchmark values alone are insufficient
+
+A retained source benchmark input such as:
 
 ```text
-supplemental qualification evidence
+R = 100
 ```
 
-from:
+is not engineering-complete unless the source package also proves what physical quantity/unit that value represents and where it came from.
 
-```text
-source-benchmark reproduction required for numerical release
-```
+`100 mm` and `100 in` are numerically identical as bare floating-point values but physically different by 25.4×.
+
+Therefore benchmark input source custody is established **before READY**, not supplied later by the release-candidate caller.
 
 ## Retained source benchmark
 
-The source package retains benchmark evidence in the form:
+Each retained source benchmark includes:
 
 ```text
 caseId
@@ -63,10 +69,51 @@ targetEditionPrimarySourceVerified
 independentlyReproduced
 independentCalculationReference
 input
+inputEvidence[]
 expectedResults[]
 ```
 
-Each expected result retains:
+The `input` object may preserve the natural source-example structure, for example:
+
+```json
+{
+  "geometry": { "R": 100, "t": 10 },
+  "loads": { "P": 1000 }
+}
+```
+
+### inputEvidence[]
+
+Every finite numeric leaf in `input` must have exactly one source-qualified evidence row:
+
+```json
+{
+  "inputId": "GEOMETRY_R",
+  "benchmarkPath": ["geometry", "R"],
+  "units": "mm",
+  "sourceRef": "DATUM-WRC537-ED4-BENCHMARK-001",
+  "sourceLocator": "exact source locator"
+}
+```
+
+`benchmarkPath` is an ordered list of object keys and/or zero-based array indexes into the retained benchmark `input` object.
+
+The source-package READY gate requires:
+
+- non-empty unique `inputId` values;
+- a valid path to a finite numeric input value;
+- non-empty units;
+- Edition 4 primary DATUM custody;
+- datum digest equal to the exact authorized source document SHA-256;
+- input evidence source locator equal to the retained datum locator;
+- 100% coverage of all finite numeric benchmark input leaves;
+- no duplicate input-path custody.
+
+A benchmark with incomplete input units/source locators cannot make the source package READY.
+
+## Expected result evidence
+
+Each retained expected result includes:
 
 ```text
 quantity
@@ -78,11 +125,11 @@ sourceRef
 sourceLocator
 ```
 
-The benchmark source reference and every expected-result source reference must already satisfy Edition 4 datum-level source custody before the source package may become READY.
+Expected result values, tolerances and locators are likewise source-qualified before READY.
 
-## Release benchmark binding
+## Release benchmark binding artifact
 
-`WRC537_ED4_BENCHMARK_BINDINGS.json` contains:
+`WRC537_ED4_BENCHMARK_BINDINGS.json` contains only mappings to evidence already retained in the immutable dataset:
 
 ```json
 {
@@ -93,7 +140,7 @@ The benchmark source reference and every expected-result source reference must a
       "inputBindings": [
         {
           "variableId": "PLAN_INPUT_VARIABLE",
-          "benchmarkPath": ["geometry", "R"]
+          "benchmarkInputId": "GEOMETRY_R"
         }
       ],
       "recoveryBindings": [
@@ -108,7 +155,7 @@ The benchmark source reference and every expected-result source reference must a
 }
 ```
 
-`benchmarkPath` is an ordered path of object keys and/or zero-based array indexes into the retained benchmark `input` object. It is evidence mapping, not an executable expression.
+The release-candidate caller does **not** supply benchmark paths, units, or source locators. It only selects source-qualified `benchmarkInputId` values already frozen into the dataset.
 
 ## Mandatory benchmark coverage
 
@@ -116,63 +163,57 @@ Every benchmark retained in `dataset.sourcePackage.benchmarks` must appear exact
 
 A release candidate is rejected when:
 
-- a retained benchmark is omitted;
+- a retained source benchmark is omitted;
 - a benchmark is bound more than once;
 - a referenced qualification case does not exist;
-- one qualification case is reused as the reproduction evidence for multiple retained source benchmarks.
-
-This makes the dataset's source benchmark inventory authoritative for release coverage.
+- one qualification case is reused as reproduction evidence for multiple source benchmarks.
 
 ## Qualification-case custody
 
-The qualification case bound to a source benchmark must retain the same:
+The qualification case bound to a source benchmark must retain the same source datum/locator and the exact retained independent-calculation reference.
+
+Required:
 
 ```text
-sourceRef
-sourceLocator
-independentCalculationReference
+qualificationCase.sourceRef == sourceBenchmark.sourceRef
+qualificationCase.sourceLocator == source benchmark DATUM locator
+qualificationCase.independentReproduction == true
+qualificationCase.independentCalculationReference == sourceBenchmark.independentCalculationReference
 ```
 
-and must retain:
+Numerical agreement does not permit substitution of a different independent reproduction reference.
+
+## Exact benchmark-input release custody
+
+For each input binding:
 
 ```text
-independentReproduction = true
+qualification request variable
+↔ source-qualified benchmarkInputId
 ```
 
-The release gate does not accept a different hand-calculation reference merely because the numerical values agree.
-
-## Exact benchmark-input custody
-
-Every qualification request input variable must be explicitly mapped to a numeric value in the retained benchmark input object.
-
-For each mapping:
+The release gate resolves the input evidence's retained path/value and requires:
 
 ```text
-qualification request value
-==
-retained source benchmark numeric value at benchmarkPath
+qualification request value == retained benchmark numeric value
+qualification request units == retained benchmark inputEvidence.units
 ```
 
-There is no tolerance at this identity boundary. If unit conversion is required, the canonical calculation plan and benchmark extraction must define that transformation explicitly rather than silently modifying the retained benchmark.
+There is no silent unit conversion at this identity boundary.
 
-### Complete numeric-leaf coverage
+The binding set must cover:
 
-The gate recursively inventories every finite numeric leaf in the retained source benchmark input object.
+- every qualification request input variable exactly once; and
+- every retained source-qualified benchmark input evidence row exactly once.
 
-Every numeric leaf must be mapped exactly once.
+Because source-package READY already requires every finite numeric input leaf to have one evidence row, this gives end-to-end 100% input coverage:
 
-For example, if a benchmark retains:
-
-```json
-{
-  "geometry": { "R": 100, "t": 10 },
-  "loads": { "P": 1000 }
-}
+```text
+source benchmark numeric leaf
+→ inputEvidence ID + units + source locator
+→ qualification request variable
+→ executable plan
 ```
-
-then a release binding that maps only `P` is rejected even if the final calculated result happens to agree with the benchmark.
-
-This prevents omitted geometry/load inputs from becoming hidden dependencies.
 
 ## Exact recovery-result custody
 
@@ -189,13 +230,15 @@ sourceRef
 sourceLocator
 ```
 
-Every qualification expected recovery result must also be represented in the source benchmark binding. The release boundary therefore cannot silently use a different expected value, a wider tolerance, or a different source locator than the retained benchmark.
+Every qualification expected recovery result must also be represented in the benchmark binding.
+
+A numerically self-consistent calculation with a changed source answer, different units, wider tolerance, different tolerance basis, or different source locator cannot become the retained source benchmark reproduction.
 
 ## Intermediate values
 
-The source benchmark release binding is intentionally centered on source benchmark **inputs and retained source outputs**.
+The release benchmark binding is centered on source benchmark inputs and retained source outputs.
 
-Term-complete qualification remains separately mandatory for every executable equation/interpolation step. Intermediate expected values may be derived from independently reproduced hand calculations when the source publication does not print them, but they do not substitute for exact source benchmark recovery binding.
+Term-complete qualification remains separately mandatory for every executable equation/interpolation step. Intermediate expected values may be derived from independently reproduced hand calculations when the publication does not print them, but those derived intermediates do not replace exact source benchmark input/output custody.
 
 ## Numeric literal/coefficient custody remains separate
 
@@ -210,7 +253,7 @@ Source-benchmark reproduction does not authorize unbound magic numbers.
 
 ## Pipeline state
 
-The one-command pipeline now includes:
+The one-command pipeline includes:
 
 ```text
 SOURCE_PACKAGE_BLOCKED
@@ -223,7 +266,7 @@ NUMERIC_LITERAL_CUSTODY_REQUIRED
 NUMERICAL_RELEASE_CANDIDATE_AWAITING_APPROVAL_AND_TRUST
 ```
 
-The benchmark binding artifact is required at:
+Required release binding artifact:
 
 ```text
 docs/wrc537/ed4/WRC537_ED4_BENCHMARK_BINDINGS.json
@@ -231,9 +274,11 @@ docs/wrc537/ed4/WRC537_ED4_BENCHMARK_BINDINGS.json
 
 It must remain absent while the real Edition 4 source package is BLOCKED.
 
-## Fail-closed diagnostics
+## Representative fail-closed diagnostics
 
-The release gate distinguishes failures including:
+Source-package readiness rejects incomplete benchmark input source custody through `BENCHMARKS_COMPLETE` and `DATUM_SOURCE_CUSTODY_COMPLETE`.
+
+Release-candidate diagnostics include:
 
 ```text
 WRC537_ED4_NUMERICAL_RELEASE_SOURCE_BENCHMARKS_REQUIRED
@@ -241,9 +286,12 @@ WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_COVERAGE_MISMATCH
 WRC537_ED4_NUMERICAL_RELEASE_QUALIFICATION_CASE_REUSED
 WRC537_ED4_NUMERICAL_RELEASE_QUALIFICATION_CASE_UNKNOWN
 WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_CASE_CUSTODY_MISMATCH
+WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_EVIDENCE_DUPLICATE
+WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_EVIDENCE_UNKNOWN
 WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_MISMATCH
+WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_UNITS_MISMATCH
 WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_BINDING_SET_MISMATCH
-WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_PATH_COVERAGE_MISMATCH
+WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_EVIDENCE_SET_MISMATCH
 WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RECOVERY_VALUE_MISMATCH
 WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RECOVERY_BINDING_SET_MISMATCH
 ```
@@ -256,6 +304,7 @@ Therefore:
 
 ```text
 source package = BLOCKED
+source benchmark inputEvidence = NOT POPULATED WITH REAL WRC DATA
 source benchmark bindings = ABSENT
 numerical release candidate = ABSENT
 engineering activation = BLOCKED

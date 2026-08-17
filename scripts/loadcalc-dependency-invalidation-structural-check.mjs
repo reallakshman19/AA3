@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const engineering = fs.readFileSync('src/workspace/engineering-model-controller.js', 'utf8');
+const engineeringStore = fs.readFileSync('src/workspace/engineering-model-store.js', 'utf8');
 const loadCalc = fs.readFileSync('src/workspace/load-calc-consumer-controller.js', 'utf8');
 const topologyRuntime = fs.readFileSync('src/workspace/topology-edit/topology-edit-check-runtime.js', 'utf8');
 const main = fs.readFileSync('src/main.js', 'utf8');
@@ -18,6 +19,7 @@ function section(source, start, end) {
 const projectHandler = section(engineering, '  handleProjectDataChanged(', '  handleMasterDataChanged(');
 const masterHandler = section(engineering, '  handleMasterDataChanged(', '  calculate() {');
 const loadChangeHandler = section(loadCalc, '  handleEngineeringChange(', '  handleFailure(');
+const modelRebuild = section(engineeringStore, '  rebuild(dataset) {', '  /** @deprecated Ordinary production callers');
 const topologyBasis = section(topologyRuntime, '  const basisKey = semanticHash({', '  if (cachedSnapshot && cachedBasisKey === basisKey)');
 const v3Subscription = section(main, '  EventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED', '  EventBus.subscribe(TOPOLOGY_EVENTS.CHANGED');
 
@@ -31,22 +33,25 @@ assert.match(projectHandler, /if \(topologyModelChanged && dataset\)/u);
 assert.match(projectHandler, /engineeringModelStore\.markEmpiricalStale\('PROJECT_DATA_CHANGED'/u);
 assert.match(projectHandler, /authorizedConsumerController\.refreshEmpirical\(\)/u);
 assert.match(projectHandler, /reason: 'project-data-changed'/u);
-assert.match(projectHandler, /topologyCheckAffected: false/u);
-console.log('PASS D01 Project Data rebuild is dependency-directed while empirical authority and legacy reason semantics remain current.');
+assert.match(projectHandler, /topologyCheckAffected: Boolean\(topologyModelChanged && dataset\)/u);
+console.log('PASS D01 Project Data rebuild is dependency-directed while the existing reason contract is preserved.');
 
 assert.doesNotMatch(masterHandler, /engineeringModelStore\.rebuild/u);
 assert.match(masterHandler, /engineeringModelStore\.markEmpiricalStale\('MASTER_DATA_CHANGED'/u);
 assert.match(masterHandler, /authorizedConsumerController\.refreshEmpirical\(\)/u);
 assert.match(masterHandler, /reason: 'master-data-changed'/u);
 assert.match(masterHandler, /topologyCheckAffected: false/u);
-console.log('PASS D02 master changes cannot rebuild support/route models and explicitly declare topology checker unaffected.');
+console.log('PASS D02 Master Data cannot rebuild support/route models and explicitly declares topology checker unaffected.');
 
 assert.match(loadCalc, /\(\{ reason, distribution, topologyCheckAffected \}\) => this\.handleEngineeringChange\(reason, distribution, topologyCheckAffected\)/u);
 assert.match(loadChangeHandler, /handleEngineeringChange\(reason, distribution, topologyCheckAffected\)/u);
 assert.match(loadChangeHandler, /reason === 'project-data-changed' \|\| reason === 'master-data-changed'/u);
 assert.match(loadChangeHandler, /topologyCheckAffected !== false/u);
 assert.match(loadChangeHandler, /void this\.refreshTopologyCheck\(\)/u);
-console.log('PASS D03 LoadCalc suppresses topology work only on explicit dependency metadata; legacy events retain fail-safe refresh.');
+console.log('PASS D03 LoadCalc suppresses topology work only on explicit false metadata; true/legacy events retain refresh.');
+
+assert.match(modelRebuild, /topologyEditCheckSnapshotStore\.invalidate\(\)/u);
+console.log('PASS D04 derived-model rebuild currently invalidates the stored topology snapshot, so topology-policy Project Data changes must recheck.');
 
 for (const token of [
   'datasetId:', 'datasetVersion:', 'sourceSha256:',
@@ -56,16 +61,16 @@ for (const token of [
 for (const forbidden of ['masterData', 'projectData', 'lineList', 'pipingClass', 'weight']) {
   assert.ok(!topologyBasis.includes(forbidden), `False topology dependency introduced: ${forbidden}`);
 }
-console.log('PASS D04 canonical topology-check dependency basis is unchanged and master/project independent.');
+console.log('PASS D05 canonical topology-check dependency basis is unchanged and Master/Project Data independent.');
 
 assert.match(v3Subscription, /\(\{ reason \}\)/u);
 assert.match(v3Subscription, /reason === 'project-data-changed'/u);
 assert.match(v3Subscription, /reason === 'master-data-changed'/u);
 assert.doesNotMatch(v3Subscription, /governingChange|effectiveChange/u);
-console.log('PASS D05 Empirical V3 governing-change invalidation remains on its original event contract.');
+console.log('PASS D06 Empirical V3 governing-change invalidation remains on its original event contract.');
 
 assert.doesNotMatch(main, /governingChange/u);
 assert.doesNotMatch(main, /effectiveChange = governingChange/u);
-console.log('PASS D06 src/main.js remains free of the optimization-specific dependency metadata.');
+console.log('PASS D07 src/main.js remains free of optimization-specific dependency metadata.');
 
 console.log('DEPENDENCY INVALIDATION STRUCTURAL STATUS: PASS');

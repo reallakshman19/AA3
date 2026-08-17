@@ -18,6 +18,7 @@ export function calculateEngineeringCorrelationFromLafea2(options) {
       methodEdition,
     );
     const geometryEvidence = createCorrelationGeometryEvidenceFromLafea2({
+      screeningRequest: options.screeningRequest,
       screeningResult: options.screeningResult,
       geometryIdentity: options.geometryIdentity,
       attachmentDiameter: options.attachmentDiameter,

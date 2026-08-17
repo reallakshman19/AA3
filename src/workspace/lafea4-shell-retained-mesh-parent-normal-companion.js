@@ -49,7 +49,7 @@ export function createLafea4RetainedMeshParentNormalCompanion({
   if (retained.stageId !== 'LAFEA.4' || midsurface.stageId !== 'LAFEA.4') {
     fail('LAFEA4_PARENT_NORMAL_COMPANION_STAGE_INVALID');
   }
-  const surfaceKind = shellMidsurfaceKind(midsurface);
+  const surfaceKind = shellMidsurfaceKind(midsurface.geometry);
   if (!SUPPORTED_SURFACES.has(surfaceKind)) {
     fail('LAFEA4_PARENT_NORMAL_COMPANION_SURFACE_NOT_QUALIFIED');
   }
@@ -167,7 +167,8 @@ export function requireCurrentLafea4RetainedMeshParentNormalCompanion(
 
 export function isLafea4ParentNormalCompanionSurfaceQualified(midsurfaceEvidence) {
   const midsurface = validateLafeaAnyShellMidsurfaceEvidence(midsurfaceEvidence);
-  return midsurface.stageId === 'LAFEA.4' && SUPPORTED_SURFACES.has(shellMidsurfaceKind(midsurface));
+  return midsurface.stageId === 'LAFEA.4'
+    && SUPPORTED_SURFACES.has(shellMidsurfaceKind(midsurface.geometry));
 }
 
 function requireShadowParents(shadow, retained, midsurface) {

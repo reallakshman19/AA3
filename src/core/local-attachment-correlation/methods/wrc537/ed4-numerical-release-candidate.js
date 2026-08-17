@@ -199,7 +199,11 @@ function validateSourceBenchmarkBindings(rows, dataset, suite) {
     }
 
     const inputBindings = validateBenchmarkInputBindings(
-      row.inputBindings, benchmark.input, qualificationCase.request.inputValues, `${path}.inputBindings`,
+      row.inputBindings,
+      benchmark.input,
+      benchmark.inputEvidence,
+      qualificationCase.request.inputValues,
+      `${path}.inputBindings`,
     );
     const recoveryBindings = validateBenchmarkRecoveryBindings(
       row.recoveryBindings, benchmark.expectedResults, qualificationCase.expectedRecovery,
@@ -216,9 +220,23 @@ function validateSourceBenchmarkBindings(rows, dataset, suite) {
   return freeze(normalized);
 }
 
-function validateBenchmarkInputBindings(rows, benchmarkInput, requestInputValues, path) {
+function validateBenchmarkInputBindings(rows, benchmarkInput, benchmarkInputEvidence, requestInputValues, path) {
   requireArray(rows, path);
   requireObject(benchmarkInput, `${path}.benchmarkInput`);
+  requireArray(benchmarkInputEvidence, `${path}.benchmarkInputEvidence`);
+
+  const evidenceById = new Map();
+  benchmarkInputEvidence.forEach((row, index) => {
+    const evidencePath = `${path}.benchmarkInputEvidence[${index}]`;
+    const inputId = requiredString(row.inputId, `${evidencePath}.inputId`);
+    if (evidenceById.has(inputId)) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_EVIDENCE_DUPLICATE', evidencePath);
+    }
+    requiredString(row.units, `${evidencePath}.units`);
+    const benchmarkValue = benchmarkNumericPath(benchmarkInput, row.benchmarkPath, `${evidencePath}.benchmarkPath`);
+    evidenceById.set(inputId, { ...row, benchmarkValue });
+  });
+
   const requestById = new Map();
   requestInputValues.forEach((row, index) => {
     const requestPath = `${path}.requestInputValues[${index}]`;
@@ -236,33 +254,37 @@ function validateBenchmarkInputBindings(rows, benchmarkInput, requestInputValues
   });
 
   const bindingIds = [];
-  const boundPathKeys = [];
+  const evidenceIds = [];
   const normalized = rows.map((row, index) => {
     const itemPath = `${path}[${index}]`;
     requireObject(row, itemPath);
-    exactKeys(row, ['variableId', 'benchmarkPath'], itemPath);
+    exactKeys(row, ['variableId', 'benchmarkInputId'], itemPath);
     const variableId = requiredString(row.variableId, `${itemPath}.variableId`);
+    const benchmarkInputId = requiredString(row.benchmarkInputId, `${itemPath}.benchmarkInputId`);
     const request = requestById.get(variableId);
     if (!request) fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VARIABLE_UNKNOWN', itemPath);
-    const benchmarkValue = benchmarkNumericPath(benchmarkInput, row.benchmarkPath, `${itemPath}.benchmarkPath`);
-    if (request.value !== benchmarkValue) {
+    const evidence = evidenceById.get(benchmarkInputId);
+    if (!evidence) fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_EVIDENCE_UNKNOWN', itemPath);
+    if (request.value !== evidence.benchmarkValue) {
       fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_MISMATCH', itemPath);
     }
+    if (request.units !== evidence.units) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_UNITS_MISMATCH', itemPath);
+    }
     bindingIds.push(variableId);
-    boundPathKeys.push(JSON.stringify(row.benchmarkPath));
-    return { variableId, benchmarkPath: clone(row.benchmarkPath) };
+    evidenceIds.push(benchmarkInputId);
+    return { variableId, benchmarkInputId };
   });
-  const expectedIds = [...requestById.keys()].sort();
-  const expectedPathKeys = benchmarkNumericLeafPaths(benchmarkInput)
-    .map((segments) => JSON.stringify(segments))
-    .sort();
+
+  const expectedRequestIds = [...requestById.keys()].sort();
+  const expectedEvidenceIds = [...evidenceById.keys()].sort();
   if (new Set(bindingIds).size !== bindingIds.length
-    || bindingIds.slice().sort().join('|') !== expectedIds.join('|')) {
+    || bindingIds.slice().sort().join('|') !== expectedRequestIds.join('|')) {
     fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_BINDING_SET_MISMATCH', path);
   }
-  if (new Set(boundPathKeys).size !== boundPathKeys.length
-    || boundPathKeys.slice().sort().join('|') !== expectedPathKeys.join('|')) {
-    fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_PATH_COVERAGE_MISMATCH', path);
+  if (new Set(evidenceIds).size !== evidenceIds.length
+    || evidenceIds.slice().sort().join('|') !== expectedEvidenceIds.join('|')) {
+    fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_EVIDENCE_SET_MISMATCH', path);
   }
   normalized.sort((a, b) => a.variableId.localeCompare(b.variableId));
   return freeze(normalized);
@@ -288,21 +310,6 @@ function benchmarkNumericPath(root, segments, path) {
     fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_INVALID', path);
   }
   return value;
-}
-
-function benchmarkNumericLeafPaths(value, path = [], rows = []) {
-  if (Number.isFinite(value)) {
-    rows.push(path);
-    return rows;
-  }
-  if (!value || typeof value !== 'object') return rows;
-  if (Array.isArray(value)) {
-    value.forEach((child, index) => benchmarkNumericLeafPaths(child, [...path, index], rows));
-  } else {
-    Object.keys(value).sort().forEach((key) =>
-      benchmarkNumericLeafPaths(value[key], [...path, key], rows));
-  }
-  return rows;
 }
 
 function validateBenchmarkRecoveryBindings(rows, benchmarkResults, expectedRecovery, path) {

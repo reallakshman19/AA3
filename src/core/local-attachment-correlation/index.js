@@ -27,6 +27,12 @@ export { bilinearNoExtrapolation, bracket } from './interpolation.js';
 export { createCorrelationRequestFromLafea2 } from './lafea2-bridge.js';
 export { correlationDatasetHash, createCorrelationProfile } from './profile.js';
 export {
+  CORRELATION_QUALIFICATION_RECORD_SCHEMA,
+  createCorrelationQualificationRecord,
+  qualificationRecordMatchesProfile,
+  validateCorrelationQualificationRecord,
+} from './qualification-record.js';
+export {
   CORRELATION_METHOD_REGISTRY_SCHEMA,
   EMPTY_ENGINEERING_CORRELATION_REGISTRY,
   createEngineeringCorrelationRegistry,
@@ -34,3 +40,7 @@ export {
   requireEngineeringCorrelationProfile,
 } from './registry.js';
 export { syntheticCorrelationProfile, syntheticCorrelationRequest } from './synthetic-profile.js';
+export {
+  TRUSTED_CORRELATION_APPROVAL_AUTHORITIES,
+  correlationApprovalAuthorityTrusted,
+} from './trusted-authorities.js';

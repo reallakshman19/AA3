@@ -139,6 +139,13 @@
       "args": ["scripts/lafea-tech12f-trust-root-promotion-protocol-check.mjs"]
     },
     {
+      "id": "TECH12G_ACTIVE_GATE_READINESS_PROPAGATION",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech12g-readiness-diagnostic-propagation-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

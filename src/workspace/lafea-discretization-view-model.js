@@ -1,4 +1,5 @@
 /** Pure presentation model for the governed Discretization step. */
+import { qualifiedMeshQualityPolicyForStage } from '../core/lafea-profile-contract/index.js';
 import { buildMeshQualityPanel } from './lafea-mesh-quality-panel.js';
 import { requireLafeaLifecycleProfileForStage } from './lafea-lifecycle-profiles.js';
 import { lafeaMeshCapabilities } from './lafea-mesh-capabilities.js';
@@ -22,17 +23,36 @@ export const LAFEA_DISCRETIZATION_MODES = Object.freeze([
   'MANUAL_REFINEMENT',
 ]);
 
+export const LAFEA_MESH_UI_PHASES = Object.freeze([
+  'NOT_APPLICABLE',
+  'PRODUCER_UNAVAILABLE',
+  'PARENT_REQUIRED',
+  'PROFILE_REQUIRED',
+  'READY_TO_PLAN',
+  'PLAN_AVAILABLE',
+  'PLAN_BLOCKED',
+  'MESH_CURRENT_PASS',
+  'MESH_CURRENT_WARNING',
+  'MESH_CURRENT_BLOCK',
+  'MESH_STALE',
+  'MESH_INVALID',
+  'MESH_NOT_READY',
+]);
+
 export function buildLafeaDiscretizationViewModel(stageValue) {
   const stage = requireStage(stageValue);
   const profile = requireLafeaLifecycleProfileForStage(stage.stageId);
   const capabilities = lafeaMeshCapabilities(stage.stageId);
-  // Governed producer routes retain v2 evidence. Legacy routes retain v1
-  // evidence imported by the user.
   const evidence = governedV2Route(stage)
     ? stage.retainedAnalysisMeshEvidenceV2 ?? null
     : stage.retainedAnalysisMeshEvidence ?? null;
   const custody = requireCustody(stage.analysisMeshCustodyProjection, stage.stageId, evidence);
   const generation = buildGenerationModel(stage, capabilities);
+  const uiPhase = lafeaMeshUiPhase({
+    applicable: profile.meshApplicable,
+    custodyState: custody.state,
+    generation,
+  });
   const reasons = custodyReasons(custody);
   const qualityPanel = custody.gateResults.length && custody.meshProfileIdentity
     ? buildMeshQualityPanel(custody.gateResults, {
@@ -51,15 +71,12 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
     stageId: stage.stageId,
     applicable: profile.meshApplicable,
     state: custody.state,
+    uiPhase,
     stepStatus: stepStatus(custody.state),
     reasons,
     generation,
     configuration: {
-      declaredMode: profile.meshApplicable
-        ? generation.generationMode === 'SOURCE_MESH_ADOPTION'
-          ? 'SOURCE_DISCRETIZATION'
-          : generation.available ? 'AUTOMATIC_MESH' : 'RETAIN_AUTHORIZED_MESH'
-        : null,
+      declaredMode: declaredMode(profile.meshApplicable, generation),
       modes: modeOptions(
         profile.meshApplicable,
         capabilities,
@@ -79,9 +96,7 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       legacyMeshConfigEngineeringEffect: 'NONE',
     },
     preview: {
-      status: generation.plan
-        ? 'PROPOSED_MESH_AVAILABLE'
-        : previewStatus(custody.state, generation.available),
+      status: previewStatus(uiPhase),
       producerQualified: generation.producerQualified,
       proposedMesh: generation.plan ? generation.plan.strategy : null,
       proposedNodeCount: generation.plan?.nodeCount ?? null,
@@ -92,66 +107,42 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       retainedNodeCount: custody.nodeCount,
       retainedElementCount: custody.elementCount,
     },
-    evidence: evidence ? {
-      present: true,
-      meshIdentity: custody.meshIdentity,
-      meshHash: custody.meshHash,
-      meshProfileIdentity: custody.meshProfileIdentity,
-      meshProfileHash: custody.meshProfileHash,
-      elementFamily: retainedElementFamily,
-      sourceHash: custody.sourceHash,
-      canonicalModelHash: custody.canonicalModelHash,
-      analysisGeometryHash: custody.analysisGeometryHash,
-      artifactHash: custody.artifactHash,
-      registrationId: custody.registrationId,
-      producerRef: custody.producerRef,
-      authorityStatus: custody.authorityStatus,
-      nodeCount: custody.nodeCount,
-      elementCount: custody.elementCount,
-      warningElementIds: [...custody.warningElementIds],
-      blockingElementIds: [...custody.blockingElementIds],
-      qualityPanel,
-    } : {
-      present: false,
-      meshIdentity: null,
-      meshHash: null,
-      meshProfileIdentity: null,
-      meshProfileHash: null,
-      elementFamily: null,
-      sourceHash: null,
-      canonicalModelHash: null,
-      analysisGeometryHash: null,
-      artifactHash: null,
-      registrationId: null,
-      producerRef: null,
-      authorityStatus: null,
-      nodeCount: 0,
-      elementCount: 0,
-      warningElementIds: [],
-      blockingElementIds: [],
-      qualityPanel: null,
-    },
+    evidence: evidence ? evidenceModel(custody, retainedElementFamily, qualityPanel) : emptyEvidence(),
     actions: {
       canImportAuthorizedMesh: profile.meshApplicable,
       canValidateEvidence: profile.meshApplicable,
       canExportEvidence: custody.canView === true,
-      canFocusWarnings: custody.canFocusFindings === true
-        && custody.warningElementIds.length > 0,
-      canFocusBlocking: custody.canFocusFindings === true
-        && custody.blockingElementIds.length > 0,
+      canFocusWarnings: custody.canFocusFindings === true && custody.warningElementIds.length > 0,
+      canFocusBlocking: custody.canFocusFindings === true && custody.blockingElementIds.length > 0,
       canAdvance: custody.usableForAdvance === true,
       canAuthorize: custody.usableForAuthorization === true,
       canRun: custody.usableForRun === true,
       warningReviewRequired: custody.state === 'CURRENT_WARNING',
       automaticMeshEnabled: generation.generationMode === 'AUTOMATIC_MESH'
-        && generation.available,
+        && (generation.available || generation.profileBindingAvailable),
       manualRefinementEnabled,
+      canBindMeshProfile: generation.profileBindingAvailable && !generation.meshProfileBound,
       canPlanMesh: generation.available,
-      canGenerateMesh: generation.available
-        && generation.plan?.resourceDisposition !== 'BLOCK',
+      canGenerateMesh: generation.available && generation.plan?.resourceDisposition !== 'BLOCK',
       canRefineMesh: manualRefinementEnabled,
     },
   });
+}
+
+export function lafeaMeshUiPhase({ applicable = true, custodyState, generation }) {
+  if (!applicable || custodyState === 'NOT_APPLICABLE') return 'NOT_APPLICABLE';
+  if (custodyState === 'CURRENT_PASS') return 'MESH_CURRENT_PASS';
+  if (custodyState === 'CURRENT_WARNING') return 'MESH_CURRENT_WARNING';
+  if (custodyState === 'CURRENT_BLOCK') return 'MESH_CURRENT_BLOCK';
+  if (custodyState === 'STALE') return 'MESH_STALE';
+  if (custodyState === 'INVALID') return 'MESH_INVALID';
+  if (!generation?.producerQualified) return 'PRODUCER_UNAVAILABLE';
+  if (!generation.parentReady) return 'PARENT_REQUIRED';
+  if (!generation.meshProfileBound) return 'PROFILE_REQUIRED';
+  if (generation.plan?.resourceDisposition === 'BLOCK') return 'PLAN_BLOCKED';
+  if (generation.plan) return 'PLAN_AVAILABLE';
+  if (generation.available) return 'READY_TO_PLAN';
+  return 'MESH_NOT_READY';
 }
 
 function requireStage(value) {
@@ -161,11 +152,6 @@ function requireStage(value) {
   return value;
 }
 
-/**
- * Two custody projections reach this surface: the legacy v1 one and the
- * governed-v2 one, which classifies continuum or shell children against their
- * current mesh-independent parents. Both are accepted and normalized here.
- */
 const CUSTODY_SCHEMAS = Object.freeze([
   'lafea-analysis-mesh-custody-projection/v1',
   'lafea-domain-first-mesh-custody/v1',
@@ -190,8 +176,7 @@ function requireCustody(value, stageId, evidence) {
     invalidReasons: value.invalidReasons ?? [],
     absenceReasons: value.absenceReasons ?? [],
     meshIdentity: value.meshIdentity ?? mesh?.meshIdentity ?? null,
-    meshProfileIdentity: value.meshProfileIdentity
-      ?? evidence?.meshProfile?.profileIdentity ?? null,
+    meshProfileIdentity: value.meshProfileIdentity ?? evidence?.meshProfile?.profileIdentity ?? null,
     sourceHash: value.sourceHash ?? evidence?.sourceHash ?? null,
     canonicalModelHash: value.canonicalModelHash ?? evidence?.canonicalModelHash ?? null,
     analysisDomainHash: value.analysisDomainHash ?? evidence?.analysisDomainHash ?? null,
@@ -204,13 +189,15 @@ function requireCustody(value, stageId, evidence) {
   });
 }
 
-function modeOptions(
-  applicable,
-  capabilities,
-  generation,
-  manualRefinementEnabled,
-  retainedElementFamily,
-) {
+function declaredMode(applicable, generation) {
+  if (!applicable) return null;
+  if (generation.generationMode === 'SOURCE_MESH_ADOPTION') return 'SOURCE_DISCRETIZATION';
+  return generation.available || generation.profileBindingAvailable
+    ? 'AUTOMATIC_MESH'
+    : 'RETAIN_AUTHORIZED_MESH';
+}
+
+function modeOptions(applicable, capabilities, generation, manualRefinementEnabled, retainedElementFamily) {
   if (!applicable) {
     return LAFEA_DISCRETIZATION_MODES.map((mode) => ({
       mode,
@@ -219,21 +206,22 @@ function modeOptions(
     }));
   }
   const sourceAdoption = generation.generationMode === 'SOURCE_MESH_ADOPTION';
+  const configurationAvailable = generation.available || generation.profileBindingAvailable;
   return [
     { mode: 'RETAIN_AUTHORIZED_MESH', enabled: true, reason: null },
     {
       mode: 'SOURCE_DISCRETIZATION',
-      enabled: sourceAdoption && generation.available,
+      enabled: sourceAdoption && configurationAvailable,
       reason: sourceAdoption
-        ? generation.available ? null : generation.unavailableReason
+        ? configurationAvailable ? null : generation.unavailableReason
         : 'NO_STAGE_SOURCE_DISCRETIZATION_AUTHORITY',
     },
     {
       mode: 'AUTOMATIC_MESH',
-      enabled: !sourceAdoption && generation.available,
+      enabled: !sourceAdoption && configurationAvailable,
       reason: sourceAdoption
         ? 'LAFEA5_CALLER_AUTHORED_SOURCE_MESH_IS_PRESERVED_NO_REMESHING'
-        : generation.available ? null : generation.unavailableReason,
+        : configurationAvailable ? null : generation.unavailableReason,
     },
     {
       mode: 'MANUAL_REFINEMENT',
@@ -261,11 +249,6 @@ function refinementUnavailableReason(capabilities, retainedElementFamily) {
   return 'RETAINED_ANALYSIS_MESH_NOT_CURRENT_PASS_OR_WARNING';
 }
 
-/**
- * What the Discretization surface needs to offer automatic meshing or exact
- * source-mesh adoption: whether a producer is qualified for the stage, whether
- * the current mesh parent is ready, and the last plan the producer returned.
- */
 function buildGenerationModel(stage, capabilities) {
   const producerQualified = capabilities.automaticMeshProducerQualified === true;
   const meshProfile = stage.retainedAnalysisMeshProfile ?? null;
@@ -280,10 +263,13 @@ function buildGenerationModel(stage, capabilities) {
     && shellParent?.qualification === 'PASS'
     && shellParent.stageId === stage.stageId
     && shellParent.sourceHash === sourceHash;
+  const shellStage = stage.stageId === 'LAFEA.4' || stage.stageId === 'LAFEA.5';
+  const parentReady = shellStage ? shellCurrent : domainFirst && geometryCurrent;
+  const profileBindingAvailable = producerQualified && parentReady;
 
   const unavailableReason = !producerQualified
     ? 'QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE'
-    : stage.stageId === 'LAFEA.4' || stage.stageId === 'LAFEA.5'
+    : shellStage
       ? !shellMidsurface
         ? 'ANALYSIS_MESH_GENERATION_REQUIRES_SHELL_MIDSURFACE_EVIDENCE'
         : !shellCurrent
@@ -301,6 +287,8 @@ function buildGenerationModel(stage, capabilities) {
 
   return {
     producerQualified,
+    parentReady,
+    profileBindingAvailable,
     available: unavailableReason === null,
     unavailableReason,
     generationMode: sourceMeshAdoption ? 'SOURCE_MESH_ADOPTION' : 'AUTOMATIC_MESH',
@@ -316,12 +304,59 @@ function buildGenerationModel(stage, capabilities) {
     localRefinementElementFamilies: [...capabilities.localRefinementElementFamilies],
     meshProfileBound: Boolean(meshProfile),
     meshProfileIdentity: meshProfile?.profileIdentity ?? null,
+    qualifiedQualityPolicy: qualifiedMeshQualityPolicyForStage(stage.stageId),
     targetElementLength: sourceMeshAdoption ? null : meshProfile?.fields.globalTargetSize ?? null,
     declaredElementFamily: declaredFamily(stage.stageId, meshProfile),
     lengthUnit: shellMidsurface
       ? shellParent?.geometry?.lengthUnit ?? shellParent?.lengthUnit ?? null
       : stage.retainedAnalysisGeometryEvidence?.geometry?.lengthUnit ?? null,
     plan: stage.lastAnalysisMeshPlan ?? null,
+  };
+}
+
+function evidenceModel(custody, retainedElementFamily, qualityPanel) {
+  return {
+    present: true,
+    meshIdentity: custody.meshIdentity,
+    meshHash: custody.meshHash,
+    meshProfileIdentity: custody.meshProfileIdentity,
+    meshProfileHash: custody.meshProfileHash,
+    elementFamily: retainedElementFamily,
+    sourceHash: custody.sourceHash,
+    canonicalModelHash: custody.canonicalModelHash,
+    analysisGeometryHash: custody.analysisGeometryHash,
+    artifactHash: custody.artifactHash,
+    registrationId: custody.registrationId,
+    producerRef: custody.producerRef,
+    authorityStatus: custody.authorityStatus,
+    nodeCount: custody.nodeCount,
+    elementCount: custody.elementCount,
+    warningElementIds: [...custody.warningElementIds],
+    blockingElementIds: [...custody.blockingElementIds],
+    qualityPanel,
+  };
+}
+
+function emptyEvidence() {
+  return {
+    present: false,
+    meshIdentity: null,
+    meshHash: null,
+    meshProfileIdentity: null,
+    meshProfileHash: null,
+    elementFamily: null,
+    sourceHash: null,
+    canonicalModelHash: null,
+    analysisGeometryHash: null,
+    artifactHash: null,
+    registrationId: null,
+    producerRef: null,
+    authorityStatus: null,
+    nodeCount: 0,
+    elementCount: 0,
+    warningElementIds: [],
+    blockingElementIds: [],
+    qualityPanel: null,
   };
 }
 
@@ -334,42 +369,32 @@ function declaredFamily(stageId, meshProfile) {
     ? meshProfile.fields.shellElement ?? null
     : meshProfile.fields.continuumElement ?? null;
 }
-function retainedFamily(stageId, meshProfile) {
-  return declaredFamily(stageId, meshProfile);
-}
+function retainedFamily(stageId, meshProfile) { return declaredFamily(stageId, meshProfile); }
 
 function custodyReasons(custody) {
-  const reasons = [
-    ...custody.staleReasons,
-    ...custody.invalidReasons,
-    ...custody.absenceReasons,
-  ];
-  if (custody.state === 'ABSENT' && !reasons.length) {
-    reasons.push('ANALYSIS_MESH_EVIDENCE_ABSENT');
-  }
+  const reasons = [...custody.staleReasons, ...custody.invalidReasons, ...custody.absenceReasons];
+  if (custody.state === 'ABSENT' && !reasons.length) reasons.push('ANALYSIS_MESH_EVIDENCE_ABSENT');
   return [...new Set(reasons)];
 }
-
 function stepStatus(state) {
   if (state === 'NOT_APPLICABLE' || state === 'CURRENT_PASS') return 'COMPLETE';
   if (state === 'CURRENT_WARNING') return 'WARNING';
   if (state === 'ABSENT') return 'NOT_STARTED';
   return 'BLOCKED';
 }
-
-function previewStatus(state, generationAvailable) {
-  if (state === 'STALE') return 'STALE_RETAINED_EVIDENCE';
-  if (state === 'CURRENT_PASS' || state === 'CURRENT_WARNING'
-    || state === 'CURRENT_BLOCK') return 'RETAINED_EVIDENCE_AVAILABLE';
-  if (state === 'INVALID') return 'INVALID_RETAINED_EVIDENCE';
-  if (state === 'NOT_APPLICABLE') return 'NOT_APPLICABLE';
-  return generationAvailable ? 'READY_TO_GENERATE' : 'NO_QUALIFIED_PRODUCER';
+function previewStatus(uiPhase) {
+  if (uiPhase === 'PLAN_AVAILABLE' || uiPhase === 'PLAN_BLOCKED') return 'PROPOSED_MESH_AVAILABLE';
+  if (uiPhase === 'READY_TO_PLAN') return 'READY_TO_PLAN';
+  if (uiPhase === 'PROFILE_REQUIRED') return 'PROFILE_CONFIGURATION_REQUIRED';
+  if (uiPhase === 'PARENT_REQUIRED') return 'MESH_PARENT_REQUIRED';
+  if (uiPhase === 'PRODUCER_UNAVAILABLE') return 'NO_QUALIFIED_PRODUCER';
+  if (uiPhase === 'MESH_STALE') return 'STALE_RETAINED_EVIDENCE';
+  if (uiPhase === 'MESH_INVALID') return 'INVALID_RETAINED_EVIDENCE';
+  if (uiPhase.startsWith('MESH_CURRENT_')) return 'RETAINED_EVIDENCE_AVAILABLE';
+  if (uiPhase === 'NOT_APPLICABLE') return 'NOT_APPLICABLE';
+  return 'NOT_READY';
 }
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
+function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function freeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   Object.values(value).forEach(freeze);

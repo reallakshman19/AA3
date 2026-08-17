@@ -17,6 +17,7 @@ export const LAFEA4_PARENT_NORMAL_REQUIRED_ENGINEERING_STEP_IDS = Object.freeze(
   'TECH12B_RETAINED_PARENT_NORMAL_COMPANION',
   'TECH12B_COMPANION_ATOMICITY_SOURCE_WIRING',
   'TECH12C_SOLVER_EXECUTION_COMPANION_BINDING',
+  'TECH12D_ACTIVATION_RECORD_POLICY',
   'TECH7_GRADED_REFINEMENT_EXECUTOR',
   'SHELL_SAMPLE_PARENT',
   'SHELL_WORKBENCH_ROUTE',
@@ -34,10 +35,12 @@ const PLAN_SCHEMA = 'lafea-independent-qualification-plan/v1';
 const INTEGRITY_SCHEMA = 'lafea-independent-qualification-bundle-integrity/v1';
 const OUTPUT_KEYS = Object.freeze([
   'schema', 'stageId', 'authority', 'status', 'reasons', 'expectedHead',
-  'qualificationId', 'evidenceDigest', 'manifestDisposition', 'qualificationComplete',
+  'qualificationId', 'runId', 'evidenceDigest', 'planSha256', 'runnerSha256',
+  'packageLockSha256', 'verifierSha256', 'manifestDisposition', 'qualificationComplete',
   'preflightAccepted', 'postflightAccepted', 'dependencyInstallSucceeded',
   'browserRequested', 'browserProvisionSucceeded', 'requiredEngineeringStepIds',
-  'requiredStepDisposition', 'integrityVerified', 'productEffect', 'hardGateActivated',
+  'requiredStepDisposition', 'integrityVerified', 'exactCheckoutVerified',
+  'toolingParityVerified', 'productEffect', 'hardGateActivated',
   'retainedMeshAcceptanceChanged', 'solverAuthorizationChanged',
   'releaseQualificationChanged', 'productionBindingAuthorized', 'releaseQualified',
   'semanticHash',
@@ -46,7 +49,8 @@ const OUTPUT_KEYS = Object.freeze([
 /**
  * Convert a verified TECH-8 evidence bundle into a promotion authorization
  * record. This record is deliberately NOT a product gate. It can only state
- * whether a later change is eligible to promote the parent-normal criterion.
+ * whether a later, separately reviewed change is eligible to promote the
+ * parent-normal criterion into solve authority.
  */
 export function createLafea4ParentNormalActivationRecord({
   expectedHead,
@@ -56,48 +60,60 @@ export function createLafea4ParentNormalActivationRecord({
   plan,
   bundleIntegrity,
 }) {
-  const reasons = [];
   requireCommit(expectedHead, 'LAFEA4_PARENT_NORMAL_ACTIVATION_EXPECTED_HEAD_INVALID');
   requireDigest(evidenceDigest, 'LAFEA4_PARENT_NORMAL_ACTIVATION_EVIDENCE_DIGEST_INVALID');
+  requireRecord(manifest, 'LAFEA4_PARENT_NORMAL_ACTIVATION_MANIFEST_REQUIRED');
+  requireRecord(commands, 'LAFEA4_PARENT_NORMAL_ACTIVATION_COMMANDS_REQUIRED');
+  requireRecord(plan, 'LAFEA4_PARENT_NORMAL_ACTIVATION_PLAN_REQUIRED');
+  if (manifest.schema !== MANIFEST_SCHEMA) fail('LAFEA4_PARENT_NORMAL_ACTIVATION_MANIFEST_SCHEMA_INVALID');
+  if (commands.schema !== COMMANDS_SCHEMA) fail('LAFEA4_PARENT_NORMAL_ACTIVATION_COMMANDS_SCHEMA_INVALID');
+  if (plan.schema !== PLAN_SCHEMA) fail('LAFEA4_PARENT_NORMAL_ACTIVATION_PLAN_SCHEMA_INVALID');
 
-  if (!bundleIntegrity || bundleIntegrity.schema !== INTEGRITY_SCHEMA
-    || bundleIntegrity.verified !== true
-    || bundleIntegrity.evidenceDigest !== evidenceDigest) {
-    reasons.push('INDEPENDENT_EVIDENCE_INTEGRITY_NOT_VERIFIED');
-  }
-  if (!manifest || manifest.schema !== MANIFEST_SCHEMA) {
-    reasons.push('INDEPENDENT_MANIFEST_SCHEMA_INVALID');
-  }
-  if (!commands || commands.schema !== COMMANDS_SCHEMA) {
-    reasons.push('INDEPENDENT_COMMANDS_SCHEMA_INVALID');
-  }
-  if (!plan || plan.schema !== PLAN_SCHEMA) {
-    reasons.push('INDEPENDENT_PLAN_SCHEMA_INVALID');
+  requireDigest(manifest.planSha256, 'LAFEA4_PARENT_NORMAL_ACTIVATION_PLAN_HASH_INVALID');
+  requireDigest(manifest.runnerSha256, 'LAFEA4_PARENT_NORMAL_ACTIVATION_RUNNER_HASH_INVALID');
+  requireDigest(
+    manifest.packageLockSha256,
+    'LAFEA4_PARENT_NORMAL_ACTIVATION_PACKAGE_LOCK_HASH_INVALID',
+  );
+  const verifierSha256 = bundleIntegrity?.verifierSha256;
+  requireDigest(verifierSha256, 'LAFEA4_PARENT_NORMAL_ACTIVATION_VERIFIER_HASH_INVALID');
+  if (typeof manifest.runId !== 'string' || !manifest.runId) {
+    fail('LAFEA4_PARENT_NORMAL_ACTIVATION_RUN_ID_INVALID');
   }
 
-  const qualificationId = manifest?.qualificationId ?? null;
+  const reasons = [];
+  const integrityVerified = bundleIntegrity?.schema === INTEGRITY_SCHEMA
+    && bundleIntegrity?.verified === true
+    && bundleIntegrity?.evidenceDigest === evidenceDigest;
+  const exactCheckoutVerified = bundleIntegrity?.exactCheckoutVerified === true;
+  const toolingParityVerified = bundleIntegrity?.toolingParityVerified === true;
+  if (!integrityVerified) reasons.push('INDEPENDENT_EVIDENCE_INTEGRITY_NOT_VERIFIED');
+  if (!exactCheckoutVerified) reasons.push('ACTIVATION_CHECKOUT_NOT_EXACT_HEAD_CLEAN');
+  if (!toolingParityVerified) reasons.push('ACTIVATION_TOOLING_PARITY_NOT_VERIFIED');
+
+  const qualificationId = manifest.qualificationId;
   if (qualificationId !== INDEPENDENT_QUALIFICATION_ID
-    || commands?.qualificationId !== INDEPENDENT_QUALIFICATION_ID
-    || plan?.qualificationId !== INDEPENDENT_QUALIFICATION_ID) {
+    || commands.qualificationId !== INDEPENDENT_QUALIFICATION_ID
+    || plan.qualificationId !== INDEPENDENT_QUALIFICATION_ID) {
     reasons.push('INDEPENDENT_QUALIFICATION_ID_MISMATCH');
   }
-  if (manifest?.expectedHead !== expectedHead
-    || manifest?.currentHead !== expectedHead
-    || commands?.expectedHead !== expectedHead) {
+  if (manifest.expectedHead !== expectedHead
+    || manifest.currentHead !== expectedHead
+    || commands.expectedHead !== expectedHead) {
     reasons.push('EXACT_HEAD_BINDING_INVALID');
   }
-  if (manifest?.disposition !== 'PASS') reasons.push('MANIFEST_DISPOSITION_NOT_PASS');
-  if (manifest?.qualificationComplete !== true) reasons.push('QUALIFICATION_NOT_COMPLETE');
-  if (manifest?.preflightAccepted !== true) reasons.push('PREFLIGHT_NOT_ACCEPTED');
-  if (manifest?.postflightAccepted !== true) reasons.push('POSTFLIGHT_NOT_ACCEPTED');
-  if (manifest?.dependencyInstallSucceeded !== true) reasons.push('DEPENDENCY_INSTALL_NOT_PASS');
-  if (manifest?.browserRequested !== true) reasons.push('BROWSER_NOT_REQUESTED');
-  if (manifest?.browserProvisionSucceeded !== true) reasons.push('BROWSER_NOT_PROVISIONED');
+  if (manifest.disposition !== 'PASS') reasons.push('MANIFEST_DISPOSITION_NOT_PASS');
+  if (manifest.qualificationComplete !== true) reasons.push('QUALIFICATION_NOT_COMPLETE');
+  if (manifest.preflightAccepted !== true) reasons.push('PREFLIGHT_NOT_ACCEPTED');
+  if (manifest.postflightAccepted !== true) reasons.push('POSTFLIGHT_NOT_ACCEPTED');
+  if (manifest.dependencyInstallSucceeded !== true) reasons.push('DEPENDENCY_INSTALL_NOT_PASS');
+  if (manifest.browserRequested !== true) reasons.push('BROWSER_NOT_REQUESTED');
+  if (manifest.browserProvisionSucceeded !== true) reasons.push('BROWSER_NOT_PROVISIONED');
 
-  const planIds = Array.isArray(plan?.steps) ? plan.steps.map((row) => row?.id) : [];
+  const planIds = Array.isArray(plan.steps) ? plan.steps.map((row) => row?.id) : [];
   const planIdSet = new Set(planIds);
   if (planIds.length !== planIdSet.size) reasons.push('PLAN_STEP_IDS_NOT_UNIQUE');
-  const commandRecords = Array.isArray(commands?.records) ? commands.records : [];
+  const commandRecords = Array.isArray(commands.records) ? commands.records : [];
   const recordsById = new Map();
   for (const row of commandRecords) {
     if (!row || typeof row.id !== 'string') continue;
@@ -133,19 +149,25 @@ export function createLafea4ParentNormalActivationRecord({
     status,
     reasons: Object.freeze([...new Set(reasons)].sort()),
     expectedHead,
-    qualificationId: qualificationId ?? INDEPENDENT_QUALIFICATION_ID,
+    qualificationId,
+    runId: manifest.runId,
     evidenceDigest,
-    manifestDisposition: manifest?.disposition ?? null,
-    qualificationComplete: manifest?.qualificationComplete === true,
-    preflightAccepted: manifest?.preflightAccepted === true,
-    postflightAccepted: manifest?.postflightAccepted === true,
-    dependencyInstallSucceeded: manifest?.dependencyInstallSucceeded === true,
-    browserRequested: manifest?.browserRequested === true,
-    browserProvisionSucceeded: manifest?.browserProvisionSucceeded === true,
+    planSha256: manifest.planSha256,
+    runnerSha256: manifest.runnerSha256,
+    packageLockSha256: manifest.packageLockSha256,
+    verifierSha256,
+    manifestDisposition: manifest.disposition,
+    qualificationComplete: manifest.qualificationComplete === true,
+    preflightAccepted: manifest.preflightAccepted === true,
+    postflightAccepted: manifest.postflightAccepted === true,
+    dependencyInstallSucceeded: manifest.dependencyInstallSucceeded === true,
+    browserRequested: manifest.browserRequested === true,
+    browserProvisionSucceeded: manifest.browserProvisionSucceeded === true,
     requiredEngineeringStepIds: LAFEA4_PARENT_NORMAL_REQUIRED_ENGINEERING_STEP_IDS,
     requiredStepDisposition: freeze(requiredStepDisposition),
-    integrityVerified: bundleIntegrity?.verified === true
-      && bundleIntegrity?.evidenceDigest === evidenceDigest,
+    integrityVerified,
+    exactCheckoutVerified,
+    toolingParityVerified,
     productEffect: LAFEA4_PARENT_NORMAL_PRODUCT_EFFECT,
     hardGateActivated: false,
     retainedMeshAcceptanceChanged: false,
@@ -180,9 +202,16 @@ export function validateLafea4ParentNormalActivationRecord(value) {
     fail('LAFEA4_PARENT_NORMAL_ACTIVATION_RECORD_CONTRACT_INVALID');
   }
   requireCommit(value.expectedHead, 'LAFEA4_PARENT_NORMAL_ACTIVATION_EXPECTED_HEAD_INVALID');
-  requireDigest(value.evidenceDigest, 'LAFEA4_PARENT_NORMAL_ACTIVATION_EVIDENCE_DIGEST_INVALID');
-  if (value.qualificationId !== INDEPENDENT_QUALIFICATION_ID) {
-    fail('LAFEA4_PARENT_NORMAL_ACTIVATION_QUALIFICATION_ID_INVALID');
+  for (const [field, hash] of Object.entries({
+    evidenceDigest: value.evidenceDigest,
+    planSha256: value.planSha256,
+    runnerSha256: value.runnerSha256,
+    packageLockSha256: value.packageLockSha256,
+    verifierSha256: value.verifierSha256,
+  })) requireDigest(hash, `LAFEA4_PARENT_NORMAL_ACTIVATION_${field.toUpperCase()}_INVALID`);
+  if (value.qualificationId !== INDEPENDENT_QUALIFICATION_ID
+    || typeof value.runId !== 'string' || !value.runId) {
+    fail('LAFEA4_PARENT_NORMAL_ACTIVATION_PROVENANCE_INVALID');
   }
   if (!Array.isArray(value.reasons) || value.reasons.some((row) => typeof row !== 'string')) {
     fail('LAFEA4_PARENT_NORMAL_ACTIVATION_REASONS_INVALID');
@@ -200,6 +229,8 @@ export function validateLafea4ParentNormalActivationRecord(value) {
     fail('LAFEA4_PARENT_NORMAL_ACTIVATION_STEP_DISPOSITION_INVALID');
   }
   const shouldAuthorize = value.integrityVerified === true
+    && value.exactCheckoutVerified === true
+    && value.toolingParityVerified === true
     && value.manifestDisposition === 'PASS'
     && value.qualificationComplete === true
     && value.preflightAccepted === true
@@ -229,6 +260,10 @@ function exactKeys(value, expected, code) {
     || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...expected].sort())) {
     fail(code);
   }
+}
+function requireRecord(value, code) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(code);
+  return value;
 }
 function requireCommit(value, code) {
   if (typeof value !== 'string' || !/^[0-9a-f]{40}$/u.test(value)) fail(code);

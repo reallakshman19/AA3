@@ -5,7 +5,7 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const CORE = path.join(ROOT, 'src/core/local-attachment-correlation');
 const files = fs.readdirSync(CORE).filter((name) => name.endsWith('.js')).sort();
-assert.ok(files.length >= 6, 'Correlation core source set is incomplete.');
+assert.ok(files.length >= 10, 'Correlation core source set is incomplete.');
 
 const forbidden = [
   'Math.random', 'Date.now(', 'performance.now(', 'new Date(',
@@ -23,21 +23,42 @@ for (const name of files) {
     `${name} contains forbidden production token ${token}.`));
 }
 
-const synthetic = fs.readFileSync(path.join(CORE, 'synthetic-profile.js'), 'utf8');
+const synthetic = read('synthetic-profile.js');
 assert.match(synthetic, /engineeringUseAuthorized:\s*false/u);
 assert.match(synthetic, /SYNTHETIC_QUALIFICATION_ONLY/u);
 assert.doesNotMatch(synthetic, /engineeringUseAuthorized:\s*true/u);
 
-const interpolation = fs.readFileSync(path.join(CORE, 'interpolation.js'), 'utf8');
+const datasetPackage = read('dataset-package.js');
+assert.match(datasetPackage, /engineeringUseAuthorized:\s*false/u);
+assert.match(datasetPackage, /DATASET_PACKAGE_INGESTED_NOT_ENGINEERING_QUALIFIED/u);
+assert.doesNotMatch(datasetPackage, /engineeringUseAuthorized:\s*true/u);
+
+const trustedAuthorities = read('trusted-authorities.js');
+assert.match(trustedAuthorities,
+  /TRUSTED_CORRELATION_APPROVAL_AUTHORITIES\s*=\s*Object\.freeze\(\[\]\)/u);
+
+const registry = read('registry.js');
+assert.match(registry, /qualificationRecordMatchesProfile/u);
+assert.match(registry, /correlationApprovalAuthorityTrusted/u);
+assert.match(registry, /CORRELATION_APPROVAL_AUTHORITY_NOT_TRUSTED/u);
+
+const interpolation = read('interpolation.js');
 assert.match(interpolation, /OUTSIDE_CORRELATION_DOMAIN/u);
 assert.match(interpolation, /BILINEAR_NO_EXTRAPOLATION/u);
 
-const bridge = fs.readFileSync(path.join(CORE, 'lafea2-bridge.js'), 'utf8');
+const bridge = read('lafea2-bridge.js');
 assert.match(bridge, /combinedForceLocal/u);
 assert.match(bridge, /combinedMomentLocal/u);
 assert.match(bridge, /screeningRequestSemanticHash/u);
 assert.match(bridge, /screeningResultPayloadSemanticHash/u);
+assert.match(bridge, /geometryEvidenceHash/u);
 assert.doesNotMatch(bridge, /mechanicalTerms\s*\[\s*\d+/u);
+
+const geometryEvidence = read('geometry-evidence.js');
+assert.match(geometryEvidence, /validateLocalAttachmentScreeningRequest/u);
+assert.match(geometryEvidence, /foundationModelHash/u);
+assert.match(geometryEvidence, /foundationResultHash/u);
+assert.match(geometryEvidence, /CORRELATION_LAFEA2_REQUEST_RESULT_MISMATCH/u);
 
 console.log(JSON.stringify({
   check: 'lafea-correlation-source-authority',
@@ -45,10 +66,13 @@ console.log(JSON.stringify({
   files,
   licensedMethodDataEmbedded: false,
   syntheticEngineeringAuthority: false,
+  ingestedDatasetEngineeringAuthority: false,
+  trustedApprovalAuthoritiesRegistered: 0,
   extrapolationAuthorized: false,
-  lafea2SourceCustodyRetained: true,
+  lafea1AndLafea2SourceCustodyRetained: true,
 }));
 
+function read(name) { return fs.readFileSync(path.join(CORE, name), 'utf8'); }
 function externalImports(source) {
   return [...source.matchAll(/from\s+['"]([^'"]+)['"]/gu)]
     .map((match) => match[1])

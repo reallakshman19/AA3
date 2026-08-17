@@ -1,0 +1,37 @@
+name: LoadCalc restraint semantics validation
+
+on:
+  push:
+    branches:
+      - fix/loadcalc-sjson-restraint-semantics
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production SJSON restraint semantics regression
+        run: node --test tests/loadcalc-production-sjson-restraint-semantics.test.mjs
+
+      - name: Existing production TopoFix regression
+        run: node --test tests/topology-edit-production-sjson-topofix.test.mjs
+
+      - name: Build application
+        run: npm run build

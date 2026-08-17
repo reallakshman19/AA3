@@ -125,6 +125,13 @@
       "args": ["scripts/lafea3-visible-continuum-preflight-check.mjs"]
     },
     {
+      "id": "LAFEA3_PREFLIGHT_REJECTION_RETRY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea3-preflight-rejection-retry-check.mjs"]
+    },
+    {
       "id": "MESHING_SUITE",
       "classification": "ENGINEERING",
       "required": true,

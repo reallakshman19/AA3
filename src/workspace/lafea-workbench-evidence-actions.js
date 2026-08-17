@@ -10,13 +10,34 @@ import {
 } from './lafea-continuum-revalidation.js';
 
 const WORKBENCH_DOCUMENT_SCHEMA = 'lafea-workbench-document/v1';
+const PREFLIGHT_FAILURE_MODE_DIAGNOSTIC_UI = 'DIAGNOSTIC_UI';
 
 export function createLafeaWorkbenchEvidenceActions(context) {
   const c = requireContext(context);
 
   function activeStageId() { return c.getRetainedState().activeStageId; }
 
-  function prepareContinuumForRun(stageId = activeStageId()) {
+  function prepareContinuumForRun(stageId = activeStageId(), options = null) {
+    const diagnosticUi = requirePreflightOptions(options);
+    if (!diagnosticUi) return prepareContinuumStrict(stageId);
+    try {
+      const result = prepareContinuumStrict(stageId);
+      return freeze({ ...result, attemptStatus: 'PASS', diagnostic: null });
+    } catch (error) {
+      c.failOrchestrator(error, 'LAFEA_CONTINUUM_PREFLIGHT_REJECTED');
+      const state = c.publish();
+      const stage = state.stages?.[stageId] ?? null;
+      return freeze({
+        changed: false,
+        evidence: stage?.retainedContinuumPreflightEvidence ?? null,
+        projection: stage?.preparationProjection ?? null,
+        attemptStatus: 'BLOCKED',
+        diagnostic: state.diagnostics?.[0] ?? null,
+      });
+    }
+  }
+
+  function prepareContinuumStrict(stageId) {
     if (stageId !== 'LAFEA.3' || c.rawStage(stageId).domainFirstProfileActive !== true) {
       throw c.storeError('LAFEA_CONTINUUM_PREFLIGHT_DOMAIN_FIRST_STAGE_REQUIRED');
     }
@@ -252,6 +273,16 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     registerAnalysisMeshEvidence,
     exportLifecycle,
   });
+}
+
+function requirePreflightOptions(options) {
+  if (options === null || options === undefined) return false;
+  if (!options || typeof options !== 'object' || Array.isArray(options)
+    || JSON.stringify(Object.keys(options).sort()) !== JSON.stringify(['failureMode'])
+    || options.failureMode !== PREFLIGHT_FAILURE_MODE_DIAGNOSTIC_UI) {
+    throw new TypeError('LAFEA_CONTINUUM_PREFLIGHT_OPTIONS_INVALID');
+  }
+  return true;
 }
 
 function exportedStageDocument(c, stageId) {

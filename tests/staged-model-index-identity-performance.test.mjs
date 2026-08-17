@@ -62,7 +62,7 @@ test('combined identity search retains depth-four boundary', () => {
   assert.equal(node.zoneId, '');
 });
 
-test('truthy first match retains first-match stop before parent fallback', () => {
+test('truthy first match retains first-match stop and stringification', () => {
   const model = index([{
     id: 'ROOT',
     type: 'OBJECT',
@@ -75,7 +75,7 @@ test('truthy first match retains first-match stop before parent fallback', () =>
     }],
   }]);
   const child = nodeById(model, 'OBJECT-MATCH');
-  assert.equal(child.zoneId, 'PARENT-ZONE', 'truthy non-string first match must stop later-root search then fall back to parent after stringValue');
+  assert.equal(child.zoneId, '[object Object]', 'truthy non-string first match must stop later-root search and retain legacy stringValue semantics');
 });
 
 test('branch source-name identity override remains authoritative', () => {

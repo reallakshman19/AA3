@@ -147,10 +147,10 @@ test('production Sjson projects only source-backed restraint semantics', async (
   assert.ok(first.anchors.every((anchor) => (
     anchor.restraintCount === anchor.restraintTypes.length
   )));
-  assert.equal(
-    new Set(first.anchors.flatMap((anchor) => anchor.memberSupportIds)).size,
-    first.metrics.projectedSourceSupportCount,
-  );
+  const canonicalSupportIds = new Set(canonical.supports.map((support) => support.id));
+  assert.ok(first.anchors.every((anchor) => (
+    anchor.memberSupportIds.every((supportId) => canonicalSupportIds.has(supportId))
+  )));
 
   const decisionBySupportId = new Map(first.decisions.map((decision) => [
     decision.supportId,

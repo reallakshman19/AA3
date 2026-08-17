@@ -23,7 +23,10 @@ import {
   LAFEA4_GRADED_REFINEMENT_QUALIFICATION,
   createLafea4GradedRefinementCommand,
 } from '../src/workspace/lafea4-shell-graded-refinement-authority.js';
-import { produceLafea4GradedShellRefinement } from '../src/workspace/lafea4-shell-graded-refinement-executor.js';
+import {
+  previewLafea4GradedShellRefinement,
+  produceLafea4GradedShellRefinement,
+} from '../src/workspace/lafea4-shell-graded-refinement-executor.js';
 
 const definition = JSON.parse(fs.readFileSync(
   new URL('../validation/lafea4-refinement/graded-executor-curved-hole-v1.json', import.meta.url),
@@ -98,18 +101,41 @@ const command = createLafea4GradedRefinementCommand({
 assert.equal(command.executionScope, 'QUALIFICATION_HARNESS_ONLY');
 assert.equal(command.productionBindingAuthorized, false);
 
-const result = produceLafea4GradedShellRefinement({
+const input = {
   parentEvidence: parent,
   midsurfaceEvidence: midsurface,
   meshProfile: profile,
   command,
-});
-const replay = produceLafea4GradedShellRefinement({
-  parentEvidence: parent,
-  midsurfaceEvidence: midsurface,
-  meshProfile: profile,
-  command,
-});
+};
+const preview = previewLafea4GradedShellRefinement(input);
+const previewAdjacency = gate(preview.evidence, 'ADJACENT_SIZE_RATIO');
+if (preview.evidence.qualification !== 'PASS'
+  || previewAdjacency.value > definition.acceptance.maximumAdjacentSizeRatio + 64 * Number.EPSILON) {
+  console.error(JSON.stringify({
+    schema: 'lafea-tech7-graded-refinement-block-witness/v1',
+    status: 'BLOCKED_CANDIDATE',
+    meshQualification: preview.evidence.qualification,
+    maximumAllowed: definition.acceptance.maximumAdjacentSizeRatio,
+    maximumObserved: preview.evidence.quality.adjacentSizeRatio?.maximumObserved ?? previewAdjacency.value,
+    violatingAdjacencyCount:
+      preview.evidence.quality.adjacentSizeRatio?.violatingAdjacencyCount ?? null,
+    violatingAdjacencies:
+      preview.evidence.quality.adjacentSizeRatio?.violatingAdjacencies ?? [],
+    blockingElementIds: preview.evidence.quality.blockingElementIds,
+  }, null, 2));
+}
+assert.equal(preview.evidence.qualification, 'PASS',
+  'TECH7 preview child is quality-blocked; see emitted block witness');
+assert.ok(
+  previewAdjacency.value <= definition.acceptance.maximumAdjacentSizeRatio + 64 * Number.EPSILON,
+  `TECH7 preview adjacent ratio ${previewAdjacency.value} exceeds ${definition.acceptance.maximumAdjacentSizeRatio}`,
+);
+
+// Only after the previewed child passes the measured gates may the fail-closed
+// producer path be invoked. This keeps the product authority strict while
+// preserving actionable qualification evidence when a candidate is blocked.
+const result = produceLafea4GradedShellRefinement(input);
+const replay = produceLafea4GradedShellRefinement(input);
 
 assert.equal(result.executionScope, 'QUALIFICATION_HARNESS_ONLY');
 assert.equal(result.productionBindingAuthorized, false);
@@ -173,6 +199,7 @@ console.log(JSON.stringify({
     levelsMm: result.plan.transitionLevels,
     transitionCount: result.plan.transitionLevelCount,
     influenceRadiusMm: result.plan.transitionInfluenceRadius,
+    holeFrontConstruction: definition.mesh.holeFrontConstruction,
   },
   mesh: {
     parentNodes: parent.mesh.nodes.length,

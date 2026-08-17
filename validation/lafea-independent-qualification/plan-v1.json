@@ -69,6 +69,20 @@
       "args": ["scripts/lafea-tech10-shell-geometric-quality-sample-check.mjs"]
     },
     {
+      "id": "TECH11_PARENT_NORMAL_INVERSION_HAND_ORACLE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech11-parent-normal-inversion-check.mjs"]
+    },
+    {
+      "id": "TECH11_PARENT_NORMAL_SAMPLE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech11-parent-normal-sample-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

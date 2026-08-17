@@ -1,0 +1,50 @@
+{
+  "schema": "lafea4-parent-normal-lifecycle-export-consumer-enforcement-definition/v1",
+  "qualificationId": "LAFEA4-PARENT-NORMAL-LIFECYCLE-EXPORT-CONSUMER-ENFORCEMENT-001",
+  "stage": "LAFEA.4",
+  "purpose": "REQUIRE_RUNTIME_LIFECYCLE_EXPORT_CONSUMERS_TO_USE_CURRENT_ENGINEERING_AUTHORITY_FOR_V2_EXPORTS",
+  "currentTrustRoot": "NULL",
+  "v2ExportSchema": "lafea-workbench-lifecycle-export/v2",
+  "v2AuthoritySchema": "lafea-workbench-lifecycle-export-current-authority/v1",
+  "v2ConsumersMustRequireCurrentResultAccepted": true,
+  "legacyV1CompatibilityRetained": true,
+  "runtimeConsumers": [
+    {
+      "id": "B7D_WORKBENCH_DISPLAY_HANDOFF",
+      "path": "src/workspace/lafea-b7d-workbench-display-handoff.js",
+      "invalidAuthorityDiagnostic": "LAFEA_NB_T6E_EXPORT_CURRENT_AUTHORITY_INVALID",
+      "notCurrentDiagnostic": "LAFEA_NB_T6E_EXPORT_CURRENT_RESULT_NOT_ACCEPTED"
+    },
+    {
+      "id": "SELECTED_PILOT_REVIEW_PANEL",
+      "path": "src/workspace/lafea-selected-pilot-review-panel.js",
+      "invalidAuthorityDiagnostic": "LAFEA_NB_T6G_EXPORT_CURRENT_AUTHORITY_INVALID",
+      "notCurrentDiagnostic": "LAFEA_NB_T6G_EXPORT_CURRENT_RESULT_NOT_ACCEPTED"
+    }
+  ],
+  "v2AcceptanceRequires": [
+    "validateLafeaWorkbenchLifecycleExportAuthority(export.currentAuthority) succeeds",
+    "export.currentAuthority.currentAuthority.currentResultAccepted == true",
+    "export.currentAuthority.interpretation.exportGrantsCurrentResultAuthority == false"
+  ],
+  "legacyV1Policy": [
+    "existing lifecycle source, binding, readiness and artifact checks remain unchanged",
+    "TECH-12L does not invent a v1 currentAuthority field",
+    "v1 support remains compatibility-only and does not broaden authority"
+  ],
+  "requiredIntegrationChecks": [
+    "scripts/lafea-u3b-live-lifecycle-check.mjs",
+    "scripts/lafea-nb-t6e-workbench-display-handoff-check.mjs",
+    "scripts/lafea-nb-t6g-read-only-review-panel-check.mjs"
+  ],
+  "forbidden": [
+    "accepting a v2 export with missing or invalid currentAuthority",
+    "accepting a v2 export when currentResultAccepted is false",
+    "using retained EXECUTION CURRENT/PASS as a substitute for currentResultAccepted",
+    "changing lifecycle artifact history",
+    "changing parent-normal mathematics",
+    "changing mesh-quality thresholds",
+    "changing shell formulation or solver equations",
+    "activating the parent-normal production trust root"
+  ]
+}

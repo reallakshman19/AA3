@@ -106,6 +106,33 @@ const weldPreview = lafeaPreviewGeometry('LAFEA.6', {
 assert.equal(weldPreview.nodePath, null, 'LAFEA.6 placeholder geometry must be display-only.');
 assert.equal(weldPreview.nodes.length, 1, 'Explicit placeholder source geometry may be shown without calculation.');
 
+const foundationStore = createLafeaWorkbenchStore({
+  initialStage: 'LAFEA.1',
+  initialDocument: attachmentFixture(),
+});
+foundationStore.setScalar('LAFEA.1.load.force.x', 'LC-1', '2500');
+assert.equal(
+  foundationStore.getState().stages['LAFEA.1'].document.loadCases
+    .find((row) => row.identity === 'LC-1').force.value[0],
+  2500,
+  'LAFEA.1 force components must be editable through governed form descriptors.',
+);
+foundationStore.setScalar('LAFEA.1.thickness.nominal', null, '12');
+const editedFoundation = foundationStore.getState().stages['LAFEA.1'].document;
+assert.equal(
+  editedFoundation.thicknessBasis.assessmentPipeThickness.value,
+  12,
+  'Derived assessment thickness must be regenerated after a nominal-thickness form edit.',
+);
+const editedFoundationExecution = executeLafeaStage('LAFEA.1', editedFoundation);
+assert.equal(editedFoundationExecution.status, 'QUALIFIED');
+assert.equal(
+  editedFoundationExecution.result.transformedLoadCases
+    .find((row) => row.identity === 'LC-1').transformedForceLocal[0],
+  2500,
+  'Edited force must reach the retained LAFEA.1 calculation result.',
+);
+
 const store = createLafeaWorkbenchStore({
   initialStage: 'LAFEA.3',
   initialDocument: continuumFixture(),

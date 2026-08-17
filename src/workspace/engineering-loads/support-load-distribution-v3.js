@@ -21,6 +21,10 @@ const supportLoadPerformanceMetrics = {
   routeChainageIndexBuilds: 0,
   routeChainageIndexEntries: 0,
   supportProjectionBuilds: 0,
+  baseMassArtifactBuilds: 0,
+  baseMassComputations: 0,
+  caseMassCompositions: 0,
+  fluidMassComputations: 0,
   caseEvaluations: 0,
   routeCaseEvaluations: 0,
   contributorIndexWrites: 0,
@@ -83,7 +87,7 @@ function calculateDistribution(input, configuration) {
   const execution = {
     ...configuration,
     componentAuthorityById,
-    ...buildExecutionIndex(input, globalBlockers),
+    ...buildExecutionIndex(input, globalBlockers, caseIds.length > 0),
   };
   const cases = caseIds.map((caseId) => calculateCase(
     String(caseId),
@@ -134,9 +138,11 @@ function calculateDistribution(input, configuration) {
 /**
  * Builds only case-independent discovery structures. Route support projection is
  * intentionally skipped when global Project Data blocks execution and for routes
- * that are not READY, matching the old evaluation boundary exactly.
+ * that are not READY, matching the old evaluation boundary exactly. Mass terms
+ * that do not vary by EMPTY/OPE/HYD are resolved once on the same executable
+ * entity/edge/chainage boundary and retained only in this execution context.
  */
-function buildExecutionIndex(input, globalBlockers) {
+function buildExecutionIndex(input, globalBlockers, hasActiveCases) {
   supportLoadPerformanceMetrics.executionIndexBuilds += 1;
 
   const entityById = new Map(input.dataset.entities.map((entity) => [entity.entityId, entity]));
@@ -146,6 +152,11 @@ function buildExecutionIndex(input, globalBlockers) {
   supportLoadPerformanceMetrics.edgeIndexEntries += input.routePartitionModel.edges.length;
 
   const routeById = new Map();
+  const baseMassByEntityId = new Map();
+  if (globalBlockers.length === 0 && hasActiveCases) {
+    supportLoadPerformanceMetrics.baseMassArtifactBuilds += 1;
+  }
+
   input.routePartitionModel.routes.forEach((route) => {
     const chainageByEntityId = new Map(
       route.entityChainages.map((row) => [row.entityId, row]),
@@ -162,6 +173,21 @@ function buildExecutionIndex(input, globalBlockers) {
         input.profile,
       );
       supportLoadPerformanceMetrics.supportProjectionBuilds += 1;
+
+      if (hasActiveCases) {
+        route.physicalEdgeIds.forEach((entityId) => {
+          const entity = entityById.get(entityId);
+          const edge = edgeById.get(entityId);
+          const chainage = chainageByEntityId.get(entityId);
+          if (!entity || !edge || !chainage || !Number.isFinite(chainage.pointMm)) return;
+          if (baseMassByEntityId.has(entityId)) return;
+          baseMassByEntityId.set(
+            entityId,
+            resolveBaseMass(entity, edge, input.profile),
+          );
+          supportLoadPerformanceMetrics.baseMassComputations += 1;
+        });
+      }
     }
 
     routeById.set(route.routeId, {
@@ -174,6 +200,7 @@ function buildExecutionIndex(input, globalBlockers) {
     entityById,
     edgeById,
     routeById,
+    baseMassByEntityId,
   };
 }
 
@@ -252,7 +279,11 @@ function calculateRoute(route, input, state, execution) {
       });
       return;
     }
-    const mass = resolveCaseMass(entity, edge, state.caseId, input.profile);
+    if (!execution.baseMassByEntityId.has(entityId)) {
+      throw new Error(`Missing case-independent mass artifact for entity ${entityId}.`);
+    }
+    const baseMass = execution.baseMassByEntityId.get(entityId);
+    const mass = resolveCaseMass(baseMass, entity, state.caseId, input.profile);
     const application = resolveApplicationPoint(
       entity,
       chainage,
@@ -346,7 +377,11 @@ function resolveApplicationPoint(entity, chainage, execution) {
   };
 }
 
-function resolveCaseMass(entity, edge, caseId, profile) {
+/**
+ * Resolve mass terms that cannot vary by EMPTY/OPE/HYD. This artifact is
+ * execution-local and is not part of engineering output or semantic hash input.
+ */
+function resolveBaseMass(entity, edge, profile) {
   if (entity.entityType !== 'PIPE') return componentMass(entity, profile);
   const sections = projectDataValue(profile, 'loadCalculation.pipeSectionProperties') || {};
   const section = sections[entity.lineKey];
@@ -373,22 +408,15 @@ function resolveCaseMass(entity, edge, caseId, profile) {
   ) * lengthM * materialDensity;
   const insulation = insulationMass(section, lengthM, profile);
   if (!insulation.qualified) return insulation;
-  const fluid = fluidMass(
-    caseId,
-    section,
-    entity,
-    insideDiameterMm,
-    lengthM,
-    profile,
-  );
-  if (!fluid.qualified) return fluid;
   return {
     qualified: true,
-    massKg: metalKg + insulation.massKg + fluid.massKg,
+    baseMassKg: metalKg + insulation.massKg,
+    section,
+    insideDiameterMm,
+    lengthM,
     formula: {
       metalKg,
       insulationKg: insulation.massKg,
-      fluidKg: fluid.massKg,
       lengthM,
       outsideDiameterMm: section.outsideDiameterMm,
       insideDiameterMm,
@@ -396,6 +424,37 @@ function resolveCaseMass(entity, edge, caseId, profile) {
         sourceRef(profile, 'loadCalculation.pipeSectionProperties'),
         sourceRef(profile, 'loadCalculation.materialDensitiesKgPerM3'),
         insulation.source,
+      ].filter(Boolean),
+    },
+  };
+}
+
+/** Compose only the case-dependent fluid term with the invariant mass artifact. */
+function resolveCaseMass(baseMass, entity, caseId, profile) {
+  supportLoadPerformanceMetrics.caseMassCompositions += 1;
+  if (!baseMass.qualified || entity.entityType !== 'PIPE') return baseMass;
+  supportLoadPerformanceMetrics.fluidMassComputations += 1;
+  const fluid = fluidMass(
+    caseId,
+    baseMass.section,
+    entity,
+    baseMass.insideDiameterMm,
+    baseMass.lengthM,
+    profile,
+  );
+  if (!fluid.qualified) return fluid;
+  return {
+    qualified: true,
+    massKg: baseMass.baseMassKg + fluid.massKg,
+    formula: {
+      metalKg: baseMass.formula.metalKg,
+      insulationKg: baseMass.formula.insulationKg,
+      fluidKg: fluid.massKg,
+      lengthM: baseMass.formula.lengthM,
+      outsideDiameterMm: baseMass.formula.outsideDiameterMm,
+      insideDiameterMm: baseMass.formula.insideDiameterMm,
+      projectDataSources: [
+        ...baseMass.formula.projectDataSources,
         fluid.source,
       ].filter(Boolean),
     },

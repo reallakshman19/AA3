@@ -200,6 +200,15 @@
       ]
     },
     {
+      "id": "TECH12I_RELEASE_RESULT_CURRENTNESS",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12i-release-result-currentness-check.mjs"
+      ]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

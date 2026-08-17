@@ -73,9 +73,8 @@ const empiricalV3SourceSubscriptions = [
     }
     empiricalV3ObservedDatasetBasis = nextBasis;
   }),
-  EventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason, governingChange }) => {
-    const effectiveChange = governingChange || reason;
-    if (effectiveChange === 'project-data-changed' || effectiveChange === 'master-data-changed') {
+  EventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason }) => {
+    if (reason === 'project-data-changed' || reason === 'master-data-changed') {
       invalidateEmpiricalV3ForGoverningChange();
     }
   }),

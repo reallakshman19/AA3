@@ -95,8 +95,8 @@ try {
   assert.deepEqual(published.at(-1), {
     topic: ENGINEERING_MODEL_EVENTS.CHANGED,
     payload: {
-      reason: 'authorization-changed',
-      governingChange: 'project-data-changed',
+      reason: 'project-data-changed',
+      topologyCheckAffected: false,
       topologyModelRebuilt: false,
     },
   });
@@ -105,18 +105,17 @@ try {
   assert.equal(rebuilds, 1, 'topology-policy Project Data change must rebuild support/route models once');
   assert.equal(empiricalRefreshes, 2, 'topology-policy Project Data change must refresh empirical authority once');
   assert.deepEqual(published.at(-1).payload, {
-    reason: 'authorization-changed',
-    governingChange: 'project-data-changed',
+    reason: 'project-data-changed',
+    topologyCheckAffected: false,
     topologyModelRebuilt: true,
   });
 
-  controller.handleMasterDataChanged({ masterKey: 'weight' });
+  controller.handleMasterDataChanged();
   assert.equal(rebuilds, 1, 'master-data change must not rebuild support/route models');
   assert.equal(empiricalRefreshes, 3, 'master-data change must refresh empirical authority once');
   assert.deepEqual(published.at(-1).payload, {
-    reason: 'authorization-changed',
-    governingChange: 'master-data-changed',
-    masterKey: 'weight',
+    reason: 'master-data-changed',
+    topologyCheckAffected: false,
   });
 
   let topologyRefreshRequests = 0;
@@ -124,15 +123,24 @@ try {
   const loadCalc = new LoadCalcConsumerController({}, { getContext: () => null }, eventBus);
   loadCalc.render = () => { renders += 1; };
   loadCalc.refreshTopologyCheck = async () => { topologyRefreshRequests += 1; };
-  loadCalc.handleEngineeringChange('authorization-changed');
-  assert.equal(renders, 1, 'routed governing change must still refresh LoadCalc presentation');
-  assert.equal(topologyRefreshRequests, 0, 'routed governing change must not request canonical topology refresh');
+
+  loadCalc.handleEngineeringChange('project-data-changed', null, false);
+  assert.equal(renders, 1, 'dependency-routed governing change must still refresh LoadCalc presentation');
+  assert.equal(topologyRefreshRequests, 0, 'explicitly unaffected project change must not request canonical topology refresh');
+
+  loadCalc.handleEngineeringChange('master-data-changed', null, false);
+  assert.equal(renders, 2, 'dependency-routed master change must still refresh LoadCalc presentation');
+  assert.equal(topologyRefreshRequests, 0, 'explicitly unaffected master change must not request canonical topology refresh');
+
+  loadCalc.handleEngineeringChange('project-data-changed');
+  assert.equal(topologyRefreshRequests, 1, 'legacy project-data publisher without dependency metadata must retain fail-safe topology refresh');
 
   console.log(JSON.stringify({
     status: 'PASS',
     masterData: { topologyRefreshRequests: 0, derivedModelRebuilds: 0, empiricalRefreshes: 1 },
     loadOnlyProjectData: { topologyRefreshRequests: 0, derivedModelRebuilds: 0, empiricalRefreshes: 1 },
     topologyPolicyProjectData: { topologyRefreshRequests: 0, derivedModelRebuilds: 1, empiricalRefreshes: 1 },
+    legacyPublisherFallback: { topologyRefreshRequests: 1 },
     topologyInputsUnchanged: true,
     numericalMethodChanged: false,
   }, null, 2));

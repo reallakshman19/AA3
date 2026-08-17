@@ -22,6 +22,8 @@ import {
 
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_PRODUCER_REF =
   `${LAFEA4_SHELL_PRODUCT_REFINEMENT_PRODUCER_ID}/PROMOTED_RETAINED_PRODUCT_V1`;
+export const LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_CAPABILITY_SCHEMA =
+  'lafea4-shell-product-refinement-retained-capability/v1';
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_QUALIFICATION_SCHEMA =
   'lafea4-shell-product-refinement-retained-qualification/v1';
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_RETENTION_PLAN_SCHEMA =
@@ -32,7 +34,7 @@ export const LAFEA4_SHELL_PRODUCT_REFINEMENT_GENERIC_RECOVERY_FORBIDDEN =
 /**
  * Re-issue an accepted TECH-13 product candidate under retained-product
  * authority after the code-owned promotion gate has already authorized use.
- * Mesh bytes are immutable; only authority/plan/qualification custody changes.
+ * Mesh bytes are immutable; only authority/capability/qualification/plan custody changes.
  */
 export function finalizeLafea4ShellProductRefinementRetention({
   adapterResult,
@@ -60,10 +62,36 @@ export function finalizeLafea4ShellProductRefinementRetention({
     promotion.promotionRecord,
   );
 
+  const capabilityCore = freeze({
+    schema: LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_CAPABILITY_SCHEMA,
+    stageId: 'LAFEA.4',
+    producerRef: LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_PRODUCER_REF,
+    candidateCapabilityHash: LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.capabilityHash,
+    candidateQualificationHash: LAFEA4_SHELL_PRODUCT_REFINEMENT_QUALIFICATION.qualificationHash,
+    promotionRecordHash: promotionRecord.semanticHash,
+    qualifiedHead: promotionRecord.qualifiedHead,
+    numericalKernel: LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.numericalKernel,
+    elementFamily: LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.elementFamily,
+    surfaceKinds: [...LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.surfaceKinds],
+    targetTypes: [...LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.targetTypes],
+    productBindingAuthorized: true,
+    uiBindingAuthorized: true,
+    releaseQualified: false,
+  });
+  const retainedCapability = freeze({
+    ...capabilityCore,
+    capabilityHash: canonicalLafeaSha256({
+      schema: 'lafea4-shell-product-refinement-retained-capability-hash-input/v1',
+      capability: capabilityCore,
+    }),
+  });
+
   const qualificationCore = freeze({
     schema: LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_QUALIFICATION_SCHEMA,
     stageId: 'LAFEA.4',
     qualificationId: 'LAFEA4-SHELL-PRODUCT-REFINE-RETAINED-Q1',
+    retainedCapabilityHash: retainedCapability.capabilityHash,
+    candidateCapabilityHash: LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.capabilityHash,
     candidateQualificationHash: LAFEA4_SHELL_PRODUCT_REFINEMENT_QUALIFICATION.qualificationHash,
     candidateArtifactHash: adapter.productEvidence.artifactHash,
     candidateMeshHash: adapter.productEvidence.meshHash,
@@ -87,7 +115,7 @@ export function finalizeLafea4ShellProductRefinementRetention({
     schema: LAFEA4_SHELL_PRODUCT_REFINEMENT_RETENTION_PLAN_SCHEMA,
     stageId: 'LAFEA.4',
     producerRef: LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_PRODUCER_REF,
-    capabilityHash: LAFEA4_SHELL_PRODUCT_REFINEMENT_CAPABILITY.capabilityHash,
+    retainedCapabilityHash: retainedCapability.capabilityHash,
     retainedQualificationHash: retainedQualification.qualificationHash,
     candidatePlanHash: adapter.plan.planHash,
     candidateArtifactHash: adapter.productEvidence.artifactHash,
@@ -127,7 +155,7 @@ export function finalizeLafea4ShellProductRefinementRetention({
       analysisGeometryHash: candidate.analysisGeometryHash,
       meshProfileHash: candidate.meshProfileHash,
       meshHash: candidate.meshHash,
-      capabilityHash: retentionPlan.capabilityHash,
+      capabilityHash: retainedCapability.capabilityHash,
       qualificationHash: retainedQualification.qualificationHash,
       planHash: retentionPlan.planHash,
     },
@@ -136,7 +164,9 @@ export function finalizeLafea4ShellProductRefinementRetention({
   if (evidence.meshHash !== candidate.meshHash
     || JSON.stringify(evidence.mesh) !== JSON.stringify(candidate.mesh)
     || evidence.artifactHash === candidate.artifactHash
+    || evidence.authority.capabilityHash === candidate.authority.capabilityHash
     || evidence.authority.qualificationHash === candidate.authority.qualificationHash
+    || evidence.authority.planHash === candidate.authority.planHash
     || evidence.authority.producerRef === candidate.authority.producerRef) {
     fail('LAFEA4_SHELL_PRODUCT_REFINEMENT_RETENTION_REWRAP_INVALID');
   }
@@ -146,6 +176,7 @@ export function finalizeLafea4ShellProductRefinementRetention({
     stageId: 'LAFEA.4',
     candidateEvidence: candidate,
     evidence,
+    retainedCapability,
     retainedQualification,
     retentionPlan,
     promotionRecordHash: promotionRecord.semanticHash,

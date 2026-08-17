@@ -20,6 +20,8 @@ if (!bundleArg || !expectedHead || !/^[0-9a-f]{40}$/u.test(expectedHead)) {
   process.exit(64);
 }
 
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(scriptDir, '..');
 const bundle = path.resolve(bundleArg);
 const files = {
   manifest: path.join(bundle, 'manifest.json'),
@@ -27,8 +29,11 @@ const files = {
   plan: path.join(bundle, 'plan.json'),
   hashes: path.join(bundle, 'hashes.sha256'),
   digest: path.join(bundle, 'evidence-digest.txt'),
+  bundledVerifier: path.join(bundle, 'tools', 'lafea-independent-qualification-verify.mjs'),
+  bundledRunner: path.join(bundle, 'tools', 'lafea-independent-qualification.mjs'),
 };
-for (const [name, file] of Object.entries(files)) {
+for (const name of ['manifest', 'commands', 'plan', 'hashes', 'digest']) {
+  const file = files[name];
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
     fail(`LAFEA4_PARENT_NORMAL_ACTIVATION_BUNDLE_FILE_MISSING:${name}`);
   }
@@ -45,14 +50,13 @@ if (recordedDigest !== evidenceDigest) {
 // authority. We deliberately do not pass --require-pass here: an integrity-
 // valid NOT_RUN/FAIL bundle must produce a deterministic BLOCKED record rather
 // than being mistaken for missing evidence.
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const verifier = path.join(scriptDir, 'lafea-independent-qualification-verify.mjs');
 const verification = spawnSync(process.execPath, [
   verifier,
   bundle,
   '--expected-digest', evidenceDigest,
 ], {
-  cwd: process.cwd(),
+  cwd: repoRoot,
   encoding: 'utf8',
   maxBuffer: 16 * 1024 * 1024,
 });
@@ -64,6 +68,35 @@ if (verification.error || verification.status !== 0) {
 const manifest = readJson(files.manifest, 'MANIFEST');
 const commands = readJson(files.commands, 'COMMANDS');
 const plan = readJson(files.plan, 'PLAN');
+
+// Promotion must be evaluated by the exact checkout that was independently
+// qualified. A valid old bundle evaluated from a newer checkout is a BLOCK,
+// never an authorization.
+const currentHead = rawSpawn('git', ['rev-parse', 'HEAD'], repoRoot);
+const trackedStatus = rawSpawn(
+  'git', ['status', '--porcelain=v1', '--untracked-files=no'], repoRoot,
+);
+const exactCheckoutVerified = currentHead.status === 0
+  && currentHead.stdout.trim() === expectedHead
+  && trackedStatus.status === 0
+  && trackedStatus.stdout.trim() === '';
+
+const currentPlan = path.join(repoRoot, 'validation/lafea-independent-qualification/plan-v1.json');
+const currentRunner = path.join(scriptDir, 'lafea-independent-qualification.mjs');
+const currentPackageLock = path.join(repoRoot, 'package-lock.json');
+const currentPlanSha256 = fileSha256(currentPlan);
+const currentRunnerSha256 = fileSha256(currentRunner);
+const currentPackageLockSha256 = fileSha256(currentPackageLock);
+const currentVerifierSha256 = fileSha256(verifier);
+const bundledVerifierSha256 = fileSha256(files.bundledVerifier);
+const bundledRunnerSha256 = fileSha256(files.bundledRunner);
+const toolingParityVerified = currentPlanSha256 === manifest.planSha256
+  && currentRunnerSha256 === manifest.runnerSha256
+  && bundledRunnerSha256 === manifest.runnerSha256
+  && currentPackageLockSha256 === manifest.packageLockSha256
+  && currentVerifierSha256 !== null
+  && currentVerifierSha256 === bundledVerifierSha256;
+
 const record = validateLafea4ParentNormalActivationRecord(
   createLafea4ParentNormalActivationRecord({
     expectedHead,
@@ -75,6 +108,9 @@ const record = validateLafea4ParentNormalActivationRecord(
       schema: 'lafea-independent-qualification-bundle-integrity/v1',
       verified: true,
       evidenceDigest,
+      exactCheckoutVerified,
+      toolingParityVerified,
+      verifierSha256: currentVerifierSha256,
     },
   }),
 );
@@ -90,6 +126,9 @@ console.log(JSON.stringify({
   check: 'lafea-tech12d-parent-normal-activation-record',
   status: record.status,
   expectedHead: record.expectedHead,
+  currentHead: currentHead.stdout.trim() || null,
+  exactCheckoutVerified,
+  toolingParityVerified,
   evidenceDigest: record.evidenceDigest,
   recordHash: record.semanticHash,
   output,
@@ -104,8 +143,25 @@ function readJson(file, label) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   catch (error) { fail(`LAFEA4_PARENT_NORMAL_ACTIVATION_${label}_JSON_INVALID:${error.message}`); }
 }
+function fileSha256(file) {
+  if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return null;
+  return sha256(fs.readFileSync(file));
+}
 function sha256(bytes) {
   return crypto.createHash('sha256').update(bytes).digest('hex');
+}
+function rawSpawn(executable, args, cwd) {
+  const result = spawnSync(executable, args, {
+    cwd,
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  return {
+    status: Number.isInteger(result.status) ? result.status : null,
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
+    error: result.error ?? null,
+  };
 }
 function parseArgs(argv) {
   const out = { _: [] };

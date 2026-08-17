@@ -1,0 +1,65 @@
+{
+  "schema": "lafea4-parent-normal-dormant-production-gate-definition/v1",
+  "qualificationId": "LAFEA4-PARENT-NORMAL-TECH12E-001",
+  "stageId": "LAFEA.4",
+  "scope": "DORMANT_PRODUCTION_GATE_MECHANISM_PENDING_REAL_TECH12D_RECORD",
+  "supportedSurfaceKinds": [
+    "CYLINDRICAL",
+    "CYLINDRICAL_HOLES"
+  ],
+  "activationTrustRoot": {
+    "sourceFile": "src/workspace/lafea4-parent-normal-production-activation.js",
+    "currentRecord": null,
+    "currentHardGateActivated": false,
+    "callerSuppliedActivationAuthorityAccepted": false,
+    "policy": "CODE_OWNED_TRUST_ROOT_ONLY_AFTER_EXACT_HEAD_TECH8_PASS_V1"
+  },
+  "inactiveDecision": {
+    "candidatePass": "NOT_ENFORCED",
+    "candidateBlock": "NOT_ENFORCED",
+    "retainedMeshAccepted": true,
+    "solverExecutionAuthorized": true
+  },
+  "futureActiveDecision": {
+    "candidatePass": "ALLOW",
+    "candidateBlock": "BLOCK",
+    "candidateBlockRetainedMeshAccepted": false,
+    "candidateBlockSolverExecutionAuthorized": false,
+    "blockingDiagnostic": "LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCKED"
+  },
+  "enforcementBoundaries": {
+    "generatedMeshCheckedBeforePublication": true,
+    "recoveredMeshCheckedBeforeProfileOrCustodyMutation": true,
+    "postRecoveryDecisionReplayRequired": true,
+    "failedGeneratedOrRecoveredMeshRolledBack": true,
+    "solverModelCompilationRechecksGate": true,
+    "shellRunRecompilesSolverModelBeforeExecution": true
+  },
+  "qualificationRequirements": {
+    "tech8StepId": "TECH12E_DORMANT_PRODUCTION_GATE",
+    "tech12eMustBeRequiredByTech12dActivationRecord": true,
+    "meshingSuiteStillRequired": true,
+    "coreSuiteStillRequired": true,
+    "productionBuildStillRequired": true,
+    "visibleChromiumStillRequired": true
+  },
+  "futurePromotionRequirements": {
+    "realTech12dStatus": "AUTHORIZED_FOR_FUTURE_PROMOTION",
+    "realTech12dRecordMustComeFromExactHeadTech8Pass": true,
+    "qualifiedHeadMustContainDormantTech12eMechanism": true,
+    "promotionMustBeSeparatelyReviewed": true,
+    "promotionMustPinExactActivationRecord": true,
+    "noSyntheticActivationRecord": true,
+    "noCallerRuntimeActivation": true,
+    "noMeshQualityThresholdChange": true,
+    "noShellFormulationChange": true,
+    "noSolverEquationChange": true
+  },
+  "currentProductEffect": {
+    "hardGateActivated": false,
+    "retainedMeshAcceptanceChanged": false,
+    "solverAuthorizationChanged": false,
+    "productionBindingAuthorized": false,
+    "releaseQualified": false
+  }
+}

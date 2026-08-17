@@ -201,7 +201,7 @@ test('production Sjson removes false support-family findings but keeps contracto
   assert.ok(lineStopRestraint);
   assert.equal(lineStopRestraint.supportType, 'LINE_STOP');
   assert.equal(lineStopRestraint.longitudinal.state, 'RESTRAINED');
-  assert.equal(lineStopRestraint.longitudinal.basis, 'TYPE');
+  assert.equal(lineStopRestraint.longitudinal.basis, 'INFERRED_FROM_SUPPORT_TYPE');
 
   const unknown = checkCanonicalTopology(canonical)
     .filter((issue) => issue.kind === 'UNKNOWN_RESTRAINT_FAMILY');

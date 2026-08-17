@@ -25,6 +25,7 @@ const stale = stage({ executionHash, resultReady: false });
 const currentAuthority = projectLafeaWorkbenchLifecycleExportAuthority(current);
 validateLafeaWorkbenchLifecycleExportAuthority(currentAuthority);
 assert.equal(currentAuthority.governedRoute, true);
+assert.equal(currentAuthority.resultAuthorityBasis, 'GOVERNED_EXECUTION_AND_READINESS');
 assert.equal(currentAuthority.retainedEvidence.executionStatus, 'QUALIFIED');
 assert.equal(currentAuthority.retainedEvidence.lifecycleExecutionArtifactStatus, 'CURRENT');
 assert.equal(currentAuthority.retainedEvidence.lifecycleExecutionArtifactQualification, 'PASS');
@@ -61,6 +62,29 @@ assert.throws(
   /LAFEA_LIFECYCLE_EXPORT_RESULT_AUTHORITY_INCONSISTENT/u,
 );
 
+// Legacy/non-governed LAFEA.3 can consume caller-authored lifecycle result
+// evidence without a local stage.execution object. Preserve that existing
+// authority basis while keeping export authority non-self-granting.
+const legacy = legacyStage({ executionHash });
+const legacyAuthority = projectLafeaWorkbenchLifecycleExportAuthority(legacy);
+validateLafeaWorkbenchLifecycleExportAuthority(legacyAuthority);
+assert.equal(legacyAuthority.governedRoute, false);
+assert.equal(legacyAuthority.resultAuthorityBasis, 'LEGACY_LIFECYCLE_READINESS');
+assert.equal(legacyAuthority.retainedEvidence.executionPresent, false);
+assert.equal(legacyAuthority.retainedEvidence.lifecycleExecutionArtifactStatus, 'CURRENT');
+assert.equal(legacyAuthority.retainedEvidence.lifecycleExecutionArtifactQualification, 'PASS');
+assert.equal(legacyAuthority.currentAuthority.calculationState, 'CALCULATION_NOT_RUN');
+assert.equal(legacyAuthority.currentAuthority.resultReady, true);
+assert.equal(legacyAuthority.currentAuthority.currentResultAccepted, true);
+assert.equal(legacyAuthority.interpretation.exportGrantsCurrentResultAuthority, false);
+
+const legacyInvalid = structuredClone(legacyAuthority);
+legacyInvalid.currentAuthority.resultReady = false;
+assert.throws(
+  () => validateLafeaWorkbenchLifecycleExportAuthority(legacyInvalid),
+  /LAFEA_LIFECYCLE_EXPORT_RESULT_AUTHORITY_INCONSISTENT/u,
+);
+
 const evidenceActions = fs.readFileSync(
   path.join(repoRoot, 'src/workspace/lafea-workbench-evidence-actions.js'),
   'utf8',
@@ -80,11 +104,16 @@ const definition = JSON.parse(fs.readFileSync(
 assert.equal(definition.currentTrustRoot, 'NULL');
 assert.equal(definition.retainedLifecycleLedgerMutationAllowed, false);
 assert.equal(definition.exportGrantsEngineeringAuthority, false);
+assert.equal(definition.governedResultAuthorityBasis, 'GOVERNED_EXECUTION_AND_READINESS');
+assert.equal(definition.legacyResultAuthorityBasis, 'LEGACY_LIFECYCLE_READINESS');
 
 console.log(JSON.stringify({
   check: 'lafea-tech12k-lifecycle-export-current-authority',
   status: 'PASS',
   currentTrustRoot: 'NULL',
+  governedAuthorityBasis: currentAuthority.resultAuthorityBasis,
+  legacyAuthorityBasis: legacyAuthority.resultAuthorityBasis,
+  legacyLifecycleResultReadyWithoutLocalExecution: true,
   retainedExecutionStatus: staleAuthority.retainedEvidence.executionStatus,
   retainedLifecycleExecutionStatus:
     staleAuthority.retainedEvidence.lifecycleExecutionArtifactStatus,
@@ -137,6 +166,36 @@ function stage({ executionHash: hash, resultReady }) {
       releaseBlockingReasons: resultReady
         ? []
         : ['RELEASE_GOVERNED_RESULT_NOT_CURRENT'],
+    },
+  };
+}
+
+function legacyStage({ executionHash: hash }) {
+  return {
+    stageId: 'LAFEA.3',
+    shellMidsurfaceProfileActive: false,
+    domainFirstProfileActive: false,
+    execution: null,
+    lifecycle: {
+      artifacts: {
+        EXECUTION: {
+          status: 'CURRENT',
+          qualification: 'PASS',
+          artifactHash: hash,
+        },
+      },
+    },
+    retainedTemplateReleaseRecord: null,
+    lifecycleReadiness: {
+      calculationState: 'CALCULATION_NOT_RUN',
+      resultReady: true,
+      releaseState: 'RELEASE_NOT_QUALIFIED',
+      releaseBinding: {
+        bindingStatus: 'ABSENT',
+        releaseQualified: false,
+      },
+      blockingReasons: [],
+      releaseBlockingReasons: [],
     },
   };
 }

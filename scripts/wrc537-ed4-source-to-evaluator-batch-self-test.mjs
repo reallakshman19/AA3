@@ -191,6 +191,19 @@ expectError('WRC537_ED4_EXECUTABLE_PLAN_OPERATOR_UNSUPPORTED', () => {
   bad.equationImplementations[0].graph = { op: 'EVAL', expression: 'P/A' };
   createWrc537Ed4ExecutablePlan(dataset, calculationPlan, bad);
 });
+expectError('WRC537_ED4_EXECUTABLE_PLAN_EXTRAPOLATION_POLICY_MISMATCH', () => {
+  const bad = structuredClone(implementationInput);
+  bad.equationImplementations[0].graph = {
+    op: 'LINEAR_INTERPOLATE',
+    x: { op: 'VAR', variableId: 'A' },
+    x0: { op: 'VAR', variableId: 'A' },
+    x1: { op: 'VAR', variableId: 'A' },
+    y0: { op: 'DIV', args: [{ op: 'VAR', variableId: 'P' }, { op: 'VAR', variableId: 'A' }] },
+    y1: { op: 'DIV', args: [{ op: 'VAR', variableId: 'P' }, { op: 'VAR', variableId: 'A' }] },
+    sourceAllowsExtrapolation: true,
+  };
+  createWrc537Ed4ExecutablePlan(dataset, calculationPlan, bad);
+});
 expectError('WRC537_ED4_EXECUTABLE_PLAN_DIMENSION_AUDIT_REQUIRED', () => {
   const bad = structuredClone(implementationInput);
   bad.equationImplementations[0].dimensionAudit.verified = false;
@@ -223,6 +236,7 @@ console.log(JSON.stringify({
   exactInputUnitsEnforced: true,
   divisionByZeroRejected: true,
   unsupportedEvaluatorRejected: true,
+  extrapolationPolicyBoundToSourcePackage: true,
   termCompleteQualification: true,
   sourceDatumToleranceCustody: true,
   numericalQualificationCanActivateEngineering: false,

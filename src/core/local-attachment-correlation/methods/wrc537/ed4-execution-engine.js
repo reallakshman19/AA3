@@ -42,17 +42,23 @@ export function createWrc537Ed4ExecutablePlan(datasetInput, calculationPlanInput
   if (calculationPlan.combinationRules.length || calculationPlan.postProcessing.length) {
     fail('WRC537_ED4_EXECUTABLE_PLAN_UNCOMPILED_SOURCE_RULES', 'calculationPlan');
   }
+  const sourceInterpolationPolicy = dataset?.sourcePackage?.interpolation;
+  if (calculationPlan.interpolationRules.length && sourceInterpolationPolicy?.interpolationAuthorized !== true) {
+    fail('WRC537_ED4_EXECUTABLE_PLAN_INTERPOLATION_RULE_NOT_SOURCE_AUTHORIZED', 'calculationPlan.interpolationRules');
+  }
 
   const variableMetadata = validateVariableMetadata(implementationInput.variableMetadata, calculationPlan.variables);
   const equations = validateEquationImplementations(
     implementationInput.equationImplementations,
     calculationPlan.equations,
     variableMetadata,
+    sourceInterpolationPolicy,
   );
   const interpolations = validateInterpolationImplementations(
     implementationInput.interpolationImplementations,
     calculationPlan.interpolationRules,
     variableMetadata,
+    sourceInterpolationPolicy,
   );
   const executionOrder = validateExecutionOrder(
     implementationInput.executionOrder,
@@ -242,7 +248,7 @@ function validateVariableMetadata(rows, variables) {
   return freeze(normalized);
 }
 
-function validateEquationImplementations(rows, equations, metadata) {
+function validateEquationImplementations(rows, equations, metadata, sourceInterpolationPolicy) {
   requireArray(rows, 'implementationInput.equationImplementations');
   unique(rows, 'equationId', 'implementationInput.equationImplementations');
   const expected = equations.map((row) => row.equationId).sort();
@@ -259,6 +265,7 @@ function validateEquationImplementations(rows, equations, metadata) {
     }
     validateDimensionAudit(row.dimensionAudit, `${path}.dimensionAudit`);
     validateGraph(row.graph, metadataById, `${path}.graph`);
+    validateGraphSourceInterpolationPolicy(row.graph, sourceInterpolationPolicy, `${path}.graph`);
     const actualDimension = graphDimension(row.graph, metadataById, `${path}.graph`);
     const expectedDimension = metadataById.get(row.outputVariableId).dimensionVector;
     if (!sameDimension(actualDimension, expectedDimension)) fail('WRC537_ED4_EXECUTABLE_PLAN_DIMENSION_MISMATCH', `${path}.graph`);
@@ -266,7 +273,7 @@ function validateEquationImplementations(rows, equations, metadata) {
   }));
 }
 
-function validateInterpolationImplementations(rows, rules, metadata) {
+function validateInterpolationImplementations(rows, rules, metadata, sourceInterpolationPolicy) {
   requireArray(rows, 'implementationInput.interpolationImplementations');
   unique(rows, 'ruleId', 'implementationInput.interpolationImplementations');
   const expected = rules.map((row) => row.ruleId).sort();
@@ -283,6 +290,7 @@ function validateInterpolationImplementations(rows, rules, metadata) {
     }
     validateDimensionAudit(row.dimensionAudit, `${path}.dimensionAudit`);
     validateGraph(row.graph, metadataById, `${path}.graph`);
+    validateGraphSourceInterpolationPolicy(row.graph, sourceInterpolationPolicy, `${path}.graph`);
     if (!sameDimension(graphDimension(row.graph, metadataById, `${path}.graph`), metadataById.get(row.outputVariableId).dimensionVector)) {
       fail('WRC537_ED4_EXECUTABLE_PLAN_DIMENSION_MISMATCH', `${path}.graph`);
     }
@@ -380,6 +388,28 @@ function validateGraph(node, metadataById, path) {
       break;
     default: break;
   }
+}
+
+function validateGraphSourceInterpolationPolicy(node, policy, path) {
+  if (typeof policy?.interpolationAuthorized !== 'boolean'
+    || typeof policy?.extrapolationAuthorized !== 'boolean') {
+    fail('WRC537_ED4_EXECUTABLE_PLAN_SOURCE_INTERPOLATION_POLICY_MISSING', path);
+  }
+  if (node.op === 'LINEAR_INTERPOLATE') {
+    if (policy.interpolationAuthorized !== true) {
+      fail('WRC537_ED4_EXECUTABLE_PLAN_INTERPOLATION_NOT_SOURCE_AUTHORIZED', path);
+    }
+    if (node.sourceAllowsExtrapolation !== policy.extrapolationAuthorized) {
+      fail('WRC537_ED4_EXECUTABLE_PLAN_EXTRAPOLATION_POLICY_MISMATCH', `${path}.sourceAllowsExtrapolation`);
+    }
+  }
+  if (node.arg) validateGraphSourceInterpolationPolicy(node.arg, policy, `${path}.arg`);
+  if (Array.isArray(node.args)) node.args.forEach((child, index) =>
+    validateGraphSourceInterpolationPolicy(child, policy, `${path}.args[${index}]`));
+  if (node.x) validateGraphSourceInterpolationPolicy(node.x, policy, `${path}.x`);
+  ['x0', 'x1', 'y0', 'y1'].forEach((key) => {
+    if (node[key]) validateGraphSourceInterpolationPolicy(node[key], policy, `${path}.${key}`);
+  });
 }
 
 function graphDimension(node, metadataById, path) {

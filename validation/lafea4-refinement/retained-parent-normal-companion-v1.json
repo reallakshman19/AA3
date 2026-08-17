@@ -11,6 +11,9 @@
     "deriveFromCurrentRetainedParents": true,
     "independentlyMutableCompanionCacheAllowed": false,
     "recoveryMustBuildCompanionBeforeMeshCustodyMutation": true,
+    "generationCompanionFailureMustDiscardNewMeshBeforePublish": true,
+    "recoveryReplayMismatchMustDiscardRecoveredMeshBeforePublish": true,
+    "midsurfaceParentRestoredAfterCompanionRollback": true,
     "exportMustBindCurrentMeshArtifactHash": true,
     "exportMustBindCurrentMidsurfaceEvidenceHash": true,
     "staleCompanionMustFailClosed": true

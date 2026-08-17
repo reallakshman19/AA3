@@ -2,6 +2,13 @@ import { resolveLineListDensity } from '../core/line-density-resolver.js';
 import { normalizeLineListRow } from '../core/linelist-mapping.js';
 import { MASTER_FIELDS } from './xml-cii-adapted-fields-config.js';
 
+const previewSearchMetrics = {
+  rowBuilds: 0,
+  rowsNormalized: 0,
+  searchIndexBuilds: 0,
+  searchTextRows: 0,
+};
+
 function text(value, fallback = '') {
   const out = String(value ?? '').trim();
   return out || fallback;
@@ -41,13 +48,38 @@ function normalizePreviewSearchRow(row, masterKey, state, index) {
   };
 }
 
+function previewSourceRows(master, state) {
+  if (Array.isArray(master.rows) && master.rows.length > 0) return master.rows;
+  return Array.isArray(state.masterContext?.rawRows?.[master.key])
+    ? state.masterContext.rawRows[master.key]
+    : [];
+}
+
+/**
+ * Builds the full searchable projection only when search is requested. Exactly
+ * one authoritative row source is normalized: canonical master.rows when
+ * available, otherwise rawRows. The previous implementation normalized both.
+ */
 export function buildPreviewSearchRows(master, state) {
-  const rows = Array.isArray(master.rows)
-    ? master.rows.map((row, index) => normalizePreviewSearchRow(row, master.key, state, index)) : [];
-  const rawRows = Array.isArray(state.masterContext?.rawRows?.[master.key])
-    ? state.masterContext.rawRows[master.key] : [];
-  const normalizedRawRows = rawRows.map((row, index) => normalizePreviewSearchRow(row, master.key, state, index));
-  return rows.length ? rows : normalizedRawRows;
+  const sourceRows = previewSourceRows(master, state);
+  previewSearchMetrics.rowBuilds += 1;
+  previewSearchMetrics.rowsNormalized += sourceRows.length;
+  return sourceRows.map((row, index) => normalizePreviewSearchRow(row, master.key, state, index));
+}
+
+/**
+ * Builds searchable text once per row so subsequent keystrokes perform only
+ * string inclusion against the cached index. This object is presentation-only;
+ * engineering Preview/calculation continue to consume the authoritative rows.
+ */
+export function buildPreviewSearchIndex(master, state) {
+  const rows = buildPreviewSearchRows(master, state);
+  previewSearchMetrics.searchIndexBuilds += 1;
+  previewSearchMetrics.searchTextRows += rows.length;
+  return rows.map((row) => ({
+    row,
+    searchText: previewSearchText(row),
+  }));
 }
 
 export function previewSearchText(row) {
@@ -63,4 +95,15 @@ export function previewSearchText(row) {
     text(row?.lineKey),
   ];
   return [...values, ...composites].join(' ').toLowerCase();
+}
+
+export function getPreviewSearchMetrics() {
+  return { ...previewSearchMetrics };
+}
+
+export function resetPreviewSearchMetrics() {
+  previewSearchMetrics.rowBuilds = 0;
+  previewSearchMetrics.rowsNormalized = 0;
+  previewSearchMetrics.searchIndexBuilds = 0;
+  previewSearchMetrics.searchTextRows = 0;
 }

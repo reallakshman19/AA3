@@ -20,11 +20,13 @@ const distributionBody = functionBody('calculateDistribution', 'buildExecutionIn
 const indexBody = functionBody('buildExecutionIndex', 'calculateCase');
 const caseBody = functionBody('calculateCase', 'calculateRoute');
 const routeBody = functionBody('calculateRoute', 'resolveApplicationPoint');
+const baseMassBody = functionBody('resolveBaseMass', 'resolveCaseMass');
+const caseMassBody = functionBody('resolveCaseMass', 'insulationMass');
 const contributionBody = functionBody('recordContribution', 'supportResults');
 const resultBody = functionBody('supportResults', 'equilibriumCheck');
 
 // P01 — discovery indexes are constructed once at distribution scope.
-assert.match(distributionBody, /\.\.\.buildExecutionIndex\(input, globalBlockers\)/u);
+assert.match(distributionBody, /\.\.\.buildExecutionIndex\(input, globalBlockers, caseIds\.length > 0\)/u);
 assert.match(indexBody, /new Map\(input\.dataset\.entities\.map/u);
 assert.match(indexBody, /new Map\(input\.routePartitionModel\.edges\.map/u);
 assert.match(indexBody, /const chainageByEntityId = new Map\(/u);
@@ -37,14 +39,14 @@ assert.doesNotMatch(routeBody, /route\.entityChainages\.find\(/u);
 assert.match(routeBody, /routeExecution\.chainageByEntityId\.get\(entityId\)/u);
 console.log('PASS P02: route physical-edge chainage lookup is O(1) map lookup.');
 
-// P03 — support projection remains behind the same old authority conditions:
+// P03 — support projection remains behind the same authority conditions:
 // global Project Data must be unblocked and route must be READY.
 assert.match(
   indexBody,
   /if \(globalBlockers\.length === 0 && route\.status === 'READY'\) \{[\s\S]*?supports = routeSupports\(/u,
 );
 assert.doesNotMatch(routeBody, /routeSupports\(/u);
-console.log('PASS P03: case-independent support projection is built only for executable READY routes.');
+console.log('PASS P03: support projection remains distribution-scoped for executable READY routes.');
 
 // P04 — contributor IDs are indexed as contributions are recorded. Set-based
 // de-duplication preserves old `.some()` semantics for duplicate site allocations,
@@ -56,9 +58,14 @@ assert.doesNotMatch(resultBody, /state\.ledger\s*\.filter/u);
 assert.match(resultBody, /state\.contributorsBySite\.get\(site\.siteId\)/u);
 console.log('PASS P04: support-result contributor discovery no longer rescans the full ledger.');
 
-// P05 — no protected numerical mechanics were replaced by this optimization.
+// P05 — protected numerical mechanics remain byte-structurally represented.
+// The mass split preserves the old floating-point association:
+//   old: metalKg + insulation.massKg + fluid.massKg
+//   new: (metalKg + insulation.massKg) + fluid.massKg
 for (const required of [
-  'resolveCaseMass(entity, edge, state.caseId, input.profile)',
+  'baseMassKg: metalKg + insulation.massKg',
+  'massKg: baseMass.baseMassKg + fluid.massKg',
+  'resolveCaseMass(baseMass, entity, state.caseId, input.profile)',
   'distributeUniform(chainage.startMm, chainage.endMm, forceN, supports)',
   'distributePoint(application.chainageMm, forceN, supports)',
   'equilibriumCheck(state, input.profile)',
@@ -67,7 +74,48 @@ for (const required of [
 ]) {
   assert.ok(source.includes(required), `Protected mechanics token missing: ${required}`);
 }
-console.log('PASS P05: protected mass/distribution/equilibrium method seams remain present.');
+assert.match(baseMassBody, /const metalKg = annulusAreaM2\([\s\S]*?\) \* lengthM \* materialDensity;/u);
+assert.match(baseMassBody, /const insulation = insulationMass\(section, lengthM, profile\);/u);
+assert.doesNotMatch(baseMassBody, /fluidMass\(/u);
+assert.match(caseMassBody, /const fluid = fluidMass\(/u);
+assert.doesNotMatch(caseMassBody, /annulusAreaM2\(/u);
+assert.doesNotMatch(caseMassBody, /insulationMass\(/u);
+assert.doesNotMatch(caseMassBody, /componentMass\(/u);
+console.log('PASS P05: mass equation partition preserves the old arithmetic order and mechanics seams.');
+
+// P06 — invariant mass work is built once per executable physical entity, only
+// when a load case actually exists. Missing entity/edge/chainage follows the old
+// MISSING_ROUTE_CHAINAGE path and therefore is deliberately not precomputed.
+assert.match(indexBody, /const baseMassByEntityId = new Map\(\)/u);
+assert.match(
+  indexBody,
+  /if \(globalBlockers\.length === 0 && hasActiveCases\) \{[\s\S]*?baseMassArtifactBuilds \+= 1;/u,
+);
+assert.match(
+  indexBody,
+  /if \(hasActiveCases\) \{[\s\S]*?route\.physicalEdgeIds\.forEach\([\s\S]*?if \(!entity \|\| !edge \|\| !chainage \|\| !Number\.isFinite\(chainage\.pointMm\)\) return;[\s\S]*?if \(baseMassByEntityId\.has\(entityId\)\) return;[\s\S]*?resolveBaseMass\(entity, edge, input\.profile\)/u,
+);
+assert.match(routeBody, /execution\.baseMassByEntityId\.has\(entityId\)/u);
+assert.match(routeBody, /execution\.baseMassByEntityId\.get\(entityId\)/u);
+assert.doesNotMatch(routeBody, /resolveBaseMass\(/u);
+assert.equal((source.match(/resolveBaseMass\(/gu) || []).length, 2,
+  'resolveBaseMass must have exactly one production call site plus its declaration.');
+console.log('PASS P06: case-invariant mass preprocessing has one distribution-scope call site.');
+
+// P07 — operation counters remain observational only and expose the expected
+// N-versus-C*N split for exact-head performance qualification.
+for (const metric of [
+  'baseMassArtifactBuilds',
+  'baseMassComputations',
+  'caseMassCompositions',
+  'fluidMassComputations',
+]) {
+  assert.ok(source.includes(`${metric}: 0`), `Missing performance metric ${metric}.`);
+}
+assert.match(indexBody, /supportLoadPerformanceMetrics\.baseMassComputations \+= 1;/u);
+assert.match(caseMassBody, /supportLoadPerformanceMetrics\.caseMassCompositions \+= 1;/u);
+assert.match(caseMassBody, /supportLoadPerformanceMetrics\.fluidMassComputations \+= 1;/u);
+console.log('PASS P07: base/case/fluid mass operation counters are available outside engineering output.');
 
 console.log('\nSTRUCTURAL PERFORMANCE STATUS: PASS if this script executes successfully.');
 console.log('NOTE: this guard is implementation-coupled. Numerical/output equivalence still requires existing empirical qualification on the exact head.');

@@ -6,6 +6,18 @@ import {
   RESTRAINT_STATES,
 } from './constants.js';
 
+const RESTRAINT_TYPE_ALIASES = Object.freeze({
+  LINESTOP: 'LINE_STOP',
+  LINE_STOP: 'LINE_STOP',
+  GUI: 'GUIDE',
+  LIM: 'LIMIT',
+  ANC: 'ANCHOR',
+  ANCI: 'ANCHOR',
+  FIX: 'ANCHOR',
+  FIXED: 'ANCHOR',
+  SPRING_HANGER: 'SPRING',
+});
+
 export function classifySupportRestraint(support, attachmentState, attachments, profile) {
   const supportType = resolveSupportType(support);
   const directions = Object.fromEntries(RESTRAINT_DIRECTIONS.map((direction) => [
@@ -142,7 +154,8 @@ function directionRecord(state, basis, evidence) {
 }
 
 function normalizedType(value) {
-  return stringValue(value).toUpperCase().replace(/[ -]+/g, '_');
+  const normalized = stringValue(value).toUpperCase().replace(/[ -]+/g, '_');
+  return RESTRAINT_TYPE_ALIASES[normalized] || normalized;
 }
 
 function diagnostic(code, scope, message) {

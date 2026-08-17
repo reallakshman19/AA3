@@ -347,7 +347,13 @@ export class LafeaWorkbenchView {
     undo.disabled = !stage.past.length;
     const redo = actionButton(this.rootElement, 'Redo', this.handlers.onRedo);
     redo.disabled = !stage.future.length;
-    toolbar.append(mock, fileLabel, file, run, benchmark, exportButton, undo, redo);
+
+    const controls = [];
+    if (!this.rootElement?.hasAttribute?.('data-lafea-app-root')) controls.push(mock);
+    controls.push(fileLabel, file, run);
+    if (this.benchmarkHost) controls.push(benchmark);
+    controls.push(exportButton, undo, redo);
+    toolbar.append(...controls);
     return toolbar;
   }
 

@@ -25,6 +25,33 @@ export class LfeaPipelineShellView {
     loadSample.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg><span>Load sample</span>';
     toolbar.append(loadSample);
 
+    const authorityLabel = doc.createElement('label');
+    authorityLabel.className = 'lfea-pipeline-shell__authority';
+    authorityLabel.title = 'A small JSON supplement carrying only interfaceAuthority, nozzleAllowableProfiles, b31Authority, and applicationId — real, cited vendor/code values, not something this tool derives.';
+    const authorityInput = doc.createElement('input');
+    authorityInput.type = 'file';
+    authorityInput.accept = '.json,application/json';
+    authorityInput.dataset.role = 'lfea-pipeline-authority-supplement-file';
+    authorityInput.hidden = true;
+    authorityInput.addEventListener('change', () => handlers.onAuthoritySupplementSelected(authorityInput.files?.[0] ?? null));
+    const authorityText = doc.createElement('span');
+    authorityText.dataset.role = 'lfea-pipeline-authority-supplement-status';
+    authorityText.textContent = 'No authority supplement loaded';
+    authorityLabel.append(authorityInput, authorityText);
+    toolbar.append(authorityLabel);
+
+    const assembleButton = doc.createElement('button');
+    assembleButton.type = 'button';
+    assembleButton.className = 'lfea-pipeline-shell__assemble';
+    assembleButton.dataset.action = 'lfea-pipeline-assemble-and-run';
+    assembleButton.title = 'Assemble the InputXML source into a real run request and send it to Run — requires an authorized pre-flight and a loaded authority supplement.';
+    assembleButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h11m0 0-4-4m4 4-4 4"/></svg><span>Assemble &amp; send to Run</span>';
+    assembleButton.addEventListener('click', () => handlers.onAssembleAndSendToRun());
+    toolbar.append(assembleButton);
+    const assembleStatus = doc.createElement('output');
+    assembleStatus.dataset.role = 'lfea-pipeline-assemble-status';
+    toolbar.append(assembleStatus);
+
     const nav = doc.createElement('nav');
     nav.className = 'lfea-pipeline-shell__stepper';
     nav.setAttribute('aria-label', 'LFEA pipeline steps');
@@ -53,8 +80,20 @@ export class LfeaPipelineShellView {
 
     shell.append(toolbar, nav, content);
     this.rootElement.append(shell);
-    this.elements = { shell, toolbar, loadSample, nav, stepButtons, content, sourceHost, resultsHost };
+    this.elements = {
+      shell, toolbar, loadSample, nav, stepButtons, content, sourceHost, resultsHost,
+      authorityInput, authorityText, assembleButton, assembleStatus,
+    };
     return this;
+  }
+
+  setAuthoritySupplementStatus(text) {
+    this.elements.authorityText.textContent = text;
+  }
+
+  setAssembleStatus(text, isError) {
+    this.elements.assembleStatus.textContent = text;
+    this.elements.assembleStatus.dataset.status = isError ? 'error' : 'ok';
   }
 
   render(state) {

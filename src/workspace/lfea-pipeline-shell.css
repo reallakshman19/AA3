@@ -44,6 +44,51 @@
   cursor: not-allowed;
 }
 
+.lfea-pipeline-shell__authority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+  color: var(--workspace-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.lfea-pipeline-shell__assemble {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--workspace-accent);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+  color: var(--workspace-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.lfea-pipeline-shell__assemble svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[data-role="lfea-pipeline-assemble-status"] {
+  font-size: 11px;
+  color: var(--workspace-muted);
+}
+
+[data-role="lfea-pipeline-assemble-status"][data-status="error"] {
+  color: #f87171;
+}
+
 .lfea-pipeline-shell__stepper {
   flex: 0 0 auto;
   display: flex;

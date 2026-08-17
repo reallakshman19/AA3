@@ -12,6 +12,8 @@ import './workspace/lfea-pipeline-shell.css';
 import { bootstrapAnalysisWorkspace } from './workspace/bootstrap.js';
 import { LfeaPipelineShellController } from './workspace/lfea-pipeline-shell-controller.js';
 import { mountLfeaGlobalSettingsPopover } from './workspace/lfea-global-settings-popover.js';
+import { buildInputXmlRunRequestCase } from './core/linear-piping-analysis-consumer/inputxml-run-request-cases.js';
+import { LINEAR_PIPING_WORKBENCH_RUN_REQUEST_SCHEMA } from './workspace/linear-piping-run-request.js';
 import { WORKSPACE_ANALYSIS_TARGET_ID } from './workspace/analysis-context.js';
 import { authorizedEnrichmentConsumerController } from './workspace/enrichment/authorized-enrichment-runtime.js';
 import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/authorized-enrichment-workspace-api.js';
@@ -67,6 +69,105 @@ const globalSettingsPopover = mountLfeaGlobalSettingsPopover(
   applicationRoot.querySelector('.application-navigation-shell'),
   { getProfile: () => coreWorkspace.getEngineeringSettingsProfile() },
 );
+let lfeaAuthoritySupplement = null;
+lfeaPipelineShell.setAssemblyHandlers({
+  async onAuthoritySupplementSelected(file) {
+    if (!file) {
+      lfeaAuthoritySupplement = null;
+      lfeaPipelineShell.setAuthoritySupplementStatus('No authority supplement loaded');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(await file.text());
+      requireLfeaAuthoritySupplementShape(parsed);
+      lfeaAuthoritySupplement = parsed;
+      lfeaPipelineShell.setAuthoritySupplementStatus(`Loaded: ${file.name}`);
+    } catch (error) {
+      lfeaAuthoritySupplement = null;
+      lfeaPipelineShell.setAuthoritySupplementStatus(`Rejected: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+  onAssembleAndSendToRun() {
+    try {
+      const runRequest = assembleLfeaInputXmlRunRequest();
+      lfeaPipelineShell.setActiveStep('LOAD_CASE');
+      lfeaPipelineShell.setStepStatus('ERROR_CHECK', { complete: true });
+      // If a human already reviewed and accepted a WARN gate for this exact
+      // application from a prior click, re-checking here would silently
+      // wipe out that authorization (checkRequest always seals a fresh,
+      // unauthorized gate). Reuse the existing authorized gate instead.
+      const existingCheck = linearPipingResults.getPreRunCheck();
+      const alreadyAuthorized = existingCheck?.applicationId === runRequest.applicationId
+        && existingCheck.solveAuthorized;
+      const preRunCheck = alreadyAuthorized ? existingCheck : linearPipingResults.checkRequest(runRequest);
+      if (preRunCheck.status === 'BLOCK') {
+        throw new Error(`Pre-run gate BLOCK for ${preRunCheck.applicationId}.`);
+      }
+      if (!preRunCheck.solveAuthorized) {
+        // A WARN gate needs genuine human review (reviewer identity +
+        // acceptance reason), not an automatic bypass — checkRequest()
+        // above already revealed that review UI; hand off to it rather
+        // than auto-authorizing on the user's behalf. Clicking "Assemble
+        // & send to Run" again after accepting reuses that authorization
+        // (see alreadyAuthorized above) instead of resetting it.
+        lfeaPipelineShell.setAssembleStatus(
+          `Assembled ${runRequest.applicationId} (${runRequest.cases.length} case(s)) — pre-run gate WARN. Review the disclosed limitations below, accept explicitly, then click Assemble & send to Run again.`,
+          false,
+        );
+        return;
+      }
+      linearPipingResults.runRequest(runRequest);
+      lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
+      lfeaPipelineShell.setAssembleStatus(`Sent to Run: ${runRequest.applicationId} (${runRequest.cases.length} case(s)).`, false);
+      lfeaPipelineShell.setActiveStep('RUN');
+    } catch (error) {
+      lfeaPipelineShell.setAssembleStatus(error instanceof Error ? error.message : String(error), true);
+    }
+  },
+});
+
+function requireLfeaAuthoritySupplementShape(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('Authority supplement must be a JSON object.');
+  }
+  for (const key of ['applicationId', 'interfaceAuthority', 'nozzleAllowableProfiles', 'b31Authority']) {
+    if (!(key in value)) throw new TypeError(`Authority supplement is missing "${key}".`);
+  }
+}
+
+function assembleLfeaInputXmlRunRequest() {
+  if (!lfeaAuthoritySupplement) {
+    throw new Error('Load an authority supplement JSON before assembling a run request.');
+  }
+  const snapshot = linearPipingInputXmlSource.getSnapshot();
+  if (!snapshot.preFlightSolveAuthorized) {
+    throw new Error('Authorize the InputXML pre-flight before assembling a run request.');
+  }
+  const preFlight = linearPipingInputXmlSource.getPreFlight();
+  const authorizedCaseIds = preFlight.preparation.authorizedCaseCandidates.map((row) => row.caseId);
+  if (authorizedCaseIds.length === 0) {
+    throw new Error('No authorized physical cases are available from this pre-flight to assemble.');
+  }
+  const applicationId = lfeaAuthoritySupplement.applicationId;
+  const cases = authorizedCaseIds.map((caseId) => ({
+    caseId,
+    inputXmlAnalysisRequest: buildInputXmlRunRequestCase({
+      intake: preFlight.intake,
+      preparation: preFlight.preparation,
+      caseId,
+      analysisIdentity: `${applicationId}-${caseId}`,
+      analysisRevision: 1,
+    }),
+  }));
+  return {
+    schema: LINEAR_PIPING_WORKBENCH_RUN_REQUEST_SCHEMA,
+    applicationId,
+    cases,
+    interfaceAuthority: lfeaAuthoritySupplement.interfaceAuthority,
+    nozzleAllowableProfiles: lfeaAuthoritySupplement.nozzleAllowableProfiles,
+    b31Authority: lfeaAuthoritySupplement.b31Authority,
+  };
+}
 let empiricalV3ObservedDatasetBasis = null;
 const empiricalV3Safety = mountEmpiricalV3SafetyWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,

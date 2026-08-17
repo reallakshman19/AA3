@@ -90,9 +90,9 @@ export class EngineeringModelStore {
     });
   }
 
-  configureAuthorizedEmpiricalPackage(runtimePackage, masterData, runtimeCurrentness = null) {
+  configureAuthorizedEmpiricalPackage(runtimePackage, masterData) {
     this.#requireActiveModels();
-    const bindings = this.#currentEmpiricalBindings(masterData, runtimeCurrentness);
+    const bindings = this.#currentEmpiricalBindings(masterData);
     const configured = authorizedEmpiricalRuntimeStore.configure(runtimePackage, bindings);
     try {
       const blockers = this.#currentEmpiricalReadiness(masterData, runtimePackage);
@@ -107,14 +107,14 @@ export class EngineeringModelStore {
     }
   }
 
-  refreshAuthorizedEmpiricalPackage(masterData, runtimeCurrentness = null) {
+  refreshAuthorizedEmpiricalPackage(masterData) {
     if (!this.#dataset || !this.#supportSiteModel || !this.#routePartitionModel) {
       return authorizedEmpiricalRuntimeStore.refresh(null);
     }
     const runtimePackage = authorizedEmpiricalRuntimeStore.getPackage();
     if (!runtimePackage) {
       try {
-        this.#currentEmpiricalBindings(masterData, runtimeCurrentness);
+        this.#currentEmpiricalBindings(masterData);
         const mechanicalBlockers = this.#currentMechanicalReadiness();
         return mechanicalBlockers.length > 0
           ? authorizedEmpiricalRuntimeStore.markBlockedNotReady('EMPIRICAL_MODELS_NOT_READY', mechanicalBlockers)
@@ -127,9 +127,7 @@ export class EngineeringModelStore {
       }
     }
     try {
-      const refreshed = authorizedEmpiricalRuntimeStore.refresh(
-        this.#currentEmpiricalBindings(masterData, runtimeCurrentness),
-      );
+      const refreshed = authorizedEmpiricalRuntimeStore.refresh(this.#currentEmpiricalBindings(masterData));
       if (!refreshed.calculationEligible) return refreshed;
       const blockers = this.#currentEmpiricalReadiness(masterData, runtimePackage);
       return blockers.length > 0
@@ -148,9 +146,9 @@ export class EngineeringModelStore {
     return authorizedEmpiricalRuntimeStore.markStale(reason, [{ datasetVersion }]);
   }
 
-  executeConfiguredAuthorized(masterData, runtimeCurrentness = null) {
+  executeConfiguredAuthorized(masterData) {
     this.#requireActiveModels();
-    this.refreshAuthorizedEmpiricalPackage(masterData, runtimeCurrentness);
+    this.refreshAuthorizedEmpiricalPackage(masterData);
     const runtimePackage = authorizedEmpiricalRuntimeStore.requireCurrentPackage();
     const execution = engineeringSupportLoadStore.calculateAuthorized({
       schema: AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_REQUEST_SCHEMA,
@@ -175,7 +173,7 @@ export class EngineeringModelStore {
       : authorizedEmpiricalRuntimeStore.refresh(null);
   }
 
-  #currentEmpiricalBindings(masterData, runtimeCurrentness = null) {
+  #currentEmpiricalBindings(masterData) {
     this.#requireActiveModels();
     const profile = projectDataStore.getProfile();
     const sourceDatasetHash = sha256(this.#dataset.sourceSha256, 'dataset.sourceSha256');
@@ -191,7 +189,7 @@ export class EngineeringModelStore {
       pipingClass: sha256(masterData?.pipingClass?.sourceHash, 'masterData.pipingClass.sourceHash'),
       componentWeight: sha256(masterData?.weight?.sourceHash, 'masterData.weight.sourceHash'),
     });
-    const basisKey = this.#empiricalBindingBasisKey(runtimeCurrentness, masterSourceHashes);
+    const basisKey = this.#empiricalBindingBasisKey(masterSourceHashes);
     if (basisKey && this.#empiricalBindingCache?.basisKey === basisKey) {
       this.#performanceMetrics.empiricalBindingCacheHits += 1;
       return this.#empiricalBindingCache.bindings;
@@ -217,17 +215,14 @@ export class EngineeringModelStore {
     return bindings;
   }
 
-  #empiricalBindingBasisKey(runtimeCurrentness, masterSourceHashes) {
-    const masterRevisions = relevantMasterRevisions(runtimeCurrentness?.masterRevisions);
-    if (!masterRevisions) return null;
+  #empiricalBindingBasisKey(masterSourceHashes) {
     const projectRuntimeRevision = projectDataStore.getRuntimeRevision?.();
     if (!nonnegativeInteger(projectRuntimeRevision)) return null;
     return JSON.stringify([
       this.#modelRuntimeRevision,
       projectRuntimeRevision,
-      masterRevisions.lineList,
-      masterRevisions.pipingClass,
-      masterRevisions.weight,
+      this.#dataset?.datasetId ?? null,
+      this.#dataset?.version ?? null,
       masterSourceHashes.dataset,
       masterSourceHashes.lineList,
       masterSourceHashes.pipingClass,
@@ -401,16 +396,6 @@ function nullableVersion(value) {
   if (Number.isInteger(value)) return value;
   if (typeof value === 'string' && value.length > 0 && value.trim() === value) return value;
   fail('dataset.version must be null, an integer, or a non-empty trimmed string.', 'EMPIRICAL_RUNTIME_VERSION_INVALID');
-}
-
-function relevantMasterRevisions(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const result = {
-    lineList: value.lineList,
-    pipingClass: value.pipingClass,
-    weight: value.weight,
-  };
-  return Object.values(result).every(nonnegativeInteger) ? result : null;
 }
 
 function nonnegativeInteger(value) {

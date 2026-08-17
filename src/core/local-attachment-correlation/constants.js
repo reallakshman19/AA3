@@ -17,7 +17,7 @@ export const LOAD_BASES = Object.freeze({
 export const STRESS_COMPONENTS = Object.freeze([
   'SIGMA_X', 'SIGMA_THETA', 'SIGMA_R', 'TAU_XTHETA',
 ]);
-export const STRESS_CLASSES = Object.freeze(['MEMBRANE', 'BENDING']);
+export const STRESS_CLASSES = Object.freeze(['MEMBRANE', 'BENDING', 'SHEAR']);
 export const SURFACES = Object.freeze(['INNER', 'OUTER', 'MID']);
 export const QUALIFICATION_STATES = Object.freeze({
   ACCEPTED: 'ACCEPTED',

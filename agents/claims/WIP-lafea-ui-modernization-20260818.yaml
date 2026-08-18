@@ -1,0 +1,26 @@
+schema: AgentClaim.v1
+pr_or_wip: WIP-lafea-ui-modernization-20260818
+claim_state: ACTIVE
+files:
+  exact:
+    - src/workspace/lafea-guided-workflow-view.js
+    - src/workspace/lafea-ui-status.js
+    - src/workspace/lafea-guided-workbench-styles.js
+    - scripts/lafea-ui-formal-presentation-check.mjs
+  prefixes:
+    - src/workspace/lafea-
+    - e2e/lafea-
+authority_domains:
+  - UI_PRESENTATION
+  - ENGINEERING_STATUS_COMMUNICATION
+claim_modes:
+  - COORDINATED
+  - SHARED_READ
+excluded_authority:
+  - SOLVER_MECHANICS
+  - MESH_QUALITY_THRESHOLDS
+  - NUMERICAL_QUALIFICATION
+  - LIFECYCLE_AUTHORITY
+  - RELEASE_AUTHORITY
+  - TRUST_ROOT
+last_verified_head: 134b43c4cd09139d3b6067223576ccdad653f07e

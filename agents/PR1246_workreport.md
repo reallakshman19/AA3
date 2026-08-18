@@ -14,14 +14,14 @@ PR: #1246 (draft)
 BRANCH: agent/lafea4-tech13-hij-salvage-20260818
 MAIN_HEAD_LAST_CHECKED: 585a897afa0f5c9799cb68a58de00a55808062b3
 MERGE_BASE: 585a897afa0f5c9799cb68a58de00a55808062b3
-REPORT_BASIS_HEAD: 835ae059071f84324c58492105bf2d916798969e
 ENGINEERING_J_HEAD: 8ec39d9eb852edb65f165fcbd9f4dcbc43407881
+REPORT_HEAD_POLICY: THIS_FILE_DOES_NOT_SELF_BIND_TO_ITS_OWN_COMMIT_SHA
 GROUNDING_EPOCH: GE-TECH13-20260818-01
 APPENDIX_A_STATUS: PASS_97_100
 CURRENT_STAGE: TECH-13J_EXACT_HEAD_VALIDATION
 CURRENT_BLOCKER: PRODUCTION_BUNDLE_CHUNK_CEILING
 HIGHEST_RISK: overstating focused TECH-13 H/I/J qualification before direct execution
-EXACT_NEXT_ACTION: observe hosted workflows on this report-only successor of 8ec39d9e; preserve shell/build evidence exactly; keep focused H/I/J checks NOT_RUN unless directly executed; do not activate trust root or merge.
+EXACT_NEXT_ACTION: observe hosted workflows on the current report-only successor of engineering head 8ec39d9e; preserve shell/build evidence exactly; keep focused H/I/J checks NOT_RUN unless directly executed; do not activate trust root or merge.
 ```
 
 ## Handover in 60 Seconds
@@ -185,4 +185,3 @@ Do not activate or merge.
 - I salvage: `5d7f0c67828c2493bc7691f4696326c64eb37309`.
 - H/I/J pre-validation checkpoint: `60118a9a1f9ead6670f49217b6f932fe0f7447f7`.
 - J direct-define engineering head: `8ec39d9eb852edb65f165fcbd9f4dcbc43407881`.
-- J validation report checkpoints: `dd4f6585f9bc10560a0d20dc6d95694ac38d68d6`, `4fc8806855fa5faf21adc05561884ebf905739ce`, `1405d3718e756a218169941a968cffa3f9f9f05f`, `835ae059071f84324c58492105bf2d916798969e`.

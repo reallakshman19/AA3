@@ -63,6 +63,14 @@ assert.equal(areas[2].targetStep.stepId, 'RUN');
 assert.equal(areas[3].status, 'NOT_STARTED');
 assert.equal(workflow.steps[0].status, 'BLOCKED');
 
+const mutableWorkflow = {
+  schema: 'lafea-guided-workflow/v1',
+  steps: workflow.steps.map((value) => ({ ...value, reasons: [...value.reasons] })),
+};
+buildLafeaWorkflowAreaPresentation(mutableWorkflow);
+assert.equal(Object.isFrozen(mutableWorkflow.steps[0]), false, 'presentation must not freeze canonical caller state');
+assert.equal(Object.isFrozen(mutableWorkflow.steps[0].reasons), false, 'presentation must not freeze canonical reason arrays');
+
 const allComplete = buildLafeaWorkflowAreaPresentation({
   schema: 'lafea-guided-workflow/v1',
   steps: workflow.steps.map((value) => ({ ...value, status: 'COMPLETE', reasons: [] })),

@@ -46,19 +46,17 @@ export function buildLafeaWorkflowAreaPresentation(workflow) {
   }
   const byId = new Map(workflow.steps.map((step) => [step.stepId, step]));
   return Object.freeze(AREA_DEFINITIONS.map((definition) => {
-    const steps = definition.stepIds.map((stepId) => requireStep(byId, stepId));
-    const status = aggregateStatus(steps);
-    const targetStep = selectTargetStep(steps);
-    return deepFreeze({
+    const steps = Object.freeze(definition.stepIds.map((stepId) => requireStep(byId, stepId)));
+    return Object.freeze({
       schema: LAFEA_WORKFLOW_AREA_SCHEMA,
       areaId: definition.areaId,
       label: definition.label,
-      status,
+      status: aggregateStatus(steps),
       steps,
-      targetStep,
-      reasons: unique(steps
+      targetStep: selectTargetStep(steps),
+      reasons: Object.freeze(unique(steps
         .filter((step) => step.status !== 'COMPLETE')
-        .flatMap((step) => step.reasons)),
+        .flatMap((step) => step.reasons))),
     });
   }));
 }
@@ -86,10 +84,4 @@ function requireStep(byId, stepId) {
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
-}
-
-function deepFreeze(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-  Object.values(value).forEach(deepFreeze);
-  return Object.freeze(value);
 }

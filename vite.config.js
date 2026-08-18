@@ -1,7 +1,15 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
 
+import {
+  computeLafea4Tech13ImplementationFingerprint,
+} from './scripts/lib/lafea4-tech13-implementation-fingerprint.mjs';
+
 const buildTime = new Date().toISOString();
+const tech13Implementation = computeLafea4Tech13ImplementationFingerprint({
+  rootDir: fileURLToPath(new URL('.', import.meta.url)),
+});
+process.env.VITE_LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT = tech13Implementation.fingerprint;
 
 const PURE_LAFEA_MESHING_WORKSPACE_MODULES = new Set([
   '/src/workspace/lafea-analysis-mesh-evidence-v2.js',
@@ -122,17 +130,8 @@ export function manualChunk(id) {
   if (source.includes('vite/preload-helper')) return 'runtime';
   if (source.includes('/node_modules/three/examples/')) return 'vendor-three-examples';
   if (source.includes('/node_modules/three/')) return 'vendor-three-core';
-  // Keep xlsx on Rollup's existing dynamic-import boundary; it is already a
-  // large isolated chunk and must not be folded into the generic leaf vendor.
   if (source.includes('/node_modules/xlsx/')) return undefined;
-  // Same treatment for the ACCDB reader stack. It is reached only through the
-  // dynamic import in caesar-accdb-reader-core.js, i.e. only once a user
-  // actually picks an .accdb file. Folding it into the eager `vendor` chunk
-  // would ship ~230 KB of Access parsing to every page load; leaving it on
-  // Rollup's dynamic boundary keeps it lazy.
   if (ACCDB_READER_PACKAGE_PATHS.some((path) => source.includes(path))) return undefined;
-  // Dependency-only partition. Workspace modules remain graph-owned below so
-  // this cannot create controller/store evaluation-order cycles.
   if (source.includes('/node_modules/')) return 'vendor';
   if (source.includes('/src/core/element-fea/')) return 'core-element-fea';
   if (source.includes('/src/core/local-continuum/')) return 'core-local-continuum';
@@ -160,16 +159,10 @@ export function manualChunk(id) {
   if (source.includes('/src/calc-workspace/')) return 'cii-standalone-core';
   if (source.includes('/src/vendors/')) return 'vendor-integrations';
   if (source.includes('/src/utils/') || source.includes('/src/mocks/')) return 'application-support';
-  // These exact paths are stateless LAFEA meshing contracts/producers. Keeping
-  // the exception explicit avoids pulling controllers, stores, views, or other
-  // singleton-bearing workspace modules into a forced chunk.
   if ([...PURE_LAFEA_MESHING_WORKSPACE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-workbench-governance';
   }
-  // This helper owns no controller/store/singleton state. Splitting its I/O and
-  // style dependencies gives the graph a safe leaf boundary without forcing
-  // the LAFEA workbench controller itself into a manual chunk.
   if (source.endsWith('/src/workspace/lafea-workbench-controller-io.js')) {
     return 'lafea-workbench-io';
   }
@@ -187,9 +180,6 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/viewport-interaction/topology-edit-endpoint-affordance-runtime.js')) {
     return 'topology-edit-r1-pure-presentation';
   }
-  // Fidelity evidence publication is a stateless projection to host datasets.
-  // Keep it out of the large stateful SJSON controller chunk while leaving the
-  // controller/backend lifecycle under Rollup graph-aware ownership.
   if (source.endsWith('/src/workspace/topology-edit/topology-edit-sjson-fidelity-evidence-v2.js')) {
     return 'topology-edit-sjson-evidence';
   }
@@ -200,39 +190,17 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/support-load-viewport-callout-projection.js')) {
     return 'workspace-viewport-engineering-projections';
   }
-  // These modules are pure event validation and presentation projection. They
-  // own no controller, store, mutable singleton, or runtime resource, so they
-  // form a safe leaf boundary for the LFEA-to-3D-Edit integration.
   if (source.endsWith('/src/workspace/event-topics.js')
     || source.endsWith('/src/workspace/lafea-support-actions-panel.js')) {
     return 'workspace-event-presentation-contracts';
   }
-  // Import-free static shell CSS is a safe presentation leaf. Keep the
-  // application controller/layout graph under Rollup ownership while moving
-  // only this large string literal out of the entry chunk.
   if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
     return 'application-shell-static-styles';
   }
-  // PR #1016 adds a bounded set of read-only views, immutable qualification
-  // custody, and derived readiness/release projections. These modules export
-  // functions/contracts only; they own no workbench controller, store, mounted
-  // viewport, or top-level mutable singleton. Keeping them in a dedicated leaf
-  // chunk reduces the entry chunk without manually partitioning the stateful
-  // workbench composition graph.
   if ([...PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-workbench-governance';
   }
-  // A handful of /src/core/lafea-meshing/ probes import this pure hash helper
-  // straight from the workspace layer. Left unrouted, Rollup follows that
-  // exclusive-dependent rule and pulls it into 'lafea-workbench-governance',
-  // which then makes 'core-application' depend on 'lafea-workbench-governance'
-  // for it while 'lafea-workbench-governance' independently depends on
-  // 'core-application' for LAFEA3_QUALIFIED_MESH_QUALITY_POLICY. That mutual
-  // chunk cycle reproduces "Cannot access '<binding>' before initialization"
-  // on boot (verified with a real browser load). This module only imports
-  // from core/shared-primitives, so routing it alongside its own dependency
-  // breaks the cycle without touching any workspace/core layering.
   if (source.endsWith('/src/workspace/lafea-canonical-sha256.js')) {
     return 'core-application';
   }
@@ -244,43 +212,15 @@ export function manualChunk(id) {
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'linear-piping-authority';
   }
-
-  // The Phase-1 pre-flight core is an indexed, DOM-free, clock-free leaf stack.
-  // scripts/lafea-preflight-phase1-indexed-model-check.mjs asserts both halves of
-  // what makes this split safe: these modules create no DOM and read no ambient
-  // clock, and none of them imports the live UI, the review surface or the
-  // application entry point. The dependency therefore runs one way, so giving
-  // them their own chunk cannot reorder evaluation of a stateful workspace
-  // controller. Splitting them keeps the main chunk under the production
-  // ceiling asserted by scripts/bundle-chunk-check.mjs.
   if (source.includes('/src/workspace/lafea-preflight-phase1-')) {
     return 'lafea-preflight-phase1';
   }
-
-  // Pure CSS-string leaf: a single exported function returning a template
-  // literal, no top-level state, no DOM access, no singleton. Its only
-  // consumer (workspace-layout.js) calls it and inserts the returned string,
-  // so splitting it changes nothing about evaluation order.
-  // Style leaves (see STYLE_LEAF_MODULES). Grouping them cannot reorder
-  // evaluation of a stateful workspace controller, and it keeps the entry
-  // chunk under the ceiling asserted by scripts/bundle-chunk-check.mjs.
   if (STYLE_LEAF_MODULES.some((modulePath) => source.endsWith(modulePath))) {
     return 'application-shell-css';
   }
-  // Largest module in the entry chunk, and a genuine leaf: no DOM, no
-  // module-level mutable state, no controller/store/view import.
-  //
-  // Splitting it was UNSAFE until the cyclic core-* chunks above were
-  // collapsed — with those cycles present the built app died on boot with
-  // "Cannot access '<binding>' before initialization" and rendered nothing,
-  // while bundle-chunk-check.mjs still reported PASS. Chunk SIZE is not
-  // evaluation ORDER: always verify a real browser boot after changing
-  // anything in this function.
   if (source.endsWith('/src/workspace/engineering-loads/empirical-beam-contact-runtime.js')) {
     return 'engineering-loads-beam-contact-runtime';
   }
-  // Rollup must own the complete stateful workspace graph so evaluation order
-  // follows static dependency analysis rather than filename-based partitions.
   if (source.includes('/src/workspace/')) return undefined;
   return undefined;
 }
@@ -300,9 +240,6 @@ export default defineConfig({
       },
       output: {
         manualChunks: manualChunk,
-        // Allow dependencies of a selected manual chunk to move with that
-        // chunk. Explicit-only ownership created circular chunks and TDZ
-        // failures in the generated ESM graph.
         onlyExplicitManualChunks: false,
       },
     },

@@ -1,4 +1,4 @@
-name: LAFEA B01 two-level affine coarse-space PCG temporary
+name: LAFEA B01 double-double exact residual temporary
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  two-level-affine:
+  double-double-residual:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -25,319 +25,96 @@ jobs:
       - run: npm ci
       - name: Verify exact PR head
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Install runner-only two-level affine coarse-space PCG
+      - name: Install runner-only double-double exact residual oracle
         shell: bash
         run: |
-          cat > src/core/local-continuum/two-level-affine-cg-temp.js <<'EOF'
-          import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
-          import {
-            sparseMatrixVectorCompensatedRaw,
-            sparseMatrixVectorRaw,
-          } from './sparse-matrix.js';
-
-          export function twoLevelAffineCgSolve(
-            matrix,
-            rightHandSide,
-            profile,
-            dofIdentities,
-            nodes,
-          ) {
-            requireInputs(matrix, rightHandSide, dofIdentities, nodes);
-            const diagonalScale = Math.max(1, ...matrix.diagonal.map((value) => Math.abs(value)));
-            const diagonalTolerance = tolerance(profile, 'choleskyPivot', diagonalScale);
-            const minimumDiagonal = Math.min(...matrix.diagonal);
-            if (!(minimumDiagonal > diagonalTolerance)) {
-              throw solverError('TWO_LEVEL_JACOBI_DIAGONAL_INVALID', minimumDiagonal);
-            }
-            const inverseSqrtDiagonal = matrix.diagonal.map((value) => 1 / Math.sqrt(value));
-            const scaledRightHandSide = rightHandSide.map(
-              (value, index) => value * inverseSqrtDiagonal[index],
-            );
-            const coarse = buildScaledAffineCoarseSpace(
-              matrix,
-              dofIdentities,
-              nodes,
-              inverseSqrtDiagonal,
-            );
-            const residualScale = Math.max(1, maxAbs(rightHandSide));
-            const residualTolerance = tolerance(profile, 'freeDofResidual', residualScale);
-            const convergenceTarget = residualTolerance / 10;
-            const iterationLimit = Math.min(50000, Math.max(1000, matrix.size * 16));
-
-            const scaledSolution = Array(matrix.size).fill(0);
-            const solutionCompensation = Array(matrix.size).fill(0);
-            const residualCompensation = Array(matrix.size).fill(0);
-            let residual = [...scaledRightHandSide];
-            let preconditioned = applyTwoLevelPreconditioner(coarse, residual);
-            let direction = [...preconditioned];
-            let rho = compensatedDot(residual, preconditioned);
-            let iterations = 0;
-            let originalResidualInfinity = maxAbs(rightHandSide);
-            if (!(rho > 0) || !Number.isFinite(rho)) {
-              throw solverError('TWO_LEVEL_AFFINE_INITIAL_PRODUCT_INVALID', rho);
-            }
-
-            while (iterations < iterationLimit) {
-              const scaledAction = scaledMatrixVector(
-                matrix,
-                direction,
-                inverseSqrtDiagonal,
-                false,
-              );
-              const curvature = compensatedDot(direction, scaledAction);
-              if (!(curvature > 0) || !Number.isFinite(curvature)) {
-                throw solverError('TWO_LEVEL_AFFINE_NONPOSITIVE_CURVATURE', curvature);
-              }
-              const alpha = rho / curvature;
-              for (let index = 0; index < matrix.size; index += 1) {
-                kahanAdd(scaledSolution, solutionCompensation, index, alpha * direction[index]);
-                kahanAdd(residual, residualCompensation, index, -alpha * scaledAction[index]);
-              }
-              iterations += 1;
-              const recursiveResidualInfinity = maxAbs(residual);
-              if (iterations % 100 === 0 || recursiveResidualInfinity <= convergenceTarget) {
-                const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);
-                const exact = exactOriginalResidual(matrix, rightHandSide, solution);
-                originalResidualInfinity = maxAbs(exact);
-                if (originalResidualInfinity <= convergenceTarget) {
-                  return result(
-                    solution,
-                    iterations,
-                    iterationLimit,
-                    residualScale,
-                    residualTolerance,
-                    convergenceTarget,
-                    originalResidualInfinity,
-                    diagonalScale,
-                    diagonalTolerance,
-                    matrix.diagonal,
-                    coarse,
-                  );
-                }
-              }
-              preconditioned = applyTwoLevelPreconditioner(coarse, residual);
-              const nextRho = compensatedDot(residual, preconditioned);
-              if (!(nextRho > 0) || !Number.isFinite(nextRho)) {
-                throw solverError('TWO_LEVEL_AFFINE_RESIDUAL_PRODUCT_INVALID', nextRho);
-              }
-              const beta = nextRho / rho;
-              rho = nextRho;
-              for (let index = 0; index < matrix.size; index += 1) {
-                direction[index] = preconditioned[index] + beta * direction[index];
-              }
-            }
-
-            const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);
-            originalResidualInfinity = maxAbs(exactOriginalResidual(matrix, rightHandSide, solution));
-            if (originalResidualInfinity > convergenceTarget) {
-              throw solverError(
-                'TWO_LEVEL_AFFINE_DID_NOT_CONVERGE',
-                `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,
-              );
-            }
-            return result(
-              solution,
-              iterations,
-              iterationLimit,
-              residualScale,
-              residualTolerance,
-              convergenceTarget,
-              originalResidualInfinity,
-              diagonalScale,
-              diagonalTolerance,
-              matrix.diagonal,
-              coarse,
-            );
-          }
-
-          function buildScaledAffineCoarseSpace(matrix, identities, nodes, inverseSqrtDiagonal) {
-            const nodeMap = new Map(nodes.map((node) => [String(node.nodeId), node]));
-            const xs = nodes.map((node) => node.x);
-            const ys = nodes.map((node) => node.y);
-            const xMid = (Math.min(...xs) + Math.max(...xs)) / 2;
-            const yMid = (Math.min(...ys) + Math.max(...ys)) / 2;
-            const xScale = Math.max(1, (Math.max(...xs) - Math.min(...xs)) / 2);
-            const yScale = Math.max(1, (Math.max(...ys) - Math.min(...ys)) / 2);
-            const physical = Array.from({ length: 6 }, () => Array(matrix.size).fill(0));
-            identities.forEach((identity, index) => {
-              const split = identity.lastIndexOf(':');
-              const nodeId = identity.slice(0, split);
-              const axis = identity.slice(split + 1);
-              const node = nodeMap.get(nodeId);
-              if (!node || !['UX', 'UY'].includes(axis)) {
-                throw new TypeError(`Invalid affine coarse-space DOF ${identity}.`);
-              }
-              const x = (node.x - xMid) / xScale;
-              const y = (node.y - yMid) / yScale;
-              const offset = axis === 'UX' ? 0 : 3;
-              physical[offset][index] = 1;
-              physical[offset + 1][index] = x;
-              physical[offset + 2][index] = y;
-            });
-            const basis = physical.map((vector) => vector.map(
-              (value, index) => value / inverseSqrtDiagonal[index],
-            ));
-            const actions = basis.map((vector) => scaledMatrixVector(
-              matrix,
-              vector,
-              inverseSqrtDiagonal,
-              false,
-            ));
-            const gram = basis.map((left) => actions.map((right) => compensatedDot(left, right)));
-            const factor = denseCholesky(gram);
-            return { basis, gram, factor, dimension: basis.length };
-          }
-
-          function applyTwoLevelPreconditioner(coarse, residual) {
-            const coarseRhs = coarse.basis.map((basis) => compensatedDot(basis, residual));
-            const alpha = denseCholeskySolve(coarse.factor, coarseRhs);
-            return residual.map((value, index) => {
-              let corrected = value;
-              for (let mode = 0; mode < coarse.dimension; mode += 1) {
-                corrected += coarse.basis[mode][index] * alpha[mode];
-              }
-              return corrected;
-            });
-          }
-
-          function denseCholesky(matrix) {
-            const n = matrix.length;
-            const lower = Array.from({ length: n }, () => Array(n).fill(0));
-            for (let i = 0; i < n; i += 1) {
-              for (let j = 0; j <= i; j += 1) {
-                let sum = matrix[i][j];
-                for (let k = 0; k < j; k += 1) sum -= lower[i][k] * lower[j][k];
-                if (i === j) {
-                  if (!(sum > 0) || !Number.isFinite(sum)) {
-                    throw solverError('TWO_LEVEL_AFFINE_COARSE_NOT_SPD', `${i}:${sum}`);
-                  }
-                  lower[i][j] = Math.sqrt(sum);
-                } else {
-                  lower[i][j] = sum / lower[j][j];
-                }
-              }
-            }
-            return lower;
-          }
-
-          function denseCholeskySolve(lower, rhs) {
-            const n = rhs.length;
-            const y = Array(n).fill(0);
-            for (let i = 0; i < n; i += 1) {
-              let value = rhs[i];
-              for (let j = 0; j < i; j += 1) value -= lower[i][j] * y[j];
-              y[i] = value / lower[i][i];
-            }
-            const x = Array(n).fill(0);
-            for (let i = n - 1; i >= 0; i -= 1) {
-              let value = y[i];
-              for (let j = i + 1; j < n; j += 1) value -= lower[j][i] * x[j];
-              x[i] = value / lower[i][i];
-            }
-            return x;
-          }
-
-          function scaledMatrixVector(matrix, scaledVector, inverseSqrtDiagonal, compensated) {
-            const unscaled = scaledVector.map(
-              (value, index) => value * inverseSqrtDiagonal[index],
-            );
-            const action = compensated
-              ? sparseMatrixVectorCompensatedRaw(matrix, unscaled)
-              : sparseMatrixVectorRaw(matrix, unscaled);
-            return action.map((value, index) => value * inverseSqrtDiagonal[index]);
-          }
-
-          function unscaleSolution(scaledSolution, inverseSqrtDiagonal) {
-            return scaledSolution.map((value, index) => value * inverseSqrtDiagonal[index]);
-          }
-
-          function exactOriginalResidual(matrix, rhs, solution) {
-            const action = sparseMatrixVectorCompensatedRaw(matrix, solution);
-            return rhs.map((value, index) => value - action[index]);
-          }
-
-          function compensatedDot(left, right) {
-            let sum = 0;
-            let compensation = 0;
-            for (let index = 0; index < left.length; index += 1) {
-              const term = left[index] * right[index];
-              const next = sum + term;
-              compensation += Math.abs(sum) >= Math.abs(term)
-                ? (sum - next) + term
-                : (term - next) + sum;
-              sum = next;
-            }
-            return sum + compensation;
-          }
-
-          function kahanAdd(values, compensation, index, increment) {
-            const corrected = increment - compensation[index];
-            const next = values[index] + corrected;
-            compensation[index] = (next - values[index]) - corrected;
-            values[index] = next;
-          }
-
-          function result(solution, iterations, iterationLimit, residualScale,
-            residualTolerance, convergenceTarget, finalResidualInfinity,
-            diagonalScale, diagonalTolerance, diagonal, coarse) {
-            const minimumDiagonal = Math.min(...diagonal);
-            const maximumDiagonal = Math.max(...diagonal);
-            return {
-              solution: solution.map((value) => canonicalNumber(value, 'two-level affine displacement')),
-              evidence: {
-                method: 'DETERMINISTIC_JACOBI_PCG',
-                algorithm: 'TWO_LEVEL_AFFINE_COARSE_SPACE_PCG_DIAGNOSTIC',
-                preconditioner: 'SYMMETRIC_JACOBI_PLUS_AFFINE_COARSE_SPACE',
-                coarseDimension: coarse.dimension,
-                iterationLimit,
-                iterations,
-                residualScale: canonicalNumber(residualScale),
-                finalResidualInfinity: canonicalNumber(finalResidualInfinity),
-                convergenceTarget: canonicalNumber(convergenceTarget),
-                residualTolerance: canonicalNumber(residualTolerance),
-                diagonalScale: canonicalNumber(diagonalScale),
-                diagonalTolerance: canonicalNumber(diagonalTolerance),
-                minimumDiagonal: canonicalNumber(minimumDiagonal),
-                maximumDiagonal: canonicalNumber(maximumDiagonal),
-                diagonalRatio: canonicalNumber(minimumDiagonal / maximumDiagonal),
-                accepted: true,
-              },
-            };
-          }
-
-          function requireInputs(matrix, rhs, identities, nodes) {
-            if (!matrix || !Number.isInteger(matrix.size) || matrix.size < 1
-              || !Array.isArray(rhs) || rhs.length !== matrix.size
-              || !Array.isArray(identities) || identities.length !== matrix.size
-              || !Array.isArray(nodes) || !nodes.length) {
-              throw new TypeError('Two-level affine PCG requires the continuum sparse system and node coordinates.');
-            }
-          }
-
-          function solverError(code, value) {
-            const error = new Error(`${code}: ${value}`);
-            error.code = code;
-            return error;
-          }
-          EOF
-
           python - <<'PY'
           from pathlib import Path
-          p = Path('src/core/local-continuum/solver.js')
+
+          p = Path('src/core/local-continuum/sparse-matrix.js')
           s = p.read_text()
-          old = "import { jacobiEquilibratedCgSolve } from './jacobi-equilibrated-cg.js';\n"
-          new = old + "import { twoLevelAffineCgSolve } from './two-level-affine-cg-temp.js';\n"
+          marker = "export function sparseMatrixScale(matrix) {\n"
+          helper = r'''export function sparseMatrixVectorDoubleDoubleRaw(matrix, vector) {
+  requireCsr(matrix);
+  if (!Array.isArray(vector) || vector.length !== matrix.size) {
+    throw new TypeError('Sparse matrix-vector dimensions differ.');
+  }
+  const output = Array(matrix.size).fill(0);
+  for (let row = 0; row < matrix.size; row += 1) {
+    const partials = [];
+    for (let offset = matrix.rowPointers[row];
+      offset < matrix.rowPointers[row + 1]; offset += 1) {
+      const left = matrix.values[offset];
+      const right = vector[matrix.columnIndices[offset]];
+      const product = left * right;
+      addAccuratePartial(partials, product);
+      const error = twoProductError(left, right, product);
+      if (error !== 0) addAccuratePartial(partials, error);
+    }
+    let value = 0;
+    for (let index = partials.length - 1; index >= 0; index -= 1) value += partials[index];
+    output[row] = value;
+  }
+  return output;
+}
+
+const DOUBLE_SPLITTER = 134217729;
+
+function twoProductError(left, right, product) {
+  const leftSplit = DOUBLE_SPLITTER * left;
+  const leftHigh = leftSplit - (leftSplit - left);
+  const leftLow = left - leftHigh;
+  const rightSplit = DOUBLE_SPLITTER * right;
+  const rightHigh = rightSplit - (rightSplit - right);
+  const rightLow = right - rightHigh;
+  return ((leftHigh * rightHigh - product)
+    + leftHigh * rightLow
+    + leftLow * rightHigh)
+    + leftLow * rightLow;
+}
+
+function addAccuratePartial(partials, input) {
+  let value = input;
+  let write = 0;
+  for (let index = 0; index < partials.length; index += 1) {
+    let partial = partials[index];
+    if (Math.abs(value) < Math.abs(partial)) {
+      const swap = value;
+      value = partial;
+      partial = swap;
+    }
+    const high = value + partial;
+    const low = partial - (high - value);
+    if (low !== 0) {
+      partials[write] = low;
+      write += 1;
+    }
+    value = high;
+  }
+  partials.length = write;
+  partials.push(value);
+}
+
+'''
+          if s.count(marker) != 1:
+              raise RuntimeError('expected sparseMatrixScale marker')
+          p.write_text(s.replace(marker, helper + marker, 1))
+
+          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          s = p.read_text()
+          old = """import {\n  sparseMatrixVectorCompensatedRaw,\n  sparseMatrixVectorRaw,\n} from './sparse-matrix.js';\n"""
+          new = """import {\n  sparseMatrixVectorCompensatedRaw,\n  sparseMatrixVectorDoubleDoubleRaw,\n  sparseMatrixVectorRaw,\n} from './sparse-matrix.js';\n"""
           if s.count(old) != 1:
-              raise RuntimeError('expected equilibrated-CG import')
+              raise RuntimeError('expected sparse-matrix import block')
           s = s.replace(old, new, 1)
-          old = """    return jacobiEquilibratedCgSolve(\n      freeStiffness,\n      rightHandSide,\n      model.qualificationProfile,\n    );\n"""
-          new = """    return twoLevelAffineCgSolve(\n      freeStiffness,\n      rightHandSide,\n      model.qualificationProfile,\n      free.map((index) => mesh.dofOrdering[index]),\n      model.nodes,\n    );\n"""
+          old = "const action = sparseMatrixVectorCompensatedRaw(matrix, solution);"
+          new = "const action = sparseMatrixVectorDoubleDoubleRaw(matrix, solution);"
           if s.count(old) != 1:
-              raise RuntimeError('expected sparse equilibrated-CG call')
+              raise RuntimeError('expected exact residual action')
           p.write_text(s.replace(old, new, 1))
           PY
-          node --check src/core/local-continuum/two-level-affine-cg-temp.js
-          node --check src/core/local-continuum/solver.js
+          node --check src/core/local-continuum/sparse-matrix.js
+          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
       - name: Execute exact L4 near-incompressible B01 case
         shell: bash
         run: |

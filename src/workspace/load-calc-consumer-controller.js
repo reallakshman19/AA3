@@ -76,7 +76,7 @@ export class LoadCalcConsumerController {
       this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, () => { void this.refreshTopologyCheck(); }),
       this.eventBus.subscribe(TOPOLOGY_EVENTS.CHANGED, () => { void this.refreshTopologyCheck(); }),
       this.eventBus.subscribe(SUPPORT_RESTRAINT_EVENTS.CHANGED, () => { void this.refreshTopologyCheck(); }),
-      this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason, distribution }) => this.handleEngineeringChange(reason, distribution)),
+      this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason, distribution, topologyCheckAffected }) => this.handleEngineeringChange(reason, distribution, topologyCheckAffected)),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.FAILED, ({ message }) => this.handleFailure(message)),
       this.eventBus.subscribe(EVENT_TOPICS.LOAD_CALC_SUBTAB_REQUESTED, ({ tab }) => { this.selectTab(tab); this.render(); }),
       this.eventBus.subscribe(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CHANGED, ({ snapshot }) => {
@@ -109,7 +109,7 @@ export class LoadCalcConsumerController {
     if (datasetChanged) void this.refreshTopologyCheck();
   }
 
-  handleEngineeringChange(reason, distribution) {
+  handleEngineeringChange(reason, distribution, topologyCheckAffected) {
     if (reason === 'calculated') {
       this.message = distribution?.status === 'CALCULATED' ? 'Authorized calculation complete.' : 'Authorized calculation blocked; review the listed inputs.';
       if (distribution?.status === 'CALCULATED') this.selectTab('loads');
@@ -118,7 +118,8 @@ export class LoadCalcConsumerController {
     if (reason === 'master-data-changed') this.message = 'Master data changed; common seal, authorization and previous calculations require refresh.';
     if (reason === 'authorization-changed') this.message = availabilityMessage(engineeringModelStore.getEmpiricalAuthorizationState());
     this.render();
-    if (reason === 'project-data-changed' || reason === 'master-data-changed') {
+    if ((reason === 'project-data-changed' || reason === 'master-data-changed')
+        && topologyCheckAffected !== false) {
       void this.refreshTopologyCheck();
     }
   }

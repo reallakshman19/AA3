@@ -1,10 +1,34 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { EngineeringModelController, ENGINEERING_MODEL_EVENTS } from '../src/workspace/engineering-model-controller.js';
+import {
+  EngineeringModelController,
+  ENGINEERING_MODEL_EVENTS,
+  projectDataTopologyModelBasis,
+} from '../src/workspace/engineering-model-controller.js';
 import { engineeringModelStore } from '../src/workspace/engineering-model-store.js';
 
 function ready(dataset, selectedEntityId = '') {
   return { status: 'ready', dataset, selectedEntityId };
+}
+
+function projectField(value) { return { value }; }
+function projectProfile(overrides = {}) {
+  return {
+    topology: {
+      supportSiteGroupingToleranceMm: projectField(overrides.supportSiteGroupingToleranceMm ?? 0.1),
+      portMatchToleranceMm: projectField(overrides.portMatchToleranceMm ?? 1),
+      autoCarrierCoincidenceToleranceMm: projectField(overrides.autoCarrierCoincidenceToleranceMm ?? 1),
+      routeJoiningRules: projectField(overrides.routeJoiningRules ?? {
+        partition: 'branch-scoped-connected-components',
+        chainage: 'exact-port-topology',
+        sourceOrderAllowed: false,
+        degreeAboveTwo: 'BLOCKED',
+      }),
+    },
+    loadCalculation: {
+      gravityMPerS2: projectField(overrides.gravityMPerS2 ?? 9.80665),
+    },
+  };
 }
 
 function harness(dataset, distribution = null) {
@@ -99,7 +123,7 @@ test('same-reference snapshots retain distribution freshness checks', () => {
   } finally { state.restore(); }
 });
 
-test('project-data changes always rebuild, stale authorization, and publish change', () => {
+test('project-data change without initialized dependency basis conservatively rebuilds and requests topology refresh', () => {
   const dataset = { datasetId: 'dataset:1', version: 4 };
   const state = harness(dataset);
   try {
@@ -108,7 +132,62 @@ test('project-data changes always rebuild, stale authorization, and publish chan
     assert.deepEqual(state.calls.rebuild, [dataset, dataset]);
     assert.deepEqual(state.calls.stale, [['PROJECT_DATA_CHANGED', 4]]);
     assert.equal(state.calls.refresh, 2);
-    assert.deepEqual(state.calls.published, [[ENGINEERING_MODEL_EVENTS.CHANGED, { reason: 'project-data-changed' }]]);
+    assert.deepEqual(state.calls.published, [[ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'project-data-changed',
+      topologyCheckAffected: true,
+      topologyModelRebuilt: true,
+    }]]);
+  } finally { state.restore(); }
+});
+
+test('load-only Project Data change skips support-route rebuild but still stales and refreshes empirical authority', () => {
+  const dataset = { datasetId: 'dataset:1', version: 4 };
+  const base = projectProfile();
+  const state = harness(dataset);
+  state.controller.projectTopologyModelBasis = projectDataTopologyModelBasis(base);
+  try {
+    state.controller.handleProjectDataChanged({ profile: projectProfile({ gravityMPerS2: 9.7 }) });
+    assert.deepEqual(state.calls.rebuild, []);
+    assert.deepEqual(state.calls.stale, [['PROJECT_DATA_CHANGED', 4]]);
+    assert.equal(state.calls.refresh, 1);
+    assert.deepEqual(state.calls.published, [[ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'project-data-changed',
+      topologyCheckAffected: false,
+      topologyModelRebuilt: false,
+    }]]);
+  } finally { state.restore(); }
+});
+
+test('topology-policy Project Data change rebuilds support-route models once and requests topology refresh', () => {
+  const dataset = { datasetId: 'dataset:1', version: 4 };
+  const base = projectProfile();
+  const state = harness(dataset);
+  state.controller.projectTopologyModelBasis = projectDataTopologyModelBasis(base);
+  try {
+    state.controller.handleProjectDataChanged({ profile: projectProfile({ portMatchToleranceMm: 1.25 }) });
+    assert.deepEqual(state.calls.rebuild, [dataset]);
+    assert.deepEqual(state.calls.stale, [['PROJECT_DATA_CHANGED', 4]]);
+    assert.equal(state.calls.refresh, 1);
+    assert.deepEqual(state.calls.published, [[ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'project-data-changed',
+      topologyCheckAffected: true,
+      topologyModelRebuilt: true,
+    }]]);
+  } finally { state.restore(); }
+});
+
+test('master-data change never rebuilds support-route models and marks topology checker unaffected', () => {
+  const dataset = { datasetId: 'dataset:1', version: 4 };
+  const state = harness(dataset);
+  try {
+    state.controller.handleMasterDataChanged();
+    assert.deepEqual(state.calls.rebuild, []);
+    assert.deepEqual(state.calls.stale, [['MASTER_DATA_CHANGED', 4]]);
+    assert.equal(state.calls.refresh, 1);
+    assert.deepEqual(state.calls.published, [[ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'master-data-changed',
+      topologyCheckAffected: false,
+    }]]);
   } finally { state.restore(); }
 });
 

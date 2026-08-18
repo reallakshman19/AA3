@@ -30,7 +30,7 @@ const POLICY = deepFreeze({
       { anchorId: 'THETA_83', value: 83 },
     ],
     protectedBreakpoints: [90, 180, 270], targetPhase: 0.65,
-    backgroundBaseDivisions: 20, windowClearanceFraction: 0.3,
+    backgroundBaseDivisions: 20, windowClearanceFraction: 0.32,
   },
   mapping: {
     radialWindowStart: 20,

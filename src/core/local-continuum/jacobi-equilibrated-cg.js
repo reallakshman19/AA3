@@ -1,6 +1,7 @@
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
 import {
   sparseMatrixVectorCompensatedRaw,
+  sparseMatrixVectorDoubleDoubleRaw,
   sparseMatrixVectorRaw,
 } from './sparse-matrix.js';
 
@@ -143,7 +144,7 @@ function unscaleSolution(scaledSolution, inverseSqrtDiagonal) {
 }
 
 function exactOriginalResidual(matrix, rightHandSide, solution) {
-  const action = sparseMatrixVectorCompensatedRaw(matrix, solution);
+  const action = sparseMatrixVectorDoubleDoubleRaw(matrix, solution);
   return rightHandSide.map((value, index) => value - action[index]);
 }
 

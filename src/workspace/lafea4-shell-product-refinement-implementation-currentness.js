@@ -8,13 +8,16 @@ export const LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT_MISMATCH_CODE =
 const FINGERPRINT_PATTERN = /^sha256:[0-9a-f]{64}$/u;
 
 /**
- * Browser production accepts only Vite's build-time source fingerprint. The
- * global fallback exists solely for non-browser Node qualification after the
- * harness independently recomputes the exact source tree; it is never a
- * browser authority seam and cannot rescue a missing production build value.
+ * Browser production accepts only the source fingerprint injected through
+ * Vite's explicit `define` replacement. The global fallback exists solely for
+ * non-browser Node qualification after the harness independently recomputes
+ * the exact source tree; it is never a browser authority seam and cannot
+ * rescue a missing production build value.
  */
 export function currentLafea4Tech13ImplementationFingerprint() {
-  const buildValue = import.meta.env?.VITE_LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT ?? null;
+  const buildValue = typeof __LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT__ === 'string'
+    ? __LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT__
+    : null;
   const browserRuntime = typeof window !== 'undefined' && typeof document !== 'undefined';
   const harnessValue = browserRuntime
     ? null

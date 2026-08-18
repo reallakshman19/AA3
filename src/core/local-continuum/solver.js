@@ -372,7 +372,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
           residual = reliableResidual;
           break;
         }
-        if (recursiveResidualInfinity <= convergenceTarget || iterations % 100 === 0) {
+        if (recursiveResidualInfinity <= convergenceTarget) {
           residual = reliableResidual;
           preconditioned = applyJacobi(matrix.diagonal, residual);
           direction = [...preconditioned];

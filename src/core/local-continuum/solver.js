@@ -332,6 +332,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
   );
   const solution = Array(matrix.size).fill(0);
   const solutionCompensation = Array(matrix.size).fill(0);
+  const residualCompensation = Array(matrix.size).fill(0);
   let residual = [...rightHandSide];
   const initialResidualInfinity = maxAbs(residual);
   let finalResidualInfinity = initialResidualInfinity;
@@ -364,7 +365,11 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
         const nextSolution = solution[index] + correctedIncrement;
         solutionCompensation[index] = (nextSolution - solution[index]) - correctedIncrement;
         solution[index] = nextSolution;
-        residual[index] -= alpha * action[index];
+        const residualIncrement = -alpha * action[index];
+        const correctedResidualIncrement = residualIncrement - residualCompensation[index];
+        const nextResidual = residual[index] + correctedResidualIncrement;
+        residualCompensation[index] = (nextResidual - residual[index]) - correctedResidualIncrement;
+        residual[index] = nextResidual;
       }
       iterations += 1;
       const recursiveResidualInfinity = maxAbs(residual);
@@ -379,6 +384,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
         }
         if (recursiveResidualInfinity <= convergenceTarget) {
           residual = reliableResidual;
+          residualCompensation.fill(0);
           preconditioned = applyJacobi(matrix.diagonal, residual);
           direction = [...preconditioned];
           rho = dotVector(residual, preconditioned);

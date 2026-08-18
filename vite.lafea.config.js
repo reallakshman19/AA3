@@ -1,7 +1,15 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
 
+import {
+  computeLafea4Tech13ImplementationFingerprint,
+} from './scripts/lib/lafea4-tech13-implementation-fingerprint.mjs';
+
 const buildTime = new Date().toISOString();
+const tech13Implementation = computeLafea4Tech13ImplementationFingerprint({
+  rootDir: fileURLToPath(new URL('.', import.meta.url)),
+});
+process.env.VITE_LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT = tech13Implementation.fingerprint;
 
 /** Dedicated standalone LAFEA build target with graph-owned chunking. */
 export default defineConfig({

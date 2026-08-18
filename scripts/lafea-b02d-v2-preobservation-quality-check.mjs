@@ -1,0 +1,97 @@
+#!/usr/bin/env node
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {
+  generateLafeaB02dProbeStablePolarMeshV2,
+  lafeaB02dProbeStablePolarPolicyV2,
+  LAFEA_B02D_PROBE_STABLE_POLAR_POLICY_ID_V2,
+} from '../src/core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js';
+import {
+  canonicalProfile,
+  defaultProfileFields,
+  PROFILE_KINDS,
+} from '../src/core/lafea-profile-contract/index.js';
+import { qualifyLafeaAnalysisMesh } from '../src/workspace/lafea-analysis-mesh-quality.js';
+import { qualifyLafeaMeshTopologyV3 } from '../src/workspace/lafea-mesh-topology-qualification-v3.js';
+import { qualifyLafeaHighOrderJacobiansV3 } from '../src/workspace/lafea-high-order-jacobian-qualification-v3.js';
+
+const definition = JSON.parse(fs.readFileSync(
+  'validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json', 'utf8',
+));
+const policy = lafeaB02dProbeStablePolarPolicyV2();
+assert.equal(definition.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
+assert.equal(definition.productionOutputUsedToChooseDefinition, false);
+assert.equal(policy.policyId, LAFEA_B02D_PROBE_STABLE_POLAR_POLICY_ID_V2);
+assert.equal(policy.circumferentialAxis.backgroundBaseDivisions, 20);
+assert.equal(definition.fixedProbeMeshPolicy.circumferentialAxis.backgroundBaseDivisions, 20);
+assert.equal(policy.radialAxis.backgroundBaseDivisions, 6);
+assert.deepEqual(policy.levels.map((row) => row.h), [40, 20, 10, 5]);
+
+const records = [];
+for (const family of ['T3', 'T6', 'Q8']) {
+  for (const level of definition.globalResponseLadder.levels) {
+    const first = generateLafeaB02dProbeStablePolarMeshV2({
+      targetElementLength: level.h,
+      elementFamily: family,
+    });
+    const second = generateLafeaB02dProbeStablePolarMeshV2({
+      targetElementLength: level.h,
+      elementFamily: family,
+    });
+    assert.equal(first.semanticHash, second.semanticHash, `${family}/${level.levelId} deterministic output`);
+    assert.deepEqual(first.mesh, second.mesh, `${family}/${level.levelId} deterministic mesh`);
+    const quality = qualifyLafeaAnalysisMesh('LAFEA.3', first.mesh, meshProfile(family, level.h));
+    assert.notEqual(quality.worstStatus, 'BLOCK', `${family}/${level.levelId} quality BLOCK`);
+    assert.equal(qualifyLafeaMeshTopologyV3(first.mesh).qualification, 'PASS', `${family}/${level.levelId} topology`);
+    if (family !== 'T3') {
+      assert.equal(qualifyLafeaHighOrderJacobiansV3(first.mesh).qualification, 'PASS', `${family}/${level.levelId} high-order Jacobian`);
+    }
+    records.push({
+      family,
+      levelId: level.levelId,
+      h: level.h,
+      nodeCount: first.mesh.nodes.length,
+      elementCount: first.mesh.elements.length,
+      meshSemanticHash: first.semanticHash,
+      qualityWorstStatus: quality.worstStatus,
+      minimumScaledJacobian: metric(quality, 'SCALED_JACOBIAN'),
+      maximumAspectRatio: metric(quality, 'ASPECT_RATIO'),
+      minimumAngleDegrees: optionalMetric(quality, 'MINIMUM_ANGLE_DEGREES'),
+    });
+  }
+}
+const t3l1 = records.find((row) => row.family === 'T3' && row.levelId === 'L1');
+assert.ok(t3l1.minimumScaledJacobian > 0.2, JSON.stringify(t3l1));
+assert.ok(t3l1.maximumAspectRatio < 5, JSON.stringify(t3l1));
+
+console.log(JSON.stringify({
+  schema: 'lafea-b02d-v2-preobservation-quality-qualification/v1',
+  status: 'PASS',
+  definitionState: definition.definitionState,
+  productionOutputUsedToChooseDefinition: definition.productionOutputUsedToChooseDefinition,
+  policyId: policy.policyId,
+  v1Preserved: true,
+  responseObserved: false,
+  hardQualityThresholdsChanged: false,
+  records,
+  releaseAuthorityGranted: false,
+}, null, 2));
+
+function meshProfile(family, h) {
+  const fields = defaultProfileFields(PROFILE_KINDS.MESH);
+  return canonicalProfile(PROFILE_KINDS.MESH, {
+    schema: 'lafea-mesh-profile/v1',
+    profileIdentity: `B02D_V2_PREOBS_${family}_H${h}`,
+    sourceRevision: 'B02D-FROZEN-POLAR-V2-PREOBS',
+    semanticHash: undefined,
+    fields: { ...fields, continuumElement: family, globalTargetSize: h },
+  });
+}
+function metric(quality, name) {
+  const row = quality.gateResults.find((entry) => entry.metric === name);
+  assert.ok(row, name);
+  return row.value;
+}
+function optionalMetric(quality, name) {
+  return quality.gateResults.find((entry) => entry.metric === name)?.value ?? null;
+}

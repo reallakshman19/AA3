@@ -16,15 +16,20 @@ const files = fs.existsSync(ASSETS)
     })).sort((a, b) => b.bytes - a.bytes || a.name.localeCompare(b.name))
   : [];
 const main = files.find((row) => /^main-[^/]+\.js$/u.test(row.name)) ?? null;
-const view = files.find((row) => /^load-calc-consumer-view-[^/]+\.js$/u.test(row.name)) ?? null;
+const loadCalcView = files.find((row) => /^load-calc-consumer-view-[^/]+\.js$/u.test(row.name)) ?? null;
+const discretizationGeneration = files.find(
+  (row) => /^lafea-discretization-generation-[^/]+\.js$/u.test(row.name),
+) ?? null;
 const log = fs.existsSync(LOG) ? fs.readFileSync(LOG, 'utf8') : '';
 const circularWarnings = log.split(/\r?\n/u).filter((line) => /circular|cycle|tdz|before initialization/iu.test(line));
 const evidence = {
-  schema: 'lafea-bundle-build-size-evidence/v1',
+  schema: 'lafea-bundle-build-size-evidence/v2',
   hardCeilingBytes: CEILING,
   exactMainBaselineBytes: BASELINE,
   mainChunk: main,
-  loadCalcConsumerViewChunk: view,
+  loadCalcConsumerViewChunk: loadCalcView,
+  lafeaDiscretizationGenerationChunk: discretizationGeneration,
+  expectedBoundedChunksPresent: Boolean(loadCalcView && discretizationGeneration),
   reductionVsExactMainBytes: main ? BASELINE - main.bytes : null,
   remainingOverCeilingBytes: main ? Math.max(0, main.bytes - CEILING) : null,
   marginUnderCeilingBytes: main ? Math.max(0, CEILING - main.bytes) : null,
@@ -35,3 +40,7 @@ const evidence = {
 fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
 fs.writeFileSync(OUTPUT, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
 process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
+
+if (!main) throw new Error('BUNDLE_EVIDENCE_MAIN_CHUNK_MISSING');
+if (!loadCalcView) throw new Error('BUNDLE_EVIDENCE_LOAD_CALC_VIEW_CHUNK_MISSING');
+if (!discretizationGeneration) throw new Error('BUNDLE_EVIDENCE_DISCRETIZATION_GENERATION_CHUNK_MISSING');

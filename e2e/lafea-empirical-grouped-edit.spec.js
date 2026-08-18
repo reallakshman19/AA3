@@ -33,14 +33,14 @@ test('Empirical LAFEA.1 applies a load group atomically with one undo', async ({
   const nextX = String(Number(beforeX) + 11);
   const nextY = String(Number(beforeY) - 7);
   const historyBefore = await page.evaluate(() => {
-    const stage = globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages['LAFEA.1'];
+    const stage = globalThis.AnalysisWorkspace.getEmpiricalWorkbenchState().stages['LAFEA.1'];
     return { pastLength: stage.past.length, futureLength: stage.future.length };
   });
 
   await forceX.fill(nextX);
   await forceY.fill(nextY);
   const sourceBeforeApply = await page.evaluate((id) => {
-    const stage = globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages['LAFEA.1'];
+    const stage = globalThis.AnalysisWorkspace.getEmpiricalWorkbenchState().stages['LAFEA.1'];
     const row = stage.document.loadCases.find((entry) => entry.identity === id);
     return [row.force.value[0], row.force.value[1]];
   }, entityId);
@@ -61,7 +61,7 @@ test('Empirical LAFEA.1 applies a load group atomically with one undo', async ({
   await expect(refreshedY).toHaveValue(nextY);
 
   const stateAfter = await page.evaluate((id) => {
-    const stage = globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages['LAFEA.1'];
+    const stage = globalThis.AnalysisWorkspace.getEmpiricalWorkbenchState().stages['LAFEA.1'];
     const row = stage.document.loadCases.find((entry) => entry.identity === id);
     return {
       force: [row.force.value[0], row.force.value[1]],
@@ -87,7 +87,7 @@ test('Empirical LAFEA.1 applies a load group atomically with one undo', async ({
     `[data-role="lafea-governed-input"][data-descriptor-id="LAFEA.1.load.force.y"][data-entity-id="${entityId}"]`,
   )).toHaveValue(beforeY);
   const stateUndo = await page.evaluate((id) => {
-    const stage = globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages['LAFEA.1'];
+    const stage = globalThis.AnalysisWorkspace.getEmpiricalWorkbenchState().stages['LAFEA.1'];
     const row = stage.document.loadCases.find((entry) => entry.identity === id);
     return {
       force: [row.force.value[0], row.force.value[1]],

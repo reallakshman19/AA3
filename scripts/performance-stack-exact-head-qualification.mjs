@@ -10,7 +10,6 @@ const RUN_REPOSITORY_GATES = process.argv.includes('--repository-gates') || proc
 const RUN_BROWSER = process.argv.includes('--browser') || process.argv.includes('--full');
 const OUTPUT_PATH = process.env.PERF_STACK_REPORT_OUTPUT || 'reports/performance-stack-qualification.json';
 const QUALIFICATION_ONLY_PATHS = new Set([
-  'agents/WIP-performance-stack-qualification_workreport.md',
   'agents/PR1243_workreport.md',
   'scripts/performance-stack-exact-head-qualification.mjs',
 ]);

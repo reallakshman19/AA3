@@ -6,13 +6,64 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   flex:0 0 auto;
   color:#9fb8cf;
 }
+.lafea-guided-shell{
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:12px!important;
+}
+.lafea-guided-shell__nav{
+  position:sticky!important;
+  top:0!important;
+  z-index:8;
+  max-height:none!important;
+  overflow:visible!important;
+  display:block!important;
+  padding:8px 10px!important;
+  border-color:#26364d!important;
+  border-radius:8px!important;
+  background:#081322!important;
+}
+.lafea-guided-workflow{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:6px 12px!important;
+  align-items:center;
+}
+.lafea-guided-workflow>h2{display:none}
+.lafea-guided-workflow__areas{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px!important;
+}
+.lafea-guided-workflow__areas>li{min-width:0}
 .lafea-guided-workflow__area{
   grid-template-columns:18px minmax(0,1fr) auto!important;
+  min-height:40px;
+  padding:7px 9px!important;
 }
 .lafea-guided-workflow__icon{
   width:15px;
   height:15px;
   color:#7dd3fc;
+}
+.lafea-guided-workflow__reasons{
+  display:none!important;
+}
+.lafea-guided-workflow__technical{
+  display:none!important;
+}
+.lafea-guided-workflow__release{
+  align-self:center;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  white-space:nowrap;
+}
+.lafea-cae-workspace{
+  grid-template-columns:minmax(0,1fr) minmax(340px,380px)!important;
+  gap:14px!important;
+}
+.lafea-cae-workspace__viewport-card .lafea-workbench__svg{
+  min-height:520px!important;
 }
 .lafea-button--primary{
   min-height:34px!important;
@@ -153,6 +204,33 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   .lafea-cae-workspace__context>[data-guided-target="results"],
   .lafea-cae-workspace__context>.lafea-engineering-evidence-drawer{
     grid-column:1/-1;
+  }
+}
+@media (max-width:1100px){
+  .lafea-cae-workspace{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .lafea-cae-workspace__inspector{
+    position:static!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+}
+@media (max-width:760px){
+  .lafea-guided-workflow{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .lafea-guided-workflow__areas{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .lafea-guided-workflow__release{white-space:normal}
+  .lafea-cae-workspace__viewport-card .lafea-workbench__svg{
+    min-height:360px!important;
+  }
+}
+@media (max-width:520px){
+  .lafea-guided-workflow__areas{
+    grid-template-columns:minmax(0,1fr);
   }
 }
 `;

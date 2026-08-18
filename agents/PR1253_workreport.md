@@ -6,6 +6,7 @@
 - Trust root: NULL.
 - Solver/formulation/mesh thresholds: unchanged.
 - Merge authority: owner explicitly authorized on 2026-08-18.
+- Qualification trigger: workreport-only synchronize; production repair blob unchanged.
 
 ## RCA
 The parent-normal qualification receives governed analysis-mesh node records containing `{nodeId,x,y,z}`. The inverse cylindrical/curved-hole surface contracts intentionally accept a pure geometric point `{x,y,z}`. Passing the governed record directly caused `LAFEA_SHELL_CURVED_POINT_KEYS_INVALID` before any parent-normal mathematics could execute.

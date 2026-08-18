@@ -9,6 +9,7 @@
 - Exact base SHA: `134b43c4cd09139d3b6067223576ccdad653f07e`
 - Base tree: `ada5ac2bff34ab0ced6b2d8bdf81807f47696f23`
 - First implementation commit: `2b2e3a25a2842cd9c86ce5ace319b2393d536601`
+- Exact head observed by qualification workflow before this WorkReport update: `efb95eb8579164137cf7ad1815d9cf01c937fc3b`
 - Criticality: `ENGINEERING_CRITICAL`
 - PR state: `DRAFT`
 - Merge authority: `OWNER ONLY`
@@ -94,19 +95,27 @@ RISK-1256-01: semantic coupling remains possible because future qualified WRC av
 | Check | Status | Observation | Oracle |
 |---|---|---|---|
 | Exact current-main reread before branch creation | PASS | `main` = `134b43c4cd09139d3b6067223576ccdad653f07e` | GitHub branch API |
-| Exact current-main reread before WorkReport mutation | PASS | `main` remained `134b43c4cd09139d3b6067223576ccdad653f07e` | GitHub branch API |
+| Exact current-main rereads before subsequent mutation batches | PASS | `main` remained `134b43c4cd09139d3b6067223576ccdad653f07e` | GitHub branch API |
 | Open-PR changed-file overlap review | PASS | No direct overlap with #1211, #1187, #1118 | GitHub PR file lists |
 | First implementation PR diff structural review | PASS | Diff contains only intended analytical-content/CSS/e2e changes; no core calculation files | GitHub PR diff |
-| Standalone Playwright regression | NOT_RUN | Spec updated but no browser execution has been performed on exact PR head in this connector session | Playwright |
-| Empirical-tab browser visual/scroll verification | NOT_RUN | Requires browser execution against exact PR head | Chromium/Playwright/manual browser |
-| `scripts/lafea-workbench-check.mjs` | NOT_RUN | No repository execution environment attached to this connector session | Node runtime |
-| Full repository gate/build | NOT_RUN | No exact-head CI result observed yet | repository CI/build |
+| Exact-head/clean-tree workflow check | PASS | Workflow run `32169257961`, job `visible-workbench`, exact head verified | GitHub Actions |
+| Static and projection checks | PASS | Workflow step completed successfully | GitHub Actions |
+| Governed shell mesh compiler/execution custody checks | PASS | Workflow step completed successfully; no inherited solver break observed | GitHub Actions |
+| Standalone boundary inheritance check | PASS | Workflow step completed successfully | GitHub Actions |
+| Standalone LAFEA bundle build | PASS | Workflow step completed successfully | GitHub Actions |
+| Production Pages bundle build | PASS | Workflow step completed successfully | GitHub Actions |
+| Pinned Chromium installation | IN_PROGRESS | Workflow step still running at last inspection | GitHub Actions |
+| Stage-17 / production-shell visible UI proof | NOT_RUN | Pending behind Chromium installation at last inspection | GitHub Actions / Chromium |
+| Updated `e2e/lafea-standalone.spec.js` specifically | NOT_RUN | No evidence yet that this exact spec was executed by the observed workflow | Playwright |
+| Empirical-tab visual/scroll/import verification | NOT_RUN | Requires the pending exact-head browser proof or direct browser inspection | Chromium/Playwright/manual browser |
+| `scripts/lafea-workbench-check.mjs` as a separately identified command | NOT_RUN | Static workflow passed, but its command composition has not been individually attributed here | Node runtime |
+| Full qualification workflow | IN_PROGRESS | Static/build portions pass; browser portion pending | GitHub Actions |
 
-No `NOT_RUN` result is represented as `PASS`.
+No `NOT_RUN` or `IN_PROGRESS` result is represented as `PASS`.
 
 ## Current state
 
-The first coherent P0 slice is committed and PR #1256 is open as a draft. Source-level review confirms the change stays on the presentation side of the authority boundary.
+The first coherent P0 slice is committed and PR #1256 is open as a draft. Source-level review confirms the change stays on the presentation side of the authority boundary. Exact-head CI has passed its static, inherited engineering-custody, and bundle-build stages; browser qualification remains in progress.
 
 The visible defects addressed by this slice are:
 
@@ -121,11 +130,11 @@ The visible defects addressed by this slice are:
 - RISK-1256-02: per-scalar `Apply` buttons still dominate the form. A follow-on change should provide a transaction-level `Apply changes` interaction while preserving descriptor identity, validation, undo/redo, and source replacement semantics.
 - RISK-1256-03: analytical result hierarchy still needs a manual-calculation-style trace view (inputs → derived geometry/indices → equations → intermediate values → results → source/tolerance evidence) once qualified method authority exists.
 - RISK-1256-04: WRC pressure-index treatment, ellipsoidal approximation custody, WRC-specific parameters/interpolation, source-resolution tolerances, and method-validation tolerances remain engineering-method work and must not be implemented from guesses in this PR.
-- RISK-1256-05: exact browser behavior of page scrolling/import affordance remains unqualified until run on the exact head.
+- RISK-1256-05: exact browser behavior of page scrolling/import affordance remains unqualified until the pending exact-head browser proof completes.
 
 ## EXACT_NEXT_ACTION
 
-Run exact-head browser/source qualification for PR #1256. If the first slice passes, implement the next UI transaction slice: replace per-field `Apply` repetition with a governed dirty-form / `Apply changes` transaction without changing descriptor identity or calculation authority. Keep WRC engineering-method implementation isolated from this UI PR unless explicit, qualified authority is supplied.
+Complete exact-head browser qualification for PR #1256. If the first slice passes, implement the next UI transaction slice: replace per-field `Apply` repetition with a governed dirty-form / `Apply changes` transaction without changing descriptor identity or calculation authority. Keep WRC engineering-method implementation isolated from this UI PR unless explicit, qualified authority is supplied.
 
 ## Appendix A — Expert handover questionnaire
 

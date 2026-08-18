@@ -19,7 +19,7 @@ test.afterEach(() => {
   else delete globalThis.location;
 });
 
-test('P0 observability is disabled unless the explicit query authority is present', () => {
+test('P0 observability is disabled unless the explicit query authority is present', async () => {
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
     value: { search: '' },
@@ -31,6 +31,10 @@ test('P0 observability is disabled unless the explicit query authority is presen
   });
   assert.equal(result, 17);
   assert.equal(callCount, 1);
+  assert.equal(await measureNonFeaP0AsyncStage('not validated while disabled', async () => 19), 19,
+    'disabled measurement must preserve the previous direct-callback path');
+  assert.equal(measureNonFeaP0Stage('not validated while disabled', () => 21), 21,
+    'disabled synchronous measurement must preserve the previous direct-callback path');
   assert.equal(isNonFeaP0ObservabilityEnabled(), false);
   assert.deepEqual(readNonFeaP0StageDurations(), {});
   assert.deepEqual(readNonFeaP0OperationCounts(), {});
@@ -80,7 +84,7 @@ test('P0 async observability measures resolved work and counts each attempted st
   assert.ok(readNonFeaP0StageDurations().SJSON_SHA256 >= 0);
 });
 
-test('P0 observability rejects malformed evidence input', async () => {
+test('P0 observability rejects malformed evidence input when enabled', async () => {
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
     value: { search: '?nonFeaP0Evidence=1' },
@@ -88,8 +92,13 @@ test('P0 observability rejects malformed evidence input', async () => {
   assert.throws(() => recordNonFeaP0Duration('bad stage', 1), /stage ID/u);
   assert.throws(() => recordNonFeaP0Duration('FIT', Number.NaN), /duration/u);
   assert.throws(() => measureNonFeaP0Stage('FIT', null), /callback/u);
+  assert.throws(() => measureNonFeaP0Stage('bad stage', () => 1), /stage ID/u);
   await assert.rejects(
     () => measureNonFeaP0AsyncStage('FIT', null),
     /callback/u,
+  );
+  await assert.rejects(
+    () => measureNonFeaP0AsyncStage('bad stage', async () => 1),
+    /stage ID/u,
   );
 });

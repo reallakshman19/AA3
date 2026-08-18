@@ -245,6 +245,15 @@ export function manualChunk(id) {
     return 'linear-piping-authority';
   }
 
+  // Rollup-profiled at 32,589 rendered bytes on exact main. This module owns
+  // presentation/render functions only; it creates no store/controller/singleton
+  // at module load. Keep its stateful consumer controller graph-owned. Its only
+  // source dependency is the import-free topology gap policy. A real browser
+  // boot remains mandatory because generated chunk evaluation order is authority.
+  if (source.endsWith('/src/workspace/load-calc-consumer-view.js')) {
+    return 'load-calc-consumer-view';
+  }
+
   // The Phase-1 pre-flight core is an indexed, DOM-free, clock-free leaf stack.
   // scripts/lafea-preflight-phase1-indexed-model-check.mjs asserts both halves of
   // what makes this split safe: these modules create no DOM and read no ambient

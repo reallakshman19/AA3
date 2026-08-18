@@ -41,6 +41,8 @@ for (const family of ['T3', 'T6', 'Q8']) {
     assert.equal(first.semanticHash, second.semanticHash, `${family}/${level.levelId} deterministic output`);
     assert.deepEqual(first.mesh, second.mesh, `${family}/${level.levelId} deterministic mesh`);
     const quality = qualifyLafeaAnalysisMesh('LAFEA.3', first.mesh, meshProfile(family, level.h));
+    const nodeById = new Map(first.mesh.nodes.map((node) => [node.nodeId, node]));
+    const elementById = new Map(first.mesh.elements.map((element) => [element.elementId, element]));
     const record = {
       family,
       levelId: level.levelId,
@@ -56,7 +58,26 @@ for (const family of ['T3', 'T6', 'Q8']) {
       blockingElements: quality.elementResults
         .filter((row) => row.worstStatus === 'BLOCK')
         .slice(0, 10)
-        .map((row) => ({ elementId: row.elementId, metrics: row.metrics })),
+        .map((row) => {
+          const element = elementById.get(row.elementId);
+          return {
+            elementId: row.elementId,
+            metrics: row.metrics,
+            nodeIds: element?.nodeIds ?? [],
+            nodes: (element?.nodeIds ?? []).slice(0, family === 'Q8' ? 4 : 3).map((nodeId) => {
+              const node = nodeById.get(nodeId);
+              return {
+                nodeId,
+                x: node?.x ?? null,
+                y: node?.y ?? null,
+                radius: node ? Math.hypot(node.x, node.y) : null,
+                angleDegrees: node
+                  ? normalizedAngle(Math.atan2(node.y, node.x) * 180 / Math.PI)
+                  : null,
+              };
+            }),
+          };
+        }),
     };
     records.push(record);
     if (quality.worstStatus === 'BLOCK') {
@@ -102,4 +123,8 @@ function metric(quality, name) {
 }
 function optionalMetric(quality, name) {
   return quality.gateResults.find((entry) => entry.metric === name)?.value ?? null;
+}
+function normalizedAngle(value) {
+  const angle = value < 0 ? value + 360 : value;
+  return Math.abs(angle - 360) < 1e-10 ? 0 : angle;
 }

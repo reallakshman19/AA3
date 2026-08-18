@@ -10,23 +10,25 @@ if (!fs.existsSync(cli)) {
   process.exit(2);
 }
 
+function runPlaywright(args) {
+  const result = spawnSync(process.execPath, [cli, 'test', '--config=playwright.lafea-visible.config.js', ...args], {
+    cwd: root,
+    env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: '0' },
+    stdio: 'inherit',
+  });
+  if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
+}
+
 // Qualify the Empirical analytical surface independently before the inherited
 // LAFEA.3 B01/B02 production gate. The B01/B02 gate remains mandatory below;
 // this ordering only prevents an unrelated upstream blocker from suppressing
 // browser evidence for the analytical-only UI changed by this PR.
-const empiricalUi = spawnSync(process.execPath, [
-  cli,
-  'test',
-  '--config=playwright.lafea-visible.config.js',
+runPlaywright([
   'e2e/lafea-visible-workbench.spec.js',
   '--grep',
   'Empirical analytical surface has truthful scope, one route navigation, and page-owned vertical scrolling',
-], {
-  cwd: root,
-  env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: '0' },
-  stdio: 'inherit',
-});
-if ((empiricalUi.status ?? 1) !== 0) process.exit(empiricalUi.status ?? 1);
+]);
+runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 
 const gate = spawnSync(process.execPath, [
   path.join(root, 'scripts/lafea-b01-b02-gate0-diagnostic.mjs'),
@@ -37,21 +39,13 @@ const gate = spawnSync(process.execPath, [
 });
 if ((gate.status ?? 1) !== 0) process.exit(gate.status ?? 1);
 
-const result = spawnSync(process.execPath, [
-  cli,
-  'test',
-  '--config=playwright.lafea-visible.config.js',
+runPlaywright([
   'e2e/lafea-standalone.spec.js',
   'e2e/lafea-standalone-golden-journey.spec.js',
   'e2e/lafea-standalone-failures.spec.js',
   'e2e/lafea-visible-workbench.spec.js',
+  'e2e/lafea-empirical-grouped-edit.spec.js',
   'e2e/lafea3-sample-mesh.spec.js',
   'e2e/lafea-shell-sample-mesh.spec.js',
   'e2e/lafea-b02-g3-custody.spec.js',
-], {
-  cwd: root,
-  env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: '0' },
-  stdio: 'inherit',
-});
-
-process.exit(result.status ?? 1);
+]);

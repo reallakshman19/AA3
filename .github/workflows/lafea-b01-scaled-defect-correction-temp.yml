@@ -1,0 +1,63 @@
+name: LAFEA B01 scaled sparse defect correction temporary
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lafea-b01-scaled-defect-correction-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  scaled-defect-correction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact PR head
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Apply target-only reliable update and one scaled sparse defect correction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          s = p.read_text()
+          old = """    if (iterations % 100 === 0 || maxAbs(residual) <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n    }\n"""
+          new = """    const recursiveResidualInfinity = maxAbs(residual);\n    if (iterations % 100 === 0 || recursiveResidualInfinity <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n      if (recursiveResidualInfinity <= convergenceTarget) {\n        residual = exact.map((value, index) => value * inverseSqrtDiagonal[index]);\n        scaledResidualCompensation.fill(0);\n        direction = [...residual];\n        rho = compensatedDot(residual, residual);\n        if (!(rho > 0) || !Number.isFinite(rho)) {\n          throw solverError('JACOBI_EQUILIBRATED_CG_RELIABLE_UPDATE_INVALID', rho);\n        }\n        continue;\n      }\n    }\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one equilibrated-CG exact-residual check block')
+          p.write_text(s.replace(old, new, 1))
+
+          p = Path('src/core/local-continuum/solver.js')
+          s = p.read_text()
+          old = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const residual = equilibriumResidual(mesh, correction, load.forceVector);\n  const qualification = qualifyResiduals(\n"""
+          new = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  let residual = equilibriumResidual(mesh, correction, load.forceVector);\n  if (mesh.globalStiffnessStorage === 'CSR_FULL_SYMMETRIC'\n    && sparseReactionRefinementRequired(\n      model,\n      mesh.dofOrdering,\n      free,\n      constraints.indices,\n      load.forceVector,\n      residual,\n    )) {\n    const refined = solveScaledSparseDefectCorrection(model, mesh, free, residual);\n    refined.solution.forEach((value, position) => {\n      correction[free[position]] = canonicalNumber(\n        correction[free[position]] + value,\n        'scaled sparse defect-corrected displacement',\n      );\n    });\n    residual = equilibriumResidual(mesh, correction, load.forceVector);\n  }\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const qualification = qualifyResiduals(\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one solvePartitioned recovery block')
+          s = s.replace(old, new, 1)
+          marker = """function equilibriumResidual(mesh, displacement, force) {\n"""
+          helper = """function sparseReactionRefinementRequired(\n  model,\n  dofs,\n  free,\n  constrained,\n  force,\n  residual,\n) {\n  const scale = Math.max(1, maxAbs(force), maxAbs(residual));\n  const freeLimit = tolerance(model.qualificationProfile, 'freeDofResidual', scale);\n  const freeMaximum = Math.max(0, ...free.map((index) => Math.abs(residual[index])));\n  if (freeMaximum > freeLimit) return false;\n  const totals = equilibriumTotals(dofs, constrained, force, residual);\n  const equilibriumLimit = tolerance(model.qualificationProfile, 'reactionEquilibrium', scale);\n  return Math.max(Math.abs(totals.UX), Math.abs(totals.UY)) > equilibriumLimit;\n}\n\nfunction solveScaledSparseDefectCorrection(model, mesh, free, residual) {\n  const freeStiffness = restrictSymmetricCsr(mesh.globalStiffnessCsr, free);\n  const rawRightHandSide = free.map((index) => canonicalNumber(\n    -residual[index],\n    'scaled sparse defect-correction rhs',\n  ));\n  const defectMagnitude = maxAbs(rawRightHandSide);\n  if (!(defectMagnitude > 0) || !Number.isFinite(defectMagnitude)) {\n    throw numericalError(\n      'SPARSE_DEFECT_CORRECTION_INVALID',\n      'solver',\n      `Sparse defect-correction magnitude is invalid: ${defectMagnitude}.`,\n    );\n  }\n  const normalization = 1 / defectMagnitude;\n  const normalizedRightHandSide = rawRightHandSide.map((value) =>\n    canonicalNumber(value * normalization, 'normalized sparse defect-correction rhs'));\n  const solvedDefect = jacobiEquilibratedCgSolve(\n    freeStiffness,\n    normalizedRightHandSide,\n    model.qualificationProfile,\n  );\n  return {\n    ...solvedDefect,\n    solution: solvedDefect.solution.map((value) =>\n      canonicalNumber(value / normalization, 'scaled sparse defect-correction solution')),\n  };\n}\n\n"""
+          if s.count(marker) != 1:
+              raise RuntimeError('expected one equilibriumResidual marker')
+          s = s.replace(marker, helper + marker, 1)
+          old = """    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      'Reaction equilibrium did not qualify.',\n    );\n"""
+          new = """    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      `Reaction equilibrium did not qualify: UX=${totals.UX}, UY=${totals.UY}, limit=${equilibriumLimit}, scale=${scale}, freeMaximum=${freeMaximum}, freeLimit=${freeLimit}.`,\n    );\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected reaction-equilibrium failure block')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+          node --check src/core/local-continuum/solver.js
+      - name: Execute frozen full Lamé matrix
+        run: node scripts/lafea-plane-strain-bbar-lame-check.mjs

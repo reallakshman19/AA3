@@ -2,7 +2,9 @@ name: LAFEA B02D V2 production response diagnostic
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - agent/lafea-b01-solver-qualification-20260818
     paths:
       - 'src/core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js'
       - 'validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json'

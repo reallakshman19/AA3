@@ -10,10 +10,19 @@ const expectations = Object.freeze({
   WARNING: ['Attention required', 'warning'],
   BLOCKED: ['Blocked', 'critical'],
   COMPLETE: ['Complete', 'positive'],
+  CURRENT: ['Current', 'positive'],
   CURRENT_PASS: ['Qualified', 'positive'],
   CURRENT_WARNING: ['Qualified with warnings', 'warning'],
   CURRENT_BLOCK: ['Blocked', 'critical'],
   STALE: ['Stale evidence', 'warning'],
+  LOADED: ['Loaded', 'positive'],
+  NOT_LOADED: ['Not loaded', 'neutral'],
+  PASS: ['Qualified', 'positive'],
+  ACCEPTED: ['Accepted', 'positive'],
+  QUALIFIED_SOURCE_INPUT: ['Qualified source', 'positive'],
+  ADVISORY: ['Advisory', 'warning'],
+  MESH_REQUIRED: ['Mesh required', 'warning'],
+  MESH_REGENERATION_REQUIRED: ['Mesh regeneration required', 'warning'],
   QUALIFIED_NOT_CURRENT: ['Previous result — stale', 'warning'],
   ENGINE_NOT_IMPLEMENTED: ['Unavailable', 'neutral'],
   QUALIFIED_ROUTE_REGISTERED: ['Engine available', 'positive'],
@@ -99,7 +108,31 @@ assert.match(styles, /\.lafea-engineering-overview__run,\[data-lafea-slot="toolb
 assert.match(styles, /background:#0b1628!important/u);
 assert.equal(styles.includes('linear-gradient'), false, 'guided action hierarchy must not add decorative gradients');
 
-console.log('LAFEA formal UI status, four-area presentation, and action hierarchy check: PASS');
+const overviewPath = fileURLToPath(new URL('../src/workspace/lafea-engineering-overview.js', import.meta.url));
+const overview = readFileSync(overviewPath, 'utf8');
+assert.match(overview, /dataset\.role = 'lafea-engineering-summary'/u);
+assert.match(overview, /dataset\.role = 'lafea-technical-evidence'/u);
+assert.match(overview, /technicalEvidenceDisclosure\(root, model\)/u);
+assert.equal(overview.includes("['Engine', model.solver.engine]"), false, 'raw solver package must not be a primary overview row');
+assert.equal(overview.includes("['Authority', model.solver.authority]"), false, 'raw solver authority must not be a primary overview row');
+assert.equal(overview.includes("['Profile', model.solver.qualificationProfile]"), false, 'raw qualification profile must not be a primary overview row');
+assert.match(overview, /\['Solver authority', model\.solver\.authority\]/u);
+assert.match(overview, /\['Engine state', model\.solver\.engineState\]/u);
+
+const settingsPath = fileURLToPath(new URL('../src/workspace/lafea-analysis-settings-view.js', import.meta.url));
+const settings = readFileSync(settingsPath, 'utf8');
+assert.match(settings, /solverSummaryRows/u);
+assert.match(settings, /settingsGroup\(root, 'Solver contract', 'GOVERNED_SOLVER', model\.solverSummaryRows\)/u);
+assert.equal(
+  settings.includes("settingsGroup(root, 'Governed solver settings', 'GOVERNED_SOLVER', model.solverRows)"),
+  false,
+  'raw solver rows must not be rendered as the primary solver group',
+);
+assert.match(settings, /technicalSettings\(root, model\.solverRows\)/u);
+assert.match(settings, /Technical identifiers and lifecycle custody/u);
+assert.match(settings, /dataset\.role = 'lafea-technical-evidence'/u);
+
+console.log('LAFEA formal UI status, workflow, action hierarchy, and terminology boundary check: PASS');
 
 function step(stepId, status, reasons = []) {
   return Object.freeze({

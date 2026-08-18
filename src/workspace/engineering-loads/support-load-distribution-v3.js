@@ -14,6 +14,32 @@ export const SUPPORT_LOAD_DISTRIBUTION_COG_SCHEMA = 'support-load-distribution/v
 export const EMPIRICAL_LOAD_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V2';
 export const EMPIRICAL_LOAD_COG_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V3_COG';
 
+const supportLoadPerformanceMetrics = {
+  executionIndexBuilds: 0,
+  entityIndexEntries: 0,
+  edgeIndexEntries: 0,
+  routeChainageIndexBuilds: 0,
+  routeChainageIndexEntries: 0,
+  supportProjectionBuilds: 0,
+  baseMassArtifactBuilds: 0,
+  baseMassComputations: 0,
+  caseMassCompositions: 0,
+  fluidMassComputations: 0,
+  caseEvaluations: 0,
+  routeCaseEvaluations: 0,
+  contributorIndexWrites: 0,
+};
+
+export function getSupportLoadPerformanceMetrics() {
+  return { ...supportLoadPerformanceMetrics };
+}
+
+export function resetSupportLoadPerformanceMetrics() {
+  Object.keys(supportLoadPerformanceMetrics).forEach((key) => {
+    supportLoadPerformanceMetrics[key] = 0;
+  });
+}
+
 /**
  * Calculates vertical gravity reactions by route. Any missing Project Data,
  * mass evidence, support capability, attachment, or bracketing support blocks
@@ -61,6 +87,7 @@ function calculateDistribution(input, configuration) {
   const execution = {
     ...configuration,
     componentAuthorityById,
+    ...buildExecutionIndex(input, globalBlockers, caseIds.length > 0),
   };
   const cases = caseIds.map((caseId) => calculateCase(
     String(caseId),
@@ -108,14 +135,82 @@ function calculateDistribution(input, configuration) {
   });
 }
 
-function calculateCase(caseId, input, globalBlockers, execution) {
-  const state = createCaseState(caseId, globalBlockers);
+/**
+ * Builds only case-independent discovery structures. Route support projection is
+ * intentionally skipped when global Project Data blocks execution and for routes
+ * that are not READY, matching the old evaluation boundary exactly. Mass terms
+ * that do not vary by EMPTY/OPE/HYD are resolved once on the same executable
+ * entity/edge/chainage boundary and retained only in this execution context.
+ */
+function buildExecutionIndex(input, globalBlockers, hasActiveCases) {
+  supportLoadPerformanceMetrics.executionIndexBuilds += 1;
+
   const entityById = new Map(input.dataset.entities.map((entity) => [entity.entityId, entity]));
+  supportLoadPerformanceMetrics.entityIndexEntries += input.dataset.entities.length;
+
+  const edgeById = new Map(input.routePartitionModel.edges.map((edge) => [edge.entityId, edge]));
+  supportLoadPerformanceMetrics.edgeIndexEntries += input.routePartitionModel.edges.length;
+
+  const routeById = new Map();
+  const baseMassByEntityId = new Map();
+  if (globalBlockers.length === 0 && hasActiveCases) {
+    supportLoadPerformanceMetrics.baseMassArtifactBuilds += 1;
+  }
+
+  input.routePartitionModel.routes.forEach((route) => {
+    const chainageByEntityId = new Map(
+      route.entityChainages.map((row) => [row.entityId, row]),
+    );
+    supportLoadPerformanceMetrics.routeChainageIndexBuilds += 1;
+    supportLoadPerformanceMetrics.routeChainageIndexEntries += route.entityChainages.length;
+
+    let supports = null;
+    if (globalBlockers.length === 0 && route.status === 'READY') {
+      supports = routeSupports(
+        route,
+        input.supportSiteModel,
+        edgeById,
+        input.profile,
+      );
+      supportLoadPerformanceMetrics.supportProjectionBuilds += 1;
+
+      if (hasActiveCases) {
+        route.physicalEdgeIds.forEach((entityId) => {
+          const entity = entityById.get(entityId);
+          const edge = edgeById.get(entityId);
+          const chainage = chainageByEntityId.get(entityId);
+          if (!entity || !edge || !chainage || !Number.isFinite(chainage.pointMm)) return;
+          if (baseMassByEntityId.has(entityId)) return;
+          baseMassByEntityId.set(
+            entityId,
+            resolveBaseMass(entity, edge, input.profile),
+          );
+          supportLoadPerformanceMetrics.baseMassComputations += 1;
+        });
+      }
+    }
+
+    routeById.set(route.routeId, {
+      chainageByEntityId,
+      supports,
+    });
+  });
+
+  return {
+    entityById,
+    edgeById,
+    routeById,
+    baseMassByEntityId,
+  };
+}
+
+function calculateCase(caseId, input, globalBlockers, execution) {
+  supportLoadPerformanceMetrics.caseEvaluations += 1;
+  const state = createCaseState(caseId, globalBlockers);
   if (globalBlockers.length === 0) {
     input.routePartitionModel.routes.forEach((route) => calculateRoute(
       route,
       input,
-      entityById,
       state,
       execution,
     ));
@@ -148,7 +243,8 @@ function calculateCase(caseId, input, globalBlockers, execution) {
   });
 }
 
-function calculateRoute(route, input, entityById, state, execution) {
+function calculateRoute(route, input, state, execution) {
+  supportLoadPerformanceMetrics.routeCaseEvaluations += 1;
   if (route.status !== 'READY') {
     state.blockers.push(...route.blockers.map((row) => ({
       ...row,
@@ -156,13 +252,14 @@ function calculateRoute(route, input, entityById, state, execution) {
     })));
     return;
   }
-  const edgeById = new Map(input.routePartitionModel.edges.map((edge) => [edge.entityId, edge]));
-  const supports = routeSupports(
-    route,
-    input.supportSiteModel,
-    edgeById,
-    input.profile,
-  );
+  const routeExecution = execution.routeById.get(route.routeId);
+  if (!routeExecution) {
+    throw new Error(`Missing support-load execution index for route ${route.routeId}.`);
+  }
+  const supports = routeExecution.supports;
+  if (!Array.isArray(supports)) {
+    throw new Error(`Missing qualified support projection for READY route ${route.routeId}.`);
+  }
   if (supports.length < 2) {
     state.blockers.push({
       code: 'ROUTE_REQUIRES_TWO_QUALIFIED_VERTICAL_SUPPORTS',
@@ -171,9 +268,9 @@ function calculateRoute(route, input, entityById, state, execution) {
     });
   }
   route.physicalEdgeIds.forEach((entityId) => {
-    const entity = entityById.get(entityId);
-    const edge = edgeById.get(entityId);
-    const chainage = route.entityChainages.find((row) => row.entityId === entityId);
+    const entity = execution.entityById.get(entityId);
+    const edge = execution.edgeById.get(entityId);
+    const chainage = routeExecution.chainageByEntityId.get(entityId);
     if (!entity || !edge || !chainage || !Number.isFinite(chainage.pointMm)) {
       state.excludedInputs.push({
         code: 'MISSING_ROUTE_CHAINAGE',
@@ -182,7 +279,11 @@ function calculateRoute(route, input, entityById, state, execution) {
       });
       return;
     }
-    const mass = resolveCaseMass(entity, edge, state.caseId, input.profile);
+    if (!execution.baseMassByEntityId.has(entityId)) {
+      throw new Error(`Missing case-independent mass artifact for entity ${entityId}.`);
+    }
+    const baseMass = execution.baseMassByEntityId.get(entityId);
+    const mass = resolveCaseMass(baseMass, entity, state.caseId, input.profile);
     const application = resolveApplicationPoint(
       entity,
       chainage,
@@ -276,7 +377,11 @@ function resolveApplicationPoint(entity, chainage, execution) {
   };
 }
 
-function resolveCaseMass(entity, edge, caseId, profile) {
+/**
+ * Resolve mass terms that cannot vary by EMPTY/OPE/HYD. This artifact is
+ * execution-local and is not part of engineering output or semantic hash input.
+ */
+function resolveBaseMass(entity, edge, profile) {
   if (entity.entityType !== 'PIPE') return componentMass(entity, profile);
   const sections = projectDataValue(profile, 'loadCalculation.pipeSectionProperties') || {};
   const section = sections[entity.lineKey];
@@ -303,22 +408,15 @@ function resolveCaseMass(entity, edge, caseId, profile) {
   ) * lengthM * materialDensity;
   const insulation = insulationMass(section, lengthM, profile);
   if (!insulation.qualified) return insulation;
-  const fluid = fluidMass(
-    caseId,
-    section,
-    entity,
-    insideDiameterMm,
-    lengthM,
-    profile,
-  );
-  if (!fluid.qualified) return fluid;
   return {
     qualified: true,
-    massKg: metalKg + insulation.massKg + fluid.massKg,
+    baseMassKg: metalKg + insulation.massKg,
+    section,
+    insideDiameterMm,
+    lengthM,
     formula: {
       metalKg,
       insulationKg: insulation.massKg,
-      fluidKg: fluid.massKg,
       lengthM,
       outsideDiameterMm: section.outsideDiameterMm,
       insideDiameterMm,
@@ -326,6 +424,37 @@ function resolveCaseMass(entity, edge, caseId, profile) {
         sourceRef(profile, 'loadCalculation.pipeSectionProperties'),
         sourceRef(profile, 'loadCalculation.materialDensitiesKgPerM3'),
         insulation.source,
+      ].filter(Boolean),
+    },
+  };
+}
+
+/** Compose only the case-dependent fluid term with the invariant mass artifact. */
+function resolveCaseMass(baseMass, entity, caseId, profile) {
+  supportLoadPerformanceMetrics.caseMassCompositions += 1;
+  if (!baseMass.qualified || entity.entityType !== 'PIPE') return baseMass;
+  supportLoadPerformanceMetrics.fluidMassComputations += 1;
+  const fluid = fluidMass(
+    caseId,
+    baseMass.section,
+    entity,
+    baseMass.insideDiameterMm,
+    baseMass.lengthM,
+    profile,
+  );
+  if (!fluid.qualified) return fluid;
+  return {
+    qualified: true,
+    massKg: baseMass.baseMassKg + fluid.massKg,
+    formula: {
+      metalKg: baseMass.formula.metalKg,
+      insulationKg: baseMass.formula.insulationKg,
+      fluidKg: fluid.massKg,
+      lengthM: baseMass.formula.lengthM,
+      outsideDiameterMm: baseMass.formula.outsideDiameterMm,
+      insideDiameterMm: baseMass.formula.insideDiameterMm,
+      projectDataSources: [
+        ...baseMass.formula.projectDataSources,
         fluid.source,
       ].filter(Boolean),
     },
@@ -501,10 +630,21 @@ function recordContribution(
   forceN,
   allocations,
 ) {
-  allocations.forEach((allocation) => state.reactions.set(
-    allocation.siteId,
-    (state.reactions.get(allocation.siteId) ?? 0) + allocation.verticalForceN,
-  ));
+  const contributionId = `${state.caseId}:${entity.entityId}`;
+  const contributorSites = new Set();
+  allocations.forEach((allocation) => {
+    state.reactions.set(
+      allocation.siteId,
+      (state.reactions.get(allocation.siteId) ?? 0) + allocation.verticalForceN,
+    );
+    if (!contributorSites.has(allocation.siteId)) {
+      contributorSites.add(allocation.siteId);
+      const contributors = state.contributorsBySite.get(allocation.siteId) || [];
+      contributors.push(contributionId);
+      state.contributorsBySite.set(allocation.siteId, contributors);
+      supportLoadPerformanceMetrics.contributorIndexWrites += 1;
+    }
+  });
   state.appliedForceN += forceN;
   state.appliedMomentNmm += forceN * application.chainageMm;
   state.reactionMomentNmm += sum(allocations.map((allocation) => (
@@ -514,7 +654,7 @@ function recordContribution(
     ? { ...mass.formula, applicationPointAuthority: application.authority }
     : mass.formula;
   const contribution = {
-    contributionId: `${state.caseId}:${entity.entityId}`,
+    contributionId,
     routeId: route.routeId,
     entityId: entity.entityId,
     source: {
@@ -537,9 +677,7 @@ function recordContribution(
 
 function supportResults(model, state, blocked) {
   return model.sites.map((site) => {
-    const contributorIds = state.ledger
-      .filter((row) => row.allocations.some((allocation) => allocation.siteId === site.siteId))
-      .map((row) => row.contributionId);
+    const contributorIds = [...(state.contributorsBySite.get(site.siteId) || [])];
     const reaction = state.reactions.get(site.siteId) ?? 0;
     return {
       supportSiteId: site.siteId,
@@ -692,6 +830,7 @@ function createCaseState(caseId, blockers) {
     excludedInputs: [],
     ledger: [],
     reactions: new Map(),
+    contributorsBySite: new Map(),
     appliedForceN: 0,
     appliedMomentNmm: 0,
     reactionMomentNmm: 0,

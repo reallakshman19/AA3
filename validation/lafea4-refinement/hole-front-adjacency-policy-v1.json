@@ -1,0 +1,19 @@
+{
+  "schema": "lafea4-hole-front-adjacency-policy/v1",
+  "qualificationId": "LAFEA4-SHELL-HOLE-FRONT-Q3/R1",
+  "scope": "QUALIFICATION_HARNESS_ONLY",
+  "retainedAdjacentSizeRatioMax": 1.5,
+  "legacyHoleFrontLayerGrowth": 1.6,
+  "legacyIdealStripCharacteristicRatio": 1.7088007490635064,
+  "naiveLayerGrowthEqualToAdjacencyLimit": 1.5,
+  "naiveIdealStripCharacteristicRatio": 1.6393596310755,
+  "governedLayerGrowthFormula": "(2/sqrt(3))*sqrt(r^2-1)",
+  "governedLayerGrowth": 1.2909944487358058,
+  "governedIdealStripCharacteristicRatio": 1.5,
+  "activationRatio": 1.5,
+  "constructionRule": "When adjacentSizeRatioMax is supplied, the hole-front constructor derives its row-height growth so an ideal aligned strip does not request a longest connecting edge above the retained adjacency limit.",
+  "acceptanceRule": "The actual generated child must still independently satisfy measured ADJACENT_SIZE_RATIO <= 1.5; this construction rule is not acceptance evidence.",
+  "legacyCompatibility": "Callers that omit adjacentSizeRatioMax retain the existing 1.6 activation/growth heuristic.",
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

@@ -14,7 +14,7 @@ const analytical = buildLafeaAnalysisSettingsViewModel(stage(
   'ANALYTICAL_FOUNDATION_V1',
 ));
 assert.equal(analytical.schema, LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA);
-assert.equal(analytical.readOnly, true);
+assert.equal(analytical.readOnly, false);
 assert.equal(value(analytical, 'Lifecycle profile'), 'ANALYTICAL_FOUNDATION_V1');
 assert.equal(value(analytical, 'Lifecycle source binding'), 'CURRENT');
 assert.equal(value(analytical, 'Model identity'), analyticalDocument.modelIdentity);
@@ -34,7 +34,8 @@ const continuum = buildLafeaAnalysisSettingsViewModel(stage(
   continuumDocument,
   'FEA_MESH_RECOVERY_V1',
 ));
-assert.equal(value(continuum, 'Formulation'), continuumDocument.formulation);
+assert.equal(value(continuum, 'Formulation'), 'Plane stress');
+assert.equal(continuum.formulationControl.current, continuumDocument.formulation);
 assert.match(value(continuum, 'Requested analyses / cases'), /L1/u);
 assert.match(value(continuum, 'Unit basis'), /stress: MPa/u);
 assert.equal(value(continuum, 'Code / allowable basis'), 'Not declared by the active stage source contract');
@@ -42,7 +43,10 @@ assert.equal(value(continuum, 'Code / allowable basis'), 'Not declared by the ac
 console.log(JSON.stringify({
   check: 'lafea-ui-analysis-settings',
   status: 'PASS',
-  readOnly: true,
+  sourceSettingsEditable: true,
+  governedSolverSettingsLocked: true,
+  humanReadableFormulationProjection: true,
+  governedFormulationIdentityPreserved: true,
   missingCodeBasisIsExplicit: true,
   githubActionsWorkflowAdded: false,
 }));

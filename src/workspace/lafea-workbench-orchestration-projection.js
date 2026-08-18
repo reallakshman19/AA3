@@ -14,6 +14,7 @@ export const LAFEA_WORKBENCH_ORCHESTRATION_ORDER = Object.freeze([
 export function buildLafeaWorkbenchOrchestrationProjection(stageValue) {
   const stage = requireStage(stageValue);
   const adapter = requireLafeaStageAnalysisAdapter(stage.stageId);
+  if (adapter.routeFamily === 'ANALYTICAL') return analyticalProjection(stage, adapter);
   const readiness = stage.lifecycleReadiness;
   const custody = stage.analysisMeshCustodyProjection;
   const preparation = stage.preparationProjection;
@@ -27,6 +28,59 @@ export function buildLafeaWorkbenchOrchestrationProjection(stageValue) {
     RESULTS: resultsSection(stage, readiness),
     RELEASE: releaseSection(readiness),
   };
+  return projection(stage, adapter, sections);
+}
+
+function analyticalProjection(stage, adapter) {
+  const readiness = stage.lifecycleReadiness;
+  const hasDocument = Boolean(stage.document);
+  const execution = stage.execution;
+  const qualifiedExecution = execution?.status === 'QUALIFIED';
+  const sourceCurrent = stage.lifecycleBinding?.status === 'CURRENT'
+    && stage.lifecycle?.source?.status === 'CURRENT';
+  const canonicalModel = stage.lifecycle?.artifacts?.CANONICAL_MODEL;
+  const modelCurrent = canonicalModel?.status === 'CURRENT'
+    && canonicalModel?.qualification === 'PASS';
+  const executionSupported = adapter.execution.qualifiedRouteRegistered === true;
+  const resultReady = readiness?.resultReady === true;
+
+  const sections = {
+    SOURCE: !hasDocument
+      ? section('NOT_STARTED', ['SOURCE_DOCUMENT_ABSENT'], [], ['IMPORT_SOURCE'])
+      : sourceCurrent
+        ? section('COMPLETE', [], sourceRefs(stage), ['EDIT_SOURCE', 'VIEW_SOURCE'])
+        : section('READY', ['ANALYTICAL_SOURCE_AUTHORITY_ESTABLISHED_ON_CALCULATION'],
+          [ref('DOCUMENT', documentRef(stage))], ['EDIT_SOURCE', 'CALCULATE']),
+    MODEL: !hasDocument
+      ? section('NOT_STARTED', ['SOURCE_DOCUMENT_ABSENT'], [], [])
+      : modelCurrent
+        ? section('COMPLETE', [], [artifactRef(canonicalModel)], ['VIEW_MODEL'])
+        : section('READY', ['ANALYTICAL_CANONICAL_MODEL_BUILT_ON_CALCULATION'], [], ['CALCULATE']),
+    PREPARATION: section('COMPLETE', ['ANALYTICAL_PREPARATION_NOT_APPLICABLE'], [], ['VIEW']),
+    DISCRETIZATION: section('COMPLETE', ['ANALYSIS_MESH_NOT_APPLICABLE'], [], ['VIEW']),
+    AUTHORIZATION: hasDocument && executionSupported
+      ? section('READY', [], [], ['AUTHORIZE_CALCULATION'])
+      : section('BLOCKED', [
+        ...(hasDocument ? [] : ['SOURCE_DOCUMENT_ABSENT']),
+        ...(executionSupported ? [] : ['STAGE_ENGINE_NOT_IMPLEMENTED']),
+      ], [], []),
+    EXECUTION: !execution
+      ? section('NOT_STARTED', ['EXECUTION_NOT_RUN'], [],
+        hasDocument && executionSupported ? ['RUN_CALCULATION'] : [])
+      : qualifiedExecution
+        ? section('COMPLETE', [], [ref('EXECUTION', executionHash(execution))], ['VIEW'])
+        : section('BLOCKED', [`EXECUTION_${execution.status ?? 'UNKNOWN'}`], [], []),
+    RESULTS: resultReady
+      ? section('COMPLETE', [], resultRefs(stage.lifecycle), ['VIEW_RESULTS', 'EXPORT_RESULTS'])
+      : qualifiedExecution
+        ? section('BLOCKED', ['RESULT_EVIDENCE_NOT_CURRENT'], [], ['VIEW'])
+        : section('NOT_STARTED', ['EXECUTION_REQUIRED'], [], []),
+    RELEASE: releaseSection(readiness),
+  };
+  return projection(stage, adapter, sections);
+}
+
+function projection(stage, adapter, sections) {
   return freeze({
     schema: LAFEA_WORKBENCH_ORCHESTRATION_SCHEMA,
     stageId: stage.stageId,
@@ -49,13 +103,24 @@ function sourceSection(stage) {
 
 function modelSection(stage, readiness) {
   if (stage.domainFirstProfileActive) {
-    const projection = stage.analysisDomainProjection;
-    const refs = projection?.analysisDomainHash ? [ref('ANALYSIS_DOMAIN', projection.analysisDomainHash)] : [];
-    if (projection?.state === 'CURRENT_PASS' && readiness?.domainCurrent) {
+    const projectionValue = stage.analysisDomainProjection;
+    const refs = projectionValue?.analysisDomainHash ? [ref('ANALYSIS_DOMAIN', projectionValue.analysisDomainHash)] : [];
+    if (projectionValue?.state === 'CURRENT_PASS' && readiness?.domainCurrent) {
       return section('COMPLETE', [], refs, ['VIEW_MODEL']);
     }
-    const state = projection?.state === 'ABSENT' ? 'NOT_STARTED' : 'BLOCKED';
-    return section(state, projection?.reasons ?? ['ANALYSIS_DOMAIN_NOT_CURRENT'], refs, []);
+    const state = projectionValue?.state === 'ABSENT' ? 'NOT_STARTED' : 'BLOCKED';
+    return section(state, projectionValue?.reasons ?? ['ANALYSIS_DOMAIN_NOT_CURRENT'], refs, []);
+  }
+  if (stage.shellMidsurfaceProfileActive === true) {
+    if (!stage.lifecycle) return section('NOT_STARTED', ['SOURCE_AUTHORITY_REQUIRED'], [], []);
+    const refs = sourceRefs(stage);
+    if (stage.shellSolverModelProjection?.solverModelHash) {
+      refs.push(ref('SOLVER_MODEL', stage.shellSolverModelProjection.solverModelHash));
+    }
+    if (readiness?.preMeshModelCurrent === true) {
+      return section('COMPLETE', [], refs, ['VIEW_MODEL']);
+    }
+    return section('BLOCKED', ['SHELL_SOURCE_MODEL_NOT_CURRENT'], refs, []);
   }
   if (!stage.lifecycle) return section('NOT_STARTED', ['SOURCE_AUTHORITY_REQUIRED'], [], []);
   const record = stage.lifecycle.artifacts?.CANONICAL_MODEL;
@@ -67,25 +132,37 @@ function modelSection(stage, readiness) {
     record && record.status !== 'ABSENT' ? [artifactRef(record)] : [], []);
 }
 
-function preparationSection(stage, adapter, readiness, projection) {
+function preparationSection(stage, adapter, readiness, preparation) {
   if (!readiness?.preMeshModelCurrent) {
     return section('NOT_STARTED', [
-      stage.domainFirstProfileActive ? 'ANALYSIS_DOMAIN_NOT_CURRENT' : 'CANONICAL_MODEL_NOT_CURRENT',
+      stage.domainFirstProfileActive
+        ? 'ANALYSIS_DOMAIN_NOT_CURRENT'
+        : stage.shellMidsurfaceProfileActive
+          ? 'SHELL_SOURCE_MODEL_NOT_CURRENT'
+          : 'CANONICAL_MODEL_NOT_CURRENT',
     ], [], []);
   }
   if (!adapter.preparation.qualified) return section('BLOCKED', [adapter.preparation.reason], [], []);
-  if (!projection) return section('BLOCKED', ['LAFEA_PREPARATION_PROJECTION_ABSENT'], [], []);
-  const refs = preparationRefs(projection);
-  if (projection.state === 'CURRENT_PASS') return section('COMPLETE', [], refs, ['VIEW_PREPARATION']);
-  if (projection.state === 'CURRENT_WARNING' && projection.usableForAuthorization) {
-    return section('WARNING', projection.reasons, refs, ['VIEW_PREPARATION', 'VIEW_APPROVAL']);
+  if (!preparation) return section('BLOCKED', ['LAFEA_PREPARATION_PROJECTION_ABSENT'], [], []);
+  const refs = preparationRefs(preparation);
+  if (preparation.state === 'CURRENT_PASS') return section('COMPLETE', [], refs, ['VIEW_PREPARATION']);
+  if (preparation.state === 'CURRENT_WARNING' && preparation.usableForAuthorization) {
+    return section('WARNING', preparation.reasons, refs, ['VIEW_PREPARATION', 'VIEW_APPROVAL']);
   }
-  if (projection.state === 'ABSENT') {
-    return section('BLOCKED', projection.reasons, refs,
-      stage.domainFirstProfileActive ? ['RUN_PREFLIGHT'] : ['REGISTER_PREPARATION_EVIDENCE']);
+  if (preparation.state === 'ABSENT') {
+    const actions = stage.domainFirstProfileActive
+      ? ['RUN_PREFLIGHT']
+      : stage.shellMidsurfaceProfileActive
+        ? []
+        : ['REGISTER_PREPARATION_EVIDENCE'];
+    return section('BLOCKED', preparation.reasons, refs, actions);
   }
-  return section('BLOCKED', projection.reasons, refs,
-    stage.domainFirstProfileActive ? ['RUN_PREFLIGHT'] : projection.evidenceHash ? ['VIEW_PREPARATION'] : []);
+  const actions = stage.domainFirstProfileActive
+    ? ['RUN_PREFLIGHT']
+    : preparation.evidenceHash
+      ? ['VIEW_PREPARATION']
+      : [];
+  return section('BLOCKED', preparation.reasons, refs, actions);
 }
 
 function discretizationSection(stage, adapter, custody) {
@@ -94,7 +171,10 @@ function discretizationSection(stage, adapter, custody) {
   const refs = custody.meshHash
     ? [ref('ANALYSIS_MESH', custody.meshHash), ref('ANALYSIS_MESH_PROFILE', custody.meshProfileHash)]
     : [];
-  if (custody.state === 'CURRENT_PASS') return section('COMPLETE', [], refs, ['VIEW', 'EXPORT_EVIDENCE']);
+  if (custody.state === 'CURRENT_PASS') {
+    const reasons = custody.usableForRun === true ? [] : (custody.runBlockingReasons ?? []);
+    return section('COMPLETE', reasons, refs, ['VIEW', 'EXPORT_EVIDENCE']);
+  }
   if (custody.state === 'CURRENT_WARNING') {
     return section('WARNING', ['ANALYSIS_MESH_WARNING_REVIEW_REQUIRED'], refs, ['VIEW', 'FOCUS_FINDINGS', 'EXPORT_EVIDENCE']);
   }
@@ -112,9 +192,14 @@ function discretizationSection(stage, adapter, custody) {
 function authorizationSection(stage, adapter, readiness, preparation, custody) {
   const reasons = []; const refs = [];
   if (!readiness?.preMeshModelCurrent) {
-    reasons.push(stage.domainFirstProfileActive ? 'ANALYSIS_DOMAIN_NOT_CURRENT' : 'CANONICAL_MODEL_NOT_CURRENT');
+    reasons.push(stage.domainFirstProfileActive
+      ? 'ANALYSIS_DOMAIN_NOT_CURRENT'
+      : stage.shellMidsurfaceProfileActive
+        ? 'SHELL_SOURCE_MODEL_NOT_CURRENT'
+        : 'CANONICAL_MODEL_NOT_CURRENT');
   }
-  if (stage.domainFirstProfileActive && !readiness?.solverModelCurrent) {
+  if ((stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive)
+    && !readiness?.solverModelCurrent) {
     reasons.push('CANONICAL_SOLVER_MODEL_NOT_CURRENT');
   }
   if (!adapter.preparation.qualified) reasons.push(adapter.preparation.reason);
@@ -126,7 +211,15 @@ function authorizationSection(stage, adapter, readiness, preparation, custody) {
   if (adapter.discretization.applicable && custody?.usableForAuthorization !== true) {
     reasons.push(`ANALYSIS_MESH_${custody?.state ?? 'ABSENT'}`);
   }
+  if (stage.shellMidsurfaceProfileActive === true && custody?.usableForRun !== true) {
+    reasons.push(...(custody?.runBlockingReasons?.length
+      ? custody.runBlockingReasons
+      : ['SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL']));
+  }
   if (custody?.meshHash) refs.push(ref('ANALYSIS_MESH', custody.meshHash));
+  if (stage.shellSolverModelProjection?.solverModelHash) {
+    refs.push(ref('SOLVER_MODEL', stage.shellSolverModelProjection.solverModelHash));
+  }
   if (reasons.length) return section('BLOCKED', reasons, refs, []);
   return section('READY', [], refs, ['AUTHORIZE_SOLVE']);
 }
@@ -134,15 +227,21 @@ function authorizationSection(stage, adapter, readiness, preparation, custody) {
 function executionSection(stage, readiness, preparation, custody) {
   const execution = stage.execution;
   if (!execution) {
-    const runnable = stage.domainFirstProfileActive
+    const governedMeshRoute = stage.domainFirstProfileActive === true
+      || stage.shellMidsurfaceProfileActive === true;
+    const runnable = governedMeshRoute
       && readiness?.solverModelCurrent === true
       && preparation?.usableForAuthorization === true
       && custody?.usableForRun === true;
-    return section('NOT_STARTED', ['EXECUTION_NOT_RUN'], [], runnable ? ['RUN_SOLVE'] : []);
+    const reasons = custody?.runBlockingReasons?.length
+      ? custody.runBlockingReasons
+      : ['EXECUTION_NOT_RUN'];
+    return section('NOT_STARTED', reasons, [], runnable ? ['RUN_SOLVE'] : []);
   }
   if (execution.status === 'QUALIFIED') {
-    if (stage.domainFirstProfileActive && readiness?.resultReady !== true) {
-      return section('BLOCKED', domainExecutionReasons(readiness), [], ['VIEW']);
+    if ((stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive)
+      && readiness?.resultReady !== true) {
+      return section('BLOCKED', governedExecutionReasons(readiness), [], ['VIEW']);
     }
     return section('COMPLETE', [], [ref('EXECUTION', executionHash(execution))], ['VIEW']);
   }
@@ -153,7 +252,7 @@ function resultsSection(stage, readiness) {
   if (readiness?.resultReady) return section('COMPLETE', [], resultRefs(stage.lifecycle), ['VIEW_RESULTS', 'EXPORT_RESULTS']);
   const executed = stage.execution?.status === 'QUALIFIED';
   return section(executed ? 'BLOCKED' : 'NOT_STARTED',
-    executed ? domainExecutionReasons(readiness) : ['EXECUTION_REQUIRED'], [], []);
+    executed ? governedExecutionReasons(readiness) : ['EXECUTION_REQUIRED'], [], []);
 }
 
 function releaseSection(readiness) {
@@ -170,15 +269,18 @@ function releaseSection(readiness) {
   return section('BLOCKED', reasons, refs, refs.length ? ['VIEW_RELEASE'] : []);
 }
 
-function domainExecutionReasons(readiness) {
+function governedExecutionReasons(readiness) {
   const reasons = readiness?.blockingReasons?.filter((reason) =>
-    reason.startsWith('DOMAIN_FIRST_')) ?? [];
+    reason.startsWith('DOMAIN_FIRST_')
+    || reason.startsWith('SHELL_')
+    || reason.startsWith('LAFEA4_SHELL_')
+    || reason.startsWith('LAFEA5_SHELL_')) ?? [];
   return reasons.length ? reasons : ['RESULT_EVIDENCE_NOT_CURRENT'];
 }
-function preparationRefs(projection) {
+function preparationRefs(preparation) {
   const refs = [];
-  if (projection?.evidenceHash) refs.push(ref('PREPARATION_EVIDENCE', projection.evidenceHash));
-  if (projection?.approvalHash) refs.push(ref('PREPARATION_APPROVAL', projection.approvalHash));
+  if (preparation?.evidenceHash) refs.push(ref('PREPARATION_EVIDENCE', preparation.evidenceHash));
+  if (preparation?.approvalHash) refs.push(ref('PREPARATION_APPROVAL', preparation.approvalHash));
   return refs;
 }
 function modelReasons(readiness, record) {

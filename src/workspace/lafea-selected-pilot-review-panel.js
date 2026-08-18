@@ -1,11 +1,18 @@
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import { validateLafeaSelectedPilotReviewSession } from './lafea-selected-pilot-review-session.js';
+import {
+  validateLafeaWorkbenchLifecycleExportAuthority,
+} from './lafea-workbench-lifecycle-export-authority.js';
 
 export const LAFEA_SELECTED_PILOT_REVIEW_PANEL_RECEIPT_SCHEMA =
   'lafea-selected-pilot-review-panel-receipt/v1';
 export const LAFEA_SELECTED_PILOT_REVIEW_PANEL_PRODUCER_REVISION = 'NB-T6G.1';
 
 const STATUS = 'READ_ONLY_SELECTED_PILOT_REVIEW_PANEL_MOUNTED';
+const LIFECYCLE_EXPORT_SCHEMAS = Object.freeze(new Set([
+  'lafea-workbench-lifecycle-export/v1',
+  'lafea-workbench-lifecycle-export/v2',
+]));
 const SECTIONS = Object.freeze([
   'BASIS', 'LEVEL_EVIDENCE', 'CONVERGENCE', 'FINEST_RETAINED_RESULT',
   'LIVE_DISPLAY_BINDING', 'LIMITATIONS',
@@ -133,7 +140,7 @@ function requireCurrent(controller, session) {
     throw error('LAFEA_NB_T6G_VIEWPORT_CONTEXT_STALE');
   }
   const exported = controller.exportLifecycle();
-  if (!exported || exported.schema !== 'lafea-workbench-lifecycle-export/v1'
+  if (!exported || !LIFECYCLE_EXPORT_SCHEMAS.has(exported.schema)
     || exported.stageId !== session.stageId
     || exported.lifecycle?.source?.status !== 'CURRENT'
     || exported.lifecycle?.source?.sourceHash !== session.parentHashes.sourceHash
@@ -146,6 +153,7 @@ function requireCurrent(controller, session) {
     || exported.readiness?.codeReady !== false) {
     throw error('LAFEA_NB_T6G_LIFECYCLE_CONTEXT_STALE');
   }
+  requireV2CurrentAuthority(exported);
   const artifacts = exported.lifecycle.artifacts ?? {};
   for (const [kind, expected] of [
     ['ANALYSIS_MESH', session.parentHashes.analysisMeshHash],
@@ -180,6 +188,21 @@ function requireCurrent(controller, session) {
       convergenceHash: artifacts.CONVERGENCE.artifactHash,
     }),
   });
+}
+
+function requireV2CurrentAuthority(value) {
+  if (value.schema !== 'lafea-workbench-lifecycle-export/v2') return;
+  try {
+    validateLafeaWorkbenchLifecycleExportAuthority(value.currentAuthority);
+  } catch (cause) {
+    const failure = error('LAFEA_NB_T6G_EXPORT_CURRENT_AUTHORITY_INVALID');
+    failure.causeCode = cause?.code ?? null;
+    throw failure;
+  }
+  if (value.currentAuthority?.currentAuthority?.currentResultAccepted !== true
+    || value.currentAuthority?.interpretation?.exportGrantsCurrentResultAuthority !== false) {
+    throw error('LAFEA_NB_T6G_EXPORT_CURRENT_RESULT_NOT_ACCEPTED');
+  }
 }
 
 function sealReceipt(session, activeSection, current) {

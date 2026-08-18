@@ -90,6 +90,63 @@ test('A17 failure: failed solve cannot create current result or release', async 
   await destroyStage17(page);
 });
 
+test('A17 failure: visible preflight veto is diagnostic, non-mutating and non-throwing', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  await mountStage17(page, { includeTemperature: true });
+
+  const root = page.locator('#a17-root');
+  const before = await page.evaluate(() => {
+    const stage = globalThis.__A17__.controller.getState().stages['LAFEA.3'];
+    return {
+      meshHash: stage.retainedAnalysisMeshEvidenceV2.meshHash,
+      artifactHash: stage.retainedAnalysisMeshEvidenceV2.artifactHash,
+      preflight: stage.retainedContinuumPreflightEvidence,
+    };
+  });
+  expect(before.preflight).toBeNull();
+
+  const advance = root.locator('[data-role="lafea-discretization-advance"]');
+  await expect(advance).toBeVisible();
+  await expect(advance).toBeEnabled();
+  await expect(advance).toHaveText('Advance to numerical preflight');
+  await advance.click();
+
+  const diagnostics = root.locator('[data-role="lafea-diagnostics"]');
+  await expect(diagnostics).toBeVisible();
+  await expect(diagnostics).toContainText(
+    'LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED',
+  );
+  await expect(root.locator('[data-role="lafea-overview-run"]')).toBeDisabled();
+
+  const after = await page.evaluate(() => {
+    const state = globalThis.__A17__.controller.getState();
+    const stage = state.stages['LAFEA.3'];
+    return {
+      status: state.status,
+      diagnosticCode: state.diagnostics[0]?.code ?? null,
+      meshHash: stage.retainedAnalysisMeshEvidenceV2.meshHash,
+      artifactHash: stage.retainedAnalysisMeshEvidenceV2.artifactHash,
+      preflight: stage.retainedContinuumPreflightEvidence,
+      execution: stage.execution,
+      resultReady: stage.lifecycleReadiness.resultReady,
+      release: stage.lifecycleReadiness.releaseState,
+    };
+  });
+  expect(after.status).toBe('FAILED');
+  expect(after.diagnosticCode).toBe(
+    'LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED',
+  );
+  expect(after.meshHash).toBe(before.meshHash);
+  expect(after.artifactHash).toBe(before.artifactHash);
+  expect(after.preflight).toBeNull();
+  expect(after.execution).toBeNull();
+  expect(after.resultReady).toBe(false);
+  expect(after.release).toBe('RELEASE_NOT_QUALIFIED');
+  expect(pageErrors).toEqual([]);
+  await destroyStage17(page);
+});
+
 test('A17 failure: stale verification is retained only as stale evidence', async ({ page }) => {
   await mountStage17(page);
   const result = await page.evaluate(async () => {

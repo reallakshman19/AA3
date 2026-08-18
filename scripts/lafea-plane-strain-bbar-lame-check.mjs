@@ -248,16 +248,31 @@ function qualifyProbeSeries(method, distortion, poissonRatio, frozenProbe, level
     `${method}/${poissonRatio}/${distortion.distortionId}/${frozenProbe.probeId} finest analytical error`,
   );
 
+  const convergenceLevelCount = convergencePolicy.minimumUsefulLevels;
+  assert.ok(
+    Number.isInteger(convergenceLevelCount)
+      && convergenceLevelCount >= 3
+      && convergenceLevelCount <= benchmark.meshLadder.levels.length,
+    'Frozen B-bar minimum useful convergence level count is invalid',
+  );
+  // The frozen programme distinguishes four AVAILABLE levels from three
+  // MINIMUM USEFUL levels. GCI therefore uses the deterministic finest-N
+  // window selected solely from that pre-observation policy; all four raw
+  // solve levels remain retained above for mesh, equilibrium and oracle audit.
+  const convergenceLevels = benchmark.meshLadder.levels.slice(-convergenceLevelCount);
+  const convergenceEvidence = evidenceByLevel.slice(-convergenceLevelCount);
+  assert.equal(convergenceLevels.length, convergenceEvidence.length);
+
   const quantityClass = displacement ? 'DISPLACEMENT_MM' : 'STRESS_MPA';
   const convergenceDefinition = createLafeaContinuumProbeConvergenceDefinition({
     schema: LAFEA_CONTINUUM_PROBE_CONVERGENCE_DEFINITION_SCHEMA,
     studyId: `${definition.programmeId}/${method}/${distortion.distortionId}/NU-${poissonRatio}/${frozenProbe.probeId}`,
-    quantityIdentityHash: evidenceByLevel[0].quantityIdentityHash,
+    quantityIdentityHash: convergenceEvidence[0].quantityIdentityHash,
     refinementRatio: convergencePolicy.refinementRatio,
     gciSafetyFactor: convergencePolicy.gciSafetyFactor,
     nearZeroAbsolute: convergencePolicy.nearZeroAbsoluteByQuantityClass[quantityClass],
     orderStabilityRelativeTolerance: convergencePolicy.orderStabilityRelativeTolerance,
-    levels: benchmark.meshLadder.levels.map((level) => ({
+    levels: convergenceLevels.map((level) => ({
       levelId: level.levelId,
       h: level.targetElementLength,
     })),
@@ -266,9 +281,9 @@ function qualifyProbeSeries(method, distortion, poissonRatio, frozenProbe, level
     schema: LAFEA_CONTINUUM_PROBE_CONVERGENCE_OBSERVATIONS_SCHEMA,
     studyId: convergenceDefinition.studyId,
     definitionHash: convergenceDefinition.semanticHash,
-    levels: benchmark.meshLadder.levels.map((level, index) => ({
+    levels: convergenceLevels.map((level, index) => ({
       levelId: level.levelId,
-      evidence: evidenceByLevel[index],
+      evidence: convergenceEvidence[index],
     })),
   });
   const convergence = evaluateLafeaContinuumProbeConvergence(
@@ -299,6 +314,7 @@ function qualifyProbeSeries(method, distortion, poissonRatio, frozenProbe, level
     observedFinestValue: finest.authoritativeValue,
     finestRelativeError,
     finestRelativeErrorLimit: finestLimit,
+    convergenceLevelIds: convergenceLevels.map((level) => level.levelId),
     convergenceClassification: convergence.classification,
     observedOrder: convergence.observedOrder,
     gciFineAbsolute: convergence.gciFineAbsolute,

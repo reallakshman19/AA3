@@ -196,6 +196,18 @@ function flattenItems(elements) {
   return items;
 }
 
+/**
+ * `item.engineeringProperties` fields may be plain scalars or evidence-wrapped
+ * objects (`{ value, unit, sourceKind, sourcePath }`, per the common-enriched-
+ * properties field shape). Unwrap the latter so a stringified evidence object
+ * never leaks into the read-only review grid as literal "[object Object]".
+ */
+function scalarOrNull(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'object') return 'value' in value ? scalarOrNull(value.value) : null;
+  return value;
+}
+
 function parseItem(item) {
   const rawFullName = item.lineKeyName || item.name || item.id || '';
   const cleanFullName = rawFullName.startsWith('/') ? rawFullName.slice(1) : rawFullName;
@@ -209,7 +221,7 @@ function parseItem(item) {
   let cls = item.attributes?.SPEC || 'UNKNOWN_SPEC';
   const parts = cleanFullName.split('-');
   if (parts.length > 3 && cls === 'UNKNOWN_SPEC') cls = parts[4] || parts[3] || cls;
-  let bore = item.boreMm ?? item._boreValue ?? item.bore ?? item.engineeringProperties?.nominalBoreMm ?? null;
+  let bore = item.boreMm ?? item._boreValue ?? item.bore ?? scalarOrNull(item.engineeringProperties?.nominalBoreMm);
   if (typeof bore === 'string') bore = Number.parseFloat(bore) || null;
   return {
     id: item.id || item.componentKey || item.sourceEntityId || item.name || item.supportKey || item.type || 'ITEM',
@@ -218,8 +230,8 @@ function parseItem(item) {
     isolatedLineKeyToken,
     fullLineKeyName: cleanFullName.replace(/\/B\d+.*$/iu, ''),
     service: deriveXmlCiiServiceFromBranchName(cleanFullName, {}) || 'UNKNOWN',
-    rating: item.attributes?.RATING || item.engineeringProperties?.ratingClassCode || 'UNKNOWN_RATING',
-    cls: item.attributes?.SPEC || item.engineeringProperties?.pipingClassCode || cls,
+    rating: item.attributes?.RATING || scalarOrNull(item.engineeringProperties?.ratingClassCode) || 'UNKNOWN_RATING',
+    cls: item.attributes?.SPEC || scalarOrNull(item.engineeringProperties?.pipingClassCode) || cls,
     bore,
     wallThickness: deriveWallThicknessFromDtxr(bore, cls, item.attributes ?? item.engineeringProperties ?? null),
   };

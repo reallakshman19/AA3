@@ -1,24 +1,47 @@
 /** Evidence-only LAFEA calculation/verification dossier. No solver or recovery work occurs here. */
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
-import { validateLafeaRunHistoryEntry } from './lafea-run-history.js';
+import {
+  lafeaRunExecutionIdentity,
+  projectLafeaRunStageCurrentAuthority,
+  validateLafeaRunHistoryEntry,
+} from './lafea-run-history.js';
 
 export const LAFEA_EVIDENCE_DOSSIER_SCHEMA = 'lafea-calculation-verification-dossier/v1';
 
 export function createLafeaRunEvidenceDossier(entryValue, options = {}) {
   const entry = validateLafeaRunHistoryEntry(entryValue);
   const currentRunId = typeof options.currentRunId === 'string' ? options.currentRunId : null;
-  const custody = currentRunId === entry.runId ? 'CURRENT_RUN_SNAPSHOT' : 'HISTORIC_RUN_SNAPSHOT';
+  const liveStage = options.currentStage && typeof options.currentStage === 'object'
+    ? options.currentStage : null;
+  const liveAuthority = liveStage ? projectLafeaRunStageCurrentAuthority(liveStage) : null;
+  const liveExecutionHash = liveStage?.execution?.status === 'QUALIFIED'
+    ? lafeaRunExecutionIdentity(liveStage.execution) : null;
+  const liveExecutionMatches = liveExecutionHash === null
+    ? null : liveExecutionHash === entry.evidence.execution.resultHash;
+  const custody = dossierCustody({
+    entry,
+    currentRunId,
+    liveStage,
+    liveAuthority,
+    liveExecutionMatches,
+  });
   const evidence = entry.evidence;
   const base = {
     schema: LAFEA_EVIDENCE_DOSSIER_SCHEMA,
     application: 'LAFEA',
-    dossierRevision: 'A17.1',
+    dossierRevision: 'A17.2',
     calculationIdentity: {
       runId: entry.runId,
       runOrdinal: entry.ordinal,
       runSemanticHash: entry.semanticHash,
       evidenceHash: entry.evidenceHash,
       custody,
+    },
+    currentAuthority: {
+      atCapture: evidence.currentAuthority ?? null,
+      live: liveAuthority,
+      liveExecutionMatches,
+      currentResultAuthorityGrantedByDossier: false,
     },
     build: evidence.build,
     sourceLifecycleProfile: {
@@ -84,6 +107,7 @@ export function validateLafeaRunEvidenceDossier(value) {
   if (!value || value.schema !== LAFEA_EVIDENCE_DOSSIER_SCHEMA
     || value.application !== 'LAFEA'
     || value.release?.currentReleaseAuthorityGrantedByDossier !== false
+    || value.currentAuthority?.currentResultAuthorityGrantedByDossier !== false
     || typeof value.semanticHash !== 'string') {
     throw dossierError('LAFEA_EVIDENCE_DOSSIER_INVALID');
   }
@@ -92,6 +116,17 @@ export function validateLafeaRunEvidenceDossier(value) {
     throw dossierError('LAFEA_EVIDENCE_DOSSIER_HASH_INVALID');
   }
   return value;
+}
+
+function dossierCustody({ entry, currentRunId, liveStage, liveAuthority, liveExecutionMatches }) {
+  if (currentRunId !== entry.runId) return 'HISTORIC_RUN_SNAPSHOT';
+  if (!liveStage) return 'LATEST_RUN_SNAPSHOT_AUTHORITY_UNVERIFIED';
+  if (liveStage.stageId !== entry.stageId
+    || liveAuthority?.currentResultAccepted !== true
+    || liveExecutionMatches !== true) {
+    return 'LATEST_RUN_HISTORIC_NOT_CURRENT';
+  }
+  return 'CURRENT_RUN_SNAPSHOT';
 }
 
 function evidenceTrace(entry) {

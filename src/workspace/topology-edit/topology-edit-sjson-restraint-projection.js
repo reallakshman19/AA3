@@ -87,6 +87,12 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
       `SJSON restraint projection crosswalk mismatch: ${rawSupportRecords.length} dataset supports versus ${canonicalTopology.supports.length} canonical supports.`,
     );
   }
+  // Capture per-source semantic disposition before any physical-site grouping.
+  // Grouping may combine restraint and non-restraint members at one position,
+  // but it must never rewrite the meaning of the individual source record.
+  const nonRestraintSupportIds = new Set(
+    rawSupportRecords.filter((record) => record.nonRestraint).map((record) => record.support.id),
+  );
 
   const hierarchy = groupSupportsHierarchy(records);
   const positioned = groupSupportsByPosition(hierarchy.records);
@@ -115,16 +121,13 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
     });
   }).sort((left, right) => compareCodeUnits(left.anchorKey, right.anchorKey));
 
-  const deferredSupportIds = new Set(
-    rawSupportRecords.filter((record) => !record.projectedSupport).map((record) => record.support.id),
-  );
   const decisions = canonicalTopology.supports.map((support) => {
     const supportId = stringValue(support.id);
     const anchorSupportId = supportIdToAnchor.get(supportId) || null;
     return Object.freeze({
       supportId,
       entityId: stringValue(support.entityId),
-      disposition: deferredSupportIds.has(supportId)
+      disposition: nonRestraintSupportIds.has(supportId)
         ? 'DEFER_NON_RESTRAINT_ATTACHMENT'
         : anchorSupportId === supportId
           ? 'ANCHOR_REPRESENTATIVE'
@@ -142,6 +145,7 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
     rawSupportRecordCount: rawSupportRecords.length,
     projectedSourceSupportCount: rawSupportRecords.filter((record) => record.projectedSupport).length,
     deferredSourceSupportCount: rawSupportRecords.filter((record) => !record.projectedSupport).length,
+    nonRestraintSourceSupportCount: nonRestraintSupportIds.size,
     hierarchyMergeCount: hierarchy.mergeCount,
     positionMergeCount: positioned.mergeCount,
   });
@@ -152,9 +156,12 @@ function sourceRecord(entity, support, sourceOrder, verticalAxis) {
   const componentType = normalizeComponentType(entity.entityType);
   const supportType = isSupportType(componentType);
   const supportPolicy = supportType ? classifySjsonSupportProjection(attributes) : null;
+  const nonRestraint = supportPolicy?.disposition === 'DEFER_SUPPORT';
   const projectedSupport = Boolean(support && isProjectedSupport(entity, support, supportPolicy));
   const position = bestPosition(attributes) || finitePoint(support?.origin);
-  const restraint = supportType ? resolveTopoValidatorRestraint(attributes, verticalAxis) : null;
+  const restraint = supportType
+    ? resolveTopoValidatorRestraint(attributes, verticalAxis, supportPolicy)
+    : null;
   const member = support ? Object.freeze({ entity, support }) : null;
   return {
     sourceOrder,
@@ -165,6 +172,7 @@ function sourceRecord(entity, support, sourceOrder, verticalAxis) {
     name: stringValue(attributes.NAME || entity.name),
     position,
     projectedSupport,
+    nonRestraint,
     supportPolicy,
     restraints: restraint ? [restraint] : [],
     members: member ? [member] : [],
@@ -302,6 +310,11 @@ function compareMembers(left, right) {
 
 function isProjectedSupport(entity, support, policy) {
   if (policy?.disposition !== 'DEFER_SUPPORT') return true;
+  // Reference points and support-hardware members remain valid support-site
+  // geometry even though they contribute no restraint coordinate. Preserve
+  // them in the visual grouping. Penetration/opening attachments remain
+  // visually deferred unless a managed enrichment explicitly resolves them.
+  if (policy?.attachmentClassification !== 'PENETRATION_ATTACHMENT') return true;
   const enriched = entity.properties?.enrichedAttributes || {};
   const managedAuthority = stringValue(enriched.schema) === 'stagedjson-cii2019-enriched-attributes/v1'
     && stringValue(enriched.componentType).toUpperCase() === 'SUPPORT'
@@ -310,12 +323,14 @@ function isProjectedSupport(entity, support, policy) {
   return managedAuthority && (Boolean(stringValue(support.hostEntityId)) || support.resolved === true);
 }
 
-function resolveTopoValidatorRestraint(attributes, verticalAxis) {
-  const kind = classifySupportKind(attributes);
+function resolveTopoValidatorRestraint(attributes, verticalAxis, policy) {
+  if (policy?.disposition === 'DEFER_SUPPORT' || !policy?.family) return null;
+  const kind = projectionKind(policy.family);
+  if (!kind) return null;
   const gap = numericAttribute(attributes, ['NODEGAP', 'CMPSUPGAP', 'GAP_MM']) ?? 0;
   const stiffness = numericAttribute(attributes, ['NODESTIFF', 'STIFFNESS']) ?? 0;
   const friction = numericAttribute(attributes, ['NODEFRICTION', 'FRICTION'])
-    ?? (kind === 'REST' ? DEFAULT_FRICTION : 0);
+    ?? (['REST', 'HANGER'].includes(kind) ? DEFAULT_FRICTION : 0);
   if (kind === 'ANCHOR') {
     return Object.freeze({ kind, type: 'ANC', direction: 'A', gap, friction: 0, stiffness: 0 });
   }
@@ -338,7 +353,7 @@ function resolveTopoValidatorRestraint(attributes, verticalAxis) {
   }
   const zUp = stringValue(verticalAxis).toUpperCase() === 'Z';
   return Object.freeze({
-    kind: 'REST',
+    kind,
     type: zUp ? '+Z' : '+Y',
     direction: zUp ? '+Z' : '+Y',
     gap,
@@ -347,22 +362,16 @@ function resolveTopoValidatorRestraint(attributes, verticalAxis) {
   });
 }
 
-function classifySupportKind(attributes) {
-  const raw = firstText(attributes, [
-    'SUPPORT_KIND',
-    'SUPPORT_MAPPER_KIND',
-    'SUPPORT_TYPE',
-    'CMPSUPTYPE',
-    'NODETYPE',
-    'MDSSUPPTYPE',
-  ]) || firstText(attributes, ['DTXR']);
-  const token = raw.toUpperCase();
-  if (!token) return 'REST';
-  if (/ANCHOR|FIXED|FIX|ANCI/u.test(token)) return 'ANCHOR';
-  if (/GUIDE|GT01/u.test(token)) return 'GUIDE';
-  if (/LINE\s*STOP|LINESTOP|ST06|LS[-_]/u.test(token)) return 'LINESTOP';
-  if (/SPRING|HANG|HANGER/u.test(token)) return 'SPRING';
-  return 'REST';
+function projectionKind(family) {
+  return ({
+    ANCHOR: 'ANCHOR',
+    GUIDE: 'GUIDE',
+    LINE_STOP: 'LINESTOP',
+    LIMIT: 'LINESTOP',
+    SPRING: 'SPRING',
+    REST: 'REST',
+    HANGER: 'HANGER',
+  })[stringValue(family).toUpperCase()] || null;
 }
 
 function restraintForViewport(restraint) {
@@ -384,6 +393,15 @@ function restraintForViewport(restraint) {
       stiffness: restraint.stiffness,
     };
   }
+  if (restraint.kind === 'HANGER') {
+    return {
+      kind: 'HANGER',
+      type: restraint.type,
+      direction: restraint.direction,
+      gapMm: restraint.gap,
+      friction: restraint.friction,
+    };
+  }
   return {
     kind: 'REST',
     type: restraint.type,
@@ -402,6 +420,7 @@ function buildMetrics(allSupports, grouped, overlays, projection) {
     rawSupportCount: allSupports.length,
     projectedSourceSupportCount: grouped.projectedSourceSupportCount,
     deferredSourceSupportCount: grouped.deferredSourceSupportCount,
+    nonRestraintSourceSupportCount: grouped.nonRestraintSourceSupportCount,
     supportAnchorCount: grouped.anchors.length,
     nativeRestraintRecordCount: restraintTypes.length,
     collapsedSourceSupportCount: grouped.projectedSourceSupportCount - grouped.anchors.length,
@@ -462,14 +481,6 @@ function positionKey(point) {
 function stableRestraintId(supportId, type, index) {
   const token = stringValue(type).replace(/[^A-Za-z0-9+_-]+/gu, '_') || `R${index + 1}`;
   return `restraint:${stringValue(supportId)}:${token}`;
-}
-
-function firstText(attributes, keys) {
-  for (const key of keys) {
-    const value = stringValue(attributes?.[key]);
-    if (value) return value;
-  }
-  return '';
 }
 
 function numericAttribute(attributes, keys) {

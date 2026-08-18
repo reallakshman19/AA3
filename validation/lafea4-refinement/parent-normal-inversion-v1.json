@@ -1,0 +1,45 @@
+{
+  "schema": "lafea4-parent-normal-inversion-qualification/v1",
+  "qualificationId": "LAFEA4-SHELL-PARENT-NORMAL-Q1/R1",
+  "stageId": "LAFEA.4",
+  "surfaceScope": ["CYLINDRICAL", "CYLINDRICAL_HOLES"],
+  "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+  "criterion": "min_u(dot(cross(x2-x1,x3-x1), n_parent(u))) > 0",
+  "roundoffClassification": "values <= 128*eps*|J| are blocked fail-closed as zero-or-roundoff-band; this is numerical classification, not an engineering acceptance threshold",
+  "analyticBasis": {
+    "director": "n(theta)=r0*cos(theta)+t0*sin(theta), theta=u/R",
+    "signedJacobian": "J.n(theta)=a*cos(theta)+b*sin(theta)",
+    "minimumEvaluation": "interval endpoints plus all stationary points phi+k*pi within the element u interval"
+  },
+  "oracle": {
+    "radiusMm": 100,
+    "axialLegMm": 50,
+    "positive": {
+      "uMinimumDegrees": -60,
+      "uMaximumDegrees": 60,
+      "expectedJacobianMagnitudeMm2": 8660.254037844386,
+      "expectedMinimumParentDirectedJacobianMm2": 4330.127018922193,
+      "expectedMinimumAlignmentCosine": 0.5,
+      "expectedQualification": "PASS"
+    },
+    "zeroBoundary": {
+      "uMinimumDegrees": -90,
+      "uMaximumDegrees": 90,
+      "expectedJacobianMagnitudeMm2": 10000,
+      "theoreticalMinimumParentDirectedJacobianMm2": 0,
+      "centroidSignedJacobianPositive": true,
+      "expectedQualification": "BLOCK",
+      "expectedClassification": "ZERO_OR_ROUNDOFF_BAND"
+    },
+    "reversedWinding": {
+      "uMinimumDegrees": -60,
+      "uMaximumDegrees": 60,
+      "expectedMaximumParentDirectedJacobianSign": "NEGATIVE",
+      "existingUnsignedShapeAndSinglePatchTopologyCanRemainNonblocking": true,
+      "expectedQualification": "BLOCK",
+      "expectedClassification": "NEGATIVE"
+    }
+  },
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

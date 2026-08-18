@@ -182,23 +182,11 @@ function renderScalarRow({
   } else {
     state.style.display = 'none';
   }
-  
+
   input.addEventListener('input', () => {
-    input.setCustomValidity('');
-    if (input.value.trim() !== '') {
-      const parsed = Number(input.value);
-      if (Number.isNaN(parsed)) {
-        input.setCustomValidity('Must be a valid number');
-      } else if (typeof descriptor.minimum === 'number' && parsed < descriptor.minimum) {
-        input.setCustomValidity(`Value must be >= ${descriptor.minimum}`);
-      } else if (typeof descriptor.minimumExclusive === 'number' && parsed <= descriptor.minimumExclusive) {
-        input.setCustomValidity(`Value must be > ${descriptor.minimumExclusive}`);
-      }
-    }
-    input.setAttribute('aria-invalid', input.checkValidity() ? 'false' : 'true');
-    input.style.borderColor = input.checkValidity() ? '' : 'red';
+    validateNumericInput(input, descriptor.valueContract);
   });
-  
+
   inputCell.append(input, state);
 
   const unitCell = documentRef.createElement('td');
@@ -229,7 +217,11 @@ function renderScalarRow({
   apply.textContent = 'Apply';
   apply.dataset.role = 'lafea-apply-descriptor';
   apply.addEventListener('click', () => {
-    input.setCustomValidity('');
+    validateNumericInput(input, descriptor.valueContract);
+    if (!input.checkValidity()) {
+      input.reportValidity();
+      return;
+    }
     const returned = onSetScalar(
       descriptor.descriptorId,
       instance.entityId,
@@ -238,6 +230,7 @@ function renderScalarRow({
     const diagnostic = firstLafeaEditDiagnostic(returned);
     if (diagnostic) {
       input.setCustomValidity(diagnostic.message);
+      input.setAttribute('aria-invalid', 'true');
       input.reportValidity();
     }
   });
@@ -245,4 +238,26 @@ function renderScalarRow({
 
   row.append(identityCell, inputCell, unitCell, sourceCell, actionCell);
   return row;
+}
+
+function validateNumericInput(input, contract) {
+  input.setCustomValidity('');
+  const text = input.value.trim();
+  if (text !== '') {
+    const parsed = Number(text);
+    if (!Number.isFinite(parsed)) {
+      input.setCustomValidity('Must be a finite number');
+    } else if (contract.minimum !== null
+      && (contract.minimumExclusive ? parsed <= contract.minimum : parsed < contract.minimum)) {
+      input.setCustomValidity(
+        `Value must be ${contract.minimumExclusive ? '>' : '>='} ${contract.minimum}`,
+      );
+    } else if (contract.maximum !== null
+      && (contract.maximumExclusive ? parsed >= contract.maximum : parsed > contract.maximum)) {
+      input.setCustomValidity(
+        `Value must be ${contract.maximumExclusive ? '<' : '<='} ${contract.maximum}`,
+      );
+    }
+  }
+  input.setAttribute('aria-invalid', input.checkValidity() ? 'false' : 'true');
 }

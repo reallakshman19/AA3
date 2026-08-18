@@ -13,6 +13,8 @@ export const LAFEA_WORKBENCH_RELEASE_BINDING_SCHEMA =
 export const LAFEA_WORKBENCH_RELEASE_BINDING_STATUSES = Object.freeze([
   'ABSENT', 'CURRENT', 'STALE',
 ]);
+export const LAFEA_RELEASE_GOVERNED_RESULT_NOT_CURRENT =
+  'RELEASE_GOVERNED_RESULT_NOT_CURRENT';
 
 export function createLafeaWorkbenchReleaseState(stageIds, options = {}) {
   const ids = requireStageIds(stageIds);
@@ -34,6 +36,9 @@ export function createLafeaWorkbenchReleaseState(stageIds, options = {}) {
   function register(recordValue, stageValue) {
     const stage = requireStage(stageValue);
     requireKnownStage(records, stage.stageId);
+    if (isGovernedMeshStage(stage) && stage.lifecycleReadiness?.resultReady !== true) {
+      throw releaseError(LAFEA_RELEASE_GOVERNED_RESULT_NOT_CURRENT);
+    }
     const record = normalizeReleaseRecord(recordValue);
     if (record.targetStage.stageId !== stage.stageId) {
       throw releaseError('RELEASE_RECORD_TARGET_STAGE_MISMATCH');
@@ -150,6 +155,30 @@ export function projectLafeaWorkbenchReleaseBinding(
   });
 }
 
+/**
+ * Release-record provenance may remain retained after a governed result loses
+ * current authority. Reclassify only the workbench binding; never mutate the
+ * release record itself.
+ */
+export function governLafeaWorkbenchReleaseBindingForResultCurrentness(
+  bindingValue,
+  { governedMesh, resultReady },
+) {
+  const binding = bindingValue;
+  if (!binding || binding.schema !== LAFEA_WORKBENCH_RELEASE_BINDING_SCHEMA) {
+    throw releaseError('RELEASE_BINDING_CURRENTNESS_INPUT_INVALID');
+  }
+  if (!governedMesh || resultReady === true || binding.bindingStatus === 'ABSENT') {
+    return binding;
+  }
+  return freeze({
+    ...binding,
+    bindingStatus: 'STALE',
+    releaseQualified: false,
+    reasons: unique([...binding.reasons, LAFEA_RELEASE_GOVERNED_RESULT_NOT_CURRENT]),
+  });
+}
+
 function currentBindingAssessment(
   stage,
   record,
@@ -244,6 +273,9 @@ function projection(stageId, candidateHeadSha, value) {
   });
 }
 
+function isGovernedMeshStage(stage) {
+  return stage?.domainFirstProfileActive === true || stage?.shellMidsurfaceProfileActive === true;
+}
 function authorizedEvidenceHashSet(value) {
   if (value === null || value === undefined) return new Set();
   if (!Array.isArray(value)) throw releaseError('RELEASE_EVIDENCE_ALLOWLIST_INVALID');

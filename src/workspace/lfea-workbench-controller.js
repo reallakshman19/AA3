@@ -25,12 +25,19 @@ import {
 export class LfeaWorkbenchController {
   /**
    * @param {Element|null} rootElement Workbench host.
-   * @param {{initialDocument?:unknown,resultMode?:string,deformationScale?:number,pipelineOptions?:unknown,workerFactory?:Function}|undefined} options Explicit initial state.
+   * @param {{initialDocument?:unknown,resultMode?:string,deformationScale?:number,pipelineOptions?:unknown,workerFactory?:Function,composeQaBenchmarkPanels?:boolean}|undefined} options Explicit initial state.
    */
   constructor(rootElement, options) {
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
     this.pipelineOptions = options?.pipelineOptions ?? {};
+    // Defaults to true (unchanged behavior for every existing caller, e.g.
+    // the standalone lfea.html app) -- only the F LFEA pipeline shell's own
+    // instance (workspace/bootstrap.js) opts out, since its QA panels now
+    // live in the pipeline shell's own Verification drawer instead. The
+    // panels are still constructed either way (below) so runBenchmark()/
+    // getBenchmarkReport() keep working regardless of composition.
+    this.composeQaBenchmarkPanels = options?.composeQaBenchmarkPanels ?? true;
     this.workerClient = typeof Worker === 'function'
       ? createLfeaWorkerClient(options?.workerFactory ?? null)
       : null;
@@ -65,9 +72,11 @@ export class LfeaWorkbenchController {
     this.caesarAccdbBenchmarkHost = this.documentRef.createElement('div');
     this.caesarAccdbBenchmarkHost.dataset.role = 'lfea-caesar-accdb-benchmark-host';
     this.caesarAccdbBenchmarkPanel = new CaesarAccdbBenchmarkPanel(this.caesarAccdbBenchmarkHost);
-    this.view.setBenchmarkHost(this.benchmarkHost);
+    if (this.composeQaBenchmarkPanels) {
+      this.view.setBenchmarkHost(this.benchmarkHost);
+      this.view.setCaesarAccdbBenchmarkHost(this.caesarAccdbBenchmarkHost);
+    }
     this.view.setConvergenceHost(this.convergenceHost);
-    this.view.setCaesarAccdbBenchmarkHost(this.caesarAccdbBenchmarkHost);
     this.unsubscribe = null;
   }
 
@@ -93,10 +102,20 @@ export class LfeaWorkbenchController {
         this.store.previewNodeMove(nodeId, x, y),
       onCommitNode: () => this.commitNodeMove(),
       onCancelNode: () => this.store.cancelNodeMove(),
-      onBenchmark: () => this.runBenchmark(),
+      // Omitted (not just gated by an if) when composeQaBenchmarkPanels
+      // is false: renderLfeaToolbar hides the Run Benchmark button
+      // itself when this handler is absent, since clicking it would
+      // otherwise run the full benchmark suite into a host <div> that is
+      // never attached to the DOM (see this.benchmarkHost above).
+      // runBenchmark()/getBenchmarkReport() stay callable directly on
+      // this controller regardless -- only this one toolbar affordance
+      // is hidden.
+      onBenchmark: this.composeQaBenchmarkPanels ? () => this.runBenchmark() : null,
     });
-    this.benchmarkPanel.render();
-    this.caesarAccdbBenchmarkPanel.render();
+    if (this.composeQaBenchmarkPanels) {
+      this.benchmarkPanel.render();
+      this.caesarAccdbBenchmarkPanel.render();
+    }
     this.convergenceController.init();
     this.unsubscribe = this.store.subscribe((state) => this.view.render(state));
     this.view.render(this.store.getState());

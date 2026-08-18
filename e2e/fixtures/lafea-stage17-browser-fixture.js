@@ -31,7 +31,10 @@ export function mountQualifiedLafea3(root, options = {}) {
   const source = composition.normalizeDocument(triangleSource());
   const authority = issueLafeaSourceAuthority('LAFEA.3', source, 'A17/BROWSER-GOLDEN');
   const geometry = triangleGeometry();
-  const domain = sourceEquivalentDomain(authority.sourceHash, geometry, options.unstable === true);
+  const domain = sourceEquivalentDomain(authority.sourceHash, geometry, {
+    unstable: options.unstable === true,
+    includeTemperature: options.includeTemperature === true,
+  });
   const geometryEvidence = createLafeaAnalysisGeometryEvidence({
     schema: LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_SCHEMA,
     stageId: 'LAFEA.3', sourceHash: authority.sourceHash,
@@ -83,8 +86,7 @@ export function evaluateHistoryEnergyConvergence(controller, runIds, meshSizes) 
     schema: LAFEA_BUCKET_01_CONVERGENCE_INPUT_SCHEMA,
     quantityId: 'TOTAL_STRAIN_ENERGY',
     samplingAuthority: 'FIXED_GLOBAL_RESPONSE',
-    locationId: 'L1_TOTAL_STRAIN_ENERGY',
-    locationDefinitionHash: canonicalLafeaSha256({
+    locationId: 'L1_TOTAL_STRAIN_ENERGY', locationDefinitionHash: canonicalLafeaSha256({
       schema: 'a17-global-response-location/v1', loadCaseId: 'L1', quantityId: 'TOTAL_STRAIN_ENERGY',
     }),
     units: 'N*mm', meshSizes, observations,
@@ -125,7 +127,9 @@ export function meshProfile(globalTargetSize) {
   });
 }
 
-function sourceEquivalentDomain(sourceHash, geometry, unstable) {
+function sourceEquivalentDomain(sourceHash, geometry, options = {}) {
+  const unstable = options.unstable === true;
+  const includeTemperature = options.includeTemperature === true;
   const allCases = ['L1', 'L2'];
   const attachments = [
     attachment('FIX-A', 'RESTRAINT', 'VERTEX', 'A', allCases, { ux: true, uy: true }),
@@ -133,10 +137,19 @@ function sourceEquivalentDomain(sourceHash, geometry, unstable) {
     attachment('F1', 'CONCENTRATED_LOAD', 'VERTEX', 'B', ['L1'], { fx: 1000, fy: 0, unit: 'N' }),
     attachment('F2', 'CONCENTRATED_LOAD', 'VERTEX', 'B', ['L2'], { fx: -500, fy: 0, unit: 'N' }),
   ];
+  if (includeTemperature) {
+    attachments.push(
+      attachment('TEMP', 'TEMPERATURE', 'REGION', 'REGION-1', ['L1'], { value: 50, unit: 'C' }),
+    );
+  }
   return createLafeaContinuumAnalysisDomain({
     schema: LAFEA_CONTINUUM_ANALYSIS_DOMAIN_SCHEMA,
     stageId: 'LAFEA.3', sourceHash,
-    applicationRef: unstable ? 'A17/UNSTABLE-DOMAIN' : 'A17/GOLDEN-DOMAIN',
+    applicationRef: includeTemperature
+      ? 'A17/TEMPERATURE-PREFLIGHT-VETO'
+      : unstable
+        ? 'A17/UNSTABLE-DOMAIN'
+        : 'A17/GOLDEN-DOMAIN',
     units: { length: 'mm', force: 'N', stress: 'MPa', temperature: 'C' },
     formulation: 'PLANE_STRESS',
     region: { regionId: 'REGION-1', materialRef: 'MAT' },

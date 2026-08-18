@@ -24,6 +24,8 @@ import {
 export const LAFEA_PRODUCER_BATCH_SCHEMA = 'lafea-lifecycle-producer-batch/v1';
 export const LAFEA_PRODUCER_REVISION = 'NB-T2.1';
 
+const SHELL_COMPILED_ROUTE = 'SHELL_RETAINED_MESH_COMPILED_SOLVER_MODEL';
+
 export function createLafeaLifecycleProducerBatch(options) {
   const stageId = options?.stageId;
   const stage = requireLafeaStageRegistryEntry(stageId);
@@ -133,6 +135,11 @@ function analyticalRecords(stage, profile, authority, execution) {
 }
 
 function feaRecords(stage, profile, authority, execution) {
+  if ((stage.stageId === 'LAFEA.4' || stage.stageId === 'LAFEA.5')
+    && execution.route === SHELL_COMPILED_ROUTE) {
+    return governedShellFeaRecords(stage, profile, authority, execution);
+  }
+
   const producerRef = producerReference(stage, profile);
   const sourceHash = authority.sourceHash;
   const canonicalModelHash = engineeringHash(stage.stageId, 'CANONICAL_MODEL', {
@@ -206,6 +213,98 @@ function feaRecords(stage, profile, authority, execution) {
   ];
 }
 
+function governedShellFeaRecords(stage, profile, authority, execution) {
+  const producerRef = `${producerReference(stage, profile)}/GOVERNED-SHELL-COMPILED-V1`;
+  const sourceHash = authority.sourceHash;
+  for (const [field, value] of Object.entries({
+    sourceHash: execution.sourceHash,
+    analysisDomainHash: execution.analysisDomainHash,
+    analysisGeometryHash: execution.analysisGeometryHash,
+    meshHash: execution.meshHash,
+    solverModelHash: execution.solverModelHash,
+    solverModelBindingHash: execution.solverModelBindingHash,
+    executionMeshBindingHash: execution.executionMeshBindingHash,
+    compiledExecutionHash: execution.compiledExecutionHash,
+  })) {
+    if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) {
+      throw producerError(`LAFEA_SHELL_COMPILED_${field.toUpperCase()}_INVALID`);
+    }
+  }
+  const meshProfileSemanticHash = execution.meshProfileHash;
+  if (typeof meshProfileSemanticHash !== 'string'
+    || !/^fnv1a64:[0-9a-f]{16}$/u.test(meshProfileSemanticHash)) {
+    throw producerError('LAFEA_SHELL_COMPILED_MESHPROFILEHASH_INVALID');
+  }
+  if (execution.sourceHash !== sourceHash) {
+    throw producerError('LAFEA_SHELL_COMPILED_SOURCE_AUTHORITY_MISMATCH');
+  }
+  const canonicalModelHash = engineeringHash(stage.stageId, 'CANONICAL_MODEL', {
+    sourceHash,
+    canonicalInput: execution.canonicalInput,
+  });
+  const analysisGeometryHash = execution.analysisGeometryHash;
+  // Lifecycle parent hashes are SHA-256 by contract, while the governed mesh
+  // profile owns an FNV-1a semantic identity. Preserve the native profile
+  // identity inside a deterministic lifecycle-owned SHA-256 wrapper rather
+  // than coercing or reinterpreting either hash domain.
+  const meshProfileHash = engineeringHash(stage.stageId, 'ANALYSIS_MESH_PROFILE', {
+    authority: 'RETAINED_GOVERNED_MESH_PROFILE',
+    meshProfileSemanticHash,
+    producerRevision: LAFEA_PRODUCER_REVISION,
+  });
+  const meshHash = execution.meshHash;
+  const physicalLoadCaseHash = engineeringHash(stage.stageId, 'PHYSICAL_LOAD_CASE_INPUT',
+    physicalLoadPayload(stage.stageId, execution.canonicalInput));
+  // FEA_MESH_RECOVERY_V1 has an exact parent-key contract. Solver-model and
+  // execution-mesh binding identities are therefore retained inside these
+  // opaque profile hashes, not appended as unauthorized parent keys.
+  const solverProfileHash = engineeringHash(stage.stageId, 'SOLVER_PROFILE', {
+    enginePackage: stage.enginePackage,
+    authority: stage.authority,
+    producerRevision: LAFEA_PRODUCER_REVISION,
+    route: execution.route,
+    solverModelHash: execution.solverModelHash,
+    solverModelBindingHash: execution.solverModelBindingHash,
+    executionMeshBindingHash: execution.executionMeshBindingHash,
+  });
+  const executionHash = execution.compiledExecutionHash;
+  const recoveryProfileHash = engineeringHash(stage.stageId, 'RECOVERY_PROFILE', {
+    resultContractRole: stage.resultContractRole,
+    authority: stage.authority,
+    producerRevision: LAFEA_PRODUCER_REVISION,
+    route: execution.route,
+    solverModelHash: execution.solverModelHash,
+    executionMeshBindingHash: execution.executionMeshBindingHash,
+  });
+  const recoveryEvidence = requireRecoveryEvidence(stage.stageId, execution.result);
+  const recoveryHash = engineeringHash(stage.stageId, 'RECOVERY', {
+    executionHash,
+    meshHash,
+    recoveryProfileHash,
+    retainedAcceptedRecoveryEvidence: recoveryEvidence,
+  });
+  return [
+    record(stage.stageId, 'CANONICAL_MODEL', canonicalModelHash, { sourceHash }, producerRef),
+    record(stage.stageId, 'ANALYSIS_GEOMETRY', analysisGeometryHash, {
+      sourceHash, canonicalModelHash,
+    }, producerRef),
+    record(stage.stageId, 'ANALYSIS_MESH', meshHash, {
+      analysisGeometryHash, meshProfileHash,
+    }, producerRef),
+    record(stage.stageId, 'EXECUTION', executionHash, {
+      canonicalModelHash,
+      meshHash,
+      physicalLoadCaseHash,
+      solverProfileHash,
+    }, producerRef),
+    record(stage.stageId, 'RECOVERY', recoveryHash, {
+      executionHash,
+      meshHash,
+      recoveryProfileHash,
+    }, producerRef),
+  ];
+}
+
 function geometryArtifactHash(stageId, sourceHash, canonicalModelHash, sourceMesh, canonicalInput) {
   if (stageId === 'LAFEA.3') {
     return createLafeaContinuumGeometryProjection(canonicalInput).semanticHash;
@@ -235,6 +334,7 @@ function meshArtifactHash(
     meshProfileHash,
     sourceMesh,
     retainedAcceptedMeshEvidence: retainedMeshEvidence,
+    canonicalInput,
   });
 }
 

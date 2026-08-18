@@ -1,0 +1,53 @@
+{
+  "schema": "lafea4-tech13-product-refinement-exact-head-plan/v1",
+  "qualificationId": "LAFEA4-TECH13-PRODUCT-REFINEMENT-EXACT-HEAD-001",
+  "requiredNodeMajor": 22,
+  "dependencyInstall": {
+    "id": "DEPENDENCY_INSTALL",
+    "classification": "INFRASTRUCTURE",
+    "executable": "npm",
+    "args": ["ci"]
+  },
+  "browserProvision": {
+    "id": "BROWSER_PROVISION",
+    "classification": "INFRASTRUCTURE",
+    "executable": "npx",
+    "args": ["playwright", "install", "chromium"]
+  },
+  "steps": [
+    { "id": "TECH3_CURVATURE_ANALYTICAL", "executable": "node", "args": ["scripts/lafea-tech3-curvature-qualification-check.mjs"] },
+    { "id": "TECH4_CURVED_HOLE_FIXED_PROBE_CONVERGENCE", "executable": "node", "args": ["scripts/lafea-tech4-curved-hole-convergence-check.mjs"] },
+    { "id": "TECH7_GRADED_REFINEMENT_EXECUTOR", "executable": "node", "args": ["scripts/lafea-tech7-graded-refinement-executor-check.mjs"] },
+    { "id": "TECH11_PARENT_NORMAL_SAMPLE", "executable": "node", "args": ["scripts/lafea-tech11-parent-normal-sample-check.mjs"] },
+    { "id": "TECH13A_PRODUCT_REFINEMENT_CONTRACT", "executable": "node", "args": ["scripts/lafea-tech13a-product-refinement-contract-check.mjs"] },
+    { "id": "TECH13B_PRODUCT_REFINEMENT_ADAPTER", "executable": "node", "args": ["scripts/lafea-tech13b-product-refinement-adapter-check.mjs"] },
+    { "id": "TECH13C_PRODUCT_REFINEMENT_ACCEPTANCE", "executable": "node", "args": ["scripts/lafea-tech13c-product-refinement-acceptance-check.mjs"] },
+    { "id": "TECH13D_PRODUCT_REFINEMENT_WORKBENCH_UI", "executable": "node", "args": ["scripts/lafea-tech13d-product-refinement-workbench-ui-check.mjs"] },
+    { "id": "TECH13E_PRODUCT_REFINEMENT_NUMERICAL", "executable": "node", "args": ["scripts/lafea-tech13e-product-refinement-numerical-check.mjs"] },
+    { "id": "TECH13F_DORMANT_PROMOTION_GATE", "executable": "node", "args": ["scripts/lafea-tech13f-dormant-promotion-gate-check.mjs"] },
+    { "id": "TECH13F_DORMANT_ACTIVATION_PATH", "executable": "node", "args": ["scripts/lafea-tech13f-dormant-product-refinement-activation-check.mjs"] },
+    { "id": "TECH13G_NONSPOOFABLE_PROMOTION_AUTHORITY", "executable": "node", "args": ["scripts/lafea-tech13g-nonspoofable-promotion-authority-check.mjs"] },
+    { "id": "SHELL_WORKBENCH_ROUTE", "executable": "node", "args": ["scripts/lafea-shell-workbench-route-check.mjs"] },
+    { "id": "SHELL_COMPILED_EXECUTION", "executable": "node", "args": ["scripts/lafea-shell-compiled-execution-check.mjs"] },
+    { "id": "MESHING_SUITE", "executable": "npm", "args": ["run", "check:lafea-meshing"] },
+    { "id": "LAFEA_CORE_SUITE", "executable": "npm", "args": ["run", "check:lafea-core"] },
+    { "id": "PRODUCTION_BUILD", "executable": "npm", "args": ["run", "build"] },
+    { "id": "VISIBLE_WORKBENCH_CHROMIUM", "executable": "node", "args": ["scripts/lafea-stage17-browser-run.mjs"], "browser": true }
+  ],
+  "passRequirements": {
+    "exactHeadRequired": true,
+    "cleanTrackedTreeRequired": true,
+    "dependencyInstallRequired": true,
+    "browserProvisionRequired": true,
+    "everyStepMustPass": true,
+    "engineeringFailureMayBeReclassifiedAsInfrastructureNotRun": false,
+    "browserSkipMayProducePass": false
+  },
+  "productEffect": {
+    "hardGateActivated": false,
+    "productRetentionAuthorized": false,
+    "uiBindingAuthorized": false,
+    "releaseQualified": false,
+    "passOnlyAuthorizesSeparateFuturePromotionReview": true
+  }
+}

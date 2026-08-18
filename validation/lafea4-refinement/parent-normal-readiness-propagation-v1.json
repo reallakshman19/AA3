@@ -1,0 +1,59 @@
+{
+  "schema": "lafea4-parent-normal-readiness-propagation-definition/v1",
+  "qualificationId": "LAFEA4-PARENT-NORMAL-TECH12G-001",
+  "stageId": "LAFEA.4",
+  "scope": "TRUSTED_PARENT_NORMAL_BLOCK_TO_DERIVED_CUSTODY_READINESS_AND_ORCHESTRATION",
+  "currentNullTrustRoot": {
+    "hardGateActivated": false,
+    "candidateBlockMayRemainRetained": true,
+    "solverBindingMayRemainCurrentPass": true,
+    "custodyStateMustRemain": "CURRENT_PASS",
+    "meshQualifiedMustRemain": true
+  },
+  "futureTrustedActiveBlock": {
+    "solverBindingReason": "LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCKED",
+    "underlyingV2MeshQualificationMayRemain": "PASS",
+    "underlyingV2OrientationTopologyMayRemain": "PASS",
+    "derivedCustodyState": "CURRENT_BLOCK",
+    "usableForAdvance": false,
+    "usableForAuthorization": false,
+    "usableForRun": false,
+    "advancePolicy": "DENY",
+    "authorizationPolicy": "DENY",
+    "runPolicy": "DENY",
+    "diagnosticCarrier": "runBlockingReasons",
+    "meshQualified": false,
+    "solverModelCurrent": false,
+    "discretizationState": "BLOCKED",
+    "authorizationState": "BLOCKED",
+    "runActionPresent": false
+  },
+  "genericSolverBindingFailure": {
+    "mustNotReclassifyMeshAsCurrentBlock": true,
+    "custodyStateMustRemain": "CURRENT_PASS",
+    "usableForRun": false
+  },
+  "custodyEvidencePolicy": {
+    "schemaMustRemain": "lafea-domain-first-mesh-custody/v1",
+    "exactProjectionKeyShapeMustBePreserved": true,
+    "doNotAddParentNormalSpecificCustodyFields": true,
+    "doNotRewriteV2MeshEvidence": true,
+    "retainMeshHash": true,
+    "retainMeshProfileHash": true,
+    "retainUnsignedMeshQualityFacts": true,
+    "derivedProductGateBlockIsSeparate": true,
+    "blockingReasonMustBeExact": true
+  },
+  "prohibitions": [
+    "NO_TRUST_ROOT_ACTIVATION_IN_TECH12G",
+    "NO_V2_MESH_QUALIFICATION_REWRITE",
+    "NO_PARENT_NORMAL_THRESHOLD_CHANGE",
+    "NO_EXISTING_15_DEGREE_PRODUCER_GUARD_CHANGE",
+    "NO_SHELL_FORMULATION_CHANGE",
+    "NO_STIFFNESS_EQUATION_CHANGE",
+    "NO_SOLVER_EQUATION_CHANGE",
+    "NO_RELEASE_AUTHORITY_CHANGE"
+  ],
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

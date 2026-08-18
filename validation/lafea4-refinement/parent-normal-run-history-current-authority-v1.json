@@ -1,0 +1,59 @@
+{
+  "schema": "lafea4-parent-normal-run-history-current-authority-definition/v1",
+  "qualificationId": "LAFEA4-PARENT-NORMAL-TECH12J-001",
+  "stageId": "LAFEA.4",
+  "scope": "RUN_HISTORY_AND_DOSSIER_CURRENT_AUTHORITY_AFTER_GATE_PROMOTION",
+  "currentTrustRoot": "NULL",
+  "historyPolicy": {
+    "appendOnlyEvidencePreserved": true,
+    "qualifiedExecutionMayBeArchivedAfterAuthorityRevocation": true,
+    "captureMustRecordCurrentAuthoritySnapshot": true,
+    "historicalExecutionStatusMayRemain": "QUALIFIED",
+    "historicalEvidenceNeverGrantsCurrentAuthority": true
+  },
+  "dossierCustody": {
+    "currentExactExecution": "CURRENT_RUN_SNAPSHOT",
+    "latestWithoutLiveAuthority": "LATEST_RUN_SNAPSHOT_AUTHORITY_UNVERIFIED",
+    "latestButLiveAuthorityRevoked": "LATEST_RUN_HISTORIC_NOT_CURRENT",
+    "latestButExecutionIdentityChanged": "LATEST_RUN_HISTORIC_NOT_CURRENT",
+    "olderEntry": "HISTORIC_RUN_SNAPSHOT"
+  },
+  "currentCustodyRequirements": {
+    "entryMustBeLatestCapturedRun": true,
+    "liveStageRequired": true,
+    "liveStageIdMustMatchEntryStage": true,
+    "liveCurrentResultAcceptedMustBeTrue": true,
+    "liveExecutionIdentityMustEqualEntryResultIdentity": true
+  },
+  "authoritySnapshotFields": [
+    "governedRoute",
+    "executionQualified",
+    "calculationState",
+    "resultReady",
+    "releaseState",
+    "currentResultAccepted",
+    "blockingReasons"
+  ],
+  "compatibility": {
+    "runHistoryEntrySchemaRemains": "lafea-run-history-entry/v1",
+    "oldEntriesWithoutCurrentAuthorityRemainValid": true,
+    "runComparisonSemanticsUnchanged": true,
+    "retainedResultValuesUnchanged": true,
+    "retainedReleaseEvidenceUnchanged": true
+  },
+  "prohibitions": [
+    "NO_TRUST_ROOT_ACTIVATION_IN_TECH12J",
+    "NO_HISTORY_ENTRY_AS_CURRENT_AUTHORITY_WITHOUT_LIVE_STATE",
+    "NO_LATEST_RUN_EQUALS_CURRENT_AUTHORITY_SHORTCUT",
+    "NO_EXECUTION_STATUS_QUALIFIED_EQUALS_CURRENT_AUTHORITY_SHORTCUT",
+    "NO_RESULT_VALUE_MUTATION",
+    "NO_RELEASE_EVIDENCE_MUTATION",
+    "NO_PARENT_NORMAL_THRESHOLD_CHANGE",
+    "NO_EXISTING_15_DEGREE_PRODUCER_GUARD_CHANGE",
+    "NO_SHELL_FORMULATION_CHANGE",
+    "NO_STIFFNESS_EQUATION_CHANGE",
+    "NO_SOLVER_EQUATION_CHANGE"
+  ],
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

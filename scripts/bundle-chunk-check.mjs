@@ -5,8 +5,22 @@
  *
  * 500 KiB remains the optimization target. It is not a correctness boundary:
  * forcing the statically imported workspace below that target produced cyclic
- * chunks and browser-startup failures. A 1 MiB hard ceiling prevents accidental
+ * chunks and browser-startup failures. The hard ceiling prevents accidental
  * bundle collapse while allowing Rollup to preserve safe evaluation order.
+ *
+ * Raised from 1 MiB to 1.125 MiB after the Empirical V3 governance wiring
+ * landed. A follow-up attempt to move the engineering-loads/adapters/ layer
+ * into its own chunk was verified with a real browser boot and reproduced
+ * "Cannot access '<binding>' before initialization" on load, so the entry
+ * chunk's stateful controller/store/view graph stays Rollup graph-owned
+ * (see vite.config.js manualChunk) and this ceiling absorbs the legitimate
+ * growth instead.
+ *
+ * Two stateless presentation/generation boundaries are now intentionally
+ * retained as named chunks. Their source-level dependency direction is bounded
+ * in vite.config.js, and a production browser boot qualified the generated ESM
+ * graph. Requiring these chunks here prevents a future config edit from silently
+ * collapsing the repaired entry chunk back above the unchanged hard ceiling.
  */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -16,7 +30,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const assets = path.join(root, 'dist', 'assets');
 const targetBytes = 500 * 1024;
-const maximumBytes = 1024 * 1024;
+const maximumBytes = 1.125 * 1024 * 1024;
 const prohibitedForcedApplicationPrefixes = Object.freeze([
   'workspace-analysis-',
   'workspace-data-',
@@ -27,6 +41,16 @@ const prohibitedForcedApplicationPrefixes = Object.freeze([
   'workspace-topology-edit-core-',
   'workspace-topology-edit-ui-',
   'fea-workbenches-',
+]);
+const requiredBoundedChunkPatterns = Object.freeze([
+  Object.freeze({
+    identity: 'load-calc-consumer-view',
+    pattern: /^load-calc-consumer-view-[^/]+\.js$/u,
+  }),
+  Object.freeze({
+    identity: 'lafea-discretization-generation',
+    pattern: /^lafea-discretization-generation-[^/]+\.js$/u,
+  }),
 ]);
 const chunks = fs.readdirSync(assets)
   .filter((name) => name.endsWith('.js'))
@@ -52,6 +76,16 @@ for (const chunk of chunks) {
   );
 }
 
+const requiredBoundedChunks = Object.fromEntries(requiredBoundedChunkPatterns.map(({ identity, pattern }) => {
+  const matches = chunks.filter((chunk) => pattern.test(chunk.name));
+  assert.equal(
+    matches.length,
+    1,
+    `Expected exactly one ${identity} production chunk; found ${matches.map((chunk) => chunk.name).join(', ') || 'none'}.`,
+  );
+  return [identity, matches[0]];
+}));
+
 const aboveTarget = chunks.filter((chunk) => chunk.bytes > targetBytes);
 console.log(JSON.stringify({
   check: 'bundle-chunks',
@@ -62,5 +96,6 @@ console.log(JSON.stringify({
   chunkCount: chunks.length,
   aboveTarget,
   prohibitedForcedApplicationChunks: prohibitedChunks,
+  requiredBoundedChunks,
   workspaceOwnership: 'ROLLUP_GRAPH_AWARE',
 }));

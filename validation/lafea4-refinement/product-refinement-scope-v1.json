@@ -1,0 +1,50 @@
+{
+  "schema": "lafea4-shell-product-refinement-scope-definition/v1",
+  "qualificationId": "LAFEA4-TECH13A-PRODUCT-REFINEMENT-SCOPE-001",
+  "stageId": "LAFEA.4",
+  "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+  "authorizedSurfaceKinds": [
+    "CYLINDRICAL",
+    "CYLINDRICAL_HOLES"
+  ],
+  "authorizedTargetTypes": [
+    "ELEMENT"
+  ],
+  "currentParentRequired": true,
+  "exactMidsurfaceParentRequired": true,
+  "conformingTri3Required": true,
+  "parentNormalQualificationRequired": true,
+  "atomicPublicationRequired": true,
+  "existingQualityPolicyMustBeReused": true,
+  "adjacentSizeRatioPolicyMayBeRelaxed": false,
+  "aspectRatioPolicyMayBeRelaxed": false,
+  "scaledJacobianPolicyMayBeRelaxed": false,
+  "tech7NumericalKernelReuseAllowed": true,
+  "tech7AuthorityMayBeReinterpretedAsProductAuthority": false,
+  "executionAuthorized": false,
+  "productBindingAuthorized": false,
+  "uiBindingAuthorized": false,
+  "releaseQualified": false,
+  "activationDependency": "TECH13B_TECH13C_TECH13E_EXACT_HEAD_QUALIFICATION",
+  "excluded": [
+    "PLANAR",
+    "PLANAR_MULTIPATCH",
+    "CYLINDRICAL_PERIODIC",
+    "SOURCE_MESH",
+    "NODE_TARGET_REFINEMENT",
+    "QUAD_SHELLS",
+    "HIGH_ORDER_SHELLS",
+    "TOPOLOGY_CHANGING_HOLE_CREATION",
+    "MIDSURFACE_GEOMETRY_MUTATION",
+    "SHELL_THICKNESS_MUTATION",
+    "FREEFORM_SURFACES"
+  ],
+  "forbidden": [
+    "changing parent-normal mathematics",
+    "changing mesh-quality thresholds",
+    "changing the existing automatic 15-degree curved-facet director guard",
+    "changing shell formulation or stiffness equations",
+    "changing TECH-7 qualification-only productionBindingAuthorized=false",
+    "enabling the workbench Refine Mesh control before integrated qualification"
+  ]
+}

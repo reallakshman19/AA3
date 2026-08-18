@@ -1,7 +1,5 @@
 /** Guided content composition for the standalone LAFEA workbench. */
 import { card, element } from './lafea-workbench-dom.js';
-import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contract/index.js';
-import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { renderLafeaEvidence } from './lafea-results-view.js';
 import { renderDocumentTableEditor } from './lafea-document-table.js';
 import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
@@ -16,10 +14,6 @@ import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js'
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import { focusLafeaRetainedMeshElement } from './lafea-canvas/retained-mesh-overlay.js';
-
-const QUICK_MESH_PROFILE_SOURCE_REVISION = 'lafea-workbench-quick-mesh-profile/v2';
-const QUICK_MESH_TARGET_LENGTH = 15;
-const SHELL_ELEMENT_PLACEHOLDER = 'CST_DKT_TRI3_THIN_SHELL_V1';
 
 export function renderLafeaWorkbenchContent(root, state, stage, options) {
   const workflow = buildLafeaGuidedWorkflow(state);
@@ -57,7 +51,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     shell,
   );
 
-  const sourceCard = card(root, `Model inputs`);
+  const sourceCard = card(root, 'Model inputs');
   sourceCard.section.dataset.guidedTarget = 'source';
   sourceCard.body.append(element(
     root,
@@ -84,8 +78,9 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     options.handlers,
   ));
 
-  const viewportCard = card(root, `Engineering viewport`);
+  const viewportCard = card(root, 'Engineering viewport');
   viewportCard.section.dataset.guidedTarget = 'viewport';
+  viewportCard.section.classList.add('lafea-cae-workspace__viewport-card');
   const reusedViewport = validReusableViewport(options.reusedViewport);
   const preview = reusedViewport?.element ?? element(root, 'div', 'lafea-workbench__svg');
   const retainedMeshEvidence = stage.domainFirstProfileActive === true
@@ -129,8 +124,9 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   }
   viewportCard.body.append(truthPanel(root, options.registryEntry));
 
-  const discretizationCard = card(root, `Meshing and discretization`);
+  const discretizationCard = card(root, 'Meshing and discretization');
   discretizationCard.section.dataset.guidedTarget = 'discretization';
+  discretizationCard.section.classList.add('lafea-cae-workspace__inspector-card');
   const discretizationHost = element(root, 'div');
   renderLafeaDiscretizationPanel(discretizationHost, discretization, {
     onImportEvidence: options.handlers.onImportMeshEvidence,
@@ -144,16 +140,24 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       options.onMeshFocusChange?.(elementId, true);
       focusLafeaRetainedMeshElement(preview, elementId);
     },
-    onAdvance: () => navigateTo(shell, 'numerical-verification'),
+    onAdvance: () => {
+      if (stage.stageId === 'LAFEA.3'
+        && stage.domainFirstProfileActive === true
+        && stage.preparationProjection?.state !== 'CURRENT_PASS') {
+        return options.handlers.onPrepareContinuum?.();
+      }
+      return navigateTo(shell, 'numerical-verification');
+    },
   });
   discretizationCard.body.append(discretizationHost);
 
-  const numericalCard = card(root, `Numerical verification`);
+  const numericalCard = card(root, 'Numerical verification');
   numericalCard.section.dataset.guidedTarget = 'numerical-verification';
   numericalCard.body.append(renderLafeaNumericalVerification(numericalCard.body, stage));
 
-  const preflightCard = card(root, `Solve readiness`);
+  const preflightCard = card(root, 'Solve readiness');
   preflightCard.section.dataset.guidedTarget = 'findings';
+  preflightCard.section.classList.add('lafea-cae-workspace__inspector-card');
   preflightCard.body.append(workflowSummary(root, workflow, [
     'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
   ]));
@@ -161,7 +165,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     preflightCard.body.append(diagnosticList(root, state.diagnostics));
   }
 
-  const evidenceCard = card(root, `Analysis results`);
+  const evidenceCard = card(root, 'Analysis results');
   evidenceCard.section.dataset.guidedTarget = 'results';
   evidenceCard.body.append(renderLafeaEvidence(
     root,
@@ -171,7 +175,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     stage.execution,
   ));
 
-  const lifecycleCard = card(root, `Engineering evidence and lineage`);
+  const lifecycleCard = card(root, 'Engineering evidence and lineage');
   lifecycleCard.section.dataset.guidedTarget = 'lineage';
   lifecycleCard.body.append(renderLafeaLifecyclePanel(
     lifecycleCard.body,
@@ -182,19 +186,26 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   const ncCard = card(root, 'NC governance — evidence placeholders');
   ncCard.body.append(renderLafeaNcPlaceholderPanel(ncCard.body));
 
-  main.append(
-    nextActionBanner,
-    engineeringOverview,
+  const caeWorkspace = element(root, 'section', 'lafea-cae-workspace');
+  caeWorkspace.dataset.role = 'lafea-cae-workspace';
+  const viewportPane = element(root, 'div', 'lafea-cae-workspace__viewport');
+  const inspectorPane = element(root, 'aside', 'lafea-cae-workspace__inspector');
+  viewportPane.append(viewportCard.section);
+  inspectorPane.append(discretizationCard.section, preflightCard.section);
+  caeWorkspace.append(viewportPane, inspectorPane);
+
+  const context = element(root, 'section', 'lafea-cae-workspace__context');
+  context.dataset.role = 'lafea-cae-workspace-context';
+  context.append(
     sourceCard.section,
     profileCard.section,
-    viewportCard.section,
-    discretizationCard.section,
     numericalCard.section,
-    preflightCard.section,
     evidenceCard.section,
     lifecycleCard.section,
     ncCard.section,
   );
+
+  main.append(nextActionBanner, engineeringOverview, caeWorkspace, context);
 
   if (options.benchmarkHost) {
     const benchmarkCard = card(root, 'Verification output');
@@ -208,7 +219,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       ),
       options.benchmarkHost,
     );
-    main.append(benchmarkCard.section);
+    context.append(benchmarkCard.section);
   }
 
   return Object.freeze({
@@ -252,6 +263,7 @@ function viewportMode(root, label, value, active) {
 function renderNextActionBanner(root, stage, discretization, workflow, options, shell) {
   const banner = element(root, 'div', 'lafea-next-action-banner');
   banner.dataset.role = 'lafea-next-action-banner';
+  banner.dataset.meshUiPhase = discretization.uiPhase;
   banner.style.padding = '16px';
   banner.style.margin = '16px 0';
   banner.style.background = '#e3f2fd';
@@ -268,8 +280,19 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
   }
 
   if (!discretization.evidence.present) {
-    banner.append(element(root, 'strong', null, 'Step 2: Mesh generation required'));
-    const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Generate qualified mesh');
+    const sourceAdoption = discretization.generation.generationMode === 'SOURCE_MESH_ADOPTION';
+    banner.append(element(
+      root,
+      'strong',
+      null,
+      meshActionHeading(discretization.uiPhase, sourceAdoption),
+    ));
+    const btn = element(
+      root,
+      'button',
+      'lafea-next-action-banner__button',
+      meshActionLabel(discretization.uiPhase),
+    );
     btn.type = 'button';
     btn.style.padding = '8px 16px';
     btn.style.background = '#1976d2';
@@ -278,17 +301,8 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
     btn.style.borderRadius = '4px';
     btn.style.cursor = 'pointer';
     btn.style.fontWeight = 'bold';
-    btn.disabled = !discretization.generation.producerQualified;
-    btn.title = btn.disabled
-      ? 'No qualified automatic mesh producer is available for this stage.'
-      : 'Bind the source-controlled qualified mesh profile and generate from it.';
-    btn.onclick = () => {
-      const family = preferredQuickMeshFamily(discretization.generation.elementFamilies);
-      if (!family) return;
-      const profileEnvelope = quickMeshProfile(family);
-      options.handlers.onBindMeshProfile?.(profileEnvelope);
-      options.handlers.onGenerateMesh?.({});
-    };
+    btn.title = 'Open the governed meshing controls. This navigation action does not bind a profile or generate a mesh.';
+    btn.onclick = () => navigateTo(shell, 'discretization');
     banner.append(btn);
     return banner;
   }
@@ -340,31 +354,25 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
   review.title = 'Review retained solver/recovery evidence. Display contours are not substituted for numerical authority.';
   review.onclick = () => navigateTo(shell, 'results');
   banner.append(review);
-
   return banner;
 }
 
-function quickMeshProfile(family) {
-  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
-  const profileEnvelope = {
-    schema: 'lafea-mesh-profile/v1',
-    profileIdentity: `LAFEA3_QUICK_${family}_QUALIFIED_PROFILE_V2`,
-    sourceRevision: QUICK_MESH_PROFILE_SOURCE_REVISION,
-    fields: {
-      ...defaults,
-      continuumElement: family,
-      shellElement: SHELL_ELEMENT_PLACEHOLDER,
-      globalTargetSize: QUICK_MESH_TARGET_LENGTH,
-    },
-  };
-  profileEnvelope.semanticHash = semanticHash(profileEnvelope);
-  return profileEnvelope;
+function meshActionHeading(uiPhase, sourceAdoption) {
+  if (uiPhase === 'PROFILE_REQUIRED') {
+    return sourceAdoption ? 'Step 2: Configure source-mesh adoption' : 'Step 2: Configure analysis mesh';
+  }
+  if (uiPhase === 'READY_TO_PLAN') return 'Step 2: Mesh profile bound — preview or generate';
+  if (uiPhase === 'PLAN_AVAILABLE') return 'Step 2: Mesh plan available for review';
+  if (uiPhase === 'PLAN_BLOCKED') return 'Step 2: Mesh plan is blocked by resource limits';
+  if (uiPhase === 'PARENT_REQUIRED') return 'Step 2: Geometry parent required before meshing';
+  if (uiPhase === 'PRODUCER_UNAVAILABLE') return 'Step 2: Qualified mesh producer unavailable';
+  return 'Step 2: Review meshing prerequisites';
 }
 
-function preferredQuickMeshFamily(families) {
-  if (!Array.isArray(families) || !families.length) return null;
-  if (families.includes('T6_QUADRATIC_TRIANGLE')) return 'T6_QUADRATIC_TRIANGLE';
-  return families[0];
+function meshActionLabel(uiPhase) {
+  if (uiPhase === 'PROFILE_REQUIRED') return 'Configure mesh';
+  if (uiPhase === 'PLAN_AVAILABLE' || uiPhase === 'PLAN_BLOCKED') return 'Review mesh plan';
+  return 'Open mesh controls';
 }
 
 function validReusableViewport(value) {

@@ -61,7 +61,7 @@ export function recoverLoadCase(model, mesh, elementEvidence, load, solution) {
     forceEvidence: {
       forceVector: load.forceVector,
       thermalForceVector: load.thermalForceVector,
-      thermalInitialStrainEnergy,
+      thermalInitialStrainEnergy: thermalInitialEnergy,
       contributions: load.contributions,
       sourceReference: load.sourceReference,
     },
@@ -82,7 +82,7 @@ export function recoverLoadCase(model, mesh, elementEvidence, load, solution) {
       globalEnergy,
       quadraticDisplacementEnergy: canonicalNumber(quadraticEnergy, 'quadratic displacement energy'),
       thermalEquivalentLoadWork: canonicalNumber(thermalWork, 'thermal equivalent load work'),
-      thermalInitialStrainEnergy,
+      thermalInitialStrainEnergy: thermalInitialEnergy,
       residual,
       tolerance: limit,
       accepted: true,

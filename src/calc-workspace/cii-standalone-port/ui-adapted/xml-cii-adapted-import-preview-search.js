@@ -2,17 +2,32 @@ import { resolveLineListDensity } from '../core/line-density-resolver.js';
 import { normalizeLineListRow } from '../core/linelist-mapping.js';
 import { MASTER_FIELDS } from './xml-cii-adapted-fields-config.js';
 
+const previewSearchMetrics = {
+  rowBuilds: 0,
+  sourceRowsVisited: 0,
+  lineRowsNormalized: 0,
+  mappingResolutions: 0,
+  supportConfigParses: 0,
+  searchIndexBuilds: 0,
+  searchTextRows: 0,
+};
+
 function text(value, fallback = '') {
   const out = String(value ?? '').trim();
   return out || fallback;
 }
 
 function mappedFieldMap(masterKey, state) {
+  previewSearchMetrics.mappingResolutions += 1;
+  const configKey = MASTER_FIELDS[masterKey]?.configKey;
+  const contextMap = state.masterContext?.config?.[configKey]?.fieldMap;
+  if (contextMap && Object.keys(contextMap).length > 0) return contextMap;
+
   let config = {};
   try {
+    previewSearchMetrics.supportConfigParses += 1;
     config = JSON.parse(state.supportConfigJson || '{}');
   } catch {}
-  const configKey = MASTER_FIELDS[masterKey]?.configKey;
   return config[configKey]?.fieldMap || {};
 }
 
@@ -24,9 +39,17 @@ function readMappedValue(row, keys) {
   return '';
 }
 
-function normalizePreviewSearchRow(row, masterKey, state, index) {
-  if (masterKey !== 'lineList') return row;
-  const fieldMap = mappedFieldMap(masterKey, state);
+function lineSearchRowReady(row) {
+  return !!row
+    && (Object.hasOwn(row, 'lineNoKey') || Object.hasOwn(row, 'lineKey'))
+    && Object.hasOwn(row, 'operatingFluidDensity')
+    && Object.hasOwn(row, 'densitySource');
+}
+
+function normalizePreviewSearchRow(row, masterKey, resolveFieldMap, index) {
+  if (masterKey !== 'lineList' || lineSearchRowReady(row)) return row;
+  previewSearchMetrics.lineRowsNormalized += 1;
+  const fieldMap = resolveFieldMap();
   const normalized = row?.lineNoKey || row?.lineNo || row?.lineKey || row?.lineSeqNo
     ? row : normalizeLineListRow(row, fieldMap, index);
   const raw = normalized?._raw || row;
@@ -41,13 +64,50 @@ function normalizePreviewSearchRow(row, masterKey, state, index) {
   };
 }
 
+function previewSourceRows(master, state) {
+  if (Array.isArray(master.rows) && master.rows.length > 0) return master.rows;
+  return Array.isArray(state.masterContext?.rawRows?.[master.key])
+    ? state.masterContext.rawRows[master.key]
+    : [];
+}
+
+/**
+ * Builds the full searchable projection only when search is requested. Exactly
+ * one authoritative row source is visited: canonical master.rows when available,
+ * otherwise rawRows. Canonical normalized Line List rows are reused directly.
+ * If raw Line List rows require projection, mapping is resolved lazily once and
+ * reused for every row; supportConfigJson is never parsed per row.
+ */
 export function buildPreviewSearchRows(master, state) {
-  const rows = Array.isArray(master.rows)
-    ? master.rows.map((row, index) => normalizePreviewSearchRow(row, master.key, state, index)) : [];
-  const rawRows = Array.isArray(state.masterContext?.rawRows?.[master.key])
-    ? state.masterContext.rawRows[master.key] : [];
-  const normalizedRawRows = rawRows.map((row, index) => normalizePreviewSearchRow(row, master.key, state, index));
-  return rows.length ? rows : normalizedRawRows;
+  const sourceRows = previewSourceRows(master, state);
+  let fieldMap = null;
+  const resolveFieldMap = () => {
+    if (fieldMap === null) fieldMap = mappedFieldMap(master.key, state);
+    return fieldMap;
+  };
+  previewSearchMetrics.rowBuilds += 1;
+  previewSearchMetrics.sourceRowsVisited += sourceRows.length;
+  return sourceRows.map((row, index) => normalizePreviewSearchRow(
+    row,
+    master.key,
+    resolveFieldMap,
+    index,
+  ));
+}
+
+/**
+ * Builds searchable text once per row so subsequent keystrokes perform only
+ * string inclusion against the cached index. This object is presentation-only;
+ * engineering Preview/calculation continue to consume the authoritative rows.
+ */
+export function buildPreviewSearchIndex(master, state) {
+  const rows = buildPreviewSearchRows(master, state);
+  previewSearchMetrics.searchIndexBuilds += 1;
+  previewSearchMetrics.searchTextRows += rows.length;
+  return rows.map((row) => ({
+    row,
+    searchText: previewSearchText(row),
+  }));
 }
 
 export function previewSearchText(row) {
@@ -63,4 +123,18 @@ export function previewSearchText(row) {
     text(row?.lineKey),
   ];
   return [...values, ...composites].join(' ').toLowerCase();
+}
+
+export function getPreviewSearchMetrics() {
+  return { ...previewSearchMetrics };
+}
+
+export function resetPreviewSearchMetrics() {
+  previewSearchMetrics.rowBuilds = 0;
+  previewSearchMetrics.sourceRowsVisited = 0;
+  previewSearchMetrics.lineRowsNormalized = 0;
+  previewSearchMetrics.mappingResolutions = 0;
+  previewSearchMetrics.supportConfigParses = 0;
+  previewSearchMetrics.searchIndexBuilds = 0;
+  previewSearchMetrics.searchTextRows = 0;
 }

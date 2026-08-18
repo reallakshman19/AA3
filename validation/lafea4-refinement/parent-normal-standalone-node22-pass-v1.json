@@ -1,0 +1,41 @@
+{
+  "schema": "lafea-tech11-standalone-execution-record/v1",
+  "scope": "ZERO_DEPENDENCY_MATHEMATICAL_ORACLE_ONLY",
+  "scriptPath": "scripts/lafea-tech11-parent-normal-standalone-check.mjs",
+  "scriptBlobSha": "495234013c0511f937d14a89d577930e76451171",
+  "runtime": {
+    "node": "v22.16.0"
+  },
+  "status": "PASS",
+  "criterion": "MIN_PARENT_DIRECTED_SURFACE_JACOBIAN_STRICTLY_POSITIVE_OVER_ELEMENT_U_INTERVAL_V1",
+  "frozenCases": {
+    "positive120": {
+      "jacobianMagnitude": 8660.254037844386,
+      "minimumParentDirectedJacobian": 4330.127018922194,
+      "minimumAlignmentCosine": 0.5000000000000001,
+      "classification": "POSITIVE"
+    },
+    "zeroBoundary180": {
+      "jacobianMagnitude": 10000,
+      "minimumParentDirectedJacobian": 6.123233995736766e-13,
+      "centroidPositiveReference": 8660.254037844386,
+      "classification": "ZERO_OR_ROUNDOFF_BAND"
+    },
+    "reversed120": {
+      "minimumParentDirectedJacobian": -8660.254037844386,
+      "minimumAlignmentCosine": -1,
+      "classification": "NEGATIVE"
+    }
+  },
+  "denseReference": {
+    "caseCount": 5,
+    "divisionsPerCase": 500000,
+    "maximumAbsoluteMinimumError": 9.952927371159603e-12
+  },
+  "roundoffEnvelopeAtJacobian10000": 2.842170943040401e-10,
+  "fullRepositoryQualification": "NOT_RUN",
+  "sampleIntegrationQualification": "NOT_RUN",
+  "tech7GeneratedChildQualification": "NOT_RUN",
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

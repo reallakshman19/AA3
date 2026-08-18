@@ -1,4 +1,4 @@
-/** Controller-owned LAFEA run evidence; intentionally independent from current engineering authority state. */
+/** Controller-owned LAFEA run evidence. History is immutable; current authority is read-only live context. */
 import { createLafeaRunEvidenceDossier } from './lafea-evidence-dossier.js';
 import { compareLafeaRunHistoryEntries } from './lafea-run-comparison.js';
 import { createLafeaRunHistory } from './lafea-run-history.js';
@@ -15,9 +15,12 @@ export function createLafeaControllerRunEvidence(options = {}) {
     return compareLafeaRunHistoryEntries(history.get(leftRunId), history.get(rightRunId));
   }
 
-  function dossier(runId) {
-    return createLafeaRunEvidenceDossier(history.get(runId), {
+  function dossier(runId, stateValue = null) {
+    const entry = history.get(runId);
+    const currentStage = stateValue?.stages?.[entry.stageId] ?? null;
+    return createLafeaRunEvidenceDossier(entry, {
       currentRunId: history.latest()?.runId ?? null,
+      currentStage,
     });
   }
 

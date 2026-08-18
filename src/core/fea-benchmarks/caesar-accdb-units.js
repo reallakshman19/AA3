@@ -88,7 +88,13 @@ export function normalizeCaesarUnitToken(rawUnit) {
     .toUpperCase()
     .replace(/\s+/gu, '')
     .replace(/·/gu, '.')
-    .replace(/\.+$/gu, '');
+    .replace(/\.+$/gu, '')
+    // Real CAESAR ACCDB exports label bar pressure as the plural "bars"; the
+    // stress/pressure table only declares the singular BAR. Matches the
+    // equivalent fold already applied to InputXML's own unit labels
+    // (inputxml-unit-system.js), so both adapters accept the same real-world
+    // label variant rather than one silently rejecting it.
+    .replace(/\bBARS\b/u, 'BAR');
   if (!compact) throw new TypeError('CAESAR unit is required.');
   return compact;
 }

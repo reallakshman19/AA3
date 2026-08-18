@@ -12,18 +12,22 @@ const METRIC_LABELS = Object.freeze({
   ASPECT_RATIO: 'Aspect ratio',
   MINIMUM_ANGLE_DEGREES: 'Minimum interior angle',
   SCALED_JACOBIAN: 'Minimum scaled Jacobian',
+  ADJACENT_SIZE_RATIO: 'Maximum adjacent element-size ratio',
   SHELL_WARPAGE_DEGREES: 'Shell warpage',
   BOUNDARY_SEGMENT_COUNT: 'Boundary segment count',
   SHELL_SIZE_TO_THICKNESS_RATIO: 'Element size / thickness',
+  SHELL_ORIENTATION_TOPOLOGY: 'Shell orientation / topology',
 });
 
 const METRIC_UNITS = Object.freeze({
   ASPECT_RATIO: 'ratio',
   MINIMUM_ANGLE_DEGREES: 'deg',
   SCALED_JACOBIAN: 'ratio',
+  ADJACENT_SIZE_RATIO: 'ratio',
   SHELL_WARPAGE_DEGREES: 'deg',
   BOUNDARY_SEGMENT_COUNT: 'count',
   SHELL_SIZE_TO_THICKNESS_RATIO: 'ratio',
+  SHELL_ORIENTATION_TOPOLOGY: 'pass=1',
 });
 
 /**
@@ -85,7 +89,10 @@ function toRow(result, index) {
 }
 
 function thresholdOf(result) {
-  const declared = ['minimum', 'minimumMultiple', 'maximumMultiple']
+  const declared = [
+    'minimum', 'maximum', 'minimumMultiple', 'maximumMultiple',
+    'warningThreshold', 'blockingThreshold',
+  ]
     .filter((key) => typeof result[key] === 'number')
     .map((key) => `${key}=${result[key]}`);
   return declared.length ? declared.join(' ') : null;

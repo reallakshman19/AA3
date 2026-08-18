@@ -1,0 +1,84 @@
+{
+  "schema": "lafea4-shell-product-refinement-numerical-qualification-definition/v1",
+  "qualificationId": "LAFEA4-TECH13E-PRODUCT-LOCAL-REFINEMENT-001",
+  "stageId": "LAFEA.4",
+  "formulation": "CST_DKT_TRI3_THIN_SHELL_V1",
+  "authority": "EXACT_HEAD_PRODUCT_LOCAL_REFINEMENT_QUALIFICATION_ONLY",
+  "requiredNodeMajor": 22,
+  "prerequisites": [
+    "TECH3_CURVATURE_ANALYTICAL",
+    "TECH4_CURVED_HOLE_FIXED_PROBE_CONVERGENCE",
+    "TECH7_GRADED_REFINEMENT_EXECUTOR",
+    "TECH11_PARENT_NORMAL_SAMPLE",
+    "TECH13A_PRODUCT_REFINEMENT_CONTRACT",
+    "TECH13B_PRODUCT_REFINEMENT_ADAPTER",
+    "TECH13C_PRODUCT_REFINEMENT_ACCEPTANCE",
+    "TECH13D_PRODUCT_REFINEMENT_WORKBENCH_UI"
+  ],
+  "smoothCylinder": {
+    "radiusMm": 100,
+    "lengthMm": 50,
+    "spanDegrees": 60,
+    "thicknessMm": 1.5,
+    "elasticModulusMpa": 200000,
+    "poissonRatio": 0.3,
+    "prescribedHoopStrain": 0.001,
+    "expectedHoopStressMpa": 219.78021978021977,
+    "coarseGlobalTargetMm": 15,
+    "localTargetMm": 7.5,
+    "globalFineTargetMm": 7.5,
+    "fixedProbes": [
+      { "probeId": "LOCAL_CORE", "uFraction": 0.47, "vFraction": 0.53 },
+      { "probeId": "TRANSITION", "uFraction": 0.71, "vFraction": 0.47 },
+      { "probeId": "FAR_FIELD", "uFraction": 0.17, "vFraction": 0.58 }
+    ],
+    "acceptance": {
+      "maximumCandidateRelativeAnalyticalStressError": 0.01,
+      "maximumLocalCoreDifferenceVsGlobalFine": 0.005,
+      "maximumTransitionDifferenceVsGlobalFine": 0.01,
+      "maximumFarFieldDifferenceVsGlobalFine": 0.01,
+      "candidateMayWorsenCoarseAnalyticalError": false,
+      "forceEquilibriumRequired": true,
+      "momentEquilibriumRequired": true
+    }
+  },
+  "curvedHole": {
+    "sourceDefinition": "validation/lafea4-curved-hole/fixed-probe-convergence-v1.json",
+    "coarseGlobalTargetMm": 15,
+    "localTargetMm": 7.5,
+    "globalFineTargetMm": 7.5,
+    "targetSelection": "ELEMENT_CENTROIDS_WITHIN_HOLE_BOX_EXPANDED_BY_22_5_MM_PLUS_NEAR_PROBE_HOST_ELEMENTS_V1",
+    "maximumTargetElementCount": 64,
+    "acceptance": {
+      "NEAR_SIDE_maximumRelativeDifferenceVsGlobalFine": 0.02,
+      "NEAR_TOP_maximumRelativeDifferenceVsGlobalFine": 0.02,
+      "FAR_SIDE_maximumRelativeDifferenceVsGlobalFine": 0.01,
+      "forceEquilibriumRequired": true,
+      "momentEquilibriumRequired": true,
+      "candidateAndGlobalFineMeshQualityPassRequired": true,
+      "candidateParentNormalPassRequired": true,
+      "transitionInfluenceRadiusMmExpectedFor15To7_5At1_5": 37.5,
+      "transitionZoneArtificialMaximumAllowed": false,
+      "transitionZoneMaximumMayExceedGlobalFineOverallMaximumByFraction": 0.02,
+      "fixedPhysicalProbeLocationsRequired": true,
+      "movingMaximumAcceptanceAllowed": false
+    }
+  },
+  "productActivation": {
+    "qualificationRecordMayAuthorizeFutureProductPromotion": true,
+    "thisDefinitionActivatesProductRetention": false,
+    "thisDefinitionEnablesRefineControl": false,
+    "thisDefinitionGrantsReleaseAuthority": false,
+    "promotionRequiresExactHeadPassBundle": true,
+    "promotionMustBeSeparateReviewedChange": true
+  },
+  "prohibitions": [
+    "NO_THRESHOLD_RELAXATION",
+    "NO_MOVING_MAXIMUM_ACCEPTANCE",
+    "NO_TECH7_AUTHORITY_REINTERPRETATION",
+    "NO_PARENT_NORMAL_MATH_CHANGE",
+    "NO_AUTOMATIC_15_DEGREE_DIRECTOR_GUARD_CHANGE",
+    "NO_PRODUCT_ACTIVATION_FROM_SOURCE_REVIEW_ALONE",
+    "NO_RELEASE_QUALIFICATION_FROM_MESH_DENSITY_ALONE"
+  ]
+}

@@ -29,11 +29,23 @@ export class LafeaWorkbenchController {
   constructor(rootElement, options) {
     const configuration = isLafeaRecord(options) ? options : {};
     const { accessoryPanels, THREE, ...storeOptions } = configuration;
-    const { benchmarkPanelFactory, mockDocumentFactory, presentationMode, analyticalOnly } = configuration;
+    const {
+      benchmarkPanelFactory,
+      mockDocumentFactory,
+      mockDomainAndGeometryFactory,
+      presentationMode,
+      analyticalOnly,
+    } = configuration;
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
     this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
     this.mockDocumentFactory = typeof mockDocumentFactory === 'function' ? mockDocumentFactory : null;
+    const companionMockDomainAndGeometryFactory = this.mockDocumentFactory?.domainAndGeometryFactory;
+    this.mockDomainAndGeometryFactory = typeof mockDomainAndGeometryFactory === 'function'
+      ? mockDomainAndGeometryFactory
+      : typeof companionMockDomainAndGeometryFactory === 'function'
+        ? companionMockDomainAndGeometryFactory
+        : null;
     initializeLafeaWorkbenchRenderEvidence(this, THREE ?? null);
     this.view = new LafeaWorkbenchView(rootElement, {
       getRenderPacket: (stageId) => lafeaWorkbenchDisplayRenderPacket(this, stageId),
@@ -67,6 +79,7 @@ export class LafeaWorkbenchController {
       onMock: (stageId) => this.loadMockData(stageId),
       onFile: (file) => this.loadFile(file),
       onRun: () => this.run(),
+      onPrepareContinuum: () => this.attemptContinuumPreflight(),
       onExport: () => this.downloadDocument(),
       onUndo: () => this.undo(),
       onRedo: () => this.redo(),
@@ -79,7 +92,8 @@ export class LafeaWorkbenchController {
       onExportMeshEvidence: () => this.downloadAnalysisMeshEvidence(),
       onBindMeshProfile: (profile) => {
         const stageId = this.getState().activeStageId;
-        if (!this.getState().stages[stageId].domainFirstProfileActive) {
+        if (stageId === 'LAFEA.3'
+          && !this.getState().stages[stageId].domainFirstProfileActive) {
           this.store.activateDomainFirstProfile(stageId);
         }
         return this.bindAnalysisMeshProfile(profile);
@@ -135,19 +149,43 @@ export class LafeaWorkbenchController {
       );
     }
     try {
-      const result = this.importDocument(await this.mockDocumentFactory(stageId), stageId);
+      const documentValue = await this.mockDocumentFactory(stageId);
+      const result = this.importDocument(documentValue, stageId);
+      const state = this.getState();
+      const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash;
       if (stageId === 'LAFEA.3') {
-        const { createLafeaMockDomainAndGeometryEvidence } = await import('./lafea-simulated-source-provider.js');
         this.store.activateDomainFirstProfile();
-        const state = this.getState();
-        const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash;
-        if (hash) {
-          const mockEv = await createLafeaMockDomainAndGeometryEvidence(stageId, hash);
+        if (hash && this.mockDomainAndGeometryFactory) {
+          const mockEv = await this.mockDomainAndGeometryFactory(stageId, hash);
           if (mockEv) {
             this.store.registerAnalysisDomain(mockEv.domain);
             this.store.registerAnalysisGeometryEvidence(mockEv.geometryEvidence);
+            const meshProfileFactory = this.mockDocumentFactory?.meshProfileFactory;
+            if (typeof meshProfileFactory === 'function') {
+              const meshProfile = await meshProfileFactory(stageId);
+              if (meshProfile) this.store.bindAnalysisMeshProfile(meshProfile, stageId);
+            }
           }
         }
+      } else if (stageId === 'LAFEA.4' && hash) {
+        const { createLafeaSimulatedShellMidsurfaceEvidence } = await import(
+          './lafea-simulated-shell-midsurface-provider.js'
+        );
+        const shellParent = createLafeaSimulatedShellMidsurfaceEvidence(
+          stageId,
+          hash,
+          documentValue,
+        );
+        if (shellParent) this.store.registerShellMidsurfaceEvidence(shellParent);
+      } else if (stageId === 'LAFEA.5' && hash) {
+        const { createLafea5SourceShellParent } = await import(
+          './lafea-source-shell-mesh-adoption.js'
+        );
+        const shellParent = createLafea5SourceShellParent({
+          sourceHash: hash,
+          shellTemplate: documentValue.shellTemplate,
+        });
+        this.store.registerShellMidsurfaceEvidence(shellParent);
       }
       return result;
     } catch (error) {
@@ -212,6 +250,10 @@ export class LafeaWorkbenchController {
   planAnalysisMesh(o = {}, s = this.getState().activeStageId) { return this.store.planAnalysisMesh(o, s); }
   generateAnalysisMesh(o = {}, s = this.getState().activeStageId) { return this.store.generateAnalysisMesh(o, s); }
   refineAnalysisMesh(r = {}, s = this.getState().activeStageId) { return this.store.refineAnalysisMesh(r, s); }
+  prepareContinuumForRun(s = this.getState().activeStageId) { return this.store.prepareContinuumForRun(s); }
+  attemptContinuumPreflight(s = this.getState().activeStageId) {
+    return this.store.prepareContinuumForRun(s, { failureMode: 'DIAGNOSTIC_UI' });
+  }
   selectRetainedAnalysisMeshEvidenceV2(s = this.getState().activeStageId) { return this.store.selectRetainedAnalysisMeshEvidenceV2(s); }
 
   buildAnalysisMeshCustodyProjection(stageId = this.getState().activeStageId) {

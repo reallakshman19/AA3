@@ -1,0 +1,37 @@
+{
+  "schema": "lafea4-shell-geometric-quality-definition/v1",
+  "qualificationId": "LAFEA4-SHELL-GEOMETRIC-QUALITY-001",
+  "stageId": "LAFEA.4",
+  "scope": "INFORMATIONAL_CYLINDRICAL_TRI3_GEOMETRIC_EVIDENCE",
+  "geometry": {
+    "radiusMm": 100,
+    "circumferentialBayDegrees": 15,
+    "circumferentialBayArcLengthMm": 26.17993877991494,
+    "circumferentialChordMm": 26.105238444010315,
+    "axialLegMm": 26.105238444010315,
+    "thicknessMm": 1.5
+  },
+  "handCalculation": {
+    "facetAreaMm2": 340.74173710931706,
+    "surfaceJacobianMagnitudeMm2": 681.4834742186341,
+    "signedSurfaceJacobianMm2": 680.8348529555523,
+    "parentDirectorOffsetDegreesAtFacetUvCentroid": 2.5,
+    "facetDeterminantRatio": 1,
+    "maximumTriangleAngleDegrees": 90,
+    "adjacentFacetNormalAngleDegrees": 15,
+    "maximumChordMidpointDeviationMm": 0.8555138626189618,
+    "characteristicLengthMm": 36.9183822565029,
+    "maximumHOverT": 24.6122548376686
+  },
+  "authority": "MEASURED_INFORMATIONAL_NOT_QUALIFICATION_GATE",
+  "gateDisposition": "NOT_GATED",
+  "qualification": "NOT_GATED",
+  "prohibitions": [
+    "NO_NEW_MESH_QUALITY_THRESHOLD",
+    "NO_RELEASE_AUTHORITY",
+    "NO_PARENT_NORMAL_SIGN_BLOCK_IN_THIS_INCREMENT",
+    "NO_NONUNIFORM_THICKNESS_REPRESENTATIVE_VALUE",
+    "NO_GENERAL_FREEFORM_SURFACE_CLAIM"
+  ],
+  "releaseQualified": false
+}

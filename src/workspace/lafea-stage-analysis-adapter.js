@@ -6,6 +6,7 @@ import { lafeaMeshDofsPerNode } from './lafea-mesh-dof-policy.js';
 import {
   LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED,
   lafeaMeshProducerBound,
+  lafeaMeshProducerLocalRefinementFamilies,
   lafeaMeshProducerRefFor,
 } from './lafea-mesh-producer-registry.js';
 
@@ -62,6 +63,9 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
   const supported = registry.engineState === 'QUALIFIED_ROUTE_REGISTERED';
   const meshApplicable = lifecycle.meshApplicable === true;
   if (meshApplicable !== (mesh.families.length > 0)) throw adapterError('LAFEA_STAGE_ANALYSIS_ADAPTER_MESH_PROFILE_MISMATCH');
+  const localRefinementFamilies = meshApplicable
+    ? lafeaMeshProducerLocalRefinementFamilies(stageId)
+    : [];
 
   return freeze({
     schema: LAFEA_STAGE_ANALYSIS_ADAPTER_SCHEMA,
@@ -91,8 +95,9 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
       dofsPerNode: meshApplicable ? lafeaMeshDofsPerNode(stageId) : null,
       qualifiedProducerId: meshApplicable ? lafeaMeshProducerRefFor(stageId) : null,
       generationAuthorized: meshApplicable && lafeaMeshProducerBound(stageId),
-      refinementAuthorized: meshApplicable && lafeaMeshProducerBound(stageId)
-        && LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED,
+      refinementAuthorized: meshApplicable
+        && LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED
+        && localRefinementFamilies.length > 0,
     },
     execution: {
       adapterId: supported ? `ENGINE:${registry.enginePackage}` : null,

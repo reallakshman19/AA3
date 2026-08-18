@@ -1,0 +1,254 @@
+{
+  "schema": "wrc537-source-extraction/v1",
+  "extractionStatus": "NOT_READY_FOR_IMPLEMENTATION",
+  "extractionCaveat": "Extracted from publicly accessible copies (Studocu-hosted OCR of WRC Bulletin 537, CEI engineering practice guide, WRC official errata) and secondary engineering sources. The licensed WRC 537 PDF was NOT available to the extractor. All source-locatable data should be verified against the licensed document before implementation.",
+  "method": {
+    "title": "Precision Equations and Enhanced Diagrams for Local Stresses in Spherical and Cylindrical Shells Due to External Loadings for Implementation of WRC Bulletin 107",
+    "bulletinNumber": "WRC Bulletin 537",
+    "knownEditions": [
+      {"edition": "1st", "date": "2010-12", "isbn": "1-58145-544-5", "pages": 188, "issn": "0043-2326"},
+      {"edition": "Reprint with errata", "date": "2013", "pages": 193, "issn": "0043-2326"},
+      {"edition": "3rd", "date": "2022-03", "issn": "2372-1057", "note": "Per CEI guide citations"}
+    ],
+    "errata": [
+      {"date": "2011-04", "description": "First errata"},
+      {"date": "2011-06-27", "description": "Second errata"},
+      {"date": "2011-08-19", "description": "Third errata (cumulative)", "items": 14}
+    ],
+    "originalAuthors": ["K.R. Wichman", "A.G. Hopper", "J.L. Mershon"],
+    "implementationTeam": ["D.A. Osage", "M.E. Buchheim", "D.E. Amos", "T.C. Shaughnessy", "D.A. Samodell", "M. Straub"],
+    "implementationOrganization": "The Equity Engineering Group, Inc.",
+    "executiveDirector": "Dr. Martin Prager",
+    "publisher": "Welding Research Council, 20600 Chagrin Blvd, Suite 1200, Shaker Heights, OH 44122",
+    "libraryOfCongressCatalogNumber": "85-647116",
+    "relationshipToWRC107": "Equivalent to WRC 107. Not an update or revision. It is the 2010 printing of WRC 107 with precision curve-fit equations replacing manual chart reading.",
+    "selfContained": "PARTIALLY. Contains all shell stress curve-fit equations and coefficients. Does NOT include nozzle stresses (WRC 297 required), pressure stresses (WRC 368 or ASME VIII Div 2 §4.5 required), or stress acceptability criteria.",
+    "codeRecognition": "ASME Section VIII, Division 2, Part 4.5.12"
+  },
+  "sourceCustody": {
+    "primarySources": [
+      "WRC Bulletin 537 (licensed document — NOT available to extractor)",
+      "WRC Bulletin 537 Errata (August 19, 2011, cumulative)"
+    ],
+    "secondarySources": [
+      "CEI Engineering Practice Guide: WRC 537 Hemispherical Nozzle Evaluations (cites 3rd ed., March 2022)",
+      "Studocu-hosted OCR copy of WRC Bulletin 537 (193 pages)",
+      "CAESAR II / PV Elite documentation (COADE/Hexagon)",
+      "Paulin Research Group technical articles",
+      "Various engineering blog posts and tutorials"
+    ]
+  },
+  "geometryDefinitions": [
+    {"symbol": "Rm", "meaning": "Mean radius of spherical shell", "definition": "R_m = R_i + T/2 = (R_o + R_i)/2 (mid-surface radius). CEI guide example: hemisphere ID=100, T=2 → R_m=51.", "dimension": "Length", "source": {"section": "1.2", "page": "2 (CEI guide)"}},
+    {"symbol": "T", "meaning": "Thickness of shell", "definition": "Nominal vs corroded NOT defined by bulletin", "dimension": "Length", "source": {"section": "1.2"}},
+    {"symbol": "r0", "meaning": "Outside radius of cylindrical attachment", "definition": "Outside radius at shell juncture", "dimension": "Length", "source": {"section": "4.1"}},
+    {"symbol": "rm", "meaning": "Mean radius of hollow cylindrical attachment", "definition": "r_m = r_i + t/2 = (r_o + r_i)/2 (mid-surface radius). CEI guide example: nozzle ID=10, t=0.75 → r_m=5.375.", "dimension": "Length", "source": {"section": "4.2"}},
+    {"symbol": "t", "meaning": "Thickness of hollow cylindrical attachment (nozzle)", "definition": "Nozzle wall thickness", "dimension": "Length", "source": {"section": "4.2"}},
+    {"symbol": "C1", "meaning": "Half length of rectangular loading in circumferential direction", "definition": "Half-width of rectangular attachment footprint", "dimension": "Length", "source": {"section": "4.3"}},
+    {"symbol": "C2", "meaning": "Half length of rectangular loading in longitudinal direction", "definition": "Half-length of rectangular attachment footprint", "dimension": "Length", "source": {"section": "4.3"}},
+    {"symbol": "Rc", "meaning": "Mean radius of cylindrical shell", "definition": "UNRESOLVED", "dimension": "Length", "source": {"section": "4.3"}},
+    {"symbol": "L", "meaning": "Length of cylindrical shell", "definition": "Shell length", "dimension": "Length", "source": {"section": "4.3"}}
+  ],
+  "dimensionlessParameters": [
+    {
+      "parameterId": "SPHERE_U",
+      "sourceSymbol": "U",
+      "equation": "U = r0 / sqrt(Rm * T)",
+      "inputs": ["r0", "Rm", "T"],
+      "minimum": null, "maximum": null,
+      "minimumInclusive": null, "maximumInclusive": null,
+      "purpose": "Shell parameter for spherical shells",
+      "source": {"section": "3.2.1", "equation": "Eq. 2", "page": "6 (CEI guide)"}
+    },
+    {
+      "parameterId": "SPHERE_GAMMA",
+      "sourceSymbol": "γ",
+      "equation": "γ = rm / t",
+      "inputs": ["rm", "t"],
+      "minimum": 5, "maximum": 50,
+      "minimumInclusive": "UNRESOLVED", "maximumInclusive": "UNRESOLVED",
+      "purpose": "Nozzle slenderness ratio for hollow attachments",
+      "source": {"section": "3.2.2.2", "equation": "Eq. 4", "page": "7 (CEI guide)"}
+    },
+    {
+      "parameterId": "SPHERE_RHO",
+      "sourceSymbol": "ρ",
+      "equation": "ρ = T / t",
+      "inputs": ["T", "t"],
+      "minimum": 0.25, "maximum": 10,
+      "minimumInclusive": "UNRESOLVED", "maximumInclusive": "UNRESOLVED",
+      "purpose": "Attachment parameter. Range depends on γ: for γ=5, ρ∈[0.25,4]; for γ=15, ρ∈[1,10]; for γ=50, ρ∈[4,10]",
+      "source": {"section": "3.2.2.2", "equation": "Eq. 4", "page": "7 (CEI guide)"}
+    },
+    {
+      "parameterId": "CYL_LAMBDA",
+      "sourceSymbol": "λ",
+      "equation": "UNRESOLVED",
+      "inputs": ["UNRESOLVED"],
+      "minimum": null, "maximum": null,
+      "purpose": "Shell parameter for cylindrical shells",
+      "source": {"section": "4.2.1"}
+    },
+    {
+      "parameterId": "CYL_DELTA",
+      "sourceSymbol": "δ",
+      "equation": "UNRESOLVED",
+      "inputs": ["UNRESOLVED"],
+      "minimum": null, "maximum": null,
+      "purpose": "Attachment parameter for cylindrical shells",
+      "source": {"section": "4.2.2"}
+    }
+  ],
+  "physicalApplicability": {
+    "sphericalShell": "SUPPORTED",
+    "cylindricalShell": "SUPPORTED",
+    "ellipsoidalHeads": "CONDITIONALLY_SUPPORTED (approximate, Rm at juncture, §3.5.3)",
+    "attachments_spherical": ["hollow cylindrical (nozzle)", "solid cylindrical (rigid plug)", "hollow square", "solid/rigid square"],
+    "attachments_cylindrical": ["solid cylindrical (rigid)", "rectangular"],
+    "intersectionAngle": "RADIAL ONLY (perpendicular to shell)",
+    "nozzleStress": "NOT_SUPPORTED",
+    "pressureStress": "NOT_SUPPORTED (explicitly excluded)",
+    "fatigue": "NOT_SUPPORTED (Kn/Kb available in Appendix B for designer use)",
+    "multipleAttachments": "NOT_SUPPORTED (single isolated attachment only)",
+    "corrosionThickness": "NOT_STATED (project engineering policy)"
+  },
+  "exclusions": [
+    {"id": "EXCL_001", "statement": "Stresses in nozzle not calculated", "consequence": "METHOD_NOT_APPLICABLE", "source": {"section": "3.5.1"}},
+    {"id": "EXCL_002", "statement": "Internal pressure stresses omitted", "consequence": "REQUIRES_ENGINEERING_JUDGMENT", "source": {"section": "3.3.5"}},
+    {"id": "EXCL_003", "statement": "Torsional moment on rectangular attachments — no acceptable method available", "consequence": "METHOD_NOT_APPLICABLE", "source": {"section": "3.3.3"}},
+    {"id": "EXCL_004", "statement": "No assurance maximum stress at eight points for arbitrary loading", "consequence": "REQUIRES_ENGINEERING_JUDGMENT", "source": {"section": "3.3.5"}},
+    {"id": "EXCL_005", "statement": "Large attachments may deviate from idealized cases", "consequence": "REQUIRES_ENGINEERING_JUDGMENT", "source": {"section": "3.5"}},
+    {"id": "EXCL_006", "statement": "Stress components may peak off-juncture", "consequence": "REQUIRES_ENGINEERING_JUDGMENT", "source": {"section": "3.5.2"}},
+    {"id": "EXCL_007", "statement": "Large d/D ratios — using values for edge of attachment may be unconservative (Bijlaard)", "consequence": "REQUIRES_ENGINEERING_JUDGMENT", "source": {"section": "Foreword (1965)"}},
+    {"id": "EXCL_008", "statement": "No stress categorization or allowable limit guidance", "consequence": "REQUIRES_ENGINEERING_JUDGMENT", "source": {"section": "General"}}
+  ],
+  "coordinateSystem": {
+    "spherical": {
+      "x": "Radial direction w.r.t. axis normal to shell through attachment center",
+      "y": "Tangential/circumferential direction",
+      "points": ["A (0°)", "B (90°)", "C (180°)", "D (270°)"],
+      "surfaces": ["U (outside)", "L (inside)"],
+      "recoveryPoints": 8
+    },
+    "cylindrical": {
+      "x": "Longitudinal direction of shell",
+      "phi": "Circumferential direction",
+      "theta": "Measured from longitudinal axis (θ=0°)",
+      "recoveryPoints": 8
+    }
+  },
+  "loads": [
+    {"spherical": "P", "meaning": "Radial load", "positive": "Inward toward vessel", "source": {"section": "3.3.1"}},
+    {"spherical": "V1", "meaning": "Shear in 1-1 direction", "positive": "B to A", "source": {"section": "3.3.4"}},
+    {"spherical": "V2", "meaning": "Shear in 2-2 direction", "positive": "D to C", "source": {"section": "3.3.4"}},
+    {"spherical": "M1", "meaning": "Overturning moment in 1-1 direction", "positive": "D to C", "source": {"section": "3.3.2"}},
+    {"spherical": "M2", "meaning": "Overturning moment in 2-2 direction", "positive": "B to A", "source": {"section": "3.3.2"}},
+    {"spherical": "Mt", "meaning": "Torsional moment", "positive": "UNRESOLVED", "source": {"section": "3.3.3"}},
+    {"cylindrical": "P", "meaning": "Radial load", "positive": "Inward (compressive membrane)", "source": {"section": "4.3.1"}},
+    {"cylindrical": "Vc", "meaning": "Shear circumferential", "positive": "UNRESOLVED", "source": {"section": "4.3.5"}},
+    {"cylindrical": "Vl", "meaning": "Shear longitudinal", "positive": "UNRESOLVED", "source": {"section": "4.3.5"}},
+    {"cylindrical": "Mc", "meaning": "Moment circumferential", "positive": "UNRESOLVED", "source": {"section": "4.3.2"}},
+    {"cylindrical": "Ml", "meaning": "Moment longitudinal", "positive": "UNRESOLVED", "source": {"section": "4.3.3"}},
+    {"cylindrical": "Mt", "meaning": "Torsional moment", "positive": "UNRESOLVED", "source": {"section": "4.3.4"}}
+  ],
+  "loadReference": {
+    "convention": "Attachment-to-shell juncture (interface)",
+    "momentTransferRequired": true,
+    "referenceGeometry": "Shell surface at nozzle-vessel intersection",
+    "remotePointTranslation": "Software/piping policy, NOT WRC requirement: M_interface = M_remote + r × F"
+  },
+  "stressDefinitions": [
+    {"source": "σ_φ (spherical) / σ_x (cylindrical)", "laffeaMapping": "UNRESOLVED", "class": "Membrane + Bending"},
+    {"source": "σ_θ (spherical) / σ_φ (cylindrical)", "laffeaMapping": "UNRESOLVED", "class": "Membrane + Bending"},
+    {"source": "τ", "laffeaMapping": "UNRESOLVED", "class": "Shear"},
+    {"source": "S (stress intensity)", "laffeaMapping": "UNRESOLVED", "class": "Derived (Tresca/Max Shear)"}
+  ],
+  "recoveryLocations": [
+    {"id": "AU", "name": "Point A outer", "angle": "0°", "surface": "outside", "shellNozzle": "shell"},
+    {"id": "AL", "name": "Point A inner", "angle": "0°", "surface": "inside", "shellNozzle": "shell"},
+    {"id": "BU", "name": "Point B outer", "angle": "90°", "surface": "outside", "shellNozzle": "shell"},
+    {"id": "BL", "name": "Point B inner", "angle": "90°", "surface": "inside", "shellNozzle": "shell"},
+    {"id": "CU", "name": "Point C outer", "angle": "180°", "surface": "outside", "shellNozzle": "shell"},
+    {"id": "CL", "name": "Point C inner", "angle": "180°", "surface": "inside", "shellNozzle": "shell"},
+    {"id": "DU", "name": "Point D outer", "angle": "270°", "surface": "outside", "shellNozzle": "shell"},
+    {"id": "DL", "name": "Point D inner", "angle": "270°", "surface": "inside", "shellNozzle": "shell"}
+  ],
+  "coefficientFamilies": [
+    {"id": "SP_NX", "symbol": "NxT/P", "load": "P", "stress": "σ_x", "class": "membrane", "location": "all 8 points", "params": ["U","γ","ρ"], "form": "TABLE", "source": {"tables": "SP-1 to SP-10"}},
+    {"id": "SP_NY", "symbol": "NyT/P", "load": "P", "stress": "σ_y", "class": "membrane", "location": "all 8 points", "params": ["U","γ","ρ"], "form": "TABLE", "source": {"tables": "SP-1 to SP-10"}},
+    {"id": "SP_MX", "symbol": "Mx/P", "load": "P", "stress": "σ_x", "class": "bending", "location": "all 8 points", "params": ["U","γ","ρ"], "form": "TABLE", "source": {"tables": "SP-1 to SP-10"}},
+    {"id": "SP_MY", "symbol": "My/P", "load": "P", "stress": "σ_y", "class": "bending", "location": "all 8 points", "params": ["U","γ","ρ"], "form": "TABLE", "source": {"tables": "SP-1 to SP-10"}},
+    {"id": "SM_NX", "symbol": "NxT√(RmT)/M", "load": "M1 or M2", "stress": "σ_x", "class": "membrane", "location": "all 8 points", "params": ["U","γ","ρ"], "form": "TABLE", "source": {"tables": "SM-1 to SM-10"}},
+    {"id": "SM_NY", "symbol": "NyT√(RmT)/M", "load": "M1 or M2", "stress": "σ_y", "class": "membrane", "location": "all 8 points", "params": ["U","γ","ρ"], "form": "TABLE", "source": {"tables": "SM-1 to SM-10"}},
+    {"id": "SM_MX", "symbol": "Mx√(RmT)/M", "load": "M1 or M2", "stress": "σ_x", "class": "bending", "location": "all 8 points", "params": ["U","γ","ρ"], "form": "TABLE", "source": {"tables": "SM-1 to SM-10"}},
+    {"id": "SM_MY", "symbol": "My√(RmT)/M", "load": "M1 or M2", "stress": "σ_y", "class": "bending", "location": "all 8 points", "params": ["U","γ","ρ"], "form": "TABLE", "source": {"tables": "SM-1 to SM-10"}},
+    {"id": "CYL_COEFFS", "symbol": "UNRESOLVED", "load": "P, Mc, Ml", "stress": "σ_x, σ_φ", "class": "membrane+bending", "location": "all 8 points", "params": ["UNRESOLVED"], "form": "TABLE/CHART", "source": {"tables": "1A to 4C"}}
+  ],
+  "equations": [
+    {"id": "EQ_GENERAL", "human": "σ = Ni/T ± 6Mi/T²", "machine": "Ni / T +/- 6 * Mi / (T**2)", "source": {"section": "2"}},
+    {"id": "EQ_RADIAL_MEMBRANE", "human": "σ_m = (Nφ/P)(P/T)", "machine": "coeff_Nphi * P / T", "source": {"section": "3.3.1", "equation": "Eq. 6"}},
+    {"id": "EQ_RADIAL_BENDING", "human": "σ_b = (Mφ/P)(6P/T²)", "machine": "coeff_Mphi * 6 * P / (T**2)", "source": {"section": "3.3.1", "equation": "Eq. 7"}},
+    {"id": "EQ_MOMENT_MEMBRANE", "human": "σ_m = (Nφ√(RmT)/M)(M/(T√(RmT)))", "machine": "coeff_Nphi * M / (T * sqrt(Rm * T))", "source": {"section": "3.3.2", "equation": "Eq. 12"}},
+    {"id": "EQ_MOMENT_BENDING", "human": "σ_b = (Mφ√(RmT)/M)(6M/(T²√(RmT)))", "machine": "coeff_Mphi * 6 * M / (T**2 * sqrt(Rm * T))", "source": {"section": "3.3.2", "equation": "Eq. 13"}},
+    {"id": "EQ_TORSION", "human": "τ = Mt/(2πr₀²T)", "machine": "Mt / (2 * pi * r0**2 * T)", "source": {"section": "3.3.3", "equation": "Eq. 18"}},
+    {"id": "EQ_SHEAR_ROUND", "human": "τ = V sinθ/(πr₀T)", "machine": "V * sin(theta) / (pi * r0 * T)", "source": {"section": "3.3.4", "equation": "Eq. 19"}},
+    {"id": "EQ_SHEAR_SQUARE", "human": "τ = V/(πC₁C₂)", "machine": "V / (pi * C1 * C2)", "source": {"section": "3.3.4", "equation": "Eq. 20"}},
+    {"id": "EQ_CURVEFIT_Y", "human": "Y = a + b·U + c·U² + d·U³ + e·U⁴ + f·U⁵ + g·U⁶ + h·U⁷ + i·U⁸ + j·U⁹", "machine": "a + b*U + c*U**2 + d*U**3 + e*U**4 + f*U**5 + g*U**6 + h*U**7 + i*U**8 + j*U**9", "source": {"section": "All SP/SM tables"}},
+    {"id": "EQ_KN", "human": "Kn = 1 + (0.65/(r/(2T))^5.6)", "machine": "1 + 0.65 / (r / (2*T))**5.6", "source": {"section": "Appendix B", "equation": "B.3", "page": "176"}},
+    {"id": "EQ_KB_HEYWOOD", "human": "Kb = 1 + (0.85/(r/(2T))^10.75)", "machine": "1 + 0.85 / (r / (2*T))**10.75", "source": {"section": "Appendix B", "equation": "B.4", "page": "176"}},
+    {"id": "EQ_KB_PETERSON", "human": "Kb = 1 + (0.80/(r/(2T))^9.4)", "machine": "1 + 0.80 / (r / (2*T))**9.4", "source": {"section": "Appendix B", "equation": "B.5", "page": "176"}},
+    {"id": "EQ_STRESS_INTENSITY", "human": "Si1 = √(0.5[(σx+σy)+√((σx-σy)²+4τ²)]), etc., S=max(Si1,Si2,Si3)", "machine": "sqrt(0.5*((sigx+sigy)+sqrt((sigx-sigy)**2+4*tau**2)))", "source": {"section": "Table 3/5"}}
+  ],
+  "numericalData": [],
+  "interpolationPolicy": {
+    "authorized": true,
+    "classification": "PARTIALLY_SOURCE_STATED",
+    "method": "Linear interpolation on Y values (not coefficients)",
+    "procedure": "1. Compute Y for each bracketing chart. 2. Interpolate on ρ. 3. Interpolate on γ.",
+    "warning": "DO NOT interpolate coefficient values. Interpolate Y results.",
+    "source": {"section": "Foreword (mentions interpolation)", "note": "Algorithm from CEI guide interpretation"}
+  },
+  "extrapolationPolicy": {
+    "authorized": "PARTIALLY",
+    "classification": "EXTRAPOLATED_CURVES_PROVIDED",
+    "conditions": ["Extrapolated curve alternatives provided for several cylindrical host curves", "Clearly labeled as original vs extrapolated"],
+    "laffeaPolicy": "NO_EXTRAPOLATION unless engineering approval",
+    "source": {"section": "Foreword and CEI guide"}
+  },
+  "pressureTreatment": {
+    "treatment": "EXCLUDED",
+    "equationsProvided": false,
+    "combinationRule": "NOT_PROVIDED — designer must independently calculate (WRC 368 or ASME VIII Div 2 §4.5) and superpose",
+    "source": {"section": "3.3.5 / 4.3.6"}
+  },
+  "stressCombination": {
+    "method": "LINEAR_SUPERPOSITION",
+    "classification": "SOURCE_STATED",
+    "pressureCombination": "NOT_INCLUDED",
+    "source": {"section": "3.3.5"}
+  },
+  "publishedExamples": [
+    {
+      "caseId": "WRC537-CEI-EXAMPLE-001",
+      "source": "CEI Engineering Practice Guide (secondary, cites WRC 537 3rd ed.)",
+      "geometry": {"shellType": "hemispherical", "shellID": 100, "T": 2, "Rm": 51, "nozzleID": 10, "t": 0.75, "rm": 5.375, "r0": 5.75},
+      "parameters": {"gamma": 7.1667, "rho": 2.6667, "U": 0.5693},
+      "loads": {"P": 5000, "M1": 10000, "M2": 12500, "V1": 2500, "V2": 7500, "Mt": 15000},
+      "intermediateValues": {
+        "NxT_P": "6.64E-02", "NyT_P": "2.09E-01", "Mx_P": "3.41E-02", "My_P": "5.15E-02",
+        "NxT_sqrt_RmT_M": "4.19E-02", "NyT_sqrt_RmT_M": "2.38E-01", "Mx_sqrt_RmT_M": "4.21E-02", "My_sqrt_RmT_M": "5.20E-02"
+      },
+      "note": "This example is from the CEI guide, NOT directly from the WRC 537 bulletin. Intermediate values were computed by CEI using the bulletin methodology, not printed in the bulletin."
+    }
+  ],
+  "openIssues": [
+    "Curve-fit equation Y exact form (CONFIRMED: 9th-order polynomial in U with 10 coefficients a-j)",
+    "Numerical coefficient values a–j for all SP/SM tables",
+    "Cylindrical shell parameters λ and δ",
+    "Sign convention tables (Table 1, Table 4) direct verification",
+    "Bulletin's own published numerical examples",
+    "Edition/page reconciliation",
+    "LAFEA canonical mapping"
+  ],
+  "semanticHash": null
+}

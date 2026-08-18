@@ -14,6 +14,8 @@ import {
 
 export const WORKSPACE_DATASET_SCHEMA = 'analysis-workspace-dataset/v1';
 const MANAGED_STAGE_SCHEMA = 'inputxml-managed-stage/v1';
+const EMPTY_SOURCE_RECORD = freezeDeep({});
+const EMPTY_SOURCE_DIAGNOSTICS = freezeDeep([]);
 
 export function normalizeWorkspaceDataset(rawPackage, sourceName = '', sourceEvidence = null) {
   const packageJson = normalizePackageRoot(rawPackage);
@@ -138,15 +140,22 @@ function internalEntityId(node, sourceIdIndex) {
 }
 
 function buildEntityProperties(item, identity) {
+  requireImmutableSourceItem(item);
   return freezeDeep({
     identity,
     geometry: extractGeometryEvidence(item),
-    sourceAttributes: clonePlain(item.sourceAttributes || {}),
-    attributes: clonePlain(item.attributes || {}),
-    enrichedAttributes: clonePlain(item.enrichedAttributes || {}),
-    nativeParams: clonePlain(item.nativeParams || {}),
-    diagnostics: clonePlain(Array.isArray(item.diagnostics) ? item.diagnostics : []),
+    sourceAttributes: item.sourceAttributes || EMPTY_SOURCE_RECORD,
+    attributes: item.attributes || EMPTY_SOURCE_RECORD,
+    enrichedAttributes: item.enrichedAttributes || EMPTY_SOURCE_RECORD,
+    nativeParams: item.nativeParams || EMPTY_SOURCE_RECORD,
+    diagnostics: Array.isArray(item.diagnostics) ? item.diagnostics : EMPTY_SOURCE_DIAGNOSTICS,
   });
+}
+
+function requireImmutableSourceItem(item) {
+  if (!Object.isFrozen(item)) {
+    throw new TypeError('Workspace entity normalization requires an immutable SourcePackageSnapshot item.');
+  }
 }
 
 function extractEntityDimensions(item) {

@@ -39,6 +39,38 @@ const PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES = new Set([
 ]);
 
 /**
+ * Stateless empirical authority calculators and validators. Each module takes
+ * complete inputs, returns immutable evidence, and owns no controller, store,
+ * DOM resource, ambient fallback, or module-level mutable engineering state.
+ */
+const PURE_EMPIRICAL_AUTHORITY_WORKSPACE_MODULES = new Set([
+  '/src/workspace/engineering-loads/adapters/canonical-thermal-rom-authority-adapter.js',
+  '/src/workspace/engineering-loads/adapters/empirical-v3-authorized-source-bound-execution.js',
+  '/src/workspace/engineering-loads/adapters/empirical-v3-live-run-orchestration.js',
+  '/src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js',
+  '/src/workspace/engineering-loads/authorized-empirical-load-execution.js',
+  '/src/workspace/engineering-loads/authorized-empirical-load-input.js',
+  '/src/workspace/engineering-loads/authorized-empirical-runtime-package.js',
+  '/src/workspace/engineering-loads/empirical-component-load-authority.js',
+  '/src/workspace/engineering-loads/empirical-result-overlay.js',
+  '/src/workspace/engineering-loads/preproduction-thermal-liftoff-displacement-authority.js',
+  '/src/workspace/engineering-loads/support-load-distribution-v3.js',
+  '/src/workspace/project-data/non-fea-configured-default-provider.js',
+]);
+
+/**
+ * Stateless linear-piping intake and run-gate contracts. These modules seal or
+ * validate complete caller-owned records, import only pure core authority, and
+ * own no controller, store, DOM resource, or module-level mutable state.
+ */
+const PURE_LINEAR_PIPING_AUTHORITY_WORKSPACE_MODULES = new Set([
+  '/src/workspace/linear-piping-inputxml-intake.js',
+  '/src/workspace/linear-piping-inputxml-prefea.js',
+  '/src/workspace/linear-piping-run-gate.js',
+  '/src/workspace/linear-piping-run-request.js',
+]);
+
+/**
  * Keep manual chunking limited to dependency-oriented or calculation-core
  * domains. Workspace modules remain graph-owned because they contain stores,
  * controllers, views, and top-level singleton instances with cross-feature
@@ -77,7 +109,7 @@ const ACCDB_READER_PACKAGE_PATHS = Object.freeze([
 const STYLE_LEAF_MODULES = Object.freeze([
   '/src/workspace/workspace-shell-styles.js',
   '/src/workspace/lafea-workbench-styles.js',
-  '/src/workspace/lfea-workbench-styles.js',
+  '/src/workspace/lafea-workbench-styles.js',
   '/src/workspace/lafea-guided-workbench-styles.js',
   '/src/workspace/viewport-productivity/topology-edit-table-styles.js',
   '/src/workspace/viewport-productivity/topology-edit-object-tree-styles.js',
@@ -172,7 +204,7 @@ export function manualChunk(id) {
   // own no controller, store, mutable singleton, or runtime resource, so they
   // form a safe leaf boundary for the LFEA-to-3D-Edit integration.
   if (source.endsWith('/src/workspace/event-topics.js')
-    || source.endsWith('/src/workspace/lfea-support-actions-panel.js')) {
+    || source.endsWith('/src/workspace/lafea-support-actions-panel.js')) {
     return 'workspace-event-presentation-contracts';
   }
   // Import-free static shell CSS is a safe presentation leaf. Keep the
@@ -190,6 +222,46 @@ export function manualChunk(id) {
   if ([...PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-workbench-governance';
+  }
+  // A handful of /src/core/lafea-meshing/ probes import this pure hash helper
+  // straight from the workspace layer. Left unrouted, Rollup follows that
+  // exclusive-dependent rule and pulls it into 'lafea-workbench-governance',
+  // which then makes 'core-application' depend on 'lafea-workbench-governance'
+  // for it while 'lafea-workbench-governance' independently depends on
+  // 'core-application' for LAFEA3_QUALIFIED_MESH_QUALITY_POLICY. That mutual
+  // chunk cycle reproduces "Cannot access '<binding>' before initialization"
+  // on boot (verified with a real browser load). This module only imports
+  // from core/shared-primitives, so routing it alongside its own dependency
+  // breaks the cycle without touching any workspace/core layering.
+  if (source.endsWith('/src/workspace/lafea-canonical-sha256.js')) {
+    return 'core-application';
+  }
+  if ([...PURE_EMPIRICAL_AUTHORITY_WORKSPACE_MODULES]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'empirical-engineering-authority';
+  }
+  if ([...PURE_LINEAR_PIPING_AUTHORITY_WORKSPACE_MODULES]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'linear-piping-authority';
+  }
+
+  // Rollup-profiled at 32,589 rendered bytes on exact main. This module owns
+  // presentation/render functions only; it creates no store/controller/singleton
+  // at module load. Keep its stateful consumer controller graph-owned. Its only
+  // source dependency is the import-free topology gap policy. A real browser
+  // boot remains mandatory because generated chunk evaluation order is authority.
+  if (source.endsWith('/src/workspace/load-calc-consumer-view.js')) {
+    return 'load-calc-consumer-view';
+  }
+
+  // The generation panel is stateless and imports only core authority plus the
+  // import-free DOM helper. Its parent also imports that helper, so the helper
+  // must travel with the panel: splitting the panel alone would create a
+  // main -> panel -> main-owned-helper back-edge. Grouping both preserves a
+  // one-way main -> generation -> core graph.
+  if (source.endsWith('/src/workspace/lafea-discretization-generation-panel.js')
+    || source.endsWith('/src/workspace/lafea-discretization-dom.js')) {
+    return 'lafea-discretization-generation';
   }
 
   // The Phase-1 pre-flight core is an indexed, DOM-free, clock-free leaf stack.

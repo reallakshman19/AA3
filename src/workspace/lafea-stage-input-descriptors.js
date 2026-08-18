@@ -106,6 +106,22 @@ const DEFINITIONS = Object.freeze({
       minimum: 0,
     }),
     ...vectorDescriptors({
+      descriptorPrefix: 'LAFEA.1.load.force', stageId: 'LAFEA.1',
+      collectionPath: 'loadCases', identityKey: 'identity',
+      propertyPrefix: ['force', 'value'], sourceRefPath: ['force', 'sourceRef'],
+      labelPrefix: 'Load force', groupId: 'LOAD_CASES', order: 60,
+      dimension: 'FORCE', unitSourcePath: ['units', 'force'],
+      invalidationClass: 'LOAD_OR_BC', descendants: MODEL_DESCENDANTS,
+    }),
+    ...vectorDescriptors({
+      descriptorPrefix: 'LAFEA.1.load.moment', stageId: 'LAFEA.1',
+      collectionPath: 'loadCases', identityKey: 'identity',
+      propertyPrefix: ['moment', 'value'], sourceRefPath: ['moment', 'sourceRef'],
+      labelPrefix: 'Load moment', groupId: 'LOAD_CASES', order: 70,
+      dimension: 'MOMENT', unitSourcePath: ['units', 'moment'],
+      invalidationClass: 'LOAD_OR_BC', descendants: MODEL_DESCENDANTS,
+    }),
+    ...vectorDescriptors({
       descriptorPrefix: 'LAFEA.1.referencePoint', stageId: 'LAFEA.1',
       collectionPath: 'loadReferencePoints', identityKey: 'identity',
       propertyPrefix: ['point', 'value'], sourceRefPath: ['point', 'sourceRef'],

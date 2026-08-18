@@ -70,7 +70,7 @@ assert.match(domain, /FORMULATIONS\.PLANE_STRAIN_BBAR/u);
 assert.match(compiledInput, /formulation:\s*model\.formulation/u);
 
 // Thermal assembler still exists for standard formulations, but B-bar is source-blocked.
-assert.match(temperature, /temperatureEquivalentNodalLoad/u);
+assert.match(temperature, /thermalEquivalentNodalForces/u);
 assert.match(normalization, /validateFormulationLoadAuthority/u);
 
 // Governed UI must edit source through the normal replacement transaction, never runtime state.
@@ -81,8 +81,11 @@ assert.match(settings, /handlers\.onApplyJson/u);
 assert.match(settings, /MESH_REGENERATION_REQUIRED/u);
 assert.match(settings, /EXACT_HEAD_QUALIFICATION_REQUIRED/u);
 assert.match(settings, /B-bar temperature\/eigenstrain loading is not qualified/u);
-assert.equal(/stage\.execution\s*=|stage\.retainedAnalysisMesh/u.test(settings), false,
-  'Formulation selector must not mutate solver/runtime custody directly.');
+assert.equal(
+  /stage\.(?:execution|retainedAnalysisMesh(?:EvidenceV2|Evidence)?)\s*=/u.test(settings),
+  false,
+  'Formulation selector must not mutate solver/runtime custody directly.',
+);
 assert.match(workbenchContent, /renderLafeaAnalysisSettings\([\s\S]*options\.registryEntry,[\s\S]*options\.handlers/u);
 
 // Overview must never manufacture a B-bar PASS from interactive state.

@@ -1,0 +1,53 @@
+{
+  "schema": "lafea4-retained-parent-normal-companion-definition/v1",
+  "qualificationId": "LAFEA4-RETAINED-PARENT-NORMAL-COMPANION-001",
+  "stageId": "LAFEA.4",
+  "scope": "CYLINDRICAL_AND_CYLINDRICAL_HOLES_RETAINED_TRI3_CUSTODY",
+  "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+  "supportedSurfaceKinds": ["CYLINDRICAL", "CYLINDRICAL_HOLES"],
+  "companionAuthority": "REQUIRED_RETAINED_CUSTODY_COMPANION_SHADOW_ONLY_V1",
+  "hardGateStatus": "DISABLED_PENDING_EXACT_HEAD_INTEGRATED_QUALIFICATION",
+  "custodyPolicy": {
+    "deriveFromCurrentRetainedParents": true,
+    "independentlyMutableCompanionCacheAllowed": false,
+    "recoveryMustBuildCompanionBeforeMeshCustodyMutation": true,
+    "generationCompanionFailureMustDiscardNewMeshBeforePublish": true,
+    "recoveryReplayMismatchMustDiscardRecoveredMeshBeforePublish": true,
+    "midsurfaceParentRestoredAfterCompanionRollback": true,
+    "exportMustBindCurrentMeshArtifactHash": true,
+    "exportMustBindCurrentMidsurfaceEvidenceHash": true,
+    "staleCompanionMustFailClosed": true
+  },
+  "sample": {
+    "radiusMm": 100,
+    "thicknessMm": 1.5,
+    "profileGlobalTargetMm": 100,
+    "expectedCandidateQualification": "PASS"
+  },
+  "reversedRetainedMesh": {
+    "existingMeshQualification": "PASS",
+    "existingOrientationTopology": "PASS",
+    "expectedCandidateQualification": "BLOCK",
+    "wouldBlockIfActivated": true,
+    "retainedMeshAcceptanceChanged": false,
+    "currentMeshCustodyStateMustRemain": "CURRENT_PASS"
+  },
+  "staleCompanion": {
+    "mutation": "REBIND_MESH_PROFILE_AND_REGENERATE",
+    "expectedRejectionCode": "LAFEA4_PARENT_NORMAL_COMPANION_STALE_OR_PARENT_MISMATCH"
+  },
+  "sourceInvalidation": {
+    "retainedMeshCleared": true,
+    "retainedMidsurfaceCleared": true,
+    "derivedCompanionSelectsNull": true
+  },
+  "prohibitions": [
+    "NO_PARENT_NORMAL_RESULT_IN_MESH_WORST_STATUS",
+    "NO_SOLVE_BLOCK_FROM_PARENT_NORMAL_COMPANION",
+    "NO_RELEASE_QUALIFICATION_FROM_PARENT_NORMAL_COMPANION",
+    "NO_INDEPENDENT_MUTABLE_COMPANION_CACHE",
+    "NO_LOOSENING_EXISTING_CURVED_PRODUCER_DIRECTOR_GUARD"
+  ],
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

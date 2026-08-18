@@ -25,6 +25,20 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
     && registry.engineState === 'QUALIFIED_ROUTE_REGISTERED'
     && stage.orchestration?.sections?.AUTHORIZATION?.state === 'READY';
   const formulationAuthority = continuumFormulationAuthority(source, mesh);
+  const governedRoute = stage.domainFirstProfileActive === true
+    || stage.shellMidsurfaceProfileActive === true;
+  const historicalAccepted = execution?.status === 'QUALIFIED'
+    && result?.qualification?.state === 'ACCEPTED';
+  const currentAccepted = governedRoute
+    ? execution?.status === 'QUALIFIED'
+      && stage.lifecycleReadiness?.calculationState === 'CALCULATION_ACCEPTED_BY_STAGE_CONTRACT'
+      && stage.lifecycleReadiness?.resultReady === true
+    : historicalAccepted;
+  const executionStatus = governedRoute
+    && execution?.status === 'QUALIFIED'
+    && !currentAccepted
+    ? 'QUALIFIED_NOT_CURRENT'
+    : text(execution?.status, 'NOT_RUN');
 
   return freeze({
     schema: LAFEA_ENGINEERING_OVERVIEW_SCHEMA,
@@ -58,9 +72,9 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
       recovery: recoveryLabel(registry, elementFamilies, source?.formulation),
     },
     execution: {
-      status: text(execution?.status, 'NOT_RUN'),
+      status: executionStatus,
       authorized: runAuthorized,
-      accepted: execution?.status === 'QUALIFIED' && result?.qualification?.state === 'ACCEPTED',
+      accepted: currentAccepted,
       loadCaseCount: array(result?.loadCaseResults).length,
       qualificationState: text(result?.qualification?.state, 'NOT_RUN'),
       metrics: continuumMetrics(result, source?.units),

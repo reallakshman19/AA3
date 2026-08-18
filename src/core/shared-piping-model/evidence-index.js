@@ -1,13 +1,14 @@
 import { isPlainRecord } from './immutable.js';
 
+const NORMALIZED_ALIAS_CACHE = new WeakMap();
+
 export function createEvidenceIndex(roots) {
   const indexedRoots = roots.map(([rootPath, root]) => indexRoot(rootPath, root));
   return Object.freeze({ roots: Object.freeze(indexedRoots) });
 }
 
 export function findFirstIndexedEvidence(index, aliases) {
-  for (const alias of aliases) {
-    const wanted = normalizeEvidenceKey(alias);
+  for (const wanted of normalizedEvidenceAliases(aliases)) {
     for (const root of index.roots) {
       const matches = root.matchesByKey[wanted];
       if (matches?.length) return matches[0];
@@ -18,14 +19,25 @@ export function findFirstIndexedEvidence(index, aliases) {
 
 export function findAllIndexedEvidence(index, aliases) {
   const found = [];
-  aliases.forEach((alias) => {
-    const wanted = normalizeEvidenceKey(alias);
+  normalizedEvidenceAliases(aliases).forEach((wanted) => {
     index.roots.forEach((root) => {
       const matches = root.matchesByKey[wanted];
       if (matches?.length) found.push(...matches);
     });
   });
   return found;
+}
+
+function normalizedEvidenceAliases(aliases) {
+  if (!Array.isArray(aliases)) return [];
+  if (Object.isFrozen(aliases)) {
+    const cached = NORMALIZED_ALIAS_CACHE.get(aliases);
+    if (cached) return cached;
+    const normalized = Object.freeze(aliases.map(normalizeEvidenceKey));
+    NORMALIZED_ALIAS_CACHE.set(aliases, normalized);
+    return normalized;
+  }
+  return aliases.map(normalizeEvidenceKey);
 }
 
 function indexRoot(rootPath, root) {

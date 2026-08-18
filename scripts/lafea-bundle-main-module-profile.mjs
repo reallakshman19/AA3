@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 import baseConfig from '../vite.config.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const OUTPUT = path.join(ROOT, 'test-results/lafea-main-bundle-profile.json');
 let profile = null;
 
 const profilePlugin = {
@@ -46,7 +48,17 @@ await build({
 });
 
 if (!profile) throw new Error('LAFEA_BUNDLE_PROFILE_NOT_CAPTURED');
-process.stdout.write(`${JSON.stringify(profile, null, 2)}\n`);
+const serialized = `${JSON.stringify(profile, null, 2)}\n`;
+fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
+fs.writeFileSync(OUTPUT, serialized, 'utf8');
+process.stdout.write(JSON.stringify({
+  schema: profile.schema,
+  mainFileName: profile.mainFileName,
+  mainModuleCount: profile.mainModuleCount,
+  renderedModuleBytes: profile.renderedModuleBytes,
+  top15: profile.topModules.slice(0, 15),
+}, null, 2));
+process.stdout.write('\n');
 
 function normalize(value) {
   return String(value)

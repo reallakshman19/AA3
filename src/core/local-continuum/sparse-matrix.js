@@ -9,7 +9,6 @@ export function assembleSymmetricCsr(size, elementEvidence, dofIndex) {
     throw new TypeError('Sparse stiffness size must be a positive integer.');
   }
   const rows = Array.from({ length: size }, () => new Map());
-  const compensationRows = Array.from({ length: size }, () => new Map());
   for (const element of elementEvidence) {
     const indices = element.localDofOrdering.map((identity) => dofIndex.get(identity));
     if (indices.some((index) => !Number.isInteger(index))) {
@@ -17,28 +16,13 @@ export function assembleSymmetricCsr(size, elementEvidence, dofIndex) {
     }
     for (let localRow = 0; localRow < indices.length; localRow += 1) {
       for (let localColumn = 0; localColumn < indices.length; localColumn += 1) {
-        const rowIndex = indices[localRow];
-        const row = rows[rowIndex];
-        const compensationRow = compensationRows[rowIndex];
+        const row = rows[indices[localRow]];
         const column = indices[localColumn];
-        const term = element.localStiffnessMatrix[localRow][localColumn];
-        const sum = row.get(column) ?? 0;
-        const next = sum + term;
-        const compensation = compensationRow.get(column) ?? 0;
-        compensationRow.set(column, compensation + (
-          Math.abs(sum) >= Math.abs(term)
-            ? (sum - next) + term
-            : (term - next) + sum
-        ));
-        row.set(column, next);
+        const value = element.localStiffnessMatrix[localRow][localColumn];
+        row.set(column, (row.get(column) ?? 0) + value);
       }
     }
   }
-  rows.forEach((row, rowIndex) => {
-    for (const [column, compensation] of compensationRows[rowIndex]) {
-      row.set(column, (row.get(column) ?? 0) + compensation);
-    }
-  });
   return finalizeRows(rows);
 }
 

@@ -338,6 +338,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
   const initialResidualInfinity = maxAbs(residual);
   let finalResidualInfinity = initialResidualInfinity;
   let iterations = 0;
+  let reliableRestarts = 0;
   if (finalResidualInfinity > convergenceTarget) {
     let preconditioned = applyJacobi(matrix.diagonal, residual);
     let direction = [...preconditioned];
@@ -378,17 +379,24 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
       if (recursiveResidualInfinity <= convergenceTarget || iterations % 100 === 0) {
         const reliableResidual = exactResidual(matrix, rightHandSide, solution);
         const reliableResidualInfinity = maxAbs(reliableResidual);
+        const residualDriftInfinity = maxAbs(reliableResidual.map(
+          (value, index) => value - residual[index],
+        ));
         finalResidualInfinity = reliableResidualInfinity;
         if (reliableResidualInfinity <= convergenceTarget) {
           residual = reliableResidual;
           break;
         }
-        if (recursiveResidualInfinity <= convergenceTarget) {
+        if (
+          recursiveResidualInfinity <= convergenceTarget
+          || residualDriftInfinity > convergenceTarget
+        ) {
           residual = reliableResidual;
           residualCompensation.fill(0);
           preconditioned = applyJacobi(matrix.diagonal, residual);
           direction = [...preconditioned];
           rho = dotVector(residual, preconditioned);
+          reliableRestarts += 1;
           if (!(rho > 0) || !Number.isFinite(rho)) {
             throw singularError(
               'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
@@ -448,6 +456,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
       minimumDiagonal: canonicalNumber(minimumDiagonal),
       maximumDiagonal: canonicalNumber(maximumDiagonal),
       diagonalRatio: canonicalNumber(minimumDiagonal / maximumDiagonal),
+      reliableRestarts,
       accepted: true,
     },
   };

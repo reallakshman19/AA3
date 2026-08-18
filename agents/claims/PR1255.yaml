@@ -1,10 +1,10 @@
 schema: AgentClaim.v1
-pr_or_wip: WIP-lafea-ui-modernization-20260818
+pr_or_wip: PR1255
 claim_state: ACTIVE
 files:
   exact:
-    - src/workspace/lafea-guided-workflow-view.js
     - src/workspace/lafea-ui-status.js
+    - src/workspace/lafea-guided-workflow-view.js
     - src/workspace/lafea-guided-workbench-styles.js
     - scripts/lafea-ui-formal-presentation-check.mjs
   prefixes:
@@ -23,4 +23,4 @@ excluded_authority:
   - LIFECYCLE_AUTHORITY
   - RELEASE_AUTHORITY
   - TRUST_ROOT
-last_verified_head: 134b43c4cd09139d3b6067223576ccdad653f07e
+last_verified_head: b4e5b6d27ca173f0e325a2058a3c2a6b9e77fa41

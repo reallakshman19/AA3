@@ -247,9 +247,25 @@ test('Empirical analytical surface has truthful scope, one route navigation, and
 
   const fileInput = workbench.locator('input[data-role="lafea-import"]');
   const importLabel = workbench.locator('label[for^="lafea-import-"]');
-  await expect(fileInput).toBeHidden();
   await expect(importLabel).toBeVisible();
   await expect(importLabel).toHaveText('Import analytical JSON');
+  const filePresentation = await fileInput.evaluate((node) => {
+    const style = getComputedStyle(node);
+    const box = node.getBoundingClientRect();
+    return {
+      position: style.position,
+      width: box.width,
+      height: box.height,
+      clip: style.clip,
+      clipPath: style.clipPath,
+      overflow: style.overflow,
+    };
+  });
+  expect(filePresentation.position).toBe('absolute');
+  expect(filePresentation.width).toBeLessThanOrEqual(1);
+  expect(filePresentation.height).toBeLessThanOrEqual(1);
+  expect(filePresentation.overflow).toBe('hidden');
+  expect(filePresentation.clipPath).not.toBe('none');
 
   const scrolling = await page.evaluate(() => {
     const view = document.querySelector('[data-application-view="EMPIRICAL"]');

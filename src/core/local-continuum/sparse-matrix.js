@@ -58,7 +58,9 @@ export function sparseMatrixVector(matrix, vector) {
 
 export function sparseMatrixVectorRaw(matrix, vector) {
   requireCsr(matrix);
-  requireVectorDimensions(matrix, vector);
+  if (!Array.isArray(vector) || vector.length !== matrix.size) {
+    throw new TypeError('Sparse matrix-vector dimensions differ.');
+  }
   const output = Array(matrix.size).fill(0);
   for (let row = 0; row < matrix.size; row += 1) {
     let value = 0;
@@ -73,7 +75,9 @@ export function sparseMatrixVectorRaw(matrix, vector) {
 
 export function sparseMatrixVectorCompensatedRaw(matrix, vector) {
   requireCsr(matrix);
-  requireVectorDimensions(matrix, vector);
+  if (!Array.isArray(vector) || vector.length !== matrix.size) {
+    throw new TypeError('Sparse matrix-vector dimensions differ.');
+  }
   const output = Array(matrix.size).fill(0);
   for (let row = 0; row < matrix.size; row += 1) {
     let sum = 0;
@@ -160,12 +164,6 @@ function sparseValueAt(matrix, row, column) {
     else high = middle - 1;
   }
   return 0;
-}
-
-function requireVectorDimensions(matrix, vector) {
-  if (!Array.isArray(vector) || vector.length !== matrix.size) {
-    throw new TypeError('Sparse matrix-vector dimensions differ.');
-  }
 }
 
 function requireCsr(matrix) {

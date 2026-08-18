@@ -350,7 +350,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
       );
     }
     while (iterations < iterationLimit) {
-      const action = sparseMatrixVectorCompensatedRaw(matrix, direction);
+      const action = sparseMatrixVectorRaw(matrix, direction);
       const curvature = dotVector(direction, action);
       if (!(curvature > 0) || !Number.isFinite(curvature)) {
         throw singularError(

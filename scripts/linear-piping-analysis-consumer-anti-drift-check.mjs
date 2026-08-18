@@ -277,5 +277,6 @@ await import('./linear-piping-inputxml-analysis-context-check.mjs');
 await import('./linear-piping-inputxml-unit-normalization-check.mjs');
 await import('./linear-piping-multicase-application-check.mjs');
 await import('./linear-piping-multicase-application-anti-drift-check.mjs');
+await import('./inputxml-run-request-cases-check.mjs');
 
 console.log('Linear piping analysis consumer T0 and Phase 2A-2F anti-drift check PASS');

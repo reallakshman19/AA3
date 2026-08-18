@@ -60,6 +60,10 @@ export function renderLfeaToolbar(root, state, modes, handlers) {
   cancel.hidden = state.status !== 'RUNNING';
   const benchmark = workbenchButton(root, 'Run Benchmark', handlers.onBenchmark);
   benchmark.dataset.role = 'lfea-benchmark';
+  // No handler means this instance's QA panels are composed elsewhere
+  // (the LFEA pipeline shell's Verification drawer) -- hide the button
+  // rather than leave a click that runs real work nowhere visible.
+  benchmark.hidden = !handlers.onBenchmark;
   const exportDocument = workbenchButton(
     root,
     'Export mesh package',

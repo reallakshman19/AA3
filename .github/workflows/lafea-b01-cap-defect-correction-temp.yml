@@ -1,4 +1,4 @@
-name: LAFEA B01 post-cap scaled defect correction temporary
+name: LAFEA B01 translational Galerkin coarse correction temporary
 
 on:
   pull_request:
@@ -25,25 +25,37 @@ jobs:
       - run: npm ci
       - name: Verify exact PR head
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Apply one post-cap scaled defect correction
+      - name: Apply target-only reliable update and translational coarse correction
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+
           p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
           s = p.read_text()
-          s = s.replace(
-            'export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {',
-            'export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile, allowDefectCorrection = true) {',
-            1,
-          )
-          old = """  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  originalResidualInfinity = maxAbs(exactOriginalResidual(matrix, rightHandSide, solution));\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
-          new = """  let solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  let exact = exactOriginalResidual(matrix, rightHandSide, solution);\n  originalResidualInfinity = maxAbs(exact);\n  if (originalResidualInfinity > convergenceTarget && allowDefectCorrection) {\n    const defectMagnitude = originalResidualInfinity;\n    const normalization = 1 / defectMagnitude;\n    const normalizedDefect = exact.map((value) =>\n      canonicalNumber(value * normalization, 'normalized equilibrated CG defect'));\n    const corrected = jacobiEquilibratedCgSolve(\n      matrix,\n      normalizedDefect,\n      profile,\n      false,\n    );\n    solution = solution.map((value, index) => canonicalNumber(\n      value + corrected.solution[index] / normalization,\n      'defect-corrected equilibrated CG displacement',\n    ));\n    exact = exactOriginalResidual(matrix, rightHandSide, solution);\n    originalResidualInfinity = maxAbs(exact);\n  }\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          old = """    if (iterations % 100 === 0 || maxAbs(residual) <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n    }\n"""
+          new = """    const recursiveResidualInfinity = maxAbs(residual);\n    if (iterations % 100 === 0 || recursiveResidualInfinity <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n      if (recursiveResidualInfinity <= convergenceTarget) {\n        residual = exact.map((value, index) => value * inverseSqrtDiagonal[index]);\n        scaledResidualCompensation.fill(0);\n        direction = [...residual];\n        rho = compensatedDot(residual, residual);\n        if (!(rho > 0) || !Number.isFinite(rho)) {\n          throw solverError('JACOBI_EQUILIBRATED_CG_RELIABLE_UPDATE_INVALID', rho);\n        }\n        continue;\n      }\n    }\n"""
           if s.count(old) != 1:
-              raise RuntimeError('expected one equilibrated-CG post-loop block')
+              raise RuntimeError('expected one equilibrated-CG exact-residual block')
           p.write_text(s.replace(old, new, 1))
+
+          p = Path('src/core/local-continuum/solver.js')
+          s = p.read_text()
+          old = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const residual = equilibriumResidual(mesh, correction, load.forceVector);\n  const qualification = qualifyResiduals(\n"""
+          new = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  let residual = equilibriumResidual(mesh, correction, load.forceVector);\n  if (mesh.globalStiffnessStorage === 'CSR_FULL_SYMMETRIC'\n    && sparseReactionRefinementRequired(\n      model,\n      mesh.dofOrdering,\n      free,\n      constraints.indices,\n      load.forceVector,\n      residual,\n    )) {\n    applySparseTranslationalCoarseCorrection(\n      mesh,\n      free,\n      correction,\n      residual,\n    );\n    residual = equilibriumResidual(mesh, correction, load.forceVector);\n  }\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const qualification = qualifyResiduals(\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected solvePartitioned recovery block')
+          s = s.replace(old, new, 1)
+          marker = """function equilibriumResidual(mesh, displacement, force) {\n"""
+          helper = """function sparseReactionRefinementRequired(\n  model,\n  dofs,\n  free,\n  constrained,\n  force,\n  residual,\n) {\n  const scale = Math.max(1, maxAbs(force), maxAbs(residual));\n  const freeLimit = tolerance(model.qualificationProfile, 'freeDofResidual', scale);\n  const freeMaximum = Math.max(0, ...free.map((index) => Math.abs(residual[index])));\n  if (freeMaximum > freeLimit) return false;\n  const totals = equilibriumTotals(dofs, constrained, force, residual);\n  const equilibriumLimit = tolerance(model.qualificationProfile, 'reactionEquilibrium', scale);\n  return Math.max(Math.abs(totals.UX), Math.abs(totals.UY)) > equilibriumLimit;\n}\n\nfunction applySparseTranslationalCoarseCorrection(mesh, free, correction, residual) {\n  const freeStiffness = restrictSymmetricCsr(mesh.globalStiffnessCsr, free);\n  const uxMode = free.map((index) => dofAxis(mesh.dofOrdering[index]) === 'UX' ? 1 : 0);\n  const uyMode = free.map((index) => dofAxis(mesh.dofOrdering[index]) === 'UY' ? 1 : 0);\n  const actionX = sparseMatrixVectorCompensatedRaw(freeStiffness, uxMode);\n  const actionY = sparseMatrixVectorCompensatedRaw(freeStiffness, uyMode);\n  const gXX = compensatedProductSumRaw(uxMode, actionX);\n  const gXY = compensatedProductSumRaw(uxMode, actionY);\n  const gYY = compensatedProductSumRaw(uyMode, actionY);\n  const freeResidual = free.map((index) => residual[index]);\n  const qX = compensatedProductSumRaw(uxMode, freeResidual);\n  const qY = compensatedProductSumRaw(uyMode, freeResidual);\n  const determinant = gXX * gYY - gXY * gXY;\n  if (!(determinant > 0) || !Number.isFinite(determinant)) {\n    throw numericalError(\n      'SPARSE_TRANSLATIONAL_COARSE_SYSTEM_INVALID',\n      'solver',\n      `Translational coarse-system determinant is invalid: ${determinant}.`,\n    );\n  }\n  const alphaX = (qX * gYY - qY * gXY) / determinant;\n  const alphaY = (gXX * qY - gXY * qX) / determinant;\n  free.forEach((index, position) => {\n    correction[index] = canonicalNumber(\n      correction[index] - uxMode[position] * alphaX - uyMode[position] * alphaY,\n      'translational coarse-corrected displacement',\n    );\n  });\n}\n\n"""
+          if s.count(marker) != 1:
+              raise RuntimeError('expected equilibriumResidual marker')
+          p.write_text(s.replace(marker, helper + marker, 1))
           PY
           node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+          node --check src/core/local-continuum/solver.js
       - name: Execute exact governing B01 case only
+        shell: bash
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
@@ -53,7 +65,10 @@ jobs:
           const level = definition.benchmarks.THICK_CYLINDER.meshLadder.levels.find((row) => row.levelId === 'L4');
           const distortion = definition.distortionMatrix.find((row) => row.distortionId === 'REGULAR');
           const run = executeLameBbarQualificationCase(definition, meshPolicy, {
-            elementType: 'T6', poissonRatio: 0.4999, level, distortion,
+            elementType: 'T6',
+            poissonRatio: 0.4999,
+            level,
+            distortion,
           });
           console.log(JSON.stringify({
             case: 'T6/0.4999/L4/REGULAR',
@@ -62,38 +77,3 @@ jobs:
             equilibrium: run.loadCase.equilibrium,
           }, null, 2));
           NODE
-
-  full-matrix:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Verify exact PR head
-        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Apply one post-cap scaled defect correction
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
-          s = p.read_text()
-          s = s.replace(
-            'export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {',
-            'export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile, allowDefectCorrection = true) {',
-            1,
-          )
-          old = """  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  originalResidualInfinity = maxAbs(exactOriginalResidual(matrix, rightHandSide, solution));\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
-          new = """  let solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  let exact = exactOriginalResidual(matrix, rightHandSide, solution);\n  originalResidualInfinity = maxAbs(exact);\n  if (originalResidualInfinity > convergenceTarget && allowDefectCorrection) {\n    const defectMagnitude = originalResidualInfinity;\n    const normalization = 1 / defectMagnitude;\n    const normalizedDefect = exact.map((value) =>\n      canonicalNumber(value * normalization, 'normalized equilibrated CG defect'));\n    const corrected = jacobiEquilibratedCgSolve(\n      matrix,\n      normalizedDefect,\n      profile,\n      false,\n    );\n    solution = solution.map((value, index) => canonicalNumber(\n      value + corrected.solution[index] / normalization,\n      'defect-corrected equilibrated CG displacement',\n    ));\n    exact = exactOriginalResidual(matrix, rightHandSide, solution);\n    originalResidualInfinity = maxAbs(exact);\n  }\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
-          if s.count(old) != 1:
-              raise RuntimeError('expected one equilibrated-CG post-loop block')
-          p.write_text(s.replace(old, new, 1))
-          PY
-          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
-      - name: Execute frozen full Lamé matrix
-        run: node scripts/lafea-plane-strain-bbar-lame-check.mjs

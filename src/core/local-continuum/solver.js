@@ -154,10 +154,7 @@ function solutionRecord(
   if (solverEvidence.method === 'DETERMINISTIC_CHOLESKY') {
     formulaIds.push(FORMULA_IDS.CHOLESKY);
   }
-  if (
-    solverEvidence.method === 'DETERMINISTIC_JACOBI_PCG'
-    || solverEvidence.method === 'DETERMINISTIC_SGS_PCG'
-  ) {
+  if (solverEvidence.method === 'DETERMINISTIC_JACOBI_PCG') {
     formulaIds.push(FORMULA_IDS.PCG);
   }
   return {
@@ -342,7 +339,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
   let finalResidualInfinity = initialResidualInfinity;
   let iterations = 0;
   if (finalResidualInfinity > convergenceTarget) {
-    let preconditioned = applySymmetricGaussSeidel(matrix, residual);
+    let preconditioned = applyJacobi(matrix.diagonal, residual);
     let direction = [...preconditioned];
     let rho = dotVector(residual, preconditioned);
     if (!(rho > 0)) {
@@ -388,7 +385,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
         if (recursiveResidualInfinity <= convergenceTarget) {
           residual = reliableResidual;
           residualCompensation.fill(0);
-          preconditioned = applySymmetricGaussSeidel(matrix, residual);
+          preconditioned = applyJacobi(matrix.diagonal, residual);
           direction = [...preconditioned];
           rho = dotVector(residual, preconditioned);
           if (!(rho > 0) || !Number.isFinite(rho)) {
@@ -401,7 +398,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
           continue;
         }
       }
-      preconditioned = applySymmetricGaussSeidel(matrix, residual);
+      preconditioned = applyJacobi(matrix.diagonal, residual);
       const nextRho = dotVector(residual, preconditioned);
       if (!(nextRho > 0) || !Number.isFinite(nextRho)) {
         throw singularError(
@@ -423,21 +420,21 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
     throw numericalError(
       'ITERATIVE_SOLVER_DID_NOT_CONVERGE',
       'solver',
-      `Sparse SGS-PCG residual ${finalResidualInfinity} exceeds internal target ${convergenceTarget} (acceptance gate ${residualTolerance}) after ${iterations} iterations.`,
+      `Sparse PCG residual ${finalResidualInfinity} exceeds internal target ${convergenceTarget} (acceptance gate ${residualTolerance}) after ${iterations} iterations.`,
     );
   }
   return {
     solution: solution.map((value) =>
       canonicalNumber(value, 'solved sparse displacement')),
     evidence: {
-      method: 'DETERMINISTIC_SGS_PCG',
+      method: 'DETERMINISTIC_JACOBI_PCG',
       pivotScale: null,
       pivotTolerance: null,
       pivots: [],
       minimumPivot: null,
       maximumPivot: null,
       pivotRatio: null,
-      preconditioner: 'SYMMETRIC_GAUSS_SEIDEL',
+      preconditioner: 'JACOBI',
       iterationLimit,
       iterations,
       residualScale: canonicalNumber(residualScale),
@@ -455,37 +452,8 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
   };
 }
 
-function applySymmetricGaussSeidel(matrix, residual) {
-  const forward = Array(matrix.size).fill(0);
-  for (let row = 0; row < matrix.size; row += 1) {
-    let value = residual[row];
-    for (
-      let offset = matrix.rowPointers[row];
-      offset < matrix.rowPointers[row + 1];
-      offset += 1
-    ) {
-      const column = matrix.columnIndices[offset];
-      if (column >= row) break;
-      value -= matrix.values[offset] * forward[column];
-    }
-    forward[row] = value / matrix.diagonal[row];
-  }
-  const scaled = forward.map((value, index) => matrix.diagonal[index] * value);
-  const output = Array(matrix.size).fill(0);
-  for (let row = matrix.size - 1; row >= 0; row -= 1) {
-    let value = scaled[row];
-    for (
-      let offset = matrix.rowPointers[row];
-      offset < matrix.rowPointers[row + 1];
-      offset += 1
-    ) {
-      const column = matrix.columnIndices[offset];
-      if (column <= row) continue;
-      value -= matrix.values[offset] * output[column];
-    }
-    output[row] = value / matrix.diagonal[row];
-  }
-  return output;
+function applyJacobi(diagonal, residual) {
+  return residual.map((value, index) => value / diagonal[index]);
 }
 
 function exactResidual(matrix, rightHandSide, solution) {

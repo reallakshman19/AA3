@@ -7,6 +7,7 @@ on:
       - agent/lafea-b01-solver-qualification-20260818
     paths:
       - 'src/core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js'
+      - 'src/core/local-continuum/jacobi-equilibrated-cg.js'
       - 'validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json'
       - '.github/workflows/lafea-b02d-v2-production-diagnostic.yml'
 

@@ -14,14 +14,14 @@ PR: #1246 (draft)
 BRANCH: agent/lafea4-tech13-hij-salvage-20260818
 MAIN_HEAD_LAST_CHECKED: 585a897afa0f5c9799cb68a58de00a55808062b3
 MERGE_BASE: 585a897afa0f5c9799cb68a58de00a55808062b3
-REPORT_BASIS_HEAD: 4fc8806855fa5faf21adc05561884ebf905739ce
+REPORT_BASIS_HEAD: 1405d3718e756a218169941a968cffa3f9f9f05f
 ENGINEERING_J_HEAD: 8ec39d9eb852edb65f165fcbd9f4dcbc43407881
 GROUNDING_EPOCH: GE-TECH13-20260818-01
 APPENDIX_A_STATUS: PASS_97_100
 CURRENT_STAGE: TECH-13J_EXACT_HEAD_VALIDATION
 CURRENT_BLOCKER: PRODUCTION_BUNDLE_CHUNK_CEILING
 HIGHEST_RISK: overstating focused TECH-13 H/I/J qualification before direct execution
-EXACT_NEXT_ACTION: observe hosted workflows on the current documentation-only successor of 8ec39d9e; preserve shell/build evidence exactly; keep focused H/I/J checks NOT_RUN unless directly executed; do not activate trust root or merge.
+EXACT_NEXT_ACTION: observe hosted workflows on this report-only successor of 8ec39d9e; preserve shell/build evidence exactly; keep focused H/I/J checks NOT_RUN unless directly executed; do not activate trust root or merge.
 ```
 
 ## Handover in 60 Seconds
@@ -29,7 +29,7 @@ PR #1246 is the current-main recovery successor to stale #1238/#1239. TECH-13H r
 
 TECH-13J binds qualification and future promotion to an automatically content-derived SHA-256 fingerprint over the promotion-critical refinement implementation. It intentionally excludes only the marker-bounded trust-root VALUE so a later trust-root-only activation commit can preserve implementation identity. It does not use repo HEAD as implementation identity and does not depend on a manually bumped version token.
 
-Production build injection now uses Vite's explicit static `define` replacement `__LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT__`. Browser runtime accepts only that build-defined value. The global fallback is restricted to non-browser Node qualification after the harness independently recomputes the source fingerprint. Both `vite.config.js` and `vite.lafea.config.js` are themselves fingerprint-critical.
+Production build injection uses Vite's explicit static `define` replacement `__LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT__`. Browser runtime accepts only that build-defined value. The global fallback is restricted to non-browser Node qualification after the harness independently recomputes the source fingerprint. Both `vite.config.js` and `vite.lafea.config.js` are themselves fingerprint-critical.
 
 Hosted shell execution on prior exact J checkpoint `60118a9a1f9ead6670f49217b6f932fe0f7447f7` remained PASS through shell sample-parent, route, compiled execution, response acceptance, standalone boundary, and standalone build. The production Vite compilation also completed; the existing production chunk gate then blocked `main-N1aP08xo.js = 1,227,400 B` against `1,179,648 B`, over by `47,752 B` = 4.048%. No chunk ceiling or manual-chunk policy is changed here.
 
@@ -161,7 +161,7 @@ B01 final exact-head workflow remains a separate LAFEA.3 B-bar mechanics failure
 Unexplained paths: 0.
 
 ## Review / CI / Coordination
-PR remains draft and mergeable. No merge authority. Current main rechecked at `585a897a...`. The report-only commits after engineering head are outside the implementation-fingerprint domain, so they do not alter J implementation identity. Hosted workflows are used only for the exact commit they actually execute; no cross-head PASS is invented. Old #1238/#1239 remain provenance only.
+PR remains draft and mergeable. No merge authority. Current main rechecked at `585a897a...`. Report-only commits after engineering head are outside the implementation-fingerprint domain, so they do not alter J implementation identity. Hosted workflows are used only for the exact commit they actually execute; no cross-head PASS is invented. Old #1238/#1239 remain provenance only.
 
 ## Exact Continuation State
 ```text
@@ -185,4 +185,4 @@ Do not activate or merge.
 - I salvage: `5d7f0c67828c2493bc7691f4696326c64eb37309`.
 - H/I/J pre-validation checkpoint: `60118a9a1f9ead6670f49217b6f932fe0f7447f7`.
 - J direct-define engineering head: `8ec39d9eb852edb65f165fcbd9f4dcbc43407881`.
-- J validation report checkpoints: `dd4f6585f9bc10560a0d20dc6d95694ac38d68d6`, `4fc8806855fa5faf21adc05561884ebf905739ce`.
+- J validation report checkpoints: `dd4f6585f9bc10560a0d20dc6d95694ac38d68d6`, `4fc8806855fa5faf21adc05561884ebf905739ce`, `1405d3718e756a218169941a968cffa3f9f9f05f`.

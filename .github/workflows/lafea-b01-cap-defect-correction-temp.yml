@@ -1,4 +1,4 @@
-name: LAFEA B01 bounded exact-residual refinement temporary
+name: LAFEA B01 double-double exact residual temporary
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  cap-refinement:
+  double-double-residual:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -25,19 +25,95 @@ jobs:
       - run: npm ci
       - name: Verify exact PR head
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Apply up to three exact-residual minimum-residual refinement steps
+      - name: Install runner-only double-double exact residual oracle
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+
+          p = Path('src/core/local-continuum/sparse-matrix.js')
+          s = p.read_text()
+          marker = "export function sparseMatrixScale(matrix) {\n"
+          helper = r'''export function sparseMatrixVectorDoubleDoubleRaw(matrix, vector) {
+  requireCsr(matrix);
+  if (!Array.isArray(vector) || vector.length !== matrix.size) {
+    throw new TypeError('Sparse matrix-vector dimensions differ.');
+  }
+  const output = Array(matrix.size).fill(0);
+  for (let row = 0; row < matrix.size; row += 1) {
+    const partials = [];
+    for (let offset = matrix.rowPointers[row];
+      offset < matrix.rowPointers[row + 1]; offset += 1) {
+      const left = matrix.values[offset];
+      const right = vector[matrix.columnIndices[offset]];
+      const product = left * right;
+      addAccuratePartial(partials, product);
+      const error = twoProductError(left, right, product);
+      if (error !== 0) addAccuratePartial(partials, error);
+    }
+    let value = 0;
+    for (let index = partials.length - 1; index >= 0; index -= 1) value += partials[index];
+    output[row] = value;
+  }
+  return output;
+}
+
+const DOUBLE_SPLITTER = 134217729;
+
+function twoProductError(left, right, product) {
+  const leftSplit = DOUBLE_SPLITTER * left;
+  const leftHigh = leftSplit - (leftSplit - left);
+  const leftLow = left - leftHigh;
+  const rightSplit = DOUBLE_SPLITTER * right;
+  const rightHigh = rightSplit - (rightSplit - right);
+  const rightLow = right - rightHigh;
+  return ((leftHigh * rightHigh - product)
+    + leftHigh * rightLow
+    + leftLow * rightHigh)
+    + leftLow * rightLow;
+}
+
+function addAccuratePartial(partials, input) {
+  let value = input;
+  let write = 0;
+  for (let index = 0; index < partials.length; index += 1) {
+    let partial = partials[index];
+    if (Math.abs(value) < Math.abs(partial)) {
+      const swap = value;
+      value = partial;
+      partial = swap;
+    }
+    const high = value + partial;
+    const low = partial - (high - value);
+    if (low !== 0) {
+      partials[write] = low;
+      write += 1;
+    }
+    value = high;
+  }
+  partials.length = write;
+  partials.push(value);
+}
+
+'''
+          if s.count(marker) != 1:
+              raise RuntimeError('expected sparseMatrixScale marker')
+          p.write_text(s.replace(marker, helper + marker, 1))
+
           p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
           s = p.read_text()
-          old = """  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  originalResidualInfinity = maxAbs(exactOriginalResidual(matrix, rightHandSide, solution));\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
-          new = """  let solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  let exact = exactOriginalResidual(matrix, rightHandSide, solution);\n  originalResidualInfinity = maxAbs(exact);\n  const refinementHistory = [originalResidualInfinity];\n  let refinementSteps = 0;\n  while (originalResidualInfinity > convergenceTarget && refinementSteps < 3) {\n    const scaledExact = exact.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const unscaledDirection = scaledExact.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const unscaledAction = sparseMatrixVectorRaw(matrix, unscaledDirection);\n    const scaledAction = unscaledAction.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const numerator = compensatedDot(scaledAction, scaledExact);\n    const denominator = compensatedDot(scaledAction, scaledAction);\n    if (!(denominator > 0) || !Number.isFinite(denominator)\n      || !Number.isFinite(numerator)) {\n      throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_INVALID', `${numerator}/${denominator}`);\n    }\n    const alpha = numerator / denominator;\n    if (!Number.isFinite(alpha)) {\n      throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_ALPHA_INVALID', alpha);\n    }\n    const candidateScaled = scaledSolution.map(\n      (value, index) => value + alpha * scaledExact[index],\n    );\n    const candidateSolution = unscaleSolution(candidateScaled, inverseSqrtDiagonal);\n    const candidateExact = exactOriginalResidual(matrix, rightHandSide, candidateSolution);\n    const candidateInfinity = maxAbs(candidateExact);\n    if (!(candidateInfinity < originalResidualInfinity)) break;\n    for (let index = 0; index < scaledSolution.length; index += 1) {\n      scaledSolution[index] = candidateScaled[index];\n    }\n    solution = candidateSolution;\n    exact = candidateExact;\n    originalResidualInfinity = candidateInfinity;\n    refinementSteps += 1;\n    refinementHistory.push(candidateInfinity);\n  }\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} exact-residual refinement steps; history=${refinementHistory.join(',')}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          old = """import {\n  sparseMatrixVectorCompensatedRaw,\n  sparseMatrixVectorRaw,\n} from './sparse-matrix.js';\n"""
+          new = """import {\n  sparseMatrixVectorCompensatedRaw,\n  sparseMatrixVectorDoubleDoubleRaw,\n  sparseMatrixVectorRaw,\n} from './sparse-matrix.js';\n"""
           if s.count(old) != 1:
-              raise RuntimeError('expected one post-loop convergence block')
+              raise RuntimeError('expected sparse-matrix import block')
+          s = s.replace(old, new, 1)
+          old = "const action = sparseMatrixVectorCompensatedRaw(matrix, solution);"
+          new = "const action = sparseMatrixVectorDoubleDoubleRaw(matrix, solution);"
+          if s.count(old) != 1:
+              raise RuntimeError('expected exact residual action')
           p.write_text(s.replace(old, new, 1))
           PY
+          node --check src/core/local-continuum/sparse-matrix.js
           node --check src/core/local-continuum/jacobi-equilibrated-cg.js
       - name: Execute exact L4 near-incompressible B01 case
         shell: bash

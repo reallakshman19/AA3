@@ -1,6 +1,7 @@
 /** Render the guided LAFEA step navigator without creating engineering state. */
 import { buildLafeaWorkflowAreaPresentation } from './lafea-guided-workflow-presentation.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
+import { lafeaUiIcon, lafeaWorkflowAreaIconId } from './lafea-ui-icons.js';
 import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
 
 export function renderLafeaGuidedWorkflow(root, workflow, onNavigate) {
@@ -31,6 +32,9 @@ export function renderLafeaGuidedWorkflow(root, workflow, onNavigate) {
     button.dataset.uiStatus = area.status;
     button.setAttribute('aria-label', `${area.label}: ${presentation.label}`);
 
+    const icon = lafeaUiIcon(doc, lafeaWorkflowAreaIconId(area.areaId));
+    icon.classList.add('lafea-guided-workflow__icon');
+
     const label = doc.createElement('span');
     label.className = 'lafea-guided-workflow__label';
     label.textContent = area.label;
@@ -40,7 +44,7 @@ export function renderLafeaGuidedWorkflow(root, workflow, onNavigate) {
     state.dataset.tone = presentation.tone;
     state.textContent = presentation.label;
 
-    button.append(label, state);
+    button.append(icon, label, state);
     button.addEventListener('click', () => onNavigate?.(area.targetStep));
     item.append(button);
 

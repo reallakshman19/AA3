@@ -38,6 +38,13 @@ jobs:
         run: npm ci
       - name: Profile production main-chunk modules
         run: node scripts/lafea-bundle-main-module-profile.mjs
+      - name: Upload production main-chunk module profile
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-main-bundle-profile-${{ github.event.pull_request.head.sha || github.sha }}
+          path: test-results/lafea-main-bundle-profile.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Static and projection checks
         run: |
           node --check src/workspace/lafea-engineering-overview.js

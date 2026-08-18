@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { buildLafeaWorkflowAreaPresentation } from '../src/workspace/lafea-guided-workflow-presentation.js';
+import { lafeaWorkflowAreaIconId } from '../src/workspace/lafea-ui-icons.js';
 import { lafeaUiStatusPresentation } from '../src/workspace/lafea-ui-status.js';
 
 const expectations = Object.freeze({
@@ -42,6 +43,10 @@ for (const [canonical, [label, tone]] of Object.entries(expectations)) {
 const unknown = lafeaUiStatusPresentation('FUTURE_INTERNAL_STATE');
 assert.equal(unknown.label, 'Unknown state');
 assert.equal(unknown.canonical, 'FUTURE_INTERNAL_STATE');
+assert.deepEqual(
+  ['MODEL', 'MESH', 'SOLVE', 'RESULTS'].map(lafeaWorkflowAreaIconId),
+  ['model', 'mesh', 'solve', 'results'],
+);
 
 const workflow = Object.freeze({
   schema: 'lafea-guided-workflow/v1',
@@ -99,6 +104,16 @@ assert.match(renderer, /buildLafeaWorkflowAreaPresentation\(workflow\)/u);
 assert.match(renderer, /dataset\.workflowArea/u);
 assert.match(renderer, /button\.dataset\.status = step\.status/u);
 assert.match(renderer, /lafea-guided-workflow__technical/u);
+assert.match(renderer, /lafeaUiIcon\(doc, lafeaWorkflowAreaIconId\(area\.areaId\)\)/u);
+assert.match(renderer, /button\.append\(icon, label, state\)/u);
+
+const iconsPath = fileURLToPath(new URL('../src/workspace/lafea-ui-icons.js', import.meta.url));
+const icons = readFileSync(iconsPath, 'utf8');
+assert.match(icons, /createElementNS\('http:\/\/www\.w3\.org\/2000\/svg', 'svg'\)/u);
+assert.match(icons, /aria-hidden/u);
+for (const glyph of informalGlyphs) {
+  assert.equal(icons.includes(glyph), false, `formal icon registry must not contain emoji glyph ${glyph}`);
+}
 
 const stylesPath = fileURLToPath(new URL('../src/workspace/lafea-guided-workbench-styles.js', import.meta.url));
 const styles = readFileSync(stylesPath, 'utf8');
@@ -108,6 +123,12 @@ assert.match(styles, /\.lafea-next-action-banner__button\{/u);
 assert.match(styles, /\.lafea-engineering-overview__run,\[data-lafea-slot="toolbar"\] \[data-role="lafea-run"\]/u);
 assert.match(styles, /background:#0b1628!important/u);
 assert.equal(styles.includes('linear-gradient'), false, 'guided action hierarchy must not add decorative gradients');
+
+const modernStylesPath = fileURLToPath(new URL('../src/workspace/lafea-ui-modernization-styles.js', import.meta.url));
+const modernStyles = readFileSync(modernStylesPath, 'utf8');
+assert.match(modernStyles, /\.lafea-ui-icon/u);
+assert.match(modernStyles, /\.lafea-engineering-evidence-drawer/u);
+assert.match(modernStyles, /\.lafea-diagnostics__item/u);
 
 const overviewPath = fileURLToPath(new URL('../src/workspace/lafea-engineering-overview.js', import.meta.url));
 const overview = readFileSync(overviewPath, 'utf8');
@@ -133,7 +154,28 @@ assert.match(settings, /technicalSettings\(root, model\.solverRows\)/u);
 assert.match(settings, /Technical identifiers and lifecycle custody/u);
 assert.match(settings, /dataset\.role = 'lafea-technical-evidence'/u);
 
-console.log('LAFEA formal UI status, workflow, action hierarchy, and terminology boundary check: PASS');
+const evidencePath = fileURLToPath(new URL('../src/workspace/lafea-workbench-evidence.js', import.meta.url));
+const evidence = readFileSync(evidencePath, 'utf8');
+assert.match(evidence, /dataset\.role = 'lafea-engineering-evidence-drawer'/u);
+assert.match(evidence, /body\.dataset\.role = 'lafea-technical-evidence'/u);
+assert.match(evidence, /if \(parent\.tagName === 'DETAILS'\) parent\.open = true/u);
+assert.match(evidence, /lafeaUiIcon\(root\.ownerDocument, 'evidence'\)/u);
+
+const contentPath = fileURLToPath(new URL('../src/workspace/lafea-workbench-content.js', import.meta.url));
+const content = readFileSync(contentPath, 'utf8');
+assert.match(content, /renderLafeaEngineeringEvidenceDrawer\(/u);
+assert.match(content, /\[numericalCard\.section, lifecycleCard\.section, ncCard\.section\]/u);
+assert.match(content, /banner\.dataset\.guidedTarget = 'run'/u);
+assert.match(content, /lafeaUiStatusPresentation\(step\.status\)\.label/u);
+assert.match(content, /'Not generated'/u);
+assert.equal(content.includes('banner.style.'), false, 'legacy inline action-banner presentation must be removed');
+assert.equal(content.includes('btn.style.'), false, 'legacy inline action-button presentation must be removed');
+
+const controllerIoPath = fileURLToPath(new URL('../src/workspace/lafea-workbench-controller-io.js', import.meta.url));
+const controllerIo = readFileSync(controllerIoPath, 'utf8');
+assert.match(controllerIo, /LAFEA_UI_MODERNIZATION_STYLES/u);
+
+console.log('LAFEA formal UI status, workflow, action hierarchy, evidence hierarchy, icon, and terminology boundary check: PASS');
 
 function step(stepId, status, reasons = []) {
   return Object.freeze({

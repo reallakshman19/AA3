@@ -1,5 +1,19 @@
 /** Presentation-only styles for the modern LAFEA workspace hierarchy. */
 export const LAFEA_UI_MODERNIZATION_STYLES = `
+.lafea-ui-icon{
+  width:16px;
+  height:16px;
+  flex:0 0 auto;
+  color:#9fb8cf;
+}
+.lafea-guided-workflow__area{
+  grid-template-columns:18px minmax(0,1fr) auto!important;
+}
+.lafea-guided-workflow__icon{
+  width:15px;
+  height:15px;
+  color:#7dd3fc;
+}
 .lafea-cae-workspace__context{
   display:grid;
   grid-template-columns:minmax(0,1fr);
@@ -12,15 +26,20 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   overflow:hidden;
 }
 .lafea-engineering-evidence-drawer__summary{
-  display:flex;
+  display:grid;
+  grid-template-columns:18px minmax(0,1fr) auto;
   align-items:center;
-  justify-content:space-between;
-  gap:16px;
+  gap:12px;
   padding:14px 16px;
   cursor:pointer;
   list-style:none;
 }
 .lafea-engineering-evidence-drawer__summary::-webkit-details-marker{display:none}
+.lafea-engineering-evidence-drawer__icon{
+  width:16px;
+  height:16px;
+  color:#7dd3fc;
+}
 .lafea-engineering-evidence-drawer__heading{
   display:grid;
   gap:2px;

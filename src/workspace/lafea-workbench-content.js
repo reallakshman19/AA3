@@ -12,6 +12,7 @@ import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaNumericalVerification } from './lafea-numerical-verification-view.js';
 import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
+import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import {
   renderLafeaEngineeringEvidenceDrawer,
@@ -228,12 +229,12 @@ function viewportModePanel(root, viewportState, retainedMeshEvidence, stage) {
     ? retainedMeshEvidence.mesh.elements.length
     : 0;
   panel.append(
-    viewportMode(root, 'Geometry', stage.document ? 'VISIBLE' : 'EMPTY', mode === 'SOURCE_AUTHORING'),
-    viewportMode(root, 'Mesh', meshCount ? `${meshCount} ELEMENTS` : 'NOT RETAINED', meshCount > 0),
+    viewportMode(root, 'Geometry', stage.document ? 'Available' : 'Not available', mode === 'SOURCE_AUTHORING'),
+    viewportMode(root, 'Mesh', meshCount ? `${meshCount} elements` : 'Not generated', meshCount > 0),
     viewportMode(
       root,
       'Result contour',
-      mode === 'QUALIFIED_RESULT' ? `READY · ${renderer}` : 'WAITING FOR QUALIFIED RESULT',
+      mode === 'QUALIFIED_RESULT' ? `Ready · ${renderer}` : 'Waiting for qualified result',
       mode === 'QUALIFIED_RESULT',
     ),
   );
@@ -250,23 +251,17 @@ function viewportMode(root, label, value, active) {
 function renderNextActionBanner(root, stage, discretization, workflow, options, shell) {
   const banner = element(root, 'div', 'lafea-next-action-banner');
   banner.dataset.role = 'lafea-next-action-banner';
+  banner.dataset.guidedTarget = 'run';
   banner.dataset.meshUiPhase = discretization.uiPhase;
-  banner.style.padding = '16px';
-  banner.style.margin = '16px 0';
-  banner.style.background = '#e3f2fd';
-  banner.style.border = '1px solid #90caf9';
-  banner.style.borderRadius = '8px';
-  banner.style.display = 'flex';
-  banner.style.alignItems = 'center';
-  banner.style.justifyContent = 'space-between';
-  banner.style.color = '#0d47a1';
 
   if (!stage.document) {
+    banner.dataset.intent = 'model';
     banner.append(element(root, 'strong', null, 'Step 1: Load a model to begin'));
     return banner;
   }
 
   if (!discretization.evidence.present) {
+    banner.dataset.intent = 'mesh';
     const sourceAdoption = discretization.generation.generationMode === 'SOURCE_MESH_ADOPTION';
     banner.append(element(
       root,
@@ -281,13 +276,6 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
       meshActionLabel(discretization.uiPhase),
     );
     btn.type = 'button';
-    btn.style.padding = '8px 16px';
-    btn.style.background = '#1976d2';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
-    btn.style.fontWeight = 'bold';
     btn.title = 'Open the governed meshing controls. This navigation action does not bind a profile or generate a mesh.';
     btn.onclick = () => navigateTo(shell, 'discretization');
     banner.append(btn);
@@ -295,13 +283,12 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
   }
 
   if (stage.execution?.status !== 'QUALIFIED') {
+    banner.dataset.intent = 'solve';
     const runStep = workflow.steps.find((step) => step.stepId === 'RUN');
     const eligible = workflow.runEligibleByCurrentUiGate === true
       && discretization.actions.canRun === true
       && runStep?.status === 'READY';
-    banner.style.background = eligible ? '#e8f5e9' : '#fff8e1';
-    banner.style.border = eligible ? '1px solid #a5d6a7' : '1px solid #ffe082';
-    banner.style.color = eligible ? '#1b5e20' : '#6d4c00';
+    banner.dataset.runEligible = String(eligible);
     banner.append(element(
       root,
       'strong',
@@ -310,13 +297,6 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
     ));
     const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Run analysis');
     btn.type = 'button';
-    btn.style.padding = '8px 16px';
-    btn.style.background = eligible ? '#2e7d32' : '#9e9e9e';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = eligible ? 'pointer' : 'not-allowed';
-    btn.style.fontWeight = 'bold';
     btn.disabled = !eligible;
     btn.title = eligible
       ? 'Run the canonically authorized registered stage calculation.'
@@ -326,18 +306,10 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
     return banner;
   }
 
-  banner.style.background = '#f3e5f5';
-  banner.style.border = '1px solid #ce93d8';
-  banner.style.color = '#4a148c';
+  banner.dataset.intent = 'results';
   banner.append(element(root, 'strong', null, 'Analysis result retained'));
   const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review retained results');
   review.type = 'button';
-  review.style.padding = '6px 12px';
-  review.style.background = '#7b1fa2';
-  review.style.color = 'white';
-  review.style.border = 'none';
-  review.style.borderRadius = '4px';
-  review.style.cursor = 'pointer';
   review.title = 'Review retained solver/recovery evidence. Display contours are not substituted for numerical authority.';
   review.onclick = () => navigateTo(shell, 'results');
   banner.append(review);
@@ -377,7 +349,7 @@ function workflowSummary(root, workflow, ids) {
     row.dataset.stepId = id;
     row.dataset.status = step.status;
     row.append(
-      element(root, 'strong', null, `${step.label}: ${step.status}`),
+      element(root, 'strong', null, `${step.label}: ${lafeaUiStatusPresentation(step.status).label}`),
       element(
         root,
         'span',
@@ -395,17 +367,25 @@ function diagnosticList(root, diagnostics) {
   section.dataset.role = 'lafea-diagnostics';
   section.dataset.guidedRole = 'findings';
   section.append(element(root, 'h3', null, 'Current findings'));
-  const list = element(root, 'ul');
+  const list = element(root, 'ul', 'lafea-diagnostics__list');
   diagnostics.forEach((item) => {
-    list.append(element(
-      root,
-      'li',
-      null,
-      `${item.severity ?? 'INFO'} ${item.code ?? 'UNKNOWN'} — ${item.message ?? ''}`,
-    ));
+    const row = element(root, 'li', 'lafea-diagnostics__item');
+    row.dataset.severity = item.severity ?? 'INFO';
+    row.append(
+      element(root, 'strong', null, diagnosticSeverityLabel(item.severity)),
+      element(root, 'span', null, item.message ?? ''),
+      element(root, 'code', null, item.code ?? 'UNKNOWN'),
+    );
+    list.append(row);
   });
   section.append(list);
   return section;
+}
+
+function diagnosticSeverityLabel(value) {
+  if (value === 'ERROR' || value === 'CRITICAL') return 'Blocked';
+  if (value === 'WARNING' || value === 'WARN') return 'Attention';
+  return 'Information';
 }
 
 function truthPanel(root, registryEntry) {

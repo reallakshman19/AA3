@@ -96,32 +96,6 @@ export function sparseMatrixVectorCompensatedRaw(matrix, vector) {
   return output;
 }
 
-export function sparseMatrixVectorDoubleDoubleRaw(matrix, vector) {
-  requireCsr(matrix);
-  if (!Array.isArray(vector) || vector.length !== matrix.size) {
-    throw new TypeError('Sparse matrix-vector dimensions differ.');
-  }
-  const output = Array(matrix.size).fill(0);
-  for (let row = 0; row < matrix.size; row += 1) {
-    const partials = [];
-    for (let offset = matrix.rowPointers[row];
-      offset < matrix.rowPointers[row + 1]; offset += 1) {
-      const left = matrix.values[offset];
-      const right = vector[matrix.columnIndices[offset]];
-      const product = left * right;
-      addAccuratePartial(partials, product);
-      const error = twoProductError(left, right, product);
-      if (error !== 0) addAccuratePartial(partials, error);
-    }
-    let value = 0;
-    for (let index = partials.length - 1; index >= 0; index -= 1) {
-      value += partials[index];
-    }
-    output[row] = value;
-  }
-  return output;
-}
-
 export function sparseMatrixScale(matrix) {
   requireCsr(matrix);
   let scale = 0;
@@ -144,43 +118,6 @@ export function sparseSymmetryResidual(matrix) {
     }
   }
   return canonicalNumber(residual, 'sparse symmetry residual');
-}
-
-const DOUBLE_SPLITTER = 134217729;
-
-function twoProductError(left, right, product) {
-  const leftSplit = DOUBLE_SPLITTER * left;
-  const leftHigh = leftSplit - (leftSplit - left);
-  const leftLow = left - leftHigh;
-  const rightSplit = DOUBLE_SPLITTER * right;
-  const rightHigh = rightSplit - (rightSplit - right);
-  const rightLow = right - rightHigh;
-  return ((leftHigh * rightHigh - product)
-    + leftHigh * rightLow
-    + leftLow * rightHigh)
-    + leftLow * rightLow;
-}
-
-function addAccuratePartial(partials, input) {
-  let value = input;
-  let write = 0;
-  for (let index = 0; index < partials.length; index += 1) {
-    let partial = partials[index];
-    if (Math.abs(value) < Math.abs(partial)) {
-      const swap = value;
-      value = partial;
-      partial = swap;
-    }
-    const high = value + partial;
-    const low = partial - (high - value);
-    if (low !== 0) {
-      partials[write] = low;
-      write += 1;
-    }
-    value = high;
-  }
-  partials.length = write;
-  partials.push(value);
 }
 
 function finalizeRows(rows) {

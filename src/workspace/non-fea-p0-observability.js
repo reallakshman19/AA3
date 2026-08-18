@@ -12,8 +12,8 @@ export function measureNonFeaP0Stage(stageId, callback) {
   if (typeof callback !== 'function') {
     throw new TypeError('P0 stage measurement requires a callback.');
   }
-  validateStageId(stageId);
   if (!isNonFeaP0ObservabilityEnabled()) return callback();
+  validateStageId(stageId);
   recordNonFeaP0Operation(stageId);
   if (!hasUserTiming()) return callback();
   const startedAtMs = globalThis.performance.now();
@@ -28,8 +28,8 @@ export async function measureNonFeaP0AsyncStage(stageId, callback) {
   if (typeof callback !== 'function') {
     throw new TypeError('P0 async stage measurement requires a callback.');
   }
-  validateStageId(stageId);
   if (!isNonFeaP0ObservabilityEnabled()) return callback();
+  validateStageId(stageId);
   recordNonFeaP0Operation(stageId);
   if (!hasUserTiming()) return callback();
   const startedAtMs = globalThis.performance.now();

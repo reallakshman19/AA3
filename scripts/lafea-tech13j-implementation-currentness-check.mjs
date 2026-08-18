@@ -36,6 +36,8 @@ const criticalMutations = [
   'src/workspace/lafea4-shell-product-refinement-replay.js',
   'src/workspace/lafea4-shell-product-refinement-ui-policy.js',
   'src/workspace/lafea-workbench-mesh-generation-actions.js',
+  'vite.config.js',
+  'vite.lafea.config.js',
 ];
 for (const relativePath of criticalMutations) {
   const raw = fs.readFileSync(path.join(ROOT, relativePath), 'utf8');
@@ -106,6 +108,17 @@ assert.equal(current.current, true);
 assert.equal(current.diagnosticCode, null);
 assert.equal(current.currentImplementationFingerprint, base.fingerprint);
 assert.equal(current.qualifiedImplementationFingerprint, base.fingerprint);
+
+// The qualification-only global must not become a browser authority seam. In a
+// browser-like runtime with no build-injected Vite value, even a matching global
+// is ignored and the currentness gate remains fail closed.
+globalThis.window = {};
+globalThis.document = {};
+const browserSpoof = evaluateLafea4Tech13ImplementationCurrentness(record);
+assert.equal(browserSpoof.current, false);
+assert.equal(browserSpoof.diagnosticCode, LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT_MISSING_CODE);
+delete globalThis.window;
+delete globalThis.document;
 delete globalThis.__LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT__;
 
 console.log(JSON.stringify({
@@ -121,6 +134,7 @@ console.log(JSON.stringify({
   missingRuntimeFingerprintBlocks: true,
   mismatchedRuntimeFingerprintBlocks: true,
   matchingRuntimeFingerprintPasses: true,
+  browserGlobalSpoofBlocked: true,
   releaseQualified: false,
 }, null, 2));
 

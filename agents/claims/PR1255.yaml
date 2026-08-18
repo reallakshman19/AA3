@@ -19,9 +19,10 @@ claim_modes:
   - SHARED_READ
 excluded_authority:
   - SOLVER_MECHANICS
+  - MESH_PRODUCER
   - MESH_QUALITY_THRESHOLDS
   - NUMERICAL_QUALIFICATION
   - LIFECYCLE_AUTHORITY
   - RELEASE_AUTHORITY
   - TRUST_ROOT
-last_verified_head: 8bfa5caffed19c6bdd29b2fc4453893b20eb92cf
+last_verified_head: 2b31bb3c394233acf66e07153a2223b622e138b4

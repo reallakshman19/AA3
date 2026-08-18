@@ -47,7 +47,25 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Build production Pages bundle and enforce hard ceiling
-        run: npm run build
+        shell: bash
+        run: |
+          mkdir -p test-results
+          set +e
+          npm run build 2>&1 | tee test-results/lafea-production-build.log
+          build_status=${PIPESTATUS[0]}
+          set -e
+          node scripts/lafea-bundle-build-size-evidence.mjs
+          exit "$build_status"
+      - name: Upload production bundle size evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-bundle-size-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            test-results/lafea-bundle-build-size-evidence.json
+            test-results/lafea-production-build.log
+          if-no-files-found: error
+          retention-days: 30
       - name: Install Chromium for generated-chunk boot proof
         env:
           PLAYWRIGHT_BROWSERS_PATH: '0'
@@ -95,28 +113,17 @@ jobs:
             printf 'git archive failed for qualification base %s\n' "$QUALIFICATION_BASE" > /tmp/base-boundary.log
           fi
           set -e
-
           echo "Standalone boundary comparator: head_status=$head_status base_status=$base_status archive_status=$archive_status"
           head_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/head-boundary.log || true)"
           base_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/base-boundary.log || true)"
           printf 'HEAD_FIRST_FORBIDDEN=%s\n' "$head_error"
           printf 'BASE_FIRST_FORBIDDEN=%s\n' "$base_error"
-
-          if [ "$head_status" -eq 0 ]; then
-            echo "Candidate standalone boundary passes."
-            exit 0
-          fi
-
+          if [ "$head_status" -eq 0 ]; then exit 0; fi
           if [ "$archive_status" -ne 0 ] || [ "$base_status" -eq 0 ] || [ -z "$head_error" ] || [ -z "$base_error" ] || [ "$head_error" != "$base_error" ]; then
-            echo '--- candidate standalone boundary log ---'
             cat /tmp/head-boundary.log
-            echo '--- exact-base standalone boundary log ---'
             cat /tmp/base-boundary.log
             exit 1
           fi
-
-          echo "Inherited exact-base boundary failure retained without expansion:"
-          echo "$head_error"
       - name: Build standalone LAFEA bundle
         run: |
           npx vite build --config vite.lafea.config.js

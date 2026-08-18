@@ -109,7 +109,7 @@ const ACCDB_READER_PACKAGE_PATHS = Object.freeze([
 const STYLE_LEAF_MODULES = Object.freeze([
   '/src/workspace/workspace-shell-styles.js',
   '/src/workspace/lafea-workbench-styles.js',
-  '/src/workspace/lfea-workbench-styles.js',
+  '/src/workspace/lafea-workbench-styles.js',
   '/src/workspace/lafea-guided-workbench-styles.js',
   '/src/workspace/viewport-productivity/topology-edit-table-styles.js',
   '/src/workspace/viewport-productivity/topology-edit-object-tree-styles.js',
@@ -252,6 +252,16 @@ export function manualChunk(id) {
   // boot remains mandatory because generated chunk evaluation order is authority.
   if (source.endsWith('/src/workspace/load-calc-consumer-view.js')) {
     return 'load-calc-consumer-view';
+  }
+
+  // The generation panel is stateless and imports only core authority plus the
+  // import-free DOM helper. Its parent also imports that helper, so the helper
+  // must travel with the panel: splitting the panel alone would create a
+  // main -> panel -> main-owned-helper back-edge. Grouping both preserves a
+  // one-way main -> generation -> core graph.
+  if (source.endsWith('/src/workspace/lafea-discretization-generation-panel.js')
+    || source.endsWith('/src/workspace/lafea-discretization-dom.js')) {
+    return 'lafea-discretization-generation';
   }
 
   // The Phase-1 pre-flight core is an indexed, DOM-free, clock-free leaf stack.

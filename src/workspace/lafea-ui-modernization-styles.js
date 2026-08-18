@@ -50,6 +50,38 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   margin:0;
   box-shadow:none;
 }
+.lafea-next-action-banner[data-intent="model"]{border-left:3px solid #64748b!important}
+.lafea-next-action-banner[data-intent="mesh"]{border-left:3px solid #0284c7!important}
+.lafea-next-action-banner[data-intent="solve"][data-run-eligible="false"]{border-left:3px solid #d97706!important}
+.lafea-next-action-banner[data-intent="solve"][data-run-eligible="true"]{border-left:3px solid #15803d!important}
+.lafea-next-action-banner[data-intent="results"]{border-left:3px solid #15803d!important}
+.lafea-diagnostics__list{
+  display:grid;
+  gap:7px;
+  margin:8px 0 0;
+  padding:0;
+  list-style:none;
+}
+.lafea-diagnostics__item{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:4px 8px;
+  padding:8px 9px;
+  border-left:3px solid #475569;
+  background:#0b1628;
+}
+.lafea-diagnostics__item[data-severity="WARNING"],
+.lafea-diagnostics__item[data-severity="WARN"]{border-left-color:#d97706}
+.lafea-diagnostics__item[data-severity="ERROR"],
+.lafea-diagnostics__item[data-severity="CRITICAL"]{border-left-color:#b91c1c}
+.lafea-diagnostics__item>strong{font-size:11px}
+.lafea-diagnostics__item>span{font-size:11px;line-height:1.4;color:#cbd5e1}
+.lafea-diagnostics__item>code{
+  grid-column:2;
+  color:#7f91a6;
+  font-size:10px;
+  overflow-wrap:anywhere;
+}
 @media (min-width:1180px){
   .lafea-cae-workspace__context{
     grid-template-columns:minmax(0,1fr) minmax(0,1fr);

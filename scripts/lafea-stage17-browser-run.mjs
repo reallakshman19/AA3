@@ -4,6 +4,30 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
+const cli = path.join(root, 'node_modules', 'playwright', 'cli.js');
+if (!fs.existsSync(cli)) {
+  console.error('LAFEA_A17_BROWSER_PLAYWRIGHT_NOT_INSTALLED');
+  process.exit(2);
+}
+
+// Qualify the Empirical analytical surface independently before the inherited
+// LAFEA.3 B01/B02 production gate. The B01/B02 gate remains mandatory below;
+// this ordering only prevents an unrelated upstream blocker from suppressing
+// browser evidence for the analytical-only UI changed by this PR.
+const empiricalUi = spawnSync(process.execPath, [
+  cli,
+  'test',
+  '--config=playwright.lafea-visible.config.js',
+  'e2e/lafea-visible-workbench.spec.js',
+  '--grep',
+  'Empirical analytical surface has truthful scope, one route navigation, and page-owned vertical scrolling',
+], {
+  cwd: root,
+  env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: '0' },
+  stdio: 'inherit',
+});
+if ((empiricalUi.status ?? 1) !== 0) process.exit(empiricalUi.status ?? 1);
+
 const gate = spawnSync(process.execPath, [
   path.join(root, 'scripts/lafea-b01-b02-gate0-diagnostic.mjs'),
 ], {
@@ -12,12 +36,6 @@ const gate = spawnSync(process.execPath, [
   stdio: 'inherit',
 });
 if ((gate.status ?? 1) !== 0) process.exit(gate.status ?? 1);
-
-const cli = path.join(root, 'node_modules', 'playwright', 'cli.js');
-if (!fs.existsSync(cli)) {
-  console.error('LAFEA_A17_BROWSER_PLAYWRIGHT_NOT_INSTALLED');
-  process.exit(2);
-}
 
 const result = spawnSync(process.execPath, [
   cli,

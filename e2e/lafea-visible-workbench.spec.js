@@ -259,19 +259,23 @@ test('Empirical analytical surface has truthful scope, one route navigation, and
 
   const scrolling = await page.evaluate(() => {
     const view = document.querySelector('[data-application-view="EMPIRICAL"]');
-    const editor = view?.querySelector('.lafea-doc-table-view');
+    const scrollOwner = view?.querySelector('[data-role="empirical-lafea-consumer-root"]');
+    const editor = scrollOwner?.querySelector('.lafea-doc-table-view');
     const viewStyle = view ? getComputedStyle(view) : null;
+    const scrollStyle = scrollOwner ? getComputedStyle(scrollOwner) : null;
     const editorStyle = editor ? getComputedStyle(editor) : null;
     return {
-      paneOverflowY: viewStyle?.overflowY ?? null,
-      paneClientHeight: view?.clientHeight ?? 0,
-      paneScrollHeight: view?.scrollHeight ?? 0,
+      shellOverflowY: viewStyle?.overflowY ?? null,
+      paneOverflowY: scrollStyle?.overflowY ?? null,
+      paneClientHeight: scrollOwner?.clientHeight ?? 0,
+      paneScrollHeight: scrollOwner?.scrollHeight ?? 0,
       editorMaxHeight: editorStyle?.maxHeight ?? null,
       editorOverflowY: editorStyle?.overflowY ?? null,
       editorClientHeight: editor?.clientHeight ?? 0,
       editorScrollHeight: editor?.scrollHeight ?? 0,
     };
   });
+  expect(scrolling.shellOverflowY).toBe('hidden');
   expect(scrolling.paneOverflowY).toBe('auto');
   expect(scrolling.paneScrollHeight).toBeGreaterThan(scrolling.paneClientHeight);
   expect(scrolling.editorMaxHeight).toBe('none');

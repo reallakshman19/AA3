@@ -14,6 +14,51 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   height:15px;
   color:#7dd3fc;
 }
+.lafea-button--primary{
+  min-height:34px!important;
+  border-color:#0284c7!important;
+  background:#075985!important;
+  color:#e0f2fe!important;
+  font-weight:750!important;
+}
+.lafea-button--primary:hover:not(:disabled){
+  border-color:#38bdf8!important;
+  background:#0c4a6e!important;
+}
+.lafea-button--primary:focus-visible{
+  outline:2px solid #7dd3fc;
+  outline-offset:2px;
+}
+.lafea-mesh-workspace-summary__state[data-tone="positive"]{color:#86efac}
+.lafea-mesh-workspace-summary__state[data-tone="warning"]{color:#fde68a}
+.lafea-mesh-workspace-summary__state[data-tone="critical"]{color:#fca5a5}
+.lafea-discretization__reason-list{
+  display:grid;
+  gap:5px;
+  margin:0 0 8px;
+  padding-left:18px;
+  color:#fbbf24;
+  font-size:11px;
+}
+.lafea-discretization__advanced-evidence{
+  border-top:1px solid #26364d;
+  padding-top:8px;
+}
+.lafea-discretization__advanced-evidence>summary{
+  cursor:pointer;
+  color:#9fb8cf;
+  font-size:11px;
+  font-weight:700;
+}
+.lafea-discretization__advanced-evidence-body{
+  display:grid;
+  gap:8px;
+  margin-top:8px;
+}
+.lafea-discretization__advanced-evidence-body>.lafea-discretization__section{
+  margin:0;
+  background:#07111c;
+}
 .lafea-cae-workspace__context{
   display:grid;
   grid-template-columns:minmax(0,1fr);

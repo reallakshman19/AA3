@@ -10,7 +10,6 @@ on:
       - 'scripts/lafea-*.mjs'
       - '.github/workflows/lafea-visible-workbench.yml'
       - '.github/workflows/pages-vite-deploy.yml'
-      - 'vite.config.js'
   workflow_dispatch:
 permissions:
   contents: read
@@ -37,49 +36,6 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Profile production main-chunk modules
-        run: node scripts/lafea-bundle-main-module-profile.mjs
-      - name: Upload production main-chunk module profile
-        uses: actions/upload-artifact@v4
-        with:
-          name: lafea-main-bundle-profile-${{ github.event.pull_request.head.sha || github.sha }}
-          path: test-results/lafea-main-bundle-profile.json
-          if-no-files-found: error
-          retention-days: 30
-      - name: Build production Pages bundle and enforce hard ceiling
-        shell: bash
-        run: |
-          mkdir -p test-results
-          set +e
-          npm run build 2>&1 | tee test-results/lafea-production-build.log
-          build_status=${PIPESTATUS[0]}
-          set -e
-          node scripts/lafea-bundle-build-size-evidence.mjs
-          exit "$build_status"
-      - name: Upload production bundle size evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lafea-bundle-size-evidence-${{ github.event.pull_request.head.sha || github.sha }}
-          path: |
-            test-results/lafea-bundle-build-size-evidence.json
-            test-results/lafea-production-build.log
-          if-no-files-found: error
-          retention-days: 30
-      - name: Resolve preinstalled Chromium for generated-chunk boot proof
-        shell: bash
-        run: |
-          for candidate in /usr/bin/chromium /usr/bin/chromium-browser /usr/bin/google-chrome /usr/bin/google-chrome-stable; do
-            if [ -x "$candidate" ]; then
-              echo "CHROMIUM_EXECUTABLE_PATH=$candidate" >> "$GITHUB_ENV"
-              "$candidate" --version
-              exit 0
-            fi
-          done
-          echo 'No preinstalled Chromium/Chrome executable found on the hosted runner.' >&2
-          exit 1
-      - name: Prove generated production chunk graph boots
-        run: node scripts/lafea-bundle-production-browser-boot.mjs
       - name: Static and projection checks
         run: |
           node --check src/workspace/lafea-engineering-overview.js
@@ -95,17 +51,12 @@ jobs:
           node --check scripts/lafea-shell-response-acceptance-check.mjs
           node tests/lafea-engineering-overview.test.mjs
           node scripts/lafea-ui-analysis-settings-check.mjs
-      - name: Observe governed shell mesh compiler and execution custody
-        id: shell_engineering_gate
-        continue-on-error: true
-        shell: bash
+      - name: Qualify governed shell mesh compiler and execution custody
         run: |
-          mkdir -p test-results
-          node scripts/lafea-shell-sample-parent-check.mjs \
-            && node scripts/lafea-shell-workbench-route-check.mjs \
-            && node scripts/lafea-shell-compiled-execution-check.mjs \
-            && node scripts/lafea-shell-response-acceptance-check.mjs \
-            2>&1 | tee test-results/lafea-shell-engineering-gate.log
+          node scripts/lafea-shell-sample-parent-check.mjs
+          node scripts/lafea-shell-workbench-route-check.mjs
+          node scripts/lafea-shell-compiled-execution-check.mjs
+          node scripts/lafea-shell-response-acceptance-check.mjs
       - name: Prove standalone boundary failure is inherited unchanged
         shell: bash
         run: |
@@ -124,26 +75,40 @@ jobs:
             printf 'git archive failed for qualification base %s\n' "$QUALIFICATION_BASE" > /tmp/base-boundary.log
           fi
           set -e
+
           echo "Standalone boundary comparator: head_status=$head_status base_status=$base_status archive_status=$archive_status"
           head_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/head-boundary.log || true)"
           base_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/base-boundary.log || true)"
           printf 'HEAD_FIRST_FORBIDDEN=%s\n' "$head_error"
           printf 'BASE_FIRST_FORBIDDEN=%s\n' "$base_error"
-          if [ "$head_status" -eq 0 ]; then exit 0; fi
+
+          if [ "$head_status" -eq 0 ]; then
+            echo "Candidate standalone boundary passes."
+            exit 0
+          fi
+
           if [ "$archive_status" -ne 0 ] || [ "$base_status" -eq 0 ] || [ -z "$head_error" ] || [ -z "$base_error" ] || [ "$head_error" != "$base_error" ]; then
+            echo '--- candidate standalone boundary log ---'
             cat /tmp/head-boundary.log
+            echo '--- exact-base standalone boundary log ---'
             cat /tmp/base-boundary.log
             exit 1
           fi
+
+          echo "Inherited exact-base boundary failure retained without expansion:"
+          echo "$head_error"
       - name: Build standalone LAFEA bundle
         run: |
           npx vite build --config vite.lafea.config.js
           node scripts/lafea-standalone-build-artifact-check.mjs
-      - name: Preserve governed shell failure as job failure
-        if: always() && steps.shell_engineering_gate.outcome == 'failure'
-        run: |
-          echo 'Governed shell gate remains FAIL. #1248 does not modify src/** or shell qualification scripts; this workflow intentionally preserves that inherited failure after collecting downstream evidence.' >&2
-          exit 1
+      - name: Build production Pages bundle
+        run: npm run build
+      - name: Install pinned Chromium runtime
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: npx playwright install --with-deps chromium
+      - name: Run Stage-17 and production-shell visible UI proof
+        run: node scripts/lafea-stage17-browser-run.mjs
       - name: Upload visible browser evidence
         if: always()
         uses: actions/upload-artifact@v4

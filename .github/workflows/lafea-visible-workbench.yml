@@ -66,13 +66,19 @@ jobs:
             test-results/lafea-production-build.log
           if-no-files-found: error
           retention-days: 30
-      - name: Install Chromium for generated-chunk boot proof
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: '0'
-        run: npx playwright install --with-deps chromium
+      - name: Resolve preinstalled Chromium for generated-chunk boot proof
+        shell: bash
+        run: |
+          for candidate in /usr/bin/chromium /usr/bin/chromium-browser /usr/bin/google-chrome /usr/bin/google-chrome-stable; do
+            if [ -x "$candidate" ]; then
+              echo "CHROMIUM_EXECUTABLE_PATH=$candidate" >> "$GITHUB_ENV"
+              "$candidate" --version
+              exit 0
+            fi
+          done
+          echo 'No preinstalled Chromium/Chrome executable found on the hosted runner.' >&2
+          exit 1
       - name: Prove generated production chunk graph boots
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: '0'
         run: node scripts/lafea-bundle-production-browser-boot.mjs
       - name: Static and projection checks
         run: |

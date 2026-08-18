@@ -57,6 +57,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   source.section.dataset.guidedTarget = 'source';
   source.body.append(renderDocumentTableEditor(source.body, stageId, stage.document, {
     onSetScalar: options.handlers.onSetScalar,
+    onSetScalarBatch: options.handlers.onSetScalarBatch,
     onApplyJson: options.handlers.onApplyJson,
   }));
 

@@ -1,4 +1,4 @@
-name: LAFEA B01 DD residual authority alignment temporary
+name: LAFEA B01 T6 B-bar translation-nullspace projection temporary
 
 on:
   pull_request:
@@ -25,39 +25,77 @@ jobs:
       - run: npm ci
       - name: Verify exact PR head
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Install runner-only bounded DD correction and equilibrium alignment
+      - name: Install runner-only T6 B-bar translational-nullspace projection
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          p = Path('src/core/local-continuum/t6-element.js')
           s = p.read_text()
-          old = """  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  originalResidualInfinity = maxAbs(\n    exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution),\n  );\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
-          new = """  let solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  let exact = exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution);\n  originalResidualInfinity = maxAbs(exact);\n  const refinementHistory = [originalResidualInfinity];\n  let refinementSteps = 0;\n  while (originalResidualInfinity > convergenceTarget && refinementSteps < 3) {\n    const scaledExact = exact.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const unscaledDirection = scaledExact.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const unscaledAction = sparseMatrixVectorRaw(matrix, unscaledDirection);\n    const scaledAction = unscaledAction.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const numerator = compensatedDot(scaledAction, scaledExact);\n    const denominator = compensatedDot(scaledAction, scaledAction);\n    if (!(denominator > 0) || !Number.isFinite(denominator)\n      || !Number.isFinite(numerator)) {\n      throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_INVALID', `${numerator}/${denominator}`);\n    }\n    const alpha = numerator / denominator;\n    if (!Number.isFinite(alpha)) {\n      throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_ALPHA_INVALID', alpha);\n    }\n    const candidateScaled = scaledSolution.map(\n      (value, index) => value + alpha * scaledExact[index],\n    );\n    const candidateSolution = unscaleSolution(candidateScaled, inverseSqrtDiagonal);\n    const candidateExact = exactOriginalResidualDoubleDouble(\n      matrix, rightHandSide, candidateSolution,\n    );\n    const candidateInfinity = maxAbs(candidateExact);\n    if (!(candidateInfinity < originalResidualInfinity)) break;\n    for (let index = 0; index < scaledSolution.length; index += 1) {\n      scaledSolution[index] = candidateScaled[index];\n    }\n    solution = candidateSolution;\n    exact = candidateExact;\n    originalResidualInfinity = candidateInfinity;\n    refinementSteps += 1;\n    refinementHistory.push(candidateInfinity);\n  }\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} DD minimum-residual steps; history=${refinementHistory.join(',')}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          old = "const stiffness = bbar?.stiffness ?? standard.stiffness;"
+          new = "const stiffness = bbar ? projectTranslationNullspace(bbar.stiffness) : standard.stiffness;"
           if s.count(old) != 1:
-              raise RuntimeError('expected one DD terminal convergence block')
-          p.write_text(s.replace(old, new, 1))
+              raise RuntimeError('expected T6 B-bar stiffness selection')
+          s = s.replace(old, new, 1)
+          marker = "function matrixTimesVector(matrix, vector) {\n"
+          helper = r'''function projectTranslationNullspace(stiffness) {
+  const size = stiffness.length;
+  const nodeCount = size / 2;
+  if (!Number.isInteger(nodeCount) || nodeCount < 2) {
+    throw new TypeError('T6 stiffness translation projection requires paired UX/UY DOFs.');
+  }
+  const projector = zeros(size, size);
+  for (let row = 0; row < size; row += 1) {
+    for (let column = 0; column < size; column += 1) {
+      projector[row][column] = (row === column ? 1 : 0)
+        - (row % 2 === column % 2 ? 1 / nodeCount : 0);
+    }
+  }
+  const projected = compensatedMatrixProduct(
+    projector,
+    compensatedMatrixProduct(stiffness, projector),
+  );
+  return projected.map((row, i) => row.map((value, j) => canonicalNumber(
+    0.5 * (value + projected[j][i]),
+    'T6 B-bar translation-projected stiffness',
+  )));
+}
+
+function compensatedMatrixProduct(left, right) {
+  const output = zeros(left.length, right[0].length);
+  for (let row = 0; row < left.length; row += 1) {
+    for (let column = 0; column < right[0].length; column += 1) {
+      let sum = 0;
+      let compensation = 0;
+      for (let index = 0; index < right.length; index += 1) {
+        const term = left[row][index] * right[index][column];
+        const next = sum + term;
+        compensation += Math.abs(sum) >= Math.abs(term)
+          ? (sum - next) + term
+          : (term - next) + sum;
+        sum = next;
+      }
+      output[row][column] = sum + compensation;
+    }
+  }
+  return output;
+}
+
+'''
+          if s.count(marker) != 1:
+              raise RuntimeError('expected matrixTimesVector marker')
+          p.write_text(s.replace(marker, helper + marker, 1))
 
           p = Path('src/core/local-continuum/solver.js')
           s = p.read_text()
-          old = """  restrictSymmetricCsr,\n  sparseMatrixVector,\n  sparseMatrixVectorCompensatedRaw,\n  sparseMatrixVectorRaw,\n"""
-          new = """  restrictSymmetricCsr,\n  sparseMatrixVector,\n  sparseMatrixVectorCompensatedRaw,\n  sparseMatrixVectorDoubleDoubleRaw,\n  sparseMatrixVectorRaw,\n"""
-          if s.count(old) != 1:
-              raise RuntimeError('expected sparse solver import block')
-          s = s.replace(old, new, 1)
-          old = "return sparseMatrixVector(mesh.globalStiffnessCsr, vector);"
-          new = "return sparseMatrixVectorDoubleDoubleRaw(mesh.globalStiffnessCsr, vector);"
-          if s.count(old) != 1:
-              raise RuntimeError('expected sparse equilibrium action')
-          s = s.replace(old, new, 1)
           old = """    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      'Reaction equilibrium did not qualify.',\n    );\n"""
           new = """    const freeTotals = { UX: 0, UY: 0 };\n    free.forEach((index) => {\n      freeTotals[dofAxis(dofs[index])] += residual[index];\n    });\n    const stiffnessNullspaceDefect = {\n      UX: totals.UX + freeTotals.UX,\n      UY: totals.UY + freeTotals.UY,\n    };\n    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      `Reaction equilibrium did not qualify: externalUX=${totals.UX}, externalUY=${totals.UY}, freeResidualUX=${freeTotals.UX}, freeResidualUY=${freeTotals.UY}, stiffnessNullspaceUX=${stiffnessNullspaceDefect.UX}, stiffnessNullspaceUY=${stiffnessNullspaceDefect.UY}, limit=${equilibriumLimit}, scale=${scale}, freeMaximum=${freeMaximum}, freeLimit=${freeLimit}.`,\n    );\n"""
           if s.count(old) != 1:
               raise RuntimeError('expected reaction failure block')
           p.write_text(s.replace(old, new, 1))
           PY
-          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+          node --check src/core/local-continuum/t6-element.js
           node --check src/core/local-continuum/solver.js
       - name: Execute exact current-source L4 governing case
         shell: bash

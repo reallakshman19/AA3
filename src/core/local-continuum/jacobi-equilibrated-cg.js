@@ -1,8 +1,5 @@
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
-import {
-  sparseMatrixVectorCompensatedRaw,
-  sparseMatrixVectorRaw,
-} from './sparse-matrix.js';
+import { sparseMatrixVectorCompensatedRaw } from './sparse-matrix.js';
 
 export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   requireInputs(matrix, rightHandSide);
@@ -34,7 +31,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     const unscaledDirection = direction.map(
       (value, index) => value * inverseSqrtDiagonal[index],
     );
-    const unscaledAction = sparseMatrixVectorRaw(matrix, unscaledDirection);
+    const unscaledAction = sparseMatrixVectorCompensatedRaw(matrix, unscaledDirection);
     const scaledAction = unscaledAction.map(
       (value, index) => value * inverseSqrtDiagonal[index],
     );

@@ -63,12 +63,18 @@ export function sparseMatrixVectorRaw(matrix, vector) {
   }
   const output = Array(matrix.size).fill(0);
   for (let row = 0; row < matrix.size; row += 1) {
-    let value = 0;
+    let sum = 0;
+    let compensation = 0;
     for (let offset = matrix.rowPointers[row];
       offset < matrix.rowPointers[row + 1]; offset += 1) {
-      value += matrix.values[offset] * vector[matrix.columnIndices[offset]];
+      const term = matrix.values[offset] * vector[matrix.columnIndices[offset]];
+      const next = sum + term;
+      compensation += Math.abs(sum) >= Math.abs(term)
+        ? (sum - next) + term
+        : (term - next) + sum;
+      sum = next;
     }
-    output[row] = value;
+    output[row] = sum + compensation;
   }
   return output;
 }

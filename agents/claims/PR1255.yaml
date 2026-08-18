@@ -4,6 +4,7 @@ claim_state: ACTIVE
 files:
   exact:
     - src/workspace/lafea-ui-status.js
+    - src/workspace/lafea-guided-workflow-presentation.js
     - src/workspace/lafea-guided-workflow-view.js
     - src/workspace/lafea-guided-workbench-styles.js
     - scripts/lafea-ui-formal-presentation-check.mjs
@@ -23,4 +24,4 @@ excluded_authority:
   - LIFECYCLE_AUTHORITY
   - RELEASE_AUTHORITY
   - TRUST_ROOT
-last_verified_head: b4e5b6d27ca173f0e325a2058a3c2a6b9e77fa41
+last_verified_head: 8bfa5caffed19c6bdd29b2fc4453893b20eb92cf

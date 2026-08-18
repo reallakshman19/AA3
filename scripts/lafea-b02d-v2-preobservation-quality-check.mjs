@@ -41,12 +41,7 @@ for (const family of ['T3', 'T6', 'Q8']) {
     assert.equal(first.semanticHash, second.semanticHash, `${family}/${level.levelId} deterministic output`);
     assert.deepEqual(first.mesh, second.mesh, `${family}/${level.levelId} deterministic mesh`);
     const quality = qualifyLafeaAnalysisMesh('LAFEA.3', first.mesh, meshProfile(family, level.h));
-    assert.notEqual(quality.worstStatus, 'BLOCK', `${family}/${level.levelId} quality BLOCK`);
-    assert.equal(qualifyLafeaMeshTopologyV3(first.mesh).qualification, 'PASS', `${family}/${level.levelId} topology`);
-    if (family !== 'T3') {
-      assert.equal(qualifyLafeaHighOrderJacobiansV3(first.mesh).qualification, 'PASS', `${family}/${level.levelId} high-order Jacobian`);
-    }
-    records.push({
+    const record = {
       family,
       levelId: level.levelId,
       h: level.h,
@@ -57,7 +52,20 @@ for (const family of ['T3', 'T6', 'Q8']) {
       minimumScaledJacobian: metric(quality, 'SCALED_JACOBIAN'),
       maximumAspectRatio: metric(quality, 'ASPECT_RATIO'),
       minimumAngleDegrees: optionalMetric(quality, 'MINIMUM_ANGLE_DEGREES'),
-    });
+      blockingElementIds: quality.blockingElementIds.slice(0, 20),
+      blockingElements: quality.elementResults
+        .filter((row) => row.worstStatus === 'BLOCK')
+        .slice(0, 10)
+        .map((row) => ({ elementId: row.elementId, metrics: row.metrics })),
+    };
+    records.push(record);
+    if (quality.worstStatus === 'BLOCK') {
+      throw new Error(`B02D_V2_PREOBS_QUALITY_BLOCK:${JSON.stringify(record)}`);
+    }
+    assert.equal(qualifyLafeaMeshTopologyV3(first.mesh).qualification, 'PASS', `${family}/${level.levelId} topology`);
+    if (family !== 'T3') {
+      assert.equal(qualifyLafeaHighOrderJacobiansV3(first.mesh).qualification, 'PASS', `${family}/${level.levelId} high-order Jacobian`);
+    }
   }
 }
 const t3l1 = records.find((row) => row.family === 'T3' && row.levelId === 'L1');

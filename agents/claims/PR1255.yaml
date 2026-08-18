@@ -7,13 +7,17 @@ files:
     - src/workspace/lafea-guided-workflow-presentation.js
     - src/workspace/lafea-guided-workflow-view.js
     - src/workspace/lafea-guided-workbench-styles.js
+    - src/workspace/lafea-engineering-overview.js
+    - src/workspace/lafea-analysis-settings-view.js
     - scripts/lafea-ui-formal-presentation-check.mjs
+    - e2e/lafea-visible-workbench.spec.js
   prefixes:
     - src/workspace/lafea-
     - e2e/lafea-
 authority_domains:
   - UI_PRESENTATION
   - ENGINEERING_STATUS_COMMUNICATION
+  - ENGINEERING_INFORMATION_ARCHITECTURE
 claim_modes:
   - COORDINATED
   - SHARED_READ
@@ -25,4 +29,4 @@ excluded_authority:
   - LIFECYCLE_AUTHORITY
   - RELEASE_AUTHORITY
   - TRUST_ROOT
-last_verified_head: 2b31bb3c394233acf66e07153a2223b622e138b4
+last_verified_head: 41ff092fef0a589bd0faa634896207ca1fa44e4c

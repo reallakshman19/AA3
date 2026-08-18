@@ -129,6 +129,12 @@ const modernStyles = readFileSync(modernStylesPath, 'utf8');
 assert.match(modernStyles, /\.lafea-ui-icon/u);
 assert.match(modernStyles, /\.lafea-engineering-evidence-drawer/u);
 assert.match(modernStyles, /\.lafea-diagnostics__item/u);
+assert.match(modernStyles, /\.lafea-guided-shell\{[\s\S]*grid-template-columns:minmax\(0,1fr\)!important/u);
+assert.match(modernStyles, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/u);
+assert.match(modernStyles, /\.lafea-guided-workflow__reasons\{[\s\S]*display:block!important/u);
+assert.match(modernStyles, /\.lafea-guided-workflow__technical\{[\s\S]*display:block!important/u);
+assert.match(modernStyles, /minmax\(340px,380px\)!important/u);
+assert.match(modernStyles, /min-height:520px!important/u);
 
 const overviewPath = fileURLToPath(new URL('../src/workspace/lafea-engineering-overview.js', import.meta.url));
 const overview = readFileSync(overviewPath, 'utf8');
@@ -171,11 +177,29 @@ assert.match(content, /'Not generated'/u);
 assert.equal(content.includes('banner.style.'), false, 'legacy inline action-banner presentation must be removed');
 assert.equal(content.includes('btn.style.'), false, 'legacy inline action-button presentation must be removed');
 
+const discretizationPath = fileURLToPath(new URL('../src/workspace/lafea-discretization-panel.js', import.meta.url));
+const discretization = readFileSync(discretizationPath, 'utf8');
+assert.match(discretization, /meshWorkspaceSummary\(doc, model\)/u);
+assert.match(discretization, /generationSection\(doc, model, handlers\)/u);
+assert.match(discretization, /qualitySection\(doc, model, handlers\)/u);
+assert.match(discretization, /primaryActionSection\(doc, model, handlers\)/u);
+assert.match(discretization, /advancedEvidence\(doc, model, handlers\)/u);
+assert.match(discretization, /lafeaUiStatusPresentation\(model\.state\)/u);
+assert.match(discretization, /dataset\.role = 'lafea-discretization-technical-evidence'/u);
+assert.match(discretization, /Advanced mesh evidence and custody/u);
+assert.match(discretization, /Retained mesh custody/u);
+assert.match(discretization, /\['Mesh hash', value\.meshHash\]/u);
+assert.match(discretization, /\['Profile hash', value\.meshProfileHash\]/u);
+assert.match(discretization, /\['Artifact hash', value\.artifactHash\]/u);
+assert.equal(discretization.includes("region(doc, 'Retained evidence', 'evidence')"), false, 'retained evidence must not remain a primary mesh section');
+assert.equal(discretization.includes("region(doc, 'Preview', 'preview')"), false, 'preview custody must not remain a primary mesh section');
+assert.equal(discretization.includes("region(doc, 'Actions', 'actions')"), false, 'evidence actions must not remain a primary mesh section');
+
 const controllerIoPath = fileURLToPath(new URL('../src/workspace/lafea-workbench-controller-io.js', import.meta.url));
 const controllerIo = readFileSync(controllerIoPath, 'utf8');
 assert.match(controllerIo, /LAFEA_UI_MODERNIZATION_STYLES/u);
 
-console.log('LAFEA formal UI status, workflow, action hierarchy, evidence hierarchy, icon, and terminology boundary check: PASS');
+console.log('LAFEA formal UI status, four-area workspace, action hierarchy, evidence hierarchy, flattened mesh inspector, icon, and terminology boundary check: PASS');
 
 function step(stepId, status, reasons = []) {
   return Object.freeze({

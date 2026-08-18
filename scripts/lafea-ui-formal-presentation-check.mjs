@@ -29,6 +29,7 @@ const expectations = Object.freeze({
   EXACT_HEAD_QUALIFICATION_REQUIRED: ['External qualification required', 'warning'],
   NOT_GATED: ['Informational only', 'neutral'],
   NOT_RETAINED: ['Not generated', 'neutral'],
+  'Not retained': ['Not generated', 'neutral'],
 });
 
 for (const [canonical, [label, tone]] of Object.entries(expectations)) {

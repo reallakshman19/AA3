@@ -70,7 +70,25 @@ html,
   font-weight: 700;
 }
 
-[data-role="empirical-lafea-consumer-root"] .lafea-workbench__toolbar label[for^="lafea-import-"]:focus-within,
-[data-role="empirical-lafea-consumer-root"] .lafea-workbench__toolbar label[for^="lafea-import-"]:hover {
+[data-role="empirical-lafea-consumer-root"] .lafea-workbench__toolbar label[for^="lafea-import-"]:hover,
+[data-role="empirical-lafea-consumer-root"] .lafea-workbench__toolbar label[for^="lafea-import-"]:has(+ input[data-role="lafea-import"]:focus-visible) {
   border-color: #38bdf8;
+}
+
+[data-role="empirical-lafea-consumer-root"] .lafea-doc-group-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 8px 0 14px;
+}
+
+[data-role="empirical-lafea-consumer-root"] .lafea-doc-group-action button {
+  min-width: 180px;
+  font-weight: 700;
+}
+
+[data-role="empirical-lafea-consumer-root"] [data-role="lafea-governed-input"][data-dirty="true"] {
+  outline: 1px solid #38bdf8;
+  outline-offset: 1px;
 }

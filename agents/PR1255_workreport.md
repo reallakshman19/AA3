@@ -4,146 +4,150 @@ HANDOVER_READINESS: READY
 PR_RECOVERY_STATE: HEALTHY
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 
-PR_HEAD_OBSERVED: 8bfa5caffed19c6bdd29b2fc4453893b20eb92cf
-REPORT_BASIS_HEAD: 8bfa5caffed19c6bdd29b2fc4453893b20eb92cf
+PR_HEAD_OBSERVED: 2b31bb3c394233acf66e07153a2223b622e138b4
+REPORT_BASIS_HEAD: 2b31bb3c394233acf66e07153a2223b622e138b4
 MAIN_HEAD_LAST_CHECKED: 134b43c4cd09139d3b6067223576ccdad653f07e
 MERGE_BASE: 134b43c4cd09139d3b6067223576ccdad653f07e
 REPORT_SYNC: CURRENT
 APPENDIX_A_STATUS: CURRENT
-GROUNDING_EPOCH: GE-003
-LAST_DURABLE_CHECKPOINT: 2026-08-18T22:03:00+04:00
-CURRENT_STAGE: VALIDATE_PHASE_2
-CURRENT_BLOCKER: Exact-head visible-workbench qualification is still running; full browser result not yet observed
-HIGHEST_RISK: UI presentation must not reinterpret, hide, freeze, or promote canonical engineering state
-EXACT_NEXT_ACTION: inspect exact-head visible-workbench result; if clean, continue with duplicate primary-action / banner-overview hierarchy reduction without solver/store changes
+GROUNDING_EPOCH: GE-005
+LAST_DURABLE_CHECKPOINT: 2026-08-18T22:21:00+04:00
+CURRENT_STAGE: VALIDATE_PHASE_3
+CURRENT_BLOCKER: Exact-head hosted browser orchestration cannot reach Playwright while inherited B02D T3/L1 numerical gate remains BLOCK
+HIGHEST_RISK: visual hierarchy must not change canonical engineering status, run eligibility, numerical authority, or analytical-stage behavior
+EXACT_NEXT_ACTION: inspect hosted run 32170433547; retain Phase-3 only if static/build/shell gates remain clean and classify any repeated B02D stop as inherited
 
 ## Handover in 60 Seconds
 
-PR #1255 is the independent current-main LAFEA UI modernization carrier. It is deliberately separate from numerical PRs #1250/#1254 and TECH-13 recovery.
+PR #1255 is the independent current-main LAFEA UI modernization carrier. It is presentation-only and deliberately separate from numerical PRs #1250/#1254 and TECH-13 recovery.
 
-Implemented through exact production head `8bfa5caffed19c6bdd29b2fc4453893b20eb92cf`:
+Implemented production scope through `2b31bb3c394233acf66e07153a2223b622e138b4`:
 
-1. **Formal canonical status presentation**
-   - UI-only `lafeaUiStatusPresentation()` maps internal status to formal engineer-facing labels/tone.
-   - emoji workflow status glyphs removed.
-   - canonical `BLOCKED` is never cosmetically rewritten to `PENDING`.
-   - BLOCKED reasons are visible.
+1. **Formal engineering state presentation**
+   - UI-only canonical-state presentation mapper.
+   - emoji workflow glyphs removed.
+   - canonical `BLOCKED` is never relabelled `PENDING`.
+   - blocked reasons remain visible.
 
 2. **Four-area operator navigation**
-   - primary workflow presentation is now `Model / Mesh / Solve / Results`.
-   - the existing eleven canonical governed steps remain unchanged and accessible under technical disclosure.
-   - area state is a conservative projection with priority `BLOCKED > WARNING > READY > NOT_STARTED > COMPLETE`; a blocked child therefore cannot disappear behind a higher-level `Ready` label.
-   - area navigation targets the highest-priority child but does not modify canonical workflow/store state.
+   - primary workflow is `Model / Mesh / Solve / Results`.
+   - all eleven canonical governed steps remain unchanged and available under technical disclosure.
+   - conservative aggregation `BLOCKED > WARNING > READY > NOT_STARTED > COMPLETE` prevents blocker hiding.
 
-3. **Side-effect / regression hardening**
-   - first grouping draft recursively froze caller-owned canonical step objects; caught during self-review and corrected before qualification.
-   - first Phase-2 source-guard regex searched `data.workflowArea` instead of actual `dataset.workflowArea`; caught by local execution and corrected.
-
-Current hosted exact-head `LAFEA visible workbench qualification` run `32169155546` is `in_progress`. Do not call browser integration PASS until that run completes successfully and relevant steps/artifacts are inspected.
+3. **Primary-action hierarchy modernization**
+   - the next-action surface is now visually the single dominant contextual CTA.
+   - old pale blue/green/yellow/purple Material-style inline presentation is overridden by one compact dark engineering action bar.
+   - toolbar and Engineering Overview Run controls remain functional compatibility controls in this phase, but are visually secondary rather than co-equal primary actions.
+   - no handlers or execution eligibility rules were changed.
+   - analytical LAFEA.1/.2 toolbar behavior is intentionally preserved.
+   - structural deletion/migration of duplicate compatibility Run controls is deferred until the browser suite can execute past the independent B02D blocker, so this slice does not mix visual hierarchy with broad selector migration.
 
 ## Classification
 
 - WORK_INTENT: IMPLEMENT
 - REPOSITORY_STATE: EXISTING_PR
-- MUTATION_AUTHORITY: WRITE_ALLOWED — owner explicitly instructed `start fix`.
-- CRITICALITY: ENGINEERING_CRITICAL — presentation communicates engineering qualification/blocker state.
+- MUTATION_AUTHORITY: WRITE_ALLOWED — owner instructed `start fix` and then `proceed next`.
+- CRITICALITY: ENGINEERING_CRITICAL — UI communicates engineering qualification/blocker state.
 
-## Ground truth — GE-003
+## Ground truth — GE-005
 
 - repository: `reallaksh19/Advanced_Analysis`
-- base: `main@134b43c4cd09139d3b6067223576ccdad653f07e`
-- PR: #1255, draft
+- base/main: `134b43c4cd09139d3b6067223576ccdad653f07e` (rechecked after Phase 3)
+- PR: #1255, draft, unmerged
 - branch: `agent/lafea-ui-modernization-20260818`
-- production/test head observed: `8bfa5caffed19c6bdd29b2fc4453893b20eb92cf`
-- master index: `agents/MASTER_INDEX.md` absent on current main
-- shared-read dependencies: #1250 B01, #1254 B02D
-- stale prior UI branch: #1118; not used as authority/base
-- exact-head Actions: `LAFEA visible workbench qualification` run `32169155546` in progress at GE-003
+- production/test head: `2b31bb3c394233acf66e07153a2223b622e138b4`
+- master index: absent on current main
+- shared-read numerical dependencies: #1250 B01, #1254 B02D
+- no `.github/workflows/*` change
 - no merge authority granted
-
-## Mission / acceptance
-
-### User-facing acceptance
-- formal engineering language; no informal workflow icons;
-- canonical engineering blockers shown truthfully with reasons;
-- primary FE navigation segregated into Model / Mesh / Solve / Results;
-- technical canonical checks available on demand, not permanently occupying primary hierarchy;
-- later slices reduce duplicated Run/banner/overview and raw developer terminology while retaining evidence custody;
-- no duplicate engineering authority created by UI projection.
-
-### Protected invariants
-- solver equations/tolerances unchanged;
-- constitutive/B-bar/shell formulations unchanged;
-- mesh producer and mesh-quality thresholds unchanged;
-- canonical eleven workflow steps and run eligibility unchanged;
-- lifecycle/release/exact-head/trust-root rules unchanged;
-- result recovery and retained numerical values unchanged;
-- no `.github/workflows/*` changes;
-- no merge without explicit owner authorization.
 
 ## Active findings / decisions
 
-- ISS-001 RESOLVED_BY_PR: current-main renderer mapped canonical BLOCKED Source/Profile steps to `PENDING` and `⚡`.
-- ISS-002 RESOLVED_BY_PR: informal emoji workflow status glyph set removed.
-- ISS-003 RESOLVED_BY_PR: existing guided-workflow CSS step/reason contract was not applied by renderer.
-- ISS-004 ACTIVE: workbench still has redundant hierarchy beyond the repaired navigator: top toolbar, next-action banner, engineering overview, CAE pane and context cards compete for priority.
-- ISS-005 ACTIVE: raw developer/internal terminology remains visible in primary surfaces outside the repaired workflow.
-- ISS-006 RESOLVED_BY_PR: initial four-area presentation helper recursively froze caller-owned canonical workflow objects. Fixed by freezing only new presentation containers and not the referenced canonical steps.
-- ISS-007 RESOLVED_BY_PR: first Phase-2 regression contained a false source-guard pattern (`data.workflowArea`). Corrected to `dataset.workflowArea` after execution exposed the mismatch.
-- RISK-001: area aggregation must never hide a blocked child. Conservative precedence is explicit and regression-covered.
-- RISK-002: presentation helpers must be side-effect free with mutable caller input.
-- DEC-001: canonical state remains the source of truth; area/status mappings are read-only UI projections.
-- DEC-002: no decorative icon set yet; removing informal glyphs is preferable to adding visual noise before hierarchy stabilization.
-- DEC-003: PR #1255 remains independent of B01/B02 numerical branches.
-- DEC-004: exact governed child steps remain accessible under disclosure instead of being deleted or replaced.
+- ISS-001 RESOLVED_BY_PR: canonical BLOCKED Source/Profile state was cosmetically converted to PENDING/⚡.
+- ISS-002 RESOLVED_BY_PR: informal emoji status glyphs removed.
+- ISS-003 RESOLVED_BY_PR: guided-workflow renderer/CSS class contract mismatch repaired.
+- ISS-004 PARTIAL: competing primary-action hierarchy reduced to one dominant contextual CTA; toolbar/overview Run remain secondary compatibility controls pending safe selector migration.
+- ISS-005 ACTIVE: raw internal/developer terminology remains visible in primary overview/settings surfaces.
+- ISS-006 RESOLVED_BY_PR: first four-area helper froze caller-owned state; corrected before qualification.
+- ISS-007 RESOLVED_BY_PR: first Phase-2 test source guard had incorrect selector spelling; corrected.
+- ISS-008 ACTIVE/INHERITED: hosted visible-workbench run `32169155546` failed before Playwright at `lafea-b02d-probe-stable-polar-mesh-check.mjs`, T3/L1 actual `BLOCK` vs expected `PASS` (`LAFEA_B02_PRODUCTION_SEQUENCE_BLOCKED_AT_B02D_POLAR_MESH`). PR #1255 does not modify B02D numerical code/mesh definition; classify as PREEXISTING for this UI PR.
+- RISK-001: a presentation aggregate may never hide a blocked canonical child.
+- RISK-002: presentation code may not mutate/freeze caller-owned engineering state.
+- RISK-003: duplicate-control cleanup may not accidentally weaken `AUTHORIZATION`, `runEligibleByCurrentUiGate`, mesh readiness, or analytical calculation behavior.
+- DEC-001: canonical workflow/store state remains authority; all area/status mapping is UI-only.
+- DEC-002: no decorative icon set until hierarchy stabilizes.
+- DEC-003: PR remains independent from B01/B02 mechanics.
+- DEC-004: exact governed child steps are retained under disclosure.
+- DEC-005: Phase 3 changes visual priority first; structural compatibility-control removal waits for executable browser proof rather than combining a selector migration with an upstream numerical blocker.
 
-## Coordination / overlap
+## Authority / negative assurance
 
-Classification: SAFE WITH SHARED-READ DEPENDENCY.
+Intentionally changed:
+- status wording/presentation only;
+- workflow navigation grouping only;
+- primary-action visual hierarchy only.
 
-Claimed presentation paths do not include `src/core/local-continuum/**`, B01/B02 frozen definitions, mesh policy authority, TECH-13 trust/promotion code, or workflow YAML.
+Must remain unchanged:
+- local-continuum and shell equations;
+- residual/solver tolerances;
+- constitutive/B-bar/shell formulation;
+- mesh generation, mesh quality thresholds and retained mesh custody;
+- canonical workflow step states;
+- authorization/run eligibility and controller dispatch;
+- lifecycle, exact-head, release and trust-root authority;
+- result recovery and numerical values;
+- analytical LAFEA.1/.2 execution behavior.
 
 ## Validation ledger
 
-| Check | Status | Observation | Oracle | Tested basis | Expected / actual | Origin / limitation |
-|---|---|---|---|---|---|---|
-| Current-main source audit | PASS | SOURCE_INSPECTION | NONE | `134b43c4...` | semantic/status presentation and hierarchy defects reproduced in source | PREEXISTING |
-| Phase-1 mapper/renderer/script syntax | PASS | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | committed authored bytes | `node --check` successful | isolated fixture, not full checkout |
-| Phase-1 formal presentation regression | PASS | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | `b4e5b6d...` authored bytes | status mapping + no emoji/PENDING path PASS | isolated fixture |
-| Phase-2 grouping/renderer/script syntax | PASS | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | exact authored bytes corresponding to current production modules | all `node --check` successful | isolated fixture |
-| Phase-2 four-area presentation regression | PASS | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | current Phase-2 bytes | four areas, conservative blocker precedence, no caller freeze, no emoji/PENDING source path PASS | isolated fixture |
-| Self-review: caller-state freeze | FAIL then RESOLVED | SOURCE_INSPECTION + LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | `e3a55e1...` -> `665d3de...` | first helper froze caller step; current helper does not | INTRODUCED_BY_PR then RESOLVED_BY_PR |
-| Regression source-guard assertion | FAIL then RESOLVED | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | `665d3de...` -> `8bfa5ca...` | incorrect regex corrected | INTRODUCED_BY_PR test-only, RESOLVED_BY_PR |
-| Commit/file reconciliation | PASS | ARTIFACT_INSPECTION | NONE | `8bfa5ca...` | UI presentation + focused regression only; no numerical authority paths | no workflow files changed |
-| Exact-head visible workbench qualification | NOT_RUN/PENDING | REMOTE_EXECUTION | IMPLEMENTATION_COUPLED | `8bfa5ca...` | run `32169155546` currently in progress | do not promote to PASS before completion/inspection |
-| Production Chromium screenshot review | NOT_RUN | NOT_OBSERVED | IMPLEMENTATION_COUPLED | PR head | required before ready-for-review | pending hosted workflow evidence |
-| B01/B02 numerical qualification | NOT_APPLICABLE | SOURCE_INSPECTION | NONE | this UI-only change | no mechanics changed | numerical PRs remain independent |
+| Check | Status | Observation | Oracle | Basis | Result / limitation |
+|---|---|---|---|---|---|
+| Current-main UI audit | PASS | SOURCE_INSPECTION | NONE | `134b43c4...` | semantic and hierarchy defects reproduced; PREEXISTING |
+| Formal status/four-area focused check | PASS | LOCAL_EXECUTION / later hosted static check | IMPLEMENTATION_COUPLED | Phase 1/2 implementation | mappings, blocker precedence, no caller freeze, no emoji/PENDING |
+| Phase-3 action-hierarchy source guard | PASS | REMOTE_EXECUTION | IMPLEMENTATION_COUPLED | `2b31bb3...`, hosted run `32170433547` static/projection step | compact primary action rules + secondary compatibility controls accepted |
+| Governed shell compiler/execution | PASS | REMOTE_EXECUTION | IMPLEMENTATION_COUPLED | `2b31bb3...`, run `32170433547` | completed successfully at GE-005 |
+| Standalone boundary proof | PASS | REMOTE_EXECUTION | IMPLEMENTATION_COUPLED | `2b31bb3...`, run `32170433547` | completed successfully |
+| Standalone LAFEA build | PASS | REMOTE_EXECUTION | IMPLEMENTATION_COUPLED | `2b31bb3...`, run `32170433547` | completed successfully |
+| Production Pages build | PENDING at GE-005 | REMOTE_EXECUTION | IMPLEMENTATION_COUPLED | `2b31bb3...` | running/pending final observation |
+| Prior exact-head browser orchestration | FAIL / PREEXISTING | REMOTE_EXECUTION | IMPLEMENTATION_COUPLED | `8bfa5ca...`, run `32169155546` | stopped before Playwright at B02D T3/L1 numerical BLOCK; UI browser proof NOT_RUN |
+| Production Chromium visual proof | NOT_RUN | NOT_OBSERVED | IMPLEMENTATION_COUPLED | PR | blocked upstream by B02D until orchestration reaches Playwright |
+| B01/B02 engineering qualification | NOT_APPLICABLE to UI diff | SOURCE_INSPECTION | NONE | #1255 | mechanics are separate PRs; no numerical authority changed |
 
-## Changed-file ledger at REPORT_BASIS_HEAD
+## Changed-file ledger
 
-- `src/workspace/lafea-ui-status.js` — UI-only canonical-state label/tone projection.
-- `src/workspace/lafea-guided-workflow-presentation.js` — UI-only conservative four-area grouping; side-effect free with caller state.
-- `src/workspace/lafea-guided-workflow-view.js` — four primary areas; canonical governed checks retained under disclosure; formal status/reasons.
-- `src/workspace/lafea-guided-workbench-styles.js` — formal four-area hierarchy/status styling.
-- `scripts/lafea-ui-formal-presentation-check.mjs` — focused status/grouping/source guard.
-- `agents/PR1255_workreport.md` / `agents/status/PR1255.yaml` / `agents/claims/PR1255.yaml` — recovery/coordination metadata.
+Production/presentation:
+- `src/workspace/lafea-ui-status.js`
+- `src/workspace/lafea-guided-workflow-presentation.js`
+- `src/workspace/lafea-guided-workflow-view.js`
+- `src/workspace/lafea-guided-workbench-styles.js`
 
-No core solver, mesh producer, qualification definition, release/trust, or workflow file is changed.
+Focused regression:
+- `scripts/lafea-ui-formal-presentation-check.mjs`
+
+Recovery/coordination:
+- `agents/PR1255_workreport.md`
+- `agents/status/PR1255.yaml`
+- `agents/claims/PR1255.yaml`
+
+No core numerical, mesh producer, qualification-definition, release/trust, or workflow file is changed.
 
 ## Exact continuation state
 
-First inspect hosted run `32169155546`. If it is green, record exact-head browser evidence and then attack the next visual-architecture defect as one mechanism: remove duplicate primary Run/action hierarchy across toolbar / next-action banner / overview, retaining one canonical action path and leaving store run eligibility untouched.
+1. Observe exact-head run `32170433547` to completion.
+2. If it repeats the already isolated B02D T3/L1 stop after static/build/shell PASS, classify browser proof `NOT_RUN` and retain this UI slice; do not modify B02D from #1255.
+3. Next UI-only increment: reduce raw internal enums/hashes in the primary Engineering Overview and move them to technical evidence disclosure while retaining exact underlying custody.
+4. Only after browser execution is available, structurally remove the now-secondary duplicate FE Run compatibility controls and migrate browser selectors in one independently qualified slice.
 
 ## Appendix A — next-agent implementation qualification
 
-A1 — Production Trace (20): Trace `RUN` from canonical `buildLafeaGuidedWorkflow()` through four-area aggregation to the visible Solve area and then to its existing target/handler. Prove the UI area projection cannot enable execution.
+A1 — Production Trace (20): Trace canonical RUN readiness from `buildLafeaGuidedWorkflow()` through UI projection and each visible compatibility action to controller dispatch. Identify which projection may style state and which object owns run authority.
 
-A2 — Current Failure Isolation (20): Quantify the remaining duplicate primary-action hierarchy in `lafea-workbench-view.js`, `lafea-workbench-content.js`, and `lafea-engineering-overview.js`. Identify which buttons call the same canonical handler and which are navigation only.
+A2 — Failure Isolation (20): Reproduce why run `32169155546` did not reach Playwright and prove whether any #1255 changed path can produce B02D T3/L1 `BLOCK`.
 
-A3 — Authority / Invariant (20): Define how one visible primary CTA can replace duplicates without changing `authorization.state`, `runEligibleByCurrentUiGate`, discretization readiness, or solver dispatch.
+A3 — Authority / Invariant (20): Define a structural removal of duplicate FE Run controls that preserves analytical LAFEA.1/.2 toolbar calculation, `AUTHORIZATION`, mesh readiness, and fail-closed controller behavior.
 
-A4 — Independent Validation (20): Design Chromium assertions for (a) blocked model, (b) ready-to-run model, and (c) accepted result proving exactly one primary CTA is enabled and canonical blocker/release state remains truthful.
+A4 — Independent Validation (20): Specify browser assertions for blocked model, mesh-required state, ready-to-run state and accepted result, including exactly one visible FE primary action and unchanged canonical state before/after clicks.
 
-A5 — Next Commit / Minimal Patch (20): Propose the smallest production/test path set to remove duplicate Run/banner/overview actions and raw developer emphasis while retaining all secondary import/export/audit controls.
+A5 — Next Commit (20): Propose the minimal raw-terminology/evidence-disclosure patch without modifying numerical store data or deleting evidence.
 
 Takeover threshold: total >= 92/100 and every question >= 17/20.

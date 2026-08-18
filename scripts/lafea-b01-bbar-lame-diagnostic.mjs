@@ -68,6 +68,33 @@ const values = benchmark.meshLadder.levels.map((level) => {
   });
 });
 const oracle = lameOracle(definition, 0.30, frozenProbe);
+const l3 = benchmark.meshLadder.levels.find((row) => row.levelId === 'L3');
+if (!l3) throw new TypeError('Frozen L3 stress diagnostic level missing');
+let firstL3SolverFailure = null;
+outer:
+for (const rowDistortion of definition.distortionMatrix) {
+  for (const poissonRatio of definition.poissonRatioLadder) {
+    if (rowDistortion.distortionId === 'REGULAR' && poissonRatio === 0.30) continue;
+    try {
+      executeLameBbarQualificationCase(definition, probeMeshPolicy, {
+        elementType: 'T6',
+        poissonRatio,
+        level: l3,
+        distortion: rowDistortion,
+      });
+    } catch (error) {
+      firstL3SolverFailure = Object.freeze({
+        elementType: 'T6',
+        levelId: l3.levelId,
+        poissonRatio,
+        distortionId: rowDistortion.distortionId,
+        errorName: error?.name ?? 'Error',
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+      break outer;
+    }
+  }
+}
 
 console.log(JSON.stringify({
   schema: 'lafea-b01-bbar-lame-convergence-diagnostic/v1',
@@ -80,6 +107,7 @@ console.log(JSON.stringify({
   })),
   allFour: sequenceEvidence(values),
   finestThree: sequenceEvidence(values.slice(-3)),
+  firstL3SolverFailure,
   qualificationChanged: false,
   releaseAuthorityGranted: false,
 }, null, 2));

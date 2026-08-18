@@ -331,6 +331,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
     Math.max(1000, matrix.size * 16),
   );
   const solution = Array(matrix.size).fill(0);
+  const solutionCompensation = Array(matrix.size).fill(0);
   let residual = [...rightHandSide];
   const initialResidualInfinity = maxAbs(residual);
   let finalResidualInfinity = initialResidualInfinity;
@@ -358,7 +359,11 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
       }
       const alpha = rho / curvature;
       for (let index = 0; index < solution.length; index += 1) {
-        solution[index] += alpha * direction[index];
+        const increment = alpha * direction[index];
+        const correctedIncrement = increment - solutionCompensation[index];
+        const nextSolution = solution[index] + correctedIncrement;
+        solutionCompensation[index] = (nextSolution - solution[index]) - correctedIncrement;
+        solution[index] = nextSolution;
         residual[index] -= alpha * action[index];
       }
       iterations += 1;

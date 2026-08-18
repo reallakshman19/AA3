@@ -113,7 +113,7 @@ function qualitySection(doc, model, handlers) {
 
 function primaryActionSection(doc, model, handlers) {
   const section = region(doc, 'Continue', 'actions');
-  const advance = button(doc, 'Advance to solve readiness', () => handlers.onAdvance?.());
+  const advance = button(doc, 'Advance to numerical preflight', () => handlers.onAdvance?.());
   advance.dataset.role = 'lafea-discretization-advance';
   advance.className = 'lafea-button lafea-button--primary';
   advance.disabled = !model.actions.canAdvance;

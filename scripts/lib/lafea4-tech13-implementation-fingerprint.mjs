@@ -16,11 +16,11 @@ export const LAFEA4_TECH13_TRUST_ROOT_VALUE_END =
 /**
  * Promotion-critical implementation domain.
  *
- * This is deliberately narrower than the repository HEAD and broader than the
- * product adapter alone. A change to any numerical refinement dependency,
- * quality/parent-normal authority, retained/replay custody, promotion logic or
- * exact-head qualification machinery invalidates the implementation identity.
- * Unrelated application/docs changes do not.
+ * This is deliberately narrower than repository HEAD and broader than the
+ * product adapter alone. It includes numerical refinement dependencies,
+ * quality/parent-normal authority, retained/replay custody, promotion logic,
+ * the runtime/build fingerprint injection path and exact-head qualification
+ * machinery. Unrelated application/docs changes do not invalidate identity.
  */
 export const LAFEA4_TECH13_IMPLEMENTATION_CRITICAL_PATHS = Object.freeze([
   'scripts/lib/lafea4-tech13-implementation-fingerprint.mjs',
@@ -28,6 +28,8 @@ export const LAFEA4_TECH13_IMPLEMENTATION_CRITICAL_PATHS = Object.freeze([
   'scripts/lafea-tech13-product-refinement-bundle-verifier.mjs',
   'scripts/lafea-tech13f-promotion-record-generator.mjs',
   'validation/lafea4-refinement/product-refinement-exact-head-plan-v1.json',
+  'vite.config.js',
+  'vite.lafea.config.js',
   'src/core/lafea-meshing/mesh-smoothing.js',
   'src/core/lafea-meshing/interior-refinement-t6.js',
   'src/core/lafea-meshing/constrained-delaunay-t6.js',

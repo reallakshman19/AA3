@@ -86,7 +86,7 @@ for (const glyph of informalGlyphs) {
 assert.equal(renderer.includes('friendlyStatus'), false, 'renderer must not reinterpret canonical status');
 assert.equal(renderer.includes("friendlyStatus = 'PENDING'"), false, 'BLOCKED must not be relabelled as PENDING');
 assert.match(renderer, /buildLafeaWorkflowAreaPresentation\(workflow\)/u);
-assert.match(renderer, /data\.workflowArea/u);
+assert.match(renderer, /dataset\.workflowArea/u);
 assert.match(renderer, /button\.dataset\.status = step\.status/u);
 assert.match(renderer, /lafea-guided-workflow__technical/u);
 

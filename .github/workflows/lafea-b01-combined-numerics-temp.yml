@@ -1,4 +1,4 @@
-name: LAFEA B01 DD plus bounded minimum-residual correction temporary
+name: LAFEA B01 DD residual authority alignment temporary
 
 on:
   pull_request:
@@ -25,11 +25,12 @@ jobs:
       - run: npm ci
       - name: Verify exact PR head
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Install runner-only bounded DD minimum-residual correction
+      - name: Install runner-only bounded DD correction and equilibrium alignment
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+
           p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
           s = p.read_text()
           old = """  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  originalResidualInfinity = maxAbs(\n    exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution),\n  );\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
@@ -37,8 +38,27 @@ jobs:
           if s.count(old) != 1:
               raise RuntimeError('expected one DD terminal convergence block')
           p.write_text(s.replace(old, new, 1))
+
+          p = Path('src/core/local-continuum/solver.js')
+          s = p.read_text()
+          old = """  restrictSymmetricCsr,\n  sparseMatrixVector,\n  sparseMatrixVectorCompensatedRaw,\n  sparseMatrixVectorRaw,\n"""
+          new = """  restrictSymmetricCsr,\n  sparseMatrixVector,\n  sparseMatrixVectorCompensatedRaw,\n  sparseMatrixVectorDoubleDoubleRaw,\n  sparseMatrixVectorRaw,\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected sparse solver import block')
+          s = s.replace(old, new, 1)
+          old = "return sparseMatrixVector(mesh.globalStiffnessCsr, vector);"
+          new = "return sparseMatrixVectorDoubleDoubleRaw(mesh.globalStiffnessCsr, vector);"
+          if s.count(old) != 1:
+              raise RuntimeError('expected sparse equilibrium action')
+          s = s.replace(old, new, 1)
+          old = """    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      'Reaction equilibrium did not qualify.',\n    );\n"""
+          new = """    const freeTotals = { UX: 0, UY: 0 };\n    free.forEach((index) => {\n      freeTotals[dofAxis(dofs[index])] += residual[index];\n    });\n    const stiffnessNullspaceDefect = {\n      UX: totals.UX + freeTotals.UX,\n      UY: totals.UY + freeTotals.UY,\n    };\n    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      `Reaction equilibrium did not qualify: externalUX=${totals.UX}, externalUY=${totals.UY}, freeResidualUX=${freeTotals.UX}, freeResidualUY=${freeTotals.UY}, stiffnessNullspaceUX=${stiffnessNullspaceDefect.UX}, stiffnessNullspaceUY=${stiffnessNullspaceDefect.UY}, limit=${equilibriumLimit}, scale=${scale}, freeMaximum=${freeMaximum}, freeLimit=${freeLimit}.`,\n    );\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected reaction failure block')
+          p.write_text(s.replace(old, new, 1))
           PY
           node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+          node --check src/core/local-continuum/solver.js
       - name: Execute exact current-source L4 governing case
         shell: bash
         run: |

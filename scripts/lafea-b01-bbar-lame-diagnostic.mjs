@@ -1,7 +1,18 @@
 #!/usr/bin/env node
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  LAFEA3_QUALIFIED_MESH_QUALITY_POLICY,
+  PROFILE_KINDS,
+  canonicalProfile,
+  defaultProfileFields,
+} from '../src/core/lafea-profile-contract/index.js';
+import {
+  qualifyLafeaAnalysisMesh,
+  requireLafeaAnalysisMeshQualifiedQualityPolicy,
+} from '../src/workspace/lafea-analysis-mesh-contract.js';
 import {
   executeLameBbarQualificationCase,
   lameOracle,
@@ -30,6 +41,19 @@ const values = benchmark.meshLadder.levels.map((level) => {
     level,
     distortion,
   });
+  const profile = meshProfile(level.targetElementLength, level.levelId, distortion.distortionId);
+  requireLafeaAnalysisMeshQualifiedQualityPolicy('LAFEA.3', profile);
+  const quality = qualifyLafeaAnalysisMesh('LAFEA.3', run.mesh, profile);
+  assert.equal(
+    quality.gateResults.some((row) => row.metric === 'MINIMUM_ANGLE_DEGREES'),
+    false,
+    `T6/${level.levelId} must not be governed by a straight-corner minimum-angle surrogate`,
+  );
+  assert.notEqual(
+    quality.worstStatus,
+    'BLOCK',
+    `T6/${level.levelId} frozen Lamé mesh quality blocked`,
+  );
   const probe = run.probes.find((row) => row.probe.probeId === frozenProbe.probeId);
   if (!probe) throw new TypeError(`Probe ${frozenProbe.probeId} missing at ${level.levelId}`);
   return Object.freeze({
@@ -39,6 +63,8 @@ const values = benchmark.meshLadder.levels.map((level) => {
     mappingResidual: probe.mapping.mappingResidual,
     meanDilatation: probe.meanDilatation,
     elementId: probe.mapping.elementId,
+    qualityWorstStatus: quality.worstStatus,
+    qualityGateMetrics: quality.gateResults.map((row) => row.metric),
   });
 });
 const oracle = lameOracle(definition, 0.30, frozenProbe);
@@ -57,6 +83,28 @@ console.log(JSON.stringify({
   qualificationChanged: false,
   releaseAuthorityGranted: false,
 }, null, 2));
+
+function meshProfile(h, levelId, distortionId) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
+  const policy = LAFEA3_QUALIFIED_MESH_QUALITY_POLICY.fields;
+  return canonicalProfile(PROFILE_KINDS.MESH, {
+    schema: 'lafea-mesh-profile/v1',
+    profileIdentity: `B01-DIAGNOSTIC/T6/${levelId}/${distortionId}`,
+    sourceRevision: 'PS-BBAR-FROZEN-V1',
+    semanticHash: undefined,
+    fields: {
+      ...defaults,
+      continuumElement: 'T6',
+      globalTargetSize: h,
+      adjacentSizeRatioMax: policy.adjacentSizeRatioMax,
+      aspectRatioWarn: policy.aspectRatioWarn,
+      aspectRatioBlock: policy.aspectRatioBlock,
+      scaledJacobianWarn: policy.scaledJacobianWarn,
+      scaledJacobianBlock: policy.scaledJacobianBlock,
+      adaptiveLevels: Math.max(defaults.adaptiveLevels, policy.adaptiveLevelsMinimum),
+    },
+  });
+}
 
 function sequenceEvidence(rows) {
   const differences = rows.slice(0, -1).map((row, index) => row.value - rows[index + 1].value);

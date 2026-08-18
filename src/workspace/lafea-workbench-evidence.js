@@ -1,4 +1,5 @@
 import { card, element } from './lafea-workbench-dom.js';
+import { lafeaUiIcon } from './lafea-ui-icons.js';
 
 export function renderLafeaEngineeringEvidenceDrawer(root, sections, benchmarkHost = null) {
   const details = element(root, 'details', 'lafea-engineering-evidence-drawer');
@@ -6,13 +7,19 @@ export function renderLafeaEngineeringEvidenceDrawer(root, sections, benchmarkHo
   details.dataset.guidedTarget = 'engineering-evidence';
 
   const summary = element(root, 'summary', 'lafea-engineering-evidence-drawer__summary');
+  const icon = lafeaUiIcon(root.ownerDocument, 'evidence');
+  icon.classList.add('lafea-engineering-evidence-drawer__icon');
   const heading = element(root, 'span', 'lafea-engineering-evidence-drawer__heading');
   heading.append(
     element(root, 'strong', null, 'Engineering evidence'),
     element(root, 'span', null, 'Numerical verification, lineage, governance and qualification output'),
   );
   const count = sections.filter(Boolean).length + (benchmarkHost ? 1 : 0);
-  summary.append(heading, element(root, 'span', 'lafea-engineering-evidence-drawer__count', `${count} sections`));
+  summary.append(
+    icon,
+    heading,
+    element(root, 'span', 'lafea-engineering-evidence-drawer__count', `${count} sections`),
+  );
 
   const body = element(root, 'div', 'lafea-engineering-evidence-drawer__body');
   body.dataset.role = 'lafea-technical-evidence';

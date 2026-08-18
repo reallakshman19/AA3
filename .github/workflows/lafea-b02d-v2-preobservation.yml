@@ -28,5 +28,36 @@ jobs:
       - name: Verify exact PR head
         shell: bash
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Qualify frozen V2 mesh before response observation
+      - name: Apply 24-division pre-observation candidate in runner workspace
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          replacements = {
+            'src/core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js': [
+              ('backgroundBaseDivisions: 20, windowClearanceFraction: 0.3,',
+               'backgroundBaseDivisions: 24, windowClearanceFraction: 0.3,'),
+            ],
+            'validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json': [
+              ('"v2Value":20', '"v2Value":24'),
+              ('"backgroundBaseDivisions":20,"windowClearanceFraction":0.3',
+               '"backgroundBaseDivisions":24,"windowClearanceFraction":0.3'),
+            ],
+            'scripts/lafea-b02d-v2-preobservation-quality-check.mjs': [
+              ('policy.circumferentialAxis.backgroundBaseDivisions, 20',
+               'policy.circumferentialAxis.backgroundBaseDivisions, 24'),
+              ('definition.fixedProbeMeshPolicy.circumferentialAxis.backgroundBaseDivisions, 20',
+               'definition.fixedProbeMeshPolicy.circumferentialAxis.backgroundBaseDivisions, 24'),
+            ],
+          }
+          for filename, pairs in replacements.items():
+              p = Path(filename)
+              s = p.read_text()
+              for old, new in pairs:
+                  if s.count(old) != 1:
+                      raise RuntimeError(f'{filename}: expected one {old!r}, got {s.count(old)}')
+                  s = s.replace(old, new, 1)
+              p.write_text(s)
+          PY
+      - name: Qualify 24-division V2 mesh before response observation
         run: node scripts/lafea-b02d-v2-preobservation-quality-check.mjs

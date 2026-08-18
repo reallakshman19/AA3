@@ -22,25 +22,36 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   shell.dataset.backingStageId = stageId;
   shell.dataset.routeFamily = 'ANALYTICAL';
 
-  const route = card(root, 'Analytical stage');
+  const route = card(root, 'Calculation scope');
   route.section.dataset.guidedTarget = 'analytical-route';
-  const selector = element(root, 'div', 'lafea-guided-summary');
-  selector.dataset.role = 'lafea-analytical-route-selector';
-  ROUTES.forEach((id) => {
-    const button = actionButton(root,
-      `${id} — ${id === 'LAFEA.1' ? 'Attachment foundation' : 'Pipe-section screening'}`,
-      () => options.onSelectRoute?.(id));
-    button.dataset.analyticalRouteId = id;
-    button.setAttribute('aria-current', id === stageId ? 'page' : 'false');
-    selector.append(button);
-  });
+  const scopeStatus = element(
+    root,
+    'strong',
+    'lafea-result-highlights__status',
+    `${foundation ? 'FOUNDATION BASELINE' : 'PIPE-SECTION SCREENING'} · ${engineeringStatus(state.status)}`,
+  );
+  scopeStatus.dataset.role = 'lafea-analytical-scope-status';
+  scopeStatus.dataset.rawStatus = String(state.status ?? 'UNKNOWN');
   const heading = element(root, 'h3', null, foundation
     ? 'LAFEA.1 — attachment foundation analytical calculation'
     : 'LAFEA.2 — nominal pipe-section analytical/screening calculation');
   heading.dataset.role = 'lafea-analytical-route-heading';
-  route.body.append(selector, heading,
+  const scopeBoundary = element(
+    root,
+    'p',
+    'lafea-workbench__authority',
+    foundation
+      ? 'Scope boundary: load-reference transfer and elastic pressure baseline only. This stage does not calculate WRC 107/537 local-attachment stress or establish code compliance.'
+      : 'Scope boundary: nominal pipe-section screening only. Detailed local-attachment / WRC 107/537 correlation remains separately governed and is not established by this stage.',
+  );
+  scopeBoundary.dataset.role = 'lafea-analytical-scope-boundary';
+  route.body.append(
+    scopeStatus,
+    heading,
     element(root, 'p', 'lafea-workbench__section-intro',
-      'LAFEA.1 and LAFEA.2 are analytical LAFEA stages. They do not create or display an FE mesh; LAFEA.3 and later stages provide the registered finite-element routes.'));
+      'LAFEA.1 and LAFEA.2 are analytical LAFEA stages. They do not create or display an FE mesh; LAFEA.3 and later stages provide the registered finite-element routes.'),
+    scopeBoundary,
+  );
 
   const source = card(root, 'Analytical inputs');
   source.section.dataset.guidedTarget = 'source';
@@ -273,4 +284,8 @@ function screeningTermCommandId(documentValue, screeningCaseId, loadCaseId) {
 function engineeringNumber(value) {
   if (!Number.isFinite(value)) return '—';
   return Number(value.toPrecision(8)).toString();
+}
+
+function engineeringStatus(value) {
+  return String(value ?? 'UNKNOWN').replaceAll('_', ' ');
 }

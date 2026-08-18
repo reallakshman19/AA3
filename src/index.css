@@ -34,3 +34,43 @@ html,
 ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+/* Empirical analytical route: one page scrollbar, one deliberate import affordance. */
+[data-role="empirical-lafea-consumer-root"] .lafea-workbench__status {
+  display: none !important;
+}
+
+[data-role="empirical-lafea-consumer-root"] .lafea-doc-table-view {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+[data-role="empirical-lafea-consumer-root"] .lafea-workbench__toolbar input[data-role="lafea-import"] {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+[data-role="empirical-lafea-consumer-root"] .lafea-workbench__toolbar label[for^="lafea-import-"] {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  padding: 8px 10px;
+  background: #0b1628;
+  color: #e5edf8;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+[data-role="empirical-lafea-consumer-root"] .lafea-workbench__toolbar label[for^="lafea-import-"]:focus-within,
+[data-role="empirical-lafea-consumer-root"] .lafea-workbench__toolbar label[for^="lafea-import-"]:hover {
+  border-color: #38bdf8;
+}

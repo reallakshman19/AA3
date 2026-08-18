@@ -1,0 +1,62 @@
+name: LAFEA B01 skyline Cholesky diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/core/local-continuum/skyline-cholesky.js'
+      - '.github/workflows/lafea-b01-skyline-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  skyline-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact PR head
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Patch solver workspace to skyline Cholesky candidate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/core/local-continuum/solver.js')
+          s = p.read_text()
+          marker = "import { rigidReferenceConditioning } from './rigid-reference-conditioning.js';\n"
+          insert = marker + "import { skylineCholeskySolve } from './skyline-cholesky.js';\n"
+          if s.count(marker) != 1:
+              raise RuntimeError('solver import marker mismatch')
+          s = s.replace(marker, insert, 1)
+          old = """    return conjugateGradientSolve(\n      freeStiffness,\n      rightHandSide,\n      model.qualificationProfile,\n    );"""
+          new = """    return skylineCholeskySolve(\n      freeStiffness,\n      rightHandSide,\n      model.qualificationProfile,\n    );"""
+          if s.count(old) != 1:
+              raise RuntimeError(f'sparse solver route marker count={s.count(old)}')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+          node --check src/core/local-continuum/skyline-cholesky.js
+          node --check src/core/local-continuum/solver.js
+      - name: Execute frozen B01 Lamé L3 sweep
+        shell: bash
+        run: |
+          node scripts/lafea-b01-bbar-lame-diagnostic.mjs > /tmp/b01-skyline.json
+          cat /tmp/b01-skyline.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('/tmp/b01-skyline.json', 'utf8'));
+          if (report.firstL3SolverFailure !== null) {
+            console.error(JSON.stringify(report.firstL3SolverFailure, null, 2));
+            process.exit(1);
+          }
+          console.log('B01 skyline Cholesky L3 sweep PASS');
+          NODE

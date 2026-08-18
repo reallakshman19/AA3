@@ -10,6 +10,7 @@ on:
       - 'scripts/lafea-*.mjs'
       - '.github/workflows/lafea-visible-workbench.yml'
       - '.github/workflows/pages-vite-deploy.yml'
+      - 'vite.config.js'
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,6 +46,16 @@ jobs:
           path: test-results/lafea-main-bundle-profile.json
           if-no-files-found: error
           retention-days: 30
+      - name: Build production Pages bundle and enforce hard ceiling
+        run: npm run build
+      - name: Install Chromium for generated-chunk boot proof
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: npx playwright install --with-deps chromium
+      - name: Prove generated production chunk graph boots
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: node scripts/lafea-bundle-production-browser-boot.mjs
       - name: Static and projection checks
         run: |
           node --check src/workspace/lafea-engineering-overview.js
@@ -110,14 +121,6 @@ jobs:
         run: |
           npx vite build --config vite.lafea.config.js
           node scripts/lafea-standalone-build-artifact-check.mjs
-      - name: Build production Pages bundle
-        run: npm run build
-      - name: Install pinned Chromium runtime
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: '0'
-        run: npx playwright install --with-deps chromium
-      - name: Run Stage-17 and production-shell visible UI proof
-        run: node scripts/lafea-stage17-browser-run.mjs
       - name: Upload visible browser evidence
         if: always()
         uses: actions/upload-artifact@v4

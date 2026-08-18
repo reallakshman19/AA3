@@ -9,7 +9,6 @@ const buildTime = new Date().toISOString();
 const tech13Implementation = computeLafea4Tech13ImplementationFingerprint({
   rootDir: fileURLToPath(new URL('.', import.meta.url)),
 });
-process.env.VITE_LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT = tech13Implementation.fingerprint;
 
 /** Dedicated standalone LAFEA build target with graph-owned chunking. */
 export default defineConfig({
@@ -17,6 +16,7 @@ export default defineConfig({
   plugins: [],
   define: {
     __BUILD_TIME__: JSON.stringify(buildTime),
+    __LAFEA4_TECH13_IMPLEMENTATION_FINGERPRINT__: JSON.stringify(tech13Implementation.fingerprint),
   },
   build: {
     outDir: 'dist-lafea',

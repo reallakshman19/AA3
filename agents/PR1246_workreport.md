@@ -14,13 +14,14 @@ PR: #1246 (draft)
 BRANCH: agent/lafea4-tech13-hij-salvage-20260818
 MAIN_HEAD_LAST_CHECKED: 585a897afa0f5c9799cb68a58de00a55808062b3
 MERGE_BASE: 585a897afa0f5c9799cb68a58de00a55808062b3
-REPORT_BASIS_HEAD: 8ec39d9eb852edb65f165fcbd9f4dcbc43407881
+REPORT_BASIS_HEAD: dd4f6585f9bc10560a0d20dc6d95694ac38d68d6
+ENGINEERING_J_HEAD: 8ec39d9eb852edb65f165fcbd9f4dcbc43407881
 GROUNDING_EPOCH: GE-TECH13-20260818-01
 APPENDIX_A_STATUS: PASS_97_100
 CURRENT_STAGE: TECH-13J_EXACT_HEAD_VALIDATION
 CURRENT_BLOCKER: PRODUCTION_BUNDLE_CHUNK_CEILING
 HIGHEST_RISK: overstating focused TECH-13 H/I/J qualification before direct execution
-EXACT_NEXT_ACTION: observe hosted workflows on 8ec39d9e; preserve shell/build evidence exactly; keep focused H/I/J checks NOT_RUN unless directly executed; do not activate trust root or merge.
+EXACT_NEXT_ACTION: observe hosted workflows on the current documentation-only successor of 8ec39d9e; preserve shell/build evidence exactly; keep focused H/I/J checks NOT_RUN unless directly executed; do not activate trust root or merge.
 ```
 
 ## Handover in 60 Seconds
@@ -160,11 +161,11 @@ B01 final exact-head workflow remains a separate LAFEA.3 B-bar mechanics failure
 Unexplained paths: 0.
 
 ## Review / CI / Coordination
-PR remains draft and mergeable. No merge authority. Current main rechecked at `585a897a...`. Hosted workflows for exact head `8ec39d9e...` are active at this checkpoint. Old #1238/#1239 remain provenance only.
+PR remains draft and mergeable. No merge authority. Current main rechecked at `585a897a...`. The report-only commit after engineering head is outside the implementation-fingerprint domain, so it does not alter J implementation identity. Hosted workflows are used only for the exact commit they actually execute; no cross-head PASS is invented. Old #1238/#1239 remain provenance only.
 
 ## Exact Continuation State
 ```text
-Observe workflows on 8ec39d9eb852edb65f165fcbd9f4dcbc43407881.
+Observe workflows on current PR head, noting engineering J head 8ec39d9eb852edb65f165fcbd9f4dcbc43407881.
 Expected shell result: PASS through compiler/execution and standalone build.
 Expected production build: Vite compile may PASS but existing chunk ceiling may still FAIL.
 If a new first failing TECH-13 boundary appears: isolate before mutation.
@@ -184,3 +185,4 @@ Do not activate or merge.
 - I salvage: `5d7f0c67828c2493bc7691f4696326c64eb37309`.
 - H/I/J pre-validation checkpoint: `60118a9a1f9ead6670f49217b6f932fe0f7447f7`.
 - J direct-define engineering head: `8ec39d9eb852edb65f165fcbd9f4dcbc43407881`.
+- J validation report checkpoint: `dd4f6585f9bc10560a0d20dc6d95694ac38d68d6`.

@@ -36,6 +36,9 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Diagnostic exact-main production bundle baseline
+        continue-on-error: true
+        run: npm run build
       - name: Static and projection checks
         run: |
           node --check src/workspace/lafea-engineering-overview.js

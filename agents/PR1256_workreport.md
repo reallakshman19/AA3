@@ -1,147 +1,211 @@
 # PR1256 Work Report — LAFEA Analytical P0 Truth and Usability
 
-## Identity
+## Recovery header
 
-- PR: #1256
-- Branch: `agent/lafea-analytical-p0-truth-usability`
 - Repository: `reallaksh19/Advanced_Analysis`
+- PR: `#1256`
+- Branch: `agent/lafea-analytical-p0-truth-usability`
 - Base branch: `main`
 - Exact base SHA: `134b43c4cd09139d3b6067223576ccdad653f07e`
-- Base tree: `ada5ac2bff34ab0ced6b2d8bdf81807f47696f23`
-- First implementation commit: `2b2e3a25a2842cd9c86ce5ace319b2393d536601`
-- Exact head observed by qualification workflow before this WorkReport update: `efb95eb8579164137cf7ad1815d9cf01c937fc3b`
+- Live main rechecked: `134b43c4cd09139d3b6067223576ccdad653f07e`
+- `REPORT_BASIS_HEAD`: `ad8b5cca28e4c6456a34300112c5e531454cf5ab` — state inspected immediately before this report update
 - Criticality: `ENGINEERING_CRITICAL`
-- PR state: `DRAFT`
-- Merge authority: `OWNER ONLY`
-- `agents/MASTER_INDEX.md`: `ABSENT_ON_BASELINE` — no index mutation made.
+- PR state: `DRAFT / OPEN / MERGEABLE`
+- Merge authority: `OWNER_ONLY`
+- `agents/MASTER_INDEX.md`: absent on the exact baseline; no synthetic index was invented in this PR
 
-## Mission
+## AUTO MODE authorization
 
-Correct the highest-risk truth/usability defects on the Empirical analytical LAFEA.1/LAFEA.2 surface without changing engineering equations, WRC authority, solver authority, source hashes, calculation semantics, or release qualification.
+Owner instruction on 2026-08-18 authorized continuation in auto mode while unavailable.
 
-This is intentionally a product-truth/usability slice, not a WRC implementation PR.
+```text
+EXECUTION_MODE = AUTO
+AUTO_STATE = RUNNING
+SCOPE_AUTHORITY = LOCKED_TO_APPROVED_MISSION
+PHASE_PROGRESSION = AUTO
+MERGE_AUTHORITY = OWNER_ONLY
+```
 
-## Baseline audit findings addressed
+AUTO MODE permits phase-by-phase implementation, validation, bounded repair, reconciliation, and durable checkpoints. It does not authorize WRC engineering-method activation, workflow-policy weakening, destructive operations, or merge.
 
-### ISS-1256-01 — duplicated analytical navigation
+## Handover in 60 seconds
 
-The Empirical analytical-only controller already renders the governed LAFEA.1/LAFEA.2 route navigation. `renderLafeaAnalyticalCalcContent()` independently rendered another LAFEA.1/LAFEA.2 selector inside the first card, producing two controls for the same route authority.
+Mission: correct the Empirical analytical LAFEA.1/LAFEA.2 truth/usability defects without changing calculation authority.
 
-**Disposition:** removed the inner route selector. The outer workbench route navigation remains authoritative.
+Current implemented slices:
 
-### ISS-1256-02 — ambiguous bare `READY` presentation
+1. one analytical navigation authority;
+2. scope-qualified analytical status instead of ambiguous bare `READY`;
+3. explicit LAFEA.1/LAFEA.2 engineering scope boundary;
+4. page-owned vertical scrolling instead of nested 520 px input scrolling;
+5. one visible governed JSON import affordance;
+6. grouped governed scalar edits for LAFEA.1/LAFEA.2, replacing per-cell Apply repetition while preserving exact descriptors, atomic failure, lifecycle invalidation and one-step undo;
+7. targeted Chromium contracts for the analytical surface and grouped-edit transaction.
 
-The top workbench output uses generic workbench state. On the Empirical analytical surface a bare `READY` can be visually read as method/release readiness even though LAFEA.1 is only load-reference transfer + elastic pressure baseline and LAFEA.2 is only nominal pipe-section screening.
+Current blocker is software packaging, not engineering calculation: at exact head `53782516026b561ff1410c9cc921c64f58f3b4d3`, production build emitted `main-D2WbYkYb.js = 1,179,811 B` against the unchanged hard ceiling `1,179,648 B`, an overage of **163 B**. The hard ceiling was not raised. A presentation-wording compaction was committed at `ad8b5cca28e4c6456a34300112c5e531454cf5ab` to restore headroom without removing any scope warning or changing runtime authority.
 
-**Disposition:** the generic top badge is suppressed on the Empirical analytical root and replaced near the top of analytical content by a scope-qualified state:
+Next: inspect exact-head CI for `ad8b5cca...`; once the production build reaches Chromium, require the targeted analytical and grouped-edit browser proofs to execute before continuing to result/input hierarchy cleanup.
 
-- `FOUNDATION BASELINE · <state>` for LAFEA.1;
-- `PIPE-SECTION SCREENING · <state>` for LAFEA.2.
+## Mission / acceptance
 
-Each route now states its engineering boundary explicitly. LAFEA.1 states that it does not calculate WRC 107/537 local-attachment stress or establish code compliance. LAFEA.2 states that detailed WRC/local-attachment correlation remains separately governed.
-
-### ISS-1256-03 — nested input-panel scrolling
-
-The governed analytical input editor inherited `.lafea-doc-table-view{max-height:520px;overflow:auto}`, creating a narrow nested vertical scrollbar inside the analytical page.
-
-**Disposition:** on the Empirical analytical root only, the input editor is allowed to expand to content height (`max-height:none; overflow:visible`), so vertical navigation is owned by the page/workspace rather than a 520 px nested pane.
-
-### ISS-1256-04 — browser-native file chooser clutter
-
-The toolbar intentionally retains a governed `<input type="file">`, but presenting the native input next to its label caused `Import analytical JSON` + `Choose File` + `No file chosen` to appear as three controls.
-
-**Disposition:** retain the real input for accessibility/event authority but visually hide it using the standard clipped-input pattern; style its associated label as the single visible import affordance on the Empirical analytical root.
-
-## Protected engineering invariants
-
-The following were explicitly NOT changed:
+Correct the highest-risk truth and usability defects on the Empirical analytical LAFEA.1/LAFEA.2 surface while preserving:
 
 - LAFEA.1 load-reference transfer mechanics;
 - LAFEA.1 Lamé elastic pressure baseline;
-- LAFEA.2 pipe-section screening mechanics;
-- thickness policy or pressure wall basis;
-- numerical qualification tolerances;
-- source/canonical/result semantic hashes;
-- lifecycle, release, or authorization state machines;
-- WRC 107/537 equations, coefficient datasets, interpolation, extrapolation, or applicability rules;
-- pressure stress indices;
+- LAFEA.2 nominal pipe-section screening mechanics;
+- source/result semantic custody;
+- lifecycle/release authority;
+- WRC 107/537 fail-closed authority boundary;
+- all existing engineering tolerances and numerical gates.
+
+Acceptance for this PR requires visible browser evidence for the changed analytical surface and grouped edit transaction, no introduced bundle-gate failure, reconciled changed-file ledger, and no unexplained authority expansion.
+
+## Coordination / overlap state
+
+Classification: `SAFE_WITH_EXPLICIT_BOUNDARY` for the approved UI/store transaction scope.
+
+Live/open WRC work remains separate. PR #1211 is the canonical WRC537 Ed4 source-to-evaluator batch and explicitly states that product/UI method activation is not authorized and the real method remains blocked pending authorized technical source/approval. PR #1256 does not consume, modify, or bypass that authority chain.
+
+No direct changed-file overlap was found in the earlier overlap review with #1211, #1187, and #1118. Semantic coupling remains possible in the future if a WRC method becomes qualified; therefore this PR uses conservative wording and does not infer future method readiness.
+
+## Current implementation state
+
+### ISS-1256-01 — duplicated analytical navigation
+
+Resolved. The inner LAFEA.1/LAFEA.2 route selector was removed. The outer Empirical analytical route remains the single navigation authority.
+
+### ISS-1256-02 — ambiguous generic READY
+
+Resolved on the Empirical analytical surface. Generic top-level READY presentation is suppressed there; calculation scope shows `FOUNDATION BASELINE · <state>` or `PIPE-SECTION SCREENING · <state>` and retains raw workbench status separately.
+
+### ISS-1256-03 — nested 520 px input scrollbar
+
+Resolved for the Empirical analytical root. The document editor expands vertically and the page/workspace owns vertical scrolling.
+
+### ISS-1256-04 — native file chooser clutter
+
+Resolved. The real file input remains governed and associated with its label, but the native browser control is visually clipped so the visible surface has one import affordance.
+
+### IMP-1256-05 — grouped analytical scalar transaction
+
+Implemented. LAFEA.1/LAFEA.2 governed scalar rows mark dirty values and expose one Apply action per engineering group. The transaction:
+
+- retains exact `StageInputDescriptor/v2` descriptor IDs and entity IDs;
+- validates each exact scalar command;
+- requires a single invalidation class per batch;
+- applies commands against successive document digests;
+- commits source/history once only after all commands succeed;
+- leaves the source document unchanged on rejected command;
+- invalidates downstream execution once;
+- produces one document-level undo step.
+
+### RISK-1256-06 — LAFEA.2 screening-term table still has per-term Apply
+
+Intentional containment. `screeningCaseId + loadCaseId` mechanical-term editing uses a different nested identity command and is not silently folded into the scalar descriptor batch. Any consolidation must preserve that command authority and is not required to close the current grouped scalar defect.
+
+### RISK-1256-07 — analytical result hierarchy
+
+Still open within UI scope. The next bounded phase may improve ordering/labels/disclosure using only already-retained evidence. It must not invent WRC equations, intermediate terms, source coefficients, pressure indices, ellipsoidal approximations, or qualification tolerances.
+
+## Protected engineering invariants / negative assurance
+
+Explicitly not changed in this PR:
+
+- WRC 107/537 equations, coefficient datasets, interpolation or extrapolation;
+- WRC applicability limits, sign conventions, pressure indices or recovery locations;
 - ellipsoidal-head approximation rules;
-- correlation registry or engineering-use authorization;
-- FE solver/mesh routes.
+- correlation registry/trust root or engineering-use authorization;
+- LAFEA.1/LAFEA.2 numerical mechanics;
+- FE formulation, meshing, solver, recovery or shell trust state;
+- numerical acceptance tolerances;
+- production bundle hard ceiling.
 
-No engineering constant, tolerance, coefficient, or fallback has been invented in this PR.
-
-## Active PR overlap / authority review
-
-Open PRs were inspected before mutation.
-
-- PR #1211 (`WRC source-to-evaluator P0/P1 implementation`) owns WRC source-package/evaluator files including `src/core/local-attachment-correlation/spherical-wrc-evaluator.js` and `src/core/wrc537/*`. **No file overlap with PR #1256.** PR #1256 does not establish WRC authority.
-- PR #1187 (`LAFEA correlation foundation`) changes local-attachment-correlation core files and `lafea-correlation-*` product files. **No changed-file overlap with PR #1256.**
-- PR #1118 (`LAFEA analytical application blockers`) changes analytical application-template/core files. **No changed-file overlap with PR #1256.**
-
-RISK-1256-01: semantic coupling remains possible because future qualified WRC availability may alter what the analytical product should display. This PR therefore uses conservative scope text and does not infer future WRC readiness.
+No engineering constant, coefficient, tolerance, source datum or fallback was invented.
 
 ## Changed-file ledger
 
-| File | Change | Engineering effect |
+| File | Purpose | Authority effect |
 |---|---|---|
-| `src/workspace/lafea-analytical-calc-content.js` | Remove duplicate inner route selector; add scope-qualified status and explicit engineering boundary | Presentation/truth only; no calculation change |
-| `src/index.css` | Empirical-root overrides for generic status, nested input scrolling, and file input presentation | Presentation/usability only |
-| `e2e/lafea-standalone.spec.js` | Update browser contract for single analytical navigation; assert scope-boundary disclosure | Regression specification only |
-| `agents/PR1256_workreport.md` | Living engineering handover record | Governance only |
+| `agents/PR1256_workreport.md` | Living recovery/validation record | Governance only |
+| `e2e/lafea-empirical-grouped-edit.spec.js` | Atomic grouped edit + one-undo browser proof | Test only |
+| `e2e/lafea-standalone.spec.js` | Single analytical-navigation/scope contract update | Test only |
+| `e2e/lafea-visible-workbench.spec.js` | Truth/scroll/import visual browser proof | Test only |
+| `scripts/lafea-stage17-browser-run.mjs` | Run changed analytical browser proofs before inherited B02 diagnostic | Test orchestration only; existing B02 gate retained |
+| `src/index.css` | Empirical analytical status, scrolling, import and grouped-action presentation | UI only |
+| `src/workspace/lafea-analytical-calc-content.js` | Single-route scope/status presentation and compact truth wording | UI only |
+| `src/workspace/lafea-document-table-form.js` | Dirty form/group Apply interaction | UI command presentation |
+| `src/workspace/lafea-document-table-support.js` | Shared edit diagnostic helper used by grouped form | UI support |
+| `src/workspace/lafea-document-table.js` | Enable grouped scalar mode for LAFEA.1/LAFEA.2 | UI routing |
+| `src/workspace/lafea-workbench-controller.js` | Controller bridge for grouped edit | Mutation orchestration only |
+| `src/workspace/lafea-workbench-orchestrator-api.js` | Single-invalidation-class batch routing | Lifecycle orchestration only |
+| `src/workspace/lafea-workbench-store.js` | Atomic exact-command batch + one history commit | Source-edit transaction semantics only |
+
+Every changed path is currently explained by the approved mission.
 
 ## Validation ledger
 
-| Check | Status | Observation | Oracle |
+| Evidence | Status | Observation | Oracle / classification |
 |---|---|---|---|
-| Exact current-main reread before branch creation | PASS | `main` = `134b43c4cd09139d3b6067223576ccdad653f07e` | GitHub branch API |
-| Exact current-main rereads before subsequent mutation batches | PASS | `main` remained `134b43c4cd09139d3b6067223576ccdad653f07e` | GitHub branch API |
-| Open-PR changed-file overlap review | PASS | No direct overlap with #1211, #1187, #1118 | GitHub PR file lists |
-| First implementation PR diff structural review | PASS | Diff contains only intended analytical-content/CSS/e2e changes; no core calculation files | GitHub PR diff |
-| Exact-head/clean-tree workflow check | PASS | Workflow run `32169257961`, job `visible-workbench`, exact head verified | GitHub Actions |
-| Static and projection checks | PASS | Workflow step completed successfully | GitHub Actions |
-| Governed shell mesh compiler/execution custody checks | PASS | Workflow step completed successfully; no inherited solver break observed | GitHub Actions |
-| Standalone boundary inheritance check | PASS | Workflow step completed successfully | GitHub Actions |
-| Standalone LAFEA bundle build | PASS | Workflow step completed successfully | GitHub Actions |
-| Production Pages bundle build | PASS | Workflow step completed successfully | GitHub Actions |
-| Pinned Chromium installation | IN_PROGRESS | Workflow step still running at last inspection | GitHub Actions |
-| Stage-17 / production-shell visible UI proof | NOT_RUN | Pending behind Chromium installation at last inspection | GitHub Actions / Chromium |
-| Updated `e2e/lafea-standalone.spec.js` specifically | NOT_RUN | No evidence yet that this exact spec was executed by the observed workflow | Playwright |
-| Empirical-tab visual/scroll/import verification | NOT_RUN | Requires the pending exact-head browser proof or direct browser inspection | Chromium/Playwright/manual browser |
-| `scripts/lafea-workbench-check.mjs` as a separately identified command | NOT_RUN | Static workflow passed, but its command composition has not been individually attributed here | Node runtime |
-| Full qualification workflow | IN_PROGRESS | Static/build portions pass; browser portion pending | GitHub Actions |
+| Live main/base recheck | PASS | main remains `134b43c...` | GitHub branch API |
+| PR open/draft/mergeable | PASS | #1256 open, draft, mergeable | GitHub PR API |
+| WRC authority separation | PASS | #1211 remains separate and non-product-authorized | Source/PR inspection |
+| Exact-head clean-tree check at `537825...` | PASS | workflow reached downstream build | Remote execution |
+| Static/projection checks at `537825...` | PASS | visible-workbench step 6 | Remote execution |
+| Governed shell mesh compiler/execution custody at `537825...` | PASS | step 7 | Remote execution; inherited gate |
+| Standalone boundary check at `537825...` | PASS | step 8 | Remote execution |
+| Standalone LAFEA bundle at `537825...` | PASS | step 9 | Remote execution |
+| Production Pages bundle at `537825...` | FAIL | 1,179,811 B > 1,179,648 B by 163 B | Remote execution; `INTRODUCED_BY_PR` packaging regression |
+| Pinned Chromium at `537825...` | NOT_RUN | skipped after production build failure | Not observed |
+| Analytical truth/scroll/import browser proof at `537825...` | NOT_RUN | skipped after production build failure | Not observed |
+| Grouped-edit browser proof at `537825...` | NOT_RUN | skipped after production build failure | Not observed |
+| B01 fail-closed workflow at `537825...` | PASS | workflow run 32172285713 | Remote execution |
+| B01 final exact-head at `537825...` | FAIL | separate inherited numerical qualification remains unresolved | Remote execution; not weakened by this PR |
+| Bundle repair at `ad8b5cca...` | IN_PROGRESS | compacted presentation text only; exact-head workflow pending | Remote execution pending |
 
-No `NOT_RUN` or `IN_PROGRESS` result is represented as `PASS`.
+No `NOT_RUN`, `IN_PROGRESS`, or unrelated inherited failure is represented as product PASS.
 
-## Current state
+## AUTO phase plan
 
-The first coherent P0 slice is committed and PR #1256 is open as a draft. Source-level review confirms the change stays on the presentation side of the authority boundary. Exact-head CI has passed its static, inherited engineering-custody, and bundle-build stages; browser qualification remains in progress.
+### Phase A — packaging recovery and exact browser proof
 
-The visible defects addressed by this slice are:
+Objective: restore the unchanged bundle ceiling and execute the changed-surface Chromium proofs.
 
-1. duplicated LAFEA.1/LAFEA.2 selector;
-2. ambiguous bare `READY` in the Empirical analytical surface;
-3. nested 520 px vertical input scroller;
-4. native file-chooser clutter;
-5. WRC/local-stress scope boundary being too remote from the top-level calculation context.
+Expected files: presentation/test/recovery files only.
 
-## Remaining defects intentionally not folded into this commit
+Prediction: removing >163 B of newly introduced presentation literals will place production `main` chunk below 1,179,648 B without changing calculations. If build passes, the targeted analytical proof and grouped transaction proof will execute before the inherited B02 gate.
 
-- RISK-1256-02: per-scalar `Apply` buttons still dominate the form. A follow-on change should provide a transaction-level `Apply changes` interaction while preserving descriptor identity, validation, undo/redo, and source replacement semantics.
-- RISK-1256-03: analytical result hierarchy still needs a manual-calculation-style trace view (inputs → derived geometry/indices → equations → intermediate values → results → source/tolerance evidence) once qualified method authority exists.
-- RISK-1256-04: WRC pressure-index treatment, ellipsoidal approximation custody, WRC-specific parameters/interpolation, source-resolution tolerances, and method-validation tolerances remain engineering-method work and must not be implemented from guesses in this PR.
-- RISK-1256-05: exact browser behavior of page scrolling/import affordance remains unqualified until the pending exact-head browser proof completes.
+Falsifier: main chunk still exceeds the ceiling, or a targeted browser test fails.
+
+### Phase B — bounded analytical hierarchy cleanup
+
+Proceed only after Phase A changed-surface proof is green. Improve the screen hierarchy using already-retained data: clearer order from scope -> inputs -> contract -> retained results -> evidence/lineage, explicit current-result vs authority distinction, and audit details visually subordinate to engineering results. Do not synthesize unavailable manual-calculation/WRC terms.
+
+### Phase C — reconciliation / closure state
+
+Reconcile actual changed files, exact-head CI, review threads, base drift and authority boundaries. If the only next action is merge, set `AUTO_STATE=COMPLETE` and stop for owner merge authorization.
+
+## Hard-stop rules for this PR
+
+AUTO progression stops if:
+
+- hierarchy work requires new WRC engineering facts or method authority;
+- a protected engineering gate would need weakening;
+- active-claim collision appears on exact files/authority domain;
+- independent evidence contradicts source-edit semantics and bounded diagnosis cannot resolve it;
+- merge becomes the next action without explicit owner merge authorization.
 
 ## EXACT_NEXT_ACTION
 
-Complete exact-head browser qualification for PR #1256. If the first slice passes, implement the next UI transaction slice: replace per-field `Apply` repetition with a governed dirty-form / `Apply changes` transaction without changing descriptor identity or calculation authority. Keep WRC engineering-method implementation isolated from this UI PR unless explicit, qualified authority is supplied.
+Inspect exact-head workflows for `ad8b5cca28e4c6456a34300112c5e531454cf5ab`. If the unchanged production bundle ceiling passes, require the analytical truth/scroll/import and grouped-edit Playwright tests to execute. Repair any failure within the existing UI/transaction authority boundary, then continue automatically to Phase B.
 
-## Appendix A — Expert handover questionnaire
+## Appendix A — implementation handover gate
 
-1. **State semantics:** Can you prove, from the workbench/store/orchestration code, what `state.status === READY` means and why it is not equivalent to WRC method qualification or release qualification?
-2. **Authority boundary:** Which exact modules currently own LAFEA.1 Lamé pressure mechanics, LAFEA.2 screening mechanics, and local-attachment correlation registration? Confirm that none changed in PR #1256.
-3. **Navigation:** Demonstrate in the Empirical analytical-only composition that exactly one LAFEA.1/LAFEA.2 route-navigation authority remains after this PR.
-4. **Scrolling:** In a browser at the target viewport, verify that the analytical input form expands with the page and that no 520 px nested vertical scroll trap remains; also check wide-table horizontal behavior.
-5. **Import accessibility:** Verify that the clipped file input remains keyboard/screen-reader operable through its associated label and that file selection still reaches the existing `onFile` handler.
-6. **Next transaction design:** Propose the smallest design for a single `Apply changes` action that preserves `StageInputDescriptor/v2` identities, exact edit commands, validation failure reporting, undo/redo history, and downstream invalidation. Do not replace governed commands with direct document mutation.
-7. **WRC coordination:** Before any WRC-specific UI fields are added, inspect the then-current state of PR #1211/#1187 (or successors) and prove the qualified source/evaluator contract that the UI would consume. Do not infer a method from synthetic fixtures.
+A1 — Production trace: identify the exact path from a dirty governed analytical input through descriptor identity, batch API, invalidation class, store command application, document commit and undo history. State one falsifier proving the batch is not atomic.
+
+A2 — Current failure isolation: reproduce from CI evidence why `537825...` did not reach Chromium and quantify the bundle overage. Prove the hard ceiling was not changed.
+
+A3 — Authority/invariant: show why LAFEA.1/LAFEA.2 workbench `READY` is not WRC method qualification and identify the current WRC Ed4 authority boundary.
+
+A4 — Independent validation: define browser observations proving exactly one analytical navigation, page-owned vertical scrolling, one visible import affordance, grouped edit persistence, and one-step undo.
+
+A5 — Next minimal patch: if hierarchy cleanup proceeds, identify the smallest presentation-only patch and list the engineering data that must remain absent until source-qualified WRC authority exists.

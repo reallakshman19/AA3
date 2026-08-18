@@ -13,6 +13,10 @@ import { renderLafeaNumericalVerification } from './lafea-numerical-verification
 import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
+import {
+  renderLafeaEngineeringEvidenceDrawer,
+  revealLafeaGuidedTarget,
+} from './lafea-workbench-evidence.js';
 import { focusLafeaRetainedMeshElement } from './lafea-canvas/retained-mesh-overlay.js';
 
 export function renderLafeaWorkbenchContent(root, state, stage, options) {
@@ -26,11 +30,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   let activeViewport = null;
   renderLafeaGuidedWorkflow(navHost, workflow, (step) => {
     const target = shell.querySelector(`[data-guided-target="${step.focusTarget}"]`);
-    if (target) {
-      target.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-      target.querySelector?.('button,input,select,textarea,[tabindex]')?.focus?.({ preventScroll: true });
-      return;
-    }
+    if (revealLafeaGuidedTarget(target)) return;
     options.onNavigateTarget?.(step.focusTarget);
   });
 
@@ -146,7 +146,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
         && stage.preparationProjection?.state !== 'CURRENT_PASS') {
         return options.handlers.onPrepareContinuum?.();
       }
-      return navigateTo(shell, 'numerical-verification');
+      return navigateTo(shell, 'findings');
     },
   });
   discretizationCard.body.append(discretizationHost);
@@ -199,28 +199,15 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   context.append(
     sourceCard.section,
     profileCard.section,
-    numericalCard.section,
     evidenceCard.section,
-    lifecycleCard.section,
-    ncCard.section,
+    renderLafeaEngineeringEvidenceDrawer(
+      root,
+      [numericalCard.section, lifecycleCard.section, ncCard.section],
+      options.benchmarkHost,
+    ),
   );
 
   main.append(nextActionBanner, engineeringOverview, caeWorkspace, context);
-
-  if (options.benchmarkHost) {
-    const benchmarkCard = card(root, 'Verification output');
-    benchmarkCard.section.dataset.guidedTarget = 'verification';
-    benchmarkCard.body.append(
-      element(
-        root,
-        'p',
-        null,
-        'A rendered verification report or demonstration run is not release qualification. Exact-head benchmark manifests and independent expected values remain required.',
-      ),
-      options.benchmarkHost,
-    );
-    context.append(benchmarkCard.section);
-  }
 
   return Object.freeze({
     element: shell,
@@ -441,5 +428,5 @@ function truthPanel(root, registryEntry) {
 
 function navigateTo(shell, targetName) {
   const target = shell.querySelector(`[data-guided-target="${targetName}"]`);
-  target?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  revealLafeaGuidedTarget(target);
 }

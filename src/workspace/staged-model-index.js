@@ -12,6 +12,12 @@ const IDENTITY_ALIASES = Object.freeze({
   systemId: ['SYSTEM_ID', 'SYSTEM'],
   zoneId: ['ZONE_ID', 'ZONE'],
 });
+const IDENTITY_ALIAS_KEYS = Object.freeze(Object.fromEntries(
+  Object.entries(IDENTITY_ALIASES).map(([field, aliases]) => [
+    field,
+    new Set(aliases.map(normalizeKey)),
+  ]),
+));
 
 export function indexWorkspaceSourcePackage(packageJson, sourceSchema, options = {}) {
   const roots = sourceRoots(packageJson, sourceSchema);
@@ -90,9 +96,10 @@ function addCompatibilityAliases(node) {
 }
 
 function inheritedIdentity(item, parent) {
-  const identity = Object.fromEntries(Object.entries(IDENTITY_ALIASES).map(([field, aliases]) => [
+  const sourceValues = sourceIdentityValues(item);
+  const identity = Object.fromEntries(Object.keys(IDENTITY_ALIASES).map((field) => [
     field,
-    firstSourceValue(item, aliases) || parent?.[field] || '',
+    sourceValues[field] || parent?.[field] || '',
   ]));
   if (sourceType(item) === 'BRANCH') {
     const branch = stringValue(item.name || item.attributes?.NAME);
@@ -100,6 +107,51 @@ function inheritedIdentity(item, parent) {
     identity.lineId = parseSjsonBranchIdentity(branch).lineKey;
   }
   return identity;
+}
+
+/**
+ * Resolves all generic source identities in one DFS while preserving the old
+ * per-field findValue() precedence exactly: direct keys before nested keys,
+ * object insertion order, depth <= 4, and first match per field per root.
+ * A falsy first match is intentionally retried only at the next legacy root.
+ */
+function sourceIdentityValues(item) {
+  const values = Object.fromEntries(Object.keys(IDENTITY_ALIASES).map((field) => [field, '']));
+  const unresolved = new Set(Object.keys(IDENTITY_ALIASES));
+  const roots = [item, item.sourceAttributes, item.attributes, item.enrichedAttributes];
+
+  for (const root of roots) {
+    if (!unresolved.size || !isPlainRecord(root)) continue;
+    const matches = {};
+    const matched = new Set();
+    collectFirstIdentityMatches(root, unresolved, matches, matched, 0);
+    for (const field of [...unresolved]) {
+      if (!Object.hasOwn(matches, field)) continue;
+      const found = matches[field];
+      if (!found) continue;
+      values[field] = stringValue(found);
+      unresolved.delete(field);
+    }
+  }
+  return values;
+}
+
+function collectFirstIdentityMatches(value, fields, matches, matched, depth) {
+  if (!isPlainRecord(value) || depth > 4 || matched.size === fields.size) return;
+  for (const [key, child] of Object.entries(value)) {
+    const normalizedKey = normalizeKey(key);
+    for (const field of fields) {
+      if (!matched.has(field) && IDENTITY_ALIAS_KEYS[field].has(normalizedKey)) {
+        matches[field] = child;
+        matched.add(field);
+      }
+    }
+  }
+  if (matched.size === fields.size) return;
+  for (const child of Object.values(value)) {
+    collectFirstIdentityMatches(child, fields, matches, matched, depth + 1);
+    if (matched.size === fields.size) return;
+  }
 }
 
 function addDuplicateIdentityDiagnostics(state) {
@@ -189,25 +241,6 @@ function sourcePathFor(item, parentPath, sourceEntityId) {
   if (explicit) return explicit;
   const parent = stringValue(parentPath).replace(/\/$/, '');
   return `${parent}/${sourceEntityId || 'missing-source-id'}`;
-}
-
-function firstSourceValue(item, aliases) {
-  const wanted = new Set(aliases.map(normalizeKey));
-  for (const root of [item, item.sourceAttributes, item.attributes, item.enrichedAttributes]) {
-    const found = findValue(root, wanted, 0);
-    if (found) return stringValue(found);
-  }
-  return '';
-}
-
-function findValue(value, wanted, depth) {
-  if (!isPlainRecord(value) || depth > 4) return null;
-  for (const [key, child] of Object.entries(value)) if (wanted.has(normalizeKey(key))) return child;
-  for (const child of Object.values(value)) {
-    const found = findValue(child, wanted, depth + 1);
-    if (found !== null) return found;
-  }
-  return null;
 }
 
 function recordMissingIdentity(node, state) {

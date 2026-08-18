@@ -70,6 +70,10 @@ export function normalizeLafeaDocumentTableHandlers(handlers) {
   if (typeof handlers?.onApplyJson !== 'function') {
     throw new TypeError('LAFEA descriptor editor requires onApplyJson.');
   }
+  if (handlers?.batchScalarEdits === true
+    && typeof handlers?.onSetScalarBatch !== 'function') {
+    throw new TypeError('LAFEA grouped descriptor editor requires onSetScalarBatch.');
+  }
   return handlers;
 }
 

@@ -139,11 +139,10 @@ export async function installP1Observer(page, config) {
         detailedStageMeasurements() {
           return Object.entries(state.requiredObservability)
             .map(([stageId, measureName]) => {
-              const entries = performance.getEntriesByName(measureName, 'measure');
-              const durationMs = entries.reduce((sum, entry) => sum + entry.duration, 0);
+              const entry = performance.getEntriesByName(measureName, 'measure')[0];
               return {
                 stageId,
-                durationMs: entries.length ? Number(durationMs.toFixed(3)) : null,
+                durationMs: entry ? Number(entry.duration.toFixed(3)) : null,
               };
             })
             .sort((left, right) => left.stageId < right.stageId ? -1 : 1);

@@ -1,0 +1,99 @@
+name: LAFEA B01 post-cap scaled defect correction temporary
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lafea-b01-cap-defect-correction-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  governing-case:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact PR head
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Apply one post-cap scaled defect correction
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          s = p.read_text()
+          s = s.replace(
+            'export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {',
+            'export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile, allowDefectCorrection = true) {',
+            1,
+          )
+          old = """  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  originalResidualInfinity = maxAbs(exactOriginalResidual(matrix, rightHandSide, solution));\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          new = """  let solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  let exact = exactOriginalResidual(matrix, rightHandSide, solution);\n  originalResidualInfinity = maxAbs(exact);\n  if (originalResidualInfinity > convergenceTarget && allowDefectCorrection) {\n    const defectMagnitude = originalResidualInfinity;\n    const normalization = 1 / defectMagnitude;\n    const normalizedDefect = exact.map((value) =>\n      canonicalNumber(value * normalization, 'normalized equilibrated CG defect'));\n    const corrected = jacobiEquilibratedCgSolve(\n      matrix,\n      normalizedDefect,\n      profile,\n      false,\n    );\n    solution = solution.map((value, index) => canonicalNumber(\n      value + corrected.solution[index] / normalization,\n      'defect-corrected equilibrated CG displacement',\n    ));\n    exact = exactOriginalResidual(matrix, rightHandSide, solution);\n    originalResidualInfinity = maxAbs(exact);\n  }\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one equilibrated-CG post-loop block')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+      - name: Execute exact governing B01 case only
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { executeLameBbarQualificationCase } from './scripts/lib/lafea-plane-strain-bbar-lame-fixture.mjs';
+          const definition = JSON.parse(fs.readFileSync('validation/lafea-incompressible/plane-strain-bbar-v1.json', 'utf8'));
+          const meshPolicy = JSON.parse(fs.readFileSync('validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json', 'utf8'));
+          const level = definition.benchmarks.THICK_CYLINDER.meshLadder.levels.find((row) => row.levelId === 'L4');
+          const distortion = definition.distortionMatrix.find((row) => row.distortionId === 'REGULAR');
+          const run = executeLameBbarQualificationCase(definition, meshPolicy, {
+            elementType: 'T6', poissonRatio: 0.4999, level, distortion,
+          });
+          console.log(JSON.stringify({
+            case: 'T6/0.4999/L4/REGULAR',
+            state: run.result.qualification.state,
+            solverEvidence: run.loadCase.solverEvidence,
+            equilibrium: run.loadCase.equilibrium,
+          }, null, 2));
+          NODE
+
+  full-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact PR head
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Apply one post-cap scaled defect correction
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          s = p.read_text()
+          s = s.replace(
+            'export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {',
+            'export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile, allowDefectCorrection = true) {',
+            1,
+          )
+          old = """  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  originalResidualInfinity = maxAbs(exactOriginalResidual(matrix, rightHandSide, solution));\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          new = """  let solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  let exact = exactOriginalResidual(matrix, rightHandSide, solution);\n  originalResidualInfinity = maxAbs(exact);\n  if (originalResidualInfinity > convergenceTarget && allowDefectCorrection) {\n    const defectMagnitude = originalResidualInfinity;\n    const normalization = 1 / defectMagnitude;\n    const normalizedDefect = exact.map((value) =>\n      canonicalNumber(value * normalization, 'normalized equilibrated CG defect'));\n    const corrected = jacobiEquilibratedCgSolve(\n      matrix,\n      normalizedDefect,\n      profile,\n      false,\n    );\n    solution = solution.map((value, index) => canonicalNumber(\n      value + corrected.solution[index] / normalization,\n      'defect-corrected equilibrated CG displacement',\n    ));\n    exact = exactOriginalResidual(matrix, rightHandSide, solution);\n    originalResidualInfinity = maxAbs(exact);\n  }\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one equilibrated-CG post-loop block')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+      - name: Execute frozen full Lamé matrix
+        run: node scripts/lafea-plane-strain-bbar-lame-check.mjs

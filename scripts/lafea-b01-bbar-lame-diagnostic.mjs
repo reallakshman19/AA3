@@ -96,6 +96,42 @@ for (const rowDistortion of definition.distortionMatrix) {
   }
 }
 
+const l4 = benchmark.meshLadder.levels.find((row) => row.levelId === 'L4');
+if (!l4) throw new TypeError('Frozen L4 governing diagnostic level missing');
+let governingL4 = null;
+let governingL4Failure = null;
+try {
+  const run = executeLameBbarQualificationCase(definition, probeMeshPolicy, {
+    elementType: 'T6',
+    poissonRatio: 0.4999,
+    level: l4,
+    distortion,
+  });
+  governingL4 = Object.freeze({
+    elementType: 'T6',
+    levelId: l4.levelId,
+    poissonRatio: 0.4999,
+    distortionId: distortion.distortionId,
+    qualificationState: run.result.qualification.state,
+    solverEvidence: run.loadCase.solverEvidence,
+    equilibrium: run.loadCase.equilibrium,
+  });
+} catch (error) {
+  governingL4Failure = Object.freeze({
+    elementType: 'T6',
+    levelId: l4.levelId,
+    poissonRatio: 0.4999,
+    distortionId: distortion.distortionId,
+    errorName: error?.name ?? 'Error',
+    errorMessage: error instanceof Error ? error.message : String(error),
+  });
+}
+assert.equal(
+  governingL4Failure,
+  null,
+  `T6/L4/nu=0.4999/REGULAR governing solver regression: ${JSON.stringify(governingL4Failure)}`,
+);
+
 console.log(JSON.stringify({
   schema: 'lafea-b01-bbar-lame-convergence-diagnostic/v1',
   status: 'EVIDENCE_ONLY',
@@ -108,6 +144,8 @@ console.log(JSON.stringify({
   allFour: sequenceEvidence(values),
   finestThree: sequenceEvidence(values.slice(-3)),
   firstL3SolverFailure,
+  governingL4,
+  governingL4Failure,
   qualificationChanged: false,
   releaseAuthorityGranted: false,
 }, null, 2));

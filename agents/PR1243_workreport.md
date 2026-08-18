@@ -7,37 +7,34 @@ HANDOVER_READINESS: READY
 PR_RECOVERY_STATE: HEALTHY
 TAKEOVER_AUTHORITY: RESTRICTED
 
-PR_HEAD_OBSERVED: e7bd87e2a111fccc2a9d1a540dc0521f69373aea
-REPORT_BASIS_HEAD: e7bd87e2a111fccc2a9d1a540dc0521f69373aea
+PR_HEAD_OBSERVED: 4347a5eeffe113d9f7fc0160cb6c340e624dcfbf
+REPORT_BASIS_HEAD: 4347a5eeffe113d9f7fc0160cb6c340e624dcfbf
 MAIN_HEAD_LAST_CHECKED: 585a897afa0f5c9799cb68a58de00a55808062b3
 MERGE_BASE: 585a897afa0f5c9799cb68a58de00a55808062b3
 REPORT_SYNC: CURRENT
 APPENDIX_A_STATUS: NOT_REQUIRED_NO_TAKEOVER
-GROUNDING_EPOCH: GE-002
+GROUNDING_EPOCH: GE-003
 LAST_DURABLE_CHECKPOINT: 2026-08-18T02:23Z
-CURRENT_STAGE: QUALIFICATION / P0_ROLE_VERIFICATION_NOT_RUN
-CURRENT_BLOCKER: repository bytes are present, but LARGE_MODEL_4884_ENTITY explicit role verification, exact-head P0 browser/command ladder, 20-object SHA Owner acceptance, and P0 Owner acceptance are not complete
-HIGHEST_RISK: treating repository presence or historical benchmark evidence as current exact-head role verification/P0 acceptance
-EXACT_NEXT_ACTION: execute exact-current-main P0 with explicit LARGE_MODEL_4884_ENTITY=benchmarks/ATTRIBUTE-AML_ASIM-1835_managed_stage_enriched_stage.json binding, retain browser/command evidence, resolve the 20-object SHA acceptance gate, and obtain explicit Owner P0 acceptance before any P1 production salvage
+CURRENT_STAGE: QUALIFICATION / EXACT_HEAD_P0_NOT_RUN
+CURRENT_BLOCKER: governed 4,884 role verification, current 20-object SHA recapture/Owner acceptance, exact-head P0 browser/command ladder, and P0 Owner acceptance are incomplete
+HIGHEST_RISK: reusing historical fixture evidence after fixture-byte drift or treating repository presence as current exact-head authority verification
+EXACT_NEXT_ACTION: run current-main P0 with explicit 4,884 role binding; recapture the current 20-object SHA from current bytes; retain browser/command evidence; obtain explicit Owner P0 acceptance; only then re-ground P1 production candidates
 ```
 
 `TAKEOVER_AUTHORITY=RESTRICTED` means this PR is an evidence/qualification vehicle only. It must not acquire P1 production changes. A future incoming agent taking over this engineering-critical PR begins READ_ONLY and completes Appendix A before technical mutation.
 
-## Handover in 60 Seconds
+## Handover in 60 seconds
 
-- PR #1243 qualifies the already-merged performance stack from #1227, #1229, #1230, #1232, #1237, #1240, #1241 and #1242.
-- It changes no production or workflow file.
-- Live production `main` at GE-002: `585a897afa0f5c9799cb68a58de00a55808062b3`.
-- #1244/#1245 are `SALVAGE_PARTIAL / AUTHORITY_HOLD`; do not absorb their production diffs here.
-- Current repository **does contain** `benchmarks/ATTRIBUTE-AML_ASIM-1835_managed_stage_enriched_stage.json`.
-- Git tree independently records that blob as `13442af26a1415b70849f5daaca1766a38ac355c`, size **25,219,174 bytes**.
-- `scripts/non-fea-baseline/runner-options.mjs` includes that repository path in the default execution inventory.
-- The governed authority manifest intentionally still classifies `LARGE_MODEL_4884_ENTITY` as `EXTERNAL_CONTENT_ADDRESSED_FILE`, `defaultPath:null`; therefore repository presence is **not** role verification.
-- Accepted role SHA remains `88e62782772d743e9236d13775476826f9649ab06d3161de35dc500baa85a9c6`; accepted identity remains 4,884 entities / 3,277 pipes / 1,331 supports.
-- `resolveNonFeaFixtureRoleBindings()` will compute/compare the actual executed fixture SHA and identity only after an explicit `--fixture-role` binding.
-- P0 remains `P0_ACCEPTED=false`; P1 production remains unauthorized.
+- #1243 is qualification-only for the already-merged performance stack from #1227, #1229, #1230, #1232, #1237, #1240, #1241 and #1242.
+- Current production `main`: `585a897afa0f5c9799cb68a58de00a55808062b3`.
+- Current PR is draft, mergeable and contains only this report plus `scripts/performance-stack-exact-head-qualification.mjs`.
+- #1244 and #1245 are `SALVAGE_PARTIAL / AUTHORITY_HOLD`; do not absorb their production diffs.
+- P0 remains unaccepted; P1 production remains unauthorized.
+- The 4,884 source bytes are physically present in the repository, but governed role SHA/identity verification is still `NOT_RUN`.
+- The current 20-object fixture is **not byte-identical** to the prior P0-executed fixture; the historical captured SHA-256 cannot be reused.
+- Next engineering step is executable P0 evidence, not another optimization.
 
-## Identity and classification
+## Classification
 
 ```text
 WORK_INTENT: INVESTIGATE / VALIDATE
@@ -48,35 +45,29 @@ EXECUTION_MODE: MANUAL
 MERGE_AUTHORITY: OWNER_ONLY
 ```
 
-- Repository: `reallaksh19/Advanced_Analysis`
-- PR: #1243
-- Branch: `agent/performance-stack-qualification-main68efa`
-- Base: `main`
-- Production qualification target: `585a897afa0f5c9799cb68a58de00a55808062b3`
-- Original merged performance-stack head: `68efa98c62537f0fdad127d0ccdd45fb6e8a328f`
-- PR state before GE-002 metadata commit: OPEN / DRAFT / mergeable
+## GE-003 live grounding
 
-## GE-002 — live repository grounding
-
-Live GitHub re-grounding established:
+Live GitHub evidence at the start of GE-003:
 
 ```text
 main head:       585a897afa0f5c9799cb68a58de00a55808062b3
+PR head:         4347a5eeffe113d9f7fc0160cb6c340e624dcfbf
 merge base:      585a897afa0f5c9799cb68a58de00a55808062b3
-branch drift:    behind_by=0 before GE-002 metadata commit
+behind_by:       0
+changed files:   2, qualification-only
 reviews:         0
 review threads:  0
-commit statuses: 0
-workflow runs:   0
+commit statuses: 0 -> NOT_RUN
+workflow runs:   0 -> NOT_RUN
 ```
 
-Repository coordination registries are absent on current `main` (`agents/MASTER_INDEX.md`, `agents/status/`, `agents/claims/`). Live PR state/diffs are therefore the mutable coordination authority.
+Repository coordination registries are absent on current main (`agents/MASTER_INDEX.md`, `agents/status/`, `agents/claims/`); live PR state/diffs are therefore the mutable coordination authority.
 
-Open PR #1246 was inspected: no exact-file or engineering-authority overlap with this qualification-only PR. Classification: `SAFE`.
+Open PR #1246 was inspected and has no exact-file or engineering-authority overlap with this qualification-only work. Coordination classification: `SAFE`.
 
 ## Source-task authority
 
-Controlling source task: Issue #541. Merged P0 PR #544 and Issue #541 retain:
+Controlling work pack: Issue #541. Merged P0 PR #544 and Issue #541 retain:
 
 ```text
 P0_ACCEPTED: false
@@ -84,32 +75,30 @@ P1_QUALIFICATION_STATUS: BLOCKED
 P1_PRODUCTION_FIX_AUTHORIZED: false
 ```
 
-No later `P0_ACCEPTED=true` or Owner production override was found during GE-002 reconciliation.
+No later `P0_ACCEPTED=true` or explicit Owner production override was found during re-grounding.
 
-This does not block qualification/evidence work in #1243. It does block P1 production changes, ready/merge promotion of #1244/#1245, and selection of another optimization.
+This does not block qualification/evidence work in #1243. It does block production continuation/merge of #1244/#1245 and selection of another optimization.
 
-## Large-model fixture custody — corrected state
+## 4,884 large-model custody
 
-### Physical repository custody — PASS
-
-Current `main` contains:
+Current main physically contains:
 
 ```text
 benchmarks/ATTRIBUTE-AML_ASIM-1835_managed_stage_enriched_stage.json
 ```
 
-Git object custody:
+Git-tree custody:
 
 ```text
 blob SHA-1: 13442af26a1415b70849f5daaca1766a38ac355c
 byteLength: 25219174
 ```
 
-Historical accepted real-project authority:
+Accepted role authority:
 
 ```text
 schema: inputxml-managed-stage/v1
-accepted SHA-256: 88e62782772d743e9236d13775476826f9649ab06d3161de35dc500baa85a9c6
+expected SHA-256: 88e62782772d743e9236d13775476826f9649ab06d3161de35dc500baa85a9c6
 rawRootCount: 276
 rawNodeCount: 4884
 rawSupportCount: 1331
@@ -118,56 +107,71 @@ normalizedSupportCount: 1331
 normalizedComponentCount: 276
 ```
 
-Current runner inventory explicitly includes the repository path.
+The authority manifest intentionally retains `LARGE_MODEL_4884_ENTITY` as `EXTERNAL_CONTENT_ADDRESSED_FILE` with `defaultPath:null`. Therefore physical repository custody is not sufficient.
 
-### Governed role verification — NOT_RUN
-
-`fixture-authority-manifest.mjs` intentionally retains:
+Current classification:
 
 ```text
-role: LARGE_MODEL_4884_ENTITY
-sourceKind: EXTERNAL_CONTENT_ADDRESSED_FILE
-defaultPath: null
-expectedSourceSha256: 88e627...
-expectedIdentity: 4884 / 3277 / 1331
+PHYSICAL_4884_FIXTURE_CUSTODY: PASS
+4884_ROLE_SHA256_VERIFICATION_CURRENT_HEAD: NOT_RUN
+4884_ROLE_IDENTITY_VERIFICATION_CURRENT_HEAD: NOT_RUN
 ```
 
-The accepted P0 audit requires:
+The existing P0 runner must explicitly execute:
 
 ```text
---fixture-role LARGE_MODEL_4884_ENTITY=<repository-relative-path>
+--fixture-role LARGE_MODEL_4884_ENTITY=benchmarks/ATTRIBUTE-AML_ASIM-1835_managed_stage_enriched_stage.json
 ```
 
-The role resolver then requires all of the following before `VERIFIED`:
+and only accept the role when the runner reports `VERIFIED` after computing actual SHA-256 and production identity. Do not weaken the manifest or hand-edit the seed report.
 
-1. explicit path exists;
-2. bound fixture was actually executed;
-3. computed `sourceSha256` equals accepted SHA-256;
-4. observed production identity equals accepted identity.
+## 20-object fixture authority — GE-003 drift finding
 
-Therefore the accurate current classification is:
+Path:
 
 ```text
-PHYSICAL_FIXTURE_CUSTODY: PASS
-ROLE_BINDING_CONFIGURED_IN_SEED_REPORT: NO
-ROLE_SHA256_VERIFICATION_ON_CURRENT_HEAD: NOT_RUN
-ROLE_IDENTITY_VERIFICATION_ON_CURRENT_HEAD: NOT_RUN
+public/fixtures/topology-edit-20-element-demo.staged.json
 ```
 
-No substitute fixture is permitted.
+Historical exact-head P0 execution:
 
-## Seed-report reconciliation
+```text
+head: 2d5edb875c3138d46858c6df8f93b3650984e0fe
+workflow run: 30889413136
+historical Git blob SHA-1: c0b00d446eb8168d8f27250e9874dd21c9363268
+captured historical SHA-256: 45ef8f2140cdc43cc1b630229f0d49df87978e90dadc8d715ec40ca033493ec0
+historical identity: 20 entities / 15 pipes / 5 supports
+historical status: CAPTURED_PENDING_OWNER_ACCEPTANCE
+```
 
-`reports/non-fea-current-main-baseline.json` still records the large role as `UNBOUND`, and `reports/p1-current-main-qualification.json` has `fixturePath:null`. Those are seed/pre-execution reports and are stale relative to physical repository custody, but they must **not** be hand-edited into a passing state. The authoritative way to replace them is execution of the existing fail-closed P0/P1 evidence machinery.
+Current main:
 
-## Qualification runner
+```text
+current Git blob SHA-1: 86ed87db0f18d7cca1a6d05e9b1a06cb556c0bcf
+```
 
-`scripts/performance-stack-exact-head-qualification.mjs` remains qualification-only. At GE-002 its allowed-change set was tightened to exactly:
+The Git blob identities differ, proving the bytes differ. Current source includes additional embedded XYZ-branch scenario data that was absent from the historical blob.
 
-- `agents/PR1243_workreport.md`;
-- `scripts/performance-stack-exact-head-qualification.mjs`.
+Therefore:
 
-The deleted pre-PR WIP path was removed from the allowlist, so it cannot silently reappear above the production target.
+```text
+HISTORICAL_20_OBJECT_SHA256: OBSOLETE_FOR_CURRENT_MAIN
+CURRENT_20_OBJECT_SHA256: NOT_RUN / MUST_RECAPTURE
+CURRENT_20_OBJECT_OWNER_ACCEPTANCE: NOT_SATISFIED
+```
+
+The old `45ef8f...` value must not be accepted for current main. The next current-head P0 run must recompute the SHA-256 from current bytes and present that newly captured value for explicit Owner acceptance.
+
+## Qualification runner custody
+
+`scripts/performance-stack-exact-head-qualification.mjs` is fail-closed. Its current allowlist contains exactly:
+
+```text
+agents/PR1243_workreport.md
+scripts/performance-stack-exact-head-qualification.mjs
+```
+
+Any production/workflow/non-qualification path above the target SHA fails the runner before qualification.
 
 Runner classifications remain distinct:
 
@@ -180,36 +184,36 @@ NOT_RUN
 
 `NOT_RUN` never counts as PASS.
 
-## Targeted qualification evidence already obtained
+## Targeted evidence already obtained
 
 | Gate | Status | Observation | Oracle | Limitation |
 |---|---|---|---|---|
 | Production target / merge-base custody | PASS | REMOTE_EXECUTION | NONE | live GitHub |
 | Qualification-only diff | PASS | REMOTE_EXECUTION | NONE | no production/workflow paths |
 | Reviews/threads | PASS | REMOTE_EXECUTION | NONE | none |
-| Commit CI/workflows | NOT_RUN | REMOTE_EXECUTION | NONE | no statuses/runs |
+| CI/workflows | NOT_RUN | REMOTE_EXECUTION | NONE | zero statuses/runs |
 | Support-load EMPTY/OPE/HYD IEEE-754 hand arithmetic | PASS | LOCAL_EXECUTION | ANALYTICAL | targeted |
 | Staged identity parity | PASS 5/5 | LOCAL_EXECUTION | INDEPENDENT_REPRODUCTION | targeted |
-| Evidence alias cache | PASS 3/3 | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | targeted |
+| Evidence-alias cache | PASS 3/3 | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | targeted |
 | Immutable snapshot custody | PASS | SOURCE_INSPECTION | AUTHORITATIVE_REFERENCE | runtime test NOT_RUN |
 | LoadCalc binding currentness | PASS | SOURCE_INSPECTION | AUTHORITATIVE_REFERENCE | runtime fixture NOT_RUN |
 | Dependency invalidation | PASS | SOURCE_INSPECTION | AUTHORITATIVE_REFERENCE | runtime fixture NOT_RUN |
 | Support-load execution index/base mass | PASS | SOURCE_INSPECTION + LOCAL_EXECUTION | ANALYTICAL | integrated fixture NOT_RUN |
-| Repository 4,884 blob presence/size | PASS | REMOTE_EXECUTION | AUTHORITATIVE_REFERENCE | SHA-256 role verification still NOT_RUN |
-| LARGE_MODEL_4884_ENTITY explicit role verification | NOT_RUN | NOT_OBSERVED | AUTHORITATIVE_REFERENCE | execute P0 with explicit binding |
-| Full exact-head P0 command ladder | NOT_RUN | NOT_OBSERVED | AUTHORITATIVE_REFERENCE | exact checkout required |
-| Exact-head P0 browser ledger | NOT_RUN | NOT_OBSERVED | AUTHORITATIVE_REFERENCE | browser execution required |
-| 20-object SHA Owner acceptance | FAIL / NOT SATISFIED | ARTIFACT_INSPECTION | AUTHORITATIVE_REFERENCE | P0 audit gate remains open |
-| P0 Owner acceptance | FAIL / NOT SATISFIED | ARTIFACT_INSPECTION | AUTHORITATIVE_REFERENCE | Issue #541/#544 |
-| P1 production authorization | FAIL / NOT AUTHORIZED | ARTIFACT_INSPECTION | AUTHORITATIVE_REFERENCE | blocked until P0 Owner acceptance |
+| Physical 4,884 repository blob custody | PASS | REMOTE_EXECUTION | AUTHORITATIVE_REFERENCE | governed SHA/identity verification NOT_RUN |
+| 4,884 governed role verification | NOT_RUN | NOT_OBSERVED | AUTHORITATIVE_REFERENCE | execute exact-head P0 explicit binding |
+| Historical 20-object SHA capture | PASS HISTORICAL | WORKFLOW_ARTIFACT_INSPECTION | AUTHORITATIVE_REFERENCE | obsolete for current bytes |
+| Current 20-object SHA capture | NOT_RUN | NOT_OBSERVED | AUTHORITATIVE_REFERENCE | fixture changed after historical P0 |
+| Full exact-head P0 browser/command ladder | NOT_RUN | NOT_OBSERVED | AUTHORITATIVE_REFERENCE | execution-capable checkout required |
+| P0 Owner acceptance | FAIL / NOT SATISFIED | ARTIFACT_INSPECTION | AUTHORITATIVE_REFERENCE | Issue #541 / PR #544 |
+| P1 production authorization | FAIL / NOT AUTHORIZED | ARTIFACT_INSPECTION | AUTHORITATIVE_REFERENCE | blocked until P0 acceptance |
 
-`FAIL / NOT SATISFIED` above describes authority gates, not discovered product numerical failures.
+The authority-gate failures above are governance states, not discovered numerical product failures.
 
 No `NOT_RUN` is represented as PASS.
 
-## Previous targeted numerical evidence
+## Targeted numerical evidence retained
 
-Support-load analytical check retained:
+Support-load hand arithmetic:
 
 ```text
 inside diameter = 154.08 mm
@@ -220,26 +224,26 @@ OPE              = 229.080257741813 kg
 HYD              = 242.206010945431 kg
 ```
 
-For EMPTY/OPE/HYD, old/new mass values were IEEE-754 identical via `Object.is`.
+Old/new EMPTY/OPE/HYD mass values were IEEE-754 identical via `Object.is`.
 
 No engineering/numerical mismatch has been observed in the executed/source-qualified checks. That is not equivalent to full application qualification.
 
 ## Active items
 
-- `ISS-001` — LARGE_MODEL_4884_ENTITY explicit role verification on current head is not executed. **OPEN / BLOCKING P0**.
-- `ISS-002` — exact-head P0 browser + command ladder are not executed in this environment. **OPEN / BLOCKING**.
-- `ISS-003` — 20-object fixture SHA awaits explicit Owner acceptance/freeze. **OPEN / BLOCKING**.
-- `ISS-004` — P0 completed report has not been explicitly accepted by Owner. **OPEN / BLOCKING P1 PRODUCTION**.
-- `RISK-001` — confusing physical repository custody with content-addressed role verification. **OPEN / CONTROLLED**.
-- `RISK-002` — future main drift invalidates the exact-head browser/build basis. **OPEN**.
+- `ISS-001` — 4,884 explicit current-head role verification is NOT_RUN. **OPEN / BLOCKING P0**.
+- `ISS-002` — current 20-object SHA must be recaptured after fixture-byte drift. **OPEN / BLOCKING P0**.
+- `ISS-003` — current 20-object captured SHA requires explicit Owner acceptance. **OPEN / BLOCKING P0**.
+- `ISS-004` — exact-head P0 browser/command ladder is NOT_RUN. **OPEN / BLOCKING**.
+- `ISS-005` — completed exact-head P0 report has not been explicitly accepted by Owner. **OPEN / BLOCKING P1 PRODUCTION**.
+- `RISK-001` — reusing historical fixture evidence after byte drift. **OPEN / CONTROLLED**.
+- `RISK-002` — treating physical repository custody as governed content-addressed verification. **OPEN / CONTROLLED**.
 - `DEC-001` — #1243 stays qualification-only. **ACTIVE**.
-- `DEC-002` — no substitute fixture, manifest weakening, tolerance relaxation, or manual seed-report promotion. **ACTIVE**.
-- `DEC-003` — operation-count savings do not authorize another optimization without current wall-clock evidence. **ACTIVE**.
-- `QST-001` — explicit Owner acceptance is required after executable P0 evidence exists. **OPEN**.
+- `DEC-002` — no substitute fixture, authority weakening, seed-report promotion, or historical 20-object SHA reuse. **ACTIVE**.
+- `DEC-003` — operation-count reductions do not authorize another optimization without current wall-clock evidence. **ACTIVE**.
 
 ## Falsifier
 
-Quarantine/recommend revert of the merged performance stack if exact-head execution changes any protected source/dataset identity, normalized engineering value/evidence source, authorized empirical binding, stale/current transition, topology invalidation semantics, mass/force/allocation, support reaction/contributor order, CoG/equilibrium, blocker/readiness content/order, output/evidence identity, or browser render-owner/page-error contract.
+Quarantine/recommend revert of the merged performance stack if exact-head execution changes protected source/dataset identity, normalized engineering value/evidence source, authorized empirical binding, stale/current transition, topology invalidation semantics, mass/force/allocation, support reaction/contributor order, CoG/equilibrium, blocker/readiness content/order, output/evidence identity, or browser render-owner/page-error contract.
 
 ## Current disposition
 
@@ -247,6 +251,7 @@ Quarantine/recommend revert of the merged performance stack if exact-head execut
 PARTIAL_TARGETED_QUALIFICATION_PASS
 PHYSICAL_4884_FIXTURE_CUSTODY_PASS
 4884_ROLE_VERIFICATION_NOT_RUN
+CURRENT_20_OBJECT_SHA_RECAPTURE_REQUIRED
 FULL_EXACT_HEAD_P0_NOT_RUN
 P0_ACCEPTANCE_NOT_SATISFIED
 P1_PRODUCTION_FIX_NOT_AUTHORIZED
@@ -254,18 +259,17 @@ P1_PRODUCTION_FIX_NOT_AUTHORIZED
 
 ## EXACT_NEXT_ACTION
 
-Run the **existing production P0 machinery** from an execution-capable clean checkout of the exact current `main` head; do not change the authority manifest.
+Run the existing production P0 machinery from a clean execution-capable checkout of the exact current main. Do not change the authority manifest.
 
-Use the repository-bound large fixture explicitly:
+Bind the 4,884 source explicitly:
 
 ```text
-LARGE_FIXTURE=benchmarks/ATTRIBUTE-AML_ASIM-1835_managed_stage_enriched_stage.json
-EXPECTED_SHA256=88e62782772d743e9236d13775476826f9649ab06d3161de35dc500baa85a9c6
+--fixture-role LARGE_MODEL_4884_ENTITY=benchmarks/ATTRIBUTE-AML_ASIM-1835_managed_stage_enriched_stage.json
 ```
 
-First generate exact-head P0 browser evidence with the existing `e2e/non-fea-p0-current-main-baseline.spec.js`, binding the same execution ID, exact head SHA, fixture path and accepted SHA-256.
+Use the current repository 20-object fixture unchanged and let the P0 runner recapture its **current** SHA-256. The old historical SHA-256 `45ef8f2140cdc43cc1b630229f0d49df87978e90dadc8d715ec40ca033493ec0` is not valid for current main.
 
-Then execute:
+Generate exact-head P0 browser evidence with the same execution ID/head/fixture authority, then run:
 
 ```bash
 node scripts/run-non-fea-current-main-baseline.mjs \
@@ -277,6 +281,4 @@ node scripts/run-non-fea-current-main-baseline.mjs \
   --fail-on-gate
 ```
 
-Accept `LARGE_MODEL_4884_ENTITY` only if the runner itself reports `VERIFIED`, thereby proving computed SHA-256 and production identity. Resolve the separately retained 20-object SHA acceptance gate and all command/browser failures without weakening the oracle.
-
-Only after the completed exact-head P0 report is explicitly accepted by the Owner may P1 production work resume. Re-ground `main` before salvaging/reconstructing #1244/#1245 or choosing another optimization.
+Accept the 4,884 role only if the runner reports `VERIFIED`. Present the newly captured current 20-object SHA for explicit Owner acceptance. Only after the completed current-head P0 report is explicitly accepted by the Owner may P1 production work resume. Re-ground current main before salvaging/reconstructing #1244/#1245 or choosing another optimization.

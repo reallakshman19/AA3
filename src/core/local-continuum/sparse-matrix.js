@@ -58,9 +58,7 @@ export function sparseMatrixVector(matrix, vector) {
 
 export function sparseMatrixVectorRaw(matrix, vector) {
   requireCsr(matrix);
-  if (!Array.isArray(vector) || vector.length !== matrix.size) {
-    throw new TypeError('Sparse matrix-vector dimensions differ.');
-  }
+  requireVectorDimensions(matrix, vector);
   const output = Array(matrix.size).fill(0);
   for (let row = 0; row < matrix.size; row += 1) {
     let value = 0;
@@ -69,6 +67,27 @@ export function sparseMatrixVectorRaw(matrix, vector) {
       value += matrix.values[offset] * vector[matrix.columnIndices[offset]];
     }
     output[row] = value;
+  }
+  return output;
+}
+
+export function sparseMatrixVectorCompensatedRaw(matrix, vector) {
+  requireCsr(matrix);
+  requireVectorDimensions(matrix, vector);
+  const output = Array(matrix.size).fill(0);
+  for (let row = 0; row < matrix.size; row += 1) {
+    let sum = 0;
+    let compensation = 0;
+    for (let offset = matrix.rowPointers[row];
+      offset < matrix.rowPointers[row + 1]; offset += 1) {
+      const term = matrix.values[offset] * vector[matrix.columnIndices[offset]];
+      const next = sum + term;
+      compensation += Math.abs(sum) >= Math.abs(term)
+        ? (sum - next) + term
+        : (term - next) + sum;
+      sum = next;
+    }
+    output[row] = sum + compensation;
   }
   return output;
 }
@@ -141,6 +160,12 @@ function sparseValueAt(matrix, row, column) {
     else high = middle - 1;
   }
   return 0;
+}
+
+function requireVectorDimensions(matrix, vector) {
+  if (!Array.isArray(vector) || vector.length !== matrix.size) {
+    throw new TypeError('Sparse matrix-vector dimensions differ.');
+  }
 }
 
 function requireCsr(matrix) {

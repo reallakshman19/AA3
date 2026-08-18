@@ -37,6 +37,7 @@ const PRESENTATIONS = Object.freeze({
   EXACT_HEAD_QUALIFICATION_REQUIRED: Object.freeze({ label: 'External qualification required', tone: 'warning' }),
   NOT_GATED: Object.freeze({ label: 'Informational only', tone: 'neutral' }),
   NOT_RETAINED: Object.freeze({ label: 'Not generated', tone: 'neutral' }),
+  'Not retained': Object.freeze({ label: 'Not generated', tone: 'neutral' }),
 });
 
 export function lafeaUiStatusPresentation(canonicalStatus) {

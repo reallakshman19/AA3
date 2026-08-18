@@ -29,6 +29,12 @@ const CONFIGURED = Boolean(
   && CONFIG.fixturePath
   && /^[0-9a-f]{64}$/u.test(CONFIG.sourceSha256),
 );
+const REQUIRED_INGEST_STAGES = Object.freeze([
+  'SJSON_FILE_READ',
+  'SJSON_DECODE',
+  'SJSON_PARSE',
+  'SJSON_SHA256',
+]);
 
 test.skip(!CONFIGURED, 'P0 exact-head fixture and execution variables are required.');
 
@@ -82,6 +88,7 @@ test('writes exact-head P0 browser evidence', async ({ page, browserName }) => {
     const timingModule = await import('/src/workspace/non-fea-p0-observability.js');
     return {
       stageDurations: timingModule.readNonFeaP0StageDurations(),
+      operationCounts: timingModule.readNonFeaP0OperationCounts(),
       renderOwnerCount: globalThis.__P1_Q0_OBSERVER__.renderOwnerCount(),
       longTaskSupport: Boolean(globalThis.__NON_FEA_P0_LONG_TASK_OBSERVER__),
       longTasks: [...(globalThis.__NON_FEA_P0_LONG_TASKS__ || [])],
@@ -94,10 +101,16 @@ test('writes exact-head P0 browser evidence', async ({ page, browserName }) => {
     };
   });
 
-  ['THREE_MATERIALIZATION', 'GPU_SCENE_INSTALL', 'FIT'].forEach((stageId) => {
-    expect(runtime.stageDurations[stageId], `${stageId} must be measured`)
-      .toBeGreaterThanOrEqual(0);
+  ['THREE_MATERIALIZATION', 'GPU_SCENE_INSTALL', 'FIT', ...REQUIRED_INGEST_STAGES]
+    .forEach((stageId) => {
+      expect(runtime.stageDurations[stageId], `${stageId} must be measured`)
+        .toBeGreaterThanOrEqual(0);
+    });
+  REQUIRED_INGEST_STAGES.forEach((stageId) => {
+    expect(runtime.operationCounts[stageId], `${stageId} must execute exactly once`)
+      .toBe(1);
   });
+
   const evidence = {
     schema: 'non-fea-browser-baseline/v1',
     executionId: CONFIG.executionId,

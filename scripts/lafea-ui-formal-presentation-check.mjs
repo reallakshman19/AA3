@@ -90,7 +90,16 @@ assert.match(renderer, /dataset\.workflowArea/u);
 assert.match(renderer, /button\.dataset\.status = step\.status/u);
 assert.match(renderer, /lafea-guided-workflow__technical/u);
 
-console.log('LAFEA formal UI status and four-area presentation check: PASS');
+const stylesPath = fileURLToPath(new URL('../src/workspace/lafea-guided-workbench-styles.js', import.meta.url));
+const styles = readFileSync(stylesPath, 'utf8');
+assert.match(styles, /Primary-action hierarchy: one dominant contextual CTA/u);
+assert.match(styles, /\.lafea-next-action-banner\{/u);
+assert.match(styles, /\.lafea-next-action-banner__button\{/u);
+assert.match(styles, /\.lafea-engineering-overview__run,\[data-lafea-slot="toolbar"\] \[data-role="lafea-run"\]/u);
+assert.match(styles, /background:#0b1628!important/u);
+assert.equal(styles.includes('linear-gradient'), false, 'guided action hierarchy must not add decorative gradients');
+
+console.log('LAFEA formal UI status, four-area presentation, and action hierarchy check: PASS');
 
 function step(stepId, status, reasons = []) {
   return Object.freeze({

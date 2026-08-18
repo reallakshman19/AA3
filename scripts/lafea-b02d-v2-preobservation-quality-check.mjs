@@ -21,11 +21,16 @@ const definition = JSON.parse(fs.readFileSync(
 const policy = lafeaB02dProbeStablePolarPolicyV2();
 assert.equal(definition.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
 assert.equal(definition.productionOutputUsedToChooseDefinition, false);
+assert.equal(definition.v2DesignBasis.responseResultsUsedToSelectV2, false);
 assert.equal(policy.policyId, LAFEA_B02D_PROBE_STABLE_POLAR_POLICY_ID_V2);
 assert.equal(policy.circumferentialAxis.backgroundBaseDivisions, 20);
 assert.equal(definition.fixedProbeMeshPolicy.circumferentialAxis.backgroundBaseDivisions, 20);
+assert.equal(policy.circumferentialAxis.windowClearanceFraction, 0.32);
+assert.equal(definition.fixedProbeMeshPolicy.circumferentialAxis.windowClearanceFraction, 0.32);
 assert.equal(policy.radialAxis.backgroundBaseDivisions, 6);
+assert.equal(policy.radialAxis.windowClearanceFraction, 0.3);
 assert.deepEqual(policy.levels.map((row) => row.h), [40, 20, 10, 5]);
+assert.equal(definition.v2DesignBasis.preObservationTrials.at(-1).status, 'QUALIFIED_PRE_OBSERVATION');
 
 const records = [];
 for (const family of ['T3', 'T6', 'Q8']) {
@@ -80,9 +85,7 @@ for (const family of ['T3', 'T6', 'Q8']) {
         }),
     };
     records.push(record);
-    if (quality.worstStatus === 'BLOCK') {
-      throw new Error(`B02D_V2_PREOBS_QUALITY_BLOCK:${JSON.stringify(record)}`);
-    }
+    assert.notEqual(quality.worstStatus, 'BLOCK', `B02D_V2_PREOBS_QUALITY_BLOCK:${JSON.stringify(record)}`);
     assert.equal(qualifyLafeaMeshTopologyV3(first.mesh).qualification, 'PASS', `${family}/${level.levelId} topology`);
     if (family !== 'T3') {
       assert.equal(qualifyLafeaHighOrderJacobiansV3(first.mesh).qualification, 'PASS', `${family}/${level.levelId} high-order Jacobian`);
@@ -90,8 +93,11 @@ for (const family of ['T3', 'T6', 'Q8']) {
   }
 }
 const t3l1 = records.find((row) => row.family === 'T3' && row.levelId === 'L1');
+const t3l2 = records.find((row) => row.family === 'T3' && row.levelId === 'L2');
 assert.ok(t3l1.minimumScaledJacobian > 0.2, JSON.stringify(t3l1));
 assert.ok(t3l1.maximumAspectRatio < 5, JSON.stringify(t3l1));
+assert.ok(t3l2.minimumScaledJacobian > 0.2, JSON.stringify(t3l2));
+assert.ok(t3l2.maximumAspectRatio < 5, JSON.stringify(t3l2));
 
 console.log(JSON.stringify({
   schema: 'lafea-b02d-v2-preobservation-quality-qualification/v1',

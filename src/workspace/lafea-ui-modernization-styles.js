@@ -6,6 +6,84 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   flex:0 0 auto;
   color:#9fb8cf;
 }
+.lafea-workbench{
+  gap:10px!important;
+  padding:14px 16px 20px!important;
+}
+.lafea-workbench__header{
+  padding:2px 2px 12px;
+  border-bottom:1px solid #223247;
+}
+.lafea-workbench__header h1{
+  margin:3px 0 4px!important;
+  font-size:22px;
+  letter-spacing:-.01em;
+}
+.lafea-workbench__status{
+  border-radius:5px!important;
+  padding:5px 8px!important;
+  font-size:11px;
+  letter-spacing:.025em;
+}
+[data-lafea-slot="navigation"]{
+  min-width:0;
+  overflow:hidden;
+}
+.lafea-workbench__stages{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  gap:4px!important;
+  min-width:0;
+  overflow-x:auto;
+  padding:2px 0 4px;
+  scrollbar-width:thin;
+}
+.lafea-workbench__stages button{
+  flex:0 0 auto;
+  min-height:32px;
+  padding:6px 9px!important;
+  border-radius:4px!important;
+  background:#091322!important;
+  border-color:#26364d!important;
+  color:#9fb0c5!important;
+  font-size:11px;
+  font-weight:650;
+}
+.lafea-workbench__stages button[aria-current="step"]{
+  border-color:#0284c7!important;
+  background:#0b1d2f!important;
+  color:#e0f2fe!important;
+  box-shadow:inset 0 -2px 0 #38bdf8;
+}
+[data-lafea-slot="toolbar"]{
+  padding:7px 8px;
+  border:1px solid #223247;
+  border-radius:6px;
+  background:#07111c;
+}
+[data-lafea-slot="toolbar"] .lafea-workbench__toolbar{
+  gap:6px!important;
+}
+[data-lafea-slot="toolbar"] button,
+[data-lafea-slot="toolbar"] label,
+[data-lafea-slot="toolbar"] input{
+  font-size:11px;
+}
+.lafea-engineering-overview{
+  gap:11px!important;
+  padding:13px!important;
+  border-color:#26384b!important;
+  border-radius:8px!important;
+  background:#0a1422!important;
+  box-shadow:none!important;
+}
+.lafea-engineering-overview__heading h2{
+  font-size:18px!important;
+}
+.lafea-engineering-overview__card{
+  border-radius:6px!important;
+  background:#08121f!important;
+}
 .lafea-guided-shell{
   grid-template-columns:minmax(0,1fr)!important;
   gap:12px!important;
@@ -126,7 +204,7 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
 }
 .lafea-engineering-evidence-drawer{
   border:1px solid rgba(148,163,184,.22);
-  border-radius:12px;
+  border-radius:8px;
   background:rgba(15,23,42,.58);
   overflow:hidden;
 }

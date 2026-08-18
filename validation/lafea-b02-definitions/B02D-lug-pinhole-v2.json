@@ -26,9 +26,13 @@
     "v1ObservedScaledJacobian":0.169110,
     "v1ObservedMaximumAspectRatio":5.911,
     "unchangedScaledJacobianBlockFloor":0.2,
-    "changedDesignVariable":"circumferentialAxis.backgroundBaseDivisions",
-    "v1Value":16,
-    "v2Value":20,
+    "backgroundBaseDivisions":{"v1":16,"v2":20},
+    "circumferentialWindowClearanceFraction":{"v1":0.3,"v2":0.32},
+    "preObservationTrials":[
+      {"candidate":"20_DIV_CLEARANCE_0.30","status":"REJECTED","reason":"T3_L2_QUALITY_BLOCK","minimumScaledJacobian":0.19274592287046324,"minimumAngleDegrees":11.113076670407807,"maximumAspectRatio":5.185484178777288},
+      {"candidate":"24_DIV_CLEARANCE_0.30","status":"REJECTED","reason":"GLOBAL_DIVISIONS_NOT_CONTROLLING","minimumScaledJacobian":0.19274592287046324,"minimumAngleDegrees":11.113076670407807,"maximumAspectRatio":5.185484178777288},
+      {"candidate":"20_DIV_CLEARANCE_0.32","status":"QUALIFIED_PRE_OBSERVATION","reason":"BOUND_ANCHOR_WINDOW_REMOVES_T3_SLIVER_WITHOUT_THRESHOLD_CHANGE","minimumScaledJacobian":0.2048815995989261,"minimumAngleDegrees":11.822568091471519,"maximumAspectRatio":4.877985269275712}
+    ],
     "responseResultsUsedToSelectV2":false
   },
   "globalResponseLadder": {
@@ -53,7 +57,7 @@
     "refinementRatio":2,
     "levelCount":4,
     "radialAxis":{"anchors":[27,33,47,73,87],"protectedBreakpoints":[60],"targetPhase":0.35,"backgroundBaseDivisions":6,"windowClearanceFraction":0.3},
-    "circumferentialAxis":{"anchorsDegrees":[17,67,83],"protectedBreakpointsDegrees":[90,180,270],"targetPhase":0.65,"backgroundBaseDivisions":20,"windowClearanceFraction":0.3},
+    "circumferentialAxis":{"anchorsDegrees":[17,67,83],"protectedBreakpointsDegrees":[90,180,270],"targetPhase":0.65,"backgroundBaseDivisions":20,"windowClearanceFraction":0.32},
     "physicalBoundaryMidsidePolicy":"HOLE_AND_OUTER_CIRCULAR_MIDSIDES_PROJECTED_TO_ANALYTIC_ARCS",
     "anchorCellWidthContraction":"EXACT_FACTOR_TWO_PER_LEVEL",
     "minimumParametricDiagonalSeparation":0.3,

@@ -1,0 +1,72 @@
+name: LAFEA B01 compensated sparse assembly temporary
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lafea-b01-compensated-assembly-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compensated-assembly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact PR head
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Apply target-only reliable update and compensated CSR assembly
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          s = p.read_text()
+          old = """    if (iterations % 100 === 0 || maxAbs(residual) <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n    }\n"""
+          new = """    const recursiveResidualInfinity = maxAbs(residual);\n    if (iterations % 100 === 0 || recursiveResidualInfinity <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n      if (recursiveResidualInfinity <= convergenceTarget) {\n        residual = exact.map((value, index) => value * inverseSqrtDiagonal[index]);\n        scaledResidualCompensation.fill(0);\n        direction = [...residual];\n        rho = compensatedDot(residual, residual);\n        if (!(rho > 0) || !Number.isFinite(rho)) {\n          throw solverError('JACOBI_EQUILIBRATED_CG_RELIABLE_UPDATE_INVALID', rho);\n        }\n        continue;\n      }\n    }\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one equilibrated-CG exact-residual check block')
+          p.write_text(s.replace(old, new, 1))
+
+          p = Path('src/core/local-continuum/sparse-matrix.js')
+          s = p.read_text()
+          old = """  const rows = Array.from({ length: size }, () => new Map());\n  for (const element of elementEvidence) {\n"""
+          new = """  const rows = Array.from({ length: size }, () => new Map());\n  const compensations = Array.from({ length: size }, () => new Map());\n  for (const element of elementEvidence) {\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected CSR row allocation block')
+          s = s.replace(old, new, 1)
+          old = """        const value = element.localStiffnessMatrix[localRow][localColumn];\n        row.set(column, (row.get(column) ?? 0) + value);\n"""
+          new = """        const value = element.localStiffnessMatrix[localRow][localColumn];\n        const sum = row.get(column) ?? 0;\n        const next = sum + value;\n        const compensation = compensations[indices[localRow]].get(column) ?? 0;\n        compensations[indices[localRow]].set(\n          column,\n          compensation + (Math.abs(sum) >= Math.abs(value)\n            ? (sum - next) + value\n            : (value - next) + sum),\n        );\n        row.set(column, next);\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected CSR coefficient accumulation block')
+          s = s.replace(old, new, 1)
+          old = """  return finalizeRows(rows);\n}\n\nexport function restrictSymmetricCsr"""
+          new = """  const compensatedRows = rows.map((row, rowIndex) => new Map(\n    [...row.entries()].map(([column, value]) => [\n      column,\n      value + (compensations[rowIndex].get(column) ?? 0),\n    ]),\n  ));\n  return finalizeRows(compensatedRows);\n}\n\nexport function restrictSymmetricCsr"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected assembled CSR finalize block')
+          p.write_text(s.replace(old, new, 1))
+
+          p = Path('src/core/local-continuum/solver.js')
+          s = p.read_text()
+          old = """    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      'Reaction equilibrium did not qualify.',\n    );\n"""
+          new = """    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      `Reaction equilibrium did not qualify: UX=${totals.UX}, UY=${totals.UY}, limit=${equilibriumLimit}, scale=${scale}, freeMaximum=${freeMaximum}, freeLimit=${freeLimit}.`,\n    );\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one reaction-equilibrium failure block')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+          node --check src/core/local-continuum/sparse-matrix.js
+          node --check src/core/local-continuum/solver.js
+      - name: Execute frozen full Lamé matrix
+        run: node scripts/lafea-plane-strain-bbar-lame-check.mjs

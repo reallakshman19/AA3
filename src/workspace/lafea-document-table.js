@@ -112,6 +112,8 @@ export function renderDocumentTableEditor(
       documentValue,
       descriptors,
       onSetScalar: callbacks.onSetScalar,
+      onSetScalarBatch: callbacks.onSetScalarBatch,
+      batchScalarEdits: callbacks.batchScalarEdits === true,
     });
   }
 

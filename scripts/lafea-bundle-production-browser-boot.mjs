@@ -1,11 +1,20 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 import { chromium } from 'playwright';
 
 const HOST = '127.0.0.1';
 const PORT = 4179;
 const ORIGIN = `http://${HOST}:${PORT}`;
 const URL = `${ORIGIN}/Advanced_Analysis/`;
+const CHROMIUM_EXECUTABLE_PATH = process.env.CHROMIUM_EXECUTABLE_PATH;
+
+if (!CHROMIUM_EXECUTABLE_PATH) {
+  throw new Error('BUNDLE_BROWSER_CHROMIUM_EXECUTABLE_PATH_REQUIRED');
+}
+if (!fs.existsSync(CHROMIUM_EXECUTABLE_PATH)) {
+  throw new Error(`BUNDLE_BROWSER_CHROMIUM_EXECUTABLE_MISSING:${CHROMIUM_EXECUTABLE_PATH}`);
+}
 
 const preview = spawn(process.execPath, [
   'node_modules/vite/bin/vite.js',
@@ -25,7 +34,10 @@ preview.stderr.on('data', (chunk) => { previewLog += String(chunk); });
 
 try {
   await waitForServer(`${ORIGIN}/Advanced_Analysis/`);
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: CHROMIUM_EXECUTABLE_PATH,
+  });
   try {
     const page = await browser.newPage();
     const pageErrors = [];
@@ -50,6 +62,12 @@ try {
     if (loadCalcViewResources.length !== 1) {
       throw new Error(`BUNDLE_BROWSER_LOAD_CALC_VIEW_CHUNK_COUNT_${loadCalcViewResources.length}`);
     }
+    const discretizationResources = resourceNames.filter(
+      (name) => /lafea-discretization-generation-[^/]+\.js(?:$|\?)/u.test(name),
+    );
+    if (discretizationResources.length !== 1) {
+      throw new Error(`BUNDLE_BROWSER_DISCRETIZATION_GENERATION_CHUNK_COUNT_${discretizationResources.length}`);
+    }
     if (pageErrors.length) {
       throw new Error(`BUNDLE_BROWSER_PAGE_ERROR:${pageErrors.join(' | ')}`);
     }
@@ -61,8 +79,10 @@ try {
       check: 'lafea-bundle-production-browser-boot',
       status: 'PASS',
       url: URL,
+      chromiumExecutablePath: CHROMIUM_EXECUTABLE_PATH,
       bodyTextLength,
       loadCalcViewChunk: loadCalcViewResources[0],
+      lafeaDiscretizationGenerationChunk: discretizationResources[0],
       pageErrorCount: pageErrors.length,
       consoleErrorCount: consoleErrors.length,
     }, null, 2)}\n`);

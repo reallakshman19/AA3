@@ -374,3 +374,57 @@
 .lfea-pipeline-results__export {
   margin-top: 12px;
 }
+
+/* ---- Layout grid ---- */
+.lfea-pipeline-layout {
+  margin: 16px;
+  border: 1px solid var(--workspace-border, #2b3a4d);
+}
+
+.lfea-pipeline-layout > summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.lfea-pipeline-layout__body {
+  padding: 0 14px 14px;
+}
+
+.lfea-pipeline-layout__scroll {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--workspace-border, #2b3a4d);
+}
+
+.lfea-pipeline-layout__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-pipeline-layout__table th,
+.lfea-pipeline-layout__table td {
+  padding: 3px 8px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--workspace-border, #2b3a4d);
+}
+
+.lfea-pipeline-layout__table td[data-align="right"],
+.lfea-pipeline-layout__table th[data-align="right"] {
+  text-align: right;
+}
+
+.lfea-pipeline-layout__table th {
+  position: sticky;
+  top: 0;
+  background: var(--workspace-panel, #16202c);
+  text-align: left;
+}
+
+.lfea-pipeline-layout__note {
+  margin: 8px 0 0;
+  color: #8ca0b8;
+  font-size: 11px;
+}

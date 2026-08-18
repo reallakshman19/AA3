@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
 import { prepareLinearPipingInputXmlPreFlight } from '../src/workspace/linear-piping-inputxml-prefea.js';
 import { createLfeaPipelineAnalysisController } from '../src/workspace/lfea-pipeline-analysis-controller.js';
+import { buildLfeaPipelineLayoutGrid } from '../src/workspace/lfea-pipeline-layout-grid.js';
 import {
   reviewInputXmlLinearUnilateralRestraints,
   unilateralRestraintReviewSummary,
@@ -97,6 +98,39 @@ assert.throws(() => controller.analyze(preFlight, []), /at least one load case/u
 
 assert.equal(controller.clear().status, 'EMPTY');
 
+// ---------------------------------------------------------------------------
+// The Layout grid: the model as an element table, in the units read on screen.
+// ---------------------------------------------------------------------------
+const layout = buildLfeaPipelineLayoutGrid(preFlight);
+assert.equal(layout.elementCount, 96, 'BM4 element count');
+assert.equal(layout.nodeCount, 97, 'BM4 node count');
+assert.equal(layout.rows.length, 96);
+
+// The three repaired backtracking elements must read as -1 mm, not +1 mm --
+// the grid shows the model actually being analyzed, not the file as received.
+const repaired = layout.rows.filter((row) => Math.abs(row.lengthMm - 1) < 1e-6);
+assert.equal(repaired.length, 3, 'BM4 has exactly three 1 mm elements');
+for (const row of repaired) {
+  assert.ok(row.deltaX < 0, `element ${row.elementIndex} must run in -X after repair`);
+}
+
+// Values are unit conversions of sealed data, and must actually convert:
+// the conditioned geometry works in metres, kelvin and pascals.
+const sample = layout.rows[13];
+assert.ok(sample.outsideDiameterMm > 1, 'diameter is shown in millimetres, not metres');
+assert.ok(sample.temperatureC > 0 && sample.temperatureC < 1000, 'temperature is shown in degrees Celsius');
+assert.ok(sample.pressureBar > 0 && sample.pressureBar < 1000, 'pressure is shown in bar');
+assert.equal(typeof sample.material, 'string');
+
+// Restraint labels must disclose the approximations that restraint relies on.
+const labels = layout.rows.map((row) => row.restraint).join(' ');
+assert.match(labels, /one-way/u, 'one-way supports must be visible in the layout');
+assert.match(labels, /friction/u, 'ignored friction must be visible in the layout');
+assert.match(labels, /gap/u, 'closed gaps must be visible in the layout');
+
+// An empty projection must be empty, not a crash or a fabricated row.
+assert.equal(buildLfeaPipelineLayoutGrid(null).rows.length, 0);
+
 console.log(JSON.stringify({
   check: 'lfea-pipeline-analysis',
   status: 'PASS',
@@ -109,5 +143,6 @@ console.log(JSON.stringify({
   unilateralRestraintCount: review.unilateralRestraintCount,
   recoveredCaseIds: state.recovery.caseRecoveries.map((row) => row.caseId),
   unrecoveredCaseIds: state.unrecoveredCaseIds,
+  layout: { elements: layout.elementCount, nodes: layout.nodeCount, repairedShortElements: repaired.length },
 }, null, 2));
 console.log('LFEA pipeline analysis path PASS');

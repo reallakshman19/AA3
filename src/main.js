@@ -39,6 +39,7 @@ import { mountLfeaPipelineAccdbInputPanel } from './workspace/lfea-pipeline-accd
 import { mountLfeaPipelineLoadCaseAuthoringPanel } from './workspace/lfea-pipeline-load-case-authoring-panel.js';
 import { mountLfeaPipelineCaseSelectionPanel } from './workspace/lfea-pipeline-case-selection-panel.js';
 import { mountLfeaPipelineResultsPanel } from './workspace/lfea-pipeline-results-panel.js';
+import { mountLfeaPipelineLayoutPanel } from './workspace/lfea-pipeline-layout-panel.js';
 import { createLfeaPipelineAnalysisController } from './workspace/lfea-pipeline-analysis-controller.js';
 import { mountLfeaPipelineVerificationDrawer } from './workspace/lfea-pipeline-verification-drawer.js';
 import { mergeAuthoredInputXmlLinearPhysicalCase } from './core/linear-piping-analysis-consumer/inputxml-linear-authored-physical-cases.js';
@@ -92,6 +93,12 @@ const lfeaCaseSelectionPanel = mountLfeaPipelineCaseSelectionPanel(lfeaPipelineS
   onApplyCaseSelection: (caseIds) => linearPipingInputXmlSource.setRequestedCaseIds(caseIds),
   onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
 });
+// The model as an element table, collapsed by default: the case selector is
+// what the Load-case step is for, and the layout is there to check against.
+const lfeaLayoutPanel = mountLfeaPipelineLayoutPanel(lfeaPipelineShell.getLoadCaseHost(), {
+  documentRef: applicationRoot.ownerDocument,
+  getPreFlight: () => linearPipingInputXmlSource.getPreFlight(),
+});
 const lfeaLoadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(lfeaPipelineShell.getLoadCaseHost(), {
   documentRef: applicationRoot.ownerDocument,
   getNodeIds: () => linearPipingInputXmlSource.getPreFlight()
@@ -121,6 +128,7 @@ lfeaPipelineShell.setAssemblyHandlers({
   onStepActivated(stepId) {
     if (stepId === 'LOAD_CASE') {
       lfeaCaseSelectionPanel.refresh();
+      lfeaLayoutPanel.refresh();
       lfeaLoadCaseAuthoringPanel.refresh();
     }
   },
@@ -358,6 +366,7 @@ const workspace = Object.freeze({
   getLfeaAccdbInputPanelState() { return lfeaAccdbInputPanel.getSnapshot(); },
   getLfeaLoadCaseAuthoringPanelState() { return lfeaLoadCaseAuthoringPanel.getSnapshot(); },
   getLfeaCaseSelectionState() { return lfeaCaseSelectionPanel.getSnapshot(); },
+  getLfeaLayoutPanelState() { return lfeaLayoutPanel.getSnapshot(); },
   getLfeaResultsPanelState() { return lfeaResultsPanel.getSnapshot(); },
   getLfeaAnalysisState() { return lfeaAnalysisController.getState(); },
   getLfeaVerificationDrawerState() { return lfeaVerificationDrawer.getSnapshot(); },
@@ -408,7 +417,7 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaCaseSelectionPanel.destroy(); lfeaResultsPanel.destroy(); lfeaLoadCaseAuthoringPanel.destroy(); lfeaVerificationDrawer.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
+  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaCaseSelectionPanel.destroy(); lfeaLayoutPanel.destroy(); lfeaResultsPanel.destroy(); lfeaLoadCaseAuthoringPanel.destroy(); lfeaVerificationDrawer.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
 });
 
 globalThis.AnalysisWorkspace = workspace;

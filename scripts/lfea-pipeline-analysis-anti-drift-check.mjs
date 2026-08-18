@@ -14,6 +14,8 @@ const readCore = (name) => readFileSync(
 const controller = read('lfea-pipeline-analysis-controller.js');
 const casePanel = read('lfea-pipeline-case-selection-panel.js');
 const resultsPanel = read('lfea-pipeline-results-panel.js');
+const layoutGrid = read('lfea-pipeline-layout-grid.js');
+const layoutPanel = read('lfea-pipeline-layout-panel.js');
 const review = readCore('inputxml-linear-unilateral-restraint-review.js');
 const main = readFileSync(fileURLToPath(new URL('../src/main.js', import.meta.url)), 'utf8');
 
@@ -92,5 +94,34 @@ assert.match(layout, /data-role="lfea-detached-host"/u,
 // --- main.js wires Analyze without the supplement --------------------------
 assert.match(main, /runLfeaPipelineAnalysis/u);
 assert.match(main, /onAnalyze:/u);
+
+// --- The Layout grid derives nothing --------------------------------------
+// It is a unit conversion of sealed data. If it ever starts computing a
+// section modulus or a stress, it has stopped being a view of the model.
+for (const forbidden of [/sectionModulus/u, /\bstress\b/u, /allowable/u, /Math\.PI \* /u]) {
+  assert.doesNotMatch(layoutGrid, forbidden, 'the layout grid must not derive engineering quantities');
+}
+assert.match(layoutGrid, /conditionedTopology\?\.geometry/u,
+  'layout rows must come from the sealed conditioned topology');
+
+// Column keys must keep matching topology-edit-table-columns.js so the
+// editable grid can adopt these rows without renaming anything.
+const editColumns = readFileSync(fileURLToPath(
+  new URL('../src/workspace/topology-edit/table/topology-edit-table-columns.js', import.meta.url)), 'utf8');
+for (const key of ['fromNodeId', 'toNodeId', 'deltaX', 'deltaY', 'deltaZ', 'material',
+  'outsideDiameterMm', 'wallThicknessMm', 'lengthMm', 'elementType']) {
+  assert.match(layoutGrid, new RegExp(`\\b${key}\\b`, 'u'), `layout grid must define ${key}`);
+  assert.match(editColumns, new RegExp(`'${key}'`, 'u'),
+    `${key} must still match the topology-edit column definitions`);
+}
+
+// --- Read-only is stated, not implied -------------------------------------
+assert.match(layoutPanel, /data-role="lfea-pipeline-layout-readonly-note"|lfea-pipeline-layout-readonly-note/u,
+  'the layout panel must state that it is read-only');
+assert.match(layoutPanel, /editable: false/u, 'the panel snapshot must report editable: false');
+// Import-shaped: the panel's header names the writeback library to explain
+// precisely why it is NOT wired yet, and that explanation is worth keeping.
+assert.doesNotMatch(layoutPanel, /import[^;]*prepareTopologyEditInputXmlWriteback/u,
+  'coordinate writeback is not wired yet; the panel must not imply that it is');
 
 console.log(JSON.stringify({ check: 'lfea-pipeline-analysis-anti-drift', status: 'PASS' }));

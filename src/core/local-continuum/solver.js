@@ -4,6 +4,7 @@ import { resolveImposedDisplacementIndices } from './imposed-displacement-loads.
 import { dot, matrixVector, zeros } from './matrix.js';
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
 import { rigidReferenceConditioning } from './rigid-reference-conditioning.js';
+import { jacobiEquilibratedCgSolve } from './jacobi-equilibrated-cg.js';
 import {
   restrictSymmetricCsr,
   sparseMatrixVector,
@@ -103,7 +104,7 @@ function solveFreeSystem(model, mesh, force, free, constraints, prescribed) {
       'sparse partition rhs',
     ));
     const freeStiffness = restrictSymmetricCsr(mesh.globalStiffnessCsr, free);
-    return conjugateGradientSolve(
+    return jacobiEquilibratedCgSolve(
       freeStiffness,
       rightHandSide,
       model.qualificationProfile,

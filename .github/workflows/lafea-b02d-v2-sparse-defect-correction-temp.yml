@@ -25,7 +25,7 @@ jobs:
       - run: npm ci
       - name: Verify exact PR head
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Apply target-only reliable update and one sparse defect correction
+      - name: Apply target-only reliable update and up to three sparse defect corrections
         shell: bash
         run: |
           python - <<'PY'
@@ -41,7 +41,7 @@ jobs:
           p = Path('src/core/local-continuum/solver.js')
           s = p.read_text()
           old = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const residual = equilibriumResidual(mesh, correction, load.forceVector);\n  const qualification = qualifyResiduals(\n"""
-          new = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  let residual = equilibriumResidual(mesh, correction, load.forceVector);\n  if (mesh.globalStiffnessStorage === 'CSR_FULL_SYMMETRIC'\n    && sparseReactionRefinementRequired(\n      model,\n      mesh.dofOrdering,\n      free,\n      constraints.indices,\n      load.forceVector,\n      residual,\n    )) {\n    const refined = solveSparseDefectCorrection(model, mesh, free, residual);\n    refined.solution.forEach((value, position) => {\n      correction[free[position]] = canonicalNumber(\n        correction[free[position]] + value,\n        'sparse defect-corrected displacement',\n      );\n    });\n    residual = equilibriumResidual(mesh, correction, load.forceVector);\n  }\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const qualification = qualifyResiduals(\n"""
+          new = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  let residual = equilibriumResidual(mesh, correction, load.forceVector);\n  let sparseDefectCorrectionSteps = 0;\n  while (mesh.globalStiffnessStorage === 'CSR_FULL_SYMMETRIC'\n    && sparseDefectCorrectionSteps < 3\n    && sparseReactionRefinementRequired(\n      model,\n      mesh.dofOrdering,\n      free,\n      constraints.indices,\n      load.forceVector,\n      residual,\n    )) {\n    const refined = solveSparseDefectCorrection(model, mesh, free, residual);\n    refined.solution.forEach((value, position) => {\n      correction[free[position]] = canonicalNumber(\n        correction[free[position]] + value,\n        'sparse defect-corrected displacement',\n      );\n    });\n    sparseDefectCorrectionSteps += 1;\n    residual = equilibriumResidual(mesh, correction, load.forceVector);\n  }\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const qualification = qualifyResiduals(\n"""
           if s.count(old) != 1:
               raise RuntimeError('expected one solvePartitioned recovery block')
           s = s.replace(old, new, 1)

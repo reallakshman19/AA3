@@ -20,7 +20,17 @@ import {
 export const NUMERIC_TOLERANCE = 1e-12;
 const DIRECTION_TOLERANCE = 1e-9;
 const RESTRAINT_DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
-const GENERIC_LINEARIZED_UNILATERAL_CODES = new Set(['14', '15']);
+// Every mirrored direction of a one-way support is the same linearization:
+// +Y (14) and -Y (17) differ only in which sign of travel is free, and the
+// linearized form restrains the DOF in both. Restricting this to +Y/+Z made
+// a -Y support BLOCK while its mirror image was accepted.
+const GENERIC_LINEARIZED_UNILATERAL_CODES = new Set(['13', '14', '15', '16', '17', '18']);
+// Bidirectional single-DOF restraints that inputxml-linear-structural-constraints.js
+// already compiles exactly today as kind:'NODAL_RESTRAINT', behavior:'FIXED'.
+// X/Y/Z are plain translations; LIM (8) and GUI (9) are double-acting stops
+// along their declared axis, structurally identical to a plain translation
+// restraint once any declared gap is handled separately below.
+const EXACT_BIDIRECTIONAL_CODES = new Set(['2', '3', '5', '8', '9']);
 // A RESTRAINT record is an unused fixed-width-array slot only when both its
 // identity attributes (which restraint, and on which node) carry the
 // sentinel. A row declaring one but not the other is genuinely malformed and
@@ -72,19 +82,75 @@ export function restraintDispositions(classification) {
   if (classification.typeCode === null || classification.typeLabel === null || classification.nodeId === null) {
     return both(invalidDisposition('MODEL_RESTRAINT_SOURCE_INVALID'));
   }
-  if (classification.gapActive) return both(nonlinearDisposition('MODEL_RESTRAINT_GAP_UNSUPPORTED'));
-  if (classification.frictionActive) return both(nonlinearDisposition('MODEL_RESTRAINT_FRICTION_UNSUPPORTED'));
+  // A connected-node restraint retargets the reaction onto another node and a
+  // declared finite stiffness changes the restraint's own compliance. Neither
+  // is representable by the FIXED-DOF constraint this consumer emits, so both
+  // stay terminal for every profile.
   if (classification.connectingNodeActive) {
     return both(unsupportedDisposition('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'));
   }
   if (classification.finiteStiffnessActive) {
     return both(unsupportedDisposition('MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED'));
   }
+
+  // Gap and friction are NOT terminal. Both leave the restrained DOF intact and
+  // only drop a nonlinear effect, which is exactly the linear idealisation this
+  // repository's own ACCDB linear path already performs -- restraintConstraints()
+  // in caesar-accdb-linear-solve.js builds the restraint without ever reading
+  // FRIC_COEF or GAP. STRICT still refuses them; the disclosed-approximation
+  // profile restrains the DOF and declares what was dropped. Evaluating them
+  // ahead of the type branch (as this function previously did) also meant a
+  // supported one-way support carrying friction never reached its own
+  // linearization at all.
+  const dropped = [];
+  if (classification.gapActive) {
+    dropped.push({ strict: 'MODEL_RESTRAINT_GAP_UNSUPPORTED', approximate: 'GENERIC_APPROX_GAP_CLOSED' });
+  }
+  if (classification.frictionActive) {
+    dropped.push({ strict: 'MODEL_RESTRAINT_FRICTION_UNSUPPORTED', approximate: 'GENERIC_APPROX_FRICTION_IGNORED' });
+  }
+
+  const base = baseRestraintDispositions(classification);
+  if (dropped.length === 0) return base;
+
+  const approximate = base[APPROXIMATE];
+  const compilable = approximate.disposition === 'IMPLEMENTED_EXACTLY'
+    || approximate.disposition === 'IMPLEMENTED_WITH_DECLARED_APPROXIMATION';
+  return {
+    [STRICT]: nonlinearDisposition(dropped[0].strict),
+    // Dropping a nonlinear effect cannot rescue a restraint whose underlying
+    // type this consumer still cannot compile -- that stays blocked.
+    [APPROXIMATE]: compilable ? approximationDisposition(dropped[0].approximate) : approximate,
+  };
+}
+
+/** Every distinct approximation this restraint relies on, for disclosure. */
+export function restraintApproximationCodes(classification) {
+  const codes = [];
+  if (classification.gapActive) codes.push('GENERIC_APPROX_GAP_CLOSED');
+  if (classification.frictionActive) codes.push('GENERIC_APPROX_FRICTION_IGNORED');
+  const base = baseRestraintDispositions(classification)[APPROXIMATE];
+  if (base.disposition === 'IMPLEMENTED_WITH_DECLARED_APPROXIMATION' && base.limitationCode) {
+    codes.push(base.limitationCode);
+  }
+  return Object.freeze(codes);
+}
+
+function baseRestraintDispositions(classification) {
   if (classification.typeCode === '0') return both(exactDisposition());
-  if (GENERIC_LINEARIZED_UNILATERAL_CODES.has(classification.typeCode)) {
-    if (!classification.direction.valid || classification.targetDofs.length !== 1) {
-      return both(invalidDisposition('MODEL_RESTRAINT_DIRECTION_INVALID'));
+  const singleAxis = classification.direction.valid && classification.targetDofs.length === 1;
+  if (EXACT_BIDIRECTIONAL_CODES.has(classification.typeCode)) {
+    if (!singleAxis) return both(invalidDisposition('MODEL_RESTRAINT_DIRECTION_INVALID'));
+    // A skewed axis would need the restraint resolved onto a declared local
+    // basis; collapsing it onto a dominant global axis would silently move the
+    // reaction, so it stays refused rather than approximated.
+    if (!axisAlignedDirection(classification.direction)) {
+      return both(unsupportedDisposition('MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED'));
     }
+    return both(exactDisposition());
+  }
+  if (GENERIC_LINEARIZED_UNILATERAL_CODES.has(classification.typeCode)) {
+    if (!singleAxis) return both(invalidDisposition('MODEL_RESTRAINT_DIRECTION_INVALID'));
     if (!axisAlignedDirection(classification.direction)) {
       return {
         [STRICT]: nonlinearDisposition('MODEL_RESTRAINT_UNILATERAL_UNSUPPORTED'),

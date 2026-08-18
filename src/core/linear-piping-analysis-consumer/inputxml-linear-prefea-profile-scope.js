@@ -32,6 +32,21 @@ export function capabilityAppliesToRequest(capabilityId, requestedFamily) {
   return true;
 }
 
+// Capabilities that decide whether a linear-static solve may proceed.
+// CODE_STRESS_INPUT_READINESS is an inventory of inputs a LATER, separately
+// qualified code evaluation would need — this pre-FEA stage explicitly does not
+// perform code-stress preparation or evaluation at all (it says so itself, via
+// CODE_STRESS_PROFILE_PREPARATION_REQUIRED). Refusing to solve a weight or
+// weight+pressure case because a code-stress input is incomplete blocks a
+// computation that never consults that input. It remains fully disclosed as a
+// CONDITIONAL finding requiring explicit acceptance; it just no longer gates
+// the solve.
+const NON_SOLVE_GATING_CAPABILITIES = new Set(['CODE_STRESS_INPUT_READINESS']);
+
+export function capabilityGatesSolve(capabilityId) {
+  return !NON_SOLVE_GATING_CAPABILITIES.has(capabilityId);
+}
+
 const EFFECT_RANK = Object.freeze({ PASS: 0, CONDITIONAL: 1, BLOCK: 2 });
 
 /**
@@ -57,8 +72,11 @@ export function scopedDisposition(upstreamCapabilityEffects, requestedFamily) {
   let worst = 'PASS';
   for (const [capabilityId, effect] of Object.entries(upstreamCapabilityEffects)) {
     if (!capabilityAppliesToRequest(capabilityId, requestedFamily)) continue;
-    const disposition = String(effect?.disposition ?? '').toUpperCase();
+    let disposition = String(effect?.disposition ?? '').toUpperCase();
     if (EFFECT_RANK[disposition] === undefined) continue;
+    // A finding that only affects a non-solve-gating capability is disclosed,
+    // not solve-blocking (see NON_SOLVE_GATING_CAPABILITIES).
+    if (disposition === 'BLOCK' && !capabilityGatesSolve(capabilityId)) disposition = 'CONDITIONAL';
     if (EFFECT_RANK[disposition] > EFFECT_RANK[worst]) worst = disposition;
   }
   return worst;

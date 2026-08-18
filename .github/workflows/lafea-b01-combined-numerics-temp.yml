@@ -1,4 +1,4 @@
-name: LAFEA B01 nodal block-SGS PCG temporary
+name: LAFEA B01 DD plus bounded minimum-residual correction temporary
 
 on:
   pull_request:
@@ -25,6 +25,20 @@ jobs:
       - run: npm ci
       - name: Verify exact PR head
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Install runner-only bounded DD minimum-residual correction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          s = p.read_text()
+          old = """  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  originalResidualInfinity = maxAbs(\n    exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution),\n  );\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          new = """  let solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n  let exact = exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution);\n  originalResidualInfinity = maxAbs(exact);\n  const refinementHistory = [originalResidualInfinity];\n  let refinementSteps = 0;\n  while (originalResidualInfinity > convergenceTarget && refinementSteps < 3) {\n    const scaledExact = exact.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const unscaledDirection = scaledExact.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const unscaledAction = sparseMatrixVectorRaw(matrix, unscaledDirection);\n    const scaledAction = unscaledAction.map(\n      (value, index) => value * inverseSqrtDiagonal[index],\n    );\n    const numerator = compensatedDot(scaledAction, scaledExact);\n    const denominator = compensatedDot(scaledAction, scaledAction);\n    if (!(denominator > 0) || !Number.isFinite(denominator)\n      || !Number.isFinite(numerator)) {\n      throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_INVALID', `${numerator}/${denominator}`);\n    }\n    const alpha = numerator / denominator;\n    if (!Number.isFinite(alpha)) {\n      throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_ALPHA_INVALID', alpha);\n    }\n    const candidateScaled = scaledSolution.map(\n      (value, index) => value + alpha * scaledExact[index],\n    );\n    const candidateSolution = unscaleSolution(candidateScaled, inverseSqrtDiagonal);\n    const candidateExact = exactOriginalResidualDoubleDouble(\n      matrix, rightHandSide, candidateSolution,\n    );\n    const candidateInfinity = maxAbs(candidateExact);\n    if (!(candidateInfinity < originalResidualInfinity)) break;\n    for (let index = 0; index < scaledSolution.length; index += 1) {\n      scaledSolution[index] = candidateScaled[index];\n    }\n    solution = candidateSolution;\n    exact = candidateExact;\n    originalResidualInfinity = candidateInfinity;\n    refinementSteps += 1;\n    refinementHistory.push(candidateInfinity);\n  }\n  if (originalResidualInfinity > convergenceTarget) {\n    throw solverError(\n      'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',\n      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} DD minimum-residual steps; history=${refinementHistory.join(',')}`,\n    );\n  }\n  return result(\n    solution,\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one DD terminal convergence block')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
       - name: Execute exact current-source L4 governing case
         shell: bash
         run: |

@@ -41,15 +41,15 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     'p',
     'lafea-workbench__authority',
     foundation
-      ? 'Scope boundary: load-reference transfer and elastic pressure baseline only. This stage does not calculate WRC 107/537 local-attachment stress or establish code compliance.'
-      : 'Scope boundary: nominal pipe-section screening only. Detailed local-attachment / WRC 107/537 correlation remains separately governed and is not established by this stage.',
+      ? 'Scope: load transfer and elastic pressure baseline only; this does not calculate WRC 107/537 local-attachment stress or establish code compliance.'
+      : 'Scope: nominal pipe-section screening only; WRC/local-attachment correlation is separately governed.',
   );
   scopeBoundary.dataset.role = 'lafea-analytical-scope-boundary';
   route.body.append(
     scopeStatus,
     heading,
     element(root, 'p', 'lafea-workbench__section-intro',
-      'LAFEA.1 and LAFEA.2 are analytical LAFEA stages. They do not create or display an FE mesh; LAFEA.3 and later stages provide the registered finite-element routes.'),
+      'Analytical stages do not use an FE mesh; registered FE routes begin at LAFEA.3.'),
     scopeBoundary,
   );
 
@@ -77,8 +77,8 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   results.section.dataset.guidedTarget = 'results';
   results.body.append(
     element(root, 'p', 'lafea-workbench__section-intro', foundation
-      ? 'Attachment-foundation analytical evidence only; local FE attachment stress is not authorized.'
-      : 'Nominal pipe-section screening evidence only; local discontinuity and attachment stress are not authorized.'),
+      ? 'Foundation analytical evidence only; local attachment stress is not authorized.'
+      : 'Nominal pipe-section screening only; local attachment stress is not authorized.'),
     renderLafeaEvidence(root, stageId, stage.document, state, stage.execution),
   );
 
@@ -108,7 +108,7 @@ function screeningLoadCustody(root, documentValue, onApplyJson) {
     root,
     'p',
     'lafea-workbench__section-intro',
-    'LAFEA.2 does not invent attachment resultants. Each mechanical term references an exact retained LAFEA.1 loadCaseId. Term factors are editable only through the screeningCaseId + loadCaseId nested-identity command below; array position is never engineering authority.',
+    'LAFEA.2 uses retained LAFEA.1 loadCaseId values. Term-factor edits use screeningCaseId + loadCaseId identity; array position is never authority.',
   ));
   if (!documentValue || typeof documentValue !== 'object') {
     custody.body.append(element(root, 'p', 'lafea-workbench-svg__empty',

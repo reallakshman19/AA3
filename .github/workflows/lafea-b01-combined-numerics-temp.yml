@@ -1,4 +1,4 @@
-name: LAFEA B01 nodal block-Jacobi PCG temporary
+name: LAFEA B01 nodal block-SGS PCG temporary
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  block-jacobi:
+  block-sgs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -25,23 +25,23 @@ jobs:
       - run: npm ci
       - name: Verify exact PR head
         run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-      - name: Install runner-only nodal block-Jacobi PCG
+      - name: Install runner-only nodal block-SGS PCG
         shell: bash
         run: |
-          cat > src/core/local-continuum/block-jacobi-cg-temp.js <<'EOF'
+          cat > src/core/local-continuum/block-sgs-cg-temp.js <<'EOF'
           import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
           import {
             sparseMatrixVectorCompensatedRaw,
             sparseMatrixVectorRaw,
           } from './sparse-matrix.js';
 
-          export function blockJacobiCgSolve(matrix, rightHandSide, profile, dofIdentities) {
+          export function blockSgsCgSolve(matrix, rightHandSide, profile, dofIdentities) {
             if (!Array.isArray(dofIdentities) || dofIdentities.length !== matrix.size) {
-              throw new TypeError('Block-Jacobi PCG requires one DOF identity per free equation.');
+              throw new TypeError('Block-SGS PCG requires one DOF identity per free equation.');
             }
             const diagonalScale = Math.max(1, ...matrix.diagonal.map((value) => Math.abs(value)));
             const diagonalTolerance = tolerance(profile, 'choleskyPivot', diagonalScale);
-            const blocks = buildBlocks(matrix, dofIdentities, diagonalTolerance);
+            const structure = buildBlockStructure(matrix, dofIdentities, diagonalTolerance);
             const residualScale = Math.max(1, maxAbs(rightHandSide));
             const residualTolerance = tolerance(profile, 'freeDofResidual', residualScale);
             const convergenceTarget = residualTolerance / 10;
@@ -50,19 +50,19 @@ jobs:
             const solutionCompensation = Array(matrix.size).fill(0);
             const residualCompensation = Array(matrix.size).fill(0);
             let residual = [...rightHandSide];
-            let preconditioned = applyBlocks(blocks, residual);
+            let preconditioned = applyBlockSgs(matrix, structure, residual);
             let direction = [...preconditioned];
             let rho = compensatedDot(residual, preconditioned);
             let iterations = 0;
             let originalResidualInfinity = maxAbs(residual);
             if (!(rho > 0) || !Number.isFinite(rho)) {
-              throw solverError('BLOCK_JACOBI_PCG_INITIAL_PRODUCT_INVALID', rho);
+              throw solverError('BLOCK_SGS_PCG_INITIAL_PRODUCT_INVALID', rho);
             }
             while (iterations < iterationLimit) {
               const action = sparseMatrixVectorRaw(matrix, direction);
               const curvature = compensatedDot(direction, action);
               if (!(curvature > 0) || !Number.isFinite(curvature)) {
-                throw solverError('BLOCK_JACOBI_PCG_NONPOSITIVE_CURVATURE', curvature);
+                throw solverError('BLOCK_SGS_PCG_NONPOSITIVE_CURVATURE', curvature);
               }
               const alpha = rho / curvature;
               for (let index = 0; index < matrix.size; index += 1) {
@@ -77,24 +77,24 @@ jobs:
                 if (originalResidualInfinity <= convergenceTarget) {
                   return result(solution, iterations, iterationLimit, residualScale,
                     residualTolerance, convergenceTarget, originalResidualInfinity,
-                    diagonalScale, diagonalTolerance, matrix.diagonal, blocks);
+                    diagonalScale, diagonalTolerance, matrix.diagonal, structure);
                 }
                 if (recursiveResidualInfinity <= convergenceTarget) {
                   residual = exact;
                   residualCompensation.fill(0);
-                  preconditioned = applyBlocks(blocks, residual);
+                  preconditioned = applyBlockSgs(matrix, structure, residual);
                   direction = [...preconditioned];
                   rho = compensatedDot(residual, preconditioned);
                   if (!(rho > 0) || !Number.isFinite(rho)) {
-                    throw solverError('BLOCK_JACOBI_PCG_RELIABLE_UPDATE_INVALID', rho);
+                    throw solverError('BLOCK_SGS_PCG_RELIABLE_UPDATE_INVALID', rho);
                   }
                   continue;
                 }
               }
-              preconditioned = applyBlocks(blocks, residual);
+              preconditioned = applyBlockSgs(matrix, structure, residual);
               const nextRho = compensatedDot(residual, preconditioned);
               if (!(nextRho > 0) || !Number.isFinite(nextRho)) {
-                throw solverError('BLOCK_JACOBI_PCG_RESIDUAL_PRODUCT_INVALID', nextRho);
+                throw solverError('BLOCK_SGS_PCG_RESIDUAL_PRODUCT_INVALID', nextRho);
               }
               const beta = nextRho / rho;
               rho = nextRho;
@@ -105,16 +105,16 @@ jobs:
             originalResidualInfinity = maxAbs(exactResidual(matrix, rightHandSide, solution));
             if (originalResidualInfinity > convergenceTarget) {
               throw solverError(
-                'BLOCK_JACOBI_PCG_DID_NOT_CONVERGE',
+                'BLOCK_SGS_PCG_DID_NOT_CONVERGE',
                 `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,
               );
             }
             return result(solution, iterations, iterationLimit, residualScale,
               residualTolerance, convergenceTarget, originalResidualInfinity,
-              diagonalScale, diagonalTolerance, matrix.diagonal, blocks);
+              diagonalScale, diagonalTolerance, matrix.diagonal, structure);
           }
 
-          function buildBlocks(matrix, identities, diagonalTolerance) {
+          function buildBlockStructure(matrix, identities, diagonalTolerance) {
             const nodes = new Map();
             identities.forEach((identity, position) => {
               const axis = identity.endsWith(':UX') ? 'UX' : identity.endsWith(':UY') ? 'UY' : null;
@@ -125,42 +125,92 @@ jobs:
               nodes.set(node, row);
             });
             const blocks = [];
+            const blockOf = new Int32Array(matrix.size);
+            let blockIndex = 0;
             for (const row of nodes.values()) {
-              if (row.UX !== null && row.UY !== null) {
-                const i = row.UX;
-                const j = row.UY;
-                const a = matrix.diagonal[i];
-                const d = matrix.diagonal[j];
-                const b = csrValue(matrix, i, j);
-                const determinant = a * d - b * b;
-                if (!(a > diagonalTolerance) || !(d > diagonalTolerance)
-                  || !(determinant > 0) || !Number.isFinite(determinant)) {
-                  throw solverError('BLOCK_JACOBI_2X2_INVALID', `${row.node}:${a},${b},${d},${determinant}`);
-                }
-                blocks.push({ kind: 'PAIR', i, j, a, b, d, determinant });
-              } else {
-                const i = row.UX ?? row.UY;
-                const a = matrix.diagonal[i];
-                if (!(a > diagonalTolerance) || !Number.isFinite(a)) {
-                  throw solverError('BLOCK_JACOBI_1X1_INVALID', `${row.node}:${a}`);
-                }
-                blocks.push({ kind: 'SINGLE', i, a });
-              }
+              const indices = row.UX !== null && row.UY !== null
+                ? [row.UX, row.UY]
+                : [row.UX ?? row.UY];
+              const block = createDiagonalBlock(matrix, row.node, indices, diagonalTolerance);
+              blocks.push(block);
+              for (const index of indices) blockOf[index] = blockIndex;
+              blockIndex += 1;
             }
-            return blocks;
+            return { blocks, blockOf };
           }
 
-          function applyBlocks(blocks, residual) {
-            const output = Array(residual.length).fill(0);
+          function createDiagonalBlock(matrix, node, indices, diagonalTolerance) {
+            if (indices.length === 1) {
+              const i = indices[0];
+              const a = matrix.diagonal[i];
+              if (!(a > diagonalTolerance) || !Number.isFinite(a)) {
+                throw solverError('BLOCK_SGS_1X1_INVALID', `${node}:${a}`);
+              }
+              return { kind: 'SINGLE', node, indices, a };
+            }
+            const [i, j] = indices;
+            const a = matrix.diagonal[i];
+            const d = matrix.diagonal[j];
+            const b = csrValue(matrix, i, j);
+            const determinant = a * d - b * b;
+            if (!(a > diagonalTolerance) || !(d > diagonalTolerance)
+              || !(determinant > 0) || !Number.isFinite(determinant)) {
+              throw solverError('BLOCK_SGS_2X2_INVALID', `${node}:${a},${b},${d},${determinant}`);
+            }
+            return { kind: 'PAIR', node, indices, a, b, d, determinant };
+          }
+
+          function applyBlockSgs(matrix, structure, residual) {
+            const { blocks, blockOf } = structure;
+            const y = Array(matrix.size).fill(0);
+            for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
+              const block = blocks[blockIndex];
+              const rhs = block.indices.map((row) => {
+                let value = residual[row];
+                for (let offset = matrix.rowPointers[row]; offset < matrix.rowPointers[row + 1]; offset += 1) {
+                  const column = matrix.columnIndices[offset];
+                  if (blockOf[column] < blockIndex) value -= matrix.values[offset] * y[column];
+                }
+                return value;
+              });
+              const solved = solveBlock(block, rhs);
+              block.indices.forEach((index, local) => { y[index] = solved[local]; });
+            }
+
+            const diagonalAction = Array(matrix.size).fill(0);
             for (const block of blocks) {
               if (block.kind === 'SINGLE') {
-                output[block.i] = residual[block.i] / block.a;
+                diagonalAction[block.indices[0]] = block.a * y[block.indices[0]];
               } else {
-                output[block.i] = (block.d * residual[block.i] - block.b * residual[block.j]) / block.determinant;
-                output[block.j] = (-block.b * residual[block.i] + block.a * residual[block.j]) / block.determinant;
+                const [i, j] = block.indices;
+                diagonalAction[i] = block.a * y[i] + block.b * y[j];
+                diagonalAction[j] = block.b * y[i] + block.d * y[j];
               }
             }
-            return output;
+
+            const z = Array(matrix.size).fill(0);
+            for (let blockIndex = blocks.length - 1; blockIndex >= 0; blockIndex -= 1) {
+              const block = blocks[blockIndex];
+              const rhs = block.indices.map((row) => {
+                let value = diagonalAction[row];
+                for (let offset = matrix.rowPointers[row]; offset < matrix.rowPointers[row + 1]; offset += 1) {
+                  const column = matrix.columnIndices[offset];
+                  if (blockOf[column] > blockIndex) value -= matrix.values[offset] * z[column];
+                }
+                return value;
+              });
+              const solved = solveBlock(block, rhs);
+              block.indices.forEach((index, local) => { z[index] = solved[local]; });
+            }
+            return z;
+          }
+
+          function solveBlock(block, rhs) {
+            if (block.kind === 'SINGLE') return [rhs[0] / block.a];
+            return [
+              (block.d * rhs[0] - block.b * rhs[1]) / block.determinant,
+              (-block.b * rhs[0] + block.a * rhs[1]) / block.determinant,
+            ];
           }
 
           function csrValue(matrix, row, column) {
@@ -204,17 +254,17 @@ jobs:
 
           function result(solution, iterations, iterationLimit, residualScale,
             residualTolerance, convergenceTarget, finalResidualInfinity,
-            diagonalScale, diagonalTolerance, diagonal, blocks) {
-            const pairCount = blocks.filter((row) => row.kind === 'PAIR').length;
-            const singleCount = blocks.length - pairCount;
+            diagonalScale, diagonalTolerance, diagonal, structure) {
+            const pairCount = structure.blocks.filter((row) => row.kind === 'PAIR').length;
+            const singleCount = structure.blocks.length - pairCount;
             const minimumDiagonal = Math.min(...diagonal);
             const maximumDiagonal = Math.max(...diagonal);
             return {
-              solution: solution.map((value) => canonicalNumber(value, 'block-Jacobi PCG displacement')),
+              solution: solution.map((value) => canonicalNumber(value, 'block-SGS PCG displacement')),
               evidence: {
                 method: 'DETERMINISTIC_JACOBI_PCG',
-                algorithm: 'NODE_BLOCK_JACOBI_PCG_DIAGNOSTIC',
-                preconditioner: 'NODE_BLOCK_JACOBI_2X2',
+                algorithm: 'NODE_BLOCK_SGS_PCG_DIAGNOSTIC',
+                preconditioner: 'NODE_BLOCK_SYMMETRIC_GAUSS_SEIDEL',
                 blockPairCount: pairCount,
                 blockSingleCount: singleCount,
                 iterationLimit,
@@ -245,17 +295,17 @@ jobs:
           p = Path('src/core/local-continuum/solver.js')
           s = p.read_text()
           old = "import { jacobiEquilibratedCgSolve } from './jacobi-equilibrated-cg.js';\n"
-          new = old + "import { blockJacobiCgSolve } from './block-jacobi-cg-temp.js';\n"
+          new = old + "import { blockSgsCgSolve } from './block-sgs-cg-temp.js';\n"
           if s.count(old) != 1:
               raise RuntimeError('expected equilibrated-CG import')
           s = s.replace(old, new, 1)
           old = """    return jacobiEquilibratedCgSolve(\n      freeStiffness,\n      rightHandSide,\n      model.qualificationProfile,\n    );\n"""
-          new = """    return blockJacobiCgSolve(\n      freeStiffness,\n      rightHandSide,\n      model.qualificationProfile,\n      free.map((index) => mesh.dofOrdering[index]),\n    );\n"""
+          new = """    return blockSgsCgSolve(\n      freeStiffness,\n      rightHandSide,\n      model.qualificationProfile,\n      free.map((index) => mesh.dofOrdering[index]),\n    );\n"""
           if s.count(old) != 1:
               raise RuntimeError('expected sparse equilibrated-CG call')
           p.write_text(s.replace(old, new, 1))
           PY
-          node --check src/core/local-continuum/block-jacobi-cg-temp.js
+          node --check src/core/local-continuum/block-sgs-cg-temp.js
           node --check src/core/local-continuum/solver.js
       - name: Execute exact L4 near-incompressible B01 case
         shell: bash

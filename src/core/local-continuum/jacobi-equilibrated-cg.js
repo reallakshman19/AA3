@@ -82,7 +82,9 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   }
 
   const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);
-  originalResidualInfinity = maxAbs(exactOriginalResidual(matrix, rightHandSide, solution));
+  originalResidualInfinity = maxAbs(
+    exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution),
+  );
   if (originalResidualInfinity > convergenceTarget) {
     throw solverError(
       'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',
@@ -144,6 +146,11 @@ function unscaleSolution(scaledSolution, inverseSqrtDiagonal) {
 }
 
 function exactOriginalResidual(matrix, rightHandSide, solution) {
+  const action = sparseMatrixVectorCompensatedRaw(matrix, solution);
+  return rightHandSide.map((value, index) => value - action[index]);
+}
+
+function exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution) {
   const action = sparseMatrixVectorDoubleDoubleRaw(matrix, solution);
   return rightHandSide.map((value, index) => value - action[index]);
 }

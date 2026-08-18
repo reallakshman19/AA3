@@ -10,23 +10,33 @@ test('F LFEA tab presents one unified pipeline shell with a working 6-step stepp
   await expect(page.locator('[data-role="lfea-pipeline-step"]')).toHaveCount(6);
 
   const sourceHost = page.locator('.lfea-pipeline-shell__host[data-host-group="SOURCE"]');
+  const loadCaseHost = page.locator('.lfea-pipeline-shell__host[data-host-group="LOAD_CASE"]');
   const resultsHost = page.locator('.lfea-pipeline-shell__host[data-host-group="RESULTS"]');
 
-  // Input/Error check route to the source panel; the other four steps
-  // route to the results panel. This reflects today's real architecture
-  // honestly (two engines) rather than pretending one already spans all
-  // six steps.
+  // Input/Error check route to the source panel; Load case has its own
+  // dedicated host (Phase 5); Run/Output/Export route to the results
+  // panel. This reflects today's real architecture honestly (two
+  // pre-existing engines plus one new authoring surface) rather than
+  // pretending one engine already spans all six steps.
   await expect(sourceHost).toBeVisible();
+  await expect(loadCaseHost).toBeHidden();
   await expect(resultsHost).toBeHidden();
   await expect(sourceHost.getByText('Import CAESAR II InputXML')).toBeVisible();
 
   await page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]').click();
   await expect(sourceHost).toBeHidden();
+  await expect(loadCaseHost).toBeVisible();
+  await expect(resultsHost).toBeHidden();
+  await expect(loadCaseHost.getByText('Load case')).toBeVisible();
+
+  await page.locator('[data-role="lfea-pipeline-step"][data-step-id="RUN"]').click();
+  await expect(loadCaseHost).toBeHidden();
   await expect(resultsHost).toBeVisible();
   await expect(resultsHost.getByText('LINEAR PIPING FEA RESULTS')).toBeVisible();
 
   await page.locator('[data-role="lfea-pipeline-step"][data-step-id="INPUT"]').click();
   await expect(sourceHost).toBeVisible();
+  await expect(loadCaseHost).toBeHidden();
   await expect(resultsHost).toBeHidden();
 });
 

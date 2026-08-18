@@ -102,7 +102,15 @@ export class LfeaWorkbenchController {
         this.store.previewNodeMove(nodeId, x, y),
       onCommitNode: () => this.commitNodeMove(),
       onCancelNode: () => this.store.cancelNodeMove(),
-      onBenchmark: () => this.runBenchmark(),
+      // Omitted (not just gated by an if) when composeQaBenchmarkPanels
+      // is false: renderLfeaToolbar hides the Run Benchmark button
+      // itself when this handler is absent, since clicking it would
+      // otherwise run the full benchmark suite into a host <div> that is
+      // never attached to the DOM (see this.benchmarkHost above).
+      // runBenchmark()/getBenchmarkReport() stay callable directly on
+      // this controller regardless -- only this one toolbar affordance
+      // is hidden.
+      onBenchmark: this.composeQaBenchmarkPanels ? () => this.runBenchmark() : null,
     });
     if (this.composeQaBenchmarkPanels) {
       this.benchmarkPanel.render();

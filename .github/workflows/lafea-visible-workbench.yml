@@ -95,12 +95,17 @@ jobs:
           node --check scripts/lafea-shell-response-acceptance-check.mjs
           node tests/lafea-engineering-overview.test.mjs
           node scripts/lafea-ui-analysis-settings-check.mjs
-      - name: Qualify governed shell mesh compiler and execution custody
+      - name: Observe governed shell mesh compiler and execution custody
+        id: shell_engineering_gate
+        continue-on-error: true
+        shell: bash
         run: |
-          node scripts/lafea-shell-sample-parent-check.mjs
-          node scripts/lafea-shell-workbench-route-check.mjs
-          node scripts/lafea-shell-compiled-execution-check.mjs
-          node scripts/lafea-shell-response-acceptance-check.mjs
+          mkdir -p test-results
+          node scripts/lafea-shell-sample-parent-check.mjs \
+            && node scripts/lafea-shell-workbench-route-check.mjs \
+            && node scripts/lafea-shell-compiled-execution-check.mjs \
+            && node scripts/lafea-shell-response-acceptance-check.mjs \
+            2>&1 | tee test-results/lafea-shell-engineering-gate.log
       - name: Prove standalone boundary failure is inherited unchanged
         shell: bash
         run: |
@@ -134,6 +139,11 @@ jobs:
         run: |
           npx vite build --config vite.lafea.config.js
           node scripts/lafea-standalone-build-artifact-check.mjs
+      - name: Preserve governed shell failure as job failure
+        if: always() && steps.shell_engineering_gate.outcome == 'failure'
+        run: |
+          echo 'Governed shell gate remains FAIL. #1248 does not modify src/** or shell qualification scripts; this workflow intentionally preserves that inherited failure after collecting downstream evidence.' >&2
+          exit 1
       - name: Upload visible browser evidence
         if: always()
         uses: actions/upload-artifact@v4

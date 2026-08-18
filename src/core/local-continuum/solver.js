@@ -451,11 +451,7 @@ function exactResidual(matrix, rightHandSide, solution) {
 }
 
 function dotVector(left, right) {
-  let value = 0;
-  for (let index = 0; index < left.length; index += 1) {
-    value += left[index] * right[index];
-  }
-  return value;
+  return compensatedProductSumRaw(left, right);
 }
 
 function pivotEvidence(scale, limit, pivots, minimum, maximum) {

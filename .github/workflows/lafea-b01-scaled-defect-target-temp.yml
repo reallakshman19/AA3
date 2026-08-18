@@ -1,0 +1,78 @@
+name: LAFEA B01 scaled defect governing-case temporary
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lafea-b01-scaled-defect-target-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  governing-case:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact PR head
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Apply target-only reliable update and one scaled sparse defect correction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          s = p.read_text()
+          old = """    if (iterations % 100 === 0 || maxAbs(residual) <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n    }\n"""
+          new = """    const recursiveResidualInfinity = maxAbs(residual);\n    if (iterations % 100 === 0 || recursiveResidualInfinity <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n      if (recursiveResidualInfinity <= convergenceTarget) {\n        residual = exact.map((value, index) => value * inverseSqrtDiagonal[index]);\n        scaledResidualCompensation.fill(0);\n        direction = [...residual];\n        rho = compensatedDot(residual, residual);\n        if (!(rho > 0) || !Number.isFinite(rho)) {\n          throw solverError('JACOBI_EQUILIBRATED_CG_RELIABLE_UPDATE_INVALID', rho);\n        }\n        continue;\n      }\n    }\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one equilibrated-CG exact-residual check block')
+          p.write_text(s.replace(old, new, 1))
+
+          p = Path('src/core/local-continuum/solver.js')
+          s = p.read_text()
+          old = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const residual = equilibriumResidual(mesh, correction, load.forceVector);\n  const qualification = qualifyResiduals(\n"""
+          new = """  solved.solution.forEach((value, position) => {\n    correction[free[position]] = value;\n  });\n  let residual = equilibriumResidual(mesh, correction, load.forceVector);\n  if (mesh.globalStiffnessStorage === 'CSR_FULL_SYMMETRIC'\n    && sparseReactionRefinementRequired(model, mesh.dofOrdering, free, constraints.indices, load.forceVector, residual)) {\n    const refined = solveScaledSparseDefectCorrection(model, mesh, free, residual);\n    refined.solution.forEach((value, position) => {\n      correction[free[position]] = canonicalNumber(\n        correction[free[position]] + value,\n        'scaled sparse defect-corrected displacement',\n      );\n    });\n    residual = equilibriumResidual(mesh, correction, load.forceVector);\n  }\n  const displacement = correction.map((value, index) => (\n    value + conditioning.referenceVector[index]\n  ));\n  constraints.indices.forEach((index, position) => {\n    displacement[index] = constraints.values[position];\n  });\n  const qualification = qualifyResiduals(\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected solvePartitioned recovery block')
+          s = s.replace(old, new, 1)
+          marker = """function equilibriumResidual(mesh, displacement, force) {\n"""
+          helper = """function sparseReactionRefinementRequired(model, dofs, free, constrained, force, residual) {\n  const scale = Math.max(1, maxAbs(force), maxAbs(residual));\n  const freeLimit = tolerance(model.qualificationProfile, 'freeDofResidual', scale);\n  const freeMaximum = Math.max(0, ...free.map((index) => Math.abs(residual[index])));\n  if (freeMaximum > freeLimit) return false;\n  const totals = equilibriumTotals(dofs, constrained, force, residual);\n  const equilibriumLimit = tolerance(model.qualificationProfile, 'reactionEquilibrium', scale);\n  return Math.max(Math.abs(totals.UX), Math.abs(totals.UY)) > equilibriumLimit;\n}\n\nfunction solveScaledSparseDefectCorrection(model, mesh, free, residual) {\n  const freeStiffness = restrictSymmetricCsr(mesh.globalStiffnessCsr, free);\n  const rawRightHandSide = free.map((index) => canonicalNumber(-residual[index], 'scaled sparse defect-correction rhs'));\n  const defectMagnitude = maxAbs(rawRightHandSide);\n  if (!(defectMagnitude > 0) || !Number.isFinite(defectMagnitude)) {\n    throw numericalError('SPARSE_DEFECT_CORRECTION_INVALID', 'solver', `Sparse defect-correction magnitude is invalid: ${defectMagnitude}.`);\n  }\n  const normalization = 1 / defectMagnitude;\n  const normalizedRightHandSide = rawRightHandSide.map((value) => canonicalNumber(value * normalization, 'normalized sparse defect-correction rhs'));\n  const solvedDefect = jacobiEquilibratedCgSolve(freeStiffness, normalizedRightHandSide, model.qualificationProfile);\n  return {\n    ...solvedDefect,\n    solution: solvedDefect.solution.map((value) => canonicalNumber(value / normalization, 'scaled sparse defect-correction solution')),\n  };\n}\n\n"""
+          if s.count(marker) != 1:
+              raise RuntimeError('expected equilibriumResidual marker')
+          p.write_text(s.replace(marker, helper + marker, 1))
+          PY
+          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+          node --check src/core/local-continuum/solver.js
+      - name: Execute exact governing B01 case only
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { executeLameBbarQualificationCase } from './scripts/lib/lafea-plane-strain-bbar-lame-fixture.mjs';
+          const definition = JSON.parse(fs.readFileSync('validation/lafea-incompressible/plane-strain-bbar-v1.json', 'utf8'));
+          const meshPolicy = JSON.parse(fs.readFileSync('validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json', 'utf8'));
+          const level = definition.benchmarks.THICK_CYLINDER.meshLadder.levels.find((row) => row.levelId === 'L4');
+          const distortion = definition.distortionMatrix.find((row) => row.distortionId === 'REGULAR');
+          const run = executeLameBbarQualificationCase(definition, meshPolicy, {
+            elementType: 'T6',
+            poissonRatio: 0.4999,
+            level,
+            distortion,
+          });
+          console.log(JSON.stringify({
+            case: 'T6/0.4999/L4/REGULAR',
+            state: run.result.qualification.state,
+            solverEvidence: run.loadCase.solverEvidence,
+            equilibrium: run.loadCase.equilibrium,
+          }, null, 2));
+          NODE

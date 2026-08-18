@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - diagnostic/lafea-b01-late-restart-20260818
+  pull_request:
+    branches:
+      - agent/lafea-b01-solver-qualification-20260818
   workflow_dispatch:
 
 permissions:

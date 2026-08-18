@@ -1,0 +1,43 @@
+name: LAFEA B01 equilibrated target reliable-update temporary
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lafea-b01-equilibrated-target-reliable-update-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  target-reliable-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact PR head
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Apply qualified target-only reliable update in runner workspace
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/core/local-continuum/jacobi-equilibrated-cg.js')
+          s = p.read_text()
+          old = """    if (iterations % 100 === 0 || maxAbs(residual) <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n    }\n"""
+          new = """    const recursiveResidualInfinity = maxAbs(residual);\n    if (iterations % 100 === 0 || recursiveResidualInfinity <= convergenceTarget) {\n      const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);\n      const exact = exactOriginalResidual(matrix, rightHandSide, solution);\n      originalResidualInfinity = maxAbs(exact);\n      if (originalResidualInfinity <= convergenceTarget) {\n        return result(\n          solution,\n          iterations,\n          iterationLimit,\n          residualScale,\n          residualTolerance,\n          convergenceTarget,\n          originalResidualInfinity,\n          diagonalScale,\n          diagonalTolerance,\n          matrix.diagonal,\n        );\n      }\n      if (recursiveResidualInfinity <= convergenceTarget) {\n        residual = exact.map(\n          (value, index) => value * inverseSqrtDiagonal[index],\n        );\n        scaledResidualCompensation.fill(0);\n        direction = [...residual];\n        rho = compensatedDot(residual, residual);\n        if (!(rho > 0) || !Number.isFinite(rho)) {\n          throw solverError(\n            'JACOBI_EQUILIBRATED_CG_RELIABLE_UPDATE_INVALID',\n            rho,\n          );\n        }\n        continue;\n      }\n    }\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected one equilibrated-CG exact-residual check block')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          node --check src/core/local-continuum/jacobi-equilibrated-cg.js
+      - name: Execute frozen full Lamé matrix
+        run: node scripts/lafea-plane-strain-bbar-lame-check.mjs

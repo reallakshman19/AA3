@@ -7,31 +7,34 @@
 - Branch: `agent/lafea-b01-solver-qualification-20260818`
 - Intent: engineering-critical prerequisite repair split from TECH-13 carrier #1249
 - Merge authority: owner explicitly authorized on 2026-08-18
+- Current `main` authority rechecked: `134b43c4cd09139d3b6067223576ccdad653f07e`
 - Trust root / TECH-13 authority: out of scope and unchanged
 - Solver acceptance thresholds: unchanged
-- PCG iteration budget: unchanged
-- Current production candidate: symmetric Jacobi equilibration followed by CG on the scaled SPD system
+- sparse iteration budget: unchanged
+- production solver candidate: symmetric Jacobi equilibration followed by CG on the scaled SPD system
+- production-code reference head before latest diagnostic-carrier-only edits: `af3a0473f8161eceddc2f4e54c0fd4ec811d4b62`
+- current branch head contains diagnostic workflow edits only above those production bytes; no diagnostic result may be treated as production authority until promoted and requalified.
 
-## Frozen governing case
+## Current governing failure
+
+The earlier T6/L3/ν=0.4999 failure is closed by symmetric Jacobi equilibration. The current full-matrix blocker is the finer case:
 
 ```text
 elementType: T6
-levelId: L3
+levelId: L4
 poissonRatio: 0.4999
 distortionId: REGULAR
-free system size: 2660 DOF
-iterationLimit: 42560 = 16*N
-public free-DOF acceptance gate: 2.102108772439442e-8
-qualified internal target:        2.102108772439442e-9
+iterationLimit: 50000
+exact original-coordinate residual: 3.725290298461914e-9
+qualified internal target:          1.5439099506948204e-9
+state: FAIL
 ```
 
-## Root cause
+At production-code head `af3a0473f8161eceddc2f4e54c0fd4ec811d4b62`, workflow run `32158946070` retained artifact `9333597264`. The final integrated qualification exits 1 only on the production Lamé matrix. The same artifact records PASS for deterministic mesh controls, registered 54-case base matrix, 270-case metamorphic matrix, 16-case fail-closed matrix, independent oracle, shared unit contract, prior T6/Q8/imposed-displacement/solver controls, and the frozen ν=0.3 Lamé diagnostic.
 
-The later sparse-PCG regression originally introduced unconditional exact-residual replacement while retaining stale conjugate state. Restoring the previously qualified reliable-residual semantics removed the reaction-equilibrium regression but exposed a longstanding finite-precision stagnation of the algebraically equivalent Jacobi-PCG recurrence on the near-incompressible T6/L3 case.
+## Numerical representation under qualification
 
-Arithmetic-only stabilization reduced the governing exact residual from approximately `1.97906e-8` to `4.627509042620659e-9` without altering any engineering acceptance criterion, but still missed the qualified internal target.
-
-The production candidate therefore changes the numerical representation of the same Jacobi-preconditioned SPD problem, not its physics or tolerance: with `D = diag(A)`, solve
+With `D = diag(A)`, sparse production solves
 
 ```text
 A_hat y = b_hat
@@ -40,59 +43,91 @@ b_hat = D^(-1/2) b
 x = D^(-1/2) y
 ```
 
-using ordinary CG. In exact arithmetic this is symmetric Jacobi preconditioning. The final and periodic convergence authority remains the exact residual in original coordinates, `b - A*x`.
+using CG. In exact arithmetic this is Jacobi-preconditioned CG. Recurrence `A*p` remains on the ordinary CSR product; exact residual custody uses compensated CSR summation in original coordinates. Solver evidence remains `DETERMINISTIC_JACOBI_PCG` / `SYMMETRIC_JACOBI_EQUILIBRATED_CG` / `JACOBI`.
 
 ## Protected invariants
 
-- constitutive / B-bar formulation unchanged;
+- constitutive and B-bar formulation unchanged;
 - stiffness and pressure-load equations unchanged;
 - free-DOF acceptance tolerance unchanged;
+- reaction-equilibrium tolerance unchanged;
 - internal convergence target remains `freeDofResidualTolerance / 10`;
 - iteration cap remains `min(50000, max(1000, 16*N))`;
-- preconditioner identity remains `JACOBI`;
-- matrix remains symmetric positive definite authority for CG;
-- final residual is checked in original physical coordinates;
+- matrix remains SPD authority for CG;
+- final convergence is checked in original physical coordinates;
 - no benchmark expected value changed;
 - no mesh-quality threshold changed;
+- T6 curved-element quality remains governed by high-order scaled Jacobian rather than the straight-corner angle surrogate;
 - no release or TECH-13 trust-root authority changed.
 
 ## Retained prerequisite corrections
 
-1. restore reliable-residual recurrence semantics after the invalid unconditional residual replacement;
-2. compensated scalar products;
+1. remove the invalid unconditional residual replacement that retained stale conjugate state;
+2. compensated PCG scalar products;
 3. compensated solution accumulation;
 4. compensated recursive-residual accumulation;
-5. compensated exact-residual CSR evaluation;
-6. T6 mesh-quality domain correction: straight-corner minimum-angle surrogate applies only to straight-sided T3/CST_DKT_TRI3; curved T6 remains governed by high-order scaled Jacobian;
-7. Lamé diagnostic reports the exact first failing L3 element/nu/distortion point.
+5. compensated exact-residual CSR summation;
+6. symmetric Jacobi equilibration for the sparse SPD system;
+7. T6 quality-domain correction: straight-corner minimum-angle surrogate applies only to straight-sided triangular formulations;
+8. frozen Lamé diagnostic retains explicit case observability.
 
-## Rejected candidates
+## Rejected / non-promoted numerical candidates
 
 | Candidate | Governing observation | Disposition |
 |---|---:|---|
-| compensated global CSR action | residual worsened to about `2.29338e-8` | rejected/reverted |
-| compensated sparse assembly | residual `2.6775524020195007e-8` | rejected/reverted |
+| compensated global CSR recurrence action | worsened prior residual to about `2.29338e-8` | rejected/reverted |
+| compensated sparse assembly | prior governing residual `2.6775524020195007e-8` | rejected/reverted |
 | unconditional/full reliable restart | ν=0.3 reaction-equilibrium regression | rejected/reverted |
-| compensated direction update | no numerical benefit | removed |
-| compensated recurrence `Ap` | residual `7.821654435247183e-9` | rejected/reverted |
-| drift-triggered PCG restart | residual `0.5968922979591298` | rejected/reverted |
-| SGS-PCG | residual `3.344212018419057e-9`, still above target | rejected/reverted |
-| IC(0)-PCG | negative IC(0) pivot square `-11758995.159897372` at row 722 | rejected/removed; no diagonal shift introduced |
-| skyline Cholesky | reaction-equilibrium failure; persisted with qualified-style iterative refinement on ν=0.4999/MODERATE | rejected/removed |
+| drift-triggered restart | residual `0.5968922979591298` | rejected/reverted |
+| target-only reliable restart | advanced convergence but exposed reaction imbalance dominated by aggregate free residual | diagnostic only; not promoted |
+| SGS-PCG | residual `3.344212018419057e-9` on earlier case | rejected/reverted |
+| IC(0)-PCG | negative IC(0) pivot square `-11758995.159897372` at row 722 | rejected; no shift introduced |
+| skyline Cholesky + refinement | reaction-equilibrium failure persisted | rejected |
+| nodal block-SGS PCG | L4 residual `6.170012056827545e-9` | rejected |
+| two-level six-mode affine coarse space | L4 residual `3.6088749766349792e-9` | insufficient; rejected |
+| post-cap minimum-residual exact-residual correction | `3.725290298461914e-9 -> 2.0954757928848267e-9`; one accepted step, then stagnation | insufficient; not promoted |
+| normalized/scaled sparse defect correction | correction solve diverged to `1.497543416917324e-5` | rejected |
 
-## Symmetric-Jacobi-equilibration evidence
+## Reaction-residual RCA retained as evidence
 
-Diagnostic head `5cd2f22c10b2e7ccfa93710e64b714dad3be5834`:
-- frozen four-level ν=0.3 Lamé diagnostic: PASS;
-- full L3 sweep including ν=0.4999 regular/moderate: PASS (`firstL3SolverFailure = null`);
-- no target/cap/tolerance change.
+When a target-only reliable update advanced a fine case to the reaction gate, residual decomposition showed that the apparent reaction imbalance was overwhelmingly the sum of free-DOF residuals, not loss of translational nullspace in assembled stiffness. Representative B01 decomposition:
 
-Production-wired code head before this workreport update: `9f0045b7a8a0fc0c0d036d5f771eeecd105e406f`.
-At that head:
-- B01 metamorphic matrix: PASS;
-- B01 fail-closed matrix: PASS;
-- final exact-head integrated B01: running at time of this record; do not infer PASS until the propagation step is green.
+```text
+external reaction imbalance:  UX +5.8949e-8, UY -6.9782e-8
+summed free residual:          UX -5.8956e-8, UY +6.9755e-8
+K translational-nullspace remainder:
+                              UX -6.53e-12, UY -2.67e-11
+```
+
+Therefore reaction-total compensation, compensated final `K*x`, and compensated sparse assembly are not accepted substitutes for solving the free system more accurately.
+
+## Active falsifier
+
+A runner-only error-free-product / double-double sparse row dot is being tested **only for the exact residual oracle**. Purpose: determine whether the remaining `3.725e-9` floor is product-rounding in the authoritative `K*x` cancellation rather than unresolved Krylov error. The CG recurrence, matrix, iteration limit, internal target, engineering tolerances, benchmark, and production source are unchanged by this diagnostic.
+
+Disposition rule:
+- if double-double exact residual remains above `1.5439099506948204e-9`, reject residual-evaluation precision as the primary cause;
+- if it falls below target, qualify the arithmetic authority independently before any production promotion.
+
+## Validation state
+
+- Registered base matrix: **PASS (54/54)**
+- Metamorphic matrix: **PASS (270/270)**
+- Fail-closed matrix: **PASS (16/16)**
+- Frozen ν=0.3 Lamé L1-L4 diagnostic: **PASS**
+- Full near-incompressible production Lamé matrix: **FAIL** at T6/L4/ν=0.4999/REGULAR
+- Exact-head merge qualification: **FAIL**
+- Merge: **BLOCKED**
 
 ## Merge gate
 
-Do not merge this PR from an obsolete base. After the production-wired exact-head matrix passes, reconstruct the same B01 file set on the then-current `main`, rerun exact-head B01, metamorphic, fail-closed, and relevant workbench/build checks, and merge only that current-main-qualified head.
+Do not merge while the full B01 matrix is red. After a candidate closes the L4 governing case, it must be promoted into source, all temporary diagnostic workflows must be removed, the workreport updated, and the cleanup-bearing exact head must rerun:
+
+1. full B01 integrated qualification;
+2. registered 54-case base matrix;
+3. 270-case metamorphic matrix;
+4. 16-case fail-closed matrix;
+5. focused Lamé diagnostic;
+6. relevant workbench/build collateral checks.
+
+Only that exact cleanup head is eligible for merge. After #1250 merges, re-ground #1254 B02D V2 on the new `main` and rerun its frozen pre-observation and full production-response/convergence gates before any B02D merge.

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { buildLafeaWorkflowAreaPresentation } from '../src/workspace/lafea-guided-workflow-presentation.js';
 import { lafeaUiStatusPresentation } from '../src/workspace/lafea-ui-status.js';
 
 const expectations = Object.freeze({
@@ -32,6 +33,42 @@ const unknown = lafeaUiStatusPresentation('FUTURE_INTERNAL_STATE');
 assert.equal(unknown.label, 'Unknown state');
 assert.equal(unknown.canonical, 'FUTURE_INTERNAL_STATE');
 
+const workflow = Object.freeze({
+  schema: 'lafea-guided-workflow/v1',
+  steps: Object.freeze([
+    step('SOURCE_IDENTITY', 'BLOCKED', ['SOURCE_DOCUMENT_REQUIRED']),
+    step('MODEL_DIAGNOSTICS', 'NOT_STARTED'),
+    step('ANALYSIS_PROFILE', 'BLOCKED', ['LIFECYCLE_NOT_INITIALIZED']),
+    step('MATERIALS_SECTIONS', 'NOT_STARTED'),
+    step('RESTRAINTS_BCS', 'NOT_STARTED'),
+    step('LOADS_CASES', 'NOT_STARTED'),
+    step('DISCRETIZATION', 'READY'),
+    step('NUMERICAL_PREFLIGHT', 'WARNING', ['PREFLIGHT_REVIEW_REQUIRED']),
+    step('AUTHORIZATION', 'READY'),
+    step('RUN', 'BLOCKED', ['RUN_NOT_AUTHORIZED']),
+    step('RESULTS_EVIDENCE', 'NOT_STARTED'),
+  ]),
+});
+
+const areas = buildLafeaWorkflowAreaPresentation(workflow);
+assert.deepEqual(areas.map((area) => area.areaId), ['MODEL', 'MESH', 'SOLVE', 'RESULTS']);
+assert.deepEqual(areas.map((area) => area.label), ['Model', 'Mesh', 'Solve', 'Results']);
+assert.equal(areas[0].steps.length, 6);
+assert.equal(areas[0].status, 'BLOCKED');
+assert.equal(areas[0].targetStep.stepId, 'SOURCE_IDENTITY');
+assert.equal(areas[1].status, 'READY');
+assert.equal(areas[1].targetStep.stepId, 'DISCRETIZATION');
+assert.equal(areas[2].status, 'BLOCKED');
+assert.equal(areas[2].targetStep.stepId, 'RUN');
+assert.equal(areas[3].status, 'NOT_STARTED');
+assert.equal(workflow.steps[0].status, 'BLOCKED');
+
+const allComplete = buildLafeaWorkflowAreaPresentation({
+  schema: 'lafea-guided-workflow/v1',
+  steps: workflow.steps.map((value) => ({ ...value, status: 'COMPLETE', reasons: [] })),
+});
+assert.equal(allComplete.every((area) => area.status === 'COMPLETE'), true);
+
 const rendererPath = fileURLToPath(new URL('../src/workspace/lafea-guided-workflow-view.js', import.meta.url));
 const renderer = readFileSync(rendererPath, 'utf8');
 const informalGlyphs = ['✓', '○', '⚠', '🚫', '⚡'];
@@ -40,9 +77,19 @@ for (const glyph of informalGlyphs) {
 }
 assert.equal(renderer.includes('friendlyStatus'), false, 'renderer must not reinterpret canonical status');
 assert.equal(renderer.includes("friendlyStatus = 'PENDING'"), false, 'BLOCKED must not be relabelled as PENDING');
-assert.match(renderer, /item\.dataset\.status = step\.status/u);
+assert.match(renderer, /buildLafeaWorkflowAreaPresentation\(workflow\)/u);
+assert.match(renderer, /data\.workflowArea/u);
 assert.match(renderer, /button\.dataset\.status = step\.status/u);
-assert.match(renderer, /if \(step\.reasons\.length\)/u);
-assert.match(renderer, /lafea-guided-workflow__reasons/u);
+assert.match(renderer, /lafea-guided-workflow__technical/u);
 
-console.log('LAFEA formal UI status presentation check: PASS');
+console.log('LAFEA formal UI status and four-area presentation check: PASS');
+
+function step(stepId, status, reasons = []) {
+  return Object.freeze({
+    stepId,
+    label: stepId,
+    status,
+    reasons: Object.freeze([...reasons]),
+    focusTarget: stepId.toLowerCase(),
+  });
+}

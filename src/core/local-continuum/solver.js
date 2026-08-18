@@ -11,7 +11,6 @@ import {
 } from './sparse-matrix.js';
 
 const DENSE_CHOLESKY_REFINEMENT_STEPS = 3;
-const SPARSE_PCG_RELIABLE_RESIDUAL_INTERVAL = 100;
 
 export function solvePartitioned(model, mesh, load) {
   const constraints = constraintData(model, mesh.dofOrdering, load);
@@ -336,7 +335,6 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
   const initialResidualInfinity = maxAbs(residual);
   let finalResidualInfinity = initialResidualInfinity;
   let iterations = 0;
-  let reliableResidualReplacements = 0;
   if (finalResidualInfinity > convergenceTarget) {
     let preconditioned = applyJacobi(matrix.diagonal, residual);
     let direction = [...preconditioned];
@@ -366,8 +364,7 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
       iterations += 1;
       const recursiveResidualInfinity = maxAbs(residual);
       finalResidualInfinity = recursiveResidualInfinity;
-      const reliableResidualDue = iterations % SPARSE_PCG_RELIABLE_RESIDUAL_INTERVAL === 0;
-      if (recursiveResidualInfinity <= convergenceTarget || reliableResidualDue) {
+      if (recursiveResidualInfinity <= convergenceTarget || iterations % 100 === 0) {
         const reliableResidual = exactResidual(matrix, rightHandSide, solution);
         const reliableResidualInfinity = maxAbs(reliableResidual);
         finalResidualInfinity = reliableResidualInfinity;
@@ -375,16 +372,11 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
           residual = reliableResidual;
           break;
         }
-        if (reliableResidualDue) {
-          residual = reliableResidual;
-          reliableResidualReplacements += 1;
-        }
         if (recursiveResidualInfinity <= convergenceTarget) {
           residual = reliableResidual;
           preconditioned = applyJacobi(matrix.diagonal, residual);
           direction = [...preconditioned];
           rho = dotVector(residual, preconditioned);
-          reliableResidualReplacements += reliableResidualDue ? 0 : 1;
           if (!(rho > 0) || !Number.isFinite(rho)) {
             throw singularError(
               'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
@@ -425,7 +417,6 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
       canonicalNumber(value, 'solved sparse displacement')),
     evidence: {
       method: 'DETERMINISTIC_JACOBI_PCG',
-      algorithmRevision: 'DETERMINISTIC_JACOBI_PCG_RELIABLE_RESIDUAL_V2',
       pivotScale: null,
       pivotTolerance: null,
       pivots: [],
@@ -435,8 +426,6 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
       preconditioner: 'JACOBI',
       iterationLimit,
       iterations,
-      reliableResidualInterval: SPARSE_PCG_RELIABLE_RESIDUAL_INTERVAL,
-      reliableResidualReplacements,
       residualScale: canonicalNumber(residualScale),
       initialResidualInfinity: canonicalNumber(initialResidualInfinity),
       finalResidualInfinity: canonicalNumber(finalResidualInfinity),

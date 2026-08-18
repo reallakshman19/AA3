@@ -26,7 +26,7 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   display:grid!important;
   grid-template-columns:minmax(0,1fr) auto;
   gap:6px 12px!important;
-  align-items:center;
+  align-items:start;
 }
 .lafea-guided-workflow>h2{display:none}
 .lafea-guided-workflow__areas{
@@ -34,7 +34,7 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   grid-template-columns:repeat(4,minmax(0,1fr));
   gap:6px!important;
 }
-.lafea-guided-workflow__areas>li{min-width:0}
+.lafea-guided-workflow__areas>li{min-width:0;align-content:start}
 .lafea-guided-workflow__area{
   grid-template-columns:18px minmax(0,1fr) auto!important;
   min-height:40px;
@@ -46,14 +46,23 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   color:#7dd3fc;
 }
 .lafea-guided-workflow__reasons{
-  display:none!important;
+  display:block!important;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .lafea-guided-workflow__technical{
-  display:none!important;
+  display:block!important;
+}
+.lafea-guided-workflow__technical>summary{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .lafea-guided-workflow__release{
-  align-self:center;
-  margin:0!important;
+  align-self:start;
+  margin:7px 0 0!important;
   padding:0!important;
   border:0!important;
   white-space:nowrap;

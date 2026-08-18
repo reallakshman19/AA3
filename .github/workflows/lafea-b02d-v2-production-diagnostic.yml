@@ -43,6 +43,7 @@ jobs:
               ("'B02D_PROBE_STABLE_POLAR'", "'B02D_PROBE_STABLE_POLAR_V2'"),
               ("'B02D-FROZEN-POLAR-V1'", "'B02D-FROZEN-POLAR-V2'"),
               ("assert.equal(definition.caseId, 'B02D');", "assert.equal(definition.caseId, 'B02D-V2');"),
+              ("assert.equal(result.qualification.state, 'ACCEPTED');", "assert.equal(result.qualification.state, 'ACCEPTED', `B02D ${method}/${level.levelId}: ${JSON.stringify(result.diagnostics)}`);"),
             ],
             'scripts/lafea-b02d-production-check.mjs': [
               ("validation/lafea-b02-definitions/B02D-lug-pinhole.json", "validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json"),

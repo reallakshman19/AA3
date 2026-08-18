@@ -37,6 +37,9 @@ import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-pipi
 import { mountLfeaPipelineStagedJsonInputPanel } from './workspace/lfea-pipeline-stagedjson-input-panel.js';
 import { mountLfeaPipelineAccdbInputPanel } from './workspace/lfea-pipeline-accdb-input-panel.js';
 import { mountLfeaPipelineLoadCaseAuthoringPanel } from './workspace/lfea-pipeline-load-case-authoring-panel.js';
+import { mountLfeaPipelineCaseSelectionPanel } from './workspace/lfea-pipeline-case-selection-panel.js';
+import { mountLfeaPipelineResultsPanel } from './workspace/lfea-pipeline-results-panel.js';
+import { createLfeaPipelineAnalysisController } from './workspace/lfea-pipeline-analysis-controller.js';
 import { mountLfeaPipelineVerificationDrawer } from './workspace/lfea-pipeline-verification-drawer.js';
 import { mergeAuthoredInputXmlLinearPhysicalCase } from './core/linear-piping-analysis-consumer/inputxml-linear-authored-physical-cases.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
@@ -78,6 +81,17 @@ const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipel
 const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
 });
+const lfeaAnalysisController = createLfeaPipelineAnalysisController({});
+// The Load-case step leads with the model's own standard analysis cases
+// (W / W+P1 / W+T1 / W+P1+T1). Authored nodal loads stay available below
+// them for wind or seismic point loads, but they are not the headline: a
+// piping engineer picks a case, they do not type force components.
+const lfeaCaseSelectionPanel = mountLfeaPipelineCaseSelectionPanel(lfeaPipelineShell.getLoadCaseHost(), {
+  documentRef: applicationRoot.ownerDocument,
+  getPreFlight: () => linearPipingInputXmlSource.getPreFlight(),
+  onApplyCaseSelection: (caseIds) => linearPipingInputXmlSource.setRequestedCaseIds(caseIds),
+  onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
+});
 const lfeaLoadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(lfeaPipelineShell.getLoadCaseHost(), {
   documentRef: applicationRoot.ownerDocument,
   getNodeIds: () => linearPipingInputXmlSource.getPreFlight()
@@ -92,6 +106,10 @@ const lfeaVerificationDrawer = mountLfeaPipelineVerificationDrawer(lfeaPipelineS
 // sections, never split by concern). This shim routes the results panel
 // into the shell's own RESULTS host instead, without changing that 700+
 // line controller's mount-target resolution.
+const lfeaResultsPanel = mountLfeaPipelineResultsPanel(lfeaPipelineShell.getResultsHost(), {
+  documentRef: applicationRoot.ownerDocument,
+  onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
+});
 const linearPipingResultsMountRoot = { querySelector: () => lfeaPipelineShell.getResultsHost() };
 const linearPipingResults = mountLinearPipingResultsWorkbench(linearPipingResultsMountRoot, { documentRef: applicationRoot.ownerDocument, urlApi: applicationRoot.ownerDocument.defaultView?.URL });
 const globalSettingsPopover = mountLfeaGlobalSettingsPopover(
@@ -101,7 +119,10 @@ const globalSettingsPopover = mountLfeaGlobalSettingsPopover(
 let lfeaAuthoritySupplement = null;
 lfeaPipelineShell.setAssemblyHandlers({
   onStepActivated(stepId) {
-    if (stepId === 'LOAD_CASE') lfeaLoadCaseAuthoringPanel.refresh();
+    if (stepId === 'LOAD_CASE') {
+      lfeaCaseSelectionPanel.refresh();
+      lfeaLoadCaseAuthoringPanel.refresh();
+    }
   },
   async onAuthoritySupplementSelected(file) {
     if (!file) {
@@ -158,6 +179,50 @@ lfeaPipelineShell.setAssemblyHandlers({
   },
 });
 
+/**
+ * Run the analysis the Load-case step asked for.
+ *
+ * No authority supplement is involved. Displacements, support loads and
+ * element end forces follow from the model, its loads and its restraints
+ * alone -- the interface/nozzle-allowable/B31 authorities exist for the
+ * separate code-stress application, and requiring them here was gating the
+ * analysis behind data it never consults.
+ */
+function runLfeaPipelineAnalysis(caseIds) {
+  try {
+    const preFlight = linearPipingInputXmlSource.getPreFlight();
+    if (!preFlight) throw new Error('Load a model and run Error check before analyzing.');
+    const requested = preFlight.preparation.requestedCaseIds ?? [];
+    const missing = caseIds.filter((caseId) => !requested.includes(caseId));
+    if (missing.length > 0) {
+      throw new Error(`Choose "Apply selection" first — ${missing.join(', ')} is not in the current pre-flight.`);
+    }
+    const state = lfeaAnalysisController.analyze(preFlight, caseIds);
+    lfeaResultsPanel.setState(state);
+    lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
+    lfeaPipelineShell.setStepStatus('RUN', { complete: true });
+    lfeaPipelineShell.setActiveStep('OUTPUT');
+    return state;
+  } catch (error) {
+    lfeaPipelineShell.setAssembleStatus(error instanceof Error ? error.message : String(error), true);
+    throw error;
+  }
+}
+
+function downloadLfeaCsv(csvText, fileName) {
+  const doc = applicationRoot.ownerDocument;
+  const view = doc.defaultView;
+  const urlApi = view?.URL;
+  if (!urlApi?.createObjectURL || typeof view.Blob !== 'function') return false;
+  const url = urlApi.createObjectURL(new view.Blob([csvText], { type: 'text/csv' }));
+  const anchorNode = doc.createElement('a');
+  anchorNode.href = url;
+  anchorNode.download = fileName;
+  anchorNode.click();
+  urlApi.revokeObjectURL(url);
+  return true;
+}
+
 function requireLfeaAuthoritySupplementShape(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new TypeError('Authority supplement must be a JSON object.');
@@ -169,7 +234,15 @@ function requireLfeaAuthoritySupplementShape(value) {
 
 function assembleLfeaInputXmlRunRequest() {
   if (!lfeaAuthoritySupplement) {
-    throw new Error('Load an authority supplement JSON before assembling a run request.');
+    // This is the optional code-stress/interface application, not the
+    // analysis. Displacements, support loads and element forces come from
+    // "Analyze" on the Load-case step and need none of this.
+    throw new Error(
+      'Nozzle interface mechanics and B31 code checks need an authority supplement '
+      + '(interface authority, nozzle allowables, B31 edition data) — licensed project data '
+      + 'no InputXML file carries. For displacements, support loads and element forces, '
+      + 'use Analyze on the Load case step instead; it needs none of this.',
+    );
   }
   const snapshot = linearPipingInputXmlSource.getSnapshot();
   if (!snapshot.preFlightSolveAuthorized) {
@@ -284,6 +357,9 @@ const workspace = Object.freeze({
   getLfeaStagedJsonInputPanelState() { return lfeaStagedJsonInputPanel.getSnapshot(); },
   getLfeaAccdbInputPanelState() { return lfeaAccdbInputPanel.getSnapshot(); },
   getLfeaLoadCaseAuthoringPanelState() { return lfeaLoadCaseAuthoringPanel.getSnapshot(); },
+  getLfeaCaseSelectionState() { return lfeaCaseSelectionPanel.getSnapshot(); },
+  getLfeaResultsPanelState() { return lfeaResultsPanel.getSnapshot(); },
+  getLfeaAnalysisState() { return lfeaAnalysisController.getState(); },
   getLfeaVerificationDrawerState() { return lfeaVerificationDrawer.getSnapshot(); },
   importLinearPipingResultPackage(value) { return linearPipingResults.loadPackage(value); },
   checkLinearPipingRunRequest(value) { return linearPipingResults.checkRequest(value); },
@@ -332,7 +408,7 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaLoadCaseAuthoringPanel.destroy(); lfeaVerificationDrawer.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
+  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaCaseSelectionPanel.destroy(); lfeaResultsPanel.destroy(); lfeaLoadCaseAuthoringPanel.destroy(); lfeaVerificationDrawer.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
 });
 
 globalThis.AnalysisWorkspace = workspace;

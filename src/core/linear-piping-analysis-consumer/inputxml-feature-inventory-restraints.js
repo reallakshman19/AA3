@@ -124,6 +124,29 @@ export function restraintDispositions(classification) {
   };
 }
 
+// CAESAR's one-way restraint codes name the direction the support acts IN:
+// 13/14/15 are +X/+Y/+Z, 16/17/18 are -X/-Y/-Z. A "+Y" support can only push
+// the pipe up, so the reaction it applies to the structure is positive on that
+// axis and never negative. Linearizing it as a bidirectional FIXED DOF removes
+// that restriction, which is exactly the approximation
+// GENERIC_APPROX_UNILATERAL_LINEARIZED discloses -- and the sign recorded here
+// is what lets a later review notice when the solved reaction actually
+// violates it.
+const UNILATERAL_RESISTED_SIGN = Object.freeze({
+  13: 1, 14: 1, 15: 1, 16: -1, 17: -1, 18: -1,
+});
+
+/**
+ * For a one-way restraint, the DOF it acts on and the sign of the reaction it
+ * is physically able to apply. Null for anything bidirectional.
+ */
+export function restraintUnilateralAction(classification) {
+  const sign = UNILATERAL_RESISTED_SIGN[classification.typeCode] ?? null;
+  if (sign === null) return null;
+  if (classification.targetDofs.length !== 1) return null;
+  return Object.freeze({ dof: classification.targetDofs[0], resistedSign: sign });
+}
+
 /** Every distinct approximation this restraint relies on, for disclosure. */
 export function restraintApproximationCodes(classification) {
   const codes = [];

@@ -293,6 +293,14 @@ function compensatedProductSumRaw(left, right) {
   return sum + compensation;
 }
 
+function compensatedTwoTermSumRaw(first, second) {
+  const sum = first + second;
+  const compensation = Math.abs(first) >= Math.abs(second)
+    ? (first - sum) + second
+    : (second - sum) + first;
+  return sum + compensation;
+}
+
 function conjugateGradientSolve(matrix, rightHandSide, profile) {
   const diagonalScale = Math.max(
     1,
@@ -410,7 +418,10 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
       const beta = nextRho / rho;
       rho = nextRho;
       for (let index = 0; index < direction.length; index += 1) {
-        direction[index] = preconditioned[index] + beta * direction[index];
+        direction[index] = compensatedTwoTermSumRaw(
+          preconditioned[index],
+          beta * direction[index],
+        );
       }
     }
   }

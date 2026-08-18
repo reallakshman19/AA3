@@ -49,6 +49,7 @@ jobs:
               ('generateLafeaB02dProbeStablePolarMesh,', 'generateLafeaB02dProbeStablePolarMeshV2,'),
               ("../core/lafea-meshing/b02d-probe-stable-polar-mesh.js", "../core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js"),
               ("'B02D_PROBE_STABLE_POLAR_QUALIFIED'", "'B02D_PROBE_STABLE_POLAR_V2_QUALIFIED'"),
+              ("'B02D-FROZEN-POLAR-V1'", "'B02D-FROZEN-POLAR-V2'"),
               ('generateLafeaB02dProbeStablePolarMesh({', 'generateLafeaB02dProbeStablePolarMeshV2({'),
             ],
             'scripts/lib/lafea-b02d-production-route.mjs': [

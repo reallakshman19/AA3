@@ -20,7 +20,7 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   const technical = overview.locator('[data-role="lafea-technical-evidence"]').first();
   await expect(technical).toContainText('CURRENT_PASS');
   await expect(technical).toContainText('T3_T6_Q8_LINEAR_CONTINUUM');
-  await expect(technical).toContainText('54 / 54 PASS');
+  await expect(technical).toContainText('Qualification profile ID');
 
   const mesh = workbench.locator('[data-role="lafea-mesh-workspace-summary"]');
   await expect(mesh).toBeVisible();

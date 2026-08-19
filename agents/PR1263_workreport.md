@@ -5,8 +5,9 @@
 - `HANDOVER_READINESS: READY`
 - `PR_RECOVERY_STATE: RECOVERABLE`
 - `TAKEOVER_AUTHORITY: QUALIFICATION_PENDING`
-- `PR_HEAD_OBSERVED: 5c88f8095dc186cffb3d0e71985767b30ff4c1cb`
+- `PR_HEAD_OBSERVED: f967aca0a4f05c48a6b68958c03d59192e109124`
 - `REPORT_BASIS_HEAD: 5c88f8095dc186cffb3d0e71985767b30ff4c1cb`
+- `REPORT_SYNC: CURRENT_METADATA_ONLY_AFTER_BASIS`
 - `MAIN_HEAD_LAST_CHECKED: 67317dc9cb47de8897fa7952b86107ab91b1f75c`
 - `SOURCE_REPO_MAIN_LAST_CHECKED: 13e7c0e653e6d61ef2f2217068e1010bd5a53bf6`
 - `GROUNDING_EPOCH: GE-008`
@@ -28,17 +29,23 @@ Merge authority: `NOT GRANTED`
 
 PR1263 remains qualification-only. Production LAFEA.1/.2 mechanics, public EMP.1 UI/routes, generic local-correlation production code, LAFEA.3+ FEM and workflows are unchanged.
 
-The exact CAUx and WRC source objects remain pinned in `XML_Compare_Utilities@dc1371.../docs/emp.1/`. CAUx source discovery/identity is PASS, but exact pp24-31 rendering/extraction remains NOT_RUN because current non-mutating transports cannot stream the large binary body. WRC PDF identity is likewise pinned, but raw SHA-256/rendered-page arbitration remains NOT_RUN.
+The supplemental Hexagon pressure-thrust precheck has now been formally qualified. This is a **bounded** qualification only:
 
-The existing WRC extraction under `Advanced_Analysis/main/docs` is reused. Its frozen readiness expectation remains `BLOCKED`: 21 unresolved JSON paths, 7 open issues, 120 CSV rows, 0 numeric coefficient rows, 120 unresolved coefficient rows, and no semantic hash/numericalData payload. The derived spherical M1/M2 convention also conflicts with Hexagon's product convention and remains quarantined pending exact WRC arbitration.
+`QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY`
 
-## Newly qualified independent numerical precheck
+It independently validates the example geometry ratios, the 12.0 in nozzle ID, pressure-thrust arithmetic, and the resulting displayed WRC radial load `-31128 lbf`. It does **not** independently reproduce `117485 psi at Bu`, does not satisfy CAUx A4, does not supply WRC coefficients/sign custody, and cannot authorize EMP.1.C.
+
+The exact CAUx and WRC source objects remain pinned in `XML_Compare_Utilities@dc1371.../docs/emp.1/`. CAUx source identity is PASS, but exact pp24-31 rendering/extraction remains NOT_RUN because the current non-mutating transports cannot stream the binary body. WRC source identity is PASS, but exact WRC page arbitration/raw SHA-256 remains NOT_RUN.
+
+The existing WRC extraction under `Advanced_Analysis/main/docs` remains fail-closed at the frozen `21 unresolved / 7 open issues / 120 unresolved coefficients / 0 numeric coefficients` expectation. Its derived spherical M1/M2 convention conflicts with Hexagon's product convention and remains quarantined pending exact WRC arbitration.
+
+## Qualified independent numerical precheck
 
 Subject:
 
 `validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-v1.json`
 
-Current subject blob after provenance tightening:
+Subject blob after provenance tightening:
 
 `bb8f6a5e3e6a634fa8364ddac267fec069359199`
 
@@ -46,43 +53,43 @@ Formal qualification record:
 
 `validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-qualification-v1.json`
 
-Verdict:
+### Source custody
 
-`QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY`
+Before qualification, the provenance was corrected so it does not falsely attribute all facts to a single documentation version:
 
-### Provenance correction before qualification
+- geometry/applicability: Hexagon CAESAR II Applications Guide v15, WRC 107 topic `330129`;
+- pressure-thrust calculation + reported WRC result: official Applications Guide topic `348744`, corroborated by maintained 15.1 topic `605844`;
+- physical pressure-thrust handling/context: CAESAR II User's Guide WRC topics.
 
-The precheck no longer attributes every source fact to one Applications Guide v15 page. It now records the independently observed Hexagon source custody accurately:
+Source transcription status:
 
-- geometry/applicability: Applications Guide v15, WRC 107 topic `330129`;
-- pressure-thrust calculation and reported stress output: official Applications Guide topic `348744`, corroborated by maintained 15.1 topic `605844`;
-- WRC 107/537 relationship/context: CAESAR II User's Guide WRC Bulletin 107(537) topic.
-
-This correction was made before formal precheck qualification.
+- geometry/applicability: PASS;
+- pressure/load construction: PASS;
+- `117485 psi at Bu`: `PASS_SOURCE_TRANSCRIPTION_ONLY`.
 
 ### Independent arithmetic
 
-Source-reported inputs used:
+Source-reported inputs:
 
-- vessel OD `D=120 in`;
-- vessel thickness `T=0.625 in`;
-- nozzle OD `d=12.75 in`;
-- nozzle thickness `t=0.375 in`;
-- pressure `275 psi`;
-- restraint axial force `-26 lbf`.
+- `D=120 in`;
+- `T=0.625 in`;
+- `d=12.75 in`;
+- `t=0.375 in`;
+- pressure `=275 psi`;
+- restraint axial force `=-26 lbf`.
 
 Independent high-precision recomputation, without EMP.1 production code:
 
 - `d/D = 0.10625`;
 - `(D-T)/T = 191`;
-- nozzle ID `di = d-2t = 12.0 in`;
-- area `A = pi*di^2/4 = 113.097335529232556584655161798... in^2`;
-- pressure thrust `= 31101.767270538953060780169494... lbf`;
-- total WRC radial load `= -31127.767270538953060780169494... lbf`;
-- source displayed whole-pound value `= -31128 lbf`;
-- absolute unrounded-to-display difference `= 0.232729461046939... lbf`.
+- `di = d-2t = 12.0 in`;
+- `A = pi*di^2/4 = 113.097335529232556584655161798... in^2`;
+- pressure thrust `=31101.767270538953060780169494... lbf`;
+- total WRC radial load `=-31127.767270538953060780169494... lbf`;
+- source displayed value `=-31128 lbf`;
+- absolute unrounded-to-display difference `=0.232729461046939... lbf`.
 
-Acceptance is exact nearest-whole-pound equality. No engineering tolerance was introduced. Floating-point checker comparisons use `1e-9` only as a numerical representation epsilon for stored derived values.
+Acceptance is exact nearest-whole-pound equality. No engineering tolerance was introduced. The checker uses `1e-9` only as floating-point storage/comparison epsilon for derived values.
 
 ### Dimensional audit
 
@@ -91,73 +98,78 @@ PASS:
 - `di=d-2t` -> length;
 - `A=pi*di^2/4` -> area;
 - `pressure*A` -> force;
-- `restraint - thrust` -> force;
+- `restraint-thrust` -> force;
 - `d/D` and `(D-T)/T` -> dimensionless.
 
 ### Sign/reference audit
 
 `PASS_FOR_THIS_HEXAGON_EXAMPLE_ONLY`.
 
-Hexagon explicitly constructs this example's WRC P load as restraint axial force minus pressure thrust. This validates the sign used in this example only. It does not establish the universal EMP.1/WRC local-P sign map for arbitrary geometry/orientation; exact WRC convention custody remains separate.
+The cited source explicitly constructs this example's WRC P load as restraint axial force minus pressure thrust. This does not establish a universal WRC/EMP.1 local-P sign rule; exact WRC convention custody remains separate.
 
-### Source-reported stress output
+### Stress-output boundary
 
-`117485 psi at Bu` is verified as a Hexagon source transcription only.
-
-It is explicitly **not** present under `independentDerived`, is **not** claimed as independently reproduced, and is **not** a CAUx expected value.
+`117485 psi at Bu` is source-reported only. It is intentionally absent from `independentDerived`, cannot be promoted by the checker, and is not a CAUx expected value.
 
 ## Executable qualification evidence
-
-Added:
 
 - `scripts/emp1-independent-precheck-qualification-lib.mjs` — blob `7835559c22ea02d0575aeeae6041886fd7770b11`;
 - `scripts/emp1-independent-precheck-qualification-check.mjs` — blob `2c6b23ebf8f6c23a103f6763b412d144b55eb8e9`;
 - `scripts/emp1-independent-precheck-qualification-self-test.mjs` — blob `f2096367a0a1b946b585011a9fc02bffa0e20620`.
 
-Before local execution, the reconstructed UTF-8 contents independently reproduced each committed Git blob SHA-1 above and the subject blob `bb8f6a5e...`. This proves the executed files were byte-identical to the committed artifacts.
+Before execution, locally reconstructed UTF-8 contents independently reproduced the committed Git blob SHA-1 values for all three scripts and the subject blob. Therefore the executed files were byte-identical to the committed artifacts.
 
 Observed local execution:
 
-1. qualification self-test: `PASS`;
-2. actual subject checker: `PASS_BOUNDED_PRECHECK_QUALIFICATION`, zero failures.
+- qualification self-test: PASS;
+- actual subject checker: `PASS_BOUNDED_PRECHECK_QUALIFICATION`;
+- failures: `0`.
 
-Negative self-test cases proven:
+Negative self-test cases:
 
 - wrong source-reported radial load -> FAIL;
 - rewritten derived pressure thrust -> FAIL;
-- promoting source-reported `117485 psi` into independent derivation -> FAIL;
-- setting `maySatisfyCauxA4=true` -> FAIL.
+- source-reported `117485 psi` promoted to independent derivation -> FAIL;
+- `maySatisfyCauxA4=true` -> FAIL.
 
 ## Qualification boundary
 
-### Qualified claims
+### Qualified
 
-- Hexagon example geometry ratios are correctly transcribed and arithmetically consistent.
-- Reported nozzle OD/thickness imply 12.0 in ID.
-- Pressure-thrust arithmetic independently reproduces the displayed `-31128 lbf` WRC radial load.
-- The pressure-thrust sign is qualified for this cited Hexagon example only.
+- source geometry ratios are correctly transcribed and arithmetically consistent;
+- source nozzle OD/thickness imply 12.0 in ID;
+- pressure-thrust arithmetic independently reproduces source display `-31128 lbf`;
+- pressure-thrust sign is qualified for this specific cited example;
 - `117485 psi at Bu` is correctly transcribed as source-reported output.
 
-### Explicitly unqualified
+### Not qualified
 
 - independent reproduction of `117485 psi at Bu`;
-- any CAUx 2017 pp24-31 expected value;
-- WRC 537 equations/coefficient tables;
-- universal WRC load-sign mapping;
+- CAUx pp24-31 expected values;
+- WRC 537 equations/coefficient data;
+- universal WRC sign mapping;
 - EMP.1.C production correctness;
-- code compliance or release authority.
+- code/release authority.
 
-Therefore:
+Hard guards:
 
 - `maySatisfyCauxA4=false`;
 - `mayAuthorizeEmp1CProduction=false`;
 - `productionObservationUsedToSetExpectedValues=false`.
 
-## WRC readiness / discrepancy state unchanged
+## Existing WRC readiness / discrepancy
 
-The current WRC extraction remains `NOT_READY_FOR_IMPLEMENTATION`, with frozen expectation `21 unresolved / 7 open issues / 120 unresolved coefficients / 0 numeric coefficients`.
+Frozen WRC readiness remains:
 
-`validation/emp1/wrc537-2013/hexagon-sign-crosscheck-v1.json` remains an explicit discrepancy record:
+- 21 unresolved JSON paths;
+- 7 open issues;
+- 120 CSV rows;
+- 0 numeric coefficient rows;
+- 120 unresolved coefficient rows;
+- `semanticHash=null`;
+- `numericalData=[]`.
+
+`validation/emp1/wrc537-2013/hexagon-sign-crosscheck-v1.json` remains blocking:
 
 - V1 consistent;
 - V2 consistent;
@@ -165,14 +177,14 @@ The current WRC extraction remains `NOT_READY_FOR_IMPLEMENTATION`, with frozen e
 - M2 conflict;
 - exact pinned WRC must arbitrate.
 
-Neither the newly qualified pressure-thrust precheck nor CAUx benchmark matching may choose WRC signs or coefficients.
+Neither the qualified pressure-thrust precheck nor CAUx benchmark matching may select WRC signs or coefficients.
 
 ## Appendix A
 
 - **A1 Production Trace:** substantially complete.
 - **A2 UX Isolation:** substantially complete; public migration deliberately unstarted.
-- **A3 Authority/Invariant:** improved by qualified bounded precheck, but still BLOCKED by WRC coefficient/source/sign closure.
-- **A4 Independent Validation:** the supplemental pressure-thrust precheck is now formally qualified, but it **does not satisfy A4**. Exact CAUx pp24-31 expected values and a CAUx-specific independent hand calculation remain NOT_RUN.
+- **A3 Authority/Invariant:** improved by this bounded qualification, but still BLOCKED by WRC source/sign/coefficient closure.
+- **A4 Independent Validation:** supplemental pressure-thrust precheck is formally qualified but **does not satisfy A4**. Exact CAUx pp24-31 expected values and CAUx-specific independent hand calculation remain NOT_RUN.
 - **A5 Minimal Patch:** qualification tooling/evidence only; no production mutation.
 
 `TAKEOVER_AUTHORITY=QUALIFICATION_PENDING` remains correct.
@@ -181,26 +193,26 @@ Neither the newly qualified pressure-thrust precheck nor CAUx benchmark matching
 
 | Check | Status | Basis |
 |---|---|---|
-| Hexagon source transcription — geometry | PASS | official Hexagon docs |
-| Hexagon source transcription — pressure/load | PASS | official Hexagon docs |
-| `117485 psi at Bu` transcription | PASS_SOURCE_TRANSCRIPTION_ONLY | official Hexagon docs |
-| independent decimal arithmetic | PASS | no EMP.1 production evaluator |
+| Hexagon geometry source transcription | PASS | official source inspection |
+| Hexagon pressure/load source transcription | PASS | official source inspection |
+| `117485 psi at Bu` transcription | PASS_SOURCE_TRANSCRIPTION_ONLY | official source inspection |
+| independent high-precision arithmetic | PASS | separate calculation, no production evaluator |
 | dimensional audit | PASS | dimensional analysis |
-| example-specific pressure-thrust sign | PASS_BOUNDED | exact cited Hexagon example |
-| committed artifact byte identity before local run | PASS | recomputed Git blob SHA-1 |
+| example-specific pressure-thrust sign | PASS_BOUNDED | cited source example |
+| committed byte identity before execution | PASS | recomputed Git blob SHA-1 |
 | qualification self-test | PASS | local execution |
-| actual subject qualification checker | PASS_BOUNDED_PRECHECK_QUALIFICATION | local execution, zero failures |
-| CAUx A4 satisfied by this precheck | NO | explicit authority guard |
+| actual subject checker | PASS_BOUNDED_PRECHECK_QUALIFICATION | local execution, zero failures |
+| CAUx A4 satisfied by precheck | NO | explicit guard |
 | exact CAUx pp24-31 extraction | NOT_RUN | binary transport blocker |
-| independent CAUx pp24-31 handcalc | NOT_RUN | benchmark not frozen |
-| WRC M1/M2 arbitration | BLOCKED | exact WRC page required |
-| WRC numerical coefficient readiness | BLOCKED | 0 numeric coefficient rows |
+| independent CAUx handcalc | NOT_RUN | benchmark not frozen |
+| WRC M1/M2 arbitration | BLOCKED | exact WRC source required |
+| WRC coefficient readiness | BLOCKED | 0 numeric coefficient rows |
 | production build/UI | NOT_RUN | production untouched |
-| remote CI | NOT_RUN | no current-head run observed yet |
+| remote CI | NOT_RUN | no current-head run observed at last check |
 
 ## Changed-file boundary — 28 paths at qualification basis
 
-New bounded-precheck qualification paths:
+Bounded-precheck qualification paths:
 
 - `validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-v1.json`;
 - `validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-qualification-v1.json`;
@@ -208,14 +220,14 @@ New bounded-precheck qualification paths:
 - `scripts/emp1-independent-precheck-qualification-check.mjs`;
 - `scripts/emp1-independent-precheck-qualification-self-test.mjs`.
 
-Other PR paths remain recovery records, dormant `src/core/emp1/**`, source-custody tooling/ledgers, WRC existing-dataset readiness tooling/audit, and WRC sign discrepancy evidence. No production LAFEA workspace/mechanics, generic correlation evaluator, FEM, or workflow path is changed.
+Other PR paths remain recovery records, dormant `src/core/emp1/**`, source-custody tooling/ledgers, WRC readiness tooling/audit, and sign-discrepancy evidence. Existing production LAFEA workspace/mechanics, generic correlation evaluator, FEM, and workflow paths remain unchanged.
 
 ## Decisions / risks
 
-- `DEC-011`: independent pressure-thrust precheck is now formally qualified only for bounded sanity-check use.
-- `DEC-012`: exact source display rounding is the acceptance oracle for `-31128 lbf`; no engineering tolerance is permitted.
+- `DEC-011`: pressure-thrust precheck is formally qualified for bounded sanity-check use only.
+- `DEC-012`: exact source display rounding is the acceptance oracle for `-31128 lbf`; no engineering tolerance permitted.
 - `DEC-013`: `117485 psi at Bu` remains source-transcription-only until independently reproduced from qualified WRC data.
-- `RISK-005`: bounded qualification could be misread as WRC/CAUx qualification; explicit authority booleans and checker negative tests prohibit escalation.
+- `RISK-005`: bounded qualification could be misread as WRC/CAUx qualification; authority booleans plus negative tests prohibit escalation.
 
 ## Review / CI / merge
 
@@ -226,10 +238,10 @@ Other PR paths remain recovery records, dormant `src/core/emp1/**`, source-custo
 
 ## Exact continuation
 
-1. preserve the newly qualified precheck unchanged unless source evidence changes; any disagreement requires RCA;
+1. keep the qualified precheck frozen; disagreement requires RCA, not expected-value/tolerance edits;
 2. obtain/render exact pinned WRC and CAUx bytes;
 3. use WRC to arbitrate M1/M2 and close coefficient/source gaps;
 4. extract/freeze CAUx pp24-31 inputs/intermediates/results;
-5. independently reproduce the CAUx benchmark before production EMP.1.C observation;
+5. independently reproduce CAUx before any production EMP.1.C observation;
 6. re-run WRC readiness and re-score Appendix A;
 7. only after Appendix A meets the engineering-critical threshold may production EMP.1.A/B/C/UI work begin.

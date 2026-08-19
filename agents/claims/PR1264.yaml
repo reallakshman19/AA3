@@ -1,19 +1,32 @@
 schema: engineering-pr-claims/v1
 pr: 1264
 repository: reallaksh19/Advanced_Analysis
+qualified_implementation_head: b22312bcde48796b07b869f0c69a4f2959510332
 claims:
   - id: IMP-1264-001
     state: IMPLEMENTED
     statement: EMP.1.C blocker state is evaluated by one fail-closed backend qualification contract.
   - id: IMP-1264-002
     state: IMPLEMENTED
-    statement: The public EMP.1 projection derives C state, blocker codes, blocker details and authority from that contract.
+    statement: The public EMP.1 projection derives C state, blocker codes, blocker details and method authority from that contract.
   - id: IMP-1264-003
     state: IMPLEMENTED
     statement: The guided EMP.1 UI renders C blocker messages from the backend projection rather than a UI-owned blocker dictionary.
+  - id: IMP-1264-004
+    state: IMPLEMENTED
+    statement: Numerical coefficient readiness requires complete retained inventory coverage; 119 of 120 rows cannot pass.
+  - id: IMP-1264-005
+    state: IMPLEMENTED
+    statement: Qualification evidence cannot self-register EMP.1.C production execution; route registration is code/registry custody and remains false.
   - id: VAL-1264-001
     state: PASS_LOCAL
-    statement: Focused pure-module qualification-state execution reproduces the four current blockers and the guarded synthetic promotion sequence.
+    statement: Focused pure-module qualification-state execution reproduces the four current blockers and guarded promotion sequence.
+  - id: VAL-1264-002
+    state: PASS
+    statement: Exact implementation head passed checkout, generic static/projection, inherited shell custody, standalone boundary/build and production bundle gates.
+  - id: VAL-1264-003
+    state: SKIPPED_BY_OWNER
+    statement: Pinned-Chromium qualification is explicitly skipped and is not represented as PASS.
   - id: ENG-1264-001
     state: BLOCKED
     statement: WRC537 method engineering qualification is not established; current dataset remains NOT_READY_FOR_IMPLEMENTATION.
@@ -30,6 +43,7 @@ prohibited_promotions:
   - EDITION4_TECHNICAL_DATA_TO_2013_PATH
   - HEXAGON_SECONDARY_REFERENCE_TO_WRC_PRIMARY_SIGN_AUTHORITY
   - SYNTHETIC_TEST_DATA_TO_ENGINEERING_EXPECTED_VALUE
+  - PARTIAL_COEFFICIENT_COVERAGE_TO_READY
   - CAUX_BENCHMARK_TO_WRC_METHOD_AUTHORITY
   - TECHNICAL_READINESS_TO_ENGINEERING_AUTHORITY_WITHOUT_RECORD
-  - METHOD_AUTHORITY_TO_EXECUTION_ROUTE_WITHOUT_REGISTRATION
+  - QUALIFICATION_EVIDENCE_TO_EXECUTION_ROUTE_REGISTRATION

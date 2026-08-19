@@ -331,6 +331,7 @@ function buildGenerationModel(stage, capabilities) {
     meshProfileBound: Boolean(meshProfile),
     meshProfileIdentity: meshProfile?.profileIdentity ?? null,
     qualifiedQualityPolicy: qualifiedMeshQualityPolicyForStage(stage.stageId),
+    boundAdjacentSizeRatioMax: meshProfile?.fields.adjacentSizeRatioMax ?? null,
     thicknessCurvatureObservation: buildLafea4ThicknessCurvatureObservation(stage),
     targetElementLength: sourceMeshAdoption ? null : meshProfile?.fields.globalTargetSize ?? null,
     declaredElementFamily: declaredFamily(stage.stageId, meshProfile),

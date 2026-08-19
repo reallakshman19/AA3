@@ -22,30 +22,42 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   shell.dataset.backingStageId = stageId;
   shell.dataset.routeFamily = 'ANALYTICAL';
 
-  const route = card(root, 'Analytical stage');
+  const route = card(root, 'Calculation scope');
   route.section.dataset.guidedTarget = 'analytical-route';
-  const selector = element(root, 'div', 'lafea-guided-summary');
-  selector.dataset.role = 'lafea-analytical-route-selector';
-  ROUTES.forEach((id) => {
-    const button = actionButton(root,
-      `${id} — ${id === 'LAFEA.1' ? 'Attachment foundation' : 'Pipe-section screening'}`,
-      () => options.onSelectRoute?.(id));
-    button.dataset.analyticalRouteId = id;
-    button.setAttribute('aria-current', id === stageId ? 'page' : 'false');
-    selector.append(button);
-  });
+  const scopeStatus = element(
+    root,
+    'strong',
+    'lafea-result-highlights__status',
+    `${foundation ? 'FOUNDATION BASELINE' : 'PIPE-SECTION SCREENING'} · ${engineeringStatus(state.status)}`,
+  );
+  scopeStatus.dataset.role = 'lafea-analytical-scope-status';
+  scopeStatus.dataset.rawStatus = String(state.status ?? 'UNKNOWN');
   const heading = element(root, 'h3', null, foundation
     ? 'LAFEA.1 — attachment foundation analytical calculation'
     : 'LAFEA.2 — nominal pipe-section analytical/screening calculation');
   heading.dataset.role = 'lafea-analytical-route-heading';
-  route.body.append(selector, heading,
+  const scopeBoundary = element(
+    root,
+    'p',
+    'lafea-workbench__authority',
+    foundation
+      ? 'Scope: load transfer and elastic pressure baseline only; this does not calculate WRC 107/537 local-attachment stress or establish code compliance.'
+      : 'Scope: nominal pipe-section screening only; WRC/local-attachment correlation is separately governed.',
+  );
+  scopeBoundary.dataset.role = 'lafea-analytical-scope-boundary';
+  route.body.append(
+    scopeStatus,
+    heading,
     element(root, 'p', 'lafea-workbench__section-intro',
-      'LAFEA.1 and LAFEA.2 are analytical LAFEA stages. They do not create or display an FE mesh; LAFEA.3 and later stages provide the registered finite-element routes.'));
+      'Analytical stages do not use an FE mesh; registered FE routes begin at LAFEA.3.'),
+    scopeBoundary,
+  );
 
   const source = card(root, 'Analytical inputs');
   source.section.dataset.guidedTarget = 'source';
   source.body.append(renderDocumentTableEditor(source.body, stageId, stage.document, {
     onSetScalar: options.handlers.onSetScalar,
+    onSetScalarBatch: options.handlers.onSetScalarBatch,
     onApplyJson: options.handlers.onApplyJson,
   }));
 
@@ -66,8 +78,8 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   results.section.dataset.guidedTarget = 'results';
   results.body.append(
     element(root, 'p', 'lafea-workbench__section-intro', foundation
-      ? 'Attachment-foundation analytical evidence only; local FE attachment stress is not authorized.'
-      : 'Nominal pipe-section screening evidence only; local discontinuity and attachment stress are not authorized.'),
+      ? 'Foundation analytical evidence only; local attachment stress is not authorized.'
+      : 'Nominal pipe-section screening only; local attachment stress is not authorized.'),
     renderLafeaEvidence(root, stageId, stage.document, state, stage.execution),
   );
 
@@ -97,7 +109,7 @@ function screeningLoadCustody(root, documentValue, onApplyJson) {
     root,
     'p',
     'lafea-workbench__section-intro',
-    'LAFEA.2 does not invent attachment resultants. Each mechanical term references an exact retained LAFEA.1 loadCaseId. Term factors are editable only through the screeningCaseId + loadCaseId nested-identity command below; array position is never engineering authority.',
+    'LAFEA.2 uses retained LAFEA.1 loadCaseId values. Term-factor edits use screeningCaseId + loadCaseId identity; array position is never authority.',
   ));
   if (!documentValue || typeof documentValue !== 'object') {
     custody.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
@@ -273,4 +285,8 @@ function screeningTermCommandId(documentValue, screeningCaseId, loadCaseId) {
 function engineeringNumber(value) {
   if (!Number.isFinite(value)) return '—';
   return Number(value.toPrecision(8)).toString();
+}
+
+function engineeringStatus(value) {
+  return String(value ?? 'UNKNOWN').replaceAll('_', ' ');
 }

@@ -188,7 +188,7 @@ test('production LAFEA.1 and LAFEA.2 are first-class analytical stages', async (
   await testInfo.attach('lafea-analytical-stages', { path: screenshotPath, contentType: 'image/png' });
 });
 
-test('Analytical Calc compatibility selector routes to the same LAFEA.1 and LAFEA.2 stages', async ({ page }, testInfo) => {
+test('Analytical Calc uses the single canonical LAFEA.1/LAFEA.2 navigation authority', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openProductionLafea(page);
 
@@ -204,14 +204,15 @@ test('Analytical Calc compatibility selector routes to the same LAFEA.1 and LAFE
   await expect(workbench.locator('[data-guided-target="viewport"]')).toHaveCount(0);
   await expect(workbench.locator('[data-guided-target="discretization"]')).toHaveCount(0);
   await expect(workbench.locator('.lafea-workbench__svg')).toHaveCount(0);
+  await expect(analytical.locator('[data-role="lafea-analytical-route-selector"]')).toHaveCount(0);
 
-  const routeSelector = analytical.locator('[data-role="lafea-analytical-route-selector"]');
-  await expect(routeSelector.locator('[data-analytical-route-id="LAFEA.1"]')).toBeVisible();
-  await expect(routeSelector.locator('[data-analytical-route-id="LAFEA.2"]')).toBeVisible();
+  const canonicalRoutes = workbench.locator('.lafea-workbench__stages [data-stage-id]');
+  await expect(canonicalRoutes.locator('[data-stage-id="LAFEA.1"]')).toBeVisible();
+  await expect(canonicalRoutes.locator('[data-stage-id="LAFEA.2"]')).toBeVisible();
   let state = await page.evaluate(() => globalThis.AnalysisWorkspace.getLafeaWorkbenchState());
   expect(state.activeStageId).toBe('LAFEA.1');
 
-  await routeSelector.locator('[data-analytical-route-id="LAFEA.2"]').click();
+  await canonicalRoutes.locator('[data-stage-id="LAFEA.2"]').click();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
   await expect(workbench.locator('h1')).toContainText('LAFEA.2');
   await expect(analytical).toContainText('nominal pipe-section analytical/screening calculation');
@@ -223,15 +224,92 @@ test('Analytical Calc compatibility selector routes to the same LAFEA.1 and LAFE
   await testInfo.attach('analytical-calc', { path: screenshotPath, contentType: 'image/png' });
 });
 
+test('Empirical analytical surface has truthful scope, one route navigation, and page-owned vertical scrolling', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openProductionEmpirical(page);
+
+  const empiricalView = page.locator('[data-application-view="EMPIRICAL"]');
+  const root = empiricalView.locator('[data-role="empirical-lafea-consumer-root"]');
+  const workbench = root.locator('[data-role="lafea-workbench"]');
+  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+
+  await expect(empiricalView).toBeVisible();
+  await expect(workbench).toBeVisible();
+  await expect(analytical).toBeVisible();
+  await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.1');
+  await expect(workbench.locator('.lafea-workbench__stages [data-stage-id]')).toHaveCount(2);
+  await expect(analytical.locator('[data-role="lafea-analytical-route-selector"]')).toHaveCount(0);
+  await expect(workbench.locator('.lafea-workbench__status')).toBeHidden();
+
+  const scope = analytical.locator('[data-role="lafea-analytical-scope-boundary"]');
+  await expect(scope).toBeVisible();
+  await expect(scope).toContainText('does not calculate WRC 107/537 local-attachment stress');
+
+  const mock = workbench.locator('[data-role="lafea-mock"]');
+  if (await mock.isVisible()) await mock.click();
+  const scopeStatus = analytical.locator('[data-role="lafea-analytical-scope-status"]');
+  await expect(scopeStatus).toBeVisible();
+  await expect(scopeStatus).toContainText('FOUNDATION BASELINE');
+
+  const fileInput = workbench.locator('input[data-role="lafea-import"]');
+  const importLabel = workbench.locator('label[for^="lafea-import-"]');
+  await expect(importLabel).toBeVisible();
+  await expect(importLabel).toHaveText('Import analytical JSON');
+  await expect(fileInput).toHaveCSS('position', 'absolute');
+  await expect(fileInput).toHaveCSS('clip-path', /inset/);
+  await expect.poll(async () => {
+    const box = await fileInput.boundingBox();
+    if (!box) return null;
+    return box.width <= 1 && box.height <= 1;
+  }).toBe(true);
+
+  const scrolling = await page.evaluate(() => {
+    const view = document.querySelector('[data-application-view="EMPIRICAL"]');
+    const scrollOwner = view?.querySelector('[data-role="empirical-lafea-consumer-root"]');
+    const editor = scrollOwner?.querySelector('.lafea-doc-table-view');
+    const viewStyle = view ? getComputedStyle(view) : null;
+    const scrollStyle = scrollOwner ? getComputedStyle(scrollOwner) : null;
+    const editorStyle = editor ? getComputedStyle(editor) : null;
+    return {
+      shellOverflowY: viewStyle?.overflowY ?? null,
+      paneOverflowY: scrollStyle?.overflowY ?? null,
+      paneClientHeight: scrollOwner?.clientHeight ?? 0,
+      paneScrollHeight: scrollOwner?.scrollHeight ?? 0,
+      editorMaxHeight: editorStyle?.maxHeight ?? null,
+      editorOverflowY: editorStyle?.overflowY ?? null,
+      editorClientHeight: editor?.clientHeight ?? 0,
+      editorScrollHeight: editor?.scrollHeight ?? 0,
+    };
+  });
+  expect(scrolling.shellOverflowY).toBe('hidden');
+  expect(scrolling.paneOverflowY).toBe('auto');
+  expect(scrolling.paneScrollHeight).toBeGreaterThan(scrolling.paneClientHeight);
+  expect(scrolling.editorMaxHeight).toBe('none');
+  expect(scrolling.editorOverflowY).toBe('visible');
+  expect(scrolling.editorScrollHeight).toBeLessThanOrEqual(scrolling.editorClientHeight + 2);
+
+  const screenshotPath = testInfo.outputPath('lafea-empirical-analytical-p0.png');
+  await page.screenshot({ path: screenshotPath, fullPage: false });
+  await testInfo.attach('lafea-empirical-analytical-p0', { path: screenshotPath, contentType: 'image/png' });
+});
+
 async function openProductionLafea(page) {
+  await openProductionView(page, 'LAFEA');
+}
+
+async function openProductionEmpirical(page) {
+  await openProductionView(page, 'EMPIRICAL');
+}
+
+async function openProductionView(page, viewId) {
   await page.addInitScript(() => {
     globalThis.__WORKSPACE_VIEWPORT_BACKEND__ = 'canvas2d';
   });
   await page.goto('/');
-  const nav = page.locator('[data-application-nav="LAFEA"]');
+  const nav = page.locator(`[data-application-nav="${viewId}"]`);
   await expect(nav).toBeVisible();
   await nav.click();
   await expect.poll(() => page.evaluate(
     () => globalThis.AnalysisWorkspace?.getApplicationViewState?.().activeViewId ?? null,
-  )).toBe('LAFEA');
+  )).toBe(viewId);
 }

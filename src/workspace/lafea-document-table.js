@@ -18,6 +18,8 @@ import {
   renderLafeaJsonEditor,
 } from './lafea-document-table-support.js';
 
+const GROUPED_ANALYTICAL_STAGES = new Set(['LAFEA.1', 'LAFEA.2']);
+
 /** Render governed typed fields and the advanced whole-document JSON view. */
 export function renderDocumentTableEditor(
   rootElement,
@@ -112,6 +114,9 @@ export function renderDocumentTableEditor(
       documentValue,
       descriptors,
       onSetScalar: callbacks.onSetScalar,
+      onSetScalarBatch: callbacks.onSetScalarBatch,
+      batchScalarEdits: GROUPED_ANALYTICAL_STAGES.has(stageId)
+        && typeof callbacks.onSetScalarBatch === 'function',
     });
   }
 

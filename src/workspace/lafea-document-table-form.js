@@ -26,6 +26,8 @@ export function renderLafeaDescriptorForm({
   documentValue,
   descriptors,
   onSetScalar,
+  onSetScalarBatch = null,
+  batchScalarEdits = false,
 }) {
   if (!descriptors.length) {
     const blocked = documentRef.createElement('p');
@@ -61,8 +63,11 @@ export function renderLafeaDescriptorForm({
         documentRef,
         stageId,
         documentValue,
+        groupId,
         descriptors: scalarDescriptors,
         onSetScalar,
+        onSetScalarBatch,
+        batchScalarEdits,
       }));
     }
     container.append(section);
@@ -73,19 +78,26 @@ function renderScalarTable({
   documentRef,
   stageId,
   documentValue,
+  groupId,
   descriptors,
   onSetScalar,
+  onSetScalarBatch,
+  batchScalarEdits,
 }) {
+  const wrapper = documentRef.createElement('div');
+  wrapper.className = 'lafea-doc-group-editor';
+  wrapper.dataset.inputGroup = groupId;
   const table = documentRef.createElement('table');
   table.className = 'lafea-doc-grid lafea-doc-grid--governed';
   const header = documentRef.createElement('tr');
-  [
+  const headings = [
     'Engineering identity',
     'Input',
     'Unit',
     'Source/status',
-    'Action',
-  ].forEach((label) => {
+  ];
+  if (!batchScalarEdits) headings.push('Action');
+  headings.forEach((label) => {
     const cell = documentRef.createElement('th');
     cell.scope = 'col';
     cell.textContent = label;
@@ -103,10 +115,62 @@ function renderScalarTable({
           descriptor,
           instance,
           onSetScalar,
+          batchScalarEdits,
         }));
       });
   });
-  return table;
+  wrapper.append(table);
+  if (batchScalarEdits) {
+    wrapper.append(renderGroupAction({
+      documentRef,
+      wrapper,
+      groupId,
+      onSetScalarBatch,
+    }));
+  }
+  return wrapper;
+}
+
+function renderGroupAction({ documentRef, wrapper, groupId, onSetScalarBatch }) {
+  const action = documentRef.createElement('div');
+  action.className = 'lafea-doc-group-action';
+  const output = documentRef.createElement('output');
+  output.dataset.role = 'lafea-group-edit-status';
+  output.setAttribute('aria-live', 'polite');
+  const apply = documentRef.createElement('button');
+  apply.type = 'button';
+  apply.dataset.role = 'lafea-apply-group';
+  apply.dataset.inputGroup = groupId;
+  apply.textContent = `Apply ${friendlyLafeaName(groupId)} changes`;
+  apply.disabled = true;
+
+  const updateButton = () => {
+    apply.disabled = !wrapper.querySelector('[data-role="lafea-governed-input"][data-dirty="true"]');
+  };
+  wrapper.addEventListener('input', updateButton);
+  apply.addEventListener('click', () => {
+    const inputs = [...wrapper.querySelectorAll(
+      '[data-role="lafea-governed-input"][data-dirty="true"]',
+    )];
+    if (!inputs.length) return;
+    for (const input of inputs) {
+      input.reportValidity();
+      if (!input.checkValidity()) {
+        input.focus();
+        return;
+      }
+    }
+    const edits = inputs.map((input) => ({
+      descriptorId: input.dataset.descriptorId,
+      entityId: input.dataset.entityId || null,
+      rawText: input.value,
+    }));
+    const returned = onSetScalarBatch(edits);
+    const diagnostic = firstLafeaEditDiagnostic(returned);
+    output.textContent = diagnostic?.message ?? `${edits.length} governed change${edits.length === 1 ? '' : 's'} applied.`;
+  });
+  action.append(apply, output);
+  return action;
 }
 
 function renderIdentityRegister(documentRef, documentValue, descriptor) {
@@ -141,6 +205,7 @@ function renderScalarRow({
   descriptor,
   instance,
   onSetScalar,
+  batchScalarEdits,
 }) {
   const row = documentRef.createElement('tr');
   row.dataset.descriptorId = descriptor.descriptorId;
@@ -169,6 +234,8 @@ function renderScalarRow({
   input.dataset.descriptorId = descriptor.descriptorId;
   input.dataset.entityId = instance.entityId ?? '';
   input.value = displayLafeaNumeric(instance.value);
+  input.dataset.initialValue = input.value;
+  input.dataset.dirty = 'false';
   input.placeholder = instance.state === 'PRESENT_NULL' ? 'null' : '';
   input.setAttribute(
     'aria-label',
@@ -185,6 +252,7 @@ function renderScalarRow({
 
   input.addEventListener('input', () => {
     validateNumericInput(input, descriptor.valueContract);
+    input.dataset.dirty = String(input.value.trim() !== input.dataset.initialValue.trim());
   });
 
   inputCell.append(input, state);
@@ -211,32 +279,34 @@ function renderScalarRow({
   sourceStatus.style.display = 'block';
   sourceCell.append(source, sourceStatus);
 
-  const actionCell = documentRef.createElement('td');
-  const apply = documentRef.createElement('button');
-  apply.type = 'button';
-  apply.textContent = 'Apply';
-  apply.dataset.role = 'lafea-apply-descriptor';
-  apply.addEventListener('click', () => {
-    validateNumericInput(input, descriptor.valueContract);
-    if (!input.checkValidity()) {
-      input.reportValidity();
-      return;
-    }
-    const returned = onSetScalar(
-      descriptor.descriptorId,
-      instance.entityId,
-      input.value,
-    );
-    const diagnostic = firstLafeaEditDiagnostic(returned);
-    if (diagnostic) {
-      input.setCustomValidity(diagnostic.message);
-      input.setAttribute('aria-invalid', 'true');
-      input.reportValidity();
-    }
-  });
-  actionCell.append(apply);
-
-  row.append(identityCell, inputCell, unitCell, sourceCell, actionCell);
+  row.append(identityCell, inputCell, unitCell, sourceCell);
+  if (!batchScalarEdits) {
+    const actionCell = documentRef.createElement('td');
+    const apply = documentRef.createElement('button');
+    apply.type = 'button';
+    apply.textContent = 'Apply';
+    apply.dataset.role = 'lafea-apply-descriptor';
+    apply.addEventListener('click', () => {
+      validateNumericInput(input, descriptor.valueContract);
+      if (!input.checkValidity()) {
+        input.reportValidity();
+        return;
+      }
+      const returned = onSetScalar(
+        descriptor.descriptorId,
+        instance.entityId,
+        input.value,
+      );
+      const diagnostic = firstLafeaEditDiagnostic(returned);
+      if (diagnostic) {
+        input.setCustomValidity(diagnostic.message);
+        input.setAttribute('aria-invalid', 'true');
+        input.reportValidity();
+      }
+    });
+    actionCell.append(apply);
+    row.append(actionCell);
+  }
   return row;
 }
 

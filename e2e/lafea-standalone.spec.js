@@ -22,17 +22,23 @@ test('standalone LAFEA entry boots without combined, LFEA, demo, or generic benc
   await expect(workbench.locator('[data-role="lafea-mock"]')).toHaveCount(0);
   await expect(workbench.locator('[data-role="lafea-benchmark"]')).toHaveCount(0);
   await expect(workbench.locator('[data-role="lafea-benchmark-host"]')).toHaveCount(0);
+  await expect(analytical.locator('[data-role="lafea-analytical-scope-boundary"]')).toContainText(
+    'does not calculate WRC 107/537 local-attachment stress',
+  );
 
   await workbench.locator('.lafea-workbench__stages [data-stage-id="LAFEA.2"]').click();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
   await expect(workbench.locator('h1')).toContainText('LAFEA.2');
   await expect(workbench.locator('[data-guided-target="viewport"]')).toHaveCount(0);
   await expect(workbench.locator('[data-guided-target="discretization"]')).toHaveCount(0);
+  await expect(analytical.locator('[data-role="lafea-analytical-scope-boundary"]')).toContainText(
+    'WRC 107/537 correlation remains separately governed',
+  );
 
   await workbench.locator('[data-lafea-tab="ANALYTICAL_CALC"]').click();
   await expect(analytical).toBeVisible();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
-  await expect(analytical.locator('[data-role="lafea-analytical-route-selector"] [data-analytical-route-id]')).toHaveCount(2);
+  await expect(analytical.locator('[data-role="lafea-analytical-route-selector"]')).toHaveCount(0);
 
   const authority = await page.evaluate(() => ({
     combinedWorkspacePublished: Object.hasOwn(globalThis, 'AnalysisWorkspace'),

@@ -23,6 +23,18 @@ const frozenProbe = benchmark.fixedPhysicalProbes.find(
 );
 if (!distortion || !frozenProbe) throw new TypeError('Frozen diagnostic target missing');
 
+// Execute the historical governing sparse case first. A solver candidate that
+// cannot clear this exact production case must be rejected before spending time
+// on the four-level nu=0.30 convergence trace or the 120-solve integrated matrix.
+const governingLevel = benchmark.meshLadder.levels.find((row) => row.levelId === 'L4');
+if (!governingLevel) throw new TypeError('Frozen governing L4 level missing');
+const governingRun = executeLameBbarQualificationCase(definition, probeMeshPolicy, {
+  elementType: 'T6',
+  poissonRatio: 0.4999,
+  level: governingLevel,
+  distortion,
+});
+
 const values = benchmark.meshLadder.levels.map((level) => {
   const run = executeLameBbarQualificationCase(definition, probeMeshPolicy, {
     elementType: 'T6',
@@ -42,18 +54,6 @@ const values = benchmark.meshLadder.levels.map((level) => {
   });
 });
 const oracle = lameOracle(definition, 0.30, frozenProbe);
-
-// Fast veto for the exact production case that historically governed sparse
-// convergence. This runs before the 120-solve integrated matrix so a solver
-// regression is rejected without consuming the full qualification budget.
-const governingLevel = benchmark.meshLadder.levels.find((row) => row.levelId === 'L4');
-if (!governingLevel) throw new TypeError('Frozen governing L4 level missing');
-const governingRun = executeLameBbarQualificationCase(definition, probeMeshPolicy, {
-  elementType: 'T6',
-  poissonRatio: 0.4999,
-  level: governingLevel,
-  distortion,
-});
 
 console.log(JSON.stringify({
   schema: 'lafea-b01-bbar-lame-convergence-diagnostic/v1',

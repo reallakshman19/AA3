@@ -4,7 +4,7 @@ pr_or_wip: PR1263
 mission: EMP.1 source custody, WRC dataset qualification, CAUx benchmark qualification, unified analytical assessment
 workstream: EMP1
 branch: agent/emp1-core-scaffold-issue1261
-pr_head: 320dc4ce021892e5678a80c55ef507366a1e2339
+pr_head: 262279e6328882e00cbc1e1d8301106c558b9a2f
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -60,4 +60,4 @@ validation_state:
   production_emp1: NOT_RUN
   remote_ci: NOT_RUN
 exact_next_action: keep bounded precheck frozen; render exact WRC/CAUx source, arbitrate WRC M1/M2 and freeze/reproduce CAUx pp24-31 before production EMP.1.C
-last_updated: 2026-08-19T11:25:00+04:00
+last_updated: 2026-08-19T11:27:00+04:00

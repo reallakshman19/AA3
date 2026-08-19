@@ -1,0 +1,14 @@
+{
+  "schema": "emp1-source-ledger/v1",
+  "sourceId": "WRC537_2013",
+  "authorityRole": "METHOD_SOURCE",
+  "repository": "reallaksh19/XML_Compare_Utilities",
+  "pinnedCommit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+  "path": "docs/emp.1/WRC537_2013.pdf",
+  "fileName": "WRC537_2013.pdf",
+  "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+  "expectedByteCount": 1443744,
+  "rawPdfSha256": null,
+  "custodyState": "UNRESOLVED_RAW_BYTES",
+  "qualificationState": "BLOCKED"
+}

@@ -15,6 +15,7 @@ assert.equal(current.runAuthorized, false);
 assert.deepEqual(current.blockerCodes, [
   EMP1_C_BLOCKER_CODES.WRC_DATASET_NOT_READY,
   EMP1_C_BLOCKER_CODES.WRC_DIMENSIONAL_CONTRACT_UNRESOLVED,
+  EMP1_C_BLOCKER_CODES.WRC_RUNTIME_CONTRACTS_UNRESOLVED,
   EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING,
   EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN,
   EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN,
@@ -26,10 +27,11 @@ assert.equal(current.evidence.derivation.retainedExtractionPinVerified, true);
 assert.equal(current.evidence.wrcDataset.unresolvedJsonPathCount, 21);
 assert.equal(current.evidence.wrcDataset.openIssueCount, 7);
 assert.equal(current.evidence.wrcDataset.dimensionalContractStatus, 'BLOCKED');
-assert.equal(current.evidence.wrcDataset.dimensionalViolationCount, 2);
+assert.equal(current.evidence.wrcDataset.dimensionalViolationCount, 3);
 assert.deepEqual(current.evidence.wrcDataset.dimensionalViolationIds, [
   'SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH',
   'SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH',
+  'STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH',
 ]);
 assert.equal(current.evidence.wrcDataset.coefficientCurveRows, 120);
 assert.equal(current.evidence.wrcDataset.coefficientsPerCurve, 10);
@@ -46,6 +48,14 @@ assert.equal(current.evidence.wrcDataset.sourceCustodyQualified, false);
 assert.equal(current.evidence.wrcDataset.sourceRawPdfSha256, null);
 assert.equal(current.evidence.signArbitration.openConflicts.length, 2);
 assert.equal(current.evidence.signArbitration.sourceCustodyQualified, false);
+assert.equal(current.evidence.runtimeContracts.status, 'NOT_RUN');
+assert.equal(current.evidence.runtimeContracts.loadAxisMappingStatus, 'BLOCKED');
+assert.equal(current.evidence.runtimeContracts.pressureThrustStatus, 'BLOCKED');
+assert.equal(current.evidence.runtimeContracts.pressureThrustMode, null);
+assert.equal(current.evidence.runtimeContracts.pressureThrustDoubleCountGuardQualified, false);
+assert.equal(current.evidence.runtimeContracts.stressIntensityDefinitionStatus, 'BLOCKED');
+assert.equal(current.evidence.runtimeContracts.stressIntensityOutputDimension, null);
+assert.equal(current.evidence.runtimeContracts.qualificationRecordHash, null);
 assert.equal(current.evidence.cauxBenchmark.pageRange, '24-31');
 assert.equal(current.evidence.cauxBenchmark.sourceCustodyQualified, false);
 assert.equal(current.evidence.cauxBenchmark.expectedValuesFrozen, false);
@@ -53,12 +63,15 @@ assert.equal(current.evidence.cauxBenchmark.independentHandCalculationStatus, 'N
 assert.equal(current.evidence.cauxBenchmark.supplementalPrecheckMaySatisfyCauxA4, false);
 assert.match(current.blockers[0].message, /21 unresolved fields; 7 open issues/u);
 assert.match(current.blockers[0].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
-assert.match(current.blockers[1].message, /2 contradiction\(s\)/u);
-assert.match(current.blockers[1].message, /SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH/u);
-assert.match(current.blockers[2].message, /0\/1200 named scalar coefficients numeric across 120 response-curve rows/u);
-assert.match(current.blockers[2].message, /schema=LEGACY_SINGLE_VALUE_PER_CURVE\/BLOCKED/u);
-assert.match(current.blockers[2].message, /independentVariable=U\/LEGACY_PARAMETER_3_ROW_ORDINATE\/BLOCKED/u);
-assert.match(current.blockers[4].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
+assert.match(current.blockers[1].message, /3 contradiction\(s\)/u);
+assert.match(current.blockers[1].message, /STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH/u);
+assert.match(current.blockers[2].message, /axisMapping=BLOCKED/u);
+assert.match(current.blockers[2].message, /pressureThrust=BLOCKED\/UNRESOLVED/u);
+assert.match(current.blockers[2].message, /stressIntensity=BLOCKED\/UNRESOLVED/u);
+assert.match(current.blockers[3].message, /0\/1200 named scalar coefficients numeric across 120 response-curve rows/u);
+assert.match(current.blockers[3].message, /schema=LEGACY_SINGLE_VALUE_PER_CURVE\/BLOCKED/u);
+assert.match(current.blockers[3].message, /independentVariable=U\/LEGACY_PARAMETER_3_ROW_ORDINATE\/BLOCKED/u);
+assert.match(current.blockers[5].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
 
 const technicallyReady = readyEvidence({ methodAuthorized: false, routeRegistered: false });
 const technical = evaluateEmp1CQualificationState(technicallyReady);
@@ -91,6 +104,43 @@ dimensionalConflict.wrcDataset.dimensionalViolationIds = ['SP_RADIAL_MEMBRANE_ST
 assert.deepEqual(
   evaluateEmp1CQualificationState(dimensionalConflict).blockerCodes,
   [EMP1_C_BLOCKER_CODES.WRC_DIMENSIONAL_CONTRACT_UNRESOLVED],
+);
+
+const missingRuntimeContracts = readyEvidence({ methodAuthorized: true, routeRegistered: true });
+missingRuntimeContracts.runtimeContracts.status = 'NOT_RUN';
+missingRuntimeContracts.runtimeContracts.loadAxisMappingStatus = 'BLOCKED';
+missingRuntimeContracts.runtimeContracts.loadAxisMappingContractHash = null;
+missingRuntimeContracts.runtimeContracts.canonicalFrameContractHash = null;
+missingRuntimeContracts.runtimeContracts.loadAxisSourceLocator = null;
+missingRuntimeContracts.runtimeContracts.pressureThrustStatus = 'BLOCKED';
+missingRuntimeContracts.runtimeContracts.pressureThrustMode = null;
+missingRuntimeContracts.runtimeContracts.pressureThrustDoubleCountGuardQualified = false;
+missingRuntimeContracts.runtimeContracts.pressureThrustIndependentCheckStatus = 'NOT_RUN';
+missingRuntimeContracts.runtimeContracts.pressureThrustPolicyRecordHash = null;
+missingRuntimeContracts.runtimeContracts.stressIntensityDefinitionStatus = 'BLOCKED';
+missingRuntimeContracts.runtimeContracts.stressIntensityDefinitionContractHash = null;
+missingRuntimeContracts.runtimeContracts.stressIntensitySourceLocator = null;
+missingRuntimeContracts.runtimeContracts.stressIntensityOutputDimension = null;
+missingRuntimeContracts.runtimeContracts.stressIntensityIndependentCheckStatus = 'NOT_RUN';
+missingRuntimeContracts.runtimeContracts.qualificationRecordHash = null;
+assert.deepEqual(
+  evaluateEmp1CQualificationState(missingRuntimeContracts).blockerCodes,
+  [EMP1_C_BLOCKER_CODES.WRC_RUNTIME_CONTRACTS_UNRESOLVED],
+);
+
+const unsafePressurePolicy = readyEvidence({ methodAuthorized: true, routeRegistered: true });
+unsafePressurePolicy.runtimeContracts.pressureThrustMode = 'UNRESOLVED';
+assert.deepEqual(
+  evaluateEmp1CQualificationState(unsafePressurePolicy).blockerCodes,
+  [EMP1_C_BLOCKER_CODES.WRC_RUNTIME_CONTRACTS_UNRESOLVED],
+);
+
+const missingStressDefinition = readyEvidence({ methodAuthorized: true, routeRegistered: true });
+missingStressDefinition.runtimeContracts.stressIntensityDefinitionStatus = 'BLOCKED';
+missingStressDefinition.runtimeContracts.stressIntensityOutputDimension = null;
+assert.deepEqual(
+  evaluateEmp1CQualificationState(missingStressDefinition).blockerCodes,
+  [EMP1_C_BLOCKER_CODES.WRC_RUNTIME_CONTRACTS_UNRESOLVED],
 );
 
 const missingCoefficient = readyEvidence({ methodAuthorized: true, routeRegistered: true });
@@ -167,7 +217,7 @@ assert.equal(Object.isFrozen(current.blockers), true);
 assert.equal(Object.isFrozen(EMP1_C_CURRENT_QUALIFICATION_EVIDENCE), true);
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-qualification-state-check/v3',
+  schema: 'emp1-c-qualification-state-check/v4',
   status: 'PASS',
   currentState: current.state,
   currentBlockers: current.blockerCodes,
@@ -176,6 +226,10 @@ console.log(JSON.stringify({
     openIssues: current.evidence.wrcDataset.openIssueCount,
     dimensionalContractStatus: current.evidence.wrcDataset.dimensionalContractStatus,
     dimensionalViolationIds: current.evidence.wrcDataset.dimensionalViolationIds,
+    runtimeContractsStatus: current.evidence.runtimeContracts.status,
+    loadAxisMappingStatus: current.evidence.runtimeContracts.loadAxisMappingStatus,
+    pressureThrustStatus: current.evidence.runtimeContracts.pressureThrustStatus,
+    stressIntensityDefinitionStatus: current.evidence.runtimeContracts.stressIntensityDefinitionStatus,
     coefficientCurveRows: current.evidence.wrcDataset.coefficientCurveRows,
     requiredScalarCoefficientCount: current.evidence.wrcDataset.requiredScalarCoefficientCount,
     numericScalarCoefficientCount: current.evidence.wrcDataset.numericScalarCoefficientCount,
@@ -235,6 +289,26 @@ function readyEvidence({ methodAuthorized, routeRegistered }) {
       resolutionAuthority: 'PINNED_WRC_PDF',
       openConflicts: [],
       sourceCustodyQualified: true,
+    },
+    runtimeContracts: {
+      status: 'PASS',
+      sourceCustodyQualified: true,
+      sourceRawPdfSha256: 'a'.repeat(64),
+      loadAxisMappingStatus: 'PASS',
+      loadAxisMappingContractHash: 'sha256:qualified-load-axis-map',
+      canonicalFrameContractHash: 'sha256:qualified-canonical-frame',
+      loadAxisSourceLocator: 'SYNTHETIC_TEST_ONLY',
+      pressureThrustStatus: 'PASS',
+      pressureThrustMode: 'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID',
+      pressureThrustDoubleCountGuardQualified: true,
+      pressureThrustIndependentCheckStatus: 'PASS',
+      pressureThrustPolicyRecordHash: 'sha256:qualified-pressure-thrust-policy',
+      stressIntensityDefinitionStatus: 'PASS',
+      stressIntensityDefinitionContractHash: 'sha256:qualified-stress-intensity',
+      stressIntensitySourceLocator: 'SYNTHETIC_TEST_ONLY',
+      stressIntensityOutputDimension: 'STRESS',
+      stressIntensityIndependentCheckStatus: 'PASS',
+      qualificationRecordHash: 'sha256:qualified-runtime-contract',
     },
     cauxBenchmark: {
       status: 'PASS',

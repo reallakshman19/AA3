@@ -1,0 +1,37 @@
+{
+  "schema": "emp1-wrc-existing-dataset-manifest/v1",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "pinnedCommit": "67317dc9cb47de8897fa7952b86107ab91b1f75c",
+  "classification": "DERIVED_SOURCE_EXTRACTION",
+  "authority": "QUALIFICATION_INPUT_ONLY",
+  "productionAuthority": false,
+  "artifacts": [
+    {
+      "id": "METHOD_DEFINITION",
+      "path": "docs/01_WRC537_METHOD_DEFINITION.md",
+      "gitBlobSha1": "69e6e83ab82a0287a2a8277b62e7e223f05befe1",
+      "byteCount": 45012
+    },
+    {
+      "id": "DATASET",
+      "path": "docs/03_WRC537_DATASET.json",
+      "gitBlobSha1": "0ffdc3f54adc0ff8025c4b3d2629272bab6860b4",
+      "byteCount": 19280
+    },
+    {
+      "id": "NUMERICAL_TABLES",
+      "path": "docs/04_WRC537_NUMERICAL_TABLES.csv",
+      "gitBlobSha1": "a787f9417c3406392bdf052d66fc9f7d1efcf11e",
+      "byteCount": 34233
+    }
+  ],
+  "gatePolicy": {
+    "requiredDatasetStatus": "READY_FOR_IMPLEMENTATION",
+    "requireSemanticHash": true,
+    "requireNumericalData": true,
+    "requireNoUnresolvedFields": true,
+    "requireNoOpenIssues": true,
+    "requireNumericCoefficientValues": true,
+    "note": "This manifest pins the pre-existing extraction package for qualification reuse. It does not upgrade secondary/derived extraction into primary WRC source authority."
+  }
+}

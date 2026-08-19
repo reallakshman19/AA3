@@ -70,6 +70,89 @@ export function renderLafeaGuidedWorkflow(root, workflow, onNavigate) {
   return nav;
 }
 
+/**
+ * Pure EMP.1 presentation leaf. It creates DOM only and accepts all mutation
+ * callbacks from the caller; it owns no store, controller or engineering state.
+ */
+export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
+  const workflow = workbenchCard(root, 'Assessment workflow');
+  workflow.section.dataset.role = 'emp1-workflow';
+  workflow.section.dataset.productId = projection.product.productId;
+  const overall = dom(root, 'strong', 'lafea-result-highlights__status',
+    `EMP.1 · ${humanState(projection.state)}`);
+  overall.dataset.role = 'emp1-product-state';
+  workflow.body.append(
+    overall,
+    dom(root, 'p', 'lafea-workbench__section-intro',
+      'Work left to right. A is the current load/reference authority. B must bind to that current A evidence while retaining its own screening cases and evaluation locations. C stays blocked until WRC source/data and CAUx benchmark qualification are complete.'),
+  );
+
+  const nav = dom(root, 'nav', 'lafea-workbench__stages');
+  nav.setAttribute('aria-label', 'EMP.1 assessment steps');
+  for (const step of projection.steps) {
+    const button = dom(root, 'button', null,
+      `${step.shortId} ${step.label} · ${humanState(step.state)}`);
+    button.type = 'button';
+    button.dataset.role = 'emp1-step';
+    button.dataset.emp1Step = step.shortId;
+    button.dataset.emp1StepId = step.stepId;
+    button.dataset.state = step.state;
+    button.setAttribute('aria-current', projection.activeStepId === step.stepId ? 'step' : 'false');
+    button.disabled = step.shortId === 'C';
+    if (step.shortId === 'C') button.title = `Blocked: ${step.blockers.join(', ')}`;
+    button.addEventListener('click', () => {
+      if (step.backingStageId) onSelectRoute?.(step.backingStageId);
+    });
+    nav.append(button);
+  }
+  workflow.body.append(nav);
+
+  const c = projection.steps.find((step) => step.shortId === 'C');
+  const blocker = dom(root, 'div', 'lafea-workbench__authority');
+  blocker.dataset.role = 'emp1-c-blocker';
+  blocker.append(dom(root, 'strong', null, 'EMP.1.C blocked — no production local-correlation authority.'));
+  const list = dom(root, 'ul');
+  for (const code of c.blockers) list.append(dom(root, 'li', null, emp1BlockerLabel(code)));
+  blocker.append(list);
+  workflow.body.append(blocker);
+  return workflow.section;
+}
+
+/**
+ * Creates the EMP.1.B custody header/card only. The caller appends B-owned
+ * screening tables so this leaf never imports edit/store/controller modules.
+ */
+export function createEmp1BSourceCustodyCard(root, projection, hasDocument, onRefresh) {
+  const custody = workbenchCard(root, 'EMP.1.B source custody from A');
+  custody.section.dataset.role = 'lafea-screening-load-custody';
+  custody.section.dataset.guidedTarget = 'screening-load-custody';
+  const currentness = dom(root, 'strong', 'lafea-result-highlights__status',
+    `A → B evidence: ${humanState(projection.custody.bSourceEvidenceState)}`);
+  currentness.dataset.role = 'emp1-b-source-currentness';
+  currentness.dataset.state = projection.custody.bSourceEvidenceState;
+  custody.body.append(
+    currentness,
+    dom(root, 'p', 'lafea-workbench__section-intro',
+      'EMP.1.B owns its screening cases, factors and evaluation locations. Only its validated A-derived source evidence may be refreshed from the current qualified EMP.1.A result.'),
+    dom(root, 'p', 'lafea-workbench__authority', projection.custody.userAction),
+  );
+
+  if (!hasDocument) {
+    custody.body.append(dom(root, 'p', 'lafea-workbench-svg__empty',
+      'B custody becomes available after a valid EMP.1.B source document is loaded.'));
+    return custody;
+  }
+
+  const refresh = dom(root, 'button', null, 'Refresh B from current A');
+  refresh.type = 'button';
+  refresh.dataset.role = 'emp1-refresh-b-from-a';
+  refresh.disabled = !projection.custody.canRefreshBFromCurrentA;
+  refresh.title = emp1RefreshTitle(projection.custody);
+  refresh.addEventListener('click', () => onRefresh?.());
+  custody.body.append(refresh);
+  return custody;
+}
+
 function technicalSteps(doc, area, onNavigate) {
   const details = doc.createElement('details');
   details.className = 'lafea-guided-workflow__technical';
@@ -99,4 +182,43 @@ function primaryReason(area) {
   const labels = lafeaWorkbenchReasonLabels(area.reasons);
   if (!labels.length) return null;
   return labels.length === 1 ? labels[0] : `${labels[0]} · ${labels.length - 1} more`;
+}
+
+function emp1BlockerLabel(code) {
+  return ({
+    WRC_DATASET_NOT_READY: 'WRC extraction package is not READY_FOR_IMPLEMENTATION.',
+    WRC_NUMERICAL_COEFFICIENTS_MISSING: 'WRC a–j numerical coefficient payload is not qualified.',
+    WRC_SIGN_ARBITRATION_OPEN: 'WRC load/sign convention arbitration remains open.',
+    CAUX_PP24_31_NOT_FROZEN: 'CAUx 2017 pp.24–31 benchmark values and independent hand calculation are not frozen.',
+  })[code] ?? code;
+}
+
+function emp1RefreshTitle(custody) {
+  if (custody.canRefreshBFromCurrentA) {
+    return 'Replace only B sourceEvidence with the current qualified A model/result; preserve and revalidate all B-owned screening inputs.';
+  }
+  if (custody.bSourceEvidenceState === 'CURRENT_A_EVIDENCE') {
+    return 'B already uses the current qualified A evidence.';
+  }
+  if (custody.refreshBlockerCode) return `Refresh blocked: ${custody.refreshBlockerCode}`;
+  return 'A current qualified A result and an existing B request are required.';
+}
+
+function workbenchCard(root, titleText) {
+  const section = dom(root, 'section', 'lafea-workbench__card');
+  const title = dom(root, 'h2', null, titleText);
+  const body = dom(root, 'div');
+  section.append(title, body);
+  return { section, body };
+}
+
+function dom(root, tag, className, text) {
+  const value = root.ownerDocument.createElement(tag);
+  if (className) value.className = className;
+  if (text !== undefined) value.textContent = text;
+  return value;
+}
+
+function humanState(value) {
+  return String(value ?? 'UNKNOWN').replaceAll('_', ' ');
 }

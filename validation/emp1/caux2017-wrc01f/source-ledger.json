@@ -1,0 +1,15 @@
+{
+  "schema": "emp1-source-ledger/v1",
+  "sourceId": "CAUX_2017_WRC01F_PP24_31",
+  "authorityRole": "BENCHMARK_SOURCE",
+  "repository": "reallaksh19/XML_Compare_Utilities",
+  "pinnedCommit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+  "path": "docs/emp.1/CAUx 2017 - WRC01f.pdf",
+  "fileName": "CAUx 2017 - WRC01f.pdf",
+  "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
+  "expectedByteCount": 7260396,
+  "rawPdfSha256": null,
+  "benchmarkPdfPages": [24, 25, 26, 27, 28, 29, 30, 31],
+  "custodyState": "UNRESOLVED_RAW_BYTES",
+  "qualificationState": "BLOCKED"
+}

@@ -2,22 +2,50 @@ import { refinementTransitionLadder } from '../core/lafea-meshing/refinement-fie
 
 const ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
 const DISTANCE_TOLERANCE = 1e-12;
-const LOCAL_CORE_TARGET_LENGTH_FACTOR = 3;
+const LOCAL_CORE_ELEMENT_COUNT = 1;
+
+/**
+ * Return the minimum radial reach needed to place one local-size core element
+ * and the requested number of elements across every intermediate governed
+ * transition band. The global level is owned by the retained parent mesh.
+ */
+export function minimumLafea3RetainedRefinementInfluenceRadius({
+  localTargetElementLength,
+  globalTargetElementLength,
+  adjacentSizeRatioMax,
+  minimumElementsPerTransitionBand = 2,
+}) {
+  const transition = refinementTransitionLadder(
+    globalTargetElementLength,
+    localTargetElementLength,
+    adjacentSizeRatioMax,
+  );
+  if (!Number.isInteger(minimumElementsPerTransitionBand)
+    || minimumElementsPerTransitionBand < 1) {
+    fail('LAFEA3_RETAINED_REFINEMENT_TRANSITION_BAND_WIDTH_INVALID');
+  }
+  const localCoreRadius = localTargetElementLength * LOCAL_CORE_ELEMENT_COUNT;
+  const transitionWidth = transition.levels
+    .slice(1, -1)
+    .reduce((sum, targetElementLength) => (
+      sum + minimumElementsPerTransitionBand * targetElementLength
+    ), 0);
+  return localCoreRadius + transitionWidth;
+}
 
 /**
  * Deterministic LAFEA.3 local-refinement sizing field.
  *
- * The stage policy is an acceptance limit on the actual mesh, not a target to
- * consume exactly during point placement. Constrained-Delaunay connectivity can
- * skip one nominal size band, so construction uses sqrt(g_accept). Therefore a
- * one-band skip is still bounded analytically by
- * sqrt(g_accept)^2 = g_accept. The actual child mesh remains subject to the
- * unchanged measured adjacency gate before custody.
+ * `influenceRadius` is the total custody radius of the refined zone. It is not
+ * merely the local-core radius. One local-size element is retained around the
+ * target, then every intermediate level from the governed adjacent-size ladder
+ * receives the required transition-band width. The final global level is not
+ * populated because the retained parent mesh owns the outer region.
  *
- * The retained command influence radius is an upper bound on the fully-local
- * core. The core is capped at three local target lengths so transition space is
- * preserved near retained coarse boundaries. The final global construction
- * level is not populated: existing parent points own that region.
+ * The construction therefore cannot silently extend refinement beyond the
+ * plan's declared radius. The actual generated child is still qualified by the
+ * independent shared-edge adjacency gate before custody; planned grading is
+ * never treated as proof of acceptance.
  */
 export function buildLafea3RetainedRefinementGrading({
   targets,
@@ -27,37 +55,34 @@ export function buildLafea3RetainedRefinementGrading({
   adjacentSizeRatioMax,
   minimumElementsPerTransitionBand = 2,
 }) {
-  const acceptanceTransition = refinementTransitionLadder(
+  const transition = refinementTransitionLadder(
     globalTargetElementLength,
     localTargetElementLength,
     adjacentSizeRatioMax,
   );
-  const constructionGrowthRatioMax = Math.sqrt(adjacentSizeRatioMax);
-  const constructionTransition = refinementTransitionLadder(
-    globalTargetElementLength,
+  const requiredInfluenceRadius = minimumLafea3RetainedRefinementInfluenceRadius({
     localTargetElementLength,
-    constructionGrowthRatioMax,
-  );
-  if (!Number.isInteger(minimumElementsPerTransitionBand)
-    || minimumElementsPerTransitionBand < 1) {
-    fail('LAFEA3_RETAINED_REFINEMENT_TRANSITION_BAND_WIDTH_INVALID');
+    globalTargetElementLength,
+    adjacentSizeRatioMax,
+    minimumElementsPerTransitionBand,
+  });
+  if (!(influenceRadius + DISTANCE_TOLERANCE >= requiredInfluenceRadius)) {
+    fail('LAFEA3_RETAINED_REFINEMENT_INFLUENCE_RADIUS_TOO_SMALL_FOR_GRADED_TRANSITION');
   }
+
   const canonicalTargets = canonicalTargetPoints(targets);
-  const localCoreRadius = Math.min(
-    influenceRadius,
-    localTargetElementLength * LOCAL_CORE_TARGET_LENGTH_FACTOR,
-  );
+  const localCoreRadius = localTargetElementLength * LOCAL_CORE_ELEMENT_COUNT;
   let outerRadius = localCoreRadius;
   const bands = [{
     bandIndex: 0,
-    targetElementLength: constructionTransition.levels[0],
+    targetElementLength: transition.levels[0],
     innerRadius: 0,
     outerRadius,
-    elementsAcrossBand: LOCAL_CORE_TARGET_LENGTH_FACTOR,
+    elementsAcrossBand: LOCAL_CORE_ELEMENT_COUNT,
     role: 'LOCAL_CORE',
   }];
-  for (let index = 1; index < constructionTransition.levels.length - 1; index += 1) {
-    const targetElementLength = constructionTransition.levels[index];
+  for (let index = 1; index < transition.levels.length - 1; index += 1) {
+    const targetElementLength = transition.levels[index];
     const innerRadius = outerRadius;
     const width = minimumElementsPerTransitionBand * targetElementLength;
     outerRadius += width;
@@ -69,6 +94,9 @@ export function buildLafea3RetainedRefinementGrading({
       elementsAcrossBand: minimumElementsPerTransitionBand,
       role: 'GRADED_TRANSITION',
     });
+  }
+  if (outerRadius > influenceRadius + DISTANCE_TOLERANCE) {
+    fail('LAFEA3_RETAINED_REFINEMENT_GRADED_TRANSITION_EXCEEDS_INFLUENCE_RADIUS');
   }
 
   const candidatesByKey = new Map();
@@ -94,12 +122,12 @@ export function buildLafea3RetainedRefinementGrading({
   }
 
   return freeze({
-    acceptanceTransition,
-    constructionGrowthRatioMax,
-    constructionTransition,
+    transition,
+    requiredInfluenceRadius,
     localCoreRadius,
     bands: bands.map(freeze),
     transitionOuterRadius: outerRadius,
+    unmodifiedParentAnnulusWidth: Math.max(0, influenceRadius - outerRadius),
     candidates: [...candidatesByKey.values()].sort((a, b) => (
       a.bandIndex - b.bandIndex || a.y - b.y || a.x - b.x
     )),

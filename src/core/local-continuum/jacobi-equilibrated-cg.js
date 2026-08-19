@@ -1,8 +1,14 @@
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
 import {
   sparseMatrixVectorCompensatedRaw,
+  sparseMatrixVectorDoubleDoubleRaw,
   sparseMatrixVectorRaw,
 } from './sparse-matrix.js';
+
+const POST_CAP_REFINEMENT_LIMIT = 3;
+const POST_CAP_REFINEMENT_METHOD = 'JACOBI_SCALED_MINIMUM_RESIDUAL_RICHARDSON';
+const ERROR_FREE_PRODUCT_RESIDUAL = 'ERROR_FREE_PRODUCT_EXPANSION';
+const COMPENSATED_CSR_RESIDUAL = 'COMPENSATED_CSR';
 
 export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   requireInputs(matrix, rightHandSide);
@@ -65,6 +71,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
           diagonalScale,
           diagonalTolerance,
           matrix.diagonal,
+          terminalEvidence(COMPENSATED_CSR_RESIDUAL, 0, [originalResidualInfinity]),
         );
       }
     }
@@ -80,12 +87,69 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     }
   }
 
-  const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);
-  originalResidualInfinity = maxAbs(exactOriginalResidual(matrix, rightHandSide, solution));
+  let solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);
+  let exact = exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution);
+  originalResidualInfinity = maxAbs(exact);
+  const refinementHistory = [originalResidualInfinity];
+  let refinementSteps = 0;
+
+  while (originalResidualInfinity > convergenceTarget
+    && refinementSteps < POST_CAP_REFINEMENT_LIMIT) {
+    // Work in the same Jacobi-scaled coordinates used by CG. The direction is
+    // the current exact residual and alpha is the one-dimensional minimizer of
+    // ||r_hat - alpha A_hat r_hat||_2. No matrix, load, tolerance or iteration
+    // budget is changed; candidate steps are retained only when the independent
+    // error-free-product residual oracle strictly decreases.
+    const scaledExact = exact.map(
+      (value, index) => value * inverseSqrtDiagonal[index],
+    );
+    const unscaledRefinementDirection = scaledExact.map(
+      (value, index) => value * inverseSqrtDiagonal[index],
+    );
+    const unscaledAction = sparseMatrixVectorRaw(matrix, unscaledRefinementDirection);
+    const scaledAction = unscaledAction.map(
+      (value, index) => value * inverseSqrtDiagonal[index],
+    );
+    const numerator = compensatedDot(scaledAction, scaledExact);
+    const denominator = compensatedDot(scaledAction, scaledAction);
+    if (!(denominator > 0) || !Number.isFinite(denominator)
+      || !Number.isFinite(numerator)) {
+      throw solverError(
+        'JACOBI_EQUILIBRATED_CG_REFINEMENT_INVALID',
+        `${numerator}/${denominator}`,
+      );
+    }
+    const alpha = numerator / denominator;
+    if (!Number.isFinite(alpha)) {
+      throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_ALPHA_INVALID', alpha);
+    }
+
+    const candidateScaled = scaledSolution.map(
+      (value, index) => value + alpha * scaledExact[index],
+    );
+    const candidateSolution = unscaleSolution(candidateScaled, inverseSqrtDiagonal);
+    const candidateExact = exactOriginalResidualDoubleDouble(
+      matrix,
+      rightHandSide,
+      candidateSolution,
+    );
+    const candidateInfinity = maxAbs(candidateExact);
+    if (!(candidateInfinity < originalResidualInfinity)) break;
+
+    for (let index = 0; index < scaledSolution.length; index += 1) {
+      scaledSolution[index] = candidateScaled[index];
+    }
+    solution = candidateSolution;
+    exact = candidateExact;
+    originalResidualInfinity = candidateInfinity;
+    refinementSteps += 1;
+    refinementHistory.push(candidateInfinity);
+  }
+
   if (originalResidualInfinity > convergenceTarget) {
     throw solverError(
       'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',
-      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations}`,
+      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} post-cap minimum-residual steps; history=${refinementHistory.join(',')}`,
     );
   }
   return result(
@@ -99,6 +163,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     diagonalScale,
     diagonalTolerance,
     matrix.diagonal,
+    terminalEvidence(ERROR_FREE_PRODUCT_RESIDUAL, refinementSteps, refinementHistory),
   );
 }
 
@@ -113,6 +178,7 @@ function result(
   diagonalScale,
   diagonalTolerance,
   diagonal,
+  terminal,
 ) {
   const minimumDiagonal = Math.min(...diagonal);
   const maximumDiagonal = Math.max(...diagonal);
@@ -133,9 +199,24 @@ function result(
       minimumDiagonal: canonicalNumber(minimumDiagonal),
       maximumDiagonal: canonicalNumber(maximumDiagonal),
       diagonalRatio: canonicalNumber(minimumDiagonal / maximumDiagonal),
+      terminalResidualArithmetic: terminal.residualArithmetic,
+      postCapRefinementMethod: terminal.refinementSteps > 0
+        ? POST_CAP_REFINEMENT_METHOD
+        : 'NOT_REQUIRED',
+      postCapRefinementLimit: POST_CAP_REFINEMENT_LIMIT,
+      postCapRefinementSteps: terminal.refinementSteps,
+      postCapResidualHistory: terminal.residualHistory,
       accepted: true,
     },
   };
+}
+
+function terminalEvidence(residualArithmetic, refinementSteps, residualHistory) {
+  return Object.freeze({
+    residualArithmetic,
+    refinementSteps,
+    residualHistory: Object.freeze(residualHistory.map((value) => canonicalNumber(value))),
+  });
 }
 
 function unscaleSolution(scaledSolution, inverseSqrtDiagonal) {
@@ -144,6 +225,11 @@ function unscaleSolution(scaledSolution, inverseSqrtDiagonal) {
 
 function exactOriginalResidual(matrix, rightHandSide, solution) {
   const action = sparseMatrixVectorCompensatedRaw(matrix, solution);
+  return rightHandSide.map((value, index) => value - action[index]);
+}
+
+function exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution) {
+  const action = sparseMatrixVectorDoubleDoubleRaw(matrix, solution);
   return rightHandSide.map((value, index) => value - action[index]);
 }
 

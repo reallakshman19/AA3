@@ -1,6 +1,7 @@
 import { makeFinding } from './inputxml-linear-prefea-contract.js';
 import {
-  requestedProfileFamily, capabilityAppliesToRequest, scopedDisposition, severityForScopedDisposition,
+  requestedProfileFamily, capabilityAppliesToRequest, capabilityGatesSolve,
+  scopedDisposition, severityForScopedDisposition,
 } from './inputxml-linear-prefea-profile-scope.js';
 
 export function collectFindings({
@@ -38,7 +39,7 @@ export function collectFindings({
   appendReportFindings(rows, engineeringSanity, 'SCHEMA', ['LINEAR_STRUCTURAL_MODEL'], requestedFamily);
   for (const capability of representability.capabilities ?? []) {
     if (!capabilityAppliesToRequest(capability.capabilityId, requestedFamily)) continue;
-    if (capability.status === 'BLOCK') {
+    if (capability.status === 'BLOCK' && capabilityGatesSolve(capability.capabilityId)) {
       rows.push(makeFinding({
         code: 'REQUIRED_CAPABILITY_BLOCKED',
         category: capability.category ?? 'UNSUPPORTED_FEATURE',
@@ -60,7 +61,11 @@ export function collectFindings({
         approximationEligible: (capability.limitationCodes ?? []).length > 0,
         authorizationRequired: false,
       }));
-    } else if (capability.status === 'WARN' || capability.status === 'CONDITIONAL') {
+    } else if (capability.status === 'WARN' || capability.status === 'CONDITIONAL'
+      || capability.status === 'BLOCK') {
+      // A BLOCK reaching here is a non-solve-gating capability (see
+      // capabilityGatesSolve): reported for explicit acceptance, not as a
+      // reason to refuse a solve that never consults it.
       rows.push(makeFinding({
         code: 'CAPABILITY_REQUIRES_CONDITIONAL_AUTHORIZATION',
         category: capability.category ?? 'UNSUPPORTED_FEATURE',

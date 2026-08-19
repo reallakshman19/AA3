@@ -38,6 +38,93 @@ export const LAFEA_RETAINED_MESH_REFINEMENT_POLICY = Object.freeze({
 });
 
 const ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
+const POLICY_COMPARE_EPSILON_FACTOR = 64;
+
+/**
+ * Actual retained-child adjacency qualification for the LAFEA.3 refinement
+ * route. It is intentionally separate from generic v2 mesh evidence so the
+ * existing evidence schema/hash remains backward compatible. The same
+ * source-controlled `meshProfile.fields.adjacentSizeRatioMax` value is used by
+ * the producer before custody and by the UI for derived inspection.
+ */
+export function qualifyLafea3RetainedMeshAdjacentSizeRatio(mesh, maximumAllowed) {
+  if (!(Number.isFinite(maximumAllowed) && maximumAllowed > 1)) {
+    fail('LAFEA3_RETAINED_REFINEMENT_ADJACENT_SIZE_RATIO_POLICY_INVALID');
+  }
+  if (!mesh?.nodes?.length || !mesh?.elements?.length) {
+    fail('LAFEA3_RETAINED_REFINEMENT_ADJACENT_SIZE_RATIO_MESH_REQUIRED');
+  }
+  const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
+  const characteristicLengthByElementId = new Map();
+  const edgeUsers = new Map();
+
+  for (const element of mesh.elements) {
+    if (!['T3', 'T6'].includes(element.elementType)) {
+      fail('LAFEA3_RETAINED_REFINEMENT_ADJACENT_SIZE_RATIO_FAMILY_INVALID');
+    }
+    const ids = element.nodeIds.slice(0, 3);
+    const corners = ids.map((nodeId) => nodeById.get(nodeId));
+    if (corners.some((node) => !node)) {
+      fail('LAFEA3_RETAINED_REFINEMENT_ADJACENT_SIZE_RATIO_NODE_MISSING');
+    }
+    const lengths = corners.map((node, index) => {
+      const next = corners[(index + 1) % corners.length];
+      return Math.hypot(next.x - node.x, next.y - node.y, next.z - node.z);
+    });
+    const characteristicLength = Math.max(...lengths);
+    if (!(characteristicLength > 0)) {
+      fail('LAFEA3_RETAINED_REFINEMENT_ADJACENT_SIZE_RATIO_DEGENERATE_ELEMENT');
+    }
+    characteristicLengthByElementId.set(element.elementId, characteristicLength);
+    for (let index = 0; index < ids.length; index += 1) {
+      const a = ids[index];
+      const b = ids[(index + 1) % ids.length];
+      const key = a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`;
+      const users = edgeUsers.get(key) ?? [];
+      users.push(element.elementId);
+      edgeUsers.set(key, users);
+    }
+  }
+
+  const adjacencies = [];
+  for (const [edgeKey, rawElementIds] of edgeUsers.entries()) {
+    const elementIds = [...new Set(rawElementIds)].sort();
+    if (elementIds.length < 2) continue;
+    const lengths = elementIds.map((elementId) => characteristicLengthByElementId.get(elementId));
+    const minimum = Math.min(...lengths);
+    const maximum = Math.max(...lengths);
+    const ratio = maximum / minimum;
+    const status = exceedsPolicyMaximum(ratio, maximumAllowed) ? 'BLOCK' : 'OK';
+    adjacencies.push(Object.freeze({
+      nodeIds: Object.freeze(edgeKey.split('\u0000')),
+      elementIds: Object.freeze(elementIds),
+      minimumCharacteristicLength: minimum,
+      maximumCharacteristicLength: maximum,
+      ratio,
+      status,
+    }));
+  }
+  adjacencies.sort((left, right) => (
+    right.ratio - left.ratio
+    || left.nodeIds.join('\u0000').localeCompare(right.nodeIds.join('\u0000'))
+  ));
+  const maximumObserved = adjacencies[0]?.ratio ?? 1;
+  const violatingAdjacencies = adjacencies.filter((row) => row.status === 'BLOCK');
+  const blockingElementIds = [...new Set(
+    violatingAdjacencies.flatMap((row) => row.elementIds),
+  )].sort();
+  return freeze({
+    schema: 'lafea3-retained-refinement-adjacent-size-ratio/v1',
+    definition: 'MAX_LONGEST_CORNER_EDGE_RATIO_ACROSS_SHARED_CORNER_EDGE_V1',
+    maximumAllowed,
+    maximumObserved,
+    adjacentEdgeCount: adjacencies.length,
+    violatingAdjacencyCount: violatingAdjacencies.length,
+    violatingAdjacencies,
+    blockingElementIds,
+    qualification: violatingAdjacencies.length ? 'BLOCK' : 'PASS',
+  });
+}
 
 /**
  * Build an auditable refinement plan against one exact retained v2 mesh.
@@ -149,6 +236,14 @@ export function previewLafeaRetainedMeshRefinement(input) {
     fail('LAFEA_RETAINED_MESH_REFINEMENT_RESOURCE_LIMIT_EXCEEDED');
   }
 
+  const adjacentSizeQualification = qualifyLafea3RetainedMeshAdjacentSizeRatio(
+    generated.mesh,
+    meshProfile.fields.adjacentSizeRatioMax,
+  );
+  if (adjacentSizeQualification.qualification !== 'PASS') {
+    fail('LAFEA_RETAINED_MESH_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCKED');
+  }
+
   const output = createLafeaMeshProducerOutputV2({
     schema: LAFEA_MESH_PRODUCER_OUTPUT_V2_SCHEMA,
     stageId: 'LAFEA.3',
@@ -194,6 +289,7 @@ export function previewLafeaRetainedMeshRefinement(input) {
     plan,
     output,
     evidence,
+    adjacentSizeQualification,
     parentEvidenceHash: parentEvidence.artifactHash,
     localPointCount: generated.localPointCount,
     estimatedDofs,
@@ -441,6 +537,11 @@ function requireCommand(value) {
     fail('LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_TAMPERED');
   }
   return rebuilt;
+}
+function exceedsPolicyMaximum(value, maximum) {
+  const tolerance = POLICY_COMPARE_EPSILON_FACTOR * Number.EPSILON
+    * Math.max(1, Math.abs(maximum));
+  return value > maximum + tolerance;
 }
 function nodeId(index) { return `N${String(index + 1).padStart(6, '0')}`; }
 function elementId(index) { return `E${String(index + 1).padStart(6, '0')}`; }

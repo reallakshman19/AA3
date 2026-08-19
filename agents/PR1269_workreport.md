@@ -4,88 +4,118 @@
 
 - `HANDOVER_READINESS: READY`
 - `PR_RECOVERY_STATE: RECOVERABLE`
-- `TAKEOVER_AUTHORITY: QUALIFIED_FOR_FAIL_CLOSED_GUARD_MUTATION_ONLY`
 - `ISSUE: #1261`
 - `PR: #1269`
 - `BRANCH: agent/emp1-wrc-numerical-contract-issue1261`
 - `PARENT_PR: #1266`
 - `PARENT_HEAD_AT_CUT: c4ecc9ec48cb87937d65599449dee55b86513f3a`
-- `MAIN_HEAD_AT_GROUNDING: cf3aaeefb028ee387d3d530f5e0e5106bd489dce`
-- `MERGE_AUTHORITY: NOT_GRANTED`
+- `VALIDATED_IMPLEMENTATION_HEAD: 2468b1f712c2d08390988d52becabefd1a5f0d1b`
+- `VALIDATION_WORKFLOW_RUN: 32282955286 (#966)`
+- `EMP1_CRITICAL_SOFTWARE_CONTRACT: PASS`
+- `EMP1_FOCUSED_CHROMIUM: PASS`
+- `FULL_WORKFLOW: FAIL_EXTERNAL_B02D`
 - `EMP1_C_ENGINEERING_AUTHORITY: BLOCKED`
+- `MERGE_AUTHORITY: NOT_GRANTED`
 - `RELEASE_QUALIFIED: false`
-- `CURRENT_STAGE: CRITICAL_GUARDS_IMPLEMENTED_EXACT_HEAD_VALIDATION_PENDING`
-- `EXACT_NEXT_ACTION: inspect latest exact-head Stage-17 run; RCA only changed EMP.1 paths, preserve inherited B02D boundary`
+- `CURRENT_STAGE: EMP1_CRITICAL_SCOPE_PASS_EXTERNAL_B02D_BLOCK`
 
-## Mission
+## Final scope verdict
 
-Implement the confirmed **critical** EMP.1 qualification fixes without fabricating WRC authority. This PR now covers the fail-open numerical contract, dimensional contradictions, source/runtime load mapping custody, pressure-thrust double-count custody, and stress-intensity output semantics.
+The confirmed Critical findings are implemented as fail-closed software contracts. On implementation head `2468b1f...`, the exact-head Stage-17 workflow completed every EMP.1 prerequisite and all five focused EMP.1 Chromium journeys, then entered the unrelated B01/B02 production gate and failed at the inherited B02D polar-mesh check:
 
-It deliberately does **not** populate WRC coefficients, choose WRC signs, infer the LAFEA→WRC permutation, infer pressure-thrust direction, invent a stress-intensity formula, freeze CAUx expected values, register an EMP.1.C evaluator, alter FEM, or grant engineering/code/release authority.
+```text
+T3/L1
+actual:   BLOCK
+expected: PASS
+LAFEA_B02_PRODUCTION_SEQUENCE_BLOCKED_AT_B02D_POLAR_MESH
+```
 
-## Ground truth and authority
+Therefore:
 
-- #1269 stacks on draft #1266; #1266 A/B production repairs remain untouched.
-- WRC and CAUx source ledgers still have `rawPdfSha256: null`; both source qualifications remain BLOCKED.
-- Retained WRC extraction is qualification input only, pinned to `Advanced_Analysis@67317dc9...` by immutable repo/commit/blob/byte-count contract.
-- WRC METHOD_SOURCE, CAUx BENCHMARK_SOURCE, independent-derived evidence, and production result remain separate authority classes.
-- Supplemental Hexagon pressure-thrust evidence is sanity-check only and cannot satisfy CAUx A4 or WRC method authority.
+```text
+EMP.1 critical software-contract scope = PASS
+EMP.1 focused browser qualification   = PASS
+full Stage-17 workflow                = FAIL_EXTERNAL_B02D
+WRC engineering qualification         = BLOCKED / NOT_RUN
+CAUx engineering qualification        = BLOCKED / NOT_RUN
+release qualification                 = false
+```
 
-## Critical findings implemented
+No B02D file, mesh formulation, frozen B02 definition, or FEM policy is changed by PR1269.
+
+## Authority boundary
+
+This PR deliberately does **not**:
+
+- populate WRC a-j values;
+- choose unresolved WRC signs;
+- infer a LAFEA→WRC field permutation;
+- infer pressure-thrust direction;
+- invent a replacement stress-intensity formula;
+- freeze CAUx pp.24–31 expected values;
+- register an EMP.1.C production evaluator/route;
+- grant engineering, code-compliance, or release authority.
+
+WRC and CAUx retained source ledgers still have unresolved raw-PDF SHA-256 custody. WRC remains METHOD_SOURCE; CAUx pp.24–31 remains BENCHMARK_SOURCE; independent-derived evidence remains separate; production results never become source authority.
+
+## Critical findings — implemented contracts
 
 ### CF-01 — coefficient inventory fail-open
 
-Retained method representation is a ninth-order polynomial:
+Retained curve fit:
 
 ```text
 Y(U) = a + bU + cU² + ... + jU⁹
 ```
 
-Therefore:
+Inventory:
 
 ```text
 20 SP/SM charts × 6 response curves/chart = 120 response curves
 120 curves × 10 named coefficients {a..j} = 1200 scalar coefficients
 ```
 
-Previous readiness could treat 120 `coefficient_value` cells as complete. New contract requires all 1200 named scalar slots. Current retained payload is truthfully:
+Old fail-open logic could treat one `coefficient_value` per row as complete coverage. New readiness requires all 1200 named scalar slots.
+
+Current retained payload is truthfully blocked:
 
 ```text
-curveRows = 120
-coefficientSchema = LEGACY_SINGLE_VALUE_PER_CURVE / BLOCKED
+curveRows                      = 120
+coefficientSchema              = LEGACY_SINGLE_VALUE_PER_CURVE
 requiredScalarCoefficientCount = 1200
-numericScalarCoefficientCount = 0
-missingScalarCoefficientCount = 1200
+numericScalarCoefficientCount  = 0
+missingScalarCoefficientCount  = 1200
 ```
 
 ### CF-02 — runtime U custody
 
-`U` is the polynomial independent variable, not a fixed third row ordinate. Legacy `parameter_3_name=U / parameter_3_value=...` cannot qualify. A future source-qualified payload must explicitly declare runtime `U` custody.
+`U` is the polynomial independent variable, not a fixed third chart ordinate. Legacy `parameter_3_name=U / parameter_3_value=...` cannot qualify. A future qualified payload must declare runtime `U` explicitly.
 
 ### CF-03 — radial membrane dimensional contradiction
 
-Retained coefficient symbol:
+Retained definition:
 
 ```text
 Y = Nx*T/P
+sigma_m = Nx/T
 ```
 
-With retained general shell stress `sigma_m = Nx/T`, dimensional algebra gives:
+Therefore:
 
 ```text
-Nx = Y*P/T
+Nx      = Y*P/T
 sigma_m = Y*P/T²
 ```
 
-The retained machine equation uses `Y*P/T`, one factor of `T` short. This is now a hard blocker:
+The retained machine equation uses `Y*P/T`, missing one `T`. The runtime now hard-blocks:
 
 `SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH`.
 
-The code does not silently replace the source equation; the pinned WRC PDF must arbitrate it.
+No inferred correction is promoted as WRC authority.
 
 ### CF-04 — moment membrane dimensional contradiction
 
-Retained coefficient symbol:
+Retained definition:
 
 ```text
 Y = Nx*T*sqrt(Rm*T)/M
@@ -97,83 +127,103 @@ Therefore:
 sigma_m = Y*M/(T²*sqrt(Rm*T))
 ```
 
-The retained machine equation uses only one `T` outside the square-root. This is now a hard blocker:
+The retained machine equation contains only one shell-thickness divisor outside the square root. The runtime hard-blocks:
 
 `SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH`.
 
-### CF-05 — retained stress-intensity equation is dimensionally invalid
+### CF-05 — stress-intensity dimensional contradiction
 
-Retained machine transcription includes an outer square-root of a first-degree stress expression. Its output dimension is `sqrt(stress)`, not stress. Example sanity state `sigx=100`, `sigy=50`, `tau=0` yields the retained outer-root branch `10 sqrt(stress units)` instead of a stress-valued principal quantity.
+The retained `EQ_STRESS_INTENSITY` applies an outer square root to an expression already having stress dimension. Its output therefore has `sqrt(stress)` dimension, not stress.
 
-The retained equation now produces:
+A simple synthetic state illustrates the defect:
+
+```text
+sigx = 100
+sigy = 50
+tau  = 0
+retained outer-root branch = sqrt(100) = 10 sqrt(stress-units)
+```
+
+The runtime hard-blocks:
 
 `STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH`.
 
-No replacement Tresca/von-Mises formula is promoted as WRC authority.
+No Tresca/von-Mises replacement is silently substituted as WRC authority.
 
-### CF-06 — LAFEA→WRC axis mapping cannot be inferred
+### CF-06 — LAFEA→WRC axis mapping custody
 
-Existing production LAFEA local frame is explicitly:
-
-```text
-eX = pipe axial
-eZ = projected radial hint
-eY = eZ × eX
-```
-
-Existing section-screening mechanics use:
+Existing LAFEA local-frame semantics are not equivalent to the tentative retained WRC mapping by declaration:
 
 ```text
-Fx/A = axial membrane
-Mx*r/J = torsion
+LAFEA eX = pipe axial
+LAFEA eZ = projected radial hint
+LAFEA eY = eZ × eX
+
+LAFEA.2 axial membrane uses Fx/A
+LAFEA.2 torsion uses Mx*r/J
 ```
 
-The retained WRC mapping is unresolved/tentative. A future evaluator can no longer become authorized by hard-coding a field permutation. A separate source-bound runtime qualification must provide:
+Future EMP.1.C method authority now requires a separate source-bound runtime qualification containing:
 
-- mapping contract hash;
+- exact mapping contract hash;
 - canonical-frame contract hash;
-- exact source locator;
-- source-qualified WRC raw-PDF SHA binding.
+- source locator;
+- binding to the source-qualified WRC raw-PDF SHA-256.
 
-### CF-07 — pressure thrust / double-count custody
+A hard-coded `FX/FY/FZ/MX/MY/MZ -> P/V1/V2/M1/M2/Mt` permutation cannot satisfy the gate by itself.
 
-Supplemental independent sanity case proves the magnitude risk:
+### CF-07 — pressure-thrust inclusion / double-count custody
+
+Existing supplemental independent sanity case:
 
 ```text
 pressure = 275 psi
 nozzle ID = 12 in
-A = pi*12²/4 = 113.0973355 in²
-F_thrust = 31,101.7673 lbf
+A = pi*12²/4 = 113.097335529 in²
+pressure thrust = 31,101.7672705 lbf
 restraint axial force = -26 lbf
-P_WRC = -26 - 31,101.7673 = -31,127.7673 lbf -> -31,128 lbf displayed
+WRC radial P = -26 - 31,101.7672705
+             = -31,127.7672705 lbf
+reported rounded value = -31,128 lbf
 ```
 
-The thrust term is about `1196×` the 26-lbf restraint magnitude. Omitting or double-counting it is therefore catastrophic in this case.
+The thrust magnitude is about `31,101.77 / 26 = 1196.22×` the 26-lbf restraint magnitude. Omission or double counting is therefore catastrophic in this sanity case.
 
-Future runtime qualification must select exactly one explicit governed mode:
+The production method cannot become authorized until a source-bound runtime record selects exactly one governed mode:
 
-- `SOURCE_LOAD_ALREADY_INCLUDES_THRUST`
-- `ADD_PRESSURE_THRUST_FROM_NOZZLE_ID`
-- `NOT_APPLICABLE_BY_QUALIFIED_METHOD`
+```text
+SOURCE_LOAD_ALREADY_INCLUDES_THRUST
+ADD_PRESSURE_THRUST_FROM_NOZZLE_ID
+NOT_APPLICABLE_BY_QUALIFIED_METHOD
+```
 
-and must include an independent check plus `doubleCountGuardQualified=true`. No thrust sign/direction is inferred by this PR.
+and proves:
 
-### CF-08 — stress-intensity source semantics must be explicit
+- independent check `PASS`;
+- `doubleCountGuardQualified = true`;
+- retained pressure-thrust policy record hash.
 
-Even after the retained dimensional defect is resolved, method authority requires a source-bound stress-intensity definition contract, source locator, output dimension `STRESS`, independent-check PASS, and qualification-record hash.
+The supplemental Hexagon result remains bounded sanity evidence only; it does not satisfy CAUx A4 or WRC method authority.
 
-## Anti-mutation / authority hardening
+### CF-08 — stress-intensity source semantics
 
-- Retained extraction manifest is immutable in code by repository, commit, blob SHA-1, and byte count.
-- C evidence re-reads and hashes retained files and recomputes readiness from those bytes.
-- A hand-edited frozen audit cannot move runtime qualification: observed/frozen drift throws.
-- Runtime-contract evidence cannot be based on production observation.
-- Method authorization must bind the runtime-contract qualification hash as well as WRC source SHA and CAUx benchmark hash.
-- EMP.1.C production route remains unregistered.
+Even after the retained dimensional transcription is source-arbitrated, method authority requires:
 
-## Current public C blockers
+- source-bound definition contract hash;
+- source locator;
+- output dimension exactly `STRESS`;
+- independent check `PASS`;
+- retained qualification-record hash.
 
-The retained state intentionally exposes six blockers:
+### CF-09 — immutable retained-evidence re-observation
+
+The retained WRC extraction is pinned by repository, commit, exact artifact path, Git blob SHA-1, and byte count. EMP.1.C qualification re-reads/re-hashes the retained bytes and independently recomputes readiness.
+
+A hand-edited frozen audit cannot move runtime qualification. During CI this guard correctly found an editorial mismatch in the frozen `openIssues` strings; the repair restored byte-semantic fidelity to the pinned dataset rather than weakening the anti-drift check.
+
+## Current public EMP.1.C blockers
+
+Exactly six intentional blockers remain:
 
 ```text
 WRC_DATASET_NOT_READY
@@ -184,7 +234,7 @@ WRC_SIGN_ARBITRATION_OPEN
 CAUX_PP24_31_NOT_FROZEN
 ```
 
-Current dimensional violations are exactly three:
+Current retained dimensional violations are exactly:
 
 ```text
 SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH
@@ -192,16 +242,45 @@ SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH
 STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH
 ```
 
-Current runtime-contract qualification is `NOT_RUN/BLOCKED` for load-axis mapping, pressure thrust, and stress intensity.
+Current runtime-contract qualification is intentionally `NOT_RUN/BLOCKED` for axis mapping, pressure-thrust policy, and stress-intensity source definition.
 
-## Changed-file ledger
+## Validation ledger — implementation head 2468b1f...
 
-Production qualification state:
+| Check | Result | Interpretation |
+|---|---|---|
+| Exact head / clean tree | PASS | workflow #966 |
+| Static and projection checks | PASS | no syntax/projection regression |
+| Shell mesh compiler/execution custody | PASS | unrelated shell boundary not regressed |
+| Standalone inherited-boundary proof | PASS | existing boundary behavior unchanged |
+| Standalone build | PASS | bundle builds |
+| Production Pages build | PASS | production bundle builds |
+| Pinned Chromium install | PASS | browser runtime available |
+| WRC coefficient/U/dimensional self-test | PASS | software contract only |
+| Supplemental pressure-thrust numerical sanity | PASS | bounded non-authority oracle |
+| Runtime axis/thrust/stress-intensity self-test | PASS | software contract only |
+| C evidence anti-mutation self-test | PASS | software contract |
+| C generated-evidence exact-drift check | PASS | retained byte observation |
+| C runtime qualification-state check | PASS | correctly remains BLOCKED |
+| Public EMP.1 projection check | PASS | six blockers exposed truthfully |
+| A→B custody checks | PASS | parent production contract preserved |
+| Focused EMP.1 Chromium journeys | PASS | all five pre-B02 Playwright runs completed |
+| B01/B02 production gate | FAIL_EXTERNAL_B02D | `T3/L1: BLOCK != PASS` |
+| WRC engineering validation | BLOCKED / NOT_RUN | source qualification required |
+| CAUx pp.24–31 hand calculation | BLOCKED / NOT_RUN | benchmark extraction/independent calc required |
+| merge | NOT_AUTHORIZED | owner authority required |
+
+The Stage-17 first-failure diagnostic recorded phase `B01_B02_GATE`; because the runner reaches that phase only after all EMP.1 Node prerequisites and all five focused EMP.1 Playwright invocations succeed, the EMP.1 qualification result above is not inferred from partial execution.
+
+## Changed-file boundary
+
+PR1269 changes only EMP.1 qualification/evidence/test/handover files plus the Stage-17 runner registration/diagnostic. It does not modify B02D or FEM production files.
+
+Key production qualification files:
 
 - `src/core/emp1/emp1-c-qualification-state.js`
 - `src/core/emp1/emp1-c-qualification-evidence.generated.js`
 
-Qualification/evidence:
+Key qualification files:
 
 - `scripts/emp1-wrc-dataset-readiness-lib.mjs`
 - `scripts/emp1-wrc-dataset-readiness-check.mjs`
@@ -216,63 +295,34 @@ Qualification/evidence:
 - `scripts/lafea-stage17-browser-run.mjs`
 - `validation/emp1/wrc537-2013/existing-dataset-audit-v1.json`
 
-Handover:
-
-- `agents/PR1269_workreport.md`
-- `agents/status/PR1269.yaml`
-- `agents/claims/PR1269.yaml`
-- legacy WIP status is marked superseded by PR1269.
-
-## Validation ledger
-
-| Check | State | Oracle |
-|---|---|---|
-| WRC coefficient/U/dimensional self-test | PENDING_LATEST_EXACT_HEAD | synthetic software contract |
-| runtime axis/thrust/stress-intensity self-test | PENDING_LATEST_EXACT_HEAD | synthetic software contract |
-| retained WRC observed-vs-frozen audit | PENDING_LATEST_EXACT_HEAD; expected BLOCKED | retained bytes + immutable pin |
-| C evidence derivation/anti-mutation self-test | PENDING_LATEST_EXACT_HEAD | software contract |
-| generated evidence exact-drift check | PENDING_LATEST_EXACT_HEAD | deterministic retained artifacts |
-| C runtime state check | PENDING_LATEST_EXACT_HEAD; expected BLOCKED | retained evidence |
-| public EMP.1 projection check | PENDING_LATEST_EXACT_HEAD | production projection |
-| Chromium EMP.1 browser journey | PENDING_LATEST_EXACT_HEAD | production browser |
-| WRC engineering validation | BLOCKED / NOT_RUN | primary source required |
-| CAUx pp24–31 qualification | BLOCKED / NOT_RUN | benchmark source + independent handcalc required |
-| downstream B02D | inherited external blocker | unchanged FEM boundary |
-| merge | NOT_AUTHORIZED | owner authority required |
-
 ## Explicit NOT_RUN / BLOCKED
 
-- WRC raw PDF SHA-256 freeze: NOT_RUN / retained ledger unresolved
-- CAUx raw PDF SHA-256 freeze: NOT_RUN / retained ledger unresolved
-- source-qualified 1200 a-j scalar transcription: NOT_RUN
-- WRC sign/equation source arbitration: NOT_RUN
-- source-qualified LAFEA→WRC axis mapping: NOT_RUN
-- pressure-thrust production policy qualification: NOT_RUN
-- source-qualified stress-intensity definition: NOT_RUN
-- CAUx pp24–31 source extraction/freeze + independent handcalc: NOT_RUN
-- WRC local-stress production evaluator: NOT_RUN / NOT_AUTHORIZED
-- EMP.1.C route registration: false
-- release qualification: false
-- B02D repair: out of scope
+- WRC raw PDF SHA-256 freeze: `NOT_RUN / BLOCKED`
+- CAUx raw PDF SHA-256 freeze: `NOT_RUN / BLOCKED`
+- source-qualified 1200 a-j scalar transcription: `NOT_RUN`
+- WRC sign/equation primary-source arbitration: `NOT_RUN`
+- source-qualified LAFEA→WRC axis mapping: `NOT_RUN`
+- pressure-thrust production-policy qualification: `NOT_RUN`
+- source-qualified stress-intensity definition: `NOT_RUN`
+- CAUx pp.24–31 extraction/freeze and independent hand calculation: `NOT_RUN`
+- WRC local-stress production evaluator: `NOT_RUN / NOT_AUTHORIZED`
+- EMP.1.C production route registration: `false`
+- release qualification: `false`
+- B02D repair: `OUT_OF_SCOPE`
 
-## Appendix A — bounded takeover qualification
+## Appendix A — takeover qualification
 
 | Question | Score | Boundary |
 |---|---:|---|
-| A1 Production trace | 20/20 | Retained bytes -> audit -> generated evidence -> runtime C state -> public blocker; A/B custody stays separate. |
-| A2 Failure/UX isolation | 19/20 | One public EMP.1 already exists; this PR changes qualification truth, not stage identity. |
-| A3 Authority/invariant | 17/20 | Source identities/pins preserved; raw SHA remains unresolved, so method authority remains blocked. |
-| A4 Independent validation design | 19/20 | Production contamination guards and supplemental-vs-CAUx separation retained; actual CAUx handcalc remains NOT_RUN. |
-| A5 Minimal repair | 20/20 | Critical defects are converted to fail-closed contracts without implementing unauthorized WRC mechanics. |
-| **Total** | **95/100** | No score grants WRC engineering authority. |
+| A1 Production trace | 20/20 | Retained bytes -> audit -> generated evidence -> runtime C state -> public blocker; A/B custody remains separate. |
+| A2 Failure/UX isolation | 19/20 | One public EMP.1 remains; this PR changes qualification truth, not stage identity. |
+| A3 Authority/invariant | 17/20 | Source identities/pins protected; raw SHA remains unresolved, therefore method authority remains blocked. |
+| A4 Independent validation design | 19/20 | Production-contamination guards and supplemental-vs-CAUx separation retained; actual CAUx handcalc remains NOT_RUN. |
+| A5 Minimal repair | 20/20 | Critical defects converted to fail-closed contracts without unauthorized WRC mechanics. |
+| **Total** | **95/100** | Score does not grant WRC engineering authority. |
 
-## Decisions / falsifiers
+## Next qualified step
 
-- `DEC-WRC-001`: 120 rows are response curves; 1200 named a-j scalar coefficients are required.
-- `DEC-WRC-002`: runtime `U` cannot be represented as a fixed chart row ordinate.
-- `DEC-WRC-003`: dimensional contradictions are blockers, not inferred source corrections.
-- `DEC-WRC-004`: load-axis mapping requires explicit source-bound transformation custody.
-- `DEC-WRC-005`: pressure thrust requires an explicit inclusion mode and double-count guard.
-- `DEC-WRC-006`: stress intensity must be source-qualified as a stress-valued output.
-- `DEC-WRC-007`: retained audit/manifest cannot be edited together to move the frozen authority baseline.
-- `FALSIFIER`: if the exact pinned WRC PDF contradicts the retained coefficient symbols, curve inventory, interpolation semantics, or assumed runtime contract structure, the PDF wins and this contract must be redesigned rather than adjusted to preserve current implementation.
+Do **not** code the EMP.1.C production evaluator yet. The next engineering-authority increment must obtain and freeze the raw source SHA-256 values, verify exact WRC equations/signs/runtime mapping against the pinned WRC PDF, transcribe/qualify the complete a-j dataset, qualify pressure-thrust/stress-intensity runtime contracts, and independently reproduce CAUx 2017 pp.24–31 before any execution-route registration.
+
+`FALSIFIER`: if the pinned WRC PDF contradicts the retained coefficient symbols, curve inventory, interpolation semantics, or proposed runtime-contract structure, the PDF wins and the implementation contract must be redesigned rather than tuned to preserve current behavior.

@@ -58,7 +58,7 @@ export function qualifyLafeaAnalysisMesh(stageId, mesh, meshProfile) {
   const angleValue = optionalMinimumMetricValue(elementResults, 'MINIMUM_ANGLE_DEGREES');
   const angleThresholds = derivedTriangleAngleThresholds(thresholds);
   const shellOrientationTopology = shellOrientationTopologyQualification(stageId, mesh);
-  const adjacentSizeRatio = stageId === 'LAFEA.4'
+  const adjacentSizeRatio = stageId === 'LAFEA.3' || stageId === 'LAFEA.4'
     ? adjacentSizeRatioQualification(mesh, elementResults, thresholds.adjacentSizeRatioMax)
     : null;
 

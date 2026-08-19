@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { validateEmp1SourceLedger } from './emp1-source-custody-lib.mjs';
 import {
+  deriveEmp1CRuntimeContractQualification,
+  runtimeContractReady,
+} from './emp1-c-runtime-contract-lib.mjs';
+import {
   auditWrcDatasetPackage,
   gitBlobSha1Bytes,
   validateWrcRetainedManifest,
@@ -12,6 +16,7 @@ export const EMP1_C_RETAINED_ARTIFACT_PATHS = Object.freeze({
   wrcManifest: 'validation/emp1/wrc537-2013/existing-dataset-manifest.json',
   wrcSourceLedger: 'validation/emp1/wrc537-2013/source-ledger.json',
   signCrosscheck: 'validation/emp1/wrc537-2013/hexagon-sign-crosscheck-v1.json',
+  runtimeContractQualification: 'validation/emp1/wrc537-2013/emp1-c-runtime-contract-qualification-v1.json',
   cauxSourceLedger: 'validation/emp1/caux2017-wrc01f/source-ledger.json',
   cauxSupplementalPrecheck: 'validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-qualification-v1.json',
   cauxBenchmarkQualification: 'validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-qualification-v1.json',
@@ -32,6 +37,7 @@ export function loadEmp1CRetainedArtifacts(root = process.cwd()) {
     wrcObservedAudit: observeRetainedWrcAudit(root, wrcManifest),
     wrcSourceLedger: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.wrcSourceLedger),
     signCrosscheck: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.signCrosscheck),
+    runtimeContractQualification: readOptionalJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.runtimeContractQualification),
     cauxSourceLedger: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.cauxSourceLedger),
     cauxSupplementalPrecheck: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.cauxSupplementalPrecheck),
     cauxBenchmarkQualification: readOptionalJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.cauxBenchmarkQualification),
@@ -47,6 +53,7 @@ export function deriveEmp1CQualificationEvidence(artifacts) {
     wrcObservedAudit,
     wrcSourceLedger,
     signCrosscheck,
+    runtimeContractQualification,
     cauxSourceLedger,
     cauxSupplementalPrecheck,
     cauxBenchmarkQualification,
@@ -74,12 +81,21 @@ export function deriveEmp1CQualificationEvidence(artifacts) {
   );
   const signStatus = signCrosscheck.status === 'PASS' ? 'PASS' : 'BLOCKED';
 
+  const runtimeContracts = deriveEmp1CRuntimeContractQualification(
+    wrcSourceLedger,
+    runtimeContractQualification,
+  );
   const cauxQualification = deriveCauxBenchmarkQualification(
     cauxSourceLedger,
     cauxSupplementalPrecheck,
     cauxBenchmarkQualification,
   );
-  const method = deriveMethodAuthorization(methodAuthorization, wrcSourceLedger, cauxQualification);
+  const method = deriveMethodAuthorization(
+    methodAuthorization,
+    wrcSourceLedger,
+    cauxQualification,
+    runtimeContracts,
+  );
 
   return {
     schema: 'emp1-c-qualification-evidence/v1',
@@ -125,6 +141,7 @@ export function deriveEmp1CQualificationEvidence(artifacts) {
       openConflicts: signConflicts,
       sourceCustodyQualified: wrcSourceCustodyQualified,
     },
+    runtimeContracts,
     cauxBenchmark: cauxQualification,
     methodAuthorization: method,
   };
@@ -389,7 +406,7 @@ function deriveCauxBenchmarkQualification(ledger, supplementalPrecheck, qualific
   };
 }
 
-function deriveMethodAuthorization(authorization, wrcSourceLedger, cauxQualification) {
+function deriveMethodAuthorization(authorization, wrcSourceLedger, cauxQualification, runtimeContracts) {
   const blocked = {
     engineeringUseAuthorized: false,
     qualificationRecordHash: null,
@@ -400,11 +417,17 @@ function deriveMethodAuthorization(authorization, wrcSourceLedger, cauxQualifica
   if (!sourceCustodyQualified(wrcSourceLedger)) {
     throw new TypeError('EMP1_C_METHOD_AUTHORIZATION_WITHOUT_WRC_SOURCE_CUSTODY');
   }
+  if (!runtimeContractReady(runtimeContracts)) {
+    throw new TypeError('EMP1_C_METHOD_AUTHORIZATION_WITHOUT_RUNTIME_CONTRACT_PASS');
+  }
   if (cauxQualification.status !== 'PASS' || !cauxQualification.benchmarkHash) {
     throw new TypeError('EMP1_C_METHOD_AUTHORIZATION_WITHOUT_CAUX_BENCHMARK_PASS');
   }
   if (authorization.wrcSourceRawPdfSha256 !== wrcSourceLedger.rawPdfSha256) {
     throw new TypeError('EMP1_C_METHOD_AUTHORIZATION_WRC_SHA256_MISMATCH');
+  }
+  if (authorization.runtimeContractQualificationHash !== runtimeContracts.qualificationRecordHash) {
+    throw new TypeError('EMP1_C_METHOD_AUTHORIZATION_RUNTIME_CONTRACT_HASH_MISMATCH');
   }
   if (authorization.cauxBenchmarkHash !== cauxQualification.benchmarkHash) {
     throw new TypeError('EMP1_C_METHOD_AUTHORIZATION_CAUX_HASH_MISMATCH');

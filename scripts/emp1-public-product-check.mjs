@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   EMP1_B_SOURCE_CUSTODY_STATES,
   EMP1_C_BLOCKER_CODES,
+  EMP1_C_PRODUCTION_ROUTE,
   EMP1_LOCAL_CORRELATION_BLOCKERS,
   EMP1_PUBLIC_PRODUCT,
   buildEmp1ProductProjection,
@@ -59,9 +60,11 @@ assert.match(projection.steps[2].blockerDetails[0].message, /21 unresolved field
 assert.match(projection.steps[2].blockerDetails[1].message, /0\/120 retained coefficient rows numeric; 120 unresolved coefficient rows/u);
 assert.equal(projection.steps[2].qualification.gateStatus.signArbitrationReady, false);
 assert.equal(projection.steps[2].qualification.gateStatus.cauxBenchmarkReady, false);
+assert.equal(EMP1_C_PRODUCTION_ROUTE.registered, false);
 assert.equal(projection.qualificationBoundary.emp1CProductionAuthority, 'NOT_AUTHORIZED');
 assert.equal(projection.qualificationBoundary.emp1CTechnicalQualificationReady, false);
 assert.equal(projection.qualificationBoundary.emp1CRunAuthorized, false);
+assert.equal(projection.qualificationBoundary.emp1CProductionRoute.registered, false);
 assert.equal(projection.qualificationBoundary.passIsCodeCompliance, false);
 assert.equal(projection.custody.automaticAToBSynchronization, false);
 assert.equal(projection.custody.governedAToBRefresh, true);
@@ -72,17 +75,23 @@ assert.equal(isEmp1BackingStage('LAFEA.2'), true);
 assert.equal(isEmp1BackingStage('LAFEA.3'), false);
 assert.equal(emp1StepForBackingStage('LAFEA.2').stepId, 'EMP.1.B');
 
-const syntheticReady = buildEmp1ProductProjection(state, {
+// Even fully green technical/method evidence is not allowed to self-register a
+// production route. The public product stays blocked until code/registry custody
+// explicitly registers EMP.1.C.
+const syntheticQualifiedMethod = buildEmp1ProductProjection(state, {
   localCorrelationQualificationEvidence: readyCQualificationEvidence(),
 });
-assert.equal(syntheticReady.state, 'LOCAL_CORRELATION_READY');
-assert.equal(syntheticReady.steps[2].state, 'READY_TO_RUN');
-assert.equal(syntheticReady.steps[2].runAuthorized, true);
-assert.deepEqual(syntheticReady.steps[2].blockers, []);
-assert.equal(syntheticReady.qualificationBoundary.emp1CProductionAuthority, 'QUALIFIED_METHOD_AUTHORITY');
-assert.equal(syntheticReady.qualificationBoundary.emp1CTechnicalQualificationReady, true);
-assert.equal(syntheticReady.qualificationBoundary.emp1CRunAuthorized, true);
-assert.equal(syntheticReady.qualificationBoundary.releaseQualified, false);
+assert.equal(syntheticQualifiedMethod.state, 'BLOCKED_LOCAL_CORRELATION');
+assert.equal(syntheticQualifiedMethod.steps[2].state, 'BLOCKED');
+assert.equal(syntheticQualifiedMethod.steps[2].runAuthorized, false);
+assert.deepEqual(syntheticQualifiedMethod.steps[2].blockers, [
+  EMP1_C_BLOCKER_CODES.EXECUTION_ROUTE_NOT_REGISTERED,
+]);
+assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CProductionAuthority, 'QUALIFIED_METHOD_AUTHORITY');
+assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CTechnicalQualificationReady, true);
+assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CRunAuthorized, false);
+assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CProductionRoute.registered, false);
+assert.equal(syntheticQualifiedMethod.qualificationBoundary.releaseQualified, false);
 
 console.log(JSON.stringify({
   status: 'PASS',
@@ -90,8 +99,10 @@ console.log(JSON.stringify({
   bCustody: projection.custody.bSourceEvidenceState,
   currentCBlockers: projection.steps[2].blockers,
   currentCBlockerMessages: projection.steps[2].blockerDetails.map((item) => item.message),
-  syntheticCState: syntheticReady.steps[2].state,
-  releaseQualified: syntheticReady.qualificationBoundary.releaseQualified,
+  syntheticQualifiedMethodState: syntheticQualifiedMethod.steps[2].state,
+  syntheticQualifiedMethodBlockers: syntheticQualifiedMethod.steps[2].blockers,
+  productionRouteRegistered: EMP1_C_PRODUCTION_ROUTE.registered,
+  releaseQualified: syntheticQualifiedMethod.qualificationBoundary.releaseQualified,
 }, null, 2));
 
 function readyCQualificationEvidence() {

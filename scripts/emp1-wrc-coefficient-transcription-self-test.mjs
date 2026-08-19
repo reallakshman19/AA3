@@ -53,7 +53,9 @@ for (const curve of fakeValuesWithoutCustody.curves) {
     slot.publishedPrecision = 'SYNTHETIC_TEST_ONLY';
     slot.primarySourceVerified = true;
     slot.primarySourceRawPdfSha256 = 'b'.repeat(64);
+    slot.primarySourceLocator = { page: curve.sourceLocator.page, table: curve.sourceLocator.table, column: slot.coefficientName, verified: true };
     slot.reviewStatus = 'QUALIFIED';
+    slot.qualificationState = 'QUALIFIED';
   }
 }
 const fakeAudit = auditWrcCoefficientTranscription(fakeValuesWithoutCustody);
@@ -70,6 +72,22 @@ const wrongHashAudit = auditWrcCoefficientTranscription(wrongHashAfterCustody);
 assert.equal(wrongHashAudit.metrics.qualifiedSlotCount, 0, 'slot SHA must equal the frozen source SHA');
 assert(wrongHashAudit.blockers.some((row) => row.code === 'BLOCK_SOURCE_QUALIFIED_SCALAR_COMPLETENESS'));
 
+const missingPrimaryLocator = structuredClone(template);
+missingPrimaryLocator.primarySource.rawPdfSha256 = 'a'.repeat(64);
+missingPrimaryLocator.primarySource.custodyState = 'PASS_SOURCE_CUSTODY';
+for (const curve of missingPrimaryLocator.curves) {
+  for (const slot of curve.slots) {
+    slot.value = 1;
+    slot.publishedPrecision = 'SYNTHETIC_TEST_ONLY';
+    slot.primarySourceVerified = true;
+    slot.primarySourceRawPdfSha256 = missingPrimaryLocator.primarySource.rawPdfSha256;
+    slot.primarySourceLocator = null;
+    slot.reviewStatus = 'QUALIFIED';
+    slot.qualificationState = 'QUALIFIED';
+  }
+}
+assert.equal(auditWrcCoefficientTranscription(missingPrimaryLocator).metrics.qualifiedSlotCount, 0, 'verified locator is mandatory per scalar');
+
 const syntheticQualified = structuredClone(template);
 syntheticQualified.primarySource.rawPdfSha256 = 'a'.repeat(64);
 syntheticQualified.primarySource.custodyState = 'PASS_SOURCE_CUSTODY';
@@ -79,6 +97,12 @@ for (const curve of syntheticQualified.curves) {
     slot.publishedPrecision = 'SYNTHETIC_TEST_ONLY';
     slot.primarySourceVerified = true;
     slot.primarySourceRawPdfSha256 = syntheticQualified.primarySource.rawPdfSha256;
+    slot.primarySourceLocator = {
+      page: curve.sourceLocator.page,
+      table: curve.sourceLocator.table,
+      column: slot.coefficientName,
+      verified: true,
+    };
     slot.reviewStatus = 'QUALIFIED';
     slot.qualificationState = 'QUALIFIED';
   }
@@ -102,7 +126,8 @@ console.log(JSON.stringify({
     'WRONG_RUNTIME_INDEPENDENT_VARIABLE_REJECTED',
     'NUMERIC_VALUES_WITHOUT_FROZEN_PRIMARY_CUSTODY_REMAIN_BLOCKED',
     'QUALIFIED_SLOT_SHA_MUST_EQUAL_FROZEN_PRIMARY_SHA256',
+    'VERIFIED_PRIMARY_SOURCE_LOCATOR_REQUIRED_PER_SCALAR',
   ],
   positiveSoftwareContractProof: 'SYNTHETIC_1200_SLOT_SOURCE_COMPLETE_PACKAGE_CAN_PASS',
-  authorityNote: 'Synthetic values/hashes exist only inside this self-test. They are not WRC engineering data or benchmark authority.',
+  authorityNote: 'Synthetic values/hashes/locators exist only inside this self-test. They are not WRC engineering data or benchmark authority.',
 }, null, 2));

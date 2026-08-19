@@ -4,6 +4,7 @@ export const EMP1_C_QUALIFICATION_SCHEMA = 'emp1-c-qualification-state/v1';
 
 export const EMP1_C_BLOCKER_CODES = Object.freeze({
   WRC_DATASET_NOT_READY: 'WRC_DATASET_NOT_READY',
+  WRC_DIMENSIONAL_CONTRACT_UNRESOLVED: 'WRC_DIMENSIONAL_CONTRACT_UNRESOLVED',
   WRC_NUMERICAL_COEFFICIENTS_MISSING: 'WRC_NUMERICAL_COEFFICIENTS_MISSING',
   WRC_SIGN_ARBITRATION_OPEN: 'WRC_SIGN_ARBITRATION_OPEN',
   CAUX_PP24_31_NOT_FROZEN: 'CAUX_PP24_31_NOT_FROZEN',
@@ -50,6 +51,19 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
       sourceCustodyState: normalized.wrcDataset.sourceCustodyState,
       sourceQualificationState: normalized.wrcDataset.sourceQualificationState,
       sourceRawPdfSha256Present: nonEmpty(normalized.wrcDataset.sourceRawPdfSha256),
+    },
+  ));
+
+  const dimensionalContractReady = normalized.wrcDataset.dimensionalContractStatus === 'PASS'
+    && normalized.wrcDataset.dimensionalViolationCount === 0
+    && normalized.wrcDataset.dimensionalViolationIds.length === 0;
+  if (!dimensionalContractReady) blockers.push(blocker(
+    EMP1_C_BLOCKER_CODES.WRC_DIMENSIONAL_CONTRACT_UNRESOLVED,
+    `WRC retained coefficient/equation dimensional contract is not qualified (${normalized.wrcDataset.dimensionalViolationCount} contradiction(s): ${normalized.wrcDataset.dimensionalViolationIds.join(', ') || 'UNRESOLVED'}). Source arbitration is required; the runtime must not infer a corrected WRC formula.`,
+    {
+      status: normalized.wrcDataset.dimensionalContractStatus,
+      violationCount: normalized.wrcDataset.dimensionalViolationCount,
+      violationIds: normalized.wrcDataset.dimensionalViolationIds,
     },
   ));
 
@@ -125,7 +139,11 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     },
   ));
 
-  const technicalQualificationReady = datasetReady && coefficientsReady && signReady && cauxReady;
+  const technicalQualificationReady = datasetReady
+    && dimensionalContractReady
+    && coefficientsReady
+    && signReady
+    && cauxReady;
   const methodAuthorized = normalized.methodAuthorization.engineeringUseAuthorized === true
     && nonEmpty(normalized.methodAuthorization.qualificationRecordHash);
   if (technicalQualificationReady && !methodAuthorized) blockers.push(blocker(
@@ -156,6 +174,7 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     blockers,
     gateStatus: {
       wrcDatasetReady: datasetReady,
+      wrcDimensionalContractReady: dimensionalContractReady,
       numericalCoefficientsReady: coefficientsReady,
       signArbitrationReady: signReady,
       cauxBenchmarkReady: cauxReady,
@@ -182,6 +201,8 @@ function normalizeDerivation(value = {}) {
   return {
     mode: text(value.mode, 'CALLER_SUPPLIED_EVIDENCE'),
     manualSummaryPermitted: value.manualSummaryPermitted === true,
+    retainedAuditObservedMatch: value.retainedAuditObservedMatch === true,
+    retainedExtractionPinVerified: value.retainedExtractionPinVerified === true,
     artifactPaths: value.artifactPaths && typeof value.artifactPaths === 'object'
       ? { ...value.artifactPaths }
       : {},
@@ -195,6 +216,11 @@ function normalizeDataset(value = {}) {
     unresolvedJsonPathCount: count(value.unresolvedJsonPathCount),
     openIssueCount: count(value.openIssueCount),
     numericalDataCount: count(value.numericalDataCount),
+    dimensionalContractStatus: text(value.dimensionalContractStatus, 'UNRESOLVED'),
+    dimensionalViolationCount: count(value.dimensionalViolationCount),
+    dimensionalViolationIds: Array.isArray(value.dimensionalViolationIds)
+      ? value.dimensionalViolationIds.map((item) => text(item, 'UNRESOLVED_DIMENSIONAL_VIOLATION'))
+      : ['UNRESOLVED_DIMENSIONAL_VIOLATION'],
     coefficientCurveRows: count(value.coefficientCurveRows),
     coefficientSchema: text(value.coefficientSchema, 'UNRESOLVED'),
     coefficientSchemaQualified: value.coefficientSchemaQualified === true,

@@ -64,6 +64,7 @@ lfeaPipelineShell.getSourceHost().append(linearPipingConsumerRoot);
 // Declared before the source workflow mounts: that controller renders (and so
 // notifies) during init(), which is earlier than either of these can exist.
 let lfeaAnalysisSurface = null;
+let lfeaStepGuidanceReady = false;
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   // The Load-case step renders straight from getPreFlight(), so it has to be
@@ -73,6 +74,7 @@ const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(appli
   onStateChanged: () => {
     lfeaAnalysisSurface?.refreshLoadCaseStep();
     lfeaAnalysisSurface?.refreshSourceStep();
+    refreshLfeaStepGuidance();
   },
 });
 const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipelineShell.getSourceHost(), {
@@ -89,6 +91,7 @@ const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipel
 // its own model-health/representability verdict directly.
 const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
+  onStateChanged: () => refreshLfeaStepGuidance(),
 });
 // The Load-case and Output surfaces load in their own chunk (see
 // lfea-pipeline-analysis-surface.js): the production bundle-chunk ceiling is
@@ -124,6 +127,10 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
     return lfeaAnalysisSurface;
   });
 
+// Every panel the projection reads now exists, so it can run: with nothing
+// loaded, Input is the only reachable step and the stepper says so.
+lfeaStepGuidanceReady = true;
+refreshLfeaStepGuidance();
 const lfeaVerificationDrawer = mountLfeaPipelineVerificationDrawer(lfeaPipelineShell.getVerificationDrawerHost(), {
   documentRef: applicationRoot.ownerDocument,
 });
@@ -199,6 +206,94 @@ lfeaPipelineShell.setAssemblyHandlers({
     }
   },
 });
+
+/**
+ * Project what the source panels actually know onto the stepper.
+ *
+ * The six steps carry a real order, but nothing was telling the stepper
+ * where a session had got to: every step rendered identically whether it was
+ * finished, waiting, or unreachable, and a disabled Load-case step gave no
+ * hint whether the model still needed checking or whether this source type
+ * cannot reach that step at all. Each status below is read from a panel's
+ * own snapshot -- no step is marked done here on the strength of a step
+ * before it having finished.
+ *
+ * Only INPUT, ERROR_CHECK and LOAD_CASE are projected: RUN, OUTPUT and
+ * EXPORT are marked complete by the code that actually performs them
+ * (runLfeaPipelineAnalysis, onAssembleAndSendToRun), and re-deriving them
+ * from here would overwrite what those paths recorded.
+ */
+function refreshLfeaStepGuidance() {
+  // The source controllers notify during their own init(), which runs while
+  // the `const` bindings holding them are still being assigned -- reading one
+  // back then throws on the temporal dead zone. (Same init-order hazard the
+  // `lfeaAnalysisSurface?.` guards above exist for, and it takes down the
+  // whole module: an uncaught error here left no panels mounted at all.) The
+  // first projection is made explicitly once every panel exists.
+  if (!lfeaStepGuidanceReady) return;
+  const inputXml = linearPipingInputXmlSource.getSnapshot();
+  const accdb = lfeaAccdbInputPanel.getSnapshot();
+  const inputXmlLoaded = inputXml.fileName !== null;
+  const accdbLoaded = accdb.fileName !== null && accdb.elementCount !== null;
+
+  lfeaPipelineShell.setStepStatus('INPUT', {
+    available: true,
+    complete: inputXmlLoaded || accdbLoaded,
+    detail: inputXmlLoaded || accdbLoaded
+      ? `Loaded ${inputXml.fileName ?? accdb.fileName}.`
+      : 'Import an InputXML, StagedJSON or CAESAR II ACCDB model.',
+  });
+
+  if (inputXmlLoaded) {
+    const cleared = inputXml.preFlightStatus === 'PASS' || inputXml.preFlightSolveAuthorized;
+    const blocked = inputXml.preFlightStatus === 'BLOCK';
+    lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+      available: true,
+      complete: cleared,
+      detail: cleared
+        ? 'Pre-flight cleared.'
+        : blocked
+          ? 'Pre-flight BLOCK — resolve the blocking findings below.'
+          : 'Review the disclosed limitations and accept them to proceed.',
+    });
+    lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+      available: cleared,
+      detail: cleared ? 'Choose the cases to analyze, then Analyze.' : null,
+      blockedReason: cleared ? null : 'The pre-flight is not authorized yet — clear Error check first.',
+    });
+    return;
+  }
+
+  if (accdbLoaded) {
+    // The ACCDB panel reports model health directly and does not seal a
+    // pre-FEA authorization (its own "Execution custody: NOT CONNECTED"
+    // disclosure), so the steps that consume a pre-flight genuinely cannot
+    // be reached from an ACCDB import yet. Saying that is the point: before
+    // this, Load case simply sat there empty with no explanation.
+    const blocking = accdb.scopedBlockingFindingCount ?? 0;
+    lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+      available: true,
+      complete: blocking === 0,
+      detail: blocking === 0
+        ? 'No blocking findings for the selected profile.'
+        : `${blocking} blocking finding(s) for the selected profile — see the grouped findings.`,
+    });
+    lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+      available: false,
+      blockedReason: 'An ACCDB import reports model health only; it does not yet seal the pre-FEA authorization the Load-case step runs from. Convert the model to InputXML to analyze it.',
+    });
+    return;
+  }
+
+  lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+    available: false,
+    blockedReason: 'Load a model on the Input step first.',
+  });
+  lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+    available: false,
+    blockedReason: 'Load a model on the Input step first.',
+  });
+}
 
 /**
  * Run the analysis the Load-case step asked for.

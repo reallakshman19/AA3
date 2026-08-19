@@ -28,6 +28,56 @@ const DISPOSITION_SEVERITY = Object.freeze({ BLOCK: 'error', CONDITIONAL: 'warni
 const SEVERITY_RANK = Object.freeze({ info: 0, warning: 1, error: 2 });
 
 /**
+ * Findings sorted into the questions an engineer actually asks, in the order
+ * they have to be answered: could the file be read, does the model hold
+ * together geometrically, can this solver represent what it contains, and
+ * what is deferred to a later stage. A single flat list forced them to sort
+ * a hundred rows into these buckets by eye, every time.
+ *
+ * Each section states what its findings mean, because the categories are the
+ * pipeline's own vocabulary, not something a reader can infer from the name.
+ */
+const FINDING_SECTIONS = Object.freeze([
+  Object.freeze({
+    sectionId: 'SOURCE',
+    title: 'Source integrity',
+    description: 'Whether the file itself could be read and converted. These block everything downstream.',
+    categories: Object.freeze(['SOURCE']),
+  }),
+  Object.freeze({
+    sectionId: 'TOPOLOGY',
+    title: 'Model topology',
+    description: 'Whether the geometry closes and connects: element routes, node coincidence, overlapping runs.',
+    categories: Object.freeze(['TOPOLOGY_GRAPH', 'TOPOLOGY_PROXIMITY']),
+  }),
+  Object.freeze({
+    sectionId: 'REPRESENTABILITY',
+    title: 'Solver representability',
+    description: 'Features the model declares and this solver represents exactly, approximately, or not at all. Under the disclosed approximation profile these are limitations to accept, not defects to fix.',
+    categories: Object.freeze(['REPRESENTABILITY', 'RESTRAINT']),
+  }),
+  Object.freeze({
+    sectionId: 'CODE_INPUT',
+    title: 'Code-stress inputs',
+    description: 'Inputs a later, separately qualified code evaluation would need. They never gate a linear solve here.',
+    categories: Object.freeze(['CODE_INPUT']),
+  }),
+  Object.freeze({
+    sectionId: 'PREPARATION',
+    title: 'Deferred preparation',
+    description: 'Stages this diagnostic slice does not perform. Expected on every model; they are disclosures, not faults.',
+    categories: Object.freeze(['PREPARATION_BOUNDARY', 'LOAD']),
+  }),
+]);
+
+const OTHER_SECTION = Object.freeze({
+  sectionId: 'OTHER',
+  title: 'Other findings',
+  description: 'Findings whose category this panel does not yet sort.',
+  categories: Object.freeze([]),
+});
+
+/**
  * Read a model-health report through one requested analysis profile.
  *
  * diagnoseInputXmlLinearModelHealth is deliberately profile-agnostic: it
@@ -48,10 +98,12 @@ export function buildAccdbModelHealthViewModel(modelHealth, requestedProfileId) 
   if (!modelHealth) return null;
   const family = requestedProfileFamily(requestedProfileId ?? null);
   const findings = modelHealth.findings.map((finding) => scopeFinding(finding, family));
+  const findingGroups = groupFindings(findings);
   return Object.freeze({
     requestedProfileId: requestedProfileId ?? null,
     capabilities: buildCapabilityRows(modelHealth, findings, family),
-    findingGroups: groupFindings(findings),
+    findingGroups,
+    findingSections: sectionFindingGroups(findingGroups),
     findingCount: findings.length,
     blockingCount: findings.filter((row) => row.severity === 'error').length,
   });
@@ -142,6 +194,42 @@ function groupFindings(findings) {
       occurrences: Object.freeze(group.occurrences),
     }))
     .sort(compareGroup));
+}
+
+/**
+ * Sort the code groups into the sections above. Sections with nothing in
+ * them are dropped rather than rendered empty, and a group whose category is
+ * unknown to this list still appears -- under "Other" -- instead of silently
+ * vanishing from a panel that claims to show every finding.
+ */
+function sectionFindingGroups(findingGroups) {
+  const sectionById = new Map([...FINDING_SECTIONS, OTHER_SECTION].map((section) => [section.sectionId, []]));
+  const sectionIdByCategory = new Map();
+  for (const section of FINDING_SECTIONS) {
+    for (const category of section.categories) sectionIdByCategory.set(category, section.sectionId);
+  }
+  for (const group of findingGroups) {
+    const sectionId = sectionIdByCategory.get(group.category) ?? OTHER_SECTION.sectionId;
+    sectionById.get(sectionId).push(group);
+  }
+  return Object.freeze([...FINDING_SECTIONS, OTHER_SECTION]
+    .map((section) => {
+      const groups = sectionById.get(section.sectionId);
+      return Object.freeze({
+        sectionId: section.sectionId,
+        title: section.title,
+        description: section.description,
+        groups: Object.freeze(groups),
+        occurrenceCount: groups.reduce((total, group) => total + group.count, 0),
+        blockingCount: groups.filter((group) => group.severity === 'error')
+          .reduce((total, group) => total + group.count, 0),
+        severity: groups.reduce(
+          (worst, group) => (SEVERITY_RANK[group.severity] > SEVERITY_RANK[worst] ? group.severity : worst),
+          'info',
+        ),
+      });
+    })
+    .filter((section) => section.groups.length > 0));
 }
 
 function entityLabel(occurrences) {

@@ -90,6 +90,34 @@ for (const [index, group] of approximateView.findingGroups.slice(1).entries()) {
   assert.ok(rank[previous.severity] >= rank[group.severity], 'Groups must be ordered worst-severity first.');
 }
 
+// --- 2b. Segregated finding sections ------------------------------------
+const sectioned = approximateView.findingSections;
+assert.ok(sectioned.length > 0, 'Findings must be sorted into sections.');
+assert.equal(
+  sectioned.reduce((total, section) => total + section.occurrenceCount, 0),
+  approximateView.findingCount,
+  'Every occurrence must land in exactly one section.',
+);
+assert.equal(
+  sectioned.reduce((total, section) => total + section.groups.length, 0),
+  approximateView.findingGroups.length,
+  'Every group must land in exactly one section.',
+);
+assert.ok(sectioned.every((section) => section.groups.length > 0), 'Empty sections must not be rendered.');
+assert.ok(
+  sectioned.some((section) => section.sectionId === 'SOURCE'),
+  'The fixture has source errors, so a source-integrity section must exist.',
+);
+assert.ok(
+  sectioned.every((section) => typeof section.description === 'string' && section.description.length > 0),
+  'Each section must say what its findings mean.',
+);
+assert.equal(
+  sectioned.find((section) => section.sectionId === 'OTHER'),
+  undefined,
+  'Every category the fixture produces should be sorted, not left to the catch-all.',
+);
+
 // --- 3. Element property rows ------------------------------------------
 const propertyRows = buildAccdbElementPropertyRows(bundle);
 assert.equal(propertyRows.length, bundle.elementRecords.length);
@@ -247,9 +275,12 @@ assert.ok(findByRole(controller.elements.summaryRoot, 'accdb-override-approver')
 assert.ok(findByRole(controller.elements.summaryRoot, 'accdb-override-reason'), 'Override custody requires a reason field.');
 assert.ok(findByRole(controller.elements.summaryRoot, 'accdb-override-scope-disclosure'), 'The override scope must be disclosed.');
 
-const groupList = findByRole(controller.elements.summaryRoot, 'lfea-pipeline-accdb-finding-groups');
-assert.ok(groupList, 'Findings must render as groups.');
-assert.equal(groupList.children.length, approximateView.findingGroups.length,
+const renderedSections = collectByRole(controller.elements.summaryRoot, 'lfea-pipeline-accdb-finding-section');
+assert.equal(renderedSections.length, approximateView.findingSections.length,
+  'One rendered section per non-empty finding section.');
+const renderedGroupRows = collectByRole(controller.elements.summaryRoot, 'lfea-pipeline-accdb-finding-groups')
+  .reduce((total, list) => total + list.children.length, 0);
+assert.equal(renderedGroupRows, approximateView.findingGroups.length,
   'One rendered row per finding group, not per occurrence.');
 
 controller.clear();

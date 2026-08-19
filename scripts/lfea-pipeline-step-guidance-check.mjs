@@ -1,0 +1,86 @@
+#!/usr/bin/env node
+
+/**
+ * Real-code check for the LFEA pipeline stepper's progress guidance.
+ *
+ * Regression-guards the defect it fixes: the six steps rendered identically
+ * whether they were finished, waiting, or unreachable, so a session gave no
+ * indication of where it had got to, and a disabled Load-case step gave no
+ * hint whether the model still needed checking or whether the loaded source
+ * type cannot reach that step at all.
+ */
+import assert from 'node:assert/strict';
+import {
+  createLfeaPipelineSession,
+  deriveLfeaPipelineStepGuidance,
+} from '../src/workspace/lfea-pipeline-session.js';
+import { LFEA_PIPELINE_STEPS } from '../src/workspace/lfea-pipeline-step-registry.js';
+
+const session = createLfeaPipelineSession(LFEA_PIPELINE_STEPS);
+
+// Nothing loaded: the first step is the one to do, and it is the current one.
+let state = session.getState();
+assert.equal(state.guidance.stepStatusById.INPUT, 'CURRENT');
+assert.equal(state.guidance.nextStepId, 'INPUT');
+assert.equal(state.guidance.completedCount, 0);
+assert.equal(state.guidance.stepCount, LFEA_PIPELINE_STEPS.length);
+
+// A loaded model that still needs checking: Input reads done, Error check is
+// next, and the next-action line carries the step's own detail rather than a
+// bare label.
+session.setStepStatus('INPUT', { complete: true, detail: 'Loaded BM4_L.ACCDB.' });
+session.setStepStatus('ERROR_CHECK', { available: true, detail: 'Review the disclosed limitations.' });
+session.setStepStatus('LOAD_CASE', { available: false, blockedReason: 'Clear Error check first.' });
+state = session.getState();
+assert.equal(state.guidance.stepStatusById.INPUT, 'COMPLETE');
+assert.equal(state.guidance.nextStepId, 'ERROR_CHECK');
+assert.equal(state.guidance.completedCount, 1);
+assert.match(state.guidance.nextActionText, /^Next: Error check — Review the disclosed limitations\.$/u);
+assert.equal(state.guidance.stepStatusById.LOAD_CASE, 'BLOCKED');
+
+// A step that cannot be reached at all explains itself instead of being a
+// dead button: with everything reachable done, the guidance names the
+// blocker and its reason rather than claiming completion.
+for (const stepId of ['ERROR_CHECK', 'RUN', 'OUTPUT', 'EXPORT']) {
+  session.setStepStatus(stepId, { available: true, complete: true });
+}
+session.setStepStatus('LOAD_CASE', {
+  available: false,
+  blockedReason: 'An ACCDB import does not seal a pre-FEA authorization.',
+});
+state = session.getState();
+assert.equal(state.guidance.nextStepId, null);
+assert.match(state.guidance.nextActionText, /^Blocked at Load case: An ACCDB import/u);
+
+// Everything done and nothing blocked says so, and claims no further step.
+session.setStepStatus('LOAD_CASE', { available: true, complete: true, blockedReason: null });
+state = session.getState();
+assert.equal(state.guidance.nextStepId, null);
+assert.equal(state.guidance.nextActionText, 'All available steps are complete.');
+assert.equal(state.guidance.completedCount, LFEA_PIPELINE_STEPS.length);
+
+// The active step is CURRENT only while it is unfinished -- a completed step
+// the engineer is looking at still reads as done.
+const derived = deriveLfeaPipelineStepGuidance(
+  LFEA_PIPELINE_STEPS,
+  Object.fromEntries(LFEA_PIPELINE_STEPS.map((step) => [step.stepId, {
+    available: true, complete: step.stepId === 'INPUT', detail: null, blockedReason: null,
+  }])),
+  'INPUT',
+);
+assert.equal(derived.stepStatusById.INPUT, 'COMPLETE');
+assert.equal(derived.nextStepId, 'ERROR_CHECK');
+
+// A later step being reachable never marks an earlier one done: completion is
+// only ever what a controller reported.
+const skipped = deriveLfeaPipelineStepGuidance(
+  LFEA_PIPELINE_STEPS,
+  Object.fromEntries(LFEA_PIPELINE_STEPS.map((step) => [step.stepId, {
+    available: true, complete: step.stepId === 'RUN', detail: null, blockedReason: null,
+  }])),
+  'RUN',
+);
+assert.equal(skipped.stepStatusById.INPUT, 'READY');
+assert.equal(skipped.nextStepId, 'INPUT');
+
+console.log(JSON.stringify({ check: 'lfea-pipeline-step-guidance', status: 'PASS', steps: LFEA_PIPELINE_STEPS.length }));

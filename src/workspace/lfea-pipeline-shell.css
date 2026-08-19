@@ -189,8 +189,31 @@
   color: var(--workspace-panel-strong);
 }
 
-.lfea-pipeline-shell__step--complete .lfea-pipeline-shell__step-index::after {
-  content: '\2713';
+/* The tick replaces the step number in the view (render()); a ::after glyph
+   here would print a second one next to it. */
+.lfea-pipeline-shell__step--complete {
+  color: var(--workspace-text);
+}
+
+.lfea-pipeline-shell__step--complete .lfea-pipeline-shell__step-index {
+  border-color: currentColor;
+}
+
+/* The one step the engineer is meant to act on next. */
+.lfea-pipeline-shell__step--next:not(:disabled) {
+  border-color: var(--workspace-accent);
+  color: var(--workspace-text);
+  box-shadow: 0 0 0 1px var(--workspace-accent) inset;
+}
+
+.lfea-pipeline-shell__guidance {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--workspace-border);
+  background: var(--workspace-panel);
+  color: var(--workspace-muted);
+  font-size: 12px;
 }
 
 .lfea-pipeline-shell__content {

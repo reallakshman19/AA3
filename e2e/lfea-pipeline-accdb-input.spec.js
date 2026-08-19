@@ -15,7 +15,11 @@ test('ACCDB panel mounts with its synthetic-identity disclosure and a real impor
 
   const accdbPanel = page.locator('[data-role="lfea-pipeline-accdb-input-panel"]');
   await expect(accdbPanel).toBeVisible();
-  await expect(accdbPanel.getByText('ACCDB', { exact: false })).toBeVisible();
+  // The panel's own title, not "any text mentioning ACCDB" -- five separate
+  // elements legitimately say ACCDB (title, import button, status line,
+  // identity disclosure, empty-state), which made the loose matcher a strict
+  // mode violation rather than a check of anything.
+  await expect(accdbPanel.locator('.accordion-section-title')).toContainText('ACCDB');
 
   const disclosure = page.locator('[data-role="accdb-identity-disclosure"]');
   await expect(disclosure).toBeVisible();

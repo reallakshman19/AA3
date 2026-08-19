@@ -137,6 +137,7 @@ export class LfeaPipelineAccdbInputPanelController {
       this.busy = false;
       if (this.elements) this.elements.fileInput.value = '';
       this.render();
+      this.notifyStateChanged();
     }
   }
 
@@ -163,6 +164,7 @@ export class LfeaPipelineAccdbInputPanelController {
       this.healthView = buildAccdbModelHealthViewModel(this.modelHealth, this.requestedProfileId);
     }
     this.render();
+    this.notifyStateChanged();
   }
 
   setOverrideDraft(accdbElementId, field, rawText) {
@@ -209,6 +211,7 @@ export class LfeaPipelineAccdbInputPanelController {
       this.message = 'Overrides were not applied; the imported values are unchanged.';
     }
     this.render();
+    this.notifyStateChanged();
   }
 
   /** Withdraw every override and return to the values exactly as imported. */
@@ -221,6 +224,7 @@ export class LfeaPipelineAccdbInputPanelController {
     this.extract(this.tables);
     this.message = `Overrides withdrawn; ${this.fileName} is back to its imported values.`;
     this.render();
+    this.notifyStateChanged();
   }
 
   clear() {
@@ -241,6 +245,7 @@ export class LfeaPipelineAccdbInputPanelController {
     this.message = 'Import a CAESAR II ACCDB source for geometry/model-health extraction.';
     if (this.elements) this.elements.fileInput.value = '';
     this.render();
+    this.notifyStateChanged();
   }
 
   getSnapshot() {
@@ -268,6 +273,18 @@ export class LfeaPipelineAccdbInputPanelController {
     this.elements?.section.remove();
     this.elements = null;
     this.initialized = false;
+  }
+
+  /**
+   * Announce a real state change to the host shell.
+   *
+   * Deliberately not called from render(): init() renders once while the
+   * caller's own `const panel = mount(...)` binding is still being assigned,
+   * so a listener that reads the panel back would hit it in the temporal
+   * dead zone. Every genuine state transition notifies below instead.
+   */
+  notifyStateChanged() {
+    this.options.onStateChanged?.(this.getSnapshot());
   }
 
   render() {
@@ -460,9 +477,35 @@ function renderFindingGroups(doc, root, controller) {
     return;
   }
 
+  // Sorted into the questions they answer -- can the file be read, does the
+  // model hold together, can the solver represent it, what is deferred --
+  // rather than one flat list the reader has to triage by eye.
+  for (const section of view.findingSections) {
+    const sectionRoot = doc.createElement('section');
+    sectionRoot.dataset.role = 'lfea-pipeline-accdb-finding-section';
+    sectionRoot.dataset.sectionId = section.sectionId;
+    sectionRoot.dataset.severity = section.severity;
+
+    const heading = doc.createElement('strong');
+    heading.textContent = section.blockingCount > 0
+      ? `${section.title} — ${section.occurrenceCount} occurrence(s), ${section.blockingCount} blocking`
+      : `${section.title} — ${section.occurrenceCount} occurrence(s)`;
+    sectionRoot.append(heading);
+
+    const description = doc.createElement('p');
+    description.dataset.role = 'lfea-pipeline-accdb-finding-section-description';
+    description.textContent = section.description;
+    sectionRoot.append(description);
+
+    sectionRoot.append(findingGroupList(doc, section.groups));
+    root.append(sectionRoot);
+  }
+}
+
+function findingGroupList(doc, groups) {
   const list = doc.createElement('ul');
   list.dataset.role = 'lfea-pipeline-accdb-finding-groups';
-  for (const group of view.findingGroups) {
+  for (const group of groups) {
     const item = doc.createElement('li');
     item.dataset.severity = group.severity;
     item.dataset.code = group.code;
@@ -494,7 +537,7 @@ function renderFindingGroups(doc, root, controller) {
     item.append(details);
     list.append(item);
   }
-  root.append(list);
+  return list;
 }
 
 /**

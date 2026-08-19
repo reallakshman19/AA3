@@ -105,7 +105,12 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
       loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
       resultsHost: lfeaPipelineShell.getResultsHost(),
       getPreFlight: () => activeLfeaPreFlight(),
-      onApplyCaseSelection: (caseIds) => linearPipingInputXmlSource.setRequestedCaseIds(caseIds),
+      // Routed to whichever source produced the pre-flight in play: applying a
+      // selection re-prepares that source, and sending it to the other one
+      // would leave the analysis running the cases the engineer did not pick.
+      onApplyCaseSelection: (caseIds) => (linearPipingInputXmlSource.getPreFlight()
+        ? linearPipingInputXmlSource.setRequestedCaseIds(caseIds)
+        : lfeaAccdbInputPanel.setRequestedCaseIds(caseIds)),
       onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
       onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
       sourceHost: lfeaPipelineShell.getSourceHost(),

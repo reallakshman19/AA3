@@ -1,5 +1,11 @@
 import { readAccdbNamedTables } from '../core/fea-benchmarks/caesar-accdb-reader-core.js';
 import { applyAccdbFieldOverrides } from '../core/linear-piping-analysis-consumer/accdb-field-overrides.js';
+import { authorizeLinearPipingInputXmlPreFlight } from './linear-piping-inputxml-prefea.js';
+import { lfeaProximityOptions } from './lfea-geometry-allowance.js';
+import {
+  plainLanguageForCapability,
+  plainLanguageForCapabilityStatus,
+} from './lfea-finding-plain-language.js';
 import {
   createLinearPipingAccdbIntake,
   prepareLinearPipingAccdbPreFlight,
@@ -86,6 +92,9 @@ export class LfeaPipelineAccdbInputPanelController {
     this.engineeringSanity = null;
     this.preFlight = null;
     this.preFlightError = '';
+    this.reviewerIdentity = '';
+    this.reviewReason = '';
+    this.requestedCaseIds = null;
     this.requestedProfileId = requireProfileId(options.requestedProfileId ?? LFEA_PIPELINE_ACCDB_DEFAULT_PROFILE_ID);
     this.overrideSet = null;
     this.overrideDisclosures = Object.freeze([]);
@@ -158,7 +167,9 @@ export class LfeaPipelineAccdbInputPanelController {
       source: `accdb-panel-${this.fileName}`,
       fileName: this.fileName,
     });
-    this.modelHealth = diagnoseInputXmlLinearModelHealth(this.sourceBundle, {});
+    this.modelHealth = diagnoseInputXmlLinearModelHealth(this.sourceBundle, {
+      proximity: lfeaProximityOptions(),
+    });
     this.healthView = buildAccdbModelHealthViewModel(this.modelHealth, this.requestedProfileId);
     this.propertyRows = buildAccdbElementPropertyRows(this.sourceBundle);
     this.engineeringSanity = diagnoseInputXmlLinearPreFeaEngineeringSanity(this.sourceBundle);
@@ -185,6 +196,53 @@ export class LfeaPipelineAccdbInputPanelController {
     } catch (error) {
       this.preFlightError = errorMessage(error);
     }
+  }
+
+  /**
+   * Re-prepare for a different set of load cases.
+   *
+   * The requested case set is sealed into the pre-flight's identity, so it
+   * cannot be changed after the fact -- the pre-flight is rebuilt for the new
+   * selection. Any acceptance sealed for the previous selection does not carry
+   * over, which is the point: it was given for a different request.
+   */
+  setRequestedCaseIds(caseIds) {
+    if (!Array.isArray(caseIds) || caseIds.length === 0) {
+      throw new TypeError('Select at least one load case.');
+    }
+    this.requestedCaseIds = [...caseIds];
+    if (this.effectiveTables) this.prepare(this.effectiveTables);
+    this.message = `Prepared for ${caseIds.length} case(s). Any previous acceptance no longer applies to this selection.`;
+    this.render();
+    this.notifyStateChanged();
+    return this.getSnapshot();
+  }
+
+  /**
+   * Accept the disclosed limitations so the analysis can proceed.
+   *
+   * A conditional pre-flight is not a failure -- it is the tool stating what
+   * it simplified and asking an engineer to take responsibility for it. That
+   * acceptance is theirs to give, with their name and their reason on it, so
+   * this never happens automatically. Without this control an ACCDB model
+   * could reach a clean pre-flight and still be stuck, because the Load-case
+   * step runs from an authorized one.
+   */
+  acceptLimitations() {
+    if (!this.preFlight) return;
+    this.error = '';
+    try {
+      this.preFlight = authorizeLinearPipingInputXmlPreFlight(this.preFlight, {
+        approverIdentity: this.reviewerIdentity,
+        reason: this.reviewReason,
+      });
+      this.message = `Limitations accepted by ${this.preFlight.approverIdentity}; the analysis can proceed.`;
+    } catch (error) {
+      this.error = errorMessage(error);
+      this.message = 'The limitations were not accepted; nothing changed.';
+    }
+    this.render();
+    this.notifyStateChanged();
   }
 
   /**
@@ -292,6 +350,9 @@ export class LfeaPipelineAccdbInputPanelController {
     this.overrideDrafts.clear();
     this.overrideApprover = '';
     this.overrideReason = '';
+    this.reviewerIdentity = '';
+    this.reviewReason = '';
+    this.requestedCaseIds = null;
     this.showProperties = false;
     this.error = '';
     this.message = 'Import a CAESAR II ACCDB source for geometry/model-health extraction.';
@@ -317,6 +378,7 @@ export class LfeaPipelineAccdbInputPanelController {
       preFlightSolveAuthorized: this.preFlight?.solveAuthorized ?? false,
       availableCaseIds: this.preFlight?.sourceSummary.availableCaseIds ?? Object.freeze([]),
       preFlightError: this.preFlightError || null,
+      preFlightApprover: this.preFlight?.approverIdentity ?? null,
       overrideCount: this.overrideSet?.overrides.length ?? 0,
       overrideApprover: this.overrideSet?.approver ?? null,
       engineeringSanityFindingCount: this.engineeringSanity?.summary.findingCount ?? null,
@@ -472,6 +534,7 @@ function renderAccdbSourceSummary(doc, root, controller) {
 
   if (controller.healthView) {
     renderCapabilities(doc, root, controller);
+    renderPreFlight(doc, root, controller);
     renderFindingGroups(doc, root, controller);
   }
 
@@ -496,7 +559,7 @@ function renderCapabilities(doc, root, controller) {
 
   const note = doc.createElement('p');
   note.dataset.role = 'lfea-pipeline-accdb-profile-note';
-  note.textContent = 'Statuses are scoped to the selected profile. NOT_APPLICABLE marks a capability belonging to the other profile family — a path this request never takes, not a failure. A capability marked "does not gate a solve" is disclosed but never blocks one.';
+  note.textContent = 'These are what the model can and cannot do as it stands, for the profile selected above. "Not used by the selected profile" means the other profile would need it — it is not a fault in your model. Anything marked "does not stop an analysis" is recorded for you to see, and never blocks a run.';
   root.append(note);
 
   const capTable = doc.createElement('table');
@@ -508,15 +571,68 @@ function renderCapabilities(doc, root, controller) {
     tr.dataset.gatesSolve = String(capability.gatesSolve);
     const th = doc.createElement('th');
     th.scope = 'row';
-    th.textContent = capability.capabilityId;
+    th.textContent = plainLanguageForCapability(capability.capabilityId);
+    th.title = capability.capabilityId;
     const td = doc.createElement('td');
+    const statusWords = plainLanguageForCapabilityStatus(capability.status);
     td.textContent = capability.gatesSolve
-      ? capability.status
-      : `${capability.status} (does not gate a solve)`;
+      ? statusWords
+      : `${statusWords} — does not stop an analysis`;
     tr.append(th, td);
     capTable.append(tr);
   }
   root.append(capTable);
+}
+
+/**
+ * Where this model stands, and the one control that moves it forward.
+ *
+ * A conditional pre-flight needs an engineer to accept the disclosed
+ * simplifications by name before anything downstream will run, so the panel
+ * asks for that here rather than leaving the Load-case step disabled with no
+ * visible way to enable it.
+ */
+function renderPreFlight(doc, root, controller) {
+  const status = doc.createElement('p');
+  status.dataset.role = 'lfea-pipeline-accdb-preflight-status';
+  status.dataset.status = controller.preFlight?.status ?? (controller.preFlightError ? 'FAILED' : 'NOT_PREPARED');
+  if (controller.preFlightError) {
+    status.textContent = `This model cannot be prepared for analysis: ${controller.preFlightError}`;
+    root.append(status);
+    return;
+  }
+  if (!controller.preFlight) {
+    status.textContent = 'This model has not been prepared for analysis.';
+    root.append(status);
+    return;
+  }
+  if (controller.preFlight.solveAuthorized) {
+    status.textContent = controller.preFlight.approverIdentity
+      ? `Ready to analyse. Limitations accepted by ${controller.preFlight.approverIdentity}.`
+      : 'Ready to analyse. Nothing needed accepting.';
+    root.append(status);
+    return;
+  }
+  if (controller.preFlight.status === 'BLOCK') {
+    status.textContent = 'This model cannot be analysed yet. Fix the items marked "Stops the analysis" below, then load it again.';
+    root.append(status);
+    return;
+  }
+  status.textContent = 'This model can be analysed once you accept the notes below. '
+    + 'They are simplifications this tool makes, not faults in your model — your name and reason are recorded with the acceptance.';
+  root.append(status);
+
+  const custody = doc.createElement('div');
+  custody.dataset.role = 'lfea-pipeline-accdb-acceptance';
+  const reviewer = labelledTextInput(doc, 'Your name ', 'lfea-pipeline-accdb-reviewer', controller.reviewerIdentity);
+  reviewer.input.addEventListener('input', () => { controller.reviewerIdentity = reviewer.input.value; });
+  const reason = labelledTextInput(doc, 'Reason ', 'lfea-pipeline-accdb-review-reason', controller.reviewReason);
+  reason.input.addEventListener('input', () => { controller.reviewReason = reason.input.value; });
+  const accept = button(doc, 'Accept these notes and continue');
+  accept.dataset.action = 'accept-lfea-pipeline-accdb-limitations';
+  accept.addEventListener('click', () => controller.acceptLimitations());
+  custody.append(reviewer.label, reason.label, accept);
+  root.append(custody);
 }
 
 function renderFindingGroups(doc, root, controller) {
@@ -569,13 +685,15 @@ function findingGroupList(doc, groups) {
 
     const details = doc.createElement('details');
     const summary = doc.createElement('summary');
-    const scopedNote = group.scopedByProfile ? ' · relaxed by the selected profile' : '';
-    summary.textContent = `${group.severity.toUpperCase()} · ${group.code} · ${group.count} occurrence(s)${scopedNote}`;
+    const scopedNote = group.scopedByProfile ? ' · accepted for the selected profile' : '';
+    // Plain English first, because that is what tells the reader whether this
+    // row matters. The code follows it for anyone who needs to refer to it.
+    summary.textContent = `${severityWord(group.severity)} · ${group.plainMessage} (${group.count}× · ${group.code})${scopedNote}`;
     details.append(summary);
 
-    // One representative message plus the affected elements: the per-element
-    // repeats say the same sentence, so the sentence is printed once and the
-    // identities are listed rather than re-printed 96 times.
+    // The pipeline's own precise wording, plus the affected elements: the
+    // per-element repeats say the same sentence, so it is printed once and
+    // the identities are listed rather than re-printed 96 times.
     const message = doc.createElement('p');
     message.textContent = group.occurrences[0].message;
     details.append(message);
@@ -723,6 +841,17 @@ function displayValue(value) {
   if (value === null || value === undefined) return '';
   if (typeof value === 'number') return String(Number(value.toPrecision(9)));
   return String(value);
+}
+
+/**
+ * Severity as a word that says what it means for the engineer, rather than a
+ * log level. "ERROR" reads as something broken; most of these are the tool
+ * declaring its own limits, which is a different thing.
+ */
+function severityWord(severity) {
+  if (severity === 'error') return 'Stops the analysis';
+  if (severity === 'warning') return 'Review and accept';
+  return 'For information';
 }
 
 function topStatus(modelHealth) {

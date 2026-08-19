@@ -51,10 +51,13 @@ test.describe('LFEA ACCDB real-model import', () => {
     if (expectedNodes !== '') await expect(status).toContainText(`${expectedNodes} node(s)`);
 
     // Source acceptance is the capability the density-label defect blocked;
-    // it must now pass on a real file.
+    // it must now pass on a real file. It reads in plain English, with the
+    // capability id kept on the row's title for anyone who needs to cite it.
     const sourceRow = panel.locator('[data-role="lfea-pipeline-accdb-capabilities"] tr').first();
-    await expect(sourceRow).toContainText('SOURCE_ACCEPTANCE');
     await expect(sourceRow).toHaveAttribute('data-status', 'PASS');
+    await expect(sourceRow).toContainText('Read the file');
+    await expect(sourceRow).toContainText('Ready');
+    await expect(sourceRow.locator('th')).toHaveAttribute('title', 'SOURCE_ACCEPTANCE');
 
     // The verdict is read through the selected profile, and findings arrive
     // grouped into sections rather than one flat per-element list.
@@ -94,6 +97,59 @@ test.describe('LFEA ACCDB real-model import', () => {
     const loadCaseStep = page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]');
     await expect(loadCaseStep).toHaveAttribute('data-step-status', 'BLOCKED');
     await expect(loadCaseStep).toHaveAttribute('title', /pre-flight/iu);
+
+    expect(pageErrors).toEqual([]);
+  });
+
+  test('runs the imported ACCDB model through to results', async ({ page }) => {
+    const pageErrors = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+
+    await page.goto('/');
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('element(s)', { timeout: 90000 });
+
+    // Findings read as sentences, not as codes: the code is kept beside the
+    // sentence, not in place of it.
+    const firstFinding = page.locator('[data-role="lfea-pipeline-accdb-finding-groups"] > li summary').first();
+    await expect(firstFinding).toContainText(/[a-z]{4,} [a-z]{3,}/u);
+    await expect(firstFinding).toContainText('×');
+
+    // A conditional model needs an engineer's acceptance before it can run,
+    // and the panel offers that rather than leaving Load case disabled with
+    // no visible way forward.
+    const preFlightStatus = page.locator('[data-role="lfea-pipeline-accdb-preflight-status"]');
+    await expect(preFlightStatus).toBeVisible();
+    await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]'))
+      .toHaveAttribute('data-step-status', 'BLOCKED');
+    await page.locator('[data-role="lfea-pipeline-accdb-reviewer"]').fill('A. Engineer');
+    await page.locator('[data-role="lfea-pipeline-accdb-review-reason"]').fill('Reviewed and accepted.');
+    await page.locator('[data-action="accept-lfea-pipeline-accdb-limitations"]').click();
+
+    await expect(page.locator('[data-role="lfea-pipeline-guidance"]'))
+      .toContainText('Next: Load case', { timeout: 60000 });
+
+    // Load cases synthesized from the ACCDB model itself.
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]').click();
+    const caseBoxes = page.locator('[data-role="lfea-pipeline-case-checkbox"]');
+    expect(await caseBoxes.count()).toBeGreaterThan(0);
+    await caseBoxes.first().check();
+    await page.locator('[data-action="lfea-pipeline-apply-cases"]').click();
+    await expect(page.locator('[data-role="lfea-pipeline-case-selection-status"]')).toContainText('case(s)');
+    await page.locator('[data-action="lfea-pipeline-analyze"]').click();
+
+    // Results, from a CAESAR database, through the same Output step an
+    // InputXML import reaches.
+    const summary = page.locator('[data-role="lfea-pipeline-results-summary"]');
+    await expect(summary).toBeVisible({ timeout: 180000 });
+    await expect(summary).toContainText('Max displacement');
+    await expect(summary).toContainText('Max support force');
+    await expect(summary).toContainText('@ node');
+    expect(await page.locator('[data-role="lfea-pipeline-results-table"] tr[data-node-id]').count())
+      .toBeGreaterThan(1);
 
     expect(pageErrors).toEqual([]);
   });

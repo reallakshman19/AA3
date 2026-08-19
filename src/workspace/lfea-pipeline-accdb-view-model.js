@@ -1,4 +1,5 @@
 import { ACCDB_ELEMENT_FIELD_SPECS } from '../core/linear-piping-analysis-consumer/accdb-source-binding.js';
+import { plainLanguageForFindingCode } from './lfea-finding-plain-language.js';
 import { foldInputXmlLinearModelHealthCapabilities } from '../core/linear-piping-analysis-consumer/inputxml-linear-model-health-capabilities.js';
 import {
   capabilityAppliesToRequest,
@@ -120,6 +121,9 @@ function scopeFinding(finding, family) {
     authoritySeverity: finding.severity,
     scopedByProfile: scoped !== null && severity !== finding.severity,
     message: finding.message,
+    // What the finding means, in the words an engineer would use. The
+    // pipeline's own message is kept beside it as the precise statement.
+    plainMessage: plainLanguageForFindingCode(finding.code),
     remediation: finding.remediation,
     entities: finding.entities,
   });
@@ -176,6 +180,7 @@ function groupFindings(findings) {
         code: finding.code,
         category: finding.category,
         severity: finding.severity,
+        plainMessage: finding.plainMessage,
         scopedByProfile: false,
         remediation: finding.remediation,
         occurrences: [],

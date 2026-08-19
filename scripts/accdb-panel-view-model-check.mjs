@@ -25,6 +25,7 @@ import {
   accdbRestraintTypeCorrespondence,
 } from '../src/core/geometry/adapters/accdb-restraint-type-correspondence.js';
 import { parseAccdbModelHealthSource } from '../src/core/linear-piping-analysis-consumer/accdb-source-binding.js';
+import { hasPlainLanguage, plainLanguageForFindingCode } from '../src/workspace/lfea-finding-plain-language.js';
 import { diagnoseInputXmlLinearModelHealth } from '../src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js';
 import { diagnoseInputXmlTopologyGraph } from '../src/core/geometry/model-health/topology-graph-diagnostics.js';
 import {
@@ -121,6 +122,27 @@ assert.equal(
   undefined,
   'Every category the fixture produces should be sorted, not left to the catch-all.',
 );
+
+// --- 2c. Plain-English explanations -------------------------------------
+// Every finding this model can raise must read as a sentence, not as a code.
+// A code with no written entry falls back to a readable form of itself, which
+// is legible but not an explanation -- so the codes a real model actually
+// produces are required to have real entries.
+for (const group of approximateView.findingGroups) {
+  assert.ok(group.plainMessage && group.plainMessage.length > 0,
+    `Finding ${group.code} has no plain-English explanation.`);
+  assert.ok(
+    hasPlainLanguage(group.code),
+    `Finding ${group.code} is falling back to a humanized code; add a written explanation for it.`,
+  );
+  for (const occurrence of group.occurrences) {
+    assert.equal(occurrence.plainMessage, group.plainMessage);
+    // The precise wording is kept, not replaced.
+    assert.ok(occurrence.message && occurrence.message.length > 0);
+  }
+}
+assert.match(plainLanguageForFindingCode('AN_UNWRITTEN_CODE'), /^An unwritten code\.$/u);
+assert.equal(plainLanguageForFindingCode(''), '');
 
 // --- 3. Element property rows ------------------------------------------
 const propertyRows = buildAccdbElementPropertyRows(bundle);

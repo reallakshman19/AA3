@@ -1,6 +1,7 @@
 import { canonicalStringify } from '../core/shared-piping-model/canonical-json.js';
 import { parseAccdbModelHealthSource } from '../core/linear-piping-analysis-consumer/accdb-source-binding.js';
 import { ACCDB_MEDIA_TYPE } from '../core/linear-piping-analysis-consumer/inputxml-source-contract.js';
+import { lfeaProximityOptions } from './lfea-geometry-allowance.js';
 import { prepareLinearPipingInputXmlPreFlight } from './linear-piping-inputxml-prefea.js';
 import { createLinearPipingSourceIntake } from './linear-piping-inputxml-intake.js';
 
@@ -71,6 +72,10 @@ export function prepareLinearPipingAccdbPreFlight(intake, sourceBundle, options 
   return prepareLinearPipingInputXmlPreFlight(intake, {
     ...options,
     diagnosticsOptions: {
+      // The same allowance the panel's own verdict is read under: if these
+      // disagreed, a model would pass the panel and fail the pre-flight (or
+      // the reverse) with no way for the engineer to tell which was right.
+      proximityOptions: lfeaProximityOptions(options.diagnosticsOptions?.proximityOptions ?? {}),
       ...(options.diagnosticsOptions ?? {}),
       parseSource: () => sourceBundle,
     },

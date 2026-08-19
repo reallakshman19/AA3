@@ -1,17 +1,30 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   deriveEmp1CQualificationEvidence,
   loadEmp1CRetainedArtifacts,
+  renderEmp1CQualificationEvidenceModule,
 } from './emp1-c-qualification-evidence-lib.mjs';
 import { EMP1_C_RETAINED_QUALIFICATION_EVIDENCE } from '../src/core/emp1/emp1-c-qualification-evidence.generated.js';
 
-const retained = loadEmp1CRetainedArtifacts();
+const root = process.cwd();
+const retained = loadEmp1CRetainedArtifacts(root);
 const derived = deriveEmp1CQualificationEvidence(retained);
+const generatedPath = path.join(root, 'src/core/emp1/emp1-c-qualification-evidence.generated.js');
+const generatedText = fs.readFileSync(generatedPath, 'utf8');
+const expectedGeneratedText = renderEmp1CQualificationEvidenceModule(derived);
+
+assert.equal(
+  generatedText,
+  expectedGeneratedText,
+  'Generated EMP.1.C module text drifted from deterministic retained-artifact rendering',
+);
 assert.deepEqual(
   EMP1_C_RETAINED_QUALIFICATION_EVIDENCE,
   derived,
-  'Generated EMP.1.C evidence drifted from retained qualification artifacts',
+  'Generated EMP.1.C evidence object drifted from retained qualification artifacts',
 );
 
 assert.equal(derived.derivation.mode, 'RETAINED_ARTIFACT_DERIVATION');
@@ -74,6 +87,7 @@ console.log(JSON.stringify({
   schema: 'emp1-c-qualification-evidence-check/v1',
   status: 'PASS',
   derivationMode: derived.derivation.mode,
+  generatedArtifactExact: true,
   wrcDataset: {
     unresolvedJsonPathCount: derived.wrcDataset.unresolvedJsonPathCount,
     openIssueCount: derived.wrcDataset.openIssueCount,

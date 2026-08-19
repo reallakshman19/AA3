@@ -6,6 +6,36 @@ export const WRC_CURVE_FIT_COEFFICIENT_NAMES = Object.freeze([
 ]);
 export const WRC_CURVE_FIT_INDEPENDENT_VARIABLE = 'U';
 
+const WRC_DIMENSIONAL_CONTRACTS = Object.freeze([
+  Object.freeze({
+    id: 'SP_RADIAL_MEMBRANE',
+    coefficientFamilies: Object.freeze({ SP_NX: 'NxT/P', SP_NY: 'NyT/P' }),
+    equationId: 'EQ_RADIAL_MEMBRANE',
+    acceptedMachineForms: Object.freeze([
+      'coeff_Nphi*P/(T**2)',
+      'coeff_Nphi*P/T**2',
+      'coeff_Nphi*P/(T*T)',
+      'coeff_Nphi*P/T/T',
+    ]),
+    dimensionalBasis: '[Nx*T/P]=1 => Nx=coeff*P/T => sigma=Nx/T=coeff*P/T^2',
+  }),
+  Object.freeze({
+    id: 'SM_MOMENT_MEMBRANE',
+    coefficientFamilies: Object.freeze({
+      SM_NX: 'NxT√(RmT)/M',
+      SM_NY: 'NyT√(RmT)/M',
+    }),
+    equationId: 'EQ_MOMENT_MEMBRANE',
+    acceptedMachineForms: Object.freeze([
+      'coeff_Nphi*M/(T**2*sqrt(Rm*T))',
+      'coeff_Nphi*M/T**2/sqrt(Rm*T)',
+      'coeff_Nphi*M/(T*T*sqrt(Rm*T))',
+      'coeff_Nphi*M/T/T/sqrt(Rm*T)',
+    ]),
+    dimensionalBasis: '[Nx*T*sqrt(Rm*T)/M]=1 => Nx=coeff*M/(T*sqrt(Rm*T)) => sigma=Nx/T=coeff*M/(T^2*sqrt(Rm*T))',
+  }),
+]);
+
 export function gitBlobSha1Bytes(bytes) {
   const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
   const hash = createHash('sha1');
@@ -51,6 +81,13 @@ export function auditWrcDatasetPackage({ methodText, dataset, numericalCsv, arti
   const openIssues = Array.isArray(dataset.openIssues) ? dataset.openIssues : [];
   if (openIssues.length) blockers.push({ code: 'BLOCK_DATASET_OPEN_ISSUES', count: openIssues.length, issues: openIssues });
 
+  const dimensionalContract = inspectWrcMethodDimensionalContract(dataset);
+  if (dimensionalContract.status !== 'PASS') blockers.push({
+    code: 'BLOCK_METHOD_DIMENSIONAL_CONTRACT',
+    violationCount: dimensionalContract.violations.length,
+    violations: dimensionalContract.violations,
+  });
+
   const csv = inspectNumericalCsv(numericalCsv);
   if (csv.parseErrors.length) {
     failures.push({ code: 'FAIL_NUMERICAL_CSV_PARSE', errors: csv.parseErrors });
@@ -89,6 +126,7 @@ export function auditWrcDatasetPackage({ methodText, dataset, numericalCsv, arti
     semanticHash: dataset.semanticHash ?? null,
     unresolvedPathCount: unresolvedPaths.length,
     openIssueCount: openIssues.length,
+    dimensionalContract,
     numericalCsv: csv,
   });
 }
@@ -106,6 +144,68 @@ export function collectUnresolvedPaths(value, path = '$', output = []) {
     for (const [key, item] of Object.entries(value)) collectUnresolvedPaths(item, `${path}.${key}`, output);
   }
   return output;
+}
+
+/**
+ * Fail closed when the retained equation expression contradicts the retained
+ * dimensionless coefficient definition. This does not claim that either
+ * transcription is authoritative WRC source data; it only proves that the two
+ * retained statements cannot both be used as an implementation contract.
+ */
+export function inspectWrcMethodDimensionalContract(dataset) {
+  const families = new Map((dataset?.coefficientFamilies ?? []).map((row) => [row.id, row]));
+  const equations = new Map((dataset?.equations ?? []).map((row) => [row.id, row]));
+  const violations = [];
+  const checks = [];
+
+  for (const contract of WRC_DIMENSIONAL_CONTRACTS) {
+    let familyDefinitionsMatch = true;
+    const familyEvidence = {};
+    for (const [familyId, expectedSymbol] of Object.entries(contract.coefficientFamilies)) {
+      const actualSymbol = families.get(familyId)?.symbol ?? null;
+      familyEvidence[familyId] = { expectedSymbol, actualSymbol };
+      if (normalizeSymbol(actualSymbol) !== normalizeSymbol(expectedSymbol)) familyDefinitionsMatch = false;
+    }
+
+    const equation = equations.get(contract.equationId);
+    const actualMachine = equation?.machine ?? null;
+    const normalizedMachine = normalizeExpression(actualMachine);
+    const acceptedMachineForms = contract.acceptedMachineForms.map(normalizeExpression);
+    const equationDimensionallyConsistent = acceptedMachineForms.includes(normalizedMachine);
+
+    const check = {
+      id: contract.id,
+      coefficientFamilies: familyEvidence,
+      equationId: contract.equationId,
+      actualMachine,
+      acceptedMachineForms: [...contract.acceptedMachineForms],
+      dimensionalBasis: contract.dimensionalBasis,
+      familyDefinitionsMatch,
+      equationDimensionallyConsistent,
+      status: familyDefinitionsMatch && equationDimensionallyConsistent ? 'PASS' : 'BLOCKED',
+    };
+    checks.push(check);
+
+    if (!familyDefinitionsMatch) violations.push({
+      id: `${contract.id}_COEFFICIENT_DEFINITION_MISMATCH`,
+      contractId: contract.id,
+      evidence: familyEvidence,
+    });
+    if (!equationDimensionallyConsistent) violations.push({
+      id: `${contract.id}_STRESS_DIMENSION_MISMATCH`,
+      contractId: contract.id,
+      equationId: contract.equationId,
+      actualMachine,
+      expectedMachineForms: [...contract.acceptedMachineForms],
+      dimensionalBasis: contract.dimensionalBasis,
+    });
+  }
+
+  return {
+    status: violations.length ? 'BLOCKED' : 'PASS',
+    checks,
+    violations,
+  };
 }
 
 /**
@@ -264,6 +364,16 @@ function emptyCsvInspection(parseErrors) {
     reviewStatusCounts: {},
     parseErrors,
   };
+}
+
+function normalizeExpression(value) {
+  return typeof value === 'string' ? value.replace(/\s+/gu, '') : '';
+}
+
+function normalizeSymbol(value) {
+  return typeof value === 'string'
+    ? value.replace(/\s+/gu, '').replace(/×/gu, '*')
+    : '';
 }
 
 function extractMethodStatus(text) {

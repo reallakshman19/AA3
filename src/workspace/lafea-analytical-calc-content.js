@@ -5,8 +5,13 @@ import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaEvidence } from './lafea-results-view.js';
 import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
 import { renderLafeaCorrelationAvailability } from './lafea-correlation-availability-view.js';
+import {
+  createEmp1BSourceCustodyCard,
+  renderEmp1AssessmentWorkflow,
+} from './lafea-guided-workflow-view.js';
 import { lafeaDocumentDigest } from './lafea-edit-command.js';
 import {
+  EMP1_B_SOURCE_CUSTODY_STATES,
   EMP1_PUBLIC_PRODUCT,
   buildEmp1ProductProjection,
   emp1StepForBackingStage,
@@ -31,7 +36,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   shell.dataset.emp1Step = step.shortId;
   shell.dataset.routeFamily = 'ANALYTICAL';
 
-  shell.append(emp1Workflow(root, projection, options.onSelectRoute));
+  shell.append(renderEmp1AssessmentWorkflow(root, projection, options.onSelectRoute));
 
   const route = card(root, 'Active EMP.1 step');
   route.section.dataset.guidedTarget = 'analytical-route';
@@ -88,14 +93,26 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   settings.section.dataset.guidedTarget = 'profile';
   settings.body.append(renderLafeaAnalysisSettings(settings.body, stage, options.registryEntry));
 
+  const bSourceCurrent = foundation
+    || projection.custody.bSourceEvidenceState === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT;
   const results = card(root, `${step.stepId} results`);
   results.section.dataset.guidedTarget = 'results';
-  results.body.append(
-    element(root, 'p', 'lafea-workbench__section-intro', foundation
-      ? 'EMP.1.A evidence only; local attachment correlation is not authorized.'
-      : 'EMP.1.B nominal screening evidence only; EMP.1.C local attachment correlation is not authorized.'),
-    renderLafeaEvidence(root, stageId, stage.document, state, stage.execution),
-  );
+  results.body.append(element(root, 'p', 'lafea-workbench__section-intro', foundation
+    ? 'EMP.1.A evidence only; local attachment correlation is not authorized.'
+    : 'EMP.1.B nominal screening evidence only; EMP.1.C local attachment correlation is not authorized.'));
+  if (!bSourceCurrent && stage.execution) {
+    const stale = element(root, 'p', 'lafea-workbench__authority',
+      `Retained B result is excluded from current EMP.1 evidence. ${projection.custody.userAction}`);
+    stale.dataset.role = 'emp1-b-stale-result-blocker';
+    results.body.append(stale);
+  }
+  results.body.append(renderLafeaEvidence(
+    root,
+    stageId,
+    stage.document,
+    state,
+    bSourceCurrent ? stage.execution : null,
+  ));
 
   const lineage = card(root, `${step.stepId} evidence and lineage`);
   lineage.section.dataset.guidedTarget = 'lineage';
@@ -111,105 +128,23 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     shell.append(benchmark.section);
   }
 
+  applyEmp1BCurrentnessRunGate(root, step, projection);
   return Object.freeze({ element: shell, viewport: null, viewportElement: null,
     viewportReused: false, workflow: null, discretization: null });
 }
 
-function emp1Workflow(root, projection, onSelectRoute) {
-  const workflow = card(root, 'Assessment workflow');
-  workflow.section.dataset.role = 'emp1-workflow';
-  workflow.section.dataset.productId = EMP1_PUBLIC_PRODUCT.productId;
-  const overall = element(root, 'strong', 'lafea-result-highlights__status',
-    `EMP.1 · ${projection.state.replaceAll('_', ' ')}`);
-  overall.dataset.role = 'emp1-product-state';
-  workflow.body.append(
-    overall,
-    element(root, 'p', 'lafea-workbench__section-intro',
-      'Work left to right. A is the current load/reference authority. B must bind to that current A evidence while retaining its own screening cases and evaluation locations. C stays blocked until WRC source/data and CAUx benchmark qualification are complete.'),
-  );
-
-  const nav = element(root, 'nav', 'lafea-workbench__stages');
-  nav.setAttribute('aria-label', 'EMP.1 assessment steps');
-  projection.steps.forEach((projectedStep) => {
-    const label = `${projectedStep.shortId} ${projectedStep.label} · ${projectedStep.state.replaceAll('_', ' ')}`;
-    const button = actionButton(root, label, () => {
-      if (projectedStep.backingStageId) onSelectRoute(projectedStep.backingStageId);
-    });
-    button.dataset.role = 'emp1-step';
-    button.dataset.emp1Step = projectedStep.shortId;
-    button.dataset.emp1StepId = projectedStep.stepId;
-    button.dataset.state = projectedStep.state;
-    button.setAttribute('aria-current', projection.activeStepId === projectedStep.stepId ? 'step' : 'false');
-    if (!projectedStep.backingStageId || !projectedStep.runAuthorized && projectedStep.shortId === 'C') {
-      button.disabled = projectedStep.shortId === 'C';
-    }
-    if (projectedStep.shortId === 'C') {
-      button.title = `Blocked: ${projectedStep.blockers.join(', ')}`;
-    }
-    nav.append(button);
-  });
-  workflow.body.append(nav);
-
-  const c = projection.steps.find((item) => item.shortId === 'C');
-  const blocker = element(root, 'div', 'lafea-workbench__authority');
-  blocker.dataset.role = 'emp1-c-blocker';
-  blocker.append(element(root, 'strong', null, 'EMP.1.C blocked — no production local-correlation authority.'));
-  const list = element(root, 'ul');
-  c.blockers.forEach((code) => list.append(element(root, 'li', null, blockerLabel(code))));
-  blocker.append(list);
-  workflow.body.append(blocker);
-  return workflow.section;
-}
-
-function blockerLabel(code) {
-  return ({
-    WRC_DATASET_NOT_READY: 'WRC extraction package is not READY_FOR_IMPLEMENTATION.',
-    WRC_NUMERICAL_COEFFICIENTS_MISSING: 'WRC a–j numerical coefficient payload is not qualified.',
-    WRC_SIGN_ARBITRATION_OPEN: 'WRC load/sign convention arbitration remains open.',
-    CAUX_PP24_31_NOT_FROZEN: 'CAUx 2017 pp.24–31 benchmark values and independent hand calculation are not frozen.',
-  })[code] ?? code;
-}
-
 function screeningLoadCustody(root, state, documentValue, projection, onApplyJson) {
-  const custody = card(root, 'EMP.1.B source custody from A');
-  custody.section.dataset.role = 'lafea-screening-load-custody';
-  custody.section.dataset.guidedTarget = 'screening-load-custody';
-  const currentness = element(root, 'strong', 'lafea-result-highlights__status',
-    `A → B evidence: ${projection.custody.bSourceEvidenceState.replaceAll('_', ' ')}`);
-  currentness.dataset.role = 'emp1-b-source-currentness';
-  currentness.dataset.state = projection.custody.bSourceEvidenceState;
-  custody.body.append(
-    currentness,
-    element(root, 'p', 'lafea-workbench__section-intro',
-      'EMP.1.B owns its screening cases, factors and evaluation locations. Only its validated A-derived source evidence may be refreshed from the current qualified EMP.1.A result.'),
-    element(root, 'p', 'lafea-workbench__authority', projection.custody.userAction),
-  );
-  if (!documentValue || typeof documentValue !== 'object') {
-    custody.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
-      'B custody becomes available after a valid EMP.1.B source document is loaded.'));
-    return custody.section;
-  }
-
-  const refresh = actionButton(root, 'Refresh B from current A', () => {
+  const hasDocument = Boolean(documentValue && typeof documentValue === 'object');
+  const custody = createEmp1BSourceCustodyCard(root, projection, hasDocument, () => {
     const aStage = state?.stages?.['LAFEA.1'];
     const refreshResult = evaluateEmp1BSourceRefresh({
       aDocument: aStage?.document,
       aExecution: aStage?.execution,
       bDocument: documentValue,
     });
-    if (refreshResult.status !== 'READY') return;
-    onApplyJson(JSON.stringify(refreshResult.document));
+    if (refreshResult.status === 'READY') onApplyJson(JSON.stringify(refreshResult.document));
   });
-  refresh.dataset.role = 'emp1-refresh-b-from-a';
-  refresh.disabled = !projection.custody.canRefreshBFromCurrentA;
-  refresh.title = projection.custody.canRefreshBFromCurrentA
-    ? 'Replace only B sourceEvidence with the current qualified A model/result; preserve and revalidate all B-owned screening inputs.'
-    : projection.custody.bSourceEvidenceState === 'CURRENT_A_EVIDENCE'
-      ? 'B already uses the current qualified A evidence.'
-      : projection.custody.refreshBlockerCode
-        ? `Refresh blocked: ${projection.custody.refreshBlockerCode}`
-        : 'A current qualified A result and an existing B request are required.';
-  custody.body.append(refresh);
+  if (!hasDocument) return custody.section;
 
   const sourceResult = documentValue.sourceEvidence?.foundationResult;
   const loadCases = Array.isArray(sourceResult?.transformedLoadCases)
@@ -347,9 +282,7 @@ function screeningTermsTable(root, documentValue, screeningCases, onApplyJson) {
           factor.reportValidity();
           return;
         }
-        if (editResult.status === 'APPLIED') {
-          onApplyJson(JSON.stringify(editResult.document));
-        }
+        if (editResult.status === 'APPLIED') onApplyJson(JSON.stringify(editResult.document));
       });
       apply.dataset.role = 'lafea-apply-screening-term-factor';
       apply.dataset.screeningCaseId = screeningCaseId;
@@ -369,6 +302,17 @@ function screeningTermsTable(root, documentValue, screeningCases, onApplyJson) {
   });
   wrapper.append(table);
   return wrapper;
+}
+
+function applyEmp1BCurrentnessRunGate(root, step, projection) {
+  if (step.shortId !== 'B'
+    || projection.custody.bSourceEvidenceState === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT) return;
+  const workbench = root.closest?.('[data-role="lafea-workbench"]') ?? root;
+  const run = workbench.querySelector?.('[data-role="lafea-run"]');
+  if (!run) return;
+  run.disabled = true;
+  run.dataset.emp1CurrentnessGate = 'BLOCKED';
+  run.title = projection.custody.userAction;
 }
 
 function screeningTermCommandId(documentValue, screeningCaseId, loadCaseId) {

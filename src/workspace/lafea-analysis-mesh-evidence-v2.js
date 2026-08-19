@@ -96,7 +96,10 @@ function enforceLafea3RefinementAdjacency(stageId, mesh, meshProfile) {
     meshProfile.fields.adjacentSizeRatioMax,
   );
   if (result.qualification !== 'PASS') {
-    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');
+    const error = new TypeError('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');
+    error.code = 'LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK';
+    error.diagnostics = result;
+    throw error;
   }
 }
 

@@ -1,10 +1,10 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1263
-mission: EMP.1 source custody, existing WRC dataset qualification, unified analytical assessment
+mission: EMP.1 source custody, WRC dataset qualification, CAUx benchmark qualification, unified analytical assessment
 workstream: EMP1
 branch: agent/emp1-core-scaffold-issue1261
-pr_head: 0f9efc26b3377de337010eab784e105712501dcd
+pr_head: 40ea46937a0f91e4162584b6a608442b4cd84fd4
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,17 +12,16 @@ agent_state: ACTIVE
 pr_recovery_state: RECOVERABLE
 handover_readiness: READY
 report_path: agents/PR1263_workreport.md
-report_basis_head: e2a9e8c926cb77cc28e3deaba87debc5711027f4
-appendix_a_status: BLOCKED_WRC_DATASET_QUALIFICATION
-grounding_epoch: GE-005
+report_basis_head: 133b5d6bf52af294c3840433aad69920362938ae
+appendix_a_status: BLOCKED_WRC_DATASET_QUALIFICATION_AND_CAUX_PAGE_EXTRACTION
+grounding_epoch: GE-006
 current_stage: WRC_DATASET_AND_CAUX_BENCHMARK_QUALIFICATION
-blocker: WRC extraction has 21 unresolved JSON paths, 7 open issues, 0 numeric coefficient rows, 120 unresolved coefficient rows; CAUx source is confirmed but pp24-31 benchmark values and independent handcalc are not frozen
-highest_risk: promoting extraction inventory, unresolved signs, or unfrozen CAUx values into production authority
+blocker: exact CAUx source identity is PASS but binary pp24-31 content is not observable through current non-mutating transports; WRC extraction has 21 unresolved JSON paths, 7 open issues, 0 numeric coefficients and 120 unresolved coefficient rows
+highest_risk: substituting supplemental Hexagon data, unresolved WRC data, or future production output for exact CAUx benchmark authority
 dependencies:
   - issue: 1261
   - existing_wrc_docs: main@67317dc9cb47de8897fa7952b86107ab91b1f75c/docs
   - benchmark_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/CAUx 2017 - WRC01f.pdf
-  - primary_source_repo: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55
   - source_repo_current_main: 13e7c0e653e6d61ef2f2217068e1010bd5a53bf6
   - main_reconciliation: required_before_production_integration
 validation_state:
@@ -39,9 +38,13 @@ validation_state:
   caux_source_location: PASS
   caux_pinned_blob_identity_metadata: PASS
   caux_current_main_same_blob_as_pinned: PASS
+  exact_caux_binary_body: NOT_RUN
   raw_pdf_sha256: NOT_RUN
   caux_pages_24_31: NOT_RUN
   independent_caux_handcalc: NOT_RUN
+  supplemental_hexagon_wrc_precheck: PASS
+  supplemental_hexagon_precheck_may_satisfy_caux_a4: false
+  production_emp1: NOT_RUN
   remote_ci: NOT_RUN
-exact_next_action: extract and freeze CAUx pp24-31 benchmark values from the already-confirmed pinned PDF while independently closing the frozen WRC readiness blockers; do not treat source discovery as a blocker
-last_updated: 2026-08-19T10:27:00+04:00
+exact_next_action: obtain observable exact CAUx bytes without workflow/source mutation; freeze SHA256 and pp24-31 benchmark; independently reproduce before any production EMP.1.C observation
+last_updated: 2026-08-19T10:33:00+04:00

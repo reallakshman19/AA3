@@ -1,0 +1,31 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP-lafea34-mesh-ui-qf-20260819
+mission: LAFEA.3/.4 meshing UX and numerical-truth foundation
+workstream: LAFEA_MESHING_UI_QUALITY_FOUNDATION
+branch: agent/lafea34-meshing-ui-quality-foundation-20260819
+pr_head: adee1f7bcd4677c01474311b63f269a615eae8d2
+main_head_last_checked: cf3aaeefb028ee387d3d530f5e0e5106bd489dce
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/WIP-lafea34-mesh-ui-qf-20260819_workreport.md
+report_basis_head: cf3aaeefb028ee387d3d530f5e0e5106bd489dce
+appendix_a_status: NOT_REQUIRED_NEW_OWNER_ASSIGNED_WORK
+grounding_epoch: GE-001
+current_stage: BASELINE_AND_FIRST_VERTICAL_SLICE
+blocker: NONE
+highest_risk: accidental promotion of determinant-variation evidence into an unqualified engineering threshold
+coordination_state: COORDINATION_REQUIRED_BOUNDED_SAFE
+validation_state:
+  repository_grounding: PASS_SOURCE_INSPECTION
+  determinant_evidence_implementation: NOT_STARTED
+  quality_ui_focus_integration: NOT_STARTED
+  local_runtime: NOT_RUN_ENVIRONMENT_UNAVAILABLE
+  chromium: NOT_RUN
+  remote_ci: NOT_RUN
+  merge: NOT_AUTHORIZED
+exact_next_action: implement evidence-only T6/Q8 determinant variation and direct quality-row element focus without touching producer/solver/threshold authority
+last_updated: 2026-08-19T19:20:00+04:00

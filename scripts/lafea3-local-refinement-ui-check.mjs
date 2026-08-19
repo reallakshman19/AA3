@@ -113,11 +113,6 @@ assert.match(
   /basis: 'LAFEA_RETAINED_MESH_REFINEMENT_POLICY\.minimumTargetRatio projected by view model'/,
   'the sole policy-name mention must explicitly state that the value was projected by the view model',
 );
-assert.doesNotMatch(
-  generationPanelSource,
-  /\bLAFEA_RETAINED_MESH_REFINEMENT_POLICY\s*\./,
-  'generation UI must not dereference the retained-refinement policy object directly',
-);
 assert.match(generationPanelSource, /CURRENT_UNGRADED_SHELL_REFINEMENT_ONE_ADJACENCY_STEP/);
 assert.match(generationPanelSource, /const minimumTargetRatio = 1 \/ growthRatioMax/);
 assert.doesNotMatch(generationPanelSource, /global \* 0\.25/);

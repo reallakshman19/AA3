@@ -38,6 +38,18 @@ export function createLafeaAnalysisMeshEvidenceV2(value) {
   const mesh = canonicalLafeaAnalysisMesh(value.mesh);
   if (mesh.schema !== LAFEA_ANALYSIS_MESH_SCHEMA) fail('LAFEA_ANALYSIS_MESH_V2_MESH_SCHEMA_INVALID');
   requireLafeaAnalysisMeshElementFamily(stageId, meshProfile, mesh.elements);
+  if (stageId === 'LAFEA.3') {
+    console.log(JSON.stringify({
+      diagnostic: 'LAFEA3_ADJACENCY_BEFORE_CUSTODY',
+      meshIdentity: mesh.meshIdentity,
+      nodeCount: mesh.nodes.length,
+      elementCount: mesh.elements.length,
+      adjacency: qualifyRefinedMeshAdjacentSizeRatio(
+        mesh,
+        meshProfile.fields.adjacentSizeRatioMax,
+      ),
+    }, null, 2));
+  }
   enforceLafea3RefinementAdjacency(stageId, mesh, meshProfile);
   const meshHash = lafeaAnalysisMeshContentHash(mesh);
   const sourceHash = sha256(value.sourceHash, 'SOURCE_HASH');
@@ -96,7 +108,10 @@ function enforceLafea3RefinementAdjacency(stageId, mesh, meshProfile) {
     meshProfile.fields.adjacentSizeRatioMax,
   );
   if (result.qualification !== 'PASS') {
-    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');
+    const error = new TypeError('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');
+    error.code = 'LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK';
+    error.diagnostics = result;
+    throw error;
   }
 }
 

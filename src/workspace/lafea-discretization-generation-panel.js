@@ -394,6 +394,9 @@ function refinementControls(doc, model, handlers) {
     target.input.min = String(sizingPolicy.minimumLocalTarget);
     host.append(refinementSizingFacts(doc, sizingPolicy, model.generation.lengthUnit));
   }
+  if (model.evidence.refinementAdjacencyInspection) {
+    host.append(refinementAdjacencyFacts(doc, model.evidence.refinementAdjacencyInspection));
+  }
   host.append(disclosure(
     doc,
     model.stageId === 'LAFEA.3'
@@ -502,6 +505,29 @@ function refinementSizingFacts(doc, policy, unit) {
   return details;
 }
 
+function refinementAdjacencyFacts(doc, inspection) {
+  const details = node(doc, 'details', 'lafea-discretization__technical-evidence');
+  details.dataset.role = 'lafea-refinement-adjacency-evidence';
+  details.dataset.qualification = inspection.qualification;
+  details.open = true;
+  details.append(node(doc, 'summary', null, 'Retained child size-transition acceptance'));
+  const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  const rows = [
+    ['Qualification', inspection.qualification],
+    ['Maximum observed adjacent ratio', formatNumber(inspection.maximumObserved)],
+    ['Maximum allowed adjacent ratio', `≤ ${formatNumber(inspection.maximumAllowed)}`],
+    ['Shared edges checked', String(inspection.adjacentEdgeCount)],
+    ['Violating adjacencies', String(inspection.violatingAdjacencyCount)],
+    ['Blocking element IDs', inspection.blockingElementIds.join(', ') || 'NONE'],
+    ['Evidence identity', 'Derived recomputation of the refinement retention gate; canonical v2 mesh evidence is unchanged'],
+  ];
+  for (const [label, value] of rows) {
+    facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value));
+  }
+  details.append(facts);
+  return details;
+}
+
 function renderRefinementTransitionPreview(doc, host, rawTarget, policy, unit) {
   host.replaceChildren();
   if (!policy) {
@@ -548,7 +574,7 @@ function renderRefinementTransitionPreview(doc, host, rawTarget, policy, unit) {
   }
   host.append(facts, disclosure(
     doc,
-    'Sizing preview only. The retained child mesh must independently pass the actual ADJACENT_SIZE_RATIO quality gate; the preview does not certify generated topology.',
+    'Sizing preview only. The retained child mesh must independently pass the actual adjacent-size retention gate; the preview does not certify generated topology.',
   ));
 }
 

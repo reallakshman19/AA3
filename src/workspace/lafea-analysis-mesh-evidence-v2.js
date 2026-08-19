@@ -95,6 +95,13 @@ function enforceLafea3RefinementAdjacency(stageId, mesh, meshProfile) {
     mesh,
     meshProfile.fields.adjacentSizeRatioMax,
   );
+  console.log(JSON.stringify({
+    diagnostic: 'LAFEA3_SQRT_GRADED_ADJACENCY_BEFORE_CUSTODY',
+    meshIdentity: mesh.meshIdentity,
+    nodeCount: mesh.nodes.length,
+    elementCount: mesh.elements.length,
+    adjacency: result,
+  }, null, 2));
   if (result.qualification !== 'PASS') {
     fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');
   }

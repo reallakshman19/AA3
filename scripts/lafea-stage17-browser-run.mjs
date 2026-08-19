@@ -29,9 +29,10 @@ function runPlaywright(args) {
 }
 
 // EMP.1 analytical qualification prerequisites run before Chromium and before
-// the unrelated LAFEA.3 B01/B02 gate. Artifact derivation is checked first so a
-// stale generated C evidence module cannot be rendered as current engineering
-// truth. These checks are deterministic Node-only contracts.
+// the unrelated LAFEA.3 B01/B02 gate. The derivation contract is self-tested,
+// then retained artifacts are checked against the generated runtime evidence so
+// stale or authority-escalated C evidence cannot be rendered as current truth.
+runNodeScript('scripts/emp1-c-qualification-evidence-self-test.mjs');
 runNodeScript('scripts/emp1-c-qualification-evidence-check.mjs');
 runNodeScript('scripts/emp1-c-qualification-state-check.mjs');
 runNodeScript('scripts/emp1-public-product-check.mjs');

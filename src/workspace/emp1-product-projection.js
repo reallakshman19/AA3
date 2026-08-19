@@ -8,6 +8,12 @@ export {
   isEmp1BackingStage,
 } from '../core/emp1/emp1-public-product-contract.js';
 export {
+  EMP1_C_BLOCKER_CODES,
+  EMP1_C_CURRENT_QUALIFICATION_EVIDENCE,
+  EMP1_C_QUALIFICATION_SCHEMA,
+  evaluateEmp1CQualificationState,
+} from '../core/emp1/emp1-c-qualification-state.js';
+export {
   EMP1_B_SOURCE_CUSTODY_STATES,
   classifyEmp1BSourceCustody,
   evaluateEmp1BSourceRefresh,

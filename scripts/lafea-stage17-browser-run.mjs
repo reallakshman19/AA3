@@ -37,6 +37,7 @@ runNodeScript('scripts/emp1-c-qualification-evidence-check.mjs');
 runNodeScript('scripts/emp1-c-qualification-state-check.mjs');
 runNodeScript('scripts/emp1-public-product-check.mjs');
 runNodeScript('scripts/emp1-a-to-b-refresh-check.mjs');
+runNodeScript('scripts/emp1-a-result-presentation-check.mjs');
 
 // Qualify both public EMP.1 surfaces and the user-driven A→B currentness refresh
 // independently before the inherited LAFEA.3 B01/B02 production gate. The FEM

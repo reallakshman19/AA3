@@ -29,12 +29,23 @@ assert.deepEqual(
 
 assert.equal(derived.derivation.mode, 'RETAINED_ARTIFACT_DERIVATION');
 assert.equal(derived.derivation.manualSummaryPermitted, false);
+assert.equal(derived.derivation.retainedAuditObservedMatch, true);
+assert.equal(derived.derivation.retainedExtractionPinVerified, true);
 assert.equal(derived.wrcDataset.unresolvedJsonPathCount, 21);
 assert.equal(derived.wrcDataset.openIssueCount, 7);
-assert.equal(derived.wrcDataset.coefficientInventoryRows, 120);
-assert.equal(derived.wrcDataset.numericCoefficientRows, 0);
-assert.equal(derived.wrcDataset.unresolvedCoefficientRows, 120);
-assert.equal(derived.wrcDataset.unresolvedParameterRows, 120);
+assert.equal(derived.wrcDataset.dimensionalContractStatus, 'BLOCKED');
+assert.equal(derived.wrcDataset.dimensionalViolationCount, 2);
+assert.deepEqual(derived.wrcDataset.dimensionalViolationIds, [
+  'SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH',
+  'SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH',
+]);
+assert.equal(derived.wrcDataset.coefficientCurveRows, 120);
+assert.equal(derived.wrcDataset.requiredScalarCoefficientCount, 1200);
+assert.equal(derived.wrcDataset.numericScalarCoefficientCount, 0);
+assert.equal(derived.wrcDataset.missingScalarCoefficientCount, 1200);
+assert.equal(derived.wrcDataset.coefficientSchema, 'LEGACY_SINGLE_VALUE_PER_CURVE');
+assert.equal(derived.wrcDataset.independentVariable, 'U');
+assert.equal(derived.wrcDataset.independentVariableRepresentation, 'LEGACY_PARAMETER_3_ROW_ORDINATE');
 assert.equal(derived.wrcDataset.sourceCustodyQualified, false);
 assert.equal(derived.signArbitration.openConflicts.length, 2);
 assert.equal(derived.cauxBenchmark.pageRange, '24-31');
@@ -44,12 +55,27 @@ assert.equal(derived.cauxBenchmark.expectedValuesFrozen, false);
 assert.equal(derived.cauxBenchmark.independentHandCalculationStatus, 'NOT_RUN');
 assert.equal(derived.methodAuthorization.engineeringUseAuthorized, false);
 
+assert.equal(retained.wrcObservedAudit.status, 'BLOCKED');
+assert.deepEqual(retained.wrcObservedAudit.blockerCodes, retained.wrcAudit.expectedBlockerCodes);
+assert.deepEqual(retained.wrcObservedAudit.failureCodes, []);
+assert.deepEqual(retained.wrcObservedAudit.metrics, retained.wrcAudit.metrics);
+assert.deepEqual(retained.wrcObservedAudit.unresolvedJsonPaths, retained.wrcAudit.unresolvedJsonPaths);
+assert.deepEqual(retained.wrcObservedAudit.openIssues, retained.wrcAudit.openIssues);
+
 const changedMetric = clone(retained);
 changedMetric.wrcAudit.metrics.unresolvedJsonPathCount = 20;
-assert.notDeepEqual(
-  deriveEmp1CQualificationEvidence(changedMetric),
-  EMP1_C_RETAINED_QUALIFICATION_EVIDENCE,
-  'Changing retained WRC audit evidence must make the generated artifact stale',
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(changedMetric),
+  /EMP1_C_WRC_FROZEN_AUDIT_OBSERVED_DRIFT/u,
+  'A hand-edited frozen WRC audit must not change runtime qualification without observed retained-byte evidence',
+);
+
+const forgedManifest = clone(retained);
+forgedManifest.wrcManifest.artifacts.find((item) => item.id === 'DATASET').gitBlobSha1 = '0'.repeat(40);
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(forgedManifest),
+  /EMP1_WRC_MANIFEST_ARTIFACT_PIN_MISMATCH:DATASET:gitBlobSha1/u,
+  'The extraction manifest cannot move the frozen blob baseline',
 );
 
 const precheckEscalation = clone(retained);
@@ -84,14 +110,21 @@ assert.throws(
 );
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-qualification-evidence-check/v1',
+  schema: 'emp1-c-qualification-evidence-check/v2',
   status: 'PASS',
   derivationMode: derived.derivation.mode,
   generatedArtifactExact: true,
+  retainedAuditObservedMatch: derived.derivation.retainedAuditObservedMatch,
+  retainedExtractionPinVerified: derived.derivation.retainedExtractionPinVerified,
   wrcDataset: {
     unresolvedJsonPathCount: derived.wrcDataset.unresolvedJsonPathCount,
     openIssueCount: derived.wrcDataset.openIssueCount,
-    coefficientCoverage: `${derived.wrcDataset.numericCoefficientRows}/${derived.wrcDataset.coefficientInventoryRows}`,
+    dimensionalContractStatus: derived.wrcDataset.dimensionalContractStatus,
+    dimensionalViolationIds: derived.wrcDataset.dimensionalViolationIds,
+    responseCurveRows: derived.wrcDataset.coefficientCurveRows,
+    namedScalarCoefficientCoverage: `${derived.wrcDataset.numericScalarCoefficientCount}/${derived.wrcDataset.requiredScalarCoefficientCount}`,
+    coefficientSchema: derived.wrcDataset.coefficientSchema,
+    independentVariableRepresentation: derived.wrcDataset.independentVariableRepresentation,
     sourceCustodyQualified: derived.wrcDataset.sourceCustodyQualified,
   },
   signConflicts: derived.signArbitration.openConflicts,

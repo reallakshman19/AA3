@@ -1,3 +1,8 @@
+import {
+  EMP1_B_SOURCE_CUSTODY_STATES,
+  classifyEmp1BSourceCustody,
+} from './emp1-a-to-b-refresh.js';
+
 export const EMP1_PUBLIC_PRODUCT = Object.freeze({
   productId: 'EMP.1',
   label: 'Local Attachment Analytical Assessment',
@@ -29,8 +34,15 @@ export function emp1StepForBackingStage(stageId) {
 
 export function buildEmp1ProductProjection(state) {
   const stages = state?.stages ?? {};
-  const a = projectExecutableStep(EMP1_STEPS[0], stages['LAFEA.1']);
-  const b = projectExecutableStep(EMP1_STEPS[1], stages['LAFEA.2']);
+  const aStage = stages['LAFEA.1'];
+  const bStage = stages['LAFEA.2'];
+  const a = projectExecutableStep(EMP1_STEPS[0], aStage);
+  const bCustody = classifyEmp1BSourceCustody({
+    aDocument: aStage?.document,
+    aExecution: aStage?.execution,
+    bDocument: bStage?.document,
+  });
+  const b = projectBStep(projectExecutableStep(EMP1_STEPS[1], bStage), bCustody);
   const c = Object.freeze({
     ...EMP1_STEPS[2],
     state: 'BLOCKED',
@@ -39,9 +51,6 @@ export function buildEmp1ProductProjection(state) {
     runAuthorized: false,
     blockers: EMP1_LOCAL_CORRELATION_BLOCKERS,
   });
-  const bSourceEvidenceState = stages['LAFEA.2']?.document?.sourceEvidence?.foundationResult
-    ? 'RETAINED_A_EVIDENCE_SNAPSHOT'
-    : 'MISSING_A_EVIDENCE_SNAPSHOT';
   return Object.freeze({
     schema: 'emp1-product-projection/v1',
     product: EMP1_PUBLIC_PRODUCT,
@@ -50,11 +59,12 @@ export function buildEmp1ProductProjection(state) {
     state: 'BLOCKED_LOCAL_CORRELATION',
     steps: Object.freeze([a, b, c]),
     custody: Object.freeze({
-      bSourceEvidenceState,
+      bSourceEvidenceState: bCustody.state,
       automaticAToBSynchronization: false,
-      userAction: bSourceEvidenceState === 'RETAINED_A_EVIDENCE_SNAPSHOT'
-        ? 'B is based on retained A evidence. If A changes, refresh/re-import B evidence before relying on B.'
-        : 'Load or create B from a source-qualified A evidence package before relying on B.',
+      governedAToBRefresh: true,
+      canRefreshBFromCurrentA: bCustody.canRefresh,
+      refreshBlockerCode: bCustody.blockerCode,
+      userAction: custodyMessage(bCustody),
     }),
     qualificationBoundary: Object.freeze({
       emp1AProductionAuthority: 'RETAINED_EXISTING_ENGINE',
@@ -78,4 +88,30 @@ function projectExecutableStep(definition, stage) {
     runAuthorized,
     blockers: Object.freeze([]),
   });
+}
+
+function projectBStep(step, custody) {
+  if (!step.documentLoaded || custody.state === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT) return step;
+  const state = custody.state === EMP1_B_SOURCE_CUSTODY_STATES.A_NOT_QUALIFIED
+    ? 'AWAITING_CURRENT_A'
+    : custody.state === EMP1_B_SOURCE_CUSTODY_STATES.MISSING
+      ? 'A_EVIDENCE_REQUIRED'
+      : 'STALE_A_EVIDENCE';
+  return Object.freeze({ ...step, state, runAuthorized: false });
+}
+
+function custodyMessage(custody) {
+  if (custody.state === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT) {
+    return 'B is bound to the current qualified A model/result. B-owned screening cases, factors and evaluation locations remain independently governed.';
+  }
+  if (custody.state === EMP1_B_SOURCE_CUSTODY_STATES.STALE_REFRESH_AVAILABLE) {
+    return 'B retains different A evidence. Refresh B from current A before relying on the unified EMP.1 chain; B-owned screening inputs will be preserved.';
+  }
+  if (custody.state === EMP1_B_SOURCE_CUSTODY_STATES.STALE_REFRESH_BLOCKED) {
+    return `B retains different A evidence, but refresh is blocked (${custody.blockerCode}). Resolve the incompatible B reference instead of substituting data.`;
+  }
+  if (custody.state === EMP1_B_SOURCE_CUSTODY_STATES.A_NOT_QUALIFIED) {
+    return 'Run the current EMP.1.A source successfully before refreshing or relying on B as the next step in this EMP.1 assessment.';
+  }
+  return 'Load an EMP.1.B request that defines B-owned screening cases and evaluation locations; EMP.1 will not invent those inputs.';
 }

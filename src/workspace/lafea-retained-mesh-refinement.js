@@ -1,10 +1,7 @@
 import { smoothInteriorPoints } from '../core/lafea-meshing/mesh-smoothing.js';
 import { edgeKey, lawsonFlip, upgradeToT6 } from '../core/lafea-meshing/constrained-delaunay-t6.js';
 import { insertInteriorPoint } from '../core/lafea-meshing/interior-refinement-t6.js';
-import {
-  buildLafea3RetainedRefinementGrading,
-  closeLafea3RetainedRefinementAdjacency,
-} from './lafea-retained-mesh-refinement-grading.js';
+import { buildLafea3RetainedRefinementGrading } from './lafea-retained-mesh-refinement-grading.js';
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import {
   LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
@@ -255,7 +252,8 @@ function refineParentMesh(parentMesh, plan, adjacentSizeRatioMax) {
   // Graded insertion leaves the final transition cleanup to the same
   // quality-guarded smoothing used by the parent mesher. Every constrained
   // boundary node remains pinned, so retained geometry and boundary identity
-  // cannot move while the transition relaxes.
+  // cannot move while the transition relaxes. The v2 evidence constructor is
+  // the final authority for the actual <= adjacentSizeRatioMax topology.
   const fixedIndices = new Set();
   for (const key of constraints) {
     const [left, right] = key.split(':').map(Number);
@@ -267,19 +265,6 @@ function refineParentMesh(parentMesh, plan, adjacentSizeRatioMax) {
     smoothInteriorPoints(points, working, fixedIndices);
     restored = lawsonFlip(points, working, constraints);
   }
-
-  // Planned grading is not accepted as proof. Close any residual violation on
-  // the actual post-smoothing topology using the exact same characteristic-
-  // length definition and limit enforced by the v2 custody gate. Boundary
-  // constraints stay pinned; only interior coarse owners are subdivided.
-  const closure = closeLafea3RetainedRefinementAdjacency({
-    points,
-    triangles: restored,
-    constrainedEdgeKeys: constraints,
-    maximumAdjacentRatio: adjacentSizeRatioMax,
-  });
-  restored = closure.triangles;
-  localPointCount += closure.insertionCount;
 
   const coreElements = plan.elementFamily === 'T6'
     ? upgradeToT6(points, [], restored, triangulation.boundaryMidpoints)

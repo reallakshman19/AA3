@@ -1,0 +1,36 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1259
+mission: Qualify prospectively frozen B02D V2 mesh and response without replacing V1 prematurely
+workstream: LAFEA_B02D_V2_QUALIFICATION
+branch: agent/lafea-b02d-v2-clean-qualification-20260819
+base_pr: 1258
+base_branch: agent/lafea-b01-nullspace-qualification-20260819
+source_recovery_pr: 1254
+initial_production_head: 7e057ee2ca3db96209c8a7633e3c1d9c5b6ed348
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: IN_PROGRESS
+report_path: agents/PR1259_workreport.md
+current_stage: DIAGNOSTIC_RESPONSE_REPLAY
+blocker: Exact clean-branch V2 response workflow is not available without workflow authority; diagnostic replay is running in non-promotable PR1254
+highest_risk: V2 numerical qualification must not silently replace V1 or use response results to alter the prospectively frozen mesh definition
+dependencies:
+  - relation: PREREQUISITE
+    pr: 1258
+    scope: B01 numerical qualification
+  - relation: DIAGNOSTIC_SOURCE_ONLY
+    pr: 1254
+    scope: existing temporary workflows for V2 response replay; never promotion
+excluded_authority:
+  - B01_NUMERICAL_CHANGES
+  - MESH_QUALITY_THRESHOLD_CHANGES
+  - RESPONSE_ACCEPTANCE_THRESHOLD_CHANGES
+  - RELEASE_AUTHORITY
+  - LIFECYCLE_AUTHORITY
+  - TRUST_ROOT
+  - WORKFLOW_MUTATION
+merge_authority: NOT_GRANTED
+exact_next_action: Observe PR1254 diagnostic V2 replay with PR1258 candidate bytes, then add clean V2 response qualification code without modifying workflows

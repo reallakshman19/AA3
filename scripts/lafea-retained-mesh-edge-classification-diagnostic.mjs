@@ -65,16 +65,13 @@ const injection = String.raw`
       });
     }
     violations.sort((a, b) => b.ratio - a.ratio || a.sharedEdgeKey.localeCompare(b.sharedEdgeKey));
-    const diagnostic = {
+    console.log('__LAFEA_EDGE_DIAGNOSTIC__' + JSON.stringify({
       diagnostic: 'LAFEA3_RETAINED_REFINEMENT_VIOLATING_COARSE_EDGE_CLASSIFICATION',
       adjacentSizeRatioMax,
       violationCount: violations.length,
       allCoarseLongestEdgesInterior: violations.every((row) => !row.coarseLongestEdge.constrained),
       violations,
-    };
-    mkdirSync('test-results', { recursive: true });
-    writeFileSync('test-results/lafea-retained-refinement-edge-classification.json', JSON.stringify(diagnostic, null, 2) + '\n', 'utf8');
-    console.log(JSON.stringify(diagnostic, null, 2));
+    }));
   }
 `;
 
@@ -83,10 +80,18 @@ try {
   const run = spawnSync(process.execPath, ['scripts/lafea-retained-mesh-refinement-check.mjs'], {
     cwd: process.cwd(), encoding: 'utf8',
   });
-  if (!readFileSync('test-results/lafea-retained-refinement-edge-classification.json', 'utf8')) {
-    throw new Error('DIAGNOSTIC_EDGE_CLASSIFICATION_NOT_WRITTEN');
-  }
-  if (!(`${run.stdout ?? ''}\n${run.stderr ?? ''}`).includes('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK')) {
+  const combined = `${run.stdout ?? ''}\n${run.stderr ?? ''}`;
+  const taggedLine = combined.split(/\r?\n/u).find((line) => line.startsWith('__LAFEA_EDGE_DIAGNOSTIC__'));
+  if (!taggedLine) throw new Error('DIAGNOSTIC_EDGE_CLASSIFICATION_NOT_EMITTED');
+  const diagnostic = JSON.parse(taggedLine.slice('__LAFEA_EDGE_DIAGNOSTIC__'.length));
+  mkdirSync('test-results', { recursive: true });
+  writeFileSync(
+    'test-results/lafea-retained-refinement-edge-classification.json',
+    `${JSON.stringify(diagnostic, null, 2)}\n`,
+    'utf8',
+  );
+  console.log(JSON.stringify(diagnostic, null, 2));
+  if (!combined.includes('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK')) {
     throw new Error('DIAGNOSTIC_EXPECTED_ADJACENCY_BLOCK_NOT_OBSERVED');
   }
 } finally {

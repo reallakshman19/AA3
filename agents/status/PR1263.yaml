@@ -4,7 +4,7 @@ pr_or_wip: PR1263
 mission: EMP.1 source custody, WRC dataset qualification, CAUx benchmark qualification, unified analytical assessment
 workstream: EMP1
 branch: agent/emp1-core-scaffold-issue1261
-pr_head: 40ea46937a0f91e4162584b6a608442b4cd84fd4
+pr_head: 5b252ef3c8af0a5c4df95e1ab49c34e1575a3068
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,16 +12,17 @@ agent_state: ACTIVE
 pr_recovery_state: RECOVERABLE
 handover_readiness: READY
 report_path: agents/PR1263_workreport.md
-report_basis_head: 133b5d6bf52af294c3840433aad69920362938ae
+report_basis_head: 0999ba22ace2104b02524c70b60e20fb2bdf597c
 appendix_a_status: BLOCKED_WRC_DATASET_QUALIFICATION_AND_CAUX_PAGE_EXTRACTION
-grounding_epoch: GE-006
+grounding_epoch: GE-007
 current_stage: WRC_DATASET_AND_CAUX_BENCHMARK_QUALIFICATION
-blocker: exact CAUx source identity is PASS but binary pp24-31 content is not observable through current non-mutating transports; WRC extraction has 21 unresolved JSON paths, 7 open issues, 0 numeric coefficients and 120 unresolved coefficient rows
-highest_risk: substituting supplemental Hexagon data, unresolved WRC data, or future production output for exact CAUx benchmark authority
+blocker: exact CAUx pp24-31 binary content is not observable through current non-mutating transports; WRC extraction has missing coefficients plus an OPEN spherical M1/M2 convention conflict requiring pinned-WRC arbitration
+highest_risk: benchmark-fitting WRC signs or substituting supplemental/product-manual values for exact WRC/CAUx authority
 dependencies:
   - issue: 1261
   - existing_wrc_docs: main@67317dc9cb47de8897fa7952b86107ab91b1f75c/docs
   - benchmark_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/CAUx 2017 - WRC01f.pdf
+  - wrc_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/WRC537_2013.pdf
   - source_repo_current_main: 13e7c0e653e6d61ef2f2217068e1010bd5a53bf6
   - main_reconciliation: required_before_production_integration
 validation_state:
@@ -44,7 +45,12 @@ validation_state:
   independent_caux_handcalc: NOT_RUN
   supplemental_hexagon_wrc_precheck: PASS
   supplemental_hexagon_precheck_may_satisfy_caux_a4: false
+  spherical_v1_crosscheck: CONSISTENT
+  spherical_v2_crosscheck: CONSISTENT
+  spherical_m1_crosscheck: CONFLICT
+  spherical_m2_crosscheck: CONFLICT
+  wrc_sign_arbitration: BLOCKED_PENDING_PINNED_WRC_PDF
   production_emp1: NOT_RUN
   remote_ci: NOT_RUN
-exact_next_action: obtain observable exact CAUx bytes without workflow/source mutation; freeze SHA256 and pp24-31 benchmark; independently reproduce before any production EMP.1.C observation
+exact_next_action: observe exact pinned WRC and CAUx bytes; arbitrate M1/M2 from WRC source and freeze CAUx pp24-31 benchmark independently before production EMP.1.C
 last_updated: 2026-08-19T10:33:00+04:00

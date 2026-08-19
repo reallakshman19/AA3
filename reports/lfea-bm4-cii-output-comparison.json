@@ -1,0 +1,4985 @@
+{
+  "schema": "lfea-bm4-cii-output-comparison/v1",
+  "cases": {
+    "IXP-WP": {
+      "ciiLoadCase": "CASE 17 (SUS) W+P1",
+      "executionStatus": "BLOCKED",
+      "diagnostics": {
+        "residual": {
+          "value": 0.000005802881237778658,
+          "limit": 1e-9,
+          "status": "BLOCK"
+        },
+        "forceEquilibrium": {
+          "value": 1.0365785555055234e-8,
+          "status": "PASS"
+        },
+        "momentEquilibrium": {
+          "value": 6.710607299877642e-12,
+          "status": "PASS"
+        },
+        "energyBalance": {
+          "value": 4.041907523430299e-16,
+          "status": "PASS"
+        },
+        "conditionEstimate": {
+          "value": 5514443603309.131,
+          "status": "PASS"
+        }
+      },
+      "restraint": {
+        "matched": [
+          {
+            "nodeId": "20030",
+            "ciiTypes": "Rigid +Y + Rigid GUI w/gap + Rigid LIM",
+            "UX": {
+              "ours": -250.57401010915123,
+              "cii": -2086.362926,
+              "difference": 1835.7889158908486,
+              "percentDifference": 87.98991263760833
+            },
+            "UY": {
+              "ours": 8228.401913630376,
+              "cii": 7150.768555,
+              "difference": 1077.6333586303763,
+              "percentDifference": 15.07017532929195
+            },
+            "UZ": {
+              "ours": -45.6765375705515,
+              "cii": 65.309258,
+              "difference": -110.9857955705515,
+              "percentDifference": -169.93884017263144
+            }
+          },
+          {
+            "nodeId": "20090",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": -515.3954736167716,
+              "cii": 0,
+              "difference": -515.3954736167716,
+              "percentDifference": null
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20170",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 1200.343872,
+              "difference": -1200.343872,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 8152.1968925345345,
+              "cii": 9200.027344,
+              "difference": -1047.8304514654656,
+              "percentDifference": -11.38942757761292
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 2320.567871,
+              "difference": -2320.567871,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "20250",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": 0,
+              "cii": 1322.056274,
+              "difference": -1322.056274,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 6528.524701017836,
+              "cii": 7016.41748,
+              "difference": -487.8927789821637,
+              "percentDifference": -6.953588214681941
+            },
+            "UZ": {
+              "ours": 48.329409460714785,
+              "cii": -2457.98781,
+              "difference": 2506.317219460715,
+              "percentDifference": 101.96621843542482
+            }
+          },
+          {
+            "nodeId": "20300",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 440.23511862162366,
+              "cii": 869.483948,
+              "difference": -429.2488293783764,
+              "percentDifference": -49.368229323352196
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20350",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": -810.692932,
+              "difference": 810.692932,
+              "percentDifference": 100
+            },
+            "UY": {
+              "ours": 3561.2057513605196,
+              "cii": 3077.177002,
+              "difference": 484.02874936051967,
+              "percentDifference": 15.72963625576062
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -389.680695,
+              "difference": 389.680695,
+              "percentDifference": 100
+            }
+          },
+          {
+            "nodeId": "20390",
+            "ciiTypes": "Rigid +Y + Rigid GUI + Rigid LIM w/gap",
+            "UX": {
+              "ours": 13.510728287690338,
+              "cii": 36.209454,
+              "difference": -22.698725712309663,
+              "percentDifference": -62.687290761991775
+            },
+            "UY": {
+              "ours": 3397.835462095313,
+              "cii": 3434.493408,
+              "difference": -36.65794590468704,
+              "percentDifference": -1.067346521012366
+            },
+            "UZ": {
+              "ours": 5.1837301632657375,
+              "cii": -21.755362,
+              "difference": 26.93909216326574,
+              "percentDifference": 123.82736799905116
+            }
+          },
+          {
+            "nodeId": "20440",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 443.259705,
+              "difference": -443.259705,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 2025.2965881949137,
+              "cii": 2023.75647,
+              "difference": 1.5401181949137026,
+              "percentDifference": 0.07610195286558874
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 375.855469,
+              "difference": -375.855469,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "20520",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 585.940918,
+              "difference": -585.940918,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 2414.7331651967957,
+              "cii": 2327.021729,
+              "difference": 87.7114361967956,
+              "percentDifference": 3.769257291571926
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 418.732422,
+              "difference": -418.732422,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "20550",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": 0,
+              "cii": 170.529861,
+              "difference": -170.529861,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 2743.23990576376,
+              "cii": 2777.432373,
+              "difference": -34.19246723624019,
+              "percentDifference": -1.231081900269915
+            },
+            "UZ": {
+              "ours": -40.87810254955336,
+              "cii": 67.176506,
+              "difference": -108.05460854955336,
+              "percentDifference": -160.8517843270285
+            }
+          },
+          {
+            "nodeId": "20580",
+            "ciiTypes": "Rigid +Y + Rigid GUI",
+            "UX": {
+              "ours": 1.7284413902745897,
+              "cii": -170.997269,
+              "difference": 172.72571039027457,
+              "percentDifference": 101.0108005820108
+            },
+            "UY": {
+              "ours": 2234.3085670092364,
+              "cii": 2197.641113,
+              "difference": 36.66745400923628,
+              "percentDifference": 1.6684914471399532
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -655.530579,
+              "difference": 655.530579,
+              "percentDifference": 100
+            }
+          },
+          {
+            "nodeId": "20640",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 2597.01014601495,
+              "cii": 2443.731445,
+              "difference": 153.27870101495,
+              "percentDifference": 6.2723218350595
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20710",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": -26.69267036221985,
+              "cii": -352.966034,
+              "difference": 326.2733636377801,
+              "percentDifference": 92.43760934735724
+            },
+            "UY": {
+              "ours": 1814.8680546802666,
+              "cii": 1882.692017,
+              "difference": -67.82396231973348,
+              "percentDifference": -3.602499065556588
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -626.921692,
+              "difference": 626.921692,
+              "percentDifference": 100
+            }
+          },
+          {
+            "nodeId": "21470",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 596.6325580681486,
+              "cii": 0,
+              "difference": 596.6325580681486,
+              "percentDifference": null
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21480",
+            "ciiTypes": "Rigid +Y + Rigid GUI w/gap + Rigid LIM w/gap",
+            "UX": {
+              "ours": 72.42893104934652,
+              "cii": -705.728699,
+              "difference": 778.1576300493465,
+              "percentDifference": 110.26299924489062
+            },
+            "UY": {
+              "ours": 2877.3152847496544,
+              "cii": 2745.905762,
+              "difference": 131.40952274965457,
+              "percentDifference": 4.785653046371902
+            },
+            "UZ": {
+              "ours": -5.895281715180431,
+              "cii": 15.827228,
+              "difference": -21.72250971518043,
+              "percentDifference": -137.2477209223272
+            }
+          },
+          {
+            "nodeId": "21610",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": -62.513618,
+              "difference": 62.513618,
+              "percentDifference": 100
+            },
+            "UY": {
+              "ours": 2680.160379664525,
+              "cii": 1464.072632,
+              "difference": 1216.0877476645248,
+              "percentDifference": 83.06198210967752
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 442.058228,
+              "difference": -442.058228,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "21640",
+            "ciiTypes": "Rigid +Y + Rigid LIM w/gap",
+            "UX": {
+              "ours": 166.71994120076272,
+              "cii": 0,
+              "difference": 166.71994120076272,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 4777.840341097473,
+              "cii": 4748.837891,
+              "difference": 29.00245009747323,
+              "percentDifference": 0.6107273139906225
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21740",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 367.935699,
+              "difference": -367.935699,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 4607.942635864161,
+              "cii": 4472.520508,
+              "difference": 135.42212786416167,
+              "percentDifference": 3.027870473079599
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -1172.942261,
+              "difference": 1172.942261,
+              "percentDifference": 100
+            }
+          },
+          {
+            "nodeId": "21800",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 91.554161,
+              "difference": -91.554161,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 3305.8985550310135,
+              "cii": 3415.038086,
+              "difference": -109.13953096898649,
+              "percentDifference": -3.195851062874105
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -954.241882,
+              "difference": 954.241882,
+              "percentDifference": 100
+            }
+          },
+          {
+            "nodeId": "21860",
+            "ciiTypes": "Rigid +Y + Rigid GUI",
+            "UX": {
+              "ours": 28.221908970600794,
+              "cii": -20.855663,
+              "difference": 49.07757197060079,
+              "percentDifference": 235.3201237026164
+            },
+            "UY": {
+              "ours": 7791.311025660173,
+              "cii": 7762.63623,
+              "difference": 28.674795660173004,
+              "percentDifference": 0.3693950716040832
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -2333.230713,
+              "difference": 2333.230713,
+              "percentDifference": 100
+            }
+          },
+          {
+            "nodeId": "21930",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": 0,
+              "cii": -4.597875,
+              "difference": 4.597875,
+              "percentDifference": 100
+            },
+            "UY": {
+              "ours": 4591.678090374751,
+              "cii": 4524.349609,
+              "difference": 67.32848137475139,
+              "percentDifference": 1.488136134325675
+            },
+            "UZ": {
+              "ours": 38.62457310436449,
+              "cii": 1926.725194,
+              "difference": -1888.1006208956355,
+              "percentDifference": -97.99532526876978
+            }
+          },
+          {
+            "nodeId": "22020",
+            "ciiTypes": "Rigid +Y + Rigid GUI",
+            "UX": {
+              "ours": -5.9597939465331935,
+              "cii": -2.325093,
+              "difference": -3.6347009465331936,
+              "percentDifference": -156.32497050798372
+            },
+            "UY": {
+              "ours": 1264.8576616841883,
+              "cii": 1311.467773,
+              "difference": -46.610111315811764,
+              "percentDifference": -3.5540416833263477
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 396.076782,
+              "difference": -396.076782,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "22070",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": -265.972687,
+              "difference": 265.972687,
+              "percentDifference": 100
+            },
+            "UY": {
+              "ours": 1645.8332957086072,
+              "cii": 1714.085327,
+              "difference": -68.25203129139277,
+              "percentDifference": -3.9818339388534283
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 382.285309,
+              "difference": -382.285309,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "22120",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": -255.794647,
+              "difference": 255.794647,
+              "percentDifference": 100
+            },
+            "UY": {
+              "ours": 5519.607231559105,
+              "cii": 5489.517578,
+              "difference": 30.08965355910459,
+              "percentDifference": 0.5481292869831228
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 1627.855225,
+              "difference": -1627.855225,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "22140",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": 0.48651488380571833,
+              "cii": -185.279251,
+              "difference": 185.7657658838057,
+              "percentDifference": 100.26258465596113
+            },
+            "UY": {
+              "ours": 2356.5801522525558,
+              "cii": 2339.111816,
+              "difference": 17.468336252555673,
+              "percentDifference": 0.7467935535645925
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 614.017639,
+              "difference": -614.017639,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "22220",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 239.362976,
+              "difference": -239.362976,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 1433.5927939632988,
+              "cii": 1427.092529,
+              "difference": 6.500264963298832,
+              "percentDifference": 0.4554900842942352
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -351.330505,
+              "difference": 351.330505,
+              "percentDifference": 100
+            }
+          },
+          {
+            "nodeId": "22260",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 414.203522,
+              "difference": -414.203522,
+              "percentDifference": -100
+            },
+            "UY": {
+              "ours": 1847.6317653896988,
+              "cii": 1790.733276,
+              "difference": 56.89848938969885,
+              "percentDifference": 3.177384937906233
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -328.102478,
+              "difference": 328.102478,
+              "percentDifference": 100
+            }
+          },
+          {
+            "nodeId": "22310",
+            "ciiTypes": "Rigid +Y + Rigid LIM w/gap",
+            "UX": {
+              "ours": 0,
+              "cii": -333.214478,
+              "difference": 333.214478,
+              "percentDifference": 100
+            },
+            "UY": {
+              "ours": 2317.869015142927,
+              "cii": 2326.476074,
+              "difference": -8.607058857073298,
+              "percentDifference": -0.36996120240664454
+            },
+            "UZ": {
+              "ours": 0.2393892005418271,
+              "cii": 103.331062,
+              "difference": -103.09167279945818,
+              "percentDifference": -99.76832793943237
+            }
+          },
+          {
+            "nodeId": "22370",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": -448.531494,
+              "difference": 448.531494,
+              "percentDifference": 100
+            },
+            "UY": {
+              "ours": 1886.375779039913,
+              "cii": 1816.85791,
+              "difference": 69.51786903991297,
+              "percentDifference": 3.8262688929764996
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 352.707062,
+              "difference": -352.707062,
+              "percentDifference": -100
+            }
+          },
+          {
+            "nodeId": "22490",
+            "ciiTypes": "Rigid ANC",
+            "UX": {
+              "ours": 0.13000876546021292,
+              "cii": 834.436279,
+              "difference": -834.3062702345399,
+              "percentDifference": -99.9844195693869
+            },
+            "UY": {
+              "ours": 1748.1647113579027,
+              "cii": 1763.087891,
+              "difference": -14.923179642097239,
+              "percentDifference": -0.8464228991801998
+            },
+            "UZ": {
+              "ours": 0.07428732115437153,
+              "cii": 183.198593,
+              "difference": -183.12430567884562,
+              "percentDifference": -99.95944984077778
+            }
+          }
+        ],
+        "unmatchedCiiNodes": [],
+        "unmatchedOurNodes": [],
+        "totalUY": {
+          "ours": 94871.75206911148,
+          "cii": 93512.43377600002,
+          "percentDifference": 1.4536230512057597
+        },
+        "unilateralTensionNodes": [
+          {
+            "nodeId": "20090",
+            "ciiTypes": "Rigid +Y",
+            "ourUY": -515.3954736167716,
+            "ciiUY": 0
+          }
+        ]
+      },
+      "displacement": {
+        "matched": [
+          {
+            "nodeId": "20010",
+            "UX": {
+              "ours": 0,
+              "cii": 0.136268,
+              "difference": -0.136268
+            },
+            "UY": {
+              "ours": -0.5409675525336508,
+              "cii": -0.815555,
+              "difference": 0.2745874474663492
+            },
+            "UZ": {
+              "ours": -0.017602803857867305,
+              "cii": 0.057868,
+              "difference": -0.07547080385786731
+            }
+          },
+          {
+            "nodeId": "20015",
+            "UX": {
+              "ours": 0,
+              "cii": 0.13623,
+              "difference": -0.13623
+            },
+            "UY": {
+              "ours": -0.5408058995042802,
+              "cii": -0.815327,
+              "difference": 0.27452110049571987
+            },
+            "UZ": {
+              "ours": -0.017598388888527702,
+              "cii": 0.057853,
+              "difference": -0.0754513888885277
+            }
+          },
+          {
+            "nodeId": "20020",
+            "UX": {
+              "ours": 0,
+              "cii": 0.135391,
+              "difference": -0.135391
+            },
+            "UY": {
+              "ours": -0.481170954819369,
+              "cii": -0.731094,
+              "difference": 0.24992304518063102
+            },
+            "UZ": {
+              "ours": -0.01596966703768115,
+              "cii": 0.052464,
+              "difference": -0.06843366703768114
+            }
+          },
+          {
+            "nodeId": "20030",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -0.000373,
+              "difference": 0.000373
+            }
+          },
+          {
+            "nodeId": "20090",
+            "UX": {
+              "ours": 0.00022126863153184808,
+              "cii": -0.18531,
+              "difference": 0.18553126863153185
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0.193868,
+              "difference": -0.193868
+            },
+            "UZ": {
+              "ours": 0.01639264162443677,
+              "cii": -0.065584,
+              "difference": 0.08197664162443677
+            }
+          },
+          {
+            "nodeId": "20120",
+            "UX": {
+              "ours": 0.0003190482934659219,
+              "cii": -0.220881,
+              "difference": 0.22120004829346593
+            },
+            "UY": {
+              "ours": -0.018894632835083695,
+              "cii": 0.092243,
+              "difference": -0.1111376328350837
+            },
+            "UZ": {
+              "ours": 0.014795980213624795,
+              "cii": -0.086753,
+              "difference": 0.1015489802136248
+            }
+          },
+          {
+            "nodeId": "20130",
+            "UX": {
+              "ours": 0.042078617718093646,
+              "cii": -0.16003,
+              "difference": 0.20210861771809366
+            },
+            "UY": {
+              "ours": -0.017483213133565163,
+              "cii": 0.018418,
+              "difference": -0.03590121313356516
+            },
+            "UZ": {
+              "ours": 0.005045839928069979,
+              "cii": -0.101735,
+              "difference": 0.10678083992806998
+            }
+          },
+          {
+            "nodeId": "20140",
+            "UX": {
+              "ours": 0.04794663264492191,
+              "cii": -0.145066,
+              "difference": 0.1930126326449219
+            },
+            "UY": {
+              "ours": -0.017277309734437706,
+              "cii": 0.007946,
+              "difference": -0.025223309734437704
+            },
+            "UZ": {
+              "ours": 0.00380070627730487,
+              "cii": -0.103594,
+              "difference": 0.10739470627730488
+            }
+          },
+          {
+            "nodeId": "20150",
+            "UX": {
+              "ours": 0.055997346072492106,
+              "cii": -0.124081,
+              "difference": 0.1800783460724921
+            },
+            "UY": {
+              "ours": -0.016985606149858293,
+              "cii": -0.006,
+              "difference": -0.010985606149858293
+            },
+            "UZ": {
+              "ours": 0.0020349414974399935,
+              "cii": -0.105921,
+              "difference": 0.10795594149743999
+            }
+          },
+          {
+            "nodeId": "20160",
+            "UX": {
+              "ours": 0.06489547766305408,
+              "cii": -0.101315,
+              "difference": 0.16621047766305408
+            },
+            "UY": {
+              "ours": -0.016648531380608175,
+              "cii": -0.012115,
+              "difference": -0.004533531380608174
+            },
+            "UZ": {
+              "ours": -0.000023596841772254683,
+              "cii": -0.108025,
+              "difference": 0.10800140315822775
+            }
+          },
+          {
+            "nodeId": "20170",
+            "UX": {
+              "ours": 0.09877334562552247,
+              "cii": -0.094678,
+              "difference": 0.19345134562552246
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.000023596841776903793,
+              "cii": -0.183036,
+              "difference": 0.1830124031582231
+            }
+          },
+          {
+            "nodeId": "20220",
+            "UX": {
+              "ours": 0.14432561399430954,
+              "cii": -0.067423,
+              "difference": 0.21174861399430955
+            },
+            "UY": {
+              "ours": -0.06024939319502527,
+              "cii": -0.097017,
+              "difference": 0.036767606804974734
+            },
+            "UZ": {
+              "ours": -0.000026406120119711464,
+              "cii": -0.258314,
+              "difference": 0.25828759387988026
+            }
+          },
+          {
+            "nodeId": "20230",
+            "UX": {
+              "ours": 0.15407684676628022,
+              "cii": -0.060305,
+              "difference": 0.21438184676628022
+            },
+            "UY": {
+              "ours": -0.07550093869513798,
+              "cii": -0.119845,
+              "difference": 0.044344061304862015
+            },
+            "UZ": {
+              "ours": 0.002270283535697326,
+              "cii": -0.268938,
+              "difference": 0.2712082835356973
+            }
+          },
+          {
+            "nodeId": "20240",
+            "UX": {
+              "ours": 0.053499106815390614,
+              "cii": -0.079826,
+              "difference": 0.13332510681539061
+            },
+            "UY": {
+              "ours": -0.01393621673343651,
+              "cii": -0.008854,
+              "difference": -0.00508221673343651
+            },
+            "UZ": {
+              "ours": -0.0000151495211767663,
+              "cii": -0.069354,
+              "difference": 0.06933885047882324
+            }
+          },
+          {
+            "nodeId": "20250",
+            "UX": {
+              "ours": 0.03941550789827304,
+              "cii": -0.007549,
+              "difference": 0.04696450789827304
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "20280",
+            "UX": {
+              "ours": 0.034903768799338125,
+              "cii": 0.031834,
+              "difference": 0.003069768799338124
+            },
+            "UY": {
+              "ours": -0.00983961543789726,
+              "cii": -0.020226,
+              "difference": 0.010386384562102741
+            },
+            "UZ": {
+              "ours": -4.069695621960981e-7,
+              "cii": 0.032474,
+              "difference": -0.0324744069695622
+            }
+          },
+          {
+            "nodeId": "20290",
+            "UX": {
+              "ours": 0.03519207048218261,
+              "cii": 0.056621,
+              "difference": -0.021428929517817386
+            },
+            "UY": {
+              "ours": -0.016119866204958866,
+              "cii": -0.035353,
+              "difference": 0.019233133795041137
+            },
+            "UZ": {
+              "ours": -0.0018061605957112325,
+              "cii": 0.042047,
+              "difference": -0.04385316059571123
+            }
+          },
+          {
+            "nodeId": "20295",
+            "UX": {
+              "ours": 0.03425222418823733,
+              "cii": 0.072498,
+              "difference": -0.038245775811762674
+            },
+            "UY": {
+              "ours": -0.02231390134126967,
+              "cii": -0.046738,
+              "difference": 0.024424098658730332
+            },
+            "UZ": {
+              "ours": -0.001806504367005989,
+              "cii": 0.052521,
+              "difference": -0.05432750436700599
+            }
+          },
+          {
+            "nodeId": "20300",
+            "UX": {
+              "ours": 0.04531962345213036,
+              "cii": 0.564499,
+              "difference": -0.5191793765478696
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.001800642589778979,
+              "cii": 0.19847,
+              "difference": -0.20027064258977897
+            }
+          },
+          {
+            "nodeId": "20330",
+            "UX": {
+              "ours": 0.0645562503203829,
+              "cii": 0.805345,
+              "difference": -0.740788749679617
+            },
+            "UY": {
+              "ours": 0.16474020100827091,
+              "cii": 0.204119,
+              "difference": -0.03937879899172908
+            },
+            "UZ": {
+              "ours": -0.001797277876709386,
+              "cii": 0.249299,
+              "difference": -0.2510962778767094
+            }
+          },
+          {
+            "nodeId": "20340",
+            "UX": {
+              "ours": -0.00007966331433461274,
+              "cii": 0.541734,
+              "difference": -0.5418136633143347
+            },
+            "UY": {
+              "ours": 0.16553284727526418,
+              "cii": 0.199573,
+              "difference": -0.03404015272473582
+            },
+            "UZ": {
+              "ours": -0.17024811562425332,
+              "cii": 0.261426,
+              "difference": -0.4316741156242533
+            }
+          },
+          {
+            "nodeId": "20350",
+            "UX": {
+              "ours": -0.00006822694646861397,
+              "cii": 0.477585,
+              "difference": -0.4776532269464686
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.14453502601039425,
+              "cii": 0.229564,
+              "difference": -0.37409902601039424
+            }
+          },
+          {
+            "nodeId": "20390",
+            "UX": {
+              "ours": 0,
+              "cii": -0.000207,
+              "difference": 0.000207
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "20440",
+            "UX": {
+              "ours": -0.000008724596807147935,
+              "cii": -0.335062,
+              "difference": 0.33505327540319285
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0.016681690702553296,
+              "cii": -0.284111,
+              "difference": 0.3007926907025533
+            }
+          },
+          {
+            "nodeId": "20480",
+            "UX": {
+              "ours": -0.00001250655405535495,
+              "cii": -0.48102,
+              "difference": 0.4810074934459446
+            },
+            "UY": {
+              "ours": -0.07022280712073829,
+              "cii": -0.054315,
+              "difference": -0.01590780712073829
+            },
+            "UZ": {
+              "ours": 0.005821262421359459,
+              "cii": -0.459924,
+              "difference": 0.46574526242135944
+            }
+          },
+          {
+            "nodeId": "20500",
+            "UX": {
+              "ours": -0.000014011773040141345,
+              "cii": -0.515099,
+              "difference": 0.5150849882269598
+            },
+            "UY": {
+              "ours": -0.034625619430109965,
+              "cii": 0.011655,
+              "difference": -0.046280619430109964
+            },
+            "UZ": {
+              "ours": 0.000010201273267827825,
+              "cii": -0.406509,
+              "difference": 0.40651920127326785
+            }
+          },
+          {
+            "nodeId": "20510",
+            "UX": {
+              "ours": -0.0017757296619458594,
+              "cii": -0.515156,
+              "difference": 0.5133802703380541
+            },
+            "UY": {
+              "ours": -0.018425917949383402,
+              "cii": 0.011709,
+              "difference": -0.030134917949383402
+            },
+            "UZ": {
+              "ours": 0.000009798498857770485,
+              "cii": -0.406342,
+              "difference": 0.4063517984988578
+            }
+          },
+          {
+            "nodeId": "20520",
+            "UX": {
+              "ours": -0.008216607877604983,
+              "cii": -0.48505,
+              "difference": 0.476833392122395
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0.000008365044079618818,
+              "cii": -0.346632,
+              "difference": 0.34664036504407963
+            }
+          },
+          {
+            "nodeId": "20550",
+            "UX": {
+              "ours": -0.035545095685409415,
+              "cii": -0.000974,
+              "difference": -0.03457109568540941
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "20580",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0.00016416741980636513,
+              "cii": 0.338624,
+              "difference": -0.33845983258019363
+            }
+          },
+          {
+            "nodeId": "20640",
+            "UX": {
+              "ours": 0.1322459724579789,
+              "cii": 0.509676,
+              "difference": -0.37743002754202115
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0.0003053867056613029,
+              "cii": 0.63229,
+              "difference": -0.6319846132943387
+            }
+          },
+          {
+            "nodeId": "20670",
+            "UX": {
+              "ours": 0.17547480869108528,
+              "cii": 0.609191,
+              "difference": -0.43371619130891476
+            },
+            "UY": {
+              "ours": -0.1970875091142723,
+              "cii": -0.233493,
+              "difference": 0.0364054908857277
+            },
+            "UZ": {
+              "ours": 0.0003333746028766785,
+              "cii": 0.690491,
+              "difference": -0.6901576253971233
+            }
+          },
+          {
+            "nodeId": "20690",
+            "UX": {
+              "ours": 0.2062697138198921,
+              "cii": 0.53022,
+              "difference": -0.3239502861801079
+            },
+            "UY": {
+              "ours": -0.35194631747660987,
+              "cii": -0.399836,
+              "difference": 0.047889682523390154
+            },
+            "UZ": {
+              "ours": 0.0003510270136085457,
+              "cii": 0.670808,
+              "difference": -0.6704569729863914
+            }
+          },
+          {
+            "nodeId": "20700",
+            "UX": {
+              "ours": 0.000006373342258664492,
+              "cii": 0.118674,
+              "difference": -0.11866762665774133
+            },
+            "UY": {
+              "ours": -0.35230150354648276,
+              "cii": -0.359325,
+              "difference": 0.007023496453517242
+            },
+            "UZ": {
+              "ours": -0.2774913023212608,
+              "cii": 0.636669,
+              "difference": -0.9141603023212608
+            }
+          },
+          {
+            "nodeId": "20710",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.12331185449502571,
+              "cii": 0.58279,
+              "difference": -0.7061018544950257
+            }
+          },
+          {
+            "nodeId": "20760",
+            "UX": {
+              "ours": 0.000033770863985340117,
+              "cii": -0.119153,
+              "difference": 0.11918677086398534
+            },
+            "UY": {
+              "ours": 0.03913178600579913,
+              "cii": 0.104343,
+              "difference": -0.06521121399420088
+            },
+            "UZ": {
+              "ours": -0.011230978106972819,
+              "cii": 0.514729,
+              "difference": -0.5259599781069728
+            }
+          },
+          {
+            "nodeId": "21430",
+            "UX": {
+              "ours": -0.0002633621082352139,
+              "cii": -0.271912,
+              "difference": 0.2716486378917648
+            },
+            "UY": {
+              "ours": -0.023658240574159425,
+              "cii": 0.107195,
+              "difference": -0.13085324057415942
+            },
+            "UZ": {
+              "ours": 0.0865434227693525,
+              "cii": 0.184321,
+              "difference": -0.09777757723064752
+            }
+          },
+          {
+            "nodeId": "21470",
+            "UX": {
+              "ours": -0.00020755114039678666,
+              "cii": -0.226578,
+              "difference": 0.22637044885960322
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0.195855,
+              "difference": -0.195855
+            },
+            "UZ": {
+              "ours": 0.07372416079987036,
+              "cii": 0.143535,
+              "difference": -0.06981083920012963
+            }
+          },
+          {
+            "nodeId": "21480",
+            "UX": {
+              "ours": 0,
+              "cii": 0.00403,
+              "difference": -0.00403
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "21550",
+            "UX": {
+              "ours": 0,
+              "cii": 0.100364,
+              "difference": -0.100364
+            },
+            "UY": {
+              "ours": -0.6760199570183264,
+              "cii": -0.849888,
+              "difference": 0.17386804298167358
+            },
+            "UZ": {
+              "ours": -0.03427705960848183,
+              "cii": -0.049603,
+              "difference": 0.015325940391518168
+            }
+          },
+          {
+            "nodeId": "21560",
+            "UX": {
+              "ours": 0,
+              "cii": 0.126344,
+              "difference": -0.126344
+            },
+            "UY": {
+              "ours": -0.9058899503910809,
+              "cii": -1.125886,
+              "difference": 0.21999604960891905
+            },
+            "UZ": {
+              "ours": -0.04352112928470257,
+              "cii": -0.062956,
+              "difference": 0.019434870715297425
+            }
+          },
+          {
+            "nodeId": "21580",
+            "UX": {
+              "ours": 0,
+              "cii": 0.127019,
+              "difference": -0.127019
+            },
+            "UY": {
+              "ours": -1.003885180628176,
+              "cii": -1.242953,
+              "difference": 0.23906781937182386
+            },
+            "UZ": {
+              "ours": -0.047428687658793565,
+              "cii": -0.068601,
+              "difference": 0.02117231234120643
+            }
+          },
+          {
+            "nodeId": "21590",
+            "UX": {
+              "ours": 0.168428268571145,
+              "cii": -0.040584,
+              "difference": 0.20901226857114502
+            },
+            "UY": {
+              "ours": -0.10305034604509383,
+              "cii": -0.188273,
+              "difference": 0.08522265395490616
+            },
+            "UZ": {
+              "ours": 0.0022702835356953346,
+              "cii": -0.359821,
+              "difference": 0.36209128353569536
+            }
+          },
+          {
+            "nodeId": "21600",
+            "UX": {
+              "ours": -0.00033998967007155555,
+              "cii": 0.076853,
+              "difference": -0.07719298967007156
+            },
+            "UY": {
+              "ours": -0.10300015588549938,
+              "cii": -0.075099,
+              "difference": -0.02790115588549938
+            },
+            "UZ": {
+              "ours": -0.18388608884450824,
+              "cii": -0.911883,
+              "difference": 0.7279969111554918
+            }
+          },
+          {
+            "nodeId": "21610",
+            "UX": {
+              "ours": -0.0002679387431143947,
+              "cii": 0.114333,
+              "difference": -0.1146009387431144
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.143676774915339,
+              "cii": -0.808496,
+              "difference": 0.664819225084661
+            }
+          },
+          {
+            "nodeId": "21640",
+            "UX": {
+              "ours": 0,
+              "cii": 0.331737,
+              "difference": -0.331737
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0.0058512532217337284,
+              "cii": -0.206017,
+              "difference": 0.21186825322173372
+            }
+          },
+          {
+            "nodeId": "21700",
+            "UX": {
+              "ours": 0,
+              "cii": 0.448321,
+              "difference": -0.448321
+            },
+            "UY": {
+              "ours": -0.6273846393220474,
+              "cii": -0.646024,
+              "difference": 0.018639360677952688
+            },
+            "UZ": {
+              "ours": 0.08603666447638426,
+              "cii": 0.117066,
+              "difference": -0.03102933552361574
+            }
+          },
+          {
+            "nodeId": "21710",
+            "UX": {
+              "ours": 0,
+              "cii": 0.449029,
+              "difference": -0.449029
+            },
+            "UY": {
+              "ours": -0.7024038981716695,
+              "cii": -0.722167,
+              "difference": 0.01976310182833052
+            },
+            "UZ": {
+              "ours": 0.09414711947638334,
+              "cii": 0.149745,
+              "difference": -0.05559788052361665
+            }
+          },
+          {
+            "nodeId": "21720",
+            "UX": {
+              "ours": 0.000038520433099523764,
+              "cii": -0.120507,
+              "difference": 0.12054552043309953
+            },
+            "UY": {
+              "ours": 0.03900730969503685,
+              "cii": 0.104187,
+              "difference": -0.06517969030496315
+            },
+            "UZ": {
+              "ours": -0.00025835223919461035,
+              "cii": 0.503807,
+              "difference": -0.5040653522391946
+            }
+          },
+          {
+            "nodeId": "21730",
+            "UX": {
+              "ours": -0.022725481373197493,
+              "cii": -0.140658,
+              "difference": 0.11793251862680251
+            },
+            "UY": {
+              "ours": 0.049115468749047195,
+              "cii": 0.080022,
+              "difference": -0.0309065312509528
+            },
+            "UZ": {
+              "ours": -0.0002354864696484858,
+              "cii": 0.473129,
+              "difference": -0.4733644864696485
+            }
+          },
+          {
+            "nodeId": "21740",
+            "UX": {
+              "ours": -0.03551700151184808,
+              "cii": -0.131196,
+              "difference": 0.09567899848815192
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.00020901276932674658,
+              "cii": 0.418238,
+              "difference": -0.4184470127693267
+            }
+          },
+          {
+            "nodeId": "21780",
+            "UX": {
+              "ours": -0.036146748615280916,
+              "cii": -0.100087,
+              "difference": 0.06394025138471908
+            },
+            "UY": {
+              "ours": -0.1052401051152814,
+              "cii": -0.125968,
+              "difference": 0.0207278948847186
+            },
+            "UZ": {
+              "ours": -0.00018077340184737543,
+              "cii": 0.360537,
+              "difference": -0.36071777340184735
+            }
+          },
+          {
+            "nodeId": "21783",
+            "UX": {
+              "ours": -0.035233472683974636,
+              "cii": -0.093649,
+              "difference": 0.05841552731602536
+            },
+            "UY": {
+              "ours": -0.1072901144475146,
+              "cii": -0.127466,
+              "difference": 0.020175885552485395
+            },
+            "UZ": {
+              "ours": -0.00018045667080252204,
+              "cii": 0.35989,
+              "difference": -0.3600704566708025
+            }
+          },
+          {
+            "nodeId": "21786",
+            "UX": {
+              "ours": -0.03131831846807434,
+              "cii": -0.066485,
+              "difference": 0.03516668153192566
+            },
+            "UY": {
+              "ours": -0.11250438744266388,
+              "cii": -0.129795,
+              "difference": 0.01729061255733612
+            },
+            "UZ": {
+              "ours": -0.00017912089218184208,
+              "cii": 0.357161,
+              "difference": -0.35734012089218187
+            }
+          },
+          {
+            "nodeId": "21790",
+            "UX": {
+              "ours": -0.030377135131011115,
+              "cii": -0.060047,
+              "difference": 0.02966986486898889
+            },
+            "UY": {
+              "ours": -0.11291196447081593,
+              "cii": -0.129395,
+              "difference": 0.01648303552918408
+            },
+            "UZ": {
+              "ours": -0.00017880416113698862,
+              "cii": 0.356514,
+              "difference": -0.35669280416113697
+            }
+          },
+          {
+            "nodeId": "21800",
+            "UX": {
+              "ours": -0.02267263493269592,
+              "cii": -0.028669,
+              "difference": 0.005996365067304079
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.0001505647936576168,
+              "cii": 0.298813,
+              "difference": -0.2989635647936576
+            }
+          },
+          {
+            "nodeId": "21850",
+            "UX": {
+              "ours": -0.011757657001675414,
+              "cii": -0.009342,
+              "difference": -0.002415657001675415
+            },
+            "UY": {
+              "ours": 0.09960160907517247,
+              "cii": 0.100417,
+              "difference": -0.0008153909248275332
+            },
+            "UZ": {
+              "ours": -0.00012124209337271894,
+              "cii": 0.239617,
+              "difference": -0.23973824209337272
+            }
+          },
+          {
+            "nodeId": "21860",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.00008581121867861563,
+              "cii": 0.168091,
+              "difference": -0.1681768112186786
+            }
+          },
+          {
+            "nodeId": "21890",
+            "UX": {
+              "ours": 0.0027931576404090375,
+              "cii": 0.001124,
+              "difference": 0.0016691576404090375
+            },
+            "UY": {
+              "ours": -0.12106617322269801,
+              "cii": -0.13409,
+              "difference": 0.013023826777301975
+            },
+            "UZ": {
+              "ours": -0.00007257401517266004,
+              "cii": 0.142161,
+              "difference": -0.14223357401517267
+            }
+          },
+          {
+            "nodeId": "21893",
+            "UX": {
+              "ours": 0.0036747606892362974,
+              "cii": 0.00138,
+              "difference": 0.0022947606892362972
+            },
+            "UY": {
+              "ours": -0.16749693524315618,
+              "cii": -0.181268,
+              "difference": 0.013771064756843837
+            },
+            "UZ": {
+              "ours": -0.00007225728412780659,
+              "cii": 0.141541,
+              "difference": -0.1416132572841278
+            }
+          },
+          {
+            "nodeId": "21896",
+            "UX": {
+              "ours": 0.007361364452700092,
+              "cii": 0.002433,
+              "difference": 0.004928364452700092
+            },
+            "UY": {
+              "ours": -0.3600242043953482,
+              "cii": -0.376327,
+              "difference": 0.01630279560465181
+            },
+            "UZ": {
+              "ours": -0.00007092150550712644,
+              "cii": 0.138924,
+              "difference": -0.13899492150550713
+            }
+          },
+          {
+            "nodeId": "21900",
+            "UX": {
+              "ours": 0.008228564506252868,
+              "cii": 0.002677,
+              "difference": 0.005551564506252868
+            },
+            "UY": {
+              "ours": -0.4046644069287224,
+              "cii": -0.421421,
+              "difference": 0.01675659307127758
+            },
+            "UZ": {
+              "ours": -0.00007060477446227298,
+              "cii": 0.138304,
+              "difference": -0.13837460477446228
+            }
+          },
+          {
+            "nodeId": "21930",
+            "UX": {
+              "ours": 0.010430714433937964,
+              "cii": 0,
+              "difference": 0.010430714433937964
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "21990",
+            "UX": {
+              "ours": 0.0077253871862919205,
+              "cii": -0.001981,
+              "difference": 0.00970638718629192
+            },
+            "UY": {
+              "ours": 0.11482856218847462,
+              "cii": 0.107089,
+              "difference": 0.007739562188474616
+            },
+            "UZ": {
+              "ours": 2.1492602728372707e-7,
+              "cii": -0.053582,
+              "difference": 0.05358221492602728
+            }
+          },
+          {
+            "nodeId": "21993",
+            "UX": {
+              "ours": 0.007080112263594572,
+              "cii": -0.002347,
+              "difference": 0.009427112263594571
+            },
+            "UY": {
+              "ours": 0.12660850399685472,
+              "cii": 0.117771,
+              "difference": 0.00883750399685472
+            },
+            "UZ": {
+              "ours": 2.1753299872809754e-7,
+              "cii": -0.054232,
+              "difference": 0.05423221753299873
+            }
+          },
+          {
+            "nodeId": "21996",
+            "UX": {
+              "ours": 0.0069617793464405,
+              "cii": -0.002414,
+              "difference": 0.0093757793464405
+            },
+            "UY": {
+              "ours": 0.12876513606235354,
+              "cii": 0.119728,
+              "difference": 0.00903713606235354
+            },
+            "UZ": {
+              "ours": 2.1801080532180255e-7,
+              "cii": -0.054351,
+              "difference": 0.05435121801080532
+            }
+          },
+          {
+            "nodeId": "22000",
+            "UX": {
+              "ours": 0.006315820302267483,
+              "cii": -0.00278,
+              "difference": 0.009095820302267483
+            },
+            "UY": {
+              "ours": 0.14052475925214075,
+              "cii": 0.130411,
+              "difference": 0.010113759252140753
+            },
+            "UZ": {
+              "ours": 2.206177767661732e-7,
+              "cii": -0.055001,
+              "difference": 0.05500122061777677
+            }
+          },
+          {
+            "nodeId": "22010",
+            "UX": {
+              "ours": 0.005681826297174442,
+              "cii": -0.004447,
+              "difference": 0.010128826297174442
+            },
+            "UY": {
+              "ours": 0.1513143406740504,
+              "cii": 0.136705,
+              "difference": 0.014609340674050397
+            },
+            "UZ": {
+              "ours": -0.0030531838897676655,
+              "cii": -0.065777,
+              "difference": 0.06272381611023234
+            }
+          },
+          {
+            "nodeId": "22020",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.0030524626251501297,
+              "cii": -0.106209,
+              "difference": 0.10315653737484987
+            }
+          },
+          {
+            "nodeId": "22050",
+            "UX": {
+              "ours": -0.0031969742440131487,
+              "cii": 0.030748,
+              "difference": -0.03394497424401315
+            },
+            "UY": {
+              "ours": -0.7766731919957465,
+              "cii": -0.77468,
+              "difference": -0.001993191995746435
+            },
+            "UZ": {
+              "ours": -0.003051518632425576,
+              "cii": -0.160319,
+              "difference": 0.1572674813675744
+            }
+          },
+          {
+            "nodeId": "22053",
+            "UX": {
+              "ours": -0.0032001619466778533,
+              "cii": 0.034984,
+              "difference": -0.038184161946677855
+            },
+            "UY": {
+              "ours": -0.8035765433218705,
+              "cii": -0.801485,
+              "difference": -0.0020915433218704482
+            },
+            "UZ": {
+              "ours": -0.003051513991828717,
+              "cii": -0.160585,
+              "difference": 0.1575334860081713
+            }
+          },
+          {
+            "nodeId": "22056",
+            "UX": {
+              "ours": -0.003207508505233353,
+              "cii": 0.050214,
+              "difference": -0.053421508505233355
+            },
+            "UY": {
+              "ours": -0.8980234844257187,
+              "cii": -0.895504,
+              "difference": -0.002519484425718699
+            },
+            "UZ": {
+              "ours": -0.0030514973402745605,
+              "cii": -0.161539,
+              "difference": 0.15848750265972542
+            }
+          },
+          {
+            "nodeId": "22060",
+            "UX": {
+              "ours": -0.0032085441653270153,
+              "cii": 0.054466,
+              "difference": -0.05767454416532702
+            },
+            "UY": {
+              "ours": -0.9237390776757909,
+              "cii": -0.921078,
+              "difference": -0.002661077675790935
+            },
+            "UZ": {
+              "ours": -0.0030514926996777015,
+              "cii": -0.161805,
+              "difference": 0.1587535073003223
+            }
+          },
+          {
+            "nodeId": "22070",
+            "UX": {
+              "ours": -0.0008152263109169838,
+              "cii": 0.170262,
+              "difference": -0.17107722631091699
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.003050046191582464,
+              "cii": -0.244719,
+              "difference": 0.24166895380841752
+            }
+          },
+          {
+            "nodeId": "22100",
+            "UX": {
+              "ours": 0.000049294301226812075,
+              "cii": 0.175177,
+              "difference": -0.1751277056987732
+            },
+            "UY": {
+              "ours": -0.021264180897909067,
+              "cii": -0.025304,
+              "difference": 0.004039819102090933
+            },
+            "UZ": {
+              "ours": -0.0030493645568889977,
+              "cii": -0.284621,
+              "difference": 0.28157163544311103
+            }
+          },
+          {
+            "nodeId": "22110",
+            "UX": {
+              "ours": 0.00008796841379022502,
+              "cii": 0.146023,
+              "difference": -0.14593503158620977
+            },
+            "UY": {
+              "ours": -0.0221459678936502,
+              "cii": -0.018927,
+              "difference": -0.003218967893650202
+            },
+            "UZ": {
+              "ours": -0.003229902315569981,
+              "cii": -0.291946,
+              "difference": 0.28871609768443
+            }
+          },
+          {
+            "nodeId": "22115",
+            "UX": {
+              "ours": 0.000058823668599326845,
+              "cii": 0.112971,
+              "difference": -0.11291217633140067
+            },
+            "UY": {
+              "ours": -0.014842714471439663,
+              "cii": -0.012735,
+              "difference": -0.0021077144714396635
+            },
+            "UZ": {
+              "ours": -0.003229899708598537,
+              "cii": -0.292603,
+              "difference": 0.28937310029140145
+            }
+          },
+          {
+            "nodeId": "22120",
+            "UX": {
+              "ours": -3.530262351120922e-7,
+              "cii": 0.046186,
+              "difference": -0.04618635302623511
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.0032298944505427555,
+              "cii": -0.293927,
+              "difference": 0.2906971055494572
+            }
+          },
+          {
+            "nodeId": "22125",
+            "UX": {
+              "ours": -3.4272513440840623e-7,
+              "cii": 0.044839,
+              "difference": -0.04483934272513441
+            },
+            "UY": {
+              "ours": 0.00034464464662810194,
+              "cii": -0.000656,
+              "difference": 0.001000644646628102
+            },
+            "UZ": {
+              "ours": -0.0031703294072979575,
+              "cii": -0.227121,
+              "difference": 0.22395067059270204
+            }
+          },
+          {
+            "nodeId": "22130",
+            "UX": {
+              "ours": -3.376011955424142e-7,
+              "cii": 0.044168,
+              "difference": -0.04416833760119554
+            },
+            "UY": {
+              "ours": 0.0005702846753168153,
+              "cii": -0.00086,
+              "difference": 0.0014302846753168153
+            },
+            "UZ": {
+              "ours": -0.0031404911893425026,
+              "cii": -0.193847,
+              "difference": 0.19070650881065748
+            }
+          },
+          {
+            "nodeId": "22140",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.002968187625743937,
+              "cii": -0.057504,
+              "difference": 0.05453581237425606
+            }
+          },
+          {
+            "nodeId": "22190",
+            "UX": {
+              "ours": 1.0001007238549874e-7,
+              "cii": -0.061906,
+              "difference": 0.061906100010072386
+            },
+            "UY": {
+              "ours": -0.05069359374689872,
+              "cii": -0.05545,
+              "difference": 0.004756406253101281
+            },
+            "UZ": {
+              "ours": -0.0025802795139947066,
+              "cii": 0.100188,
+              "difference": -0.10276827951399471
+            }
+          },
+          {
+            "nodeId": "22200",
+            "UX": {
+              "ours": 1.9432050572152457e-7,
+              "cii": -0.120283,
+              "difference": 0.12028319432050573
+            },
+            "UY": {
+              "ours": -0.08505920044177503,
+              "cii": -0.091268,
+              "difference": 0.006208799558224967
+            },
+            "UZ": {
+              "ours": -0.00210367013176003,
+              "cii": 0.211192,
+              "difference": -0.21329567013176
+            }
+          },
+          {
+            "nodeId": "22210",
+            "UX": {
+              "ours": 2.627821955068814e-7,
+              "cii": -0.16266,
+              "difference": 0.1626602627821955
+            },
+            "UY": {
+              "ours": -0.07304766074554801,
+              "cii": -0.078423,
+              "difference": 0.005375339254451994
+            },
+            "UZ": {
+              "ours": -0.0017175787644968577,
+              "cii": 0.272341,
+              "difference": -0.27405857876449685
+            }
+          },
+          {
+            "nodeId": "22220",
+            "UX": {
+              "ours": 3.826549769985665e-7,
+              "cii": -0.236861,
+              "difference": 0.236861382654977
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.0010197057683829134,
+              "cii": 0.347658,
+              "difference": -0.3486777057683829
+            }
+          },
+          {
+            "nodeId": "22250",
+            "UX": {
+              "ours": 5.887931643005574e-7,
+              "cii": -0.358138,
+              "difference": 0.3581385887931643
+            },
+            "UY": {
+              "ours": 0.104073382136249,
+              "cii": 0.077681,
+              "difference": 0.026392382136249004
+            },
+            "UZ": {
+              "ours": -0.000001421787019428933,
+              "cii": 0.347915,
+              "difference": -0.3479164217870194
+            }
+          },
+          {
+            "nodeId": "22260",
+            "UX": {
+              "ours": -0.00024863328623501,
+              "cii": -0.398824,
+              "difference": 0.398575366713765
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.0000012326781567426237,
+              "cii": 0.31592,
+              "difference": -0.3159212326781567
+            }
+          },
+          {
+            "nodeId": "22310",
+            "UX": {
+              "ours": -0.0003426193755482333,
+              "cii": 0.001903,
+              "difference": -0.002245619375548233
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -0.00059,
+              "difference": 0.00059
+            }
+          },
+          {
+            "nodeId": "22350",
+            "UX": {
+              "ours": -5.816518431995311e-7,
+              "cii": 0.342625,
+              "difference": -0.3426255816518432
+            },
+            "UY": {
+              "ours": 0.02377323594051584,
+              "cii": 0.029691,
+              "difference": -0.00591776405948416
+            },
+            "UZ": {
+              "ours": 1.678230249106353e-7,
+              "cii": -0.184439,
+              "difference": 0.1844391678230249
+            }
+          },
+          {
+            "nodeId": "22360",
+            "UX": {
+              "ours": -4.814720542299395e-7,
+              "cii": 0.297111,
+              "difference": -0.29711148147205424
+            },
+            "UY": {
+              "ours": 0.00006933252579441789,
+              "cii": 0,
+              "difference": 0.00006933252579441789
+            },
+            "UZ": {
+              "ours": -0.000050946091002776397,
+              "cii": -0.233733,
+              "difference": 0.2336820539089972
+            }
+          },
+          {
+            "nodeId": "22370",
+            "UX": {
+              "ours": -4.813541956546813e-7,
+              "cii": 0.297186,
+              "difference": -0.2971864813541957
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -0.00005098115809743523,
+              "cii": -0.233695,
+              "difference": 0.23364401884190258
+            }
+          },
+          {
+            "nodeId": "22380",
+            "UX": {
+              "ours": -4.812363370794229e-7,
+              "cii": 0.29726,
+              "difference": -0.2972604812363371
+            },
+            "UY": {
+              "ours": -0.00006948935097824409,
+              "cii": 0,
+              "difference": -0.00006948935097824409
+            },
+            "UZ": {
+              "ours": -0.00005101617243213206,
+              "cii": -0.233659,
+              "difference": 0.23360798382756787
+            }
+          },
+          {
+            "nodeId": "22390",
+            "UX": {
+              "ours": -4.811184785041645e-7,
+              "cii": 0.297334,
+              "difference": -0.2973344811184785
+            },
+            "UY": {
+              "ours": -0.00013913531294055672,
+              "cii": 0.000156,
+              "difference": -0.0002951353129405567
+            },
+            "UZ": {
+              "ours": -0.00005105113402852769,
+              "cii": -0.233623,
+              "difference": 0.23357194886597146
+            }
+          },
+          {
+            "nodeId": "22400",
+            "UX": {
+              "ours": -1.6290032530677193e-7,
+              "cii": 0.100674,
+              "difference": -0.10067416290032531
+            },
+            "UY": {
+              "ours": -0.11493072162876368,
+              "cii": -0.123895,
+              "difference": 0.008964278371236326
+            },
+            "UZ": {
+              "ours": -0.00002428296501108003,
+              "cii": -0.072946,
+              "difference": 0.07292171703498891
+            }
+          },
+          {
+            "nodeId": "22470",
+            "UX": {
+              "ours": -4.268693807198985e-8,
+              "cii": 0.026381,
+              "difference": -0.026381042686938073
+            },
+            "UY": {
+              "ours": -0.013928283313005368,
+              "cii": -0.016184,
+              "difference": 0.0022557166869946327
+            },
+            "UZ": {
+              "ours": -0.0000021005223057859233,
+              "cii": -0.006287,
+              "difference": 0.006284899477694214
+            }
+          },
+          {
+            "nodeId": "22480",
+            "UX": {
+              "ours": -1.080505130751004e-9,
+              "cii": 0.000668,
+              "difference": -0.0006680010805051308
+            },
+            "UY": {
+              "ours": -0.00006552612088247426,
+              "cii": -0.000125,
+              "difference": 0.00005947387911752574
+            },
+            "UZ": {
+              "ours": -8.255578190857001e-9,
+              "cii": 0,
+              "difference": -8.255578190857001e-9
+            }
+          },
+          {
+            "nodeId": "22490",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          }
+        ],
+        "unmatchedCiiNodes": [
+          "20119",
+          "20161",
+          "20296",
+          "20329",
+          "20339",
+          "20499",
+          "20689",
+          "20698",
+          "20699",
+          "21429",
+          "21589",
+          "21599",
+          "21719",
+          "22249",
+          "22349"
+        ],
+        "totalAbsoluteTranslation": {
+          "ours": 17.314763963154835,
+          "cii": 53.049776,
+          "ratio": 0.3263871267459232
+        }
+      }
+    },
+    "IXP-WPT": {
+      "ciiLoadCase": "CASE 20 (OPE) W+T1+P1",
+      "executionStatus": "CONDITIONAL",
+      "diagnostics": {
+        "residual": {
+          "value": 4.108851392149119e-9,
+          "limit": 1e-9,
+          "status": "WARN"
+        },
+        "forceEquilibrium": {
+          "value": 2.9233118582830255e-10,
+          "status": "PASS"
+        },
+        "momentEquilibrium": {
+          "value": 5.6431828427377974e-11,
+          "status": "PASS"
+        },
+        "energyBalance": {
+          "value": 6.823443701644449e-16,
+          "status": "PASS"
+        },
+        "conditionEstimate": {
+          "value": 5514443603309.131,
+          "status": "PASS"
+        }
+      },
+      "restraint": {
+        "matched": [
+          {
+            "nodeId": "20030",
+            "ciiTypes": "Rigid +Y + Rigid GUI w/gap + Rigid LIM",
+            "UX": {
+              "ours": -2948.6433572303504,
+              "cii": -3099.937012,
+              "difference": 151.2936547696495,
+              "percentDifference": 4.880539642708376
+            },
+            "UY": {
+              "ours": 52449.82622937931,
+              "cii": 6096.632324,
+              "difference": 46353.19390537931,
+              "percentDifference": 760.3081741194289
+            },
+            "UZ": {
+              "ours": 3537.3505495028294,
+              "cii": 639.069641,
+              "difference": 2898.2809085028293,
+              "percentDifference": 453.51566129282446
+            }
+          },
+          {
+            "nodeId": "20090",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": -157503.5654321586,
+              "cii": 0,
+              "difference": -157503.5654321586,
+              "percentDifference": null
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20170",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 122381.01995165498,
+              "cii": 11151.713867,
+              "difference": 111229.30608465498,
+              "percentDifference": 997.4189385705387
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20250",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 85206.564713071,
+              "cii": 5715.743164,
+              "difference": 79490.821549071,
+              "percentDifference": 1390.7346650866937
+            },
+            "UZ": {
+              "ours": -1958.4437627661973,
+              "cii": 555.710388,
+              "difference": -2514.1541507661973,
+              "percentDifference": -452.42165794572077
+            }
+          },
+          {
+            "nodeId": "20300",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 29230.443501482572,
+              "cii": 6292.640137,
+              "difference": 22937.80336448257,
+              "percentDifference": 364.5179585212719
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20350",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": -12828.917664069057,
+              "cii": 0,
+              "difference": -12828.917664069057,
+              "percentDifference": null
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20390",
+            "ciiTypes": "Rigid +Y + Rigid GUI + Rigid LIM w/gap",
+            "UX": {
+              "ours": 16670.287854051217,
+              "cii": 6252.781738,
+              "difference": 10417.506116051218,
+              "percentDifference": 166.60594520261213
+            },
+            "UY": {
+              "ours": 3753.5059620395587,
+              "cii": 2867.469727,
+              "difference": 886.0362350395585,
+              "percentDifference": 30.89958463019402
+            },
+            "UZ": {
+              "ours": -2520.764326704135,
+              "cii": -742.350281,
+              "difference": -1778.4140457041349,
+              "percentDifference": -239.56534956900418
+            }
+          },
+          {
+            "nodeId": "20440",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 1888.1272671378965,
+              "cii": 2466.120605,
+              "difference": -577.9933378621035,
+              "percentDifference": -23.43735082097104
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20520",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 2304.2424349364724,
+              "cii": 2114.926758,
+              "difference": 189.3156769364723,
+              "percentDifference": 8.95140582151887
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20550",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 2785.91457046767,
+              "cii": 2686.731445,
+              "difference": 99.18312546766992,
+              "percentDifference": 3.6915905998811103
+            },
+            "UZ": {
+              "ours": 430.23445835895836,
+              "cii": -156.655548,
+              "difference": 586.8900063589583,
+              "percentDifference": 374.6372304407363
+            }
+          },
+          {
+            "nodeId": "20580",
+            "ciiTypes": "Rigid +Y + Rigid GUI",
+            "UX": {
+              "ours": 291.6678267698212,
+              "cii": 639.518677,
+              "difference": -347.8508502301788,
+              "percentDifference": -54.39260223985277
+            },
+            "UY": {
+              "ours": 2821.612690024546,
+              "cii": 2918.621582,
+              "difference": -97.00889197545439,
+              "percentDifference": -3.323791360063148
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20640",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 448.50008547616653,
+              "cii": 191.404297,
+              "difference": 257.0957884761665,
+              "percentDifference": 134.32080287944973
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "20710",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": -308.4965403843671,
+              "cii": -585.671387,
+              "difference": 277.1748466156329,
+              "percentDifference": 47.326001025150454
+            },
+            "UY": {
+              "ours": 4903.5253538698,
+              "cii": 5098.82666,
+              "difference": -195.30130613019992,
+              "percentDifference": -3.830318603735392
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21470",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": -61444.61294031533,
+              "cii": 0,
+              "difference": -61444.61294031533,
+              "percentDifference": null
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21480",
+            "ciiTypes": "Rigid +Y + Rigid GUI w/gap + Rigid LIM w/gap",
+            "UX": {
+              "ours": -19642.75220018672,
+              "cii": -7242.407227,
+              "difference": -12400.344973186719,
+              "percentDifference": -171.21855461203162
+            },
+            "UY": {
+              "ours": 9877.819847353712,
+              "cii": 1614.704346,
+              "difference": 8263.115501353712,
+              "percentDifference": 511.74170192972974
+            },
+            "UZ": {
+              "ours": 908.7831798215811,
+              "cii": 31.538351,
+              "difference": 877.2448288215811,
+              "percentDifference": 2781.5177427050044
+            }
+          },
+          {
+            "nodeId": "21610",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": -47414.4609102772,
+              "cii": 0,
+              "difference": -47414.4609102772,
+              "percentDifference": null
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21640",
+            "ciiTypes": "Rigid +Y + Rigid LIM w/gap",
+            "UX": {
+              "ours": 5532.778335727751,
+              "cii": 3497.249268,
+              "difference": 2035.5290677277512,
+              "percentDifference": 58.203717028492676
+            },
+            "UY": {
+              "ours": 17148.68968810346,
+              "cii": 5713.630859,
+              "difference": 11435.058829103458,
+              "percentDifference": 200.1364650831647
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21740",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 2200.512633206942,
+              "cii": 1868.110596,
+              "difference": 332.40203720694217,
+              "percentDifference": 17.793488132805503
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21800",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 4489.305770278299,
+              "cii": 4684.139648,
+              "difference": -194.83387772170136,
+              "percentDifference": -4.159437855463812
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21860",
+            "ciiTypes": "Rigid +Y + Rigid GUI",
+            "UX": {
+              "ours": 1021.2556206431032,
+              "cii": 1303.953125,
+              "difference": -282.69750435689684,
+              "percentDifference": -21.680035803196287
+            },
+            "UY": {
+              "ours": 7568.918729845923,
+              "cii": 7548.83252,
+              "difference": 20.086209845922895,
+              "percentDifference": 0.2660836598600666
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "21930",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 4481.101183175061,
+              "cii": 4436.727051,
+              "difference": 44.37413217506128,
+              "percentDifference": 1.0001546560106676
+            },
+            "UZ": {
+              "ours": -3110.188215267379,
+              "cii": -3321.362549,
+              "difference": 211.1743337326211,
+              "percentDifference": 6.358063313389311
+            }
+          },
+          {
+            "nodeId": "22020",
+            "ciiTypes": "Rigid +Y + Rigid GUI",
+            "UX": {
+              "ours": -1553.336769600549,
+              "cii": -1982.868042,
+              "difference": 429.53127239945115,
+              "percentDifference": 21.662120892634324
+            },
+            "UY": {
+              "ours": 1366.6361350236916,
+              "cii": 1377.503784,
+              "difference": -10.867648976308374,
+              "percentDifference": -0.7889378673611231
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "22070",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 1757.3494147515194,
+              "cii": 1779.290527,
+              "difference": -21.94111224848075,
+              "percentDifference": -1.23313826019604
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "22120",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 5462.008917296249,
+              "cii": 5477.317871,
+              "difference": -15.308953703751286,
+              "percentDifference": -0.27949726607625774
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "22140",
+            "ciiTypes": "Rigid +Y + Rigid LIM",
+            "UX": {
+              "ours": -2294.1767492699437,
+              "cii": -1825.537109,
+              "difference": -468.6396402699436,
+              "percentDifference": -25.671329164415447
+            },
+            "UY": {
+              "ours": 2305.7023670241874,
+              "cii": 2291.157471,
+              "difference": 14.544896024187437,
+              "percentDifference": 0.6348274271099822
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "22220",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 1426.5572937242673,
+              "cii": 1414.30896,
+              "difference": 12.24833372426724,
+              "percentDifference": 0.8660295643087237
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "22260",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 1846.310793036883,
+              "cii": 1789.932251,
+              "difference": 56.37854203688312,
+              "percentDifference": 3.1497584338952236
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "22310",
+            "ciiTypes": "Rigid +Y + Rigid LIM w/gap",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 2327.1463869436884,
+              "cii": 2340.226318,
+              "difference": -13.07993105631158,
+              "percentDifference": -0.5589173558004393
+            },
+            "UZ": {
+              "ours": -1469.2494328399189,
+              "cii": 0,
+              "difference": -1469.2494328399189,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "22370",
+            "ciiTypes": "Rigid +Y",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            },
+            "UY": {
+              "ours": 1883.229782946163,
+              "cii": 1812.373047,
+              "difference": 70.85673594616287,
+              "percentDifference": 3.909610996668219
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0,
+              "percentDifference": null
+            }
+          },
+          {
+            "nodeId": "22490",
+            "ciiTypes": "Rigid ANC",
+            "UX": {
+              "ours": 3231.4159765020013,
+              "cii": 3042.918457,
+              "difference": 188.49751950200107,
+              "percentDifference": 6.1946293390931
+            },
+            "UY": {
+              "ours": 1748.4909444278098,
+              "cii": 1763.348877,
+              "difference": -14.857932572190066,
+              "percentDifference": -0.8425974443280896
+            },
+            "UZ": {
+              "ours": 4182.660749619128,
+              "cii": 2994.049805,
+              "difference": 1188.610944619128,
+              "percentDifference": 39.69910395726126
+            }
+          }
+        ],
+        "unmatchedCiiNodes": [],
+        "unmatchedOurNodes": [],
+        "totalUY": {
+          "ours": 94871.50569985768,
+          "cii": 93512.434692,
+          "percentDifference": 1.4533585959279383
+        },
+        "unilateralTensionNodes": [
+          {
+            "nodeId": "20090",
+            "ciiTypes": "Rigid +Y",
+            "ourUY": -157503.5654321586,
+            "ciiUY": 0
+          },
+          {
+            "nodeId": "20350",
+            "ciiTypes": "Rigid +Y",
+            "ourUY": -12828.917664069057,
+            "ciiUY": 0
+          },
+          {
+            "nodeId": "21470",
+            "ciiTypes": "Rigid +Y",
+            "ourUY": -61444.61294031533,
+            "ciiUY": 0
+          },
+          {
+            "nodeId": "21610",
+            "ciiTypes": "Rigid +Y",
+            "ourUY": -47414.4609102772,
+            "ciiUY": 0
+          }
+        ]
+      },
+      "displacement": {
+        "matched": [
+          {
+            "nodeId": "20010",
+            "UX": {
+              "ours": 7.469584189295351,
+              "cii": 8.650723,
+              "difference": -1.181138810704648
+            },
+            "UY": {
+              "ours": 3.8452962837232945,
+              "cii": -5.532485,
+              "difference": 9.377781283723294
+            },
+            "UZ": {
+              "ours": 3.24635451535907,
+              "cii": -35.266338,
+              "difference": 38.51269251535907
+            }
+          },
+          {
+            "nodeId": "20015",
+            "UX": {
+              "ours": 7.467710748206351,
+              "cii": 8.648551,
+              "difference": -1.180840251793648
+            },
+            "UY": {
+              "ours": 3.844357817233928,
+              "cii": -5.531075,
+              "difference": 9.375432817233929
+            },
+            "UZ": {
+              "ours": 3.2455403047463833,
+              "cii": -35.263767,
+              "difference": 38.509307304746386
+            }
+          },
+          {
+            "nodeId": "20020",
+            "UX": {
+              "ours": 6.776581500000845,
+              "cii": 7.859904,
+              "difference": -1.0833224999991549
+            },
+            "UY": {
+              "ours": 3.498148788530123,
+              "cii": -5.010404,
+              "difference": 8.508552788530123
+            },
+            "UZ": {
+              "ours": 2.9451706947614236,
+              "cii": -34.313862,
+              "difference": 37.25903269476142
+            }
+          },
+          {
+            "nodeId": "20030",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -25,
+              "difference": 25
+            }
+          },
+          {
+            "nodeId": "20090",
+            "UX": {
+              "ours": -9.364708709287813,
+              "cii": -10.86206,
+              "difference": 1.4973512907121869
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 5.98286,
+              "difference": -5.98286
+            },
+            "UZ": {
+              "ours": -3.6313284328818587,
+              "cii": -12.0488,
+              "difference": 8.417471567118142
+            }
+          },
+          {
+            "nodeId": "20120",
+            "UX": {
+              "ours": -13.503018081773094,
+              "cii": -16.313745,
+              "difference": 2.810726918226907
+            },
+            "UY": {
+              "ours": 6.854580797229844,
+              "cii": 6.659882,
+              "difference": 0.19469879722984462
+            },
+            "UZ": {
+              "ours": -4.551552977638016,
+              "cii": -6.231101,
+              "difference": 1.6795480223619839
+            }
+          },
+          {
+            "nodeId": "20130",
+            "UX": {
+              "ours": -22.379205759040556,
+              "cii": -18.005194,
+              "difference": -4.374011759040556
+            },
+            "UY": {
+              "ours": 1.7931613216257785,
+              "cii": 2.303168,
+              "difference": -0.5100066783742214
+            },
+            "UZ": {
+              "ours": -5.283708466566382,
+              "cii": -6.32335,
+              "difference": 1.0396415334336178
+            }
+          },
+          {
+            "nodeId": "20140",
+            "UX": {
+              "ours": -23.247295522204123,
+              "cii": -18.229267,
+              "difference": -5.018028522204123
+            },
+            "UY": {
+              "ours": 1.263782403340221,
+              "cii": 1.682598,
+              "difference": -0.4188155966597791
+            },
+            "UZ": {
+              "ours": -5.342852286034356,
+              "cii": -6.333796,
+              "difference": 0.9909437139656445
+            }
+          },
+          {
+            "nodeId": "20150",
+            "UX": {
+              "ours": -24.38949149470585,
+              "cii": -18.523579,
+              "difference": -5.865912494705849
+            },
+            "UY": {
+              "ours": 0.5579610113452208,
+              "cii": 0.855189,
+              "difference": -0.2972279886547792
+            },
+            "UZ": {
+              "ours": -5.413534767654992,
+              "cii": -6.346246,
+              "difference": 0.9327112323450075
+            }
+          },
+          {
+            "nodeId": "20160",
+            "UX": {
+              "ours": -25.604509587733062,
+              "cii": -18.838299,
+              "difference": -6.766210587733063
+            },
+            "UY": {
+              "ours": -0.20430405711147503,
+              "cii": -0.029514,
+              "difference": -0.17479005711147505
+            },
+            "UZ": {
+              "ours": -5.478139705577741,
+              "cii": -6.35568,
+              "difference": 0.8775402944222597
+            }
+          },
+          {
+            "nodeId": "20170",
+            "UX": {
+              "ours": -26.294879148609514,
+              "cii": -24.371042,
+              "difference": -1.9238371486095147
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -9.282160705575212,
+              "cii": -10.767821,
+              "difference": 1.4856602944247879
+            }
+          },
+          {
+            "nodeId": "20220",
+            "UX": {
+              "ours": -26.583825186282365,
+              "cii": -29.611925,
+              "difference": 3.0280998137176347
+            },
+            "UY": {
+              "ours": -1.6290960262226026,
+              "cii": -0.143702,
+              "difference": -1.4853940262226026
+            },
+            "UZ": {
+              "ours": -13.057710030861925,
+              "cii": -15.14686,
+              "difference": 2.0891499691380755
+            }
+          },
+          {
+            "nodeId": "20230",
+            "UX": {
+              "ours": -26.77468503223379,
+              "cii": -30.536093,
+              "difference": 3.7614079677662104
+            },
+            "UY": {
+              "ours": -2.137582886350174,
+              "cii": -0.290132,
+              "difference": -1.8474508863501737
+            },
+            "UZ": {
+              "ours": -13.630834860730436,
+              "cii": -15.879456,
+              "difference": 2.248621139269563
+            }
+          },
+          {
+            "nodeId": "20240",
+            "UX": {
+              "ours": -24.921524616113103,
+              "cii": -15.814472,
+              "difference": -9.107052616113103
+            },
+            "UY": {
+              "ours": -0.1945811962231329,
+              "cii": -0.034775,
+              "difference": -0.1598061962231329
+            },
+            "UZ": {
+              "ours": -3.517046657341911,
+              "cii": -4.080441,
+              "difference": 0.5633943426580896
+            }
+          },
+          {
+            "nodeId": "20250",
+            "UX": {
+              "ours": -22.771892647781264,
+              "cii": -10.022575,
+              "difference": -12.749317647781265
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "20280",
+            "UX": {
+              "ours": -21.351815806312977,
+              "cii": -7.178149,
+              "difference": -14.173666806312976
+            },
+            "UY": {
+              "ours": -0.12864549456675733,
+              "cii": 0.013448,
+              "difference": -0.14209349456675732
+            },
+            "UZ": {
+              "ours": 1.6279928789669047,
+              "cii": 1.888346,
+              "difference": -0.2603531210330954
+            }
+          },
+          {
+            "nodeId": "20290",
+            "UX": {
+              "ours": -20.93828345644503,
+              "cii": -6.066511,
+              "difference": -14.871772456445031
+            },
+            "UY": {
+              "ours": -0.39088122465779723,
+              "cii": -0.197497,
+              "difference": -0.19338422465779723
+            },
+            "UZ": {
+              "ours": 2.2417248986549803,
+              "cii": 2.626888,
+              "difference": -0.38516310134501985
+            }
+          },
+          {
+            "nodeId": "20295",
+            "UX": {
+              "ours": -20.313296818107556,
+              "cii": -5.081811,
+              "difference": -15.231485818107556
+            },
+            "UY": {
+              "ours": -0.44116955751300174,
+              "cii": -0.189037,
+              "difference": -0.25213255751300173
+            },
+            "UZ": {
+              "ours": 2.751815727542302,
+              "cii": 3.218932,
+              "difference": -0.46711627245769805
+            }
+          },
+          {
+            "nodeId": "20300",
+            "UX": {
+              "ours": 4.918289166730348,
+              "cii": 13.880987,
+              "difference": -8.962697833269651
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 9.859341516670739,
+              "cii": 11.470237,
+              "difference": -1.6108954833292604
+            }
+          },
+          {
+            "nodeId": "20330",
+            "UX": {
+              "ours": 23.726579957850923,
+              "cii": 25.540916,
+              "difference": -1.8143360421490762
+            },
+            "UY": {
+              "ours": -3.6981904566253294,
+              "cii": 0.305672,
+              "difference": -4.003862456625329
+            },
+            "UZ": {
+              "ours": 13.939125512035982,
+              "cii": 16.341949,
+              "difference": -2.4028234879640173
+            }
+          },
+          {
+            "nodeId": "20340",
+            "UX": {
+              "ours": 27.323642174789153,
+              "cii": 25.854198,
+              "difference": 1.4694441747891531
+            },
+            "UY": {
+              "ours": -0.047779493547313215,
+              "cii": 3.785752,
+              "difference": -3.833531493547313
+            },
+            "UZ": {
+              "ours": 17.424745922133386,
+              "cii": 17.83279,
+              "difference": -0.408044077866613
+            }
+          },
+          {
+            "nodeId": "20350",
+            "UX": {
+              "ours": 23.40109355928374,
+              "cii": 22.234377,
+              "difference": 1.166716559283742
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 3.709641,
+              "difference": -3.709641
+            },
+            "UZ": {
+              "ours": 24.244296113183054,
+              "cii": 20.116926,
+              "difference": 4.127370113183055
+            }
+          },
+          {
+            "nodeId": "20390",
+            "UX": {
+              "ours": 0,
+              "cii": -5,
+              "difference": 5
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "20440",
+            "UX": {
+              "ours": -16.462720115891244,
+              "cii": -24.104437,
+              "difference": 7.641716884108757
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -18.371309641748937,
+              "cii": -19.639027,
+              "difference": 1.267717358251062
+            }
+          },
+          {
+            "nodeId": "20480",
+            "UX": {
+              "ours": -23.59901592918184,
+              "cii": -32.385876,
+              "difference": 8.786860070818165
+            },
+            "UY": {
+              "ours": 0.10774085852489099,
+              "cii": 0.02627,
+              "difference": 0.08147085852489099
+            },
+            "UZ": {
+              "ours": -20.694876283720866,
+              "cii": -23.618429,
+              "difference": 2.923552716279133
+            }
+          },
+          {
+            "nodeId": "20500",
+            "UX": {
+              "ours": -26.439261662871495,
+              "cii": -35.614666,
+              "difference": 9.175404337128505
+            },
+            "UY": {
+              "ours": 0.28742456578256986,
+              "cii": 0.108008,
+              "difference": 0.17941656578256987
+            },
+            "UZ": {
+              "ours": -20.69747571980803,
+              "cii": -23.07795,
+              "difference": 2.3804742801919723
+            }
+          },
+          {
+            "nodeId": "20510",
+            "UX": {
+              "ours": -26.34411238232699,
+              "cii": -35.613419,
+              "difference": 9.26930661767301
+            },
+            "UY": {
+              "ours": 0.21886530309031932,
+              "cii": 0.107769,
+              "difference": 0.11109630309031931
+            },
+            "UZ": {
+              "ours": -19.88028228190527,
+              "cii": -23.068485,
+              "difference": 3.188202718094729
+            }
+          },
+          {
+            "nodeId": "20520",
+            "UX": {
+              "ours": -25.6783442143653,
+              "cii": -34.796429,
+              "difference": 9.118084785634704
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -16.971930090242587,
+              "cii": -19.69372,
+              "difference": 2.721789909757412
+            }
+          },
+          {
+            "nodeId": "20550",
+            "UX": {
+              "ours": -14.507705428499513,
+              "cii": -19.48946,
+              "difference": 4.981754571500488
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "20580",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 16.59185196879927,
+              "cii": 19.255453,
+              "difference": -2.6636010312007308
+            }
+          },
+          {
+            "nodeId": "20640",
+            "UX": {
+              "ours": 7.466372899333399,
+              "cii": 8.963593,
+              "difference": -1.4972201006666008
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 30.86441280217498,
+              "cii": 35.81929,
+              "difference": -4.954877197825024
+            }
+          },
+          {
+            "nodeId": "20670",
+            "UX": {
+              "ours": 8.092294324575418,
+              "cii": 9.671714,
+              "difference": -1.5794196754245817
+            },
+            "UY": {
+              "ours": 0.3761420758274988,
+              "cii": 0.445749,
+              "difference": -0.0696069241725012
+            },
+            "UZ": {
+              "ours": 33.693055952339634,
+              "cii": 39.102036,
+              "difference": -5.408980047660364
+            }
+          },
+          {
+            "nodeId": "20690",
+            "UX": {
+              "ours": 8.325740019667526,
+              "cii": 9.400498,
+              "difference": -1.0747579803324747
+            },
+            "UY": {
+              "ours": 0.6338699924914691,
+              "cii": -0.144459,
+              "difference": 0.7783289924914691
+            },
+            "UZ": {
+              "ours": 35.47712605651161,
+              "cii": 41.348404,
+              "difference": -5.871277943488394
+            }
+          },
+          {
+            "nodeId": "20700",
+            "UX": {
+              "ours": 6.576583976157338,
+              "cii": 6.685712,
+              "difference": -0.10912802384266129
+            },
+            "UY": {
+              "ours": -2.9335031359622525,
+              "cii": -2.827985,
+              "difference": -0.10551813596225257
+            },
+            "UZ": {
+              "ours": 35.97024561855455,
+              "cii": 41.95723,
+              "difference": -5.986984381445453
+            }
+          },
+          {
+            "nodeId": "20710",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 34.61071272088795,
+              "cii": 40.266693,
+              "difference": -5.655980279112043
+            }
+          },
+          {
+            "nodeId": "20760",
+            "UX": {
+              "ours": -5.8089199513709335,
+              "cii": -6.741167,
+              "difference": 0.9322470486290664
+            },
+            "UY": {
+              "ours": 0.8440305274928107,
+              "cii": 1.004055,
+              "difference": -0.1600244725071892
+            },
+            "UZ": {
+              "ours": 32.5311052720019,
+              "cii": 37.629086,
+              "difference": -5.097980727998099
+            }
+          },
+          {
+            "nodeId": "21430",
+            "UX": {
+              "ours": -14.241829601344762,
+              "cii": -5.6391,
+              "difference": -8.602729601344763
+            },
+            "UY": {
+              "ours": 6.443392536459439,
+              "cii": 7.925102,
+              "difference": -1.481709463540561
+            },
+            "UZ": {
+              "ours": 3.8677591407853034,
+              "cii": 1.464135,
+              "difference": 2.403624140785303
+            }
+          },
+          {
+            "nodeId": "21470",
+            "UX": {
+              "ours": -11.22374055593388,
+              "cii": -3.069795,
+              "difference": -8.15394555593388
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 7.479138,
+              "difference": -7.479138
+            },
+            "UZ": {
+              "ours": 2.1970621879878633,
+              "cii": -2.904488,
+              "difference": 5.101550187987863
+            }
+          },
+          {
+            "nodeId": "21480",
+            "UX": {
+              "ours": 0,
+              "cii": 10,
+              "difference": -10
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": -25,
+              "difference": 25
+            }
+          },
+          {
+            "nodeId": "21550",
+            "UX": {
+              "ours": 4.671166500000034,
+              "cii": 15.420919,
+              "difference": -10.749752499999966
+            },
+            "UY": {
+              "ours": 3.7736743486501045,
+              "cii": -4.578069,
+              "difference": 8.351743348650105
+            },
+            "UZ": {
+              "ours": -0.33217910795793487,
+              "cii": -34.130104,
+              "difference": 33.79792489204207
+            }
+          },
+          {
+            "nodeId": "21560",
+            "UX": {
+              "ours": 5.930918330746542,
+              "cii": 16.88287,
+              "difference": -10.951951669253457
+            },
+            "UY": {
+              "ours": 4.743828064066139,
+              "cii": -5.859508,
+              "difference": 10.603336064066138
+            },
+            "UZ": {
+              "ours": -0.4217634204375241,
+              "cii": -36.592377,
+              "difference": 36.17061357956248
+            }
+          },
+          {
+            "nodeId": "21580",
+            "UX": {
+              "ours": 6.463427711130043,
+              "cii": 17.490543,
+              "difference": -11.027115288869956
+            },
+            "UY": {
+              "ours": 5.1530945547608855,
+              "cii": -6.401585,
+              "difference": 11.554679554760884
+            },
+            "UZ": {
+              "ours": -0.4596315826947568,
+              "cii": -37.633202,
+              "difference": 37.17357041730524
+            }
+          },
+          {
+            "nodeId": "21590",
+            "UX": {
+              "ours": -26.816876887893084,
+              "cii": -31.271254,
+              "difference": 4.454377112106915
+            },
+            "UY": {
+              "ours": -2.8956436762244713,
+              "cii": 0.840537,
+              "difference": -3.736180676224471
+            },
+            "UZ": {
+              "ours": -14.719227360729333,
+              "cii": -17.260731,
+              "difference": 2.541503639270667
+            }
+          },
+          {
+            "nodeId": "21600",
+            "UX": {
+              "ours": -14.324286380674002,
+              "cii": -25.336821,
+              "difference": 11.012534619325999
+            },
+            "UY": {
+              "ours": 4.298523342369631,
+              "cii": 7.195868,
+              "difference": -2.897344657630369
+            },
+            "UZ": {
+              "ours": -19.875273494818554,
+              "cii": -19.732616,
+              "difference": -0.14265749481855394
+            }
+          },
+          {
+            "nodeId": "21610",
+            "UX": {
+              "ours": -11.28867029413178,
+              "cii": -23.080656,
+              "difference": 11.791985705868221
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 6.017893,
+              "difference": -6.017893
+            },
+            "UZ": {
+              "ours": -19.985770518198198,
+              "cii": -22.307215,
+              "difference": 2.3214444818018016
+            }
+          },
+          {
+            "nodeId": "21640",
+            "UX": {
+              "ours": 0,
+              "cii": -10,
+              "difference": 10
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -20.39668032198482,
+              "cii": -37.234081,
+              "difference": 16.837400678015182
+            }
+          },
+          {
+            "nodeId": "21700",
+            "UX": {
+              "ours": 6.0488571023008495,
+              "cii": -2.988423,
+              "difference": 9.03728010230085
+            },
+            "UY": {
+              "ours": 2.766575750805602,
+              "cii": -3.612749,
+              "difference": 6.379324750805602
+            },
+            "UZ": {
+              "ours": -20.61703346295946,
+              "cii": -45.238712,
+              "difference": 24.62167853704054
+            }
+          },
+          {
+            "nodeId": "21710",
+            "UX": {
+              "ours": 6.660676416595348,
+              "cii": -2.290312,
+              "difference": 8.950988416595347
+            },
+            "UY": {
+              "ours": 3.0348429150775815,
+              "cii": -3.988964,
+              "difference": 7.023806915077582
+            },
+            "UZ": {
+              "ours": -20.639321360485813,
+              "cii": -46.048351,
+              "difference": 25.409029639514184
+            }
+          },
+          {
+            "nodeId": "21720",
+            "UX": {
+              "ours": -6.626022341195407,
+              "cii": -7.283506,
+              "difference": 0.6574836588045931
+            },
+            "UY": {
+              "ours": 0.8948558146604356,
+              "cii": 0.867161,
+              "difference": 0.027694814660435663
+            },
+            "UZ": {
+              "ours": 32.20281401585941,
+              "cii": 36.2985,
+              "difference": -4.095685984140587
+            }
+          },
+          {
+            "nodeId": "21730",
+            "UX": {
+              "ours": -5.677184649951941,
+              "cii": -6.597631,
+              "difference": 0.9204463500480591
+            },
+            "UY": {
+              "ours": 0.4381334369250287,
+              "cii": 0.513774,
+              "difference": -0.07564056307497125
+            },
+            "UZ": {
+              "ours": 29.891013674289127,
+              "cii": 34.562481,
+              "difference": -4.671467325710871
+            }
+          },
+          {
+            "nodeId": "21740",
+            "UX": {
+              "ours": -4.574892939694616,
+              "cii": -5.345253,
+              "difference": 0.770360060305384
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 27.21444032201378,
+              "cii": 31.456392,
+              "difference": -4.241951677986222
+            }
+          },
+          {
+            "nodeId": "21780",
+            "UX": {
+              "ours": -3.448318121826138,
+              "cii": -4.037599,
+              "difference": 0.5892808781738621
+            },
+            "UY": {
+              "ours": -0.20836087859350214,
+              "cii": -0.237849,
+              "difference": 0.02948812140649787
+            },
+            "UZ": {
+              "ours": 24.3593525344434,
+              "cii": 28.143133,
+              "difference": -3.7837804655565996
+            }
+          },
+          {
+            "nodeId": "21783",
+            "UX": {
+              "ours": -3.250890102596045,
+              "cii": -3.806656,
+              "difference": 0.5557658974039548
+            },
+            "UY": {
+              "ours": -0.20320787892756806,
+              "cii": -0.231959,
+              "difference": 0.02875112107243194
+            },
+            "UZ": {
+              "ours": 23.838169870929846,
+              "cii": 27.548388,
+              "difference": -3.710218129070153
+            }
+          },
+          {
+            "nodeId": "21786",
+            "UX": {
+              "ours": -2.419218600106505,
+              "cii": -2.833676,
+              "difference": 0.4144573998934953
+            },
+            "UY": {
+              "ours": -0.1767229297233572,
+              "cii": -0.201679,
+              "difference": 0.02495607027664279
+            },
+            "UZ": {
+              "ours": 21.64013885785809,
+              "cii": 25.040108,
+              "difference": -3.3999691421419094
+            }
+          },
+          {
+            "nodeId": "21790",
+            "UX": {
+              "ours": -2.2222848332915737,
+              "cii": -2.603258,
+              "difference": 0.3809731667084262
+            },
+            "UY": {
+              "ours": -0.16939306744855218,
+              "cii": -0.193302,
+              "difference": 0.023908932551447826
+            },
+            "UZ": {
+              "ours": 21.118956194344523,
+              "cii": 24.445362,
+              "difference": -3.326405805655476
+            }
+          },
+          {
+            "nodeId": "21800",
+            "UX": {
+              "ours": -1.243313196236275,
+              "cii": -1.452534,
+              "difference": 0.2092208037637251
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 18.26386840677393,
+              "cii": 21.132107,
+              "difference": -2.8682385932260708
+            }
+          },
+          {
+            "nodeId": "21850",
+            "UX": {
+              "ours": -0.48073561291968697,
+              "cii": -0.554554,
+              "difference": 0.07381838708031302
+            },
+            "UY": {
+              "ours": 0.11839542343683009,
+              "cii": 0.120829,
+              "difference": -0.00243357656316992
+            },
+            "UZ": {
+              "ours": 15.29925230681492,
+              "cii": 17.691748,
+              "difference": -2.392495693185081
+            }
+          },
+          {
+            "nodeId": "21860",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 11.717080796919308,
+              "cii": 13.534739,
+              "difference": -1.8176582030806916
+            }
+          },
+          {
+            "nodeId": "21890",
+            "UX": {
+              "ours": 0.03598519077522789,
+              "cii": 0.029392,
+              "difference": 0.006593190775227888
+            },
+            "UY": {
+              "ours": -0.12754052626021545,
+              "cii": -0.141534,
+              "difference": 0.013993473739784545
+            },
+            "UZ": {
+              "ours": 10.378758396495584,
+              "cii": 11.981649,
+              "difference": -1.6028906035044166
+            }
+          },
+          {
+            "nodeId": "21893",
+            "UX": {
+              "ours": 0.03495297671704268,
+              "cii": 0.022882,
+              "difference": 0.01207097671704268
+            },
+            "UY": {
+              "ours": -0.17597018409089127,
+              "cii": -0.191124,
+              "difference": 0.01515381590910872
+            },
+            "UZ": {
+              "ours": 9.857575732982024,
+              "cii": 11.386903,
+              "difference": -1.529327267017976
+            }
+          },
+          {
+            "nodeId": "21896",
+            "UX": {
+              "ours": 0.028434279562748313,
+              "cii": -0.007226,
+              "difference": 0.03566027956274831
+            },
+            "UY": {
+              "ours": -0.37683567477508656,
+              "cii": -0.396262,
+              "difference": 0.019426325224913443
+            },
+            "UZ": {
+              "ours": 7.659544719910252,
+              "cii": 8.878623,
+              "difference": -1.2190782800897475
+            }
+          },
+          {
+            "nodeId": "21900",
+            "UX": {
+              "ours": 0.026434718915473464,
+              "cii": -0.014919,
+              "difference": 0.041353718915473466
+            },
+            "UY": {
+              "ours": -0.4234304497103165,
+              "cii": -0.443722,
+              "difference": 0.02029155028968349
+            },
+            "UZ": {
+              "ours": 7.138362056396698,
+              "cii": 8.283876,
+              "difference": -1.1455139436033015
+            }
+          },
+          {
+            "nodeId": "21930",
+            "UX": {
+              "ours": -0.4824653126881359,
+              "cii": -0.707541,
+              "difference": 0.22507568731186406
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          },
+          {
+            "nodeId": "21990",
+            "UX": {
+              "ours": -0.7530381631717347,
+              "cii": -1.057281,
+              "difference": 0.30424283682826525
+            },
+            "UY": {
+              "ours": 0.14541237384295586,
+              "cii": 0.148274,
+              "difference": -0.0028616261570441337
+            },
+            "UZ": {
+              "ours": -2.6952845396400353,
+              "cii": -3.128001,
+              "difference": 0.43271646035996447
+            }
+          },
+          {
+            "nodeId": "21993",
+            "UX": {
+              "ours": -0.8013582672901284,
+              "cii": -1.118988,
+              "difference": 0.3176297327098717
+            },
+            "UY": {
+              "ours": 0.16382808347293076,
+              "cii": 0.168489,
+              "difference": -0.0046609165270692365
+            },
+            "UZ": {
+              "ours": -3.2277713691722365,
+              "cii": -3.735649,
+              "difference": 0.5078776308277635
+            }
+          },
+          {
+            "nodeId": "21996",
+            "UX": {
+              "ours": -0.8102070404450646,
+              "cii": -1.130289,
+              "difference": 0.32008195955493546
+            },
+            "UY": {
+              "ours": 0.16720091028730608,
+              "cii": 0.172195,
+              "difference": -0.004994089712693911
+            },
+            "UZ": {
+              "ours": -3.325365732455711,
+              "cii": -3.84702,
+              "difference": 0.5216542675442892
+            }
+          },
+          {
+            "nodeId": "22000",
+            "UX": {
+              "ours": -0.8584418619619545,
+              "cii": -1.191886,
+              "difference": 0.3334441380380455
+            },
+            "UY": {
+              "ours": 0.18559533613287993,
+              "cii": 0.19242,
+              "difference": -0.006824663867120079
+            },
+            "UZ": {
+              "ours": -3.8578525619879125,
+              "cii": -4.454669,
+              "difference": 0.5968164380120875
+            }
+          },
+          {
+            "nodeId": "22010",
+            "UX": {
+              "ours": -0.9111666237568482,
+              "cii": -1.257037,
+              "difference": 0.34587037624315176
+            },
+            "UY": {
+              "ours": 0.06105759779336323,
+              "cii": 0.046552,
+              "difference": 0.014505597793363224
+            },
+            "UZ": {
+              "ours": -4.361932657564253,
+              "cii": -5.037557,
+              "difference": 0.6756243424357464
+            }
+          },
+          {
+            "nodeId": "22020",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -7.603028566924476,
+              "cii": -8.779541,
+              "difference": 1.1765124330755237
+            }
+          },
+          {
+            "nodeId": "22050",
+            "UX": {
+              "ours": 5.06046759175092,
+              "cii": 6.551943,
+              "difference": -1.4914754082490793
+            },
+            "UY": {
+              "ours": -0.6974020068358429,
+              "cii": -0.704369,
+              "difference": 0.006966993164157165
+            },
+            "UZ": {
+              "ours": -11.844982051999287,
+              "cii": -13.677058,
+              "difference": 1.832075948000714
+            }
+          },
+          {
+            "nodeId": "22053",
+            "UX": {
+              "ours": 5.629713396854883,
+              "cii": 7.279294,
+              "difference": -1.6495806031451172
+            },
+            "UY": {
+              "ours": -0.7218856621473309,
+              "cii": -0.729032,
+              "difference": 0.00714633785266916
+            },
+            "UZ": {
+              "ours": -12.230161474154936,
+              "cii": -14.116424,
+              "difference": 1.8862625258450638
+            }
+          },
+          {
+            "nodeId": "22056",
+            "UX": {
+              "ours": 7.6723250957841,
+              "cii": 9.889069,
+              "difference": -2.2167439042158996
+            },
+            "UY": {
+              "ours": -0.8077435339787354,
+              "cii": -0.815449,
+              "difference": 0.00770546602126454
+            },
+            "UZ": {
+              "ours": -13.612275931120298,
+              "cii": -15.692969,
+              "difference": 2.080693068879702
+            }
+          },
+          {
+            "nodeId": "22060",
+            "UX": {
+              "ours": 8.241388686163212,
+              "cii": 10.616094,
+              "difference": -2.374705313836788
+            },
+            "UY": {
+              "ours": -0.8310917113223332,
+              "cii": -0.838928,
+              "difference": 0.007836288677666836
+            },
+            "UZ": {
+              "ours": -13.997455353275948,
+              "cii": -16.132336,
+              "difference": 2.134880646724051
+            }
+          },
+          {
+            "nodeId": "22070",
+            "UX": {
+              "ours": 13.109016081611863,
+              "cii": 16.540785,
+              "difference": -3.431768918388137
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -20.497526695389293,
+              "cii": -23.636944,
+              "difference": 3.1394173046107063
+            }
+          },
+          {
+            "nodeId": "22100",
+            "UX": {
+              "ours": 9.170901472778858,
+              "cii": 11.085497,
+              "difference": -1.9145955272211417
+            },
+            "UY": {
+              "ours": -0.12455297233733795,
+              "cii": -0.128358,
+              "difference": 0.0038050276626620527
+            },
+            "UZ": {
+              "ours": -23.560540411927853,
+              "cii": -27.173326,
+              "difference": 3.6127855880721462
+            }
+          },
+          {
+            "nodeId": "22110",
+            "UX": {
+              "ours": 7.957816793363964,
+              "cii": 9.504811,
+              "difference": -1.546994206636036
+            },
+            "UY": {
+              "ours": 0.006793308892403967,
+              "cii": 0.025638,
+              "difference": -0.018844691107596033
+            },
+            "UZ": {
+              "ours": -24.061979157025835,
+              "cii": -27.753878,
+              "difference": 3.6918988429741653
+            }
+          },
+          {
+            "nodeId": "22115",
+            "UX": {
+              "ours": 6.566156025788221,
+              "cii": 7.790134,
+              "difference": -1.2239779742117793
+            },
+            "UY": {
+              "ours": 0.004504616606421723,
+              "cii": 0.017055,
+              "difference": -0.012550383393578278
+            },
+            "UZ": {
+              "ours": -24.594465986558035,
+              "cii": -28.361525,
+              "difference": 3.7670590134419655
+            }
+          },
+          {
+            "nodeId": "22120",
+            "UX": {
+              "ours": 3.7580393714079725,
+              "cii": 4.330131,
+              "difference": -0.5720916285920272
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -25.66844992280414,
+              "cii": -29.587105,
+              "difference": 3.9186550771958615
+            }
+          },
+          {
+            "nodeId": "22125",
+            "UX": {
+              "ours": 2.6875050311408493,
+              "cii": 3.108491,
+              "difference": -0.4209859688591506
+            },
+            "UY": {
+              "ours": 0.0006606742629941737,
+              "cii": -0.000273,
+              "difference": 0.0009336742629941738
+            },
+            "UZ": {
+              "ours": -22.867744675704444,
+              "cii": -26.135754,
+              "difference": 3.268009324295555
+            }
+          },
+          {
+            "nodeId": "22130",
+            "UX": {
+              "ours": 2.1550034401690197,
+              "cii": 2.500828,
+              "difference": -0.34582455983098015
+            },
+            "UY": {
+              "ours": 0.0010356047179971295,
+              "cii": -0.000295,
+              "difference": 0.0013306047179971296
+            },
+            "UZ": {
+              "ours": -21.474095761982827,
+              "cii": -24.418272,
+              "difference": 2.9441762380171745
+            }
+          },
+          {
+            "nodeId": "22140",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -15.743109072048563,
+              "cii": -17.320923,
+              "difference": 1.5778139279514374
+            }
+          },
+          {
+            "nodeId": "22190",
+            "UX": {
+              "ours": -3.025600565504341,
+              "cii": -3.511776,
+              "difference": 0.4861754344956588
+            },
+            "UY": {
+              "ours": -0.0518502206272481,
+              "cii": -0.056859,
+              "difference": 0.005008779372751897
+            },
+            "UZ": {
+              "ours": -7.627271960703569,
+              "cii": -7.150231,
+              "difference": -0.47704096070356883
+            }
+          },
+          {
+            "nodeId": "22200",
+            "UX": {
+              "ours": -5.878770187605462,
+              "cii": -6.823409,
+              "difference": 0.9446388123945377
+            },
+            "UY": {
+              "ours": -0.0867512157246765,
+              "cii": -0.093508,
+              "difference": 0.006756784275323488
+            },
+            "UZ": {
+              "ours": -0.29641441978055155,
+              "cii": 2.222718,
+              "difference": -2.5191324197805516
+            }
+          },
+          {
+            "nodeId": "22210",
+            "UX": {
+              "ours": -7.949938844813563,
+              "cii": -9.227383,
+              "difference": 1.277444155186437
+            },
+            "UY": {
+              "ours": -0.07462559172494541,
+              "cii": -0.080611,
+              "difference": 0.005985408275054588
+            },
+            "UZ": {
+              "ours": 4.593255296657184,
+              "cii": 8.633839,
+              "difference": -4.040583703342816
+            }
+          },
+          {
+            "nodeId": "22220",
+            "UX": {
+              "ours": -11.576445123819216,
+              "cii": -13.436625,
+              "difference": 1.8601798761807835
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 11.765779915729416,
+              "cii": 18.496336,
+              "difference": -6.730556084270583
+            }
+          },
+          {
+            "nodeId": "22250",
+            "UX": {
+              "ours": -17.812735141377274,
+              "cii": -20.99082,
+              "difference": 3.178084858622725
+            },
+            "UY": {
+              "ours": 0.11055423574375405,
+              "cii": 0.083451,
+              "difference": 0.027103235743754048
+            },
+            "UZ": {
+              "ours": 17.82995120200853,
+              "cii": 27.896658,
+              "difference": -10.066706797991468
+            }
+          },
+          {
+            "nodeId": "22260",
+            "UX": {
+              "ours": -17.396517441727305,
+              "cii": -20.675119,
+              "difference": 3.278601558272694
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 15.458427374959859,
+              "cii": 26.090471,
+              "difference": -10.632043625040142
+            }
+          },
+          {
+            "nodeId": "22310",
+            "UX": {
+              "ours": 7.028582756663184,
+              "cii": 5.441804,
+              "difference": 1.5867787566631835
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 8.150254,
+              "difference": -8.150254
+            }
+          },
+          {
+            "nodeId": "22350",
+            "UX": {
+              "ours": 18.09648309795163,
+              "cii": 20.023022,
+              "difference": -1.926538902048371
+            },
+            "UY": {
+              "ours": 0.024006822630897484,
+              "cii": 0.029827,
+              "difference": -0.005820177369102515
+            },
+            "UZ": {
+              "ours": -8.883253023659458,
+              "cii": -2.810535,
+              "difference": -6.0727180236594585
+            }
+          },
+          {
+            "nodeId": "22360",
+            "UX": {
+              "ours": 15.065748103678779,
+              "cii": 17.451351,
+              "difference": -2.3856028963212204
+            },
+            "UY": {
+              "ours": 0.00006959633609443687,
+              "cii": 0,
+              "difference": 0.00006959633609443687
+            },
+            "UZ": {
+              "ours": -8.958563948323905,
+              "cii": -3.628823,
+              "difference": -5.329740948323904
+            }
+          },
+          {
+            "nodeId": "22370",
+            "UX": {
+              "ours": 15.06218253309729,
+              "cii": 17.455502,
+              "difference": -2.3933194669027085
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": -8.95755268074128,
+              "cii": -3.628137,
+              "difference": -5.329415680741279
+            }
+          },
+          {
+            "nodeId": "22380",
+            "UX": {
+              "ours": 15.058616962515789,
+              "cii": 17.45965,
+              "difference": -2.4010330374842113
+            },
+            "UY": {
+              "ours": -0.00006975290281026312,
+              "cii": 0,
+              "difference": -0.00006975290281026312
+            },
+            "UZ": {
+              "ours": -8.956539174635168,
+              "cii": -3.627453,
+              "difference": -5.329086174635168
+            }
+          },
+          {
+            "nodeId": "22390",
+            "UX": {
+              "ours": 15.055051391934287,
+              "cii": 17.463802,
+              "difference": -2.4087506080657146
+            },
+            "UY": {
+              "ours": -0.00013966215807883117,
+              "cii": 0.000156,
+              "difference": -0.0002956621580788312
+            },
+            "UZ": {
+              "ours": -8.955523431225139,
+              "cii": -3.626771,
+              "difference": -5.328752431225139
+            }
+          },
+          {
+            "nodeId": "22400",
+            "UX": {
+              "ours": 5.428010821891664,
+              "cii": 6.289828,
+              "difference": -0.8618171781083364
+            },
+            "UY": {
+              "ours": -0.11501186702900162,
+              "cii": -0.123961,
+              "difference": 0.008949132970998377
+            },
+            "UZ": {
+              "ours": -2.0603551723986415,
+              "cii": -1.170365,
+              "difference": -0.8899901723986414
+            }
+          },
+          {
+            "nodeId": "22470",
+            "UX": {
+              "ours": 1.7912002114875136,
+              "cii": 2.068626,
+              "difference": -0.27742578851248645
+            },
+            "UY": {
+              "ours": -0.01393579618199746,
+              "cii": -0.016191,
+              "difference": 0.0022552038180025397
+            },
+            "UZ": {
+              "ours": -0.16480320667476342,
+              "cii": -0.101282,
+              "difference": -0.06352120667476342
+            }
+          },
+          {
+            "nodeId": "22480",
+            "UX": {
+              "ours": 0.5324825240286132,
+              "cii": 0.607648,
+              "difference": -0.07516547597138679
+            },
+            "UY": {
+              "ours": -0.00006555647343930964,
+              "cii": -0.000125,
+              "difference": 0.00005944352656069036
+            },
+            "UZ": {
+              "ours": -0.0006252843661062323,
+              "cii": -0.000488,
+              "difference": -0.0001372843661062323
+            }
+          },
+          {
+            "nodeId": "22490",
+            "UX": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UY": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            },
+            "UZ": {
+              "ours": 0,
+              "cii": 0,
+              "difference": 0
+            }
+          }
+        ],
+        "unmatchedCiiNodes": [
+          "20119",
+          "20161",
+          "20296",
+          "20329",
+          "20339",
+          "20499",
+          "20689",
+          "20698",
+          "20699",
+          "21429",
+          "21589",
+          "21599",
+          "21719",
+          "22249",
+          "22349"
+        ],
+        "totalAbsoluteTranslation": {
+          "ours": 2237.587568056219,
+          "cii": 2845.552064000002,
+          "ratio": 0.7863456783534774
+        }
+      }
+    }
+  },
+  "limitations": [
+    "CAESAR solved BM4 with its nonlinear restraint treatment active: unilateral (+Y) supports lift off, and gapped GUIDE/LIM supports stay open until their gap closes. This consumer linearizes every restrained DOF as bidirectionally FIXED and discloses that as GENERIC_APPROX_GAP_CLOSED / GENERIC_APPROX_FRICTION_IGNORED. Every deviation recorded here at a gapped or unilateral support is attributable to that declared approximation, not to a solver defect.",
+    "CAESAR reports 112 displacement nodes against this model's 97: CAESAR inserts its own intermediate bend nodes. Only the 97 nodes declared by the source model are compared; no approximate station matching is used.",
+    "reaction values are the reaction applied BY the restraint TO the structure (this repository's standing convention). CAESAR's RESTRAINT_REPORT exports the equal-and-opposite force applied BY the pipe TO the restraint hardware, so every CAESAR reaction is negated before differencing.",
+    "The comparison runs on InputXML_BM4.repaired.xml, whose three corrected backtracking elements are documented in benchmarks/LFEA/BM4/PROVENANCE.md and reproducible via scripts/lfea-bm4-collinear-repair.mjs. The as-received model BLOCKs on TOPOLOGY_COLLINEAR_SEGMENT_OVERLAP and cannot be solved at all."
+  ]
+}

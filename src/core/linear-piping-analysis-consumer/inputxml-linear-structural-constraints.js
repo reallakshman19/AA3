@@ -1,4 +1,8 @@
 import { InputXmlLinearStructuralPreparationError } from './inputxml-linear-structural-profile.js';
+import {
+  restraintApproximationCodes,
+  restraintUnilateralAction,
+} from './inputxml-feature-inventory-restraints.js';
 
 const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
 const ALLOWED_DISPOSITIONS = new Set([
@@ -62,6 +66,16 @@ export function compileInputXmlStructuralConstraints({ inventory, modelId, analy
       targetDofs: Object.freeze([...dofs]),
       implementation: disposition.disposition,
       limitationCode: disposition.limitationCode,
+      // A restraint can rely on more than one approximation at once -- a +Y
+      // support carrying friction relies on both -- but `limitationCode` can
+      // only name the first. Reporting just that one loses the fact that the
+      // support is ALSO one-way, which is the approximation most likely to
+      // move a reaction. Every applicable code is carried here.
+      limitationCodes: restraintApproximationCodes(item.classification),
+      // Non-null only for a one-way restraint: the DOF it acts on and the sign
+      // of the reaction it can physically apply. This is what lets a solved
+      // result be reviewed against what the real support could actually do.
+      unilateralAction: restraintUnilateralAction(item.classification),
       declarationIds: Object.freeze(declarationIds),
     }));
   }

@@ -114,10 +114,14 @@ function childInventory({ element, feature, segment, componentInventoryId }) {
   }
   if (kind === 'FORCES_MOMENTS') {
     if (isForcesMomentsSlotUnfilled(feature.rawAttributes)) return unfilledSlotRow(common, kind);
+    // Declared vectors are applied verbatim as NODAL_FORCE_MOMENT primitives by
+    // compileInputXmlLinearPhysicalCases (one physical case per CAESAR vector
+    // set). Components are already SI-converted at ingestion, so nothing is
+    // approximated in carrying them through.
     return inventoryRow({
       ...common,
       classification: { kind },
-      dispositions: both(unsupportedDisposition('MODEL_NODAL_FORCE_VECTOR_NOT_COMPILED')),
+      dispositions: both(exactDisposition()),
     });
   }
   if (kind === 'RESTRAINT') {

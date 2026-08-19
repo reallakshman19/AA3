@@ -104,7 +104,7 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
       documentRef: applicationRoot.ownerDocument,
       loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
       resultsHost: lfeaPipelineShell.getResultsHost(),
-      getPreFlight: () => linearPipingInputXmlSource.getPreFlight(),
+      getPreFlight: () => activeLfeaPreFlight(),
       onApplyCaseSelection: (caseIds) => linearPipingInputXmlSource.setRequestedCaseIds(caseIds),
       onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
       onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
@@ -117,7 +117,7 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
           { fallbackUnit: 'mm' },
         );
       },
-      getNodeIds: () => linearPipingInputXmlSource.getPreFlight()
+      getNodeIds: () => activeLfeaPreFlight()
         ?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
         ?.map((node) => node.id) ?? [],
     });
@@ -208,6 +208,20 @@ lfeaPipelineShell.setAssemblyHandlers({
 });
 
 /**
+ * The pre-flight the downstream steps run from, whichever source produced it.
+ *
+ * Load case, Run and Output consume a sealed pre-flight, not a file format.
+ * An InputXML import produces one through its own workflow controller and an
+ * ACCDB import through linear-piping-accdb-intake.js; both are the same
+ * sealed record, so the steps below need only know which one is loaded. The
+ * InputXML workflow wins when both are, because it is the one whose panel
+ * owns the case-selection and repair affordances.
+ */
+function activeLfeaPreFlight() {
+  return linearPipingInputXmlSource.getPreFlight() ?? lfeaAccdbInputPanel.getPreFlight();
+}
+
+/**
  * Project what the source panels actually know onto the stepper.
  *
  * The six steps carry a real order, but nothing was telling the stepper
@@ -265,22 +279,25 @@ function refreshLfeaStepGuidance() {
   }
 
   if (accdbLoaded) {
-    // The ACCDB panel reports model health directly and does not seal a
-    // pre-FEA authorization (its own "Execution custody: NOT CONNECTED"
-    // disclosure), so the steps that consume a pre-flight genuinely cannot
-    // be reached from an ACCDB import yet. Saying that is the point: before
-    // this, Load case simply sat there empty with no explanation.
-    const blocking = accdb.scopedBlockingFindingCount ?? 0;
+    const cleared = accdb.preFlightStatus === 'PASS' || accdb.preFlightSolveAuthorized;
+    const failed = accdb.preFlightStatus === 'FAILED';
     lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
       available: true,
-      complete: blocking === 0,
-      detail: blocking === 0
-        ? 'No blocking findings for the selected profile.'
-        : `${blocking} blocking finding(s) for the selected profile — see the grouped findings.`,
+      complete: cleared,
+      detail: cleared
+        ? 'Pre-flight cleared.'
+        : failed
+          ? `Pre-flight could not be prepared: ${accdb.preFlightError}`
+          : `Pre-flight ${accdb.preFlightStatus} — see the grouped findings.`,
     });
     lfeaPipelineShell.setStepStatus('LOAD_CASE', {
-      available: false,
-      blockedReason: 'An ACCDB import reports model health only; it does not yet seal the pre-FEA authorization the Load-case step runs from. Convert the model to InputXML to analyze it.',
+      available: cleared,
+      detail: cleared ? `Choose from ${accdb.availableCaseIds.length} case(s), then Analyze.` : null,
+      blockedReason: cleared
+        ? null
+        : failed
+          ? `The ACCDB pre-flight failed closed: ${accdb.preFlightError}`
+          : 'The ACCDB pre-flight is not authorized yet — clear the blocking findings on Error check first.',
     });
     return;
   }
@@ -306,7 +323,7 @@ function refreshLfeaStepGuidance() {
  */
 function runLfeaPipelineAnalysis(caseIds) {
   try {
-    const preFlight = linearPipingInputXmlSource.getPreFlight();
+    const preFlight = activeLfeaPreFlight();
     if (!preFlight) throw new Error('Load a model and run Error check before analyzing.');
     const requested = preFlight.preparation.requestedCaseIds ?? [];
     const missing = caseIds.filter((caseId) => !requested.includes(caseId));

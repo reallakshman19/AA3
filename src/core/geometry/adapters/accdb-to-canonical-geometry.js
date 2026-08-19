@@ -430,9 +430,17 @@ function resolveAccdbReducerGeometry(row, declaration, elementRows, lengthConver
   return {
     toOuterDiameter: outerDiameter,
     toWallThickness: wallThickness,
+    // ALPHA is an angle, so it carries no length unit to convert.
     alpha: accdbNumberOrNull(declaration.ALPHA),
-    r1: accdbNumberOrNull(declaration.R1),
-    r2: accdbNumberOrNull(declaration.R2),
+    // R1/R2 are retained exactly as the file states them, in the file's own
+    // length unit -- this adapter has no confirmed reading of what CAESAR
+    // measures them between, and converting on an assumption would put a
+    // silently mis-scaled length next to the two genuinely converted ones
+    // above. The names say which units they are in so no reader can mistake
+    // them for the metres the rest of this record is in; no mechanics
+    // consumes them today.
+    r1SourceUnits: accdbNumberOrNull(declaration.R1),
+    r2SourceUnits: accdbNumberOrNull(declaration.R2),
   };
 }
 

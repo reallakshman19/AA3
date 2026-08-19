@@ -39,6 +39,19 @@ export const INPUTXML_INGESTION_EVIDENCE_KEYS = Object.freeze([
 
 const HASH_PATTERN = /^fnv1a64:[0-9a-f]{16}$/u;
 export const INPUTXML_MEDIA_TYPE = 'application/xml';
+/**
+ * CAESAR's ACCDB is a database file, not text, so a source sealed from one
+ * carries the canonical serialization of the model tables actually read out
+ * of it rather than a document. It is a distinct media type because it is a
+ * distinct thing: the type is part of every content and source hash below, so
+ * two sources can never collide across formats, and nothing can pass off
+ * table data as an XML document.
+ */
+export const ACCDB_MEDIA_TYPE = 'application/vnd.ms-access';
+export const LINEAR_PIPING_SOURCE_MEDIA_TYPES = Object.freeze([
+  INPUTXML_MEDIA_TYPE,
+  ACCDB_MEDIA_TYPE,
+]);
 export const CANONICAL_ANALYSIS_UNIT = 'm';
 
 export function sealLinearPipingInputXmlSource(input) {
@@ -196,8 +209,11 @@ export function compareAscii(left, right) {
 }
 
 function requireMediaType(value) {
-  if (value !== INPUTXML_MEDIA_TYPE) {
-    failInputXml('InputXML media type must be application/xml.', 'PIPING_INPUTXML_SOURCE_INVALID');
+  if (!LINEAR_PIPING_SOURCE_MEDIA_TYPES.includes(value)) {
+    failInputXml(
+      `Linear piping source media type must be one of ${LINEAR_PIPING_SOURCE_MEDIA_TYPES.join(', ')}.`,
+      'PIPING_INPUTXML_SOURCE_INVALID',
+    );
   }
   return value;
 }

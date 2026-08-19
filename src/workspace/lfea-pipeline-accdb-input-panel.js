@@ -1,5 +1,9 @@
 import { readAccdbNamedTables } from '../core/fea-benchmarks/caesar-accdb-reader-core.js';
 import { applyAccdbFieldOverrides } from '../core/linear-piping-analysis-consumer/accdb-field-overrides.js';
+import {
+  createLinearPipingAccdbIntake,
+  prepareLinearPipingAccdbPreFlight,
+} from './linear-piping-accdb-intake.js';
 import { parseAccdbModelHealthSource } from '../core/linear-piping-analysis-consumer/accdb-source-binding.js';
 import { diagnoseInputXmlLinearModelHealth } from '../core/linear-piping-analysis-consumer/inputxml-linear-model-health.js';
 import { diagnoseInputXmlLinearPreFeaEngineeringSanity } from '../core/linear-piping-analysis-consumer/inputxml-linear-prefea-engineering-checks.js';
@@ -71,11 +75,17 @@ export class LfeaPipelineAccdbInputPanelController {
     this.initialized = false;
     this.fileName = null;
     this.tables = null;
+    this.effectiveTables = null;
+    this.effectiveTables = null;
+    this.preFlight = null;
+    this.preFlightError = '';
     this.sourceBundle = null;
     this.modelHealth = null;
     this.healthView = null;
     this.propertyRows = Object.freeze([]);
     this.engineeringSanity = null;
+    this.preFlight = null;
+    this.preFlightError = '';
     this.requestedProfileId = requireProfileId(options.requestedProfileId ?? LFEA_PIPELINE_ACCDB_DEFAULT_PROFILE_ID);
     this.overrideSet = null;
     this.overrideDisclosures = Object.freeze([]);
@@ -143,6 +153,7 @@ export class LfeaPipelineAccdbInputPanelController {
 
   /** Build every derived record from one exact table set. */
   extract(tables) {
+    this.effectiveTables = tables;
     this.sourceBundle = parseAccdbModelHealthSource(tables, {
       source: `accdb-panel-${this.fileName}`,
       fileName: this.fileName,
@@ -151,6 +162,42 @@ export class LfeaPipelineAccdbInputPanelController {
     this.healthView = buildAccdbModelHealthViewModel(this.modelHealth, this.requestedProfileId);
     this.propertyRows = buildAccdbElementPropertyRows(this.sourceBundle);
     this.engineeringSanity = diagnoseInputXmlLinearPreFeaEngineeringSanity(this.sourceBundle);
+    this.prepare(tables);
+  }
+
+  /**
+   * Take the imported model through the same governed pre-flight an InputXML
+   * import goes through, so the Load-case, Run and Output steps have the
+   * authority they consume. A model that fails closed here still shows its
+   * verdict above -- the failure is reported, not swallowed, and it never
+   * takes the panel's own extraction down with it.
+   */
+  prepare(tables) {
+    this.preFlight = null;
+    this.preFlightError = '';
+    try {
+      const intake = createLinearPipingAccdbIntake(tables, {
+        fileName: this.fileName,
+        requestedProfileId: this.requestedProfileId,
+        requestedCaseIds: this.requestedCaseIds ?? undefined,
+      });
+      this.preFlight = prepareLinearPipingAccdbPreFlight(intake, this.sourceBundle);
+    } catch (error) {
+      this.preFlightError = errorMessage(error);
+    }
+  }
+
+  /**
+   * The sealed pre-flight this source produced, or null. The Load-case step
+   * reads this exactly as it reads the InputXML workflow's.
+   */
+  getPreFlight() {
+    return this.preFlight;
+  }
+
+  getNodeIds() {
+    return this.preFlight?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
+      ?.map((node) => node.id) ?? [];
   }
 
   /**
@@ -163,6 +210,10 @@ export class LfeaPipelineAccdbInputPanelController {
     if (this.modelHealth) {
       this.healthView = buildAccdbModelHealthViewModel(this.modelHealth, this.requestedProfileId);
     }
+    // The requested profile is sealed into the pre-flight's identity, so it
+    // cannot be swapped after the fact -- the pre-flight is rebuilt for the
+    // newly selected profile rather than left describing the previous one.
+    if (this.effectiveTables) this.prepare(this.effectiveTables);
     this.render();
     this.notifyStateChanged();
   }
@@ -230,6 +281,7 @@ export class LfeaPipelineAccdbInputPanelController {
   clear() {
     this.fileName = null;
     this.tables = null;
+    this.effectiveTables = null;
     this.sourceBundle = null;
     this.modelHealth = null;
     this.healthView = null;
@@ -261,6 +313,10 @@ export class LfeaPipelineAccdbInputPanelController {
       )),
       scopedBlockingFindingCount: this.healthView?.blockingCount ?? null,
       findingGroupCount: this.healthView?.findingGroups.length ?? null,
+      preFlightStatus: this.preFlight?.status ?? (this.preFlightError ? 'FAILED' : 'NOT_PREPARED'),
+      preFlightSolveAuthorized: this.preFlight?.solveAuthorized ?? false,
+      availableCaseIds: this.preFlight?.sourceSummary.availableCaseIds ?? Object.freeze([]),
+      preFlightError: this.preFlightError || null,
       overrideCount: this.overrideSet?.overrides.length ?? 0,
       overrideApprover: this.overrideSet?.approver ?? null,
       engineeringSanityFindingCount: this.engineeringSanity?.summary.findingCount ?? null,

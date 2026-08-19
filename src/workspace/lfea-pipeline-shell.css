@@ -362,6 +362,56 @@
   line-height: 1.5;
 }
 
+/* Governing values, before the table of everything. */
+.lfea-pipeline-results__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px 12px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+}
+
+.lfea-pipeline-results__summary dt {
+  grid-row: 1;
+  color: var(--workspace-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lfea-pipeline-results__summary dd {
+  grid-row: 2;
+  margin: 0;
+  color: var(--workspace-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-pipeline-results__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+/* Sorting is a column header action, so the header reads as one. */
+.lfea-pipeline-results__table th button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* The rows the summary above is pointing at. */
+.lfea-pipeline-results__table tr[data-extreme="true"] {
+  background: color-mix(in srgb, var(--workspace-accent) 12%, transparent);
+}
+
 .lfea-pipeline-results__scroll {
   max-height: 460px;
   overflow: auto;

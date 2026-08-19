@@ -3,6 +3,7 @@ import {
   STRICT_INPUTXML_LINEAR_STATIC_PROFILE,
 } from '../core/linear-piping-analysis-consumer/inputxml-model-health-profile.js';
 import {
+  INPUTXML_MEDIA_TYPE,
   requireLinearPipingInputXmlSource,
   sealLinearPipingInputXmlSource,
 } from '../core/linear-piping-analysis-consumer/inputxml-source-contract.js';
@@ -80,6 +81,81 @@ export function inspectLinearPipingInputXmlSource(input) {
 }
 
 /**
+ * Seal one source/ingestion authority from an already-inspected source.
+ *
+ * Split out of createLinearPipingInputXmlIntake so a second source format can
+ * seal an intake through exactly this code rather than a parallel copy of it.
+ * Everything format-specific -- how the text was obtained, which unit
+ * declaration is authoritative, what the media type is -- is decided by the
+ * caller and passed in; everything custody-related (source sealing, unit
+ * profile, ingestion options, identity hash) happens here, once.
+ */
+export function createLinearPipingSourceIntake(input) {
+  const fileName = requireText(input.fileName, 'sourceIntake.fileName');
+  const content = requireText(input.content, 'sourceIntake.content');
+  const mediaType = input.mediaType ?? INPUTXML_MEDIA_TYPE;
+  const sourceUnit = String(input.sourceUnit ?? '').trim().toLowerCase();
+  if (!sourceUnit) {
+    failIntake('PIPING_INPUTXML_INTAKE_UNIT_AUTHORITY_REQUIRED', 'A source length unit is required.');
+  }
+  const contentSha256 = sha256HexText(content);
+  const sourceId = `${input.sourceIdPrefix ?? 'LFEA-INPUTXML'}-${contentSha256.slice(0, 16).toUpperCase()}`;
+  const inputXmlSource = sealLinearPipingInputXmlSource({
+    sourceId,
+    sourceRevision: `SHA256-${contentSha256.slice(0, 16).toUpperCase()}`,
+    fileName,
+    mediaType,
+    content,
+  });
+  const unitAuthority = Object.freeze({
+    declared: input.unitAuthority?.declared ?? true,
+    sourceUnit,
+    authority: input.unitAuthority?.authority ?? 'CAESAR_INPUTXML_DECLARED_LENGTH_UNIT',
+    revision: input.unitAuthority?.revision ?? inputXmlSource.contentHash,
+    evidence: input.unitAuthority?.evidence ?? 'The declared source length unit is authoritative.',
+  });
+  const unitProfile = sealLinearPipingInputXmlUnitProfile({
+    schema: LINEAR_PIPING_INPUTXML_UNIT_PROFILE_SCHEMA,
+    profileId: `LFEA-NATIVE-INPUTXML-${sourceUnit.toUpperCase()}-TO-M-R1`,
+    registryId: INPUTXML_LENGTH_UNIT_REGISTRY_ID,
+    allowedSourceUnits: [sourceUnit],
+    sourceEvidence: {
+      authority: unitAuthority.authority,
+      documentId: fileName,
+      revision: unitAuthority.revision,
+      sourceSemanticHash: inputXmlSource.semanticHash,
+    },
+    semanticHash: '',
+  });
+  const draft = {
+    schema: LINEAR_PIPING_INPUTXML_INTAKE_SCHEMA,
+    fileName,
+    contentSha256,
+    inputXmlSource,
+    unitAuthority,
+    ingestionOptions: Object.freeze({
+      unit: sourceUnit,
+      source: sourceId,
+      componentOrigins: normalizeComponentOrigins(input.componentOrigins),
+      restraintTypeCodeMap: Object.freeze({ ...DEFAULT_RESTRAINT_TYPE_CODE_MAP }),
+      restraintTypeMutation: Object.freeze(defaultRestraintTypeMutationConfig()),
+      restraintTypeCorrectionProfileId: CAESAR_INPUTXML_RESTRAINT_TYPE_CORRECTION_PROFILE_ID,
+      bendRadiusTolerance: normalizeBendTolerance(input.bendRadiusTolerance),
+      unitNormalizationProfile: unitProfile,
+    }),
+    conditioning: Object.freeze({
+      requiredAttachmentPoints: Object.freeze([]),
+      profile: INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE,
+    }),
+    requestedProfileId: normalizeProfile(input.requestedProfileId),
+    requestedCaseIds: normalizeCaseIds(input.requestedCaseIds),
+    semanticHash: '',
+  };
+  draft.semanticHash = semanticHash(intakeIdentity(draft));
+  return requireLinearPipingInputXmlIntake(draft);
+}
+
+/**
  * Seal one native InputXML source/ingestion authority. No pre-FEA preparation,
  * factorization or solver runtime is created here.
  */
@@ -99,54 +175,30 @@ export function createLinearPipingInputXmlIntake(input, options) {
       });
   }
   const sourceUnit = inspection.sourceUnit ?? fallbackUnit;
-  const sourceId = `LFEA-INPUTXML-${inspection.contentSha256.slice(0, 16).toUpperCase()}`;
-  const inputXmlSource = sealLinearPipingInputXmlSource({
-    sourceId,
-    sourceRevision: `SHA256-${inspection.contentSha256.slice(0, 16).toUpperCase()}`,
+  const declared = Boolean(inspection.unitDeclared) && inspection.sourceUnit !== null;
+  return createLinearPipingSourceIntake({
     fileName: input.fileName,
-    mediaType: 'application/xml',
     content: input.content,
-  });
-  const unitAuthority = unitAuthorityRecord({ inspection, sourceUnit, inputXmlSource });
-  const unitProfile = sealLinearPipingInputXmlUnitProfile({
-    schema: LINEAR_PIPING_INPUTXML_UNIT_PROFILE_SCHEMA,
-    profileId: `LFEA-NATIVE-INPUTXML-${sourceUnit.toUpperCase()}-TO-M-R1`,
-    registryId: INPUTXML_LENGTH_UNIT_REGISTRY_ID,
-    allowedSourceUnits: [sourceUnit],
-    sourceEvidence: {
-      authority: unitAuthority.authority,
-      documentId: input.fileName,
-      revision: unitAuthority.revision,
-      sourceSemanticHash: inputXmlSource.semanticHash,
+    mediaType: INPUTXML_MEDIA_TYPE,
+    sourceUnit,
+    sourceIdPrefix: 'LFEA-INPUTXML',
+    unitAuthority: {
+      declared,
+      authority: declared
+        ? 'CAESAR_INPUTXML_DECLARED_LENGTH_UNIT'
+        : 'LFEA_ENGINEER_DECLARED_FALLBACK_LENGTH_UNIT',
+      // A fallback unit is the engineer's declaration, not the file's, so its
+      // revision must not read as if the file had carried the unit.
+      revision: declared ? undefined : `ENGINEER-SELECTION-${sourceUnit.toUpperCase()}`,
+      evidence: declared
+        ? 'The supported <UNITS><LENGTH> declaration in the selected InputXML is authoritative.'
+        : 'The selected source has no supported <UNITS><LENGTH>; the engineer explicitly selected the fallback unit.',
     },
-    semanticHash: '',
+    componentOrigins: options.componentOrigins,
+    bendRadiusTolerance: options.bendRadiusTolerance,
+    requestedProfileId: options.requestedProfileId,
+    requestedCaseIds: options.requestedCaseIds,
   });
-  const draft = {
-    schema: LINEAR_PIPING_INPUTXML_INTAKE_SCHEMA,
-    fileName: input.fileName,
-    contentSha256: inspection.contentSha256,
-    inputXmlSource,
-    unitAuthority,
-    ingestionOptions: Object.freeze({
-      unit: sourceUnit,
-      source: sourceId,
-      componentOrigins: normalizeComponentOrigins(options.componentOrigins),
-      restraintTypeCodeMap: Object.freeze({ ...DEFAULT_RESTRAINT_TYPE_CODE_MAP }),
-      restraintTypeMutation: Object.freeze(defaultRestraintTypeMutationConfig()),
-      restraintTypeCorrectionProfileId: CAESAR_INPUTXML_RESTRAINT_TYPE_CORRECTION_PROFILE_ID,
-      bendRadiusTolerance: normalizeBendTolerance(options.bendRadiusTolerance),
-      unitNormalizationProfile: unitProfile,
-    }),
-    conditioning: Object.freeze({
-      requiredAttachmentPoints: Object.freeze([]),
-      profile: INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE,
-    }),
-    requestedProfileId: normalizeProfile(options.requestedProfileId),
-    requestedCaseIds: normalizeCaseIds(options.requestedCaseIds),
-    semanticHash: '',
-  };
-  draft.semanticHash = semanticHash(intakeIdentity(draft));
-  return requireLinearPipingInputXmlIntake(draft);
 }
 
 export function requireLinearPipingInputXmlIntake(value) {
@@ -178,21 +230,6 @@ export function requireLinearPipingInputXmlIntake(value) {
     });
   }
   return Object.freeze(structuredClone(value));
-}
-
-function unitAuthorityRecord({ inspection, sourceUnit, inputXmlSource }) {
-  const declared = inspection.unitDeclared && inspection.sourceUnit !== null;
-  return Object.freeze({
-    declared,
-    sourceUnit,
-    authority: declared
-      ? 'CAESAR_INPUTXML_DECLARED_LENGTH_UNIT'
-      : 'LFEA_ENGINEER_DECLARED_FALLBACK_LENGTH_UNIT',
-    revision: declared ? inputXmlSource.contentHash : `ENGINEER-SELECTION-${sourceUnit.toUpperCase()}`,
-    evidence: declared
-      ? 'The supported <UNITS><LENGTH> declaration in the selected InputXML is authoritative.'
-      : 'The selected source has no supported <UNITS><LENGTH>; the engineer explicitly selected the fallback unit.',
-  });
 }
 
 function intakeIdentity(value) {

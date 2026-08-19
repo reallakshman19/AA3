@@ -86,11 +86,14 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(await propertyRows.count()).toBeGreaterThan(1);
     expect(await panel.locator('[data-role="accdb-override-input"]').count()).toBeGreaterThan(0);
 
-    // The stepper now says where the session got to and what blocks it.
+    // The stepper says where the session got to and what blocks it. BM4_L
+    // carries 7 real collinear-overlap findings, so its pre-flight fails
+    // closed and Load case names that rather than sitting there empty --
+    // the ACCDB source itself now reaches the pre-flight the step runs from.
     await expect(guidance).toContainText('complete.');
     const loadCaseStep = page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]');
     await expect(loadCaseStep).toHaveAttribute('data-step-status', 'BLOCKED');
-    await expect(loadCaseStep).toHaveAttribute('title', /ACCDB import/u);
+    await expect(loadCaseStep).toHaveAttribute('title', /pre-flight/iu);
 
     expect(pageErrors).toEqual([]);
   });

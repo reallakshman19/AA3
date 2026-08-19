@@ -12,12 +12,16 @@ files:
     - scripts/emp1-wrc-dataset-readiness-lib.mjs
     - scripts/emp1-wrc-dataset-readiness-check.mjs
     - scripts/emp1-wrc-dataset-readiness-self-test.mjs
+    - scripts/emp1-independent-precheck-qualification-lib.mjs
+    - scripts/emp1-independent-precheck-qualification-check.mjs
+    - scripts/emp1-independent-precheck-qualification-self-test.mjs
     - validation/emp1/wrc537-2013/source-ledger.json
     - validation/emp1/wrc537-2013/existing-dataset-manifest.json
     - validation/emp1/wrc537-2013/existing-dataset-audit-v1.json
     - validation/emp1/wrc537-2013/hexagon-sign-crosscheck-v1.json
     - validation/emp1/caux2017-wrc01f/source-ledger.json
     - validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-v1.json
+    - validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-qualification-v1.json
   prefixes:
     - src/core/emp1/
     - docs/emp1/
@@ -39,9 +43,9 @@ observe_only:
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: 4b24d3f204ad4ec9197a48fed4e02951c560c39c
-implementation_basis_head: 0999ba22ace2104b02524c70b60e20fb2bdf597c
+last_verified_head: 10ae4eb878a639dbca1252573a417044c07a827b
+implementation_basis_head: 5c88f8095dc186cffb3d0e71985767b30ff4c1cb
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 overlap_state: SAFE_FOR_QUALIFICATION_ONLY
 base_drift: RECONCILIATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION
-note: Exact CAUx source identity is PASS but pp24-31 remains NOT_RUN due binary transport. Hexagon WRC arithmetic evidence is supplemental only. The derived dataset M1/M2 convention conflicts with Hexagon's official product convention and is quarantined pending exact pinned-WRC arbitration. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.
+note: Hexagon pressure-thrust precheck is formally QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY after source, dimensional, independent arithmetic, identity, positive and negative execution checks. It may not satisfy CAUx A4 or authorize EMP.1.C. Exact CAUx pp24-31 and pinned-WRC coefficient/sign arbitration remain blocking. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.

@@ -36,6 +36,62 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Capture graded refinement adjacency diagnostic
+        id: graded_adjacency
+        shell: bash
+        run: |
+          set +e
+          node scripts/lafea-retained-mesh-refinement-check.mjs > /tmp/lafea-refinement.log 2>&1
+          refinement_status=$?
+          set -e
+          GITHUB_OUTPUT="$GITHUB_OUTPUT" REFINEMENT_STATUS="$refinement_status" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          text = Path('/tmp/lafea-refinement.log').read_text(errors='replace')
+          decoder = json.JSONDecoder()
+          objects = []
+          for index, character in enumerate(text):
+              if character != '{':
+                  continue
+              try:
+                  value, _ = decoder.raw_decode(text[index:])
+              except Exception:
+                  continue
+              if isinstance(value, dict) and value.get('diagnostic') == 'LAFEA3_ADJACENCY_BEFORE_CUSTODY':
+                  objects.append(value)
+          refined = [row for row in objects if ':LOCAL_REFINEMENT:' in str(row.get('meshIdentity', ''))]
+          if not refined:
+              raise SystemExit('No LOCAL_REFINEMENT adjacency diagnostic was captured.')
+          row = refined[-1]
+          adjacency = row['adjacency']
+          summary = {
+              'meshIdentity': row['meshIdentity'],
+              'nodeCount': row['nodeCount'],
+              'elementCount': row['elementCount'],
+              'maximumAllowed': adjacency['maximumAllowed'],
+              'maximumObserved': adjacency['maximumObserved'],
+              'adjacentEdgeCount': adjacency['adjacentEdgeCount'],
+              'violatingAdjacencyCount': adjacency['violatingAdjacencyCount'],
+              'blockingElementIds': adjacency['blockingElementIds'],
+              'violatingAdjacencies': adjacency['violatingAdjacencies'],
+              'qualification': adjacency['qualification'],
+              'refinementScriptExitStatus': int(os.environ['REFINEMENT_STATUS']),
+          }
+          Path('/tmp/lafea-graded-adjacency-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f"ratio={adjacency['maximumObserved']:.9f}\n")
+              output.write(f"violations={adjacency['violatingAdjacencyCount']}\n")
+              output.write(f"qualification={adjacency['qualification']}\n")
+          print(json.dumps(summary, indent=2))
+          PY
+      - name: Upload graded refinement adjacency diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-graded-ratio-${{ steps.graded_adjacency.outputs.ratio }}-violations-${{ steps.graded_adjacency.outputs.violations }}-${{ steps.graded_adjacency.outputs.qualification }}
+          path: /tmp/lafea-graded-adjacency-summary.json
+          retention-days: 7
       - name: Static and projection checks
         run: |
           node --check src/workspace/lafea-engineering-overview.js

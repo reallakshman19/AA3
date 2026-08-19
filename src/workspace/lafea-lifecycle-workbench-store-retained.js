@@ -296,6 +296,10 @@ export function createLafeaWorkbenchStore(options) {
       `SET_SCALAR:${descriptorId}`,
       () => base.setScalar(descriptorId, entityId, rawText, surface),
     ),
+    setScalarBatch: (edits, surface) => mutateBase(
+      'SET_SCALAR_BATCH',
+      () => base.setScalarBatch(edits, surface),
+    ),
     replaceDocument: (value, surface) => mutateBase(
       'REPLACE_DOCUMENT',
       () => base.replaceDocument(value, surface),

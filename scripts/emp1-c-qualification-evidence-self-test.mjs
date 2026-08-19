@@ -15,8 +15,13 @@ const derived = deriveEmp1CQualificationEvidence(qualifiedArtifacts);
 
 assert.equal(derived.wrcDataset.status, 'PASS');
 assert.equal(derived.wrcDataset.sourceCustodyQualified, true);
-assert.equal(derived.wrcDataset.numericCoefficientRows, 120);
-assert.equal(derived.wrcDataset.coefficientInventoryRows, 120);
+assert.equal(derived.wrcDataset.coefficientCurveRows, 120);
+assert.equal(derived.wrcDataset.coefficientsPerCurve, 10);
+assert.equal(derived.wrcDataset.requiredScalarCoefficientCount, 1200);
+assert.equal(derived.wrcDataset.numericScalarCoefficientCount, 1200);
+assert.equal(derived.wrcDataset.coefficientSchemaQualified, true);
+assert.equal(derived.wrcDataset.independentVariable, 'U');
+assert.equal(derived.wrcDataset.independentVariableQualified, true);
 assert.deepEqual(derived.signArbitration.openConflicts, []);
 assert.equal(derived.signArbitration.resolutionAuthority, 'PINNED_WRC_PDF');
 assert.equal(derived.cauxBenchmark.status, 'PASS');
@@ -41,6 +46,29 @@ assert.equal(executable.engineeringUseAuthorized, true);
 assert.equal(executable.runAuthorized, true);
 assert.deepEqual(executable.blockerCodes, []);
 
+const oneNamedCoefficientMissing = fullyQualifiedSyntheticArtifacts(retained);
+oneNamedCoefficientMissing.wrcAudit.metrics.numericScalarCoefficientCount = 1199;
+oneNamedCoefficientMissing.wrcAudit.metrics.missingScalarCoefficientCount = 1;
+const partialDerived = deriveEmp1CQualificationEvidence(oneNamedCoefficientMissing);
+const partialState = evaluateEmp1CQualificationState(partialDerived);
+assert.equal(partialState.technicalQualificationReady, false);
+assert.equal(partialState.gateStatus.numericalCoefficientsReady, false);
+assert.ok(partialState.blockerCodes.includes(EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING));
+
+const legacyAnonymousPayload = fullyQualifiedSyntheticArtifacts(retained);
+legacyAnonymousPayload.wrcAudit.metrics.coefficientSchema = 'LEGACY_SINGLE_VALUE_PER_CURVE';
+legacyAnonymousPayload.wrcAudit.metrics.coefficientSchemaQualified = false;
+legacyAnonymousPayload.wrcAudit.metrics.numericScalarCoefficientCount = 0;
+legacyAnonymousPayload.wrcAudit.metrics.missingScalarCoefficientCount = 1200;
+legacyAnonymousPayload.wrcAudit.metrics.legacyAnonymousCoefficientRows = 120;
+legacyAnonymousPayload.wrcAudit.metrics.legacyNumericValueRows = 120;
+legacyAnonymousPayload.wrcAudit.metrics.independentVariableRepresentation = 'LEGACY_PARAMETER_3_ROW_ORDINATE';
+legacyAnonymousPayload.wrcAudit.metrics.independentVariableQualified = false;
+const legacyDerived = deriveEmp1CQualificationEvidence(legacyAnonymousPayload);
+const legacyState = evaluateEmp1CQualificationState(legacyDerived);
+assert.equal(legacyState.gateStatus.numericalCoefficientsReady, false);
+assert.ok(legacyState.blockerCodes.includes(EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING));
+
 const productionContaminatedBenchmark = fullyQualifiedSyntheticArtifacts(retained);
 productionContaminatedBenchmark.cauxBenchmarkQualification.productionObservationUsedToSetExpectedValues = true;
 assert.throws(
@@ -62,15 +90,15 @@ assert.throws(
   /EMP1_C_WRC_AUDIT_MANIFEST_BINDING_MISMATCH:DATASET/u,
 );
 
-const brokenRowAccounting = fullyQualifiedSyntheticArtifacts(retained);
-brokenRowAccounting.wrcAudit.metrics.numericCoefficientRows = 119;
+const brokenScalarAccounting = fullyQualifiedSyntheticArtifacts(retained);
+brokenScalarAccounting.wrcAudit.metrics.numericScalarCoefficientCount = 1199;
 assert.throws(
-  () => deriveEmp1CQualificationEvidence(brokenRowAccounting),
-  /EMP1_C_WRC_COEFFICIENT_ROW_ACCOUNTING_INVALID/u,
+  () => deriveEmp1CQualificationEvidence(brokenScalarAccounting),
+  /EMP1_C_WRC_SCALAR_COEFFICIENT_ACCOUNTING_INVALID/u,
 );
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-qualification-evidence-self-test/v1',
+  schema: 'emp1-c-qualification-evidence-self-test/v2',
   status: 'PASS',
   fixtureClassification: 'SOFTWARE_CONTRACT_ONLY_NOT_ENGINEERING_EVIDENCE',
   syntheticTechnicalQualificationReady: awaitingRoute.technicalQualificationReady,
@@ -78,10 +106,12 @@ console.log(JSON.stringify({
   syntheticRouteGate: awaitingRoute.blockerCodes,
   syntheticExecutableState: executable.state,
   negativeCases: [
+    '1199/1200 named a-j coefficients remains blocked',
+    '120 anonymous per-curve values cannot satisfy named a-j coverage',
     'production-derived CAUx expected values rejected',
     'method authorization benchmark mismatch rejected',
     'WRC manifest/audit binding mismatch rejected',
-    'coefficient row-accounting mismatch rejected',
+    'scalar coefficient accounting mismatch rejected',
   ],
 }, null, 2));
 
@@ -94,9 +124,22 @@ function fullyQualifiedSyntheticArtifacts(source) {
   value.wrcAudit.metrics.numericalDataCount = 1;
   value.wrcAudit.metrics.unresolvedJsonPathCount = 0;
   value.wrcAudit.metrics.openIssueCount = 0;
-  value.wrcAudit.metrics.numericCoefficientRows = 120;
-  value.wrcAudit.metrics.unresolvedCoefficientRows = 0;
-  value.wrcAudit.metrics.unresolvedParameter3Rows = 0;
+  value.wrcAudit.metrics.numericalCsvCurveRows = 120;
+  value.wrcAudit.metrics.coefficientSchema = 'WIDE_A_TO_J_PER_CURVE';
+  value.wrcAudit.metrics.coefficientSchemaQualified = true;
+  value.wrcAudit.metrics.coefficientsPerCurve = 10;
+  value.wrcAudit.metrics.requiredScalarCoefficientCount = 1200;
+  value.wrcAudit.metrics.numericScalarCoefficientCount = 1200;
+  value.wrcAudit.metrics.unresolvedScalarCoefficientCount = 0;
+  value.wrcAudit.metrics.missingScalarCoefficientCount = 0;
+  value.wrcAudit.metrics.invalidScalarCoefficientCount = 0;
+  value.wrcAudit.metrics.legacyAnonymousCoefficientRows = 0;
+  value.wrcAudit.metrics.legacyNumericValueRows = 0;
+  value.wrcAudit.metrics.legacyUnresolvedValueRows = 0;
+  value.wrcAudit.metrics.independentVariable = 'U';
+  value.wrcAudit.metrics.independentVariableRepresentation = 'EXPLICIT_RUNTIME_INDEPENDENT_VARIABLE';
+  value.wrcAudit.metrics.independentVariableQualified = true;
+  value.wrcAudit.metrics.legacyParameter3UnresolvedRows = 0;
 
   value.wrcSourceLedger.rawPdfSha256 = 'a'.repeat(64);
   value.wrcSourceLedger.custodyState = 'VERIFIED';

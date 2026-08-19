@@ -46,6 +46,7 @@ runPlaywright([
   '--grep',
   'Empirical analytical surface presents one truthful EMP.1 product and page-owned vertical scrolling',
 ]);
+runPlaywright(['e2e/lafea-emp1-a-run-state.spec.js']);
 runPlaywright([
   'e2e/lafea-visible-workbench.spec.js',
   '--grep',
@@ -68,6 +69,7 @@ runPlaywright([
   'e2e/lafea-standalone-golden-journey.spec.js',
   'e2e/lafea-standalone-failures.spec.js',
   'e2e/lafea-visible-workbench.spec.js',
+  'e2e/lafea-emp1-a-run-state.spec.js',
   'e2e/lafea-emp1-a-to-b-refresh.spec.js',
   'e2e/lafea-empirical-grouped-edit.spec.js',
   'e2e/lafea3-sample-mesh.spec.js',

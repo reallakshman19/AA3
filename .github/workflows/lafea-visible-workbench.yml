@@ -51,6 +51,7 @@ jobs:
           node --check scripts/lafea-shell-response-acceptance-check.mjs
           node tests/lafea-engineering-overview.test.mjs
           node scripts/lafea-ui-analysis-settings-check.mjs
+          node scripts/lafea-retained-mesh-refinement-check.mjs
       - name: Qualify governed shell mesh compiler and execution custody
         run: |
           node scripts/lafea-shell-sample-parent-check.mjs

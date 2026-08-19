@@ -28,7 +28,7 @@ observe_only:
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: fb2753b13c8326705d7c716448fa34109b3bc959
+last_verified_head: e5dee9ab6cdd61dd84ed8c77a767c52530b59dd9
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 overlap_state: SAFE_FOR_SOURCE_CUSTODY_ONLY
 base_drift: RECONCILIATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION

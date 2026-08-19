@@ -1,0 +1,39 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1270
+claim_state: ACTIVE
+files:
+  exact:
+    - agents/PR1270_workreport.md
+    - agents/status/PR1270.yaml
+    - agents/claims/PR1270.yaml
+    - src/core/lafea-meshing/refinement-fields.js
+    - src/workspace/lafea-analysis-mesh-quality.js
+    - src/workspace/lafea-discretization-view-model.js
+    - src/workspace/lafea-discretization-generation-panel.js
+    - scripts/lafea3-local-refinement-ui-check.mjs
+  prefixes: []
+authority_domains:
+  - LAFEA3_RETAINED_LOCAL_REFINEMENT_UI
+  - LAFEA3_ADJACENT_SIZE_RATIO_GATE_INTEGRATION
+  - REFINEMENT_TRANSITION_EVIDENCE
+claim_modes:
+  - EXCLUSIVE_EXACT_FILES
+excluded_authority:
+  - MESH_PRODUCER_BINDING
+  - RETAINED_REFINEMENT_ALGORITHM
+  - MESH_PROFILE_THRESHOLDS
+  - SOLVER_MECHANICS
+  - FORMULATION
+  - RECOVERY
+  - LIFECYCLE_AUTHORITY
+  - RELEASE_AUTHORITY
+observe_only:
+  - src/workspace/lafea-mesh-producer-binding.js
+  - src/workspace/lafea-retained-mesh-refinement.js
+  - src/workspace/lafea-workbench-content.js
+  - src/workspace/lafea-workbench-controller.js
+last_verified_head: adccafc84d7546f66c8e0a9df81478f0074d1784
+implementation_basis_head: c3e161beb4c0bec95c506eee0a5c1ce27c1f6984
+main_head_last_checked: cf3aaeefb028ee387d3d530f5e0e5106bd489dce
+overlap_state: COORDINATION_REQUIRED_BOUNDED_SAFE
+note: PR1270 is stacked on PR1268. Reuses qualified retained-mesh refinement. Implements transition evidence/UI and wires existing LAFEA.3 adjacent-size ratio policy into qualification. Does not touch open PR1160 producer-binding seam. Current minimum local/global target ratio 0.25 and Q8 fail-closed behavior are protected invariants.

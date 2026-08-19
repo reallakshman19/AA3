@@ -5,29 +5,47 @@ issue: 1261
 pr: 1269
 claims:
   - id: ISS-WRC-001
-    state: FIXED_PENDING_VALIDATION
-    statement: WRC readiness previously aliased 120 numerical CSV response-curve rows to complete coefficient coverage even though the retained SP/SM representation requires named a-j scalar coefficients per response curve.
+    state: FIXED_PENDING_EXACT_HEAD_VALIDATION
+    statement: WRC readiness previously aliased 120 numerical CSV response-curve rows to complete coefficient coverage even though the retained SP/SM representation requires ten named a-j scalar coefficients per response curve.
   - id: IMP-WRC-001
-    state: IMPLEMENTED_PENDING_VALIDATION
-    statement: Replaced row-count readiness with response-curve count, explicit a-j schema qualification, and required/numeric/unresolved/missing/invalid scalar coefficient accounting.
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Readiness now distinguishes 120 response curves from 1200 required named scalar coefficients and accounts independently for numeric, unresolved, missing, and invalid a-j slots.
   - id: IMP-WRC-002
-    state: IMPLEMENTED_PENDING_VALIDATION
-    statement: Runtime U now has explicit independent-variable custody; the legacy parameter_3 row-ordinate representation cannot satisfy coefficient readiness.
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Runtime U has explicit independent-variable custody; legacy parameter_3 row-ordinate representation cannot satisfy WRC numerical readiness.
   - id: IMP-WRC-003
-    state: IN_PROGRESS
-    statement: Add explicit dimensional/formula authority guard so retained unresolved or dimensionally inconsistent WRC equations cannot be promoted by a structurally complete coefficient payload.
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Retained SP radial-membrane and SM moment-membrane coefficient/equation contradictions are detected dimensionally and hard-block EMP.1.C rather than being silently corrected from inference.
   - id: IMP-WRC-004
-    state: IN_PROGRESS
-    statement: Add source-freeze/mutation guard so benchmark/method readiness cannot be promoted when protected source-derived contract fields change without a new retained authority record.
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Retained EQ_STRESS_INTENSITY outer-square-root transcription is detected as dimensionally invalid because it produces sqrt(stress), and it hard-blocks EMP.1.C pending source arbitration.
+  - id: IMP-WRC-005
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Future EMP.1.C method authority now requires an explicit source-bound LAFEA-to-WRC load-axis mapping contract; no hard-coded field permutation can satisfy the runtime gate.
+  - id: IMP-WRC-006
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Future EMP.1.C method authority now requires an explicit pressure-thrust mode, independent check, and double-count guard before WRC load assembly can be authorized.
+  - id: IMP-WRC-007
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Future EMP.1.C method authority now requires a source-qualified stress-intensity definition with output dimension STRESS and an independent check.
+  - id: IMP-WRC-008
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Retained extraction manifest is pinned immutably by repository, commit, blob SHA-1, and byte count; C evidence re-observes retained bytes and rejects frozen-audit drift.
+  - id: IMP-WRC-009
+    state: IMPLEMENTED_PENDING_EXACT_HEAD_VALIDATION
+    statement: Stage-17 now runs both WRC numerical/dimensional readiness and runtime-contract self-tests before EMP.1 browser qualification.
   - id: AUTH-WRC-001
     state: PRESERVED
-    statement: This work may only tighten qualification guards; it must not supply WRC values, resolve source signs/equations, freeze CAUx expected values, register EMP.1.C execution, or grant engineering/release authority.
+    statement: No WRC coefficient, sign, equation correction, load-axis mapping, pressure-thrust sign, stress-intensity formula, CAUx expected value, tolerance, production evaluator, route registration, or engineering/release authority is supplied by this PR.
   - id: DEP-WRC-001
     state: ACTIVE_STACKED
-    statement: Work stacks on draft PR #1266 head c4ecc9ec48cb87937d65599449dee55b86513f3a and must not rewrite #1266 A/B production repair.
+    statement: Work stacks on draft PR #1266 head c4ecc9ec48cb87937d65599449dee55b86513f3a and does not rewrite #1266 A/B production repair.
   - id: BLOCK-WRC-001
     state: OPEN
     statement: WRC and CAUx raw PDF SHA-256 custody remains unresolved in retained source ledgers; full EMP.1.C engineering implementation stays blocked.
   - id: BLOCK-WRC-002
+    state: OPEN
+    statement: Source-qualified WRC a-j transcription, load/sign arbitration, runtime axis mapping, pressure-thrust policy, stress-intensity definition, and CAUx pp24-31 independent benchmark remain NOT_RUN/BLOCKED.
+  - id: BLOCK-WRC-003
     state: OPEN_EXTERNAL
-    statement: Parent exact-head Stage-17 remains red only at unchanged downstream LAFEA.3 B02D T3/L1 mesh qualification; this successor will not patch that boundary.
+    statement: Parent Stage-17 downstream LAFEA.3 B02D T3/L1 mesh qualification remains an external inherited blocker and is not patched by this PR.

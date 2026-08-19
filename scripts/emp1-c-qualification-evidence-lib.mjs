@@ -15,6 +15,8 @@ export const EMP1_C_RETAINED_ARTIFACT_PATHS = Object.freeze({
 
 const EXPECTED_CAUX_PAGES = Object.freeze([24, 25, 26, 27, 28, 29, 30, 31]);
 const SHA256_HEX = /^[a-f0-9]{64}$/u;
+const REQUIRED_WRC_CURVE_FIT_COEFFICIENTS = 10;
+const REQUIRED_WRC_INDEPENDENT_VARIABLE = 'U';
 
 export function loadEmp1CRetainedArtifacts(root = process.cwd()) {
   return {
@@ -83,10 +85,18 @@ export function deriveEmp1CQualificationEvidence(artifacts) {
       unresolvedJsonPathCount: wrcMetrics.unresolvedJsonPathCount,
       openIssueCount: wrcMetrics.openIssueCount,
       numericalDataCount: wrcMetrics.numericalDataCount,
-      coefficientInventoryRows: wrcMetrics.numericalCsvDataRows,
-      numericCoefficientRows: wrcMetrics.numericCoefficientRows,
-      unresolvedCoefficientRows: wrcMetrics.unresolvedCoefficientRows,
-      unresolvedParameterRows: wrcMetrics.unresolvedParameter3Rows,
+      coefficientCurveRows: wrcMetrics.numericalCsvCurveRows,
+      coefficientSchema: wrcMetrics.coefficientSchema,
+      coefficientSchemaQualified: wrcMetrics.coefficientSchemaQualified === true,
+      coefficientsPerCurve: wrcMetrics.coefficientsPerCurve,
+      requiredScalarCoefficientCount: wrcMetrics.requiredScalarCoefficientCount,
+      numericScalarCoefficientCount: wrcMetrics.numericScalarCoefficientCount,
+      unresolvedScalarCoefficientCount: wrcMetrics.unresolvedScalarCoefficientCount,
+      missingScalarCoefficientCount: wrcMetrics.missingScalarCoefficientCount,
+      invalidScalarCoefficientCount: wrcMetrics.invalidScalarCoefficientCount,
+      independentVariable: wrcMetrics.independentVariable,
+      independentVariableRepresentation: wrcMetrics.independentVariableRepresentation,
+      independentVariableQualified: wrcMetrics.independentVariableQualified === true,
       semanticHash: wrcMetrics.semanticHash,
       sourceCustodyQualified: wrcSourceCustodyQualified,
       sourceCustodyState: text(wrcSourceLedger.custodyState, 'UNRESOLVED'),
@@ -143,22 +153,58 @@ function validateWrcAuditBinding(audit, manifest) {
   if (manifest.productionAuthority !== false || manifest.authority !== 'QUALIFICATION_INPUT_ONLY') {
     throw new TypeError('EMP1_C_WRC_MANIFEST_AUTHORITY_INVALID');
   }
+
   const metrics = audit.metrics;
   for (const key of [
     'unresolvedJsonPathCount',
     'openIssueCount',
     'numericalDataCount',
-    'numericalCsvDataRows',
-    'numericCoefficientRows',
-    'unresolvedCoefficientRows',
-    'unresolvedParameter3Rows',
+    'numericalCsvCurveRows',
+    'coefficientsPerCurve',
+    'requiredScalarCoefficientCount',
+    'numericScalarCoefficientCount',
+    'unresolvedScalarCoefficientCount',
+    'missingScalarCoefficientCount',
+    'invalidScalarCoefficientCount',
+    'legacyAnonymousCoefficientRows',
+    'legacyNumericValueRows',
+    'legacyUnresolvedValueRows',
+    'legacyParameter3UnresolvedRows',
   ]) {
     if (!Number.isInteger(metrics?.[key]) || metrics[key] < 0) {
       throw new TypeError(`EMP1_C_WRC_AUDIT_METRIC_INVALID:${key}`);
     }
   }
-  if (metrics.numericalCsvDataRows !== metrics.numericCoefficientRows + metrics.unresolvedCoefficientRows) {
-    throw new TypeError('EMP1_C_WRC_COEFFICIENT_ROW_ACCOUNTING_INVALID');
+
+  if (metrics.coefficientsPerCurve !== REQUIRED_WRC_CURVE_FIT_COEFFICIENTS) {
+    throw new TypeError('EMP1_C_WRC_COEFFICIENTS_PER_CURVE_INVALID');
+  }
+  if (metrics.requiredScalarCoefficientCount
+      !== metrics.numericalCsvCurveRows * metrics.coefficientsPerCurve) {
+    throw new TypeError('EMP1_C_WRC_REQUIRED_SCALAR_COEFFICIENT_COUNT_INVALID');
+  }
+  if (metrics.requiredScalarCoefficientCount
+      !== metrics.numericScalarCoefficientCount
+        + metrics.unresolvedScalarCoefficientCount
+        + metrics.missingScalarCoefficientCount
+        + metrics.invalidScalarCoefficientCount) {
+    throw new TypeError('EMP1_C_WRC_SCALAR_COEFFICIENT_ACCOUNTING_INVALID');
+  }
+  if (typeof metrics.coefficientSchema !== 'string' || !metrics.coefficientSchema) {
+    throw new TypeError('EMP1_C_WRC_COEFFICIENT_SCHEMA_INVALID');
+  }
+  if (typeof metrics.coefficientSchemaQualified !== 'boolean') {
+    throw new TypeError('EMP1_C_WRC_COEFFICIENT_SCHEMA_QUALIFICATION_INVALID');
+  }
+  if (metrics.independentVariable !== REQUIRED_WRC_INDEPENDENT_VARIABLE) {
+    throw new TypeError('EMP1_C_WRC_INDEPENDENT_VARIABLE_INVALID');
+  }
+  if (typeof metrics.independentVariableRepresentation !== 'string'
+      || !metrics.independentVariableRepresentation) {
+    throw new TypeError('EMP1_C_WRC_INDEPENDENT_VARIABLE_REPRESENTATION_INVALID');
+  }
+  if (typeof metrics.independentVariableQualified !== 'boolean') {
+    throw new TypeError('EMP1_C_WRC_INDEPENDENT_VARIABLE_QUALIFICATION_INVALID');
   }
 }
 

@@ -20,6 +20,7 @@ assert.deepEqual(current.blockerCodes, [
 ]);
 assert.equal(current.evidence.wrcDataset.unresolvedJsonPathCount, 21);
 assert.equal(current.evidence.wrcDataset.openIssueCount, 7);
+assert.equal(current.evidence.wrcDataset.coefficientInventoryRows, 120);
 assert.equal(current.evidence.wrcDataset.numericCoefficientRows, 0);
 assert.equal(current.evidence.wrcDataset.unresolvedCoefficientRows, 120);
 assert.equal(current.evidence.wrcDataset.unresolvedParameterRows, 120);
@@ -28,7 +29,7 @@ assert.equal(current.evidence.cauxBenchmark.pageRange, '24-31');
 assert.equal(current.evidence.cauxBenchmark.expectedValuesFrozen, false);
 assert.equal(current.evidence.cauxBenchmark.independentHandCalculationStatus, 'NOT_RUN');
 assert.match(current.blockers[0].message, /21 unresolved fields; 7 open issues/u);
-assert.match(current.blockers[1].message, /0 numeric coefficient rows; 120 unresolved coefficient rows; 120 unresolved parameter rows/u);
+assert.match(current.blockers[1].message, /0\/120 retained coefficient rows numeric; 120 unresolved coefficient rows; 120 unresolved parameter rows/u);
 
 const technicallyReady = readyEvidence({ methodAuthorized: false, routeRegistered: false });
 const technical = evaluateEmp1CQualificationState(technicallyReady);
@@ -61,6 +62,13 @@ assert.deepEqual(
   [EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING],
 );
 
+const incompleteCoverage = readyEvidence({ methodAuthorized: true, routeRegistered: true });
+incompleteCoverage.wrcDataset.numericCoefficientRows = 119;
+assert.deepEqual(
+  evaluateEmp1CQualificationState(incompleteCoverage).blockerCodes,
+  [EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING],
+);
+
 const unresolvedSign = readyEvidence({ methodAuthorized: true, routeRegistered: true });
 unresolvedSign.signArbitration.resolutionAuthority = 'HEXAGON_SECONDARY_REFERENCE';
 assert.deepEqual(
@@ -87,6 +95,7 @@ console.log(JSON.stringify({
   currentMetrics: {
     unresolvedJsonPaths: current.evidence.wrcDataset.unresolvedJsonPathCount,
     openIssues: current.evidence.wrcDataset.openIssueCount,
+    coefficientInventoryRows: current.evidence.wrcDataset.coefficientInventoryRows,
     numericCoefficientRows: current.evidence.wrcDataset.numericCoefficientRows,
     unresolvedCoefficientRows: current.evidence.wrcDataset.unresolvedCoefficientRows,
     unresolvedParameterRows: current.evidence.wrcDataset.unresolvedParameterRows,
@@ -109,6 +118,7 @@ function readyEvidence({ methodAuthorized, routeRegistered }) {
       unresolvedJsonPathCount: 0,
       openIssueCount: 0,
       numericalDataCount: 1,
+      coefficientInventoryRows: 120,
       numericCoefficientRows: 120,
       unresolvedCoefficientRows: 0,
       unresolvedParameterRows: 0,

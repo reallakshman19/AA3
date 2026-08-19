@@ -29,9 +29,11 @@ function runPlaywright(args) {
 }
 
 // EMP.1 analytical qualification prerequisites run before Playwright tests and
-// before the unrelated LAFEA.3 B01/B02 gate. The derivation contract is
-// self-tested, then retained artifacts are checked against generated runtime
-// evidence so stale or authority-escalated C evidence cannot be rendered current.
+// before the unrelated LAFEA.3 B01/B02 gate. The WRC readiness contract is
+// self-tested first (dimension contract, named a-j scalar coverage, runtime-U
+// custody), then the C derivation contract re-observes the immutable retained
+// artifacts and checks generated runtime evidence for drift/authority escalation.
+runNodeScript('scripts/emp1-wrc-dataset-readiness-self-test.mjs');
 runNodeScript('scripts/emp1-c-qualification-evidence-self-test.mjs');
 runNodeScript('scripts/emp1-c-qualification-evidence-check.mjs');
 runNodeScript('scripts/emp1-c-qualification-state-check.mjs');

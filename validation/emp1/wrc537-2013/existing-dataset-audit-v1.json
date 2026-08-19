@@ -7,7 +7,7 @@
     "datasetBlob": "0ffdc3f54adc0ff8025c4b3d2629272bab6860b4",
     "numericalTablesBlob": "a787f9417c3406392bdf052d66fc9f7d1efcf11e"
   },
-  "observationMethod": "DIRECT_GITHUB_BLOB_INSPECTION_PLUS_FAIL_CLOSED_NUMERICAL_SCHEMA_AUDIT",
+  "observationMethod": "DIRECT_GITHUB_BLOB_INSPECTION_PLUS_FAIL_CLOSED_NUMERICAL_AND_DIMENSIONAL_SCHEMA_AUDIT",
   "status": "BLOCKED",
   "expectedCheckerStatus": "BLOCKED",
   "metrics": {
@@ -17,6 +17,12 @@
     "numericalDataCount": 0,
     "unresolvedJsonPathCount": 21,
     "openIssueCount": 7,
+    "dimensionalContractStatus": "BLOCKED",
+    "dimensionalViolationCount": 2,
+    "dimensionalViolationIds": [
+      "SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH",
+      "SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH"
+    ],
     "numericalCsvCurveRows": 120,
     "coefficientSchema": "LEGACY_SINGLE_VALUE_PER_CURVE",
     "coefficientSchemaQualified": false,
@@ -77,10 +83,11 @@
     "BLOCK_DATASET_NUMERICAL_DATA_EMPTY",
     "BLOCK_UNRESOLVED_DATASET_FIELDS",
     "BLOCK_DATASET_OPEN_ISSUES",
+    "BLOCK_METHOD_DIMENSIONAL_CONTRACT",
     "BLOCK_COEFFICIENT_SCHEMA_REQUIRES_A_TO_J",
     "BLOCK_NO_NUMERIC_SCALAR_COEFFICIENT_VALUES",
     "BLOCK_INCOMPLETE_SCALAR_COEFFICIENT_SET",
     "BLOCK_INDEPENDENT_VARIABLE_CUSTODY"
   ],
-  "authorityNote": "This is a frozen pre-execution expectation derived from direct inspection of the pinned retained text blobs and the fail-closed software contract. It is not WRC production authority. The 120 CSV rows are response-curve records, not proof of 120 complete coefficients; ten named a-j scalar coefficients are required per curve by the retained polynomial representation. No coefficient value is invented here, and the expectation must not be rewritten merely because a later checker/production result differs."
+  "authorityNote": "This is a frozen pre-execution expectation derived from direct inspection of the pinned retained text blobs and the fail-closed software contract. It is not WRC production authority. The retained coefficient definitions and membrane machine equations are dimensionally inconsistent by one shell-thickness factor in the SP radial-membrane and SM moment-membrane paths; this is recorded as a blocker rather than silently corrected from inference. The 120 CSV rows are response-curve records, not proof of 120 complete coefficients; ten named a-j scalar coefficients are required per curve by the retained polynomial representation. No coefficient value, WRC sign, or source formula is invented here, and the expectation must not be rewritten merely because a later checker/production result differs."
 }

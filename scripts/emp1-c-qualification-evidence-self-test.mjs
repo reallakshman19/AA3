@@ -30,6 +30,13 @@ assert.equal(derived.wrcDataset.independentVariable, 'U');
 assert.equal(derived.wrcDataset.independentVariableQualified, true);
 assert.deepEqual(derived.signArbitration.openConflicts, []);
 assert.equal(derived.signArbitration.resolutionAuthority, 'PINNED_WRC_PDF');
+assert.equal(derived.runtimeContracts.status, 'PASS');
+assert.equal(derived.runtimeContracts.loadAxisMappingStatus, 'PASS');
+assert.equal(derived.runtimeContracts.pressureThrustStatus, 'PASS');
+assert.equal(derived.runtimeContracts.pressureThrustMode, 'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID');
+assert.equal(derived.runtimeContracts.pressureThrustDoubleCountGuardQualified, true);
+assert.equal(derived.runtimeContracts.stressIntensityDefinitionStatus, 'PASS');
+assert.equal(derived.runtimeContracts.stressIntensityOutputDimension, 'STRESS');
 assert.equal(derived.cauxBenchmark.status, 'PASS');
 assert.equal(derived.cauxBenchmark.sourceCustodyQualified, true);
 assert.equal(derived.cauxBenchmark.expectedValuesFrozen, true);
@@ -54,10 +61,11 @@ assert.deepEqual(executable.blockerCodes, []);
 
 const dimensionallyBlocked = fullyQualifiedSyntheticArtifacts(retained);
 dimensionallyBlocked.wrcAudit.metrics.dimensionalContractStatus = 'BLOCKED';
-dimensionallyBlocked.wrcAudit.metrics.dimensionalViolationCount = 2;
+dimensionallyBlocked.wrcAudit.metrics.dimensionalViolationCount = 3;
 dimensionallyBlocked.wrcAudit.metrics.dimensionalViolationIds = [
   'SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH',
   'SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH',
+  'STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH',
 ];
 dimensionallyBlocked.wrcAudit.expectedBlockerCodes = ['BLOCK_METHOD_DIMENSIONAL_CONTRACT'];
 dimensionallyBlocked.wrcAudit.expectedCheckerStatus = 'BLOCKED';
@@ -97,6 +105,34 @@ const legacyState = evaluateEmp1CQualificationState(legacyDerived);
 assert.equal(legacyState.gateStatus.numericalCoefficientsReady, false);
 assert.ok(legacyState.blockerCodes.includes(EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING));
 
+const runtimeContractMissing = fullyQualifiedSyntheticArtifacts(retained);
+runtimeContractMissing.runtimeContractQualification = null;
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(runtimeContractMissing),
+  /EMP1_C_METHOD_AUTHORIZATION_WITHOUT_RUNTIME_CONTRACT_PASS/u,
+);
+
+const runtimeContractContaminated = fullyQualifiedSyntheticArtifacts(retained);
+runtimeContractContaminated.runtimeContractQualification.productionObservationUsedToSetContract = true;
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(runtimeContractContaminated),
+  /EMP1_C_RUNTIME_CONTRACT_PRODUCTION_CONTAMINATED/u,
+);
+
+const invalidPressureMode = fullyQualifiedSyntheticArtifacts(retained);
+invalidPressureMode.runtimeContractQualification.pressureThrust.mode = 'GUESS_PRESSURE_THRUST_SIGN';
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(invalidPressureMode),
+  /EMP1_C_PRESSURE_THRUST_MODE_INVALID/u,
+);
+
+const falseRuntimePass = fullyQualifiedSyntheticArtifacts(retained);
+falseRuntimePass.runtimeContractQualification.loadAxisMapping.sourceLocator = '';
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(falseRuntimePass),
+  /EMP1_C_RUNTIME_CONTRACT_FALSE_PASS/u,
+);
+
 const forgedAudit = fullyQualifiedSyntheticArtifacts(retained);
 forgedAudit.wrcAudit.metrics.numericScalarCoefficientCount = 1199;
 forgedAudit.wrcAudit.metrics.missingScalarCoefficientCount = 1;
@@ -111,6 +147,13 @@ productionContaminatedBenchmark.cauxBenchmarkQualification.productionObservation
 assert.throws(
   () => deriveEmp1CQualificationEvidence(productionContaminatedBenchmark),
   /EMP1_C_CAUX_EXPECTED_VALUES_PRODUCTION_CONTAMINATED/u,
+);
+
+const wrongRuntimeHash = fullyQualifiedSyntheticArtifacts(retained);
+wrongRuntimeHash.methodAuthorization.runtimeContractQualificationHash = 'sha256:different-runtime-contract';
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(wrongRuntimeHash),
+  /EMP1_C_METHOD_AUTHORIZATION_RUNTIME_CONTRACT_HASH_MISMATCH/u,
 );
 
 const wrongMethodBenchmark = fullyQualifiedSyntheticArtifacts(retained);
@@ -135,7 +178,7 @@ assert.throws(
 );
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-qualification-evidence-self-test/v3',
+  schema: 'emp1-c-qualification-evidence-self-test/v4',
   status: 'PASS',
   fixtureClassification: 'SOFTWARE_CONTRACT_ONLY_NOT_ENGINEERING_EVIDENCE',
   syntheticTechnicalQualificationReady: awaitingRoute.technicalQualificationReady,
@@ -143,9 +186,14 @@ console.log(JSON.stringify({
   syntheticRouteGate: awaitingRoute.blockerCodes,
   syntheticExecutableState: executable.state,
   negativeCases: [
-    'dimensionally inconsistent retained membrane formula remains blocked',
+    'three retained dimensional contradictions remain blocked',
     '1199/1200 named a-j coefficients remains blocked',
     '120 anonymous per-curve values cannot satisfy named a-j coverage',
+    'method authority without runtime-contract qualification rejected',
+    'production-contaminated runtime-contract evidence rejected',
+    'unrecognized pressure-thrust policy rejected',
+    'false PASS runtime-contract artifact rejected',
+    'runtime-contract hash mismatch rejected by method authorization',
     'frozen WRC audit mutation without independently observed retained bytes rejected',
     'retained extraction manifest blob mutation rejected against immutable code pin',
     'production-derived CAUx expected values rejected',
@@ -202,6 +250,34 @@ function fullyQualifiedSyntheticArtifacts(source) {
     M2: 'CONSISTENT',
   };
 
+  value.runtimeContractQualification = {
+    schema: 'emp1-c-runtime-contract-qualification/v1',
+    status: 'PASS',
+    wrcSourceRawPdfSha256: value.wrcSourceLedger.rawPdfSha256,
+    productionObservationUsedToSetContract: false,
+    qualificationRecordHash: 'sha256:synthetic-runtime-contract',
+    loadAxisMapping: {
+      status: 'PASS',
+      mappingContractHash: 'sha256:synthetic-load-axis-map',
+      canonicalFrameContractHash: 'sha256:synthetic-canonical-frame',
+      sourceLocator: 'SYNTHETIC_TEST_ONLY',
+    },
+    pressureThrust: {
+      status: 'PASS',
+      mode: 'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID',
+      doubleCountGuardQualified: true,
+      independentCheckStatus: 'PASS',
+      policyRecordHash: 'sha256:synthetic-pressure-thrust-policy',
+    },
+    stressIntensity: {
+      status: 'PASS',
+      definitionContractHash: 'sha256:synthetic-stress-intensity-definition',
+      sourceLocator: 'SYNTHETIC_TEST_ONLY',
+      outputDimension: 'STRESS',
+      independentCheckStatus: 'PASS',
+    },
+  };
+
   value.cauxSourceLedger.rawPdfSha256 = 'b'.repeat(64);
   value.cauxSourceLedger.custodyState = 'VERIFIED';
   value.cauxSourceLedger.qualificationState = 'PASS';
@@ -220,6 +296,7 @@ function fullyQualifiedSyntheticArtifacts(source) {
     engineeringUseAuthorized: true,
     qualificationRecordHash: 'sha256:synthetic-qualified-method-record',
     wrcSourceRawPdfSha256: value.wrcSourceLedger.rawPdfSha256,
+    runtimeContractQualificationHash: value.runtimeContractQualification.qualificationRecordHash,
     cauxBenchmarkHash: value.cauxBenchmarkQualification.benchmarkHash,
   };
   return value;

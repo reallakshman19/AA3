@@ -4,7 +4,7 @@ pr_or_wip: PR1263
 mission: EMP.1 source custody, existing WRC dataset qualification, unified analytical assessment
 workstream: EMP1
 branch: agent/emp1-core-scaffold-issue1261
-pr_head: 23bea179c3c7e7b4cbb85f6c235820a77bdcee7a
+pr_head: 0f9efc26b3377de337010eab784e105712501dcd
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -14,14 +14,16 @@ handover_readiness: READY
 report_path: agents/PR1263_workreport.md
 report_basis_head: e2a9e8c926cb77cc28e3deaba87debc5711027f4
 appendix_a_status: BLOCKED_WRC_DATASET_QUALIFICATION
-grounding_epoch: GE-004
-current_stage: WRC_DATASET_QUALIFICATION
-blocker: WRC extraction has 21 unresolved JSON paths, 7 open issues, 0 numeric coefficient rows, 120 unresolved coefficient rows; CAUx benchmark not frozen
-highest_risk: promoting extraction inventory or unresolved signs into production WRC authority
+grounding_epoch: GE-005
+current_stage: WRC_DATASET_AND_CAUX_BENCHMARK_QUALIFICATION
+blocker: WRC extraction has 21 unresolved JSON paths, 7 open issues, 0 numeric coefficient rows, 120 unresolved coefficient rows; CAUx source is confirmed but pp24-31 benchmark values and independent handcalc are not frozen
+highest_risk: promoting extraction inventory, unresolved signs, or unfrozen CAUx values into production authority
 dependencies:
   - issue: 1261
   - existing_wrc_docs: main@67317dc9cb47de8897fa7952b86107ab91b1f75c/docs
+  - benchmark_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/CAUx 2017 - WRC01f.pdf
   - primary_source_repo: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55
+  - source_repo_current_main: 13e7c0e653e6d61ef2f2217068e1010bd5a53bf6
   - main_reconciliation: required_before_production_integration
 validation_state:
   local_custody_self_test: PASS
@@ -34,8 +36,12 @@ validation_state:
   expected_numeric_coefficients: 0
   expected_unresolved_coefficients: 120
   actual_wrc_readiness_check: NOT_RUN
+  caux_source_location: PASS
+  caux_pinned_blob_identity_metadata: PASS
+  caux_current_main_same_blob_as_pinned: PASS
   raw_pdf_sha256: NOT_RUN
   caux_pages_24_31: NOT_RUN
+  independent_caux_handcalc: NOT_RUN
   remote_ci: NOT_RUN
-exact_next_action: execute the readiness checker against a full checkout and RCA any difference from the frozen 21/7/120/0 expectation, then close CAUx/source gaps
-last_updated: 2026-08-19T09:45:00+04:00
+exact_next_action: extract and freeze CAUx pp24-31 benchmark values from the already-confirmed pinned PDF while independently closing the frozen WRC readiness blockers; do not treat source discovery as a blocker
+last_updated: 2026-08-19T10:27:00+04:00

@@ -5,14 +5,21 @@ import { edgeKey, lawsonFlip } from '../core/lafea-meshing/constrained-delaunay-
 const ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
 const DISTANCE_TOLERANCE = 1e-12;
 const RATIO_TOLERANCE = 1e-12;
+const LOCAL_CORE_TARGET_LENGTH_FACTOR = 3;
 
 /**
  * Deterministic LAFEA.3 local-refinement sizing field.
  *
- * The requested influence radius remains the fully local-size core. Outside
- * that core, one or more radial transition bands reconnect the local lattice
- * to the already-qualified parent global mesh. The last (global) ladder level
- * is intentionally not populated: existing parent points own that region.
+ * The retained command influence radius is an upper bound on the fully-local
+ * core, not permission to carry the smallest size all the way to a retained
+ * coarse boundary. The local core is therefore capped at three local target
+ * lengths. Governed transition bands then reconnect that core to the already
+ * qualified parent mesh. This prevents a target near a boundary from placing a
+ * 15 mm interior lattice directly beside a retained ~30 mm boundary triangle.
+ *
+ * The last (global) ladder level is intentionally not populated: existing
+ * parent points own that region. Actual produced topology remains subject to
+ * the measured adjacency gate; this sizing field does not assert acceptance.
  */
 export function buildLafea3RetainedRefinementGrading({
   targets,
@@ -32,13 +39,17 @@ export function buildLafea3RetainedRefinementGrading({
     fail('LAFEA3_RETAINED_REFINEMENT_TRANSITION_BAND_WIDTH_INVALID');
   }
   const canonicalTargets = canonicalTargetPoints(targets);
-  let outerRadius = influenceRadius;
+  const localCoreRadius = Math.min(
+    influenceRadius,
+    localTargetElementLength * LOCAL_CORE_TARGET_LENGTH_FACTOR,
+  );
+  let outerRadius = localCoreRadius;
   const bands = [{
     bandIndex: 0,
     targetElementLength: transition.levels[0],
     innerRadius: 0,
     outerRadius,
-    elementsAcrossBand: null,
+    elementsAcrossBand: LOCAL_CORE_TARGET_LENGTH_FACTOR,
     role: 'LOCAL_CORE',
   }];
   for (let index = 1; index < transition.levels.length - 1; index += 1) {
@@ -80,6 +91,7 @@ export function buildLafea3RetainedRefinementGrading({
 
   return freeze({
     transition,
+    localCoreRadius,
     bands: bands.map(freeze),
     transitionOuterRadius: outerRadius,
     candidates: [...candidatesByKey.values()].sort((a, b) => (

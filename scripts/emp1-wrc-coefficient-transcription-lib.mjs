@@ -43,8 +43,8 @@ const SHA256_HEX = /^[a-f0-9]{64}$/u;
  *
  * This function deliberately supplies NO numerical coefficient values. The
  * retained CSV is qualification input only; each a..j slot remains unresolved
- * until a human/source extraction supplies the raw-PDF custody, source precision,
- * value, and review state required by auditWrcCoefficientTranscription().
+ * until a human/source extraction supplies the raw-PDF custody, exact primary
+ * locator, source precision, value, and review state required by the audit.
  */
 export function buildWrcCoefficientTranscriptionTemplate(numericalCsv) {
   const rows = parseCsv(String(numericalCsv ?? ''));
@@ -83,7 +83,6 @@ export function buildWrcCoefficientTranscriptionTemplate(numericalCsv) {
       if (!sourceLocator[key]) throw new TypeError(`EMP1_WRC_TRANSCRIPTION_SOURCE_LOCATOR_MISSING:${sourceRowIndex + 2}:${key}`);
     }
 
-    const family = read('coefficient_family');
     const coefficientId = read('coefficient_id');
     const gamma = read('parameter_1_value');
     const rho = read('parameter_2_value');
@@ -93,17 +92,14 @@ export function buildWrcCoefficientTranscriptionTemplate(numericalCsv) {
     return {
       curveId,
       retainedSourceRow: sourceRowIndex + 2,
-      coefficientFamily: family,
+      coefficientFamily: read('coefficient_family'),
       coefficientId,
       loadComponent: read('load_component'),
       stressComponent: read('stress_component'),
       stressClass: read('stress_class'),
       targetLocation: read('target_location'),
       surface: read('surface'),
-      chartParameters: {
-        gamma,
-        rho,
-      },
+      chartParameters: { gamma, rho },
       independentVariable: WRC_CURVE_FIT_INDEPENDENT_VARIABLE,
       polynomial: 'Y=a+bU+cU^2+dU^3+eU^4+fU^5+gU^6+hU^7+iU^8+jU^9',
       sourceLocator,
@@ -112,6 +108,7 @@ export function buildWrcCoefficientTranscriptionTemplate(numericalCsv) {
         exponent,
         value: null,
         publishedPrecision: null,
+        primarySourceLocator: null,
         primarySourceRawPdfSha256: null,
         primarySourceVerified: false,
         reviewStatus: 'NOT_RUN',
@@ -248,7 +245,11 @@ function isQualifiedSlot(slot, frozenPrimarySha256) {
   if (slot?.primarySourceVerified !== true) return false;
   if (!SHA256_HEX.test(slot?.primarySourceRawPdfSha256 ?? '')) return false;
   if (slot.primarySourceRawPdfSha256 !== frozenPrimarySha256) return false;
+  const locator = slot?.primarySourceLocator;
+  if (!locator || typeof locator !== 'object') return false;
+  if (!locator.page || !locator.table || !locator.column || locator.verified !== true) return false;
   if (slot?.publishedPrecision == null || String(slot.publishedPrecision).trim() === '' || slot.publishedPrecision === 'UNRESOLVED') return false;
   if (slot?.reviewStatus !== 'QUALIFIED') return false;
+  if (slot?.qualificationState !== 'QUALIFIED') return false;
   return true;
 }

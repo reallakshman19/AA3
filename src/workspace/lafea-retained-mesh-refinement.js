@@ -1,6 +1,7 @@
 import { smoothInteriorPoints } from '../core/lafea-meshing/mesh-smoothing.js';
 import { edgeKey, lawsonFlip, upgradeToT6 } from '../core/lafea-meshing/constrained-delaunay-t6.js';
 import { insertInteriorPoint } from '../core/lafea-meshing/interior-refinement-t6.js';
+import { buildLafea3RetainedRefinementGrading } from './lafea-retained-mesh-refinement-grading.js';
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import {
   LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
@@ -34,10 +35,9 @@ export const LAFEA_RETAINED_MESH_REFINEMENT_POLICY = Object.freeze({
   influenceRadiusGlobalFactor: 2,
   boundaryClearanceLocalFactor: 0.30,
   pointClearanceLocalFactor: 0.18,
+  minimumElementsPerTransitionBand: 2,
   maximumTargets: 64,
 });
-
-const ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
 
 /**
  * Build an auditable refinement plan against one exact retained v2 mesh.
@@ -139,7 +139,11 @@ export function previewLafeaRetainedMeshRefinement(input) {
   const plan = planLafeaRetainedMeshRefinement({
     stage: input.stage, meshProfile, parentEvidence, command,
   });
-  const generated = refineParentMesh(parentEvidence.mesh, plan);
+  const generated = refineParentMesh(
+    parentEvidence.mesh,
+    plan,
+    meshProfile.fields.adjacentSizeRatioMax,
+  );
   const capability = lafeaCoreMeshProducerCapability();
   const qualification = lafeaCoreMeshProducerQualification();
   const estimatedDofs = estimateLafeaMeshDofs('LAFEA.3', generated.mesh.nodes.length);
@@ -215,20 +219,29 @@ export function produceLafeaRetainedMeshRefinement(input) {
 /** Fixed round count keeps the refined child deterministic. */
 const REFINEMENT_SMOOTHING_ROUNDS = 3;
 
-function refineParentMesh(parentMesh, plan) {
+function refineParentMesh(parentMesh, plan, adjacentSizeRatioMax) {
   const triangulation = parentTriangulation(parentMesh, plan.elementFamily);
   const points = triangulation.points.map((point) => ({ ...point }));
   const triangles = triangulation.triangles.map((row) => [...row]);
   const constraints = new Set(triangulation.boundaryEdgeKeys);
-  const candidates = localCandidates(plan.targets, plan.targetElementLength, plan.influenceRadius);
+  const grading = buildLafea3RetainedRefinementGrading({
+    targets: plan.targets,
+    localTargetElementLength: plan.targetElementLength,
+    globalTargetElementLength: plan.globalTargetElementLength,
+    influenceRadius: plan.influenceRadius,
+    adjacentSizeRatioMax,
+    minimumElementsPerTransitionBand:
+      LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumElementsPerTransitionBand,
+  });
   let localPointCount = 0;
-  for (const candidate of candidates) {
+  for (const candidate of grading.candidates) {
+    const localSize = candidate.targetElementLength;
     if (!farFromBoundary(candidate, points, constraints,
-      plan.targetElementLength * LAFEA_RETAINED_MESH_REFINEMENT_POLICY.boundaryClearanceLocalFactor)) {
+      localSize * LAFEA_RETAINED_MESH_REFINEMENT_POLICY.boundaryClearanceLocalFactor)) {
       continue;
     }
     if (!farFromPoints(candidate, points,
-      plan.targetElementLength * LAFEA_RETAINED_MESH_REFINEMENT_POLICY.pointClearanceLocalFactor)) {
+      localSize * LAFEA_RETAINED_MESH_REFINEMENT_POLICY.pointClearanceLocalFactor)) {
       continue;
     }
     if (insertInteriorPoint(points, triangles, constraints, candidate)) localPointCount += 1;
@@ -236,10 +249,10 @@ function refineParentMesh(parentMesh, plan) {
   if (!localPointCount) fail('LAFEA_RETAINED_MESH_REFINEMENT_NO_LOCAL_POINTS_INSERTED');
   let restored = lawsonFlip(points, triangles, constraints);
 
-  // Local insertion leaves a size transition between the refined patch and the
-  // surrounding parent elements. Relax it with the same quality-guarded
-  // smoothing the global refinement uses, pinning every node on a constrained
-  // edge so the retained boundary and the parent's own geometry cannot move.
+  // Graded insertion leaves the final transition cleanup to the same
+  // quality-guarded smoothing used by the parent mesher. Every constrained
+  // boundary node remains pinned, so retained geometry and boundary identity
+  // cannot move while the transition relaxes.
   const fixedIndices = new Set();
   for (const key of constraints) {
     const [left, right] = key.split(':').map(Number);
@@ -334,25 +347,6 @@ function resolveTargets(mesh, targetType, ids) {
       z: corners.reduce((sum, node) => sum + node.z, 0) / 3,
     });
   }));
-}
-
-function localCandidates(targets, spacing, radius) {
-  const rows = Math.ceil(radius / (spacing * ROW_HEIGHT_FACTOR));
-  const columns = Math.ceil(radius / spacing) + 1;
-  const candidates = new Map();
-  for (const target of [...targets].sort((a, b) => a.targetId.localeCompare(b.targetId))) {
-    for (let row = -rows; row <= rows; row += 1) {
-      const y = target.y + row * spacing * ROW_HEIGHT_FACTOR;
-      const xOffset = Math.abs(row) % 2 ? spacing / 2 : 0;
-      for (let column = -columns; column <= columns; column += 1) {
-        const x = target.x + column * spacing + xOffset;
-        if (Math.hypot(x - target.x, y - target.y) > radius + 1e-12) continue;
-        const key = `${x},${y}`;
-        if (!candidates.has(key)) candidates.set(key, { x, y });
-      }
-    }
-  }
-  return [...candidates.values()].sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
 function farFromBoundary(point, points, boundaryEdgeKeys, clearance) {

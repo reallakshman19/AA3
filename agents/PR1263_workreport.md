@@ -1,215 +1,198 @@
-# PR1263 work report — EMP.1 source custody and WRC dataset qualification boundary
+# PR1263 work report — EMP.1 qualification foundation
 
 ## Recovery header
 
 - `HANDOVER_READINESS: READY`
 - `PR_RECOVERY_STATE: RECOVERABLE`
 - `TAKEOVER_AUTHORITY: QUALIFICATION_PENDING`
-- `PR_HEAD_OBSERVED: 6273a9f0d09bf137f9070a83a14211e357664c69`
-- `REPORT_BASIS_HEAD: 6273a9f0d09bf137f9070a83a14211e357664c69`
+- `PR_HEAD_OBSERVED: e2a9e8c926cb77cc28e3deaba87debc5711027f4`
+- `REPORT_BASIS_HEAD: e2a9e8c926cb77cc28e3deaba87debc5711027f4`
 - `MAIN_HEAD_LAST_CHECKED: 67317dc9cb47de8897fa7952b86107ab91b1f75c`
 - `MERGE_BASE: b841975b20e547c721447e95527a995805d9761a`
 - `REPORT_SYNC: CURRENT`
-- `APPENDIX_A_STATUS: BLOCKED_WRC_DATASET_QUALIFICATION`
 - `GROUNDING_EPOCH: GE-004`
-- `LAST_DURABLE_CHECKPOINT: 6273a9f0... pins/audits existing WRC extraction package`
+- `APPENDIX_A_STATUS: BLOCKED_WRC_DATASET_QUALIFICATION`
 - `CURRENT_STAGE: WRC_DATASET_QUALIFICATION`
-- `CURRENT_BLOCKER: existing WRC extraction is present and reusable but declares NOT_READY_FOR_IMPLEMENTATION and unresolved source/numerical items`
-- `HIGHEST_RISK: promoting derived/partially unresolved WRC extraction to production authority`
-- `EXACT_NEXT_ACTION: execute the readiness checker on a full checkout, freeze its blocker report, then resolve only those blockers before EMP.1.C production mechanics`
+- `CURRENT_BLOCKER: existing WRC extraction is reusable but quantitatively incomplete; CAUx benchmark is not yet frozen`
+- `HIGHEST_RISK: promoting extracted table inventory or unresolved signs into production WRC authority`
+- `EXACT_NEXT_ACTION: execute/falsify the frozen WRC readiness expectation, then close CAUx and primary-source gaps before production mutation`
 
 Repository: `reallaksh19/Advanced_Analysis`  
 Issue: `#1261`  
-PR: `#1263` (draft/open)  
+PR: `#1263` — draft/open  
 Branch: `agent/emp1-core-scaffold-issue1261`  
 Criticality: `ENGINEERING_CRITICAL`  
 Merge authority: `NOT GRANTED`
 
 ## Handover in 60 seconds
 
-The owner correctly identified that WRC extraction data already exists on `main@67317dc9.../docs`. PR1263 now reuses that package instead of planning a fresh extraction from zero.
+Owner correction accepted: WRC data already exists on `main@67317dc9.../docs`; do not re-create it.
 
-The exact existing package is:
+Baseline WRC extraction package:
 
 - `docs/01_WRC537_METHOD_DEFINITION.md` — blob `69e6e83ab82a0287a2a8277b62e7e223f05befe1`, 45,012 bytes;
 - `docs/03_WRC537_DATASET.json` — blob `0ffdc3f54adc0ff8025c4b3d2629272bab6860b4`, 19,280 bytes;
 - `docs/04_WRC537_NUMERICAL_TABLES.csv` — blob `a787f9417c3406392bdf052d66fc9f7d1efcf11e`, 34,233 bytes.
 
-However, the existing method definition and dataset explicitly declare `NOT_READY_FOR_IMPLEMENTATION`. The extraction caveat says the licensed WRC 537 PDF was not available to that extractor, `semanticHash` is null, `numericalData` is empty, multiple fields remain `UNRESOLVED`, and open issues remain. The numerical CSV is currently an extraction/table inventory with sampled coefficient/value fields still `UNRESOLVED`, not a complete production coefficient dataset.
+PR1263 now pins, reuses, and fail-closed audits those artifacts. The extraction is useful engineering structure, but its own declared state is `NOT_READY_FOR_IMPLEMENTATION`. Direct Git blob inspection was used to freeze a quantitative expected readiness result before the real checker is executed.
 
-Therefore the corrected engineering state is:
+**Frozen WRC readiness expectation:**
 
-> WRC extraction data **exists and must be reused**, but EMP.1.C remains fail-closed until the existing package passes a machine-audited readiness gate.
+- status: `BLOCKED`;
+- JSON unresolved paths: **21**;
+- dataset open issues: **7**;
+- dataset `semanticHash`: **null**;
+- dataset `numericalData`: **0 rows**;
+- numerical CSV data rows: **120** = 60 SP + 60 SM;
+- numeric coefficient rows: **0**;
+- unresolved coefficient rows: **120/120**;
+- unresolved parameter-3/U rows: **120/120**;
+- review status: **EXTRACTED = 120/120**.
 
-Current public LAFEA.1/.2 routes, their numerical mechanics, the UI, WRC production evaluator, and LAFEA.3+ remain untouched.
+Therefore the current CSV is a WRC table/page/family inventory, not a production a-j coefficient payload.
 
-## Live ground truth — GE-004
+Current LAFEA.1/.2 mechanics, public UI, generic correlation evaluator, WRC production mechanics, and LAFEA.3+ remain untouched.
 
-- current main: `67317dc9cb47de8897fa7952b86107ab91b1f75c`;
-- PR implementation basis before this report-only update: `6273a9f0d09bf137f9070a83a14211e357664c69`;
-- PR #1263: draft/open/mergeable/not merged;
-- actual changed files before this report update: 21, all reconciled below;
-- existing WRC docs are already present on the PR branch with the same blobs as current main;
-- PR #1258/#1259 remain FEM solver/mesh qualification; no source-dataset overlap;
-- current-main reconciliation remains required before any production/public EMP.1 integration.
+## Exact WRC unresolved paths — 21
 
-## Existing WRC extraction — audited facts
+1. `$.geometryDefinitions[7].definition` — cylindrical `Rc` definition.
+2. `$.dimensionlessParameters[1].minimumInclusive` — gamma lower-bound inclusivity.
+3. `$.dimensionlessParameters[1].maximumInclusive` — gamma upper-bound inclusivity.
+4. `$.dimensionlessParameters[2].minimumInclusive` — rho lower-bound inclusivity.
+5. `$.dimensionlessParameters[2].maximumInclusive` — rho upper-bound inclusivity.
+6. `$.dimensionlessParameters[3].equation` — cylindrical lambda.
+7. `$.dimensionlessParameters[3].inputs[0]` — cylindrical lambda inputs.
+8. `$.dimensionlessParameters[4].equation` — cylindrical delta.
+9. `$.dimensionlessParameters[4].inputs[0]` — cylindrical delta inputs.
+10. `$.loads[5].positive` — spherical torsion sign.
+11. `$.loads[7].positive` — cylindrical `Vc` sign.
+12. `$.loads[8].positive` — cylindrical `Vl` sign.
+13. `$.loads[9].positive` — cylindrical `Mc` sign.
+14. `$.loads[10].positive` — cylindrical `Ml` sign.
+15. `$.loads[11].positive` — cylindrical `Mt` sign.
+16-19. four `stressDefinitions[*].laffeaMapping` entries.
+20. `$.coefficientFamilies[8].symbol` — cylindrical coefficient family identity.
+21. `$.coefficientFamilies[8].params[0]` — cylindrical coefficient parameters.
 
-### Method definition
+Open issues additionally retain: a-j numerical coefficients, cylindrical parameters, direct sign-table verification, WRC published examples, edition/page reconciliation, and LAFEA canonical mapping.
 
-`docs/01_WRC537_METHOD_DEFINITION.md` states:
+## Reusable WRC engineering content already present
 
-- `EXTRACTION STATUS: NOT_READY_FOR_IMPLEMENTATION`;
-- extraction used publicly accessible copies/OCR, CEI guide, official errata, and secondary engineering sources;
-- licensed WRC 537 PDF was not available to that extractor;
-- unresolved primary-source items must remain blocked.
+The existing dataset does contain source-located structure useful for later implementation, including:
 
-### Dataset
-
-`docs/03_WRC537_DATASET.json` states:
-
-- schema `wrc537-source-extraction/v1`;
-- `extractionStatus = NOT_READY_FOR_IMPLEMENTATION`;
-- `semanticHash = null`;
-- `numericalData = []`;
-- cylindrical `Rc` exact definition unresolved;
-- cylindrical `lambda` and `delta` equations unresolved;
-- gamma/rho boundary inclusivity unresolved;
-- spherical torsion sign unresolved;
-- cylindrical `Vc`, `Vl`, `Mc`, `Ml`, `Mt` positive directions unresolved;
-- LAFEA stress mappings unresolved;
-- open issues include numerical a-j coefficient values, cylindrical parameters, direct sign-table verification, bulletin numerical examples, edition/page reconciliation, and canonical mapping.
-
-It does contain reusable engineering structure including:
-
-- source-located general stress equation `sigma = N/T +/- 6M/T^2`;
-- radial/moment membrane and bending scaling equations;
-- torsion and shear equations;
-- curve-fit polynomial form;
-- A/B/C/D outer/inner recovery identities;
+- `sigma = N/T +/- 6M/T^2` general surface-stress reconstruction;
+- radial load membrane and bending scaling equations;
+- moment membrane and bending scaling equations;
+- torsion `Mt/(2*pi*r0^2*T)`;
+- shear equations;
+- 9th-order curve-fit polynomial form in U;
+- AU/AL/BU/BL/CU/CL/DU/DL recovery identities;
 - interface load-reference convention;
-- pressure exclusion and linear-superposition policy;
-- explicit exclusions/limitations.
+- pressure exclusion;
+- linear superposition;
+- explicit applicability/exclusion notes.
 
-These are qualification inputs, not automatic production authority.
+These stay **qualification inputs**, not production authority, until the extraction gate passes.
 
-### Numerical table CSV
+## New implementation in PR1263
 
-`docs/04_WRC537_NUMERICAL_TABLES.csv` provides table-family/page/source metadata. Sampled SP rows show the coefficient/value slots as `UNRESOLVED`, despite extraction/review metadata being populated. Therefore row presence must not be confused with numeric coefficient availability.
+### Exact source custody
 
-## New WRC reuse/readiness implementation
+- `scripts/emp1-source-custody-lib.mjs`
+- `scripts/emp1-source-custody-check.mjs`
+- `scripts/emp1-source-custody-self-test.mjs`
+- WRC/CAUx source ledgers.
 
-### `validation/emp1/wrc537-2013/existing-dataset-manifest.json`
+Candidate primary-source bytes must pass exact byte count -> recomputed Git blob SHA-1 -> separately frozen raw SHA-256. Local custody self-test: `PASS`.
 
-Pins the three pre-existing WRC artifacts to `main@67317dc...` by exact byte count and Git blob SHA-1. Classification is `DERIVED_SOURCE_EXTRACTION`; authority is `QUALIFICATION_INPUT_ONLY`; `productionAuthority=false`.
+### Existing WRC package pin
 
-### `scripts/emp1-wrc-dataset-readiness-lib.mjs`
+`validation/emp1/wrc537-2013/existing-dataset-manifest.json` pins the three existing docs at current main and classifies them as:
 
-Implements fail-closed readiness analysis:
+- `DERIVED_SOURCE_EXTRACTION`;
+- `QUALIFICATION_INPUT_ONLY`;
+- `productionAuthority=false`.
 
-- verifies artifact byte count/blob identity when supplied;
-- requires method and dataset `READY_FOR_IMPLEMENTATION`;
-- blocks when extraction caveat reports primary source unavailable;
-- requires non-null semantic hash;
-- requires non-empty `numericalData`;
-- recursively enumerates every JSON path containing `UNRESOLVED`;
-- requires zero open issues;
-- parses the numerical CSV;
-- counts numeric coefficient rows, unresolved coefficient rows, unresolved parameter rows, and review statuses;
-- distinguishes `PASS`, `BLOCKED`, and `FAIL`.
+### WRC readiness gate
 
-### `scripts/emp1-wrc-dataset-readiness-check.mjs`
+- `scripts/emp1-wrc-dataset-readiness-lib.mjs`
+- `scripts/emp1-wrc-dataset-readiness-check.mjs`
+- `scripts/emp1-wrc-dataset-readiness-self-test.mjs`
 
-Reads the pinned manifest plus the actual three `docs/` artifacts from a checkout, recomputes each Git blob SHA-1, then emits the complete machine-readable blocker report. Exit codes: `0=PASS`, `2=BLOCKED`, `1=FAIL`.
+Gate behavior:
 
-### `scripts/emp1-wrc-dataset-readiness-self-test.mjs`
+- exact artifact byte/blob identity;
+- method/dataset `READY_FOR_IMPLEMENTATION` required;
+- semantic hash required;
+- numerical data required;
+- recursive `UNRESOLVED` path enumeration;
+- zero open issues required;
+- RFC-style CSV parsing;
+- numeric/unresolved coefficient and parameter counts;
+- `PASS / BLOCKED / FAIL` distinction.
 
-Local self-test covers:
+Self-test + syntax: `PASS`. Real full-checkout execution: `NOT_RUN`.
 
-- fully ready package -> PASS;
-- NOT_READY + unresolved field + empty numerical data + unresolved coefficient -> BLOCKED;
-- artifact byte/blob mismatch -> FAIL;
-- recursive unresolved-path detection;
-- quoted CSV parsing;
-- numeric coefficient counting.
+### Frozen pre-execution expectation
 
-Local self-test and Node syntax checks: `PASS`.
+`validation/emp1/wrc537-2013/existing-dataset-audit-v1.json` freezes the direct-blob-inspection expectation listed above. It must not be rewritten merely because later checker or production output disagrees; disagreement requires RCA.
 
-The real package readiness check is still `NOT_RUN` because no full repository checkout is available in the execution container. Do not convert authored logic into a claimed package PASS/BLOCKED count until it is actually executed.
+## Authority graph
 
-## Source custody layer retained
+```text
+Pinned WRC PDF (primary arbiter where needed)
+        |
+        v
+Existing docs/ extraction package (derived qualification input)
+        |
+        v
+WRC readiness gate -------------------------- BLOCKED today
+        |
+        v
+EMP.1.C production dataset/evaluator          NOT AUTHORIZED
 
-PR1263 also retains the exact-PDF custody checker for the Issue #1261 pinned PDFs. Candidate bytes, if/when used to close primary-source gaps, must pass:
+Pinned CAUx pp.24-31 (independent benchmark)
+        |
+        v
+Frozen independent hand calculation          NOT_RUN
+        |
+        v
+Production benchmark comparison               NOT AUTHORIZED
+```
 
-1. expected byte count;
-2. Git blob SHA-1 recomputed from exact bytes;
-3. separately frozen raw PDF SHA-256.
+The existing WRC extraction does not remove the need to close any datum that it itself labels unresolved/unverified. The exact PDF should be used selectively to resolve those fields, not to repeat the whole extraction.
 
-This layer remains useful for resolving primary-source discrepancies but is no longer treated as evidence that no WRC data exists in the repository.
+## Appendix A
 
-## Authority / invariants
+- **A1 Production Trace:** substantially complete.
+- **A2 UX Isolation:** substantially complete; public EMP.1 migration still deliberately unstarted.
+- **A3 Authority / Invariant:** materially improved because exact WRC extraction artifacts and quantitative blockers are now frozen; still blocked by unresolved primary/numerical items.
+- **A4 Independent Validation:** blocked because CAUx pp.24-31 expected values + independent hand calculation are not frozen.
+- **A5 Minimal Patch:** satisfied by isolated source-custody + WRC-readiness work; no production formula/UI/migration mixing.
 
-- reuse the existing WRC extraction package; do not duplicate it;
-- preserve its own `NOT_READY` and `UNRESOLVED` classifications until evidence changes them;
-- derived/extracted data is qualification input, not automatic WRC production authority;
-- exact pinned WRC PDF remains the preferred primary-source arbiter for disputed/unresolved items;
-- CAUx pp.24-31 remains independent benchmark authority, not WRC equation/coefficient authority;
-- source-reported, derived-extraction, independent-derived, benchmark-reported and production values remain distinguishable;
-- production results may never create/rewrite benchmark expected values;
-- no tolerance weakening to obtain PASS;
-- EMP.1.A load transfer, EMP.1.B nominal screening and EMP.1.C local WRC correlation remain distinct engineering objects;
-- current LAFEA.1/.2 production mechanics stay unchanged until Appendix A passes;
-- LAFEA.3+ behavior stays unchanged;
-- SVG/display geometry never becomes mechanics authority;
-- product PASS is not code compliance; release remains false.
-
-## Decisions / issues / risks
-
-- `DEC-001`: one visible EMP.1 product; A/B/C remain separable evidence boundaries.
-- `DEC-002`: reuse existing A/B mechanics through thin adapters after qualification.
-- `DEC-003`: WRC production remains fail-closed until source/dataset/qualification/benchmark evidence passes.
-- `DEC-004`: source-custody and dataset-readiness tooling may advance before production authority.
-- `DEC-005`: candidate primary-source bytes must reproduce the pinned Git blob before SHA-256 freeze.
-- `DEC-006`: existing `docs/01_WRC537_METHOD_DEFINITION.md`, `03_WRC537_DATASET.json`, and `04_WRC537_NUMERICAL_TABLES.csv` are the baseline WRC extraction package and must be reused.
-- `ISS-001`: existing WRC package is `NOT_READY_FOR_IMPLEMENTATION`; machine blocker report authored but real-package execution NOT_RUN.
-- `ISS-002`: exact CAUx pp.24-31 extraction and independent hand calculation remain NOT_RUN.
-- `ISS-003`: exact primary-source WRC PDF remains useful/required to resolve extraction items that the existing package itself marks unverified/unresolved.
-- `ISS-004`: branch requires live-main reconciliation before production/public integration.
-- `RISK-001`: row/table inventory could be mistaken for populated numeric coefficients.
-- `RISK-002`: source edition/page/sign discrepancies could leak through if `UNRESOLVED` is ignored.
-- `RISK-003`: derived data could be promoted beyond its declared authority.
-
-## Appendix A status
-
-- **A1 Production Trace:** substantially complete; production mutation still gated.
-- **A2 Current Failure / UX Isolation:** substantially complete; public migration deliberately unstarted.
-- **A3 Authority / Invariant:** improved because committed WRC extraction is now identified and pinned, but still `BLOCKED` by its own `NOT_READY/UNRESOLVED` state plus unresolved exact-source items.
-- **A4 Independent Validation:** still `BLOCKED`; CAUx pp.24-31 expected values/hand calculation are not yet frozen.
-- **A5 Next Commit / Minimal Patch:** completed as an isolated WRC existing-dataset manifest/readiness gate; no production mechanics/UI/migration mixed in.
-
-`APPENDIX_A_STATUS=BLOCKED_WRC_DATASET_QUALIFICATION`; `TAKEOVER_AUTHORITY=QUALIFICATION_PENDING`.
+`TAKEOVER_AUTHORITY=QUALIFICATION_PENDING` remains correct.
 
 ## Validation ledger
 
-| Check | Status | Observation | Oracle | Notes |
-|---|---|---|---|---|
-| current main grounding | PASS | REMOTE_EXECUTION | repository state | `67317dc9...` |
-| existing WRC artifact discovery | PASS | SOURCE_INSPECTION | current main | exact three WRC docs confirmed |
-| existing WRC artifact blobs/sizes | PASS | REMOTE_EXECUTION | GitHub object metadata | manifest pins exact values |
-| method/dataset declared readiness | PASS | SOURCE_INSPECTION | committed extraction | both say `NOT_READY_FOR_IMPLEMENTATION` |
-| dataset unresolved/open-item inspection | PASS | SOURCE_INSPECTION | committed extraction | concrete blockers identified |
-| numerical CSV spot inspection | PASS | SOURCE_INSPECTION | committed extraction | sampled coefficient/value slots unresolved |
-| WRC readiness self-test | PASS | LOCAL_EXECUTION | implementation-coupled | PASS/BLOCKED/FAIL paths exercised |
-| WRC readiness scripts syntax | PASS | LOCAL_EXECUTION | Node parser | all new scripts |
-| actual three-artifact readiness check | NOT_RUN | NOT_OBSERVED | implementation + current docs | full checkout unavailable |
-| exact WRC PDF SHA-256 | NOT_RUN | NOT_OBSERVED | cryptographic | needed for primary-source closure where required |
-| CAUx pp.24-31 extraction | NOT_RUN | NOT_OBSERVED | AUTHORITATIVE_REFERENCE | independent benchmark blocker |
-| independent CAUx/WRC handcalc | NOT_RUN | NOT_OBSERVED | ANALYTICAL + AUTHORITATIVE_REFERENCE | expected values not frozen |
-| production build | NOT_RUN | NOT_OBSERVED | repository build | production untouched |
-| Chromium EMP.1 workflow | NOT_RUN | NOT_OBSERVED | browser | UI deferred |
-| WRC engineering qualification | BLOCKED | SOURCE_INSPECTION | existing extraction + source authority | fail-closed |
+| Check | Status | Basis |
+|---|---|---|
+| current main grounding | PASS | GitHub live state `67317dc9...` |
+| existing WRC artifact discovery | PASS | GitHub current-main docs |
+| WRC artifact blob/size pin | PASS | GitHub object metadata |
+| WRC dataset direct blob inspection | PASS | full text blob inspection |
+| frozen WRC blocker expectation | PASS | committed `existing-dataset-audit-v1.json` |
+| custody self-test | PASS | local execution |
+| WRC readiness self-test | PASS | local execution |
+| Node syntax new scripts | PASS | local execution |
+| actual WRC readiness checker vs real docs | NOT_RUN | no full checkout |
+| raw WRC PDF SHA-256 | NOT_RUN | selective primary-source closure pending |
+| CAUx pp.24-31 exact extraction | NOT_RUN | no existing benchmark extraction found on main |
+| independent CAUx hand calculation | NOT_RUN | benchmark values not frozen |
+| production EMP.1 build | NOT_RUN | production untouched |
+| Chromium EMP.1 UI | NOT_RUN | UI untouched |
+| WRC engineering qualification | BLOCKED | existing package declared NOT_READY |
 
-## Changed-file ledger — 21 paths
+## Changed-file ledger — 22 paths
 
 Recovery/coordination:
 - `agents/PR1263_workreport.md`
@@ -234,25 +217,34 @@ Source custody:
 - `validation/emp1/caux2017-wrc01f/source-ledger.json`
 - `validation/emp1/wrc537-2013/source-ledger.json`
 
-Existing-WRC reuse/readiness:
+WRC reuse/readiness:
 - `validation/emp1/wrc537-2013/existing-dataset-manifest.json`
+- `validation/emp1/wrc537-2013/existing-dataset-audit-v1.json`
 - `scripts/emp1-wrc-dataset-readiness-lib.mjs`
 - `scripts/emp1-wrc-dataset-readiness-check.mjs`
 - `scripts/emp1-wrc-dataset-readiness-self-test.mjs`
 
-No current `src/workspace/lafea-*`, existing A/B mechanics, generic correlation evaluator, FEM solver/meshing, or workflow file is changed.
+No current production LAFEA workspace/mechanics, FEM solver/meshing, or workflow file is changed.
 
-## Review / CI / merge state
+## Decisions / risks
 
-- PR #1263 remains draft/open; merge authority NOT GRANTED;
-- do not mark ready for review/merge while Appendix A is blocked;
-- remote CI remains NOT_RUN unless an actual run is observed on the current head.
+- `DEC-006`: reuse existing WRC extraction; no duplicate research package.
+- `DEC-007`: freeze quantitative readiness expectation before executing gate against real files.
+- `RISK-001`: 120 extraction rows could be mistaken for 120 numeric coefficients; actual numeric coefficient count is zero.
+- `RISK-002`: unresolved sign/cylindrical mapping must not be guessed.
+- `RISK-003`: benchmark expected values must not be created from future production output.
+
+## Review / CI / merge
+
+- draft PR only;
+- merge authority `NOT GRANTED`;
+- remote CI stays `NOT_RUN` unless a real run is observed;
+- do not mark ready/merge until Appendix A passes.
 
 ## Exact continuation
 
-1. run `node scripts/emp1-wrc-dataset-readiness-check.mjs` on a full PR checkout and freeze the emitted blocker inventory;
-2. resolve existing-package blockers in the extraction artifacts themselves, not by hard-coding workarounds in production;
-3. use the exact pinned WRC PDF only where needed to close disputed/unverified source fields and freeze source custody;
-4. extract/freeze CAUx pp.24-31 benchmark and independent hand calculation;
-5. re-score Appendix A;
-6. only after `>=92/100` total and every item `>=17/20`, reconcile current main and begin production EMP.1.A/B adapters followed by EMP.1.C and unified UI.
+1. execute the WRC readiness checker on a full checkout and compare to the frozen 21/7/120/0 expectation; RCA any mismatch;
+2. use the pinned WRC PDF selectively to resolve the 21 unresolved paths and missing a-j values/source verification;
+3. obtain/freeze CAUx pp.24-31 exact benchmark values and independent hand calculation;
+4. re-score Appendix A;
+5. only after `>=92/100` total and each answer `>=17/20`, reconcile to live main and start production EMP.1.A/B adapters, then EMP.1.C and the unified UI.

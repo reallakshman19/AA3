@@ -69,6 +69,7 @@ const evidenceV2Source = source('src/workspace/lafea-analysis-mesh-evidence-v2.j
 const evidenceQualitySource = source('src/workspace/lafea-analysis-mesh-quality.js');
 const viewModelSource = source('src/workspace/lafea-discretization-view-model.js');
 const panelSource = source('src/workspace/lafea-discretization-generation-panel.js');
+const viteSource = source('vite.config.js');
 
 assert.match(evidenceV2Source, /qualifyRefinedMeshAdjacentSizeRatio/);
 assert.match(evidenceV2Source, /:LOCAL_REFINEMENT:/);
@@ -90,17 +91,22 @@ assert.doesNotMatch(
   evidenceQualitySource,
   /stageId === 'LAFEA\.3' \|\| stageId === 'LAFEA\.4'/,
 );
+assert.match(viewModelSource, /LAFEA_RETAINED_MESH_REFINEMENT_POLICY/);
+assert.match(viewModelSource, /lafea3MinimumLocalTargetRatio/);
 assert.match(viewModelSource, /boundAdjacentSizeRatioMax/);
 assert.match(viewModelSource, /DERIVED_RECOMPUTATION_OF_REFINEMENT_RETENTION_GATE/);
 assert.match(viewModelSource, /qualifyRefinedMeshAdjacentSizeRatio/);
 assert.match(panelSource, /lafea-refinement-transition-preview/);
 assert.match(panelSource, /lafea-refinement-adjacency-evidence/);
-assert.match(panelSource, /LAFEA_RETAINED_MESH_REFINEMENT_POLICY\.minimumTargetRatio/);
+assert.match(panelSource, /model\.generation\.lafea3MinimumLocalTargetRatio/);
+assert.doesNotMatch(panelSource, /lafea-retained-mesh-refinement\.js/);
+assert.doesNotMatch(panelSource, /LAFEA_RETAINED_MESH_REFINEMENT_POLICY/);
 assert.match(panelSource, /CURRENT_UNGRADED_SHELL_REFINEMENT_ONE_ADJACENCY_STEP/);
 assert.match(panelSource, /const minimumTargetRatio = 1 \/ growthRatioMax/);
 assert.doesNotMatch(panelSource, /global \* 0\.25/);
 assert.match(panelSource, /not source-geometry feature IDs/);
 assert.match(panelSource, /preview does not certify generated topology/);
+assert.match(viteSource, /generation panel imports only core authority plus its tiny import-free DOM helper/);
 
 console.log(JSON.stringify({
   status: 'PASS',
@@ -117,7 +123,8 @@ console.log(JSON.stringify({
     retainedEvidenceSchemaChanged: false,
     genericLafea3QualityHashChanged: false,
     actualRefinedChildAdjacencyGate: 'ENFORCED_IN_V2_EVIDENCE_CONSTRUCTOR_BEFORE_CUSTODY',
-    uiPolicySource: 'BOUND_PROFILE_PLUS_EXISTING_REFINEMENT_POLICY',
+    uiPolicySource: 'EXISTING_REFINEMENT_POLICY_PROJECTED_BY_VIEW_MODEL',
+    isolatedGenerationChunkWorkspaceDependency: false,
   },
 }, null, 2));
 

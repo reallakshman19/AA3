@@ -102,7 +102,7 @@ function projectBStep(step, custody) {
 
 function custodyMessage(custody) {
   if (custody.state === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT) {
-    return 'B is bound to the current qualified A model/result. B-owned screening cases, factors and evaluation locations remain independently governed.';
+    return 'B is bound to the current qualified A model/result. Its retained snapshot of EMP.1.A foundation evidence is current. If A changes, refresh/re-import B evidence before relying on B. B-owned screening cases, factors and evaluation locations remain independently governed.';
   }
   if (custody.state === EMP1_B_SOURCE_CUSTODY_STATES.STALE_REFRESH_AVAILABLE) {
     return 'B retains different A evidence. Refresh B from current A before relying on the unified EMP.1 chain; B-owned screening inputs will be preserved.';

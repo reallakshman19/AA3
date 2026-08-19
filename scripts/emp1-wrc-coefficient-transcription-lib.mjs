@@ -157,6 +157,7 @@ export function auditWrcCoefficientTranscription(pkg) {
   const failures = [];
   const blockers = [];
   const curves = Array.isArray(pkg?.curves) ? pkg.curves : [];
+  const frozenPrimarySha256 = pkg?.primarySource?.rawPdfSha256 ?? null;
 
   if (pkg?.schema !== EMP1_WRC_COEFFICIENT_TRANSCRIPTION_SCHEMA) failures.push({ code: 'FAIL_SCHEMA' });
   if (curves.length !== EMP1_WRC_EXPECTED_CURVE_COUNT) {
@@ -199,7 +200,7 @@ export function auditWrcCoefficientTranscription(pkg) {
       const numeric = typeof slot?.value === 'number' && Number.isFinite(slot.value);
       if (numeric) numericSlotCount += 1;
       else unresolvedSlotCount += 1;
-      if (isQualifiedSlot(curve, slot)) qualifiedSlotCount += 1;
+      if (isQualifiedSlot(slot, frozenPrimarySha256)) qualifiedSlotCount += 1;
     }
   }
 
@@ -213,7 +214,7 @@ export function auditWrcCoefficientTranscription(pkg) {
     failures.push({ code: 'FAIL_SCALAR_COUNT', expected: EMP1_WRC_EXPECTED_SCALAR_COUNT, actual: slotCount });
   }
 
-  if (!SHA256_HEX.test(pkg?.primarySource?.rawPdfSha256 ?? '') || pkg?.primarySource?.custodyState !== 'PASS_SOURCE_CUSTODY') {
+  if (!SHA256_HEX.test(frozenPrimarySha256 ?? '') || pkg?.primarySource?.custodyState !== 'PASS_SOURCE_CUSTODY') {
     blockers.push({ code: 'BLOCK_PRIMARY_PDF_CUSTODY' });
   }
   if (numericSlotCount !== EMP1_WRC_EXPECTED_SCALAR_COUNT) {
@@ -242,11 +243,11 @@ export function auditWrcCoefficientTranscription(pkg) {
   };
 }
 
-function isQualifiedSlot(curve, slot) {
+function isQualifiedSlot(slot, frozenPrimarySha256) {
   if (typeof slot?.value !== 'number' || !Number.isFinite(slot.value)) return false;
   if (slot?.primarySourceVerified !== true) return false;
   if (!SHA256_HEX.test(slot?.primarySourceRawPdfSha256 ?? '')) return false;
-  if (slot.primarySourceRawPdfSha256 !== curve?.primarySourceRawPdfSha256 && curve?.primarySourceRawPdfSha256 != null) return false;
+  if (slot.primarySourceRawPdfSha256 !== frozenPrimarySha256) return false;
   if (slot?.publishedPrecision == null || String(slot.publishedPrecision).trim() === '' || slot.publishedPrecision === 'UNRESOLVED') return false;
   if (slot?.reviewStatus !== 'QUALIFIED') return false;
   return true;

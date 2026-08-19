@@ -9,12 +9,15 @@ export const EMP1_C_RETAINED_QUALIFICATION_EVIDENCE = {
       "wrcManifest": "validation/emp1/wrc537-2013/existing-dataset-manifest.json",
       "wrcSourceLedger": "validation/emp1/wrc537-2013/source-ledger.json",
       "signCrosscheck": "validation/emp1/wrc537-2013/hexagon-sign-crosscheck-v1.json",
+      "runtimeContractQualification": "validation/emp1/wrc537-2013/emp1-c-runtime-contract-qualification-v1.json",
       "cauxSourceLedger": "validation/emp1/caux2017-wrc01f/source-ledger.json",
       "cauxSupplementalPrecheck": "validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-qualification-v1.json",
       "cauxBenchmarkQualification": "validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-qualification-v1.json",
       "methodAuthorization": "validation/emp1/wrc537-2013/emp1-c-method-authorization-v1.json"
     },
-    "manualSummaryPermitted": false
+    "manualSummaryPermitted": false,
+    "retainedAuditObservedMatch": true,
+    "retainedExtractionPinVerified": true
   },
   "wrcDataset": {
     "status": "BLOCKED",
@@ -22,10 +25,25 @@ export const EMP1_C_RETAINED_QUALIFICATION_EVIDENCE = {
     "unresolvedJsonPathCount": 21,
     "openIssueCount": 7,
     "numericalDataCount": 0,
-    "coefficientInventoryRows": 120,
-    "numericCoefficientRows": 0,
-    "unresolvedCoefficientRows": 120,
-    "unresolvedParameterRows": 120,
+    "dimensionalContractStatus": "BLOCKED",
+    "dimensionalViolationCount": 3,
+    "dimensionalViolationIds": [
+      "SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH",
+      "SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH",
+      "STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH"
+    ],
+    "coefficientCurveRows": 120,
+    "coefficientSchema": "LEGACY_SINGLE_VALUE_PER_CURVE",
+    "coefficientSchemaQualified": false,
+    "coefficientsPerCurve": 10,
+    "requiredScalarCoefficientCount": 1200,
+    "numericScalarCoefficientCount": 0,
+    "unresolvedScalarCoefficientCount": 0,
+    "missingScalarCoefficientCount": 1200,
+    "invalidScalarCoefficientCount": 0,
+    "independentVariable": "U",
+    "independentVariableRepresentation": "LEGACY_PARAMETER_3_ROW_ORDINATE",
+    "independentVariableQualified": false,
     "semanticHash": null,
     "sourceCustodyQualified": false,
     "sourceCustodyState": "UNRESOLVED_RAW_BYTES",
@@ -40,6 +58,26 @@ export const EMP1_C_RETAINED_QUALIFICATION_EVIDENCE = {
       "SPHERICAL_M2_CONFLICT"
     ],
     "sourceCustodyQualified": false
+  },
+  "runtimeContracts": {
+    "status": "NOT_RUN",
+    "sourceCustodyQualified": false,
+    "sourceRawPdfSha256": null,
+    "loadAxisMappingStatus": "BLOCKED",
+    "loadAxisMappingContractHash": null,
+    "canonicalFrameContractHash": null,
+    "loadAxisSourceLocator": null,
+    "pressureThrustStatus": "BLOCKED",
+    "pressureThrustMode": null,
+    "pressureThrustDoubleCountGuardQualified": false,
+    "pressureThrustIndependentCheckStatus": "NOT_RUN",
+    "pressureThrustPolicyRecordHash": null,
+    "stressIntensityDefinitionStatus": "BLOCKED",
+    "stressIntensityDefinitionContractHash": null,
+    "stressIntensitySourceLocator": null,
+    "stressIntensityOutputDimension": null,
+    "stressIntensityIndependentCheckStatus": "NOT_RUN",
+    "qualificationRecordHash": null
   },
   "cauxBenchmark": {
     "status": "NOT_RUN",

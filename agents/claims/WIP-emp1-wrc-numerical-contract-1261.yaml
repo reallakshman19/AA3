@@ -1,0 +1,10 @@
+schema: engineering-pr-claims/v1
+work_item: WIP-emp1-wrc-numerical-contract-1261
+repository: reallaksh19/Advanced_Analysis
+issue: 1261
+state: SUPERSEDED
+superseded_by: PR1269
+active_claims_path: agents/claims/PR1269.yaml
+active_workreport_path: agents/PR1269_workreport.md
+merge_authority: NOT_GRANTED
+release_qualified: false

@@ -1,0 +1,41 @@
+schema: engineering-pr-status/v1
+work_item: PR1269
+issue: 1261
+pr: 1269
+repository: reallaksh19/Advanced_Analysis
+parent_pr: 1266
+parent_head: c4ecc9ec48cb87937d65599449dee55b86513f3a
+base_main: cf3aaeefb028ee387d3d530f5e0e5106bd489dce
+branch: agent/emp1-wrc-numerical-contract-issue1261
+intent: ENGINEERING_CRITICAL_FAIL_CLOSED_NUMERICAL_AND_RUNTIME_QUALIFICATION_CONTRACT
+handover_readiness: READY
+takeover_authority: QUALIFIED_FOR_FAIL_CLOSED_GUARD_MUTATION_ONLY
+appendix_a_score: 95
+merge_authority: NOT_GRANTED
+current_stage: EMP1_CRITICAL_SCOPE_PASS_EXTERNAL_B02D_BLOCK
+coordination: COORDINATION_REQUIRED_STACKED_DEPENDENCY
+validated_implementation_head: 2468b1f712c2d08390988d52becabefd1a5f0d1b
+validation_workflow_run: 32282955286
+validation_workflow_number: 966
+emp1_critical_software_contract: PASS
+emp1_focused_chromium: PASS
+full_workflow: FAIL_EXTERNAL_B02D
+critical_guard_coverage:
+  coefficient_scalar_contract: PASS_SOFTWARE_CONTRACT
+  runtime_u_custody: PASS_SOFTWARE_CONTRACT
+  membrane_dimensional_contract: PASS_SOFTWARE_CONTRACT
+  stress_intensity_dimensional_contract: PASS_SOFTWARE_CONTRACT
+  lafea_wrc_axis_mapping_gate: PASS_SOFTWARE_CONTRACT
+  pressure_thrust_double_count_gate: PASS_SOFTWARE_CONTRACT
+  stress_intensity_source_definition_gate: PASS_SOFTWARE_CONTRACT
+  immutable_retained_artifact_reobservation: PASS_SOFTWARE_CONTRACT
+  pressure_thrust_supplemental_numerical_sanity: PASS_BOUNDED_NON_AUTHORITY
+wrc_source_custody: BLOCKED_RAW_SHA256_UNRESOLVED
+caux_source_custody: BLOCKED_RAW_SHA256_UNRESOLVED
+wrc_engineering_qualification: BLOCKED
+caux_engineering_qualification: BLOCKED
+runtime_contract_qualification: BLOCKED_NOT_RUN
+emp1_c_execution_route_registered: false
+release_qualified: false
+external_parent_blocker: B02D_T3_L1_MESH_QUALIFICATION_BLOCK
+external_failure: LAFEA_B02_PRODUCTION_SEQUENCE_BLOCKED_AT_B02D_POLAR_MESH

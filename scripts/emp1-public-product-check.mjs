@@ -56,7 +56,7 @@ assert.deepEqual(projection.steps[2].blockers, [
 ]);
 assert.equal(projection.steps[2].blockerDetails.length, 4);
 assert.match(projection.steps[2].blockerDetails[0].message, /21 unresolved fields; 7 open issues/u);
-assert.match(projection.steps[2].blockerDetails[1].message, /0 numeric coefficient rows; 120 unresolved coefficient rows/u);
+assert.match(projection.steps[2].blockerDetails[1].message, /0\/120 retained coefficient rows numeric; 120 unresolved coefficient rows/u);
 assert.equal(projection.steps[2].qualification.gateStatus.signArbitrationReady, false);
 assert.equal(projection.steps[2].qualification.gateStatus.cauxBenchmarkReady, false);
 assert.equal(projection.qualificationBoundary.emp1CProductionAuthority, 'NOT_AUTHORIZED');
@@ -103,6 +103,7 @@ function readyCQualificationEvidence() {
       unresolvedJsonPathCount: 0,
       openIssueCount: 0,
       numericalDataCount: 1,
+      coefficientInventoryRows: 120,
       numericCoefficientRows: 120,
       unresolvedCoefficientRows: 0,
       unresolvedParameterRows: 0,

@@ -61,6 +61,10 @@ const WRC_DIMENSIONAL_CONTRACTS = Object.freeze([
   }),
 ]);
 
+const KNOWN_INVALID_STRESS_INTENSITY_FORMS = Object.freeze([
+  'sqrt(0.5*((sigx+sigy)+sqrt((sigx-sigy)**2+4*tau**2)))',
+]);
+
 export function gitBlobSha1Bytes(bytes) {
   const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
   const hash = createHash('sha1');
@@ -200,9 +204,9 @@ export function collectUnresolvedPaths(value, path = '$', output = []) {
 
 /**
  * Fail closed when the retained equation expression contradicts the retained
- * dimensionless coefficient definition. This does not claim that either
- * transcription is authoritative WRC source data; it only proves that the two
- * retained statements cannot both be used as an implementation contract.
+ * dimensionless coefficient definition or is a known dimensionally invalid
+ * stress-intensity transcription. This does not claim that any inferred repair
+ * is WRC source authority; the exact pinned source must arbitrate the formula.
  */
 export function inspectWrcMethodDimensionalContract(dataset) {
   const families = new Map((dataset?.coefficientFamilies ?? []).map((row) => [row.id, row]));
@@ -252,6 +256,35 @@ export function inspectWrcMethodDimensionalContract(dataset) {
       dimensionalBasis: contract.dimensionalBasis,
     });
   }
+
+  const stressIntensityEquation = equations.get('EQ_STRESS_INTENSITY');
+  const stressIntensityMachine = stressIntensityEquation?.machine ?? null;
+  const normalizedStressIntensity = normalizeExpression(stressIntensityMachine);
+  const knownInvalidStressIntensity = KNOWN_INVALID_STRESS_INTENSITY_FORMS
+    .map(normalizeExpression)
+    .includes(normalizedStressIntensity);
+  const stressIntensityMissing = normalizedStressIntensity === '';
+  const stressIntensityStatus = stressIntensityMissing || knownInvalidStressIntensity ? 'BLOCKED' : 'PASS';
+  checks.push({
+    id: 'STRESS_INTENSITY_OUTPUT_DIMENSION',
+    equationId: 'EQ_STRESS_INTENSITY',
+    actualMachine: stressIntensityMachine,
+    knownInvalidForms: [...KNOWN_INVALID_STRESS_INTENSITY_FORMS],
+    dimensionalBasis: 'A stress-intensity expression must retain stress units. An outer square-root applied to a first-degree stress expression produces sqrt(stress), not stress.',
+    status: stressIntensityStatus,
+  });
+  if (stressIntensityMissing) violations.push({
+    id: 'STRESS_INTENSITY_EQUATION_MISSING',
+    contractId: 'STRESS_INTENSITY_OUTPUT_DIMENSION',
+    equationId: 'EQ_STRESS_INTENSITY',
+  });
+  if (knownInvalidStressIntensity) violations.push({
+    id: 'STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH',
+    contractId: 'STRESS_INTENSITY_OUTPUT_DIMENSION',
+    equationId: 'EQ_STRESS_INTENSITY',
+    actualMachine: stressIntensityMachine,
+    dimensionalBasis: 'The retained outer sqrt maps stress -> sqrt(stress); it cannot be consumed as a stress result.',
+  });
 
   return {
     status: violations.length ? 'BLOCKED' : 'PASS',

@@ -18,18 +18,27 @@ assert.deepEqual(current.blockerCodes, [
   EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN,
   EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN,
 ]);
+assert.equal(current.evidence.derivation.mode, 'RETAINED_ARTIFACT_DERIVATION');
+assert.equal(current.evidence.derivation.manualSummaryPermitted, false);
 assert.equal(current.evidence.wrcDataset.unresolvedJsonPathCount, 21);
 assert.equal(current.evidence.wrcDataset.openIssueCount, 7);
 assert.equal(current.evidence.wrcDataset.coefficientInventoryRows, 120);
 assert.equal(current.evidence.wrcDataset.numericCoefficientRows, 0);
 assert.equal(current.evidence.wrcDataset.unresolvedCoefficientRows, 120);
 assert.equal(current.evidence.wrcDataset.unresolvedParameterRows, 120);
+assert.equal(current.evidence.wrcDataset.sourceCustodyQualified, false);
+assert.equal(current.evidence.wrcDataset.sourceRawPdfSha256, null);
 assert.equal(current.evidence.signArbitration.openConflicts.length, 2);
+assert.equal(current.evidence.signArbitration.sourceCustodyQualified, false);
 assert.equal(current.evidence.cauxBenchmark.pageRange, '24-31');
+assert.equal(current.evidence.cauxBenchmark.sourceCustodyQualified, false);
 assert.equal(current.evidence.cauxBenchmark.expectedValuesFrozen, false);
 assert.equal(current.evidence.cauxBenchmark.independentHandCalculationStatus, 'NOT_RUN');
+assert.equal(current.evidence.cauxBenchmark.supplementalPrecheckMaySatisfyCauxA4, false);
 assert.match(current.blockers[0].message, /21 unresolved fields; 7 open issues/u);
+assert.match(current.blockers[0].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
 assert.match(current.blockers[1].message, /0\/120 retained coefficient rows numeric; 120 unresolved coefficient rows; 120 unresolved parameter rows/u);
+assert.match(current.blockers[3].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
 
 const technicallyReady = readyEvidence({ methodAuthorized: false, routeRegistered: false });
 const technical = evaluateEmp1CQualificationState(technicallyReady);
@@ -69,6 +78,14 @@ assert.deepEqual(
   [EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING],
 );
 
+const missingWrcSourceCustody = readyEvidence({ methodAuthorized: true, routeRegistered: true });
+missingWrcSourceCustody.wrcDataset.sourceCustodyQualified = false;
+missingWrcSourceCustody.wrcDataset.sourceRawPdfSha256 = null;
+assert.deepEqual(
+  evaluateEmp1CQualificationState(missingWrcSourceCustody).blockerCodes,
+  [EMP1_C_BLOCKER_CODES.WRC_DATASET_NOT_READY],
+);
+
 const unresolvedSign = readyEvidence({ methodAuthorized: true, routeRegistered: true });
 unresolvedSign.signArbitration.resolutionAuthority = 'HEXAGON_SECONDARY_REFERENCE';
 assert.deepEqual(
@@ -76,10 +93,25 @@ assert.deepEqual(
   [EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN],
 );
 
+const signWithoutSourceCustody = readyEvidence({ methodAuthorized: true, routeRegistered: true });
+signWithoutSourceCustody.signArbitration.sourceCustodyQualified = false;
+assert.deepEqual(
+  evaluateEmp1CQualificationState(signWithoutSourceCustody).blockerCodes,
+  [EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN],
+);
+
 const incompleteCaux = readyEvidence({ methodAuthorized: true, routeRegistered: true });
 incompleteCaux.cauxBenchmark.independentHandCalculationStatus = 'NOT_RUN';
 assert.deepEqual(
   evaluateEmp1CQualificationState(incompleteCaux).blockerCodes,
+  [EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN],
+);
+
+const cauxWithoutSourceCustody = readyEvidence({ methodAuthorized: true, routeRegistered: true });
+cauxWithoutSourceCustody.cauxBenchmark.sourceCustodyQualified = false;
+cauxWithoutSourceCustody.cauxBenchmark.sourceRawPdfSha256 = null;
+assert.deepEqual(
+  evaluateEmp1CQualificationState(cauxWithoutSourceCustody).blockerCodes,
   [EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN],
 );
 
@@ -99,7 +131,9 @@ console.log(JSON.stringify({
     numericCoefficientRows: current.evidence.wrcDataset.numericCoefficientRows,
     unresolvedCoefficientRows: current.evidence.wrcDataset.unresolvedCoefficientRows,
     unresolvedParameterRows: current.evidence.wrcDataset.unresolvedParameterRows,
+    wrcSourceCustodyQualified: current.evidence.wrcDataset.sourceCustodyQualified,
     signConflicts: current.evidence.signArbitration.openConflicts.length,
+    cauxSourceCustodyQualified: current.evidence.cauxBenchmark.sourceCustodyQualified,
     cauxIndependentHandCalculation: current.evidence.cauxBenchmark.independentHandCalculationStatus,
   },
   syntheticPromotionSequence: [
@@ -123,23 +157,35 @@ function readyEvidence({ methodAuthorized, routeRegistered }) {
       unresolvedCoefficientRows: 0,
       unresolvedParameterRows: 0,
       semanticHash: 'sha256:qualified-dataset',
+      sourceCustodyQualified: true,
+      sourceCustodyState: 'VERIFIED',
+      sourceQualificationState: 'PASS',
+      sourceRawPdfSha256: 'a'.repeat(64),
     },
     signArbitration: {
       status: 'PASS',
       resolutionAuthority: 'PINNED_WRC_PDF',
       openConflicts: [],
+      sourceCustodyQualified: true,
     },
     cauxBenchmark: {
       status: 'PASS',
       sourceIdentityVerified: true,
+      sourceCustodyQualified: true,
+      sourceCustodyState: 'VERIFIED',
+      sourceQualificationState: 'PASS',
+      sourceRawPdfSha256: 'b'.repeat(64),
       pageRange: '24-31',
       expectedValuesFrozen: true,
       independentHandCalculationStatus: 'PASS',
       benchmarkHash: 'sha256:qualified-caux-benchmark',
+      supplementalPrecheckVerdict: 'QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY',
+      supplementalPrecheckMaySatisfyCauxA4: false,
     },
     methodAuthorization: {
       engineeringUseAuthorized: methodAuthorized,
       qualificationRecordHash: methodAuthorized ? 'sha256:qualified-method-record' : null,
+      authoritySource: methodAuthorized ? 'SYNTHETIC_TEST_ONLY' : 'NONE',
     },
     execution: { routeRegistered },
   };

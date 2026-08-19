@@ -4,7 +4,7 @@ pr_or_wip: PR1263
 mission: EMP.1 source custody, existing WRC dataset qualification, unified analytical assessment
 workstream: EMP1
 branch: agent/emp1-core-scaffold-issue1261
-pr_head: f9a0970e97431391ce9fc70a0004fac07c1c15b8
+pr_head: 23bea179c3c7e7b4cbb85f6c235820a77bdcee7a
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,12 +12,12 @@ agent_state: ACTIVE
 pr_recovery_state: RECOVERABLE
 handover_readiness: READY
 report_path: agents/PR1263_workreport.md
-report_basis_head: 6273a9f0d09bf137f9070a83a14211e357664c69
+report_basis_head: e2a9e8c926cb77cc28e3deaba87debc5711027f4
 appendix_a_status: BLOCKED_WRC_DATASET_QUALIFICATION
 grounding_epoch: GE-004
 current_stage: WRC_DATASET_QUALIFICATION
-blocker: existing WRC extraction exists but declares NOT_READY_FOR_IMPLEMENTATION with unresolved source/numerical fields
-highest_risk: promoting derived or unresolved WRC extraction to production authority
+blocker: WRC extraction has 21 unresolved JSON paths, 7 open issues, 0 numeric coefficient rows, 120 unresolved coefficient rows; CAUx benchmark not frozen
+highest_risk: promoting extraction inventory or unresolved signs into production WRC authority
 dependencies:
   - issue: 1261
   - existing_wrc_docs: main@67317dc9cb47de8897fa7952b86107ab91b1f75c/docs
@@ -27,9 +27,15 @@ validation_state:
   local_custody_self_test: PASS
   local_wrc_readiness_self_test: PASS
   existing_wrc_artifact_inspection: PASS
+  frozen_wrc_blocker_expectation: PASS
+  expected_unresolved_json_paths: 21
+  expected_open_issues: 7
+  expected_csv_rows: 120
+  expected_numeric_coefficients: 0
+  expected_unresolved_coefficients: 120
   actual_wrc_readiness_check: NOT_RUN
   raw_pdf_sha256: NOT_RUN
   caux_pages_24_31: NOT_RUN
   remote_ci: NOT_RUN
-exact_next_action: execute the existing-WRC readiness checker on a full checkout and freeze its blocker inventory
-last_updated: 2026-08-19T09:40:00+04:00
+exact_next_action: execute the readiness checker against a full checkout and RCA any difference from the frozen 21/7/120/0 expectation, then close CAUx/source gaps
+last_updated: 2026-08-19T09:45:00+04:00

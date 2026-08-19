@@ -98,7 +98,9 @@ test('production exposes one EMP.1 product with A/B retained engines and C visib
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openProductionLafea(page);
 
-  const workbench = page.locator('[data-role="lafea-workbench"]');
+  const productionView = page.locator('[data-application-view="LAFEA"]');
+  await expect(productionView).toBeVisible();
+  const workbench = productionView.locator('[data-role="lafea-workbench"]');
   const product = workbench.locator(':scope > [data-lafea-slot="navigation"] [data-product-id="EMP.1"]');
   await expect(product).toHaveCount(1);
   await expect(product).toContainText('EMP.1 Local Attachment Analytical Assessment');
@@ -192,7 +194,9 @@ test('Analytical Calc uses one EMP.1 public navigation authority with A/B/C inte
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openProductionLafea(page);
 
-  const workbench = page.locator('[data-role="lafea-workbench"]');
+  const productionView = page.locator('[data-application-view="LAFEA"]');
+  await expect(productionView).toBeVisible();
+  const workbench = productionView.locator('[data-role="lafea-workbench"]');
   await workbench.locator('[data-lafea-tab="ANALYTICAL_CALC"]').click();
 
   const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');

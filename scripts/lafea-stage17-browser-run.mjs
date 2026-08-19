@@ -10,6 +10,15 @@ if (!fs.existsSync(cli)) {
   process.exit(2);
 }
 
+function runNodeScript(relativePath) {
+  const result = spawnSync(process.execPath, [path.join(root, relativePath)], {
+    cwd: root,
+    env: process.env,
+    stdio: 'inherit',
+  });
+  if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
+}
+
 function runPlaywright(args) {
   const result = spawnSync(process.execPath, [cli, 'test', '--config=playwright.lafea-visible.config.js', ...args], {
     cwd: root,
@@ -19,14 +28,24 @@ function runPlaywright(args) {
   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
 }
 
-// Qualify the Empirical analytical surface independently before the inherited
+// The EMP.1 product contract and A-to-B evidence refresh are analytical
+// qualification prerequisites. They do not depend on the LAFEA.3 B01/B02 gate.
+runNodeScript('scripts/emp1-public-product-check.mjs');
+runNodeScript('scripts/emp1-a-to-b-refresh-check.mjs');
+
+// Qualify both public EMP.1 surfaces independently before the inherited
 // LAFEA.3 B01/B02 production gate. The B01/B02 gate remains mandatory below;
-// this ordering only prevents an unrelated upstream blocker from suppressing
-// browser evidence for the analytical-only UI changed by this PR.
+// this ordering prevents an unrelated FEM blocker from suppressing browser
+// evidence for the analytical UI changed by this PR.
 runPlaywright([
   'e2e/lafea-visible-workbench.spec.js',
   '--grep',
   'Empirical analytical surface presents one truthful EMP.1 product and page-owned vertical scrolling',
+]);
+runPlaywright([
+  'e2e/lafea-visible-workbench.spec.js',
+  '--grep',
+  'production exposes one EMP.1 product with A/B retained engines and C visibly blocked',
 ]);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 

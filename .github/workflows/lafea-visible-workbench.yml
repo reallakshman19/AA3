@@ -52,11 +52,14 @@ jobs:
           node tests/lafea-engineering-overview.test.mjs
           node scripts/lafea-ui-analysis-settings-check.mjs
           node scripts/lafea-retained-mesh-smoothing-sweep-diagnostic.mjs
-      - name: Upload retained-refinement smoothing sweep
+          node scripts/lafea-retained-mesh-edge-classification-diagnostic.mjs
+      - name: Upload retained-refinement diagnostics
         uses: actions/upload-artifact@v4
         with:
-          name: lafea-retained-refinement-smoothing-sweep-${{ github.event.pull_request.head.sha || github.sha }}
-          path: test-results/lafea-retained-refinement-smoothing-sweep.json
+          name: lafea-retained-refinement-diagnostics-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            test-results/lafea-retained-refinement-smoothing-sweep.json
+            test-results/lafea-retained-refinement-edge-classification.json
           if-no-files-found: error
           retention-days: 7
       - name: Qualify governed shell mesh compiler and execution custody

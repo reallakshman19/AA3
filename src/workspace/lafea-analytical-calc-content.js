@@ -10,6 +10,7 @@ import {
   EMP1_PUBLIC_PRODUCT,
   buildEmp1ProductProjection,
   emp1StepForBackingStage,
+  evaluateEmp1BSourceRefresh,
   isEmp1BackingStage,
 } from './emp1-product-projection.js';
 import {
@@ -74,6 +75,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
 
   const screeningCustody = foundation ? null : screeningLoadCustody(
     root,
+    state,
     stage.document,
     projection,
     options.handlers.onApplyJson,
@@ -123,7 +125,7 @@ function emp1Workflow(root, projection, onSelectRoute) {
   workflow.body.append(
     overall,
     element(root, 'p', 'lafea-workbench__section-intro',
-      'Work left to right. A and B use retained qualified analytical engines. C stays blocked until WRC source/data and CAUx benchmark qualification are complete.'),
+      'Work left to right. A is the current load/reference authority. B must bind to that current A evidence while retaining its own screening cases and evaluation locations. C stays blocked until WRC source/data and CAUx benchmark qualification are complete.'),
   );
 
   const nav = element(root, 'nav', 'lafea-workbench__stages');
@@ -168,13 +170,18 @@ function blockerLabel(code) {
   })[code] ?? code;
 }
 
-function screeningLoadCustody(root, documentValue, projection, onApplyJson) {
+function screeningLoadCustody(root, state, documentValue, projection, onApplyJson) {
   const custody = card(root, 'EMP.1.B source custody from A');
   custody.section.dataset.role = 'lafea-screening-load-custody';
   custody.section.dataset.guidedTarget = 'screening-load-custody';
+  const currentness = element(root, 'strong', 'lafea-result-highlights__status',
+    `A → B evidence: ${projection.custody.bSourceEvidenceState.replaceAll('_', ' ')}`);
+  currentness.dataset.role = 'emp1-b-source-currentness';
+  currentness.dataset.state = projection.custody.bSourceEvidenceState;
   custody.body.append(
+    currentness,
     element(root, 'p', 'lafea-workbench__section-intro',
-      'EMP.1.B uses a retained snapshot of EMP.1.A foundation evidence. Switching steps does not silently recalculate or replace this snapshot.'),
+      'EMP.1.B owns its screening cases, factors and evaluation locations. Only its validated A-derived source evidence may be refreshed from the current qualified EMP.1.A result.'),
     element(root, 'p', 'lafea-workbench__authority', projection.custody.userAction),
   );
   if (!documentValue || typeof documentValue !== 'object') {
@@ -182,6 +189,27 @@ function screeningLoadCustody(root, documentValue, projection, onApplyJson) {
       'B custody becomes available after a valid EMP.1.B source document is loaded.'));
     return custody.section;
   }
+
+  const refresh = actionButton(root, 'Refresh B from current A', () => {
+    const aStage = state?.stages?.['LAFEA.1'];
+    const refreshResult = evaluateEmp1BSourceRefresh({
+      aDocument: aStage?.document,
+      aExecution: aStage?.execution,
+      bDocument: documentValue,
+    });
+    if (refreshResult.status !== 'READY') return;
+    onApplyJson(JSON.stringify(refreshResult.document));
+  });
+  refresh.dataset.role = 'emp1-refresh-b-from-a';
+  refresh.disabled = !projection.custody.canRefreshBFromCurrentA;
+  refresh.title = projection.custody.canRefreshBFromCurrentA
+    ? 'Replace only B sourceEvidence with the current qualified A model/result; preserve and revalidate all B-owned screening inputs.'
+    : projection.custody.bSourceEvidenceState === 'CURRENT_A_EVIDENCE'
+      ? 'B already uses the current qualified A evidence.'
+      : projection.custody.refreshBlockerCode
+        ? `Refresh blocked: ${projection.custody.refreshBlockerCode}`
+        : 'A current qualified A result and an existing B request are required.';
+  custody.body.append(refresh);
 
   const sourceResult = documentValue.sourceEvidence?.foundationResult;
   const loadCases = Array.isArray(sourceResult?.transformedLoadCases)

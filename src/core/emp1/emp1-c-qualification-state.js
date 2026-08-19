@@ -35,7 +35,7 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     && nonEmpty(normalized.wrcDataset.sourceRawPdfSha256);
   if (!datasetReady) blockers.push(blocker(
     EMP1_C_BLOCKER_CODES.WRC_DATASET_NOT_READY,
-    `WRC extraction package/source custody is not READY_FOR_IMPLEMENTATION (${normalized.wrcDataset.unresolvedJsonPathCount} unresolved fields; ${normalized.wrcDataset.openIssueCount} open issues; numericalData=${normalized.wrcDataset.numericalDataCount}; sourceCustody=${normalized.wrcDataset.sourceCustodyState}/${normalized.wrcDataset.sourceQualificationState}).`,
+    `WRC extraction package is not READY_FOR_IMPLEMENTATION (${normalized.wrcDataset.unresolvedJsonPathCount} unresolved fields; ${normalized.wrcDataset.openIssueCount} open issues; numericalData=${normalized.wrcDataset.numericalDataCount}; sourceCustody=${normalized.wrcDataset.sourceCustodyState}/${normalized.wrcDataset.sourceQualificationState}).`,
     {
       status: normalized.wrcDataset.status,
       extractionStatus: normalized.wrcDataset.extractionStatus,
@@ -89,7 +89,7 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     && nonEmpty(normalized.cauxBenchmark.benchmarkHash);
   if (!cauxReady) blockers.push(blocker(
     EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN,
-    `CAUx 2017 pp.${normalized.cauxBenchmark.pageRange} source/benchmark values and independent hand calculation are not frozen (sourceCustody=${normalized.cauxBenchmark.sourceCustodyState}/${normalized.cauxBenchmark.sourceQualificationState}; benchmark=${normalized.cauxBenchmark.status}; independent=${normalized.cauxBenchmark.independentHandCalculationStatus}).`,
+    `CAUx 2017 pp.${displayPageRange(normalized.cauxBenchmark.pageRange)} benchmark values and independent hand calculation are not frozen (sourceCustody=${normalized.cauxBenchmark.sourceCustodyState}/${normalized.cauxBenchmark.sourceQualificationState}; benchmark=${normalized.cauxBenchmark.status}; independent=${normalized.cauxBenchmark.independentHandCalculationStatus}).`,
     {
       status: normalized.cauxBenchmark.status,
       sourceIdentityVerified: normalized.cauxBenchmark.sourceIdentityVerified,
@@ -246,6 +246,10 @@ function nullableText(value) {
 
 function nonEmpty(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function displayPageRange(value) {
+  return String(value ?? '').replace('-', '–');
 }
 
 function deepFreeze(value) {

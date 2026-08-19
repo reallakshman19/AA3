@@ -1,10 +1,15 @@
 /** Automatic generation and retained-mesh refinement controls for Discretization. */
+import { refinementTransitionLadder } from '../core/lafea-meshing/refinement-fields.js';
 import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contract/index.js';
 import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { button, node, region } from './lafea-discretization-dom.js';
+import {
+  LAFEA_RETAINED_MESH_REFINEMENT_POLICY,
+} from './lafea-retained-mesh-refinement.js';
 
 const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v4';
 const SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
+const POLICY_COMPARE_EPSILON_FACTOR = 64;
 
 export function generationSection(doc, model, handlers) {
   const generation = model.generation;
@@ -384,6 +389,30 @@ function refinementControls(doc, model, handlers) {
   const unit = textControl(doc, 'Length unit', 'lafea-refinement-length-unit', model.generation.lengthUnit ?? '', 'Declared geometry length unit');
   if (model.generation.lengthUnit) unit.input.readOnly = true;
 
+  const sizingPolicy = refinementSizingPolicy(model, productActive);
+  if (sizingPolicy) {
+    target.input.min = String(sizingPolicy.minimumLocalTarget);
+    host.append(refinementSizingFacts(doc, sizingPolicy, model.generation.lengthUnit));
+  }
+  host.append(disclosure(
+    doc,
+    model.stageId === 'LAFEA.3'
+      ? 'Target IDs are retained analysis-mesh NODE/ELEMENT identities bound to the current parent mesh hashes; they are not source-geometry feature IDs.'
+      : 'The target is a retained shell-mesh element identity bound to the current qualified parent mesh.',
+  ));
+
+  const preview = node(doc, 'div', 'lafea-discretization__refinement-preview');
+  preview.dataset.role = 'lafea-refinement-transition-preview';
+  const updatePreview = () => renderRefinementTransitionPreview(
+    doc,
+    preview,
+    target.input.value,
+    sizingPolicy,
+    model.generation.lengthUnit,
+  );
+  target.input.addEventListener('input', updatePreview);
+  updatePreview();
+
   const submit = button(doc, 'Refine retained mesh', () => {
     const targetIds = parseTargetIds(ids.input.value);
     if (!targetIds.length) return invalid(ids, 'Enter at least one retained mesh node or element ID.');
@@ -393,8 +422,11 @@ function refinementControls(doc, model, handlers) {
     if (!(targetElementLength > 0 && targetElementLength < global)) {
       return invalid(target, `Local target length must be greater than zero and smaller than the global target ${global}.`);
     }
-    if (targetElementLength < global * 0.25) {
-      return invalid(target, `Qualified local target length is at least 25% of the global target (${global * 0.25}).`);
+    if (sizingPolicy && belowMinimumTarget(targetElementLength, sizingPolicy.minimumLocalTarget)) {
+      return invalid(
+        target,
+        `Current qualified local target is at least ${formatLength(sizingPolicy.minimumLocalTarget, model.generation.lengthUnit)} (${formatNumber(sizingPolicy.minimumTargetRatio)} of the global target).`,
+      );
     }
     target.input.setCustomValidity('');
     const lengthUnit = unit.input.value.trim();
@@ -413,8 +445,117 @@ function refinementControls(doc, model, handlers) {
   });
   submit.dataset.role = 'lafea-refinement-submit';
   submit.disabled = !model.actions.canRefineMesh;
-  host.append(targetType.label, ids.label, target.label, unit.label, submit);
+  host.append(targetType.label, ids.label, target.label, unit.label, preview, submit);
   return host;
+}
+
+function refinementSizingPolicy(model, productActive) {
+  const globalTarget = Number(model.generation.targetElementLength);
+  const growthRatioMax = Number(model.generation.boundAdjacentSizeRatioMax);
+  if (!(globalTarget > 0 && growthRatioMax > 1)) return null;
+
+  if (model.stageId === 'LAFEA.3' && !productActive) {
+    const minimumTargetRatio = LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumTargetRatio;
+    return Object.freeze({
+      stageId: 'LAFEA.3',
+      globalTarget,
+      growthRatioMax,
+      minimumTargetRatio,
+      minimumLocalTarget: globalTarget * minimumTargetRatio,
+      basis: 'LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumTargetRatio',
+      transitionScope: 'GRADED_PREVIEW_ACTUAL_CHILD_MUST_PASS_ADJACENT_SIZE_RATIO',
+    });
+  }
+
+  if (model.stageId === 'LAFEA.4' && productActive) {
+    const minimumTargetRatio = 1 / growthRatioMax;
+    return Object.freeze({
+      stageId: 'LAFEA.4',
+      globalTarget,
+      growthRatioMax,
+      minimumTargetRatio,
+      minimumLocalTarget: globalTarget * minimumTargetRatio,
+      basis: 'CURRENT_UNGRADED_SHELL_REFINEMENT_ONE_ADJACENCY_STEP',
+      transitionScope: 'DEEPER_TARGET_REQUIRES_GRADED_TRANSITION_QUALIFICATION',
+    });
+  }
+  return null;
+}
+
+function refinementSizingFacts(doc, policy, unit) {
+  const details = node(doc, 'details', 'lafea-discretization__technical-evidence');
+  details.dataset.role = 'lafea-refinement-sizing-policy';
+  details.open = true;
+  details.append(node(doc, 'summary', null, 'Qualified local-sizing envelope'));
+  const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  const rows = [
+    ['Global target', formatLength(policy.globalTarget, unit)],
+    ['Minimum current local target', formatLength(policy.minimumLocalTarget, unit)],
+    ['Minimum local / global ratio', `≥ ${formatNumber(policy.minimumTargetRatio)}`],
+    ['Bound adjacent size ratio max', `≤ ${formatNumber(policy.growthRatioMax)}`],
+    ['Policy basis', policy.basis],
+  ];
+  for (const [label, value] of rows) {
+    facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value));
+  }
+  details.append(facts);
+  return details;
+}
+
+function renderRefinementTransitionPreview(doc, host, rawTarget, policy, unit) {
+  host.replaceChildren();
+  if (!policy) {
+    host.append(disclosure(doc, 'No stage-specific local sizing envelope is available for transition preview.'));
+    return;
+  }
+  const localTarget = Number(rawTarget);
+  if (!Number.isFinite(localTarget) || localTarget <= 0) {
+    host.append(disclosure(
+      doc,
+      `Enter a local target between ${formatLength(policy.minimumLocalTarget, unit)} and ${formatLength(policy.globalTarget, unit)} to preview the governed size transition.`,
+    ));
+    return;
+  }
+  if (belowMinimumTarget(localTarget, policy.minimumLocalTarget)) {
+    host.dataset.status = 'BLOCK';
+    host.append(status(
+      doc,
+      `Blocked preview: local/global=${formatNumber(localTarget / policy.globalTarget)} is below the current qualified minimum ${formatNumber(policy.minimumTargetRatio)}.`,
+    ));
+    return;
+  }
+  if (!(localTarget < policy.globalTarget)) {
+    host.dataset.status = 'BLOCK';
+    host.append(status(doc, 'Blocked preview: local target must be smaller than the global target.'));
+    return;
+  }
+
+  const ladder = refinementTransitionLadder(
+    policy.globalTarget,
+    localTarget,
+    policy.growthRatioMax,
+  );
+  host.dataset.status = 'PREVIEW';
+  const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  const rows = [
+    ['Sizing transition', ladder.levels.map((value) => formatLength(value, unit)).join(' → ')],
+    ['Growth steps', String(ladder.growthStepCount)],
+    ['Maximum preview adjacent ratio', formatNumber(ladder.maximumObservedRatio)],
+    ['Bound adjacent size ratio max', `≤ ${formatNumber(ladder.growthRatioMax)}`],
+  ];
+  for (const [label, value] of rows) {
+    facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value));
+  }
+  host.append(facts, disclosure(
+    doc,
+    'Sizing preview only. The retained child mesh must independently pass the actual ADJACENT_SIZE_RATIO quality gate; the preview does not certify generated topology.',
+  ));
+}
+
+function belowMinimumTarget(value, minimum) {
+  const tolerance = POLICY_COMPARE_EPSILON_FACTOR * Number.EPSILON
+    * Math.max(1, Math.abs(minimum));
+  return value < minimum - tolerance;
 }
 
 function productRefinementFacts(doc, refinement, unit) {

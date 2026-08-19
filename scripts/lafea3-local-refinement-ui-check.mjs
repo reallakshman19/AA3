@@ -69,7 +69,8 @@ const evidenceV2Source = source('src/workspace/lafea-analysis-mesh-evidence-v2.j
 const evidenceQualitySource = source('src/workspace/lafea-analysis-mesh-quality.js');
 const viewModelSource = source('src/workspace/lafea-discretization-view-model.js');
 const panelSource = source('src/workspace/lafea-discretization-generation-panel.js');
-const viteSource = source('vite.config.js');
+const presentationLeafSource = source('src/workspace/lafea-discretization-dom.js');
+const qualityFacadeSource = source('src/workspace/lafea-mesh-quality-panel.js');
 
 assert.match(evidenceV2Source, /qualifyRefinedMeshAdjacentSizeRatio/);
 assert.match(evidenceV2Source, /:LOCAL_REFINEMENT:/);
@@ -106,7 +107,11 @@ assert.match(panelSource, /const minimumTargetRatio = 1 \/ growthRatioMax/);
 assert.doesNotMatch(panelSource, /global \* 0\.25/);
 assert.match(panelSource, /not source-geometry feature IDs/);
 assert.match(panelSource, /preview does not certify generated topology/);
-assert.match(viteSource, /generation panel imports only core authority plus its tiny import-free DOM helper/);
+assert.doesNotMatch(presentationLeafSource, /^\s*import\s/m);
+assert.doesNotMatch(presentationLeafSource, /lafea-workbench-controller|editor-store|workspace-store/);
+assert.match(presentationLeafSource, /Gate classification remains owned by the meshing quality-gate package/);
+assert.match(qualityFacadeSource, /from '\.\/lafea-discretization-dom\.js'/);
+assert.doesNotMatch(qualityFacadeSource, /const SEVERITY|function affectedElementIds|function renderQualityRow/);
 
 console.log(JSON.stringify({
   status: 'PASS',
@@ -124,6 +129,7 @@ console.log(JSON.stringify({
     genericLafea3QualityHashChanged: false,
     actualRefinedChildAdjacencyGate: 'ENFORCED_IN_V2_EVIDENCE_CONSTRUCTOR_BEFORE_CUSTODY',
     uiPolicySource: 'EXISTING_REFINEMENT_POLICY_PROJECTED_BY_VIEW_MODEL',
+    discretizationPresentationLeafImportFree: true,
     isolatedGenerationChunkWorkspaceDependency: false,
   },
 }, null, 2));

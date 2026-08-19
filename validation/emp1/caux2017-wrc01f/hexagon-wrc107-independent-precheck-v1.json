@@ -1,0 +1,66 @@
+{
+  "schema": "emp1-independent-precheck/v1",
+  "precheckId": "HEXAGON_CII_WRC107_APPLICATIONS_GUIDE_V15",
+  "classification": "SUPPLEMENTAL_REFERENCE_NOT_CAUX_BENCHMARK",
+  "qualificationUse": "SANITY_CHECK_ONLY",
+  "maySatisfyCauxA4": false,
+  "mayAuthorizeEmp1CProduction": false,
+  "expectedValuesLockedBeforeProductionWrcObservation": true,
+  "source": {
+    "publisher": "Hexagon",
+    "product": "CAESAR II",
+    "document": "CAESAR II Applications Guide",
+    "version": "15",
+    "section": "WRC 107 / Convert Forces/Moments from CAESAR II Global Coordinates to WRC 107 Local Axes",
+    "authorityRole": "OFFICIAL_PRODUCT_REFERENCE_SUPPLEMENTAL",
+    "notAuthorityFor": [
+      "CAUx 2017 - WRC01f.pdf pages 24-31 benchmark",
+      "WRC Bulletin 537 equation or coefficient custody"
+    ]
+  },
+  "sourceReported": {
+    "geometry": {
+      "vesselOutsideDiameter_in": 120.0,
+      "vesselThickness_in": 0.625,
+      "nozzleOutsideDiameter_in": 12.75,
+      "nozzleThickness_in": 0.375
+    },
+    "geometryChecks": {
+      "d_over_D": 0.10625,
+      "Dm_over_T": 191
+    },
+    "pressure_psi": 275.0,
+    "restraintAxialForce_lbf": -26.0,
+    "reportedTotalWrcRadialLoad_lbf": -31128,
+    "reportedLargestExpansionStressIntensity_psi": 117485,
+    "reportedLargestExpansionStressLocation": "Bu",
+    "reportedLargestExpansionStressSurface": "outer",
+    "reportedLargestExpansionStressPoint": "B"
+  },
+  "independentDerived": {
+    "nozzleInsideDiameter_in": 12.0,
+    "pressureThrustArea_in2": 113.09733552923255,
+    "pressureThrust_lbf": 31101.767270538952,
+    "totalWrcRadialLoadUnrounded_lbf": -31127.767270538952,
+    "totalWrcRadialLoadRounded_lbf": -31128,
+    "equations": {
+      "nozzleInsideDiameter": "di = d - 2*t",
+      "pressureThrustArea": "A = pi*di^2/4",
+      "pressureThrust": "Fthrust = pressure*A",
+      "wrcRadialLoad": "P_wrc = P_restraint - Fthrust"
+    }
+  },
+  "comparison": {
+    "reportedVsIndependentRoundedRadialLoad": "PASS",
+    "reported_lbf": -31128,
+    "independentRounded_lbf": -31128,
+    "difference_lbf": 0
+  },
+  "guardrails": [
+    "Do not use 117485 psi as a CAUx pp24-31 expected value unless the exact pinned CAUx pages independently show the same value.",
+    "Do not infer WRC 537 coefficients from this precheck.",
+    "Do not rewrite these frozen values after observing future EMP.1.C production output.",
+    "Any disagreement with future production output requires root-cause analysis rather than tolerance or expected-value adjustment."
+  ],
+  "status": "PASS_SUPPLEMENTAL_PRECHECK_CAUX_A4_STILL_BLOCKED"
+}

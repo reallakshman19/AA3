@@ -21,8 +21,17 @@ claims:
     state: PASS_REVIEW
     statement: Current generated values were reconciled to the retained WRC audit, sign cross-check, CAUx source ledger and bounded precheck during implementation review.
   - id: VAL-1265-002
-    state: PENDING_EXACT_HEAD
-    statement: Exact-head execution of artifact derivation self-test, drift checker, C-state checker and public-product checker is pending.
+    state: PASS_EXACT_HEAD
+    statement: On exact code head 7cc4fd5e5f27a670d55fae64b8e361093b9730fe, the Stage-17 runner advanced through artifact self-test, artifact drift check, C-state check, public-product check and A-to-B Node check into Playwright; those prerequisite commands are fail-fast and therefore all passed.
+  - id: VAL-1265-003
+    state: PASS_EXACT_HEAD
+    statement: The first EMP.1 Playwright proof completed on exact code head, confirming the corrected CAUx pp.24–31 visible contract and artifact-derived blocker rendering.
+  - id: ISS-1265-001
+    state: OPEN_DOWNSTREAM_BROWSER
+    statement: The second existing production EMP.1 journey fails after clicking Validate and run EMP.1.A because the expected Max |transferred force| result panel is absent. This occurs after all new #1265 Node qualification prerequisites and the first EMP.1 Playwright proof have passed.
+  - id: RCA-1265-001
+    state: PARTIALLY_GROUNDED
+    statement: Parent PR #1264 also failed the same Stage-17 workflow step, but at an earlier CAUx hyphen/en-dash assertion. PR #1265 fixes that parent assertion and advances farther. The later A-run result-panel failure is not yet proven to exist on the parent at the exact assertion level and is not attributed to the artifact derivation seam without further evidence.
   - id: ENG-1265-001
     state: BLOCKED
     statement: WRC537 engineering qualification remains blocked; no coefficients, sign resolution or method authority are introduced.

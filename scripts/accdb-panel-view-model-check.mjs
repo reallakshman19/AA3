@@ -22,6 +22,7 @@ import {
 } from '../src/core/linear-piping-analysis-consumer/accdb-field-overrides.js';
 import { parseAccdbModelHealthSource } from '../src/core/linear-piping-analysis-consumer/accdb-source-binding.js';
 import { diagnoseInputXmlLinearModelHealth } from '../src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js';
+import { diagnoseInputXmlTopologyGraph } from '../src/core/geometry/model-health/topology-graph-diagnostics.js';
 import {
   LFEA_PIPELINE_ACCDB_DEFAULT_PROFILE_ID,
   LFEA_PIPELINE_ACCDB_PROFILE_IDS,
@@ -98,6 +99,44 @@ const element2Diameter = propertyRows.find((row) => row.accdbElementId === '2')
 assert.ok(
   element2Diameter.disposition.includes('INHERITED'),
   `Element 2 declares no DIAMETER, so it must read as inherited, got ${element2Diameter.disposition}.`,
+);
+
+// --- 3b. Single-precision coordinate closure ---------------------------
+// CAESAR stores ACCDB coordinates as float32, so a closure residual carries
+// quantization proportional to the endpoints' distance from the origin. On
+// the real BM4_L.ACCDB (coordinates to 735 m, one ulp = 0.0625 mm) a fixed
+// 1e-6 m tolerance failed 45 of 96 elements on residuals no model could
+// avoid. The binding declares the precision; the closure check allows for it.
+assert.equal(bundle.coordinatePrecision, 'FLOAT32', 'The ACCDB binding must declare its coordinate precision.');
+const farTables = buildAccdbFixtureTables();
+const FAR = 700000; // mm, i.e. 700 m from the origin -- BM4_L's real extent.
+farTables.INPUT_NODAL_COORDINATES.rows = farTables.INPUT_NODAL_COORDINATES.rows.map((row) => ({
+  ...row,
+  FROM_NODE_X: Math.fround(row.FROM_NODE_X + FAR),
+  TO_NODE_X: Math.fround(row.TO_NODE_X + FAR),
+}));
+const farBundle = parseAccdbModelHealthSource(farTables, { source: 'accdb-panel-check-far', fileName: 'FIXTURE.ACCDB' });
+const farClosure = diagnoseInputXmlTopologyGraph(farBundle, {});
+assert.equal(farClosure.tolerances.sourceCoordinatePrecision, 'FLOAT32');
+assert.ok(farClosure.tolerances.coordinateMagnitudeRelative > 0, 'A float32 source must carry a magnitude-proportional allowance.');
+const farRow = farClosure.coordinateClosure.find((row) => row.coordinateMagnitude > 1000);
+assert.ok(farRow, 'Expected a closure row far from the origin.');
+assert.ok(
+  farRow.acceptanceTolerance > 1e-4,
+  `At 700 m the tolerance must cover float32 quantization, got ${farRow.acceptanceTolerance}.`,
+);
+// A source that states coordinates exactly gets no allowance at all: the
+// check is unchanged for InputXML and StagedJSON.
+const exactClosure = diagnoseInputXmlTopologyGraph({ ...bundle, coordinatePrecision: undefined }, {});
+assert.equal(exactClosure.tolerances.coordinateMagnitudeRelative, 0);
+assert.ok(
+  exactClosure.coordinateClosure[0].acceptanceTolerance < 1e-5,
+  'Without a declared precision the tolerance must stay as tight as before.',
+);
+assert.throws(
+  () => diagnoseInputXmlTopologyGraph({ ...bundle, coordinatePrecision: 'FLOAT17' }, {}),
+  TypeError,
+  'An unknown coordinate precision must fail closed rather than defaulting.',
 );
 
 // --- 4. Overrides -------------------------------------------------------

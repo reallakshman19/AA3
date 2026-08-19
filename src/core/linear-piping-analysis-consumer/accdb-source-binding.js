@@ -79,6 +79,13 @@ export function parseAccdbModelHealthSource(tables, options) {
     modelFeatureId: null,
     modelAttributes: Object.freeze({}),
     unitSystem: Object.freeze({ lengthUnit: geometry.unit, declared: geometry.summary?.accdbUnits ?? null }),
+    // CAESAR stores ACCDB node coordinates as single-precision REALs -- every
+    // one of the 576 coordinates in the real BM4_L.ACCDB is exactly a float32
+    // value. Declaring that lets the topology closure check allow for the
+    // quantization a coordinate difference inherits from its own storage
+    // (see COORDINATE_PRECISION_RELATIVE in topology-graph-diagnostics.js)
+    // instead of reporting it as 45 model errors.
+    coordinatePrecision: 'FLOAT32',
     elementRecords: Object.freeze(elementRecords),
     sourceRecordCount: elementRecords.length,
     canonicalSegmentCount: geometry.segments.length,

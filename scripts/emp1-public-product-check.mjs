@@ -57,7 +57,10 @@ assert.deepEqual(projection.steps[2].blockers, [
 ]);
 assert.equal(projection.steps[2].blockerDetails.length, 4);
 assert.match(projection.steps[2].blockerDetails[0].message, /21 unresolved fields; 7 open issues/u);
+assert.match(projection.steps[2].blockerDetails[0].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
 assert.match(projection.steps[2].blockerDetails[1].message, /0\/120 retained coefficient rows numeric; 120 unresolved coefficient rows/u);
+assert.equal(projection.steps[2].qualification.evidence.derivation.mode, 'RETAINED_ARTIFACT_DERIVATION');
+assert.equal(projection.steps[2].qualification.evidence.derivation.manualSummaryPermitted, false);
 assert.equal(projection.steps[2].qualification.gateStatus.signArbitrationReady, false);
 assert.equal(projection.steps[2].qualification.gateStatus.cauxBenchmarkReady, false);
 assert.equal(EMP1_C_PRODUCTION_ROUTE.registered, false);
@@ -97,6 +100,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   product: projection.product,
   bCustody: projection.custody.bSourceEvidenceState,
+  derivationMode: projection.steps[2].qualification.evidence.derivation.mode,
   currentCBlockers: projection.steps[2].blockers,
   currentCBlockerMessages: projection.steps[2].blockerDetails.map((item) => item.message),
   syntheticQualifiedMethodState: syntheticQualifiedMethod.steps[2].state,
@@ -119,23 +123,35 @@ function readyCQualificationEvidence() {
       unresolvedCoefficientRows: 0,
       unresolvedParameterRows: 0,
       semanticHash: 'sha256:qualified-dataset',
+      sourceCustodyQualified: true,
+      sourceCustodyState: 'VERIFIED',
+      sourceQualificationState: 'PASS',
+      sourceRawPdfSha256: 'a'.repeat(64),
     },
     signArbitration: {
       status: 'PASS',
       resolutionAuthority: 'PINNED_WRC_PDF',
       openConflicts: [],
+      sourceCustodyQualified: true,
     },
     cauxBenchmark: {
       status: 'PASS',
       sourceIdentityVerified: true,
+      sourceCustodyQualified: true,
+      sourceCustodyState: 'VERIFIED',
+      sourceQualificationState: 'PASS',
+      sourceRawPdfSha256: 'b'.repeat(64),
       pageRange: '24-31',
       expectedValuesFrozen: true,
       independentHandCalculationStatus: 'PASS',
       benchmarkHash: 'sha256:qualified-caux-benchmark',
+      supplementalPrecheckVerdict: 'QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY',
+      supplementalPrecheckMaySatisfyCauxA4: false,
     },
     methodAuthorization: {
       engineeringUseAuthorized: true,
       qualificationRecordHash: 'sha256:qualified-method-record',
+      authoritySource: 'SYNTHETIC_TEST_ONLY',
     },
     execution: { routeRegistered: true },
   };

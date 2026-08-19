@@ -11,6 +11,9 @@ import {
   lafeaMeshProducerElementFamilies,
 } from './lafea-mesh-producer-registry.js';
 import {
+  qualifyLafea3RetainedMeshAdjacentSizeRatio,
+} from './lafea-retained-mesh-refinement.js';
+import {
   LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
   LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
 } from './lafea-source-shell-mesh-adoption.js';
@@ -58,6 +61,10 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
   });
   const reasons = custodyReasons(custody);
   const mappingInspection = buildHighOrderMappingInspection(evidence, generation.lengthUnit);
+  const refinementAdjacencyInspection = buildLafea3RefinementAdjacencyInspection(
+    stage.stageId,
+    evidence,
+  );
   const qualityPanel = custody.gateResults.length && custody.meshProfileIdentity
     ? buildMeshQualityPanel(custody.gateResults, {
       stageId: stage.stageId,
@@ -119,7 +126,13 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       retainedElementCount: custody.elementCount,
     },
     evidence: evidence
-      ? evidenceModel(custody, retainedElementFamily, qualityPanel, mappingInspection)
+      ? evidenceModel(
+        custody,
+        retainedElementFamily,
+        qualityPanel,
+        mappingInspection,
+        refinementAdjacencyInspection,
+      )
       : emptyEvidence(),
     actions: {
       canImportAuthorizedMesh: profile.meshApplicable,
@@ -342,7 +355,13 @@ function buildGenerationModel(stage, capabilities) {
   };
 }
 
-function evidenceModel(custody, retainedElementFamily, qualityPanel, mappingInspection) {
+function evidenceModel(
+  custody,
+  retainedElementFamily,
+  qualityPanel,
+  mappingInspection,
+  refinementAdjacencyInspection,
+) {
   return {
     present: true,
     meshIdentity: custody.meshIdentity,
@@ -363,6 +382,7 @@ function evidenceModel(custody, retainedElementFamily, qualityPanel, mappingInsp
     blockingElementIds: [...custody.blockingElementIds],
     qualityPanel,
     mappingInspection,
+    refinementAdjacencyInspection,
   };
 }
 
@@ -387,7 +407,26 @@ function emptyEvidence() {
     blockingElementIds: [],
     qualityPanel: null,
     mappingInspection: null,
+    refinementAdjacencyInspection: null,
   };
+}
+
+function buildLafea3RefinementAdjacencyInspection(stageId, evidence) {
+  if (stageId !== 'LAFEA.3'
+    || !evidence?.mesh?.meshIdentity?.includes(':LOCAL_REFINEMENT:')) {
+    return null;
+  }
+  const maximumAllowed = evidence.meshProfile?.fields?.adjacentSizeRatioMax;
+  if (!(Number.isFinite(maximumAllowed) && maximumAllowed > 1)) return null;
+  const qualification = qualifyLafea3RetainedMeshAdjacentSizeRatio(
+    evidence.mesh,
+    maximumAllowed,
+  );
+  return Object.freeze({
+    ...qualification,
+    authority: 'DERIVED_RECOMPUTATION_OF_REFINEMENT_RETENTION_GATE',
+    canonicalEvidenceMutation: false,
+  });
 }
 
 function buildHighOrderMappingInspection(evidence, lengthUnit) {

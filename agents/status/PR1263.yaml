@@ -1,10 +1,10 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1263
-mission: EMP.1 source custody, WRC dataset qualification, CAUx benchmark qualification, unified analytical assessment
+mission: EMP.1 source custody, WRC/CAUx qualification, and unified analytical product
 workstream: EMP1
 branch: agent/emp1-core-scaffold-issue1261
-pr_head: aca36329d30a9d256fd7d295c99b080588492d2c
+pr_head: d1e1f81f083bf0542c8f5f03b1484d892c664642
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,52 +12,38 @@ agent_state: ACTIVE
 pr_recovery_state: RECOVERABLE
 handover_readiness: READY
 report_path: agents/PR1263_workreport.md
-report_basis_head: 5c88f8095dc186cffb3d0e71985767b30ff4c1cb
-report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
+report_basis_head: d1e1f81f083bf0542c8f5f03b1484d892c664642
 appendix_a_status: BLOCKED_WRC_DATASET_QUALIFICATION_AND_CAUX_PAGE_EXTRACTION
-grounding_epoch: GE-008
-current_stage: WRC_DATASET_AND_CAUX_BENCHMARK_QUALIFICATION
-blocker: bounded pressure-thrust precheck is qualified, but exact CAUx pp24-31 remains unextracted and WRC coefficient/sign/source closure remains blocked
-highest_risk: promoting bounded sanity evidence or source-reported 117485 psi into CAUx/WRC/production authority
+grounding_epoch: GE-009
+current_stage: EMP1_PUBLIC_PRODUCT_INTEGRATION_WITH_C_BLOCKED
+blocker: EMP.1.C remains unqualified; exact WRC coefficient/sign/source closure and CAUx pp24-31 freeze/reproduction remain outstanding
+highest_risk: UI implying live A-to-B or qualified C authority that backend does not possess
 dependencies:
   - issue: 1261
-  - existing_wrc_docs: main@67317dc9cb47de8897fa7952b86107ab91b1f75c/docs
-  - benchmark_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/CAUx 2017 - WRC01f.pdf
+  - main_reconciliation: required_before_release_or_merge
   - wrc_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/WRC537_2013.pdf
-  - source_repo_current_main: 13e7c0e653e6d61ef2f2217068e1010bd5a53bf6
-  - main_reconciliation: required_before_production_integration
+  - caux_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/CAUx 2017 - WRC01f.pdf
 validation_state:
-  local_custody_self_test: PASS
-  local_wrc_readiness_self_test: PASS
-  frozen_wrc_blocker_expectation: PASS
-  expected_unresolved_json_paths: 21
-  expected_open_issues: 7
-  expected_csv_rows: 120
-  expected_numeric_coefficients: 0
-  expected_unresolved_coefficients: 120
-  caux_source_location: PASS
-  exact_caux_binary_body: NOT_RUN
-  raw_pdf_sha256: NOT_RUN
-  caux_pages_24_31: NOT_RUN
-  independent_caux_handcalc: NOT_RUN
-  supplemental_precheck_source_transcription_geometry: PASS
-  supplemental_precheck_source_transcription_pressure_load: PASS
-  supplemental_precheck_source_transcription_117485_bu: PASS_SOURCE_TRANSCRIPTION_ONLY
-  supplemental_precheck_independent_decimal_arithmetic: PASS
-  supplemental_precheck_dimensional_audit: PASS
-  supplemental_precheck_example_sign_reference: PASS_BOUNDED
-  supplemental_precheck_artifact_identity_before_execution: PASS
-  supplemental_precheck_self_test: PASS
-  supplemental_precheck_actual_checker: PASS_BOUNDED_PRECHECK_QUALIFICATION
-  supplemental_precheck_verdict: QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY
-  supplemental_precheck_may_satisfy_caux_a4: false
-  supplemental_precheck_may_authorize_emp1c: false
-  spherical_v1_crosscheck: CONSISTENT
-  spherical_v2_crosscheck: CONSISTENT
-  spherical_m1_crosscheck: CONFLICT
-  spherical_m2_crosscheck: CONFLICT
+  emp1_public_product_projection: PASS
+  emp1_public_product_projection_check: PASS
+  new_workspace_js_syntax: PASS
+  updated_playwright_spec_syntax: PASS
+  authored_git_blob_identity: PASS
+  public_navigation_one_emp1: AUTHORED_NOT_RUN_BROWSER
+  internal_steps_a_b_c: AUTHORED_NOT_RUN_BROWSER
+  emp1c_visible_blocker: AUTHORED_NOT_RUN_BROWSER
+  a_retained_engine: IMPLEMENTED_BACKING_LAFEA1
+  b_retained_engine: IMPLEMENTED_BACKING_LAFEA2
+  automatic_a_to_b_sync: false
+  b_retained_a_snapshot_warning: IMPLEMENTED
+  emp1c_production_authority: NOT_AUTHORIZED
+  lafea3_plus_mechanics_changed: false
+  bounded_hexagon_precheck: QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY
+  wrc_readiness: BLOCKED_21_7_120_0
   wrc_sign_arbitration: BLOCKED_PENDING_PINNED_WRC_PDF
-  production_emp1: NOT_RUN
+  caux_pages_24_31: NOT_RUN
+  chromium_navigation: NOT_RUN
   remote_ci: NOT_RUN
-exact_next_action: keep bounded precheck frozen; render exact WRC/CAUx source, arbitrate WRC M1/M2 and freeze/reproduce CAUx pp24-31 before production EMP.1.C
-last_updated: 2026-08-19T11:28:00+04:00
+  merge: NOT_AUTHORIZED
+exact_next_action: run authored Chromium navigation regression when runnable checkout exists, while continuing exact WRC/CAUx qualification before any EMP.1.C mechanics
+last_updated: 2026-08-19T11:46:00+04:00

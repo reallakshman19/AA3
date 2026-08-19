@@ -15,6 +15,11 @@ files:
     - scripts/emp1-independent-precheck-qualification-lib.mjs
     - scripts/emp1-independent-precheck-qualification-check.mjs
     - scripts/emp1-independent-precheck-qualification-self-test.mjs
+    - scripts/emp1-public-product-check.mjs
+    - src/workspace/emp1-product-projection.js
+    - src/workspace/lafea-workbench-view.js
+    - src/workspace/lafea-analytical-calc-content.js
+    - e2e/lafea-visible-workbench.spec.js
     - validation/emp1/wrc537-2013/source-ledger.json
     - validation/emp1/wrc537-2013/existing-dataset-manifest.json
     - validation/emp1/wrc537-2013/existing-dataset-audit-v1.json
@@ -31,21 +36,24 @@ authority_domains:
   - EMP1_SOURCE_CUSTODY
   - EMP1_WRC_DATASET_QUALIFICATION
   - EMP1_INDEPENDENT_QUALIFICATION_EVIDENCE
+  - EMP1_PUBLIC_PRODUCT_PROJECTION
+  - EMP1_PUBLIC_PRODUCT_PRESENTATION
 claim_modes:
   - EXCLUSIVE
 observe_only:
   - docs/01_WRC537_METHOD_DEFINITION.md
   - docs/03_WRC537_DATASET.json
   - docs/04_WRC537_NUMERICAL_TABLES.csv
-  - src/workspace/lafea-*
+  - src/workspace/lafea-stage-registry.js
+  - src/workspace/lafea-stage-composition-bindings.js
   - src/core/local-stress/
   - src/core/local-attachment-screening/
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: 00bb3fa660d378bd53cb49c161a14499894332dc
-implementation_basis_head: 5c88f8095dc186cffb3d0e71985767b30ff4c1cb
+last_verified_head: d1e1f81f083bf0542c8f5f03b1484d892c664642
+implementation_basis_head: d1e1f81f083bf0542c8f5f03b1484d892c664642
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
-overlap_state: SAFE_FOR_QUALIFICATION_ONLY
-base_drift: RECONCILIATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION
-note: Hexagon pressure-thrust precheck is formally QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY after source, dimensional, independent arithmetic, exact committed-byte identity, positive and negative execution checks. It cannot satisfy CAUx A4 or authorize EMP.1.C. Exact CAUx pp24-31 and pinned-WRC coefficient/sign arbitration remain blocking. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.
+overlap_state: SAFE_FOR_BOUNDED_PRESENTATION_INTEGRATION
+base_drift: RECONCILIATION_REQUIRED_BEFORE_RELEASE_OR_MERGE
+note: Owner authorized bounded EMP.1 product/UI integration. One public EMP.1 now projects retained LAFEA.1/LAFEA.2 backing engines as A/B while C remains visibly BLOCKED and NOT_AUTHORIZED. There is no automatic A-to-B synchronization; B explicitly warns that its A evidence is a retained snapshot. LAFEA.3+ mechanics, WRC production mechanics, coefficients and workflows remain outside this claim. Chromium navigation regression is authored but NOT_RUN. No merge authority granted.

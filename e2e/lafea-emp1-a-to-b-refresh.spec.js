@@ -8,11 +8,12 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   await workbench.locator(':scope > [data-lafea-slot="navigation"] [data-product-id="EMP.1"]').click();
   const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
   const step = (id) => analytical.locator(`[data-role="emp1-step"][data-emp1-step="${id}"]`);
+  const run = workbench.locator('[data-role="lafea-run"]');
 
   const mockA = workbench.locator('[data-role="lafea-mock"]');
   if (await mockA.isVisible()) await mockA.click();
-  await expect(workbench.locator('[data-role="lafea-run"]')).toBeEnabled();
-  await workbench.locator('[data-role="lafea-run"]').click();
+  await expect(run).toBeEnabled();
+  await run.click();
   await expect(analytical.locator('[data-role="lafea-result-highlights"]')).toContainText('Max |transferred force|');
 
   await step('B').click();
@@ -27,6 +28,9 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
     '[data-role="lafea-screening-term-factor"][data-screening-case-id="CASE-B"][data-load-case-id="LC-A"]',
   );
   await expect(retainedFactor).toHaveValue('-0.5');
+  await expect(run).toBeEnabled();
+  await run.click();
+  await expect(analytical.locator('[data-role="lafea-result-highlights"]')).toContainText('Governing nominal von Mises');
 
   await step('A').click();
   const loadGroup = analytical.locator('.lafea-doc-group-editor[data-input-group="LOAD_CASES"]');
@@ -46,8 +50,8 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
 
   const aAfterEdit = await page.evaluate(() => globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages['LAFEA.1']);
   expect(aAfterEdit.execution).toBeNull();
-  await expect(workbench.locator('[data-role="lafea-run"]')).toBeEnabled();
-  await workbench.locator('[data-role="lafea-run"]').click();
+  await expect(run).toBeEnabled();
+  await run.click();
 
   await step('B').click();
   currentness = analytical.locator('[data-role="emp1-b-source-currentness"]');
@@ -55,15 +59,27 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   await expect(currentness).toHaveAttribute('data-state', 'STALE_A_EVIDENCE_REFRESH_AVAILABLE');
   await expect(step('B')).toContainText('STALE A EVIDENCE');
   await expect(refresh).toBeEnabled();
+  await expect(run).toBeDisabled();
+  await expect(run).toHaveAttribute('data-emp1-currentness-gate', 'BLOCKED');
+  await expect(analytical.locator('[data-role="emp1-b-stale-result-blocker"]')).toBeVisible();
   await expect(analytical.locator(
     '[data-role="lafea-screening-term-factor"][data-screening-case-id="CASE-B"][data-load-case-id="LC-A"]',
   )).toHaveValue('-0.5');
+
+  const staleCustody = await page.evaluate(() => {
+    const state = globalThis.AnalysisWorkspace.getLafeaWorkbenchState();
+    return {
+      bRetainedExecutionStatus: state.stages['LAFEA.2'].execution?.status ?? null,
+    };
+  });
+  expect(staleCustody.bRetainedExecutionStatus).toBe('QUALIFIED');
 
   await refresh.click();
   currentness = analytical.locator('[data-role="emp1-b-source-currentness"]');
   refresh = analytical.locator('[data-role="emp1-refresh-b-from-a"]');
   await expect(currentness).toHaveAttribute('data-state', 'CURRENT_A_EVIDENCE');
   await expect(refresh).toBeDisabled();
+  await expect(analytical.locator('[data-role="emp1-b-stale-result-blocker"]')).toHaveCount(0);
   await expect(analytical.locator(
     '[data-role="lafea-screening-term-factor"][data-screening-case-id="CASE-B"][data-load-case-id="LC-A"]',
   )).toHaveValue('-0.5');
@@ -87,8 +103,8 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   expect(custody.bSourceModelHash).toBe(custody.aModelHash);
   expect(custody.bFactor).toBe(-0.5);
 
-  await expect(workbench.locator('[data-role="lafea-run"]')).toBeEnabled();
-  await workbench.locator('[data-role="lafea-run"]').click();
+  await expect(run).toBeEnabled();
+  await run.click();
   await expect(analytical.locator('[data-role="lafea-result-highlights"]')).toContainText('Governing nominal von Mises');
 
   const screenshotPath = testInfo.outputPath('emp1-a-to-b-currentness-refresh.png');

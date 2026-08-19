@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   jacobianDeterminantStatisticsOf,
-} from '../src/core/lafea-meshing/index.js';
+} from '../src/core/lafea-meshing/quality-gates.js';
 import { buildMeshQualityPanel } from '../src/workspace/lafea-mesh-quality-panel.js';
 
 const ROOT = new URL('../', import.meta.url);

@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { validateEmp1SourceLedger } from './emp1-source-custody-lib.mjs';
+import {
+  auditWrcDatasetPackage,
+  gitBlobSha1Bytes,
+  validateWrcRetainedManifest,
+} from './emp1-wrc-dataset-readiness-lib.mjs';
 
 export const EMP1_C_RETAINED_ARTIFACT_PATHS = Object.freeze({
   wrcAudit: 'validation/emp1/wrc537-2013/existing-dataset-audit-v1.json',
@@ -19,9 +24,12 @@ const REQUIRED_WRC_CURVE_FIT_COEFFICIENTS = 10;
 const REQUIRED_WRC_INDEPENDENT_VARIABLE = 'U';
 
 export function loadEmp1CRetainedArtifacts(root = process.cwd()) {
+  const wrcManifest = readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.wrcManifest);
+  validateWrcRetainedManifest(wrcManifest);
   return {
     wrcAudit: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.wrcAudit),
-    wrcManifest: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.wrcManifest),
+    wrcManifest,
+    wrcObservedAudit: observeRetainedWrcAudit(root, wrcManifest),
     wrcSourceLedger: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.wrcSourceLedger),
     signCrosscheck: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.signCrosscheck),
     cauxSourceLedger: readJson(root, EMP1_C_RETAINED_ARTIFACT_PATHS.cauxSourceLedger),
@@ -36,6 +44,7 @@ export function deriveEmp1CQualificationEvidence(artifacts) {
   const {
     wrcAudit,
     wrcManifest,
+    wrcObservedAudit,
     wrcSourceLedger,
     signCrosscheck,
     cauxSourceLedger,
@@ -51,7 +60,7 @@ export function deriveEmp1CQualificationEvidence(artifacts) {
   if (wrcSourceLedger.authorityRole !== 'METHOD_SOURCE') throw new TypeError('EMP1_C_WRC_SOURCE_ROLE_INVALID');
   if (cauxSourceLedger.authorityRole !== 'BENCHMARK_SOURCE') throw new TypeError('EMP1_C_CAUX_SOURCE_ROLE_INVALID');
 
-  validateWrcAuditBinding(wrcAudit, wrcManifest);
+  validateWrcAuditBinding(wrcAudit, wrcManifest, wrcObservedAudit);
   validateCauxSource(cauxSourceLedger, cauxSupplementalPrecheck);
 
   const wrcMetrics = wrcAudit.metrics;
@@ -78,6 +87,8 @@ export function deriveEmp1CQualificationEvidence(artifacts) {
       mode: 'RETAINED_ARTIFACT_DERIVATION',
       artifactPaths: { ...EMP1_C_RETAINED_ARTIFACT_PATHS },
       manualSummaryPermitted: false,
+      retainedAuditObservedMatch: true,
+      retainedExtractionPinVerified: true,
     },
     wrcDataset: {
       status: wrcAudit.status,
@@ -85,6 +96,11 @@ export function deriveEmp1CQualificationEvidence(artifacts) {
       unresolvedJsonPathCount: wrcMetrics.unresolvedJsonPathCount,
       openIssueCount: wrcMetrics.openIssueCount,
       numericalDataCount: wrcMetrics.numericalDataCount,
+      dimensionalContractStatus: text(wrcMetrics.dimensionalContractStatus, 'UNRESOLVED'),
+      dimensionalViolationCount: wrcMetrics.dimensionalViolationCount,
+      dimensionalViolationIds: Array.isArray(wrcMetrics.dimensionalViolationIds)
+        ? [...wrcMetrics.dimensionalViolationIds]
+        : [],
       coefficientCurveRows: wrcMetrics.numericalCsvCurveRows,
       coefficientSchema: wrcMetrics.coefficientSchema,
       coefficientSchemaQualified: wrcMetrics.coefficientSchemaQualified === true,
@@ -123,10 +139,103 @@ export function renderEmp1CQualificationEvidenceModule(evidence) {
   ].join('\n');
 }
 
+/**
+ * Projection of the immutable frozen expectation used only for comparison with
+ * an independently re-observed retained package. Exported for synthetic
+ * software-contract fixtures; production loading always computes observation
+ * from bytes on disk.
+ */
+export function projectWrcFrozenAudit(audit) {
+  return {
+    schema: 'emp1-wrc-observed-readiness/v1',
+    status: audit?.expectedCheckerStatus ?? audit?.status ?? 'FAIL',
+    blockerCodes: [...(audit?.expectedBlockerCodes ?? [])],
+    failureCodes: [],
+    metrics: cloneJson(audit?.metrics ?? {}),
+    unresolvedJsonPaths: [...(audit?.unresolvedJsonPaths ?? [])],
+    openIssues: [...(audit?.openIssues ?? [])],
+  };
+}
+
+function observeRetainedWrcAudit(root, manifest) {
+  const byId = new Map((manifest.artifacts ?? []).map((row) => [row.id, row]));
+  const readPinnedBytes = (id) => {
+    const row = byId.get(id);
+    if (!row) throw new TypeError(`EMP1_C_WRC_MANIFEST_ARTIFACT_MISSING:${id}`);
+    const bytes = fs.readFileSync(path.join(root, row.path));
+    return { row, bytes };
+  };
+
+  const method = readPinnedBytes('METHOD_DEFINITION');
+  const dataset = readPinnedBytes('DATASET');
+  const numerical = readPinnedBytes('NUMERICAL_TABLES');
+  const identity = [method, dataset, numerical].map(({ row, bytes }) => ({
+    id: row.id,
+    path: row.path,
+    expectedByteCount: row.byteCount,
+    actualByteCount: bytes.length,
+    expectedGitBlobSha1: row.gitBlobSha1,
+    actualGitBlobSha1: gitBlobSha1Bytes(bytes),
+  }));
+
+  const parsedDataset = JSON.parse(dataset.bytes.toString('utf8'));
+  const observed = auditWrcDatasetPackage({
+    methodText: method.bytes.toString('utf8'),
+    dataset: parsedDataset,
+    numericalCsv: numerical.bytes.toString('utf8'),
+    artifactIdentity: identity,
+  });
+  const unresolved = observed.blockers.find((row) => row.code === 'BLOCK_UNRESOLVED_DATASET_FIELDS');
+  const openIssues = observed.blockers.find((row) => row.code === 'BLOCK_DATASET_OPEN_ISSUES');
+  const csv = observed.metrics?.numericalCsv ?? {};
+  const dimensional = observed.metrics?.dimensionalContract ?? {};
+  return {
+    schema: 'emp1-wrc-observed-readiness/v1',
+    status: observed.status,
+    blockerCodes: observed.blockers.map((row) => row.code),
+    failureCodes: observed.failures.map((row) => row.code),
+    metrics: {
+      methodStatus: observed.metrics?.methodStatus ?? null,
+      datasetExtractionStatus: observed.metrics?.extractionStatus ?? null,
+      semanticHash: observed.metrics?.semanticHash ?? null,
+      numericalDataCount: observed.metrics?.numericalDataCount ?? 0,
+      unresolvedJsonPathCount: observed.metrics?.unresolvedPathCount ?? 0,
+      openIssueCount: observed.metrics?.openIssueCount ?? 0,
+      dimensionalContractStatus: dimensional.status ?? 'UNRESOLVED',
+      dimensionalViolationCount: Array.isArray(dimensional.violations) ? dimensional.violations.length : 0,
+      dimensionalViolationIds: Array.isArray(dimensional.violations)
+        ? dimensional.violations.map((row) => row.id)
+        : [],
+      numericalCsvCurveRows: csv.curveRows ?? 0,
+      coefficientSchema: csv.coefficientSchema ?? 'UNRESOLVED',
+      coefficientSchemaQualified: csv.coefficientSchemaQualified === true,
+      coefficientsPerCurve: csv.coefficientsPerCurve ?? 0,
+      requiredScalarCoefficientCount: csv.requiredScalarCoefficientCount ?? 0,
+      numericScalarCoefficientCount: csv.numericScalarCoefficientCount ?? 0,
+      unresolvedScalarCoefficientCount: csv.unresolvedScalarCoefficientCount ?? 0,
+      missingScalarCoefficientCount: csv.missingScalarCoefficientCount ?? 0,
+      invalidScalarCoefficientCount: csv.invalidScalarCoefficientCount ?? 0,
+      legacyAnonymousCoefficientRows: csv.coefficientSchema === 'LEGACY_SINGLE_VALUE_PER_CURVE'
+        ? csv.curveRows ?? 0
+        : 0,
+      legacyNumericValueRows: csv.legacyNumericValueRows ?? 0,
+      legacyUnresolvedValueRows: csv.legacyUnresolvedValueRows ?? 0,
+      independentVariable: csv.independentVariable ?? 'UNRESOLVED',
+      independentVariableRepresentation: csv.independentVariableRepresentation ?? 'UNRESOLVED',
+      independentVariableQualified: csv.independentVariableQualified === true,
+      legacyParameter3UnresolvedRows: csv.legacyParameter3UnresolvedRows ?? 0,
+      reviewStatusCounts: cloneJson(csv.reviewStatusCounts ?? {}),
+    },
+    unresolvedJsonPaths: [...(unresolved?.paths ?? [])],
+    openIssues: [...(openIssues?.issues ?? [])],
+  };
+}
+
 function validateRequiredArtifacts(artifacts) {
   if (!artifacts || typeof artifacts !== 'object') throw new TypeError('EMP1_C_RETAINED_ARTIFACTS_REQUIRED');
   assertSchema(artifacts.wrcAudit, 'emp1-wrc-existing-dataset-audit/v1', 'WRC_AUDIT');
   assertSchema(artifacts.wrcManifest, 'emp1-wrc-existing-dataset-manifest/v1', 'WRC_MANIFEST');
+  assertSchema(artifacts.wrcObservedAudit, 'emp1-wrc-observed-readiness/v1', 'WRC_OBSERVED_AUDIT');
   assertSchema(artifacts.wrcSourceLedger, 'emp1-source-ledger/v1', 'WRC_SOURCE_LEDGER');
   assertSchema(artifacts.signCrosscheck, 'emp1-source-discrepancy/v1', 'SIGN_CROSSCHECK');
   assertSchema(artifacts.cauxSourceLedger, 'emp1-source-ledger/v1', 'CAUX_SOURCE_LEDGER');
@@ -137,7 +246,8 @@ function validateRequiredArtifacts(artifacts) {
   );
 }
 
-function validateWrcAuditBinding(audit, manifest) {
+function validateWrcAuditBinding(audit, manifest, observed) {
+  validateWrcRetainedManifest(manifest);
   const manifestById = new Map((manifest.artifacts ?? []).map((item) => [item.id, item]));
   const expected = [
     ['METHOD_DEFINITION', audit.basis?.methodDefinitionBlob],
@@ -159,6 +269,7 @@ function validateWrcAuditBinding(audit, manifest) {
     'unresolvedJsonPathCount',
     'openIssueCount',
     'numericalDataCount',
+    'dimensionalViolationCount',
     'numericalCsvCurveRows',
     'coefficientsPerCurve',
     'requiredScalarCoefficientCount',
@@ -176,6 +287,13 @@ function validateWrcAuditBinding(audit, manifest) {
     }
   }
 
+  if (!['PASS', 'BLOCKED'].includes(metrics.dimensionalContractStatus)) {
+    throw new TypeError('EMP1_C_WRC_DIMENSIONAL_CONTRACT_STATUS_INVALID');
+  }
+  if (!Array.isArray(metrics.dimensionalViolationIds)
+      || metrics.dimensionalViolationIds.length !== metrics.dimensionalViolationCount) {
+    throw new TypeError('EMP1_C_WRC_DIMENSIONAL_VIOLATION_ACCOUNTING_INVALID');
+  }
   if (metrics.coefficientsPerCurve !== REQUIRED_WRC_CURVE_FIT_COEFFICIENTS) {
     throw new TypeError('EMP1_C_WRC_COEFFICIENTS_PER_CURVE_INVALID');
   }
@@ -205,6 +323,11 @@ function validateWrcAuditBinding(audit, manifest) {
   }
   if (typeof metrics.independentVariableQualified !== 'boolean') {
     throw new TypeError('EMP1_C_WRC_INDEPENDENT_VARIABLE_QUALIFICATION_INVALID');
+  }
+
+  const frozenProjection = projectWrcFrozenAudit(audit);
+  if (JSON.stringify(frozenProjection) !== JSON.stringify(observed)) {
+    throw new TypeError('EMP1_C_WRC_FROZEN_AUDIT_OBSERVED_DRIFT');
   }
 }
 
@@ -326,4 +449,8 @@ function text(value, fallback) {
 
 function nullableText(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
 }

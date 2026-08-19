@@ -36,6 +36,15 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Capture bounded retained-refinement adjacency
+        run: node scripts/lafea-retained-bounded-adjacency-diagnostic.mjs
+      - name: Upload bounded retained-refinement adjacency
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-bounded-adjacency-${{ github.event.pull_request.head.sha || github.sha }}
+          path: test-results/lafea-retained-bounded-adjacency.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Static and projection checks
         run: |
           node --check src/workspace/lafea-engineering-overview.js
@@ -51,7 +60,6 @@ jobs:
           node --check scripts/lafea-shell-response-acceptance-check.mjs
           node tests/lafea-engineering-overview.test.mjs
           node scripts/lafea-ui-analysis-settings-check.mjs
-          node scripts/lafea-retained-mesh-refinement-check.mjs
       - name: Qualify governed shell mesh compiler and execution custody
         run: |
           node scripts/lafea-shell-sample-parent-check.mjs

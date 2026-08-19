@@ -7,7 +7,7 @@
     "datasetBlob": "0ffdc3f54adc0ff8025c4b3d2629272bab6860b4",
     "numericalTablesBlob": "a787f9417c3406392bdf052d66fc9f7d1efcf11e"
   },
-  "observationMethod": "DIRECT_GITHUB_BLOB_INSPECTION",
+  "observationMethod": "DIRECT_GITHUB_BLOB_INSPECTION_PLUS_FAIL_CLOSED_NUMERICAL_SCHEMA_AUDIT",
   "status": "BLOCKED",
   "expectedCheckerStatus": "BLOCKED",
   "metrics": {
@@ -17,10 +17,22 @@
     "numericalDataCount": 0,
     "unresolvedJsonPathCount": 21,
     "openIssueCount": 7,
-    "numericalCsvDataRows": 120,
-    "numericCoefficientRows": 0,
-    "unresolvedCoefficientRows": 120,
-    "unresolvedParameter3Rows": 120,
+    "numericalCsvCurveRows": 120,
+    "coefficientSchema": "LEGACY_SINGLE_VALUE_PER_CURVE",
+    "coefficientSchemaQualified": false,
+    "coefficientsPerCurve": 10,
+    "requiredScalarCoefficientCount": 1200,
+    "numericScalarCoefficientCount": 0,
+    "unresolvedScalarCoefficientCount": 0,
+    "missingScalarCoefficientCount": 1200,
+    "invalidScalarCoefficientCount": 0,
+    "legacyAnonymousCoefficientRows": 120,
+    "legacyNumericValueRows": 0,
+    "legacyUnresolvedValueRows": 120,
+    "independentVariable": "U",
+    "independentVariableRepresentation": "LEGACY_PARAMETER_3_ROW_ORDINATE",
+    "independentVariableQualified": false,
+    "legacyParameter3UnresolvedRows": 120,
     "reviewStatusCounts": {
       "EXTRACTED": 120
     }
@@ -49,8 +61,8 @@
     "$.coefficientFamilies[8].params[0]"
   ],
   "openIssues": [
-    "Curve-fit equation Y exact form (CONFIRMED: 9th-order polynomial in U with 10 coefficients a-j)",
-    "Numerical coefficient values a-j for all SP/SM tables",
+    "Curve-fit equation Y exact form (CONFIRMED in retained extraction: 9th-order polynomial in U with 10 coefficients a-j; primary-source custody still required before engineering use)",
+    "Numerical coefficient values a-j for all SP/SM response curves",
     "Cylindrical shell parameters lambda and delta",
     "Sign convention tables (Table 1, Table 4) direct verification",
     "Bulletin's own published numerical examples",
@@ -65,9 +77,10 @@
     "BLOCK_DATASET_NUMERICAL_DATA_EMPTY",
     "BLOCK_UNRESOLVED_DATASET_FIELDS",
     "BLOCK_DATASET_OPEN_ISSUES",
-    "BLOCK_NO_NUMERIC_COEFFICIENT_VALUES",
-    "BLOCK_UNRESOLVED_COEFFICIENT_VALUES",
-    "BLOCK_UNRESOLVED_PARAMETER_VALUES"
+    "BLOCK_COEFFICIENT_SCHEMA_REQUIRES_A_TO_J",
+    "BLOCK_NO_NUMERIC_SCALAR_COEFFICIENT_VALUES",
+    "BLOCK_INCOMPLETE_SCALAR_COEFFICIENT_SET",
+    "BLOCK_INDEPENDENT_VARIABLE_CUSTODY"
   ],
-  "authorityNote": "This is a frozen pre-execution expectation derived from direct inspection of the pinned text blobs. It is not WRC production authority and must not be rewritten merely because a later checker/production result differs."
+  "authorityNote": "This is a frozen pre-execution expectation derived from direct inspection of the pinned retained text blobs and the fail-closed software contract. It is not WRC production authority. The 120 CSV rows are response-curve records, not proof of 120 complete coefficients; ten named a-j scalar coefficients are required per curve by the retained polynomial representation. No coefficient value is invented here, and the expectation must not be rewritten merely because a later checker/production result differs."
 }

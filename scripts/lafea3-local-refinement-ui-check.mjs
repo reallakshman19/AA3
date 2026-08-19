@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { refinementTransitionLadder } from '../src/core/lafea-meshing/refinement-fields.js';
+import {
+  qualifyRefinedMeshAdjacentSizeRatio,
+  refinementTransitionLadder,
+} from '../src/core/lafea-meshing/refinement-fields.js';
 import {
   LAFEA_RETAINED_MESH_REFINEMENT_POLICY,
-  qualifyLafea3RetainedMeshAdjacentSizeRatio,
 } from '../src/workspace/lafea-retained-mesh-refinement.js';
 
 const ROOT = new URL('../', import.meta.url);
@@ -45,36 +47,44 @@ assertClose(
   'minimum qualified local target for h=30',
 );
 
-const passMesh = t3Pair({ x: 0.5, y: -1 });
-const passAdjacency = qualifyLafea3RetainedMeshAdjacentSizeRatio(passMesh, 1.5);
+const passAdjacency = qualifyRefinedMeshAdjacentSizeRatio(
+  t3Pair({ x: 0.5, y: -1 }),
+  1.5,
+);
 assert.equal(passAdjacency.qualification, 'PASS');
 assert.equal(passAdjacency.violatingAdjacencyCount, 0);
 assert.ok(passAdjacency.maximumObserved < 1.5);
 
-const blockMesh = t3Pair({ x: 0.5, y: -3 });
-const blockAdjacency = qualifyLafea3RetainedMeshAdjacentSizeRatio(blockMesh, 1.5);
+const blockAdjacency = qualifyRefinedMeshAdjacentSizeRatio(
+  t3Pair({ x: 0.5, y: -3 }),
+  1.5,
+);
 const expectedBlockRatio = Math.sqrt(9.25) / Math.sqrt(2);
 assertClose(blockAdjacency.maximumObserved, expectedBlockRatio, 'blocking adjacency ratio');
 assert.equal(blockAdjacency.qualification, 'BLOCK');
 assert.equal(blockAdjacency.violatingAdjacencyCount, 1);
 assert.deepEqual(blockAdjacency.blockingElementIds, ['E1', 'E2']);
 
-const refinerSource = source('src/workspace/lafea-retained-mesh-refinement.js');
+const evidenceV2Source = source('src/workspace/lafea-analysis-mesh-evidence-v2.js');
 const evidenceQualitySource = source('src/workspace/lafea-analysis-mesh-quality.js');
 const viewModelSource = source('src/workspace/lafea-discretization-view-model.js');
 const panelSource = source('src/workspace/lafea-discretization-generation-panel.js');
 
-assert.match(refinerSource, /LAFEA_RETAINED_MESH_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCKED/);
-assert.match(refinerSource, /qualifyLafea3RetainedMeshAdjacentSizeRatio/);
+assert.match(evidenceV2Source, /qualifyRefinedMeshAdjacentSizeRatio/);
+assert.match(evidenceV2Source, /:LOCAL_REFINEMENT:/);
+assert.match(
+  evidenceV2Source,
+  /LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK/,
+);
 assert.ok(
-  refinerSource.indexOf('LAFEA_RETAINED_MESH_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCKED')
-    < refinerSource.indexOf('createLafeaMeshProducerOutputV2({'),
-  'actual adjacency must be qualified before custody-eligible output/evidence is built',
+  evidenceV2Source.indexOf('enforceLafea3RefinementAdjacency(stageId, mesh, meshProfile)')
+    < evidenceV2Source.indexOf('const meshHash = lafeaAnalysisMeshContentHash(mesh)'),
+  'refinement adjacency must fail before canonical evidence custody/hashing proceeds',
 );
 assert.match(
   evidenceQualitySource,
   /const adjacentSizeRatio = stageId === 'LAFEA\.4'/,
-  'generic v2 retained-quality contract must remain backward-compatible in this PR',
+  'generic v2 retained quality must remain backward-compatible',
 );
 assert.doesNotMatch(
   evidenceQualitySource,
@@ -82,6 +92,7 @@ assert.doesNotMatch(
 );
 assert.match(viewModelSource, /boundAdjacentSizeRatioMax/);
 assert.match(viewModelSource, /DERIVED_RECOMPUTATION_OF_REFINEMENT_RETENTION_GATE/);
+assert.match(viewModelSource, /qualifyRefinedMeshAdjacentSizeRatio/);
 assert.match(panelSource, /lafea-refinement-transition-preview/);
 assert.match(panelSource, /lafea-refinement-adjacency-evidence/);
 assert.match(panelSource, /LAFEA_RETAINED_MESH_REFINEMENT_POLICY\.minimumTargetRatio/);
@@ -105,7 +116,7 @@ console.log(JSON.stringify({
   authority: {
     retainedEvidenceSchemaChanged: false,
     genericLafea3QualityHashChanged: false,
-    actualRefinedChildAdjacencyGate: 'ENFORCED_BEFORE_OUTPUT_AND_EVIDENCE',
+    actualRefinedChildAdjacencyGate: 'ENFORCED_IN_V2_EVIDENCE_CONSTRUCTOR_BEFORE_CUSTODY',
     uiPolicySource: 'BOUND_PROFILE_PLUS_EXISTING_REFINEMENT_POLICY',
   },
 }, null, 2));

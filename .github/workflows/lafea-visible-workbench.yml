@@ -53,6 +53,7 @@ jobs:
           node scripts/lafea-ui-analysis-settings-check.mjs
           node scripts/lafea-retained-mesh-smoothing-sweep-diagnostic.mjs
           node scripts/lafea-retained-mesh-edge-classification-diagnostic.mjs
+          node scripts/lafea-retained-mesh-longest-edge-closure-diagnostic.mjs
       - name: Upload retained-refinement diagnostics
         uses: actions/upload-artifact@v4
         with:
@@ -60,6 +61,7 @@ jobs:
           path: |
             test-results/lafea-retained-refinement-smoothing-sweep.json
             test-results/lafea-retained-refinement-edge-classification.json
+            test-results/lafea-retained-refinement-longest-edge-closure.json
           if-no-files-found: error
           retention-days: 7
       - name: Qualify governed shell mesh compiler and execution custody

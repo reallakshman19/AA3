@@ -1,11 +1,11 @@
 schema: AgentClaim.v1
-pr_or_wip: WIP-EMP1-1261
+pr_or_wip: PR1263
 claim_state: ACTIVE
 files:
   exact:
-    - agents/WIP-EMP1-1261_core_scaffold.md
-    - agents/status/WIP-EMP1-1261.yaml
-    - agents/claims/WIP-EMP1-1261.yaml
+    - agents/PR1263_workreport.md
+    - agents/status/PR1263.yaml
+    - agents/claims/PR1263.yaml
     - scripts/emp1-source-custody-lib.mjs
     - scripts/emp1-source-custody-check.mjs
     - scripts/emp1-source-custody-self-test.mjs
@@ -28,7 +28,8 @@ observe_only:
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: fd5f2cd58481ec1417850ef927486aed03044a53
+last_verified_head: fb2753b13c8326705d7c716448fa34109b3bc959
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 overlap_state: SAFE_FOR_SOURCE_CUSTODY_ONLY
+base_drift: RECONCILIATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION
 note: Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.

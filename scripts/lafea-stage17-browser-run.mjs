@@ -6,6 +6,7 @@ import path from 'node:path';
 const root = process.cwd();
 const cli = path.join(root, 'node_modules', 'playwright', 'cli.js');
 const diagnosticPath = path.join(root, 'test-results', 'emp1-stage17-diagnostic.json');
+const DIAGNOSTIC_OUTPUT_LIMIT = 16000;
 if (!fs.existsSync(cli)) {
   writeDiagnostic({ phase: 'SETUP', target: 'playwright-cli', exitStatus: 2, code: 'LAFEA_A17_BROWSER_PLAYWRIGHT_NOT_INSTALLED' });
   console.error('LAFEA_A17_BROWSER_PLAYWRIGHT_NOT_INSTALLED');
@@ -16,11 +17,18 @@ function runNodeScript(relativePath) {
   const result = spawnSync(process.execPath, [path.join(root, relativePath)], {
     cwd: root,
     env: process.env,
-    stdio: 'inherit',
+    encoding: 'utf8',
   });
+  forwardOutput(result);
   const status = result.status ?? 1;
   if (status !== 0) {
-    writeDiagnostic({ phase: 'NODE_PREREQUISITE', target: relativePath, exitStatus: status });
+    writeDiagnostic({
+      phase: 'NODE_PREREQUISITE',
+      target: relativePath,
+      exitStatus: status,
+      stdout: diagnosticTail(result.stdout),
+      stderr: diagnosticTail(result.stderr),
+    });
     process.exit(status);
   }
 }
@@ -29,24 +37,45 @@ function runPlaywright(args) {
   const result = spawnSync(process.execPath, [cli, 'test', '--config=playwright.lafea-visible.config.js', ...args], {
     cwd: root,
     env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: '0' },
-    stdio: 'inherit',
+    encoding: 'utf8',
   });
+  forwardOutput(result);
   const status = result.status ?? 1;
   if (status !== 0) {
-    writeDiagnostic({ phase: 'PLAYWRIGHT', target: args.join(' '), exitStatus: status });
+    writeDiagnostic({
+      phase: 'PLAYWRIGHT',
+      target: args.join(' '),
+      exitStatus: status,
+      stdout: diagnosticTail(result.stdout),
+      stderr: diagnosticTail(result.stderr),
+    });
     process.exit(status);
   }
 }
 
-function writeDiagnostic({ phase, target, exitStatus, code = null }) {
+function forwardOutput(result) {
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+}
+
+function diagnosticTail(value) {
+  const text = typeof value === 'string' ? value : '';
+  return text.length > DIAGNOSTIC_OUTPUT_LIMIT
+    ? text.slice(text.length - DIAGNOSTIC_OUTPUT_LIMIT)
+    : text;
+}
+
+function writeDiagnostic({ phase, target, exitStatus, code = null, stdout = '', stderr = '' }) {
   fs.mkdirSync(path.dirname(diagnosticPath), { recursive: true });
   fs.writeFileSync(diagnosticPath, `${JSON.stringify({
-    schema: 'lafea-stage17-first-failure/v1',
+    schema: 'lafea-stage17-first-failure/v2',
     status: 'FAIL',
     phase,
     target,
     exitStatus,
     code,
+    stdout,
+    stderr,
     head: process.env.EXPECTED_HEAD ?? null,
   }, null, 2)}\n`, 'utf8');
 }
@@ -93,13 +122,16 @@ const gate = spawnSync(process.execPath, [
 ], {
   cwd: root,
   env: process.env,
-  stdio: 'inherit',
+  encoding: 'utf8',
 });
+forwardOutput(gate);
 if ((gate.status ?? 1) !== 0) {
   writeDiagnostic({
     phase: 'B01_B02_GATE',
     target: 'scripts/lafea-b01-b02-gate0-diagnostic.mjs',
     exitStatus: gate.status ?? 1,
+    stdout: diagnosticTail(gate.stdout),
+    stderr: diagnosticTail(gate.stderr),
   });
   process.exit(gate.status ?? 1);
 }

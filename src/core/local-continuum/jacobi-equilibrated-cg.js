@@ -5,6 +5,7 @@ import {
   sparseMatrixVectorRaw,
 } from './sparse-matrix.js';
 
+const RELIABLE_RESIDUAL_INTERVAL = 100;
 const POST_CAP_REFINEMENT_LIMIT = 3;
 const POST_CAP_REFINEMENT_METHOD = 'JACOBI_SCALED_MINIMUM_RESIDUAL_RICHARDSON';
 const ERROR_FREE_PRODUCT_RESIDUAL = 'ERROR_FREE_PRODUCT_EXPANSION';
@@ -34,6 +35,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   let direction = [...residual];
   let rho = compensatedDot(residual, residual);
   let iterations = 0;
+  let reliableResidualReplacements = 0;
   let originalResidualInfinity = maxAbs(rightHandSide);
 
   while (iterations < iterationLimit) {
@@ -55,7 +57,9 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     }
     iterations += 1;
 
-    if (iterations % 100 === 0 || maxAbs(residual) <= convergenceTarget) {
+    const recursiveResidualInfinity = maxAbs(residual);
+    const reliableResidualDue = iterations % RELIABLE_RESIDUAL_INTERVAL === 0;
+    if (reliableResidualDue || recursiveResidualInfinity <= convergenceTarget) {
       const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);
       const exact = exactOriginalResidual(matrix, rightHandSide, solution);
       originalResidualInfinity = maxAbs(exact);
@@ -71,9 +75,27 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
           diagonalScale,
           diagonalTolerance,
           matrix.diagonal,
+          reliableResidualReplacements,
           terminalEvidence(COMPENSATED_CSR_RESIDUAL, 0, [originalResidualInfinity]),
         );
       }
+
+      // Preserve the mainline reliable-residual semantics in the symmetric
+      // Jacobi-scaled system. The exact original-coordinate residual is mapped
+      // back to scaled coordinates, and CG restarts from that residual. This
+      // changes no matrix, load, tolerance or iteration budget.
+      const scaledExact = exact.map(
+        (value, index) => value * inverseSqrtDiagonal[index],
+      );
+      residual = scaledExact;
+      scaledResidualCompensation.fill(0);
+      direction = [...residual];
+      rho = compensatedDot(residual, residual);
+      reliableResidualReplacements += 1;
+      if (!(rho > 0) || !Number.isFinite(rho)) {
+        throw solverError('JACOBI_EQUILIBRATED_CG_RELIABLE_UPDATE_INVALID', rho);
+      }
+      continue;
     }
 
     const nextRho = compensatedDot(residual, residual);
@@ -149,7 +171,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   if (originalResidualInfinity > convergenceTarget) {
     throw solverError(
       'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',
-      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} post-cap minimum-residual steps; history=${refinementHistory.join(',')}`,
+      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations, ${reliableResidualReplacements} reliable residual replacements and ${refinementSteps} post-cap minimum-residual steps; history=${refinementHistory.join(',')}`,
     );
   }
   return result(
@@ -163,6 +185,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     diagonalScale,
     diagonalTolerance,
     matrix.diagonal,
+    reliableResidualReplacements,
     terminalEvidence(ERROR_FREE_PRODUCT_RESIDUAL, refinementSteps, refinementHistory),
   );
 }
@@ -178,6 +201,7 @@ function result(
   diagonalScale,
   diagonalTolerance,
   diagonal,
+  reliableResidualReplacements,
   terminal,
 ) {
   const minimumDiagonal = Math.min(...diagonal);
@@ -186,10 +210,12 @@ function result(
     solution: solution.map((value) => canonicalNumber(value, 'equilibrated CG displacement')),
     evidence: {
       method: 'DETERMINISTIC_JACOBI_PCG',
-      algorithm: 'SYMMETRIC_JACOBI_EQUILIBRATED_CG',
+      algorithm: 'SYMMETRIC_JACOBI_EQUILIBRATED_CG_RELIABLE_RESIDUAL_V2',
       preconditioner: 'JACOBI',
       iterationLimit,
       iterations,
+      reliableResidualInterval: RELIABLE_RESIDUAL_INTERVAL,
+      reliableResidualReplacements,
       residualScale: canonicalNumber(residualScale),
       finalResidualInfinity: canonicalNumber(finalResidualInfinity),
       convergenceTarget: canonicalNumber(convergenceTarget),

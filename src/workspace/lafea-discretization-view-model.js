@@ -14,6 +14,9 @@ import {
   lafeaMeshProducerElementFamilies,
 } from './lafea-mesh-producer-registry.js';
 import {
+  LAFEA_RETAINED_MESH_REFINEMENT_POLICY,
+} from './lafea-retained-mesh-refinement.js';
+import {
   LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
   LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
 } from './lafea-source-shell-mesh-adoption.js';
@@ -345,6 +348,9 @@ function buildGenerationModel(stage, capabilities) {
     meshProfileIdentity: meshProfile?.profileIdentity ?? null,
     qualifiedQualityPolicy: qualifiedMeshQualityPolicyForStage(stage.stageId),
     boundAdjacentSizeRatioMax: meshProfile?.fields.adjacentSizeRatioMax ?? null,
+    lafea3MinimumLocalTargetRatio: stage.stageId === 'LAFEA.3'
+      ? LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumTargetRatio
+      : null,
     thicknessCurvatureObservation: buildLafea4ThicknessCurvatureObservation(stage),
     targetElementLength: sourceMeshAdoption ? null : meshProfile?.fields.globalTargetSize ?? null,
     declaredElementFamily: declaredFamily(stage.stageId, meshProfile),

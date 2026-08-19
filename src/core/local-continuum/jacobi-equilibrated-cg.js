@@ -5,7 +5,6 @@ import {
   sparseMatrixVectorRaw,
 } from './sparse-matrix.js';
 
-const EXACT_RESIDUAL_CHECK_INTERVAL = 100;
 const POST_CAP_REFINEMENT_LIMIT = 3;
 const POST_CAP_REFINEMENT_METHOD = 'JACOBI_SCALED_MINIMUM_RESIDUAL_RICHARDSON';
 const ERROR_FREE_PRODUCT_RESIDUAL = 'ERROR_FREE_PRODUCT_EXPANSION';
@@ -35,7 +34,6 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   let direction = [...residual];
   let rho = compensatedDot(residual, residual);
   let iterations = 0;
-  let reliableResidualReplacements = 0;
   let originalResidualInfinity = maxAbs(rightHandSide);
 
   while (iterations < iterationLimit) {
@@ -57,9 +55,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     }
     iterations += 1;
 
-    const recursiveResidualInfinity = maxAbs(residual);
-    const exactResidualCheckDue = iterations % EXACT_RESIDUAL_CHECK_INTERVAL === 0;
-    if (exactResidualCheckDue || recursiveResidualInfinity <= convergenceTarget) {
+    if (iterations % 100 === 0 || maxAbs(residual) <= convergenceTarget) {
       const solution = unscaleSolution(scaledSolution, inverseSqrtDiagonal);
       const exact = exactOriginalResidual(matrix, rightHandSide, solution);
       originalResidualInfinity = maxAbs(exact);
@@ -75,33 +71,8 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
           diagonalScale,
           diagonalTolerance,
           matrix.diagonal,
-          reliableResidualReplacements,
           terminalEvidence(COMPENSATED_CSR_RESIDUAL, 0, [originalResidualInfinity]),
         );
-      }
-
-      // A periodic exact-residual observation alone must not restart the
-      // equilibrated Krylov trajectory: doing so was falsified by the focused
-      // near-incompressible Lamé case. Replace the recursive residual only for
-      // the narrow false-convergence condition where the recursive residual has
-      // already crossed the frozen convergence target but the exact
-      // original-coordinate residual has not. The replacement is mapped back
-      // into the Jacobi-scaled coordinates and the direction is restarted from
-      // that exact residual. No matrix, load, tolerance or iteration budget is
-      // changed.
-      if (recursiveResidualInfinity <= convergenceTarget) {
-        const scaledExact = exact.map(
-          (value, index) => value * inverseSqrtDiagonal[index],
-        );
-        residual = scaledExact;
-        scaledResidualCompensation.fill(0);
-        direction = [...residual];
-        rho = compensatedDot(residual, residual);
-        reliableResidualReplacements += 1;
-        if (!(rho > 0) || !Number.isFinite(rho)) {
-          throw solverError('JACOBI_EQUILIBRATED_CG_RELIABLE_UPDATE_INVALID', rho);
-        }
-        continue;
       }
     }
 
@@ -178,7 +149,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   if (originalResidualInfinity > convergenceTarget) {
     throw solverError(
       'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',
-      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations, ${reliableResidualReplacements} target-only reliable residual replacements and ${refinementSteps} post-cap minimum-residual steps; history=${refinementHistory.join(',')}`,
+      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} post-cap minimum-residual steps; history=${refinementHistory.join(',')}`,
     );
   }
   return result(
@@ -192,7 +163,6 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     diagonalScale,
     diagonalTolerance,
     matrix.diagonal,
-    reliableResidualReplacements,
     terminalEvidence(ERROR_FREE_PRODUCT_RESIDUAL, refinementSteps, refinementHistory),
   );
 }
@@ -208,7 +178,6 @@ function result(
   diagonalScale,
   diagonalTolerance,
   diagonal,
-  reliableResidualReplacements,
   terminal,
 ) {
   const minimumDiagonal = Math.min(...diagonal);
@@ -217,13 +186,10 @@ function result(
     solution: solution.map((value) => canonicalNumber(value, 'equilibrated CG displacement')),
     evidence: {
       method: 'DETERMINISTIC_JACOBI_PCG',
-      algorithm: 'SYMMETRIC_JACOBI_EQUILIBRATED_CG_TARGET_RELIABLE_UPDATE_V3',
+      algorithm: 'SYMMETRIC_JACOBI_EQUILIBRATED_CG',
       preconditioner: 'JACOBI',
       iterationLimit,
       iterations,
-      exactResidualCheckInterval: EXACT_RESIDUAL_CHECK_INTERVAL,
-      reliableResidualPolicy: 'REPLACE_ONLY_ON_RECURSIVE_FALSE_CONVERGENCE',
-      reliableResidualReplacements,
       residualScale: canonicalNumber(residualScale),
       finalResidualInfinity: canonicalNumber(finalResidualInfinity),
       convergenceTarget: canonicalNumber(convergenceTarget),

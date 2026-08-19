@@ -26,7 +26,7 @@ function runPlaywright(args) {
 runPlaywright([
   'e2e/lafea-visible-workbench.spec.js',
   '--grep',
-  'Empirical analytical surface has truthful scope, one route navigation, and page-owned vertical scrolling',
+  'Empirical analytical surface presents one truthful EMP.1 product and page-owned vertical scrolling',
 ]);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 

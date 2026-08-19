@@ -28,8 +28,9 @@ observe_only:
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: e5dee9ab6cdd61dd84ed8c77a767c52530b59dd9
+last_verified_head: 55657b56893f29a6efc651e2513da2166f2d7eb2
+implementation_basis_head: 266832e8f2e621d46b608a69d8d95985f4c7dc4a
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 overlap_state: SAFE_FOR_SOURCE_CUSTODY_ONLY
 base_drift: RECONCILIATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION
-note: Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.
+note: Candidate source bytes must reproduce pinned Git blob identity before SHA-256 freeze. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.

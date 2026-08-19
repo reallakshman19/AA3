@@ -1,0 +1,31 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1258
+claim_state: ACTIVE
+files:
+  exact:
+    - src/core/local-continuum/jacobi-equilibrated-cg.js
+    - src/core/local-continuum/solver.js
+    - src/core/local-continuum/sparse-matrix.js
+    - src/core/local-continuum/planar-translation-nullspace.js
+    - src/core/local-continuum/bbar-plane-strain.js
+    - src/workspace/lafea-analysis-mesh-quality.js
+    - agents/PR1258_workreport.md
+    - agents/status/PR1258.yaml
+    - agents/claims/PR1258.yaml
+authority_domains:
+  - B01_NUMERICAL_QUALIFICATION
+  - LOCAL_CONTINUUM_FLOATING_POINT_REPRESENTATION
+  - B_BAR_STIFFNESS_NULLSPACE_PRESERVATION
+claim_modes:
+  - EXCLUSIVE_WRITE
+  - SHARED_READ
+excluded_authority:
+  - B02D_NUMERICS
+  - MESH_GENERATION
+  - MESH_QUALITY_THRESHOLDS
+  - BENCHMARK_EXPECTED_VALUES
+  - LIFECYCLE_AUTHORITY
+  - RELEASE_AUTHORITY
+  - TRUST_ROOT
+qualified_candidate_head: 80986bcc42ebb6cb5e48a68e9b5ad88c9084d1f4
+merge_authority: NOT_GRANTED

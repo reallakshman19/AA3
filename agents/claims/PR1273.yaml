@@ -1,0 +1,30 @@
+schema: engineering-pr-claims/v1
+work_item: PR1273
+repository: reallaksh19/Advanced_Analysis
+issue: 1261
+pr: 1273
+claims:
+  - id: AUTH-SRC-001
+    state: PRESERVED
+    statement: WRC537_2013.pdf is METHOD_SOURCE and CAUx 2017 pp.24-31 is BENCHMARK_SOURCE; production results never become source authority.
+  - id: IMP-SRC-001
+    state: RUNNING
+    statement: Raw-byte source custody is being independently observed from the pinned XML_Compare_Utilities commit using byte count, Git blob SHA-1, and SHA-256.
+  - id: IMP-SRC-002
+    state: NOT_RUN
+    statement: WRC primary-source arbitration must resolve retained membrane-thickness and stress-intensity contradictions before engineering use.
+  - id: IMP-SRC-003
+    state: NOT_RUN
+    statement: All 120 response curves must contain exactly ten source-qualified named scalar coefficients a through j, for 1200 total scalar coefficients.
+  - id: IMP-SRC-004
+    state: NOT_RUN
+    statement: CAUx pp.24-31 source-reported values and independent hand calculation must be frozen before production EMP.1.C observation.
+  - id: BLOCK-SRC-001
+    state: OPEN
+    statement: WRC raw PDF SHA-256 is not yet frozen.
+  - id: BLOCK-SRC-002
+    state: OPEN
+    statement: CAUx raw PDF SHA-256 is not yet frozen.
+  - id: BLOCK-SRC-003
+    state: OPEN
+    statement: EMP.1.C production route remains unregistered and engineering/release authority remains blocked.

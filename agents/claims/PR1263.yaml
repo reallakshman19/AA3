@@ -16,6 +16,7 @@ files:
     - validation/emp1/wrc537-2013/existing-dataset-manifest.json
     - validation/emp1/wrc537-2013/existing-dataset-audit-v1.json
     - validation/emp1/caux2017-wrc01f/source-ledger.json
+    - validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-v1.json
   prefixes:
     - src/core/emp1/
     - docs/emp1/
@@ -37,9 +38,9 @@ observe_only:
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: 84a92fd700eb43476a8787a741d09aba1b08f21e
-implementation_basis_head: e2a9e8c926cb77cc28e3deaba87debc5711027f4
+last_verified_head: 8b56faea52257173aacea818af77f671c4f09756
+implementation_basis_head: 133b5d6bf52af294c3840433aad69920362938ae
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 overlap_state: SAFE_FOR_QUALIFICATION_ONLY
 base_drift: RECONCILIATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION
-note: Existing WRC docs are reused as qualification input and remain observe-only. Frozen expectation is BLOCKED with 21 unresolved JSON paths, 7 open issues, 120 CSV rows, 0 numeric coefficients, 120 unresolved coefficients. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.
+note: Exact CAUx source identity is confirmed but pp24-31 content remains NOT_RUN because binary bytes are not observable through current non-mutating transports. The Hexagon WRC precheck is frozen as SUPPLEMENTAL_REFERENCE_NOT_CAUX_BENCHMARK and may not satisfy A4 or authorize EMP.1.C. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.

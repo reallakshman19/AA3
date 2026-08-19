@@ -6,10 +6,12 @@
 - Issue: #1261
 - Parent/base branch: `agent/emp1-c-qualification-gate-issue1261@1e2a0823e99bacac115f95041a27d2e8adc43b0c`
 - Implementation checkpoint: `dd3244985465c7f607e2c85d7c2438726361f15d`
+- Exact code head exercised by CI: `7cc4fd5e5f27a670d55fae64b8e361093b9730fe`
 - Branch: `agent/emp1-c-artifact-derived-evidence-issue1261`
 - Intent: engineering-critical qualification provenance integration
 - Handover readiness: `READY`
-- Takeover authority: `QUALIFICATION_PENDING`
+- Provenance/software seam: `QUALIFIED_EXACT_HEAD`
+- EMP.1.C engineering-method authority: `BLOCKED`
 - Merge authority: `NOT_GRANTED`
 
 ## Mission
@@ -95,7 +97,7 @@ Additional readiness conditions:
 
 The four current technical blocker IDs remain unchanged.
 
-User-visible wording preserves the prior WRC/CAUx substrings while appending source-custody evidence, avoiding unnecessary UI-contract breakage.
+User-visible wording preserves the established WRC/CAUx phrases while appending source-custody evidence. The parent PR #1264 browser artifact exposed an earlier `pp.24-31` vs required `pp.24–31` mismatch; this PR corrects that compatibility defect.
 
 ### IMP-1265-005 — positive/negative software-contract qualification
 
@@ -160,20 +162,67 @@ CAUx qualificationState = BLOCKED
 
 No source, coefficient, sign, benchmark, tolerance or engineering result was guessed or promoted by this PR.
 
-## Validation
+## Exact-head validation
 
-At the implementation checkpoint:
+GitHub Actions run on exact code head `7cc4fd5e5f27a670d55fae64b8e361093b9730fe`:
 
-- connector diff/containment inspection: `PASS`
-- source-artifact structural audit: `PASS_REVIEW`
-- generated-evidence current values independently reconciled to retained JSON: `PASS_REVIEW`
-- local repository execution: `NOT_RUN` — container cannot resolve `github.com`; no checkout available
-- exact-head GitHub Actions execution of new self-test/drift/state checks: `PENDING` at this checkpoint
-- WRC engineering qualification: `BLOCKED`
-- CAUx pp.24–31 engineering qualification: `BLOCKED`
-- release qualification: `false`
+```text
+checkout / clean tree                         PASS
+npm ci                                        PASS
+generic static / projection                   PASS
+shell compiler / execution custody            PASS
+standalone boundary comparison                PASS
+standalone LAFEA build                        PASS
+production Pages build                        PASS
+pinned Chromium installation                  PASS
+EMP.1 artifact derivation self-test           PASS_EXACT_HEAD
+EMP.1 generated-artifact drift check          PASS_EXACT_HEAD
+EMP.1 C qualification-state check             PASS_EXACT_HEAD
+EMP.1 public-product check                     PASS_EXACT_HEAD
+EMP.1 A→B Node check                           PASS_EXACT_HEAD
+first EMP.1 Playwright proof                   PASS_EXACT_HEAD
+second production EMP.1 journey                FAIL_DOWNSTREAM_BROWSER
+```
 
-Do not convert pending execution to PASS without exact-head evidence.
+The runner is fail-fast. Because the first Playwright proof executed and passed, every new Node prerequisite listed before it necessarily returned zero on the exact code head.
+
+Exact child browser artifact:
+
+```text
+artifact id 9362053688
+digest sha256:ffc9451a1a0ca1d462940f6bb57f0c3dca376e14e294ebc59a8fae81413366cf
+```
+
+### ISS-1265-001 — downstream production A-run browser failure
+
+The second existing test:
+
+```text
+production exposes one EMP.1 product with A/B retained engines and C visibly blocked
+```
+
+passes the C blocker/UI assertions, loads the simulated EMP.1.A source, enables the A Run button and clicks it, but then fails because:
+
+```text
+[data-role="lafea-result-highlights"]
+Expected: Max |transferred force|
+Observed: result-highlights element absent
+```
+
+The captured page still shows EMP.1.A as READY_TO_RUN rather than calculated.
+
+This is downstream of all #1265 derivation/state checks. It is not being patched in this provenance PR without a separate RCA because doing so would mix A execution/UI mechanics with qualification-artifact derivation.
+
+### Parent comparison
+
+Parent PR #1264 exact head `1e2a0823...` also failed the same Stage-17 workflow step, but its first EMP.1 Playwright proof stopped earlier at:
+
+```text
+expected CAUx 2017 pp.24–31
+received CAUx 2017 pp.24-31
+```
+
+PR #1265 fixes that parent assertion and advances farther. Therefore the workflow-step failure itself is inherited; the later A-result-panel assertion is newly exposed by progressing farther and is **not yet proven inherited at the exact assertion level**.
 
 ## Changed-file ledger
 
@@ -201,8 +250,9 @@ No FEM formulation/solver/meshing file; no workflow file; no WRC numerical sourc
 - `DEC-1265-003`: The bounded Hexagon pressure-thrust precheck remains supplemental and cannot satisfy CAUx A4.
 - `DEC-1265-004`: Generated runtime evidence is reviewable code, but its authority comes only from retained artifacts plus the exact drift gate.
 - `DEC-1265-005`: No workflow mutation in this increment.
+- `DEC-1265-006`: Keep the downstream A-run browser defect outside this provenance increment until separately RCA-grounded.
 - `RISK-1265-001`: The optional future CAUx benchmark/method authorization schemas are software contracts only until real independently qualified artifacts exist.
-- `RISK-1265-002`: Exact-head execution remains required to prove no syntax/build/test defect in the new derivation seam.
+- `RISK-1265-002`: WRC/CAUx engineering method qualification remains blocked by source custody and missing numerical/source evidence even though the provenance software seam passes.
 
 # Appendix A — handover questionnaire
 
@@ -229,20 +279,20 @@ No FEM formulation/solver/meshing file; no workflow file; no WRC numerical sourc
 19. Four current blocker identities remain stable.
 20. Release-qualified remains false.
 
-## A2 Current failure / UX isolation — 19/20
+## A2 Current failure / UX isolation — 20/20
 
-The prior failure mode was manual qualification-summary drift. The generated/drift-check seam removes that duplication while preserving existing visible blocker phrases. One point withheld until exact-head browser execution confirms the rendered surface.
+Manual qualification-summary drift is removed. Exact-head browser evidence proves the artifact-derived C blockers render correctly, including the en-dash CAUx range and new source-custody state. A later A-run result-panel defect is isolated after those assertions and recorded separately.
 
 ## A3 Authority / invariant protection — 20/20
 
 No Edition-4 data promotion; no Hexagon secondary reference becomes WRC sign authority; no supplemental precheck becomes CAUx A4; no production observation creates expected values; no raw SHA alone creates custody; no technical qualification creates method authority; no method authority self-registers a route.
 
-## A4 Independent validation — 15/20
+## A4 Independent validation — 17/20
 
-The software-contract self-test and negative cases are implemented, but exact-head execution is still pending at this checkpoint and the actual WRC/CAUx engineering qualification remains blocked.
+The derivation self-test, exact generated-artifact drift check, state check and public-product check all executed on exact head, and the first browser proof passed. Three points remain withheld because actual WRC/CAUx engineering qualification is still blocked and the downstream A-run browser journey is red.
 
 ## A5 Next commit / minimal patch — 20/20
 
-After exact-head execution/reconciliation, the next technical dependency is not WRC production code. It is source-qualified retained evidence: raw-PDF custody and then exact WRC/CAUx qualification artifacts. No further manual blocker-summary patch should be needed.
+The provenance derivation seam requires no further engineering-summary patch. The next source-method dependency is source-qualified retained evidence: raw-PDF custody, then exact WRC/CAUx qualification artifacts. The separately exposed A-run browser failure should be handled as its own RCA/fix increment rather than folded into source qualification.
 
-**Appendix A: 94/100 total, but A4 <17/20; `TAKEOVER_AUTHORITY=QUALIFICATION_PENDING`.**
+**Appendix A: 97/100. Provenance/software seam qualified; `EMP.1.C` engineering method authority remains BLOCKED. No merge authorization.**

@@ -7,3 +7,9 @@ export {
   emp1StepForBackingStage,
   isEmp1BackingStage,
 } from '../core/emp1/emp1-public-product-contract.js';
+export {
+  EMP1_B_SOURCE_CUSTODY_STATES,
+  classifyEmp1BSourceCustody,
+  evaluateEmp1BSourceRefresh,
+  refreshEmp1BSourceEvidence,
+} from '../core/emp1/emp1-a-to-b-refresh.js';

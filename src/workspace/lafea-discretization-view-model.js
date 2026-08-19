@@ -1,5 +1,8 @@
 /** Pure presentation model for the governed Discretization step. */
-import { jacobianDeterminantStatisticsOf } from '../core/lafea-meshing/index.js';
+import {
+  jacobianDeterminantStatisticsOf,
+  qualifyRefinedMeshAdjacentSizeRatio,
+} from '../core/lafea-meshing/index.js';
 import { qualifiedMeshQualityPolicyForStage } from '../core/lafea-profile-contract/index.js';
 import { buildLafea4ThicknessCurvatureObservation } from './lafea-shell-thickness-curvature-observation.js';
 import { buildMeshQualityPanel } from './lafea-mesh-quality-panel.js';
@@ -10,9 +13,6 @@ import {
   LAFEA_MESH_PRODUCER_REF,
   lafeaMeshProducerElementFamilies,
 } from './lafea-mesh-producer-registry.js';
-import {
-  qualifyLafea3RetainedMeshAdjacentSizeRatio,
-} from './lafea-retained-mesh-refinement.js';
 import {
   LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
   LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
@@ -418,7 +418,7 @@ function buildLafea3RefinementAdjacencyInspection(stageId, evidence) {
   }
   const maximumAllowed = evidence.meshProfile?.fields?.adjacentSizeRatioMax;
   if (!(Number.isFinite(maximumAllowed) && maximumAllowed > 1)) return null;
-  const qualification = qualifyLafea3RetainedMeshAdjacentSizeRatio(
+  const qualification = qualifyRefinedMeshAdjacentSizeRatio(
     evidence.mesh,
     maximumAllowed,
   );

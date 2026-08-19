@@ -1,0 +1,55 @@
+schema: engineering-pr-claims/v1
+pr: 1265
+repository: reallaksh19/Advanced_Analysis
+claims:
+  - id: IMP-1265-001
+    state: IMPLEMENTED
+    statement: Current EMP.1.C qualification evidence is derived from retained WRC/CAUx artifacts instead of a manually maintained summary.
+  - id: IMP-1265-002
+    state: IMPLEMENTED
+    statement: The generated runtime evidence is checked for exact deterministic text and object equality against re-derived retained-artifact evidence.
+  - id: IMP-1265-003
+    state: IMPLEMENTED
+    statement: WRC and CAUx raw-PDF source custody are explicit technical-readiness gates.
+  - id: IMP-1265-004
+    state: IMPLEMENTED
+    statement: The bounded Hexagon pressure-thrust precheck is retained as supplemental evidence and is rejected if promoted to CAUx A4 or production authority.
+  - id: IMP-1265-005
+    state: IMPLEMENTED
+    statement: A synthetic software-contract self-test covers the complete future retained-artifact promotion sequence and negative authority-boundary cases.
+  - id: VAL-1265-001
+    state: PASS_REVIEW
+    statement: Current generated values were reconciled to the retained WRC audit, sign cross-check, CAUx source ledger and bounded precheck during implementation review.
+  - id: VAL-1265-002
+    state: PASS_EXACT_HEAD
+    statement: On exact code head 7cc4fd5e5f27a670d55fae64b8e361093b9730fe, the Stage-17 runner advanced through artifact self-test, artifact drift check, C-state check, public-product check and A-to-B Node check into Playwright; those prerequisite commands are fail-fast and therefore all passed.
+  - id: VAL-1265-003
+    state: PASS_EXACT_HEAD
+    statement: The first EMP.1 Playwright proof completed on exact code head, confirming the corrected CAUx pp.24–31 visible contract and artifact-derived blocker rendering.
+  - id: ISS-1265-001
+    state: OPEN_DOWNSTREAM_BROWSER
+    statement: The second existing production EMP.1 journey fails after clicking Validate and run EMP.1.A because the expected Max |transferred force| result panel is absent. This occurs after all new #1265 Node qualification prerequisites and the first EMP.1 Playwright proof have passed.
+  - id: RCA-1265-001
+    state: PARTIALLY_GROUNDED
+    statement: Parent PR #1264 also failed the same Stage-17 workflow step, but at an earlier CAUx hyphen/en-dash assertion. PR #1265 fixes that parent assertion and advances farther. The later A-run result-panel failure is not yet proven to exist on the parent at the exact assertion level and is not attributed to the artifact derivation seam without further evidence.
+  - id: ENG-1265-001
+    state: BLOCKED
+    statement: WRC537 engineering qualification remains blocked; no coefficients, sign resolution or method authority are introduced.
+  - id: ENG-1265-002
+    state: BLOCKED
+    statement: CAUx 2017 pp.24-31 expected values and independent benchmark hand calculation remain unfrozen/not run.
+  - id: AUTH-1265-001
+    state: NOT_AUTHORIZED
+    statement: EMP.1.C engineering use remains unauthorized and its production route remains unregistered.
+  - id: REL-1265-001
+    state: false
+    statement: This PR does not establish release qualification.
+prohibited_promotions:
+  - MANUAL_SUMMARY_TO_CURRENT_ENGINEERING_TRUTH
+  - RAW_SHA_ONLY_TO_SOURCE_CUSTODY_PASS
+  - HEXAGON_SUPPLEMENTAL_PRECHECK_TO_CAUX_A4
+  - HEXAGON_SECONDARY_REFERENCE_TO_WRC_PRIMARY_SIGN_AUTHORITY
+  - EDITION4_TECHNICAL_DATA_TO_2013_PATH
+  - PRODUCTION_OUTPUT_TO_BENCHMARK_EXPECTED_VALUE
+  - TECHNICAL_READINESS_TO_METHOD_AUTHORITY_WITHOUT_RETAINED_RECORD
+  - METHOD_AUTHORITY_TO_EXECUTION_ROUTE_WITHOUT_CODE_REGISTRATION

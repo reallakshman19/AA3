@@ -28,10 +28,12 @@ function runPlaywright(args) {
   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
 }
 
-// EMP.1 analytical qualification prerequisites run before Chromium and before
-// the unrelated LAFEA.3 B01/B02 gate. These checks are deterministic Node-only
-// contracts and therefore remain observable even when browser provisioning is
-// unavailable.
+// EMP.1 analytical qualification prerequisites run before Playwright tests and
+// before the unrelated LAFEA.3 B01/B02 gate. The derivation contract is
+// self-tested, then retained artifacts are checked against generated runtime
+// evidence so stale or authority-escalated C evidence cannot be rendered current.
+runNodeScript('scripts/emp1-c-qualification-evidence-self-test.mjs');
+runNodeScript('scripts/emp1-c-qualification-evidence-check.mjs');
 runNodeScript('scripts/emp1-c-qualification-state-check.mjs');
 runNodeScript('scripts/emp1-public-product-check.mjs');
 runNodeScript('scripts/emp1-a-to-b-refresh-check.mjs');

@@ -1,3 +1,5 @@
+import { EMP1_C_RETAINED_QUALIFICATION_EVIDENCE } from './emp1-c-qualification-evidence.generated.js';
+
 export const EMP1_C_QUALIFICATION_SCHEMA = 'emp1-c-qualification-state/v1';
 
 export const EMP1_C_BLOCKER_CODES = Object.freeze({
@@ -10,50 +12,14 @@ export const EMP1_C_BLOCKER_CODES = Object.freeze({
 });
 
 /**
- * Frozen evidence summary for the currently merged EMP.1.C qualification state.
- * This is qualification metadata only; it contains no WRC coefficient, equation,
- * sign resolution or CAUx expected value and therefore cannot manufacture method
- * authority. Future source-qualified work may pass a replacement evidence object
- * to evaluateEmp1CQualificationState().
+ * Runtime evidence is generated from retained WRC/CAUx qualification artifacts.
+ * The generated module is checked for exact drift by
+ * scripts/emp1-c-qualification-evidence-check.mjs. No numerical WRC datum or
+ * benchmark expected value is created here.
  */
-export const EMP1_C_CURRENT_QUALIFICATION_EVIDENCE = deepFreeze({
-  schema: 'emp1-c-qualification-evidence/v1',
-  wrcDataset: {
-    status: 'BLOCKED',
-    extractionStatus: 'NOT_READY_FOR_IMPLEMENTATION',
-    unresolvedJsonPathCount: 21,
-    openIssueCount: 7,
-    numericalDataCount: 0,
-    coefficientInventoryRows: 120,
-    numericCoefficientRows: 0,
-    unresolvedCoefficientRows: 120,
-    unresolvedParameterRows: 120,
-    semanticHash: null,
-  },
-  signArbitration: {
-    status: 'BLOCKED',
-    resolutionAuthority: 'PINNED_WRC_PDF_ONLY',
-    openConflicts: [
-      'SPHERICAL_M1_DERIVED_D_TO_C_VS_HEXAGON_A_TO_B',
-      'SPHERICAL_M2_DERIVED_B_TO_A_VS_HEXAGON_D_TO_C',
-    ],
-  },
-  cauxBenchmark: {
-    status: 'NOT_RUN',
-    sourceIdentityVerified: true,
-    pageRange: '24-31',
-    expectedValuesFrozen: false,
-    independentHandCalculationStatus: 'NOT_RUN',
-    benchmarkHash: null,
-  },
-  methodAuthorization: {
-    engineeringUseAuthorized: false,
-    qualificationRecordHash: null,
-  },
-  execution: {
-    routeRegistered: false,
-  },
-});
+export const EMP1_C_CURRENT_QUALIFICATION_EVIDENCE = deepFreeze(
+  EMP1_C_RETAINED_QUALIFICATION_EVIDENCE,
+);
 
 export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIFICATION_EVIDENCE) {
   const normalized = normalizeEvidence(evidence);
@@ -64,10 +30,12 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     && normalized.wrcDataset.unresolvedJsonPathCount === 0
     && normalized.wrcDataset.openIssueCount === 0
     && normalized.wrcDataset.numericalDataCount > 0
-    && nonEmpty(normalized.wrcDataset.semanticHash);
+    && nonEmpty(normalized.wrcDataset.semanticHash)
+    && normalized.wrcDataset.sourceCustodyQualified === true
+    && nonEmpty(normalized.wrcDataset.sourceRawPdfSha256);
   if (!datasetReady) blockers.push(blocker(
     EMP1_C_BLOCKER_CODES.WRC_DATASET_NOT_READY,
-    `WRC extraction package is not READY_FOR_IMPLEMENTATION (${normalized.wrcDataset.unresolvedJsonPathCount} unresolved fields; ${normalized.wrcDataset.openIssueCount} open issues; numericalData=${normalized.wrcDataset.numericalDataCount}).`,
+    `WRC extraction package is not READY_FOR_IMPLEMENTATION (${normalized.wrcDataset.unresolvedJsonPathCount} unresolved fields; ${normalized.wrcDataset.openIssueCount} open issues; numericalData=${normalized.wrcDataset.numericalDataCount}; sourceCustody=${normalized.wrcDataset.sourceCustodyState}/${normalized.wrcDataset.sourceQualificationState}).`,
     {
       status: normalized.wrcDataset.status,
       extractionStatus: normalized.wrcDataset.extractionStatus,
@@ -75,6 +43,10 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
       openIssueCount: normalized.wrcDataset.openIssueCount,
       numericalDataCount: normalized.wrcDataset.numericalDataCount,
       semanticHashPresent: nonEmpty(normalized.wrcDataset.semanticHash),
+      sourceCustodyQualified: normalized.wrcDataset.sourceCustodyQualified,
+      sourceCustodyState: normalized.wrcDataset.sourceCustodyState,
+      sourceQualificationState: normalized.wrcDataset.sourceQualificationState,
+      sourceRawPdfSha256Present: nonEmpty(normalized.wrcDataset.sourceRawPdfSha256),
     },
   ));
 
@@ -95,32 +67,42 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
 
   const signReady = normalized.signArbitration.status === 'PASS'
     && normalized.signArbitration.resolutionAuthority === 'PINNED_WRC_PDF'
-    && normalized.signArbitration.openConflicts.length === 0;
+    && normalized.signArbitration.openConflicts.length === 0
+    && normalized.signArbitration.sourceCustodyQualified === true;
   if (!signReady) blockers.push(blocker(
     EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN,
-    `WRC load/sign convention arbitration remains open (${normalized.signArbitration.openConflicts.length} recorded conflict(s)); only the pinned WRC PDF may resolve it.`,
+    `WRC load/sign convention arbitration remains open (${normalized.signArbitration.openConflicts.length} recorded conflict(s)); only the source-qualified pinned WRC PDF may resolve it.`,
     {
       status: normalized.signArbitration.status,
       resolutionAuthority: normalized.signArbitration.resolutionAuthority,
       openConflicts: normalized.signArbitration.openConflicts,
+      sourceCustodyQualified: normalized.signArbitration.sourceCustodyQualified,
     },
   ));
 
   const cauxReady = normalized.cauxBenchmark.status === 'PASS'
     && normalized.cauxBenchmark.sourceIdentityVerified === true
+    && normalized.cauxBenchmark.sourceCustodyQualified === true
+    && nonEmpty(normalized.cauxBenchmark.sourceRawPdfSha256)
     && normalized.cauxBenchmark.expectedValuesFrozen === true
     && normalized.cauxBenchmark.independentHandCalculationStatus === 'PASS'
     && nonEmpty(normalized.cauxBenchmark.benchmarkHash);
   if (!cauxReady) blockers.push(blocker(
     EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN,
-    `CAUx 2017 pp.${normalized.cauxBenchmark.pageRange} benchmark values and independent hand calculation are not frozen (benchmark=${normalized.cauxBenchmark.status}; independent=${normalized.cauxBenchmark.independentHandCalculationStatus}).`,
+    `CAUx 2017 pp.${displayPageRange(normalized.cauxBenchmark.pageRange)} benchmark values and independent hand calculation are not frozen (sourceCustody=${normalized.cauxBenchmark.sourceCustodyState}/${normalized.cauxBenchmark.sourceQualificationState}; benchmark=${normalized.cauxBenchmark.status}; independent=${normalized.cauxBenchmark.independentHandCalculationStatus}).`,
     {
       status: normalized.cauxBenchmark.status,
       sourceIdentityVerified: normalized.cauxBenchmark.sourceIdentityVerified,
+      sourceCustodyQualified: normalized.cauxBenchmark.sourceCustodyQualified,
+      sourceCustodyState: normalized.cauxBenchmark.sourceCustodyState,
+      sourceQualificationState: normalized.cauxBenchmark.sourceQualificationState,
+      sourceRawPdfSha256Present: nonEmpty(normalized.cauxBenchmark.sourceRawPdfSha256),
       pageRange: normalized.cauxBenchmark.pageRange,
       expectedValuesFrozen: normalized.cauxBenchmark.expectedValuesFrozen,
       independentHandCalculationStatus: normalized.cauxBenchmark.independentHandCalculationStatus,
       benchmarkHashPresent: nonEmpty(normalized.cauxBenchmark.benchmarkHash),
+      supplementalPrecheckVerdict: normalized.cauxBenchmark.supplementalPrecheckVerdict,
+      supplementalPrecheckMaySatisfyCauxA4: normalized.cauxBenchmark.supplementalPrecheckMaySatisfyCauxA4,
     },
   ));
 
@@ -133,6 +115,7 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     {
       engineeringUseAuthorized: normalized.methodAuthorization.engineeringUseAuthorized,
       qualificationRecordHashPresent: nonEmpty(normalized.methodAuthorization.qualificationRecordHash),
+      authoritySource: normalized.methodAuthorization.authoritySource,
     },
   ));
 
@@ -167,11 +150,22 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
 function normalizeEvidence(value) {
   if (!value || typeof value !== 'object') throw new TypeError('EMP1_C_QUALIFICATION_EVIDENCE_REQUIRED');
   return {
+    derivation: normalizeDerivation(value.derivation),
     wrcDataset: normalizeDataset(value.wrcDataset),
     signArbitration: normalizeSign(value.signArbitration),
     cauxBenchmark: normalizeCaux(value.cauxBenchmark),
     methodAuthorization: normalizeMethod(value.methodAuthorization),
     execution: normalizeExecution(value.execution),
+  };
+}
+
+function normalizeDerivation(value = {}) {
+  return {
+    mode: text(value.mode, 'CALLER_SUPPLIED_EVIDENCE'),
+    manualSummaryPermitted: value.manualSummaryPermitted === true,
+    artifactPaths: value.artifactPaths && typeof value.artifactPaths === 'object'
+      ? { ...value.artifactPaths }
+      : {},
   };
 }
 
@@ -187,6 +181,10 @@ function normalizeDataset(value = {}) {
     unresolvedCoefficientRows: count(value.unresolvedCoefficientRows),
     unresolvedParameterRows: count(value.unresolvedParameterRows),
     semanticHash: nullableText(value.semanticHash),
+    sourceCustodyQualified: value.sourceCustodyQualified === true,
+    sourceCustodyState: text(value.sourceCustodyState, 'UNRESOLVED'),
+    sourceQualificationState: text(value.sourceQualificationState, 'BLOCKED'),
+    sourceRawPdfSha256: nullableText(value.sourceRawPdfSha256),
   };
 }
 
@@ -197,6 +195,7 @@ function normalizeSign(value = {}) {
     openConflicts: Array.isArray(value.openConflicts)
       ? value.openConflicts.map((item) => text(item, 'UNRESOLVED_CONFLICT'))
       : ['UNRESOLVED_CONFLICT'],
+    sourceCustodyQualified: value.sourceCustodyQualified === true,
   };
 }
 
@@ -204,10 +203,16 @@ function normalizeCaux(value = {}) {
   return {
     status: text(value.status, 'NOT_RUN'),
     sourceIdentityVerified: value.sourceIdentityVerified === true,
+    sourceCustodyQualified: value.sourceCustodyQualified === true,
+    sourceCustodyState: text(value.sourceCustodyState, 'UNRESOLVED'),
+    sourceQualificationState: text(value.sourceQualificationState, 'BLOCKED'),
+    sourceRawPdfSha256: nullableText(value.sourceRawPdfSha256),
     pageRange: text(value.pageRange, '24-31'),
     expectedValuesFrozen: value.expectedValuesFrozen === true,
     independentHandCalculationStatus: text(value.independentHandCalculationStatus, 'NOT_RUN'),
     benchmarkHash: nullableText(value.benchmarkHash),
+    supplementalPrecheckVerdict: text(value.supplementalPrecheckVerdict, 'UNRESOLVED'),
+    supplementalPrecheckMaySatisfyCauxA4: value.supplementalPrecheckMaySatisfyCauxA4 === true,
   };
 }
 
@@ -215,6 +220,7 @@ function normalizeMethod(value = {}) {
   return {
     engineeringUseAuthorized: value.engineeringUseAuthorized === true,
     qualificationRecordHash: nullableText(value.qualificationRecordHash),
+    authoritySource: text(value.authoritySource, 'UNRESOLVED'),
   };
 }
 
@@ -240,6 +246,10 @@ function nullableText(value) {
 
 function nonEmpty(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function displayPageRange(value) {
+  return String(value ?? '').replace('-', '–');
 }
 
 function deepFreeze(value) {

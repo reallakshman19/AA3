@@ -28,8 +28,11 @@ function runPlaywright(args) {
   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
 }
 
-// The EMP.1 product contract and A-to-B evidence refresh are analytical
-// qualification prerequisites. They do not depend on the LAFEA.3 B01/B02 gate.
+// EMP.1 analytical qualification prerequisites run before Chromium and before
+// the unrelated LAFEA.3 B01/B02 gate. These checks are deterministic Node-only
+// contracts and therefore remain observable even when browser provisioning is
+// unavailable.
+runNodeScript('scripts/emp1-c-qualification-state-check.mjs');
 runNodeScript('scripts/emp1-public-product-check.mjs');
 runNodeScript('scripts/emp1-a-to-b-refresh-check.mjs');
 

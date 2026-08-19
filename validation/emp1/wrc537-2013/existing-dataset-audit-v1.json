@@ -1,0 +1,73 @@
+{
+  "schema": "emp1-wrc-existing-dataset-audit/v1",
+  "basis": {
+    "repository": "reallaksh19/Advanced_Analysis",
+    "commit": "67317dc9cb47de8897fa7952b86107ab91b1f75c",
+    "methodDefinitionBlob": "69e6e83ab82a0287a2a8277b62e7e223f05befe1",
+    "datasetBlob": "0ffdc3f54adc0ff8025c4b3d2629272bab6860b4",
+    "numericalTablesBlob": "a787f9417c3406392bdf052d66fc9f7d1efcf11e"
+  },
+  "observationMethod": "DIRECT_GITHUB_BLOB_INSPECTION",
+  "status": "BLOCKED",
+  "expectedCheckerStatus": "BLOCKED",
+  "metrics": {
+    "methodStatus": "NOT_READY_FOR_IMPLEMENTATION",
+    "datasetExtractionStatus": "NOT_READY_FOR_IMPLEMENTATION",
+    "semanticHash": null,
+    "numericalDataCount": 0,
+    "unresolvedJsonPathCount": 21,
+    "openIssueCount": 7,
+    "numericalCsvDataRows": 120,
+    "numericCoefficientRows": 0,
+    "unresolvedCoefficientRows": 120,
+    "unresolvedParameter3Rows": 120,
+    "reviewStatusCounts": {
+      "EXTRACTED": 120
+    }
+  },
+  "unresolvedJsonPaths": [
+    "$.geometryDefinitions[7].definition",
+    "$.dimensionlessParameters[1].minimumInclusive",
+    "$.dimensionlessParameters[1].maximumInclusive",
+    "$.dimensionlessParameters[2].minimumInclusive",
+    "$.dimensionlessParameters[2].maximumInclusive",
+    "$.dimensionlessParameters[3].equation",
+    "$.dimensionlessParameters[3].inputs[0]",
+    "$.dimensionlessParameters[4].equation",
+    "$.dimensionlessParameters[4].inputs[0]",
+    "$.loads[5].positive",
+    "$.loads[7].positive",
+    "$.loads[8].positive",
+    "$.loads[9].positive",
+    "$.loads[10].positive",
+    "$.loads[11].positive",
+    "$.stressDefinitions[0].laffeaMapping",
+    "$.stressDefinitions[1].laffeaMapping",
+    "$.stressDefinitions[2].laffeaMapping",
+    "$.stressDefinitions[3].laffeaMapping",
+    "$.coefficientFamilies[8].symbol",
+    "$.coefficientFamilies[8].params[0]"
+  ],
+  "openIssues": [
+    "Curve-fit equation Y exact form (CONFIRMED: 9th-order polynomial in U with 10 coefficients a-j)",
+    "Numerical coefficient values a-j for all SP/SM tables",
+    "Cylindrical shell parameters lambda and delta",
+    "Sign convention tables (Table 1, Table 4) direct verification",
+    "Bulletin's own published numerical examples",
+    "Edition/page reconciliation",
+    "LAFEA canonical mapping"
+  ],
+  "expectedBlockerCodes": [
+    "BLOCK_METHOD_DEFINITION_STATUS",
+    "BLOCK_DATASET_EXTRACTION_STATUS",
+    "BLOCK_PRIMARY_SOURCE_NOT_AVAILABLE_TO_EXTRACTOR",
+    "BLOCK_DATASET_SEMANTIC_HASH_MISSING",
+    "BLOCK_DATASET_NUMERICAL_DATA_EMPTY",
+    "BLOCK_UNRESOLVED_DATASET_FIELDS",
+    "BLOCK_DATASET_OPEN_ISSUES",
+    "BLOCK_NO_NUMERIC_COEFFICIENT_VALUES",
+    "BLOCK_UNRESOLVED_COEFFICIENT_VALUES",
+    "BLOCK_UNRESOLVED_PARAMETER_VALUES"
+  ],
+  "authorityNote": "This is a frozen pre-execution expectation derived from direct inspection of the pinned text blobs. It is not WRC production authority and must not be rewritten merely because a later checker/production result differs."
+}

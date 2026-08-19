@@ -6,7 +6,8 @@ import {
 } from './sparse-matrix.js';
 
 const POST_CAP_REFINEMENT_LIMIT = 3;
-const POST_CAP_REFINEMENT_METHOD = 'JACOBI_SCALED_MINIMUM_RESIDUAL_RICHARDSON';
+const POST_CAP_REFINEMENT_METHOD = 'JACOBI_SCALED_KRYLOV2_MINIMUM_RESIDUAL';
+const POST_CAP_KRYLOV2_MIN_DETERMINANT = 4096 * Number.EPSILON;
 const ERROR_FREE_PRODUCT_RESIDUAL = 'ERROR_FREE_PRODUCT_EXPANSION';
 const COMPENSATED_CSR_RESIDUAL = 'COMPENSATED_CSR';
 
@@ -71,7 +72,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
           diagonalScale,
           diagonalTolerance,
           matrix.diagonal,
-          terminalEvidence(COMPENSATED_CSR_RESIDUAL, 0, [originalResidualInfinity]),
+          terminalEvidence(COMPENSATED_CSR_RESIDUAL, 0, [originalResidualInfinity], []),
         );
       }
     }
@@ -91,43 +92,29 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   let exact = exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution);
   originalResidualInfinity = maxAbs(exact);
   const refinementHistory = [originalResidualInfinity];
+  const refinementDimensions = [];
   let refinementSteps = 0;
 
   while (originalResidualInfinity > convergenceTarget
     && refinementSteps < POST_CAP_REFINEMENT_LIMIT) {
-    // Work in the same Jacobi-scaled coordinates used by CG. The direction is
-    // the current exact residual and alpha is the one-dimensional minimizer of
-    // ||r_hat - alpha A_hat r_hat||_2. No matrix, load, tolerance or iteration
-    // budget is changed; candidate steps are retained only when the independent
-    // error-free-product residual oracle strictly decreases.
-    const scaledExact = exact.map(
-      (value, index) => value * inverseSqrtDiagonal[index],
+    // Work in the same Jacobi-scaled coordinates used by CG. The bounded
+    // correction is sought in K2(A_hat,r_hat)=span{r_hat,A_hat r_hat}; its
+    // coefficients minimize the scaled residual 2-norm over the corresponding
+    // action space span{A_hat r_hat,A_hat^2 r_hat}. If those two action vectors
+    // are numerically dependent, fall back deterministically to the original
+    // one-dimensional minimum-residual direction. No matrix, load, tolerance or
+    // iteration budget is changed. A candidate is retained only when the
+    // independent error-free-product residual infinity norm strictly decreases.
+    const candidate = krylovTwoMinimumResidualCandidate(
+      matrix,
+      scaledSolution,
+      exact,
+      inverseSqrtDiagonal,
     );
-    const unscaledRefinementDirection = scaledExact.map(
-      (value, index) => value * inverseSqrtDiagonal[index],
+    const candidateSolution = unscaleSolution(
+      candidate.scaledSolution,
+      inverseSqrtDiagonal,
     );
-    const unscaledAction = sparseMatrixVectorRaw(matrix, unscaledRefinementDirection);
-    const scaledAction = unscaledAction.map(
-      (value, index) => value * inverseSqrtDiagonal[index],
-    );
-    const numerator = compensatedDot(scaledAction, scaledExact);
-    const denominator = compensatedDot(scaledAction, scaledAction);
-    if (!(denominator > 0) || !Number.isFinite(denominator)
-      || !Number.isFinite(numerator)) {
-      throw solverError(
-        'JACOBI_EQUILIBRATED_CG_REFINEMENT_INVALID',
-        `${numerator}/${denominator}`,
-      );
-    }
-    const alpha = numerator / denominator;
-    if (!Number.isFinite(alpha)) {
-      throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_ALPHA_INVALID', alpha);
-    }
-
-    const candidateScaled = scaledSolution.map(
-      (value, index) => value + alpha * scaledExact[index],
-    );
-    const candidateSolution = unscaleSolution(candidateScaled, inverseSqrtDiagonal);
     const candidateExact = exactOriginalResidualDoubleDouble(
       matrix,
       rightHandSide,
@@ -137,19 +124,20 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     if (!(candidateInfinity < originalResidualInfinity)) break;
 
     for (let index = 0; index < scaledSolution.length; index += 1) {
-      scaledSolution[index] = candidateScaled[index];
+      scaledSolution[index] = candidate.scaledSolution[index];
     }
     solution = candidateSolution;
     exact = candidateExact;
     originalResidualInfinity = candidateInfinity;
     refinementSteps += 1;
     refinementHistory.push(candidateInfinity);
+    refinementDimensions.push(candidate.dimension);
   }
 
   if (originalResidualInfinity > convergenceTarget) {
     throw solverError(
       'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',
-      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} post-cap minimum-residual steps; history=${refinementHistory.join(',')}`,
+      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} post-cap Krylov minimum-residual steps; history=${refinementHistory.join(',')}; dimensions=${refinementDimensions.join(',')}`,
     );
   }
   return result(
@@ -163,7 +151,122 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
     diagonalScale,
     diagonalTolerance,
     matrix.diagonal,
-    terminalEvidence(ERROR_FREE_PRODUCT_RESIDUAL, refinementSteps, refinementHistory),
+    terminalEvidence(
+      ERROR_FREE_PRODUCT_RESIDUAL,
+      refinementSteps,
+      refinementHistory,
+      refinementDimensions,
+    ),
+  );
+}
+
+function krylovTwoMinimumResidualCandidate(
+  matrix,
+  scaledSolution,
+  exactResidual,
+  inverseSqrtDiagonal,
+) {
+  const scaledResidual = exactResidual.map(
+    (value, index) => value * inverseSqrtDiagonal[index],
+  );
+  const action1 = scaledMatrixAction(matrix, scaledResidual, inverseSqrtDiagonal);
+  const action1NormSquared = compensatedDot(action1, action1);
+  if (!(action1NormSquared > 0) || !Number.isFinite(action1NormSquared)) {
+    throw solverError(
+      'JACOBI_EQUILIBRATED_CG_REFINEMENT_ACTION_INVALID',
+      action1NormSquared,
+    );
+  }
+
+  const action2 = scaledMatrixAction(matrix, action1, inverseSqrtDiagonal);
+  const action2NormSquared = compensatedDot(action2, action2);
+  if (!(action2NormSquared > 0) || !Number.isFinite(action2NormSquared)) {
+    return oneDimensionalMinimumResidualCandidate(
+      scaledSolution,
+      scaledResidual,
+      action1,
+      action1NormSquared,
+    );
+  }
+
+  const action1Norm = Math.sqrt(action1NormSquared);
+  const action2Norm = Math.sqrt(action2NormSquared);
+  const normalizedCross = compensatedDot(action1, action2) / (action1Norm * action2Norm);
+  if (!Number.isFinite(normalizedCross)) {
+    throw solverError(
+      'JACOBI_EQUILIBRATED_CG_REFINEMENT_KRYLOV2_CROSS_INVALID',
+      normalizedCross,
+    );
+  }
+  const determinant = 1 - normalizedCross * normalizedCross;
+  if (!(determinant > POST_CAP_KRYLOV2_MIN_DETERMINANT)) {
+    return oneDimensionalMinimumResidualCandidate(
+      scaledSolution,
+      scaledResidual,
+      action1,
+      action1NormSquared,
+    );
+  }
+
+  const rhs1 = compensatedDot(action1, scaledResidual) / action1Norm;
+  const rhs2 = compensatedDot(action2, scaledResidual) / action2Norm;
+  if (!Number.isFinite(rhs1) || !Number.isFinite(rhs2)) {
+    throw solverError(
+      'JACOBI_EQUILIBRATED_CG_REFINEMENT_KRYLOV2_RHS_INVALID',
+      `${rhs1}/${rhs2}`,
+    );
+  }
+  const normalizedCoefficient1 = (rhs1 - normalizedCross * rhs2) / determinant;
+  const normalizedCoefficient2 = (rhs2 - normalizedCross * rhs1) / determinant;
+  const alpha = normalizedCoefficient1 / action1Norm;
+  const beta = normalizedCoefficient2 / action2Norm;
+  if (!Number.isFinite(alpha) || !Number.isFinite(beta)) {
+    throw solverError(
+      'JACOBI_EQUILIBRATED_CG_REFINEMENT_KRYLOV2_COEFFICIENT_INVALID',
+      `${alpha}/${beta}`,
+    );
+  }
+
+  return Object.freeze({
+    dimension: 2,
+    scaledSolution: scaledSolution.map(
+      (value, index) => value + alpha * scaledResidual[index] + beta * action1[index],
+    ),
+  });
+}
+
+function oneDimensionalMinimumResidualCandidate(
+  scaledSolution,
+  scaledResidual,
+  action,
+  actionNormSquared,
+) {
+  const numerator = compensatedDot(action, scaledResidual);
+  if (!Number.isFinite(numerator)) {
+    throw solverError(
+      'JACOBI_EQUILIBRATED_CG_REFINEMENT_KRYLOV1_RHS_INVALID',
+      numerator,
+    );
+  }
+  const alpha = numerator / actionNormSquared;
+  if (!Number.isFinite(alpha)) {
+    throw solverError('JACOBI_EQUILIBRATED_CG_REFINEMENT_ALPHA_INVALID', alpha);
+  }
+  return Object.freeze({
+    dimension: 1,
+    scaledSolution: scaledSolution.map(
+      (value, index) => value + alpha * scaledResidual[index],
+    ),
+  });
+}
+
+function scaledMatrixAction(matrix, scaledVector, inverseSqrtDiagonal) {
+  const unscaledVector = scaledVector.map(
+    (value, index) => value * inverseSqrtDiagonal[index],
+  );
+  const unscaledAction = sparseMatrixVectorRaw(matrix, unscaledVector);
+  return unscaledAction.map(
+    (value, index) => value * inverseSqrtDiagonal[index],
   );
 }
 
@@ -205,17 +308,24 @@ function result(
         : 'NOT_REQUIRED',
       postCapRefinementLimit: POST_CAP_REFINEMENT_LIMIT,
       postCapRefinementSteps: terminal.refinementSteps,
+      postCapRefinementDimensions: terminal.refinementDimensions,
       postCapResidualHistory: terminal.residualHistory,
       accepted: true,
     },
   };
 }
 
-function terminalEvidence(residualArithmetic, refinementSteps, residualHistory) {
+function terminalEvidence(
+  residualArithmetic,
+  refinementSteps,
+  residualHistory,
+  refinementDimensions,
+) {
   return Object.freeze({
     residualArithmetic,
     refinementSteps,
     residualHistory: Object.freeze(residualHistory.map((value) => canonicalNumber(value))),
+    refinementDimensions: Object.freeze([...refinementDimensions]),
   });
 }
 

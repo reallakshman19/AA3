@@ -3,9 +3,6 @@ import { refinementTransitionLadder } from '../core/lafea-meshing/refinement-fie
 import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contract/index.js';
 import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { button, node, region } from './lafea-discretization-dom.js';
-import {
-  LAFEA_RETAINED_MESH_REFINEMENT_POLICY,
-} from './lafea-retained-mesh-refinement.js';
 
 const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v4';
 const SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
@@ -458,14 +455,15 @@ function refinementSizingPolicy(model, productActive) {
   if (!(globalTarget > 0 && growthRatioMax > 1)) return null;
 
   if (model.stageId === 'LAFEA.3' && !productActive) {
-    const minimumTargetRatio = LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumTargetRatio;
+    const minimumTargetRatio = Number(model.generation.lafea3MinimumLocalTargetRatio);
+    if (!(minimumTargetRatio > 0 && minimumTargetRatio < 1)) return null;
     return Object.freeze({
       stageId: 'LAFEA.3',
       globalTarget,
       growthRatioMax,
       minimumTargetRatio,
       minimumLocalTarget: globalTarget * minimumTargetRatio,
-      basis: 'LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumTargetRatio',
+      basis: 'LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumTargetRatio projected by view model',
       transitionScope: 'GRADED_PREVIEW_ACTUAL_CHILD_MUST_PASS_ADJACENT_SIZE_RATIO',
     });
   }

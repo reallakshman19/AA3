@@ -11,9 +11,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
+import { BM4_REPAIRED_PATH, BM4_SOURCE_PATH } from './lfea-bm4-cii-output-comparison.mjs';
 import { prepareLinearPipingInputXmlPreFlight } from '../src/workspace/linear-piping-inputxml-prefea.js';
 import { createLfeaPipelineAnalysisController } from '../src/workspace/lfea-pipeline-analysis-controller.js';
 import { buildLfeaPipelineLayoutGrid } from '../src/workspace/lfea-pipeline-layout-grid.js';
+import {
+  findInputXmlBacktrackingElements,
+  repairInputXmlCollinearBacktracks,
+} from '../src/core/geometry/adapters/inputxml-collinear-backtrack-repair.js';
 import {
   reviewInputXmlLinearUnilateralRestraints,
   unilateralRestraintReviewSummary,
@@ -130,6 +135,40 @@ assert.match(labels, /gap/u, 'closed gaps must be visible in the layout');
 
 // An empty projection must be empty, not a crash or a fabricated row.
 assert.equal(buildLfeaPipelineLayoutGrid(null).rows.length, 0);
+
+// ---------------------------------------------------------------------------
+// The in-app source correction, on the model AS RECEIVED.
+// ---------------------------------------------------------------------------
+// The repaired benchmark file being committed is not the same thing as the
+// product offering the correction: a user loads their real file. This asserts
+// the rule the panel runs finds the fault in the as-received model and clears
+// it, so the fix is reachable from the UI and not only from a build script.
+const asReceived = readFileSync(BM4_SOURCE_PATH, 'utf8');
+const candidates = findInputXmlBacktrackingElements(asReceived);
+assert.equal(candidates.length, 3, 'the as-received BM4 has three backtracking elements');
+for (const candidate of candidates) {
+  assert.ok(candidate.length <= 25, 'the rule stays inside its declared bound');
+  assert.ok(candidate.vector.some((value) => value !== 0));
+}
+const repairedInMemory = repairInputXmlCollinearBacktracks(asReceived);
+assert.equal(repairedInMemory.repairs.length, 3);
+assert.equal(findInputXmlBacktrackingElements(repairedInMemory.xml).length, 0,
+  'the correction must be idempotent -- nothing is left for a second pass');
+// Byte-identical to the committed repaired variant: one rule, one result.
+assert.equal(repairedInMemory.xml, readFileSync(BM4_REPAIRED_PATH, 'utf8'),
+  'the in-app correction must produce exactly the committed repaired model');
+
+// It must clear the blocking findings on the real file, not merely change bytes.
+const repairedPreFlight = prepareLinearPipingInputXmlPreFlight(createLinearPipingInputXmlIntake(
+  { fileName: 'corrected.xml', content: repairedInMemory.xml }, { requestedCaseIds: CASES }));
+assert.notEqual(repairedPreFlight.status, 'BLOCK', 'the correction must clear the overlap BLOCK');
+assert.equal(
+  (repairedPreFlight.preparation.findings ?? []).filter((row) => row.disposition === 'BLOCK').length,
+  0,
+);
+
+// A model without the fault must yield no candidates, so the panel stays quiet.
+assert.equal(findInputXmlBacktrackingElements(repairedInMemory.xml).length, 0);
 
 console.log(JSON.stringify({
   check: 'lfea-pipeline-analysis',

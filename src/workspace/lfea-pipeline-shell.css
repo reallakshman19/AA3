@@ -428,3 +428,22 @@
   color: #8ca0b8;
   font-size: 11px;
 }
+
+/* ---- Input vs Error check ----
+   Both steps render into the SOURCE host, but they answer different
+   questions. Input is the file and the statistics read from it; Error check is
+   the review of what those mean and what to do about it. Showing findings on
+   Input made the two steps indistinguishable. */
+[data-host-group="SOURCE"][data-active-step="INPUT"]
+  [data-role="linear-piping-inputxml-review"],
+[data-host-group="SOURCE"][data-active-step="INPUT"]
+  [data-role="lfea-pipeline-model-repair-panel"] {
+  display: none;
+}
+
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-stagedjson-input-panel"],
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-accdb-input-panel"] {
+  display: none;
+}

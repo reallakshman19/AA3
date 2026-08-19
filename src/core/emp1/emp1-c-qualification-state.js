@@ -24,6 +24,7 @@ export const EMP1_C_CURRENT_QUALIFICATION_EVIDENCE = deepFreeze({
     unresolvedJsonPathCount: 21,
     openIssueCount: 7,
     numericalDataCount: 0,
+    coefficientInventoryRows: 120,
     numericCoefficientRows: 0,
     unresolvedCoefficientRows: 120,
     unresolvedParameterRows: 120,
@@ -77,13 +78,15 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     },
   ));
 
-  const coefficientsReady = normalized.wrcDataset.numericCoefficientRows > 0
+  const coefficientsReady = normalized.wrcDataset.coefficientInventoryRows > 0
+    && normalized.wrcDataset.numericCoefficientRows === normalized.wrcDataset.coefficientInventoryRows
     && normalized.wrcDataset.unresolvedCoefficientRows === 0
     && normalized.wrcDataset.unresolvedParameterRows === 0;
   if (!coefficientsReady) blockers.push(blocker(
     EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING,
-    `WRC a–j numerical coefficient payload is not qualified (${normalized.wrcDataset.numericCoefficientRows} numeric coefficient rows; ${normalized.wrcDataset.unresolvedCoefficientRows} unresolved coefficient rows; ${normalized.wrcDataset.unresolvedParameterRows} unresolved parameter rows).`,
+    `WRC a–j numerical coefficient payload is not qualified (${normalized.wrcDataset.numericCoefficientRows}/${normalized.wrcDataset.coefficientInventoryRows} retained coefficient rows numeric; ${normalized.wrcDataset.unresolvedCoefficientRows} unresolved coefficient rows; ${normalized.wrcDataset.unresolvedParameterRows} unresolved parameter rows).`,
     {
+      coefficientInventoryRows: normalized.wrcDataset.coefficientInventoryRows,
       numericCoefficientRows: normalized.wrcDataset.numericCoefficientRows,
       unresolvedCoefficientRows: normalized.wrcDataset.unresolvedCoefficientRows,
       unresolvedParameterRows: normalized.wrcDataset.unresolvedParameterRows,
@@ -179,6 +182,7 @@ function normalizeDataset(value = {}) {
     unresolvedJsonPathCount: count(value.unresolvedJsonPathCount),
     openIssueCount: count(value.openIssueCount),
     numericalDataCount: count(value.numericalDataCount),
+    coefficientInventoryRows: count(value.coefficientInventoryRows),
     numericCoefficientRows: count(value.numericCoefficientRows),
     unresolvedCoefficientRows: count(value.unresolvedCoefficientRows),
     unresolvedParameterRows: count(value.unresolvedParameterRows),

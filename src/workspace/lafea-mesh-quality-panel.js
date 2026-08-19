@@ -7,6 +7,7 @@
  */
 
 const SEVERITY = Object.freeze({ OK: 0, WARNING: 1, BLOCK: 2 });
+const MAX_INLINE_FOCUS_ACTIONS = 6;
 
 const METRIC_LABELS = Object.freeze({
   ASPECT_RATIO: 'Aspect ratio',
@@ -33,8 +34,12 @@ const METRIC_UNITS = Object.freeze({
 /**
  * Build a display model from retained gate evidence.
  *
+ * `context.quality`, when supplied, is the already-retained quality object and
+ * is used only to associate a non-OK aggregate gate with the affected retained
+ * element IDs. It does not recompute or reclassify any engineering metric.
+ *
  * @param {readonly object[]} gateResults Results from the governed quality-gate package.
- * @param {{stageId: string, meshProfileIdentity: string}} context Retained parent identities.
+ * @param {{stageId: string, meshProfileIdentity: string, quality?: object|null}} context Retained parent identities.
  * @returns {Readonly<Record<string, unknown>>}
  */
 export function buildMeshQualityPanel(gateResults, context) {
@@ -43,7 +48,7 @@ export function buildMeshQualityPanel(gateResults, context) {
   }
   requireText(context?.stageId, 'stageId');
   requireText(context?.meshProfileIdentity, 'meshProfileIdentity');
-  const rows = gateResults.map((result, index) => toRow(result, index));
+  const rows = gateResults.map((result, index) => toRow(result, index, context?.quality ?? null));
   const worst = rows.reduce(
     (current, row) => (SEVERITY[row.status] > SEVERITY[current] ? row.status : current),
     'OK',
@@ -62,7 +67,7 @@ export function buildMeshQualityPanel(gateResults, context) {
   });
 }
 
-function toRow(result, index) {
+function toRow(result, index, quality) {
   const path = `meshQuality.gateResults[${index}]`;
   const metric = result?.metric;
   if (typeof metric !== 'string' || !metric) {
@@ -85,7 +90,43 @@ function toRow(result, index) {
     status: result.status,
     threshold: thresholdOf(result),
     sourcePath: `${path}.value`,
+    affectedElementIds: Object.freeze(affectedElementIds(result, quality)),
   });
+}
+
+function affectedElementIds(result, quality) {
+  if (result.status === 'OK' || !quality || typeof quality !== 'object') return [];
+  if (['ASPECT_RATIO', 'MINIMUM_ANGLE_DEGREES', 'SCALED_JACOBIAN'].includes(result.metric)) {
+    return uniqueSorted((quality.elementResults ?? [])
+      .filter((element) => element.metrics?.some((metric) => (
+        metric.metric === result.metric && metric.status === result.status
+      )))
+      .map((element) => element.elementId));
+  }
+  if (result.metric === 'ADJACENT_SIZE_RATIO') {
+    return uniqueSorted((quality.adjacentSizeRatio?.violatingAdjacencies ?? [])
+      .flatMap((row) => row.elementIds ?? []));
+  }
+  if (result.metric === 'SHELL_ORIENTATION_TOPOLOGY') {
+    return shellTopologyElementIds(quality);
+  }
+  return [];
+}
+
+function shellTopologyElementIds(quality) {
+  const shell = quality.shellOrientationTopology;
+  if (!shell || shell.qualification === 'PASS') return [];
+  if (shell.state === 'DISCONNECTED_PATCHES') {
+    return uniqueSorted((quality.elementResults ?? []).map((element) => element.elementId));
+  }
+  return uniqueSorted([
+    ...(shell.elementsRequiringFlip ?? []),
+    ...(shell.nonManifoldEdges ?? []).flatMap((edge) => edge.elementIds ?? []),
+  ]);
+}
+
+function uniqueSorted(values) {
+  return [...new Set(values.filter((value) => typeof value === 'string' && value))].sort();
 }
 
 function thresholdOf(result) {
@@ -118,7 +159,7 @@ function requireText(value, key) {
  *
  * @param {Element} rootElement Target DOM host.
  * @param {object|null} panel Retained panel model or null.
- * @param {{stageId?: string, documentValue?: object}} options Display context.
+ * @param {{stageId?: string, documentValue?: object, onFocusElement?: Function}} options Display context.
  */
 export function renderMeshQualityPanel(rootElement, panel, options = {}) {
   if (!rootElement) return;
@@ -168,16 +209,48 @@ export function renderMeshQualityPanel(rootElement, panel, options = {}) {
   const list = documentRef.createElement('ul');
   list.className = 'lafea-mesh-quality-panel__list';
   for (const row of panel.rows) {
-    const item = documentRef.createElement('li');
-    item.className = `lafea-mesh-quality-panel__row lafea-mesh-quality-panel__row--${row.status.toLowerCase()}`;
-    const threshold = row.threshold ? `; retained gate ${row.threshold}` : '';
-    item.textContent = `${row.label}: ${row.value} ${row.unit}${threshold} [${row.status}]`;
-    item.dataset.sourcePath = row.sourcePath;
-    list.append(item);
+    list.append(renderQualityRow(documentRef, row, options.onFocusElement));
   }
 
   container.append(header, list);
   rootElement.append(container);
+}
+
+function renderQualityRow(documentRef, row, onFocusElement) {
+  const item = documentRef.createElement('li');
+  item.className = `lafea-mesh-quality-panel__row lafea-mesh-quality-panel__row--${row.status.toLowerCase()}`;
+  item.dataset.sourcePath = row.sourcePath;
+  item.dataset.metric = row.metric;
+  const threshold = row.threshold ? `; retained gate ${row.threshold}` : '';
+  const value = documentRef.createElement('span');
+  value.textContent = `${row.label}: ${row.value} ${row.unit}${threshold} [${row.status}]`;
+  item.append(value);
+
+  if (row.status !== 'OK' && row.affectedElementIds.length && typeof onFocusElement === 'function') {
+    const actions = documentRef.createElement('span');
+    actions.className = 'lafea-mesh-quality-panel__focus-actions';
+    actions.setAttribute('aria-label', `${row.label} affected mesh elements`);
+    const visibleIds = row.affectedElementIds.slice(0, MAX_INLINE_FOCUS_ACTIONS);
+    for (const elementId of visibleIds) {
+      const focus = documentRef.createElement('button');
+      focus.type = 'button';
+      focus.className = 'lafea-mesh-quality-panel__focus';
+      focus.dataset.role = 'lafea-quality-row-focus-element';
+      focus.dataset.metric = row.metric;
+      focus.dataset.elementId = String(elementId);
+      focus.textContent = `Focus ${elementId}`;
+      focus.title = `Focus retained element ${elementId} associated with this ${row.status.toLowerCase()} quality finding.`;
+      focus.addEventListener('click', () => onFocusElement(elementId));
+      actions.append(focus);
+    }
+    if (row.affectedElementIds.length > visibleIds.length) {
+      const more = documentRef.createElement('span');
+      more.textContent = ` +${row.affectedElementIds.length - visibleIds.length} more`; 
+      actions.append(more);
+    }
+    item.append(actions);
+  }
+  return item;
 }
 
 function summarizeConfig(meshConfig) {

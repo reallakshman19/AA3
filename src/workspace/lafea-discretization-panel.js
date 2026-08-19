@@ -92,8 +92,17 @@ function qualitySection(doc, model, handlers) {
 
   const qualityHost = node(doc, 'div');
   qualityHost.dataset.role = 'lafea-discretization-quality';
-  renderMeshQualityPanel(qualityHost, model.evidence.qualityPanel, { stageId: model.stageId });
+  renderMeshQualityPanel(qualityHost, model.evidence.qualityPanel, {
+    stageId: model.stageId,
+    onFocusElement: handlers.onFocusElement,
+  });
   section.append(qualityHost);
+  const mappingInspection = mappingInspectionSection(
+    doc,
+    model.evidence.mappingInspection,
+    handlers.onFocusElement,
+  );
+  if (mappingInspection) section.append(mappingInspection);
   section.append(findingList(
     doc,
     'Warning elements',
@@ -109,6 +118,83 @@ function qualitySection(doc, model, handlers) {
     handlers.onFocusElement,
   ));
   return section;
+}
+
+function mappingInspectionSection(doc, inspection, onFocus) {
+  if (!inspection) return null;
+  const section = node(doc, 'div', 'lafea-discretization__mapping-inspection');
+  section.dataset.role = 'lafea-high-order-mapping-inspection';
+  section.dataset.authority = inspection.authority;
+  section.append(
+    node(doc, 'h4', null, 'High-order mapping inspection'),
+    node(
+      doc,
+      'p',
+      'lafea-discretization__status',
+      'Derived from the retained T6/Q8 mesh on the same corner + formulation integration-point sampling used by scaled Jacobian. No qualified determinant-ratio limit is applied; this observation does not change mesh PASS/WARNING/BLOCK.',
+    ),
+  );
+  const determinantUnit = inspection.lengthUnit
+    ? `${inspection.lengthUnit}²`
+    : 'model-length²';
+  const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  const values = [
+    ['High-order elements inspected', String(inspection.elementCount)],
+    ['Jacobian samples', String(inspection.sampleCount)],
+    ['Minimum det(J)', `${inspection.minimumDeterminant} ${determinantUnit}`],
+    ['Maximum det(J)', `${inspection.maximumDeterminant} ${determinantUnit}`],
+    [
+      'Minimum positive det(J) ratio',
+      inspection.minimumPositiveDeterminantRatio === null
+        ? 'Not defined — at least one inspected mapping is nonpositive'
+        : String(inspection.minimumPositiveDeterminantRatio),
+    ],
+    ['Nonpositive det(J) samples', String(inspection.nonPositiveSampleCount)],
+  ];
+  values.forEach(([label, value]) => {
+    facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value));
+  });
+  section.append(facts);
+  section.append(inspectionFocus(
+    doc,
+    'Focus minimum-det(J) element',
+    inspection.minimumDeterminantElementIds,
+    'minimum-detj',
+    onFocus,
+  ));
+  if (inspection.minimumPositiveRatioElementIds.length) {
+    section.append(inspectionFocus(
+      doc,
+      'Focus minimum det(J)-ratio element',
+      inspection.minimumPositiveRatioElementIds,
+      'minimum-detj-ratio',
+      onFocus,
+    ));
+  }
+  if (inspection.nonPositiveElementIds.length) {
+    section.append(inspectionFocus(
+      doc,
+      'Focus nonpositive-mapping element',
+      inspection.nonPositiveElementIds,
+      'nonpositive-detj',
+      onFocus,
+    ));
+  }
+  return section;
+}
+
+function inspectionFocus(doc, label, ids, kind, onFocus) {
+  const row = node(doc, 'div', 'lafea-discretization__findings');
+  if (!ids.length) return row;
+  row.append(node(doc, 'span', null, `${label}: `));
+  ids.forEach((id) => {
+    const focus = button(doc, String(id), () => onFocus?.(id));
+    focus.dataset.role = 'lafea-mapping-inspection-focus-element';
+    focus.dataset.kind = kind;
+    focus.dataset.elementId = String(id);
+    row.append(focus);
+  });
+  return row;
 }
 
 function primaryActionSection(doc, model, handlers) {

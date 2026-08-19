@@ -1,0 +1,30 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1259
+claim_state: ACTIVE
+files:
+  exact:
+    - src/core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js
+    - scripts/lafea-b02d-v2-preobservation-quality-check.mjs
+    - validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json
+    - src/workspace/lafea-mesh-producer-binding.js
+    - agents/PR1259_workreport.md
+    - agents/status/PR1259.yaml
+    - agents/claims/PR1259.yaml
+authority_domains:
+  - B02D_V2_FROZEN_MESH_QUALIFICATION
+  - B02D_V2_RESPONSE_QUALIFICATION
+  - QUALIFICATION_ONLY_PRODUCER_SELECTION
+claim_modes:
+  - EXCLUSIVE_WRITE
+  - SHARED_READ
+excluded_authority:
+  - B01_NUMERICAL_CHANGES
+  - V1_REPLACEMENT
+  - MESH_QUALITY_THRESHOLD_CHANGES
+  - RESPONSE_ACCEPTANCE_THRESHOLD_CHANGES
+  - RELEASE_AUTHORITY
+  - LIFECYCLE_AUTHORITY
+  - TRUST_ROOT
+  - WORKFLOW_MUTATION
+initial_production_head: 7e057ee2ca3db96209c8a7633e3c1d9c5b6ed348
+merge_authority: NOT_GRANTED

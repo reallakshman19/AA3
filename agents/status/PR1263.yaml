@@ -4,7 +4,7 @@ pr_or_wip: PR1263
 mission: EMP.1 source custody, qualification, unified analytical assessment
 workstream: EMP1
 branch: agent/emp1-core-scaffold-issue1261
-pr_head: fb2753b13c8326705d7c716448fa34109b3bc959
+pr_head: e5dee9ab6cdd61dd84ed8c77a767c52530b59dd9
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,7 +12,7 @@ agent_state: ACTIVE
 pr_recovery_state: RECOVERABLE
 handover_readiness: READY
 report_path: agents/PR1263_workreport.md
-report_head: fb2753b13c8326705d7c716448fa34109b3bc959
+report_basis_head: fb2753b13c8326705d7c716448fa34109b3bc959
 appendix_a_status: BLOCKED_SOURCE_CUSTODY
 grounding_epoch: GE-002
 current_stage: SOURCE_CUSTODY
@@ -22,5 +22,11 @@ dependencies:
   - issue: 1261
   - source_repo: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55
   - main_reconciliation: required_before_production_integration
+validation_state:
+  local_custody_self_test: PASS
+  local_node_syntax: PASS
+  raw_pdf_sha256: NOT_RUN
+  caux_pages_24_31: NOT_RUN
+  remote_ci: NOT_RUN
 exact_next_action: obtain exact pinned PDF bytes and freeze independently reviewed raw SHA-256 values
-last_updated: 2026-08-19T08:47:00+04:00
+last_updated: 2026-08-19T08:50:00+04:00

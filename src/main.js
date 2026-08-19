@@ -36,11 +36,6 @@ import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping
 import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-piping-inputxml-source-workflow.js';
 import { mountLfeaPipelineStagedJsonInputPanel } from './workspace/lfea-pipeline-stagedjson-input-panel.js';
 import { mountLfeaPipelineAccdbInputPanel } from './workspace/lfea-pipeline-accdb-input-panel.js';
-import { mountLfeaPipelineLoadCaseAuthoringPanel } from './workspace/lfea-pipeline-load-case-authoring-panel.js';
-import { mountLfeaPipelineCaseSelectionPanel } from './workspace/lfea-pipeline-case-selection-panel.js';
-import { mountLfeaPipelineResultsPanel } from './workspace/lfea-pipeline-results-panel.js';
-import { mountLfeaPipelineLayoutPanel } from './workspace/lfea-pipeline-layout-panel.js';
-import { createLfeaPipelineAnalysisController } from './workspace/lfea-pipeline-analysis-controller.js';
 import { mountLfeaPipelineVerificationDrawer } from './workspace/lfea-pipeline-verification-drawer.js';
 import { mergeAuthoredInputXmlLinearPhysicalCase } from './core/linear-piping-analysis-consumer/inputxml-linear-authored-physical-cases.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
@@ -82,29 +77,29 @@ const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipel
 const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
 });
-const lfeaAnalysisController = createLfeaPipelineAnalysisController({});
-// The Load-case step leads with the model's own standard analysis cases
-// (W / W+P1 / W+T1 / W+P1+T1). Authored nodal loads stay available below
-// them for wind or seismic point loads, but they are not the headline: a
-// piping engineer picks a case, they do not type force components.
-const lfeaCaseSelectionPanel = mountLfeaPipelineCaseSelectionPanel(lfeaPipelineShell.getLoadCaseHost(), {
-  documentRef: applicationRoot.ownerDocument,
-  getPreFlight: () => linearPipingInputXmlSource.getPreFlight(),
-  onApplyCaseSelection: (caseIds) => linearPipingInputXmlSource.setRequestedCaseIds(caseIds),
-  onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
-});
-// The model as an element table, collapsed by default: the case selector is
-// what the Load-case step is for, and the layout is there to check against.
-const lfeaLayoutPanel = mountLfeaPipelineLayoutPanel(lfeaPipelineShell.getLoadCaseHost(), {
-  documentRef: applicationRoot.ownerDocument,
-  getPreFlight: () => linearPipingInputXmlSource.getPreFlight(),
-});
-const lfeaLoadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(lfeaPipelineShell.getLoadCaseHost(), {
-  documentRef: applicationRoot.ownerDocument,
-  getNodeIds: () => linearPipingInputXmlSource.getPreFlight()
-    ?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
-    ?.map((node) => node.id) ?? [],
-});
+// The Load-case and Output surfaces load in their own chunk (see
+// lfea-pipeline-analysis-surface.js): the production bundle-chunk ceiling is
+// a hard limit and the check enforcing it forbids naming workspace chunks
+// directly, so graph-aware splitting via a dynamic import is the sanctioned
+// route. Nothing here is needed until a model is loaded on the F LFEA tab.
+let lfeaAnalysisSurface = null;
+const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surface.js')
+  .then(({ mountLfeaPipelineAnalysisSurface }) => {
+    lfeaAnalysisSurface = mountLfeaPipelineAnalysisSurface({
+      documentRef: applicationRoot.ownerDocument,
+      loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
+      resultsHost: lfeaPipelineShell.getResultsHost(),
+      getPreFlight: () => linearPipingInputXmlSource.getPreFlight(),
+      onApplyCaseSelection: (caseIds) => linearPipingInputXmlSource.setRequestedCaseIds(caseIds),
+      onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
+      onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
+      getNodeIds: () => linearPipingInputXmlSource.getPreFlight()
+        ?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
+        ?.map((node) => node.id) ?? [],
+    });
+    return lfeaAnalysisSurface;
+  });
+
 const lfeaVerificationDrawer = mountLfeaPipelineVerificationDrawer(lfeaPipelineShell.getVerificationDrawerHost(), {
   documentRef: applicationRoot.ownerDocument,
 });
@@ -113,10 +108,6 @@ const lfeaVerificationDrawer = mountLfeaPipelineVerificationDrawer(lfeaPipelineS
 // sections, never split by concern). This shim routes the results panel
 // into the shell's own RESULTS host instead, without changing that 700+
 // line controller's mount-target resolution.
-const lfeaResultsPanel = mountLfeaPipelineResultsPanel(lfeaPipelineShell.getResultsHost(), {
-  documentRef: applicationRoot.ownerDocument,
-  onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
-});
 const linearPipingResultsMountRoot = { querySelector: () => lfeaPipelineShell.getResultsHost() };
 const linearPipingResults = mountLinearPipingResultsWorkbench(linearPipingResultsMountRoot, { documentRef: applicationRoot.ownerDocument, urlApi: applicationRoot.ownerDocument.defaultView?.URL });
 const globalSettingsPopover = mountLfeaGlobalSettingsPopover(
@@ -127,9 +118,7 @@ let lfeaAuthoritySupplement = null;
 lfeaPipelineShell.setAssemblyHandlers({
   onStepActivated(stepId) {
     if (stepId === 'LOAD_CASE') {
-      lfeaCaseSelectionPanel.refresh();
-      lfeaLayoutPanel.refresh();
-      lfeaLoadCaseAuthoringPanel.refresh();
+      lfeaAnalysisSurface?.refreshLoadCaseStep();
     }
   },
   async onAuthoritySupplementSelected(file) {
@@ -205,8 +194,9 @@ function runLfeaPipelineAnalysis(caseIds) {
     if (missing.length > 0) {
       throw new Error(`Choose "Apply selection" first — ${missing.join(', ')} is not in the current pre-flight.`);
     }
-    const state = lfeaAnalysisController.analyze(preFlight, caseIds);
-    lfeaResultsPanel.setState(state);
+    if (lfeaAnalysisSurface === null) throw new Error('The analysis surface is still loading; try again in a moment.');
+    const state = lfeaAnalysisSurface.analysisController.analyze(preFlight, caseIds);
+    lfeaAnalysisSurface.resultsPanel.setState(state);
     lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
     lfeaPipelineShell.setStepStatus('RUN', { complete: true });
     lfeaPipelineShell.setActiveStep('OUTPUT');
@@ -266,7 +256,7 @@ function assembleLfeaInputXmlRunRequest() {
   // re-sealed physical-case preparation now, on top of the unmodified
   // W/WP/WT/WPT preparation, so buildInputXmlRunRequestCase can pick them
   // up exactly like any other case, with zero special-casing.
-  const authoredCasePayload = lfeaLoadCaseAuthoringPanel.getAuthoredCasePayload();
+  const authoredCasePayload = lfeaAnalysisSurface?.loadCaseAuthoringPanel.getAuthoredCasePayload() ?? null;
   let authoredPreparation = preFlight.preparation;
   let authoredCaseId = null;
   if (authoredCasePayload) {
@@ -364,11 +354,12 @@ const workspace = Object.freeze({
   clearLinearPipingInputXmlSource() { linearPipingInputXmlSource.clear(); },
   getLfeaStagedJsonInputPanelState() { return lfeaStagedJsonInputPanel.getSnapshot(); },
   getLfeaAccdbInputPanelState() { return lfeaAccdbInputPanel.getSnapshot(); },
-  getLfeaLoadCaseAuthoringPanelState() { return lfeaLoadCaseAuthoringPanel.getSnapshot(); },
-  getLfeaCaseSelectionState() { return lfeaCaseSelectionPanel.getSnapshot(); },
-  getLfeaLayoutPanelState() { return lfeaLayoutPanel.getSnapshot(); },
-  getLfeaResultsPanelState() { return lfeaResultsPanel.getSnapshot(); },
-  getLfeaAnalysisState() { return lfeaAnalysisController.getState(); },
+  getLfeaLoadCaseAuthoringPanelState() { return lfeaAnalysisSurface?.loadCaseAuthoringPanel.getSnapshot() ?? null; },
+  getLfeaCaseSelectionState() { return lfeaAnalysisSurface?.caseSelectionPanel.getSnapshot() ?? null; },
+  getLfeaLayoutPanelState() { return lfeaAnalysisSurface?.layoutPanel.getSnapshot() ?? null; },
+  getLfeaResultsPanelState() { return lfeaAnalysisSurface?.resultsPanel.getSnapshot() ?? null; },
+  getLfeaAnalysisState() { return lfeaAnalysisSurface?.analysisController.getState() ?? null; },
+  whenLfeaAnalysisSurfaceReady() { return lfeaAnalysisSurfaceReady; },
   getLfeaVerificationDrawerState() { return lfeaVerificationDrawer.getSnapshot(); },
   importLinearPipingResultPackage(value) { return linearPipingResults.loadPackage(value); },
   checkLinearPipingRunRequest(value) { return linearPipingResults.checkRequest(value); },
@@ -417,7 +408,7 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaCaseSelectionPanel.destroy(); lfeaLayoutPanel.destroy(); lfeaResultsPanel.destroy(); lfeaLoadCaseAuthoringPanel.destroy(); lfeaVerificationDrawer.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
+  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaAnalysisSurface?.destroy(); lfeaVerificationDrawer.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
 });
 
 globalThis.AnalysisWorkspace = workspace;

@@ -20,6 +20,10 @@ import {
   applyAccdbFieldOverrides,
   requireAccdbFieldOverrideSet,
 } from '../src/core/linear-piping-analysis-consumer/accdb-field-overrides.js';
+import {
+  ACCDB_RESTRAINT_TYPE_CODES_WITH_EVIDENCE,
+  accdbRestraintTypeCorrespondence,
+} from '../src/core/geometry/adapters/accdb-restraint-type-correspondence.js';
 import { parseAccdbModelHealthSource } from '../src/core/linear-piping-analysis-consumer/accdb-source-binding.js';
 import { diagnoseInputXmlLinearModelHealth } from '../src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js';
 import { diagnoseInputXmlTopologyGraph } from '../src/core/geometry/model-health/topology-graph-diagnostics.js';
@@ -166,6 +170,27 @@ assert.throws(
   TypeError,
   'An unknown coordinate precision must fail closed rather than defaulting.',
 );
+
+// --- 3c. Restraint type correspondence ----------------------------------
+// ACCDB's RES_TYPEID is a different enumeration from InputXML's TYPE, and the
+// two disagree on GUI vs LIM specifically -- reading ACCDB codes through the
+// InputXML map would swap every guide and limit stop silently. Each evidenced
+// row must round-trip: the label CAESAR printed in its own report must equal
+// the label this pipeline derives from the corrected code.
+for (const sourceCode of ACCDB_RESTRAINT_TYPE_CODES_WITH_EVIDENCE) {
+  const row = accdbRestraintTypeCorrespondence(sourceCode);
+  assert.ok(row, `RES_TYPEID ${sourceCode} must resolve.`);
+  assert.equal(row.canonicalLabel, row.typeLabel,
+    `RES_TYPEID ${sourceCode}: CAESAR's label ${row.typeLabel} disagrees with the pipeline's label ${row.canonicalLabel} for corrected code ${row.typeCode}.`);
+  assert.ok(['ANCHOR', 'GUIDE'].includes(row.conditioningClass));
+}
+assert.equal(accdbRestraintTypeCorrespondence(9).typeLabel, 'LIM',
+  'ACCDB 9 is LIM (InputXML 9 is GUI) -- the swap this correspondence exists to prevent.');
+assert.equal(accdbRestraintTypeCorrespondence(8).typeLabel, 'GUI',
+  'ACCDB 8 is GUI (InputXML 8 is LIM) -- the swap this correspondence exists to prevent.');
+assert.equal(accdbRestraintTypeCorrespondence(1).conditioningClass, 'ANCHOR');
+assert.equal(accdbRestraintTypeCorrespondence(4), null, 'An unevidenced code must not resolve.');
+assert.equal(accdbRestraintTypeCorrespondence(null), null);
 
 // --- 4. Overrides -------------------------------------------------------
 const applied = applyAccdbFieldOverrides(tables, {

@@ -91,7 +91,30 @@ assert.ok(
 // Restraints.
 const nodeById = Object.fromEntries(geometry.nodes.map((node) => [node.id, node]));
 assert.equal(nodeById['10'].restraint, 'ANCHOR');
-assert.equal(nodeById['40'].restraint, 'UNKNOWN');
+// RES_TYPEID 3 is CAESAR's "+Y" (evidenced in
+// accdb-restraint-type-correspondence.js), so this node carries a real
+// restraint kind. Before that correspondence existed every non-anchor ACCDB
+// restraint read as UNKNOWN -- the model could not tell a support from
+// nothing.
+assert.equal(nodeById['40'].restraint, 'GUIDE');
+const node40Restraint = nodeById['40'].meta.restraints[0];
+assert.equal(node40Restraint.sourceTypeCode, '3', 'The raw ACCDB code is retained as evidence.');
+assert.equal(node40Restraint.typeCode, '14', 'RES_TYPEID 3 corresponds to corrected type code 14 (+Y).');
+assert.equal(node40Restraint.typeLabel, '+Y');
+
+// A restraint kind with no evidenced correspondence must fail closed: an
+// omitted or misread support changes the load path and every reaction after
+// it. ACCDB 8/9 are GUI/LIM -- the reverse of InputXML's 8/9 -- so guessing
+// from the numbering is exactly what this must not do.
+const unmappedTables = buildAccdbFixtureTables();
+unmappedTables.INPUT_RESTRAINTS.rows[1] = { ...unmappedTables.INPUT_RESTRAINTS.rows[1], RES_TYPEID: 4 };
+const unmappedGeometry = accdbTablesToCanonicalGeometry(unmappedTables, { source: 'accdb-fixture-check-unmapped-restraint' });
+assert.equal(unmappedGeometry.valid, false, 'An unmapped restraint type must not produce valid geometry.');
+assert.ok(
+  unmappedGeometry.diagnostics.some((d) => d.severity === 'error'
+    && d.code === 'ACCDB_RESTRAINT_TYPE_UNMAPPED' && d.data?.resTypeId === 4),
+  'Expected ACCDB_RESTRAINT_TYPE_UNMAPPED for a restraint code with no evidence.',
+);
 assert.ok(
   geometry.diagnostics.some((d) => d.code === 'ACCDB_RESTRAINT_GAP_NOT_MODELED' && d.data?.nodeId === '40'),
   'Expected a disclosed, not-modeled GAP diagnostic for the node 40 restraint.',

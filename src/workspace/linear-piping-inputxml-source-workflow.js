@@ -32,17 +32,23 @@ export function mountLinearPipingInputXmlSourceWorkflow(applicationRoot, options
     throw new TypeError('Native InputXML source workflow could not find a mount root.');
   }
   const documentRef = options.documentRef ?? applicationRoot.ownerDocument ?? document;
-  return new LinearPipingInputXmlSourceWorkflowController(panelContainer, documentRef).init();
+  return new LinearPipingInputXmlSourceWorkflowController(panelContainer, documentRef, options).init();
 }
 
 export class LinearPipingInputXmlSourceWorkflowController {
-  constructor(panelContainer, documentRef) {
+  constructor(panelContainer, documentRef, options) {
     if (!panelContainer || typeof panelContainer.append !== 'function') {
       throw new TypeError('Native InputXML source workflow panel container is required.');
     }
     if (!documentRef || typeof documentRef.createElement !== 'function') {
       throw new TypeError('Native InputXML source workflow document is required.');
     }
+    // Anything that changes the loaded source or its pre-flight has to reach
+    // the panels that read it -- the Load-case step's case list and layout
+    // grid render straight from getPreFlight(), so without this they keep
+    // showing "no model loaded" when a model is loaded while that step is
+    // already on screen.
+    this.onStateChanged = typeof options?.onStateChanged === 'function' ? options.onStateChanged : null;
     this.panelContainer = panelContainer;
     this.documentRef = documentRef;
     this.sourceInput = null;
@@ -135,6 +141,11 @@ export class LinearPipingInputXmlSourceWorkflowController {
 
   getPreFlight() {
     return this.preFlight;
+  }
+
+  /** The retained source text, for tools that operate on the file itself. */
+  getSourceText() {
+    return this.sourceInput?.content ?? null;
   }
 
   getSnapshot() {
@@ -348,6 +359,7 @@ export class LinearPipingInputXmlSourceWorkflowController {
     this.elements.section.dataset.preFlightStatus = this.preFlight?.status ?? 'NOT_PREPARED';
     this.elements.section.dataset.preFlightAuthorized = this.preFlight?.solveAuthorized ? 'true' : 'false';
     this.elements.section.dataset.nativeExecutionReady = 'false';
+    this.onStateChanged?.(this.getSnapshot());
   }
 }
 
@@ -516,8 +528,17 @@ function renderSourceSummary(doc, root, controller) {
   }
   root.append(table);
 
-  renderUnitDiagnostics(doc, root, controller.inspection);
+  // Findings live in their own container so the pipeline shell can show the
+  // Input step as input and statistics only, and keep the review content on
+  // the Error-check step where it belongs.
+  const review = doc.createElement('div');
+  review.dataset.role = 'linear-piping-inputxml-review';
+  root.append(review);
+  renderUnitDiagnostics(doc, review, controller.inspection);
+  renderReviewFindings(doc, review, controller);
+}
 
+function renderReviewFindings(doc, root, controller) {
   if (controller.preFlight) {
     const findings = controller.preFlight.preparation.findings
       .filter((row) => row.disposition !== 'PASS');

@@ -1,59 +1,76 @@
-/** Analytical presentation for retained LAFEA.1/LAFEA.2 calculators. */
+/** EMP.1 analytical presentation over retained LAFEA.1/LAFEA.2 calculators. */
 import { actionButton, card, element } from './lafea-workbench-dom.js';
 import { renderDocumentTableEditor } from './lafea-document-table.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaEvidence } from './lafea-results-view.js';
 import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
 import { renderLafeaCorrelationAvailability } from './lafea-correlation-availability-view.js';
+import {
+  createEmp1BSourceCustodyCard,
+  renderEmp1AssessmentWorkflow,
+} from './lafea-guided-workflow-view.js';
 import { lafeaDocumentDigest } from './lafea-edit-command.js';
+import {
+  EMP1_B_SOURCE_CUSTODY_STATES,
+  EMP1_PUBLIC_PRODUCT,
+  buildEmp1ProductProjection,
+  emp1StepForBackingStage,
+  evaluateEmp1BSourceRefresh,
+  isEmp1BackingStage,
+} from './emp1-product-projection.js';
 import {
   applyLafeaScreeningTermFactorCommand,
   createLafeaScreeningTermFactorCommand,
 } from './lafea-screening-term-edit.js';
 
-const ROUTES = Object.freeze(['LAFEA.1', 'LAFEA.2']);
-
 export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   const stageId = stage?.stageId;
-  if (!ROUTES.includes(stageId)) throw new TypeError(`LAFEA_ANALYTICAL_ROUTE_UNSUPPORTED:${stageId}`);
+  if (!isEmp1BackingStage(stageId)) throw new TypeError(`EMP1_BACKING_ROUTE_UNSUPPORTED:${stageId}`);
   const foundation = stageId === 'LAFEA.1';
+  const step = emp1StepForBackingStage(stageId);
+  const projection = options.emp1Projection ?? buildEmp1ProductProjection(state);
   const shell = element(root, 'div', 'lafea-analytical-calc');
   shell.dataset.role = 'lafea-analytical-calc';
+  shell.dataset.productId = EMP1_PUBLIC_PRODUCT.productId;
   shell.dataset.backingStageId = stageId;
+  shell.dataset.emp1Step = step.shortId;
   shell.dataset.routeFamily = 'ANALYTICAL';
 
-  const route = card(root, 'Calculation scope');
+  shell.append(renderEmp1AssessmentWorkflow(root, projection, options.onSelectRoute));
+
+  const route = card(root, 'Active EMP.1 step');
   route.section.dataset.guidedTarget = 'analytical-route';
   const scopeStatus = element(
     root,
     'strong',
     'lafea-result-highlights__status',
-    `${foundation ? 'FOUNDATION BASELINE' : 'PIPE-SECTION SCREENING'} · ${engineeringStatus(state.status)}`,
+    `${step.stepId} ${step.label.toUpperCase()} · ${engineeringStatus(state.status)}`,
   );
   scopeStatus.dataset.role = 'lafea-analytical-scope-status';
   scopeStatus.dataset.rawStatus = String(state.status ?? 'UNKNOWN');
   const heading = element(root, 'h3', null, foundation
-    ? 'LAFEA.1 — attachment foundation analytical calculation'
-    : 'LAFEA.2 — nominal pipe-section analytical/screening calculation');
+    ? 'EMP.1.A — load transfer & pressure baseline'
+    : 'EMP.1.B — nominal section screening');
   heading.dataset.role = 'lafea-analytical-route-heading';
+  heading.dataset.emp1Step = step.shortId;
   const scopeBoundary = element(
     root,
     'p',
     'lafea-workbench__authority',
     foundation
-      ? 'Scope: load transfer and elastic pressure baseline only; this does not calculate WRC 107/537 local-attachment stress or establish code compliance.'
-      : 'Scope: nominal pipe-section screening only; WRC/local-attachment correlation is separately governed.',
+      ? 'Authority: load/reference transfer and elastic pressure baseline only. It does not calculate WRC 107/537 local-attachment stress or establish code compliance.'
+      : 'Authority: nominal pipe-section screening only. EMP.1.C local correlation remains separately governed and blocked.',
   );
   scopeBoundary.dataset.role = 'lafea-analytical-scope-boundary';
   route.body.append(
     scopeStatus,
     heading,
     element(root, 'p', 'lafea-workbench__section-intro',
-      'Analytical stages do not use an FE mesh; registered FE routes begin at LAFEA.3.'),
+      `Retained backing engine: ${stageId}. EMP.1 is analytical; registered FE routes begin at LAFEA.3.`),
     scopeBoundary,
   );
 
-  const source = card(root, 'Analytical inputs');
+  const source = card(root, `${step.stepId} inputs`);
   source.section.dataset.guidedTarget = 'source';
   source.body.append(renderDocumentTableEditor(source.body, stageId, stage.document, {
     onSetScalar: options.handlers.onSetScalar,
@@ -63,27 +80,41 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
 
   const screeningCustody = foundation ? null : screeningLoadCustody(
     root,
+    state,
     stage.document,
+    projection,
     options.handlers.onApplyJson,
   );
   const correlationAvailability = foundation
     ? null
     : renderLafeaCorrelationAvailability(root, stage);
 
-  const settings = card(root, 'Calculation contract and settings');
+  const settings = card(root, `${step.stepId} calculation contract and settings`);
   settings.section.dataset.guidedTarget = 'profile';
   settings.body.append(renderLafeaAnalysisSettings(settings.body, stage, options.registryEntry));
 
-  const results = card(root, 'Analytical results');
+  const bSourceCurrent = foundation
+    || projection.custody.bSourceEvidenceState === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT;
+  const results = card(root, `${step.stepId} results`);
   results.section.dataset.guidedTarget = 'results';
-  results.body.append(
-    element(root, 'p', 'lafea-workbench__section-intro', foundation
-      ? 'Foundation analytical evidence only; local attachment stress is not authorized.'
-      : 'Nominal pipe-section screening only; local attachment stress is not authorized.'),
-    renderLafeaEvidence(root, stageId, stage.document, state, stage.execution),
-  );
+  results.body.append(element(root, 'p', 'lafea-workbench__section-intro', foundation
+    ? 'EMP.1.A evidence only; local attachment correlation is not authorized.'
+    : 'EMP.1.B nominal screening evidence only; EMP.1.C local attachment correlation is not authorized.'));
+  if (!bSourceCurrent && stage.execution) {
+    const stale = element(root, 'p', 'lafea-workbench__authority',
+      `Retained B result is excluded from current EMP.1 evidence. ${projection.custody.userAction}`);
+    stale.dataset.role = 'emp1-b-stale-result-blocker';
+    results.body.append(stale);
+  }
+  results.body.append(renderLafeaEvidence(
+    root,
+    stageId,
+    stage.document,
+    state,
+    bSourceCurrent ? stage.execution : null,
+  ));
 
-  const lineage = card(root, 'Analytical evidence and lineage');
+  const lineage = card(root, `${step.stepId} evidence and lineage`);
   lineage.section.dataset.guidedTarget = 'lineage';
   lineage.body.append(renderLafeaLifecyclePanel(lineage.body, stageId, stage));
   shell.append(route.section, source.section);
@@ -92,30 +123,28 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   shell.append(settings.section, results.section, lineage.section);
 
   if (options.benchmarkHost) {
-    const benchmark = card(root, 'Analytical verification output');
+    const benchmark = card(root, `${step.stepId} verification output`);
     benchmark.body.append(options.benchmarkHost);
     shell.append(benchmark.section);
   }
 
+  applyEmp1BCurrentnessRunGate(root, step, projection);
   return Object.freeze({ element: shell, viewport: null, viewportElement: null,
     viewportReused: false, workflow: null, discretization: null });
 }
 
-function screeningLoadCustody(root, documentValue, onApplyJson) {
-  const custody = card(root, 'Inherited LAFEA.1 load custody');
-  custody.section.dataset.role = 'lafea-screening-load-custody';
-  custody.section.dataset.guidedTarget = 'screening-load-custody';
-  custody.body.append(element(
-    root,
-    'p',
-    'lafea-workbench__section-intro',
-    'LAFEA.2 uses retained LAFEA.1 loadCaseId values. Term-factor edits use screeningCaseId + loadCaseId identity; array position is never authority.',
-  ));
-  if (!documentValue || typeof documentValue !== 'object') {
-    custody.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
-      'Load custody becomes available after a valid LAFEA.2 source document is loaded.'));
-    return custody.section;
-  }
+function screeningLoadCustody(root, state, documentValue, projection, onApplyJson) {
+  const hasDocument = Boolean(documentValue && typeof documentValue === 'object');
+  const custody = createEmp1BSourceCustodyCard(root, projection, hasDocument, () => {
+    const aStage = state?.stages?.['LAFEA.1'];
+    const refreshResult = evaluateEmp1BSourceRefresh({
+      aDocument: aStage?.document,
+      aExecution: aStage?.execution,
+      bDocument: documentValue,
+    });
+    if (refreshResult.status === 'READY') onApplyJson(JSON.stringify(refreshResult.document));
+  });
+  if (!hasDocument) return custody.section;
 
   const sourceResult = documentValue.sourceEvidence?.foundationResult;
   const loadCases = Array.isArray(sourceResult?.transformedLoadCases)
@@ -137,10 +166,10 @@ function screeningLoadCustody(root, documentValue, onApplyJson) {
 
 function resultantsTable(root, loadCases, forceUnit, momentUnit) {
   const wrapper = element(root, 'div', 'lafea-screening-custody__resultants');
-  wrapper.append(element(root, 'h4', null, 'Retained transformed resultants'));
+  wrapper.append(element(root, 'h4', null, 'Retained EMP.1.A transformed resultants'));
   if (!loadCases.length) {
     wrapper.append(element(root, 'p', 'lafea-workbench-svg__empty',
-      'No retained LAFEA.1 transformed load cases are available.'));
+      'No retained EMP.1.A transformed load cases are available.'));
     return wrapper;
   }
   const table = element(root, 'table', 'lafea-result-table');
@@ -253,9 +282,7 @@ function screeningTermsTable(root, documentValue, screeningCases, onApplyJson) {
           factor.reportValidity();
           return;
         }
-        if (editResult.status === 'APPLIED') {
-          onApplyJson(JSON.stringify(editResult.document));
-        }
+        if (editResult.status === 'APPLIED') onApplyJson(JSON.stringify(editResult.document));
       });
       apply.dataset.role = 'lafea-apply-screening-term-factor';
       apply.dataset.screeningCaseId = screeningCaseId;
@@ -275,6 +302,17 @@ function screeningTermsTable(root, documentValue, screeningCases, onApplyJson) {
   });
   wrapper.append(table);
   return wrapper;
+}
+
+function applyEmp1BCurrentnessRunGate(root, step, projection) {
+  if (step.shortId !== 'B'
+    || projection.custody.bSourceEvidenceState === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT) return;
+  const workbench = root.closest?.('[data-role="lafea-workbench"]') ?? root;
+  const run = workbench.querySelector?.('[data-role="lafea-run"]');
+  if (!run) return;
+  run.disabled = true;
+  run.dataset.emp1CurrentnessGate = 'BLOCKED';
+  run.title = projection.custody.userAction;
 }
 
 function screeningTermCommandId(documentValue, screeningCaseId, loadCaseId) {

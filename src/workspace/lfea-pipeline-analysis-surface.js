@@ -3,6 +3,7 @@ import { mountLfeaPipelineCaseSelectionPanel } from './lfea-pipeline-case-select
 import { mountLfeaPipelineLayoutPanel } from './lfea-pipeline-layout-panel.js';
 import { mountLfeaPipelineResultsPanel } from './lfea-pipeline-results-panel.js';
 import { mountLfeaPipelineLoadCaseAuthoringPanel } from './lfea-pipeline-load-case-authoring-panel.js';
+import { mountLfeaPipelineModelRepairPanel } from './lfea-pipeline-model-repair-panel.js';
 
 /**
  * Everything the Load-case and Output steps need, behind one entry point.
@@ -43,8 +44,17 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     onExportCsv: options.onExportCsv,
   });
 
+  // Offered on the Error-check step, and only when the loaded model actually
+  // has the fault it corrects.
+  const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, {
+    documentRef: options.documentRef,
+    getSourceText: options.getSourceText,
+    onRepaired: options.onRepaired,
+  });
+
   return Object.freeze({
     analysisController,
+    modelRepairPanel,
     caseSelectionPanel,
     layoutPanel,
     resultsPanel,
@@ -54,11 +64,15 @@ export function mountLfeaPipelineAnalysisSurface(options) {
       layoutPanel.refresh();
       loadCaseAuthoringPanel.refresh();
     },
+    refreshSourceStep() {
+      modelRepairPanel.refresh();
+    },
     destroy() {
       caseSelectionPanel.destroy();
       layoutPanel.destroy();
       resultsPanel.destroy();
       loadCaseAuthoringPanel.destroy();
+      modelRepairPanel.destroy();
     },
   });
 }

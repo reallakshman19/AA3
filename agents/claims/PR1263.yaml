@@ -1,0 +1,59 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1263
+claim_state: ACTIVE
+files:
+  exact:
+    - agents/PR1263_workreport.md
+    - agents/status/PR1263.yaml
+    - agents/claims/PR1263.yaml
+    - scripts/emp1-source-custody-lib.mjs
+    - scripts/emp1-source-custody-check.mjs
+    - scripts/emp1-source-custody-self-test.mjs
+    - scripts/emp1-wrc-dataset-readiness-lib.mjs
+    - scripts/emp1-wrc-dataset-readiness-check.mjs
+    - scripts/emp1-wrc-dataset-readiness-self-test.mjs
+    - scripts/emp1-independent-precheck-qualification-lib.mjs
+    - scripts/emp1-independent-precheck-qualification-check.mjs
+    - scripts/emp1-independent-precheck-qualification-self-test.mjs
+    - scripts/emp1-public-product-check.mjs
+    - src/workspace/emp1-product-projection.js
+    - src/workspace/lafea-workbench-view.js
+    - src/workspace/lafea-analytical-calc-content.js
+    - e2e/lafea-visible-workbench.spec.js
+    - validation/emp1/wrc537-2013/source-ledger.json
+    - validation/emp1/wrc537-2013/existing-dataset-manifest.json
+    - validation/emp1/wrc537-2013/existing-dataset-audit-v1.json
+    - validation/emp1/wrc537-2013/hexagon-sign-crosscheck-v1.json
+    - validation/emp1/caux2017-wrc01f/source-ledger.json
+    - validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-v1.json
+    - validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-qualification-v1.json
+  prefixes:
+    - src/core/emp1/
+    - docs/emp1/
+    - validation/emp1/
+authority_domains:
+  - EMP1_DORMANT_SCAFFOLD
+  - EMP1_SOURCE_CUSTODY
+  - EMP1_WRC_DATASET_QUALIFICATION
+  - EMP1_INDEPENDENT_QUALIFICATION_EVIDENCE
+  - EMP1_PUBLIC_PRODUCT_PROJECTION
+  - EMP1_PUBLIC_PRODUCT_PRESENTATION
+claim_modes:
+  - EXCLUSIVE
+observe_only:
+  - docs/01_WRC537_METHOD_DEFINITION.md
+  - docs/03_WRC537_DATASET.json
+  - docs/04_WRC537_NUMERICAL_TABLES.csv
+  - src/workspace/lafea-stage-registry.js
+  - src/workspace/lafea-stage-composition-bindings.js
+  - src/core/local-stress/
+  - src/core/local-attachment-screening/
+  - src/core/local-attachment-correlation/
+  - src/core/local-continuum/
+  - src/core/lafea-meshing/
+last_verified_head: d1e1f81f083bf0542c8f5f03b1484d892c664642
+implementation_basis_head: d1e1f81f083bf0542c8f5f03b1484d892c664642
+main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
+overlap_state: SAFE_FOR_BOUNDED_PRESENTATION_INTEGRATION
+base_drift: RECONCILIATION_REQUIRED_BEFORE_RELEASE_OR_MERGE
+note: Owner authorized bounded EMP.1 product/UI integration. One public EMP.1 now projects retained LAFEA.1/LAFEA.2 backing engines as A/B while C remains visibly BLOCKED and NOT_AUTHORIZED. There is no automatic A-to-B synchronization; B explicitly warns that its A evidence is a retained snapshot. LAFEA.3+ mechanics, WRC production mechanics, coefficients and workflows remain outside this claim. Chromium navigation regression is authored but NOT_RUN. No merge authority granted.

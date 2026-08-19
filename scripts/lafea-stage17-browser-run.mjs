@@ -33,10 +33,9 @@ function runPlaywright(args) {
 runNodeScript('scripts/emp1-public-product-check.mjs');
 runNodeScript('scripts/emp1-a-to-b-refresh-check.mjs');
 
-// Qualify both public EMP.1 surfaces independently before the inherited
-// LAFEA.3 B01/B02 production gate. The B01/B02 gate remains mandatory below;
-// this ordering prevents an unrelated FEM blocker from suppressing browser
-// evidence for the analytical UI changed by this PR.
+// Qualify both public EMP.1 surfaces and the user-driven A→B currentness refresh
+// independently before the inherited LAFEA.3 B01/B02 production gate. The FEM
+// gate remains mandatory below; this ordering only preserves analytical evidence.
 runPlaywright([
   'e2e/lafea-visible-workbench.spec.js',
   '--grep',
@@ -47,6 +46,7 @@ runPlaywright([
   '--grep',
   'production exposes one EMP.1 product with A/B retained engines and C visibly blocked',
 ]);
+runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 
 const gate = spawnSync(process.execPath, [
@@ -63,6 +63,7 @@ runPlaywright([
   'e2e/lafea-standalone-golden-journey.spec.js',
   'e2e/lafea-standalone-failures.spec.js',
   'e2e/lafea-visible-workbench.spec.js',
+  'e2e/lafea-emp1-a-to-b-refresh.spec.js',
   'e2e/lafea-empirical-grouped-edit.spec.js',
   'e2e/lafea3-sample-mesh.spec.js',
   'e2e/lafea-shell-sample-mesh.spec.js',

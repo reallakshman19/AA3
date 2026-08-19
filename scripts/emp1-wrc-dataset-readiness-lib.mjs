@@ -5,6 +5,31 @@ export const WRC_CURVE_FIT_COEFFICIENT_NAMES = Object.freeze([
   'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
 ]);
 export const WRC_CURVE_FIT_INDEPENDENT_VARIABLE = 'U';
+export const WRC_RETAINED_EXTRACTION_PIN = deepFreeze({
+  schema: 'emp1-wrc-existing-dataset-manifest/v1',
+  repository: 'reallaksh19/Advanced_Analysis',
+  pinnedCommit: '67317dc9cb47de8897fa7952b86107ab91b1f75c',
+  classification: 'DERIVED_SOURCE_EXTRACTION',
+  authority: 'QUALIFICATION_INPUT_ONLY',
+  productionAuthority: false,
+  artifacts: {
+    METHOD_DEFINITION: {
+      path: 'docs/01_WRC537_METHOD_DEFINITION.md',
+      gitBlobSha1: '69e6e83ab82a0287a2a8277b62e7e223f05befe1',
+      byteCount: 45012,
+    },
+    DATASET: {
+      path: 'docs/03_WRC537_DATASET.json',
+      gitBlobSha1: '0ffdc3f54adc0ff8025c4b3d2629272bab6860b4',
+      byteCount: 19280,
+    },
+    NUMERICAL_TABLES: {
+      path: 'docs/04_WRC537_NUMERICAL_TABLES.csv',
+      gitBlobSha1: 'a787f9417c3406392bdf052d66fc9f7d1efcf11e',
+      byteCount: 34233,
+    },
+  },
+});
 
 const WRC_DIMENSIONAL_CONTRACTS = Object.freeze([
   Object.freeze({
@@ -44,6 +69,31 @@ export function gitBlobSha1Bytes(bytes) {
   return hash.digest('hex');
 }
 
+export function validateWrcRetainedManifest(manifest) {
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    throw new TypeError('EMP1_WRC_MANIFEST_NOT_OBJECT');
+  }
+  for (const key of ['schema', 'repository', 'pinnedCommit', 'classification', 'authority', 'productionAuthority']) {
+    if (manifest[key] !== WRC_RETAINED_EXTRACTION_PIN[key]) {
+      throw new TypeError(`EMP1_WRC_MANIFEST_PIN_MISMATCH:${key}`);
+    }
+  }
+  const rows = new Map((manifest.artifacts ?? []).map((row) => [row.id, row]));
+  if (rows.size !== Object.keys(WRC_RETAINED_EXTRACTION_PIN.artifacts).length) {
+    throw new TypeError('EMP1_WRC_MANIFEST_ARTIFACT_COUNT_MISMATCH');
+  }
+  for (const [id, expected] of Object.entries(WRC_RETAINED_EXTRACTION_PIN.artifacts)) {
+    const actual = rows.get(id);
+    if (!actual) throw new TypeError(`EMP1_WRC_MANIFEST_ARTIFACT_MISSING:${id}`);
+    for (const key of ['path', 'gitBlobSha1', 'byteCount']) {
+      if (actual[key] !== expected[key]) {
+        throw new TypeError(`EMP1_WRC_MANIFEST_ARTIFACT_PIN_MISMATCH:${id}:${key}`);
+      }
+    }
+  }
+  return { status: 'PASS', code: 'PASS_RETAINED_EXTRACTION_PIN' };
+}
+
 export function auditWrcDatasetPackage({ methodText, dataset, numericalCsv, artifactIdentity = null }) {
   const blockers = [];
   const failures = [];
@@ -73,7 +123,8 @@ export function auditWrcDatasetPackage({ methodText, dataset, numericalCsv, arti
   if (dataset.extractionStatus !== 'READY_FOR_IMPLEMENTATION') blockers.push({ code: 'BLOCK_DATASET_EXTRACTION_STATUS', actual: dataset.extractionStatus ?? null });
   if (String(dataset.extractionCaveat ?? '').match(/licensed .*pdf.*not available/i)) blockers.push({ code: 'BLOCK_PRIMARY_SOURCE_NOT_AVAILABLE_TO_EXTRACTOR' });
   if (dataset.semanticHash == null || dataset.semanticHash === '') blockers.push({ code: 'BLOCK_DATASET_SEMANTIC_HASH_MISSING' });
-  if (!Array.isArray(dataset.numericalData) || dataset.numericalData.length === 0) blockers.push({ code: 'BLOCK_DATASET_NUMERICAL_DATA_EMPTY' });
+  const numericalDataCount = Array.isArray(dataset.numericalData) ? dataset.numericalData.length : 0;
+  if (numericalDataCount === 0) blockers.push({ code: 'BLOCK_DATASET_NUMERICAL_DATA_EMPTY' });
 
   const unresolvedPaths = collectUnresolvedPaths(dataset);
   if (unresolvedPaths.length) blockers.push({ code: 'BLOCK_UNRESOLVED_DATASET_FIELDS', count: unresolvedPaths.length, paths: unresolvedPaths });
@@ -124,6 +175,7 @@ export function auditWrcDatasetPackage({ methodText, dataset, numericalCsv, arti
     methodStatus,
     extractionStatus: dataset.extractionStatus ?? null,
     semanticHash: dataset.semanticHash ?? null,
+    numericalDataCount,
     unresolvedPathCount: unresolvedPaths.length,
     openIssueCount: openIssues.length,
     dimensionalContract,
@@ -383,4 +435,10 @@ function extractMethodStatus(text) {
 
 function result(status, blockers, failures, metrics) {
   return { schema: EMP1_WRC_DATASET_AUDIT_SCHEMA, status, blockers, failures, metrics };
+}
+
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(deepFreeze);
+  return Object.freeze(value);
 }

@@ -4,3 +4,5 @@ export * from './emp1-dependency-graph.js';
 export * from './emp1-local-correlation-gate.js';
 export * from './emp1-assessment.js';
 export * from './emp1-orchestrator.js';
+export * from './emp1-public-product-contract.js';
+export * from './emp1-a-to-b-refresh.js';

@@ -12,6 +12,8 @@ import { finiteNumber, positiveNumber } from '../shared-analysis-contract/numeri
  */
 
 const SEED_FIELDS = Object.freeze(['seedId', 'origin', 'localSize', 'label']);
+const TRANSITION_COMPARE_EPSILON_FACTOR = 64;
+const MAXIMUM_TRANSITION_STEPS = 256;
 
 export function canonicalRefinementSeed(source) {
   exactKeys(source, SEED_FIELDS, 'refinementSeed');
@@ -58,4 +60,79 @@ export function sizeAt(point, seeds, globalTargetSize, growthRatioMax) {
     size = Math.min(size, seedSize);
   }
   return size;
+}
+
+/**
+ * Deterministic engineering preview of the coarsening ladder from a local
+ * target back to the global target under a declared maximum adjacent-size
+ * growth ratio.
+ *
+ * This is a sizing-policy calculation, not a claim that a specific generated
+ * mesh contains elements at every listed size. The downstream mesh-quality
+ * gate must still prove the actual adjacent element-size ratio.
+ *
+ * For each successive preview level `h_i -> h_(i+1)`:
+ *
+ *   h_(i+1) <= growthRatioMax * h_i
+ *
+ * and the final level is exactly `globalTargetSize`.
+ */
+export function refinementTransitionLadder(globalTargetSize, localTargetSize, growthRatioMax) {
+  positiveNumber(globalTargetSize, 'globalTargetSize');
+  positiveNumber(localTargetSize, 'localTargetSize');
+  if (!(growthRatioMax > 1) || !Number.isFinite(growthRatioMax)) {
+    throw new LafeaMeshingError('growthRatioMax must be finite and exceed 1', 'INVALID_GROWTH_RATIO');
+  }
+  if (!(localTargetSize < globalTargetSize)) {
+    throw new LafeaMeshingError(
+      'localTargetSize must be smaller than globalTargetSize',
+      'LOCAL_TARGET_NOT_REFINED',
+    );
+  }
+
+  const rawStepCount = Math.log(globalTargetSize / localTargetSize) / Math.log(growthRatioMax);
+  if (!Number.isFinite(rawStepCount)) {
+    throw new LafeaMeshingError('Refinement transition step count is non-finite', 'INVALID_TRANSITION_STEP_COUNT');
+  }
+  const epsilon = TRANSITION_COMPARE_EPSILON_FACTOR * Number.EPSILON
+    * Math.max(1, Math.abs(rawStepCount));
+  const growthStepCount = Math.ceil(rawStepCount - epsilon);
+  if (!(growthStepCount >= 1 && growthStepCount <= MAXIMUM_TRANSITION_STEPS)) {
+    throw new LafeaMeshingError(
+      'Refinement transition step count exceeds the supported preview envelope',
+      'TRANSITION_STEP_LIMIT_EXCEEDED',
+    );
+  }
+
+  const levels = [localTargetSize];
+  for (let step = 1; step < growthStepCount; step += 1) {
+    levels.push(Math.min(
+      globalTargetSize,
+      localTargetSize * Math.pow(growthRatioMax, step),
+    ));
+  }
+  levels.push(globalTargetSize);
+
+  const ratios = levels.slice(1).map((value, index) => value / levels[index]);
+  const ratioTolerance = TRANSITION_COMPARE_EPSILON_FACTOR * Number.EPSILON
+    * Math.max(1, growthRatioMax);
+  if (ratios.some((ratio) => !(ratio > 1 && ratio <= growthRatioMax + ratioTolerance))) {
+    throw new LafeaMeshingError(
+      'Derived refinement transition violates the declared growth ratio',
+      'TRANSITION_GROWTH_RATIO_VIOLATION',
+    );
+  }
+
+  return Object.freeze({
+    globalTargetSize,
+    localTargetSize,
+    growthRatioMax,
+    localToGlobalRatio: localTargetSize / globalTargetSize,
+    growthStepCount,
+    levels: Object.freeze(levels),
+    adjacentRatios: Object.freeze(ratios),
+    maximumObservedRatio: Math.max(...ratios),
+    formula: 'N=CEIL(LOG(H_GLOBAL/H_LOCAL)/LOG(G_MAX)); H_i=MIN(H_GLOBAL,H_LOCAL*G_MAX^i)',
+    authority: 'SIZING_POLICY_PREVIEW_ACTUAL_MESH_MUST_PASS_ADJACENCY_GATE',
+  });
 }

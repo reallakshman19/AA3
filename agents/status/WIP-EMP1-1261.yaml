@@ -1,0 +1,24 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP-EMP1-1261
+mission: EMP.1 source custody, qualification, unified analytical assessment
+workstream: EMP1
+branch: agent/emp1-core-scaffold-issue1261
+pr_head: 6429f83edf53f16375c9f5c824b7f00d1778b7b1
+main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: RECOVERABLE
+handover_readiness: READY
+report_path: agents/WIP-EMP1-1261_core_scaffold.md
+appendix_a_status: BLOCKED_SOURCE_CUSTODY
+grounding_epoch: GE-002
+current_stage: SOURCE_CUSTODY_PREP
+blocker: exact raw WRC/CAUx PDF bytes and page extraction not observed
+highest_risk: false WRC authority before exact source qualification
+dependencies:
+  - issue: 1261
+  - source_repo: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55
+exact_next_action: add fail-closed source ledgers/checker/self-test; no production mutation
+last_updated: 2026-08-19T08:39:00+04:00

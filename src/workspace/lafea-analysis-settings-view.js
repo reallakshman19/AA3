@@ -4,6 +4,7 @@ import {
   FORMULATIONS,
 } from '../core/local-continuum/index.js';
 import { element } from './lafea-workbench-dom.js';
+import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
 
 export const LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA = 'lafea-analysis-settings-view/v1';
 
@@ -41,12 +42,19 @@ export function buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryVal
     row('Qualification profile', textOr(profile?.identity)),
     row('Source schema', textOr(documentValue?.schema)),
   ];
+  const solverSummaryRows = [
+    row('Solver route', solverRouteLabel(registry.enginePackage)),
+    row('Availability', statusLabel(registry.engineState ?? 'ENGINE_NOT_IMPLEMENTED')),
+    row('Source binding', statusLabel(stage.lifecycleBinding?.status ?? 'UNINITIALIZED')),
+    row('Qualification profile', profile?.identity ? 'Configured' : 'Not declared'),
+  ];
   return freeze({
     schema: LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA,
     stageId: stage.stageId,
     readOnly: false,
     modelRows,
     solverRows,
+    solverSummaryRows,
     rows: [...modelRows, ...solverRows],
     formulationControl: stage.stageId === 'LAFEA.3'
       ? buildFormulationControl(stage, documentValue)
@@ -80,11 +88,12 @@ export function renderLafeaAnalysisSettings(
   }
 
   const groups = element(root, 'div', 'lafea-analysis-settings__groups');
+  groups.dataset.role = 'lafea-analysis-settings-primary';
   groups.append(
     settingsGroup(root, 'Model-declared analysis settings', 'MODEL_SOURCE', model.modelRows),
-    settingsGroup(root, 'Governed solver settings', 'GOVERNED_SOLVER', model.solverRows),
+    settingsGroup(root, 'Solver contract', 'GOVERNED_SOLVER', model.solverSummaryRows),
   );
-  section.append(groups);
+  section.append(groups, technicalSettings(root, model.solverRows));
 
   if (model.recoveryDisclosure) {
     const recovery = element(root, 'p', 'lafea-analysis-settings__recovery', model.recoveryDisclosure);
@@ -94,6 +103,7 @@ export function renderLafeaAnalysisSettings(
 
   if (model.qualificationDetails.length) {
     const details = element(root, 'details', 'lafea-analysis-settings__details');
+    details.dataset.role = 'lafea-technical-evidence';
     details.append(element(root, 'summary', null, `Locked qualification tolerances (${model.qualificationDetails.length})`));
     const qualificationList = element(root, 'ul');
     model.qualificationDetails.forEach((value) => qualificationList.append(element(root, 'li', null, value)));
@@ -120,7 +130,7 @@ function formulationControl(root, stageValue, control, handlers) {
   const heading = element(root, 'div', 'lafea-analysis-settings__group-heading');
   heading.append(
     element(root, 'h3', null, 'Continuum formulation'),
-    element(root, 'span', 'lafea-analysis-settings__lock', 'SOURCE'),
+    element(root, 'span', 'lafea-analysis-settings__lock', 'Source input'),
   );
   const select = element(root, 'select');
   select.dataset.role = 'lafea3-formulation-select';
@@ -150,7 +160,7 @@ function formulationControl(root, stageValue, control, handlers) {
     ['B-bar element authority', 'T6 / Q8 only; actual T3 solver mesh blocks before stiffness assembly'],
     ['B-bar temperature authority', 'Not granted — temperature/eigenstrain loads are blocked'],
     ['Legacy plane-strain hard block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
-    ['Qualification state', control.status],
+    ['Qualification state', statusLabel(control.status)],
   ].forEach(([label, value]) => {
     facts.append(element(root, 'dt', null, label), element(root, 'dd', null, String(value)));
   });
@@ -245,7 +255,7 @@ function settingsGroup(root, title, authority, rows) {
   const heading = element(root, 'div', 'lafea-analysis-settings__group-heading');
   heading.append(
     element(root, 'h3', null, title),
-    element(root, 'span', 'lafea-analysis-settings__lock', authority === 'GOVERNED_SOLVER' ? 'LOCKED' : 'SOURCE'),
+    element(root, 'span', 'lafea-analysis-settings__lock', authority === 'GOVERNED_SOLVER' ? 'Governed' : 'Source input'),
   );
   const list = element(root, 'dl', 'lafea-analysis-settings__list');
   for (const item of rows) {
@@ -256,6 +266,21 @@ function settingsGroup(root, title, authority, rows) {
   }
   group.append(heading, list);
   return group;
+}
+
+function technicalSettings(root, rows) {
+  const details = element(root, 'details', 'lafea-analysis-settings__details');
+  details.dataset.role = 'lafea-technical-evidence';
+  details.append(element(root, 'summary', null, 'Technical identifiers and lifecycle custody'));
+  const list = element(root, 'dl', 'lafea-analysis-settings__list');
+  for (const item of rows) {
+    list.append(
+      element(root, 'dt', null, item.label),
+      element(root, 'dd', null, item.value),
+    );
+  }
+  details.append(list);
+  return details;
 }
 
 function registryEntry(value) {
@@ -358,6 +383,13 @@ function displayValue(value) {
 function formulationLabel(value) {
   return FORMULATION_LABELS[value] ?? textOr(value);
 }
+function solverRouteLabel(enginePackage) {
+  if (enginePackage === 'local-continuum') return 'Linear continuum solver';
+  if (enginePackage === 'local-shell') return 'Linear thin-shell solver';
+  if (!enginePackage) return 'Not implemented';
+  return 'Registered stage solver';
+}
+function statusLabel(value) { return lafeaUiStatusPresentation(value).label; }
 function row(label, value) { return freeze({ label, value }); }
 function textOr(value) { return typeof value === 'string' && value ? value : 'Not declared'; }
 function stringArray(value) { return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item) : []; }

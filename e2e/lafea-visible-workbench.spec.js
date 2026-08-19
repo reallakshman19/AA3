@@ -12,9 +12,15 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   const overview = workbench.locator('[data-role="lafea-engineering-overview"]');
   await expect(overview).toBeVisible();
   await expect(overview).toContainText('Model → mesh → solve → results');
-  await expect(overview).toContainText('CURRENT_PASS');
-  await expect(overview).toContainText('T3_T6_Q8_LINEAR_CONTINUUM');
-  await expect(overview).toContainText('54 / 54 PASS');
+  const summary = overview.locator('[data-role="lafea-engineering-summary"]');
+  await expect(summary).toContainText('Qualified');
+  await expect(summary).toContainText('Linear continuum solver');
+  await expect(summary).not.toContainText('CURRENT_PASS');
+  await expect(summary).not.toContainText('T3_T6_Q8_LINEAR_CONTINUUM');
+  const technical = overview.locator('[data-role="lafea-technical-evidence"]').first();
+  await expect(technical).toContainText('CURRENT_PASS');
+  await expect(technical).toContainText('T3_T6_Q8_LINEAR_CONTINUUM');
+  await expect(technical).toContainText('Qualification profile ID');
 
   const mesh = workbench.locator('[data-role="lafea-mesh-workspace-summary"]');
   await expect(mesh).toBeVisible();

@@ -43,7 +43,7 @@ observe_only:
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: 043f48f898c53f27b64636751307d48098fadcc3
+last_verified_head: 00bb3fa660d378bd53cb49c161a14499894332dc
 implementation_basis_head: 5c88f8095dc186cffb3d0e71985767b30ff4c1cb
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 overlap_state: SAFE_FOR_QUALIFICATION_ONLY

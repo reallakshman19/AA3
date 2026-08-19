@@ -61,7 +61,20 @@ lfeaPipelineShellRoot.dataset.role = 'lfea-pipeline-shell-root';
 lfeaApplicationView.insertBefore(lfeaPipelineShellRoot, linearPipingConsumerRoot);
 const lfeaPipelineShell = new LfeaPipelineShellController(lfeaPipelineShellRoot).init();
 lfeaPipelineShell.getSourceHost().append(linearPipingConsumerRoot);
-const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, { documentRef: applicationRoot.ownerDocument });
+// Declared before the source workflow mounts: that controller renders (and so
+// notifies) during init(), which is earlier than either of these can exist.
+let lfeaAnalysisSurface = null;
+const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
+  documentRef: applicationRoot.ownerDocument,
+  // The Load-case step renders straight from getPreFlight(), so it has to be
+  // told when the loaded source changes -- refreshing only on step activation
+  // left it showing "no model loaded" for a model loaded while that step was
+  // already on screen.
+  onStateChanged: () => {
+    lfeaAnalysisSurface?.refreshLoadCaseStep();
+    lfeaAnalysisSurface?.refreshSourceStep();
+  },
+});
 const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
   onConversionComplete: (result) => linearPipingInputXmlSource.loadSource(
@@ -82,7 +95,6 @@ const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.g
 // a hard limit and the check enforcing it forbids naming workspace chunks
 // directly, so graph-aware splitting via a dynamic import is the sanctioned
 // route. Nothing here is needed until a model is loaded on the F LFEA tab.
-let lfeaAnalysisSurface = null;
 const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surface.js')
   .then(({ mountLfeaPipelineAnalysisSurface }) => {
     lfeaAnalysisSurface = mountLfeaPipelineAnalysisSurface({
@@ -93,10 +105,22 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
       onApplyCaseSelection: (caseIds) => linearPipingInputXmlSource.setRequestedCaseIds(caseIds),
       onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
       onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
+      sourceHost: lfeaPipelineShell.getSourceHost(),
+      getSourceText: () => linearPipingInputXmlSource.getSourceText(),
+      onRepaired: (repairedXml) => {
+        const fileName = linearPipingInputXmlSource.getSnapshot().fileName ?? 'model.xml';
+        linearPipingInputXmlSource.loadSource(
+          { fileName: `${fileName.replace(/\.xml$/iu, '')}.corrected.xml`, content: repairedXml },
+          { fallbackUnit: 'mm' },
+        );
+      },
       getNodeIds: () => linearPipingInputXmlSource.getPreFlight()
         ?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
         ?.map((node) => node.id) ?? [],
     });
+    // A model may already be loaded by the time this chunk arrives.
+    lfeaAnalysisSurface.refreshLoadCaseStep();
+    lfeaAnalysisSurface.refreshSourceStep();
     return lfeaAnalysisSurface;
   });
 
@@ -356,6 +380,7 @@ const workspace = Object.freeze({
   getLfeaAccdbInputPanelState() { return lfeaAccdbInputPanel.getSnapshot(); },
   getLfeaLoadCaseAuthoringPanelState() { return lfeaAnalysisSurface?.loadCaseAuthoringPanel.getSnapshot() ?? null; },
   getLfeaCaseSelectionState() { return lfeaAnalysisSurface?.caseSelectionPanel.getSnapshot() ?? null; },
+  getLfeaModelRepairState() { return lfeaAnalysisSurface?.modelRepairPanel.getSnapshot() ?? null; },
   getLfeaLayoutPanelState() { return lfeaAnalysisSurface?.layoutPanel.getSnapshot() ?? null; },
   getLfeaResultsPanelState() { return lfeaAnalysisSurface?.resultsPanel.getSnapshot() ?? null; },
   getLfeaAnalysisState() { return lfeaAnalysisSurface?.analysisController.getState() ?? null; },

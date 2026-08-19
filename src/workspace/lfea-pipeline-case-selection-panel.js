@@ -17,6 +17,8 @@ export const LFEA_PIPELINE_CASE_SELECTION_PANEL_SCHEMA = 'lfea-pipeline-case-sel
  * into sets that are commonly ALTERNATIVE occasional directions, so they are
  * never summed together and are not offered as a default.
  */
+const EMPTY_MESSAGE = 'Load a model and run Error check to see its analysis cases.';
+
 const CASE_PRESENTATION = Object.freeze({
   WEIGHT_BASE: { label: 'W', description: 'Weight', category: 'STANDARD' },
   WEIGHT_PRESSURE: { label: 'W+P1', description: 'Weight + pressure', category: 'STANDARD' },
@@ -45,7 +47,7 @@ export class LfeaPipelineCaseSelectionPanelController {
     this.elements = null;
     this.initialized = false;
     this.selected = new Set();
-    this.message = 'Load a model and run Error check to see its analysis cases.';
+    this.message = EMPTY_MESSAGE;
     this.error = '';
   }
 
@@ -127,6 +129,13 @@ export class LfeaPipelineCaseSelectionPanelController {
         }));
       }
     }
+    // Keep the standing message honest: it was written for the empty state and
+    // would otherwise still say "load a model" with the model's cases listed
+    // right above it.
+    if (this.error === '' && available.length > 0 && this.message === EMPTY_MESSAGE) {
+      this.message = `${available.length} case(s) available. Choose which to analyze, then Apply selection.`;
+    }
+    if (available.length === 0) this.message = EMPTY_MESSAGE;
     this.elements.status.textContent = this.error === '' ? this.message : this.error;
     this.elements.status.dataset.status = this.error === '' ? 'ok' : 'error';
     this.elements.applyButton.disabled = available.length === 0;

@@ -146,6 +146,11 @@ export class LfeaPipelineShellView {
     });
     const activeHostGroup = lfeaPipelineHostGroupFor(state.activeStepId);
     this.elements.sourceHost.hidden = activeHostGroup !== 'SOURCE';
+    // INPUT and ERROR_CHECK share the SOURCE host but are not the same view:
+    // Input is the file and what was read from it, Error check is the review
+    // of what that means. Stamping the step lets each show only its own half
+    // instead of both rendering the whole panel identically.
+    this.elements.sourceHost.dataset.activeStep = state.activeStepId;
     this.elements.loadCaseHost.hidden = activeHostGroup !== 'LOAD_CASE';
     this.elements.resultsHost.hidden = activeHostGroup !== 'RESULTS';
   }

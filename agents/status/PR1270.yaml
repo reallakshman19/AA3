@@ -1,0 +1,35 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1270
+mission: LAFEA.3 governed local-refinement UX and transition evidence
+workstream: LAFEA3_LOCAL_REFINEMENT_UI
+branch: agent/lafea3-local-refinement-ui-20260819
+pr_head: b3409b214b7b1f501a5373754f84f150312bba5f
+main_head_last_checked: cf3aaeefb028ee387d3d530f5e0e5106bd489dce
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_APPROVED_MISSION
+phase_progression: AUTO
+merge_authority: OWNER_ONLY
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/PR1270_workreport.md
+report_basis_head: 456fcacc77415ca67a056e68d91a6df90edbec26
+appendix_a_status: NOT_REQUIRED_NEW_OWNER_ASSIGNED_WORK
+grounding_epoch: GE-002
+current_stage: PR2_IMPLEMENTATION
+blocker: NONE
+highest_risk: existing refined meshes may fail when the already-qualified LAFEA.3 adjacent-size ratio is actually enforced
+coordination_state: COORDINATION_REQUIRED_BOUNDED_SAFE
+validation_state:
+  existing_refinement_route_source_audit: PASS_SOURCE_INSPECTION
+  analytical_transition_oracle: ESTABLISHED
+  implementation: NOT_STARTED
+  runtime: NOT_RUN
+  chromium: NOT_RUN
+  merge: NOT_AUTHORIZED
+exact_next_action: implement transition ladder, LAFEA.3 adjacency gate, then quantitative UI preview
+last_updated: 2026-08-19T19:50:00+04:00

@@ -11,13 +11,16 @@ const PINNED_REPOSITORY = 'reallaksh19/XML_Compare_Utilities';
 export const EMP1_SOURCE_CUSTODY_SCHEMA = 'emp1-source-ledger/v1';
 
 export async function sha256File(filePath) {
-  const hash = createHash('sha256');
-  await new Promise((resolve, reject) => {
-    const stream = createReadStream(filePath);
-    stream.on('data', (chunk) => hash.update(chunk));
-    stream.on('error', reject);
-    stream.on('end', resolve);
-  });
+  return hashFile(filePath, 'sha256');
+}
+
+export async function gitBlobSha1File(filePath, byteCount) {
+  if (!Number.isSafeInteger(byteCount) || byteCount < 0) {
+    throw new TypeError('EMP1_GIT_BLOB_BYTE_COUNT_INVALID');
+  }
+  const hash = createHash('sha1');
+  hash.update(Buffer.from(`blob ${byteCount}\0`, 'utf8'));
+  await updateHashFromFile(hash, filePath);
   return hash.digest('hex');
 }
 
@@ -79,6 +82,18 @@ export async function inspectEmp1SourceFile({ ledger, filePath }) {
     };
   }
 
+  const actualGitBlobSha1 = await gitBlobSha1File(filePath, fileStat.size);
+  if (actualGitBlobSha1 !== ledger.gitBlobSha1) {
+    return {
+      status: 'FAIL',
+      code: 'FAIL_SOURCE_GIT_BLOB_MISMATCH',
+      sourceId: ledger.sourceId,
+      expectedGitBlobSha1: ledger.gitBlobSha1,
+      actualGitBlobSha1,
+      actualByteCount: fileStat.size,
+    };
+  }
+
   const actualSha256 = await sha256File(filePath);
   if (ledger.rawPdfSha256 == null) {
     return {
@@ -86,6 +101,7 @@ export async function inspectEmp1SourceFile({ ledger, filePath }) {
       code: 'BLOCKED_RAW_SHA256_NOT_FROZEN',
       sourceId: ledger.sourceId,
       actualByteCount: fileStat.size,
+      gitBlobSha1: actualGitBlobSha1,
       candidateRawPdfSha256: actualSha256,
       note: 'Review this independently observed hash, then freeze it in a source-only commit before benchmark extraction.',
     };
@@ -105,6 +121,7 @@ export async function inspectEmp1SourceFile({ ledger, filePath }) {
     code: 'PASS_SOURCE_CUSTODY',
     sourceId: ledger.sourceId,
     actualByteCount: fileStat.size,
+    gitBlobSha1: actualGitBlobSha1,
     rawPdfSha256: actualSha256,
   };
 }
@@ -113,6 +130,21 @@ export function aggregateCustodyStatus(results) {
   if (results.some((row) => row.status === 'FAIL')) return 'FAIL';
   if (results.some((row) => row.status === 'BLOCKED')) return 'BLOCKED';
   return 'PASS';
+}
+
+async function hashFile(filePath, algorithm) {
+  const hash = createHash(algorithm);
+  await updateHashFromFile(hash, filePath);
+  return hash.digest('hex');
+}
+
+async function updateHashFromFile(hash, filePath) {
+  await new Promise((resolve, reject) => {
+    const stream = createReadStream(filePath);
+    stream.on('data', (chunk) => hash.update(chunk));
+    stream.on('error', reject);
+    stream.on('end', resolve);
+  });
 }
 
 function invalid(code) {

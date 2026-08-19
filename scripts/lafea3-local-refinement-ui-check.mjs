@@ -68,7 +68,8 @@ assert.deepEqual(blockAdjacency.blockingElementIds, ['E1', 'E2']);
 const evidenceV2Source = source('src/workspace/lafea-analysis-mesh-evidence-v2.js');
 const evidenceQualitySource = source('src/workspace/lafea-analysis-mesh-quality.js');
 const viewModelSource = source('src/workspace/lafea-discretization-view-model.js');
-const panelSource = source('src/workspace/lafea-discretization-generation-panel.js');
+const generationPanelSource = source('src/workspace/lafea-discretization-generation-panel.js');
+const discretizationPanelSource = source('src/workspace/lafea-discretization-panel.js');
 const presentationLeafSource = source('src/workspace/lafea-discretization-dom.js');
 const qualityFacadeSource = source('src/workspace/lafea-mesh-quality-panel.js');
 
@@ -97,19 +98,24 @@ assert.match(viewModelSource, /lafea3MinimumLocalTargetRatio/);
 assert.match(viewModelSource, /boundAdjacentSizeRatioMax/);
 assert.match(viewModelSource, /DERIVED_RECOMPUTATION_OF_REFINEMENT_RETENTION_GATE/);
 assert.match(viewModelSource, /qualifyRefinedMeshAdjacentSizeRatio/);
-assert.match(panelSource, /lafea-refinement-transition-preview/);
-assert.match(panelSource, /lafea-refinement-adjacency-evidence/);
-assert.match(panelSource, /model\.generation\.lafea3MinimumLocalTargetRatio/);
-assert.doesNotMatch(panelSource, /lafea-retained-mesh-refinement\.js/);
-assert.doesNotMatch(panelSource, /LAFEA_RETAINED_MESH_REFINEMENT_POLICY/);
-assert.match(panelSource, /CURRENT_UNGRADED_SHELL_REFINEMENT_ONE_ADJACENCY_STEP/);
-assert.match(panelSource, /const minimumTargetRatio = 1 \/ growthRatioMax/);
-assert.doesNotMatch(panelSource, /global \* 0\.25/);
-assert.match(panelSource, /not source-geometry feature IDs/);
-assert.match(panelSource, /preview does not certify generated topology/);
+assert.match(generationPanelSource, /lafea-refinement-transition-preview/);
+assert.match(generationPanelSource, /lafea-refinement-adjacency-evidence/);
+assert.match(generationPanelSource, /model\.generation\.lafea3MinimumLocalTargetRatio/);
+assert.doesNotMatch(generationPanelSource, /lafea-retained-mesh-refinement\.js/);
+assert.doesNotMatch(generationPanelSource, /LAFEA_RETAINED_MESH_REFINEMENT_POLICY/);
+assert.match(generationPanelSource, /CURRENT_UNGRADED_SHELL_REFINEMENT_ONE_ADJACENCY_STEP/);
+assert.match(generationPanelSource, /const minimumTargetRatio = 1 \/ growthRatioMax/);
+assert.doesNotMatch(generationPanelSource, /global \* 0\.25/);
+assert.match(generationPanelSource, /not source-geometry feature IDs/);
+assert.match(generationPanelSource, /preview does not certify generated topology/);
+
 assert.doesNotMatch(presentationLeafSource, /^\s*import\s/m);
 assert.doesNotMatch(presentationLeafSource, /lafea-workbench-controller|editor-store|workspace-store/);
 assert.match(presentationLeafSource, /Gate classification remains owned by the meshing quality-gate package/);
+assert.match(presentationLeafSource, /export function mappingInspectionSection/);
+assert.match(presentationLeafSource, /No qualified determinant-ratio limit is applied/);
+assert.match(discretizationPanelSource, /mappingInspectionSection/);
+assert.doesNotMatch(discretizationPanelSource, /function mappingInspectionSection|function inspectionFocus/);
 assert.match(qualityFacadeSource, /from '\.\/lafea-discretization-dom\.js'/);
 assert.doesNotMatch(qualityFacadeSource, /const SEVERITY|function affectedElementIds|function renderQualityRow/);
 
@@ -130,6 +136,7 @@ console.log(JSON.stringify({
     actualRefinedChildAdjacencyGate: 'ENFORCED_IN_V2_EVIDENCE_CONSTRUCTOR_BEFORE_CUSTODY',
     uiPolicySource: 'EXISTING_REFINEMENT_POLICY_PROJECTED_BY_VIEW_MODEL',
     discretizationPresentationLeafImportFree: true,
+    mappingInspectionClassificationAuthorityMoved: false,
     isolatedGenerationChunkWorkspaceDependency: false,
   },
 }, null, 2));

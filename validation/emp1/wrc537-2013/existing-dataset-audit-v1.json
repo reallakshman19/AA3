@@ -18,10 +18,11 @@
     "unresolvedJsonPathCount": 21,
     "openIssueCount": 7,
     "dimensionalContractStatus": "BLOCKED",
-    "dimensionalViolationCount": 2,
+    "dimensionalViolationCount": 3,
     "dimensionalViolationIds": [
       "SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH",
-      "SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH"
+      "SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH",
+      "STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH"
     ],
     "numericalCsvCurveRows": 120,
     "coefficientSchema": "LEGACY_SINGLE_VALUE_PER_CURVE",
@@ -89,5 +90,5 @@
     "BLOCK_INCOMPLETE_SCALAR_COEFFICIENT_SET",
     "BLOCK_INDEPENDENT_VARIABLE_CUSTODY"
   ],
-  "authorityNote": "This is a frozen pre-execution expectation derived from direct inspection of the pinned retained text blobs and the fail-closed software contract. It is not WRC production authority. The retained coefficient definitions and membrane machine equations are dimensionally inconsistent by one shell-thickness factor in the SP radial-membrane and SM moment-membrane paths; this is recorded as a blocker rather than silently corrected from inference. The 120 CSV rows are response-curve records, not proof of 120 complete coefficients; ten named a-j scalar coefficients are required per curve by the retained polynomial representation. No coefficient value, WRC sign, or source formula is invented here, and the expectation must not be rewritten merely because a later checker/production result differs."
+  "authorityNote": "This is a frozen pre-execution expectation derived from direct inspection of the pinned retained text blobs and the fail-closed software contract. It is not WRC production authority. The retained coefficient definitions and membrane machine equations are dimensionally inconsistent by one shell-thickness factor in the SP radial-membrane and SM moment-membrane paths. The retained stress-intensity machine expression also applies an outer square-root to a first-degree stress expression, producing sqrt(stress) rather than stress. All three are recorded as blockers rather than silently corrected from inference. The 120 CSV rows are response-curve records, not proof of 120 complete coefficients; ten named a-j scalar coefficients are required per curve by the retained polynomial representation. No coefficient value, WRC sign, source formula, axis mapping, or pressure-thrust policy is invented here, and the expectation must not be rewritten merely because a later checker/production result differs."
 }

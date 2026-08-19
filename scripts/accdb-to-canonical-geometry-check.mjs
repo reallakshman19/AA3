@@ -105,6 +105,24 @@ assert.ok(
   'Expected a warning for the restraint referencing an unresolved node (9999).',
 );
 
+// Density label spelling: CAESAR writes the same unit as "kg./cu.cm."
+// (BM1/BM2/BM3) and as "kg.cu.cm." (BM4). Both must convert identically --
+// keying the registry on one literal spelling made every BM4-style export
+// report ACCDB_UNIT_TOKEN_UNSUPPORTED plus one
+// ACCDB_UNIT_DECLARATION_REQUIRED per declared density field.
+for (const label of ['kg.cu.cm.', 'kg. / cu.cm.', 'KG/CU.CM.']) {
+  const tablesForLabel = buildAccdbFixtureTables();
+  tablesForLabel.INPUT_UNITS.rows[0] = {
+    ...tablesForLabel.INPUT_UNITS.rows[0],
+    PIPE_DENSITY: label, INSUL_DENSITY: label, FLUID_DENSITY: label,
+  };
+  const geometryForLabel = accdbTablesToCanonicalGeometry(tablesForLabel, { source: 'accdb-fixture-check-density-label' });
+  const unitErrors = geometryForLabel.diagnostics.filter((d) => d.severity === 'error' && d.code.startsWith('ACCDB_UNIT_'));
+  assert.deepEqual(unitErrors, [], `Density label "${label}" must convert without unit diagnostics: ${JSON.stringify(unitErrors)}`);
+  const element1 = geometryForLabel.segments.find((segment) => segment.meta.sourceElementId === '1');
+  assert.ok(Math.abs(element1.meta.analysis.pipeDensity - 7833) < 1, `Density label "${label}" should convert 0.007833 to ~7833 kg/m^3, got ${element1.meta.analysis.pipeDensity}`);
+}
+
 // Unsupported density token must fail closed (an error diagnostic, and the
 // geometry marked invalid), not silently guess at an unconfirmed factor.
 const badTables = buildAccdbFixtureTables();

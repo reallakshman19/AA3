@@ -225,11 +225,6 @@ const SIF_TYPE_WELDING_TEE = 3;
 const SIF_TYPE_WELDOLET = 5;
 const POSITION_TOLERANCE_M = 1e-7;
 
-/** Only the one real, confirmed ACCDB density token — throw on anything else rather than guess. */
-const DENSITY_UNITS = Object.freeze({
-  'KG./CU.CM': Object.freeze({ factor: 1e6, unit: 'kg/m^3' }),
-});
-
 const MODEL_TABLE_NAMES = Object.freeze([
   'INPUT_BASIC_ELEMENT_DATA', 'INPUT_BENDS', 'INPUT_CONTROL', 'INPUT_FORCMNT',
   'INPUT_NODAL_COORDINATES', 'INPUT_OFFSETS', 'INPUT_REDUCERS', 'INPUT_RESTRAINTS',
@@ -257,9 +252,9 @@ function resolveAccdbUnitSystem(unitsRows, diagnostics) {
     stress: dimensionConverter('STRESS', declared.STRESS, diagnostics),
     emodulus: dimensionConverter('STRESS', declared.EMODULUS, diagnostics),
     pressure: dimensionConverter('STRESS', declared.PRESSURE, diagnostics),
-    pipeDensity: densityConverter(declared.PIPE_DENSITY, diagnostics),
-    insulDensity: densityConverter(declared.INSUL_DENSITY, diagnostics),
-    fluidDensity: densityConverter(declared.FLUID_DENSITY, diagnostics),
+    pipeDensity: dimensionConverter('DENSITY', declared.PIPE_DENSITY, diagnostics),
+    insulDensity: dimensionConverter('DENSITY', declared.INSUL_DENSITY, diagnostics),
+    fluidDensity: dimensionConverter('DENSITY', declared.FLUID_DENSITY, diagnostics),
     temp: (rawValue) => temperatureToKelvin(rawValue, declared.TEMP),
   };
 }
@@ -285,22 +280,6 @@ function dimensionConverter(dimension, rawUnit, diagnostics) {
       }
       return null;
     }
-  };
-}
-
-function densityConverter(rawUnit, diagnostics) {
-  let warned = false;
-  const token = String(rawUnit ?? '').trim().toUpperCase().replace(/\s+/gu, '').replace(/\.+$/gu, '');
-  const conversion = DENSITY_UNITS[token];
-  return (rawValue) => {
-    if (!conversion) {
-      if (!warned) {
-        warned = true;
-        addDiagnostic(diagnostics, 'error', 'ACCDB_UNIT_TOKEN_UNSUPPORTED', `Unsupported CAESAR DENSITY unit ${String(rawUnit)}.`, { dimension: 'DENSITY', rawUnit });
-      }
-      return null;
-    }
-    return Number(rawValue) * conversion.factor;
   };
 }
 

@@ -25,6 +25,7 @@ const readyDataset = {
   equations: [
     { id: 'EQ_RADIAL_MEMBRANE', machine: 'coeff_Nphi * P / (T**2)' },
     { id: 'EQ_MOMENT_MEMBRANE', machine: 'coeff_Nphi * M / (T**2 * sqrt(Rm * T))' },
+    { id: 'EQ_STRESS_INTENSITY', machine: '0.5*((sigx+sigy)+sqrt((sigx-sigy)**2+4*tau**2))' },
   ],
 };
 
@@ -50,6 +51,7 @@ assert.equal(pass.metrics.numericalCsv.independentVariableQualified, true);
 const dimensionallyWrongDataset = structuredClone(readyDataset);
 dimensionallyWrongDataset.equations.find((row) => row.id === 'EQ_RADIAL_MEMBRANE').machine = 'coeff_Nphi * P / T';
 dimensionallyWrongDataset.equations.find((row) => row.id === 'EQ_MOMENT_MEMBRANE').machine = 'coeff_Nphi * M / (T * sqrt(Rm * T))';
+dimensionallyWrongDataset.equations.find((row) => row.id === 'EQ_STRESS_INTENSITY').machine = 'sqrt(0.5*((sigx+sigy)+sqrt((sigx-sigy)**2+4*tau**2)))';
 const dimensional = auditWrcDatasetPackage({
   methodText: '> EXTRACTION STATUS: READY_FOR_IMPLEMENTATION',
   dataset: dimensionallyWrongDataset,
@@ -57,16 +59,24 @@ const dimensional = auditWrcDatasetPackage({
 });
 assert.equal(dimensional.status, 'BLOCKED');
 assert.equal(dimensional.metrics.dimensionalContract.status, 'BLOCKED');
-assert.equal(dimensional.metrics.dimensionalContract.violations.length, 2);
+assert.equal(dimensional.metrics.dimensionalContract.violations.length, 3);
 assert.ok(dimensional.blockers.some((row) => row.code === 'BLOCK_METHOD_DIMENSIONAL_CONTRACT'));
 assert.deepEqual(
   dimensional.metrics.dimensionalContract.violations.map((row) => row.id),
   [
     'SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH',
     'SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH',
+    'STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH',
   ],
 );
 assert.equal(inspectWrcMethodDimensionalContract(dimensionallyWrongDataset).status, 'BLOCKED');
+
+const missingStressIntensity = structuredClone(readyDataset);
+missingStressIntensity.equations = missingStressIntensity.equations.filter((row) => row.id !== 'EQ_STRESS_INTENSITY');
+assert.deepEqual(
+  inspectWrcMethodDimensionalContract(missingStressIntensity).violations.map((row) => row.id),
+  ['STRESS_INTENSITY_EQUATION_MISSING'],
+);
 
 const legacySingleValueCsv = [
   'coefficient_value,parameter_3_name,parameter_3_value,review_status',
@@ -146,12 +156,13 @@ assert.deepEqual(parseCsv('a,b\n"x,y",z'), [['a', 'b'], ['x,y', 'z']]);
 assert.equal(inspectNumericalCsv(readyCsv).numericScalarCoefficientCount, 10);
 
 console.log(JSON.stringify({
-  schema: 'emp1-wrc-dataset-readiness-self-test/v3',
+  schema: 'emp1-wrc-dataset-readiness-self-test/v4',
   status: 'PASS',
   oracleClassification: 'SOFTWARE_CONTRACT_ONLY_NOT_WRC_ENGINEERING_EVIDENCE',
   verifiedGuardrails: [
     'dimensionless retained SP membrane coefficient cannot feed a force/length stress expression',
     'dimensionless retained SM membrane coefficient cannot feed a force/length stress expression',
+    'retained stress-intensity transcription cannot apply an outer square-root to a first-degree stress expression',
     'one anonymous numeric value per response curve cannot satisfy a-j coverage',
     'nine of ten named scalar coefficients cannot satisfy one curve',
     'all ten named scalar coefficients plus explicit runtime U can satisfy the synthetic shape gate',

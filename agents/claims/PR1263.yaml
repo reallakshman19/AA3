@@ -9,7 +9,11 @@ files:
     - scripts/emp1-source-custody-lib.mjs
     - scripts/emp1-source-custody-check.mjs
     - scripts/emp1-source-custody-self-test.mjs
+    - scripts/emp1-wrc-dataset-readiness-lib.mjs
+    - scripts/emp1-wrc-dataset-readiness-check.mjs
+    - scripts/emp1-wrc-dataset-readiness-self-test.mjs
     - validation/emp1/wrc537-2013/source-ledger.json
+    - validation/emp1/wrc537-2013/existing-dataset-manifest.json
     - validation/emp1/caux2017-wrc01f/source-ledger.json
   prefixes:
     - src/core/emp1/
@@ -18,19 +22,23 @@ files:
 authority_domains:
   - EMP1_DORMANT_SCAFFOLD
   - EMP1_SOURCE_CUSTODY
+  - EMP1_WRC_DATASET_QUALIFICATION
   - EMP1_INDEPENDENT_QUALIFICATION_EVIDENCE
 claim_modes:
   - EXCLUSIVE
 observe_only:
+  - docs/01_WRC537_METHOD_DEFINITION.md
+  - docs/03_WRC537_DATASET.json
+  - docs/04_WRC537_NUMERICAL_TABLES.csv
   - src/workspace/lafea-*
   - src/core/local-stress/
   - src/core/local-attachment-screening/
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: 55657b56893f29a6efc651e2513da2166f2d7eb2
-implementation_basis_head: 266832e8f2e621d46b608a69d8d95985f4c7dc4a
+last_verified_head: 7c247ef72a4d936f57dd616ceda0c5ccd9c6d604
+implementation_basis_head: 6273a9f0d09bf137f9070a83a14211e357664c69
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
-overlap_state: SAFE_FOR_SOURCE_CUSTODY_ONLY
+overlap_state: SAFE_FOR_QUALIFICATION_ONLY
 base_drift: RECONCILIATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION
-note: Candidate source bytes must reproduce pinned Git blob identity before SHA-256 freeze. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.
+note: Existing WRC docs are reused as qualification input and remain observe-only in this increment. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.

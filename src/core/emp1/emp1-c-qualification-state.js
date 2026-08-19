@@ -11,6 +11,9 @@ export const EMP1_C_BLOCKER_CODES = Object.freeze({
   EXECUTION_ROUTE_NOT_REGISTERED: 'EMP1_C_EXECUTION_ROUTE_NOT_REGISTERED',
 });
 
+const REQUIRED_WRC_COEFFICIENTS_PER_CURVE = 10;
+const REQUIRED_WRC_INDEPENDENT_VARIABLE = 'U';
+
 /**
  * Runtime evidence is generated from retained WRC/CAUx qualification artifacts.
  * The generated module is checked for exact drift by
@@ -50,18 +53,34 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     },
   ));
 
-  const coefficientsReady = normalized.wrcDataset.coefficientInventoryRows > 0
-    && normalized.wrcDataset.numericCoefficientRows === normalized.wrcDataset.coefficientInventoryRows
-    && normalized.wrcDataset.unresolvedCoefficientRows === 0
-    && normalized.wrcDataset.unresolvedParameterRows === 0;
+  const coefficientsReady = normalized.wrcDataset.coefficientCurveRows > 0
+    && normalized.wrcDataset.coefficientSchemaQualified === true
+    && normalized.wrcDataset.coefficientsPerCurve === REQUIRED_WRC_COEFFICIENTS_PER_CURVE
+    && normalized.wrcDataset.requiredScalarCoefficientCount
+      === normalized.wrcDataset.coefficientCurveRows * normalized.wrcDataset.coefficientsPerCurve
+    && normalized.wrcDataset.numericScalarCoefficientCount
+      === normalized.wrcDataset.requiredScalarCoefficientCount
+    && normalized.wrcDataset.unresolvedScalarCoefficientCount === 0
+    && normalized.wrcDataset.missingScalarCoefficientCount === 0
+    && normalized.wrcDataset.invalidScalarCoefficientCount === 0
+    && normalized.wrcDataset.independentVariable === REQUIRED_WRC_INDEPENDENT_VARIABLE
+    && normalized.wrcDataset.independentVariableQualified === true;
   if (!coefficientsReady) blockers.push(blocker(
     EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING,
-    `WRC a–j numerical coefficient payload is not qualified (${normalized.wrcDataset.numericCoefficientRows}/${normalized.wrcDataset.coefficientInventoryRows} retained coefficient rows numeric; ${normalized.wrcDataset.unresolvedCoefficientRows} unresolved coefficient rows; ${normalized.wrcDataset.unresolvedParameterRows} unresolved parameter rows).`,
+    `WRC a–j numerical payload is not qualified (${normalized.wrcDataset.numericScalarCoefficientCount}/${normalized.wrcDataset.requiredScalarCoefficientCount} named scalar coefficients numeric across ${normalized.wrcDataset.coefficientCurveRows} response-curve rows; schema=${normalized.wrcDataset.coefficientSchema}/${normalized.wrcDataset.coefficientSchemaQualified ? 'QUALIFIED' : 'BLOCKED'}; unresolved=${normalized.wrcDataset.unresolvedScalarCoefficientCount}; missing=${normalized.wrcDataset.missingScalarCoefficientCount}; invalid=${normalized.wrcDataset.invalidScalarCoefficientCount}; independentVariable=${normalized.wrcDataset.independentVariable}/${normalized.wrcDataset.independentVariableRepresentation}/${normalized.wrcDataset.independentVariableQualified ? 'QUALIFIED' : 'BLOCKED'}).`,
     {
-      coefficientInventoryRows: normalized.wrcDataset.coefficientInventoryRows,
-      numericCoefficientRows: normalized.wrcDataset.numericCoefficientRows,
-      unresolvedCoefficientRows: normalized.wrcDataset.unresolvedCoefficientRows,
-      unresolvedParameterRows: normalized.wrcDataset.unresolvedParameterRows,
+      coefficientCurveRows: normalized.wrcDataset.coefficientCurveRows,
+      coefficientSchema: normalized.wrcDataset.coefficientSchema,
+      coefficientSchemaQualified: normalized.wrcDataset.coefficientSchemaQualified,
+      coefficientsPerCurve: normalized.wrcDataset.coefficientsPerCurve,
+      requiredScalarCoefficientCount: normalized.wrcDataset.requiredScalarCoefficientCount,
+      numericScalarCoefficientCount: normalized.wrcDataset.numericScalarCoefficientCount,
+      unresolvedScalarCoefficientCount: normalized.wrcDataset.unresolvedScalarCoefficientCount,
+      missingScalarCoefficientCount: normalized.wrcDataset.missingScalarCoefficientCount,
+      invalidScalarCoefficientCount: normalized.wrcDataset.invalidScalarCoefficientCount,
+      independentVariable: normalized.wrcDataset.independentVariable,
+      independentVariableRepresentation: normalized.wrcDataset.independentVariableRepresentation,
+      independentVariableQualified: normalized.wrcDataset.independentVariableQualified,
     },
   ));
 
@@ -176,10 +195,18 @@ function normalizeDataset(value = {}) {
     unresolvedJsonPathCount: count(value.unresolvedJsonPathCount),
     openIssueCount: count(value.openIssueCount),
     numericalDataCount: count(value.numericalDataCount),
-    coefficientInventoryRows: count(value.coefficientInventoryRows),
-    numericCoefficientRows: count(value.numericCoefficientRows),
-    unresolvedCoefficientRows: count(value.unresolvedCoefficientRows),
-    unresolvedParameterRows: count(value.unresolvedParameterRows),
+    coefficientCurveRows: count(value.coefficientCurveRows),
+    coefficientSchema: text(value.coefficientSchema, 'UNRESOLVED'),
+    coefficientSchemaQualified: value.coefficientSchemaQualified === true,
+    coefficientsPerCurve: count(value.coefficientsPerCurve),
+    requiredScalarCoefficientCount: count(value.requiredScalarCoefficientCount),
+    numericScalarCoefficientCount: count(value.numericScalarCoefficientCount),
+    unresolvedScalarCoefficientCount: count(value.unresolvedScalarCoefficientCount),
+    missingScalarCoefficientCount: count(value.missingScalarCoefficientCount),
+    invalidScalarCoefficientCount: count(value.invalidScalarCoefficientCount),
+    independentVariable: text(value.independentVariable, 'UNRESOLVED'),
+    independentVariableRepresentation: text(value.independentVariableRepresentation, 'UNRESOLVED'),
+    independentVariableQualified: value.independentVariableQualified === true,
     semanticHash: nullableText(value.semanticHash),
     sourceCustodyQualified: value.sourceCustodyQualified === true,
     sourceCustodyState: text(value.sourceCustodyState, 'UNRESOLVED'),

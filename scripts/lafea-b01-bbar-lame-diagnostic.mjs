@@ -43,6 +43,18 @@ const values = benchmark.meshLadder.levels.map((level) => {
 });
 const oracle = lameOracle(definition, 0.30, frozenProbe);
 
+// Fast veto for the exact production case that historically governed sparse
+// convergence. This runs before the 120-solve integrated matrix so a solver
+// regression is rejected without consuming the full qualification budget.
+const governingLevel = benchmark.meshLadder.levels.find((row) => row.levelId === 'L4');
+if (!governingLevel) throw new TypeError('Frozen governing L4 level missing');
+const governingRun = executeLameBbarQualificationCase(definition, probeMeshPolicy, {
+  elementType: 'T6',
+  poissonRatio: 0.4999,
+  level: governingLevel,
+  distortion,
+});
+
 console.log(JSON.stringify({
   schema: 'lafea-b01-bbar-lame-convergence-diagnostic/v1',
   status: 'EVIDENCE_ONLY',
@@ -54,6 +66,17 @@ console.log(JSON.stringify({
   })),
   allFour: sequenceEvidence(values),
   finestThree: sequenceEvidence(values.slice(-3)),
+  governingSolverVeto: {
+    elementType: 'T6',
+    poissonRatio: 0.4999,
+    levelId: governingLevel.levelId,
+    targetElementLength: governingLevel.targetElementLength,
+    distortionId: distortion.distortionId,
+    qualificationState: governingRun.result.qualification.state,
+    nodeCount: governingRun.mesh.nodes.length,
+    elementCount: governingRun.mesh.elements.length,
+    executionEvidenceHash: governingRun.result.semanticHashes.executionEvidenceHash,
+  },
   qualificationChanged: false,
   releaseAuthorityGranted: false,
 }, null, 2));

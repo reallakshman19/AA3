@@ -1,0 +1,141 @@
+{
+  "schema": "emp1-independent-precheck-qualification/v1",
+  "qualificationId": "HEXAGON_WRC107_PRESSURE_THRUST_PRECHECK_Q1",
+  "subject": {
+    "path": "validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-v1.json",
+    "gitBlobSha1": "bb8f6a5e3e6a634fa8364ddac267fec069359199",
+    "classification": "SUPPLEMENTAL_REFERENCE_NOT_CAUX_BENCHMARK"
+  },
+  "checkerCustody": {
+    "library": {
+      "path": "scripts/emp1-independent-precheck-qualification-lib.mjs",
+      "gitBlobSha1": "7835559c22ea02d0575aeeae6041886fd7770b11"
+    },
+    "checker": {
+      "path": "scripts/emp1-independent-precheck-qualification-check.mjs",
+      "gitBlobSha1": "2c6b23ebf8f6c23a103f6763b412d144b55eb8e9"
+    },
+    "selfTest": {
+      "path": "scripts/emp1-independent-precheck-qualification-self-test.mjs",
+      "gitBlobSha1": "f2096367a0a1b946b585011a9fc02bffa0e20620"
+    }
+  },
+  "sourceVerification": {
+    "publisher": "Hexagon",
+    "status": "PASS",
+    "facts": [
+      {
+        "id": "SRC_GEOMETRY",
+        "status": "PASS",
+        "locator": "CAESAR II Applications Guide v15, WRC 107 topic 330129",
+        "verified": [
+          "D=120.0 in",
+          "T=0.625 in",
+          "d=12.75 in",
+          "t=0.375 in",
+          "d/D=0.10625",
+          "(D-T)/T=191"
+        ]
+      },
+      {
+        "id": "SRC_PRESSURE_THRUST",
+        "status": "PASS",
+        "locator": "CAESAR II Applications Guide, Convert Forces/Moments topic 348744; corroborating maintained 15.1 topic 605844",
+        "verified": [
+          "pressure=275 psi",
+          "restraint axial force=-26 lbf",
+          "source calculation P=-26-275*pi*12^2/4=-31128 lbf"
+        ]
+      },
+      {
+        "id": "SRC_STRESS_OUTPUT",
+        "status": "PASS_SOURCE_TRANSCRIPTION_ONLY",
+        "locator": "CAESAR II Applications Guide, Convert Forces/Moments topic 348744; corroborating maintained 15.1 topic 605844",
+        "verified": [
+          "largest expansion stress intensity=117485 psi",
+          "location=Bu=outer surface of point B"
+        ]
+      },
+      {
+        "id": "SRC_PHYSICAL_FORMULATION",
+        "status": "PASS",
+        "locator": "CAESAR II User's Guide v15, Elastic Analyses of Shells near Nozzles Using WRC 107 topic 336367",
+        "verified": [
+          "axial pressure thrust uses pressure times inside area",
+          "some or all of that thrust may need to be added depending on restraint configuration"
+        ]
+      }
+    ]
+  },
+  "independentArithmetic": {
+    "status": "PASS",
+    "method": "Independent decimal/arithmetic recomputation from source-reported geometry, pressure and restraint load; no EMP.1 production evaluator called.",
+    "values": {
+      "d_over_D": 0.10625,
+      "Dm_over_T": 191,
+      "nozzleInsideDiameter_in": 12.0,
+      "pressureThrustArea_in2_highPrecision": "113.0973355292325565846551617980621038311",
+      "pressureThrust_lbf_highPrecision": "31101.76727053895306078016949446707855355",
+      "totalWrcRadialLoadUnrounded_lbf_highPrecision": "-31127.76727053895306078016949446707855355",
+      "sourceDisplayedTotal_lbf": -31128,
+      "absoluteUnroundedToDisplayedDifference_lbf": "0.23272946104693921983050553292144645"
+    },
+    "acceptance": {
+      "engineeringToleranceApplied": false,
+      "criterion": "nearest-whole-pound result must equal source display exactly and the unrounded-to-display difference must be <0.5 lbf",
+      "result": "PASS"
+    }
+  },
+  "dimensionalAudit": {
+    "status": "PASS",
+    "checks": [
+      "di=d-2t -> length",
+      "A=pi*di^2/4 -> area",
+      "pressure*A -> force",
+      "restraint force - pressure thrust -> force",
+      "d/D and (D-T)/T -> dimensionless"
+    ]
+  },
+  "signAndReferenceAudit": {
+    "status": "PASS_FOR_THIS_HEXAGON_EXAMPLE_ONLY",
+    "basis": "The source explicitly constructs the example P load as -26 minus pressure thrust and states pressure thrust tends to push the nozzle away from the vessel.",
+    "limitation": "This does not establish a universal EMP.1/WRC local-P sign mapping for arbitrary geometry/orientation. Exact WRC convention custody remains separate."
+  },
+  "executionEvidence": {
+    "artifactIdentityVerification": "PASS",
+    "note": "Before execution, locally reconstructed UTF-8 contents reproduced the Git blob SHA-1 values listed in checkerCustody and subject.",
+    "selfTest": {
+      "status": "PASS",
+      "negativeCases": [
+        "wrong source-reported radial load fails",
+        "rewritten derived pressure thrust fails",
+        "source-reported 117485 psi promoted to independent derivation fails",
+        "CAUx authority escalation fails"
+      ]
+    },
+    "actualSubjectCheck": {
+      "status": "PASS_BOUNDED_PRECHECK_QUALIFICATION",
+      "failureCount": 0,
+      "recomputedRoundedRadialLoad_lbf": -31128
+    }
+  },
+  "qualifiedClaims": [
+    "The Hexagon example geometry ratios are correctly transcribed and arithmetically consistent.",
+    "The reported nozzle OD/thickness imply a 12.0 in inside diameter.",
+    "The pressure-thrust calculation independently reproduces Hexagon's -31128 lbf displayed WRC radial load.",
+    "The sign used in that pressure-thrust calculation is qualified only for the cited Hexagon example.",
+    "117485 psi at Bu is correctly transcribed as a source-reported output."
+  ],
+  "explicitlyUnqualifiedClaims": [
+    "Independent reproduction of 117485 psi at Bu",
+    "Any CAUx 2017 WRC01f pages 24-31 expected value",
+    "WRC 537 coefficient/equation custody",
+    "Universal WRC load-sign mapping",
+    "EMP.1.C production correctness",
+    "Code compliance or release authority"
+  ],
+  "verdict": "QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY",
+  "maySatisfyCauxA4": false,
+  "mayAuthorizeEmp1CProduction": false,
+  "productionObservationUsedToSetExpectedValues": false
+}

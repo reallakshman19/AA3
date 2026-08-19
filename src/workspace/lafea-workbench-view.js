@@ -1,6 +1,6 @@
 /** DOM view for the independent guided LAFEA workbench.
- * LAFEA.1/LAFEA.2 are first-class analytical stages. LAFEA.3+ use the retained
- * FE viewport where their registered execution route requires one.
+ * EMP.1 is the public analytical product. Its retained A/B mechanics continue
+ * to execute through LAFEA.1/LAFEA.2 backing stages; LAFEA.3+ remain FEA routes.
  */
 import {
   LAFEA_STAGE_REGISTRY,
@@ -15,6 +15,12 @@ import {
 } from './lafea-workbench-dom.js';
 import { renderLafeaWorkbenchContent } from './lafea-workbench-content.js';
 import { renderLafeaAnalyticalCalcContent } from './lafea-analytical-calc-content.js';
+import {
+  EMP1_PUBLIC_PRODUCT,
+  buildEmp1ProductProjection,
+  emp1StepForBackingStage,
+  isEmp1BackingStage,
+} from './emp1-product-projection.js';
 import {
   lafeaWorkbenchReasonLabel,
   lafeaWorkbenchReasonLabels,
@@ -97,6 +103,7 @@ export class LafeaWorkbenchView {
       ? renderLafeaAnalyticalCalcContent(this.rootElement, state, stage, {
         handlers: this.handlers,
         registryEntry,
+        emp1Projection: buildEmp1ProductProjection(state),
         onSelectRoute: (nextStageId) => this.selectAnalyticalRoute(nextStageId, state),
         benchmarkHost: this.benchmarkHost,
       })
@@ -168,10 +175,10 @@ export class LafeaWorkbenchView {
 
     if (modes.analyticalMode) {
       eyebrow = this.analyticalOnly
-        ? 'Independent analytical calculation'
-        : `LAFEA standalone analysis • analytical stage ${definition.stageId}`;
-      title = `${definition.stageId} — ${definition.label}`;
-      purpose = `${definition.purpose} This stage uses analytical mechanics and does not create an FE mesh.`;
+        ? 'Independent analytical assessment'
+        : 'LAFEA standalone analysis • analytical product';
+      title = `${EMP1_PUBLIC_PRODUCT.productId} — ${EMP1_PUBLIC_PRODUCT.label}`;
+      purpose = `${EMP1_PUBLIC_PRODUCT.purpose} No FE mesh is created in EMP.1.`;
       custody = this.analyticalCustody(stage);
     } else {
       eyebrow = `LAFEA standalone analysis • active stage ${definition.stageId}`;
@@ -216,8 +223,10 @@ export class LafeaWorkbenchView {
     const summary = element(this.rootElement, 'summary', null, 'Technical custody detail');
     const row = element(this.rootElement, 'div', 'lafea-workbench__custody');
     const sections = stage.orchestration?.sections ?? {};
+    const step = emp1StepForBackingStage(stage.stageId);
     [
-      `Backing route: ${stage.stageId} analytical`,
+      `Public step: ${step?.stepId ?? 'UNRESOLVED'} ${step?.label ?? ''}`.trim(),
+      `Retained backing engine: ${stage.stageId}`,
       `Source binding: ${stage.lifecycleBinding?.status ?? 'UNINITIALIZED'}`,
       `Profile: ${stage.lifecycle?.profileId ?? 'UNINITIALIZED'}`,
       `Preparation: ${sections.PREPARATION?.state ?? 'UNAVAILABLE'}`,
@@ -231,34 +240,33 @@ export class LafeaWorkbenchView {
 
   stageNavigation(state) {
     const navigation = element(this.rootElement, 'nav', 'lafea-workbench__stages');
+    const emp1 = actionButton(
+      this.rootElement,
+      `${EMP1_PUBLIC_PRODUCT.productId} ${EMP1_PUBLIC_PRODUCT.label} · Analytical`,
+      () => this.selectAnalyticalPresentation(state),
+    );
+    emp1.dataset.productId = EMP1_PUBLIC_PRODUCT.productId;
+    emp1.dataset.method = 'ANALYTICAL';
+    emp1.setAttribute('aria-current', isAnalyticalStage(state.activeStageId) ? 'step' : 'false');
+
     if (this.analyticalOnly) {
-      navigation.setAttribute('aria-label', 'Analytical calculation routes');
-      ['LAFEA.1', 'LAFEA.2'].forEach((stageId) => {
-        const definition = requireLafeaStageRegistryEntry(stageId);
-        const button = actionButton(
-          this.rootElement,
-          `${stageId} — ${definition.label}`,
-          () => this.selectAnalyticalRoute(stageId, state),
-        );
-        button.dataset.stageId = stageId;
-        button.setAttribute('aria-current', definition.stageId === state.activeStageId ? 'step' : 'false');
-        navigation.append(button);
-      });
+      navigation.setAttribute('aria-label', 'Analytical assessment products');
+      navigation.append(emp1);
       return navigation;
     }
 
-    navigation.setAttribute('aria-label', 'LAFEA analysis stages');
+    navigation.setAttribute('aria-label', 'LAFEA analysis products and stages');
+    navigation.append(emp1);
     for (const definition of LAFEA_STAGE_REGISTRY) {
-      const analytical = isAnalyticalStage(definition.stageId);
+      if (isAnalyticalStage(definition.stageId)) continue;
       const disabled = definition.engineState === 'ENGINE_NOT_IMPLEMENTED';
-      const methodLabel = analytical ? 'Analytical' : 'FEA';
       const button = actionButton(
         this.rootElement,
-        `${definition.stageId} ${definition.label} · ${methodLabel}${disabled ? ' (Not implemented)' : ''}`,
+        `${definition.stageId} ${definition.label} · FEA${disabled ? ' (Not implemented)' : ''}`,
         () => this.selectStagePresentation(definition.stageId, state),
       );
       button.dataset.stageId = definition.stageId;
-      button.dataset.method = analytical ? 'ANALYTICAL' : 'FEA';
+      button.dataset.method = 'FEA';
       if (disabled) button.setAttribute('aria-disabled', 'true');
       button.setAttribute('aria-current', definition.stageId === state.activeStageId ? 'step' : 'false');
       navigation.append(button);
@@ -287,7 +295,7 @@ export class LafeaWorkbenchView {
 
   selectAnalyticalRoute(stageId, state) {
     if (!isAnalyticalStage(stageId)) {
-      throw new TypeError(`LAFEA_ANALYTICAL_ROUTE_UNSUPPORTED:${stageId}`);
+      throw new TypeError(`EMP1_BACKING_ROUTE_UNSUPPORTED:${stageId}`);
     }
     this.presentationMode = PRESENTATION_ANALYTICAL;
     const result = this.handlers.onStage(stageId);
@@ -297,9 +305,11 @@ export class LafeaWorkbenchView {
 
   toolbar(stageId, stage, analyticalMode = false) {
     const toolbar = element(this.rootElement, 'div', 'lafea-workbench__toolbar');
+    const step = analyticalMode ? emp1StepForBackingStage(stageId) : null;
+    const publicId = step?.stepId ?? stageId;
     const mock = actionButton(
       this.rootElement,
-      `[SIMULATED] Load ${stageId} demonstration source`,
+      `[SIMULATED] Load ${publicId} demonstration source`,
       () => this.handlers.onMock(stageId),
     );
     mock.dataset.role = 'lafea-mock';
@@ -308,7 +318,7 @@ export class LafeaWorkbenchView {
 
     const file = element(this.rootElement, 'input');
     const fileLabel = element(this.rootElement, 'label', null,
-      analyticalMode ? 'Import analytical JSON' : 'Import stage JSON');
+      analyticalMode ? `Import ${publicId} source JSON` : 'Import stage JSON');
     const fileId = `lafea-import-${stageId.replace('.', '-')}`;
     file.id = fileId;
     fileLabel.htmlFor = fileId;
@@ -322,16 +332,17 @@ export class LafeaWorkbenchView {
     const runAuthorized = authorization?.state === 'READY';
     const run = actionButton(
       this.rootElement,
-      executionSupported ? 'Validate and calculate' : 'Calculation not implemented',
+      executionSupported ? (analyticalMode ? `Validate and run ${publicId}` : 'Validate and calculate') : 'Calculation not implemented',
       this.handlers.onRun,
     );
     run.dataset.role = 'lafea-run';
+    if (step) run.dataset.emp1Step = step.shortId;
     run.disabled = !stage.document || !executionSupported || !runAuthorized;
     run.title = runTitle(stage, executionSupported, authorization);
 
     const benchmark = actionButton(
       this.rootElement,
-      analyticalMode ? 'Run analytical verification suite' : 'Run available verification suite',
+      analyticalMode ? `Verify ${publicId}` : 'Run available verification suite',
       this.handlers.onBenchmark,
     );
     benchmark.dataset.role = 'lafea-benchmark';
@@ -339,7 +350,7 @@ export class LafeaWorkbenchView {
 
     const exportButton = actionButton(
       this.rootElement,
-      analyticalMode ? 'Export analytical source' : 'Export source document',
+      analyticalMode ? `Export ${publicId} source` : 'Export source document',
       this.handlers.onExport,
     );
     exportButton.disabled = !stage.document;
@@ -380,7 +391,7 @@ export class LafeaWorkbenchView {
 }
 
 function isAnalyticalStage(stageId) {
-  return stageId === 'LAFEA.1' || stageId === 'LAFEA.2';
+  return isEmp1BackingStage(stageId);
 }
 
 function runTitle(stage, executionSupported, authorization) {

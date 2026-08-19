@@ -4,24 +4,25 @@ pr_or_wip: PR1258
 mission: Qualify B01 near-incompressible solver with roundoff-bounded B-bar translation-nullspace preservation
 workstream: LAFEA_B01_NUMERICAL_QUALIFICATION
 branch: agent/lafea-b01-nullspace-qualification-20260819
-base_main: f4b838284568827a1241fdd494a219e807cc60f1
-qualified_candidate_head: 80986bcc42ebb6cb5e48a68e9b5ad88c9084d1f4
+base_main: b841975b20e547c721447e95527a995805d9761a
+qualification_candidate_head: a66bbb9358bab9d1d689946c93247ddf3cbbefe1
+report_commits_are_recovery_only: true
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY
-handover_readiness: IN_PROGRESS
+handover_readiness: READY_TO_CONTINUE
 report_path: agents/PR1258_workreport.md
-current_stage: EXACT_HEAD_QUALIFICATION
-blocker: Exact-head B01 qualification outcomes are running; no PASS claimed yet
-highest_risk: A nullspace representation repair must remain roundoff-only and must not alter B-bar physical stiffness or acceptance tolerances
+current_stage: INTEGRATED_EXACT_HEAD_QUALIFICATION
+blocker: Integrated B01 exact-head run 32208643212 is still executing; final integrated PASS is not yet claimable
+highest_risk: Solver cleanup must remain bounded and must not alter B-bar physics, engineering acceptance tolerances, benchmark expected values, release authority or trust roots
 dependencies:
   - relation: SOURCE_RECOVERY
     pr: 1250
-    scope: retained production solver prerequisites only
-  - relation: BLOCKS
-    pr: 1254
-    scope: B02D remains frozen until B01 qualification and merge
+    scope: retained production solver prerequisites and diagnostic history only
+  - relation: PREREQUISITE_FOR
+    pr: 1259
+    scope: clean B02D V2 qualification successor
 excluded_authority:
   - B02D_NUMERICS
   - RELEASE_AUTHORITY
@@ -29,4 +30,4 @@ excluded_authority:
   - TRUST_ROOT
   - BENCHMARK_EXPECTED_VALUES
 merge_authority: NOT_GRANTED
-exact_next_action: Inspect first failing exact-head B01 workflow and repair only PR1258-owned mechanism defects
+exact_next_action: Preserve candidate a66bbb9358bab9d1d689946c93247ddf3cbbefe1, inspect integrated run 32208643212, then harden final custody only if integrated B01 passes

@@ -133,9 +133,12 @@ function normalizeSegment(segment, scale, index) {
         `segments[${index}].meta.bendArcCentre`,
       );
     }
+    if (meta.reducer) {
+      meta.reducer = normalizeReducer(meta.reducer, scale, `segments[${index}].meta.reducer`);
+    }
     rejectUnknownNumericMetadata(
       meta,
-      new Set([...DIMENSIONLESS_META_FIELDS, ...LENGTH_META_FIELDS, 'bendArcCentre']),
+      new Set([...DIMENSIONLESS_META_FIELDS, ...LENGTH_META_FIELDS, 'bendArcCentre', 'reducer']),
       `segments[${index}].meta`,
     );
     result.meta = meta;
@@ -144,6 +147,32 @@ function normalizeSegment(segment, scale, index) {
     segment,
     new Set(['length', 'diameter', 'thickness']),
     `segments[${index}]`,
+  );
+  return result;
+}
+
+/**
+ * Reducer outlet geometry (ACCDB models declare it; InputXML does not).
+ *
+ * Only the two outlet dimensions are lengths in the geometry's own unit and
+ * get scaled. ALPHA is an angle, and R1/R2 are retained in the source file's
+ * units under names that say so -- scaling either of those would be inventing
+ * a conversion this pipeline has no confirmed reading for. Anything else
+ * appearing in the record is unclassified and fails closed, exactly as it
+ * does elsewhere in this module.
+ */
+function normalizeReducer(reducer, scale, field) {
+  requireRecord(reducer, field);
+  const result = { ...structuredClone(reducer) };
+  for (const key of ['toOuterDiameter', 'toWallThickness']) {
+    if (typeof reducer[key] === 'number') {
+      result[key] = scaleNumber(reducer[key], scale, `${field}.${key}`);
+    }
+  }
+  rejectUnknownNumericMetadata(
+    reducer,
+    new Set(['toOuterDiameter', 'toWallThickness', 'alpha', 'r1SourceUnits', 'r2SourceUnits']),
+    field,
   );
   return result;
 }

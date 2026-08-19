@@ -64,6 +64,7 @@ lfeaPipelineShell.getSourceHost().append(linearPipingConsumerRoot);
 // Declared before the source workflow mounts: that controller renders (and so
 // notifies) during init(), which is earlier than either of these can exist.
 let lfeaAnalysisSurface = null;
+let lfeaStepGuidanceReady = false;
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   // The Load-case step renders straight from getPreFlight(), so it has to be
@@ -73,6 +74,7 @@ const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(appli
   onStateChanged: () => {
     lfeaAnalysisSurface?.refreshLoadCaseStep();
     lfeaAnalysisSurface?.refreshSourceStep();
+    refreshLfeaStepGuidance();
   },
 });
 const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipelineShell.getSourceHost(), {
@@ -89,6 +91,7 @@ const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipel
 // its own model-health/representability verdict directly.
 const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
+  onStateChanged: () => refreshLfeaStepGuidance(),
 });
 // The Load-case and Output surfaces load in their own chunk (see
 // lfea-pipeline-analysis-surface.js): the production bundle-chunk ceiling is
@@ -101,8 +104,13 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
       documentRef: applicationRoot.ownerDocument,
       loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
       resultsHost: lfeaPipelineShell.getResultsHost(),
-      getPreFlight: () => linearPipingInputXmlSource.getPreFlight(),
-      onApplyCaseSelection: (caseIds) => linearPipingInputXmlSource.setRequestedCaseIds(caseIds),
+      getPreFlight: () => activeLfeaPreFlight(),
+      // Routed to whichever source produced the pre-flight in play: applying a
+      // selection re-prepares that source, and sending it to the other one
+      // would leave the analysis running the cases the engineer did not pick.
+      onApplyCaseSelection: (caseIds) => (linearPipingInputXmlSource.getPreFlight()
+        ? linearPipingInputXmlSource.setRequestedCaseIds(caseIds)
+        : lfeaAccdbInputPanel.setRequestedCaseIds(caseIds)),
       onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
       onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
       sourceHost: lfeaPipelineShell.getSourceHost(),
@@ -114,7 +122,7 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
           { fallbackUnit: 'mm' },
         );
       },
-      getNodeIds: () => linearPipingInputXmlSource.getPreFlight()
+      getNodeIds: () => activeLfeaPreFlight()
         ?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
         ?.map((node) => node.id) ?? [],
     });
@@ -124,6 +132,10 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
     return lfeaAnalysisSurface;
   });
 
+// Every panel the projection reads now exists, so it can run: with nothing
+// loaded, Input is the only reachable step and the stepper says so.
+lfeaStepGuidanceReady = true;
+refreshLfeaStepGuidance();
 const lfeaVerificationDrawer = mountLfeaPipelineVerificationDrawer(lfeaPipelineShell.getVerificationDrawerHost(), {
   documentRef: applicationRoot.ownerDocument,
 });
@@ -201,6 +213,111 @@ lfeaPipelineShell.setAssemblyHandlers({
 });
 
 /**
+ * The pre-flight the downstream steps run from, whichever source produced it.
+ *
+ * Load case, Run and Output consume a sealed pre-flight, not a file format.
+ * An InputXML import produces one through its own workflow controller and an
+ * ACCDB import through linear-piping-accdb-intake.js; both are the same
+ * sealed record, so the steps below need only know which one is loaded. The
+ * InputXML workflow wins when both are, because it is the one whose panel
+ * owns the case-selection and repair affordances.
+ */
+function activeLfeaPreFlight() {
+  return linearPipingInputXmlSource.getPreFlight() ?? lfeaAccdbInputPanel.getPreFlight();
+}
+
+/**
+ * Project what the source panels actually know onto the stepper.
+ *
+ * The six steps carry a real order, but nothing was telling the stepper
+ * where a session had got to: every step rendered identically whether it was
+ * finished, waiting, or unreachable, and a disabled Load-case step gave no
+ * hint whether the model still needed checking or whether this source type
+ * cannot reach that step at all. Each status below is read from a panel's
+ * own snapshot -- no step is marked done here on the strength of a step
+ * before it having finished.
+ *
+ * Only INPUT, ERROR_CHECK and LOAD_CASE are projected: RUN, OUTPUT and
+ * EXPORT are marked complete by the code that actually performs them
+ * (runLfeaPipelineAnalysis, onAssembleAndSendToRun), and re-deriving them
+ * from here would overwrite what those paths recorded.
+ */
+function refreshLfeaStepGuidance() {
+  // The source controllers notify during their own init(), which runs while
+  // the `const` bindings holding them are still being assigned -- reading one
+  // back then throws on the temporal dead zone. (Same init-order hazard the
+  // `lfeaAnalysisSurface?.` guards above exist for, and it takes down the
+  // whole module: an uncaught error here left no panels mounted at all.) The
+  // first projection is made explicitly once every panel exists.
+  if (!lfeaStepGuidanceReady) return;
+  const inputXml = linearPipingInputXmlSource.getSnapshot();
+  const accdb = lfeaAccdbInputPanel.getSnapshot();
+  const inputXmlLoaded = inputXml.fileName !== null;
+  const accdbLoaded = accdb.fileName !== null && accdb.elementCount !== null;
+
+  lfeaPipelineShell.setStepStatus('INPUT', {
+    available: true,
+    complete: inputXmlLoaded || accdbLoaded,
+    detail: inputXmlLoaded || accdbLoaded
+      ? `Loaded ${inputXml.fileName ?? accdb.fileName}.`
+      : 'Import an InputXML, StagedJSON or CAESAR II ACCDB model.',
+  });
+
+  if (inputXmlLoaded) {
+    const cleared = inputXml.preFlightStatus === 'PASS' || inputXml.preFlightSolveAuthorized;
+    const blocked = inputXml.preFlightStatus === 'BLOCK';
+    lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+      available: true,
+      complete: cleared,
+      detail: cleared
+        ? 'Pre-flight cleared.'
+        : blocked
+          ? 'Pre-flight BLOCK — resolve the blocking findings below.'
+          : 'Review the disclosed limitations and accept them to proceed.',
+    });
+    lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+      available: cleared,
+      detail: cleared ? 'Choose the cases to analyze, then Analyze.' : null,
+      blockedReason: cleared ? null : 'The pre-flight is not authorized yet — clear Error check first.',
+    });
+    return;
+  }
+
+  if (accdbLoaded) {
+    const cleared = accdb.preFlightStatus === 'PASS' || accdb.preFlightSolveAuthorized;
+    const failed = accdb.preFlightStatus === 'FAILED';
+    lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+      available: true,
+      complete: cleared,
+      detail: cleared
+        ? 'Pre-flight cleared.'
+        : failed
+          ? `Pre-flight could not be prepared: ${accdb.preFlightError}`
+          : `Pre-flight ${accdb.preFlightStatus} — see the grouped findings.`,
+    });
+    lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+      available: cleared,
+      detail: cleared ? `Choose from ${accdb.availableCaseIds.length} case(s), then Analyze.` : null,
+      blockedReason: cleared
+        ? null
+        : failed
+          ? `The ACCDB pre-flight failed closed: ${accdb.preFlightError}`
+          : 'The ACCDB pre-flight is not authorized yet — clear the blocking findings on Error check first.',
+    });
+    return;
+  }
+
+  lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+    available: false,
+    blockedReason: 'Load a model on the Input step first.',
+  });
+  lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+    available: false,
+    blockedReason: 'Load a model on the Input step first.',
+  });
+}
+
+/**
  * Run the analysis the Load-case step asked for.
  *
  * No authority supplement is involved. Displacements, support loads and
@@ -211,7 +328,7 @@ lfeaPipelineShell.setAssemblyHandlers({
  */
 function runLfeaPipelineAnalysis(caseIds) {
   try {
-    const preFlight = linearPipingInputXmlSource.getPreFlight();
+    const preFlight = activeLfeaPreFlight();
     if (!preFlight) throw new Error('Load a model and run Error check before analyzing.');
     const requested = preFlight.preparation.requestedCaseIds ?? [];
     const missing = caseIds.filter((caseId) => !requested.includes(caseId));

@@ -1,0 +1,34 @@
+schema: AgentClaim.v1
+pr_or_wip: WIP-EMP1-1261
+claim_state: ACTIVE
+files:
+  exact:
+    - agents/WIP-EMP1-1261_core_scaffold.md
+    - agents/status/WIP-EMP1-1261.yaml
+    - agents/claims/WIP-EMP1-1261.yaml
+    - scripts/emp1-source-custody-lib.mjs
+    - scripts/emp1-source-custody-check.mjs
+    - scripts/emp1-source-custody-self-test.mjs
+    - validation/emp1/wrc537-2013/source-ledger.json
+    - validation/emp1/caux2017-wrc01f/source-ledger.json
+  prefixes:
+    - src/core/emp1/
+    - docs/emp1/
+    - validation/emp1/
+authority_domains:
+  - EMP1_DORMANT_SCAFFOLD
+  - EMP1_SOURCE_CUSTODY
+  - EMP1_INDEPENDENT_QUALIFICATION_EVIDENCE
+claim_modes:
+  - EXCLUSIVE
+observe_only:
+  - src/workspace/lafea-*
+  - src/core/local-stress/
+  - src/core/local-attachment-screening/
+  - src/core/local-attachment-correlation/
+  - src/core/local-continuum/
+  - src/core/lafea-meshing/
+last_verified_head: fd5f2cd58481ec1417850ef927486aed03044a53
+main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
+overlap_state: SAFE_FOR_SOURCE_CUSTODY_ONLY
+note: Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.

@@ -19,17 +19,21 @@ const aExecution = executeLafeaStage('LAFEA.1', aDocument);
 
 assert.equal(aExecution.status, 'QUALIFIED');
 assert.ok(aExecution.result);
+assert.ok(aExecution.canonicalInput);
+assert.equal(typeof aExecution.canonicalInput.semanticHash, 'string');
 
 const custody = classifyEmp1BSourceCustody({ aDocument, aExecution, bDocument });
 const refresh = evaluateEmp1BSourceRefresh({ aDocument, aExecution, bDocument });
 
 const audit = {
   schema: 'emp1-simulated-a-b-custody-check/v1',
-  aDocumentHash: semanticHash(aDocument),
+  aEditableDocumentHash: semanticHash(aDocument),
+  aCanonicalModelHash: semanticHash(aExecution.canonicalInput),
   bFoundationModelHash: semanticHash(bDocument.sourceEvidence.foundationModel),
   aResultHash: semanticHash(aExecution.result),
   bFoundationResultHash: semanticHash(bDocument.sourceEvidence.foundationResult),
-  sameFoundationModel: semanticHash(aDocument) === semanticHash(bDocument.sourceEvidence.foundationModel),
+  sameCanonicalFoundationModel:
+    semanticHash(aExecution.canonicalInput) === semanticHash(bDocument.sourceEvidence.foundationModel),
   sameFoundationResult: semanticHash(aExecution.result) === semanticHash(bDocument.sourceEvidence.foundationResult),
   custody,
   refresh: {
@@ -41,7 +45,7 @@ const audit = {
 console.log(JSON.stringify(audit, null, 2));
 
 assert.equal(custody.state, EMP1_B_SOURCE_CUSTODY_STATES.CURRENT,
-  `Simulated EMP.1.B evidence must be the same deterministic A evidence. Refresh diagnostic: ${refresh.code ?? 'none'} ${refresh.message ?? ''}`);
+  `Simulated EMP.1.B evidence must be the same deterministic canonical A evidence. Refresh diagnostic: ${refresh.code ?? 'none'} ${refresh.message ?? ''}`);
 assert.equal(custody.canRefresh, false);
-assert.equal(audit.sameFoundationModel, true);
+assert.equal(audit.sameCanonicalFoundationModel, true);
 assert.equal(audit.sameFoundationResult, true);

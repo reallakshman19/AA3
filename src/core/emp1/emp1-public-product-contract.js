@@ -15,7 +15,15 @@ export const EMP1_PUBLIC_PRODUCT = Object.freeze({
 
 export const EMP1_BACKING_STAGE_IDS = Object.freeze(['LAFEA.1', 'LAFEA.2']);
 
-const CURRENT_C_QUALIFICATION = evaluateEmp1CQualificationState(EMP1_C_CURRENT_QUALIFICATION_EVIDENCE);
+/** Production route registration is code/registry custody, never source-evidence custody. */
+export const EMP1_C_PRODUCTION_ROUTE = Object.freeze({
+  registered: false,
+  routeId: null,
+});
+
+const CURRENT_C_QUALIFICATION = evaluateEmp1CQualificationState(withGovernedCExecutionRoute(
+  EMP1_C_CURRENT_QUALIFICATION_EVIDENCE,
+));
 export const EMP1_LOCAL_CORRELATION_BLOCKERS = Object.freeze([...CURRENT_C_QUALIFICATION.blockerCodes]);
 
 export const EMP1_STEPS = Object.freeze([
@@ -43,11 +51,13 @@ export function buildEmp1ProductProjection(state, options = {}) {
     bDocument: bStage?.document,
   });
   const b = projectBStep(projectExecutableStep(EMP1_STEPS[1], bStage), bCustody);
-  const cQualification = evaluateEmp1CQualificationState(
-    options.localCorrelationQualificationEvidence
-      ?? state?.emp1?.localCorrelationQualificationEvidence
-      ?? EMP1_C_CURRENT_QUALIFICATION_EVIDENCE,
-  );
+
+  // Qualification evidence may be supplied by a governed caller, but it cannot
+  // assert that a production route exists. Route registration is owned here and
+  // remains false until an actual EMP.1.C production route is implemented.
+  const qualificationEvidence = options.localCorrelationQualificationEvidence
+    ?? EMP1_C_CURRENT_QUALIFICATION_EVIDENCE;
+  const cQualification = evaluateEmp1CQualificationState(withGovernedCExecutionRoute(qualificationEvidence));
   const c = Object.freeze({
     ...EMP1_STEPS[2],
     state: cQualification.state,
@@ -79,11 +89,22 @@ export function buildEmp1ProductProjection(state, options = {}) {
       emp1CProductionAuthority: cQualification.engineeringUseAuthorized ? 'QUALIFIED_METHOD_AUTHORITY' : 'NOT_AUTHORIZED',
       emp1CTechnicalQualificationReady: cQualification.technicalQualificationReady,
       emp1CRunAuthorized: cQualification.runAuthorized,
+      emp1CProductionRoute: EMP1_C_PRODUCTION_ROUTE,
       emp1CQualificationState: cQualification,
       passIsCodeCompliance: false,
       releaseQualified: false,
     }),
   });
+}
+
+function withGovernedCExecutionRoute(evidence) {
+  if (!evidence || typeof evidence !== 'object') return evidence;
+  return {
+    ...evidence,
+    execution: {
+      routeRegistered: EMP1_C_PRODUCTION_ROUTE.registered,
+    },
+  };
 }
 
 function projectExecutableStep(definition, stage) {

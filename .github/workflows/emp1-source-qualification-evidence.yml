@@ -1,4 +1,4 @@
-name: EMP.1 source qualification evidence
+name: EMP.1 retained-source qualification evidence
 
 on:
   pull_request:
@@ -7,84 +7,69 @@ permissions:
   contents: read
 
 jobs:
-  source-qualification-evidence:
+  retained-source-qualification:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Advanced_Analysis candidate
         uses: actions/checkout@v4
 
-      - name: Checkout pinned EMP.1 source repository
-        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          repository: reallaksh19/XML_Compare_Utilities
-          ref: dc1371afcd44c12de86b2dad6eddf00f1f0b3c55
-          path: .source/XML_Compare_Utilities
-          fetch-depth: 1
+          node-version: '20'
 
-      - name: Verify pinned source commit
+      - name: Record raw primary-source custody boundary
         shell: bash
         run: |
           set -euo pipefail
-          actual="$(git -C .source/XML_Compare_Utilities rev-parse HEAD)"
-          expected="dc1371afcd44c12de86b2dad6eddf00f1f0b3c55"
-          printf 'expected=%s\nactual=%s\n' "$expected" "$actual"
-          test "$actual" = "$expected"
-
-      - name: Prepare PDF inspection tools
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! command -v pdftotext >/dev/null 2>&1 || ! command -v pdftoppm >/dev/null 2>&1 || ! command -v pdfinfo >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y poppler-utils
-          fi
-
-      - name: Observe raw-byte custody and extract bounded source evidence
-        shell: bash
-        run: |
-          set -euo pipefail
-          source_root="$PWD/.source/XML_Compare_Utilities/docs/emp.1"
           out="$PWD/test-results/emp1-source-qualification"
-          mkdir -p "$out/caux-pages"
-
-          set +e
-          node scripts/emp1-source-custody-check.mjs --source-root "$source_root" > "$out/source-custody.json" 2> "$out/source-custody.stderr.txt"
-          custody_rc=$?
-          set -e
-          cat "$out/source-custody.json"
-          if [ "$custody_rc" -ne 0 ] && [ "$custody_rc" -ne 2 ]; then
-            echo "EMP1_SOURCE_CUSTODY_OBSERVATION_FAILED rc=$custody_rc" >&2
-            cat "$out/source-custody.stderr.txt" >&2 || true
-            exit "$custody_rc"
-          fi
-          printf '%s\n' "$custody_rc" > "$out/source-custody.exit-code.txt"
-
-          wrc="$source_root/WRC537_2013.pdf"
-          caux="$source_root/CAUx 2017 - WRC01f.pdf"
-
-          sha256sum "$wrc" "$caux" > "$out/raw-sha256.txt"
-          stat --printf='%s  %n\n' "$wrc" "$caux" > "$out/byte-counts.txt"
-          git -C .source/XML_Compare_Utilities hash-object "docs/emp.1/WRC537_2013.pdf" > "$out/wrc-git-blob-sha1.txt"
-          git -C .source/XML_Compare_Utilities hash-object "docs/emp.1/CAUx 2017 - WRC01f.pdf" > "$out/caux-git-blob-sha1.txt"
-
-          pdfinfo "$wrc" > "$out/WRC537_2013.pdfinfo.txt"
-          pdfinfo "$caux" > "$out/CAUx_2017_WRC01f.pdfinfo.txt"
-          pdftotext -layout "$wrc" "$out/WRC537_2013.txt"
-          pdftotext -f 24 -l 31 -layout "$caux" "$out/CAUx_2017_WRC01f_pp24-31.txt"
-          pdftoppm -f 24 -l 31 -png -r 150 "$caux" "$out/caux-pages/page" >/dev/null
-
+          mkdir -p "$out"
+          cat > "$out/raw-primary-source-custody.json" <<'JSON'
           {
-            echo "source_commit=dc1371afcd44c12de86b2dad6eddf00f1f0b3c55"
-            echo "wrc_path=docs/emp.1/WRC537_2013.pdf"
-            echo "caux_path=docs/emp.1/CAUx 2017 - WRC01f.pdf"
-            echo "custody_exit_code=$custody_rc"
-          } > "$out/manifest.txt"
+            "schema": "emp1-primary-source-custody-boundary/v1",
+            "status": "BLOCKED",
+            "code": "BLOCK_PRIVATE_SOURCE_RAW_BYTES_NOT_OBSERVED",
+            "wrc": {
+              "repository": "reallaksh19/XML_Compare_Utilities",
+              "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+              "path": "docs/emp.1/WRC537_2013.pdf",
+              "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+              "expectedByteCount": 1443744,
+              "rawPdfSha256": null
+            },
+            "caux": {
+              "repository": "reallaksh19/XML_Compare_Utilities",
+              "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+              "path": "docs/emp.1/CAUx 2017 - WRC01f.pdf",
+              "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
+              "expectedByteCount": 7260396,
+              "rawPdfSha256": null
+            },
+            "authorityNote": "This workflow does not possess raw bytes from the private source repository. Git blob IDs and byte counts are identity pins only and are not substituted for raw SHA-256 or primary-PDF page verification."
+          }
+          JSON
+          cat "$out/raw-primary-source-custody.json"
 
-      - name: Upload source qualification evidence
+      - name: Verify retained-source arbitration remains fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-retained-source-arbitration-check.mjs \
+            | tee test-results/emp1-source-qualification/retained-source-arbitration-check.json
+
+      - name: Prove 120-curve / 1200-scalar transcription contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-coefficient-transcription-self-test.mjs \
+            | tee test-results/emp1-source-qualification/coefficient-transcription-self-test.json
+          node scripts/emp1-wrc-coefficient-transcription-generate.mjs
+
+      - name: Upload retained qualification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: emp1-source-qualification-${{ github.sha }}
+          name: emp1-retained-source-qualification-${{ github.sha }}
           path: test-results/emp1-source-qualification
           if-no-files-found: error
           retention-days: 30

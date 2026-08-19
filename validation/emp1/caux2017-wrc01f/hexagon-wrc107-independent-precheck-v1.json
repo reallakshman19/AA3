@@ -1,6 +1,6 @@
 {
   "schema": "emp1-independent-precheck/v1",
-  "precheckId": "HEXAGON_CII_WRC107_APPLICATIONS_GUIDE_V15",
+  "precheckId": "HEXAGON_CII_WRC107_APPLICATIONS_GUIDE_REFERENCE",
   "classification": "SUPPLEMENTAL_REFERENCE_NOT_CAUX_BENCHMARK",
   "qualificationUse": "SANITY_CHECK_ONLY",
   "maySatisfyCauxA4": false,
@@ -9,13 +9,52 @@
   "source": {
     "publisher": "Hexagon",
     "product": "CAESAR II",
-    "document": "CAESAR II Applications Guide",
-    "version": "15",
-    "section": "WRC 107 / Convert Forces/Moments from CAESAR II Global Coordinates to WRC 107 Local Axes",
+    "document": "CAESAR II Applications Guide / User's Guide online documentation",
     "authorityRole": "OFFICIAL_PRODUCT_REFERENCE_SUPPLEMENTAL",
+    "provenancePolicy": "Do not infer a single documentation-version locator where the independently observed source facts are distributed across maintained Hexagon documentation versions/locales.",
+    "evidence": [
+      {
+        "factSet": "geometry_and_applicability",
+        "document": "CAESAR II Applications Guide",
+        "version": "15",
+        "topic": "WRC 107",
+        "locator": "330129",
+        "observed": [
+          "D=120.0 in",
+          "T=0.625 in",
+          "d=12.75 in",
+          "t=0.375 in",
+          "d/D=0.10625",
+          "(D-T)/T=191"
+        ]
+      },
+      {
+        "factSet": "pressure_thrust_and_reported_wrc_result",
+        "document": "CAESAR II Applications Guide",
+        "version": "12 official online topic; corroborated by 15.1 maintained documentation",
+        "topic": "Convert Forces/Moments from CAESAR II Global Coordinates to WRC 107 Local Axes",
+        "locator": "348744 / corroborating 15.1 topic 605844",
+        "observed": [
+          "pressure=275 psi",
+          "restraint axial force=-26 lbf",
+          "P=-26-275*pi*12^2/4=-31128 lbf",
+          "largest expansion stress intensity=117485 psi at Bu"
+        ]
+      },
+      {
+        "factSet": "wrc107_537_relationship_and_convention_context",
+        "document": "CAESAR II User's Guide",
+        "topic": "WRC Bulletin 107(537)",
+        "observed": [
+          "WRC 537 provides equations in place of WRC 107 curves",
+          "WRC local load convention is independent of vessel global orientation"
+        ]
+      }
+    ],
     "notAuthorityFor": [
       "CAUx 2017 - WRC01f.pdf pages 24-31 benchmark",
-      "WRC Bulletin 537 equation or coefficient custody"
+      "WRC Bulletin 537 equation or coefficient custody",
+      "arbitrating a discrepancy against the exact pinned WRC Bulletin source"
     ]
   },
   "sourceReported": {
@@ -54,11 +93,15 @@
     "reportedVsIndependentRoundedRadialLoad": "PASS",
     "reported_lbf": -31128,
     "independentRounded_lbf": -31128,
-    "difference_lbf": 0
+    "difference_lbf": 0,
+    "unroundedToDisplayedDifference_lbf": 0.232729461048,
+    "acceptanceBasis": "Exact agreement after the source's whole-pound display rounding; no engineering tolerance is applied."
   },
   "guardrails": [
     "Do not use 117485 psi as a CAUx pp24-31 expected value unless the exact pinned CAUx pages independently show the same value.",
+    "117485 psi at Bu is source-reported only; it has not been independently reproduced from WRC coefficients in this precheck.",
     "Do not infer WRC 537 coefficients from this precheck.",
+    "Do not use this supplemental reference to arbitrate a conflict with the exact pinned WRC Bulletin.",
     "Do not rewrite these frozen values after observing future EMP.1.C production output.",
     "Any disagreement with future production output requires root-cause analysis rather than tolerance or expected-value adjustment."
   ],

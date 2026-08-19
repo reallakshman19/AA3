@@ -6,7 +6,7 @@ import {
 } from './sparse-matrix.js';
 
 const POST_CAP_REFINEMENT_LIMIT = 3;
-const POST_CAP_REFINEMENT_METHOD = 'JACOBI_SCALED_KRYLOV2_MINIMUM_RESIDUAL';
+const POST_CAP_REFINEMENT_METHOD = 'JACOBI_SCALED_DD_INFINITY_SELECTED_MINIMUM_RESIDUAL';
 const POST_CAP_KRYLOV2_MIN_DETERMINANT = 4096 * Number.EPSILON;
 const ERROR_FREE_PRODUCT_RESIDUAL = 'ERROR_FREE_PRODUCT_EXPANSION';
 const COMPENSATED_CSR_RESIDUAL = 'COMPENSATED_CSR';
@@ -97,47 +97,46 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
 
   while (originalResidualInfinity > convergenceTarget
     && refinementSteps < POST_CAP_REFINEMENT_LIMIT) {
-    // Work in the same Jacobi-scaled coordinates used by CG. The bounded
-    // correction is sought in K2(A_hat,r_hat)=span{r_hat,A_hat r_hat}; its
-    // coefficients minimize the scaled residual 2-norm over the corresponding
-    // action space span{A_hat r_hat,A_hat^2 r_hat}. If those two action vectors
-    // are numerically dependent, fall back deterministically to the original
-    // one-dimensional minimum-residual direction. No matrix, load, tolerance or
-    // iteration budget is changed. A candidate is retained only when the
-    // independent error-free-product residual infinity norm strictly decreases.
-    const candidate = krylovTwoMinimumResidualCandidate(
+    // Generate both the historical one-dimensional minimum-residual correction
+    // and, when independent, the K2 correction in the Jacobi-scaled space.
+    // The scaled 2-norm calculation only proposes candidates; acceptance is
+    // governed by the independent error-free-product residual in original
+    // coordinates. Choosing the smallest DD infinity residual guarantees that
+    // adding K2 cannot suppress a better historical K1 correction.
+    const candidates = minimumResidualCandidates(
       matrix,
       scaledSolution,
       exact,
       inverseSqrtDiagonal,
     );
-    const candidateSolution = unscaleSolution(
-      candidate.scaledSolution,
-      inverseSqrtDiagonal,
-    );
-    const candidateExact = exactOriginalResidualDoubleDouble(
+    const evaluated = candidates.map((candidate) => evaluateRefinementCandidate(
       matrix,
       rightHandSide,
-      candidateSolution,
-    );
-    const candidateInfinity = maxAbs(candidateExact);
-    if (!(candidateInfinity < originalResidualInfinity)) break;
+      candidate,
+      inverseSqrtDiagonal,
+    ));
+    const best = evaluated.reduce((selected, candidate) => (
+      selected === null || candidate.residualInfinity < selected.residualInfinity
+        ? candidate
+        : selected
+    ), null);
+    if (!best || !(best.residualInfinity < originalResidualInfinity)) break;
 
     for (let index = 0; index < scaledSolution.length; index += 1) {
-      scaledSolution[index] = candidate.scaledSolution[index];
+      scaledSolution[index] = best.scaledSolution[index];
     }
-    solution = candidateSolution;
-    exact = candidateExact;
-    originalResidualInfinity = candidateInfinity;
+    solution = best.solution;
+    exact = best.exactResidual;
+    originalResidualInfinity = best.residualInfinity;
     refinementSteps += 1;
-    refinementHistory.push(candidateInfinity);
-    refinementDimensions.push(candidate.dimension);
+    refinementHistory.push(originalResidualInfinity);
+    refinementDimensions.push(best.dimension);
   }
 
   if (originalResidualInfinity > convergenceTarget) {
     throw solverError(
       'JACOBI_EQUILIBRATED_CG_DID_NOT_CONVERGE',
-      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} post-cap Krylov minimum-residual steps; history=${refinementHistory.join(',')}; dimensions=${refinementDimensions.join(',')}`,
+      `${originalResidualInfinity} > ${convergenceTarget} after ${iterations} iterations and ${refinementSteps} post-cap DD-selected minimum-residual steps; history=${refinementHistory.join(',')}; dimensions=${refinementDimensions.join(',')}`,
     );
   }
   return result(
@@ -160,7 +159,7 @@ export function jacobiEquilibratedCgSolve(matrix, rightHandSide, profile) {
   );
 }
 
-function krylovTwoMinimumResidualCandidate(
+function minimumResidualCandidates(
   matrix,
   scaledSolution,
   exactResidual,
@@ -178,15 +177,16 @@ function krylovTwoMinimumResidualCandidate(
     );
   }
 
+  const oneDimensional = oneDimensionalMinimumResidualCandidate(
+    scaledSolution,
+    scaledResidual,
+    action1,
+    action1NormSquared,
+  );
   const action2 = scaledMatrixAction(matrix, action1, inverseSqrtDiagonal);
   const action2NormSquared = compensatedDot(action2, action2);
   if (!(action2NormSquared > 0) || !Number.isFinite(action2NormSquared)) {
-    return oneDimensionalMinimumResidualCandidate(
-      scaledSolution,
-      scaledResidual,
-      action1,
-      action1NormSquared,
-    );
+    return Object.freeze([oneDimensional]);
   }
 
   const action1Norm = Math.sqrt(action1NormSquared);
@@ -200,12 +200,7 @@ function krylovTwoMinimumResidualCandidate(
   }
   const determinant = 1 - normalizedCross * normalizedCross;
   if (!(determinant > POST_CAP_KRYLOV2_MIN_DETERMINANT)) {
-    return oneDimensionalMinimumResidualCandidate(
-      scaledSolution,
-      scaledResidual,
-      action1,
-      action1NormSquared,
-    );
+    return Object.freeze([oneDimensional]);
   }
 
   const rhs1 = compensatedDot(action1, scaledResidual) / action1Norm;
@@ -227,12 +222,13 @@ function krylovTwoMinimumResidualCandidate(
     );
   }
 
-  return Object.freeze({
+  const twoDimensional = Object.freeze({
     dimension: 2,
     scaledSolution: scaledSolution.map(
       (value, index) => value + alpha * scaledResidual[index] + beta * action1[index],
     ),
   });
+  return Object.freeze([oneDimensional, twoDimensional]);
 }
 
 function oneDimensionalMinimumResidualCandidate(
@@ -257,6 +253,23 @@ function oneDimensionalMinimumResidualCandidate(
     scaledSolution: scaledSolution.map(
       (value, index) => value + alpha * scaledResidual[index],
     ),
+  });
+}
+
+function evaluateRefinementCandidate(
+  matrix,
+  rightHandSide,
+  candidate,
+  inverseSqrtDiagonal,
+) {
+  const solution = unscaleSolution(candidate.scaledSolution, inverseSqrtDiagonal);
+  const exactResidual = exactOriginalResidualDoubleDouble(matrix, rightHandSide, solution);
+  return Object.freeze({
+    dimension: candidate.dimension,
+    scaledSolution: candidate.scaledSolution,
+    solution,
+    exactResidual,
+    residualInfinity: maxAbs(exactResidual),
   });
 }
 

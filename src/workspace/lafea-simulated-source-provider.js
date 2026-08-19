@@ -12,6 +12,17 @@ export const LAFEA3_SIMULATED_MESH_PROFILE_ID = 'LAFEA3_SIMULATED_T6_H30_V1';
 
 export async function createLafeaMockDocument(stageId) {
   const provider = await import('./advanced-mock-data.js');
+  if (stageId === 'LAFEA.1') {
+    const screening = provider.createLafeaMockDocument('LAFEA.2');
+    const canonicalFoundation = screening?.sourceEvidence?.foundationModel;
+    if (!canonicalFoundation?.sourceEvidence || !canonicalFoundation?.schema) {
+      throw new TypeError('EMP1_SIMULATED_A_SOURCE_FROM_B_REQUIRED');
+    }
+    return {
+      ...structuredClone(canonicalFoundation.sourceEvidence),
+      schema: canonicalFoundation.schema,
+    };
+  }
   return provider.createLafeaMockDocument(stageId);
 }
 

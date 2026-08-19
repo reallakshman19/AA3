@@ -1,7 +1,10 @@
 import { smoothInteriorPoints } from '../core/lafea-meshing/mesh-smoothing.js';
 import { edgeKey, lawsonFlip, upgradeToT6 } from '../core/lafea-meshing/constrained-delaunay-t6.js';
 import { insertInteriorPoint } from '../core/lafea-meshing/interior-refinement-t6.js';
-import { buildLafea3RetainedRefinementGrading } from './lafea-retained-mesh-refinement-grading.js';
+import {
+  buildLafea3RetainedRefinementGrading,
+  minimumLafea3RetainedRefinementInfluenceRadius,
+} from './lafea-retained-mesh-refinement-grading.js';
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import {
   LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
@@ -83,9 +86,16 @@ export function planLafeaRetainedMeshRefinement({
   }
 
   const targets = resolveTargets(parentEvidence.mesh, command.targetType, command.targetIds);
+  const minimumGradedInfluenceRadius = minimumLafea3RetainedRefinementInfluenceRadius({
+    localTargetElementLength: command.targetElementLength,
+    globalTargetElementLength,
+    adjacentSizeRatioMax: meshProfile.fields.adjacentSizeRatioMax,
+    minimumElementsPerTransitionBand:
+      LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumElementsPerTransitionBand,
+  });
   const influenceRadius = Math.max(
     globalTargetElementLength * LAFEA_RETAINED_MESH_REFINEMENT_POLICY.influenceRadiusGlobalFactor,
-    command.targetElementLength * 3,
+    minimumGradedInfluenceRadius,
   );
   const capability = lafeaCoreMeshProducerCapability();
   const qualification = lafeaCoreMeshProducerQualification();

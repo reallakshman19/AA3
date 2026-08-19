@@ -97,7 +97,13 @@ function projectBStep(step, custody) {
     : custody.state === EMP1_B_SOURCE_CUSTODY_STATES.MISSING
       ? 'A_EVIDENCE_REQUIRED'
       : 'STALE_A_EVIDENCE';
-  return Object.freeze({ ...step, state, runAuthorized: false });
+  return Object.freeze({
+    ...step,
+    state,
+    retainedResultAvailable: step.resultAvailable,
+    resultAvailable: false,
+    runAuthorized: false,
+  });
 }
 
 function custodyMessage(custody) {

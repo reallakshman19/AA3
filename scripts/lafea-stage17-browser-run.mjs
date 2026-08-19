@@ -30,11 +30,15 @@ function runPlaywright(args) {
 
 // EMP.1 analytical qualification prerequisites run before Playwright tests and
 // before the unrelated LAFEA.3 B01/B02 gate. The retained WRC numerical and
-// dimensional contract is self-tested first. The separate runtime-contract
-// self-test then proves that axis mapping, pressure-thrust/double-count policy,
-// and stress-intensity semantics cannot be inferred or promoted without source-
-// bound evidence. C derivation finally re-observes the immutable retained bytes.
+// dimensional contract is self-tested first. The supplemental Hexagon pressure-
+// thrust oracle is then replayed as a bounded numerical sanity check only; it
+// cannot satisfy CAUx A4 or WRC authority. The separate runtime-contract test
+// proves axis mapping, pressure-thrust/double-count policy, and stress-intensity
+// semantics cannot be inferred or promoted without source-bound evidence. C
+// derivation finally re-observes the immutable retained bytes.
 runNodeScript('scripts/emp1-wrc-dataset-readiness-self-test.mjs');
+runNodeScript('scripts/emp1-independent-precheck-qualification-self-test.mjs');
+runNodeScript('scripts/emp1-independent-precheck-qualification-check.mjs');
 runNodeScript('scripts/emp1-c-runtime-contract-self-test.mjs');
 runNodeScript('scripts/emp1-c-qualification-evidence-self-test.mjs');
 runNodeScript('scripts/emp1-c-qualification-evidence-check.mjs');

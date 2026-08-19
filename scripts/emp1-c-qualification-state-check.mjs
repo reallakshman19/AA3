@@ -14,14 +14,23 @@ assert.equal(current.engineeringUseAuthorized, false);
 assert.equal(current.runAuthorized, false);
 assert.deepEqual(current.blockerCodes, [
   EMP1_C_BLOCKER_CODES.WRC_DATASET_NOT_READY,
+  EMP1_C_BLOCKER_CODES.WRC_DIMENSIONAL_CONTRACT_UNRESOLVED,
   EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING,
   EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN,
   EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN,
 ]);
 assert.equal(current.evidence.derivation.mode, 'RETAINED_ARTIFACT_DERIVATION');
 assert.equal(current.evidence.derivation.manualSummaryPermitted, false);
+assert.equal(current.evidence.derivation.retainedAuditObservedMatch, true);
+assert.equal(current.evidence.derivation.retainedExtractionPinVerified, true);
 assert.equal(current.evidence.wrcDataset.unresolvedJsonPathCount, 21);
 assert.equal(current.evidence.wrcDataset.openIssueCount, 7);
+assert.equal(current.evidence.wrcDataset.dimensionalContractStatus, 'BLOCKED');
+assert.equal(current.evidence.wrcDataset.dimensionalViolationCount, 2);
+assert.deepEqual(current.evidence.wrcDataset.dimensionalViolationIds, [
+  'SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH',
+  'SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH',
+]);
 assert.equal(current.evidence.wrcDataset.coefficientCurveRows, 120);
 assert.equal(current.evidence.wrcDataset.coefficientsPerCurve, 10);
 assert.equal(current.evidence.wrcDataset.requiredScalarCoefficientCount, 1200);
@@ -44,10 +53,12 @@ assert.equal(current.evidence.cauxBenchmark.independentHandCalculationStatus, 'N
 assert.equal(current.evidence.cauxBenchmark.supplementalPrecheckMaySatisfyCauxA4, false);
 assert.match(current.blockers[0].message, /21 unresolved fields; 7 open issues/u);
 assert.match(current.blockers[0].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
-assert.match(current.blockers[1].message, /0\/1200 named scalar coefficients numeric across 120 response-curve rows/u);
-assert.match(current.blockers[1].message, /schema=LEGACY_SINGLE_VALUE_PER_CURVE\/BLOCKED/u);
-assert.match(current.blockers[1].message, /independentVariable=U\/LEGACY_PARAMETER_3_ROW_ORDINATE\/BLOCKED/u);
-assert.match(current.blockers[3].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
+assert.match(current.blockers[1].message, /2 contradiction\(s\)/u);
+assert.match(current.blockers[1].message, /SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH/u);
+assert.match(current.blockers[2].message, /0\/1200 named scalar coefficients numeric across 120 response-curve rows/u);
+assert.match(current.blockers[2].message, /schema=LEGACY_SINGLE_VALUE_PER_CURVE\/BLOCKED/u);
+assert.match(current.blockers[2].message, /independentVariable=U\/LEGACY_PARAMETER_3_ROW_ORDINATE\/BLOCKED/u);
+assert.match(current.blockers[4].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
 
 const technicallyReady = readyEvidence({ methodAuthorized: false, routeRegistered: false });
 const technical = evaluateEmp1CQualificationState(technicallyReady);
@@ -72,6 +83,15 @@ assert.equal(executable.technicalQualificationReady, true);
 assert.equal(executable.engineeringUseAuthorized, true);
 assert.equal(executable.runAuthorized, true);
 assert.deepEqual(executable.blockerCodes, []);
+
+const dimensionalConflict = readyEvidence({ methodAuthorized: true, routeRegistered: true });
+dimensionalConflict.wrcDataset.dimensionalContractStatus = 'BLOCKED';
+dimensionalConflict.wrcDataset.dimensionalViolationCount = 1;
+dimensionalConflict.wrcDataset.dimensionalViolationIds = ['SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH'];
+assert.deepEqual(
+  evaluateEmp1CQualificationState(dimensionalConflict).blockerCodes,
+  [EMP1_C_BLOCKER_CODES.WRC_DIMENSIONAL_CONTRACT_UNRESOLVED],
+);
 
 const missingCoefficient = readyEvidence({ methodAuthorized: true, routeRegistered: true });
 missingCoefficient.wrcDataset.numericScalarCoefficientCount = 0;
@@ -147,13 +167,15 @@ assert.equal(Object.isFrozen(current.blockers), true);
 assert.equal(Object.isFrozen(EMP1_C_CURRENT_QUALIFICATION_EVIDENCE), true);
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-qualification-state-check/v2',
+  schema: 'emp1-c-qualification-state-check/v3',
   status: 'PASS',
   currentState: current.state,
   currentBlockers: current.blockerCodes,
   currentMetrics: {
     unresolvedJsonPaths: current.evidence.wrcDataset.unresolvedJsonPathCount,
     openIssues: current.evidence.wrcDataset.openIssueCount,
+    dimensionalContractStatus: current.evidence.wrcDataset.dimensionalContractStatus,
+    dimensionalViolationIds: current.evidence.wrcDataset.dimensionalViolationIds,
     coefficientCurveRows: current.evidence.wrcDataset.coefficientCurveRows,
     requiredScalarCoefficientCount: current.evidence.wrcDataset.requiredScalarCoefficientCount,
     numericScalarCoefficientCount: current.evidence.wrcDataset.numericScalarCoefficientCount,
@@ -175,12 +197,21 @@ console.log(JSON.stringify({
 function readyEvidence({ methodAuthorized, routeRegistered }) {
   return {
     schema: 'emp1-c-qualification-evidence/v1',
+    derivation: {
+      mode: 'SYNTHETIC_TEST_ONLY',
+      manualSummaryPermitted: false,
+      retainedAuditObservedMatch: true,
+      retainedExtractionPinVerified: true,
+    },
     wrcDataset: {
       status: 'PASS',
       extractionStatus: 'READY_FOR_IMPLEMENTATION',
       unresolvedJsonPathCount: 0,
       openIssueCount: 0,
       numericalDataCount: 1,
+      dimensionalContractStatus: 'PASS',
+      dimensionalViolationCount: 0,
+      dimensionalViolationIds: [],
       coefficientCurveRows: 120,
       coefficientSchema: 'WIDE_A_TO_J_PER_CURVE',
       coefficientSchemaQualified: true,

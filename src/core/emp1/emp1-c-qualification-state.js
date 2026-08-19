@@ -5,6 +5,7 @@ export const EMP1_C_QUALIFICATION_SCHEMA = 'emp1-c-qualification-state/v1';
 export const EMP1_C_BLOCKER_CODES = Object.freeze({
   WRC_DATASET_NOT_READY: 'WRC_DATASET_NOT_READY',
   WRC_DIMENSIONAL_CONTRACT_UNRESOLVED: 'WRC_DIMENSIONAL_CONTRACT_UNRESOLVED',
+  WRC_RUNTIME_CONTRACTS_UNRESOLVED: 'WRC_RUNTIME_CONTRACTS_UNRESOLVED',
   WRC_NUMERICAL_COEFFICIENTS_MISSING: 'WRC_NUMERICAL_COEFFICIENTS_MISSING',
   WRC_SIGN_ARBITRATION_OPEN: 'WRC_SIGN_ARBITRATION_OPEN',
   CAUX_PP24_31_NOT_FROZEN: 'CAUX_PP24_31_NOT_FROZEN',
@@ -14,13 +15,12 @@ export const EMP1_C_BLOCKER_CODES = Object.freeze({
 
 const REQUIRED_WRC_COEFFICIENTS_PER_CURVE = 10;
 const REQUIRED_WRC_INDEPENDENT_VARIABLE = 'U';
+const ALLOWED_PRESSURE_THRUST_MODES = Object.freeze([
+  'SOURCE_LOAD_ALREADY_INCLUDES_THRUST',
+  'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID',
+  'NOT_APPLICABLE_BY_QUALIFIED_METHOD',
+]);
 
-/**
- * Runtime evidence is generated from retained WRC/CAUx qualification artifacts.
- * The generated module is checked for exact drift by
- * scripts/emp1-c-qualification-evidence-check.mjs. No numerical WRC datum or
- * benchmark expected value is created here.
- */
 export const EMP1_C_CURRENT_QUALIFICATION_EVIDENCE = deepFreeze(
   EMP1_C_RETAINED_QUALIFICATION_EVIDENCE,
 );
@@ -64,6 +64,40 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
       status: normalized.wrcDataset.dimensionalContractStatus,
       violationCount: normalized.wrcDataset.dimensionalViolationCount,
       violationIds: normalized.wrcDataset.dimensionalViolationIds,
+    },
+  ));
+
+  const runtimeContractsReady = normalized.runtimeContracts.status === 'PASS'
+    && normalized.runtimeContracts.sourceCustodyQualified === true
+    && nonEmpty(normalized.runtimeContracts.sourceRawPdfSha256)
+    && normalized.runtimeContracts.loadAxisMappingStatus === 'PASS'
+    && nonEmpty(normalized.runtimeContracts.loadAxisMappingContractHash)
+    && nonEmpty(normalized.runtimeContracts.canonicalFrameContractHash)
+    && nonEmpty(normalized.runtimeContracts.loadAxisSourceLocator)
+    && normalized.runtimeContracts.pressureThrustStatus === 'PASS'
+    && ALLOWED_PRESSURE_THRUST_MODES.includes(normalized.runtimeContracts.pressureThrustMode)
+    && normalized.runtimeContracts.pressureThrustDoubleCountGuardQualified === true
+    && normalized.runtimeContracts.pressureThrustIndependentCheckStatus === 'PASS'
+    && nonEmpty(normalized.runtimeContracts.pressureThrustPolicyRecordHash)
+    && normalized.runtimeContracts.stressIntensityDefinitionStatus === 'PASS'
+    && nonEmpty(normalized.runtimeContracts.stressIntensityDefinitionContractHash)
+    && nonEmpty(normalized.runtimeContracts.stressIntensitySourceLocator)
+    && normalized.runtimeContracts.stressIntensityOutputDimension === 'STRESS'
+    && normalized.runtimeContracts.stressIntensityIndependentCheckStatus === 'PASS'
+    && nonEmpty(normalized.runtimeContracts.qualificationRecordHash);
+  if (!runtimeContractsReady) blockers.push(blocker(
+    EMP1_C_BLOCKER_CODES.WRC_RUNTIME_CONTRACTS_UNRESOLVED,
+    `EMP.1.C runtime contracts are not qualified (axisMapping=${normalized.runtimeContracts.loadAxisMappingStatus}; pressureThrust=${normalized.runtimeContracts.pressureThrustStatus}/${normalized.runtimeContracts.pressureThrustMode ?? 'UNRESOLVED'}; stressIntensity=${normalized.runtimeContracts.stressIntensityDefinitionStatus}/${normalized.runtimeContracts.stressIntensityOutputDimension ?? 'UNRESOLVED'}). A source-bound LAFEA↔WRC mapping, explicit thrust/double-count policy, and source-qualified stress-intensity definition are mandatory before method authority.`,
+    {
+      status: normalized.runtimeContracts.status,
+      sourceCustodyQualified: normalized.runtimeContracts.sourceCustodyQualified,
+      loadAxisMappingStatus: normalized.runtimeContracts.loadAxisMappingStatus,
+      pressureThrustStatus: normalized.runtimeContracts.pressureThrustStatus,
+      pressureThrustMode: normalized.runtimeContracts.pressureThrustMode,
+      pressureThrustDoubleCountGuardQualified: normalized.runtimeContracts.pressureThrustDoubleCountGuardQualified,
+      stressIntensityDefinitionStatus: normalized.runtimeContracts.stressIntensityDefinitionStatus,
+      stressIntensityOutputDimension: normalized.runtimeContracts.stressIntensityOutputDimension,
+      qualificationRecordHashPresent: nonEmpty(normalized.runtimeContracts.qualificationRecordHash),
     },
   ));
 
@@ -141,6 +175,7 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
 
   const technicalQualificationReady = datasetReady
     && dimensionalContractReady
+    && runtimeContractsReady
     && coefficientsReady
     && signReady
     && cauxReady;
@@ -175,6 +210,7 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     gateStatus: {
       wrcDatasetReady: datasetReady,
       wrcDimensionalContractReady: dimensionalContractReady,
+      wrcRuntimeContractsReady: runtimeContractsReady,
       numericalCoefficientsReady: coefficientsReady,
       signArbitrationReady: signReady,
       cauxBenchmarkReady: cauxReady,
@@ -191,6 +227,7 @@ function normalizeEvidence(value) {
     derivation: normalizeDerivation(value.derivation),
     wrcDataset: normalizeDataset(value.wrcDataset),
     signArbitration: normalizeSign(value.signArbitration),
+    runtimeContracts: normalizeRuntimeContracts(value.runtimeContracts),
     cauxBenchmark: normalizeCaux(value.cauxBenchmark),
     methodAuthorization: normalizeMethod(value.methodAuthorization),
     execution: normalizeExecution(value.execution),
@@ -249,6 +286,29 @@ function normalizeSign(value = {}) {
       ? value.openConflicts.map((item) => text(item, 'UNRESOLVED_CONFLICT'))
       : ['UNRESOLVED_CONFLICT'],
     sourceCustodyQualified: value.sourceCustodyQualified === true,
+  };
+}
+
+function normalizeRuntimeContracts(value = {}) {
+  return {
+    status: text(value.status, 'NOT_RUN'),
+    sourceCustodyQualified: value.sourceCustodyQualified === true,
+    sourceRawPdfSha256: nullableText(value.sourceRawPdfSha256),
+    loadAxisMappingStatus: text(value.loadAxisMappingStatus, 'BLOCKED'),
+    loadAxisMappingContractHash: nullableText(value.loadAxisMappingContractHash),
+    canonicalFrameContractHash: nullableText(value.canonicalFrameContractHash),
+    loadAxisSourceLocator: nullableText(value.loadAxisSourceLocator),
+    pressureThrustStatus: text(value.pressureThrustStatus, 'BLOCKED'),
+    pressureThrustMode: nullableText(value.pressureThrustMode),
+    pressureThrustDoubleCountGuardQualified: value.pressureThrustDoubleCountGuardQualified === true,
+    pressureThrustIndependentCheckStatus: text(value.pressureThrustIndependentCheckStatus, 'NOT_RUN'),
+    pressureThrustPolicyRecordHash: nullableText(value.pressureThrustPolicyRecordHash),
+    stressIntensityDefinitionStatus: text(value.stressIntensityDefinitionStatus, 'BLOCKED'),
+    stressIntensityDefinitionContractHash: nullableText(value.stressIntensityDefinitionContractHash),
+    stressIntensitySourceLocator: nullableText(value.stressIntensitySourceLocator),
+    stressIntensityOutputDimension: nullableText(value.stressIntensityOutputDimension),
+    stressIntensityIndependentCheckStatus: text(value.stressIntensityIndependentCheckStatus, 'NOT_RUN'),
+    qualificationRecordHash: nullableText(value.qualificationRecordHash),
   };
 }
 

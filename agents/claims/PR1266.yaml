@@ -3,14 +3,32 @@ pr: 1266
 repository: reallaksh19/Advanced_Analysis
 claims:
   - id: ISS-1266-001
-    state: OPEN
-    statement: Production EMP.1.A Run does not leave visible transferred-force result evidence in the exact Stage-17 browser journey.
+    state: CLOSED
+    statement: Production EMP.1.A Run retained a qualified result but the analytical subscriber render failed because the presenter attempted to format a legitimate null axialPressureStress value.
+  - id: IMP-1266-001
+    state: PASS
+    statement: LAFEA.1 presentation now renders numeric axial pressure stress only when present, renders explicit axial resultant separately in force units, and never invents zero for null axial stress.
   - id: VAL-1266-001
-    state: PENDING_EXACT_HEAD
-    statement: A dedicated production-shell browser probe records exact EMP.1.A state before and after the Run click and asserts execution/result retention.
+    state: PASS
+    statement: Exact-head deterministic presenter validation and isolated Chromium production-shell Run probe prove LAFEA.1 execution/result retention and visible transferred-force result highlights.
+  - id: ISS-1266-002
+    state: CLOSED
+    statement: EMP.1.B refresh incorrectly treated the editable A workbench document as canonical foundation evidence, causing currentness refresh rejection.
+  - id: IMP-1266-002
+    state: PASS
+    statement: A-to-B refresh now reconstructs and validates canonical A evidence, proves it matches execution.canonicalInput, and writes only canonical A model/result evidence into B without changing B-owned screening inputs.
+  - id: VAL-1266-002
+    state: PASS
+    statement: Deterministic and Chromium A-to-B tests prove CURRENT_A_EVIDENCE after refresh, preserved CASE-B LC-A factor -0.5, cleared stale B execution until rerun, forged canonical input rejection, and no invented B inputs.
+  - id: BLOCK-1266-001
+    state: OPEN_EXTERNAL
+    statement: The full Stage-17 workflow remains blocked at the downstream LAFEA B02D polar-mesh check for T3/L1, where qualification is BLOCK instead of PASS.
+  - id: VAL-1266-003
+    state: PASS_UNCHANGED_BOUNDARY
+    statement: The failing B02D script is byte-identical at base and head with blob SHA 0e55933c763043e1eab807a5d1d9255ca78510ec, its direct production dependencies and frozen inputs do not intersect PR1266 changes, and prerequisite Node checks execute in separate processes; exact-base direct B02D execution is NOT_RUN because the parent stopped earlier at EMP.1.A.
   - id: AUTH-1266-001
     state: PRESERVED
-    statement: No WRC/CAUx engineering authority, EMP.1.C route, tolerance, FEM formulation, or workflow scope is modified by this RCA increment.
+    statement: No WRC/CAUx engineering authority, EMP.1.C route, tolerance, FEM formulation, B02D production dependency, frozen B02D input, or GitHub workflow is modified by this repair increment.
   - id: REL-1266-001
     state: false
     statement: This successor work does not establish release qualification.

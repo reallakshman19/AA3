@@ -15,6 +15,7 @@ files:
     - validation/emp1/wrc537-2013/source-ledger.json
     - validation/emp1/wrc537-2013/existing-dataset-manifest.json
     - validation/emp1/wrc537-2013/existing-dataset-audit-v1.json
+    - validation/emp1/wrc537-2013/hexagon-sign-crosscheck-v1.json
     - validation/emp1/caux2017-wrc01f/source-ledger.json
     - validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-v1.json
   prefixes:
@@ -38,9 +39,9 @@ observe_only:
   - src/core/local-attachment-correlation/
   - src/core/local-continuum/
   - src/core/lafea-meshing/
-last_verified_head: 8b56faea52257173aacea818af77f671c4f09756
-implementation_basis_head: 133b5d6bf52af294c3840433aad69920362938ae
+last_verified_head: 4b24d3f204ad4ec9197a48fed4e02951c560c39c
+implementation_basis_head: 0999ba22ace2104b02524c70b60e20fb2bdf597c
 main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
 overlap_state: SAFE_FOR_QUALIFICATION_ONLY
 base_drift: RECONCILIATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION
-note: Exact CAUx source identity is confirmed but pp24-31 content remains NOT_RUN because binary bytes are not observable through current non-mutating transports. The Hexagon WRC precheck is frozen as SUPPLEMENTAL_REFERENCE_NOT_CAUX_BENCHMARK and may not satisfy A4 or authorize EMP.1.C. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.
+note: Exact CAUx source identity is PASS but pp24-31 remains NOT_RUN due binary transport. Hexagon WRC arithmetic evidence is supplemental only. The derived dataset M1/M2 convention conflicts with Hexagon's official product convention and is quarantined pending exact pinned-WRC arbitration. Production EMP.1/WRC/UI mutation remains prohibited until Issue 1261 Appendix A passes.

@@ -14,7 +14,9 @@ export const EMP1_C_RETAINED_QUALIFICATION_EVIDENCE = {
       "cauxBenchmarkQualification": "validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-qualification-v1.json",
       "methodAuthorization": "validation/emp1/wrc537-2013/emp1-c-method-authorization-v1.json"
     },
-    "manualSummaryPermitted": false
+    "manualSummaryPermitted": false,
+    "retainedAuditObservedMatch": true,
+    "retainedExtractionPinVerified": true
   },
   "wrcDataset": {
     "status": "BLOCKED",
@@ -22,6 +24,12 @@ export const EMP1_C_RETAINED_QUALIFICATION_EVIDENCE = {
     "unresolvedJsonPathCount": 21,
     "openIssueCount": 7,
     "numericalDataCount": 0,
+    "dimensionalContractStatus": "BLOCKED",
+    "dimensionalViolationCount": 2,
+    "dimensionalViolationIds": [
+      "SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH",
+      "SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH"
+    ],
     "coefficientCurveRows": 120,
     "coefficientSchema": "LEGACY_SINGLE_VALUE_PER_CURVE",
     "coefficientSchemaQualified": false,

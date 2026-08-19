@@ -42,17 +42,24 @@ assert.deepEqual(projection.steps[2].blockers, EMP1_LOCAL_CORRELATION_BLOCKERS);
 assert.deepEqual(projection.steps[2].blockers, [
   EMP1_C_BLOCKER_CODES.WRC_DATASET_NOT_READY,
   EMP1_C_BLOCKER_CODES.WRC_DIMENSIONAL_CONTRACT_UNRESOLVED,
+  EMP1_C_BLOCKER_CODES.WRC_RUNTIME_CONTRACTS_UNRESOLVED,
   EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING,
   EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN,
   EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN,
 ]);
-assert.equal(projection.steps[2].blockerDetails.length, 5);
+assert.equal(projection.steps[2].blockerDetails.length, 6);
 assert.match(projection.steps[2].blockerDetails[0].message, /21 unresolved fields; 7 open issues/u);
-assert.match(projection.steps[2].blockerDetails[1].message, /2 contradiction\(s\)/u);
-assert.match(projection.steps[2].blockerDetails[2].message, /0\/1200 named scalar coefficients numeric across 120 response-curve rows/u);
+assert.match(projection.steps[2].blockerDetails[1].message, /3 contradiction\(s\)/u);
+assert.match(projection.steps[2].blockerDetails[1].message, /STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH/u);
+assert.match(projection.steps[2].blockerDetails[2].message, /runtime contracts are not qualified/u);
+assert.match(projection.steps[2].blockerDetails[2].message, /axisMapping=BLOCKED/u);
+assert.match(projection.steps[2].blockerDetails[2].message, /pressureThrust=BLOCKED\/UNRESOLVED/u);
+assert.match(projection.steps[2].blockerDetails[2].message, /stressIntensity=BLOCKED\/UNRESOLVED/u);
+assert.match(projection.steps[2].blockerDetails[3].message, /0\/1200 named scalar coefficients numeric across 120 response-curve rows/u);
 assert.equal(projection.steps[2].qualification.evidence.derivation.retainedAuditObservedMatch, true);
 assert.equal(projection.steps[2].qualification.evidence.derivation.retainedExtractionPinVerified, true);
 assert.equal(projection.steps[2].qualification.gateStatus.wrcDimensionalContractReady, false);
+assert.equal(projection.steps[2].qualification.gateStatus.wrcRuntimeContractsReady, false);
 assert.equal(projection.steps[2].qualification.gateStatus.signArbitrationReady, false);
 assert.equal(projection.steps[2].qualification.gateStatus.cauxBenchmarkReady, false);
 assert.equal(EMP1_C_PRODUCTION_ROUTE.registered, false);
@@ -78,7 +85,12 @@ assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CTechnicalQualif
 assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CRunAuthorized, false);
 assert.equal(syntheticQualifiedMethod.qualificationBoundary.releaseQualified, false);
 
-console.log(JSON.stringify({ status: 'PASS', currentCBlockers: projection.steps[2].blockers, productionRouteRegistered: EMP1_C_PRODUCTION_ROUTE.registered }, null, 2));
+console.log(JSON.stringify({
+  status: 'PASS',
+  currentCBlockers: projection.steps[2].blockers,
+  runtimeContractGateReady: projection.steps[2].qualification.gateStatus.wrcRuntimeContractsReady,
+  productionRouteRegistered: EMP1_C_PRODUCTION_ROUTE.registered,
+}, null, 2));
 
 function readyCQualificationEvidence() {
   return {
@@ -93,6 +105,13 @@ function readyCQualificationEvidence() {
       semanticHash: 'sha256:qualified-dataset', sourceCustodyQualified: true, sourceCustodyState: 'VERIFIED', sourceQualificationState: 'PASS', sourceRawPdfSha256: 'a'.repeat(64),
     },
     signArbitration: { status: 'PASS', resolutionAuthority: 'PINNED_WRC_PDF', openConflicts: [], sourceCustodyQualified: true },
+    runtimeContracts: {
+      status: 'PASS', sourceCustodyQualified: true, sourceRawPdfSha256: 'a'.repeat(64),
+      loadAxisMappingStatus: 'PASS', loadAxisMappingContractHash: 'sha256:qualified-load-axis-map', canonicalFrameContractHash: 'sha256:qualified-canonical-frame', loadAxisSourceLocator: 'SYNTHETIC_TEST_ONLY',
+      pressureThrustStatus: 'PASS', pressureThrustMode: 'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID', pressureThrustDoubleCountGuardQualified: true, pressureThrustIndependentCheckStatus: 'PASS', pressureThrustPolicyRecordHash: 'sha256:qualified-pressure-thrust-policy',
+      stressIntensityDefinitionStatus: 'PASS', stressIntensityDefinitionContractHash: 'sha256:qualified-stress-intensity', stressIntensitySourceLocator: 'SYNTHETIC_TEST_ONLY', stressIntensityOutputDimension: 'STRESS', stressIntensityIndependentCheckStatus: 'PASS',
+      qualificationRecordHash: 'sha256:qualified-runtime-contract',
+    },
     cauxBenchmark: {
       status: 'PASS', sourceIdentityVerified: true, sourceCustodyQualified: true, sourceCustodyState: 'VERIFIED', sourceQualificationState: 'PASS', sourceRawPdfSha256: 'b'.repeat(64),
       pageRange: '24-31', expectedValuesFrozen: true, independentHandCalculationStatus: 'PASS', benchmarkHash: 'sha256:qualified-caux-benchmark', supplementalPrecheckVerdict: 'QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY', supplementalPrecheckMaySatisfyCauxA4: false,

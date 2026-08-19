@@ -99,6 +99,58 @@ export function createLafeaWorkbenchStore(options) {
     return applyEditCommand(command);
   }
 
+  /**
+   * Apply a same-authority group of exact scalar commands atomically.
+   *
+   * Each edit is still validated through StageEditCommand/v2 against the digest
+   * produced by the previous local edit. State/history is committed only once
+   * after every command succeeds. A rejected command leaves the source document
+   * unchanged and publishes only its diagnostic evidence.
+   */
+  function setScalarBatch(edits, surface = 'FORM_GROUP') {
+    const initialDocument = requireDocument(state);
+    const initialStageState = currentStage(state);
+    if (!Array.isArray(edits) || !edits.length) {
+      return publish(failedState(
+        state,
+        commandError('LAFEA_SCALAR_BATCH_REQUIRED', 'Scalar edit batch requires at least one governed edit.'),
+        'LAFEA_SCALAR_BATCH_REQUIRED',
+      ));
+    }
+
+    let workingDocument = initialDocument;
+    let finalResult = null;
+    let applied = false;
+    for (let index = 0; index < edits.length; index += 1) {
+      const edit = requireScalarBatchEdit(edits[index], index);
+      const command = scalarCommand(
+        edit.descriptorId,
+        edit.entityId,
+        edit.rawText,
+        workingDocument,
+        surface,
+      );
+      const result = applyLafeaStageEditCommand(workingDocument, command);
+      finalResult = result;
+      if (!['APPLIED', 'NO_CHANGE'].includes(result.status)) {
+        return publish(withCurrentStage(state, {
+          ...initialStageState,
+          lastEditResult: result,
+        }, 'FAILED', result.diagnostics));
+      }
+      if (result.status === 'APPLIED') applied = true;
+      workingDocument = result.document;
+    }
+
+    if (!applied) {
+      return publish(withCurrentStage(state, {
+        ...initialStageState,
+        lastEditResult: finalResult,
+      }, 'READY', []));
+    }
+    return publish(commitDocument(state, workingDocument, finalResult));
+  }
+
   function replaceDocument(value, surface = 'RAW_JSON') {
     try {
       const document = requireDocument(state);
@@ -255,6 +307,7 @@ export function createLafeaWorkbenchStore(options) {
     importDocument,
     applyEditCommand,
     setScalar,
+    setScalarBatch,
     replaceDocument,
     moveNode,
     reportEditError,
@@ -266,6 +319,21 @@ export function createLafeaWorkbenchStore(options) {
     getState: () => state,
     destroy: () => listeners.clear(),
   });
+}
+
+function requireScalarBatchEdit(value, index) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw commandError('LAFEA_SCALAR_BATCH_EDIT_INVALID', `Scalar batch edit ${index} must be an object.`);
+  }
+  const keys = Object.keys(value).sort();
+  const expected = ['descriptorId', 'entityId', 'rawText'].sort();
+  if (JSON.stringify(keys) !== JSON.stringify(expected)
+    || typeof value.descriptorId !== 'string'
+    || (value.entityId !== null && typeof value.entityId !== 'string')
+    || typeof value.rawText !== 'string') {
+    throw commandError('LAFEA_SCALAR_BATCH_EDIT_INVALID', `Scalar batch edit ${index} is invalid.`);
+  }
+  return value;
 }
 
 function initialState(activeStageId) {

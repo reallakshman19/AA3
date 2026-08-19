@@ -47,8 +47,8 @@ export class LfeaPipelineShellView {
     assembleButton.type = 'button';
     assembleButton.className = 'lfea-pipeline-shell__assemble';
     assembleButton.dataset.action = 'lfea-pipeline-assemble-and-run';
-    assembleButton.title = 'Assemble the InputXML source into a real run request and send it to Run — requires an authorized pre-flight and a loaded authority supplement.';
-    assembleButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h11m0 0-4-4m4 4-4 4"/></svg><span>Assemble &amp; send to Run</span>';
+    assembleButton.title = 'Optional: add nozzle interface mechanics and B31 code checks on top of the analysis. Needs an authorized pre-flight and an authority supplement (licensed project data). Displacements, support loads and element forces do not need this — use Analyze on the Load case step.';
+    assembleButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h11m0 0-4-4m4 4-4 4"/></svg><span>Code checks (optional)</span>';
     assembleButton.addEventListener('click', () => handlers.onAssembleAndSendToRun());
     toolbar.append(assembleButton);
     const assembleStatus = doc.createElement('output');

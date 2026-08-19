@@ -4,6 +4,7 @@ import {
   FORMULATIONS,
 } from '../core/local-continuum/index.js';
 import { element } from './lafea-workbench-dom.js';
+import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
 
 export const LAFEA_ENGINEERING_OVERVIEW_SCHEMA = 'lafea-engineering-overview/v1';
 
@@ -118,36 +119,62 @@ export function renderLafeaEngineeringOverview(root, stageValue, registryEntryVa
   host.append(heading);
 
   const strip = element(root, 'div', 'lafea-engineering-overview__strip');
+  strip.dataset.role = 'lafea-engineering-summary';
   strip.append(
     summaryCard(root, 'Model', model.model.status, [
       ['Nodes', model.model.nodeCount],
       ['Elements', model.model.elementCount],
       ['Families', model.model.elementFamilies.join(' / ') || '—'],
-      ['Formulation', model.model.formulation],
+      ['Formulation', formulationLabel(model.model.formulation)],
       ['Load cases', model.model.loadCaseCount],
     ]),
     summaryCard(root, 'Mesh', model.mesh.state, [
       ['Nodes', model.mesh.nodeCount],
       ['Elements', model.mesh.elementCount],
-      ['Family', model.mesh.family],
-      ['Profile', model.mesh.profile],
-      ['Qualification', model.mesh.qualification],
+      ['Element family', model.mesh.family],
+      ['Quality', statusLabel(model.mesh.qualification)],
     ]),
     summaryCard(root, 'Solver', model.solver.engineState, [
-      ['Engine', model.solver.engine],
-      ['Authority', model.solver.authority],
-      ['Profile', model.solver.qualificationProfile],
+      ['Route', solverRouteLabel(model.solver.engine)],
+      ['Qualification profile', model.solver.qualificationProfile === 'Not declared' ? 'Not declared' : 'Configured'],
       ['Recovery', model.solver.recovery],
     ]),
     resultCard(root, model),
   );
-  host.append(strip);
+  host.append(strip, technicalEvidenceDisclosure(root, model));
 
   if (model.stageId === 'LAFEA.3') {
     host.append(formulationAuthorityPanel(root, model.model.formulationAuthority));
   }
   if (model.qualification) host.append(qualificationBar(root, model.qualification));
   return host;
+}
+
+function technicalEvidenceDisclosure(root, model) {
+  const details = element(root, 'details', 'lafea-engineering-overview__qualification');
+  details.dataset.role = 'lafea-technical-evidence';
+  details.append(element(root, 'summary', null, 'Technical identifiers and custody'));
+  const grid = element(root, 'div', 'lafea-engineering-overview__qualification-grid');
+  [
+    ['Stage ID', model.stageId],
+    ['Model identity', model.model.identity],
+    ['Model formulation ID', model.model.formulation],
+    ['Mesh custody state', model.mesh.state],
+    ['Mesh profile ID', model.mesh.profile],
+    ['Mesh qualification state', model.mesh.qualification],
+    ['Solver package', model.solver.engine],
+    ['Solver authority', model.solver.authority],
+    ['Engine state', model.solver.engineState],
+    ['Qualification profile ID', model.solver.qualificationProfile],
+    ['Execution state', model.execution.status],
+    ['Result qualification state', model.execution.qualificationState],
+  ].forEach(([label, value]) => {
+    const row = element(root, 'div');
+    row.append(element(root, 'strong', null, label), element(root, 'code', null, String(value)));
+    grid.append(row);
+  });
+  details.append(grid);
+  return details;
 }
 
 function formulationAuthorityPanel(root, value) {
@@ -158,11 +185,11 @@ function formulationAuthorityPanel(root, value) {
     root,
     'summary',
     null,
-    `Formulation & material controls — ${value.status}`,
+    `Formulation & material controls — ${statusLabel(value.status)}`,
   );
   const grid = element(root, 'div', 'lafea-engineering-overview__qualification-grid');
   [
-    ['Configured formulation', value.formulation],
+    ['Configured formulation', formulationLabel(value.formulation)],
     ['Configured Poisson ratio(s)', value.poissonRatios || 'Not declared'],
     ...value.details,
   ].forEach(([label, item]) => {
@@ -192,8 +219,8 @@ function continuumFormulationAuthority(source, mesh) {
     const details = [
       ['Locking-resistant authority', 'Mean-dilatation B-bar; T6 / Q8 mechanical route only'],
       ['Retained solver-mesh families', meshFamilies.join(' / ') || 'Not retained'],
-      ['Temperature / eigenstrain authority', 'NOT GRANTED'],
-      ['T3 B-bar authority', 'NOT GRANTED — actual T3 solver elements block before stiffness assembly'],
+      ['Temperature / eigenstrain authority', 'Not granted'],
+      ['T3 B-bar authority', 'Not granted — actual T3 solver elements block before stiffness assembly'],
       ['Qualification evidence', 'Frozen ν=0.30→0.4999 × distortion × h-refinement matrix requires external exact-head execution'],
       ['Guard authority', 'Source-controlled mechanics; solver tolerances cannot substitute for locking qualification'],
     ];
@@ -245,7 +272,7 @@ function continuumFormulationAuthority(source, mesh) {
     ['Plane-strain advisory band', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonWarning}`],
     ['Plane-strain qualification block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
     ['Guard authority', 'Source-controlled; solver tolerances cannot override it'],
-    ['Locking-resistant alternative', 'PLANE_STRAIN_BBAR with separately qualified T6/Q8 mechanics'],
+    ['Locking-resistant alternative', 'Plane strain — B-bar with separately qualified T6/Q8 mechanics'],
   ];
   const maximum = ratios.length ? Math.max(...ratios) : null;
   if (maximum === null) {
@@ -278,28 +305,26 @@ function continuumFormulationAuthority(source, mesh) {
 }
 
 function resultCard(root, model) {
+  const canonicalStatus = model.execution.accepted ? 'ACCEPTED' : model.execution.status;
   const rows = [
-    ['Status', model.execution.status],
+    ['Status', statusLabel(canonicalStatus)],
     ['Load cases', model.execution.loadCaseCount],
   ];
   for (const metric of model.execution.metrics.slice(0, 4)) {
     rows.push([metric.label, `${format(metric.value)}${metric.unit ? ` ${metric.unit}` : ''}`]);
   }
-  return summaryCard(
-    root,
-    'Results',
-    model.execution.accepted ? 'ACCEPTED' : model.execution.status,
-    rows,
-  );
+  return summaryCard(root, 'Results', canonicalStatus, rows);
 }
 
 function summaryCard(root, title, status, rows) {
+  const presentation = lafeaUiStatusPresentation(status);
   const card = element(root, 'article', 'lafea-engineering-overview__card');
   card.dataset.status = String(status);
+  card.dataset.tone = presentation.tone;
   const header = element(root, 'div', 'lafea-engineering-overview__card-header');
   header.append(
     element(root, 'h3', null, title),
-    element(root, 'strong', 'lafea-engineering-overview__badge', String(status)),
+    element(root, 'strong', 'lafea-engineering-overview__badge', presentation.label),
   );
   const facts = element(root, 'dl', 'lafea-engineering-overview__facts');
   rows.forEach(([label, value]) => {
@@ -311,7 +336,8 @@ function summaryCard(root, title, status, rows) {
 
 function qualificationBar(root, value) {
   const details = element(root, 'details', 'lafea-engineering-overview__qualification');
-  const summary = element(root, 'summary', null, `${value.program} qualification evidence — external`);
+  details.dataset.role = 'lafea-technical-evidence';
+  const summary = element(root, 'summary', null, `${value.program} qualification evidence`);
   const grid = element(root, 'div', 'lafea-engineering-overview__qualification-grid');
   [
     ['Base benchmark', value.baseRuns],
@@ -319,7 +345,7 @@ function qualificationBar(root, value) {
     ['Metamorphic', value.metamorphic],
     ['Fail-closed', value.failClosed],
     ['Exact-head integrated', value.exactHead],
-    ['Release authority', value.releaseAuthority ? 'GRANTED' : 'NOT GRANTED'],
+    ['Release authority', value.releaseAuthority ? 'Granted' : 'Not granted'],
     ['Runtime scope', value.scope],
   ].forEach(([label, item]) => {
     const row = element(root, 'div');
@@ -379,6 +405,24 @@ function recoveryLabel(registry, elementFamilies, formulation) {
     return 'Integration-point stress (authoritative)';
   }
   return registry.presenterRole ?? 'Registered stage result';
+}
+
+function formulationLabel(value) {
+  if (value === FORMULATIONS.PLANE_STRESS) return 'Plane stress';
+  if (value === FORMULATIONS.PLANE_STRAIN) return 'Plane strain — standard displacement';
+  if (value === FORMULATIONS.PLANE_STRAIN_BBAR) return 'Plane strain — B-bar (locking resistant)';
+  return text(value, 'Not declared');
+}
+
+function solverRouteLabel(engine) {
+  if (engine === 'src/core/local-continuum') return 'Linear continuum solver';
+  if (engine === 'src/core/local-shell') return 'Linear thin-shell solver';
+  if (engine === 'Not implemented') return 'Not implemented';
+  return 'Registered stage solver';
+}
+
+function statusLabel(value) {
+  return lafeaUiStatusPresentation(value).label;
 }
 
 function metric(label, value, unit) { return { label, value, unit }; }

@@ -32,4 +32,23 @@ test('ACCDB panel mounts with its synthetic-identity disclosure and a real impor
   // Before any file is loaded, the panel discloses "no source" rather
   // than a fabricated verdict.
   await expect(accdbPanel).toHaveAttribute('data-model-health-status', 'NOT_LOADED');
+
+  // The verdict is read through a chosen analysis profile. The default is
+  // the disclosed approximation profile (matching the InputXML surface):
+  // strict is the stricter claim and is selected deliberately, never landed
+  // on. Without this control the panel showed every declared-approximation
+  // finding at the strict profile's BLOCK severity.
+  const profileSelect = page.locator('[data-role="lfea-pipeline-accdb-profile"]');
+  await expect(profileSelect).toBeVisible();
+  await expect(profileSelect).toHaveValue('DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1');
+  await expect(accdbPanel).toHaveAttribute('data-requested-profile', 'DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1');
+  await expect(profileSelect.locator('option')).toHaveCount(2);
+
+  await profileSelect.selectOption('STRICT_INPUTXML_LINEAR_STATIC_V1');
+  await expect(accdbPanel).toHaveAttribute('data-requested-profile', 'STRICT_INPUTXML_LINEAR_STATIC_V1');
+
+  // No source is loaded, so there are no element properties to override and
+  // no override custody to offer.
+  await expect(accdbPanel).toHaveAttribute('data-override-count', '0');
+  await expect(page.locator('[data-action="toggle-lfea-pipeline-accdb-properties"]')).toHaveCount(0);
 });

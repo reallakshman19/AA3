@@ -104,6 +104,18 @@ const FIELD_SPECS = Object.freeze([
   field('CORR_ALLOW', (segment) => segment?.meta?.analysis?.corrosionAllowance),
 ]);
 
+/**
+ * The element fields this binding inventories, name + kind only.
+ *
+ * Exported so the property table the engineer edits and the override
+ * validator that accepts their edits are driven by the same list the
+ * evidence records are built from -- a field cannot appear in one and be
+ * unknown to another.
+ */
+export const ACCDB_ELEMENT_FIELD_SPECS = Object.freeze(
+  FIELD_SPECS.map((spec) => Object.freeze({ name: spec.name, kind: spec.kind })),
+);
+
 function field(name, canonicalValue, kind) {
   return Object.freeze({ name, canonicalValue, kind: kind ?? 'NUMBER' });
 }

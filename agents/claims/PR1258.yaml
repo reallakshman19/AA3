@@ -9,6 +9,7 @@ files:
     - src/core/local-continuum/planar-translation-nullspace.js
     - src/core/local-continuum/bbar-plane-strain.js
     - src/workspace/lafea-analysis-mesh-quality.js
+    - scripts/lafea-plane-strain-bbar-source-guard.mjs
     - agents/PR1258_workreport.md
     - agents/status/PR1258.yaml
     - agents/claims/PR1258.yaml
@@ -27,5 +28,6 @@ excluded_authority:
   - LIFECYCLE_AUTHORITY
   - RELEASE_AUTHORITY
   - TRUST_ROOT
-qualified_candidate_head: 80986bcc42ebb6cb5e48a68e9b5ad88c9084d1f4
+qualification_candidate_head: a66bbb9358bab9d1d689946c93247ddf3cbbefe1
+report_commits_are_recovery_only: true
 merge_authority: NOT_GRANTED

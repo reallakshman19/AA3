@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
 const sourcePath = 'src/workspace/lafea-retained-mesh-refinement.js';
@@ -29,4 +29,7 @@ try {
 } finally {
   writeFileSync(sourcePath, original, 'utf8');
 }
-console.log(JSON.stringify({ diagnostic: 'LAFEA3_RETAINED_REFINEMENT_SMOOTHING_SWEEP', results }, null, 2));
+const report = { diagnostic: 'LAFEA3_RETAINED_REFINEMENT_SMOOTHING_SWEEP', results };
+mkdirSync('test-results', { recursive: true });
+writeFileSync('test-results/lafea-retained-refinement-smoothing-sweep.json', `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+console.log(JSON.stringify(report, null, 2));

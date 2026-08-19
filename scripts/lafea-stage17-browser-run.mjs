@@ -5,7 +5,9 @@ import path from 'node:path';
 
 const root = process.cwd();
 const cli = path.join(root, 'node_modules', 'playwright', 'cli.js');
+const diagnosticPath = path.join(root, 'test-results', 'emp1-stage17-diagnostic.json');
 if (!fs.existsSync(cli)) {
+  writeDiagnostic({ phase: 'SETUP', target: 'playwright-cli', exitStatus: 2, code: 'LAFEA_A17_BROWSER_PLAYWRIGHT_NOT_INSTALLED' });
   console.error('LAFEA_A17_BROWSER_PLAYWRIGHT_NOT_INSTALLED');
   process.exit(2);
 }
@@ -16,7 +18,11 @@ function runNodeScript(relativePath) {
     env: process.env,
     stdio: 'inherit',
   });
-  if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
+  const status = result.status ?? 1;
+  if (status !== 0) {
+    writeDiagnostic({ phase: 'NODE_PREREQUISITE', target: relativePath, exitStatus: status });
+    process.exit(status);
+  }
 }
 
 function runPlaywright(args) {
@@ -25,7 +31,24 @@ function runPlaywright(args) {
     env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: '0' },
     stdio: 'inherit',
   });
-  if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
+  const status = result.status ?? 1;
+  if (status !== 0) {
+    writeDiagnostic({ phase: 'PLAYWRIGHT', target: args.join(' '), exitStatus: status });
+    process.exit(status);
+  }
+}
+
+function writeDiagnostic({ phase, target, exitStatus, code = null }) {
+  fs.mkdirSync(path.dirname(diagnosticPath), { recursive: true });
+  fs.writeFileSync(diagnosticPath, `${JSON.stringify({
+    schema: 'lafea-stage17-first-failure/v1',
+    status: 'FAIL',
+    phase,
+    target,
+    exitStatus,
+    code,
+    head: process.env.EXPECTED_HEAD ?? null,
+  }, null, 2)}\n`, 'utf8');
 }
 
 // EMP.1 analytical qualification prerequisites run before Playwright tests and
@@ -72,7 +95,14 @@ const gate = spawnSync(process.execPath, [
   env: process.env,
   stdio: 'inherit',
 });
-if ((gate.status ?? 1) !== 0) process.exit(gate.status ?? 1);
+if ((gate.status ?? 1) !== 0) {
+  writeDiagnostic({
+    phase: 'B01_B02_GATE',
+    target: 'scripts/lafea-b01-b02-gate0-diagnostic.mjs',
+    exitStatus: gate.status ?? 1,
+  });
+  process.exit(gate.status ?? 1);
+}
 
 runPlaywright([
   'e2e/lafea-standalone.spec.js',

@@ -101,24 +101,46 @@ export function prepareEmp1Wrc537Gamma5ZeroDpLocalSource({
   return deepFreeze(prepared);
 }
 
-export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({ source, loadTransfer, gate } = {}) {
+/**
+ * Execute C against freshly re-derived A/B custody. The prepared source retains
+ * the same custody as an audit artifact, but it is not trusted as execution
+ * authority: a forged/tampered prepared source must agree bit-for-bit with the
+ * custody re-derived from the actual loadTransfer/sectionScreening arguments.
+ */
+export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
+  source,
+  loadTransfer,
+  sectionScreening,
+  gate,
+} = {}) {
   if (gate?.state !== 'METHOD_QUALIFIED' || gate?.engineeringUseAuthorized !== true) {
     throw orchestrationError('EMP1_WRC537_ZERO_DP_ORCHESTRATION_GATE_NOT_QUALIFIED');
   }
   const request = requireRequest(source?.localMethod?.routeRequest);
-  const sourceCustody = requireEmp1Wrc537SourceCustody(source?.localMethod?.wrcSourceCustody);
+  const foundationResult = requireFoundationResult(loadTransfer);
+  const preparedCustody = requireEmp1Wrc537SourceCustody(source?.localMethod?.wrcSourceCustody);
+  const executionCustody = deriveEmp1Wrc537SourceCustody({
+    foundationResult,
+    sectionScreening,
+    loadCaseIdentity: request.loadCaseIdentity,
+  });
+  if (semanticHash(preparedCustody) !== semanticHash(executionCustody)) {
+    throw orchestrationError('EMP1_WRC537_ZERO_DP_SOURCE_CUSTODY_DRIFT');
+  }
+  buildEmp1Wrc537CylindricalFrame(executionCustody.axes);
+
   const routeResult = runEmp1Wrc537Gamma5ZeroDpRoute({
-    loadTransferResult: requireFoundationResult(loadTransfer),
+    loadTransferResult: foundationResult,
     loadCaseIdentity: request.loadCaseIdentity,
     pressureResultIdentity: request.pressureResultIdentity,
-    wrcReferencePointGlobal: sourceCustody.loadReference.pointGlobal,
-    geometry: sourceCustody.geometry,
-    axes: sourceCustody.axes,
-    stressConcentration: sourceCustody.stressConcentration,
+    wrcReferencePointGlobal: executionCustody.loadReference.pointGlobal,
+    geometry: executionCustody.geometry,
+    axes: executionCustody.axes,
+    stressConcentration: executionCustody.stressConcentration,
   });
   const result = {
     ...routeResult,
-    sourceCustody,
+    sourceCustody: executionCustody,
   };
   return deepFreeze({
     ...result,

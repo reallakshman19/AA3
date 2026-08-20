@@ -24,10 +24,8 @@ jobs:
           set -euo pipefail
           out="$PWD/test-results/emp1-source-qualification"
           mkdir -p "$out"
-
           node scripts/emp1-source-custody-check.mjs --source-root "$PWD/docs/emp1" \
             | tee "$out/source-custody.json"
-
           node --input-type=module <<'NODE'
           import { readFile } from 'node:fs/promises';
           const report = JSON.parse(await readFile('test-results/emp1-source-qualification/source-custody.json', 'utf8'));
@@ -57,7 +55,6 @@ jobs:
           mkdir -p "$out/wrc-pages" "$out/caux-pages"
           wrc="$PWD/docs/emp1/WRC537_2013.pdf"
           caux="$PWD/docs/emp1/CAUx 2017 - WRC01f.pdf"
-
           pdfinfo "$wrc" > "$out/WRC537_2013.pdfinfo.txt"
           pdfinfo "$caux" > "$out/CAUx_2017_WRC01f.pdfinfo.txt"
 
@@ -71,26 +68,30 @@ jobs:
             pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$caux" "$out/caux-pages/page-${page}" >/dev/null
           done
 
-      - name: Audit source-derived WRC curve-fit model and inventory
+      - name: Cross-check WRC source extraction against exact PDF text
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/emp1-pr1286-wrc-source-table-audit.mjs \
+          pdf_text="test-results/emp1-source-qualification/WRC537_2013_pages_33-95.txt"
+          node scripts/emp1-pr1286-wrc-source-table-audit.mjs --pdf-text "$pdf_text" \
             | tee test-results/emp1-source-qualification/wrc-source-table-audit.json
+          node scripts/emp1-wrc-primary-coefficient-source-self-test.mjs --pdf-text "$pdf_text" \
+            | tee test-results/emp1-source-qualification/wrc-primary-coefficient-self-test.json
+          node scripts/emp1-wrc-primary-coefficient-source-generate.mjs --pdf-text "$pdf_text"
 
-      - name: Verify retained-source arbitration remains fail closed until page arbitration is frozen
+      - name: Keep retained contradiction ledger blocked until direct page arbitration is frozen
         shell: bash
         run: |
           set -euo pipefail
           node scripts/emp1-wrc-retained-source-arbitration-check.mjs \
             | tee test-results/emp1-source-qualification/retained-source-arbitration-check.json
 
-      - name: Preserve pre-PR1286 coefficient contract as a blocked baseline
+      - name: Preserve legacy 1200-slot contract only as superseded diagnostic evidence
         shell: bash
         run: |
           set -euo pipefail
           node scripts/emp1-wrc-coefficient-transcription-self-test.mjs \
-            | tee test-results/emp1-source-qualification/coefficient-transcription-self-test.json
+            | tee test-results/emp1-source-qualification/legacy-coefficient-transcription-self-test.json
           node scripts/emp1-wrc-coefficient-transcription-generate.mjs
 
       - name: Prove CAUx pp24-31 cannot be substituted before benchmark freeze

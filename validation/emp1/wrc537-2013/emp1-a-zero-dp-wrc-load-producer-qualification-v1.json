@@ -1,8 +1,8 @@
 {
   "schema": "emp1-wrc537-load-producer-qualification/v1",
-  "status": "PASS_CANDIDATE_PENDING_INDEPENDENT_REOBSERVATION",
-  "engineeringAuthority": false,
-  "productionRouteAuthority": false,
+  "status": "PASS_REOBSERVED_INDEPENDENT_ZERO_DP_LOAD_PRODUCER",
+  "engineeringAuthority": true,
+  "productionRouteAuthority": true,
   "productionObservationUsedToSetAuthority": false,
   "semanticPayload": {
     "producerId": "EMP1_A_LAFEA1_ZERO_DP_WRC_REFERENCE_V1",
@@ -62,12 +62,20 @@
   },
   "semanticHashSha256": "47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b",
   "reobservation": {
-    "status": "PENDING",
-    "productionImports": [],
+    "status": "PASS",
+    "workflowRunId": 32347213425,
+    "workflowRunNumber": 66,
+    "qualificationOutputStatus": "PASS_CANDIDATE_INDEPENDENT_QUALIFICATION",
+    "qualificationRecordSha256": "47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b",
+    "expectedForceGlobal": [1000, 0, 0],
+    "expectedMomentGlobal": [0, 1000000, 0],
+    "expectedDifferentialPressure": 0,
+    "expectedPressureThrust": 0,
+    "falsifiersPassed": 8,
     "productionObservationUsed": false
   },
   "authorization": {
-    "zeroDifferentialPressureLoadProducerAllowed": false,
+    "zeroDifferentialPressureLoadProducerAllowed": true,
     "nonzeroDifferentialPressureAllowed": false,
     "boundedWrcRouteRegistrationAllowed": false
   }

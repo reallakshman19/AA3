@@ -104,6 +104,12 @@ jobs:
           set -euo pipefail
           node scripts/emp1-wrc-gamma5-zero-dp-route-qualification.mjs > test-results/emp1-exact-gamma/gamma5-zero-dp-route-qualification.json
           cat test-results/emp1-exact-gamma/gamma5-zero-dp-route-qualification.json
+      - name: Qualify bounded route through real EMP.1 orchestration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs > test-results/emp1-exact-gamma/gamma5-zero-dp-orchestration-qualification.json
+          cat test-results/emp1-exact-gamma/gamma5-zero-dp-orchestration-qualification.json
       - name: Prove bounded method scope is enforced by orchestration gate
         run: node scripts/emp1-local-correlation-bounded-scope-self-test.mjs
       - name: Preserve existing EMP.1 core scaffold behavior

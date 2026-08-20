@@ -4,11 +4,12 @@ import {
   selectEmp1Wrc537CylindricalDatasetCurve,
 } from './emp1-wrc537-cylindrical-index.js';
 import { requireEmp1Wrc537BoundedDomain } from './emp1-wrc537-cylindrical-bounded-domain.js';
+import { requireEmp1Wrc537Gamma15Domain } from './emp1-wrc537-cylindrical-gamma15-domain.js';
 import { buildEmp1Wrc537CylindricalFrame, emp1GlobalLoadsToWrc537 } from './emp1-wrc537-cylindrical-frame.js';
 import { evaluateEmp1Wrc537CylindricalTable5 } from './emp1-wrc537-cylindrical-table5.js';
 import { requireEmp1Wrc537ComparisonLoadCustody, requireEmp1Wrc537QualifiedLoadCustody } from './emp1-wrc537-load-custody.js';
 
-export const EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA='emp1-wrc537-cylindrical-bounded-adapter-result/v3';
+export const EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA='emp1-wrc537-cylindrical-bounded-adapter-result/v4';
 const FIGURES=deepFreeze({
   circ:{Pmem_AB:'4C',Pmem_CD:'3C',Pbend_AB:'2C-1',Pbend_CD:'1C',Mcmem:'3A',Mcbend:'1A',Mlmem:'3B',Mlbend:'1B-1'},
   long:{Pmem_AB:'3C',Pmem_CD:'4C',Pbend_AB:'1C-1',Pbend_CD:'2C',Mcmem:'4A',Mcbend:'2A',Mlmem:'4B',Mlbend:'2B-1'},
@@ -16,29 +17,41 @@ const FIGURES=deepFreeze({
 const UNIT_SYSTEMS=deepFreeze({SI_MM:{force:'N',length:'mm',moment:'N*mm',stress:'N/mm^2'},US_IN:{force:'lbf',length:'in',moment:'lbf*in',stress:'psi'}});
 const ROUND_OFF_RELATIVE_TOLERANCE=1e-12;
 
-/** Qualification-only numerical comparison using a frozen comparison fixture. */
+/** Qualification-only numerical comparison for the already-authorized gamma=5 bounded domain. */
 export function evaluateEmp1Wrc537CylindricalBoundedAdapter(input){
   const custody=requireEmp1Wrc537ComparisonLoadCustody(input?.loadCustody);
-  return evaluateWithCustody(input,custody,'EVALUATED_BOUNDED_GAMMA5_TABLE5_COMPARISON',false);
+  return evaluateWithCustody(input,custody,'EVALUATED_BOUNDED_GAMMA5_TABLE5_COMPARISON',false,requireEmp1Wrc537BoundedDomain);
 }
 
 /**
- * Production numerical layer for a separately qualified load package. This
- * proves input authority but deliberately does not itself grant method/route
- * authority; the orchestrated route must also pass the local-method gate.
+ * Qualification-only numerical comparison for the source-qualified gamma=15
+ * domain. This function cannot consume production-authorized load custody and
+ * grants no route authority; it exists only to compare production numerics to
+ * the independently frozen gamma=15 oracle before any route is created.
+ */
+export function evaluateEmp1Wrc537CylindricalGamma15ComparisonAdapter(input){
+  const custody=requireEmp1Wrc537ComparisonLoadCustody(input?.loadCustody);
+  return evaluateWithCustody(input,custody,'EVALUATED_BOUNDED_GAMMA15_TABLE5_COMPARISON',false,requireEmp1Wrc537Gamma15Domain);
+}
+
+/**
+ * Production numerical layer for a separately qualified gamma=5 load package.
+ * This proves input authority but deliberately does not itself grant
+ * method/route authority; the orchestrated route must also pass the
+ * local-method gate.
  */
 export function evaluateEmp1Wrc537CylindricalBoundedQualifiedNumerics(input,{expectedProducerQualificationHash}={}){
   const custody=requireEmp1Wrc537QualifiedLoadCustody(input?.loadCustody,{expectedProducerQualificationHash});
-  return evaluateWithCustody(input,custody,'EVALUATED_BOUNDED_GAMMA5_TABLE5_QUALIFIED_INPUT',true);
+  return evaluateWithCustody(input,custody,'EVALUATED_BOUNDED_GAMMA5_TABLE5_QUALIFIED_INPUT',true,requireEmp1Wrc537BoundedDomain);
 }
 export function deriveEmp1Wrc537CylindricalBoundedGeometry(value){return deriveGeometry(value);}
 
-function evaluateWithCustody(input,loadCustody,state,qualifiedInputAuthority){
+function evaluateWithCustody(input,loadCustody,state,qualifiedInputAuthority,requireDomain){
   if(!input||typeof input!=='object'||Array.isArray(input)) throw adapterError('EMP1_WRC537_BOUNDED_ADAPTER_INPUT_REQUIRED');
   const units=normalizeUnits(input.units),geometry=deriveGeometry(input.geometry);
   const sourceDocumentSha256=requiredString(input.sourceDocumentSha256,'SOURCE_SHA256');
   const datasetHash=requiredString(input.datasetHash,'DATASET_HASH'),variant=requiredString(input.variant,'VARIANT');
-  const domain=requireEmp1Wrc537BoundedDomain({shellFamily:input.shellFamily,attachmentShape:input.attachmentShape,sourceDocumentSha256,datasetHash,variant,gamma:geometry.gamma,beta:geometry.beta});
+  const domain=requireDomain({shellFamily:input.shellFamily,attachmentShape:input.attachmentShape,sourceDocumentSha256,datasetHash,variant,gamma:geometry.gamma,beta:geometry.beta});
   const frame=buildEmp1Wrc537CylindricalFrame({vesselCenterlineGlobal:input.axes?.vesselCenterlineGlobal,nozzleCenterlineGlobal:input.axes?.nozzleCenterlineGlobal});
   const wrcLoads=emp1GlobalLoadsToWrc537(frame,{forceGlobal:input.loadsAtWrcReference?.forceGlobal,momentGlobal:input.loadsAtWrcReference?.momentGlobal});
   const curveEvaluation=evaluateFigureSet({variant,gamma:geometry.gamma,beta:geometry.beta});

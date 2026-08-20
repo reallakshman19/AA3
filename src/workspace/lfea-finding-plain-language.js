@@ -71,7 +71,7 @@ const PLAIN_LANGUAGE = Object.freeze({
 
   // --- Solver ---
   SOLVER_MECHANISM_FLOATING_COMPONENT: 'Part of the model is not held by any support, so it can move freely and the analysis cannot be solved.',
-  ALGEBRAIC_RESIDUAL_NORMALIZED: 'The solution did not settle as tightly as this tool requires, usually because the model mixes very short and very long elements.',
+  ALGEBRAIC_RESIDUAL_NORMALIZED: 'The answer is good to about five significant figures rather than the full precision this tool can reach. That is the model\u2019s own geometry — very short elements beside very long ones — not a fault in the solve, and it is far finer than pipe stress work needs.',
 });
 
 /**

@@ -54,11 +54,27 @@ for (const row of state.cases) {
 }
 
 // One unqualified case must not withhold element end forces from the cases
-// that solved. BM4 is exactly this situation: W/W+P1 trip the residual gate,
-// W+P1+T1 does not.
+// that solved, and exactly the unqualified ones are reported unrecovered.
+//
+// BM4 used to be that mixed situation because W and W+P1 tripped the
+// normalized-residual gate. They no longer do, and should not: measured
+// through this same path, BM4's normwise backward error is 1.19e-17 -- 0.05 x
+// machine epsilon -- so the solve was exact to better than one epsilon and
+// only its ACCURACY was limited, by the model's own 1.25e4 element-length
+// ratio. The gate had been set to 1e-9 by an unstudied default while the same
+// profile permitted conditioning up to 1e14, two limits that cannot hold at
+// once; see scripts/lfea-solver-residual-conditioning-check.mjs.
+//
+// So the partition invariants below are asserted on their own terms rather
+// than through a failure that should not have been happening. NOTE: with BM4
+// qualifying cleanly, no committed fixture currently drives the
+// blocked-and-qualified mix through this path -- the invariants hold, but
+// that branch is no longer covered by a real model here.
 const blocked = state.cases.filter((row) => row.executionStatus === 'BLOCKED');
 const qualified = state.cases.filter((row) => row.blockingChecks.length === 0);
-assert.ok(blocked.length > 0 && qualified.length > 0, 'BM4 exercises the mixed-qualification path');
+assert.equal(blocked.length, 0,
+  `BM4 must qualify on every case now that the residual gate reflects conditioning: ${JSON.stringify(blocked.map((row) => [row.caseId, row.blockingChecks]))}`);
+assert.equal(qualified.length, state.cases.length, 'every BM4 case must qualify');
 assert.notEqual(state.recovery, null, 'qualified cases must still be recovered');
 for (const row of qualified) {
   const recovered = state.recovery.caseRecoveries.find((entry) => entry.caseId === row.caseId);

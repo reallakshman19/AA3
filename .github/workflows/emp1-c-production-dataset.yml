@@ -1,0 +1,62 @@
+name: EMP.1.C production dataset qualification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-production-dataset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Prepare PDF text tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+          fi
+      - name: Generate deterministic candidate production package
+        run: node scripts/emp1-wrc-cylindrical-production-package-generate.mjs test-results/emp1-cylindrical-production-package.json
+      - name: Cross-check all packaged scalars against frozen primary PDF
+        run: node scripts/emp1-wrc-cylindrical-production-package-pdf-crosscheck.mjs test-results/emp1-cylindrical-production-package.json docs/emp1/WRC537_2013.pdf
+      - name: Prove a coefficient mutation is rejected
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const source='test-results/emp1-cylindrical-production-package.json';
+          const target='test-results/emp1-cylindrical-production-package-mutated.json';
+          const pkg=JSON.parse(await readFile(source,'utf8'));
+          pkg.semanticPayload.curves[0].coefficients[0]+=0.123456789;
+          await writeFile(target,JSON.stringify(pkg,null,2)+'\n');
+          NODE
+          set +e
+          node scripts/emp1-wrc-cylindrical-production-package-pdf-crosscheck.mjs \
+            test-results/emp1-cylindrical-production-package-mutated.json docs/emp1/WRC537_2013.pdf \
+            > test-results/mutation-crosscheck.log 2>&1
+          code=$?
+          set -e
+          cat test-results/mutation-crosscheck.log
+          if [ "$code" -eq 0 ]; then
+            echo 'Mutated coefficient unexpectedly passed primary-PDF cross-check'
+            exit 1
+          fi
+          echo EMP1_PRODUCTION_DATASET_MUTATION_REJECTED
+      - name: Upload candidate dataset evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emp1-cylindrical-production-dataset-${{ github.sha }}
+          path: |
+            test-results/emp1-cylindrical-production-package.json
+            test-results/mutation-crosscheck.log
+          if-no-files-found: error
+          retention-days: 30

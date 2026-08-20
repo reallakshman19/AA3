@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import {
   EMP1_B_SOURCE_CUSTODY_STATES,
   EMP1_C_BLOCKER_CODES,
+  EMP1_C_BOUNDED_PRODUCTION_ROUTES,
   EMP1_C_PRODUCTION_ROUTE,
+  EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
   EMP1_LOCAL_CORRELATION_BLOCKERS,
   EMP1_PUBLIC_PRODUCT,
   buildEmp1ProductProjection,
@@ -62,11 +64,32 @@ assert.equal(projection.steps[2].qualification.gateStatus.wrcDimensionalContract
 assert.equal(projection.steps[2].qualification.gateStatus.wrcRuntimeContractsReady, false);
 assert.equal(projection.steps[2].qualification.gateStatus.signArbitrationReady, false);
 assert.equal(projection.steps[2].qualification.gateStatus.cauxBenchmarkReady, false);
-assert.equal(EMP1_C_PRODUCTION_ROUTE.registered, false);
+
+assert.equal(EMP1_C_PRODUCTION_ROUTE.registered, false, 'global/full-domain EMP.1.C remains unregistered');
+assert.equal(EMP1_C_BOUNDED_PRODUCTION_ROUTES.length, 1);
+const bounded = EMP1_C_BOUNDED_PRODUCTION_ROUTES[0];
+assert.equal(bounded.routeId, EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
+assert.equal(bounded.registered, true);
+assert.equal(bounded.engineeringUseAuthorized, true);
+assert.equal(bounded.globalEmp1CRouteAuthority, false);
+assert.equal(bounded.releaseQualified, false);
+assert.equal(bounded.runtimeEligibilityRequired, true);
+assert.equal(bounded.scope.gamma, 5);
+assert.equal(bounded.scope.betaMinimum, 0.05);
+assert.equal(bounded.scope.betaMaximum, 0.5);
+assert.equal(bounded.scope.differentialPressure, 0);
+assert.equal(bounded.scope.Kn, 1);
+assert.equal(bounded.scope.Kb, 1);
+assert.equal(projection.steps[2].boundedRouteCount, 1);
+assert.equal(projection.steps[2].boundedProductionRoutes[0].routeId, bounded.routeId);
+
 assert.equal(projection.qualificationBoundary.emp1CProductionAuthority, 'NOT_AUTHORIZED');
 assert.equal(projection.qualificationBoundary.emp1CTechnicalQualificationReady, false);
 assert.equal(projection.qualificationBoundary.emp1CRunAuthorized, false);
 assert.equal(projection.qualificationBoundary.emp1CProductionRoute.registered, false);
+assert.equal(projection.qualificationBoundary.emp1CBoundedRouteCount, 1);
+assert.equal(projection.qualificationBoundary.emp1CBoundedProductionRoutes[0].registered, true);
+assert.equal(projection.qualificationBoundary.emp1CBoundedProductionRoutes[0].globalEmp1CRouteAuthority, false);
 assert.equal(projection.qualificationBoundary.passIsCodeCompliance, false);
 assert.equal(projection.custody.bSourceEvidenceState, EMP1_B_SOURCE_CUSTODY_STATES.CURRENT);
 assert.equal(isEmp1BackingStage('LAFEA.1'), true);
@@ -83,13 +106,20 @@ assert.deepEqual(syntheticQualifiedMethod.steps[2].blockers, [EMP1_C_BLOCKER_COD
 assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CProductionAuthority, 'QUALIFIED_METHOD_AUTHORITY');
 assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CTechnicalQualificationReady, true);
 assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CRunAuthorized, false);
+assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CProductionRoute.registered, false);
+assert.equal(syntheticQualifiedMethod.qualificationBoundary.emp1CBoundedRouteCount, 1);
 assert.equal(syntheticQualifiedMethod.qualificationBoundary.releaseQualified, false);
 
 console.log(JSON.stringify({
   status: 'PASS',
   currentCBlockers: projection.steps[2].blockers,
   runtimeContractGateReady: projection.steps[2].qualification.gateStatus.wrcRuntimeContractsReady,
-  productionRouteRegistered: EMP1_C_PRODUCTION_ROUTE.registered,
+  globalProductionRouteRegistered: EMP1_C_PRODUCTION_ROUTE.registered,
+  boundedProductionRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
+  boundedRouteId: bounded.routeId,
+  boundedRouteRegistered: bounded.registered,
+  boundedGlobalAuthority: bounded.globalEmp1CRouteAuthority,
+  releaseQualified: bounded.releaseQualified,
 }, null, 2));
 
 function readyCQualificationEvidence() {

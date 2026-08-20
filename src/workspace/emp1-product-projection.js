@@ -9,6 +9,14 @@ export {
   isEmp1BackingStage,
 } from '../core/emp1/emp1-public-product-contract.js';
 export {
+  EMP1_C_BOUNDED_PRODUCTION_ROUTES,
+  EMP1_C_BOUNDED_ROUTE_REGISTRY_SCHEMA,
+  EMP1_C_WRC537_GAMMA5_ZERO_DP_QUALIFICATION_SHA256,
+  EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
+  EMP1_C_WRC537_ZERO_DP_LOAD_PRODUCER_SHA256,
+  emp1CBoundedRoute,
+} from '../core/emp1/emp1-c-bounded-route-registry.js';
+export {
   EMP1_C_BLOCKER_CODES,
   EMP1_C_CURRENT_QUALIFICATION_EVIDENCE,
   EMP1_C_QUALIFICATION_SCHEMA,

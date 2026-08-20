@@ -1,0 +1,83 @@
+schema: engineering-pr-status/v1
+work_item: PR1291
+issue: 1261
+pr: 1291
+repository: reallaksh19/Advanced_Analysis
+parent_pr: 1287
+base_head_after_pr1287_merge: fa21da0f948133c471b4679e7e8a634491db9e0b
+branch: agent/emp1-c-exact-gamma-qualified-route-issue1261
+intent: EMP1_C_EXACT_SOURCE_TABULATED_GAMMA_BOUNDARY
+handover_readiness: READY
+merge_authority: NOT_GRANTED
+current_stage: GAMMA5_ROUTE_AUTHORIZED_GAMMA15_SOURCE_ORACLE_AND_PRODUCTION_NUMERICS_QUALIFIED
+validated_code_head: e2c3beb7bf905c8636f35480284a02daa4006929
+validated_workflows:
+  emp1_c_exact_gamma_112: PASS
+  emp1_c_primary_qualification_state_118: PASS
+  emp1_c_runtime_qualification_130: PASS
+  emp1_c_production_dataset_84: PASS
+  emp1_c_gamma5_full_table5_oracle_70: PASS
+  emp1_c_gamma15_full_table5_oracle_9: PASS
+  emp1_c_beta_domain_source_evidence_14: PASS
+  emp1_caux_curve_selection_probe_142: PASS
+  emp1_primary_source_qualification_198: PASS
+wrc_source_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+production_dataset_package: PASS_PRIMARY_PDF_CROSSCHECK
+production_dataset_hash: fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c
+production_dataset_curves: 321
+production_dataset_scalar_coefficients: 3210
+production_dataset_primary_pdf_crosscheck: PASS_3210_OF_3210
+blank_gamma_source_row: WRC537-FIG1B-ORIGINAL-GAMMA-BLANK
+blank_gamma_source_row_selectable: false
+exact_gamma_single_curve_oracle: PASS_REOBSERVED
+exact_gamma_single_curve_oracle_hash: 809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e
+full_table5_gamma5_oracle: PASS_REOBSERVED_INDEPENDENT
+full_table5_gamma5_oracle_hash: 5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa
+production_curve_evaluator_comparison: PASS
+production_table5_kernel_caux_comparison: PASS_32_OF_32
+gamma5_bounded_adapter_comparison: PASS_32_OF_32
+zero_dp_load_producer: PASS_REOBSERVED_PROMOTED
+zero_dp_load_producer_qualification_sha256: 47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b
+gamma5_bounded_route_qualification: PASS_REOBSERVED_AUTHORIZED_BOUNDED_ZERO_DP_ROUTE
+gamma5_bounded_route_qualification_sha256: 3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e
+gamma5_bounded_route_registered: true
+gamma5_bounded_route_scope:
+  shell_family: CYLINDRICAL
+  attachment_shape: ROUND
+  variant: ORIGINAL
+  gamma: 5
+  beta_minimum: 0.05
+  beta_maximum: 0.5
+  differential_pressure: 0
+  Kn: 1
+  Kb: 1
+  interpolation_allowed: false
+  cross_variant_fallback_allowed: false
+real_run_emp1_gamma5_bounded_orchestration: PASS
+public_product_gamma5_bounded_route_projection: PASS
+gamma15_source_chart_evidence: PASS_OBSERVATION_ONLY_SHA_BOUND_300_DPI
+gamma15_source_domain: PASS_SOURCE_QUALIFIED_CONSERVATIVE_DOMAIN
+gamma15_source_domain_scope:
+  shell_family: CYLINDRICAL
+  attachment_shape: ROUND
+  variant: ORIGINAL
+  gamma: 15
+  beta_minimum: 0.05
+  beta_maximum: 0.30
+  interpolation_allowed: false
+  cross_variant_fallback_allowed: false
+gamma15_governing_outer_limit_figures:
+  - 1C
+  - 2C
+gamma15_full_table5_oracle: PASS_REOBSERVED_INDEPENDENT
+gamma15_full_table5_oracle_hash: d34827bfdfebad9f175e5fbcdfeab5fdc799d28de5c298ed2ae578886f72ae98
+gamma15_full_table5_oracle_production_imports: 0
+gamma15_production_numerical_comparison: PASS_16_ORDINATES_32_STRESSES
+gamma15_production_route_registered: false
+global_emp1_c_route_registered: false
+full_domain_wrc_gamma_interpolation_authority: BLOCKED_SOURCE_RULE_UNRESOLVED
+higher_gamma_curve_specific_beta_limits: PARTIAL_GAMMA15_PASS_OTHER_GAMMAS_BLOCKED
+nonzero_pressure_thrust_policy: BLOCKED_NOT_SOURCE_QUALIFIED
+general_Kn_Kb_producer: BLOCKED_NOT_SOURCE_QUALIFIED
+release_qualified: false
+next_action: START_STACKED_SUCCESSOR_FOR_GAMMA15_ZERO_DP_UNITY_K_ROUTE_AUTHORIZATION_AND_REAL_RUN_EMP1_REOBSERVATION

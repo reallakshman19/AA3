@@ -1,0 +1,128 @@
+name: EMP.1.C exact-gamma qualification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-exact-gamma:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Re-observe inherited primary qualification boundary
+        shell: bash
+        run: |
+          set +e
+          node scripts/emp1-c-primary-qualification-state-check.mjs > /tmp/emp1-primary-v2.json
+          status=$?
+          set -e
+          cat /tmp/emp1-primary-v2.json
+          if [ "$status" -ne 2 ]; then
+            echo "Expected inherited full-domain state to remain blocked only on non-tabulated gamma authority"
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const state=JSON.parse(await readFile('/tmp/emp1-primary-v2.json','utf8'));
+          if (state.status!=='BLOCKED') throw new Error(`EMP1_EXACT_GAMMA_INHERITED_STATE:${state.status}`);
+          const codes=state.blockers?.map((row)=>row.code)??[];
+          if (codes.length!==1 || codes[0]!=='WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED') throw new Error(`EMP1_EXACT_GAMMA_INHERITED_BLOCKERS:${codes.join(',')}`);
+          if (state.routeRegistrationAllowed!==false || state.productionAuthority!==false) throw new Error('EMP1_EXACT_GAMMA_PREMATURE_FULL_ROUTE_AUTHORITY');
+          NODE
+      - name: Qualify exact source-tabulated gamma selector
+        run: node scripts/emp1-wrc-cylindrical-exact-gamma-self-test.mjs
+      - name: Re-observe WRC page 95 coefficient table from frozen PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+          fi
+          pdftotext -f 95 -l 95 -layout docs/emp1/WRC537_2013.pdf /tmp/wrc-page95.txt
+      - name: Independently re-observe exact-gamma primary-source oracle
+        run: node scripts/emp1-wrc-exact-gamma-independent-oracle-check.mjs /tmp/wrc-page95.txt
+      - name: Bind capability record to live source observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { parseCylindricalExactGammaPackage } from './scripts/emp1-wrc-cylindrical-exact-gamma-lib.mjs';
+          import { evaluateEmp1Wrc537BoundedDomain } from './src/core/emp1/emp1-wrc537-cylindrical-bounded-domain.js';
+          const capability=JSON.parse(await readFile('validation/emp1/wrc537-2013/exact-gamma-capability-v1.json','utf8'));
+          const domain=JSON.parse(await readFile('validation/emp1/wrc537-2013/cylindrical-original-bounded-domain-v1.json','utf8'));
+          const oracle=JSON.parse(await readFile('validation/emp1/wrc537-2013/exact-gamma-oracle-1a-g5-v1.json','utf8'));
+          const markdown=await readFile('docs/emp1/WRC537_2013_Tables_and_Charts.md','utf8');
+          const pkg=parseCylindricalExactGammaPackage(markdown);
+          if (capability.status!=='PASS_BOUNDED_EXACT_TABULATED_GAMMA_SELECTION') throw new Error(`EMP1_EXACT_GAMMA_CAPABILITY_STATE:${capability.status}`);
+          if (domain.status!=='PASS_INITIAL_BOUNDED_DOMAIN' || domain.authorization?.boundedRouteRegistrationAllowed!==false) throw new Error(`EMP1_BOUNDED_DOMAIN_STATE:${domain.status}`);
+          if (oracle.status!=='PASS_REOBSERVED_INDEPENDENT_EXACT_GAMMA_ORACLE' || oracle.engineeringAuthority!==true) throw new Error(`EMP1_EXACT_GAMMA_ORACLE_STATE:${oracle.status}`);
+          if (oracle.semanticHash!==capability.qualificationEvidence?.independentExactGammaOracleHash) throw new Error('EMP1_EXACT_GAMMA_ORACLE_HASH_BINDING');
+          if (capability.source?.rawPdfSha256!==pkg.source.rawPdfSha256) throw new Error('EMP1_EXACT_GAMMA_SOURCE_SHA_DRIFT');
+          for (const [key,value] of Object.entries(capability.inventory ?? {})) {
+            const packageKey={coefficientTables:'tables'}[key] ?? key;
+            if (pkg.counts[packageKey]!==value) throw new Error(`EMP1_EXACT_GAMMA_INVENTORY_DRIFT:${key}:${pkg.counts[packageKey]}:${value}`);
+          }
+          const inside=evaluateEmp1Wrc537BoundedDomain({shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',sourceDocumentSha256:domain.source.rawPdfSha256,datasetHash:'fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c',variant:'ORIGINAL',gamma:5,beta:0.155});
+          if(inside.status!=='PASS_BOUNDED_DOMAIN') throw new Error(`EMP1_BOUNDED_DOMAIN_INSIDE:${inside.reasons}`);
+          for(const beta of [0.049999,0.500001]){
+            const outside=evaluateEmp1Wrc537BoundedDomain({shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',sourceDocumentSha256:domain.source.rawPdfSha256,datasetHash:'fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c',variant:'ORIGINAL',gamma:5,beta});
+            if(outside.status!=='BLOCKED_OUTSIDE_QUALIFIED_DOMAIN'||!outside.reasons.includes('EMP1_WRC537_BOUNDED_BETA')) throw new Error(`EMP1_BOUNDED_DOMAIN_BETA_FALSIFIER:${beta}`);
+          }
+          const gamma15=evaluateEmp1Wrc537BoundedDomain({shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',sourceDocumentSha256:domain.source.rawPdfSha256,datasetHash:'fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c',variant:'ORIGINAL',gamma:15,beta:0.155});
+          if(gamma15.status!=='BLOCKED_OUTSIDE_QUALIFIED_DOMAIN'||!gamma15.reasons.includes('EMP1_WRC537_BOUNDED_GAMMA')) throw new Error('EMP1_BOUNDED_DOMAIN_HIGHER_GAMMA_FALSIFIER');
+          console.log(JSON.stringify({schema:'emp1-exact-gamma-capability-binding/v3',status:'PASS',inventory:capability.inventory,oracleSemanticHash:oracle.semanticHash,boundedDomain:{gamma:5,beta:[0.05,0.5]},globalRouteRegistrationAllowed:false},null,2));
+          NODE
+      - name: Build independent full Table 5 gamma5 oracle candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/emp1-exact-gamma
+          node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs > test-results/emp1-exact-gamma/gamma5-full-table5-oracle.json
+          cat test-results/emp1-exact-gamma/gamma5-full-table5-oracle.json
+      - name: Compare production curve evaluator to frozen independent oracle
+        run: node scripts/emp1-wrc-exact-gamma-production-comparison.mjs
+      - name: Compare production Table 5 stress kernel to qualified CAUx benchmark
+        run: node scripts/emp1-wrc-table5-production-comparison.mjs
+      - name: Compare bounded production adapter to frozen full Table 5 oracle
+        run: node scripts/emp1-wrc-gamma5-bounded-adapter-comparison.mjs
+      - name: Compare gamma15 production numerics to frozen independent oracle
+        run: node scripts/emp1-wrc-gamma15-bounded-adapter-comparison.mjs
+      - name: Re-observe zero-differential-pressure WRC load producer
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs > test-results/emp1-exact-gamma/zero-dp-load-producer-qualification.json
+          cat test-results/emp1-exact-gamma/zero-dp-load-producer-qualification.json
+      - name: Qualify end-to-end gamma5 zero-dp route candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-gamma5-zero-dp-route-qualification.mjs > test-results/emp1-exact-gamma/gamma5-zero-dp-route-qualification.json
+          cat test-results/emp1-exact-gamma/gamma5-zero-dp-route-qualification.json
+      - name: Qualify bounded route through real EMP.1 orchestration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs > test-results/emp1-exact-gamma/gamma5-zero-dp-orchestration-qualification.json
+          cat test-results/emp1-exact-gamma/gamma5-zero-dp-orchestration-qualification.json
+      - name: Prove bounded method scope is enforced by orchestration gate
+        run: node scripts/emp1-local-correlation-bounded-scope-self-test.mjs
+      - name: Preserve existing EMP.1 core scaffold behavior
+        run: node scripts/emp1-core-scaffold-check.mjs
+      - name: Preserve bounded versus global public route distinction
+        run: node scripts/emp1-public-product-check.mjs
+      - name: Upload exact-gamma qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emp1-exact-gamma-${{ github.sha }}
+          path: test-results/emp1-exact-gamma
+          if-no-files-found: error
+          retention-days: 30

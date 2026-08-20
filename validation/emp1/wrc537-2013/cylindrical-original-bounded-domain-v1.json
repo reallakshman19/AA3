@@ -1,0 +1,80 @@
+{
+  "schema": "emp1-wrc537-cylindrical-bounded-domain/v1",
+  "status": "PASS_INITIAL_BOUNDED_DOMAIN",
+  "engineeringAuthority": true,
+  "productionAuthority": false,
+  "fullMethodAuthority": false,
+  "source": {
+    "document": "WRC537_2013.pdf",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "parameterDefinition": {
+      "section": "4.2.2.1",
+      "equation": "26",
+      "beta": "0.875*r0/Rm"
+    },
+    "curveLimitAuthority": {
+      "section": "4.4",
+      "rule": "ORIGINAL_CURVES_MUST_NOT_BE_USED_BEYOND_LIMITS_INDICATED",
+      "reason": "OUTER_LIMITS_REPORTED_APPRECIABLY_UNCONSERVATIVE"
+    }
+  },
+  "table5OriginalFigureSet": [
+    "1A", "2A", "3A", "4A",
+    "1B-1", "2B-1", "3B", "4B",
+    "1C", "1C-1", "2C", "2C-1", "3C", "4C"
+  ],
+  "sourceChartReview": {
+    "method": "VISUAL_REVIEW_OF_220_DPI_PNG_RENDERED_FROM_SHA_BOUND_PRIMARY_PDF_NO_OCR",
+    "pdfPages": [94, 96, 100, 104, 110, 118, 122, 124, 128, 132, 136, 140, 144, 146],
+    "allRequiredGamma5CurvesCoverProductBetaBand": true,
+    "figure1COriginal": {
+      "pdfPage": 128,
+      "printedPage": 116,
+      "gamma5CurveReachesBeta": 0.5,
+      "higherGammaCurvesHaveSourceDeletedOuterSegments": true
+    },
+    "figure2COriginal": {
+      "pdfPage": 136,
+      "printedPage": 124,
+      "gamma5CurveReachesBeta": 0.5,
+      "higherGammaCurvesHaveSourceDeletedOuterSegments": true
+    }
+  },
+  "qualifiedProductDomain": {
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "variant": "ORIGINAL",
+    "gamma": {
+      "mode": "EXACT_SOURCE_TABULATED",
+      "allowedValues": [5],
+      "machineRoundOffRelativeTolerance": 1e-12
+    },
+    "beta": {
+      "minimum": 0.05,
+      "minimumInclusive": true,
+      "maximum": 0.5,
+      "maximumInclusive": true,
+      "minimumClassification": "CONSERVATIVE_PRODUCT_BOUNDARY_INSIDE_ALL_REVIEWED_GAMMA5_CURVES_NOT_CLAIMED_AS_GENERAL_WRC_LIMIT",
+      "maximumClassification": "PRIMARY_CHART_LIMIT_FOR_GAMMA5_REQUIRED_ORIGINAL_CURVES"
+    },
+    "interpolationAllowed": false,
+    "extrapolatedCurveUseAllowed": false,
+    "crossVariantFallbackAllowed": false
+  },
+  "explicitExclusions": [
+    "NON_TABULATED_GAMMA",
+    "GAMMA_7P5_10_15_25_35_50_75_100_150_200_300_FOR_FULL_TABLE5_ROUTE_UNTIL_PER_CURVE_BETA_LIMITS_ARE_MACHINE_QUALIFIED",
+    "BETA_BELOW_0P05",
+    "BETA_ABOVE_0P5",
+    "EXTRAPOLATED_CURVE_FAMILIES",
+    "RECTANGULAR_OR_SQUARE_ATTACHMENTS",
+    "WRC537_FIG1B_ORIGINAL_GAMMA_BLANK_ROW"
+  ],
+  "authorization": {
+    "boundedAdapterImplementationAllowed": true,
+    "boundedProductionComparisonAllowed": true,
+    "boundedRouteRegistrationAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "requiredNextGate": "FULL_TABLE5_GAMMA5_BETA0P155_INDEPENDENT_PRIMARY_SOURCE_ORACLE_AND_REAL_ORCHESTRATOR_PROOF"
+  }
+}

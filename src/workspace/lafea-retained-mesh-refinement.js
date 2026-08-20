@@ -1,11 +1,9 @@
-import { smoothInteriorPoints } from '../core/lafea-meshing/mesh-smoothing.js';
-import { edgeKey, lawsonFlip, upgradeToT6 } from '../core/lafea-meshing/constrained-delaunay-t6.js';
-import { insertInteriorPoint } from '../core/lafea-meshing/interior-refinement-t6.js';
 import {
-  buildLafea3RetainedRefinementGrading,
+  buildLafea3MappedRetainedRefinementMesh,
   minimumLafea3RetainedRefinementInfluenceRadius,
 } from './lafea-retained-mesh-refinement-grading.js';
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
+import { validateLafeaAnalysisGeometryEvidence } from './lafea-analysis-geometry-evidence.js';
 import {
   LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
   LAFEA_ANALYSIS_MESH_AUTHORITY_V2_SCHEMA,
@@ -36,10 +34,8 @@ export const LAFEA_RETAINED_MESH_REFINEMENT_RESULT_SCHEMA =
 export const LAFEA_RETAINED_MESH_REFINEMENT_POLICY = Object.freeze({
   minimumTargetRatio: 0.25,
   influenceRadiusGlobalFactor: 2,
-  boundaryClearanceLocalFactor: 0.30,
-  pointClearanceLocalFactor: 0.18,
   minimumElementsPerTransitionBand: 2,
-  maximumTargets: 64,
+  maximumTargets: 1,
 });
 
 /**
@@ -64,6 +60,9 @@ export function planLafeaRetainedMeshRefinement({
   }
   if (!command.executionAuthorized) {
     fail('LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_NOT_AUTHORIZED');
+  }
+  if (command.targetIds.length > LAFEA_RETAINED_MESH_REFINEMENT_POLICY.maximumTargets) {
+    fail('LAFEA_RETAINED_MESH_REFINEMENT_SINGLE_TARGET_ONLY');
   }
 
   const elementFamily = meshProfile.fields.continuumElement;
@@ -149,11 +148,16 @@ export function previewLafeaRetainedMeshRefinement(input) {
   const plan = planLafeaRetainedMeshRefinement({
     stage: input.stage, meshProfile, parentEvidence, command,
   });
-  const generated = refineParentMesh(
-    parentEvidence.mesh,
-    plan,
-    meshProfile.fields.adjacentSizeRatioMax,
-  );
+  const geometryEvidence = requireCurrentRefinementGeometry(input.stage, plan);
+  const generated = buildLafea3MappedRetainedRefinementMesh({
+    geometry: geometryEvidence.geometry,
+    targets: plan.targets,
+    elementFamily: plan.elementFamily,
+    localTargetElementLength: plan.targetElementLength,
+    globalTargetElementLength: plan.globalTargetElementLength,
+    adjacentSizeRatioMax: meshProfile.fields.adjacentSizeRatioMax,
+    producerRevision: plan.producerRevision,
+  });
   const capability = lafeaCoreMeshProducerCapability();
   const qualification = lafeaCoreMeshProducerQualification();
   const estimatedDofs = estimateLafeaMeshDofs('LAFEA.3', generated.mesh.nodes.length);
@@ -210,6 +214,7 @@ export function previewLafeaRetainedMeshRefinement(input) {
     evidence,
     parentEvidenceHash: parentEvidence.artifactHash,
     localPointCount: generated.localPointCount,
+    construction: generated.construction,
     estimatedDofs,
     changed: evidence.meshHash !== parentEvidence.meshHash,
     qualification: evidence.qualification,
@@ -224,118 +229,6 @@ export function produceLafeaRetainedMeshRefinement(input) {
     fail('LAFEA_RETAINED_MESH_REFINEMENT_QUALITY_BLOCKED');
   }
   return result;
-}
-
-/** Fixed round count keeps the refined child deterministic. */
-const REFINEMENT_SMOOTHING_ROUNDS = 3;
-
-function refineParentMesh(parentMesh, plan, adjacentSizeRatioMax) {
-  const triangulation = parentTriangulation(parentMesh, plan.elementFamily);
-  const points = triangulation.points.map((point) => ({ ...point }));
-  const triangles = triangulation.triangles.map((row) => [...row]);
-  const constraints = new Set(triangulation.boundaryEdgeKeys);
-  const grading = buildLafea3RetainedRefinementGrading({
-    targets: plan.targets,
-    localTargetElementLength: plan.targetElementLength,
-    globalTargetElementLength: plan.globalTargetElementLength,
-    influenceRadius: plan.influenceRadius,
-    adjacentSizeRatioMax,
-    minimumElementsPerTransitionBand:
-      LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumElementsPerTransitionBand,
-  });
-  let localPointCount = 0;
-  for (const candidate of grading.candidates) {
-    const localSize = candidate.targetElementLength;
-    if (!farFromBoundary(candidate, points, constraints,
-      localSize * LAFEA_RETAINED_MESH_REFINEMENT_POLICY.boundaryClearanceLocalFactor)) {
-      continue;
-    }
-    if (!farFromPoints(candidate, points,
-      localSize * LAFEA_RETAINED_MESH_REFINEMENT_POLICY.pointClearanceLocalFactor)) {
-      continue;
-    }
-    if (insertInteriorPoint(points, triangles, constraints, candidate)) localPointCount += 1;
-  }
-  if (!localPointCount) fail('LAFEA_RETAINED_MESH_REFINEMENT_NO_LOCAL_POINTS_INSERTED');
-  let restored = lawsonFlip(points, triangles, constraints);
-
-  // Graded insertion leaves the final transition cleanup to the same
-  // quality-guarded smoothing used by the parent mesher. Every constrained
-  // boundary node remains pinned, so retained geometry and boundary identity
-  // cannot move while the transition relaxes. The v2 evidence constructor is
-  // the final authority for the actual <= adjacentSizeRatioMax topology.
-  const fixedIndices = new Set();
-  for (const key of constraints) {
-    const [left, right] = key.split(':').map(Number);
-    fixedIndices.add(left);
-    fixedIndices.add(right);
-  }
-  for (let round = 0; round < REFINEMENT_SMOOTHING_ROUNDS; round += 1) {
-    const working = restored.map((triangle) => [...triangle]);
-    smoothInteriorPoints(points, working, fixedIndices);
-    restored = lawsonFlip(points, working, constraints);
-  }
-
-  const coreElements = plan.elementFamily === 'T6'
-    ? upgradeToT6(points, [], restored, triangulation.boundaryMidpoints)
-    : restored.map((triple, elementIndex) => freeze({
-      elementIndex,
-      elementType: 'T3',
-      nodes: freeze(triple.map((index) => ({ x: points[index].x, y: points[index].y }))),
-    }));
-  return freeze({
-    mesh: weld(coreElements, plan.elementFamily, plan.producerRevision),
-    localPointCount,
-  });
-}
-
-function parentTriangulation(mesh, family) {
-  const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
-  const cornerIds = [...new Set(mesh.elements.flatMap((element) => element.nodeIds.slice(0, 3)))].sort();
-  const pointIndexById = new Map(cornerIds.map((id, index) => [id, index]));
-  const points = cornerIds.map((id) => {
-    const node = nodeById.get(id);
-    if (!node || node.z !== 0) fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_NOT_PLANAR_XY');
-    return { x: node.x, y: node.y };
-  });
-  const triangles = [];
-  const edgeOwners = new Map();
-  const midsides = new Map();
-  for (const element of mesh.elements) {
-    if (element.elementType !== family) fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_FAMILY_MISMATCH');
-    const corner = element.nodeIds.slice(0, 3).map((id) => pointIndexById.get(id));
-    if (corner.some((index) => index === undefined)) fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_CONNECTIVITY_INVALID');
-    const original = [...corner];
-    normalizeTriangle(corner, points);
-    triangles.push(corner);
-    for (let edge = 0; edge < 3; edge += 1) {
-      const a = original[edge]; const b = original[(edge + 1) % 3];
-      const key = edgeKey(a, b);
-      edgeOwners.set(key, (edgeOwners.get(key) ?? 0) + 1);
-      if (family === 'T6') {
-        const mid = nodeById.get(element.nodeIds[3 + edge]);
-        if (!mid) fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_MIDSIDE_INVALID');
-        midsides.set(key, { x: mid.x, y: mid.y });
-      }
-    }
-  }
-  const boundaryEdgeKeys = new Set(
-    [...edgeOwners.entries()].filter(([, owners]) => owners === 1).map(([key]) => key),
-  );
-  if ([...edgeOwners.values()].some((owners) => owners > 2)) {
-    fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_NON_MANIFOLD');
-  }
-  const boundaryMidpoints = new Map();
-  if (family === 'T6') {
-    for (const key of boundaryEdgeKeys) {
-      const mid = midsides.get(key);
-      boundaryMidpoints.set(key, {
-        curveId: null,
-        midPoint: { point: { x: mid.x, y: mid.y } },
-      });
-    }
-  }
-  return { points, triangles, boundaryEdgeKeys, boundaryMidpoints };
 }
 
 function resolveTargets(mesh, targetType, ids) {
@@ -361,58 +254,17 @@ function resolveTargets(mesh, targetType, ids) {
   }));
 }
 
-function farFromBoundary(point, points, boundaryEdgeKeys, clearance) {
-  for (const key of boundaryEdgeKeys) {
-    const [a, b] = key.split(':').map(Number);
-    if (pointSegmentDistance(point, points[a], points[b]) < clearance) return false;
+function requireCurrentRefinementGeometry(stage, plan) {
+  if (!stage?.retainedAnalysisGeometryEvidence) {
+    fail('LAFEA_RETAINED_MESH_REFINEMENT_GEOMETRY_EVIDENCE_REQUIRED');
   }
-  return true;
-}
-function farFromPoints(point, points, clearance) {
-  return points.every((candidate) => Math.hypot(point.x - candidate.x, point.y - candidate.y) >= clearance);
-}
-function pointSegmentDistance(point, a, b) {
-  const dx = b.x - a.x; const dy = b.y - a.y;
-  const length2 = dx * dx + dy * dy;
-  if (!length2) return Math.hypot(point.x - a.x, point.y - a.y);
-  const t = Math.max(0, Math.min(1,
-    ((point.x - a.x) * dx + (point.y - a.y) * dy) / length2));
-  return Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy));
-}
-
-function normalizeTriangle(triangle, points) {
-  const [a, b, c] = triangle.map((index) => points[index]);
-  const twiceArea = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-  if (!(Math.abs(twiceArea) > 1e-12)) fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_DEGENERATE_ELEMENT');
-  if (twiceArea < 0) [triangle[1], triangle[2]] = [triangle[2], triangle[1]];
-}
-
-function weld(coreElements, family, revision) {
-  const nodeIndexByKey = new Map();
-  const welded = [];
-  const elementNodeKeys = coreElements.map((element) => element.nodes.map((node) => {
-    const key = `${node.x},${node.y}`;
-    if (!nodeIndexByKey.has(key)) {
-      nodeIndexByKey.set(key, welded.length);
-      welded.push({ key, x: node.x, y: node.y });
-    }
-    return key;
-  }));
-  const ordered = [...welded].sort((a, b) => a.x - b.x || a.y - b.y);
-  const nodeIdByKey = new Map(ordered.map((node, index) => [node.key, nodeId(index)]));
-  const nodes = ordered.map((node) => ({
-    nodeId: nodeIdByKey.get(node.key), x: node.x, y: node.y, z: 0,
-  }));
-  const elements = elementNodeKeys
-    .map((keys) => ({ elementType: family, nodeIds: keys.map((key) => nodeIdByKey.get(key)) }))
-    .sort((a, b) => compareIdLists(a.nodeIds, b.nodeIds))
-    .map((row, index) => ({ elementId: elementId(index), ...row }));
-  return freeze({
-    schema: 'lafea-analysis-mesh/v1',
-    meshIdentity: `LAFEA_CORE_MESHER:${revision}:LOCAL_REFINEMENT:${family}`,
-    nodes,
-    elements,
-  });
+  const evidence = validateLafeaAnalysisGeometryEvidence(stage.retainedAnalysisGeometryEvidence);
+  if (evidence.sourceHash !== plan.sourceHash
+    || evidence.analysisDomainHash !== plan.analysisDomainHash
+    || evidence.analysisGeometryHash !== plan.analysisGeometryHash) {
+    fail('LAFEA_RETAINED_MESH_REFINEMENT_GEOMETRY_EVIDENCE_STALE');
+  }
+  return evidence;
 }
 
 function requireCurrentParents(stage, parentEvidence, meshProfile) {
@@ -447,14 +299,6 @@ function requireCommand(value) {
     fail('LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_TAMPERED');
   }
   return rebuilt;
-}
-function nodeId(index) { return `N${String(index + 1).padStart(6, '0')}`; }
-function elementId(index) { return `E${String(index + 1).padStart(6, '0')}`; }
-function compareIdLists(left, right) {
-  for (let index = 0; index < Math.min(left.length, right.length); index += 1) {
-    if (left[index] !== right[index]) return left[index] < right[index] ? -1 : 1;
-  }
-  return left.length - right.length;
 }
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
 function freeze(value) {

@@ -93,7 +93,7 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
     return {
       aExecutionStatus: a.execution?.status ?? null,
       bExecution: b.execution,
-      aModelHash: a.document?.semanticHash ?? null,
+      aCanonicalModelHash: a.execution?.canonicalInput?.semanticHash ?? null,
       bSourceModelHash: b.document?.sourceEvidence?.foundationModel?.semanticHash ?? null,
       bFactor: b.document.screeningCases
         .find((row) => row.screeningCaseId === 'CASE-B').mechanicalTerms
@@ -102,7 +102,8 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   });
   expect(custody.aExecutionStatus).toBe('QUALIFIED');
   expect(custody.bExecution).toBeNull();
-  expect(custody.bSourceModelHash).toBe(custody.aModelHash);
+  expect(custody.aCanonicalModelHash).not.toBeNull();
+  expect(custody.bSourceModelHash).toBe(custody.aCanonicalModelHash);
   expect(custody.bFactor).toBe(-0.5);
 
   await expect(run).toBeEnabled();

@@ -40,6 +40,16 @@ jobs:
           NODE
       - name: Qualify exact source-tabulated gamma selector
         run: node scripts/emp1-wrc-cylindrical-exact-gamma-self-test.mjs
+      - name: Re-observe WRC page 95 coefficient table from frozen PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+          fi
+          pdftotext -f 95 -l 95 -layout docs/emp1/WRC537_2013.pdf /tmp/wrc-page95.txt
+          sed -n '1,180p' /tmp/wrc-page95.txt
       - name: Bind capability record to live source observation
         shell: bash
         run: |

@@ -21,7 +21,7 @@ assert.equal(runtimeContractReady(absent), false);
 const qualifiedLedger = {
   rawPdfSha256: 'a'.repeat(64),
   custodyState: 'VERIFIED',
-  qualificationState: 'PASS',
+  qualificationState: 'PASS_SOURCE_CUSTODY',
 };
 const passArtifact = readyArtifact(qualifiedLedger.rawPdfSha256);
 const pass = deriveEmp1CRuntimeContractQualification(qualifiedLedger, passArtifact);
@@ -44,6 +44,17 @@ for (const mode of EMP1_C_PRESSURE_THRUST_MODES) {
   assert.equal(result.pressureThrustMode, mode);
   assert.equal(runtimeContractReady(result), true);
 }
+
+const genericPassLedger = {
+  rawPdfSha256: 'a'.repeat(64),
+  custodyState: 'VERIFIED',
+  qualificationState: 'PASS',
+};
+assert.equal(deriveEmp1CRuntimeContractQualification(genericPassLedger, null).sourceCustodyQualified, false);
+assert.throws(
+  () => deriveEmp1CRuntimeContractQualification(genericPassLedger, readyArtifact(genericPassLedger.rawPdfSha256)),
+  /EMP1_C_RUNTIME_CONTRACT_WITHOUT_WRC_SOURCE_CUSTODY/u,
+);
 
 const noSourceCustody = readyArtifact('a'.repeat(64));
 assert.throws(
@@ -101,11 +112,13 @@ assert.equal(blocked.pressureThrustStatus, 'BLOCKED');
 assert.equal(runtimeContractReady(blocked), false);
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-runtime-contract-self-test/v1',
+  schema: 'emp1-c-runtime-contract-self-test/v2',
   status: 'PASS',
   oracleClassification: 'SOFTWARE_CONTRACT_ONLY_NOT_WRC_ENGINEERING_EVIDENCE',
   allowedPressureThrustModes: EMP1_C_PRESSURE_THRUST_MODES,
   guardrails: [
+    'source custody requires exact VERIFIED plus PASS_SOURCE_CUSTODY semantics',
+    'generic PASS cannot masquerade as source-custody authority',
     'load-axis mapping requires source locator plus canonical-frame and mapping hashes',
     'pressure-thrust handling requires explicit allowed mode, independent check, and double-count guard',
     'stress-intensity output must be source-qualified as a stress dimension',

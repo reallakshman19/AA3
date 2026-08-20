@@ -87,6 +87,8 @@ jobs:
         run: node scripts/emp1-wrc-exact-gamma-production-comparison.mjs
       - name: Compare production Table 5 stress kernel to qualified CAUx benchmark
         run: node scripts/emp1-wrc-table5-production-comparison.mjs
+      - name: Compare bounded production adapter to frozen full Table 5 oracle
+        run: node scripts/emp1-wrc-gamma5-bounded-adapter-comparison.mjs
       - name: Prove bounded method scope is enforced by orchestration gate
         run: node scripts/emp1-local-correlation-bounded-scope-self-test.mjs
       - name: Preserve existing EMP.1 core scaffold behavior

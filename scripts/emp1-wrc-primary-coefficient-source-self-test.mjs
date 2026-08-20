@@ -48,7 +48,7 @@ const pdfTextPath = readArg('--pdf-text');
 let pdfTextCrossCheck = null;
 let qualifiedPackage = null;
 if (pdfTextPath) {
-  const pdfText = await readFile(resolve(pdfTextPath), 'utf8');
+  const pdfText = scopeSphericalHollowCoefficientText(await readFile(resolve(pdfTextPath), 'utf8'));
   const pdfTables = parsePrimaryWrcCoefficientTablesFromPdfText(pdfText);
   pdfTextCrossCheck = comparePrimaryWrcCoefficientExtractions(tables, pdfTables);
   assert.equal(pdfTextCrossCheck.status, 'PASS');
@@ -72,7 +72,7 @@ if (pdfTextPath) {
 }
 
 console.log(JSON.stringify({
-  schema: 'emp1-wrc-primary-coefficient-source-self-test/v1',
+  schema: 'emp1-wrc-primary-coefficient-source-self-test/v2',
   status: 'PASS',
   sourceInventory: { tableCount: 20, curveCount: 115, scalarCount: 1150 },
   rationalEvaluationProof: {
@@ -89,8 +89,17 @@ console.log(JSON.stringify({
     'DENOMINATOR_ZERO_REJECTED',
     ...(pdfTextPath ? ['ONE_SCALAR_PDF_TEXT_MUTATION_REJECTED'] : []),
   ],
-  authorityNote: 'PASS_SOURCE_TRANSCRIPTION qualifies transcription of the frozen WRC coefficient tables; production use remains separately blocked by method/runtime/benchmark authorization.',
+  authorityNote: 'PASS_SOURCE_TRANSCRIPTION qualifies the spherical-hollow SP/SM transcription only. Complete WRC scope, runtime selection, and benchmark authorization are separate gates.',
 }, null, 2));
+
+function scopeSphericalHollowCoefficientText(text) {
+  const source = String(text ?? '').replace(/\r/gu, '');
+  const start = source.indexOf('Curve Fit Coefficients for Figure SP-1');
+  if (start < 0) throw new TypeError('EMP1_WRC_PDF_TEXT_SP1_BOUNDARY_MISSING');
+  const afterSm10 = source.indexOf('Curve Fit Coefficients for Figure 1A', start);
+  if (afterSm10 < 0) throw new TypeError('EMP1_WRC_PDF_TEXT_CYLINDRICAL_BOUNDARY_MISSING');
+  return source.slice(start, afterSm10);
+}
 
 function readArg(name) {
   const index = process.argv.indexOf(name);

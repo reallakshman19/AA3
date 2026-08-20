@@ -23,11 +23,16 @@ const diagnosticEvidence = originalEvidence.replace(
 );
 
 const cases = [
-  [0.30, 0.18], [0.50, 0.18], [0.75, 0.18], [1.00, 0.18], [1.25, 0.18], [1.50, 0.18],
-  [0.75, 0.35], [0.75, 0.50], [0.75, 0.65], [0.75, 0.80], [0.75, 1.00],
-  [1.00, 0.35], [1.00, 0.50], [1.00, 0.65], [1.00, 0.80], [1.00, 1.00],
-  [1.25, 0.35], [1.25, 0.50], [1.25, 0.65], [1.25, 0.80], [1.25, 1.00],
-  [1.50, 0.35], [1.50, 0.50], [1.50, 0.65], [1.50, 0.80], [1.50, 1.00],
+  [0.30, 0.50],
+  [0.30, 0.55],
+  [0.30, 0.575],
+  [0.30, 0.60],
+  [0.30, 0.625],
+  [0.30, 0.65],
+  [0.30, 0.675],
+  [0.30, 0.70],
+  [0.30, 0.75],
+  [0.30, 0.80],
 ];
 const rows = [];
 try {
@@ -47,6 +52,7 @@ try {
     rows.push({
       boundaryClearanceLocalFactor,
       pointClearanceLocalFactor,
+      pointClearanceMmAtH15: 15 * pointClearanceLocalFactor,
       childExitCode: run.status,
       maximumObserved: metric?.maximumObserved ?? null,
       adjacentEdgeCount: metric?.adjacentEdgeCount ?? null,
@@ -61,12 +67,13 @@ try {
 }
 
 const passing = rows.filter((row) => row.qualification === 'PASS');
+const firstPassing = passing[0] ?? null;
 console.log(JSON.stringify({
-  check: 'PR1270_CLEARANCE_SWEEP',
+  check: 'PR1270_BASELINE_BOUNDARY_POINT_CLEARANCE_SWEEP',
   acceptanceMaximum: 1.5,
-  baseline: { boundaryClearanceLocalFactor: 0.30, pointClearanceLocalFactor: 0.18 },
+  fixedBoundaryClearanceLocalFactor: 0.30,
   rows,
-  passing,
+  firstPassing,
 }));
-assert.ok(passing.length > 0, 'clearance sweep found no candidate satisfying the unchanged actual-topology gate');
-throw new Error(`PR1270_CLEARANCE_PASSING=${JSON.stringify(passing)}`);
+assert.ok(firstPassing, 'baseline boundary clearance 0.30 has no tested passing point-clearance candidate');
+throw new Error(`PR1270_FIRST_PASSING_CLEARANCE=${JSON.stringify(firstPassing)}`);

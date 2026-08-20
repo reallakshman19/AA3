@@ -1,0 +1,54 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1289
+mission: Correct PR1288 EI P0 FIT/AIV source transcriptions and quarantine unresolved authority
+workstream: EI_AVIFF_SOURCE_MASTER
+branch: agent/ei-p0-source-correction-20260820
+base_head_at_allocation: 782683e7355281e95e5319dcad7f8a5644710d1d
+reconciled_main_head: ef9445469fbddd3a34e51c83e295bb749ae79c73
+reconciliation_basis_head: cb27cc28eab98919eca558bb809fb28ab8e69f33
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+agent_state: MERGE_PENDING_OWNER_AUTHORIZED
+pr_recovery_state: RECOVERABLE
+handover_readiness: READY
+report_path: agents/PR1289_workreport.md
+current_stage: OWNER_AUTHORIZED_MERGE_PENDING
+blocker: none_to_owner_directed_merge; promotion gates below remain NOT satisfied
+highest_risk: source-corroborated qualification evidence being mistaken for production screening or design authority
+validation_state:
+  live_main_grounding: PASS
+  pr1288_scope_grounding: PASS
+  current_main_reconciliation: PASS
+  current_main_reconciliation_relation: 42_AHEAD_0_BEHIND
+  pr_mergeable: PASS
+  changed_path_ledger: PASS_20_INTENDED_PATHS
+  controlled_pdf_blob_identity: PASS
+  rollback_git_blob_manifest: PASS
+  p0_formula_diagnosis: PASS
+  prior_v1_exact_changed_blob_reconstruction: PASS
+  prior_v1_focused_source_master_regression: PASS
+  current_v2_gate_schema: EiAviffSourceMasterP0Check.v2
+  current_v2_source_equation_corroboration: PASS
+  current_v2_d2_3_numerical_reproduction: PASS
+  current_v2_branch_edge_oracle: PASS
+  current_v2_exact_branch_script_execution: NOT_RUN_TRANSPORT_BLOCKED
+  direct_pdf_visual_inspection: NOT_RUN_TRANSPORT_BLOCKED
+  native_repo_checkout: NOT_RUN_DNS_BLOCKED
+  hosted_comments_reviews: PASS_NONE_PRESENT
+  hosted_status_entries: NOT_RUN_EMPTY_SET
+  hosted_pr_workflows: NOT_RUN_EMPTY_SET
+  production_code_changed: false
+  screening_authority_changed: false
+  design_authority_changed: false
+  merge: OWNER_AUTHORIZED_2026_08_20T11_50_PLUS04
+remaining_promotion_gates:
+  - EXACT_PINNED_PDF_VISUAL_PARITY
+  - D2_3_PUBLISHED_FLM1_ARITHMETIC_DISPOSITION
+  - INDEPENDENT_MULTI_SOURCE_BENCHMARK
+  - GOVERNED_SIMULTANEOUS_SOURCE_SCOPE
+  - GOVERNED_DISCONTINUITY_INVENTORY_COMPLETENESS
+  - DOWNSTREAM_PRODUCT_IMPLEMENTATION_PARITY
+  - PRODUCTION_RELEASE_QUALIFICATION
+exact_next_action: mark PR1289 ready, squash-merge exact authorized head, then re-ground downstream 3D_Converters AIV parity work
+last_updated: 2026-08-20T11:50:00+04:00

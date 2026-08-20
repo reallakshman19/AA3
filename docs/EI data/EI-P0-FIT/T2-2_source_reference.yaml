@@ -1,9 +1,15 @@
 module: EI-P0-FIT
 title: Flow Induced Turbulence (FIT) Main Line Assessment
 authority: Energy Institute Guidelines for Avoidance of Vibration Induced Fatigue Failure in Process Pipework (2nd Edition, 2008)
+transcription_status: PARTIALLY_VERIFIED_AGAINST_CONTROLLED_EI_WORKED_EXAMPLES
+source_pdf:
+  git_blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
+  role: GOVERNING_SOURCE_DOCUMENT
+engineering_use: VERIFIED_SECTIONS_ONLY
 sections:
   - id: T2.2.3.1
     title: Determining rho_v2
+    verification: VERIFIED_BY_CONTROLLED_WORKED_EXAMPLE_AND_QUALIFIED_FIT_IMPLEMENTATION
     formulas:
       single_phase: "rho_v2 = rho_actual * v_actual^2"
       multiphase: "rho_v2 = rho_effective * v_effective^2"
@@ -11,22 +17,33 @@ sections:
       v_effective: "total_volumetric_flow_rate / pipe_internal_cross_sectional_area"
   - id: T2.2.3.2
     title: Determining Fluid Viscosity Factor (FVF)
+    verification: VERIFIED_BY_D2_WORKED_EXAMPLE
     rules:
       liquid_or_multiphase: 1.0
-      gas: "1.0 / (mu_gas * 1000)"
+      gas: "sqrt(mu_gas / 0.001)"
       mu_units: "Pa.s (kg/(m.s))"
+      dimensional_note: "0.001 Pa.s is the empirical reference viscosity. Example: 2e-5 Pa.s -> FVF 0.141421...; 1e-5 Pa.s -> FVF 0.1."
   - id: T2.2.3.4
     title: Determining Flow Induced Vibration Factor Fv
+    verification: VERIFIED_AGAINST_T2_2_COEFFICIENT_MASTER_AND_D2_WORKED_EXAMPLE
     table: Table T2-2
     forms:
       POWER: "Fv = alpha * (Dext / T)^beta"
       EXP_POWER: "Fv = exp(alpha * (Dext / T)^beta)"
   - id: T2.2.3.5
     title: Calculation of Likelihood of Failure (LOF)
-    formula: "LOF_FIT = rho_v2 / (Fv * FVF)"
+    verification: VERIFIED_BY_CONTROLLED_FIT_METHOD_AND_WORKED_EXAMPLES
+    formulas:
+      liquid: "LOF_FIT = rho_v2 / Fv"
+      gas: "LOF_FIT = rho_v2 * FVF / Fv"
+      multiphase: "LOF_FIT = rho_v2 / Fv"
   - id: T2.2.3.5_valve_check
     title: Trim Exit Kinetic Energy Limits
-    limits:
-      continuous_single_phase_kpa: 480
-      multiphase_kpa: 275
-      formula_kpa: "rho * v_trim^2 / 2000"
+    verification: QUARANTINED_PENDING_DIRECT_SOURCE_RECONCILIATION
+    engineering_authority: NONE
+    note: "Numerical trim-exit limits uploaded in PR1288 are not promoted by this correction because they were not independently reconciled against the controlled source page."
+correction_record:
+  source_pr: 1288
+  corrected_issues:
+    - "PR1288 gas FVF was transcribed as 1/(mu*1000), which does not reproduce EI D2 examples."
+    - "PR1288 LOF divided by FVF; controlled EI FIT screening multiplies gas rho_v2 by FVF before division by Fv."

@@ -1,48 +1,106 @@
 flowchart_id: Flowchart T2-6 (AIV)
-title: High Frequency Acoustic Fatigue Assessment (Determining Individual Welded Discontinuity LOF)
+title: High Frequency Acoustic Fatigue Assessment (Individual Welded Discontinuity LOF)
 module: T2.7
 source_document: Energy Institute Guidelines 2nd Edition (2008)
 page: PDF 69 / Doc 61
+source_pdf_git_blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
+transcription_status: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
+engineering_use: QUALIFICATION_EVIDENCE_ONLY
+production_promotion_authority: BLOCKED_PENDING_PINNED_PDF_VISUAL_PARITY_AND_DOWNSTREAM_QUALIFICATION
+source_reconciliation:
+  original_guidance_text_rendering: CORROBORATED_PRINTED_PAGE_61
+  successor_ei_subsea_flowchart: CORROBORATED_SAME_EQUATION_CHAIN
+  exact_pinned_pdf_visual_parity: NOT_RUN_TRANSPORT_BLOCKED
+  numerical_oracle: EI_D2_3_WORKED_EXAMPLE
 steps:
   - step: 1
-    name: Geometric and Stress Parameter Calculation
-    inputs:
-      Dext: "Main line outside diameter (mm)"
-      T: "Main line wall thickness (mm)"
-      PWL: "Total acoustic sound power level at discontinuity (dB)"
-    equations:
-      a: "1.12762e-7*(Dext/T)^3 - 1.812e-5*(Dext/T)^2 + 4.307277e-3*(Dext/T) + 91.9"
-      s: "-3.28e-7*(Dext/T)^3 + 8.503e-5*(Dext/T)^2 - 7.063e-3*(Dext/T) + 0.816"
-      B: "10^((PWL - a) / s)"
+    name: Geometric / Stress Intermediates a, s and B
+    verification: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
+    definitions:
+      ratio: "R = Dext / T"
+      s: "s = 91.9 - R"
+      a: "a = 3.28e-7*R^3 - 8.503e-5*R^2 + 7.063e-3*R + 0.816"
+      B: "B = a * (PWL - 0.112762*s - 0.001812*s^2 + 4.307277e-5*s^3)"
+    units:
+      Dext: mm
+      T: mm
+      PWL: dB
+    d2_3_reproduction:
+      Dext_mm: 168.3
+      T_mm: 7.11
+      PWL_discontinuity_db: 164.3883116883117
+      calculated_a: 0.9398945187723486
+      published_a: 0.93989
+      calculated_s: 68.22911392405064
+      published_s: 68.229
+      calculated_B: 152.2067364535756
+      published_B: 152.207
   - step: 2
-    name: Baseline Cycles to Failure (N)
-    equation: "log10_N = 47.0712 - 6.3075*log10(B) - 0.183685*B + 5.575094e-4*B^2 - 1.3273e-6*B^3"
-    result: "N = 10^log10_N"
+    name: Baseline Cycles to Failure N
+    verification: VERIFIED_AGAINST_OFFICIAL_ENERGY_INSTITUTE_ERRATA_AND_D2_3
+    source_class: OFFICIAL_PUBLISHER_ERRATA
+    errata_locator: "Errata 1, Pg 61: Feed in from Flowchart T2-5"
+    equation: "log10(N) = 470711.5155 - 63075.1242*log10(B) + 183685.4368/sqrt(B) - 575094.3273/B^0.1"
+    worked_example_anchor: "B=152.207 -> log10(N)=9.90256787... -> N=7.990388e9, published as 9.9026 and 7.99E9."
   - step: 3
-    name: Diameter Ratio Modifier (FLM1)
-    condition: "Dext / dext < 10"
-    formula_under_10: "FLM1 = -0.07 + 0.91*(Dext/dext) + 1.32/(Dext/dext) - 0.48*(Dext/dext)^1.5 + 0.065*(Dext/dext)^2"
-    formula_10_and_above: "FLM1 = 0.5"
+    name: Diameter Ratio Modifier FLM1
+    verification: SOURCE_CORROBORATED_FULL_BRANCH_WITH_OPEN_D2_3_ARITHMETIC_RECONCILIATION
+    ratio: "R1 = Dext / dext"
+    branch_under_10:
+      condition: "R1 < 10"
+      formula: "FLM1 = -0.07 + 0.91*R1 + 1.32/R1 - 0.48*R1^1.5 + 0.065*R1^2"
+    branch_10_and_above:
+      condition: "R1 >= 10"
+      formula: "FLM1 = 0.5"
     application: "N = N * FLM1"
+    published_d2_3:
+      ratio: 2.791
+      FLM1: 1.2133
+    independent_recalculation:
+      ratio_from_displayed_dimensions: 2.7910447761194033
+      FLM1: 1.2109758194311824
+      reconciliation_state: OPEN_PUBLISHED_ARITHMETIC_VARIANCE
+      consequence: "Final D2.3 LOF remains 0.29 using either value; discrepancy must not be hidden."
   - step: 4
-    name: Connection Type Modifier (FLM2)
-    condition: "Is connection a Weldolet type fitting?"
-    formula_weldolet: "FLM2 = 0.29 + 0.09 * tanh((PWL - 172) / 2.9)"
-    formula_standard_tee: "FLM2 = 1.0"
-    application: "N = N * FLM2"
+    name: Connection Modifier FLM2
+    verification: SOURCE_CORROBORATED_FULL_BRANCH_AND_D2_3_REPRODUCED
+    condition: "Is the connection a weldolet type fitting?"
+    yes:
+      formula: "FLM2 = 0.29 + 0.09*tanh((PWL - 172)/2.9)"
+      application: "N = N * FLM2"
+    no:
+      application: "No FLM2 multiplier is applied; proceed to material branch."
+    worked_example_anchor: "PWL≈164.4 dB -> FLM2≈0.2009; published N_after_FLM2=1.95E9."
   - step: 5
-    name: Material Modifier (FLM3)
-    condition: "Is piping material Duplex / Super Duplex?"
-    formula_duplex: "FLM3 = 0.263 + 0.087 * tanh((PWL - 172) / 2.9)"
-    formula_carbon_or_austenitic: "FLM3 = 1.0"
-    application: "N = N * FLM3"
+    name: Material Modifier FLM3
+    verification: SOURCE_CORROBORATED_FULL_BRANCH
+    condition: "Is the piping material duplex?"
+    yes:
+      formula: "FLM3 = 0.263 + 0.087*tanh((PWL - 172)/2.9)"
+      application: "N = N * FLM3"
+    no:
+      application: "No FLM3 multiplier is applied; proceed to fatigue factor."
+    d2_3_anchor: "D2.3 material is not duplex, so no FLM3 multiplier is applied."
   - step: 6
-    name: Likelihood of Failure (LOF) Mapping
-    equation: "Lf = 1.30 - 0.1303 * ln(N)"
-    clamping:
-      min: 0.0
-      max: 1.0
-    threshold_gate:
-      condition: "Lf >= 0.5"
-      true_action: "LOF = Lf"
-      false_action: "LOF = 0.29"
+    name: Fatigue Factor and LOF
+    verification: SOURCE_CORROBORATED_FULL_BRANCH_AND_D2_3_REPRODUCED
+    fatigue_factor_equation: "Lf = 3.1 - 0.1303*ln(N)"
+    clamp:
+      below_zero: "if Lf <= 0.0, take Lf = 0.0"
+      above_one: "if Lf >= 1.0, take Lf = 1.0"
+    lof_mapping:
+      - condition: "Lf >= 0.5"
+        result: "LOF = Lf"
+      - condition: "Lf < 0.5"
+        result: "LOF = 0.29"
+    worked_example_anchor: "N=1.95E9 -> Lf≈0.31 -> LOF=0.29."
+correction_record:
+  source_pr: 1288
+  corrected_or_reconciled:
+    - "Replaced PR1288 non-reproducing A/S/B polynomial with the source-corroborated a/s/B relations that reproduce D2.3."
+    - "Retained official publisher errata for log10(N)."
+    - "Resolved Dext/dext >= 10 branch as FLM1=0.5 from source-corroborated flowchart text."
+    - "Resolved non-Weldolet path as no FLM2 application rather than an invented connection-type table."
+    - "Resolved duplex material branch and FLM3 equation from source-corroborated flowchart text."
+    - "Resolved Lf clamp and both LOF branches from source-corroborated flowchart text."
+    - "Production promotion remains blocked until exact pinned-PDF visual parity and downstream qualification are complete."

@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           target='validation/emp1/wrc537-2013/gamma5-full-table5-oracle-v1.json'
-          if git diff --quiet -- "$target"; then
+          if git ls-files --error-unmatch "$target" >/dev/null 2>&1 && git diff --quiet -- "$target"; then
             echo EMP1_GAMMA5_FULL_TABLE5_ORACLE_ALREADY_STEADY
             exit 0
           fi

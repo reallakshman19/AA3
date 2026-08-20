@@ -1,0 +1,38 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1289
+mission: Correct PR1288 EI P0 FIT/AIV source transcriptions and quarantine unresolved authority
+workstream: EI_AVIFF_SOURCE_MASTER
+branch: agent/ei-p0-source-correction-20260820
+base_head_at_allocation: 782683e7355281e95e5319dcad7f8a5644710d1d
+implementation_head: 47f8a643e6a056313889a298b458dcc1a4fe475a
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: RECOVERABLE
+handover_readiness: READY
+report_path: agents/PR1289_workreport.md
+current_stage: DRAFT_PR_OWNER_GATE
+blocker: source promotion remains blocked for unresolved T2.6/P1 branches; no blocker to review the bounded correction
+highest_risk: stale/invented EI-derived formulas being consumed as engineering authority
+validation_state:
+  live_main_grounding: PASS
+  pr1288_scope_grounding: PASS
+  controlled_pdf_blob_identity: PASS
+  rollback_git_blob_manifest: PASS
+  p0_formula_diagnosis: PASS
+  exact_changed_blob_reconstruction: PASS
+  source_master_gate_syntax: PASS
+  focused_source_master_regression: PASS
+  focused_gate_schema: EiAviffSourceMasterP0Check.v1
+  direct_pdf_visual_inspection: NOT_RUN_TRANSPORT_BLOCKED
+  native_repo_checkout: NOT_RUN_DNS_BLOCKED
+  production_code_changed: false
+  screening_authority_changed: false
+  design_authority_changed: false
+  hosted_reviews: PENDING_RECONCILIATION
+  hosted_statuses: PENDING_RECONCILIATION
+  hosted_workflows: PENDING_RECONCILIATION
+  merge: NOT_AUTHORIZED
+exact_next_action: release WIP custody to PR1289, then reconcile exact PR head/main relation, changed paths, reviews, statuses and workflows
+last_updated: 2026-08-20T07:44:00+04:00

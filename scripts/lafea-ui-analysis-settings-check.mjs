@@ -51,6 +51,12 @@ console.log(JSON.stringify({
   githubActionsWorkflowAdded: false,
 }));
 
+// Keep the qualified LAFEA.3 refinement route in the existing release gate
+// without adding a second workflow or weakening any engineering threshold.
+await import('./lafea3-local-refinement-ui-check.mjs');
+await import('./lafea3-mapped-refinement-envelope-check.mjs');
+await import('./lafea-retained-mesh-refinement-check.mjs');
+
 function stage(stageId, document, profileId) {
   return {
     stageId,

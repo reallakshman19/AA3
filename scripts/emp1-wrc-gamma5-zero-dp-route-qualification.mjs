@@ -85,13 +85,13 @@ console.log(JSON.stringify({
 },null,2));
 
 function routeFixture(){return canonicalFixture((source)=>{
-  source.loadCases[0].pipeForceGlobal.value=[-400,-250,-1000];
-  source.loadCases[0].pipeMomentGlobal.value=[-750000,1000000,-700000];
+  source.loadCases[0].pipeForceGlobal=[-400,-250,-1000];
+  source.loadCases[0].pipeMomentGlobal=[-750000,1000000,-700000];
   source.pressureDefinitions.forEach((row)=>{row.internalPressure.value=0;row.externalPressure.value=0;});
 });}
 function nonzeroDpRouteFixture(){return canonicalFixture((source)=>{
-  source.loadCases[0].pipeForceGlobal.value=[-400,-250,-1000];
-  source.loadCases[0].pipeMomentGlobal.value=[-750000,1000000,-700000];
+  source.loadCases[0].pipeForceGlobal=[-400,-250,-1000];
+  source.loadCases[0].pipeMomentGlobal=[-750000,1000000,-700000];
   source.pressureDefinitions.forEach((row)=>{row.internalPressure.value=1;row.externalPressure.value=0;});
 });}
 function runFalsifier(name,fn,code){expectCode(name,fn,code);falsifiers.push(name);}

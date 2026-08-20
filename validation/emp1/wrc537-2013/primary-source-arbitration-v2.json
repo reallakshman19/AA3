@@ -1,0 +1,116 @@
+{
+  "schema": "emp1-wrc-primary-source-arbitration/v2",
+  "status": "PASS_METHOD_FORMULA_AND_SIGN_AUTHORITY",
+  "engineeringAuthority": true,
+  "productionAuthority": false,
+  "primarySource": {
+    "sourceId": "WRC537_2013",
+    "path": "docs/emp1/WRC537_2013.pdf",
+    "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "custodyState": "VERIFIED",
+    "qualificationState": "PASS_SOURCE_CUSTODY"
+  },
+  "curveFit": {
+    "status": "PASS",
+    "model": "RATIONAL_5_OVER_6",
+    "equation": "Y=(a+cX+eX^2+gX^3+iX^4)/(1+bX+dX^2+fX^3+hX^4+jX^5)",
+    "sphericalIndependentVariable": "U",
+    "cylindricalIndependentVariable": "beta",
+    "sourceLocator": {
+      "section": "8 Curve Fit Coefficients",
+      "examples": ["SP-1 PDF page 53", "1A Original PDF page 95"]
+    },
+    "supersedesRetainedClaim": "Y=a+bU+cU^2+dU^3+eU^4+fU^5+gU^6+hU^7+iU^8+jU^9"
+  },
+  "sphericalMembraneReconstruction": {
+    "status": "PASS",
+    "sourceLocator": {
+      "table": "Table 3 - Computation Sheet for Local Stresses in Spherical Shells (Hollow Attachment)",
+      "pdfPages": [37, 38],
+      "printedPages": [25, 26]
+    },
+    "radialLoad": {
+      "curveOrdinate": "Nx*T/P or Ny*T/P",
+      "stressReconstruction": "sigma_m=Kn*Y*P/T^2",
+      "outputDimension": "force/area",
+      "retainedMachineForm": "Y*P/T",
+      "retainedDisposition": "REJECTED_TRANSCRIPTION_ERROR"
+    },
+    "momentLoad": {
+      "curveOrdinate": "Nx*T*sqrt(Rm*T)/M or Ny*T*sqrt(Rm*T)/M",
+      "stressReconstruction": "sigma_m=Kn*Y*M/(T^2*sqrt(Rm*T))",
+      "outputDimension": "force/area",
+      "retainedMachineForm": "Y*M/(T*sqrt(Rm*T))",
+      "retainedDisposition": "REJECTED_TRANSCRIPTION_ERROR"
+    },
+    "bending": {
+      "radialLoad": "sigma_b=Kb*(Mi/P)*(6P/T^2)",
+      "momentLoad": "sigma_b=Kb*(Mi*sqrt(Rm*T)/M)*(6M/(T^2*sqrt(Rm*T)))"
+    }
+  },
+  "cylindricalReconstruction": {
+    "status": "PASS",
+    "sourceLocator": {
+      "table": "Table 5 - Computation Sheet for Local Stresses in Cylindrical Shells",
+      "pdfPages": [41, 42],
+      "printedPages": [29, 30]
+    },
+    "radialMembrane": "sigma_m=Kn*(Ni/(P/Rm))*P/(Rm*T)",
+    "radialBending": "sigma_b=Kb*(Mi/P)*6P/T^2",
+    "circumferentialMomentMembrane": "sigma_m=Kn*(Ni/(Mc/(Rm^2*beta)))*Mc/(Rm^2*beta*T)",
+    "circumferentialMomentBending": "sigma_b=Kb*(Mi/(Mc/(Rm*beta)))*6Mc/(Rm*beta*T^2)",
+    "longitudinalMomentMembrane": "sigma_m=Kn*(Ni/(Ml/(Rm^2*beta)))*Ml/(Rm^2*beta*T)",
+    "longitudinalMomentBending": "sigma_b=Kb*(Mi/(Ml/(Rm*beta)))*6Ml/(Rm*beta*T^2)",
+    "torsionalShear": "tau=Mt/(2*pi*r0^2*T)",
+    "circumferentialShear": "tau=Vc/(pi*r0*T) with location/sign factor from Table 5",
+    "longitudinalShear": "tau=Vl/(pi*r0*T) with location/sign factor from Table 5"
+  },
+  "stressIntensity": {
+    "status": "PASS",
+    "definition": "twice maximum shear stress = maximum absolute difference among the three plane-stress principal stresses",
+    "sourceLocator": {
+      "spherical": {"table": "Table 3", "pdfPage": 38, "printedPage": 26},
+      "cylindrical": {"table": "Table 5", "pdfPage": 42, "printedPage": 30}
+    },
+    "algorithm": [
+      "d=sqrt((sigma1-sigma2)^2+4*tau^2)",
+      "p1=0.5*(sigma1+sigma2+d)",
+      "p2=0.5*(sigma1+sigma2-d)",
+      "p3=0",
+      "S=max(abs(p1-p2),abs(p2-p3),abs(p3-p1))"
+    ],
+    "outputDimension": "stress",
+    "retainedOuterSqrtTranscription": "REJECTED_TRANSCRIPTION_ERROR"
+  },
+  "stressSigns": {
+    "status": "PASS",
+    "rule": "plus is tension; minus is compression; if the applied load or moment direction reverses, reverse every sign in that applicable source column",
+    "sourceLocators": [
+      {"table": "Table 1", "shell": "spherical", "pdfPages": [33, 34], "printedPages": [21, 22]},
+      {"table": "Table 4", "shell": "cylindrical", "pdfPages": [39, 40], "printedPages": [27, 28]}
+    ]
+  },
+  "axisMapping": {
+    "status": "PARTIAL_BENCHMARK_QUALIFIED_RUNTIME_TRANSFORM_REQUIRED",
+    "rule": "WRC symbols and stress signs are source-qualified; mapping a LAFEA six-component load into WRC P/V/M components must be a frame transformation from source-qualified vessel/nozzle directions, never a universal FX/FY/FZ rename.",
+    "benchmarkEvidence": "CAUx pp.25-26 supplies vessel/nozzle direction cosines and a concrete global-to-WRC conversion for independent transform qualification."
+  },
+  "pressureThrust": {
+    "status": "BENCHMARK_MODE_QUALIFIED_GENERAL_POLICY_STILL_REQUIRED",
+    "wrcMethodBoundary": "WRC external-load shell-stress computation does not supply the pressure-stress calculation.",
+    "cauxBenchmarkMode": "Include Pressure Thrust = No",
+    "generalProductionRule": "Production must still declare whether source loads already contain thrust, whether qualified thrust is to be added, or why thrust is not applicable; unresolved mode blocks."
+  },
+  "authorization": {
+    "methodFormulaAuthority": "PASS",
+    "stressSignAuthority": "PASS",
+    "stressIntensityAuthority": "PASS",
+    "curveFitFunctionalFormAuthority": "PASS",
+    "lafEaToWrcFrameTransformAuthority": "PARTIAL_BLOCKED_RUNTIME_CONTRACT",
+    "generalPressureThrustAuthority": "PARTIAL_BLOCKED_RUNTIME_POLICY",
+    "fullCoefficientInventoryAuthority": "IN_PROGRESS",
+    "cauxBenchmarkAuthority": "IN_PROGRESS",
+    "emp1CRouteRegistrationAllowed": false
+  }
+}

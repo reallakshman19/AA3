@@ -1,0 +1,117 @@
+{
+  "schema": "emp1-wrc537-gamma5-zero-dp-route-qualification/v1",
+  "status": "PASS_REOBSERVED_AUTHORIZED_BOUNDED_ZERO_DP_ROUTE",
+  "engineeringAuthority": true,
+  "productionRouteAuthority": true,
+  "globalEmp1CRouteAuthority": false,
+  "productionObservationUsedToSetAuthority": false,
+  "semanticPayload": {
+    "methodIdentity": "WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP",
+    "methodEdition": "2013",
+    "sourceDocumentSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "datasetHash": "fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c",
+    "scope": {
+      "type": "CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_BOUNDED",
+      "shellFamily": "CYLINDRICAL",
+      "attachmentShape": "ROUND",
+      "variant": "ORIGINAL",
+      "gamma": 5,
+      "betaMinimum": 0.05,
+      "betaMaximum": 0.5,
+      "gammaSelectionPolicy": "EXACT_SOURCE_TABULATED_GAMMA_ONLY",
+      "interpolationAllowed": false,
+      "crossVariantFallbackAllowed": false,
+      "loadReference": "WRC_ATTACHMENT_REFERENCE_POINT",
+      "pressureDomain": "DIFFERENTIAL_PRESSURE_EXACTLY_ZERO",
+      "pressureThrustDisposition": "PRESSURE_THRUST_RESOLVED_UPSTREAM",
+      "stressConcentration": {
+        "Kn": 1,
+        "Kb": 1,
+        "policy": "INITIAL_UNITY_ONLY"
+      }
+    },
+    "loadProducerQualificationSha256": "47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b",
+    "benchmarkQualification": {
+      "status": "PASS",
+      "benchmarkHash": "5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa"
+    },
+    "supportingEvidence": {
+      "exactGammaOracleHash": "809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e",
+      "fullTable5OracleHash": "5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa",
+      "cauxTable5BenchmarkHash": "8d97539f03f077321eef1e496e315a6a7700a9d83a6c8cd4ff1b83382ebe45fe",
+      "cauxIndependentHandcalcHash": "679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c"
+    },
+    "prohibitions": [
+      "NONZERO_DIFFERENTIAL_PRESSURE",
+      "NON_TABULATED_GAMMA",
+      "GAMMA_OTHER_THAN_5",
+      "BETA_OUTSIDE_0P05_TO_0P5",
+      "EXTRAPOLATED_VARIANT",
+      "NON_ROUND_ATTACHMENT",
+      "INTERPOLATION",
+      "CROSS_VARIANT_FALLBACK",
+      "UNQUALIFIED_LOAD_CUSTODY",
+      "PRODUCER_QUALIFICATION_HASH_MISMATCH"
+    ]
+  },
+  "qualificationRecordSha256": "3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e",
+  "reobservation": {
+    "status": "PASS_STRICT_FAIL_CLOSED_WORKFLOW",
+    "workflowRunId": 32348667313,
+    "workflowRunNumber": 78,
+    "headSha": "c80e4952adeae5e9fbca407cdb18fc4316393889",
+    "artifactId": 9399007941,
+    "artifactSizeBytes": 4521,
+    "artifactDigestSha256": "b3ecbc2091f6c2758e2da9b0da9943d7950a48e3f8c7e34b12b2b30264e75890",
+    "routeEvidenceFileBytes": 1592,
+    "routeEvidenceStatus": "PASS_ROUTE_CANDIDATE_END_TO_END",
+    "transferredGlobalForce": [-400, -250, -1000],
+    "transferredGlobalMoment": [-500000, 600000, -700000],
+    "wrcLoads": {
+      "P": -1000,
+      "Vc": 250,
+      "Vl": -400,
+      "Mc": 500000,
+      "Ml": -600000,
+      "Mt": 700000
+    },
+    "stressComparisonsPassed": 32,
+    "routeFalsifiersPassed": 8,
+    "productionObservationUsed": false
+  },
+  "orchestrationReobservation": {
+    "status": "PASS_RUN_EMP1_BOUNDED_ROUTE_END_TO_END",
+    "workflowRunId": 32355132909,
+    "workflowRunNumber": 88,
+    "headSha": "7f0a2c3b516a2a00b80cbd2d6075335caab88cce",
+    "artifactId": 9401342042,
+    "artifactSizeBytes": 5576,
+    "artifactDigestSha256": "1914eb08d1fcf301540ac9362933d62b4a7bb3c05aeba577bf01bd61dc1fcc20",
+    "evidenceFile": "gamma5-zero-dp-orchestration-qualification.json",
+    "evidenceFileBytes": 1448,
+    "evidenceFileSha256": "8b96c3c262c4a1f75bb5e2ddbc56a0a62ea31879264bdb70f5f0e7faa81cfd48",
+    "localCorrelationInvocations": 1,
+    "stressOutputsPassed": 32,
+    "falsifiersPassedBeforeWrcInvocation": 8,
+    "callerAuthorityInjection": "IGNORED_AND_REBUILT_FROM_PINNED_ROUTE_AND_ACTUAL_A_RESULT",
+    "legacyUnscopedOrchestratorCompatibility": "PASS",
+    "assessmentDecision": "ESCALATE",
+    "assessmentInterpretation": "WRC_STRESS_RESULT_DOES_NOT_INVENT_CODE_COMPLIANCE_PASS",
+    "productionObservationUsed": false
+  },
+  "authorization": {
+    "boundedMethodGateAllowed": true,
+    "boundedRouteRegistrationAllowed": true,
+    "boundedRunEmp1OrchestrationAllowed": true,
+    "nonzeroDifferentialPressureAllowed": false,
+    "nonUnityStressConcentrationAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "releaseQualified": false
+  },
+  "remainingExpansionBlockers": [
+    "WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED",
+    "HIGHER_GAMMA_CURVE_SPECIFIC_BETA_LIMITS_NOT_QUALIFIED",
+    "NONZERO_PRESSURE_THRUST_POLICY_NOT_QUALIFIED",
+    "GENERAL_KN_KB_PRODUCER_NOT_QUALIFIED"
+  ]
+}

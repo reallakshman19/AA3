@@ -50,7 +50,7 @@ const ranked = Object.entries(schemeSummary)
   .map(([policy, metrics]) => ({ policy, ...metrics }));
 
 console.log(JSON.stringify({
-  schema: 'emp1-caux-wrc-curve-selection-probe/v2',
+  schema: 'emp1-caux-wrc-curve-selection-probe/v3',
   status: 'PASS_PROBE_ONLY',
   authority: 'NON_AUTHORITATIVE_NUMERICAL_POLICY_PROBE',
   source: {
@@ -82,25 +82,55 @@ function parseCylindricalTables(text) {
     const pageMatch = block.find((line) => /^\*\*PDF Page \d+\*\*/u.test(line))?.match(/PDF Page (\d+)/u);
     assert(pageMatch, `${figure}: PDF page`);
     const rows = block.map(parseRow).filter(Boolean);
-    const curves = [];
-    for (const row of rows) {
-      if (row.length !== 11 || !row.slice(1).every((cell) => cell !== '' && Number.isFinite(Number(cell)))) continue;
-      const gammaText = row[0].trim();
-      curves.push({
-        gamma: gammaText !== '' && Number.isFinite(Number(gammaText)) ? Number(gammaText) : null,
-        gammaRaw: gammaText,
-        coefficients: Object.fromEntries(['a','b','c','d','e','f','g','h','i','j'].map((name, index) => [name, Number(row[index + 1])])),
-      });
-    }
-    assert(curves.length > 0, `${figure}: no coefficient curves`);
+    const parsed = parseCoefficientRowsGammaColumns(rows, figure) ?? parseGammaRowsCoefficientColumns(rows, figure);
+    assert(parsed && parsed.curves.length > 0, `${figure}: no coefficient curves`);
     result.push({
       figure,
       pdfPage: Number(pageMatch[1]),
       variant: /Extrapolated/iu.test(figure) ? 'EXTRAPOLATED' : /Original/iu.test(figure) ? 'ORIGINAL' : 'STANDARD',
-      curves,
+      orientation: parsed.orientation,
+      curves: parsed.curves,
     });
   }
   return result;
+}
+
+function parseCoefficientRowsGammaColumns(rows, figure) {
+  const names = ['a','b','c','d','e','f','g','h','i','j'];
+  const coefficientRows = rows.filter((row) => names.includes(row[0]));
+  if (coefficientRows.length !== 10) return null;
+  assert.deepEqual(coefficientRows.map((row) => row[0]), names, `${figure}: coefficient row order`);
+  const columnCount = coefficientRows[0].length - 1;
+  assert(columnCount > 0 && coefficientRows.every((row) => row.length - 1 === columnCount), `${figure}: coefficient-row shape`);
+  const gammaHeader = rows.find((row) => row.length === columnCount + 1 && row[0] === '' && row.slice(1).every((cell) => cell !== '' && Number.isFinite(Number(cell))));
+  assert(gammaHeader, `${figure}: gamma column header`);
+  const curves = gammaHeader.slice(1).map((gammaText, columnIndex) => ({
+    gamma: Number(gammaText),
+    gammaRaw: gammaText,
+    coefficients: Object.fromEntries(names.map((name, rowIndex) => {
+      const value = Number(coefficientRows[rowIndex][columnIndex + 1]);
+      assert(Number.isFinite(value), `${figure}/${name}/gamma=${gammaText}: coefficient`);
+      return [name, value];
+    })),
+  }));
+  return { orientation: 'COEFFICIENT_ROWS_GAMMA_COLUMNS', curves };
+}
+
+function parseGammaRowsCoefficientColumns(rows, figure) {
+  const names = ['a','b','c','d','e','f','g','h','i','j'];
+  const dataRows = rows.filter((row) => row.length === 11 && row.slice(1).every((cell) => cell !== '' && Number.isFinite(Number(cell))));
+  if (!dataRows.length) return null;
+  const curves = dataRows.map((row, rowIndex) => {
+    const gammaText = row[0].trim();
+    return {
+      gamma: gammaText !== '' && Number.isFinite(Number(gammaText)) ? Number(gammaText) : null,
+      gammaRaw: gammaText,
+      rowIndex: rowIndex + 1,
+      coefficients: Object.fromEntries(names.map((name, index) => [name, Number(row[index + 1])])),
+    };
+  });
+  assert(curves.every((curve) => Object.values(curve.coefficients).every(Number.isFinite)), `${figure}: gamma-row coefficients`);
+  return { orientation: 'GAMMA_ROWS_COEFFICIENT_COLUMNS', curves };
 }
 
 function evaluateTableAtGamma(table, gamma, x, target) {
@@ -143,6 +173,7 @@ function evaluateTableAtGamma(table, gamma, x, target) {
     tableFigure: table.figure,
     canonicalFigure: canonicalFigure(table.figure),
     variant: table.variant,
+    orientation: table.orientation,
     pdfPage: table.pdfPage,
     resolvedGammaRange: [resolved[0]?.gamma ?? null, resolved.at(-1)?.gamma ?? null],
     bracket: { lowerGamma: lower?.gamma ?? null, upperGamma: upper?.gamma ?? null },

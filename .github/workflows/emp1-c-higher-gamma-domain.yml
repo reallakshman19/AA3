@@ -1,0 +1,52 @@
+name: EMP.1.C higher-gamma source-domain qualification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-higher-gamma-domain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify frozen WRC source custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2  docs/emp1/WRC537_2013.pdf' | sha256sum -c -
+      - name: Install source-page renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftoppm >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+          fi
+      - name: Render first-fail Original radial-load source charts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/emp1-higher-gamma/source-pages
+          pdftoppm -f 128 -l 128 -singlefile -png -r 220 docs/emp1/WRC537_2013.pdf test-results/emp1-higher-gamma/source-pages/WRC537-p128-Figure1C-Original
+          pdftoppm -f 136 -l 136 -singlefile -png -r 220 docs/emp1/WRC537_2013.pdf test-results/emp1-higher-gamma/source-pages/WRC537-p136-Figure2C-Original
+          sha256sum test-results/emp1-higher-gamma/source-pages/*.png | tee test-results/emp1-higher-gamma/source-pages/render-sha256.txt
+      - name: Prove higher-gamma route remains blocked pending exact endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-cylindrical-higher-gamma-beta-limit-check.mjs test-results/emp1-higher-gamma/qualification.json | tee test-results/emp1-higher-gamma/qualification.stdout.json
+      - name: Preserve qualified gamma5 bounded route and global-route block
+        run: node scripts/emp1-public-product-check.mjs
+      - name: Upload source-domain qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emp1-higher-gamma-domain-${{ github.sha }}
+          path: test-results/emp1-higher-gamma
+          if-no-files-found: error
+          retention-days: 30

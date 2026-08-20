@@ -1,0 +1,98 @@
+{
+  "schema": "emp1-wrc537-cylindrical-higher-gamma-beta-limit-ledger/v1",
+  "status": "BLOCKED_PENDING_EXACT_SOURCE_CURVE_ENDPOINT_QUALIFICATION",
+  "engineeringAuthority": true,
+  "productionRouteExpansionAuthority": false,
+  "productionObservationUsedToSetAuthority": false,
+  "source": {
+    "document": "docs/emp1/WRC537_2013.pdf",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "gitBlob": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "edition": "2013",
+    "curveLimitAuthority": {
+      "section": "4.4",
+      "rule": "ORIGINAL_CURVES_MUST_NOT_BE_USED_BEYOND_LIMITS_INDICATED",
+      "reason": "OUTER_LIMITS_REPORTED_APPRECIABLY_UNCONSERVATIVE"
+    },
+    "parameterDefinition": {
+      "section": "4.2.2.1",
+      "equation": "26",
+      "gamma": "Rm/T",
+      "beta": "0.875*r0/Rm"
+    }
+  },
+  "routeIntersectionPolicy": {
+    "type": "FIRST_FAIL_REQUIRED_FIGURE",
+    "rule": "A full Table-5 exact-gamma route is blocked if any required Original source curve has an unresolved or exceeded beta outer limit.",
+    "rationale": "The route consumes all required Table-5 figures; coefficient availability does not authorize evaluation beyond the plotted Original-curve limit.",
+    "digitizationAllowedForProductionAuthority": false,
+    "rationalFitUsedToInferChartEndpoint": false
+  },
+  "requiredTable5OriginalFigures": [
+    {"figure":"1A","chartPdfPage":94},
+    {"figure":"2A","chartPdfPage":96},
+    {"figure":"3A","chartPdfPage":100},
+    {"figure":"4A","chartPdfPage":104},
+    {"figure":"1B-1","chartPdfPage":110},
+    {"figure":"2B-1","chartPdfPage":118},
+    {"figure":"3B","chartPdfPage":122},
+    {"figure":"4B","chartPdfPage":124},
+    {"figure":"1C","chartPdfPage":128},
+    {"figure":"1C-1","chartPdfPage":132},
+    {"figure":"2C","chartPdfPage":136},
+    {"figure":"2C-1","chartPdfPage":140},
+    {"figure":"3C","chartPdfPage":144},
+    {"figure":"4C","chartPdfPage":146}
+  ],
+  "firstFailProbeFigures": [
+    {
+      "figure": "1C",
+      "chartPdfPage": 128,
+      "coefficientTablePdfPage": 129,
+      "existingSourceObservation": "HIGHER_GAMMA_CURVES_HAVE_SOURCE_DELETED_OUTER_SEGMENTS",
+      "exactHigherGammaEndpointStatus": "UNRESOLVED_PENDING_INDEPENDENT_VISUAL_REOBSERVATION"
+    },
+    {
+      "figure": "2C",
+      "chartPdfPage": 136,
+      "coefficientTablePdfPage": 137,
+      "existingSourceObservation": "HIGHER_GAMMA_CURVES_HAVE_SOURCE_DELETED_OUTER_SEGMENTS",
+      "exactHigherGammaEndpointStatus": "UNRESOLVED_PENDING_INDEPENDENT_VISUAL_REOBSERVATION"
+    }
+  ],
+  "existingQualifiedGamma5Route": {
+    "gamma": 5,
+    "betaMinimum": 0.05,
+    "betaMaximum": 0.5,
+    "status": "PASS_ALREADY_QUALIFIED_IN_PR1291",
+    "routeQualificationSha256": "3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e"
+  },
+  "higherExactTabulatedGammaAssessments": [
+    {"gamma":7.5,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":10,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":15,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":25,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":35,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":50,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":75,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":100,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":150,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":200,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
+    {"gamma":300,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"}
+  ],
+  "prohibitions": [
+    "DO_NOT_INFER_BETA_ENDPOINT_FROM_RATIONAL_COEFFICIENTS",
+    "DO_NOT_DIGITIZE_CURVE_ENDPOINT_FOR_PRODUCTION_AUTHORITY",
+    "DO_NOT_REUSE_GAMMA5_BETA_MAXIMUM_FOR_HIGHER_GAMMA",
+    "DO_NOT_USE_EXTRAPOLATED_CURVE_AS_ORIGINAL_FALLBACK",
+    "DO_NOT_AUTHORIZE_ROUTE_WHILE_ANY_REQUIRED_FIGURE_ENDPOINT_IS_UNRESOLVED"
+  ],
+  "authorization": {
+    "sourcePageRenderingAllowed": true,
+    "independentVisualReobservationAllowed": true,
+    "higherGammaProductionComparisonAllowed": false,
+    "higherGammaRouteRegistrationAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false
+  },
+  "nextGate": "INDEPENDENTLY_REOBSERVE_SHA_BOUND_1C_AND_2C_ORIGINAL_CHARTS_AND_RECORD_ONLY_EXACT_SOURCE_ENDPOINTS;_IF_ENDPOINT_IS_NOT_EXACTLY_SOURCE_READABLE_KEEP_GAMMA_BLOCKED"
+}

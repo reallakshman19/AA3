@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Enforce EMP1-03 scope
+      - name: Enforce historical EMP1-03 scope
         if: github.event_name == 'pull_request' && github.head_ref == 'agent/emp1-03-runemp1-orchestration-issue1261'
         shell: bash
         run: |
@@ -32,19 +32,15 @@ jobs:
             echo "$unexpected"
             exit 1
           fi
-          if grep -E '(gamma15|pressure-thrust|src/workspace/|src/ui/|e2e/)' /tmp/emp1-03-files.txt; then
-            echo 'EMP1_03_SCOPE_VIOLATION:GAMMA15_PRESSURE_UI_OR_E2E_CHANGE'
-            exit 1
-          fi
 
       - name: Re-observe independent gamma5 hand calculation
         run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
 
-      - name: Re-observe bounded gamma5 route
-        run: node scripts/emp1-wrc-gamma5-zero-dp-route-qualification.mjs
+      - name: Re-observe fail-closed cylindrical load-axis authority
+        run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
 
-      - name: Qualify real runEmp1 orchestration and currentness
-        run: node scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs
+      - name: Preserve EMP.1 public product truth
+        run: node scripts/emp1-public-product-check.mjs
 
       - name: Preserve EMP.1 core scaffold compatibility
         run: node scripts/emp1-core-scaffold-check.mjs

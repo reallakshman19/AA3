@@ -13,13 +13,16 @@ export const EMP1_C_WRC537_GAMMA5_ZERO_DP_QUALIFICATION_SHA256 =
   '3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e';
 export const EMP1_C_WRC537_ZERO_DP_LOAD_PRODUCER_SHA256 =
   '47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b';
+export const EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON = 'WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED';
 
 export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([
   Object.freeze({
     schema: EMP1_C_BOUNDED_ROUTE_REGISTRY_SCHEMA,
     routeId: EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
-    registered: true,
-    engineeringUseAuthorized: true,
+    registered: false,
+    engineeringUseAuthorized: false,
+    comparisonQualificationAvailable: true,
+    suspensionReasons: Object.freeze([EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON]),
     globalEmp1CRouteAuthority: false,
     releaseQualified: false,
     runtimeEligibilityRequired: true,
@@ -45,6 +48,7 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([
       crossVariantFallbackAllowed: false,
     }),
     remainingBlocked: Object.freeze([
+      EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
       'NONZERO_DIFFERENTIAL_PRESSURE',
       'NONUNITY_STRESS_CONCENTRATION',
       'GAMMA_OTHER_THAN_5',

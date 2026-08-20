@@ -10,7 +10,10 @@ import {
 } from './emp1-wrc537-cylindrical-bounded-adapter.js';
 
 export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256='3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e';
-export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED=true;
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED=false;
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS=Object.freeze([
+  'WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED',
+]);
 export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SCHEMA='emp1-wrc537-gamma5-zero-dp-route-result/v1';
 
 const SOURCE_SHA='698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2';
@@ -19,6 +22,8 @@ const FULL_TABLE5_ORACLE_HASH='5daeb3a84828cf19017e6d1d0a70bd3478929713973948f87
 
 export const EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION=deepFreeze({
   engineeringUseAuthorized:true,
+  productionUseAuthorized:false,
+  cylindricalLoadAxisSignAuthority:'UNRESOLVED',
   methodIdentity:'WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP',
   methodEdition:'2013',
   sourceDocumentSha256:SOURCE_SHA,
@@ -48,6 +53,7 @@ export const EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION=deepFreeze({
 });
 export const EMP1_WRC537_GAMMA5_ZERO_DP_BENCHMARK_QUALIFICATION=deepFreeze({status:'PASS',benchmarkHash:FULL_TABLE5_ORACLE_HASH});
 
+/** Qualification/comparison evaluator only while production route authority is suspended. */
 export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input){
   if(!record(input)) throw routeError('EMP1_WRC537_ZERO_DP_ROUTE_INPUT_REQUIRED');
   requireUnityStressConcentration(input.stressConcentration);
@@ -74,10 +80,12 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input){
   },{expectedProducerQualificationHash:EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256});
   return deepFreeze({
     schema:EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SCHEMA,
-    state:'PASS_BOUNDED_ROUTE_CANDIDATE',
-    engineeringUseAuthorized:true,
+    state:'PASS_BOUNDED_ROUTE_COMPARISON_CANDIDATE',
+    engineeringUseAuthorized:false,
+    engineeringComparisonUseAuthorized:true,
     productionRouteAuthority:false,
     globalEmp1CRouteAuthority:false,
+    routeSuspensionReasons:EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS,
     routeQualificationSha256:EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
     methodGate:gate,
     loadCandidate,
@@ -88,12 +96,13 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input){
 }
 
 export function runEmp1Wrc537Gamma5ZeroDpRoute(input){
-  if(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED!==true) throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_NOT_AUTHORIZED');
+  if(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED!==true) throw suspendedRouteError();
   const result=evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
-  return deepFreeze({...result,state:'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE',productionRouteAuthority:true,globalEmp1CRouteAuthority:false});
+  return deepFreeze({...result,state:'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE',engineeringUseAuthorized:true,productionRouteAuthority:true,globalEmp1CRouteAuthority:false});
 }
 
 function requireUnityStressConcentration(value){if(!record(value)||value.Kn!==1||value.Kb!==1) throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');}
+function suspendedRouteError(){const error=routeError('EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED');error.reasons=[...EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS];return error;}
 function record(value){return Boolean(value)&&typeof value==='object'&&!Array.isArray(value);}
 function routeError(code){const error=new TypeError(code);error.code=code;return error;}
 function deepFreeze(value){if(!value||typeof value!=='object'||Object.isFrozen(value))return value;Object.values(value).forEach(deepFreeze);return Object.freeze(value);}

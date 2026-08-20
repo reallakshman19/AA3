@@ -5,12 +5,12 @@ import {
   EMP1_C_BOUNDED_PRODUCTION_ROUTES,
   EMP1_C_PRODUCTION_ROUTE,
   EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
-  EMP1_LOCAL_CORRELATION_BLOCKERS,
   EMP1_PUBLIC_PRODUCT,
   buildEmp1ProductProjection,
   emp1StepForBackingStage,
   isEmp1BackingStage,
 } from '../src/workspace/emp1-product-projection.js';
+import { EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON } from '../src/core/emp1/emp1-c-bounded-route-registry.js';
 import { screeningRequestFixture } from './lafea.2-fixtures.mjs';
 
 const bDocument = screeningRequestFixture();
@@ -35,24 +35,24 @@ const state = {
 
 const projection = buildEmp1ProductProjection(state);
 assert.equal(EMP1_PUBLIC_PRODUCT.productId, 'EMP.1');
-assert.equal(projection.state, 'BOUNDED_LOCAL_CORRELATION_AVAILABLE');
+assert.equal(projection.state, 'BLOCKED_LOCAL_CORRELATION');
 assert.equal(projection.steps.length, 3);
 assert.equal(projection.steps[0].state, 'CALCULATED');
 assert.equal(projection.steps[1].state, 'READY_TO_RUN');
 assert.equal(projection.steps[1].runAuthorized, true);
-assert.equal(projection.steps[2].state, 'BOUNDED_ROUTE_AVAILABLE');
+assert.equal(projection.steps[2].state, 'BLOCKED');
 assert.equal(projection.steps[2].runAuthorized, false);
 assert.equal(projection.steps[2].workspaceExecutionWired, false);
-assert.deepEqual(projection.steps[2].blockers, EMP1_LOCAL_CORRELATION_BLOCKERS);
-assert.equal(projection.steps[2].blockerDetails.length, 2);
 assert.equal(projection.steps[2].boundedRouteCount, 1);
 
 assert.equal(EMP1_C_PRODUCTION_ROUTE.registered, false, 'global/full-domain EMP.1.C remains unregistered');
 assert.equal(EMP1_C_BOUNDED_PRODUCTION_ROUTES.length, 1);
 const bounded = EMP1_C_BOUNDED_PRODUCTION_ROUTES[0];
 assert.equal(bounded.routeId, EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
-assert.equal(bounded.registered, true);
-assert.equal(bounded.engineeringUseAuthorized, true);
+assert.equal(bounded.registered, false);
+assert.equal(bounded.engineeringUseAuthorized, false);
+assert.equal(bounded.comparisonQualificationAvailable, true);
+assert.deepEqual(bounded.suspensionReasons,[EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON]);
 assert.equal(bounded.globalEmp1CRouteAuthority, false);
 assert.equal(bounded.releaseQualified, false);
 assert.equal(bounded.runtimeEligibilityRequired, true);
@@ -62,8 +62,9 @@ assert.equal(bounded.scope.betaMaximum, 0.5);
 assert.equal(bounded.scope.differentialPressure, 0);
 assert.equal(bounded.scope.Kn, 1);
 assert.equal(bounded.scope.Kb, 1);
+assert.ok(bounded.remainingBlocked.includes(EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON));
 
-assert.equal(projection.qualificationBoundary.emp1CProductionAuthority, 'BOUNDED_ROUTE_ONLY');
+assert.equal(projection.qualificationBoundary.emp1CProductionAuthority, 'NOT_AUTHORIZED');
 assert.equal(projection.qualificationBoundary.emp1CTechnicalQualificationReady, false);
 assert.equal(projection.qualificationBoundary.emp1CRunAuthorized, false);
 assert.equal(projection.qualificationBoundary.emp1CWorkspaceExecutionWired, false);
@@ -81,6 +82,7 @@ assert.ok(globalQualification.blockerCodes.includes(EMP1_C_BLOCKER_CODES.WRC_RUN
 assert.ok(globalQualification.blockerCodes.includes(EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING));
 assert.ok(globalQualification.blockerCodes.includes(EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN));
 assert.ok(globalQualification.blockerCodes.includes(EMP1_C_BLOCKER_CODES.CAUX_PP24_31_NOT_FROZEN));
+assert.deepEqual(projection.steps[2].blockers,globalQualification.blockerCodes);
 assert.equal(globalQualification.evidence.derivation.retainedAuditObservedMatch, true);
 assert.equal(globalQualification.evidence.derivation.retainedExtractionPinVerified, true);
 
@@ -99,7 +101,8 @@ console.log(JSON.stringify({
   bCustody: projection.custody.bSourceEvidenceState,
   cState: projection.steps[2].state,
   cBoundedRoutes: projection.steps[2].boundedRouteCount,
-  cExecutionBlockers: projection.steps[2].blockers,
+  suspendedRoute: bounded.routeId,
+  suspensionReasons: bounded.suspensionReasons,
   globalQualificationBlockers: globalQualification.blockerCodes,
   globalEmp1CRouteAuthority: projection.qualificationBoundary.globalEmp1CRouteAuthority,
   releaseQualified: projection.qualificationBoundary.releaseQualified,

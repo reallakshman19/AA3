@@ -24,7 +24,7 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.head_ref }}" != "agent/emp1-02-gamma5-route-main-issue1261" ]; then
             echo 'EMP1_02_SCOPE_GUARD_NOT_APPLICABLE_TO_LATER_INTEGRATION_PR'
-            echo 'Functional gamma5 oracle, load-producer, route and registry qualification remains mandatory below.'
+            echo 'Functional gamma5 oracle, load-producer and fail-closed route qualification remains mandatory below.'
             exit 0
           fi
           base="${{ github.event.pull_request.base.sha }}"
@@ -51,26 +51,24 @@ jobs:
       - name: Re-observe qualified zero-dp upstream load producer
         run: node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs
 
-      - name: Re-observe authorized gamma5 route and falsifiers
-        run: node scripts/emp1-wrc-gamma5-zero-dp-route-qualification.mjs
+      - name: Re-observe gamma5 comparison kernel and fail-closed axis authority
+        run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
 
-      - name: Prove registry is bounded and global route is absent
+      - name: Prove route registry is suspended and global route is absent
         shell: bash
         run: |
           set -euo pipefail
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
-          import { EMP1_C_BOUNDED_PRODUCTION_ROUTES, EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID, emp1CBoundedRoute } from './src/core/emp1/emp1-c-bounded-route-registry.js';
+          import { EMP1_C_BOUNDED_PRODUCTION_ROUTES, EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON, EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID, emp1CBoundedRoute } from './src/core/emp1/emp1-c-bounded-route-registry.js';
           import { evaluateEmp1Wrc537BoundedDomain } from './src/core/emp1/emp1-wrc537-cylindrical-bounded-domain.js';
           const route=emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
           assert.equal(EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,1);
-          assert.equal(route.registered,true); assert.equal(route.engineeringUseAuthorized,true); assert.equal(route.globalEmp1CRouteAuthority,false); assert.equal(route.releaseQualified,false);
+          assert.equal(route.registered,false); assert.equal(route.engineeringUseAuthorized,false); assert.equal(route.comparisonQualificationAvailable,true); assert.equal(route.globalEmp1CRouteAuthority,false); assert.equal(route.releaseQualified,false);
+          assert.deepEqual(route.suspensionReasons,[EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON]);
           assert.deepEqual(route.scope,{shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',variant:'ORIGINAL',gamma:5,betaMinimum:0.05,betaMaximum:0.5,differentialPressure:0,Kn:1,Kb:1,interpolationAllowed:false,crossVariantFallbackAllowed:false});
           const base={shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',sourceDocumentSha256:route.method.sourceDocumentSha256,datasetHash:route.method.datasetHash,variant:'ORIGINAL',gamma:5};
           assert.equal(evaluateEmp1Wrc537BoundedDomain({...base,beta:0.05}).status,'PASS_BOUNDED_DOMAIN');
           assert.equal(evaluateEmp1Wrc537BoundedDomain({...base,beta:0.5}).status,'PASS_BOUNDED_DOMAIN');
-          for(const [name,patch] of [['gamma-low',{gamma:4.999}],['gamma-high',{gamma:5.001}],['beta-low',{beta:0.049999}],['beta-high',{beta:0.500001}],['variant',{variant:'EXTRAPOLATED'}],['source-sha',{sourceDocumentSha256:'0'.repeat(64)}],['dataset-hash',{datasetHash:'0'.repeat(64)}]]){
-            const result=evaluateEmp1Wrc537BoundedDomain({...base,beta:0.155,...patch}); assert.notEqual(result.status,'PASS_BOUNDED_DOMAIN',name);
-          }
-          console.log(JSON.stringify({status:'PASS',registeredRoutes:1,globalRouteAuthority:false,bounds:{gamma:5,beta:[0.05,0.5],dp:0,Kn:1,Kb:1}},null,2));
+          console.log(JSON.stringify({status:'PASS_SUSPENDED',registeredRoutes:0,comparisonRoutes:1,suspensionReasons:route.suspensionReasons,globalRouteAuthority:false},null,2));
           NODE

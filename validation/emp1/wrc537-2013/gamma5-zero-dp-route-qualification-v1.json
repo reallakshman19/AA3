@@ -1,8 +1,8 @@
 {
   "schema": "emp1-wrc537-gamma5-zero-dp-route-qualification/v1",
-  "status": "PASS_METHOD_AUTHORITY_PENDING_ROUTE_REOBSERVATION",
+  "status": "PASS_REOBSERVED_AUTHORIZED_BOUNDED_ZERO_DP_ROUTE",
   "engineeringAuthority": true,
-  "productionRouteAuthority": false,
+  "productionRouteAuthority": true,
   "globalEmp1CRouteAuthority": false,
   "productionObservationUsedToSetAuthority": false,
   "semanticPayload": {
@@ -51,15 +51,47 @@
       "INTERPOLATION",
       "CROSS_VARIANT_FALLBACK",
       "UNQUALIFIED_LOAD_CUSTODY",
-      "PRODUCER_QUALIFICATION_HASH_MISMATCH"
+      "PRODUCER_QUALIFICATION_HASH_MISMATCH",
+      "NONUNITY_STRESS_CONCENTRATION"
     ]
   },
   "qualificationRecordSha256": "3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e",
+  "reobservation": {
+    "status": "PASS_STRICT_FAIL_CLOSED_WORKFLOW",
+    "workflowRunId": 32348667313,
+    "workflowRunNumber": 78,
+    "headSha": "c80e4952adeae5e9fbca407cdb18fc4316393889",
+    "artifactId": 9399007941,
+    "artifactSizeBytes": 4521,
+    "artifactDigestSha256": "b3ecbc2091f6c2758e2da9b0da9943d7950a48e3f8c7e34b12b2b30264e75890",
+    "routeEvidenceFileBytes": 1592,
+    "routeEvidenceStatus": "PASS_ROUTE_CANDIDATE_END_TO_END",
+    "transferredGlobalForce": [-400, -250, -1000],
+    "transferredGlobalMoment": [-500000, 600000, -700000],
+    "wrcLoads": {
+      "P": -1000,
+      "Vc": 250,
+      "Vl": -400,
+      "Mc": 500000,
+      "Ml": -600000,
+      "Mt": 700000
+    },
+    "stressComparisonsPassed": 32,
+    "routeFalsifiersPassed": 8,
+    "productionObservationUsed": false
+  },
   "authorization": {
     "boundedMethodGateAllowed": true,
-    "boundedRouteRegistrationAllowed": false,
+    "boundedRouteRegistrationAllowed": true,
     "nonzeroDifferentialPressureAllowed": false,
     "nonUnityStressConcentrationAllowed": false,
-    "globalEmp1CRouteRegistrationAllowed": false
-  }
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "releaseQualified": false
+  },
+  "remainingExpansionBlockers": [
+    "WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED",
+    "HIGHER_GAMMA_CURVE_SPECIFIC_BETA_LIMITS_NOT_QUALIFIED",
+    "NONZERO_PRESSURE_THRUST_POLICY_NOT_QUALIFIED",
+    "GENERAL_KN_KB_PRODUCER_NOT_QUALIFIED"
+  ]
 }

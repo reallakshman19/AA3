@@ -47,10 +47,10 @@ assert.equal(derived.wrcDataset.missingScalarCoefficientCount, 1200);
 assert.equal(derived.wrcDataset.coefficientSchema, 'LEGACY_SINGLE_VALUE_PER_CURVE');
 assert.equal(derived.wrcDataset.independentVariable, 'U');
 assert.equal(derived.wrcDataset.independentVariableRepresentation, 'LEGACY_PARAMETER_3_ROW_ORDINATE');
-assert.equal(derived.wrcDataset.sourceCustodyQualified, false);
+assert.equal(derived.wrcDataset.sourceCustodyQualified, true);
 assert.equal(derived.signArbitration.openConflicts.length, 2);
 assert.equal(derived.runtimeContracts.status, 'NOT_RUN');
-assert.equal(derived.runtimeContracts.sourceCustodyQualified, false);
+assert.equal(derived.runtimeContracts.sourceCustodyQualified, true);
 assert.equal(derived.runtimeContracts.loadAxisMappingStatus, 'BLOCKED');
 assert.equal(derived.runtimeContracts.pressureThrustStatus, 'BLOCKED');
 assert.equal(derived.runtimeContracts.pressureThrustMode, null);
@@ -59,7 +59,7 @@ assert.equal(derived.runtimeContracts.stressIntensityDefinitionStatus, 'BLOCKED'
 assert.equal(derived.runtimeContracts.stressIntensityOutputDimension, null);
 assert.equal(derived.runtimeContracts.qualificationRecordHash, null);
 assert.equal(derived.cauxBenchmark.pageRange, '24-31');
-assert.equal(derived.cauxBenchmark.sourceCustodyQualified, false);
+assert.equal(derived.cauxBenchmark.sourceCustodyQualified, true);
 assert.equal(derived.cauxBenchmark.supplementalPrecheckMaySatisfyCauxA4, false);
 assert.equal(derived.cauxBenchmark.expectedValuesFrozen, false);
 assert.equal(derived.cauxBenchmark.independentHandCalculationStatus, 'NOT_RUN');
@@ -96,18 +96,19 @@ assert.throws(
 );
 
 const partialSourceCustody = clone(retained);
-partialSourceCustody.wrcSourceLedger.rawPdfSha256 = 'a'.repeat(64);
+partialSourceCustody.wrcSourceLedger.rawPdfSha256 = null;
 assert.equal(
   deriveEmp1CQualificationEvidence(partialSourceCustody).wrcDataset.sourceCustodyQualified,
   false,
-  'A raw SHA alone must not promote source custody without VERIFIED/PASS ledger state',
+  'VERIFIED/PASS_SOURCE_CUSTODY without the frozen raw SHA must not remain source-qualified',
 );
 
 const runtimeWithoutSourceCustody = clone(retained);
+runtimeWithoutSourceCustody.wrcSourceLedger.qualificationState = 'PASS';
 runtimeWithoutSourceCustody.runtimeContractQualification = {
   schema: 'emp1-c-runtime-contract-qualification/v1',
   status: 'PASS',
-  wrcSourceRawPdfSha256: 'a'.repeat(64),
+  wrcSourceRawPdfSha256: retained.wrcSourceLedger.rawPdfSha256,
   productionObservationUsedToSetContract: false,
   qualificationRecordHash: 'sha256:synthetic-runtime-contract',
   loadAxisMapping: {
@@ -137,10 +138,11 @@ assert.throws(
 );
 
 const cauxWithoutSourceCustody = clone(retained);
+cauxWithoutSourceCustody.cauxSourceLedger.qualificationState = 'PASS';
 cauxWithoutSourceCustody.cauxBenchmarkQualification = {
   schema: 'emp1-caux-pp24-31-benchmark-qualification/v1',
   sourceId: retained.cauxSourceLedger.sourceId,
-  sourceRawPdfSha256: 'b'.repeat(64),
+  sourceRawPdfSha256: retained.cauxSourceLedger.rawPdfSha256,
   status: 'PASS',
   expectedValuesFrozen: true,
   independentHandCalculation: { status: 'PASS' },
@@ -153,7 +155,7 @@ assert.throws(
 );
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-qualification-evidence-check/v3',
+  schema: 'emp1-c-qualification-evidence-check/v4',
   status: 'PASS',
   derivationMode: derived.derivation.mode,
   generatedArtifactExact: true,
@@ -172,6 +174,7 @@ console.log(JSON.stringify({
   },
   runtimeContracts: {
     status: derived.runtimeContracts.status,
+    sourceCustodyQualified: derived.runtimeContracts.sourceCustodyQualified,
     loadAxisMappingStatus: derived.runtimeContracts.loadAxisMappingStatus,
     pressureThrustStatus: derived.runtimeContracts.pressureThrustStatus,
     stressIntensityDefinitionStatus: derived.runtimeContracts.stressIntensityDefinitionStatus,

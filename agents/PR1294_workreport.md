@@ -94,15 +94,33 @@ cycle_transition corrected Git blob     39de344d28c0381dc7f938b94be5ac9c2e92c17f
 component_qualification corrected blob  547f674001ce87ffca1d6bab78773aa9a227c554
 focused exact-content harness           PASS 6/6 / IMPLEMENTATION_COUPLED
 corrected CLI audit                     PASS / 0 issues
-old HP-AN-003 re-admission               PASS / blocked
-old TR-003 count re-admission            PASS / blocked
-old NPS6 rating re-admission             PASS / blocked
-full repository-native suite             NOT_RUN / NO_NATIVE_CHECKOUT
-browser/UI suite                          NOT_APPLICABLE / UI_UNCHANGED
-Code-source qualification                NOT_RUN / CONTROLLED_SOURCES_UNAVAILABLE
+old HP-AN-003 re-admission              PASS / blocked
+old TR-003 count re-admission           PASS / blocked
+old NPS6 rating re-admission            PASS / blocked
+full repository-native suite            NOT_RUN / NO_NATIVE_CHECKOUT
+browser/UI suite                        NOT_APPLICABLE / UI_UNCHANGED
+Code-source qualification               NOT_RUN / CONTROLLED_SOURCES_UNAVAILABLE
 ```
 
 Do not convert NOT_RUN to PASS.
+
+## Hosted reconciliation receipt
+At pre-handover metadata head `9b27382848828b7e77e634ed4631ac2efda29b76`:
+
+```text
+base                         main@ef9445469fbddd3a34e51c83e295bb749ae79c73
+branch relation              ahead 8 / behind 0
+changed files                8 / 8 intended
+engineering/test files       5
+recovery records             3
+GitHub mergeable             true
+draft                        true
+commit status entries        0 -> NOT_RUN
+PR-triggered workflow runs   0 -> NOT_RUN
+reviews / review threads     0 / 0
+```
+
+This workreport/status normalization is recovery metadata only; it does not alter the engineering/test blobs listed above. Re-read the PR head after publication for the final hosted SHA.
 
 ## Authority boundary
 

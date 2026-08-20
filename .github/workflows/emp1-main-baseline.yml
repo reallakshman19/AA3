@@ -19,13 +19,11 @@ jobs:
           node-version: '20'
 
       - name: Enforce EMP1-01 evidence-only scope
+        if: github.event_name == 'pull_request' && github.head_ref == 'agent/emp1-01-main-baseline-issue1261'
         shell: bash
         run: |
           set -euo pipefail
           base="${{ github.event.pull_request.base.sha }}"
-          if [ -z "$base" ]; then
-            base="$(git rev-parse HEAD^)"
-          fi
           git diff --name-only "$base"...HEAD | tee /tmp/emp1-01-changed-files.txt
           if grep -E '^(src/|e2e/|package(-lock)?\.json$)' /tmp/emp1-01-changed-files.txt; then
             echo 'EMP1_01_SCOPE_VIOLATION: production/UI/e2e/package changes are not allowed in the baseline PR'

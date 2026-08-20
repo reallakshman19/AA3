@@ -1,0 +1,46 @@
+name: PR1270 adjacency RCA
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pr1270-adjacency-rca.yml'
+permissions:
+  contents: read
+jobs:
+  rca:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_PRODUCT_PARENT: 42beedc20b20733e924c2d0e581785be80e356fa
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Verify product parent
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PRODUCT_PARENT"
+          git diff --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Instrument exact product code and print actual adjacency blockers
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/workspace/lafea-analysis-mesh-evidence-v2.js')
+          s = p.read_text()
+          needle = "  if (result.qualification !== 'PASS') {\n    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');\n  }"
+          repl = "  if (result.qualification !== 'PASS') {\n    console.error('PR1270_ADJACENCY_RCA=' + JSON.stringify(result, null, 2));\n    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');\n  }"
+          if needle not in s:
+              raise SystemExit('instrumentation anchor missing')
+          p.write_text(s.replace(needle, repl))
+          PY
+          set +e
+          node scripts/lafea-retained-mesh-refinement-check.mjs 2>&1 | tee /tmp/rca.log
+          status=${PIPESTATUS[0]}
+          set -e
+          grep -A220 'PR1270_ADJACENCY_RCA=' /tmp/rca.log || true
+          test "$status" -ne 0

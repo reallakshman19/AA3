@@ -4,45 +4,89 @@ governing_source:
   publication: Energy Institute Guidelines 2nd Edition (2008)
   section: T2.7
   source_pdf_git_blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
-authority_state: PARTIAL_SOURCE_RECONCILIATION
-production_promotion_authority: BLOCKED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION
+authority_state: SOURCE_CORROBORATED_AND_WORKED_EXAMPLE_REPRODUCED
+engineering_use: QUALIFICATION_EVIDENCE_ONLY
+production_promotion_authority: BLOCKED_PENDING_PINNED_PDF_VISUAL_PARITY_AND_DOWNSTREAM_QUALIFICATION
+source_reconciliation:
+  original_guidance_text_rendering:
+    status: CORROBORATED
+    pages: [60, 61]
+  successor_ei_subsea_equation_chain:
+    status: CORROBORATED
+  exact_pinned_pdf_visual_parity:
+    status: NOT_RUN_TRANSPORT_BLOCKED
+  worked_example_d2_3:
+    status: NUMERICALLY_REPRODUCED
 reconciliation_note: >
-  Source labels must be preserved as printed. The EI material includes an AIV
-  Flowchart T2-6 for welded-discontinuity assessment and other T2 flowchart labels
-  that can collide in secondary transcriptions. Local software may disambiguate by
-  module/context, but it must not invent a replacement EI identifier.
+  Source labels are preserved as printed. Derived YAML/CSV never inherits production
+  authority merely by existing beside the governing PDF. Source-corroborated equations
+  may be used as qualification evidence, while exact pinned-PDF visual parity and
+  downstream product qualification remain separate gates.
 calculation_chain:
   source_pwl:
     source: T2-5_flowchart.yaml
-    authority: VERIFIED_FOR_D2_3_SOURCE_PWL_ANCHORS
+    authority: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
     equation: "10*log10(W^2 * ((P1-P2)/P1)^3.6 * (Te/Mw)^1.2) + 126.1 + SFF"
+    sonic_flow_factor: "SFF=6 for sonic conditions; otherwise SFF=0"
+  low_noise_trim:
+    source: T2-5_flowchart.yaml
+    authority: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
+    rule: "PWL_effective = PWL_source - manufacturer-qualified trim reduction delta"
   spatial_attenuation:
     source: T2-5_flowchart.yaml
-    authority: VERIFIED_FOR_D2_3_ATTENUATION_ANCHOR
+    authority: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
     equation: "attenuation_dB = 60 * L_dis_m / Dint_mm; PWL_dis = PWL_effective - attenuation_dB"
     empirical_unit_basis: "L in m; Dint in mm"
   multi_source_combination:
-    candidate_equation: "PWL_total = 10 * log10(sum(10^(PWL_i/10)))"
-    authority: UNRESOLVED_PENDING_DIRECT_T2_5_RECONCILIATION_AND_INDEPENDENT_BENCHMARK
+    equation: "PWL_total = 10 * log10(sum(10^(PWL_i/10)))"
+    authority: SOURCE_CORROBORATED_INDEPENDENT_BENCHMARK_PENDING
+    remaining_gate: INDEPENDENT_MULTI_SOURCE_BENCHMARK_AND_GOVERNED_SIMULTANEOUS_SOURCE_SCOPE
   discontinuity_fatigue:
     source: T2-6_flowchart.yaml
-    authority: VERIFIED_SUBSET_ONLY
-    unresolved:
-      - A_S_B_EQUATIONS
-      - D_OVER_d_10_AND_ABOVE
-      - NON_WELDOLET_CONNECTION_MODIFIERS
-      - GENERAL_MATERIAL_MODIFIER
-      - LOF_MAPPING_FOR_Lf_GE_0_5
-  modifiers:
-    FLM1:
-      file: T2-6_diameter_ratio_modifier.csv
-      authority: VERIFIED_UNDER_10_FORMULA_WITH_OPEN_D2_3_PUBLISHED_VARIANCE
-    FLM2:
-      file: T2-6_connection_modifier.csv
-      authority: VERIFIED_WELDOLET_PATH_ONLY
-    material:
-      file: T2-6_material_modifier.csv
-      authority: QUARANTINED_PENDING_DIRECT_T2_6_SOURCE_RECONCILIATION
+    authority: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
+    equations:
+      ratio: "R = Dext/T"
+      s: "s = 91.9 - R"
+      a: "a = 3.28e-7*R^3 - 8.503e-5*R^2 + 7.063e-3*R + 0.816"
+      B: "B = a*(PWL - 0.112762*s - 0.001812*s^2 + 4.307277e-5*s^3)"
+      log10N: "470711.5155 - 63075.1242*log10(B) + 183685.4368/sqrt(B) - 575094.3273/B^0.1"
+      Lf: "3.1 - 0.1303*ln(N), clamped to [0,1]"
+    branches:
+      FLM1_under_10: "-0.07 + 0.91*R1 + 1.32/R1 - 0.48*R1^1.5 + 0.065*R1^2"
+      FLM1_10_and_above: "0.5"
+      FLM2_weldolet: "0.29 + 0.09*tanh((PWL-172)/2.9)"
+      FLM2_non_weldolet: "no FLM2 multiplier"
+      FLM3_duplex: "0.263 + 0.087*tanh((PWL-172)/2.9)"
+      FLM3_non_duplex: "no FLM3 multiplier"
+      LOF_high_branch: "Lf >= 0.5 -> LOF = Lf"
+      LOF_low_branch: "Lf < 0.5 -> LOF = 0.29"
+    open_arithmetic_item:
+      id: D2_3_PUBLISHED_FLM1_VARIANCE
+      published: 1.2133
+      recalculated_from_displayed_dimensions: 1.2109758194311824
+      consequence: FINAL_D2_3_LOF_UNCHANGED_AT_0_29
+  line_path_rule:
+    source: T2-5_flowchart.yaml
+    authority: SOURCE_CORROBORATED_INVENTORY_COMPLETENESS_STILL_REQUIRED
+    rule: "Main-line LOF follows the greatest discontinuity LOF encountered up to the location from the source; downstream of the first sub-155 dB point the source-path LOF is 0.29."
+modifiers:
+  FLM1:
+    file: T2-6_diameter_ratio_modifier.csv
+    authority: SOURCE_CORROBORATED_FULL_BRANCH_WITH_OPEN_D2_3_VARIANCE
+  FLM2:
+    file: T2-6_connection_modifier.csv
+    authority: SOURCE_CORROBORATED_WELDOLET_FORMULA_SAMPLES
+  material:
+    file: T2-6_material_modifier.csv
+    authority: SOURCE_CORROBORATED_DUPLEX_BRANCH
+remaining_promotion_gates:
+  - EXACT_PINNED_PDF_VISUAL_PARITY
+  - D2_3_PUBLISHED_FLM1_ARITHMETIC_DISPOSITION
+  - INDEPENDENT_MULTI_SOURCE_BENCHMARK
+  - GOVERNED_SIMULTANEOUS_SOURCE_SCOPE
+  - GOVERNED_DISCONTINUITY_INVENTORY_COMPLETENESS
+  - DOWNSTREAM_PRODUCT_IMPLEMENTATION_PARITY
+  - PRODUCTION_RELEASE_QUALIFICATION
 official_errata:
   page_61_feed_from_T2_5:
     status: VERIFIED_OFFICIAL_PUBLISHER_ERRATA
@@ -50,4 +94,4 @@ official_errata:
     d2_3_anchor: "B=152.207 -> log10N≈9.9026 -> N≈7.99E9"
 correction_record:
   source_pr: 1288
-  note: "Derived CSV/YAML does not inherit engineering authority automatically from the governing PDF. Only explicitly verified subsets may be consumed."
+  note: "PR1289 corrects transcription defects and captures source-corroborated T2.5/T2.6 branches without granting screening or design authority."

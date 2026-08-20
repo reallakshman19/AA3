@@ -45,10 +45,10 @@ export const EMP1_C_RETAINED_QUALIFICATION_EVIDENCE = {
     "independentVariableRepresentation": "LEGACY_PARAMETER_3_ROW_ORDINATE",
     "independentVariableQualified": false,
     "semanticHash": null,
-    "sourceCustodyQualified": false,
-    "sourceCustodyState": "UNRESOLVED_RAW_BYTES",
-    "sourceQualificationState": "BLOCKED",
-    "sourceRawPdfSha256": null
+    "sourceCustodyQualified": true,
+    "sourceCustodyState": "VERIFIED",
+    "sourceQualificationState": "PASS_SOURCE_CUSTODY",
+    "sourceRawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
   },
   "signArbitration": {
     "status": "BLOCKED",
@@ -57,12 +57,12 @@ export const EMP1_C_RETAINED_QUALIFICATION_EVIDENCE = {
       "SPHERICAL_M1_CONFLICT",
       "SPHERICAL_M2_CONFLICT"
     ],
-    "sourceCustodyQualified": false
+    "sourceCustodyQualified": true
   },
   "runtimeContracts": {
     "status": "NOT_RUN",
-    "sourceCustodyQualified": false,
-    "sourceRawPdfSha256": null,
+    "sourceCustodyQualified": true,
+    "sourceRawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
     "loadAxisMappingStatus": "BLOCKED",
     "loadAxisMappingContractHash": null,
     "canonicalFrameContractHash": null,
@@ -82,10 +82,10 @@ export const EMP1_C_RETAINED_QUALIFICATION_EVIDENCE = {
   "cauxBenchmark": {
     "status": "NOT_RUN",
     "sourceIdentityVerified": true,
-    "sourceCustodyQualified": false,
-    "sourceCustodyState": "UNRESOLVED_RAW_BYTES",
-    "sourceQualificationState": "BLOCKED",
-    "sourceRawPdfSha256": null,
+    "sourceCustodyQualified": true,
+    "sourceCustodyState": "VERIFIED",
+    "sourceQualificationState": "PASS_SOURCE_CUSTODY",
+    "sourceRawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
     "pageRange": "24-31",
     "expectedValuesFrozen": false,
     "independentHandCalculationStatus": "NOT_RUN",

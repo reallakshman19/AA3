@@ -7,6 +7,8 @@
 - `PR: #1289`
 - `BRANCH: agent/ei-p0-source-correction-20260820`
 - `BASE_AT_ALLOCATION: main@782683e7355281e95e5319dcad7f8a5644710d1d`
+- `RECONCILED_MAIN: ef9445469fbddd3a34e51c83e295bb749ae79c73`
+- `RECONCILIATION_BASIS_HEAD: cb27cc28eab98919eca558bb809fb28ab8e69f33`
 - `CRITICALITY: ENGINEERING_CRITICAL`
 - `CURRENT_STAGE: DRAFT_PR_OWNER_GATE`
 - `MERGE_AUTHORITY: OWNER_ONLY_NOT_GRANTED`
@@ -142,10 +144,35 @@ Branch-edge checks also passed independently:
 Still `NOT_RUN`:
 
 - exact pinned-PDF page visual parity: `NOT_RUN / TRANSPORT_BLOCKED`;
-- native repository checkout: `NOT_RUN / DNS_BLOCKED`;
-- current-head hosted CI/workflows: reconcile at final head.
+- native repository checkout: `NOT_RUN / DNS_BLOCKED`.
 
 No production calculator/UI/workflow is changed by PR1289. No screening/design authority is promoted.
+
+## Current-main reconciliation
+
+`main` advanced after PR allocation via merged PR #1290. That PR changed only `docs/High Pr/Hi PR/**`, with no EI-data overlap.
+
+PR1289 was losslessly reconciled onto:
+
+```text
+main = ef9445469fbddd3a34e51c83e295bb749ae79c73
+reconciliation commit = cb27cc28eab98919eca558bb809fb28ab8e69f33
+relation = 40 ahead / 0 behind
+changed paths = 20 intended paths
+mergeable = true
+```
+
+The reconciliation tree uses current `main` as the base and overlays the exact PR1289 blobs; no EI product/source blob was regenerated during the re-ground.
+
+Hosted reconciliation on `cb27cc28...`:
+
+```text
+PR comments / reviews          0
+commit status entries          0  -> NOT_RUN
+PR-triggered workflow runs     0  -> NOT_RUN
+```
+
+Empty hosted check sets are not PASS.
 
 ## Remaining promotion gates
 
@@ -158,5 +185,9 @@ Before any downstream AIV production promotion:
 5. governed welded-discontinuity inventory completeness;
 6. downstream `3D_Converters` implementation/readiness parity;
 7. production release qualification.
+
+## Exact next action
+
+Owner review/merge decision for PR1289. After the source correction lands, re-ground downstream `3D_Converters` AIV parity work against the merged authority map; do not stack production mutation on an unmerged source-authority draft.
 
 No merge is authorized by the instruction that created or continued this PR.

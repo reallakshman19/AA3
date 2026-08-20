@@ -1,0 +1,45 @@
+name: EMP.1.C beta-domain source evidence
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  render-beta-domain-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify frozen WRC PDF and render Original cylindrical charts
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2'
+          actual="$(sha256sum docs/emp1/WRC537_2013.pdf | awk '{print $1}')"
+          test "$actual" = "$expected"
+          if ! command -v pdftoppm >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+          fi
+          mkdir -p test-results/emp1-beta-domain/charts
+          for page in 94 96 100 104 110 118 122 124 128 132 136 140 144 146; do
+            pdftoppm -f "$page" -l "$page" -png -r 300 -singlefile docs/emp1/WRC537_2013.pdf "test-results/emp1-beta-domain/charts/pdf-page-${page}"
+          done
+          cat > test-results/emp1-beta-domain/manifest.json <<'JSON'
+          {
+            "schema": "emp1-wrc537-beta-domain-source-evidence/v1",
+            "status": "OBSERVATION_ONLY_NOT_ENGINEERING_AUTHORITY",
+            "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+            "variant": "ORIGINAL",
+            "pdfPages": [94,96,100,104,110,118,122,124,128,132,136,140,144,146],
+            "purpose": "Visually qualify per-curve deleted outer beta limits before any higher-gamma route expansion."
+          }
+          JSON
+      - name: Upload beta-domain source evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: emp1-beta-domain-${{ github.sha }}
+          path: test-results/emp1-beta-domain
+          if-no-files-found: error
+          retention-days: 30

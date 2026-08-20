@@ -1,0 +1,20 @@
+schema: AgentClaims.v1
+pr: 1295
+repository: reallaksh19/Advanced_Analysis
+claims:
+  - id: PR1295-C01
+    statement: Locally incomplete High Pr master-data records are quarantined instead of represented as usable engineering authority.
+    evidence: scripts/high-pr-master-data-referential-audit.mjs
+    validation: PASS_8_OF_8_IMPLEMENTATION_COUPLED
+  - id: PR1295-C02
+    statement: Missing FEA, vendor, envelope, material-map, load-case-template, material-property, curve-point, and transient evidence is not fabricated by this PR.
+    evidence: agents/PR1295_workreport.md
+    validation: STRUCTURAL_SCOPE_REVIEW
+  - id: PR1295-C03
+    statement: Referential containment is not ASME Code qualification and release readiness remains false.
+    evidence: scripts/high-pr-master-data-referential-audit.mjs
+    validation: HARD_CODED_AUTHORITY_BOUNDARY
+  - id: PR1295-C04
+    statement: Native KD320 semantics, fatigue curve points, UI, and controlled-source receipts are unchanged.
+    evidence: pull_request_changed_file_ledger
+    validation: HOSTED_DIFF_SCOPE

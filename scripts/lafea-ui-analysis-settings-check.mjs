@@ -51,6 +51,9 @@ console.log(JSON.stringify({
   githubActionsWorkflowAdded: false,
 }));
 
+await import('./lafea3-local-refinement-ui-check.mjs');
+await import('./lafea-retained-mesh-refinement-check.mjs');
+
 function stage(stageId, document, profileId) {
   return {
     stageId,

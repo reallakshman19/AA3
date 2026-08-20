@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { calculateLocalAttachmentFoundation, reconstructResultHashes } from '../src/core/local-stress/index.js';
+import { calculateLocalAttachmentFoundation } from '../src/core/local-stress/index.js';
 import { canonicalFixture } from './lafea.1-fixtures.mjs';
 import {
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,
@@ -49,8 +49,11 @@ assert.equal(candidate.productionRouteAuthority,false);
 assert.equal(candidate.globalEmp1CRouteAuthority,false);
 assert.equal(candidate.methodGate.state,'METHOD_QUALIFIED');
 assert.equal(candidate.methodGate.scopeStatus,'PASS_BOUNDED_SCOPE');
-assert.equal(candidate.loadCustody.productionRouteInputAuthorized,false,'raw custody record is immutable input evidence; qualified numerics revalidates it separately');
+assert.equal(candidate.loadCustody.status,'PASS_QUALIFIED_UPSTREAM_LOAD_PACKAGE');
+assert.equal(candidate.loadCustody.engineeringUseAuthorized,true);
+assert.equal(candidate.loadCustody.producerQualification.qualificationRecordHash,producerRecord.semanticHashSha256);
 assert.equal(candidate.numerics.qualifiedInputAuthority,true);
+assert.equal(candidate.numerics.loadCustody.productionRouteInputAuthorized,true);
 assert.equal(candidate.numerics.state,'EVALUATED_BOUNDED_GAMMA5_TABLE5_QUALIFIED_INPUT');
 assert.deepEqual(candidate.numerics.wrcLoads,oracle.semanticPayload.case.loads);
 let stressComparisons=0;
@@ -72,12 +75,13 @@ runFalsifier('upstream-hash-drift',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandid
 runFalsifier('nonorthogonal-frame',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,axes:{vesselCenterlineGlobal:[1,0,0],nozzleCenterlineGlobal:[1,0,1]}}),'EMP1_WRC537_FRAME_NON_ORTHOGONAL');
 
 console.log(JSON.stringify({
-  schema:'emp1-wrc537-gamma5-zero-dp-route-qualification/v1',
+  schema:'emp1-wrc537-gamma5-zero-dp-route-qualification/v2',
   status:'PASS_ROUTE_CANDIDATE_END_TO_END',
   engineeringAuthority:true,productionRouteAuthority:false,globalEmp1CRouteAuthority:false,
   routeQualificationSha256:routeHash,loadProducerQualificationSha256:producerRecord.semanticHashSha256,
   upstreamResultHashes:result.semanticHashes,
   transferredGlobal:{force:transferred.transformedForceGlobal,moment:transferred.transformedMomentGlobal},
+  qualifiedLoadCustody:{status:candidate.loadCustody.status,producerQualificationHash:candidate.loadCustody.producerQualification.qualificationRecordHash,normalizedRouteInputAuthorized:candidate.numerics.loadCustody.productionRouteInputAuthorized},
   wrcLoads:candidate.numerics.wrcLoads,
   oracleSemanticHash:oracle.semanticHash,
   stressComparisons,

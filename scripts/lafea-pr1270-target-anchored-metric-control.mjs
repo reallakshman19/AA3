@@ -23,11 +23,33 @@ const replacement = String.raw`function metricAxisCoordinates(minimum, maximum, 
     : cutoffDistance + global * (metricValue - cutoffMetric);
   const leftMetric = metricDistance(target - minimum);
   const rightMetric = metricDistance(maximum - target);
-  const epsilon = 64 * Number.EPSILON * Math.max(1, leftMetric, rightMetric);
-  const leftIntervalCount = Math.max(1, Math.ceil(leftMetric - epsilon));
-  const rightIntervalCount = Math.max(1, Math.ceil(rightMetric - epsilon));
+  const epsilon = 64 * Number.EPSILON * Math.max(1, leftMetric, rightMetric, growth);
+  let leftIntervalCount = Math.max(1, Math.ceil(leftMetric - epsilon));
+  let rightIntervalCount = Math.max(1, Math.ceil(rightMetric - epsilon));
+  let balancingInsertions = 0;
+  const maximumBalancingInsertions = 256;
+  while (balancingInsertions <= maximumBalancingInsertions) {
+    const leftFirstInterval = physicalDistance(leftMetric / leftIntervalCount);
+    const rightFirstInterval = physicalDistance(rightMetric / rightIntervalCount);
+    const targetAdjacentIntervalRatio = Math.max(leftFirstInterval, rightFirstInterval)
+      / Math.min(leftFirstInterval, rightFirstInterval);
+    if (targetAdjacentIntervalRatio <= growth + epsilon) break;
+    if (leftFirstInterval >= rightFirstInterval) leftIntervalCount += 1;
+    else rightIntervalCount += 1;
+    balancingInsertions += 1;
+  }
+  if (balancingInsertions > maximumBalancingInsertions) {
+    throw new Error('PR1270_METRIC_TARGET_BALANCING_LIMIT');
+  }
   const leftDeltaMetric = leftMetric / leftIntervalCount;
   const rightDeltaMetric = rightMetric / rightIntervalCount;
+  const leftFirstInterval = physicalDistance(leftDeltaMetric);
+  const rightFirstInterval = physicalDistance(rightDeltaMetric);
+  const targetAdjacentIntervalRatio = Math.max(leftFirstInterval, rightFirstInterval)
+    / Math.min(leftFirstInterval, rightFirstInterval);
+  if (targetAdjacentIntervalRatio > growth + epsilon) {
+    throw new Error('PR1270_METRIC_TARGET_ADJACENT_RATIO_UNRESOLVED');
+  }
   const leftCoordinates = [];
   for (let index = leftIntervalCount; index >= 1; index -= 1) {
     leftCoordinates.push(target - physicalDistance(index * leftDeltaMetric));
@@ -49,10 +71,15 @@ const replacement = String.raw`function metricAxisCoordinates(minimum, maximum, 
     deltaMetric: maximumDeltaMetric,
     leftMetric, rightMetric, leftIntervalCount, rightIntervalCount,
     leftDeltaMetric, rightDeltaMetric,
+    leftFirstInterval, rightFirstInterval,
+    targetAdjacentIntervalRatio,
+    balancingInsertions,
     targetStationIndex: leftIntervalCount,
     targetStationExact: coordinates[leftIntervalCount] === target,
     beta,
-    theoreticalAdjacentRatioBound: Math.exp(beta * maximumDeltaMetric),
+    theoreticalAdjacentRatioBound: Math.max(
+      Math.exp(beta * maximumDeltaMetric), targetAdjacentIntervalRatio,
+    ),
     maximumObservedAdjacentIntervalRatio: adjacentRatios.length ? Math.max(...adjacentRatios) : 1,
   });
 }
@@ -62,15 +89,15 @@ const replacement = String.raw`function metricAxisCoordinates(minimum, maximum, 
 let patched = original.slice(0, functionStart) + replacement + original.slice(functionEnd);
 patched = patched.replace(
   "check: 'PR1270_MAPPED_METRIC_GRADING_CONTROL_V2'",
-  "check: 'PR1270_TARGET_ANCHORED_MAPPED_METRIC_GRADING_CONTROL_V1'",
+  "check: 'PR1270_TARGET_ANCHORED_BALANCED_MAPPED_METRIC_GRADING_CONTROL_V2'",
 );
 patched = patched.replace(
   "architecture: 'SIMULTANEOUS_TENSOR_METRIC_GRID_THEN_FIXED_DIAGONAL_TRIANGULATION'",
-  "architecture: 'TARGET_ANCHORED_TENSOR_METRIC_GRID_THEN_FIXED_DIAGONAL_TRIANGULATION'",
+  "architecture: 'TARGET_ANCHORED_BALANCED_TENSOR_METRIC_GRID_THEN_FIXED_DIAGONAL_TRIANGULATION'",
 );
 patched = patched.replace(
   "metric: 'M(D)=INTEGRAL_0^D DS/H(S); UNIFORM_DELTA_M_PER_AXIS'",
-  "metric: 'M(D)=INTEGRAL_0^D DS/H(S); TARGET_ANCHORED_LEFT_RIGHT_DELTA_M_LE_1'",
+  "metric: 'M(D)=INTEGRAL_0^D DS/H(S); TARGET_STATION_EXACT; MINIMAL_SIDE_COUNT_BALANCING_TO_G_MAX'",
 );
 
 try {
@@ -78,7 +105,7 @@ try {
   const run = spawnSync(process.execPath, [tempPath], { encoding: 'utf8' });
   process.stdout.write(run.stdout ?? '');
   process.stderr.write(run.stderr ?? '');
-  assert.equal(run.status, 0, `target-anchored mapped metric control exited ${run.status}`);
+  assert.equal(run.status, 0, `target-anchored balanced mapped metric control exited ${run.status}`);
 } finally {
   if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 }

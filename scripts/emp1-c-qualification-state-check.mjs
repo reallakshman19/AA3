@@ -6,6 +6,9 @@ import {
   evaluateEmp1CQualificationState,
 } from '../src/core/emp1/emp1-c-qualification-state.js';
 
+const WRC_SOURCE_SHA256 = '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2';
+const CAUX_SOURCE_SHA256 = 'c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e';
+
 const current = evaluateEmp1CQualificationState();
 assert.equal(current.schema, EMP1_C_QUALIFICATION_SCHEMA);
 assert.equal(current.state, 'BLOCKED');
@@ -44,11 +47,15 @@ assert.equal(current.evidence.wrcDataset.coefficientSchemaQualified, false);
 assert.equal(current.evidence.wrcDataset.independentVariable, 'U');
 assert.equal(current.evidence.wrcDataset.independentVariableRepresentation, 'LEGACY_PARAMETER_3_ROW_ORDINATE');
 assert.equal(current.evidence.wrcDataset.independentVariableQualified, false);
-assert.equal(current.evidence.wrcDataset.sourceCustodyQualified, false);
-assert.equal(current.evidence.wrcDataset.sourceRawPdfSha256, null);
+assert.equal(current.evidence.wrcDataset.sourceCustodyQualified, true);
+assert.equal(current.evidence.wrcDataset.sourceCustodyState, 'VERIFIED');
+assert.equal(current.evidence.wrcDataset.sourceQualificationState, 'PASS_SOURCE_CUSTODY');
+assert.equal(current.evidence.wrcDataset.sourceRawPdfSha256, WRC_SOURCE_SHA256);
 assert.equal(current.evidence.signArbitration.openConflicts.length, 2);
-assert.equal(current.evidence.signArbitration.sourceCustodyQualified, false);
+assert.equal(current.evidence.signArbitration.sourceCustodyQualified, true);
 assert.equal(current.evidence.runtimeContracts.status, 'NOT_RUN');
+assert.equal(current.evidence.runtimeContracts.sourceCustodyQualified, true);
+assert.equal(current.evidence.runtimeContracts.sourceRawPdfSha256, WRC_SOURCE_SHA256);
 assert.equal(current.evidence.runtimeContracts.loadAxisMappingStatus, 'BLOCKED');
 assert.equal(current.evidence.runtimeContracts.pressureThrustStatus, 'BLOCKED');
 assert.equal(current.evidence.runtimeContracts.pressureThrustMode, null);
@@ -57,12 +64,15 @@ assert.equal(current.evidence.runtimeContracts.stressIntensityDefinitionStatus, 
 assert.equal(current.evidence.runtimeContracts.stressIntensityOutputDimension, null);
 assert.equal(current.evidence.runtimeContracts.qualificationRecordHash, null);
 assert.equal(current.evidence.cauxBenchmark.pageRange, '24-31');
-assert.equal(current.evidence.cauxBenchmark.sourceCustodyQualified, false);
+assert.equal(current.evidence.cauxBenchmark.sourceCustodyQualified, true);
+assert.equal(current.evidence.cauxBenchmark.sourceCustodyState, 'VERIFIED');
+assert.equal(current.evidence.cauxBenchmark.sourceQualificationState, 'PASS_SOURCE_CUSTODY');
+assert.equal(current.evidence.cauxBenchmark.sourceRawPdfSha256, CAUX_SOURCE_SHA256);
 assert.equal(current.evidence.cauxBenchmark.expectedValuesFrozen, false);
 assert.equal(current.evidence.cauxBenchmark.independentHandCalculationStatus, 'NOT_RUN');
 assert.equal(current.evidence.cauxBenchmark.supplementalPrecheckMaySatisfyCauxA4, false);
 assert.match(current.blockers[0].message, /21 unresolved fields; 7 open issues/u);
-assert.match(current.blockers[0].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
+assert.match(current.blockers[0].message, /sourceCustody=VERIFIED\/PASS_SOURCE_CUSTODY/u);
 assert.match(current.blockers[1].message, /3 contradiction\(s\)/u);
 assert.match(current.blockers[1].message, /STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH/u);
 assert.match(current.blockers[2].message, /axisMapping=BLOCKED/u);
@@ -71,7 +81,7 @@ assert.match(current.blockers[2].message, /stressIntensity=BLOCKED\/UNRESOLVED/u
 assert.match(current.blockers[3].message, /0\/1200 named scalar coefficients numeric across 120 response-curve rows/u);
 assert.match(current.blockers[3].message, /schema=LEGACY_SINGLE_VALUE_PER_CURVE\/BLOCKED/u);
 assert.match(current.blockers[3].message, /independentVariable=U\/LEGACY_PARAMETER_3_ROW_ORDINATE\/BLOCKED/u);
-assert.match(current.blockers[5].message, /sourceCustody=UNRESOLVED_RAW_BYTES\/BLOCKED/u);
+assert.match(current.blockers[5].message, /sourceCustody=VERIFIED\/PASS_SOURCE_CUSTODY/u);
 
 const technicallyReady = readyEvidence({ methodAuthorized: false, routeRegistered: false });
 const technical = evaluateEmp1CQualificationState(technicallyReady);
@@ -217,7 +227,7 @@ assert.equal(Object.isFrozen(current.blockers), true);
 assert.equal(Object.isFrozen(EMP1_C_CURRENT_QUALIFICATION_EVIDENCE), true);
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-qualification-state-check/v4',
+  schema: 'emp1-c-qualification-state-check/v5',
   status: 'PASS',
   currentState: current.state,
   currentBlockers: current.blockerCodes,
@@ -281,7 +291,7 @@ function readyEvidence({ methodAuthorized, routeRegistered }) {
       semanticHash: 'sha256:qualified-dataset',
       sourceCustodyQualified: true,
       sourceCustodyState: 'VERIFIED',
-      sourceQualificationState: 'PASS',
+      sourceQualificationState: 'PASS_SOURCE_CUSTODY',
       sourceRawPdfSha256: 'a'.repeat(64),
     },
     signArbitration: {
@@ -315,7 +325,7 @@ function readyEvidence({ methodAuthorized, routeRegistered }) {
       sourceIdentityVerified: true,
       sourceCustodyQualified: true,
       sourceCustodyState: 'VERIFIED',
-      sourceQualificationState: 'PASS',
+      sourceQualificationState: 'PASS_SOURCE_CUSTODY',
       sourceRawPdfSha256: 'b'.repeat(64),
       pageRange: '24-31',
       expectedValuesFrozen: true,

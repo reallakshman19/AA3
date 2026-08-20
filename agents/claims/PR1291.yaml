@@ -1,0 +1,33 @@
+schema: engineering-pr-claims/v1
+work_item: PR1291
+repository: reallaksh19/Advanced_Analysis
+issue: 1261
+pr: 1291
+claims:
+  - id: AUTH-BOUNDARY-1291-001
+    state: PASS_BOUNDED
+    statement: Cylindrical WRC537 coefficient selection is engineering-qualified only when runtime gamma matches a source-tabulated gamma within machine round-off; this does not qualify interpolation.
+  - id: IMP-SELECTOR-1291-001
+    state: PASS
+    statement: The selector parses 28 cylindrical coefficient tables into 321 selectable source-qualified curves and preserves one unresolved blank-gamma curve as unselectable.
+  - id: IMP-SELECTOR-1291-002
+    state: PASS
+    statement: Original and Extrapolated variants require explicit selection and the selector never falls back across variants.
+  - id: IMP-SELECTOR-1291-003
+    state: PASS
+    statement: A non-tabulated midpoint gamma is rejected with interpolationUsed=false and extrapolationFallbackUsed=false.
+  - id: IMP-EVAL-1291-001
+    state: PASS_SOFTWARE_CONTRACT
+    statement: The cylindrical rational beta evaluator reproduces an independently written duplicate arithmetic expression for a source-selected exact-gamma row.
+  - id: RISK-WRC-1291-001
+    state: OPEN_FULL_DOMAIN
+    statement: WRC537 does not provide a uniquely qualified programmable rule for non-tabulated cylindrical gamma selection; full-domain interpolation remains blocked.
+  - id: RISK-WRC-1291-002
+    state: OPEN_AFFECTED_ROW_ONLY
+    statement: WRC Figure 1B Original contains one coefficient row with unresolved gamma identity; assigning gamma=10 by sequence remains prohibited.
+  - id: AUTH-ORACLE-1291-001
+    state: IN_PROGRESS
+    statement: The first exact-gamma primary-PDF numerical oracle is being independently re-observed from WRC PDF page 95 before bounded production comparison is authorized.
+  - id: AUTH-ROUTE-1291-001
+    state: BLOCKED
+    statement: Global EMP.1.C route registration remains false; no interpolation or full-domain engineering authority is granted by this PR.

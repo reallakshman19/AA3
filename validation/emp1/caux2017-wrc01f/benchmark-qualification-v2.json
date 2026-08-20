@@ -1,7 +1,7 @@
 {
   "schema": "emp1-caux-pp24-31-benchmark-qualification/v2",
-  "status": "HANDCALC_HASH_FROZEN_PENDING_REOBSERVATION",
-  "engineeringAuthority": false,
+  "status": "PASS_INDEPENDENT_BENCHMARK_QUALIFICATION",
+  "engineeringAuthority": true,
   "productionAuthority": false,
   "productionObservationUsed": false,
   "source": {
@@ -22,9 +22,17 @@
     "firstPassWorkflowRun": 32328483892,
     "firstPassWorkflowNumber": 47,
     "firstPassHead": "f4b2d6634ac41406eacfbc7a29b88991cfb64a02",
-    "firstPassArtifactJsonSha256": "100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f",
-    "frozenSemanticHash": "679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c",
-    "status": "PASS_PENDING_INDEPENDENT_REOBSERVATION",
+    "artifactJsonSha256": "100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f",
+    "semanticHash": "679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c",
+    "reobservation": {
+      "status": "PASS",
+      "workflowRun": 32328966083,
+      "workflowNumber": 52,
+      "head": "18b16622564d6235443f9d97955f91c1ede8e636",
+      "semanticHashMatchedFrozen": true,
+      "productionObservationUsed": false,
+      "productionImports": []
+    },
     "freezeCorrection": {
       "previousIncorrectValue": "ee9692d64f052852e1856c07bad99c50c92cac80ecda9e0fee64f4067c40a029",
       "detectedByWorkflowRun": 32328678654,
@@ -43,8 +51,8 @@
     "sourceExpectedValuesFrozen": true,
     "handCalculationFirstPass": "PASS",
     "handCalculationHashFrozen": true,
-    "handCalculationReobserved": false,
-    "productionComparisonAllowed": false,
+    "handCalculationReobserved": true,
+    "productionComparisonAllowed": true,
     "emp1CRouteRegistrationAllowed": false
   }
 }

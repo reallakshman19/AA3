@@ -40,7 +40,7 @@ console.log(JSON.stringify({
   githubActionsWorkflowAdded: false,
 }));
 
-await import('./lafea-pr1270-affine-metric-screen.mjs');
+await import('./lafea-pr1270-affine-angle-boundary.mjs');
 
 function stage(stageId, document, profileId) {
   return { stageId, document, lifecycle: { profileId }, lifecycleBinding: { status: 'CURRENT' } };

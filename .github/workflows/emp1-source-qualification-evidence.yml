@@ -32,9 +32,7 @@ jobs:
           if (report.status !== 'PASS') throw new Error(`EMP1_SOURCE_CUSTODY_NOT_PASS:${report.status}`);
           if (!Array.isArray(report.results) || report.results.length !== 2) throw new Error('EMP1_SOURCE_CUSTODY_RESULT_COUNT');
           for (const row of report.results) {
-            if (row.status !== 'PASS' || row.code !== 'PASS_SOURCE_CUSTODY') {
-              throw new Error(`EMP1_SOURCE_CUSTODY_ROW_NOT_PASS:${row.sourceId}:${row.code}`);
-            }
+            if (row.status !== 'PASS' || row.code !== 'PASS_SOURCE_CUSTODY') throw new Error(`EMP1_SOURCE_CUSTODY_ROW_NOT_PASS:${row.sourceId}:${row.code}`);
           }
           NODE
 
@@ -57,16 +55,23 @@ jobs:
           caux="$PWD/docs/emp1/CAUx 2017 - WRC01f.pdf"
           pdfinfo "$wrc" > "$out/WRC537_2013.pdfinfo.txt"
           pdfinfo "$caux" > "$out/CAUx_2017_WRC01f.pdfinfo.txt"
-
+          pdftotext -layout "$wrc" "$out/WRC537_2013_full.txt"
           pdftotext -f 33 -l 135 -layout "$wrc" "$out/WRC537_2013_pages_33-135.txt"
           for page in 33 34 35 36 37 38 39 40 41 42 43 44 49 51 53 55 57 59 61 63 65 67 69 71 73 75 77 79 81 83 85 87 89 91 93 95 97 99 101 103 105 107 109 111 113 115 117 119 121 123 125 127 129 131 133 135; do
             pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$wrc" "$out/wrc-pages/page-${page}" >/dev/null
           done
-
           pdftotext -f 24 -l 31 -layout "$caux" "$out/CAUx_2017_WRC01f_pages_24-31.txt"
           for page in 24 25 26 27 28 29 30 31; do
             pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$caux" "$out/caux-pages/page-${page}" >/dev/null
           done
+
+      - name: Scan full WRC source for interpolation authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-interpolation-source-scan.mjs \
+            --pdf-text test-results/emp1-source-qualification/WRC537_2013_full.txt \
+            | tee test-results/emp1-source-qualification/wrc-interpolation-source-scan.json
 
       - name: Audit complete WRC Section 8 source inventory
         shell: bash

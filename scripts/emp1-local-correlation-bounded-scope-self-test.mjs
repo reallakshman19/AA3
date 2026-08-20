@@ -17,7 +17,7 @@ const method={
     machineRoundOffRelativeTolerance:1e-12,sourceDocumentSha256:sha,datasetHash,
     shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',variant:'ORIGINAL',gamma:5,betaMinimum:0.05,betaMaximum:0.5,
     loadReference:'WRC_ATTACHMENT_REFERENCE_POINT',pressureThrustDisposition:'PRESSURE_THRUST_RESOLVED_UPSTREAM',
-    loadProducerQualificationHash,scopeContractHash:'sha256:scope-contract-placeholder',
+    loadProducerQualificationHash:producerQualificationHash,scopeContractHash:'sha256:scope-contract-placeholder',
   },
 };
 const benchmark={status:'PASS',benchmarkHash:'sha256:frozen-benchmark-placeholder'};

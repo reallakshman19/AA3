@@ -23,20 +23,25 @@ export async function runEmp1(options = {}) {
     execute: () => adapters.runSectionScreening({ source, loadTransfer }),
   });
 
+  const needsLocal = sectionScreening?.decision === 'ESCALATE' || source?.localMethod?.requested === true;
+  const localSource = needsLocal
+    ? await prepareLocalSource(adapters, { source, loadTransfer, sectionScreening })
+    : source;
   const localGate = evaluateEmp1LocalCorrelationGate({
     methodQualification: options.methodQualification,
     benchmarkQualification: options.benchmarkQualification,
+    source: localSource,
   });
 
   let localCorrelation = localGate;
-  const needsLocal = sectionScreening?.decision === 'ESCALATE' || source?.localMethod?.requested === true;
   if (needsLocal && localGate.state === 'METHOD_QUALIFIED') {
     localCorrelation = await resolveLayer({
       componentId: EMP1_COMPONENTS.LOCAL_CORRELATION,
       invalidated,
       previous: previous.localCorrelation,
       execute: () => adapters.runLocalCorrelation({
-        source,
+        source: localSource,
+        originalSource: source,
         loadTransfer,
         sectionScreening,
         gate: localGate,
@@ -61,6 +66,15 @@ export async function runEmp1(options = {}) {
   });
 }
 
+async function prepareLocalSource(adapters, context) {
+  if (typeof adapters.prepareLocalCorrelationSource !== 'function') return context.source;
+  const prepared = await adapters.prepareLocalCorrelationSource(context);
+  if (!prepared || typeof prepared !== 'object' || Array.isArray(prepared)) {
+    throw new TypeError('EMP1_ADAPTER_RESULT_INVALID:EMP.1.C.SOURCE_PREPARATION');
+  }
+  return prepared;
+}
+
 async function resolveLayer({ componentId, invalidated, previous, execute }) {
   if (!invalidated.has(componentId) && previous) return previous;
   const result = await execute();
@@ -75,5 +89,9 @@ function requireAdapters(value) {
   ['runLoadTransfer', 'runSectionScreening', 'runLocalCorrelation'].forEach((name) => {
     if (typeof value[name] !== 'function') throw new TypeError(`EMP1_ADAPTER_REQUIRED:${name}`);
   });
+  if (value.prepareLocalCorrelationSource != null
+    && typeof value.prepareLocalCorrelationSource !== 'function') {
+    throw new TypeError('EMP1_ADAPTER_INVALID:prepareLocalCorrelationSource');
+  }
   return value;
 }

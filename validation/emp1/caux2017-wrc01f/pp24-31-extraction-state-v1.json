@@ -1,67 +1,30 @@
 {
   "schema": "emp1-caux-pp24-31-extraction-state/v1",
-  "status": "NOT_RUN_PRIMARY_PDF_REQUIRED",
-  "benchmarkAuthority": false,
-  "productionObservationAllowed": false,
-  "source": {
-    "sourceId": "CAUX_2017_WRC01F_PP24_31",
-    "classification": "BENCHMARK_SOURCE",
-    "repository": "reallaksh19/XML_Compare_Utilities",
-    "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
-    "path": "docs/emp.1/CAUx 2017 - WRC01f.pdf",
-    "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
-    "expectedByteCount": 7260396,
-    "rawPdfSha256": null,
-    "pdfPages": [24, 25, 26, 27, 28, 29, 30, 31],
-    "custodyState": "UNRESOLVED_RAW_BYTES"
+  "status": "SUPERSEDED_BY_QUALIFIED_V2",
+  "supersededBy": {
+    "sourceBenchmark": "validation/emp1/caux2017-wrc01f/benchmark-source-pp24-31-v2.json",
+    "benchmarkQualification": "validation/emp1/caux2017-wrc01f/benchmark-qualification-v2.json",
+    "sourceRawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "sourceBenchmarkSemanticHash": "8d97539f03f077321eef1e496e315a6a7700a9d83a6c8cd4ff1b83382ebe45fe",
+    "independentHandCalculationSemanticHash": "679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c",
+    "reobservationWorkflowRun": 32328966083,
+    "reobservationWorkflowNumber": 52,
+    "qualificationStatus": "PASS_INDEPENDENT_BENCHMARK_QUALIFICATION"
   },
-  "repositoryAudit": {
-    "retainedIndependentPp24_31ExtractionFound": false,
-    "supplementalArtifactFound": "validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-v1.json",
-    "supplementalArtifactAuthority": "SUPPLEMENTAL_ONLY_NOT_CAUX_PP24_31",
-    "conclusion": "No retained independent extraction of CAUx PDF pages 24-31 is available to freeze as the benchmark expected-value source."
-  },
-  "requiredExtraction": {
-    "fields": [
-      "source page for every datum",
-      "geometry and thickness dimensions with units",
-      "load components with signs and reference point",
-      "pressure and pressure-thrust treatment if present",
-      "WRC dimensionless parameters",
-      "source-reported coefficient/intermediate values",
-      "recovery locations and shell surfaces",
-      "source-reported stress components and stress intensity",
-      "rounding/printed precision",
-      "all notes/footnotes affecting interpretation"
-    ],
-    "expectedValues": null,
-    "expectedValuesFrozen": false,
-    "independentHandCalculation": null,
-    "independentHandCalculationFrozen": false,
-    "benchmarkSemanticHash": null
-  },
-  "freezeSequence": [
-    "freeze raw CAUx PDF SHA-256",
-    "extract only pages 24-31 with exact page locators",
-    "freeze source-reported expected values without production imports",
-    "freeze source-reported expected-value semantic hash",
-    "perform independent hand calculation without production EMP.1.C imports",
-    "freeze independent-handcalc hash",
-    "only then execute production EMP.1.C and compare"
+  "historicalPurpose": "This v1 record captured the fail-closed pre-source state and anti-substitution rules before PR1286 made the exact CAUx PDF bytes available. It is retained only as qualification history and must not be read as current authority state.",
+  "antiSubstitutionRulesStillBinding": [
+    "Hexagon supplemental pressure-thrust precheck cannot replace CAUx pp24-31 benchmark source authority",
+    "CEI WRC example cannot replace CAUx pp24-31 benchmark source authority",
+    "production EMP.1.C output cannot set or alter benchmark expected values",
+    "reverse-engineered values chosen to match production are prohibited",
+    "unauthorized digitized/inferred values are prohibited"
   ],
-  "disallowedSubstitutions": [
-    "Hexagon supplemental pressure-thrust precheck",
-    "CEI WRC example retained in docs/03_WRC537_DATASET.json",
-    "production EMP.1.C output",
-    "reverse-engineered values chosen to match production",
-    "digitized or inferred values not explicitly authorized by the benchmark source"
-  ],
-  "qualification": {
-    "sourceCustody": "BLOCKED",
-    "pageExtraction": "NOT_RUN",
-    "expectedValueFreeze": "NOT_RUN",
-    "independentHandCalculation": "NOT_RUN",
-    "productionComparison": "PROHIBITED_UNTIL_FREEZE_SEQUENCE_COMPLETE",
-    "emp1CBenchmarkAuthority": "BLOCKED"
+  "currentAuthority": {
+    "sourceCustody": "PASS",
+    "pageExtraction": "PASS",
+    "expectedValueFreeze": "PASS",
+    "independentHandCalculation": "PASS_REOBSERVED",
+    "productionComparison": "ALLOWED_BY_BENCHMARK_GATE_BUT_REQUIRES_METHOD_RUNTIME_AUTHORITY",
+    "emp1CRouteRegistration": "NOT_AUTHORIZED_BY_THIS_RECORD"
   }
 }

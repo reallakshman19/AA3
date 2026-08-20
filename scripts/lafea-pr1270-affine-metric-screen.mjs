@@ -13,7 +13,7 @@ import { qualifyLafeaAnalysisMesh } from '../src/workspace/lafea-analysis-mesh-q
 const GLOBAL = 30;
 const GROWTH = 1.5;
 const families = ['T3'];
-const localTargets = [15, 7.5];
+const localTargets = [22.5, 15, 11.25, 7.5];
 const targetCases = [
   { name: 'CENTER', u: 0.50, v: 0.50 },
   { name: 'NEAR_EDGE', u: 0.15, v: 0.50 },
@@ -48,7 +48,7 @@ const rotationInvariantFailures = rotationRows.filter((row) => (
 ));
 
 const receipt = {
-  check: 'PR1270_AFFINE_BALANCED_METRIC_SCREEN_V1',
+  check: 'PR1270_AFFINE_BALANCED_METRIC_SCREEN_V2',
   classification: 'QUALIFICATION_CONTROL_NOT_PRODUCT_MESHER',
   globalTarget: GLOBAL,
   adjacentSizeRatioMax: GROWTH,
@@ -120,11 +120,9 @@ function runCase({ family, geometry, localTarget, targetCase }) {
       targetV,
     }))
     : null;
-  const targetNode = nearestCornerNode(mesh, mapPoint(geometry, targetU, targetV));
-  const targetResidual = Math.hypot(
-    targetNode.x - mapPoint(geometry, targetU, targetV).x,
-    targetNode.y - mapPoint(geometry, targetU, targetV).y,
-  );
+  const targetPoint = mapPoint(geometry, targetU, targetV);
+  const targetNode = nearestCornerNode(mesh, targetPoint);
+  const targetResidual = Math.hypot(targetNode.x - targetPoint.x, targetNode.y - targetPoint.y);
   const acceptancePass = quality.worstStatus !== 'BLOCK'
     && adjacency.qualification === 'PASS'
     && axes.maximumAxisIntervalRatio <= GROWTH + 1e-12
@@ -239,13 +237,11 @@ function mapPoint(geometry, u, v) {
   };
 }
 function rawElement(family, p0, p1, p2) {
-  const nodes = family === 'T3'
+  return family === 'T3'
     ? [p0, p1, p2]
     : [p0, p1, p2, midpoint(p0, p1), midpoint(p1, p2), midpoint(p2, p0)];
-  return nodes;
 }
 function midpoint(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
-
 function weld(rawElements, family) {
   const byKey = new Map();
   const keysByElement = rawElements.map((nodes) => nodes.map((node) => {
@@ -263,22 +259,14 @@ function weld(rawElements, family) {
   }));
   return { schema: 'lafea-analysis-mesh/v1', meshIdentity: `PR1270_AFFINE_SCREEN:${family}`, nodes, elements };
 }
-
 function meshProfile(family) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
-    schema: 'lafea-mesh-profile/v1',
-    profileIdentity: `PR1270-AFFINE-${family}`,
-    sourceRevision: 'PR1270-AFFINE-DIAG',
-    semanticHash: undefined,
-    fields: {
-      ...defaultProfileFields(PROFILE_KINDS.MESH),
-      continuumElement: family,
-      shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
-      globalTargetSize: GLOBAL,
-    },
+    schema: 'lafea-mesh-profile/v1', profileIdentity: `PR1270-AFFINE-${family}`,
+    sourceRevision: 'PR1270-AFFINE-DIAG', semanticHash: undefined,
+    fields: { ...defaultProfileFields(PROFILE_KINDS.MESH), continuumElement: family,
+      shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1', globalTargetSize: GLOBAL },
   });
 }
-
 function independentTriangleAudit(mesh) {
   const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
   let maximumAspectRatio = 1;
@@ -287,82 +275,69 @@ function independentTriangleAudit(mesh) {
   for (const element of mesh.elements) {
     const p = element.nodeIds.slice(0, 3).map((id) => nodeById.get(id));
     const lengths = [distance(p[0], p[1]), distance(p[1], p[2]), distance(p[2], p[0])];
-    maximumAspectRatio = Math.max(maximumAspectRatio, Math.max(...lengths) / Math.min(...lengths));
-    for (let corner = 0; corner < 3; corner += 1) {
-      const a = p[(corner + 1) % 3];
-      const b = p[corner];
-      const c = p[(corner + 2) % 3];
-      const ux = a.x - b.x; const uy = a.y - b.y;
-      const vx = c.x - b.x; const vy = c.y - b.y;
-      const nu = Math.hypot(ux, uy); const nv = Math.hypot(vx, vy);
-      const cos = Math.max(-1, Math.min(1, (ux * vx + uy * vy) / (nu * nv)));
-      const angle = Math.acos(cos);
-      const sj = Math.abs(ux * vy - uy * vx) / (nu * nv);
-      minimumAngle = Math.min(minimumAngle, angle);
-      minimumScaledJacobian = Math.min(minimumScaledJacobian, sj);
-    }
+    const longest = Math.max(...lengths); const shortest = Math.min(...lengths);
+    maximumAspectRatio = Math.max(maximumAspectRatio, longest / shortest);
+    const cross = Math.abs((p[1].x - p[0].x) * (p[2].y - p[0].y) - (p[1].y - p[0].y) * (p[2].x - p[0].x));
+    minimumScaledJacobian = Math.min(minimumScaledJacobian, cross / (lengths[0] * lengths[2]));
+    minimumAngle = Math.min(minimumAngle, ...triangleAngles(lengths));
   }
   return { maximumAspectRatio, minimumScaledJacobian, minimumAngleDeg: minimumAngle * 180 / Math.PI };
 }
-function controlMetrics(mesh) {
-  const adjacency = qualifyRefinedMeshAdjacentSizeRatio(mesh, GROWTH);
-  const audit = independentTriangleAudit(mesh);
-  return {
-    maximumObservedAdjacency: adjacency.maximumObserved,
-    independentMinimumScaledJacobian: audit.minimumScaledJacobian,
-    independentMaximumAspectRatio: audit.maximumAspectRatio,
-  };
+function triangleAngles([a, b, c]) {
+  return [
+    Math.acos(clamp((a * a + c * c - b * b) / (2 * a * c))),
+    Math.acos(clamp((a * a + b * b - c * c) / (2 * a * b))),
+    Math.acos(clamp((b * b + c * c - a * a) / (2 * a * b))),
+  ];
 }
-
+function clamp(value) { return Math.max(-1, Math.min(1, value)); }
+function distance(a, b) { return Math.hypot(b.x - a.x, b.y - a.y); }
 function boundaryAudit(mesh, geometry) {
   const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
   const owners = new Map();
   for (const element of mesh.elements) {
-    const corners = element.nodeIds.slice(0, 3);
+    const ids = element.nodeIds.slice(0, 3);
     for (let edge = 0; edge < 3; edge += 1) {
-      const a = corners[edge]; const b = corners[(edge + 1) % 3];
-      const key = a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`;
-      const rows = owners.get(key) ?? [];
-      rows.push({ element, edge }); owners.set(key, rows);
+      const a = ids[edge]; const b = ids[(edge + 1) % 3]; const key = [a, b].sort().join(':');
+      owners.set(key, (owners.get(key) ?? 0) + 1);
     }
   }
-  const corners = [
-    mapPoint(geometry, 0, 0),
-    mapPoint(geometry, geometry.lengthA, 0),
-    mapPoint(geometry, geometry.lengthA, geometry.lengthB),
-    mapPoint(geometry, 0, geometry.lengthB),
-  ];
-  let maximumResidual = 0;
-  let nonManifoldBoundaryOwnerCount = 0;
-  for (const rows of owners.values()) {
-    if (rows.length > 2) nonManifoldBoundaryOwnerCount += 1;
-    if (rows.length !== 1) continue;
-    const { element, edge } = rows[0];
-    const ids = [element.nodeIds[edge], element.nodeIds[(edge + 1) % 3]];
-    if (element.elementType === 'T6') ids.push(element.nodeIds[3 + edge]);
-    for (const id of ids) {
-      const node = nodeById.get(id);
-      maximumResidual = Math.max(maximumResidual, Math.min(
-        pointSegmentDistance(node, corners[0], corners[1]),
-        pointSegmentDistance(node, corners[1], corners[2]),
-        pointSegmentDistance(node, corners[2], corners[3]),
-        pointSegmentDistance(node, corners[3], corners[0]),
-      ));
-    }
+  let maximumResidual = 0; let nonManifoldBoundaryOwnerCount = 0;
+  for (const [key, count] of owners.entries()) {
+    if (count > 2) nonManifoldBoundaryOwnerCount += 1;
+    if (count !== 1) continue;
+    for (const id of key.split(':')) maximumResidual = Math.max(maximumResidual, boundaryResidual(nodeById.get(id), geometry));
   }
   return { maximumResidual, nonManifoldBoundaryOwnerCount };
 }
+function boundaryResidual(point, geometry) {
+  const corners = [
+    mapPoint(geometry, 0, 0), mapPoint(geometry, geometry.lengthA, 0),
+    mapPoint(geometry, geometry.lengthA, geometry.lengthB), mapPoint(geometry, 0, geometry.lengthB),
+  ];
+  return Math.min(
+    pointSegmentDistance(point, corners[0], corners[1]),
+    pointSegmentDistance(point, corners[1], corners[2]),
+    pointSegmentDistance(point, corners[2], corners[3]),
+    pointSegmentDistance(point, corners[3], corners[0]),
+  );
+}
 function pointSegmentDistance(point, a, b) {
-  const dx = b.x - a.x; const dy = b.y - a.y;
-  const l2 = dx * dx + dy * dy;
-  const t = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / l2));
+  const dx = b.x - a.x; const dy = b.y - a.y; const l2 = dx * dx + dy * dy;
+  const t = l2 ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / l2)) : 0;
   return Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy));
 }
 function nearestCornerNode(mesh, point) {
   const cornerIds = new Set(mesh.elements.flatMap((element) => element.nodeIds.slice(0, 3)));
   return mesh.nodes.filter((node) => cornerIds.has(node.nodeId))
-    .sort((a, b) => distance(a, point) - distance(b, point) || a.nodeId.localeCompare(b.nodeId))[0];
+    .sort((a, b) => Math.hypot(a.x - point.x, a.y - point.y) - Math.hypot(b.x - point.x, b.y - point.y))[0];
 }
-function distance(a, b) { return Math.hypot(b.x - a.x, b.y - a.y); }
+function controlMetrics(mesh) {
+  const adjacency = qualifyRefinedMeshAdjacentSizeRatio(mesh, GROWTH);
+  const independent = independentTriangleAudit(mesh);
+  return { maximumObservedAdjacency: adjacency.maximumObserved,
+    independentMinimumScaledJacobian: independent.minimumScaledJacobian,
+    independentMaximumAspectRatio: independent.maximumAspectRatio };
+}
 function maxFinite(values) { const rows = values.filter(Number.isFinite); return rows.length ? Math.max(...rows) : null; }
 function minFinite(values) { const rows = values.filter(Number.isFinite); return rows.length ? Math.min(...rows) : null; }

@@ -179,3 +179,4 @@ function exactPointExists(points, point) {
           node --check src/workspace/lafea-retained-mesh-refinement.js
           node scripts/lafea-retained-mesh-refinement-check.mjs 2>&1 | tee /tmp/closure.log
           grep 'PR1270_CLOSURE_PASS=' /tmp/closure.log
+# retrigger-longest-edge

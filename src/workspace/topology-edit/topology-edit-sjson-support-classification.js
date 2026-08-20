@@ -57,6 +57,18 @@ export function classifySjsonSupportProjection(attributes = {}) {
     return nonRestraint('SOURCE_GENERIC_ATTACHMENT_PLACEHOLDER');
   }
 
+  // If no family field, no support-object signal, and the only identifiers are
+  // opaque numeric-entity IDs (=<digits>/…), this entity has zero restraint
+  // evidence. Treat it as a reference point rather than emitting an
+  // unresolvable UNKNOWN_RESTRAINT_FAMILY review finding.
+  const hasNoFamilyFields = FAMILY_FIELDS.every((field) => !meaningful(attributes[field]));
+  const hasNoSupportSignal = !supportObjectSignal(attributes);
+  const allIdentifiersOpaque = identifiers.length > 0
+    && identifiers.every((value) => OPAQUE_SOURCE_ID.test(value));
+  if (hasNoFamilyFields && hasNoSupportSignal && allIdentifiersOpaque) {
+    return nonRestraint('OPAQUE_ID_NO_RESTRAINT_EVIDENCE');
+  }
+
   const signal = supportObjectSignal(attributes);
   return Object.freeze({
     disposition: 'EMIT_SUPPORT_ATTACHMENT',

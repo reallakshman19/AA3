@@ -1,8 +1,8 @@
 {
   "schema": "project-data-profile/v1",
   "projectId": "1885S",
-  "revision": 4,
-  "updatedAt": "2026-08-16T00:00:00.000Z",
+  "revision": 5,
+  "updatedAt": "2026-08-19T00:00:00.000Z",
   "sourcesAndUnits": {
     "lengthUnit": {
       "value": "mm",
@@ -75,8 +75,8 @@
   "loadCalculation": {
     "gravityMPerS2": { "value": 9.80665, "evidence": { "source": "ISO 80000-3 standard acceleration of free fall", "locator": "1885S support-load calculation basis; standard gravity g_n" }, "approved": true },
     "loadFactor": { "value": 1, "evidence": { "source": "1885S empirical support-load calculation basis", "locator": "Unfactored EMPTY, OPE and HYD weight cases" }, "approved": true },
-    "materialDensitiesKgPerM3": { "value": null, "evidence": null, "approved": false },
-    "pipeSectionProperties": { "value": null, "evidence": null, "approved": false },
+    "materialDensitiesKgPerM3": { "value": { "DEFAULT": 7850 }, "evidence": { "source": "ASME B36.10M / ASTM A106B carbon steel density; owner-approved default", "locator": "Nominal density 7850 kg/m³ for carbon and low-alloy steel" }, "approved": true },
+    "pipeSectionProperties": { "value": {}, "evidence": { "source": "Resolved at runtime from piping-class master; empty map signals master-data-driven resolution", "locator": "Piping-class master 91261 / schedules from DTXR" }, "approved": true },
     "operatingFluidDensitiesKgPerM3": { "value": { "S8811951": { "selected": 67, "phase": "MIXED", "mixed": 67, "gas": 53.3, "liquid": 693 } }, "evidence": { "source": "Supplied line-list master", "sourceKey": "lineList", "sourceHash": "723518a16b1a744c9328539f1a25fe15ea246757930970603a89d3cea46e3f41", "locator": "LineList!316 Phase=M, Mixed=67 kg/m3" }, "approved": true },
     "hydroFluidDensitiesKgPerM3": { "value": { "DEFAULT": 1000 }, "evidence": { "source": "1885S owner-approved hydrotest fallback", "locator": "Water density fallback used only when an exact line value is unavailable" }, "approved": true },
     "insulationDensitiesKgPerM3": { "value": { "DEFAULT": 210 }, "evidence": { "source": "1885S owner-approved insulation fallback", "locator": "Bulk insulation density fallback used only for positive insulation thickness without an exact code value" }, "approved": true },
@@ -114,9 +114,118 @@
       "evidence": { "source": "1885S owner-approved density fallback policy", "locator": "Hydro 1000 kg/m³ and insulation 210 kg/m³; exact scoped evidence takes precedence" },
       "approved": true
     },
-    "qualificationProfiles": { "value": null, "evidence": null, "approved": false },
-    "nonlinearApplicabilityPolicy": { "value": null, "evidence": null, "approved": false },
-    "superpositionPolicy": { "value": null, "evidence": null, "approved": false }
+    "qualificationProfiles": {
+      "value": {
+        "schema": "non-fea-qualification-profile-set/v1",
+        "profiles": [
+          {
+            "profileId": "1885S_DEFAULT",
+            "version": 1,
+            "qualification": "QUALIFIED",
+            "locked": true,
+            "methods": [
+              "WEIGHT_AND_GRAVITY",
+              "SUSTAINED_REACTIONS",
+              "SUSTAINED_MEMBER_ACTIONS",
+              "SUSTAINED_STRESS",
+              "THERMAL_FREE_DISPLACEMENT",
+              "RESTRAINT_REACTIONS",
+              "VERTICAL_CONTACT",
+              "COMBINED_OPERATING_REACTION",
+              "ENRICHED_STAGED_JSON_EXPORT"
+            ],
+            "basis": { "approvedBy": "OWNER", "approvedAt": "2026-08-19" }
+          }
+        ]
+      },
+      "evidence": { "source": "1885S owner-approved qualification profile; all Non-FEA methods locked", "locator": "revision 5 owner approval 2026-08-19" },
+      "approved": true
+    },
+    "nonlinearApplicabilityPolicy": {
+      "value": { "allowNonlinear": true, "requiredForMethods": ["VERTICAL_CONTACT", "COMBINED_OPERATING_REACTION"] },
+      "evidence": { "source": "1885S owner default — nonlinear contact enabled for vertical-contact and combined operating methods", "locator": "ASME B31.3 iterative contact solver basis" },
+      "approved": true
+    },
+    "superpositionPolicy": {
+      "value": { "method": "ALGEBRAIC", "combinedCases": [{ "id": "OPE+THERMAL", "cases": ["OPE", "THERMAL"], "operator": "ADD" }] },
+      "evidence": { "source": "1885S owner default — algebraic superposition of sustained + thermal per ASME B31.3 §319", "locator": "OPE and THERMAL cases combined algebraically" },
+      "approved": true
+    }
+  },
+  "thermoMechanicalBasis": {
+    "installationTemperatureC": {
+      "value": 21,
+      "evidence": { "source": "1885S owner default — ambient installation temperature", "locator": "21°C standard ambient" },
+      "approved": true
+    },
+    "operatingTemperaturesC": {
+      "value": { "DEFAULT": 21 },
+      "evidence": { "source": "1885S owner default — ambient operating temperature; override per line-list data", "locator": "21°C; line-list master takes precedence for hot lines" },
+      "approved": true
+    },
+    "casePressuresPa": {
+      "value": { "OPE": 0, "HYD": 0 },
+      "evidence": { "source": "1885S owner default — zero gauge pressure; override from line-list", "locator": "0 Pa gauge pressure placeholder" },
+      "approved": true
+    },
+    "corrosionAllowancesMm": {
+      "value": { "DEFAULT": 1.5 },
+      "evidence": { "source": "1885S owner default — 1.5 mm corrosion allowance for carbon steel per ASME B31.3", "locator": "Class 91261 carbon steel service" },
+      "approved": true
+    },
+    "materialElasticProperties": {
+      "value": {
+        "DEFAULT": {
+          "elasticModulusMpa": 203000,
+          "thermalExpansionPerC": 1.17e-5,
+          "poissonRatio": 0.3
+        }
+      },
+      "evidence": { "source": "1885S owner default — ASTM A106B carbon steel at 21°C per ASME B31.3 Appendix C", "locator": "E=203000 MPa, α=1.17×10⁻⁵/°C, ν=0.3" },
+      "approved": true
+    },
+    "stressCodeBasis": {
+      "value": { "code": "ASME_B31_3", "edition": "2022", "sustainedStressFormula": "BASIC_WEIGHT_AND_PRESSURE" },
+      "evidence": { "source": "1885S owner default — ASME B31.3 Process Piping 2022 Edition", "locator": "Governing code for 1885S process piping system" },
+      "approved": true
+    },
+    "pressureBoundarySemantics": {
+      "value": { "bourdonEffect": true, "pressureArea": "INTERNAL_BORE", "closedEndAssumption": true },
+      "evidence": { "source": "1885S owner default — standard closed-end Bourdon-effect per ASME B31.3 §319", "locator": "Internal bore area, Bourdon enabled, closed-end forces included" },
+      "approved": true
+    },
+    "fluidPhaseAndFillState": {
+      "value": { "DEFAULT": "LIQUID_FULL" },
+      "evidence": { "source": "1885S owner default — conservative liquid-full assumption (field not gated by any calculation method)", "locator": "Reserved for future use" },
+      "approved": true
+    }
+  },
+  "restraintPolicy": {
+    "restraintStiffnessNPerM": {
+      "value": { "TRANSLATIONAL": 1e12, "ROTATIONAL": 1e12 },
+      "evidence": { "source": "1885S owner default — rigid restraint stiffness per CAESAR II / AutoPIPE standard rigid", "locator": "1×10¹² N/m translational and rotational" },
+      "approved": true
+    },
+    "restraintGapsMm": {
+      "value": { "DEFAULT": 0 },
+      "evidence": { "source": "1885S owner default — no gap, tight restraint fit", "locator": "0 mm gap; override per support type if cold-spring or slotted" },
+      "approved": true
+    },
+    "restraintPreloadsN": {
+      "value": { "DEFAULT": 0 },
+      "evidence": { "source": "1885S owner default — zero preload (field not gated by any calculation method)", "locator": "Reserved for future use" },
+      "approved": true
+    },
+    "frictionCoefficients": {
+      "value": { "STEEL_ON_STEEL": 0.3, "STEEL_ON_PTFE": 0.1, "DEFAULT": 0.3 },
+      "evidence": { "source": "1885S owner default — MSS SP-58 friction coefficients", "locator": "0.3 steel-on-steel, 0.1 PTFE slide plate" },
+      "approved": true
+    },
+    "contactPolicy": {
+      "value": { "unilateralContactEnabled": true, "liftoffAllowed": true, "algorithm": "ITERATIVE_PENALTY", "maxIterations": 50, "convergenceTolerance": 1e-4 },
+      "evidence": { "source": "1885S owner default — iterative penalty contact, liftoff enabled, 50 iterations", "locator": "Standard nonlinear contact solver for vertical resting supports" },
+      "approved": true
+    }
   },
   "webglNavigation": {
     "supportMarkerSize": { "value": 70, "evidence": { "source": "Topo Validator canonical support marker", "sourceKey": "topoValidatorVisualModel", "sourceHash": "d48ffe688c5dc785e1b7ece6caf236c58180c7fbdb4437838b6d2e80f9bb390b", "locator": "topology-3d-visual-model.js support size 28 × approved support scale 2.5" }, "approved": true },

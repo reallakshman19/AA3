@@ -1,5 +1,10 @@
 import { EventBus } from './event-bus.js';
 import { WorkspaceState } from './workspace-state.js';
+import {
+  BUNDLED_WEIGHT_MASTER,
+  BUNDLED_MAT_MAP_MASTER,
+  BUNDLED_PIPING_CLASS_MASTER,
+} from '../master-data/bundled-master-data.js';
 
 const MASTER_DATA_DB_NAME = 'MasterDataDB';
 const MASTER_DATA_STORE_NAME = 'masters';
@@ -164,7 +169,11 @@ export class MasterDataController {
   async restorePersistedRows(basisRevision) {
     try {
       const stored = await readPersistedMasterRows();
-      if (!stored || basisRevision !== this._mutationRevision) return false;
+      if (!stored || basisRevision !== this._mutationRevision) {
+        // Nothing in IndexedDB — seed bundled defaults for keys that are still empty.
+        this._seedBundledDefaults();
+        return false;
+      }
       let restored = false;
       for (const key of MASTER_KEYS) {
         const source = stored[key];
@@ -182,13 +191,48 @@ export class MasterDataController {
         this._masterRevisions[key] += 1;
         restored = true;
       }
-      if (restored && basisRevision === this._mutationRevision) {
+      // Seed bundled defaults for any key that still has no rows after IDB restore.
+      this._seedBundledDefaults();
+      if (basisRevision === this._mutationRevision) {
         this.publishMasterUpdated({ action: 'idb_restore', revisions: this.getRevisionSnapshot() });
       }
       return restored;
     } catch (error) {
       console.warn('Failed to restore master data rows from IndexedDB', error);
+      this._seedBundledDefaults();
       return false;
+    }
+  }
+
+  /**
+   * Seeds bundled master data for 'weight' and 'materialMap' only when the
+   * key currently has zero rawRows. User-uploaded data always wins because
+   * this is called after IDB restoration.
+   */
+  _seedBundledDefaults() {
+    const BUNDLED = {
+      weight: BUNDLED_WEIGHT_MASTER,
+      materialMap: BUNDLED_MAT_MAP_MASTER,
+      pipingClass: BUNDLED_PIPING_CLASS_MASTER,
+    };
+    let seeded = false;
+    for (const [key, bundled] of Object.entries(BUNDLED)) {
+      if (!this.masterData[key]) continue;
+      if (this.masterData[key].rawRows.length > 0) continue; // IDB data wins
+      Object.assign(this.masterData[key], {
+        rawRows: bundled.rawRows,
+        normalizedRows: bundled.normalizedRows,
+        fileName: bundled.fileName,
+        sheetName: bundled.sheetName,
+        diagnostics: bundled.diagnostics,
+        sourceHash: bundled.sourceHash,
+        byteLength: bundled.byteLength,
+      });
+      this._masterRevisions[key] += 1;
+      seeded = true;
+    }
+    if (seeded) {
+      this.publishMasterUpdated({ action: 'bundled_seed', revisions: this.getRevisionSnapshot() });
     }
   }
 

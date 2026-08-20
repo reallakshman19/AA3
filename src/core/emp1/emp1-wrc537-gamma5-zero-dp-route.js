@@ -10,7 +10,7 @@ import {
 } from './emp1-wrc537-cylindrical-bounded-adapter.js';
 
 export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256='3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e';
-export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED=false;
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED=true;
 export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SCHEMA='emp1-wrc537-gamma5-zero-dp-route-result/v1';
 
 const SOURCE_SHA='698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2';
@@ -48,10 +48,6 @@ export const EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION=deepFreeze({
 });
 export const EMP1_WRC537_GAMMA5_ZERO_DP_BENCHMARK_QUALIFICATION=deepFreeze({status:'PASS',benchmarkHash:FULL_TABLE5_ORACLE_HASH});
 
-/**
- * Build and fully gate the bounded route without claiming final route
- * registration. Expected values are never derived from this function.
- */
 export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input){
   if(!record(input)) throw routeError('EMP1_WRC537_ZERO_DP_ROUTE_INPUT_REQUIRED');
   requireUnityStressConcentration(input.stressConcentration);
@@ -94,12 +90,10 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input){
 export function runEmp1Wrc537Gamma5ZeroDpRoute(input){
   if(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED!==true) throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_NOT_AUTHORIZED');
   const result=evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
-  return deepFreeze({...result,state:'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE',productionRouteAuthority:true});
+  return deepFreeze({...result,state:'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE',productionRouteAuthority:true,globalEmp1CRouteAuthority:false});
 }
 
-function requireUnityStressConcentration(value){
-  if(!record(value)||value.Kn!==1||value.Kb!==1) throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
-}
+function requireUnityStressConcentration(value){if(!record(value)||value.Kn!==1||value.Kb!==1) throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');}
 function record(value){return Boolean(value)&&typeof value==='object'&&!Array.isArray(value);}
 function routeError(code){const error=new TypeError(code);error.code=code;return error;}
 function deepFreeze(value){if(!value||typeof value!=='object'||Object.isFrozen(value))return value;Object.values(value).forEach(deepFreeze);return Object.freeze(value);}

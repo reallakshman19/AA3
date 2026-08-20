@@ -9,10 +9,10 @@
 - `MUTATION_AUTHORITY: WRITE_ALLOWED`
 - `BRANCH: agent/ei-p0-source-correction-20260820`
 - `MAIN_HEAD_LAST_CHECKED: 782683e7355281e95e5319dcad7f8a5644710d1d`
-- `GROUNDING_SOURCE: merged PR1288 / exact EI PDF blob 9d3eccc56429411e17c07a579bdebbd13cb0bdc5`
-- `CURRENT_STAGE: P0_SOURCE_TRANSCRIPTION_CORRECTION`
+- `GROUNDING_SOURCE: merged PR1288 / EI PDF blob 9d3eccc56429411e17c07a579bdebbd13cb0bdc5`
+- `CURRENT_STAGE: READY_FOR_DRAFT_PR_RECONCILIATION`
 - `MERGE_AUTHORITY: NOT_GRANTED`
-- `EXACT_NEXT_ACTION: snapshot exact target blobs, correct independently reproduced FIT/AIV formulas, quarantine unresolved T2.6/P1 transcriptions, add focused source-master validation, then open a draft PR`
+- `EXACT_NEXT_ACTION: re-ground live main, open draft corrective PR, migrate custody, reconcile hosted state`
 
 Repository: `reallaksh19/Advanced_Analysis`  
 Source upload: merged PR `#1288`  
@@ -20,68 +20,226 @@ Base: `main@782683e7355281e95e5319dcad7f8a5644710d1d`
 
 ## Handover in 60 seconds
 
-PR1288 supplied the missing EI source packs plus `EI - AVIFF Guidelines 2nd Edition.pdf`. The uploaded PDF blob is exactly `9d3eccc56429411e17c07a579bdebbd13cb0bdc5`, matching the controlled EI main-guidance blob already pinned by `3D_Converters` FIT/AIV source evidence.
+PR1288 supplied the requested FIT/AIV/T1 source packs, but its derived CSV/YAML contained several engineering-critical transcription errors. This WIP corrects only formulas independently reproduced from the controlled EI worked examples, the official Energy Institute errata, and the already source-pinned FIT/AIV evidence chain. It deliberately reduces authority where the direct T2.6/T1 source has not been reconciled.
 
-Audit found multiple engineering-critical transcription defects in the newly merged master data. This WIP corrects only formulas independently reproduced from the controlled EI worked examples / official publisher errata / existing source-pinned production evidence. It must not invent unresolved AIV T2.6 A/S/B equations or qualitative scoring systems.
+The uploaded PDF is the exact controlled source already pinned elsewhere:
 
-## Confirmed defects
+```text
+docs/EI data/EI - AVIFF Guidelines 2nd Edition.pdf
+Git blob 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
+```
 
-- `ISS-001 AIV_SOURCE_PWL_EXPONENT`: `T2-5_flowchart.yaml` uses `W^0.2`; EI D.2.3 and the controlled AIV kernel reproduce 164.7/159.4 dB only with `W^2`.
-- `ISS-002 AIV_ATTENUATION_FORM`: file uses `L/(60D)` and says units are interchangeable; EI D.2.3 explicitly evaluates `60 * 0.8 m / 154 mm = 0.312 dB`.
-- `ISS-003 FIT_GAS_FVF`: `T2-2_source_reference.yaml` uses `1/(mu*1000)`; EI D.2 gas examples and qualified FIT production use `sqrt(mu/0.001 Pa.s)`.
-- `ISS-004 FIT_GAS_LOF`: file divides by FVF; controlled FIT method uses `rhoV2 * FVF / Fv` for gas, while liquid/multiphase use `rhoV2/Fv`.
-- `ISS-005 AIV_T26_LOG10N`: uploaded polynomial does not reproduce published D.2.3 `B=152.207 -> log10N=9.9026`. Official EI errata equation does.
-- `ISS-006 AIV_T26_ASB`: uploaded A/S/B formulas do not reproduce D.2.3 and contradict the existing controlled qualification state, which explicitly keeps A/S/B unrederived pending human T2.6 reconciliation.
-- `ISS-007 AIV_FLM1_SAMPLES`: governing FLM1 equation is consistent with the controlled method, but several CSV sample values do not satisfy that equation.
-- `ISS-008 AIV_FATIGUE_FACTOR`: uploaded `Lf = 1.30 - 0.1303 ln(N)` cannot reproduce D.2.3 `N=1.95e9 -> Lf≈0.31`; controlled qualification uses `Lf = 3.1 - 0.1303 ln(N)`.
-- `ISS-009 AIV_MATERIAL_MODIFIER`: uploaded FLM3-as-N-multiplier abstraction is not qualified against direct T2.6 source; quarantine until reconciled.
-- `ISS-010 P1_IDENTIFICATION_SYNTHESIS`: uploaded T1/P1 files introduce numeric scores/multipliers and inferred thresholds not present in the worked-example transcription; they must not be treated as governing EI authority.
+## Implemented corrections
 
-## Known-good PR1288 data to preserve
+### FIT T2.2
 
-- `EI-P0-FIT/T2-1_support_arrangement.csv` span boundaries match the qualified FIT implementation.
-- `EI-P0-FIT/T2-2_fv_coefficients.csv` correlation families match the qualified FIT implementation.
-- AIV FLM1 formula itself is retained, but generated/digitized samples require correction and provenance labeling.
-- AIV FLM2 formula is retained; sample rows should be regenerated from the formula if retained.
+`EI-P0-FIT/T2-2_source_reference.yaml`
 
-## Authority invariants
+Corrected:
 
-- The uploaded PDF is governing source evidence; derived YAML/CSV is not automatically authoritative merely because it is present in the repo.
-- No unsourced EI threshold, coefficient, scoring algorithm, applicability rule, or disposition may be invented.
-- AIV A/S/B remain `UNRESOLVED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION`.
-- P1 T1 qualitative files remain `QUARANTINED_NOT_ENGINEERING_AUTHORITY` until source-faithful transcription is completed.
-- This WIP changes no `3D_Converters` production code and grants no new screening/design authority.
+```text
+Gas FVF = sqrt(mu_gas / 0.001 Pa.s)
+Gas LOF = rho_v2 * FVF / Fv
+Liquid/multiphase LOF = rho_v2 / Fv
+```
 
-## Validation plan
+These reproduce the D2 gas FVF examples (`2e-5 Pa.s -> 0.1414`, `1e-5 Pa.s -> 0.1`) and match the qualified bounded FIT implementation.
 
-Focused source-master check will independently verify:
+Untouched known-good masters:
 
-1. FIT FVF: `mu=2e-5 -> sqrt(0.02)=0.141421...`; `mu=1e-5 -> 0.1`.
-2. FIT T2-2 medium-stiff coefficients reproduce D.2 worked-example alpha/beta/Fv anchors.
-3. AIV source PWL reproduces relief `164.7 dB` and recycle `159.4 dB` to displayed precision.
-4. AIV attenuation `60*0.8/154 = 0.311688... dB` and point PWL ≈ `164.4 dB`.
-5. Official errata `B=152.207 -> log10N≈9.9026`, `N≈7.99e9`.
-6. FLM2 at D.2.3 point PWL ≈ `0.2009`.
-7. `Lf = 3.1 - 0.1303 ln(1.95e9) ≈ 0.31` and final LOF branch = `0.29`.
-8. FLM1 generated samples satisfy the retained formula and retain the published-vs-recalculated D.2.3 discrepancy as an open reconciliation item.
-9. Quarantined P1/T2.6 unresolved files visibly deny engineering authority.
+- `T2-1_support_arrangement.csv`
+- `T2-2_fv_coefficients.csv`
+
+The focused gate independently checks the Medium-Stiff D2 6-inch anchor (`alpha≈346183`, `beta≈-0.9341`, `Fv≈18022`).
+
+### AIV T2.5
+
+`EI-P0-AIV/T2-5_flowchart.yaml`
+
+Corrected source PWL to:
+
+```text
+PWL = 10 log10[ W^2 ((P1-P2)/P1)^3.6 (Te/Mw)^1.2 ] + 126.1 + SFF
+```
+
+This reproduces D2.3:
+
+```text
+Relief  ≈ 164.7 dB
+Recycle ≈ 159.4 dB
+```
+
+Corrected spatial attenuation to the empirical mixed-unit relation:
+
+```text
+attenuation_dB = 60 * L_m / Dint_mm
+```
+
+D2.3 anchor:
+
+```text
+60 * 0.8 / 154 = 0.311688... dB
+164.7 - 0.311688... = 164.388... dB -> published 164.4 dB
+```
+
+The prior `L/(60D)` transcription was rejected.
+
+### AIV T2.6
+
+`EI-P0-AIV/T2-6_flowchart.yaml`
+
+The uploaded A/S/B equations were removed from engineering authority because they do not reproduce the published D2.3 anchors:
+
+```text
+A = 0.93989
+S = 68.229
+B = 152.207
+```
+
+A/S/B remain:
+
+`UNRESOLVED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION`
+
+The cycles-to-failure equation is now the official Energy Institute errata relation:
+
+```text
+log10(N) = 470711.5155
+           - 63075.1242 log10(B)
+           + 183685.4368 / sqrt(B)
+           - 575094.3273 / B^0.1
+```
+
+For `B=152.207` it reproduces:
+
+```text
+log10(N) = 9.90256787...
+N = 7.990388e9
+```
+
+matching EI's displayed `9.9026 / 7.99E9`.
+
+Corrected fatigue factor:
+
+```text
+Lf = 3.1 - 0.1303 ln(N)
+```
+
+For `N=1.95E9`, `Lf≈0.3127`, consistent with published `0.31`. The PR1288 `1.30` constant was rejected.
+
+### AIV modifiers
+
+`T2-6_diameter_ratio_modifier.csv`
+- regenerated all `D/d < 10` samples from the retained FLM1 formula;
+- retained the published-vs-recalculated D2.3 discrepancy visibly (`1.2133` published vs `1.210975819...` recalculated);
+- `D/d >= 10` is now unresolved rather than silently blessed from the upload.
+
+`T2-6_connection_modifier.csv`
+- retains only the D2.3-reconciled Weldolet FLM2 path;
+- sample values are regenerated from the formula;
+- other connection types are not promoted.
+
+`T2-6_material_modifier.csv`
+- PR1288's general FLM3-on-N abstraction is quarantined;
+- D2.3 non-duplex/Lf statement is retained as worked-example evidence only.
+
+`T2-7_method_source_register.yaml`
+- now defines package-level authority and unresolved branches;
+- fixes attenuation;
+- preserves published flowchart labels instead of inventing an EI identifier to resolve numbering collisions.
+
+## P1 qualitative pack disposition
+
+The existing PR1288 files themselves were left byte-for-byte intact as evidence, but the directory now contains:
+
+`EI-P1-IDENTIFICATION/AUTHORITY_STATUS.yaml`
+
+with:
+
+`QUARANTINED_NOT_ENGINEERING_AUTHORITY`
+
+Reason: PR1288 introduced numeric T1 scoring/multipliers and some altered criteria that are not established by the source-faithful worked-example transcription. These files may not drive applicability, completeness, disposition, or release qualification until direct T1/Chapter-3 transcription is completed.
+
+## Global authority map
+
+Added:
+
+`docs/EI data/EI_SOURCE_AUTHORITY_STATUS.md`
+
+Updated:
+
+`docs/EI data/README.md`
+
+The large `EI_AVIFF_Complete_Master_Register.md` is explicitly classified as a **reference compilation, not a trust root**. It was not rewritten in this slice.
+
+## Rollback evidence
+
+Before editing, immutable original Git blob IDs were recorded under:
+
+`.backups/connector-20260820-ei-p0-source-correction/`
+
+Native backup tooling was not run because this is a connector-only environment; the Git blob manifest is rollback evidence, not a native-backup PASS.
+
+## Validation
+
+Authored:
+
+`scripts/ei-aviff-source-master-p0-check.mjs`
+
+Exact branch-byte validation:
+
+```text
+node --check scripts/ei-aviff-source-master-p0-check.mjs   PASS
+node scripts/ei-aviff-source-master-p0-check.mjs           PASS
+```
+
+Gate output:
+
+```json
+{
+  "schema": "EiAviffSourceMasterP0Check.v1",
+  "status": "PASS",
+  "checks": [
+    "FIT",
+    "AIV_T2_5",
+    "AIV_T2_6_VERIFIED_SUBSET",
+    "AUTHORITY_QUARANTINE"
+  ],
+  "designAuthority": false,
+  "sourcePromotionBeyondVerifiedSubset": false
+}
+```
+
+The local reconstruction was hash-checked against the GitHub blobs for every changed/source file consumed by the gate. The untouched `T2-2_fv_coefficients.csv` required preserving its original CRLF bytes and then matched GitHub blob `9bd6cccadd84f82ab4b225496970a711e92b7f65` exactly.
+
+### Validation truth
+
+| Check | Status |
+|---|---|
+| PR1288/current-main grounding | PASS |
+| EI PDF Git-blob identity | PASS |
+| confirmed formula diagnosis | PASS |
+| pre-edit immutable rollback manifest | PASS |
+| exact changed/source blob reconstruction | PASS |
+| focused source-master gate | PASS |
+| direct visual PDF page inspection through current transport | NOT_RUN / TRANSPORT_BLOCKED |
+| native repository checkout | NOT_RUN / DNS_BLOCKED |
+| production calculator regression | NOT_APPLICABLE — no production code changed |
+| screening/design authority promotion | NOT_APPLICABLE / explicitly false |
+| merge | NOT_AUTHORIZED |
 
 ## Coordination
 
-Active claims inspected at base: PR1255 (LAFEA UI), PR1263 (EMP1), PR1268; none claim `docs/EI data/**`. Open-PR search found no EI-data authority conflict. `COORDINATION_STATE = SAFE` for this bounded source correction.
+Live claims inspected before mutation did not overlap `docs/EI data/**`. Current scope is source transcription + authority quarantine only; it does not modify LAFEA/EMP1 mechanics or any production calculator.
 
-## Validation ledger
+## Follow-up exposed by this correction
 
-| Check | Status | Observation / oracle |
-|---|---|---|
-| PR1288/main grounding | PASS | GitHub live state |
-| uploaded EI PDF identity | PASS | exact Git blob matches controlled FIT/AIV source pin |
-| PR1288 comments/reviews | PASS | no PR comments observed |
-| P0 formula diagnosis | PASS | source inspection + independent worked-example reproduction |
-| focused correction regression | NOT_RUN | not authored yet |
-| direct PDF visual page inspection in this transport | NOT_RUN | binary PDF not exposed by connector/web screenshot path |
-| merge | NOT_AUTHORIZED | owner has not granted merge for follow-on PR |
+Do **not** patch cross-repo production code as part of this PR. After this source correction is reviewed, separately reconcile `3D_Converters` AIV production behavior against the now-explicit source gaps—especially:
 
-## Appendix A / implementation authorization
+- T2.6 A/S/B human transcription;
+- `D/d >= 10` FLM1 branch;
+- general material treatment;
+- non-Weldolet connection handling;
+- higher `Lf` LOF mapping;
+- independent multi-source AIV benchmark.
 
-This is a new WIP, not takeover of an existing engineering-critical PR. Implementation authority is bounded to the owner-approved pending task and the correction plan above. Source changes must be falsifiable against the pinned EI evidence and must fail closed on unresolved formula authority.
+Those are follow-on qualification tasks, not authority granted by this source-data correction.

@@ -1,48 +1,74 @@
 flowchart_id: Flowchart T2-6 (AIV)
-title: High Frequency Acoustic Fatigue Assessment (Determining Individual Welded Discontinuity LOF)
+title: High Frequency Acoustic Fatigue Assessment (Individual Welded Discontinuity LOF)
 module: T2.7
 source_document: Energy Institute Guidelines 2nd Edition (2008)
 page: PDF 69 / Doc 61
+source_pdf_git_blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
+transcription_status: PARTIAL_SOURCE_RECONCILIATION
+engineering_use: VERIFIED_SUBSET_ONLY
+promotion_authority: BLOCKED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION
 steps:
   - step: 1
-    name: Geometric and Stress Parameter Calculation
-    inputs:
-      Dext: "Main line outside diameter (mm)"
-      T: "Main line wall thickness (mm)"
-      PWL: "Total acoustic sound power level at discontinuity (dB)"
-    equations:
-      a: "1.12762e-7*(Dext/T)^3 - 1.812e-5*(Dext/T)^2 + 4.307277e-3*(Dext/T) + 91.9"
-      s: "-3.28e-7*(Dext/T)^3 + 8.503e-5*(Dext/T)^2 - 7.063e-3*(Dext/T) + 0.816"
-      B: "10^((PWL - a) / s)"
+    name: Geometric / Stress Intermediates A, S and B
+    verification: UNRESOLVED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION
+    engineering_authority: NONE
+    prohibited_use: "Do not calculate A, S or B from the PR1288 equations; they do not reproduce the controlled D2.3 worked example."
+    published_d2_3_anchors:
+      A: 0.93989
+      S: 68.229
+      B: 152.207
+    note: "Published anchors are benchmark evidence only and are not a substitute for the missing source-faithful A/S/B equations."
   - step: 2
-    name: Baseline Cycles to Failure (N)
-    equation: "log10_N = 47.0712 - 6.3075*log10(B) - 0.183685*B + 5.575094e-4*B^2 - 1.3273e-6*B^3"
-    result: "N = 10^log10_N"
+    name: Baseline Cycles to Failure N
+    verification: VERIFIED_AGAINST_OFFICIAL_ENERGY_INSTITUTE_ERRATA_AND_D2_3
+    source_class: OFFICIAL_PUBLISHER_ERRATA
+    errata_locator: "Errata 1, Pg 61: Feed in from Flowchart T2-5"
+    equation: "log10(N) = 470711.5155 - 63075.1242*log10(B) + 183685.4368/sqrt(B) - 575094.3273/B^0.1"
+    worked_example_anchor: "B=152.207 -> log10(N)=9.90256787... -> N=7.990388e9, published as 9.9026 and 7.99E9."
   - step: 3
-    name: Diameter Ratio Modifier (FLM1)
-    condition: "Dext / dext < 10"
-    formula_under_10: "FLM1 = -0.07 + 0.91*(Dext/dext) + 1.32/(Dext/dext) - 0.48*(Dext/dext)^1.5 + 0.065*(Dext/dext)^2"
-    formula_10_and_above: "FLM1 = 0.5"
-    application: "N = N * FLM1"
+    name: Diameter Ratio Modifier FLM1
+    verification: VERIFIED_FOR_D_OVER_d_LESS_THAN_10_FORMULA_WITH_OPEN_D2_3_ARITHMETIC_RECONCILIATION
+    condition_verified: "Dext/dext < 10"
+    formula_verified: "FLM1 = -0.07 + 0.91*R + 1.32/R - 0.48*R^1.5 + 0.065*R^2, where R=Dext/dext"
+    application_verified: "N_after_FLM1 = N * FLM1"
+    published_d2_3:
+      ratio: 2.791
+      FLM1: 1.2133
+    independent_recalculation:
+      ratio_from_displayed_dimensions: 2.7910447761194033
+      FLM1: 1.2109758194311824
+      reconciliation_state: OPEN
+      consequence: "Final D2.3 LOF remains 0.29 using either value; discrepancy must not be hidden."
+    d_over_d_10_and_above: UNRESOLVED_PENDING_DIRECT_SOURCE_RECONCILIATION
   - step: 4
-    name: Connection Type Modifier (FLM2)
-    condition: "Is connection a Weldolet type fitting?"
-    formula_weldolet: "FLM2 = 0.29 + 0.09 * tanh((PWL - 172) / 2.9)"
-    formula_standard_tee: "FLM2 = 1.0"
-    application: "N = N * FLM2"
+    name: Connection Modifier FLM2
+    verification: VERIFIED_FOR_D2_3_WELDOLET_PATH_ONLY
+    condition_verified: WELDOLET
+    formula_verified: "FLM2 = 0.29 + 0.09*tanh((PWL - 172)/2.9)"
+    application_verified: "N_after_FLM2 = N_after_FLM1 * FLM2"
+    worked_example_anchor: "PWL≈164.4 dB -> FLM2≈0.2009; published N_after_FLM2=1.95E9."
+    other_connection_types: UNRESOLVED_PENDING_DIRECT_SOURCE_RECONCILIATION
   - step: 5
-    name: Material Modifier (FLM3)
-    condition: "Is piping material Duplex / Super Duplex?"
-    formula_duplex: "FLM3 = 0.263 + 0.087 * tanh((PWL - 172) / 2.9)"
-    formula_carbon_or_austenitic: "FLM3 = 1.0"
-    application: "N = N * FLM3"
+    name: Material Treatment
+    verification: UNRESOLVED_GENERAL_METHOD
+    engineering_authority: NONE_FOR_GENERAL_MATERIAL_MODIFIER
+    published_d2_3_anchor:
+      material_duplex: false
+      statement: "The piping material is not duplex therefore calculate Lf = 0.31."
+    warning: "PR1288 introduced a general FLM3 multiplier on N. That abstraction is quarantined until the controlled T2.6 source is reconciled directly."
   - step: 6
-    name: Likelihood of Failure (LOF) Mapping
-    equation: "Lf = 1.30 - 0.1303 * ln(N)"
-    clamping:
-      min: 0.0
-      max: 1.0
-    threshold_gate:
-      condition: "Lf >= 0.5"
-      true_action: "LOF = Lf"
-      false_action: "LOF = 0.29"
+    name: Fatigue Factor and LOF
+    verification: VERIFIED_FOR_D2_3_LOWER_BRANCH_ONLY
+    fatigue_factor_equation: "Lf = 3.1 - 0.1303*ln(N)"
+    worked_example_anchor: "N=1.95E9 -> Lf=0.31274..., published as 0.31."
+    verified_LOF_branch:
+      condition: "Lf < 0.5"
+      result: "LOF = 0.29"
+    higher_branch: UNRESOLVED_PENDING_DIRECT_SOURCE_RECONCILIATION
+correction_record:
+  source_pr: 1288
+  corrected_or_quarantined:
+    - "Removed non-reproducible A/S/B equations from engineering authority."
+    - "Replaced the non-reproducing PR1288 log10(N) polynomial with the official publisher errata equation."
+    - "Corrected fatigue-factor constant from 1.30 to 3.1 for the D2.3-reproduced relation."
+    - "Quarantined PR1288 FLM3 material multiplier and all unverified general branches."

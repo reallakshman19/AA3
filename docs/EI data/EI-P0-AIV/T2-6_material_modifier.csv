@@ -1,3 +1,4 @@
-material_scope,authority_state,verified_evidence,general_formula
-GENERAL_T2_6_MATERIAL_MODIFIER,QUARANTINED_PENDING_DIRECT_T2_6_SOURCE_RECONCILIATION,"PR1288 introduced a general FLM3 multiplier but this correction has no independent source reconciliation supporting that abstraction.",
-D2_3_NON_DUPLEX_ANCHOR,WORKED_EXAMPLE_ANCHOR_ONLY,"EI D2.3 states that the piping material is not duplex and reports Lf = 0.31 after N = 1.95E9. This does not establish a general FLM3 equation.",
+material_condition,action,formula,authority_state,qualification_note
+DUPLEX,APPLY_FLM3,FLM3 = 0.263 + 0.087*tanh((PWL-172)/2.9),SOURCE_CORROBORATED_FLOWCHART_BRANCH,"Apply N = N*FLM3 before calculating Lf; exact pinned-PDF visual parity remains NOT_RUN."
+NOT_DUPLEX,NO_FLM3_MULTIPLIER,,SOURCE_CORROBORATED_FLOWCHART_BRANCH,"Proceed directly to Lf; this matches the D2.3 non-duplex worked example."
+OTHER_OR_UNRESOLVED_MATERIAL_CLASSIFICATION,FAIL_CLOSED_NO_CLASSIFICATION_INFERENCE,,NOT_AUTHORIZED,"Do not infer duplex/non-duplex status from alloy family names not explicitly resolved by governed project data."

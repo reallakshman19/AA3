@@ -1,4 +1,5 @@
 import { EMP1_SCHEMAS } from './emp1-identity.js';
+import { evaluateEmp1LocalMethodScope } from './emp1-local-method-scope.js';
 
 export function evaluateEmp1LocalCorrelationGate(options = {}) {
   const method = options.methodQualification ?? null;
@@ -25,12 +26,20 @@ export function evaluateEmp1LocalCorrelationGate(options = {}) {
     reasons.push('EMP1_LOCAL_METHOD_BENCHMARK_HASH_REQUIRED');
   }
 
+  const scopeEvaluation = method
+    ? evaluateEmp1LocalMethodScope(method, options.source ?? null)
+    : Object.freeze({ status: 'NOT_EVALUATED_NO_METHOD', bounded: false, reasons: [] });
+  if (scopeEvaluation.reasons?.length) reasons.push(...scopeEvaluation.reasons);
+
   if (reasons.length) {
     return deepFreeze({
       schema: EMP1_SCHEMAS.LOCAL_CORRELATION_RESULT,
       state: 'BLOCKED',
       engineeringUseAuthorized: false,
-      reasons,
+      boundedScope: scopeEvaluation.bounded === true,
+      scopeStatus: scopeEvaluation.status,
+      scopeType: scopeEvaluation.scopeType ?? null,
+      reasons: unique(reasons),
       result: null,
     });
   }
@@ -39,6 +48,10 @@ export function evaluateEmp1LocalCorrelationGate(options = {}) {
     schema: EMP1_SCHEMAS.LOCAL_CORRELATION_RESULT,
     state: 'METHOD_QUALIFIED',
     engineeringUseAuthorized: true,
+    boundedScope: scopeEvaluation.bounded === true,
+    scopeStatus: scopeEvaluation.status,
+    scopeType: scopeEvaluation.scopeType ?? null,
+    gammaSelectionPolicy: scopeEvaluation.gammaSelectionPolicy ?? null,
     methodIdentity: method.methodIdentity,
     methodEdition: method.methodEdition,
     sourceDocumentSha256: method.sourceDocumentSha256,
@@ -63,7 +76,7 @@ export function requireEmp1LocalCorrelationExecutionAuthority(gate) {
 function nonEmpty(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
-
+function unique(values) { return [...new Set(values)]; }
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   Object.values(value).forEach(deepFreeze);

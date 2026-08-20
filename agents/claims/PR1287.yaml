@@ -1,0 +1,51 @@
+schema: engineering-pr-claims/v1
+work_item: PR1287
+repository: reallaksh19/Advanced_Analysis
+issue: 1261
+pr: 1287
+claims:
+  - id: AUTH-SRC-1287-001
+    state: PASS
+    statement: WRC537_2013.pdf and CAUx 2017 WRC01f.pdf are exact PR1286 blobs matching the previously pinned private-source Git identities and have independently re-observed raw SHA-256 custody.
+  - id: IMP-WRC-1287-001
+    state: PASS_PRIMARY_SOURCE
+    statement: The WRC curve-fit is the rational 5-over-6 coefficient form Y=(a+cX+eX^2+gX^3+iX^4)/(1+bX+dX^2+fX^3+hX^4+jX^5); the legacy ninth-order polynomial interpretation is rejected.
+  - id: IMP-WRC-1287-002
+    state: PASS_PRIMARY_SOURCE
+    statement: WRC Tables 3 and 5 directly qualify membrane/bending dimensional reconstruction, stress signs, and stress-intensity semantics; the retained missing-thickness and outer-square-root transcriptions are rejected.
+  - id: IMP-WRC-1287-003
+    state: PASS_WITH_SOURCE_BLOCKER
+    statement: Section 8 contains 51 coefficient tables, 451 curves, and 4510 numeric scalar values; 450 curves/4500 scalars have resolved parameter identity, while one 1B Original curve/10 scalars remain unselectable because the primary PDF gamma cell is blank.
+  - id: IMP-WRC-1287-004
+    state: PASS
+    statement: The spherical-hollow SP/SM subset is 20 tables, 115 curves, and 1150 scalars; an independent Poppler parser matches all 1150 values against the PR1286 structured extraction.
+  - id: IMP-CAUX-1287-001
+    state: PASS
+    statement: CAUx pp24-31 source expected values are frozen before production observation with semantic hash 8d97539f03f077321eef1e496e315a6a7700a9d83a6c8cd4ff1b83382ebe45fe.
+  - id: IMP-CAUX-1287-002
+    state: PASS_REOBSERVED
+    statement: Independent CAUx sustained hand calculation imports no production EMP.1.C code, uses source-derived tolerance, and re-observes semantic hash 679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c.
+  - id: RISK-CAUX-1287-001
+    state: PRESERVED
+    statement: CAUx reports gamma=48.03 and beta=0.155 even though displayed geometry arithmetic differs slightly; benchmark lookup uses source-reported values and records the discrepancy rather than silently reconciling it.
+  - id: RISK-WRC-1287-001
+    state: OPEN_AFFECTED_CURVE_ONLY
+    statement: WRC Figure 1B Original third numeric coefficient row has a blank gamma label; assigning gamma=10 from sequence is prohibited without authoritative correction.
+  - id: POLICY-WRC-1287-001
+    state: PRESERVED
+    statement: Original and Extrapolated cylindrical curves are distinct authority classes. Extrapolated curves are never an automatic fallback because WRC states there is no rigorous theoretical basis for the extrapolation.
+  - id: IMP-RUNTIME-1287-001
+    state: PASS_SOFTWARE_CONTRACT
+    statement: Runtime source custody now requires exact VERIFIED plus PASS_SOURCE_CUSTODY and rejects generic PASS as insufficient authority.
+  - id: BLOCK-RUNTIME-1287-001
+    state: OPEN
+    statement: General vessel/nozzle frame-to-WRC mapping contract is not yet frozen; CAUx supplies one benchmark transform but it must not be hard-coded as a universal FX/FY/FZ rename.
+  - id: BLOCK-RUNTIME-1287-002
+    state: OPEN
+    statement: General pressure-thrust mode and double-count policy remain runtime-authority gates even though the CAUx benchmark explicitly uses Include Pressure Thrust = No.
+  - id: BLOCK-RUNTIME-1287-003
+    state: OPEN
+    statement: Cylindrical gamma curve-selection/interpolation policy is under independent CAUx benchmark probe and is not yet authorized.
+  - id: AUTH-ROUTE-1287-001
+    state: BLOCKED
+    statement: EMP.1.C execution route remains unregistered until method-selection, runtime-frame, pressure-thrust, and production-comparison gates are complete.

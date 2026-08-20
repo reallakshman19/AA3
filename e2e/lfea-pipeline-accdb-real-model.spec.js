@@ -118,6 +118,32 @@ test.describe('LFEA ACCDB real-model import', () => {
     await expect(firstFinding).toContainText(/[a-z]{4,} [a-z]{3,}/u);
     await expect(firstFinding).toContainText('×');
 
+    // One loaded model, one source panel. All three mount into this host so a
+    // choice can be made while nothing is loaded; once something is loaded the
+    // others only mislead -- an imported ACCDB used to leave the InputXML
+    // panel below it announcing "No native InputXML source is loaded".
+    const sourceHost = page.locator('[data-host-group="SOURCE"]');
+    await expect(sourceHost).toHaveAttribute('data-active-source', 'ACCDB');
+    await expect(page.locator('[data-role="linear-piping-inputxml-source-workflow"]')).toBeHidden();
+    await expect(page.locator('[data-role="lfea-pipeline-stagedjson-input-panel"]')).toBeHidden();
+
+    // Input and Error check ask different questions of the same import, and
+    // each shows only its own half. Error check previously hid the ACCDB panel
+    // outright, so the step the stepper sent an engineer to was the one step
+    // that hid the findings and the accept button it named.
+    const panel = page.locator('[data-role="lfea-pipeline-accdb-input-panel"]');
+    await expect(panel.locator('[data-role="lfea-pipeline-accdb-source-view"]')).toBeVisible();
+    await expect(panel.locator('[data-role="lfea-pipeline-accdb-review-view"]')).toBeHidden();
+
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('[data-role="lfea-pipeline-accdb-review-view"]')).toBeVisible();
+    await expect(panel.locator('[data-role="lfea-pipeline-accdb-source-view"]')).toBeHidden();
+    expect(await panel.locator('[data-role="lfea-pipeline-accdb-finding-section"]').count()).toBeGreaterThan(0);
+    // The other sources stay out of the way on this step too -- this is where
+    // the InputXML panel used to be the only thing on screen.
+    await expect(page.locator('[data-role="linear-piping-inputxml-source-workflow"]')).toBeHidden();
+
     // A conditional model needs an engineer's acceptance before it can run,
     // and the panel offers that rather than leaving Load case disabled with
     // no visible way forward.

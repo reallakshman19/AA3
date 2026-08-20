@@ -26,7 +26,7 @@
     "pressureClassification": {"pdfPages": [25, 26, 30]}
   },
   "benchmarkSemanticHashAlgorithm": "SHA256_CANONICAL_JSON_SORTED_KEYS_NO_WHITESPACE_OF_BENCHMARK_OBJECT",
-  "benchmarkSemanticHash": "de0e610e907122d0525d2e85aa458e69ea1c14aa5c0c40f0d81a225cc94060e5",
+  "benchmarkSemanticHash": "8d97539f03f077321eef1e496e315a6a7700a9d83a6c8cd4ff1b83382ebe45fe",
   "benchmark": {
     "caseId": "CAUX2017_WRC01F_PP24_31_SUSTAINED",
     "units": {"length": "mm", "force": "N", "moment": "N.m", "stress": "kPa"},

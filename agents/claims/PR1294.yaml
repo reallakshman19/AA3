@@ -1,0 +1,16 @@
+schema: AgentClaim.v1
+pr: 1294
+repository: reallaksh19/Advanced_Analysis
+branch: agent/hp-master-data-numerical-integrity
+base_sha_at_allocation: ef9445469fbddd3a34e51c83e295bb749ae79c73
+scope:
+  - docs/High Pr/benchmark_case.csv
+  - docs/High Pr/component_qualification.csv
+  - docs/High Pr/cycle_transition.csv
+  - scripts/high-pr-master-data-numerical-audit.mjs
+  - tests/high-pr-master-data-numerical-audit.test.mjs
+purpose: repair confirmed High Pr arithmetic defects and fail closed on benchmark, lifecycle-cycle, and propagated straight-pipe qualification inconsistencies
+exclusive_authority_claim: false
+code_qualification_claimed: false
+kd320_native_authority_claimed: false
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_PR1294

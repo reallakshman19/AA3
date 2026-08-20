@@ -92,6 +92,8 @@ jobs:
         run: node scripts/emp1-wrc-table5-production-comparison.mjs
       - name: Compare bounded production adapter to frozen full Table 5 oracle
         run: node scripts/emp1-wrc-gamma5-bounded-adapter-comparison.mjs
+      - name: Compare gamma15 production numerics to frozen independent oracle
+        run: node scripts/emp1-wrc-gamma15-bounded-adapter-comparison.mjs
       - name: Re-observe zero-differential-pressure WRC load producer
         shell: bash
         run: |

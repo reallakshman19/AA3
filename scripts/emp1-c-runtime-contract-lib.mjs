@@ -7,6 +7,7 @@ export const EMP1_C_PRESSURE_THRUST_MODES = Object.freeze([
 ]);
 
 const SHA256_HEX = /^[a-f0-9]{64}$/u;
+const SOURCE_CUSTODY_QUALIFICATION_STATE = 'PASS_SOURCE_CUSTODY';
 
 /**
  * Qualify the runtime contracts that cannot be inferred safely from the retained
@@ -128,7 +129,7 @@ export function runtimeContractReady(value) {
 
 function sourceCustodyQualified(ledger) {
   return ledger?.custodyState === 'VERIFIED'
-    && ledger?.qualificationState === 'PASS'
+    && ledger?.qualificationState === SOURCE_CUSTODY_QUALIFICATION_STATE
     && SHA256_HEX.test(ledger?.rawPdfSha256 ?? '');
 }
 

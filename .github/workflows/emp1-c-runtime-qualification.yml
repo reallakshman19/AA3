@@ -20,3 +20,5 @@ jobs:
         run: node scripts/emp1-c-cylindrical-frame-contract-self-test.mjs
       - name: Qualify WRC stress-intensity runtime definition
         run: node scripts/emp1-c-stress-intensity-definition-check.mjs
+      - name: Qualify explicit pressure-thrust and double-count policy
+        run: node scripts/emp1-c-pressure-thrust-policy-self-test.mjs

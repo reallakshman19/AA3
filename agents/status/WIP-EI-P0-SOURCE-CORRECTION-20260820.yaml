@@ -1,34 +1,10 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: WIP-EI-P0-SOURCE-CORRECTION-20260820
-mission: Correct PR1288 EI P0 FIT/AIV source transcriptions and quarantine unresolved authority
-workstream: EI_AVIFF_SOURCE_MASTER
 branch: agent/ei-p0-source-correction-20260820
-main_head_last_checked: 782683e7355281e95e5319dcad7f8a5644710d1d
-work_intent: IMPLEMENT
-criticality: ENGINEERING_CRITICAL
-agent_state: ACTIVE
-pr_recovery_state: RECOVERABLE_WIP
+agent_state: RELEASED_TO_PR1289
+pr_recovery_state: RELEASED
 handover_readiness: READY
-report_path: agents/WIP-EI-P0-SOURCE-CORRECTION-20260820_workreport.md
-current_stage: READY_FOR_DRAFT_PR_RECONCILIATION
-blocker: none for bounded correction; unresolved AIV T2.6 A/S/B/general branches and P1 scoring remain deliberately quarantined
-highest_risk: derived YAML/CSV being mistaken for EI engineering authority despite unresolved source semantics
-validation_state:
-  live_main_grounding: PASS
-  pr1288_scope_grounding: PASS
-  controlled_pdf_blob_identity: PASS
-  rollback_git_blob_manifest: PASS
-  p0_formula_diagnosis: PASS
-  exact_changed_blob_reconstruction: PASS
-  focused_source_master_regression: PASS
-  focused_gate_command: node scripts/ei-aviff-source-master-p0-check.mjs
-  focused_gate_schema: EiAviffSourceMasterP0Check.v1
-  direct_pdf_visual_inspection: NOT_RUN_TRANSPORT_BLOCKED
-  native_repo_checkout: NOT_RUN_DNS_BLOCKED
-  production_code_changed: false
-  screening_authority_changed: false
-  design_authority_changed: false
-  merge: NOT_AUTHORIZED
-exact_next_action: re-ground live main, open draft corrective PR, migrate WIP custody to PR-numbered recovery files, then reconcile hosted reviews/status/workflows
-last_updated: 2026-08-20T07:35:00+04:00
+report_path: agents/PR1289_workreport.md
+exact_next_action: continue from PR1289 recovery files
+last_updated: 2026-08-20T07:46:00+04:00

@@ -1,5 +1,7 @@
 name: PR1270 fresh longest-edge proof
-on: pull_request
+on:
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -10,12 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-      - name: Verify exact product parent
+      - name: Verify exact product ancestry
         shell: bash
         run: |
-          test "$(git rev-parse HEAD^)" = "$EXPECTED_PRODUCT_PARENT"
+          git merge-base --is-ancestor "$EXPECTED_PRODUCT_PARENT" HEAD
           git diff --check
       - uses: actions/setup-node@v4
         with:

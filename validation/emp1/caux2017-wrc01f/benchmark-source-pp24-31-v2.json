@@ -1,0 +1,110 @@
+{
+  "schema": "emp1-caux-pp24-31-benchmark-source/v2",
+  "status": "PASS_SOURCE_EXPECTED_VALUES_FROZEN",
+  "benchmarkAuthority": true,
+  "productionAuthority": false,
+  "source": {
+    "sourceId": "CAUX_2017_WRC01F_PP24_31",
+    "classification": "BENCHMARK_SOURCE",
+    "repository": "reallaksh19/XML_Compare_Utilities",
+    "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+    "path": "docs/emp.1/CAUx 2017 - WRC01f.pdf",
+    "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
+    "rawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "pdfPages": [24, 25, 26, 27, 28, 29, 30, 31],
+    "custodyState": "VERIFIED",
+    "qualificationState": "PASS_SOURCE_CUSTODY",
+    "extractionMarkdownPath": "docs/emp1/CAUx_2017_WRC01f_pages_24-31.md",
+    "extractionMarkdownGitBlobSha1": "ce0ee91cd996feee162d4dd90ce1af4063e06775"
+  },
+  "sourceLocators": {
+    "geometryAndImportedLoads": {"pdfPage": 25, "slide": 25},
+    "localWrcLoadsAndDimensionlessParameters": {"pdfPage": 26, "slide": 26},
+    "curveOrdinatesAndCircumferentialStress": {"pdfPage": 27, "slide": 27},
+    "longitudinalAndShearStress": {"pdfPage": 28, "slide": 28},
+    "stressIntensityAndLoadCaseSummaries": {"pdfPage": 29, "slide": 29},
+    "pressureClassification": {"pdfPages": [25, 26, 30]}
+  },
+  "benchmarkSemanticHashAlgorithm": "SHA256_CANONICAL_JSON_SORTED_KEYS_NO_WHITESPACE_OF_BENCHMARK_OBJECT",
+  "benchmarkSemanticHash": "8d97539f03f077321eef1e496e315a6a7700a9d83a6c8cd4ff1b83382ebe45fe",
+  "benchmark": {
+    "caseId": "CAUX2017_WRC01F_PP24_31_SUSTAINED",
+    "units": {"length": "mm", "force": "N", "moment": "N.m", "stress": "kPa"},
+    "geometry": {
+      "vessel": {
+        "diameterBasis": "OD",
+        "outerDiameterMm": 1844.0,
+        "nominalThicknessMm": 22.0,
+        "corrosionAllowanceMm": 3.0,
+        "meanRadiusMm": 911.0,
+        "corrodedThicknessMm": 19.0
+      },
+      "nozzle": {
+        "diameterBasis": "OD",
+        "outerDiameterMm": 323.85,
+        "nominalThicknessMm": 14.27,
+        "corrosionAllowanceMm": 3.0,
+        "sourceCalculationRadiusMm": 162.0
+      },
+      "dimensionless": {"gammaSourceReported": 48.03, "betaSourceReported": 0.155}
+    },
+    "pressure": {
+      "designPressureNPerMm2": 1.970,
+      "includePressureThrust": false,
+      "pressureStressIndices": false,
+      "computePressureStressWrc368": false
+    },
+    "frame": {
+      "vesselCenterlineGlobal": [0.0, 1.0, 0.0],
+      "nozzleCenterlineGlobal": [1.0, 0.0, 0.0]
+    },
+    "sustained": {
+      "global": {
+        "forceN": [-161.0, -2109.0, 53.0],
+        "momentNm": [775.0, -121.0, -33.0]
+      },
+      "wrc": {"P_N": -161.0, "Vc_N": -53.0, "Vl_N": -2109.0, "Mc_Nm": 121.0, "Ml_Nm": 33.0, "Mt_Nm": -775.0}
+    },
+    "curveOrdinates": {
+      "circ": {
+        "Pmem_AB": {"figure": "4C", "value": 7.273},
+        "Pmem_CD": {"figure": "3C", "value": 5.343},
+        "Pbend_AB": {"figure": "2C1", "value": 0.046},
+        "Pbend_CD": {"figure": "1C", "value": 0.079},
+        "Mcmem": {"figure": "3A", "value": 1.935},
+        "Mcbend": {"figure": "1A", "value": 0.080},
+        "Mlmem": {"figure": "3B", "value": 5.217},
+        "Mlbend": {"figure": "1B1", "value": 0.031}
+      },
+      "long": {
+        "Pmem_AB": {"figure": "3C", "value": 5.343},
+        "Pmem_CD": {"figure": "4C", "value": 7.273},
+        "Pbend_AB": {"figure": "1C1", "value": 0.082},
+        "Pbend_CD": {"figure": "2C", "value": 0.045},
+        "Mcmem": {"figure": "4A", "value": 3.318},
+        "Mcbend": {"figure": "2A", "value": 0.040},
+        "Mlmem": {"figure": "4B", "value": 1.861},
+        "Mlbend": {"figure": "2B1", "value": 0.045}
+      }
+    },
+    "sourceFormulaExamplesKPa": {
+      "circ": {"Pmem_AB": 67.65, "Pbend_AB": 123.09, "Mcmem": 95.79, "Mcbend": 1139.0, "Mlmem": 70.43, "Mlbend": 120.41},
+      "long": {"Pmem_AB": 49.70, "Pbend_AB": 219.42, "Mcmem": 164.26, "Mcbend": 569.69, "Mlmem": 25.12, "Mlbend": 174.79},
+      "shear": {"Vc": 5.480, "Vl": 218.10, "Mt": 247.36}
+    },
+    "expectedSustainedKPa": {
+      "locations": ["Au", "Al", "Bu", "Bl", "Cu", "Cl", "Du", "Dl"],
+      "circumferential": [0, -5, 378, -102, -973, 882, 1493, -1204],
+      "longitudinal": [71, -22, 466, -317, -545, 354, 923, -461],
+      "shear": [-253, -253, -242, -242, -29, -29, -465, -465],
+      "stressIntensity": [511, 506, 668, 529, 975, 883, 1754, 1428]
+    }
+  },
+  "qualification": {
+    "sourceCustody": "PASS",
+    "pageExtraction": "PASS",
+    "expectedValueFreeze": "PASS",
+    "independentHandCalculation": "NOT_RUN",
+    "productionComparison": "PROHIBITED_UNTIL_INDEPENDENT_HANDCALC_FROZEN"
+  }
+}

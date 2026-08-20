@@ -1,0 +1,39 @@
+{
+  "schema": "emp1-wrc-cylindrical-curve-selection-probe/v1",
+  "status": "BLOCKED_NO_POLICY_QUALIFIED_BY_CAUX_ORDINATES",
+  "engineeringAuthority": false,
+  "productionAuthority": false,
+  "source": {
+    "wrcPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "cauxPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "benchmarkSemanticHash": "8d97539f03f077321eef1e496e315a6a7700a9d83a6c8cd4ff1b83382ebe45fe",
+    "probeWorkflowRun": 32329547379,
+    "probeWorkflowNumber": 8,
+    "probeArtifactDigest": "sha256:89782421ebd4f2b309d7d835498eec68a6fff7a902649ee26e575d8f921ab103"
+  },
+  "benchmarkContext": {
+    "wrc107Version": "March 1979 B1/B2",
+    "ordinateBasis": "CAUx states curves read for 1979 B1/B2",
+    "gamma": 48.03,
+    "beta": 0.155
+  },
+  "bestFullOriginalCandidates": [
+    {"policy":"LINEAR_Y_IN_INVERSE_GAMMA","targets":16,"within0p001":8,"maxAbsError":0.27054026906393336,"rmsError":0.13325687577817483},
+    {"policy":"LINEAR_Y_IN_LOG_GAMMA","targets":16,"within0p001":7,"maxAbsError":0.24189941307671514,"rmsError":0.11060839663762316},
+    {"policy":"LINEAR_Y_IN_GAMMA","targets":16,"within0p001":6,"maxAbsError":0.21049850689845773,"rmsError":0.08359808456988738},
+    {"policy":"LINEAR_COEFFICIENTS_IN_GAMMA_THEN_Y","targets":16,"within0p001":5,"maxAbsError":0.3800149622817388,"rmsError":0.17144416630720918}
+  ],
+  "falsifiers": [
+    {"figure":"4C","caux":7.273,"originalLinearYInGamma":7.399295794623303,"originalCoefficientInterpolation":7.175202367257238,"extrapolatedCoefficientInterpolation":7.286988834873545},
+    {"figure":"3B","caux":5.217,"originalLinearYInGamma":5.427498506898457,"originalCoefficientInterpolation":5.5970149622817384}
+  ],
+  "decision": {
+    "cauxStressChainUsingReportedOrdinates": "QUALIFIED_SEPARATELY",
+    "wrc537GammaInterpolation": "NOT_QUALIFIED",
+    "coefficientInterpolation": "NOT_AUTHORIZED",
+    "linearYInterpolation": "NOT_AUTHORIZED",
+    "automaticExtrapolatedFallback": "NOT_AUTHORIZED",
+    "productionCurveSelection": "BLOCKED"
+  },
+  "nextAuthorityRequired": "Direct WRC537 interpolation statement or a source-qualified WRC537 numerical example that uniquely identifies the selection algorithm."
+}

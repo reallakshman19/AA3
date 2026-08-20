@@ -1,0 +1,163 @@
+name: EMP.1 primary-source qualification evidence
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  primary-source-qualification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Advanced_Analysis candidate
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Re-observe frozen WRC and CAUx source custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$PWD/test-results/emp1-source-qualification"
+          mkdir -p "$out"
+          node scripts/emp1-source-custody-check.mjs --source-root "$PWD/docs/emp1" \
+            | tee "$out/source-custody.json"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const report = JSON.parse(await readFile('test-results/emp1-source-qualification/source-custody.json', 'utf8'));
+          if (report.status !== 'PASS') throw new Error(`EMP1_SOURCE_CUSTODY_NOT_PASS:${report.status}`);
+          if (!Array.isArray(report.results) || report.results.length !== 2) throw new Error('EMP1_SOURCE_CUSTODY_RESULT_COUNT');
+          for (const row of report.results) {
+            if (row.status !== 'PASS' || row.code !== 'PASS_SOURCE_CUSTODY') throw new Error(`EMP1_SOURCE_CUSTODY_ROW_NOT_PASS:${row.sourceId}:${row.code}`);
+          }
+          NODE
+
+      - name: Prepare PDF inspection tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null 2>&1 || ! command -v pdftoppm >/dev/null 2>&1 || ! command -v pdfinfo >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+          fi
+
+      - name: Extract and render bounded primary-source review pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$PWD/test-results/emp1-source-qualification"
+          mkdir -p "$out/wrc-pages" "$out/caux-pages"
+          wrc="$PWD/docs/emp1/WRC537_2013.pdf"
+          caux="$PWD/docs/emp1/CAUx 2017 - WRC01f.pdf"
+          pdfinfo "$wrc" > "$out/WRC537_2013.pdfinfo.txt"
+          pdfinfo "$caux" > "$out/CAUx_2017_WRC01f.pdfinfo.txt"
+          pdftotext -layout "$wrc" "$out/WRC537_2013_full.txt"
+          pdftotext -f 33 -l 135 -layout "$wrc" "$out/WRC537_2013_pages_33-135.txt"
+          for page in 33 34 35 36 37 38 39 40 41 42 43 44 49 51 53 55 57 59 61 63 65 67 69 71 73 75 77 79 81 83 85 87 89 91 93 95 97 99 101 103 105 107 109 111 113 115 117 119 121 123 125 127 129 131 133 135; do
+            pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$wrc" "$out/wrc-pages/page-${page}" >/dev/null
+          done
+          pdftotext -f 24 -l 31 -layout "$caux" "$out/CAUx_2017_WRC01f_pages_24-31.txt"
+          for page in 24 25 26 27 28 29 30 31; do
+            pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$caux" "$out/caux-pages/page-${page}" >/dev/null
+          done
+
+      - name: Scan full WRC source for interpolation authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-interpolation-source-scan.mjs \
+            --pdf-text test-results/emp1-source-qualification/WRC537_2013_full.txt \
+            | tee test-results/emp1-source-qualification/wrc-interpolation-source-scan.json
+
+      - name: Audit complete WRC Section 8 source inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-pr1286-wrc-all-curve-source-audit.mjs \
+            | tee test-results/emp1-source-qualification/wrc-all-curve-source-audit.json
+
+      - name: Cross-check spherical-hollow WRC source extraction against exact PDF text
+        shell: bash
+        run: |
+          set -euo pipefail
+          pdf_text="test-results/emp1-source-qualification/WRC537_2013_pages_33-135.txt"
+          node scripts/emp1-pr1286-wrc-source-table-audit.mjs --pdf-text "$pdf_text" \
+            | tee test-results/emp1-source-qualification/wrc-source-table-audit.json
+          node scripts/emp1-wrc-primary-coefficient-source-self-test.mjs --pdf-text "$pdf_text" \
+            | tee test-results/emp1-source-qualification/wrc-primary-coefficient-self-test.json
+          node scripts/emp1-wrc-primary-coefficient-source-generate.mjs --pdf-text "$pdf_text"
+
+      - name: Preserve primary-source formula and sign arbitration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee test-results/emp1-source-qualification/primary-source-arbitration-check.json
+          import { readFile } from 'node:fs/promises';
+          const p = JSON.parse(await readFile('validation/emp1/wrc537-2013/primary-source-arbitration-v2.json', 'utf8'));
+          if (p.status !== 'PASS_METHOD_FORMULA_AND_SIGN_AUTHORITY') throw new Error(`EMP1_WRC_PRIMARY_ARBITRATION:${p.status}`);
+          if (p.primarySource?.rawPdfSha256 !== '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2') throw new Error('EMP1_WRC_PRIMARY_ARBITRATION_SHA');
+          if (p.curveFit?.model !== 'RATIONAL_5_OVER_6') throw new Error('EMP1_WRC_PRIMARY_CURVE_MODEL');
+          if (p.stressIntensity?.status !== 'PASS' || p.stressIntensity?.outputDimension !== 'stress') throw new Error('EMP1_WRC_PRIMARY_STRESS_INTENSITY');
+          if (p.authorization?.emp1CRouteRegistrationAllowed !== false) throw new Error('EMP1_WRC_PRIMARY_PREMATURE_ROUTE_AUTH');
+          console.log(JSON.stringify({schema:'emp1-wrc-primary-arbitration-check/v1',status:'PASS',productionAuthority:false},null,2));
+          NODE
+
+      - name: Preserve legacy 1200-slot contract only as superseded diagnostic evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-coefficient-transcription-self-test.mjs \
+            | tee test-results/emp1-source-qualification/legacy-coefficient-transcription-self-test.json
+          node scripts/emp1-wrc-coefficient-transcription-generate.mjs
+
+      - name: Preserve CAUx anti-substitution history
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-caux-pp24-31-extraction-gate-check.mjs \
+            | tee test-results/emp1-source-qualification/caux-pp24-31-legacy-gate-check.json
+
+      - name: Re-observe qualified independent CAUx pp24-31 hand calculation
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="test-results/emp1-source-qualification/caux-pp24-31-independent-handcalc.json"
+          node scripts/emp1-caux-pp24-31-independent-handcalc.mjs | tee "$output"
+          node --input-type=module <<'NODE' | tee test-results/emp1-source-qualification/caux-benchmark-qualification-check.json
+          import { readFile } from 'node:fs/promises';
+          const q = JSON.parse(await readFile('validation/emp1/caux2017-wrc01f/benchmark-qualification-v2.json', 'utf8'));
+          const r = JSON.parse(await readFile('test-results/emp1-source-qualification/caux-pp24-31-independent-handcalc.json', 'utf8'));
+          if (q.status !== 'PASS_INDEPENDENT_BENCHMARK_QUALIFICATION') throw new Error(`EMP1_CAUX_BENCHMARK_STATE:${q.status}`);
+          if (q.productionObservationUsed !== false || r.productionObservationUsed !== false) throw new Error('EMP1_CAUX_PRODUCTION_OBSERVATION_CONTAMINATION');
+          if (!Array.isArray(r.productionImports) || r.productionImports.length !== 0) throw new Error('EMP1_CAUX_HANDCALC_PRODUCTION_IMPORT');
+          if (r.status !== 'PASS' || r.engineeringAuthority !== true || r.productionAuthority !== false) throw new Error('EMP1_CAUX_HANDCALC_NOT_PASS');
+          if (r.sourceBenchmarkSemanticHash !== q.sourceBenchmark.semanticHash) throw new Error('EMP1_CAUX_BENCHMARK_HASH_MISMATCH');
+          if (r.handCalculationSemanticHash !== q.independentHandCalculation.semanticHash) throw new Error(`EMP1_CAUX_HANDCALC_HASH_DRIFT:${r.handCalculationSemanticHash}`);
+          if (q.independentHandCalculation?.reobservation?.status !== 'PASS') throw new Error('EMP1_CAUX_HANDCALC_REOBSERVATION_NOT_FROZEN');
+          const comparisons = r.calculationEvidence?.comparisons ?? {};
+          for (const [quantity, rows] of Object.entries(comparisons)) {
+            if (!Array.isArray(rows) || rows.length !== 8 || rows.some((row) => row.status !== 'PASS')) throw new Error(`EMP1_CAUX_HANDCALC_COMPARISON_NOT_PASS:${quantity}`);
+          }
+          if (q.authorization?.productionComparisonAllowed !== true || q.authorization?.emp1CRouteRegistrationAllowed !== false) throw new Error('EMP1_CAUX_BENCHMARK_AUTHORIZATION_STATE');
+          console.log(JSON.stringify({schema:'emp1-caux-benchmark-qualification-check/v2',status:'PASS',benchmarkSemanticHash:r.sourceBenchmarkSemanticHash,handCalculationSemanticHash:r.handCalculationSemanticHash,productionComparisonAllowed:true,routeRegistrationAllowed:false},null,2));
+          NODE
+
+      - name: Prove corrected runtime source-custody semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-c-runtime-contract-self-test.mjs \
+            | tee test-results/emp1-source-qualification/emp1-c-runtime-contract-self-test.json
+
+      - name: Upload source qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emp1-primary-source-qualification-${{ github.sha }}
+          path: test-results/emp1-source-qualification
+          if-no-files-found: error
+          retention-days: 30

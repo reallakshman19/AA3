@@ -1,0 +1,29 @@
+name: EMP.1 CAUx curve-selection probe
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Probe WRC cylindrical table selection and interpolation against frozen CAUx ordinates
+        run: |
+          mkdir -p test-results/emp1-caux-curve-selection
+          node scripts/emp1-caux-wrc-curve-selection-probe.mjs \
+            | tee test-results/emp1-caux-curve-selection/probe.json
+      - name: Upload probe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emp1-caux-curve-selection-probe-${{ github.sha }}
+          path: test-results/emp1-caux-curve-selection
+          if-no-files-found: error
+          retention-days: 30

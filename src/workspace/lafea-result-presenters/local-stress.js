@@ -37,13 +37,7 @@ export function presentLocalStress(result, units) {
   const pressureRows = [];
   for (const [index, record] of (result.pressureStressResults ?? []).entries()) {
     const prefix = `result.pressureStressResults[${index}]`;
-    pressureRows.push(presenterRow(
-      `${record.identity} axial pressure stress`,
-      record.axialPressureStress,
-      stress,
-      formulaId(record),
-      `${prefix}.axialPressureStress`,
-    ));
+    appendAxialPressureEvidence(pressureRows, record, prefix, force, stress);
     record.requestedPoints.forEach((point, pointIndex) => {
       pressureRows.push(
         presenterRow(
@@ -67,4 +61,41 @@ export function presentLocalStress(result, units) {
     { title: 'Transferred resultants', rows },
     { title: 'Lamé pressure stress', rows: pressureRows },
   ], null);
+}
+
+function appendAxialPressureEvidence(rows, record, prefix, forceUnit, stressUnit) {
+  const axialStress = record.axialPressureStress;
+  const explicitResultant = record.explicitAxialResultant;
+  const hasAxialStress = typeof axialStress === 'number';
+  const hasExplicitResultant = typeof explicitResultant === 'number';
+
+  if (axialStress !== null && !hasAxialStress) {
+    throw new TypeError(`${prefix}.axialPressureStress must be numeric or null.`);
+  }
+  if (explicitResultant !== null && !hasExplicitResultant) {
+    throw new TypeError(`${prefix}.explicitAxialResultant must be numeric or null.`);
+  }
+  if (hasAxialStress && hasExplicitResultant) {
+    throw new TypeError(`${prefix} cannot retain both axial pressure stress and explicit axial resultant.`);
+  }
+
+  if (hasAxialStress) {
+    rows.push(presenterRow(
+      `${record.identity} axial pressure stress`,
+      axialStress,
+      stressUnit,
+      formulaId(record),
+      `${prefix}.axialPressureStress`,
+    ));
+  }
+
+  if (hasExplicitResultant) {
+    rows.push(presenterRow(
+      `${record.identity} explicit axial resultant`,
+      explicitResultant,
+      forceUnit,
+      formulaId(record),
+      `${prefix}.explicitAxialResultant`,
+    ));
+  }
 }

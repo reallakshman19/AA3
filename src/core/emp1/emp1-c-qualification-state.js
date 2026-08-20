@@ -4,6 +4,8 @@ export const EMP1_C_QUALIFICATION_SCHEMA = 'emp1-c-qualification-state/v1';
 
 export const EMP1_C_BLOCKER_CODES = Object.freeze({
   WRC_DATASET_NOT_READY: 'WRC_DATASET_NOT_READY',
+  WRC_DIMENSIONAL_CONTRACT_UNRESOLVED: 'WRC_DIMENSIONAL_CONTRACT_UNRESOLVED',
+  WRC_RUNTIME_CONTRACTS_UNRESOLVED: 'WRC_RUNTIME_CONTRACTS_UNRESOLVED',
   WRC_NUMERICAL_COEFFICIENTS_MISSING: 'WRC_NUMERICAL_COEFFICIENTS_MISSING',
   WRC_SIGN_ARBITRATION_OPEN: 'WRC_SIGN_ARBITRATION_OPEN',
   CAUX_PP24_31_NOT_FROZEN: 'CAUX_PP24_31_NOT_FROZEN',
@@ -11,12 +13,14 @@ export const EMP1_C_BLOCKER_CODES = Object.freeze({
   EXECUTION_ROUTE_NOT_REGISTERED: 'EMP1_C_EXECUTION_ROUTE_NOT_REGISTERED',
 });
 
-/**
- * Runtime evidence is generated from retained WRC/CAUx qualification artifacts.
- * The generated module is checked for exact drift by
- * scripts/emp1-c-qualification-evidence-check.mjs. No numerical WRC datum or
- * benchmark expected value is created here.
- */
+const REQUIRED_WRC_COEFFICIENTS_PER_CURVE = 10;
+const REQUIRED_WRC_INDEPENDENT_VARIABLE = 'U';
+const ALLOWED_PRESSURE_THRUST_MODES = Object.freeze([
+  'SOURCE_LOAD_ALREADY_INCLUDES_THRUST',
+  'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID',
+  'NOT_APPLICABLE_BY_QUALIFIED_METHOD',
+]);
+
 export const EMP1_C_CURRENT_QUALIFICATION_EVIDENCE = deepFreeze(
   EMP1_C_RETAINED_QUALIFICATION_EVIDENCE,
 );
@@ -50,18 +54,81 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     },
   ));
 
-  const coefficientsReady = normalized.wrcDataset.coefficientInventoryRows > 0
-    && normalized.wrcDataset.numericCoefficientRows === normalized.wrcDataset.coefficientInventoryRows
-    && normalized.wrcDataset.unresolvedCoefficientRows === 0
-    && normalized.wrcDataset.unresolvedParameterRows === 0;
+  const dimensionalContractReady = normalized.wrcDataset.dimensionalContractStatus === 'PASS'
+    && normalized.wrcDataset.dimensionalViolationCount === 0
+    && normalized.wrcDataset.dimensionalViolationIds.length === 0;
+  if (!dimensionalContractReady) blockers.push(blocker(
+    EMP1_C_BLOCKER_CODES.WRC_DIMENSIONAL_CONTRACT_UNRESOLVED,
+    `WRC retained coefficient/equation dimensional contract is not qualified (${normalized.wrcDataset.dimensionalViolationCount} contradiction(s): ${normalized.wrcDataset.dimensionalViolationIds.join(', ') || 'UNRESOLVED'}). Source arbitration is required; the runtime must not infer a corrected WRC formula.`,
+    {
+      status: normalized.wrcDataset.dimensionalContractStatus,
+      violationCount: normalized.wrcDataset.dimensionalViolationCount,
+      violationIds: normalized.wrcDataset.dimensionalViolationIds,
+    },
+  ));
+
+  const runtimeContractsReady = normalized.runtimeContracts.status === 'PASS'
+    && normalized.runtimeContracts.sourceCustodyQualified === true
+    && nonEmpty(normalized.runtimeContracts.sourceRawPdfSha256)
+    && normalized.runtimeContracts.loadAxisMappingStatus === 'PASS'
+    && nonEmpty(normalized.runtimeContracts.loadAxisMappingContractHash)
+    && nonEmpty(normalized.runtimeContracts.canonicalFrameContractHash)
+    && nonEmpty(normalized.runtimeContracts.loadAxisSourceLocator)
+    && normalized.runtimeContracts.pressureThrustStatus === 'PASS'
+    && ALLOWED_PRESSURE_THRUST_MODES.includes(normalized.runtimeContracts.pressureThrustMode)
+    && normalized.runtimeContracts.pressureThrustDoubleCountGuardQualified === true
+    && normalized.runtimeContracts.pressureThrustIndependentCheckStatus === 'PASS'
+    && nonEmpty(normalized.runtimeContracts.pressureThrustPolicyRecordHash)
+    && normalized.runtimeContracts.stressIntensityDefinitionStatus === 'PASS'
+    && nonEmpty(normalized.runtimeContracts.stressIntensityDefinitionContractHash)
+    && nonEmpty(normalized.runtimeContracts.stressIntensitySourceLocator)
+    && normalized.runtimeContracts.stressIntensityOutputDimension === 'STRESS'
+    && normalized.runtimeContracts.stressIntensityIndependentCheckStatus === 'PASS'
+    && nonEmpty(normalized.runtimeContracts.qualificationRecordHash);
+  if (!runtimeContractsReady) blockers.push(blocker(
+    EMP1_C_BLOCKER_CODES.WRC_RUNTIME_CONTRACTS_UNRESOLVED,
+    `EMP.1.C runtime contracts are not qualified (axisMapping=${normalized.runtimeContracts.loadAxisMappingStatus}; pressureThrust=${normalized.runtimeContracts.pressureThrustStatus}/${normalized.runtimeContracts.pressureThrustMode ?? 'UNRESOLVED'}; stressIntensity=${normalized.runtimeContracts.stressIntensityDefinitionStatus}/${normalized.runtimeContracts.stressIntensityOutputDimension ?? 'UNRESOLVED'}). A source-bound LAFEA↔WRC mapping, explicit thrust/double-count policy, and source-qualified stress-intensity definition are mandatory before method authority.`,
+    {
+      status: normalized.runtimeContracts.status,
+      sourceCustodyQualified: normalized.runtimeContracts.sourceCustodyQualified,
+      loadAxisMappingStatus: normalized.runtimeContracts.loadAxisMappingStatus,
+      pressureThrustStatus: normalized.runtimeContracts.pressureThrustStatus,
+      pressureThrustMode: normalized.runtimeContracts.pressureThrustMode,
+      pressureThrustDoubleCountGuardQualified: normalized.runtimeContracts.pressureThrustDoubleCountGuardQualified,
+      stressIntensityDefinitionStatus: normalized.runtimeContracts.stressIntensityDefinitionStatus,
+      stressIntensityOutputDimension: normalized.runtimeContracts.stressIntensityOutputDimension,
+      qualificationRecordHashPresent: nonEmpty(normalized.runtimeContracts.qualificationRecordHash),
+    },
+  ));
+
+  const coefficientsReady = normalized.wrcDataset.coefficientCurveRows > 0
+    && normalized.wrcDataset.coefficientSchemaQualified === true
+    && normalized.wrcDataset.coefficientsPerCurve === REQUIRED_WRC_COEFFICIENTS_PER_CURVE
+    && normalized.wrcDataset.requiredScalarCoefficientCount
+      === normalized.wrcDataset.coefficientCurveRows * normalized.wrcDataset.coefficientsPerCurve
+    && normalized.wrcDataset.numericScalarCoefficientCount
+      === normalized.wrcDataset.requiredScalarCoefficientCount
+    && normalized.wrcDataset.unresolvedScalarCoefficientCount === 0
+    && normalized.wrcDataset.missingScalarCoefficientCount === 0
+    && normalized.wrcDataset.invalidScalarCoefficientCount === 0
+    && normalized.wrcDataset.independentVariable === REQUIRED_WRC_INDEPENDENT_VARIABLE
+    && normalized.wrcDataset.independentVariableQualified === true;
   if (!coefficientsReady) blockers.push(blocker(
     EMP1_C_BLOCKER_CODES.WRC_NUMERICAL_COEFFICIENTS_MISSING,
-    `WRC a–j numerical coefficient payload is not qualified (${normalized.wrcDataset.numericCoefficientRows}/${normalized.wrcDataset.coefficientInventoryRows} retained coefficient rows numeric; ${normalized.wrcDataset.unresolvedCoefficientRows} unresolved coefficient rows; ${normalized.wrcDataset.unresolvedParameterRows} unresolved parameter rows).`,
+    `WRC a–j numerical coefficient payload is not qualified (${normalized.wrcDataset.numericScalarCoefficientCount}/${normalized.wrcDataset.requiredScalarCoefficientCount} named scalar coefficients numeric across ${normalized.wrcDataset.coefficientCurveRows} response-curve rows; schema=${normalized.wrcDataset.coefficientSchema}/${normalized.wrcDataset.coefficientSchemaQualified ? 'QUALIFIED' : 'BLOCKED'}; unresolved=${normalized.wrcDataset.unresolvedScalarCoefficientCount}; missing=${normalized.wrcDataset.missingScalarCoefficientCount}; invalid=${normalized.wrcDataset.invalidScalarCoefficientCount}; independentVariable=${normalized.wrcDataset.independentVariable}/${normalized.wrcDataset.independentVariableRepresentation}/${normalized.wrcDataset.independentVariableQualified ? 'QUALIFIED' : 'BLOCKED'}).`,
     {
-      coefficientInventoryRows: normalized.wrcDataset.coefficientInventoryRows,
-      numericCoefficientRows: normalized.wrcDataset.numericCoefficientRows,
-      unresolvedCoefficientRows: normalized.wrcDataset.unresolvedCoefficientRows,
-      unresolvedParameterRows: normalized.wrcDataset.unresolvedParameterRows,
+      coefficientCurveRows: normalized.wrcDataset.coefficientCurveRows,
+      coefficientSchema: normalized.wrcDataset.coefficientSchema,
+      coefficientSchemaQualified: normalized.wrcDataset.coefficientSchemaQualified,
+      coefficientsPerCurve: normalized.wrcDataset.coefficientsPerCurve,
+      requiredScalarCoefficientCount: normalized.wrcDataset.requiredScalarCoefficientCount,
+      numericScalarCoefficientCount: normalized.wrcDataset.numericScalarCoefficientCount,
+      unresolvedScalarCoefficientCount: normalized.wrcDataset.unresolvedScalarCoefficientCount,
+      missingScalarCoefficientCount: normalized.wrcDataset.missingScalarCoefficientCount,
+      invalidScalarCoefficientCount: normalized.wrcDataset.invalidScalarCoefficientCount,
+      independentVariable: normalized.wrcDataset.independentVariable,
+      independentVariableRepresentation: normalized.wrcDataset.independentVariableRepresentation,
+      independentVariableQualified: normalized.wrcDataset.independentVariableQualified,
     },
   ));
 
@@ -106,7 +173,12 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     },
   ));
 
-  const technicalQualificationReady = datasetReady && coefficientsReady && signReady && cauxReady;
+  const technicalQualificationReady = datasetReady
+    && dimensionalContractReady
+    && runtimeContractsReady
+    && coefficientsReady
+    && signReady
+    && cauxReady;
   const methodAuthorized = normalized.methodAuthorization.engineeringUseAuthorized === true
     && nonEmpty(normalized.methodAuthorization.qualificationRecordHash);
   if (technicalQualificationReady && !methodAuthorized) blockers.push(blocker(
@@ -137,6 +209,8 @@ export function evaluateEmp1CQualificationState(evidence = EMP1_C_CURRENT_QUALIF
     blockers,
     gateStatus: {
       wrcDatasetReady: datasetReady,
+      wrcDimensionalContractReady: dimensionalContractReady,
+      wrcRuntimeContractsReady: runtimeContractsReady,
       numericalCoefficientsReady: coefficientsReady,
       signArbitrationReady: signReady,
       cauxBenchmarkReady: cauxReady,
@@ -153,6 +227,7 @@ function normalizeEvidence(value) {
     derivation: normalizeDerivation(value.derivation),
     wrcDataset: normalizeDataset(value.wrcDataset),
     signArbitration: normalizeSign(value.signArbitration),
+    runtimeContracts: normalizeRuntimeContracts(value.runtimeContracts),
     cauxBenchmark: normalizeCaux(value.cauxBenchmark),
     methodAuthorization: normalizeMethod(value.methodAuthorization),
     execution: normalizeExecution(value.execution),
@@ -163,6 +238,8 @@ function normalizeDerivation(value = {}) {
   return {
     mode: text(value.mode, 'CALLER_SUPPLIED_EVIDENCE'),
     manualSummaryPermitted: value.manualSummaryPermitted === true,
+    retainedAuditObservedMatch: value.retainedAuditObservedMatch === true,
+    retainedExtractionPinVerified: value.retainedExtractionPinVerified === true,
     artifactPaths: value.artifactPaths && typeof value.artifactPaths === 'object'
       ? { ...value.artifactPaths }
       : {},
@@ -176,10 +253,23 @@ function normalizeDataset(value = {}) {
     unresolvedJsonPathCount: count(value.unresolvedJsonPathCount),
     openIssueCount: count(value.openIssueCount),
     numericalDataCount: count(value.numericalDataCount),
-    coefficientInventoryRows: count(value.coefficientInventoryRows),
-    numericCoefficientRows: count(value.numericCoefficientRows),
-    unresolvedCoefficientRows: count(value.unresolvedCoefficientRows),
-    unresolvedParameterRows: count(value.unresolvedParameterRows),
+    dimensionalContractStatus: text(value.dimensionalContractStatus, 'UNRESOLVED'),
+    dimensionalViolationCount: count(value.dimensionalViolationCount),
+    dimensionalViolationIds: Array.isArray(value.dimensionalViolationIds)
+      ? value.dimensionalViolationIds.map((item) => text(item, 'UNRESOLVED_DIMENSIONAL_VIOLATION'))
+      : ['UNRESOLVED_DIMENSIONAL_VIOLATION'],
+    coefficientCurveRows: count(value.coefficientCurveRows),
+    coefficientSchema: text(value.coefficientSchema, 'UNRESOLVED'),
+    coefficientSchemaQualified: value.coefficientSchemaQualified === true,
+    coefficientsPerCurve: count(value.coefficientsPerCurve),
+    requiredScalarCoefficientCount: count(value.requiredScalarCoefficientCount),
+    numericScalarCoefficientCount: count(value.numericScalarCoefficientCount),
+    unresolvedScalarCoefficientCount: count(value.unresolvedScalarCoefficientCount),
+    missingScalarCoefficientCount: count(value.missingScalarCoefficientCount),
+    invalidScalarCoefficientCount: count(value.invalidScalarCoefficientCount),
+    independentVariable: text(value.independentVariable, 'UNRESOLVED'),
+    independentVariableRepresentation: text(value.independentVariableRepresentation, 'UNRESOLVED'),
+    independentVariableQualified: value.independentVariableQualified === true,
     semanticHash: nullableText(value.semanticHash),
     sourceCustodyQualified: value.sourceCustodyQualified === true,
     sourceCustodyState: text(value.sourceCustodyState, 'UNRESOLVED'),
@@ -196,6 +286,29 @@ function normalizeSign(value = {}) {
       ? value.openConflicts.map((item) => text(item, 'UNRESOLVED_CONFLICT'))
       : ['UNRESOLVED_CONFLICT'],
     sourceCustodyQualified: value.sourceCustodyQualified === true,
+  };
+}
+
+function normalizeRuntimeContracts(value = {}) {
+  return {
+    status: text(value.status, 'NOT_RUN'),
+    sourceCustodyQualified: value.sourceCustodyQualified === true,
+    sourceRawPdfSha256: nullableText(value.sourceRawPdfSha256),
+    loadAxisMappingStatus: text(value.loadAxisMappingStatus, 'BLOCKED'),
+    loadAxisMappingContractHash: nullableText(value.loadAxisMappingContractHash),
+    canonicalFrameContractHash: nullableText(value.canonicalFrameContractHash),
+    loadAxisSourceLocator: nullableText(value.loadAxisSourceLocator),
+    pressureThrustStatus: text(value.pressureThrustStatus, 'BLOCKED'),
+    pressureThrustMode: nullableText(value.pressureThrustMode),
+    pressureThrustDoubleCountGuardQualified: value.pressureThrustDoubleCountGuardQualified === true,
+    pressureThrustIndependentCheckStatus: text(value.pressureThrustIndependentCheckStatus, 'NOT_RUN'),
+    pressureThrustPolicyRecordHash: nullableText(value.pressureThrustPolicyRecordHash),
+    stressIntensityDefinitionStatus: text(value.stressIntensityDefinitionStatus, 'BLOCKED'),
+    stressIntensityDefinitionContractHash: nullableText(value.stressIntensityDefinitionContractHash),
+    stressIntensitySourceLocator: nullableText(value.stressIntensitySourceLocator),
+    stressIntensityOutputDimension: nullableText(value.stressIntensityOutputDimension),
+    stressIntensityIndependentCheckStatus: text(value.stressIntensityIndependentCheckStatus, 'NOT_RUN'),
+    qualificationRecordHash: nullableText(value.qualificationRecordHash),
   };
 }
 

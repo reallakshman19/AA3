@@ -1,0 +1,45 @@
+name: EMP.1.C primary qualification state
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  state:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Require exact expected-blocked primary qualification state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/emp1-c-primary-state
+          set +e
+          node scripts/emp1-c-primary-qualification-state-check.mjs \
+            > test-results/emp1-c-primary-state/state.json
+          rc=$?
+          set -e
+          cat test-results/emp1-c-primary-state/state.json
+          test "$rc" -eq 2
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const s=JSON.parse(await readFile('test-results/emp1-c-primary-state/state.json','utf8'));
+          if(s.status!=='BLOCKED') throw new Error(`EMP1_C_PRIMARY_STATE:${s.status}`);
+          if(s.blockers?.length!==1 || s.blockers[0].code!=='WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED') throw new Error('EMP1_C_PRIMARY_BLOCKER_SET_DRIFT');
+          if(s.restrictions?.length!==1 || s.restrictions[0].code!=='WRC537-FIG1B-ORIGINAL-GAMMA-BLANK') throw new Error('EMP1_C_PRIMARY_RESTRICTION_SET_DRIFT');
+          if(s.gates?.wrcSourceCustody!=='PASS' || s.gates?.cauxBenchmark!=='PASS_INDEPENDENT_BENCHMARK_QUALIFICATION') throw new Error('EMP1_C_PRIMARY_RESOLVED_GATE_REGRESSION');
+          if(s.routeRegistrationAllowed!==false || s.productionComparisonAllowed!==false) throw new Error('EMP1_C_PRIMARY_PREMATURE_AUTHORIZATION');
+          NODE
+      - name: Upload primary state evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emp1-c-primary-state-${{ github.sha }}
+          path: test-results/emp1-c-primary-state
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,51 @@
+{
+  "schema": "emp1-c-runtime-components/v1",
+  "status": "PASS_COMPONENTS_METHOD_STILL_BLOCKED_BY_INTERPOLATION",
+  "engineeringAuthority": true,
+  "productionAuthority": false,
+  "workflow": {
+    "run": 32330236984,
+    "number": 8,
+    "conclusion": "success"
+  },
+  "sourceCustody": {
+    "status": "PASS",
+    "requiredSemantics": "custodyState=VERIFIED; qualificationState=PASS_SOURCE_CUSTODY; 64-hex rawPdfSha256",
+    "genericPassAccepted": false
+  },
+  "cylindricalFrame": {
+    "status": "PASS",
+    "contractHash": "sha256:23f3570f657362d007502964e4a9164f3e73ba742f14b8a3e409aa916ea6818f",
+    "construction": "eLong=normalize(vesselCenterline); eP=normalize(nozzleCenterline); eVc=normalize(eLong x eP)",
+    "forceBasis": {"P":"eP","Vc":"eVc","Vl":"eLong"},
+    "momentBasis": {"Mc":"-eLong","Ml":"eVc","Mt":"-eP"},
+    "sourceLocators": ["WRC537 Table 4 PDF pages 39-40", "CAUx pp25-26 direction-cosine/load-conversion benchmark"],
+    "cauxBenchmarkMapping": {"P":-161,"Vc":-53,"Vl":-2109,"Mc":121,"Ml":33,"Mt":-775},
+    "obliqueRoundTrip": "PASS",
+    "globalFieldRename": "PROHIBITED"
+  },
+  "stressIntensity": {
+    "status": "PASS",
+    "definitionContractHash": "sha256:e3dfebceb731e2c0e0b41aaf6cc0b27c1ac33004da6538564a97058296d510d8",
+    "sourceLocators": ["WRC537 Table 3 PDF page 38", "WRC537 Table 5 PDF page 42"],
+    "outputDimension": "STRESS",
+    "independentCases": "PASS",
+    "stressScalingMetamorphicProof": "PASS"
+  },
+  "pressureThrust": {
+    "status": "PASS_POLICY_CAPABILITY",
+    "policyContractHash": "sha256:af950cf160ad3cf1c9035014dd055ce1f91264e8a8d1af593cdbb619a4ef8f1b",
+    "modes": ["SOURCE_LOAD_ALREADY_INCLUDES_THRUST","ADD_PRESSURE_THRUST_FROM_NOZZLE_ID","NOT_APPLICABLE_BY_QUALIFIED_METHOD"],
+    "addFormula": "A=pi*d_i^2/4; magnitude=pressure*A",
+    "signRule": "ADD requires explicit directionAlongEP=+1 or -1 with authority; sign is never inferred from existing force",
+    "doubleCountRule": "ADD requires VERIFIED_EXCLUDED source-load thrust custody; INCLUDED requires VERIFIED_INCLUDED custody; non-ADD modes reject ADD inputs",
+    "hexagonSanity": "275 psi and 12 in ID -> 31101.7672705 lbf; with explicit -eP and -26 lbf existing P -> -31127.7672705 lbf",
+    "cauxBenchmarkMode": "Include Pressure Thrust = No"
+  },
+  "overallMethodAuthorization": {
+    "runtimeComponentsQualified": true,
+    "cylindricalCurveSelectionQualified": false,
+    "productionComparisonAllowed": false,
+    "emp1CRouteRegistrationAllowed": false
+  }
+}

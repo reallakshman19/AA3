@@ -6,6 +6,7 @@ import {
   EMP1_C_CURRENT_QUALIFICATION_EVIDENCE,
   evaluateEmp1CQualificationState,
 } from './emp1-c-qualification-state.js';
+import { EMP1_C_BOUNDED_PRODUCTION_ROUTES } from './emp1-c-bounded-route-registry.js';
 
 export const EMP1_PUBLIC_PRODUCT = Object.freeze({
   productId: 'EMP.1',
@@ -15,7 +16,11 @@ export const EMP1_PUBLIC_PRODUCT = Object.freeze({
 
 export const EMP1_BACKING_STAGE_IDS = Object.freeze(['LAFEA.1', 'LAFEA.2']);
 
-/** Production route registration is code/registry custody, never source-evidence custody. */
+/**
+ * Global/full-domain EMP.1.C route authority remains false. Qualified bounded
+ * production slices are listed separately in EMP1_C_BOUNDED_PRODUCTION_ROUTES
+ * and still require runtime scope validation before execution.
+ */
 export const EMP1_C_PRODUCTION_ROUTE = Object.freeze({
   registered: false,
   routeId: null,
@@ -53,8 +58,8 @@ export function buildEmp1ProductProjection(state, options = {}) {
   const b = projectBStep(projectExecutableStep(EMP1_STEPS[1], bStage), bCustody);
 
   // Qualification evidence may be supplied by a governed caller, but it cannot
-  // assert that a production route exists. Route registration is owned here and
-  // remains false until an actual EMP.1.C production route is implemented.
+  // assert global route registration. Bounded route capability is separate and
+  // each bounded route must revalidate runtime eligibility before execution.
   const qualificationEvidence = options.localCorrelationQualificationEvidence
     ?? EMP1_C_CURRENT_QUALIFICATION_EVIDENCE;
   const cQualification = evaluateEmp1CQualificationState(withGovernedCExecutionRoute(qualificationEvidence));
@@ -64,6 +69,8 @@ export function buildEmp1ProductProjection(state, options = {}) {
     documentLoaded: false,
     resultAvailable: false,
     runAuthorized: cQualification.runAuthorized,
+    boundedProductionRoutes: EMP1_C_BOUNDED_PRODUCTION_ROUTES,
+    boundedRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
     blockers: cQualification.blockerCodes,
     blockerDetails: cQualification.blockers,
     qualification: cQualification,
@@ -90,6 +97,8 @@ export function buildEmp1ProductProjection(state, options = {}) {
       emp1CTechnicalQualificationReady: cQualification.technicalQualificationReady,
       emp1CRunAuthorized: cQualification.runAuthorized,
       emp1CProductionRoute: EMP1_C_PRODUCTION_ROUTE,
+      emp1CBoundedProductionRoutes: EMP1_C_BOUNDED_PRODUCTION_ROUTES,
+      emp1CBoundedRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
       emp1CQualificationState: cQualification,
       passIsCodeCompliance: false,
       releaseQualified: false,

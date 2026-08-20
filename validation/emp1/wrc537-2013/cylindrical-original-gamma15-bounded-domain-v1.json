@@ -1,0 +1,84 @@
+{
+  "schema": "emp1-wrc537-cylindrical-gamma15-bounded-domain/v1",
+  "status": "PASS_SOURCE_QUALIFIED_CONSERVATIVE_DOMAIN",
+  "engineeringAuthority": true,
+  "productionRouteAuthority": false,
+  "globalEmp1CRouteAuthority": false,
+  "source": {
+    "document": "WRC537_2013.pdf",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "parameterDefinition": {
+      "gamma": "Rm/T",
+      "beta": "0.875*r0/Rm",
+      "section": "4.2.2.1",
+      "equation": "26"
+    },
+    "curveLimitAuthority": {
+      "section": "4.4",
+      "rule": "ORIGINAL_CURVES_MUST_NOT_BE_USED_BEYOND_LIMITS_INDICATED",
+      "reason": "OUTER_LIMITS_REPORTED_APPRECIABLY_UNCONSERVATIVE"
+    }
+  },
+  "table5OriginalFigureSet": [
+    "1A", "2A", "3A", "4A",
+    "1B-1", "2B-1", "3B", "4B",
+    "1C", "1C-1", "2C", "2C-1", "3C", "4C"
+  ],
+  "sourceChartReview": {
+    "method": "VISUAL_REVIEW_OF_300_DPI_PNG_RENDERED_FROM_SHA_BOUND_PRIMARY_PDF_NO_OCR",
+    "evidenceWorkflow": "EMP.1.C beta-domain source evidence",
+    "pdfPages": [94,96,100,104,110,118,122,124,128,132,136,140,144,146],
+    "gamma": 15,
+    "allRequiredCurvesExist": true,
+    "governingOuterLimitCharts": [
+      {
+        "figure": "1C",
+        "pdfPage": 128,
+        "observation": "gamma=15 Original curve visibly terminates above beta=0.30 and below beta=0.35"
+      },
+      {
+        "figure": "2C",
+        "pdfPage": 136,
+        "observation": "gamma=15 Original curve visibly terminates above beta=0.30 and below beta=0.35"
+      }
+    ],
+    "productBoundaryClassification": "CONSERVATIVE_BOUNDARY_STRICTLY_INSIDE_ALL_REVIEWED_GAMMA15_ORIGINAL_CURVES; NOT_CLAIMED_AS_EXACT_WRC_OUTER_LIMIT"
+  },
+  "qualifiedProductDomain": {
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "variant": "ORIGINAL",
+    "gamma": {
+      "mode": "EXACT_SOURCE_TABULATED",
+      "allowedValues": [15],
+      "machineRoundOffRelativeTolerance": 1e-12
+    },
+    "beta": {
+      "minimum": 0.05,
+      "minimumInclusive": true,
+      "maximum": 0.30,
+      "maximumInclusive": true,
+      "minimumClassification": "CONSERVATIVE_PRODUCT_BOUNDARY_INSIDE_ALL_REVIEWED_CURVES",
+      "maximumClassification": "CONSERVATIVE_PRODUCT_BOUNDARY_BELOW_GOVERNING_1C_AND_2C_SOURCE_CURVE_ENDPOINTS"
+    },
+    "interpolationAllowed": false,
+    "extrapolatedCurveUseAllowed": false,
+    "crossVariantFallbackAllowed": false
+  },
+  "explicitExclusions": [
+    "NON_TABULATED_GAMMA",
+    "GAMMA_OTHER_THAN_15_FOR_THIS_DOMAIN_RECORD",
+    "BETA_BELOW_0P05",
+    "BETA_ABOVE_0P30",
+    "EXTRAPOLATED_CURVE_FAMILIES",
+    "RECTANGULAR_OR_SQUARE_ATTACHMENTS",
+    "WRC537_FIG1B_ORIGINAL_GAMMA_BLANK_ROW"
+  ],
+  "authorization": {
+    "independentFullTable5OracleAllowed": true,
+    "boundedAdapterProductionComparisonAllowed": false,
+    "boundedRouteRegistrationAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "requiredNextGate": "GAMMA15_BETA0P155_INDEPENDENT_FULL_TABLE5_ORACLE_REOBSERVATION"
+  }
+}

@@ -92,10 +92,10 @@ for(const key of ['circumferential','longitudinal','shear','stressIntensity']){
 assert.equal(stressComparisons,32);
 
 const falsifiers=[
-  ['gamma-low',mutate(input,(x)=>{x.geometry.meanRadius=99.9;}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],
-  ['gamma-high',mutate(input,(x)=>{x.geometry.shellThickness=19.9;}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],
-  ['beta-low',mutate(input,(x)=>{x.geometry.attachmentRadius=5;}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],
-  ['beta-high',mutate(input,(x)=>{x.geometry.attachmentRadius=60;}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],
+  ['gamma-low',mutate(input,(x)=>{x.geometry.meanRadius=99.9;delete x.geometry.gamma;delete x.geometry.beta;}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],
+  ['gamma-high',mutate(input,(x)=>{x.geometry.shellThickness=19.9;delete x.geometry.gamma;}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],
+  ['beta-low',mutate(input,(x)=>{x.geometry.attachmentRadius=5;delete x.geometry.beta;}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],
+  ['beta-high',mutate(input,(x)=>{x.geometry.attachmentRadius=60;delete x.geometry.beta;}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],
   ['declared-beta-drift',mutate(input,(x)=>{x.geometry.beta=0.156;}),'EMP1_WRC537_BOUNDED_DECLARED_BETA_MISMATCH'],
   ['declared-gamma-drift',mutate(input,(x)=>{x.geometry.gamma=5.01;}),'EMP1_WRC537_BOUNDED_DECLARED_GAMMA_MISMATCH'],
   ['source-sha-substitution',mutate(input,(x)=>{x.sourceDocumentSha256='0'.repeat(64);}),'EMP1_WRC537_OUTSIDE_BOUNDED_DOMAIN'],

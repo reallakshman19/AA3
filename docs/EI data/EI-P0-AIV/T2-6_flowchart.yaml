@@ -4,20 +4,37 @@ module: T2.7
 source_document: Energy Institute Guidelines 2nd Edition (2008)
 page: PDF 69 / Doc 61
 source_pdf_git_blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
-transcription_status: PARTIAL_SOURCE_RECONCILIATION
-engineering_use: VERIFIED_SUBSET_ONLY
-promotion_authority: BLOCKED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION
+transcription_status: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
+engineering_use: QUALIFICATION_EVIDENCE_ONLY
+production_promotion_authority: BLOCKED_PENDING_PINNED_PDF_VISUAL_PARITY_AND_DOWNSTREAM_QUALIFICATION
+source_reconciliation:
+  original_guidance_text_rendering: CORROBORATED_PRINTED_PAGE_61
+  successor_ei_subsea_flowchart: CORROBORATED_SAME_EQUATION_CHAIN
+  exact_pinned_pdf_visual_parity: NOT_RUN_TRANSPORT_BLOCKED
+  numerical_oracle: EI_D2_3_WORKED_EXAMPLE
 steps:
   - step: 1
-    name: Geometric / Stress Intermediates A, S and B
-    verification: UNRESOLVED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION
-    engineering_authority: NONE
-    prohibited_use: "Do not calculate A, S or B from the PR1288 equations; they do not reproduce the controlled D2.3 worked example."
-    published_d2_3_anchors:
-      A: 0.93989
-      S: 68.229
-      B: 152.207
-    note: "Published anchors are benchmark evidence only and are not a substitute for the missing source-faithful A/S/B equations."
+    name: Geometric / Stress Intermediates a, s and B
+    verification: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
+    definitions:
+      ratio: "R = Dext / T"
+      s: "s = 91.9 - R"
+      a: "a = 3.28e-7*R^3 - 8.503e-5*R^2 + 7.063e-3*R + 0.816"
+      B: "B = a * (PWL - 0.112762*s - 0.001812*s^2 + 4.307277e-5*s^3)"
+    units:
+      Dext: mm
+      T: mm
+      PWL: dB
+    d2_3_reproduction:
+      Dext_mm: 168.3
+      T_mm: 7.11
+      PWL_discontinuity_db: 164.3883116883117
+      calculated_a: 0.9398945187723486
+      published_a: 0.93989
+      calculated_s: 68.22911392405064
+      published_s: 68.229
+      calculated_B: 152.2067364535756
+      published_B: 152.207
   - step: 2
     name: Baseline Cycles to Failure N
     verification: VERIFIED_AGAINST_OFFICIAL_ENERGY_INSTITUTE_ERRATA_AND_D2_3
@@ -27,48 +44,63 @@ steps:
     worked_example_anchor: "B=152.207 -> log10(N)=9.90256787... -> N=7.990388e9, published as 9.9026 and 7.99E9."
   - step: 3
     name: Diameter Ratio Modifier FLM1
-    verification: VERIFIED_FOR_D_OVER_d_LESS_THAN_10_FORMULA_WITH_OPEN_D2_3_ARITHMETIC_RECONCILIATION
-    condition_verified: "Dext/dext < 10"
-    formula_verified: "FLM1 = -0.07 + 0.91*R + 1.32/R - 0.48*R^1.5 + 0.065*R^2, where R=Dext/dext"
-    application_verified: "N_after_FLM1 = N * FLM1"
+    verification: SOURCE_CORROBORATED_FULL_BRANCH_WITH_OPEN_D2_3_ARITHMETIC_RECONCILIATION
+    ratio: "R1 = Dext / dext"
+    branch_under_10:
+      condition: "R1 < 10"
+      formula: "FLM1 = -0.07 + 0.91*R1 + 1.32/R1 - 0.48*R1^1.5 + 0.065*R1^2"
+    branch_10_and_above:
+      condition: "R1 >= 10"
+      formula: "FLM1 = 0.5"
+    application: "N = N * FLM1"
     published_d2_3:
       ratio: 2.791
       FLM1: 1.2133
     independent_recalculation:
       ratio_from_displayed_dimensions: 2.7910447761194033
       FLM1: 1.2109758194311824
-      reconciliation_state: OPEN
+      reconciliation_state: OPEN_PUBLISHED_ARITHMETIC_VARIANCE
       consequence: "Final D2.3 LOF remains 0.29 using either value; discrepancy must not be hidden."
-    d_over_d_10_and_above: UNRESOLVED_PENDING_DIRECT_SOURCE_RECONCILIATION
   - step: 4
     name: Connection Modifier FLM2
-    verification: VERIFIED_FOR_D2_3_WELDOLET_PATH_ONLY
-    condition_verified: WELDOLET
-    formula_verified: "FLM2 = 0.29 + 0.09*tanh((PWL - 172)/2.9)"
-    application_verified: "N_after_FLM2 = N_after_FLM1 * FLM2"
+    verification: SOURCE_CORROBORATED_FULL_BRANCH_AND_D2_3_REPRODUCED
+    condition: "Is the connection a weldolet type fitting?"
+    yes:
+      formula: "FLM2 = 0.29 + 0.09*tanh((PWL - 172)/2.9)"
+      application: "N = N * FLM2"
+    no:
+      application: "No FLM2 multiplier is applied; proceed to material branch."
     worked_example_anchor: "PWL≈164.4 dB -> FLM2≈0.2009; published N_after_FLM2=1.95E9."
-    other_connection_types: UNRESOLVED_PENDING_DIRECT_SOURCE_RECONCILIATION
   - step: 5
-    name: Material Treatment
-    verification: UNRESOLVED_GENERAL_METHOD
-    engineering_authority: NONE_FOR_GENERAL_MATERIAL_MODIFIER
-    published_d2_3_anchor:
-      material_duplex: false
-      statement: "The piping material is not duplex therefore calculate Lf = 0.31."
-    warning: "PR1288 introduced a general FLM3 multiplier on N. That abstraction is quarantined until the controlled T2.6 source is reconciled directly."
+    name: Material Modifier FLM3
+    verification: SOURCE_CORROBORATED_FULL_BRANCH
+    condition: "Is the piping material duplex?"
+    yes:
+      formula: "FLM3 = 0.263 + 0.087*tanh((PWL - 172)/2.9)"
+      application: "N = N * FLM3"
+    no:
+      application: "No FLM3 multiplier is applied; proceed to fatigue factor."
+    d2_3_anchor: "D2.3 material is not duplex, so no FLM3 multiplier is applied."
   - step: 6
     name: Fatigue Factor and LOF
-    verification: VERIFIED_FOR_D2_3_LOWER_BRANCH_ONLY
+    verification: SOURCE_CORROBORATED_FULL_BRANCH_AND_D2_3_REPRODUCED
     fatigue_factor_equation: "Lf = 3.1 - 0.1303*ln(N)"
-    worked_example_anchor: "N=1.95E9 -> Lf=0.31274..., published as 0.31."
-    verified_LOF_branch:
-      condition: "Lf < 0.5"
-      result: "LOF = 0.29"
-    higher_branch: UNRESOLVED_PENDING_DIRECT_SOURCE_RECONCILIATION
+    clamp:
+      below_zero: "if Lf <= 0.0, take Lf = 0.0"
+      above_one: "if Lf >= 1.0, take Lf = 1.0"
+    lof_mapping:
+      - condition: "Lf >= 0.5"
+        result: "LOF = Lf"
+      - condition: "Lf < 0.5"
+        result: "LOF = 0.29"
+    worked_example_anchor: "N=1.95E9 -> Lf≈0.31 -> LOF=0.29."
 correction_record:
   source_pr: 1288
-  corrected_or_quarantined:
-    - "Removed non-reproducible A/S/B equations from engineering authority."
-    - "Replaced the non-reproducing PR1288 log10(N) polynomial with the official publisher errata equation."
-    - "Corrected fatigue-factor constant from 1.30 to 3.1 for the D2.3-reproduced relation."
-    - "Quarantined PR1288 FLM3 material multiplier and all unverified general branches."
+  corrected_or_reconciled:
+    - "Replaced PR1288 non-reproducing A/S/B polynomial with the source-corroborated a/s/B relations that reproduce D2.3."
+    - "Retained official publisher errata for log10(N)."
+    - "Resolved Dext/dext >= 10 branch as FLM1=0.5 from source-corroborated flowchart text."
+    - "Resolved non-Weldolet path as no FLM2 application rather than an invented connection-type table."
+    - "Resolved duplex material branch and FLM3 equation from source-corroborated flowchart text."
+    - "Resolved Lf clamp and both LOF branches from source-corroborated flowchart text."
+    - "Production promotion remains blocked until exact pinned-PDF visual parity and downstream qualification are complete."

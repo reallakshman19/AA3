@@ -6,10 +6,10 @@ import { spawnSync } from 'node:child_process';
 const casePath = 'scripts/lafea-pr1270-source-remesh-case.mjs';
 const original = fs.readFileSync(casePath, 'utf8');
 const candidate = makeMappedMetricControl(makeObservationFirst(original));
-const family = 'T3';
+const families = ['T3', 'T6'];
 const globalTarget = 30;
 const acceptanceGrowth = 1.5;
-const localTargets = [15, 7.5];
+const localTargets = [22.5, 15, 11.25, 7.5];
 const scenarios = [
   { name: 'CENTER', width: 200, height: 120, xf: 0.50, yf: 0.50 },
   { name: 'NEAR_EDGE', width: 200, height: 120, xf: 0.15, yf: 0.50 },
@@ -20,8 +20,10 @@ const rows = [];
 
 try {
   fs.writeFileSync(casePath, candidate);
-  for (const localTarget of localTargets) {
-    for (const scenario of scenarios) rows.push(runCase(localTarget, scenario));
+  for (const family of families) {
+    for (const localTarget of localTargets) {
+      for (const scenario of scenarios) rows.push(runCase(family, localTarget, scenario));
+    }
   }
 } finally {
   fs.writeFileSync(casePath, original);
@@ -41,7 +43,7 @@ const failures = rows.filter((row) => (
 ));
 const observed = rows.map((row) => row.maximumObserved).filter(Number.isFinite);
 const receipt = {
-  check: 'PR1270_MAPPED_METRIC_GRADING_CONTROL_V1',
+  check: 'PR1270_MAPPED_METRIC_GRADING_CONTROL_V2',
   classification: 'CONTROL_PROOF_NOT_PRODUCT_MESHER',
   architecture: 'SIMULTANEOUS_TENSOR_METRIC_GRID_THEN_FIXED_DIAGONAL_TRIANGULATION',
   field: 'H(D)=MIN(H_GLOBAL,H_LOCAL+(1-1/G_MAX)*D)',
@@ -49,6 +51,9 @@ const receipt = {
   handBound: 'ADJACENT_1D_INTERVAL_RATIO<=EXP((1-1/G_MAX)*DELTA_M)<=EXP(1/3)',
   theoreticalAxisRatioBound: Math.exp(1 / 3),
   acceptanceGrowth,
+  families,
+  localTargets,
+  scenarios: scenarios.map((row) => row.name),
   caseCount: rows.length,
   passCount: rows.length - failures.length,
   failCount: failures.length,
@@ -65,13 +70,54 @@ const receipt = {
   adjacencyFailureCaseIds: rows.filter((row) => !(row.maximumObserved <= acceptanceGrowth + 1e-12) || row.violatingAdjacencyCount !== 0).map((row) => row.caseId),
   deliveryFailureCaseIds: rows.filter((row) => !(row.insertedPointCount > 0) || !(row.localCornerGain > 0)).map((row) => row.caseId),
   failureCaseIds: failures.map((row) => row.caseId),
+  familySummaries: families.map((family) => summarize(rows.filter((row) => row.family === family), family)),
+  ratioSummaries: localTargets.map((localTarget) => summarize(
+    rows.filter((row) => row.localTarget === localTarget),
+    `HLOCAL_${localTarget}`,
+  )),
   qualification: failures.length ? 'BLOCK' : 'PASS',
   rows,
 };
 fs.mkdirSync('test-results', { recursive: true });
 fs.writeFileSync('test-results/pr1270-metric-mapped-control-matrix.json', `${JSON.stringify(receipt, null, 2)}\n`);
-console.log(`PR1270_METRIC_MAPPED_CONTROL=${JSON.stringify(receipt)}`);
+const compact = {
+  check: receipt.check,
+  classification: receipt.classification,
+  qualification: receipt.qualification,
+  caseCount: receipt.caseCount,
+  passCount: receipt.passCount,
+  failCount: receipt.failCount,
+  theoreticalAxisRatioBound: receipt.theoreticalAxisRatioBound,
+  worstMaximumObserved: receipt.worstMaximumObserved,
+  minimumAcceptanceMargin: receipt.minimumAcceptanceMargin,
+  worstAxisIntervalRatio: receipt.worstAxisIntervalRatio,
+  worstAspectRatio: receipt.worstAspectRatio,
+  minimumScaledJacobian: receipt.minimumScaledJacobian,
+  maximumChildNodes: receipt.maximumChildNodes,
+  maximumChildElements: receipt.maximumChildElements,
+  minimumLocalCornerGain: receipt.minimumLocalCornerGain,
+  failureCaseIds: receipt.failureCaseIds,
+  familySummaries: receipt.familySummaries,
+  ratioSummaries: receipt.ratioSummaries,
+};
+console.log(`PR1270_METRIC_MAPPED_CONTROL_SUMMARY=${JSON.stringify(compact)}`);
 assert.equal(failures.length, 0, `mapped metric control failed ${failures.length}/${rows.length} cases`);
+
+function summarize(group, key) {
+  const groupFailures = group.filter((row) => row.qualification !== 'PASS');
+  return {
+    key,
+    caseCount: group.length,
+    passCount: group.length - groupFailures.length,
+    worstMaximumObserved: maxFinite(group.map((row) => row.maximumObserved)),
+    worstAxisIntervalRatio: maxFinite(group.map((row) => row.construction?.maximumAxisIntervalRatio)),
+    worstAspectRatio: maxFinite(group.map((row) => row.construction?.maximumTriangleAspectRatio)),
+    minimumScaledJacobian: minFinite(group.map((row) => row.construction?.minimumTriangleScaledJacobian)),
+    maximumChildNodes: maxFinite(group.map((row) => row.childNodes)),
+    maximumChildElements: maxFinite(group.map((row) => row.childElements)),
+    minimumLocalCornerGain: minFinite(group.map((row) => row.localCornerGain)),
+  };
+}
 
 function makeMappedMetricControl(source) {
   const generationStart = source.indexOf('function generateSourceRemesh(');
@@ -79,7 +125,7 @@ function makeMappedMetricControl(source) {
   assert.ok(generationStart >= 0 && candidatesStart > generationStart, 'mapped control generation anchors missing');
   const replacement = String.raw`function generateSourceRemesh(geometryValue, targets, transition, meshProfile, elementFamily, policy) {
   void meshProfile; void policy;
-  if (elementFamily !== 'T3') throw new Error('PR1270_METRIC_MAPPED_CONTROL_T3_ONLY');
+  if (!['T3', 'T6'].includes(elementFamily)) throw new Error('PR1270_METRIC_MAPPED_CONTROL_FAMILY_INVALID');
   if (targets.length !== 1) throw new Error('PR1270_METRIC_MAPPED_CONTROL_SINGLE_TARGET_ONLY');
   const bounds = geometryBounds(geometryValue);
   const local = transition.levels[0];
@@ -95,14 +141,26 @@ function makeMappedMetricControl(source) {
       const p10 = { x: xAxis.coordinates[i + 1], y: yAxis.coordinates[j] };
       const p11 = { x: xAxis.coordinates[i + 1], y: yAxis.coordinates[j + 1] };
       const p01 = { x: xAxis.coordinates[i], y: yAxis.coordinates[j + 1] };
-      coreElements.push(Object.freeze({ elementIndex: coreElements.length, elementType: 'T3', nodes: Object.freeze([p00, p10, p11]) }));
-      coreElements.push(Object.freeze({ elementIndex: coreElements.length, elementType: 'T3', nodes: Object.freeze([p00, p11, p01]) }));
+      coreElements.push(mappedTriangle(coreElements.length, elementFamily, p00, p10, p11));
+      coreElements.push(mappedTriangle(coreElements.length, elementFamily, p00, p11, p01));
     }
   }
   const construction = mappedMetricConstructionDiagnostics(xAxis, yAxis);
   const insertedPointCount = Math.max(0, (xAxis.coordinates.length - 2) * (yAxis.coordinates.length - 2));
   return Object.freeze({ mesh: weld(coreElements, elementFamily), insertedPointCount, construction });
 }
+
+function mappedTriangle(elementIndex, elementFamily, p0, p1, p2) {
+  const nodes = elementFamily === 'T3'
+    ? [p0, p1, p2]
+    : [p0, p1, p2, midpoint(p0, p1), midpoint(p1, p2), midpoint(p2, p0)];
+  return Object.freeze({
+    elementIndex,
+    elementType: elementFamily,
+    nodes: Object.freeze(nodes.map((point) => Object.freeze({ x: point.x, y: point.y }))),
+  });
+}
+function midpoint(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 
 function geometryBounds(geometryValue) {
   const xs = geometryValue.vertices.map((row) => row.x);
@@ -199,8 +257,8 @@ function makeObservationFirst(source) {
   return patched;
 }
 
-function runCase(localTarget, scenario) {
-  const caseId = `METRIC_GRID_T3_H${String(localTarget).replace('.', '_')}_${scenario.name}`;
+function runCase(family, localTarget, scenario) {
+  const caseId = `METRIC_GRID_${family}_H${String(localTarget).replace('.', '_')}_${scenario.name}`;
   const run = spawnSync(process.execPath, [casePath], { encoding: 'utf8', env: {
     ...process.env, PR1270_CASE_ID: caseId, PR1270_FAMILY: family,
     PR1270_HGLOBAL: String(globalTarget), PR1270_HLOCAL: String(localTarget),
@@ -211,7 +269,7 @@ function runCase(localTarget, scenario) {
   const match = text.match(/PR1270_SOURCE_REMESH_CASE=(\{[^\n]+\})/u);
   const p = match ? JSON.parse(match[1]) : null;
   return {
-    caseId, localTarget, targetRatio: localTarget / globalTarget, scenario: scenario.name,
+    caseId, family, localTarget, targetRatio: localTarget / globalTarget, scenario: scenario.name,
     exitCode: run.status, qualification: p?.qualification ?? 'NOT_REACHED',
     replayEqual: p?.replayEqual ?? null, replayInsertionCountEqual: p?.replayInsertionCountEqual ?? null,
     maximumObserved: p?.maximumObserved ?? null, violatingAdjacencyCount: p?.violatingAdjacencyCount ?? null,

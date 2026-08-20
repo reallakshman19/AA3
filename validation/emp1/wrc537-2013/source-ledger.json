@@ -9,6 +9,6 @@
   "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
   "expectedByteCount": 1443744,
   "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
-  "custodyState": "SHA256_FROZEN_PENDING_REOBSERVATION",
-  "qualificationState": "BLOCKED_PENDING_REOBSERVATION"
+  "custodyState": "VERIFIED",
+  "qualificationState": "PASS_SOURCE_CUSTODY"
 }

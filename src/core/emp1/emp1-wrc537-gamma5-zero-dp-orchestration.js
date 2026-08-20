@@ -19,6 +19,8 @@ import {
 
 export const EMP1_WRC537_GAMMA5_ZERO_DP_ORCHESTRATION_REQUEST_SCHEMA =
   'emp1-wrc537-gamma5-zero-dp-orchestration-request/v1';
+export const EMP1_WRC537_GAMMA5_ZERO_DP_LOAD_LAYER_SCHEMA =
+  'emp1-a-retained-foundation-layer/v1';
 
 const REQUEST_KEYS = Object.freeze([
   'schema',
@@ -32,6 +34,30 @@ const REQUEST_KEYS = Object.freeze([
 const EXACT_GAMMA_POLICY = 'EXACT_SOURCE_TABULATED_GAMMA_ONLY';
 
 /**
+ * Wrap a retained LAFEA.1 result for the unified EMP.1 orchestrator without
+ * altering the retained result contract. The WRC preparer independently
+ * revalidates the nested result hashes before creating load custody.
+ */
+export function createEmp1RetainedFoundationLayer(foundationResult) {
+  if (!record(foundationResult)
+    || foundationResult.schema !== 'local-attachment-foundation-result/v1'
+    || foundationResult.qualification?.state !== 'ACCEPTED') {
+    throw orchestrationError('EMP1_WRC537_ZERO_DP_FOUNDATION_RESULT_NOT_QUALIFIED');
+  }
+  const resultHash = foundationResult.semanticHashes?.resultPayloadSemanticHash;
+  if (typeof resultHash !== 'string' || !resultHash.trim()) {
+    throw orchestrationError('EMP1_WRC537_ZERO_DP_FOUNDATION_RESULT_HASH_REQUIRED');
+  }
+  return deepFreeze({
+    schema: EMP1_WRC537_GAMMA5_ZERO_DP_LOAD_LAYER_SCHEMA,
+    qualification: 'PASS',
+    resultHash,
+    reasons: [],
+    foundationResult,
+  });
+}
+
+/**
  * Build the runtime local-method source only from caller geometry/axis intent
  * plus the actual qualified EMP.1.A result. Caller-authored authority hashes,
  * load custody and policy flags are deliberately outside the accepted request.
@@ -39,12 +65,13 @@ const EXACT_GAMMA_POLICY = 'EXACT_SOURCE_TABULATED_GAMMA_ONLY';
 export function prepareEmp1Wrc537Gamma5ZeroDpLocalSource({ source, loadTransfer } = {}) {
   if (!record(source)) throw orchestrationError('EMP1_WRC537_ZERO_DP_ORCHESTRATION_SOURCE_REQUIRED');
   const request = requireRequest(source?.localMethod?.routeRequest);
+  const foundationResult = requireFoundationResult(loadTransfer);
   const geometry = deriveEmp1Wrc537CylindricalBoundedGeometry(request.geometry);
   requireUnityStressConcentration(request.stressConcentration);
   buildEmp1Wrc537CylindricalFrame(request.axes);
 
   const loadCandidate = deriveEmp1AZeroDpWrcLoadPackageCandidate({
-    result: loadTransfer,
+    result: foundationResult,
     loadCaseIdentity: request.loadCaseIdentity,
     pressureResultIdentity: request.pressureResultIdentity,
     wrcReferencePointGlobal: request.wrcReferencePointGlobal,
@@ -79,7 +106,7 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({ source, loadTransfer
   }
   const request = requireRequest(source?.localMethod?.routeRequest);
   return runEmp1Wrc537Gamma5ZeroDpRoute({
-    loadTransferResult: loadTransfer,
+    loadTransferResult: requireFoundationResult(loadTransfer),
     loadCaseIdentity: request.loadCaseIdentity,
     pressureResultIdentity: request.pressureResultIdentity,
     wrcReferencePointGlobal: request.wrcReferencePointGlobal,
@@ -113,6 +140,19 @@ export function emp1Wrc537Gamma5ZeroDpOrchestrationQualification() {
     benchmarkQualification: EMP1_WRC537_GAMMA5_ZERO_DP_BENCHMARK_QUALIFICATION,
     loadProducerQualificationSha256: EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256,
   });
+}
+
+function requireFoundationResult(value) {
+  if (value?.schema === 'local-attachment-foundation-result/v1') return value;
+  if (value?.schema !== EMP1_WRC537_GAMMA5_ZERO_DP_LOAD_LAYER_SCHEMA
+    || value?.qualification !== 'PASS'
+    || value?.foundationResult?.schema !== 'local-attachment-foundation-result/v1') {
+    throw orchestrationError('EMP1_WRC537_ZERO_DP_RETAINED_FOUNDATION_LAYER_REQUIRED');
+  }
+  if (value.resultHash !== value.foundationResult.semanticHashes?.resultPayloadSemanticHash) {
+    throw orchestrationError('EMP1_WRC537_ZERO_DP_FOUNDATION_LAYER_HASH_MISMATCH');
+  }
+  return value.foundationResult;
 }
 
 function requireRequest(value) {

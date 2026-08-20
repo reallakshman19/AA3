@@ -1,0 +1,52 @@
+name: EMP.1 current-main independent baseline
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-handcalc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enforce EMP1-01 evidence-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$base" ]; then
+            base="$(git rev-parse HEAD^)"
+          fi
+          git diff --name-only "$base"...HEAD | tee /tmp/emp1-01-changed-files.txt
+          if grep -E '^(src/|e2e/|package(-lock)?\.json$)' /tmp/emp1-01-changed-files.txt; then
+            echo 'EMP1_01_SCOPE_VIOLATION: production/UI/e2e/package changes are not allowed in the baseline PR'
+            exit 1
+          fi
+
+      - name: Re-observe WRC gamma15 hand calculation independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-main-gamma15-independent-baseline-check.mjs | tee /tmp/emp1-main-baseline.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const result = JSON.parse(await readFile('/tmp/emp1-main-baseline.json', 'utf8'));
+          if (result.status !== 'PASS') throw new Error(`EMP1_MAIN_BASELINE_STATUS:${result.status}`);
+          if (result.productionImports?.length !== 0) throw new Error('EMP1_MAIN_BASELINE_PRODUCTION_IMPORT');
+          if (result.productionObservationUsed !== false) throw new Error('EMP1_MAIN_BASELINE_PRODUCTION_OBSERVATION');
+          if (result.source?.figures !== 14 || result.source?.sourceRows !== 14) throw new Error('EMP1_MAIN_BASELINE_SOURCE_FIGURE_COUNT');
+          if (result.comparisons?.curveOrdinates !== 16) throw new Error('EMP1_MAIN_BASELINE_CURVE_COUNT');
+          if (result.comparisons?.scaleFactors !== 9) throw new Error('EMP1_MAIN_BASELINE_SCALE_COUNT');
+          if (result.comparisons?.stressComponents !== 24) throw new Error('EMP1_MAIN_BASELINE_STRESS_COMPONENT_COUNT');
+          if (result.comparisons?.stressIntensities !== 8) throw new Error('EMP1_MAIN_BASELINE_STRESS_INTENSITY_COUNT');
+          if (result.governing?.location !== 'Du') throw new Error(`EMP1_MAIN_BASELINE_GOVERNING_LOCATION:${result.governing?.location}`);
+          NODE

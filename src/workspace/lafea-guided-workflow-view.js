@@ -84,7 +84,7 @@ export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
   workflow.body.append(
     overall,
     dom(root, 'p', 'lafea-workbench__section-intro',
-      'Work left to right. A is the current load/reference authority. B must bind to that current A evidence while retaining its own screening cases and evaluation locations. C stays blocked until WRC source/data and CAUx benchmark qualification are complete.'),
+      'Work left to right. A is the current load/reference authority. B must bind to that current A evidence while retaining its own screening cases and evaluation locations. C has a separately qualified bounded WRC537 gamma=5 route, but this workspace does not yet own its execution and global/full-domain EMP.1.C remains unregistered.'),
   );
 
   const nav = dom(root, 'nav', 'lafea-workbench__stages');
@@ -99,7 +99,11 @@ export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
     button.dataset.state = step.state;
     button.setAttribute('aria-current', projection.activeStepId === step.stepId ? 'step' : 'false');
     button.disabled = step.shortId === 'C';
-    if (step.shortId === 'C') button.title = `Blocked: ${step.blockers.join(', ')}`;
+    if (step.shortId === 'C') {
+      button.title = step.boundedRouteCount
+        ? 'A bounded WRC537 route is qualified, but EMP.1.C workspace execution is not wired and global C authority remains false.'
+        : `Blocked: ${step.blockers.join(', ')}`;
+    }
     button.addEventListener('click', () => {
       if (step.backingStageId) onSelectRoute?.(step.backingStageId);
     });
@@ -110,7 +114,10 @@ export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
   const c = projection.steps.find((step) => step.shortId === 'C');
   const blocker = dom(root, 'div', 'lafea-workbench__authority');
   blocker.dataset.role = 'emp1-c-blocker';
-  blocker.append(dom(root, 'strong', null, 'EMP.1.C blocked — no production local-correlation authority.'));
+  blocker.append(dom(root, 'strong', null,
+    c?.boundedRouteCount
+      ? 'EMP.1.C bounded route qualified — workspace/full-domain authority still blocked.'
+      : 'EMP.1.C blocked — no local-correlation production authority.'));
   const list = dom(root, 'ul');
   for (const code of c.blockers) list.append(dom(root, 'li', null, emp1BlockerLabel(code)));
   blocker.append(list);
@@ -186,6 +193,8 @@ function primaryReason(area) {
 
 function emp1BlockerLabel(code) {
   return ({
+    GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED: 'Global/full-domain EMP.1.C remains unregistered; only explicitly listed bounded routes have engineering authority.',
+    EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED: 'The analytical workspace does not yet execute the bounded C route as part of its visible A→B→C transaction.',
     WRC_DATASET_NOT_READY: 'WRC extraction package is not READY_FOR_IMPLEMENTATION.',
     WRC_NUMERICAL_COEFFICIENTS_MISSING: 'WRC a–j numerical coefficient payload is not qualified.',
     WRC_SIGN_ARBITRATION_OPEN: 'WRC load/sign convention arbitration remains open.',

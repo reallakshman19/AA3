@@ -1,6 +1,6 @@
 schema: AgentClaim.v1
 pr_or_wip: PR1289
-claim_state: ACTIVE
+claim_state: MERGE_PENDING_OWNER_AUTHORIZED
 files:
   exact:
     - docs/EI data/EI-P0-FIT/T2-2_source_reference.yaml
@@ -51,5 +51,5 @@ excluded_authority:
 base_head: 782683e7355281e95e5319dcad7f8a5644710d1d
 overlap_state: SAFE
 validation_gate: scripts/ei-aviff-source-master-p0-check.mjs
-merge_authority: OWNER_ONLY_NOT_GRANTED
-note: PR1289 corrects independently reproduced PR1288 source transcription defects and advances T2.5/T2.6 equations to source-corroborated qualification evidence. Exact pinned-PDF visual parity, downstream implementation parity, release qualification and all production authority remain outside this claim.
+merge_authority: OWNER_GRANTED_2026_08_20T11_50_PLUS04
+note: Owner authorized merge on 2026-08-20. PR1289 still does not grant downstream screening/design authority; exact pinned-PDF visual parity, downstream implementation parity and release qualification remain separate gates.

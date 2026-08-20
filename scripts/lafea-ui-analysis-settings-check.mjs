@@ -9,9 +9,7 @@ import {
 
 const analyticalDocument = sourceFixture();
 const analytical = buildLafeaAnalysisSettingsViewModel(stage(
-  'LAFEA.1',
-  analyticalDocument,
-  'ANALYTICAL_FOUNDATION_V1',
+  'LAFEA.1', analyticalDocument, 'ANALYTICAL_FOUNDATION_V1',
 ));
 assert.equal(analytical.schema, LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA);
 assert.equal(analytical.readOnly, false);
@@ -22,17 +20,12 @@ assert.equal(value(analytical, 'Qualification profile'), analyticalDocument.qual
 assert.equal(value(analytical, 'Thickness policy'), analyticalDocument.thicknessBasis.policy);
 assert.match(value(analytical, 'Requested analyses / cases'), /LOAD_TRANSFER/u);
 assert.match(value(analytical, 'Unit basis'), /length: mm/u);
-assert.equal(
-  value(analytical, 'Code / allowable basis'),
-  'Not declared by the active stage source contract',
-);
+assert.equal(value(analytical, 'Code / allowable basis'), 'Not declared by the active stage source contract');
 assert.ok(analytical.qualificationDetails.length > 0);
 
 const continuumDocument = triangleSource();
 const continuum = buildLafeaAnalysisSettingsViewModel(stage(
-  'LAFEA.3',
-  continuumDocument,
-  'FEA_MESH_RECOVERY_V1',
+  'LAFEA.3', continuumDocument, 'FEA_MESH_RECOVERY_V1',
 ));
 assert.equal(value(continuum, 'Formulation'), 'Plane stress');
 assert.equal(continuum.formulationControl.current, continuumDocument.formulation);
@@ -41,24 +34,17 @@ assert.match(value(continuum, 'Unit basis'), /stress: MPa/u);
 assert.equal(value(continuum, 'Code / allowable basis'), 'Not declared by the active stage source contract');
 
 console.log(JSON.stringify({
-  check: 'lafea-ui-analysis-settings',
-  status: 'PASS',
-  sourceSettingsEditable: true,
-  governedSolverSettingsLocked: true,
-  humanReadableFormulationProjection: true,
-  governedFormulationIdentityPreserved: true,
-  missingCodeBasisIsExplicit: true,
+  check: 'lafea-ui-analysis-settings', status: 'PASS', sourceSettingsEditable: true,
+  governedSolverSettingsLocked: true, humanReadableFormulationProjection: true,
+  governedFormulationIdentityPreserved: true, missingCodeBasisIsExplicit: true,
   githubActionsWorkflowAdded: false,
 }));
 
+await import('./lafea-pr1270-affine-metric-screen.mjs');
+await import('./lafea-pr1270-affine-t6-positive.mjs');
+await import('./lafea-pr1270-affine-angle-boundary.mjs');
+
 function stage(stageId, document, profileId) {
-  return {
-    stageId,
-    document,
-    lifecycle: { profileId },
-    lifecycleBinding: { status: 'CURRENT' },
-  };
+  return { stageId, document, lifecycle: { profileId }, lifecycleBinding: { status: 'CURRENT' } };
 }
-function value(model, label) {
-  return model.rows.find((row) => row.label === label)?.value;
-}
+function value(model, label) { return model.rows.find((row) => row.label === label)?.value; }

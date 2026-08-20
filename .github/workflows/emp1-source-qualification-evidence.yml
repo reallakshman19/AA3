@@ -1,4 +1,4 @@
-name: EMP.1 retained-source qualification evidence
+name: EMP.1 primary-source qualification evidence
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  retained-source-qualification:
+  primary-source-qualification:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Advanced_Analysis candidate
@@ -18,37 +18,77 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Record raw primary-source custody boundary
+      - name: Observe exact PR1286 PDF bytes and candidate SHA-256
         shell: bash
         run: |
           set -euo pipefail
           out="$PWD/test-results/emp1-source-qualification"
           mkdir -p "$out"
-          cat > "$out/raw-primary-source-custody.json" <<'JSON'
-          {
-            "schema": "emp1-primary-source-custody-boundary/v1",
-            "status": "BLOCKED",
-            "code": "BLOCK_PRIVATE_SOURCE_RAW_BYTES_NOT_OBSERVED",
-            "wrc": {
-              "repository": "reallaksh19/XML_Compare_Utilities",
-              "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
-              "path": "docs/emp.1/WRC537_2013.pdf",
-              "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
-              "expectedByteCount": 1443744,
-              "rawPdfSha256": null
+
+          set +e
+          node scripts/emp1-source-custody-check.mjs --source-root "$PWD/docs/emp1" \
+            > "$out/source-custody.json" 2> "$out/source-custody.stderr.txt"
+          rc=$?
+          set -e
+
+          cat "$out/source-custody.json"
+          printf '%s\n' "$rc" > "$out/source-custody.exit-code.txt"
+
+          # Before SHA-256 is frozen, BLOCKED/rc=2 is the required state.
+          # Any byte-count/blob mismatch or malformed ledger must fail the job.
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
+            cat "$out/source-custody.stderr.txt" >&2 || true
+            exit "$rc"
+          fi
+
+          node --input-type=module <<'NODE' > "$out/pr1286-blob-identity.json"
+          import { readFile } from 'node:fs/promises';
+          import { createHash } from 'node:crypto';
+
+          const files = [
+            {
+              id: 'WRC537_2013',
+              path: 'docs/emp1/WRC537_2013.pdf',
+              expectedBlob: 'ce861233928154145a9257efbbf8dbef3f5a17d1',
+              expectedBytes: 1443744,
             },
-            "caux": {
-              "repository": "reallaksh19/XML_Compare_Utilities",
-              "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
-              "path": "docs/emp.1/CAUx 2017 - WRC01f.pdf",
-              "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
-              "expectedByteCount": 7260396,
-              "rawPdfSha256": null
+            {
+              id: 'CAUX_2017_WRC01F_PP24_31',
+              path: 'docs/emp1/CAUx 2017 - WRC01f.pdf',
+              expectedBlob: '76573b41462943b2987e28b23ebbbf7e51ac0a02',
+              expectedBytes: 7260396,
             },
-            "authorityNote": "This workflow does not possess raw bytes from the private source repository. Git blob IDs and byte counts are identity pins only and are not substituted for raw SHA-256 or primary-PDF page verification."
+          ];
+
+          const rows = [];
+          for (const item of files) {
+            const bytes = await readFile(item.path);
+            const git = createHash('sha1')
+              .update(Buffer.from(`blob ${bytes.length}\0`, 'utf8'))
+              .update(bytes)
+              .digest('hex');
+            const sha256 = createHash('sha256').update(bytes).digest('hex');
+            const row = {
+              ...item,
+              observedBytes: bytes.length,
+              observedBlob: git,
+              candidateRawPdfSha256: sha256,
+              byteCountMatches: bytes.length === item.expectedBytes,
+              blobMatches: git === item.expectedBlob,
+            };
+            if (!row.byteCountMatches || !row.blobMatches) {
+              throw new Error(`EMP1_PR1286_SOURCE_IDENTITY_MISMATCH:${item.id}`);
+            }
+            rows.push(row);
           }
-          JSON
-          cat "$out/raw-primary-source-custody.json"
+          console.log(JSON.stringify({
+            schema: 'emp1-pr1286-source-byte-observation/v1',
+            status: 'PASS',
+            authority: 'CANDIDATE_HASH_OBSERVATION_ONLY_UNTIL_LEDGER_FREEZE_AND_REOBSERVATION',
+            rows,
+          }, null, 2));
+          NODE
+          cat "$out/pr1286-blob-identity.json"
 
       - name: Verify retained-source arbitration remains fail closed
         shell: bash
@@ -57,7 +97,7 @@ jobs:
           node scripts/emp1-wrc-retained-source-arbitration-check.mjs \
             | tee test-results/emp1-source-qualification/retained-source-arbitration-check.json
 
-      - name: Prove 120-curve / 1200-scalar transcription contract
+      - name: Preserve pre-PR1286 coefficient contract as a blocked baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -72,11 +112,11 @@ jobs:
           node scripts/emp1-caux-pp24-31-extraction-gate-check.mjs \
             | tee test-results/emp1-source-qualification/caux-pp24-31-extraction-gate-check.json
 
-      - name: Upload retained qualification evidence
+      - name: Upload source qualification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: emp1-retained-source-qualification-${{ github.sha }}
+          name: emp1-primary-source-qualification-${{ github.sha }}
           path: test-results/emp1-source-qualification
           if-no-files-found: error
           retention-days: 30

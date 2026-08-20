@@ -84,7 +84,7 @@ export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
   workflow.body.append(
     overall,
     dom(root, 'p', 'lafea-workbench__section-intro',
-      'Work left to right. A is the current load/reference authority. B must bind to that current A evidence while retaining its own screening cases and evaluation locations. C stays blocked until WRC source/data and CAUx benchmark qualification are complete.'),
+      'Work left to right. A is the current load/reference authority. B must bind to that current A evidence while retaining its own screening cases and evaluation locations. C stays blocked until its backend WRC/CAUx qualification state authorizes execution.'),
   );
 
   const nav = dom(root, 'nav', 'lafea-workbench__stages');
@@ -98,8 +98,10 @@ export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
     button.dataset.emp1StepId = step.stepId;
     button.dataset.state = step.state;
     button.setAttribute('aria-current', projection.activeStepId === step.stepId ? 'step' : 'false');
-    button.disabled = step.shortId === 'C';
-    if (step.shortId === 'C') button.title = `Blocked: ${step.blockers.join(', ')}`;
+    button.disabled = step.shortId === 'C' || step.runAuthorized === false && !step.backingStageId;
+    if (step.shortId === 'C' && step.blockerDetails?.length) {
+      button.title = `Blocked: ${step.blockerDetails.map((item) => item.message).join(' | ')}`;
+    }
     button.addEventListener('click', () => {
       if (step.backingStageId) onSelectRoute?.(step.backingStageId);
     });
@@ -110,9 +112,17 @@ export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
   const c = projection.steps.find((step) => step.shortId === 'C');
   const blocker = dom(root, 'div', 'lafea-workbench__authority');
   blocker.dataset.role = 'emp1-c-blocker';
-  blocker.append(dom(root, 'strong', null, 'EMP.1.C blocked — no production local-correlation authority.'));
+  blocker.dataset.qualificationState = c.qualification?.state ?? c.state;
+  blocker.append(dom(root, 'strong', null, c.runAuthorized
+    ? 'EMP.1.C qualification gates are ready; production route registration remains the execution authority.'
+    : 'EMP.1.C blocked — no production local-correlation authority.'));
   const list = dom(root, 'ul');
-  for (const code of c.blockers) list.append(dom(root, 'li', null, emp1BlockerLabel(code)));
+  const blockerDetails = Array.isArray(c.blockerDetails) ? c.blockerDetails : [];
+  for (const item of blockerDetails) {
+    const entry = dom(root, 'li', null, item.message);
+    entry.dataset.blockerCode = item.code;
+    list.append(entry);
+  }
   blocker.append(list);
   workflow.body.append(blocker);
   return workflow.section;
@@ -182,15 +192,6 @@ function primaryReason(area) {
   const labels = lafeaWorkbenchReasonLabels(area.reasons);
   if (!labels.length) return null;
   return labels.length === 1 ? labels[0] : `${labels[0]} · ${labels.length - 1} more`;
-}
-
-function emp1BlockerLabel(code) {
-  return ({
-    WRC_DATASET_NOT_READY: 'WRC extraction package is not READY_FOR_IMPLEMENTATION.',
-    WRC_NUMERICAL_COEFFICIENTS_MISSING: 'WRC a–j numerical coefficient payload is not qualified.',
-    WRC_SIGN_ARBITRATION_OPEN: 'WRC load/sign convention arbitration remains open.',
-    CAUX_PP24_31_NOT_FROZEN: 'CAUx 2017 pp.24–31 benchmark values and independent hand calculation are not frozen.',
-  })[code] ?? code;
 }
 
 function emp1RefreshTitle(custody) {

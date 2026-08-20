@@ -1,5 +1,9 @@
 import { semanticHash } from '../shared-primitives/canonical-json.js';
 import {
+  createCanonicalLocalAttachmentFoundationModel,
+  validateCanonicalLocalAttachmentFoundationModel,
+} from '../local-stress/index.js';
+import {
   SOURCE_SCHEMA,
   createLocalAttachmentScreeningRequest,
 } from '../local-attachment-screening/index.js';
@@ -14,13 +18,13 @@ export const EMP1_B_SOURCE_CUSTODY_STATES = Object.freeze({
 
 export function refreshEmp1BSourceEvidence(options) {
   const aDocument = requireRecord(options?.aDocument, 'EMP1_A_DOCUMENT_REQUIRED');
-  const aExecution = requireCurrentQualifiedAExecution(aDocument, options?.aExecution);
+  const currentA = requireCurrentQualifiedA(aDocument, options?.aExecution);
   const bDocument = requireRecord(options?.bDocument, 'EMP1_B_DOCUMENT_REQUIRED');
   const rawB = stripScreeningDerivedFields(bDocument);
   rawB.sourceEvidence = {
     schema: SOURCE_SCHEMA,
-    foundationModel: aDocument,
-    foundationResult: aExecution.result,
+    foundationModel: currentA.canonicalModel,
+    foundationResult: currentA.execution.result,
   };
   return createLocalAttachmentScreeningRequest(rawB);
 }
@@ -50,10 +54,11 @@ export function classifyEmp1BSourceCustody(options) {
   if (!bDocument?.sourceEvidence?.foundationResult) {
     return custody(EMP1_B_SOURCE_CUSTODY_STATES.MISSING, false, null);
   }
-  if (!isCurrentQualifiedA(aDocument, aExecution)) {
-    return custody(EMP1_B_SOURCE_CUSTODY_STATES.A_NOT_QUALIFIED, false, 'EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED');
+  const currentA = evaluateCurrentQualifiedA(aDocument, aExecution);
+  if (currentA.status !== 'READY') {
+    return custody(EMP1_B_SOURCE_CUSTODY_STATES.A_NOT_QUALIFIED, false, currentA.code);
   }
-  if (sameEvidence(bDocument.sourceEvidence, aDocument, aExecution.result)) {
+  if (sameEvidence(bDocument.sourceEvidence, currentA.canonicalModel, aExecution.result)) {
     return custody(EMP1_B_SOURCE_CUSTODY_STATES.CURRENT, false, null);
   }
   const refresh = evaluateEmp1BSourceRefresh({ aDocument, aExecution, bDocument });
@@ -63,30 +68,60 @@ export function classifyEmp1BSourceCustody(options) {
   return custody(EMP1_B_SOURCE_CUSTODY_STATES.STALE_REFRESH_BLOCKED, false, refresh.code);
 }
 
-function requireCurrentQualifiedAExecution(aDocument, value) {
-  if (!isCurrentQualifiedA(aDocument, value)) {
-    fail('EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED',
-      'EMP.1.B refresh requires the current qualified EMP.1.A result for the retained A document.');
+function evaluateCurrentQualifiedA(aDocument, execution) {
+  try {
+    return { status: 'READY', code: null, ...requireCurrentQualifiedA(aDocument, execution) };
+  } catch (error) {
+    return {
+      status: 'BLOCKED',
+      code: typeof error?.code === 'string' ? error.code : 'EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED',
+      canonicalModel: null,
+      execution: null,
+    };
   }
-  return value;
 }
 
-function isCurrentQualifiedA(aDocument, execution) {
-  if (!aDocument || typeof aDocument !== 'object'
+function requireCurrentQualifiedA(aDocument, execution) {
+  if (!aDocument || typeof aDocument !== 'object' || Array.isArray(aDocument)
     || execution?.stageId !== 'LAFEA.1'
     || execution?.status !== 'QUALIFIED'
     || execution?.result?.qualification?.state !== 'ACCEPTED'
-    || !execution?.source) return false;
-  try {
-    return semanticHash(execution.source) === semanticHash(aDocument);
-  } catch {
-    return false;
+    || !execution?.source) {
+    fail('EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED',
+      'EMP.1.B refresh requires the current qualified EMP.1.A result for the retained A document.');
   }
+  if (semanticHash(execution.source) !== semanticHash(aDocument)) {
+    fail('EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED',
+      'EMP.1.A execution source does not match the retained A document.');
+  }
+
+  const canonicalModel = canonicalFoundationDocument(aDocument);
+  if (!execution.canonicalInput || typeof execution.canonicalInput !== 'object'
+    || Array.isArray(execution.canonicalInput)) {
+    fail('EMP1_A_CANONICAL_INPUT_REQUIRED',
+      'EMP.1.B refresh requires the canonical EMP.1.A input retained by the qualified execution.');
+  }
+  const executionCanonical = validateCanonicalLocalAttachmentFoundationModel(
+    structuredClone(execution.canonicalInput),
+  );
+  if (semanticHash(executionCanonical) !== semanticHash(canonicalModel)) {
+    fail('EMP1_A_CANONICAL_INPUT_MISMATCH',
+      'EMP.1.A canonical execution input does not reconstruct from the retained A document.');
+  }
+  return { execution, canonicalModel };
 }
 
-function sameEvidence(sourceEvidence, aDocument, aResult) {
+function canonicalFoundationDocument(aDocument) {
+  if (aDocument?.sourceEvidence && typeof aDocument.semanticHash === 'string') {
+    return validateCanonicalLocalAttachmentFoundationModel(structuredClone(aDocument));
+  }
+  const { meshConfig: _meshConfig, ...kernelSource } = structuredClone(aDocument);
+  return createCanonicalLocalAttachmentFoundationModel(kernelSource);
+}
+
+function sameEvidence(sourceEvidence, canonicalModel, aResult) {
   try {
-    return semanticHash(sourceEvidence.foundationModel) === semanticHash(aDocument)
+    return semanticHash(sourceEvidence.foundationModel) === semanticHash(canonicalModel)
       && semanticHash(sourceEvidence.foundationResult) === semanticHash(aResult);
   } catch {
     return false;

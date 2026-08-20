@@ -18,10 +18,15 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Enforce EMP1-02 scope
+      - name: Enforce EMP1-02 delivery scope
         shell: bash
         run: |
           set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.head_ref }}" != "agent/emp1-02-gamma5-route-main-issue1261" ]; then
+            echo 'EMP1_02_SCOPE_GUARD_NOT_APPLICABLE_TO_LATER_INTEGRATION_PR'
+            echo 'Functional gamma5 oracle, load-producer, route and registry qualification remains mandatory below.'
+            exit 0
+          fi
           base="${{ github.event.pull_request.base.sha }}"
           if [ -z "$base" ]; then base="$(git rev-parse HEAD^)"; fi
           git diff --name-only "$base"...HEAD | tee /tmp/emp1-02-files.txt

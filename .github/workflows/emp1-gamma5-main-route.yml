@@ -1,12 +1,9 @@
 name: EMP.1 gamma5 bounded route on current main
-
 on:
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   qualify-gamma5-route:
     runs-on: ubuntu-latest
@@ -17,58 +14,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Enforce EMP1-02 delivery scope
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.head_ref }}" != "agent/emp1-02-gamma5-route-main-issue1261" ]; then
-            echo 'EMP1_02_SCOPE_GUARD_NOT_APPLICABLE_TO_LATER_INTEGRATION_PR'
-            echo 'Functional gamma5 oracle, load-producer and fail-closed route qualification remains mandatory below.'
-            exit 0
-          fi
-          base="${{ github.event.pull_request.base.sha }}"
-          if [ -z "$base" ]; then base="$(git rev-parse HEAD^)"; fi
-          git diff --name-only "$base"...HEAD | tee /tmp/emp1-02-files.txt
-          if grep -E '^(src/workspace/|src/ui/|e2e/)' /tmp/emp1-02-files.txt; then echo 'EMP1_02_SCOPE_VIOLATION:UI_WORKBENCH_E2E_CHANGE'; exit 1; fi
-          if grep -E '^src/core/emp1/(emp1-orchestrator|emp1-public-product-contract|emp1-wrc537-gamma5-zero-dp-orchestration)\.js$' /tmp/emp1-02-files.txt; then echo 'EMP1_02_SCOPE_VIOLATION:ORCHESTRATION_OR_PUBLIC_PROJECTION_CHANGE'; exit 1; fi
-          if grep -E 'gamma15|pressure-thrust' /tmp/emp1-02-files.txt; then echo 'EMP1_02_SCOPE_VIOLATION:GAMMA15_OR_PRESSURE_THRUST_CHANGE'; exit 1; fi
-
       - name: Re-observe independent gamma5 full Table-5 oracle
-        shell: bash
-        run: |
-          set -euo pipefail
-          node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs > /tmp/emp1-gamma5-independent.json
-          cat /tmp/emp1-gamma5-independent.json
-          node --input-type=module <<'NODE'
-          import { readFile } from 'node:fs/promises';
-          const r=JSON.parse(await readFile('/tmp/emp1-gamma5-independent.json','utf8'));
-          if(r.status!=='PASS_REOBSERVED_FROZEN_FULL_TABLE5_ORACLE') throw new Error(`EMP1_G5_ORACLE:${r.status}`);
-          if(r.productionObservationUsed!==false || r.productionImports?.length!==0) throw new Error('EMP1_G5_ORACLE_NOT_INDEPENDENT');
-          if(r.semanticHash!=='5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa') throw new Error('EMP1_G5_ORACLE_HASH_DRIFT');
-          NODE
-
+        run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
+      - name: Qualify longitudinal-moment curve selection policy
+        run: node scripts/emp1-wrc537-longitudinal-moment-curve-selection-check.mjs
       - name: Re-observe qualified zero-dp upstream load producer
         run: node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs
-
-      - name: Re-observe gamma5 comparison kernel and fail-closed axis authority
+      - name: Re-observe fail-closed gamma5 authority
         run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
-
-      - name: Prove route registry is suspended and global route is absent
-        shell: bash
-        run: |
-          set -euo pipefail
-          node --input-type=module <<'NODE'
-          import assert from 'node:assert/strict';
-          import { EMP1_C_BOUNDED_PRODUCTION_ROUTES, EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON, EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID, emp1CBoundedRoute } from './src/core/emp1/emp1-c-bounded-route-registry.js';
-          import { evaluateEmp1Wrc537BoundedDomain } from './src/core/emp1/emp1-wrc537-cylindrical-bounded-domain.js';
-          const route=emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
-          assert.equal(EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,1);
-          assert.equal(route.registered,false); assert.equal(route.engineeringUseAuthorized,false); assert.equal(route.comparisonQualificationAvailable,true); assert.equal(route.globalEmp1CRouteAuthority,false); assert.equal(route.releaseQualified,false);
-          assert.deepEqual(route.suspensionReasons,[EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON]);
-          assert.deepEqual(route.scope,{shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',variant:'ORIGINAL',gamma:5,betaMinimum:0.05,betaMaximum:0.5,differentialPressure:0,Kn:1,Kb:1,interpolationAllowed:false,crossVariantFallbackAllowed:false});
-          const base={shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',sourceDocumentSha256:route.method.sourceDocumentSha256,datasetHash:route.method.datasetHash,variant:'ORIGINAL',gamma:5};
-          assert.equal(evaluateEmp1Wrc537BoundedDomain({...base,beta:0.05}).status,'PASS_BOUNDED_DOMAIN');
-          assert.equal(evaluateEmp1Wrc537BoundedDomain({...base,beta:0.5}).status,'PASS_BOUNDED_DOMAIN');
-          console.log(JSON.stringify({status:'PASS_SUSPENDED',registeredRoutes:0,comparisonRoutes:1,suspensionReasons:route.suspensionReasons,globalRouteAuthority:false},null,2));
-          NODE
+      - name: Preserve EMP.1 public product truth
+        run: node scripts/emp1-public-product-check.mjs

@@ -1,4 +1,4 @@
-# PR1287 work report — EMP.1.C primary-source and benchmark qualification
+# PR1287 work report — EMP.1.C primary-source, benchmark, and runtime qualification
 
 ## Recovery header
 
@@ -11,15 +11,16 @@
 - `MERGE_AUTHORITY: NOT_GRANTED`
 - `EMP1_C_ROUTE_REGISTERED: false`
 - `RELEASE_QUALIFIED: false`
-- `CURRENT_STAGE: CAUX_CURVE_SELECTION_POLICY_PROBE_RUNNING`
+- `CURRENT_STAGE: BLOCKED_WRC537_NON_TABULATED_GAMMA_SELECTION_AUTHORITY`
+- `SOLE_METHOD_WIDE_BLOCKER: WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED`
 
 ## Owner instruction consumed
 
-The owner explicitly instructed: refer PR #1286, merge PR #1273, and proceed.
+The owner instructed: refer PR #1286, merge PR #1273, and proceed.
 
-PR #1273 was squash-merged with an expected-head guard. PR #1286 had already merged four source artifacts to main. Those four PR1286 blobs were imported onto this successor branch by exact Git blob identity so source qualification could continue without re-encoding the PDFs.
+PR #1273 was squash-merged with an expected-head guard. PR #1286 had already merged four source artifacts to main. Those four PR1286 blobs were imported onto this successor branch by exact Git blob identity, preserving the previously pinned WRC and CAUx PDF identities.
 
-## Exact primary-source custody
+## Exact primary-source custody — PASS
 
 ### WRC 537
 
@@ -42,59 +43,66 @@ custody    = VERIFIED / PASS_SOURCE_CUSTODY
 benchmark  = PDF pages 24-31
 ```
 
-The first SHA-256 observation was performed only after byte count and Git blob identity matched. The frozen hashes were then independently re-observed and required to return `PASS_SOURCE_CUSTODY`.
+The SHA-256 values were accepted only after byte count and Git blob identity matched, then independently re-observed and required to return `PASS_SOURCE_CUSTODY`.
 
-## Critical WRC source corrections
+## Primary WRC method authority — PASS
 
-### 1. Curve-fit functional form
+### Curve-fit functional form
 
-The retained extraction had incorrectly represented each curve as a ninth-order polynomial. The primary WRC source uses:
+The retained ninth-order polynomial model was wrong. Primary WRC Section 8 uses:
 
 ```text
 Y = (a + cX + eX^2 + gX^3 + iX^4)
     / (1 + bX + dX^2 + fX^3 + hX^4 + jX^5)
 ```
 
-with `X=U` for the spherical SP/SM tables and `X=beta` for cylindrical tables.
+`X=U` for spherical SP/SM curves and `X=beta` for cylindrical curves.
 
-The old polynomial interpretation is rejected and must not be reintroduced.
+Legacy polynomial interpretation is rejected.
 
-### 2. Spherical radial membrane reconstruction
+### Spherical membrane reconstruction
 
-Primary WRC Table 3 directly resolves the retained dimensional contradiction:
+Primary WRC Table 3 resolves both thickness-factor contradictions:
 
 ```text
+radial load:
 curve ordinate = Nx*T/P or Ny*T/P
 sigma_m = Kn * Y * P / T^2
-```
 
-The retained `Y*P/T` expression is a transcription error.
-
-### 3. Spherical moment membrane reconstruction
-
-Primary WRC Table 3 gives:
-
-```text
+moment load:
 curve ordinate = Nx*T*sqrt(Rm*T)/M or Ny*T*sqrt(Rm*T)/M
 sigma_m = Kn * Y * M / (T^2*sqrt(Rm*T))
 ```
 
-The retained missing-thickness form is rejected.
+The retained `Y*P/T` and `Y*M/(T*sqrt(Rm*T))` machine forms are rejected transcription defects.
 
-### 4. Stress intensity
+### Stress intensity
 
-Primary WRC Tables 3/5 define a stress-valued principal-difference / twice-maximum-shear quantity. The retained outer square-root transcription is dimensionally and source-textually wrong.
-
-### 5. Signs
-
-Primary WRC sign tables qualify tension/compression signs and require reversal of all applicable signs in a load/moment column when the applied load direction reverses.
-
-## Complete WRC coefficient inventory
-
-The source-derived inventory is not the old `120 curves / 1200 scalars` model.
+Primary WRC Tables 3/5 define a stress-valued principal-difference / twice-maximum-shear quantity:
 
 ```text
-Section 8 coefficient tables = 51
+d  = sqrt((sigma1-sigma2)^2 + 4*tau^2)
+p1 = 0.5*(sigma1+sigma2+d)
+p2 = 0.5*(sigma1+sigma2-d)
+p3 = 0
+S  = max(abs(p1-p2), abs(p2-p3), abs(p3-p1))
+```
+
+The retained outer square-root transcription is rejected.
+
+### Signs
+
+Primary WRC sign tables qualify plus as tension and minus as compression. When an applied load/moment direction reverses, all signs in that applicable source column reverse.
+
+Primary method record:
+`validation/emp1/wrc537-2013/primary-source-arbitration-v2.json`
+
+## Complete WRC Section 8 inventory — PASS with one bounded row restriction
+
+Source-derived inventory:
+
+```text
+coefficient tables           = 51
 response curves              = 451
 numeric scalar coefficients  = 4,510
 parameter-qualified curves   = 450
@@ -113,25 +121,30 @@ cylindrical original       178 curves / 1,780 scalars total
 cylindrical extrapolated   144 curves / 1,440 scalars
 ```
 
-The spherical-hollow 1,150 values were independently parsed from Poppler text of the frozen PDF and matched 1,150/1,150 against the PR1286 structured extraction. One-scalar mutation is rejected by self-test.
+The spherical-hollow 1,150 values were parsed independently from Poppler text of the frozen PDF and matched 1,150/1,150 against the PR1286 structured extraction. A one-scalar mutation is rejected by self-test.
 
-## Open source anomaly
+Inventory record:
+`validation/emp1/wrc537-2013/section8-inventory-v1.json`
+
+### Bounded source anomaly
 
 `WRC537-FIG1B-ORIGINAL-GAMMA-BLANK`:
 
-- Figure: `1B – Original`
-- PDF page: 107
-- printed page: 95
-- the third curve has ten numeric coefficients but the gamma label cell is blank.
-- assigning gamma=10 by sequence is prohibited.
-- the affected curve is not selectable.
-- unaffected source-qualified curves retain their own authority.
+- Figure `1B – Original`
+- PDF page 107 / printed page 95
+- third numeric curve has all ten `a..j` values but the gamma label cell is blank
+- assigning `gamma=10` from sequence is prohibited
+- affected curve is unselectable
+- unaffected curves retain authority
 
-See `validation/emp1/wrc537-2013/source-anomalies-v1.json`.
+This is a row-level restriction, not a method-wide blocker.
 
-## Original vs Extrapolated policy
+Record:
+`validation/emp1/wrc537-2013/source-anomalies-v1.json`
 
-WRC states extrapolated curves are provided for ease of programming when required and are thought conservative, but explicitly says there is no rigorous theoretical basis supporting the extrapolation.
+## Original vs Extrapolated policy — preserved
+
+WRC says extrapolated curves are supplied for ease of programming when required and are thought conservative, while explicitly noting no rigorous theoretical basis supports the extrapolation.
 
 Therefore:
 
@@ -139,12 +152,12 @@ Therefore:
 ORIGINAL != EXTRAPOLATED
 NO silent fallback
 NO silent merge
-NO use of extrapolated row to repair an original-row source defect
+NO use of extrapolated data to repair the blank-gamma Original row
 ```
 
-Any use of extrapolated curves requires an explicit authorized selection policy.
+Any extrapolated-curve use requires explicit authority.
 
-## CAUx pp24-31 benchmark qualification
+## CAUx pp24-31 benchmark — PASS / independently re-observed
 
 Source benchmark semantic hash:
 
@@ -158,94 +171,70 @@ Independent hand-calculation semantic hash:
 679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c
 ```
 
-The independent checker:
-
-- imports Node built-ins only;
-- imports no production EMP.1.C/local-stress evaluator;
-- uses source-reported CAUx geometry/load/ordinate values;
-- reconstructs the CAUx global-to-WRC sustained load mapping independently;
-- applies primary WRC Table 5 stress equations/signs;
-- derives acceptance tolerance from the CAUx printed three-decimal curve ordinates and final whole-kPa reporting, not from production output.
-
-Expected sustained locations are `Au, Al, Bu, Bl, Cu, Cl, Du, Dl`.
-
-CAUx source expected kPa:
+Independent handcalc artifact file SHA-256:
 
 ```text
-Circ = [0,-5,378,-102,-973,882,1493,-1204]
-Long = [71,-22,466,-317,-545,354,923,-461]
-Shear = [-253,-253,-242,-242,-29,-29,-465,-465]
-Stress intensity = [511,506,668,529,975,883,1754,1428]
+100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f
+```
+
+The checker imports Node built-ins only and no production EMP.1.C/local-stress evaluator. It reconstructs the CAUx global-to-WRC loads independently, applies WRC Table 5 equations/signs, and derives tolerances from the source's three-decimal curve ordinates plus whole-kPa final reporting.
+
+CAUx expected sustained kPa at `[Au, Al, Bu, Bl, Cu, Cl, Du, Dl]`:
+
+```text
+Circ   = [0,-5,378,-102,-973,882,1493,-1204]
+Long   = [71,-22,466,-317,-545,354,923,-461]
+Shear  = [-253,-253,-242,-242,-29,-29,-465,-465]
+S      = [511,506,668,529,975,883,1754,1428]
 ```
 
 Independent calculated kPa:
 
 ```text
-Circ = [-0.1095,-5.4684,381.5922,-105.4145,-974.0831,881.8885,1496.2714,-1205.2847]
-Long = [69.2034,-20.0611,469.0403,-319.3905,-545.8885,352.6624,922.0194,-458.1936]
-Shear = [-252.8459,-252.8459,-241.8840,-241.8840,-29.2638,-29.2638,-465.4662,-465.4662]
-Stress intensity = [510.4200,505.9024,671.1204,528.9775,976.0738,883.5017,1756.0459,1428.5599]
+Circ   = [-0.1095,-5.4684,381.5922,-105.4145,-974.0831,881.8885,1496.2714,-1205.2847]
+Long   = [69.2034,-20.0611,469.0403,-319.3905,-545.8885,352.6624,922.0194,-458.1936]
+Shear  = [-252.8459,-252.8459,-241.8840,-241.8840,-29.2638,-29.2638,-465.4662,-465.4662]
+S      = [510.4200,505.9024,671.1204,528.9775,976.0738,883.5017,1756.0459,1428.5599]
 ```
 
 All source-resolution comparisons pass.
 
-### Hash-freeze falsifier event
-
-An incorrect handcalc semantic hash was initially copied into the qualification record. The re-observation gate failed. Run-47 and run-50 handcalc JSON were then compared byte-for-byte:
-
-```text
-both length = 20,536 bytes
-both file SHA256 = 100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f
-both semantic hash = 679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c
-calculationEvidence diff = 0
-```
-
-The frozen record was corrected without changing benchmark input, mechanics, sign, tolerance, or calculated result. Workflow #52 subsequently re-observed the correct hash and passed.
-
-Current benchmark state:
+Current benchmark status:
 
 ```text
 PASS_INDEPENDENT_BENCHMARK_QUALIFICATION
 production comparison allowed by benchmark gate = true
-EMP.1.C route registration allowed = false
+EMP.1.C route registration allowed by benchmark gate = false
 ```
 
-## CAUx frame evidence
+Records:
+- `validation/emp1/caux2017-wrc01f/benchmark-source-pp24-31-v2.json`
+- `validation/emp1/caux2017-wrc01f/benchmark-qualification-v2.json`
 
-For the benchmark only:
+### Hash-freeze falsifier event
+
+An incorrect handcalc semantic hash was initially copied into the qualification record. Re-observation failed. Run-47 and run-50 handcalc JSON were then proven byte-identical:
 
 ```text
-eP    = nozzle centerline = +global X
-eLong = vessel centerline = +global Y
-eVc   = eLong x eP = -global Z
-
-P  = F dot eP
-Vc = F dot eVc
-Vl = F dot eLong
-Mc = -M dot eLong
-Ml =  M dot eVc
-Mt = -M dot eP
+length = 20,536 bytes
+file SHA256 = 100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f
+semantic hash = 679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c
+calculationEvidence diff = 0
 ```
 
-This is one qualified transform benchmark. It is not authorization to universally rename global FX/FY/FZ fields. A general EMP.1 source/runtime frame contract must identify vessel and nozzle directions explicitly.
+The qualification metadata was corrected without changing inputs, mechanics, signs, tolerances, or results. Workflow #52 then re-observed the correct hash and passed.
 
-## Pressure thrust
+## Runtime components — PASS independently
 
-CAUx benchmark source states `Include Pressure Thrust = No`. This qualifies the benchmark mode only.
+Record:
+`validation/emp1/wrc537-2013/runtime-components-v1.json`
 
-General production still requires an explicit runtime mode and a double-count guard. Current allowed runtime modes remain:
+Runtime qualification workflow #8:
+`32330236984` — PASS.
 
-```text
-SOURCE_LOAD_ALREADY_INCLUDES_THRUST
-ADD_PRESSURE_THRUST_FROM_NOZZLE_ID
-NOT_APPLICABLE_BY_QUALIFIED_METHOD
-```
+### Source-custody semantics
 
-## Runtime custody bug fixed
-
-The inherited runtime gate incorrectly required source ledger `qualificationState == PASS`, while the qualified source ledgers use the more specific `PASS_SOURCE_CUSTODY`.
-
-It now requires exactly:
+Qualified source requires exactly:
 
 ```text
 custodyState = VERIFIED
@@ -253,70 +242,245 @@ qualificationState = PASS_SOURCE_CUSTODY
 rawPdfSha256 = 64-hex
 ```
 
-Generic `PASS` is explicitly rejected in the runtime self-test.
+Generic `PASS` is explicitly rejected.
 
-## Current active numerical-policy probe
+### Cylindrical physical frame — PASS
 
-The remaining cylindrical curve-selection/interpolation policy is being probed against the independently qualified CAUx ordinates at:
+Contract hash:
 
 ```text
+sha256:23f3570f657362d007502964e4a9164f3e73ba742f14b8a3e409aa916ea6818f
+```
+
+Frame construction:
+
+```text
+eLong = normalize(vessel centerline)
+eP    = normalize(nozzle centerline / radial direction)
+eVc   = normalize(eLong x eP)
+
+P  = F dot eP
+Vc = F dot eVc
+Vl = F dot eLong
+Mc = M dot (-eLong)
+Ml = M dot eVc
+Mt = M dot (-eP)
+```
+
+The contract reproduces CAUx exactly and passes an oblique-orientation round trip with numerical residual near machine precision. It does not depend on global `FX/FY/FZ` field names. Universal field renaming is prohibited.
+
+### Stress intensity runtime definition — PASS
+
+Contract hash:
+
+```text
+sha256:e3dfebceb731e2c0e0b41aaf6cc0b27c1ac33004da6538564a97058296d510d8
+```
+
+Independent biaxial, pure-shear, mixed-sign, compressive, and stress-scaling metamorphic tests pass.
+
+### Pressure thrust / double-count policy — PASS capability
+
+Policy hash:
+
+```text
+sha256:af950cf160ad3cf1c9035014dd055ce1f91264e8a8d1af593cdbb619a4ef8f1b
+```
+
+Modes:
+
+```text
+SOURCE_LOAD_ALREADY_INCLUDES_THRUST
+ADD_PRESSURE_THRUST_FROM_NOZZLE_ID
+NOT_APPLICABLE_BY_QUALIFIED_METHOD
+```
+
+Rules:
+
+- ADD computes `A = pi*d_i^2/4` and `F = pressure*A`.
+- ADD requires source-load thrust custody `VERIFIED_EXCLUDED`.
+- ADD requires an explicit `directionAlongEP = +1 or -1` plus direction authority; sign is never inferred from the existing load.
+- INCLUDED adds zero and requires `VERIFIED_INCLUDED` source-load custody.
+- NOT_APPLICABLE adds zero and requires a qualified method reason/record.
+- ADD inputs are rejected in non-ADD modes.
+
+Bounded numerical sanity:
+
+```text
+pressure = 275 psi
+ID       = 12 in
+area     = 113.0973355 in^2
+thrust   = 31,101.7672705 lbf
+existing P = -26 lbf
+explicit -eP total = -31,127.7672705 lbf
+```
+
+CAUx benchmark mode remains `Include Pressure Thrust = No`.
+
+## Sole method-wide blocker — WRC537 non-tabulated gamma selection
+
+### Full primary-source scan
+
+The complete frozen WRC PDF was searched, not only Section 8.
+
+WRC states that the precision equations were produced to:
+
+- eliminate implementation errors;
+- facilitate proper interpolation/extrapolation;
+- permit efficient computation.
+
+However, the bulletin does **not** identify the programmable rule between discrete cylindrical gamma coefficient curves: linear gamma, log gamma, inverse gamma, coefficient interpolation, nearest curve, etc.
+
+Record:
+`validation/emp1/wrc537-2013/interpolation-authority-v1.json`
+
+Status:
+
+```text
+BLOCKED_SOURCE_RULE_UNRESOLVED
+```
+
+### Qualified CAUx probe does not identify the WRC537 rule
+
+CAUx explicitly uses:
+
+```text
+WRC107 Version: March 1979 (B1 & B2)
+Curves read for 1979 B1/B2
 gamma = 48.03
 beta  = 0.155
 ```
 
-The probe compares Original versus Extrapolated and:
+Therefore CAUx is a qualified chart-read end-result benchmark; it is not a declared WRC537 coefficient-evaluator specification.
+
+A separate probe evaluated the source-qualified WRC537 coefficient tables against all 16 CAUx-reported ordinates under:
+
+- Original and Extrapolated data;
+- linear Y in gamma;
+- linear Y in log(gamma);
+- linear Y in inverse gamma;
+- coefficient-wise interpolation then Y;
+- lower/upper bracket values.
+
+No tested policy reproduces all 16 ordinates within the source's published 0.001 precision.
+
+Best full Original candidates:
 
 ```text
-exact gamma Y
-linear interpolation of evaluated Y in gamma
-linear interpolation of Y in log(gamma)
-linear interpolation of Y in inverse gamma
-coefficient-wise interpolation followed by evaluation
-lower/upper bracket without interpolation
+inverse-gamma Y interpolation: 8/16 within 0.001; max |error| = 0.27054
+log-gamma Y interpolation:     7/16 within 0.001; max |error| = 0.24190
+linear-gamma Y interpolation:  6/16 within 0.001; max |error| = 0.21050
+coefficient interpolation:     5/16 within 0.001; max |error| = 0.38001
 ```
 
-The coefficient-interpolation path is included only as a falsifier/comparator; it is not authorized.
+Representative falsifiers:
 
-## Current blockers before production comparison
+```text
+Figure 4C: CAUx = 7.273
+Original linear-Y/gamma = 7.39930
+Original coefficient interpolation = 7.17520
+Extrapolated coefficient interpolation = 7.28699
 
-1. Freeze source/benchmark-qualified cylindrical curve selection/interpolation semantics.
-2. Define a general canonical vessel/nozzle frame contract for EMP.1 source input and qualify LAFEA-to-WRC transformation independently.
-3. Freeze general pressure-thrust mode/double-count policy.
-4. Freeze source-qualified stress-intensity runtime record against already-qualified primary WRC definition.
-5. Update the generated EMP.1.C qualification state only after method/runtime/benchmark gates all pass.
-6. Only then run production EMP.1.C comparison.
-7. Route registration remains false until the production comparison and method authorization pass.
+Figure 3B: CAUx = 5.217
+Original linear-Y/gamma = 5.42750
+Original coefficient interpolation = 5.59701
+```
 
-## Changed-file families
+Record:
+`validation/emp1/wrc537-2013/cylindrical-curve-selection-probe-v1.json`
 
-Primary source / benchmark:
-- `docs/emp1/WRC537_2013.pdf`
-- `docs/emp1/WRC537_2013_Tables_and_Charts.md`
-- `docs/emp1/CAUx 2017 - WRC01f.pdf`
-- `docs/emp1/CAUx_2017_WRC01f_pages_24-31.md`
-- source ledgers and arbitration/benchmark qualification JSON under `validation/emp1/**`
+Decision:
 
-Qualification code:
-- source custody workflow
-- primary WRC source parsers/evaluators/audits
-- complete Section 8 inventory audit
-- CAUx independent hand calculation
-- CAUx curve-selection probe
-- runtime-contract custody semantic correction
+```text
+linear Y interpolation       NOT AUTHORIZED
+log-Y interpolation          NOT AUTHORIZED BY PRIMARY SOURCE
+inverse-gamma interpolation  NOT AUTHORIZED
+coefficient interpolation    NOT AUTHORIZED
+automatic extrapolated use   NOT AUTHORIZED
+production curve selection   BLOCKED for non-tabulated gamma
+```
+
+A secondary 2025 demo engineering report uses logarithmic interpolation in gamma, but it is retained only as corroboration and is not elevated above the frozen primary-source gap.
+
+### What is still allowed
+
+- exact source-qualified gamma rows may be evaluated directly;
+- the qualified CAUx benchmark may continue using its own source-reported chart ordinates;
+- the single blank-gamma `1B Original` row remains prohibited independently.
+
+### Required authority to close
+
+One of:
+
+1. direct authoritative WRC537 interpolation/selection instruction; or
+2. a source-qualified WRC537 numerical example that uniquely identifies and independently reproduces the required non-tabulated-gamma selection algorithm.
+
+## Primary qualification v2 state
+
+Current v2 state checker:
+`scripts/emp1-c-primary-qualification-state-check.mjs`
+
+Expected current output:
+
+```text
+status = BLOCKED
+method-wide blockers = 1
+  WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED
+bounded restrictions = 1
+  WRC537-FIG1B-ORIGINAL-GAMMA-BLANK
+routeRegistrationAllowed = false
+productionComparisonAllowed = false
+```
+
+CI intentionally treats this exact BLOCKED state as PASS evidence; any extra blocker, missing resolved gate, or premature authorization fails the workflow.
+
+## Superseded legacy assumptions
+
+Do not reintroduce:
+
+- ninth-order polynomial WRC curve fit;
+- spherical-hollow `120 curves / 1200 scalars`;
+- calling `1150` the complete WRC Section 8 dataset;
+- generic source ledger `qualificationState=PASS`;
+- CAUx pp24-31 `NOT_RUN` status;
+- tentative hard-coded `FX/FY/FZ -> WRC` field renaming;
+- silent extrapolated-curve fallback.
+
+## Current production/merge disposition
+
+```text
+WRC primary source custody            PASS
+CAUx primary source custody           PASS
+WRC equations/signs/stress intensity  PASS
+WRC rational curve model              PASS
+Section 8 inventory                   PASS_WITH_BOUNDED_ROW_RESTRICTION
+CAUx benchmark                        PASS_INDEPENDENT_REOBSERVED
+physical frame runtime contract       PASS
+stress-intensity runtime contract     PASS
+pressure-thrust runtime policy        PASS_COMPONENT_CAPABILITY
+non-tabulated cylindrical gamma rule  BLOCKED_SOURCE_RULE_UNRESOLVED
+production EMP.1.C comparison         BLOCKED
+EMP.1.C route registration            false
+engineering authority                 PARTIAL; method-wide interpolation blocker remains
+release qualified                     false
+merge authority for PR1287            NOT_GRANTED
+```
 
 No production EMP.1.C route has been registered in this PR.
 
 ## Appendix A — next-agent expert questions
 
-1. Do the WRC and CAUx PDF bytes still reproduce their frozen byte counts, Git blob SHA-1 and raw SHA-256 values?
-2. Is the WRC rational curve equation preserved exactly, with a/c/e/g/i numerator and b/d/f/h/j denominator roles?
-3. Does any code still assume 120 curves or 1200 scalars as the full spherical-hollow source inventory?
-4. Does any code still call 1150 scalars the complete WRC dataset rather than the SP/SM subset?
-5. Is the blank-gamma 1B Original curve still blocked rather than inferred as gamma=10?
-6. Can extrapolated curves be selected only through an explicit policy, never silent fallback?
-7. What interpolation/selection policy does the qualified CAUx benchmark support at gamma=48.03 and beta=0.155?
-8. Does the general source contract explicitly own vessel and nozzle direction vectors before mapping to WRC P/Vc/Vl/Mc/Ml/Mt?
-9. Is pressure thrust explicit and double-count-safe for every production case?
-10. Does stress-intensity runtime evidence bind exactly to the primary WRC Table 3/5 definition?
-11. Was the CAUx independent handcalc hash re-observed before any production EMP.1.C result was inspected?
-12. Does EMP.1.C remain unregistered until method, runtime, benchmark, and production-comparison authority all pass?
+1. Do both PDFs still reproduce frozen byte count, Git blob SHA-1, and raw SHA-256 custody?
+2. Is the rational WRC equation preserved exactly, with `a/c/e/g/i` numerator roles and `b/d/f/h/j` denominator roles?
+3. Does any code still assume `120/1200` for spherical hollow or `1150` for the complete Section 8 dataset?
+4. Is the blank-gamma `1B Original` row still unselectable rather than silently assigned gamma=10?
+5. Are Original and Extrapolated data still separate authority classes with no silent fallback?
+6. Has any new authoritative source been found that actually specifies non-tabulated cylindrical gamma selection/interpolation?
+7. If a secondary interpolation rule is proposed, is it clearly classified below primary WRC authority and independently numerically qualified before use?
+8. Does the physical frame contract continue to require vessel/nozzle directions rather than global field renaming?
+9. Does ADD pressure thrust require both VERIFIED_EXCLUDED source-load custody and explicit signed `+eP/-eP` authority?
+10. Does stress intensity remain bound to WRC Tables 3/5 and output stress units?
+11. Does the primary v2 state contain exactly one method-wide blocker and one bounded row restriction?
+12. Is production comparison still prohibited until non-tabulated-gamma method authority is closed?
+13. Is route registration still false until method authority and subsequent production comparison pass?
+14. Has PR1287 remained unmerged without fresh owner authorization?

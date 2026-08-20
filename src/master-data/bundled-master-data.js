@@ -1,9 +1,12 @@
 /**
  * Bundled default master-data assets.
  *
- * Both files are imported at Vite build time and bundled into the app.
- * The controller uses these only when IndexedDB has no persisted rows for a
- * given master key — i.e. on first ever load or after a clear().
+ * Small files (weight, material map) are statically imported by Vite and
+ * bundled into the app — they are tiny enough to parse synchronously.
+ *
+ * Large files (piping class — 2.4 MB) are NOT statically imported here.
+ * They live in public/master-data/ and are fetched asynchronously by the
+ * controller so they never block the main thread.
  *
  * SHA-256 values are hard-coded from the source files and match the
  * project-data-profile evidence contract (componentWeightSource.sourceHash).
@@ -11,7 +14,6 @@
 
 import weightRawRows from './wtValveweights.json' with { type: 'json' };
 import matMapText from './PCF_MAT_MAP.txt?raw';
-import pipingClassRawRows from './Piping_class_master.json' with { type: 'json' };
 
 export const BUNDLED_WEIGHT_MASTER = Object.freeze({
   fileName: 'wtValveweights.json',
@@ -57,13 +59,15 @@ export const BUNDLED_MAT_MAP_MASTER = Object.freeze({
   diagnostics: [],
 });
 
-export const BUNDLED_PIPING_CLASS_MASTER = Object.freeze({
+/**
+ * Descriptor for the large piping-class master that lives in public/.
+ * The actual rows are NOT stored here — the controller fetches the file
+ * asynchronously so the main thread is never blocked.
+ */
+export const PIPING_CLASS_MASTER_DESCRIPTOR = Object.freeze({
+  /** Path relative to the Vite base URL — resolved at runtime. */
+  publicPath: 'master-data/Piping_class_master.json',
   fileName: 'Piping_class_master.json',
-  sheetName: '',
   sourceHash: '74997209ffbbf4c5e1eacc9948ec89a5e2f59ad87cc3dd7cfca6d24166d7fab1',
   byteLength: 2439490,
-  rawRows: pipingClassRawRows,
-  normalizedRows: [],
-  fieldMap: {},
-  diagnostics: [],
 });

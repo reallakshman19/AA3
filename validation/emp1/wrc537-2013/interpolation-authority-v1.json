@@ -1,0 +1,48 @@
+{
+  "schema": "emp1-wrc-interpolation-authority/v1",
+  "status": "BLOCKED_SOURCE_RULE_UNRESOLVED",
+  "engineeringAuthority": false,
+  "productionAuthority": false,
+  "source": {
+    "document": "WRC537_2013.pdf",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "fullTextScanWorkflowRun": 32329991378,
+    "fullTextScanArtifactDigest": "sha256:d83a2816650aa24396e81cecb47f8845e73f7d0428b0c874678d84854b6fe98d",
+    "pageCount": 195
+  },
+  "sourceFindings": [
+    {
+      "pdfPage": 5,
+      "classification": "OBJECTIVE_ONLY",
+      "finding": "WRC537 states that the precision equations were prepared to eliminate implementation errors, facilitate proper interpolation and extrapolation, and permit efficient computation. It does not state the interpolation variable/transform or algorithm between tabulated shell-parameter gamma curves."
+    },
+    {
+      "pdfPage": 29,
+      "classification": "CURVE_READABILITY_CONTEXT",
+      "finding": "The cylindrical nondimensional curves are described as replots of Bijlaard data to semilog scale so portions can be read more easily; this does not define interpolation between discrete gamma coefficient curves."
+    },
+    {
+      "pdfPages": [152,153],
+      "classification": "EXTRAPOLATION_LIMITATION_CONTEXT",
+      "finding": "Appendix A discusses empirical extrapolation behavior and cases that can be unconservative; it does not authorize a gamma interpolation algorithm."
+    }
+  ],
+  "independentBenchmarkProbe": {
+    "record": "validation/emp1/wrc537-2013/cylindrical-curve-selection-probe-v1.json",
+    "status": "BLOCKED_NO_POLICY_QUALIFIED_BY_CAUX_ORDINATES",
+    "conclusion": "The qualified CAUx 1979 chart-read benchmark does not uniquely identify a WRC537 gamma interpolation algorithm."
+  },
+  "prohibitedUntilAuthorityExists": [
+    "linear interpolation of evaluated Y in gamma",
+    "linear interpolation of evaluated Y in log(gamma)",
+    "linear interpolation of evaluated Y in inverse gamma",
+    "interpolation of a-j coefficients",
+    "silent nearest-gamma selection",
+    "silent Original-to-Extrapolated fallback"
+  ],
+  "allowedWithoutInterpolationAuthority": [
+    "evaluate a source-qualified curve when the requested gamma exactly matches a source-qualified gamma row",
+    "use source-reported benchmark ordinates for an independently qualified external benchmark without claiming they define WRC537 interpolation"
+  ],
+  "requiredToClose": "A direct authoritative interpolation rule, erratum, implementation note, or source-qualified WRC537 numerical example that uniquely identifies the gamma-selection/interpolation algorithm."
+}

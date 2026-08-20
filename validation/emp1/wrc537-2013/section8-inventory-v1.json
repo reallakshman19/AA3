@@ -1,0 +1,41 @@
+{
+  "schema": "emp1-wrc-section8-inventory/v1",
+  "status": "PASS_WITH_ONE_BOUNDED_SOURCE_ANOMALY",
+  "engineeringAuthority": true,
+  "productionAuthority": false,
+  "source": {
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "extractionMarkdownGitBlobSha1": "810a39d845e15bae92d9c30abb8d452401e711d2",
+    "qualifiedWorkflowRun": 32328483892,
+    "reobservedWorkflowRun": 32329991378
+  },
+  "totals": {
+    "coefficientTables": 51,
+    "responseCurves": 451,
+    "scalarCoefficients": 4510,
+    "parameterQualifiedCurves": 450,
+    "sourceQualifiedScalars": 4500,
+    "parameterUnresolvedCurves": 1,
+    "sourceUnresolvedScalars": 10
+  },
+  "families": {
+    "sphericalRigid": {"curves":14,"scalars":140,"qualifiedCurves":14},
+    "sphericalHollow": {"tables":20,"curves":115,"scalars":1150,"qualifiedCurves":115,"pdfTextScalarCrosscheck":"PASS_1150_OF_1150"},
+    "cylindricalOriginal": {"curves":178,"scalars":1780,"qualifiedCurves":177,"qualifiedScalars":1770},
+    "cylindricalExtrapolated": {"curves":144,"scalars":1440,"qualifiedCurves":144}
+  },
+  "boundedRestriction": {
+    "anomalyId": "WRC537-FIG1B-ORIGINAL-GAMMA-BLANK",
+    "affectedCurveCount": 1,
+    "affectedScalarCount": 10,
+    "affectedCurveSelectable": false,
+    "unaffectedCurvesRemainQualified": true,
+    "silentGamma10InferenceAllowed": false
+  },
+  "legacyCorrections": {
+    "fullWrcDatasetIs1150Scalars": false,
+    "sphericalHollowIs120Curves1200Scalars": false,
+    "sphericalHollowActual": "115 curves / 1150 scalars",
+    "completeSection8Actual": "451 curves / 4510 scalars"
+  }
+}

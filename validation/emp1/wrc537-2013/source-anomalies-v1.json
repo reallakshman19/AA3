@@ -1,0 +1,30 @@
+{
+  "schema": "emp1-wrc-source-anomalies/v1",
+  "status": "OPEN_SOURCE_ANOMALY",
+  "source": {
+    "path": "docs/emp1/WRC537_2013.pdf",
+    "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
+  },
+  "anomalies": [
+    {
+      "id": "WRC537-FIG1B-ORIGINAL-GAMMA-BLANK",
+      "severity": "BLOCKING_FOR_AFFECTED_CURVE_SELECTION",
+      "figure": "1B – Original",
+      "pdfPage": 107,
+      "printedPage": 95,
+      "field": "Shell Parameter gamma",
+      "rowPosition": 3,
+      "sourceObservation": "The third coefficient row contains ten numeric coefficients a..j but the shell-parameter gamma cell is blank in the primary PDF.",
+      "neighboringResolvedGammas": [5, 7.5, 15, 25, 35, 50, 75, 100, 150, 200, 300],
+      "inferenceProhibited": "Do not assign gamma=10 merely from sequence or from the extrapolated 1B table without an authoritative erratum/source correction.",
+      "errataSearchState": "NO_EXPLICIT_CORRECTION_FOUND_IN_REPOSITORY_SEARCH",
+      "productionPolicy": "The affected 1B Original row is not selectable while gamma identity is unresolved. Other source-qualified rows remain independently usable subject to method-selection policy."
+    }
+  ],
+  "authority": {
+    "anomalyMayBeSilentlyRepaired": false,
+    "affectedCurveProductionAuthority": false,
+    "unaffectedCurveAuthorityUnaffectedByThisRecord": true
+  }
+}

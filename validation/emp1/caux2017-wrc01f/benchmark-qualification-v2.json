@@ -1,0 +1,58 @@
+{
+  "schema": "emp1-caux-pp24-31-benchmark-qualification/v2",
+  "status": "PASS_INDEPENDENT_BENCHMARK_QUALIFICATION",
+  "engineeringAuthority": true,
+  "productionAuthority": false,
+  "productionObservationUsed": false,
+  "source": {
+    "sourceId": "CAUX_2017_WRC01F_PP24_31",
+    "rawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "custodyState": "VERIFIED",
+    "benchmarkPdfPages": [24, 25, 26, 27, 28, 29, 30, 31]
+  },
+  "sourceBenchmark": {
+    "path": "validation/emp1/caux2017-wrc01f/benchmark-source-pp24-31-v2.json",
+    "semanticHash": "8d97539f03f077321eef1e496e315a6a7700a9d83a6c8cd4ff1b83382ebe45fe",
+    "status": "PASS_SOURCE_EXPECTED_VALUES_FROZEN"
+  },
+  "independentHandCalculation": {
+    "script": "scripts/emp1-caux-pp24-31-independent-handcalc.mjs",
+    "classification": "INDEPENDENT_ARITHMETIC_FROM_SOURCE_REPORTED_ORDINATES",
+    "productionImports": [],
+    "firstPassWorkflowRun": 32328483892,
+    "firstPassWorkflowNumber": 47,
+    "firstPassHead": "f4b2d6634ac41406eacfbc7a29b88991cfb64a02",
+    "artifactJsonSha256": "100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f",
+    "semanticHash": "679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c",
+    "reobservation": {
+      "status": "PASS",
+      "workflowRun": 32328966083,
+      "workflowNumber": 52,
+      "head": "18b16622564d6235443f9d97955f91c1ede8e636",
+      "semanticHashMatchedFrozen": true,
+      "productionObservationUsed": false,
+      "productionImports": []
+    },
+    "freezeCorrection": {
+      "previousIncorrectValue": "ee9692d64f052852e1856c07bad99c50c92cac80ecda9e0fee64f4067c40a029",
+      "detectedByWorkflowRun": 32328678654,
+      "detectedByWorkflowNumber": 50,
+      "rca": "The previous value was a transcription/copy error in this qualification record. The run-47 and run-50 caux-pp24-31-independent-handcalc.json artifacts are byte-for-byte identical (same 20,536-byte payload and SHA-256 100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f), and both report semantic hash 679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c. No benchmark input, mechanics equation, sign, tolerance, or result was changed to make re-observation pass."
+    }
+  },
+  "toleranceAuthority": {
+    "sourceCurveOrdinatePrintedDecimals": 3,
+    "curveOrdinateHalfUnit": 0.0005,
+    "sourceFinalTableRoundingHalfUnitKPa": 0.5,
+    "derivation": "Tolerance derives from source-published ordinate precision and final table rounding; no production result is used to tune acceptance."
+  },
+  "authorization": {
+    "sourceCustody": "PASS",
+    "sourceExpectedValuesFrozen": true,
+    "handCalculationFirstPass": "PASS",
+    "handCalculationHashFrozen": true,
+    "handCalculationReobserved": true,
+    "productionComparisonAllowed": true,
+    "emp1CRouteRegistrationAllowed": false
+  }
+}

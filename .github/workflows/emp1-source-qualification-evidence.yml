@@ -18,79 +18,62 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Observe exact PR1286 PDF bytes and candidate SHA-256
+      - name: Re-observe frozen WRC and CAUx source custody
         shell: bash
         run: |
           set -euo pipefail
           out="$PWD/test-results/emp1-source-qualification"
           mkdir -p "$out"
 
-          set +e
           node scripts/emp1-source-custody-check.mjs --source-root "$PWD/docs/emp1" \
-            > "$out/source-custody.json" 2> "$out/source-custody.stderr.txt"
-          rc=$?
-          set -e
+            | tee "$out/source-custody.json"
 
-          cat "$out/source-custody.json"
-          printf '%s\n' "$rc" > "$out/source-custody.exit-code.txt"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const report = JSON.parse(await readFile('test-results/emp1-source-qualification/source-custody.json', 'utf8'));
+          if (report.status !== 'PASS') throw new Error(`EMP1_SOURCE_CUSTODY_NOT_PASS:${report.status}`);
+          if (!Array.isArray(report.results) || report.results.length !== 2) throw new Error('EMP1_SOURCE_CUSTODY_RESULT_COUNT');
+          for (const row of report.results) {
+            if (row.status !== 'PASS' || row.code !== 'PASS_SOURCE_CUSTODY') {
+              throw new Error(`EMP1_SOURCE_CUSTODY_ROW_NOT_PASS:${row.sourceId}:${row.code}`);
+            }
+          }
+          NODE
 
-          # Before SHA-256 is frozen, BLOCKED/rc=2 is the required state.
-          # Any byte-count/blob mismatch or malformed ledger must fail the job.
-          if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
-            cat "$out/source-custody.stderr.txt" >&2 || true
-            exit "$rc"
+      - name: Prepare PDF inspection tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null 2>&1 || ! command -v pdftoppm >/dev/null 2>&1 || ! command -v pdfinfo >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
           fi
 
-          node --input-type=module <<'NODE' > "$out/pr1286-blob-identity.json"
-          import { readFile } from 'node:fs/promises';
-          import { createHash } from 'node:crypto';
+      - name: Extract and render bounded primary-source review pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$PWD/test-results/emp1-source-qualification"
+          mkdir -p "$out/wrc-pages" "$out/caux-pages"
+          wrc="$PWD/docs/emp1/WRC537_2013.pdf"
+          caux="$PWD/docs/emp1/CAUx 2017 - WRC01f.pdf"
 
-          const files = [
-            {
-              id: 'WRC537_2013',
-              path: 'docs/emp1/WRC537_2013.pdf',
-              expectedBlob: 'ce861233928154145a9257efbbf8dbef3f5a17d1',
-              expectedBytes: 1443744,
-            },
-            {
-              id: 'CAUX_2017_WRC01F_PP24_31',
-              path: 'docs/emp1/CAUx 2017 - WRC01f.pdf',
-              expectedBlob: '76573b41462943b2987e28b23ebbbf7e51ac0a02',
-              expectedBytes: 7260396,
-            },
-          ];
+          pdfinfo "$wrc" > "$out/WRC537_2013.pdfinfo.txt"
+          pdfinfo "$caux" > "$out/CAUx_2017_WRC01f.pdfinfo.txt"
 
-          const rows = [];
-          for (const item of files) {
-            const bytes = await readFile(item.path);
-            const git = createHash('sha1')
-              .update(Buffer.from(`blob ${bytes.length}\0`, 'utf8'))
-              .update(bytes)
-              .digest('hex');
-            const sha256 = createHash('sha256').update(bytes).digest('hex');
-            const row = {
-              ...item,
-              observedBytes: bytes.length,
-              observedBlob: git,
-              candidateRawPdfSha256: sha256,
-              byteCountMatches: bytes.length === item.expectedBytes,
-              blobMatches: git === item.expectedBlob,
-            };
-            if (!row.byteCountMatches || !row.blobMatches) {
-              throw new Error(`EMP1_PR1286_SOURCE_IDENTITY_MISMATCH:${item.id}`);
-            }
-            rows.push(row);
-          }
-          console.log(JSON.stringify({
-            schema: 'emp1-pr1286-source-byte-observation/v1',
-            status: 'PASS',
-            authority: 'CANDIDATE_HASH_OBSERVATION_ONLY_UNTIL_LEDGER_FREEZE_AND_REOBSERVATION',
-            rows,
-          }, null, 2));
-          NODE
-          cat "$out/pr1286-blob-identity.json"
+          # WRC computation/sign tables plus all retained SP/SM coefficient-table pages.
+          pdftotext -f 33 -l 89 -layout "$wrc" "$out/WRC537_2013_pages_33-89.txt"
+          for page in 33 34 35 36 37 38 51 52 54 56 58 60 62 64 66 68 70 71 74 76 78 80 82 84 86 89; do
+            pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$wrc" "$out/wrc-pages/page-${page}" >/dev/null
+          done
 
-      - name: Verify retained-source arbitration remains fail closed
+          # CAUx benchmark authority is explicitly bounded to pp.24-31.
+          pdftotext -f 24 -l 31 -layout "$caux" "$out/CAUx_2017_WRC01f_pages_24-31.txt"
+          for page in 24 25 26 27 28 29 30 31; do
+            pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$caux" "$out/caux-pages/page-${page}" >/dev/null
+          done
+
+      - name: Verify retained-source arbitration remains fail closed until page arbitration is frozen
         shell: bash
         run: |
           set -euo pipefail
@@ -105,7 +88,7 @@ jobs:
             | tee test-results/emp1-source-qualification/coefficient-transcription-self-test.json
           node scripts/emp1-wrc-coefficient-transcription-generate.mjs
 
-      - name: Prove CAUx pp24-31 cannot be substituted or observed early
+      - name: Prove CAUx pp24-31 cannot be substituted before benchmark freeze
         shell: bash
         run: |
           set -euo pipefail

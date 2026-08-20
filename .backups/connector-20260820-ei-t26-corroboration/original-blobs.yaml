@@ -1,0 +1,19 @@
+schema: ConnectorBackupBlobRefs.v1
+reason: Preserve PR1289 pre-corroboration T2.6 source-authority state before follow-up edits.
+branch: agent/ei-p0-source-correction-20260820
+files:
+  - path: docs/EI data/EI-P0-AIV/T2-6_flowchart.yaml
+    blob: a83960e859ae62ccf5356507424d71d3374a980f
+  - path: docs/EI data/EI-P0-AIV/T2-6_diameter_ratio_modifier.csv
+    blob: 47d397ae3e91335adf871ebb9bd433e51c8e2b3f
+  - path: docs/EI data/EI-P0-AIV/T2-6_connection_modifier.csv
+    blob: 05bdefb8c85cbe79dcc6e536f0513a32c9e1db33
+  - path: docs/EI data/EI-P0-AIV/T2-6_material_modifier.csv
+    blob: 023debeadda1f6fb68620a4d31f3f2d2457f1736
+  - path: docs/EI data/EI-P0-AIV/T2-7_method_source_register.yaml
+    blob: a69bd21e78f9afdc45d4fcde5d06d2728b47a82f
+  - path: docs/EI data/EI_SOURCE_AUTHORITY_STATUS.md
+    blob: 593819cf285f84ae1fdfdc1f687dbf79c20854dd
+  - path: scripts/ei-aviff-source-master-p0-check.mjs
+    blob: b496190622edad932e2fe9cb7caf10ef487e4c20
+note: Native backup CLI remains NOT_RUN / ENVIRONMENT_BLOCKED; these are exact Git blob references to the pre-edit branch bytes.

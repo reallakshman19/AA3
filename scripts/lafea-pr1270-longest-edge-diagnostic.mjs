@@ -69,3 +69,4 @@ console.log(JSON.stringify({
   passing,
 }));
 assert.ok(passing.length > 0, 'clearance sweep found no candidate satisfying the unchanged actual-topology gate');
+throw new Error(`PR1270_CLEARANCE_PASSING=${JSON.stringify(passing)}`);

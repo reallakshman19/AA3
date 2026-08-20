@@ -255,6 +255,12 @@ function refreshLfeaStepGuidance() {
   const inputXmlLoaded = inputXml.fileName !== null;
   const accdbLoaded = accdb.fileName !== null && accdb.elementCount !== null;
 
+  // Only the panel that owns the loaded model stays on screen; with nothing
+  // loaded all three remain, because that is the choice being offered.
+  lfeaPipelineShell.setActiveSourceKind(
+    inputXmlLoaded ? 'INPUTXML' : accdbLoaded ? 'ACCDB' : 'NONE',
+  );
+
   lfeaPipelineShell.setStepStatus('INPUT', {
     available: true,
     complete: inputXmlLoaded || accdbLoaded,

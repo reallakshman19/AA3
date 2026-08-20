@@ -102,6 +102,7 @@ export class LfeaPipelineShellView {
     const sourceHost = doc.createElement('div');
     sourceHost.className = 'lfea-pipeline-shell__host';
     sourceHost.dataset.hostGroup = 'SOURCE';
+    sourceHost.dataset.activeSource = 'NONE';
     const loadCaseHost = doc.createElement('div');
     loadCaseHost.className = 'lfea-pipeline-shell__host';
     loadCaseHost.dataset.hostGroup = 'LOAD_CASE';
@@ -130,6 +131,20 @@ export class LfeaPipelineShellView {
     host.hidden = !host.hidden;
     this.elements.verificationDrawerToggle.setAttribute('aria-expanded', host.hidden ? 'false' : 'true');
     this.elements.verificationDrawerToggle.classList.toggle('lfea-pipeline-shell__verification-toggle--open', !host.hidden);
+  }
+
+  /**
+   * Which source owns the loaded model.
+   *
+   * All three source panels mount into the same host, which is right while
+   * nothing is loaded -- the engineer picks one. Once a model IS loaded, the
+   * other two are noise at best: an ACCDB import left the InputXML panel
+   * sitting underneath it saying "No native InputXML source is loaded", on
+   * the very step that was reviewing the ACCDB model. The stylesheet reads
+   * this stamp and shows only the panel that owns what is loaded.
+   */
+  setActiveSourceKind(kind) {
+    this.elements.sourceHost.dataset.activeSource = kind;
   }
 
   setAuthoritySupplementStatus(text) {

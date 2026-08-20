@@ -39,26 +39,28 @@ export function resolvePressureThrust(policy, eP) {
   const area = Math.PI * nozzleId ** 2 / 4;
   const magnitude = pressure * area;
   const signedP = policy.directionAlongEP * magnitude;
-  const vector = eP.map((component) => component * signedP);
+  const vector = eP.map((component) => canonicalZero(component * signedP));
   return result(policy, area, magnitude, vector, 'ADD_EXPLICIT_SIGNED_PRESSURE_THRUST');
 }
 
 export function applyPressureThrustToWrcP(existingP, resolved) {
   const P = finite(existingP, 'existingP');
   if (!resolved || resolved.schema !== 'emp1-c-pressure-thrust-resolution/v1') throw new TypeError('EMP1_C_PRESSURE_THRUST_RESOLUTION');
-  return P + resolved.addedP;
+  return canonicalZero(P + resolved.addedP);
 }
 
 function result(policy, area, magnitude, vector, disposition) {
-  const addedP = policy.mode === 'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID' ? policy.directionAlongEP * magnitude : 0;
+  const addedP = policy.mode === 'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID'
+    ? canonicalZero(policy.directionAlongEP * magnitude)
+    : 0;
   return Object.freeze({
     schema: 'emp1-c-pressure-thrust-resolution/v1',
     mode: policy.mode,
-    pressureThrustArea: area,
-    pressureThrustMagnitude: magnitude,
+    pressureThrustArea: canonicalZero(area),
+    pressureThrustMagnitude: canonicalZero(magnitude),
     directionAlongEP: policy.mode === 'ADD_PRESSURE_THRUST_FROM_NOZZLE_ID' ? policy.directionAlongEP : null,
     addedP,
-    addedForceGlobal: Object.freeze([...vector]),
+    addedForceGlobal: Object.freeze(vector.map(canonicalZero)),
     disposition,
     doubleCountGuardQualified: true,
     policyRecordHash: policy.policyRecordHash ?? null,
@@ -76,3 +78,4 @@ function validateUnitVector(v) {
 }
 function finite(value,name){if(!Number.isFinite(value))throw new TypeError(`EMP1_C_PRESSURE_THRUST_NONFINITE:${name}`);return value;}
 function nonEmpty(value){return typeof value==='string'&&value.trim().length>0;}
+function canonicalZero(value){return Object.is(value,-0)||value===0?0:value;}

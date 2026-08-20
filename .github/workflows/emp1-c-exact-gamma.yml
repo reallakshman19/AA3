@@ -1,0 +1,42 @@
+name: EMP.1.C exact-gamma qualification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-exact-gamma:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Re-observe inherited primary qualification boundary
+        shell: bash
+        run: |
+          set +e
+          node scripts/emp1-c-primary-qualification-state-check.mjs > /tmp/emp1-primary-v2.json
+          status=$?
+          set -e
+          cat /tmp/emp1-primary-v2.json
+          if [ "$status" -ne 2 ]; then
+            echo "Expected inherited full-domain state to remain blocked only on non-tabulated gamma authority"
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const state=JSON.parse(await readFile('/tmp/emp1-primary-v2.json','utf8'));
+          if (state.status!=='BLOCKED') throw new Error(`EMP1_EXACT_GAMMA_INHERITED_STATE:${state.status}`);
+          const codes=state.blockers?.map((row)=>row.code)??[];
+          if (codes.length!==1 || codes[0]!=='WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED') {
+            throw new Error(`EMP1_EXACT_GAMMA_INHERITED_BLOCKERS:${codes.join(',')}`);
+          }
+          if (state.routeRegistrationAllowed!==false || state.productionAuthority!==false) {
+            throw new Error('EMP1_EXACT_GAMMA_PREMATURE_FULL_ROUTE_AUTHORITY');
+          }
+          NODE
+      - name: Qualify exact source-tabulated gamma selector
+        run: node scripts/emp1-wrc-cylindrical-exact-gamma-self-test.mjs

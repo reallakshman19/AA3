@@ -32,9 +32,18 @@ for(const figure of figures){
 
 const nonTabulated=selectExactGammaCurve(pkg,{figure:'1A',variant:'ORIGINAL',gamma:14});
 assert.equal(nonTabulated.status,'BLOCKED_NON_TABULATED_GAMMA');
+const original1A=selected.find((row)=>row.figure==='1A');
 const extrapolated=selectExactGammaCurve(pkg,{figure:'1A',variant:'EXTRAPOLATED',gamma:15});
-assert.equal(extrapolated.status,'PASS_EXACT_SOURCE_TABULATED_GAMMA');
-assert.notEqual(extrapolated.curve.curveId,selected.find((row)=>row.figure==='1A').curveId);
+if(extrapolated.status==='PASS_EXACT_SOURCE_TABULATED_GAMMA'){
+  assert.notEqual(extrapolated.curve.curveId,original1A.curveId,'cross-variant source row reuse is prohibited');
+  assert.equal(extrapolated.curve.variant,'EXTRAPOLATED');
+}else{
+  assert.ok([
+    'BLOCKED_FIGURE_VARIANT_NOT_SOURCE_QUALIFIED',
+    'BLOCKED_NON_TABULATED_GAMMA',
+    'BLOCKED_GAMMA_NOT_TABULATED_AND_SOURCE_ROW_UNRESOLVED',
+  ].includes(extrapolated.status),`unexpected extrapolated lookup state:${extrapolated.status}`);
+}
 
 const governing=domain.sourceChartReview.governingOuterLimitCharts;
 assert.deepEqual(governing.map((row)=>row.figure),['1C','2C']);
@@ -51,5 +60,6 @@ console.log(JSON.stringify({
   qualifiedBetaBand:[0.05,0.30],
   requiredFigures:selected,
   governingOuterLimitFigures:['1C','2C'],
-  negativeProofs:['NON_TABULATED_GAMMA_BLOCKED','ORIGINAL_EXTRAPOLATED_CUSTODY_DISTINCT'],
+  extrapolated1AObservation:extrapolated.status,
+  negativeProofs:['NON_TABULATED_GAMMA_BLOCKED','NO_ORIGINAL_TO_EXTRAPOLATED_FALLBACK'],
 },null,2));

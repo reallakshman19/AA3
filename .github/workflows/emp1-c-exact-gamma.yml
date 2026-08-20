@@ -114,6 +114,8 @@ jobs:
         run: node scripts/emp1-local-correlation-bounded-scope-self-test.mjs
       - name: Preserve existing EMP.1 core scaffold behavior
         run: node scripts/emp1-core-scaffold-check.mjs
+      - name: Preserve bounded versus global public route distinction
+        run: node scripts/emp1-public-product-check.mjs
       - name: Upload exact-gamma qualification evidence
         if: always()
         uses: actions/upload-artifact@v4

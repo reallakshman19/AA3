@@ -49,7 +49,8 @@ jobs:
             sudo apt-get install -y poppler-utils
           fi
           pdftotext -f 95 -l 95 -layout docs/emp1/WRC537_2013.pdf /tmp/wrc-page95.txt
-          sed -n '1,180p' /tmp/wrc-page95.txt
+      - name: Independently re-observe exact-gamma primary-source oracle
+        run: node scripts/emp1-wrc-exact-gamma-independent-oracle-check.mjs /tmp/wrc-page95.txt
       - name: Bind capability record to live source observation
         shell: bash
         run: |

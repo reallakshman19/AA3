@@ -1,4 +1,4 @@
-# PR1291 work report — EMP.1.C exact source-tabulated gamma bounded production route
+# PR1291 work report — EMP.1.C exact-tabulated-gamma bounded qualification
 
 ## Recovery header
 
@@ -8,49 +8,29 @@
 - `PR: #1291`
 - `BRANCH: agent/emp1-c-exact-gamma-qualified-route-issue1261`
 - `BASE_AFTER_PR1287_MERGE: fa21da0f948133c471b4679e7e8a634491db9e0b`
-- `VALIDATED_CODE_HEAD: 72481dd84992d71df8d0d4388d15de2c0f565d28`
-- `EXACT_GAMMA_WORKFLOW: 32355845796 (#95) PASS`
 - `MERGE_AUTHORITY: NOT_GRANTED`
-- `BOUNDED_EMP1_C_ROUTE_REGISTERED: true`
-- `EMP1_C_GLOBAL_ROUTE_REGISTERED: false`
+- `PR_STATE: DRAFT_UNMERGED`
+- `GLOBAL_EMP1_C_ROUTE_REGISTERED: false`
 - `RELEASE_QUALIFIED: false`
-- `CURRENT_STAGE: BOUNDED_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED_GLOBAL_ROUTE_BLOCKED`
+- `VALIDATED_CODE_HEAD_BEFORE_HANDOVER_REFRESH: e2c3beb7bf905c8636f35480284a02daa4006929`
+- `CURRENT_STAGE: GAMMA5_ROUTE_AUTHORIZED_GAMMA15_SOURCE_ORACLE_AND_PRODUCTION_NUMERICS_QUALIFIED`
 
-## Executive state
+## Executive engineering state
 
-PR #1291 has completed a real but deliberately narrow EMP.1.C production route. It is no longer only a selector/adapter experiment.
+PR #1291 now contains two deliberately different authority levels:
 
-Authorized route:
+1. **Gamma=5 production route — registered and executable in a bounded domain.**
+2. **Gamma=15 — source domain, independent oracle and production numerics qualified; route registration intentionally NOT performed in this PR.**
 
-```text
-method              WRC537 2013 cylindrical Table 5
-shell                CYLINDRICAL
-attachment           ROUND
-curve family         ORIGINAL
-gamma                exactly 5 (machine-roundoff identity only)
-beta                 0.05 <= beta <= 0.5
-differential pressure exactly 0
-Kn                    1
-Kb                    1
-interpolation         prohibited
-cross-variant fallback prohibited
-load reference        WRC_ATTACHMENT_REFERENCE_POINT
-upstream producer     qualified EMP.1.A zero-dp load producer
-```
-
-The following remain explicitly **not authorized**:
+The full WRC537 cylindrical method remains blocked for non-tabulated gamma because no source-qualified programmable gamma interpolation algorithm has been established.
 
 ```text
-non-tabulated gamma interpolation
-exact gamma values other than 5 for the full Table-5 route
-beta outside 0.05..0.5
-nonzero differential pressure / pressure-thrust addition
-non-unity Kn or Kb
-Extrapolated curve family
-non-round attachments
-global/full-domain EMP.1.C route
-code-compliance PASS
-release qualification
+GLOBAL / FULL-DOMAIN EMP.1.C             BLOCKED
+EXACT gamma=5 bounded route              AUTHORIZED + REGISTERED
+EXACT gamma=15 source/numerical slice    QUALIFIED, ROUTE NOT REGISTERED
+NON-TABULATED gamma                      BLOCKED
+NONZERO differential pressure            BLOCKED
+NON-UNITY Kn/Kb                          BLOCKED
 ```
 
 ## Source and dataset custody
@@ -58,342 +38,302 @@ release qualification
 Frozen WRC source:
 
 ```text
-document      docs/emp1/WRC537_2013.pdf
-Git blob       ce861233928154145a9257efbbf8dbef3f5a17d1
-raw SHA-256    698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
-curve model    rational 5-over-6
-cylindrical X  beta = 0.875*r0/Rm
-gamma          Rm/T
+document   = docs/emp1/WRC537_2013.pdf
+raw SHA256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+curve fit  = RATIONAL_5_OVER_6
+X          = beta for cylindrical curves
 ```
 
-Production package:
+Qualified production cylindrical package:
 
 ```text
-selectable cylindrical curves   321
-qualified scalar coefficients   3210
-primary-PDF crosscheck           3210 / 3210 PASS
-unresolved curves                1
-unresolved scalars               10
-dataset semantic hash            fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c
+coefficient tables        = 28
+selectable curves          = 321
+qualified scalar a..j      = 3,210
+primary-PDF scalar check   = 3,210 / 3,210 PASS
+dataset hash               = fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c
 ```
 
-The sole unresolved row is `WRC537-FIG1B-ORIGINAL-GAMMA-BLANK`. Its coefficients exist but its gamma identity is blank in the source. The software retains it as unselectable; inferring gamma by row order is prohibited.
+The sole unresolved cylindrical row remains `WRC537-FIG1B-ORIGINAL-GAMMA-BLANK`; its numerical coefficients are retained but its gamma identity is not inferred and the row remains unselectable.
 
-## Independent numerical authority
-
-### Exact-gamma single-curve oracle
-
-Primary PDF page 95, Figure 1A Original, gamma=5, beta=0.155:
+The source-qualified curve equation is:
 
 ```text
 Y = (a + c*beta + e*beta^2 + g*beta^3 + i*beta^4)
     / (1 + b*beta + d*beta^2 + f*beta^3 + h*beta^4 + j*beta^5)
-
-numerator   = 0.0390883341086
-denominator = 0.37137334479929657
-Y           = 0.10525347243142809
-semantic hash = 809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e
 ```
 
-The oracle imports no production modules and does not use a production result to set expected values.
+The superseded ninth-order-polynomial interpretation must not be restored.
 
-### Full Table-5 gamma=5 oracle
+## Gamma=5 authorized bounded route
 
-Frozen full-oracle semantic hash:
+Registered method identity:
+
+`WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP`
+
+Exact scope:
 
 ```text
-5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa
+shell family          CYLINDRICAL
+attachment shape      ROUND
+curve variant         ORIGINAL
+gamma = Rm/T          5 exactly, roundoff identity only
+beta                  0.05 <= beta <= 0.50
+differential pressure 0
+Kn                     1
+Kb                     1
+interpolation          prohibited
+cross-variant fallback prohibited
+load reference         WRC_ATTACHMENT_REFERENCE_POINT
 ```
 
-The independent oracle covers:
+Qualification identities:
 
 ```text
-14 unique source figures
-16 curve-ordinate uses
-8 circumferential stresses
-8 longitudinal stresses
-8 shear stresses
-8 Tresca stress intensities
-32 stress outputs total
+single-curve PDF oracle     809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e
+full Table-5 gamma5 oracle  5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa
+zero-dp producer record     47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b
+bounded route record        3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e
 ```
 
-Frozen six-component WRC load case:
+The authorized route executes through the real `runEmp1()` orchestration path. The qualified case invokes local correlation exactly once and reproduces all 32 frozen stress results. Eight invalid route cases are blocked before WRC execution.
+
+The public product projection explicitly exposes this as a **bounded production route** while retaining the global/full-domain EMP.1.C route as unregistered.
+
+## CI integrity correction retained
+
+A prior evidence command used `node ... | tee ...` without `pipefail`, allowing `tee` to return success when the Node assertion had failed. That run was rejected as invalid engineering evidence.
+
+The current qualification workflow is fail-closed (`set -euo pipefail` or direct Node invocation), and the strict rerun passed before gamma=5 route authorization. Do not revert to pipeline semantics that can mask the producer process exit code.
+
+## Gamma=15 source-domain qualification
+
+### Why gamma=15 was handled separately
+
+WRC §4.4 states that Original cylindrical curves must not be used beyond the indicated outer limits because deleted portions were reported appreciably unconservative. The higher-gamma curves therefore cannot inherit the gamma=5 beta range.
+
+A new observation-only workflow verifies the WRC PDF SHA-256 and renders the 14 required Original Table-5 chart pages at 300 dpi. The evidence remains source observation, not authority by itself.
+
+Reviewed PDF pages:
 
 ```text
-P  = -1000 N
-Vc =   250 N
-Vl =  -400 N
-Mc =  500000 N.mm
-Ml = -600000 N.mm
-Mt =  700000 N.mm
+94, 96, 100, 104, 110, 118, 122,
+124, 128, 132, 136, 140, 144, 146
 ```
 
-## Table-5 production mechanics
+All 14 required Table-5 figure families contain an exact gamma=15 Original source row.
 
-`src/core/emp1/emp1-wrc537-cylindrical-table5.js` reconstructs the qualified Table-5 stress quantities using consistent force/length units:
+The governing visible outer endpoints occur on:
 
 ```text
-P membrane      = |P|*Kn/(Rm*T)
-P bending       = 6|P|*Kb/T^2
-Mc membrane     = |Mc|*Kn/(Rm^2*beta*T)
-Mc bending      = 6|Mc|*Kb/(Rm*beta*T^2)
-Ml membrane     = |Ml|*Kn/(Rm^2*beta*T)
-Ml bending      = 6|Ml|*Kb/(Rm*beta*T^2)
-Vc/Vl shear     = |V|/(pi*r0*T)
-Mt torsion      = |Mt|/(2*pi*r0^2*T)
+Figure 1C — PDF page 128
+Figure 2C — PDF page 136
 ```
 
-The kernel applies the qualified cylindrical Table-5 sign matrix at `Au, Al, Bu, Bl, Cu, Cl, Du, Dl`, algebraically superposes load components, and computes plane-stress Tresca stress intensity.
-
-CAUx benchmark comparison remains 32/32 PASS within tolerances fixed from source resolution before production observation. Reversing all six external loads reverses linear stress signs and preserves stress intensity.
-
-## Qualified WRC frame and geometry adapter
-
-The bounded adapter derives, rather than trusts caller-declared values:
+For gamma=15, both source curves visibly terminate **above beta=0.30 and below beta=0.35**. PR1291 therefore qualifies the deliberately conservative product domain:
 
 ```text
-gamma = Rm/T
-beta  = 0.875*r0/Rm
+gamma = 15 exactly
+0.05 <= beta <= 0.30
+Original only
+no interpolation
+no Extrapolated fallback
 ```
 
-It validates the qualified frame, transforms global loads to the WRC Table-5 axes, obtains all required ordinates from the frozen production coefficient package, and invokes the qualified Table-5 kernel.
+Important classification: beta=0.30 is a product boundary strictly inside the source-observed endpoints. It is **not claimed to be the exact WRC outer-limit coordinate**.
 
-The gamma=5 adapter comparison passes all 32 frozen stresses and exercises 20 fail-closed falsifiers covering source substitution, geometry/domain violations, variant substitution, frame defects, load-custody defects, and pressure-thrust custody violations.
+The source-domain self-test also proves:
 
-## Zero-differential-pressure upstream load producer
+- all 14 required Original gamma=15 rows exist;
+- gamma=14 is non-tabulated and blocked;
+- an Extrapolated query cannot consume/reuse an Original row;
+- source SHA and domain record remain bound.
 
-The first production load producer was intentionally limited to differential pressure exactly zero so no pressure-thrust sign was invented.
+## Gamma=15 independent full Table-5 oracle
 
-Qualification SHA-256:
+Independent calculation:
+
+`scripts/emp1-wrc-gamma15-full-table5-independent-handcalc.mjs`
+
+The oracle imports only Node built-ins. It imports no `src/core` modules, no production cylindrical dataset and no production selector.
+
+Qualification case:
 
 ```text
-47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b
+gamma = 15
+beta  = 0.155
+Rm    = 300
+T     = 20
+r0    = beta*Rm/0.875
+Kn    = 1
+Kb    = 1
+P     = -1000
+Vc    = 250
+Vl    = -400
+Mc    = 500000
+Ml    = -600000
+Mt    = 700000
 ```
 
-Independent producer proof includes:
+The first repository-side materialization froze a candidate only. A second independent PR-triggered run recomputed the same source rows, curve ordinates and 32 stress results and promoted the oracle.
+
+Final oracle state:
 
 ```text
-F_target = [1000, 0, 0] N
-M_target = [0, 1000000, 0] N.mm
-Delta p  = 0
-pressure thrust = 0
+status                  PASS_REOBSERVED_INDEPENDENT_FULL_TABLE5_ORACLE
+engineeringAuthority    true
+productionAuthority     false
+productionImports       0
+productionObservation   false
+semantic hash           d34827bfdfebad9f175e5fbcdfeab5fdc799d28de5c298ed2ae578886f72ae98
 ```
 
-Moment transfer uses the retained relation:
+## Gamma=15 production numerical comparison
+
+A separate gamma=15 comparison-only domain guard was added in:
+
+`src/core/emp1/emp1-wrc537-cylindrical-gamma15-domain.js`
+
+The existing bounded production adapter was factored only enough to expose a **comparison-only gamma=15 profile**. The existing gamma=5 production-qualified numerical path still uses its original gamma=5 domain guard.
+
+The gamma=15 comparison profile:
+
+- accepts comparison-only load custody;
+- has no production route authority;
+- requires exact gamma=15;
+- requires beta within 0.05–0.30;
+- requires Original curves;
+- consumes the frozen production coefficient package;
+- maps global loads through the qualified WRC frame;
+- selects all 14 source figures;
+- executes the qualified Table-5 stress kernel.
+
+`scripts/emp1-wrc-gamma15-bounded-adapter-comparison.mjs` passed in exact-gamma workflow #112 / run `32361117686`:
 
 ```text
-M_target = M_source + (r_source - r_target) x F
+16 required curve ordinate uses   PASS
+14 unique source figures          PASS
+32 stress outputs                 PASS
+production route authority        false
+global route authority            false
 ```
 
-The producer rejects nonzero pressure, WRC-reference mismatch, rejected upstream state, semantic-hash drift, load/accounting residual corruption, missing pressure evidence, production-contaminated authority, and producer-qualification substitution.
+Falsifiers cover gamma=5 in the gamma15 profile, gamma=14, beta below/above the qualified band, Extrapolated variant, source/dataset substitution, declared geometry drift, missing custody and a non-orthogonal frame.
 
-## Authorized bounded route
+## Validated current engineering head
 
-Qualification record:
+Validated code head before handover-only status/claims/workreport refresh:
+
+`e2c3beb7bf905c8636f35480284a02daa4006929`
+
+All nine PR-triggered qualification workflows on that head passed:
 
 ```text
-validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v1.json
-qualification SHA-256 = 3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e
-status = PASS_REOBSERVED_AUTHORIZED_BOUNDED_ZERO_DP_ROUTE
-productionRouteAuthority = true
-globalEmp1CRouteAuthority = false
+EMP.1.C exact-gamma qualification                 #112 PASS
+EMP.1.C primary qualification state               #118 PASS
+EMP.1.C runtime qualification                     #130 PASS
+EMP.1.C production dataset qualification           #84 PASS
+EMP.1.C gamma5 full Table5 oracle                  #70 PASS
+EMP.1.C gamma15 full Table5 oracle                  #9 PASS
+EMP.1.C beta-domain source evidence                #14 PASS
+EMP.1 CAUx curve-selection probe                  #142 PASS
+EMP.1 primary-source qualification evidence       #198 PASS
 ```
 
-The production route implementation sets:
+The exact-gamma workflow proves gamma=15 production numerics while simultaneously re-running the already-authorized gamma=5 route, real `runEmp1()` orchestration, public projection guard and all inherited exact-gamma evidence.
 
-```text
-EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED = true
-```
+## Authority that remains explicitly blocked
 
-but every call still passes the method scope gate, upstream producer-hash custody, zero-dp guard, unity `Kn/Kb`, geometry derivation, frame mapping and frozen dataset checks before WRC numerics execute.
+1. **Non-tabulated gamma interpolation** — no uniquely source-qualified programmable rule.
+2. **Exact gammas other than 5 and 15** — per-curve common beta domains not yet qualified.
+3. **Gamma=15 route registration** — intentionally deferred to a successor PR even though source/oracle/numerics now pass.
+4. **Nonzero differential pressure** — production pressure-thrust sign/inclusion/double-count authority remains unresolved.
+5. **Non-unity Kn/Kb** — no qualified general stress-concentration producer.
+6. **Global/full-domain EMP.1.C route** — unregistered.
+7. **Release/code-compliance PASS** — false; not invented.
 
-## Strict end-to-end route re-observation
+Observation only, not yet an authority claim: visual chart evidence suggests very high gamma values may have no common Original Table-5 beta interval because some curve families begin at beta values above the deleted outer endpoint of other families. This must be formalized per gamma before any further route expansion.
 
-A CI integrity defect was found during qualification: an evidence command used `node ... | tee ...` without `pipefail`, which allowed `tee` to return zero even when the Node process failed. That false-green run was explicitly rejected as invalid evidence.
+## Scope stop / successor action
 
-The workflow was hardened with `set -euo pipefail`, the incorrect assertion was repaired without weakening the engineering gate, and the route was re-observed successfully.
+PR #1291 should stop here. The next implementation increment belongs in a stacked successor:
 
-Strict re-observation retained in the route record:
+**Gamma=15 zero-dp unity-K bounded route qualification.**
 
-```text
-workflow run             32348667313 (#78)
-head                     c80e4952adeae5e9fbca407cdb18fc4316393889
-artifact                 9399007941
-artifact digest SHA-256  b3ecbc2091f6c2758e2da9b0da9943d7950a48e3f8c7e34b12b2b30264e75890
-route evidence bytes     1592
-stress comparisons       32 / 32 PASS
-route falsifiers         8 / 8 PASS
-```
+Required sequence:
 
-Transferred global load for the route oracle:
+1. create a gamma=15 method-scope record bound to WRC SHA, dataset hash and oracle hash;
+2. reuse the already qualified zero-dp WRC-reference load producer only if its reference/load semantics remain valid for the gamma=15 geometry;
+3. keep `Kn=Kb=1`;
+4. create a route candidate with route-authority flag false;
+5. compare end-to-end source load -> moment transfer -> WRC frame -> 14 curves -> Table 5 -> 32 stresses against oracle `d34827bf...ae98`;
+6. add negative tests for beta >0.30, beta <0.05, gamma !=15, nonzero dp, nonunity K, frame/reference/hash drift;
+7. reobserve through real `runEmp1()` orchestration with local-correlation invocation counting;
+8. only after strict reobservation promote/register a **second bounded route**;
+9. preserve the gamma=5 route and global/full-domain route states independently.
 
-```text
-F = [-400, -250, -1000] N
-M = [-500000, 600000, -700000] N.mm
-```
+## Changed-file ledger — principal PR1291 files
 
-Qualified WRC mapping reproduces exactly:
+Qualification and source:
 
-```text
-P=-1000, Vc=250, Vl=-400, Mc=500000, Ml=-600000, Mt=700000
-```
+- `.github/workflows/emp1-c-exact-gamma.yml`
+- `.github/workflows/emp1-c-production-dataset.yml`
+- `.github/workflows/emp1-c-gamma5-oracle-materialize.yml`
+- `.github/workflows/emp1-c-beta-domain-evidence.yml`
+- `.github/workflows/emp1-c-gamma15-oracle-materialize.yml`
+- `scripts/emp1-wrc-cylindrical-exact-gamma-lib.mjs`
+- `scripts/emp1-wrc-cylindrical-exact-gamma-self-test.mjs`
+- `scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs`
+- `scripts/emp1-wrc-gamma15-domain-self-test.mjs`
+- `scripts/emp1-wrc-gamma15-full-table5-independent-handcalc.mjs`
+- `scripts/emp1-wrc-gamma15-full-table5-oracle-materialize.mjs`
+- `scripts/emp1-wrc-gamma15-bounded-adapter-comparison.mjs`
 
-## Real `runEmp1()` orchestration qualification
+Production core:
 
-The bounded route is not a side-door helper. `src/core/emp1/emp1-wrc537-gamma5-zero-dp-orchestration.js` composes the retained EMP.1.A result with the authorized bounded WRC route through the real EMP.1 orchestration surface.
+- `src/core/emp1/emp1-wrc537-cylindrical-data.generated.js`
+- `src/core/emp1/emp1-wrc537-exact-gamma.js`
+- `src/core/emp1/emp1-wrc537-cylindrical-table5.js`
+- `src/core/emp1/emp1-wrc537-cylindrical-frame.js`
+- `src/core/emp1/emp1-wrc537-cylindrical-bounded-domain.js`
+- `src/core/emp1/emp1-wrc537-cylindrical-gamma15-domain.js`
+- `src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js`
+- `src/core/emp1/emp1-a-wrc-zero-dp-load-producer.js`
+- `src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js`
+- `src/core/emp1/emp1-wrc537-gamma5-zero-dp-orchestration.js`
+- `src/core/emp1/emp1-c-bounded-route-registry.js`
 
-Frozen orchestration re-observation:
+Evidence records:
 
-```text
-workflow run                  32355132909 (#88)
-head                          7f0a2c3b516a2a00b80cbd2d6075335caab88cce
-local-correlation invocations 1
-stress outputs                 32 / 32 PASS
-pre-WRC falsifiers             8 / 8 PASS
-caller authority injection     ignored; authority rebuilt from pinned route + actual A result
-legacy unscoped compatibility  PASS
-assessment decision            ESCALATE
-```
+- `validation/emp1/wrc537-2013/exact-gamma-capability-v1.json`
+- `validation/emp1/wrc537-2013/exact-gamma-oracle-1a-g5-v1.json`
+- `validation/emp1/wrc537-2013/cylindrical-original-bounded-domain-v1.json`
+- `validation/emp1/wrc537-2013/gamma5-full-table5-oracle-v1.json`
+- `validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v1.json`
+- `validation/emp1/wrc537-2013/cylindrical-original-gamma15-bounded-domain-v1.json`
+- `validation/emp1/wrc537-2013/gamma15-full-table5-oracle-v1.json`
 
-`ESCALATE` is intentional: the WRC local-stress result does not invent a code-compliance PASS.
+Governance:
 
-## Public product boundary
+- `agents/status/PR1291.yaml`
+- `agents/claims/PR1291.yaml`
+- `agents/PR1291_workreport.md`
 
-The public projection now distinguishes two concepts:
+## Appendix A — expert takeover questions
 
-```text
-GLOBAL EMP.1.C route      registered = false
-BOUNDED production routes count = 1
-```
-
-The one bounded route is registered and engineering-authorized but has:
-
-```text
-globalEmp1CRouteAuthority = false
-releaseQualified = false
-runtimeEligibilityRequired = true
-```
-
-This prevents the UI/product contract from turning one qualified special case into a claim that all EMP.1.C cases are executable.
-
-## Current-head validation
-
-Validated code head before this handover-only refresh:
-
-```text
-72481dd84992d71df8d0d4388d15de2c0f565d28
-```
-
-All seven PR-triggered qualification workflows on that head are PASS:
-
-```text
-EMP.1.C exact-gamma qualification                 #95  PASS
-EMP.1.C primary qualification state               #101 PASS
-EMP.1.C runtime qualification                     #113 PASS
-EMP.1 CAUx curve-selection probe                  #125 PASS
-EMP.1.C production dataset qualification          #67  PASS
-EMP.1.C gamma5 full Table5 oracle materialization #53  PASS
-EMP.1 primary-source qualification evidence       #181 PASS
-```
-
-The exact-gamma workflow includes both:
-
-```text
-Qualify bounded route through real EMP.1 orchestration  PASS
-Preserve bounded versus global public route distinction PASS
-```
-
-## Remaining engineering blockers
-
-### 1. Non-tabulated gamma
-
-Still blocked. No source-qualified programmable interpolation algorithm has been established. `1e-12` is only a floating-point identity tolerance.
-
-### 2. Higher exact tabulated gamma values
-
-Still blocked for the **full Table-5 route**. WRC section 4.4 states Original curves must not be used beyond indicated limits, and the radial-load charts contain source-deleted outer segments for higher gamma curves. The current gamma=5 beta band must not be copied to gamma=7.5/10/15/... by assumption. Each required curve/gamma beta outer limit must be source-qualified first.
-
-### 3. Nonzero differential pressure
-
-Still blocked. The generic pressure-thrust arithmetic helper exists, but the production route has not qualified the nonzero pressure-thrust inclusion/exclusion policy, direction/sign authority and double-count protection. The zero-dp route does not imply a nonzero-dp sign rule.
-
-### 4. Non-unity `Kn`, `Kb`
-
-Still blocked. The Table-5 equations accept stress-concentration factors, but a general source-qualified production producer for non-unity factors has not been frozen. The authorized route therefore enforces `Kn=Kb=1`.
-
-## Scope decision for the next increment
-
-Do **not** keep expanding PR #1291. Its bounded route is now an auditable production capability with all intended fail-closed guards.
-
-The successor increment should be source qualification, not speculative route widening. Preferred order:
-
-1. build a machine-readable per-figure/per-gamma Original-curve beta-limit ledger from the SHA-bound WRC source;
-2. distinguish explicit source limits from visual/digitized estimates; unresolved limits must remain blocked;
-3. determine the intersection beta domain across all 14 Table-5 figures for each exact tabulated gamma;
-4. only for gamma values with a complete nonempty source-qualified intersection, build an independent full Table-5 oracle and add a new bounded route;
-5. keep non-tabulated interpolation, nonzero pressure and non-unity `Kn/Kb` separate authority increments.
-
-If the WRC source does not state a sufficiently exact higher-gamma curve endpoint, do not digitize or approximate it into production authority; leave that gamma blocked and move to another separately qualifiable boundary.
-
-## Changed-file ledger
-
-PR #1291 currently changes 49 files. Major groups:
-
-```text
-workflows
-  .github/workflows/emp1-c-exact-gamma.yml
-  .github/workflows/emp1-c-gamma5-oracle-materialize.yml
-  .github/workflows/emp1-c-production-dataset.yml
-
-production core
-  src/core/emp1/emp1-wrc537-cylindrical-data.generated.js
-  src/core/emp1/emp1-wrc537-cylindrical-index.js
-  src/core/emp1/emp1-wrc537-exact-gamma.js
-  src/core/emp1/emp1-wrc537-cylindrical-table5.js
-  src/core/emp1/emp1-wrc537-cylindrical-frame.js
-  src/core/emp1/emp1-wrc537-load-custody.js
-  src/core/emp1/emp1-wrc537-cylindrical-bounded-domain.js
-  src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js
-  src/core/emp1/emp1-a-wrc-zero-dp-load-producer.js
-  src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
-  src/core/emp1/emp1-wrc537-gamma5-zero-dp-orchestration.js
-  src/core/emp1/emp1-c-bounded-route-registry.js
-  src/core/emp1/emp1-local-method-scope.js
-  src/core/emp1/emp1-local-correlation-gate.js
-  src/core/emp1/emp1-orchestrator.js
-  src/core/emp1/emp1-public-product-contract.js
-  src/workspace/emp1-product-projection.js
-
-qualification / evidence
-  scripts/emp1-wrc-*.mjs
-  scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs
-  scripts/emp1-local-correlation-bounded-scope-self-test.mjs
-  validation/emp1/wrc537-2013/*.json
-
-handover
-  agents/status/PR1291.yaml
-  agents/claims/PR1291.yaml
-  agents/PR1291_workreport.md
-```
-
-No merge is authorized by this report.
-
-## Appendix A — next-agent expert questions
-
-1. Does the WRC PDF still hash to `698fcdc3...c27b2` and the generated cylindrical dataset to `fb440a29...b73c`?
-2. Does the package still contain exactly 321 selectable curves / 3210 qualified scalars and one unselectable blank-gamma Figure 1B Original row?
-3. Does the full gamma=5 oracle still re-observe `5daeb3a8...80aa` with zero production imports?
-4. Does the authorized route still require gamma=5 and `0.05<=beta<=0.5` derived from geometry rather than trusting caller declarations?
-5. Does the route still enforce round/Cylindrical/Original, interpolation=false and cross-variant fallback=false?
-6. Does the zero-dp producer still reject every nonzero differential-pressure case?
-7. Are `Kn=Kb=1` still hard requirements at the route boundary?
-8. Does load-custody qualification bind producer SHA `47a9157b...622b` and reject semantic-hash drift/reference mismatch?
-9. Does route qualification hash remain `3b437540...e1a8e`?
-10. Does real `runEmp1()` invoke local correlation exactly once for the authorized case and zero times for all pre-WRC falsifiers?
-11. Does the route reproduce all 32 frozen stress outputs and the exact six WRC load components?
-12. Is the CI evidence pipeline still `pipefail`-protected so `tee` cannot mask a Node failure?
-13. Does public product projection expose one bounded route while the global EMP.1.C route remains unregistered?
-14. Is `releaseQualified` still false and is product decision still prevented from masquerading as code compliance?
-15. Before adding gamma>5, can every required Figure/gamma Original beta endpoint be traced to an exact source locator and a non-inferred numerical limit? If not, that gamma stays blocked.
-16. Before adding nonzero pressure, what exact qualified source establishes pressure-thrust inclusion/exclusion, direction/sign and double-count handling at the WRC reference point?
-17. Before adding non-unity `Kn/Kb`, what exact WRC source path and calculation contract produces those factors for the runtime geometry?
+1. Does WRC PDF SHA-256 still equal `698fcdc3...c27b2`?
+2. Does the production dataset still reproduce 321 curves / 3,210 scalar coefficients / 3,210-of-3,210 primary-source crosscheck?
+3. Is the blank-gamma Figure 1B Original row still unselectable?
+4. Is the rational 5-over-6 curve equation still the only authorized cylindrical evaluator?
+5. Can any non-tabulated gamma pass either selection path? It must not.
+6. Is gamma=5 still restricted to 0.05<=beta<=0.50, zero dp and Kn=Kb=1?
+7. Does real `runEmp1()` still execute gamma=5 once and reject invalid cases before WRC invocation?
+8. Is gamma=15 source domain explicitly 0.05<=beta<=0.30 and classified conservative rather than exact-source endpoint?
+9. Do all 14 required Original gamma=15 rows exist?
+10. Does gamma=15 oracle hash remain `d34827bfdfebad9f175e5fbcdfeab5fdc799d28de5c298ed2ae578886f72ae98` with zero production imports?
+11. Does gamma=15 production comparison still pass 16 ordinate uses and 32 stresses?
+12. Is the gamma=15 comparison profile still comparison-only, with no production route authority?
+13. Is the gamma=15 route still unregistered in PR1291?
+14. Are nonzero differential pressure and nonunity Kn/Kb still blocked?
+15. Is the global/full-domain EMP.1.C route still false?
+16. Are all evidence-producing shell pipelines fail-closed against Node-process failure masking?

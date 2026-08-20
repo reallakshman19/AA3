@@ -2,6 +2,7 @@ import {
   EMP1_B_SOURCE_CUSTODY_STATES,
   classifyEmp1BSourceCustody,
 } from './emp1-a-to-b-refresh.js';
+import { EMP1_C_BOUNDED_PRODUCTION_ROUTES } from './emp1-c-bounded-route-registry.js';
 
 export const EMP1_PUBLIC_PRODUCT = Object.freeze({
   productId: 'EMP.1',
@@ -12,16 +13,14 @@ export const EMP1_PUBLIC_PRODUCT = Object.freeze({
 export const EMP1_BACKING_STAGE_IDS = Object.freeze(['LAFEA.1', 'LAFEA.2']);
 
 export const EMP1_LOCAL_CORRELATION_BLOCKERS = Object.freeze([
-  'WRC_DATASET_NOT_READY',
-  'WRC_NUMERICAL_COEFFICIENTS_MISSING',
-  'WRC_SIGN_ARBITRATION_OPEN',
-  'CAUX_PP24_31_NOT_FROZEN',
+  'GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED',
+  'EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED',
 ]);
 
 export const EMP1_STEPS = Object.freeze([
   Object.freeze({ stepId: 'EMP.1.A', shortId: 'A', label: 'Load & reference', backingStageId: 'LAFEA.1', authority: 'LOAD_TRANSFER_AND_PRESSURE_BASELINE_ONLY' }),
   Object.freeze({ stepId: 'EMP.1.B', shortId: 'B', label: 'Section screening', backingStageId: 'LAFEA.2', authority: 'NOMINAL_PIPE_SECTION_SCREENING_ONLY' }),
-  Object.freeze({ stepId: 'EMP.1.C', shortId: 'C', label: 'Local correlation', backingStageId: null, authority: 'BLOCKED_PENDING_WRC_AND_CAUX_QUALIFICATION' }),
+  Object.freeze({ stepId: 'EMP.1.C', shortId: 'C', label: 'Local correlation', backingStageId: null, authority: 'BOUNDED_ROUTE_REGISTERED_GLOBAL_ROUTE_BLOCKED' }),
 ]);
 
 export function isEmp1BackingStage(stageId) {
@@ -45,10 +44,13 @@ export function buildEmp1ProductProjection(state) {
   const b = projectBStep(projectExecutableStep(EMP1_STEPS[1], bStage), bCustody);
   const c = Object.freeze({
     ...EMP1_STEPS[2],
-    state: 'BLOCKED',
+    state: 'BOUNDED_ROUTE_AVAILABLE',
     documentLoaded: false,
     resultAvailable: false,
     runAuthorized: false,
+    workspaceExecutionWired: false,
+    boundedProductionRoutes: EMP1_C_BOUNDED_PRODUCTION_ROUTES,
+    boundedRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
     blockers: EMP1_LOCAL_CORRELATION_BLOCKERS,
   });
   return Object.freeze({
@@ -56,7 +58,7 @@ export function buildEmp1ProductProjection(state) {
     product: EMP1_PUBLIC_PRODUCT,
     activeBackingStageId: isEmp1BackingStage(state?.activeStageId) ? state.activeStageId : null,
     activeStepId: emp1StepForBackingStage(state?.activeStageId)?.stepId ?? null,
-    state: 'BLOCKED_LOCAL_CORRELATION',
+    state: 'BOUNDED_LOCAL_CORRELATION_AVAILABLE',
     steps: Object.freeze([a, b, c]),
     custody: Object.freeze({
       bSourceEvidenceState: bCustody.state,
@@ -69,7 +71,11 @@ export function buildEmp1ProductProjection(state) {
     qualificationBoundary: Object.freeze({
       emp1AProductionAuthority: 'RETAINED_EXISTING_ENGINE',
       emp1BProductionAuthority: 'RETAINED_EXISTING_ENGINE',
-      emp1CProductionAuthority: 'NOT_AUTHORIZED',
+      emp1CProductionAuthority: 'BOUNDED_ROUTE_ONLY',
+      emp1CWorkspaceExecutionWired: false,
+      emp1CBoundedProductionRoutes: EMP1_C_BOUNDED_PRODUCTION_ROUTES,
+      emp1CBoundedRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
+      globalEmp1CRouteAuthority: false,
       passIsCodeCompliance: false,
       releaseQualified: false,
     }),

@@ -171,6 +171,13 @@ await rejectedBeforeC('authority-field-injection', {
 await rejectedBeforeC('retained-layer-hash-drift', {
   tamperLoadLayer: (layer) => ({ ...layer, resultHash: 'fnv1a64:0000000000000000' }),
 }, 'EMP1_WRC537_ZERO_DP_FOUNDATION_LAYER_HASH_MISMATCH');
+await rejectedAtC('prepared-source-custody-drift', {
+  mutatePreparedSource: (prepared) => {
+    const tampered = structuredClone(prepared);
+    tampered.localMethod.wrcSourceCustody.geometry.meanRadius += 1;
+    return tampered;
+  },
+}, 'EMP1_WRC537_ZERO_DP_SOURCE_CUSTODY_DRIFT');
 
 const independentReferenceOffsetMoment = 100 * 1000;
 assert.equal(independentReferenceOffsetMoment, 100000);
@@ -281,6 +288,15 @@ async function rejectedBeforeC(name, options, codePrefix) {
   falsifiers.push(name);
 }
 
+async function rejectedAtC(name, options, codePrefix) {
+  const observed = await executeScenario(options);
+  assert.ok(observed.error, `${name}: expected rejection`);
+  assert.equal(observed.calls.c, 1, `${name}: C boundary must execute and reject before Table-5`);
+  assert.ok(String(observed.error.code ?? observed.error.message).startsWith(codePrefix),
+    `${name}: actual=${observed.error.code ?? observed.error.message}`);
+  falsifiers.push(name);
+}
+
 async function executeScenario(options = {}) {
   const calls = { a: 0, b: 0, c: 0, prepare: 0 };
   let preparedSource = null;
@@ -302,6 +318,7 @@ async function executeScenario(options = {}) {
     prepareLocalCorrelationSource: (context) => {
       calls.prepare += 1;
       preparedSource = prepareEmp1Wrc537Gamma5ZeroDpLocalSource(context);
+      if (options.mutatePreparedSource) preparedSource = options.mutatePreparedSource(preparedSource);
       return preparedSource;
     },
     runLocalCorrelation: (context) => {

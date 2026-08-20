@@ -9,10 +9,9 @@ import {
   emp1GlobalLoadsToWrc537,
 } from './emp1-wrc537-cylindrical-frame.js';
 import { evaluateEmp1Wrc537CylindricalTable5 } from './emp1-wrc537-cylindrical-table5.js';
+import { requireEmp1Wrc537ComparisonLoadCustody } from './emp1-wrc537-load-custody.js';
 
-export const EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA='emp1-wrc537-cylindrical-bounded-adapter-result/v1';
-export const EMP1_WRC537_BOUNDED_LOAD_REFERENCE='WRC_ATTACHMENT_REFERENCE_POINT';
-export const EMP1_WRC537_BOUNDED_PRESSURE_DISPOSITION='PRESSURE_THRUST_RESOLVED_UPSTREAM';
+export const EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA='emp1-wrc537-cylindrical-bounded-adapter-result/v2';
 
 const FIGURES=deepFreeze({
   circ:{
@@ -31,16 +30,11 @@ const UNIT_SYSTEMS=deepFreeze({
 const ROUND_OFF_RELATIVE_TOLERANCE=1e-12;
 
 /**
- * Bounded WRC537 cylindrical Table-5 adapter.
- *
- * Authority boundary:
- * - source: WRC537 2013 SHA-bound coefficient package;
- * - shape: round attachment on cylindrical shell;
- * - variant: ORIGINAL only;
- * - gamma: exactly 5 within machine round-off;
- * - beta: 0.05 <= beta <= 0.5;
- * - pressure thrust must already be resolved upstream and carried by custody hash;
- * - this module does not authorize a global EMP.1.C route by itself.
+ * Qualification/comparison adapter for the first bounded WRC537 Table-5 route.
+ * It accepts only a structured COMPARISON_FIXTURE load-custody record. A
+ * separately qualified runtime route must use requireEmp1Wrc537QualifiedLoadCustody
+ * with a pinned producer-qualification hash; this adapter cannot create route
+ * authority from caller-supplied provenance strings.
  */
 export function evaluateEmp1Wrc537CylindricalBoundedAdapter(input){
   if(!input||typeof input!=='object'||Array.isArray(input)) throw adapterError('EMP1_WRC537_BOUNDED_ADAPTER_INPUT_REQUIRED');
@@ -60,7 +54,7 @@ export function evaluateEmp1Wrc537CylindricalBoundedAdapter(input){
     beta:geometry.beta,
   });
 
-  const loadCustody=normalizeLoadCustody(input.loadCustody);
+  const loadCustody=requireEmp1Wrc537ComparisonLoadCustody(input.loadCustody);
   const frame=buildEmp1Wrc537CylindricalFrame({
     vesselCenterlineGlobal:input.axes?.vesselCenterlineGlobal,
     nozzleCenterlineGlobal:input.axes?.nozzleCenterlineGlobal,
@@ -88,7 +82,7 @@ export function evaluateEmp1Wrc537CylindricalBoundedAdapter(input){
 
   return deepFreeze({
     schema:EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA,
-    state:'EVALUATED_BOUNDED_GAMMA5_TABLE5',
+    state:'EVALUATED_BOUNDED_GAMMA5_TABLE5_COMPARISON',
     engineeringComparisonUseAuthorized:true,
     productionRouteAuthority:false,
     globalEmp1CRouteAuthority:false,
@@ -109,9 +103,7 @@ export function evaluateEmp1Wrc537CylindricalBoundedAdapter(input){
   });
 }
 
-export function deriveEmp1Wrc537CylindricalBoundedGeometry(value){
-  return deriveGeometry(value);
-}
+export function deriveEmp1Wrc537CylindricalBoundedGeometry(value){return deriveGeometry(value);}
 
 function deriveGeometry(value){
   if(!value||typeof value!=='object'||Array.isArray(value)) throw adapterError('EMP1_WRC537_BOUNDED_GEOMETRY_REQUIRED');
@@ -124,50 +116,28 @@ function deriveGeometry(value){
   if(value.beta!=null&&!roundOffEquivalent(value.beta,beta)) throw adapterError('EMP1_WRC537_BOUNDED_DECLARED_BETA_MISMATCH');
   return deepFreeze({
     meanRadius,shellThickness,attachmentRadius,gamma,beta,
-    gammaEquation:'Rm/T',
-    betaEquation:'0.875*r0/Rm',
-    declaredGamma:value.gamma??null,
-    declaredBeta:value.beta??null,
+    gammaEquation:'Rm/T',betaEquation:'0.875*r0/Rm',
+    declaredGamma:value.gamma??null,declaredBeta:value.beta??null,
   });
 }
-
 function evaluateFigureSet({variant,gamma,beta}){
-  const selections={circ:{},long:{}};
-  const ordinates={circ:{},long:{}};
-  for(const family of ['circ','long']){
-    for(const [quantity,figure] of Object.entries(FIGURES[family])){
-      const curve=selectEmp1Wrc537CylindricalDatasetCurve({figure,variant,gamma});
-      const evaluation=evaluateEmp1Wrc537DatasetCurve(curve,beta);
-      if(evaluation.y<0) throw adapterError(`EMP1_WRC537_BOUNDED_NEGATIVE_ORDINATE:${figure}:${evaluation.y}`);
-      selections[family][quantity]=deepFreeze({
-        figure:curve.figure,variant:curve.variant,sourceGamma:curve.gamma,pdfPage:curve.pdfPage,
-        sourceDocumentSha256:curve.sourceDocumentSha256,datasetHash:curve.datasetHash,
-        interpolationUsed:curve.interpolationUsed,extrapolationFallbackUsed:curve.extrapolationFallbackUsed,
-      });
-      ordinates[family][quantity]=evaluation.y;
-    }
+  const selections={circ:{},long:{}};const ordinates={circ:{},long:{}};
+  for(const family of ['circ','long']) for(const [quantity,figure] of Object.entries(FIGURES[family])){
+    const curve=selectEmp1Wrc537CylindricalDatasetCurve({figure,variant,gamma});
+    const evaluation=evaluateEmp1Wrc537DatasetCurve(curve,beta);
+    if(evaluation.y<0) throw adapterError(`EMP1_WRC537_BOUNDED_NEGATIVE_ORDINATE:${figure}:${evaluation.y}`);
+    selections[family][quantity]=deepFreeze({
+      figure:curve.figure,variant:curve.variant,sourceGamma:curve.gamma,pdfPage:curve.pdfPage,
+      sourceDocumentSha256:curve.sourceDocumentSha256,datasetHash:curve.datasetHash,
+      interpolationUsed:curve.interpolationUsed,extrapolationFallbackUsed:curve.extrapolationFallbackUsed,
+    });
+    ordinates[family][quantity]=evaluation.y;
   }
   return deepFreeze({selections,ordinates});
 }
-
-function normalizeLoadCustody(value){
-  if(!value||typeof value!=='object'||Array.isArray(value)) throw adapterError('EMP1_WRC537_BOUNDED_LOAD_CUSTODY_REQUIRED');
-  if(value.loadReference!==EMP1_WRC537_BOUNDED_LOAD_REFERENCE) throw adapterError('EMP1_WRC537_BOUNDED_LOAD_REFERENCE');
-  if(value.pressureThrustDisposition!==EMP1_WRC537_BOUNDED_PRESSURE_DISPOSITION) throw adapterError('EMP1_WRC537_BOUNDED_PRESSURE_THRUST_UPSTREAM_REQUIRED');
-  const sourceLoadCustodyHash=requiredString(value.sourceLoadCustodyHash,'SOURCE_LOAD_CUSTODY_HASH');
-  return deepFreeze({
-    loadReference:value.loadReference,
-    pressureThrustDisposition:value.pressureThrustDisposition,
-    sourceLoadCustodyHash,
-    note:'Pressure-thrust inclusion/exclusion is an upstream authority prerequisite; this adapter does not infer or add thrust.',
-  });
-}
-
 function normalizeUnits(value){
   if(!value||typeof value!=='object'||Array.isArray(value)) throw adapterError('EMP1_WRC537_BOUNDED_UNITS_REQUIRED');
-  for(const [system,contract] of Object.entries(UNIT_SYSTEMS)){
-    if(Object.entries(contract).every(([key,expected])=>value[key]===expected)) return deepFreeze({system,...contract});
-  }
+  for(const [system,contract] of Object.entries(UNIT_SYSTEMS)) if(Object.entries(contract).every(([key,expected])=>value[key]===expected)) return deepFreeze({system,...contract});
   throw adapterError('EMP1_WRC537_BOUNDED_UNITS_UNSUPPORTED');
 }
 function positive(value,label){if(!Number.isFinite(value)||value<=0) throw adapterError(`EMP1_WRC537_BOUNDED_${label}_INVALID`);return Number(value);}

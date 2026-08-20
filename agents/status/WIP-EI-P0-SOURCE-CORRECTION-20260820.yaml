@@ -11,19 +11,24 @@ agent_state: ACTIVE
 pr_recovery_state: RECOVERABLE_WIP
 handover_readiness: READY
 report_path: agents/WIP-EI-P0-SOURCE-CORRECTION-20260820_workreport.md
-current_stage: P0_SOURCE_TRANSCRIPTION_CORRECTION
-blocker: none for bounded corrections; unresolved AIV T2.6 A/S/B and P1 scoring must remain quarantined
-highest_risk: derived YAML/CSV being mistaken for EI engineering authority despite transcription errors or unresolved source semantics
+current_stage: READY_FOR_DRAFT_PR_RECONCILIATION
+blocker: none for bounded correction; unresolved AIV T2.6 A/S/B/general branches and P1 scoring remain deliberately quarantined
+highest_risk: derived YAML/CSV being mistaken for EI engineering authority despite unresolved source semantics
 validation_state:
   live_main_grounding: PASS
   pr1288_scope_grounding: PASS
   controlled_pdf_blob_identity: PASS
+  rollback_git_blob_manifest: PASS
   p0_formula_diagnosis: PASS
-  focused_source_master_regression: NOT_RUN
-  direct_pdf_visual_inspection: NOT_RUN
+  exact_changed_blob_reconstruction: PASS
+  focused_source_master_regression: PASS
+  focused_gate_command: node scripts/ei-aviff-source-master-p0-check.mjs
+  focused_gate_schema: EiAviffSourceMasterP0Check.v1
+  direct_pdf_visual_inspection: NOT_RUN_TRANSPORT_BLOCKED
+  native_repo_checkout: NOT_RUN_DNS_BLOCKED
   production_code_changed: false
   screening_authority_changed: false
   design_authority_changed: false
   merge: NOT_AUTHORIZED
-exact_next_action: snapshot exact target blobs, implement bounded P0 corrections/quarantine markers, add and execute focused source-master validation, then reconcile a draft PR
-last_updated: 2026-08-20T07:10:00+04:00
+exact_next_action: re-ground live main, open draft corrective PR, migrate WIP custody to PR-numbered recovery files, then reconcile hosted reviews/status/workflows
+last_updated: 2026-08-20T07:35:00+04:00

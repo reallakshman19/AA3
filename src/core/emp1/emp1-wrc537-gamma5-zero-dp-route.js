@@ -1,0 +1,105 @@
+import { evaluateEmp1LocalCorrelationGate, requireEmp1LocalCorrelationExecutionAuthority } from './emp1-local-correlation-gate.js';
+import {
+  EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256,
+  createEmp1AZeroDpWrcQualifiedLoadCustody,
+  deriveEmp1AZeroDpWrcLoadPackageCandidate,
+} from './emp1-a-wrc-zero-dp-load-producer.js';
+import {
+  deriveEmp1Wrc537CylindricalBoundedGeometry,
+  evaluateEmp1Wrc537CylindricalBoundedQualifiedNumerics,
+} from './emp1-wrc537-cylindrical-bounded-adapter.js';
+
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256='3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e';
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED=false;
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SCHEMA='emp1-wrc537-gamma5-zero-dp-route-result/v1';
+
+const SOURCE_SHA='698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2';
+const DATASET_HASH='fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c';
+const FULL_TABLE5_ORACLE_HASH='5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa';
+
+export const EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION=deepFreeze({
+  engineeringUseAuthorized:true,
+  methodIdentity:'WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP',
+  methodEdition:'2013',
+  sourceDocumentSha256:SOURCE_SHA,
+  datasetHash:DATASET_HASH,
+  qualificationRecordHash:EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
+  scopeContract:{
+    schema:'emp1-local-method-scope/v1',
+    type:'CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_BOUNDED',
+    gammaSelectionPolicy:'EXACT_SOURCE_TABULATED_GAMMA_ONLY',
+    nonTabulatedGamma:'BLOCKED',
+    interpolationAllowed:false,
+    crossVariantFallbackAllowed:false,
+    machineRoundOffRelativeTolerance:1e-12,
+    sourceDocumentSha256:SOURCE_SHA,
+    datasetHash:DATASET_HASH,
+    shellFamily:'CYLINDRICAL',
+    attachmentShape:'ROUND',
+    variant:'ORIGINAL',
+    gamma:5,
+    betaMinimum:0.05,
+    betaMaximum:0.5,
+    loadReference:'WRC_ATTACHMENT_REFERENCE_POINT',
+    pressureThrustDisposition:'PRESSURE_THRUST_RESOLVED_UPSTREAM',
+    loadProducerQualificationHash:EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256,
+    scopeContractHash:EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
+  },
+});
+export const EMP1_WRC537_GAMMA5_ZERO_DP_BENCHMARK_QUALIFICATION=deepFreeze({status:'PASS',benchmarkHash:FULL_TABLE5_ORACLE_HASH});
+
+/**
+ * Build and fully gate the bounded route without claiming final route
+ * registration. Expected values are never derived from this function.
+ */
+export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input){
+  if(!record(input)) throw routeError('EMP1_WRC537_ZERO_DP_ROUTE_INPUT_REQUIRED');
+  requireUnityStressConcentration(input.stressConcentration);
+  const geometry=deriveEmp1Wrc537CylindricalBoundedGeometry(input.geometry);
+  const loadCandidate=deriveEmp1AZeroDpWrcLoadPackageCandidate({
+    result:input.loadTransferResult,
+    loadCaseIdentity:input.loadCaseIdentity,
+    pressureResultIdentity:input.pressureResultIdentity,
+    wrcReferencePointGlobal:input.wrcReferencePointGlobal,
+    productionObservationUsedToSetAuthority:false,
+  });
+  const loadCustody=createEmp1AZeroDpWrcQualifiedLoadCustody(loadCandidate);
+  const source={localMethod:{
+    requested:true,sourceSha256:SOURCE_SHA,datasetHash:DATASET_HASH,shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',
+    gammaSelectionPolicy:'EXACT_SOURCE_TABULATED_GAMMA_ONLY',sourceParameterResolved:true,interpolationUsed:false,extrapolationFallbackUsed:false,
+    variant:'ORIGINAL',gamma:geometry.gamma,sourceGamma:5,beta:geometry.beta,loadCustody,
+  }};
+  const gate=evaluateEmp1LocalCorrelationGate({methodQualification:EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION,benchmarkQualification:EMP1_WRC537_GAMMA5_ZERO_DP_BENCHMARK_QUALIFICATION,source});
+  requireEmp1LocalCorrelationExecutionAuthority(gate);
+  const numerics=evaluateEmp1Wrc537CylindricalBoundedQualifiedNumerics({
+    sourceDocumentSha256:SOURCE_SHA,datasetHash:DATASET_HASH,shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',variant:'ORIGINAL',
+    units:{force:'N',length:'mm',moment:'N*mm',stress:'N/mm^2'},geometry:input.geometry,axes:input.axes,
+    loadsAtWrcReference:loadCandidate.loadsAtWrcReference,loadCustody,stressConcentration:{Kn:1,Kb:1},
+  },{expectedProducerQualificationHash:EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256});
+  return deepFreeze({
+    schema:EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SCHEMA,
+    state:'PASS_BOUNDED_ROUTE_CANDIDATE',
+    engineeringUseAuthorized:true,
+    productionRouteAuthority:false,
+    globalEmp1CRouteAuthority:false,
+    routeQualificationSha256:EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
+    methodGate:gate,
+    loadCandidate,
+    loadCustody,
+    numerics,
+    stresses:numerics.stresses,
+  });
+}
+
+export function runEmp1Wrc537Gamma5ZeroDpRoute(input){
+  if(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED!==true) throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_NOT_AUTHORIZED');
+  const result=evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
+  return deepFreeze({...result,state:'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE',productionRouteAuthority:true});
+}
+
+function requireUnityStressConcentration(value){
+  if(!record(value)||value.Kn!==1||value.Kb!==1) throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
+}
+function record(value){return Boolean(value)&&typeof value==='object'&&!Array.isArray(value);}
+function routeError(code){const error=new TypeError(code);error.code=code;return error;}
+function deepFreeze(value){if(!value||typeof value!=='object'||Object.isFrozen(value))return value;Object.values(value).forEach(deepFreeze);return Object.freeze(value);}

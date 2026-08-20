@@ -40,8 +40,7 @@ console.log(JSON.stringify({
   githubActionsWorkflowAdded: false,
 }));
 
-await import('./lafea-pr1270-target-anchored-metric-control.mjs');
-throw new Error('PR1293_DIAGNOSTIC_CAPTURE_STOP_AFTER_BALANCED_METRIC_RECEIPT');
+await import('./lafea-pr1270-affine-metric-screen.mjs');
 
 function stage(stageId, document, profileId) {
   return { stageId, document, lifecycle: { profileId }, lifecycleBinding: { status: 'CURRENT' } };

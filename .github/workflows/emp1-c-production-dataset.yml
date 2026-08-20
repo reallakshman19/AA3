@@ -16,11 +16,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Prepare PDF text tools
+      - name: Prepare PDF inspection tools
         shell: bash
         run: |
           set -euo pipefail
-          if ! command -v pdftotext >/dev/null 2>&1; then
+          if ! command -v pdftotext >/dev/null 2>&1 || ! command -v pdftoppm >/dev/null 2>&1; then
             sudo apt-get update
             sudo apt-get install -y poppler-utils
           fi
@@ -31,6 +31,7 @@ jobs:
           mkdir -p test-results/wrc-chart-pages
           for page in 94 96 100 104 106 110 114 118 122 124 128 132 136 140 144 146; do
             pdftotext -f "$page" -l "$page" -layout docs/emp1/WRC537_2013.pdf "test-results/wrc-chart-pages/page-${page}.txt"
+            pdftoppm -f "$page" -l "$page" -singlefile -png -r 220 docs/emp1/WRC537_2013.pdf "test-results/wrc-chart-pages/page-${page}" >/dev/null
           done
           echo '--- WRC PDF page 94 / Figure 1A chart text ---'
           cat test-results/wrc-chart-pages/page-94.txt

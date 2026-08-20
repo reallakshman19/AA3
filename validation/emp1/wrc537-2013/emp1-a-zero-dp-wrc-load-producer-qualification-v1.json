@@ -1,0 +1,74 @@
+{
+  "schema": "emp1-wrc537-load-producer-qualification/v1",
+  "status": "PASS_CANDIDATE_PENDING_INDEPENDENT_REOBSERVATION",
+  "engineeringAuthority": false,
+  "productionRouteAuthority": false,
+  "productionObservationUsedToSetAuthority": false,
+  "semanticPayload": {
+    "producerId": "EMP1_A_LAFEA1_ZERO_DP_WRC_REFERENCE_V1",
+    "authorityClass": "WRC_REFERENCE_POINT_LOAD_PRODUCER",
+    "productionModule": "src/core/emp1/emp1-a-wrc-zero-dp-load-producer.js",
+    "upstreamEngine": {
+      "resultSchema": "local-attachment-foundation-result/v1",
+      "requiredQualificationState": "ACCEPTED",
+      "requiredEngineeringLevel": "LOAD_TRANSFER_AND_PRESSURE_BASELINE_ONLY",
+      "requiredEvidence": [
+        "transformedLoadCases",
+        "pressureStressResults",
+        "forceMomentAccounting",
+        "semanticHashes"
+      ]
+    },
+    "qualifiedScope": {
+      "pressureDomain": "DIFFERENTIAL_PRESSURE_EXACTLY_ZERO",
+      "pressureMode": "SOURCE_LOAD_EXCLUDES_THRUST_NOT_REQUIRED",
+      "pressureThrustEquation": "F_thrust=(p_i-p_o)*A=0",
+      "loadReference": "WRC_ATTACHMENT_REFERENCE_POINT",
+      "requirements": [
+        "selected transformed-load targetPointGlobal equals declared WRC reference within retained source length tolerance",
+        "selected pressure result internalPressure equals externalPressure exactly after canonical normalization",
+        "force residual, moment residual, and common-origin moment residual remain within retained source tolerances",
+        "retained result semantic hashes reconstruct exactly",
+        "production observation is not used to establish authority"
+      ]
+    },
+    "canonicalUnits": {
+      "length": "mm",
+      "force": "N",
+      "moment": "N·mm",
+      "pressure": "MPa",
+      "stress": "MPa"
+    },
+    "independentQualificationCase": {
+      "sourcePointGlobal": [0, 0, 1000],
+      "targetPointGlobal": [0, 0, 0],
+      "sourceForceGlobal": [1000, 0, 0],
+      "sourceMomentGlobal": [0, 0, 0],
+      "expectedTransformedForceGlobal": [1000, 0, 0],
+      "expectedTransformedMomentGlobal": [0, 1000000, 0],
+      "internalPressure": 0,
+      "externalPressure": 0,
+      "expectedPressureThrust": 0
+    },
+    "prohibitions": [
+      "NONZERO_DIFFERENTIAL_PRESSURE",
+      "WRC_REFERENCE_POINT_MISMATCH",
+      "UPSTREAM_RESULT_NOT_ACCEPTED",
+      "UPSTREAM_RESULT_HASH_DRIFT",
+      "LOAD_ACCOUNTING_RESIDUAL_FAILURE",
+      "PRESSURE_RESULT_MISSING",
+      "PRODUCTION_OBSERVATION_USED_AS_AUTHORITY"
+    ]
+  },
+  "semanticHashSha256": "47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b",
+  "reobservation": {
+    "status": "PENDING",
+    "productionImports": [],
+    "productionObservationUsed": false
+  },
+  "authorization": {
+    "zeroDifferentialPressureLoadProducerAllowed": false,
+    "nonzeroDifferentialPressureAllowed": false,
+    "boundedWrcRouteRegistrationAllowed": false
+  }
+}

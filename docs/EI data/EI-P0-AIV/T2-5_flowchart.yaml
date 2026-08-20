@@ -4,57 +4,71 @@ module: T2.7
 source_document: Energy Institute Guidelines 2nd Edition (2008)
 page: PDF 68 / Doc 60
 source_pdf_git_blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
-transcription_status: PARTIALLY_VERIFIED_AGAINST_CONTROLLED_D2_3_WORKED_EXAMPLE
-engineering_use: VERIFIED_STEPS_ONLY
+transcription_status: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
+engineering_use: QUALIFICATION_EVIDENCE_ONLY
+production_promotion_authority: BLOCKED_PENDING_PINNED_PDF_VISUAL_PARITY_AND_DOWNSTREAM_QUALIFICATION
+source_reconciliation:
+  original_guidance_text_rendering: CORROBORATED_PRINTED_PAGE_60
+  exact_pinned_pdf_visual_parity: NOT_RUN_TRANSPORT_BLOCKED
+  numerical_oracle: EI_D2_3_WORKED_EXAMPLE
 steps:
   - step: 1
     name: Source Sound Power Level Calculation
-    verification: VERIFIED_BY_D2_3_RELIEF_AND_RECYCLE_PUBLISHED_PWL
+    verification: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
     equation: "PWL_source = 10 * log10( W^2 * ((P1 - P2)/P1)^3.6 * (Te / Mw)^1.2 ) + 126.1 + SFF"
     parameters:
       W: "Mass flow rate (kg/s)"
       P1: "Upstream absolute static pressure; same pressure unit basis as P2"
       P2: "Downstream absolute static pressure; same pressure unit basis as P1"
       Te: "Upstream temperature (K)"
-      Mw: "Molecular weight (g/mol or numerically equivalent kg/kmol)"
-      SFF: "Sonic-flow factor in dB; controlled AIV source evidence uses 0 for NON_SONIC and 6 for SONIC. Sonic-state determination itself remains a separate readiness/source gate."
+      Mw: "Molecular weight (g/mol)"
+      SFF: "Sonic-flow factor in dB: 6 for sonic conditions, otherwise 0. Sonic-state determination remains a separate readiness/input-resolution gate."
     worked_example_anchors:
       relief_source_pwl_db: 164.7
       recycle_source_pwl_db: 159.4
   - step: 2
     name: Low Noise Trim Reduction
-    verification: VERIFIED_BY_D2_3_RECYCLE_EXAMPLE
+    verification: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
     rule: "If manufacturer-qualified low-noise trim reduction is available, PWL_effective = PWL_source - delta_PWL_trim"
     restriction: "Do not substitute a manufacturer absolute noise prediction for the EI source PWL; only a qualified reduction delta is applied."
   - step: 3
     name: 155 dB Source Screening Gate
-    verification: VERIFIED_BY_D2_3_WORKED_EXAMPLE
+    verification: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
     condition: "PWL_effective < 155 dB"
     true_action: "Main-line AIV LOF = 0.29 for this source path; no T2-6 discontinuity calculation is required for that source."
-    false_action: "Proceed along the main line to welded discontinuities and evaluate the point PWL."
+    false_action: "Proceed along the main line to welded discontinuities and evaluate point PWL."
   - step: 4
     name: Spatial Attenuation to Discontinuity
-    verification: VERIFIED_BY_D2_3_0_8M_154MM_ANCHOR
+    verification: SOURCE_CORROBORATED_AND_D2_3_REPRODUCED
     equation: "attenuation_dB = 60 * L_dis_m / Dint_mm"
     result: "PWL_discontinuity = PWL_effective - attenuation_dB"
     empirical_unit_basis:
       L_dis: m
       Dint: mm
-    warning: "This is an empirical mixed-unit relation. Do NOT convert L_dis and Dint to the same unit before applying the coefficient 60."
+    warning: "This is an empirical mixed-unit relation. Do NOT convert L_dis and Dint to the same unit before applying coefficient 60."
     worked_example_anchor: "60 * 0.8 / 154 = 0.311688... dB; 164.7 - 0.311688... = 164.388... dB, published as 164.4 dB."
   - step: 5
     name: Multi-Source Acoustic Summation
-    verification: REQUIRES_DIRECT_T2_5_HUMAN_RECONCILIATION_AND_INDEPENDENT_MULTI_SOURCE_BENCHMARK
-    engineering_authority: NONE_FOR_PROMOTION
-    candidate_equation: "PWL_total = 10 * log10( sum( 10^(PWL_i / 10) ) )"
+    verification: SOURCE_CORROBORATED_EQUATION_INDEPENDENT_BENCHMARK_PENDING
+    equation: "PWL_total = 10 * log10(sum(10^(PWL_i / 10)))"
+    application: "Use point PWL contributions at the same welded discontinuity from all applicable additional sources."
+    authority_note: "Equation transcription is source-corroborated; production multi-source promotion still requires an independent benchmark and governed simultaneous-source scope."
   - step: 6
     name: Discontinuity Screening Gate
-    verification: VERIFIED_FOR_D2_3_SINGLE_SOURCE_PATH
-    condition: "PWL_at_discontinuity < 155 dB"
-    true_action: "Discontinuity LOF = 0.29; continue source/line assessment as required by T2-5."
-    false_action: "Proceed to AIV Flowchart T2-6 for welded-discontinuity fatigue calculation."
+    verification: SOURCE_CORROBORATED
+    condition: "PWL_at_discontinuity_total < 155 dB"
+    true_action: "Subsequent affected length from this source path has AIV LOF = 0.29."
+    false_action: "Calculate discontinuity LOF using Flowchart T2-6."
+  - step: 7
+    name: Main-Line Result Along Source Path
+    verification: SOURCE_CORROBORATED_RULE_INVENTORY_COMPLETENESS_STILL_REQUIRED
+    rule: "Main-line AIV LOF at a location is the greatest welded-discontinuity LOF encountered up to that location from the source; after the first sub-155 dB discontinuity gate, subsequent length has LOF = 0.29 for that source path."
+    authority_note: "This source rule does not prove that a software assessment inventory is complete. Production line/case summarization must still fail closed when welded-discontinuity inventory completeness is not governed."
 correction_record:
   source_pr: 1288
-  corrected_issues:
-    - "Mass-flow exponent corrected from W^0.2 to W^2; W^2 reproduces the EI D2.3 164.7/159.4 dB anchors."
-    - "Attenuation corrected from L/(60D) to 60*L_m/D_mm; the mixed empirical unit basis is now explicit."
+  corrected_or_reconciled:
+    - "Mass-flow exponent corrected from W^0.2 to W^2; W^2 reproduces EI D2.3 164.7/159.4 dB anchors."
+    - "Attenuation corrected from L/(60D) to 60*L_m/D_mm; mixed empirical unit basis is explicit."
+    - "SFF=6 sonic / 0 otherwise captured from source; sonic-state determination itself remains a separate readiness gate."
+    - "Multi-source acoustic energy summation captured from source; independent multi-source benchmark remains pending."
+    - "Main-line greatest-discontinuity rule captured from source while inventory completeness remains separately governed."

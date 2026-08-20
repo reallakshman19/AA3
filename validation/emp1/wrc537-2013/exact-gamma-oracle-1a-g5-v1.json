@@ -1,0 +1,51 @@
+{
+  "schema": "emp1-wrc537-exact-gamma-oracle/v1",
+  "status": "PASS_REOBSERVED_INDEPENDENT_EXACT_GAMMA_ORACLE",
+  "engineeringAuthority": true,
+  "productionAuthority": false,
+  "productionObservationUsed": false,
+  "source": {
+    "document": "WRC537_2013.pdf",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "pdfPage": 95,
+    "printedPage": 83,
+    "figure": "1A - Original"
+  },
+  "semanticPayload": {
+    "figure": "1A",
+    "variant": "ORIGINAL",
+    "gamma": 5,
+    "beta": 0.155,
+    "curveFitModel": "RATIONAL_5_OVER_6",
+    "coefficients": {
+      "a": 0.11311378,
+      "b": -5.2677559,
+      "c": -0.70077182,
+      "d": 32.197618,
+      "e": 5.0076344,
+      "f": -239.96888,
+      "g": -37.157352,
+      "h": 434.74384,
+      "i": 91.22496,
+      "j": 637.19594
+    },
+    "expected": {
+      "numerator": 0.03908833410859999,
+      "denominator": 0.3713733447992965,
+      "y": 0.10525347243142809
+    }
+  },
+  "semanticHash": "809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e",
+  "reobservation": {
+    "status": "PASS",
+    "workflowRunId": 32336475959,
+    "workflowRunNumber": 11,
+    "productionImports": [],
+    "productionObservationUsed": false
+  },
+  "authorization": {
+    "boundedProductionComparisonAllowed": true,
+    "mayAuthorizeNonTabulatedGamma": false,
+    "mayAuthorizeGlobalEmp1CRoute": false
+  }
+}

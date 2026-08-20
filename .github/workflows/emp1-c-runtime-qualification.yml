@@ -18,3 +18,5 @@ jobs:
         run: node scripts/emp1-c-runtime-contract-self-test.mjs
       - name: Qualify cylindrical vessel/nozzle WRC frame
         run: node scripts/emp1-c-cylindrical-frame-contract-self-test.mjs
+      - name: Qualify WRC stress-intensity runtime definition
+        run: node scripts/emp1-c-stress-intensity-definition-check.mjs

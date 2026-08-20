@@ -16,25 +16,27 @@ export const EMP1_PUBLIC_PRODUCT = Object.freeze({
 
 export const EMP1_BACKING_STAGE_IDS = Object.freeze(['LAFEA.1', 'LAFEA.2']);
 
-/**
- * Global/full-domain EMP.1.C route authority remains false. Qualified bounded
- * production slices are listed separately in EMP1_C_BOUNDED_PRODUCTION_ROUTES
- * and still require runtime scope validation before execution.
- */
+/** Global/full-domain EMP.1.C route authority remains false. */
 export const EMP1_C_PRODUCTION_ROUTE = Object.freeze({
   registered: false,
   routeId: null,
 });
 
-const CURRENT_C_QUALIFICATION = evaluateEmp1CQualificationState(withGovernedCExecutionRoute(
-  EMP1_C_CURRENT_QUALIFICATION_EVIDENCE,
-));
-export const EMP1_LOCAL_CORRELATION_BLOCKERS = Object.freeze([...CURRENT_C_QUALIFICATION.blockerCodes]);
+/**
+ * These are the product/workspace blockers for the separately qualified bounded
+ * route. Full-domain technical qualification remains available under
+ * `qualification` / `emp1CQualificationState` and must not be conflated with
+ * this narrower bounded-route authority.
+ */
+export const EMP1_LOCAL_CORRELATION_BLOCKERS = Object.freeze([
+  'GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED',
+  'EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED',
+]);
 
 export const EMP1_STEPS = Object.freeze([
   Object.freeze({ stepId: 'EMP.1.A', shortId: 'A', label: 'Load & reference', backingStageId: 'LAFEA.1', authority: 'LOAD_TRANSFER_AND_PRESSURE_BASELINE_ONLY' }),
   Object.freeze({ stepId: 'EMP.1.B', shortId: 'B', label: 'Section screening', backingStageId: 'LAFEA.2', authority: 'NOMINAL_PIPE_SECTION_SCREENING_ONLY' }),
-  Object.freeze({ stepId: 'EMP.1.C', shortId: 'C', label: 'Local correlation', backingStageId: null, authority: 'GOVERNED_BY_EMP1_C_QUALIFICATION_STATE' }),
+  Object.freeze({ stepId: 'EMP.1.C', shortId: 'C', label: 'Local correlation', backingStageId: null, authority: 'BOUNDED_ROUTE_REGISTERED_GLOBAL_ROUTE_BLOCKED' }),
 ]);
 
 export function isEmp1BackingStage(stageId) {
@@ -57,30 +59,36 @@ export function buildEmp1ProductProjection(state, options = {}) {
   });
   const b = projectBStep(projectExecutableStep(EMP1_STEPS[1], bStage), bCustody);
 
-  // Qualification evidence may be supplied by a governed caller, but it cannot
-  // assert global route registration. Bounded route capability is separate and
-  // each bounded route must revalidate runtime eligibility before execution.
   const qualificationEvidence = options.localCorrelationQualificationEvidence
     ?? EMP1_C_CURRENT_QUALIFICATION_EVIDENCE;
   const cQualification = evaluateEmp1CQualificationState(withGovernedCExecutionRoute(qualificationEvidence));
+  const boundedRouteAvailable = EMP1_C_BOUNDED_PRODUCTION_ROUTES.some((route) => route.registered && route.engineeringUseAuthorized);
+  const cBlockerDetails = boundedRouteAvailable
+    ? Object.freeze([
+      Object.freeze({ code: 'GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED', message: 'Global/full-domain EMP.1.C remains unregistered; only explicitly listed bounded routes have engineering authority.' }),
+      Object.freeze({ code: 'EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED', message: 'The analytical workspace does not yet execute the bounded C route as part of its visible A→B→C transaction.' }),
+    ])
+    : cQualification.blockers;
   const c = Object.freeze({
     ...EMP1_STEPS[2],
-    state: cQualification.state,
+    state: boundedRouteAvailable ? 'BOUNDED_ROUTE_AVAILABLE' : cQualification.state,
     documentLoaded: false,
     resultAvailable: false,
-    runAuthorized: cQualification.runAuthorized,
+    runAuthorized: false,
+    workspaceExecutionWired: false,
     boundedProductionRoutes: EMP1_C_BOUNDED_PRODUCTION_ROUTES,
     boundedRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
-    blockers: cQualification.blockerCodes,
-    blockerDetails: cQualification.blockers,
+    blockers: boundedRouteAvailable ? EMP1_LOCAL_CORRELATION_BLOCKERS : cQualification.blockerCodes,
+    blockerDetails: cBlockerDetails,
     qualification: cQualification,
   });
+
   return Object.freeze({
     schema: 'emp1-product-projection/v1',
     product: EMP1_PUBLIC_PRODUCT,
     activeBackingStageId: isEmp1BackingStage(state?.activeStageId) ? state.activeStageId : null,
     activeStepId: emp1StepForBackingStage(state?.activeStageId)?.stepId ?? null,
-    state: cQualification.runAuthorized ? 'LOCAL_CORRELATION_READY' : 'BLOCKED_LOCAL_CORRELATION',
+    state: boundedRouteAvailable ? 'BOUNDED_LOCAL_CORRELATION_AVAILABLE' : 'BLOCKED_LOCAL_CORRELATION',
     steps: Object.freeze([a, b, c]),
     custody: Object.freeze({
       bSourceEvidenceState: bCustody.state,
@@ -93,12 +101,14 @@ export function buildEmp1ProductProjection(state, options = {}) {
     qualificationBoundary: Object.freeze({
       emp1AProductionAuthority: 'RETAINED_EXISTING_ENGINE',
       emp1BProductionAuthority: 'RETAINED_EXISTING_ENGINE',
-      emp1CProductionAuthority: cQualification.engineeringUseAuthorized ? 'QUALIFIED_METHOD_AUTHORITY' : 'NOT_AUTHORIZED',
+      emp1CProductionAuthority: boundedRouteAvailable ? 'BOUNDED_ROUTE_ONLY' : (cQualification.engineeringUseAuthorized ? 'QUALIFIED_METHOD_AUTHORITY' : 'NOT_AUTHORIZED'),
       emp1CTechnicalQualificationReady: cQualification.technicalQualificationReady,
-      emp1CRunAuthorized: cQualification.runAuthorized,
+      emp1CRunAuthorized: false,
+      emp1CWorkspaceExecutionWired: false,
       emp1CProductionRoute: EMP1_C_PRODUCTION_ROUTE,
       emp1CBoundedProductionRoutes: EMP1_C_BOUNDED_PRODUCTION_ROUTES,
       emp1CBoundedRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
+      globalEmp1CRouteAuthority: false,
       emp1CQualificationState: cQualification,
       passIsCodeCompliance: false,
       releaseQualified: false,

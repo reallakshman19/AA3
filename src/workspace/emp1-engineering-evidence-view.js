@@ -1,0 +1,289 @@
+/** Read-only EMP.1 engineering custody presentation. No DOM value is calculation authority. */
+import { card, element } from './lafea-workbench-dom.js';
+
+const FORCE_NAMES = Object.freeze(['Fx', 'Fy', 'Fz']);
+const MOMENT_NAMES = Object.freeze(['Mx', 'My', 'Mz']);
+const WRC_LOCATIONS = Object.freeze(['Au', 'Al', 'Bu', 'Bl', 'Cu', 'Cl', 'Du', 'Dl']);
+
+export function renderEmp1StageEngineeringEvidence(root, stageId, stage, projection) {
+  if (stageId === 'LAFEA.1') return renderStageA(root, stage);
+  if (stageId === 'LAFEA.2') return renderStageB(root, stage, projection);
+  return null;
+}
+
+export function renderEmp1BoundedCorrelationEvidence(root, projection) {
+  const result = card(root, 'EMP.1.C bounded local-correlation authority');
+  result.section.dataset.role = 'emp1-c-bounded-evidence';
+  result.section.dataset.guidedTarget = 'emp1-c-bounded-evidence';
+  const c = projection?.steps?.find((step) => step.shortId === 'C');
+  const routes = Array.isArray(c?.boundedProductionRoutes) ? c.boundedProductionRoutes : [];
+  result.body.append(element(root, 'p', 'lafea-workbench__section-intro',
+    'C is a governed local shell-correlation step. The bounded route below is real engineering authority only inside its exact runtime domain; global/full-domain EMP.1.C and code-compliance release remain separate and blocked.'));
+
+  if (!routes.length) {
+    result.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
+      'No bounded local-correlation route is registered in this product projection.'));
+    return result.section;
+  }
+
+  for (const route of routes) {
+    const status = element(root, 'strong', 'lafea-result-highlights__status',
+      route.engineeringUseAuthorized ? 'BOUNDED ROUTE QUALIFIED' : 'ROUTE NOT AUTHORIZED');
+    status.dataset.role = 'emp1-c-bounded-route-status';
+    status.dataset.routeId = String(route.routeId ?? 'UNRESOLVED');
+    result.body.append(status);
+    result.body.append(keyValueTable(root, [
+      ['Route', route.routeId],
+      ['Method', route.method?.identity],
+      ['Edition', route.method?.edition],
+      ['Shell / attachment', `${route.scope?.shellFamily ?? '—'} / ${route.scope?.attachmentShape ?? '—'}`],
+      ['Curve variant', route.scope?.variant],
+      ['γ', route.scope?.gamma],
+      ['β domain', `${engineeringNumber(route.scope?.betaMinimum)} ≤ β ≤ ${engineeringNumber(route.scope?.betaMaximum)}`],
+      ['Differential pressure', route.scope?.differentialPressure],
+      ['Kn / Kb', `${engineeringNumber(route.scope?.Kn)} / ${engineeringNumber(route.scope?.Kb)}`],
+      ['Interpolation', route.scope?.interpolationAllowed === false ? 'PROHIBITED' : 'UNRESOLVED'],
+      ['Cross-variant fallback', route.scope?.crossVariantFallbackAllowed === false ? 'PROHIBITED' : 'UNRESOLVED'],
+      ['Release qualified', route.releaseQualified === true ? 'YES' : 'NO'],
+    ]));
+    const blocked = element(root, 'div', 'lafea-workbench__authority');
+    blocked.append(element(root, 'strong', null, 'Still blocked outside this bounded route'));
+    const list = element(root, 'ul');
+    (route.remainingBlocked ?? []).forEach((code) => list.append(element(root, 'li', null, human(code))));
+    blocked.append(list);
+    result.body.append(blocked);
+  }
+  return result.section;
+}
+
+export function renderEmp1CorrelationResultEvidence(root, localCorrelation) {
+  if (!localCorrelation || typeof localCorrelation !== 'object') return null;
+  const result = card(root, 'EMP.1.C WRC calculation evidence');
+  result.section.dataset.role = 'emp1-c-result-evidence';
+  const custody = localCorrelation.sourceCustody;
+  const numerics = localCorrelation.numerics;
+  const geometry = custody?.geometry ?? numerics?.geometry;
+  if (geometry) {
+    result.body.append(sectionHeading(root, 'Source-bound WRC geometry'));
+    result.body.append(keyValueTable(root, [
+      ['Rm', geometry.meanRadius],
+      ['T', geometry.shellThickness],
+      ['r0', geometry.attachmentRadius],
+      ['γ = Rm/T', geometry.gamma],
+      ['β = 0.875 r0/Rm', geometry.beta],
+      ['Geometry evidence hash', custody?.geometryEvidenceHash],
+    ]));
+  }
+  if (custody?.loadReference || custody?.axes) {
+    result.body.append(sectionHeading(root, 'Reference and axis custody'));
+    result.body.append(keyValueTable(root, [
+      ['Reference identity', custody?.loadReference?.identity],
+      ['Reference point global', vectorText(custody?.loadReference?.pointGlobal)],
+      ['Vessel axis', vectorText(custody?.axes?.vesselCenterlineGlobal)],
+      ['Nozzle/radial axis', vectorText(custody?.axes?.nozzleCenterlineGlobal)],
+      ['Foundation result hash', custody?.foundationResultHash],
+      ['Screening result hash', custody?.screeningResultHash],
+    ]));
+  }
+  if (numerics?.wrcLoads) {
+    result.body.append(sectionHeading(root, 'WRC attachment-reference loads'));
+    result.body.append(keyValueTable(root,
+      ['P', 'Vc', 'Vl', 'Mc', 'Ml', 'Mt'].map((key) => [key, numerics.wrcLoads[key]])));
+  }
+  const stresses = localCorrelation.stresses;
+  if (stresses?.stressIntensity?.length === WRC_LOCATIONS.length) {
+    result.body.append(sectionHeading(root, 'Eight-location shell stress trace'));
+    result.body.append(wrcStressTable(root, stresses));
+  }
+  return result.section;
+}
+
+function renderStageA(root, stage) {
+  const result = card(root, 'EMP.1.A load, reference and axis custody');
+  result.section.dataset.role = 'emp1-a-engineering-custody';
+  const execution = retainedResult(stage);
+  if (!execution) {
+    result.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
+      'Run EMP.1.A to retain transformed resultants, target-reference and coordinate-frame evidence.'));
+    return result.section;
+  }
+  const frame = execution.coordinateSystemEvidence ?? {};
+  result.body.append(element(root, 'p', 'lafea-workbench__section-intro',
+    'These vectors are retained calculation evidence. The WRC bounded route consumes the selected load-case target point and the retained eX/eZ basis; this view cannot override them.'));
+  result.body.append(sectionHeading(root, 'Retained coordinate basis'));
+  result.body.append(keyValueTable(root, [
+    ['Coordinate system', frame.identity],
+    ['Origin global', vectorText(frame.originGlobal)],
+    ['eX — pipe/vessel axis', vectorText(frame.axesGlobal?.eX)],
+    ['eY — circumferential axis', vectorText(frame.axesGlobal?.eY)],
+    ['eZ — radial/nozzle axis', vectorText(frame.axesGlobal?.eZ)],
+    ['Handedness', frame.handedness],
+    ['Orthogonality residual', frame.orthogonalityResidual],
+  ]));
+  result.body.append(sectionHeading(root, 'Transferred load cases'));
+  result.body.append(loadCaseTable(root, execution.transformedLoadCases ?? []));
+  result.body.append(sectionHeading(root, 'Pressure disposition'));
+  result.body.append(pressureTable(root, execution.pressureStressResults ?? []));
+  return result.section;
+}
+
+function renderStageB(root, stage, projection) {
+  const result = card(root, 'EMP.1.B geometry, thickness and A→B custody');
+  result.section.dataset.role = 'emp1-b-engineering-custody';
+  const execution = retainedResult(stage);
+  const source = stage?.document?.sourceEvidence;
+  const model = source?.foundationModel;
+  const section = execution?.sectionProperties;
+  const currentness = projection?.custody?.bSourceEvidenceState ?? 'UNRESOLVED';
+  const current = human(currentness);
+  const status = element(root, 'strong', 'lafea-result-highlights__status', `A → B ${current}`);
+  status.dataset.role = 'emp1-b-engineering-currentness';
+  status.dataset.state = currentness;
+  result.body.append(status);
+  result.body.append(element(root, 'p', 'lafea-workbench__section-intro',
+    'B retains its own screening cases and evaluation locations, but OD/thickness and A resultants remain traceable to the exact retained A model/result.'));
+
+  if (!model) {
+    result.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
+      'Load a valid EMP.1.B request to inspect retained A geometry lineage.'));
+    return result.section;
+  }
+  const ro = section?.outerRadius ?? model.pipeGeometry?.outsideDiameter?.value / 2;
+  const t = section?.assessmentPipeThickness ?? model.thicknessBasis?.assessmentPipeThickness?.value;
+  const rm = Number.isFinite(ro) && Number.isFinite(t) ? ro - t / 2 : null;
+  result.body.append(sectionHeading(root, 'Section geometry lineage'));
+  result.body.append(keyValueTable(root, [
+    ['Pipe OD', model.pipeGeometry?.outsideDiameter?.value],
+    ['Assessment thickness T', t],
+    ['Outer radius', ro],
+    ['Inner radius', section?.innerRadius],
+    ['Mean radius Rm = Ro − T/2', rm],
+    ['OD source', section?.sourceReferences?.outsideDiameter ?? model.pipeGeometry?.outsideDiameter?.sourceRef],
+    ['Thickness source', section?.sourceReferences?.assessmentPipeThickness ?? model.thicknessBasis?.assessmentPipeThickness?.sourceRef],
+  ]));
+  result.body.append(sectionHeading(root, 'Retained ancestry'));
+  result.body.append(keyValueTable(root, [
+    ['Foundation model hash', model.semanticHash],
+    ['Foundation result hash', source?.foundationResult?.semanticHashes?.resultPayloadSemanticHash],
+    ['Screening request hash', stage?.document?.semanticHash],
+    ['Screening result hash', execution?.semanticHashes?.screeningResultPayloadSemanticHash],
+  ]));
+  if (execution?.limitations?.length) {
+    const limits = element(root, 'div', 'lafea-workbench__authority');
+    limits.append(element(root, 'strong', null, 'Screening limitations retained'));
+    const list = element(root, 'ul');
+    execution.limitations.forEach((value) => list.append(element(root, 'li', null, human(value))));
+    limits.append(list);
+    result.body.append(limits);
+  }
+  return result.section;
+}
+
+function loadCaseTable(root, rows) {
+  const table = element(root, 'table', 'lafea-result-table');
+  appendHeader(root, table, ['Load case', 'Action', 'Source ref', 'Target ref', ...FORCE_NAMES, ...MOMENT_NAMES]);
+  if (!rows.length) appendEmptyRow(root, table, 10, 'No retained transformed load cases.');
+  rows.forEach((row) => {
+    const tr = element(root, 'tr');
+    const identity = element(root, 'th', null, String(row.identity ?? 'UNRESOLVED'));
+    identity.scope = 'row';
+    tr.append(identity,
+      element(root, 'td', null, human(row.canonicalActionSense ?? row.inputActionSense)),
+      element(root, 'td', null, String(row.sourceReferencePointIdentity ?? '—')),
+      element(root, 'td', null, `${row.targetReferencePointIdentity ?? '—'} @ ${vectorText(row.targetPointGlobal)}`));
+    [...(row.transformedForceLocal ?? []).slice(0, 3), ...(row.transformedMomentLocal ?? []).slice(0, 3)]
+      .forEach((value) => tr.append(element(root, 'td', null, engineeringNumber(value))));
+    table.append(tr);
+  });
+  return table;
+}
+
+function pressureTable(root, rows) {
+  const table = element(root, 'table', 'lafea-result-table');
+  appendHeader(root, table, ['Pressure result', 'Definition', 'Pi', 'Po', 'Δp', 'End condition', 'Axial pressure stress', 'Limitations']);
+  if (!rows.length) appendEmptyRow(root, table, 8, 'No retained pressure result.');
+  rows.forEach((row) => {
+    const tr = element(root, 'tr');
+    const identity = element(root, 'th', null, String(row.identity ?? 'UNRESOLVED'));
+    identity.scope = 'row';
+    const dp = Number.isFinite(row.internalPressure) && Number.isFinite(row.externalPressure)
+      ? row.internalPressure - row.externalPressure : null;
+    tr.append(identity,
+      element(root, 'td', null, String(row.pressureDefinitionIdentity ?? '—')),
+      element(root, 'td', null, engineeringNumber(row.internalPressure)),
+      element(root, 'td', null, engineeringNumber(row.externalPressure)),
+      element(root, 'td', null, engineeringNumber(dp)),
+      element(root, 'td', null, human(row.endCondition)),
+      element(root, 'td', null, engineeringNumber(row.axialPressureStress)),
+      element(root, 'td', null, (row.limitations ?? []).map(human).join('; ') || '—'));
+    table.append(tr);
+  });
+  return table;
+}
+
+function wrcStressTable(root, stresses) {
+  const table = element(root, 'table', 'lafea-result-table');
+  appendHeader(root, table, ['Location', 'σφ', 'σx', 'τ', 'Stress intensity']);
+  WRC_LOCATIONS.forEach((location, index) => {
+    const tr = element(root, 'tr');
+    const identity = element(root, 'th', null, location);
+    identity.scope = 'row';
+    tr.append(identity,
+      element(root, 'td', null, engineeringNumber(stresses.circumferential?.[index])),
+      element(root, 'td', null, engineeringNumber(stresses.longitudinal?.[index])),
+      element(root, 'td', null, engineeringNumber(stresses.shear?.[index])),
+      element(root, 'td', null, engineeringNumber(stresses.stressIntensity?.[index])));
+    table.append(tr);
+  });
+  return table;
+}
+
+function keyValueTable(root, rows) {
+  const table = element(root, 'table', 'lafea-result-table');
+  appendHeader(root, table, ['Engineering datum', 'Retained value']);
+  rows.forEach(([label, value]) => {
+    const tr = element(root, 'tr');
+    const th = element(root, 'th', null, label);
+    th.scope = 'row';
+    tr.append(th, element(root, 'td', null, displayValue(value)));
+    table.append(tr);
+  });
+  return table;
+}
+function appendHeader(root, table, labels) {
+  const tr = element(root, 'tr');
+  labels.forEach((label) => {
+    const th = element(root, 'th', null, label);
+    th.scope = 'col';
+    tr.append(th);
+  });
+  table.append(tr);
+}
+function appendEmptyRow(root, table, span, text) {
+  const tr = element(root, 'tr');
+  const td = element(root, 'td', null, text);
+  td.colSpan = span;
+  tr.append(td);
+  table.append(tr);
+}
+function sectionHeading(root, text) { return element(root, 'h4', null, text); }
+function retainedResult(stage) { return stage?.execution?.result ?? stage?.execution ?? null; }
+function vectorText(value) {
+  return Array.isArray(value) && value.length === 3
+    ? `[${value.map(engineeringNumber).join(', ')}]`
+    : '—';
+}
+function displayValue(value) {
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'number') return engineeringNumber(value);
+  if (value === true) return 'YES';
+  if (value === false) return 'NO';
+  return value == null || value === '' ? '—' : String(value);
+}
+function engineeringNumber(value) {
+  if (!Number.isFinite(value)) return '—';
+  return Number(value.toPrecision(10)).toString();
+}
+function human(value) {
+  return String(value ?? 'UNRESOLVED').replaceAll('_', ' ');
+}

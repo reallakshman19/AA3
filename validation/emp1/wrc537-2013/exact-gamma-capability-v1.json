@@ -1,0 +1,54 @@
+{
+  "schema": "emp1-wrc-cylindrical-exact-gamma-capability/v1",
+  "status": "PASS_BOUNDED_EXACT_TABULATED_GAMMA_SELECTION",
+  "engineeringAuthority": true,
+  "productionAuthority": false,
+  "fullMethodAuthority": false,
+  "source": {
+    "document": "WRC537_2013.pdf",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "curveFitModel": "RATIONAL_5_OVER_6",
+    "independentVariable": "BETA"
+  },
+  "qualifiedDomain": {
+    "shellFamily": "CYLINDRICAL",
+    "gammaSelection": "EXACT_SOURCE_TABULATED_GAMMA_ONLY",
+    "machineRoundOffRelativeTolerance": 1e-12,
+    "originalVsExtrapolated": "EXPLICIT_VARIANT_REQUIRED_NO_FALLBACK",
+    "nonTabulatedGamma": "BLOCKED_NO_INTERPOLATION_AUTHORITY",
+    "blankGammaRows": "UNSELECTABLE",
+    "interpolationUsed": false
+  },
+  "inventory": {
+    "coefficientTables": 28,
+    "qualifiedCurves": 321,
+    "unresolvedCurves": 1,
+    "originalQualifiedCurves": 177,
+    "originalUnresolvedCurves": 1,
+    "extrapolatedQualifiedCurves": 144,
+    "extrapolatedUnresolvedCurves": 0,
+    "sourceQualifiedScalars": 3210,
+    "sourceUnresolvedScalars": 10
+  },
+  "boundedRestriction": {
+    "id": "WRC537-FIG1B-ORIGINAL-GAMMA-BLANK",
+    "affectedFigure": "1B Original",
+    "productionSelectable": false,
+    "inferenceOfGamma10Prohibited": true
+  },
+  "qualificationEvidence": {
+    "sourceParserCardinality": "PASS",
+    "exactGammaSelection": "PASS",
+    "machineRoundOffIdentity": "PASS",
+    "nonTabulatedMidpointFalsifier": "PASS_BLOCKED",
+    "crossVariantFallbackFalsifier": "PASS_BLOCKED",
+    "rationalBetaEvaluation": "PASS_INDEPENDENT_DUPLICATE_ARITHMETIC"
+  },
+  "authorization": {
+    "boundedSelectionAndEvaluationEngineeringUse": true,
+    "boundedProductionComparisonAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "nonTabulatedGammaEngineeringUse": false,
+    "requiredNextGate": "INDEPENDENT_EXACT_GAMMA_NUMERICAL_ORACLE_BEFORE_BOUNDED_PRODUCTION_COMPARISON"
+  }
+}

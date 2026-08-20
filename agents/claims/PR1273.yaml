@@ -1,0 +1,39 @@
+schema: engineering-pr-claims/v1
+work_item: PR1273
+repository: reallaksh19/Advanced_Analysis
+issue: 1261
+pr: 1273
+claims:
+  - id: AUTH-SRC-001
+    state: PRESERVED
+    statement: WRC537_2013.pdf is METHOD_SOURCE and CAUx 2017 pp.24-31 is BENCHMARK_SOURCE; retained extraction is qualification input only and production results never become source authority.
+  - id: IMP-SRC-001
+    state: BLOCKED_TRANSPORT
+    statement: Exact source repository, commit, PDF paths, Git blob SHA-1 identities, and byte counts are pinned, but raw private PDF bytes could not be materialized through the available connector/runner paths; raw SHA-256 values therefore remain null and are not inferred.
+  - id: IMP-SRC-002
+    state: IMPLEMENTED_FAIL_CLOSED_LEDGER
+    statement: Five WRC/runtime arbitration questions are frozen with retained evidence and independent dimensional/numerical falsifiers; direct primary-PDF arbitration remains NOT_RUN and no candidate correction is promoted to WRC authority.
+  - id: IMP-SRC-003
+    state: IMPLEMENTED_STRUCTURE_PASS_0_OF_1200_QUALIFIED
+    statement: The retained 120 response curves are expanded into exactly 1200 named a-through-j scalar slots; each scalar requires a numeric value, published precision, verified primary-source page/table/column, and SHA-256 equal to the one frozen WRC PDF hash before qualification.
+  - id: IMP-SRC-004
+    state: IMPLEMENTED_GATE_EXPECTED_NOT_RUN
+    statement: CAUx pp.24-31 has a fail-closed freeze sequence that prohibits benchmark expected values or independent hand-calculation authority until raw PDF custody and direct page extraction are complete; supplemental Hexagon, retained CEI, and production values cannot substitute.
+  - id: VAL-SRC-001
+    state: PASS
+    statement: Advanced_Analysis head 8eca6ab025285516f37c653089f8b418d8df29bc passed workflow 32286085933 run 16 for retained-source arbitration, 120-curve/1200-scalar transcription, CAUx anti-substitution/freeze ordering, and evidence upload.
+  - id: BLOCK-SRC-001
+    state: OPEN
+    statement: WRC raw PDF SHA-256 is not frozen; exact private raw bytes must first be observed, then the frozen hash must be independently re-observed.
+  - id: BLOCK-SRC-002
+    state: OPEN
+    statement: CAUx raw PDF SHA-256 is not frozen; CAUx PDF pages 24-31 source extraction and benchmark expected-value freeze remain NOT_RUN.
+  - id: BLOCK-SRC-003
+    state: OPEN
+    statement: Direct WRC Eq.6/Eq.12, stress-intensity, load/sign/Mt, recovery orientation, axis transform, and pressure-thrust policy source arbitration remains blocked pending exact primary-source review.
+  - id: BLOCK-SRC-004
+    state: OPEN
+    statement: Zero of 1200 WRC scalar coefficients are source-qualified; EMP.1.C production route remains unregistered and engineering/release authority remains blocked.
+  - id: DEP-SRC-001
+    state: CLOSED_UNMERGED
+    statement: Temporary XML_Compare_Utilities source-evidence PR #1000 was closed without merge after private-repository workflow and binary transport paths could not produce an authorized raw-byte observation; source main was not changed by that PR.

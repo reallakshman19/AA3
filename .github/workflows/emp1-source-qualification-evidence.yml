@@ -1,0 +1,82 @@
+name: EMP.1 retained-source qualification evidence
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  retained-source-qualification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Advanced_Analysis candidate
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Record raw primary-source custody boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$PWD/test-results/emp1-source-qualification"
+          mkdir -p "$out"
+          cat > "$out/raw-primary-source-custody.json" <<'JSON'
+          {
+            "schema": "emp1-primary-source-custody-boundary/v1",
+            "status": "BLOCKED",
+            "code": "BLOCK_PRIVATE_SOURCE_RAW_BYTES_NOT_OBSERVED",
+            "wrc": {
+              "repository": "reallaksh19/XML_Compare_Utilities",
+              "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+              "path": "docs/emp.1/WRC537_2013.pdf",
+              "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+              "expectedByteCount": 1443744,
+              "rawPdfSha256": null
+            },
+            "caux": {
+              "repository": "reallaksh19/XML_Compare_Utilities",
+              "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+              "path": "docs/emp.1/CAUx 2017 - WRC01f.pdf",
+              "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
+              "expectedByteCount": 7260396,
+              "rawPdfSha256": null
+            },
+            "authorityNote": "This workflow does not possess raw bytes from the private source repository. Git blob IDs and byte counts are identity pins only and are not substituted for raw SHA-256 or primary-PDF page verification."
+          }
+          JSON
+          cat "$out/raw-primary-source-custody.json"
+
+      - name: Verify retained-source arbitration remains fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-retained-source-arbitration-check.mjs \
+            | tee test-results/emp1-source-qualification/retained-source-arbitration-check.json
+
+      - name: Prove 120-curve / 1200-scalar transcription contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-coefficient-transcription-self-test.mjs \
+            | tee test-results/emp1-source-qualification/coefficient-transcription-self-test.json
+          node scripts/emp1-wrc-coefficient-transcription-generate.mjs
+
+      - name: Prove CAUx pp24-31 cannot be substituted or observed early
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-caux-pp24-31-extraction-gate-check.mjs \
+            | tee test-results/emp1-source-qualification/caux-pp24-31-extraction-gate-check.json
+
+      - name: Upload retained qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emp1-retained-source-qualification-${{ github.sha }}
+          path: test-results/emp1-source-qualification
+          if-no-files-found: error
+          retention-days: 30

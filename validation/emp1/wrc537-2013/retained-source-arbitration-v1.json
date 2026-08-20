@@ -1,0 +1,248 @@
+{
+  "schema": "emp1-wrc-retained-source-arbitration/v1",
+  "status": "BLOCKED_PRIMARY_PDF_REOBSERVATION",
+  "engineeringAuthority": false,
+  "productionAuthority": false,
+  "primarySource": {
+    "sourceId": "WRC537_2013",
+    "repository": "reallaksh19/XML_Compare_Utilities",
+    "commit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+    "path": "docs/emp.1/WRC537_2013.pdf",
+    "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "expectedByteCount": 1443744,
+    "rawPdfSha256": null,
+    "custodyState": "UNRESOLVED_RAW_BYTES",
+    "reobservationState": "NOT_RUN"
+  },
+  "retainedExtraction": {
+    "repository": "reallaksh19/Advanced_Analysis",
+    "commit": "67317dc9cb47de8897fa7952b86107ab91b1f75c",
+    "methodDefinition": {
+      "path": "docs/01_WRC537_METHOD_DEFINITION.md",
+      "gitBlobSha1": "69e6e83ab82a0287a2a8277b62e7e223f05befe1"
+    },
+    "dataset": {
+      "path": "docs/03_WRC537_DATASET.json",
+      "gitBlobSha1": "0ffdc3f54adc0ff8025c4b3d2629272bab6860b4"
+    },
+    "numericalCurveIndex": {
+      "path": "docs/04_WRC537_NUMERICAL_TABLES.csv",
+      "gitBlobSha1": "a787f9417c3406392bdf052d66fc9f7d1efcf11e"
+    },
+    "authority": "QUALIFICATION_INPUT_ONLY",
+    "caveat": "The retained extraction explicitly states that the licensed WRC PDF was not available to its extractor. Retained locators and equations therefore require arbitration against the pinned PDF before engineering use."
+  },
+  "arbitrations": [
+    {
+      "id": "SP_RADIAL_MEMBRANE_STRESS_DIMENSION_MISMATCH",
+      "status": "BLOCKED_PENDING_PRIMARY_SOURCE",
+      "retainedEvidence": {
+        "coefficientDefinitions": [
+          { "family": "SP_NX", "symbol": "NxT/P", "sourceTables": "SP-1 to SP-10" },
+          { "family": "SP_NY", "symbol": "NyT/P", "sourceTables": "SP-1 to SP-10" }
+        ],
+        "generalStressEquation": {
+          "equationId": "EQ_GENERAL",
+          "expression": "sigma = Ni/T +/- 6Mi/T^2",
+          "retainedLocator": { "section": "2" }
+        },
+        "retainedRadialMembraneEquation": {
+          "equationId": "EQ_RADIAL_MEMBRANE",
+          "human": "sigma_m = (Nphi/P)(P/T)",
+          "machine": "coeff_Nphi * P / T",
+          "retainedLocator": { "section": "3.3.1", "equation": "Eq. 6" }
+        }
+      },
+      "dimensionalProof": {
+        "classification": "INDEPENDENT_DERIVED_NOT_SOURCE_AUTHORITY",
+        "steps": [
+          "Y_N = Nx*T/P is dimensionless",
+          "Nx = Y_N*P/T has dimension force/length",
+          "sigma_m = Nx/T",
+          "therefore sigma_m = Y_N*P/T^2 has dimension force/area"
+        ],
+        "candidateDimensionallyConsistentForm": "coeff_Nphi * P / T^2",
+        "retainedMachineOutputDimension": "force/length",
+        "requiredOutputDimension": "force/area"
+      },
+      "handCalculationProbe": {
+        "sourceClass": "SECONDARY_CEI_EXAMPLE_RETAINED_IN_DATASET",
+        "inputs": { "coefficient": 0.0664, "P_lbf": 5000, "T_in": 2.0 },
+        "dimensionallyConsistentCandidate_psi": 83.0,
+        "retainedMachineNumericValue": 166.0,
+        "retainedMachinePhysicalDimension": "lbf/in (NOT psi)",
+        "ratio_retainedNumeric_to_candidate": 2.0,
+        "unitMetamorphicProbe": {
+          "P_N": 22241.1081,
+          "T_mm": 50.8,
+          "candidate_MPa": 0.572264855942712,
+          "candidate_converted_psi": 83.0000000883153,
+          "conclusion": "The dimensionally consistent candidate is unit-invariant; the retained P/T machine form is not a stress."
+        }
+      },
+      "sourceDecisionRequired": {
+        "document": "WRC537_2013.pdf",
+        "retainedLocatorToVerify": { "section": "3.3.1", "equation": "Eq. 6", "tables": "SP-1 to SP-10" },
+        "question": "Does the pinned source define the curve coefficient as Nx*T/P, Nx/P, or another normalization, and what exact stress-reconstruction equation is printed?",
+        "rule": "Pinned PDF wins. Do not promote the dimensional candidate to WRC authority without direct source verification."
+      }
+    },
+    {
+      "id": "SM_MOMENT_MEMBRANE_STRESS_DIMENSION_MISMATCH",
+      "status": "BLOCKED_PENDING_PRIMARY_SOURCE",
+      "retainedEvidence": {
+        "coefficientDefinitions": [
+          { "family": "SM_NX", "symbol": "NxT*sqrt(RmT)/M", "sourceTables": "SM-1 to SM-10" },
+          { "family": "SM_NY", "symbol": "NyT*sqrt(RmT)/M", "sourceTables": "SM-1 to SM-10" }
+        ],
+        "generalStressEquation": {
+          "equationId": "EQ_GENERAL",
+          "expression": "sigma = Ni/T +/- 6Mi/T^2",
+          "retainedLocator": { "section": "2" }
+        },
+        "retainedMomentMembraneEquation": {
+          "equationId": "EQ_MOMENT_MEMBRANE",
+          "human": "sigma_m = (Nphi*sqrt(RmT)/M)(M/(T*sqrt(RmT)))",
+          "machine": "coeff_Nphi * M / (T * sqrt(Rm * T))",
+          "retainedLocator": { "section": "3.3.2", "equation": "Eq. 12" }
+        }
+      },
+      "dimensionalProof": {
+        "classification": "INDEPENDENT_DERIVED_NOT_SOURCE_AUTHORITY",
+        "steps": [
+          "Y_NM = Nx*T*sqrt(Rm*T)/M is dimensionless",
+          "Nx = Y_NM*M/(T*sqrt(Rm*T)) has dimension force/length",
+          "sigma_m = Nx/T",
+          "therefore sigma_m = Y_NM*M/(T^2*sqrt(Rm*T)) has dimension force/area"
+        ],
+        "candidateDimensionallyConsistentForm": "coeff_Nphi * M / (T^2 * sqrt(Rm*T))",
+        "retainedMachineOutputDimension": "force/length",
+        "requiredOutputDimension": "force/area"
+      },
+      "handCalculationProbe": {
+        "sourceClass": "SECONDARY_CEI_EXAMPLE_RETAINED_IN_DATASET",
+        "inputs": { "coefficient": 0.0419, "M_lbf_in": 10000, "T_in": 2.0, "Rm_in": 51.0 },
+        "dimensionallyConsistentCandidate_psi": 10.371795512680665,
+        "retainedMachineNumericValue": 20.74359102536133,
+        "retainedMachinePhysicalDimension": "lbf/in (NOT psi)",
+        "ratio_retainedNumeric_to_candidate": 2.0
+      },
+      "sourceDecisionRequired": {
+        "document": "WRC537_2013.pdf",
+        "retainedLocatorToVerify": { "section": "3.3.2", "equation": "Eq. 12", "tables": "SM-1 to SM-10" },
+        "question": "Does the pinned source define the moment membrane curve as Nx*T*sqrt(Rm*T)/M, Nx*sqrt(Rm*T)/M, or another normalization, and what exact stress-reconstruction equation is printed?",
+        "rule": "Pinned PDF wins. Do not promote the dimensional candidate to WRC authority without direct source verification."
+      }
+    },
+    {
+      "id": "STRESS_INTENSITY_OUTPUT_DIMENSION_MISMATCH",
+      "status": "BLOCKED_PENDING_PRIMARY_SOURCE",
+      "retainedEvidence": {
+        "nomenclature": {
+          "symbol": "S",
+          "meaning": "stress intensity = twice maximum shear stress",
+          "dimension": "stress",
+          "retainedLocator": { "section": "4.1 Nomenclature" }
+        },
+        "retainedEquation": {
+          "equationId": "EQ_STRESS_INTENSITY",
+          "machine": "sqrt(0.5*((sigx+sigy)+sqrt((sigx-sigy)^2+4*tau^2)))",
+          "retainedLocator": { "section": "Table 3/5" }
+        }
+      },
+      "dimensionalProof": {
+        "classification": "INDEPENDENT_DERIVED_NOT_SOURCE_AUTHORITY",
+        "innerRadicalDimension": "stress",
+        "outerArgumentDimension": "stress",
+        "outerSqrtOutputDimension": "sqrt(stress)",
+        "requiredOutputDimension": "stress",
+        "conclusion": "The retained machine transcription cannot be consumed as a stress-intensity result."
+      },
+      "handCalculationProbe": {
+        "inputs_MPa": { "sigmaX": 100, "sigmaY": 50, "tauXY": 0 },
+        "retainedOuterSqrtTerm": 10.0,
+        "retainedOuterSqrtTermDimension": "sqrt(MPa)",
+        "planeStressPrincipalValues_MPa": [100, 50, 0],
+        "twiceMaximumShearStress_MPa": 100,
+        "authorityNote": "The principal/Tresca values are an independent mechanics check, not a replacement WRC transcription."
+      },
+      "sourceDecisionRequired": {
+        "document": "WRC537_2013.pdf",
+        "retainedLocatorToVerify": { "section": "Table 3/5" },
+        "question": "What exact principal-stress and stress-intensity equations are printed, including parentheses, signs, and whether any square-root is outside the principal-stress expression?",
+        "rule": "No substitute stress-intensity equation is authorized until the pinned source is directly verified."
+      }
+    },
+    {
+      "id": "LAFEA_TO_WRC_AXIS_AND_SIGN_ARBITRATION",
+      "status": "BLOCKED_PENDING_PRIMARY_SOURCE_AND_FRAME_CONTRACT",
+      "retainedWrcEvidence": {
+        "loads": [
+          { "symbol": "P", "positive": "inward toward vessel", "locator": "3.3.1" },
+          { "symbol": "V1", "positive": "B to A", "locator": "3.3.4" },
+          { "symbol": "V2", "positive": "D to C", "locator": "3.3.4" },
+          { "symbol": "M1", "positive": "D to C", "locator": "3.3.2" },
+          { "symbol": "M2", "positive": "B to A", "locator": "3.3.2" },
+          { "symbol": "Mt", "positive": "UNRESOLVED", "locator": "3.3.3" }
+        ],
+        "retainedTentativeMapping": "FZ->P, FX->V1, FY->V2, MX->M1, MY->M2, MZ->Mt",
+        "retainedMappingAuthority": "TENTATIVE_UNRESOLVED"
+      },
+      "lafEaProductionEvidence": {
+        "coordinateSource": "src/core/local-stress/coordinates.js",
+        "frameRule": "eX = axialDirection; eZ = projected radialHint orthogonal to eX; eY = eZ x eX",
+        "screeningSource": "src/core/local-attachment-screening/mechanics.js",
+        "screeningRule": "sigma axial uses Fx/A and torsion uses Mx*r/J",
+        "conflict": "A static FZ->WRC-P permutation cannot be assumed. In the canonical pipe frame FZ is orthogonal to pipe/nozzle axial eX, while a radial nozzle's WRC radial attachment load is along the attachment/shell-normal axis."
+      },
+      "requiredResolution": {
+        "rule": "Transform the six-component canonical load vector from a source-qualified attachment frame into WRC axes; do not rename FX/FY/FZ fields by fixed permutation.",
+        "mustDefine": [
+          "attachment/shell-normal unit vector",
+          "WRC 1-1 and 2-2 tangent axes",
+          "right-handed orientation",
+          "positive P/V1/V2/M1/M2/Mt signs",
+          "load reference point at attachment-shell juncture",
+          "moment translation before axis transformation"
+        ]
+      }
+    },
+    {
+      "id": "PRESSURE_THRUST_LOAD_ASSEMBLY_CUSTODY",
+      "status": "BLOCKED_PENDING_ENGINEERING_POLICY_AND_SOURCE_CHECK",
+      "retainedWrcEvidence": {
+        "pressureStressTreatment": "EXCLUDED",
+        "retainedLocator": "3.3.5 / 4.3.6",
+        "statement": "WRC external-load shell-stress method does not supply internal-pressure stress equations."
+      },
+      "softwareBoundary": {
+        "issue": "Pressure stress exclusion does not by itself answer whether a piping/nozzle load set already contains pressure thrust. Omitting required thrust or adding it twice can dominate WRC P.",
+        "requiredModes": [
+          "SOURCE_LOAD_ALREADY_INCLUDES_THRUST",
+          "ADD_PRESSURE_THRUST_FROM_QUALIFIED_NOZZLE_INTERNAL_AREA",
+          "NOT_APPLICABLE"
+        ],
+        "unresolvedBehavior": "BLOCK",
+        "doubleCountGuardRequired": true
+      },
+      "supplementalNumericalSanity": {
+        "authority": "NON_CAUX_NON_WRC_SUPPLEMENTAL_ONLY",
+        "pressure_psi": 275,
+        "nozzleInsideDiameter_in": 12,
+        "pressureArea_in2": 113.09733552923255,
+        "pressureThrust_lbf": 31101.76727053895,
+        "restraintAxialForce_lbf": -26,
+        "combinedRadialLoad_lbf": -31127.76727053895,
+        "displayRounded_lbf": -31128
+      }
+    }
+  ],
+  "authorization": {
+    "methodFormulaAuthority": "BLOCKED",
+    "signAndAxisAuthority": "BLOCKED",
+    "pressureThrustAuthority": "BLOCKED",
+    "stressIntensityAuthority": "BLOCKED",
+    "coefficientAuthority": "BLOCKED",
+    "emp1CRouteRegistrationAllowed": false
+  }
+}

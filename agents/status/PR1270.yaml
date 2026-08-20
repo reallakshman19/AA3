@@ -1,38 +1,43 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1270
-mission: LAFEA.3 governed local-refinement UX and transition evidence
+mission: LAFEA.3 governed source-mapped local refinement and transition evidence
 workstream: LAFEA3_LOCAL_REFINEMENT_UI
 branch: agent/lafea3-local-refinement-ui-20260819
-pr_head: 12d5e61a237a7418544b1351c96be3a6f01b9741
-main_head_last_checked: cf3aaeefb028ee387d3d530f5e0e5106bd489dce
-work_intent: IMPLEMENT
+pr_head: 19e86363014e2a6ac0d75b45cd16a404cdbd3891
+qualified_product_head: beaccbcac2dd553e7ac9778675d8bcae1ed84115
+main_head_last_checked: d24a5a1ecb5dc555cd11a29429b02106f5cbfe9b
+work_intent: IMPLEMENT_AND_MERGE
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 auto_state: RUNNING
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
-merge_authority: OWNER_ONLY
+merge_authority: OWNER_GRANTED_2026_08_20
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1270_workreport.md
-report_basis_head: ed6fb1458cd7d34013151c1550920b682eeeb056
-appendix_a_status: NOT_REQUIRED_NEW_OWNER_ASSIGNED_WORK
-grounding_epoch: GE-003
-current_stage: PR2_RECONCILIATION_AND_AUTO_PROGRESSION
-blocker: exact-head Node/Chromium execution unavailable; runtime validation remains NOT_RUN
-highest_risk: exact-head execution may show current retained-refinement generator cannot meet bound adjacency at deepest qualified target; threshold must not be weakened
-coordination_state: COORDINATION_REQUIRED_BOUNDED_SAFE
+report_basis_head: beaccbcac2dd553e7ac9778675d8bcae1ed84115
+appendix_a_status: READY
+grounding_epoch: GE-004
+current_stage: FINAL_MAIN_RECONCILIATION_AND_MERGE
+blocker: final exact-head reconciliation run required; full workflow is expected to retain inherited downstream B02D T3/L1 failure only
+highest_risk: main reconciliation changes LAFEA.3 behavior or final exact-head metrics; do not merge if PR-specific gates regress
+coordination_state: RECONCILIATION_REQUIRED
 validation_state:
-  existing_refinement_route_source_audit: PASS_SOURCE_INSPECTION
-  transition_and_adjacency_implementation: IMPLEMENTED
-  generic_v2_quality_identity_preserved: PASS_SOURCE_INSPECTION
-  retained_refiner_restored_exact_blob: PASS_SOURCE_INSPECTION
-  focused_regression: AUTHORED_NOT_RUN
-  existing_refinement_regression: NOT_RUN
-  chromium: NOT_RUN
-  remote_ci: NOT_RUN
-  merge: NOT_AUTHORIZED
-exact_next_action: source-reconcile PR1270 workflow state then continue automatically to dependent LAFEA.3 convergence workspace
-last_updated: 2026-08-19T20:18:00+04:00
+  transition_and_adjacency_implementation: PASS
+  mapped_product_envelope_48_cases: PASS
+  mapped_product_worst_adjacency: 1.3282147318170396
+  mapped_product_min_scaled_jacobian: 0.23728455020922165
+  unchanged_adjacent_ratio_max: 1.5
+  unchanged_scaled_jacobian_block: 0.2
+  retained_refinement_replay_custody: PASS
+  refined_nodes_elements: 247_108
+  production_bundle: PASS_1177384_BYTES
+  chromium_emp1_and_four_playwright_journeys: PASS
+  downstream_b02d: FAIL_INHERITED_T3_L1_BLOCK_NE_PASS
+  final_reconciled_exact_head: PENDING
+  merge: AUTHORIZED_PENDING_FINAL_GATE
+exact_next_action: reconcile with main d24a5a1ecb5dc555cd11a29429b02106f5cbfe9b, rerun exact-head gates, then squash-merge with expected head SHA
+last_updated: 2026-08-20T15:25:00+04:00

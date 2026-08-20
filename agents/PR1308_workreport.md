@@ -7,9 +7,11 @@
 - `PR: #1308`
 - `BRANCH: agent/emp1-06-longitudinal-curve-selection-20260821`
 - `BASE_MAIN: 564b67a478dd660fbf39e780f289f4739c0e7261`
+- `VALIDATED_HEAD_BEFORE_REPORT_REFRESH: 67c33f9d72188b4eb0392f917cf4f7461f29ccf2`
 - `MERGE_AUTHORITY: NOT_GRANTED_FOR_PR1308`
 - `GAMMA5_PRODUCTION_ROUTE_AUTHORIZED: false`
 - `GLOBAL_EMP1_C_ROUTE_REGISTERED: false`
+- `QUALIFICATION_STATE: PASS_READY_FOR_OWNER_MERGE_DECISION`
 
 ## Finding
 
@@ -31,13 +33,23 @@ No WRC coefficient, curve-fit polynomial, Table-5 dimensional stress equation, p
 
 ## Validation
 
-- Local connector execution: `NOT_RUN`.
-- PR workflows: `PENDING` at report creation.
-- Required checks: longitudinal-moment selector falsifiers, gamma5 fail-closed authority, independent Table-5 oracle, zero-dp load producer, public-product truth.
+Exact PR head `67c33f9d72188b4eb0392f917cf4f7461f29ccf2`:
+
+- `EMP.1 current-main independent baseline` — **PASS**, run `32420544101`.
+- `EMP.1 runEmp1 bounded gamma5 orchestration` — **PASS**, run `32420544102`.
+- `EMP.1 gamma5 bounded route on current main` — **PASS**, run `32420544099`.
+  - independent frozen Table-5 oracle retained;
+  - new longitudinal-moment curve selector falsifiers PASS;
+  - zero-dp load producer PASS;
+  - gamma5 production authority remains fail closed;
+  - public EMP.1 projection remains blocked for production C.
+- Local connector execution: `NOT_RUN`; no local PASS is claimed.
+
+The final report refresh is documentation-only.
 
 ## Exact next action
 
-Qualify PR #1308. Do not merge without explicit owner authorization for this PR. After this item, continue with WRC physical-geometry custody (`r0` outside radius / shell applicability limits) while the production C route remains fail closed.
+PR #1308 is qualified and ready for owner merge decision. Do not merge without explicit owner authorization for this PR. After merge, continue with WRC physical-geometry custody (`r0` outside radius / shell applicability limits) while the production C route remains fail closed.
 
 ## Appendix A
 

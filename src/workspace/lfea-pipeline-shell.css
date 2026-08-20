@@ -514,9 +514,20 @@
   display: none;
 }
 
+/* StagedJSON converts into InputXML and has no review of its own, so its
+   panel belongs to Input only. The ACCDB panel is not like that: it owns its
+   model's whole verdict -- capabilities, findings, and the acceptance that
+   releases the analysis -- so hiding it here sent an engineer to the one step
+   that hid what it told them to look at. It stays, and shows its review half
+   instead. */
 [data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
-  [data-role="lfea-pipeline-stagedjson-input-panel"],
+  [data-role="lfea-pipeline-stagedjson-input-panel"] {
+  display: none;
+}
+
+[data-host-group="SOURCE"][data-active-step="INPUT"]
+  [data-role="lfea-pipeline-accdb-review-view"],
 [data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
-  [data-role="lfea-pipeline-accdb-input-panel"] {
+  [data-role="lfea-pipeline-accdb-source-view"] {
   display: none;
 }

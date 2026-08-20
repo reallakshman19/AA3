@@ -118,6 +118,20 @@ test.describe('LFEA ACCDB real-model import', () => {
     await expect(firstFinding).toContainText(/[a-z]{4,} [a-z]{3,}/u);
     await expect(firstFinding).toContainText('×');
 
+    // Input and Error check ask different questions of the same import, and
+    // each shows only its own half. Error check previously hid the ACCDB panel
+    // outright, so the step the stepper sent an engineer to was the one step
+    // that hid the findings and the accept button it named.
+    const panel = page.locator('[data-role="lfea-pipeline-accdb-input-panel"]');
+    await expect(panel.locator('[data-role="lfea-pipeline-accdb-source-view"]')).toBeVisible();
+    await expect(panel.locator('[data-role="lfea-pipeline-accdb-review-view"]')).toBeHidden();
+
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('[data-role="lfea-pipeline-accdb-review-view"]')).toBeVisible();
+    await expect(panel.locator('[data-role="lfea-pipeline-accdb-source-view"]')).toBeHidden();
+    expect(await panel.locator('[data-role="lfea-pipeline-accdb-finding-section"]').count()).toBeGreaterThan(0);
+
     // A conditional model needs an engineer's acceptance before it can run,
     // and the panel offers that rather than leaving Load case disabled with
     // no visible way forward.

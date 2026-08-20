@@ -491,8 +491,29 @@ function createAccdbInputPanelSection(doc) {
   return { section, importButton, fileInput, clearButton, profileSelect, status, error, summaryRoot };
 }
 
+/**
+ * The panel renders two halves, because Input and Error check ask different
+ * questions of the same import.
+ *
+ * Input is the file and what was read out of it -- counts, units, and the
+ * per-element values an engineer may override. Error check is the review of
+ * what those mean: the capabilities, the findings, and the acceptance that
+ * lets the analysis proceed. The shell stamps the active step on the SOURCE
+ * host and the stylesheet shows one half at a time.
+ *
+ * Both halves live under this one panel deliberately. Before this, Error
+ * check hid the ACCDB panel outright -- a rule from when the panel only
+ * imported and InputXML owned the review -- so the step the stepper sent an
+ * engineer to was the one step that hid the findings and the accept button it
+ * was telling them to use.
+ */
 function renderAccdbSourceSummary(doc, root, controller) {
   root.replaceChildren();
+  const sourceView = doc.createElement('div');
+  sourceView.dataset.role = 'lfea-pipeline-accdb-source-view';
+  const reviewView = doc.createElement('div');
+  reviewView.dataset.role = 'lfea-pipeline-accdb-review-view';
+  root.append(sourceView, reviewView);
 
   const disclosure = doc.createElement('p');
   disclosure.dataset.role = 'accdb-identity-disclosure';
@@ -502,12 +523,18 @@ function renderAccdbSourceSummary(doc, root, controller) {
     'only to satisfy the shared model-health contract InputXML and StagedJSON already use.',
     'Node/element geometry itself is read directly from the ACCDB tables, not fabricated.',
   ].join(' ');
-  root.append(disclosure);
+  sourceView.append(disclosure);
 
   if (!controller.sourceBundle) {
     const empty = doc.createElement('p');
     empty.textContent = 'No ACCDB source is loaded.';
-    root.append(empty);
+    sourceView.append(empty);
+    // Error check has nothing to review until a file is read, and says so
+    // there rather than looking empty for no stated reason.
+    const noReview = doc.createElement('p');
+    noReview.dataset.role = 'lfea-pipeline-accdb-review-empty';
+    noReview.textContent = 'No ACCDB source is loaded, so there is nothing to check yet. Import one on the Input step.';
+    reviewView.append(noReview);
     return;
   }
 
@@ -530,26 +557,23 @@ function renderAccdbSourceSummary(doc, root, controller) {
     tr.append(th, td);
     table.append(tr);
   }
-  root.append(table);
+  sourceView.append(table);
 
   if (controller.healthView) {
-    renderCapabilities(doc, root, controller);
-    renderPreFlight(doc, root, controller);
-    renderFindingGroups(doc, root, controller);
+    renderCapabilities(doc, reviewView, controller);
+    renderPreFlight(doc, reviewView, controller);
+    renderFindingGroups(doc, reviewView, controller);
   }
 
   if (controller.engineeringSanity) {
     const sanityHeading = doc.createElement('strong');
     sanityHeading.textContent = `Engineering sanity findings — ${controller.engineeringSanity.summary.findingCount}`;
-    root.append(sanityHeading);
+    reviewView.append(sanityHeading);
   }
 
-  renderOverrideSection(doc, root, controller);
-
-  const execution = doc.createElement('p');
-  execution.dataset.role = 'lfea-pipeline-accdb-execution-boundary';
-  execution.textContent = 'Execution custody: NOT CONNECTED. This ACCDB source panel reports geometry/model-health representability only; it does not seal a pre-FEA authorization or run a solve.';
-  root.append(execution);
+  // The property table is about the file's own values, so it belongs with the
+  // file on the Input step.
+  renderOverrideSection(doc, sourceView, controller);
 }
 
 function renderCapabilities(doc, root, controller) {

@@ -50,6 +50,7 @@ jobs:
       - name: Bind capability record to live source observation
         shell: bash
         run: |
+          set -euo pipefail
           node --input-type=module <<'NODE'
           import { readFile } from 'node:fs/promises';
           import { parseCylindricalExactGammaPackage } from './scripts/emp1-wrc-cylindrical-exact-gamma-lib.mjs';
@@ -81,8 +82,10 @@ jobs:
       - name: Build independent full Table 5 gamma5 oracle candidate
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p test-results/emp1-exact-gamma
-          node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs | tee test-results/emp1-exact-gamma/gamma5-full-table5-oracle.json
+          node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs > test-results/emp1-exact-gamma/gamma5-full-table5-oracle.json
+          cat test-results/emp1-exact-gamma/gamma5-full-table5-oracle.json
       - name: Compare production curve evaluator to frozen independent oracle
         run: node scripts/emp1-wrc-exact-gamma-production-comparison.mjs
       - name: Compare production Table 5 stress kernel to qualified CAUx benchmark
@@ -90,9 +93,17 @@ jobs:
       - name: Compare bounded production adapter to frozen full Table 5 oracle
         run: node scripts/emp1-wrc-gamma5-bounded-adapter-comparison.mjs
       - name: Re-observe zero-differential-pressure WRC load producer
-        run: node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs | tee test-results/emp1-exact-gamma/zero-dp-load-producer-qualification.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs > test-results/emp1-exact-gamma/zero-dp-load-producer-qualification.json
+          cat test-results/emp1-exact-gamma/zero-dp-load-producer-qualification.json
       - name: Qualify end-to-end gamma5 zero-dp route candidate
-        run: node scripts/emp1-wrc-gamma5-zero-dp-route-qualification.mjs | tee test-results/emp1-exact-gamma/gamma5-zero-dp-route-qualification.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-wrc-gamma5-zero-dp-route-qualification.mjs > test-results/emp1-exact-gamma/gamma5-zero-dp-route-qualification.json
+          cat test-results/emp1-exact-gamma/gamma5-zero-dp-route-qualification.json
       - name: Prove bounded method scope is enforced by orchestration gate
         run: node scripts/emp1-local-correlation-bounded-scope-self-test.mjs
       - name: Preserve existing EMP.1 core scaffold behavior

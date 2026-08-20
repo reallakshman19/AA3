@@ -42,13 +42,15 @@
     "machineRoundOffIdentity": "PASS",
     "nonTabulatedMidpointFalsifier": "PASS_BLOCKED",
     "crossVariantFallbackFalsifier": "PASS_BLOCKED",
-    "rationalBetaEvaluation": "PASS_INDEPENDENT_DUPLICATE_ARITHMETIC"
+    "rationalBetaEvaluation": "PASS_INDEPENDENT_DUPLICATE_ARITHMETIC",
+    "independentExactGammaOracle": "PASS_REOBSERVED",
+    "independentExactGammaOracleHash": "809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e"
   },
   "authorization": {
     "boundedSelectionAndEvaluationEngineeringUse": true,
-    "boundedProductionComparisonAllowed": false,
+    "boundedProductionComparisonAllowed": true,
     "globalEmp1CRouteRegistrationAllowed": false,
     "nonTabulatedGammaEngineeringUse": false,
-    "requiredNextGate": "INDEPENDENT_EXACT_GAMMA_NUMERICAL_ORACLE_BEFORE_BOUNDED_PRODUCTION_COMPARISON"
+    "requiredNextGate": "BOUNDED_CORE_PRODUCTION_EVALUATOR_COMPARISON"
   }
 }

@@ -2,17 +2,18 @@
 
 ## Recovery header
 
-- `HANDOVER_READINESS: READY_PENDING_EXACT_HEAD_CI`
+- `HANDOVER_READINESS: READY`
 - `PR_RECOVERY_STATE: RECOVERABLE`
 - `ISSUE: #1261`
 - `PR: #1301`
 - `BRANCH: agent/emp1-03-runemp1-orchestration-issue1261`
 - `BASE_MAIN: ddfad5cd12cdbf271509031817ad9590704620c3`
+- `VALIDATED_CODE_HEAD_BEFORE_HANDOVER_REFRESH: 24aadc58a7cf99b022419833e07c76aa1f07429f`
 - `PR_STATE: DRAFT_UNMERGED`
 - `MERGE_AUTHORITY: NOT_GRANTED_FOR_PR1301`
 - `GLOBAL_EMP1_C_ROUTE_REGISTERED: false`
 - `RELEASE_QUALIFIED: false`
-- `CURRENT_STAGE: RUNEMP1_GAMMA5_ORCHESTRATION_IMPLEMENTED_CI_PENDING`
+- `CURRENT_STAGE: RUNEMP1_GAMMA5_ORCHESTRATION_QUALIFIED`
 
 ## Purpose
 
@@ -116,17 +117,33 @@ New workflow `.github/workflows/emp1-03-runemp1-orchestration.yml` runs:
 
 ## Validation state
 
-At creation of this report:
+Validated code head `24aadc58a7cf99b022419833e07c76aa1f07429f`:
 
 - PR #1301 opened as draft: PASS
-- branch divergence from `main`: 0 behind before report commit
-- pre-PR changed-file audit: PASS, six intended paths only
-- exact-head GitHub Actions after this report commit: `NOT_RUN/PENDING`
+- branch divergence from `main`: 0 behind at validation
+- pre-PR changed-file audit: PASS, intended orchestration/CI paths only
+- workflow `EMP.1 runEmp1 bounded gamma5 orchestration` run `32386076028`: PASS
+  - EMP1-03 strict scope guard: PASS
+  - independent gamma=5 full Table-5 hand calculation: PASS
+  - bounded gamma=5 route re-observation: PASS
+  - real `runEmp1()` orchestration/currentness qualification: PASS
+  - EMP.1 core scaffold compatibility: PASS
+- workflow `EMP.1 gamma5 bounded route on current main` run `32386076198`: PASS
+  - inherited EMP1-02 scope guard correctly skipped on successor branch
+  - independent gamma=5 oracle: PASS
+  - zero-dp load producer: PASS
+  - authorized bounded route/falsifiers: PASS
+  - bounded registry/global-route-absence proof: PASS
+- workflow `EMP.1 current-main independent baseline` run `32386076303`: PASS
+  - inherited EMP1-01 scope guard correctly skipped on successor branch
+  - independent gamma=15 baseline re-observation: PASS
 - browser/Chromium: `NOT_RUN` — no UI/workspace change
 - full repository regression: `NOT_RUN`
 - gamma=15 production comparison: `NOT_RUN` — deliberately outside scope
 - pressure-thrust qualification: `BLOCKED/NOT_RUN`
 - Appendix-B Kn/Kb qualification: `BLOCKED/NOT_RUN`
+
+This commit only refreshes the handover record after the validated code head; it does not modify production or qualification logic.
 
 ## Abandon/redesign conditions
 

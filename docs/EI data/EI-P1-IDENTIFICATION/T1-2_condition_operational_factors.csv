@@ -1,0 +1,5 @@
+factor_id,contributory_factor,high_condition,high_score,medium_condition,medium_score,low_condition,low_score,guidance_ref
+A,Build Quality,"Below industry standards (poor fit-up, unsupported spans, excessive gap, misalignment)",3,Average construction quality with minor non-conformances,1,High quality engineering construction with 100% verified support,0,Table T1-4 / Item A
+B,Corrosion / Maintenance Management,"Poor corrosion management, active external pitting, loose/fretting clamps, degraded supports",3,Standard maintenance regime with minor paint breakdown,1,"Excellent corrosion protection, positive clamp tightness, active monitoring",0,Table T1-4 / Item B
+C,Cyclical Loading,"Repeating batch process, regular flow/pressure cycling > 1000 cycles/year",2,Occasional process swings / cyclic batching (100 to 1000 cycles/year),1,Steady state continuous operation with no cyclic swings,0,Table T1-4 / Item C
+D,Process Upsets / Transients,9 or more planned or unplanned shutdowns/trips/upsets per average year,3,3 to 8 process upsets/trips per year,1,Fewer than 3 process interruptions per year,0,Table T1-4 / Item D

@@ -23,7 +23,7 @@ const retainedCurveRows = retainedCsv.trim().split(/\r?\n/u).slice(1).filter(Boo
 const pdfTextPath = readArg('--pdf-text');
 let crossCheck = null;
 if (pdfTextPath) {
-  const pdfText = await readFile(resolve(pdfTextPath), 'utf8');
+  const pdfText = scopeSphericalHollowCoefficientText(await readFile(resolve(pdfTextPath), 'utf8'));
   const pdfTables = parsePrimaryWrcCoefficientTablesFromPdfText(pdfText);
   crossCheck = comparePrimaryWrcCoefficientExtractions(tables, pdfTables);
   if (crossCheck.status !== 'PASS') {
@@ -36,7 +36,7 @@ if (pdfTextPath) {
 }
 
 const report = {
-  schema: 'emp1-pr1286-wrc-source-table-audit/v2',
+  schema: 'emp1-pr1286-wrc-source-table-audit/v3',
   status: crossCheck?.status === 'PASS' ? 'PASS_SOURCE_AND_PDF_TEXT' : 'PASS_SOURCE_EXTRACTION_ONLY',
   source: {
     pdfBlobSha1: WRC_PRIMARY_PDF_BLOB_SHA1,
@@ -67,6 +67,15 @@ const report = {
 };
 
 console.log(JSON.stringify(report, null, 2));
+
+function scopeSphericalHollowCoefficientText(text) {
+  const source = String(text ?? '').replace(/\r/gu, '');
+  const start = source.indexOf('Curve Fit Coefficients for Figure SP-1');
+  if (start < 0) throw new TypeError('EMP1_WRC_PDF_TEXT_SP1_BOUNDARY_MISSING');
+  const afterSm10 = source.indexOf('Curve Fit Coefficients for Figure 1A', start);
+  if (afterSm10 < 0) throw new TypeError('EMP1_WRC_PDF_TEXT_CYLINDRICAL_BOUNDARY_MISSING');
+  return source.slice(start, afterSm10);
+}
 
 function readArg(name) {
   const index = process.argv.indexOf(name);

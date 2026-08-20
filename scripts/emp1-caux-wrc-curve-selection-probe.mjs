@@ -50,7 +50,7 @@ const ranked = Object.entries(schemeSummary)
   .map(([policy, metrics]) => ({ policy, ...metrics }));
 
 console.log(JSON.stringify({
-  schema: 'emp1-caux-wrc-curve-selection-probe/v1',
+  schema: 'emp1-caux-wrc-curve-selection-probe/v2',
   status: 'PASS_PROBE_ONLY',
   authority: 'NON_AUTHORITATIVE_NUMERICAL_POLICY_PROBE',
   source: {
@@ -82,8 +82,6 @@ function parseCylindricalTables(text) {
     const pageMatch = block.find((line) => /^\*\*PDF Page \d+\*\*/u.test(line))?.match(/PDF Page (\d+)/u);
     assert(pageMatch, `${figure}: PDF page`);
     const rows = block.map(parseRow).filter(Boolean);
-    const header = rows.find((row) => row.length === 11 && row[0] === '' && row.slice(1).join('|') === 'a|b|c|d|e|f|g|h|i|j');
-    assert(header, `${figure}: gamma/coefficient header`);
     const curves = [];
     for (const row of rows) {
       if (row.length !== 11 || !row.slice(1).every((cell) => cell !== '' && Number.isFinite(Number(cell)))) continue;

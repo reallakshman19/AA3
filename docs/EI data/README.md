@@ -18,7 +18,7 @@ Git blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
 | Document / Folder | Mechanism / Scope | EI Reference | Priority | Current authority note |
 | :--- | :--- | :--- | :---: | :--- |
 | [`EI-P0-FIT/`](./EI-P0-FIT/) | Flow Induced Turbulence (FIT) | Module T2.2 | **P0** | T2-1 span boundaries and T2-2 correlation coefficients are verified for the qualified bounded FIT method. `T2-2_source_reference.yaml` marks verified vs quarantined sections explicitly. |
-| [`EI-P0-AIV/`](./EI-P0-AIV/) | Acoustic Induced Vibration (AIV) | Module T2.7 | **P0** | **Partial source reconciliation.** T2-5 D.2.3 path and selected T2-6 equations are verified; A/S/B, general material treatment and other branches remain blocked. |
+| [`EI-P0-AIV/`](./EI-P0-AIV/) | Acoustic Induced Vibration (AIV) | Module T2.7 | **P0** | **Source-corroborated qualification evidence.** T2-5/T2-6 equations now reproduce D.2.3 and source branch logic is recorded. Exact pinned-PDF visual parity, multi-source benchmark, governed inventory/scope, downstream implementation parity and release qualification remain separate gates; no production authority is granted here. |
 | [`P0_SBC_Master_Data.md`](./P0_SBC_Master_Data.md) | Small Bore Connections (SBC) | Module T3 | **P0** | Existing digitized tables/curves; retain package-specific source review before production promotion. |
 | [`EI-P1-IDENTIFICATION/`](./EI-P1-IDENTIFICATION/) | Qualitative Assessment / mechanism identification | TM-01, Ch. 3 | **P1** | **QUARANTINED_NOT_ENGINEERING_AUTHORITY.** PR1288 introduced synthetic scoring/multiplier logic. See `AUTHORITY_STATUS.yaml`. |
 | [`P1_Valve_Transient_and_Cavitation.md`](./P1_Valve_Transient_and_Cavitation.md) | Valve Transient & Cavitation/Flashing | T2.8, T2.9 | **P1** | Reference candidate only until its numerical/flowchart content is directly source-reconciled. Do not treat local flowchart renaming as an EI identifier. |
@@ -39,11 +39,11 @@ Git blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
    - Derived files may be consumed only for the engineering use explicitly allowed by their authority status.
 
 2. **No inferred authority**
-   - Do not invent or interpolate missing EI equations, thresholds, score mappings, material modifiers, connection modifiers, result dispositions, or flowchart identifiers.
+   - Do not invent or interpolate missing EI equations, thresholds, score mappings, material classifications, connection modifiers, result dispositions, or flowchart identifiers.
    - A worked-example value may qualify a bounded benchmark path; it does not establish a general method by itself.
 
 3. **Fail closed on unresolved source semantics**
-   - `UNRESOLVED`, `QUARANTINED`, `REFERENCE`, `WORKED_EXAMPLE_ANCHOR_ONLY`, or similar states are not production authority.
+   - `UNRESOLVED`, `QUARANTINED`, `REFERENCE`, `QUALIFICATION_EVIDENCE_ONLY`, `WORKED_EXAMPLE_ANCHOR_ONLY`, or similar states are not production authority.
    - Missing or unresolved method data must surface as a blocker rather than being replaced by an arbitrary LOF or hidden default.
 
 4. **Deterministic digitized data**
@@ -52,3 +52,8 @@ Git blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
 
 5. **Traceability**
    - Every promoted master must retain source document identity, locator, transcription/reconciliation state and validation evidence.
+
+6. **AIV qualification boundary**
+   - Source equation corroboration and D.2.3 numerical reproduction are qualification evidence, not screening authority.
+   - Exact pinned-PDF visual parity is currently `NOT_RUN / TRANSPORT_BLOCKED`.
+   - Production AIV still requires governed simultaneous-source scope, discontinuity-inventory completeness, downstream implementation parity and release qualification.

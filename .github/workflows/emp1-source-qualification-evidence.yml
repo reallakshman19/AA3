@@ -61,17 +61,22 @@ jobs:
           pdfinfo "$wrc" > "$out/WRC537_2013.pdfinfo.txt"
           pdfinfo "$caux" > "$out/CAUx_2017_WRC01f.pdfinfo.txt"
 
-          # WRC computation/sign tables plus all retained SP/SM coefficient-table pages.
-          pdftotext -f 33 -l 89 -layout "$wrc" "$out/WRC537_2013_pages_33-89.txt"
-          for page in 33 34 35 36 37 38 51 52 54 56 58 60 62 64 66 68 70 71 74 76 78 80 82 84 86 89; do
+          pdftotext -f 33 -l 95 -layout "$wrc" "$out/WRC537_2013_pages_33-95.txt"
+          for page in 33 34 35 36 37 38 49 51 53 55 57 59 61 63 65 67 69 71 73 75 77 79 81 83 85 87 89 91 93 95; do
             pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$wrc" "$out/wrc-pages/page-${page}" >/dev/null
           done
 
-          # CAUx benchmark authority is explicitly bounded to pp.24-31.
           pdftotext -f 24 -l 31 -layout "$caux" "$out/CAUx_2017_WRC01f_pages_24-31.txt"
           for page in 24 25 26 27 28 29 30 31; do
             pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$caux" "$out/caux-pages/page-${page}" >/dev/null
           done
+
+      - name: Audit source-derived WRC curve-fit model and inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-pr1286-wrc-source-table-audit.mjs \
+            | tee test-results/emp1-source-qualification/wrc-source-table-audit.json
 
       - name: Verify retained-source arbitration remains fail closed until page arbitration is frozen
         shell: bash

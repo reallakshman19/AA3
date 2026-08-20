@@ -1,0 +1,20 @@
+name: EMP.1.C runtime qualification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Qualify source-custody runtime semantics
+        run: node scripts/emp1-c-runtime-contract-self-test.mjs
+      - name: Qualify cylindrical vessel/nozzle WRC frame
+        run: node scripts/emp1-c-cylindrical-frame-contract-self-test.mjs

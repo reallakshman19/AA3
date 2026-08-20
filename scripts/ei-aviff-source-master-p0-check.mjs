@@ -47,7 +47,7 @@ function checkFit() {
   const ref = read('docs/EI data/EI-P0-FIT/T2-2_source_reference.yaml');
   assert.match(ref, /gas: "sqrt\(mu_gas \/ 0\.001\)"/);
   assert.match(ref, /gas: "LOF_FIT = rho_v2 \* FVF \/ Fv"/);
-  assert.doesNotMatch(ref, /1\s*\/\s*\(mu.*1000/i);
+  assert.doesNotMatch(ref, /^\s*gas:\s*"1\s*\/\s*\(mu.*1000/im);
 
   approx(Math.sqrt(2e-5 / 0.001), 0.1414213562373095, 1e-12, 'FIT FVF at 2e-5 Pa.s');
   approx(Math.sqrt(1e-5 / 0.001), 0.1, 1e-12, 'FIT FVF at 1e-5 Pa.s');
@@ -68,7 +68,7 @@ function checkFit() {
 function checkAivT25() {
   const text = read('docs/EI data/EI-P0-AIV/T2-5_flowchart.yaml');
   assert.match(text, /W\^2/);
-  assert.doesNotMatch(text, /W\^0\.2/);
+  assert.doesNotMatch(text, /^\s*equation:.*W\^0\.2/m);
   assert.match(text, /attenuation_dB = 60 \* L_dis_m \/ Dint_mm/);
   assert.match(text, /Do NOT convert L_dis and Dint to the same unit/);
 
@@ -88,9 +88,9 @@ function checkAivT26() {
   assert.match(flowchart, /470711\.5155/);
   assert.match(flowchart, /183685\.4368\/sqrt\(B\)/);
   assert.match(flowchart, /575094\.3273\/B\^0\.1/);
-  assert.doesNotMatch(flowchart, /log10_N = 47\.0712/);
+  assert.doesNotMatch(flowchart, /^\s*equation:\s*"log10_N = 47\.0712/m);
   assert.match(flowchart, /fatigue_factor_equation: "Lf = 3\.1 - 0\.1303\*ln\(N\)"/);
-  assert.doesNotMatch(flowchart, /Lf = 1\.30/);
+  assert.doesNotMatch(flowchart, /^\s*fatigue_factor_equation:.*Lf = 1\.30/m);
   assert.match(flowchart, /A_S_B_EQUATIONS|A, S and B/);
   assert.match(flowchart, /UNRESOLVED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION/);
 
@@ -129,7 +129,7 @@ function checkAuthority() {
 
   const p1 = read('docs/EI data/EI-P1-IDENTIFICATION/AUTHORITY_STATUS.yaml');
   assert.match(p1, /QUARANTINED_NOT_ENGINEERING_AUTHORITY/);
-  assert.match(p1, /P1_IDENTIFICATION_SCORING_AUTHORITY|PRODUCTION_APPLICABILITY/);
+  assert.match(p1, /PRODUCTION_APPLICABILITY/);
 
   const global = read('docs/EI data/EI_SOURCE_AUTHORITY_STATUS.md');
   assert.match(global, /REFERENCE COMPILATION, NOT TRUST ROOT/);

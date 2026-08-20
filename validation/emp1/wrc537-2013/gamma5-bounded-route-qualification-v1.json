@@ -1,0 +1,73 @@
+{
+  "schema": "emp1-wrc537-gamma5-bounded-route-qualification/v1",
+  "status": "BLOCKED_UPSTREAM_LOAD_PRODUCER_QUALIFICATION",
+  "boundedMethodMechanicsAuthority": true,
+  "boundedRouteAuthority": false,
+  "globalEmp1CRouteAuthority": false,
+  "productionAuthority": false,
+  "productionObservationUsedToSetAuthority": false,
+  "method": {
+    "identity": "WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_BOUNDED",
+    "sourceDocumentSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "datasetHash": "fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c",
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "variant": "ORIGINAL",
+    "gamma": 5,
+    "betaMinimum": 0.05,
+    "betaMaximum": 0.5,
+    "interpolationAllowed": false,
+    "crossVariantFallbackAllowed": false,
+    "loadReference": "WRC_ATTACHMENT_REFERENCE_POINT",
+    "pressureThrustDisposition": "PRESSURE_THRUST_RESOLVED_UPSTREAM"
+  },
+  "qualifiedEvidence": {
+    "exactGammaOracleSemanticHash": "809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e",
+    "fullTable5OracleSemanticHash": "5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa",
+    "cauxTable5BenchmarkSemanticHash": "8d97539f03f077321eef1e496e315a6a7700a9d83a6c8cd4ff1b83382ebe45fe",
+    "cauxIndependentHandcalcSemanticHash": "679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c",
+    "coefficientInventory": {
+      "selectableCurves": 321,
+      "qualifiedScalars": 3210,
+      "excludedUnresolvedCurves": 1,
+      "excludedUnresolvedScalars": 10
+    },
+    "boundedAdapterComparison": {
+      "status": "PASS_BOUNDED_ADAPTER_MATCHES_FROZEN_INDEPENDENT_ORACLE",
+      "uniqueSourceFigures": 14,
+      "curveComparisons": 16,
+      "stressComparisons": 32,
+      "loadCustodyMode": "COMPARISON_FIXTURE_ONLY",
+      "productionRouteAuthority": false
+    },
+    "boundedScopeGate": "PASS_WITH_PINNED_LOAD_PRODUCER_HASH_REQUIRED",
+    "sourceBoundaryLoadCustodyValidation": "PASS_STRUCTURAL_CONTRACT_IMPLEMENTED"
+  },
+  "loadProducerQualification": {
+    "requiredAuthorityClass": "WRC_REFERENCE_POINT_LOAD_PRODUCER",
+    "requiredQualificationRecordHash": null,
+    "requiredRuntimeBinding": "scopeContract.loadProducerQualificationHash == runtime.localMethod.loadCustody.producerQualification.qualificationRecordHash",
+    "requiredPressureControls": [
+      "explicit pressure-thrust mode",
+      "double-count guard qualified",
+      "source-load thrust inclusion flag consistent with mode",
+      "pressure policy record SHA-256",
+      "production observation not used to establish authority"
+    ],
+    "status": "NOT_QUALIFIED_IN_THIS_RECORD"
+  },
+  "blockers": [
+    {
+      "code": "EMP1_WRC537_QUALIFIED_LOAD_PRODUCER_REQUIRED",
+      "scope": "BOUNDED_ROUTE_REGISTRATION",
+      "requiredAuthority": "A separately qualified upstream producer must emit loads at WRC_ATTACHMENT_REFERENCE_POINT and a structured emp1-wrc537-upstream-load-custody/v1 record whose producer qualification SHA-256 is pinned by the bounded method scope. Pressure-thrust inclusion/exclusion and double-count protection must be qualified by that producer; the Hexagon supplemental example does not authorize a universal production sign policy."
+    }
+  ],
+  "authorization": {
+    "boundedAdapterProductionComparisonAllowed": true,
+    "boundedRouteRegistrationAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "releaseQualified": false
+  },
+  "exactNextAction": "QUALIFY_A_WRC_REFERENCE_POINT_LOAD_PRODUCER_AND_FREEZE_ITS_QUALIFICATION_HASH_BEFORE_REGISTERING_THE_GAMMA5_BOUNDED_ROUTE"
+}

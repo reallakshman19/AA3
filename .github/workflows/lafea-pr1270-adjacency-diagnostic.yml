@@ -1,0 +1,31 @@
+name: PR1270 exact-head adjacency diagnostic
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  adjacency:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify exact diagnostic head and product parent
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor 42beedc20b20733e924c2d0e581785be80e356fa HEAD
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          git diff --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Prove retained-refinement adjacency at exact product head
+        run: node scripts/lafea-retained-mesh-refinement-check.mjs

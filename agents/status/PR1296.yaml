@@ -1,0 +1,47 @@
+schema: engineering-pr-status/v1
+work_item: PR1296
+issue: 1261
+pr: 1296
+repository: reallaksh19/Advanced_Analysis
+parent_pr: 1291
+base_branch: agent/emp1-c-exact-gamma-qualified-route-issue1261
+base_head_at_creation: 6d1e29073e34a25830d282b761525068443798aa
+branch: agent/emp1-c-higher-gamma-domain-issue1261
+intent: EMP1_C_HIGHER_GAMMA_ORIGINAL_BETA_LIMIT_SOURCE_QUALIFICATION
+handover_readiness: READY
+merge_authority: NOT_GRANTED
+current_stage: HIGHER_GAMMA_FULL_TABLE5_BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION
+validated_initial_head: 66e06871613e62a7a8f6481ee8c889233879d7b9
+higher_gamma_domain_workflow_run: 32357165433
+higher_gamma_domain_workflow_number: 1
+higher_gamma_domain_workflow: PASS
+wrc_source_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+wrc_source_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
+route_intersection_strategy: FIRST_FAIL_REQUIRED_FIGURE
+probe_figures:
+  - figure: 1C
+    chart_pdf_page: 128
+    coefficient_pdf_page: 129
+    higher_gamma_deleted_outer_segments: true
+    per_curve_numeric_endpoint_label: false
+    exact_endpoint_status: BLOCKED_REQUIRES_GRAPHICAL_DIGITIZATION
+  - figure: 2C
+    chart_pdf_page: 136
+    coefficient_pdf_page: 137
+    higher_gamma_deleted_outer_segments: true
+    per_curve_numeric_endpoint_label: false
+    exact_endpoint_status: BLOCKED_REQUIRES_GRAPHICAL_DIGITIZATION
+visual_reobservation_artifact_id: 9402093459
+visual_reobservation_artifact_digest_sha256: 30dc1d0b3e01e25d1452e35ad18761256c0136b81ab9a02390802c4cf5e005cf
+render_figure1c_sha256: dfbc3a3da8898c3ba299bbbe3b6bdec9dda352861dbcd6dc207b50757f63aef5
+render_figure2c_sha256: 4f736e01ce9365ecc815c73dd240966da5f27125b15af3c957d2c848ded9869e
+higher_exact_tabulated_gammas_checked: [7.5, 10, 15, 25, 35, 50, 75, 100, 150, 200, 300]
+higher_gamma_probe_coefficient_rows_present: PASS_11_OF_11_BOTH_FIGURES
+higher_gamma_routes_authorized: 0
+higher_gamma_routes_blocked: 11
+endpoint_inference_used: false
+chart_digitization_used_for_production_authority: false
+inherited_gamma5_bounded_route_preserved: true
+global_emp1_c_route_registered: false
+release_qualified: false
+next_action: SEARCH_AUTHORITATIVE_NUMERIC_HIGHER_GAMMA_BETA_LIMIT_SOURCE_OR_FREEZE_THIS_BLOCK_AND_MOVE_TO_SEPARATE_PRESSURE_OR_KN_KB_AUTHORITY_INCREMENT

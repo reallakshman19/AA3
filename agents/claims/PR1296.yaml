@@ -1,0 +1,36 @@
+schema: engineering-pr-claims/v1
+work_item: PR1296
+repository: reallaksh19/Advanced_Analysis
+issue: 1261
+pr: 1296
+claims:
+  - id: AUTH-HIGHER-GAMMA-1296-001
+    state: BLOCKED_SOURCE_REPRESENTATION
+    statement: Exact-tabulated gamma values above 5 are not authorized for the full cylindrical Table-5 route because required Original Figures 1C and 2C delete outer curve segments but do not numerically annotate each higher-gamma termination beta coordinate.
+  - id: SRC-LIMIT-1296-001
+    state: PASS_REOBSERVED
+    statement: WRC537 section 4.4 requires Original curves to remain within indicated limits because outer regions may be appreciably unconservative; the frozen source SHA-256 remains 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2.
+  - id: SRC-CHART-1296-001
+    state: PASS_REOBSERVED_NO_NUMERIC_ENDPOINT
+    statement: SHA-bound Figure 1C Original PDF page 128 was rendered at 220 dpi without OCR; higher-gamma curves visibly terminate before the gamma=5 range, but no per-curve numeric beta endpoint is printed. Render SHA-256 dfbc3a3da8898c3ba299bbbe3b6bdec9dda352861dbcd6dc207b50757f63aef5.
+  - id: SRC-CHART-1296-002
+    state: PASS_REOBSERVED_NO_NUMERIC_ENDPOINT
+    statement: SHA-bound Figure 2C Original PDF page 136 was rendered at 220 dpi without OCR; higher-gamma curves visibly terminate before the gamma=5 range, but no per-curve numeric beta endpoint is printed. Render SHA-256 4f736e01ce9365ecc815c73dd240966da5f27125b15af3c957d2c848ded9869e.
+  - id: IMP-FIRST-FAIL-1296-001
+    state: PASS
+    statement: The higher-gamma domain checker uses a first-fail required-figure rule: one unresolved required Original curve endpoint blocks the full Table-5 route, avoiding unnecessary or misleading endpoint reconstruction for the remaining figures.
+  - id: IMP-COEFF-1296-001
+    state: PASS_11_OF_11
+    statement: All 11 higher exact-tabulated gamma values 7.5,10,15,25,35,50,75,100,150,200,300 have coefficient rows in both probe figures; the checker proves that coefficient availability alone does not confer curve-domain authority.
+  - id: AUTH-DIGITIZATION-1296-001
+    state: PROHIBITED
+    statement: Graphical coordinate extraction/digitization of deleted-curve endpoints is not permitted to establish production beta-limit authority in this PR; no endpoint number is inferred from pixels, rational coefficients, labels, or curve ordering.
+  - id: AUTH-GAMMA5-1296-001
+    state: PRESERVED
+    statement: The already-qualified PR1291 gamma=5 route at 0.05<=beta<=0.5 remains unchanged and registered; PR1296 does not reduce or broaden that authority.
+  - id: AUTH-GLOBAL-1296-001
+    state: BLOCKED
+    statement: Global/full-domain EMP.1.C registration remains false and releaseQualified remains false.
+  - id: NEXT-AUTHORITY-1296-001
+    state: OPEN
+    statement: A higher-gamma route may proceed only if an authoritative numeric source independently states the Original-curve beta limits; otherwise all gamma>5 full Table-5 routes remain blocked and work should move to a separate pressure-thrust or Kn/Kb authority increment.

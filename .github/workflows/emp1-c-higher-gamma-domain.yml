@@ -35,7 +35,7 @@ jobs:
           pdftoppm -f 128 -l 128 -singlefile -png -r 220 docs/emp1/WRC537_2013.pdf test-results/emp1-higher-gamma/source-pages/WRC537-p128-Figure1C-Original
           pdftoppm -f 136 -l 136 -singlefile -png -r 220 docs/emp1/WRC537_2013.pdf test-results/emp1-higher-gamma/source-pages/WRC537-p136-Figure2C-Original
           sha256sum test-results/emp1-higher-gamma/source-pages/*.png | tee test-results/emp1-higher-gamma/source-pages/render-sha256.txt
-      - name: Prove higher-gamma route remains blocked pending exact endpoints
+      - name: Prove higher-gamma route remains blocked by non-numeric source endpoints
         shell: bash
         run: |
           set -euo pipefail

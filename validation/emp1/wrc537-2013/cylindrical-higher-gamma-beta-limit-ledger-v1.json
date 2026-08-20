@@ -1,6 +1,6 @@
 {
   "schema": "emp1-wrc537-cylindrical-higher-gamma-beta-limit-ledger/v1",
-  "status": "BLOCKED_PENDING_EXACT_SOURCE_CURVE_ENDPOINT_QUALIFICATION",
+  "status": "BLOCKED_SOURCE_REPRESENTATION_REQUIRES_GRAPHICAL_DIGITIZATION",
   "engineeringAuthority": true,
   "productionRouteExpansionAuthority": false,
   "productionObservationUsedToSetAuthority": false,
@@ -26,7 +26,8 @@
     "rule": "A full Table-5 exact-gamma route is blocked if any required Original source curve has an unresolved or exceeded beta outer limit.",
     "rationale": "The route consumes all required Table-5 figures; coefficient availability does not authorize evaluation beyond the plotted Original-curve limit.",
     "digitizationAllowedForProductionAuthority": false,
-    "rationalFitUsedToInferChartEndpoint": false
+    "rationalFitUsedToInferChartEndpoint": false,
+    "graphicalCoordinateReadingCountsAsDigitization": true
   },
   "requiredTable5OriginalFigures": [
     {"figure":"1A","chartPdfPage":94},
@@ -50,16 +51,38 @@
       "chartPdfPage": 128,
       "coefficientTablePdfPage": 129,
       "existingSourceObservation": "HIGHER_GAMMA_CURVES_HAVE_SOURCE_DELETED_OUTER_SEGMENTS",
-      "exactHigherGammaEndpointStatus": "UNRESOLVED_PENDING_INDEPENDENT_VISUAL_REOBSERVATION"
+      "visualReobservationStatus": "PASS_REOBSERVED_GRAPHICAL_ENDPOINT_NOT_NUMERICALLY_ANNOTATED",
+      "higherGammaCurvesTerminateBeforeGamma5Range": true,
+      "perCurveEndpointBetaNumericallyPrinted": false,
+      "exactHigherGammaEndpointStatus": "BLOCKED_REQUIRES_GRAPHICAL_DIGITIZATION",
+      "renderSha256": "dfbc3a3da8898c3ba299bbbe3b6bdec9dda352861dbcd6dc207b50757f63aef5"
     },
     {
       "figure": "2C",
       "chartPdfPage": 136,
       "coefficientTablePdfPage": 137,
       "existingSourceObservation": "HIGHER_GAMMA_CURVES_HAVE_SOURCE_DELETED_OUTER_SEGMENTS",
-      "exactHigherGammaEndpointStatus": "UNRESOLVED_PENDING_INDEPENDENT_VISUAL_REOBSERVATION"
+      "visualReobservationStatus": "PASS_REOBSERVED_GRAPHICAL_ENDPOINT_NOT_NUMERICALLY_ANNOTATED",
+      "higherGammaCurvesTerminateBeforeGamma5Range": true,
+      "perCurveEndpointBetaNumericallyPrinted": false,
+      "exactHigherGammaEndpointStatus": "BLOCKED_REQUIRES_GRAPHICAL_DIGITIZATION",
+      "renderSha256": "4f736e01ce9365ecc815c73dd240966da5f27125b15af3c957d2c848ded9869e"
     }
   ],
+  "visualReobservation": {
+    "status": "PASS_SOURCE_CHARTS_REOBSERVED_NO_EXACT_NUMERIC_HIGHER_GAMMA_ENDPOINTS",
+    "workflowRunId": 32357165433,
+    "workflowRunNumber": 1,
+    "sourceCommit": "66e06871613e62a7a8f6481ee8c889233879d7b9",
+    "artifactId": 9402093459,
+    "artifactSizeBytes": 259178,
+    "artifactDigestSha256": "30dc1d0b3e01e25d1452e35ad18761256c0136b81ab9a02390802c4cf5e005cf",
+    "renderDpi": 220,
+    "renderMethod": "POPPLER_PDFTOPPM_NO_OCR",
+    "observation": "Figures 1C and 2C visibly delete the outer portions of higher-gamma Original curves. Individual termination beta coordinates are not numerically annotated per curve; converting the graphical termination points to numeric beta values would require graphical coordinate extraction/digitization.",
+    "digitizationPerformed": false,
+    "productionObservationUsed": false
+  },
   "existingQualifiedGamma5Route": {
     "gamma": 5,
     "betaMinimum": 0.05,
@@ -68,17 +91,17 @@
     "routeQualificationSha256": "3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e"
   },
   "higherExactTabulatedGammaAssessments": [
-    {"gamma":7.5,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":10,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":15,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":25,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":35,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":50,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":75,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":100,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":150,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":200,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"},
-    {"gamma":300,"coefficientRowsRequired":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED"}
+    {"gamma":7.5,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":10,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":15,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":25,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":35,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":50,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":75,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":100,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":150,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":200,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"},
+    {"gamma":300,"coefficientRowsPresentInProbeFigures":true,"probeCurveEndpointBetaMaximum":null,"routeBetaIntersection":null,"status":"BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION"}
   ],
   "prohibitions": [
     "DO_NOT_INFER_BETA_ENDPOINT_FROM_RATIONAL_COEFFICIENTS",
@@ -94,5 +117,5 @@
     "higherGammaRouteRegistrationAllowed": false,
     "globalEmp1CRouteRegistrationAllowed": false
   },
-  "nextGate": "INDEPENDENTLY_REOBSERVE_SHA_BOUND_1C_AND_2C_ORIGINAL_CHARTS_AND_RECORD_ONLY_EXACT_SOURCE_ENDPOINTS;_IF_ENDPOINT_IS_NOT_EXACTLY_SOURCE_READABLE_KEEP_GAMMA_BLOCKED"
+  "nextGate": "FIND_AN_AUTHORITATIVE_NUMERIC_SOURCE_FOR_HIGHER_GAMMA_ORIGINAL_CURVE_BETA_LIMITS_OR_KEEP_ALL_GAMMA_GT_5_FULL_TABLE5_ROUTES_BLOCKED"
 }

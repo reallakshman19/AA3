@@ -8,12 +8,7 @@ const ledgerPath='validation/emp1/wrc537-2013/cylindrical-higher-gamma-beta-limi
 const inheritedDomainPath='validation/emp1/wrc537-2013/cylindrical-original-bounded-domain-v1.json';
 const extractionPath='docs/emp1/WRC537_2013_Tables_and_Charts.md';
 const outputPath=process.argv[2]??null;
-
-const [ledger,domain,markdown]=await Promise.all([
-  readJson(ledgerPath),
-  readJson(inheritedDomainPath),
-  readFile(extractionPath,'utf8'),
-]);
+const [ledger,domain,markdown]=await Promise.all([readJson(ledgerPath),readJson(inheritedDomainPath),readFile(extractionPath,'utf8')]);
 const pkg=parseCylindricalExactGammaPackage(markdown);
 
 const sourceSha='698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2';
@@ -22,7 +17,7 @@ const higherGammas=[7.5,10,15,25,35,50,75,100,150,200,300];
 const probeFigures=['1C','2C'];
 
 assert.equal(ledger.schema,'emp1-wrc537-cylindrical-higher-gamma-beta-limit-ledger/v1');
-assert.equal(ledger.status,'BLOCKED_PENDING_EXACT_SOURCE_CURVE_ENDPOINT_QUALIFICATION');
+assert.equal(ledger.status,'BLOCKED_SOURCE_REPRESENTATION_REQUIRES_GRAPHICAL_DIGITIZATION');
 assert.equal(ledger.productionRouteExpansionAuthority,false);
 assert.equal(ledger.productionObservationUsedToSetAuthority,false);
 assert.equal(ledger.source.rawPdfSha256,sourceSha);
@@ -32,6 +27,7 @@ assert.equal(ledger.source.curveLimitAuthority.section,'4.4');
 assert.equal(ledger.source.curveLimitAuthority.rule,'ORIGINAL_CURVES_MUST_NOT_BE_USED_BEYOND_LIMITS_INDICATED');
 assert.equal(ledger.routeIntersectionPolicy.digitizationAllowedForProductionAuthority,false);
 assert.equal(ledger.routeIntersectionPolicy.rationalFitUsedToInferChartEndpoint,false);
+assert.equal(ledger.routeIntersectionPolicy.graphicalCoordinateReadingCountsAsDigitization,true);
 assert.deepEqual(ledger.requiredTable5OriginalFigures.map((row)=>row.figure),expectedFigures);
 assert.deepEqual(ledger.firstFailProbeFigures.map((row)=>row.figure),probeFigures);
 assert.equal(domain.sourceChartReview.figure1COriginal.higherGammaCurvesHaveSourceDeletedOuterSegments,true);
@@ -42,6 +38,15 @@ assert.equal(ledger.existingQualifiedGamma5Route.gamma,5);
 assert.equal(ledger.existingQualifiedGamma5Route.betaMinimum,0.05);
 assert.equal(ledger.existingQualifiedGamma5Route.betaMaximum,0.5);
 assert.equal(ledger.existingQualifiedGamma5Route.status,'PASS_ALREADY_QUALIFIED_IN_PR1291');
+
+assert.equal(ledger.visualReobservation.status,'PASS_SOURCE_CHARTS_REOBSERVED_NO_EXACT_NUMERIC_HIGHER_GAMMA_ENDPOINTS');
+assert.equal(ledger.visualReobservation.workflowRunId,32357165433);
+assert.equal(ledger.visualReobservation.workflowRunNumber,1);
+assert.equal(ledger.visualReobservation.artifactId,9402093459);
+assert.equal(ledger.visualReobservation.renderDpi,220);
+assert.equal(ledger.visualReobservation.renderMethod,'POPPLER_PDFTOPPM_NO_OCR');
+assert.equal(ledger.visualReobservation.digitizationPerformed,false);
+assert.equal(ledger.visualReobservation.productionObservationUsed,false);
 
 const originalCurves=pkg.curves.filter((row)=>row.variant==='ORIGINAL');
 const figureGammaSets=new Map();
@@ -55,9 +60,10 @@ const coefficientPresence=[];
 for(const gamma of higherGammas){
   const assessment=ledger.higherExactTabulatedGammaAssessments.find((row)=>row.gamma===gamma);
   assert.ok(assessment,`ledger assessment missing gamma=${gamma}`);
+  assert.equal(assessment.coefficientRowsPresentInProbeFigures,true);
   assert.equal(assessment.probeCurveEndpointBetaMaximum,null,`gamma=${gamma} must not carry inferred endpoint`);
   assert.equal(assessment.routeBetaIntersection,null,`gamma=${gamma} must not carry inferred route intersection`);
-  assert.equal(assessment.status,'BLOCKED_EXACT_OUTER_LIMIT_UNRESOLVED');
+  assert.equal(assessment.status,'BLOCKED_SOURCE_ENDPOINT_REQUIRES_DIGITIZATION');
   const presence={gamma,figures:{}};
   for(const figure of probeFigures){
     const present=figureGammaSets.get(figure)?.includes(gamma)===true;
@@ -68,7 +74,11 @@ for(const gamma of higherGammas){
 }
 
 for(const row of ledger.firstFailProbeFigures){
-  assert.equal(row.exactHigherGammaEndpointStatus,'UNRESOLVED_PENDING_INDEPENDENT_VISUAL_REOBSERVATION');
+  assert.equal(row.visualReobservationStatus,'PASS_REOBSERVED_GRAPHICAL_ENDPOINT_NOT_NUMERICALLY_ANNOTATED');
+  assert.equal(row.higherGammaCurvesTerminateBeforeGamma5Range,true);
+  assert.equal(row.perCurveEndpointBetaNumericallyPrinted,false);
+  assert.equal(row.exactHigherGammaEndpointStatus,'BLOCKED_REQUIRES_GRAPHICAL_DIGITIZATION');
+  assert.match(row.renderSha256,/^[a-f0-9]{64}$/u);
   assert.ok(Number.isInteger(row.chartPdfPage)&&row.chartPdfPage>0);
   assert.ok(Number.isInteger(row.coefficientTablePdfPage)&&row.coefficientTablePdfPage===row.chartPdfPage+1);
 }
@@ -88,14 +98,15 @@ const semanticPayload={
   curveLimitAuthority:ledger.source.curveLimitAuthority,
   routeIntersectionPolicy:ledger.routeIntersectionPolicy,
   requiredFigures:ledger.requiredTable5OriginalFigures,
-  probeFigures:ledger.firstFailProbeFigures,
+  probeFigures:ledger.firstFailProbeFigures.map(({renderSha256,...row})=>row),
   existingQualifiedGamma5Route:ledger.existingQualifiedGamma5Route,
   higherGammaAssessments:ledger.higherExactTabulatedGammaAssessments,
   prohibitions:ledger.prohibitions,
+  visualConclusion:{status:ledger.visualReobservation.status,digitizationPerformed:false},
 };
 const result={
-  schema:'emp1-wrc537-cylindrical-higher-gamma-beta-limit-check/v1',
-  status:'PASS_HIGHER_GAMMA_ROUTE_REMAINS_FAIL_CLOSED_PENDING_EXACT_ENDPOINT_AUTHORITY',
+  schema:'emp1-wrc537-cylindrical-higher-gamma-beta-limit-check/v2',
+  status:'PASS_HIGHER_GAMMA_FULL_TABLE5_ROUTE_BLOCKED_SOURCE_ENDPOINT_NOT_NUMERICALLY_ANNOTATED',
   engineeringAuthority:true,
   productionRouteExpansionAuthority:false,
   sourceSha256:sourceSha,
@@ -106,12 +117,13 @@ const result={
   coefficientPresence,
   higherGammaRoutesBlocked:higherGammas.length,
   higherGammaRoutesAuthorized:0,
+  exactNumericEndpointLabelsFound:0,
   endpointInferenceUsed:false,
   chartDigitizationUsedForProductionAuthority:false,
   inheritedGamma5RoutePreserved:true,
+  nextAuthority:'AUTHORITATIVE_NUMERIC_HIGHER_GAMMA_ORIGINAL_CURVE_BETA_LIMIT_SOURCE_REQUIRED',
   semanticHashSha256:sha256Canonical(semanticPayload),
 };
-
 if(outputPath){await mkdir(outputPath.split('/').slice(0,-1).join('/')||'.',{recursive:true});await writeFile(outputPath,JSON.stringify(result,null,2)+'\n','utf8');}
 console.log(JSON.stringify(result,null,2));
 

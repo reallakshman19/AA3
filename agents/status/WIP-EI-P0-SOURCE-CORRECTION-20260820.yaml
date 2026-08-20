@@ -1,0 +1,29 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP-EI-P0-SOURCE-CORRECTION-20260820
+mission: Correct PR1288 EI P0 FIT/AIV source transcriptions and quarantine unresolved authority
+workstream: EI_AVIFF_SOURCE_MASTER
+branch: agent/ei-p0-source-correction-20260820
+main_head_last_checked: 782683e7355281e95e5319dcad7f8a5644710d1d
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: RECOVERABLE_WIP
+handover_readiness: READY
+report_path: agents/WIP-EI-P0-SOURCE-CORRECTION-20260820_workreport.md
+current_stage: P0_SOURCE_TRANSCRIPTION_CORRECTION
+blocker: none for bounded corrections; unresolved AIV T2.6 A/S/B and P1 scoring must remain quarantined
+highest_risk: derived YAML/CSV being mistaken for EI engineering authority despite transcription errors or unresolved source semantics
+validation_state:
+  live_main_grounding: PASS
+  pr1288_scope_grounding: PASS
+  controlled_pdf_blob_identity: PASS
+  p0_formula_diagnosis: PASS
+  focused_source_master_regression: NOT_RUN
+  direct_pdf_visual_inspection: NOT_RUN
+  production_code_changed: false
+  screening_authority_changed: false
+  design_authority_changed: false
+  merge: NOT_AUTHORIZED
+exact_next_action: snapshot exact target blobs, implement bounded P0 corrections/quarantine markers, add and execute focused source-master validation, then reconcile a draft PR
+last_updated: 2026-08-20T07:10:00+04:00

@@ -31,12 +31,8 @@ jobs:
           const state=JSON.parse(await readFile('/tmp/emp1-primary-v2.json','utf8'));
           if (state.status!=='BLOCKED') throw new Error(`EMP1_EXACT_GAMMA_INHERITED_STATE:${state.status}`);
           const codes=state.blockers?.map((row)=>row.code)??[];
-          if (codes.length!==1 || codes[0]!=='WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED') {
-            throw new Error(`EMP1_EXACT_GAMMA_INHERITED_BLOCKERS:${codes.join(',')}`);
-          }
-          if (state.routeRegistrationAllowed!==false || state.productionAuthority!==false) {
-            throw new Error('EMP1_EXACT_GAMMA_PREMATURE_FULL_ROUTE_AUTHORITY');
-          }
+          if (codes.length!==1 || codes[0]!=='WRC537_NON_TABULATED_GAMMA_SELECTION_UNQUALIFIED') throw new Error(`EMP1_EXACT_GAMMA_INHERITED_BLOCKERS:${codes.join(',')}`);
+          if (state.routeRegistrationAllowed!==false || state.productionAuthority!==false) throw new Error('EMP1_EXACT_GAMMA_PREMATURE_FULL_ROUTE_AUTHORITY');
           NODE
       - name: Qualify exact source-tabulated gamma selector
         run: node scripts/emp1-wrc-cylindrical-exact-gamma-self-test.mjs
@@ -71,10 +67,10 @@ jobs:
           }
           if (capability.qualifiedDomain?.gammaSelection!=='EXACT_SOURCE_TABULATED_GAMMA_ONLY') throw new Error('EMP1_EXACT_GAMMA_POLICY_DRIFT');
           if (capability.qualifiedDomain?.nonTabulatedGamma!=='BLOCKED_NO_INTERPOLATION_AUTHORITY') throw new Error('EMP1_EXACT_GAMMA_NON_TABULATED_POLICY_DRIFT');
-          if (capability.authorization?.boundedProductionComparisonAllowed!==true || capability.authorization?.globalEmp1CRouteRegistrationAllowed!==false) {
-            throw new Error('EMP1_EXACT_GAMMA_AUTHORITY_BOUNDARY');
-          }
+          if (capability.authorization?.boundedProductionComparisonAllowed!==true || capability.authorization?.globalEmp1CRouteRegistrationAllowed!==false) throw new Error('EMP1_EXACT_GAMMA_AUTHORITY_BOUNDARY');
           console.log(JSON.stringify({schema:'emp1-exact-gamma-capability-binding/v2',status:'PASS',inventory:capability.inventory,oracleSemanticHash:oracle.semanticHash,boundedProductionComparisonAllowed:true,globalRouteRegistrationAllowed:false},null,2));
           NODE
-      - name: Compare production core evaluator to frozen independent oracle
+      - name: Compare production curve evaluator to frozen independent oracle
         run: node scripts/emp1-wrc-exact-gamma-production-comparison.mjs
+      - name: Compare production Table 5 stress kernel to qualified CAUx benchmark
+        run: node scripts/emp1-wrc-table5-production-comparison.mjs

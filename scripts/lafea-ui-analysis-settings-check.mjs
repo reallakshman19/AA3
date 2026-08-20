@@ -40,7 +40,7 @@ console.log(JSON.stringify({
   githubActionsWorkflowAdded: false,
 }));
 
-await import('./lafea-pr1270-metric-mapped-control-matrix.mjs');
+await import('./lafea-pr1270-target-anchored-metric-control.mjs');
 
 function stage(stageId, document, profileId) {
   return { stageId, document, lifecycle: { profileId }, lifecycleBinding: { status: 'CURRENT' } };

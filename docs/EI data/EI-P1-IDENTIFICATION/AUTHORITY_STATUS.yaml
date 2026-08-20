@@ -1,0 +1,64 @@
+schema: EiAviffSourceAuthorityStatus.v1
+scope: EI-P1-IDENTIFICATION
+governing_source:
+  publication: Energy Institute Guidelines 2nd Edition (2008)
+  source_pdf_git_blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
+authority_state: QUARANTINED_NOT_ENGINEERING_AUTHORITY
+reason: >
+  The PR1288 T1/P1 files mix source observations with inferred numeric scores,
+  multipliers, thresholds and action logic that are not established by the
+  controlled worked-example transcription. They must not drive mechanism
+  applicability, qualitative ranking, completeness or engineering disposition.
+files:
+  T1-1_excitation_factors.csv:
+    git_blob_at_pr1288: 774d092f5557e101f780e07b9a9a75fb1c50c4bf
+    state: QUARANTINED
+    issue: "Numeric score scheme and several mechanism criteria are synthetic rather than a source-faithful Table T1-1 transcription."
+  T1-2_condition_operational_factors.csv:
+    git_blob_at_pr1288: 40aee83e180b7d03c847d17049ba1c2b0912fe05
+    state: QUARANTINED
+    issue: "Numeric scores and some process-upset bands differ from the controlled D1 transcription, which shows 9+, 2-8 and 0-1 classifications."
+  T1-1_combination_flowchart.yaml:
+    git_blob_at_pr1288: 8e1f09583a7c520b27098521d50c8bbfc08d58ef
+    state: QUARANTINED
+    issue: "E_total/M_op/Q_score arithmetic and 10/20 thresholds are inferred and are not established by the controlled EI example."
+  T1-2_existing_plant_flowchart.yaml:
+    git_blob_at_pr1288: fbbfa490f669114cab85448841e9a319edaa761c
+    state: SOURCE_OBSERVATIONS_PARTIAL_BUT_NOT_GOVERNING
+    issue: "Several Table T1-5 thresholds are corroborated by D3, but the YAML is a synthesized workflow rather than a source-faithful complete transcription."
+  Table_3-1_disposition.csv:
+    git_blob_at_pr1288: c915b9bbcae2d3cedb9953727f51df19b92b6843
+    state: QUARANTINED
+    issue: "Disposition ranges/actions have not been directly reconciled against the controlled Chapter 3 source tables."
+verified_source_observations_from_worked_examples:
+  table_T1_1_items:
+    - "1 kinetic energy -> FIT and gas flow-induced pulsation consideration"
+    - "2 choked/sonic flow -> high-frequency acoustic excitation"
+    - "3 rotating/reciprocating machinery -> mechanical excitation"
+    - "4 positive-displacement machinery -> reciprocating pulsation"
+    - "5 rotating stall"
+    - "6 flashing/cavitation"
+    - "7 fast-acting valves -> surge/momentum change"
+    - "8 intrusive elements -> thermowell/vortex shedding"
+    - "9 slug flow"
+    - "10 known vibration history"
+  table_T1_2_D_process_upsets:
+    high: "9 or more"
+    medium: "2-8"
+    low: "0-1"
+  table_T1_5_examples:
+    - "flow velocity increase >5%"
+    - "fluid density increase >10%"
+    - "gas molecular weight/temperature/Cp-Cv change > +/-5%"
+    - "reciprocating-pump liquid density/bulk-modulus change > +/-5%"
+required_before_promotion:
+  - SOURCE_FAITHFUL_TABLE_T1_1_TRANSCRIPTION
+  - SOURCE_FAITHFUL_TABLE_T1_2_TRANSCRIPTION
+  - SOURCE_FAITHFUL_FLOWCHART_T1_1_TRANSCRIPTION
+  - SOURCE_FAITHFUL_TABLE_T1_5_AND_FLOWCHART_T1_2_TRANSCRIPTION
+  - SOURCE_FAITHFUL_CHAPTER_3_DISPOSITION_TABLES
+prohibited_consumers:
+  - PRODUCTION_APPLICABILITY
+  - ASSESSMENT_COMPLETENESS
+  - ENGINEERING_DISPOSITION
+  - RELEASE_QUALIFICATION

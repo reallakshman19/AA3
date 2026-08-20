@@ -17,7 +17,7 @@ import { screeningRequestFixture } from './lafea.2-fixtures.mjs';
 const originalB = screeningRequestFixture();
 const currentA = changedCompatibleA(originalB.sourceEvidence.foundationModel);
 const currentAResult = calculateLocalAttachmentFoundation(currentA);
-const currentAExecution = qualifiedAExecution(currentA, currentAResult);
+const currentAExecution = qualifiedAExecution(currentA, currentA, currentAResult);
 
 const stale = classifyEmp1BSourceCustody({
   aDocument: currentA,
@@ -55,6 +55,51 @@ const current = classifyEmp1BSourceCustody({
 assert.equal(current.state, EMP1_B_SOURCE_CUSTODY_STATES.CURRENT);
 assert.equal(current.canRefresh, false);
 
+// Production workbench shape: A retains the editable source-form document while
+// the qualified execution retains the canonical kernel input separately.
+const editableA = editableFoundationDocument(currentA);
+const editableAExecution = qualifiedAExecution(editableA, currentA, currentAResult);
+const editableStale = classifyEmp1BSourceCustody({
+  aDocument: editableA,
+  aExecution: editableAExecution,
+  bDocument: originalB,
+});
+assert.equal(editableStale.state, EMP1_B_SOURCE_CUSTODY_STATES.STALE_REFRESH_AVAILABLE);
+assert.equal(editableStale.canRefresh, true);
+
+const editableRefreshedB = refreshEmp1BSourceEvidence({
+  aDocument: editableA,
+  aExecution: editableAExecution,
+  bDocument: originalB,
+});
+assert.equal(
+  semanticHash(editableRefreshedB.sourceEvidence.foundationModel),
+  semanticHash(currentA),
+  'Editable A source must be converted back to the exact canonical foundation model before entering B evidence.',
+);
+assert.notEqual(
+  semanticHash(editableRefreshedB.sourceEvidence.foundationModel),
+  semanticHash(editableA),
+  'B evidence must never mistake the editable A workbench document for a canonical foundation model.',
+);
+const editableCurrent = classifyEmp1BSourceCustody({
+  aDocument: editableA,
+  aExecution: editableAExecution,
+  bDocument: editableRefreshedB,
+});
+assert.equal(editableCurrent.state, EMP1_B_SOURCE_CUSTODY_STATES.CURRENT);
+assert.equal(editableCurrent.canRefresh, false);
+
+const forgedCanonical = canonicalFixture();
+const forgedCanonicalInput = evaluateEmp1BSourceRefresh({
+  aDocument: editableA,
+  aExecution: qualifiedAExecution(editableA, forgedCanonical, currentAResult),
+  bDocument: originalB,
+});
+assert.equal(forgedCanonicalInput.status, 'BLOCKED');
+assert.equal(forgedCanonicalInput.code, 'EMP1_A_CANONICAL_INPUT_MISMATCH');
+assert.equal(forgedCanonicalInput.document, null);
+
 const missingA = evaluateEmp1BSourceRefresh({
   aDocument: currentA,
   aExecution: null,
@@ -67,7 +112,7 @@ const incompatibleA = canonicalFixture();
 const incompatibleResult = calculateLocalAttachmentFoundation(incompatibleA);
 const incompatible = evaluateEmp1BSourceRefresh({
   aDocument: incompatibleA,
-  aExecution: qualifiedAExecution(incompatibleA, incompatibleResult),
+  aExecution: qualifiedAExecution(incompatibleA, incompatibleA, incompatibleResult),
   bDocument: originalB,
 });
 assert.equal(incompatible.status, 'BLOCKED');
@@ -78,6 +123,9 @@ console.log(JSON.stringify({
   status: 'PASS',
   staleState: stale.state,
   refreshedState: current.state,
+  editableWorkbenchState: editableCurrent.state,
+  editableFoundationCanonicalized: true,
+  forgedCanonicalInput: forgedCanonicalInput.code,
   preservedFactor,
   incompatibleRefresh: incompatible.code,
   authority: 'A_SOURCE_EVIDENCE_REFRESH_ONLY',
@@ -92,12 +140,19 @@ function changedCompatibleA(model) {
   return createCanonicalLocalAttachmentFoundationModel(raw);
 }
 
-function qualifiedAExecution(document, result) {
+function editableFoundationDocument(canonicalModel) {
+  return {
+    ...structuredClone(canonicalModel.sourceEvidence),
+    schema: MODEL_SCHEMA,
+  };
+}
+
+function qualifiedAExecution(source, canonicalInput, result) {
   return Object.freeze({
     stageId: 'LAFEA.1',
     status: 'QUALIFIED',
-    source: document,
-    canonicalInput: document,
+    source,
+    canonicalInput,
     result,
     diagnostics: Object.freeze([]),
   });

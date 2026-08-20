@@ -141,6 +141,14 @@ assert.throws(
   'Generic PASS must not masquerade as PASS_SOURCE_CUSTODY in the integrated qualification fixture',
 );
 
+const genericCauxSourcePassCannotAuthorizeBenchmark = fullyQualifiedSyntheticArtifacts(retained);
+genericCauxSourcePassCannotAuthorizeBenchmark.cauxSourceLedger.qualificationState = 'PASS';
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(genericCauxSourcePassCannotAuthorizeBenchmark),
+  /EMP1_C_CAUX_QUALIFICATION_WITHOUT_SOURCE_CUSTODY/u,
+  'Generic PASS must not masquerade as PASS_SOURCE_CUSTODY for CAUx benchmark custody',
+);
+
 const forgedAudit = fullyQualifiedSyntheticArtifacts(retained);
 forgedAudit.wrcAudit.metrics.numericScalarCoefficientCount = 1199;
 forgedAudit.wrcAudit.metrics.missingScalarCoefficientCount = 1;
@@ -202,6 +210,7 @@ console.log(JSON.stringify({
     'unrecognized pressure-thrust policy rejected',
     'false PASS runtime-contract artifact rejected',
     'generic source PASS cannot masquerade as PASS_SOURCE_CUSTODY',
+    'generic CAUx source PASS cannot masquerade as PASS_SOURCE_CUSTODY',
     'runtime-contract hash mismatch rejected by method authorization',
     'frozen WRC audit mutation without independently observed retained bytes rejected',
     'retained extraction manifest blob mutation rejected against immutable code pin',

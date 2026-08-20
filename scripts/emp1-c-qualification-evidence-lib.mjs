@@ -25,6 +25,7 @@ export const EMP1_C_RETAINED_ARTIFACT_PATHS = Object.freeze({
 
 const EXPECTED_CAUX_PAGES = Object.freeze([24, 25, 26, 27, 28, 29, 30, 31]);
 const SHA256_HEX = /^[a-f0-9]{64}$/u;
+const SOURCE_CUSTODY_QUALIFICATION_STATE = 'PASS_SOURCE_CUSTODY';
 const REQUIRED_WRC_CURVE_FIT_COEFFICIENTS = 10;
 const REQUIRED_WRC_INDEPENDENT_VARIABLE = 'U';
 
@@ -441,7 +442,7 @@ function deriveMethodAuthorization(authorization, wrcSourceLedger, cauxQualifica
 
 function sourceCustodyQualified(ledger) {
   return ledger.custodyState === 'VERIFIED'
-    && ledger.qualificationState === 'PASS'
+    && ledger.qualificationState === SOURCE_CUSTODY_QUALIFICATION_STATE
     && SHA256_HEX.test(ledger.rawPdfSha256 ?? '');
 }
 

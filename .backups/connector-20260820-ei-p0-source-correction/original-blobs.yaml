@@ -1,0 +1,22 @@
+schema: EiSourceCorrectionRollback.v1
+repository: reallaksh19/Advanced_Analysis
+base_commit: 782683e7355281e95e5319dcad7f8a5644710d1d
+source_pr: 1288
+note: Git blob IDs are immutable rollback evidence for the exact pre-edit PR1288 bytes. Native backup tooling was not used in this connector-only environment.
+files:
+  docs/EI data/EI-P0-FIT/T2-2_source_reference.yaml: 1b6618b246eec81b12a71bd0ef52f6dd017ee831
+  docs/EI data/EI-P0-AIV/T2-5_flowchart.yaml: 9dc74769f363e2d72b69a701c3f377ea0ebb6c18
+  docs/EI data/EI-P0-AIV/T2-6_flowchart.yaml: a8afcb1842d2fa05a6e7cbe16255acdc39a2a76f
+  docs/EI data/EI-P0-AIV/T2-6_diameter_ratio_modifier.csv: 6c7d975f5ea2c032ef5312e1ca3252067ed96a04
+  docs/EI data/EI-P0-AIV/T2-6_connection_modifier.csv: 93ff640a3eeb307def5562973bb0b4b11f746389
+  docs/EI data/EI-P0-AIV/T2-6_material_modifier.csv: 2b2748cb3bb70a0f6bbdad77970f758b3dbb434a
+  docs/EI data/EI-P0-AIV/T2-7_method_source_register.yaml: 57dc2b376d94fcec32190cc7257027cbe95dadcc
+  docs/EI data/EI-P1-IDENTIFICATION/T1-1_excitation_factors.csv: 774d092f5557e101f780e07b9a9a75fb1c50c4bf
+  docs/EI data/EI-P1-IDENTIFICATION/T1-2_condition_operational_factors.csv: 40aee83e180b7d03c847d17049ba1c2b0912fe05
+  docs/EI data/EI-P1-IDENTIFICATION/T1-1_combination_flowchart.yaml: 8e1f09583a7c520b27098521d50c8bbfc08d58ef
+  docs/EI data/EI-P1-IDENTIFICATION/T1-2_existing_plant_flowchart.yaml: fbbfa490f669114cab85448841e9a319edaa761c
+  docs/EI data/EI-P1-IDENTIFICATION/Table_3-1_disposition.csv: c915b9bbcae2d3cedb9953727f51df19b92b6843
+observe_only:
+  docs/EI data/EI-P0-FIT/T2-1_support_arrangement.csv: 85cb71c66a95bd4d2a44297a8715ea76fe08cd0e
+  docs/EI data/EI-P0-FIT/T2-2_fv_coefficients.csv: 9bd6cccadd84f82ab4b225496970a711e92b7f65
+  docs/EI data/EI - AVIFF Guidelines 2nd Edition.pdf: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5

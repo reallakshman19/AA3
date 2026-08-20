@@ -40,7 +40,7 @@ console.log(JSON.stringify({
   githubActionsWorkflowAdded: false,
 }));
 
-await import('./lafea-pr1270-source-remesh-matrix.mjs');
+await import('./lafea-pr1270-boundary-only-seed-matrix.mjs');
 
 function stage(stageId, document, profileId) {
   return { stageId, document, lifecycle: { profileId }, lifecycleBinding: { status: 'CURRENT' } };

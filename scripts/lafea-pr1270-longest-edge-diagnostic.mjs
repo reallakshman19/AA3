@@ -3,49 +3,24 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
-const refinementPath = 'src/workspace/lafea-retained-mesh-refinement.js';
 const evidencePath = 'src/workspace/lafea-analysis-mesh-evidence-v2.js';
-const originalRefinement = fs.readFileSync(refinementPath, 'utf8');
 const originalEvidence = fs.readFileSync(evidencePath, 'utf8');
-const roundsAnchor = 'const REFINEMENT_SMOOTHING_ROUNDS = 3;';
-assert.ok(originalRefinement.includes(roundsAnchor), 'smoothing-round anchor missing');
-const evidenceAnchor = "  if (result.qualification !== 'PASS') {\n    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');\n  }";
-assert.ok(originalEvidence.includes(evidenceAnchor), 'adjacency evidence anchor missing');
-const instrumentedEvidence = originalEvidence.replace(
-  evidenceAnchor,
-  "  if (result.qualification !== 'PASS') {\n    console.error('PR1270_SMOOTHING_METRIC=' + JSON.stringify(result));\n    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');\n  }",
+const anchor = "  if (result.qualification !== 'PASS') {\n    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');\n  }";
+assert.ok(originalEvidence.includes(anchor), 'adjacency evidence anchor missing');
+const instrumented = originalEvidence.replace(
+  anchor,
+  `  if (result.qualification !== 'PASS') {\n    const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));\n    const elementById = new Map(mesh.elements.map((element) => [element.elementId, element]));\n    const rows = result.violatingAdjacencies.map((row) => {\n      const edgeNodes = row.nodeIds.map((id) => nodeById.get(id));\n      const edgeMid = {\n        x: (edgeNodes[0].x + edgeNodes[1].x) / 2,\n        y: (edgeNodes[0].y + edgeNodes[1].y) / 2,\n      };\n      const elements = row.elementIds.map((elementId) => {\n        const element = elementById.get(elementId);\n        const corners = element.nodeIds.slice(0, 3).map((id) => nodeById.get(id));\n        const centroid = {\n          x: corners.reduce((sum, node) => sum + node.x, 0) / 3,\n          y: corners.reduce((sum, node) => sum + node.y, 0) / 3,\n        };\n        return {\n          elementId,\n          centroid,\n          centroidRadiusFromPlateCenter: Math.hypot(centroid.x - 100, centroid.y - 60),\n        };\n      });\n      return {\n        ...row,\n        edgeNodes: edgeNodes.map((node) => ({ nodeId: node.nodeId, x: node.x, y: node.y })),\n        edgeMid,\n        edgeMidRadiusFromPlateCenter: Math.hypot(edgeMid.x - 100, edgeMid.y - 60),\n        elements,\n      };\n    });\n    console.error('PR1270_ADJACENCY_GEOMETRY=' + JSON.stringify({\n      maximumAllowed: result.maximumAllowed,\n      maximumObserved: result.maximumObserved,\n      violatingAdjacencyCount: result.violatingAdjacencyCount,\n      expectedBandInterfacesFromPlateCenter: [15, 60],\n      rows,\n    }));\n    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');\n  }`,
 );
 
-const testedRounds = [3, 4, 5, 6, 8, 10, 12, 16, 20];
-const rows = [];
 try {
-  fs.writeFileSync(evidencePath, instrumentedEvidence);
-  for (const rounds of testedRounds) {
-    fs.writeFileSync(refinementPath, originalRefinement.replace(
-      roundsAnchor,
-      `const REFINEMENT_SMOOTHING_ROUNDS = ${rounds};`,
-    ));
-    const run = spawnSync(process.execPath, ['scripts/lafea-retained-mesh-refinement-check.mjs'], {
-      encoding: 'utf8',
-    });
-    const combined = `${run.stdout ?? ''}\n${run.stderr ?? ''}`;
-    const match = combined.match(/PR1270_SMOOTHING_METRIC=(\{[^\n]+\})/u);
-    const metric = match ? JSON.parse(match[1]) : null;
-    rows.push({
-      rounds,
-      status: run.status === 0 ? 'PASS' : 'FAIL',
-      maximumObserved: metric?.maximumObserved ?? null,
-      violatingAdjacencyCount: metric?.violatingAdjacencyCount ?? (run.status === 0 ? 0 : null),
-    });
-  }
+  fs.writeFileSync(evidencePath, instrumented);
+  const run = spawnSync(process.execPath, ['scripts/lafea-retained-mesh-refinement-check.mjs'], {
+    encoding: 'utf8',
+  });
+  process.stdout.write(run.stdout ?? '');
+  process.stderr.write(run.stderr ?? '');
+  assert.notEqual(run.status, 0, 'baseline unexpectedly passed while mapping blocker geometry');
+  assert.match(`${run.stdout ?? ''}\n${run.stderr ?? ''}`, /PR1270_ADJACENCY_GEOMETRY=/u);
 } finally {
-  fs.writeFileSync(refinementPath, originalRefinement);
   fs.writeFileSync(evidencePath, originalEvidence);
 }
-
-console.log(JSON.stringify({
-  check: 'PR1270_SMOOTHING_ROUND_SWEEP',
-  acceptanceMaximum: 1.5,
-  rows,
-}));
-assert.ok(rows.some((row) => row.status === 'PASS'), 'no tested deterministic smoothing round count satisfied the unchanged 1.5 gate');

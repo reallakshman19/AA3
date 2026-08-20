@@ -24,6 +24,16 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y poppler-utils
           fi
+      - name: Capture WRC cylindrical chart beta-domain evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/wrc-chart-pages
+          for page in 94 96 100 104 106 110 114 118 122 124 128 132 136 140 144 146; do
+            pdftotext -f "$page" -l "$page" -layout docs/emp1/WRC537_2013.pdf "test-results/wrc-chart-pages/page-${page}.txt"
+          done
+          echo '--- WRC PDF page 94 / Figure 1A chart text ---'
+          cat test-results/wrc-chart-pages/page-94.txt
       - name: Generate deterministic candidate production package
         run: node scripts/emp1-wrc-cylindrical-production-package-generate.mjs test-results/emp1-cylindrical-production-package.json
       - name: Cross-check all packaged scalars against frozen primary PDF
@@ -93,6 +103,7 @@ jobs:
           path: |
             test-results/emp1-cylindrical-production-package.json
             test-results/mutation-crosscheck.log
+            test-results/wrc-chart-pages
             src/core/emp1/emp1-wrc537-cylindrical-data.generated.js
           if-no-files-found: error
           retention-days: 30

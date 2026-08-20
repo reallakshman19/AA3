@@ -6,6 +6,11 @@ import { renderLafeaEvidence } from './lafea-results-view.js';
 import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
 import { renderLafeaCorrelationAvailability } from './lafea-correlation-availability-view.js';
 import {
+  renderEmp1BoundedCorrelationEvidence,
+  renderEmp1CorrelationResultEvidence,
+  renderEmp1StageEngineeringEvidence,
+} from './emp1-engineering-evidence-view.js';
+import {
   createEmp1BSourceCustodyCard,
   renderEmp1AssessmentWorkflow,
 } from './lafea-guided-workflow-view.js';
@@ -59,7 +64,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     'lafea-workbench__authority',
     foundation
       ? 'Authority: load/reference transfer and elastic pressure baseline only. It does not calculate WRC 107/537 local-attachment stress or establish code compliance.'
-      : 'Authority: nominal pipe-section screening only. EMP.1.C local correlation remains separately governed and blocked.',
+      : 'Authority: nominal pipe-section screening only. A separately qualified bounded EMP.1.C route may consume retained A/B evidence only after its exact runtime domain passes.',
   );
   scopeBoundary.dataset.role = 'lafea-analytical-scope-boundary';
   route.body.append(
@@ -78,6 +83,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     onApplyJson: options.handlers.onApplyJson,
   }));
 
+  const engineeringEvidence = renderEmp1StageEngineeringEvidence(root, stageId, stage, projection);
   const screeningCustody = foundation ? null : screeningLoadCustody(
     root,
     state,
@@ -88,6 +94,11 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   const correlationAvailability = foundation
     ? null
     : renderLafeaCorrelationAvailability(root, stage);
+  const boundedCorrelation = renderEmp1BoundedCorrelationEvidence(root, projection);
+  const correlationResult = renderEmp1CorrelationResultEvidence(
+    root,
+    options.emp1Execution?.localCorrelation ?? null,
+  );
 
   const settings = card(root, `${step.stepId} calculation contract and settings`);
   settings.section.dataset.guidedTarget = 'profile';
@@ -98,8 +109,8 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   const results = card(root, `${step.stepId} results`);
   results.section.dataset.guidedTarget = 'results';
   results.body.append(element(root, 'p', 'lafea-workbench__section-intro', foundation
-    ? 'EMP.1.A evidence only; local attachment correlation is not authorized.'
-    : 'EMP.1.B nominal screening evidence only; EMP.1.C local attachment correlation is not authorized.'));
+    ? 'EMP.1.A evidence only; local attachment correlation is not implied by this result.'
+    : 'EMP.1.B nominal screening evidence only; any bounded EMP.1.C result remains a separately governed local-correlation layer.'));
   if (!bSourceCurrent && stage.execution) {
     const stale = element(root, 'p', 'lafea-workbench__authority',
       `Retained B result is excluded from current EMP.1 evidence. ${projection.custody.userAction}`);
@@ -118,8 +129,11 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   lineage.section.dataset.guidedTarget = 'lineage';
   lineage.body.append(renderLafeaLifecyclePanel(lineage.body, stageId, stage));
   shell.append(route.section, source.section);
+  if (engineeringEvidence) shell.append(engineeringEvidence);
   if (screeningCustody) shell.append(screeningCustody);
   if (correlationAvailability) shell.append(correlationAvailability);
+  shell.append(boundedCorrelation);
+  if (correlationResult) shell.append(correlationResult);
   shell.append(settings.section, results.section, lineage.section);
 
   if (options.benchmarkHost) {

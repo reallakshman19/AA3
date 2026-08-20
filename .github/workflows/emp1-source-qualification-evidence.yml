@@ -116,12 +116,42 @@ jobs:
           node scripts/emp1-caux-pp24-31-extraction-gate-check.mjs \
             | tee test-results/emp1-source-qualification/caux-pp24-31-legacy-gate-check.json
 
-      - name: Run independent CAUx pp24-31 sustained hand calculation
+      - name: Re-observe frozen independent CAUx pp24-31 hand calculation
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/emp1-caux-pp24-31-independent-handcalc.mjs \
-            | tee test-results/emp1-source-qualification/caux-pp24-31-independent-handcalc.json
+          output="test-results/emp1-source-qualification/caux-pp24-31-independent-handcalc.json"
+          node scripts/emp1-caux-pp24-31-independent-handcalc.mjs | tee "$output"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const q = JSON.parse(await readFile('validation/emp1/caux2017-wrc01f/benchmark-qualification-v2.json', 'utf8'));
+          const r = JSON.parse(await readFile('test-results/emp1-source-qualification/caux-pp24-31-independent-handcalc.json', 'utf8'));
+          if (q.status !== 'HANDCALC_HASH_FROZEN_PENDING_REOBSERVATION') throw new Error(`EMP1_CAUX_HANDCALC_FREEZE_STATE:${q.status}`);
+          if (q.productionObservationUsed !== false || r.productionObservationUsed !== false) throw new Error('EMP1_CAUX_PRODUCTION_OBSERVATION_CONTAMINATION');
+          if (!Array.isArray(r.productionImports) || r.productionImports.length !== 0) throw new Error('EMP1_CAUX_HANDCALC_PRODUCTION_IMPORT');
+          if (r.status !== 'PASS' || r.engineeringAuthority !== true || r.productionAuthority !== false) throw new Error('EMP1_CAUX_HANDCALC_NOT_PASS');
+          if (r.sourceBenchmarkSemanticHash !== q.sourceBenchmark.semanticHash) throw new Error('EMP1_CAUX_BENCHMARK_HASH_MISMATCH');
+          if (r.handCalculationSemanticHash !== q.independentHandCalculation.frozenSemanticHash) {
+            throw new Error(`EMP1_CAUX_HANDCALC_HASH_DRIFT:${r.handCalculationSemanticHash}`);
+          }
+          const comparisons = r.calculationEvidence?.comparisons ?? {};
+          for (const [quantity, rows] of Object.entries(comparisons)) {
+            if (!Array.isArray(rows) || rows.length !== 8 || rows.some((row) => row.status !== 'PASS')) {
+              throw new Error(`EMP1_CAUX_HANDCALC_COMPARISON_NOT_PASS:${quantity}`);
+            }
+          }
+          if (q.authorization?.productionComparisonAllowed !== false || q.authorization?.emp1CRouteRegistrationAllowed !== false) {
+            throw new Error('EMP1_CAUX_PREMATURE_PRODUCTION_AUTHORIZATION');
+          }
+          console.log(JSON.stringify({
+            schema:'emp1-caux-handcalc-reobservation/v1',
+            status:'PASS',
+            benchmarkSemanticHash:r.sourceBenchmarkSemanticHash,
+            handCalculationSemanticHash:r.handCalculationSemanticHash,
+            productionObservationUsed:false,
+            productionImports:[],
+          },null,2));
+          NODE
 
       - name: Upload source qualification evidence
         if: always()

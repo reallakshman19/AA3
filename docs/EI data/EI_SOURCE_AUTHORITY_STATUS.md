@@ -21,22 +21,36 @@ The PDF blob is identical to the controlled main-guidance blob already pinned by
 | `EI-P0-FIT/T2-1_support_arrangement.csv` | **VERIFIED** | Controlled FIT T2.2 span/stiffness boundaries within the already-qualified bounded FIT method. |
 | `EI-P0-FIT/T2-2_fv_coefficients.csv` | **VERIFIED** | Controlled FIT T2.2 empirical correlation coefficients within the already-qualified bounded FIT method. |
 | `EI-P0-FIT/T2-2_source_reference.yaml` | **VERIFIED SUBSET** | FIT source chain, FVF and phase-specific LOF equations explicitly marked verified; quarantined items are not authority. |
-| `EI-P0-AIV/T2-5_flowchart.yaml` | **VERIFIED SUBSET** | D.2.3-reproduced source PWL, trim reduction, 155-dB gate and spatial attenuation. Multi-source generalization still requires its own independent gate. |
-| `EI-P0-AIV/T2-6_flowchart.yaml` | **PARTIAL / PROMOTION BLOCKED** | Official errata `log10(N)`, under-10 FLM1 relation, D.2.3 weldolet FLM2 and D.2.3 lower LOF branch only. A/S/B and other general branches remain unresolved. |
-| `EI-P0-AIV/T2-6_diameter_ratio_modifier.csv` | **VERIFIED CALCULATED SAMPLES FOR D/d < 10 ONLY** | Consistency/benchmark aid for the retained FLM1 relation. Not a digitized source table. `D/d >= 10` remains unresolved here. |
-| `EI-P0-AIV/T2-6_connection_modifier.csv` | **VERIFIED WELDOLET PATH ONLY** | Calculated FLM2 samples for the D.2.3-reconciled weldolet relation. Other connection types are not promoted. |
-| `EI-P0-AIV/T2-6_material_modifier.csv` | **QUARANTINED** | None. PR1288's general FLM3 abstraction is not source-qualified. |
+| `EI-P0-AIV/T2-5_flowchart.yaml` | **SOURCE-CORROBORATED / D.2.3 REPRODUCED** | Qualification evidence for source PWL, SFF values, trim reduction, 155 dB gates, attenuation, multi-source summation and source-path greatest-discontinuity rule. Production use still requires the downstream gates in the AIV source register. |
+| `EI-P0-AIV/T2-6_flowchart.yaml` | **SOURCE-CORROBORATED / D.2.3 REPRODUCED** | Qualification evidence for a/s/B, official-errata `log10(N)`, both FLM1 branches, Weldolet FLM2 branch, duplex FLM3 branch, Lf clamp and LOF mapping. Exact pinned-PDF visual parity and product qualification remain pending. |
+| `EI-P0-AIV/T2-6_diameter_ratio_modifier.csv` | **SOURCE-CORROBORATED CALCULATED SAMPLES** | Consistency/benchmark aid for the full FLM1 branch. Not a digitized source table. D.2.3 published FLM1 arithmetic variance remains open. |
+| `EI-P0-AIV/T2-6_connection_modifier.csv` | **SOURCE-CORROBORATED WELDOLET SAMPLES** | Calculated sample values for the source-corroborated Weldolet FLM2 formula. Non-Weldolet means no FLM2 application and is governed by the flowchart, not this sample table. |
+| `EI-P0-AIV/T2-6_material_modifier.csv` | **SOURCE-CORROBORATED BRANCH LOGIC** | Qualification evidence for Duplex -> apply FLM3; non-Duplex -> no FLM3. It does not classify a project material as Duplex. |
 | `EI-P1-IDENTIFICATION/*` | **QUARANTINED / SOURCE OBSERVATIONS ONLY** | None for production applicability/completeness/disposition. See `EI-P1-IDENTIFICATION/AUTHORITY_STATUS.yaml`. |
 | `EI_AVIFF_Complete_Master_Register.md` | **REFERENCE COMPILATION, NOT TRUST ROOT** | Navigation/review aid only. Any numerical or workflow statement must defer to the package-specific status above and the governing PDF. |
+
+## Source-corroboration boundary
+
+The AIV T2.5/T2.6 equations are now corroborated against an independently accessible text rendering of the original 2008 guidance and against the same equation chain in later EI subsea guidance, and they reproduce the controlled D.2.3 worked example. This is strong **qualification evidence**, but it is intentionally not represented as exact visual parity against the pinned repository PDF because the current transport cannot render that binary page.
+
+Therefore:
+
+```text
+exactPinnedPdfVisualParity = NOT_RUN / TRANSPORT_BLOCKED
+sourceEquationCorroboration = PASS
+D2_3NumericalReproduction = PASS
+screeningAuthorityPromotion = false
+designAuthority = false
+```
 
 ## Fail-closed rules
 
 1. A derived transcription may be consumed only when its own status explicitly permits the intended engineering use.
-2. `UNRESOLVED`, `QUARANTINED`, `REFERENCE`, or `WORKED_EXAMPLE_ANCHOR_ONLY` never means production authority.
-3. Do not infer missing EI equations, thresholds, score mappings, material modifiers, connection modifiers, or result dispositions from nearby examples.
-4. Worked-example published values can qualify a bounded benchmark path, but they do not create a general equation where the governing equation has not been source-reconciled.
+2. `UNRESOLVED`, `QUARANTINED`, `REFERENCE`, `QUALIFICATION_EVIDENCE_ONLY`, or `WORKED_EXAMPLE_ANCHOR_ONLY` never means production authority.
+3. Do not infer missing EI equations, thresholds, score mappings, material classifications, applicability dispositions, or result dispositions from nearby examples.
+4. Source-corroborated equations may close transcription gaps for qualification, but production promotion still requires exact applicable gates, implementation parity and release qualification.
 5. Source numbering must be preserved as published. Local disambiguation must not invent a replacement EI flowchart identifier.
 
-## PR1288 correction note
+## PR1288 / PR1289 correction note
 
-Merged PR #1288 supplied the needed source files, but several derived transcriptions were not numerically self-consistent with the controlled EI examples. The follow-on correction intentionally **reduces** claimed authority rather than filling source gaps by assumption.
+Merged PR #1288 supplied the needed source files, but several derived transcriptions were not numerically self-consistent with the controlled EI examples. Draft PR #1289 corrects those defects, keeps the P1 qualitative synthesis quarantined, and records the AIV T2.5/T2.6 equations as source-corroborated qualification evidence without granting screening or design authority.

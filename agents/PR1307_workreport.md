@@ -8,12 +8,13 @@
 - `PR: #1307`
 - `BRANCH: agent/emp1-05-suspend-axis-authority-20260821`
 - `BASE_MAIN: 8fe449d1be72db78a38cbdf55594a4a0fe847ea2`
-- `PR_STATE: OPEN`
+- `VALIDATED_EXACT_HEAD_BEFORE_REPORT_REFRESH: 1cf21273a28af00c2ece1fb5f5fc32ce64013159`
+- `PR_STATE: OPEN_READY_TO_MERGE_AFTER_DOCS_ONLY_REOBSERVATION`
 - `MERGE_AUTHORITY: GRANTED_BY_OWNER`
 - `GLOBAL_EMP1_C_ROUTE_REGISTERED: false`
 - `GAMMA5_PRODUCTION_ROUTE_AUTHORIZED: false`
 - `RELEASE_QUALIFIED: false`
-- `CURRENT_STAGE: FAIL_CLOSED_AXIS_SIGN_CONTAINMENT`
+- `CURRENT_STAGE: FAIL_CLOSED_AXIS_SIGN_CONTAINMENT_QUALIFIED`
 
 ## Purpose
 
@@ -78,12 +79,24 @@ No cylindrical WRC load sign is guessed or silently corrected in this PR.
 
 ## Validation ledger
 
-- Branch based exactly on `main@8fe449d1be72db78a38cbdf55594a4a0fe847ea2`: **PASS** before PR creation.
-- Changed-file comparison: **7 files**, **1 commit**, **0 behind** at PR creation.
-- Local runtime execution: **NOT_RUN** in the connector-only environment.
-- PR workflows: **PENDING / NOT YET OBSERVED** at this report creation.
-- Independent gamma5 Table-5 comparison oracle: retained; current PR workflow must re-observe before merge.
-- Production gamma5 route: **INTENTIONALLY BLOCKED** pending source arbitration.
+Exact PR head `1cf21273a28af00c2ece1fb5f5fc32ce64013159`:
+
+- `EMP.1 gamma5 bounded route on current main` — **PASS**, run `32419935459`.
+  - independent gamma5 Table-5 oracle re-observed;
+  - zero-dp load producer re-observed;
+  - comparison kernel remains executable;
+  - production route and registry fail closed on unresolved cylindrical axis-sign authority.
+- `EMP.1 runEmp1 bounded gamma5 orchestration` — **PASS**, run `32419935488`.
+  - independent gamma5 hand calculation retained;
+  - fail-closed axis-authority guard PASS;
+  - public-product containment PASS;
+  - core scaffold compatibility PASS.
+- `EMP.1 current-main independent baseline` — **PASS**, run `32419935464`.
+- Branch comparison at PR creation — **PASS**, `0 behind` current main.
+- Local connector runtime execution — **NOT_RUN**; no local PASS is claimed.
+- Production gamma5 route — **INTENTIONALLY BLOCKED**, not a validation failure.
+
+This report refresh is documentation-only. Any workflows triggered by this final report commit must remain green before merge; no production or qualification source changed after exact head `1cf21273...`.
 
 ## Reopen / reauthorization conditions
 
@@ -98,7 +111,7 @@ The gamma5 production route may be re-enabled only after all of the following ar
 
 ## Exact next action
 
-Observe PR #1307 workflows. If green, merge. Then proceed to the next audit defect: source-governed selection between WRC cylindrical longitudinal-moment curves `1B` versus `1B-1` and `2B` versus `2B-1`, which currently lacks an attachment-flexibility authority discriminator.
+Merge after the docs-only exact-head re-observation passes. Then proceed to the next audit defect: source-governed selection between WRC cylindrical longitudinal-moment curves `1B` versus `1B-1` and `2B` versus `2B-1`, which currently lacks an attachment-flexibility authority discriminator.
 
 ## Appendix A — next-agent qualification questions
 

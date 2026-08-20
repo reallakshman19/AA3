@@ -40,6 +40,7 @@ export class LfeaPipelineResultsPanelController {
     this.state = null;
     this.activeCaseId = null;
     this.activeView = 'DISPLACEMENTS';
+    this.forceFrame = 'local';
     this.sortColumn = 'nodeId';
     this.sortDirection = 'ASC';
     this.nodeFilter = '';
@@ -79,13 +80,28 @@ export class LfeaPipelineResultsPanelController {
     section.append(this.caseTabs(cases));
     const active = this.activeCase();
     if (active === null) return this;
-    section.append(this.caseStatus(active));
-    if (active.unilateralSummary !== null) section.append(this.accuracyWarning(active));
-    section.append(this.summaryStrip(active));
-    section.append(this.viewTabs());
-    section.append(this.tableControls());
-    section.append(this.activeTable(active));
-    section.append(this.exportBar(active));
+
+    // Did it solve, and what governs -- the Run step's question.
+    const runView = this.documentRef.createElement('div');
+    runView.dataset.role = 'lfea-pipeline-results-run-view';
+    runView.append(this.caseStatus(active));
+    if (active.unilateralSummary !== null) runView.append(this.accuracyWarning(active));
+    runView.append(this.summaryStrip(active));
+    section.append(runView);
+
+    // The numbers themselves -- the Output step's question.
+    const tableView = this.documentRef.createElement('div');
+    tableView.dataset.role = 'lfea-pipeline-results-table-view';
+    tableView.append(this.viewTabs());
+    tableView.append(this.activeView === 'ELEMENT_FORCES' ? this.frameTabs() : this.tableControls());
+    tableView.append(this.activeTable(active));
+    section.append(tableView);
+
+    // Getting them out -- the Export step's question.
+    const exportView = this.documentRef.createElement('div');
+    exportView.dataset.role = 'lfea-pipeline-results-export-view';
+    exportView.append(this.exportBar(active));
+    section.append(exportView);
     return this;
   }
 
@@ -124,6 +140,24 @@ export class LfeaPipelineResultsPanelController {
       strip.append(dt, dd);
     }
     return strip;
+  }
+
+  /** Local or global components for the element end forces. */
+  frameTabs() {
+    const doc = this.documentRef;
+    const bar = doc.createElement('div');
+    bar.className = 'lfea-pipeline-results__views';
+    bar.dataset.role = 'lfea-pipeline-results-frames';
+    for (const [frame, label] of [['local', 'Local (axial, shear, torsion)'], ['global', 'Global (model axes)']]) {
+      const button = doc.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.dataset.frame = frame;
+      button.dataset.active = String(frame === this.forceFrame);
+      button.addEventListener('click', () => { this.forceFrame = frame; this.render(); });
+      bar.append(button);
+    }
+    return bar;
   }
 
   /** Filter by node and say how the table is currently ordered. */
@@ -259,7 +293,7 @@ export class LfeaPipelineResultsPanelController {
     if (recovered === null) {
       return emptyParagraph(this.documentRef, this.elementForceUnavailableReason(active));
     }
-    return elementActionTable(this.documentRef, recovered);
+    return elementActionTable(this.documentRef, recovered, this.forceFrame);
   }
 
   /**
@@ -366,10 +400,22 @@ export class LfeaPipelineResultsPanelController {
       return toCsv(['Node', 'DX_mm', 'DY_mm', 'DZ_mm', 'RX_deg', 'RY_deg', 'RZ_deg', 'Dresultant_mm'], csvRows(this.displacementRows(active)));
     }
     const recovered = this.recoveredActionsFor(active.caseId) ?? [];
+    const csvRowsForActions = [];
+    for (const action of recovered) {
+      for (const end of ['I', 'J']) {
+        const components = action?.[this.forceFrame]?.[end];
+        if (!components) continue;
+        csvRowsForActions.push([
+          action.elementId, end,
+          ...['fx', 'fy', 'fz', 'mx', 'my', 'mz'].map((field) => formatNumber(components[field])),
+        ]);
+      }
+    }
+    const frame = this.forceFrame === 'local' ? 'local' : 'global';
     return toCsv(
-      ['Element', 'End', 'FX_N', 'FY_N', 'FZ_N', 'MX_Nm', 'MY_Nm', 'MZ_Nm'],
-      recovered.map((row) => [row.elementId, row.end,
-        ...['fx', 'fy', 'fz', 'mx', 'my', 'mz'].map((field) => formatNumber(row[field] ?? row.actions?.[field]))]),
+      ['Element', 'End', `FX_${frame}_N`, `FY_${frame}_N`, `FZ_${frame}_N`,
+        `MX_${frame}_Nm`, `MY_${frame}_Nm`, `MZ_${frame}_Nm`],
+      csvRowsForActions,
     );
   }
 
@@ -379,6 +425,7 @@ export class LfeaPipelineResultsPanelController {
       caseCount: (this.state?.cases ?? []).length,
       activeCaseId: this.activeCaseId,
       activeView: this.activeView,
+      forceFrame: this.forceFrame,
     });
   }
 
@@ -452,13 +499,39 @@ function nodeTable(doc, rows, labels) {
   return scrollWrap(doc, table);
 }
 
-function elementActionTable(doc, actions) {
-  const rows = actions.map((row) => [
-    row.elementId,
-    row.end,
-    ...['fx', 'fy', 'fz', 'mx', 'my', 'mz'].map((field) => formatNumber(row[field] ?? row.actions?.[field])),
+/**
+ * End forces for every element, both ends, in the requested frame.
+ *
+ * A recovered action carries `local` and `global`, each with an `I` and a `J`
+ * end -- one record per element covering both. Reading `row.end` and `row.fx`
+ * off it, as this did, found nothing: the table printed one row per element
+ * with an undefined end and six blank columns, for every model.
+ *
+ * Local is the default because that is how an engineer reads element end
+ * actions -- fx along the element, mx as torsion about it -- and the frame is
+ * named in the header either way, because the same six labels mean different
+ * things in each. Both are the solver's own recovered values; nothing here is
+ * derived from them.
+ */
+function elementActionTable(doc, actions, frame) {
+  const rows = [];
+  for (const action of actions) {
+    for (const end of ['I', 'J']) {
+      const components = action?.[frame]?.[end];
+      if (!components) continue;
+      rows.push([
+        action.elementId,
+        end,
+        ...['fx', 'fy', 'fz', 'mx', 'my', 'mz'].map((field) => formatNumber(components[field])),
+      ]);
+    }
+  }
+  const suffix = frame === 'local' ? 'local' : 'global';
+  return nodeTable(doc, rows, [
+    'Element', 'End',
+    `FX ${suffix} [N]`, `FY ${suffix} [N]`, `FZ ${suffix} [N]`,
+    `MX ${suffix} [N·m]`, `MY ${suffix} [N·m]`, `MZ ${suffix} [N·m]`,
   ]);
-  return nodeTable(doc, rows, ['Element', 'End', 'FX [N]', 'FY [N]', 'FZ [N]', 'MX [N·m]', 'MY [N·m]', 'MZ [N·m]']);
 }
 
 function scrollWrap(doc, node) {

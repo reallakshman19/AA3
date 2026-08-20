@@ -525,6 +525,31 @@
   display: none;
 }
 
+/* ---- Run vs Output vs Export ----
+   All three render into the RESULTS host and ask different questions: Run is
+   whether it solved and what governs, Output is the numbers, Export is
+   getting them out. Before this stamp existed the three steps were one page.
+
+   The sealed-package workbench is a separate engine -- it runs its own
+   pre-run check and code-stress application from an imported package -- so it
+   belongs to the Export step's territory, not on top of the results of the
+   analysis the pipeline just ran. */
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"],
+[data-host-group="RESULTS"][data-active-step="OUTPUT"]
+  [data-role="linear-piping-results-workbench"] {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="lfea-pipeline-results-table-view"],
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="lfea-pipeline-results-export-view"],
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="lfea-pipeline-results-table-view"] {
+  display: none;
+}
+
 /* ---- One loaded model, one source panel ----
    The three source panels share this host so an engineer can pick one while
    nothing is loaded. Once something IS loaded the other two only mislead --

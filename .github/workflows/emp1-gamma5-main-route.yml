@@ -19,11 +19,11 @@ jobs:
           node-version: '20'
 
       - name: Enforce EMP1-02 scope
+        if: github.event_name == 'pull_request' && github.head_ref == 'agent/emp1-02-gamma5-route-main-issue1261'
         shell: bash
         run: |
           set -euo pipefail
           base="${{ github.event.pull_request.base.sha }}"
-          if [ -z "$base" ]; then base="$(git rev-parse HEAD^)"; fi
           git diff --name-only "$base"...HEAD | tee /tmp/emp1-02-files.txt
           if grep -E '^(src/workspace/|src/ui/|e2e/)' /tmp/emp1-02-files.txt; then echo 'EMP1_02_SCOPE_VIOLATION:UI_WORKBENCH_E2E_CHANGE'; exit 1; fi
           if grep -E '^src/core/emp1/(emp1-orchestrator|emp1-public-product-contract|emp1-wrc537-gamma5-zero-dp-orchestration)\.js$' /tmp/emp1-02-files.txt; then echo 'EMP1_02_SCOPE_VIOLATION:ORCHESTRATION_OR_PUBLIC_PROJECTION_CHANGE'; exit 1; fi

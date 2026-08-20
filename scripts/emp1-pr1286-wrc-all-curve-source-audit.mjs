@@ -49,18 +49,32 @@ for (let i = 0; i < lines.length; i += 1) {
     pdfPage,
     orientation: parsed.orientation,
     curveCount: parsed.curveCount,
+    qualifiedParameterCurveCount: parsed.qualifiedParameterCurveCount,
+    unresolvedParameterCurveCount: parsed.unresolvedParameterCurveCount,
     curveKeys: parsed.curveKeys,
+    unresolvedCurveKeys: parsed.unresolvedCurveKeys,
     scalarCount: parsed.curveCount * 10,
+    sourceQualifiedScalarCount: parsed.qualifiedParameterCurveCount * 10,
   });
 }
 
 const summary = new Map();
 for (const row of tables) {
   const key = `${row.shellFamily}|${row.attachmentFamily}|${row.variant}|${row.independentVariable}`;
-  const entry = summary.get(key) ?? { tables: 0, curves: 0, scalars: 0 };
+  const entry = summary.get(key) ?? {
+    tables: 0,
+    curves: 0,
+    qualifiedParameterCurves: 0,
+    unresolvedParameterCurves: 0,
+    scalars: 0,
+    sourceQualifiedScalars: 0,
+  };
   entry.tables += 1;
   entry.curves += row.curveCount;
+  entry.qualifiedParameterCurves += row.qualifiedParameterCurveCount;
+  entry.unresolvedParameterCurves += row.unresolvedParameterCurveCount;
   entry.scalars += row.scalarCount;
+  entry.sourceQualifiedScalars += row.sourceQualifiedScalarCount;
   summary.set(key, entry);
 }
 
@@ -69,17 +83,38 @@ assert.deepEqual(duplicateLabels, [], 'duplicate exact figure labels');
 assert(tables.some((row) => row.shellFamily === 'SPHERICAL'), 'spherical family absent');
 assert(tables.some((row) => row.shellFamily === 'CYLINDRICAL'), 'cylindrical family absent');
 
+const totalCurves = tables.reduce((sum, row) => sum + row.curveCount, 0);
+const qualifiedParameterCurves = tables.reduce((sum, row) => sum + row.qualifiedParameterCurveCount, 0);
+const unresolvedParameterCurves = tables.reduce((sum, row) => sum + row.unresolvedParameterCurveCount, 0);
+const totalScalars = tables.reduce((sum, row) => sum + row.scalarCount, 0);
+const sourceQualifiedScalars = tables.reduce((sum, row) => sum + row.sourceQualifiedScalarCount, 0);
+assert.equal(totalCurves, qualifiedParameterCurves + unresolvedParameterCurves, 'curve custody partition');
+assert.equal(totalScalars, totalCurves * 10, 'scalar cardinality');
+
 console.log(JSON.stringify({
-  schema: 'emp1-pr1286-wrc-all-curve-source-audit/v2',
-  status: 'PASS',
+  schema: 'emp1-pr1286-wrc-all-curve-source-audit/v3',
+  status: unresolvedParameterCurves ? 'PASS_WITH_EXPLICIT_SOURCE_BLOCKERS' : 'PASS',
   source: {
     pdfSha256: '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2',
     pdfBlobSha1: 'ce861233928154145a9257efbbf8dbef3f5a17d1',
     extractionMarkdownBlobSha1: '810a39d845e15bae92d9c30abb8d452401e711d2',
   },
   tableCount: tables.length,
-  responseCurveCount: tables.reduce((sum, row) => sum + row.curveCount, 0),
-  scalarCoefficientCount: tables.reduce((sum, row) => sum + row.scalarCount, 0),
+  responseCurveCount: totalCurves,
+  qualifiedParameterCurveCount: qualifiedParameterCurves,
+  unresolvedParameterCurveCount: unresolvedParameterCurves,
+  scalarCoefficientCount: totalScalars,
+  sourceQualifiedScalarCount: sourceQualifiedScalars,
+  sourceUnresolvedScalarCount: totalScalars - sourceQualifiedScalars,
+  blockers: tables
+    .filter((row) => row.unresolvedParameterCurveCount > 0)
+    .map((row) => ({
+      code: 'BLOCK_SOURCE_CURVE_PARAMETER_IDENTITY',
+      figure: row.figureLabel,
+      pdfPage: row.pdfPage,
+      unresolvedCurveKeys: row.unresolvedCurveKeys,
+      rule: 'Do not infer a missing source parameter label from sequence or neighboring tables.',
+    })),
   summary: Object.fromEntries(summary),
   tables,
 }, null, 2));
@@ -106,7 +141,10 @@ function parseCoefficientRowwise(block, figureLabel) {
   return {
     orientation: 'COEFFICIENT_ROWS_RESPONSE_COLUMNS',
     curveCount,
+    qualifiedParameterCurveCount: curveCount,
+    unresolvedParameterCurveCount: 0,
     curveKeys: detailHeader.slice(1).map((header, index) => `column=${index + 1}:${header}`),
+    unresolvedCurveKeys: [],
   };
 }
 
@@ -114,14 +152,38 @@ function parseGammaRowwise(block, figureLabel) {
   const rows = block.map(parseRow).filter(Boolean);
   const coefficientHeader = rows.find((row) => row.length === 11 && row[0] === '' && row.slice(1).join('|') === COEFF.join('|'));
   if (!coefficientHeader) return null;
-  const gammaRows = rows.filter((row) => row.length === 11 && Number.isFinite(Number(row[0])) && row.slice(1).every((cell) => Number.isFinite(Number(cell))));
-  assert(gammaRows.length > 0, `${figureLabel}: gamma rows missing`);
-  const gammaValues = gammaRows.map((row) => Number(row[0]));
-  assert.equal(new Set(gammaValues).size, gammaValues.length, `${figureLabel}: duplicate gamma row`);
+
+  // A curve row is admitted when all ten coefficient cells are numeric. The
+  // shell-parameter cell is evaluated separately so a blank label is retained
+  // as an explicit unresolved source curve rather than converted by Number('')=0.
+  const coefficientDataRows = rows.filter((row) =>
+    row.length === 11
+    && row.slice(1).every((cell) => cell !== '' && Number.isFinite(Number(cell))));
+  assert(coefficientDataRows.length > 0, `${figureLabel}: coefficient data rows missing`);
+
+  const curveKeys = [];
+  const unresolvedCurveKeys = [];
+  const resolvedGammas = [];
+  for (let index = 0; index < coefficientDataRows.length; index += 1) {
+    const rawGamma = coefficientDataRows[index][0].trim();
+    if (rawGamma === '' || !Number.isFinite(Number(rawGamma))) {
+      const key = `row=${index + 1}:gamma=UNRESOLVED`;
+      curveKeys.push(key);
+      unresolvedCurveKeys.push(key);
+      continue;
+    }
+    const gamma = Number(rawGamma);
+    resolvedGammas.push(gamma);
+    curveKeys.push(`gamma=${rawGamma}`);
+  }
+  assert.equal(new Set(resolvedGammas).size, resolvedGammas.length, `${figureLabel}: duplicate resolved gamma row`);
   return {
     orientation: 'GAMMA_ROWS_COEFFICIENT_COLUMNS',
-    curveCount: gammaRows.length,
-    curveKeys: gammaRows.map((row) => `gamma=${row[0]}`),
+    curveCount: coefficientDataRows.length,
+    qualifiedParameterCurveCount: coefficientDataRows.length - unresolvedCurveKeys.length,
+    unresolvedParameterCurveCount: unresolvedCurveKeys.length,
+    curveKeys,
+    unresolvedCurveKeys,
   };
 }
 

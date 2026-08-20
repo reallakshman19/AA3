@@ -10,22 +10,26 @@ files:
     - docs/EI data/EI-P0-AIV/T2-6_connection_modifier.csv
     - docs/EI data/EI-P0-AIV/T2-6_material_modifier.csv
     - docs/EI data/EI-P0-AIV/T2-7_method_source_register.yaml
-    - docs/EI data/EI-P1-IDENTIFICATION/T1-1_excitation_factors.csv
-    - docs/EI data/EI-P1-IDENTIFICATION/T1-2_condition_operational_factors.csv
-    - docs/EI data/EI-P1-IDENTIFICATION/T1-1_combination_flowchart.yaml
-    - docs/EI data/EI-P1-IDENTIFICATION/T1-2_existing_plant_flowchart.yaml
-    - docs/EI data/EI-P1-IDENTIFICATION/Table_3-1_disposition.csv
+    - docs/EI data/EI-P1-IDENTIFICATION/AUTHORITY_STATUS.yaml
+    - docs/EI data/EI_SOURCE_AUTHORITY_STATUS.md
     - docs/EI data/README.md
-    - docs/EI data/EI_AVIFF_Complete_Master_Register.md
     - scripts/ei-aviff-source-master-p0-check.mjs
+    - .backups/connector-20260820-ei-p0-source-correction/original-blobs.yaml
+    - .backups/connector-20260820-ei-p0-source-correction/README.md.blobref
     - agents/WIP-EI-P0-SOURCE-CORRECTION-20260820_workreport.md
     - agents/status/WIP-EI-P0-SOURCE-CORRECTION-20260820.yaml
     - agents/claims/WIP-EI-P0-SOURCE-CORRECTION-20260820.yaml
   observe_only:
     - docs/EI data/EI - AVIFF Guidelines 2nd Edition.pdf
     - docs/EI data/EI_AVIFF_Guidelines_2nd_Edition_Examples.md
+    - docs/EI data/EI_AVIFF_Complete_Master_Register.md
     - docs/EI data/EI-P0-FIT/T2-1_support_arrangement.csv
     - docs/EI data/EI-P0-FIT/T2-2_fv_coefficients.csv
+    - docs/EI data/EI-P1-IDENTIFICATION/T1-1_excitation_factors.csv
+    - docs/EI data/EI-P1-IDENTIFICATION/T1-2_condition_operational_factors.csv
+    - docs/EI data/EI-P1-IDENTIFICATION/T1-1_combination_flowchart.yaml
+    - docs/EI data/EI-P1-IDENTIFICATION/T1-2_existing_plant_flowchart.yaml
+    - docs/EI data/EI-P1-IDENTIFICATION/Table_3-1_disposition.csv
 authority_domains:
   - EI_AVIFF_MASTER_DATA_SOURCE_TRANSCRIPTION
   - FIT_T2_2_SOURCE_REFERENCE_CORRECTION
@@ -42,4 +46,5 @@ excluded_authority:
   - P1_IDENTIFICATION_SCORING_AUTHORITY
 base_head: 782683e7355281e95e5319dcad7f8a5644710d1d
 overlap_state: SAFE
+validation_gate: scripts/ei-aviff-source-master-p0-check.mjs
 note: Correct only independently reproduced source transcription defects introduced by merged PR1288. Preserve valid FIT tables. Quarantine unresolved AIV T2.6 A/S/B/material semantics and synthetic P1 qualitative scoring rather than inventing authority.

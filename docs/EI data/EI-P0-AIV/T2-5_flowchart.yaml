@@ -1,0 +1,37 @@
+flowchart_id: Flowchart T2-5
+title: High Frequency Acoustic Fatigue Assessment (Source Sound Power Level & Screening)
+module: T2.7
+source_document: Energy Institute Guidelines 2nd Edition (2008)
+page: PDF 68 / Doc 60
+steps:
+  - step: 1
+    name: Source Sound Power Level Calculation
+    equation: "PWL_source = 10 * log10( W^0.2 * ((P1 - P2)/P1)^3.6 * (Te / Mw)^1.2 ) + 126.1 + SFF"
+    parameters:
+      W: "Mass flow rate (kg/s)"
+      P1: "Upstream static pressure (Pa or bar abs consistent with P2)"
+      P2: "Downstream static pressure"
+      Te: "Upstream temperature (K)"
+      Mw: "Molecular weight (g/mol)"
+      SFF: "Sonic flow factor: SFF = 6 if sonic flow exists (P1/P2 >= ((gamma+1)/2)^(gamma/(gamma-1))), else 0"
+  - step: 2
+    name: Low Noise Trim Reduction
+    rule: "If valve has low noise trim, PWL_source = PWL_source - delta_PWL_trim"
+    restriction: "Manufacturer raw PWL must NOT be used directly; only manufacturer noise reduction delta"
+  - step: 3
+    name: 155 dB Source Screening Gate
+    condition: "PWL_source < 155 dB"
+    true_action: "Main line LOF = 0.29 (No further AIV assessment required)"
+    false_action: "Proceed to welded discontinuities in mainline (SBC, welded tee, welded support)"
+  - step: 4
+    name: Spatial Attenuation to Discontinuity
+    equation: "PWL_discontinuity = PWL_source - (L_dis / (60 * Dint))"
+    units: "L_dis and Dint must be in consistent units (e.g. mm or m)"
+  - step: 5
+    name: Multi-Source Acoustic Summation
+    equation: "PWL_total = 10 * log10( sum( 10^(PWL_i / 10) ) )"
+  - step: 6
+    name: Discontinuity Screening Gate
+    condition: "PWL_total < 155 dB"
+    true_action: "Discontinuity LOF = 0.29; mainline LOF = max(previous discontinuity LOFs)"
+    false_action: "Proceed to Flowchart T2-6 for welded discontinuity LOF calculation"

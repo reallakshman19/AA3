@@ -1,0 +1,5 @@
+support_class,typical_fn_hz,c0,c1_dext,c2_dext2,lower_bound_expr,upper_bound_expr,engineering_definition,source_page
+Stiff,14 to 16 Hz,2.0563,0.0200,-1.2346e-5,0.0,-1.2346e-5*Dext^2 + 0.02*Dext + 2.0563,"Rigid, short-span, heavily supported piping with fundamental frequency >= 14 Hz",PDF 58 / Doc 50
+Medium Stiff,7 Hz,3.3601,0.025262,-1.1886e-5,-1.2346e-5*Dext^2 + 0.02*Dext + 2.0563,-1.1886e-5*Dext^2 + 0.025262*Dext + 3.3601,Standard well-supported process piping,PDF 58 / Doc 50
+Medium,4 Hz,4.4290,0.033583,-1.5968e-5,-1.1886e-5*Dext^2 + 0.025262*Dext + 3.3601,-1.5968e-5*Dext^2 + 0.033583*Dext + 4.4290,Moderately flexible piping with standard guide/support spacing,PDF 58 / Doc 50
+Flexible,1 Hz,4.4290,0.033583,-1.5968e-5,-1.5968e-5*Dext^2 + 0.033583*Dext + 4.4290,Infinity,Long unsupported spans (e.g. wellhead flowlines accommodating riser motion),PDF 58 / Doc 50

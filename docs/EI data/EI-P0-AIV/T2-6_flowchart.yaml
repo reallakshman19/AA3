@@ -1,0 +1,48 @@
+flowchart_id: Flowchart T2-6 (AIV)
+title: High Frequency Acoustic Fatigue Assessment (Determining Individual Welded Discontinuity LOF)
+module: T2.7
+source_document: Energy Institute Guidelines 2nd Edition (2008)
+page: PDF 69 / Doc 61
+steps:
+  - step: 1
+    name: Geometric and Stress Parameter Calculation
+    inputs:
+      Dext: "Main line outside diameter (mm)"
+      T: "Main line wall thickness (mm)"
+      PWL: "Total acoustic sound power level at discontinuity (dB)"
+    equations:
+      a: "1.12762e-7*(Dext/T)^3 - 1.812e-5*(Dext/T)^2 + 4.307277e-3*(Dext/T) + 91.9"
+      s: "-3.28e-7*(Dext/T)^3 + 8.503e-5*(Dext/T)^2 - 7.063e-3*(Dext/T) + 0.816"
+      B: "10^((PWL - a) / s)"
+  - step: 2
+    name: Baseline Cycles to Failure (N)
+    equation: "log10_N = 47.0712 - 6.3075*log10(B) - 0.183685*B + 5.575094e-4*B^2 - 1.3273e-6*B^3"
+    result: "N = 10^log10_N"
+  - step: 3
+    name: Diameter Ratio Modifier (FLM1)
+    condition: "Dext / dext < 10"
+    formula_under_10: "FLM1 = -0.07 + 0.91*(Dext/dext) + 1.32/(Dext/dext) - 0.48*(Dext/dext)^1.5 + 0.065*(Dext/dext)^2"
+    formula_10_and_above: "FLM1 = 0.5"
+    application: "N = N * FLM1"
+  - step: 4
+    name: Connection Type Modifier (FLM2)
+    condition: "Is connection a Weldolet type fitting?"
+    formula_weldolet: "FLM2 = 0.29 + 0.09 * tanh((PWL - 172) / 2.9)"
+    formula_standard_tee: "FLM2 = 1.0"
+    application: "N = N * FLM2"
+  - step: 5
+    name: Material Modifier (FLM3)
+    condition: "Is piping material Duplex / Super Duplex?"
+    formula_duplex: "FLM3 = 0.263 + 0.087 * tanh((PWL - 172) / 2.9)"
+    formula_carbon_or_austenitic: "FLM3 = 1.0"
+    application: "N = N * FLM3"
+  - step: 6
+    name: Likelihood of Failure (LOF) Mapping
+    equation: "Lf = 1.30 - 0.1303 * ln(N)"
+    clamping:
+      min: 0.0
+      max: 1.0
+    threshold_gate:
+      condition: "Lf >= 0.5"
+      true_action: "LOF = Lf"
+      false_action: "LOF = 0.29"

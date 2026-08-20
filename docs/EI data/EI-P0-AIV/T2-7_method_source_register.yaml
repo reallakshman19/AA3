@@ -1,0 +1,20 @@
+module: EI-P0-AIV
+title: High Frequency Acoustic Excitation (AIV) Method Source Register
+authority: Energy Institute Guidelines 2nd Edition (2008) Section T2.7
+reconciliation_note: >
+  In the printed Energy Institute Guidelines 2nd Edition, there is a known typographical
+  numbering collision in Section T2:
+  - Page 69 (Doc Page 61) is titled 'Flowchart T2-6 High frequency acoustic fatigue assessment (determining individual welded discontinuity LOF)'.
+  - Page 74 (Doc Page 66) is ALSO titled 'Flowchart T2-6 Dry gas rapid valve opening assessment'.
+  In this controlled database architecture:
+  - 'Flowchart T2-6' exclusively denotes the AIV Discontinuity Assessment.
+  - 'Flowchart T2-6b' (or Surge Flowchart T2-6) denotes the Dry Gas Rapid Valve Opening assessment.
+calculation_chain:
+  source_pwl: "Flowchart T2-5 (Step 1 to 3)"
+  spatial_attenuation: "PWL_dis = PWL_source - L_dis / (60 * Dint)"
+  multi_source_comb: "PWL_total = 10 * log10( sum( 10^(PWL_i / 10) ) )"
+  discontinuity_fatigue: "Flowchart T2-6"
+  modifiers:
+    FLM1: "T2-6_diameter_ratio_modifier.csv"
+    FLM2: "T2-6_connection_modifier.csv"
+    FLM3: "T2-6_material_modifier.csv"

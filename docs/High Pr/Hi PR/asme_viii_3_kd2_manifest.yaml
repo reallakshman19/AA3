@@ -1,0 +1,24 @@
+standard: ASME Section VIII Division 3
+part: KD (Design Requirements)
+article: KD-2 (Basic Design Requirements)
+source_pdf: ilide.info-asme-sec-viii-d3-art-kd-2-pr_a7181b037b53d68c9b5f980d0bacce40.pdf
+sha256: 36259fabfb83e451e02779dbe82b3885b1a7e506d47991c5297144f3f50a15a7
+paragraphs:
+  scope: KD-200
+  terms: KD-210
+  stress_intensities: KD-220
+  stress_limits: KD-230
+  elastic_plastic: KD-240
+  cylindrical_shells: KD-250 / KD-251.1
+  principal_stresses: KD-260
+formulas:
+  hoop_stress: "sigma_t = (P / (Y^2 - 1)) * (1 + (DO/D)^2)"
+  radial_stress: "sigma_r = (P / (Y^2 - 1)) * (1 - (DO/D)^2)"
+  axial_stress: "sigma_l = P / (Y^2 - 1)"
+  bore_stress_intensity: "S_bore = P * (2 * Y^2) / (Y^2 - 1)"
+  plastic_collapse_limit: "P_D <= (1 / 1.732) * Sy * ln(Y)"
+handoff_to_kd3:
+  export_quantities:
+    - principal_stresses: [sigma_1, sigma_2, sigma_3]
+    - principal_stress_differences: [S_12, S_23, S_31]
+    - normal_stresses: [sigma_n12, sigma_n23, sigma_n31]

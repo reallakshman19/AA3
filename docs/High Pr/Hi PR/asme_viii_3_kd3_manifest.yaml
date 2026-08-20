@@ -1,0 +1,39 @@
+standard: ASME Section VIII Division 3
+part: KD (Design Requirements)
+article: KD-3 (Fatigue Evaluation)
+source_pdf: kd-3.pdf
+sha256: 4dbba73ad342e69b3b755de392a987df634a917ba7fa2f66b072b32bf93ee6c7
+governing_paragraphs:
+  scope: KD-300
+  general: KD-301
+  theory: KD-302
+  stress_analysis: KD-310
+  loading_and_residual: KD-311
+  fatigue_stresses_fixed_axes: KD-312
+  fatigue_stresses_rotating_axes: KD-313
+  design_cycles: KD-320
+  fatigue_curve_basis: KD-321
+  use_of_fatigue_curves: KD-322
+  penalty_factor_ke: KD-323
+  cumulative_damage: KD-330
+  weld_fatigue: KD-340
+  cycle_counting: KD-350
+curves:
+  Table_KD_320_1: "kd3_fatigue_curves_data.csv"
+  CS_LAS_Forged_90ksi: "Figure KD-320.1"
+  CS_LAS_Forged_125ksi: "Figure KD-320.1"
+  CS_LAS_Nonwelded_80ksi: "Figure KD-320.2"
+  CS_LAS_Nonwelded_115ksi: "Figure KD-320.2"
+  Austenitic_SS: "Figure KD-320.3"
+  Stainless_17_4PH: "Figure KD-320.4"
+  HSLA_Bolting: "Figure KD-320.5"
+interpolation:
+  method: "log-log"
+  formula: "N = Ni * 10^( log10(Nj/Ni) * log10(Si/Sa) / log10(Si/Sj) )"
+acceptance_criterion:
+  cumulative_usage: "U = sum(ni / Ni) <= 1.00"
+fail_closed_codes:
+  - KD3_STRESS_EXCEEDS_MAX_FATIGUE_LIMIT
+  - KD3_MATERIAL_OUT_OF_SCOPE
+  - KD3_TEMPERATURE_EXCEEDS_CREEP_LIMIT
+  - KD3_CUMULATIVE_FATIGUE_EXCEEDED

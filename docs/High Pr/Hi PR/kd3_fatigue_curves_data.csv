@@ -1,0 +1,8 @@
+figure_id,curve_id,material_description,uts_ksi_range,sy_min_ksi,5E1,1E2,2E2,5E2,1E3,2E3,5E3,1E4,2E4,5E4,1E5,2E5,5E5,1E6,2E6,5E6,1E7,2E7,5E7,1E8,ecurve_msi,source_page
+KD-320.1,CS_LAS_FORGED_90,Forged Carbon / Low Alloy Steel Machined Parts,UTS = 90 ksi,38.0,311,226,164,113,89,72,57,49,43,34,29,25,21,19,17,16.2,15.7,15.2,14.5,14.0,28.3,Page 84 / 85
+KD-320.1,CS_LAS_FORGED_125,Forged Carbon / Low Alloy Steel Machined Parts,UTS >= 125 ksi (125-175),85.0,317,233,171,121,98,82,68,61,49,39,34,31,28,26,24,22.9,22.1,21.4,20.4,19.7,28.3,Page 84 / 85
+KD-320.2,CS_LAS_NONWELDED_80,Nonwelded Carbon / Low Alloy Steel Parts,UTS <= 80 ksi,30.0,275,205,155,105,83,64,48,38,31,23,20,16.5,13.5,12.5,12.1,11.5,11.1,10.8,10.3,9.9,30.0,Page 84 / 85
+KD-320.2,CS_LAS_NONWELDED_115,Nonwelded Carbon / Low Alloy Steel Parts,UTS = 115-130 ksi,70.0,230,175,135,100,78,62,49,44,36,29,26,24,22,20,19.3,18.5,17.8,17.2,16.4,15.9,30.0,Page 84 / 85
+KD-320.3,AUSTENITIC_SS,Austenitic Stainless Steel Construction,All standard grades,30.0,345,261,201,148,119,97,76,64,56,46,41,36,31,28,,,,,,,28.3,Page 84 / 85
+KD-320.4,MARTENSITIC_SS_17_4PH,17-4PH / 15-5PH Stainless Steel,UTS >= 115 ksi (793 MPa),100.0,205,171,149,129,103,86.1,72.0,65.1,60.0,54.8,51.6,48.7,45.2,42.8,40.6,37.8,35.9,,,,29.0,Page 84 / 85
+KD-320.5,HSLA_BOLTING,High-Strength Low Alloy Steel Bolting (SA-193/SA-320),High strength bolting,105.0,450,300,205,122,81,55,33,22.5,15,10.5,8.4,7.1,6.0,5.3,,,,,,,30.0,Page 84 / 85

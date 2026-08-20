@@ -51,6 +51,8 @@ console.log(JSON.stringify({
   githubActionsWorkflowAdded: false,
 }));
 
+await import('./lafea-pr1270-noflip-matrix.mjs');
+
 function stage(stageId, document, profileId) {
   return {
     stageId,

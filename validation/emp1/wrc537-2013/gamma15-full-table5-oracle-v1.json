@@ -1,7 +1,7 @@
 {
   "schema": "emp1-wrc537-gamma15-full-table5-oracle/v1",
-  "status": "PASS_FROZEN_PENDING_REOBSERVATION",
-  "engineeringAuthority": false,
+  "status": "PASS_REOBSERVED_INDEPENDENT_FULL_TABLE5_ORACLE",
+  "engineeringAuthority": true,
   "productionAuthority": false,
   "productionObservationUsed": false,
   "source": {
@@ -377,14 +377,14 @@
   },
   "semanticHash": "d34827bfdfebad9f175e5fbcdfeab5fdc799d28de5c298ed2ae578886f72ae98",
   "reobservation": {
-    "status": "PENDING",
-    "workflowRunId": null,
-    "workflowRunNumber": null,
+    "status": "PASS",
+    "workflowRunId": "32360787891",
+    "workflowRunNumber": 4,
     "productionImports": [],
     "productionObservationUsed": false
   },
   "authorization": {
-    "boundedAdapterProductionComparisonAllowed": false,
+    "boundedAdapterProductionComparisonAllowed": true,
     "boundedRouteRegistrationAllowed": false,
     "globalEmp1CRouteRegistrationAllowed": false
   }

@@ -29,6 +29,10 @@ test('imports, authorizes, analyzes, and reports governing values', async ({ pag
   await page.locator('input[type="file"][accept*="xml"]').first()
     .setInputFiles('benchmarks/LFEA/BM4/InputXML_BM4.repaired.xml');
   await expect(step('INPUT')).toHaveAttribute('data-step-status', 'COMPLETE', { timeout: 60000 });
+  // The same routing in the other direction: an InputXML model owns the host,
+  // and the ACCDB panel stays out of it.
+  await expect(page.locator('[data-host-group="SOURCE"]')).toHaveAttribute('data-active-source', 'INPUTXML');
+  await expect(page.locator('[data-role="lfea-pipeline-accdb-input-panel"]')).toBeHidden();
   // A loaded but unauthorized model: Error check is next, Load case says why
   // it cannot be reached rather than sitting there empty.
   await expect(guidance).toContainText('Next: Error check');

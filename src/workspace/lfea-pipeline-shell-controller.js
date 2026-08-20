@@ -47,6 +47,10 @@ export class LfeaPipelineShellController {
     this.assemblyHandlers = handlers;
   }
 
+  setActiveSourceKind(kind) {
+    this.view.setActiveSourceKind(kind);
+  }
+
   setAuthoritySupplementStatus(text) {
     this.view.setAuthoritySupplementStatus(text);
   }

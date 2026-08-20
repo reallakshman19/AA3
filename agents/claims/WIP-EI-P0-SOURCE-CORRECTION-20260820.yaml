@@ -1,0 +1,6 @@
+schema: AgentClaim.v1
+pr_or_wip: WIP-EI-P0-SOURCE-CORRECTION-20260820
+claim_state: RELEASED_TO_PR
+released_to: PR1289
+branch: agent/ei-p0-source-correction-20260820
+release_note: Active custody moved to agents/claims/PR1289.yaml. This WIP record is historical only and must not be treated as a second active claim.

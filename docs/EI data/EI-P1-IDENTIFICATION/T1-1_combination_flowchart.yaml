@@ -1,0 +1,21 @@
+flowchart_id: Flowchart T1-1
+title: Qualitative Assessment for New Design or Existing Plant
+module: TM-01
+source_document: Energy Institute Guidelines 2nd Edition (2008)
+page: PDF 43 / Doc 35
+logic:
+  step_1: "Determine individual Excitation Scores (E_i) from Table T1-1 (Items 1 to 10)"
+  step_2: "Calculate Total Excitation Score: E_total = sum(E_i)"
+  step_3: "Determine Condition & Operational Factor Scores (C_A, C_B, C_C, C_D) from Table T1-2"
+  step_4: "Calculate Operational Multiplier: M_op = 1 + (C_A + C_B + C_C + C_D) / 10"
+  step_5: "Calculate Combined Qualitative Ranking Score: Q_score = E_total * M_op"
+  disposition_thresholds:
+    - score_range: "Q_score >= 20"
+      classification: "High Likelihood of Failure (Priority 1)"
+      action: "Mandatory Quantitative Main Line, SBC, and Thermowell assessment (TM-02, TM-03, TM-04)"
+    - score_range: "10 <= Q_score < 20"
+      classification: "Medium Likelihood of Failure (Priority 2)"
+      action: "Visual survey (TM-05, TM-06) and screening review; proceed to quantitative evaluation if high-consequence lines"
+    - score_range: "Q_score < 10"
+      classification: "Low Likelihood of Failure (Priority 3)"
+      action: "Standard visual inspection during commissioning / routine operation"

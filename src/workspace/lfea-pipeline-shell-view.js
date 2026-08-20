@@ -82,11 +82,20 @@ export class LfeaPipelineShellView {
       stepButton.className = 'lfea-pipeline-shell__step';
       stepButton.dataset.role = 'lfea-pipeline-step';
       stepButton.dataset.stepId = step.stepId;
-      stepButton.innerHTML = `<span class="lfea-pipeline-shell__step-index">${index + 1}</span><span class="lfea-pipeline-shell__step-label">${step.label}</span>`;
+      stepButton.innerHTML = `<span class="lfea-pipeline-shell__step-index" data-role="lfea-pipeline-step-index">${index + 1}</span><span class="lfea-pipeline-shell__step-label">${step.label}</span>`;
       stepButton.addEventListener('click', () => handlers.onStepSelected(step.stepId));
       nav.append(stepButton);
       stepButtons.set(step.stepId, stepButton);
     });
+
+    // What is done, and what to do next. The stepper alone could only show
+    // six buttons of equal weight; this line names the one step the engineer
+    // is actually meant to act on, or says what is blocking if none is
+    // reachable.
+    const guidance = doc.createElement('p');
+    guidance.className = 'lfea-pipeline-shell__guidance';
+    guidance.dataset.role = 'lfea-pipeline-guidance';
+    guidance.setAttribute('aria-live', 'polite');
 
     const content = doc.createElement('div');
     content.className = 'lfea-pipeline-shell__content';
@@ -106,10 +115,10 @@ export class LfeaPipelineShellView {
     verificationDrawerHost.dataset.role = 'lfea-pipeline-verification-drawer-host';
     verificationDrawerHost.hidden = true;
 
-    shell.append(toolbar, nav, content, verificationDrawerHost);
+    shell.append(toolbar, nav, guidance, content, verificationDrawerHost);
     this.rootElement.append(shell);
     this.elements = {
-      shell, toolbar, loadSample, nav, stepButtons, content, sourceHost, loadCaseHost, resultsHost,
+      shell, toolbar, loadSample, nav, guidance, stepButtons, content, sourceHost, loadCaseHost, resultsHost,
       authorityInput, authorityText, assembleButton, assembleStatus,
       verificationDrawerToggle, verificationDrawerHost,
     };
@@ -134,16 +143,35 @@ export class LfeaPipelineShellView {
 
   render(state) {
     const { stepButtons } = this.elements;
-    LFEA_PIPELINE_STEPS.forEach((step) => {
+    const guidance = state.guidance;
+    LFEA_PIPELINE_STEPS.forEach((step, index) => {
       const stepButton = stepButtons.get(step.stepId);
       const status = state.stepAvailability[step.stepId];
       const isActive = state.activeStepId === step.stepId;
+      const stepStatus = guidance.stepStatusById[step.stepId];
       stepButton.classList.toggle('lfea-pipeline-shell__step--active', isActive);
       stepButton.classList.toggle('lfea-pipeline-shell__step--complete', Boolean(status.complete));
+      stepButton.classList.toggle('lfea-pipeline-shell__step--next', guidance.nextStepId === step.stepId);
+      stepButton.dataset.stepStatus = stepStatus;
       stepButton.setAttribute('aria-current', isActive ? 'step' : 'false');
       stepButton.disabled = !status.available;
-      if (status.detail) stepButton.title = status.detail;
+      // A finished step reads as finished at a glance; the number is only
+      // useful until it is done.
+      const indexCell = stepButton.querySelector('[data-role="lfea-pipeline-step-index"]');
+      if (indexCell) indexCell.textContent = status.complete ? '✓' : String(index + 1);
+      // Every disabled step says what would unblock it rather than being a
+      // dead button with no explanation.
+      const title = status.complete
+        ? `${step.label}: done.`
+        : status.available
+          ? (status.detail ?? `${step.label}: ready.`)
+          : (status.blockedReason ?? status.detail ?? `${step.label} is not reachable yet.`);
+      stepButton.title = title;
+      stepButton.setAttribute('aria-label', `${step.label} — ${stepStatus.toLowerCase()}. ${title}`);
     });
+    this.elements.guidance.textContent =
+      `Step ${guidance.completedCount} of ${guidance.stepCount} complete. ${guidance.nextActionText}`;
+    this.elements.guidance.dataset.nextStepId = guidance.nextStepId ?? '';
     const activeHostGroup = lfeaPipelineHostGroupFor(state.activeStepId);
     this.elements.sourceHost.hidden = activeHostGroup !== 'SOURCE';
     // INPUT and ERROR_CHECK share the SOURCE host but are not the same view:

@@ -1,0 +1,17 @@
+flowchart_id: Flowchart T1-2
+title: Qualitative Assessment for Change to Existing Plant (Management of Change / MOC)
+module: TM-01
+source_document: Energy Institute Guidelines 2nd Edition (2008)
+page: PDF 43 / Doc 35
+logic:
+  step_1: "Screen modification against Table T1-5 Potential Issues Checklist (Items 1 to 9):"
+    - "1. Flow velocity increase > 5% or density increase > 10% -> Check FIT (T2.2), Pulsation (T2.6), Thermowell (TM-04), Surge (T2.8)"
+    - "2. Gas Mw, Temperature, or Cp/Cv change > 5% -> Check Pulsation (T2.6), Rotating Stall (T2.5), Reciprocating (T2.4)"
+    - "3. Liquid density or Bulk Modulus change > 5% -> Check Reciprocating Pump Pulsation (T2.4)"
+    - "4. Positive displacement operational configuration change (parallel, recycle, unload) -> Check T2.4"
+    - "5. Centrifugal compressor low flow operation -> Check T2.5 Rotating Stall"
+    - "6. Choked flow or sonic velocity introduction -> Check T2.7 High Frequency Acoustic Excitation"
+    - "7. Flashing or cavitation potential -> Check T2.9 Cavitation & Flashing"
+    - "8. Non-like-for-like piping, valve, or machinery replacement -> Check T2.3, T2.8, TM-04, TM-05, TM-06"
+    - "9. Slug flow introduction -> Seek specialist multiphase dynamic analysis"
+  step_2: "If ANY Table T1-5 item is flagged 'YES', trigger targeted Quantitative Module for that mechanism."

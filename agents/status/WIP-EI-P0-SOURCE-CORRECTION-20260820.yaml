@@ -1,0 +1,10 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP-EI-P0-SOURCE-CORRECTION-20260820
+branch: agent/ei-p0-source-correction-20260820
+agent_state: RELEASED_TO_PR1289
+pr_recovery_state: RELEASED
+handover_readiness: READY
+report_path: agents/PR1289_workreport.md
+exact_next_action: continue from PR1289 recovery files
+last_updated: 2026-08-20T07:46:00+04:00

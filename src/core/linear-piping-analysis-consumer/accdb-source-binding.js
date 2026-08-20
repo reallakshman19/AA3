@@ -1,4 +1,8 @@
 import { accdbTablesToCanonicalGeometry } from '../geometry/adapters/accdb-to-canonical-geometry.js';
+import {
+  accdbRestraintsByNode,
+  childFeatureRecords,
+} from './accdb-source-child-features.js';
 import { INPUTXML_MODEL_HEALTH_SOURCE_SCHEMA } from '../geometry/adapters/inputxml-model-health-source.js';
 import { convertCaesarValue } from '../fea-benchmarks/caesar-accdb-units.js';
 
@@ -34,6 +38,7 @@ export function parseAccdbModelHealthSource(tables, options) {
   const rigidsByPointer = indexByPointer(tables.INPUT_RIGIDS.rows, 'RIGID_PTR');
   const reducersByPointer = indexByPointer(tables.INPUT_REDUCERS.rows, 'RED_PTR');
   const sifsByNode = groupByNode(tables.INPUT_SIFTEES.rows, 'NODE');
+  const restraintsByNode = accdbRestraintsByNode(tables.INPUT_RESTRAINTS.rows, elementRows);
 
   const lengthUnit = geometry.summary?.accdbUnits?.length ?? null;
   const effectiveByField = new Map();
@@ -61,7 +66,7 @@ export function parseAccdbModelHealthSource(tables, options) {
       rawDelta: rawDeltaFor(row, lengthUnit),
       rawAttributes: Object.freeze({ ...row }),
       childFeatures: Object.freeze(childFeatureRecords({
-        sourceFeatureId, row, rigidsByPointer, reducersByPointer, sifsByNode,
+        sourceFeatureId, row, rigidsByPointer, reducersByPointer, restraintsByNode, sifsByNode,
       })),
       fieldEvidence: Object.freeze(fieldEvidence),
       canonicalSegmentId: segment?.id ?? null,
@@ -79,6 +84,13 @@ export function parseAccdbModelHealthSource(tables, options) {
     modelFeatureId: null,
     modelAttributes: Object.freeze({}),
     unitSystem: Object.freeze({ lengthUnit: geometry.unit, declared: geometry.summary?.accdbUnits ?? null }),
+    // CAESAR stores ACCDB node coordinates as single-precision REALs -- every
+    // one of the 576 coordinates in the real BM4_L.ACCDB is exactly a float32
+    // value. Declaring that lets the topology closure check allow for the
+    // quantization a coordinate difference inherits from its own storage
+    // (see COORDINATE_PRECISION_RELATIVE in topology-graph-diagnostics.js)
+    // instead of reporting it as 45 model errors.
+    coordinatePrecision: 'FLOAT32',
     elementRecords: Object.freeze(elementRecords),
     sourceRecordCount: elementRecords.length,
     canonicalSegmentCount: geometry.segments.length,
@@ -103,6 +115,18 @@ const FIELD_SPECS = Object.freeze([
   field('INSUL_DENSITY', (segment) => segment?.meta?.analysis?.insulationDensity),
   field('CORR_ALLOW', (segment) => segment?.meta?.analysis?.corrosionAllowance),
 ]);
+
+/**
+ * The element fields this binding inventories, name + kind only.
+ *
+ * Exported so the property table the engineer edits and the override
+ * validator that accepts their edits are driven by the same list the
+ * evidence records are built from -- a field cannot appear in one and be
+ * unknown to another.
+ */
+export const ACCDB_ELEMENT_FIELD_SPECS = Object.freeze(
+  FIELD_SPECS.map((spec) => Object.freeze({ name: spec.name, kind: spec.kind })),
+);
 
 function field(name, canonicalValue, kind) {
   return Object.freeze({ name, canonicalValue, kind: kind ?? 'NUMBER' });
@@ -150,56 +174,6 @@ function classifyRawField(rawValue, kind) {
 
 function normalizeCanonical(value) {
   return value === undefined || value === null ? null : value;
-}
-
-function childFeatureRecords({ sourceFeatureId, row, rigidsByPointer, reducersByPointer, restraintsByNode, sifsByNode }) {
-  const records = [];
-  const rigidPointer = numberOrNull(row.RIGID_PTR);
-  if (rigidPointer != null && rigidPointer > 0) {
-    const declaration = rigidsByPointer.get(rigidPointer);
-    if (declaration) {
-      records.push(Object.freeze({
-        sourceFeatureId: `${sourceFeatureId}/RIGID[0]`,
-        parentFeatureId: sourceFeatureId,
-        kind: 'RIGID',
-        ordinal: 0,
-        rawAttributes: Object.freeze({ TYPE: declaration.RIGID_TYPE ?? null, WEIGHT: declaration.RIGID_WGT ?? null }),
-      }));
-    }
-  }
-  const reducerPointer = numberOrNull(row.REDUCER_PTR);
-  if (reducerPointer != null && reducerPointer > 0) {
-    const declaration = reducersByPointer.get(reducerPointer);
-    if (declaration) {
-      records.push(Object.freeze({
-        sourceFeatureId: `${sourceFeatureId}/REDUCER[0]`,
-        parentFeatureId: sourceFeatureId,
-        kind: 'REDUCER',
-        ordinal: 0,
-        rawAttributes: Object.freeze({ ...declaration }),
-      }));
-    }
-  }
-  const fromNode = cleanNodeId(row.FROM_NODE);
-  const toNode = cleanNodeId(row.TO_NODE);
-  // Restraints attach to nodes, not elements, in ACCDB's own table shape
-  // (unlike InputXML's inline per-element <RESTRAINT> tags), so they are
-  // not represented as childFeatures here -- restraint evidence already
-  // lives on geometry.nodes[].meta.restraints from the geometry adapter.
-  let sifOrdinal = 0;
-  for (const nodeId of [fromNode, toNode]) {
-    for (const sifRow of sifsByNode.get(nodeId) ?? []) {
-      records.push(Object.freeze({
-        sourceFeatureId: `${sourceFeatureId}/SIF[${sifOrdinal}]`,
-        parentFeatureId: sourceFeatureId,
-        kind: 'SIF',
-        ordinal: sifOrdinal,
-        rawAttributes: Object.freeze({ NODE: sifRow.NODE, TYPE: sifRow.TYPE, SIF_IN: sifRow.SIF_IN, SIF_OUT: sifRow.SIF_OUT }),
-      }));
-      sifOrdinal += 1;
-    }
-  }
-  return records;
 }
 
 function indexByPointer(rows, pointerField) {

@@ -1,0 +1,7 @@
+support_class,dext_min_mm,dext_max_mm,form,alpha_expr,beta_expr,alpha_c0,alpha_c1_dext,alpha_c2_dext2,alpha_c3_dext3,beta_c0,beta_c1_dext,beta_c2_dext2,beta_ln_coeff,source_page
+Stiff,60,762,POWER,446187 + 646*Dext + 9.17e-4*Dext^3,0.1*ln(Dext) - 1.3739,446187,646,0,9.17e-4,-1.3739,0,0,0.1000,PDF 59 / Doc 51
+Medium Stiff,60,762,POWER,283921 + 370*Dext,0.1106*ln(Dext) - 1.501,283921,370,0,0,-1.5010,0,0,0.1106,PDF 59 / Doc 51
+Medium,273,762,POWER,150412 + 209*Dext,0.0815*ln(Dext) - 1.3269,150412,209,0,0,-1.3269,0,0,0.0815,PDF 59 / Doc 51
+Medium,60,219,EXP_POWER,13.1 - 4.75e-3*Dext + 1.41e-5*Dext^2,-0.132 + 2.28e-4*Dext - 3.72e-7*Dext^2,13.10,-4.75e-3,1.41e-5,0,-0.1320,2.28e-4,-3.72e-7,0,PDF 59 / Doc 51
+Flexible,273,762,POWER,41.21*Dext + 49397,0.0815*ln(Dext) - 1.3842,49397,41.21,0,0,-1.3842,0,0,0.0815,PDF 59 / Doc 51
+Flexible,60,219,EXP_POWER,1.32e-5*Dext^2 - 4.42e-3*Dext + 12.22,2.84e-4*Dext - 4.62e-7*Dext^2 - 0.164,12.22,-4.42e-3,1.32e-5,0,-0.1640,2.84e-4,-4.62e-7,0,PDF 59 / Doc 51

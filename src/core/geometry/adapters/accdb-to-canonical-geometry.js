@@ -1,4 +1,8 @@
 import { CANONICAL_GEOMETRY_SCHEMA_VERSION } from '../geometryTypes.js';
+import {
+  ACCDB_RESTRAINT_TYPE_CODES_WITH_EVIDENCE,
+  accdbRestraintTypeCorrespondence,
+} from './accdb-restraint-type-correspondence.js';
 import { validateCanonicalGeometry } from '../validateCanonicalGeometry.js';
 import { checkDeclaredRadius, resolveBendArcCentre } from './inputxml-bend-arc.js';
 import { convertCaesarValue, temperatureToKelvin } from '../../fea-benchmarks/caesar-accdb-units.js';
@@ -220,15 +224,9 @@ export function accdbTablesToCanonicalGeometry(tables, options = {}) {
 
 const ACCDB_BLANK_SENTINEL = -1.01010000705719;
 const ACCDB_SENTINEL_TOLERANCE = 0.001;
-const CAESAR_ANCHOR_RESTRAINT_TYPE = 1;
 const SIF_TYPE_WELDING_TEE = 3;
 const SIF_TYPE_WELDOLET = 5;
 const POSITION_TOLERANCE_M = 1e-7;
-
-/** Only the one real, confirmed ACCDB density token — throw on anything else rather than guess. */
-const DENSITY_UNITS = Object.freeze({
-  'KG./CU.CM': Object.freeze({ factor: 1e6, unit: 'kg/m^3' }),
-});
 
 const MODEL_TABLE_NAMES = Object.freeze([
   'INPUT_BASIC_ELEMENT_DATA', 'INPUT_BENDS', 'INPUT_CONTROL', 'INPUT_FORCMNT',
@@ -257,9 +255,9 @@ function resolveAccdbUnitSystem(unitsRows, diagnostics) {
     stress: dimensionConverter('STRESS', declared.STRESS, diagnostics),
     emodulus: dimensionConverter('STRESS', declared.EMODULUS, diagnostics),
     pressure: dimensionConverter('STRESS', declared.PRESSURE, diagnostics),
-    pipeDensity: densityConverter(declared.PIPE_DENSITY, diagnostics),
-    insulDensity: densityConverter(declared.INSUL_DENSITY, diagnostics),
-    fluidDensity: densityConverter(declared.FLUID_DENSITY, diagnostics),
+    pipeDensity: dimensionConverter('DENSITY', declared.PIPE_DENSITY, diagnostics),
+    insulDensity: dimensionConverter('DENSITY', declared.INSUL_DENSITY, diagnostics),
+    fluidDensity: dimensionConverter('DENSITY', declared.FLUID_DENSITY, diagnostics),
     temp: (rawValue) => temperatureToKelvin(rawValue, declared.TEMP),
   };
 }
@@ -285,22 +283,6 @@ function dimensionConverter(dimension, rawUnit, diagnostics) {
       }
       return null;
     }
-  };
-}
-
-function densityConverter(rawUnit, diagnostics) {
-  let warned = false;
-  const token = String(rawUnit ?? '').trim().toUpperCase().replace(/\s+/gu, '').replace(/\.+$/gu, '');
-  const conversion = DENSITY_UNITS[token];
-  return (rawValue) => {
-    if (!conversion) {
-      if (!warned) {
-        warned = true;
-        addDiagnostic(diagnostics, 'error', 'ACCDB_UNIT_TOKEN_UNSUPPORTED', `Unsupported CAESAR DENSITY unit ${String(rawUnit)}.`, { dimension: 'DENSITY', rawUnit });
-      }
-      return null;
-    }
-    return Number(rawValue) * conversion.factor;
   };
 }
 
@@ -448,9 +430,17 @@ function resolveAccdbReducerGeometry(row, declaration, elementRows, lengthConver
   return {
     toOuterDiameter: outerDiameter,
     toWallThickness: wallThickness,
+    // ALPHA is an angle, so it carries no length unit to convert.
     alpha: accdbNumberOrNull(declaration.ALPHA),
-    r1: accdbNumberOrNull(declaration.R1),
-    r2: accdbNumberOrNull(declaration.R2),
+    // R1/R2 are retained exactly as the file states them, in the file's own
+    // length unit -- this adapter has no confirmed reading of what CAESAR
+    // measures them between, and converting on an assumption would put a
+    // silently mis-scaled length next to the two genuinely converted ones
+    // above. The names say which units they are in so no reader can mistake
+    // them for the metres the rest of this record is in; no mechanics
+    // consumes them today.
+    r1SourceUnits: accdbNumberOrNull(declaration.R1),
+    r2SourceUnits: accdbNumberOrNull(declaration.R2),
   };
 }
 
@@ -538,12 +528,23 @@ function attachAccdbBendGeometry(segment, row, declaration, elementRows, positio
 function attachAccdbRestraint(node, row, diagnostics) {
   const type = accdbNumberOrNull(row.RES_TYPEID);
   const restraints = node.meta.restraints || (node.meta.restraints = []);
+  // ACCDB's RES_TYPEID is a different enumeration from InputXML's TYPE (they
+  // disagree on GUI vs LIM, among others), so the raw code is translated
+  // through the evidenced correspondence rather than passed on as if the two
+  // numbering schemes matched. See accdb-restraint-type-correspondence.js.
+  const correspondence = accdbRestraintTypeCorrespondence(type);
   const gap = accdbNumberOrNull(row.GAP);
   const frictionCoefficient = accdbNumberOrNull(row.FRIC_COEF);
   const connectedNode = accdbNumberOrNull(row.CNODE);
-  const dominantDof = type === CAESAR_ANCHOR_RESTRAINT_TYPE ? null : dominantTranslationDof(row, node.id);
+  const dominantDof = correspondence?.conditioningClass === 'ANCHOR' ? null : dominantTranslationDof(row, node.id);
   restraints.push({
     resTypeId: type,
+    // The vocabulary every downstream reader already speaks: the corrected
+    // type code, the raw ACCDB code it came from, and the label CAESAR's own
+    // reports print for it.
+    sourceTypeCode: correspondence?.sourceTypeCode ?? null,
+    typeCode: correspondence?.typeCode ?? null,
+    typeLabel: correspondence?.typeLabel ?? null,
     xCosine: accdbNumberOrNull(row.XCOSINE),
     yCosine: accdbNumberOrNull(row.YCOSINE),
     zCosine: accdbNumberOrNull(row.ZCOSINE),
@@ -567,8 +568,25 @@ function attachAccdbRestraint(node, row, diagnostics) {
   if (frictionCoefficient != null) {
     addDiagnostic(diagnostics, 'warn', 'ACCDB_RESTRAINT_FRICTION_NOT_MODELED', `Restraint at node ${node.id} declares a friction coefficient; retained as evidence, not modeled by geometry ingestion.`, { nodeId: node.id, frictionCoefficient });
   }
-  if (type === CAESAR_ANCHOR_RESTRAINT_TYPE) {
+  if (correspondence === null) {
+    // An unrecognized restraint kind is not a detail to carry as evidence and
+    // move past: an omitted or misread support changes the load path and every
+    // reaction downstream of it. Fail closed and say which code needs
+    // evidence.
+    addDiagnostic(
+      diagnostics, 'error', 'ACCDB_RESTRAINT_TYPE_UNMAPPED',
+      `Restraint at node ${node.id} declares RES_TYPEID ${String(type)}, which has no evidenced correspondence to a CAESAR restraint type. Add it from a paired export rather than assuming the InputXML numbering.`,
+      { nodeId: node.id, resTypeId: type, codesWithEvidence: ACCDB_RESTRAINT_TYPE_CODES_WITH_EVIDENCE },
+    );
+    if (node.restraint === 'FREE') node.restraint = 'UNKNOWN';
+    return;
+  }
+  if (correspondence.conditioningClass === 'ANCHOR') {
     node.restraint = 'ANCHOR';
+  } else if (correspondence.conditioningClass !== null) {
+    // A node already anchored stays anchored: an anchor is the stronger
+    // condition, and a guide declared at the same node cannot relax it.
+    if (node.restraint !== 'ANCHOR') node.restraint = correspondence.conditioningClass;
   } else if (node.restraint === 'FREE') {
     node.restraint = 'UNKNOWN';
   }

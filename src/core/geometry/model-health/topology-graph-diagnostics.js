@@ -18,6 +18,35 @@ const DEFAULT_TOLERANCES = Object.freeze({
 });
 
 /**
+ * How precisely a source format can state a node coordinate at all.
+ *
+ * The closure residual below is a difference of two ABSOLUTE coordinates, so
+ * it carries whatever rounding those coordinates were stored with -- an error
+ * proportional to their distance from the origin, not to the element's own
+ * length. A source that writes coordinates as decimal text (InputXML,
+ * StagedJSON) reproduces them to double precision and needs no allowance;
+ * CAESAR's ACCDB stores them as single-precision REALs, so at a coordinate
+ * 735 m from the origin one ulp is already 0.0625 mm and a difference of two
+ * such coordinates carries up to ~1.25e-4 m of pure quantization. Measured on
+ * the real BM4_L.ACCDB: all 576 stored coordinates are exactly float32
+ * values, and 45 of 96 elements failed the fixed 1.001e-6 m tolerance on
+ * residuals of that size -- a model with nothing wrong with it could not
+ * pass, and no correct model of that extent ever could.
+ *
+ * Each float32 coordinate carries at most |c| * 2^-24 of rounding, so a
+ * difference of two carries at most (|a| + |b|) * 2^-24; the constant below
+ * is twice that half-ulp bound, which also covers combining three axes into
+ * the residual norm. This is the source's own information floor, not a
+ * relaxation of the check: below it, a real modelling error and a storage
+ * artefact are genuinely indistinguishable in the data. Sources that do not
+ * declare a precision get 0 and behave exactly as before.
+ */
+const COORDINATE_PRECISION_RELATIVE = Object.freeze({
+  FLOAT32: 2 ** -23,
+  FLOAT64: 0,
+});
+
+/**
  * CAESAR writes an unset numeric field as -1.0101, not as an empty attribute.
  *
  * An unset `DELTA_Y` therefore arrives as the literal number -1.0101 and, read
@@ -39,7 +68,7 @@ function isCaesarUnsetSentinel(value) {
 export function diagnoseInputXmlTopologyGraph(sourceBundle, options = {}) {
   const accepted = requireInputXmlModelHealthSource(sourceBundle);
   const geometry = accepted.geometry;
-  const tolerances = resolveTolerances(options);
+  const tolerances = resolveTolerances(options, accepted);
   const graph = buildTopologyGraph(geometry);
   const nodeById = indexNodes(geometry.nodes);
   const findings = [];
@@ -250,7 +279,13 @@ function collectCoordinateClosure(records, nodeById, tolerances) {
     });
     const residualNorm = vectorNorm(residual);
     const scale = Math.max(vectorNorm(actual), vectorNorm(declared.value), 1);
-    const acceptanceTolerance = tolerances.coordinateAbsolute + tolerances.coordinateRelative * scale;
+    // The magnitude term is what the endpoints' own storage precision costs
+    // (see COORDINATE_PRECISION_RELATIVE); it is 0 for every source that
+    // states coordinates exactly.
+    const coordinateMagnitude = vectorNorm(from) + vectorNorm(to);
+    const acceptanceTolerance = tolerances.coordinateAbsolute
+      + tolerances.coordinateRelative * scale
+      + tolerances.coordinateMagnitudeRelative * coordinateMagnitude;
     return Object.freeze({
       sourceFeatureId,
       sourceElementIndex: record.sourceIndex,
@@ -264,6 +299,7 @@ function collectCoordinateClosure(records, nodeById, tolerances) {
       residual,
       residualNorm,
       acceptanceTolerance,
+      coordinateMagnitude,
       unresolvedReasons: Object.freeze([]),
       status: residualNorm <= acceptanceTolerance ? 'PASS' : 'MISMATCH',
     });
@@ -333,7 +369,11 @@ function finding({ code, effect, scopeKey, message, entities = {}, evidence = {}
   });
 }
 
-function resolveTolerances(options) {
+function resolveTolerances(options, sourceBundle) {
+  const declaredPrecision = sourceBundle?.coordinatePrecision ?? null;
+  if (declaredPrecision !== null && COORDINATE_PRECISION_RELATIVE[declaredPrecision] === undefined) {
+    throw new TypeError(`Unknown source coordinate precision ${declaredPrecision}.`);
+  }
   return Object.freeze({
     coordinateAbsolute: positive(
       options.coordinateAbsoluteTolerance ?? DEFAULT_TOLERANCES.coordinateAbsolute,
@@ -343,6 +383,12 @@ function resolveTolerances(options) {
       options.coordinateRelativeTolerance ?? DEFAULT_TOLERANCES.coordinateRelative,
       'coordinateRelativeTolerance',
     ),
+    coordinateMagnitudeRelative: nonnegative(
+      options.coordinateMagnitudeRelativeTolerance
+        ?? (declaredPrecision === null ? 0 : COORDINATE_PRECISION_RELATIVE[declaredPrecision]),
+      'coordinateMagnitudeRelativeTolerance',
+    ),
+    sourceCoordinatePrecision: declaredPrecision,
     unit: 'GEOMETRY_NATIVE',
   });
 }

@@ -91,7 +91,30 @@ assert.ok(
 // Restraints.
 const nodeById = Object.fromEntries(geometry.nodes.map((node) => [node.id, node]));
 assert.equal(nodeById['10'].restraint, 'ANCHOR');
-assert.equal(nodeById['40'].restraint, 'UNKNOWN');
+// RES_TYPEID 3 is CAESAR's "+Y" (evidenced in
+// accdb-restraint-type-correspondence.js), so this node carries a real
+// restraint kind. Before that correspondence existed every non-anchor ACCDB
+// restraint read as UNKNOWN -- the model could not tell a support from
+// nothing.
+assert.equal(nodeById['40'].restraint, 'GUIDE');
+const node40Restraint = nodeById['40'].meta.restraints[0];
+assert.equal(node40Restraint.sourceTypeCode, '3', 'The raw ACCDB code is retained as evidence.');
+assert.equal(node40Restraint.typeCode, '14', 'RES_TYPEID 3 corresponds to corrected type code 14 (+Y).');
+assert.equal(node40Restraint.typeLabel, '+Y');
+
+// A restraint kind with no evidenced correspondence must fail closed: an
+// omitted or misread support changes the load path and every reaction after
+// it. ACCDB 8/9 are GUI/LIM -- the reverse of InputXML's 8/9 -- so guessing
+// from the numbering is exactly what this must not do.
+const unmappedTables = buildAccdbFixtureTables();
+unmappedTables.INPUT_RESTRAINTS.rows[1] = { ...unmappedTables.INPUT_RESTRAINTS.rows[1], RES_TYPEID: 4 };
+const unmappedGeometry = accdbTablesToCanonicalGeometry(unmappedTables, { source: 'accdb-fixture-check-unmapped-restraint' });
+assert.equal(unmappedGeometry.valid, false, 'An unmapped restraint type must not produce valid geometry.');
+assert.ok(
+  unmappedGeometry.diagnostics.some((d) => d.severity === 'error'
+    && d.code === 'ACCDB_RESTRAINT_TYPE_UNMAPPED' && d.data?.resTypeId === 4),
+  'Expected ACCDB_RESTRAINT_TYPE_UNMAPPED for a restraint code with no evidence.',
+);
 assert.ok(
   geometry.diagnostics.some((d) => d.code === 'ACCDB_RESTRAINT_GAP_NOT_MODELED' && d.data?.nodeId === '40'),
   'Expected a disclosed, not-modeled GAP diagnostic for the node 40 restraint.',
@@ -104,6 +127,24 @@ assert.ok(
   geometry.diagnostics.some((d) => d.code === 'ACCDB_RESTRAINT_NODE_UNRESOLVED'),
   'Expected a warning for the restraint referencing an unresolved node (9999).',
 );
+
+// Density label spelling: CAESAR writes the same unit as "kg./cu.cm."
+// (BM1/BM2/BM3) and as "kg.cu.cm." (BM4). Both must convert identically --
+// keying the registry on one literal spelling made every BM4-style export
+// report ACCDB_UNIT_TOKEN_UNSUPPORTED plus one
+// ACCDB_UNIT_DECLARATION_REQUIRED per declared density field.
+for (const label of ['kg.cu.cm.', 'kg. / cu.cm.', 'KG/CU.CM.']) {
+  const tablesForLabel = buildAccdbFixtureTables();
+  tablesForLabel.INPUT_UNITS.rows[0] = {
+    ...tablesForLabel.INPUT_UNITS.rows[0],
+    PIPE_DENSITY: label, INSUL_DENSITY: label, FLUID_DENSITY: label,
+  };
+  const geometryForLabel = accdbTablesToCanonicalGeometry(tablesForLabel, { source: 'accdb-fixture-check-density-label' });
+  const unitErrors = geometryForLabel.diagnostics.filter((d) => d.severity === 'error' && d.code.startsWith('ACCDB_UNIT_'));
+  assert.deepEqual(unitErrors, [], `Density label "${label}" must convert without unit diagnostics: ${JSON.stringify(unitErrors)}`);
+  const element1 = geometryForLabel.segments.find((segment) => segment.meta.sourceElementId === '1');
+  assert.ok(Math.abs(element1.meta.analysis.pipeDensity - 7833) < 1, `Density label "${label}" should convert 0.007833 to ~7833 kg/m^3, got ${element1.meta.analysis.pipeDensity}`);
+}
 
 // Unsupported density token must fail closed (an error diagnostic, and the
 // geometry marked invalid), not silently guess at an unconfirmed factor.

@@ -1,8 +1,14 @@
-export const LFEA_PIPELINE_RESULTS_PANEL_SCHEMA = 'lfea-pipeline-results-panel/v1';
+import {
+  LFEA_RESULTS_ALL_DOFS,
+  LFEA_RESULTS_ROTATION_DOFS,
+  extremeNodeIds,
+  filterResultRows,
+  nodeResultRows,
+  sortResultRows,
+  summarizeCaseResults,
+} from './lfea-pipeline-results-view-model.js';
 
-const TRANSLATION_DOFS = Object.freeze(['UX', 'UY', 'UZ']);
-const ROTATION_DOFS = Object.freeze(['RX', 'RY', 'RZ']);
-const ALL_DOFS = Object.freeze([...TRANSLATION_DOFS, ...ROTATION_DOFS]);
+export const LFEA_PIPELINE_RESULTS_PANEL_SCHEMA = 'lfea-pipeline-results-panel/v1';
 
 /**
  * The Output step: what an engineer actually came for -- nodal displacements,
@@ -34,6 +40,9 @@ export class LfeaPipelineResultsPanelController {
     this.state = null;
     this.activeCaseId = null;
     this.activeView = 'DISPLACEMENTS';
+    this.sortColumn = 'nodeId';
+    this.sortDirection = 'ASC';
+    this.nodeFilter = '';
   }
 
   init() {
@@ -72,10 +81,100 @@ export class LfeaPipelineResultsPanelController {
     if (active === null) return this;
     section.append(this.caseStatus(active));
     if (active.unilateralSummary !== null) section.append(this.accuracyWarning(active));
+    section.append(this.summaryStrip(active));
     section.append(this.viewTabs());
+    section.append(this.tableControls());
     section.append(this.activeTable(active));
     section.append(this.exportBar(active));
     return this;
+  }
+
+  /**
+   * Where the worst of it is, before the table of everything.
+   *
+   * A hundred-node model prints six hundred numbers in node order and leaves
+   * the governing displacement somewhere in the middle. These are the same
+   * numbers, ranked -- nothing here is derived beyond the magnitude of the
+   * components already shown.
+   */
+  summaryStrip(active) {
+    const doc = this.documentRef;
+    const summary = summarizeCaseResults(
+      this.displacementRows(active),
+      this.reactionRows(active),
+    );
+    const strip = doc.createElement('dl');
+    strip.className = 'lfea-pipeline-results__summary';
+    strip.dataset.role = 'lfea-pipeline-results-summary';
+    const tiles = [
+      ['Nodes', String(summary.nodeCount), null],
+      ['Restrained nodes', String(summary.restrainedNodeCount), null],
+      ['Max displacement', summary.maxTranslation && `${formatNumber(summary.maxTranslation.magnitude)} mm`, summary.maxTranslation?.nodeId],
+      ['Max rotation', summary.maxRotation && `${formatNumber(summary.maxRotation.magnitude)} deg`, summary.maxRotation?.nodeId],
+      ['Max support force', summary.maxForce && `${formatNumber(summary.maxForce.magnitude)} N`, summary.maxForce?.nodeId],
+      ['Max support moment', summary.maxMoment && `${formatNumber(summary.maxMoment.magnitude)} N·m`, summary.maxMoment?.nodeId],
+    ];
+    for (const [label, value, nodeId] of tiles) {
+      if (value === null || value === undefined) continue;
+      const dt = doc.createElement('dt');
+      dt.textContent = label;
+      const dd = doc.createElement('dd');
+      dd.dataset.metric = label;
+      dd.textContent = nodeId === null || nodeId === undefined ? value : `${value} @ node ${nodeId}`;
+      strip.append(dt, dd);
+    }
+    return strip;
+  }
+
+  /** Filter by node and say how the table is currently ordered. */
+  tableControls() {
+    const doc = this.documentRef;
+    const bar = doc.createElement('div');
+    bar.className = 'lfea-pipeline-results__controls';
+    bar.dataset.role = 'lfea-pipeline-results-controls';
+    const label = doc.createElement('label');
+    label.textContent = 'Filter by node ';
+    const input = doc.createElement('input');
+    input.type = 'search';
+    input.dataset.role = 'lfea-pipeline-results-filter';
+    input.value = this.nodeFilter;
+    input.addEventListener('input', () => {
+      this.nodeFilter = input.value;
+      this.render();
+      // Re-rendering replaces the input, so focus has to be put back or the
+      // filter can only accept one keystroke at a time.
+      const refreshed = this.elements.section.querySelector('[data-role="lfea-pipeline-results-filter"]');
+      if (refreshed) { refreshed.focus(); refreshed.setSelectionRange(refreshed.value.length, refreshed.value.length); }
+    });
+    label.append(input);
+    bar.append(label);
+    return bar;
+  }
+
+  displacementRows(active) {
+    // Solver works in metres and radians; engineers read millimetres and degrees.
+    return nodeResultRows(active.displacements, (dof) => (LFEA_RESULTS_ROTATION_DOFS.includes(dof) ? 180 / Math.PI : 1000));
+  }
+
+  reactionRows(active) {
+    // Forces and moments are already N and N*m.
+    return nodeResultRows(active.reactions, () => 1);
+  }
+
+  /** Apply the engineer's filter and column sort to one set of node rows. */
+  presentRows(rows) {
+    return sortResultRows(filterResultRows(rows, this.nodeFilter), this.sortColumn, this.sortDirection);
+  }
+
+  sortBy(columnKey) {
+    if (this.sortColumn === columnKey) {
+      this.sortDirection = this.sortDirection === 'ASC' ? 'DESC' : 'ASC';
+    } else {
+      this.sortColumn = columnKey;
+      // A value column is asked about largest-first; node order is not.
+      this.sortDirection = columnKey === 'nodeId' ? 'ASC' : 'DESC';
+    }
+    this.render();
   }
 
   caseTabs(cases) {
@@ -141,20 +240,85 @@ export class LfeaPipelineResultsPanelController {
 
   activeTable(active) {
     if (this.activeView === 'DISPLACEMENTS') {
-      return nodeTable(this.documentRef, displacementRows(active.displacements), [
-        'Node', 'DX [mm]', 'DY [mm]', 'DZ [mm]', 'RX [deg]', 'RY [deg]', 'RZ [deg]',
-      ]);
+      const rows = this.displacementRows(active);
+      return this.resultTable(rows, [
+        ['Node', 'nodeId'], ['DX [mm]', 'UX'], ['DY [mm]', 'UY'], ['DZ [mm]', 'UZ'],
+        ['RX [deg]', 'RX'], ['RY [deg]', 'RY'], ['RZ [deg]', 'RZ'],
+        ['|D| [mm]', 'translationResultant'],
+      ], active);
     }
     if (this.activeView === 'REACTIONS') {
-      return nodeTable(this.documentRef, reactionRows(active.reactions), [
-        'Node', 'FX [N]', 'FY [N]', 'FZ [N]', 'MX [N·m]', 'MY [N·m]', 'MZ [N·m]',
-      ]);
+      const rows = this.reactionRows(active);
+      return this.resultTable(rows, [
+        ['Node', 'nodeId'], ['FX [N]', 'UX'], ['FY [N]', 'UY'], ['FZ [N]', 'UZ'],
+        ['MX [N·m]', 'RX'], ['MY [N·m]', 'RY'], ['MZ [N·m]', 'RZ'],
+        ['|F| [N]', 'translationResultant'],
+      ], active);
     }
     const recovered = this.recoveredActionsFor(active.caseId);
     if (recovered === null) {
       return emptyParagraph(this.documentRef, this.elementForceUnavailableReason(active));
     }
     return elementActionTable(this.documentRef, recovered);
+  }
+
+  /**
+   * A sortable node table whose governing rows are marked.
+   *
+   * The rows the summary above names are stamped data-extreme, so the reader
+   * is not left scanning for the value they were just told about.
+   */
+  resultTable(rows, columns, active) {
+    const doc = this.documentRef;
+    const extremes = extremeNodeIds(summarizeCaseResults(
+      this.displacementRows(active),
+      this.reactionRows(active),
+    ));
+    const presented = this.presentRows(rows);
+    const table = doc.createElement('table');
+    table.className = 'lfea-pipeline-results__table';
+    table.dataset.role = 'lfea-pipeline-results-table';
+    table.dataset.sortColumn = this.sortColumn;
+    table.dataset.sortDirection = this.sortDirection;
+    const head = doc.createElement('tr');
+    for (const [label, columnKey] of columns) {
+      const th = doc.createElement('th');
+      th.scope = 'col';
+      const button = doc.createElement('button');
+      button.type = 'button';
+      button.dataset.role = 'lfea-pipeline-results-sort';
+      button.dataset.columnKey = columnKey;
+      const active_ = this.sortColumn === columnKey;
+      button.textContent = active_ ? `${label} ${this.sortDirection === 'ASC' ? '▲' : '▼'}` : label;
+      button.addEventListener('click', () => this.sortBy(columnKey));
+      th.append(button);
+      head.append(th);
+    }
+    table.append(head);
+    for (const row of presented) {
+      const tr = doc.createElement('tr');
+      tr.dataset.nodeId = row.nodeId;
+      if (extremes.has(row.nodeId)) tr.dataset.extreme = 'true';
+      for (const [, columnKey] of columns) {
+        const td = doc.createElement('td');
+        td.textContent = columnKey === 'nodeId'
+          ? row.nodeId
+          : formatNumber(columnKey === 'translationResultant'
+            ? row.translationResultant
+            : row.values[columnKey] ?? 0);
+        tr.append(td);
+      }
+      table.append(tr);
+    }
+    if (presented.length === 0) {
+      const tr = doc.createElement('tr');
+      const td = doc.createElement('td');
+      td.colSpan = columns.length;
+      td.textContent = `No node matches "${this.nodeFilter}".`;
+      tr.append(td);
+      table.append(tr);
+    }
+    return scrollWrap(doc, table);
   }
 
   /** Say WHICH case failed to qualify, not just that recovery was refused. */
@@ -188,11 +352,18 @@ export class LfeaPipelineResultsPanelController {
   }
 
   csvFor(active) {
+    // Exports what is on screen, filter and sort included: an export that
+    // silently differed from the table would be the more surprising choice.
+    const csvRows = (rows) => this.presentRows(rows).map((row) => [
+      row.nodeId,
+      ...LFEA_RESULTS_ALL_DOFS.map((dof) => formatNumber(row.values[dof] ?? 0)),
+      formatNumber(row.translationResultant),
+    ]);
     if (this.activeView === 'REACTIONS') {
-      return toCsv(['Node', 'FX_N', 'FY_N', 'FZ_N', 'MX_Nm', 'MY_Nm', 'MZ_Nm'], reactionRows(active.reactions));
+      return toCsv(['Node', 'FX_N', 'FY_N', 'FZ_N', 'MX_Nm', 'MY_Nm', 'MZ_Nm', 'Fresultant_N'], csvRows(this.reactionRows(active)));
     }
     if (this.activeView === 'DISPLACEMENTS') {
-      return toCsv(['Node', 'DX_mm', 'DY_mm', 'DZ_mm', 'RX_deg', 'RY_deg', 'RZ_deg'], displacementRows(active.displacements));
+      return toCsv(['Node', 'DX_mm', 'DY_mm', 'DZ_mm', 'RX_deg', 'RY_deg', 'RZ_deg', 'Dresultant_mm'], csvRows(this.displacementRows(active)));
     }
     const recovered = this.recoveredActionsFor(active.caseId) ?? [];
     return toCsv(
@@ -216,36 +387,6 @@ export class LfeaPipelineResultsPanelController {
     this.elements = null;
     this.initialized = false;
   }
-}
-
-/** Group per-DOF solver rows into one row per node, in display units. */
-function groupByNode(rows, scaleFor) {
-  const byNode = new Map();
-  for (const row of rows ?? []) {
-    const node = String(row.nodeId).replace(/^.*\.N/u, '');
-    if (!byNode.has(node)) byNode.set(node, {});
-    byNode.get(node)[row.dof] = row.value * scaleFor(row.dof);
-  }
-  return [...byNode.entries()]
-    .sort((left, right) => compareNodes(left[0], right[0]))
-    .map(([node, values]) => [node, ...ALL_DOFS.map((dof) => formatNumber(values[dof] ?? 0))]);
-}
-
-function displacementRows(rows) {
-  // Solver works in metres and radians; engineers read millimetres and degrees.
-  return groupByNode(rows, (dof) => (ROTATION_DOFS.includes(dof) ? 180 / Math.PI : 1000));
-}
-
-function reactionRows(rows) {
-  // Forces and moments are already N and N*m.
-  return groupByNode(rows, () => 1);
-}
-
-function compareNodes(left, right) {
-  const a = Number(left);
-  const b = Number(right);
-  if (Number.isFinite(a) && Number.isFinite(b) && a !== b) return a - b;
-  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function formatNumber(value) {

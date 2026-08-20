@@ -189,8 +189,31 @@
   color: var(--workspace-panel-strong);
 }
 
-.lfea-pipeline-shell__step--complete .lfea-pipeline-shell__step-index::after {
-  content: '\2713';
+/* The tick replaces the step number in the view (render()); a ::after glyph
+   here would print a second one next to it. */
+.lfea-pipeline-shell__step--complete {
+  color: var(--workspace-text);
+}
+
+.lfea-pipeline-shell__step--complete .lfea-pipeline-shell__step-index {
+  border-color: currentColor;
+}
+
+/* The one step the engineer is meant to act on next. */
+.lfea-pipeline-shell__step--next:not(:disabled) {
+  border-color: var(--workspace-accent);
+  color: var(--workspace-text);
+  box-shadow: 0 0 0 1px var(--workspace-accent) inset;
+}
+
+.lfea-pipeline-shell__guidance {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--workspace-border);
+  background: var(--workspace-panel);
+  color: var(--workspace-muted);
+  font-size: 12px;
 }
 
 .lfea-pipeline-shell__content {
@@ -337,6 +360,56 @@
   background: rgba(217, 164, 65, 0.08);
   font-size: 12px;
   line-height: 1.5;
+}
+
+/* Governing values, before the table of everything. */
+.lfea-pipeline-results__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px 12px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+}
+
+.lfea-pipeline-results__summary dt {
+  grid-row: 1;
+  color: var(--workspace-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lfea-pipeline-results__summary dd {
+  grid-row: 2;
+  margin: 0;
+  color: var(--workspace-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-pipeline-results__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+/* Sorting is a column header action, so the header reads as one. */
+.lfea-pipeline-results__table th button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* The rows the summary above is pointing at. */
+.lfea-pipeline-results__table tr[data-extreme="true"] {
+  background: color-mix(in srgb, var(--workspace-accent) 12%, transparent);
 }
 
 .lfea-pipeline-results__scroll {

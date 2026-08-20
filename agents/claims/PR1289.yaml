@@ -16,6 +16,7 @@ files:
     - scripts/ei-aviff-source-master-p0-check.mjs
     - .backups/connector-20260820-ei-p0-source-correction/original-blobs.yaml
     - .backups/connector-20260820-ei-p0-source-correction/README.md.blobref
+    - .backups/connector-20260820-ei-t26-corroboration/original-blobs.yaml
     - agents/PR1289_workreport.md
     - agents/status/PR1289.yaml
     - agents/claims/PR1289.yaml
@@ -36,7 +37,8 @@ files:
 authority_domains:
   - EI_AVIFF_MASTER_DATA_SOURCE_TRANSCRIPTION
   - FIT_T2_2_SOURCE_REFERENCE_CORRECTION
-  - AIV_T2_7_SOURCE_REFERENCE_CORRECTION
+  - AIV_T2_5_SOURCE_RECONCILIATION
+  - AIV_T2_6_SOURCE_RECONCILIATION
   - SOURCE_AUTHORITY_QUARANTINE
 claim_modes:
   - EXCLUSIVE
@@ -44,12 +46,10 @@ excluded_authority:
   - PRODUCTION_CALCULATOR_MUTATION
   - SCREENING_AUTHORITY_PROMOTION
   - DESIGN_AUTHORITY
-  - UNSOURCED_EI_METHOD_COMPLETION
-  - AIV_T2_6_ASB_FORMULA_AUTHORITY
+  - PRODUCTION_AIV_T2_6_AUTHORITY
   - P1_IDENTIFICATION_SCORING_AUTHORITY
 base_head: 782683e7355281e95e5319dcad7f8a5644710d1d
-implementation_head: 47f8a643e6a056313889a298b458dcc1a4fe475a
 overlap_state: SAFE
 validation_gate: scripts/ei-aviff-source-master-p0-check.mjs
 merge_authority: OWNER_ONLY_NOT_GRANTED
-note: PR1289 corrects only independently reproduced PR1288 source transcription defects and reduces authority for unresolved AIV T2.6/P1 content. It does not change production calculator behavior.
+note: PR1289 corrects independently reproduced PR1288 source transcription defects and advances T2.5/T2.6 equations to source-corroborated qualification evidence. Exact pinned-PDF visual parity, downstream implementation parity, release qualification and all production authority remain outside this claim.

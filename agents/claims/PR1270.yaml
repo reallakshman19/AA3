@@ -6,36 +6,48 @@ files:
     - agents/PR1270_workreport.md
     - agents/status/PR1270.yaml
     - agents/claims/PR1270.yaml
+    - e2e/lafea-emp1-a-to-b-refresh.spec.js
+    - scripts/emp1-a-result-presentation-check.mjs
+    - scripts/emp1-a-to-b-refresh-check.mjs
+    - scripts/lafea-ui-analysis-settings-check.mjs
+    - scripts/lafea3-local-refinement-ui-check.mjs
+    - scripts/lafea3-mapped-refinement-envelope-check.mjs
+    - src/core/emp1/emp1-a-to-b-refresh.js
     - src/core/lafea-meshing/refinement-fields.js
     - src/workspace/lafea-analysis-mesh-evidence-v2.js
-    - src/workspace/lafea-discretization-view-model.js
+    - src/workspace/lafea-discretization-dom.js
     - src/workspace/lafea-discretization-generation-panel.js
-    - scripts/lafea3-local-refinement-ui-check.mjs
+    - src/workspace/lafea-discretization-panel.js
+    - src/workspace/lafea-discretization-view-model.js
+    - src/workspace/lafea-result-presenters/local-stress.js
+    - src/workspace/lafea-retained-mesh-refinement-grading.js
+    - src/workspace/lafea-retained-mesh-refinement.js
   prefixes: []
 authority_domains:
   - LAFEA3_RETAINED_LOCAL_REFINEMENT_UI
   - LAFEA3_LOCAL_REFINEMENT_ADJACENCY_ACCEPTANCE
+  - LAFEA3_SOURCE_AFFINE_MAPPED_REFINEMENT
   - REFINEMENT_TRANSITION_EVIDENCE
+  - EMP1_CANONICAL_REFRESH_REGRESSION_REPAIR
 claim_modes:
   - EXCLUSIVE_EXACT_FILES
 excluded_authority:
-  - MESH_PRODUCER_BINDING
-  - RETAINED_REFINEMENT_ALGORITHM
   - GENERIC_V2_QUALITY_SCHEMA
-  - MESH_PROFILE_THRESHOLDS
+  - MESH_PROFILE_THRESHOLD_RELAXATION
   - SOLVER_MECHANICS
   - FORMULATION
   - RECOVERY
-  - LIFECYCLE_AUTHORITY
-  - RELEASE_AUTHORITY
-observe_only:
-  - src/workspace/lafea-mesh-producer-binding.js
-  - src/workspace/lafea-retained-mesh-refinement.js
-  - src/workspace/lafea-analysis-mesh-quality.js
-  - src/workspace/lafea-workbench-content.js
-  - src/workspace/lafea-workbench-controller.js
-last_verified_head: ed6fb1458cd7d34013151c1550920b682eeeb056
-implementation_basis_head: c3e161beb4c0bec95c506eee0a5c1ce27c1f6984
-main_head_last_checked: cf3aaeefb028ee387d3d530f5e0e5106bd489dce
-overlap_state: COORDINATION_REQUIRED_BOUNDED_SAFE
-note: PR1270 is stacked on PR1268. It reuses the existing retained-mesh refinement algorithm. Local-refinement adjacency is enforced only for LAFEA.3 meshes whose identity contains :LOCAL_REFINEMENT:, inside the v2 evidence constructor before custody, using the bound profile adjacentSizeRatioMax. No new canonical evidence/quality field is added. The retained-refinement implementation file and generic analysis-mesh quality file are observe-only and absent from the final diff. Current minimum local/global target ratio 0.25 and Q8 fail-closed behavior remain protected invariants.
+  - B02D_QUALIFICATION_DEFINITION
+  - LIFECYCLE_RELEASE_AUTHORITY
+invariants:
+  - LAFEA3_MINIMUM_LOCAL_GLOBAL_RATIO_0_25
+  - ADJACENT_SIZE_RATIO_MAX_1_5_UNCHANGED
+  - SCALED_JACOBIAN_BLOCK_0_2_UNCHANGED
+  - Q8_LOCAL_REFINEMENT_FAIL_CLOSED
+  - ACTUAL_CHILD_REQUALIFIED_BEFORE_V2_CUSTODY
+  - PASSING_GENERIC_V2_EVIDENCE_SHAPE_UNCHANGED
+last_verified_head: beaccbcac2dd553e7ac9778675d8bcae1ed84115
+current_metadata_head_before_reconciliation: e4f7bdfd6f1df3ca8f760e3ac39b74908e7aec1f
+main_head_last_checked: d24a5a1ecb5dc555cd11a29429b02106f5cbfe9b
+overlap_state: RECONCILIATION_REQUIRED
+note: PR1270 replaces the falsified radial retained-child construction with the narrowly qualified SOURCE_AFFINE_BALANCED_METRIC_GRID_V1 route. Permanent product qualification covers 48 T3/T6 positive cases and seven fail-closed exclusions. Worst actual adjacency is 1.3282147318170396 against unchanged 1.5; minimum scaled Jacobian is 0.23728455020922165 against unchanged 0.2 block. Full exact-head workflow reaches only the inherited downstream B02D T3/L1 BLOCK != PASS boundary. Owner granted merge authority on 2026-08-20 subject to final current-main exact-head reconciliation.

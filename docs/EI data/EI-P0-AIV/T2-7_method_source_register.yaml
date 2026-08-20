@@ -1,20 +1,53 @@
 module: EI-P0-AIV
 title: High Frequency Acoustic Excitation (AIV) Method Source Register
-authority: Energy Institute Guidelines 2nd Edition (2008) Section T2.7
+governing_source:
+  publication: Energy Institute Guidelines 2nd Edition (2008)
+  section: T2.7
+  source_pdf_git_blob: 9d3eccc56429411e17c07a579bdebbd13cb0bdc5
+authority_state: PARTIAL_SOURCE_RECONCILIATION
+production_promotion_authority: BLOCKED_PENDING_CONTROLLED_T2_6_HUMAN_RECONCILIATION
 reconciliation_note: >
-  In the printed Energy Institute Guidelines 2nd Edition, there is a known typographical
-  numbering collision in Section T2:
-  - Page 69 (Doc Page 61) is titled 'Flowchart T2-6 High frequency acoustic fatigue assessment (determining individual welded discontinuity LOF)'.
-  - Page 74 (Doc Page 66) is ALSO titled 'Flowchart T2-6 Dry gas rapid valve opening assessment'.
-  In this controlled database architecture:
-  - 'Flowchart T2-6' exclusively denotes the AIV Discontinuity Assessment.
-  - 'Flowchart T2-6b' (or Surge Flowchart T2-6) denotes the Dry Gas Rapid Valve Opening assessment.
+  Source labels must be preserved as printed. The EI material includes an AIV
+  Flowchart T2-6 for welded-discontinuity assessment and other T2 flowchart labels
+  that can collide in secondary transcriptions. Local software may disambiguate by
+  module/context, but it must not invent a replacement EI identifier.
 calculation_chain:
-  source_pwl: "Flowchart T2-5 (Step 1 to 3)"
-  spatial_attenuation: "PWL_dis = PWL_source - L_dis / (60 * Dint)"
-  multi_source_comb: "PWL_total = 10 * log10( sum( 10^(PWL_i / 10) ) )"
-  discontinuity_fatigue: "Flowchart T2-6"
+  source_pwl:
+    source: T2-5_flowchart.yaml
+    authority: VERIFIED_FOR_D2_3_SOURCE_PWL_ANCHORS
+    equation: "10*log10(W^2 * ((P1-P2)/P1)^3.6 * (Te/Mw)^1.2) + 126.1 + SFF"
+  spatial_attenuation:
+    source: T2-5_flowchart.yaml
+    authority: VERIFIED_FOR_D2_3_ATTENUATION_ANCHOR
+    equation: "attenuation_dB = 60 * L_dis_m / Dint_mm; PWL_dis = PWL_effective - attenuation_dB"
+    empirical_unit_basis: "L in m; Dint in mm"
+  multi_source_combination:
+    candidate_equation: "PWL_total = 10 * log10(sum(10^(PWL_i/10)))"
+    authority: UNRESOLVED_PENDING_DIRECT_T2_5_RECONCILIATION_AND_INDEPENDENT_BENCHMARK
+  discontinuity_fatigue:
+    source: T2-6_flowchart.yaml
+    authority: VERIFIED_SUBSET_ONLY
+    unresolved:
+      - A_S_B_EQUATIONS
+      - D_OVER_d_10_AND_ABOVE
+      - NON_WELDOLET_CONNECTION_MODIFIERS
+      - GENERAL_MATERIAL_MODIFIER
+      - LOF_MAPPING_FOR_Lf_GE_0_5
   modifiers:
-    FLM1: "T2-6_diameter_ratio_modifier.csv"
-    FLM2: "T2-6_connection_modifier.csv"
-    FLM3: "T2-6_material_modifier.csv"
+    FLM1:
+      file: T2-6_diameter_ratio_modifier.csv
+      authority: VERIFIED_UNDER_10_FORMULA_WITH_OPEN_D2_3_PUBLISHED_VARIANCE
+    FLM2:
+      file: T2-6_connection_modifier.csv
+      authority: VERIFIED_WELDOLET_PATH_ONLY
+    material:
+      file: T2-6_material_modifier.csv
+      authority: QUARANTINED_PENDING_DIRECT_T2_6_SOURCE_RECONCILIATION
+official_errata:
+  page_61_feed_from_T2_5:
+    status: VERIFIED_OFFICIAL_PUBLISHER_ERRATA
+    equation: "log10(N) = 470711.5155 - 63075.1242*log10(B) + 183685.4368/sqrt(B) - 575094.3273/B^0.1"
+    d2_3_anchor: "B=152.207 -> log10N≈9.9026 -> N≈7.99E9"
+correction_record:
+  source_pr: 1288
+  note: "Derived CSV/YAML does not inherit engineering authority automatically from the governing PDF. Only explicitly verified subsets may be consumed."

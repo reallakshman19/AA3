@@ -86,12 +86,20 @@ jobs:
             | tee test-results/emp1-source-qualification/wrc-primary-coefficient-self-test.json
           node scripts/emp1-wrc-primary-coefficient-source-generate.mjs --pdf-text "$pdf_text"
 
-      - name: Keep retained contradiction ledger blocked until direct page arbitration is frozen
+      - name: Preserve primary-source formula and sign arbitration
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/emp1-wrc-retained-source-arbitration-check.mjs \
-            | tee test-results/emp1-source-qualification/retained-source-arbitration-check.json
+          node --input-type=module <<'NODE' | tee test-results/emp1-source-qualification/primary-source-arbitration-check.json
+          import { readFile } from 'node:fs/promises';
+          const p = JSON.parse(await readFile('validation/emp1/wrc537-2013/primary-source-arbitration-v2.json', 'utf8'));
+          if (p.status !== 'PASS_METHOD_FORMULA_AND_SIGN_AUTHORITY') throw new Error(`EMP1_WRC_PRIMARY_ARBITRATION:${p.status}`);
+          if (p.primarySource?.rawPdfSha256 !== '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2') throw new Error('EMP1_WRC_PRIMARY_ARBITRATION_SHA');
+          if (p.curveFit?.model !== 'RATIONAL_5_OVER_6') throw new Error('EMP1_WRC_PRIMARY_CURVE_MODEL');
+          if (p.stressIntensity?.status !== 'PASS' || p.stressIntensity?.outputDimension !== 'stress') throw new Error('EMP1_WRC_PRIMARY_STRESS_INTENSITY');
+          if (p.authorization?.emp1CRouteRegistrationAllowed !== false) throw new Error('EMP1_WRC_PRIMARY_PREMATURE_ROUTE_AUTH');
+          console.log(JSON.stringify({schema:'emp1-wrc-primary-arbitration-check/v1',status:'PASS',productionAuthority:false},null,2));
+          NODE
 
       - name: Preserve legacy 1200-slot contract only as superseded diagnostic evidence
         shell: bash
@@ -101,12 +109,19 @@ jobs:
             | tee test-results/emp1-source-qualification/legacy-coefficient-transcription-self-test.json
           node scripts/emp1-wrc-coefficient-transcription-generate.mjs
 
-      - name: Prove CAUx pp24-31 cannot be substituted before benchmark freeze
+      - name: Preserve CAUx anti-substitution history
         shell: bash
         run: |
           set -euo pipefail
           node scripts/emp1-caux-pp24-31-extraction-gate-check.mjs \
-            | tee test-results/emp1-source-qualification/caux-pp24-31-extraction-gate-check.json
+            | tee test-results/emp1-source-qualification/caux-pp24-31-legacy-gate-check.json
+
+      - name: Run independent CAUx pp24-31 sustained hand calculation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/emp1-caux-pp24-31-independent-handcalc.mjs \
+            | tee test-results/emp1-source-qualification/caux-pp24-31-independent-handcalc.json
 
       - name: Upload source qualification evidence
         if: always()

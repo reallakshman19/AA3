@@ -17,10 +17,19 @@ const oracle=JSON.parse(await readFile('validation/emp1/wrc537-2013/gamma5-full-
 const routeHash=sha256Canonical(routeRecord.semanticPayload);
 assert.equal(routeHash,routeRecord.qualificationRecordSha256);
 assert.equal(routeHash,EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256);
-assert.equal(routeRecord.status,'PASS_METHOD_AUTHORITY_PENDING_ROUTE_REOBSERVATION');
+assert.equal(routeRecord.status,'PASS_REOBSERVED_AUTHORIZED_BOUNDED_ZERO_DP_ROUTE');
 assert.equal(routeRecord.engineeringAuthority,true);
-assert.equal(routeRecord.productionRouteAuthority,false);
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,false);
+assert.equal(routeRecord.productionRouteAuthority,true);
+assert.equal(routeRecord.globalEmp1CRouteAuthority,false);
+assert.equal(routeRecord.productionObservationUsedToSetAuthority,false);
+assert.equal(routeRecord.reobservation?.status,'PASS_STRICT_FAIL_CLOSED_WORKFLOW');
+assert.equal(routeRecord.reobservation?.stressComparisonsPassed,32);
+assert.equal(routeRecord.reobservation?.routeFalsifiersPassed,8);
+assert.equal(routeRecord.authorization?.boundedRouteRegistrationAllowed,true);
+assert.equal(routeRecord.authorization?.nonzeroDifferentialPressureAllowed,false);
+assert.equal(routeRecord.authorization?.nonUnityStressConcentrationAllowed,false);
+assert.equal(routeRecord.authorization?.globalEmp1CRouteRegistrationAllowed,false);
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,true);
 assert.equal(producerRecord.status,'PASS_REOBSERVED_INDEPENDENT_ZERO_DP_LOAD_PRODUCER');
 assert.equal(producerRecord.engineeringAuthority,true);
 assert.equal(producerRecord.semanticHashSha256,routeRecord.semanticPayload.loadProducerQualificationSha256);
@@ -44,48 +53,53 @@ const input={
 };
 const candidate=evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
 assert.equal(candidate.state,'PASS_BOUNDED_ROUTE_CANDIDATE');
-assert.equal(candidate.engineeringUseAuthorized,true);
 assert.equal(candidate.productionRouteAuthority,false);
 assert.equal(candidate.globalEmp1CRouteAuthority,false);
 assert.equal(candidate.methodGate.state,'METHOD_QUALIFIED');
-assert.equal(candidate.methodGate.scopeStatus,'PASS_BOUNDED_SCOPE');
-assert.equal(candidate.loadCustody.status,'PASS_QUALIFIED_UPSTREAM_LOAD_PACKAGE');
-assert.equal(candidate.loadCustody.engineeringUseAuthorized,true);
-assert.equal(candidate.loadCustody.producerQualification.qualificationRecordHash,producerRecord.semanticHashSha256);
-assert.equal(candidate.numerics.qualifiedInputAuthority,true);
 assert.equal(candidate.numerics.loadCustody.productionRouteInputAuthorized,true);
-assert.equal(candidate.numerics.state,'EVALUATED_BOUNDED_GAMMA5_TABLE5_QUALIFIED_INPUT');
-assert.deepEqual(candidate.numerics.wrcLoads,oracle.semanticPayload.case.loads);
+
+const authorized=runEmp1Wrc537Gamma5ZeroDpRoute(input);
+assert.equal(authorized.state,'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE');
+assert.equal(authorized.engineeringUseAuthorized,true);
+assert.equal(authorized.productionRouteAuthority,true);
+assert.equal(authorized.globalEmp1CRouteAuthority,false);
+assert.equal(authorized.routeQualificationSha256,routeHash);
+assert.equal(authorized.loadCustody.status,'PASS_QUALIFIED_UPSTREAM_LOAD_PACKAGE');
+assert.equal(authorized.loadCustody.producerQualification.qualificationRecordHash,producerRecord.semanticHashSha256);
+assert.equal(authorized.numerics.qualifiedInputAuthority,true);
+assert.equal(authorized.numerics.loadCustody.productionRouteInputAuthorized,true);
+assert.deepEqual(authorized.numerics.wrcLoads,oracle.semanticPayload.case.loads);
+
 let stressComparisons=0;
 for(const key of ['circumferential','longitudinal','shear','stressIntensity']){
-  candidate.stresses[key].forEach((value,index)=>{close(value,oracle.semanticPayload.expected[key][index],`${key}[${index}]`);stressComparisons+=1;});
+  authorized.stresses[key].forEach((value,index)=>{close(value,oracle.semanticPayload.expected[key][index],`${key}[${index}]`);stressComparisons+=1;});
 }
 assert.equal(stressComparisons,32);
-expectCode('premature-route-registration',()=>runEmp1Wrc537Gamma5ZeroDpRoute(input),'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_NOT_AUTHORIZED');
 
 const falsifiers=[];
-runFalsifier('nonzero-dp',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,loadTransferResult:calculateLocalAttachmentFoundation(nonzeroDpRouteFixture())}),'EMP1_A_WRC_ZERO_DP_NONZERO_DIFFERENTIAL_PRESSURE');
-runFalsifier('nonunity-kn',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,stressConcentration:{Kn:1.01,Kb:1}}),'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
-runFalsifier('nonunity-kb',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,stressConcentration:{Kn:1,Kb:0.99}}),'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
-runFalsifier('gamma15',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,geometry:{...input.geometry,meanRadius:300,gamma:15,beta:0.155,attachmentRadius:53.142857142857146}}),'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
-runFalsifier('beta-high',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,geometry:{...input.geometry,attachmentRadius:60,beta:0.525}}),'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
-runFalsifier('reference-mismatch',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,wrcReferencePointGlobal:[0,0,1]}),'EMP1_A_WRC_ZERO_DP_REFERENCE_POINT_MISMATCH');
+runFalsifier('nonzero-dp',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,loadTransferResult:calculateLocalAttachmentFoundation(nonzeroDpRouteFixture())}),'EMP1_A_WRC_ZERO_DP_NONZERO_DIFFERENTIAL_PRESSURE');
+runFalsifier('nonunity-kn',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,stressConcentration:{Kn:1.01,Kb:1}}),'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
+runFalsifier('nonunity-kb',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,stressConcentration:{Kn:1,Kb:0.99}}),'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
+runFalsifier('gamma15',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,geometry:{...input.geometry,meanRadius:300,gamma:15,beta:0.155,attachmentRadius:53.142857142857146}}),'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
+runFalsifier('beta-high',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,geometry:{...input.geometry,attachmentRadius:60,beta:0.525}}),'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
+runFalsifier('reference-mismatch',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,wrcReferencePointGlobal:[0,0,1]}),'EMP1_A_WRC_ZERO_DP_REFERENCE_POINT_MISMATCH');
 const hashTamper=structuredClone(result);hashTamper.semanticHashes.resultPayloadSemanticHash='fnv1a64:0000000000000000';
-runFalsifier('upstream-hash-drift',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,loadTransferResult:hashTamper}),'EMP1_A_WRC_ZERO_DP_RESULT_HASH_DRIFT:resultPayloadSemanticHash');
-runFalsifier('nonorthogonal-frame',()=>evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({...input,axes:{vesselCenterlineGlobal:[1,0,0],nozzleCenterlineGlobal:[1,0,1]}}),'EMP1_WRC537_FRAME_NON_ORTHOGONAL');
+runFalsifier('upstream-hash-drift',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,loadTransferResult:hashTamper}),'EMP1_A_WRC_ZERO_DP_RESULT_HASH_DRIFT:resultPayloadSemanticHash');
+runFalsifier('nonorthogonal-frame',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,axes:{vesselCenterlineGlobal:[1,0,0],nozzleCenterlineGlobal:[1,0,1]}}),'EMP1_WRC537_FRAME_NON_ORTHOGONAL');
 
 console.log(JSON.stringify({
-  schema:'emp1-wrc537-gamma5-zero-dp-route-qualification/v2',
-  status:'PASS_ROUTE_CANDIDATE_END_TO_END',
-  engineeringAuthority:true,productionRouteAuthority:false,globalEmp1CRouteAuthority:false,
+  schema:'emp1-wrc537-gamma5-zero-dp-route-qualification/v3',
+  status:'PASS_AUTHORIZED_ROUTE_END_TO_END_REOBSERVED',
+  engineeringAuthority:true,productionRouteAuthority:true,globalEmp1CRouteAuthority:false,
   routeQualificationSha256:routeHash,loadProducerQualificationSha256:producerRecord.semanticHashSha256,
   upstreamResultHashes:result.semanticHashes,
   transferredGlobal:{force:transferred.transformedForceGlobal,moment:transferred.transformedMomentGlobal},
-  qualifiedLoadCustody:{status:candidate.loadCustody.status,producerQualificationHash:candidate.loadCustody.producerQualification.qualificationRecordHash,normalizedRouteInputAuthorized:candidate.numerics.loadCustody.productionRouteInputAuthorized},
-  wrcLoads:candidate.numerics.wrcLoads,
+  qualifiedLoadCustody:{status:authorized.loadCustody.status,producerQualificationHash:authorized.loadCustody.producerQualification.qualificationRecordHash,normalizedRouteInputAuthorized:authorized.numerics.loadCustody.productionRouteInputAuthorized},
+  wrcLoads:authorized.numerics.wrcLoads,
   oracleSemanticHash:oracle.semanticHash,
   stressComparisons,
   falsifiersPassed:falsifiers.length,falsifiers,
+  remainingBlocked:{nonzeroDifferentialPressure:true,nonUnityStressConcentration:true,gammaOtherThan5:true,betaOutsideQualifiedDomain:true,globalEmp1CRoute:true},
 },null,2));
 
 function routeFixture(){return canonicalFixture((source)=>{

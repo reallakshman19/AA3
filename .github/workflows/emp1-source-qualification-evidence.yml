@@ -58,8 +58,8 @@ jobs:
           pdfinfo "$wrc" > "$out/WRC537_2013.pdfinfo.txt"
           pdfinfo "$caux" > "$out/CAUx_2017_WRC01f.pdfinfo.txt"
 
-          pdftotext -f 33 -l 95 -layout "$wrc" "$out/WRC537_2013_pages_33-95.txt"
-          for page in 33 34 35 36 37 38 49 51 53 55 57 59 61 63 65 67 69 71 73 75 77 79 81 83 85 87 89 91 93 95; do
+          pdftotext -f 33 -l 135 -layout "$wrc" "$out/WRC537_2013_pages_33-135.txt"
+          for page in 33 34 35 36 37 38 39 40 41 42 43 44 49 51 53 55 57 59 61 63 65 67 69 71 73 75 77 79 81 83 85 87 89 91 93 95 97 99 101 103 105 107 109 111 113 115 117 119 121 123 125 127 129 131 133 135; do
             pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$wrc" "$out/wrc-pages/page-${page}" >/dev/null
           done
 
@@ -68,11 +68,18 @@ jobs:
             pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 "$caux" "$out/caux-pages/page-${page}" >/dev/null
           done
 
-      - name: Cross-check WRC source extraction against exact PDF text
+      - name: Audit complete WRC Section 8 source inventory
         shell: bash
         run: |
           set -euo pipefail
-          pdf_text="test-results/emp1-source-qualification/WRC537_2013_pages_33-95.txt"
+          node scripts/emp1-pr1286-wrc-all-curve-source-audit.mjs \
+            | tee test-results/emp1-source-qualification/wrc-all-curve-source-audit.json
+
+      - name: Cross-check spherical-hollow WRC source extraction against exact PDF text
+        shell: bash
+        run: |
+          set -euo pipefail
+          pdf_text="test-results/emp1-source-qualification/WRC537_2013_pages_33-135.txt"
           node scripts/emp1-pr1286-wrc-source-table-audit.mjs --pdf-text "$pdf_text" \
             | tee test-results/emp1-source-qualification/wrc-source-table-audit.json
           node scripts/emp1-wrc-primary-coefficient-source-self-test.mjs --pdf-text "$pdf_text" \

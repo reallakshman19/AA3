@@ -11,7 +11,7 @@ const importAnchor = "import { refinementTransitionLadder } from '../core/lafea-
 assert.ok(grading.includes(importAnchor), 'grading import anchor missing');
 grading = grading.replace(
   importAnchor,
-  `${importAnchor}import { insertInteriorPoint } from '../core/lafea-meshing/interior-refinement-t6.js';\nimport { edgeKey, lawsonFlip } from '../core/lafea-meshing/constrained-delaunay-t6.js';\n`,
+  `${importAnchor}import { insertInteriorPoint } from '../core/lafea-meshing/interior-refinement-t6.js';\nimport { edgeKey } from '../core/lafea-meshing/constrained-delaunay-t6.js';\n`,
 );
 const helperAnchor = 'function latticeCandidates(target, spacing, radius) {';
 assert.ok(grading.includes(helperAnchor), 'grading helper anchor missing');
@@ -31,7 +31,7 @@ export function closeLafea3RetainedRefinementAdjacency({
     const measured = measureLafea3TriangulationAdjacency(points, working, maximumAdjacentRatio);
     if (measured.qualification === 'PASS') {
       console.log(JSON.stringify({
-        check: 'PR1270_LONGEST_EDGE_CLOSURE',
+        check: 'PR1270_LONGEST_EDGE_NO_FLIP_CLOSURE',
         status: 'PASS',
         insertionCount,
         initialMaximumObserved: initial.maximumObserved,
@@ -54,7 +54,6 @@ export function closeLafea3RetainedRefinementAdjacency({
         if (exactPointExists(points, midpoint)) continue;
         if (!insertInteriorPoint(points, working, constrainedEdgeKeys, midpoint)) continue;
         insertionCount += 1;
-        working = lawsonFlip(points, working, constrainedEdgeKeys);
         inserted = true;
         break;
       }
@@ -185,4 +184,4 @@ const run = spawnSync(process.execPath, ['scripts/lafea-retained-mesh-refinement
 });
 process.stdout.write(run.stdout ?? '');
 process.stderr.write(run.stderr ?? '');
-assert.equal(run.status, 0, 'retained-mesh refinement regression failed under longest-edge candidate');
+assert.equal(run.status, 0, 'retained-mesh refinement regression failed under no-flip longest-edge candidate');

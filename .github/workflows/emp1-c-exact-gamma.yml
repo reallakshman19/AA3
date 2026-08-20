@@ -89,6 +89,8 @@ jobs:
         run: node scripts/emp1-wrc-table5-production-comparison.mjs
       - name: Compare bounded production adapter to frozen full Table 5 oracle
         run: node scripts/emp1-wrc-gamma5-bounded-adapter-comparison.mjs
+      - name: Qualify zero-differential-pressure WRC load producer candidate
+        run: node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs | tee test-results/emp1-exact-gamma/zero-dp-load-producer-qualification.json
       - name: Prove bounded method scope is enforced by orchestration gate
         run: node scripts/emp1-local-correlation-bounded-scope-self-test.mjs
       - name: Preserve existing EMP.1 core scaffold behavior

@@ -22,8 +22,15 @@
     "firstPassWorkflowRun": 32328483892,
     "firstPassWorkflowNumber": 47,
     "firstPassHead": "f4b2d6634ac41406eacfbc7a29b88991cfb64a02",
-    "frozenSemanticHash": "ee9692d64f052852e1856c07bad99c50c92cac80ecda9e0fee64f4067c40a029",
-    "status": "PASS_PENDING_INDEPENDENT_REOBSERVATION"
+    "firstPassArtifactJsonSha256": "100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f",
+    "frozenSemanticHash": "679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c",
+    "status": "PASS_PENDING_INDEPENDENT_REOBSERVATION",
+    "freezeCorrection": {
+      "previousIncorrectValue": "ee9692d64f052852e1856c07bad99c50c92cac80ecda9e0fee64f4067c40a029",
+      "detectedByWorkflowRun": 32328678654,
+      "detectedByWorkflowNumber": 50,
+      "rca": "The previous value was a transcription/copy error in this qualification record. The run-47 and run-50 caux-pp24-31-independent-handcalc.json artifacts are byte-for-byte identical (same 20,536-byte payload and SHA-256 100d8dfd5b74401ce4fc0277e5bdd088c8786a7194b6e12c26d98f5af487c74f), and both report semantic hash 679199df770a2018b2ff26b7d942bc6c42dc44c89668745b5f852eeccc314b4c. No benchmark input, mechanics equation, sign, tolerance, or result was changed to make re-observation pass."
+    }
   },
   "toleranceAuthority": {
     "sourceCurveOrdinatePrintedDecimals": 3,

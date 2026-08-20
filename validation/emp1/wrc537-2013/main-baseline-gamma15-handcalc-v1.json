@@ -1,0 +1,215 @@
+{
+  "schema": "emp1-current-main-gamma15-independent-baseline/v1",
+  "status": "FROZEN_CURRENT_MAIN_INDEPENDENT_HANDCALC_BASELINE",
+  "authority": {
+    "engineeringBaseline": true,
+    "productionAuthority": false,
+    "routeRegistrationAuthority": false,
+    "codeComplianceAuthority": false
+  },
+  "source": {
+    "document": "docs/emp1/WRC537_2013.pdf",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "sourceExtraction": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "sourceExtractionGitBlobSha1": "810a39d845e15bae92d9c30abb8d452401e711d2",
+    "mainAtFreeze": "d24a5a1ecb5dc555cd11a29429b02106f5cbfe9b",
+    "featureStackObservedHead": "014e8fa4085b7e4b68ec03d7bd0e56f3e8ef7b83",
+    "sourceBlobIdentityAcrossMainAndFeatureStack": true,
+    "wrcLocators": {
+      "gamma": "Section 4.2.1, Eq. 25: gamma = Rm/T",
+      "betaRoundAttachment": "Section 4.2.2.1, Eq. 26: beta = 0.875*r0/Rm",
+      "radialLoad": "Section 4.3.1, Eqs. 31-36",
+      "circumferentialMoment": "Section 4.3.2, Eqs. 37-42",
+      "longitudinalMoment": "Section 4.3.3, Eqs. 43-46",
+      "torsion": "Section 4.3.4, Eq. 47",
+      "shearLoads": "Section 4.3.5, Eqs. 48-49",
+      "signConvention": "Table 4",
+      "cylindricalComputation": "Table 5",
+      "curveDomainRule": "Section 4.4"
+    }
+  },
+  "domain": {
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "variant": "ORIGINAL",
+    "gamma": 15,
+    "beta": 0.155,
+    "differentialPressure": 0,
+    "Kn": 1,
+    "Kb": 1,
+    "candidateConservativeProductBand": {
+      "minimumBeta": 0.05,
+      "maximumBeta": 0.30,
+      "classification": "CARRIED_SOURCE_QUALIFIED_CONSERVATIVE_BAND_NOT_PRODUCTION_ROUTE_AUTHORITY"
+    },
+    "interpolationUsed": false,
+    "extrapolationUsed": false,
+    "crossVariantFallbackUsed": false
+  },
+  "case": {
+    "units": {
+      "length": "mm",
+      "force": "N",
+      "moment": "N.mm",
+      "stress": "MPa"
+    },
+    "geometry": {
+      "meanRadius": 300,
+      "shellThickness": 20,
+      "attachmentRadius": 53.142857142857146,
+      "gamma": 15,
+      "beta": 0.155
+    },
+    "loadsAtWrcAttachmentReferencePoint": {
+      "P": -1000,
+      "Vc": 250,
+      "Vl": -400,
+      "Mc": 500000,
+      "Ml": -600000,
+      "Mt": 700000
+    }
+  },
+  "figureMap": {
+    "circumferential": {
+      "Pmem_AB": "4C",
+      "Pmem_CD": "3C",
+      "Pbend_AB": "2C-1",
+      "Pbend_CD": "1C",
+      "Mcmem": "3A",
+      "Mcbend": "1A",
+      "Mlmem": "3B",
+      "Mlbend": "1B-1"
+    },
+    "longitudinal": {
+      "Pmem_AB": "3C",
+      "Pmem_CD": "4C",
+      "Pbend_AB": "1C-1",
+      "Pbend_CD": "2C",
+      "Mcmem": "4A",
+      "Mcbend": "2A",
+      "Mlmem": "4B",
+      "Mlbend": "2B-1"
+    }
+  },
+  "sourceCoefficientPages": {
+    "1A": 95,
+    "2A": 97,
+    "3A": 101,
+    "4A": 105,
+    "1B-1": 111,
+    "2B-1": 119,
+    "3B": 123,
+    "4B": 125,
+    "1C": 129,
+    "1C-1": 133,
+    "2C": 137,
+    "2C-1": 141,
+    "3C": 145,
+    "4C": 147
+  },
+  "expected": {
+    "curveOrdinates": {
+      "circumferential": {
+        "Pmem_AB": 2.7274216258700967,
+        "Pmem_CD": 2.428245823616779,
+        "Pbend_AB": 0.08832735750268944,
+        "Pbend_CD": 0.12021730581698144,
+        "Mcmem": 0.46989704353685713,
+        "Mcbend": 0.09915014549680493,
+        "Mlmem": 1.5491916025520804,
+        "Mlbend": 0.04854245122742948
+      },
+      "longitudinal": {
+        "Pmem_AB": 2.428245823616779,
+        "Pmem_CD": 2.7274216258700967,
+        "Pbend_AB": 0.1224064338936482,
+        "Pbend_CD": 0.08745622632417854,
+        "Mcmem": 0.6790892916419736,
+        "Mcbend": 0.055078983173118615,
+        "Mlmem": 0.4425407853351359,
+        "Mlbend": 0.07608604375055537
+      }
+    },
+    "scaleFactors": {
+      "pMem": 0.16666666666666666,
+      "pBend": 15,
+      "mcMem": 1.7921146953405018,
+      "mcBend": 161.29032258064515,
+      "mlMem": 2.150537634408602,
+      "mlBend": 193.5483870967742,
+      "vcShear": 0.07487127699215507,
+      "vlShear": 0.1197940431874481,
+      "mtShear": 1.972415361621289
+    },
+    "locations": ["Au", "Al", "Bu", "Bl", "Cu", "Cl", "Du", "Dl"],
+    "circumferentialStress": [
+      14.506388618509515,
+      -6.934058388156773,
+      -10.947427351472134,
+      5.193378205032789,
+      -14.62610112359284,
+      13.751297604092851,
+      19.042035572641208,
+      -16.548401504063367
+    ],
+    "longitudinalStress": [
+      17.918835807792725,
+      -15.206019306005901,
+      -13.437227516444352,
+      12.343241563735383,
+      -8.334299196565153,
+      6.809427940521946,
+      11.867126528247208,
+      -8.523974188290603
+    ],
+    "shearStress": [
+      2.047286638613444,
+      2.047286638613444,
+      1.8975440846291338,
+      1.8975440846291338,
+      2.092209404808737,
+      2.092209404808737,
+      1.852621318433841,
+      1.852621318433841
+    ],
+    "stressIntensity": [
+      18.877679104536185,
+      15.68498380203486,
+      14.461787671213997,
+      12.815631228821726,
+      15.258299294009637,
+      14.333106139468912,
+      19.492158999951467,
+      16.955471067022373
+    ],
+    "governing": {
+      "location": "Du",
+      "stressIntensity": 19.492158999951467
+    }
+  },
+  "comparisonTolerance": {
+    "floatingPointRelative": 1e-11,
+    "floatingPointAbsolute": 1e-12,
+    "publishedRoundedExample": "SEPARATE_CLASS_NOT_USED_FOR_THIS_FROZEN_BASELINE",
+    "sourceTranscription": "EXACT_SOURCE_NUMERIC_LITERALS"
+  },
+  "falsifiers": [
+    "SOURCE_PDF_SHA_DRIFT",
+    "SOURCE_EXTRACTION_BLOB_DRIFT",
+    "GAMMA_OR_BETA_DRIFT",
+    "FIGURE_MAP_DRIFT",
+    "COEFFICIENT_PAGE_DRIFT",
+    "CURVE_ORDINATE_DRIFT",
+    "SCALE_FACTOR_DRIFT",
+    "STRESS_COMPONENT_DRIFT",
+    "STRESS_INTENSITY_DRIFT",
+    "GOVERNING_LOCATION_DRIFT"
+  ],
+  "knownProductionBlockersPreserved": [
+    "GAMMA15_ROUTE_NOT_REGISTERED_ON_CURRENT_MAIN",
+    "NONZERO_DIFFERENTIAL_PRESSURE_NOT_QUALIFIED",
+    "NONUNITY_KN_KB_NOT_QUALIFIED",
+    "NON_TABULATED_GAMMA_INTERPOLATION_NOT_QUALIFIED",
+    "GLOBAL_EMP1_C_ROUTE_NOT_QUALIFIED"
+  ]
+}

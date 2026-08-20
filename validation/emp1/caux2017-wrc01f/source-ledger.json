@@ -10,6 +10,6 @@
   "expectedByteCount": 7260396,
   "rawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
   "benchmarkPdfPages": [24, 25, 26, 27, 28, 29, 30, 31],
-  "custodyState": "SHA256_FROZEN_PENDING_REOBSERVATION",
-  "qualificationState": "BLOCKED_PENDING_REOBSERVATION"
+  "custodyState": "VERIFIED",
+  "qualificationState": "PASS_SOURCE_CUSTODY"
 }

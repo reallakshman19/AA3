@@ -6,40 +6,49 @@ pr: 1291
 claims:
   - id: AUTH-BOUNDARY-1291-001
     state: PASS_BOUNDED
-    statement: Cylindrical WRC537 coefficient selection is engineering-qualified only when runtime gamma matches a source-tabulated gamma within machine round-off; this does not qualify interpolation.
-  - id: IMP-SELECTOR-1291-001
-    state: PASS
-    statement: The selector parses 28 cylindrical coefficient tables into 321 selectable source-qualified curves and preserves one unresolved blank-gamma curve as unselectable.
-  - id: IMP-SELECTOR-1291-002
-    state: PASS
-    statement: Original and Extrapolated variants require explicit selection and the selector never falls back across variants.
-  - id: IMP-SELECTOR-1291-003
-    state: PASS
-    statement: A non-tabulated midpoint gamma is rejected with interpolationUsed=false and extrapolationFallbackUsed=false.
+    statement: Cylindrical WRC537 coefficient selection is engineering-qualified only for exact source-tabulated gamma; no non-tabulated-gamma interpolation authority is claimed.
+  - id: IMP-DATASET-1291-001
+    state: PASS_PRIMARY_PDF_CROSSCHECK
+    statement: The production cylindrical package contains 321 selectable source-qualified curves and 3210 scalar coefficients, crosschecked 3210/3210 against the SHA-bound primary WRC PDF extraction; the one blank-gamma Figure 1B Original row remains unselectable.
   - id: AUTH-ORACLE-1291-001
     state: PASS_REOBSERVED
-    statement: WRC537 PDF page 95 independently supplies the 1A Original gamma=5 coefficient row; at beta=0.155 its frozen rational result is Y=0.10525347243142809 with semantic hash 809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e and zero production imports.
+    statement: The independent gamma=5 full Table-5 oracle has semantic hash 5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa, uses zero production imports, and supplies the frozen 14-figure/32-stress expected result set.
   - id: IMP-EVAL-1291-001
     state: PASS_PRODUCTION_COMPARISON
-    statement: The production core exact-gamma rational evaluator reproduces the frozen independent WRC PDF oracle to 2e-15 relative-scale tolerance and rejects non-tabulated gamma, interpolation, fallback, unresolved parameter identity, source substitution, legacy polynomial semantics, and interpolation-policy substitution.
+    statement: The production exact-gamma rational evaluator reproduces the independent source oracle and rejects non-tabulated gamma, interpolation, cross-variant fallback, unresolved source identity, source substitution, legacy polynomial semantics, and interpolation-policy substitution.
   - id: IMP-TABLE5-1291-001
-    state: PASS_PRODUCTION_COMPARISON
-    statement: The production cylindrical WRC Table 5 kernel reproduces all 32 qualified CAUx sustained stress outputs within source-resolution tolerances derived before production observation.
-  - id: IMP-TABLE5-1291-002
-    state: PASS_METAMORPHIC
-    statement: Reversing all six WRC external loads reverses circumferential, longitudinal, and shear stresses while leaving Tresca stress intensity invariant.
-  - id: IMP-GATE-1291-001
+    state: PASS_32_OF_32
+    statement: The production cylindrical Table-5 kernel reproduces all 32 qualified CAUx sustained stress outputs within source-resolution tolerances fixed independently of production observation.
+  - id: IMP-ADAPTER-1291-001
+    state: PASS_32_OF_32
+    statement: The bounded production adapter derives gamma=Rm/T and beta=0.875*r0/Rm, maps the qualified global frame into WRC loads, selects the required 14 source figures, and reproduces all 32 frozen gamma=5 oracle stresses.
+  - id: AUTH-LOAD-PRODUCER-1291-001
+    state: PASS_ZERO_DP_ONLY
+    statement: The EMP.1.A WRC-reference load producer is qualified only for differential pressure exactly zero; its qualification SHA-256 is 47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b. Nonzero pressure-thrust treatment is not authorized by this claim.
+  - id: AUTH-ROUTE-1291-001
+    state: PASS_AUTHORIZED_BOUNDED_PRODUCTION
+    statement: The registered production route WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP is authorized only for cylindrical round attachments, Original curves, gamma=5, 0.05<=beta<=0.5, differential pressure=0, Kn=Kb=1, no interpolation, no cross-variant fallback, and qualified WRC-reference load custody. Qualification record SHA-256 is 3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e.
+  - id: IMP-ORCHESTRATION-1291-001
+    state: PASS_REAL_RUN_EMP1
+    statement: Real runEmp1 orchestration executes the authorized bounded route once, reproduces all 32 frozen stress outputs, ignores caller authority injection, and blocks eight invalid route cases before WRC local-correlation invocation.
+  - id: IMP-PROJECTION-1291-001
     state: PASS
-    statement: The local-correlation gate now enforces an optional bounded exact-gamma scope against runtime source custody; non-tabulated gamma, interpolation, cross-variant fallback, unresolved source parameter identity, invalid variant, SHA substitution, and widened roundoff tolerance are blocked while unrelated unscoped gate behavior is preserved.
+    statement: Public product projection exposes exactly one registered bounded EMP.1.C route while keeping the global/full-domain EMP.1.C production route unregistered and release-qualified=false.
+  - id: IMP-CI-INTEGRITY-1291-001
+    state: PASS_FAIL_CLOSED
+    statement: Evidence-producing workflow pipelines use pipefail so a failing Node qualification process cannot be masked by tee; the earlier false-green route artifact was rejected and replaced by strict successful re-observation.
   - id: RISK-WRC-1291-001
     state: OPEN_FULL_DOMAIN
-    statement: WRC537 does not provide a uniquely qualified programmable rule for non-tabulated cylindrical gamma selection; full-domain interpolation remains blocked.
+    statement: WRC537 does not yet have a uniquely qualified programmable rule for non-tabulated cylindrical gamma selection; full-domain interpolation remains blocked.
   - id: RISK-WRC-1291-002
-    state: OPEN_AFFECTED_ROW_ONLY
-    statement: WRC Figure 1B Original contains one coefficient row with unresolved gamma identity; assigning gamma=10 by sequence remains prohibited.
-  - id: BLOCK-DATASET-1291-001
-    state: OPEN
-    statement: The production route is not registered because a deterministic source-qualified 321-curve production coefficient package and dataset hash have not yet been frozen; arbitrary runtime coefficient injection must not become the production data path.
-  - id: AUTH-ROUTE-1291-001
+    state: OPEN_HIGHER_GAMMA_DOMAIN
+    statement: Full Table-5 routes for gamma values above 5 remain blocked until curve-specific Original beta outer limits are source-qualified; higher-gamma radial-load curves contain deleted outer segments and must not inherit the gamma=5 beta band by assumption.
+  - id: RISK-WRC-1291-003
+    state: OPEN_NONZERO_DP
+    statement: Nonzero differential-pressure pressure-thrust inclusion, direction/sign authority, and double-count protection remain unqualified for production routing.
+  - id: RISK-WRC-1291-004
+    state: OPEN_KN_KB
+    statement: General non-unity Kn/Kb stress-concentration-factor production authority remains unqualified; the authorized route is unity-only.
+  - id: AUTH-GLOBAL-1291-001
     state: BLOCKED
-    statement: Global EMP.1.C route registration remains false and release is not qualified; bounded dispatch may only be considered after production dataset packaging, hash binding, and real orchestrator fail-closed proof.
+    statement: Global/full-domain EMP.1.C route registration remains false, code-compliance PASS is not invented, and release qualification remains false.

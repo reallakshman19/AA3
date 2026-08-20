@@ -133,6 +133,14 @@ assert.throws(
   /EMP1_C_RUNTIME_CONTRACT_FALSE_PASS/u,
 );
 
+const genericSourcePassCannotAuthorizeRuntime = fullyQualifiedSyntheticArtifacts(retained);
+genericSourcePassCannotAuthorizeRuntime.wrcSourceLedger.qualificationState = 'PASS';
+assert.throws(
+  () => deriveEmp1CQualificationEvidence(genericSourcePassCannotAuthorizeRuntime),
+  /EMP1_C_RUNTIME_CONTRACT_WITHOUT_WRC_SOURCE_CUSTODY/u,
+  'Generic PASS must not masquerade as PASS_SOURCE_CUSTODY in the integrated qualification fixture',
+);
+
 const forgedAudit = fullyQualifiedSyntheticArtifacts(retained);
 forgedAudit.wrcAudit.metrics.numericScalarCoefficientCount = 1199;
 forgedAudit.wrcAudit.metrics.missingScalarCoefficientCount = 1;
@@ -178,7 +186,7 @@ assert.throws(
 );
 
 console.log(JSON.stringify({
-  schema: 'emp1-c-qualification-evidence-self-test/v4',
+  schema: 'emp1-c-qualification-evidence-self-test/v5',
   status: 'PASS',
   fixtureClassification: 'SOFTWARE_CONTRACT_ONLY_NOT_ENGINEERING_EVIDENCE',
   syntheticTechnicalQualificationReady: awaitingRoute.technicalQualificationReady,
@@ -193,6 +201,7 @@ console.log(JSON.stringify({
     'production-contaminated runtime-contract evidence rejected',
     'unrecognized pressure-thrust policy rejected',
     'false PASS runtime-contract artifact rejected',
+    'generic source PASS cannot masquerade as PASS_SOURCE_CUSTODY',
     'runtime-contract hash mismatch rejected by method authorization',
     'frozen WRC audit mutation without independently observed retained bytes rejected',
     'retained extraction manifest blob mutation rejected against immutable code pin',
@@ -239,7 +248,7 @@ function fullyQualifiedSyntheticArtifacts(source) {
 
   value.wrcSourceLedger.rawPdfSha256 = 'a'.repeat(64);
   value.wrcSourceLedger.custodyState = 'VERIFIED';
-  value.wrcSourceLedger.qualificationState = 'PASS';
+  value.wrcSourceLedger.qualificationState = 'PASS_SOURCE_CUSTODY';
 
   value.signCrosscheck.status = 'PASS';
   value.signCrosscheck.resolutionAuthority = 'PINNED_WRC_PDF';
@@ -280,7 +289,7 @@ function fullyQualifiedSyntheticArtifacts(source) {
 
   value.cauxSourceLedger.rawPdfSha256 = 'b'.repeat(64);
   value.cauxSourceLedger.custodyState = 'VERIFIED';
-  value.cauxSourceLedger.qualificationState = 'PASS';
+  value.cauxSourceLedger.qualificationState = 'PASS_SOURCE_CUSTODY';
   value.cauxBenchmarkQualification = {
     schema: 'emp1-caux-pp24-31-benchmark-qualification/v1',
     sourceId: value.cauxSourceLedger.sourceId,

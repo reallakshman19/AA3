@@ -34,7 +34,9 @@ jobs:
         run: node scripts/emp1-wrc537-longitudinal-moment-curve-selection-check.mjs
       - name: Re-observe qualified zero-dp upstream load producer
         run: node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs
-      - name: Re-observe fail-closed gamma5 authority
+      - name: Qualify cylindrical WRC load-axis polarity
+        run: node scripts/emp1-wrc537-cylindrical-axis-authority-check.mjs
+      - name: Re-observe fail-closed gamma5 authority after axis closure
         run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
       - name: Preserve EMP.1 public product truth
         run: node scripts/emp1-public-product-check.mjs

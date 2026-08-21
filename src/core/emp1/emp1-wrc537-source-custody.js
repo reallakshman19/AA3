@@ -5,6 +5,10 @@ import {
 } from '../local-attachment-correlation/index.js';
 import { reconstructResultHashes } from '../local-stress/index.js';
 import { deriveEmp1Wrc537CylindricalBoundedGeometry } from './emp1-wrc537-cylindrical-bounded-adapter.js';
+import {
+  createEmp1Wrc537UnityStressConcentrationAuthority,
+  requireEmp1Wrc537UnityStressConcentrationAuthority,
+} from './emp1-wrc537-stress-concentration-authority.js';
 
 export const EMP1_WRC537_RETAINED_SCREENING_LAYER_SCHEMA =
   'emp1-b-retained-screening-layer/v1';
@@ -148,11 +152,7 @@ export function deriveEmp1Wrc537SourceCustody({
       handedness: axesEvidence?.handedness ?? null,
       orthogonalityResidual: axesEvidence?.orthogonalityResidual ?? null,
     },
-    stressConcentration: {
-      Kn: 1,
-      Kb: 1,
-      authority: 'PINNED_BOUNDED_ROUTE_UNITY_ONLY',
-    },
+    stressConcentration: createEmp1Wrc537UnityStressConcentrationAuthority(),
   });
 }
 
@@ -174,9 +174,7 @@ export function requireEmp1Wrc537SourceCustody(value) {
   requiredString(value.loadReference?.identity, 'EMP1_WRC537_SOURCE_TARGET_REFERENCE_ID_REQUIRED');
   vector3(value.axes?.vesselCenterlineGlobal, 'EMP1_WRC537_SOURCE_VESSEL_AXIS_INVALID');
   vector3(value.axes?.nozzleCenterlineGlobal, 'EMP1_WRC537_SOURCE_NOZZLE_AXIS_INVALID');
-  if (value.stressConcentration?.Kn !== 1 || value.stressConcentration?.Kb !== 1) {
-    throw custodyError('EMP1_WRC537_SOURCE_UNITY_STRESS_CONCENTRATION_REQUIRED');
-  }
+  requireEmp1Wrc537UnityStressConcentrationAuthority(value.stressConcentration);
   return deepFreeze(structuredClone(value));
 }
 

@@ -27,6 +27,9 @@ import {
   requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority,
 } from '../src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js';
 import {
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
+} from '../src/core/emp1/emp1-wrc537-longitudinal-moment-curve-selection.js';
+import {
   EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
   EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
   EMP1_WORKBENCH_LEGACY_RUN_INPUT_SCHEMA,
@@ -90,6 +93,8 @@ const runtime = requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority({
 });
 assert.equal(runtime.attachmentSourceAuthority.semanticHash, authority.semanticHash);
 close(runtime.attachmentOutsideRadius, qualified.geometry.attachmentOutsideRadius, 'runtime r0');
+assert.equal(runtime.longitudinalMomentBendingAuthority.authorityId,
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
 expectCode(() => requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority({
   geometry: qualified.geometry,
 }), 'EMP1_WRC537_R0_QUALIFIED_SOURCE_AUTHORITY_REQUIRED');
@@ -173,12 +178,11 @@ expectCode(() => normalizeEmp1WorkbenchRunInput(wrongLocation),
   'EMP1_WORKBENCH_ATTACHMENT_SHELL_JUNCTURE_LOCATION_REQUIRED');
 
 const route = emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
-const expectedReasons = [
-  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
-  EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
-];
+const expectedReasons = [EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON];
 assert.deepEqual(route.suspensionReasons, expectedReasons);
 assert.equal(route.suspensionReasons.includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
+assert.equal(route.suspensionReasons.includes(
+  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON), false);
 assert.equal(route.registered, false);
 assert.equal(route.engineeringUseAuthorized, false);
 assert.equal(route.scope.attachmentRadiusSourceAuthority,
@@ -187,13 +191,20 @@ assert.equal(route.scope.attachmentRadiusSourceQualification,
   EMP1_WRC537_ATTACHMENT_SOURCE_QUALIFIED);
 assert.equal(route.scope.runtimeAttachmentSourceEvidenceRequired, true);
 assert.equal(route.scope.legacyAttachmentSourceAuthorized, false);
+assert.equal(route.scope.longitudinalMomentCurveSelectionAuthorityId,
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
+assert.equal(route.scope.longitudinalMomentCircumferentialFigure, '1B');
+assert.equal(route.scope.longitudinalMomentLongitudinalFigure, '2B');
+assert.equal(route.scope.offAxisLongitudinalMomentMaximumAuthorized, false);
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.attachmentOutsideRadiusSourceAuthority,
   'TYPED_ENGINEERING_SOURCE_BINDING_RUNTIME_REQUIRED');
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.attachmentOutsideRadiusSourceQualification,
   EMP1_WRC537_ATTACHMENT_SOURCE_QUALIFIED);
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.longitudinalMomentCurveSelectionAuthorityId,
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
 
 console.log(JSON.stringify({
-  status: 'PASS_TYPED_WRC_R0_SOURCE_AUTHORITY',
+  status: 'PASS_TYPED_WRC_R0_SOURCE_AUTHORITY_WITH_LONGITUDINAL_EIGHT_POINT_AUTHORITY',
   r0: qualified.geometry.attachmentOutsideRadius,
   beta: qualified.geometry.beta,
   sourceQualification: qualified.geometry.attachmentRadiusSourceQualification,
@@ -208,7 +219,9 @@ console.log(JSON.stringify({
   productionObservationRejected: true,
   routeR0ValueMismatchRejected: true,
   directRouteRuntimeAuthorityGuarded: true,
-  resolvedSuspensionReason: EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  longitudinalMomentAuthorityId: runtime.longitudinalMomentBendingAuthority.authorityId,
+  resolvedR0SuspensionReason: EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  resolvedLongitudinalSuspensionReason: EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
   remainingSuspensionReasons: expectedReasons,
   productionRouteAuthorized: false,
 }, null, 2));

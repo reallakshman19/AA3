@@ -1,3 +1,9 @@
+import {
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  emp1Wrc537ApplicabilityEvidenceFromAuthority,
+  requireEmp1Wrc537QualifiedApplicabilitySourceAuthority,
+} from './emp1-wrc537-applicability-source-authority.js';
+
 export const EMP1_WRC537_CYLINDRICAL_APPLICABILITY_SCHEMA =
   'emp1-wrc537-cylindrical-applicability/v1';
 export const EMP1_WRC537_STRESS_DOMAIN =
@@ -23,15 +29,25 @@ export const EMP1_WRC537_STRESS_SCOPE = deepFreeze({
  * - 4.5.2 end-distance limit is applied when overturning moments Mc/Ml are active;
  * - no new geometric limit is invented here for Vc/Vl/Mt.
  *
- * Missing evidence is comparison-incomplete rather than silently PASS. A known
- * out-of-source-limit case is rejected before Table-5 numerics.
+ * Comparison callers may still provide legacy evidence, but production-qualified
+ * use must provide the typed geometry source authority. The nearest end distance
+ * in that path is derived from cylinder length + WRC attachment station; it is
+ * never trusted as a caller-authored production datum.
  */
 export function evaluateEmp1Wrc537CylindricalApplicability(input = {}) {
   const meanRadius = positive(input.meanRadius, 'MEAN_RADIUS');
   const loads = normalizeLoads(input.loads);
   const radialLoadActive = Math.abs(loads.P) > 0;
   const externalMomentActive = Math.abs(loads.Mc) > 0 || Math.abs(loads.Ml) > 0;
-  const evidence = normalizeEvidence(input.evidence);
+  if (input.sourceAuthority != null && input.evidence != null) {
+    throw applicabilityError('EMP1_WRC537_CYLINDRICAL_APPLICABILITY_AUTHORITY_AND_LEGACY_EVIDENCE_CONFLICT');
+  }
+  const sourceAuthority = input.sourceAuthority == null
+    ? null
+    : requireEmp1Wrc537QualifiedApplicabilitySourceAuthority(input.sourceAuthority);
+  const evidence = sourceAuthority
+    ? emp1Wrc537ApplicabilityEvidenceFromAuthority(sourceAuthority)
+    : normalizeLegacyEvidence(input.evidence);
 
   const radialLoad = evaluateRadialLoadRule({
     active: radialLoadActive,
@@ -61,20 +77,26 @@ export function evaluateEmp1Wrc537CylindricalApplicability(input = {}) {
   const sourceEvidenceComplete = Boolean(evidence)
     && (!radialLoadActive || radialLoad.status === 'PASS_SOURCE_LIMIT')
     && (!externalMomentActive || externalMoment.status === 'PASS_SOURCE_LIMIT');
+  const sourceQualified = sourceAuthority != null
+    && evidence?.sourceQualification === EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED;
+  const qualifiedForBoundedRoute = sourceQualified && sourceEvidenceComplete && !outsideSourceLimits;
   const status = outsideSourceLimits
     ? 'OUTSIDE_WRC537_4_5_SOURCE_LIMITS'
-    : sourceEvidenceComplete
-      ? 'PASS_WRC537_4_5_SOURCE_LIMITS_COMPARISON_ONLY'
-      : 'INCOMPLETE_WRC537_4_5_SOURCE_EVIDENCE';
+    : qualifiedForBoundedRoute
+      ? 'PASS_WRC537_4_5_SOURCE_LIMITS_QUALIFIED'
+      : sourceEvidenceComplete
+        ? 'PASS_WRC537_4_5_SOURCE_LIMITS_COMPARISON_ONLY'
+        : 'INCOMPLETE_WRC537_4_5_SOURCE_EVIDENCE';
 
   return deepFreeze({
     schema: EMP1_WRC537_CYLINDRICAL_APPLICABILITY_SCHEMA,
     status,
     comparisonApplicabilitySatisfied: sourceEvidenceComplete && !outsideSourceLimits,
-    engineeringUseAuthorized: false,
-    productionUseAuthorized: false,
+    engineeringUseAuthorized: qualifiedForBoundedRoute,
+    productionUseAuthorized: qualifiedForBoundedRoute,
     sourceQualification: evidence?.sourceQualification
       ?? EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFICATION,
+    sourceAuthoritySemanticHash: sourceAuthority?.semanticHash ?? null,
     meanRadius,
     loadsConsidered: { P: loads.P, Mc: loads.Mc, Ml: loads.Ml },
     evidence,
@@ -92,6 +114,18 @@ export function requireEmp1Wrc537CylindricalApplicabilityForNumerics(value) {
     const error = applicabilityError('EMP1_WRC537_CYLINDRICAL_APPLICABILITY_OUTSIDE_SOURCE_LIMITS');
     error.reasons = [...value.reasons];
     throw error;
+  }
+  return value;
+}
+
+export function requireEmp1Wrc537QualifiedCylindricalApplicability(value) {
+  requireEmp1Wrc537CylindricalApplicabilityForNumerics(value);
+  if (value.status !== 'PASS_WRC537_4_5_SOURCE_LIMITS_QUALIFIED'
+    || value.sourceQualification !== EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED
+    || value.engineeringUseAuthorized !== true
+    || value.productionUseAuthorized !== true
+    || !value.sourceAuthoritySemanticHash) {
+    throw applicabilityError('EMP1_WRC537_CYLINDRICAL_APPLICABILITY_QUALIFIED_SOURCE_AUTHORITY_REQUIRED');
   }
   return value;
 }
@@ -150,7 +184,7 @@ function evaluateExternalMomentRule({ active, meanRadius, nearestCylinderEndDist
   });
 }
 
-function normalizeEvidence(value) {
+function normalizeLegacyEvidence(value) {
   if (value == null) return null;
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw applicabilityError('EMP1_WRC537_CYLINDRICAL_APPLICABILITY_EVIDENCE_INVALID');

@@ -6,6 +6,10 @@ import {
 import { reconstructResultHashes } from '../local-stress/index.js';
 import { deriveEmp1Wrc537CylindricalBoundedGeometry } from './emp1-wrc537-cylindrical-bounded-adapter.js';
 import {
+  deriveEmp1Wrc537CylindricalAxisAuthority,
+  requireEmp1Wrc537CylindricalAxisAuthorityEvidence,
+} from './emp1-wrc537-cylindrical-axis-authority.js';
+import {
   createEmp1Wrc537UnityStressConcentrationAuthority,
   requireEmp1Wrc537UnityStressConcentrationAuthority,
 } from './emp1-wrc537-stress-concentration-authority.js';
@@ -64,9 +68,10 @@ export function createEmp1RetainedSectionScreeningLayer({
 }
 
 /**
- * Derive all physical WRC input geometry/reference/axis values from retained
- * A/B evidence. r0 is explicitly the OUTSIDE radius of the cylindrical
- * attachment at the shell juncture. The caller does not author Rm/T/r0 here.
+ * Derive physical WRC geometry/reference plus load-axis custody from retained
+ * A/B evidence. The generic LAFEA radial eZ remains visible as raw evidence but
+ * is not promoted as WRC +P. WRC polarity is resolved separately from the
+ * selected load-reference source point toward the attachment target.
  */
 export function deriveEmp1Wrc537SourceCustody({
   foundationResult,
@@ -81,6 +86,7 @@ export function deriveEmp1Wrc537SourceCustody({
   if (geometryEvidence.foundationResultHash !== foundationHash) {
     throw custodyError('EMP1_WRC537_SOURCE_GEOMETRY_FOUNDATION_RESULT_MISMATCH');
   }
+  const foundationModel = requireFoundationModelFromScreening(screening, geometryEvidence);
 
   const loadCase = foundation.transformedLoadCases?.find((row) => row.identity === loadCaseIdentity);
   if (!loadCase) throw custodyError('EMP1_WRC537_SOURCE_LOAD_CASE_NOT_FOUND');
@@ -89,7 +95,7 @@ export function deriveEmp1Wrc537SourceCustody({
   const axesEvidence = foundation.coordinateSystemEvidence;
   const vesselAxis = vector3(axesEvidence?.axesGlobal?.eX,
     'EMP1_WRC537_SOURCE_VESSEL_AXIS_INVALID');
-  const nozzleAxis = vector3(axesEvidence?.axesGlobal?.eZ,
+  const foundationRadialAxis = vector3(axesEvidence?.axesGlobal?.eZ,
     'EMP1_WRC537_SOURCE_NOZZLE_AXIS_INVALID');
 
   const shellThickness = positive(geometryEvidence.pipeThickness,
@@ -105,6 +111,15 @@ export function deriveEmp1Wrc537SourceCustody({
     shellThickness,
     attachmentOutsideRadius,
   });
+  const wrcAxisAuthority = deriveEmp1Wrc537CylindricalAxisAuthority({
+    foundationResult: foundation,
+    foundationModel,
+    loadCaseIdentity,
+  });
+  if (wrcAxisAuthority.foundationModelHash !== geometryEvidence.foundationModelHash
+    || wrcAxisAuthority.foundationResultHash !== foundationHash) {
+    throw custodyError('EMP1_WRC537_SOURCE_AXIS_FOUNDATION_ANCESTRY_MISMATCH');
+  }
 
   return deepFreeze({
     schema: EMP1_WRC537_SOURCE_CUSTODY_SCHEMA,
@@ -144,14 +159,16 @@ export function deriveEmp1Wrc537SourceCustody({
     },
     axes: {
       vesselCenterlineGlobal: vesselAxis,
-      nozzleCenterlineGlobal: nozzleAxis,
+      nozzleCenterlineGlobal: foundationRadialAxis,
       coordinateSystemIdentity: requiredString(axesEvidence?.identity,
         'EMP1_WRC537_SOURCE_COORDINATE_SYSTEM_ID_REQUIRED'),
       vesselAxisDerivation: 'FOUNDATION_PIPE_AXIAL_EX',
-      nozzleAxisDerivation: 'FOUNDATION_PROJECTED_RADIAL_EZ',
+      nozzleAxisDerivation: 'FOUNDATION_PROJECTED_RADIAL_EZ_UNORIENTED_LINE_ONLY',
+      wrcPolarityAuthority: 'SEE_WRC_AXIS_AUTHORITY',
       handedness: axesEvidence?.handedness ?? null,
       orthogonalityResidual: axesEvidence?.orthogonalityResidual ?? null,
     },
+    wrcAxisAuthority,
     stressConcentration: createEmp1Wrc537UnityStressConcentrationAuthority(),
   });
 }
@@ -174,6 +191,11 @@ export function requireEmp1Wrc537SourceCustody(value) {
   requiredString(value.loadReference?.identity, 'EMP1_WRC537_SOURCE_TARGET_REFERENCE_ID_REQUIRED');
   vector3(value.axes?.vesselCenterlineGlobal, 'EMP1_WRC537_SOURCE_VESSEL_AXIS_INVALID');
   vector3(value.axes?.nozzleCenterlineGlobal, 'EMP1_WRC537_SOURCE_NOZZLE_AXIS_INVALID');
+  const axis = requireEmp1Wrc537CylindricalAxisAuthorityEvidence(value.wrcAxisAuthority);
+  if (axis.foundationModelHash !== value.foundationModelHash
+    || axis.foundationResultHash !== value.foundationResultHash) {
+    throw custodyError('EMP1_WRC537_SOURCE_AXIS_ANCESTRY_MISMATCH');
+  }
   requireEmp1Wrc537UnityStressConcentrationAuthority(value.stressConcentration);
   return deepFreeze(structuredClone(value));
 }
@@ -241,6 +263,14 @@ function requireRetainedScreeningLayer(value) {
     throw custodyError('EMP1_WRC537_SCREENING_GEOMETRY_REPLAY_MISMATCH');
   }
   return value;
+}
+
+function requireFoundationModelFromScreening(screening, geometryEvidence) {
+  const model = screening.screeningRequest?.sourceEvidence?.foundationModel;
+  if (!record(model) || model.semanticHash !== geometryEvidence.foundationModelHash) {
+    throw custodyError('EMP1_WRC537_SOURCE_FOUNDATION_MODEL_HASH_MISMATCH');
+  }
+  return model;
 }
 
 function requireQualifiedFoundationResult(value) {

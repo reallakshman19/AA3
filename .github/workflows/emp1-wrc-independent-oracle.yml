@@ -1,0 +1,43 @@
+name: EMP.1 independent WRC source oracle
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/oracles/emp1-wrc537/**'
+      - 'scripts/emp1-wrc537-independent-*.mjs'
+      - 'scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs'
+      - 'validation/emp1/wrc537-2013/**'
+      - 'docs/emp1/WRC537_2013_Tables_and_Charts.md'
+      - 'docs/emp1/CAUx_2017_WRC01f_pages_24-31.md'
+      - '.github/workflows/emp1-wrc-independent-oracle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-source-oracle:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify exact head
+        if: github.event_name == 'pull_request'
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Enforce independent-oracle import firewall
+        run: node scripts/emp1-wrc537-independent-oracle-import-firewall-check.mjs
+      - name: Qualify retained-source interpretation decoupling
+        run: node scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs
+      - name: Run independent mutation and load-isolation falsifiers
+        run: node scripts/emp1-wrc537-independent-oracle-falsifiers.mjs
+      - name: Re-observe frozen gamma5 historical comparison vector
+        run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
+      - name: Re-observe independent gamma15 baseline
+        run: node scripts/emp1-main-gamma15-independent-baseline-check.mjs

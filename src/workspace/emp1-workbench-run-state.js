@@ -100,7 +100,10 @@ export function projectEmp1WorkbenchRunReadiness({ aDocument, bDocument, runInpu
   if (!record(aDocument)) reasons.push('EMP1_WORKBENCH_A_DOCUMENT_REQUIRED');
   if (!record(bDocument)) reasons.push('EMP1_WORKBENCH_B_DOCUMENT_REQUIRED');
   try {
-    normalizeEmp1WorkbenchRunInput(runInput);
+    const normalized = normalizeEmp1WorkbenchRunInput(runInput);
+    if (!normalized.localMethod.applicabilityGeometry) {
+      reasons.push('EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_REQUIRED');
+    }
   } catch (error) {
     reasons.push(error?.code ?? 'EMP1_WORKBENCH_RUN_INPUT_INVALID');
   }

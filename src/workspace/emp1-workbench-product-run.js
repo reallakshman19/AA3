@@ -52,15 +52,18 @@ export {
  * assessment thickness, WRC reference coordinates, axes, gamma/beta, Kn/Kb and
  * nearest-end distance remain derived authority.
  *
- * When the gamma=5 production route is suspended, this function still proves
- * the A -> B -> prepared-C custody chain but it does not invoke the production
- * WRC route. The retained localCorrelation layer is then an explicit BLOCKED
- * artifact, not a numerical WRC engineering result.
+ * Older v3 source state may still normalize for recovery, but execution is
+ * fail-closed until the typed §4.5 geometry binding is present. This prevents a
+ * prepared-C artifact from silently omitting applicability authority before a
+ * future route reauthorization.
  */
 export async function executeEmp1WorkbenchProduct(options = {}) {
   const aDocument = requireRecord(options.aDocument, 'EMP1_WORKBENCH_A_DOCUMENT_REQUIRED');
   const bDocument = requireRecord(options.bDocument, 'EMP1_WORKBENCH_B_DOCUMENT_REQUIRED');
   const runInput = normalizeEmp1WorkbenchRunInput(options.runInput);
+  if (!runInput.localMethod.applicabilityGeometry) {
+    throw workbenchError('EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_REQUIRED');
+  }
   const inputHashes = emp1WorkbenchInputHashes({ aDocument, bDocument, runInput });
   const previous = normalizePrevious(options.previous);
   const changeClasses = reconcileEmp1WorkbenchChangeClasses(
@@ -68,13 +71,11 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
     previous?.inputHashes,
     inputHashes,
   );
-  const applicabilitySourceAuthority = runInput.localMethod.applicabilityGeometry
-    ? requireApplicabilityGeometryForExecution(
-      runInput.localMethod.applicabilityGeometry,
-      aDocument,
-      bDocument,
-    )
-    : null;
+  const applicabilitySourceAuthority = requireApplicabilityGeometryForExecution(
+    runInput.localMethod.applicabilityGeometry,
+    aDocument,
+    bDocument,
+  );
   const productSource = buildProductSource(runInput, applicabilitySourceAuthority);
   const sourceHash = semanticHash({
     schema: 'emp1-workbench-source-binding/v4',
@@ -183,8 +184,8 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
     authority: {
       boundedLocalRoutePrepared,
       boundedLocalRouteExecuted,
-      applicabilitySourceAuthorityPrepared: applicabilitySourceAuthority != null,
-      applicabilitySourceAuthoritySemanticHash: applicabilitySourceAuthority?.semanticHash ?? null,
+      applicabilitySourceAuthorityPrepared: true,
+      applicabilitySourceAuthoritySemanticHash: applicabilitySourceAuthority.semanticHash,
       routeModuleAuthorized: routeAuthority.routeModuleAuthorized,
       routeRegistryRegistered: routeAuthority.routeRegistryRegistered,
       routeRegistryEngineeringUseAuthorized: routeAuthority.routeRegistryEngineeringUseAuthorized,
@@ -249,17 +250,14 @@ function suspendedLocalCorrelation(preparedSource, routeAuthority) {
 }
 
 function buildProductSource(runInput, applicabilitySourceAuthority) {
-  const localMethod = {
-    requested: true,
-    routeRequest: structuredClone(runInput.localMethod.routeRequest),
-  };
-  if (applicabilitySourceAuthority) {
-    localMethod.applicabilitySourceAuthority = structuredClone(applicabilitySourceAuthority);
-  }
   return deepFreeze({
     schema: 'emp1-workbench-orchestration-source/v4',
     sourceId: 'EMP1-WORKBENCH-TRANSACTION',
-    localMethod,
+    localMethod: {
+      requested: true,
+      routeRequest: structuredClone(runInput.localMethod.routeRequest),
+      applicabilitySourceAuthority: structuredClone(applicabilitySourceAuthority),
+    },
   });
 }
 

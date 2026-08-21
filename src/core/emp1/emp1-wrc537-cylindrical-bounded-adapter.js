@@ -4,7 +4,8 @@ import { buildEmp1Wrc537CylindricalFrame,emp1GlobalLoadsToWrc537 } from './emp1-
 import { evaluateEmp1Wrc537CylindricalTable5 } from './emp1-wrc537-cylindrical-table5.js';
 import { requireEmp1Wrc537ComparisonLoadCustody,requireEmp1Wrc537QualifiedLoadCustody } from './emp1-wrc537-load-custody.js';
 import { resolveEmp1Wrc537LongitudinalMomentBendingSelection } from './emp1-wrc537-longitudinal-moment-curve-selection.js';
-export const EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA='emp1-wrc537-cylindrical-bounded-adapter-result/v6';
+import { evaluateEmp1Wrc537CylindricalApplicability,requireEmp1Wrc537CylindricalApplicabilityForNumerics } from './emp1-wrc537-cylindrical-applicability.js';
+export const EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA='emp1-wrc537-cylindrical-bounded-adapter-result/v7';
 export const EMP1_WRC537_R0_BASIS='OUTSIDE_RADIUS_AT_SHELL_JUNCTURE';
 const FIGURE_BASE=deepFreeze({circ:{Pmem_AB:'4C',Pmem_CD:'3C',Pbend_AB:'2C-1',Pbend_CD:'1C',Mcmem:'3A',Mcbend:'1A',Mlmem:'3B'},long:{Pmem_AB:'3C',Pmem_CD:'4C',Pbend_AB:'1C-1',Pbend_CD:'2C',Mcmem:'4A',Mcbend:'2A',Mlmem:'4B'}});
 const UNIT_SYSTEMS=deepFreeze({SI_MM:{force:'N',length:'mm',moment:'N*mm',stress:'N/mm^2'},US_IN:{force:'lbf',length:'in',moment:'lbf*in',stress:'psi'}});const ROUND_OFF_RELATIVE_TOLERANCE=1e-12;
@@ -18,9 +19,11 @@ function evaluateWithCustody(input,loadCustody,state,qualifiedInputAuthority){
   const domain=requireEmp1Wrc537BoundedDomain({shellFamily:input.shellFamily,attachmentShape:input.attachmentShape,sourceDocumentSha256,datasetHash,variant,gamma:geometry.gamma,beta:geometry.beta});
   const frame=buildEmp1Wrc537CylindricalFrame({vesselCenterlineGlobal:input.axes?.vesselCenterlineGlobal,nozzleCenterlineGlobal:input.axes?.nozzleCenterlineGlobal});
   const wrcLoads=emp1GlobalLoadsToWrc537(frame,{forceGlobal:input.loadsAtWrcReference?.forceGlobal,momentGlobal:input.loadsAtWrcReference?.momentGlobal});
+  const applicability=evaluateEmp1Wrc537CylindricalApplicability({meanRadius:geometry.meanRadius,loads:wrcLoads,evidence:input.applicabilityEvidence});
+  requireEmp1Wrc537CylindricalApplicabilityForNumerics(applicability);
   const curveEvaluation=evaluateFigureSet({figures,variant,gamma:geometry.gamma,beta:geometry.beta});
   const table5=evaluateEmp1Wrc537CylindricalTable5({geometry:{meanRadius:geometry.meanRadius,shellThickness:geometry.shellThickness,attachmentRadius:geometry.attachmentOutsideRadius,beta:geometry.beta},stressConcentration:input.stressConcentration,loads:wrcLoads,curveOrdinates:curveEvaluation.ordinates});
-  return deepFreeze({schema:EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA,state,engineeringComparisonUseAuthorized:true,qualifiedInputAuthority,productionRouteAuthority:false,globalEmp1CRouteAuthority:false,sourceDocumentSha256,datasetHash,datasetIdentity:EMP1_WRC537_CYLINDRICAL_DATASET_IDENTITY,units,domain,geometry,loadCustody,frame,wrcLoads,longitudinalMomentBendingSelection:lmSelection,curveFigureMap:figures,curveSelections:curveEvaluation.selections,curveOrdinates:curveEvaluation.ordinates,table5,stresses:table5.stresses});
+  return deepFreeze({schema:EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA,state,engineeringComparisonUseAuthorized:true,engineeringApplicabilityAuthorized:false,qualifiedInputAuthority,productionRouteAuthority:false,globalEmp1CRouteAuthority:false,sourceDocumentSha256,datasetHash,datasetIdentity:EMP1_WRC537_CYLINDRICAL_DATASET_IDENTITY,units,domain,geometry,applicability,stressScope:table5.stressScope,loadCustody,frame,wrcLoads,longitudinalMomentBendingSelection:lmSelection,curveFigureMap:figures,curveSelections:curveEvaluation.selections,curveOrdinates:curveEvaluation.ordinates,table5,stresses:table5.stresses});
 }
 function figureMap(selection){return deepFreeze({circ:{...FIGURE_BASE.circ,Mlbend:selection.circumferentialFigure},long:{...FIGURE_BASE.long,Mlbend:selection.longitudinalFigure}});}
 function deriveGeometry(value,requireOutsideRadiusAuthority=false){

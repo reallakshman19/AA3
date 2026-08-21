@@ -36,7 +36,10 @@ jobs:
       - name: Re-observe independent gamma5 hand calculation
         run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
 
-      - name: Re-observe fail-closed cylindrical load-axis authority
+      - name: Qualify cylindrical WRC load-axis polarity
+        run: node scripts/emp1-wrc537-cylindrical-axis-authority-check.mjs
+
+      - name: Re-observe remaining fail-closed authority after axis closure
         run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
 
       - name: Preserve EMP.1 public product truth

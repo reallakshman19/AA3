@@ -17,8 +17,22 @@ import {
   requireEmp1Wrc537QualifiedCylindricalAxisAuthority,
 } from './emp1-wrc537-cylindrical-axis-authority.js';
 import {
+  buildEmp1Wrc537CylindricalFrame,
+  emp1GlobalLoadsToWrc537,
+} from './emp1-wrc537-cylindrical-frame.js';
+import {
   requireEmp1Wrc537QualifiedAttachmentSourceAuthority,
 } from './emp1-wrc537-attachment-source-authority.js';
+import {
+  EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  emp1Wrc537ApplicabilityEvidenceFromAuthority,
+  requireEmp1Wrc537QualifiedApplicabilitySourceAuthority,
+} from './emp1-wrc537-applicability-source-authority.js';
+import {
+  evaluateEmp1Wrc537CylindricalApplicability,
+  requireEmp1Wrc537QualifiedCylindricalApplicability,
+} from './emp1-wrc537-cylindrical-applicability.js';
 import {
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
@@ -28,7 +42,7 @@ export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256 =
   '3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e';
 export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED = false;
 export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS = Object.freeze([
-  'WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED',
+  'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE',
 ]);
 export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SCHEMA =
   'emp1-wrc537-gamma5-zero-dp-route-result/v1';
@@ -53,7 +67,9 @@ export const EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION = deepFreeze({
   offAxisLongitudinalMomentMaximumAuthority: 'NOT_AUTHORIZED_BY_THIS_ROUTE',
   attachmentOutsideRadiusSourceAuthority: 'TYPED_ENGINEERING_SOURCE_BINDING_RUNTIME_REQUIRED',
   attachmentOutsideRadiusSourceQualification: 'QUALIFIED_FOR_BOUNDED_R0_CUSTODY',
-  cylindricalApplicabilitySourceAuthority: 'UNQUALIFIED_FOR_PRODUCTION',
+  cylindricalApplicabilitySourceAuthority: EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+  cylindricalApplicabilitySourceQualification: EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  cylindricalApplicabilityNearestEndDistanceBasis: 'DERIVED_MIN_X_L_MINUS_X',
   stressOutputDomain: 'HOST_CYLINDRICAL_SHELL_ONLY_NO_ATTACHMENT_OR_NOZZLE_STRESS',
   methodIdentity: 'WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP',
   methodEdition: '2013',
@@ -92,6 +108,11 @@ export const EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION = deepFreeze({
     offAxisLongitudinalMomentMaximumAuthorized: false,
     radialLoadCylinderLengthRule: 'P_REQUIRES_L_GE_RM',
     externalMomentEndDistanceRule: 'MC_OR_ML_REQUIRES_NEAREST_END_DISTANCE_GE_0P5_RM',
+    applicabilitySourceAuthority: EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+    applicabilitySourceQualification: EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+    applicabilityNearestEndDistanceBasis: 'DERIVED_MIN_X_L_MINUS_X',
+    runtimeApplicabilitySourceEvidenceRequired: true,
+    legacyApplicabilityEvidenceAuthorizedForProduction: false,
     stressOutputDomain: 'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE',
     attachmentStressCalculated: false,
     nozzleStressCalculated: false,
@@ -115,6 +136,9 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input) {
   if (!record(input)) throw routeError('EMP1_WRC537_ZERO_DP_ROUTE_INPUT_REQUIRED');
   requireUnityStressConcentration(input.stressConcentration);
   const axisAuthority = requireEmp1Wrc537QualifiedCylindricalAxisAuthority(input.axisAuthority);
+  const applicabilitySourceAuthority = requireQualifiedApplicabilityAuthorityForRoute(
+    input.applicabilitySourceAuthority,
+  );
   const geometry = deriveEmp1Wrc537CylindricalBoundedGeometry(input.geometry);
   const loadCandidate = deriveEmp1AZeroDpWrcLoadPackageCandidate({
     result: input.loadTransferResult,
@@ -124,6 +148,14 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input) {
     productionObservationUsedToSetAuthority: false,
   });
   const loadCustody = createEmp1AZeroDpWrcQualifiedLoadCustody(loadCandidate);
+  const frame = buildEmp1Wrc537CylindricalFrame(axisAuthority.frameInput);
+  const wrcLoads = emp1GlobalLoadsToWrc537(frame, loadCandidate.loadsAtWrcReference);
+  const qualifiedApplicability = evaluateEmp1Wrc537CylindricalApplicability({
+    meanRadius: geometry.meanRadius,
+    loads: wrcLoads,
+    sourceAuthority: applicabilitySourceAuthority,
+  });
+  requireEmp1Wrc537QualifiedCylindricalApplicability(qualifiedApplicability);
   const source = {
     localMethod: {
       requested: true,
@@ -167,7 +199,9 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input) {
     stressConcentration: { Kn: 1, Kb: 1 },
     longitudinalMomentBendingAuthority:
       EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
-    applicabilityEvidence: input.applicabilityEvidence,
+    applicabilityEvidence: emp1Wrc537ApplicabilityEvidenceFromAuthority(
+      applicabilitySourceAuthority,
+    ),
   }, {
     expectedProducerQualificationHash: EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256,
   });
@@ -182,11 +216,14 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input) {
     routeQualificationSha256: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
     methodGate: gate,
     axisAuthority,
+    applicabilitySourceAuthority,
+    qualifiedApplicability,
     longitudinalMomentBendingAuthority:
       EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
     loadCandidate,
     loadCustody,
-    applicability: numerics.applicability,
+    applicability: qualifiedApplicability,
+    adapterComparisonApplicability: numerics.applicability,
     stressScope: numerics.stressScope,
     numerics,
     stresses: numerics.stresses,
@@ -199,6 +236,9 @@ export function requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority(input) {
   const attachmentSourceAuthority = requireEmp1Wrc537QualifiedAttachmentSourceAuthority(
     input.attachmentSourceAuthority,
   );
+  const applicabilitySourceAuthority = requireQualifiedApplicabilityAuthorityForRoute(
+    input.applicabilitySourceAuthority,
+  );
   if (attachmentSourceAuthority.unit !== ROUTE_LENGTH_UNIT) {
     throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_R0_SOURCE_UNIT_MISMATCH');
   }
@@ -207,6 +247,7 @@ export function requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority(input) {
   }
   return deepFreeze({
     attachmentSourceAuthority,
+    applicabilitySourceAuthority,
     attachmentOutsideRadius: geometry.attachmentOutsideRadius,
     canonicalLengthUnit: ROUTE_LENGTH_UNIT,
     longitudinalMomentBendingAuthority:
@@ -228,6 +269,13 @@ export function runEmp1Wrc537Gamma5ZeroDpRoute(input) {
   });
 }
 
+function requireQualifiedApplicabilityAuthorityForRoute(value) {
+  const authority = requireEmp1Wrc537QualifiedApplicabilitySourceAuthority(value);
+  if (authority.unit !== ROUTE_LENGTH_UNIT) {
+    throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_4_5_SOURCE_UNIT_MISMATCH');
+  }
+  return authority;
+}
 function requireUnityStressConcentration(value) {
   if (!record(value) || value.Kn !== 1 || value.Kb !== 1) {
     throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');

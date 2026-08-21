@@ -36,16 +36,13 @@ assert.equal(first.result.localCorrelation.state, 'BLOCKED');
 assert.ok(first.result.localCorrelation.reasons.includes(
   'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED',
 ));
-for (const reason of [
-  'WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED',
-  'WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED',
-]) {
-  assert.ok(first.result.localCorrelation.reasons.includes(reason), `missing ${reason}`);
-  assert.ok(first.authority.routeSuspensionReasons.includes(reason), `missing authority ${reason}`);
-}
+const remainingSourceReason = 'WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED';
+assert.ok(first.result.localCorrelation.reasons.includes(remainingSourceReason));
+assert.ok(first.authority.routeSuspensionReasons.includes(remainingSourceReason));
 for (const resolved of [
   'WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED',
   'WRC_ATTACHMENT_OUTSIDE_RADIUS_SOURCE_BASIS_UNQUALIFIED',
+  'WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED',
 ]) {
   assert.equal(first.result.localCorrelation.reasons.includes(resolved), false,
     `resolved blocker reappeared: ${resolved}`);
@@ -211,8 +208,8 @@ assert.equal(gamma15.authority.boundedLocalRouteExecuted, false);
 assert.equal(gamma15.authority.globalEmp1CRouteAuthority, false);
 
 console.log(JSON.stringify({
-  schema: 'emp1-workbench-product-run-qualification/v5',
-  status: 'PASS_TYPED_R0_SOURCE_BOUND_PREPARED_C_FAIL_CLOSED',
+  schema: 'emp1-workbench-product-run-qualification/v6',
+  status: 'PASS_TYPED_R0_SOURCE_BOUND_PREPARED_C_WITH_LONGITUDINAL_AUTHORITY_FAIL_CLOSED',
   productId: first.productId,
   decision: first.decision,
   firstInvocations: first.invocations,
@@ -231,6 +228,8 @@ console.log(JSON.stringify({
   routeSuspensionReasons: first.authority.routeSuspensionReasons,
   resolvedAxisBlockerAbsent: true,
   resolvedR0BlockerAbsent: true,
+  resolvedLongitudinalCurveBlockerAbsent: true,
+  remainingSourceReason,
   legacyV2RebindRequired: true,
   typedBasisAndLocationEnforced: true,
   distinctLayerHashes: true,

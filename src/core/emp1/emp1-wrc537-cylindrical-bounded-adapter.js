@@ -20,10 +20,11 @@ import {
 import {
   evaluateEmp1Wrc537CylindricalApplicability,
   requireEmp1Wrc537CylindricalApplicabilityForNumerics,
+  requireEmp1Wrc537QualifiedCylindricalApplicability,
 } from './emp1-wrc537-cylindrical-applicability.js';
 
 export const EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA =
-  'emp1-wrc537-cylindrical-bounded-adapter-result/v9';
+  'emp1-wrc537-cylindrical-bounded-adapter-result/v10';
 export const EMP1_WRC537_R0_BASIS = 'OUTSIDE_RADIUS_AT_SHELL_JUNCTURE';
 
 const FIGURE_BASE = deepFreeze({
@@ -109,12 +110,19 @@ function evaluateWithCustody(input, loadCustody, state, qualifiedInputAuthority)
     forceGlobal: input.loadsAtWrcReference?.forceGlobal,
     momentGlobal: input.loadsAtWrcReference?.momentGlobal,
   });
-  const applicability = evaluateEmp1Wrc537CylindricalApplicability({
-    meanRadius: geometry.meanRadius,
-    loads: wrcLoads,
-    evidence: input.applicabilityEvidence,
-  });
-  requireEmp1Wrc537CylindricalApplicabilityForNumerics(applicability);
+  const applicability = qualifiedInputAuthority
+    ? evaluateEmp1Wrc537CylindricalApplicability({
+      meanRadius: geometry.meanRadius,
+      loads: wrcLoads,
+      sourceAuthority: input.applicabilitySourceAuthority,
+    })
+    : evaluateEmp1Wrc537CylindricalApplicability({
+      meanRadius: geometry.meanRadius,
+      loads: wrcLoads,
+      evidence: input.applicabilityEvidence,
+    });
+  if (qualifiedInputAuthority) requireEmp1Wrc537QualifiedCylindricalApplicability(applicability);
+  else requireEmp1Wrc537CylindricalApplicabilityForNumerics(applicability);
   const curveEvaluation = evaluateFigureSet({
     figures,
     variant,
@@ -136,7 +144,7 @@ function evaluateWithCustody(input, loadCustody, state, qualifiedInputAuthority)
     schema: EMP1_WRC537_BOUNDED_ADAPTER_SCHEMA,
     state,
     engineeringComparisonUseAuthorized: true,
-    engineeringApplicabilityAuthorized: false,
+    engineeringApplicabilityAuthorized: applicability.engineeringUseAuthorized === true,
     qualifiedInputAuthority,
     productionRouteAuthority: false,
     globalEmp1CRouteAuthority: false,

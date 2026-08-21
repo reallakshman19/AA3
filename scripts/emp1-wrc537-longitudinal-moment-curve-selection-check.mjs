@@ -19,13 +19,19 @@ const authority = requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(
 );
 assert.equal(authority.authorityId,
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
+assert.deepEqual(authority.sourceLocators, [
+  'WRC537_2013_TABLE5_PAGES_41_42',
+  'WRC537_2013_SECTION_4_4',
+  'WRC537_2013_SECTION_4_3_6',
+]);
 assert.equal(authority.recoveryDomain.set, 'WRC_TABLE5_EIGHT_SHELL_JUNCTURE_POINTS');
 assert.equal(authority.recoveryDomain.count, 8);
 assert.deepEqual(authority.recoveryDomain.locations,
   ['Au', 'Al', 'Bu', 'Bl', 'Cu', 'Cl', 'Du', 'Dl']);
 assert.equal(authority.recoveryDomain.continuousJunctureSearchPerformed, false);
 assert.equal(authority.recoveryDomain.absoluteShellMaximumAssured, false);
-assert.equal(authority.selection.mode, EMP1_WRC537_LONGITUDINAL_MOMENT_SELECTION_MODES.AXIS_OF_SYMMETRY);
+assert.equal(authority.selection.mode,
+  EMP1_WRC537_LONGITUDINAL_MOMENT_SELECTION_MODES.AXIS_OF_SYMMETRY);
 assert.equal(authority.selection.circumferentialFigure, '1B');
 assert.equal(authority.selection.longitudinalFigure, '2B');
 assert.equal(authority.selection.offAxisMaximum, false);
@@ -85,6 +91,15 @@ recoverySpoof.recoveryDomain.locations[0] = 'OFF_AXIS';
 expect(() => requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(recoverySpoof),
   'EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_RECOVERY_DOMAIN_INVALID');
 
+const sourceSpoof = structuredClone(authority);
+sourceSpoof.sourceLocators[1] = 'UNQUALIFIED_SECTION';
+expect(() => requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(sourceSpoof),
+  'EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_SOURCE_AUTHORITY_INVALID');
+
+const shapeSpoof = { ...structuredClone(authority), hiddenAuthority: true };
+expect(() => requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(shapeSpoof),
+  'EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_SHAPE_MISMATCH');
+
 const hashSpoof = structuredClone(authority);
 hashSpoof.semanticHash = 'fnv1a64:0000000000000000';
 expect(() => requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(hashSpoof),
@@ -97,6 +112,8 @@ console.log(JSON.stringify({
   offAxisMaximumFigures: ['1B-1', '2B-1'],
   offAxisApplicability: 'ROUND_FLEXIBLE_NOZZLE_ONLY_SEPARATE_SCOPE',
   offAxisAuthorizedByEightPointRoute: false,
+  sourceLocatorSpoofRejected: true,
+  hiddenFieldSpoofRejected: true,
   authorityHash: authority.semanticHash,
 }, null, 2));
 

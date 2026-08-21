@@ -63,6 +63,7 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     betaMinimum: EMP1_WRC537_BOUNDED_BETA_MIN,
     betaMaximum: EMP1_WRC537_BOUNDED_BETA_MAX,
     differentialPressure: 0,
+    canonicalLengthUnit: 'mm',
     cylindricalLoadAxisAuthority: EMP1_C_WRC537_AXIS_AUTHORITY_STATE,
     cylindricalLoadAxisAuthorityId: EMP1_WRC537_CYLINDRICAL_AXIS_AUTHORITY_ID,
     cylindricalLoadAxisSourceSha256: EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,

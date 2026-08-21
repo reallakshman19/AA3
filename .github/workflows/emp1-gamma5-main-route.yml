@@ -28,6 +28,8 @@ jobs:
         run: node scripts/emp1-wrc537-cylindrical-applicability-check.mjs
       - name: Qualify WRC eight-point extrema authority
         run: node scripts/emp1-wrc537-eight-point-extrema-scope-check.mjs
+      - name: Qualify WRC unity-only stress-concentration authority
+        run: node scripts/emp1-wrc537-stress-concentration-authority-check.mjs
       - name: Qualify longitudinal-moment curve selection policy
         run: node scripts/emp1-wrc537-longitudinal-moment-curve-selection-check.mjs
       - name: Re-observe qualified zero-dp upstream load producer

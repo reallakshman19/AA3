@@ -6,7 +6,10 @@ import {
   EMP1_WRC537_BOUNDED_SOURCE_SHA256,
   EMP1_WRC537_BOUNDED_VARIANT,
 } from './emp1-wrc537-cylindrical-bounded-domain.js';
-import { EMP1_WRC537_UNITY_SCF_AUTHORITY } from './emp1-wrc537-stress-concentration-authority.js';
+import {
+  EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE,
+  EMP1_WRC537_UNITY_SCF_AUTHORITY,
+} from './emp1-wrc537-stress-concentration-authority.js';
 
 export const EMP1_C_BOUNDED_ROUTE_REGISTRY_SCHEMA = 'emp1-c-bounded-route-registry/v1';
 export const EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID =
@@ -68,15 +71,17 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     differentialPressure: 0,
     Kn: EMP1_WRC537_UNITY_SCF_AUTHORITY.Kn,
     Kb: EMP1_WRC537_UNITY_SCF_AUTHORITY.Kb,
-    stressConcentrationMode: EMP1_WRC537_UNITY_SCF_AUTHORITY.mode,
-    stressConcentrationAuthority: EMP1_WRC537_UNITY_SCF_AUTHORITY.authority,
-    stressConcentrationEngineeringMeaning: EMP1_WRC537_UNITY_SCF_AUTHORITY.engineeringMeaning,
+    stressConcentrationMode: EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE.mode,
+    stressConcentrationAuthority: EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE.routeAuthority,
+    stressConcentrationCustodyAuthority: EMP1_WRC537_UNITY_SCF_AUTHORITY.authority,
+    stressConcentrationEngineeringMeaning:
+      EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE.engineeringMeaning,
     appendixBStressConcentrationQualified:
-      EMP1_WRC537_UNITY_SCF_AUTHORITY.generalAppendixBAuthority,
+      EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE.generalAppendixBAuthority,
     nonUnityStressConcentrationAuthorized:
-      EMP1_WRC537_UNITY_SCF_AUTHORITY.nonUnityAuthorized,
+      EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE.nonUnityAuthorized,
     stressConcentrationSourceQualification:
-      EMP1_WRC537_UNITY_SCF_AUTHORITY.sourceQualification.retainedExtractionState,
+      EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE.sourceQualification.retainedExtractionState,
     interpolationAllowed: false,
     crossVariantFallbackAllowed: false,
     longitudinalMomentBendingSelection: 'SOURCE_GOVERNED_REQUIRED',

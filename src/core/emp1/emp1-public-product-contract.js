@@ -22,12 +22,7 @@ export const EMP1_C_PRODUCTION_ROUTE = Object.freeze({
   routeId: null,
 });
 
-/**
- * These are the product/workspace blockers for the separately qualified bounded
- * route. Full-domain technical qualification remains available under
- * `qualification` / `emp1CQualificationState` and must not be conflated with
- * this narrower bounded-route authority.
- */
+/** Default blockers before a workspace explicitly wires the C transaction. */
 export const EMP1_LOCAL_CORRELATION_BLOCKERS = Object.freeze([
   'GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED',
   'EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED',
@@ -36,7 +31,7 @@ export const EMP1_LOCAL_CORRELATION_BLOCKERS = Object.freeze([
 export const EMP1_STEPS = Object.freeze([
   Object.freeze({ stepId: 'EMP.1.A', shortId: 'A', label: 'Load & reference', backingStageId: 'LAFEA.1', authority: 'LOAD_TRANSFER_AND_PRESSURE_BASELINE_ONLY' }),
   Object.freeze({ stepId: 'EMP.1.B', shortId: 'B', label: 'Section screening', backingStageId: 'LAFEA.2', authority: 'NOMINAL_PIPE_SECTION_SCREENING_ONLY' }),
-  Object.freeze({ stepId: 'EMP.1.C', shortId: 'C', label: 'Local correlation', backingStageId: null, authority: 'BOUNDED_ROUTE_REGISTERED_GLOBAL_ROUTE_BLOCKED' }),
+  Object.freeze({ stepId: 'EMP.1.C', shortId: 'C', label: 'Local correlation', backingStageId: null, authority: 'ROUTE_SUSPENDED_PENDING_WRC_SIGN_AUTHORITY' }),
 ]);
 
 export function isEmp1BackingStage(stageId) {
@@ -62,23 +57,26 @@ export function buildEmp1ProductProjection(state, options = {}) {
   const qualificationEvidence = options.localCorrelationQualificationEvidence
     ?? EMP1_C_CURRENT_QUALIFICATION_EVIDENCE;
   const cQualification = evaluateEmp1CQualificationState(withGovernedCExecutionRoute(qualificationEvidence));
-  const boundedRouteAvailable = EMP1_C_BOUNDED_PRODUCTION_ROUTES.some((route) => route.registered && route.engineeringUseAuthorized);
+  const boundedRouteAvailable = EMP1_C_BOUNDED_PRODUCTION_ROUTES.some(
+    (route) => route.registered && route.engineeringUseAuthorized,
+  );
+  const workspaceExecutionWired = options.workspaceExecutionWired === true;
+  const boundedBlockers = boundedRouteAvailable
+    ? boundedRouteBlockers(workspaceExecutionWired)
+    : cQualification.blockerCodes;
   const cBlockerDetails = boundedRouteAvailable
-    ? Object.freeze([
-      Object.freeze({ code: 'GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED', message: 'Global/full-domain EMP.1.C remains unregistered; only explicitly listed bounded routes have engineering authority.' }),
-      Object.freeze({ code: 'EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED', message: 'The analytical workspace does not yet execute the bounded C route as part of its visible A→B→C transaction.' }),
-    ])
+    ? boundedRouteBlockerDetails(workspaceExecutionWired)
     : cQualification.blockers;
   const c = Object.freeze({
     ...EMP1_STEPS[2],
     state: boundedRouteAvailable ? 'BOUNDED_ROUTE_AVAILABLE' : cQualification.state,
     documentLoaded: false,
-    resultAvailable: false,
+    resultAvailable: Boolean(options.workspaceResultAvailable),
     runAuthorized: false,
-    workspaceExecutionWired: false,
+    workspaceExecutionWired,
     boundedProductionRoutes: EMP1_C_BOUNDED_PRODUCTION_ROUTES,
     boundedRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
-    blockers: boundedRouteAvailable ? EMP1_LOCAL_CORRELATION_BLOCKERS : cQualification.blockerCodes,
+    blockers: boundedBlockers,
     blockerDetails: cBlockerDetails,
     qualification: cQualification,
   });
@@ -101,10 +99,12 @@ export function buildEmp1ProductProjection(state, options = {}) {
     qualificationBoundary: Object.freeze({
       emp1AProductionAuthority: 'RETAINED_EXISTING_ENGINE',
       emp1BProductionAuthority: 'RETAINED_EXISTING_ENGINE',
-      emp1CProductionAuthority: boundedRouteAvailable ? 'BOUNDED_ROUTE_ONLY' : (cQualification.engineeringUseAuthorized ? 'QUALIFIED_METHOD_AUTHORITY' : 'NOT_AUTHORIZED'),
+      emp1CProductionAuthority: boundedRouteAvailable
+        ? 'BOUNDED_ROUTE_ONLY'
+        : (cQualification.engineeringUseAuthorized ? 'QUALIFIED_METHOD_AUTHORITY' : 'NOT_AUTHORIZED'),
       emp1CTechnicalQualificationReady: cQualification.technicalQualificationReady,
       emp1CRunAuthorized: false,
-      emp1CWorkspaceExecutionWired: false,
+      emp1CWorkspaceExecutionWired: workspaceExecutionWired,
       emp1CProductionRoute: EMP1_C_PRODUCTION_ROUTE,
       emp1CBoundedProductionRoutes: EMP1_C_BOUNDED_PRODUCTION_ROUTES,
       emp1CBoundedRouteCount: EMP1_C_BOUNDED_PRODUCTION_ROUTES.length,
@@ -114,6 +114,26 @@ export function buildEmp1ProductProjection(state, options = {}) {
       releaseQualified: false,
     }),
   });
+}
+
+function boundedRouteBlockers(workspaceExecutionWired) {
+  return Object.freeze([
+    'GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED',
+    ...(workspaceExecutionWired ? [] : ['EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED']),
+  ]);
+}
+
+function boundedRouteBlockerDetails(workspaceExecutionWired) {
+  return Object.freeze([
+    Object.freeze({
+      code: 'GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED',
+      message: 'Global/full-domain EMP.1.C remains unregistered; only explicitly listed bounded routes have engineering authority.',
+    }),
+    ...(workspaceExecutionWired ? [] : [Object.freeze({
+      code: 'EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED',
+      message: 'The analytical workspace does not yet own the bounded C transaction path.',
+    })]),
+  ]);
 }
 
 function withGovernedCExecutionRoute(evidence) {

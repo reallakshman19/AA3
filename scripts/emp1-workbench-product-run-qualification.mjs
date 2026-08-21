@@ -5,6 +5,8 @@ import { semanticHash } from '../src/core/shared-primitives/canonical-json.js';
 import {
   EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
   EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
+  EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS,
+  EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS,
   EMP1_WORKBENCH_EXECUTION_CURRENTNESS,
   EMP1_WORKBENCH_RUN_INPUT_SCHEMA,
   classifyEmp1WorkbenchExecutionCurrentness,
@@ -36,19 +38,22 @@ assert.equal(first.result.localCorrelation.state, 'BLOCKED');
 assert.ok(first.result.localCorrelation.reasons.includes(
   'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED',
 ));
-const remainingSourceReason = 'WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED';
-assert.ok(first.result.localCorrelation.reasons.includes(remainingSourceReason));
-assert.ok(first.authority.routeSuspensionReasons.includes(remainingSourceReason));
+const requalificationReason =
+  'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE';
+assert.ok(first.result.localCorrelation.reasons.includes(requalificationReason));
+assert.ok(first.authority.routeSuspensionReasons.includes(requalificationReason));
 for (const resolved of [
   'WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED',
   'WRC_ATTACHMENT_OUTSIDE_RADIUS_SOURCE_BASIS_UNQUALIFIED',
   'WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED',
+  'WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED',
 ]) {
   assert.equal(first.result.localCorrelation.reasons.includes(resolved), false,
     `resolved blocker reappeared: ${resolved}`);
   assert.equal(first.authority.routeSuspensionReasons.includes(resolved), false,
     `resolved authority blocker reappeared: ${resolved}`);
 }
+
 assert.equal(first.result.localCorrelation.preparedSourceCustody.geometry.gamma, 5);
 assert.ok(Math.abs(first.result.localCorrelation.preparedSourceCustody.geometry.beta - 0.155) < 1e-12);
 assert.ok(Math.abs(
@@ -66,6 +71,25 @@ assert.equal(retainedAttachment.diameterBasis, EMP1_WORKBENCH_ATTACHMENT_DIAMETE
 assert.equal(retainedAttachment.physicalLocation, EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION);
 assert.equal(retainedAttachment.sourceBindingSemanticHash,
   semanticHash(runInput.localMethod.attachmentGeometry));
+
+const applicabilityAuthority = first.applicabilitySourceAuthority;
+assert.equal(first.authority.applicabilitySourceAuthorityPrepared, true);
+assert.equal(first.authority.applicabilitySourceAuthoritySemanticHash,
+  applicabilityAuthority.semanticHash);
+assert.equal(applicabilityAuthority.authority,
+  'EMP1_TYPED_WRC537_4_5_GEOMETRY_SOURCE_BINDING_V1');
+assert.equal(applicabilityAuthority.sourceQualification,
+  'QUALIFIED_FOR_BOUNDED_WRC537_4_5_GEOMETRY');
+assert.equal(applicabilityAuthority.cylinderLength, 300);
+assert.equal(applicabilityAuthority.attachmentStationFromCylinderStart, 80);
+assert.equal(applicabilityAuthority.distanceFromCylinderStart, 80);
+assert.equal(applicabilityAuthority.distanceFromCylinderEnd, 220);
+assert.equal(applicabilityAuthority.nearestCylinderEndDistance, 80);
+assert.equal(applicabilityAuthority.sourceBindingSemanticHash,
+  semanticHash(runInput.localMethod.applicabilityGeometry));
+assert.equal(first.result.localCorrelation.preparedApplicabilitySourceAuthority.semanticHash,
+  applicabilityAuthority.semanticHash);
+
 assert.equal(first.result.localCorrelation.stresses, undefined);
 assert.equal(first.authority.boundedLocalRoutePrepared, true);
 assert.equal(first.authority.boundedLocalRouteExecuted, false);
@@ -132,11 +156,30 @@ assert.notEqual(
   attachmentRerun.result.localCorrelation.preparedSourceCustody.geometryEvidenceHash,
   first.result.localCorrelation.preparedSourceCustody.geometryEvidenceHash,
 );
-assert.notEqual(
-  attachmentRerun.result.localCorrelation.preparedSourceCustody
-    .attachmentGeometryEvidence.sourceBindingSemanticHash,
-  retainedAttachment.sourceBindingSemanticHash,
-);
+
+const applicabilityChanged = structuredClone(runInput);
+applicabilityChanged.localMethod.applicabilityGeometry.attachmentStationFromCylinderStart = 90;
+const applicabilityRerun = await executeEmp1WorkbenchProduct({
+  aDocument,
+  bDocument,
+  runInput: applicabilityChanged,
+  previous: first,
+  changeClasses: [],
+});
+assert.ok(applicabilityRerun.changeClasses.includes('LOCAL_METHOD'));
+assert.equal(applicabilityRerun.changeClasses.includes('SECTION'), false);
+assert.deepEqual(applicabilityRerun.invocations, {
+  loadTransfer: 0,
+  sectionScreening: 0,
+  localPreparation: 1,
+  localCorrelation: 0,
+});
+assert.equal(applicabilityRerun.result.loadTransfer.resultHash, first.result.loadTransfer.resultHash);
+assert.equal(applicabilityRerun.result.sectionScreening.resultHash,
+  first.result.sectionScreening.resultHash);
+assert.notEqual(applicabilityRerun.applicabilitySourceAuthority.semanticHash,
+  applicabilityAuthority.semanticHash);
+assert.equal(applicabilityRerun.applicabilitySourceAuthority.nearestCylinderEndDistance, 90);
 
 const bChanged = structuredClone(bDocument);
 bChanged.screeningCases[0].mechanicalTerms[0].factor = 1.1;
@@ -164,6 +207,14 @@ assert.throws(
   'caller-authored WRC geometry must not re-enter the route request',
 );
 
+const directNearestEndSpoof = structuredClone(runInput);
+directNearestEndSpoof.localMethod.applicabilityGeometry.nearestCylinderEndDistance = 999;
+assert.throws(
+  () => normalizeEmp1WorkbenchRunInput(directNearestEndSpoof),
+  (error) => error?.code === 'EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_KEYS_INVALID',
+  'caller-authored nearest-end distance must not enter the source binding',
+);
+
 const legacyV2 = structuredClone(runInput);
 legacyV2.schema = 'emp1-workbench-run-input/v2';
 assert.throws(
@@ -176,17 +227,30 @@ assert.throws(
   () => normalizeEmp1WorkbenchRunInput(wrongBasis),
   (error) => error?.code === 'EMP1_WORKBENCH_ATTACHMENT_OUTSIDE_DIAMETER_BASIS_REQUIRED',
 );
-const wrongLocation = structuredClone(runInput);
-wrongLocation.localMethod.attachmentGeometry.physicalLocation = 'UNSPECIFIED';
+const wrongApplicabilityBasis = structuredClone(runInput);
+wrongApplicabilityBasis.localMethod.applicabilityGeometry.attachmentStationBasis =
+  'CALLER_NEAREST_END_DISTANCE';
 assert.throws(
-  () => normalizeEmp1WorkbenchRunInput(wrongLocation),
-  (error) => error?.code === 'EMP1_WORKBENCH_ATTACHMENT_SHELL_JUNCTURE_LOCATION_REQUIRED',
+  () => normalizeEmp1WorkbenchRunInput(wrongApplicabilityBasis),
+  (error) => error?.code === 'EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS_REQUIRED',
+);
+const stationOutside = structuredClone(runInput);
+stationOutside.localMethod.applicabilityGeometry.attachmentStationFromCylinderStart = 301;
+assert.throws(
+  () => normalizeEmp1WorkbenchRunInput(stationOutside),
+  (error) => error?.code === 'EMP1_WORKBENCH_ATTACHMENT_STATION_OUTSIDE_CYLINDER',
 );
 const wrongUnit = structuredClone(runInput);
 wrongUnit.localMethod.attachmentGeometry.unit = 'm';
 await assert.rejects(
   () => executeEmp1WorkbenchProduct({ aDocument, bDocument, runInput: wrongUnit }),
   (error) => error?.code === 'EMP1_WORKBENCH_ATTACHMENT_UNIT_NOT_CANONICAL',
+);
+const wrongApplicabilityUnit = structuredClone(runInput);
+wrongApplicabilityUnit.localMethod.applicabilityGeometry.unit = 'm';
+await assert.rejects(
+  () => executeEmp1WorkbenchProduct({ aDocument, bDocument, runInput: wrongApplicabilityUnit }),
+  (error) => error?.code === 'EMP1_WORKBENCH_APPLICABILITY_UNIT_NOT_CANONICAL',
 );
 
 const gamma15Document = routeFoundationModel({ meanRadius: 300, shellThickness: 20 });
@@ -208,33 +272,28 @@ assert.equal(gamma15.authority.boundedLocalRouteExecuted, false);
 assert.equal(gamma15.authority.globalEmp1CRouteAuthority, false);
 
 console.log(JSON.stringify({
-  schema: 'emp1-workbench-product-run-qualification/v6',
-  status: 'PASS_TYPED_R0_SOURCE_BOUND_PREPARED_C_WITH_LONGITUDINAL_AUTHORITY_FAIL_CLOSED',
+  schema: 'emp1-workbench-product-run-qualification/v7',
+  status: 'PASS_TYPED_R0_AND_WRC45_SOURCE_BOUND_PREPARED_C_REQUALIFICATION_BLOCKED',
   productId: first.productId,
   decision: first.decision,
   firstInvocations: first.invocations,
   reuseInvocations: reused.invocations,
   attachmentGeometryInvalidation: attachmentRerun.invocations,
+  applicabilityGeometryInvalidation: applicabilityRerun.invocations,
   gamma5: first.result.localCorrelation.preparedSourceCustody.geometry.gamma,
   beta: first.result.localCorrelation.preparedSourceCustody.geometry.beta,
   r0: first.result.localCorrelation.preparedSourceCustody.geometry.attachmentOutsideRadius,
   r0SourceBindingHash: retainedAttachment.sourceBindingSemanticHash,
+  applicabilitySourceBindingHash: applicabilityAuthority.sourceBindingSemanticHash,
+  applicabilityAuthorityHash: applicabilityAuthority.semanticHash,
+  derivedNearestEndDistance: applicabilityAuthority.nearestCylinderEndDistance,
   productionRouteInvoked: first.invocations.localCorrelation > 0,
-  routeAuthority: {
-    module: first.authority.routeModuleAuthorized,
-    registered: first.authority.routeRegistryRegistered,
-    engineeringUse: first.authority.routeRegistryEngineeringUseAuthorized,
-  },
   routeSuspensionReasons: first.authority.routeSuspensionReasons,
-  resolvedAxisBlockerAbsent: true,
-  resolvedR0BlockerAbsent: true,
-  resolvedLongitudinalCurveBlockerAbsent: true,
-  remainingSourceReason,
-  legacyV2RebindRequired: true,
-  typedBasisAndLocationEnforced: true,
-  distinctLayerHashes: true,
-  forgedCallerGeometryRejected: true,
-  canonicalAttachmentUnitEnforced: true,
+  allWrcSourceBlockersAbsent: true,
+  requalificationReason,
+  directNearestEndSpoofRejected: true,
+  applicabilityChangeDoesNotRerunAOrB: true,
+  canonicalApplicabilityUnitEnforced: true,
   gamma15BlockedBeforeTable5: gamma15.invocations.localCorrelation === 0,
   globalEmp1CRouteAuthority: false,
   releaseQualified: false,
@@ -257,6 +316,16 @@ function qualifiedRunInput() {
         physicalLocation: EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
         unit: 'mm',
         sourceReference: 'EMP1-13/QUALIFICATION/ATTACHMENT-OUTSIDE-DIAMETER-AT-SHELL-JUNCTURE',
+      },
+      applicabilityGeometry: {
+        geometryIdentity: 'EMP1-WRC45-CYLINDER-001',
+        cylinderLengthBasis: EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS,
+        cylinderLength: 300,
+        attachmentStationBasis: EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS,
+        attachmentStationFromCylinderStart: 80,
+        unit: 'mm',
+        cylinderLengthSourceReference: 'EMP1-15/QUALIFICATION/CYLINDER-LENGTH',
+        attachmentStationSourceReference: 'EMP1-15/QUALIFICATION/WRC-ATTACHMENT-STATION',
       },
     },
   };
@@ -293,7 +362,7 @@ function routeScreeningRequest(foundationModel, foundationResult) {
       mechanicalTerms: [{ loadCaseId: 'LC-1', factor: 1 }],
       pressureDefinitionId: 'P-CLOSED',
       pressureFactor: 0,
-      sourceReference: 'EMP1-13/CASE-WRC',
+      sourceReference: 'EMP1-15/CASE-WRC',
     }];
   });
 }

@@ -26,6 +26,8 @@ jobs:
         run: node scripts/emp1-wrc537-r0-outside-radius-custody-check.mjs
       - name: Qualify typed WRC r0 source authority
         run: node scripts/emp1-wrc537-r0-source-authority-check.mjs
+      - name: Qualify WRC r0 unit coherence
+        run: node scripts/emp1-wrc537-r0-unit-coherence-check.mjs
       - name: Qualify WRC 4.5 cylindrical applicability
         run: node scripts/emp1-wrc537-cylindrical-applicability-check.mjs
       - name: Qualify WRC eight-point extrema authority

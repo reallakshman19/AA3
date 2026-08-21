@@ -9,6 +9,10 @@ export const EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS =
   'OUTSIDE_DIAMETER_AT_SHELL_JUNCTURE';
 export const EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION =
   'ATTACHMENT_SHELL_JUNCTURE';
+export const EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS =
+  'BETWEEN_CYLINDER_END_PLANES';
+export const EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS =
+  'FROM_CYLINDER_START_END_PLANE_TO_WRC_ATTACHMENT_REFERENCE_POINT';
 export const EMP1_WORKBENCH_EXECUTION_CURRENTNESS = Object.freeze({
   NOT_RUN: 'NOT_RUN',
   CURRENT: 'CURRENT',
@@ -16,10 +20,18 @@ export const EMP1_WORKBENCH_EXECUTION_CURRENTNESS = Object.freeze({
 });
 
 const RUN_INPUT_KEYS = Object.freeze(['schema', 'localMethod']);
-const LOCAL_METHOD_KEYS = Object.freeze(['routeRequest', 'attachmentGeometry']);
+const LOCAL_METHOD_REQUIRED_KEYS = Object.freeze(['routeRequest', 'attachmentGeometry']);
+const LOCAL_METHOD_ALLOWED_KEYS = Object.freeze([
+  ...LOCAL_METHOD_REQUIRED_KEYS, 'applicabilityGeometry',
+]);
 const ATTACHMENT_GEOMETRY_KEYS = Object.freeze([
   'geometryIdentity', 'attachmentDiameter', 'diameterBasis',
   'physicalLocation', 'unit', 'sourceReference',
+]);
+const APPLICABILITY_GEOMETRY_KEYS = Object.freeze([
+  'geometryIdentity', 'cylinderLengthBasis', 'cylinderLength',
+  'attachmentStationBasis', 'attachmentStationFromCylinderStart', 'unit',
+  'cylinderLengthSourceReference', 'attachmentStationSourceReference',
 ]);
 const ROUTE_REQUEST_KEYS = Object.freeze([
   'schema', 'loadCaseIdentity', 'pressureResultIdentity',
@@ -57,6 +69,9 @@ export function emp1WorkbenchInputHashes({ aDocument, bDocument, runInput } = {}
       'EMP1_WORKBENCH_B_DOCUMENT_REQUIRED',
     )),
     attachmentGeometry: semanticHash(normalized.localMethod.attachmentGeometry),
+    applicabilityGeometry: normalized.localMethod.applicabilityGeometry
+      ? semanticHash(normalized.localMethod.applicabilityGeometry)
+      : null,
     localRoute: semanticHash(normalized.localMethod.routeRequest),
   });
 }
@@ -72,7 +87,10 @@ export function reconcileEmp1WorkbenchChangeClasses(declared, previousHashes, ne
       || previousHashes.attachmentGeometry !== nextHashes.attachmentGeometry) {
       classes.add('SECTION');
     }
-    if (previousHashes.localRoute !== nextHashes.localRoute) classes.add('LOCAL_METHOD');
+    if (previousHashes.localRoute !== nextHashes.localRoute
+      || previousHashes.applicabilityGeometry !== nextHashes.applicabilityGeometry) {
+      classes.add('LOCAL_METHOD');
+    }
   }
   return deepFreeze([...classes]);
 }
@@ -82,7 +100,10 @@ export function projectEmp1WorkbenchRunReadiness({ aDocument, bDocument, runInpu
   if (!record(aDocument)) reasons.push('EMP1_WORKBENCH_A_DOCUMENT_REQUIRED');
   if (!record(bDocument)) reasons.push('EMP1_WORKBENCH_B_DOCUMENT_REQUIRED');
   try {
-    normalizeEmp1WorkbenchRunInput(runInput);
+    const normalized = normalizeEmp1WorkbenchRunInput(runInput);
+    if (!normalized.localMethod.applicabilityGeometry) {
+      reasons.push('EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_REQUIRED');
+    }
   } catch (error) {
     reasons.push(error?.code ?? 'EMP1_WORKBENCH_RUN_INPUT_INVALID');
   }
@@ -156,15 +177,46 @@ export function normalizeEmp1AttachmentGeometry(value) {
   });
 }
 
+export function normalizeEmp1ApplicabilityGeometry(value) {
+  const source = exactRecord(value, APPLICABILITY_GEOMETRY_KEYS,
+    'EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_KEYS_INVALID');
+  if (source.cylinderLengthBasis !== EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS) {
+    throw workbenchError('EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS_REQUIRED');
+  }
+  if (source.attachmentStationBasis !== EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS) {
+    throw workbenchError('EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS_REQUIRED');
+  }
+  const cylinderLength = positive(source.cylinderLength,
+    'EMP1_WORKBENCH_CYLINDER_LENGTH_INVALID');
+  const station = nonNegative(source.attachmentStationFromCylinderStart,
+    'EMP1_WORKBENCH_ATTACHMENT_STATION_INVALID');
+  if (station > cylinderLength) {
+    throw workbenchError('EMP1_WORKBENCH_ATTACHMENT_STATION_OUTSIDE_CYLINDER');
+  }
+  return deepFreeze({
+    geometryIdentity: requiredText(source.geometryIdentity,
+      'EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_IDENTITY_REQUIRED'),
+    cylinderLengthBasis: EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS,
+    cylinderLength,
+    attachmentStationBasis: EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS,
+    attachmentStationFromCylinderStart: station,
+    unit: requiredText(source.unit, 'EMP1_WORKBENCH_APPLICABILITY_UNIT_REQUIRED'),
+    cylinderLengthSourceReference: requiredText(source.cylinderLengthSourceReference,
+      'EMP1_WORKBENCH_CYLINDER_LENGTH_SOURCE_REFERENCE_REQUIRED'),
+    attachmentStationSourceReference: requiredText(source.attachmentStationSourceReference,
+      'EMP1_WORKBENCH_ATTACHMENT_STATION_SOURCE_REFERENCE_REQUIRED'),
+  });
+}
+
 function normalizeLocalMethod(value) {
-  const source = exactRecord(value, LOCAL_METHOD_KEYS,
+  const source = allowedRecord(value, LOCAL_METHOD_REQUIRED_KEYS, LOCAL_METHOD_ALLOWED_KEYS,
     'EMP1_WORKBENCH_LOCAL_METHOD_KEYS_INVALID');
   const routeRequest = exactRecord(source.routeRequest, ROUTE_REQUEST_KEYS,
     'EMP1_WORKBENCH_ROUTE_REQUEST_KEYS_INVALID');
   if (routeRequest.schema !== EMP1_WORKBENCH_BOUNDED_ROUTE_REQUEST_SCHEMA) {
     throw workbenchError('EMP1_WORKBENCH_ROUTE_REQUEST_SCHEMA_INVALID');
   }
-  return {
+  const normalized = {
     routeRequest: deepFreeze({
       schema: EMP1_WORKBENCH_BOUNDED_ROUTE_REQUEST_SCHEMA,
       loadCaseIdentity: requiredText(
@@ -178,8 +230,23 @@ function normalizeLocalMethod(value) {
     }),
     attachmentGeometry: normalizeEmp1AttachmentGeometry(source.attachmentGeometry),
   };
+  if (source.applicabilityGeometry != null) {
+    normalized.applicabilityGeometry = normalizeEmp1ApplicabilityGeometry(
+      source.applicabilityGeometry,
+    );
+  }
+  return normalized;
 }
 
+function allowedRecord(value, requiredKeys, allowedKeys, code) {
+  requireRecord(value, code);
+  const actual = Object.keys(value);
+  if (requiredKeys.some((key) => !actual.includes(key))
+    || actual.some((key) => !allowedKeys.includes(key))) {
+    throw workbenchError(code);
+  }
+  return structuredClone(value);
+}
 function exactRecord(value, keys, code) {
   requireRecord(value, code);
   const actual = Object.keys(value).sort();
@@ -198,6 +265,10 @@ function requiredText(value, code) {
 }
 function positive(value, code) {
   if (!Number.isFinite(value) || value <= 0) throw workbenchError(code);
+  return Number(value);
+}
+function nonNegative(value, code) {
+  if (!Number.isFinite(value) || value < 0) throw workbenchError(code);
   return Number(value);
 }
 function workbenchError(code) { const error = new TypeError(code); error.code = code; return error; }

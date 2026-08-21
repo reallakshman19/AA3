@@ -10,6 +10,12 @@ import {
   requireEmp1Wrc537QualifiedAttachmentSourceAuthority,
 } from '../src/core/emp1/emp1-wrc537-attachment-source-authority.js';
 import {
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+  EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+  createEmp1Wrc537ApplicabilitySourceAuthority,
+} from '../src/core/emp1/emp1-wrc537-applicability-source-authority.js';
+import {
   EMP1_WRC537_ATTACHMENT_SOURCE_QUALIFICATION,
   createEmp1RetainedSectionScreeningLayer,
   deriveEmp1Wrc537SourceCustody,
@@ -20,6 +26,7 @@ import {
   EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
   EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
   EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
   emp1CBoundedRoute,
 } from '../src/core/emp1/emp1-c-bounded-route-registry.js';
 import {
@@ -62,7 +69,20 @@ const authority = createEmp1Wrc537AttachmentSourceAuthority({
   ...binding,
   productionObservationUsedToSetAuthority: false,
 });
+const applicabilityAuthority = createEmp1Wrc537ApplicabilitySourceAuthority({
+  geometryIdentity: 'EMP1-15-R0-ISOLATION-CYLINDER',
+  cylinderLengthBasis: EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+  cylinderLength: 300,
+  attachmentStationBasis: EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+  attachmentStationFromCylinderStart: 80,
+  unit: 'mm',
+  cylinderLengthSourceReference: 'EMP1-15/R0-ISOLATION/CYLINDER-LENGTH',
+  attachmentStationSourceReference: 'EMP1-15/R0-ISOLATION/WRC-STATION',
+  productionObservationUsedToSetAuthority: false,
+});
 assert.equal(authority.sourceQualification, EMP1_WRC537_ATTACHMENT_SOURCE_QUALIFIED);
+assert.equal(applicabilityAuthority.sourceQualification,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED);
 assert.equal(authority.sourceBindingSemanticHash, semanticHash(normalizedAttachment));
 assert.equal(requireEmp1Wrc537QualifiedAttachmentSourceAuthority(authority).semanticHash,
   authority.semanticHash);
@@ -90,13 +110,17 @@ assert.equal(qualified.geometrySourceReferences.attachmentSourceBindingSemanticH
 const runtime = requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority({
   geometry: qualified.geometry,
   attachmentSourceAuthority: authority,
+  applicabilitySourceAuthority: applicabilityAuthority,
 });
 assert.equal(runtime.attachmentSourceAuthority.semanticHash, authority.semanticHash);
+assert.equal(runtime.applicabilitySourceAuthority.semanticHash, applicabilityAuthority.semanticHash);
 close(runtime.attachmentOutsideRadius, qualified.geometry.attachmentOutsideRadius, 'runtime r0');
 assert.equal(runtime.longitudinalMomentBendingAuthority.authorityId,
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
+
 expectCode(() => requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority({
   geometry: qualified.geometry,
+  applicabilitySourceAuthority: applicabilityAuthority,
 }), 'EMP1_WRC537_R0_QUALIFIED_SOURCE_AUTHORITY_REQUIRED');
 const differentValidAuthority = createEmp1Wrc537AttachmentSourceAuthority({
   ...binding,
@@ -105,6 +129,7 @@ const differentValidAuthority = createEmp1Wrc537AttachmentSourceAuthority({
 expectCode(() => requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority({
   geometry: qualified.geometry,
   attachmentSourceAuthority: differentValidAuthority,
+  applicabilitySourceAuthority: applicabilityAuthority,
 }), 'EMP1_WRC537_GAMMA5_ZERO_DP_R0_SOURCE_VALUE_MISMATCH');
 
 const legacyLayer = createEmp1RetainedSectionScreeningLayer({
@@ -178,13 +203,18 @@ expectCode(() => normalizeEmp1WorkbenchRunInput(wrongLocation),
   'EMP1_WORKBENCH_ATTACHMENT_SHELL_JUNCTURE_LOCATION_REQUIRED');
 
 const route = emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
-const expectedReasons = [EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON];
+const expectedReasons = [EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON];
 assert.deepEqual(route.suspensionReasons, expectedReasons);
-assert.equal(route.suspensionReasons.includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
-assert.equal(route.suspensionReasons.includes(
-  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON), false);
+for (const resolved of [
+  EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
+  EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
+]) {
+  assert.equal(route.suspensionReasons.includes(resolved), false);
+}
 assert.equal(route.registered, false);
 assert.equal(route.engineeringUseAuthorized, false);
+assert.equal(route.method.routeRequalificationRequired, true);
 assert.equal(route.scope.attachmentRadiusSourceAuthority,
   'EMP1_TYPED_ENGINEERING_SOURCE_BINDING_V1');
 assert.equal(route.scope.attachmentRadiusSourceQualification,
@@ -193,35 +223,27 @@ assert.equal(route.scope.runtimeAttachmentSourceEvidenceRequired, true);
 assert.equal(route.scope.legacyAttachmentSourceAuthorized, false);
 assert.equal(route.scope.longitudinalMomentCurveSelectionAuthorityId,
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
-assert.equal(route.scope.longitudinalMomentCircumferentialFigure, '1B');
-assert.equal(route.scope.longitudinalMomentLongitudinalFigure, '2B');
-assert.equal(route.scope.offAxisLongitudinalMomentMaximumAuthorized, false);
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.attachmentOutsideRadiusSourceAuthority,
-  'TYPED_ENGINEERING_SOURCE_BINDING_RUNTIME_REQUIRED');
+assert.equal(route.scope.applicabilitySourceQualification,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED);
+assert.equal(route.scope.nearestEndDistanceBasis, 'DERIVED_MIN_X_L_MINUS_X');
+assert.equal(route.scope.runtimeApplicabilitySourceEvidenceRequired, true);
+assert.equal(route.scope.legacyApplicabilityEvidenceAuthorizedForProduction, false);
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.attachmentOutsideRadiusSourceQualification,
   EMP1_WRC537_ATTACHMENT_SOURCE_QUALIFIED);
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.longitudinalMomentCurveSelectionAuthorityId,
-  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalApplicabilitySourceQualification,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED);
 
 console.log(JSON.stringify({
-  status: 'PASS_TYPED_WRC_R0_SOURCE_AUTHORITY_WITH_LONGITUDINAL_EIGHT_POINT_AUTHORITY',
+  status: 'PASS_TYPED_WRC_R0_AUTHORITY_RETAINED_WITH_WRC45_SOURCE_AUTHORITY',
   r0: qualified.geometry.attachmentOutsideRadius,
   beta: qualified.geometry.beta,
   sourceQualification: qualified.geometry.attachmentRadiusSourceQualification,
   sourceBindingSemanticHash: authority.sourceBindingSemanticHash,
-  legacyRejectedForProduction: true,
-  legacyV2RebindRequired: true,
-  basisSpoofRejected: true,
-  locationSpoofRejected: true,
-  sourceBindingHashDriftRejected: true,
-  authorityHashDriftRejected: true,
-  authorityShapeSpoofRejected: true,
-  productionObservationRejected: true,
+  applicabilityAuthorityHash: applicabilityAuthority.semanticHash,
+  r0FalsifiersIsolatedWithValidApplicabilityAuthority: true,
   routeR0ValueMismatchRejected: true,
   directRouteRuntimeAuthorityGuarded: true,
   longitudinalMomentAuthorityId: runtime.longitudinalMomentBendingAuthority.authorityId,
-  resolvedR0SuspensionReason: EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
-  resolvedLongitudinalSuspensionReason: EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
   remainingSuspensionReasons: expectedReasons,
   productionRouteAuthorized: false,
 }, null, 2));

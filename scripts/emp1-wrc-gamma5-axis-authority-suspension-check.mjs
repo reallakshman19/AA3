@@ -15,6 +15,7 @@ import {
   EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
   EMP1_C_WRC537_LONGITUDINAL_EIGHT_POINT_AUTHORITY_STATE,
   EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
   EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
   emp1CBoundedRoute,
 } from '../src/core/emp1/emp1-c-bounded-route-registry.js';
@@ -24,25 +25,31 @@ import {
   deriveEmp1Wrc537CylindricalAxisAuthority,
 } from '../src/core/emp1/emp1-wrc537-cylindrical-axis-authority.js';
 import {
+  EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+  EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+  createEmp1Wrc537ApplicabilitySourceAuthority,
+} from '../src/core/emp1/emp1-wrc537-applicability-source-authority.js';
+import {
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
 } from '../src/core/emp1/emp1-wrc537-longitudinal-moment-curve-selection.js';
 
-const reasons = [EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON];
+const reasons = [EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON];
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, false);
 assert.deepEqual(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS, reasons);
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS
-  .includes(EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON), false);
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS
-  .includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS
-  .includes(EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON), false);
+for (const resolved of [
+  EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
+  EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
+  EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
+]) {
+  assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS.includes(resolved), false,
+    `resolved source blocker reappeared: ${resolved}`);
+}
 assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalLoadAxisSignAuthority,
   'SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED',
-);
-assert.equal(
-  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.attachmentOutsideRadiusSourceAuthority,
-  'TYPED_ENGINEERING_SOURCE_BINDING_RUNTIME_REQUIRED',
 );
 assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.attachmentOutsideRadiusSourceQualification,
@@ -56,13 +63,17 @@ assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.longitudinalMomentCurveSelectionAuthorityId,
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
 );
-assert.deepEqual(
-  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.longitudinalMomentFigures,
-  { circumferential: '1B', longitudinal: '2B' },
+assert.equal(
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalApplicabilitySourceAuthority,
+  EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
 );
 assert.equal(
-  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.offAxisLongitudinalMomentMaximumAuthority,
-  'NOT_AUTHORIZED_BY_THIS_ROUTE',
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalApplicabilitySourceQualification,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+);
+assert.equal(
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalApplicabilityNearestEndDistanceBasis,
+  'DERIVED_MIN_X_L_MINUS_X',
 );
 assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalLoadAxisAuthorityId,
@@ -75,16 +86,24 @@ assert.equal(
 
 const registry = emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
 assert.deepEqual(registry.suspensionReasons, reasons);
+assert.equal(registry.registered, false);
+assert.equal(registry.engineeringUseAuthorized, false);
+assert.equal(registry.method.routeRequalificationRequired, true);
 assert.equal(registry.scope.rawFoundationRadialHintIsPolarityAuthority, false);
 assert.equal(registry.scope.runtimeSourcePolarityEvidenceRequired, true);
 assert.equal(registry.scope.runtimeAttachmentSourceEvidenceRequired, true);
 assert.equal(registry.scope.legacyAttachmentSourceAuthorized, false);
+assert.equal(registry.scope.applicabilitySourceAuthority,
+  EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY);
+assert.equal(registry.scope.applicabilitySourceQualification,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED);
+assert.equal(registry.scope.nearestEndDistanceBasis, 'DERIVED_MIN_X_L_MINUS_X');
+assert.equal(registry.scope.runtimeApplicabilitySourceEvidenceRequired, true);
+assert.equal(registry.scope.legacyApplicabilityEvidenceAuthorizedForProduction, false);
 assert.equal(registry.scope.longitudinalMomentCurveSelectionAuthority,
   EMP1_C_WRC537_LONGITUDINAL_EIGHT_POINT_AUTHORITY_STATE);
 assert.equal(registry.scope.longitudinalMomentCurveSelectionAuthorityId,
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
-assert.equal(registry.scope.longitudinalMomentCircumferentialFigure, '1B');
-assert.equal(registry.scope.longitudinalMomentLongitudinalFigure, '2B');
 assert.equal(registry.scope.offAxisLongitudinalMomentMaximumAuthorized, false);
 assert.ok(registry.remainingBlocked.includes('OFF_AXIS_LONGITUDINAL_MOMENT_MAXIMUM'));
 
@@ -97,6 +116,17 @@ const axisAuthority = deriveEmp1Wrc537CylindricalAxisAuthority({
   loadCaseIdentity: 'LC-1',
 });
 assert.deepEqual(axisAuthority.frameInput.nozzleCenterlineGlobal, [0, 0, -1]);
+const applicabilitySourceAuthority = createEmp1Wrc537ApplicabilitySourceAuthority({
+  geometryIdentity: 'EMP1-15-ROUTE-CYLINDER',
+  cylinderLengthBasis: EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+  cylinderLength: 300,
+  attachmentStationBasis: EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+  attachmentStationFromCylinderStart: 80,
+  unit: 'mm',
+  cylinderLengthSourceReference: 'EMP1-15/QUALIFICATION/CYLINDER-LENGTH',
+  attachmentStationSourceReference: 'EMP1-15/QUALIFICATION/WRC-STATION',
+  productionObservationUsedToSetAuthority: false,
+});
 const input = {
   loadTransferResult: result,
   loadCaseIdentity: 'LC-1',
@@ -110,6 +140,7 @@ const input = {
     beta: 0.155,
   },
   axisAuthority,
+  applicabilitySourceAuthority,
   stressConcentration: { Kn: 1, Kb: 1 },
 };
 const comparison = evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
@@ -118,16 +149,24 @@ assert.equal(comparison.numerics.geometry.attachmentRadiusBasis,
   'OUTSIDE_RADIUS_AT_SHELL_JUNCTURE');
 assert.equal(comparison.numerics.longitudinalMomentBendingAuthority.authorityId,
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
-assert.equal(comparison.numerics.longitudinalMomentBendingSelection.mode,
-  'AXIS_OF_SYMMETRY');
 assert.equal(comparison.numerics.curveFigureMap.circ.Mlbend, '1B');
 assert.equal(comparison.numerics.curveFigureMap.long.Mlbend, '2B');
 assert.equal(comparison.numerics.extremaScope.evaluatedLocationCount, 8);
 assert.equal(comparison.numerics.extremaScope.continuousJunctureSearchPerformed, false);
-assert.equal(comparison.applicability.status, 'INCOMPLETE_WRC537_4_5_SOURCE_EVIDENCE');
+assert.equal(comparison.applicability.status, 'PASS_WRC537_4_5_SOURCE_LIMITS_QUALIFIED');
+assert.equal(comparison.applicability.productionUseAuthorized, true);
+assert.equal(comparison.applicability.evidence.cylinderLength, 300);
+assert.equal(comparison.applicability.evidence.nearestCylinderEndDistance, 80);
+assert.equal(comparison.numerics.applicability.sourceAuthoritySemanticHash,
+  applicabilitySourceAuthority.semanticHash);
 assert.equal(comparison.stressScope.domain,
   'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE');
 assert.equal(comparison.stressScope.attachmentStressesCalculated, false);
+
+assert.throws(
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({ ...input, applicabilitySourceAuthority: undefined }),
+  (error) => error?.code === 'EMP1_WRC537_4_5_QUALIFIED_SOURCE_AUTHORITY_REQUIRED',
+);
 
 let caught = null;
 try { runEmp1Wrc537Gamma5ZeroDpRoute(input); } catch (error) { caught = error; }
@@ -135,27 +174,22 @@ assert.equal(caught?.code, 'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED');
 assert.deepEqual(caught.reasons, reasons);
 
 console.log(JSON.stringify({
-  status: 'PASS_AXIS_R0_AND_LONGITUDINAL_EIGHT_POINT_AUTHORITIES_CLOSED_APPLICABILITY_REMAINS',
-  resolvedAxisBlocker: EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
-  resolvedR0Blocker: EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
-  resolvedLongitudinalCurveBlocker: EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
-  axisAuthority: {
-    state: axisAuthority.state,
-    authorityId: axisAuthority.authorityId,
-    sourceDocumentSha256: axisAuthority.sourceDocumentSha256,
-    wrcPositivePGlobal: axisAuthority.basisGlobal.P,
-  },
-  longitudinalMomentAuthority: {
-    authorityId: comparison.numerics.longitudinalMomentBendingAuthority.authorityId,
-    recoveryDomain: comparison.numerics.longitudinalMomentBendingAuthority.recoveryDomain.set,
-    productionFigures: ['1B', '2B'],
-    offAxisMaximumAuthorized: false,
+  status: 'PASS_WRC_SOURCE_AUTHORITIES_CLOSED_ROUTE_REQUALIFICATION_REMAINS',
+  resolvedSourceBlockers: [
+    EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
+    EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+    EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
+    EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
+  ],
+  applicabilityAuthority: {
+    authority: applicabilitySourceAuthority.authority,
+    semanticHash: applicabilitySourceAuthority.semanticHash,
+    cylinderLength: applicabilitySourceAuthority.cylinderLength,
+    nearestEndDistance: applicabilitySourceAuthority.nearestCylinderEndDistance,
   },
   remainingSuspensionReasons: reasons,
-  r0Basis: comparison.numerics.geometry.attachmentRadiusBasis,
-  applicability: comparison.applicability.status,
-  stressDomain: comparison.stressScope.domain,
   productionRouteAuthorized: false,
+  routeRequalificationRequired: true,
 }, null, 2));
 
 function routeFixture() {

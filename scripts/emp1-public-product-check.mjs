@@ -12,6 +12,7 @@ import {
 } from '../src/workspace/emp1-product-projection.js';
 import {
   EMP1_C_WRC537_APPENDIX_B_SCF_LIMITATION,
+  EMP1_C_WRC537_APPLICABILITY_SOURCE_AUTHORITY_STATE,
   EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
   EMP1_C_WRC537_AXIS_AUTHORITY_STATE,
   EMP1_C_WRC537_EXTREMA_LIMITATION,
@@ -20,8 +21,15 @@ import {
   EMP1_C_WRC537_LONGITUDINAL_EIGHT_POINT_AUTHORITY_STATE,
   EMP1_C_WRC537_R0_SOURCE_AUTHORITY_STATE,
   EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
   EMP1_C_WRC537_UNITY_SCF_LIMITATION,
 } from '../src/core/emp1/emp1-c-bounded-route-registry.js';
+import {
+  EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+  EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+} from '../src/core/emp1/emp1-wrc537-applicability-source-authority.js';
 import {
   EMP1_WRC537_CYLINDRICAL_AXIS_AUTHORITY_ID,
   EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
@@ -66,16 +74,24 @@ assert.equal(projection.steps[2].runAuthorized, false);
 assert.equal(EMP1_C_PRODUCTION_ROUTE.registered, false);
 assert.equal(EMP1_C_BOUNDED_PRODUCTION_ROUTES.length, 1);
 const bounded = EMP1_C_BOUNDED_PRODUCTION_ROUTES[0];
-const reasons = [EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON];
+const reasons = [EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON];
 assert.equal(bounded.routeId, EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
 assert.equal(bounded.registered, false);
 assert.equal(bounded.engineeringUseAuthorized, false);
 assert.equal(bounded.comparisonQualificationAvailable, true);
 assert.deepEqual(bounded.suspensionReasons, reasons);
-assert.equal(bounded.suspensionReasons.includes(EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON), false);
-assert.equal(bounded.suspensionReasons.includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
-assert.equal(bounded.suspensionReasons.includes(
-  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON), false);
+assert.equal(bounded.method.routeRequalificationRequired, true);
+for (const resolved of [
+  EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
+  EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
+  EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
+]) {
+  assert.equal(bounded.suspensionReasons.includes(resolved), false,
+    `resolved bounded source blocker reappeared: ${resolved}`);
+  assert.equal(bounded.remainingBlocked.includes(resolved), false,
+    `resolved bounded blocker reappeared in remainingBlocked: ${resolved}`);
+}
 assert.deepEqual(bounded.limitations, [
   EMP1_C_WRC537_EXTREMA_LIMITATION,
   EMP1_C_WRC537_UNITY_SCF_LIMITATION,
@@ -109,8 +125,20 @@ assert.equal(bounded.scope.longitudinalMomentLongitudinalFigure, '2B');
 assert.equal(bounded.scope.offAxisLongitudinalMomentMaximumAuthorized, false);
 assert.deepEqual(bounded.scope.offAxisLongitudinalMomentFigures, ['1B-1', '2B-1']);
 assert.ok(bounded.remainingBlocked.includes('OFF_AXIS_LONGITUDINAL_MOMENT_MAXIMUM'));
-assert.equal(bounded.remainingBlocked.includes(
-  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON), false);
+
+assert.equal(bounded.scope.applicabilitySourceAuthority,
+  EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY);
+assert.equal(bounded.scope.applicabilitySourceAuthorityState,
+  EMP1_C_WRC537_APPLICABILITY_SOURCE_AUTHORITY_STATE);
+assert.equal(bounded.scope.applicabilitySourceQualification,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED);
+assert.equal(bounded.scope.cylinderLengthBasis, EMP1_WRC537_CYLINDER_LENGTH_BASIS);
+assert.equal(bounded.scope.attachmentStationBasis, EMP1_WRC537_ATTACHMENT_STATION_BASIS);
+assert.equal(bounded.scope.nearestEndDistanceBasis, 'DERIVED_MIN_X_L_MINUS_X');
+assert.equal(bounded.scope.runtimeApplicabilitySourceEvidenceRequired, true);
+assert.equal(bounded.scope.legacyApplicabilityEvidenceAuthorizedForProduction, false);
+assert.ok(bounded.remainingBlocked.includes(EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON));
+
 assert.equal(bounded.scope.Kn, 1);
 assert.equal(bounded.scope.Kb, 1);
 assert.equal(bounded.scope.stressConcentrationMode, 'UNITY_ONLY');
@@ -123,7 +151,6 @@ assert.equal(bounded.scope.nonUnityStressConcentrationAuthorized, false);
 assert.equal(bounded.scope.stressConcentrationSourceQualification,
   'NOT_READY_FOR_IMPLEMENTATION');
 assert.ok(bounded.remainingBlocked.includes('NONUNITY_STRESS_CONCENTRATION'));
-assert.equal(bounded.remainingBlocked.includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
 assert.equal(bounded.scope.radialLoadCylinderLengthRule, 'P_REQUIRES_L_GE_RM');
 assert.equal(bounded.scope.externalMomentEndDistanceRule,
   'MC_OR_ML_REQUIRES_NEAREST_END_DISTANCE_GE_0P5_RM');
@@ -158,46 +185,17 @@ console.log(JSON.stringify({
   productState: projection.state,
   suspendedRoute: bounded.routeId,
   suspensionReasons: reasons,
-  boundedAxisAuthority: {
-    state: bounded.scope.cylindricalLoadAxisAuthority,
-    authorityId: bounded.scope.cylindricalLoadAxisAuthorityId,
-    sourceSha256: bounded.scope.cylindricalLoadAxisSourceSha256,
-    positivePRule: bounded.scope.wrcPositivePRule,
-    rawFoundationRadialHintIsPolarityAuthority:
-      bounded.scope.rawFoundationRadialHintIsPolarityAuthority,
-  },
-  r0SourceAuthority: {
-    state: bounded.scope.attachmentRadiusSourceAuthorityState,
-    authority: bounded.scope.attachmentRadiusSourceAuthority,
-    qualification: bounded.scope.attachmentRadiusSourceQualification,
-    runtimeEvidenceRequired: bounded.scope.runtimeAttachmentSourceEvidenceRequired,
-    legacyAuthorized: bounded.scope.legacyAttachmentSourceAuthorized,
-  },
-  longitudinalMomentAuthority: {
-    state: bounded.scope.longitudinalMomentCurveSelectionAuthority,
-    authorityId: bounded.scope.longitudinalMomentCurveSelectionAuthorityId,
-    eightPointFigures: [
-      bounded.scope.longitudinalMomentCircumferentialFigure,
-      bounded.scope.longitudinalMomentLongitudinalFigure,
-    ],
-    offAxisMaximumAuthorized: bounded.scope.offAxisLongitudinalMomentMaximumAuthorized,
+  allBoundedWrcSourceAuthorityClosed: true,
+  routeRequalificationRequired: true,
+  applicabilityAuthority: {
+    state: bounded.scope.applicabilitySourceAuthorityState,
+    authority: bounded.scope.applicabilitySourceAuthority,
+    qualification: bounded.scope.applicabilitySourceQualification,
+    cylinderLengthBasis: bounded.scope.cylinderLengthBasis,
+    attachmentStationBasis: bounded.scope.attachmentStationBasis,
+    nearestEndDistanceBasis: bounded.scope.nearestEndDistanceBasis,
   },
   limitations: bounded.limitations,
-  stressConcentration: {
-    Kn: bounded.scope.Kn,
-    Kb: bounded.scope.Kb,
-    mode: bounded.scope.stressConcentrationMode,
-    authority: bounded.scope.stressConcentrationAuthority,
-    appendixBQualified: bounded.scope.appendixBStressConcentrationQualified,
-    nonUnityAuthorized: bounded.scope.nonUnityStressConcentrationAuthorized,
-  },
-  scope: {
-    radialLoadCylinderLengthRule: bounded.scope.radialLoadCylinderLengthRule,
-    externalMomentEndDistanceRule: bounded.scope.externalMomentEndDistanceRule,
-    stressOutputDomain: bounded.scope.stressOutputDomain,
-    eightPointEnvelopeBasis: bounded.scope.eightPointEnvelopeBasis,
-    absoluteShellMaximumAssured: bounded.scope.absoluteShellMaximumAssured,
-  },
   globalQualificationBlockers: globalQualification.blockerCodes,
   releaseQualified: false,
 }, null, 2));

@@ -31,7 +31,7 @@ export const EMP1_LOCAL_CORRELATION_BLOCKERS = Object.freeze([
 export const EMP1_STEPS = Object.freeze([
   Object.freeze({ stepId: 'EMP.1.A', shortId: 'A', label: 'Load & reference', backingStageId: 'LAFEA.1', authority: 'LOAD_TRANSFER_AND_PRESSURE_BASELINE_ONLY' }),
   Object.freeze({ stepId: 'EMP.1.B', shortId: 'B', label: 'Section screening', backingStageId: 'LAFEA.2', authority: 'NOMINAL_PIPE_SECTION_SCREENING_ONLY' }),
-  Object.freeze({ stepId: 'EMP.1.C', shortId: 'C', label: 'Local correlation', backingStageId: null, authority: 'ROUTE_SUSPENDED_PENDING_WRC_4_5_APPLICABILITY_SOURCE_AUTHORITY' }),
+  Object.freeze({ stepId: 'EMP.1.C', shortId: 'C', label: 'Local correlation', backingStageId: null, authority: 'ROUTE_SUSPENDED_PENDING_POST_SOURCE_AUTHORITY_REQUALIFICATION' }),
 ]);
 
 export function isEmp1BackingStage(stageId) {

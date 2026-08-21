@@ -53,14 +53,26 @@ Therefore EMP1-14 qualifies `1B/2B` for this **eight-point axis-of-symmetry reco
 
 The generic comparison selector is intentionally retained. The qualified numerics entry point instead requires the immutable eight-point authority object, so a caller cannot inject `OFF_AXIS_MAXIMUM` into production-qualified Table-5 numerics.
 
+## Qualification-record custody
+
+The existing route qualification record SHA
+
+```text
+3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e
+```
+
+is retained as the historical bounded gamma5 numerical qualification-record identity. EMP1-14 does **not** treat that older record as the authority for the new longitudinal curve-selection semantics. The new curve-selection authority has its own semantic hash and is retained explicitly in qualified numerics and the route candidate.
+
+Because §4.5 applicability is still unresolved for production, EMP1-14 does not refreeze/re-authorize the overall production route. A final production requalification/refreeze belongs only after the remaining applicability source authority is resolved; no old qualification record may be used to bypass that gate.
+
 ## Route state after EMP1-14
 
 Resolved from active bounded-route suspension reasons:
 
 ```text
-WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED                 [EMP1-12]
-WRC_ATTACHMENT_OUTSIDE_RADIUS_SOURCE_BASIS_UNQUALIFIED    [EMP1-13]
-WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED [EMP1-14]
+WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED                     [EMP1-12]
+WRC_ATTACHMENT_OUTSIDE_RADIUS_SOURCE_BASIS_UNQUALIFIED        [EMP1-13]
+WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED  [EMP1-14]
 ```
 
 Remaining active WRC source-authority suspension reason:
@@ -73,7 +85,7 @@ The route remains `registered=false`, `engineeringUseAuthorized=false`, and prod
 
 ## Falsifiers
 
-The focused authority check now rejects:
+The focused authority check rejects:
 
 1. missing longitudinal selection;
 2. off-axis request without round attachment;
@@ -83,25 +95,28 @@ The focused authority check now rejects:
 6. a changed eight-point recovery location;
 7. substituted source locators;
 8. hidden/additional authority fields;
-9. semantic-hash drift.
+9. semantic-hash drift;
+10. a semantic mutation whose attacker recomputes the authority hash — semantic field validation still rejects it.
 
-Route/public-product checks also assert that the resolved longitudinal blocker cannot reappear and that the remaining source suspension reason is §4.5 applicability only.
+Route/public-product/workbench/r0 checks also assert that the resolved longitudinal blocker cannot reappear and that the remaining source suspension reason is §4.5 applicability only.
 
 ## Changed-file ledger
 
-- `src/core/emp1/emp1-wrc537-longitudinal-moment-curve-selection.js` — source-qualified eight-point authority + strict validator; comparison off-axis selector retained separately.
-- `src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js` — qualified numerics require eight-point longitudinal authority; comparison numerics retain explicit selector.
-- `src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js` — route bound to eight-point `1B/2B`; longitudinal blocker removed; §4.5 remains.
-- `src/core/emp1/emp1-c-bounded-route-registry.js` — registry exposes qualified longitudinal authority and off-axis exclusion.
-- `src/core/emp1/emp1-public-product-contract.js` — stale sign-authority C label corrected to the actual remaining §4.5 applicability authority boundary.
-- `src/core/emp1/index.js` — exports longitudinal authority contract.
-- `scripts/emp1-wrc537-longitudinal-moment-curve-selection-check.mjs` — source/shape/recovery/off-axis/hash falsifiers.
-- `scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs` — proves axis, r0 and longitudinal blockers closed while §4.5 remains.
-- `scripts/emp1-public-product-check.mjs` — product/registry truth updated to one active WRC source blocker.
-- `scripts/emp1-workbench-product-run-qualification.mjs` — concurrent aligned update: expects only §4.5 source suspension and asserts longitudinal blocker absent.
-- `scripts/emp1-wrc537-r0-source-authority-check.mjs` — concurrent aligned update: carries longitudinal authority checks through prior r0 custody falsifiers.
-- `docs/emp1/WRC537_2013_Longitudinal_Moment_Eight_Point_Authority.md` — durable source/authority ledger.
-- `agents/PR1316_workreport.md` — living handover record.
+1. `src/core/emp1/emp1-wrc537-longitudinal-moment-curve-selection.js` — source-qualified eight-point authority + strict semantic/shape/hash validator; comparison off-axis selector retained separately.
+2. `src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js` — qualified numerics require eight-point longitudinal authority; comparison numerics retain explicit selector.
+3. `src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js` — route bound to eight-point `1B/2B`; longitudinal blocker removed; §4.5 remains.
+4. `src/core/emp1/emp1-c-bounded-route-registry.js` — registry exposes qualified longitudinal authority and off-axis exclusion.
+5. `src/core/emp1/emp1-public-product-contract.js` — stale sign-authority C label corrected to the actual remaining §4.5 applicability authority boundary.
+6. `src/core/emp1/index.js` — exports longitudinal authority contract.
+7. `scripts/emp1-wrc537-longitudinal-moment-curve-selection-check.mjs` — source/shape/recovery/off-axis/hash/recomputed-hash falsifiers.
+8. `scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs` — proves axis, r0 and longitudinal blockers closed while §4.5 remains.
+9. `scripts/emp1-public-product-check.mjs` — product/registry truth updated to one active WRC source blocker.
+10. `scripts/emp1-workbench-product-run-qualification.mjs` — expects only §4.5 source suspension and asserts longitudinal blocker absent.
+11. `scripts/emp1-wrc537-r0-source-authority-check.mjs` — carries longitudinal authority checks through prior r0 custody falsifiers.
+12. `docs/emp1/WRC537_2013_Longitudinal_Moment_Eight_Point_Authority.md` — durable source/authority ledger.
+13. `agents/PR1316_workreport.md` — living handover record.
+
+No workflow file is changed by PR1316.
 
 ## Validation ledger
 
@@ -111,21 +126,24 @@ Route/public-product checks also assert that the resolved longitudinal blocker c
 - Eight-point extrema contract re-observed: exactly 8 locations; no continuous search; no global-maximum claim.
 - Qualified numerics call path reviewed: authority object is mandatory and determines `1B/2B`.
 - Comparison selector remains separate and cannot acquire Table-5 eight-point production authority.
+- Route/public-product/workbench/r0 reason arrays reconciled to exactly one remaining WRC source blocker.
 - No WRC coefficient, Table-5 equation/sign matrix, gamma/beta equation, frozen gamma5/gamma15 oracle, pressure policy or SCF arithmetic changed.
 
 ### GitHub Actions — NOT_RUN_EXECUTION_ENVIRONMENT
 
 At engineering code head `83fd2cb2ce6d47f98a3e4a3c5bce27de43ee0920`:
 
-- EMP.1 gamma5 bounded route: run `32489621624` — GitHub conclusion `failure`, but job `96793963116` reports `steps=null`, `logs_url=null`;
-- EMP.1 current-main independent baseline: run `32489621554` — GitHub conclusion `failure` before usable test evidence;
-- EMP.1 runEmp1 bounded gamma5 orchestration: run `32489621576` — GitHub conclusion `failure` before usable test evidence.
+| Workflow | Run | Job | Observed state |
+|---|---:|---:|---|
+| EMP.1 gamma5 bounded route | `32489621624` | `96793963116` | `steps=null`, `logs_url=null` |
+| EMP.1 current-main independent baseline | `32489621554` | `96793963002` | `steps=null`, `logs_url=null` |
+| EMP.1 runEmp1 bounded gamma5 orchestration | `32489621576` | `96793963193` | `steps=null`, `logs_url=null` |
 
-This is the same zero-step runner/startup condition observed on PR1315 and earlier heads. No test command is demonstrated to have executed. These runs are therefore **not software FAIL evidence and not PASS evidence**; exact-head runtime qualification remains `NOT_RUN_EXECUTION_ENVIRONMENT`.
+GitHub reports conclusion `failure`, but no workflow step or test command executed. This is the same runner/startup condition observed on PR1315 and earlier heads. These runs are therefore **not software FAIL evidence and not PASS evidence**; exact-head runtime qualification remains `NOT_RUN_EXECUTION_ENVIRONMENT`.
 
 ### Local full-repository runtime — NOT_RUN
 
-No usable matching local repository checkout/runtime is available in this connector-only environment. No local PASS is claimed.
+A local clone attempt failed with `Could not resolve host: github.com`; no matching executable checkout is available in this runtime. No local PASS is claimed.
 
 ## Protected invariants
 
@@ -137,10 +155,16 @@ No usable matching local repository checkout/runtime is available in this connec
 - No claim that eight Table-5 locations are the absolute shell maximum.
 - No production route registration.
 - No global EMP.1.C, code compliance or release authority.
+- No workflow weakening/change.
 
-## Next action after PR1316 merge
+## Exact continuation / next action
 
-EMP1-15 should address the remaining `WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED` blocker. Before changing its current rules, independently re-open and arbitrate WRC §4.5.1/§4.5.2 source text because earlier retained/web evidence suggested the radial-load length wording may be more nuanced than the current distilled `P_REQUIRES_L_GE_RM` rule. Do not widen or alter the applicability domain without direct source proof.
+1. Keep PR1316 draft until the actual qualification commands execute.
+2. When the runner/execution environment is restored, execute the three EMP.1 workflows against the exact engineering content and record real step evidence.
+3. Do not merge PR1316 without fresh PR-specific owner authorization.
+4. After PR1316 merges, EMP1-15 should address the remaining `WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED` blocker.
+5. Before EMP1-15 changes the current rules, independently re-open and arbitrate WRC §4.5.1/§4.5.2 source text because earlier retained evidence indicates the radial-load length wording may be more nuanced than the current distilled `P_REQUIRES_L_GE_RM` rule. Do not widen or alter the applicability domain without direct source proof.
+6. After §4.5 closure, refreeze/requalify the complete bounded production route before any route registration or engineering-use authorization is restored.
 
 ## Appendix A — takeover qualification
 
@@ -150,5 +174,7 @@ EMP1-15 should address the remaining `WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_B
 4. Why may the comparison selector retain off-axis evaluation while production authority remains false for that scope?
 5. What evidence would be required to create a separate production off-axis maximum route?
 6. Why is the eight-point envelope not a global absolute shell maximum?
-7. Which single active WRC source-authority suspension reason remains after EMP1-14?
-8. What §4.5 wording must be re-arbitrated before EMP1-15 changes the current radial-load length rule?
+7. Why does the old `3b437...` route qualification record not by itself authorize the new longitudinal selection semantics?
+8. Which single active WRC source-authority suspension reason remains after EMP1-14?
+9. What §4.5 wording must be re-arbitrated before EMP1-15 changes the current radial-load length rule?
+10. Why are zero-step Actions failures neither software PASS nor software FAIL evidence?

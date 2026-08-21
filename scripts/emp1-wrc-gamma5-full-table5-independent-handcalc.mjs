@@ -4,14 +4,20 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deriveIndependentWrc537Table5Authority } from './emp1-wrc537-independent-source-authority-lib.mjs';
+import { deriveIndependentWrc537Table5Authority } from './oracles/emp1-wrc537/source-authority.mjs';
+import { evaluateIndependentWrc537Table5 } from './oracles/emp1-wrc537/table5-handcalc.mjs';
 
-// Independent qualification calculation: source-derived interpretation plus
-// Node built-ins only. No src/core imports, selector imports, or production data.
+// Independent qualification calculation. WRC interpretation and Table-5
+// mechanics are isolated from src/core production semantics.
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
-const sourceText=await readFile(resolve(root,'docs/emp1/WRC537_2013_Tables_and_Charts.md'),'utf8');
-const cauxText=await readFile(resolve(root,'docs/emp1/CAUx_2017_WRC01f_pages_24-31.md'),'utf8');
-const sourceAuthority=deriveIndependentWrc537Table5Authority({wrcMarkdown:sourceText,cauxMarkdown:cauxText});
+const [sourceText,cauxText,reviewedInterpretation]=await Promise.all([
+  readFile(resolve(root,'docs/emp1/WRC537_2013_Tables_and_Charts.md'),'utf8'),
+  readFile(resolve(root,'docs/emp1/CAUx_2017_WRC01f_pages_24-31.md'),'utf8'),
+  readFile(resolve(root,'validation/emp1/wrc537-2013/table5-reviewed-interpretation-v1.json'),'utf8').then(JSON.parse),
+]);
+const sourceAuthority=deriveIndependentWrc537Table5Authority({
+  wrcMarkdown:sourceText,cauxMarkdown:cauxText,reviewedInterpretation,
+});
 const frozenPath=resolve(root,'validation/emp1/wrc537-2013/gamma5-full-table5-oracle-v1.json');
 let frozen=null;
 try{frozen=JSON.parse(await readFile(frozenPath,'utf8'));}catch{}
@@ -22,7 +28,10 @@ const beta=0.155;
 const geometry={meanRadius:100,shellThickness:20,attachmentRadius:beta*100/0.875,beta,gamma};
 const stressConcentration={Kn:1,Kb:1};
 const loads={P:-1000,Vc:250,Vl:-400,Mc:500000,Ml:-600000,Mt:700000};
-const figureMap={circ:sourceAuthority.figureMap.circumferential,long:sourceAuthority.figureMap.longitudinal};
+const figureMap={
+  circ:sourceAuthority.historicalFigureMap.circumferential,
+  long:sourceAuthority.historicalFigureMap.longitudinal,
+};
 const requiredFigures=[...new Set([...Object.values(figureMap.circ),...Object.values(figureMap.long)])];
 assert.equal(requiredFigures.length,14);
 const coefficients={};
@@ -36,35 +45,21 @@ const q={
   circ:Object.fromEntries(Object.entries(figureMap.circ).map(([key,figure])=>[key,ordinates[figure]])),
   long:Object.fromEntries(Object.entries(figureMap.long).map(([key,figure])=>[key,ordinates[figure]])),
 };
-const LOC=sourceAuthority.locations;
-const SIGN=sourceAuthority.signs;
-const Rm=geometry.meanRadius,T=geometry.shellThickness,r0=geometry.attachmentRadius,Kn=stressConcentration.Kn,Kb=stressConcentration.Kb;
-const scale={
-  pMem:Math.abs(loads.P)*Kn/(Rm*T),pBend:6*Math.abs(loads.P)*Kb/T**2,
-  mcMem:Math.abs(loads.Mc)*Kn/(Rm**2*beta*T),mcBend:6*Math.abs(loads.Mc)*Kb/(Rm*beta*T**2),
-  mlMem:Math.abs(loads.Ml)*Kn/(Rm**2*beta*T),mlBend:6*Math.abs(loads.Ml)*Kb/(Rm*beta*T**2),
-  vcShear:Math.abs(loads.Vc)/(Math.PI*r0*T),vlShear:Math.abs(loads.Vl)/(Math.PI*r0*T),mtShear:Math.abs(loads.Mt)/(2*Math.PI*r0**2*T),
-};
-const circComponents={
-  Pmem:apply(SIGN.pMem,loads.P,grouped(q.circ.Pmem_AB*scale.pMem,q.circ.Pmem_CD*scale.pMem)),
-  Pbend:apply(SIGN.pBend,loads.P,grouped(q.circ.Pbend_AB*scale.pBend,q.circ.Pbend_CD*scale.pBend)),
-  Mcmem:apply(SIGN.mcMem,loads.Mc,q.circ.Mcmem*scale.mcMem),Mcbend:apply(SIGN.mcBend,loads.Mc,q.circ.Mcbend*scale.mcBend),
-  Mlmem:apply(SIGN.mlMem,loads.Ml,q.circ.Mlmem*scale.mlMem),Mlbend:apply(SIGN.mlBend,loads.Ml,q.circ.Mlbend*scale.mlBend),
-};
-const longComponents={
-  Pmem:apply(SIGN.pMem,loads.P,grouped(q.long.Pmem_AB*scale.pMem,q.long.Pmem_CD*scale.pMem)),
-  Pbend:apply(SIGN.pBend,loads.P,grouped(q.long.Pbend_AB*scale.pBend,q.long.Pbend_CD*scale.pBend)),
-  Mcmem:apply(SIGN.mcMem,loads.Mc,q.long.Mcmem*scale.mcMem),Mcbend:apply(SIGN.mcBend,loads.Mc,q.long.Mcbend*scale.mcBend),
-  Mlmem:apply(SIGN.mlMem,loads.Ml,q.long.Mlmem*scale.mlMem),Mlbend:apply(SIGN.mlBend,loads.Ml,q.long.Mlbend*scale.mlBend),
-};
-const shearComponents={Vc:apply(SIGN.vc,loads.Vc,scale.vcShear),Vl:apply(SIGN.vl,loads.Vl,scale.vlShear),Mt:apply(SIGN.mt,loads.Mt,scale.mtShear)};
-const circumferential=sum(circComponents),longitudinal=sum(longComponents),shear=sum(shearComponents);
-const stressIntensity=LOC.map((_,i)=>tresca(circumferential[i],longitudinal[i],shear[i]));
+const independent=evaluateIndependentWrc537Table5({
+  geometry,stressConcentration,loads,curveOrdinates:q,
+  signs:sourceAuthority.signs,locations:sourceAuthority.locations,
+});
 const semanticPayload={
   sourceDocumentSha256:sourceSha,sourceExtraction:'docs/emp1/WRC537_2013_Tables_and_Charts.md',
   case:{shellFamily:'CYLINDRICAL',attachmentShape:'ROUND',variant:'ORIGINAL',gamma,beta,geometry,stressConcentration,loads},
-  figureMap,sourceRows:coefficients,curveOrdinates:q,scale,
-  expected:{locations:LOC,circumferential,longitudinal,shear,stressIntensity},
+  figureMap,sourceRows:coefficients,curveOrdinates:q,scale:independent.scale,
+  expected:{
+    locations:sourceAuthority.locations,
+    circumferential:independent.stresses.circumferential,
+    longitudinal:independent.stresses.longitudinal,
+    shear:independent.stresses.shear,
+    stressIntensity:independent.stresses.stressIntensity,
+  },
 };
 const semanticHash=createHash('sha256').update(canonical(semanticPayload)).digest('hex');
 if(frozen?.semanticHash){
@@ -72,10 +67,25 @@ if(frozen?.semanticHash){
   assert.deepEqual(frozen.semanticPayload,semanticPayload,'full Table5 oracle payload drift');
 }
 console.log(JSON.stringify({
-  schema:'emp1-wrc537-gamma5-full-table5-independent-handcalc/v2',
-  status:frozen?.semanticHash?'PASS_REOBSERVED_FROZEN_FULL_TABLE5_ORACLE_WITH_SOURCE_DERIVED_INTERPRETATION':'PASS_CANDIDATE_FULL_TABLE5_ORACLE_WITH_SOURCE_DERIVED_INTERPRETATION',
-  engineeringAuthority:Boolean(frozen?.semanticHash),productionAuthority:false,productionImports:[],productionObservationUsed:false,
-  interpretationAuthority:{authorityHash:sourceAuthority.authorityHash,figureMapAuthority:sourceAuthority.sourceCustody.figureMapDisambiguator,signAuthority:sourceAuthority.sourceCustody.signAuthority,productionAuthority:false},
+  schema:'emp1-wrc537-gamma5-full-table5-independent-handcalc/v3',
+  status:frozen?.semanticHash?'PASS_REOBSERVED_FROZEN_FULL_TABLE5_ORACLE_WITH_ISOLATED_SOURCE_AUTHORITY':'PASS_CANDIDATE_FULL_TABLE5_ORACLE_WITH_ISOLATED_SOURCE_AUTHORITY',
+  comparisonClassification:'HISTORICAL_GAMMA5_COMPARISON_VECTOR',
+  engineeringAuthority:Boolean(frozen?.semanticHash),
+  engineeringAuthorityScope:'HISTORICAL_COMPARISON_VECTOR_ONLY',
+  fullWrcSemanticAuthority:false,
+  productionAuthority:false,
+  productionImports:[],
+  productionObservationUsed:false,
+  interpretationAuthority:{
+    authorityHash:sourceAuthority.authorityHash,
+    sourceSemanticHash:sourceAuthority.hashes.sourceSemanticHash,
+    table5InterpretationHash:sourceAuthority.hashes.table5InterpretationHash,
+    signAuthorityHash:sourceAuthority.hashes.signAuthorityHash,
+    historicalFigureMapHash:sourceAuthority.hashes.historicalFigureMapHash,
+    allowedFigureAuthority:sourceAuthority.sourceCustody.allowedFigureAuthority,
+    historicalFigureSelectionValidation:sourceAuthority.sourceCustody.historicalFigureSelectionValidation,
+    productionAuthority:false,
+  },
   semanticHash,semanticPayload,
 },null,2));
 
@@ -98,17 +108,12 @@ function parseGamma5Original(markdown,figure){
   const coeffRows=mdRows.filter((row)=>coefficientOrder.includes(row[0]));
   assert.equal(coeffRows.length,10,`coefficient row count:${figure}`);
   const count=coeffRows[0].length-1;assert(count>0&&coeffRows.every((row)=>row.length-1===count),`coefficient shape:${figure}`);
-  const firstCoeffLineIndex=lines.findIndex((line)=>{const r=parseRow(line);return r&&coefficientOrder.includes(r[0]);});
+  const firstCoeffLineIndex=lines.findIndex((line)=>{const row=parseRow(line);return row&&coefficientOrder.includes(row[0]);});
   const candidates=lines.slice(0,firstCoeffLineIndex).map(parseRow).filter((row)=>row&&row.length===count+1);
   const gammaHeader=[...candidates].reverse().find((row)=>row[0]==='');assert(gammaHeader,`gamma header missing:${figure}`);
-  const column=gammaHeader.slice(1).findIndex((x)=>Number(x)===gamma);assert(column>=0,`gamma5 column missing:${figure}`);
+  const column=gammaHeader.slice(1).findIndex((value)=>Number(value)===gamma);assert(column>=0,`gamma5 column missing:${figure}`);
   return {pdfPage:page,gamma,coefficients:Object.fromEntries(coeffRows.map((row)=>[row[0],Number(row[column+1])]))};
 }
 function rational(c,x){const numerator=c.a+c.c*x+c.e*x**2+c.g*x**3+c.i*x**4;const denominator=1+c.b*x+c.d*x**2+c.f*x**3+c.h*x**4+c.j*x**5;assert(Number.isFinite(denominator)&&denominator!==0);return numerator/denominator;}
-function parseRow(line){const t=String(line??'').trim();if(!t.startsWith('|')||!t.endsWith('|'))return null;return t.slice(1,-1).split('|').map((x)=>x.trim());}
-function apply(signs,load,magnitude){const values=Array.isArray(magnitude)?magnitude:Array(signs.length).fill(magnitude);const direction=load<0?-1:1;return signs.map((s,i)=>zero(s*direction*values[i]));}
-function grouped(ab,cd){return[ab,ab,ab,ab,cd,cd,cd,cd];}
-function sum(components){const rows=Object.values(components);return LOC.map((_,i)=>zero(rows.reduce((a,row)=>a+row[i],0)));}
-function tresca(a,b,t){const d=Math.sqrt((a-b)**2+4*t**2),p1=.5*(a+b+d),p2=.5*(a+b-d),p3=0;return Math.max(Math.abs(p1-p2),Math.abs(p2-p3),Math.abs(p3-p1));}
-function zero(v){return Object.is(v,-0)?0:v;}
-function canonical(value){if(Array.isArray(value))return`[${value.map(canonical).join(',')}]`;if(value&&typeof value==='object')return`{${Object.keys(value).sort().map((k)=>`${JSON.stringify(k)}:${canonical(value[k])}`).join(',')}}`;return JSON.stringify(value);}
+function parseRow(line){const text=String(line??'').trim();if(!text.startsWith('|')||!text.endsWith('|'))return null;return text.slice(1,-1).split('|').map((cell)=>cell.trim());}
+function canonical(value){if(Array.isArray(value))return`[${value.map(canonical).join(',')}]`;if(value&&typeof value==='object')return`{${Object.keys(value).sort().map((key)=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;return JSON.stringify(value);}

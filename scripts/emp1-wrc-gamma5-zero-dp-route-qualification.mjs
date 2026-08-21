@@ -7,113 +7,223 @@ import { canonicalFixture } from './lafea.1-fixtures.mjs';
 import {
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
+  EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS,
   evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate,
   runEmp1Wrc537Gamma5ZeroDpRoute,
 } from '../src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js';
+import {
+  deriveEmp1Wrc537CylindricalAxisAuthority,
+} from '../src/core/emp1/emp1-wrc537-cylindrical-axis-authority.js';
+import {
+  EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+  EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+  createEmp1Wrc537ApplicabilitySourceAuthority,
+} from '../src/core/emp1/emp1-wrc537-applicability-source-authority.js';
 
-const routeRecord=JSON.parse(await readFile('validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v1.json','utf8'));
-const producerRecord=JSON.parse(await readFile('validation/emp1/wrc537-2013/emp1-a-zero-dp-wrc-load-producer-qualification-v1.json','utf8'));
-const oracle=JSON.parse(await readFile('validation/emp1/wrc537-2013/gamma5-full-table5-oracle-v1.json','utf8'));
-const routeHash=sha256Canonical(routeRecord.semanticPayload);
-assert.equal(routeHash,routeRecord.qualificationRecordSha256);
-assert.equal(routeHash,EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256);
-assert.equal(routeRecord.status,'PASS_REOBSERVED_AUTHORIZED_BOUNDED_ZERO_DP_ROUTE');
-assert.equal(routeRecord.engineeringAuthority,true);
-assert.equal(routeRecord.productionRouteAuthority,true);
-assert.equal(routeRecord.globalEmp1CRouteAuthority,false);
-assert.equal(routeRecord.productionObservationUsedToSetAuthority,false);
-assert.equal(routeRecord.reobservation?.status,'PASS_STRICT_FAIL_CLOSED_WORKFLOW');
-assert.equal(routeRecord.reobservation?.stressComparisonsPassed,32);
-assert.equal(routeRecord.reobservation?.routeFalsifiersPassed,8);
-assert.equal(routeRecord.authorization?.boundedRouteRegistrationAllowed,true);
-assert.equal(routeRecord.authorization?.nonzeroDifferentialPressureAllowed,false);
-assert.equal(routeRecord.authorization?.nonUnityStressConcentrationAllowed,false);
-assert.equal(routeRecord.authorization?.globalEmp1CRouteRegistrationAllowed,false);
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,true);
-assert.equal(producerRecord.status,'PASS_REOBSERVED_INDEPENDENT_ZERO_DP_LOAD_PRODUCER');
-assert.equal(producerRecord.engineeringAuthority,true);
-assert.equal(producerRecord.semanticHashSha256,routeRecord.semanticPayload.loadProducerQualificationSha256);
-assert.equal(oracle.status,'PASS_REOBSERVED_INDEPENDENT_FULL_TABLE5_ORACLE');
-assert.equal(oracle.semanticHash,routeRecord.semanticPayload.benchmarkQualification.benchmarkHash);
+const routeRecord = JSON.parse(await readFile(
+  'validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v1.json', 'utf8'));
+const producerRecord = JSON.parse(await readFile(
+  'validation/emp1/wrc537-2013/emp1-a-zero-dp-wrc-load-producer-qualification-v1.json', 'utf8'));
+const oracle = JSON.parse(await readFile(
+  'validation/emp1/wrc537-2013/gamma5-full-table5-oracle-v1.json', 'utf8'));
 
-const result=calculateLocalAttachmentFoundation(routeFixture());
-assert.equal(result.qualification.state,'ACCEPTED');
-const transferred=result.transformedLoadCases.find((row)=>row.identity==='LC-1');
-const expectedGlobalForce=[-400,-250,-1000];
-const expectedGlobalMoment=[-500000,600000,-700000];
-assert.deepEqual(transferred.transformedForceGlobal,expectedGlobalForce);
-assert.deepEqual(transferred.transformedMomentGlobal,expectedGlobalMoment);
+const routeHash = sha256Canonical(routeRecord.semanticPayload);
+assert.equal(routeHash, routeRecord.qualificationRecordSha256);
+assert.equal(routeHash, EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256);
+assert.equal(routeRecord.status, 'PASS_REOBSERVED_AUTHORIZED_BOUNDED_ZERO_DP_ROUTE');
+assert.equal(routeRecord.productionRouteAuthority, true,
+  'historical record remains an immutable statement about its old qualification epoch');
+assert.equal(routeRecord.globalEmp1CRouteAuthority, false);
+assert.equal(routeRecord.productionObservationUsedToSetAuthority, false);
+assert.equal(routeRecord.reobservation?.stressComparisonsPassed, 32);
+assert.equal(routeRecord.reobservation?.routeFalsifiersPassed, 8);
+assert.equal(producerRecord.status, 'PASS_REOBSERVED_INDEPENDENT_ZERO_DP_LOAD_PRODUCER');
+assert.equal(producerRecord.semanticHashSha256,
+  routeRecord.semanticPayload.loadProducerQualificationSha256);
+assert.equal(oracle.status, 'PASS_REOBSERVED_INDEPENDENT_FULL_TABLE5_ORACLE');
+assert.equal(oracle.semanticHash, routeRecord.semanticPayload.benchmarkQualification.benchmarkHash);
 
-const input={
-  loadTransferResult:result,
-  loadCaseIdentity:'LC-1',pressureResultIdentity:'PR-1',wrcReferencePointGlobal:[0,0,0],
-  geometry:{meanRadius:100,shellThickness:20,attachmentRadius:17.714285714285715,gamma:5,beta:0.155},
-  axes:{vesselCenterlineGlobal:[1,0,0],nozzleCenterlineGlobal:[0,0,1]},
-  stressConcentration:{Kn:1,Kb:1},
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, false,
+  'historical qualification must not reactivate current production');
+assert.deepEqual(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS, [
+  'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE',
+]);
+
+const model = routeFixture();
+const result = calculateLocalAttachmentFoundation(model);
+assert.equal(result.qualification.state, 'ACCEPTED');
+const transferred = result.transformedLoadCases.find((row) => row.identity === 'LC-1');
+assert.deepEqual(transferred.transformedForceGlobal, [-400, -250, -1000]);
+assert.deepEqual(transferred.transformedMomentGlobal, [-500000, 600000, -700000]);
+const axisAuthority = deriveEmp1Wrc537CylindricalAxisAuthority({
+  foundationResult: result,
+  foundationModel: model,
+  loadCaseIdentity: 'LC-1',
+});
+const applicabilitySourceAuthority = createEmp1Wrc537ApplicabilitySourceAuthority({
+  geometryIdentity: 'EMP1-15-HISTORICAL-ROUTE-REOBSERVATION',
+  cylinderLengthBasis: EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+  cylinderLength: 300,
+  attachmentStationBasis: EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+  attachmentStationFromCylinderStart: 80,
+  unit: 'mm',
+  cylinderLengthSourceReference: 'EMP1-15/QUALIFICATION/CYLINDER-LENGTH',
+  attachmentStationSourceReference: 'EMP1-15/QUALIFICATION/WRC-STATION',
+  productionObservationUsedToSetAuthority: false,
+});
+
+const input = {
+  loadTransferResult: result,
+  loadCaseIdentity: 'LC-1',
+  pressureResultIdentity: 'PR-1',
+  wrcReferencePointGlobal: [0, 0, 0],
+  geometry: {
+    meanRadius: 100,
+    shellThickness: 20,
+    attachmentOutsideRadius: 17.714285714285715,
+    gamma: 5,
+    beta: 0.155,
+  },
+  axisAuthority,
+  applicabilitySourceAuthority,
+  stressConcentration: { Kn: 1, Kb: 1 },
 };
-const candidate=evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
-assert.equal(candidate.state,'PASS_BOUNDED_ROUTE_CANDIDATE');
-assert.equal(candidate.productionRouteAuthority,false);
-assert.equal(candidate.globalEmp1CRouteAuthority,false);
-assert.equal(candidate.methodGate.state,'METHOD_QUALIFIED');
-assert.equal(candidate.numerics.loadCustody.productionRouteInputAuthorized,true);
+const candidate = evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
+assert.equal(candidate.state, 'PASS_BOUNDED_ROUTE_COMPARISON_CANDIDATE');
+assert.equal(candidate.productionRouteAuthority, false);
+assert.equal(candidate.globalEmp1CRouteAuthority, false);
+assert.equal(candidate.methodGate.state, 'METHOD_QUALIFIED');
+assert.equal(candidate.numerics.qualifiedInputAuthority, true);
+assert.equal(candidate.numerics.loadCustody.productionRouteInputAuthorized, true);
+assert.equal(candidate.applicability.status, 'PASS_WRC537_4_5_SOURCE_LIMITS_QUALIFIED');
+assert.equal(candidate.applicability.sourceAuthoritySemanticHash,
+  applicabilitySourceAuthority.semanticHash);
 
-const authorized=runEmp1Wrc537Gamma5ZeroDpRoute(input);
-assert.equal(authorized.state,'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE');
-assert.equal(authorized.engineeringUseAuthorized,true);
-assert.equal(authorized.productionRouteAuthority,true);
-assert.equal(authorized.globalEmp1CRouteAuthority,false);
-assert.equal(authorized.routeQualificationSha256,routeHash);
-assert.equal(authorized.loadCustody.status,'PASS_QUALIFIED_UPSTREAM_LOAD_PACKAGE');
-assert.equal(authorized.loadCustody.producerQualification.qualificationRecordHash,producerRecord.semanticHashSha256);
-assert.equal(authorized.numerics.qualifiedInputAuthority,true);
-assert.equal(authorized.numerics.loadCustody.productionRouteInputAuthorized,true);
-assert.deepEqual(authorized.numerics.wrcLoads,oracle.semanticPayload.case.loads);
-
-let stressComparisons=0;
-for(const key of ['circumferential','longitudinal','shear','stressIntensity']){
-  authorized.stresses[key].forEach((value,index)=>{close(value,oracle.semanticPayload.expected[key][index],`${key}[${index}]`);stressComparisons+=1;});
+let stressComparisons = 0;
+for (const key of ['circumferential', 'longitudinal', 'shear', 'stressIntensity']) {
+  candidate.stresses[key].forEach((value, index) => {
+    close(value, oracle.semanticPayload.expected[key][index], `${key}[${index}]`);
+    stressComparisons += 1;
+  });
 }
-assert.equal(stressComparisons,32);
+assert.equal(stressComparisons, 32);
 
-const falsifiers=[];
-runFalsifier('nonzero-dp',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,loadTransferResult:calculateLocalAttachmentFoundation(nonzeroDpRouteFixture())}),'EMP1_A_WRC_ZERO_DP_NONZERO_DIFFERENTIAL_PRESSURE');
-runFalsifier('nonunity-kn',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,stressConcentration:{Kn:1.01,Kb:1}}),'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
-runFalsifier('nonunity-kb',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,stressConcentration:{Kn:1,Kb:0.99}}),'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
-runFalsifier('gamma15',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,geometry:{...input.geometry,meanRadius:300,gamma:15,beta:0.155,attachmentRadius:53.142857142857146}}),'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
-runFalsifier('beta-high',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,geometry:{...input.geometry,attachmentRadius:60,beta:0.525}}),'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
-runFalsifier('reference-mismatch',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,wrcReferencePointGlobal:[0,0,1]}),'EMP1_A_WRC_ZERO_DP_REFERENCE_POINT_MISMATCH');
-const hashTamper=structuredClone(result);hashTamper.semanticHashes.resultPayloadSemanticHash='fnv1a64:0000000000000000';
-runFalsifier('upstream-hash-drift',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,loadTransferResult:hashTamper}),'EMP1_A_WRC_ZERO_DP_RESULT_HASH_DRIFT:resultPayloadSemanticHash');
-runFalsifier('nonorthogonal-frame',()=>runEmp1Wrc537Gamma5ZeroDpRoute({...input,axes:{vesselCenterlineGlobal:[1,0,0],nozzleCenterlineGlobal:[1,0,1]}}),'EMP1_WRC537_FRAME_NON_ORTHOGONAL');
+let suspended = null;
+try { runEmp1Wrc537Gamma5ZeroDpRoute(input); } catch (error) { suspended = error; }
+assert.equal(suspended?.code, 'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED');
+assert.deepEqual(suspended.reasons, EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS);
+
+const falsifiers = [];
+runCandidateFalsifier('missing-applicability-authority',
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
+    ...input, applicabilitySourceAuthority: undefined,
+  }), 'EMP1_WRC537_4_5_QUALIFIED_SOURCE_AUTHORITY_REQUIRED');
+runCandidateFalsifier('nonzero-dp',
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
+    ...input,
+    loadTransferResult: calculateLocalAttachmentFoundation(nonzeroDpRouteFixture()),
+  }), 'EMP1_A_WRC_ZERO_DP_NONZERO_DIFFERENTIAL_PRESSURE');
+runCandidateFalsifier('nonunity-kn',
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
+    ...input, stressConcentration: { Kn: 1.01, Kb: 1 },
+  }), 'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
+runCandidateFalsifier('nonunity-kb',
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
+    ...input, stressConcentration: { Kn: 1, Kb: 0.99 },
+  }), 'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
+runCandidateFalsifier('gamma15',
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
+    ...input,
+    geometry: {
+      ...input.geometry,
+      meanRadius: 300,
+      gamma: 15,
+      beta: 0.155,
+      attachmentOutsideRadius: 53.142857142857146,
+    },
+  }), 'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
+runCandidateFalsifier('beta-high',
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
+    ...input,
+    geometry: { ...input.geometry, attachmentOutsideRadius: 60, beta: 0.525 },
+  }), 'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
+runCandidateFalsifier('reference-mismatch',
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
+    ...input, wrcReferencePointGlobal: [0, 0, 1],
+  }), 'EMP1_A_WRC_ZERO_DP_REFERENCE_POINT_MISMATCH');
+const hashTamper = structuredClone(result);
+hashTamper.semanticHashes.resultPayloadSemanticHash = 'fnv1a64:0000000000000000';
+runCandidateFalsifier('upstream-hash-drift',
+  () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
+    ...input, loadTransferResult: hashTamper,
+  }), 'EMP1_A_WRC_ZERO_DP_RESULT_HASH_DRIFT:resultPayloadSemanticHash');
 
 console.log(JSON.stringify({
-  schema:'emp1-wrc537-gamma5-zero-dp-route-qualification/v3',
-  status:'PASS_AUTHORIZED_ROUTE_END_TO_END_REOBSERVED',
-  engineeringAuthority:true,productionRouteAuthority:true,globalEmp1CRouteAuthority:false,
-  routeQualificationSha256:routeHash,loadProducerQualificationSha256:producerRecord.semanticHashSha256,
-  upstreamResultHashes:result.semanticHashes,
-  transferredGlobal:{force:transferred.transformedForceGlobal,moment:transferred.transformedMomentGlobal},
-  qualifiedLoadCustody:{status:authorized.loadCustody.status,producerQualificationHash:authorized.loadCustody.producerQualification.qualificationRecordHash,normalizedRouteInputAuthorized:authorized.numerics.loadCustody.productionRouteInputAuthorized},
-  wrcLoads:authorized.numerics.wrcLoads,
-  oracleSemanticHash:oracle.semanticHash,
-  stressComparisons,
-  falsifiersPassed:falsifiers.length,falsifiers,
-  remainingBlocked:{nonzeroDifferentialPressure:true,nonUnityStressConcentration:true,gammaOtherThan5:true,betaOutsideQualifiedDomain:true,globalEmp1CRoute:true},
-},null,2));
+  schema: 'emp1-wrc537-gamma5-zero-dp-route-qualification/v4',
+  status: 'PASS_HISTORICAL_RECORD_CUSTODY_CURRENT_COMPARISON_REOBSERVED_PRODUCTION_SUSPENDED',
+  historicalQualificationRecord: {
+    qualificationRecordSha256: routeHash,
+    oldProductionAuthority: routeRecord.productionRouteAuthority,
+    reusedAsCurrentAuthorization: false,
+  },
+  current: {
+    routeAuthorized: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,
+    suspensionReasons: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS,
+    applicabilityAuthorityHash: applicabilitySourceAuthority.semanticHash,
+    stressComparisons,
+    falsifiersPassed: falsifiers.length,
+    falsifiers,
+  },
+  globalEmp1CRouteAuthority: false,
+}, null, 2));
 
-function routeFixture(){return canonicalFixture((source)=>{
-  source.loadCases[0].force.value=[-400,-250,-1000];
-  source.loadCases[0].moment.value=[-750000,1000000,-700000];
-  source.pressureDefinitions.forEach((row)=>{row.internalPressure.value=0;row.externalPressure.value=0;});
-});}
-function nonzeroDpRouteFixture(){return canonicalFixture((source)=>{
-  source.loadCases[0].force.value=[-400,-250,-1000];
-  source.loadCases[0].moment.value=[-750000,1000000,-700000];
-  source.pressureDefinitions.forEach((row)=>{row.internalPressure.value=1;row.externalPressure.value=0;});
-});}
-function runFalsifier(name,fn,code){expectCode(name,fn,code);falsifiers.push(name);}
-function expectCode(name,fn,prefix){let caught=null;try{fn();}catch(error){caught=error;}assert.ok(caught,`${name}: expected failure`);assert.ok(String(caught.code??caught.message).startsWith(prefix),`${name}: actual=${caught.code??caught.message}`);}
-function close(a,e,label){const t=Math.max(1,Math.abs(e))*1e-11;assert.ok(Math.abs(a-e)<=t,`${label}: actual=${a} expected=${e} tol=${t}`);}
-function sha256Canonical(value){return createHash('sha256').update(JSON.stringify(sortValue(value)),'utf8').digest('hex');}
-function sortValue(value){if(Array.isArray(value))return value.map(sortValue);if(value&&typeof value==='object'){const out={};for(const key of Object.keys(value).sort())out[key]=sortValue(value[key]);return out;}return value;}
+function routeFixture() {
+  return canonicalFixture((source) => {
+    source.loadCases[0].force.value = [-400, -250, -1000];
+    source.loadCases[0].moment.value = [-750000, 1000000, -700000];
+    source.pressureDefinitions.forEach((row) => {
+      row.internalPressure.value = 0;
+      row.externalPressure.value = 0;
+    });
+  });
+}
+function nonzeroDpRouteFixture() {
+  return canonicalFixture((source) => {
+    source.loadCases[0].force.value = [-400, -250, -1000];
+    source.loadCases[0].moment.value = [-750000, 1000000, -700000];
+    source.pressureDefinitions.forEach((row) => {
+      row.internalPressure.value = 1;
+      row.externalPressure.value = 0;
+    });
+  });
+}
+function runCandidateFalsifier(name, fn, code) {
+  expectCode(name, fn, code);
+  falsifiers.push(name);
+}
+function expectCode(name, fn, prefix) {
+  let caught = null;
+  try { fn(); } catch (error) { caught = error; }
+  assert.ok(caught, `${name}: expected failure`);
+  assert.ok(String(caught.code ?? caught.message).startsWith(prefix),
+    `${name}: actual=${caught.code ?? caught.message}`);
+}
+function close(actual, expected, label) {
+  const tolerance = Math.max(1, Math.abs(expected)) * 1e-11;
+  assert.ok(Math.abs(actual - expected) <= tolerance,
+    `${label}: actual=${actual} expected=${expected} tol=${tolerance}`);
+}
+function sha256Canonical(value) {
+  return createHash('sha256')
+    .update(JSON.stringify(sortValue(value)), 'utf8')
+    .digest('hex');
+}
+function sortValue(value) {
+  if (Array.isArray(value)) return value.map(sortValue);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const key of Object.keys(value).sort()) out[key] = sortValue(value[key]);
+    return out;
+  }
+  return value;
+}

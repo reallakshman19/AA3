@@ -26,7 +26,6 @@ import {
 import {
   EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
   EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
-  emp1Wrc537ApplicabilityEvidenceFromAuthority,
   requireEmp1Wrc537QualifiedApplicabilitySourceAuthority,
 } from './emp1-wrc537-applicability-source-authority.js';
 import {
@@ -199,9 +198,7 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input) {
     stressConcentration: { Kn: 1, Kb: 1 },
     longitudinalMomentBendingAuthority:
       EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
-    applicabilityEvidence: emp1Wrc537ApplicabilityEvidenceFromAuthority(
-      applicabilitySourceAuthority,
-    ),
+    applicabilitySourceAuthority,
   }, {
     expectedProducerQualificationHash: EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256,
   });
@@ -222,8 +219,7 @@ export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input) {
       EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
     loadCandidate,
     loadCustody,
-    applicability: qualifiedApplicability,
-    adapterComparisonApplicability: numerics.applicability,
+    applicability: numerics.applicability,
     stressScope: numerics.stressScope,
     numerics,
     stresses: numerics.stresses,

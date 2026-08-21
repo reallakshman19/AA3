@@ -20,6 +20,10 @@ import {
   lafeaWorkbenchDisplayRenderPacket,
   lafeaWorkbenchThreeNamespace,
 } from './lafea-workbench-render-evidence.js';
+import {
+  normalizeEmp1WorkbenchRunInput,
+  projectEmp1WorkbenchRunReadiness,
+} from './emp1-workbench-run-state.js';
 import { LafeaWorkbenchView } from './lafea-workbench-view.js';
 
 const ACCESSORY_PANEL_MANAGERS = new WeakMap();
@@ -28,7 +32,7 @@ const DESTROYED_CONTROLLERS = new WeakSet();
 export class LafeaWorkbenchController {
   constructor(rootElement, options) {
     const configuration = isLafeaRecord(options) ? options : {};
-    const { accessoryPanels, THREE, ...storeOptions } = configuration;
+    const { accessoryPanels, THREE, emp1RunInput, ...storeOptions } = configuration;
     const {
       benchmarkPanelFactory,
       mockDocumentFactory,
@@ -39,6 +43,10 @@ export class LafeaWorkbenchController {
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
     this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
+    this.emp1RunInput = emp1RunInput == null ? null : normalizeEmp1WorkbenchRunInput(emp1RunInput);
+    this.emp1Execution = null;
+    this.emp1RunFailure = null;
+    this.emp1RunSerial = 0;
     this.mockDocumentFactory = typeof mockDocumentFactory === 'function' ? mockDocumentFactory : null;
     const companionMockDomainAndGeometryFactory = this.mockDocumentFactory?.domainAndGeometryFactory;
     this.mockDomainAndGeometryFactory = typeof mockDomainAndGeometryFactory === 'function'
@@ -49,6 +57,9 @@ export class LafeaWorkbenchController {
     initializeLafeaWorkbenchRenderEvidence(this, THREE ?? null);
     this.view = new LafeaWorkbenchView(rootElement, {
       getRenderPacket: (stageId) => lafeaWorkbenchDisplayRenderPacket(this, stageId),
+      getEmp1RunInput: () => this.emp1RunInput,
+      getEmp1Execution: () => this.emp1Execution,
+      getEmp1RunFailure: () => this.emp1RunFailure,
       THREE: lafeaWorkbenchThreeNamespace(this),
       presentationMode,
       analyticalOnly,
@@ -79,6 +90,8 @@ export class LafeaWorkbenchController {
       onMock: (stageId) => this.loadMockData(stageId),
       onFile: (file) => this.loadFile(file),
       onRun: () => this.run(),
+      onRunEmp1: () => this.runEmp1Product(),
+      onEmp1RunInput: (value) => this.setEmp1RunInput(value),
       onPrepareContinuum: () => this.attemptContinuumPreflight(),
       onExport: () => this.downloadDocument(),
       onUndo: () => this.undo(),
@@ -332,6 +345,67 @@ export class LafeaWorkbenchController {
     }
   }
 
+  setEmp1RunInput(value) {
+    try {
+      this.emp1RunInput = normalizeEmp1WorkbenchRunInput(value);
+      this.emp1RunFailure = null;
+      if (this.unsubscribe) this.view.render(this.getState());
+      return Object.freeze({ status: 'APPLIED', input: this.emp1RunInput });
+    } catch (error) {
+      return Object.freeze({
+        status: 'REJECTED',
+        code: error?.code ?? 'EMP1_WORKBENCH_RUN_INPUT_REJECTED',
+        message: error instanceof Error ? error.message : 'EMP.1 source binding was rejected.',
+      });
+    }
+  }
+
+  getEmp1RunInput() { return this.emp1RunInput; }
+  getEmp1Execution() { return this.emp1Execution; }
+
+  async runEmp1Product() {
+    const state = this.getState();
+    const readiness = projectEmp1WorkbenchRunReadiness({
+      aDocument: state.stages?.['LAFEA.1']?.document,
+      bDocument: state.stages?.['LAFEA.2']?.document,
+      runInput: this.emp1RunInput,
+    });
+    if (!readiness.runAuthorized) {
+      this.emp1RunFailure = Object.freeze({
+        code: 'EMP1_WORKBENCH_RUN_NOT_READY',
+        message: readiness.reasons.join(', '),
+      });
+      if (this.unsubscribe) this.view.render(state);
+      return Object.freeze({ status: 'BLOCKED', reasons: readiness.reasons });
+    }
+
+    const serial = ++this.emp1RunSerial;
+    this.emp1RunFailure = null;
+    try {
+      const { executeEmp1WorkbenchProduct } = await import('./emp1-workbench-product-run.js');
+      const execution = await executeEmp1WorkbenchProduct({
+        aDocument: state.stages['LAFEA.1'].document,
+        bDocument: state.stages['LAFEA.2'].document,
+        runInput: this.emp1RunInput,
+        previous: this.emp1Execution,
+      });
+      if (serial !== this.emp1RunSerial || DESTROYED_CONTROLLERS.has(this)) return null;
+      this.emp1Execution = execution;
+      this.emp1RunFailure = null;
+      if (this.unsubscribe) this.view.render(this.getState());
+      return execution;
+    } catch (error) {
+      if (serial !== this.emp1RunSerial || DESTROYED_CONTROLLERS.has(this)) return null;
+      this.emp1Execution = null;
+      this.emp1RunFailure = Object.freeze({
+        code: error?.code ?? 'EMP1_WORKBENCH_RUN_FAILED',
+        message: error instanceof Error ? error.message : 'EMP.1 execution failed.',
+      });
+      if (this.unsubscribe) this.view.render(this.getState());
+      return Object.freeze({ status: 'FAILED', ...this.emp1RunFailure });
+    }
+  }
+
   run() { return this.store.run(); }
   undo() { return this.store.undo(); }
   redo() { return this.store.redo(); }
@@ -353,6 +427,10 @@ export class LafeaWorkbenchController {
   destroy() {
     if (DESTROYED_CONTROLLERS.has(this)) return;
     DESTROYED_CONTROLLERS.add(this);
+    this.emp1RunSerial += 1;
+    this.emp1RunInput = null;
+    this.emp1Execution = null;
+    this.emp1RunFailure = null;
     const accessoryPanelManager = ACCESSORY_PANEL_MANAGERS.get(this);
     accessoryPanelManager?.destroy();
     ACCESSORY_PANEL_MANAGERS.delete(this);

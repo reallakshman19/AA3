@@ -41,6 +41,11 @@ export function renderEmp1BoundedCorrelationEvidence(root, projection) {
       ['γ', route.scope?.gamma],
       ['β domain', `${engineeringNumber(route.scope?.betaMinimum)} ≤ β ≤ ${engineeringNumber(route.scope?.betaMaximum)}`],
       ['Differential pressure', route.scope?.differentialPressure],
+      ['WRC load-axis authority', human(route.scope?.cylindricalLoadAxisAuthority)],
+      ['WRC +P rule', human(route.scope?.wrcPositivePRule)],
+      ['Runtime source-polarity evidence', route.scope?.runtimeSourcePolarityEvidenceRequired === true ? 'REQUIRED' : 'UNRESOLVED'],
+      ['Raw foundation eZ is WRC polarity authority', route.scope?.rawFoundationRadialHintIsPolarityAuthority === false ? 'NO' : 'UNRESOLVED'],
+      ['Axis source SHA-256', route.scope?.cylindricalLoadAxisSourceSha256],
       ['Kn / Kb', `${engineeringNumber(route.scope?.Kn)} / ${engineeringNumber(route.scope?.Kb)}`],
       ['Interpolation', route.scope?.interpolationAllowed === false ? 'PROHIBITED' : 'UNRESOLVED'],
       ['Cross-variant fallback', route.scope?.crossVariantFallbackAllowed === false ? 'PROHIBITED' : 'UNRESOLVED'],
@@ -75,14 +80,32 @@ export function renderEmp1CorrelationResultEvidence(root, localCorrelation) {
     ]));
   }
   if (custody?.loadReference || custody?.axes) {
-    result.body.append(sectionHeading(root, 'Reference and axis custody'));
+    result.body.append(sectionHeading(root, 'Reference and foundation-frame custody'));
     result.body.append(keyValueTable(root, [
       ['Reference identity', custody?.loadReference?.identity],
       ['Reference point global', vectorText(custody?.loadReference?.pointGlobal)],
-      ['Vessel axis', vectorText(custody?.axes?.vesselCenterlineGlobal)],
-      ['Nozzle/radial axis', vectorText(custody?.axes?.nozzleCenterlineGlobal)],
+      ['Foundation vessel eX', vectorText(custody?.axes?.vesselCenterlineGlobal)],
+      ['Foundation radial eZ — unoriented line', vectorText(custody?.axes?.nozzleCenterlineGlobal)],
       ['Foundation result hash', custody?.foundationResultHash],
       ['Screening result hash', custody?.screeningResultHash],
+    ]));
+  }
+  const axis = custody?.wrcAxisAuthority ?? localCorrelation?.axisAuthority;
+  if (axis) {
+    result.body.append(sectionHeading(root, 'Source-qualified WRC load-axis polarity'));
+    result.body.append(keyValueTable(root, [
+      ['Axis authority state', human(axis.state)],
+      ['Axis authority identity', axis.authorityId],
+      ['Source point global', vectorText(axis.sourcePointGlobal)],
+      ['Attachment target global', vectorText(axis.targetPointGlobal)],
+      ['Raw radial-line alignment with +P', axis.sourceToTargetRadialAlignment],
+      ['+P', vectorText(axis.basisGlobal?.P)],
+      ['+Vc', vectorText(axis.basisGlobal?.Vc)],
+      ['+Vl', vectorText(axis.basisGlobal?.Vl)],
+      ['+Mc moment axis', vectorText(axis.basisGlobal?.Mc)],
+      ['+Ml moment axis', vectorText(axis.basisGlobal?.Ml)],
+      ['+Mt moment axis', vectorText(axis.basisGlobal?.Mt)],
+      ['Axis source SHA-256', axis.sourceDocumentSha256],
     ]));
   }
   if (numerics?.wrcLoads) {
@@ -109,14 +132,14 @@ function renderStageA(root, stage) {
   }
   const frame = execution.coordinateSystemEvidence ?? {};
   result.body.append(element(root, 'p', 'lafea-workbench__section-intro',
-    'These vectors are retained calculation evidence. The WRC bounded route consumes the selected load-case target point and the retained eX/eZ basis; this view cannot override them.'));
+    'These vectors are retained calculation evidence. EMP.1.C uses retained vessel-axis and load-reference geometry to derive WRC polarity; foundation eZ is only a radial line and cannot by itself define WRC +P. This view cannot override either authority.'));
   result.body.append(sectionHeading(root, 'Retained coordinate basis'));
   result.body.append(keyValueTable(root, [
     ['Coordinate system', frame.identity],
     ['Origin global', vectorText(frame.originGlobal)],
     ['eX — pipe/vessel axis', vectorText(frame.axesGlobal?.eX)],
     ['eY — circumferential axis', vectorText(frame.axesGlobal?.eY)],
-    ['eZ — radial/nozzle axis', vectorText(frame.axesGlobal?.eZ)],
+    ['eZ — radial line, polarity not WRC authority', vectorText(frame.axesGlobal?.eZ)],
     ['Handedness', frame.handedness],
     ['Orthogonality residual', frame.orthogonalityResidual],
   ]));

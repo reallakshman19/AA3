@@ -61,7 +61,7 @@ export function deriveEmp1Wrc537CylindricalAxisAuthority({
     'EMP1_WRC537_AXIS_SOURCE_POINT_INVALID');
   const targetPoint = vector3(load.targetPointGlobal,
     'EMP1_WRC537_AXIS_TARGET_POINT_INVALID');
-  const inwardVector = targetPoint.map((value, index) => value - sourcePoint[index]);
+  const inwardVector = targetPoint.map((value, index) => canonicalZero(value - sourcePoint[index]));
   const inwardNorm = norm(inwardVector);
   const sourceRefs = axisSourceRefs(model);
 
@@ -104,7 +104,7 @@ export function deriveEmp1Wrc537CylindricalAxisAuthority({
     });
   }
 
-  const eP = inwardVector.map((value) => value / inwardNorm);
+  const eP = inwardVector.map((value) => canonicalZero(value / inwardNorm));
   const longitudinalResidual = Math.abs(dot(eLong, eP));
   if (longitudinalResidual > orthogonalityTolerance) {
     throw axisError(`EMP1_WRC537_AXIS_SOURCE_TO_TARGET_NOT_RADIAL:${longitudinalResidual}`);
@@ -127,8 +127,8 @@ export function deriveEmp1Wrc537CylindricalAxisAuthority({
     state: EMP1_WRC537_CYLINDRICAL_AXIS_QUALIFIED,
     engineeringUseAuthorized: true,
     reason: null,
-    sourceToTargetRadialAlignment: radialAlignment,
-    sourceToTargetLongitudinalResidual: longitudinalResidual,
+    sourceToTargetRadialAlignment: canonicalZero(radialAlignment),
+    sourceToTargetLongitudinalResidual: canonicalZero(longitudinalResidual),
     frameInput: {
       vesselCenterlineGlobal: eLong,
       nozzleCenterlineGlobal: eP,
@@ -246,24 +246,27 @@ function vector3(value, code) {
   if (!Array.isArray(value) || value.length !== 3 || value.some((item) => !Number.isFinite(item))) {
     throw axisError(code);
   }
-  return value.map(Number);
+  return value.map((item) => canonicalZero(Number(item)));
 }
 function normalize3(value, code) {
   const vector = vector3(value, code);
   const magnitude = norm(vector);
   if (!(magnitude > 0)) throw axisError(code);
-  return vector.map((item) => item / magnitude);
+  return vector.map((item) => canonicalZero(item / magnitude));
 }
 function norm(value) { return Math.sqrt(dot(value, value)); }
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
 function cross(a, b) {
   return [
-    a[1] * b[2] - a[2] * b[1],
-    a[2] * b[0] - a[0] * b[2],
-    a[0] * b[1] - a[1] * b[0],
+    canonicalZero(a[1] * b[2] - a[2] * b[1]),
+    canonicalZero(a[2] * b[0] - a[0] * b[2]),
+    canonicalZero(a[0] * b[1] - a[1] * b[0]),
   ];
 }
-function scale(vector, scalar) { return vector.map((value) => value * scalar); }
+function scale(vector, scalar) {
+  return vector.map((value) => canonicalZero(value * scalar));
+}
+function canonicalZero(value) { return Object.is(value, -0) || value === 0 ? 0 : value; }
 function axisError(code) { const error = new TypeError(code); error.code = code; return error; }
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;

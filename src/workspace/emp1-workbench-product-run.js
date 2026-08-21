@@ -105,9 +105,11 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
         physicalLocation: attachment.physicalLocation,
         unit: attachment.unit,
         sourceReference: attachment.sourceReference,
-        sourceBindingSemanticHash: semanticHash(attachment),
         productionObservationUsedToSetAuthority: false,
       });
+      if (attachmentSourceAuthority.sourceBindingSemanticHash !== semanticHash(attachment)) {
+        throw workbenchError('EMP1_WORKBENCH_ATTACHMENT_SOURCE_BINDING_HASH_MISMATCH');
+      }
       const retained = createEmp1RetainedSectionScreeningLayer({
         screeningRequest: execution.canonicalInput,
         screeningResult: execution.result,

@@ -16,6 +16,9 @@ import {
 } from './emp1-wrc537-cylindrical-axis-authority.js';
 import { buildEmp1Wrc537CylindricalFrame } from './emp1-wrc537-cylindrical-frame.js';
 import {
+  requireEmp1Wrc537QualifiedApplicabilitySourceAuthority,
+} from './emp1-wrc537-applicability-source-authority.js';
+import {
   deriveEmp1Wrc537SourceCustody,
   requireEmp1Wrc537QualifiedR0SourceCustody,
   requireEmp1Wrc537SourceCustody,
@@ -56,6 +59,11 @@ export function prepareEmp1Wrc537Gamma5ZeroDpLocalSource({
 } = {}) {
   if (!record(source)) throw orchestrationError('EMP1_WRC537_ZERO_DP_ORCHESTRATION_SOURCE_REQUIRED');
   const request = requireRequest(source?.localMethod?.routeRequest);
+  const applicabilitySourceAuthority = source?.localMethod?.applicabilitySourceAuthority == null
+    ? null
+    : requireEmp1Wrc537QualifiedApplicabilitySourceAuthority(
+      source.localMethod.applicabilitySourceAuthority,
+    );
   const foundationResult = requireFoundationResult(loadTransfer);
   const sourceCustody = deriveEmp1Wrc537SourceCustody({
     foundationResult,
@@ -90,6 +98,7 @@ export function prepareEmp1Wrc537Gamma5ZeroDpLocalSource({
     beta: sourceCustody.geometry.beta,
     loadCustody,
     wrcSourceCustody: sourceCustody,
+    applicabilitySourceAuthority,
   };
   return deepFreeze(prepared);
 }
@@ -104,6 +113,9 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
     throw orchestrationError('EMP1_WRC537_ZERO_DP_ORCHESTRATION_GATE_NOT_QUALIFIED');
   }
   const request = requireRequest(source?.localMethod?.routeRequest);
+  const applicabilitySourceAuthority = requireEmp1Wrc537QualifiedApplicabilitySourceAuthority(
+    source?.localMethod?.applicabilitySourceAuthority,
+  );
   const foundationResult = requireFoundationResult(loadTransfer);
   const preparedCustody = requireEmp1Wrc537SourceCustody(
     source?.localMethod?.wrcSourceCustody,
@@ -132,11 +144,13 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
     geometry: qualifiedCustody.geometry,
     axisAuthority,
     attachmentSourceAuthority: qualifiedCustody.attachmentGeometryEvidence,
+    applicabilitySourceAuthority,
     stressConcentration: qualifiedCustody.stressConcentration,
   });
   const result = {
     ...routeResult,
     sourceCustody: qualifiedCustody,
+    applicabilitySourceAuthority,
   };
   return deepFreeze({
     ...result,

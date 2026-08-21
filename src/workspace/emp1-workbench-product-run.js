@@ -2,6 +2,7 @@ import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import {
   createEmp1RetainedFoundationLayer,
   createEmp1RetainedSectionScreeningLayer,
+  createEmp1Wrc537ApplicabilitySourceAuthority,
   createEmp1Wrc537AttachmentSourceAuthority,
   emp1Wrc537Gamma5ZeroDpOrchestrationQualification,
   prepareEmp1Wrc537Gamma5ZeroDpLocalSource,
@@ -21,6 +22,7 @@ import { executeLafeaStage } from './lafea-workbench-model.js';
 import {
   EMP1_WORKBENCH_PRODUCT_EXECUTION_SCHEMA,
   emp1WorkbenchInputHashes,
+  normalizeEmp1ApplicabilityGeometry,
   normalizeEmp1AttachmentGeometry,
   normalizeEmp1WorkbenchRunInput,
   reconcileEmp1WorkbenchChangeClasses,
@@ -29,7 +31,9 @@ import {
 export {
   EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
   EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
+  EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS,
   EMP1_WORKBENCH_BOUNDED_ROUTE_REQUEST_SCHEMA,
+  EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS,
   EMP1_WORKBENCH_EXECUTION_CURRENTNESS,
   EMP1_WORKBENCH_PRODUCT_EXECUTION_SCHEMA,
   EMP1_WORKBENCH_RUN_INPUT_SCHEMA,
@@ -43,9 +47,10 @@ export {
  * Product-owned EMP.1 transaction over the retained A/B engines and the
  * governed bounded-C preparation path.
  *
- * The caller may select retained identities and author one typed attachment
- * source binding. Pipe OD, assessment thickness, WRC reference coordinates,
- * axes, gamma/beta and Kn/Kb remain derived authority.
+ * The caller may select retained identities and author typed engineering-source
+ * bindings for attachment OD and WRC §4.5 cylinder geometry. Pipe OD,
+ * assessment thickness, WRC reference coordinates, axes, gamma/beta, Kn/Kb and
+ * nearest-end distance remain derived authority.
  *
  * When the gamma=5 production route is suspended, this function still proves
  * the A -> B -> prepared-C custody chain but it does not invoke the production
@@ -63,9 +68,16 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
     previous?.inputHashes,
     inputHashes,
   );
-  const productSource = buildProductSource(runInput);
+  const applicabilitySourceAuthority = runInput.localMethod.applicabilityGeometry
+    ? requireApplicabilityGeometryForExecution(
+      runInput.localMethod.applicabilityGeometry,
+      aDocument,
+      bDocument,
+    )
+    : null;
+  const productSource = buildProductSource(runInput, applicabilitySourceAuthority);
   const sourceHash = semanticHash({
-    schema: 'emp1-workbench-source-binding/v3',
+    schema: 'emp1-workbench-source-binding/v4',
     inputHashes,
     productSource,
   });
@@ -161,6 +173,7 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
     inputHashes,
     changeClasses,
     runInput,
+    applicabilitySourceAuthority,
     invocations,
     result,
     stageExecutions: {
@@ -170,6 +183,8 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
     authority: {
       boundedLocalRoutePrepared,
       boundedLocalRouteExecuted,
+      applicabilitySourceAuthorityPrepared: applicabilitySourceAuthority != null,
+      applicabilitySourceAuthoritySemanticHash: applicabilitySourceAuthority?.semanticHash ?? null,
       routeModuleAuthorized: routeAuthority.routeModuleAuthorized,
       routeRegistryRegistered: routeAuthority.routeRegistryRegistered,
       routeRegistryEngineeringUseAuthorized: routeAuthority.routeRegistryEngineeringUseAuthorized,
@@ -212,12 +227,14 @@ function currentProductionRouteAuthority() {
 
 function suspendedLocalCorrelation(preparedSource, routeAuthority) {
   const preparedSourceCustody = preparedSource?.localMethod?.wrcSourceCustody ?? null;
+  const preparedApplicabilitySourceAuthority =
+    preparedSource?.localMethod?.applicabilitySourceAuthority ?? null;
   const reasons = Object.freeze([
     'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED',
     ...routeAuthority.reasons,
   ]);
   const payload = {
-    schema: 'emp1-workbench-suspended-local-correlation/v1',
+    schema: 'emp1-workbench-suspended-local-correlation/v2',
     state: 'BLOCKED',
     decision: null,
     reasons,
@@ -226,18 +243,23 @@ function suspendedLocalCorrelation(preparedSource, routeAuthority) {
     globalEmp1CRouteAuthority: false,
     routeSuspensionReasons: routeAuthority.reasons,
     preparedSourceCustody,
+    preparedApplicabilitySourceAuthority,
   };
   return deepFreeze({ ...payload, resultHash: semanticHash(payload) });
 }
 
-function buildProductSource(runInput) {
+function buildProductSource(runInput, applicabilitySourceAuthority) {
+  const localMethod = {
+    requested: true,
+    routeRequest: structuredClone(runInput.localMethod.routeRequest),
+  };
+  if (applicabilitySourceAuthority) {
+    localMethod.applicabilitySourceAuthority = structuredClone(applicabilitySourceAuthority);
+  }
   return deepFreeze({
-    schema: 'emp1-workbench-orchestration-source/v3',
+    schema: 'emp1-workbench-orchestration-source/v4',
     sourceId: 'EMP1-WORKBENCH-TRANSACTION',
-    localMethod: {
-      requested: true,
-      routeRequest: structuredClone(runInput.localMethod.routeRequest),
-    },
+    localMethod,
   });
 }
 
@@ -261,6 +283,26 @@ function requireAttachmentGeometryForExecution(value, execution) {
     throw workbenchError('EMP1_WORKBENCH_ATTACHMENT_UNIT_NOT_CANONICAL');
   }
   return attachment;
+}
+
+function requireApplicabilityGeometryForExecution(value, aDocument, bDocument) {
+  const geometry = normalizeEmp1ApplicabilityGeometry(value);
+  const canonicalLengthUnit = aDocument?.units?.canonical?.length
+    ?? bDocument?.units?.canonical?.length;
+  if (typeof canonicalLengthUnit !== 'string' || !canonicalLengthUnit) {
+    throw workbenchError('EMP1_WORKBENCH_CANONICAL_LENGTH_UNIT_REQUIRED');
+  }
+  if (geometry.unit !== canonicalLengthUnit) {
+    throw workbenchError('EMP1_WORKBENCH_APPLICABILITY_UNIT_NOT_CANONICAL');
+  }
+  const authority = createEmp1Wrc537ApplicabilitySourceAuthority({
+    ...geometry,
+    productionObservationUsedToSetAuthority: false,
+  });
+  if (authority.sourceBindingSemanticHash !== semanticHash(geometry)) {
+    throw workbenchError('EMP1_WORKBENCH_APPLICABILITY_SOURCE_BINDING_HASH_MISMATCH');
+  }
+  return authority;
 }
 
 function qualifiedStageExecution(stageId, document) {

@@ -16,19 +16,41 @@ export const EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_SCHEMA =
 export const EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID =
   'WRC537_2013_TABLE5_EIGHT_POINT_AXIS_OF_SYMMETRY_1B_2B';
 
+const SOURCE_LOCATORS = Object.freeze([
+  'WRC537_2013_TABLE5_PAGES_41_42',
+  'WRC537_2013_SECTION_4_4',
+  'WRC537_2013_SECTION_4_3_6',
+]);
+const RECOVERY_LOCATIONS = Object.freeze([
+  ...EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE.evaluatedLocations,
+]);
+const AUTHORITY_KEYS = Object.freeze([
+  'schema', 'authorityId', 'sourceDocumentSha256', 'sourceLocators',
+  'recoveryDomain', 'selection', 'offAxisMaximum',
+  'productionObservationUsedToSetAuthority', 'semanticHash',
+]);
+const RECOVERY_KEYS = Object.freeze([
+  'set', 'count', 'locations', 'continuousJunctureSearchPerformed',
+  'absoluteShellMaximumAssured',
+]);
+const SELECTION_KEYS = Object.freeze([
+  'mode', 'circumferentialFigure', 'longitudinalFigure',
+  'recoveryMeaning', 'offAxisMaximum',
+]);
+const OFF_AXIS_KEYS = Object.freeze([
+  'authorizedByThisRoute', 'circumferentialFigure', 'longitudinalFigure',
+  'requiredSeparateApplicability',
+]);
+
 const eightPointAuthorityBase = {
   schema: EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_SCHEMA,
   authorityId: EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
   sourceDocumentSha256: EMP1_WRC537_BOUNDED_SOURCE_SHA256,
-  sourceLocators: [
-    'WRC537_2013_TABLE5_PAGES_41_42',
-    'WRC537_2013_SECTION_4_4',
-    'WRC537_2013_SECTION_4_3_6',
-  ],
+  sourceLocators: [...SOURCE_LOCATORS],
   recoveryDomain: {
     set: EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE.evaluatedLocationSet,
     count: EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE.evaluatedLocationCount,
-    locations: [...EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE.evaluatedLocations],
+    locations: [...RECOVERY_LOCATIONS],
     continuousJunctureSearchPerformed: false,
     absoluteShellMaximumAssured: false,
   },
@@ -104,27 +126,36 @@ export function requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(val
     || value.authorityId !== EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID) {
     throw selectionError('EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_REQUIRED');
   }
+  if (!sameKeys(value, AUTHORITY_KEYS)
+    || !sameKeys(value.recoveryDomain, RECOVERY_KEYS)
+    || !sameKeys(value.selection, SELECTION_KEYS)
+    || !sameKeys(value.offAxisMaximum, OFF_AXIS_KEYS)) {
+    throw selectionError('EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_SHAPE_MISMATCH');
+  }
   if (value.sourceDocumentSha256 !== EMP1_WRC537_BOUNDED_SOURCE_SHA256
-    || value.productionObservationUsedToSetAuthority !== false) {
+    || value.productionObservationUsedToSetAuthority !== false
+    || JSON.stringify(value.sourceLocators) !== JSON.stringify(SOURCE_LOCATORS)) {
     throw selectionError('EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_SOURCE_AUTHORITY_INVALID');
   }
-  if (value.recoveryDomain?.set !== EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE.evaluatedLocationSet
-    || value.recoveryDomain?.count !== 8
-    || JSON.stringify(value.recoveryDomain?.locations)
-      !== JSON.stringify(EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE.evaluatedLocations)
-    || value.recoveryDomain?.continuousJunctureSearchPerformed !== false
-    || value.recoveryDomain?.absoluteShellMaximumAssured !== false) {
+  if (value.recoveryDomain.set !== EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE.evaluatedLocationSet
+    || value.recoveryDomain.count !== 8
+    || JSON.stringify(value.recoveryDomain.locations) !== JSON.stringify(RECOVERY_LOCATIONS)
+    || value.recoveryDomain.continuousJunctureSearchPerformed !== false
+    || value.recoveryDomain.absoluteShellMaximumAssured !== false) {
     throw selectionError('EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_RECOVERY_DOMAIN_INVALID');
   }
-  if (value.selection?.mode !== EMP1_WRC537_LONGITUDINAL_MOMENT_SELECTION_MODES.AXIS_OF_SYMMETRY
-    || value.selection?.circumferentialFigure !== '1B'
-    || value.selection?.longitudinalFigure !== '2B'
-    || value.selection?.offAxisMaximum !== false) {
+  if (value.selection.mode !== EMP1_WRC537_LONGITUDINAL_MOMENT_SELECTION_MODES.AXIS_OF_SYMMETRY
+    || value.selection.circumferentialFigure !== '1B'
+    || value.selection.longitudinalFigure !== '2B'
+    || value.selection.recoveryMeaning !== 'TABLE5_EIGHT_POINT_AXIS_OF_SYMMETRY_VALUE'
+    || value.selection.offAxisMaximum !== false) {
     throw selectionError('EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_SELECTION_INVALID');
   }
-  if (value.offAxisMaximum?.authorizedByThisRoute !== false
-    || value.offAxisMaximum?.circumferentialFigure !== '1B-1'
-    || value.offAxisMaximum?.longitudinalFigure !== '2B-1') {
+  if (value.offAxisMaximum.authorizedByThisRoute !== false
+    || value.offAxisMaximum.circumferentialFigure !== '1B-1'
+    || value.offAxisMaximum.longitudinalFigure !== '2B-1'
+    || value.offAxisMaximum.requiredSeparateApplicability
+      !== 'ROUND_FLEXIBLE_NOZZLE_WITH_SOURCE_CUSTODY') {
     throw selectionError('EMP1_WRC537_TABLE5_EIGHT_POINT_OFF_AXIS_BOUNDARY_INVALID');
   }
   const { semanticHash: retainedHash, ...base } = value;
@@ -134,6 +165,10 @@ export function requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(val
   return deepFreeze(structuredClone(value));
 }
 
+function sameKeys(value, expected) {
+  if (!record(value)) return false;
+  return JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...expected].sort());
+}
 function record(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }

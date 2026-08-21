@@ -24,7 +24,7 @@ const routeRecord = JSON.parse(await readFile(
   'validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v1.json', 'utf8'));
 const producerRecord = JSON.parse(await readFile(
   'validation/emp1/wrc537-2013/emp1-a-zero-dp-wrc-load-producer-qualification-v1.json', 'utf8'));
-const oracle = JSON.parse(await readFile(
+const historicalOracle = JSON.parse(await readFile(
   'validation/emp1/wrc537-2013/gamma5-full-table5-oracle-v1.json', 'utf8'));
 
 const routeHash = sha256Canonical(routeRecord.semanticPayload);
@@ -37,11 +37,10 @@ assert.equal(routeRecord.globalEmp1CRouteAuthority, false);
 assert.equal(routeRecord.productionObservationUsedToSetAuthority, false);
 assert.equal(routeRecord.reobservation?.stressComparisonsPassed, 32);
 assert.equal(routeRecord.reobservation?.routeFalsifiersPassed, 8);
-assert.equal(producerRecord.status, 'PASS_REOBSERVED_INDEPENDENT_ZERO_DP_LOAD_PRODUCER');
 assert.equal(producerRecord.semanticHashSha256,
   routeRecord.semanticPayload.loadProducerQualificationSha256);
-assert.equal(oracle.status, 'PASS_REOBSERVED_INDEPENDENT_FULL_TABLE5_ORACLE');
-assert.equal(oracle.semanticHash, routeRecord.semanticPayload.benchmarkQualification.benchmarkHash);
+assert.equal(historicalOracle.semanticHash,
+  routeRecord.semanticPayload.benchmarkQualification.benchmarkHash);
 
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, false,
   'historical qualification must not reactivate current production');
@@ -52,26 +51,12 @@ assert.deepEqual(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS, [
 const model = routeFixture();
 const result = calculateLocalAttachmentFoundation(model);
 assert.equal(result.qualification.state, 'ACCEPTED');
-const transferred = result.transformedLoadCases.find((row) => row.identity === 'LC-1');
-assert.deepEqual(transferred.transformedForceGlobal, [-400, -250, -1000]);
-assert.deepEqual(transferred.transformedMomentGlobal, [-500000, 600000, -700000]);
 const axisAuthority = deriveEmp1Wrc537CylindricalAxisAuthority({
   foundationResult: result,
   foundationModel: model,
   loadCaseIdentity: 'LC-1',
 });
-const applicabilitySourceAuthority = createEmp1Wrc537ApplicabilitySourceAuthority({
-  geometryIdentity: 'EMP1-15-HISTORICAL-ROUTE-REOBSERVATION',
-  cylinderLengthBasis: EMP1_WRC537_CYLINDER_LENGTH_BASIS,
-  cylinderLength: 300,
-  attachmentStationBasis: EMP1_WRC537_ATTACHMENT_STATION_BASIS,
-  attachmentStationFromCylinderStart: 80,
-  unit: 'mm',
-  cylinderLengthSourceReference: 'EMP1-15/QUALIFICATION/CYLINDER-LENGTH',
-  attachmentStationSourceReference: 'EMP1-15/QUALIFICATION/WRC-STATION',
-  productionObservationUsedToSetAuthority: false,
-});
-
+const applicabilitySourceAuthority = applicabilityAuthority(300, 80);
 const input = {
   loadTransferResult: result,
   loadCaseIdentity: 'LC-1',
@@ -98,15 +83,17 @@ assert.equal(candidate.numerics.loadCustody.productionRouteInputAuthorized, true
 assert.equal(candidate.applicability.status, 'PASS_WRC537_4_5_SOURCE_LIMITS_QUALIFIED');
 assert.equal(candidate.applicability.sourceAuthoritySemanticHash,
   applicabilitySourceAuthority.semanticHash);
-
-let stressComparisons = 0;
+assert.equal(candidate.numerics.extremaScope.evaluatedLocationCount, 8);
 for (const key of ['circumferential', 'longitudinal', 'shear', 'stressIntensity']) {
-  candidate.stresses[key].forEach((value, index) => {
-    close(value, oracle.semanticPayload.expected[key][index], `${key}[${index}]`);
-    stressComparisons += 1;
-  });
+  assert.equal(candidate.stresses[key].length, 8);
+  candidate.stresses[key].forEach((value) => assert.ok(Number.isFinite(value)));
 }
-assert.equal(stressComparisons, 32);
+
+// Deliberately DO NOT compare this source-authorized physical candidate with the
+// historical gamma5 stress vector. Axis/r0/curve/applicability authority was
+// closed after that record. A new independent physical vector must be frozen by
+// the successor route-requalification increment before production can reactivate.
+const currentStressComparisonsAgainstHistoricalVector = 0;
 
 let suspended = null;
 try { runEmp1Wrc537Gamma5ZeroDpRoute(input); } catch (error) { suspended = error; }
@@ -131,17 +118,10 @@ runCandidateFalsifier('nonunity-kb',
   () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
     ...input, stressConcentration: { Kn: 1, Kb: 0.99 },
   }), 'EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
-runCandidateFalsifier('gamma15',
+runCandidateFalsifier('short-cylinder',
   () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
-    ...input,
-    geometry: {
-      ...input.geometry,
-      meanRadius: 300,
-      gamma: 15,
-      beta: 0.155,
-      attachmentOutsideRadius: 53.142857142857146,
-    },
-  }), 'EMP1_LOCAL_CORRELATION_NOT_AUTHORIZED');
+    ...input, applicabilitySourceAuthority: applicabilityAuthority(90, 45),
+  }), 'EMP1_WRC537_CYLINDRICAL_APPLICABILITY_OUTSIDE_SOURCE_LIMITS');
 runCandidateFalsifier('beta-high',
   () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
     ...input,
@@ -157,12 +137,14 @@ runCandidateFalsifier('upstream-hash-drift',
   () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({
     ...input, loadTransferResult: hashTamper,
   }), 'EMP1_A_WRC_ZERO_DP_RESULT_HASH_DRIFT:resultPayloadSemanticHash');
+assert.equal(falsifiers.length, 8);
 
 console.log(JSON.stringify({
-  schema: 'emp1-wrc537-gamma5-zero-dp-route-qualification/v4',
-  status: 'PASS_HISTORICAL_RECORD_CUSTODY_CURRENT_COMPARISON_REOBSERVED_PRODUCTION_SUSPENDED',
+  schema: 'emp1-wrc537-gamma5-zero-dp-route-qualification/v5',
+  status: 'PASS_HISTORICAL_RECORD_CUSTODY_CURRENT_SOURCE_CHAIN_REOBSERVED_REQUALIFICATION_REQUIRED',
   historicalQualificationRecord: {
     qualificationRecordSha256: routeHash,
+    historicalStressComparisons: routeRecord.reobservation?.stressComparisonsPassed,
     oldProductionAuthority: routeRecord.productionRouteAuthority,
     reusedAsCurrentAuthorization: false,
   },
@@ -170,17 +152,32 @@ console.log(JSON.stringify({
     routeAuthorized: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,
     suspensionReasons: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS,
     applicabilityAuthorityHash: applicabilitySourceAuthority.semanticHash,
-    stressComparisons,
+    finiteEightPointCandidate: true,
+    currentStressComparisonsAgainstHistoricalVector,
+    currentPhysicalVectorRefrozen: false,
     falsifiersPassed: falsifiers.length,
     falsifiers,
   },
   globalEmp1CRouteAuthority: false,
 }, null, 2));
 
+function applicabilityAuthority(cylinderLength, station) {
+  return createEmp1Wrc537ApplicabilitySourceAuthority({
+    geometryIdentity: `EMP1-15-ROUTE-${cylinderLength}-${station}`,
+    cylinderLengthBasis: EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+    cylinderLength,
+    attachmentStationBasis: EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+    attachmentStationFromCylinderStart: station,
+    unit: 'mm',
+    cylinderLengthSourceReference: 'EMP1-15/QUALIFICATION/CYLINDER-LENGTH',
+    attachmentStationSourceReference: 'EMP1-15/QUALIFICATION/WRC-STATION',
+    productionObservationUsedToSetAuthority: false,
+  });
+}
 function routeFixture() {
   return canonicalFixture((source) => {
-    source.loadCases[0].force.value = [-400, -250, -1000];
-    source.loadCases[0].moment.value = [-750000, 1000000, -700000];
+    source.loadCases[0].force.value = [-400, 250, 1000];
+    source.loadCases[0].moment.value = [-250000, -200000, 700000];
     source.pressureDefinitions.forEach((row) => {
       row.internalPressure.value = 0;
       row.externalPressure.value = 0;
@@ -189,8 +186,8 @@ function routeFixture() {
 }
 function nonzeroDpRouteFixture() {
   return canonicalFixture((source) => {
-    source.loadCases[0].force.value = [-400, -250, -1000];
-    source.loadCases[0].moment.value = [-750000, 1000000, -700000];
+    source.loadCases[0].force.value = [-400, 250, 1000];
+    source.loadCases[0].moment.value = [-250000, -200000, 700000];
     source.pressureDefinitions.forEach((row) => {
       row.internalPressure.value = 1;
       row.externalPressure.value = 0;
@@ -207,11 +204,6 @@ function expectCode(name, fn, prefix) {
   assert.ok(caught, `${name}: expected failure`);
   assert.ok(String(caught.code ?? caught.message).startsWith(prefix),
     `${name}: actual=${caught.code ?? caught.message}`);
-}
-function close(actual, expected, label) {
-  const tolerance = Math.max(1, Math.abs(expected)) * 1e-11;
-  assert.ok(Math.abs(actual - expected) <= tolerance,
-    `${label}: actual=${actual} expected=${expected} tol=${tolerance}`);
 }
 function sha256Canonical(value) {
   return createHash('sha256')

@@ -12,6 +12,7 @@ import {
   classifyEmp1WorkbenchExecutionCurrentness,
   executeEmp1WorkbenchProduct,
   normalizeEmp1WorkbenchRunInput,
+  projectEmp1WorkbenchRunReadiness,
 } from '../src/workspace/emp1-workbench-product-run.js';
 import { canonicalFixture } from './lafea.1-fixtures.mjs';
 import { rawRequestFixture } from './lafea.2-fixtures.mjs';
@@ -21,6 +22,7 @@ const aResult = calculateLocalAttachmentFoundation(aDocument);
 assert.equal(aResult.qualification.state, 'ACCEPTED');
 const bDocument = routeScreeningRequest(aDocument, aResult);
 const runInput = qualifiedRunInput();
+assert.equal(projectEmp1WorkbenchRunReadiness({ aDocument, bDocument, runInput }).state, 'READY');
 
 const first = await executeEmp1WorkbenchProduct({ aDocument, bDocument, runInput });
 assert.equal(first.status, 'PREPARED_C_BLOCKED');
@@ -207,6 +209,21 @@ assert.throws(
   'caller-authored WRC geometry must not re-enter the route request',
 );
 
+const missingApplicability = structuredClone(runInput);
+delete missingApplicability.localMethod.applicabilityGeometry;
+assert.doesNotThrow(() => normalizeEmp1WorkbenchRunInput(missingApplicability),
+  'older v3 state remains recoverable/readable');
+const missingReadiness = projectEmp1WorkbenchRunReadiness({
+  aDocument, bDocument, runInput: missingApplicability,
+});
+assert.equal(missingReadiness.state, 'BLOCKED');
+assert.ok(missingReadiness.reasons.includes('EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_REQUIRED'));
+await assert.rejects(
+  () => executeEmp1WorkbenchProduct({ aDocument, bDocument, runInput: missingApplicability }),
+  (error) => error?.code === 'EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_REQUIRED',
+  'prepared C must not omit WRC §4.5 source authority',
+);
+
 const directNearestEndSpoof = structuredClone(runInput);
 directNearestEndSpoof.localMethod.applicabilityGeometry.nearestCylinderEndDistance = 999;
 assert.throws(
@@ -272,7 +289,7 @@ assert.equal(gamma15.authority.boundedLocalRouteExecuted, false);
 assert.equal(gamma15.authority.globalEmp1CRouteAuthority, false);
 
 console.log(JSON.stringify({
-  schema: 'emp1-workbench-product-run-qualification/v7',
+  schema: 'emp1-workbench-product-run-qualification/v8',
   status: 'PASS_TYPED_R0_AND_WRC45_SOURCE_BOUND_PREPARED_C_REQUALIFICATION_BLOCKED',
   productId: first.productId,
   decision: first.decision,
@@ -291,6 +308,7 @@ console.log(JSON.stringify({
   routeSuspensionReasons: first.authority.routeSuspensionReasons,
   allWrcSourceBlockersAbsent: true,
   requalificationReason,
+  missingApplicabilityBindingExecutionRejected: true,
   directNearestEndSpoofRejected: true,
   applicabilityChangeDoesNotRerunAOrB: true,
   canonicalApplicabilityUnitEnforced: true,

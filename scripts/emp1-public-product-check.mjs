@@ -17,6 +17,7 @@ import {
   EMP1_C_WRC537_EXTREMA_LIMITATION,
   EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
   EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
+  EMP1_C_WRC537_R0_SOURCE_AUTHORITY_STATE,
   EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
   EMP1_C_WRC537_UNITY_SCF_LIMITATION,
 } from '../src/core/emp1/emp1-c-bounded-route-registry.js';
@@ -56,7 +57,6 @@ assert.equal(EMP1_C_BOUNDED_PRODUCTION_ROUTES.length, 1);
 const bounded = EMP1_C_BOUNDED_PRODUCTION_ROUTES[0];
 const reasons = [
   EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
-  EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
   EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
 ];
 assert.equal(bounded.routeId, EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
@@ -65,6 +65,7 @@ assert.equal(bounded.engineeringUseAuthorized, false);
 assert.equal(bounded.comparisonQualificationAvailable, true);
 assert.deepEqual(bounded.suspensionReasons, reasons);
 assert.equal(bounded.suspensionReasons.includes(EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON), false);
+assert.equal(bounded.suspensionReasons.includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
 assert.deepEqual(bounded.limitations, [
   EMP1_C_WRC537_EXTREMA_LIMITATION,
   EMP1_C_WRC537_UNITY_SCF_LIMITATION,
@@ -76,6 +77,12 @@ assert.equal(bounded.scope.cylindricalLoadAxisSourceSha256, EMP1_WRC537_CYLINDRI
 assert.equal(bounded.scope.wrcPositivePRule, 'SOURCE_REFERENCE_TOWARD_ATTACHMENT_TARGET');
 assert.equal(bounded.scope.rawFoundationRadialHintIsPolarityAuthority, false);
 assert.equal(bounded.scope.runtimeSourcePolarityEvidenceRequired, true);
+assert.equal(bounded.scope.attachmentRadiusBasis, 'OUTSIDE_RADIUS_AT_SHELL_JUNCTURE');
+assert.equal(bounded.scope.attachmentRadiusSourceAuthority, 'EMP1_TYPED_ENGINEERING_SOURCE_BINDING_V1');
+assert.equal(bounded.scope.attachmentRadiusSourceAuthorityState, EMP1_C_WRC537_R0_SOURCE_AUTHORITY_STATE);
+assert.equal(bounded.scope.attachmentRadiusSourceQualification, 'QUALIFIED_FOR_BOUNDED_R0_CUSTODY');
+assert.equal(bounded.scope.runtimeAttachmentSourceEvidenceRequired, true);
+assert.equal(bounded.scope.legacyAttachmentSourceAuthorized, false);
 assert.equal(bounded.scope.Kn, 1);
 assert.equal(bounded.scope.Kb, 1);
 assert.equal(bounded.scope.stressConcentrationMode, 'UNITY_ONLY');
@@ -85,8 +92,8 @@ assert.equal(bounded.scope.appendixBStressConcentrationQualified, false);
 assert.equal(bounded.scope.nonUnityStressConcentrationAuthorized, false);
 assert.equal(bounded.scope.stressConcentrationSourceQualification, 'NOT_READY_FOR_IMPLEMENTATION');
 assert.ok(bounded.remainingBlocked.includes('NONUNITY_STRESS_CONCENTRATION'));
+assert.equal(bounded.remainingBlocked.includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
 assert.equal(bounded.scope.longitudinalMomentBendingSelection, 'SOURCE_GOVERNED_REQUIRED');
-assert.equal(bounded.scope.attachmentRadiusBasis, 'OUTSIDE_RADIUS_AT_SHELL_JUNCTURE_SOURCE_QUALIFIED_REQUIRED');
 assert.equal(bounded.scope.radialLoadCylinderLengthRule, 'P_REQUIRES_L_GE_RM');
 assert.equal(bounded.scope.externalMomentEndDistanceRule, 'MC_OR_ML_REQUIRES_NEAREST_END_DISTANCE_GE_0P5_RM');
 assert.equal(bounded.scope.stressOutputDomain, 'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE');
@@ -123,6 +130,13 @@ console.log(JSON.stringify({
     sourceSha256: bounded.scope.cylindricalLoadAxisSourceSha256,
     positivePRule: bounded.scope.wrcPositivePRule,
     rawFoundationRadialHintIsPolarityAuthority: bounded.scope.rawFoundationRadialHintIsPolarityAuthority,
+  },
+  r0SourceAuthority: {
+    state: bounded.scope.attachmentRadiusSourceAuthorityState,
+    authority: bounded.scope.attachmentRadiusSourceAuthority,
+    qualification: bounded.scope.attachmentRadiusSourceQualification,
+    runtimeEvidenceRequired: bounded.scope.runtimeAttachmentSourceEvidenceRequired,
+    legacyAuthorized: bounded.scope.legacyAttachmentSourceAuthorized,
   },
   limitations: bounded.limitations,
   stressConcentration: {

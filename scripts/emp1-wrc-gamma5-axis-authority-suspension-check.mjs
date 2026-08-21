@@ -25,16 +25,25 @@ import {
 
 const reasons = [
   EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
-  EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
   EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
 ];
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, false);
 assert.deepEqual(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS, reasons);
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS
   .includes(EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON), false);
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS
+  .includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
 assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalLoadAxisSignAuthority,
   'SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED',
+);
+assert.equal(
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.attachmentOutsideRadiusSourceAuthority,
+  'TYPED_ENGINEERING_SOURCE_BINDING_RUNTIME_REQUIRED',
+);
+assert.equal(
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.attachmentOutsideRadiusSourceQualification,
+  'QUALIFIED_FOR_BOUNDED_R0_CUSTODY',
 );
 assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalLoadAxisAuthorityId,
@@ -48,6 +57,8 @@ const registry = emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
 assert.deepEqual(registry.suspensionReasons, reasons);
 assert.equal(registry.scope.rawFoundationRadialHintIsPolarityAuthority, false);
 assert.equal(registry.scope.runtimeSourcePolarityEvidenceRequired, true);
+assert.equal(registry.scope.runtimeAttachmentSourceEvidenceRequired, true);
+assert.equal(registry.scope.legacyAttachmentSourceAuthorized, false);
 
 const model = routeFixture();
 const result = calculateLocalAttachmentFoundation(model);
@@ -89,8 +100,9 @@ assert.equal(caught?.code, 'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED');
 assert.deepEqual(caught.reasons, reasons);
 
 console.log(JSON.stringify({
-  status: 'PASS_AXIS_AUTHORITY_CLOSED_OTHER_WRC_AUTHORITIES_STILL_FAIL_CLOSED',
+  status: 'PASS_AXIS_AND_R0_AUTHORITIES_CLOSED_OTHER_WRC_AUTHORITIES_STILL_FAIL_CLOSED',
   resolvedAxisBlocker: EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
+  resolvedR0Blocker: EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
   axisAuthority: {
     state: axisAuthority.state,
     authorityId: axisAuthority.authorityId,

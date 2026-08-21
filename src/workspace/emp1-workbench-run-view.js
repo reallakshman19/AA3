@@ -1,4 +1,6 @@
 import {
+  EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
+  EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
   EMP1_WORKBENCH_BOUNDED_ROUTE_REQUEST_SCHEMA,
   EMP1_WORKBENCH_RUN_INPUT_SCHEMA,
 } from './emp1-workbench-run-state.js';
@@ -27,7 +29,7 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
   panel.section.dataset.productionAuthority = routeSuspended ? 'SUSPENDED' : 'AVAILABLE';
 
   panel.body.append(element(root, 'p', 'lafea-workbench__section-intro',
-    'Select retained A identities and bind the source-referenced attachment diameter. Rm, T, WRC reference coordinates, axes, γ, β, Kn and Kb are not editable here; they are derived from retained A/B evidence by the governed C preparation path.'));
+    'Select retained A identities and bind the attachment OUTSIDE diameter at the shell juncture to its engineering source. Rm, T, WRC reference coordinates, axes, γ, β, Kn and Kb are not editable here; they are derived from retained source evidence.'));
 
   const status = element(root, 'strong', 'lafea-result-highlights__status',
     `EMP.1 transaction: ${human(currentness.state)}`);
@@ -62,14 +64,17 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
     pressureResultIdentities(aDocument), routeRequest.pressureResultIdentity, 'emp1-c-pressure-result');
   const geometryIdentity = inputField(root, 'Attachment geometry identity',
     attachment.geometryIdentity ?? '', 'text', 'emp1-c-geometry-identity');
-  const diameter = inputField(root, `Attachment outside diameter (${lengthUnit})`,
+  const diameter = inputField(root, `Attachment outside diameter at shell juncture (${lengthUnit})`,
     finiteText(attachment.attachmentDiameter), 'number', 'emp1-c-attachment-diameter');
   diameter.input.min = '0';
   diameter.input.step = 'any';
-  const sourceRef = inputField(root, 'Attachment diameter source reference',
+  const sourceRef = inputField(root, 'Engineering source reference for this outside diameter',
     attachment.sourceReference ?? '', 'text', 'emp1-c-attachment-source-ref');
   form.append(loadCase.row, pressure.row, geometryIdentity.row, diameter.row, sourceRef.row);
 
+  const physicalBasis = element(root, 'p', 'lafea-workbench__authority',
+    'WRC r0 basis locked by the product source contract: OUTSIDE DIAMETER at the ATTACHMENT–SHELL JUNCTURE. Legacy generic-diameter bindings must be re-entered; they are not silently promoted.');
+  physicalBasis.dataset.role = 'emp1-c-r0-physical-basis';
   const canonical = element(root, 'p', 'lafea-workbench__authority',
     `Canonical length unit: ${lengthUnit}. Enter the attachment diameter in this exact unit; no UI-side unit conversion is calculation authority.`);
   canonical.dataset.role = 'emp1-c-canonical-length-unit';
@@ -90,6 +95,8 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
         attachmentGeometry: {
           geometryIdentity: geometryIdentity.input.value.trim(),
           attachmentDiameter: Number(diameter.input.value),
+          diameterBasis: EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
+          physicalLocation: EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
           unit: lengthUnit,
           sourceReference: sourceRef.input.value.trim(),
         },
@@ -107,7 +114,7 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
     boundary.append(
       element(root, 'strong', null, 'C production execution suspended'),
       element(root, 'p', null,
-        'The source-bound A→B→C transaction may be prepared, but no production WRC stress result is authorized while cylindrical WRC load-axis/sign authority remains unresolved.'),
+        'The source-bound A→B→C transaction may be prepared, but no production WRC stress result is authorized while the retained bounded-route source-authority prerequisites below remain unresolved.'),
     );
     const reasons = element(root, 'ul');
     suspensionReasons.forEach((reason) => reasons.append(element(root, 'li', null, human(reason))));
@@ -119,7 +126,7 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
         'Only the registered bounded runtime domain may execute. A successful run is not global WRC authority, code compliance, or release qualification.'),
     );
   }
-  panel.body.append(form, canonical, apply, boundary);
+  panel.body.append(form, physicalBasis, canonical, apply, boundary);
   return panel.section;
 }
 

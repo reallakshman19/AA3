@@ -17,6 +17,7 @@ import {
 import { buildEmp1Wrc537CylindricalFrame } from './emp1-wrc537-cylindrical-frame.js';
 import {
   deriveEmp1Wrc537SourceCustody,
+  requireEmp1Wrc537QualifiedR0SourceCustody,
   requireEmp1Wrc537SourceCustody,
 } from './emp1-wrc537-source-custody.js';
 import {
@@ -104,7 +105,9 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
   }
   const request = requireRequest(source?.localMethod?.routeRequest);
   const foundationResult = requireFoundationResult(loadTransfer);
-  const preparedCustody = requireEmp1Wrc537SourceCustody(source?.localMethod?.wrcSourceCustody);
+  const preparedCustody = requireEmp1Wrc537SourceCustody(
+    source?.localMethod?.wrcSourceCustody,
+  );
   const executionCustody = deriveEmp1Wrc537SourceCustody({
     foundationResult,
     sectionScreening,
@@ -113,8 +116,11 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
   if (semanticHash(preparedCustody) !== semanticHash(executionCustody)) {
     throw orchestrationError('EMP1_WRC537_ZERO_DP_SOURCE_CUSTODY_DRIFT');
   }
+  const qualifiedCustody = requireEmp1Wrc537QualifiedR0SourceCustody(
+    executionCustody,
+  );
   const axisAuthority = requireEmp1Wrc537QualifiedCylindricalAxisAuthority(
-    executionCustody.wrcAxisAuthority,
+    qualifiedCustody.wrcAxisAuthority,
   );
   buildEmp1Wrc537CylindricalFrame(axisAuthority.frameInput);
 
@@ -122,14 +128,15 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
     loadTransferResult: foundationResult,
     loadCaseIdentity: request.loadCaseIdentity,
     pressureResultIdentity: request.pressureResultIdentity,
-    wrcReferencePointGlobal: executionCustody.loadReference.pointGlobal,
-    geometry: executionCustody.geometry,
+    wrcReferencePointGlobal: qualifiedCustody.loadReference.pointGlobal,
+    geometry: qualifiedCustody.geometry,
     axisAuthority,
-    stressConcentration: executionCustody.stressConcentration,
+    attachmentSourceAuthority: qualifiedCustody.attachmentGeometryEvidence,
+    stressConcentration: qualifiedCustody.stressConcentration,
   });
   const result = {
     ...routeResult,
-    sourceCustody: executionCustody,
+    sourceCustody: qualifiedCustody,
   };
   return deepFreeze({
     ...result,

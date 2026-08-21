@@ -2,6 +2,7 @@ import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import {
   createEmp1RetainedFoundationLayer,
   createEmp1RetainedSectionScreeningLayer,
+  createEmp1Wrc537AttachmentSourceAuthority,
   emp1Wrc537Gamma5ZeroDpOrchestrationQualification,
   prepareEmp1Wrc537Gamma5ZeroDpLocalSource,
   refreshEmp1BSourceEvidence,
@@ -26,6 +27,8 @@ import {
 } from './emp1-workbench-run-state.js';
 
 export {
+  EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
+  EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
   EMP1_WORKBENCH_BOUNDED_ROUTE_REQUEST_SCHEMA,
   EMP1_WORKBENCH_EXECUTION_CURRENTNESS,
   EMP1_WORKBENCH_PRODUCT_EXECUTION_SCHEMA,
@@ -40,9 +43,9 @@ export {
  * Product-owned EMP.1 transaction over the retained A/B engines and the
  * governed bounded-C preparation path.
  *
- * The caller may select retained identities and supply the one attachment
- * dimension not owned by LAFEA.1/LAFEA.2. Pipe OD, assessment thickness, WRC
- * reference coordinates, axes, gamma/beta and Kn/Kb remain derived authority.
+ * The caller may select retained identities and author one typed attachment
+ * source binding. Pipe OD, assessment thickness, WRC reference coordinates,
+ * axes, gamma/beta and Kn/Kb remain derived authority.
  *
  * When the gamma=5 production route is suspended, this function still proves
  * the A -> B -> prepared-C custody chain but it does not invoke the production
@@ -62,7 +65,7 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
   );
   const productSource = buildProductSource(runInput);
   const sourceHash = semanticHash({
-    schema: 'emp1-workbench-source-binding/v2',
+    schema: 'emp1-workbench-source-binding/v3',
     inputHashes,
     productSource,
   });
@@ -95,12 +98,22 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
         runInput.localMethod.attachmentGeometry,
         execution,
       );
+      const attachmentSourceAuthority = createEmp1Wrc537AttachmentSourceAuthority({
+        geometryIdentity: attachment.geometryIdentity,
+        outsideDiameter: attachment.attachmentDiameter,
+        diameterBasis: attachment.diameterBasis,
+        physicalLocation: attachment.physicalLocation,
+        unit: attachment.unit,
+        sourceReference: attachment.sourceReference,
+        productionObservationUsedToSetAuthority: false,
+      });
+      if (attachmentSourceAuthority.sourceBindingSemanticHash !== semanticHash(attachment)) {
+        throw workbenchError('EMP1_WORKBENCH_ATTACHMENT_SOURCE_BINDING_HASH_MISMATCH');
+      }
       const retained = createEmp1RetainedSectionScreeningLayer({
         screeningRequest: execution.canonicalInput,
         screeningResult: execution.result,
-        geometryIdentity: attachment.geometryIdentity,
-        attachmentDiameter: attachment.attachmentDiameter,
-        attachmentSourceReference: attachment.sourceReference,
+        attachmentSourceAuthority,
       });
       return deepFreeze({ ...retained, execution });
     },
@@ -219,7 +232,7 @@ function suspendedLocalCorrelation(preparedSource, routeAuthority) {
 
 function buildProductSource(runInput) {
   return deepFreeze({
-    schema: 'emp1-workbench-orchestration-source/v2',
+    schema: 'emp1-workbench-orchestration-source/v3',
     sourceId: 'EMP1-WORKBENCH-TRANSACTION',
     localMethod: {
       requested: true,

@@ -7,6 +7,10 @@ import {
   EMP1_WRC537_BOUNDED_VARIANT,
 } from './emp1-wrc537-cylindrical-bounded-domain.js';
 import {
+  EMP1_WRC537_CYLINDRICAL_AXIS_AUTHORITY_ID,
+  EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
+} from './emp1-wrc537-cylindrical-axis-authority.js';
+import {
   EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE,
   EMP1_WRC537_UNITY_SCF_AUTHORITY,
 } from './emp1-wrc537-stress-concentration-authority.js';
@@ -18,8 +22,12 @@ export const EMP1_C_WRC537_GAMMA5_ZERO_DP_QUALIFICATION_SHA256 =
   '3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e';
 export const EMP1_C_WRC537_ZERO_DP_LOAD_PRODUCER_SHA256 =
   '47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b';
+// Historical blocker code retained as an exported identifier for audit/replay.
+// EMP1-12 closes it from the live suspension set; it must not reappear there.
 export const EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON =
   'WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED';
+export const EMP1_C_WRC537_AXIS_AUTHORITY_STATE =
+  'SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED';
 export const EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON =
   'WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED';
 export const EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON =
@@ -40,7 +48,6 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
   engineeringUseAuthorized: false,
   comparisonQualificationAvailable: true,
   suspensionReasons: Object.freeze([
-    EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
     EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
     EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
     EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
@@ -69,6 +76,12 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     betaMinimum: EMP1_WRC537_BOUNDED_BETA_MIN,
     betaMaximum: EMP1_WRC537_BOUNDED_BETA_MAX,
     differentialPressure: 0,
+    cylindricalLoadAxisAuthority: EMP1_C_WRC537_AXIS_AUTHORITY_STATE,
+    cylindricalLoadAxisAuthorityId: EMP1_WRC537_CYLINDRICAL_AXIS_AUTHORITY_ID,
+    cylindricalLoadAxisSourceSha256: EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
+    wrcPositivePRule: 'SOURCE_REFERENCE_TOWARD_ATTACHMENT_TARGET',
+    rawFoundationRadialHintIsPolarityAuthority: false,
+    runtimeSourcePolarityEvidenceRequired: true,
     Kn: EMP1_WRC537_UNITY_SCF_AUTHORITY.Kn,
     Kb: EMP1_WRC537_UNITY_SCF_AUTHORITY.Kb,
     stressConcentrationMode: EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE.mode,
@@ -98,7 +111,6 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     arbitraryLoadingExtremaRequiresEngineeringJudgment: true,
   }),
   remainingBlocked: Object.freeze([
-    EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
     EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
     EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
     EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,

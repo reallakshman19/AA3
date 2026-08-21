@@ -13,6 +13,7 @@ import {
   EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
   EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
   EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
+  EMP1_C_WRC537_LONGITUDINAL_EIGHT_POINT_AUTHORITY_STATE,
   EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
   EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
   emp1CBoundedRoute,
@@ -22,17 +23,19 @@ import {
   EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
   deriveEmp1Wrc537CylindricalAxisAuthority,
 } from '../src/core/emp1/emp1-wrc537-cylindrical-axis-authority.js';
+import {
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
+} from '../src/core/emp1/emp1-wrc537-longitudinal-moment-curve-selection.js';
 
-const reasons = [
-  EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
-  EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
-];
+const reasons = [EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON];
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, false);
 assert.deepEqual(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS, reasons);
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS
   .includes(EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON), false);
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS
   .includes(EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON), false);
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS
+  .includes(EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON), false);
 assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalLoadAxisSignAuthority,
   'SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED',
@@ -46,6 +49,22 @@ assert.equal(
   'QUALIFIED_FOR_BOUNDED_R0_CUSTODY',
 );
 assert.equal(
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.longitudinalMomentCurveSelectionAuthority,
+  EMP1_C_WRC537_LONGITUDINAL_EIGHT_POINT_AUTHORITY_STATE,
+);
+assert.equal(
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.longitudinalMomentCurveSelectionAuthorityId,
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
+);
+assert.deepEqual(
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.longitudinalMomentFigures,
+  { circumferential: '1B', longitudinal: '2B' },
+);
+assert.equal(
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.offAxisLongitudinalMomentMaximumAuthority,
+  'NOT_AUTHORIZED_BY_THIS_ROUTE',
+);
+assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalLoadAxisAuthorityId,
   EMP1_WRC537_CYLINDRICAL_AXIS_AUTHORITY_ID,
 );
@@ -53,12 +72,21 @@ assert.equal(
   EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.cylindricalLoadAxisSourceSha256,
   EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
 );
+
 const registry = emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
 assert.deepEqual(registry.suspensionReasons, reasons);
 assert.equal(registry.scope.rawFoundationRadialHintIsPolarityAuthority, false);
 assert.equal(registry.scope.runtimeSourcePolarityEvidenceRequired, true);
 assert.equal(registry.scope.runtimeAttachmentSourceEvidenceRequired, true);
 assert.equal(registry.scope.legacyAttachmentSourceAuthorized, false);
+assert.equal(registry.scope.longitudinalMomentCurveSelectionAuthority,
+  EMP1_C_WRC537_LONGITUDINAL_EIGHT_POINT_AUTHORITY_STATE);
+assert.equal(registry.scope.longitudinalMomentCurveSelectionAuthorityId,
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
+assert.equal(registry.scope.longitudinalMomentCircumferentialFigure, '1B');
+assert.equal(registry.scope.longitudinalMomentLongitudinalFigure, '2B');
+assert.equal(registry.scope.offAxisLongitudinalMomentMaximumAuthorized, false);
+assert.ok(registry.remainingBlocked.includes('OFF_AXIS_LONGITUDINAL_MOMENT_MAXIMUM'));
 
 const model = routeFixture();
 const result = calculateLocalAttachmentFoundation(model);
@@ -88,32 +116,45 @@ const comparison = evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
 assert.equal(comparison.axisAuthority.state, 'QUALIFIED_SOURCE_POLARITY');
 assert.equal(comparison.numerics.geometry.attachmentRadiusBasis,
   'OUTSIDE_RADIUS_AT_SHELL_JUNCTURE');
+assert.equal(comparison.numerics.longitudinalMomentBendingAuthority.authorityId,
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID);
+assert.equal(comparison.numerics.longitudinalMomentBendingSelection.mode,
+  'AXIS_OF_SYMMETRY');
 assert.equal(comparison.numerics.curveFigureMap.circ.Mlbend, '1B');
 assert.equal(comparison.numerics.curveFigureMap.long.Mlbend, '2B');
+assert.equal(comparison.numerics.extremaScope.evaluatedLocationCount, 8);
+assert.equal(comparison.numerics.extremaScope.continuousJunctureSearchPerformed, false);
 assert.equal(comparison.applicability.status, 'INCOMPLETE_WRC537_4_5_SOURCE_EVIDENCE');
 assert.equal(comparison.stressScope.domain,
   'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE');
 assert.equal(comparison.stressScope.attachmentStressesCalculated, false);
+
 let caught = null;
 try { runEmp1Wrc537Gamma5ZeroDpRoute(input); } catch (error) { caught = error; }
 assert.equal(caught?.code, 'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED');
 assert.deepEqual(caught.reasons, reasons);
 
 console.log(JSON.stringify({
-  status: 'PASS_AXIS_AND_R0_AUTHORITIES_CLOSED_OTHER_WRC_AUTHORITIES_STILL_FAIL_CLOSED',
+  status: 'PASS_AXIS_R0_AND_LONGITUDINAL_EIGHT_POINT_AUTHORITIES_CLOSED_APPLICABILITY_REMAINS',
   resolvedAxisBlocker: EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
   resolvedR0Blocker: EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
+  resolvedLongitudinalCurveBlocker: EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
   axisAuthority: {
     state: axisAuthority.state,
     authorityId: axisAuthority.authorityId,
     sourceDocumentSha256: axisAuthority.sourceDocumentSha256,
     wrcPositivePGlobal: axisAuthority.basisGlobal.P,
   },
+  longitudinalMomentAuthority: {
+    authorityId: comparison.numerics.longitudinalMomentBendingAuthority.authorityId,
+    recoveryDomain: comparison.numerics.longitudinalMomentBendingAuthority.recoveryDomain.set,
+    productionFigures: ['1B', '2B'],
+    offAxisMaximumAuthorized: false,
+  },
   remainingSuspensionReasons: reasons,
   r0Basis: comparison.numerics.geometry.attachmentRadiusBasis,
   applicability: comparison.applicability.status,
   stressDomain: comparison.stressScope.domain,
-  comparisonLongitudinalMomentFigures: ['1B', '2B'],
   productionRouteAuthorized: false,
 }, null, 2));
 

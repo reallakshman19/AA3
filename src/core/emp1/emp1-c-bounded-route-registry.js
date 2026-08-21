@@ -11,6 +11,12 @@ import {
   EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
 } from './emp1-wrc537-cylindrical-axis-authority.js';
 import {
+  EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+  EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+} from './emp1-wrc537-applicability-source-authority.js';
+import {
   EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE,
   EMP1_WRC537_UNITY_SCF_AUTHORITY,
 } from './emp1-wrc537-stress-concentration-authority.js';
@@ -39,8 +45,13 @@ export const EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON =
   'WRC_ATTACHMENT_OUTSIDE_RADIUS_SOURCE_BASIS_UNQUALIFIED';
 export const EMP1_C_WRC537_R0_SOURCE_AUTHORITY_STATE =
   'TYPED_ENGINEERING_SOURCE_BINDING_RUNTIME_REQUIRED';
+/** Historical blocker code retained for audit compatibility; resolved by EMP1-15. */
 export const EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON =
   'WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED';
+export const EMP1_C_WRC537_APPLICABILITY_SOURCE_AUTHORITY_STATE =
+  'QUALIFIED_TYPED_GEOMETRY_SOURCE_BINDING_RUNTIME_REQUIRED';
+export const EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON =
+  'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE';
 export const EMP1_C_WRC537_EXTREMA_LIMITATION =
   'WRC_TABLE5_EIGHT_POINTS_NOT_GLOBAL_ABSOLUTE_MAXIMUM';
 export const EMP1_C_WRC537_UNITY_SCF_LIMITATION =
@@ -55,7 +66,7 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
   engineeringUseAuthorized: false,
   comparisonQualificationAvailable: true,
   suspensionReasons: Object.freeze([
-    EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
+    EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
   ]),
   limitations: Object.freeze([
     EMP1_C_WRC537_EXTREMA_LIMITATION,
@@ -71,6 +82,8 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     sourceDocumentSha256: EMP1_WRC537_BOUNDED_SOURCE_SHA256,
     datasetHash: EMP1_WRC537_BOUNDED_DATASET_HASH,
     qualificationRecordSha256: EMP1_C_WRC537_GAMMA5_ZERO_DP_QUALIFICATION_SHA256,
+    qualificationRecordRole: 'HISTORICAL_PRE_EMP1_12_TO_15_BOUNDED_NUMERICAL_QUALIFICATION',
+    routeRequalificationRequired: true,
     loadProducerQualificationSha256: EMP1_C_WRC537_ZERO_DP_LOAD_PRODUCER_SHA256,
   }),
   scope: Object.freeze({
@@ -122,6 +135,14 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     radialLoadCylinderLengthRule: 'P_REQUIRES_L_GE_RM',
     externalMomentEndDistanceRule:
       'MC_OR_ML_REQUIRES_NEAREST_END_DISTANCE_GE_0P5_RM',
+    applicabilitySourceAuthority: EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+    applicabilitySourceAuthorityState: EMP1_C_WRC537_APPLICABILITY_SOURCE_AUTHORITY_STATE,
+    applicabilitySourceQualification: EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+    cylinderLengthBasis: EMP1_WRC537_CYLINDER_LENGTH_BASIS,
+    attachmentStationBasis: EMP1_WRC537_ATTACHMENT_STATION_BASIS,
+    nearestEndDistanceBasis: 'DERIVED_MIN_X_L_MINUS_X',
+    runtimeApplicabilitySourceEvidenceRequired: true,
+    legacyApplicabilityEvidenceAuthorizedForProduction: false,
     stressOutputDomain: 'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE',
     attachmentStressCalculated: false,
     nozzleStressCalculated: false,
@@ -132,7 +153,7 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     arbitraryLoadingExtremaRequiresEngineeringJudgment: true,
   }),
   remainingBlocked: Object.freeze([
-    EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
+    EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
     'NONZERO_DIFFERENTIAL_PRESSURE',
     'NONUNITY_STRESS_CONCENTRATION',
     EMP1_C_WRC537_APPENDIX_B_SCF_LIMITATION,

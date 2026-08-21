@@ -1,9 +1,14 @@
 import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 
-export const EMP1_WORKBENCH_RUN_INPUT_SCHEMA = 'emp1-workbench-run-input/v2';
+export const EMP1_WORKBENCH_RUN_INPUT_SCHEMA = 'emp1-workbench-run-input/v3';
+export const EMP1_WORKBENCH_LEGACY_RUN_INPUT_SCHEMA = 'emp1-workbench-run-input/v2';
 export const EMP1_WORKBENCH_PRODUCT_EXECUTION_SCHEMA = 'emp1-workbench-product-execution/v2';
 export const EMP1_WORKBENCH_BOUNDED_ROUTE_REQUEST_SCHEMA =
   'emp1-wrc537-gamma5-zero-dp-orchestration-request/v2';
+export const EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS =
+  'OUTSIDE_DIAMETER_AT_SHELL_JUNCTURE';
+export const EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION =
+  'ATTACHMENT_SHELL_JUNCTURE';
 export const EMP1_WORKBENCH_EXECUTION_CURRENTNESS = Object.freeze({
   NOT_RUN: 'NOT_RUN',
   CURRENT: 'CURRENT',
@@ -13,7 +18,8 @@ export const EMP1_WORKBENCH_EXECUTION_CURRENTNESS = Object.freeze({
 const RUN_INPUT_KEYS = Object.freeze(['schema', 'localMethod']);
 const LOCAL_METHOD_KEYS = Object.freeze(['routeRequest', 'attachmentGeometry']);
 const ATTACHMENT_GEOMETRY_KEYS = Object.freeze([
-  'geometryIdentity', 'attachmentDiameter', 'unit', 'sourceReference',
+  'geometryIdentity', 'attachmentDiameter', 'diameterBasis',
+  'physicalLocation', 'unit', 'sourceReference',
 ]);
 const ROUTE_REQUEST_KEYS = Object.freeze([
   'schema', 'loadCaseIdentity', 'pressureResultIdentity',
@@ -21,7 +27,11 @@ const ROUTE_REQUEST_KEYS = Object.freeze([
 
 /** Lightweight source-state contract. This module intentionally imports no WRC executor/data. */
 export function normalizeEmp1WorkbenchRunInput(value) {
-  const input = exactRecord(value, RUN_INPUT_KEYS, 'EMP1_WORKBENCH_RUN_INPUT_KEYS_INVALID');
+  const raw = requireRecord(value, 'EMP1_WORKBENCH_RUN_INPUT_REQUIRED');
+  if (raw.schema === EMP1_WORKBENCH_LEGACY_RUN_INPUT_SCHEMA) {
+    throw workbenchError('EMP1_WORKBENCH_V2_ATTACHMENT_GEOMETRY_REBIND_REQUIRED');
+  }
+  const input = exactRecord(raw, RUN_INPUT_KEYS, 'EMP1_WORKBENCH_RUN_INPUT_KEYS_INVALID');
   if (input.schema !== EMP1_WORKBENCH_RUN_INPUT_SCHEMA) {
     throw workbenchError('EMP1_WORKBENCH_RUN_INPUT_SCHEMA_INVALID');
   }
@@ -121,6 +131,12 @@ export function classifyEmp1WorkbenchExecutionCurrentness({
 export function normalizeEmp1AttachmentGeometry(value) {
   const source = exactRecord(value, ATTACHMENT_GEOMETRY_KEYS,
     'EMP1_WORKBENCH_ATTACHMENT_GEOMETRY_KEYS_INVALID');
+  if (source.diameterBasis !== EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS) {
+    throw workbenchError('EMP1_WORKBENCH_ATTACHMENT_OUTSIDE_DIAMETER_BASIS_REQUIRED');
+  }
+  if (source.physicalLocation !== EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION) {
+    throw workbenchError('EMP1_WORKBENCH_ATTACHMENT_SHELL_JUNCTURE_LOCATION_REQUIRED');
+  }
   return deepFreeze({
     geometryIdentity: requiredText(
       source.geometryIdentity,
@@ -130,6 +146,8 @@ export function normalizeEmp1AttachmentGeometry(value) {
       source.attachmentDiameter,
       'EMP1_WORKBENCH_ATTACHMENT_DIAMETER_INVALID',
     ),
+    diameterBasis: EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
+    physicalLocation: EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
     unit: requiredText(source.unit, 'EMP1_WORKBENCH_ATTACHMENT_UNIT_REQUIRED'),
     sourceReference: requiredText(
       source.sourceReference,

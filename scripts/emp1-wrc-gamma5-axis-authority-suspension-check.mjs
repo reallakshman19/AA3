@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { calculateLocalAttachmentFoundation } from '../src/core/local-stress/index.js';
 import { canonicalFixture } from './lafea.1-fixtures.mjs';
 import {
@@ -34,6 +35,12 @@ import {
 import {
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
 } from '../src/core/emp1/emp1-wrc537-longitudinal-moment-curve-selection.js';
+
+const postAuthorityOracle = JSON.parse(await readFile(
+  'validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json', 'utf8'));
+const oracle = postAuthorityOracle.semanticPayload;
+assert.equal(postAuthorityOracle.productionAuthority, false);
+assert.equal(postAuthorityOracle.productionObservationUsed, false);
 
 const reasons = [EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON];
 assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, false);
@@ -163,6 +170,29 @@ assert.equal(comparison.stressScope.domain,
   'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE');
 assert.equal(comparison.stressScope.attachmentStressesCalculated, false);
 
+assert.deepEqual(comparison.numerics.wrcLoads, oracle.expectedPhysical.wrcLoads,
+  'current production candidate must reproduce independent physical WRC loads');
+assert.deepEqual(comparison.numerics.curveFigureMap, oracle.figureMap,
+  'current production candidate must use the post-authority source figure map');
+let stressComparisons = 0;
+for (const [productionKey, oracleKey] of [
+  ['circumferential', 'circumferential'],
+  ['longitudinal', 'longitudinal'],
+  ['shear', 'shear'],
+  ['stressIntensity', 'stressIntensity'],
+]) {
+  const actual = comparison.stresses[productionKey];
+  const expected = oracle.expected[oracleKey];
+  assert.equal(actual.length, expected.length, `${productionKey}:length`);
+  actual.forEach((value, index) => {
+    const tolerance = Math.max(1, Math.abs(expected[index])) * 1e-11;
+    assert.ok(Math.abs(value - expected[index]) <= tolerance,
+      `${productionKey}[${index}]: actual=${value} expected=${expected[index]} tol=${tolerance}`);
+    stressComparisons += 1;
+  });
+}
+assert.equal(stressComparisons, 32);
+
 assert.throws(
   () => evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate({ ...input, applicabilitySourceAuthority: undefined }),
   (error) => error?.code === 'EMP1_WRC537_4_5_QUALIFIED_SOURCE_AUTHORITY_REQUIRED',
@@ -174,7 +204,11 @@ assert.equal(caught?.code, 'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED');
 assert.deepEqual(caught.reasons, reasons);
 
 console.log(JSON.stringify({
-  status: 'PASS_WRC_SOURCE_AUTHORITIES_CLOSED_ROUTE_REQUALIFICATION_REMAINS',
+  status: 'PASS_POST_AUTHORITY_PRODUCTION_CANDIDATE_MATCHES_FROZEN_ORACLE_ROUTE_STILL_SUSPENDED',
+  oracleHash: postAuthorityOracle.semanticHash,
+  stressComparisons,
+  wrcLoads: comparison.numerics.wrcLoads,
+  stressIntensity: comparison.stresses.stressIntensity,
   resolvedSourceBlockers: [
     EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
     EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,

@@ -10,7 +10,7 @@ const SIGN = deepFreeze({
   vl:     [ 0, 0, 0, 0,-1,-1, 1, 1],
   mt:     [ 1, 1, 1, 1, 1, 1, 1, 1],
 });
-export const EMP1_WRC537_CYL_TABLE5_SCHEMA = 'emp1-wrc537-cylindrical-table5-result/v2';
+export const EMP1_WRC537_CYL_TABLE5_SCHEMA = 'emp1-wrc537-cylindrical-table5-result/v3';
 export const EMP1_WRC537_CYL_LOCATIONS = LOCATIONS;
 export const EMP1_WRC537_CYL_TABLE5_STRESS_SCOPE = deepFreeze({
   domain: 'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE',
@@ -19,6 +19,17 @@ export const EMP1_WRC537_CYL_TABLE5_STRESS_SCOPE = deepFreeze({
   nozzleStressesCalculated: false,
   recoveryLocation: 'ATTACHMENT_SHELL_JUNCTURE',
   sourceSection: 'WRC537_4.5.3',
+});
+export const EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE = deepFreeze({
+  evaluatedLocationSet: 'WRC_TABLE5_EIGHT_SHELL_JUNCTURE_POINTS',
+  evaluatedLocationCount: 8,
+  evaluatedLocations: [...LOCATIONS],
+  absoluteShellMaximumAssured: false,
+  arbitraryLoadingGlobalMaximumAuthority: false,
+  continuousJunctureSearchPerformed: false,
+  intermediatePointSearchPerformed: false,
+  sourceSection: 'WRC537_4.3.6',
+  limitationCode: 'WRC_TABLE5_EIGHT_POINTS_NOT_GLOBAL_ABSOLUTE_MAXIMUM',
 });
 
 export function evaluateEmp1Wrc537CylindricalTable5(input) {
@@ -67,6 +78,8 @@ export function evaluateEmp1Wrc537CylindricalTable5(input) {
   const longitudinal = sumComponentArrays(longitudinalComponents);
   const shear = sumComponentArrays(shearComponents);
   const stressIntensity = LOCATIONS.map((_, index) => planeStressTresca(circumferential[index], longitudinal[index], shear[index]));
+  const evaluatedEightPointEnvelope = eightPointEnvelope(stressIntensity);
+  const extremaScope = deepFreeze({ ...EMP1_WRC537_CYL_TABLE5_EXTREMA_SCOPE, evaluatedEightPointEnvelope });
   return deepFreeze({
     schema: EMP1_WRC537_CYL_TABLE5_SCHEMA,
     state: 'EVALUATED_TABLE5',
@@ -75,6 +88,7 @@ export function evaluateEmp1Wrc537CylindricalTable5(input) {
     fullDomainAuthority: false,
     globalRouteAuthority: false,
     stressScope: EMP1_WRC537_CYL_TABLE5_STRESS_SCOPE,
+    extremaScope,
     locations: [...LOCATIONS],
     scale,
     components: { circumferential: circumferentialComponents, longitudinal: longitudinalComponents, shear: shearComponents },
@@ -82,6 +96,16 @@ export function evaluateEmp1Wrc537CylindricalTable5(input) {
   });
 }
 export function emp1Wrc537PlaneStressIntensity(sigmaPhi, sigmaX, tau) { return planeStressTresca(finite(sigmaPhi, 'SIGMA_PHI'), finite(sigmaX, 'SIGMA_X'), finite(tau, 'TAU')); }
+function eightPointEnvelope(values) {
+  let index = 0;
+  for (let i = 1; i < values.length; i += 1) if (values[i] > values[index]) index = i;
+  return deepFreeze({
+    basis: 'MAXIMUM_OVER_EVALUATED_TABLE5_EIGHT_POINTS_ONLY',
+    stressIntensity: values[index],
+    location: LOCATIONS[index],
+    globalAbsoluteMaximumClaim: false,
+  });
+}
 function planeStressTresca(sigmaPhi, sigmaX, tau) { const d=Math.sqrt((sigmaPhi-sigmaX)**2+4*tau**2); const p1=0.5*(sigmaPhi+sigmaX+d),p2=0.5*(sigmaPhi+sigmaX-d),p3=0; return Math.max(Math.abs(p1-p2),Math.abs(p2-p3),Math.abs(p3-p1)); }
 function normalizeLoads(value={}) { return deepFreeze({P:finite(value.P,'LOAD_P'),Vc:finite(value.Vc,'LOAD_VC'),Vl:finite(value.Vl,'LOAD_VL'),Mc:finite(value.Mc,'LOAD_MC'),Ml:finite(value.Ml,'LOAD_ML'),Mt:finite(value.Mt,'LOAD_MT')}); }
 function normalizeOrdinates(value={}) { return deepFreeze({circ:normalizeFamily(value.circ,'CIRC'),long:normalizeFamily(value.long,'LONG')}); }

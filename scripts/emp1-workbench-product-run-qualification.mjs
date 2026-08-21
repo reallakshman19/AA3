@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { calculateLocalAttachmentFoundation } from '../src/core/local-stress/index.js';
+import { semanticHash } from '../src/core/shared-primitives/canonical-json.js';
 import {
+  EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
+  EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
   EMP1_WORKBENCH_EXECUTION_CURRENTNESS,
   EMP1_WORKBENCH_RUN_INPUT_SCHEMA,
   classifyEmp1WorkbenchExecutionCurrentness,
@@ -33,29 +36,52 @@ assert.equal(first.result.localCorrelation.state, 'BLOCKED');
 assert.ok(first.result.localCorrelation.reasons.includes(
   'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED',
 ));
-assert.ok(first.result.localCorrelation.reasons.includes(
+for (const reason of [
+  'WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED',
+  'WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED',
+]) {
+  assert.ok(first.result.localCorrelation.reasons.includes(reason), `missing ${reason}`);
+  assert.ok(first.authority.routeSuspensionReasons.includes(reason), `missing authority ${reason}`);
+}
+for (const resolved of [
   'WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED',
-));
+  'WRC_ATTACHMENT_OUTSIDE_RADIUS_SOURCE_BASIS_UNQUALIFIED',
+]) {
+  assert.equal(first.result.localCorrelation.reasons.includes(resolved), false,
+    `resolved blocker reappeared: ${resolved}`);
+  assert.equal(first.authority.routeSuspensionReasons.includes(resolved), false,
+    `resolved authority blocker reappeared: ${resolved}`);
+}
 assert.equal(first.result.localCorrelation.preparedSourceCustody.geometry.gamma, 5);
 assert.ok(Math.abs(first.result.localCorrelation.preparedSourceCustody.geometry.beta - 0.155) < 1e-12);
+assert.ok(Math.abs(
+  first.result.localCorrelation.preparedSourceCustody.geometry.attachmentOutsideRadius
+    - 17.714285714285715,
+) < 1e-12);
+assert.equal(
+  first.result.localCorrelation.preparedSourceCustody.geometry.attachmentRadiusSourceQualification,
+  'QUALIFIED_FOR_BOUNDED_R0_CUSTODY',
+);
+const retainedAttachment = first.result.localCorrelation.preparedSourceCustody
+  .attachmentGeometryEvidence;
+assert.equal(retainedAttachment.authority, 'EMP1_TYPED_ENGINEERING_SOURCE_BINDING_V1');
+assert.equal(retainedAttachment.diameterBasis, EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS);
+assert.equal(retainedAttachment.physicalLocation, EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION);
+assert.equal(retainedAttachment.sourceBindingSemanticHash,
+  semanticHash(runInput.localMethod.attachmentGeometry));
 assert.equal(first.result.localCorrelation.stresses, undefined);
 assert.equal(first.authority.boundedLocalRoutePrepared, true);
 assert.equal(first.authority.boundedLocalRouteExecuted, false);
 assert.equal(first.authority.routeModuleAuthorized, false);
 assert.equal(first.authority.routeRegistryRegistered, false);
 assert.equal(first.authority.routeRegistryEngineeringUseAuthorized, false);
-assert.ok(first.authority.routeSuspensionReasons.includes(
-  'WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED',
-));
-assert.ok(first.authority.routeSuspensionReasons.includes(
+for (const authorityReason of [
   'EMP1_C_BOUNDED_ROUTE_NOT_REGISTERED',
-));
-assert.ok(first.authority.routeSuspensionReasons.includes(
   'EMP1_C_BOUNDED_ROUTE_ENGINEERING_USE_NOT_AUTHORIZED',
-));
-assert.ok(first.authority.routeSuspensionReasons.includes(
   'EMP1_C_BOUNDED_ROUTE_EXECUTOR_NOT_AUTHORIZED',
-));
+]) {
+  assert.ok(first.authority.routeSuspensionReasons.includes(authorityReason));
+}
 assert.equal(first.authority.globalEmp1CRouteAuthority, false);
 assert.equal(first.authority.codeComplianceProduced, false);
 assert.equal(first.authority.releaseQualified, false);
@@ -109,6 +135,11 @@ assert.notEqual(
   attachmentRerun.result.localCorrelation.preparedSourceCustody.geometryEvidenceHash,
   first.result.localCorrelation.preparedSourceCustody.geometryEvidenceHash,
 );
+assert.notEqual(
+  attachmentRerun.result.localCorrelation.preparedSourceCustody
+    .attachmentGeometryEvidence.sourceBindingSemanticHash,
+  retainedAttachment.sourceBindingSemanticHash,
+);
 
 const bChanged = structuredClone(bDocument);
 bChanged.screeningCases[0].mechanicalTerms[0].factor = 1.1;
@@ -136,6 +167,24 @@ assert.throws(
   'caller-authored WRC geometry must not re-enter the route request',
 );
 
+const legacyV2 = structuredClone(runInput);
+legacyV2.schema = 'emp1-workbench-run-input/v2';
+assert.throws(
+  () => normalizeEmp1WorkbenchRunInput(legacyV2),
+  (error) => error?.code === 'EMP1_WORKBENCH_V2_ATTACHMENT_GEOMETRY_REBIND_REQUIRED',
+);
+const wrongBasis = structuredClone(runInput);
+wrongBasis.localMethod.attachmentGeometry.diameterBasis = 'GENERIC_DIAMETER';
+assert.throws(
+  () => normalizeEmp1WorkbenchRunInput(wrongBasis),
+  (error) => error?.code === 'EMP1_WORKBENCH_ATTACHMENT_OUTSIDE_DIAMETER_BASIS_REQUIRED',
+);
+const wrongLocation = structuredClone(runInput);
+wrongLocation.localMethod.attachmentGeometry.physicalLocation = 'UNSPECIFIED';
+assert.throws(
+  () => normalizeEmp1WorkbenchRunInput(wrongLocation),
+  (error) => error?.code === 'EMP1_WORKBENCH_ATTACHMENT_SHELL_JUNCTURE_LOCATION_REQUIRED',
+);
 const wrongUnit = structuredClone(runInput);
 wrongUnit.localMethod.attachmentGeometry.unit = 'm';
 await assert.rejects(
@@ -162,8 +211,8 @@ assert.equal(gamma15.authority.boundedLocalRouteExecuted, false);
 assert.equal(gamma15.authority.globalEmp1CRouteAuthority, false);
 
 console.log(JSON.stringify({
-  schema: 'emp1-workbench-product-run-qualification/v4',
-  status: 'PASS_SOURCE_BOUND_PREPARED_C_FAIL_CLOSED',
+  schema: 'emp1-workbench-product-run-qualification/v5',
+  status: 'PASS_TYPED_R0_SOURCE_BOUND_PREPARED_C_FAIL_CLOSED',
   productId: first.productId,
   decision: first.decision,
   firstInvocations: first.invocations,
@@ -171,6 +220,8 @@ console.log(JSON.stringify({
   attachmentGeometryInvalidation: attachmentRerun.invocations,
   gamma5: first.result.localCorrelation.preparedSourceCustody.geometry.gamma,
   beta: first.result.localCorrelation.preparedSourceCustody.geometry.beta,
+  r0: first.result.localCorrelation.preparedSourceCustody.geometry.attachmentOutsideRadius,
+  r0SourceBindingHash: retainedAttachment.sourceBindingSemanticHash,
   productionRouteInvoked: first.invocations.localCorrelation > 0,
   routeAuthority: {
     module: first.authority.routeModuleAuthorized,
@@ -178,6 +229,10 @@ console.log(JSON.stringify({
     engineeringUse: first.authority.routeRegistryEngineeringUseAuthorized,
   },
   routeSuspensionReasons: first.authority.routeSuspensionReasons,
+  resolvedAxisBlockerAbsent: true,
+  resolvedR0BlockerAbsent: true,
+  legacyV2RebindRequired: true,
+  typedBasisAndLocationEnforced: true,
   distinctLayerHashes: true,
   forgedCallerGeometryRejected: true,
   canonicalAttachmentUnitEnforced: true,
@@ -199,8 +254,10 @@ function qualifiedRunInput() {
       attachmentGeometry: {
         geometryIdentity: 'EMP1-WRC-ATTACHMENT-001',
         attachmentDiameter: 2 * attachmentRadius,
+        diameterBasis: EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
+        physicalLocation: EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
         unit: 'mm',
-        sourceReference: 'EMP1-05/QUALIFICATION/ATTACHMENT-DIAMETER',
+        sourceReference: 'EMP1-13/QUALIFICATION/ATTACHMENT-OUTSIDE-DIAMETER-AT-SHELL-JUNCTURE',
       },
     },
   };
@@ -237,7 +294,7 @@ function routeScreeningRequest(foundationModel, foundationResult) {
       mechanicalTerms: [{ loadCaseId: 'LC-1', factor: 1 }],
       pressureDefinitionId: 'P-CLOSED',
       pressureFactor: 0,
-      sourceReference: 'EMP1-05/CASE-WRC',
+      sourceReference: 'EMP1-13/CASE-WRC',
     }];
   });
 }

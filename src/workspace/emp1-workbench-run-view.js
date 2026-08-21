@@ -1,7 +1,9 @@
 import {
   EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
   EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
+  EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS,
   EMP1_WORKBENCH_BOUNDED_ROUTE_REQUEST_SCHEMA,
+  EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS,
   EMP1_WORKBENCH_RUN_INPUT_SCHEMA,
 } from './emp1-workbench-run-state.js';
 import { card, element } from './lafea-workbench-dom.js';
@@ -29,7 +31,7 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
   panel.section.dataset.productionAuthority = routeSuspended ? 'SUSPENDED' : 'AVAILABLE';
 
   panel.body.append(element(root, 'p', 'lafea-workbench__section-intro',
-    'Select retained A identities and bind the attachment OUTSIDE diameter at the shell juncture to its engineering source. Rm, T, WRC reference coordinates, axes, γ, β, Kn and Kb are not editable here; they are derived from retained source evidence.'));
+    'Bind the attachment OUTSIDE diameter at the shell juncture and the WRC §4.5 cylinder geometry to engineering sources. Rm, T, WRC axes, γ, β, Kn/Kb and nearest-end distance are not editable calculation authority; nearest-end distance is derived from cylinder length and the WRC attachment reference station.'));
 
   const status = element(root, 'strong', 'lafea-result-highlights__status',
     `EMP.1 transaction: ${human(currentness.state)}`);
@@ -55,6 +57,7 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
   const local = runInput?.localMethod ?? {};
   const routeRequest = local.routeRequest ?? {};
   const attachment = local.attachmentGeometry ?? {};
+  const applicability = local.applicabilityGeometry ?? {};
   const lengthUnit = canonicalLengthUnit(aDocument, bDocument);
   const form = element(root, 'div', 'lafea-workbench__form');
 
@@ -70,13 +73,43 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
   diameter.input.step = 'any';
   const sourceRef = inputField(root, 'Engineering source reference for this outside diameter',
     attachment.sourceReference ?? '', 'text', 'emp1-c-attachment-source-ref');
-  form.append(loadCase.row, pressure.row, geometryIdentity.row, diameter.row, sourceRef.row);
+
+  const applicabilityIdentity = inputField(root, 'Cylinder geometry identity for WRC §4.5',
+    applicability.geometryIdentity ?? '', 'text', 'emp1-c-applicability-geometry-identity');
+  const cylinderLength = inputField(root, `Cylinder length between end planes (${lengthUnit})`,
+    finiteText(applicability.cylinderLength), 'number', 'emp1-c-cylinder-length');
+  cylinderLength.input.min = '0';
+  cylinderLength.input.step = 'any';
+  const attachmentStation = inputField(root,
+    `WRC attachment reference station from cylinder start end plane (${lengthUnit})`,
+    finiteText(applicability.attachmentStationFromCylinderStart),
+    'number', 'emp1-c-attachment-station');
+  attachmentStation.input.min = '0';
+  attachmentStation.input.step = 'any';
+  const cylinderLengthSource = inputField(root, 'Engineering source reference for cylinder length',
+    applicability.cylinderLengthSourceReference ?? '', 'text', 'emp1-c-cylinder-length-source-ref');
+  const attachmentStationSource = inputField(root,
+    'Engineering source reference for WRC attachment station',
+    applicability.attachmentStationSourceReference ?? '', 'text', 'emp1-c-attachment-station-source-ref');
+
+  form.append(
+    loadCase.row,
+    pressure.row,
+    geometryIdentity.row,
+    diameter.row,
+    sourceRef.row,
+    applicabilityIdentity.row,
+    cylinderLength.row,
+    attachmentStation.row,
+    cylinderLengthSource.row,
+    attachmentStationSource.row,
+  );
 
   const physicalBasis = element(root, 'p', 'lafea-workbench__authority',
-    'WRC r0 basis locked by the product source contract: OUTSIDE DIAMETER at the ATTACHMENT–SHELL JUNCTURE. Legacy generic-diameter bindings must be re-entered; they are not silently promoted.');
+    'WRC r0 basis is locked to OUTSIDE DIAMETER at the ATTACHMENT–SHELL JUNCTURE. WRC §4.5 cylinder length is measured BETWEEN CYLINDER END PLANES. The attachment station is measured from the selected cylinder start end plane to the retained WRC attachment reference point; nearest-end distance is derived as min(x, L−x) and is not directly editable.');
   physicalBasis.dataset.role = 'emp1-c-r0-physical-basis';
   const canonical = element(root, 'p', 'lafea-workbench__authority',
-    `Canonical length unit: ${lengthUnit}. Enter the attachment diameter in this exact unit; no UI-side unit conversion is calculation authority.`);
+    `Canonical length unit: ${lengthUnit}. Enter attachment diameter, cylinder length and station in this exact unit; no UI-side unit conversion is calculation authority.`);
   canonical.dataset.role = 'emp1-c-canonical-length-unit';
 
   const apply = element(root, 'button', null, 'Apply C source binding');
@@ -84,6 +117,7 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
   apply.dataset.role = 'emp1-c-apply-run-input';
   apply.addEventListener('click', () => {
     sourceRef.input.setCustomValidity('');
+    attachmentStationSource.input.setCustomValidity('');
     const response = options.onApply?.({
       schema: EMP1_WORKBENCH_RUN_INPUT_SCHEMA,
       localMethod: {
@@ -100,11 +134,27 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
           unit: lengthUnit,
           sourceReference: sourceRef.input.value.trim(),
         },
+        applicabilityGeometry: {
+          geometryIdentity: applicabilityIdentity.input.value.trim(),
+          cylinderLengthBasis: EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS,
+          cylinderLength: Number(cylinderLength.input.value),
+          attachmentStationBasis: EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS,
+          attachmentStationFromCylinderStart: Number(attachmentStation.input.value),
+          unit: lengthUnit,
+          cylinderLengthSourceReference: cylinderLengthSource.input.value.trim(),
+          attachmentStationSourceReference: attachmentStationSource.input.value.trim(),
+        },
       },
     });
     if (response?.status === 'REJECTED') {
-      sourceRef.input.setCustomValidity(response.message ?? response.code ?? 'EMP.1 source binding was rejected.');
-      sourceRef.input.reportValidity();
+      const target = String(response.code ?? '').includes('4_5')
+        || String(response.code ?? '').includes('APPLICABILITY')
+        || String(response.code ?? '').includes('STATION')
+        || String(response.code ?? '').includes('CYLINDER')
+        ? attachmentStationSource.input
+        : sourceRef.input;
+      target.setCustomValidity(response.message ?? response.code ?? 'EMP.1 source binding was rejected.');
+      target.reportValidity();
     }
   });
 

@@ -18,6 +18,7 @@ export const EMP1_WRC537_UNITY_SCF_AUTHORITY = Object.freeze({
 export const EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE = Object.freeze({
   schema: EMP1_WRC537_STRESS_CONCENTRATION_AUTHORITY_SCHEMA,
   mode: 'UNITY_ONLY',
+  routeAuthority: 'BOUNDED_ROUTE_UNITY_MULTIPLIER_ONLY',
   engineeringMeaning: 'NO_APPENDIX_B_STRESS_CONCENTRATION_AMPLIFICATION_APPLIED',
   generalAppendixBAuthority: false,
   nonUnityAuthorized: false,
@@ -58,6 +59,7 @@ export function requireEmp1Wrc537GeneralScfAuthorityState(value) {
     throw scfError('EMP1_WRC537_GENERAL_STRESS_CONCENTRATION_AUTHORITY_STATE_REQUIRED');
   }
   if (value.mode !== 'UNITY_ONLY'
+    || value.routeAuthority !== 'BOUNDED_ROUTE_UNITY_MULTIPLIER_ONLY'
     || value.engineeringMeaning !== 'NO_APPENDIX_B_STRESS_CONCENTRATION_AMPLIFICATION_APPLIED'
     || value.generalAppendixBAuthority !== false
     || value.nonUnityAuthorized !== false) {

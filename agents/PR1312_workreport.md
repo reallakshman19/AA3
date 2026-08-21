@@ -1,77 +1,254 @@
-# PR1312 Work Report — EMP1-10 independent WRC oracle decoupling
+# PR1312 Work Report — EMP1-10 independent WRC source-derived oracle
 
 ## Recovery header
 
 - `HANDOVER_READINESS: READY`
+- `PR_RECOVERY_STATE: RECOVERABLE`
+- `TAKEOVER_AUTHORITY: WRITE_ALLOWED`
+- `WORK_INTENT: VALIDATION_ARCHITECTURE`
 - `CRITICALITY: ENGINEERING_CRITICAL`
 - `PR: #1312`
 - `BRANCH: agent/emp1-10-wrc-independent-oracle-decoupling-20260821`
-- `BASE_MAIN: 38c6cb5d4324581fc0ed8348ce7c5137886dd106`
-- `ENGINEERING_CODE_HEAD_VALIDATED: b94e1cbdc272226da05fb137c1ffb730c029174a`
-- `MERGE_AUTHORITY: NOT_GRANTED_FOR_PR1312`
+- `CURRENT_MAIN: c24378e94d61526afc6a50fc51e0e5c38eae932e`
+- `CURRENT_MAIN_INCREMENT: EMP1-05 / PR #1306`
+- `ENGINEERING_HEAD_VALIDATED_BEFORE_MAIN_RECONCILIATION: 42342d4d94ecac7c6481b5a987c97fdf55bce879`
 - `PRODUCTION_ROUTE_AUTHORIZED: false`
+- `GLOBAL_EMP1_C_AUTHORIZED: false`
+- `CODE_COMPLIANCE_AUTHORIZED: false`
+- `RELEASE_QUALIFIED: false`
 
-## Finding closed
+## P0 finding closed
 
-The gamma5 independent hand calculation parsed WRC curve coefficients without production imports, but its location-to-figure map and Table-5 sign matrix were hardcoded and mirrored the same interpretation used by production. This allowed common-mode agreement if both sides shared the same engineering interpretation error. The gamma15 historical baseline also retained a hardcoded sign matrix and frozen figure map.
+The previous gamma5 “independent” hand calculation imported no production code, but it could still share common-mode WRC interpretation errors because the Table-5 figure map and sign matrix were duplicated as constants. A wrong interpretation could therefore produce PASS/PASS.
 
-## Implemented repair
+EMP1-10 changes the validation architecture so source interpretation and numerical reconstruction are independently derived and mechanically isolated from production semantic modules.
 
-1. Added `scripts/emp1-wrc537-independent-source-authority-lib.mjs` with zero `src/core` imports.
-2. WRC Table 5 pp.41–42 is parsed at runtime for the eight-location sign placement.
-3. `docs/emp1/CAUx_2017_WRC01f_pages_24-31.md` pp.24/27 is parsed as independent secondary validation evidence for exact location-to-figure mapping where the retained WRC OCR/merged cells are ambiguous.
-4. The gamma5 full Table-5 handcalc no longer owns a figure map or sign matrix; it consumes the source-derived validation authority object.
-5. The frozen gamma5 v1 semantic payload/hash was not changed or regenerated. It passed unchanged after the interpretation constants were removed.
-6. The gamma15 frozen figure map is independently checked against CAUx, and its frozen stresses are independently replayed with WRC-source-derived signs before the historical baseline is accepted.
-7. The decoupling check is enforced in both the current-main independent-baseline workflow and the gamma5 bounded-route workflow.
+## Authority architecture implemented
 
-## Source/authority boundary
+```text
+retained WRC Table 5 / coefficient transcription
+                ↓
+reviewed source interpretation artifact
+                ↓
+independent source-authority parser
+                ↓
+independent Table-5 numerical kernel
+                ↓
+mutation/load falsifiers + production comparison
+```
 
-- WRC Table 5 remains primary engineering evidence for sign placement.
-- CAUx/Hexagon is `INDEPENDENT_SECONDARY_VALIDATION_EVIDENCE` only; it is not WRC production method authority.
-- The historical gamma5 oracle retains the published/off-axis `1B-1/2B-1` worked-example mapping. Production `1B/2B` versus `1B-1/2B-1` selection remains governed separately by EMP1-06 and its existing production suspension reason.
-- No `src/` production calculation file changed in this PR.
-- No production suspension reason is removed or added.
+CAUx remains secondary historical worked-case evidence only. It does not define WRC method authority and does not authorize production curve selection.
 
-## Validation evidence
+## Source authority split
 
-Engineering code head: `b94e1cbdc272226da05fb137c1ffb730c029174a`.
+### WRC Table 5 — primary validation authority
 
-- `EMP.1 current-main independent baseline` — run `32458581000` — **PASS**.
-- `EMP.1 runEmp1 bounded gamma5 orchestration` — run `32458580991` — **PASS**.
-- `EMP.1 gamma5 bounded route on current main` — run `32458581151` — **PASS**.
-- Frozen gamma5 semantic payload/hash: **PASS unchanged** through the gamma5 workflow.
-- Gamma15 source-derived figure-map verification and WRC-sign replay: **PASS** through the independent-baseline workflow.
-- Local repository execution: `NOT_RUN` (GitHub connector delivery; no networked local checkout available).
+`docs/emp1/WRC537_2013_Tables_and_Charts.md`, Table 5, pp.41–42 supplies:
+
+- allowed figure/reference cells;
+- algebraic sign placement;
+- reversal statement for opposite load direction.
+
+### Reviewed interpretation artifact
+
+`validation/emp1/wrc537-2013/table5-reviewed-interpretation-v1.json` binds retained source cells to reviewed engineering meanings and records:
+
+- eight recovery locations;
+- required source anchors;
+- WRC-allowed figure alternatives;
+- historical gamma5 worked-case alternatives separately from production authority;
+- reviewed sign arrays;
+- `productionMethodAuthority=false`;
+- semantic hash `654e33f7fa7124c78e827bffeae06570d7feb401624291c823a6218b6bd012d2`.
+
+### CAUx — secondary validation only
+
+`docs/emp1/CAUx_2017_WRC01f_pages_24-31.md` is used only to validate the historical worked-case AB/CD / alternative selection represented by the frozen gamma5 comparison vector.
+
+It does not remove or weaken EMP1-06 production curve-selection authority.
+
+## Independent import firewall
+
+Isolated oracle modules live under:
+
+`scripts/oracles/emp1-wrc537/**`
+
+CI mechanically rejects:
+
+- `src/core/**` imports;
+- `src/workspace/**` imports;
+- production Table-5 evaluator imports;
+- production bounded-adapter imports;
+- production longitudinal-moment selector imports;
+- copied `FIGURE_BASE` constants;
+- copied production-style `SIGN` constants.
+
+Observed result:
+
+```text
+PASS_ZERO_PRODUCTION_SEMANTIC_IMPORTS
+productionSemanticImports = 0
+copiedProductionConstantPatterns = 0
+```
+
+## Independent numerical oracle
+
+`scripts/oracles/emp1-wrc537/table5-handcalc.mjs` independently reconstructs:
+
+1. dimensional scale factors;
+2. load-direction sign application;
+3. A/B/C/D upper/lower stress contributions;
+4. algebraic superposition;
+5. plane-stress Tresca stress intensity.
+
+No production Table-5 helper is consumed by this kernel.
+
+## Mandatory falsifiers implemented
+
+`scripts/emp1-wrc537-independent-oracle-falsifiers.mjs` proves the oracle can detect wrong logic.
+
+Observed exact-head matrix:
+
+```text
+production comparison cases:
+P+, P-, Vc+, Vc-, Vl+, Vl-, Mc+, Mc-, Ml+, Ml-, Mt+, Mt-, ALL+
+
+singleLoadCases                    6
+loadReversalCases                  6
+zeroIsolationCases                 6
+superpositionCases                 2
+deliberateFigureCorruptionsDetected 2
+deliberateSignCorruptionsDetected   2
+```
+
+Status:
+
+`PASS_COMMON_MODE_FALSIFIERS`
+
+## Evidence hashes observed at validated head
+
+```text
+sourceSemanticHash        ccc3715aeefe71cbca4fffbee36c24d037e45a531636d65d24bf475312518890
+table5InterpretationHash  654e33f7fa7124c78e827bffeae06570d7feb401624291c823a6218b6bd012d2
+signAuthorityHash         be95253de1fb7d07a3662b92b29364da4b29e4251e2c8af2383618d99c82e985
+historicalFigureMapHash   1343b2febc9895345d93749f31fb756f18543442cc415ce3d2a5e09f5cd5c920
+overallAuthorityHash      e1a56de01be61ea04fedc0de4eabd8fced3f141ddb9fce43be6b365cf6feaaf5
+```
+
+## Historical benchmark disposition
+
+### gamma5
+
+Frozen semantic hash remains unchanged:
+
+`5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa`
+
+Classification is now explicit:
+
+`HISTORICAL_GAMMA5_COMPARISON_VECTOR`
+
+and the result carries:
+
+- `engineeringAuthorityScope=HISTORICAL_COMPARISON_VECTOR_ONLY`;
+- `fullWrcSemanticAuthority=false`;
+- `productionAuthority=false`;
+- `productionImports=[]`;
+- `productionObservationUsed=false`.
+
+### gamma15
+
+The existing historical gamma15 baseline is replayed through the isolated source-derived numerical kernel and remains:
+
+`Du = 19.492158999951467 MPa`.
+
+The frozen artifact is not silently regenerated.
+
+## Exact-head validation observed at `42342d4d94ecac7c6481b5a987c97fdf55bce879`
+
+| Check | Status | Evidence |
+|---|---|---|
+| dedicated independent WRC source oracle | PASS | Actions run `32462629985`, exact-head checkout verified |
+| import firewall | PASS | same run, 0 production semantic imports |
+| reviewed/source interpretation decoupling | PASS | same run, `PASS_INDEPENDENT_ORACLE_INTERPRETATION_DECOUPLED` |
+| common-mode falsifier matrix | PASS | same run, `PASS_COMMON_MODE_FALSIFIERS` |
+| frozen gamma5 historical comparison | PASS | same run; semantic hash unchanged |
+| gamma15 independent baseline | PASS | same run; Du = 19.492158999951467 MPa |
+| EMP.1 current-main independent baseline | PASS | Actions run `32462629973` |
+| EMP.1 gamma5 bounded route on current main | PASS | Actions run `32462629963` |
+| EMP.1 runEmp1 bounded gamma5 orchestration | PASS | Actions run `32462629962` |
+
+All exact-head EMP.1 suites remained green after the stronger firewall/falsifiers were added.
 
 ## Changed-file ledger
 
-- `.github/workflows/emp1-gamma5-main-route.yml` — enforce source-decoupling check.
-- `.github/workflows/emp1-main-baseline.yml` — enforce source-decoupling check before historical gamma15 baseline.
-- `docs/emp1/WRC537_2013_Independent_Oracle_Authority.md` — source split and authority ledger.
-- `scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs` — remove local figure/sign constants and consume source-derived authority.
-- `scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs` — cross-oracle falsifier and gamma15 source-sign replay.
-- `scripts/emp1-wrc537-independent-source-authority-lib.mjs` — independent WRC/CAUx parser.
-- `agents/PR1312_workreport.md` — living handover record.
+1. `.github/workflows/emp1-gamma5-main-route.yml` — require firewall, source-decoupling and falsifiers before route regression.
+2. `.github/workflows/emp1-main-baseline.yml` — require firewall/decoupling/falsifiers before gamma15 baseline.
+3. `.github/workflows/emp1-wrc-independent-oracle.yml` — dedicated exact-head independent-oracle qualification workflow.
+4. `agents/PR1312_workreport.md` — living handover/evidence record.
+5. `docs/emp1/WRC537_2013_Independent_Oracle_Authority.md` — authority split and falsification ledger.
+6. `scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs` — isolated source authority + numerical kernel; no copied figure/sign semantics.
+7. `scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs` — gamma5/gamma15 source-authority replay.
+8. `scripts/emp1-wrc537-independent-oracle-falsifiers.mjs` — six-load/reversal/isolation/superposition and mutation suite.
+9. `scripts/emp1-wrc537-independent-oracle-import-firewall-check.mjs` — common-mode dependency firewall.
+10. `scripts/emp1-wrc537-independent-source-authority-lib.mjs` — compatibility re-export to isolated oracle.
+11. `scripts/oracles/emp1-wrc537/source-authority.mjs` — strict WRC/CAUx/reviewed interpretation validator.
+12. `scripts/oracles/emp1-wrc537/table5-handcalc.mjs` — independent numerical reconstruction.
+13. `validation/emp1/wrc537-2013/table5-reviewed-interpretation-v1.json` — source-derived reviewed interpretation identity.
+
+No `src/**` production calculation file is changed by EMP1-10.
+
+## Production authority retained
+
+Production C remains suspended for all four current independent source-authority blockers:
+
+1. `WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED`
+2. `WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED`
+3. `WRC_ATTACHMENT_OUTSIDE_RADIUS_SOURCE_BASIS_UNQUALIFIED`
+4. `WRC_CYLINDRICAL_4_5_APPLICABILITY_SOURCE_BASIS_UNQUALIFIED`
+
+EMP1-09 limitation also remains:
+
+- `WRC_TABLE5_EIGHT_POINTS_NOT_GLOBAL_ABSOLUTE_MAXIMUM`
+
+EMP1-10 does not authorize:
+
+- pressure thrust / nonzero Δp;
+- non-unity `Kn/Kb`;
+- WRC297/nozzle-neck assessment;
+- global EMP.1.C;
+- code-compliance PASS;
+- release qualification.
+
+## Current reconciliation state
+
+PR #1306 merged after the validated EMP1-10 engineering head, advancing main to:
+
+`c24378e94d61526afc6a50fc51e0e5c38eae932e`.
+
+The #1306 files do not overlap EMP1-10's validation/oracle file set. PR #1312 must nevertheless be rebuilt on that exact main ancestry and exact-head workflows re-observed before merge.
 
 ## NOT_RUN / deferred
 
-- Browser/UI checks: `NOT_RUN`; no UI production file changed.
-- Full repository release suite: `NOT_RUN`; this PR is limited to EMP.1 validation architecture.
-- Production route activation: deliberately `NOT_RUN` / unauthorized because existing engineering authority blockers remain.
+- Browser/UI: NOT_RUN / not applicable to EMP1-10; no UI or production file changed.
+- Full repository release suite: NOT_RUN; independent-oracle scope only.
+- Production route activation: deliberately NOT_RUN / unauthorized.
+- Route-authority currentness debt from EMP1-05 remains a mandatory future gate before any production C reauthorization.
 
-## Exact next action
+## Exact next actions
 
-PR #1312 can be marked ready for review after the final workreport-only head is rechecked. Do not merge without explicit user authorization.
-
-After merge, the next independent audit slice should address the remaining minor finding on `Kn/Kb = 1`: distinguish a deliberately bounded unity-SCF route from a source-qualified general Appendix-B stress-concentration implementation, and ensure UI/evidence does not imply unity is generally WRC-complete.
+1. Rebuild the 13-file EMP1-10 delta on `main@c24378e9...` without altering #1306 production/workspace files.
+2. Re-observe dedicated oracle + baseline + gamma5 exact-head workflows.
+3. Update this report only if final-head evidence differs.
+4. Production remains fail closed regardless of EMP1-10 PASS.
 
 ## Appendix A — takeover qualification
 
-1. Why is “no production imports” insufficient to prove an independent hand calculation when the same interpretation constants are duplicated?
-2. Which retained source supplies Table-5 sign placement, and how are blank sign cells represented?
-3. Why is CAUx suitable to disambiguate a validation mapping but prohibited from granting production WRC authority?
-4. What unchanged frozen artifact proves the gamma5 source parser did not silently alter the historical hand calculation?
-5. How is gamma15 protected without rewriting its frozen baseline artifact?
-6. Why does this PR not remove `WRC_LONGITUDINAL_MOMENT_CURVE_SELECTION_AUTHORITY_UNRESOLVED`?
-7. Which production source files changed in PR1312? The correct answer is none.
+1. Why is “zero production imports” alone insufficient for independence? Because duplicated semantic constants can create common-mode PASS/PASS without imports.
+2. What is primary authority for allowed Table-5 figure cells and algebraic signs? Retained WRC 537 Table 5 pp.41–42.
+3. What is the reviewed interpretation artifact for? To make OCR/engineering binding explicit, reviewable and hash-addressed without using production code.
+4. What is CAUx allowed to prove? Only the historical worked-case location/alternative selection used by the frozen comparison vector.
+5. What may CAUx not prove? General WRC production method/curve-selection authority.
+6. How does CI prove semantic independence? Import firewall plus deliberate sign/figure corruption, six isolated loads, reversal and superposition falsifiers.
+7. What unchanged artifact proves the source-derived path did not silently tune the gamma5 benchmark? Frozen gamma5 semantic hash `5daeb3...`.
+8. Does EMP1-10 reauthorize production C? No.
+9. Which production files changed? None.

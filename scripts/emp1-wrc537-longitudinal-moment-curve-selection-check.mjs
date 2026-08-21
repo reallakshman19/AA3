@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { semanticHash } from '../src/core/shared-primitives/canonical-json.js';
 import {
   EMP1_WRC537_CONNECTION_FLEXIBILITY,
   EMP1_WRC537_LONGITUDINAL_MOMENT_SELECTION_MODES,
@@ -105,6 +106,14 @@ hashSpoof.semanticHash = 'fnv1a64:0000000000000000';
 expect(() => requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(hashSpoof),
   'EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_HASH_MISMATCH');
 
+const recomputedSemanticSpoof = structuredClone(authority);
+recomputedSemanticSpoof.selection.recoveryMeaning = 'OFF_AXIS_MAXIMUM_VALUE';
+const { semanticHash: _oldHash, ...recomputedPayload } = recomputedSemanticSpoof;
+recomputedSemanticSpoof.semanticHash = semanticHash(recomputedPayload);
+expect(() => requireEmp1Wrc537Table5EightPointLongitudinalMomentAuthority(
+  recomputedSemanticSpoof,
+), 'EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_SELECTION_INVALID');
+
 console.log(JSON.stringify({
   status: 'PASS_TABLE5_EIGHT_POINT_LONGITUDINAL_MOMENT_AUTHORITY',
   recoveryLocations: authority.recoveryDomain.locations,
@@ -114,6 +123,7 @@ console.log(JSON.stringify({
   offAxisAuthorizedByEightPointRoute: false,
   sourceLocatorSpoofRejected: true,
   hiddenFieldSpoofRejected: true,
+  recomputedSemanticSpoofRejected: true,
   authorityHash: authority.semanticHash,
 }, null, 2));
 

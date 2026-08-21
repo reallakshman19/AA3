@@ -1,12 +1,23 @@
 export const EMP1_WRC537_STRESS_CONCENTRATION_AUTHORITY_SCHEMA =
   'emp1-wrc537-stress-concentration-authority/v1';
 
+/**
+ * Historical bounded-route custody shape. Keep this exact enumerable contract
+ * stable because it participates in qualified A/B/C semantic evidence.
+ */
 export const EMP1_WRC537_UNITY_SCF_AUTHORITY = Object.freeze({
-  schema: EMP1_WRC537_STRESS_CONCENTRATION_AUTHORITY_SCHEMA,
-  mode: 'UNITY_ONLY',
   Kn: 1,
   Kb: 1,
-  authority: 'BOUNDED_ROUTE_UNITY_MULTIPLIER_ONLY',
+  authority: 'PINNED_BOUNDED_ROUTE_UNITY_ONLY',
+});
+
+/**
+ * Separate product/engineering authority state. This deliberately does not
+ * alter the historical source-custody payload above.
+ */
+export const EMP1_WRC537_GENERAL_SCF_AUTHORITY_STATE = Object.freeze({
+  schema: EMP1_WRC537_STRESS_CONCENTRATION_AUTHORITY_SCHEMA,
+  mode: 'UNITY_ONLY',
   engineeringMeaning: 'NO_APPENDIX_B_STRESS_CONCENTRATION_AMPLIFICATION_APPLIED',
   generalAppendixBAuthority: false,
   nonUnityAuthorized: false,
@@ -26,19 +37,30 @@ export function createEmp1Wrc537UnityStressConcentrationAuthority() {
 }
 
 export function requireEmp1Wrc537UnityStressConcentrationAuthority(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)
-    || value.schema !== EMP1_WRC537_STRESS_CONCENTRATION_AUTHORITY_SCHEMA) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw scfError('EMP1_WRC537_STRESS_CONCENTRATION_AUTHORITY_REQUIRED');
-  }
-  if (value.mode !== EMP1_WRC537_UNITY_SCF_AUTHORITY.mode
-    || value.authority !== EMP1_WRC537_UNITY_SCF_AUTHORITY.authority
-    || value.engineeringMeaning !== EMP1_WRC537_UNITY_SCF_AUTHORITY.engineeringMeaning) {
-    throw scfError('EMP1_WRC537_UNITY_STRESS_CONCENTRATION_AUTHORITY_MISMATCH');
   }
   if (value.Kn !== 1 || value.Kb !== 1) {
     throw scfError('EMP1_WRC537_UNITY_STRESS_CONCENTRATION_REQUIRED');
   }
-  if (value.generalAppendixBAuthority !== false || value.nonUnityAuthorized !== false) {
+  if (value.authority !== EMP1_WRC537_UNITY_SCF_AUTHORITY.authority) {
+    throw scfError('EMP1_WRC537_UNITY_STRESS_CONCENTRATION_AUTHORITY_MISMATCH');
+  }
+  if (Object.keys(value).length !== 3) {
+    throw scfError('EMP1_WRC537_UNITY_STRESS_CONCENTRATION_CUSTODY_SHAPE_MISMATCH');
+  }
+  return deepFreeze(structuredClone(value));
+}
+
+export function requireEmp1Wrc537GeneralScfAuthorityState(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || value.schema !== EMP1_WRC537_STRESS_CONCENTRATION_AUTHORITY_SCHEMA) {
+    throw scfError('EMP1_WRC537_GENERAL_STRESS_CONCENTRATION_AUTHORITY_STATE_REQUIRED');
+  }
+  if (value.mode !== 'UNITY_ONLY'
+    || value.engineeringMeaning !== 'NO_APPENDIX_B_STRESS_CONCENTRATION_AMPLIFICATION_APPLIED'
+    || value.generalAppendixBAuthority !== false
+    || value.nonUnityAuthorized !== false) {
     throw scfError('EMP1_WRC537_GENERAL_STRESS_CONCENTRATION_AUTHORITY_NOT_ALLOWED');
   }
   const source = value.sourceQualification;

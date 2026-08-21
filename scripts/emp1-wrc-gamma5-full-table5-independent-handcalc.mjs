@@ -4,11 +4,14 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deriveIndependentWrc537Table5Authority } from './emp1-wrc537-independent-source-authority-lib.mjs';
 
-// Independent qualification calculation: Node built-ins only. No src/core
-// imports, no exact-gamma selector import, and no production dataset import.
+// Independent qualification calculation: source-derived interpretation plus
+// Node built-ins only. No src/core imports, selector imports, or production data.
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const sourceText=await readFile(resolve(root,'docs/emp1/WRC537_2013_Tables_and_Charts.md'),'utf8');
+const cauxText=await readFile(resolve(root,'docs/emp1/CAUx_2017_WRC01f_pages_24-31.md'),'utf8');
+const sourceAuthority=deriveIndependentWrc537Table5Authority({wrcMarkdown:sourceText,cauxMarkdown:cauxText});
 const frozenPath=resolve(root,'validation/emp1/wrc537-2013/gamma5-full-table5-oracle-v1.json');
 let frozen=null;
 try{frozen=JSON.parse(await readFile(frozenPath,'utf8'));}catch{}
@@ -19,10 +22,7 @@ const beta=0.155;
 const geometry={meanRadius:100,shellThickness:20,attachmentRadius:beta*100/0.875,beta,gamma};
 const stressConcentration={Kn:1,Kb:1};
 const loads={P:-1000,Vc:250,Vl:-400,Mc:500000,Ml:-600000,Mt:700000};
-const figureMap={
-  circ:{Pmem_AB:'4C',Pmem_CD:'3C',Pbend_AB:'2C-1',Pbend_CD:'1C',Mcmem:'3A',Mcbend:'1A',Mlmem:'3B',Mlbend:'1B-1'},
-  long:{Pmem_AB:'3C',Pmem_CD:'4C',Pbend_AB:'1C-1',Pbend_CD:'2C',Mcmem:'4A',Mcbend:'2A',Mlmem:'4B',Mlbend:'2B-1'},
-};
+const figureMap={circ:sourceAuthority.figureMap.circumferential,long:sourceAuthority.figureMap.longitudinal};
 const requiredFigures=[...new Set([...Object.values(figureMap.circ),...Object.values(figureMap.long)])];
 assert.equal(requiredFigures.length,14);
 const coefficients={};
@@ -36,13 +36,8 @@ const q={
   circ:Object.fromEntries(Object.entries(figureMap.circ).map(([key,figure])=>[key,ordinates[figure]])),
   long:Object.fromEntries(Object.entries(figureMap.long).map(([key,figure])=>[key,ordinates[figure]])),
 };
-const LOC=['Au','Al','Bu','Bl','Cu','Cl','Du','Dl'];
-const SIGN={
-  pMem:[-1,-1,-1,-1,-1,-1,-1,-1],pBend:[-1,1,-1,1,-1,1,-1,1],
-  mcMem:[0,0,0,0,-1,-1,1,1],mcBend:[0,0,0,0,-1,1,1,-1],
-  mlMem:[-1,-1,1,1,0,0,0,0],mlBend:[-1,1,1,-1,0,0,0,0],
-  vc:[1,1,-1,-1,0,0,0,0],vl:[0,0,0,0,-1,-1,1,1],mt:[1,1,1,1,1,1,1,1],
-};
+const LOC=sourceAuthority.locations;
+const SIGN=sourceAuthority.signs;
 const Rm=geometry.meanRadius,T=geometry.shellThickness,r0=geometry.attachmentRadius,Kn=stressConcentration.Kn,Kb=stressConcentration.Kb;
 const scale={
   pMem:Math.abs(loads.P)*Kn/(Rm*T),pBend:6*Math.abs(loads.P)*Kb/T**2,
@@ -77,9 +72,10 @@ if(frozen?.semanticHash){
   assert.deepEqual(frozen.semanticPayload,semanticPayload,'full Table5 oracle payload drift');
 }
 console.log(JSON.stringify({
-  schema:'emp1-wrc537-gamma5-full-table5-independent-handcalc/v1',
-  status:frozen?.semanticHash?'PASS_REOBSERVED_FROZEN_FULL_TABLE5_ORACLE':'PASS_CANDIDATE_FULL_TABLE5_ORACLE',
+  schema:'emp1-wrc537-gamma5-full-table5-independent-handcalc/v2',
+  status:frozen?.semanticHash?'PASS_REOBSERVED_FROZEN_FULL_TABLE5_ORACLE_WITH_SOURCE_DERIVED_INTERPRETATION':'PASS_CANDIDATE_FULL_TABLE5_ORACLE_WITH_SOURCE_DERIVED_INTERPRETATION',
   engineeringAuthority:Boolean(frozen?.semanticHash),productionAuthority:false,productionImports:[],productionObservationUsed:false,
+  interpretationAuthority:{authorityHash:sourceAuthority.authorityHash,figureMapAuthority:sourceAuthority.sourceCustody.figureMapDisambiguator,signAuthority:sourceAuthority.sourceCustody.signAuthority,productionAuthority:false},
   semanticHash,semanticPayload,
 },null,2));
 
@@ -93,14 +89,12 @@ function parseGamma5Original(markdown,figure){
   const lines=block.replace(/\r/gu,'').split('\n');
   const mdRows=lines.map(parseRow).filter(Boolean);
   const coefficientOrder=['a','b','c','d','e','f','g','h','i','j'];
-  // Orientation A: gamma rows, coefficients columns.
   const header=mdRows.find((row)=>row.length===11&&row[0]===''&&row.slice(1).join('|')===coefficientOrder.join('|'));
   if(header){
     const row=mdRows.find((cells)=>cells.length===11&&Number(cells[0])===gamma&&cells.slice(1).every((x)=>Number.isFinite(Number(x))));
     assert(row,`gamma5 row missing:${figure}`);
     return {pdfPage:page,gamma,coefficients:Object.fromEntries(coefficientOrder.map((name,i)=>[name,Number(row[i+1])]))};
   }
-  // Orientation B: coefficient rows, gamma columns.
   const coeffRows=mdRows.filter((row)=>coefficientOrder.includes(row[0]));
   assert.equal(coeffRows.length,10,`coefficient row count:${figure}`);
   const count=coeffRows[0].length-1;assert(count>0&&coeffRows.every((row)=>row.length-1===count),`coefficient shape:${figure}`);

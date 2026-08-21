@@ -30,6 +30,9 @@ jobs:
             exit 1
           fi
 
+      - name: Qualify independent oracle interpretation decoupling
+        run: node scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs
+
       - name: Re-observe WRC gamma15 hand calculation independently
         shell: bash
         run: |

@@ -14,6 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Qualify independent oracle interpretation decoupling
+        run: node scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs
       - name: Re-observe independent gamma5 full Table-5 oracle
         run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
       - name: Qualify WRC r0 outside-radius custody

@@ -11,6 +11,9 @@ import {
   EMP1_WRC537_BOUNDED_SOURCE_SHA256,
   EMP1_WRC537_BOUNDED_VARIANT,
 } from './emp1-wrc537-cylindrical-bounded-domain.js';
+import {
+  requireEmp1Wrc537QualifiedCylindricalAxisAuthority,
+} from './emp1-wrc537-cylindrical-axis-authority.js';
 import { buildEmp1Wrc537CylindricalFrame } from './emp1-wrc537-cylindrical-frame.js';
 import {
   deriveEmp1Wrc537SourceCustody,
@@ -34,11 +37,6 @@ const REQUEST_KEYS = Object.freeze([
 ]);
 const EXACT_GAMMA_POLICY = 'EXACT_SOURCE_TABULATED_GAMMA_ONLY';
 
-/**
- * Wrap a retained LAFEA.1 result for the unified EMP.1 orchestrator without
- * altering the retained result contract. Reconstructing the payload hash here
- * prevents a copied/tampered result from becoming reference/axis authority.
- */
 export function createEmp1RetainedFoundationLayer(foundationResult) {
   const result = requireQualifiedFoundationResult(foundationResult);
   return deepFreeze({
@@ -50,11 +48,6 @@ export function createEmp1RetainedFoundationLayer(foundationResult) {
   });
 }
 
-/**
- * Prepare C from selected load/pressure identities plus retained A/B evidence.
- * Rm/T/r0, WRC reference coordinates, axis vectors and Kn/Kb are not accepted
- * from the caller. They are derived from current qualified evidence.
- */
 export function prepareEmp1Wrc537Gamma5ZeroDpLocalSource({
   source,
   loadTransfer,
@@ -68,7 +61,6 @@ export function prepareEmp1Wrc537Gamma5ZeroDpLocalSource({
     sectionScreening,
     loadCaseIdentity: request.loadCaseIdentity,
   });
-  buildEmp1Wrc537CylindricalFrame(sourceCustody.axes);
 
   const loadCandidate = deriveEmp1AZeroDpWrcLoadPackageCandidate({
     result: foundationResult,
@@ -101,12 +93,6 @@ export function prepareEmp1Wrc537Gamma5ZeroDpLocalSource({
   return deepFreeze(prepared);
 }
 
-/**
- * Execute C against freshly re-derived A/B custody. The prepared source retains
- * the same custody as an audit artifact, but it is not trusted as execution
- * authority: a forged/tampered prepared source must agree bit-for-bit with the
- * custody re-derived from the actual loadTransfer/sectionScreening arguments.
- */
 export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
   source,
   loadTransfer,
@@ -127,7 +113,10 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
   if (semanticHash(preparedCustody) !== semanticHash(executionCustody)) {
     throw orchestrationError('EMP1_WRC537_ZERO_DP_SOURCE_CUSTODY_DRIFT');
   }
-  buildEmp1Wrc537CylindricalFrame(executionCustody.axes);
+  const axisAuthority = requireEmp1Wrc537QualifiedCylindricalAxisAuthority(
+    executionCustody.wrcAxisAuthority,
+  );
+  buildEmp1Wrc537CylindricalFrame(axisAuthority.frameInput);
 
   const routeResult = runEmp1Wrc537Gamma5ZeroDpRoute({
     loadTransferResult: foundationResult,
@@ -135,7 +124,7 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
     pressureResultIdentity: request.pressureResultIdentity,
     wrcReferencePointGlobal: executionCustody.loadReference.pointGlobal,
     geometry: executionCustody.geometry,
-    axes: executionCustody.axes,
+    axisAuthority,
     stressConcentration: executionCustody.stressConcentration,
   });
   const result = {

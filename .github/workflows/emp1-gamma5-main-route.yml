@@ -24,6 +24,8 @@ jobs:
         run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
       - name: Qualify WRC r0 outside-radius custody
         run: node scripts/emp1-wrc537-r0-outside-radius-custody-check.mjs
+      - name: Qualify typed WRC r0 source authority
+        run: node scripts/emp1-wrc537-r0-source-authority-check.mjs
       - name: Qualify WRC 4.5 cylindrical applicability
         run: node scripts/emp1-wrc537-cylindrical-applicability-check.mjs
       - name: Qualify WRC eight-point extrema authority
@@ -36,7 +38,7 @@ jobs:
         run: node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs
       - name: Qualify cylindrical WRC load-axis polarity
         run: node scripts/emp1-wrc537-cylindrical-axis-authority-check.mjs
-      - name: Re-observe fail-closed gamma5 authority after axis closure
+      - name: Re-observe fail-closed gamma5 authority after axis and r0 closure
         run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
       - name: Preserve EMP.1 public product truth
         run: node scripts/emp1-public-product-check.mjs

@@ -141,7 +141,7 @@ export function runEmp1Wrc537Gamma5ZeroDpLocalCorrelation({
     pressureResultIdentity: request.pressureResultIdentity,
     wrcReferencePointGlobal: executionCustody.loadReference.pointGlobal,
     geometry: executionCustody.geometry,
-    axes: axisAuthority.frameInput,
+    axisAuthority,
     stressConcentration: executionCustody.stressConcentration,
   });
   const result = {

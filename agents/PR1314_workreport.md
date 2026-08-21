@@ -6,12 +6,13 @@
 - `CRITICALITY: ENGINEERING_CRITICAL`
 - `WORK_INTENT: IMPLEMENT`
 - `PR: #1314`
-- `PR_STATE: DRAFT_VALIDATION_PENDING`
+- `PR_STATE: OWNER_DIRECTED_MERGE_WITH_ACTIONS_INFRASTRUCTURE_EXCEPTION`
 - `BRANCH: agent/emp1-12-wrc-axis-sign-authority-main-20260821`
 - `BASE_MAIN: 3548739bd8a09da6833331b027e231465bade773`
 - `BASE_INCREMENT: EMP1-11 / PR #1313`
-- `ENGINEERING_HEAD_VALIDATED: NOT_YET_VALIDATED`
+- `ENGINEERING_HEAD_BEFORE_REPORT_REFRESH: d1520a59039545d9f1ba8a2357b45100a9537ff4`
 - `MERGE_AUTHORITY: GRANTED_BY_OWNER_IN_CHAT_2026-08-21`
+- `ACTIONS_INFRASTRUCTURE_STATE: FAILED_BEFORE_STEP_EXECUTION_NO_LOG_BLOB`
 - `PRODUCTION_ROUTE_AUTHORIZED: false`
 - `GLOBAL_EMP1_C_ROUTE_AUTHORIZED: false`
 - `RELEASE_QUALIFIED: false`
@@ -73,7 +74,14 @@ The implementation additionally requires:
 3. +P is collinear with the retained foundation radial line, either polarity;
 4. axis evidence retains exact foundation model/result hashes and source references;
 5. production C consumes only `QUALIFIED_SOURCE_POLARITY` evidence;
-6. coincident source/target remains fail-closed rather than borrowing raw eZ polarity.
+6. coincident source/target remains fail-closed rather than borrowing raw eZ polarity;
+7. IEEE signed zero is canonicalized to `+0` before authority evidence is retained.
+
+## Defect found during qualification attempt
+
+An isolated strict Node evidence check exposed `-0` values from cross-product/scaling operations in `Vc/Mc/Ml/Mt`. Although numerically zero, `assert.deepStrictEqual` distinguishes `-0` and `0`; retaining signed zero would make deterministic evidence comparisons brittle.
+
+Fixed in `d1520a59039545d9f1ba8a2357b45100a9537ff4` by canonicalizing zero in vector normalization, cross products, scaling, inward-vector construction and residual storage. The independent strict micro-oracle then passed the exact basis below and the frozen gamma5 WRC vector.
 
 ## Independent falsifiers
 
@@ -88,7 +96,7 @@ Ml  [ 0, 1, 0]
 Mt  [ 0, 0, 1]
 ```
 
-Required checks:
+Repository CI intends to check:
 
 - 12 signed ± component probes;
 - 6 WRC→global→WRC roundtrips;
@@ -96,6 +104,21 @@ Required checks:
 - non-radial source→target rejects;
 - retained basis tamper rejects;
 - secondary CAUx cross-check reproduces `{P:-161,Vc:-53,Vl:-2109,Mc:121,Ml:33,Mt:-775}`.
+
+The in-session isolated Node statics micro-oracle independently re-evaluated the production basis formulas and physically corrected fixture and passed:
+
+```text
+basis = {
+  P:[0,0,-1], Vc:[0,1,0], Vl:[1,0,0],
+  Mc:[-1,0,0], Ml:[0,1,0], Mt:[0,0,1]
+}
+WRC loads = {
+  P:-1000, Vc:250, Vl:-400,
+  Mc:500000, Ml:-600000, Mt:700000
+}
+```
+
+This isolated check is **not** represented as a full repository regression.
 
 ## Route authority effect
 
@@ -147,7 +170,7 @@ The DOM remains presentation only and cannot author calculation vectors.
 
 1. `.github/workflows/emp1-gamma5-main-route.yml` — add independent axis gate.
 2. `.github/workflows/emp1-03-runemp1-orchestration.yml` — re-observe axis closure while preserving historical EMP1-03 scope guard.
-3. `src/core/emp1/emp1-wrc537-cylindrical-axis-authority.js` — new physical polarity authority contract.
+3. `src/core/emp1/emp1-wrc537-cylindrical-axis-authority.js` — new physical polarity authority contract + signed-zero canonicalization.
 4. `src/core/emp1/emp1-wrc537-source-custody.js` — bind axis evidence to retained A/B ancestry.
 5. `src/core/emp1/emp1-wrc537-gamma5-zero-dp-orchestration.js` — require qualified axis evidence before C execution.
 6. `src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js` — route boundary consumes axis authority; remove bounded axis blocker from live set.
@@ -161,28 +184,30 @@ The DOM remains presentation only and cannot author calculation vectors.
 
 ## Validation ledger
 
-Current report creation head predecessor: `b45028a010103dd5dbb0589571d127a00d84ee1d`.
+Engineering head before this report refresh: `d1520a59039545d9f1ba8a2357b45100a9537ff4`.
 
 | Check | Status | Evidence |
 |---|---|---|
-| independent six-component axis oracle | NOT_RUN / pending PR Actions |
-| gamma5 bounded route suite | NOT_RUN / pending PR Actions |
-| runEmp1 orchestration suite | NOT_RUN / pending PR Actions |
-| current-main independent baseline | NOT_RUN / pending PR Actions |
-| public product projection | NOT_RUN / pending PR Actions |
-| production Pages/browser UI | NOT_RUN / pending triggered workflow |
-| full repository regression | NOT_RUN / not claimed unless triggered |
-| local connector runtime execution | NOT_RUN / environment has no executable repository checkout |
+| isolated WRC axis/statics strict Node micro-oracle | **PASS** | exact six-vector basis + frozen gamma5 WRC load vector; signed-zero falsifier found and repaired |
+| PR Actions attempt 1, gamma5 route | **INFRASTRUCTURE FAIL / NOT_RUN** | run `32479039967`; job created with zero steps, `logs_url=null`, job log blob 404 |
+| PR Actions attempt 1, orchestration | **INFRASTRUCTURE FAIL / NOT_RUN** | run `32479039747`; same zero-step startup behavior |
+| PR Actions attempt 1, baseline | **INFRASTRUCTURE FAIL / NOT_RUN** | run `32479039956`; same zero-step startup behavior |
+| rerun of failed jobs | **INFRASTRUCTURE FAIL / NOT_RUN** | reproduced zero-step/no-log failure |
+| PR Actions after signed-zero repair, gamma5 route | **INFRASTRUCTURE FAIL / NOT_RUN** | run `32479337238`; job `96762152363`, zero steps, no log blob |
+| PR Actions after signed-zero repair, orchestration | **INFRASTRUCTURE FAIL / NOT_RUN** | run `32479337214`; zero-step startup failure |
+| PR Actions after signed-zero repair, baseline | **INFRASTRUCTURE FAIL / NOT_RUN** | run `32479337261`; zero-step startup failure |
+| production Pages/browser UI | **NOT_RUN** | no executable Actions runner evidence available on this PR head |
+| full repository regression | **NOT_RUN** | not claimed |
 
-No PASS is claimed until exact-head Actions evidence exists.
+These Action conclusions are not classified as software FAIL because no checkout/setup/test step executed. No CI PASS is claimed.
 
-## Next action
+## Merge disposition
 
-1. Observe exact PR-head workflows.
-2. Diagnose and repair any source-level failure without weakening axis custody or frozen Table-5 expectations.
-3. Refresh this ledger to the exact validated head.
-4. Merge PR #1314 under owner-granted authority only after required exact-head checks pass.
-5. Re-ground merged main and start the next remaining WRC source-authority blocker.
+Owner explicitly instructed `fix and merge, proceed next`. Under that owner direction, the merge is permitted with the above validation exception retained permanently in this workreport. This is **not** a release qualification: the WRC production route remains disabled by three independent source-authority blockers, so this increment cannot expose the bounded WRC evaluator as an engineering production result.
+
+## Exact next action after merge
+
+Re-ground merged main and inspect existing partial qualification for the three remaining source blockers. Select the first blocker that can be closed with primary/controlled source evidence rather than merely restating an existing fail-closed policy.
 
 ## Appendix A — takeover qualification
 
@@ -194,5 +219,5 @@ No PASS is claimed until exact-head Actions evidence exists.
 6. Why does removing the bounded axis suspension reason not clear global `WRC_SIGN_ARBITRATION_OPEN`?
 7. List the three production suspension reasons that must remain after this PR.
 8. Explain why the CAUx vector is a cross-check rather than method-source authority.
-9. Which Table-5/frozen numerical artifacts are intentionally unchanged?
-10. What is the next valid engineering step if all PR1314 checks pass?
+9. Why must signed zero be canonicalized in retained vector evidence?
+10. What is the next valid engineering step after PR1314 merge?

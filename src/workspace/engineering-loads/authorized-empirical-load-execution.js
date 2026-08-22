@@ -6,6 +6,9 @@ import {
   validateProjectDataProfile,
 } from '../project-data/project-data-contract.js';
 import { PROJECT_DATA_PROFILE_SCHEMA } from '../project-data/project-data-fields.js';
+import {
+  createNonFeaProductDefaultProvider,
+} from '../project-data/non-fea-product-default-profile.js';
 import { requireAuthorizedEmpiricalLoadInput } from './authorized-empirical-load-input.js';
 import { calculateSupportLoadDistribution } from './support-load-distribution-v3.js';
 
@@ -38,6 +41,12 @@ export function computeAuthorizedEmpiricalLoadExecutionSemanticHash(value) {
   return semanticHash(authorizedEmpiricalLoadExecutionSemanticProjection(value));
 }
 
+/**
+ * Builds the ephemeral profile consumed by authorized gravity execution.
+ * Product defaults fill only empty Project Data fields before the authorized
+ * six-field mass overlay is applied. The stored Project Data profile is never
+ * mutated, and the authorized overlay remains the sole owner of its fields.
+ */
 export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
   const input = requireAuthorizedEmpiricalLoadInput(authorizedInput);
   requireProfile(profile);
@@ -48,6 +57,8 @@ export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
     });
   }
 
+  const productDefaultProvider = createNonFeaProductDefaultProvider({ profile });
+  const effectiveProfile = productDefaultProvider.effectiveProfile;
   const evidence = freezeDeep({
     source: 'AUTHORIZED_EMPIRICAL_LOAD_INPUT',
     sourceSchema: input.schema,
@@ -61,7 +72,7 @@ export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
     handoffSemanticHash: input.handoffSemanticHash,
     projectionPayloadSemanticHash: input.projectionPayloadSemanticHash,
   });
-  const loadCalculation = clonePlain(profile.loadCalculation);
+  const loadCalculation = clonePlain(effectiveProfile.loadCalculation);
   for (const field of OVERLAY_FIELDS) {
     loadCalculation[field] = createEvidenceValue(
       input.loadCalculationOverlay[field],
@@ -70,7 +81,7 @@ export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
     );
   }
   return freezeDeep({
-    ...clonePlain(profile),
+    ...clonePlain(effectiveProfile),
     loadCalculation,
   });
 }

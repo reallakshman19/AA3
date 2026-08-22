@@ -9,7 +9,7 @@
 - `PR: #1325`
 - `BRANCH: agent/issue-1324-emp1-authority-currentness`
 - `BASE_MAIN: a222e18c38bd20fb55c1c6c95f724f40e40e8532`
-- `LAST_CODE_HEAD: eb747b841e5cc673b832870bdab46b188f226d0d`
+- `LAST_CODE_HEAD: ccfc4064e6eafea4296606551cf5e87bc9b2c5b0`
 - `PRODUCTION_ROUTE_AUTHORIZED: false`
 - `GLOBAL_EMP1_C_ROUTE_AUTHORIZED: false`
 - `CODE_COMPLIANCE_AUTHORIZED: false`
@@ -58,14 +58,13 @@ Implement issue #1324 in one continuously stacked PR:
 - `lafea-workbench-view.js` injects retained A/B when `inputCurrent === true`; C-only authority mutation therefore leaves valid A/B visible.
 
 ### 3. C rendering/reportability boundary — single-source closure
-Static follow-up found two presentation bypasses and closed them:
-- `emp1-workbench-run-view.js` previously recomputed route suspension from `boundedProductionRoutes`; it now consumes `cState.productionUseAuthorized`, `cState.blockerCodes`, and `cState.stageBadge` only.
-- `lafea-analytical-calc-content.js` previously selected a C payload from retained execution using overall transaction currentness; the normal WRC result renderer now receives only `emp1CState.reportableResult`.
+- `emp1-workbench-run-view.js` consumes `cState.productionUseAuthorized`, `cState.blockerCodes`, and `cState.stageBadge`; it does not independently re-evaluate bounded-route registration/authorization.
+- `lafea-analytical-calc-content.js` sends only `emp1CState.reportableResult` to the normal WRC result renderer.
 - A/B presentation is independently driven by `emp1ExecutionCurrentness.inputCurrent`, so Q1→Q2 stales only C rather than hiding unchanged A/B.
-- Transaction evidence shows execution-authority hash versus current-authority hash, current/reportable C availability, retained numerical-evidence availability, and qualification/source/dataset hashes.
+- Transaction/evidence views now prefer explicit `executionAuthorityHash` / `currentAuthorityHash` and fall back to snapshot hashes only for recovery compatibility.
+- Historical records prefer their retained explicit `routeAuthorityHash` and fall back to their snapshot hash.
 - A stale numerical C result remains inaccessible to the normal `emp1-c-result-evidence` renderer but is visible inside the explicit route-authority/historical-evidence drawer.
 - Immediate Q1→Q2 stale evidence is handled before any rerun moves the record into `retainedLocalCorrelationHistory`: `currentExecutionEvidence` is exposed only as `emp1-c-retained-stale-result-payload` with an explicit historical/stale warning.
-- Older retained history remains separately visible as historical evidence records.
 
 ### 4. Complete source-only qualification sample
 - Added `[SIMULATED] Load complete EMP.1 qualification sample`.
@@ -77,14 +76,14 @@ Static follow-up found two presentation bypasses and closed them:
 - Under present suspension expected truth is `A=1, B=1, prepare C=1, production C=0`, `PREPARED_C_BLOCKED`, no WRC stress/code/release result.
 
 ### 5. Adversarial currentness falsifiers authored
-`scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs` now covers:
+`scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs` covers:
 - Q1 authorized/current numerical C;
 - exact retained `routeAuthorityHash` equality with execution snapshot hash;
 - Q1 → different authorized Q2 with identical A/B/input;
 - canonical blocker `EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED`;
 - old Q1 result stale/non-reportable while Q2 rerun remains enabled — negative control proving no global C disable;
 - execution-authority hash remains Q1 while current-authority hash becomes Q2;
-- serialized/persisted Q1 execution reloaded for the first time under Q2 becomes immediately stale/non-reportable, proving currentness does not depend on an in-memory transition;
+- serialized/persisted Q1 execution reloaded under Q2 is immediately stale/non-reportable;
 - fresh Q2 result current;
 - same Q2 subsequently suspended: C hidden/disabled while A/B/input remain current;
 - semantically unchanged Q2 clone remains current;
@@ -105,10 +104,10 @@ Static follow-up found two presentation bypasses and closed them:
 - C projection is `ROUTE_SUSPENDED`, disabled, has no reportable result, and exposes matching current/execution authority hashes.
 
 ### 7. Browser/E2E four-state contract authored
-`e2e/emp1-workbench-authority.spec.js` now covers the issue-required visible state family without changing real route authority:
+`e2e/emp1-workbench-authority.spec.js` covers the issue-required visible state family without changing real route authority:
 - **NO SOURCE**: initial C state is `SOURCE_INCOMPLETE`, production C disabled, no C result card.
 - **SUSPENDED / PREPARED**: one-click complete sample reaches `A 1 / B 1 / prepare C 1 / production C 0`, C setup remains navigable, production C remains disabled, route blocker visible, no C result card, code/release remain NO.
-- The prepared transaction exposes explicit route-authority hash, snapshot hash, and blocked-evidence hash and asserts all three are identical.
+- Prepared transaction explicitly proves route-authority hash = snapshot hash = blocked-evidence hash.
 - **CURRENT**: synthetic presentation-only Q1 fixture supplies `cState.reportableResult`; the actual normal WRC evidence renderer creates the eight-location stress card and execution-authority hash remains visible. This does not execute or authorize the production route.
 - **STALE**: synthetic Q1-under-Q2 fixture invokes the same normal renderer with `cState.reportableResult = null`; no normal C result card is created, current-result flag is false, Q1 and Q2 authority hashes remain visible, and stale Q1 stress payload is available only in the historical authority drawer.
 - Synthetic browser fixtures are passed explicitly into `page.evaluate()`; they do not depend on Node-scope closures or fake production execution.
@@ -121,16 +120,16 @@ Static follow-up found two presentation bypasses and closed them:
 - Any future C numerical report/export consumer must consume the same reportable projection rather than `execution.result.localCorrelation` directly.
 
 ## Validation evidence
-### Exact-head workflow observation at code head `eb747b841e5cc673b832870bdab46b188f226d0d`
-Six PR-triggered workflows were created on this exact code head. GitHub reports them completed/failure. The inspected visible-workbench job for run `32579211101`, job `97045951558`, contains `steps=null` and `logs_url=null`; no checkout, Playwright command, source qualification, or engineering comparison step executed. This remains `NOT_RUN_EXECUTION_ENVIRONMENT`, not software FAIL and not PASS.
+### Exact-head workflow observation at code head `ccfc4064e6eafea4296606551cf5e87bc9b2c5b0`
+Six PR-triggered workflows were created on this exact code head. GitHub reports them completed/failure. The inspected visible-workbench job for run `32579359685`, job `97046303535`, contains `steps=null` and `logs_url=null`; no checkout, Playwright command, source qualification, or engineering comparison step executed. This remains `NOT_RUN_EXECUTION_ENVIRONMENT`, not software FAIL and not PASS.
 
 Workflow family observed on this head:
-- `EMP.1 current-main independent baseline` run `32579211106`;
-- `LAFEA B01 final exact-head qualification` run `32579211115`;
-- `EMP.1 gamma5 bounded route on current main` run `32579211079`;
-- `LAFEA visible workbench qualification` run `32579211101`;
-- `LAFEA B01 fail-closed qualification` run `32579211128`;
-- `EMP.1 runEmp1 bounded gamma5 orchestration` run `32579211100`.
+- `LAFEA B01 final exact-head qualification` run `32579359655`;
+- `EMP.1 runEmp1 bounded gamma5 orchestration` run `32579359658`;
+- `EMP.1 gamma5 bounded route on current main` run `32579359650`;
+- `LAFEA B01 fail-closed qualification` run `32579359643`;
+- `LAFEA visible workbench qualification` run `32579359685`;
+- `EMP.1 current-main independent baseline` run `32579359644`.
 
 ### Alternate execution environment attempt
 - An isolated local runtime was tested as a non-GitHub-Actions fallback using `git ls-remote` against this repository/branch.
@@ -165,7 +164,7 @@ No unexecuted check is represented as PASS.
 6. `src/workspace/emp1-workbench-product-run.js` — canonical route-authority snapshot/hash, current authority resolver, pre-run invalidation, retained C history.
 7. `src/workspace/emp1-workbench-qualification-sample.js` — deterministic source-only complete qualification bundle.
 8. `src/workspace/emp1-workbench-run-state.js` — authority-aware currentness, canonical blocker, explicit hashes, and single C-state/reportability projection.
-9. `src/workspace/emp1-workbench-run-view.js` — cState-driven source/run status, authority-currentness evidence, stale-result historical drawer.
+9. `src/workspace/emp1-workbench-run-view.js` — cState-driven source/run status, explicit authority-hash evidence, stale-result historical drawer.
 10. `src/workspace/lafea-analytical-calc-content.js` — A/B `inputCurrent` presentation and C `reportableResult` rendering boundary.
 11. `src/workspace/lafea-guided-workflow-view.js` — C setup navigation and state/badge/blocker presentation.
 12. `src/workspace/lafea-workbench-controller.js` — normal import/normalize/run sample wiring and live route-authority provider.
@@ -179,7 +178,7 @@ No unexecuted check is represented as PASS.
 - `RISK-1324-02`: unsupported method scope remains fail-closed: nonzero differential pressure, general Kn/Kb, gamma outside bounded scope, beta outside qualified range, off-axis/global maxima, nozzle/attachment stress claims, WRC 297/nozzle-neck routes, rectangular/lug approximations, and code/release authority.
 
 ## Exact next action
-When an execution environment actually starts steps, execute on exact code head `eb747b841e5cc673b832870bdab46b188f226d0d`:
+When an execution environment actually starts steps, execute on exact code head `ccfc4064e6eafea4296606551cf5e87bc9b2c5b0`:
 1. `node scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs`;
 2. `node scripts/emp1-workbench-complete-sample-qualification.mjs`;
 3. existing `node scripts/emp1-workbench-product-run-qualification.mjs`;

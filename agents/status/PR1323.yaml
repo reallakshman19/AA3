@@ -4,7 +4,7 @@ pr_or_wip: PR1323
 mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
 workstream: ISSUE1321_LOAD_CALC
 branch: agent/issue-1321-load-calc-effective-values
-pr_head: dc9758a16cdd96d6705b1b3f29ce5ea61da18400
+pr_head: a5593db5fed429d5416793e1abeef778edcab552
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,21 +12,23 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1323_workreport.md
-report_basis_head: 63af300790d45539e5386971f7d9385740a0b855
+report_basis_head: 1f07cdbd3e3646ec5ba3e8e7bdcbc9883e8e6899
 appendix_a_status: CURRENT
-grounding_epoch: GE-010
-current_stage: STACK_9_FLUID_AND_COMPONENT_MASS_COMPOSITION_SOURCE_INTEGRATED
-blocker: EXACT_HEAD_LOAD_CALC_NODE_BROWSER_QUALIFICATION_NOT_OBSERVED_AND_SUPPORT_DEFAULT_OUTPUT_CONVENTION_ACCEPTANCE_OPEN
-highest_risk: Policy contracts must remain bounded to implemented mechanics; non-empty zero-fill, ancillary/component-contained mass, arbitrary gravity vectors and unsupported dry-mass modes remain fail-closed or open.
+grounding_epoch: GE-011
+current_stage: STACK_10_SUPPORT_DEFAULT_AND_GRAVITY_CONVENTION_AUTHORITY_SOURCE_INTEGRATED
+blocker: EXACT_HEAD_LOAD_CALC_NODE_BROWSER_QUALIFICATION_NOT_OBSERVED_AND_VERIFY_UI_EFFECTIVE_READINESS_ANCILLARY_MASS_ACCEPTANCE_OPEN
+highest_risk: Bounded support/convention policies must not be presented as mechanics beyond source-Z/mm scalar route-chainage gravity. Alternative conventions, X/Y-up, non-mm units and unsupported ancillary/component-content mass remain fail-closed or open.
 dependencies:
   - Issue #1321 exact effective-value precedence
-  - LOAD_CALC_STANDARD_DEFAULTS_V1
-  - non-fea-fluid-fill-policy/v1
-  - non-fea-component-mass-policy/v1
+  - LOAD_CALC_STANDARD_DEFAULTS_V1@4
   - authorized-empirical-effective-value-ledger/v1
   - authorized-empirical-effective-execution-projection/v1
   - authorized-empirical-effective-support-load-execution/v1
+  - authorized-empirical-support-capability-binding/v1
+  - authorized-empirical-gravity-convention-binding/v1
   - authorized-empirical-source-axis-binding/v1
+  - non-fea-fluid-fill-policy/v1
+  - non-fea-component-mass-policy/v1
   - support-load-static-accounting/v1
-exact_next_action: Consume supportTypeCapabilities.DEFAULT explicitly with visible fallback evidence while preserving Product DEFAULT.vertical=false; then bind supported force/moment/analysis/sign conventions pre-statics.
-last_updated: 2026-08-22T22:52:00+05:30
+exact_next_action: Reconcile Verify & Run presentation with effective/default readiness so raw missing source/master fields do not appear as routine blockers when the authorized ledger path is eligible; then implement explicit ancillary/component-content mass primitives with double-count protection.
+last_updated: 2026-08-22T23:12:00+05:30

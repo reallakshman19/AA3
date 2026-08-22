@@ -212,6 +212,7 @@ lfeaPipelineShell.setAssemblyHandlers({
         throw new Error(`Pre-run gate BLOCK for ${preRunCheck.applicationId}.`);
       }
       if (!preRunCheck.solveAuthorized) {
+        lfeaPipelineShell.setActiveStep('RUN');
         lfeaPipelineShell.setAssembleStatus(
           `Assembled ${runRequest.applicationId} (${runRequest.cases.length} case(s)) — pre-run gate WARN. Review the disclosed limitations below, accept explicitly, then click Assemble & send to Run again.`,
           false,
@@ -590,7 +591,7 @@ const workspace = Object.freeze({
   },
   loadEmpiricalV3CalculationEvidence(value) { return empiricalV3Safety.loadCalculationEvidence(value); },
   loadEmpiricalV3ResultReviewReceipt(value) { return empiricalV3Safety.loadResultReviewReceipt(value); },
-  loadEmpiricalV3AuditReadiness(value) { return empiricalV3Safety.loadAuditReadiness(value); },
+  loadEmpiricalV3AuditReadiness(value) { return empiricalV3Safety.loadAuditReadiness(); },
   reviewEmpiricalV3CalculationResult(review) { return empiricalV3Safety.reviewResult(review); },
   prepareEmpiricalV3Audit() { return empiricalV3Safety.prepareAudit(); },
   clearEmpiricalV3SafetyPresentationPackage() { clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.clear(); },

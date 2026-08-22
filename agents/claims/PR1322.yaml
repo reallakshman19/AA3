@@ -16,6 +16,8 @@ files:
     - src/workspace/lfea-pipeline-shell-controller.js
     - src/workspace/lfea-pipeline-shell-view.js
     - src/workspace/lfea-pipeline-shell.css
+    - src/workspace/lfea-source-acquisition.js
+    - src/workspace/lfea-source-acquisition.css
     - src/workspace/linear-piping-inputxml-source-workflow.js
     - src/workspace/linear-piping-inputxml-diagnostics-view.js
     - src/workspace/lfea-pipeline-accdb-input-panel.js
@@ -26,6 +28,7 @@ files:
   prefixes:
     - src/workspace/lfea-session/
     - src/workspace/lfea-diagnostics/
+    - src/workspace/lfea-model-review/
     - scripts/lfea-ui-
     - e2e/lfea-pipeline-
 authority_domains:
@@ -33,12 +36,17 @@ authority_domains:
   - LFEA_SOURCE_IDENTITY_ROUTING
   - LFEA_DIAGNOSTIC_PRESENTATION
   - LFEA_INPUT_INFORMATION_ARCHITECTURE
+  - LFEA_MODEL_REVIEW_PRESENTATION
+  - LFEA_TRANSFORMATION_EVIDENCE_PRESENTATION
   - LFEA_DOWNSTREAM_INVALIDATION
 excluded_authority_domains:
   - FEA_SOLVER_FORMULATION
   - STIFFNESS_ASSEMBLY
   - LOAD_ASSEMBLY
   - ELEMENT_RECOVERY
+  - SOURCE_PARSING
+  - TOPOLOGY_CONDITIONING_MECHANICS
+  - RESTRAINT_CONDITIONING_MECHANICS
   - ENGINEERING_BENCHMARK_EXPECTED_VALUES
   - CODE_CHECK_METHODOLOGY
   - GOVERNED_PREFLIGHT_DETECTION
@@ -49,21 +57,22 @@ frozen_ui00_files:
   count: 11
   guard: scripts/lfea-ui-numerical-custody-check.mjs
   current_pr_overlap: 0
-ui02:
-  technical_head: 969fb0bc1142b815be454a698c630ef3caef7b32
-  contract: lfea-diagnostic-presentation/v1
-  rule: governed disposition is copied verbatim and solely determines display impact
+ui03:
+  technical_head: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
+  contract: lfea-source-acquisition/v1
+  rule: source representation and preparation provider are distinct; StagedJSON remains original source
   runtime: NOT_RUN
-  exact_byte_syntax: PASS
+  browser: NOT_RUN
+  syntax: PASS
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
-    basis: design and agent artifacts only; no production-path overlap at GE-004
+    basis: design and agent artifacts only; no production overlap, source-specific Error Check IA superseded
   PR1323:
     classification: SAFE
-    basis: Load Calc/non-FEA/project-data paths only at GE-004
-last_overlap_check: GE-004
-next_overlap_check_required: UI03_STAGE_ENTRY
-last_verified_head: 969fb0bc1142b815be454a698c630ef3caef7b32
-current_stage: UI03_INPUT_INFORMATION_ARCHITECTURE
-last_updated: 2026-08-22T14:11:00+05:30
+    basis: current Load Calc/non-FEA/support-load/UI paths do not overlap LFEA source-shell/model-review paths
+last_overlap_check: GE-006
+next_overlap_check_required: UI04_STAGE_ENTRY
+last_verified_head: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
+current_stage: UI04_MODEL_REVIEW_TRANSFORMATION_LEDGER
+last_updated: 2026-08-22T15:17:00+05:30

@@ -10,6 +10,8 @@ const checks = [
   ['Fluid fill policy and precedence', 'scripts/non-fea-fluid-fill-policy-check.mjs'],
   ['Authorized fluid mass composition', 'scripts/authorized-empirical-fluid-mass-composition-check.mjs'],
   ['Authorized component dry-mass composition', 'scripts/authorized-empirical-component-mass-composition-check.mjs'],
+  ['Authorized support DEFAULT capability binding', 'scripts/authorized-empirical-support-capability-default-check.mjs'],
+  ['Authorized gravity output convention binding', 'scripts/authorized-empirical-gravity-convention-binding-check.mjs'],
   ['Product engineering-default profile and scope', 'scripts/non-fea-product-engineering-default-profile-check.mjs'],
   ['Effective-value authority resolver', 'scripts/non-fea-effective-value-resolver-check.mjs'],
   ['Authorized baseline effective-value ledger', 'scripts/authorized-empirical-effective-value-ledger-check.mjs'],

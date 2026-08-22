@@ -24,6 +24,7 @@ import {
   normalizeEmp1WorkbenchRunInput,
   projectEmp1WorkbenchRunReadiness,
 } from './emp1-workbench-run-state.js';
+import { currentEmp1WorkbenchRouteAuthority } from './emp1-workbench-product-run.js';
 import { LafeaWorkbenchView } from './lafea-workbench-view.js';
 
 const ACCESSORY_PANEL_MANAGERS = new WeakMap();
@@ -60,6 +61,7 @@ export class LafeaWorkbenchController {
       getEmp1RunInput: () => this.emp1RunInput,
       getEmp1Execution: () => this.emp1Execution,
       getEmp1RunFailure: () => this.emp1RunFailure,
+      getEmp1RouteAuthority: () => currentEmp1WorkbenchRouteAuthority(),
       THREE: lafeaWorkbenchThreeNamespace(this),
       presentationMode,
       analyticalOnly,
@@ -88,6 +90,7 @@ export class LafeaWorkbenchController {
     this.view.init({
       onStage: (stageId) => this.store.selectStage(stageId),
       onMock: (stageId) => this.loadMockData(stageId),
+      onLoadEmp1QualificationSample: () => this.loadEmp1QualificationSample(),
       onFile: (file) => this.loadFile(file),
       onRun: () => this.run(),
       onRunEmp1: () => this.runEmp1Product(),
@@ -204,6 +207,37 @@ export class LafeaWorkbenchController {
       return result;
     } catch (error) {
       return this.store.reportEditError('document', null, error);
+    }
+  }
+
+  async loadEmp1QualificationSample() {
+    try {
+      const { createEmp1WorkbenchQualificationSample } = await import(
+        './emp1-workbench-qualification-sample.js'
+      );
+      const sample = createEmp1WorkbenchQualificationSample();
+      this.importDocument(sample.aDocument, 'LAFEA.1');
+      this.importDocument(sample.bDocument, 'LAFEA.2');
+      const applied = this.setEmp1RunInput(sample.runInput);
+      if (applied.status !== 'APPLIED') {
+        const error = new TypeError(applied.code ?? 'EMP1_QUALIFICATION_SAMPLE_RUN_INPUT_REJECTED');
+        error.code = applied.code ?? 'EMP1_QUALIFICATION_SAMPLE_RUN_INPUT_REJECTED';
+        throw error;
+      }
+      this.store.selectStage('LAFEA.2');
+      const execution = await this.runEmp1Product();
+      return Object.freeze({
+        schema: sample.schema,
+        status: execution?.status ?? 'FAILED',
+        execution,
+      });
+    } catch (error) {
+      this.emp1RunFailure = Object.freeze({
+        code: error?.code ?? 'EMP1_QUALIFICATION_SAMPLE_LOAD_FAILED',
+        message: error instanceof Error ? error.message : 'EMP.1 qualification sample load failed.',
+      });
+      if (this.unsubscribe) this.view.render(this.getState());
+      return Object.freeze({ status: 'FAILED', ...this.emp1RunFailure });
     }
   }
 

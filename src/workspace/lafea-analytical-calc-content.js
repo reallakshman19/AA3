@@ -38,15 +38,13 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   const foundation = stageId === 'LAFEA.1';
   const step = emp1StepForBackingStage(stageId);
   const projection = options.emp1Projection ?? buildEmp1ProductProjection(state);
-  const currentProductExecution = options.emp1ExecutionCurrentness?.state === 'CURRENT'
+  const inputCurrentProductExecution = options.emp1ExecutionCurrentness?.inputCurrent === true
     ? options.emp1Execution
     : null;
   const productStageExecution = foundation
-    ? currentProductExecution?.stageExecutions?.loadTransfer
-    : currentProductExecution?.stageExecutions?.sectionScreening;
-  const productionLocalCorrelation = currentProductExecution?.authority?.boundedLocalRouteExecuted === true
-    ? currentProductExecution?.result?.localCorrelation ?? null
-    : null;
+    ? inputCurrentProductExecution?.stageExecutions?.loadTransfer
+    : inputCurrentProductExecution?.stageExecutions?.sectionScreening;
+  const productionLocalCorrelation = options.emp1CState?.reportableResult ?? null;
   const presentedStage = productStageExecution
     ? {
       ...stage,
@@ -120,6 +118,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     projection,
     runInput: options.emp1RunInput,
     currentness: options.emp1ExecutionCurrentness,
+    cState: options.emp1CState,
     runFailure: options.emp1RunFailure,
     onApply: options.handlers.onEmp1RunInput,
   });
@@ -127,6 +126,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     root,
     options.emp1Execution,
     options.emp1ExecutionCurrentness,
+    options.emp1CState,
   );
   const correlationResult = renderEmp1CorrelationResultEvidence(
     root,
@@ -139,7 +139,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
 
   const bSourceCurrent = foundation
     || projection.custody.bSourceEvidenceState === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT
-    || Boolean(currentProductExecution?.stageExecutions?.sectionScreening);
+    || Boolean(inputCurrentProductExecution?.stageExecutions?.sectionScreening);
   const results = card(root, `${step.stepId} results`);
   results.section.dataset.guidedTarget = 'results';
   results.body.append(element(root, 'p', 'lafea-workbench__section-intro', foundation

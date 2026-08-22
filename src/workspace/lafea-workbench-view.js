@@ -24,6 +24,7 @@ import {
 import {
   EMP1_WORKBENCH_EXECUTION_CURRENTNESS,
   classifyEmp1WorkbenchExecutionCurrentness,
+  projectEmp1WorkbenchCState,
   projectEmp1WorkbenchRunReadiness,
 } from './emp1-workbench-run-state.js';
 import {
@@ -55,6 +56,9 @@ export class LafeaWorkbenchView {
         : () => null,
       getEmp1RunFailure: typeof options.getEmp1RunFailure === 'function'
         ? options.getEmp1RunFailure
+        : () => null,
+      getEmp1RouteAuthority: typeof options.getEmp1RouteAuthority === 'function'
+        ? options.getEmp1RouteAuthority
         : () => null,
       THREE: options.THREE ?? null,
     }));
@@ -98,12 +102,14 @@ export class LafeaWorkbenchView {
     const dependencies = VIEW_RENDER_DEPENDENCIES.get(this);
     const emp1RunInput = analyticalMode ? dependencies.getEmp1RunInput() : null;
     const emp1Execution = analyticalMode ? dependencies.getEmp1Execution() : null;
+    const emp1RouteAuthority = analyticalMode ? dependencies.getEmp1RouteAuthority() : null;
     const emp1ExecutionCurrentness = analyticalMode
       ? classifyEmp1WorkbenchExecutionCurrentness({
         execution: emp1Execution,
         aDocument: state.stages?.['LAFEA.1']?.document,
         bDocument: state.stages?.['LAFEA.2']?.document,
         runInput: emp1RunInput,
+        currentRouteAuthority: emp1RouteAuthority,
       })
       : null;
     const emp1RunReadiness = analyticalMode
@@ -113,16 +119,25 @@ export class LafeaWorkbenchView {
         runInput: emp1RunInput,
       })
       : null;
+    const emp1CState = analyticalMode
+      ? projectEmp1WorkbenchCState({
+        readiness: emp1RunReadiness,
+        execution: emp1Execution,
+        currentness: emp1ExecutionCurrentness,
+        routeAuthority: emp1RouteAuthority,
+      })
+      : null;
     const analyticalState = analyticalMode
       ? withCurrentEmp1StageExecutions(state, emp1Execution, emp1ExecutionCurrentness)
       : state;
-    const emp1Projection = analyticalMode
+    const baseEmp1Projection = analyticalMode
       ? buildEmp1ProductProjection(analyticalState, {
         workspaceExecutionWired: true,
-        workspaceResultAvailable: emp1ExecutionCurrentness?.state
-          === EMP1_WORKBENCH_EXECUTION_CURRENTNESS.CURRENT
-          && emp1Execution?.authority?.boundedLocalRouteExecuted === true,
+        workspaceResultAvailable: emp1CState?.currentResultAvailable === true,
       })
+      : null;
+    const emp1Projection = analyticalMode
+      ? withEmp1CStateProjection(baseEmp1Projection, emp1CState)
       : null;
     const renderPacket = fePresentation ? dependencies.getRenderPacket(stageId) : null;
     const sceneRevision = fePresentation
@@ -142,6 +157,7 @@ export class LafeaWorkbenchView {
     this.slots.toolbar.replaceChildren(this.toolbar(stageId, stage, analyticalMode, {
       emp1RunReadiness,
       emp1ExecutionCurrentness,
+      emp1CState,
     }));
 
     const presentedStage = analyticalMode ? analyticalState.stages[stageId] : stage;
@@ -153,6 +169,8 @@ export class LafeaWorkbenchView {
         emp1RunInput,
         emp1Execution,
         emp1ExecutionCurrentness,
+        emp1CState,
+        emp1RouteAuthority,
         emp1RunFailure: dependencies.getEmp1RunFailure(),
         onSelectRoute: (nextStageId) => this.selectAnalyticalRoute(nextStageId, state),
         benchmarkHost: this.benchmarkHost,
@@ -366,6 +384,19 @@ export class LafeaWorkbenchView {
     mock.dataset.mockData = 'true';
     if (stage?.document) mock.style.display = 'none';
 
+    const completeSample = analyticalMode
+      ? actionButton(
+        this.rootElement,
+        '[SIMULATED] Load complete EMP.1 qualification sample',
+        this.handlers.onLoadEmp1QualificationSample,
+      )
+      : null;
+    if (completeSample) {
+      completeSample.dataset.role = 'emp1-load-complete-qualification-sample';
+      completeSample.dataset.mockData = 'true';
+      completeSample.title = 'Load source-only A/B/C qualification inputs through the normal workbench custody path. Derived WRC quantities and production authority are not injected.';
+    }
+
     const file = element(this.rootElement, 'input');
     const fileLabel = element(this.rootElement, 'label', null,
       analyticalMode ? `Import ${publicId} source JSON` : 'Import stage JSON');
@@ -402,6 +433,22 @@ export class LafeaWorkbenchView {
         : 'Execute retained A/B mechanics and prepare source-bound C custody. If C production authority is suspended, no WRC stress result is produced.';
     }
 
+    const cRun = analyticalMode
+      ? actionButton(
+        this.rootElement,
+        emp1.emp1CState?.buttonLabel ?? 'Run C',
+        this.handlers.onRunEmp1,
+      )
+      : null;
+    if (cRun) {
+      cRun.dataset.role = 'emp1-run-c';
+      cRun.dataset.cState = emp1.emp1CState?.state ?? 'SOURCE_INCOMPLETE';
+      cRun.disabled = emp1.emp1CState?.buttonEnabled !== true;
+      cRun.title = cRun.disabled
+        ? `C production execution is unavailable: ${(emp1.emp1CState?.blockerCodes ?? []).join(', ') || 'source/authority not ready'}`
+        : 'Execute the governed C transaction under the current route authority. Unchanged A/B layers are retained.';
+    }
+
     const benchmark = actionButton(
       this.rootElement,
       analyticalMode ? `Verify ${publicId}` : 'Run available verification suite',
@@ -423,8 +470,10 @@ export class LafeaWorkbenchView {
 
     const controls = [];
     if (!this.rootElement?.hasAttribute?.('data-lafea-app-root')) controls.push(mock);
+    if (completeSample) controls.push(completeSample);
     controls.push(fileLabel, file);
     if (productRun) controls.push(productRun);
+    if (cRun) controls.push(cRun);
     controls.push(run);
     if (this.benchmarkHost) controls.push(benchmark);
     controls.push(exportButton, undo, redo);
@@ -455,7 +504,7 @@ export class LafeaWorkbenchView {
 }
 
 function withCurrentEmp1StageExecutions(state, execution, currentness) {
-  if (currentness?.state !== EMP1_WORKBENCH_EXECUTION_CURRENTNESS.CURRENT || !execution) return state;
+  if (currentness?.inputCurrent !== true || !execution) return state;
   const loadTransfer = execution.stageExecutions?.loadTransfer ?? null;
   const sectionScreening = execution.stageExecutions?.sectionScreening ?? null;
   if (!loadTransfer && !sectionScreening) return state;
@@ -471,6 +520,24 @@ function withCurrentEmp1StageExecutions(state, execution, currentness) {
         : state.stages['LAFEA.2'],
     },
   };
+}
+
+function withEmp1CStateProjection(projection, cState) {
+  if (!projection || !cState) return projection;
+  return Object.freeze({
+    ...projection,
+    steps: Object.freeze(projection.steps.map((step) => step.shortId === 'C'
+      ? Object.freeze({
+        ...step,
+        state: cState.state,
+        resultAvailable: cState.currentResultAvailable,
+        retainedResultAvailable: cState.retainedResultAvailable,
+        runAuthorized: cState.buttonEnabled,
+        blockers: cState.blockerCodes,
+        currentnessBadge: cState.stageBadge,
+      })
+      : step)),
+  });
 }
 
 function isAnalyticalStage(stageId) {

@@ -1,4 +1,3 @@
-import { authorizeLinearPipingInputXmlPreFlight } from './linear-piping-inputxml-prefea.js';
 import { createLfeaNativeExecutionAuthority } from '../lfea/native-execution-authority.js';
 import { recoverInputXmlAuthorizedRawCases } from '../core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js';
 import {
@@ -22,6 +21,10 @@ import {
  * authorities `lfea.html` has always used, unchanged. Supplying the authority
  * supplement adds the code-stress application on top; it is not a gate in
  * front of the analysis.
+ *
+ * Human limitation acceptance belongs to Error check. This controller consumes
+ * only an already-authorized sealed pre-flight and never manufactures reviewer
+ * identity/reason on behalf of the engineer.
  */
 export function createLfeaPipelineAnalysisController(options) {
   const executionAuthority = options?.executionAuthority ?? createLfeaNativeExecutionAuthority();
@@ -33,13 +36,10 @@ export function createLfeaPipelineAnalysisController(options) {
     if (!Array.isArray(requestedCaseIds) || requestedCaseIds.length === 0) {
       throw new TypeError('Select at least one load case to analyze.');
     }
-    const authorized = preFlight.solveAuthorized
-      ? preFlight
-      : authorizeLinearPipingInputXmlPreFlight(preFlight, {
-        approverIdentity: options?.approverIdentity ?? 'LFEA_PIPELINE_REVIEWER',
-        reason: options?.approvalReason
-          ?? 'Accepted the disclosed conditional limitation set shown at Error check.',
-      });
+    if (!preFlight.solveAuthorized || preFlight.authorization === null) {
+      throw new TypeError('Authorize the current pre-flight at Error check before analyzing.');
+    }
+    const authorized = preFlight;
 
     const executionState = executionAuthority.run(authorized, { requestedCaseIds });
     const cases = executionState.execution.caseExecutions.map((row) => caseView(

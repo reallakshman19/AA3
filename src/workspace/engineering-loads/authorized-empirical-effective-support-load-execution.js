@@ -45,10 +45,10 @@ export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
   routePartitionModel,
   masterData,
 } = {}) {
-  const projection = requireEffectiveExecutionProjection(effectiveExecutionProjection);
+  const projection = requireAuthorizedEmpiricalEffectiveSupportProjection(
+    effectiveExecutionProjection,
+  );
   const requestedMethod = requireMethod(method);
-  assertProjectedLoadEvidence(projection);
-  assertNoLegacyDefaultSelectors(projection.profile);
 
   const calculationInput = {
     dataset: projection.dataset,
@@ -70,6 +70,19 @@ export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
   }
   assertNoLegacyFallbackConsumption(distribution);
   return distribution;
+}
+
+/**
+ * Validates the complete pre-execution authority boundary without invoking the
+ * support-load statics kernel. Focused falsifiers can therefore prove that a
+ * stale projection, unbound projected map or legacy DEFAULT selector cannot
+ * reach ledger-driven V1/V2 calculation.
+ */
+export function requireAuthorizedEmpiricalEffectiveSupportProjection(value) {
+  const projection = requireEffectiveExecutionProjection(value);
+  assertProjectedLoadEvidence(projection);
+  assertNoLegacyDefaultSelectors(projection.profile);
+  return projection;
 }
 
 export function requireEffectiveExecutionProjection(value) {

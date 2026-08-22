@@ -1,5 +1,6 @@
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { clonePlain, freezeDeep, isRecord, stringValue } from '../dataset-utils.js';
+import { NON_FEA_COMPONENT_MASS_POLICY_SCHEMA } from './non-fea-component-mass-policy.js';
 import { NON_FEA_FLUID_FILL_POLICY_SCHEMA } from './non-fea-fluid-fill-policy.js';
 
 export const NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA = 'non-fea-product-default-profile/v1';
@@ -8,7 +9,7 @@ export const NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA = 'non-fea-product-default-
 export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
   schema: NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA,
   profileId: 'LOAD_CALC_STANDARD_DEFAULTS_V1',
-  version: 2,
+  version: 3,
   defaults: [
     productDefault('PD-LENGTH-UNIT', 'sourcesAndUnits.lengthUnit', 'mm', 'unit',
       'Canonical Load Calc product length unit when project/source unit authority is absent.'),
@@ -42,6 +43,11 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
     'Tight floating-point closure tolerances for force and first-moment accounting; not an engineering load allowable.'),
     productDefault('PD-ACTIVE-CASES', 'loadCalculation.activeLoadCases', ['EMPTY', 'OPE', 'HYD'], 'set',
       'Canonical built-in Load Calc case set.'),
+    productDefault('PD-COMPONENT-MASS-COMPOSITION', 'loadCalculation.componentMassCompositionPolicy', {
+      schema: NON_FEA_COMPONENT_MASS_POLICY_SCHEMA,
+      defaultMode: 'COMPONENT_EXPLICIT_POINT_MASS',
+    }, 'policy',
+    'One explicit point-mass dry-metal primitive per non-pipe component. Derived geometric and equivalent-length modes require dedicated mechanics and are not silently substituted.'),
     productDefault('PD-FLUID-FILL-POLICY', 'thermoMechanicalBasis.fluidPhaseAndFillState', {
       schema: NON_FEA_FLUID_FILL_POLICY_SCHEMA,
       cases: {

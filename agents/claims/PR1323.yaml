@@ -3,9 +3,15 @@ pr_or_wip: PR1323
 claim_state: ACTIVE
 files:
   exact:
+    - src/core/common-enriched-properties/field.js
     - src/workspace/project-data/non-fea-product-default-profile.js
+    - src/workspace/project-data/non-fea-product-engineering-default-profile.js
     - src/workspace/project-data/non-fea-field-registry.js
+    - src/workspace/project-data/non-fea-configured-default-provider.js
+    - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
+    - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
     - src/workspace/project-data/non-fea-effective-value-resolver.js
+    - src/workspace/enrichment/non-fea-common-enriched-effective-default-authoring.js
     - src/workspace/non-fea-common-input-runtime.js
     - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
     - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
@@ -20,7 +26,12 @@ files:
     - src/workspace/load-calc-consumer-view.js
     - src/workspace/load-calc-result-presentation.js
     - scripts/non-fea-product-default-profile-check.mjs
+    - scripts/non-fea-product-engineering-default-profile-check.mjs
     - scripts/non-fea-effective-value-resolver-check.mjs
+    - scripts/non-fea-configured-default-scope-priority-check.mjs
+    - scripts/non-fea-common-enriched-configured-default-overlay-check.mjs
+    - scripts/non-fea-common-enriched-effective-default-composition-check.mjs
+    - scripts/non-fea-common-enriched-effective-default-authoring-check.mjs
     - scripts/authorized-empirical-effective-value-ledger-check.mjs
     - scripts/authorized-empirical-effective-execution-projection-check.mjs
     - scripts/authorized-empirical-effective-execution-projection-collision-check.mjs
@@ -42,14 +53,18 @@ files:
   prefixes:
     - src/workspace/engineering-loads/
     - src/workspace/project-data/
+    - src/workspace/enrichment/
     - src/core/non-fea-enrichment/
+    - src/core/common-enriched-properties/
 authority_domains:
   - LOAD_CALC_EFFECTIVE_ENGINEERING_VALUES
+  - LOAD_CALC_PROJECT_CONFIGURED_DEFAULTS
   - LOAD_CALC_PRODUCT_DEFAULTS
+  - LOAD_CALC_PRE_READINESS_DEFAULT_AUTHORING
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION
   - GRAVITY_SUPPORT_LOAD_ACCOUNTING
   - EMPIRICAL_METHOD_AUTO_SELECTION
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: 3c101ba3debc0510de601216136ca6ba8d356bd9
+last_verified_head: 5ca4f6d2a6738f4de21f57f1a9a591e1a53ec837

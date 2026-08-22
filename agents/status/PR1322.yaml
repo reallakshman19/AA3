@@ -1,1 +1,87 @@
-x
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1322
+mission: >-
+  Stack the approved LFEA engineering-session and CAESAR-style UI architecture
+  in one long-lived PR while preserving exact numerical/pre-flight authority.
+workstream: LFEA_UI_ENGINEERING_SESSION
+branch: agent/lfea-engineering-session-ui-20260822
+report_basis_head: 3e88ff396e44517f4bd7434ad333748bc5aa46d9
+pr_head_last_observed: 3e88ff396e44517f4bd7434ad333748bc5aa46d9
+main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
+work_intent: QUALIFY
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: BLOCKED_ON_PRODUCTION_APP_BROWSER
+handover_readiness: READY_WITH_BLOCKER
+report_path: agents/PR1322_workreport.md
+appendix_a_status: CURRENT_FOR_UI08_PRODUCTION_APP_BROWSER_RETRY
+grounding_epoch: GE-013
+current_stage: UI08_PRODUCTION_APP_BROWSER_QUALIFICATION_BLOCKED
+last_completed_stage: UI07_RESULTS_CODE_APPLICATION_QUALIFICATION_PRESENTATION
+blocker: PRODUCTION_APP_CHECKOUT_OR_PREVIEW_UNAVAILABLE
+coordination: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
+validation:
+  ui00_source_diff: PASS
+  ui00_runtime: NOT_RUN
+  ui01_source_diff: PASS
+  ui02_source_diff: PASS
+  ui03_source_diff: PASS
+  ui04_focused_local_execution: PASS
+  ui04_pushed_blob_identity: PASS
+  ui05_focused_local_execution: PASS
+  ui05_pushed_blob_identity: PASS
+  ui06_focused_local_projection: PASS
+  ui06_pushed_blob_identity: PASS
+  ui07_focused_local_execution: PASS
+  ui07_pushed_blob_identity: PASS
+  ui08_source_scale_a11y: PASS
+  ui08_5000_row_projection: PASS
+  ui08_stale_state_source_focused: PASS
+  ui08_exact_byte_syntax: PASS
+  ui08_pushed_blob_identity: PASS
+  ui08_authority_diff: PASS
+  ui08_chromium_exact_function_harness: PASS
+  ui08_browser_keyboard_focus: PASS
+  ui08_browser_5000_geometry_render: PASS
+  ui08_browser_5000_row_traversal: PASS
+  ui08_browser_stagedjson_source_failclosed: PASS
+  ui08_browser_stale_presentation_clear_replace: PASS
+  ui08_prerun_warn_reachability_source: PASS
+  ui08_results_authority_checker_syntax: PASS
+  ui08_results_authority_checker_blob_identity: PASS
+  ui08_production_six_step_browser: NOT_RUN
+  ui08_official_full_repo_aggregate: NOT_RUN
+  unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
+ui08_integration_hardening:
+  technical_head: 3e88ff396e44517f4bd7434ad333748bc5aa46d9
+  issue: CONDITIONAL_PRERUN_WARN_REVIEW_CONTROLS_UNREACHABLE
+  fix: RUN_NAVIGATION_BEFORE_WARN_RETURN
+  main_blob: 85010f83f08c0b8eafb8c1ca8931bae8110338fa
+  checker_blob: e2fbb09943159af6b5ee4457c9100f25f9e0624b
+  effective_files_from_previous_recovery: 2
+  engineering_authority_changed: false
+browser_measurement:
+  engine: Chromium_144_under_Xvfb_via_CDP
+  basis: exact_hash_verified_UI08_function_bodies_with_synthetic_sealed_projection_upstream_stub
+  geometry_spans: 5000
+  geometry_nodes: 5001
+  mount_ms_browser: 307.1
+  cdp_wall_ms: 366.462
+  table_page_size: 250
+  table_pages: 20
+  rows_reached: 5000
+  rows_unique: 5000
+  note: informational_timing_not_release_threshold
+highest_risk: >-
+  Production application integration is still not executed. UI08 release remains
+  blocked until the exact stacked head runs the real six-step workflow for
+  InputXML, ACCDB and StagedJSON in a repository checkout or authorized preview.
+exact_next_action: >-
+  Materialize the exact PR head in an actual repository checkout or existing
+  authorized preview, run InputXML/ACCDB/StagedJSON through Input→Error Check→
+  Load Case→Run→Output→Export including conditional WARN acceptance, falsify
+  source/profile/case stale-state and hidden-control keyboard behavior, then run
+  the strongest repository build/import/lint/Playwright checks. Do not merge
+  before explicit owner authorization.
+last_updated: 2026-08-22

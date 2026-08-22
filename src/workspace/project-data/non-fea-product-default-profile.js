@@ -1,0 +1,175 @@
+import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
+import { clonePlain, freezeDeep, isRecord, stringValue } from '../dataset-utils.js';
+
+export const NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA = 'non-fea-product-default-profile/v1';
+export const NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA = 'non-fea-product-default-provider/v1';
+
+export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
+  schema: NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA,
+  profileId: 'LOAD_CALC_STANDARD_DEFAULTS_V1',
+  version: 1,
+  defaults: [
+    productDefault('PD-LENGTH-UNIT', 'sourcesAndUnits.lengthUnit', 'mm', 'unit',
+      'Canonical Load Calc product length unit when project/source unit authority is absent.'),
+    productDefault('PD-SOURCE-UP-AXIS', 'sourcesAndUnits.sourceUpAxis', 'Z', 'axis',
+      'Z-up screening default when source/project up-axis authority is absent.'),
+    productDefault('PD-GRAVITY', 'loadCalculation.gravityMPerS2', 9.80665, 'm/s²',
+      'Standard gravity used by the built-in Load Calc screening profile.'),
+    productDefault('PD-LOAD-FACTOR', 'loadCalculation.loadFactor', 1, 'ratio',
+      'Unfactored screening load default.'),
+    productDefault('PD-ACTIVE-CASES', 'loadCalculation.activeLoadCases', ['EMPTY', 'OPE', 'HYD'], 'set',
+      'Canonical built-in Load Calc case set.'),
+    productDefault('PD-CORROSION-ALLOWANCE', 'thermoMechanicalBasis.corrosionAllowancesMm', { DEFAULT: 0 }, 'mm',
+      'Zero corrosion allowance only when no project/source corrosion authority exists.'),
+    productDefault('PD-ELASTIC-THERMAL', 'thermoMechanicalBasis.materialElasticProperties', {
+      DEFAULT: {
+        elasticModulusPa: 2.0e11,
+        thermalExpansionPerK: 12.0e-6,
+      },
+    }, 'material-policy',
+    'Generic steel screening elastic/thermal properties; visible assumption, never source evidence.'),
+    productDefault('PD-RESTRAINT-PRELOAD', 'restraintPolicy.restraintPreloadsN', { DEFAULT: 0 }, 'N',
+      'Zero preload screening default when no restraint preload authority exists.'),
+    productDefault('PD-FRICTION', 'restraintPolicy.frictionCoefficients', { DEFAULT: 0 }, 'ratio',
+      'Frictionless screening default when no project/source friction authority exists.'),
+  ],
+});
+
+/**
+ * Builds an ephemeral effective Project Data profile. Product defaults fill
+ * only empty evidence values and never mutate or overwrite the stored profile.
+ */
+export function createNonFeaProductDefaultProvider({
+  profile,
+  defaultProfile = LOAD_CALC_STANDARD_DEFAULTS_V1,
+} = {}) {
+  requireProjectProfile(profile);
+  requireDefaultProfile(defaultProfile);
+  const effectiveProfile = clonePlain(profile);
+  const usageRows = [];
+  const shadowedRows = [];
+  const profileHash = semanticHash(defaultProfile);
+
+  defaultProfile.defaults.forEach((row) => {
+    const entry = readPath(effectiveProfile, row.projectDataPath);
+    if (!isEvidenceValue(entry)) {
+      throw new TypeError(`Product default target is not a Project Data evidence field: ${row.projectDataPath}.`);
+    }
+    if (!isEmpty(entry.value)) {
+      shadowedRows.push(shadowed(row, entry));
+      return;
+    }
+    writePath(effectiveProfile, row.projectDataPath, {
+      value: clonePlain(row.value),
+      evidence: {
+        source: 'Load Calc built-in product default',
+        authority: 'PRODUCT_DEFAULT',
+        defaultId: row.defaultId,
+        basis: row.basis,
+        profileId: defaultProfile.profileId,
+        profileVersion: defaultProfile.version,
+        productDefaultProfileSemanticHash: profileHash,
+      },
+      approved: true,
+    });
+    usageRows.push(freezeDeep({
+      defaultId: row.defaultId,
+      projectDataPath: row.projectDataPath,
+      value: clonePlain(row.value),
+      unit: row.unit,
+      basis: row.basis,
+      authority: 'PRODUCT_DEFAULT',
+    }));
+  });
+
+  const frozenProfile = freezeDeep(effectiveProfile);
+  const base = {
+    schema: NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA,
+    profileId: defaultProfile.profileId,
+    profileVersion: defaultProfile.version,
+    sourceProjectDataSemanticHash: semanticHash(profile),
+    productDefaultProfileSemanticHash: profileHash,
+    effectiveProjectDataProfileSemanticHash: semanticHash(frozenProfile),
+    usageRows: usageRows.sort(byPath),
+    shadowedRows: shadowedRows.sort(byPath),
+    effectiveProfile: frozenProfile,
+  };
+  return freezeDeep({ ...base, semanticHash: semanticHash(base) });
+}
+
+export function isProductDefaultEvidence(entry) {
+  return isEvidenceValue(entry)
+    && stringValue(entry.evidence?.authority) === 'PRODUCT_DEFAULT'
+    && Boolean(stringValue(entry.evidence?.defaultId));
+}
+
+function productDefault(defaultId, projectDataPath, value, unit, basis) {
+  return freezeDeep({ defaultId, projectDataPath, value, unit, basis });
+}
+
+function shadowed(row, entry) {
+  return freezeDeep({
+    defaultId: row.defaultId,
+    projectDataPath: row.projectDataPath,
+    status: 'SHADOWED_BY_HIGHER_AUTHORITY',
+    existingAuthority: stringValue(entry.evidence?.authority) || 'PROJECT_DATA',
+    existingSource: stringValue(entry.evidence?.source) || null,
+  });
+}
+
+function requireProjectProfile(profile) {
+  if (!isRecord(profile) || profile.schema !== 'project-data-profile/v1') {
+    throw new TypeError('Product-default provider requires project-data-profile/v1.');
+  }
+}
+
+function requireDefaultProfile(profile) {
+  if (!isRecord(profile)
+      || profile.schema !== NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA
+      || !stringValue(profile.profileId)
+      || !Number.isInteger(profile.version)
+      || profile.version < 1
+      || !Array.isArray(profile.defaults)) {
+    throw new TypeError(`Expected ${NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA}.`);
+  }
+  const ids = new Set();
+  const paths = new Set();
+  profile.defaults.forEach((row) => {
+    if (!isRecord(row) || !stringValue(row.defaultId) || !stringValue(row.projectDataPath)
+        || !stringValue(row.unit) || !stringValue(row.basis)
+        || !Object.hasOwn(row, 'value')) {
+      throw new TypeError('Product default rows require ID, Project Data path, value, unit and basis.');
+    }
+    if (ids.has(row.defaultId)) throw new TypeError(`Duplicate product default ID: ${row.defaultId}.`);
+    if (paths.has(row.projectDataPath)) throw new TypeError(`Duplicate product default path: ${row.projectDataPath}.`);
+    ids.add(row.defaultId);
+    paths.add(row.projectDataPath);
+  });
+}
+
+function isEvidenceValue(value) {
+  return isRecord(value) && Object.hasOwn(value, 'value')
+    && Object.hasOwn(value, 'evidence') && typeof value.approved === 'boolean';
+}
+
+function isEmpty(value) {
+  if (value === null || value === undefined || value === '') return true;
+  if (Array.isArray(value)) return value.length === 0;
+  return isRecord(value) && Object.keys(value).length === 0;
+}
+
+function readPath(value, path) {
+  return path.split('.').reduce((current, key) => current?.[key], value);
+}
+
+function writePath(value, path, entry) {
+  const [groupKey, fieldKey] = path.split('.');
+  if (!isRecord(value[groupKey]) || !Object.hasOwn(value[groupKey], fieldKey)) {
+    throw new RangeError(`Unknown Project Data field: ${path}.`);
+  }
+  value[groupKey][fieldKey] = entry;
+}
+
+function byPath(left, right) {
+  return left.projectDataPath.localeCompare(right.projectDataPath);
+}

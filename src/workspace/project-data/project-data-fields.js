@@ -38,6 +38,7 @@ export const PROJECT_DATA_GROUPS = Object.freeze([
     field('hydroFluidDensitiesKgPerM3', 'Hydro fluid densities', 'json', 'kg/m³'),
     field('insulationDensitiesKgPerM3', 'Insulation densities by code', 'json', 'kg/m³'),
     field('componentWeightsKg', 'Approved component weights', 'json', 'kg'),
+    phase2Field('componentMassCompositionPolicy', 'Component dry-mass composition policy', 'json', 'Loads'),
     field('equilibriumTolerances', 'Equilibrium tolerances', 'json', 'Loads'),
     field('activeLoadCases', 'Active load cases', 'json', 'Loads'),
   ]),
@@ -101,6 +102,7 @@ export const PROJECT_DATA_REQUIREMENTS = Object.freeze({
     'loadCalculation.gravityMPerS2', 'loadCalculation.loadFactor',
     'loadCalculation.equilibriumTolerances',
     'loadCalculation.activeLoadCases',
+    'loadCalculation.componentMassCompositionPolicy',
     'thermoMechanicalBasis.fluidPhaseAndFillState',
   ]),
   editing: Object.freeze([
@@ -126,9 +128,11 @@ export const PROJECT_DATA_REQUIREMENTS = Object.freeze({
     'loadCalculation.hydroFluidDensitiesKgPerM3',
     'loadCalculation.insulationDensitiesKgPerM3', 'loadCalculation.componentWeightsKg',
     'loadCalculation.equilibriumTolerances', 'loadCalculation.activeLoadCases',
+    'loadCalculation.componentMassCompositionPolicy',
     'thermoMechanicalBasis.fluidPhaseAndFillState',
   ]),
   nonFeaPolicy: Object.freeze([
+    'loadCalculation.componentMassCompositionPolicy',
     'thermoMechanicalBasis.installationTemperatureC',
     'thermoMechanicalBasis.operatingTemperaturesC',
     'thermoMechanicalBasis.casePressuresPa',

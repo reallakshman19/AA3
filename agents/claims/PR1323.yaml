@@ -6,12 +6,24 @@ files:
     - src/workspace/project-data/non-fea-product-default-profile.js
     - src/workspace/non-fea-common-input-runtime.js
     - scripts/non-fea-product-default-profile-check.mjs
-    - scripts/empirical-gravity-method-selection-check.mjs
-    - scripts/run-non-fea-checks.mjs
     - src/workspace/engineering-loads/empirical-gravity-method-selection.js
     - src/workspace/engineering-loads/engineering-support-load-store.js
+    - scripts/empirical-gravity-method-selection-check.mjs
+    - src/workspace/engineering-loads/support-load-static-accounting.js
     - src/workspace/engineering-loads/support-load-distribution-v3.js
-    - src/workspace/engineering-loads/empirical-method-registry.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+    - scripts/support-load-static-accounting-check.mjs
+    - scripts/support-load-partial-distribution-check.mjs
+    - scripts/empirical-authorized-blocked-cases-check.mjs
+    - scripts/run-non-fea-checks.mjs
+    - src/workspace/load-calc-consumer-view.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v3.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v4.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v5.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v6.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v7.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v8.js
   prefixes:
     - src/workspace/engineering-loads/
     - src/workspace/project-data/
@@ -21,6 +33,7 @@ authority_domains:
   - LOAD_CALC_PRODUCT_DEFAULTS
   - GRAVITY_SUPPORT_LOAD_ACCOUNTING
   - EMPIRICAL_METHOD_AUTO_SELECTION
+  - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: 2f29f1df9f56db6d2c491a6949213493a1cf5c47
+last_verified_head: cbf8150320ee907c0ecbba628df4e1c585c5b988

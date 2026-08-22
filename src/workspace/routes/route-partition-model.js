@@ -1,24 +1,31 @@
 import { freezeDeep } from '../dataset-utils.js';
 import { projectDataValue } from '../project-data/project-data-contract.js';
+import {
+  createNonFeaProductDefaultProvider,
+} from '../project-data/non-fea-product-default-profile.js';
 
 export const ROUTE_PARTITION_MODEL_SCHEMA = 'route-partition-model/v1';
 
 /**
  * Builds branch-scoped connected routes from exact component ports. Source
  * order is never used to invent chainage. Approximate port joining requires an
- * approved Project Data tolerance.
+ * approved Project Data tolerance. Routine empty topology policy is first
+ * composed with conservative Product defaults: zero geometric tolerances and
+ * the existing exact-port, branch-scoped joining rule.
  */
 export function buildRoutePartitionModel(dataset, profile) {
   assertDataset(dataset);
-  const tolerance = projectDataValue(profile, 'topology.portMatchToleranceMm');
-  const routeJoiningRules = projectDataValue(profile, 'topology.routeJoiningRules');
+  const effectiveProfile = createNonFeaProductDefaultProvider({ profile }).effectiveProfile;
+  const tolerance = projectDataValue(effectiveProfile, 'topology.portMatchToleranceMm');
+  const routeJoiningRules = projectDataValue(effectiveProfile, 'topology.routeJoiningRules');
+  const autoCarrierTolerance = projectDataValue(effectiveProfile, 'topology.autoCarrierCoincidenceToleranceMm');
   const edges = dataset.entities.map(toEdge).filter(Boolean);
-  classifyAutoCarriers(edges, projectDataValue(profile, 'topology.autoCarrierCoincidenceToleranceMm'));
+  classifyAutoCarriers(edges, autoCarrierTolerance);
   const byBranch = groupBy(edges, (edge) => edge.branchId || 'UNASSIGNED');
   const routes = [...byBranch.entries()].flatMap(([branchId, branchEdges]) => connectedRoutes(branchId, branchEdges, tolerance));
   const blockers = [];
   if (!Number.isFinite(tolerance)) blockers.push({ code: 'MISSING_PORT_MATCH_TOLERANCE', projectDataPath: 'topology.portMatchToleranceMm' });
-  if (!Number.isFinite(projectDataValue(profile, 'topology.autoCarrierCoincidenceToleranceMm'))) {
+  if (!Number.isFinite(autoCarrierTolerance)) {
     blockers.push({ code: 'MISSING_AUTO_CARRIER_TOLERANCE', projectDataPath: 'topology.autoCarrierCoincidenceToleranceMm' });
   }
   if (!supportedRouteJoiningRules(routeJoiningRules)) {

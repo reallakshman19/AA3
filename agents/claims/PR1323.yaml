@@ -7,10 +7,15 @@ files:
     - src/workspace/project-data/non-fea-product-default-profile.js
     - src/workspace/project-data/non-fea-product-engineering-default-profile.js
     - src/workspace/project-data/non-fea-field-registry.js
+    - src/workspace/project-data/project-data-fields.js
     - src/workspace/project-data/non-fea-configured-default-provider.js
     - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
     - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
     - src/workspace/project-data/non-fea-effective-value-resolver.js
+    - src/workspace/routes/route-partition-model.js
+    - src/workspace/support-sites/support-site-model.js
+    - src/workspace/engineering-model-store.js
+    - src/workspace/enrichment/authorized-enrichment-consumer-controller.js
     - src/workspace/enrichment/non-fea-common-enriched-effective-default-authoring.js
     - src/workspace/non-fea-common-input-runtime.js
     - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
@@ -20,6 +25,12 @@ files:
     - src/workspace/engineering-loads/authorized-empirical-load-input.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v3.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v4.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v5.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v6.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v7.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v8.js
     - src/workspace/engineering-loads/empirical-gravity-method-selection.js
     - src/workspace/engineering-loads/engineering-support-load-store.js
     - src/workspace/engineering-loads/support-load-static-accounting.js
@@ -28,6 +39,7 @@ files:
     - src/workspace/load-calc-consumer-view.js
     - src/workspace/load-calc-result-presentation.js
     - scripts/non-fea-product-default-profile-check.mjs
+    - scripts/non-fea-gravity-product-default-bootstrap-check.mjs
     - scripts/non-fea-product-engineering-default-profile-check.mjs
     - scripts/non-fea-effective-value-resolver-check.mjs
     - scripts/non-fea-configured-default-scope-priority-check.mjs
@@ -39,7 +51,9 @@ files:
     - scripts/authorized-empirical-effective-execution-projection-collision-check.mjs
     - scripts/authorized-empirical-effective-support-guard-check.mjs
     - scripts/authorized-empirical-source-axis-binding-check.mjs
+    - scripts/authorized-empirical-default-staleness-check.mjs
     - scripts/authorized-empirical-generation-boundary-check.mjs
+    - scripts/authorized-empirical-ledger-readiness-check.mjs
     - scripts/authorized-empirical-v2-effective-execution-check.mjs
     - scripts/authorized-empirical-product-default-convergence-check.mjs
     - scripts/empirical-gravity-method-selection-check.mjs
@@ -49,22 +63,20 @@ files:
     - scripts/empirical-authorized-blocked-cases-check.mjs
     - scripts/load-calc-result-presentation-check.mjs
     - scripts/run-non-fea-checks.mjs
-    - src/workspace/engineering-loads/authorized-empirical-load-execution-v3.js
-    - src/workspace/engineering-loads/authorized-empirical-load-execution-v4.js
-    - src/workspace/engineering-loads/authorized-empirical-load-execution-v5.js
-    - src/workspace/engineering-loads/authorized-empirical-load-execution-v6.js
-    - src/workspace/engineering-loads/authorized-empirical-load-execution-v7.js
-    - src/workspace/engineering-loads/authorized-empirical-load-execution-v8.js
   prefixes:
     - src/workspace/engineering-loads/
     - src/workspace/project-data/
     - src/workspace/enrichment/
+    - src/workspace/routes/
+    - src/workspace/support-sites/
     - src/core/non-fea-enrichment/
     - src/core/common-enriched-properties/
 authority_domains:
   - LOAD_CALC_EFFECTIVE_ENGINEERING_VALUES
   - LOAD_CALC_PROJECT_CONFIGURED_DEFAULTS
   - LOAD_CALC_PRODUCT_DEFAULTS
+  - LOAD_CALC_CONSERVATIVE_TOPOLOGY_BOOTSTRAP
+  - LOAD_CALC_LEDGER_AWARE_READINESS
   - LOAD_CALC_PRE_READINESS_DEFAULT_AUTHORING
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_SUPPORT_GUARD
@@ -75,4 +87,4 @@ authority_domains:
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: da18b1bbf535aba8d76f160d5b2f3980bfdd176e
+last_verified_head: b90adda0f275636426293ad4a30a6346a57373c0

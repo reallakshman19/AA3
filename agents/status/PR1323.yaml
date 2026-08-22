@@ -4,7 +4,7 @@ pr_or_wip: PR1323
 mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
 workstream: ISSUE1321_LOAD_CALC
 branch: agent/issue-1321-load-calc-effective-values
-pr_head: b98fb404e73310d7028742a651c845b36586ae7f
+pr_head: e39c31118d0d3020233388cc0a0b27481449ef3d
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,16 +12,16 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1323_workreport.md
-report_basis_head: cbf8150320ee907c0ecbba628df4e1c585c5b988
+report_basis_head: df23445c0231cb3fc9704fa4f9cb1de2d159f9c2
 appendix_a_status: CURRENT
-grounding_epoch: GE-002
-current_stage: SUPPORT_ACCOUNTING_INTEGRATED_VALIDATION_AND_DOWNSTREAM_COMPATIBILITY
-blocker: NO_RELEVANT_EXACT_HEAD_RUNTIME_OR_CI_QUALIFICATION_OBSERVED
-highest_risk: Prevent cross-route first-moment residual cancellation and preserve partial-result publication through later authorized wrappers and UI.
+grounding_epoch: GE-003
+current_stage: STACK_3_SOURCE_INTEGRATED_EXACT_RUNTIME_QUALIFICATION_PENDING
+blocker: NO_RELEVANT_EXACT_HEAD_LOAD_CALC_EXECUTION_OBSERVED
+highest_risk: Raw Project Data/default re-resolution remains in support and empirical consumers despite the common effective-value path.
 dependencies:
   - Issue #1321
   - current common Non-FEA resolution ledger
   - empirical component CoG authority audit
   - support-load-static-accounting/v1
-exact_next_action: Add per-route force/first-moment closure, then reconcile authorized V3-V8 and Load Calc partial-result presentation.
+exact_next_action: Make CALCULATED_WITH_EXCEPTIONS current and visible in the guided Load Calc UI, then cut support/empirical value reads over to one effective-value resolver.
 last_updated: 2026-08-22T14:11:00+05:30

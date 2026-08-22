@@ -211,7 +211,7 @@ function calculateCase(caseId, input, globalBlockers, execution) {
   if (globalBlockers.length === 0 && !equilibrium.passed) {
     state.blockers.push(...equilibrium.blockers);
   }
-  const status = caseStatus(state);
+  const status = caseStatus(state, globalBlockers);
   return freezeDeep({
     loadCaseId: caseId,
     status,
@@ -554,7 +554,7 @@ function routeAccountingState(state, routeId) {
 }
 
 function supportResults(model, state, caseStatusValue) {
-  const publishable = caseStatusValue !== 'FAILED';
+  const publishable = caseStatusValue === 'CALCULATED' || caseStatusValue === 'CALCULATED_WITH_EXCEPTIONS';
   return model.sites.map((site) => {
     const contributorIds = [...(state.contributorsBySite.get(site.siteId) || [])];
     const reaction = state.reactions.get(site.siteId) ?? 0;
@@ -563,7 +563,7 @@ function supportResults(model, state, caseStatusValue) {
       supportSiteId: site.siteId,
       tags: site.tags,
       sourceAxisBasis: 'Z_UP',
-      status: publishable ? caseStatusValue : 'FAILED',
+      status: caseStatusValue,
       verticalForceN: publishable ? reaction : null,
       qualifiedReactionCandidateN: publishable || contributorIds.length > 0 ? reaction : null,
       cantileverMomentDemandNmm: publishable ? cantileverMomentDemandNmm : null,
@@ -695,9 +695,11 @@ function completenessAudit(state, status) {
   return {
     status: status === 'FAILED'
       ? 'FAILED'
-      : status === 'CALCULATED_WITH_EXCEPTIONS'
-        ? 'COMPLETE_WITH_EXCEPTIONS'
-        : 'COMPLETE',
+      : status === 'BLOCKED'
+        ? 'BLOCKED'
+        : status === 'CALCULATED_WITH_EXCEPTIONS'
+          ? 'COMPLETE_WITH_EXCEPTIONS'
+          : 'COMPLETE',
     coverageBasis: 'EVALUATED_KNOWN_FORCE_ONLY',
     evaluatedMassKg: state.evaluatedMassKg,
     allocatedMassKg: state.allocatedMassKg,
@@ -722,7 +724,13 @@ function completenessAudit(state, status) {
   };
 }
 
-function caseStatus(state) {
+// A case is BLOCKED, not FAILED, when calculation was never attempted because
+// the Project Data/topology profile itself was incomplete (globalBlockers is
+// only ever non-empty in that pre-execution scenario; calculateCase skips all
+// route processing whenever it is). FAILED is reserved for a route or
+// equilibrium check that was actually attempted and did not close.
+function caseStatus(state, globalBlockers) {
+  if (globalBlockers.length > 0) return 'BLOCKED';
   if (state.blockers.length > 0 || state.excludedInputs.some(isFatalExclusion)) return 'FAILED';
   if (state.excludedInputs.length > 0 || state.exceptions.length > 0) return 'CALCULATED_WITH_EXCEPTIONS';
   return 'CALCULATED';
@@ -737,6 +745,7 @@ function isFatalExclusion(row) {
 
 function aggregateDistributionStatus(cases) {
   if (cases.length === 0 || cases.some((row) => row.status === 'FAILED')) return 'FAILED';
+  if (cases.some((row) => row.status === 'BLOCKED')) return 'BLOCKED';
   if (cases.some((row) => row.status === 'CALCULATED_WITH_EXCEPTIONS')) return 'CALCULATED_WITH_EXCEPTIONS';
   return 'CALCULATED';
 }

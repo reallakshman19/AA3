@@ -9,7 +9,7 @@ import {
   createNonFeaCommonEnrichedProductDefaultOverlay,
 } from '../project-data/non-fea-common-enriched-product-default-overlay.js';
 import {
-  LOAD_CALC_PRODUCT_ENGINEERING_DEFAULTS_V1,
+  LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1,
 } from '../project-data/non-fea-product-engineering-default-profile.js';
 
 export const NON_FEA_COMMON_ENRICHED_EFFECTIVE_DEFAULT_AUTHORING_SCHEMA =
@@ -39,7 +39,7 @@ export function authorCommonEnrichedCandidateWithEffectiveDefaults({
   sourceModel,
   inventory,
   projectDataProfile,
-  productEngineeringDefaultProfile = LOAD_CALC_PRODUCT_ENGINEERING_DEFAULTS_V1,
+  productEngineeringDefaultProfile = LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1,
   requestedMethods = ['WEIGHT_AND_GRAVITY'],
   projectCompositionIdentity,
   finalCompositionIdentity,

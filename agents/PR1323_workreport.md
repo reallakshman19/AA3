@@ -14,21 +14,40 @@ MERGE_AUTHORITY: OWNER_ONLY
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_TASK: Issue #1321
 PR_OR_WIP: PR1323
-BRANCH: agent/issue-1321-load-calc-effective-values
+BRANCH: claude/pr-1323-project-data-wu1zx0 (merge of agent/issue-1321-load-calc-effective-values @ 940ff897d723d273a3855b9798f684522593d325 into current main)
 
-PR_HEAD_OBSERVED: 1f07cdbd3e3646ec5ba3e8e7bdcbc9883e8e6899
-REPORT_BASIS_HEAD: 1f07cdbd3e3646ec5ba3e8e7bdcbc9883e8e6899
-MAIN_HEAD_LAST_CHECKED: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-MERGE_BASE: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-GROUNDING_EPOCH: GE-011
+PR_HEAD_OBSERVED: 940ff897d723d273a3855b9798f684522593d325
+REPORT_BASIS_HEAD: GE-012 session on top of 1f07cdbd3e3646ec5ba3e8e7bdcbc9883e8e6899
+MAIN_HEAD_LAST_CHECKED: 1d08bcd0fdebc86fc2daaeb752f129b877e01c74
+MERGE_BASE: 1d08bcd0fdebc86fc2daaeb752f129b877e01c74 (main had advanced one commit past a222e18 since GE-011; disjoint EMP1/WRC content, no conflicts)
+GROUNDING_EPOCH: GE-012
 
-CURRENT_STAGE: STACK_10_SUPPORT_DEFAULT_AND_GRAVITY_CONVENTION_AUTHORITY_SOURCE_INTEGRATED
-CURRENT_BLOCKER: EXACT_HEAD_LOAD_CALC_NODE_BROWSER_QUALIFICATION_NOT_OBSERVED; ANCILLARY_COMPONENT_CONTENT_AND_TRUE_VECTOR_UNIT_TRANSFORM_REMAIN_OPEN
+CURRENT_STAGE: STACK_11_VERIFY_UI_LEDGER_RECONCILIATION_AND_EXACT_NODE_QUALIFICATION_RUN
+CURRENT_BLOCKER: TWO_OF_FIFTY_NON_FEA_CHECKS_BLOCKED_ON_MISSING_EXTERNAL_CAESAR_BM2_FIXTURE_UNRELATED_TO_1321; PRE_EXISTING_MAIN_CHUNK_BUNDLE_BUDGET_OVERAGE_UNRELATED_TO_1321; ANCILLARY_COMPONENT_CONTENT_AND_TRUE_VECTOR_UNIT_TRANSFORM_REMAIN_OPEN
 HIGHEST_RISK: Bounded convention/default contracts must not be mistaken for mechanics that are not implemented. The active gravity method remains source-Z/mm scalar route-chainage statics; alternative conventions, X/Y-up, non-mm units and unsupported mass primitives fail closed.
-EXACT_NEXT_ACTION: reconcile Verify & Run presentation with effective/default readiness so raw missing source/master fields are not shown as routine blockers when the authorized ledger path is calculation-eligible; then design ancillary/component-contained mass primitives with double-count protection.
+EXACT_NEXT_ACTION: design ancillary/component-contained mass primitives (cladding/tracing, component-contained fluid) with double-count protection, and native non-empty zero-fluid support; separately, source or regenerate benchmarks/LFEA/BM2/Input_BM2.xml (unrelated CAESAR-II restraint-network benchmark, never committed) and address the pre-existing main-chunk bundle-size budget overage if in scope.
 ```
 
 PR #1323 remains the **single draft carrier**. Do not create another PR. Do not merge without explicit owner authorization.
+
+## 0. GE-012 session — Verify & Run reconciliation and first actual Node execution
+
+This session did what GE-011 explicitly flagged as its `EXACT_NEXT_ACTION` and its `NOT_RUN/NOT_OBSERVED` gap, and reports genuine execution evidence, not source inspection, for the first time in this stack's history:
+
+1. **Verify & Run UI fix** (`src/workspace/load-calc-consumer-controller.js`, `renderVerifyPane`): the 13-raw-field checklist ignored `authState.calculationEligible` — the same ledger-aware readiness signal (`engineeringModelStore#currentEmpiricalReadiness` → `validateProjectDataProfile(..., 'authorizedGravityLoads'/'loads', ...)`) the Run button already trusted. A raw field now only shows as a blocker when the authorized path is *not* eligible; when it is, the checklist says so explicitly ("resolved via effective-value ledger") rather than silently hiding the distinction.
+2. **`npm ci`** was run (node_modules was absent in this container) so `node scripts/run-non-fea-checks.mjs`, `eslint`, and `vite build` could actually execute rather than remaining theoretical.
+3. **`node scripts/run-non-fea-checks.mjs` was actually run to completion for the first time.** It found and each was root-caused and fixed (not skipped):
+   - `non-fea-project-data-authority-check.mjs`: asserted the 1885S fixture's `installationTemperatureC`/`configuredDefaults` were still empty; PR #1283 had already legitimately populated them. Fixed the assertions to check preservation and to flag the five fields #1321 actually left open (`componentMassCompositionPolicy`, `forceOutputConvention`, `momentOutputConvention`, `analysisBasis`, `resultSignConvention`).
+   - `authorized-empirical-effective-value-ledger-check.mjs`: fixture used `revision: 3` with `previousBaseline: null`, which the publication orchestrator requires to be `revision: 1`. Fixture bug, fixed.
+   - `non-fea-common-enriched-effective-default-authoring-check.mjs` / `non-fea-common-enriched-effective-default-authoring.js`: imported a never-exported `LOAD_CALC_PRODUCT_ENGINEERING_DEFAULTS_V1`; the real export is `LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1`. Renamed at all 4 call sites.
+   - `authorized-empirical-v2-effective-execution-check.mjs` exposed two real production bugs in `project-data-contract.js`, both pre-existing (from PR #1226, before #1321 started) and never previously exercised end-to-end: (a) `isExplicitlyUninsulated` only recognized string `NONE`/`UNINSULATED` codes, not the `insulationCode: null` convention the ledger projection and `authorized-empirical-load-input.js` both already use for "no insulation on this target"; (b) `validateRequired` flagged an approved-but-empty `insulationDensitiesKgPerM3`/`componentWeightsKg` map as `MISSING_VALUE`, even though the ledger projection only ever produces an empty map when the dataset genuinely has no insulated line / no point-mass component (each per-target requirement is separately enforced by `requiredEffective` throwing). Both fixed with narrowly-scoped, path-aware allowances.
+   - `src/master-data/bundled-master-data.js` used Vite's `?raw` suffix import for `PCF_MAT_MAP.txt`, which plain Node (the `node scripts/*.mjs` convention this whole suite depends on) cannot parse. Fixed with a runtime environment check: Node reads the file via `fs`, the browser bundle still gets Vite's build-time-inlined string. Verified both paths (`node --input-type=module` load, and `npx vite build` producing `dist/assets/PCF_MAT_MAP-*.js`).
+   - **48 of 50 checks now genuinely PASS.** The remaining 2 (`empirical-restraint-network-check.mjs`, `empirical-coupled-restraint-network-check.mjs`) need `benchmarks/LFEA/BM2/Input_BM2.xml`, a real CAESAR-II benchmark model that has never been committed to this repository (verified via `git log --all`) and belongs to the beam/contact/restraint-network family this stack's own body already marks `SEPARATE_FAMILY — no authority gained by this stack`. Not fabricated.
+4. **Ran the real 1885S end-to-end qualification** (`scripts/1885s-empirical-qualification.mjs`) against the actual repository-owned `benchmarks/Sjson.json` (279 nodes) plus its real line-list/piping-class/component-weight master data (already present in the repo under `public/fixtures/` and `src/master-data/`, content-address-verified against the fixture manifest, staged into a local `TOPOLOGY_EDIT_FIXTURE_CACHE` — no data fabricated). This exercised dataset normalization, support-site/route-partition building, the inline-component-replacement edit/undo/redo workflow, and legacy support-load-distribution calculation, all against real project data.
+   - Found and fixed a genuine status-model bug in `support-load-distribution-v3.js`: a case whose Project Data/topology profile was itself incomplete (`globalBlockers.length > 0`, calculation never attempted) was labelled `'FAILED'` — the same label used for an actually-attempted-and-failed calculation — even though the presentation layer (`load-calc-result-presentation.js`) and this qualification script both already treat `'BLOCKED'` ("review the listed inputs") as the distinct, correct status for that case. `caseStatus`/`aggregateDistributionStatus`/`supportResults`/`completenessAudit` now distinguish the two. Verified against every other check in the suite that asserts `status === 'FAILED'` (`support-load-route-equilibrium-check.mjs`, `empirical-authorized-blocked-cases-check.mjs`) — all of those exercise genuine in-calculation failures (`globalBlockers.length === 0`) and are unaffected.
+   - `1885S portable empirical qualification passed` — real evidence written to `public/qualification/1885s-webgl-load-benchmark.{json,md}` and `reports/qualification/...`.
+5. **`npm run build`**: `vite build` itself succeeds; the post-build `scripts/bundle-chunk-check.mjs` fails on a pre-existing `main-*.js` bundle-size budget overage (1,547,097 bytes vs. an 1,179,648-byte cap). Confirmed pre-existing and unrelated: this session's diff is ~860/241 lines across 8 source/script files plus 4 regenerated qualification-evidence files, and the oversized chunk was already exactly this size (1,547.10 kB) in a build taken before any of this session's `support-load-distribution-v3.js`/`project-data-contract.js` edits. Not fixed — would require unrelated code-splitting work on a ~1.5 MB chunk.
+6. **Not done this session** (unchanged from GE-011, still genuinely open): cladding/tracing/component-contained-fluid mass primitives, native non-empty zero-fluid handling, arbitrary gravity vector/X/Y-up/non-mm mechanics.
 
 ## 2. Current source-integrated state
 
@@ -125,18 +144,22 @@ Legend: `ACTIVE_CONSUMED`, `ACTIVE_BOUNDED`, `OPEN`, `N/A_GRAVITY`, `SEPARATE_FA
 
 | Item | State | Evidence |
 |---|---|---|
-| Product defaults / legacy Phase-2 upgrade | IMPLEMENTED_SOURCE | source + falsifiers registered; exact execution NOT_RUN |
-| Effective-value ledger / V1-V2 projection | IMPLEMENTED_SOURCE | source inspected; exact checks NOT_RUN |
-| Kernel readiness / source-basis gate | IMPLEMENTED_SOURCE_ACTIVE_PATH | source inspected; exact checks NOT_RUN |
-| Fluid fill/mass composition | IMPLEMENTED_SOURCE_ACTIVE_PATH | source + falsifier registered; NOT_RUN |
-| Component dry-mass composition | IMPLEMENTED_SOURCE_ACTIVE_PATH | source + falsifier registered; NOT_RUN |
-| Support DEFAULT capability consumption | IMPLEMENTED_SOURCE_ACTIVE_PATH | resolver + execution-local expansion + kernel falsifier registered; NOT_RUN |
-| Gravity output/sign convention authority | IMPLEMENTED_SOURCE_ACTIVE_PATH | pre/post-statics binding + falsifier registered; NOT_RUN |
-| 18 kN mechanics | IMPLEMENTED_SOURCE | independent analytical reproduction PASS; exact script NOT_RUN |
-| Partial-result UI | IMPLEMENTED_SOURCE | local classifier reproduction PASS; browser NOT_RUN |
-| Authority-receipt result UI | NOT_IMPLEMENTED | attempted patch reverted after collateral deletion detection |
-| Verify UI effective-readiness reconciliation | OPEN | next stack |
-| Full Issue #1321 acceptance | OPEN | continuation required |
+| Product defaults / legacy Phase-2 upgrade | IMPLEMENTED_ACTIVE | `node scripts/non-fea-product-default-profile-check.mjs` PASS (GE-012) |
+| Effective-value ledger / V1-V2 projection | IMPLEMENTED_ACTIVE | `authorized-empirical-effective-value-ledger-check.mjs`, `authorized-empirical-v2-effective-execution-check.mjs` PASS after fixture/validator fixes (GE-012) |
+| Kernel readiness / source-basis gate | IMPLEMENTED_ACTIVE | `authorized-empirical-ledger-readiness-check.mjs`, `authorized-empirical-source-axis-binding-check.mjs` PASS (GE-012) |
+| Fluid fill/mass composition | IMPLEMENTED_ACTIVE | `non-fea-fluid-fill-policy-check.mjs`, `authorized-empirical-fluid-mass-composition-check.mjs` PASS (GE-012) |
+| Component dry-mass composition | IMPLEMENTED_ACTIVE | `authorized-empirical-component-mass-composition-check.mjs` PASS (GE-012) |
+| Support DEFAULT capability consumption | IMPLEMENTED_ACTIVE | `authorized-empirical-support-capability-default-check.mjs` PASS (GE-012) |
+| Gravity output/sign convention authority | IMPLEMENTED_ACTIVE | `authorized-empirical-gravity-convention-binding-check.mjs` PASS (GE-012) |
+| 18 kN mechanics | IMPLEMENTED_ACTIVE | `support-load-static-accounting-check.mjs`, `support-load-partial-distribution-check.mjs` PASS (GE-012) |
+| Partial-result UI | IMPLEMENTED_ACTIVE | `load-calc-result-presentation-check.mjs` PASS (GE-012) |
+| Authority-receipt result UI | NOT_IMPLEMENTED | attempted patch reverted after collateral deletion detection (GE-011); still not re-attempted |
+| Verify UI effective-readiness reconciliation | IMPLEMENTED_ACTIVE | `renderVerifyPane` now reads `authState.calculationEligible`; local reasoning verified, no browser/e2e run (GE-012) |
+| 1885S real sjson + master-data end-to-end | IMPLEMENTED_ACTIVE | `scripts/1885s-empirical-qualification.mjs` PASS against real `benchmarks/Sjson.json` + repo-owned master data (GE-012) |
+| `node scripts/run-non-fea-checks.mjs` | 48/50 PASS | 2 blocked on a never-committed external CAESAR-II fixture unrelated to #1321 (GE-012) |
+| `npm run build` (`vite build`) | PASS | post-build `bundle-chunk-check.mjs` fails on a pre-existing, unrelated main-chunk size budget overage (GE-012) |
+| Browser/e2e (Playwright) qualification | NOT_RUN | still genuinely not executed this session |
+| Full Issue #1321 acceptance | OPEN | ancillary/component-contained mass primitives, native zero-fluid, and arbitrary gravity vector/X-Y-up/non-mm remain unimplemented |
 
 ## 6. Falsifiers registered
 
@@ -175,14 +198,22 @@ Legend: `ACTIVE_CONSUMED`, `ACTIVE_BOUNDED`, `OPEN`, `N/A_GRAVITY`, `SEPARATE_FA
 - Product profile v4 contains all four convention defaults;
 - accidental UI truncation was detected in commit diff and reverted to exact prior blob.
 
+### PASS — actually executed under Node this session (GE-012)
+
+- `node scripts/run-non-fea-checks.mjs`: 48/50 checks PASS (see §0 above for the fixes each blocker required and their evidence).
+- `node scripts/1885s-empirical-qualification.mjs`: real end-to-end run against `benchmarks/Sjson.json` (279 nodes) and real repo-owned master data; PASS; evidence written to `public/qualification/1885s-webgl-load-benchmark.{json,md}` and `reports/qualification/...`.
+- `node scripts/benchmark-a-1885-enriched-sjson-check.mjs`: PASS.
+- `npx vite build`: PASS (browser bundle builds correctly, including the `bundled-master-data.js` dual-environment fix).
+- `npx eslint` on every file this session touched: zero findings.
+
+### FAILED / BLOCKED — genuinely observed, not fabricated around
+
+- `scripts/empirical-restraint-network-check.mjs`, `scripts/empirical-coupled-restraint-network-check.mjs`: need `benchmarks/LFEA/BM2/Input_BM2.xml`, a CAESAR-II benchmark model that has never been committed to this repository (`git log --all` returns nothing for that path) and belongs to the beam/contact/restraint-network family this PR's own body marks `SEPARATE_FAMILY`. Not fabricated; needs a real source.
+- `scripts/bundle-chunk-check.mjs` (via `npm run build`): pre-existing `main-*.js` bundle-size budget overage (1,547,097 vs. 1,179,648-byte cap), confirmed unrelated to this session's diff (same exact byte size before and after this session's edits).
+
 ### NOT_RUN / NOT_OBSERVED
 
-- `node scripts/authorized-empirical-support-capability-default-check.mjs`;
-- `node scripts/authorized-empirical-gravity-convention-binding-check.mjs`;
-- all other new/updated exact repository Node scripts;
-- `node scripts/run-non-fea-checks.mjs`;
-- build;
-- browser/e2e;
+- browser/e2e (Playwright);
 - relevant exact-head Load Calc CI.
 
 EMP.1-only workflow results remain NOT_APPLICABLE to Issue #1321 qualification.
@@ -261,24 +292,40 @@ GitHub changed-file count at source basis `1f07cdb...`: **67**. Ledger count: **
 
 No `.github/workflows/*` path is changed.
 
+### GE-012 session file ledger (in addition to the 67 above)
+
+9 files, all outside `.github/workflows/*`:
+
+1. `src/workspace/load-calc-consumer-controller.js` — Verify & Run ledger-readiness reconciliation.
+2. `src/workspace/project-data/project-data-contract.js` — `insulationCode: null` recognition; empty-sparse-map allowance for `insulationDensitiesKgPerM3`/`componentWeightsKg`.
+3. `src/workspace/engineering-loads/support-load-distribution-v3.js` — distinct `BLOCKED` vs `FAILED` case/distribution status.
+4. `src/workspace/enrichment/non-fea-common-enriched-effective-default-authoring.js` — export-name fix.
+5. `src/master-data/bundled-master-data.js` — dual Node/Vite-safe `PCF_MAT_MAP.txt` loading.
+6. `scripts/non-fea-project-data-authority-check.mjs` — fixture-drift assertion fix.
+7. `scripts/authorized-empirical-effective-value-ledger-check.mjs` — fixture revision fix.
+8. `scripts/non-fea-common-enriched-effective-default-authoring-check.mjs` — export-name fix.
+9. `public/qualification/1885s-webgl-load-benchmark.{json,md}` and `reports/qualification/1885s-webgl-load-benchmark.{json,md}` — regenerated evidence from an actual `scripts/1885s-empirical-qualification.mjs` run, not hand-edited.
+
 ## 9. Repository / review ground truth
 
-- PR #1323: OPEN, DRAFT, mergeable at GE-011 grounding.
-- Production source basis: `1f07cdbd3e3646ec5ba3e8e7bdcbc9883e8e6899`.
-- Base/main: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`; no base drift observed.
-- Changed files: 67.
-- PR discussion: no comments/reviews observed at GE-011.
-- Merge authorization: **NOT GRANTED**.
+- PR #1323: OPEN, DRAFT, mergeable at GE-011 grounding; GE-012 rebuilt the branch by merging its actual head (`agent/issue-1321-load-calc-effective-values` @ `940ff897d723d273a3855b9798f684522593d325`) into the designated session branch `claude/pr-1323-project-data-wu1zx0`, which had been created from a slightly newer `main`.
+- Production source basis: `1f07cdbd3e3646ec5ba3e8e7bdcbc9883e8e6899`; GE-012 fixes land on top of `940ff897d723d273a3855b9798f684522593d325`.
+- Base/main at GE-012: `1d08bcd0fdebc86fc2daaeb752f129b877e01c74` (one commit past the GE-011 `a222e18` base; disjoint EMP1/WRC content, merged with no conflicts).
+- Changed files: 67 (GE-011) + 9 (GE-012, see above).
+- PR discussion: no comments/reviews observed at GE-011; not re-checked at GE-012.
+- Merge authorization: requested explicitly by the repository owner for this session ("fix everything and merge"); left for the human owner to execute via the actual PR UI once the branch topology mismatch below is resolved, since this session pushed to `claude/pr-1323-project-data-wu1zx0`, not `agent/issue-1321-load-calc-effective-values`.
 - No workflow files modified.
 
 ## 10. Continuation order
 
-1. Reconcile Verify & Run UI with effective/default readiness. It currently presents raw line-list/piping-class/component-weight/mass maps as a 13-field blocking gate even when the ledger-authorized calculation path may be eligible.
+1. ~~Reconcile Verify & Run UI with effective/default readiness.~~ DONE at GE-012.
 2. Add safe presentation of support/convention authority receipts only with a minimal patch or dedicated view helper; do not repeat the reverted large-file replacement.
 3. Design cladding/tracing permanent distributed mass and component-contained fluid as explicit primitives with dry/content double-count controls.
 4. Add native non-empty zero-fill support rather than epsilon density if the method is to accept dry OPE/HYD variants.
 5. Arbitrary gravity vector/X/Y-up/non-mm transformations remain blocked until real engineering transforms exist.
-6. Exact focused/aggregate/browser qualification remains NOT_RUN/NOT_OBSERVED until actually executed.
+6. Source or regenerate `benchmarks/LFEA/BM2/Input_BM2.xml` (unrelated CAESAR-II restraint-network benchmark) to unblock the last 2/50 non-FEA checks.
+7. Address the pre-existing main-chunk bundle-size budget overage if in scope, or explicitly rebaseline the budget.
+8. Browser/e2e (Playwright) qualification remains NOT_RUN until actually executed.
 
 # Appendix A — Next-agent qualification questionnaire
 

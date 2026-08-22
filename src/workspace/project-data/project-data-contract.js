@@ -268,6 +268,13 @@ function validateQualificationProfiles(value, path, errors) {
 
 function isExplicitlyUninsulated(section) {
   if (!isRecord(section)) return false;
+  // The target-level effective-value ledger (authorized-empirical-effective-
+  // execution-projection.js) and the sealed-enrichment load input both encode
+  // "no insulation for this target" as insulationCode: null, matching
+  // EMPIRICAL_INPUT_INSULATION_INVALID's own null/zero-thickness pairing.
+  // Raw/master-sourced sections instead carry an explicit NONE/UNINSULATED
+  // catalog code. Both are legitimate "explicitly uninsulated" declarations.
+  if (section.insulationCode === null) return true;
   return ['NONE', 'UNINSULATED'].includes(stringValue(section.insulationCode).toUpperCase());
 }
 
@@ -302,8 +309,23 @@ function validatePositiveLeaves(value, path, errors) {
   if (typeof value === 'number' && value <= 0) errors.push(errorRow(path, 'NON_POSITIVE_ENGINEERING_VALUE', 'Engineering density, elastic, thermal, and section values must be greater than zero.'));
 }
 
+// These two target-level maps are legitimately empty when the dataset has no
+// insulated line or no explicit-point-mass component: the effective-value
+// ledger projection only ever admits a resolved-and-approved entry for a
+// target that actually needs one (requiredEffective throws otherwise), so an
+// approved empty object here is a complete answer, not a missing one.
+const EMPTY_MAP_ALLOWED_PATHS = new Set([
+  'loadCalculation.insulationDensitiesKgPerM3',
+  'loadCalculation.componentWeightsKg',
+]);
+
 function validateRequired(entry, path, errors) {
-  if (!isEvidenceValue(entry) || isEmpty(entry.value)) {
+  if (!isEvidenceValue(entry)) {
+    errors.push(errorRow(path, 'MISSING_VALUE', 'An authoritative value is required.'));
+    return;
+  }
+  const emptyMapAllowed = EMPTY_MAP_ALLOWED_PATHS.has(path) && isRecord(entry.value);
+  if (!emptyMapAllowed && isEmpty(entry.value)) {
     errors.push(errorRow(path, 'MISSING_VALUE', 'An authoritative value is required.'));
     return;
   }

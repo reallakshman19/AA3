@@ -102,7 +102,7 @@ const candidate = createCommonEnrichedPropertiesCandidate({
   schema: COMMON_ENRICHED_CANDIDATE_SCHEMA,
   candidateId: 'CAND-EFFECTIVE-LEDGER',
   projectId: PROJECT,
-  revision: 3,
+  revision: 1,
   createdAt: '2026-08-22T09:00:00.000Z',
   status: COMMON_ENRICHED_CANDIDATE_STATUS,
   sourceModelHash: MODEL_HASH,

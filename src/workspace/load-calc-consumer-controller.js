@@ -561,8 +561,7 @@ export class LoadCalcConsumerController {
     const factorSet    = fieldVal('lc', 'loadFactor') !== null && fieldVal('lc', 'loadFactor') > 0;
     const equilSet     = fieldVal('lc', 'equilibriumTolerances') !== null;
     const casesSet     = Array.isArray(fieldVal('lc', 'activeLoadCases')) && fieldVal('lc', 'activeLoadCases').length > 0;
-    const allSafeSet   = gravitySet && factorSet && equilSet && casesSet;
-  
+
     const pipeSectSet  = fieldVal('lc', 'pipeSectionProperties') !== null;
     const matDensSet   = fieldVal('lc', 'materialDensitiesKgPerM3') !== null;
     const opFluidSet   = fieldVal('lc', 'operatingFluidDensitiesKgPerM3') !== null;
@@ -572,19 +571,41 @@ export class LoadCalcConsumerController {
     const lineListSet  = fieldVal('su', 'lineListSource') !== null;
     const pipClassSet  = fieldVal('su', 'pipingClassSource') !== null;
     const compSrcSet   = fieldVal('su', 'componentWeightSource') !== null;
-  
-    const masterFieldsSet = pipeSectSet && matDensSet && opFluidSet && hydFluidSet && insulSet && compWtSet;
-    const sourceFieldsSet = lineListSet && pipClassSet && compSrcSet;
-  
+
+    // The raw-field checks above predate the #1321 effective-value/default
+    // ledger: they only see literal Project Data values, never Product/Project
+    // defaults or ledger-resolved targets. `authState.calculationEligible` is
+    // the same readiness signal the Run button already trusts
+    // (engineeringModelStore#currentEmpiricalReadiness runs the ledger-aware
+    // validateProjectDataProfile(..., 'authorizedGravityLoads'/'loads', ...)),
+    // so a raw field showing empty must not be presented as a blocker once
+    // that authorized path is eligible.
+    const ledgerAuthorized = authState?.calculationEligible === true;
+
+    const allSafeSet       = (gravitySet && factorSet && equilSet && casesSet) || ledgerAuthorized;
+    const masterFieldsSet  = (pipeSectSet && matDensSet && opFluidSet && hydFluidSet && insulSet && compWtSet) || ledgerAuthorized;
+    const sourceFieldsSet  = (lineListSet && pipClassSet && compSrcSet) || ledgerAuthorized;
+
     // Count blockers for the loads gate
-    const loadsBlockerCount = [gravitySet, factorSet, equilSet, casesSet, pipeSectSet, matDensSet,
+    const rawLoadsBlockerCount = [gravitySet, factorSet, equilSet, casesSet, pipeSectSet, matDensSet,
       opFluidSet, hydFluidSet, insulSet, compWtSet, lineListSet, pipClassSet, compSrcSet
     ].filter((v) => !v).length;
+    const loadsBlockerCount = ledgerAuthorized ? 0 : rawLoadsBlockerCount;
     const loadsOk = loadsBlockerCount === 0;
-  
+
     const esc = (val) => String(val ?? '').replace(/[&<>'"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[c]);
-  
+
+    // Renders a field's status: the raw value when present, a distinct
+    // ledger-resolved note when the authorized path filled it via governed
+    // defaults instead, or the original missing/blocked copy otherwise. This
+    // never lets default/ledger evidence masquerade as raw source evidence.
+    function fieldStatus(rawOk, rawLabel, missingLabel) {
+      if (rawOk) return rawLabel;
+      if (ledgerAuthorized) return '<em>resolved via effective-value ledger</em>';
+      return missingLabel;
+    }
+
     function gate(ok, label, detail, actionHtml = '') {
       return `<li class="verify-gate" data-status="${ok ? 'ok' : 'fail'}">
         <span class="verify-gate__icon">${ok ? '✅' : '❌'}</span>
@@ -593,12 +614,14 @@ export class LoadCalcConsumerController {
         ${actionHtml}
       </li>`;
     }
-  
+
     const sealBtn  = !sealOk  ? `<button class="verify-gate__action" data-seal-inputs title="Seal all common inputs now">→ Seal inputs</button>` : '';
     const authNote = !authOk && sealOk ? `<button class="verify-gate__action" data-empirical-authorize title="Authorize the configured scenario">→ Authorize</button>` : (!authOk ? `<span class="verify-gate__blocked">(seal first)</span>` : '');
-  
+
     const loadsDetail = loadsOk
-      ? 'All 13 fields ready'
+      ? (ledgerAuthorized && rawLoadsBlockerCount > 0
+        ? `Ready — effective-value ledger resolved ${rawLoadsBlockerCount} field${rawLoadsBlockerCount > 1 ? 's' : ''} via governed defaults`
+        : 'All 13 fields ready')
       : `${loadsBlockerCount} field${loadsBlockerCount > 1 ? 's' : ''} need values`;
   
     container.innerHTML = `
@@ -636,10 +659,10 @@ export class LoadCalcConsumerController {
                 <span class="verify-card__subtitle">${allSafeSet ? 'Approved values loaded' : 'Configuration required'}</span>
               </div>
               <dl class="verify-defaults-dl">
-                <dt>Gravity</dt><dd>${gravitySet ? `${esc(fieldVal('lc', 'gravityMPerS2'))} m/s²` : '<em>empty</em>'}</dd>
-                <dt>Load factor</dt><dd>${factorSet ? (fieldVal('lc','loadFactor') + ' (ratio)') : '<em>0 — invalid</em>'}</dd>
-                <dt>Equilibrium tolerances</dt><dd>${equilSet ? esc(JSON.stringify(fieldVal('lc', 'equilibriumTolerances'))) : '<em>missing</em>'}</dd>
-                <dt>Active load cases</dt><dd>${casesSet ? esc(JSON.stringify(fieldVal('lc','activeLoadCases'))) : '<em>missing</em>'}</dd>
+                <dt>Gravity</dt><dd>${fieldStatus(gravitySet, `${esc(fieldVal('lc', 'gravityMPerS2'))} m/s²`, '<em>empty</em>')}</dd>
+                <dt>Load factor</dt><dd>${fieldStatus(factorSet, fieldVal('lc','loadFactor') + ' (ratio)', '<em>0 — invalid</em>')}</dd>
+                <dt>Equilibrium tolerances</dt><dd>${fieldStatus(equilSet, esc(JSON.stringify(fieldVal('lc', 'equilibriumTolerances'))), '<em>missing</em>')}</dd>
+                <dt>Active load cases</dt><dd>${fieldStatus(casesSet, esc(JSON.stringify(fieldVal('lc','activeLoadCases'))), '<em>missing</em>')}</dd>
               </dl>
               ${!allSafeSet ? '<p class="engineering-note">Configure and approve the missing project-owned values in Project Data.</p>' : ''}
             </div>
@@ -651,16 +674,16 @@ export class LoadCalcConsumerController {
                 <span class="verify-card__subtitle">Must come from master data</span>
               </div>
               <dl class="verify-defaults-dl">
-                <dt>Pipe section properties</dt><dd>${pipeSectSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Material densities</dt><dd>${matDensSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Operating fluid densities</dt><dd>${opFluidSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Hydro fluid densities</dt><dd>${hydFluidSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Insulation densities</dt><dd>${insulSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Component weights</dt><dd>${compWtSet ? '✓ Set' : '<em>missing</em>'}</dd>
+                <dt>Pipe section properties</dt><dd>${fieldStatus(pipeSectSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Material densities</dt><dd>${fieldStatus(matDensSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Operating fluid densities</dt><dd>${fieldStatus(opFluidSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Hydro fluid densities</dt><dd>${fieldStatus(hydFluidSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Insulation densities</dt><dd>${fieldStatus(insulSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Component weights</dt><dd>${fieldStatus(compWtSet, '✓ Set', '<em>missing</em>')}</dd>
               </dl>
               ${!masterFieldsSet ? '<button class="verify-gate__action verify-gate__action--secondary" style="width:100%;margin-top:8px" data-goto-tab="masters">→ Open Masters tab</button>' : ''}
             </div>
-  
+
             <!-- Source fields card -->
             <div class="verify-card verify-card--info" style="margin-top:12px">
               <div class="verify-card__header">
@@ -668,9 +691,9 @@ export class LoadCalcConsumerController {
                 <span class="verify-card__subtitle">Auto-resolve when masters are loaded</span>
               </div>
               <dl class="verify-defaults-dl">
-                <dt>Line-list source</dt><dd>${lineListSet ? '✓ Bound' : '<em>not bound</em>'}</dd>
-                <dt>Piping-class source</dt><dd>${pipClassSet ? '✓ Bound' : '<em>not bound</em>'}</dd>
-                <dt>Component-weight source</dt><dd>${compSrcSet ? '✓ Bound' : '<em>not bound</em>'}</dd>
+                <dt>Line-list source</dt><dd>${fieldStatus(lineListSet, '✓ Bound', '<em>not bound</em>')}</dd>
+                <dt>Piping-class source</dt><dd>${fieldStatus(pipClassSet, '✓ Bound', '<em>not bound</em>')}</dd>
+                <dt>Component-weight source</dt><dd>${fieldStatus(compSrcSet, '✓ Bound', '<em>not bound</em>')}</dd>
               </dl>
             </div>
   

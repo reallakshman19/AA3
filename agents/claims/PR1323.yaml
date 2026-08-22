@@ -4,6 +4,7 @@ claim_state: ACTIVE
 files:
   exact:
     - src/core/common-enriched-properties/field.js
+    - src/master-data/bundled-master-data.js
     - src/workspace/project-data/non-fea-product-default-profile.js
     - src/workspace/project-data/non-fea-product-engineering-default-profile.js
     - src/workspace/project-data/non-fea-field-registry.js
@@ -102,4 +103,4 @@ authority_domains:
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: 1f07cdbd3e3646ec5ba3e8e7bdcbc9883e8e6899
+last_verified_head: 940ff897d723d273a3855b9798f684522593d325

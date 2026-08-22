@@ -20,11 +20,11 @@ SOURCE_TASK: Issue #1321
 PR_OR_WIP: PR1323
 BRANCH: agent/issue-1321-load-calc-effective-values
 
-PR_HEAD_OBSERVED: 4605bf80e68e5aae6b363e0bffdf9bbaae730dc3
+PR_HEAD_OBSERVED: 1655c37eca9e259a6f86adb2355647143af78619
 REPORT_BASIS_HEAD: 4605bf80e68e5aae6b363e0bffdf9bbaae730dc3
 MAIN_HEAD_LAST_CHECKED: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 MERGE_BASE: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-REPORT_SYNC: CURRENT_TO_PRODUCTION_HEAD
+REPORT_SYNC: CURRENT_TO_PRODUCTION_HEAD_AND_RECOVERY_METADATA
 
 APPENDIX_A_STATUS: CURRENT
 GROUNDING_EPOCH: GE-004
@@ -48,11 +48,11 @@ PR #1323 is the single draft carrier for Issue #1321. Do not create a second PR 
 1. **Product defaults** are versioned, non-destructive, evidence-bearing and hash-bound. They fill empty Project Data only and never masquerade as source evidence.
 2. **AUTO gravity selection** distinguishes qualified CoG, missing-CoG midpoint fallback, and known eccentric/invalid/moment cases that must not fall back.
 3. **Support-load mechanics** preserve force and first moment for bracketed, overhang and unsupported routes; valid incompleteness publishes `CALCULATED_WITH_EXCEPTIONS`; invalid/unsolved mechanics are `FAILED`; equilibrium is checked per route.
-4. **Effective-value precedence** is now aligned to Issue #1321 at the composition seam: `ACCEPTED_OVERRIDE → SOURCE_EXPLICIT → SOURCE_INHERITED → EXACT_APPROVED_MASTER → CONFIGURED_DERIVATION → PROJECT_POLICY (only where field-owned) → PROJECT_CONFIGURED_DEFAULT → PRODUCT_DEFAULT`.
+4. **Effective-value precedence** is aligned to Issue #1321 at the composition seam: `ACCEPTED_OVERRIDE → SOURCE_EXPLICIT → SOURCE_INHERITED → EXACT_APPROVED_MASTER → CONFIGURED_DERIVATION → PROJECT_POLICY (only where field-owned) → PROJECT_CONFIGURED_DEFAULT → PRODUCT_DEFAULT`.
 5. **`PRODUCT_DEFAULT` is first-class in the field registry** only on fields where explicitly permitted.
-6. **Authorized empirical input now carries a target-level effective-value ledger** built from the authorized common-enriched baseline with source kind/hash/locator/review custody preserved.
+6. **Authorized empirical input carries a target-level effective-value ledger** built from the authorized common-enriched baseline with source kind/hash/locator/review custody preserved.
 7. **V1 authorized gravity execution** uses `authorized-empirical-effective-execution-projection/v1` whenever the input carries the ledger. The six legacy mass/section maps are rebuilt from selected target values with no `DEFAULT` selector.
-8. **V2 authorized execution now uses that same projection** for both `CHAINAGE_TRIBUTARY_SPAN_V2` and `CHAINAGE_TRIBUTARY_SPAN_V3_COG`. Historical ledger-less receipts retain the compatibility overlay and historical hash projection.
+8. **V2 authorized execution uses the same projection** for both `CHAINAGE_TRIBUTARY_SPAN_V2` and `CHAINAGE_TRIBUTARY_SPAN_V3_COG`. Historical ledger-less receipts retain the compatibility overlay and historical hash projection.
 9. **Target specificity is preserved.** Synthetic execution-local material/insulation/component selectors prevent two lines/components that share an original code/catalog key from collapsing distinct reviewed effective values.
 10. A temporary parallel calculation-view/context implementation was created during investigation, then removed after detecting the existing execution projection. Effective diff contains one production projection seam, not two.
 
@@ -173,7 +173,7 @@ Visible unrelated EMP.1 workflow runs are NOT_APPLICABLE to this Load Calc quali
 
 ## 8. Changed-File Ledger
 
-GitHub changed-file count at `4605bf80...`: **30**. Ledger count: **30**. Unexplained: **0**.
+GitHub changed-file count at production head `4605bf80...`: **30**. Ledger count: **30**. Unexplained: **0**.
 
 1. `agents/PR1323_workreport.md` — living recovery report
 2. `agents/claims/PR1323.yaml` — coordination claim
@@ -212,7 +212,8 @@ No `.github/workflows/*` paths changed.
 
 - PR #1323: OPEN, DRAFT, mergeable at last check.
 - Base/main: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`; no base drift observed.
-- Production head used for this report: `4605bf80e68e5aae6b363e0bffdf9bbaae730dc3`.
+- Production head used for engineering state: `4605bf80e68e5aae6b363e0bffdf9bbaae730dc3`.
+- Recovery metadata synchronized through `1655c37eca9e259a6f86adb2355647143af78619` before this report-sync commit.
 - Changed files: 30.
 - No merge authorization has been given.
 - No workflow modification authorization has been given.

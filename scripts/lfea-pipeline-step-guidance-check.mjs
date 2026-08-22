@@ -83,4 +83,8 @@ const skipped = deriveLfeaPipelineStepGuidance(
 assert.equal(skipped.stepStatusById.INPUT, 'READY');
 assert.equal(skipped.nextStepId, 'INPUT');
 
+// UI00: execute the exact engineering-authority custody gate from the existing
+// check:lfea-workbench path before later UI01+ session ownership changes land.
+await import('./lfea-ui-numerical-custody-check.mjs');
+
 console.log(JSON.stringify({ check: 'lfea-pipeline-step-guidance', status: 'PASS', steps: LFEA_PIPELINE_STEPS.length }));

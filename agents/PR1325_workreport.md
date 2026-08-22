@@ -61,7 +61,7 @@ Implement issue #1324 in one continuously stacked PR:
 - `emp1-workbench-run-view.js` consumes `cState.productionUseAuthorized`, `cState.blockerCodes`, and `cState.stageBadge`; it does not independently re-evaluate bounded-route registration/authorization.
 - `lafea-analytical-calc-content.js` sends only `emp1CState.reportableResult` to the normal WRC result renderer.
 - A/B presentation is independently driven by `emp1ExecutionCurrentness.inputCurrent`, so Q1→Q2 stales only C rather than hiding unchanged A/B.
-- Transaction/evidence views now prefer explicit `executionAuthorityHash` / `currentAuthorityHash` and fall back to snapshot hashes only for recovery compatibility.
+- Transaction/evidence views prefer explicit `executionAuthorityHash` / `currentAuthorityHash` and fall back to snapshot hashes only for recovery compatibility.
 - Historical records prefer their retained explicit `routeAuthorityHash` and fall back to their snapshot hash.
 - A stale numerical C result remains inaccessible to the normal `emp1-c-result-evidence` renderer but is visible inside the explicit route-authority/historical-evidence drawer.
 - Immediate Q1→Q2 stale evidence is handled before any rerun moves the record into `retainedLocalCorrelationHistory`: `currentExecutionEvidence` is exposed only as `emp1-c-retained-stale-result-payload` with an explicit historical/stale warning.

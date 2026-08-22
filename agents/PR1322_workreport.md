@@ -243,6 +243,7 @@ The remaining exact-head gate is:
 - Earlier UI08 nonexistent-branch discovery writes returned 404 and created nothing.
 - Current integration fix first wrote one unintended EMP.1 argument deletion; mandatory diff inspection caught it immediately and `95aa6d0f...` restored it. Current effective unrelated diff is zero.
 - During recovery-tool discovery in this continuation, five deliberately nonexistent-branch `create_file` probes returned HTTP 404 and created no files/commits.
+- Recovery plumbing then accidentally used the contents API instead of the branch-ref action and created `6ac11fffae10aa1a22d0d54bb995a0cb93784fb0`, temporarily replacing `agents/status/PR1322.yaml` with `x`. It was detected before checkpoint completion; `ac974c89125f8d8ca4978a9b68d574b6261a9106` immediately restored the complete intended recovery tree. No production file or effective metadata corruption remains.
 - No workflow was edited or manually rerun.
 
 # APPENDIX A — UI08 PRODUCTION APPLICATION BROWSER RETRY

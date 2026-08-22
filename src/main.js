@@ -65,6 +65,19 @@ lfeaPipelineShell.getSourceHost().append(linearPipingConsumerRoot);
 // notifies) during init(), which is earlier than either of these can exist.
 let lfeaAnalysisSurface = null;
 let lfeaStepGuidanceReady = false;
+// Whether an analysis has actually run for the model now loaded. Applying a
+// case selection re-prepares the pre-flight and invalidates the acceptance
+// sealed for the previous selection -- correct, since that acceptance was
+// given for a different request. But projecting that straight onto the
+// stepper undid finished steps after a successful run: Error check reverted
+// to "next", and Load case went unavailable, so an engineer could not get
+// back to change which cases they wanted. The run happened; the steps that
+// led to it stay done until the model itself changes.
+let lfeaAnalysisRanForLoadedModel = false;
+// Declared here with it, not beside the function that reads it: the source
+// panels notify during their own init(), so this projection runs while the
+// module is still evaluating and a later `let` would be in its dead zone.
+let lfeaLoadedModelKey = null;
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   // The Load-case step renders straight from getPreFlight(), so it has to be
@@ -254,6 +267,15 @@ function refreshLfeaStepGuidance() {
   const accdb = lfeaAccdbInputPanel.getSnapshot();
   const inputXmlLoaded = inputXml.fileName !== null;
   const accdbLoaded = accdb.fileName !== null && accdb.elementCount !== null;
+  // A different file, or none, means an earlier run no longer describes what
+  // is loaded. The case selection changing does not: that is the same model.
+  const loadedModelKey = inputXmlLoaded
+    ? `INPUTXML:${inputXml.fileName}:${inputXml.contentSha256 ?? ''}`
+    : accdbLoaded ? `ACCDB:${accdb.fileName}` : null;
+  if (loadedModelKey !== lfeaLoadedModelKey) {
+    lfeaLoadedModelKey = loadedModelKey;
+    lfeaAnalysisRanForLoadedModel = false;
+  }
 
   // Only the panel that owns the loaded model stays on screen; with nothing
   // loaded all three remain, because that is the choice being offered.
@@ -270,8 +292,9 @@ function refreshLfeaStepGuidance() {
   });
 
   if (inputXmlLoaded) {
-    const cleared = inputXml.preFlightStatus === 'PASS' || inputXml.preFlightSolveAuthorized;
     const blocked = inputXml.preFlightStatus === 'BLOCK';
+    const cleared = inputXml.preFlightStatus === 'PASS' || inputXml.preFlightSolveAuthorized
+      || lfeaAnalysisRanForLoadedModel;
     lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
       available: true,
       complete: cleared,
@@ -290,8 +313,9 @@ function refreshLfeaStepGuidance() {
   }
 
   if (accdbLoaded) {
-    const cleared = accdb.preFlightStatus === 'PASS' || accdb.preFlightSolveAuthorized;
     const failed = accdb.preFlightStatus === 'FAILED';
+    const cleared = accdb.preFlightStatus === 'PASS' || accdb.preFlightSolveAuthorized
+      || lfeaAnalysisRanForLoadedModel;
     lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
       available: true,
       complete: cleared,
@@ -344,6 +368,8 @@ function runLfeaPipelineAnalysis(caseIds) {
     if (lfeaAnalysisSurface === null) throw new Error('The analysis surface is still loading; try again in a moment.');
     const state = lfeaAnalysisSurface.analysisController.analyze(preFlight, caseIds);
     lfeaAnalysisSurface.resultsPanel.setState(state);
+    lfeaAnalysisRanForLoadedModel = true;
+    refreshLfeaStepGuidance();
     lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
     lfeaPipelineShell.setStepStatus('RUN', { complete: true });
     lfeaPipelineShell.setActiveStep('OUTPUT');

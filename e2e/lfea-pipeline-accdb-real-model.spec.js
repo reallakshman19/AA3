@@ -177,6 +177,49 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(await page.locator('[data-role="lfea-pipeline-results-table"] tr[data-node-id]').count())
       .toBeGreaterThan(1);
 
+    // Element end forces: one row per element END, carrying real numbers. The
+    // table used to read row.end and row.fx off a record shaped local/global
+    // x I/J, so it printed one row per element with an undefined end and six
+    // blank columns.
+    await page.locator('[data-role="lfea-pipeline-results-views"] button[data-view="ELEMENT_FORCES"]').click();
+    const forceRows = page.locator('[data-role="lfea-pipeline-results-table"] tr');
+    expect(await forceRows.count()).toBeGreaterThan(100);
+    const firstForceRow = await forceRows.nth(1).locator('td').allTextContents();
+    expect(['I', 'J']).toContain(firstForceRow[1]);
+    expect(firstForceRow.slice(2).every((cell) => cell !== '')).toBe(true);
+    // The frame is named, because the same six labels mean different things in
+    // each, and both are reachable.
+    await expect(forceRows.first()).toContainText('local');
+    await page.locator('[data-role="lfea-pipeline-results-frames"] button[data-frame="global"]').click();
+    await expect(forceRows.first()).toContainText('global');
+
+    // Run, Output and Export are three different screens, not one page with
+    // every panel on it -- including the sealed-package workbench, which runs
+    // its own engine and knows nothing about the model just analyzed.
+    const runView = page.locator('[data-role="lfea-pipeline-results-run-view"]');
+    const tableView = page.locator('[data-role="lfea-pipeline-results-table-view"]');
+    const legacyWorkbench = page.locator('[data-role="linear-piping-results-workbench"]');
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="RUN"]').click();
+    await expect(runView).toBeVisible();
+    await expect(tableView).toBeHidden();
+    await expect(legacyWorkbench).toBeHidden();
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="OUTPUT"]').click();
+    await expect(tableView).toBeVisible();
+    await expect(legacyWorkbench).toBeHidden();
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="EXPORT"]').click();
+    await expect(page.locator('[data-role="lfea-pipeline-results-export-view"]')).toBeVisible();
+    await expect(tableView).toBeHidden();
+
+    // A finished run leaves the steps that produced it finished: applying a
+    // case selection re-prepares the pre-flight, and projecting that straight
+    // onto the stepper used to disable Load case so the engineer could not go
+    // back and change which cases they wanted.
+    for (const stepId of ['INPUT', 'ERROR_CHECK', 'LOAD_CASE', 'RUN']) {
+      await expect(page.locator(`[data-role="lfea-pipeline-step"][data-step-id="${stepId}"]`))
+        .toHaveAttribute('data-step-status', 'COMPLETE');
+      await expect(page.locator(`[data-role="lfea-pipeline-step"][data-step-id="${stepId}"]`)).toBeEnabled();
+    }
+
     expect(pageErrors).toEqual([]);
   });
 });

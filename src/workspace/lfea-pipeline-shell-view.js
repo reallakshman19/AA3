@@ -196,6 +196,13 @@ export class LfeaPipelineShellView {
     this.elements.sourceHost.dataset.activeStep = state.activeStepId;
     this.elements.loadCaseHost.hidden = activeHostGroup !== 'LOAD_CASE';
     this.elements.resultsHost.hidden = activeHostGroup !== 'RESULTS';
+    // RUN, OUTPUT and EXPORT share the RESULTS host and are no more the same
+    // view than Input and Error check are: Run is whether it solved, Output is
+    // the numbers, Export is getting them out. Without this stamp all three
+    // rendered the same page -- every panel in the host at once, including the
+    // separate sealed-package workbench, which asks for its own authorization
+    // and knows nothing about the model just analyzed.
+    this.elements.resultsHost.dataset.activeStep = state.activeStepId;
   }
 
   getSourceHost() {

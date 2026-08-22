@@ -6,7 +6,7 @@
 
 ```text
 HANDOVER_READINESS: READY_WITH_BLOCKER
-PR_RECOVERY_STATE: BLOCKED_ON_QUALIFICATION
+PR_RECOVERY_STATE: BLOCKED_ON_PRODUCTION_APP_BROWSER
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: MANUAL
 AUTO_STATE: NOT_ACTIVE
@@ -17,62 +17,39 @@ MERGE_AUTHORITY: OWNER_ONLY
 REPOSITORY: reallaksh19/Advanced_Analysis
 PR_OR_WIP: PR1322
 BRANCH: agent/lfea-engineering-session-ui-20260822
-PR_HEAD_OBSERVED: d9cce5168a0898b635b5f7507b01759349c8e06f
-REPORT_BASIS_HEAD: d9cce5168a0898b635b5f7507b01759349c8e06f
+UI08_TECHNICAL_HEAD: d9cce5168a0898b635b5f7507b01759349c8e06f
+PREVIOUS_RECOVERY_HEAD: 4ffe37bd16665c8e11d0607a438f4d482cba4f18
 MAIN_HEAD_LAST_CHECKED: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 MERGE_BASE: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-REPORT_SYNC: CURRENT_THROUGH_UI08_TECHNICAL_HEAD
-APPENDIX_A_STATUS: CURRENT_FOR_UI08_BROWSER_RETRY
-GROUNDING_EPOCH: GE-011
-CURRENT_STAGE: UI08 — BROWSER QUALIFICATION BLOCKED
+GROUNDING_EPOCH: GE-012
+CURRENT_STAGE: UI08 — PRODUCTION APPLICATION BROWSER QUALIFICATION
 LAST_COMPLETED_STAGE: UI07 — ANALYSIS / CODE / APPLICATION QUALIFICATION PRESENTATION SEPARATION
-CURRENT_BLOCKER: PRODUCTION_CHROMIUM_EXECUTION_UNAVAILABLE
-LAST_DURABLE_TECHNICAL_CHECKPOINT: d9cce5168a0898b635b5f7507b01759349c8e06f
-EXACT_NEXT_ACTION: Materialize this exact head in a Chromium-capable repository checkout and run the production LFEA browser workflows, stale-state falsifiers, keyboard/accessibility checks, 5k render qualification, then the strongest repository checks. Do not merge until those release gates are recorded.
+CURRENT_BLOCKER: PRODUCTION_APP_CHECKOUT_OR_PREVIEW_UNAVAILABLE
+EXACT_NEXT_ACTION: Materialize the exact stacked head in a real checkout or existing preview and run the production InputXML/ACCDB/StagedJSON six-step browser workflow plus full repository release checks. Do not merge without owner authorization.
 ```
 
-## 2. Current stack
+## 2. Approved stack status
 
-| Stage | State | Evidence |
+| Stage | State | Current evidence |
 |---|---|---|
-| UI00 | COMPLETE | exact 11-file authority custody; no full runtime claim |
-| UI01 | COMPLETE | explicit engineering-session ownership/invalidation |
-| UI02 | COMPLETE | common governed diagnostic presentation |
-| UI03 | COMPLETE | source acquisition + StagedJSON provenance |
-| UI04 | COMPLETE | Model Review + source→canonical→analysis ledger |
-| UI05 | COMPLETE | read-only Imported/Source vs Analysis geometry |
-| UI06 | COMPLETE | common engineering-category Error Check |
-| UI07 | COMPLETE | analysis/code/application-qualification presentation separation |
-| UI08 | PARTIAL / BLOCKED | source a11y + 5k hardening PASS; production Chromium NOT_RUN |
+| UI00 | COMPLETE | exact 11-file engineering-authority custody |
+| UI01 | COMPLETE | one engineering session; governing changes invalidate downstream presentation |
+| UI02 | COMPLETE | sealed finding disposition owns display impact |
+| UI03 | COMPLETE | explicit InputXML / StagedJSON / ACCDB acquisition and provenance |
+| UI04 | COMPLETE | read-only Elements / Restraints / Loads / transformation ledger |
+| UI05 | COMPLETE | honest Imported/Source vs Analysis geometry presentation |
+| UI06 | COMPLETE | common piping-engineering Error Check |
+| UI07 | COMPLETE | Analysis / Code Assessment / Application Qualification separated |
+| UI08 | PARTIAL | focused + real Chromium module evidence PASS; full production-page E2E NOT_RUN |
 
-PR #1322 remains one stacked draft. Owner-only merge authority is unchanged.
+PR #1322 remains one stacked draft. Merge authority is owner-only.
 
-## 3. Engineering authority boundary
-
-UI08 changes presentation only. It does not change solver formulation, stiffness/load assembly, recovery mechanics, source parsing/conditioning, governed diagnostic disposition, authorization creation, B31/nozzle methodology, application-qualification semantics, engineering export values, benchmark values, tolerance values or workflows.
-
-UI00 continues to freeze these 11 engineering-authority paths by exact blob identity:
-
-1. `src/workspace/linear-piping-inputxml-prefea.js`
-2. `src/workspace/linear-piping-accdb-intake.js`
-3. `src/lfea/native-execution-authority.js`
-4. `src/core/linear-piping-analysis-consumer/inputxml-source-binding.js`
-5. `src/core/linear-piping-analysis-consumer/accdb-source-binding.js`
-6. `src/core/geometry/adapters/accdb-to-canonical-geometry.js`
-7. `src/core/geometry/adapters/stagedjson-to-inputxml-worker-client.js`
-8. `src/core/linear-piping-analysis-consumer/inputxml-linear-solve-authorization.js`
-9. `src/core/linear-piping-analysis-consumer/inputxml-linear-governed-solve.js`
-10. `src/core/linear-piping-analysis-consumer/inputxml-linear-production-executor.js`
-11. `src/core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js`
-
-Full main→UI08 technical diff contains **0** of those paths and **0** `.github/workflows/*` paths.
-
-## 4. UI08 technical implementation
+## 3. UI08 technical implementation
 
 Technical sequence:
 
-- `544eebb7d5d5e4d1f7268275a9686241352d6f50` — `UI08 harden LFEA Model Review accessibility and 5k presentation`
-- `d9cce5168a0898b635b5f7507b01759349c8e06f` — `UI08 normalize aggregate check registration`
+- `544eebb7d5d5e4d1f7268275a9686241352d6f50` — UI08 harden LFEA Model Review accessibility and 5k presentation.
+- `d9cce5168a0898b635b5f7507b01759349c8e06f` — normalize aggregate registration.
 
 UI07 recovery `ce368c12953b6905ee297c27bf7e95748c0eb0fa` → UI08 technical head is **2 ahead / 0 behind** with exactly six effective paths:
 
@@ -83,141 +60,193 @@ UI07 recovery `ce368c12953b6905ee297c27bf7e95748c0eb0fa` → UI08 technical head
 5. `scripts/lfea-ui-scale-a11y-check.mjs`
 6. `scripts/lfea-pipeline-step-guidance-check.mjs`
 
-Main→UI08 technical head is **37 ahead / 0 behind**.
+Main→UI08 technical head is **37 ahead / 0 behind**. UI00 frozen-authority overlap is **0**. `.github/workflows/*` overlap is **0**.
 
-### Model Review keyboard/accessibility hardening
+Exact UI08 pushed blobs:
 
-- tabs now implement `role=tablist` / `role=tab` / `role=tabpanel` relationships;
-- each mount has unique tab/panel IDs;
-- `aria-controls` and active `aria-labelledby` are explicit;
-- roving tab index uses `0` for active and `-1` for inactive tabs;
-- keyboard navigation supports ArrowRight, ArrowLeft, Home and End;
-- selected geometry representation exposes `aria-pressed`;
-- focus-visible outlines are explicit;
-- pager state is announced through a polite live region.
+```text
+row-window             7efcb940f5724f633289ebd37078e2d8a3b28f3c
+geometry-review-svg    18db3bb44f2638ba8f9a500be65b861227623e38
+model-review-panel     0d9d53c4ca91bf183439373d349e4bebd72a40f7
+model-review.css       2bef2c9bfadb0174708e73a7e5910d322b8ad717
+scale-a11y-check       8e90448cc1e823593f7b362d635ff5913f1e5aa4
+aggregate registration a2e6eb8f9d775e9ff5ea92fed963a2ea0827396f
+```
 
-No engineering source or result is edited by these controls.
+UI08 remains presentation-only. It changes no solver/recovery mechanics, source parsing/conditioning, finding disposition, authorization creation, code method/formula, application qualification semantics, engineering export values, benchmark/tolerance values or workflows.
 
-### 5k table presentation
+## 4. Accessibility and large-model contract
 
-`lfea-review-row-window.js` provides deterministic read-only paging at **250 rows/page**. It does not filter, sample or discard engineering rows. A 5,000-row fixture therefore produces 20 pages, and concatenating those pages reproduces all 5,000 original row identities in original order. Page indices clamp safely after source/model changes.
+Model Review now has:
 
-### High-density geometry presentation
+- `tablist` / `tab` / `tabpanel` relationships with unique IDs;
+- `aria-controls` and active `aria-labelledby`;
+- roving `tabindex`;
+- ArrowLeft / ArrowRight / Home / End keyboard navigation;
+- geometry selection with `aria-pressed`;
+- visible keyboard focus treatment;
+- pager state in a polite live region.
 
-All SVG spans and node markers remain rendered. Above **500 spans**, repetitive per-span text labels/tooltips are suppressed only as display decoration. The caption discloses that density behavior and states that all spans/nodes remain retained. No topology evidence is removed from the underlying Model Review tables or geometry descriptor.
+Table presentation uses deterministic **250-row pages**. No engineering row is filtered or sampled. A 5,000-row review therefore has **20 pages**, and concatenating the pages reproduces all 5,000 original identities in order.
 
-## 5. Stale-state/currentness evidence
+For geometry above **500 spans**, only repetitive span text/tooltips are suppressed. Every span and every node remains rendered. The SVG caption explicitly discloses the density behavior.
 
-Existing focused engineering-session evidence remains applicable and unchanged:
+## 5. Chromium runtime diagnosis — corrected
 
-- same authoritative pre-flight refresh does not invalidate a current result;
-- changed profile/case/pre-flight invalidates the downstream result with `PREFLIGHT_CHANGED`;
-- source replacement invalidates with `SOURCE_REPLACED`;
-- clearing an inactive source owner does not destroy the active session;
-- StagedJSON retains original source identity while InputXML owns derived preparation;
-- integration source wiring clears the analysis controller and results panel on governing changes;
-- UI07 stale application/code evidence renders `NOT_CURRENT` and withholds stale code rows.
+The earlier recovery record said production Chromium was unavailable. That diagnosis was too broad.
 
-This is **focused/source evidence**. Production-browser stale-state proof remains NOT_RUN.
+Observed now:
 
-## 6. Validation ledger
+- Chromium 144 runs under **Xvfb** and exposes DevTools/CDP correctly.
+- direct headless mode was the problematic launch path;
+- organizational browser policy blocks navigation to localhost, `file:`, `data:` and GitHub/raw targets;
+- the environment has no checked-out Advanced_Analysis repository and no Playwright dependency runtime;
+- no existing Netlify project is linked to Advanced_Analysis, so no new deployment was created without owner authorization.
+
+Therefore Chromium itself is usable, but the full production application cannot be navigated in this execution environment.
+
+## 6. Real Chromium exact-function harness
+
+A Chromium 144/Xvfb/CDP harness executed in `about:blank`. The UI08 changed function bodies were reconstructed from exact hash-verified pushed bytes. The unchanged upstream Model Review builder was replaced only by a synthetic sealed read-only projection so the presentation layer could be exercised without a full repository checkout.
+
+This is **real browser presentation evidence**, not a production-page E2E substitute.
+
+### 5,000-element result
+
+Observed browser result:
+
+```text
+Chromium engine:                     144 under Xvfb/CDP
+presentation mount:                  ~307.1 ms
+CDP wall observation:                ~366.462 ms
+geometry spans rendered:             5,000
+geometry node markers rendered:      5,001
+span labels/tooltips rendered:       0 (density rule active)
+engineering table page size:         250
+engineering table pages:             20
+rows reached across pages:           5,000
+unique rows reached:                 5,000
+first / last identity:               SRC-0000 / SRC-4999
+```
+
+Timing is informational only; it is not promoted into a release threshold.
+
+### Browser keyboard / ARIA
+
+Real CDP key events produced:
+
+```text
+ArrowRight: Geometry -> Elements; focus follows active tab
+End:        -> Transformation ledger; focus follows
+Home:       -> Geometry; focus follows
+```
+
+Active/inactive tabs retained the expected `aria-selected` and roving `tabindex` state. The tabpanel remained labelled by the active tab.
+
+### Geometry representation
+
+The browser switched Source→Analysis without changing the engineering session object. Both representations retained 5,000 spans / 5,001 nodes. High-density labels remained suppressed only as decoration.
+
+### StagedJSON fail-closed
+
+With source kind `STAGED_JSON`, Source geometry rendered **no SVG** and displayed the governed disclosure that original StagedJSON geometry is not retained and derived InputXML geometry is not substituted as original source. Analysis representation remained separately available when prepared.
+
+### Stale-presentation clear/replace
+
+Browser refresh from the 5,000-row prepared model to no pre-flight produced:
+
+```text
+model state: EMPTY
+old SVG:      removed
+old table:    removed
+summary:      Load a model to review engineering entities and their source→analysis custody.
+```
+
+Replacing with a new 3-row prepared projection produced only `NEW-0`, `NEW-1`, `NEW-2`; no old 5,000-row identity remained. This proves presentation-level stale DOM is not retained across refresh.
+
+## 7. Validation ledger
 
 | Gate | Status | Basis |
 |---|---|---|
-| UI08 5,000-row deterministic paging | PASS | focused local execution |
-| all 5,000 engineering rows reachable in order | PASS | focused local execution |
-| maximum table rows rendered per page = 250 | PASS | focused local execution |
-| geometry high-density display retains all spans/nodes | PASS | source/focused falsifier |
-| tab keyboard pattern + ARIA relationships | PASS | source/focused falsifier |
-| UI08 presentation authority firewall | PASS | source inspection |
+| 5,000-row deterministic paging | PASS | focused Node execution |
+| 5,000/5,000 identities reachable in order | PASS | focused + Chromium |
+| maximum table rows per view = 250 | PASS | focused + Chromium |
+| 5,000-span / 5,001-node SVG retention | PASS | Chromium DOM |
+| density label suppression only | PASS | Chromium DOM |
+| keyboard tab pattern / focus | PASS | real CDP key events |
+| ARIA relationships | PASS | Chromium DOM |
+| Source→Analysis display toggle | PASS | Chromium DOM |
+| StagedJSON original-source anti-substitution | PASS | Chromium DOM |
+| stale presentation clear/replace | PASS | Chromium DOM |
 | exact-byte JS syntax | PASS | local `node --check` |
-| pushed blob identity | PASS | 6/6 local Git hashes equal pushed blobs |
-| UI07→UI08 authority/path diff | PASS | exactly six presentation/test paths |
-| full main divergence | PASS | 37 ahead / 0 behind |
-| UI00 frozen-authority overlap | PASS | 0 paths |
-| workflow-file overlap | PASS | 0 paths |
-| stale-state focused/source evidence | PASS | UI01/UI07 focused guards retained |
-| production Chromium six-step walkthrough | NOT_RUN | Chromium runtime unavailable in this execution environment |
-| browser keyboard/focus exercise | NOT_RUN | same blocker |
-| actual browser 5k DOM/render timing | NOT_RUN | same blocker |
-| full repository aggregate/build/lint/E2E | NOT_RUN | no materialized repository/dependency runtime here |
+| UI08 pushed blob identity | PASS | exact Git hash equality |
+| UI07→UI08 authority/path diff | PASS | six presentation/test paths |
+| UI00 frozen-authority overlap | PASS | zero paths |
+| workflow-file overlap | PASS | zero paths |
+| production InputXML/ACCDB/StagedJSON six-step page | NOT_RUN | no checkout/preview + navigation policy |
+| full repository aggregate/build/lint/E2E | NOT_RUN | no full checkout/dependency runtime |
 | exact-head EMP.1 workflows | FAIL / UNKNOWN_ORIGIN | unrelated remote executions; not LFEA evidence |
 
-Focused UI08 result:
+## 8. Remaining release gate
 
-```json
-{"check":"lfea-ui-scale-a11y","status":"PASS","scaleFixtureElements":5000,"pageSize":250,"pages":20,"maximumRowsRenderedPerTableView":250,"allRowsReachable":true,"geometrySpanLabelsAt5000":"SUPPRESSED_FOR_DENSITY_ALL_TOPOLOGY_RETAINED","keyboardTabPattern":"ARROWS_HOME_END","sourceMutation":false}
-```
+UI08 is **not COMPLETE**. The real Chromium harness closes the earlier keyboard/5k/presentation-runtime uncertainty, but it cannot prove application integration.
 
-The measured pure-projection elapsed time was informational only and is not used as a release threshold.
+The remaining exact-head gate is:
 
-## 7. Chromium blocker
-
-The container has a Chromium binary, but no checked-out Advanced_Analysis repository and no Playwright package. External GitHub resolution from the container is unavailable. More importantly, direct headless Chromium attempts against a locally served trivial one-line static HTML page did not complete within the execution timeout and produced no DOM output. Therefore the earlier 5k browser-harness timeout cannot be classified as an application performance failure; the same browser runtime fails on a trivial page.
-
-Engineering classification:
-
-```text
-PRODUCTION_CHROMIUM_EXECUTION = NOT_RUN
-FAILURE_ORIGIN = EXECUTION_ENVIRONMENT
-UI08_RELEASE_QUALIFICATION = BLOCKED
-```
-
-Do not convert this into PASS and do not treat it as a product FAIL.
-
-## 8. Exact-head remote status
-
-At `d9cce5168a0898b635b5f7507b01759349c8e06f`, the only PR-triggered workflows are:
-
-- `32574997384` — EMP.1 runEmp1 bounded gamma5 orchestration — FAILURE
-- `32574997392` — EMP.1 current-main independent baseline — FAILURE
-- `32574997383` — EMP.1 gamma5 bounded route on current main — FAILURE
-
-Combined commit-status contexts are empty. These remain `FAIL / REMOTE_EXECUTION / UNKNOWN_ORIGIN` for the LFEA workstream and are not counted as UI08 evidence. No workflow was edited or manually rerun.
+1. Materialize PR #1322 exact head in an actual repository checkout or an existing authorized preview.
+2. Run visible InputXML, ACCDB and StagedJSON-derived InputXML through:
+   `Input → Error Check → Load Case → Run → Output → Export`.
+3. After a completed run, independently change source, requested profile and case selection; verify native result/current authorization and application/code presentation cannot silently remain current.
+4. Keyboard-navigate the six workflow steps and verify hidden step-specific controls are not reachable.
+5. Run the actual ~5,000-element browser model through Model Review and Error Check.
+6. Run strongest repository checks including LFEA workbench/Playwright, imports, build and lint where available.
+7. Record PASS/FAIL/NOT_RUN separately. Do not modify benchmark/tolerance/authority/workflow files to obtain green status.
 
 ## 9. Coordination
 
-- PR #1320: design-only source-specific Error Check lineage; superseded by current architecture.
-- PR #1323: Load Calc/non-FEA/support-load work; no UI08 overlap.
-- PR #1305: historical LFEA browser/results lineage. It independently demonstrated that browser-only faults can escape source checks. UI08 changes **none** of #1305's five paths (`src/main.js`, results panel, shell view, shell CSS, ACCDB E2E).
-- PR #1118: LAFEA continuum SVG/meshing lineage; no LFEA piping UI08 overlap.
+Fresh open-LFEA grounding:
 
-Coordination: `SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE`.
+- PR #1320 — design-only source-specific Error Check lineage; superseded by current common engineering Error Check.
+- PR #1305 — historical full BM4_L browser/results lineage; important browser-risk evidence, but UI08 changes none of its five main/result/shell/E2E paths.
+- PR #1323 — Load Calc/non-FEA/support-load lineage; no UI08 presentation overlap on last inspection.
+- PR #1118 — LAFEA continuum SVG/meshing; no LFEA piping UI08 overlap.
 
-## 10. Active register
+Coordination remains `SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE`.
+
+## 10. Active engineering register
 
 - `ISS-001…ISS-008` remain resolved through UI07.
-- `RISK-002` CONTROLLED_PENDING_BROWSER — source/pre-flight changes invalidate downstream state; production-browser proof still required.
-- `RISK-011` PARTIALLY_CONTROLLED_UI08 — source-level keyboard and 5k presentation defects corrected; production browser remains unqualified.
-- `BLK-UI08-001` OPEN — `PRODUCTION_CHROMIUM_EXECUTION_UNAVAILABLE`.
-- `DEC-016` ACTIVE — deterministic paging may reduce DOM density but may never sample/truncate engineering evidence.
-- `DEC-017` ACTIVE — high-density SVG may suppress decorative span labels only; all spans/nodes and tabular custody remain retained.
-- `DEC-018` ACTIVE — UI08 cannot be declared COMPLETE without browser-capable exact-head evidence.
+- `RISK-002` CONTROLLED_PENDING_PRODUCTION_APP — source/pre-flight invalidation is focused-tested; full app browser proof remains.
+- `RISK-011` PARTIALLY_CONTROLLED_UI08 — actual Chromium accessibility/5k/stale-DOM presentation proof now exists.
+- `BLK-UI08-001` OPEN — `PRODUCTION_APP_CHECKOUT_OR_PREVIEW_UNAVAILABLE`.
+- `DEC-016` ACTIVE — pagination may reduce DOM density but never sample/truncate engineering evidence.
+- `DEC-017` ACTIVE — high-density SVG may suppress decoration only; all spans/nodes remain.
+- `DEC-018` ACTIVE — UI08 cannot be declared COMPLETE without the production six-step page.
+- `DEC-019` ACTIVE — exact-function Chromium harness is supplemental release evidence, not a substitute for application integration E2E.
 
-## 11. Tooling incident record
+## 11. Tooling history
 
-Historical incidents retained for continuity:
+- UI03 connector README placeholder was immediately reversed; no effective diff.
+- UI06 `update_file` HTTP 409 changed nothing.
+- UI07 two helper placeholder create/delete pairs have zero effective diff.
+- UI08 two deliberate nonexistent-branch discovery writes returned 404 and created nothing.
+- No workflow was edited or manually rerun for UI08.
 
-- Earlier UI03 connector README placeholder was immediately reversed; no effective diff remains.
-- UI06 `update_file` attempt returned HTTP 409 before mutation.
-- UI07 created/deleted two one-byte helper placeholders; both pairs have zero effective diff and are documented in Git history.
-- UI08 made two connector-discovery `create_file` attempts against deliberately nonexistent branches; both returned HTTP 404 `Branch not found` and created no file or commit.
+# APPENDIX A — UI08 PRODUCTION APPLICATION BROWSER RETRY
 
-# APPENDIX A — UI08 BROWSER RETRY AUTHORITY
+Replacement agent starts READ_ONLY. Technical basis remains `d9cce5168a0898b635b5f7507b01759349c8e06f` until a later technical commit explicitly supersedes it.
 
-A replacement agent starts READ_ONLY and must treat `d9cce5168a0898b635b5f7507b01759349c8e06f` as the UI08 technical basis until a newer recovery head explicitly supersedes it.
-
-### A1 Exact-head materialization /20
-Materialize the exact PR head in a Chromium-capable checkout with repository dependencies. Verify HEAD, main/merge-base, effective changed paths, UI00 frozen-file overlap and workflow overlap before executing tests. Do not rebase or merge as part of qualification.
+### A1 Exact-head custody /20
+Verify checkout HEAD, main/merge-base, six-path UI08 technical diff, zero UI00 frozen-authority overlap and zero workflow overlap. No rebase/merge as part of qualification.
 
 ### A2 Production workflow /20
-In real Chromium exercise InputXML, ACCDB and StagedJSON-derived InputXML through Input → Error Check → Load Case → Run → Output → Export. Check source provenance, Model Review, Source/Analysis geometry, common Error Check, native results, optional code-assessment states and application-qualification/export evidence. Browser console errors or inaccessible required controls block release.
+Use real Chromium on InputXML, ACCDB and StagedJSON-derived InputXML. Complete Input → Error Check → Load Case → Run → Output → Export and inspect console errors, provenance, Model Review, Error Check, result/code/application separation and export evidence.
 
-### A3 Stale/currentness /20
-After a valid run independently change source, requested profile and selected cases. Verify previous results/authorization are invalidated as governed, and stale application/code evidence is removed or labelled `NOT_CURRENT`. Repeat StagedJSON with original-source identity retained while derived InputXML preparation changes.
+### A3 Currentness /20
+After a valid run change source, requested profile and selected cases independently. Verify previous result/authorization/application/code evidence is invalidated, removed, or explicitly `NOT_CURRENT` as governed. Preserve StagedJSON original-source identity.
 
-### A4 Accessibility + 5k /20
-Keyboard-navigate the six workflow steps, Model Review tabs, geometry representation and table pager. Confirm hidden step-specific controls are not keyboard reachable. Exercise a deterministic ~5,000-element model in the actual browser; record responsiveness/DOM behavior and verify every engineering row remains reachable without sampling or truncation.
+### A4 Accessibility + scale /20
+Keyboard-navigate all visible controls and confirm hidden step-specific controls are not focusable. Run the actual ~5k prepared model and confirm all engineering evidence remains reachable without truncation.
 
 ### A5 Final release evidence /20
-Run the strongest available exact-head commands, including `npm run check:lfea-workbench`, relevant LFEA Playwright cases, imports/build/lint and other required release checks available in the checkout. Record PASS/FAIL/NOT_RUN separately. Do not modify benchmarks, tolerances, engineering authority or workflows to obtain green status. Keep the PR draft and unmerged until the owner explicitly authorizes merge.
+Run the strongest exact-head repository checks. Record PASS/FAIL/NOT_RUN individually. Keep PR draft and unmerged until owner explicitly authorizes merge.

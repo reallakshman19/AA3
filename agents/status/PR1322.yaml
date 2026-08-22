@@ -7,67 +7,70 @@ mission: >-
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
 report_basis_head: d9cce5168a0898b635b5f7507b01759349c8e06f
-pr_head_last_observed: d9cce5168a0898b635b5f7507b01759349c8e06f
+pr_head_last_observed: 4ffe37bd16665c8e11d0607a438f4d482cba4f18
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: QUALIFY
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: BLOCKED_ON_QUALIFICATION
+pr_recovery_state: BLOCKED_ON_PRODUCTION_APP_BROWSER
 handover_readiness: READY_WITH_BLOCKER
 report_path: agents/PR1322_workreport.md
-appendix_a_status: CURRENT_FOR_UI08_BROWSER_RETRY
-grounding_epoch: GE-011
-current_stage: UI08_BROWSER_QUALIFICATION_BLOCKED
+appendix_a_status: CURRENT_FOR_UI08_PRODUCTION_APP_BROWSER_RETRY
+grounding_epoch: GE-012
+current_stage: UI08_PRODUCTION_APP_BROWSER_QUALIFICATION_BLOCKED
 last_completed_stage: UI07_RESULTS_CODE_APPLICATION_QUALIFICATION_PRESENTATION
-blocker: PRODUCTION_CHROMIUM_EXECUTION_UNAVAILABLE
+blocker: PRODUCTION_APP_CHECKOUT_OR_PREVIEW_UNAVAILABLE
 coordination: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
 validation:
   ui00_source_diff: PASS
   ui00_runtime: NOT_RUN
   ui01_source_diff: PASS
-  ui01_relevant_runtime: NOT_RUN
   ui02_source_diff: PASS
-  ui02_focused_execution: NOT_RUN
   ui03_source_diff: PASS
-  ui03_browser: NOT_RUN
   ui04_focused_local_execution: PASS
-  ui04_exact_byte_syntax: PASS
   ui04_pushed_blob_identity: PASS
-  ui04_authority_diff: PASS
-  ui04_browser_full_repo: NOT_RUN
   ui05_focused_local_execution: PASS
-  ui05_exact_byte_syntax: PASS
   ui05_pushed_blob_identity: PASS
-  ui05_authority_diff: PASS
-  ui05_browser_full_repo: NOT_RUN
   ui06_focused_local_projection: PASS
-  ui06_exact_byte_syntax: PASS
   ui06_pushed_blob_identity: PASS
-  ui06_authority_diff: PASS
-  ui06_browser_full_repo_aggregate: NOT_RUN
   ui07_focused_local_execution: PASS
-  ui07_exact_byte_syntax: PASS
   ui07_pushed_blob_identity: PASS
-  ui07_authority_diff: PASS
-  ui07_browser_full_repo_aggregate: NOT_RUN
   ui08_source_scale_a11y: PASS
   ui08_5000_row_projection: PASS
   ui08_stale_state_source_focused: PASS
   ui08_exact_byte_syntax: PASS
   ui08_pushed_blob_identity: PASS
   ui08_authority_diff: PASS
-  ui08_production_chromium: NOT_RUN
-  ui08_browser_keyboard: NOT_RUN
-  ui08_actual_5000_browser_render: NOT_RUN
+  ui08_chromium_exact_function_harness: PASS
+  ui08_browser_keyboard_focus: PASS
+  ui08_browser_5000_geometry_render: PASS
+  ui08_browser_5000_row_traversal: PASS
+  ui08_browser_stagedjson_source_failclosed: PASS
+  ui08_browser_stale_presentation_clear_replace: PASS
+  ui08_production_six_step_browser: NOT_RUN
   ui08_full_repo_aggregate: NOT_RUN
   unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
+browser_measurement:
+  engine: Chromium_144_under_Xvfb_via_CDP
+  basis: exact_hash_verified_UI08_function_bodies_with_synthetic_sealed_projection_upstream_stub
+  geometry_spans: 5000
+  geometry_nodes: 5001
+  mount_ms_browser: 307.1
+  cdp_wall_ms: 366.462
+  table_page_size: 250
+  table_pages: 20
+  rows_reached: 5000
+  rows_unique: 5000
+  note: informational_timing_not_release_threshold
 highest_risk: >-
-  UI08 cannot be released or marked COMPLETE without an actual production
-  Chromium run against this exact stacked head, including stale-state,
-  accessibility and 5k interaction evidence.
+  The UI08 changed presentation code now has real Chromium DOM/keyboard/5k evidence,
+  but the actual six-step production application is still unqualified because this
+  environment has no repository checkout or existing preview and browser navigation
+  to local/file/data/GitHub targets is blocked by administrative policy.
 exact_next_action: >-
-  Materialize the exact PR head in a Chromium-capable repository checkout,
-  run InputXML/ACCDB/StagedJSON six-step workflows, stale-state and keyboard
-  falsifiers plus the 5k browser render, then execute the strongest repository
-  checks and record final release evidence. Do not merge before owner approval.
+  Materialize the exact PR head in an actual repository checkout or existing preview,
+  run InputXML/ACCDB/StagedJSON through Input→Error Check→Load Case→Run→Output→Export,
+  falsify source/profile/case stale-state and hidden-control keyboard behavior, then
+  run the strongest repository build/import/lint/E2E checks. Do not merge before
+  explicit owner authorization.
 last_updated: 2026-08-22

@@ -6,8 +6,8 @@ scope: >-
   One-PR stacked LFEA UI00-UI08 implementation: exact authority custody,
   engineering-session ownership/invalidation, governed diagnostics, source
   provenance, Model Review, read-only source/analysis geometry, common Error
-  Check, results/code/application qualification separation, and final browser
-  qualification.
+  Check, results/code/application qualification separation, accessibility,
+  large-model presentation, and final browser qualification.
 claim_modes:
   - COORDINATED
 files:
@@ -43,9 +43,6 @@ authority_domains:
   - LFEA_TRANSFORMATION_EVIDENCE_PRESENTATION
   - LFEA_READONLY_GEOMETRY_PRESENTATION
   - LFEA_ERROR_CHECK_INFORMATION_ARCHITECTURE
-  - LFEA_RESULTS_PRESENTATION
-  - LFEA_CODE_CHECK_PRESENTATION
-  - LFEA_APPLICATION_QUALIFICATION_PRESENTATION
   - LFEA_RESULTS_AUTHORITY_PRESENTATION
   - LFEA_ACCESSIBILITY_PRESENTATION
   - LFEA_LARGE_MODEL_PRESENTATION
@@ -56,7 +53,6 @@ excluded_authority_domains:
   - LOAD_ASSEMBLY
   - ELEMENT_RECOVERY
   - RESULT_VALUE_RECOMPUTATION
-  - RESULT_FRAME_END_CONVENTION
   - SOURCE_PARSING
   - TOPOLOGY_CONDITIONING_MECHANICS
   - RESTRAINT_CONDITIONING_MECHANICS
@@ -79,8 +75,15 @@ frozen_ui00_files:
   current_pr_overlap: 0
 ui08:
   technical_head: d9cce5168a0898b635b5f7507b01759349c8e06f
-  state: PARTIAL_BLOCKED_ON_BROWSER_QUALIFICATION
+  state: PARTIAL_BLOCKED_ON_PRODUCTION_APP_BROWSER_QUALIFICATION
   effective_paths: 6
+  exact_changed_blobs:
+    lfea_review_row_window: 7efcb940f5724f633289ebd37078e2d8a3b28f3c
+    lfea_geometry_review_svg: 18db3bb44f2638ba8f9a500be65b861227623e38
+    lfea_model_review_panel: 0d9d53c4ca91bf183439373d349e4bebd72a40f7
+    lfea_model_review_css: 2bef2c9bfadb0174708e73a7e5910d322b8ad717
+    scale_a11y_check: 8e90448cc1e823593f7b362d635ff5913f1e5aa4
+    aggregate_registration: a2e6eb8f9d775e9ff5ea92fed963a2ea0827396f
   row_window:
     page_size: 250
     scale_fixture_rows: 5000
@@ -94,16 +97,27 @@ ui08:
     roving_tabindex: true
     tabpanel_relationships: true
     geometry_aria_pressed: true
-  stale_state_source_focused: PASS
   focused_scale_a11y: PASS
   exact_byte_syntax: PASS
   pushed_blob_identity: PASS
   authority_diff: PASS
-  production_chromium: NOT_RUN
-  browser_keyboard: NOT_RUN
-  actual_5000_browser_render: NOT_RUN
+  chromium_exact_function_harness:
+    status: PASS
+    engine: Chromium_144_Xvfb_CDP
+    changed_ui08_functions_exact: true
+    upstream_model_projection: SYNTHETIC_SEALED_READONLY_STUB
+    mount_ms_5000: 307.1
+    cdp_wall_ms: 366.462
+    spans_rendered: 5000
+    nodes_rendered: 5001
+    table_rows_reachable: 5000
+    table_rows_unique: 5000
+    keyboard_focus: PASS
+    stagedjson_source_failclosed: PASS
+    stale_presentation_clear_replace: PASS
+  production_six_step_browser: NOT_RUN
   full_repo_aggregate: NOT_RUN
-  blocker: PRODUCTION_CHROMIUM_EXECUTION_UNAVAILABLE
+  blocker: PRODUCTION_APP_CHECKOUT_OR_PREVIEW_UNAVAILABLE
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
@@ -114,13 +128,13 @@ overlap:
   PR1305:
     classification: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
     basis: >-
-      historical main/results-panel/shell-view/shell-css/E2E browser work shows
+      historical main/results-panel/shell-view/shell-css/E2E browser work proves
       browser-only risk; UI08 changes none of those five paths
   PR1118:
     classification: SAFE
     basis: LAFEA continuum SVG/meshing paths do not overlap LFEA piping UI08
-last_overlap_check: GE-011
-next_overlap_check_required: UI08_BROWSER_RETRY
+last_overlap_check: GE-012
+next_overlap_check_required: UI08_PRODUCTION_APP_BROWSER_RETRY
 last_verified_head: d9cce5168a0898b635b5f7507b01759349c8e06f
-current_stage: UI08_BROWSER_QUALIFICATION_BLOCKED
+current_stage: UI08_PRODUCTION_APP_BROWSER_QUALIFICATION_BLOCKED
 last_updated: 2026-08-22

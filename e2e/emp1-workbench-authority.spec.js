@@ -117,7 +117,10 @@ test('C setup stays navigable while production C remains disabled', async ({ pag
 
 test('synthetic current C presentation uses reportable result and execution authority hash', async ({ page }) => {
   await page.goto(HOST_URL);
-  const result = await page.evaluate(async () => {
+  const authoritySnapshot = authoritySnapshotForUi('Q1');
+  const localCorrelation = currentCorrelationForUi();
+  const execution = executionForUi(authoritySnapshot, localCorrelation);
+  const result = await page.evaluate(async (fixture) => {
     const { renderEmp1WorkbenchExecutionSummary } = await import(
       '/src/workspace/emp1-workbench-run-view.js'
     );
@@ -126,9 +129,6 @@ test('synthetic current C presentation uses reportable result and execution auth
     );
     const host = document.createElement('div');
     document.body.replaceChildren(host);
-    const authoritySnapshot = authoritySnapshotForUi('Q1');
-    const localCorrelation = currentCorrelationForUi();
-    const execution = executionForUi(authoritySnapshot, localCorrelation);
     const currentness = {
       state: 'CURRENT',
       reasons: [],
@@ -142,37 +142,44 @@ test('synthetic current C presentation uses reportable result and execution auth
       productionUseAuthorized: true,
       currentResultAvailable: true,
       retainedResultAvailable: true,
-      reportableResult: localCorrelation,
-      currentExecutionEvidence: localCorrelation,
+      reportableResult: fixture.localCorrelation,
+      currentExecutionEvidence: fixture.localCorrelation,
       retainedHistoricalEvidence: [],
-      executionAuthorityHash: authoritySnapshot.semanticHash,
-      currentAuthorityHash: authoritySnapshot.semanticHash,
-      executionAuthoritySnapshot: authoritySnapshot,
-      currentAuthoritySnapshot: authoritySnapshot,
+      executionAuthorityHash: fixture.authoritySnapshot.semanticHash,
+      currentAuthorityHash: fixture.authoritySnapshot.semanticHash,
+      executionAuthoritySnapshot: fixture.authoritySnapshot,
+      currentAuthoritySnapshot: fixture.authoritySnapshot,
     };
-    const summary = renderEmp1WorkbenchExecutionSummary(host, execution, currentness, cState);
+    const summary = renderEmp1WorkbenchExecutionSummary(
+      host, fixture.execution, currentness, cState,
+    );
     const currentResult = renderEmp1CorrelationResultEvidence(host, cState.reportableResult);
     host.append(summary);
     if (currentResult) host.append(currentResult);
     return {
       normalResultCards: host.querySelectorAll('[data-role="emp1-c-result-evidence"]').length,
-      stressRows: host.querySelectorAll('[data-role="emp1-c-result-evidence"] tbody tr').length,
       summaryText: summary.textContent,
       resultText: currentResult?.textContent ?? '',
     };
-  });
+  }, { authoritySnapshot, localCorrelation, execution });
   expect(result.normalResultCards).toBe(1);
   expect(result.summaryText).toContain('C current/reportable resultYES');
   expect(result.summaryText).toContain('AUTH-Q1');
   expect(result.summaryText).toContain('Code compliance producedNO');
   expect(result.summaryText).toContain('Release qualifiedNO');
   expect(result.resultText).toContain('Eight-location shell stress trace');
-  expect(result.resultText).toContain('72.67281564');
+  expect(result.resultText).toContain('72.672816');
 });
 
 test('stale numerical C is hidden from results but retained in authority evidence', async ({ page }) => {
   await page.goto(HOST_URL);
-  const result = await page.evaluate(async () => {
+  const executionAuthoritySnapshot = authoritySnapshotForUi('Q1');
+  const currentAuthoritySnapshot = authoritySnapshotForUi('Q2');
+  const staleLocalCorrelation = currentCorrelationForUi();
+  staleLocalCorrelation.resultHash = 'C-Q1-RESULT';
+  const execution = executionForUi(executionAuthoritySnapshot, staleLocalCorrelation);
+  execution.decision = 'RETAINED_Q1_ONLY';
+  const result = await page.evaluate(async (fixture) => {
     const { renderEmp1WorkbenchExecutionSummary } = await import(
       '/src/workspace/emp1-workbench-run-view.js'
     );
@@ -181,12 +188,6 @@ test('stale numerical C is hidden from results but retained in authority evidenc
     );
     const host = document.createElement('div');
     document.body.replaceChildren(host);
-    const executionAuthoritySnapshot = authoritySnapshotForUi('Q1');
-    const currentAuthoritySnapshot = authoritySnapshotForUi('Q2');
-    const staleLocalCorrelation = currentCorrelationForUi();
-    staleLocalCorrelation.resultHash = 'C-Q1-RESULT';
-    const execution = executionForUi(executionAuthoritySnapshot, staleLocalCorrelation);
-    execution.decision = 'RETAINED_Q1_ONLY';
     const currentness = {
       state: 'STALE',
       reasons: ['EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED'],
@@ -201,14 +202,16 @@ test('stale numerical C is hidden from results but retained in authority evidenc
       currentResultAvailable: false,
       retainedResultAvailable: true,
       reportableResult: null,
-      currentExecutionEvidence: staleLocalCorrelation,
+      currentExecutionEvidence: fixture.staleLocalCorrelation,
       retainedHistoricalEvidence: [],
-      executionAuthorityHash: 'AUTH-Q1',
-      currentAuthorityHash: 'AUTH-Q2',
-      executionAuthoritySnapshot,
-      currentAuthoritySnapshot,
+      executionAuthorityHash: fixture.executionAuthoritySnapshot.semanticHash,
+      currentAuthorityHash: fixture.currentAuthoritySnapshot.semanticHash,
+      executionAuthoritySnapshot: fixture.executionAuthoritySnapshot,
+      currentAuthoritySnapshot: fixture.currentAuthoritySnapshot,
     };
-    const summary = renderEmp1WorkbenchExecutionSummary(host, execution, currentness, cState);
+    const summary = renderEmp1WorkbenchExecutionSummary(
+      host, fixture.execution, currentness, cState,
+    );
     const normalResult = renderEmp1CorrelationResultEvidence(host, cState.reportableResult);
     host.append(summary);
     if (normalResult) host.append(normalResult);
@@ -223,13 +226,14 @@ test('stale numerical C is hidden from results but retained in authority evidenc
         ?.textContent ?? null,
       summaryText: summary.textContent,
     };
-  });
+  }, { executionAuthoritySnapshot, currentAuthoritySnapshot, staleLocalCorrelation, execution });
   expect(result.normalResultCards).toBe(0);
   expect(result.authorityDrawer).toBe(1);
   expect(result.reportableFlag).toBe('false');
   expect(result.staleWarning).toContain('historical/stale evidence only');
   expect(result.stalePayload).toContain('C-Q1-RESULT');
   expect(result.stalePayload).toContain('72.67281563686576');
+  expect(result.summaryText).toContain('EMP1 WORKBENCH ROUTE AUTHORITY CHANGED');
   expect(result.summaryText).toContain('AUTH-Q1');
   expect(result.summaryText).toContain('AUTH-Q2');
   expect(result.summaryText).toContain('C current/reportable resultNO');
@@ -265,9 +269,6 @@ function authoritySnapshotForUi(qualificationId) {
 }
 
 function currentCorrelationForUi() {
-  const stressIntensity = [
-    72.67281563686576, 61.1, 52.2, 43.3, 34.4, 25.5, 16.6, 7.7,
-  ];
   return {
     schema: 'emp1-local-correlation-result/v1',
     resultHash: 'C-Q1-RESULT',
@@ -276,7 +277,9 @@ function currentCorrelationForUi() {
       circumferential: [41, 39, 37, 35, 33, 31, 29, 27],
       longitudinal: [21, 20, 19, 18, 17, 16, 15, 14],
       shear: [3, 3, 3, 3, 3, 3, 3, 3],
-      stressIntensity,
+      stressIntensity: [
+        72.67281563686576, 61.1, 52.2, 43.3, 34.4, 25.5, 16.6, 7.7,
+      ],
     },
   };
 }

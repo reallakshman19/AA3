@@ -26,6 +26,7 @@ const checks = [
   ['Support-load force and first-moment accounting', 'scripts/support-load-static-accounting-check.mjs'],
   ['Support-load partial distribution', 'scripts/support-load-partial-distribution-check.mjs'],
   ['Support-load route-local equilibrium', 'scripts/support-load-route-equilibrium-check.mjs'],
+  ['Load Calc completeness-aware result presentation', 'scripts/load-calc-result-presentation-check.mjs'],
   ['Empirical scenario compatibility', 'scripts/empirical-load-calc-scenario-check.mjs'],
   ['Non-FEA 3D investigation', 'scripts/non-fea-3d-investigation-check.mjs'],
   ['First-cut launcher source guard', 'scripts/first-cut-workbench-launcher-source-guard.mjs'],

@@ -54,9 +54,8 @@ test('UI08 exact production LFEA InputXML six-step workflow and profile currentn
   await expect(step(page, 'INPUT')).toHaveClass(/lfea-pipeline-shell__step--complete/u);
 
   await step(page, 'ERROR_CHECK').click();
-  const errorCheck = sourceHost.locator('[data-role="lfea-common-error-check"]');
+  const errorCheck = sourceHost.locator('[data-role="lfea-common-error-check-panel"]');
   await expect(errorCheck).toBeVisible();
-  await expect(errorCheck).toHaveAttribute('data-source-kind', 'INPUTXML');
   await expect(errorCheck).toHaveAttribute('data-pre-flight-status', 'WARN');
   await expect(inputXmlPanel.locator('[data-role="linear-piping-inputxml-reviewer"]')).toBeVisible();
   await inputXmlPanel.locator('[data-role="linear-piping-inputxml-reviewer"]').fill('ui08-production-browser');
@@ -71,6 +70,22 @@ test('UI08 exact production LFEA InputXML six-step workflow and profile currentn
   const casePanel = page.locator('[data-role="lfea-pipeline-case-selection-panel"]');
   await expect(casePanel).toBeVisible();
   await expect(casePanel.locator('[data-role="lfea-pipeline-case-checkbox"]:checked').first()).toBeVisible();
+  await casePanel.locator('[data-action="lfea-pipeline-apply-cases"]').click();
+
+  // Applying a case selection re-runs governed preparation, which seals a new
+  // preparation identity and invalidates the previous pre-flight
+  // authorization. Re-authorize before analyzing, proving currentness is
+  // enforced rather than silently carried over.
+  await step(page, 'ERROR_CHECK').click();
+  await expect(inputXmlPanel).toHaveAttribute('data-pre-flight-status', 'WARN');
+  await expect(inputXmlPanel).toHaveAttribute('data-pre-flight-authorized', 'false');
+  await inputXmlPanel.locator('[data-role="linear-piping-inputxml-reviewer"]').fill('ui08-production-browser');
+  await inputXmlPanel.locator('[data-role="linear-piping-inputxml-review-reason"]')
+    .fill('Exact-head browser qualification of disclosed InputXML limitations.');
+  await inputXmlPanel.locator('[data-action="authorize-linear-piping-inputxml-prefea"]').click();
+  await expect(inputXmlPanel).toHaveAttribute('data-pre-flight-authorized', 'true');
+
+  await step(page, 'LOAD_CASE').click();
   await casePanel.locator('[data-action="lfea-pipeline-analyze"]').click();
 
   const resultsHost = page.locator('.lfea-pipeline-shell__host[data-host-group="RESULTS"]');

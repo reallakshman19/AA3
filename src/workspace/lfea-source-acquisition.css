@@ -1,5 +1,6 @@
 @import './lfea-model-review/lfea-model-review.css';
 @import './lfea-diagnostics/lfea-error-check.css';
+@import './lfea-results-authority/lfea-results-authority.css';
 
 .lfea-source-acquisition {
   margin: 12px 16px;

@@ -6,14 +6,15 @@ import { mountLfeaPipelineLoadCaseAuthoringPanel } from './lfea-pipeline-load-ca
 import { mountLfeaPipelineModelRepairPanel } from './lfea-pipeline-model-repair-panel.js';
 import { mountLfeaModelReviewPanel } from './lfea-model-review/lfea-model-review-panel.js';
 import { mountLfeaCommonErrorCheckPanel } from './lfea-diagnostics/lfea-error-check-panel.js';
+import { mountLfeaResultsAuthorityPanel } from './lfea-results-authority/lfea-results-authority-panel.js';
 
 /**
  * Everything the Load-case, Input review and Output steps need, behind one entry point.
  *
  * main.js loads this with a dynamic import so Rollup gives it its own chunk
- * rather than folding it into the application entry. Model Review and Error
- * Check are read-only projections of already-prepared records; neither adds a
- * second parse/compile/solve path.
+ * rather than folding it into the application entry. Model Review, Error Check
+ * and the result-authority panel are read-only projections of already-retained
+ * records; none adds a second parse/compile/solve/application path.
  */
 export function mountLfeaPipelineAnalysisSurface(options) {
   const analysisController = createLfeaPipelineAnalysisController({});
@@ -37,6 +38,9 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     documentRef: options.documentRef,
     onExportCsv: options.onExportCsv,
   });
+  const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, {
+    documentRef: options.documentRef,
+  });
   const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, {
     documentRef: options.documentRef,
     getSourceText: options.getSourceText,
@@ -59,6 +63,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     caseSelectionPanel,
     layoutPanel,
     resultsPanel,
+    resultsAuthorityPanel,
     loadCaseAuthoringPanel,
     refreshLoadCaseStep() {
       caseSelectionPanel.refresh();
@@ -70,10 +75,14 @@ export function mountLfeaPipelineAnalysisSurface(options) {
       modelReviewPanel.refresh();
       errorCheckPanel.refresh();
     },
+    refreshResultsStep() {
+      resultsAuthorityPanel.refresh();
+    },
     destroy() {
       caseSelectionPanel.destroy();
       layoutPanel.destroy();
       resultsPanel.destroy();
+      resultsAuthorityPanel.destroy();
       loadCaseAuthoringPanel.destroy();
       modelRepairPanel.destroy();
       modelReviewPanel.destroy();

@@ -71,5 +71,6 @@ await import('./lfea-ui-source-acquisition-check.mjs');
 await import('./lfea-ui-model-review-check.mjs');
 await import('./lfea-ui-geometry-review-check.mjs');
 await import('./lfea-ui-error-check-check.mjs');
+await import('./lfea-ui-results-authority-check.mjs');
 
 console.log(JSON.stringify({ check: 'lfea-pipeline-step-guidance', status: 'PASS', steps: LFEA_PIPELINE_STEPS.length }));

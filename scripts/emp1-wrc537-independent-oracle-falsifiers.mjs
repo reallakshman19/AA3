@@ -92,6 +92,10 @@ console.log(JSON.stringify({
   productionAuthority:false,
 },null,2));
 
+// EMP1-16 extends this owned falsifier gate with the independent physical
+// benchmark mutations. The imported script has zero production imports.
+await import('./emp1-wrc-gamma5-post-authority-refreeze-falsifiers.mjs');
+
 function run(partialLoads){
   const loads=Object.fromEntries(Object.keys(magnitudes).map((key)=>[key,Number(partialLoads[key]??0)]));
   const independent=evaluateIndependentWrc537Table5({geometry,stressConcentration,loads,curveOrdinates,signs:authority.signs,locations:authority.locations});

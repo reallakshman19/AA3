@@ -51,5 +51,10 @@ console.log(JSON.stringify({
   sourceCustody:authority.sourceCustody,
 },null,2));
 
+// EMP1-16 Gate A: this entrypoint is already owned by the independent-oracle
+// workflow. Importing the scripts-only refreeze here makes the new physical
+// oracle executable under that existing gate without modifying workflow YAML.
+await import('./emp1-wrc-gamma5-post-authority-independent-refreeze.mjs');
+
 function compare(actual,expected,baseline,label){assert.equal(actual.length,expected.length,`${label}:length`);const rel=baseline.comparisonTolerance.floatingPointRelative,abs=baseline.comparisonTolerance.floatingPointAbsolute;actual.forEach((value,index)=>{const tol=Math.max(abs,Math.max(1,Math.abs(expected[index]))*rel);assert.ok(Math.abs(value-expected[index])<=tol,`${label}[${index}] actual=${value} expected=${expected[index]} tol=${tol}`);});}
 function compareObject(actual,expected,baseline,label){for(const [key,value] of Object.entries(expected)){const rel=baseline.comparisonTolerance.floatingPointRelative,abs=baseline.comparisonTolerance.floatingPointAbsolute,tol=Math.max(abs,Math.max(1,Math.abs(value))*rel);assert.ok(Math.abs(actual[key]-value)<=tol,`${label}.${key} actual=${actual[key]} expected=${value} tol=${tol}`);}}

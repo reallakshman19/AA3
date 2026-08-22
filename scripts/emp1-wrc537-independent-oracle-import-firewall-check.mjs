@@ -8,6 +8,8 @@ const files=await walk(oracleRoot);
 const additional=[
   'scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs',
   'scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs',
+  'scripts/emp1-wrc-gamma5-post-authority-independent-refreeze.mjs',
+  'scripts/emp1-wrc-gamma5-post-authority-refreeze-falsifiers.mjs',
 ];
 const forbiddenImports=[
   /(?:from\s+|import\s*\()['"][^'"]*src\/core\//u,

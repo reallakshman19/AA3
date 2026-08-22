@@ -35,11 +35,6 @@ export class LfeaPipelineShellController {
     let previousActiveStepId = null;
     this.unsubscribe = this.session.subscribe((state) => {
       this.view.render(state);
-      // Fires on both a user's step-button click and a programmatic
-      // setActiveStep() (e.g. from the "Assemble & send to Run" flow) --
-      // panels with no subscription of their own to source-controller
-      // state (e.g. the Load-case authoring panel's node list) use this
-      // as their one reliable "become visible" refresh point.
       if (state.activeStepId !== previousActiveStepId) {
         previousActiveStepId = state.activeStepId;
         this.assemblyHandlers?.onStepActivated?.(state.activeStepId);
@@ -63,6 +58,14 @@ export class LfeaPipelineShellController {
     const model = buildLfeaSourceAcquisitionModel(engineeringState, kind);
     this.view.setActiveSourceKind(model.sourceKind);
     this.sourceAcquisition?.render(model);
+    // UI04 read-only consumers refresh from the same already-current pre-flight
+    // after every source/preparation projection. This is a presentation event;
+    // it carries no engineering values and creates no second state authority.
+    const sourceHost = this.view.getSourceHost();
+    const EventCtor = sourceHost?.ownerDocument?.defaultView?.Event ?? globalThis.Event;
+    if (sourceHost && typeof sourceHost.dispatchEvent === 'function' && typeof EventCtor === 'function') {
+      sourceHost.dispatchEvent(new EventCtor('lfea-source-presentation-refresh'));
+    }
   }
 
   setAuthoritySupplementStatus(text) {

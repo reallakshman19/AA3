@@ -68,5 +68,6 @@ await import('./lfea-ui-analysis-authorization-boundary-check.mjs');
 await import('./lfea-ui-engineering-session-integration-check.mjs');
 await import('./lfea-ui-diagnostic-presentation-check.mjs');
 await import('./lfea-ui-source-acquisition-check.mjs');
+await import('./lfea-ui-model-review-check.mjs');
 
 console.log(JSON.stringify({ check: 'lfea-pipeline-step-guidance', status: 'PASS', steps: LFEA_PIPELINE_STEPS.length }));

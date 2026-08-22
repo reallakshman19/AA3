@@ -41,6 +41,7 @@ export {
   EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS,
   EMP1_WORKBENCH_EXECUTION_CURRENTNESS,
   EMP1_WORKBENCH_PRODUCT_EXECUTION_SCHEMA,
+  EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED,
   EMP1_WORKBENCH_RUN_INPUT_SCHEMA,
   classifyEmp1WorkbenchExecutionCurrentness,
   emp1WorkbenchRunInputHash,
@@ -203,6 +204,7 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
       routeRegistryRegistered: routeAuthority.routeRegistryRegistered,
       routeRegistryEngineeringUseAuthorized: routeAuthority.routeRegistryEngineeringUseAuthorized,
       routeSuspensionReasons,
+      routeAuthorityHash: routeAuthority.routeAuthorityHash,
       routeAuthoritySnapshot: routeAuthority.snapshot,
       globalEmp1CRouteAuthority: false,
       codeComplianceProduced: false,
@@ -265,6 +267,7 @@ export function currentEmp1WorkbenchRouteAuthority() {
     routeRegistryRegistered,
     routeRegistryEngineeringUseAuthorized,
     reasons,
+    routeAuthorityHash: snapshot.semanticHash,
     snapshot,
   });
 }
@@ -291,6 +294,9 @@ function retainHistoricalLocalCorrelation(previous) {
       schema: EMP1_WORKBENCH_RETAINED_C_EVIDENCE_SCHEMA,
       sourceHash: previous.sourceHash ?? null,
       inputHashes: structuredClone(previous.inputHashes ?? null),
+      routeAuthorityHash: previous.authority.routeAuthorityHash
+        ?? previous.authority.routeAuthoritySnapshot?.semanticHash
+        ?? null,
       authoritySnapshot: structuredClone(previous.authority.routeAuthoritySnapshot ?? null),
       localCorrelation: structuredClone(previous.result.localCorrelation),
     };
@@ -318,6 +324,7 @@ function suspendedLocalCorrelation(preparedSource, routeAuthority) {
     engineeringUseAuthorized: false,
     productionRouteAuthority: false,
     globalEmp1CRouteAuthority: false,
+    routeAuthorityHash: routeAuthority.routeAuthorityHash,
     routeSuspensionReasons: routeAuthority.reasons,
     preparedSourceCustody,
     preparedApplicabilitySourceAuthority,

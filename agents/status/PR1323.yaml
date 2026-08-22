@@ -4,7 +4,7 @@ pr_or_wip: PR1323
 mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
 workstream: ISSUE1321_LOAD_CALC
 branch: agent/issue-1321-load-calc-effective-values
-pr_head: b90adda0f275636426293ad4a30a6346a57373c0
+pr_head: bef97d453d0044918bdb0bf5008bc0fa053dd199
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,22 +12,22 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1323_workreport.md
-report_basis_head: b90adda0f275636426293ad4a30a6346a57373c0
+report_basis_head: bef97d453d0044918bdb0bf5008bc0fa053dd199
 appendix_a_status: CURRENT
-grounding_epoch: GE-008
-current_stage: STACK_7_ZERO_ROUTINE_BLOCKER_GRAVITY_BOOTSTRAP_AND_LEDGER_READINESS_SOURCE_INTEGRATED
-blocker: EXACT_HEAD_LOAD_CALC_NODE_BROWSER_QUALIFICATION_NOT_OBSERVED_AND_FULL_ISSUE1321_CONFIGURABLE_FAMILY_ACCEPTANCE_OPEN
-highest_risk: Wider Issue #1321 method/scenario/contact/mass-composition families remain to be audited against active consumers; V3-V8 remain independent Package-5 authorities outside the guarded V1/V2 chain.
+grounding_epoch: GE-009
+current_stage: STACK_8_LEDGER_KERNEL_READINESS_CONTAINED_AND_SOURCE_BASIS_FAIL_CLOSED
+blocker: EXACT_HEAD_LOAD_CALC_NODE_BROWSER_QUALIFICATION_NOT_OBSERVED_AND_ACTIVE_FILL_MASS_COMPOSITION_OUTPUT_CONVENTION_ACCEPTANCE_OPEN
+highest_risk: Contract-only Issue #1321 policies must not be presented as implemented mechanics; fluid fill/mass composition and output/sign convention authority remain open, while V3-V8 remain independent Package-5 authorities.
 dependencies:
   - Issue #1321 exact effective-value precedence
   - LOAD_CALC_STANDARD_DEFAULTS_V1 conservative topology/equilibrium policy
-  - non-fea-common-enriched-effective-default-authoring/v1
   - non-fea-effective-value-resolution-ledger/v1
   - authorized-empirical-effective-value-ledger/v1
   - authorized-empirical-effective-execution-projection/v1
   - authorized-empirical-effective-support-load-execution/v1
   - authorized-empirical-source-axis-binding/v1
   - project-data authorizedGravityLoads workflow
+  - evidence-driven six-map kernel validation boundary
   - support-load-static-accounting/v1
-exact_next_action: Build the remaining Issue #1321 active-consumer acceptance matrix, starting with gravity vector/sign/output conventions and mass/fill composition; implement consumed settings only and keep unsupported mechanics explicit.
+exact_next_action: Design traceable fluid fill and component mass-composition consumption without falsifying raw density provenance; then reconcile support DEFAULT capability and output/sign convention authority.
 last_updated: 2026-08-22T19:38:00+05:30

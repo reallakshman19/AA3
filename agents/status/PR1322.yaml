@@ -6,7 +6,8 @@ mission: >-
   in one long-lived PR while preserving exact numerical/pre-flight authority.
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
-pr_head: 0bb07da0bd321c90d70d9506f9355a27a0ff0aed
+report_basis_head: 2c83b505d87523d34d27147ec1cdcf909277357a
+pr_head_last_observed: 2c83b505d87523d34d27147ec1cdcf909277357a
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -14,21 +15,23 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1322_workreport.md
-report_head: 0bb07da0bd321c90d70d9506f9355a27a0ff0aed
-appendix_a_status: CURRENT
-grounding_epoch: GE-003
-current_stage: UI01_ENGINEERING_SESSION
-last_completed_stage: UI00_NUMERICAL_CUSTODY
+appendix_a_status: CURRENT_FOR_UI02
+grounding_epoch: GE-004
+current_stage: UI02_DIAGNOSTIC_PRESENTATION
+last_completed_stage: UI01_ENGINEERING_SESSION
 blocker: NONE
+coordination: SAFE_WITH_DESIGN_LINEAGE
 validation:
   ui00_source_artifact: PASS
   ui00_execution: NOT_RUN
-  ui00_workflow_runs_observed: 0
+  ui01_source_diff: PASS
+  ui01_relevant_execution: NOT_RUN
+  unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
 highest_risk: >-
-  UI01 presentation/session state must not duplicate solve authorization or
-  native execution currentness and must not retain stale downstream state.
+  UI02 presentation normalization must preserve governed finding identity and
+  disposition/status exactly and must not infer engineering meaning from free text.
 exact_next_action: >-
-  Implement the smallest pure LFEA engineering-session state machine and focused
-  check, then route main.js active pre-flight/case dispatch by explicit source identity
-  without touching any UI00-frozen authority file.
-last_updated: 2026-08-22T12:14:00+05:30
+  Inspect InputXML and ACCDB governed diagnostic shapes, implement a pure immutable
+  presentation adapter under src/workspace/lfea-diagnostics, add row-for-row parity
+  and unknown-token fail-closed checks, then integrate views without touching frozen authority files.
+last_updated: 2026-08-22T14:11:00+05:30

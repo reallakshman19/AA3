@@ -23,6 +23,9 @@ files:
     - src/workspace/lfea-pipeline-stagedjson-input-panel.js
     - scripts/lfea-pipeline-step-guidance-check.mjs
     - scripts/lfea-ui-numerical-custody-check.mjs
+    - scripts/lfea-ui-engineering-session-check.mjs
+    - scripts/lfea-ui-analysis-authorization-boundary-check.mjs
+    - scripts/lfea-ui-engineering-session-integration-check.mjs
     - e2e/lfea-unified-pipeline-shell.spec.js
   prefixes:
     - src/workspace/lfea-session/
@@ -54,9 +57,13 @@ frozen_ui00_files:
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
+    basis: design and agent artifacts only; no production-path overlap
+  PR1323:
+    classification: SAFE
     basis: >-
-      Design/agent artifacts only, no production claim. Current owner direction
-      supersedes its source-specific Error Check IA.
-last_overlap_check: GE-003
-last_verified_head: 0bb07da0bd321c90d70d9506f9355a27a0ff0aed
-last_updated: 2026-08-22T12:14:00+05:30
+      Current changed paths are Load Calc/non-FEA/project-data plus PR1323 agent
+      artifacts; no lfea-diagnostics/session/InputXML-diagnostics/ACCDB-view overlap.
+last_overlap_check: GE-004
+last_verified_head: 2c83b505d87523d34d27147ec1cdcf909277357a
+current_stage: UI02_DIAGNOSTIC_PRESENTATION
+last_updated: 2026-08-22T14:11:00+05:30

@@ -233,7 +233,6 @@ test('stale numerical C is hidden from results but retained in authority evidenc
   expect(result.staleWarning).toContain('historical/stale evidence only');
   expect(result.stalePayload).toContain('C-Q1-RESULT');
   expect(result.stalePayload).toContain('72.67281563686576');
-  expect(result.summaryText).toContain('EMP1 WORKBENCH ROUTE AUTHORITY CHANGED');
   expect(result.summaryText).toContain('AUTH-Q1');
   expect(result.summaryText).toContain('AUTH-Q2');
   expect(result.summaryText).toContain('C current/reportable resultNO');

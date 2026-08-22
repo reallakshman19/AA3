@@ -8,6 +8,7 @@ files:
     - src/workspace/project-data/non-fea-product-engineering-default-profile.js
     - src/workspace/project-data/non-fea-field-registry.js
     - src/workspace/project-data/project-data-fields.js
+    - src/workspace/project-data/project-data-contract.js
     - src/workspace/project-data/non-fea-configured-default-provider.js
     - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
     - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
@@ -77,14 +78,15 @@ authority_domains:
   - LOAD_CALC_PRODUCT_DEFAULTS
   - LOAD_CALC_CONSERVATIVE_TOPOLOGY_BOOTSTRAP
   - LOAD_CALC_LEDGER_AWARE_READINESS
+  - LOAD_CALC_LEDGER_BOUND_KERNEL_VALIDATION
   - LOAD_CALC_PRE_READINESS_DEFAULT_AUTHORING
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_SUPPORT_GUARD
-  - AUTHORIZED_EMPIRICAL_SOURCE_AXIS
+  - AUTHORIZED_EMPIRICAL_SOURCE_BASIS_Z_UP_MM
   - EMPIRICAL_EXECUTION_GENERATION_BOUNDARY
   - GRAVITY_SUPPORT_LOAD_ACCOUNTING
   - EMPIRICAL_METHOD_AUTO_SELECTION
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: b90adda0f275636426293ad4a30a6346a57373c0
+last_verified_head: bef97d453d0044918bdb0bf5008bc0fa053dd199

@@ -227,7 +227,11 @@ function renderAuthorityEvidence(root, cState) {
   const history = Array.isArray(cState.retainedHistoricalEvidence)
     ? cState.retainedHistoricalEvidence
     : [];
-  if (!current && !execution && history.length === 0) return null;
+  const staleRetainedExecution = cState.retainedResultAvailable === true
+    && cState.currentResultAvailable !== true
+    ? cState.currentExecutionEvidence ?? null
+    : null;
+  if (!current && !execution && history.length === 0 && !staleRetainedExecution) return null;
 
   const details = element(root, 'details', 'lafea-workbench__custody-details');
   details.dataset.role = 'emp1-c-authority-evidence';
@@ -249,6 +253,16 @@ function renderAuthorityEvidence(root, cState) {
     ['Current dataset hash', current?.registry?.method?.datasetHash],
     ['Retained historical C records', history.length],
   ]));
+
+  if (staleRetainedExecution) {
+    const warning = element(root, 'p', 'lafea-workbench__authority',
+      'The retained C execution below is historical/stale evidence only. It is explicitly excluded from the current/reportable result projection.');
+    warning.dataset.role = 'emp1-c-retained-stale-result-warning';
+    const payload = element(root, 'pre', 'lafea-workbench__evidence-json',
+      JSON.stringify(staleRetainedExecution, null, 2));
+    payload.dataset.role = 'emp1-c-retained-stale-result-payload';
+    details.append(warning, payload);
+  }
 
   if (history.length > 0) {
     const warning = element(root, 'p', 'lafea-workbench__authority',

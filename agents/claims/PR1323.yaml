@@ -25,6 +25,8 @@ files:
     - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
     - src/workspace/engineering-loads/authorized-empirical-effective-support-load-execution.js
     - src/workspace/engineering-loads/authorized-empirical-source-axis-binding.js
+    - src/workspace/engineering-loads/authorized-empirical-support-capability-binding.js
+    - src/workspace/engineering-loads/authorized-empirical-gravity-convention-binding.js
     - src/workspace/engineering-loads/authorized-empirical-load-input.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
@@ -45,6 +47,8 @@ files:
     - scripts/non-fea-fluid-fill-policy-check.mjs
     - scripts/authorized-empirical-fluid-mass-composition-check.mjs
     - scripts/authorized-empirical-component-mass-composition-check.mjs
+    - scripts/authorized-empirical-support-capability-default-check.mjs
+    - scripts/authorized-empirical-gravity-convention-binding-check.mjs
     - scripts/non-fea-gravity-product-default-bootstrap-check.mjs
     - scripts/non-fea-product-engineering-default-profile-check.mjs
     - scripts/non-fea-effective-value-resolver-check.mjs
@@ -87,6 +91,8 @@ authority_domains:
   - LOAD_CALC_PRE_READINESS_DEFAULT_AUTHORING
   - LOAD_CALC_FLUID_FILL_MASS_COMPOSITION
   - LOAD_CALC_COMPONENT_DRY_MASS_COMPOSITION
+  - LOAD_CALC_SUPPORT_DEFAULT_CAPABILITY_BINDING
+  - LOAD_CALC_GRAVITY_OUTPUT_CONVENTION_BINDING
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_SUPPORT_GUARD
   - AUTHORIZED_EMPIRICAL_SOURCE_BASIS_Z_UP_MM
@@ -96,4 +102,4 @@ authority_domains:
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: 63af300790d45539e5386971f7d9385740a0b855
+last_verified_head: 1f07cdbd3e3646ec5ba3e8e7bdcbc9883e8e6899

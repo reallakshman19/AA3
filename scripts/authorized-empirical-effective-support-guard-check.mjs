@@ -10,6 +10,9 @@ import {
   AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION_PROJECTION_SCHEMA,
 } from '../src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js';
 import {
+  IMPLEMENTED_GRAVITY_CONVENTIONS,
+} from '../src/workspace/engineering-loads/authorized-empirical-gravity-convention-binding.js';
+import {
   requireAuthorizedEmpiricalEffectiveSupportProjection,
 } from '../src/workspace/engineering-loads/authorized-empirical-effective-support-load-execution.js';
 
@@ -48,6 +51,14 @@ expectCode(
   'EMPIRICAL_SOURCE_LENGTH_UNIT_UNSUPPORTED',
 );
 
+const wrongForceConvention = mutateProjection(valid, (profile) => {
+  profile.loadCalculation.forceOutputConvention.value = 'SIGNED_SOURCE_AXIS_FORCE';
+});
+expectCode(
+  () => requireAuthorizedEmpiricalEffectiveSupportProjection(wrongForceConvention),
+  'EMPIRICAL_GRAVITY_FORCE_OUTPUT_CONVENTION_UNSUPPORTED',
+);
+
 expectCode(
   () => requireAuthorizedEmpiricalEffectiveSupportProjection({
     ...valid,
@@ -73,6 +84,17 @@ for (const [label, source] of [['V1', v1Source], ['V2', v2Source]]) {
     `${label} legacy ledger-less compatibility path was unexpectedly removed`);
 }
 
+const effectiveSupportSource = await readFile(
+  new URL('../src/workspace/engineering-loads/authorized-empirical-effective-support-load-execution.js', import.meta.url),
+  'utf8',
+);
+assert.match(effectiveSupportSource, /bindAuthorizedEmpiricalSupportCapabilities/u,
+  'ledger support execution no longer binds governed support DEFAULT capability');
+assert.match(effectiveSupportSource, /requireAuthorizedEmpiricalGravityConventions/u,
+  'ledger support execution no longer gates gravity conventions before statics');
+assert.match(effectiveSupportSource, /bindAuthorizedEmpiricalGravityConventions/u,
+  'ledger support execution no longer binds gravity convention authority after statics');
+
 console.log(JSON.stringify({
   status: 'PASS',
   validLedgerProjectionAccepted: true,
@@ -80,7 +102,10 @@ console.log(JSON.stringify({
   unboundProjectedEvidenceRejected: true,
   unsupportedAxisRejected: true,
   unsupportedLengthUnitRejected: true,
+  unsupportedForceConventionRejected: true,
   staleProjectionHashRejected: true,
+  supportDefaultBindingPresent: true,
+  gravityConventionGatePresent: true,
   v1LedgerPathGuarded: true,
   v2LedgerPathGuarded: true,
   ledgerlessCompatibilityPathRetained: true,
@@ -109,6 +134,10 @@ function makeProjection() {
     source: 'FIXTURE_SOURCE_BASIS',
     authority: 'SOURCE_EXPLICIT',
   };
+  const policyEvidence = {
+    source: 'FIXTURE_GRAVITY_POLICY',
+    authority: 'PROJECT_POLICY',
+  };
   const profile = {
     schema: 'project-data-profile/v1',
     projectId: 'PROJECT-GUARD-FIXTURE',
@@ -125,6 +154,10 @@ function makeProjection() {
       hydroFluidDensitiesKgPerM3: createEvidenceValue({ L1: 1000 }, evidence, true),
       insulationDensitiesKgPerM3: createEvidenceValue({ I1: 160 }, evidence, true),
       componentWeightsKg: createEvidenceValue({ C1: 12.5 }, evidence, true),
+      forceOutputConvention: createEvidenceValue(IMPLEMENTED_GRAVITY_CONVENTIONS.forceOutputConvention, policyEvidence, true),
+      momentOutputConvention: createEvidenceValue(IMPLEMENTED_GRAVITY_CONVENTIONS.momentOutputConvention, policyEvidence, true),
+      analysisBasis: createEvidenceValue(IMPLEMENTED_GRAVITY_CONVENTIONS.analysisBasis, policyEvidence, true),
+      resultSignConvention: createEvidenceValue(IMPLEMENTED_GRAVITY_CONVENTIONS.resultSignConvention, policyEvidence, true),
     },
   };
   const material = {

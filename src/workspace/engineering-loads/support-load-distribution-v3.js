@@ -19,6 +19,24 @@ export const SUPPORT_LOAD_DISTRIBUTION_COG_SCHEMA = 'support-load-distribution/v
 export const EMPIRICAL_LOAD_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V2';
 export const EMPIRICAL_LOAD_COG_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V3_COG';
 
+const FATAL_EXCLUSION_CODES = new Set([
+  'INVALID_PIPE_SECTION',
+  'INVALID_PIPE_INSIDE_DIAMETER',
+  'MISSING_ROUTE_CHAINAGE',
+  'EMPIRICAL_COMPONENT_LOAD_AUTHORITY_RECORD_MISSING',
+  'EMPIRICAL_COMPONENT_LOAD_AUTHORITY_BLOCKED',
+  'EMPIRICAL_COMPONENT_COG_CHAINAGE_INVALID',
+  'EMPIRICAL_COMPONENT_COG_OFF_ROUTE',
+  'EMPIRICAL_COMPONENT_COG_ROUTE_AMBIGUOUS',
+  'EMPIRICAL_COMPONENT_COG_INVALID',
+  'EMPIRICAL_COMPONENT_COG_UNIT_UNSUPPORTED',
+  'EMPIRICAL_COMPONENT_EXPLICIT_MOMENT_INVALID',
+  'EMPIRICAL_COMPONENT_EXPLICIT_MOMENT_UNSUPPORTED',
+  'EMPIRICAL_COMPONENT_ROUTE_MISSING',
+  'EMPIRICAL_COMPONENT_ROUTE_AMBIGUOUS',
+  'EMPIRICAL_COMPONENT_LOAD_IDENTITY_MISSING',
+]);
+
 const supportLoadPerformanceMetrics = {
   executionIndexBuilds: 0,
   entityIndexEntries: 0,
@@ -50,8 +68,8 @@ export function resetSupportLoadPerformanceMetrics() {
  * discarded merely because the route has fewer than two qualified vertical
  * supports: overhangs retain their force plus signed cantilever/member-transfer
  * moment, and zero-support loads remain explicit unallocated force/first moment.
- * Missing/invalid inputs remain visible exceptions and failed accounting remains
- * fail-closed.
+ * Missing defaultable inputs remain visible exceptions. Invalid geometry,
+ * unresolved application-point authority, and failed accounting remain fail-closed.
  */
 export function calculateSupportLoadDistribution(input) {
   return calculateDistribution(input, {
@@ -795,11 +813,18 @@ function completenessAudit(state, status) {
 }
 
 function caseStatus(state) {
-  if (state.blockers.length > 0) return 'FAILED';
+  if (state.blockers.length > 0 || state.excludedInputs.some(isFatalExclusion)) return 'FAILED';
   if (state.excludedInputs.length > 0 || state.exceptions.length > 0) {
     return 'CALCULATED_WITH_EXCEPTIONS';
   }
   return 'CALCULATED';
+}
+
+function isFatalExclusion(row) {
+  const code = stringValue(row?.code);
+  return FATAL_EXCLUSION_CODES.has(code)
+    || code.startsWith('EMPIRICAL_COMPONENT_COG_')
+    || code.startsWith('EMPIRICAL_COMPONENT_EXPLICIT_MOMENT_');
 }
 
 function aggregateDistributionStatus(cases) {

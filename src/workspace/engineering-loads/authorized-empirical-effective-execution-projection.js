@@ -3,6 +3,9 @@ import { deepFreeze } from '../../core/shared-piping-model/immutable.js';
 import { clonePlain, freezeDeep } from '../dataset-utils.js';
 import { createEvidenceValue } from '../project-data/project-data-contract.js';
 import {
+  resolveNonFeaFluidFillPolicy,
+} from '../project-data/non-fea-fluid-fill-policy.js';
+import {
   findAuthorizedEmpiricalEffectiveValue,
   requireAuthorizedEmpiricalEffectiveValueLedger,
 } from './authorized-empirical-effective-value-ledger.js';
@@ -18,12 +21,20 @@ const LINE_FIELDS = Object.freeze([
   ['HYDRO_FLUID_DENSITY', 'kg/m3'],
   ['INSULATION_THICKNESS', 'mm'],
 ]);
+const FLUID_COMPOSITION_RULE = 'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION';
 
 /**
  * Projects target-level effective values into the legacy gravity engine's exact
  * selector maps. No DEFAULT key is emitted. Per-line material/insulation and
  * per-component mass selectors are synthetic and execution-local, preventing
  * selector collisions from erasing target-level authority.
+ *
+ * Raw OPE/HYD fluid density remains authoritative in the effective-value
+ * ledger. The projected density consumed by the scalar gravity kernel is an
+ * explicitly derived bulk density, rho_bulk = rho_raw * fillFraction, with a
+ * separate receipt binding the raw-density row and the governed fill policy.
+ * This makes partial-fill mass auditable without masquerading the derived value
+ * as source/master density.
  *
  * The supplied dataset/profile are cloned; source objects are never mutated.
  */
@@ -61,6 +72,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
   const weights = {};
   const lineMappings = [];
   const componentMappings = [];
+  const fluidCompositionRows = [];
   const projectedDataset = clonePlain(dataset);
   const projectedProfile = clonePlain(profile);
 
@@ -75,6 +87,30 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
       : requiredEffective(ledger, 'LINE', binding.targetId, 'INSULATION_DENSITY', 'kg/m3');
     validateSection(values.PIPE_OUTER_DIAMETER.value, values.PIPE_WALL_THICKNESS.value, binding.targetId);
 
+    const operatingFill = resolveNonFeaFluidFillPolicy({
+      profile,
+      loadCaseId: 'OPE',
+      lineKey: binding.lineKey,
+    });
+    const hydroFill = resolveNonFeaFluidFillPolicy({
+      profile,
+      loadCaseId: 'HYD',
+      lineKey: binding.lineKey,
+    });
+    const operatingComposition = composeFluidDensity(
+      binding,
+      'OPE',
+      values.OPERATING_FLUID_DENSITY,
+      operatingFill,
+    );
+    const hydroComposition = composeFluidDensity(
+      binding,
+      'HYD',
+      values.HYDRO_FLUID_DENSITY,
+      hydroFill,
+    );
+    fluidCompositionRows.push(operatingComposition.receipt, hydroComposition.receipt);
+
     const materialSelector = `EFFECTIVE_MATERIAL:${binding.targetId}`;
     const insulationSelector = insulationThickness === 0
       ? null
@@ -87,8 +123,8 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
       insulationThicknessMm: insulationThickness,
     };
     materials[materialSelector] = values.MATERIAL_DENSITY.value;
-    operating[binding.lineKey] = values.OPERATING_FLUID_DENSITY.value;
-    hydro[binding.lineKey] = values.HYDRO_FLUID_DENSITY.value;
+    operating[binding.lineKey] = operatingComposition.projectedDensity;
+    hydro[binding.lineKey] = hydroComposition.projectedDensity;
     if (insulationSelector) insulation[insulationSelector] = insulationDensity.value;
     lineMappings.push(freezeDeep({
       targetId: binding.targetId,
@@ -98,6 +134,8 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
       selectedSemanticHashes: [
         ...Object.values(values).map((row) => row.semanticHash),
         ...(insulationDensity ? [insulationDensity.semanticHash] : []),
+        operatingFill.semanticHash,
+        hydroFill.semanticHash,
       ].sort(),
     }));
   }
@@ -134,9 +172,11 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
       originalCatalogKey: attributes.CATALOG_KEY ?? null,
       effectiveSelector: selector,
       selectedSemanticHash: weight.semanticHash,
+      massCompositionPolicy: 'COMPONENT_EXPLICIT_POINT_MASS',
     }));
   }
 
+  const orderedFluidRows = fluidCompositionRows.sort(byFluidComposition);
   const mappingMaterial = {
     schema: AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION_PROJECTION_SCHEMA,
     authorizedInputSemanticHash: authorizedInput.semanticHash,
@@ -144,6 +184,8 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
     sourceDatasetSemanticHash: semanticHash(dataset),
     lineMappings: lineMappings.sort(byTarget),
     componentMappings: componentMappings.sort(byTarget),
+    fluidCompositionRule: FLUID_COMPOSITION_RULE,
+    fluidCompositionRows: orderedFluidRows,
   };
   const projectionSemanticHash = semanticHash(mappingMaterial);
   const evidence = freezeDeep({
@@ -154,11 +196,21 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
     baselineSemanticHash: ledger.baselineSemanticHash,
     handoffSemanticHash: ledger.handoffSemanticHash,
   });
+  const operatingEvidence = freezeDeep({
+    ...evidence,
+    massCompositionRule: FLUID_COMPOSITION_RULE,
+    fluidCompositionBySelector: fluidEvidenceBySelector(orderedFluidRows, 'OPE'),
+  });
+  const hydroEvidence = freezeDeep({
+    ...evidence,
+    massCompositionRule: FLUID_COMPOSITION_RULE,
+    fluidCompositionBySelector: fluidEvidenceBySelector(orderedFluidRows, 'HYD'),
+  });
   const loadCalculation = projectedProfile.loadCalculation;
   loadCalculation.pipeSectionProperties = createEvidenceValue(sortedObject(sections), evidence, true);
   loadCalculation.materialDensitiesKgPerM3 = createEvidenceValue(sortedObject(materials), evidence, true);
-  loadCalculation.operatingFluidDensitiesKgPerM3 = createEvidenceValue(sortedObject(operating), evidence, true);
-  loadCalculation.hydroFluidDensitiesKgPerM3 = createEvidenceValue(sortedObject(hydro), evidence, true);
+  loadCalculation.operatingFluidDensitiesKgPerM3 = createEvidenceValue(sortedObject(operating), operatingEvidence, true);
+  loadCalculation.hydroFluidDensitiesKgPerM3 = createEvidenceValue(sortedObject(hydro), hydroEvidence, true);
   loadCalculation.insulationDensitiesKgPerM3 = createEvidenceValue(sortedObject(insulation), evidence, true);
   loadCalculation.componentWeightsKg = createEvidenceValue(sortedObject(weights), evidence, true);
 
@@ -176,6 +228,73 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
     dataset: frozenDataset,
     semanticHash: semanticHash(material),
   });
+}
+
+function composeFluidDensity(binding, loadCaseId, rawDensityRow, fillPolicy) {
+  const rawDensityKgPerM3 = Number(rawDensityRow.value);
+  if (!(rawDensityKgPerM3 > 0)) {
+    throw codedError(
+      `${loadCaseId} raw fluid density must be positive before fill composition.`,
+      'EMPIRICAL_EFFECTIVE_FLUID_DENSITY_INVALID',
+      { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, rawDensityKgPerM3 },
+    );
+  }
+  const bulkDensityKgPerM3 = rawDensityKgPerM3 * fillPolicy.fillFraction;
+  if (!(bulkDensityKgPerM3 > 0)) {
+    throw codedError(
+      `${loadCaseId} derived bulk density must be positive on the current legacy statics path.`,
+      'EMPIRICAL_EFFECTIVE_FLUID_BULK_DENSITY_INVALID',
+      { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, bulkDensityKgPerM3 },
+    );
+  }
+  const receiptMaterial = {
+    targetId: binding.targetId,
+    lineKey: binding.lineKey,
+    loadCaseId,
+    rule: FLUID_COMPOSITION_RULE,
+    rawDensityKgPerM3,
+    rawDensitySemanticHash: rawDensityRow.semanticHash,
+    fillFraction: fillPolicy.fillFraction,
+    phase: fillPolicy.phase,
+    fillState: fillPolicy.state,
+    fillPolicySelector: fillPolicy.selector,
+    fillPolicySemanticHash: fillPolicy.semanticHash,
+    bulkDensityKgPerM3,
+  };
+  const receipt = freezeDeep({
+    ...receiptMaterial,
+    semanticHash: semanticHash(receiptMaterial),
+  });
+  return freezeDeep({
+    projectedDensity: {
+      selected: bulkDensityKgPerM3,
+      rawDensityKgPerM3,
+      fillFraction: fillPolicy.fillFraction,
+      phase: fillPolicy.phase,
+      fillState: fillPolicy.state,
+      rawDensitySemanticHash: rawDensityRow.semanticHash,
+      fillPolicySemanticHash: fillPolicy.semanticHash,
+      compositionSemanticHash: receipt.semanticHash,
+    },
+    receipt,
+  });
+}
+
+function fluidEvidenceBySelector(rows, loadCaseId) {
+  return sortedObject(Object.fromEntries(rows
+    .filter((row) => row.loadCaseId === loadCaseId)
+    .map((row) => [row.lineKey, {
+      rule: row.rule,
+      rawDensityKgPerM3: row.rawDensityKgPerM3,
+      rawDensitySemanticHash: row.rawDensitySemanticHash,
+      fillFraction: row.fillFraction,
+      phase: row.phase,
+      fillState: row.fillState,
+      fillPolicySelector: row.fillPolicySelector,
+      fillPolicySemanticHash: row.fillPolicySemanticHash,
+      bulkDensityKgPerM3: row.bulkDensityKgPerM3,
+      compositionSemanticHash: row.semanticHash,
+    }])));
 }
 
 function requiredEffective(ledger, targetKind, targetId, fieldId, unit) {
@@ -246,6 +365,12 @@ function sortedObject(value) {
 
 function byTarget(left, right) {
   return left.targetId < right.targetId ? -1 : left.targetId > right.targetId ? 1 : 0;
+}
+
+function byFluidComposition(left, right) {
+  const a = `${left.targetId}|${left.loadCaseId}`;
+  const b = `${right.targetId}|${right.loadCaseId}`;
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 function codedError(message, code, details = null) {

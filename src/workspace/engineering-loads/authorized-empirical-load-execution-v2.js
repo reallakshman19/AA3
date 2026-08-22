@@ -199,8 +199,12 @@ function summarize(distribution) {
   const cases = Array.isArray(distribution.loadCases) ? distribution.loadCases : [];
   return {
     loadCaseCount: cases.length,
-    calculatedCaseCount: cases.filter((row) => row.status === 'CALCULATED').length,
-    blockedCaseCount: cases.filter((row) => row.status === 'BLOCKED').length,
+    calculatedCaseCount: cases.filter((row) => (
+      row.status === 'CALCULATED' || row.status === 'CALCULATED_WITH_EXCEPTIONS'
+    )).length,
+    blockedCaseCount: cases.filter((row) => (
+      row.status === 'BLOCKED' || row.status === 'FAILED'
+    )).length,
     contributionCount: cases.reduce((total, row) => (
       total + (Array.isArray(row.contributionLedger) ? row.contributionLedger.length : 0)
     ), 0),
@@ -314,9 +318,10 @@ function nonnegativeInteger(value, label) {
 }
 
 function executionStatus(value) {
-  if (!['CALCULATED', 'BLOCKED'].includes(value)) {
+  const allowed = ['CALCULATED', 'CALCULATED_WITH_EXCEPTIONS', 'FAILED', 'BLOCKED'];
+  if (!allowed.includes(value)) {
     fail(
-      'Execution status must be CALCULATED or BLOCKED.',
+      'Execution status must be CALCULATED, CALCULATED_WITH_EXCEPTIONS, FAILED, or legacy BLOCKED.',
       'EMPIRICAL_EXECUTION_V2_STATUS_INVALID',
     );
   }

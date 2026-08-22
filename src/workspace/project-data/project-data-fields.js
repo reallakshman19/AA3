@@ -101,6 +101,7 @@ export const PROJECT_DATA_REQUIREMENTS = Object.freeze({
     'loadCalculation.gravityMPerS2', 'loadCalculation.loadFactor',
     'loadCalculation.equilibriumTolerances',
     'loadCalculation.activeLoadCases',
+    'thermoMechanicalBasis.fluidPhaseAndFillState',
   ]),
   editing: Object.freeze([
     'editing.snapToleranceMm', 'editing.connectionToleranceMm',
@@ -125,6 +126,7 @@ export const PROJECT_DATA_REQUIREMENTS = Object.freeze({
     'loadCalculation.hydroFluidDensitiesKgPerM3',
     'loadCalculation.insulationDensitiesKgPerM3', 'loadCalculation.componentWeightsKg',
     'loadCalculation.equilibriumTolerances', 'loadCalculation.activeLoadCases',
+    'thermoMechanicalBasis.fluidPhaseAndFillState',
   ]),
   nonFeaPolicy: Object.freeze([
     'thermoMechanicalBasis.installationTemperatureC',

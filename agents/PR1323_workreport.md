@@ -21,8 +21,8 @@ SOURCE_TASK: Issue #1321
 PR_OR_WIP: PR1323
 BRANCH: agent/issue-1321-load-calc-effective-values
 
-PR_HEAD_OBSERVED: ee3782188037604723df1d8e6ab881670714cdad
-REPORT_BASIS_HEAD: a222e18c38bd20fb55c1c6c95f724f40e40e8532
+PR_HEAD_OBSERVED: 24400f95cd022798aaa358b616e561541e5cb355
+REPORT_BASIS_HEAD: c177d048934e212eb6b2984eb07d1d2ee9dc4c97
 MAIN_HEAD_LAST_CHECKED: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 MERGE_BASE: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 REPORT_SYNC: CURRENT
@@ -31,225 +31,264 @@ APPENDIX_A_STATUS: CURRENT
 GROUNDING_EPOCH: GE-001
 CURRENT_TAKEOVER: NONE — new owner-authorized workstream
 
-CURRENT_STAGE: PLAN / FIRST PRODUCTION SLICE
-LAST_COMPLETED_STAGE: BOOTSTRAP + COORDINATION CHECK + PR ALLOCATION
+CURRENT_STAGE: AUTO METHOD-SELECTION DESIGN / IMPLEMENTATION
+LAST_COMPLETED_STAGE: PRODUCT DEFAULT AUTHORITY + COMMON-INPUT INTEGRATION
 CURRENT_BLOCKER: NONE
-HIGHEST_RISK: reducing routine blockers must not invent support reactions, overwrite source/master authority, or hide force/moment imbalance
-LAST_DURABLE_CHECKPOINT: draft PR #1323 allocated from grounded branch
+HIGHEST_RISK: zero-routine-blocker behavior must not invent support reactions, erase eccentric moments, or let lower authority overwrite governed data
+LAST_DURABLE_CHECKPOINT: product-default authority slice + status/claim records
 
-EXACT_NEXT_ACTION: implement the canonical effective-field authority seam and bind the first production consumer without creating a second resolver.
+EXACT_NEXT_ACTION: add deterministic gravity AUTO selection that separates method applicability from input availability and preserves restricted-domain authority.
 ```
 
 ## 2. Handover in 60 Seconds
 
 ### What is now true
-Issue #1321 is the owner-approved mission. Live `main` was grounded at `a222e18c38bd20fb55c1c6c95f724f40e40e8532`. Draft PR #1323 is the single carrier and all coherent increments must stack here. The repository already has a common Non-FEA resolution ledger and configured-default provider, but `support-load-distribution-v3.js` still re-reads raw Project Data and owns an independent density/default path.
+Draft PR #1323 is the single carrier for Issue #1321. A versioned `LOAD_CALC_STANDARD_DEFAULTS_V1` provider now creates an **ephemeral effective Project Data profile**: it fills only empty Project Data fields, records `PRODUCT_DEFAULT`, default ID/basis/version/per-default semantic hash, and never mutates or overwrites a populated Project Data entry. The real common-input runtime now consumes this effective profile for load-case authority, configured defaults, qualification lookup, checker input and Project Data origin/hash binding.
 
 ### What is currently being worked on
-First production slice: canonical effective-field authority including visible product defaults, single winning-value selection, hash-bound evidence, and downstream binding.
+Deterministic `AUTO` method selection for gravity calculations, with applicability kept separate from input availability and with V3→V2 fallback recorded rather than silently changing method.
 
 ### What remains unfinished
-Support-load partial accounting/overhang custody, `CALCULATED_WITH_EXCEPTIONS`, deterministic AUTO V3→V2 selection, restricted-domain handling for Beam/Contact/restraint methods, UI/default visibility, broader configurable registry, and exact-head qualification.
+- `PRODUCT_DEFAULT` is not yet a first-class entity-field authority in `non-fea-field-registry.js` / `core/non-fea-enrichment`; current work is a project-level effective layer.
+- Current entity resolver precedence still differs from Issue #1321's requested precedence and must be reconciled explicitly.
+- `support-load-distribution-v3.js` still independently reads raw Project Data for section/mass/density and owns a local density DEFAULT path.
+- support-load partial accounting, overhang transfer, unallocated-force/moment buckets and `CALCULATED_WITH_EXCEPTIONS` remain unimplemented.
+- UI/default visibility beyond the common-input origin/evidence is incomplete.
+- runtime/build/browser/exact-head qualification is not yet observed.
 
 ### What has been proven
-SOURCE_INSPECTION: current common input already binds resolution-ledger/default-usage hashes and staleness; support distribution still has local raw Project Data/default selection.
+SOURCE_INSPECTION at `c177d048...` shows: product defaults fill only empty evidence fields; shadowed defaults are reported but not used; each default has its own semantic hash; changing a selected default changes product-profile/effective-profile/provider hashes; the common-input runtime consumes the effective profile; no universal OD/wall/component mass table was introduced.
 
 ### What has NOT been proven / NOT_RUN
-No production code change has yet been executed. Focused Node checks, build, browser path, CI, numerical 18 kN force/moment benchmark, and stale-authorization falsifiers are NOT_RUN.
+The new focused Node script and the aggregate Non-FEA suite are wired but execution has not been observed. Build/browser tests are NOT_RUN. The analytical 18 kN support-accounting case is NOT_RUN because mechanics have not yet been changed. The only workflows observed on the first production head were unrelated EMP.1 jobs; their failure is not evidence for or against this Load Calc slice.
 
 ### What must not be assumed
-`PRODUCT_DEFAULT` must never masquerade as source/master evidence. Missing CoG may permit midpoint/V2 fallback; known off-route eccentricity or explicit moment may not be erased by fallback. A nearby support is not automatically a qualified load path.
+A `PRODUCT_DEFAULT` is an assumption, not source/master evidence. Missing CoG may permit an explicit midpoint/V2 fallback; known off-route CoG/eccentricity or explicit moment cannot be erased by fallback. A nearby support is not a qualified load path by proximity alone.
 
 ### Highest-risk remaining item
-Preserving mechanical force/moment custody while converting global BLOCKED behavior into partial engineering output.
+Force and moment custody when an otherwise valid route contains one-support overhang or unsupported branch load.
 
 ### Exact next action
-Create the effective-field/default authority seam and one production integration, then validate before proceeding to load allocation mechanics.
+Implement and source-qualify the AUTO selection ledger; then checkpoint before touching support reaction mechanics.
 
 ## 3. Repository Ground Truth
 
-- Grounding timestamp: 2026-08-22.
-- Default/base branch: `main`.
-- Main/base SHA: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
-- Working branch: `agent/issue-1321-load-calc-effective-values`.
-- PR: #1323, OPEN, DRAFT at allocation.
-- PR allocation HEAD observed: `ee3782188037604723df1d8e6ab881670714cdad`.
-- Issue #1321: open; no comments observed.
-- `agents/MASTER_INDEX.md`: not present on live main.
-- Open-PR inspection: older drafts exist in adjacent authority/build domains; no live exact-file claim was found for the intended support-load/effective-field files.
-- Coordination classification: `COORDINATION_REQUIRED` for adjacent authority semantics, no observed exact-file blocker.
-- Base drift: zero at GE-001.
+- GE-001 grounding date: 2026-08-22.
+- Base/main at grounding: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
+- Branch: `agent/issue-1321-load-calc-effective-values`.
+- PR: #1323, OPEN, DRAFT.
+- PR production basis HEAD: `c177d048934e212eb6b2984eb07d1d2ee9dc4c97`.
+- Later commits through `24400f95...` are recovery metadata only; report remains CURRENT under continuous-handover freshness rules.
+- Issue #1321 had no comments at GE-001.
+- `agents/MASTER_INDEX.md` was not present on live main.
+- `agents/status/PR1323.yaml` and `agents/claims/PR1323.yaml` now exist on the PR branch.
+- Older open drafts exist in adjacent authority/build domains; no exact-file hard collision was observed. Coordination state remains `COORDINATION_REQUIRED` because authority semantics overlap broadly.
+- No `.github/workflows/*` files have been changed.
 
 ## 4. Mission / Scope / Acceptance
 
-Mission: implement Issue #1321 as one continuously stacked PR so structurally readable piping can normally calculate with explicit, configurable, auditable assumptions rather than routine workflow blockers.
+Mission: implement Issue #1321 in one continuously stacked PR so a structurally readable piping model can normally calculate with visible, configurable assumptions rather than routine workflow blockers, while retaining fail-closed behavior for invalid or mechanically indefensible states.
 
-Engineering consequence: routine missing data may become visible assumptions, but invalid geometry/values, unresolved ownership, lost load, failed equilibrium, or unsupported mechanics remain fail-closed.
-
-Approved scope includes:
+Approved scope:
 1. one effective-value resolution authority;
-2. versioned `PRODUCT_DEFAULT` evidence below higher source/master/project authority;
-3. immutable effective/default ledgers and semantic-hash propagation;
-4. support-load `CALCULATED | CALCULATED_WITH_EXCEPTIONS | FAILED` behavior with unallocated/boundary-transfer custody;
-5. deterministic AUTO selection with method applicability separated from input availability;
-6. UI/evidence visibility for defaults/fallbacks/coverage;
+2. versioned visible `PRODUCT_DEFAULT` below governed authority;
+3. immutable effective/default evidence and semantic-hash propagation;
+4. `CALCULATED | CALCULATED_WITH_EXCEPTIONS | FAILED` support-load semantics with explicit load custody;
+5. deterministic AUTO selection with applicability separate from availability;
+6. UI/evidence visibility;
 7. focused and independent mechanics validation.
 
-Non-goals: no hidden universal OD/wall/component tables; no response fitting; no nearest-support invention for unsupported branches; no workflow-file modification without owner authorization; no merge without explicit owner authorization.
+Explicit non-goals: hidden universal pipe/component tables; response fitting; nearest-support invention for unsupported branches; silent stiffness/support idealization; workflow changes; merge without explicit owner authorization.
 
 ## 5. Current Implementation State
 
 | Work item | Implementation | Integration | Validation | Location | Remaining |
 |---|---|---|---|---|---|
-| Effective field authority | NOT_STARTED | NOT_STARTED | NOT_RUN | common Non-FEA resolver/field registry | implement |
-| Product defaults | NOT_STARTED | NOT_STARTED | NOT_RUN | default provider/profile | implement |
-| Support partial accounting | NOT_STARTED | NOT_STARTED | NOT_RUN | support-load-distribution-v3.js | implement |
-| AUTO selection ledger | NOT_STARTED | NOT_STARTED | NOT_RUN | empirical method selection | implement |
-| UI/evidence | NOT_STARTED | NOT_STARTED | NOT_RUN | Load Calc surfaces | implement |
+| Product-default profile | IMPLEMENTED | COMMON INPUT | SOURCE_INSPECTED / EXECUTION NOT_RUN | `non-fea-product-default-profile.js` | broader fields/UI |
+| Effective field authority | PARTIAL | PARTIAL | SOURCE_INSPECTED | existing resolver + product effective Project Data | first-class entity authority + consumer cutover |
+| Default hash/staleness evidence | IMPLEMENTED FOR PROJECT PROFILE | COMMON INPUT HASH-BOUND | SOURCE_INSPECTED / EXECUTION NOT_RUN | product provider + common runtime | explicit product usage ledger in common contract |
+| AUTO method selection | IN_PROGRESS | NOT_STARTED | NOT_RUN | empirical selection layer | implement |
+| Support partial accounting | NOT_STARTED | NOT_STARTED | NOT_RUN | `support-load-distribution-v3.js` | implement |
+| UI/evidence | PARTIAL | Project Data origin only | NOT_RUN | common input status/origin | operator surface |
 
 ## 6. Active Engineering Item Register
 
 | ID | Type | Severity | Priority | Status | Summary | Evidence | Current PR? |
 |---|---|---|---|---|---|---|---|
-| ISS-001 | ISS | HIGH | P0 | OPEN | Support distribution independently re-resolves Project Data/default densities | source inspection of `support-load-distribution-v3.js` | yes |
+| ISS-001 | ISS | HIGH | P0 | OPEN | Support distribution independently re-resolves Project Data/default densities | source inspection | yes |
 | ISS-002 | ISS | HIGH | P0 | OPEN | Current case status suppresses qualified partial reactions when any contribution is excluded | source inspection | yes |
-| ISS-003 | ISS | HIGH | P0 | OPEN | Current unbracketed point/uniform load returns null instead of preserving overhang transfer or explicit unallocated force | source inspection | yes |
-| RISK-001 | RISK | CRITICAL | P0 | OPEN | zero-blocker goal could silently invent structural load paths | mechanics review | yes |
-| DEC-001 | DEC | HIGH | P0 | ACTIVE | all calculation-affecting assumptions require explicit authority, provenance, hash and usage evidence | issue #1321 | yes |
-| DEC-002 | DEC | HIGH | P0 | ACTIVE | `FAILED` is reserved for invalid/unsolved mechanics; accounted incompleteness uses `CALCULATED_WITH_EXCEPTIONS` | issue #1321 + mechanics review | yes |
+| ISS-003 | ISS | HIGH | P0 | OPEN | Unbracketed loads are excluded without explicit source-force/moment custody | source inspection | yes |
+| ISS-004 | ISS | HIGH | P0 | OPEN | `PRODUCT_DEFAULT` not yet in canonical entity field authority registry/resolver | source inspection | yes |
+| RISK-001 | RISK | CRITICAL | P0 | OPEN | zero blockers could silently invent structural load paths | mechanics review | yes |
+| RISK-002 | RISK | HIGH | P0 | OPEN | Issue #1321 requested precedence differs from current entity resolver precedence; must not drift silently | issue + source inspection | yes |
+| DEC-001 | DEC | HIGH | P0 | ACTIVE | defaults are assumptions with explicit identity/provenance/hash, never fake source evidence | issue #1321 | yes |
+| DEC-002 | DEC | HIGH | P0 | ACTIVE | accounted incompleteness uses `CALCULATED_WITH_EXCEPTIONS`; invalid/unsolved mechanics use `FAILED` | issue + mechanics review | yes |
+| DEC-003 | DEC | HIGH | P0 | ACTIVE | first slice does not invent OD/wall/material/fluid/insulation/component values not in the approved minimum product profile | source inspection | yes |
+| DEBT-001 | DEBT | MEDIUM | P1 | OPEN | product-default provider is not yet a dedicated common-checker contract/usage ledger node | architecture review | yes |
 
 ## 7. Current Technical Diagnosis
 
 ```text
-Observed symptom: multiple downstream engines can obtain the same engineering property from different stores/default logic; excluded support-load contributions globally suppress publishable reactions.
-Current hypothesis: the existing common field-resolution ledger is the correct ownership seam; configured/product defaults should become candidates to that seam, and downstream engines should consume a compiled immutable effective ledger rather than raw Project Data.
-Supporting evidence: common-input runtime already builds configured-default evidence -> resolution ledger -> enriched projection -> usage ledger; support-load-distribution-v3.js independently reads section/density/component weight and owns DEFAULT logic.
-Alternative hypotheses: create a support-load-only default layer; make Project Data pre-populated. Rejected because both preserve multiple authority paths.
-Already ruled out: nearest-support assignment as a generic unsupported-branch fallback; it invents structural connectivity.
-Falsifier: if a downstream consumer still chooses between raw source/master/project/default values after the new seam, the single-resolver objective is not met.
-Next isolating experiment: replace one production field family with effective-ledger consumption and prove higher-authority values defeat product defaults.
+Observed symptom: multiple consumers can choose engineering values independently; current Load Calc converts routine missing configuration and local load exceptions into global blockers.
+Current hypothesis: the existing common resolution seam should become the only effective engineering-value authority. Product defaults should supply missing candidates/effective project policy, never downstream fallbacks. Mechanical incompleteness should be represented by explicit load-accounting buckets rather than hidden exclusions.
+Supporting evidence: common runtime already owns resolution ledger, configured-default provider, enriched projection and staleness bindings; support distribution still bypasses this for section/mass/density.
+Alternative rejected: a support-load-only default resolver. It would preserve two authorities.
+Falsifier: after completion, any downstream calculation that re-decides source/master/default precedence is a failure of Issue #1321.
+Next isolating experiment: AUTO selection with explicit method/fallback ledger before mechanics changes.
 ```
 
 ## 8. Authority and Invariants
 
-Authority selection must be deterministic and recorded. Issue #1321 requests `PRODUCT_DEFAULT`; implementation must keep it visibly lower than source/master/project-configured authority and never relabel it as source evidence.
+Current project-level default rule implemented: a product default fills only an empty Project Data evidence entry. Any populated entry shadows the product default. This rule must not be misrepresented as final entity-field precedence until the canonical resolver is reconciled.
 
-Mechanical invariants:
-- source force equals allocated reaction-resolved force + boundary-transfer force + unallocated force + invalid/unresolved force bucket, within declared tolerance;
-- corresponding first moment about the declared reference must close for every accounted contribution class;
-- one load contribution has one dry-mass ownership path per case;
-- one engineering target/field has one effective selected record;
-- known eccentricity/moment cannot be erased by midpoint fallback;
-- spring/line-stop capability is DOF/method-specific, not generic support eligibility.
+Mechanical invariants to preserve:
+- `F_source = F_reaction_resolved + F_boundary_transfer + F_unallocated + F_invalid` within tolerance;
+- corresponding first moment about the declared reference closes across the same buckets;
+- each component has exactly one dry-mass ownership path per case;
+- one target/field has one selected effective value;
+- known eccentricity/moment cannot be discarded by fallback;
+- spring and line-stop participation is DOF/method-specific;
+- restricted method execution does not confer broader engineering authority.
 
 ## 9. Current Validation
 
-### VAL-001
+### VAL-001A — product-default source contract
+Status: PASS
+Observation: SOURCE_INSPECTION
+Oracle: IMPLEMENTATION_COUPLED
+Tested HEAD: `c177d048934e212eb6b2984eb07d1d2ee9dc4c97`
+Command/evidence: inspect product provider + focused falsifier + common-runtime integration
+Expected: defaults fill empty fields only; higher authority shadows; per-default/profile/effective hashes bind changes; no hidden OD/wall/mass values
+Actual: source path implements all expected conditions
+Limitations: execution of the check script is NOT observed
+Origin: RESOLVED_BY_PR
+
+### VAL-001B — focused product-default runtime check
 Status: NOT_RUN
 Observation: NOT_OBSERVED
 Oracle: IMPLEMENTATION_COUPLED
-Tested HEAD: N/A
-Command/evidence: focused resolver tests to be added
-Expected: source/master/project authority defeats product defaults; deterministic hash/usage rows
-Actual: NOT_RUN
-Limitations: implementation not yet present
+Tested HEAD: `c177d048934e212eb6b2984eb07d1d2ee9dc4c97`
+Command/evidence: `node scripts/non-fea-product-default-profile-check.mjs`
+Expected: PASS
+Actual: NOT_RUN / no execution evidence observed
+Limitations: no local checkout execution channel; relevant CI not observed
 Origin: UNKNOWN_ORIGIN
 
-### VAL-002
+### VAL-001C — Non-FEA aggregate
+Status: NOT_RUN
+Observation: NOT_OBSERVED
+Oracle: IMPLEMENTATION_COUPLED
+Tested HEAD: `c177d048934e212eb6b2984eb07d1d2ee9dc4c97`
+Command/evidence: `node scripts/run-non-fea-checks.mjs`
+Expected: all existing checks plus new product-default check pass
+Actual: NOT_RUN / no execution evidence observed
+Limitations: aggregate wired in source only
+Origin: UNKNOWN_ORIGIN
+
+### VAL-002 — 18 kN analytical force/moment custody
 Status: NOT_RUN
 Observation: NOT_OBSERVED
 Oracle: ANALYTICAL
 Tested HEAD: N/A
-Command/evidence: 18 kN force/moment custody benchmark
-Expected: 12 kN resolved + 3 kN overhang transfer + 3 kN unallocated = 18 kN, with moment closure
+Command/evidence: pending support-accounting implementation
+Expected: 12 kN reaction-resolved + 3 kN overhang transfer + 3 kN unallocated = 18 kN; moment ledger closes
 Actual: NOT_RUN
-Limitations: support partial-accounting change not yet present
+Limitations: mechanics not yet changed
 Origin: UNKNOWN_ORIGIN
 
 ## 10. Changed-File Ledger
 
-| File | Intended? | First stage | Latest stage | Purpose | Sensitive? | Validation |
-|---|---:|---|---|---|---:|---|
-| agents/PR1323_workreport.md | yes | bootstrap | bootstrap | continuous handover | no | source inspection |
-| agents/WIP-ISSUE1321-load-calc-effective-values_workreport.md | transitional | bootstrap | bootstrap | pre-PR identity; delete after migration | no | N/A |
+| File | Intended? | Stage | Purpose | Sensitive? | Validation |
+|---|---:|---|---|---:|---|
+| `agents/PR1323_workreport.md` | yes | recovery | living handover | no | metadata |
+| `agents/status/PR1323.yaml` | yes | recovery | machine-readable current state | no | metadata |
+| `agents/claims/PR1323.yaml` | yes | recovery | file/authority coordination claim | no | metadata |
+| `src/workspace/project-data/non-fea-product-default-profile.js` | yes | authority | versioned product defaults + effective Project Data provider | yes | VAL-001A; runtime NOT_RUN |
+| `scripts/non-fea-product-default-profile-check.mjs` | yes | validation | shadow/hash/no-hidden-default falsifiers | yes | NOT_RUN |
+| `scripts/run-non-fea-checks.mjs` | yes | validation integration | include product-default qualification in aggregate | no | NOT_RUN |
+| `src/workspace/non-fea-common-input-runtime.js` | yes | production integration | use effective Project Data + bind product default origin | yes | VAL-001A; runtime NOT_RUN |
 
-At PR allocation GitHub reported 1 changed WIP metadata file. Migration metadata commits are allowed; reconcile after deletion.
+Pre-PR WIP report was deleted after PR allocation; it is not part of the current intended diff. Unexplained paths: none known at this checkpoint.
 
 ## 11. Review / CI State
 
-PR #1323 is draft. Reviews/checks have not yet been observed on a production-code head. No workflow files will be added or modified unless owner explicitly authorizes.
+PR #1323 remains DRAFT. No review comments/threads have been processed yet. On production HEAD `ed80e3c4...`, only unrelated EMP.1 workflows were observed and they concluded failure; logs were unavailable. They are `NOT_APPLICABLE` to the Load Calc slice and are not counted as PASS/FAIL evidence. No current Load Calc execution result has been observed.
 
 ## 12. Repository Coordination / Overlap
 
 ```text
-MASTER_INDEX_CHECKED: attempted; file not present
-STATUS_RECORD: repository does not expose active status directory through code search
-CLAIM_RECORD: no exact-file active claim found by repository search
-LAST_OVERLAP_CHECK: GE-001
+MASTER_INDEX_CHECKED: attempted at GE-001; absent on main
+STATUS_RECORD: agents/status/PR1323.yaml
+CLAIM_RECORD: agents/claims/PR1323.yaml
+LAST_OVERLAP_CHECK: GE-001 plus exact-file PR search before branch creation
 FILE_OVERLAP: no observed active exact-file collision
-AUTHORITY_OVERLAP: adjacent older master-authority drafts exist; current-main issue implementation must preserve exact source/master custody
-DEPENDENCY_OVERLAP: issue #1321 builds on current common Non-FEA resolution/default architecture
-COORDINATION_STATE: COORDINATION_REQUIRED, no hard collision observed
+AUTHORITY_OVERLAP: adjacent historic/open master-authority work exists
+DEPENDENCY_OVERLAP: current common Non-FEA resolver/default architecture
+COORDINATION_STATE: COORDINATION_REQUIRED; no hard collision observed
 ```
 
 ## 13. Continuation State
 
 ```text
-Start here: common effective-field/default authority
-Exact file/function/component: src/core/non-fea-enrichment/index.js, src/workspace/project-data/non-fea-field-registry.js, non-fea-configured-default-provider.js, non-fea-common-input-runtime.js
-Current value/path under investigation: engineering properties used by WEIGHT_AND_GRAVITY and Beam/Contact
-Do not redo: existing configured-default scope matching and common resolution provenance unless consolidation requires it
-Do not change: source/master truth, geometry/topology ownership, engineering tolerances to force green tests
-Validation still required: focused resolver, staleness, support equilibrium, AUTO selection, build/browser/CI
-Highest-risk remaining item: force/moment custody under partial allocation
-Exact next action: implement first canonical product-default/effective-resolution production slice
+Start here: deterministic gravity method AUTO selection
+Exact file/function/component: empirical method registry/selection + analysis-plan runtime integration
+Current value/path under investigation: V3_COG vs V2 vs restricted Beam/Contact suitability
+Do not redo: product-default provider slice unless a falsifier fails
+Do not change: source/master truth; support mechanics in same AUTO commit; engineering tolerances
+Validation still required: AUTO selection falsifiers; product-default runtime; support equilibrium; build/browser/CI
+Highest-risk remaining item: partial support-load force/moment custody
+Exact next action: implement method/fallback ledger with missing-CoG-only deterministic V3→V2 fallback and explicit restricted-domain reasons
 ```
 
 ## 14. Takeover / Custody Chain
 
-GE-001 — new work grounded directly on `main@a222e18c38bd20fb55c1c6c95f724f40e40e8532`; PR #1323 allocated after WIP checkpoint.
+- GE-001: grounded new work directly on `main@a222e18c...`; PR #1323 allocated from that base.
+- No takeover events yet.
 
 # APPENDIX A — IMPLEMENTATION TAKEOVER QUALIFICATION
 
 Qualification basis:
 
 ```text
-PR_HEAD: ee3782188037604723df1d8e6ab881670714cdad at PR allocation
+PR_HEAD: production basis c177d048934e212eb6b2984eb07d1d2ee9dc4c97; later metadata only
 MAIN_HEAD: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 GROUNDING_EPOCH: GE-001
-Generated from OPEN ISS/RISK/QST: ISS-001..003, RISK-001
-PARTIAL implementation: none yet
-NOT_RUN validation: resolver, staleness, analytical support accounting, AUTO selection, build/browser/CI
-Next intended stage: canonical effective-field/product-default authority
+Generated from OPEN ISS/RISK/QST: ISS-001..004, RISK-001..002
+PARTIAL implementation: project-level product defaults integrated; entity resolver/support mechanics incomplete
+NOT_RUN validation: product-default runtime, aggregate, AUTO, 18 kN mechanics, build/browser
+Next intended stage: AUTO method-selection ledger
 APPENDIX_A_STATUS: CURRENT
 ```
 
-A1 Production Trace (20): Trace one pipe's OD, wall, material density, E, alpha, operating fluid density, insulation and component mass from current source/master/default candidates through `non-fea-common-input-runtime.js` to the current support/empirical consumers. Name every bypass that would remain if only the configured-default provider were changed.
+A1 Production Trace (20): Trace OD, wall, density, E, alpha, fluid density, insulation and component mass from source/master/default candidates to support/beam consumers. Identify every remaining bypass after the current product-default slice.
 
-A2 Current Failure Isolation (20): Using current `support-load-distribution-v3.js`, explain why one unbracketed contribution makes the published case blocked even when other reaction candidates are statically valid. Identify the exact state fields that currently omit excluded force from equilibrium accounting.
+A2 Current Failure Isolation (20): Explain why one unbracketed contribution currently blocks published support reactions and identify which state/equilibrium fields omit the excluded source force/moment.
 
-A3 Authority / Invariant (20): Give the required precedence and evidence semantics for `PRODUCT_DEFAULT`, and identify the falsifier proving it cannot override governed source/master/project-configured data. State the force and moment custody equations required for partial output.
+A3 Authority / Invariant (20): Reconcile Issue #1321's requested authority order with the current resolver. State the exact falsifier proving `PRODUCT_DEFAULT` cannot displace a higher authority and the force/moment custody equations for partial output.
 
-A4 Independent Validation (20): Construct the 18 kN analytical case (12 kN two-support span, 3 kN one-support overhang, 3 kN unsupported branch), including overhang shear/moment transfer and the unallocated bucket. State what result statuses would constitute a false PASS.
+A4 Independent Validation (20): Solve the 18 kN analytical case (12 kN bracketed, 3 kN overhang, 3 kN unsupported branch), retaining overhang shear/moment and unallocated first moment. Identify false-PASS result states.
 
-A5 Next-Commit / Minimal Patch (20): Propose the smallest production slice that creates a single effective-value ownership seam with a real consumer, preserves current higher-authority evidence, and adds a falsifier without changing support mechanics in the same commit.
+A5 Next-Commit / Minimal Patch (20): Propose the smallest mechanics patch that introduces explicit boundary-transfer/unallocated accounting without simultaneously changing mass authority or method selection.
 
-Takeover threshold for engineering-critical production modification: total >= 92/100 and every question >= 17/20; unsafe/fabricated/anti-validation claims fail regardless of score.
+Takeover threshold: total >= 92/100 and every question >= 17/20; unsafe/fabricated/anti-validation claims fail regardless of score.
 
 # HISTORICAL RECORD — NOT CURRENT AUTHORITY
 
 ## Stage Execution Log
-- GE-001: bootstrap, issue/skill/current-main grounding and coordination check completed.
-- PR allocation: draft PR #1323 created; WIP report migration initiated.
+- GE-001 bootstrap and coordination check.
+- Draft PR #1323 allocated; WIP report migrated and retired.
+- Product-default profile/provider added and integrated into common-input runtime.
+- Per-default semantic identities and focused falsifiers added; aggregate Non-FEA suite references the new check.
+- Durable status and claim records created.
 
 ## Closed Findings
-None.
+None yet; ISS-004 prevents claiming full unified resolver completion.
 
 ## Prior Validation
-None.
+None beyond current VAL-001A source inspection.
 
 ## Decision / Invariant History
-- DEC-001, DEC-002 created at bootstrap.
+DEC-001..003 active.
 
 ## Recovery / Salvage Decisions
 None.

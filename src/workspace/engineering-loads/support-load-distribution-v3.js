@@ -8,6 +8,11 @@ import { projectDataEntry, projectDataValue, validateProjectDataProfile } from '
 import {
   createConfiguredDefaultUsageLedger,
 } from '../project-data/non-fea-field-registry.js';
+import {
+  allocateSupportPointLoad,
+  allocateSupportUniformLoad,
+  evaluateSupportLoadAccounting,
+} from './support-load-static-accounting.js';
 
 export const SUPPORT_LOAD_DISTRIBUTION_SCHEMA = 'support-load-distribution/v3';
 export const SUPPORT_LOAD_DISTRIBUTION_COG_SCHEMA = 'support-load-distribution/v4';
@@ -41,9 +46,12 @@ export function resetSupportLoadPerformanceMetrics() {
 }
 
 /**
- * Calculates vertical gravity reactions by route. Any missing Project Data,
- * mass evidence, support capability, attachment, or bracketing support blocks
- * the affected case; qualified partials remain completeness-audit data only.
+ * Calculates vertical gravity reactions by route. Known loads are never
+ * discarded merely because the route has fewer than two qualified vertical
+ * supports: overhangs retain their force plus signed cantilever/member-transfer
+ * moment, and zero-support loads remain explicit unallocated force/first moment.
+ * Missing/invalid inputs remain visible exceptions and failed accounting remains
+ * fail-closed.
  */
 export function calculateSupportLoadDistribution(input) {
   return calculateDistribution(input, {
@@ -111,9 +119,7 @@ function calculateDistribution(input, configuration) {
     },
     sourceAxisBasis: 'Z_UP',
     verticalForceConvention: 'positive reaction opposes source-axis gravity',
-    status: cases.length > 0 && cases.every((row) => row.status === 'CALCULATED')
-      ? 'CALCULATED'
-      : 'BLOCKED',
+    status: aggregateDistributionStatus(cases),
     loadCases: cases,
     configuredDefaultUsageLedger,
     freshness: {
@@ -221,25 +227,18 @@ function calculateCase(caseId, input, globalBlockers, execution) {
   if (globalBlockers.length === 0 && !equilibrium.passed) {
     state.blockers.push(...equilibrium.blockers);
   }
-  const blocked = state.blockers.length > 0 || state.excludedInputs.length > 0;
+  const status = caseStatus(state);
   return freezeDeep({
     loadCaseId: caseId,
-    status: blocked ? 'BLOCKED' : 'CALCULATED',
+    status,
     verticalForceUnit: 'N',
-    supportResults: supportResults(input.supportSiteModel, state, blocked),
+    supportResults: supportResults(input.supportSiteModel, state, status),
     contributionLedger: state.ledger,
+    exceptionLedger: dedupeRows(state.exceptions),
     excludedInputs: state.excludedInputs,
     blockers: dedupeRows(state.blockers),
     equilibrium,
-    completenessAudit: {
-      status: blocked ? 'PARTIAL_NOT_A_CALCULATED_REACTION' : 'COMPLETE',
-      qualifiedAppliedForceN: state.ledger.length ? state.appliedForceN : null,
-      qualifiedReactionCandidateN: state.ledger.length
-        ? sum([...state.reactions.values()])
-        : null,
-      qualifiedContributionCount: state.ledger.length,
-      excludedContributionCount: state.excludedInputs.length,
-    },
+    completenessAudit: completenessAudit(state, status),
   });
 }
 
@@ -259,13 +258,6 @@ function calculateRoute(route, input, state, execution) {
   const supports = routeExecution.supports;
   if (!Array.isArray(supports)) {
     throw new Error(`Missing qualified support projection for READY route ${route.routeId}.`);
-  }
-  if (supports.length < 2) {
-    state.blockers.push({
-      code: 'ROUTE_REQUIRES_TWO_QUALIFIED_VERTICAL_SUPPORTS',
-      routeId: route.routeId,
-      qualifiedSupportCount: supports.length,
-    });
   }
   route.physicalEdgeIds.forEach((entityId) => {
     const entity = execution.entityById.get(entityId);
@@ -308,18 +300,18 @@ function calculateRoute(route, input, state, execution) {
     const forceN = mass.massKg
       * projectDataValue(input.profile, 'loadCalculation.gravityMPerS2')
       * projectDataValue(input.profile, 'loadCalculation.loadFactor');
-    const allocations = edge.entityType === 'PIPE' && edge.lengthMm > 0
-      ? distributeUniform(chainage.startMm, chainage.endMm, forceN, supports)
-      : distributePoint(application.chainageMm, forceN, supports);
-    if (!allocations) {
-      state.excludedInputs.push({
-        code: 'UNBRACKETED_ROUTE_LOAD',
-        routeId: route.routeId,
-        entityId,
+    const accounting = edge.entityType === 'PIPE' && edge.lengthMm > 0
+      ? allocateSupportUniformLoad({
+        startMm: chainage.startMm,
+        endMm: chainage.endMm,
+        forceN,
+        supports,
+      })
+      : allocateSupportPointLoad({
         chainageMm: application.chainageMm,
+        forceN,
+        supports,
       });
-      return;
-    }
     recordContribution(
       state,
       route,
@@ -328,7 +320,7 @@ function calculateRoute(route, input, state, execution) {
       application,
       mass,
       forceN,
-      allocations,
+      accounting,
     );
   });
 }
@@ -568,58 +560,6 @@ function projectPointToRoute(point, route, edgeById, tolerance) {
   return null;
 }
 
-function distributeUniform(startMm, endMm, forceN, supports) {
-  const lower = Math.min(startMm, endMm);
-  const upper = Math.max(startMm, endMm);
-  const cuts = [
-    lower,
-    ...supports.map((row) => row.chainageMm)
-      .filter((value) => value > lower && value < upper),
-    upper,
-  ];
-  const allocations = [];
-  for (let index = 0; index < cuts.length - 1; index += 1) {
-    const span = cuts[index + 1] - cuts[index];
-    const pieceForce = forceN * span / Math.max(upper - lower, Number.EPSILON);
-    const piece = distributePoint(
-      (cuts[index] + cuts[index + 1]) / 2,
-      pieceForce,
-      supports,
-    );
-    if (!piece) return null;
-    allocations.push(...piece);
-  }
-  return mergeAllocations(allocations);
-}
-
-function distributePoint(chainageMm, forceN, supports) {
-  const exact = supports.find((support) => support.chainageMm === chainageMm);
-  if (exact) {
-    return [{
-      siteId: exact.siteId,
-      verticalForceN: forceN,
-      chainageMm: exact.chainageMm,
-    }];
-  }
-  const lower = [...supports].reverse()
-    .find((support) => support.chainageMm < chainageMm);
-  const upper = supports.find((support) => support.chainageMm > chainageMm);
-  if (!lower || !upper) return null;
-  const span = upper.chainageMm - lower.chainageMm;
-  return [
-    {
-      siteId: lower.siteId,
-      verticalForceN: forceN * (upper.chainageMm - chainageMm) / span,
-      chainageMm: lower.chainageMm,
-    },
-    {
-      siteId: upper.siteId,
-      verticalForceN: forceN * (chainageMm - lower.chainageMm) / span,
-      chainageMm: upper.chainageMm,
-    },
-  ];
-}
-
 function recordContribution(
   state,
   route,
@@ -628,9 +568,12 @@ function recordContribution(
   application,
   mass,
   forceN,
-  allocations,
+  accounting,
 ) {
   const contributionId = `${state.caseId}:${entity.entityId}`;
+  const allocations = accounting.allocations || [];
+  const boundaryTransfers = accounting.boundaryTransfers || [];
+  const unallocated = accounting.unallocated || [];
   const contributorSites = new Set();
   allocations.forEach((allocation) => {
     state.reactions.set(
@@ -645,11 +588,47 @@ function recordContribution(
       supportLoadPerformanceMetrics.contributorIndexWrites += 1;
     }
   });
-  state.appliedForceN += forceN;
-  state.appliedMomentNmm += forceN * application.chainageMm;
+
+  boundaryTransfers.forEach((transfer) => {
+    state.boundaryMomentBySite.set(
+      transfer.supportSiteId,
+      (state.boundaryMomentBySite.get(transfer.supportSiteId) ?? 0) + transfer.momentDemandNmm,
+    );
+    state.exceptions.push({
+      code: 'OVERHANG_CANTILEVER_TRANSFER',
+      routeId: route.routeId,
+      entityId: entity.entityId,
+      supportSiteId: transfer.supportSiteId,
+      verticalForceN: transfer.verticalForceN,
+      eccentricityMm: transfer.eccentricityMm,
+      momentDemandNmm: transfer.momentDemandNmm,
+    });
+  });
+  unallocated.forEach((row) => state.exceptions.push({
+    code: 'UNALLOCATED_FORCE_NO_QUALIFIED_VERTICAL_SUPPORT',
+    routeId: route.routeId,
+    entityId: entity.entityId,
+    verticalForceN: row.verticalForceN,
+    applicationChainageMm: row.applicationChainageMm,
+    firstMomentNmm: row.firstMomentNmm,
+  }));
+
+  const allocatedForceN = sum(allocations.map((row) => row.verticalForceN));
+  const unallocatedForceN = sum(unallocated.map((row) => row.verticalForceN));
+  state.evaluatedMassKg += mass.massKg;
+  state.evaluatedForceN += forceN;
+  state.evaluatedMomentNmm += forceN * application.chainageMm;
   state.reactionMomentNmm += sum(allocations.map((allocation) => (
     allocation.verticalForceN * allocation.chainageMm
   )));
+  state.boundaryTransferMomentNmm += sum(boundaryTransfers.map((row) => row.momentDemandNmm));
+  state.unallocatedForceN += unallocatedForceN;
+  state.unallocatedMomentNmm += sum(unallocated.map((row) => row.firstMomentNmm));
+  if (forceN !== 0) {
+    state.allocatedMassKg += mass.massKg * allocatedForceN / forceN;
+    state.unallocatedMassKg += mass.massKg * unallocatedForceN / forceN;
+  }
+
   const formula = application.authority
     ? { ...mass.formula, applicationPointAuthority: application.authority }
     : mass.formula;
@@ -667,7 +646,10 @@ function recordContribution(
     verticalForceN: forceN,
     chainageMm: application.chainageMm,
     formula,
+    accountingDisposition: accounting.disposition,
     allocations,
+    boundaryTransfers,
+    unallocated,
   };
   if (application.authority) {
     contribution.currentMethodPointChainageMm = routeChainage.pointMm;
@@ -675,19 +657,20 @@ function recordContribution(
   state.ledger.push(contribution);
 }
 
-function supportResults(model, state, blocked) {
+function supportResults(model, state, caseStatusValue) {
+  const publishable = caseStatusValue !== 'FAILED';
   return model.sites.map((site) => {
     const contributorIds = [...(state.contributorsBySite.get(site.siteId) || [])];
     const reaction = state.reactions.get(site.siteId) ?? 0;
+    const cantileverMomentDemandNmm = state.boundaryMomentBySite.get(site.siteId) ?? 0;
     return {
       supportSiteId: site.siteId,
       tags: site.tags,
       sourceAxisBasis: 'Z_UP',
-      status: blocked ? 'BLOCKED' : 'CALCULATED',
-      verticalForceN: blocked ? null : reaction,
-      qualifiedReactionCandidateN: blocked && contributorIds.length === 0
-        ? null
-        : reaction,
+      status: publishable ? caseStatusValue : 'FAILED',
+      verticalForceN: publishable ? reaction : null,
+      qualifiedReactionCandidateN: publishable || contributorIds.length > 0 ? reaction : null,
+      cantileverMomentDemandNmm: publishable ? cantileverMomentDemandNmm : null,
       contributorIds,
     };
   });
@@ -698,37 +681,61 @@ function equilibriumCheck(state, profile) {
     profile,
     'loadCalculation.equilibriumTolerances',
   ) || {};
-  const reactionN = sum([...state.reactions.values()]);
-  const reactionMomentNmm = state.reactionMomentNmm;
-  const forceResidualN = reactionN - state.appliedForceN;
-  const momentResidualNmm = reactionMomentNmm - state.appliedMomentNmm;
   const forceLimit = tolerance.forceN;
   const momentLimit = tolerance.momentNmm;
-  const blockers = [];
   if (!positiveOrZero(forceLimit) || !positiveOrZero(momentLimit)) {
-    blockers.push({
-      code: 'MISSING_EQUILIBRIUM_TOLERANCE',
-      projectDataPath: 'loadCalculation.equilibriumTolerances',
-    });
-  } else if (
-    Math.abs(forceResidualN) > forceLimit
-      || Math.abs(momentResidualNmm) > momentLimit
-  ) {
-    blockers.push({
-      code: 'EQUILIBRIUM_CHECK_FAILED',
-      forceResidualN,
-      momentResidualNmm,
-    });
+    return {
+      status: 'FAILED',
+      passed: false,
+      appliedForceN: state.evaluatedForceN,
+      evaluatedForceN: state.evaluatedForceN,
+      reactionN: sum([...state.reactions.values()]),
+      unallocatedForceN: state.unallocatedForceN,
+      forceResidualN: null,
+      appliedMomentNmm: state.evaluatedMomentNmm,
+      evaluatedMomentNmm: state.evaluatedMomentNmm,
+      reactionMomentNmm: state.reactionMomentNmm,
+      boundaryTransferMomentNmm: state.boundaryTransferMomentNmm,
+      unallocatedMomentNmm: state.unallocatedMomentNmm,
+      accountedMomentNmm: null,
+      momentResidualNmm: null,
+      blockers: [{
+        code: 'MISSING_EQUILIBRIUM_TOLERANCE',
+        projectDataPath: 'loadCalculation.equilibriumTolerances',
+      }],
+    };
   }
+  const closure = evaluateSupportLoadAccounting({
+    evaluatedForceN: state.evaluatedForceN,
+    evaluatedMomentNmm: state.evaluatedMomentNmm,
+    reactionForceN: sum([...state.reactions.values()]),
+    reactionMomentNmm: state.reactionMomentNmm,
+    boundaryTransferMomentNmm: state.boundaryTransferMomentNmm,
+    unallocatedForceN: state.unallocatedForceN,
+    unallocatedMomentNmm: state.unallocatedMomentNmm,
+    forceToleranceN: forceLimit,
+    momentToleranceNmm: momentLimit,
+  });
+  const blockers = closure.passed ? [] : [{
+    code: 'EQUILIBRIUM_CHECK_FAILED',
+    forceResidualN: closure.forceResidualN,
+    momentResidualNmm: closure.momentResidualNmm,
+  }];
   return {
-    status: blockers.length === 0 ? 'PASSED' : 'FAILED',
-    passed: blockers.length === 0,
-    appliedForceN: state.appliedForceN,
-    reactionN,
-    forceResidualN,
-    appliedMomentNmm: state.appliedMomentNmm,
-    reactionMomentNmm,
-    momentResidualNmm,
+    status: closure.status,
+    passed: closure.passed,
+    appliedForceN: closure.evaluatedForceN,
+    evaluatedForceN: closure.evaluatedForceN,
+    reactionN: closure.reactionForceN,
+    unallocatedForceN: closure.unallocatedForceN,
+    forceResidualN: closure.forceResidualN,
+    appliedMomentNmm: closure.evaluatedMomentNmm,
+    evaluatedMomentNmm: closure.evaluatedMomentNmm,
+    reactionMomentNmm: closure.reactionMomentNmm,
+    boundaryTransferMomentNmm: closure.boundaryTransferMomentNmm,
+    unallocatedMomentNmm: closure.unallocatedMomentNmm,
+    accountedMomentNmm: closure.accountedMomentNmm,
+    momentResidualNmm: closure.momentResidualNmm,
     blockers,
   };
 }
@@ -738,13 +745,69 @@ function blockedEquilibrium() {
     status: 'NOT_RUN_PROJECT_DATA_BLOCKED',
     passed: false,
     appliedForceN: null,
+    evaluatedForceN: null,
     reactionN: null,
+    unallocatedForceN: null,
     forceResidualN: null,
     appliedMomentNmm: null,
+    evaluatedMomentNmm: null,
     reactionMomentNmm: null,
+    boundaryTransferMomentNmm: null,
+    unallocatedMomentNmm: null,
+    accountedMomentNmm: null,
     momentResidualNmm: null,
     blockers: [],
   };
+}
+
+function completenessAudit(state, status) {
+  const allocatedForceN = sum([...state.reactions.values()]);
+  const coverageRatio = state.evaluatedForceN > 0
+    ? allocatedForceN / state.evaluatedForceN
+    : (state.excludedInputs.length > 0 ? 0 : 1);
+  return {
+    status: status === 'FAILED'
+      ? 'FAILED'
+      : status === 'CALCULATED_WITH_EXCEPTIONS'
+        ? 'COMPLETE_WITH_EXCEPTIONS'
+        : 'COMPLETE',
+    coverageBasis: 'EVALUATED_KNOWN_FORCE_ONLY',
+    evaluatedMassKg: state.evaluatedMassKg,
+    allocatedMassKg: state.allocatedMassKg,
+    unallocatedMassKg: state.unallocatedMassKg,
+    blockedInvalidMassKg: state.excludedInputs.length > 0 ? null : 0,
+    evaluatedForceN: state.evaluatedForceN,
+    allocatedForceN,
+    unallocatedForceN: state.unallocatedForceN,
+    invalidForceN: state.excludedInputs.length > 0 ? null : 0,
+    coverageRatio,
+    boundaryTransferMomentNmm: state.boundaryTransferMomentNmm,
+    unallocatedFirstMomentNmm: state.unallocatedMomentNmm,
+    evaluatedContributionCount: state.ledger.length,
+    allocatedContributionCount: state.ledger.filter((row) => row.allocations.length > 0).length,
+    unallocatedContributionCount: state.ledger.filter((row) => row.unallocated.length > 0).length,
+    excludedContributionCount: state.excludedInputs.length,
+    exceptionCount: state.exceptions.length,
+    qualifiedAppliedForceN: state.ledger.length ? state.evaluatedForceN : null,
+    qualifiedReactionCandidateN: state.ledger.length ? allocatedForceN : null,
+    qualifiedContributionCount: state.ledger.length,
+  };
+}
+
+function caseStatus(state) {
+  if (state.blockers.length > 0) return 'FAILED';
+  if (state.excludedInputs.length > 0 || state.exceptions.length > 0) {
+    return 'CALCULATED_WITH_EXCEPTIONS';
+  }
+  return 'CALCULATED';
+}
+
+function aggregateDistributionStatus(cases) {
+  if (cases.length === 0 || cases.some((row) => row.status === 'FAILED')) return 'FAILED';
+  if (cases.some((row) => row.status === 'CALCULATED_WITH_EXCEPTIONS')) {
+    return 'CALCULATED_WITH_EXCEPTIONS';
+  }
+  return 'CALCULATED';
 }
 
 function sourceRef(profile, path) {
@@ -828,12 +891,20 @@ function createCaseState(caseId, blockers) {
     caseId,
     blockers: [...blockers],
     excludedInputs: [],
+    exceptions: [],
     ledger: [],
     reactions: new Map(),
     contributorsBySite: new Map(),
-    appliedForceN: 0,
-    appliedMomentNmm: 0,
+    boundaryMomentBySite: new Map(),
+    evaluatedMassKg: 0,
+    allocatedMassKg: 0,
+    unallocatedMassKg: 0,
+    evaluatedForceN: 0,
+    evaluatedMomentNmm: 0,
     reactionMomentNmm: 0,
+    boundaryTransferMomentNmm: 0,
+    unallocatedForceN: 0,
+    unallocatedMomentNmm: 0,
   };
 }
 
@@ -873,15 +944,6 @@ function projectToSegment(point, start, end) {
       point.z - projected.z,
     ),
   };
-}
-
-function mergeAllocations(rows) {
-  const map = new Map();
-  rows.forEach((row) => map.set(row.siteId, {
-    ...row,
-    verticalForceN: (map.get(row.siteId)?.verticalForceN ?? 0) + row.verticalForceN,
-  }));
-  return [...map.values()];
 }
 
 function masterHashes(masterData, dataset) {

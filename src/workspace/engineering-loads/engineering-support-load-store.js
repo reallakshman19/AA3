@@ -1,26 +1,66 @@
 import { freezeDeep } from '../dataset-utils.js';
 import { calculateAuthorizedEmpiricalLoadExecution } from './authorized-empirical-load-execution.js';
 import { calculateAuthorizedEmpiricalLoadExecutionV2 } from './authorized-empirical-load-execution-v2.js';
-import { calculateSupportLoadDistribution } from './support-load-distribution-v3.js';
+import {
+  evaluateEmpiricalGravityMethodSelection,
+} from './empirical-gravity-method-selection.js';
+import {
+  EMPIRICAL_LOAD_METHOD,
+  calculateSupportLoadDistribution,
+  calculateSupportLoadDistributionWithComponentCog,
+} from './support-load-distribution-v3.js';
 
 /** Owns the last explicit engineering calculation and its edit freshness. */
 export class EngineeringSupportLoadStore {
   #distribution = null;
   #authorizedExecution = null;
+  #methodSelection = null;
 
   /** @deprecated Ordinary production callers shall use calculateAuthorized(). */
   calculate(input) {
     this.#authorizedExecution = null;
+    this.#methodSelection = null;
     this.#distribution = calculateSupportLoadDistribution(input);
     return this.#distribution;
   }
 
+  /**
+   * Selects V3_COG or V2 before execution. AUTO never catches a failed method
+   * and tries a simpler one. A known eccentricity/moment exception stops here
+   * until the partial-accounting mechanics can retain that evidence safely.
+   */
+  calculateAuto(input) {
+    this.#authorizedExecution = null;
+    const selection = evaluateEmpiricalGravityMethodSelection({
+      requestedMethod: 'AUTO',
+      dataset: input?.dataset,
+      profile: input?.profile,
+      routePartitionModel: input?.routePartitionModel,
+    });
+    this.#methodSelection = selection;
+    if (!selection.selectedMethod) {
+      this.#distribution = null;
+      const error = new Error(
+        'AUTO gravity selection requires an explicit component-exception policy before calculation.',
+      );
+      error.code = 'EMPIRICAL_AUTO_EXCEPTION_POLICY_REQUIRED';
+      error.details = selection;
+      throw error;
+    }
+    this.#distribution = selection.selectedMethod === EMPIRICAL_LOAD_METHOD
+      ? calculateSupportLoadDistribution(input)
+      : calculateSupportLoadDistributionWithComponentCog(input);
+    return this.#distribution;
+  }
+
   calculateAuthorized(input) {
+    this.#methodSelection = null;
     const execution = calculateAuthorizedEmpiricalLoadExecution(input);
     return this.#recordAuthorizedExecution(execution);
   }
 
   calculateAuthorizedV2(input) {
+    this.#methodSelection = null;
     const execution = calculateAuthorizedEmpiricalLoadExecutionV2(input);
     return this.#recordAuthorizedExecution(execution);
   }
@@ -45,7 +85,12 @@ export class EngineeringSupportLoadStore {
 
   getDistribution() { return this.#distribution; }
   getAuthorizedExecution() { return this.#authorizedExecution; }
-  clear() { this.#distribution = null; this.#authorizedExecution = null; }
+  getMethodSelection() { return this.#methodSelection; }
+  clear() {
+    this.#distribution = null;
+    this.#authorizedExecution = null;
+    this.#methodSelection = null;
+  }
 }
 
 export const engineeringSupportLoadStore = new EngineeringSupportLoadStore();

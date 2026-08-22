@@ -7,6 +7,7 @@ import {
   renderLoadCalcConsumer,
   renderLoadCalcTopologyPane,
 } from './load-calc-consumer-view.js';
+import { classifyLoadCalcResultPresentation } from './load-calc-result-presentation.js';
 import { masterDataController } from './master-data-controller.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 import { sealCurrentNonFeaCommonInput } from './non-fea-common-input-runtime.js';
@@ -111,8 +112,9 @@ export class LoadCalcConsumerController {
 
   handleEngineeringChange(reason, distribution, topologyCheckAffected) {
     if (reason === 'calculated') {
-      this.message = distribution?.status === 'CALCULATED' ? 'Authorized calculation complete.' : 'Authorized calculation blocked; review the listed inputs.';
-      if (distribution?.status === 'CALCULATED') this.selectTab('loads');
+      const presentation = classifyLoadCalcResultPresentation(distribution);
+      this.message = presentation.message;
+      if (presentation.openLoads) this.selectTab('loads');
     }
     if (reason === 'project-data-changed') this.message = 'Project Data changed; common seal, authorization and previous calculations require refresh.';
     if (reason === 'master-data-changed') this.message = 'Master data changed; common seal, authorization and previous calculations require refresh.';

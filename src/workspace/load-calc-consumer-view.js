@@ -59,7 +59,6 @@ function headerMarkup(state) {
   const authStatus = (authSt === 'EXECUTED_CURRENT' || authSt === 'AUTHORIZED_CURRENT') ? 'ok' : (authSt.includes('AWAITING') || authSt === 'DRAFT_READY' ? 'warn' : 'fail');
   const resultStatus = freshness === 'CURRENT' ? 'ok' : (freshness === 'NOT_CALCULATED' ? 'warn' : 'fail');
 
-  // Human-readable pill labels
   const SEAL_LABELS = { CURRENT: 'Sealed ✓', STALE: 'Seal stale ⚠', NOT_SEALED: 'Not sealed' };
   const AUTH_LABELS = {
     EXECUTED_CURRENT: 'Authorized ✓', AUTHORIZED_CURRENT: 'Authorized ✓',
@@ -136,7 +135,6 @@ const WORKFLOW_STEPS = Object.freeze([
   Object.freeze({ id: 'loads', label: 'View Loads', tab: 'loads' }),
 ]);
 
-/** Renders the owner-approved process without creating engineering readiness. */
 function workflowMarkup(state, runAction) {
   return `<nav class="empirical-load-calc__workflow" aria-label="Load calculation process">
     ${WORKFLOW_STEPS.map((step, index) => workflowStep(step, index, state, runAction)).join('')}
@@ -223,10 +221,6 @@ export function renderEngineeringLoadPane(
   )}${caseMarkup(distribution, supportSiteModel)}`;
 }
 
-/**
- * Keeps topology review inside Load Calc. The full editor remains an explicit
- * advanced action and is never opened merely by selecting workflow Step 2.
- */
 export function renderLoadCalcTopologyPane(
   container,
   supportSiteModel,
@@ -307,7 +301,6 @@ function modelBlockerMarkup(blockers) {
   </section>`;
 }
 
-/** Shows configuration and execution as separate actions with local feedback. */
 function topologyAutofixPolicyMarkup(gapToleranceMm, exactFixCount, policyFeedback) {
   const candidateMessage = exactFixCount > 0
     ? `${exactFixCount} certified source-backed endpoint gap(s) are eligible. Select Prepare auto-fix to create a 3D draft.`
@@ -529,19 +522,47 @@ function caseMarkup(distribution, supportSiteModel) {
   if (!distribution?.loadCases?.length) return '<p class="panel-empty">A current authorized empirical package is required before calculation.</p>';
   const primaryBySite = new Map((supportSiteModel?.sites || []).map((site) => [site.siteId, site.primaryEntityId]));
   const current = distribution.freshness?.status === 'CURRENT';
-  return distribution.loadCases.map((loadCase) => `<section class="load-case-evidence">
+  return distribution.loadCases.map((loadCase) => {
+    const acceptedCurrent = current && isPublishableCaseStatus(loadCase.status);
+    return `<section class="load-case-evidence" data-load-case-status="${escapeHtml(loadCase.status)}">
     <h2>${escapeHtml(loadCase.loadCaseId)} <span>${escapeHtml(loadCase.status)}${current ? '' : ' / STALE'}</span></h2>
+    ${completenessMarkup(loadCase.completenessAudit, loadCase.status, current)}
     ${blockerMarkup(loadCase.blockers)}
-    <table><thead><tr><th>Support site</th><th>Status</th><th>Vertical force (N, source Z-up)</th><th>Contributors</th></tr></thead>
-    <tbody>${loadCase.supportResults.map((row) => `<tr><td><button type="button" data-load-support-entity-id="${escapeHtml(primaryBySite.get(row.supportSiteId) || '')}">${escapeHtml(row.supportSiteId)}</button></td><td>${escapeHtml(row.status)}${current ? '' : ' / STALE'}</td><td>${force(row.verticalForceN, current && loadCase.status === 'CALCULATED' && row.status === 'CALCULATED')}</td><td>${integer(row.contributorIds?.length)}</td></tr>`).join('')}</tbody></table>
+    <table><thead><tr><th>Support site</th><th>Status</th><th>Vertical force (N, source Z-up)</th><th>Transfer moment demand (N·mm)</th><th>Contributors</th></tr></thead>
+    <tbody>${loadCase.supportResults.map((row) => `<tr><td><button type="button" data-load-support-entity-id="${escapeHtml(primaryBySite.get(row.supportSiteId) || '')}">${escapeHtml(row.supportSiteId)}</button></td><td>${escapeHtml(row.status)}${current ? '' : ' / STALE'}</td><td>${force(row.verticalForceN, acceptedCurrent && isPublishableCaseStatus(row.status))}</td><td>${moment(row.cantileverMomentDemandNmm, acceptedCurrent && isPublishableCaseStatus(row.status))}</td><td>${integer(row.contributorIds?.length)}</td></tr>`).join('')}</tbody></table>
+    <details ${loadCase.status === 'CALCULATED_WITH_EXCEPTIONS' ? 'open' : ''}><summary>Exceptions (${integer(loadCase.exceptionLedger?.length)})</summary><pre>${escapeHtml(JSON.stringify(loadCase.exceptionLedger || [], null, 2))}</pre></details>
     <details><summary>Contribution ledger (${integer(loadCase.contributionLedger?.length)})</summary><pre>${escapeHtml(JSON.stringify(loadCase.contributionLedger || [], null, 2))}</pre></details>
     <details><summary>Excluded inputs (${integer(loadCase.excludedInputs?.length)})</summary><pre>${escapeHtml(JSON.stringify(loadCase.excludedInputs || [], null, 2))}</pre></details>
-  </section>`).join('');
+    <details><summary>Equilibrium / route closure</summary><pre>${escapeHtml(JSON.stringify(loadCase.equilibrium || null, null, 2))}</pre></details>
+  </section>`;
+  }).join('');
+}
+
+function completenessMarkup(audit, status, current) {
+  if (!audit) return '';
+  const state = status === 'CALCULATED_WITH_EXCEPTIONS'
+    ? 'exceptions'
+    : status === 'CALCULATED'
+      ? 'complete'
+      : 'failed';
+  return `<section class="load-case-completeness" data-completeness-state="${state}">
+    <strong>${current ? 'Current result' : 'Historical result'} · ${escapeHtml(status)}</strong>
+    <dl>
+      <dt>Evaluated force</dt><dd>${engineeringNumber(audit.evaluatedForceN, 'N')}</dd>
+      <dt>Allocated force</dt><dd>${engineeringNumber(audit.allocatedForceN, 'N')}</dd>
+      <dt>Unallocated force</dt><dd>${engineeringNumber(audit.unallocatedForceN, 'N')}</dd>
+      <dt>Coverage</dt><dd>${percentage(audit.coverageRatio)}</dd>
+      <dt>Boundary-transfer moment</dt><dd>${engineeringNumber(audit.boundaryTransferMomentNmm, 'N·mm')}</dd>
+      <dt>Unallocated first moment</dt><dd>${engineeringNumber(audit.unallocatedFirstMomentNmm, 'N·mm')}</dd>
+      <dt>Exceptions</dt><dd>${integer(audit.exceptionCount)}</dd>
+      <dt>Excluded inputs</dt><dd>${integer(audit.excludedContributionCount)}</dd>
+    </dl>
+  </section>`;
 }
 
 function blockerMarkup(blockers) {
   if (!blockers?.length) return '';
-  return `<details open class="load-blockers"><summary>Blocked inputs (${blockers.length})</summary><ul>${blockers.map((row) => `<li><strong>${escapeHtml(row.code || 'BLOCKED')}</strong> ${escapeHtml(row.path || row.routeId || '')} ${escapeHtml(row.message || '')}</li>`).join('')}</ul></details>`;
+  return `<details open class="load-blockers"><summary>Blocking failures (${blockers.length})</summary><ul>${blockers.map((row) => `<li><strong>${escapeHtml(row.code || 'BLOCKED')}</strong> ${escapeHtml(row.path || row.routeId || '')} ${escapeHtml(row.message || '')}</li>`).join('')}</ul></details>`;
 }
 
 function authorizationReason(state) {
@@ -571,10 +592,28 @@ function authorizationReason(state) {
     : 'Authorized empirical calculation is disabled.';
 }
 
-function force(value, acceptedCurrent) {
-  if (!acceptedCurrent) return Number.isFinite(value) ? `${value.toFixed(3)} (HISTORICAL)` : 'BLOCKED';
-  return Number.isFinite(value) ? value.toFixed(3) : 'BLOCKED';
+function isPublishableCaseStatus(value) {
+  return value === 'CALCULATED' || value === 'CALCULATED_WITH_EXCEPTIONS';
 }
+
+function force(value, acceptedCurrent) {
+  if (!acceptedCurrent) return Number.isFinite(value) ? `${value.toFixed(3)} (HISTORICAL)` : 'FAILED';
+  return Number.isFinite(value) ? value.toFixed(3) : '—';
+}
+
+function moment(value, acceptedCurrent) {
+  if (!acceptedCurrent) return Number.isFinite(value) ? `${value.toFixed(3)} (HISTORICAL)` : '—';
+  return Number.isFinite(value) ? value.toFixed(3) : '—';
+}
+
+function engineeringNumber(value, unit) {
+  return Number.isFinite(value) ? `${value.toFixed(3)} ${unit}` : '—';
+}
+
+function percentage(value) {
+  return Number.isFinite(value) ? `${(value * 100).toFixed(1)} %` : '—';
+}
+
 function integer(value) { return Number.isInteger(value) ? String(value) : '—'; }
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>\"]/g, (character) => ({

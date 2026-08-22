@@ -1,7 +1,12 @@
 import { buildLfeaModelReview, LFEA_MODEL_REVIEW_SCHEMA } from './lfea-model-review.js';
+import {
+  buildLfeaGeometryReview,
+  LFEA_GEOMETRY_REVIEW_REPRESENTATIONS,
+} from './lfea-geometry-review.js';
+import { renderLfeaGeometryReviewSvg } from './lfea-geometry-review-svg.js';
 
 export const LFEA_MODEL_REVIEW_PANEL_SCHEMA = 'lfea-model-review-panel/v1';
-const VIEWS = Object.freeze(['ELEMENTS', 'RESTRAINTS', 'LOADS', 'TRANSFORMATIONS']);
+const VIEWS = Object.freeze(['GEOMETRY', 'ELEMENTS', 'RESTRAINTS', 'LOADS', 'TRANSFORMATIONS']);
 
 export function mountLfeaModelReviewPanel(hostElement, options = {}) {
   if (!hostElement || typeof hostElement.append !== 'function') {
@@ -20,8 +25,11 @@ export class LfeaModelReviewPanelController {
     this.documentRef = documentRef;
     this.options = options;
     this.elements = null;
+    this.preFlight = null;
+    this.engineeringState = null;
     this.model = buildLfeaModelReview(null);
-    this.activeView = 'ELEMENTS';
+    this.activeView = 'GEOMETRY';
+    this.geometryRepresentation = 'SOURCE';
     this.onRefreshRequested = () => this.refresh();
   }
 
@@ -38,7 +46,11 @@ export class LfeaModelReviewPanelController {
   }
 
   refresh() {
-    this.model = buildLfeaModelReview(this.options.getPreFlight());
+    this.preFlight = this.options.getPreFlight();
+    this.engineeringState = this.options.getEngineeringSessionState?.()
+      ?? globalThis.AnalysisWorkspace?.getLfeaEngineeringSessionState?.()
+      ?? null;
+    this.model = buildLfeaModelReview(this.preFlight);
     this.render();
     return this;
   }
@@ -46,6 +58,15 @@ export class LfeaModelReviewPanelController {
   setActiveView(view) {
     if (!VIEWS.includes(view)) throw new TypeError(`Unknown LFEA Model Review view ${String(view)}.`);
     this.activeView = view;
+    this.render();
+    return this.getSnapshot();
+  }
+
+  setGeometryRepresentation(representation) {
+    if (!LFEA_GEOMETRY_REVIEW_REPRESENTATIONS.includes(representation)) {
+      throw new TypeError(`Unknown LFEA geometry representation ${String(representation)}.`);
+    }
+    this.geometryRepresentation = representation;
     this.render();
     return this.getSnapshot();
   }
@@ -66,24 +87,78 @@ export class LfeaModelReviewPanelController {
       return;
     }
     summary.textContent = `Elements ${this.model.counts.elements} · Restraints ${this.model.counts.restraints} · Loads ${this.model.counts.loads} · Declared transformations ${this.model.counts.declaredApproximations}`;
-    body.append(this.activeView === 'ELEMENTS'
-      ? elementsTable(this.documentRef, this.model.elements)
-      : this.activeView === 'RESTRAINTS'
-        ? restraintsTable(this.documentRef, this.model.restraints)
-        : this.activeView === 'LOADS'
-          ? loadsTable(this.documentRef, this.model.loads)
-          : transformationsTable(this.documentRef, this.model.transformationLedger));
+    body.append(this.activeView === 'GEOMETRY'
+      ? this.geometryView()
+      : this.activeView === 'ELEMENTS'
+        ? elementsTable(this.documentRef, this.model.elements)
+        : this.activeView === 'RESTRAINTS'
+          ? restraintsTable(this.documentRef, this.model.restraints)
+          : this.activeView === 'LOADS'
+            ? loadsTable(this.documentRef, this.model.loads)
+            : transformationsTable(this.documentRef, this.model.transformationLedger));
     const note = paragraph(this.documentRef,
       'Read-only evidence view. Source, canonical and analysis identifiers are shown separately; no representation is edited or re-derived here.');
     note.dataset.role = 'lfea-model-review-readonly-note';
     body.append(note);
   }
 
+  geometryView() {
+    const review = buildLfeaGeometryReview(
+      this.preFlight,
+      this.engineeringState,
+      this.geometryRepresentation,
+    );
+    const wrapper = this.documentRef.createElement('section');
+    wrapper.className = 'lfea-geometry-review';
+    wrapper.dataset.role = 'lfea-geometry-review';
+    wrapper.dataset.representation = review.selectedRepresentation;
+
+    const controls = this.documentRef.createElement('div');
+    controls.className = 'lfea-geometry-review__controls';
+    controls.setAttribute('role', 'group');
+    controls.setAttribute('aria-label', 'Geometry representation');
+    for (const representation of LFEA_GEOMETRY_REVIEW_REPRESENTATIONS) {
+      const button = this.documentRef.createElement('button');
+      button.type = 'button';
+      button.dataset.action = 'lfea-geometry-representation';
+      button.dataset.representation = representation;
+      button.dataset.active = representation === review.selectedRepresentation ? 'true' : 'false';
+      button.textContent = representation === 'SOURCE' ? 'Imported / Source' : 'Analysis';
+      button.addEventListener('click', () => this.setGeometryRepresentation(representation));
+      controls.append(button);
+    }
+
+    const identity = paragraph(this.documentRef,
+      `${review.selected.label} · ${review.selected.authority}`);
+    identity.dataset.role = 'lfea-geometry-review-identity';
+    identity.dataset.objectPath = review.selected.objectPath;
+    identity.dataset.available = review.selected.available ? 'true' : 'false';
+
+    const svgHost = this.documentRef.createElement('div');
+    svgHost.className = 'lfea-geometry-review__svg';
+    svgHost.dataset.role = 'lfea-geometry-review-svg-host';
+    renderLfeaGeometryReviewSvg(svgHost, review.selected);
+
+    const custody = paragraph(this.documentRef,
+      `Object: ${review.selected.objectPath} · semantic: ${review.selected.semanticHash ?? 'not retained'} · evidence: ${review.selected.evidenceHash ?? 'not retained'}`);
+    custody.className = 'lfea-geometry-review__custody';
+    custody.dataset.role = 'lfea-geometry-review-custody';
+    wrapper.append(controls, identity, svgHost, custody);
+    return wrapper;
+  }
+
   getSnapshot() {
+    const geometryReview = buildLfeaGeometryReview(
+      this.preFlight,
+      this.engineeringState,
+      this.geometryRepresentation,
+    );
     return Object.freeze({
       schema: LFEA_MODEL_REVIEW_PANEL_SCHEMA,
       modelSchema: LFEA_MODEL_REVIEW_SCHEMA,
       activeView: this.activeView,
+      geometryRepresentation: this.geometryRepresentation,
+      geometryAvailable: geometryReview.selected.available,
       counts: this.model.counts,
       elementCount: this.model.counts.elements,
       nodeCount: this.model.empty ? 0 : new Set(this.model.elements.flatMap((row) => [row.fromNodeId, row.toNodeId])).size,
@@ -114,7 +189,10 @@ function createElements(doc) {
   tablist.className = 'lfea-model-review__tabs';
   tablist.setAttribute('role', 'tablist');
   tablist.setAttribute('aria-label', 'Model Review views');
-  const labels = { ELEMENTS: 'Elements', RESTRAINTS: 'Restraints', LOADS: 'Loads', TRANSFORMATIONS: 'Transformation ledger' };
+  const labels = {
+    GEOMETRY: 'Geometry', ELEMENTS: 'Elements', RESTRAINTS: 'Restraints', LOADS: 'Loads',
+    TRANSFORMATIONS: 'Transformation ledger',
+  };
   const tabs = VIEWS.map((view) => {
     const button = doc.createElement('button');
     button.type = 'button';

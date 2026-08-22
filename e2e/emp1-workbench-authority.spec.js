@@ -10,6 +10,17 @@ const destroyWorkbench = async (page) => page.evaluate(() => {
 
 test.afterEach(async ({ page }) => destroyWorkbench(page));
 
+test('EMP.1 C starts source-incomplete with no result', async ({ page }) => {
+  await mountEmp1Workbench(page);
+  const workbench = page.locator('[data-role="lafea-workbench"]');
+  const cRun = workbench.locator('[data-role="emp1-run-c"]');
+  await expect(cRun).toBeDisabled();
+  await expect(cRun).toHaveAttribute('data-c-state', 'SOURCE_INCOMPLETE');
+  await expect(workbench.locator('[data-role="emp1-c-result-evidence"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-role="emp1-c-run-configuration"]'))
+    .toHaveAttribute('data-c-state', 'SOURCE_INCOMPLETE');
+});
+
 test('complete EMP.1 qualification sample reaches prepared C and remains fail-closed', async ({ page }) => {
   await mountEmp1Workbench(page);
   const workbench = page.locator('[data-role="lafea-workbench"]');
@@ -67,24 +78,26 @@ test('complete EMP.1 qualification sample reaches prepared C and remains fail-cl
       stressesPresent: execution?.result?.localCorrelation?.stresses != null,
       codeComplianceProduced: execution?.authority?.codeComplianceProduced ?? null,
       releaseQualified: execution?.authority?.releaseQualified ?? null,
-      routeAuthorityHash: execution?.authority?.routeAuthoritySnapshot?.semanticHash ?? null,
+      routeAuthorityHash: execution?.authority?.routeAuthorityHash ?? null,
+      routeAuthoritySnapshotHash: execution?.authority?.routeAuthoritySnapshot?.semanticHash ?? null,
+      blockedEvidenceAuthorityHash: execution?.result?.localCorrelation?.routeAuthorityHash ?? null,
     };
   });
-  expect(evidence).toEqual({
-    status: 'PREPARED_C_BLOCKED',
-    invocations: {
-      loadTransfer: 1,
-      sectionScreening: 1,
-      localPreparation: 1,
-      localCorrelation: 0,
-    },
-    prepared: true,
-    executed: false,
-    stressesPresent: false,
-    codeComplianceProduced: false,
-    releaseQualified: false,
-    routeAuthorityHash: expect.any(String),
+  expect(evidence.status).toBe('PREPARED_C_BLOCKED');
+  expect(evidence.invocations).toEqual({
+    loadTransfer: 1,
+    sectionScreening: 1,
+    localPreparation: 1,
+    localCorrelation: 0,
   });
+  expect(evidence.prepared).toBe(true);
+  expect(evidence.executed).toBe(false);
+  expect(evidence.stressesPresent).toBe(false);
+  expect(evidence.codeComplianceProduced).toBe(false);
+  expect(evidence.releaseQualified).toBe(false);
+  expect(evidence.routeAuthorityHash).toEqual(expect.any(String));
+  expect(evidence.routeAuthorityHash).toBe(evidence.routeAuthoritySnapshotHash);
+  expect(evidence.blockedEvidenceAuthorityHash).toBe(evidence.routeAuthorityHash);
 });
 
 test('C setup stays navigable while production C remains disabled', async ({ page }) => {
@@ -102,67 +115,81 @@ test('C setup stays navigable while production C remains disabled', async ({ pag
     .toContainText('C production execution suspended');
 });
 
+test('synthetic current C presentation uses reportable result and execution authority hash', async ({ page }) => {
+  await page.goto(HOST_URL);
+  const result = await page.evaluate(async () => {
+    const { renderEmp1WorkbenchExecutionSummary } = await import(
+      '/src/workspace/emp1-workbench-run-view.js'
+    );
+    const { renderEmp1CorrelationResultEvidence } = await import(
+      '/src/workspace/emp1-engineering-evidence-view.js'
+    );
+    const host = document.createElement('div');
+    document.body.replaceChildren(host);
+    const authoritySnapshot = authoritySnapshotForUi('Q1');
+    const localCorrelation = currentCorrelationForUi();
+    const execution = executionForUi(authoritySnapshot, localCorrelation);
+    const currentness = {
+      state: 'CURRENT',
+      reasons: [],
+      inputCurrent: true,
+      cAuthorityCurrent: true,
+      cReportable: true,
+    };
+    const cState = {
+      state: 'CALCULATED_CURRENT',
+      stageBadge: 'CALCULATED · CURRENT',
+      productionUseAuthorized: true,
+      currentResultAvailable: true,
+      retainedResultAvailable: true,
+      reportableResult: localCorrelation,
+      currentExecutionEvidence: localCorrelation,
+      retainedHistoricalEvidence: [],
+      executionAuthorityHash: authoritySnapshot.semanticHash,
+      currentAuthorityHash: authoritySnapshot.semanticHash,
+      executionAuthoritySnapshot: authoritySnapshot,
+      currentAuthoritySnapshot: authoritySnapshot,
+    };
+    const summary = renderEmp1WorkbenchExecutionSummary(host, execution, currentness, cState);
+    const currentResult = renderEmp1CorrelationResultEvidence(host, cState.reportableResult);
+    host.append(summary);
+    if (currentResult) host.append(currentResult);
+    return {
+      normalResultCards: host.querySelectorAll('[data-role="emp1-c-result-evidence"]').length,
+      stressRows: host.querySelectorAll('[data-role="emp1-c-result-evidence"] tbody tr').length,
+      summaryText: summary.textContent,
+      resultText: currentResult?.textContent ?? '',
+    };
+  });
+  expect(result.normalResultCards).toBe(1);
+  expect(result.summaryText).toContain('C current/reportable resultYES');
+  expect(result.summaryText).toContain('AUTH-Q1');
+  expect(result.summaryText).toContain('Code compliance producedNO');
+  expect(result.summaryText).toContain('Release qualifiedNO');
+  expect(result.resultText).toContain('Eight-location shell stress trace');
+  expect(result.resultText).toContain('72.67281564');
+});
+
 test('stale numerical C is hidden from results but retained in authority evidence', async ({ page }) => {
   await page.goto(HOST_URL);
   const result = await page.evaluate(async () => {
     const { renderEmp1WorkbenchExecutionSummary } = await import(
       '/src/workspace/emp1-workbench-run-view.js'
     );
+    const { renderEmp1CorrelationResultEvidence } = await import(
+      '/src/workspace/emp1-engineering-evidence-view.js'
+    );
     const host = document.createElement('div');
     document.body.replaceChildren(host);
-    const executionAuthoritySnapshot = {
-      schema: 'emp1-workbench-route-authority-snapshot/v1',
-      routeId: 'EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP',
-      productionUseAuthorized: true,
-      semanticHash: 'AUTH-Q1',
-      registry: {
-        method: {
-          qualificationRecordSha256: 'QUAL-Q1',
-          sourceDocumentSha256: 'SOURCE-Q1',
-          datasetHash: 'DATASET-Q1',
-        },
-      },
-    };
-    const currentAuthoritySnapshot = {
-      schema: 'emp1-workbench-route-authority-snapshot/v1',
-      routeId: 'EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP',
-      productionUseAuthorized: true,
-      semanticHash: 'AUTH-Q2',
-      registry: {
-        method: {
-          qualificationRecordSha256: 'QUAL-Q2',
-          sourceDocumentSha256: 'SOURCE-Q2',
-          datasetHash: 'DATASET-Q2',
-        },
-      },
-    };
-    const staleLocalCorrelation = {
-      schema: 'emp1-local-correlation-result/v1',
-      resultHash: 'C-Q1-RESULT',
-      stresses: { Au: 72.67281563686576 },
-    };
-    const execution = {
-      status: 'CALCULATED',
-      decision: 'RETAINED_Q1_ONLY',
-      sourceHash: 'SOURCE-HASH-Q1',
-      invocations: { loadTransfer: 0, sectionScreening: 0, localPreparation: 0, localCorrelation: 1 },
-      authority: {
-        boundedLocalRoutePrepared: true,
-        boundedLocalRouteExecuted: true,
-        routeAuthoritySnapshot: executionAuthoritySnapshot,
-        globalEmp1CRouteAuthority: false,
-        codeComplianceProduced: false,
-        releaseQualified: false,
-      },
-      result: {
-        loadTransfer: { resultHash: 'A-RESULT' },
-        sectionScreening: { resultHash: 'B-RESULT' },
-        localCorrelation: staleLocalCorrelation,
-      },
-    };
+    const executionAuthoritySnapshot = authoritySnapshotForUi('Q1');
+    const currentAuthoritySnapshot = authoritySnapshotForUi('Q2');
+    const staleLocalCorrelation = currentCorrelationForUi();
+    staleLocalCorrelation.resultHash = 'C-Q1-RESULT';
+    const execution = executionForUi(executionAuthoritySnapshot, staleLocalCorrelation);
+    execution.decision = 'RETAINED_Q1_ONLY';
     const currentness = {
       state: 'STALE',
-      reasons: ['EMP1_WORKBENCH_C_ROUTE_AUTHORITY_CHANGED'],
+      reasons: ['EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED'],
       inputCurrent: true,
       cAuthorityCurrent: false,
       cReportable: false,
@@ -176,11 +203,15 @@ test('stale numerical C is hidden from results but retained in authority evidenc
       reportableResult: null,
       currentExecutionEvidence: staleLocalCorrelation,
       retainedHistoricalEvidence: [],
+      executionAuthorityHash: 'AUTH-Q1',
+      currentAuthorityHash: 'AUTH-Q2',
       executionAuthoritySnapshot,
       currentAuthoritySnapshot,
     };
     const summary = renderEmp1WorkbenchExecutionSummary(host, execution, currentness, cState);
+    const normalResult = renderEmp1CorrelationResultEvidence(host, cState.reportableResult);
     host.append(summary);
+    if (normalResult) host.append(normalResult);
     return {
       normalResultCards: host.querySelectorAll('[data-role="emp1-c-result-evidence"]').length,
       authorityDrawer: host.querySelectorAll('[data-role="emp1-c-authority-evidence"]').length,
@@ -215,4 +246,60 @@ async function mountEmp1Workbench(page) {
     const state = controller.getState();
     return { stageId: state.activeStageId, status: state.status };
   }, { controllerUrl: CONTROLLER_URL });
+}
+
+function authoritySnapshotForUi(qualificationId) {
+  return {
+    schema: 'emp1-workbench-route-authority-snapshot/v1',
+    routeId: 'EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP',
+    productionUseAuthorized: true,
+    semanticHash: `AUTH-${qualificationId}`,
+    registry: {
+      method: {
+        qualificationRecordSha256: `QUAL-${qualificationId}`,
+        sourceDocumentSha256: `SOURCE-${qualificationId}`,
+        datasetHash: `DATASET-${qualificationId}`,
+      },
+    },
+  };
+}
+
+function currentCorrelationForUi() {
+  const stressIntensity = [
+    72.67281563686576, 61.1, 52.2, 43.3, 34.4, 25.5, 16.6, 7.7,
+  ];
+  return {
+    schema: 'emp1-local-correlation-result/v1',
+    resultHash: 'C-Q1-RESULT',
+    productionRouteAuthority: true,
+    stresses: {
+      circumferential: [41, 39, 37, 35, 33, 31, 29, 27],
+      longitudinal: [21, 20, 19, 18, 17, 16, 15, 14],
+      shear: [3, 3, 3, 3, 3, 3, 3, 3],
+      stressIntensity,
+    },
+  };
+}
+
+function executionForUi(authoritySnapshot, localCorrelation) {
+  return {
+    status: 'CALCULATED',
+    decision: 'BOUNDED_CALCULATION_ONLY',
+    sourceHash: 'SOURCE-HASH-Q1',
+    invocations: { loadTransfer: 0, sectionScreening: 0, localPreparation: 0, localCorrelation: 1 },
+    authority: {
+      boundedLocalRoutePrepared: true,
+      boundedLocalRouteExecuted: true,
+      routeAuthorityHash: authoritySnapshot.semanticHash,
+      routeAuthoritySnapshot: authoritySnapshot,
+      globalEmp1CRouteAuthority: false,
+      codeComplianceProduced: false,
+      releaseQualified: false,
+    },
+    result: {
+      loadTransfer: { resultHash: 'A-RESULT' },
+      sectionScreening: { resultHash: 'B-RESULT' },
+      localCorrelation,
+    },
+  };
 }

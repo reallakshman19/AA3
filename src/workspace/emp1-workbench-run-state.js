@@ -13,6 +13,8 @@ export const EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS =
   'BETWEEN_CYLINDER_END_PLANES';
 export const EMP1_WORKBENCH_ATTACHMENT_STATION_BASIS =
   'FROM_CYLINDER_START_END_PLANE_TO_WRC_ATTACHMENT_REFERENCE_POINT';
+export const EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED =
+  'EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED';
 export const EMP1_WORKBENCH_EXECUTION_CURRENTNESS = Object.freeze({
   NOT_RUN: 'NOT_RUN',
   CURRENT: 'CURRENT',
@@ -47,7 +49,7 @@ const ROUTE_REQUEST_KEYS = Object.freeze([
 const C_AUTHORITY_CURRENTNESS_REASONS = Object.freeze([
   'EMP1_WORKBENCH_C_ROUTE_AUTHORITY_SNAPSHOT_REQUIRED',
   'EMP1_WORKBENCH_C_CURRENT_ROUTE_AUTHORITY_REQUIRED',
-  'EMP1_WORKBENCH_C_ROUTE_AUTHORITY_CHANGED',
+  EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED,
   'EMP1_WORKBENCH_C_CURRENT_ROUTE_NOT_AUTHORIZED',
 ]);
 
@@ -266,6 +268,12 @@ export function projectEmp1WorkbenchCState({
       ? (currentness?.reasons ?? [])
       : []),
   ]);
+  const executionAuthorityHash = execution?.authority?.routeAuthorityHash
+    ?? execution?.authority?.routeAuthoritySnapshot?.semanticHash
+    ?? null;
+  const currentAuthorityHash = routeAuthority?.routeAuthorityHash
+    ?? routeAuthority?.snapshot?.semanticHash
+    ?? null;
   return deepFreeze({
     schema: 'emp1-workbench-c-state/v1',
     state,
@@ -280,6 +288,8 @@ export function projectEmp1WorkbenchCState({
     reportableResult: reportable ? execution.result.localCorrelation : null,
     currentExecutionEvidence: execution?.result?.localCorrelation ?? null,
     retainedHistoricalEvidence: retainedHistory,
+    currentAuthorityHash,
+    executionAuthorityHash,
     currentAuthoritySnapshot: routeAuthority?.snapshot ?? null,
     executionAuthoritySnapshot: execution?.authority?.routeAuthoritySnapshot ?? null,
   });
@@ -347,6 +357,12 @@ export function normalizeEmp1ApplicabilityGeometry(value) {
 function routeAuthorityCurrentnessReasons(execution, currentRouteAuthority) {
   const retainedSnapshot = execution.authority?.routeAuthoritySnapshot ?? null;
   const currentSnapshot = currentRouteAuthority?.snapshot ?? null;
+  const retainedHash = execution.authority?.routeAuthorityHash
+    ?? retainedSnapshot?.semanticHash
+    ?? null;
+  const currentHash = currentRouteAuthority?.routeAuthorityHash
+    ?? currentSnapshot?.semanticHash
+    ?? null;
   const reasons = [];
   if (!retainedSnapshot?.semanticHash) {
     reasons.push('EMP1_WORKBENCH_C_ROUTE_AUTHORITY_SNAPSHOT_REQUIRED');
@@ -354,9 +370,8 @@ function routeAuthorityCurrentnessReasons(execution, currentRouteAuthority) {
   if (!currentSnapshot?.semanticHash) {
     reasons.push('EMP1_WORKBENCH_C_CURRENT_ROUTE_AUTHORITY_REQUIRED');
   }
-  if (retainedSnapshot?.semanticHash && currentSnapshot?.semanticHash
-    && retainedSnapshot.semanticHash !== currentSnapshot.semanticHash) {
-    reasons.push('EMP1_WORKBENCH_C_ROUTE_AUTHORITY_CHANGED');
+  if (retainedHash && currentHash && retainedHash !== currentHash) {
+    reasons.push(EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED);
   }
   if (execution.authority?.boundedLocalRouteExecuted === true
     && currentRouteAuthority?.productionUseAuthorized !== true) {

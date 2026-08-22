@@ -32,6 +32,22 @@ expectCode(
   'EMPIRICAL_EFFECTIVE_SUPPORT_FIELD_AUTHORITY_INVALID',
 );
 
+const wrongAxis = mutateProjection(valid, (profile) => {
+  profile.sourcesAndUnits.sourceUpAxis.value = 'Y';
+});
+expectCode(
+  () => requireAuthorizedEmpiricalEffectiveSupportProjection(wrongAxis),
+  'EMPIRICAL_SOURCE_AXIS_MECHANICS_UNSUPPORTED',
+);
+
+const wrongUnit = mutateProjection(valid, (profile) => {
+  profile.sourcesAndUnits.lengthUnit.value = 'm';
+});
+expectCode(
+  () => requireAuthorizedEmpiricalEffectiveSupportProjection(wrongUnit),
+  'EMPIRICAL_SOURCE_LENGTH_UNIT_UNSUPPORTED',
+);
+
 expectCode(
   () => requireAuthorizedEmpiricalEffectiveSupportProjection({
     ...valid,
@@ -62,6 +78,8 @@ console.log(JSON.stringify({
   validLedgerProjectionAccepted: true,
   legacyDefaultSelectorRejected: true,
   unboundProjectedEvidenceRejected: true,
+  unsupportedAxisRejected: true,
+  unsupportedLengthUnitRejected: true,
   staleProjectionHashRejected: true,
   v1LedgerPathGuarded: true,
   v2LedgerPathGuarded: true,
@@ -87,11 +105,19 @@ function makeProjection() {
     authorizedInputSemanticHash,
     effectiveExecutionProjectionSemanticHash: projectionSemanticHash,
   };
+  const basisEvidence = {
+    source: 'FIXTURE_SOURCE_BASIS',
+    authority: 'SOURCE_EXPLICIT',
+  };
   const profile = {
     schema: 'project-data-profile/v1',
     projectId: 'PROJECT-GUARD-FIXTURE',
     revision: 1,
     updatedAt: '2026-08-22T12:40:00.000Z',
+    sourcesAndUnits: {
+      lengthUnit: createEvidenceValue('mm', basisEvidence, true),
+      sourceUpAxis: createEvidenceValue('Z', basisEvidence, true),
+    },
     loadCalculation: {
       pipeSectionProperties: createEvidenceValue({ L1: { outsideDiameterMm: 114.3, wallThicknessMm: 6.02, materialCode: 'M1', insulationCode: 'I1', insulationThicknessMm: 25 } }, evidence, true),
       materialDensitiesKgPerM3: createEvidenceValue({ M1: 7850 }, evidence, true),

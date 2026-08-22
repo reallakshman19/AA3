@@ -6,7 +6,10 @@ files:
     - src/workspace/project-data/non-fea-product-default-profile.js
     - src/workspace/non-fea-common-input-runtime.js
     - scripts/non-fea-product-default-profile-check.mjs
+    - scripts/empirical-gravity-method-selection-check.mjs
     - scripts/run-non-fea-checks.mjs
+    - src/workspace/engineering-loads/empirical-gravity-method-selection.js
+    - src/workspace/engineering-loads/engineering-support-load-store.js
     - src/workspace/engineering-loads/support-load-distribution-v3.js
     - src/workspace/engineering-loads/empirical-method-registry.js
   prefixes:
@@ -20,4 +23,4 @@ authority_domains:
   - EMPIRICAL_METHOD_AUTO_SELECTION
 claim_modes:
   - COORDINATED
-last_verified_head: c177d048934e212eb6b2984eb07d1d2ee9dc4c97
+last_verified_head: 2f29f1df9f56db6d2c491a6949213493a1cf5c47

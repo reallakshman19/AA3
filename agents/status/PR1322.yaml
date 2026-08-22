@@ -6,8 +6,8 @@ mission: >-
   in one long-lived PR while preserving exact numerical/pre-flight authority.
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
-report_basis_head: 969fb0bc1142b815be454a698c630ef3caef7b32
-pr_head_last_observed: 969fb0bc1142b815be454a698c630ef3caef7b32
+report_basis_head: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
+pr_head_last_observed: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -15,10 +15,10 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1322_workreport.md
-appendix_a_status: CURRENT_FOR_UI03
-grounding_epoch: GE-005
-current_stage: UI03_INPUT_INFORMATION_ARCHITECTURE
-last_completed_stage: UI02_DIAGNOSTIC_PRESENTATION
+appendix_a_status: CURRENT_FOR_UI04
+grounding_epoch: GE-006
+current_stage: UI04_MODEL_REVIEW_TRANSFORMATION_LEDGER
+last_completed_stage: UI03_INPUT_INFORMATION_ARCHITECTURE
 blocker: NONE
 coordination: SAFE_WITH_DESIGN_LINEAGE
 validation:
@@ -26,14 +26,17 @@ validation:
   ui00_runtime: NOT_RUN
   ui01_source_diff: PASS
   ui01_relevant_runtime: NOT_RUN
-  ui02_exact_byte_syntax: PASS
   ui02_source_diff: PASS
   ui02_focused_execution: NOT_RUN
+  ui03_source_diff: PASS
+  ui03_syntax: PASS
+  ui03_focused_execution: NOT_RUN
+  ui03_browser: NOT_RUN
   unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
 highest_risk: >-
-  UI03 must expose source acquisition and provenance without reintroducing multiple
-  simultaneously active engineering models or turning representation choice into authority.
+  UI04 must distinguish source, canonical and analysis representations and may
+  publish transformation rows only when existing evidence explicitly supports them.
 exact_next_action: >-
-  Re-ground open UI/source claims, then implement the Input source selector/IA around
-  one active engineering session and visibly retain StagedJSON original-to-derived provenance.
-last_updated: 2026-08-22T14:11:00+05:30
+  Characterize existing element/restraint/load source, canonical and prepared-analysis
+  records and build read-only Model Review selectors plus an evidence-backed transformation ledger.
+last_updated: 2026-08-22T15:17:00+05:30

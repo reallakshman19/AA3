@@ -591,7 +591,7 @@ const workspace = Object.freeze({
   },
   loadEmpiricalV3CalculationEvidence(value) { return empiricalV3Safety.loadCalculationEvidence(value); },
   loadEmpiricalV3ResultReviewReceipt(value) { return empiricalV3Safety.loadResultReviewReceipt(value); },
-  loadEmpiricalV3AuditReadiness(value) { return empiricalV3Safety.loadAuditReadiness(); },
+  loadEmpiricalV3AuditReadiness(value) { return empiricalV3Safety.loadAuditReadiness(value); },
   reviewEmpiricalV3CalculationResult(review) { return empiricalV3Safety.reviewResult(review); },
   prepareEmpiricalV3Audit() { return empiricalV3Safety.prepareAudit(); },
   clearEmpiricalV3SafetyPresentationPackage() { clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.clear(); },

@@ -12,6 +12,7 @@ const checks = [
   ['Ledger-only gravity execution projection', 'scripts/authorized-empirical-effective-execution-projection-check.mjs'],
   ['Effective execution selector-collision falsifier', 'scripts/authorized-empirical-effective-execution-projection-collision-check.mjs'],
   ['Effective support projection guard', 'scripts/authorized-empirical-effective-support-guard-check.mjs'],
+  ['Authorized source-axis binding', 'scripts/authorized-empirical-source-axis-binding-check.mjs'],
   ['Authorized empirical generation boundary', 'scripts/authorized-empirical-generation-boundary-check.mjs'],
   ['V2/V3 effective-value execution cutover', 'scripts/authorized-empirical-v2-effective-execution-check.mjs'],
   ['Authorized profile product-default convergence', 'scripts/authorized-empirical-product-default-convergence-check.mjs'],

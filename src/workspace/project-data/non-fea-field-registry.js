@@ -112,7 +112,7 @@ export const NON_FEA_FIELD_REGISTRY = freezeDeep({
     field('HYDRO_FLUID_DENSITY', 'Hydrotest fluid density', 'kg/m³', SOURCE_MASTER_OVERRIDE_DEFAULT, 'loadCalculation.hydroFluidDensitiesKgPerM3', WEIGHT_METHODS, true),
     field('OPERATING_FLUID_WEIGHT', 'Operating fluid weight', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),
     field('HYDRO_FLUID_WEIGHT', 'Hydrotest fluid weight', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),
-    field('FLUID_PHASE_AND_FILL_STATE', 'Fluid phase and fill state', 'policy', ['ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'EXACT_APPROVED_MASTER', 'PROJECT_POLICY'], 'thermoMechanicalBasis.fluidPhaseAndFillState', WEIGHT_METHODS),
+    field('FLUID_PHASE_AND_FILL_STATE', 'Fluid phase and fill state', 'policy', ['ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER', 'PROJECT_POLICY', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT'], 'thermoMechanicalBasis.fluidPhaseAndFillState', WEIGHT_METHODS, true),
     field('INSULATION_DENSITY', 'Insulation density', 'kg/m³', SOURCE_MASTER_OVERRIDE_DEFAULT, 'loadCalculation.insulationDensitiesKgPerM3', WEIGHT_METHODS, true),
     field('INSULATION_THICKNESS', 'Insulation thickness', 'm', SOURCE_MASTER_OVERRIDE_DEFAULT, null, WEIGHT_METHODS, true),
     field('INSULATION_WEIGHT', 'Insulation weight', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),

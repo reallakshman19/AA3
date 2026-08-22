@@ -192,9 +192,12 @@ export function renderEmp1WorkbenchExecutionSummary(root, execution, currentness
     ['C state', cState?.stageBadge ?? cState?.state],
     ['C current/reportable result', cState?.currentResultAvailable === true ? 'YES' : 'NO'],
     ['C retained numerical evidence', cState?.retainedResultAvailable === true ? 'YES' : 'NO'],
-    ['Execution authority hash', cState?.executionAuthoritySnapshot?.semanticHash
+    ['Execution authority hash', cState?.executionAuthorityHash
+      ?? execution.authority?.routeAuthorityHash
+      ?? cState?.executionAuthoritySnapshot?.semanticHash
       ?? execution.authority?.routeAuthoritySnapshot?.semanticHash],
-    ['Current authority hash', cState?.currentAuthoritySnapshot?.semanticHash],
+    ['Current authority hash', cState?.currentAuthorityHash
+      ?? cState?.currentAuthoritySnapshot?.semanticHash],
     ['EMP.1 source hash', execution.sourceHash],
     ['A result hash', execution.result?.loadTransfer?.resultHash],
     ['B retained evidence hash', execution.result?.sectionScreening?.resultHash],
@@ -241,12 +244,12 @@ function renderAuthorityEvidence(root, cState) {
     ['C state', cState.stageBadge ?? cState.state],
     ['Current result reportable', cState.currentResultAvailable === true ? 'YES' : 'NO'],
     ['Execution route', execution?.routeId],
-    ['Execution authority hash', execution?.semanticHash],
+    ['Execution authority hash', cState.executionAuthorityHash ?? execution?.semanticHash],
     ['Execution qualification hash', execution?.registry?.method?.qualificationRecordSha256],
     ['Execution source SHA-256', execution?.registry?.method?.sourceDocumentSha256],
     ['Execution dataset hash', execution?.registry?.method?.datasetHash],
     ['Current route', current?.routeId],
-    ['Current authority hash', current?.semanticHash],
+    ['Current authority hash', cState.currentAuthorityHash ?? current?.semanticHash],
     ['Current production use authorized', current?.productionUseAuthorized === true ? 'YES' : 'NO'],
     ['Current qualification hash', current?.registry?.method?.qualificationRecordSha256],
     ['Current source SHA-256', current?.registry?.method?.sourceDocumentSha256],
@@ -279,7 +282,7 @@ function renderAuthorityEvidence(root, cState) {
         keyValueTable(root, [
           ['Evidence hash', record.evidenceHash],
           ['Source hash', record.sourceHash],
-          ['Authority hash', record.authoritySnapshot?.semanticHash],
+          ['Authority hash', record.routeAuthorityHash ?? record.authoritySnapshot?.semanticHash],
           ['C result hash', record.localCorrelation?.resultHash],
         ]),
       );

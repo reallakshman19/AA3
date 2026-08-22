@@ -6,8 +6,8 @@ mission: >-
   in one long-lived PR while preserving exact numerical/pre-flight authority.
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
-report_basis_head: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
-pr_head_last_observed: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
+report_basis_head: 50934fed4135b0981e1235ea477207f8c4ab8895
+pr_head_last_observed: 50934fed4135b0981e1235ea477207f8c4ab8895
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -15,12 +15,12 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1322_workreport.md
-appendix_a_status: CURRENT_FOR_UI04
-grounding_epoch: GE-006
-current_stage: UI04_MODEL_REVIEW_TRANSFORMATION_LEDGER
-last_completed_stage: UI03_INPUT_INFORMATION_ARCHITECTURE
+appendix_a_status: CURRENT_FOR_UI05
+grounding_epoch: GE-007
+current_stage: UI05_READONLY_SVG_REPRESENTATION_TOGGLE
+last_completed_stage: UI04_MODEL_REVIEW_TRANSFORMATION_LEDGER
 blocker: NONE
-coordination: SAFE_WITH_DESIGN_LINEAGE
+coordination: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
 validation:
   ui00_source_diff: PASS
   ui00_runtime: NOT_RUN
@@ -29,14 +29,17 @@ validation:
   ui02_source_diff: PASS
   ui02_focused_execution: NOT_RUN
   ui03_source_diff: PASS
-  ui03_syntax: PASS
-  ui03_focused_execution: NOT_RUN
   ui03_browser: NOT_RUN
+  ui04_focused_local_execution: PASS
+  ui04_exact_byte_syntax: PASS
+  ui04_pushed_blob_identity: PASS
+  ui04_authority_diff: PASS
+  ui04_browser_full_repo: NOT_RUN
   unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
 highest_risk: >-
-  UI04 must distinguish source, canonical and analysis representations and may
-  publish transformation rows only when existing evidence explicitly supports them.
+  UI05 must render imported/source versus analysis representation honestly and
+  read-only, without geometry mutation, conditioning authority or session invalidation.
 exact_next_action: >-
-  Characterize existing element/restraint/load source, canonical and prepared-analysis
-  records and build read-only Model Review selectors plus an evidence-backed transformation ledger.
-last_updated: 2026-08-22T15:17:00+05:30
+  Audit existing LFEA SVG/geometry viewers and wire a read-only Imported/Analysis
+  representation selector to exact existing session/model-review geometry sources.
+last_updated: 2026-08-22

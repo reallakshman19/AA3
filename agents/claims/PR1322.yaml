@@ -4,9 +4,9 @@ claim_state: ACTIVE
 branch: agent/lfea-engineering-session-ui-20260822
 scope: >-
   One-PR stacked LFEA UI00-UI08 implementation: exact authority custody,
-  explicit engineering-session source ownership/invalidation, governed diagnostic
-  presentation, provenance/Input IA, Model Review, read-only SVG, common Error Check,
-  and results/qualification cleanup.
+  explicit engineering-session source ownership/invalidation, governed diagnostics,
+  source provenance/Input IA, first-class Model Review/transformation evidence,
+  read-only SVG representation views, common Error Check, and results/qualification cleanup.
 claim_modes:
   - COORDINATED
 files:
@@ -18,6 +18,7 @@ files:
     - src/workspace/lfea-pipeline-shell.css
     - src/workspace/lfea-source-acquisition.js
     - src/workspace/lfea-source-acquisition.css
+    - src/workspace/lfea-pipeline-analysis-surface.js
     - src/workspace/linear-piping-inputxml-source-workflow.js
     - src/workspace/linear-piping-inputxml-diagnostics-view.js
     - src/workspace/lfea-pipeline-accdb-input-panel.js
@@ -38,6 +39,7 @@ authority_domains:
   - LFEA_INPUT_INFORMATION_ARCHITECTURE
   - LFEA_MODEL_REVIEW_PRESENTATION
   - LFEA_TRANSFORMATION_EVIDENCE_PRESENTATION
+  - LFEA_READONLY_GEOMETRY_PRESENTATION
   - LFEA_DOWNSTREAM_INVALIDATION
 excluded_authority_domains:
   - FEA_SOLVER_FORMULATION
@@ -47,6 +49,8 @@ excluded_authority_domains:
   - SOURCE_PARSING
   - TOPOLOGY_CONDITIONING_MECHANICS
   - RESTRAINT_CONDITIONING_MECHANICS
+  - GEOMETRY_WRITEBACK
+  - MESHING_AUTHORITY
   - ENGINEERING_BENCHMARK_EXPECTED_VALUES
   - CODE_CHECK_METHODOLOGY
   - GOVERNED_PREFLIGHT_DETECTION
@@ -57,22 +61,28 @@ frozen_ui00_files:
   count: 11
   guard: scripts/lfea-ui-numerical-custody-check.mjs
   current_pr_overlap: 0
-ui03:
-  technical_head: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
-  contract: lfea-source-acquisition/v1
-  rule: source representation and preparation provider are distinct; StagedJSON remains original source
-  runtime: NOT_RUN
-  browser: NOT_RUN
-  syntax: PASS
+ui04:
+  technical_head: 50934fed4135b0981e1235ea477207f8c4ab8895
+  contract: lfea-model-review/v1
+  rule: >-
+    Model Review projects sealed segmentBindings, constraintBindings and loadLedger;
+    source/canonical/analysis identities remain separate and no engineering transformation is recomputed.
+  focused_local_execution: PASS
+  exact_byte_syntax: PASS
+  pushed_blob_identity: PASS
+  browser_full_repo: NOT_RUN
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
-    basis: design and agent artifacts only; no production overlap, source-specific Error Check IA superseded
+    basis: design-only source-specific Error Check proposal remains superseded
   PR1323:
     classification: SAFE
-    basis: current Load Calc/non-FEA/support-load/UI paths do not overlap LFEA source-shell/model-review paths
-last_overlap_check: GE-006
-next_overlap_check_required: UI04_STAGE_ENTRY
-last_verified_head: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
-current_stage: UI04_MODEL_REVIEW_TRANSFORMATION_LEDGER
-last_updated: 2026-08-22T15:17:00+05:30
+    basis: Load Calc/non-FEA/support-load paths do not overlap UI04/UI05 LFEA presentation paths
+  PR1305:
+    classification: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
+    basis: historical main/results/shell-view/shell-css changes checked; UI04 avoided those paths
+last_overlap_check: GE-007
+next_overlap_check_required: UI05_STAGE_ENTRY
+last_verified_head: 50934fed4135b0981e1235ea477207f8c4ab8895
+current_stage: UI05_READONLY_SVG_REPRESENTATION_TOGGLE
+last_updated: 2026-08-22

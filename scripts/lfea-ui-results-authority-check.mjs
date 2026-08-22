@@ -139,12 +139,24 @@ assert.match(cssSource, /data-active-step="RUN"/u);
 assert.match(cssSource, /data-active-step="OUTPUT"/u);
 assert.match(cssSource, /data-active-step="EXPORT"/u);
 assert.match(cssSource, /linear-piping-results-workbench/u);
+assert.match(
+  cssSource,
+  /data-active-step="RUN"[\s\S]*?linear-piping-prerun-reviewer[\s\S]*?authorize-linear-piping-analysis/u,
+  'conditional reviewer controls must remain scoped to the Run presentation',
+);
 
 const surfaceSource = fs.readFileSync(
   new URL('../src/workspace/lfea-pipeline-analysis-surface.js', import.meta.url),
   'utf8',
 );
 assert.match(surfaceSource, /mountLfeaResultsAuthorityPanel/u);
+
+const mainSource = fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+assert.match(
+  mainSource,
+  /if \(!preRunCheck\.solveAuthorized\) \{[\s\S]*?lfeaPipelineShell\.setActiveStep\('RUN'\);[\s\S]*?pre-run gate WARN[\s\S]*?return;/u,
+  'a conditional pre-run WARN must navigate to Run before returning so its reviewer controls are reachable',
+);
 
 console.log(JSON.stringify({
   check: 'lfea-ui-results-authority',
@@ -153,5 +165,6 @@ console.log(JSON.stringify({
   qualifiedWithoutCodeRemainsNotPerformed: true,
   staleEvidenceFailsClosed: true,
   engineeringValuesCopiedExactly: true,
+  preRunWarnReviewReachable: true,
   presentationOnly: true,
 }));

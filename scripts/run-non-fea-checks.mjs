@@ -9,6 +9,8 @@ const checks = [
   ['Effective-value authority resolver', 'scripts/non-fea-effective-value-resolver-check.mjs'],
   ['Authorized baseline effective-value ledger', 'scripts/authorized-empirical-effective-value-ledger-check.mjs'],
   ['Ledger-only gravity execution projection', 'scripts/authorized-empirical-effective-execution-projection-check.mjs'],
+  ['Effective execution selector-collision falsifier', 'scripts/authorized-empirical-effective-execution-projection-collision-check.mjs'],
+  ['V2/V3 effective-value execution cutover', 'scripts/authorized-empirical-v2-effective-execution-check.mjs'],
   ['Authorized profile product-default convergence', 'scripts/authorized-empirical-product-default-convergence-check.mjs'],
   ['Configured-default resolver convergence', 'scripts/non-fea-configured-default-resolution-check.mjs'],
   ['Load-case authority convergence', 'scripts/non-fea-load-case-authority-check.mjs'],

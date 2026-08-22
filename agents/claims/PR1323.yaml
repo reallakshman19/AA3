@@ -18,6 +18,7 @@ files:
     - src/workspace/engineering-loads/support-load-distribution-v3.js
     - src/workspace/load-calc-consumer-controller.js
     - src/workspace/load-calc-consumer-view.js
+    - src/workspace/load-calc-result-presentation.js
     - scripts/non-fea-product-default-profile-check.mjs
     - scripts/non-fea-effective-value-resolver-check.mjs
     - scripts/authorized-empirical-effective-value-ledger-check.mjs
@@ -30,6 +31,7 @@ files:
     - scripts/support-load-partial-distribution-check.mjs
     - scripts/support-load-route-equilibrium-check.mjs
     - scripts/empirical-authorized-blocked-cases-check.mjs
+    - scripts/load-calc-result-presentation-check.mjs
     - scripts/run-non-fea-checks.mjs
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v3.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v4.js
@@ -50,4 +52,4 @@ authority_domains:
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: c24a6dcfc8bb7ad35d9c70e4271c3ba7cb7b7d58
+last_verified_head: 3c101ba3debc0510de601216136ca6ba8d356bd9

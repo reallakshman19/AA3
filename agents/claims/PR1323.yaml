@@ -50,4 +50,4 @@ authority_domains:
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: d117e4afb696c1649aba6a7481a7fffb90beeb96
+last_verified_head: c24a6dcfc8bb7ad35d9c70e4271c3ba7cb7b7d58

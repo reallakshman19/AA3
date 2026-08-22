@@ -10,6 +10,9 @@ import {
   createNonFeaProductDefaultProvider,
 } from '../project-data/non-fea-product-default-profile.js';
 import { requireAuthorizedEmpiricalLoadInput } from './authorized-empirical-load-input.js';
+import {
+  createAuthorizedEmpiricalEffectiveExecutionProjection,
+} from './authorized-empirical-effective-execution-projection.js';
 import { calculateSupportLoadDistribution } from './support-load-distribution-v3.js';
 
 export const AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_REQUEST_SCHEMA = 'authorized-empirical-load-execution-request/v1';
@@ -19,11 +22,16 @@ const REQUEST_KEYS = [
   'schema', 'executionId', 'executedAt', 'authorizedInput', 'dataset', 'profile',
   'supportSiteModel', 'routePartitionModel', 'masterData',
 ];
-const OUTPUT_KEYS = [
+const LEGACY_OUTPUT_KEYS = [
   'schema', 'executionId', 'executedAt', 'projectId', 'datasetId', 'datasetVersion',
   'authorizedInputSemanticHash', 'overlaySemanticHash', 'baselineSemanticHash',
   'handoffSemanticHash', 'projectionPayloadSemanticHash', 'ephemeralProfileSemanticHash',
   'distributionSemanticHash', 'status', 'summary', 'distribution', 'semanticHash',
+];
+const OUTPUT_KEYS = [
+  ...LEGACY_OUTPUT_KEYS.filter((key) => key !== 'semanticHash'),
+  'effectiveExecutionProjectionSemanticHash',
+  'semanticHash',
 ];
 const OVERLAY_FIELDS = [
   'pipeSectionProperties', 'materialDensitiesKgPerM3',
@@ -31,8 +39,12 @@ const OVERLAY_FIELDS = [
   'insulationDensitiesKgPerM3', 'componentWeightsKg',
 ];
 
+/** Historical executions keep their old projection; ledger-enabled executions bind the new projection hash. */
 export function authorizedEmpiricalLoadExecutionSemanticProjection(value) {
-  return Object.fromEntries(OUTPUT_KEYS
+  const keys = Object.hasOwn(value || {}, 'effectiveExecutionProjectionSemanticHash')
+    ? OUTPUT_KEYS
+    : LEGACY_OUTPUT_KEYS;
+  return Object.fromEntries(keys
     .filter((key) => key !== 'semanticHash')
     .map((key) => [key, value[key]]));
 }
@@ -44,8 +56,9 @@ export function computeAuthorizedEmpiricalLoadExecutionSemanticHash(value) {
 /**
  * Builds the ephemeral profile consumed by authorized gravity execution.
  * Product defaults fill only empty Project Data fields before the authorized
- * six-field mass overlay is applied. The stored Project Data profile is never
- * mutated, and the authorized overlay remains the sole owner of its fields.
+ * six-field compatibility overlay is applied. The stored Project Data profile
+ * is never mutated. For newly compiled inputs the six fields are subsequently
+ * replaced by exact target-level effective values before calculation.
  */
 export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
   const input = requireAuthorizedEmpiricalLoadInput(authorizedInput);
@@ -92,8 +105,17 @@ export function calculateAuthorizedEmpiricalLoadExecution(value) {
     fail('Unsupported authorized empirical execution request.', 'EMPIRICAL_EXECUTION_SCHEMA_INVALID');
   }
   const authorizedInput = requireAuthorizedEmpiricalLoadInput(value.authorizedInput);
-  const profile = buildAuthorizedEmpiricalLoadProfile(value.profile, authorizedInput);
-  const activeHashes = masterHashes(value.masterData, value.dataset);
+  const compatibilityProfile = buildAuthorizedEmpiricalLoadProfile(value.profile, authorizedInput);
+  const effectiveExecutionProjection = authorizedInput.effectiveValueLedger
+    ? createAuthorizedEmpiricalEffectiveExecutionProjection({
+      authorizedInput,
+      dataset: value.dataset,
+      profile: compatibilityProfile,
+    })
+    : null;
+  const profile = effectiveExecutionProjection?.profile || compatibilityProfile;
+  const dataset = effectiveExecutionProjection?.dataset || value.dataset;
+  const activeHashes = masterHashes(value.masterData, dataset);
   const loadAudit = validateProjectDataProfile(profile, 'loads', activeHashes);
   const topologyAudit = validateProjectDataProfile(profile, 'topology', activeHashes);
   const errors = [...loadAudit.errors, ...topologyAudit.errors];
@@ -102,7 +124,7 @@ export function calculateAuthorizedEmpiricalLoadExecution(value) {
   }
 
   const distribution = calculateSupportLoadDistribution({
-    dataset: value.dataset,
+    dataset,
     profile,
     supportSiteModel: value.supportSiteModel,
     routePartitionModel: value.routePartitionModel,
@@ -122,6 +144,9 @@ export function calculateAuthorizedEmpiricalLoadExecution(value) {
     handoffSemanticHash: authorizedInput.handoffSemanticHash,
     projectionPayloadSemanticHash: authorizedInput.projectionPayloadSemanticHash,
     ephemeralProfileSemanticHash: semanticHash(profile),
+    ...(effectiveExecutionProjection ? {
+      effectiveExecutionProjectionSemanticHash: effectiveExecutionProjection.semanticHash,
+    } : {}),
     distributionSemanticHash: semanticHash(distribution),
     status: distribution.status,
     summary,
@@ -135,10 +160,11 @@ export function calculateAuthorizedEmpiricalLoadExecution(value) {
 }
 
 export function requireAuthorizedEmpiricalLoadExecution(value) {
-  exact(value, OUTPUT_KEYS, 'authorizedEmpiricalLoadExecution');
+  exactOneOf(value, [LEGACY_OUTPUT_KEYS, OUTPUT_KEYS], 'authorizedEmpiricalLoadExecution');
   if (value.schema !== AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_SCHEMA) {
     fail('Unsupported authorized empirical execution.', 'EMPIRICAL_EXECUTION_SCHEMA_INVALID');
   }
+  const hasEffectiveProjection = Object.hasOwn(value, 'effectiveExecutionProjectionSemanticHash');
   const result = {
     ...value,
     executionId: identity(value.executionId, 'executionId'),
@@ -152,6 +178,12 @@ export function requireAuthorizedEmpiricalLoadExecution(value) {
     handoffSemanticHash: hash(value.handoffSemanticHash, 'handoffSemanticHash'),
     projectionPayloadSemanticHash: hash(value.projectionPayloadSemanticHash, 'projectionPayloadSemanticHash'),
     ephemeralProfileSemanticHash: hash(value.ephemeralProfileSemanticHash, 'ephemeralProfileSemanticHash'),
+    ...(hasEffectiveProjection ? {
+      effectiveExecutionProjectionSemanticHash: hash(
+        value.effectiveExecutionProjectionSemanticHash,
+        'effectiveExecutionProjectionSemanticHash',
+      ),
+    } : {}),
     distributionSemanticHash: hash(value.distributionSemanticHash, 'distributionSemanticHash'),
     status: status(value.status),
     summary: requireSummary(value.summary),
@@ -227,6 +259,22 @@ function exact(value, keys, label) {
   const expected = [...keys].sort(ascii);
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
     fail(`${label} contains unexpected or missing keys.`, 'EMPIRICAL_EXECUTION_KEYS_INVALID', { actual, expected });
+  }
+}
+
+function exactOneOf(value, keySets, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail(`${label} must be an object.`, 'EMPIRICAL_EXECUTION_TYPE_INVALID');
+  }
+  const actual = Object.keys(value).sort(ascii);
+  const matches = keySets.some((keys) => (
+    JSON.stringify(actual) === JSON.stringify([...keys].sort(ascii))
+  ));
+  if (!matches) {
+    fail(`${label} contains unexpected or missing keys.`, 'EMPIRICAL_EXECUTION_KEYS_INVALID', {
+      actual,
+      expectedVariants: keySets.map((keys) => [...keys].sort(ascii)),
+    });
   }
 }
 

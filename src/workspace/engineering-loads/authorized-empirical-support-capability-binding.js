@@ -11,12 +11,14 @@ export const AUTHORIZED_EMPIRICAL_SUPPORT_CAPABILITY_BINDING_SCHEMA =
 const SUPPORT_CAPABILITY_PATH = 'topology.supportTypeCapabilities';
 
 /**
- * Expands governed support capability DEFAULT only for support kinds that are
- * actually present in the execution support-site model. Exact support-kind
+ * Expands governed support capability DEFAULT only for named support kinds that
+ * are actually present in the execution support-site model. Exact support-kind
  * rules always win. The source profile is never mutated.
  *
- * Missing exact + missing DEFAULT is retained as an explicit unresolved,
- * non-bearing resolution; no synthetic vertical capacity is invented.
+ * A missing support-kind identifier is not the same thing as an unknown named
+ * kind: the legacy kernel has no selector that can be expanded for a missing
+ * identity, so it remains explicit unresolved/non-bearing even when DEFAULT is
+ * present. No receipt may claim capacity the kernel cannot actually consume.
  */
 export function bindAuthorizedEmpiricalSupportCapabilities({
   profile,
@@ -106,7 +108,8 @@ export function resolveSupportCapability(capabilities, sourceType) {
     throw codedError('Support capabilities must be an object.', 'EMPIRICAL_SUPPORT_CAPABILITY_POLICY_INVALID');
   }
   const type = stringValue(sourceType);
-  if (type && Object.hasOwn(capabilities, type)) {
+  if (!type) return unresolvedNonBearing();
+  if (type !== 'DEFAULT' && Object.hasOwn(capabilities, type)) {
     const rule = requireCapabilityRule(capabilities[type], type);
     return freezeDeep({
       selector: type,
@@ -126,13 +129,7 @@ export function resolveSupportCapability(capabilities, sourceType) {
       rule,
     });
   }
-  return freezeDeep({
-    selector: null,
-    resolutionAuthority: 'UNRESOLVED_NON_BEARING',
-    fallbackUsed: false,
-    vertical: false,
-    rule: null,
-  });
+  return unresolvedNonBearing();
 }
 
 export function bindAuthorizedEmpiricalSupportCapabilityResult({ distribution, binding } = {}) {
@@ -154,6 +151,16 @@ export function bindAuthorizedEmpiricalSupportCapabilityResult({ distribution, b
     rows: clonePlain(binding.rows),
   };
   return freezeDeep(rebound);
+}
+
+function unresolvedNonBearing() {
+  return freezeDeep({
+    selector: null,
+    resolutionAuthority: 'UNRESOLVED_NON_BEARING',
+    fallbackUsed: false,
+    vertical: false,
+    rule: null,
+  });
 }
 
 function requireApprovedEntry(entry) {

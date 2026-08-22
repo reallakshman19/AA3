@@ -4,9 +4,9 @@ claim_state: ACTIVE
 branch: agent/lfea-engineering-session-ui-20260822
 scope: >-
   One-PR stacked LFEA UI00-UI08 implementation: exact authority custody,
-  explicit engineering-session source ownership/invalidation, diagnostic
-  normalization, provenance/Input IA, Model Review, read-only SVG,
-  engineering-category Error Check, and results/qualification cleanup.
+  explicit engineering-session source ownership/invalidation, governed diagnostic
+  presentation, provenance/Input IA, Model Review, read-only SVG, common Error Check,
+  and results/qualification cleanup.
 claim_modes:
   - COORDINATED
 files:
@@ -22,10 +22,6 @@ files:
     - src/workspace/lfea-pipeline-accdb-view-model.js
     - src/workspace/lfea-pipeline-stagedjson-input-panel.js
     - scripts/lfea-pipeline-step-guidance-check.mjs
-    - scripts/lfea-ui-numerical-custody-check.mjs
-    - scripts/lfea-ui-engineering-session-check.mjs
-    - scripts/lfea-ui-analysis-authorization-boundary-check.mjs
-    - scripts/lfea-ui-engineering-session-integration-check.mjs
     - e2e/lfea-unified-pipeline-shell.spec.js
   prefixes:
     - src/workspace/lfea-session/
@@ -36,6 +32,7 @@ authority_domains:
   - LFEA_PRESENTATION_STATE
   - LFEA_SOURCE_IDENTITY_ROUTING
   - LFEA_DIAGNOSTIC_PRESENTATION
+  - LFEA_INPUT_INFORMATION_ARCHITECTURE
   - LFEA_DOWNSTREAM_INVALIDATION
 excluded_authority_domains:
   - FEA_SOLVER_FORMULATION
@@ -51,19 +48,22 @@ excluded_authority_domains:
 frozen_ui00_files:
   count: 11
   guard: scripts/lfea-ui-numerical-custody-check.mjs
-  policy: >-
-    Any blob change is an engineering-authority scope event requiring explicit
-    re-grounding; do not update expected blobs merely to make the guard green.
+  current_pr_overlap: 0
+ui02:
+  technical_head: 969fb0bc1142b815be454a698c630ef3caef7b32
+  contract: lfea-diagnostic-presentation/v1
+  rule: governed disposition is copied verbatim and solely determines display impact
+  runtime: NOT_RUN
+  exact_byte_syntax: PASS
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
-    basis: design and agent artifacts only; no production-path overlap
+    basis: design and agent artifacts only; no production-path overlap at GE-004
   PR1323:
     classification: SAFE
-    basis: >-
-      Current changed paths are Load Calc/non-FEA/project-data plus PR1323 agent
-      artifacts; no lfea-diagnostics/session/InputXML-diagnostics/ACCDB-view overlap.
+    basis: Load Calc/non-FEA/project-data paths only at GE-004
 last_overlap_check: GE-004
-last_verified_head: 2c83b505d87523d34d27147ec1cdcf909277357a
-current_stage: UI02_DIAGNOSTIC_PRESENTATION
+next_overlap_check_required: UI03_STAGE_ENTRY
+last_verified_head: 969fb0bc1142b815be454a698c630ef3caef7b32
+current_stage: UI03_INPUT_INFORMATION_ARCHITECTURE
 last_updated: 2026-08-22T14:11:00+05:30

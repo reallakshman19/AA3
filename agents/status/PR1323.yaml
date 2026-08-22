@@ -4,7 +4,7 @@ pr_or_wip: PR1323
 mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
 workstream: ISSUE1321_LOAD_CALC
 branch: agent/issue-1321-load-calc-effective-values
-pr_head: 836e930fc96d327a39016abc07197c22754a4b23
+pr_head: 5ca4f6d2a6738f4de21f57f1a9a591e1a53ec837
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,18 +12,20 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1323_workreport.md
-report_basis_head: db32a6e6a4a1a6cdf86e73b4f45f94470e764d60
+report_basis_head: 5ca4f6d2a6738f4de21f57f1a9a591e1a53ec837
 appendix_a_status: CURRENT
-grounding_epoch: GE-005
-current_stage: STACK_4_ACTIVE_V1_V2_EFFECTIVE_VALUE_CUTOVER_AND_COMPLETENESS_AWARE_UI_SOURCE_INTEGRATED
-blocker: NO_RELEVANT_EXACT_HEAD_LOAD_CALC_REPOSITORY_OR_BROWSER_EXECUTION_OBSERVED
-highest_risk: Historical V3-V8 package wrappers retain separate enrichment and overlay authority paths; entity-scoped project/product defaults are not yet composed into the authorized effective ledger.
+grounding_epoch: GE-006
+current_stage: STACK_4_PRE_READINESS_PROJECT_PRODUCT_EFFECTIVE_DEFAULT_AUTHORING_SOURCE_INTEGRATED
+blocker: NO_EXISTING_WORKSPACE_COMMON_ENRICHED_CANDIDATE_AUTHORING_CALLER_FOUND_AND_NO_RELEVANT_EXACT_HEAD_LOAD_CALC_EXECUTION_OBSERVED
+highest_risk: Historical V3-V8 package wrappers and direct support-distribution callers retain independent/raw value-resolution authority outside the active V1/V2 target-level ledger path.
 dependencies:
   - Issue #1321 exact effective-value precedence
+  - non-fea-common-enriched-effective-default-authoring/v1
+  - non-fea-common-enriched-configured-default-overlay/v1
+  - non-fea-common-enriched-product-default-overlay/v1
   - non-fea-effective-value-resolution-ledger/v1
   - authorized-empirical-effective-value-ledger/v1
   - authorized-empirical-effective-execution-projection/v1
   - support-load-static-accounting/v1
-  - load-calc-result-presentation
-exact_next_action: Compose entity-scoped project-configured/product-default candidates into the single effective ledger without collapsing target identity, then classify V3-V8 production support before authority migration.
-last_updated: 2026-08-22T17:14:00+05:30
+exact_next_action: Contain direct raw Project Data/DEFAULT re-resolution in support-load-distribution-v3.js for ledger-driven callers, then classify V3-V8 production support before authority migration.
+last_updated: 2026-08-22T18:09:17+05:30

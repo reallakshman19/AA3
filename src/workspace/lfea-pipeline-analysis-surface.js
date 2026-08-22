@@ -5,13 +5,14 @@ import { mountLfeaPipelineResultsPanel } from './lfea-pipeline-results-panel.js'
 import { mountLfeaPipelineLoadCaseAuthoringPanel } from './lfea-pipeline-load-case-authoring-panel.js';
 import { mountLfeaPipelineModelRepairPanel } from './lfea-pipeline-model-repair-panel.js';
 import { mountLfeaModelReviewPanel } from './lfea-model-review/lfea-model-review-panel.js';
+import { mountLfeaCommonErrorCheckPanel } from './lfea-diagnostics/lfea-error-check-panel.js';
 
 /**
  * Everything the Load-case, Input review and Output steps need, behind one entry point.
  *
  * main.js loads this with a dynamic import so Rollup gives it its own chunk
- * rather than folding it into the application entry. Model Review is a
- * read-only projection of the already-prepared records; it does not add a
+ * rather than folding it into the application entry. Model Review and Error
+ * Check are read-only projections of already-prepared records; neither adds a
  * second parse/compile/solve path.
  */
 export function mountLfeaPipelineAnalysisSurface(options) {
@@ -45,11 +46,16 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
   });
+  const errorCheckPanel = mountLfeaCommonErrorCheckPanel(options.sourceHost, {
+    documentRef: options.documentRef,
+    getPreFlight: options.getPreFlight,
+  });
 
   return Object.freeze({
     analysisController,
     modelRepairPanel,
     modelReviewPanel,
+    errorCheckPanel,
     caseSelectionPanel,
     layoutPanel,
     resultsPanel,
@@ -62,6 +68,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     refreshSourceStep() {
       modelRepairPanel.refresh();
       modelReviewPanel.refresh();
+      errorCheckPanel.refresh();
     },
     destroy() {
       caseSelectionPanel.destroy();
@@ -70,6 +77,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
       loadCaseAuthoringPanel.destroy();
       modelRepairPanel.destroy();
       modelReviewPanel.destroy();
+      errorCheckPanel.destroy();
     },
   });
 }

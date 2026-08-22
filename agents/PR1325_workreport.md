@@ -10,6 +10,7 @@
 - `BRANCH: agent/issue-1324-emp1-authority-currentness`
 - `BASE_MAIN: a222e18c38bd20fb55c1c6c95f724f40e40e8532`
 - `LAST_CODE_HEAD: ccfc4064e6eafea4296606551cf5e87bc9b2c5b0`
+- `CURRENT_BRANCH_HEAD_POLICY: commits after LAST_CODE_HEAD are living-workreport bookkeeping only unless this report explicitly records a newer code head`
 - `PRODUCTION_ROUTE_AUTHORIZED: false`
 - `GLOBAL_EMP1_C_ROUTE_AUTHORIZED: false`
 - `CODE_COMPLIANCE_AUTHORIZED: false`

@@ -66,6 +66,7 @@ export function createNonFeaProductDefaultProvider({
         authority: 'PRODUCT_DEFAULT',
         defaultId: row.defaultId,
         basis: row.basis,
+        defaultSemanticHash: row.semanticHash,
         profileId: defaultProfile.profileId,
         profileVersion: defaultProfile.version,
         productDefaultProfileSemanticHash: profileHash,
@@ -79,6 +80,7 @@ export function createNonFeaProductDefaultProvider({
       unit: row.unit,
       basis: row.basis,
       authority: 'PRODUCT_DEFAULT',
+      defaultSemanticHash: row.semanticHash,
     }));
   });
 
@@ -100,17 +102,20 @@ export function createNonFeaProductDefaultProvider({
 export function isProductDefaultEvidence(entry) {
   return isEvidenceValue(entry)
     && stringValue(entry.evidence?.authority) === 'PRODUCT_DEFAULT'
-    && Boolean(stringValue(entry.evidence?.defaultId));
+    && Boolean(stringValue(entry.evidence?.defaultId))
+    && Boolean(stringValue(entry.evidence?.defaultSemanticHash));
 }
 
 function productDefault(defaultId, projectDataPath, value, unit, basis) {
-  return freezeDeep({ defaultId, projectDataPath, value, unit, basis });
+  const base = { defaultId, projectDataPath, value, unit, basis };
+  return freezeDeep({ ...base, semanticHash: semanticHash(base) });
 }
 
 function shadowed(row, entry) {
   return freezeDeep({
     defaultId: row.defaultId,
     projectDataPath: row.projectDataPath,
+    defaultSemanticHash: row.semanticHash,
     status: 'SHADOWED_BY_HIGHER_AUTHORITY',
     existingAuthority: stringValue(entry.evidence?.authority) || 'PROJECT_DATA',
     existingSource: stringValue(entry.evidence?.source) || null,
@@ -139,6 +144,16 @@ function requireDefaultProfile(profile) {
         || !stringValue(row.unit) || !stringValue(row.basis)
         || !Object.hasOwn(row, 'value')) {
       throw new TypeError('Product default rows require ID, Project Data path, value, unit and basis.');
+    }
+    const expectedHash = semanticHash({
+      defaultId: row.defaultId,
+      projectDataPath: row.projectDataPath,
+      value: row.value,
+      unit: row.unit,
+      basis: row.basis,
+    });
+    if (row.semanticHash !== expectedHash) {
+      throw new TypeError(`Product default semantic hash mismatch: ${row.defaultId}.`);
     }
     if (ids.has(row.defaultId)) throw new TypeError(`Duplicate product default ID: ${row.defaultId}.`);
     if (paths.has(row.projectDataPath)) throw new TypeError(`Duplicate product default path: ${row.projectDataPath}.`);

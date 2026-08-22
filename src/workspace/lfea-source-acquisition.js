@@ -1,5 +1,3 @@
-import './lfea-source-acquisition.css';
-
 export const LFEA_SOURCE_ACQUISITION_SCHEMA = 'lfea-source-acquisition/v1';
 
 const SOURCE_KINDS = Object.freeze(['NONE', 'INPUTXML', 'STAGED_JSON', 'ACCDB']);

@@ -43,7 +43,7 @@ function checkEmptyProfileDefaults() {
   assert.equal(JSON.stringify(source), before, 'provider must not mutate stored Project Data');
   assert.equal(provider.schema, 'non-fea-product-default-provider/v1');
   assert.equal(provider.profileId, 'LOAD_CALC_STANDARD_DEFAULTS_V1');
-  assert.equal(provider.profileVersion, 3);
+  assert.equal(provider.profileVersion, 4);
   assert.equal(provider.usageRows.length, LOAD_CALC_STANDARD_DEFAULTS_V1.defaults.length);
   assert.equal(provider.shadowedRows.length, 0);
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.value, 9.80665);
@@ -54,8 +54,25 @@ function checkEmptyProfileDefaults() {
     provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy.value.defaultMode,
     'COMPONENT_EXPLICIT_POINT_MASS',
   );
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.forceOutputConvention.value,
+    'POSITIVE_REACTION_OPPOSES_SOURCE_AXIS_GRAVITY',
+  );
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.momentOutputConvention.value,
+    'SIGNED_ROUTE_CHAINAGE_FIRST_MOMENT_NMM',
+  );
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.analysisBasis.value,
+    'ROUTE_CHAINAGE_1D_STATIC_GRAVITY',
+  );
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.resultSignConvention.value,
+    'SOURCE_Z_UP_POSITIVE_SUPPORT_REACTION',
+  );
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.gravityMPerS2), true);
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy), true);
+  assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.forceOutputConvention), true);
   assert.equal(provider.effectiveProfile.loadCalculation.pipeSectionProperties.value, null,
     'product profile must not invent universal pipe OD/wall data');
   assert.equal(provider.effectiveProfile.loadCalculation.componentWeightsKg.value, null,
@@ -104,7 +121,13 @@ function checkLegacyPhase2Upgrade() {
     true,
   );
   const legacy = clone(project);
-  delete legacy.loadCalculation.componentMassCompositionPolicy;
+  for (const field of [
+    'componentMassCompositionPolicy',
+    'forceOutputConvention',
+    'momentOutputConvention',
+    'analysisBasis',
+    'resultSignConvention',
+  ]) delete legacy.loadCalculation[field];
   const before = JSON.stringify(legacy);
   const provider = createNonFeaProductDefaultProvider({ profile: legacy });
 
@@ -117,9 +140,18 @@ function checkLegacyPhase2Upgrade() {
     'COMPONENT_EXPLICIT_POINT_MASS',
   );
   assert.equal(
-    provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy.evidence.authority,
-    'PRODUCT_DEFAULT',
+    provider.effectiveProfile.loadCalculation.forceOutputConvention.value,
+    'POSITIVE_REACTION_OPPOSES_SOURCE_AXIS_GRAVITY',
   );
+  for (const field of [
+    'componentMassCompositionPolicy',
+    'forceOutputConvention',
+    'momentOutputConvention',
+    'analysisBasis',
+    'resultSignConvention',
+  ]) {
+    assert.equal(provider.effectiveProfile.loadCalculation[field].evidence.authority, 'PRODUCT_DEFAULT');
+  }
   assert.notEqual(provider.sourceProjectDataSemanticHash, provider.upgradedProjectDataSemanticHash,
     'legacy structural upgrade must remain visible in provider hashes');
 }

@@ -5,6 +5,9 @@ import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js'
 import {
   PRODUCT_DEFAULT_AUTHORITY,
   createNonFeaEffectiveValueCandidate,
+  createNonFeaEffectiveValueCandidatesFromCoreResolution,
+  findResolvedNonFeaEffectiveValue,
+  resolveCoreNonFeaEffectiveValues,
   resolveNonFeaEffectiveValue,
   resolveNonFeaEffectiveValues,
 } from '../src/workspace/project-data/non-fea-effective-value-resolver.js';
@@ -167,6 +170,71 @@ assert.equal(identicalSameAuthority.status, 'RESOLVED');
 assert.equal(identicalSameAuthority.selected.value, 120);
 assert.equal(identicalSameAuthority.shadowedCandidateIds.length, 1);
 
+const coreSourceCandidate = Object.freeze({
+  targetKind: 'COMPONENT',
+  targetId: 'PIPE-CORE-1',
+  fieldId: 'PIPE_OUTER_DIAMETER',
+  propertyKey: 'outerDiameterMm',
+  value: 168.3,
+  unit: 'mm',
+  authority: 'SOURCE_EXPLICIT',
+  recordId: 'source:PIPE-CORE-1:PIPE_OUTER_DIAMETER',
+  sourceId: 'SOURCE-MODEL',
+  revision: 'SOURCE',
+  evidence: { source: 'Explicit source property' },
+  migration: null,
+  fromSource: true,
+});
+const coreMasterCandidate = Object.freeze({
+  targetKind: 'COMPONENT',
+  targetId: 'PIPE-CORE-1',
+  fieldId: 'PIPE_OUTER_DIAMETER',
+  propertyKey: 'outerDiameterMm',
+  value: 168.3,
+  unit: 'mm',
+  authority: 'EXACT_APPROVED_MASTER',
+  recordId: 'master:PIPE-CORE-1:PIPE_OUTER_DIAMETER',
+  sourceId: 'PCL-MASTER',
+  revision: '7',
+  evidence: { source: 'Approved piping-class master' },
+  migration: null,
+  fromSource: false,
+});
+const coreResolutionLedger = Object.freeze({
+  schema: 'non-fea-field-resolution-ledger/v1',
+  sourceSemanticHash: 'fnv1a64:1010101010101010',
+  sidecarSemanticHash: 'fnv1a64:2020202020202020',
+  status: 'READY',
+  rows: [Object.freeze({
+    resolutionKey: 'COMPONENT|PIPE-CORE-1|PIPE_OUTER_DIAMETER',
+    targetKind: 'COMPONENT',
+    targetId: 'PIPE-CORE-1',
+    fieldId: 'PIPE_OUTER_DIAMETER',
+    status: 'RESOLVED',
+    selected: coreSourceCandidate,
+    candidates: [coreSourceCandidate, coreMasterCandidate],
+  })],
+  blockers: [],
+  semanticHash: 'fnv1a64:3030303030303030',
+});
+const coreCandidates = createNonFeaEffectiveValueCandidatesFromCoreResolution(coreResolutionLedger);
+assert.equal(coreCandidates.length, 2);
+assert.equal(coreCandidates.every((row) => row.unit === 'mm'), true,
+  'CORE adapter must preserve storage units until an explicit conversion adapter is invoked');
+const coreEffective = resolveCoreNonFeaEffectiveValues(coreResolutionLedger);
+assert.equal(coreEffective.status, 'RESOLVED');
+const coreSelected = findResolvedNonFeaEffectiveValue(
+  coreEffective,
+  'COMPONENT',
+  'PIPE-CORE-1',
+  'PIPE_OUTER_DIAMETER',
+);
+assert.ok(coreSelected);
+assert.equal(coreSelected.authority, coreResolutionLedger.rows[0].selected.authority);
+assert.equal(coreSelected.value, coreResolutionLedger.rows[0].selected.value);
+assert.equal(coreSelected.unit, coreResolutionLedger.rows[0].selected.unit);
+assert.equal(coreSelected.sourceId, coreResolutionLedger.rows[0].selected.sourceId);
+
 assert.throws(() => candidate({
   candidateId: 'BAD-PD-SUPPORT-SENSITIVITY',
   fieldId: 'SUPPORT_AVAILABILITY_SENSITIVITY',
@@ -187,6 +255,29 @@ assert.throws(() => candidate({
   evidence: { defaultId: 'PD-E' },
 }), /requires default ID and semantic-hash evidence/u);
 
+assert.throws(() => candidate({
+  candidateId: 'BAD-PD-MALFORMED-HASH',
+  fieldId: 'ELASTIC_MODULUS',
+  value: 2e11,
+  unit: 'Pa',
+  authority: PRODUCT_DEFAULT_AUTHORITY,
+  sourceId: 'BAD',
+  evidence: {
+    defaultId: 'PD-E',
+    defaultSemanticHash: 'not-a-hash',
+    productDefaultProfileSemanticHash: 'fnv1a64:2222222222222222',
+  },
+}), /requires default ID and semantic-hash evidence/u);
+
+assert.throws(() => candidate({
+  candidateId: 'BAD-NULL-VALUE',
+  fieldId: 'MATERIAL_DENSITY',
+  value: null,
+  unit: 'kg/m3',
+  authority: 'EXACT_APPROVED_MASTER',
+  sourceId: 'BAD',
+}), /missing value/u);
+
 const deterministicA = resolveNonFeaEffectiveValues({ candidates: [productOd, sourceOd, masterOd] });
 const deterministicB = resolveNonFeaEffectiveValues({ candidates: [masterOd, productOd, sourceOd] });
 assert.deepEqual(deterministicA, deterministicB);
@@ -198,24 +289,24 @@ assert.equal(deterministicA.semanticHash, semanticHash({
   summary: deterministicA.summary,
 }));
 
-const changed = resolveNonFeaEffectiveValues({
-  candidates: [
-    sourceOd,
-    candidate({
-      candidateId: 'PD-OD',
-      fieldId: 'PIPE_OUTER_DIAMETER',
-      value: 219.1,
-      unit: 'mm',
-      authority: PRODUCT_DEFAULT_AUTHORITY,
-      sourceId: 'LOAD_CALC_STANDARD_DEFAULTS_TEST',
-      evidence: {
-        defaultId: 'PD-TEST-OD',
-        defaultSemanticHash: 'fnv1a64:5555555555555555',
-        productDefaultProfileSemanticHash: 'fnv1a64:4444444444444444',
-      },
-    }),
-  ],
+const changedProductOd = candidate({
+  candidateId: 'PD-OD',
+  fieldId: 'PIPE_OUTER_DIAMETER',
+  value: 219.1,
+  unit: 'mm',
+  authority: PRODUCT_DEFAULT_AUTHORITY,
+  sourceId: 'LOAD_CALC_STANDARD_DEFAULTS_TEST',
+  evidence: {
+    defaultId: 'PD-TEST-OD',
+    defaultSemanticHash: 'fnv1a64:5555555555555555',
+    productDefaultProfileSemanticHash: 'fnv1a64:4444444444444444',
+  },
 });
+const changed = resolveNonFeaEffectiveValues({
+  candidates: [changedProductOd, sourceOd, masterOd],
+});
+assert.equal(changed.rows[0].selected.value, deterministicA.rows[0].selected.value,
+  'shadowed default must not displace selected source value');
 assert.notEqual(changed.semanticHash, deterministicA.semanticHash,
   'shadowed default changes must remain hash-visible even when source stays selected');
 
@@ -225,6 +316,9 @@ console.log(JSON.stringify({
   masterPrecedenceSelected: masterWins.selected.candidateId,
   productDefaultSelectedCount: productOnly.summary.productDefaultSelectedCount,
   sameAuthorityConflict: conflict.blockers[0].code,
+  coreParitySelectedAuthority: coreSelected.authority,
+  coreParitySelectedValue: coreSelected.value,
+  coreParitySelectedUnit: coreSelected.unit,
   deterministicSemanticHash: deterministicA.semanticHash,
 }, null, 2));
 

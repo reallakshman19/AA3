@@ -6,8 +6,8 @@ mission: >-
   in one long-lived PR while preserving exact numerical/pre-flight authority.
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
-report_basis_head: 50934fed4135b0981e1235ea477207f8c4ab8895
-pr_head_last_observed: 50934fed4135b0981e1235ea477207f8c4ab8895
+report_basis_head: 1dd711245a40fa96d9ba0dc384586285459522da
+pr_head_last_observed: 1dd711245a40fa96d9ba0dc384586285459522da
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -15,10 +15,10 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1322_workreport.md
-appendix_a_status: CURRENT_FOR_UI05
-grounding_epoch: GE-007
-current_stage: UI05_READONLY_SVG_REPRESENTATION_TOGGLE
-last_completed_stage: UI04_MODEL_REVIEW_TRANSFORMATION_LEDGER
+appendix_a_status: CURRENT_FOR_UI06
+grounding_epoch: GE-008
+current_stage: UI06_COMMON_ENGINEERING_ERROR_CHECK
+last_completed_stage: UI05_READONLY_SVG_REPRESENTATION_TOGGLE
 blocker: NONE
 coordination: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
 validation:
@@ -35,11 +35,18 @@ validation:
   ui04_pushed_blob_identity: PASS
   ui04_authority_diff: PASS
   ui04_browser_full_repo: NOT_RUN
+  ui05_focused_local_execution: PASS
+  ui05_exact_byte_syntax: PASS
+  ui05_pushed_blob_identity: PASS
+  ui05_authority_diff: PASS
+  ui05_browser_full_repo: NOT_RUN
   unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
 highest_risk: >-
-  UI05 must render imported/source versus analysis representation honestly and
-  read-only, without geometry mutation, conditioning authority or session invalidation.
+  UI06 must consolidate Error Check by piping-engineering category without
+  reclassifying governed disposition, duplicating source-specific acceptance,
+  or allowing message/severity/capability text to become engineering authority.
 exact_next_action: >-
-  Audit existing LFEA SVG/geometry viewers and wire a read-only Imported/Analysis
-  representation selector to exact existing session/model-review geometry sources.
+  Re-ground open diagnostic/source-panel claims, inventory current Error Check
+  duplication, then group the common sealed diagnostic presentation by explicit
+  engineering categories while preserving every finding ID and disposition.
 last_updated: 2026-08-22

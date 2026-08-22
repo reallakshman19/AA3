@@ -1,0 +1,312 @@
+import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
+import { freezeDeep, isRecord, stringValue } from '../dataset-utils.js';
+import { getNonFeaFieldDefinition } from './non-fea-field-registry.js';
+
+export const NON_FEA_EFFECTIVE_VALUE_RESOLUTION_LEDGER_SCHEMA =
+  'non-fea-effective-value-resolution-ledger/v1';
+export const NON_FEA_EFFECTIVE_VALUE_RESOLUTION_ROW_SCHEMA =
+  'non-fea-effective-value-resolution-row/v1';
+
+export const PRODUCT_DEFAULT_AUTHORITY = 'PRODUCT_DEFAULT';
+
+/**
+ * Consumer-facing authority resolver for Non-FEA engineering values.
+ *
+ * The existing CORE enrichment resolver remains responsible for producing
+ * source/master/override/derivation candidates. This resolver is the single
+ * composition seam that selects the value a workspace consumer is allowed to
+ * use after Project Data and product-default candidates are added.
+ *
+ * Precedence is field-owned: the registry authorityPath is already ordered from
+ * highest to lowest authority. PRODUCT_DEFAULT is appended as the final tier
+ * only for a Project-Data-backed field and only when its candidate carries the
+ * immutable product-default identity/hash evidence.
+ */
+export function resolveNonFeaEffectiveValues({
+  candidates,
+  sourceModelSemanticHash = null,
+  enrichmentResolutionSemanticHash = null,
+  projectDataProfileSemanticHash = null,
+  productDefaultProviderSemanticHash = null,
+} = {}) {
+  if (!Array.isArray(candidates)) {
+    throw new TypeError('Effective-value resolution requires a candidate array.');
+  }
+
+  const normalized = candidates.map(normalizeCandidate).sort(candidateStableOrder);
+  assertUniqueCandidateIds(normalized);
+
+  const grouped = groupBy(normalized, (row) => row.resolutionKey);
+  const rows = [...grouped.entries()]
+    .sort(([left], [right]) => ascii(left, right))
+    .map(([resolutionKey, group]) => resolveGroup(resolutionKey, group));
+
+  const blockedRows = rows.filter((row) => row.status === 'BLOCKED');
+  const unresolvedRows = rows.filter((row) => row.status === 'UNRESOLVED');
+  const resolvedRows = rows.filter((row) => row.status === 'RESOLVED');
+  const status = blockedRows.length > 0
+    ? 'BLOCKED'
+    : unresolvedRows.length > 0
+      ? 'PARTIAL'
+      : 'RESOLVED';
+
+  const base = {
+    schema: NON_FEA_EFFECTIVE_VALUE_RESOLUTION_LEDGER_SCHEMA,
+    status,
+    bindings: {
+      sourceModelSemanticHash: nullableIdentity(sourceModelSemanticHash),
+      enrichmentResolutionSemanticHash: nullableIdentity(enrichmentResolutionSemanticHash),
+      projectDataProfileSemanticHash: nullableIdentity(projectDataProfileSemanticHash),
+      productDefaultProviderSemanticHash: nullableIdentity(productDefaultProviderSemanticHash),
+    },
+    rows,
+    summary: {
+      candidateCount: normalized.length,
+      rowCount: rows.length,
+      resolvedCount: resolvedRows.length,
+      unresolvedCount: unresolvedRows.length,
+      blockedCount: blockedRows.length,
+      productDefaultSelectedCount: resolvedRows.filter(
+        (row) => row.selected?.authority === PRODUCT_DEFAULT_AUTHORITY,
+      ).length,
+    },
+  };
+  return freezeDeep({ ...base, semanticHash: semanticHash(base) });
+}
+
+/**
+ * Resolve one target/field pair. This is exported so individual consumers can
+ * migrate without introducing a second local precedence implementation.
+ */
+export function resolveNonFeaEffectiveValue(candidates) {
+  if (!Array.isArray(candidates) || candidates.length === 0) {
+    throw new TypeError('At least one effective-value candidate is required.');
+  }
+  const normalized = candidates.map(normalizeCandidate).sort(candidateStableOrder);
+  const keys = new Set(normalized.map((row) => row.resolutionKey));
+  if (keys.size !== 1) {
+    throw new TypeError('Single effective-value resolution may address only one target/field key.');
+  }
+  return resolveGroup(normalized[0].resolutionKey, normalized);
+}
+
+/**
+ * Canonical candidate constructor. Callers should construct candidates at the
+ * authority boundary where the value is observed, never after the selected
+ * value has already been consumed by an engineering method.
+ */
+export function createNonFeaEffectiveValueCandidate(input) {
+  return normalizeCandidate(input);
+}
+
+function resolveGroup(resolutionKey, candidates) {
+  const representative = candidates[0];
+  const definition = getNonFeaFieldDefinition(representative.fieldId);
+  if (!definition) {
+    return resolutionRow(
+      resolutionKey,
+      representative,
+      candidates,
+      null,
+      'BLOCKED',
+      [{ code: 'UNKNOWN_EFFECTIVE_VALUE_FIELD', fieldId: representative.fieldId }],
+    );
+  }
+
+  const precedence = effectiveAuthorityPath(definition);
+  const invalidAuthority = candidates.filter((candidate) => (
+    !precedence.includes(candidate.authority)
+  ));
+  if (invalidAuthority.length > 0) {
+    return resolutionRow(
+      resolutionKey,
+      representative,
+      candidates,
+      null,
+      'BLOCKED',
+      invalidAuthority.map((candidate) => ({
+        code: 'EFFECTIVE_VALUE_AUTHORITY_NOT_PERMITTED',
+        candidateId: candidate.candidateId,
+        fieldId: candidate.fieldId,
+        authority: candidate.authority,
+        allowedAuthorities: precedence,
+      })),
+    );
+  }
+
+  const sameAuthorityConflicts = conflictingSameAuthorityCandidates(candidates);
+  if (sameAuthorityConflicts.length > 0) {
+    return resolutionRow(
+      resolutionKey,
+      representative,
+      candidates,
+      null,
+      'BLOCKED',
+      sameAuthorityConflicts,
+    );
+  }
+
+  const selected = [...candidates].sort((left, right) => {
+    const rank = precedence.indexOf(left.authority) - precedence.indexOf(right.authority);
+    return rank || candidateStableOrder(left, right);
+  })[0] || null;
+
+  if (!selected) {
+    return resolutionRow(resolutionKey, representative, candidates, null, 'UNRESOLVED', []);
+  }
+
+  return resolutionRow(resolutionKey, representative, candidates, selected, 'RESOLVED', []);
+}
+
+function resolutionRow(resolutionKey, representative, candidates, selected, status, blockers) {
+  const base = {
+    schema: NON_FEA_EFFECTIVE_VALUE_RESOLUTION_ROW_SCHEMA,
+    resolutionKey,
+    targetKind: representative.targetKind,
+    targetId: representative.targetId,
+    fieldId: representative.fieldId,
+    status,
+    selected,
+    candidates,
+    shadowedCandidateIds: selected
+      ? candidates.filter((candidate) => candidate.candidateId !== selected.candidateId)
+        .map((candidate) => candidate.candidateId)
+        .sort(ascii)
+      : [],
+    blockers,
+  };
+  return freezeDeep({ ...base, semanticHash: semanticHash(base) });
+}
+
+function normalizeCandidate(input) {
+  if (!isRecord(input)) throw new TypeError('Effective-value candidate must be an object.');
+  const candidateId = requiredText(input.candidateId, 'Candidate ID');
+  const targetKind = requiredText(input.targetKind, 'Target kind');
+  const targetId = requiredText(input.targetId, 'Target ID');
+  const fieldId = requiredText(input.fieldId, 'Field ID');
+  const authority = requiredText(input.authority, 'Authority');
+  const sourceId = requiredText(input.sourceId, 'Source ID');
+  const unit = requiredText(input.unit, 'Unit');
+  if (!Object.hasOwn(input, 'value')) {
+    throw new TypeError(`Effective-value candidate ${candidateId} is missing value.`);
+  }
+  validateFiniteEngineeringValue(input.value, `candidate ${candidateId}`);
+
+  const definition = getNonFeaFieldDefinition(fieldId);
+  if (authority === PRODUCT_DEFAULT_AUTHORITY) {
+    if (!definition?.projectDataPath) {
+      throw new TypeError(`PRODUCT_DEFAULT is not permitted for non-Project-Data field ${fieldId}.`);
+    }
+    const evidence = input.evidence;
+    if (!isRecord(evidence)
+        || !stringValue(evidence.defaultId)
+        || !stringValue(evidence.defaultSemanticHash)
+        || !stringValue(evidence.productDefaultProfileSemanticHash)) {
+      throw new TypeError(
+        `PRODUCT_DEFAULT candidate ${candidateId} requires default ID and semantic-hash evidence.`,
+      );
+    }
+  }
+
+  const base = {
+    candidateId,
+    targetKind,
+    targetId,
+    fieldId,
+    value: plainClone(input.value),
+    unit,
+    authority,
+    sourceId,
+    evidence: input.evidence === undefined || input.evidence === null
+      ? null
+      : plainClone(input.evidence),
+    resolutionKey: `${targetKind}|${targetId}|${fieldId}`,
+  };
+  return freezeDeep({ ...base, semanticHash: semanticHash(base) });
+}
+
+function effectiveAuthorityPath(definition) {
+  const path = [...definition.authorityPath];
+  if (definition.projectDataPath && !path.includes(PRODUCT_DEFAULT_AUTHORITY)) {
+    path.push(PRODUCT_DEFAULT_AUTHORITY);
+  }
+  return freezeDeep(path);
+}
+
+function conflictingSameAuthorityCandidates(candidates) {
+  const groups = groupBy(candidates, (row) => row.authority);
+  const blockers = [];
+  groups.forEach((rows, authority) => {
+    const valueHashes = new Set(rows.map((row) => semanticHash({ value: row.value, unit: row.unit })));
+    if (valueHashes.size <= 1) return;
+    blockers.push(freezeDeep({
+      code: 'EFFECTIVE_VALUE_SAME_AUTHORITY_CONFLICT',
+      authority,
+      candidateIds: rows.map((row) => row.candidateId).sort(ascii),
+    }));
+  });
+  return blockers.sort((left, right) => ascii(left.authority, right.authority));
+}
+
+function assertUniqueCandidateIds(candidates) {
+  const ids = new Set();
+  candidates.forEach((row) => {
+    if (ids.has(row.candidateId)) {
+      throw new TypeError(`Duplicate effective-value candidate ID: ${row.candidateId}.`);
+    }
+    ids.add(row.candidateId);
+  });
+}
+
+function candidateStableOrder(left, right) {
+  return ascii(left.resolutionKey, right.resolutionKey)
+    || ascii(left.authority, right.authority)
+    || ascii(left.candidateId, right.candidateId);
+}
+
+function groupBy(rows, keyFn) {
+  const groups = new Map();
+  rows.forEach((row) => {
+    const key = keyFn(row);
+    const group = groups.get(key) || [];
+    group.push(row);
+    groups.set(key, group);
+  });
+  return groups;
+}
+
+function requiredText(value, label) {
+  const result = stringValue(value);
+  if (!result) throw new TypeError(`${label} is required.`);
+  return result;
+}
+
+function nullableIdentity(value) {
+  if (value === null || value === undefined || value === '') return null;
+  return requiredText(value, 'Semantic binding');
+}
+
+function validateFiniteEngineeringValue(value, label) {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new TypeError(`${label} must be finite.`);
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => validateFiniteEngineeringValue(item, `${label}[${index}]`));
+    return;
+  }
+  if (isRecord(value)) {
+    Object.entries(value).forEach(([key, item]) => (
+      validateFiniteEngineeringValue(item, `${label}.${key}`)
+    ));
+  }
+}
+
+function plainClone(value) {
+  if (value === undefined) return undefined;
+  return JSON.parse(JSON.stringify(value));
+}
+
+function ascii(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}

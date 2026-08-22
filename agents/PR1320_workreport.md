@@ -1,6 +1,7 @@
-# WIP-LFEA-INPUT-SUBTABS — work report
+# PR1320 — work report
 
-**Identity:** `WIP-LFEA-INPUT-SUBTABS`
+**Identity:** `PR1320` (allocated from `WIP-LFEA-INPUT-SUBTABS`)
+**Pull request:** https://github.com/reallaksh19/Advanced_Analysis/pull/1320 (draft)
 **Branch:** `claude/input-tabs-error-check-p78jbg`
 **Base at start:** `49c9228` (`main`)
 **Criticality:** `ENGINEERING_CRITICAL` (LFEA source intake / pre-flight surface)
@@ -95,9 +96,9 @@ No tolerance was weakened, no expected value changed, no benchmark touched, no t
 | File | Change |
 |---|---|
 | `docs/lfea-input-subtabs-ui-concept.md` | new — the deliverable |
-| `agents/WIP-LFEA-INPUT-SUBTABS_workreport.md` | new — this report |
-| `agents/status/WIP-LFEA-INPUT-SUBTABS.yaml` | new |
-| `agents/claims/WIP-LFEA-INPUT-SUBTABS.yaml` | new |
+| `agents/PR1320_workreport.md` | new — this report |
+| `agents/status/PR1320.yaml` | new |
+| `agents/claims/PR1320.yaml` | new |
 
 ## 9. EXACT_NEXT_ACTION
 

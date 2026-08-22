@@ -1,5 +1,5 @@
 schema: AgentClaim.v1
-pr_or_wip: WIP-LFEA-INPUT-SUBTABS
+pr_or_wip: PR1320
 claim_state: ACTIVE
 branch: claude/input-tabs-error-check-p78jbg
 scope: >-
@@ -8,9 +8,9 @@ scope: >-
   Documentation and agent artifacts only.
 files_claimed:
   - docs/lfea-input-subtabs-ui-concept.md
-  - agents/WIP-LFEA-INPUT-SUBTABS_workreport.md
-  - agents/status/WIP-LFEA-INPUT-SUBTABS.yaml
-  - agents/claims/WIP-LFEA-INPUT-SUBTABS.yaml
+  - agents/PR1320_workreport.md
+  - agents/status/PR1320.yaml
+  - agents/claims/PR1320.yaml
 production_files_claimed: []
 overlap_classification: SAFE
 overlap_basis: >-

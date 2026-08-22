@@ -1,11 +1,12 @@
 schema: AgentStatus.v1
-pr_or_wip: WIP-LFEA-INPUT-SUBTABS
+pr: 1320
+wip_identity_at_allocation: WIP-LFEA-INPUT-SUBTABS
 repository: reallaksh19/Advanced_Analysis
 branch: claude/input-tabs-error-check-p78jbg
 base_sha_at_allocation: 49c9228
 criticality: ENGINEERING_CRITICAL
 intent: LFEA_INPUT_SUBTABS_AND_COMMON_ELEMENT_TABLE_DESIGN
-state: DESIGN_ISSUED_FOR_REVIEW
+state: OPEN_DRAFT_HANDOVER_READY
 authority_exercised: DESIGN_AND_REVIEW_ONLY
 production_code_changed: false
 ui_changed: false

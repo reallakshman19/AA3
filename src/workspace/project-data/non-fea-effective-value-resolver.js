@@ -9,6 +9,9 @@ export const NON_FEA_EFFECTIVE_VALUE_RESOLUTION_ROW_SCHEMA =
 
 export const PRODUCT_DEFAULT_AUTHORITY = 'PRODUCT_DEFAULT';
 
+const CORE_RESOLUTION_LEDGER_SCHEMA = 'non-fea-field-resolution-ledger/v1';
+const SEMANTIC_HASH_PATTERN = /^fnv1a64:[0-9a-f]{16}$/u;
+
 /**
  * Consumer-facing authority resolver for Non-FEA engineering values.
  *
@@ -21,6 +24,11 @@ export const PRODUCT_DEFAULT_AUTHORITY = 'PRODUCT_DEFAULT';
  * highest to lowest authority. PRODUCT_DEFAULT is appended as the final tier
  * only for a Project-Data-backed field and only when its candidate carries the
  * immutable product-default identity/hash evidence.
+ *
+ * Units are deliberately preserved, not converted here. Legacy CORE field
+ * storage includes mm/Mpa properties while the workspace registry describes
+ * conceptual canonical units. A consumer adapter must perform an explicit,
+ * audited conversion instead of allowing this resolver to hide unit changes.
  */
 export function resolveNonFeaEffectiveValues({
   candidates,
@@ -83,6 +91,7 @@ export function resolveNonFeaEffectiveValue(candidates) {
     throw new TypeError('At least one effective-value candidate is required.');
   }
   const normalized = candidates.map(normalizeCandidate).sort(candidateStableOrder);
+  assertUniqueCandidateIds(normalized);
   const keys = new Set(normalized.map((row) => row.resolutionKey));
   if (keys.size !== 1) {
     throw new TypeError('Single effective-value resolution may address only one target/field key.');
@@ -97,6 +106,84 @@ export function resolveNonFeaEffectiveValue(candidates) {
  */
 export function createNonFeaEffectiveValueCandidate(input) {
   return normalizeCandidate(input);
+}
+
+/**
+ * Adapts the existing CORE field-resolution ledger into candidates without
+ * changing its selected values. This is the migration seam used to prove
+ * source/master/override parity before Project Data or product defaults are
+ * introduced into the same target/field key.
+ */
+export function createNonFeaEffectiveValueCandidatesFromCoreResolution(
+  resolutionLedger,
+) {
+  if (!isRecord(resolutionLedger)
+      || resolutionLedger.schema !== CORE_RESOLUTION_LEDGER_SCHEMA
+      || !Array.isArray(resolutionLedger.rows)) {
+    throw new TypeError(`Expected ${CORE_RESOLUTION_LEDGER_SCHEMA}.`);
+  }
+  const sourceModelSemanticHash = stringValue(resolutionLedger.sourceSemanticHash);
+  const rows = [];
+  resolutionLedger.rows.forEach((resolutionRowValue) => {
+    if (!isRecord(resolutionRowValue) || !Array.isArray(resolutionRowValue.candidates)) {
+      throw new TypeError('CORE resolution rows require a candidate array.');
+    }
+    resolutionRowValue.candidates.forEach((candidate, index) => {
+      if (!isRecord(candidate)) throw new TypeError('CORE resolution candidate must be an object.');
+      const coreFingerprint = semanticHash(candidate);
+      rows.push(createNonFeaEffectiveValueCandidate({
+        candidateId: `core:${coreFingerprint}:${index}`,
+        targetKind: candidate.targetKind,
+        targetId: candidate.targetId,
+        fieldId: candidate.fieldId,
+        value: candidate.value,
+        unit: candidate.unit,
+        authority: candidate.authority,
+        sourceId: stringValue(candidate.sourceId)
+          || stringValue(candidate.recordId)
+          || (sourceModelSemanticHash ? `source-model:${sourceModelSemanticHash}` : 'CORE_RESOLUTION'),
+        evidence: {
+          source: 'CORE Non-FEA field-resolution ledger',
+          coreResolutionKey: resolutionRowValue.resolutionKey,
+          coreResolutionStatus: resolutionRowValue.status,
+          coreCandidateSemanticHash: coreFingerprint,
+          coreRecordId: candidate.recordId ?? null,
+          coreRevision: candidate.revision ?? null,
+          coreFromSource: candidate.fromSource === true,
+          coreEvidence: candidate.evidence ?? null,
+          coreMigration: candidate.migration ?? null,
+        },
+      }));
+    });
+  });
+  return freezeDeep(rows.sort(candidateStableOrder));
+}
+
+export function resolveCoreNonFeaEffectiveValues(resolutionLedger) {
+  const candidates = createNonFeaEffectiveValueCandidatesFromCoreResolution(
+    resolutionLedger,
+  );
+  return resolveNonFeaEffectiveValues({
+    candidates,
+    sourceModelSemanticHash: resolutionLedger.sourceSemanticHash ?? null,
+    enrichmentResolutionSemanticHash: resolutionLedger.semanticHash ?? null,
+  });
+}
+
+export function findResolvedNonFeaEffectiveValue(
+  ledger,
+  targetKind,
+  targetId,
+  fieldId,
+) {
+  if (!isRecord(ledger)
+      || ledger.schema !== NON_FEA_EFFECTIVE_VALUE_RESOLUTION_LEDGER_SCHEMA
+      || !Array.isArray(ledger.rows)) {
+    throw new TypeError(`Expected ${NON_FEA_EFFECTIVE_VALUE_RESOLUTION_LEDGER_SCHEMA}.`);
+  }
+  const resolutionKey = `${requiredText(targetKind, 'Target kind')}|${requiredText(targetId, 'Target ID')}|${requiredText(fieldId, 'Field ID')}`;
+  const row = ledger.rows.find((item) => item.resolutionKey === resolutionKey) || null;
+  return row?.status === 'RESOLVED' ? row.selected : null;
 }
 
 function resolveGroup(resolutionKey, candidates) {
@@ -187,7 +274,7 @@ function normalizeCandidate(input) {
   const authority = requiredText(input.authority, 'Authority');
   const sourceId = requiredText(input.sourceId, 'Source ID');
   const unit = requiredText(input.unit, 'Unit');
-  if (!Object.hasOwn(input, 'value')) {
+  if (!Object.hasOwn(input, 'value') || input.value === null || input.value === undefined) {
     throw new TypeError(`Effective-value candidate ${candidateId} is missing value.`);
   }
   validateFiniteEngineeringValue(input.value, `candidate ${candidateId}`);
@@ -200,8 +287,8 @@ function normalizeCandidate(input) {
     const evidence = input.evidence;
     if (!isRecord(evidence)
         || !stringValue(evidence.defaultId)
-        || !stringValue(evidence.defaultSemanticHash)
-        || !stringValue(evidence.productDefaultProfileSemanticHash)) {
+        || !semanticHashIdentity(evidence.defaultSemanticHash)
+        || !semanticHashIdentity(evidence.productDefaultProfileSemanticHash)) {
       throw new TypeError(
         `PRODUCT_DEFAULT candidate ${candidateId} requires default ID and semantic-hash evidence.`,
       );
@@ -286,11 +373,20 @@ function nullableIdentity(value) {
   return requiredText(value, 'Semantic binding');
 }
 
+function semanticHashIdentity(value) {
+  return SEMANTIC_HASH_PATTERN.test(stringValue(value));
+}
+
 function validateFiniteEngineeringValue(value, label) {
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) throw new TypeError(`${label} must be finite.`);
     return;
   }
+  if (typeof value === 'string') {
+    if (!value.trim()) throw new TypeError(`${label} must not be an empty string.`);
+    return;
+  }
+  if (typeof value === 'boolean') return;
   if (Array.isArray(value)) {
     value.forEach((item, index) => validateFiniteEngineeringValue(item, `${label}[${index}]`));
     return;
@@ -299,7 +395,9 @@ function validateFiniteEngineeringValue(value, label) {
     Object.entries(value).forEach(([key, item]) => (
       validateFiniteEngineeringValue(item, `${label}.${key}`)
     ));
+    return;
   }
+  throw new TypeError(`${label} contains an unsupported engineering value type.`);
 }
 
 function plainClone(value) {

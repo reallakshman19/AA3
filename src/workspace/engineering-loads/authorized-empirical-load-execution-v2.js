@@ -8,6 +8,9 @@ import {
   createAuthorizedEmpiricalEffectiveExecutionProjection,
 } from './authorized-empirical-effective-execution-projection.js';
 import {
+  calculateAuthorizedEmpiricalEffectiveSupportLoads,
+} from './authorized-empirical-effective-support-load-execution.js';
+import {
   EMPIRICAL_LOAD_COG_METHOD,
   EMPIRICAL_LOAD_METHOD,
   calculateSupportLoadDistribution,
@@ -100,9 +103,17 @@ export function calculateAuthorizedEmpiricalLoadExecutionV2(value) {
     routePartitionModel: value.routePartitionModel,
     masterData: value.masterData,
   };
-  const distribution = requestedMethod === EMPIRICAL_LOAD_METHOD
-    ? calculateSupportLoadDistribution(calculationInput)
-    : calculateSupportLoadDistributionWithComponentCog(calculationInput);
+  const distribution = effectiveExecutionProjection
+    ? calculateAuthorizedEmpiricalEffectiveSupportLoads({
+      effectiveExecutionProjection,
+      method: requestedMethod,
+      supportSiteModel: value.supportSiteModel,
+      routePartitionModel: value.routePartitionModel,
+      masterData: value.masterData,
+    })
+    : requestedMethod === EMPIRICAL_LOAD_METHOD
+      ? calculateSupportLoadDistribution(calculationInput)
+      : calculateSupportLoadDistributionWithComponentCog(calculationInput);
   if (distribution.method !== requestedMethod) {
     fail(
       'Executed empirical method differs from the authorized method.',

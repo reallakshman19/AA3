@@ -62,30 +62,38 @@ assert.equal(operating60.rawDensityKgPerM3, 800);
 assert.equal(operating60.fillFraction, 0.6);
 assert.equal(operating60.selected, 480);
 assert.equal(operating60.phase, 'MIXED');
-assert.equal(hydro60.rawDensityKgPerM3, 1000);
-assert.equal(hydro60.fillFraction, 1);
-assert.equal(hydro60.selected, 1000);
+assert.equal(hydro60, 1000, 'full-fill hydro must retain historical numeric projection shape');
 assert.equal(projection60.fluidCompositionRows.length, 2);
 assert.equal(projection60.fluidCompositionRule,
   'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION');
 
 const opeReceipt60 = projection60.fluidCompositionRows.find((row) => row.loadCaseId === 'OPE');
+const hydReceipt60 = projection60.fluidCompositionRows.find((row) => row.loadCaseId === 'HYD');
 assert.ok(opeReceipt60);
+assert.ok(hydReceipt60);
 assert.equal(opeReceipt60.rawDensityKgPerM3, 800);
 assert.equal(opeReceipt60.bulkDensityKgPerM3, 480);
 assert.equal(opeReceipt60.fillFraction, 0.6);
 assert.equal(opeReceipt60.rawDensitySemanticHash, operating60.rawDensitySemanticHash);
 assert.equal(opeReceipt60.fillPolicySemanticHash, operating60.fillPolicySemanticHash);
 assert.equal(opeReceipt60.semanticHash, operating60.compositionSemanticHash);
+assert.equal(hydReceipt60.rawDensityKgPerM3, 1000);
+assert.equal(hydReceipt60.bulkDensityKgPerM3, 1000);
+assert.equal(hydReceipt60.fillFraction, 1);
 
 const opeEvidence60 = projection60.profile.loadCalculation
   .operatingFluidDensitiesKgPerM3.evidence;
+const hydEvidence60 = projection60.profile.loadCalculation
+  .hydroFluidDensitiesKgPerM3.evidence;
 assert.equal(opeEvidence60.source, 'AUTHORIZED_EMPIRICAL_EFFECTIVE_VALUE_LEDGER');
 assert.equal(opeEvidence60.massCompositionRule,
   'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION');
 assert.equal(opeEvidence60.fluidCompositionBySelector['L-1'].rawDensityKgPerM3, 800);
 assert.equal(opeEvidence60.fluidCompositionBySelector['L-1'].fillFraction, 0.6);
 assert.equal(opeEvidence60.fluidCompositionBySelector['L-1'].bulkDensityKgPerM3, 480);
+assert.equal(hydEvidence60.fluidCompositionBySelector['L-1'].rawDensityKgPerM3, 1000);
+assert.equal(hydEvidence60.fluidCompositionBySelector['L-1'].fillFraction, 1);
+assert.equal(hydEvidence60.fluidCompositionBySelector['L-1'].bulkDensityKgPerM3, 1000);
 
 const profile80 = effectiveProfile({
   schema: NON_FEA_FLUID_FILL_POLICY_SCHEMA,
@@ -120,11 +128,16 @@ const legacyProjection = createAuthorizedEmpiricalEffectiveExecutionProjection({
 assert.equal(projectDataValue(
   legacyProjection.profile,
   'loadCalculation.operatingFluidDensitiesKgPerM3',
-)['L-1'].selected, 800);
+)['L-1'], 800);
 assert.equal(projectDataValue(
   legacyProjection.profile,
   'loadCalculation.hydroFluidDensitiesKgPerM3',
-)['L-1'].selected, 1000);
+)['L-1'], 1000);
+assert.equal(
+  legacyProjection.profile.loadCalculation.operatingFluidDensitiesKgPerM3
+    .evidence.fluidCompositionBySelector['L-1'].fillFraction,
+  1,
+);
 
 assert.throws(
   () => createAuthorizedEmpiricalEffectiveExecutionProjection({
@@ -144,6 +157,7 @@ console.log(JSON.stringify({
   rawOperatingDensityKgPerM3: 800,
   opeFill60BulkDensityKgPerM3: operating60.selected,
   opeFill80BulkDensityKgPerM3: operating80.selected,
+  fullHydroProjectionShape: 'NUMERIC_COMPATIBLE',
   rawDensityHashStableAcrossFillChange: true,
   projectionHashChangesWithFillPolicy: projection80.semanticHash !== projection60.semanticHash,
   legacyFullPolicyPreserved: true,

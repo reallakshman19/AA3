@@ -8,6 +8,10 @@ import {
   AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION_PROJECTION_SCHEMA,
 } from './authorized-empirical-effective-execution-projection.js';
 import {
+  bindAuthorizedEmpiricalGravityConventions,
+  requireAuthorizedEmpiricalGravityConventions,
+} from './authorized-empirical-gravity-convention-binding.js';
+import {
   bindAuthorizedEmpiricalSourceAxis,
   requireAuthorizedEmpiricalSourceBasis,
 } from './authorized-empirical-source-axis-binding.js';
@@ -37,22 +41,22 @@ const PROJECTED_LOAD_PATHS = Object.freeze([
 /**
  * Guarded execution seam for ledger-bearing V1/V2 gravity calculations.
  *
- * The legacy distribution kernel still consumes Project-Data-shaped maps, but
- * on this path those maps are an immutable execution projection generated from
- * the authorized target-level effective-value ledger. This guard proves that
- * projection binding before the kernel runs and forbids legacy mass-map
- * `DEFAULT` selectors entirely.
+ * The legacy distribution kernel still consumes Project-Data-shaped mass maps,
+ * but those maps are immutable projections generated from the authorized
+ * target-level effective-value ledger. Legacy mass-map DEFAULT selectors are
+ * forbidden on this path.
  *
- * Support capability is handled separately because `DEFAULT` is a legitimate
- * governed topology policy, not a legacy mass lookup. Immediately before
- * statics, the execution-local support-capability binding expands only support
- * kinds actually present in the support-site model. Exact rules win; governed
- * DEFAULT may fill an unknown kind and every resolution is retained in the
- * returned authority receipt. The source effective projection remains frozen.
+ * Support `DEFAULT` is different: it is legitimate governed topology policy.
+ * Immediately before statics, an execution-local support-capability binding
+ * expands only support kinds actually present in the support-site model. Exact
+ * rules win; governed DEFAULT may fill an unknown kind and every resolution is
+ * retained in the returned authority receipt.
  *
- * The implemented engineering source basis (Z-up, mm) is also validated before
- * statics execute. Historical ledger-less callers intentionally do not use this
- * function.
+ * Source axis/unit and result convention authority are both validated before
+ * statics. The current kernel is intentionally bounded to source-Z/mm scalar
+ * route-chainage gravity with its existing force/moment/sign conventions.
+ * Unsupported configuration fails closed instead of relabelling mechanics.
+ * Historical ledger-less callers intentionally do not use this function.
  */
 export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
   effectiveExecutionProjection,
@@ -70,6 +74,7 @@ export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
     supportSiteModel,
   });
   requireAuthorizedEmpiricalSourceBasis(supportCapabilityBinding.profile);
+  requireAuthorizedEmpiricalGravityConventions(supportCapabilityBinding.profile);
   const requestedMethod = requireMethod(method);
 
   const calculationInput = {
@@ -95,23 +100,27 @@ export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
     distribution,
     profile: supportCapabilityBinding.profile,
   });
-  return bindAuthorizedEmpiricalSupportCapabilityResult({
+  const conventionBound = bindAuthorizedEmpiricalGravityConventions({
     distribution: axisBound,
+    profile: supportCapabilityBinding.profile,
+  });
+  return bindAuthorizedEmpiricalSupportCapabilityResult({
+    distribution: conventionBound,
     binding: supportCapabilityBinding,
   });
 }
 
 /**
  * Validates the complete projection authority boundary without invoking the
- * support-load statics kernel. The site-specific support DEFAULT expansion is
- * deliberately deferred until calculate-time because it depends on the active
- * support-site model.
+ * support-load statics kernel. Site-specific support DEFAULT expansion is
+ * deferred until calculate-time because it depends on the active support model.
  */
 export function requireAuthorizedEmpiricalEffectiveSupportProjection(value) {
   const projection = requireEffectiveExecutionProjection(value);
   assertProjectedLoadEvidence(projection);
   assertNoLegacyDefaultSelectors(projection.profile);
   requireAuthorizedEmpiricalSourceBasis(projection.profile);
+  requireAuthorizedEmpiricalGravityConventions(projection.profile);
   return projection;
 }
 

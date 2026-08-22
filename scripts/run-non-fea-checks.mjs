@@ -13,6 +13,7 @@ const checks = [
   ['V2/V3 effective-value execution cutover', 'scripts/authorized-empirical-v2-effective-execution-check.mjs'],
   ['Authorized profile product-default convergence', 'scripts/authorized-empirical-product-default-convergence-check.mjs'],
   ['Configured-default resolver convergence', 'scripts/non-fea-configured-default-resolution-check.mjs'],
+  ['Configured-default Issue 1321 scope precedence', 'scripts/non-fea-configured-default-scope-priority-check.mjs'],
   ['Load-case authority convergence', 'scripts/non-fea-load-case-authority-check.mjs'],
   ['Mass-ledger authority convergence', 'scripts/non-fea-mass-ledger-convergence-check.mjs'],
   ['Common engineering foundation convergence', 'scripts/non-fea-engineering-foundation-check.mjs'],

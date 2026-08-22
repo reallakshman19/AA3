@@ -49,6 +49,11 @@ runPlaywright([
 runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 
+// Test-only UI08 execution carrier: this uses the same real Vite production
+// application and Chromium runtime as the authorized visible-workbench lane.
+// It changes no workflow YAML and no LFEA engineering authority.
+runPlaywright(['e2e/lafea-lfea-ui08-production.spec.js']);
+
 const gate = spawnSync(process.execPath, [
   path.join(root, 'scripts/lafea-b01-b02-gate0-diagnostic.mjs'),
 ], {

@@ -4,7 +4,7 @@ pr_or_wip: PR1323
 mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
 workstream: ISSUE1321_LOAD_CALC
 branch: agent/issue-1321-load-calc-effective-values
-pr_head: c177d048934e212eb6b2984eb07d1d2ee9dc4c97
+pr_head: b57fd486deda41d410a8033333587c9a8ac06ee9
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,14 +12,15 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1323_workreport.md
-report_basis_head: c177d048934e212eb6b2984eb07d1d2ee9dc4c97
+report_basis_head: 2f29f1df9f56db6d2c491a6949213493a1cf5c47
 appendix_a_status: CURRENT
 grounding_epoch: GE-001
-current_stage: PRODUCT_DEFAULT_AUTHORITY_VALIDATION
-blocker: NONE
-highest_risk: Preserve force and moment custody while replacing routine support-load blockers with explicit exceptions.
+current_stage: VALIDATION_CHECKPOINT_BEFORE_SUPPORT_ACCOUNTING
+blocker: NO_RELEVANT_RUNTIME_QUALIFICATION_OBSERVED
+highest_risk: Preserve force and first-moment custody while replacing one-support and unsupported-load blockers with explicit exceptions.
 dependencies:
   - Issue #1321
   - current common Non-FEA resolution ledger
-exact_next_action: Add deterministic AUTO gravity-method selection without weakening restricted method qualification.
-last_updated: 2026-08-22T12:20:00+05:30
+  - empirical component CoG authority audit
+exact_next_action: Qualify the focused product-default and AUTO checks, then implement support boundary-transfer and unallocated-load accounting on this same PR.
+last_updated: 2026-08-22T12:27:00+05:30

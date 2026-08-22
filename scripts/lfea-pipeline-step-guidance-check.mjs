@@ -28,7 +28,10 @@ assert.equal(state.guidance.stepStatusById.LOAD_CASE, 'BLOCKED');
 for (const stepId of ['ERROR_CHECK', 'RUN', 'OUTPUT', 'EXPORT']) {
   session.setStepStatus(stepId, { available: true, complete: true });
 }
-session.setStepStatus('LOAD_CASE', { available: false, blockedReason: 'An ACCDB import does not seal a pre-FEA authorization.' });
+session.setStepStatus('LOAD_CASE', {
+  available: false,
+  blockedReason: 'An ACCDB import does not seal a pre-FEA authorization.',
+});
 state = session.getState();
 assert.equal(state.guidance.nextStepId, null);
 assert.match(state.guidance.nextActionText, /^Blocked at Load case: An ACCDB import/u);
@@ -41,7 +44,9 @@ assert.equal(state.guidance.completedCount, LFEA_PIPELINE_STEPS.length);
 
 const derived = deriveLfeaPipelineStepGuidance(
   LFEA_PIPELINE_STEPS,
-  Object.fromEntries(LFEA_PIPELINE_STEPS.map((step) => [step.stepId, { available: true, complete: step.stepId === 'INPUT', detail: null, blockedReason: null }])),
+  Object.fromEntries(LFEA_PIPELINE_STEPS.map((step) => [step.stepId, {
+    available: true, complete: step.stepId === 'INPUT', detail: null, blockedReason: null,
+  }])),
   'INPUT',
 );
 assert.equal(derived.stepStatusById.INPUT, 'COMPLETE');
@@ -49,7 +54,9 @@ assert.equal(derived.nextStepId, 'ERROR_CHECK');
 
 const skipped = deriveLfeaPipelineStepGuidance(
   LFEA_PIPELINE_STEPS,
-  Object.fromEntries(LFEA_PIPELINE_STEPS.map((step) => [step.stepId, { available: true, complete: step.stepId === 'RUN', detail: null, blockedReason: null }])),
+  Object.fromEntries(LFEA_PIPELINE_STEPS.map((step) => [step.stepId, {
+    available: true, complete: step.stepId === 'RUN', detail: null, blockedReason: null,
+  }])),
   'RUN',
 );
 assert.equal(skipped.stepStatusById.INPUT, 'READY');

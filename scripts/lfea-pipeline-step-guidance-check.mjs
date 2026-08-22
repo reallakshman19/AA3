@@ -1,14 +1,6 @@
 #!/usr/bin/env node
 
-/**
- * Real-code check for the LFEA pipeline stepper's progress guidance.
- *
- * Regression-guards the defect it fixes: the six steps rendered identically
- * whether they were finished, waiting, or unreachable, so a session gave no
- * indication of where it had got to, and a disabled Load-case step gave no
- * hint whether the model still needed checking or whether the loaded source
- * type cannot reach that step at all.
- */
+/** Real-code check for the LFEA pipeline stepper and stacked UI safety gates. */
 import assert from 'node:assert/strict';
 import {
   createLfeaPipelineSession,
@@ -17,7 +9,6 @@ import {
 import { LFEA_PIPELINE_STEPS } from '../src/workspace/lfea-pipeline-step-registry.js';
 
 const session = createLfeaPipelineSession(LFEA_PIPELINE_STEPS);
-
 let state = session.getState();
 assert.equal(state.guidance.stepStatusById.INPUT, 'CURRENT');
 assert.equal(state.guidance.nextStepId, 'INPUT');
@@ -74,5 +65,6 @@ assert.equal(skipped.nextStepId, 'INPUT');
 await import('./lfea-ui-numerical-custody-check.mjs');
 await import('./lfea-ui-engineering-session-check.mjs');
 await import('./lfea-ui-analysis-authorization-boundary-check.mjs');
+await import('./lfea-ui-engineering-session-integration-check.mjs');
 
 console.log(JSON.stringify({ check: 'lfea-pipeline-step-guidance', status: 'PASS', steps: LFEA_PIPELINE_STEPS.length }));

@@ -1,6 +1,10 @@
 import { createLfeaPipelineSession } from './lfea-pipeline-session.js';
 import { LFEA_PIPELINE_STEPS } from './lfea-pipeline-step-registry.js';
 import { LfeaPipelineShellView } from './lfea-pipeline-shell-view.js';
+import {
+  buildLfeaSourceAcquisitionModel,
+  createLfeaSourceAcquisitionController,
+} from './lfea-source-acquisition.js';
 
 /**
  * Composes the unified LFEA pipeline stepper shell around whichever
@@ -12,6 +16,7 @@ export class LfeaPipelineShellController {
     this.rootElement = rootElement;
     this.session = createLfeaPipelineSession(LFEA_PIPELINE_STEPS);
     this.view = new LfeaPipelineShellView(rootElement);
+    this.sourceAcquisition = null;
     this.unsubscribe = null;
     // Bound lazily via setAssemblyHandlers(), after main.js constructs the
     // source/results controllers this shell wraps — those don't exist yet
@@ -26,6 +31,7 @@ export class LfeaPipelineShellController {
       onAuthoritySupplementSelected: (file) => this.assemblyHandlers?.onAuthoritySupplementSelected?.(file),
       onAssembleAndSendToRun: () => this.assemblyHandlers?.onAssembleAndSendToRun?.(),
     });
+    this.sourceAcquisition = createLfeaSourceAcquisitionController(this.view.getSourceHost());
     let previousActiveStepId = null;
     this.unsubscribe = this.session.subscribe((state) => {
       this.view.render(state);
@@ -48,7 +54,15 @@ export class LfeaPipelineShellController {
   }
 
   setActiveSourceKind(kind) {
-    this.view.setActiveSourceKind(kind);
+    // main.js still calls this legacy method with the preparation owner.
+    // UI03 resolves the read-only engineering session when available so a
+    // StagedJSON source is presented as StagedJSON rather than relabelled as
+    // its derived InputXML preparation provider. During bootstrap the passed
+    // kind remains the safe fallback.
+    const engineeringState = globalThis.AnalysisWorkspace?.getLfeaEngineeringSessionState?.() ?? null;
+    const model = buildLfeaSourceAcquisitionModel(engineeringState, kind);
+    this.view.setActiveSourceKind(model.sourceKind);
+    this.sourceAcquisition?.render(model);
   }
 
   setAuthoritySupplementStatus(text) {
@@ -90,6 +104,8 @@ export class LfeaPipelineShellController {
   destroy() {
     this.unsubscribe?.();
     this.unsubscribe = null;
+    this.sourceAcquisition?.destroy();
+    this.sourceAcquisition = null;
     this.session.destroy();
     this.view.destroy();
     this.rootElement = null;

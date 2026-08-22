@@ -15,6 +15,8 @@ files:
     - src/workspace/non-fea-common-input-runtime.js
     - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
     - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
+    - src/workspace/engineering-loads/authorized-empirical-effective-support-load-execution.js
+    - src/workspace/engineering-loads/authorized-empirical-source-axis-binding.js
     - src/workspace/engineering-loads/authorized-empirical-load-input.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
@@ -35,6 +37,9 @@ files:
     - scripts/authorized-empirical-effective-value-ledger-check.mjs
     - scripts/authorized-empirical-effective-execution-projection-check.mjs
     - scripts/authorized-empirical-effective-execution-projection-collision-check.mjs
+    - scripts/authorized-empirical-effective-support-guard-check.mjs
+    - scripts/authorized-empirical-source-axis-binding-check.mjs
+    - scripts/authorized-empirical-generation-boundary-check.mjs
     - scripts/authorized-empirical-v2-effective-execution-check.mjs
     - scripts/authorized-empirical-product-default-convergence-check.mjs
     - scripts/empirical-gravity-method-selection-check.mjs
@@ -62,9 +67,12 @@ authority_domains:
   - LOAD_CALC_PRODUCT_DEFAULTS
   - LOAD_CALC_PRE_READINESS_DEFAULT_AUTHORING
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION
+  - AUTHORIZED_EMPIRICAL_EFFECTIVE_SUPPORT_GUARD
+  - AUTHORIZED_EMPIRICAL_SOURCE_AXIS
+  - EMPIRICAL_EXECUTION_GENERATION_BOUNDARY
   - GRAVITY_SUPPORT_LOAD_ACCOUNTING
   - EMPIRICAL_METHOD_AUTO_SELECTION
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: 5ca4f6d2a6738f4de21f57f1a9a591e1a53ec837
+last_verified_head: da18b1bbf535aba8d76f160d5b2f3980bfdd176e

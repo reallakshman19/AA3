@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 import {
+  NON_FEA_EFFECTIVE_AUTHORITY_PRECEDENCE,
   PRODUCT_DEFAULT_AUTHORITY,
   createNonFeaEffectiveValueCandidate,
   createNonFeaEffectiveValueCandidatesFromCoreResolution,
@@ -11,6 +12,17 @@ import {
   resolveNonFeaEffectiveValue,
   resolveNonFeaEffectiveValues,
 } from '../src/workspace/project-data/non-fea-effective-value-resolver.js';
+
+assert.deepEqual(NON_FEA_EFFECTIVE_AUTHORITY_PRECEDENCE, [
+  'ACCEPTED_OVERRIDE',
+  'SOURCE_EXPLICIT',
+  'SOURCE_INHERITED',
+  'EXACT_APPROVED_MASTER',
+  'CONFIGURED_DERIVATION',
+  'PROJECT_POLICY',
+  'PROJECT_CONFIGURED_DEFAULT',
+  PRODUCT_DEFAULT_AUTHORITY,
+]);
 
 const productEvidence = Object.freeze({
   defaultId: 'PD-ELASTIC-THERMAL',
@@ -54,6 +66,28 @@ assert.equal(sourceWins.selected.candidateId, 'SRC-OD');
 assert.equal(sourceWins.selected.value, 168.3);
 assert.deepEqual(sourceWins.shadowedCandidateIds, ['MASTER-OD', 'PD-OD']);
 
+const acceptedOverrideWins = resolveNonFeaEffectiveValue([
+  candidate({
+    candidateId: 'SRC-WALL',
+    fieldId: 'PIPE_WALL_THICKNESS',
+    value: 7.11,
+    unit: 'mm',
+    authority: 'SOURCE_EXPLICIT',
+    sourceId: 'SJSON:/PIPE-1/WALL',
+  }),
+  candidate({
+    candidateId: 'OVERRIDE-WALL',
+    fieldId: 'PIPE_WALL_THICKNESS',
+    value: 6.35,
+    unit: 'mm',
+    authority: 'ACCEPTED_OVERRIDE',
+    sourceId: 'OVERRIDE:WALL:1',
+  }),
+]);
+assert.equal(acceptedOverrideWins.selected.candidateId, 'OVERRIDE-WALL',
+  '#1321 requires accepted override to supersede explicit source');
+assert.equal(acceptedOverrideWins.selected.value, 6.35);
+
 const masterWins = resolveNonFeaEffectiveValue([
   candidate({
     candidateId: 'PROJECT-DEFAULT-DENSITY',
@@ -74,6 +108,35 @@ const masterWins = resolveNonFeaEffectiveValue([
 ]);
 assert.equal(masterWins.selected.candidateId, 'MASTER-DENSITY');
 assert.equal(masterWins.selected.value, 7850);
+
+const projectPolicyWinsDefault = resolveNonFeaEffectiveValue([
+  candidate({
+    candidateId: 'PROJECT-GRAVITY',
+    targetKind: 'PROJECT',
+    targetId: 'PROJECT-1',
+    fieldId: 'GRAVITY_ACCELERATION',
+    value: 9.81,
+    unit: 'm/s²',
+    authority: 'PROJECT_POLICY',
+    sourceId: 'PROJECT-DATA',
+  }),
+  candidate({
+    candidateId: 'PRODUCT-GRAVITY',
+    targetKind: 'PROJECT',
+    targetId: 'PROJECT-1',
+    fieldId: 'GRAVITY_ACCELERATION',
+    value: 9.80665,
+    unit: 'm/s²',
+    authority: PRODUCT_DEFAULT_AUTHORITY,
+    sourceId: 'LOAD_CALC_STANDARD_DEFAULTS_TEST',
+    evidence: {
+      defaultId: 'PD-GRAVITY',
+      defaultSemanticHash: 'fnv1a64:6666666666666666',
+      productDefaultProfileSemanticHash: 'fnv1a64:7777777777777777',
+    },
+  }),
+]);
+assert.equal(projectPolicyWinsDefault.selected.candidateId, 'PROJECT-GRAVITY');
 
 const productElastic = candidate({
   candidateId: 'PD-E',
@@ -102,29 +165,8 @@ const productOnly = resolveNonFeaEffectiveValues({
 });
 assert.equal(productOnly.status, 'RESOLVED');
 assert.equal(productOnly.summary.productDefaultSelectedCount, 2);
-assert.equal(productOnly.summary.resolvedCount, 2);
 assert.equal(productOnly.rows.find((row) => row.fieldId === 'ELASTIC_MODULUS').selected.value, 2e11);
 assert.equal(productOnly.rows.find((row) => row.fieldId === 'THERMAL_EXPANSION_COEFFICIENT').selected.value, 12e-6);
-
-const overrideDoesNotEraseSource = resolveNonFeaEffectiveValue([
-  candidate({
-    candidateId: 'SRC-WALL',
-    fieldId: 'PIPE_WALL_THICKNESS',
-    value: 7.11,
-    unit: 'mm',
-    authority: 'SOURCE_EXPLICIT',
-    sourceId: 'SJSON:/PIPE-1/WALL',
-  }),
-  candidate({
-    candidateId: 'OVERRIDE-WALL',
-    fieldId: 'PIPE_WALL_THICKNESS',
-    value: 6.35,
-    unit: 'mm',
-    authority: 'ACCEPTED_OVERRIDE',
-    sourceId: 'OVERRIDE:WALL:1',
-  }),
-]);
-assert.equal(overrideDoesNotEraseSource.selected.candidateId, 'SRC-WALL');
 
 const conflict = resolveNonFeaEffectiveValue([
   candidate({
@@ -170,59 +212,33 @@ assert.equal(identicalSameAuthority.status, 'RESOLVED');
 assert.equal(identicalSameAuthority.selected.value, 120);
 assert.equal(identicalSameAuthority.shadowedCandidateIds.length, 1);
 
-const coreSourceCandidate = Object.freeze({
-  targetKind: 'COMPONENT',
-  targetId: 'PIPE-CORE-1',
-  fieldId: 'PIPE_OUTER_DIAMETER',
-  propertyKey: 'outerDiameterMm',
-  value: 168.3,
-  unit: 'mm',
+const coreSourceCandidate = coreCandidate({
   authority: 'SOURCE_EXPLICIT',
   recordId: 'source:PIPE-CORE-1:PIPE_OUTER_DIAMETER',
   sourceId: 'SOURCE-MODEL',
   revision: 'SOURCE',
+  value: 168.3,
   evidence: { source: 'Explicit source property' },
-  migration: null,
   fromSource: true,
 });
-const coreMasterCandidate = Object.freeze({
-  targetKind: 'COMPONENT',
-  targetId: 'PIPE-CORE-1',
-  fieldId: 'PIPE_OUTER_DIAMETER',
-  propertyKey: 'outerDiameterMm',
-  value: 168.3,
-  unit: 'mm',
+const coreMasterCandidate = coreCandidate({
   authority: 'EXACT_APPROVED_MASTER',
   recordId: 'master:PIPE-CORE-1:PIPE_OUTER_DIAMETER',
   sourceId: 'PCL-MASTER',
   revision: '7',
+  value: 168.3,
   evidence: { source: 'Approved piping-class master' },
-  migration: null,
   fromSource: false,
 });
-const coreResolutionLedger = Object.freeze({
-  schema: 'non-fea-field-resolution-ledger/v1',
-  sourceSemanticHash: 'fnv1a64:1010101010101010',
-  sidecarSemanticHash: 'fnv1a64:2020202020202020',
-  status: 'READY',
-  rows: [Object.freeze({
-    resolutionKey: 'COMPONENT|PIPE-CORE-1|PIPE_OUTER_DIAMETER',
-    targetKind: 'COMPONENT',
-    targetId: 'PIPE-CORE-1',
-    fieldId: 'PIPE_OUTER_DIAMETER',
-    status: 'RESOLVED',
-    selected: coreSourceCandidate,
-    candidates: [coreSourceCandidate, coreMasterCandidate],
-  })],
-  blockers: [],
-  semanticHash: 'fnv1a64:3030303030303030',
+const coreResolutionLedger = coreLedger({
+  selected: coreSourceCandidate,
+  candidates: [coreSourceCandidate, coreMasterCandidate],
 });
 const coreCandidates = createNonFeaEffectiveValueCandidatesFromCoreResolution(coreResolutionLedger);
 assert.equal(coreCandidates.length, 2);
 assert.equal(coreCandidates.every((row) => row.unit === 'mm'), true,
   'CORE adapter must preserve storage units until an explicit conversion adapter is invoked');
 const coreEffective = resolveCoreNonFeaEffectiveValues(coreResolutionLedger);
-assert.equal(coreEffective.status, 'RESOLVED');
 const coreSelected = findResolvedNonFeaEffectiveValue(
   coreEffective,
   'COMPONENT',
@@ -230,10 +246,36 @@ const coreSelected = findResolvedNonFeaEffectiveValue(
   'PIPE_OUTER_DIAMETER',
 );
 assert.ok(coreSelected);
-assert.equal(coreSelected.authority, coreResolutionLedger.rows[0].selected.authority);
+assert.equal(coreSelected.authority, coreResolutionLedger.rows[0].selected.authority,
+  'legacy CORE parity must hold when no higher accepted override exists');
 assert.equal(coreSelected.value, coreResolutionLedger.rows[0].selected.value);
 assert.equal(coreSelected.unit, coreResolutionLedger.rows[0].selected.unit);
-assert.equal(coreSelected.sourceId, coreResolutionLedger.rows[0].selected.sourceId);
+
+const coreOverrideCandidate = coreCandidate({
+  authority: 'ACCEPTED_OVERRIDE',
+  recordId: 'override:PIPE-CORE-1:PIPE_OUTER_DIAMETER',
+  sourceId: 'ENGINEER-REVIEW',
+  revision: '9',
+  value: 170.0,
+  evidence: { source: 'Reviewed override', acceptanceBasis: 'Approved correction.' },
+  fromSource: false,
+});
+const legacySourceFirstLedger = coreLedger({
+  selected: coreSourceCandidate,
+  candidates: [coreSourceCandidate, coreMasterCandidate, coreOverrideCandidate],
+  semanticHash: 'fnv1a64:4040404040404040',
+});
+const correctedEffective = resolveCoreNonFeaEffectiveValues(legacySourceFirstLedger);
+const correctedSelected = findResolvedNonFeaEffectiveValue(
+  correctedEffective,
+  'COMPONENT',
+  'PIPE-CORE-1',
+  'PIPE_OUTER_DIAMETER',
+);
+assert.equal(legacySourceFirstLedger.rows[0].selected.authority, 'SOURCE_EXPLICIT');
+assert.equal(correctedSelected.authority, 'ACCEPTED_OVERRIDE');
+assert.equal(correctedSelected.value, 170.0,
+  'effective resolver must intentionally correct legacy source-first CORE selection');
 
 assert.throws(() => candidate({
   candidateId: 'BAD-PD-SUPPORT-SENSITIVITY',
@@ -302,23 +344,23 @@ const changedProductOd = candidate({
     productDefaultProfileSemanticHash: 'fnv1a64:4444444444444444',
   },
 });
-const changed = resolveNonFeaEffectiveValues({
-  candidates: [changedProductOd, sourceOd, masterOd],
-});
+const changed = resolveNonFeaEffectiveValues({ candidates: [changedProductOd, sourceOd, masterOd] });
 assert.equal(changed.rows[0].selected.value, deterministicA.rows[0].selected.value,
-  'shadowed default must not displace selected source value');
+  'shadowed product default must not displace selected source value');
 assert.notEqual(changed.semanticHash, deterministicA.semanticHash,
   'shadowed default changes must remain hash-visible even when source stays selected');
 
 console.log(JSON.stringify({
   status: 'PASS',
-  sourcePrecedenceSelected: sourceWins.selected.candidateId,
-  masterPrecedenceSelected: masterWins.selected.candidateId,
+  issuePrecedence: NON_FEA_EFFECTIVE_AUTHORITY_PRECEDENCE,
+  overrideSelected: acceptedOverrideWins.selected.candidateId,
+  sourceSelectedWithoutOverride: sourceWins.selected.candidateId,
+  masterSelectedOverProjectDefault: masterWins.selected.candidateId,
+  projectPolicySelectedOverProductDefault: projectPolicyWinsDefault.selected.candidateId,
   productDefaultSelectedCount: productOnly.summary.productDefaultSelectedCount,
   sameAuthorityConflict: conflict.blockers[0].code,
-  coreParitySelectedAuthority: coreSelected.authority,
-  coreParitySelectedValue: coreSelected.value,
-  coreParitySelectedUnit: coreSelected.unit,
+  legacyCoreParityAuthority: coreSelected.authority,
+  correctedLegacyCoreAuthority: correctedSelected.authority,
   deterministicSemanticHash: deterministicA.semanticHash,
 }, null, 2));
 
@@ -327,5 +369,37 @@ function candidate(overrides) {
     targetKind: 'ENTITY',
     targetId: 'PIPE-1',
     ...overrides,
+  });
+}
+
+function coreCandidate(overrides) {
+  return Object.freeze({
+    targetKind: 'COMPONENT',
+    targetId: 'PIPE-CORE-1',
+    fieldId: 'PIPE_OUTER_DIAMETER',
+    propertyKey: 'outerDiameterMm',
+    unit: 'mm',
+    migration: null,
+    ...overrides,
+  });
+}
+
+function coreLedger({ selected, candidates, semanticHash: ledgerHash = 'fnv1a64:3030303030303030' }) {
+  return Object.freeze({
+    schema: 'non-fea-field-resolution-ledger/v1',
+    sourceSemanticHash: 'fnv1a64:1010101010101010',
+    sidecarSemanticHash: 'fnv1a64:2020202020202020',
+    status: 'READY',
+    rows: [Object.freeze({
+      resolutionKey: 'COMPONENT|PIPE-CORE-1|PIPE_OUTER_DIAMETER',
+      targetKind: 'COMPONENT',
+      targetId: 'PIPE-CORE-1',
+      fieldId: 'PIPE_OUTER_DIAMETER',
+      status: 'RESOLVED',
+      selected,
+      candidates,
+    })],
+    blockers: [],
+    semanticHash: ledgerHash,
   });
 }

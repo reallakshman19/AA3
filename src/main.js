@@ -44,6 +44,14 @@ import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety
 import { EVENT_TOPICS } from './workspace/event-topics.js';
 import { SUPPORT_RESTRAINT_EVENTS } from './workspace/support-restraint-events.js';
 import { TOPOLOGY_EVENTS } from './workspace/topology-events.js';
+import {
+  LFEA_ENGINEERING_PREPARATION_OWNERS,
+  LFEA_ENGINEERING_SOURCE_KINDS,
+  createLfeaEngineeringSession,
+  lfeaSessionPreFlight,
+  lfeaSessionPreparationOwner,
+  lfeaSessionSourceKind,
+} from './workspace/lfea-session/lfea-engineering-session.js';
 
 const applicationRoot = document.getElementById('root');
 const coreWorkspace = bootstrapAnalysisWorkspace(applicationRoot);
@@ -61,17 +69,25 @@ lfeaPipelineShellRoot.dataset.role = 'lfea-pipeline-shell-root';
 lfeaApplicationView.insertBefore(lfeaPipelineShellRoot, linearPipingConsumerRoot);
 const lfeaPipelineShell = new LfeaPipelineShellController(lfeaPipelineShellRoot).init();
 lfeaPipelineShell.getSourceHost().append(linearPipingConsumerRoot);
-// Declared before the source workflow mounts: that controller renders (and so
-// notifies) during init(), which is earlier than either of these can exist.
+const lfeaEngineeringSession = createLfeaEngineeringSession();
 let lfeaAnalysisSurface = null;
 let lfeaStepGuidanceReady = false;
+let lfeaStagedJsonHandoff = null;
+const lfeaEngineeringSessionUnsubscribe = lfeaEngineeringSession.subscribe((_state, event) => {
+  if (['SOURCE_REPLACED', 'SOURCE_CLEARED', 'PREFLIGHT_CHANGED'].includes(event?.type)) {
+    invalidateLfeaDownstreamPresentation(event.type);
+  }
+});
+
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
-  // The Load-case step renders straight from getPreFlight(), so it has to be
-  // told when the loaded source changes -- refreshing only on step activation
-  // left it showing "no model loaded" for a model loaded while that step was
-  // already on screen.
-  onStateChanged: () => {
+  onStateChanged: (snapshot) => {
+    if (lfeaStepGuidanceReady) {
+      if (snapshot.fileName !== null && lfeaAccdbInputPanel.getSnapshot().fileName !== null) {
+        lfeaAccdbInputPanel.clear();
+      }
+      syncLfeaInputXmlEngineeringSession(snapshot);
+    }
     lfeaAnalysisSurface?.refreshLoadCaseStep();
     lfeaAnalysisSurface?.refreshSourceStep();
     refreshLfeaStepGuidance();
@@ -79,25 +95,40 @@ const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(appli
 });
 const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
-  onConversionComplete: (result) => linearPipingInputXmlSource.loadSource(
-    { fileName: result.outputName, content: result.inputXmlText },
-    { fallbackUnit: 'mm' },
-  ),
+  onConversionComplete: (result) => {
+    const staged = lfeaStagedJsonInputPanel.getSnapshot();
+    lfeaStagedJsonHandoff = Object.freeze({
+      identityKey: `STAGED_JSON:${staged.fileName ?? result.outputName}`,
+      fileName: staged.fileName ?? result.outputName,
+      provenance: Object.freeze({
+        derivedInputXmlFileName: result.outputName,
+        diagnosticsSummary: result.diagnostics?.summary ?? null,
+      }),
+    });
+    try {
+      return linearPipingInputXmlSource.loadSource(
+        { fileName: result.outputName, content: result.inputXmlText },
+        { fallbackUnit: 'mm' },
+      );
+    } finally {
+      lfeaStagedJsonHandoff = null;
+    }
+  },
   onClear: () => linearPipingInputXmlSource.clear(),
 });
-// ACCDB has no InputXML-text conversion precedent to reuse (see
-// accdb-to-canonical-geometry.js's header) so, unlike StagedJSON, this
-// panel does not hand off into linearPipingInputXmlSource -- it renders
-// its own model-health/representability verdict directly.
 const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
-  onStateChanged: () => refreshLfeaStepGuidance(),
+  onStateChanged: (snapshot) => {
+    if (lfeaStepGuidanceReady) {
+      if (snapshot.fileName !== null && snapshot.elementCount !== null
+        && linearPipingInputXmlSource.getSnapshot().fileName !== null) {
+        linearPipingInputXmlSource.clear();
+      }
+      syncLfeaAccdbEngineeringSession(snapshot);
+    }
+    refreshLfeaStepGuidance();
+  },
 });
-// The Load-case and Output surfaces load in their own chunk (see
-// lfea-pipeline-analysis-surface.js): the production bundle-chunk ceiling is
-// a hard limit and the check enforcing it forbids naming workspace chunks
-// directly, so graph-aware splitting via a dynamic import is the sanctioned
-// route. Nothing here is needed until a model is loaded on the F LFEA tab.
 const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surface.js')
   .then(({ mountLfeaPipelineAnalysisSurface }) => {
     lfeaAnalysisSurface = mountLfeaPipelineAnalysisSurface({
@@ -105,17 +136,19 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
       loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
       resultsHost: lfeaPipelineShell.getResultsHost(),
       getPreFlight: () => activeLfeaPreFlight(),
-      // Routed to whichever source produced the pre-flight in play: applying a
-      // selection re-prepares that source, and sending it to the other one
-      // would leave the analysis running the cases the engineer did not pick.
-      onApplyCaseSelection: (caseIds) => (linearPipingInputXmlSource.getPreFlight()
-        ? linearPipingInputXmlSource.setRequestedCaseIds(caseIds)
-        : lfeaAccdbInputPanel.setRequestedCaseIds(caseIds)),
+      onApplyCaseSelection: (caseIds) => applyLfeaCaseSelection(caseIds),
       onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
       onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
       sourceHost: lfeaPipelineShell.getSourceHost(),
-      getSourceText: () => linearPipingInputXmlSource.getSourceText(),
+      getSourceText: () => lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+        === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
+        ? linearPipingInputXmlSource.getSourceText()
+        : null,
       onRepaired: (repairedXml) => {
+        if (lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+          !== LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
+          throw new Error('Model repair is only available for the active InputXML-derived source.');
+        }
         const fileName = linearPipingInputXmlSource.getSnapshot().fileName ?? 'model.xml';
         linearPipingInputXmlSource.loadSource(
           { fileName: `${fileName.replace(/\.xml$/iu, '')}.corrected.xml`, content: repairedXml },
@@ -126,24 +159,17 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
         ?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
         ?.map((node) => node.id) ?? [],
     });
-    // A model may already be loaded by the time this chunk arrives.
     lfeaAnalysisSurface.refreshLoadCaseStep();
     lfeaAnalysisSurface.refreshSourceStep();
     return lfeaAnalysisSurface;
   });
 
-// Every panel the projection reads now exists, so it can run: with nothing
-// loaded, Input is the only reachable step and the stepper says so.
+syncLfeaEngineeringSessionFromControllers();
 lfeaStepGuidanceReady = true;
 refreshLfeaStepGuidance();
 const lfeaVerificationDrawer = mountLfeaPipelineVerificationDrawer(lfeaPipelineShell.getVerificationDrawerHost(), {
   documentRef: applicationRoot.ownerDocument,
 });
-// Both source and results panels historically mounted into the same
-// `linear-piping-consumer-root` container (they only ever appended sibling
-// sections, never split by concern). This shim routes the results panel
-// into the shell's own RESULTS host instead, without changing that 700+
-// line controller's mount-target resolution.
 const linearPipingResultsMountRoot = { querySelector: () => lfeaPipelineShell.getResultsHost() };
 const linearPipingResults = mountLinearPipingResultsWorkbench(linearPipingResultsMountRoot, { documentRef: applicationRoot.ownerDocument, urlApi: applicationRoot.ownerDocument.defaultView?.URL });
 const globalSettingsPopover = mountLfeaGlobalSettingsPopover(
@@ -178,10 +204,6 @@ lfeaPipelineShell.setAssemblyHandlers({
       const runRequest = assembleLfeaInputXmlRunRequest();
       lfeaPipelineShell.setActiveStep('LOAD_CASE');
       lfeaPipelineShell.setStepStatus('ERROR_CHECK', { complete: true });
-      // If a human already reviewed and accepted a WARN gate for this exact
-      // application from a prior click, re-checking here would silently
-      // wipe out that authorization (checkRequest always seals a fresh,
-      // unauthorized gate). Reuse the existing authorized gate instead.
       const existingCheck = linearPipingResults.getPreRunCheck();
       const alreadyAuthorized = existingCheck?.applicationId === runRequest.applicationId
         && existingCheck.solveAuthorized;
@@ -190,12 +212,7 @@ lfeaPipelineShell.setAssemblyHandlers({
         throw new Error(`Pre-run gate BLOCK for ${preRunCheck.applicationId}.`);
       }
       if (!preRunCheck.solveAuthorized) {
-        // A WARN gate needs genuine human review (reviewer identity +
-        // acceptance reason), not an automatic bypass — checkRequest()
-        // above already revealed that review UI; hand off to it rather
-        // than auto-authorizing on the user's behalf. Clicking "Assemble
-        // & send to Run" again after accepting reuses that authorization
-        // (see alreadyAuthorized above) instead of resetting it.
+        lfeaPipelineShell.setActiveStep('RUN');
         lfeaPipelineShell.setAssembleStatus(
           `Assembled ${runRequest.applicationId} (${runRequest.cases.length} case(s)) — pre-run gate WARN. Review the disclosed limitations below, accept explicitly, then click Assemble & send to Run again.`,
           false,
@@ -212,60 +229,122 @@ lfeaPipelineShell.setAssemblyHandlers({
   },
 });
 
-/**
- * The pre-flight the downstream steps run from, whichever source produced it.
- *
- * Load case, Run and Output consume a sealed pre-flight, not a file format.
- * An InputXML import produces one through its own workflow controller and an
- * ACCDB import through linear-piping-accdb-intake.js; both are the same
- * sealed record, so the steps below need only know which one is loaded. The
- * InputXML workflow wins when both are, because it is the one whose panel
- * owns the case-selection and repair affordances.
- */
 function activeLfeaPreFlight() {
-  return linearPipingInputXmlSource.getPreFlight() ?? lfeaAccdbInputPanel.getPreFlight();
+  return lfeaSessionPreFlight(lfeaEngineeringSession.getState());
 }
 
-/**
- * Project what the source panels actually know onto the stepper.
- *
- * The six steps carry a real order, but nothing was telling the stepper
- * where a session had got to: every step rendered identically whether it was
- * finished, waiting, or unreachable, and a disabled Load-case step gave no
- * hint whether the model still needed checking or whether this source type
- * cannot reach that step at all. Each status below is read from a panel's
- * own snapshot -- no step is marked done here on the strength of a step
- * before it having finished.
- *
- * Only INPUT, ERROR_CHECK and LOAD_CASE are projected: RUN, OUTPUT and
- * EXPORT are marked complete by the code that actually performs them
- * (runLfeaPipelineAnalysis, onAssembleAndSendToRun), and re-deriving them
- * from here would overwrite what those paths recorded.
- */
-function refreshLfeaStepGuidance() {
-  // The source controllers notify during their own init(), which runs while
-  // the `const` bindings holding them are still being assigned -- reading one
-  // back then throws on the temporal dead zone. (Same init-order hazard the
-  // `lfeaAnalysisSurface?.` guards above exist for, and it takes down the
-  // whole module: an uncaught error here left no panels mounted at all.) The
-  // first projection is made explicitly once every panel exists.
-  if (!lfeaStepGuidanceReady) return;
+function applyLfeaCaseSelection(caseIds) {
+  const owner = lfeaSessionPreparationOwner(lfeaEngineeringSession.getState());
+  if (owner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
+    return linearPipingInputXmlSource.setRequestedCaseIds(caseIds);
+  }
+  if (owner === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB) {
+    return lfeaAccdbInputPanel.setRequestedCaseIds(caseIds);
+  }
+  throw new Error('Load a model before applying a load-case selection.');
+}
+
+function syncLfeaEngineeringSessionFromControllers() {
   const inputXml = linearPipingInputXmlSource.getSnapshot();
   const accdb = lfeaAccdbInputPanel.getSnapshot();
-  const inputXmlLoaded = inputXml.fileName !== null;
-  const accdbLoaded = accdb.fileName !== null && accdb.elementCount !== null;
+  if (inputXml.fileName !== null) {
+    syncLfeaInputXmlEngineeringSession(inputXml);
+  } else if (accdb.fileName !== null && accdb.elementCount !== null) {
+    syncLfeaAccdbEngineeringSession(accdb);
+  }
+}
 
-  // Only the panel that owns the loaded model stays on screen; with nothing
-  // loaded all three remain, because that is the choice being offered.
+function syncLfeaInputXmlEngineeringSession(snapshot) {
+  if (snapshot?.fileName === null || snapshot?.fileName === undefined) {
+    lfeaEngineeringSession.clearSource(LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML);
+    return;
+  }
+  const preFlight = linearPipingInputXmlSource.getPreFlight();
+  const providerIdentityKey = snapshot.contentSha256
+    ?? preFlight?.semanticHash
+    ?? `INPUTXML:${snapshot.fileName}`;
+  const current = lfeaEngineeringSession.getState();
+  const retainStagedIdentity = lfeaStagedJsonHandoff === null
+    && current.source.kind === LFEA_ENGINEERING_SOURCE_KINDS.STAGED_JSON
+    && current.source.preparationOwner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
+    && current.source.providerIdentityKey === providerIdentityKey;
+  const staged = lfeaStagedJsonHandoff;
+  lfeaEngineeringSession.setSource({
+    kind: staged || retainStagedIdentity
+      ? LFEA_ENGINEERING_SOURCE_KINDS.STAGED_JSON
+      : LFEA_ENGINEERING_SOURCE_KINDS.INPUTXML,
+    identityKey: staged?.identityKey
+      ?? (retainStagedIdentity ? current.source.identityKey : providerIdentityKey),
+    providerIdentityKey,
+    preparationOwner: LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML,
+    fileName: staged?.fileName
+      ?? (retainStagedIdentity ? current.source.fileName : snapshot.fileName),
+    provenance: staged?.provenance
+      ?? (retainStagedIdentity ? current.source.provenance : Object.freeze({})),
+    preFlight,
+    requestedProfileId: snapshot.requestedProfileId,
+    requestedCaseIds: snapshot.requestedCaseIds,
+  });
+}
+
+function syncLfeaAccdbEngineeringSession(snapshot) {
+  if (snapshot?.fileName === null || snapshot?.fileName === undefined || snapshot.elementCount === null) {
+    lfeaEngineeringSession.clearSource(LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB);
+    return;
+  }
+  const preFlight = lfeaAccdbInputPanel.getPreFlight();
+  const identityKey = preFlight?.intake?.contentSha256
+    ?? preFlight?.semanticHash
+    ?? `ACCDB:${snapshot.fileName}:OVERRIDES=${snapshot.overrideCount ?? 0}`;
+  lfeaEngineeringSession.setSource({
+    kind: LFEA_ENGINEERING_SOURCE_KINDS.ACCDB,
+    identityKey,
+    providerIdentityKey: identityKey,
+    preparationOwner: LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB,
+    fileName: snapshot.fileName,
+    provenance: Object.freeze({ overrideCount: snapshot.overrideCount ?? 0 }),
+    preFlight,
+    requestedProfileId: snapshot.requestedProfileId,
+    requestedCaseIds: preFlight?.preparation?.requestedCaseIds ?? [],
+  });
+}
+
+function invalidateLfeaDownstreamPresentation(reason) {
+  lfeaAnalysisSurface?.analysisController.clear();
+  lfeaAnalysisSurface?.resultsPanel.setState(null);
+  for (const stepId of ['LOAD_CASE', 'RUN', 'OUTPUT', 'EXPORT']) {
+    lfeaPipelineShell.setStepStatus(stepId, { complete: false });
+  }
+  if (reason) lfeaPipelineShell.setAssembleStatus(`Analysis state invalidated: ${reason}.`, false);
+}
+
+function refreshLfeaStepGuidance() {
+  if (!lfeaStepGuidanceReady) return;
+  const engineering = lfeaEngineeringSession.getState();
+  const sourceKind = lfeaSessionSourceKind(engineering);
+  const owner = lfeaSessionPreparationOwner(engineering);
+  const inputXml = owner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
+    ? linearPipingInputXmlSource.getSnapshot()
+    : null;
+  const accdb = owner === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB
+    ? lfeaAccdbInputPanel.getSnapshot()
+    : null;
+  const inputXmlLoaded = inputXml?.fileName !== null && inputXml !== null;
+  const accdbLoaded = accdb?.fileName !== null && accdb?.elementCount !== null && accdb !== null;
+  const sourceLoaded = sourceKind !== LFEA_ENGINEERING_SOURCE_KINDS.NONE
+    && (inputXmlLoaded || accdbLoaded);
+
   lfeaPipelineShell.setActiveSourceKind(
-    inputXmlLoaded ? 'INPUTXML' : accdbLoaded ? 'ACCDB' : 'NONE',
+    owner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
+      ? 'INPUTXML'
+      : owner === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB ? 'ACCDB' : 'NONE',
   );
 
   lfeaPipelineShell.setStepStatus('INPUT', {
     available: true,
-    complete: inputXmlLoaded || accdbLoaded,
-    detail: inputXmlLoaded || accdbLoaded
-      ? `Loaded ${inputXml.fileName ?? accdb.fileName}.`
+    complete: sourceLoaded,
+    detail: sourceLoaded
+      ? `Loaded ${engineering.source.fileName}.`
       : 'Import an InputXML, StagedJSON or CAESAR II ACCDB model.',
   });
 
@@ -323,15 +402,6 @@ function refreshLfeaStepGuidance() {
   });
 }
 
-/**
- * Run the analysis the Load-case step asked for.
- *
- * No authority supplement is involved. Displacements, support loads and
- * element end forces follow from the model, its loads and its restraints
- * alone -- the interface/nozzle-allowable/B31 authorities exist for the
- * separate code-stress application, and requiring them here was gating the
- * analysis behind data it never consults.
- */
 function runLfeaPipelineAnalysis(caseIds) {
   try {
     const preFlight = activeLfeaPreFlight();
@@ -343,6 +413,7 @@ function runLfeaPipelineAnalysis(caseIds) {
     }
     if (lfeaAnalysisSurface === null) throw new Error('The analysis surface is still loading; try again in a moment.');
     const state = lfeaAnalysisSurface.analysisController.analyze(preFlight, caseIds);
+    lfeaEngineeringSession.bindAnalysisResult(state);
     lfeaAnalysisSurface.resultsPanel.setState(state);
     lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
     lfeaPipelineShell.setStepStatus('RUN', { complete: true });
@@ -378,10 +449,11 @@ function requireLfeaAuthoritySupplementShape(value) {
 }
 
 function assembleLfeaInputXmlRunRequest() {
+  if (lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+    !== LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
+    throw new Error('Optional interface/B31 code checks currently require an active InputXML-derived source.');
+  }
   if (!lfeaAuthoritySupplement) {
-    // This is the optional code-stress/interface application, not the
-    // analysis. Displacements, support loads and element forces come from
-    // "Analyze" on the Load-case step and need none of this.
     throw new Error(
       'Nozzle interface mechanics and B31 code checks need an authority supplement '
       + '(interface authority, nozzle allowables, B31 edition data) — licensed project data '
@@ -390,19 +462,12 @@ function assembleLfeaInputXmlRunRequest() {
     );
   }
   const snapshot = linearPipingInputXmlSource.getSnapshot();
-  if (!snapshot.preFlightSolveAuthorized) {
-    throw new Error('Authorize the InputXML pre-flight before assembling a run request.');
+  const preFlight = activeLfeaPreFlight();
+  if (!snapshot.preFlightSolveAuthorized || !preFlight?.solveAuthorized) {
+    throw new Error('Authorize the active InputXML-derived pre-flight before assembling a run request.');
   }
-  const preFlight = linearPipingInputXmlSource.getPreFlight();
   const authorizedCaseIds = preFlight.preparation.authorizedCaseCandidates.map((row) => row.caseId);
   const applicationId = lfeaAuthoritySupplement.applicationId;
-
-  // Engineer-authored cases (from the Load-case authoring panel) are not
-  // part of authorizedCaseCandidates -- they were never in the sealed
-  // pre-flight's own preparation to begin with. Merge them into a fresh,
-  // re-sealed physical-case preparation now, on top of the unmodified
-  // W/WP/WT/WPT preparation, so buildInputXmlRunRequestCase can pick them
-  // up exactly like any other case, with zero special-casing.
   const authoredCasePayload = lfeaAnalysisSurface?.loadCaseAuthoringPanel.getAuthoredCasePayload() ?? null;
   let authoredPreparation = preFlight.preparation;
   let authoredCaseId = null;
@@ -499,6 +564,7 @@ const workspace = Object.freeze({
   getLinearPipingInputXmlPreFlight() { return linearPipingInputXmlSource.getPreFlight(); },
   getLinearPipingInputXmlAnalyzerIntegrationPolicy() { return linearPipingAnalyzerIntegration; },
   clearLinearPipingInputXmlSource() { linearPipingInputXmlSource.clear(); },
+  getLfeaEngineeringSessionState() { return lfeaEngineeringSession.getState(); },
   getLfeaStagedJsonInputPanelState() { return lfeaStagedJsonInputPanel.getSnapshot(); },
   getLfeaAccdbInputPanelState() { return lfeaAccdbInputPanel.getSnapshot(); },
   getLfeaLoadCaseAuthoringPanelState() { return lfeaAnalysisSurface?.loadCaseAuthoringPanel.getSnapshot() ?? null; },
@@ -556,7 +622,24 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaAnalysisSurface?.destroy(); lfeaVerificationDrawer.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
+  destroy() {
+    lfeaEngineeringSessionUnsubscribe();
+    preflightSubscriptions.forEach((unsubscribe) => unsubscribe());
+    empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe());
+    clearEmpiricalV3GovernedPreparedExecution();
+    empiricalV3Safety.destroy();
+    preflightUi.destroy();
+    globalSettingsPopover.destroy();
+    linearPipingResults.destroy();
+    linearPipingInputXmlSource.destroy();
+    lfeaStagedJsonInputPanel.destroy();
+    lfeaAccdbInputPanel.destroy();
+    lfeaAnalysisSurface?.destroy();
+    lfeaVerificationDrawer.destroy();
+    lfeaPipelineShell.destroy();
+    lfeaEngineeringSession.destroy();
+    coreWorkspace.destroy();
+  },
 });
 
 globalThis.AnalysisWorkspace = workspace;

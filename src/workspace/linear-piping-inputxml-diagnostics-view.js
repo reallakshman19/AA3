@@ -1,11 +1,15 @@
 import { createLfeaTopologyReviewFromDiagnostics } from './lfea-topology-review-from-prefea.js';
 import { renderLfeaTopologyReview } from './lfea-topology-review-view.js';
+import { buildInputXmlDiagnosticPresentation } from './lfea-diagnostics/lfea-source-diagnostic-adapters.js';
+import { renderLfeaDiagnosticPresentation } from './lfea-diagnostics/lfea-diagnostic-presentation-view.js';
 
 export const LINEAR_PIPING_INPUTXML_DIAGNOSTICS_VIEW_SCHEMA = 'linear-piping-inputxml-diagnostics-view/v1';
 
 /**
  * Render diagnostics already retained by the native InputXML pre-flight receipt.
- * This view never reparses source bytes and never creates execution authority.
+ * The governed preparation finding set is the only authority for finding
+ * disposition here; raw topology/proximity diagnostics remain metric/evidence
+ * views and are never reinterpreted into BLOCK/CONDITIONAL UI state.
  */
 export function renderLinearPipingInputXmlDiagnostics(documentRef, root, preFlight) {
   if (!root || typeof root.append !== 'function') {
@@ -24,9 +28,14 @@ export function renderLinearPipingInputXmlDiagnostics(documentRef, root, preFlig
 
   const heading = documentRef.createElement('h3');
   heading.textContent = 'Governed InputXML diagnostics';
-  shell.append(heading);
+  shell.append(heading, readinessSection(documentRef, preFlight));
+
+  const findingPresentation = buildInputXmlDiagnosticPresentation(preFlight);
+  renderLfeaDiagnosticPresentation(documentRef, shell, findingPresentation, {
+    heading: 'Governed pre-FEA findings',
+  });
+
   shell.append(
-    readinessSection(documentRef, preFlight),
     restraintSection(documentRef, preparation, diagnostics),
     topologySection(documentRef, diagnostics),
     representabilitySection(documentRef, diagnostics),
@@ -49,6 +58,7 @@ function readinessSection(doc, preFlight) {
   section.body.append(keyValueTable(doc, [
     ['Status', preparation.status],
     ['PASS findings', String(counts.PASS)],
+    ['ADVISORY findings', String(counts.ADVISORY)],
     ['CONDITIONAL findings', String(counts.CONDITIONAL)],
     ['BLOCK findings', String(counts.BLOCK)],
     ['Requested physical cases', (preparation.requestedCaseIds ?? []).join(', ') || 'None'],
@@ -69,7 +79,6 @@ function restraintSection(doc, preparation, diagnostics) {
     ['Affected restraints', String(diagnostics.summary?.affectedRestraintCount ?? 0)],
     ['Retained restraint/constraint findings', String(findings.length)],
   ]));
-  appendFindingList(doc, section.body, findings, 'No restraint or constraint findings are retained.');
   return section.section;
 }
 
@@ -91,11 +100,6 @@ function topologySection(doc, diagnostics) {
     ['Proximity semantic hash', proximity.semanticHash ?? 'UNAVAILABLE'],
     ['Proximity evidence hash', proximity.evidenceHash ?? 'UNAVAILABLE'],
   ]));
-  const findings = [
-    ...(topology.findings ?? []).map((finding) => normalizeModelHealthFinding(finding, 'TOPOLOGY')),
-    ...(proximity.findings ?? []).map((finding) => normalizeModelHealthFinding(finding, 'PROXIMITY')),
-  ];
-  appendFindingList(doc, section.body, findings, 'No topology or proximity findings are retained.');
   return section.section;
 }
 
@@ -164,60 +168,8 @@ function keyValueTable(doc, rows) {
   return table;
 }
 
-function appendFindingList(doc, root, findings, emptyText) {
-  if (findings.length === 0) {
-    const empty = doc.createElement('p');
-    empty.textContent = emptyText;
-    root.append(empty);
-    return;
-  }
-  const list = doc.createElement('ul');
-  for (const finding of findings) {
-    const item = doc.createElement('li');
-    if (finding.findingId) item.dataset.findingId = finding.findingId;
-    item.textContent = [
-      finding.disposition ?? finding.effect ?? 'INFO',
-      finding.code ?? 'UNSPECIFIED',
-      finding.message ?? 'No message.',
-    ].join(' · ');
-    list.append(item);
-  }
-  root.append(list);
-}
-
-function normalizeModelHealthFinding(finding, category) {
-  return {
-    ...finding,
-    category,
-    disposition: findingDisposition(finding),
-  };
-}
-
-/**
- * Raw topology/proximity findings, as retained in diagnostics.topologyDiagnostics
- * and diagnostics.proximityDiagnostics, never carry a top-level `.disposition`
- * or `.effect` field — their capability effect lives in `capabilityEffects`,
- * an array of `{capabilityId, effect}`. The old `finding.disposition ??
- * finding.effect ?? 'INFO'` fallback always missed both, so every topology
- * finding rendered here defaulted to the literal string 'INFO' regardless of
- * whether it actually blocked — a genuine BLOCK-worthy collinear-overlap
- * defect showed as merely informational in this section while the same
- * finding correctly showed BLOCK in the main findings list above it.
- */
-function findingDisposition(finding) {
-  const explicit = String(finding.disposition ?? finding.effect ?? '').trim().toUpperCase();
-  if (explicit) return explicit;
-  const effects = Array.isArray(finding.capabilityEffects) ? finding.capabilityEffects : [];
-  if (effects.some((row) => String(row?.effect ?? '').toUpperCase() === 'BLOCK')) return 'BLOCK';
-  if (effects.some((row) => String(row?.effect ?? '').toUpperCase() === 'ADVISORY')) return 'ADVISORY';
-  const severity = String(finding.severity ?? '').toUpperCase();
-  if (severity === 'ERROR' || severity === 'FATAL') return 'BLOCK';
-  if (severity === 'WARNING') return 'ADVISORY';
-  return 'INFO';
-}
-
 function countDispositions(findings) {
-  const counts = { PASS: 0, CONDITIONAL: 0, BLOCK: 0 };
+  const counts = { PASS: 0, ADVISORY: 0, CONDITIONAL: 0, BLOCK: 0 };
   for (const finding of findings) {
     const disposition = String(finding.disposition ?? '').toUpperCase();
     if (disposition in counts) counts[disposition] += 1;

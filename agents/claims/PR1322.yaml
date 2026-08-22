@@ -1,0 +1,148 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1322
+claim_state: ACTIVE
+branch: agent/lfea-engineering-session-ui-20260822
+scope: >-
+  One-PR stacked LFEA UI00-UI08 implementation: exact authority custody,
+  engineering-session ownership/invalidation, governed diagnostics, source
+  provenance, Model Review, read-only source/analysis geometry, common Error
+  Check, results/code/application qualification separation, accessibility,
+  large-model presentation, and final browser qualification.
+claim_modes:
+  - COORDINATED
+files:
+  exact:
+    - src/main.js
+    - src/workspace/lfea-pipeline-session.js
+    - src/workspace/lfea-pipeline-shell-controller.js
+    - src/workspace/lfea-pipeline-shell-view.js
+    - src/workspace/lfea-pipeline-shell.css
+    - src/workspace/lfea-source-acquisition.js
+    - src/workspace/lfea-source-acquisition.css
+    - src/workspace/lfea-pipeline-analysis-surface.js
+    - src/workspace/linear-piping-inputxml-source-workflow.js
+    - src/workspace/linear-piping-inputxml-diagnostics-view.js
+    - src/workspace/lfea-pipeline-accdb-input-panel.js
+    - src/workspace/lfea-pipeline-accdb-view-model.js
+    - src/workspace/lfea-pipeline-stagedjson-input-panel.js
+    - scripts/lfea-pipeline-step-guidance-check.mjs
+    - e2e/lfea-unified-pipeline-shell.spec.js
+  prefixes:
+    - src/workspace/lfea-session/
+    - src/workspace/lfea-diagnostics/
+    - src/workspace/lfea-model-review/
+    - src/workspace/lfea-results-authority/
+    - scripts/lfea-ui-
+    - e2e/lfea-pipeline-
+authority_domains:
+  - LFEA_PRESENTATION_STATE
+  - LFEA_SOURCE_IDENTITY_ROUTING
+  - LFEA_DIAGNOSTIC_PRESENTATION
+  - LFEA_INPUT_INFORMATION_ARCHITECTURE
+  - LFEA_MODEL_REVIEW_PRESENTATION
+  - LFEA_TRANSFORMATION_EVIDENCE_PRESENTATION
+  - LFEA_READONLY_GEOMETRY_PRESENTATION
+  - LFEA_ERROR_CHECK_INFORMATION_ARCHITECTURE
+  - LFEA_RESULTS_AUTHORITY_PRESENTATION
+  - LFEA_ACCESSIBILITY_PRESENTATION
+  - LFEA_LARGE_MODEL_PRESENTATION
+  - LFEA_DOWNSTREAM_INVALIDATION
+excluded_authority_domains:
+  - FEA_SOLVER_FORMULATION
+  - STIFFNESS_ASSEMBLY
+  - LOAD_ASSEMBLY
+  - ELEMENT_RECOVERY
+  - RESULT_VALUE_RECOMPUTATION
+  - SOURCE_PARSING
+  - TOPOLOGY_CONDITIONING_MECHANICS
+  - RESTRAINT_CONDITIONING_MECHANICS
+  - GEOMETRY_WRITEBACK
+  - MESHING_AUTHORITY
+  - ENGINEERING_BENCHMARK_EXPECTED_VALUES
+  - ENGINEERING_TOLERANCE_AUTHORITY
+  - CODE_CHECK_METHODOLOGY
+  - CODE_FORMULA_AUTHORITY
+  - GOVERNED_PREFLIGHT_DETECTION
+  - GOVERNED_DIAGNOSTIC_DISPOSITION
+  - GOVERNED_AUTHORIZATION_CREATION
+  - APPLICATION_QUALIFICATION_SEMANTICS
+  - ENGINEERING_EXPORT_VALUE_AUTHORITY
+  - NATIVE_EXECUTION_CURRENTNESS_AUTHORITY
+  - GITHUB_WORKFLOWS
+frozen_ui00_files:
+  count: 11
+  guard: scripts/lfea-ui-numerical-custody-check.mjs
+  current_pr_overlap: 0
+ui08:
+  original_technical_head: d9cce5168a0898b635b5f7507b01759349c8e06f
+  integration_hardening_head: 3e88ff396e44517f4bd7434ad333748bc5aa46d9
+  state: PARTIAL_BLOCKED_ON_PRODUCTION_APP_BROWSER_QUALIFICATION
+  original_effective_paths: 6
+  row_window:
+    page_size: 250
+    scale_fixture_rows: 5000
+    pages: 20
+    all_rows_reachable: true
+  geometry_density:
+    segment_label_limit: 500
+    all_spans_and_nodes_retained: true
+  accessibility:
+    tab_keyboard: ARROW_LEFT_RIGHT_HOME_END
+    roving_tabindex: true
+    tabpanel_relationships: true
+    geometry_aria_pressed: true
+  focused_scale_a11y: PASS
+  original_pushed_blob_identity: PASS
+  chromium_exact_function_harness:
+    status: PASS
+    engine: Chromium_144_Xvfb_CDP
+    changed_ui08_functions_exact: true
+    upstream_model_projection: SYNTHETIC_SEALED_READONLY_STUB
+    mount_ms_5000: 307.1
+    cdp_wall_ms: 366.462
+    spans_rendered: 5000
+    nodes_rendered: 5001
+    table_rows_reachable: 5000
+    table_rows_unique: 5000
+    keyboard_focus: PASS
+    stagedjson_source_failclosed: PASS
+    stale_presentation_clear_replace: PASS
+  pre_run_warn_review:
+    status: RESOLVED_SOURCE_GUARDED
+    issue: CONDITIONAL_PRERUN_WARN_REVIEW_CONTROLS_UNREACHABLE_FROM_LOAD_CASE
+    fix: lfeaPipelineShell.setActiveStep_RUN_before_WARN_return
+    scope: NAVIGATION_ONLY
+    main_blob: 85010f83f08c0b8eafb8c1ca8931bae8110338fa
+    checker_blob: e2fbb09943159af6b5ee4457c9100f25f9e0624b
+    checker_syntax: PASS
+    checker_blob_identity: PASS
+    authorization_semantics_changed: false
+    engineering_values_changed: false
+  production_six_step_browser_inputxml: PASS
+  production_browser_stagedjson_handoff: PASS
+  production_browser_accdb: NOT_RUN_NO_REAL_FIXTURE_COMMITTED
+  official_lfea_workbench_aggregate: PASS
+  blocker: NONE_REMAINING_EXCEPT_ACCDB_REAL_FIXTURE_AVAILABILITY
+overlap:
+  PR1320:
+    classification: SAFE_WITH_DESIGN_LINEAGE
+    basis: design-only source-specific Error Check proposal remains superseded
+  PR1323:
+    classification: SAFE
+    basis: Load Calc/non-FEA/support-load paths do not overlap UI08 integration hardening
+  PR1305:
+    classification: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
+    basis: >-
+      PR1305 historically changed src/main.js plus results/shell/E2E paths and
+      demonstrated browser-only navigation defects. UI08 integration hardening
+      now also touches src/main.js, but its effective new main.js change is one
+      RUN-navigation line for existing WARN acceptance reachability; no solver,
+      result-recovery or engineering-authority semantics are adopted from PR1305.
+  PR1118:
+    classification: SAFE
+    basis: LAFEA continuum SVG/meshing paths do not overlap LFEA piping UI08
+last_overlap_check: GE-014
+next_overlap_check_required: NONE_PENDING
+last_verified_head: 71118c52dd82558ac406f82b4c05302cc791a8a1
+current_stage: UI08_PRODUCTION_APP_BROWSER_QUALIFICATION_SUBSTANTIALLY_COMPLETE
+last_updated: 2026-08-22

@@ -1,0 +1,55 @@
+.lfea-model-review {
+  margin: 12px 16px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 8px;
+  background: var(--workspace-panel);
+  overflow: hidden;
+}
+
+.lfea-model-review__header { padding: 12px 14px 8px; }
+.lfea-model-review__header h3 { margin: 0; font-size: 14px; }
+.lfea-model-review__header p { margin: 5px 0 0; color: var(--workspace-muted); font-size: 11px; }
+.lfea-model-review__tabs { display: flex; gap: 6px; padding: 0 14px 10px; overflow-x: auto; }
+.lfea-model-review__tabs button,
+.lfea-geometry-review__controls button,
+.lfea-model-review__pager button {
+  padding: 5px 9px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--workspace-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.lfea-model-review__tabs button[data-active="true"],
+.lfea-geometry-review__controls button[data-active="true"] { border-color: var(--workspace-accent); color: var(--workspace-text); }
+.lfea-model-review__tabs button:focus-visible,
+.lfea-geometry-review__controls button:focus-visible,
+.lfea-model-review__pager button:focus-visible { outline: 2px solid var(--workspace-accent); outline-offset: 2px; }
+.lfea-model-review__pager button:disabled { cursor: not-allowed; opacity: 0.5; }
+.lfea-model-review__body { padding: 0 14px 14px; }
+.lfea-model-review__body > p { color: var(--workspace-muted); font-size: 11px; }
+.lfea-model-review__scroll { max-height: 430px; overflow: auto; border: 1px solid var(--workspace-border); }
+.lfea-model-review table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.lfea-model-review th,
+.lfea-model-review td { padding: 4px 8px; border-bottom: 1px solid var(--workspace-border); text-align: left; vertical-align: top; white-space: nowrap; }
+.lfea-model-review th { position: sticky; top: 0; background: var(--workspace-panel-strong); color: var(--workspace-muted); font-weight: 600; }
+.lfea-model-review__pager { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.lfea-model-review__pager p { margin: 0; color: var(--workspace-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+.lfea-geometry-review__controls { display: flex; gap: 6px; margin: 0 0 8px; }
+.lfea-geometry-review [data-role="lfea-geometry-review-identity"],
+.lfea-geometry-review__custody { margin: 6px 0; color: var(--workspace-muted); font-size: 11px; }
+.lfea-geometry-review__svg { min-height: 260px; border: 1px solid var(--workspace-border); background: var(--workspace-panel-strong); overflow: hidden; }
+.lfea-geometry-review__svg svg { display: block; width: 100%; min-height: 260px; }
+.lfea-geometry-review__segment { stroke: currentColor; stroke-width: 2; }
+.lfea-geometry-review__node { fill: currentColor; }
+.lfea-geometry-review__segment-label,
+.lfea-geometry-review__caption { fill: currentColor; font-size: 10px; }
+.lfea-geometry-review__caption { font-size: 11px; }
+.lfea-geometry-review [data-role="lfea-geometry-review-unavailable"] { margin: 0; padding: 16px; color: var(--workspace-muted); font-size: 12px; }
+
+/* Model Review belongs to Input. Error Check consumes the governed diagnostic
+   contract instead; keeping these separate prevents source/custody evidence
+   from being mistaken for a second engineering-disposition engine. */
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"] [data-role="lfea-model-review-panel"] { display: none; }

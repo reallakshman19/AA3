@@ -1,0 +1,141 @@
+.lfea-common-error-check {
+  margin: 12px 16px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 8px;
+  background: var(--workspace-panel);
+  overflow: hidden;
+}
+
+.lfea-common-error-check__header {
+  padding: 12px 14px 8px;
+}
+
+.lfea-common-error-check__header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.lfea-common-error-check__header p,
+.lfea-common-error-check__category > p,
+.lfea-common-error-check__body > p {
+  margin: 5px 0;
+  color: var(--workspace-muted);
+  font-size: 11px;
+}
+
+.lfea-common-error-check__filters {
+  display: flex;
+  gap: 6px;
+  padding: 0 14px 10px;
+  overflow-x: auto;
+}
+
+.lfea-common-error-check__filters button {
+  padding: 5px 9px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--workspace-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.lfea-common-error-check__filters button[data-active="true"] {
+  border-color: var(--workspace-accent);
+  color: var(--workspace-text);
+}
+
+.lfea-common-error-check__body {
+  padding: 0 14px 10px;
+}
+
+.lfea-common-error-check__category {
+  margin-bottom: 12px;
+  border-top: 1px solid var(--workspace-border);
+  padding-top: 10px;
+}
+
+.lfea-common-error-check__category h4 {
+  margin: 0;
+  font-size: 12px;
+}
+
+.lfea-common-error-check__finding {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.lfea-common-error-check__finding[data-presentation-level="error"] {
+  border-left: 3px solid #f87171;
+}
+
+.lfea-common-error-check__finding[data-presentation-level="warning"] {
+  border-left: 3px solid #fbbf24;
+}
+
+.lfea-common-error-check__finding summary {
+  cursor: pointer;
+  color: var(--workspace-text);
+}
+
+.lfea-common-error-check__finding p {
+  margin: 5px 0 0;
+  color: var(--workspace-muted);
+}
+
+.lfea-common-error-check__evidence {
+  margin: 0 14px 14px;
+  font-size: 11px;
+}
+
+.lfea-common-error-check__evidence table {
+  margin-top: 7px;
+  border-collapse: collapse;
+}
+
+.lfea-common-error-check__evidence th,
+.lfea-common-error-check__evidence td {
+  padding: 3px 10px 3px 0;
+  text-align: left;
+  vertical-align: top;
+}
+
+/* UI06: the common governed review belongs to Error Check, never Input. */
+[data-host-group="SOURCE"][data-active-step="INPUT"]
+  [data-role="lfea-common-error-check-panel"] {
+  display: none;
+}
+
+/* InputXML retains source/unit evidence, readiness/topology metrics and the
+   existing acceptance controls. Suppress only duplicated governed finding
+   lists now owned by the common Error Check presentation. */
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="linear-piping-inputxml-review"] > strong,
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="linear-piping-inputxml-review"] > ul,
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="linear-piping-inputxml-review"] > p:not([data-role]),
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="linear-piping-inputxml-governed-diagnostics"]
+  [data-role="lfea-diagnostic-presentation"],
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="linear-piping-inputxml-capabilities"] {
+  display: none;
+}
+
+/* ACCDB retains the sealed pre-flight status and its existing reviewer/reason/
+   acceptance control. Its model-health capability/finding lists are redundant
+   with the common sealed pre-flight finding presentation and are suppressed. */
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-accdb-review-view"] > strong,
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-accdb-profile-note"],
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-accdb-capabilities"],
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-accdb-finding-section"] {
+  display: none;
+}

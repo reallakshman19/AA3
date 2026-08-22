@@ -10,6 +10,15 @@ import {
   validateConfiguredDefaultsPolicy,
 } from './non-fea-field-registry.js';
 
+const AUTHORIZED_GRAVITY_LEDGER_PATHS = Object.freeze([
+  'loadCalculation.pipeSectionProperties',
+  'loadCalculation.materialDensitiesKgPerM3',
+  'loadCalculation.operatingFluidDensitiesKgPerM3',
+  'loadCalculation.hydroFluidDensitiesKgPerM3',
+  'loadCalculation.insulationDensitiesKgPerM3',
+  'loadCalculation.componentWeightsKg',
+]);
+
 /**
  * Creates a visible, intentionally incomplete profile. No engineering value is
  * inferred: every field begins without a value, evidence, or approval.
@@ -61,6 +70,13 @@ export function createEvidenceValue(value, evidence, approved) {
 /**
  * Validates profile structure, evidence, approvals, numeric ranges, source
  * hashes, and a named workflow requirement set.
+ *
+ * The legacy gravity kernel still asks for the historical `loads` workflow.
+ * When — and only when — all six gravity mass/section maps are bound to the
+ * same authorized effective-value ledger/projection evidence, that request is
+ * resolved to `authorizedGravityLoads`. This prevents a ledger-bearing profile
+ * from re-demanding source-sheet presence after exact target authorization,
+ * while ordinary/legacy profiles keep the historical `loads` requirements.
  */
 export function validateProjectDataProfile(profile, workflow, activeHashes) {
   const errors = [];
@@ -69,7 +85,8 @@ export function validateProjectDataProfile(profile, workflow, activeHashes) {
     return freezeDeep({ valid: false, workflow, errors });
   }
   const normalized = upgradeProjectDataProfile(profile);
-  const required = PROJECT_DATA_REQUIREMENTS[workflow];
+  const effectiveWorkflow = resolveValidationWorkflow(normalized, workflow);
+  const required = PROJECT_DATA_REQUIREMENTS[effectiveWorkflow];
   validateAllFields(normalized, activeHashes, errors, new Set(required || []));
   if (!required) errors.push(errorRow('workflow', 'UNKNOWN_WORKFLOW', `Unknown Project Data workflow: ${workflow}.`));
   (required || []).forEach((path) => validateRequired(readPath(normalized, path), path, errors));
@@ -295,6 +312,27 @@ function validateSourceHash(entry, path, activeHashes, errors, validateActiveSou
   if (active && active !== expected) {
     errors.push(errorRow(path, 'STALE_SOURCE_HASH', `Evidence hash does not match active ${sourceKey} source.`));
   }
+}
+
+function resolveValidationWorkflow(profile, workflow) {
+  if (workflow !== 'loads') return workflow;
+  const entries = AUTHORIZED_GRAVITY_LEDGER_PATHS.map((path) => readPath(profile, path));
+  if (!entries.every((entry) => isAuthorizedGravityLedgerEntry(entry))) return workflow;
+  const ledgerHashes = new Set(entries.map((entry) => entry.evidence.sourceSemanticHash));
+  const inputHashes = new Set(entries.map((entry) => entry.evidence.authorizedInputSemanticHash));
+  const projectionHashes = new Set(entries.map((entry) => entry.evidence.effectiveExecutionProjectionSemanticHash));
+  return ledgerHashes.size === 1 && inputHashes.size === 1 && projectionHashes.size === 1
+    ? 'authorizedGravityLoads'
+    : workflow;
+}
+
+function isAuthorizedGravityLedgerEntry(entry) {
+  return isEvidenceValue(entry)
+    && entry.approved === true
+    && entry.evidence?.source === 'AUTHORIZED_EMPIRICAL_EFFECTIVE_VALUE_LEDGER'
+    && Boolean(stringValue(entry.evidence?.sourceSemanticHash))
+    && Boolean(stringValue(entry.evidence?.authorizedInputSemanticHash))
+    && Boolean(stringValue(entry.evidence?.effectiveExecutionProjectionSemanticHash));
 }
 
 function emptyEvidenceValue() {

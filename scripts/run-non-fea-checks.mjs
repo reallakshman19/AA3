@@ -16,6 +16,7 @@ const checks = [
   ['Common checker and seal', 'scripts/non-fea-common-checker-check.mjs'],
   ['Analysis plan', 'scripts/non-fea-analysis-plan-check.mjs'],
   ['Method consumption', 'scripts/non-fea-method-consumption-check.mjs'],
+  ['Empirical gravity AUTO method selection', 'scripts/empirical-gravity-method-selection-check.mjs'],
   ['Empirical scenario compatibility', 'scripts/empirical-load-calc-scenario-check.mjs'],
   ['Non-FEA 3D investigation', 'scripts/non-fea-3d-investigation-check.mjs'],
   ['First-cut launcher source guard', 'scripts/first-cut-workbench-launcher-source-guard.mjs'],

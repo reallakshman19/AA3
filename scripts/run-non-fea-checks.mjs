@@ -8,6 +8,7 @@ const checks = [
   ['Product-default authority and hash binding', 'scripts/non-fea-product-default-profile-check.mjs'],
   ['Effective-value authority resolver', 'scripts/non-fea-effective-value-resolver-check.mjs'],
   ['Authorized baseline effective-value ledger', 'scripts/authorized-empirical-effective-value-ledger-check.mjs'],
+  ['Ledger-only gravity execution projection', 'scripts/authorized-empirical-effective-execution-projection-check.mjs'],
   ['Authorized profile product-default convergence', 'scripts/authorized-empirical-product-default-convergence-check.mjs'],
   ['Configured-default resolver convergence', 'scripts/non-fea-configured-default-resolution-check.mjs'],
   ['Load-case authority convergence', 'scripts/non-fea-load-case-authority-check.mjs'],

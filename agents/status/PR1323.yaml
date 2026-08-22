@@ -4,7 +4,7 @@ pr_or_wip: PR1323
 mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
 workstream: ISSUE1321_LOAD_CALC
 branch: agent/issue-1321-load-calc-effective-values
-pr_head: e39c31118d0d3020233388cc0a0b27481449ef3d
+pr_head: b0515d96655062fee338ac44ac5bc57878b3e236
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,16 +12,17 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1323_workreport.md
-report_basis_head: df23445c0231cb3fc9704fa4f9cb1de2d159f9c2
+report_basis_head: 4605bf80e68e5aae6b363e0bffdf9bbaae730dc3
 appendix_a_status: CURRENT
-grounding_epoch: GE-003
-current_stage: STACK_3_SOURCE_INTEGRATED_EXACT_RUNTIME_QUALIFICATION_PENDING
+grounding_epoch: GE-004
+current_stage: STACK_4_ACTIVE_V1_V2_EFFECTIVE_VALUE_CUTOVER_SOURCE_INTEGRATED
 blocker: NO_RELEVANT_EXACT_HEAD_LOAD_CALC_EXECUTION_OBSERVED
-highest_risk: Raw Project Data/default re-resolution remains in support and empirical consumers despite the common effective-value path.
+highest_risk: Historical V3-V8 package wrappers retain separate enrichment and overlay authority paths and do not inherit the active V2 effective-value projection.
 dependencies:
-  - Issue #1321
-  - current common Non-FEA resolution ledger
-  - empirical component CoG authority audit
+  - Issue #1321 exact effective-value precedence
+  - non-fea-effective-value-resolution-ledger/v1
+  - authorized-empirical-effective-value-ledger/v1
+  - authorized-empirical-effective-execution-projection/v1
   - support-load-static-accounting/v1
-exact_next_action: Make CALCULATED_WITH_EXCEPTIONS current and visible in the guided Load Calc UI, then cut support/empirical value reads over to one effective-value resolver.
-last_updated: 2026-08-22T14:11:00+05:30
+exact_next_action: Fix CALCULATED_WITH_EXCEPTIONS controller messaging/routing, then classify V3-V8 production support before authority migration.
+last_updated: 2026-08-22T15:37:00+05:30

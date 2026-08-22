@@ -7,6 +7,7 @@ const checks = [
   ['Project Data authority contract', 'scripts/non-fea-project-data-authority-check.mjs'],
   ['Product-default authority and hash binding', 'scripts/non-fea-product-default-profile-check.mjs'],
   ['Effective-value authority resolver', 'scripts/non-fea-effective-value-resolver-check.mjs'],
+  ['Authorized profile product-default convergence', 'scripts/authorized-empirical-product-default-convergence-check.mjs'],
   ['Configured-default resolver convergence', 'scripts/non-fea-configured-default-resolution-check.mjs'],
   ['Load-case authority convergence', 'scripts/non-fea-load-case-authority-check.mjs'],
   ['Mass-ledger authority convergence', 'scripts/non-fea-mass-ledger-convergence-check.mjs'],

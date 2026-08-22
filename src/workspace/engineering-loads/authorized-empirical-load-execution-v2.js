@@ -84,8 +84,9 @@ export function calculateAuthorizedEmpiricalLoadExecutionV2(value) {
   const profile = effectiveExecutionProjection?.profile || compatibilityProfile;
   const dataset = effectiveExecutionProjection?.dataset || value.dataset;
   const activeHashes = masterHashes(value.masterData, dataset);
+  const loadWorkflow = effectiveExecutionProjection ? 'authorizedGravityLoads' : 'loads';
   const errors = [
-    ...validateProjectDataProfile(profile, 'loads', activeHashes).errors,
+    ...validateProjectDataProfile(profile, loadWorkflow, activeHashes).errors,
     ...validateProjectDataProfile(profile, 'topology', activeHashes).errors,
   ];
   if (errors.length > 0) {

@@ -6,8 +6,8 @@ mission: >-
   in one long-lived PR while preserving exact numerical/pre-flight authority.
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
-report_basis_head: 1dd711245a40fa96d9ba0dc384586285459522da
-pr_head_last_observed: 1dd711245a40fa96d9ba0dc384586285459522da
+report_basis_head: cd8eb334b87664b9846b2e9c74dad7b07464ab7f
+pr_head_last_observed: cd8eb334b87664b9846b2e9c74dad7b07464ab7f
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -15,10 +15,10 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1322_workreport.md
-appendix_a_status: CURRENT_FOR_UI06
-grounding_epoch: GE-008
-current_stage: UI06_COMMON_ENGINEERING_ERROR_CHECK
-last_completed_stage: UI05_READONLY_SVG_REPRESENTATION_TOGGLE
+appendix_a_status: CURRENT_FOR_UI07
+grounding_epoch: GE-009
+current_stage: UI07_RESULTS_CODE_CHECK_TOOLBAR_QUALIFICATION_PRESENTATION
+last_completed_stage: UI06_COMMON_ENGINEERING_ERROR_CHECK
 blocker: NONE
 coordination: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
 validation:
@@ -40,13 +40,18 @@ validation:
   ui05_pushed_blob_identity: PASS
   ui05_authority_diff: PASS
   ui05_browser_full_repo: NOT_RUN
+  ui06_focused_local_projection: PASS
+  ui06_exact_byte_syntax: PASS
+  ui06_pushed_blob_identity: PASS
+  ui06_authority_diff: PASS
+  ui06_browser_full_repo_aggregate: NOT_RUN
   unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
 highest_risk: >-
-  UI06 must consolidate Error Check by piping-engineering category without
-  reclassifying governed disposition, duplicating source-specific acceptance,
-  or allowing message/severity/capability text to become engineering authority.
+  UI07 must separate analysis results, code assessment and application
+  qualification without changing result values, code methodology, qualification
+  semantics or making a successful solve appear code-compliant.
 exact_next_action: >-
-  Re-ground open diagnostic/source-panel claims, inventory current Error Check
-  duplication, then group the common sealed diagnostic presentation by explicit
-  engineering categories while preserving every finding ID and disposition.
+  Re-ground Run/Output/Export/results/code-check/qualification presentation,
+  trace each visible status/value to its authoritative record, and implement
+  a presentation-only hierarchy plus toolbar declutter with focused falsifiers.
 last_updated: 2026-08-22

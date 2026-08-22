@@ -17,151 +17,147 @@ MERGE_AUTHORITY: OWNER_ONLY
 REPOSITORY: reallaksh19/Advanced_Analysis
 PR_OR_WIP: PR1322
 BRANCH: agent/lfea-engineering-session-ui-20260822
-PR_HEAD_OBSERVED: 1dd711245a40fa96d9ba0dc384586285459522da
-REPORT_BASIS_HEAD: 1dd711245a40fa96d9ba0dc384586285459522da
+PR_HEAD_OBSERVED: cd8eb334b87664b9846b2e9c74dad7b07464ab7f
+REPORT_BASIS_HEAD: cd8eb334b87664b9846b2e9c74dad7b07464ab7f
 MAIN_HEAD_LAST_CHECKED: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 MERGE_BASE: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-REPORT_SYNC: CURRENT_THROUGH_UI05_TECHNICAL_HEAD
-APPENDIX_A_STATUS: CURRENT_FOR_UI06
-GROUNDING_EPOCH: GE-008
-CURRENT_STAGE: UI06 — COMMON ERROR CHECK / ENGINEERING CATEGORY IA
-LAST_COMPLETED_STAGE: UI05 — READ-ONLY SVG / IMPORTED-vs-ANALYSIS REPRESENTATION
+REPORT_SYNC: CURRENT_THROUGH_UI06_TECHNICAL_HEAD
+APPENDIX_A_STATUS: CURRENT_FOR_UI07
+GROUNDING_EPOCH: GE-009
+CURRENT_STAGE: UI07 — RESULTS / CODE-CHECK / TOOLBAR / QUALIFICATION PRESENTATION
+LAST_COMPLETED_STAGE: UI06 — COMMON ERROR CHECK / ENGINEERING CATEGORY IA
 CURRENT_BLOCKER: NONE
-HIGHEST_RISK: UI06 could accidentally turn presentation grouping into a second disposition engine or leave source-specific acceptance controls looking like independent engineering authorities.
-LAST_DURABLE_CHECKPOINT: UI05 technical head 1dd711245a40fa96d9ba0dc384586285459522da.
-EXACT_NEXT_ACTION: Re-ground current diagnostic/source-panel overlap, inventory all Error Check rows/acceptance controls, then consolidate governed findings by piping-engineering category while preserving sealed finding IDs/dispositions and existing authorization authority.
+HIGHEST_RISK: UI07 could blur linear-solver results, code-check applicability, and application qualification into one apparent engineering authority or hide result provenance while simplifying the toolbar.
+LAST_DURABLE_CHECKPOINT: UI06 technical head cd8eb334b87664b9846b2e9c74dad7b07464ab7f.
+EXACT_NEXT_ACTION: Re-ground current Run/Output/Export/results/code-check/qualification surfaces, identify which records are authoritative versus presentation-only, then separate them visually and declutter controls without changing solve, recovery, code-check methodology, result values, or qualification semantics.
 ```
 
 ## 2. Handover in 60 Seconds
 
-- One draft PR only: **#1322**. Keep stacking here. Do not merge without owner authorization.
+- One long-lived draft PR only: **#1322**. Keep stacking here. Do not merge without owner authorization.
 - Base/main remains `a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
-- UI05 technical head is `1dd711245a40fa96d9ba0dc384586285459522da`; main→UI05 is 26 commits ahead / 0 behind.
-- UI00 freezes 11 numerical/pre-flight/solver authority files by exact Git blob; full PR overlap with those paths remains **0**.
+- UI06 technical head is `cd8eb334b87664b9846b2e9c74dad7b07464ab7f`; main→UI06 is **28 commits ahead / 0 behind**.
+- UI00 freezes 11 numerical/pre-flight/solver authority files by exact Git blob; full PR overlap remains **0**.
 - UI01 owns one active engineering source/session and downstream invalidation. Analysis cannot manufacture pre-flight authorization.
-- UI02 owns the common governed diagnostic presentation. Sealed `finding.disposition` alone controls presentation impact.
-- UI03 owns explicit source acquisition/provenance. StagedJSON remains the original source while derived InputXML is a preparation artifact/provider.
+- UI02 owns the source-agnostic governed diagnostic presentation. The sealed finding `disposition` is the sole source of display impact.
+- UI03 owns one source acquisition/provenance surface. StagedJSON remains the original source; derived InputXML remains a preparation artifact/provider.
 - UI04 owns first-class read-only Model Review: Elements, Restraints, Loads and source→canonical→analysis transformation ledger.
-- **UI05 adds Geometry to Model Review** with explicit `Imported / Source` and `Analysis` display choices.
-- InputXML/ACCDB source geometry is the exact sealed importer canonical object at `preFlight.diagnostics.sourceBundle.geometry`; the UI labels it source-derived canonical geometry rather than raw file bytes.
-- Analysis geometry is exactly `preFlight.preparation.structuralPreparation.conditionedTopology.geometry`.
-- StagedJSON original geometry is **UNAVAILABLE** because the current governed session does not retain a renderable original StagedJSON geometry object. The derived InputXML source bundle is deliberately **not substituted** for the original source view.
-- UI05 does not reuse the independent mesh workbench SVG renderer because that renderer is polygon/T3/Q4 oriented and binds `lfea-svg-node-editor` in MODEL mode. UI05 instead reuses only the pure existing `lfea-svg-viewport.js` coordinate transform and adds a read-only piping centerline renderer.
-- The centerline renderer creates only SVG lines/circles/text. It has no node editor, pointer mutation, parser, conditioning, compilation, authorization or solve call.
-- The 3D→2D isometric transformation is display-only. The projected rows retain the exact source x/y/z coordinates as metadata; no transformed coordinates are written back.
-- Representation switching is controller-local display state. Focused falsification proves the pre-flight JSON and engineering-session JSON remain unchanged and the session revision/pre-flight semantic hash are stable.
-- UI05 technical diff is exactly six paths, all under Model Review/checking except one aggregate-check import.
-- Local focused UI05 execution: **PASS**. Exact-byte JavaScript syntax: **PASS**. All six local `git hash-object` values equal the blobs pushed to GitHub: **PASS**.
-- Browser/full repository qualification: **NOT_RUN**.
-- Only three EMP.1 workflows ran on the UI05 technical head; all failed, with no commit-status contexts. They remain `FAIL / REMOTE_EXECUTION / UNKNOWN_ORIGIN` and are not LFEA evidence.
+- UI05 owns read-only piping geometry review with explicit Imported/Source vs Analysis representation; StagedJSON source geometry fails closed as unavailable rather than being substituted by derived InputXML.
+- **UI06 adds one common Engineering Error Check.** It consumes UI02's already-governed presentation and groups findings by piping-engineering topic only.
+- UI06 taxonomy: Source & Units; Geometry & Topology; Elements & Properties; Restraints & Supports; Loads/Pressure/Thermal; Representability & Approximations; Readiness & Authorization; Other / Unclassified.
+- Every governed finding ID survives exactly once. The original governed category is retained on each row. Unknown categories are shown under Other / Unclassified rather than guessed or dropped.
+- UI06 does not inspect message text, raw severity or capability effects to decide impact. PASS/ADVISORY/CONDITIONAL/BLOCK presentation remains inherited from UI02's sealed-disposition projection.
+- Existing InputXML/ACCDB reviewer-name/reason/acceptance controls remain in their current source/pre-flight controllers. UI06 creates no authorization and exposes `authorizes:false` in its panel snapshot.
+- CSS suppresses only redundant provider-specific governed-finding/capability lists on Error Check. Source-unit evidence, provenance, topology/readiness evidence, pre-flight status and existing acceptance controls remain visible.
+- StagedJSON conversion evidence remains an Input/source artifact; Error Check consumes its derived InputXML governed pre-flight while UI03 provenance still identifies the original StagedJSON source.
+- UI06 technical diff is exactly seven presentation/test paths. No `src/main.js`, shell CSS/view, source parser, governed pre-flight core, authorization mechanic, solver, benchmark, tolerance, export or workflow file changed.
+- Focused UI06 projection falsifier: **PASS**. Exact-byte JavaScript syntax: **PASS**. All **7/7** local Git blob identities equal the pushed GitHub blobs: **PASS**.
+- Browser/full repository/aggregate execution: **NOT_RUN**.
+- Exact-head remote runs are only three EMP.1 workflows; all failed with no commit-status contexts. They remain `FAIL / REMOTE_EXECUTION / UNKNOWN_ORIGIN` and are not LFEA UI06 evidence.
+- A rejected connector status-file write during UI06 returned GitHub 409 before mutation because the supplied blob SHA was intentionally/non-current. No file or branch changed from that rejected call; branch mutation proceeded only through the prepared technical commit.
 
 ## 3. Approved stack status
 
 | Stage | State | Notes |
 |---|---|---|
-| UI00 | COMPLETE | exact 11-file authority custody; repository runtime NOT_RUN |
+| UI00 | COMPLETE | exact 11-file engineering-authority custody; repository runtime NOT_RUN |
 | UI01 | COMPLETE | explicit engineering-session ownership/invalidation; relevant browser/runtime NOT_RUN |
 | UI02 | COMPLETE | common governed diagnostic presentation; integrated focused execution NOT_RUN |
 | UI03 | COMPLETE | source acquisition + StagedJSON provenance; browser NOT_RUN |
 | UI04 | COMPLETE | Model Review + evidence-backed transformation ledger; focused local execution PASS |
 | UI05 | COMPLETE | read-only piping SVG + honest Source/Analysis representation selection; focused local execution PASS |
-| UI06 | CURRENT | common Error Check by piping-engineering categories |
-| UI07 | NOT_STARTED | code-check/results separation and toolbar/qualification cleanup |
+| UI06 | COMPLETE | common Error Check by engineering category; focused projection execution PASS |
+| UI07 | CURRENT | results/code-check separation, toolbar declutter, application qualification hierarchy |
 | UI08 | NOT_STARTED | Chromium/a11y/stale-state/5k/performance qualification |
 
-Explicit non-scope remains solver formulation, stiffness/load assembly, element recovery, raw-source parsing, geometry/restraint conditioning mechanics, axes/sign/end conventions, governed finding disposition, benchmark values/tolerances, code methodology, engineering exports, workflows and writeback authority.
+Explicit non-scope remains solver formulation, stiffness/load assembly, element recovery, raw-source parsing, geometry/restraint conditioning mechanics, axes/sign/end conventions, governed finding disposition, benchmark values/tolerances, code methodology, engineering result values/exports, workflows and new writeback/authorization authority.
 
-## 4. Ground truth / coordination — GE-008
+## 4. Ground truth / coordination — GE-009
 
-- PR #1322: OPEN / DRAFT / mergeable at UI05 technical head.
-- UI05 technical head: `1dd711245a40fa96d9ba0dc384586285459522da`.
+- PR #1322: OPEN / DRAFT / mergeable before this recovery checkpoint; merge authority OWNER_ONLY.
+- UI06 technical head: `cd8eb334b87664b9846b2e9c74dad7b07464ab7f`.
 - main/base/merge-base: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
-- compare UI04 recovery `aebe3e07...`→UI05: 1 ahead / 0 behind; exactly six changed paths.
-- compare main→UI05: 26 ahead / 0 behind.
+- compare UI05 recovery `d944d5fd...`→UI06: **1 ahead / 0 behind**, exactly seven changed paths.
+- compare main→UI06: **28 ahead / 0 behind**.
 - UI00 frozen-authority paths in full PR diff: **0**.
 - `.github/workflows/*` paths in full PR diff: **0**.
-- UI05 adds no `src/main.js`, core/compiler, benchmark, tolerance, shell-view or shell-CSS change.
-- PR #1320 remains design-only lineage; its source-tab Error Check concept is superseded by the approved one-session engineering IA.
-- PR #1323 remains Load Calc/non-FEA/support-load work with no LFEA Model Review overlap.
-- PR #1305 is historical shell/results lineage; UI05 avoids all five of its changed paths.
-- PR #1118 uses `lafea-*` continuum SVG/meshing files and does not overlap LFEA piping Model Review.
+- UI06 adds no `src/main.js`, core/compiler, benchmark, tolerance, shell-view or shell-CSS change.
+- PR #1323 remains Load Calc/non-FEA/support-load work and has no UI06 LFEA diagnostic path overlap.
+- PR #1320 remains design-only lineage; its source-tab Error Check proposal is superseded by the one-session engineering-category IA.
+- PR #1305 remains historical shell/results lineage; UI06 avoids its shell/main/results paths.
+- PR #1118 is `lafea-*` continuum SVG/meshing work and is independent of LFEA piping UI06.
+- `agents/MASTER_INDEX.md` remains absent on current main.
 - coordination classification: `SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE`.
 
-## 5. UI05 existing-viewer diagnosis
+## 5. UI06 current Error Check diagnosis
 
-### Existing production LFEA workbench SVG
+### Before UI06
 
-`src/workspace/lfea-workbench-svg.js` is not a safe piping viewer primitive:
-
-```text
-independent lfea-mesh-package/v1
- -> polygon elements (>=3 nodes)
- -> T3/Q4 mesh/result field
- -> MODEL mode
-    -> bindLfeaNodeEditor(...)
-       -> node drag/edit callbacks
-```
-
-That renderer is correct for the independent editable mesh workbench but wrong for UI05 because piping is centerline/span geometry and UI05 must be read-only.
-
-### Safe reused primitive
-
-`src/workspace/lfea-svg-viewport.js` is a pure coordinate/screen transform. It owns no result derivation and no mutation. UI05 reuses this primitive only.
-
-## 6. UI05 representation contract
-
-Contract: `lfea-geometry-review/v1`.
-
-### SOURCE / Imported
-
-For native InputXML and ACCDB:
+InputXML Error Check could show the same governed condition several ways:
 
 ```text
-object: preFlight.diagnostics.sourceBundle.geometry
-meaning: governed importer canonical geometry derived from active source
-label: Imported / source-derived
+preFlight.preparation.findings
+  -> manual non-PASS Review findings list
+  -> UI02 governed diagnostic presentation
+  -> capability/representability evidence tables
 ```
 
-This is not described as raw bytes. Raw source custody remains in the source bundle/source records.
+ACCDB Error Check additionally presented raw model-health capability/finding sections alongside the governed pre-flight and its acceptance control. Those surfaces were useful evidence, but visually appeared as parallel engineering verdicts.
 
-For StagedJSON:
+### After UI06
 
 ```text
-SOURCE view: UNAVAILABLE
-reason: original StagedJSON renderable geometry is not retained in the governed session
-prohibited fallback: derived InputXML geometry must not be relabelled as original StagedJSON
+active governed pre-flight
+  -> UI02 buildLfeaDiagnosticPresentation()
+       sealed findingId/category/disposition retained
+       disposition alone -> presentation impact
+  -> UI06 buildLfeaErrorCheckPresentation()
+       category metadata only -> engineering topic
+       unknown category -> Other / Unclassified
+  -> one common Engineering Error Check panel
 ```
 
-### ANALYSIS
+Provider panels continue to own only their existing source evidence and acceptance mechanics.
 
-For every prepared source route:
+## 6. UI06 engineering-category contract
+
+Contract: `lfea-error-check-presentation/v1`.
+
+Mapping is metadata-only:
 
 ```text
-object: preFlight.preparation.structuralPreparation.conditionedTopology.geometry
-meaning: conditioned structural geometry used by compiled analysis model
-label: Analysis representation
+SOURCE / SCHEMA / UNIT
+  -> Source & Units
+GEOMETRY / TOPOLOGY
+  -> Geometry & Topology
+COMPONENT / MATERIAL / SECTION / RIGID
+  -> Elements & Properties
+RESTRAINT / CONSTRAINT
+  -> Restraints & Supports
+LOAD / PRESSURE / THERMAL / PHYSICAL_CASE
+  -> Loads, Pressure & Thermal
+MECHANISM / STIFFNESS / CONDITIONING / UNSUPPORTED_FEATURE
+  -> Representability & Approximations
+AUTHORIZATION / STALE_EVIDENCE / TAMPER
+  -> Readiness & Authorization
+anything else
+  -> Other / Unclassified
 ```
 
-### Display projection
+The original governed category remains visible on every finding row.
 
-```text
-x_display = (x - y) * cos(30°)
-y_display = z + 0.5 * (x + y)
-```
+## 7. UI06 authority/invariants
 
-This is visualization only. Each projected node retains `sourceX/sourceY/sourceZ`; no engineering record is mutated.
-
-## 7. UI05 engineering invariants
-
-- `SOURCE != ANALYSIS` is allowed and visible.
-- The active SVG carries the exact `representation` and `objectPath` that supplied it.
-- Unknown representation tokens fail closed.
-- Missing/invalid node coordinates fail closed.
-- Missing segment node references fail closed.
-- StagedJSON source geometry is unavailable rather than guessed.
-- Representation selection does not call `setSource`, `clearSource`, conditioning, compiler, authorization or solve routines.
-- No `bindLfeaNodeEditor` or `onMoveNode` exists in UI05 projection/renderer/panel.
-- Analysis result/session revision/pre-flight semantic hash are not changed by display selection.
+- UI06 calls `buildLfeaDiagnosticPresentation()`; it does not read raw finding severity/message/capability effects to derive impact.
+- `findingId`, `code`, original category and sealed `disposition` are retained.
+- Duplicate governed finding IDs fail closed at the common Error Check boundary.
+- Every governed finding must be retained exactly once.
+- Unknown categories are visible and retain their original token.
+- Source kind/provenance cannot change category mapping or disposition impact.
+- Category filter selection is presentation state only.
+- UI06 panel cannot call source mutation, conditioning, compilation, solve or authorization APIs.
+- Existing InputXML and ACCDB conditional-authorization controls remain unchanged.
+- Provider-specific source/unit/intake/conversion evidence is not promoted to a second governed disposition engine.
 
 ## 8. Active engineering register
 
@@ -170,36 +166,37 @@ This is visualization only. Each projected node retains `sourceX/sourceY/sourceZ
 - `ISS-003` RESOLVED_UI02 — UI-side disposition reconstruction removed.
 - `ISS-004` RESOLVED_UI01 — fabricated analysis-side reviewer authorization removed.
 - `ISS-005` RESOLVED_UI04 — first-class Model Review exposes element/restraint/load custody.
-- `ISS-006` RESOLVED_UI05 — piping visualization now distinguishes imported/source-derived and analysis geometry.
-- `RISK-001` CONTROLLED — presentation layers own no solver/pre-flight authority.
+- `ISS-006` RESOLVED_UI05 — piping visualization distinguishes source-derived and analysis geometry.
+- `ISS-007` RESOLVED_UI06 — one common governed Error Check replaces parallel provider-specific verdict presentation.
+- `RISK-001` CONTROLLED — presentation layers own no solver/pre-flight authorization authority.
 - `RISK-002` CONTROLLED — source/pre-flight changes invalidate downstream result state; final browser proof remains UI08.
-- `RISK-005` CONTROLLED_UI03 — source chooser cannot create multiple live engineering models.
 - `RISK-006` CONTROLLED_UI04_UI05 — source/canonical/analysis names do not imply equality.
 - `RISK-007` CONTROLLED_UI04 — transformation ledger uses existing evidence only.
-- `RISK-008` CONTROLLED_UI05 — editable workbench SVG was not reused as piping authority; piping renderer is read-only.
-- `RISK-009` OPEN_UI06 — source-specific Error Check rows/acceptance controls can still fragment the engineering review experience.
+- `RISK-008` CONTROLLED_UI05 — piping SVG is read-only.
+- `RISK-009` CONTROLLED_UI06 — provider-specific Error Check verdict duplication is suppressed; acceptance authority remains single-source.
+- `RISK-010` OPEN_UI07 — current results/code-check/application-qualification surfaces may still blur distinct authorities or expose too many implementation controls.
 - `DEC-001` ACTIVE — SOURCE REPRESENTATION != CANONICAL MODEL != ANALYSIS MODEL.
 - `DEC-002` ACTIVE — Error Check taxonomy is engineering-based, not source-tab based.
 - `DEC-003` ACTIVE — sealed pre-flight/authorization remains engineering authority.
 - `DEC-004` ACTIVE — PR1322 remains one stack; owner-only merge.
-- `DEC-005` ACTIVE — UI00 blob baseline is not rewritten to make tests green.
+- `DEC-005` ACTIVE — UI00 blob baseline is never rewritten merely to obtain green tests.
 - `DEC-006` ACTIVE — diagnostic normalization is presentation-only.
-- `DEC-008` UI03 — source chooser delegates to existing importers.
-- `DEC-009` UI03 — StagedJSON stays original source; derived InputXML is preparation provenance.
-- `DEC-010` UI04 — Model Review consumes sealed bindings/load ledger only.
-- `DEC-011` UI05 — piping SVG reuses only the pure viewport primitive; edit-capable workbench SVG is not reused.
-- `DEC-012` UI05 — StagedJSON source geometry is UNAVAILABLE when not retained; no substitution is allowed.
+- `DEC-009` ACTIVE — StagedJSON stays original source; derived InputXML is preparation provenance.
+- `DEC-010` ACTIVE — Model Review consumes sealed bindings/load ledger only.
+- `DEC-011` ACTIVE — piping SVG is read-only and does not reuse the edit-capable mesh renderer.
+- `DEC-013` UI06 — common Error Check grouping consumes UI02 and cannot redefine engineering impact.
+- `DEC-014` UI06 — existing provider authorization controls remain authoritative; UI06 adds no acceptance action.
 
 ## 9. Validation ledger
 
 ### VAL-001 — UI00 frozen authority custody
-`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`. Full main→UI05 has zero frozen authority paths. Repository runtime custody remains NOT_RUN.
+`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`. Full main→UI06 contains zero frozen authority paths. Repository runtime custody remains NOT_RUN.
 
 ### VAL-002 — UI01 engineering session
 `STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`. Relevant browser/runtime remains NOT_RUN.
 
 ### VAL-003 — UI02 governed diagnostics
-`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`. Integrated focused execution remains NOT_RUN.
+`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`. Integrated repository focused execution remains NOT_RUN.
 
 ### VAL-004 — UI03 source acquisition/provenance
 `STATUS=PASS`, `OBSERVATION=SOURCE+LOCAL_SYNTAX`. Browser remains NOT_RUN.
@@ -207,65 +204,69 @@ This is visualization only. Each projected node retains `sourceX/sourceY/sourceZ
 ### VAL-005 — UI04 Model Review
 `STATUS=PASS`, `OBSERVATION=LOCAL_FOCUSED_EXECUTION+EXACT_BYTE_SYNTAX+PUSHED_BLOB_IDENTITY`. Browser/full repository remains NOT_RUN.
 
-### VAL-006 — UI05 representation falsifier
-`STATUS=PASS`, `OBSERVATION=LOCAL_EXECUTION`, `ORACLE=EXPLICIT_OBJECT_IDENTITY`. Fixture deliberately differs between SOURCE BEND/node-Z and ANALYSIS PIPE/conditioned node-Z. The two representations remain distinct.
+### VAL-006 — UI05 geometry representation
+`STATUS=PASS`, `OBSERVATION=LOCAL_FOCUSED_EXECUTION+EXACT_BYTE_SYNTAX+PUSHED_BLOB_IDENTITY`. Browser/full repository remains NOT_RUN.
 
-### VAL-007 — UI05 StagedJSON anti-substitution
-`STATUS=PASS`, `OBSERVATION=LOCAL_EXECUTION`. SOURCE returns unavailable with zero nodes/spans and explicitly states derived InputXML is not substituted; ANALYSIS remains available through the prepared chain.
+### VAL-007 — UI06 mixed-disposition/category falsifier
+`STATUS=PASS`, `OBSERVATION=LOCAL_FOCUSED_EXECUTION`, `ORACLE=EXPLICIT_SEALED_DISPOSITION_AND_CATEGORY_IDENTITY`. Fixture contains PASS/ADVISORY/CONDITIONAL/BLOCK, InputXML/ACCDB provenance, a deliberately misleading raw severity/message, and an unknown category. Category and display impact remain governed by explicit metadata/sealed disposition.
 
-### VAL-008 — UI05 read-only authority boundary
-`STATUS=PASS`, `OBSERVATION=LOCAL_SOURCE_FALSIFICATION`. Projection/renderer contain no node editor, source mutation, conditioning, model compilation or solve authorization calls. Renderer reuses only the pure viewport transform.
+### VAL-008 — UI06 finding conservation / anti-substitution
+`STATUS=PASS`, `OBSERVATION=LOCAL_FOCUSED_EXECUTION`. Every finding ID survives exactly once; duplicate IDs fail closed; unknown category survives in Other / Unclassified; source kind does not alter stable projection.
 
-### VAL-009 — UI05 exact-byte syntax / pushed identity
-`STATUS=PASS`. `node --check` passed for all five UI05 JavaScript files. Every local `git hash-object` equals the GitHub blob inserted into the UI05 tree for all six stage files including CSS.
+### VAL-009 — UI06 non-mutation / authorization firewall
+`STATUS=PASS`, `OBSERVATION=LOCAL_SOURCE_FALSIFICATION`. Category filtering leaves pre-flight JSON unchanged. Presentation/panel source contains no source mutation, conditioning/compiler, solve or authorization mechanics. Existing acceptance controls are not hidden by UI06 CSS.
 
-### VAL-010 — UI05 branch diff
-`STATUS=PASS`. UI04 recovery→UI05 is exactly six paths and 1 ahead / 0 behind. Full main→UI05 is 26 ahead / 0 behind with no frozen authority or workflow path.
+### VAL-010 — UI06 exact-byte syntax / pushed identity
+`STATUS=PASS`. `node --check` passed on the UI06 JavaScript candidate files. All seven local `git hash-object` identities equal the GitHub blobs in the technical commit.
 
-### VAL-011 — UI05 browser/full repository
-`STATUS=NOT_RUN`. No Chromium or full repo suite was executed in this environment.
+### VAL-011 — UI06 branch diff
+`STATUS=PASS`. UI05 recovery→UI06 is exactly seven presentation/test paths, 1 ahead / 0 behind. Full main→UI06 is 28 ahead / 0 behind with zero frozen-authority and workflow paths.
 
-### VAL-012 — UI05 PR workflows
-`STATUS=FAIL`, `OBSERVATION=REMOTE_EXECUTION`, `FAILURE_ORIGIN=UNKNOWN_ORIGIN`. Only the three EMP.1 workflows ran on `1dd711245...`; all failed and no commit-status contexts exist. They are not UI05 evidence.
+### VAL-012 — UI06 browser/full repository
+`STATUS=NOT_RUN`. No Chromium, full repository suite or integrated aggregate execution was performed in this environment.
 
-## 10. UI05 changed-file ledger
+### VAL-013 — UI06 PR workflows
+`STATUS=FAIL`, `OBSERVATION=REMOTE_EXECUTION`, `FAILURE_ORIGIN=UNKNOWN_ORIGIN`. Only three EMP.1 workflows ran on `cd8eb334...`; all failed and no commit-status contexts exist. They are not UI06 evidence.
 
-- `src/workspace/lfea-model-review/lfea-geometry-review.js` — pure read-only SOURCE/ANALYSIS geometry selector with StagedJSON fail-closed anti-substitution.
-- `src/workspace/lfea-model-review/lfea-geometry-review-svg.js` — read-only piping centerline SVG; pure isometric display projection; reuses `lfea-svg-viewport.js` only.
-- `src/workspace/lfea-model-review/lfea-model-review-panel.js` — adds Geometry tab and local Imported/Source vs Analysis display selector.
-- `src/workspace/lfea-model-review/lfea-model-review.css` — Geometry controls/viewer styling; existing Error Check hiding retained.
-- `scripts/lfea-ui-geometry-review-check.mjs` — source/analysis difference, StagedJSON anti-substitution, non-mutation and read-only falsifiers.
-- `scripts/lfea-pipeline-step-guidance-check.mjs` — adds UI05 focused check to aggregate path.
+## 10. UI06 changed-file ledger
 
-No UI05 change to `src/main.js`, shell-view/shell-CSS, source parser, source converter, governed pre-flight, authorization, solver, recovery, benchmark, tolerance, export or workflow files.
+- `src/workspace/lfea-diagnostics/lfea-error-check-presentation.js` — category-only projection over UI02's governed finding presentation; conservation and unknown-category fail-safe.
+- `src/workspace/lfea-diagnostics/lfea-error-check-panel.js` — one read-only Engineering Error Check panel and local category filter.
+- `src/workspace/lfea-diagnostics/lfea-error-check.css` — common Error Check styling and suppression of duplicated provider verdict lists while retaining evidence/acceptance controls.
+- `src/workspace/lfea-pipeline-analysis-surface.js` — mounts/refreshes/destroys the common Error Check consumer.
+- `src/workspace/lfea-source-acquisition.css` — imports UI06 stylesheet only.
+- `scripts/lfea-ui-error-check-check.mjs` — disposition/category/finding-conservation/source-independence/non-mutation falsifier.
+- `scripts/lfea-pipeline-step-guidance-check.mjs` — adds UI06 focused check to the existing aggregate path.
+
+No UI06 change to `src/main.js`, shell-view/shell-CSS, source parser/converter, governed pre-flight/authorization mechanics, solver/recovery, benchmark/tolerance, results values, export or workflow files.
 
 ## 11. Review / CI truth
 
-- PR remains OPEN / DRAFT / mergeable.
-- Merge authority: OWNER_ONLY; no merge performed.
-- UI05 focused local execution and syntax: PASS.
-- UI05 browser/full repository execution: NOT_RUN.
+- PR remains OPEN / DRAFT / mergeable; no merge performed.
+- UI06 focused local projection execution and exact-byte syntax: PASS.
+- UI06 pushed-blob identity and stage-diff inspection: PASS.
+- UI06 browser/full repository/aggregate execution: NOT_RUN.
 - Three EMP.1 workflow failures remain UNKNOWN_ORIGIN and are not hidden or relabelled.
 - No workflow file changed or manually rerun.
 
-# APPENDIX A — UI06 IMPLEMENTATION AUTHORITY
+# APPENDIX A — UI07 IMPLEMENTATION AUTHORITY
 
-Basis: UI05 technical head `1dd711245...`, main `a222e18...`, GE-008. Replacement agent starts READ_ONLY and must score >=92/100 with >=17/20 each. Continued same-agent execution may re-ground and proceed.
+Basis: UI06 technical head `cd8eb334...`, main `a222e18...`, GE-009. Replacement agent starts READ_ONLY and must score >=92/100 with >=17/20 each. Continued same-agent execution may re-ground and proceed.
 
-### A1 Current Error Check trace /20
-Inventory every visible Error Check surface for InputXML, ACCDB and StagedJSON-derived preparation. For each row/control, identify whether it comes from sealed `preFlight.preparation.findings`, raw source/model-health metrics, capability review, conversion diagnostics, or authorization/acceptance UI. Name all duplicate presentations of the same governed finding. A response that treats source-specific panels as separate engineering authorities fails.
+### A1 Results / code-check / qualification authority trace /20
+Inventory the visible Run, Output and Export surfaces and every code-check/application-qualification indicator. For each, identify the exact authoritative object it consumes: solve result, recovered element/node/reaction output, code-check input/result, benchmark/qualification receipt, export payload, or presentation-only status. Identify any current panel that mixes these domains or implies code compliance from a linear solve result. A response that treats all green statuses as equivalent engineering authority fails.
 
-### A2 Engineering-category IA /20
-Define one presentation taxonomy suitable for piping review, for example Geometry/Topology, Elements/Properties, Restraints/Supports, Loads/Pressure/Thermal, Representability/Approximations, and Readiness/Authorization. Map only from explicit existing finding/category metadata. Preserve the original governed category and finding ID. Unknown categories must remain visible (e.g. Other/Unclassified) rather than being guessed or dropped.
+### A2 Presentation hierarchy /20
+Define a presentation hierarchy that clearly separates: **Analysis execution**, **Analysis results**, **Code assessment**, and **Application/solver qualification evidence**. State what is allowed to appear when a code check was not performed, when a method is outside qualification scope, or when evidence is NOT_RUN/UNQUALIFIED. No UI label may upgrade NOT_RUN, applicability, or benchmark evidence into code compliance.
 
-### A3 Authority / disposition firewall /20
-Prove UI06 cannot derive BLOCK/CONDITIONAL from message text, severity or `capabilityEffects`; UI02 sealed disposition remains the only display-impact authority. UI06 must not manufacture authorization or duplicate source-specific acceptance semantics. Existing Error Check acceptance continues through the current governed source/pre-flight authority until a separately approved authority refactor.
+### A3 Result/authority firewall /20
+Prove UI07 cannot recompute stresses, reactions, code utilization or qualification status; cannot alter result frame/end conventions; cannot manufacture an application qualification; and cannot change export engineering values. Toolbar removal/reordering must affect presentation only. Existing sealed result/currentness and any code-check/qualification authorities remain the source of truth.
 
 ### A4 Independent validation /20
-Use a mixed fixture with PASS/ADVISORY/CONDITIONAL/BLOCK findings across several engineering categories and both InputXML/ACCDB source provenance. Prove source kind does not alter category/disposition impact, every finding ID survives exactly once in the common governed list, unknown category survives, and display-only category/filter selection does not mutate session/pre-flight state.
+Construct mixed fixtures for: successful analysis with no code check; successful analysis with an explicit code-check result; stale/invalidated analysis result; qualified versus unqualified application evidence. Prove each is labelled distinctly, no value changes when controls move, and display selection does not mutate result/session/pre-flight hashes. Include a negative case where a PASS analysis must not render as code-compliant.
 
 ### A5 Minimal patch /20
-Name exact UI06 files and common presentation/view contracts. Consolidate the visible governed Error Check by engineering category and suppress redundant source-specific governed-finding lists where safe. Preserve source-specific intake/conversion metrics when they are evidence rather than engineering disposition. UI07 code-check/results cleanup, source editing, solver/core changes, benchmark/tolerance changes, workflow edits or new authorization mechanics fail this stage.
+Name the exact UI07 presentation/controller/test files. Prefer dedicated projections over new `main.js` branches. The patch may declutter/reorder controls and separate result/code/qualification panels, but solver/recovery changes, code methodology/formula changes, benchmark/tolerance edits, export-value changes, source/pre-flight changes, workflow edits, or new qualification semantics fail this stage.
 
 # HISTORICAL RECORD — NOT CURRENT AUTHORITY
 
@@ -275,4 +276,6 @@ Name exact UI06 files and common presentation/view contracts. Consolidate the vi
 - UI03: explicit source acquisition and StagedJSON original→derived provenance.
 - UI04: first-class Model Review and source→canonical→analysis transformation ledger at `50934fed...`.
 - UI05: read-only piping centerline SVG and explicit Source/Analysis representation selector at `1dd711245...`.
+- UI06: common engineering-category Error Check at `cd8eb334...`.
 - Historical tooling incident: a connector mistake briefly created one-line `README.md` in `af4a051...`; immediate deletion in `4bc68b...` restored the exact prior tree. No README change exists in the effective PR diff.
+- UI06 tooling incident: one `update_file` attempt against the status record used a non-current SHA and was rejected by GitHub with HTTP 409 before any mutation. It did not alter the branch or file.

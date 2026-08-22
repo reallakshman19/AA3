@@ -6,7 +6,7 @@ scope: >-
   One-PR stacked LFEA UI00-UI08 implementation: exact authority custody,
   engineering-session ownership/invalidation, governed diagnostics, source
   provenance, Model Review, read-only source/analysis geometry, common Error
-  Check, and results/qualification cleanup.
+  Check, results/code-check separation, toolbar cleanup and qualification UI.
 claim_modes:
   - COORDINATED
 files:
@@ -41,12 +41,17 @@ authority_domains:
   - LFEA_TRANSFORMATION_EVIDENCE_PRESENTATION
   - LFEA_READONLY_GEOMETRY_PRESENTATION
   - LFEA_ERROR_CHECK_INFORMATION_ARCHITECTURE
+  - LFEA_RESULTS_PRESENTATION
+  - LFEA_CODE_CHECK_PRESENTATION
+  - LFEA_APPLICATION_QUALIFICATION_PRESENTATION
   - LFEA_DOWNSTREAM_INVALIDATION
 excluded_authority_domains:
   - FEA_SOLVER_FORMULATION
   - STIFFNESS_ASSEMBLY
   - LOAD_ASSEMBLY
   - ELEMENT_RECOVERY
+  - RESULT_VALUE_RECOMPUTATION
+  - RESULT_FRAME_END_CONVENTION
   - SOURCE_PARSING
   - TOPOLOGY_CONDITIONING_MECHANICS
   - RESTRAINT_CONDITIONING_MECHANICS
@@ -54,43 +59,45 @@ excluded_authority_domains:
   - MESHING_AUTHORITY
   - ENGINEERING_BENCHMARK_EXPECTED_VALUES
   - CODE_CHECK_METHODOLOGY
+  - CODE_FORMULA_AUTHORITY
   - GOVERNED_PREFLIGHT_DETECTION
   - GOVERNED_DIAGNOSTIC_DISPOSITION
   - GOVERNED_AUTHORIZATION_CREATION
+  - APPLICATION_QUALIFICATION_SEMANTICS
+  - ENGINEERING_EXPORT_VALUE_AUTHORITY
   - NATIVE_EXECUTION_CURRENTNESS_AUTHORITY
   - GITHUB_WORKFLOWS
 frozen_ui00_files:
   count: 11
   guard: scripts/lfea-ui-numerical-custody-check.mjs
   current_pr_overlap: 0
-ui05:
-  technical_head: 1dd711245a40fa96d9ba0dc384586285459522da
-  contract: lfea-geometry-review/v1
+ui06:
+  technical_head: cd8eb334b87664b9846b2e9c74dad7b07464ab7f
+  contract: lfea-error-check-presentation/v1
   rule: >-
-    SOURCE renders only preFlight.diagnostics.sourceBundle.geometry when that
-    object represents the active original provider; ANALYSIS renders only the
-    conditioned structural geometry. StagedJSON SOURCE is unavailable rather
-    than being silently replaced by derived InputXML geometry.
-  focused_local_execution: PASS
+    UI06 consumes UI02 sealed findings and groups only by explicit governed
+    category metadata. It preserves every finding ID/category/disposition,
+    routes unknown categories to Other/Unclassified, and owns no authorization.
+  focused_local_projection: PASS
   exact_byte_syntax: PASS
   pushed_blob_identity: PASS
   authority_diff: PASS
-  browser_full_repo: NOT_RUN
+  browser_full_repo_aggregate: NOT_RUN
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
     basis: design-only source-specific Error Check proposal remains superseded
   PR1323:
     classification: SAFE
-    basis: Load Calc/non-FEA/support-load paths do not overlap current LFEA presentation paths
+    basis: Load Calc/non-FEA/support-load paths do not overlap UI06 diagnostic presentation paths
   PR1305:
     classification: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
-    basis: historical main/results/shell-view/shell-css changes; UI05 avoids those paths
+    basis: historical main/results/shell-view/shell-css work; UI06 avoided those paths
   PR1118:
     classification: SAFE
-    basis: LAFEA continuum SVG/meshing paths use lafea-* files and do not overlap LFEA piping Model Review
-last_overlap_check: GE-008
-next_overlap_check_required: UI06_STAGE_ENTRY
-last_verified_head: 1dd711245a40fa96d9ba0dc384586285459522da
-current_stage: UI06_COMMON_ENGINEERING_ERROR_CHECK
+    basis: LAFEA continuum SVG/meshing paths use lafea-* files and do not overlap LFEA piping UI
+last_overlap_check: GE-009
+next_overlap_check_required: UI07_STAGE_ENTRY
+last_verified_head: cd8eb334b87664b9846b2e9c74dad7b07464ab7f
+current_stage: UI07_RESULTS_CODE_CHECK_TOOLBAR_QUALIFICATION_PRESENTATION
 last_updated: 2026-08-22

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createEvidenceValue } from '../src/workspace/project-data/project-data-contract.js';
 import {
   bindAuthorizedEmpiricalSourceAxis,
+  requireAuthorizedEmpiricalSourceBasis,
 } from '../src/workspace/engineering-loads/authorized-empirical-source-axis-binding.js';
 
 const distribution = {
@@ -17,37 +18,47 @@ const distribution = {
   }],
 };
 
-const zProfile = profile('Z', {
+const zProfile = profile('Z', 'mm', {
   source: 'SOURCE_METADATA',
   authority: 'SOURCE_EXPLICIT',
-  sourceHash: 'sha256:axis-z',
+  sourceHash: 'sha256:axis-z-mm',
 });
+const basis = requireAuthorizedEmpiricalSourceBasis(zProfile);
+assert.equal(basis.sourceUpAxis, 'Z');
+assert.equal(basis.lengthUnit, 'mm');
+assert.equal(basis.mechanicsScope, 'SOURCE_Z_UP_MM_SCALAR_VERTICAL_GRAVITY');
+
 const bound = bindAuthorizedEmpiricalSourceAxis({ distribution, profile: zProfile });
 assert.equal(bound.sourceAxisBasis, 'Z_UP');
 assert.equal(bound.loadCases[0].supportResults[0].sourceAxisBasis, 'Z_UP');
 assert.equal(bound.sourceAxisAuthority.sourceUpAxis, 'Z');
-assert.equal(bound.sourceAxisAuthority.mechanicsScope, 'SOURCE_Z_UP_SCALAR_VERTICAL_GRAVITY');
-assert.equal(bound.sourceAxisAuthority.evidence.authority, 'SOURCE_EXPLICIT');
+assert.equal(bound.sourceAxisAuthority.lengthUnit, 'mm');
+assert.equal(bound.sourceAxisAuthority.mechanicsScope, 'SOURCE_Z_UP_MM_SCALAR_VERTICAL_GRAVITY');
+assert.equal(bound.sourceAxisAuthority.sourceAxisEvidence.authority, 'SOURCE_EXPLICIT');
 assert.equal(distribution.sourceAxisBasis, 'Z_UP', 'source distribution was mutated');
 
 for (const axis of ['X', 'Y']) {
   expectCode(
-    () => bindAuthorizedEmpiricalSourceAxis({
-      distribution,
-      profile: profile(axis, {
-        source: 'SOURCE_METADATA',
-        authority: 'SOURCE_EXPLICIT',
-      }),
-    }),
+    () => requireAuthorizedEmpiricalSourceBasis(profile(axis, 'mm', {
+      source: 'SOURCE_METADATA',
+      authority: 'SOURCE_EXPLICIT',
+    })),
     'EMPIRICAL_SOURCE_AXIS_MECHANICS_UNSUPPORTED',
   );
 }
 expectCode(
-  () => bindAuthorizedEmpiricalSourceAxis({ distribution, profile: profile('Q', { source: 'bad' }) }),
+  () => requireAuthorizedEmpiricalSourceBasis(profile('Z', 'm', {
+    source: 'SOURCE_METADATA',
+    authority: 'SOURCE_EXPLICIT',
+  })),
+  'EMPIRICAL_SOURCE_LENGTH_UNIT_UNSUPPORTED',
+);
+expectCode(
+  () => requireAuthorizedEmpiricalSourceBasis(profile('Q', 'mm', { source: 'bad' })),
   'EMPIRICAL_SOURCE_AXIS_INVALID',
 );
 expectCode(
-  () => bindAuthorizedEmpiricalSourceAxis({ distribution, profile: profile('Z', null) }),
+  () => requireAuthorizedEmpiricalSourceBasis(profile('Z', 'mm', null)),
   'EMPIRICAL_SOURCE_AXIS_AUTHORITY_INVALID',
 );
 expectCode(
@@ -60,17 +71,18 @@ expectCode(
 
 console.log(JSON.stringify({
   status: 'PASS',
-  implementedMechanics: 'SOURCE_Z_UP_SCALAR_VERTICAL_GRAVITY',
-  sourceZUpBound: true,
+  implementedMechanics: 'SOURCE_Z_UP_MM_SCALAR_VERTICAL_GRAVITY',
+  sourceZUpMmBound: true,
   xUpRejectedAsUnimplementedMechanics: true,
   yUpRejectedAsUnimplementedMechanics: true,
+  metreSourceRejectedAsUnimplementedConversion: true,
   invalidAxisRejected: true,
   missingAuthorityRejected: true,
   mismatchedKernelBasisRejected: true,
   legacyKernelPayloadNotMutated: true,
 }, null, 2));
 
-function profile(axis, evidence) {
+function profile(axis, lengthUnit, evidence) {
   return {
     schema: 'project-data-profile/v1',
     projectId: 'PROJECT-AXIS-CHECK',
@@ -78,6 +90,7 @@ function profile(axis, evidence) {
     updatedAt: '2026-08-22T13:10:00.000Z',
     sourcesAndUnits: {
       sourceUpAxis: createEvidenceValue(axis, evidence, true),
+      lengthUnit: createEvidenceValue(lengthUnit, evidence, true),
     },
   };
 }

@@ -15,8 +15,10 @@ files:
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
     - scripts/support-load-static-accounting-check.mjs
     - scripts/support-load-partial-distribution-check.mjs
+    - scripts/support-load-route-equilibrium-check.mjs
     - scripts/empirical-authorized-blocked-cases-check.mjs
     - scripts/run-non-fea-checks.mjs
+    - src/workspace/load-calc-consumer-controller.js
     - src/workspace/load-calc-consumer-view.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v3.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v4.js
@@ -36,4 +38,4 @@ authority_domains:
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: cbf8150320ee907c0ecbba628df4e1c585c5b988
+last_verified_head: df23445c0231cb3fc9704fa4f9cb1de2d159f9c2

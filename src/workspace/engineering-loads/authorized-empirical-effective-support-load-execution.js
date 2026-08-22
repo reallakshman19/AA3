@@ -8,6 +8,9 @@ import {
   AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION_PROJECTION_SCHEMA,
 } from './authorized-empirical-effective-execution-projection.js';
 import {
+  bindAuthorizedEmpiricalSourceAxis,
+} from './authorized-empirical-source-axis-binding.js';
+import {
   EMPIRICAL_LOAD_COG_METHOD,
   EMPIRICAL_LOAD_METHOD,
   calculateSupportLoadDistribution,
@@ -35,6 +38,9 @@ const PROJECTED_LOAD_PATHS = Object.freeze([
  * projection binding before the kernel runs and forbids the legacy `DEFAULT`
  * selector entirely. Therefore the kernel may perform only exact lookups from
  * the effective projection; raw Project Data fallback authority is unreachable.
+ * The returned result is then rebound to the governed effective source up-axis
+ * so the active ledger path does not publish the legacy kernel's hard-coded
+ * Z-up metadata.
  *
  * Historical ledger-less callers intentionally do not use this function.
  */
@@ -69,7 +75,10 @@ export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
     );
   }
   assertNoLegacyFallbackConsumption(distribution);
-  return distribution;
+  return bindAuthorizedEmpiricalSourceAxis({
+    distribution,
+    profile: projection.profile,
+  });
 }
 
 /**

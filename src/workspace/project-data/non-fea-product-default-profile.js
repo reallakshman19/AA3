@@ -34,6 +34,11 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
       'Standard gravity used by the built-in Load Calc screening profile.'),
     productDefault('PD-LOAD-FACTOR', 'loadCalculation.loadFactor', 1, 'ratio',
       'Unfactored screening load default.'),
+    productDefault('PD-EQUILIBRIUM-TOLERANCES', 'loadCalculation.equilibriumTolerances', {
+      forceN: 1e-6,
+      momentNmm: 1e-3,
+    }, 'numerical-policy',
+    'Tight floating-point closure tolerances for force and first-moment accounting; not an engineering load allowable.'),
     productDefault('PD-ACTIVE-CASES', 'loadCalculation.activeLoadCases', ['EMPTY', 'OPE', 'HYD'], 'set',
       'Canonical built-in Load Calc case set.'),
     productDefault('PD-CORROSION-ALLOWANCE', 'thermoMechanicalBasis.corrosionAllowancesMm', { DEFAULT: 0 }, 'mm',

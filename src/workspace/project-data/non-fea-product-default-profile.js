@@ -10,7 +10,7 @@ export const NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA = 'non-fea-product-default-
 export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
   schema: NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA,
   profileId: 'LOAD_CALC_STANDARD_DEFAULTS_V1',
-  version: 3,
+  version: 4,
   defaults: [
     productDefault('PD-LENGTH-UNIT', 'sourcesAndUnits.lengthUnit', 'mm', 'unit',
       'Canonical Load Calc product length unit when project/source unit authority is absent.'),
@@ -49,6 +49,18 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
       defaultMode: 'COMPONENT_EXPLICIT_POINT_MASS',
     }, 'policy',
     'One explicit point-mass dry-metal primitive per non-pipe component. Derived geometric and equivalent-length modes require dedicated mechanics and are not silently substituted.'),
+    productDefault('PD-FORCE-OUTPUT-CONVENTION', 'loadCalculation.forceOutputConvention',
+      'POSITIVE_REACTION_OPPOSES_SOURCE_AXIS_GRAVITY', 'convention',
+      'Current scalar gravity convention: positive published support reaction opposes source-axis gravity.'),
+    productDefault('PD-MOMENT-OUTPUT-CONVENTION', 'loadCalculation.momentOutputConvention',
+      'SIGNED_ROUTE_CHAINAGE_FIRST_MOMENT_NMM', 'convention',
+      'Current route statics convention: signed first moments are reported in N·mm about each route chainage origin.'),
+    productDefault('PD-ANALYSIS-BASIS', 'loadCalculation.analysisBasis',
+      'ROUTE_CHAINAGE_1D_STATIC_GRAVITY', 'analysis-basis',
+      'Current empirical gravity mechanics use one-dimensional route-chainage statics.'),
+    productDefault('PD-RESULT-SIGN-CONVENTION', 'loadCalculation.resultSignConvention',
+      'SOURCE_Z_UP_POSITIVE_SUPPORT_REACTION', 'convention',
+      'Current result sign basis for the implemented source-Z-up scalar gravity method.'),
     productDefault('PD-FLUID-FILL-POLICY', 'thermoMechanicalBasis.fluidPhaseAndFillState', {
       schema: NON_FEA_FLUID_FILL_POLICY_SCHEMA,
       cases: {

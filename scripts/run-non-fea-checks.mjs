@@ -16,6 +16,7 @@ const checks = [
   ['Configured-default resolver convergence', 'scripts/non-fea-configured-default-resolution-check.mjs'],
   ['Configured-default Issue 1321 scope precedence', 'scripts/non-fea-configured-default-scope-priority-check.mjs'],
   ['Common-enriched configured-default pre-readiness overlay', 'scripts/non-fea-common-enriched-configured-default-overlay-check.mjs'],
+  ['Common-enriched Project/Product default precedence', 'scripts/non-fea-common-enriched-effective-default-composition-check.mjs'],
   ['Load-case authority convergence', 'scripts/non-fea-load-case-authority-check.mjs'],
   ['Mass-ledger authority convergence', 'scripts/non-fea-mass-ledger-convergence-check.mjs'],
   ['Common engineering foundation convergence', 'scripts/non-fea-engineering-foundation-check.mjs'],

@@ -1,0 +1,32 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP-LFEA-SESSION-20260822
+mission: >-
+  Stack the approved LFEA engineering-session and CAESAR-style UI architecture
+  in one long-lived PR while freezing numerical/pre-flight authority.
+workstream: LFEA_UI_ENGINEERING_SESSION
+branch: agent/lfea-engineering-session-ui-20260822
+pr_head: NOT_ALLOCATED
+main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/WIP-LFEA-SESSION-20260822_workreport.md
+report_head: a222e18c38bd20fb55c1c6c95f724f40e40e8532
+appendix_a_status: CURRENT
+grounding_epoch: GE-001
+current_stage: BOOTSTRAP_PR_ALLOCATION
+blocker: NONE
+highest_risk: >-
+  New presentation/session state must not become duplicate pre-flight,
+  solver, or authorization authority or retain stale downstream state.
+dependencies:
+  - relation: DESIGN_LINEAGE_SUPERSEDES_DIRECTION
+    item: PR1320
+    note: design-only; no production files claimed; source-specific Error Check IA rejected by current owner direction
+exact_next_action: >-
+  Open one draft PR from this branch to main, migrate WIP artifacts to the PR
+  number, then implement UI00 characterization before production ownership changes.
+last_updated: 2026-08-22T12:01:00+05:30

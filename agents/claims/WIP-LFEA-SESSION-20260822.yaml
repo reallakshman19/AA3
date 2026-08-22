@@ -1,0 +1,53 @@
+schema: AgentClaim.v1
+pr_or_wip: WIP-LFEA-SESSION-20260822
+claim_state: ACTIVE
+branch: agent/lfea-engineering-session-ui-20260822
+scope: >-
+  One-PR stacked implementation of LFEA UI00-UI08: numerical/state custody
+  characterization, explicit engineering-session ownership and invalidation,
+  diagnostic normalization, source provenance/Input IA, Model Review,
+  read-only SVG, engineering-category Error Check, and results/qualification cleanup.
+claim_modes:
+  - COORDINATED
+files:
+  exact:
+    - src/main.js
+    - src/workspace/lfea-pipeline-session.js
+    - src/workspace/lfea-pipeline-shell-controller.js
+    - src/workspace/lfea-pipeline-shell-view.js
+    - src/workspace/lfea-pipeline-shell.css
+    - src/workspace/linear-piping-inputxml-source-workflow.js
+    - src/workspace/linear-piping-inputxml-diagnostics-view.js
+    - src/workspace/lfea-pipeline-accdb-input-panel.js
+    - src/workspace/lfea-pipeline-accdb-view-model.js
+    - src/workspace/lfea-pipeline-stagedjson-input-panel.js
+    - e2e/lfea-unified-pipeline-shell.spec.js
+  prefixes:
+    - src/workspace/lfea-session/
+    - src/workspace/lfea-diagnostics/
+    - scripts/lfea-ui-
+    - e2e/lfea-pipeline-
+authority_domains:
+  - LFEA_PRESENTATION_STATE
+  - LFEA_SOURCE_IDENTITY_ROUTING
+  - LFEA_DIAGNOSTIC_PRESENTATION
+  - LFEA_DOWNSTREAM_INVALIDATION
+excluded_authority_domains:
+  - FEA_SOLVER_FORMULATION
+  - STIFFNESS_ASSEMBLY
+  - LOAD_ASSEMBLY
+  - ELEMENT_RECOVERY
+  - ENGINEERING_BENCHMARK_EXPECTED_VALUES
+  - CODE_CHECK_METHODOLOGY
+  - GOVERNED_PREFLIGHT_DETECTION
+  - GOVERNED_AUTHORIZATION_CREATION
+  - GITHUB_WORKFLOWS
+overlap:
+  PR1320:
+    classification: SAFE_WITH_DESIGN_LINEAGE
+    basis: >-
+      PR1320 claims documentation/agent artifacts only and explicitly claims no
+      production files. Current owner direction supersedes its source-specific
+      Error Check IA. No code is inherited from PR1320.
+last_verified_head: a222e18c38bd20fb55c1c6c95f724f40e40e8532
+last_updated: 2026-08-22T12:01:00+05:30

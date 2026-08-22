@@ -8,6 +8,30 @@ import {
 } from '../src/workspace/lfea-diagnostics/lfea-source-diagnostic-adapters.js';
 import { renderLfeaDiagnosticPresentation } from '../src/workspace/lfea-diagnostics/lfea-diagnostic-presentation-view.js';
 
+class FakeDocument {
+  createElement(tagName) {
+    return new FakeElement(tagName);
+  }
+}
+
+class FakeElement {
+  constructor(tagName) {
+    this.tagName = tagName;
+    this.children = [];
+    this.dataset = {};
+    this.textContent = '';
+    this.scope = '';
+    this.parentNode = null;
+  }
+
+  append(...children) {
+    for (const child of children) {
+      child.parentNode = this;
+      this.children.push(child);
+    }
+  }
+}
+
 const preFlight = fixture();
 const inputXml = buildInputXmlDiagnosticPresentation(preFlight, {
   sourceIdentityKey: 'SOURCE-A',
@@ -172,28 +196,4 @@ function collect(node, predicate, result = []) {
   if (predicate(node)) result.push(node);
   for (const child of node.children ?? []) collect(child, predicate, result);
   return result;
-}
-
-class FakeDocument {
-  createElement(tagName) {
-    return new FakeElement(tagName);
-  }
-}
-
-class FakeElement {
-  constructor(tagName) {
-    this.tagName = tagName;
-    this.children = [];
-    this.dataset = {};
-    this.textContent = '';
-    this.scope = '';
-    this.parentNode = null;
-  }
-
-  append(...children) {
-    for (const child of children) {
-      child.parentNode = this;
-      this.children.push(child);
-    }
-  }
 }

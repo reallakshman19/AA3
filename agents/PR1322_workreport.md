@@ -288,10 +288,14 @@ Investigating the above surfaced two further, genuine issues in files this PR's 
 ### 12.5 Remaining validation suite
 
 - `npm run check:imports` — **PASS**.
-- `npm run lint`, scoped to this PR's 34 changed `.js`/`.mjs` files — **PASS**, zero errors or warnings.
+- `npm run lint`, scoped to this PR's 38 changed `.js`/`.mjs` files — **PASS**, zero errors or warnings.
 - `npm run build` — `vite build` itself **PASS** (1,902 modules, ~15s); the subsequent `bundle-chunk-check.mjs` **FAILS** because `main-*.js` exceeds its 1,179,648-byte budget. Confirmed via a direct build of base commit `a222e18c38bd20fb55c1c6c95f724f40e40e8532` in an isolated worktree that this is **pre-existing on `main`**: main's own bundle is already 1,529,892 bytes against the same limit; this PR's head is 1,550,351 bytes — an increase of ~20KB (~1.3%) on top of an already-over-budget baseline, not the creation of the ~370KB gap itself. Not a regression this PR introduced; not fixed here (would require either a threshold change or a cross-cutting chunking refactor, both owner-level decisions unrelated to LFEA UI).
 
-### 12.6 What ACCDB still needs
+### 12.6 CI on this PR's actual head
+
+Four checks run on this PR's head, all `FAIL`, all completing in ~3-5 seconds each: the three pre-existing EMP.1 checks already documented above as `FAIL_UNKNOWN_ORIGIN`, plus a fourth, "LAFEA visible workbench qualification" (`.github/workflows/lafea-visible-workbench.yml`), triggered only because its path filter (`scripts/lafea-*.mjs`) happens to also match `scripts/lafea-stage17-browser-run.mjs`, a file this PR's dangling commit touched — the workflow's own steps check an entirely different, unrelated subsystem (`src/workspace/lafea-engineering-overview.js`, `lafea-workbench-content.js`, etc., none of which this PR touches). Checked this workflow's run history directly: it has failed with the same ~3-4 second runtime on every recent run across dozens of completely unrelated commits and branches, including commits entirely about EMP.1 empirical formulas on a different branch (`agent/issue-1324-emp1-authority-currentness`). This is a pre-existing, repo-wide CI/infrastructure failure unrelated to any specific code content, not signal about this PR; not fixed here (would be an org/CI-infrastructure change, outside LFEA UI scope).
+
+### 12.7 What ACCDB still needs
 
 `e2e/lfea-pipeline-accdb-real-model.spec.js` and the now-fixture-gated `e2e/lfea-pipeline-accdb-input.spec.js` both skip without `LFEA_ACCDB_FIXTURE` pointing at a real CAESAR II `.accdb` binary. No such binary is committed to this repo, by a prior, explicit, documented project decision (fabricating a synthetic one "good enough for mdb-reader to parse" was already judged out of proportion). This is the one remaining piece of UI08's originally-stated three-source gate; it is a pre-existing scope boundary, not a new gap introduced or left unaddressed in this session.
 

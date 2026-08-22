@@ -6,20 +6,20 @@ mission: >-
   in one long-lived PR while preserving exact numerical/pre-flight authority.
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
-report_basis_head: 340b6b072a85ea69d1658419091a4b8bbfaac1fc
-pr_head_last_observed: 340b6b072a85ea69d1658419091a4b8bbfaac1fc
+report_basis_head: d9cce5168a0898b635b5f7507b01759349c8e06f
+pr_head_last_observed: d9cce5168a0898b635b5f7507b01759349c8e06f
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-work_intent: IMPLEMENT
+work_intent: QUALIFY
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY
-handover_readiness: READY
+pr_recovery_state: BLOCKED_ON_QUALIFICATION
+handover_readiness: READY_WITH_BLOCKER
 report_path: agents/PR1322_workreport.md
-appendix_a_status: CURRENT_FOR_UI08
-grounding_epoch: GE-010
-current_stage: UI08_BROWSER_ACCESSIBILITY_STALE_STATE_5K_PERFORMANCE_QUALIFICATION
+appendix_a_status: CURRENT_FOR_UI08_BROWSER_RETRY
+grounding_epoch: GE-011
+current_stage: UI08_BROWSER_QUALIFICATION_BLOCKED
 last_completed_stage: UI07_RESULTS_CODE_APPLICATION_QUALIFICATION_PRESENTATION
-blocker: NONE
+blocker: PRODUCTION_CHROMIUM_EXECUTION_UNAVAILABLE
 coordination: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
 validation:
   ui00_source_diff: PASS
@@ -50,14 +50,24 @@ validation:
   ui07_pushed_blob_identity: PASS
   ui07_authority_diff: PASS
   ui07_browser_full_repo_aggregate: NOT_RUN
+  ui08_source_scale_a11y: PASS
+  ui08_5000_row_projection: PASS
+  ui08_stale_state_source_focused: PASS
+  ui08_exact_byte_syntax: PASS
+  ui08_pushed_blob_identity: PASS
+  ui08_authority_diff: PASS
+  ui08_production_chromium: NOT_RUN
+  ui08_browser_keyboard: NOT_RUN
+  ui08_actual_5000_browser_render: NOT_RUN
+  ui08_full_repo_aggregate: NOT_RUN
   unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
 highest_risk: >-
-  UI08 must expose and close browser-only stale-state, accessibility and
-  production-scale rendering faults without truncating evidence or broadening
-  numerical/code/qualification authority.
+  UI08 cannot be released or marked COMPLETE without an actual production
+  Chromium run against this exact stacked head, including stale-state,
+  accessibility and 5k interaction evidence.
 exact_next_action: >-
-  Run production-browser InputXML/ACCDB/StagedJSON workflows, stale-state
-  falsifiers, keyboard/a11y checks and a deterministic ~5k-element rendering
-  qualification; then execute the strongest exact-head repository checks and
-  issue a final release recommendation without merging.
+  Materialize the exact PR head in a Chromium-capable repository checkout,
+  run InputXML/ACCDB/StagedJSON six-step workflows, stale-state and keyboard
+  falsifiers plus the 5k browser render, then execute the strongest repository
+  checks and record final release evidence. Do not merge before owner approval.
 last_updated: 2026-08-22

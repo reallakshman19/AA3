@@ -47,8 +47,9 @@ authority_domains:
   - LFEA_CODE_CHECK_PRESENTATION
   - LFEA_APPLICATION_QUALIFICATION_PRESENTATION
   - LFEA_RESULTS_AUTHORITY_PRESENTATION
+  - LFEA_ACCESSIBILITY_PRESENTATION
+  - LFEA_LARGE_MODEL_PRESENTATION
   - LFEA_DOWNSTREAM_INVALIDATION
-  - LFEA_BROWSER_QUALIFICATION_PRESENTATION_ONLY
 excluded_authority_domains:
   - FEA_SOLVER_FORMULATION
   - STIFFNESS_ASSEMBLY
@@ -76,37 +77,50 @@ frozen_ui00_files:
   count: 11
   guard: scripts/lfea-ui-numerical-custody-check.mjs
   current_pr_overlap: 0
-ui07:
-  technical_head: 340b6b072a85ea69d1658419091a4b8bbfaac1fc
-  contract: lfea-results-authority-presentation/v1
-  rule: >-
-    Native linear execution, optional sealed code assessment, and application
-    qualification/export evidence are separate presentation authorities. A
-    successful solve cannot imply code compliance; absent/stale code evidence
-    remains NOT_PERFORMED/NOT_CURRENT.
-  focused_local_execution: PASS
+ui08:
+  technical_head: d9cce5168a0898b635b5f7507b01759349c8e06f
+  state: PARTIAL_BLOCKED_ON_BROWSER_QUALIFICATION
+  effective_paths: 6
+  row_window:
+    page_size: 250
+    scale_fixture_rows: 5000
+    pages: 20
+    all_rows_reachable: true
+  geometry_density:
+    segment_label_limit: 500
+    all_spans_and_nodes_retained: true
+  accessibility:
+    tab_keyboard: ARROW_LEFT_RIGHT_HOME_END
+    roving_tabindex: true
+    tabpanel_relationships: true
+    geometry_aria_pressed: true
+  stale_state_source_focused: PASS
+  focused_scale_a11y: PASS
   exact_byte_syntax: PASS
   pushed_blob_identity: PASS
   authority_diff: PASS
-  browser_full_repo_aggregate: NOT_RUN
+  production_chromium: NOT_RUN
+  browser_keyboard: NOT_RUN
+  actual_5000_browser_render: NOT_RUN
+  full_repo_aggregate: NOT_RUN
+  blocker: PRODUCTION_CHROMIUM_EXECUTION_UNAVAILABLE
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
     basis: design-only source-specific Error Check proposal remains superseded
   PR1323:
     classification: SAFE
-    basis: Load Calc/non-FEA/support-load paths do not overlap UI07 result-authority paths
+    basis: Load Calc/non-FEA/support-load paths do not overlap UI08 presentation paths
   PR1305:
     classification: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
     basis: >-
-      historical main/results-panel/shell-view/shell-css/E2E changes independently
-      identify shared RESULTS-host presentation defects; UI07 avoids all five
-      paths and uses a new read-only observer/projection instead
+      historical main/results-panel/shell-view/shell-css/E2E browser work shows
+      browser-only risk; UI08 changes none of those five paths
   PR1118:
     classification: SAFE
-    basis: LAFEA continuum SVG/meshing paths do not overlap LFEA piping UI
-last_overlap_check: GE-010
-next_overlap_check_required: UI08_STAGE_ENTRY
-last_verified_head: 340b6b072a85ea69d1658419091a4b8bbfaac1fc
-current_stage: UI08_BROWSER_ACCESSIBILITY_STALE_STATE_5K_PERFORMANCE_QUALIFICATION
+    basis: LAFEA continuum SVG/meshing paths do not overlap LFEA piping UI08
+last_overlap_check: GE-011
+next_overlap_check_required: UI08_BROWSER_RETRY
+last_verified_head: d9cce5168a0898b635b5f7507b01759349c8e06f
+current_stage: UI08_BROWSER_QUALIFICATION_BLOCKED
 last_updated: 2026-08-22

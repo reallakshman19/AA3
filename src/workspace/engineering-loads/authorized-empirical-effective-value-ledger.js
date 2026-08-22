@@ -40,8 +40,8 @@ const MASTER_SOURCE_KINDS = new Set([
  * MODEL is explicit source authority. The common-enriched baseline does not
  * encode source-inheritance semantics, so this adapter never fabricates
  * SOURCE_INHERITED; inherited candidates remain the responsibility of the
- * existing CORE field-resolution adapter. Approved Project Data configured
- * defaults retain their own source kind and map to PROJECT_CONFIGURED_DEFAULT.
+ * existing CORE field-resolution adapter. Project and product defaults retain
+ * their own source kinds and semantic-hash evidence.
  */
 export function createAuthorizedEmpiricalEffectiveValueLedger(handoffValue) {
   const handoff = requireCommonEnrichedConsumerHandoff(handoffValue);
@@ -84,31 +84,7 @@ export function createAuthorizedEmpiricalEffectiveValueLedger(handoffValue) {
         unit,
         authority,
         sourceId,
-        evidence: {
-          source: 'Authorized common-enriched properties baseline',
-          baselineId: baseline.baselineId,
-          baselineRevision: baseline.revision,
-          baselineSemanticHash: baseline.semanticHash,
-          publicationDecisionSemanticHash: semanticHash(baseline.publicationDecision),
-          sourceRecordId: target.sourceRecordId,
-          lineKey: target.lineKey,
-          sourceKind: field.sourceKind,
-          sourceKey: field.sourceKey,
-          sourceHash: field.sourceHash,
-          locator: field.locator,
-          matchMethod: field.matchMethod,
-          fieldStatus: field.status,
-          policyId: field.policyId,
-          policyHash: field.policyHash,
-          reviewEventId: field.reviewEventId,
-          scope: {
-            targetKind: target.targetKind,
-            targetId: target.targetId,
-            lineKey: target.lineKey,
-          },
-          basis: field.policyId || field.matchMethod,
-          version: baseline.revision,
-        },
+        evidence: effectiveCandidateEvidence({ baseline, target, field }),
       }));
     }
   }
@@ -170,11 +146,55 @@ export function authorityFromCommonEnrichedSourceKind(sourceKind) {
   return authorityFromSourceKind(sourceKind);
 }
 
+function effectiveCandidateEvidence({ baseline, target, field }) {
+  const evidence = {
+    source: 'Authorized common-enriched properties baseline',
+    baselineId: baseline.baselineId,
+    baselineRevision: baseline.revision,
+    baselineSemanticHash: baseline.semanticHash,
+    publicationDecisionSemanticHash: semanticHash(baseline.publicationDecision),
+    sourceRecordId: target.sourceRecordId,
+    lineKey: target.lineKey,
+    sourceKind: field.sourceKind,
+    sourceKey: field.sourceKey,
+    sourceHash: field.sourceHash,
+    locator: field.locator,
+    matchMethod: field.matchMethod,
+    fieldStatus: field.status,
+    policyId: field.policyId,
+    policyHash: field.policyHash,
+    reviewEventId: field.reviewEventId,
+    scope: {
+      targetKind: target.targetKind,
+      targetId: target.targetId,
+      lineKey: target.lineKey,
+    },
+    basis: field.policyId || field.matchMethod,
+    version: baseline.revision,
+  };
+  if (field.sourceKind === 'PRODUCT_DEFAULT') {
+    if (!field.policyId || !field.sourceHash || !field.policyHash) {
+      throw codedError(
+        `Published product default ${target.targetId}:${field.field} lacks product-default hash custody.`,
+        'EMPIRICAL_EFFECTIVE_PRODUCT_DEFAULT_EVIDENCE_INVALID',
+      );
+    }
+    return {
+      ...evidence,
+      defaultId: field.policyId,
+      defaultSemanticHash: field.sourceHash,
+      productDefaultProfileSemanticHash: field.policyHash,
+    };
+  }
+  return evidence;
+}
+
 function authorityFromSourceKind(sourceKind) {
   if (sourceKind === 'MODEL') return 'SOURCE_EXPLICIT';
   if (MASTER_SOURCE_KINDS.has(sourceKind)) return 'EXACT_APPROVED_MASTER';
   if (sourceKind === 'DERIVATION_POLICY') return 'CONFIGURED_DERIVATION';
   if (sourceKind === 'PROJECT_CONFIGURED_DEFAULT') return 'PROJECT_CONFIGURED_DEFAULT';
+  if (sourceKind === 'PRODUCT_DEFAULT') return 'PRODUCT_DEFAULT';
   if (sourceKind === 'MANUAL_REVIEW') return 'ACCEPTED_OVERRIDE';
   throw codedError(
     `Common-enriched source kind ${sourceKind || '<empty>'} has no effective-value authority mapping.`,

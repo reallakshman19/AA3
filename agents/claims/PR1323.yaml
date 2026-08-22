@@ -13,6 +13,8 @@ files:
     - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
     - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
     - src/workspace/project-data/non-fea-effective-value-resolver.js
+    - src/workspace/project-data/non-fea-fluid-fill-policy.js
+    - src/workspace/project-data/non-fea-component-mass-policy.js
     - src/workspace/routes/route-partition-model.js
     - src/workspace/support-sites/support-site-model.js
     - src/workspace/engineering-model-store.js
@@ -40,6 +42,9 @@ files:
     - src/workspace/load-calc-consumer-view.js
     - src/workspace/load-calc-result-presentation.js
     - scripts/non-fea-product-default-profile-check.mjs
+    - scripts/non-fea-fluid-fill-policy-check.mjs
+    - scripts/authorized-empirical-fluid-mass-composition-check.mjs
+    - scripts/authorized-empirical-component-mass-composition-check.mjs
     - scripts/non-fea-gravity-product-default-bootstrap-check.mjs
     - scripts/non-fea-product-engineering-default-profile-check.mjs
     - scripts/non-fea-effective-value-resolver-check.mjs
@@ -80,6 +85,8 @@ authority_domains:
   - LOAD_CALC_LEDGER_AWARE_READINESS
   - LOAD_CALC_LEDGER_BOUND_KERNEL_VALIDATION
   - LOAD_CALC_PRE_READINESS_DEFAULT_AUTHORING
+  - LOAD_CALC_FLUID_FILL_MASS_COMPOSITION
+  - LOAD_CALC_COMPONENT_DRY_MASS_COMPOSITION
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION
   - AUTHORIZED_EMPIRICAL_EFFECTIVE_SUPPORT_GUARD
   - AUTHORIZED_EMPIRICAL_SOURCE_BASIS_Z_UP_MM
@@ -89,4 +96,4 @@ authority_domains:
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: bef97d453d0044918bdb0bf5008bc0fa053dd199
+last_verified_head: 63af300790d45539e5386971f7d9385740a0b855

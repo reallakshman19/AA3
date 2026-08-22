@@ -13,7 +13,13 @@ import { requireAuthorizedEmpiricalLoadInput } from './authorized-empirical-load
 import {
   createAuthorizedEmpiricalEffectiveExecutionProjection,
 } from './authorized-empirical-effective-execution-projection.js';
-import { calculateSupportLoadDistribution } from './support-load-distribution-v3.js';
+import {
+  calculateAuthorizedEmpiricalEffectiveSupportLoads,
+} from './authorized-empirical-effective-support-load-execution.js';
+import {
+  EMPIRICAL_LOAD_METHOD,
+  calculateSupportLoadDistribution,
+} from './support-load-distribution-v3.js';
 
 export const AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_REQUEST_SCHEMA = 'authorized-empirical-load-execution-request/v1';
 export const AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_SCHEMA = 'authorized-empirical-load-execution/v1';
@@ -123,13 +129,21 @@ export function calculateAuthorizedEmpiricalLoadExecution(value) {
     fail('The ephemeral Project Data profile is not calculation-ready.', 'EMPIRICAL_EXECUTION_PROFILE_BLOCKED', { errors });
   }
 
-  const distribution = calculateSupportLoadDistribution({
-    dataset,
-    profile,
-    supportSiteModel: value.supportSiteModel,
-    routePartitionModel: value.routePartitionModel,
-    masterData: value.masterData,
-  });
+  const distribution = effectiveExecutionProjection
+    ? calculateAuthorizedEmpiricalEffectiveSupportLoads({
+      effectiveExecutionProjection,
+      method: EMPIRICAL_LOAD_METHOD,
+      supportSiteModel: value.supportSiteModel,
+      routePartitionModel: value.routePartitionModel,
+      masterData: value.masterData,
+    })
+    : calculateSupportLoadDistribution({
+      dataset,
+      profile,
+      supportSiteModel: value.supportSiteModel,
+      routePartitionModel: value.routePartitionModel,
+      masterData: value.masterData,
+    });
   const summary = summarize(distribution);
   const draft = {
     schema: AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_SCHEMA,

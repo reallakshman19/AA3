@@ -88,6 +88,13 @@ assert.deepEqual(resolveSupportCapability({ DEFAULT: { vertical: false } }, 'X')
   vertical: false,
   rule: { vertical: false },
 });
+assert.deepEqual(resolveSupportCapability({ DEFAULT: { vertical: true } }, ''), {
+  selector: null,
+  resolutionAuthority: 'UNRESOLVED_NON_BEARING',
+  fallbackUsed: false,
+  vertical: false,
+  rule: null,
+}, 'missing support identity must not consume DEFAULT because the kernel has no exact selector to expand');
 
 const distribution = {
   schema: 'support-load-distribution/v3',
@@ -119,6 +126,7 @@ console.log(JSON.stringify({
   projectDefaultUnknownVertical: unknownProject.vertical,
   exactRestShadowsDefault: restProject.vertical === false,
   unresolvedWithoutDefaultIsNonBearing: unresolved.vertical === false,
+  missingSupportIdentityDoesNotConsumeDefault: true,
   resultReceiptBound: true,
 }, null, 2));
 

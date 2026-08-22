@@ -16,6 +16,7 @@ const checks = [
   ['Authorized source-axis binding', 'scripts/authorized-empirical-source-axis-binding-check.mjs'],
   ['Product-default authorization staleness', 'scripts/authorized-empirical-default-staleness-check.mjs'],
   ['Authorized empirical generation boundary', 'scripts/authorized-empirical-generation-boundary-check.mjs'],
+  ['Ledger-aware pre-execution readiness', 'scripts/authorized-empirical-ledger-readiness-check.mjs'],
   ['V2/V3 effective-value execution cutover', 'scripts/authorized-empirical-v2-effective-execution-check.mjs'],
   ['Authorized profile product-default convergence', 'scripts/authorized-empirical-product-default-convergence-check.mjs'],
   ['Configured-default resolver convergence', 'scripts/non-fea-configured-default-resolution-check.mjs'],

@@ -40,7 +40,8 @@ const MASTER_SOURCE_KINDS = new Set([
  * MODEL is explicit source authority. The common-enriched baseline does not
  * encode source-inheritance semantics, so this adapter never fabricates
  * SOURCE_INHERITED; inherited candidates remain the responsibility of the
- * existing CORE field-resolution adapter.
+ * existing CORE field-resolution adapter. Approved Project Data configured
+ * defaults retain their own source kind and map to PROJECT_CONFIGURED_DEFAULT.
  */
 export function createAuthorizedEmpiricalEffectiveValueLedger(handoffValue) {
   const handoff = requireCommonEnrichedConsumerHandoff(handoffValue);
@@ -173,6 +174,7 @@ function authorityFromSourceKind(sourceKind) {
   if (sourceKind === 'MODEL') return 'SOURCE_EXPLICIT';
   if (MASTER_SOURCE_KINDS.has(sourceKind)) return 'EXACT_APPROVED_MASTER';
   if (sourceKind === 'DERIVATION_POLICY') return 'CONFIGURED_DERIVATION';
+  if (sourceKind === 'PROJECT_CONFIGURED_DEFAULT') return 'PROJECT_CONFIGURED_DEFAULT';
   if (sourceKind === 'MANUAL_REVIEW') return 'ACCEPTED_OVERRIDE';
   throw codedError(
     `Common-enriched source kind ${sourceKind || '<empty>'} has no effective-value authority mapping.`,

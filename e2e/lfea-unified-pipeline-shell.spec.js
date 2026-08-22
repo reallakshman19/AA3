@@ -29,16 +29,31 @@ test('F LFEA tab presents one unified pipeline shell with a working 6-step stepp
   await expect(sourceHost.locator('[data-role="lfea-pipeline-stagedjson-input-panel"]')).toBeHidden();
   await expect(sourceHost.locator('[data-role="lfea-pipeline-accdb-input-panel"]')).toBeHidden();
 
+  // Load Case and Run are gated behind a loaded, authorized model -- load one
+  // through the real UI before exercising the stepper's host visibility.
+  await page.locator('input[type="file"][accept*="xml"]').first()
+    .setInputFiles('benchmarks/LFEA/BM4/InputXML_BM4.repaired.xml');
+  await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="INPUT"]'))
+    .toHaveAttribute('data-step-status', 'COMPLETE', { timeout: 60000 });
+  await page.locator('[data-role="linear-piping-inputxml-reviewer"]').fill('A. Engineer');
+  await page.locator('[data-role="linear-piping-inputxml-review-reason"]')
+    .fill('Declared approximations reviewed and accepted.');
+  await page.locator('[data-action="authorize-linear-piping-inputxml-prefea"]').click();
+  await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]'))
+    .toHaveAttribute('data-step-status', 'COMPLETE', { timeout: 60000 });
+
   await page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]').click();
   await expect(sourceHost).toBeHidden();
   await expect(loadCaseHost).toBeVisible();
   await expect(resultsHost).toBeHidden();
-  await expect(loadCaseHost.getByText('Load case')).toBeVisible();
+  await expect(loadCaseHost.getByRole('heading', { name: 'Load cases' })).toBeVisible();
 
   await page.locator('[data-role="lfea-pipeline-step"][data-step-id="RUN"]').click();
   await expect(loadCaseHost).toBeHidden();
   await expect(resultsHost).toBeVisible();
-  await expect(resultsHost.getByText('LINEAR PIPING FEA RESULTS')).toBeVisible();
+  // Run's own sub-step shows the analysis execution view; the "Linear Piping
+  // FEA Results" table title is Output-specific and only renders there.
+  await expect(resultsHost.locator('[data-role="lfea-results-authority-execution-view"]')).toBeVisible();
 
   await page.locator('[data-role="lfea-pipeline-step"][data-step-id="INPUT"]').click();
   await expect(sourceHost).toBeVisible();

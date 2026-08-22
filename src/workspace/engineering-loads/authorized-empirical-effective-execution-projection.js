@@ -6,6 +6,9 @@ import {
   resolveNonFeaFluidFillPolicy,
 } from '../project-data/non-fea-fluid-fill-policy.js';
 import {
+  createNonFeaProductDefaultProvider,
+} from '../project-data/non-fea-product-default-profile.js';
+import {
   findAuthorizedEmpiricalEffectiveValue,
   requireAuthorizedEmpiricalEffectiveValueLedger,
 } from './authorized-empirical-effective-value-ledger.js';
@@ -33,10 +36,13 @@ const FLUID_COMPOSITION_RULE = 'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FIL
  * ledger. The projected density consumed by the scalar gravity kernel is an
  * explicitly derived bulk density, rho_bulk = rho_raw * fillFraction, with a
  * separate receipt binding the raw-density row and the governed fill policy.
- * This makes partial-fill mass auditable without masquerading the derived value
- * as source/master density.
+ * Full-fill projections retain the historical numeric density shape; genuine
+ * partial fill uses a `{ selected, rawDensityKgPerM3, fillFraction, ... }`
+ * record which the legacy density reader consumes through `.selected`.
  *
- * The supplied dataset/profile are cloned; source objects are never mutated.
+ * Product defaults are composed again at this boundary so direct/focused
+ * callers cannot accidentally bypass the governed fill/source-basis defaults.
+ * The supplied dataset/profile are never mutated.
  */
 export function createAuthorizedEmpiricalEffectiveExecutionProjection({
   authorizedInput,
@@ -63,6 +69,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
       'EMPIRICAL_EFFECTIVE_EXECUTION_LEDGER_BINDING_MISMATCH',
     );
   }
+  const effectiveProfile = createNonFeaProductDefaultProvider({ profile }).effectiveProfile;
 
   const sections = {};
   const materials = {};
@@ -74,7 +81,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
   const componentMappings = [];
   const fluidCompositionRows = [];
   const projectedDataset = clonePlain(dataset);
-  const projectedProfile = clonePlain(profile);
+  const projectedProfile = clonePlain(effectiveProfile);
 
   for (const binding of authorizedInput.lineBindings || []) {
     const values = Object.fromEntries(LINE_FIELDS.map(([fieldId, unit]) => [
@@ -88,12 +95,12 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
     validateSection(values.PIPE_OUTER_DIAMETER.value, values.PIPE_WALL_THICKNESS.value, binding.targetId);
 
     const operatingFill = resolveNonFeaFluidFillPolicy({
-      profile,
+      profile: effectiveProfile,
       loadCaseId: 'OPE',
       lineKey: binding.lineKey,
     });
     const hydroFill = resolveNonFeaFluidFillPolicy({
-      profile,
+      profile: effectiveProfile,
       loadCaseId: 'HYD',
       lineKey: binding.lineKey,
     });
@@ -182,6 +189,8 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({
     authorizedInputSemanticHash: authorizedInput.semanticHash,
     effectiveValueLedgerSemanticHash: ledger.semanticHash,
     sourceDatasetSemanticHash: semanticHash(dataset),
+    sourceProjectDataSemanticHash: semanticHash(profile),
+    effectiveProjectDataSemanticHash: semanticHash(effectiveProfile),
     lineMappings: lineMappings.sort(byTarget),
     componentMappings: componentMappings.sort(byTarget),
     fluidCompositionRule: FLUID_COMPOSITION_RULE,
@@ -265,8 +274,9 @@ function composeFluidDensity(binding, loadCaseId, rawDensityRow, fillPolicy) {
     ...receiptMaterial,
     semanticHash: semanticHash(receiptMaterial),
   });
-  return freezeDeep({
-    projectedDensity: {
+  const projectedDensity = fillPolicy.fillFraction === 1
+    ? bulkDensityKgPerM3
+    : {
       selected: bulkDensityKgPerM3,
       rawDensityKgPerM3,
       fillFraction: fillPolicy.fillFraction,
@@ -275,9 +285,8 @@ function composeFluidDensity(binding, loadCaseId, rawDensityRow, fillPolicy) {
       rawDensitySemanticHash: rawDensityRow.semanticHash,
       fillPolicySemanticHash: fillPolicy.semanticHash,
       compositionSemanticHash: receipt.semanticHash,
-    },
-    receipt,
-  });
+    };
+  return freezeDeep({ projectedDensity, receipt });
 }
 
 function fluidEvidenceBySelector(rows, loadCaseId) {

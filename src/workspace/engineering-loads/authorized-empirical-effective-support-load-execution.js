@@ -9,6 +9,7 @@ import {
 } from './authorized-empirical-effective-execution-projection.js';
 import {
   bindAuthorizedEmpiricalSourceAxis,
+  requireAuthorizedEmpiricalSourceBasis,
 } from './authorized-empirical-source-axis-binding.js';
 import {
   EMPIRICAL_LOAD_COG_METHOD,
@@ -38,9 +39,10 @@ const PROJECTED_LOAD_PATHS = Object.freeze([
  * projection binding before the kernel runs and forbids the legacy `DEFAULT`
  * selector entirely. Therefore the kernel may perform only exact lookups from
  * the effective projection; raw Project Data fallback authority is unreachable.
- * The returned result is then rebound to the governed effective source up-axis
- * so the active ledger path does not publish the legacy kernel's hard-coded
- * Z-up metadata.
+ *
+ * The implemented engineering source basis (Z-up, mm) is also validated before
+ * statics execute. The available coordinate transform is rendering-only, so an
+ * unsupported axis/unit cannot be repaired by relabelling result metadata.
  *
  * Historical ledger-less callers intentionally do not use this function.
  */
@@ -54,6 +56,7 @@ export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
   const projection = requireAuthorizedEmpiricalEffectiveSupportProjection(
     effectiveExecutionProjection,
   );
+  requireAuthorizedEmpiricalSourceBasis(projection.profile);
   const requestedMethod = requireMethod(method);
 
   const calculationInput = {
@@ -91,6 +94,7 @@ export function requireAuthorizedEmpiricalEffectiveSupportProjection(value) {
   const projection = requireEffectiveExecutionProjection(value);
   assertProjectedLoadEvidence(projection);
   assertNoLegacyDefaultSelectors(projection.profile);
+  requireAuthorizedEmpiricalSourceBasis(projection.profile);
   return projection;
 }
 

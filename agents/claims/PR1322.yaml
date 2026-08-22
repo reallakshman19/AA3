@@ -1,5 +1,5 @@
 schema: AgentClaim.v1
-pr_or_wip: WIP-LFEA-SESSION-20260822
+pr_or_wip: PR1322
 claim_state: ACTIVE
 branch: agent/lfea-engineering-session-ui-20260822
 scope: >-
@@ -46,8 +46,8 @@ overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
     basis: >-
-      PR1320 claims documentation/agent artifacts only and explicitly claims no
+      PR1320 claims documentation/agent artifacts only and explicitly no
       production files. Current owner direction supersedes its source-specific
-      Error Check IA. No code is inherited from PR1320.
-last_verified_head: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-last_updated: 2026-08-22T12:01:00+05:30
+      Error Check IA; no production code is inherited.
+last_verified_head: 12ed508b31a78ef0056b7d5826b3081fe9051b9f
+last_updated: 2026-08-22T12:05:00+05:30

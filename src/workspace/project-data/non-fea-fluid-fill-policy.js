@@ -14,11 +14,14 @@ const PHASES = new Set(['EMPTY', 'LIQUID', 'GAS', 'MIXED', 'UNSPECIFIED']);
  *
  *   line + case > case > policy default
  *
- * Legacy `{ DEFAULT: 'LIQUID_FULL' }` Project Data remains accepted so the
- * existing 1885S profile can migrate without changing full-bore OPE/HYD mass.
- * Canonical EMPTY is always zero-content in this gravity method. OPE/HYD zero
- * fill is intentionally fail-closed for now because the legacy statics kernel
- * rejects zero effective density; no epsilon-density approximation is allowed.
+ * Generic/default rules apply only to OPE/HYD. Canonical EMPTY remains dry
+ * unless an explicit EMPTY rule is supplied, and any explicit non-zero EMPTY
+ * rule fails closed. This preserves legacy `{ DEFAULT: 'LIQUID_FULL' }` policy
+ * without turning the EMPTY case into a fluid-filled case.
+ *
+ * OPE/HYD zero fill is intentionally fail-closed for now because the legacy
+ * statics kernel rejects zero effective density; no epsilon-density
+ * approximation is allowed.
  */
 export function resolveNonFeaFluidFillPolicy({ profile, loadCaseId, lineKey } = {}) {
   const caseId = stringValue(loadCaseId).toUpperCase();
@@ -133,8 +136,12 @@ function validatePolicyStructure(value) {
 }
 
 function selectPolicy(value, caseId, lineKey) {
-  if (isSelectionValue(value)) return { selector: 'DIRECT', value, authority: 'DIRECT_POLICY' };
-  if (!isRecord(value)) return null;
+  if (isSelectionValue(value)) {
+    return caseId === 'EMPTY'
+      ? canonicalEmptySelection()
+      : { selector: 'DIRECT', value, authority: 'DIRECT_POLICY' };
+  }
+  if (!isRecord(value)) return caseId === 'EMPTY' ? canonicalEmptySelection() : null;
 
   const lineRules = isRecord(value.lines?.[lineKey])
     ? value.lines[lineKey]
@@ -148,6 +155,7 @@ function selectPolicy(value, caseId, lineKey) {
   if (Object.hasOwn(value, caseId)) {
     return { selector: `CASE:${caseId}`, value: value[caseId], authority: 'CASE' };
   }
+  if (caseId === 'EMPTY') return canonicalEmptySelection();
   if (Object.hasOwn(value, 'default')) {
     return { selector: 'DEFAULT', value: value.default, authority: 'DEFAULT' };
   }
@@ -155,6 +163,14 @@ function selectPolicy(value, caseId, lineKey) {
     return { selector: 'DEFAULT', value: value.DEFAULT, authority: 'DEFAULT' };
   }
   return null;
+}
+
+function canonicalEmptySelection() {
+  return {
+    selector: 'CANONICAL:EMPTY',
+    value: 'EMPTY',
+    authority: 'CANONICAL_CASE_POLICY',
+  };
 }
 
 function normalizeSelection(value, caseId) {

@@ -39,6 +39,8 @@ assert.equal(routeAuthority.productionUseAuthorized, false,
 assert.ok(routeAuthority.reasons.includes(
   'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE',
 ));
+assert.equal(routeAuthority.routeAuthorityHash, routeAuthority.snapshot.semanticHash,
+  'live authority must expose the same canonical hash retained by its snapshot');
 
 const execution = await executeEmp1WorkbenchProduct({
   aDocument,
@@ -57,8 +59,16 @@ assert.equal(execution.authority.boundedLocalRoutePrepared, true);
 assert.equal(execution.authority.boundedLocalRouteExecuted, false);
 assert.equal(execution.authority.codeComplianceProduced, false);
 assert.equal(execution.authority.releaseQualified, false);
+assert.equal(execution.authority.routeAuthorityHash, routeAuthority.routeAuthorityHash,
+  'transaction must retain the exact live route-authority hash');
+assert.equal(execution.authority.routeAuthorityHash,
+  execution.authority.routeAuthoritySnapshot.semanticHash,
+  'explicit transaction hash and retained authority snapshot must agree');
 assert.equal(execution.result.localCorrelation.state, 'BLOCKED');
 assert.equal(execution.result.localCorrelation.stresses, undefined);
+assert.equal(execution.result.localCorrelation.routeAuthorityHash,
+  execution.authority.routeAuthorityHash,
+  'suspended C evidence must retain the exact governing authority hash');
 assert.ok(execution.result.localCorrelation.reasons.includes(
   'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE',
 ));
@@ -95,6 +105,8 @@ assert.equal(cState.currentResultAvailable, false);
 assert.equal(cState.reportableResult, null);
 assert.equal(cState.retainedResultAvailable, false,
   'prepared custody is not a retained numerical C result');
+assert.equal(cState.executionAuthorityHash, execution.authority.routeAuthorityHash);
+assert.equal(cState.currentAuthorityHash, routeAuthority.routeAuthorityHash);
 assert.ok(cState.blockerCodes.includes(
   'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE',
 ));
@@ -107,7 +119,7 @@ console.log(JSON.stringify({
   cState: cState.state,
   cProductionCount: execution.invocations.localCorrelation,
   cReportable: cState.currentResultAvailable,
-  routeAuthorityHash: routeAuthority.snapshot.semanticHash,
+  routeAuthorityHash: execution.authority.routeAuthorityHash,
 }, null, 2));
 
 function assertSourceOnlyCInput(runInput) {
@@ -154,6 +166,7 @@ function assertSourceOnlyCInput(runInput) {
     'codeCompliance',
     'releaseQualified',
     'productionUseAuthorized',
+    'routeAuthorityHash',
   ]) {
     assert.equal(serialized.includes(`\"${forbidden}\"`), false,
       `sample C input injected derived/result authority: ${forbidden}`);

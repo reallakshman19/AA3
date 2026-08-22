@@ -1,5 +1,6 @@
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { clonePlain, freezeDeep, isRecord, stringValue } from '../dataset-utils.js';
+import { NON_FEA_FLUID_FILL_POLICY_SCHEMA } from './non-fea-fluid-fill-policy.js';
 
 export const NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA = 'non-fea-product-default-profile/v1';
 export const NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA = 'non-fea-product-default-provider/v1';
@@ -7,7 +8,7 @@ export const NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA = 'non-fea-product-default-
 export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
   schema: NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA,
   profileId: 'LOAD_CALC_STANDARD_DEFAULTS_V1',
-  version: 1,
+  version: 2,
   defaults: [
     productDefault('PD-LENGTH-UNIT', 'sourcesAndUnits.lengthUnit', 'mm', 'unit',
       'Canonical Load Calc product length unit when project/source unit authority is absent.'),
@@ -41,6 +42,15 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
     'Tight floating-point closure tolerances for force and first-moment accounting; not an engineering load allowable.'),
     productDefault('PD-ACTIVE-CASES', 'loadCalculation.activeLoadCases', ['EMPTY', 'OPE', 'HYD'], 'set',
       'Canonical built-in Load Calc case set.'),
+    productDefault('PD-FLUID-FILL-POLICY', 'thermoMechanicalBasis.fluidPhaseAndFillState', {
+      schema: NON_FEA_FLUID_FILL_POLICY_SCHEMA,
+      cases: {
+        EMPTY: { state: 'EMPTY', fillFraction: 0, phase: 'EMPTY' },
+        OPE: { state: 'FULL', fillFraction: 1, phase: 'UNSPECIFIED' },
+        HYD: { state: 'LIQUID_FULL', fillFraction: 1, phase: 'LIQUID' },
+      },
+    }, 'policy',
+    'Canonical screening content policy: EMPTY is dry, OPE is full-bore using the resolved operating density, and HYD is liquid-full using the resolved hydro density. Any project/source policy shadows this Product default.'),
     productDefault('PD-CORROSION-ALLOWANCE', 'thermoMechanicalBasis.corrosionAllowancesMm', { DEFAULT: 0 }, 'mm',
       'Zero corrosion allowance only when no project/source corrosion authority exists.'),
     productDefault('PD-ELASTIC-THERMAL', 'thermoMechanicalBasis.materialElasticProperties', {

@@ -17,28 +17,31 @@ const distribution = {
   }],
 };
 
-const xProfile = profile('X', {
+const zProfile = profile('Z', {
   source: 'SOURCE_METADATA',
   authority: 'SOURCE_EXPLICIT',
-  sourceHash: 'sha256:axis-x',
+  sourceHash: 'sha256:axis-z',
 });
-const xBound = bindAuthorizedEmpiricalSourceAxis({ distribution, profile: xProfile });
-assert.equal(xBound.sourceAxisBasis, 'X_UP');
-assert.equal(xBound.loadCases[0].supportResults[0].sourceAxisBasis, 'X_UP');
-assert.equal(xBound.sourceAxisAuthority.sourceUpAxis, 'X');
-assert.equal(xBound.sourceAxisAuthority.evidence.authority, 'SOURCE_EXPLICIT');
-assert.equal(distribution.sourceAxisBasis, 'Z_UP', 'Source distribution was mutated.');
+const bound = bindAuthorizedEmpiricalSourceAxis({ distribution, profile: zProfile });
+assert.equal(bound.sourceAxisBasis, 'Z_UP');
+assert.equal(bound.loadCases[0].supportResults[0].sourceAxisBasis, 'Z_UP');
+assert.equal(bound.sourceAxisAuthority.sourceUpAxis, 'Z');
+assert.equal(bound.sourceAxisAuthority.mechanicsScope, 'SOURCE_Z_UP_SCALAR_VERTICAL_GRAVITY');
+assert.equal(bound.sourceAxisAuthority.evidence.authority, 'SOURCE_EXPLICIT');
+assert.equal(distribution.sourceAxisBasis, 'Z_UP', 'source distribution was mutated');
 
-const yProfile = profile('Y', {
-  source: 'Load Calc built-in product default',
-  authority: 'PRODUCT_DEFAULT',
-  defaultId: 'PD-SOURCE-UP-AXIS',
-  defaultSemanticHash: 'fnv1a64:1111111111111111',
-});
-const yBound = bindAuthorizedEmpiricalSourceAxis({ distribution, profile: yProfile });
-assert.equal(yBound.sourceAxisBasis, 'Y_UP');
-assert.equal(yBound.sourceAxisAuthority.evidence.authority, 'PRODUCT_DEFAULT');
-
+for (const axis of ['X', 'Y']) {
+  expectCode(
+    () => bindAuthorizedEmpiricalSourceAxis({
+      distribution,
+      profile: profile(axis, {
+        source: 'SOURCE_METADATA',
+        authority: 'SOURCE_EXPLICIT',
+      }),
+    }),
+    'EMPIRICAL_SOURCE_AXIS_MECHANICS_UNSUPPORTED',
+  );
+}
 expectCode(
   () => bindAuthorizedEmpiricalSourceAxis({ distribution, profile: profile('Q', { source: 'bad' }) }),
   'EMPIRICAL_SOURCE_AXIS_INVALID',
@@ -47,13 +50,23 @@ expectCode(
   () => bindAuthorizedEmpiricalSourceAxis({ distribution, profile: profile('Z', null) }),
   'EMPIRICAL_SOURCE_AXIS_AUTHORITY_INVALID',
 );
+expectCode(
+  () => bindAuthorizedEmpiricalSourceAxis({
+    distribution: { ...structuredClone(distribution), sourceAxisBasis: 'Y_UP' },
+    profile: zProfile,
+  }),
+  'EMPIRICAL_SOURCE_AXIS_KERNEL_BASIS_MISMATCH',
+);
 
 console.log(JSON.stringify({
   status: 'PASS',
-  sourceExplicitAxisRebound: 'X_UP',
-  productDefaultAxisRebound: 'Y_UP',
+  implementedMechanics: 'SOURCE_Z_UP_SCALAR_VERTICAL_GRAVITY',
+  sourceZUpBound: true,
+  xUpRejectedAsUnimplementedMechanics: true,
+  yUpRejectedAsUnimplementedMechanics: true,
   invalidAxisRejected: true,
   missingAuthorityRejected: true,
+  mismatchedKernelBasisRejected: true,
   legacyKernelPayloadNotMutated: true,
 }, null, 2));
 

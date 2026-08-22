@@ -6,6 +6,7 @@ const checks = [
   ['Canvas2D render-model v3 bootstrap regression', 'scripts/non-fea-canvas-v3-bootstrap-check.mjs'],
   ['Project Data authority contract', 'scripts/non-fea-project-data-authority-check.mjs'],
   ['Product-default authority and hash binding', 'scripts/non-fea-product-default-profile-check.mjs'],
+  ['Conservative Product-default gravity bootstrap', 'scripts/non-fea-gravity-product-default-bootstrap-check.mjs'],
   ['Product engineering-default profile and scope', 'scripts/non-fea-product-engineering-default-profile-check.mjs'],
   ['Effective-value authority resolver', 'scripts/non-fea-effective-value-resolver-check.mjs'],
   ['Authorized baseline effective-value ledger', 'scripts/authorized-empirical-effective-value-ledger-check.mjs'],

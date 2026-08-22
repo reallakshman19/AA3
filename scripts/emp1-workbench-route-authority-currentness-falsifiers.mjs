@@ -4,6 +4,7 @@ import { semanticHash } from '../src/core/shared-primitives/canonical-json.js';
 import {
   EMP1_WORKBENCH_EXECUTION_CURRENTNESS,
   EMP1_WORKBENCH_PRODUCT_EXECUTION_SCHEMA,
+  EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED,
   emp1WorkbenchInputHashes,
   classifyEmp1WorkbenchExecutionCurrentness,
   projectEmp1WorkbenchCState,
@@ -22,6 +23,8 @@ const q2Suspended = authority('Q2', false, 'qualification-q2', 'dataset-q2', [
   'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE',
 ]);
 const retainedQ1 = retainedNumericalExecution(q1.snapshot, aDocument, bDocument, runInput);
+assert.equal(retainedQ1.authority.routeAuthorityHash, q1.snapshot.semanticHash,
+  'retained numerical C must carry the exact execution route-authority hash');
 
 const currentQ1 = classifyEmp1WorkbenchExecutionCurrentness({
   execution: retainedQ1,
@@ -43,6 +46,8 @@ const q1View = projectEmp1WorkbenchCState({
 assert.equal(q1View.state, 'CALCULATED_CURRENT');
 assert.equal(q1View.currentResultAvailable, true);
 assert.equal(q1View.reportableResult.stresses.Au, 72.67281563686576);
+assert.equal(q1View.executionAuthorityHash, q1.snapshot.semanticHash);
+assert.equal(q1View.currentAuthorityHash, q1.snapshot.semanticHash);
 
 // Mandatory negative control: Q2 is still authorized. The old Q1 result must
 // become stale/hidden while the C action remains enabled for a Q2 rerun.
@@ -57,7 +62,7 @@ assert.equal(changedToQ2.state, EMP1_WORKBENCH_EXECUTION_CURRENTNESS.STALE);
 assert.equal(changedToQ2.inputCurrent, true, 'unchanged A/B/input must remain current');
 assert.equal(changedToQ2.cAuthorityCurrent, false);
 assert.equal(changedToQ2.cReportable, false);
-assert.ok(changedToQ2.reasons.includes('EMP1_WORKBENCH_C_ROUTE_AUTHORITY_CHANGED'));
+assert.ok(changedToQ2.reasons.includes(EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED));
 const q2View = projectEmp1WorkbenchCState({
   readiness,
   execution: retainedQ1,
@@ -73,6 +78,8 @@ assert.equal(q2View.reportableResult, null,
   'Q1 stresses must not remain in the current result projection');
 assert.equal(q2View.currentExecutionEvidence.stresses.Au, 72.67281563686576,
   'historical evidence must remain retained even when not reportable');
+assert.equal(q2View.executionAuthorityHash, q1.snapshot.semanticHash);
+assert.equal(q2View.currentAuthorityHash, q2.snapshot.semanticHash);
 
 // Persist/reload falsifier: a serialized Q1 execution loaded after Q2 becomes
 // current must be stale on its first classification. There is no in-memory
@@ -88,7 +95,7 @@ const reloadedChangedToQ2 = classifyEmp1WorkbenchExecutionCurrentness({
 assert.equal(reloadedChangedToQ2.state, EMP1_WORKBENCH_EXECUTION_CURRENTNESS.STALE);
 assert.equal(reloadedChangedToQ2.inputCurrent, true);
 assert.equal(reloadedChangedToQ2.cReportable, false);
-assert.ok(reloadedChangedToQ2.reasons.includes('EMP1_WORKBENCH_C_ROUTE_AUTHORITY_CHANGED'));
+assert.ok(reloadedChangedToQ2.reasons.includes(EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED));
 const reloadedQ2View = projectEmp1WorkbenchCState({
   readiness,
   execution: reloadedQ1,
@@ -99,6 +106,8 @@ assert.equal(reloadedQ2View.state, 'STALE_AUTHORITY');
 assert.equal(reloadedQ2View.currentResultAvailable, false);
 assert.equal(reloadedQ2View.reportableResult, null);
 assert.equal(reloadedQ2View.currentExecutionEvidence.stresses.Au, 72.67281563686576);
+assert.equal(reloadedQ2View.executionAuthorityHash, q1.snapshot.semanticHash);
+assert.equal(reloadedQ2View.currentAuthorityHash, q2.snapshot.semanticHash);
 
 // A fresh numerical execution carrying Q2 authority becomes current again.
 const retainedQ2 = retainedNumericalExecution(q2.snapshot, aDocument, bDocument, runInput);
@@ -117,6 +126,7 @@ const currentQ2View = projectEmp1WorkbenchCState({
 });
 assert.equal(currentQ2View.state, 'CALCULATED_CURRENT');
 assert.equal(currentQ2View.currentResultAvailable, true);
+assert.equal(retainedQ2.authority.routeAuthorityHash, q2.snapshot.semanticHash);
 
 // Suspending the same Q2 authority hides the numerical result and disables
 // production C, while leaving A/B/input current and the historical payload intact.
@@ -155,6 +165,7 @@ assert.equal(unchanged.cReportable, true);
 // A legacy numerical C result with no retained authority snapshot is fail-closed.
 const legacy = structuredClone(retainedQ2);
 delete legacy.authority.routeAuthoritySnapshot;
+delete legacy.authority.routeAuthorityHash;
 const legacyState = classifyEmp1WorkbenchExecutionCurrentness({
   execution: legacy,
   aDocument,
@@ -188,10 +199,12 @@ assert.equal(projectEmp1WorkbenchCState({
 }).state, 'STALE_INPUT');
 
 console.log(JSON.stringify({
-  schema: 'emp1-workbench-route-authority-currentness-falsifiers/v2',
+  schema: 'emp1-workbench-route-authority-currentness-falsifiers/v3',
   status: 'PASS',
+  governedRouteAuthorityChangedBlocker: EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED,
   q1AuthorityHash: q1.snapshot.semanticHash,
   q2AuthorityHash: q2.snapshot.semanticHash,
+  retainedQ1RouteAuthorityHash: retainedQ1.authority.routeAuthorityHash,
   q1ToQ2OldResultReportable: q2View.currentResultAvailable,
   q1ToQ2RerunEnabled: q2View.buttonEnabled,
   persistedQ1ReloadedUnderQ2Reportable: reloadedQ2View.currentResultAvailable,
@@ -225,16 +238,18 @@ function authority(qualificationId, productionUseAuthorized, qualificationSha256
       remainingBlocked: [],
     },
   };
+  const snapshot = {
+    ...semanticPayload,
+    semanticHash: semanticHash(semanticPayload),
+  };
   return {
     productionUseAuthorized,
     routeModuleAuthorized: productionUseAuthorized,
     routeRegistryRegistered: productionUseAuthorized,
     routeRegistryEngineeringUseAuthorized: productionUseAuthorized,
     reasons: suspensionReasons,
-    snapshot: {
-      ...semanticPayload,
-      semanticHash: semanticHash(semanticPayload),
-    },
+    routeAuthorityHash: snapshot.semanticHash,
+    snapshot,
   };
 }
 
@@ -246,6 +261,7 @@ function retainedNumericalExecution(routeAuthoritySnapshot, aDocument, bDocument
     inputHashes: emp1WorkbenchInputHashes({ aDocument, bDocument, runInput }),
     authority: {
       boundedLocalRouteExecuted: true,
+      routeAuthorityHash: routeAuthoritySnapshot.semanticHash,
       routeAuthoritySnapshot,
       globalEmp1CRouteAuthority: false,
       codeComplianceProduced: false,

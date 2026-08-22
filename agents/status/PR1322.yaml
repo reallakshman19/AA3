@@ -6,8 +6,8 @@ mission: >-
   in one long-lived PR while preserving exact numerical/pre-flight authority.
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
-report_basis_head: cd8eb334b87664b9846b2e9c74dad7b07464ab7f
-pr_head_last_observed: cd8eb334b87664b9846b2e9c74dad7b07464ab7f
+report_basis_head: 340b6b072a85ea69d1658419091a4b8bbfaac1fc
+pr_head_last_observed: 340b6b072a85ea69d1658419091a4b8bbfaac1fc
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -15,10 +15,10 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1322_workreport.md
-appendix_a_status: CURRENT_FOR_UI07
-grounding_epoch: GE-009
-current_stage: UI07_RESULTS_CODE_CHECK_TOOLBAR_QUALIFICATION_PRESENTATION
-last_completed_stage: UI06_COMMON_ENGINEERING_ERROR_CHECK
+appendix_a_status: CURRENT_FOR_UI08
+grounding_epoch: GE-010
+current_stage: UI08_BROWSER_ACCESSIBILITY_STALE_STATE_5K_PERFORMANCE_QUALIFICATION
+last_completed_stage: UI07_RESULTS_CODE_APPLICATION_QUALIFICATION_PRESENTATION
 blocker: NONE
 coordination: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
 validation:
@@ -45,13 +45,19 @@ validation:
   ui06_pushed_blob_identity: PASS
   ui06_authority_diff: PASS
   ui06_browser_full_repo_aggregate: NOT_RUN
+  ui07_focused_local_execution: PASS
+  ui07_exact_byte_syntax: PASS
+  ui07_pushed_blob_identity: PASS
+  ui07_authority_diff: PASS
+  ui07_browser_full_repo_aggregate: NOT_RUN
   unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
 highest_risk: >-
-  UI07 must separate analysis results, code assessment and application
-  qualification without changing result values, code methodology, qualification
-  semantics or making a successful solve appear code-compliant.
+  UI08 must expose and close browser-only stale-state, accessibility and
+  production-scale rendering faults without truncating evidence or broadening
+  numerical/code/qualification authority.
 exact_next_action: >-
-  Re-ground Run/Output/Export/results/code-check/qualification presentation,
-  trace each visible status/value to its authoritative record, and implement
-  a presentation-only hierarchy plus toolbar declutter with focused falsifiers.
+  Run production-browser InputXML/ACCDB/StagedJSON workflows, stale-state
+  falsifiers, keyboard/a11y checks and a deterministic ~5k-element rendering
+  qualification; then execute the strongest exact-head repository checks and
+  issue a final release recommendation without merging.
 last_updated: 2026-08-22

@@ -127,6 +127,12 @@ Workflow family observed on this head:
 - `LAFEA visible workbench qualification` run `32578260153`;
 - `EMP.1 current-main independent baseline` run `32578260169`.
 
+### Alternate execution environment attempt
+- An isolated local runtime was tested as a non-GitHub-Actions fallback using `git ls-remote` against this repository/branch.
+- The runtime failed before checkout with `Could not resolve host: github.com`.
+- No repository file, Node qualification, browser test, or engineering calculation executed in that runtime.
+- Classify this path `NOT_RUN_EXECUTION_ENVIRONMENT_NETWORK_UNAVAILABLE`; it is not independent PASS/FAIL evidence.
+
 ### Validation classification
 - Source/diff audit against issue #1324 acceptance: `COMPLETE`.
 - Single-source C renderer/reportability static audit: `COMPLETE`.
@@ -138,6 +144,7 @@ Workflow family observed on this head:
 - Browser/Playwright EMP.1 qualification execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
 - Existing focused EMP.1 orchestration workflow execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
 - Independent gamma5 exact-head oracle execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Alternate local checkout/execution: `NOT_RUN_EXECUTION_ENVIRONMENT_NETWORK_UNAVAILABLE`.
 - Full repository regression: `NOT_RUN`.
 - Live deployed-browser click-through: `NOT_RUN`.
 
@@ -159,8 +166,8 @@ No unexecuted check is represented as PASS.
 13. `src/workspace/lafea-workbench-view.js` — current route evaluation, A/B input-current presentation, sample action, separate state-driven production C control.
 
 ## Open blockers / risks
-- `VAL-1324-01`: authored Node qualification and adversarial falsifiers have not executed in the available environment.
-- `VAL-1324-02`: authored browser qualification has not executed because the exact-head runner never started a job step.
+- `VAL-1324-01`: authored Node qualification and adversarial falsifiers have not executed in an available environment.
+- `VAL-1324-02`: authored browser qualification has not executed because hosted exact-head jobs never started a step and fallback runtime cannot fetch the repository.
 - `VAL-1324-03`: independent exact-head gamma5 requalification remains `NOT_RUN_EXECUTION_ENVIRONMENT`; production-route suspension must remain in force.
 - `RISK-1324-01`: do not interpret source-authority closure, authored tests, or historical ~72.67 MPa comparison evidence as production authorization.
 - `RISK-1324-02`: unsupported method scope remains fail-closed: nonzero differential pressure, general Kn/Kb, gamma outside bounded scope, beta outside qualified range, off-axis/global maxima, nozzle/attachment stress claims, WRC 297/nozzle-neck routes, rectangular/lug approximations, and code/release authority.

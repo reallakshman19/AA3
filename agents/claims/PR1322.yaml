@@ -118,9 +118,11 @@ ui08:
     checker_blob_identity: PASS
     authorization_semantics_changed: false
     engineering_values_changed: false
-  production_six_step_browser: NOT_RUN
-  official_full_repo_aggregate: NOT_RUN
-  blocker: PRODUCTION_APP_CHECKOUT_OR_PREVIEW_UNAVAILABLE
+  production_six_step_browser_inputxml: PASS
+  production_browser_stagedjson_handoff: PASS
+  production_browser_accdb: NOT_RUN_NO_REAL_FIXTURE_COMMITTED
+  official_lfea_workbench_aggregate: PASS
+  blocker: NONE_REMAINING_EXCEPT_ACCDB_REAL_FIXTURE_AVAILABILITY
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
@@ -139,8 +141,8 @@ overlap:
   PR1118:
     classification: SAFE
     basis: LAFEA continuum SVG/meshing paths do not overlap LFEA piping UI08
-last_overlap_check: GE-013
-next_overlap_check_required: UI08_PRODUCTION_APP_BROWSER_RETRY
-last_verified_head: 3e88ff396e44517f4bd7434ad333748bc5aa46d9
-current_stage: UI08_PRODUCTION_APP_BROWSER_QUALIFICATION_BLOCKED
+last_overlap_check: GE-014
+next_overlap_check_required: NONE_PENDING
+last_verified_head: 71118c52dd82558ac406f82b4c05302cc791a8a1
+current_stage: UI08_PRODUCTION_APP_BROWSER_QUALIFICATION_SUBSTANTIALLY_COMPLETE
 last_updated: 2026-08-22

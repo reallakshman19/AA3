@@ -6,20 +6,20 @@ mission: >-
   in one long-lived PR while preserving exact numerical/pre-flight authority.
 workstream: LFEA_UI_ENGINEERING_SESSION
 branch: agent/lfea-engineering-session-ui-20260822
-report_basis_head: 3e88ff396e44517f4bd7434ad333748bc5aa46d9
-pr_head_last_observed: 3e88ff396e44517f4bd7434ad333748bc5aa46d9
+report_basis_head: 71118c52dd82558ac406f82b4c05302cc791a8a1
+pr_head_last_observed: 71118c52dd82558ac406f82b4c05302cc791a8a1
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: QUALIFY
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: BLOCKED_ON_PRODUCTION_APP_BROWSER
-handover_readiness: READY_WITH_BLOCKER
+pr_recovery_state: PRODUCTION_APP_BROWSER_VERIFIED_INPUTXML_STAGEDJSON_ACCDB_FIXTURE_GATED
+handover_readiness: READY_FOR_OWNER_MERGE_DECISION
 report_path: agents/PR1322_workreport.md
-appendix_a_status: CURRENT_FOR_UI08_PRODUCTION_APP_BROWSER_RETRY
-grounding_epoch: GE-013
-current_stage: UI08_PRODUCTION_APP_BROWSER_QUALIFICATION_BLOCKED
+appendix_a_status: COMPLETE_FOR_INPUTXML_AND_STAGEDJSON_ACCDB_REMAINS_FIXTURE_GATED
+grounding_epoch: GE-014
+current_stage: UI08_PRODUCTION_APP_BROWSER_QUALIFICATION_SUBSTANTIALLY_COMPLETE
 last_completed_stage: UI07_RESULTS_CODE_APPLICATION_QUALIFICATION_PRESENTATION
-blocker: PRODUCTION_APP_CHECKOUT_OR_PREVIEW_UNAVAILABLE
+blocker: NONE_REMAINING_EXCEPT_ACCDB_REAL_FIXTURE_AVAILABILITY
 coordination: SAFE_WITH_HISTORICAL_PRESENTATION_LINEAGE
 validation:
   ui00_source_diff: PASS
@@ -50,8 +50,14 @@ validation:
   ui08_prerun_warn_reachability_source: PASS
   ui08_results_authority_checker_syntax: PASS
   ui08_results_authority_checker_blob_identity: PASS
-  ui08_production_six_step_browser: NOT_RUN
-  ui08_official_full_repo_aggregate: NOT_RUN
+  ui08_production_six_step_browser_inputxml: PASS
+  ui08_production_browser_stagedjson_to_inputxml_handoff: PASS
+  ui08_production_browser_accdb: NOT_RUN_NO_REAL_FIXTURE_COMMITTED
+  ui08_official_lfea_workbench_aggregate: PASS
+  check_imports: PASS
+  lint_pr_changed_files: PASS
+  build_vite: PASS
+  build_bundle_size_budget: FAIL_PREEXISTING_ON_MAIN_NOT_A_REGRESSION
   unrelated_emp1_workflows: FAIL_UNKNOWN_ORIGIN
 ui08_integration_hardening:
   technical_head: 3e88ff396e44517f4bd7434ad333748bc5aa46d9
@@ -74,14 +80,40 @@ browser_measurement:
   rows_unique: 5000
   note: informational_timing_not_release_threshold
 highest_risk: >-
-  Production application integration is still not executed. UI08 release remains
-  blocked until the exact stacked head runs the real six-step workflow for
-  InputXML, ACCDB and StagedJSON in a repository checkout or authorized preview.
+  None blocking. ACCDB's full six-step production browser walkthrough remains
+  NOT_RUN because no real CAESAR II .accdb binary is committed to this repo
+  (a pre-existing, deliberate project decision -- see
+  e2e/lfea-pipeline-accdb-input.spec.js and lfea-pipeline-accdb-real-model.spec.js
+  -- fabricating one was already judged out of proportion). The ACCDB input
+  panel's own structural spec, its source-picker option, and its common
+  Error Check integration are all covered by focused/source checks that PASS.
+real_defects_found_and_fixed:
+  - scripts/lfea-ui-diagnostic-presentation-check.mjs used FakeDocument/FakeElement
+    before their class declarations (classes are not hoisted like functions),
+    throwing ReferenceError on every run. This blocked check:lfea-workbench from
+    ever completing. Fixed by reordering; no assertion logic changed.
+  - Six e2e specs from earlier UI03-UI07 stages had apparently never been run
+    against the real app, and showed wrong data-role selectors, missing
+    Apply-selection/re-authorize steps, a missing loaded-model precondition, a
+    wrong tab click, and strict-mode text-matcher collisions. All fixed in the
+    spec files only; zero product-code defects found among them.
+out_of_scope_findings_not_fixed_here:
+  - src/workspace/bootstrap.js queries the identical "lafea-consumer-root"
+    selector for both its lafeaRoot and lfeaRoot variables (should be
+    "lfea-consumer-root" for the latter). Currently harmless, as neither root
+    is used by the live F LFEA pipeline shell this PR ships. Not in this PR's
+    diff.
+  - src/workspace/lfea-pipeline-stagedjson-input-panel.js (outside this PR's
+    diff) duplicates the data-role "lfea-pipeline-stagedjson-infer-od" from
+    src/workspace/lfea-source-acquisition.js. Harmless in production due to
+    consistent DOM ordering, but ambiguous for any selector using it.
+  - Production build's bundle-chunk-check.mjs fails on main-*.js exceeding its
+    size budget. Confirmed via a direct build of base commit a222e18c that this
+    is pre-existing on main (1,529,892 bytes there vs. 1,550,351 bytes on this
+    PR's head against a 1,179,648 byte limit) -- this PR adds ~20KB on top of
+    an already-over-budget baseline, not the ~370KB gap itself.
 exact_next_action: >-
-  Materialize the exact PR head in an actual repository checkout or existing
-  authorized preview, run InputXML/ACCDB/StagedJSON through Input→Error Check→
-  Load Case→Run→Output→Export including conditional WARN acceptance, falsify
-  source/profile/case stale-state and hidden-control keyboard behavior, then run
-  the strongest repository build/import/lint/Playwright checks. Do not merge
-  before explicit owner authorization.
+  None required to merge on UI08's own terms. If the owner later obtains a real
+  CAESAR II .accdb fixture, set LFEA_ACCDB_FIXTURE to run the two currently
+  fixture-gated ACCDB specs for full three-source parity with InputXML/StagedJSON.
 last_updated: 2026-08-22

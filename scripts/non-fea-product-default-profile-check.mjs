@@ -43,12 +43,19 @@ function checkEmptyProfileDefaults() {
   assert.equal(JSON.stringify(source), before, 'provider must not mutate stored Project Data');
   assert.equal(provider.schema, 'non-fea-product-default-provider/v1');
   assert.equal(provider.profileId, 'LOAD_CALC_STANDARD_DEFAULTS_V1');
+  assert.equal(provider.profileVersion, 3);
   assert.equal(provider.usageRows.length, LOAD_CALC_STANDARD_DEFAULTS_V1.defaults.length);
   assert.equal(provider.shadowedRows.length, 0);
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.value, 9.80665);
   assert.deepEqual(provider.effectiveProfile.loadCalculation.activeLoadCases.value, ['EMPTY', 'OPE', 'HYD']);
   assert.equal(provider.effectiveProfile.sourcesAndUnits.sourceUpAxis.value, 'Z');
+  assert.equal(provider.effectiveProfile.thermoMechanicalBasis.fluidPhaseAndFillState.value.cases.OPE.fillFraction, 1);
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy.value.defaultMode,
+    'COMPONENT_EXPLICIT_POINT_MASS',
+  );
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.gravityMPerS2), true);
+  assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy), true);
   assert.equal(provider.effectiveProfile.loadCalculation.pipeSectionProperties.value, null,
     'product profile must not invent universal pipe OD/wall data');
   assert.equal(provider.effectiveProfile.loadCalculation.componentWeightsKg.value, null,
@@ -88,10 +95,39 @@ function checkHigherAuthorityWins() {
   assert.equal(typeof shadow?.defaultSemanticHash, 'string');
 }
 
+function checkLegacyPhase2Upgrade() {
+  const project = replaceProjectDataValue(
+    createEmptyProjectDataProfile(),
+    'loadCalculation.gravityMPerS2',
+    9.81,
+    { source: 'Legacy project basis', authority: 'PROJECT_POLICY' },
+    true,
+  );
+  const legacy = clone(project);
+  delete legacy.loadCalculation.componentMassCompositionPolicy;
+  const before = JSON.stringify(legacy);
+  const provider = createNonFeaProductDefaultProvider({ profile: legacy });
+
+  assert.equal(JSON.stringify(legacy), before, 'legacy source profile must remain unmodified');
+  assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.value, 9.81,
+    'existing legacy Project Data evidence must survive additive upgrade');
+  assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.evidence.authority, 'PROJECT_POLICY');
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy.value.defaultMode,
+    'COMPONENT_EXPLICIT_POINT_MASS',
+  );
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy.evidence.authority,
+    'PRODUCT_DEFAULT',
+  );
+  assert.notEqual(provider.sourceProjectDataSemanticHash, provider.upgradedProjectDataSemanticHash,
+    'legacy structural upgrade must remain visible in provider hashes');
+}
+
 function checkDefaultChangeInvalidatesHashes() {
   const source = createEmptyProjectDataProfile();
   const first = createNonFeaProductDefaultProvider({ profile: source });
-  const changedDefaults = withGravity(LOAD_CALC_STANDARD_DEFAULTS_V1, 9.7, 2);
+  const changedDefaults = withGravity(LOAD_CALC_STANDARD_DEFAULTS_V1, 9.7);
   const second = createNonFeaProductDefaultProvider({
     profile: source,
     defaultProfile: changedDefaults,
@@ -131,6 +167,7 @@ function checkDuplicatePathRejected() {
 
 checkEmptyProfileDefaults();
 checkHigherAuthorityWins();
+checkLegacyPhase2Upgrade();
 checkDefaultChangeInvalidatesHashes();
 checkTamperedDefaultHashRejected();
 checkDuplicatePathRejected();

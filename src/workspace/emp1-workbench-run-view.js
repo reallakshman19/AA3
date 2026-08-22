@@ -19,22 +19,20 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
   const bDocument = state.stages?.['LAFEA.2']?.document ?? null;
   const runInput = options.runInput ?? null;
   const currentness = options.currentness ?? { state: 'NOT_RUN', reasons: [] };
-  const cStep = options.projection?.steps?.find((step) => step.shortId === 'C') ?? null;
-  const boundedRoute = cStep?.boundedProductionRoutes?.[0] ?? null;
-  const routeSuspended = Boolean(
-    boundedRoute && (boundedRoute.registered !== true || boundedRoute.engineeringUseAuthorized !== true),
-  );
-  const suspensionReasons = routeSuspended ? boundedRoute.suspensionReasons ?? [] : [];
+  const cState = options.cState ?? null;
+  const routeSuspended = cState?.productionUseAuthorized !== true;
+  const suspensionReasons = routeSuspended ? cState?.blockerCodes ?? [] : [];
   const panel = card(root, 'EMP.1.C source binding and run setup');
   panel.section.dataset.role = 'emp1-c-run-configuration';
   panel.section.dataset.currentness = currentness.state;
+  panel.section.dataset.cState = cState?.state ?? 'SOURCE_INCOMPLETE';
   panel.section.dataset.productionAuthority = routeSuspended ? 'SUSPENDED' : 'AVAILABLE';
 
   panel.body.append(element(root, 'p', 'lafea-workbench__section-intro',
     'Bind the attachment OUTSIDE diameter at the shell juncture and the WRC §4.5 cylinder geometry to engineering sources. Rm, T, WRC axes, γ, β, Kn/Kb and nearest-end distance are not editable calculation authority; nearest-end distance is derived from cylinder length and the WRC attachment reference station.'));
 
   const status = element(root, 'strong', 'lafea-result-highlights__status',
-    `EMP.1 transaction: ${human(currentness.state)}`);
+    `EMP.1.C: ${cState?.stageBadge ?? human(currentness.state)}`);
   status.dataset.role = 'emp1-product-currentness';
   panel.body.append(status);
   if (currentness.reasons?.length) {
@@ -164,7 +162,7 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
     boundary.append(
       element(root, 'strong', null, 'C production execution suspended'),
       element(root, 'p', null,
-        'The source-bound A→B→C transaction may be prepared, but no production WRC stress result is authorized while the retained bounded-route source-authority prerequisites below remain unresolved.'),
+        'The source-bound A→B→C transaction may be prepared, but no production WRC stress result is authorized while the current C-state authority projection is not production-authorized.'),
     );
     const reasons = element(root, 'ul');
     suspensionReasons.forEach((reason) => reasons.append(element(root, 'li', null, human(reason))));
@@ -180,16 +178,23 @@ export function renderEmp1WorkbenchRunConfiguration(root, options = {}) {
   return panel.section;
 }
 
-export function renderEmp1WorkbenchExecutionSummary(root, execution, currentness) {
+export function renderEmp1WorkbenchExecutionSummary(root, execution, currentness, cState = null) {
   if (!execution) return null;
   const panel = card(root, 'EMP.1 transaction evidence');
   panel.section.dataset.role = 'emp1-product-execution-summary';
   panel.section.dataset.currentness = currentness?.state ?? 'UNRESOLVED';
+  panel.section.dataset.cState = cState?.state ?? 'UNRESOLVED';
   const routeExecuted = execution.authority?.boundedLocalRouteExecuted === true;
   panel.body.append(keyValueTable(root, [
     ['Transaction status', execution.status],
     ['Engineering decision', execution.decision],
     ['Currentness', currentness?.state],
+    ['C state', cState?.stageBadge ?? cState?.state],
+    ['C current/reportable result', cState?.currentResultAvailable === true ? 'YES' : 'NO'],
+    ['C retained numerical evidence', cState?.retainedResultAvailable === true ? 'YES' : 'NO'],
+    ['Execution authority hash', cState?.executionAuthoritySnapshot?.semanticHash
+      ?? execution.authority?.routeAuthoritySnapshot?.semanticHash],
+    ['Current authority hash', cState?.currentAuthoritySnapshot?.semanticHash],
     ['EMP.1 source hash', execution.sourceHash],
     ['A result hash', execution.result?.loadTransfer?.resultHash],
     ['B retained evidence hash', execution.result?.sectionScreening?.resultHash],
@@ -210,7 +215,68 @@ export function renderEmp1WorkbenchExecutionSummary(root, execution, currentness
     panel.body.append(element(root, 'p', 'lafea-workbench__authority',
       'No WRC stress field was produced by this transaction. A/B results and prepared C custody are retained only to support fail-closed engineering traceability.'));
   }
+  const authorityEvidence = renderAuthorityEvidence(root, cState);
+  if (authorityEvidence) panel.body.append(authorityEvidence);
   return panel.section;
+}
+
+function renderAuthorityEvidence(root, cState) {
+  if (!cState) return null;
+  const current = cState.currentAuthoritySnapshot ?? null;
+  const execution = cState.executionAuthoritySnapshot ?? null;
+  const history = Array.isArray(cState.retainedHistoricalEvidence)
+    ? cState.retainedHistoricalEvidence
+    : [];
+  if (!current && !execution && history.length === 0) return null;
+
+  const details = element(root, 'details', 'lafea-workbench__custody-details');
+  details.dataset.role = 'emp1-c-authority-evidence';
+  details.dataset.currentResultAvailable = cState.currentResultAvailable === true ? 'true' : 'false';
+  const summary = element(root, 'summary', null, 'C route-authority and retained historical evidence');
+  details.append(summary, keyValueTable(root, [
+    ['C state', cState.stageBadge ?? cState.state],
+    ['Current result reportable', cState.currentResultAvailable === true ? 'YES' : 'NO'],
+    ['Execution route', execution?.routeId],
+    ['Execution authority hash', execution?.semanticHash],
+    ['Execution qualification hash', execution?.registry?.method?.qualificationRecordSha256],
+    ['Execution source SHA-256', execution?.registry?.method?.sourceDocumentSha256],
+    ['Execution dataset hash', execution?.registry?.method?.datasetHash],
+    ['Current route', current?.routeId],
+    ['Current authority hash', current?.semanticHash],
+    ['Current production use authorized', current?.productionUseAuthorized === true ? 'YES' : 'NO'],
+    ['Current qualification hash', current?.registry?.method?.qualificationRecordSha256],
+    ['Current source SHA-256', current?.registry?.method?.sourceDocumentSha256],
+    ['Current dataset hash', current?.registry?.method?.datasetHash],
+    ['Retained historical C records', history.length],
+  ]));
+
+  if (history.length > 0) {
+    const warning = element(root, 'p', 'lafea-workbench__authority',
+      'Historical C records below are retained evidence only. They are not current/reportable unless the live C-state projection explicitly says so.');
+    warning.dataset.role = 'emp1-c-historical-evidence-warning';
+    details.append(warning);
+    history.forEach((record, index) => {
+      const historical = element(root, 'details', 'lafea-workbench__custody-details');
+      historical.dataset.role = 'emp1-c-historical-evidence-record';
+      historical.dataset.index = String(index);
+      historical.append(
+        element(root, 'summary', null,
+          `Historical C ${index + 1} · ${record.evidenceHash ?? record.localCorrelation?.resultHash ?? 'UNHASHED'}`),
+        keyValueTable(root, [
+          ['Evidence hash', record.evidenceHash],
+          ['Source hash', record.sourceHash],
+          ['Authority hash', record.authoritySnapshot?.semanticHash],
+          ['C result hash', record.localCorrelation?.resultHash],
+        ]),
+      );
+      const payload = element(root, 'pre', 'lafea-workbench__evidence-json',
+        JSON.stringify(record.localCorrelation ?? null, null, 2));
+      payload.dataset.role = 'emp1-c-historical-result-payload';
+      historical.append(payload);
+      details.append(historical);
+    });
+  }
+  return details;
 }
 
 function loadCaseIdentities(documentValue) {

@@ -8,322 +8,236 @@
 HANDOVER_READINESS: READY
 PR_RECOVERY_STATE: HEALTHY
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
-
 EXECUTION_MODE: MANUAL
 AUTO_STATE: NOT_ACTIVE
 SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION
 PHASE_PROGRESSION: MANUAL
 MERGE_AUTHORITY: OWNER_ONLY
-AUTO_STOP_REASON: N/A
 
 REPOSITORY: reallaksh19/Advanced_Analysis
-SOURCE_TASK: Owner instruction 2026-08-22 — implement approved LFEA engineering-session/UI architecture in one PR and keep stacking increments on it.
+SOURCE_TASK: Owner instruction 2026-08-22 — follow pinned Engineering PR Delivery; create one PR and keep stacking the approved LFEA engineering-session/UI program.
 PR_OR_WIP: PR1322
 BRANCH: agent/lfea-engineering-session-ui-20260822
-
-PR_HEAD_OBSERVED: 12ed508b31a78ef0056b7d5826b3081fe9051b9f
-REPORT_BASIS_HEAD: a222e18c38bd20fb55c1c6c95f724f40e40e8532
+PR_HEAD_OBSERVED: 0bb07da0bd321c90d70d9506f9355a27a0ff0aed
+REPORT_BASIS_HEAD: 0bb07da0bd321c90d70d9506f9355a27a0ff0aed
 MAIN_HEAD_LAST_CHECKED: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 MERGE_BASE: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 REPORT_SYNC: CURRENT
-
 APPENDIX_A_STATUS: CURRENT
-GROUNDING_EPOCH: GE-002
-CURRENT_TAKEOVER: NONE — new assignment
-
-CURRENT_STAGE: UI00 — CHARACTERIZATION / NUMERICAL CUSTODY
-LAST_COMPLETED_STAGE: PR ALLOCATION + RECOVERY MIGRATION
+GROUNDING_EPOCH: GE-003
+CURRENT_STAGE: UI01 — ENGINEERING SESSION OWNERSHIP
+LAST_COMPLETED_STAGE: UI00 — NUMERICAL AUTHORITY CUSTODY GATE
 CURRENT_BLOCKER: NONE
-HIGHEST_RISK: New UI/session state accidentally becomes duplicate pre-flight/solver/authorization authority or carries stale authorization/results after source/profile/case/model change.
-LAST_DURABLE_CHECKPOINT: PR1322 allocated from current main; WIP recovery state migrated to PR identity.
-
-EXACT_NEXT_ACTION: Implement UI00 characterization/anti-drift checks only; do not change visible IA or source ownership until current source/pre-flight/analysis custody has a regression gate.
+HIGHEST_RISK: UI01 must own active source/presentation invalidation without becoming a second pre-flight, authorization, execution-currentness, or solver authority.
+LAST_DURABLE_CHECKPOINT: UI00 technical commit 0bb07da0bd321c90d70d9506f9355a27a0ff0aed.
+EXACT_NEXT_ACTION: Implement the smallest UI01 session module + focused state-machine check, then integrate main.js active pre-flight/case routing through explicit source identity while leaving all UI00-frozen authority files untouched.
 ```
 
 ## 2. Handover in 60 Seconds
 
-### What is now true
-- PR #1322 is the one long-lived implementation stack; draft, base `main`, branch `agent/lfea-engineering-session-ui-20260822`.
-- Base/main at allocation: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
-- Current source ownership is ambiguous by design: `src/main.js::activeLfeaPreFlight()` returns `InputXML ?? ACCDB`.
-- `refreshLfeaStepGuidance()` derives active source from controller snapshots rather than an explicit engineering-session identity.
-- StagedJSON converts to InputXML and downstream becomes indistinguishable from manual InputXML.
-- `lfea-pipeline-session.js` explicitly owns navigation/UI projection only; source/pre-flight/case orchestration remains in `main.js`.
-- InputXML diagnostics contain a compatibility reconstruction because topology/proximity BLOCK findings previously rendered as INFO.
-- PR #1320 is design-only, claims zero production files, and its source-specific Error Check IA is superseded by current owner direction.
+- One draft PR only: #1322. Keep stacking on it.
+- Current main/base: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
+- Current PR technical head: `0bb07da0bd321c90d70d9506f9355a27a0ff0aed`.
+- UI00 added `scripts/lfea-ui-numerical-custody-check.mjs` and wired it through the existing `scripts/lfea-pipeline-step-guidance-check.mjs` -> existing `check:lfea-workbench` path.
+- UI00 pins 11 authority files to their exact pre-refactor Git blobs. It intentionally does **not** pin `src/main.js` or the current controller precedence defect.
+- UI00 protects: InputXML governed pre-flight, ACCDB intake bridge, native execution authority, InputXML/ACCDB source bindings, ACCDB canonical adapter, StagedJSON converter client, solve authorization, governed solve, raw executor, recovery.
+- UI00 also asserts `INVALIDATE_ON_PARENT_IDENTITY_CHANGE`, BLOCK override prohibition, explicit WARN approver requirement, native execution currentness/parent identity and reuse of `prepareLinearPipingInputXmlPreFlight` for ACCDB.
+- No PR-triggered GitHub workflow run started for `0bb07da...`; runtime execution of the new gate remains **NOT_RUN**. Source/artifact inspection is PASS; do not claim execution PASS.
+- Stage-boundary LFEA PR search found no new overlapping implementation; #1320 remains design-only lineage with no production claims.
 
-### What is currently being worked on
-UI00 only: freeze current source/pre-flight/solver/result custody before production ownership migration.
+## 3. Mission and stack
 
-### What remains unfinished
-UI00 runtime/contract gate, then UI01–UI08 stacked increments.
-
-### What has been proven
-- source ownership defect: PASS by SOURCE_INSPECTION;
-- StagedJSON provenance-loss mechanism: PASS by SOURCE_INSPECTION;
-- diagnostic-renderer compensation path: PASS by SOURCE_INSPECTION;
-- PR1320 production-file overlap: none, verified from live changed-file list/claim.
-
-### What has NOT been proven / NOT_RUN
-- current-head UI00 executable characterization;
-- Chromium/Playwright baseline;
-- before/after numerical custody;
-- any production change.
-
-### What must not be assumed
-Presentation state is not engineering authority. Existing pre-flight/authorization/solver objects remain governing. UI-only refactor may not alter deterministic engineering values.
-
-### Highest-risk remaining item
-Choosing UI00 assertions that freeze the relevant authority/ordering without freezing incidental rendering details.
-
-### Exact next action
-Add focused UI00 source-level/contract characterization and wire it into existing non-workflow script checks; execute where available; update this report before UI01.
-
-## 3. Repository Ground Truth
-
-### GE-002 — PR allocation grounding
-- PR: #1322, OPEN, DRAFT;
-- PR head at allocation: `12ed508b31a78ef0056b7d5826b3081fe9051b9f`;
-- base/main: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`;
-- merge base: same main SHA;
-- initial changed files: three WIP recovery metadata files only;
-- open conceptual overlap: PR #1320; changed files are only its workreport/status/claim/design doc; its claim explicitly lists no production files;
-- `agents/MASTER_INDEX.md`: not present on main;
-- repo `AGENTS.md`: read;
-- pinned `Common@3fe20c7.../skills/engineering-pr-delivery`: read with ground-truth, continuous-handover, workreport, multi-agent, engineering-validation, authority-boundaries, coding, validation, anti-gaming, takeover and git/PR references;
-- `.github/workflows/*`: NOT AUTHORIZED.
-
-Coordination: `SAFE_WITH_DESIGN_LINEAGE`.
-
-## 4. Mission / Scope / Acceptance
-
-### Mission
-Make the six-step LFEA shell consume one explicit engineering-session state instead of independent-controller precedence, then stack the approved CAESAR-like review UX while preserving imported -> canonical -> analysis-model provenance and exact numerical custody.
-
-### Stacked plan on this same PR
-1. UI00 — characterization/exact anti-drift baseline.
-2. UI01 — `LfeaEngineeringSession`, explicit active source, invalidation/selectors.
-3. UI02 — common diagnostic presentation contract/adapters.
-4. UI03 — source selector/Input IA; retain StagedJSON provenance.
-5. UI04 — Model Review: Elements/Restraints/Loads + transformation ledger.
-6. UI05 — read-only SVG from session selectors; imported/analysis toggle.
+Approved one-PR sequence:
+1. UI00 — characterization / exact numerical authority custody. **IMPLEMENTED**.
+2. UI01 — explicit engineering-session active source + invalidation/selectors. **CURRENT**.
+3. UI02 — normalized diagnostic presentation contract/adapters.
+4. UI03 — Input source IA; retain StagedJSON provenance.
+5. UI04 — Model Review: Elements / Restraints / Loads + transformation ledger.
+6. UI05 — read-only SVG from session selectors, imported/analysis toggle.
 7. UI06 — Error Check by engineering categories, no source tabs.
-8. UI07 — results/code-check separation, toolbar/qualification cleanup.
-9. UI08 — browser/a11y/stale-state/5k-element/performance qualification.
+8. UI07 — code-check/results separation, toolbar declutter, app qualification hierarchy.
+9. UI08 — Chromium/a11y/stale-state/5k-element/performance qualification.
 
-### Non-goals / protected scope
-No solver formulation, stiffness/load assembly, element recovery, unit/axis/sign/end convention, governed pre-flight detection/disposition, benchmark oracle/tolerance, code methodology, engineering export value, workflow file, or InputXML/StagedJSON writeback authority change.
+Explicit non-scope: solver formulation; stiffness/load assembly; recovery; units/axes/sign/end conventions; governed finding detection/disposition; benchmark expected values/tolerances; code methodology; engineering export values; workflow files; new source writeback authority.
 
-### Acceptance
-- one explicit active source identity;
-- StagedJSON source identity retained through conversion;
-- existing governed authorization functions remain the only solve-authorization authority;
-- model/profile/case/source-changing operations invalidate incompatible authorization/results;
-- display-only state does not invalidate analysis;
-- diagnostics normalized for presentation without independent engineering-disposition inference;
-- imported/canonical/analysis representations are explicit;
-- exact deterministic numerical/result/export custody across UI refactor;
-- every changed file explained and validation truth explicit.
+## 4. Ground truth and coordination
 
-## 5. Current Implementation State
+### GE-003
+- PR #1322: OPEN / DRAFT.
+- head observed: `0bb07da0bd321c90d70d9506f9355a27a0ff0aed`.
+- main last observed: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
+- merge base remains main SHA above.
+- PR #1320: design-only; no production files claimed; source-specific Error Check IA superseded by current owner direction.
+- open LFEA PR refresh after UI00: #1322, #1320, #1305 and unrelated historical nonlinear/friction work; no new source/session implementation overlap observed.
+- `agents/MASTER_INDEX.md`: absent on current main.
+- `.github/workflows/*`: not authorized and untouched.
+- coordination state: `SAFE_WITH_DESIGN_LINEAGE`.
 
-| Work item | Implementation | Integration | Validation | Remaining |
-|---|---|---|---|---|
-| UI00 | IN_PROGRESS | NOT_STARTED | NOT_RUN | author focused characterization/anti-drift gate |
-| UI01 | NOT_STARTED | NOT_STARTED | NOT_RUN | blocked on UI00 evidence |
-| UI02 | NOT_STARTED | NOT_STARTED | NOT_RUN | after UI01 |
-| UI03–UI08 | NOT_STARTED | NOT_STARTED | NOT_RUN | stacked later |
+## 5. Current implementation state
 
-## 6. Active Engineering Item Register
+| Stage | Implementation | Integration | Validation |
+|---|---|---|---|
+| UI00 | COMPLETE | COMPLETE into existing check path | SOURCE/ARTIFACT PASS; execution NOT_RUN |
+| UI01 | NOT_STARTED | NOT_STARTED | NOT_RUN |
+| UI02 | NOT_STARTED | NOT_STARTED | NOT_RUN |
+| UI03–UI08 | NOT_STARTED | NOT_STARTED | NOT_RUN |
 
-| ID | Type | Severity | Status | Summary |
-|---|---|---|---|---|
-| ISS-001 | ISSUE | HIGH | OPEN | `activeLfeaPreFlight()` uses InputXML-over-ACCDB precedence. |
-| ISS-002 | ISSUE | HIGH | OPEN | StagedJSON original source identity is lost after InputXML handoff. |
-| ISS-003 | ISSUE | HIGH | OPEN | diagnostic presentation contracts differ; renderer reconstructs disposition to avoid BLOCK→INFO misrender. |
-| RISK-001 | RISK | CRITICAL | OPEN | session could duplicate pre-flight/authorization authority. |
-| RISK-002 | RISK | HIGH | OPEN | stale acceptance/result could survive governing mutations without centralized invalidation. |
-| DEC-001 | DECISION | HIGH | ACTIVE | source representation != canonical model != analysis model. |
-| DEC-002 | DECISION | HIGH | ACTIVE | Error Check taxonomy is engineering-based, not source tabs. |
-| DEC-003 | DECISION | HIGH | ACTIVE | existing sealed pre-flight/authorization objects remain authority; session references them only. |
-| DEC-004 | DECISION | HIGH | ACTIVE | one PR #1322 carries the full coherent UI00–UI08 stack; no merge until owner authorizes. |
-| QST-001 | QUESTION | MEDIUM | OPEN | exact deterministic custody fields uniformly observable for all source paths must be established in UI00. |
+## 6. Active engineering register
 
-## 7. Current Technical Diagnosis
+- `ISS-001` HIGH OPEN — `src/main.js::activeLfeaPreFlight()` uses `InputXML ?? ACCDB` precedence instead of explicit active-source ownership.
+- `ISS-002` HIGH OPEN — StagedJSON source identity disappears after conversion handoff to InputXML.
+- `ISS-003` HIGH OPEN — diagnostic UI contracts differ; InputXML renderer reconstructs missing disposition to prevent BLOCK→INFO misrender.
+- `ISS-004` HIGH NEW — `lfea-pipeline-analysis-controller.js::analyze()` can call `authorizeLinearPipingInputXmlPreFlight()` with a default reviewer when handed an unauthorized pre-flight. Normal step gating hides this in ordinary UI flow, but UI01 must not copy or strengthen that bypass-like orchestration behavior.
+- `RISK-001` CRITICAL OPEN — session must not manufacture or duplicate solve authorization.
+- `RISK-002` HIGH OPEN — stale acceptance/result must not survive governing source/profile/case/model changes.
+- `RISK-003` HIGH NEW — session-level result invalidation must not compete with `native-execution-authority.js` current/stale parent identity; session should clear presentation references and allow native authority reconciliation to remain authoritative.
+- `DEC-001` ACTIVE — source representation != canonical model != analysis model.
+- `DEC-002` ACTIVE — Error Check taxonomy is engineering-based, not source-specific tabs.
+- `DEC-003` ACTIVE — existing sealed pre-flight/authorization remains engineering authority; session references receipts only.
+- `DEC-004` ACTIVE — one PR #1322 carries UI00–UI08; merge owner-only.
+- `DEC-005` NEW ACTIVE — UI00 freezes engineering authority files by exact Git blob, not current UI orchestration. Any update to frozen blobs is a scope/authority event requiring explicit re-grounding.
+- `QST-001` PARTIALLY RESOLVED — deterministic custody is enforceable at authority-file blob level now; runtime/result exact-value characterization remains NOT_RUN and must be exercised before final UI release.
+
+## 7. Current diagnosis / next hypothesis
 
 ```text
-Observed symptom:
-A unified shell wraps independent source controllers. main.js decides which pre-flight is active, which controller receives case selection, and what source kind is shown.
+Observed first wrong boundary:
+main.js manually resolves active source/pre-flight and dispatches case selection by controller presence.
 
-Current hypothesis:
-The first wrong boundary is session/presentation ownership. A single explicit session can own active source identity and invalidation while referencing existing sealed engineering records, requiring no numerical-core change.
-
-Supporting evidence:
-- main.js activeLfeaPreFlight(): InputXML ?? ACCDB.
-- main.js refreshLfeaStepGuidance(): derives source from snapshots.
-- stagedjson panel: converter handoff into InputXML.
-- lfea-pipeline-session.js: navigation projection only.
-
-Alternative hypothesis:
-ACCDB/InputXML pre-flight contracts differ materially enough that source-controller ownership is required downstream.
-
-Already ruled out:
-Load-case/Run already consume the same sealed pre-flight-shaped downstream interface through activeLfeaPreFlight().
+UI01 hypothesis:
+A small pure session can own only:
+- source.kind + source identity/provenance reference,
+- immutable current preFlight reference,
+- analysis profile/case presentation references,
+- result reference/currentness projection,
+- revision and invalidation reason.
+It must not parse, prepare, authorize, solve or recover.
 
 Falsifier:
-UI00 finds a source-specific downstream authority semantic that cannot be represented by explicit source identity/reference without re-computation or bypass.
+If integration requires modifying any UI00-frozen authority file or deriving authorization/solver semantics inside the session, stop UI01 and re-scope.
 
-Next isolating experiment:
-Characterize the exact active-preflight routing, source identity/provenance, case/profile resealing and existing analysis anti-drift surfaces before UI01.
+Prediction:
+main.js can replace controller-precedence decisions with session selectors while still obtaining actual pre-flight records from the existing source controllers/adapters.
 ```
 
-## 8. Authority and Invariants
+## 8. Authority / invariants
 
+Protected chain:
 ```text
 source bytes/tables
--> existing parser/converter/intake authority
--> existing canonical/preparation/pre-flight records
+-> existing parser/converter/intake
+-> existing canonical/preparation/pre-flight
 -> existing authorization receipt
--> existing analysis controller/solver
--> existing recovery
--> presentation/export
+-> existing native execution authority / governed solve
+-> existing production recovery
+-> presentation/session/export
 ```
 
-PR may change presentation/session/invalidation and later UI. It may not change numerical or engineering authority layers above.
+UI01 may change only the final presentation/session routing layer. It may hold references to authoritative immutable objects but may not create equivalent receipts.
 
-Negative assurance:
-- intended change: who owns/declares active presentation session and when downstream presentation state is invalidated;
-- invariant: pre-flight creation/authorization and solver input/result computation remain existing code paths;
-- invariant: case/profile changes keep existing reseal/invalidation semantics;
-- invariant: code-stress authority remains downstream/optional for structural solve.
+Must remain unchanged:
+- UI00 11 frozen blob identities;
+- `PREFEA_BLOCK_OVERRIDE_PROHIBITED`;
+- `PREFEA_WARN_REQUIRES_EXPLICIT_APPROVER`;
+- authorization invalidation on parent identity change;
+- native execution current/stale parent identity;
+- ACCDB reuse of governed InputXML pre-flight chain;
+- solver/recovery mechanics and ordering;
+- no code-stress authority in front of structural analysis.
 
-## 9. Current Validation
+## 9. Validation ledger
 
-### VAL-001 — current source ownership
-Status: PASS
-Observation: SOURCE_INSPECTION
-Oracle: NONE
-Basis: main `a222e18...`
-Actual: InputXML precedence exists in `activeLfeaPreFlight()`; active source derived from controller snapshots.
-Origin: PREEXISTING.
+### VAL-001 UI00 frozen authority inventory
+```text
+STATUS: PASS
+OBSERVATION: SOURCE_INSPECTION + ARTIFACT_INSPECTION
+ORACLE: AUTHORITATIVE_REFERENCE (Git blob identities from pre-refactor main)
+BASIS: main a222e18..., PR head 0bb07da...
+EXPECTED: exactly 11 named authority files match captured main blobs.
+ACTUAL: commit source contains exact GitHub-observed blob IDs for each fetched authority file; PR diff touches none of those files.
+LIMITATION: new Node check itself not executed in this environment.
+```
 
-### VAL-002 — StagedJSON provenance
-Status: PASS
-Observation: SOURCE_INSPECTION
-Oracle: NONE
-Basis: main `a222e18...`
-Actual: conversion result handed into InputXML `loadSource()`, documented as indistinguishable downstream.
-Origin: PREEXISTING.
+### VAL-002 UI00 check wiring
+```text
+STATUS: PASS
+OBSERVATION: SOURCE_INSPECTION
+ORACLE: IMPLEMENTATION_COUPLED
+BASIS: PR head 0bb07da...
+EXPECTED: custody check reachable from existing check:lfea-workbench without package/workflow mutation.
+ACTUAL: lfea-pipeline-step-guidance-check.mjs imports lfea-ui-numerical-custody-check.mjs; package check:lfea-workbench already executes step-guidance check.
+```
 
-### VAL-003 — diagnostic compatibility defect
-Status: PASS
-Observation: SOURCE_INSPECTION
-Oracle: NONE
-Basis: main `a222e18...`
-Actual: renderer reconstructs disposition from capability effects because raw topology/proximity finding shape previously defaulted BLOCK-worthy findings to INFO.
-Origin: PREEXISTING.
+### VAL-003 UI00 execution
+```text
+STATUS: NOT_RUN
+OBSERVATION: NOT_OBSERVED
+ORACLE: IMPLEMENTATION_COUPLED
+BASIS: PR head 0bb07da...
+EVIDENCE: fetch_commit_workflow_runs returned zero PR-triggered workflow runs.
+LIMITATION: no local repository runtime is available through the GitHub connector.
+```
 
-### VAL-004 — UI00 executable characterization
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: IMPLEMENTATION_COUPLED
-Basis: PR1322 pre-UI00
-Expected: freeze relevant source/pre-flight/analysis invariants without changing production.
-Actual: NOT_RUN.
+### VAL-004 existing authority semantics
+```text
+STATUS: PASS
+OBSERVATION: SOURCE_INSPECTION
+ORACLE: NONE
+EVIDENCE: solve authorization declares INVALIDATE_ON_PARENT_IDENTITY_CHANGE; governed solve rejects SYSTEM_POLICY WARN authorization; native execution requires solveAuthorized + authorization and tracks parent identity/currentness.
+```
 
-### VAL-005 — Chromium baseline
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: IMPLEMENTATION_COUPLED
-Actual: NOT_RUN.
+## 10. Changed-file ledger
 
-## 10. Changed-File Ledger
+| File | Stage | Purpose | Engineering-sensitive? | Validation |
+|---|---|---|---:|---|
+| agents/PR1322_workreport.md | bootstrap/current | living recovery authority | no | source inspection |
+| agents/status/PR1322.yaml | bootstrap/current | machine status | no | source inspection |
+| agents/claims/PR1322.yaml | bootstrap/current | coordination claim | no | source inspection |
+| scripts/lfea-ui-numerical-custody-check.mjs | UI00 | exact authority anti-drift guard | yes, test-only | source/artifact PASS; execution NOT_RUN |
+| scripts/lfea-pipeline-step-guidance-check.mjs | UI00 | wire custody gate through existing workbench check | test-only | source inspection PASS |
 
-At PR allocation the diff contains recovery metadata only. This migration replaces WIP-named artifacts with PR1322-named artifacts; no production files yet.
+Production source files changed: 0. Workflow files changed: 0. Unexplained files: 0.
 
-| File | Intended? | Stage | Purpose | Sensitive? | Validation |
-|---|---:|---|---|---:|---|
-| agents/PR1322_workreport.md | yes | bootstrap | living recovery authority | no | source inspection |
-| agents/status/PR1322.yaml | yes | bootstrap | machine status | no | source inspection |
-| agents/claims/PR1322.yaml | yes | bootstrap | coordination claim | no | source inspection |
+## 11. Review / CI
 
-WIP-named predecessors are deleted by the migration commit. Unexplained files: 0.
+- PR remains DRAFT.
+- PR-triggered workflow runs at `0bb07da...`: none.
+- no merge requested or authorized.
+- no workflow rerun/manually triggered.
 
-## 11. Review / CI State
-
-- PR #1322: OPEN / DRAFT.
-- review submissions/threads: none inspected after allocation yet; refresh at next reconciliation.
-- CI: NOT_RUN on current implementation because there is no technical increment yet.
-- merge authority: OWNER_ONLY.
-
-## 12. Repository Coordination / Overlap
+## 12. Continuation state
 
 ```text
-MASTER_INDEX_CHECKED: attempted; not present
-STATUS_RECORD: agents/status/PR1322.yaml
-CLAIM_RECORD: agents/claims/PR1322.yaml
-LAST_OVERLAP_CHECK: GE-002
-FILE_OVERLAP: none with PR1320 production (PR1320 claims none)
-AUTHORITY_OVERLAP: conceptual IA only; current owner direction supersedes PR1320 design
-DEPENDENCY_OVERLAP: PR1320 design lineage only; no code dependency
-COORDINATION_STATE: SAFE_WITH_DESIGN_LINEAGE
+Start: UI01.
+Create: src/workspace/lfea-session/lfea-engineering-session.js and focused scripts/lfea-ui-engineering-session-check.mjs.
+Integrate minimally: src/main.js + shell controller only as needed.
+Do not change: any file listed in scripts/lfea-ui-numerical-custody-check.mjs FROZEN_AUTHORITY.
+Do not yet build: Error Check redesign, SVG, model review, toolbar cleanup.
+Critical design rule: session stores/references existing pre-flight; source adapters/controller callbacks publish it. No session authorization API.
+Exact next action: inspect all main.js source-change/clear callbacks and native execution reconciliation seams, then define pure UI01 invalidation transitions before integration.
 ```
-
-## 13. Continuation State
-
-```text
-Start here: UI00.
-Exact location: src/main.js ownership/routing plus existing source/pre-flight/analysis anti-drift scripts.
-Do not redo: initial architecture diagnosis, PR1320 overlap classification, branch/PR creation.
-Do not change: solver/core engineering mechanics, findings detection/dispositions, benchmark expected values, workflows.
-Validation still required: UI00 focused characterization and current-head execution where possible.
-Highest risk: freezing a presentation artifact rather than an engineering invariant, or missing an authority identity required for later anti-drift.
-Exact next action: add UI00 characterization/anti-drift script(s), run/inspect them, update report and checkpoint before UI01.
-```
-
-## 14. Takeover / Custody Chain
-
-### GE-001 — pre-PR grounding
-Current main/AGENTS/pinned skill/open PRs/PR1320 claim inspected; branch created from exact main.
-
-### GE-002 — PR allocation
-PR1322 allocated at head `12ed508b31a78ef0056b7d5826b3081fe9051b9f`; base/main unchanged; WIP recovery artifacts scheduled for PR identity migration.
 
 # APPENDIX A — IMPLEMENTATION TAKEOVER QUALIFICATION
 
-Basis:
-```text
-PR_HEAD: 12ed508b31a78ef0056b7d5826b3081fe9051b9f (refresh live before takeover)
-MAIN_HEAD: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-GROUNDING_EPOCH: GE-002
-Generated from: ISS-001..003, RISK-001..002, QST-001
-PARTIAL implementation: UI00 not yet authored
-NOT_RUN: UI00 executable characterization; Chromium
-Next intended stage: UI00 then UI01
-APPENDIX_A_STATUS: CURRENT
-```
+Basis: PR `0bb07da...`, main `a222e18...`, GE-003, next stage UI01. Incoming engineering-critical agent starts READ_ONLY and must re-ground then score >=92/100, >=17/20 each.
 
-Incoming engineering-critical implementer starts READ_ONLY, re-grounds, then must score >=92/100 and >=17/20 each.
+### A1 Production trace /20
+Trace ACCDB and InputXML from source load through current `main.js` selection to `runLfeaPipelineAnalysis()`, then through native execution. Identify the precise location UI01 may replace and every frozen authority file it must not alter. Falsifier: evidence source-controller precedence is required by the governed solve contract.
 
-### A1 — Production trace /20
-Trace a selected physical case from source controller through `activeLfeaPreFlight()` into `runLfeaPipelineAnalysis()` and identify every authoritative versus presentation-owned record. Required: exact file/function evidence, predicted invariants, falsifier, minimal UI01 implication. Generic state-management answer fails.
+### A2 Failure isolation /20
+Construct a state sequence where InputXML and ACCDB controller states are both non-empty and show which current branch wins `activeLfeaPreFlight()`. Then define the minimum explicit-source state transition that removes ambiguity without parsing or re-preparing. No generic state-management answer.
 
-### A2 — Current failure isolation /20
-Using InputXML, ACCDB and StagedJSON source paths, design the smallest UI00 characterization proving whether controller precedence is merely presentation ownership or required by incompatible downstream authority semantics. Give predicted observations and the first wrong boundary if falsified. No production mutation allowed in the experiment.
+### A3 Authority/invalidation /20
+Using solve-authorization and native-execution files, prove which parent identities/currentness already exist and define what the session may clear versus what it must delegate. Any proposed session `authorize()` or solver-currentness calculation fails.
 
-### A3 — Authority/invalidation /20
-Trace conditional authorization for InputXML and ACCDB, including profile/case resealing. Prove which existing function/object owns solve authorization and define which session changes must invalidate references/results. Any session-created bypass is automatic failure.
+### A4 Validation /20
+Recompute at least two UI00 expected Git blob IDs from repository bytes or independently verify via GitHub blob metadata, and explain why updating a baseline to match an accidental core edit is prohibited. Distinguish artifact/source PASS from runtime NOT_RUN.
 
-### A4 — Anti-drift validation /20
-Use existing consumer/ACCDB/StagedJSON/pipeline-analysis checks to distinguish implementation-coupled regression from independent engineering evidence. Define exact deterministic equality fields suitable for this UI refactor and identify any field that legitimately requires canonicalized rather than byte comparison, with repository evidence.
-
-### A5 — Minimal next commit /20
-Specify the first UI01 production commit after UI00: exact files/functions, smallest API/state addition, rollback boundary, focused tests, permitted/prohibited diff. It must not include Error Check redesign/SVG or solver/core changes.
+### A5 Minimal patch /20
+Specify UI01 exact files, public session API, source transitions, invalidation behavior, and a focused test matrix for source load/replace/clear/profile/cases/display-only changes. Must avoid UI02+ presentation work and all UI00-frozen authority files.
 
 # HISTORICAL RECORD — NOT CURRENT AUTHORITY
 
-## Stage Execution Log
-- 2026-08-22: owner ordered one PR and continued stacking.
-- 2026-08-22: GE-001 source/coordination grounding; PR1320 design-only overlap classified.
-- 2026-08-22: branch recovery metadata checkpoint `12ed508b31a78ef0056b7d5826b3081fe9051b9f`.
-- 2026-08-22: draft PR #1322 allocated; WIP→PR recovery migration initiated.
+- GE-001: live main/AGENTS/pinned skill/active claims grounded; implementation branch created.
+- GE-002: draft PR #1322 allocated; WIP artifacts migrated to PR identity.
+- GE-003: UI00 commit `0bb07da...` added 11-file exact authority custody gate; no CI run started, execution remains NOT_RUN.

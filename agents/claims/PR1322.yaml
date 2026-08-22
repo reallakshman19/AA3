@@ -3,10 +3,10 @@ pr_or_wip: PR1322
 claim_state: ACTIVE
 branch: agent/lfea-engineering-session-ui-20260822
 scope: >-
-  One-PR stacked implementation of LFEA UI00-UI08: numerical/state custody
-  characterization, explicit engineering-session ownership and invalidation,
-  diagnostic normalization, source provenance/Input IA, Model Review,
-  read-only SVG, engineering-category Error Check, and results/qualification cleanup.
+  One-PR stacked LFEA UI00-UI08 implementation: exact authority custody,
+  explicit engineering-session source ownership/invalidation, diagnostic
+  normalization, provenance/Input IA, Model Review, read-only SVG,
+  engineering-category Error Check, and results/qualification cleanup.
 claim_modes:
   - COORDINATED
 files:
@@ -21,6 +21,8 @@ files:
     - src/workspace/lfea-pipeline-accdb-input-panel.js
     - src/workspace/lfea-pipeline-accdb-view-model.js
     - src/workspace/lfea-pipeline-stagedjson-input-panel.js
+    - scripts/lfea-pipeline-step-guidance-check.mjs
+    - scripts/lfea-ui-numerical-custody-check.mjs
     - e2e/lfea-unified-pipeline-shell.spec.js
   prefixes:
     - src/workspace/lfea-session/
@@ -41,13 +43,20 @@ excluded_authority_domains:
   - CODE_CHECK_METHODOLOGY
   - GOVERNED_PREFLIGHT_DETECTION
   - GOVERNED_AUTHORIZATION_CREATION
+  - NATIVE_EXECUTION_CURRENTNESS_AUTHORITY
   - GITHUB_WORKFLOWS
+frozen_ui00_files:
+  count: 11
+  guard: scripts/lfea-ui-numerical-custody-check.mjs
+  policy: >-
+    Any blob change is an engineering-authority scope event requiring explicit
+    re-grounding; do not update expected blobs merely to make the guard green.
 overlap:
   PR1320:
     classification: SAFE_WITH_DESIGN_LINEAGE
     basis: >-
-      PR1320 claims documentation/agent artifacts only and explicitly no
-      production files. Current owner direction supersedes its source-specific
-      Error Check IA; no production code is inherited.
-last_verified_head: 12ed508b31a78ef0056b7d5826b3081fe9051b9f
-last_updated: 2026-08-22T12:05:00+05:30
+      Design/agent artifacts only, no production claim. Current owner direction
+      supersedes its source-specific Error Check IA.
+last_overlap_check: GE-003
+last_verified_head: 0bb07da0bd321c90d70d9506f9355a27a0ff0aed
+last_updated: 2026-08-22T12:14:00+05:30

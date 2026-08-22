@@ -1,3 +1,6 @@
+import {
+  requireCommonEnrichedConsumerHandoff,
+} from '../../core/common-enriched-properties/index.js';
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { freezeDeep } from '../dataset-utils.js';
 import {
@@ -39,8 +42,14 @@ const MASTER_SOURCE_KINDS = new Set([
  * SOURCE_INHERITED; inherited candidates remain the responsibility of the
  * existing CORE field-resolution adapter.
  */
-export function createAuthorizedEmpiricalEffectiveValueLedger(handoff) {
-  requireAuthorizedHandoff(handoff);
+export function createAuthorizedEmpiricalEffectiveValueLedger(handoffValue) {
+  const handoff = requireCommonEnrichedConsumerHandoff(handoffValue);
+  if (handoff.status !== 'AUTHORIZED' || handoff.consumer !== 'EMPIRICAL_LOADS') {
+    throw codedError(
+      'Authorized EMPIRICAL_LOADS handoff with published baseline is required.',
+      'EMPIRICAL_EFFECTIVE_HANDOFF_INVALID',
+    );
+  }
   const baseline = handoff.baseline;
   const candidates = [];
   for (const target of baseline.targetRecords) {
@@ -170,20 +179,6 @@ function authorityFromSourceKind(sourceKind) {
     'EMPIRICAL_EFFECTIVE_SOURCE_KIND_UNSUPPORTED',
     { sourceKind: sourceKind || null },
   );
-}
-
-function requireAuthorizedHandoff(handoff) {
-  if (!handoff || typeof handoff !== 'object' || Array.isArray(handoff)
-      || handoff.status !== 'AUTHORIZED'
-      || handoff.consumer !== 'EMPIRICAL_LOADS'
-      || !handoff.baseline
-      || !Array.isArray(handoff.baseline.targetRecords)
-      || typeof handoff.semanticHash !== 'string') {
-    throw codedError(
-      'Authorized EMPIRICAL_LOADS handoff with published baseline is required.',
-      'EMPIRICAL_EFFECTIVE_HANDOFF_INVALID',
-    );
-  }
 }
 
 function requiredHash(value, label) {

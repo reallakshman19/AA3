@@ -17,176 +17,195 @@ MERGE_AUTHORITY: OWNER_ONLY
 REPOSITORY: reallaksh19/Advanced_Analysis
 PR_OR_WIP: PR1322
 BRANCH: agent/lfea-engineering-session-ui-20260822
-PR_HEAD_OBSERVED: 969fb0bc1142b815be454a698c630ef3caef7b32
-REPORT_BASIS_HEAD: 969fb0bc1142b815be454a698c630ef3caef7b32
+PR_HEAD_OBSERVED: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
+REPORT_BASIS_HEAD: bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea
 MAIN_HEAD_LAST_CHECKED: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 MERGE_BASE: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-REPORT_SYNC: CURRENT
-APPENDIX_A_STATUS: CURRENT_FOR_UI03
-GROUNDING_EPOCH: GE-005
-CURRENT_STAGE: UI03 — INPUT INFORMATION ARCHITECTURE / SOURCE PROVENANCE
-LAST_COMPLETED_STAGE: UI02 — COMMON GOVERNED DIAGNOSTIC PRESENTATION CONTRACT
+REPORT_SYNC: CURRENT_THROUGH_UI03_TECHNICAL_HEAD
+APPENDIX_A_STATUS: CURRENT_FOR_UI04
+GROUNDING_EPOCH: GE-006
+CURRENT_STAGE: UI04 — MODEL REVIEW / SOURCE→ANALYSIS TRANSFORMATION LEDGER
+LAST_COMPLETED_STAGE: UI03 — INPUT INFORMATION ARCHITECTURE / SOURCE PROVENANCE
 CURRENT_BLOCKER: NONE
-HIGHEST_RISK: UI03 must expose source choice/provenance without reintroducing multiple simultaneously active engineering models or turning representation selection into engineering authority.
-LAST_DURABLE_CHECKPOINT: UI02 technical head 969fb0bc1142b815be454a698c630ef3caef7b32.
-EXACT_NEXT_ACTION: Re-ground open UI/source claims, then design the Input surface around one active engineering session: explicit source choice when empty, one loaded source identity when active, and StagedJSON original→derived InputXML provenance retained visibly; do not start Model Review or SVG yet.
+HIGHEST_RISK: UI04 could accidentally present canonical or conditioned solver geometry as if it were source truth, or invent transformation explanations not supported by existing authority/evidence.
+LAST_DURABLE_CHECKPOINT: UI03 technical head bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea.
+EXACT_NEXT_ACTION: Characterize the existing element/restraint/load representations in source bundles and preFlight.preparation, define read-only imported/canonical/analysis selectors plus an evidence-backed transformation ledger, then render Model Review without changing parsing, conditioning, solver preparation, or numerical values.
 ```
 
 ## 2. Handover in 60 Seconds
 
-- **One draft PR only: #1322.** Keep stacking UI03 onward on this branch. Do not create a successor PR and do not merge without owner authorization.
-- Base/main remains `a222e18c38bd20fb55c1c6c95f724f40e40e8532`; PR was 11 commits ahead / 0 behind at UI02 head.
-- UI00: exact Git-blob custody guard freezes 11 engineering-authority files. Current PR changed-path comparison contains none of those files.
-- UI01: explicit `LfeaEngineeringSession` owns source/provenance/pre-flight/result references and presentation invalidation only. `src/main.js` routes active pre-flight and case selection by explicit owner, not `InputXML ?? ACCDB`; StagedJSON identity survives its InputXML preparation handoff; analysis controller no longer fabricates reviewer authorization.
-- UI02: `src/workspace/lfea-diagnostics/` now contains a common immutable diagnostic presentation schema, renderer, and explicit InputXML/ACCDB adapters. Both adapters delegate to the same `preFlight.preparation.findings` projection.
-- UI02 engineering rule: governed `finding.disposition` is copied verbatim and is the **only** input to display impact (`PASS`, `ADVISORY`, `CONDITIONAL`, `BLOCK`). Message text, raw severity and `capabilityEffects` cannot upgrade/downgrade it.
-- InputXML diagnostics no longer contain `findingDisposition()` or reconstruct topology/proximity findings from raw severity/capability effects. Raw topology/proximity records remain metric/evidence displays; governed finding display comes from sealed preparation findings.
-- ACCDB’s existing raw model-health view-model remains in place for capabilities/property editing and backwards checks. UI02 supplies the ACCDB prepared-finding adapter; UI06 will move the visible common Error Check surface to that adapter rather than deleting capability/property behavior now.
-- Focused UI02 falsifier is committed and wired into the existing LFEA workbench aggregate path. It checks row/order/disposition preservation, source-kind parity, message/severity non-inference, same-code/different-disposition non-merging, renderer traceability, and unknown-token fail-closed behavior.
-- Exact proposed UI02 JavaScript bytes passed local `node --check` before push. The repository-integrated UI02 falsifier/browser path is still **NOT_RUN** in the available environment.
-- On UI02 head the only observed PR workflows are three unrelated EMP.1 workflows; all failed. They remain `FAIL / REMOTE_EXECUTION / UNKNOWN_ORIGIN` for this LFEA workstream and are not used as qualification evidence.
-- Tooling incident GE-004: an accidental one-line `README.md` creation occurred while writing recovery metadata; repo had no README at the parent. It was immediately deleted, restoring the exact prior tree before the intended recovery commit. Final PR diff contains no README change and no engineering file was affected.
+- **One draft PR only: #1322.** Continue stacking here. Merge remains owner-only.
+- Base/main is still `a222e18c38bd20fb55c1c6c95f724f40e40e8532`; UI03 technical head is `bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea`; branch is 20 commits ahead / 0 behind at that technical head.
+- UI00 freezes 11 engineering-authority files by exact Git blob. Full main→UI03 compare contains **zero** of those paths.
+- UI01 owns explicit source/session identity and invalidation; StagedJSON remains `STAGED_JSON` while InputXML is its preparation provider; analysis cannot manufacture pre-flight authorization.
+- UI02 provides one governed diagnostic presentation contract. `preFlight.preparation.findings[].disposition` alone controls display impact; message/raw severity/capability effects do not.
+- UI03 adds one visible source acquisition surface rather than three peer implementation panels. With no source loaded, the engineer sees InputXML / StagedJSON / ACCDB choices and exactly one engineering session remains authoritative.
+- UI03 source acquisition only invokes the existing importer file inputs and clear actions. It has no parser, preparation, authorization, solver, recovery, or writeback authority.
+- Loaded-source summary is projected from the read-only engineering session. StagedJSON is shown as the original source and the derived InputXML is explicitly labelled **Derived preparation artifact**; the derived artifact never replaces original source identity.
+- Source replacement does not clear the current model before file selection. If the picker is cancelled or replacement fails, the prior engineering model remains active. Successful replacement still invalidates downstream result state through UI01.
+- On Error Check, source switching controls are hidden but the source/provenance summary remains visible. For StagedJSON, the derived InputXML provider review is visible while the original StagedJSON panel is hidden.
+- UI03 technical diff is seven paths only: source-acquisition JS/CSS, shell controller/CSS, focused check, aggregate wiring, and the existing shell E2E contract.
+- Exact/pushed UI03 source-acquisition JS and shell-controller JS were syntax-checked; the exact focused-check and updated E2E contents were also syntax-checked after push. Browser execution itself is still **NOT_RUN**.
+- On UI03 head the only PR workflows are three EMP.1 workflows; all failed. They are unrelated by workflow scope/name, have no commit-status contexts, and remain `FAIL / REMOTE_EXECUTION / UNKNOWN_ORIGIN` for this LFEA workstream—not LFEA qualification evidence.
+- Fresh stage-entry coordination: #1323 has expanded into Load Calc/effective-value/support-load/UI files but has no LFEA source-shell/model-review paths; #1320 remains design-only lineage. UI03 coordination classification: `SAFE_WITH_DESIGN_LINEAGE`.
 
 ## 3. Approved stack status
 
 | Stage | State | Notes |
 |---|---|---|
-| UI00 | COMPLETE | 11-file exact engineering-authority custody; runtime gate NOT_RUN |
-| UI01 | COMPLETE | explicit source/session ownership + invalidation; relevant runtime/browser NOT_RUN |
-| UI02 | COMPLETE | common governed diagnostic presentation contract/adapters; exact-byte syntax PASS; integrated falsifier NOT_RUN |
-| UI03 | CURRENT | Input IA/source selector/provenance; no production changes yet |
-| UI04 | NOT_STARTED | Model Review: Elements / Restraints / Loads + transformation ledger |
+| UI00 | COMPLETE | exact 11-file engineering-authority custody; repository runtime NOT_RUN |
+| UI01 | COMPLETE | explicit engineering session/source ownership + invalidation; relevant browser/runtime NOT_RUN |
+| UI02 | COMPLETE | common governed diagnostic presentation; syntax/source PASS; integrated falsifier NOT_RUN |
+| UI03 | COMPLETE | explicit source acquisition + StagedJSON original→derived provenance; syntax/source PASS; browser NOT_RUN |
+| UI04 | CURRENT | Model Review Elements / Restraints / Loads + evidence-backed transformation ledger |
 | UI05 | NOT_STARTED | read-only SVG + imported/analysis representation toggle |
 | UI06 | NOT_STARTED | common Error Check by engineering categories |
 | UI07 | NOT_STARTED | code-check/results and toolbar/qualification cleanup |
 | UI08 | NOT_STARTED | Chromium/a11y/stale-state/5k/performance qualification |
 
-Explicit non-scope remains: solver formulation, stiffness/load assembly, recovery, units/axes/sign/end conventions, governed finding detection/disposition, benchmark values/tolerances, code methodology, engineering export values, workflow files, or new writeback authority.
+Explicit non-scope remains: solver formulation, stiffness/load assembly, element recovery, units/axes/sign/end conventions, governed detection/disposition, benchmark values/tolerances, code methodology, engineering exports, workflow files, or new source writeback authority.
 
-## 4. Ground truth / coordination — GE-005
+## 4. Ground truth / coordination — GE-006
 
-- UI02 technical head: `969fb0bc1142b815be454a698c630ef3caef7b32`.
+- PR #1322: OPEN / DRAFT / mergeable at UI03 technical head.
+- UI03 technical head: `bffa9f39f432240ea2cf84e9fb7e4bcb1515d1ea`.
 - main/base/merge-base: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
-- current compare at UI02: 11 commits ahead / 0 behind; 16 effective changed paths.
-- UI00-frozen authority paths in current PR diff: **0**.
-- `.github/workflows/*` changes: **0**.
-- PR #1323 overlap last checked at UI02 entry: Load Calc/non-FEA/project-data paths only; no UI02 source/session/diagnostic overlap.
-- PR #1320 overlap last checked at UI02 entry: design/agent artifacts only; no production overlap; its source-specific Error Check proposal remains superseded design lineage.
+- compare main→UI03: 20 ahead / 0 behind; 22 effective changed paths for UI00–UI03 combined.
+- compare UI02 recovery head `f262823...`→UI03: 8 commits, seven effective changed paths.
+- UI00 frozen-authority paths in full PR diff: **0**.
+- `.github/workflows/*` paths in full PR diff: **0**.
+- PR #1323 current changed files include non-FEA effective values, support-load mechanics, Load Calc UI and its checks/agent artifacts. No `src/workspace/lfea-*` source-shell/model-review path overlap observed.
+- PR #1320 remains design/agent artifacts only; its source-specific Error Check IA remains superseded design lineage.
 - `agents/MASTER_INDEX.md`: absent on current main.
-- coordination at UI02 completion: `SAFE_WITH_DESIGN_LINEAGE`.
-- UI03 must perform a fresh open-PR/claim overlap check before source-shell/IA edits.
+- coordination classification: `SAFE_WITH_DESIGN_LINEAGE`.
 
-## 5. UI02 technical diagnosis and resolution
+## 5. UI03 technical diagnosis and resolution
 
 ### Before
-- Canonical governed findings already existed in `preFlight.preparation.findings` for both InputXML and ACCDB via the shared preparation chain.
-- InputXML `linear-piping-inputxml-diagnostics-view.js` ignored that authority for topology/proximity display and reconstructed a disposition from raw `capabilityEffects`, `severity`, or fallback `INFO`.
-- ACCDB had a separate profile-scoped raw model-health presentation path. It was useful for capability/property review, but not a reason to create a second final pre-flight finding semantics.
+- Three source-specific panels shared the Input surface as peer acquisition choices.
+- CSS used `data-active-source` to suppress inactive panels after load, but `main.js` supplied the **preparation owner** to that stamp.
+- A StagedJSON model therefore had correct session identity (`STAGED_JSON`) but was visually stamped/presented as `INPUTXML` because InputXML prepares the governed pre-flight.
+- The derived InputXML name existed in session provenance but was not presented as a first-class source→preparation relationship.
 
 ### After
 ```text
-existing parser/model health
--> existing governed diagnostics/preparation
--> sealed preFlight.preparation.findings
--> buildLfeaDiagnosticPresentation()
-   - copies findingId/code/category/disposition/message
-   - validates known governed disposition
-   - maps display label ONLY from disposition
-   - groups without merging differing disposition/message/remediation
-   - stores sourceKind/identity/fileName as provenance only
--> source adapter (INPUTXML or ACCDB)
--> common renderer
+Input step
+-> Source model acquisition surface
+   -> choose InputXML | StagedJSON | ACCDB
+   -> existing source-specific importer executes unchanged
+-> LfeaEngineeringSession owns one current source identity
+-> buildLfeaSourceAcquisitionModel(read-only session)
+   -> original source representation/file
+   -> preparation provider
+   -> derived InputXML artifact when StagedJSON
+   -> provenance identities
+-> active source technical details only
 ```
 
-The common adapter does **not** call parse/diagnose/prepare/authorize/solve functions and does not inspect free-text messages or capability effects for engineering classification.
+For StagedJSON:
+```text
+Original engineering source: plant.sjson
+        |
+        +--> governed converter
+              |
+              +--> derived preparation artifact: plant.input.xml
+                        |
+                        +--> existing InputXML pre-flight provider
+```
+
+UI03 does not claim the derived InputXML is source truth.
 
 ## 6. Active engineering register
 
-- `ISS-001` RESOLVED_UI01 — controller precedence removed from active pre-flight path.
-- `ISS-002` RESOLVED_UI01 — StagedJSON original source identity retained in session.
-- `ISS-003` RESOLVED_UI02_CONTRACT — InputXML raw topology severity/capability-effect disposition reconstruction removed; common contract now consumes governed preparation findings.
-- `ISS-004` RESOLVED_UI01 — analysis-side default-reviewer authorization removed.
-- `RISK-001` CONTROLLED — session has no parser/authorize/solver/recovery API; UI00 frozen files unchanged.
-- `RISK-002` CONTROLLED — governing session changes invalidate displayed downstream analysis/results; final browser proof remains UI08.
-- `RISK-004` CONTROLLED_UI02 — message/raw severity/capability effects cannot determine common presentation impact; unknown disposition fails closed.
-- `RISK-005` OPEN_UI03 — source selector/IA could accidentally imply multiple loaded models or conflate source representation with preparation owner.
-- `DEC-001` ACTIVE — source representation != canonical model != analysis model.
-- `DEC-002` ACTIVE — Error Check taxonomy will be engineering-based, not source tabs.
-- `DEC-003` ACTIVE — sealed pre-flight/authorization remains authority.
-- `DEC-004` ACTIVE — PR1322 stays the one coherent stack; merge owner-only.
-- `DEC-005` ACTIVE — UI00 blob changes require explicit authority re-grounding, never a golden-update shortcut.
-- `DEC-006` ACTIVE — diagnostic normalization is presentation-only; no free-text engineering inference.
-- `DEC-007` UI02 — source metadata is provenance and cannot alter disposition/display impact.
+- `ISS-001` RESOLVED_UI01 — controller-precedence source selection removed from active pre-flight path.
+- `ISS-002` RESOLVED_UI01_UI03 — StagedJSON source identity retained in session and now visibly distinguished from derived InputXML.
+- `ISS-003` RESOLVED_UI02 — common governed diagnostic presentation replaces UI-side topology disposition reconstruction.
+- `ISS-004` RESOLVED_UI01 — analysis-side fabricated reviewer authorization removed.
+- `RISK-001` CONTROLLED — session/presentation layers have no solver/pre-flight authorization authority.
+- `RISK-002` CONTROLLED — governing source/pre-flight changes invalidate downstream result presentation; final browser proof remains UI08.
+- `RISK-005` CONTROLLED_UI03 — acquisition choice does not create multiple live engineering models; successful replacement goes through existing UI01 ownership/invalidation.
+- `RISK-006` OPEN_UI04 — imported/canonical/analysis representation names must not imply equality or hide conditioning/idealization.
+- `RISK-007` OPEN_UI04 — transformation ledger entries must be derived only from explicit existing evidence/records; no inferred engineering story may be invented from numerical differences alone.
+- `DEC-001` ACTIVE — SOURCE REPRESENTATION != CANONICAL MODEL != ANALYSIS MODEL.
+- `DEC-002` ACTIVE — Error Check taxonomy is engineering-based, not source tabs.
+- `DEC-003` ACTIVE — sealed pre-flight/authorization remains engineering authority.
+- `DEC-004` ACTIVE — PR1322 remains the one stack; merge owner-only.
+- `DEC-005` ACTIVE — UI00 blob baseline is never updated merely to make a test green.
+- `DEC-006` ACTIVE — diagnostic normalization is presentation-only.
+- `DEC-008` UI03 — source chooser is acquisition/presentation only; it invokes existing importers and does not mutate engineering session directly.
+- `DEC-009` UI03 — StagedJSON stays source representation; InputXML is explicitly a derived preparation artifact/provider.
 
 ## 7. Validation ledger
 
 ### VAL-001 — UI00 frozen authority custody
-`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`, `ORACLE=AUTHORITATIVE_REFERENCE`. Current full PR compare includes zero frozen-authority paths. Runtime execution remains NOT_RUN.
+`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`, `ORACLE=AUTHORITATIVE_REFERENCE`. Full main→UI03 comparison has zero frozen authority paths. Runtime custody script remains NOT_RUN in repository execution.
 
-### VAL-002 — UI01 explicit session/source routing
-`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`, `ORACLE=IMPLEMENTATION_COUPLED`. Relevant browser/runtime execution remains NOT_RUN.
+### VAL-002 — UI01 source/session routing
+`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`, `ORACLE=IMPLEMENTATION_COUPLED`. Relevant browser/runtime remains NOT_RUN.
 
-### VAL-003 — UI01 authorization boundary
-`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`, `ORACLE=IMPLEMENTATION_COUPLED`. Analyze requires an already authorized sealed pre-flight.
+### VAL-003 — UI02 governed diagnostic semantics
+`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`, `ORACLE=AUTHORITATIVE_REFERENCE`. Integrated focused execution remains NOT_RUN.
 
-### VAL-004 — UI02 exact-byte syntax
-`STATUS=PASS`, `OBSERVATION=LOCAL_EXECUTION`, `ORACLE=INDEPENDENT_RUNTIME_SYNTAX`. `node --check` passed on all six proposed UI02 JavaScript files before those exact contents were pushed.
+### VAL-004 — UI03 source acquisition/provenance source contract
+`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`, `ORACLE=AUTHORITATIVE_REFERENCE`. The projection uses `engineeringState.source.kind/fileName/preparationOwner/provenance`; StagedJSON original and derived InputXML are separate fields; acquisition invokes existing importer inputs/clear actions only.
 
-### VAL-005 — UI02 common presentation semantics
-`STATUS=PASS`, `OBSERVATION=SOURCE+DIFF_INSPECTION`, `ORACLE=AUTHORITATIVE_REFERENCE`. Adapter consumes `PREFEA_DISPOSITIONS`; presentation impact indexes only by explicit `disposition`; InputXML view no longer contains `findingDisposition`, `capabilityEffects`, or severity→BLOCK reconstruction.
+### VAL-005 — UI03 JavaScript syntax
+`STATUS=PASS`, `OBSERVATION=LOCAL_EXECUTION`, `ORACLE=INDEPENDENT_RUNTIME_SYNTAX`. `node --check` passed for source-acquisition JS, shell-controller JS, focused source-acquisition check, and updated Playwright spec contents corresponding to pushed UI03 files.
 
-### VAL-006 — UI02 focused falsifier execution
-`STATUS=NOT_RUN`, `OBSERVATION=NOT_OBSERVED`, `ORACLE=IMPLEMENTATION_COUPLED`. `scripts/lfea-ui-diagnostic-presentation-check.mjs` is committed and aggregated but no relevant repository execution was observed.
+### VAL-006 — UI03 state falsifier wiring
+`STATUS=PASS`, `OBSERVATION=SOURCE_INSPECTION`, `ORACLE=IMPLEMENTATION_COUPLED`. Focused test asserts source projection leaves session revision unchanged, successful source replacement clears bound analysis, StagedJSON original/derived identities stay distinct, and clear returns to NONE. **Execution of the integrated focused test is NOT_RUN.**
 
-### VAL-007 — UI02 PR workflows
-`STATUS=FAIL`, `OBSERVATION=REMOTE_EXECUTION`, `ORACLE=NONE`, `FAILURE_ORIGIN=UNKNOWN_ORIGIN`. Only EMP.1 workflows were observed on the UI02 head; all failed and are unrelated by workflow name/scope to LFEA UI02. Do not treat as green and do not use as LFEA evidence.
+### VAL-007 — UI03 browser behavior
+`STATUS=NOT_RUN`, `OBSERVATION=NOT_OBSERVED`, `ORACLE=IMPLEMENTATION_COUPLED`. E2E contract is updated but Playwright was not executed in this environment.
 
-## 8. UI02 changed-file ledger
+### VAL-008 — UI03 PR workflows
+`STATUS=FAIL`, `OBSERVATION=REMOTE_EXECUTION`, `ORACLE=NONE`, `FAILURE_ORIGIN=UNKNOWN_ORIGIN`. Only EMP.1 workflows ran on `bffa9f39...`; all failed. No commit status contexts are registered. They are not LFEA UI03 evidence.
 
-New:
-- `src/workspace/lfea-diagnostics/lfea-diagnostic-presentation.js` — source-agnostic immutable presentation contract.
-- `src/workspace/lfea-diagnostics/lfea-diagnostic-presentation-view.js` — DOM renderer with code/category/disposition/finding-ID traceability.
-- `src/workspace/lfea-diagnostics/lfea-source-diagnostic-adapters.js` — explicit InputXML and ACCDB provenance adapters delegating to same projector.
-- `scripts/lfea-ui-diagnostic-presentation-check.mjs` — parity/non-inference/fail-closed falsifier.
+## 8. UI03 changed-file ledger
 
-Modified:
-- `src/workspace/linear-piping-inputxml-diagnostics-view.js` — consumes common governed findings; raw topology/proximity remains metrics/evidence only; removed compensation/inference path.
-- `scripts/lfea-pipeline-step-guidance-check.mjs` — adds UI02 focused check to existing aggregate path.
+- `src/workspace/lfea-source-acquisition.js` — pure read-only source/provenance model + UI controller that delegates to real existing importer/clear controls.
+- `src/workspace/lfea-source-acquisition.css` — one chooser/no-source state, STAGED_JSON representation rules, duplicate importer control suppression, Error Check provenance behavior.
+- `src/workspace/lfea-pipeline-shell-controller.js` — mounts source acquisition and resolves actual session source representation for display; no analysis mechanics.
+- `src/workspace/lfea-pipeline-shell.css` — imports source-acquisition stylesheet only.
+- `scripts/lfea-ui-source-acquisition-check.mjs` — provenance/one-source/non-mutation/replacement-invalidation falsifier.
+- `scripts/lfea-pipeline-step-guidance-check.mjs` — adds UI03 focused check to existing aggregate path.
+- `e2e/lfea-unified-pipeline-shell.spec.js` — initial Input state now asserts one source chooser and hidden technical panels.
 
-No core/frozen/workflow/benchmark/expected-value file changed in UI02.
+No `src/main.js`, source parser/converter, governed pre-flight, authorization, solver, recovery, benchmark, tolerance, or workflow file changed in UI03.
 
 ## 9. Review / CI truth
 
 - PR remains DRAFT / OPEN.
-- Merge authority remains OWNER_ONLY.
-- No merge performed.
-- No workflow file changed or rerun manually.
-- Relevant UI02 repository/browser execution: NOT_RUN.
-- EMP.1 failures remain recorded as UNKNOWN_ORIGIN for this workstream.
+- Merge authority: OWNER_ONLY; no merge performed.
+- UI03 relevant repository/browser execution: NOT_RUN.
+- Three EMP.1 workflow failures remain UNKNOWN_ORIGIN for this workstream and are not hidden or relabelled.
+- No workflow file changed or manually rerun.
 
-# APPENDIX A — UI03 IMPLEMENTATION AUTHORITY
+# APPENDIX A — UI04 IMPLEMENTATION AUTHORITY
 
-Basis: PR `969fb0bc...`, main `a222e18...`, GE-005. A replacement agent starts READ_ONLY and must score >=92/100 with >=17/20 each; continued same-agent execution may re-ground and proceed.
+Basis: PR UI03 technical head `bffa9f39...`, main `a222e18...`, GE-006. Replacement agent starts READ_ONLY and must score >=92/100 with >=17/20 each. Continued same-agent execution may re-ground and proceed.
 
 ### A1 Production trace /20
-Trace InputXML, ACCDB, and StagedJSON source load/clear from UI controls to `LfeaEngineeringSession.source`. Explain `kind`, `identityKey`, `providerIdentityKey`, `preparationOwner`, `fileName`, and StagedJSON `derivedInputXmlFileName`. Name every current CSS/data-role rule that hides/shows source panels.
+Trace, for both InputXML-derived and ACCDB paths, the exact objects that contain: source element identity/values; canonical geometry nodes/segments; conditioned/compiled structural geometry; restraints/constraints; physical load primitives/cases. Identify which are source, canonical, and analysis representations and where each hash/evidence identity lives. A response that calls the conditioned geometry “the source model” fails.
 
-### A2 Failure isolation /20
-Demonstrate the current UX defect when no source is loaded versus after one source is active. Prove why three independent source panels are an implementation vocabulary, not the engineering IA. Include the stale-source-resurrection falsifier already controlled by UI01.
+### A2 Transformation isolation /20
+Find at least three real transformations already occurring in current production (examples may include inherited source fields, engineer ACCDB overrides, restraint conditioning, topology conditioning, approximation/representability handling, StagedJSON→InputXML derivation). For each, prove whether there is explicit evidence sufficient for a ledger row. If evidence is absent, classify it UNRESOLVED rather than infer from value deltas.
 
 ### A3 Authority / invariant /20
-Define the UI03 selector as a source acquisition/presentation control only. It may choose which importer to invoke while session is empty; it must not switch between multiple live engineering models, alter pre-flight disposition, authorize a solve, or reinterpret StagedJSON’s derived InputXML as the original source.
+Define the Model Review selectors so they are read-only projections. Prove they cannot modify source/canonical/analysis records, cannot authorize a pre-flight, and cannot manufacture a source→analysis equivalence. Define exact semantics for SOURCE REPRESENTATION, CANONICAL MODEL, and ANALYSIS MODEL.
 
 ### A4 Independent validation /20
-Create a source-selector state fixture independent of rendered DOM and prove: NONE shows all acquisition options; loading one source exposes exactly one active identity; replacing source invalidates old downstream state; StagedJSON displays original + derived provenance; clearing active source returns to acquisition state; display-only tab changes do not invalidate analysis.
+Construct a fixture where source and analysis representations deliberately differ and prove the UI exposes the difference rather than normalizing them. Include at least one restraint and one load transformation, plus a no-transformation case. Verify element/restraint/load cardinalities and IDs are stable and that display selection does not invalidate the analysis session.
 
 ### A5 Minimal patch /20
-Name exact UI03 shell/view/session selectors and tests. UI04 Model Review, UI05 SVG, UI06 Error Check category redesign, solver/core changes, workflow edits, writeback, or benchmark changes fail the stage.
+Name exact UI04 files and public selector/view contracts. The patch must add first-class **Elements / Restraints / Loads** review plus an evidence-backed transformation ledger. UI05 SVG, UI06 Error Check restructuring, solver/core edits, new conditioning mechanics, workflow edits, benchmark changes, or writeback authority fail this stage.
 
 # HISTORICAL RECORD — NOT CURRENT AUTHORITY
 
 - GE-001/002: branch + draft PR allocated from current main; recovery artifacts established.
-- GE-003: UI00 exact 11-file authority custody gate created and wired; execution NOT_RUN.
-- UI01: pure engineering session + explicit source routing + downstream invalidation + analysis authorization boundary at `2c83b505...`.
-- GE-004: stale recovery artifacts reconciled; #1323/#1320 overlap checked. A connector mistake briefly created a one-line README in branch history; immediate deletion restored the exact prior tree and no README remains in the PR diff.
-- UI02: common governed diagnostic presentation contract/adapters + InputXML integration at `969fb0bc...`; source/diff/exact-byte syntax PASS; focused repository execution NOT_RUN.
+- GE-003: UI00 exact 11-file authority custody gate created and wired; repository execution NOT_RUN.
+- UI01: pure engineering session + explicit source routing + downstream invalidation + authorization-boundary correction.
+- GE-004: stale recovery artifacts reconciled; #1323/#1320 overlap checked. A connector mistake briefly created a one-line README; immediate deletion restored the exact prior tree and no README remains in PR diff.
+- UI02: common governed diagnostic presentation at `969fb0bc...`; source/diff/syntax PASS; integrated execution NOT_RUN.
+- GE-005: UI02 recovery synchronized and UI03 opened.
+- UI03: explicit source acquisition/provenance technical head `bffa9f39...`; seven-path presentation/test-only stage; source/diff/syntax PASS; browser/integrated execution NOT_RUN.

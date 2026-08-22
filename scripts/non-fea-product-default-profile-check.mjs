@@ -16,11 +16,22 @@ function clone(value) {
   return structuredClone(value);
 }
 
+function rowHash(row) {
+  return semanticHash({
+    defaultId: row.defaultId,
+    projectDataPath: row.projectDataPath,
+    value: row.value,
+    unit: row.unit,
+    basis: row.basis,
+  });
+}
+
 function withGravity(defaultProfile, gravity, version = defaultProfile.version + 1) {
   const next = clone(defaultProfile);
   next.version = version;
   const row = next.defaults.find((candidate) => candidate.defaultId === 'PD-GRAVITY');
   row.value = gravity;
+  row.semanticHash = rowHash(row);
   return next;
 }
 
@@ -42,6 +53,15 @@ function checkEmptyProfileDefaults() {
     'product profile must not invent universal pipe OD/wall data');
   assert.equal(provider.effectiveProfile.loadCalculation.componentWeightsKg.value, null,
     'product profile must not invent component masses');
+
+  const gravityUsage = provider.usageRows.find((row) => row.defaultId === 'PD-GRAVITY');
+  const gravityDefinition = LOAD_CALC_STANDARD_DEFAULTS_V1.defaults
+    .find((row) => row.defaultId === 'PD-GRAVITY');
+  assert.equal(gravityUsage.defaultSemanticHash, gravityDefinition.semanticHash);
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.gravityMPerS2.evidence.defaultSemanticHash,
+    gravityDefinition.semanticHash,
+  );
 
   const { semanticHash: supplied, ...base } = provider;
   assert.equal(supplied, semanticHash(base), 'provider semantic hash must bind effective values and usage evidence');
@@ -65,6 +85,7 @@ function checkHigherAuthorityWins() {
   const shadow = provider.shadowedRows.find((row) => row.defaultId === 'PD-GRAVITY');
   assert.equal(shadow?.status, 'SHADOWED_BY_HIGHER_AUTHORITY');
   assert.equal(shadow?.existingAuthority, 'PROJECT_POLICY');
+  assert.equal(typeof shadow?.defaultSemanticHash, 'string');
 }
 
 function checkDefaultChangeInvalidatesHashes() {
@@ -82,9 +103,23 @@ function checkDefaultChangeInvalidatesHashes() {
   assert.equal(second.effectiveProfile.loadCalculation.gravityMPerS2.value, 9.7);
 }
 
+function checkTamperedDefaultHashRejected() {
+  const invalid = clone(LOAD_CALC_STANDARD_DEFAULTS_V1);
+  invalid.defaults[0].value = 'cm';
+  assert.throws(
+    () => createNonFeaProductDefaultProvider({
+      profile: createEmptyProjectDataProfile(),
+      defaultProfile: invalid,
+    }),
+    /Product default semantic hash mismatch/,
+  );
+}
+
 function checkDuplicatePathRejected() {
   const invalid = clone(LOAD_CALC_STANDARD_DEFAULTS_V1);
-  invalid.defaults.push({ ...clone(invalid.defaults[0]), defaultId: 'PD-DUPLICATE-PATH' });
+  const duplicate = { ...clone(invalid.defaults[0]), defaultId: 'PD-DUPLICATE-PATH' };
+  duplicate.semanticHash = rowHash(duplicate);
+  invalid.defaults.push(duplicate);
   assert.throws(
     () => createNonFeaProductDefaultProvider({
       profile: createEmptyProjectDataProfile(),
@@ -97,6 +132,7 @@ function checkDuplicatePathRejected() {
 checkEmptyProfileDefaults();
 checkHigherAuthorityWins();
 checkDefaultChangeInvalidatesHashes();
+checkTamperedDefaultHashRejected();
 checkDuplicatePathRejected();
 
 console.log('Non-FEA product-default profile check: PASS');

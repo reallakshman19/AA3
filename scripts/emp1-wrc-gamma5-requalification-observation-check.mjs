@@ -49,28 +49,112 @@ assert.equal(record.datasetHash, candidateRecord.semanticPayload.datasetHash);
 assert.equal(record.loadProducerQualificationSha256,
   candidateRecord.semanticPayload.loadProducerQualificationSha256);
 
-assert.deepEqual(record.tolerancePolicy, {
+const tolerancePolicy = {
   absolute: 1e-12,
   relative: 1e-11,
   formula: 'max(abs, max(1, |expected|) * rel)',
+};
+assert.deepEqual(record.tolerancePolicy, tolerancePolicy);
+
+const oracle = oracleRecord.semanticPayload;
+const loadComponents = ['P', 'Vc', 'Vl', 'Mc', 'Ml', 'Mt'];
+assert.equal(record.physicalWrcLoadComparisons.length, loadComponents.length);
+record.physicalWrcLoadComparisons.forEach((row, index) => {
+  const component = loadComponents[index];
+  assert.equal(row.component, component,
+    `EMP1_REQUALIFICATION_WRC_LOAD_COMPONENT_ORDER:${index}`);
+  assert.ok(Number.isFinite(row.actual), `EMP1_REQUALIFICATION_WRC_LOAD_ACTUAL:${component}`);
+  assert.ok(Number.isFinite(row.expected), `EMP1_REQUALIFICATION_WRC_LOAD_EXPECTED:${component}`);
+  assert.equal(row.expected, oracle.expectedPhysical.wrcLoads[component],
+    `EMP1_REQUALIFICATION_WRC_LOAD_ORACLE_DRIFT:${component}`);
+  const absoluteDelta = Math.abs(row.actual - row.expected);
+  assert.equal(row.absoluteDelta, absoluteDelta,
+    `EMP1_REQUALIFICATION_WRC_LOAD_DELTA_DRIFT:${component}`);
+  assert.equal(absoluteDelta, 0,
+    `EMP1_REQUALIFICATION_WRC_LOAD_NONZERO_DRIFT:${component}`);
 });
-assert.equal(record.physicalWrcLoadComparisons.length, 6);
-assert.ok(record.physicalWrcLoadComparisons.every((row) =>
-  typeof row.component === 'string'
-    && Number.isFinite(row.actual)
-    && Number.isFinite(row.expected)
-    && row.absoluteDelta === 0));
+
+const families = ['circumferential', 'longitudinal', 'shear', 'stressIntensity'];
+const locations = oracle.expected.locations;
+assert.deepEqual(locations, ['Au', 'Al', 'Bu', 'Bl', 'Cu', 'Cl', 'Du', 'Dl']);
 assert.equal(record.stressComparisonsRequired, 32);
 assert.equal(record.stressComparisonsPassed, 32);
-assert.ok(Number.isFinite(record.maxAbsoluteDelta) && record.maxAbsoluteDelta >= 0);
-assert.ok(Number.isFinite(record.maxRelativeDelta) && record.maxRelativeDelta >= 0);
-assert.ok(Number.isFinite(record.maxToleranceRatio)
-  && record.maxToleranceRatio >= 0
-  && record.maxToleranceRatio <= 1);
-assert.ok(record.governingComparison && typeof record.governingComparison === 'object');
-assert.equal(record.governingComparison.toleranceRatio, record.maxToleranceRatio);
-assert.equal(record.stressIntensity.length, 8);
-record.stressIntensity.forEach((value) => assert.ok(Number.isFinite(value)));
+assert.ok(Array.isArray(record.stressComparisons),
+  'EMP1_REQUALIFICATION_STRESS_COMPARISON_MATRIX_REQUIRED');
+assert.equal(record.stressComparisons.length, 32,
+  'EMP1_REQUALIFICATION_STRESS_COMPARISON_MATRIX_INCOMPLETE');
+
+const recomputed = [];
+let rowIndex = 0;
+for (const family of families) {
+  const expectedFamily = oracle.expected[family];
+  assert.equal(expectedFamily.length, locations.length,
+    `EMP1_REQUALIFICATION_ORACLE_FAMILY_LENGTH:${family}`);
+  for (let locationIndex = 0; locationIndex < locations.length; locationIndex += 1) {
+    const row = record.stressComparisons[rowIndex];
+    const location = locations[locationIndex];
+    const expected = expectedFamily[locationIndex];
+    assert.equal(row.family, family,
+      `EMP1_REQUALIFICATION_STRESS_FAMILY_ORDER:${rowIndex}`);
+    assert.equal(row.location, location,
+      `EMP1_REQUALIFICATION_STRESS_LOCATION_ORDER:${rowIndex}`);
+    assert.ok(Number.isFinite(row.actual),
+      `EMP1_REQUALIFICATION_STRESS_ACTUAL:${family}:${location}`);
+    assert.ok(Number.isFinite(row.expected),
+      `EMP1_REQUALIFICATION_STRESS_EXPECTED:${family}:${location}`);
+    assert.equal(row.expected, expected,
+      `EMP1_REQUALIFICATION_STRESS_ORACLE_DRIFT:${family}:${location}`);
+    const tolerance = Math.max(
+      tolerancePolicy.absolute,
+      Math.max(1, Math.abs(expected)) * tolerancePolicy.relative,
+    );
+    const absoluteDelta = Math.abs(row.actual - expected);
+    const relativeDelta = absoluteDelta / Math.max(1, Math.abs(expected));
+    const toleranceRatio = absoluteDelta / tolerance;
+    assert.equal(row.tolerance, tolerance,
+      `EMP1_REQUALIFICATION_STRESS_TOLERANCE_DRIFT:${family}:${location}`);
+    assert.equal(row.absoluteDelta, absoluteDelta,
+      `EMP1_REQUALIFICATION_STRESS_ABSOLUTE_DELTA_DRIFT:${family}:${location}`);
+    assert.equal(row.relativeDelta, relativeDelta,
+      `EMP1_REQUALIFICATION_STRESS_RELATIVE_DELTA_DRIFT:${family}:${location}`);
+    assert.equal(row.toleranceRatio, toleranceRatio,
+      `EMP1_REQUALIFICATION_STRESS_TOLERANCE_RATIO_DRIFT:${family}:${location}`);
+    assert.ok(toleranceRatio <= 1,
+      `EMP1_REQUALIFICATION_STRESS_OUTSIDE_TOLERANCE:${family}:${location}`);
+    recomputed.push({
+      family,
+      location,
+      actual: row.actual,
+      expected,
+      absoluteDelta,
+      relativeDelta,
+      tolerance,
+      toleranceRatio,
+    });
+    rowIndex += 1;
+  }
+}
+assert.equal(rowIndex, 32);
+
+const maxAbsoluteDelta = Math.max(...recomputed.map((row) => row.absoluteDelta));
+const maxRelativeDelta = Math.max(...recomputed.map((row) => row.relativeDelta));
+const governing = recomputed.reduce((current, row) =>
+  row.toleranceRatio > current.toleranceRatio ? row : current, recomputed[0]);
+assert.equal(record.maxAbsoluteDelta, maxAbsoluteDelta,
+  'EMP1_REQUALIFICATION_MAX_ABSOLUTE_DELTA_DRIFT');
+assert.equal(record.maxRelativeDelta, maxRelativeDelta,
+  'EMP1_REQUALIFICATION_MAX_RELATIVE_DELTA_DRIFT');
+assert.equal(record.maxToleranceRatio, governing.toleranceRatio,
+  'EMP1_REQUALIFICATION_MAX_TOLERANCE_RATIO_DRIFT');
+assert.deepEqual(record.governingComparison, governing,
+  'EMP1_REQUALIFICATION_GOVERNING_COMPARISON_DRIFT');
+assert.ok(record.maxToleranceRatio >= 0 && record.maxToleranceRatio <= 1);
+
+const stressIntensityRows = recomputed
+  .filter((row) => row.family === 'stressIntensity')
+  .map((row) => row.actual);
+assert.deepEqual(record.stressIntensity, stressIntensityRows,
+  'EMP1_REQUALIFICATION_STRESS_INTENSITY_VECTOR_DRIFT');
 
 assertSubordinate(record.subordinateEvidence.independentDecoupling,
   'scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs',
@@ -105,13 +189,14 @@ assert.deepEqual(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS, [
 ]);
 
 console.log(JSON.stringify({
-  schema: 'emp1-wrc537-gamma5-requalification-observation-check/v1',
-  status: 'PASS_REQUALIFICATION_OBSERVATION_INTEGRITY_ROUTE_STILL_SUSPENDED',
+  schema: 'emp1-wrc537-gamma5-requalification-observation-check/v2',
+  status: 'PASS_REQUALIFICATION_OBSERVATION_FULL_MATRIX_INTEGRITY_ROUTE_STILL_SUSPENDED',
   observedHeadSha: record.observedHeadSha,
   observationSemanticHash,
   candidateQualificationSha256: record.candidateQualificationSha256,
   oracleSemanticHash: record.oracleSemanticHash,
-  stressComparisonsPassed: record.stressComparisonsPassed,
+  physicalWrcLoadsPassed: loadComponents.length,
+  stressComparisonsPassed: record.stressComparisons.length,
   maxToleranceRatio: record.maxToleranceRatio,
   productionRouteAuthorized: false,
   authorizationChangeApplied: false,

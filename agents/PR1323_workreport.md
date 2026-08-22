@@ -11,7 +11,7 @@ TAKEOVER_AUTHORITY: WRITE_ALLOWED
 
 EXECUTION_MODE: MANUAL
 AUTO_STATE: NOT_ACTIVE
-SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION
+SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1321
 PHASE_PROGRESSION: MANUAL
 MERGE_AUTHORITY: OWNER_ONLY
 
@@ -20,72 +20,52 @@ SOURCE_TASK: Issue #1321
 PR_OR_WIP: PR1323
 BRANCH: agent/issue-1321-load-calc-effective-values
 
-PR_HEAD_OBSERVED: df23445c0231cb3fc9704fa4f9cb1de2d159f9c2
-REPORT_BASIS_HEAD: df23445c0231cb3fc9704fa4f9cb1de2d159f9c2
+PR_HEAD_OBSERVED: 4605bf80e68e5aae6b363e0bffdf9bbaae730dc3
+REPORT_BASIS_HEAD: 4605bf80e68e5aae6b363e0bffdf9bbaae730dc3
 MAIN_HEAD_LAST_CHECKED: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 MERGE_BASE: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-REPORT_SYNC: CURRENT
+REPORT_SYNC: CURRENT_TO_PRODUCTION_HEAD
 
 APPENDIX_A_STATUS: CURRENT
-GROUNDING_EPOCH: GE-003
+GROUNDING_EPOCH: GE-004
 CURRENT_TAKEOVER: NONE
 
-CURRENT_STAGE: STACK_3_SOURCE_INTEGRATED / EXACT_RUNTIME_QUALIFICATION_PENDING
-LAST_COMPLETED_STAGE: ROUTE-LOCAL SUPPORT-LOAD COMPLETENESS MECHANICS
+CURRENT_STAGE: STACK_4_ACTIVE_V1_V2_EFFECTIVE_VALUE_CUTOVER_SOURCE_INTEGRATED
+LAST_COMPLETED_STAGE: ACTIVE AUTHORIZED GRAVITY V1/V2 TARGET-LEVEL EFFECTIVE EXECUTION PROJECTION
 CURRENT_BLOCKER: NO RELEVANT EXACT-HEAD LOAD-CALC EXECUTION OBSERVED
-HIGHEST_RISK: downstream value-resolution bypasses still allow support/empirical consumers to re-decide Project Data/default authority independently
-LAST_DURABLE_CHECKPOINT: Stack 3 mechanics + route-local anti-cancellation benchmark + regression matrix reconciliation
+HIGHEST_RISK: historical V3-V8 package wrappers still own separate enrichment/overlay authority paths and do not inherit the V2 cutover
+LAST_DURABLE_CHECKPOINT: V1/V2 ledger execution projection + selector-collision falsifier + V2/V3 method-lane falsifier registered
 
-EXACT_NEXT_ACTION: make partial-result coverage/overhang/unallocated evidence operator-visible, then cut support/empirical property reads over to the canonical effective-value resolver.
+EXACT_NEXT_ACTION: fix guided UI partial-status message/routing, then reconcile whether V3-V8 are supported production lanes or historical compatibility packages before changing their authority contracts.
 ```
 
 ## 2. Handover in 60 Seconds
 
-### What is now true
-PR #1323 remains the single draft carrier for Issue #1321. Current source has three stacks:
+PR #1323 is the single draft carrier for Issue #1321. Do not create a second PR and do not merge without owner authorization.
 
-1. **Product defaults:** `LOAD_CALC_STANDARD_DEFAULTS_V1` fills only empty Project Data evidence fields and records `PRODUCT_DEFAULT` identity/hash; populated Project Data shadows it.
-2. **AUTO gravity method:** exact on-route CoG selects V3; missing CoG may use logged V2 midpoint fallback; known off-route/ambiguous/invalid CoG or explicit moment does not silently fall back.
-3. **Support-load completeness mechanics:** bracketed reactions use statics; one-support/overhang force retains signed `F*a` member/boundary-transfer moment; no-support known load is explicitly unallocated; invalid mechanics/data remain `FAILED`; known incomplete but accounted cases publish `CALCULATED_WITH_EXCEPTIONS`; force and first moment must close per route chainage frame.
+### What is now true
+
+1. **Product defaults** are versioned, non-destructive, evidence-bearing and hash-bound. They fill empty Project Data only and never masquerade as source evidence.
+2. **AUTO gravity selection** distinguishes qualified CoG, missing-CoG midpoint fallback, and known eccentric/invalid/moment cases that must not fall back.
+3. **Support-load mechanics** preserve force and first moment for bracketed, overhang and unsupported routes; valid incompleteness publishes `CALCULATED_WITH_EXCEPTIONS`; invalid/unsolved mechanics are `FAILED`; equilibrium is checked per route.
+4. **Effective-value precedence** is now aligned to Issue #1321 at the composition seam: `ACCEPTED_OVERRIDE → SOURCE_EXPLICIT → SOURCE_INHERITED → EXACT_APPROVED_MASTER → CONFIGURED_DERIVATION → PROJECT_POLICY (only where field-owned) → PROJECT_CONFIGURED_DEFAULT → PRODUCT_DEFAULT`.
+5. **`PRODUCT_DEFAULT` is first-class in the field registry** only on fields where explicitly permitted.
+6. **Authorized empirical input now carries a target-level effective-value ledger** built from the authorized common-enriched baseline with source kind/hash/locator/review custody preserved.
+7. **V1 authorized gravity execution** uses `authorized-empirical-effective-execution-projection/v1` whenever the input carries the ledger. The six legacy mass/section maps are rebuilt from selected target values with no `DEFAULT` selector.
+8. **V2 authorized execution now uses that same projection** for both `CHAINAGE_TRIBUTARY_SPAN_V2` and `CHAINAGE_TRIBUTARY_SPAN_V3_COG`. Historical ledger-less receipts retain the compatibility overlay and historical hash projection.
+9. **Target specificity is preserved.** Synthetic execution-local material/insulation/component selectors prevent two lines/components that share an original code/catalog key from collapsing distinct reviewed effective values.
+10. A temporary parallel calculation-view/context implementation was created during investigation, then removed after detecting the existing execution projection. Effective diff contains one production projection seam, not two.
 
 ### What remains unfinished
-- first-class `PRODUCT_DEFAULT` in the canonical entity-field resolver;
-- final authority precedence reconciliation;
-- removal of raw Project Data/default re-resolution from `support-load-distribution-v3.js` and other empirical consumers;
-- source/project vertical-axis consumption instead of hard-coded `Z_UP`;
-- Load Calc UI treatment of partial results, coverage, unallocated force and overhang moment;
-- historical V3–V8 authorized status-validator migration where those package lanes remain supported;
-- exact focused tests, aggregate, build/browser and relevant CI execution.
 
-### What has been proven
-- SOURCE_INSPECTION: product defaults never overwrite populated Project Data.
-- SOURCE_INSPECTION: AUTO does not use try/catch fallback and does not erase known eccentricity/moment.
-- SOURCE_INSPECTION: zero-support known loads receive no support contributor/reaction path.
-- LOCAL ANALYTICAL REPRODUCTION: 18 kN case closes at 15 kN reaction-resolved + 3 kN unallocated; overhang transfer moment = 6 kN·m; residuals = 0.
-- SOURCE_INSPECTION: route-local closure prevents equal/opposite route moment residuals from cancelling into a valid case.
+- `support-load-distribution-v3.js` still contains the historical direct Project Data resolver and `DEFAULT` fallback for callers that bypass authorized execution. The active ledger-bearing V1/V2 paths neutralize this by supplying scrubbed exact maps, but direct/legacy calls remain compatibility debt.
+- Historical `authorized-empirical-load-execution-v3.js` through V8 do **not** inherit V2; V3 starts a separate Package-5A component-weight overlay path. Do not bulk-edit them until production support/authority semantics are classified.
+- The common-enriched baseline effective ledger currently carries published source/master/review/derivation values. Project-configured/product-default entity candidates still need deliberate composition where Issue #1321 expects routine missing values to resolve.
+- `sourceAxisBasis: 'Z_UP'` remains hard-coded in support distribution/support results.
+- `load-calc-consumer-controller.js::handleEngineeringChange` still labels `CALCULATED_WITH_EXCEPTIONS` as blocked and does not auto-open Loads, although the view now renders current partial coverage/unallocated/transfer evidence.
+- exact focused scripts, aggregate suite, build, browser/e2e and relevant exact-head CI remain NOT_RUN/NOT_OBSERVED.
 
-### What has NOT been proven / NOT_RUN
-Exact repository execution of all new/updated Node scripts, aggregate Non-FEA suite, build, browser/e2e and relevant exact-head CI remain NOT_RUN/NOT_OBSERVED. Unrelated EMP.1 workflows are NOT_APPLICABLE.
-
-### Exact next action
-UI/evidence integration for `CALCULATED_WITH_EXCEPTIONS`, then resolver cutover/removal of local engineering-value authority paths.
-
-## 3. Repository Ground Truth
-
-- GE-003 live PR check: OPEN, DRAFT, mergeable.
-- Main remains `a222e18c38bd20fb55c1c6c95f724f40e40e8532`; base drift = 0.
-- PR source tree observed through `df23445c0231cb3fc9704fa4f9cb1de2d159f9c2`.
-- `df23445c...` is a no-content source rewrite attempt; it does not add a changed path and does not alter production semantics from the preceding route-local mechanics tree.
-- No submitted reviews or review threads were observed during this cycle.
-- Changed-file count: **18**; ledger count: **18**; unexplained paths: **0**.
-- No `.github/workflows/*` changes.
-- `agents/MASTER_INDEX.md` remains absent on main.
-
-## 4. Mission / Acceptance Boundary
-
-Issue #1321 target: structurally readable piping should normally calculate using explicit, visible assumptions rather than routine blockers, while invalid geometry/data, irrecoverable ownership, unsupported mechanics, lost loads, singular/numerically invalid states and equilibrium failures remain fail-closed.
-
-Non-negotiable invariants:
+## 3. Governing Engineering Invariants
 
 ```text
 F_evaluated(route) = F_reaction(route) + F_unallocated(route)
@@ -94,213 +74,173 @@ M_evaluated(route) = M_reaction(route) + M_boundary_transfer(route) + M_unalloca
 
 - no known load disappears;
 - zero qualified support means zero invented reaction;
-- overhang `F*a` is retained as member/boundary-transfer demand, not silently labelled a rotational REST reaction;
-- known CoG eccentricity/explicit moment cannot be erased by V2 fallback;
-- invalid pipe dimensions/application authority remain `FAILED`;
-- missing/defaultable evidence may be an exception, not a fabricated value;
+- overhang `F*a` remains member/boundary-transfer demand, not a fabricated rotational REST reaction;
+- known CoG eccentricity or explicit moment cannot be erased by midpoint fallback;
+- accepted reviewed override supersedes source exactly as Issue #1321 specifies;
+- lower authority cannot displace a higher-authority effective value;
+- same-authority unequal values fail closed;
+- unit mismatch is not silently converted by the resolver/projection;
+- target-specific values cannot be collapsed back to material/catalog-key authority;
 - engineering tolerances are unchanged.
 
-## 5. Current Implementation State
+## 4. Current Implementation State
 
-| Work item | State | Integration | Validation |
+| Work item | State | Active integration | Validation state |
 |---|---|---|---|
-| Product-default profile | IMPLEMENTED | common-input effective Project Data | source inspected; exact runtime NOT_RUN |
-| Product-default hash binding | IMPLEMENTED | common input | source inspected; exact runtime NOT_RUN |
-| Gravity AUTO selector | IMPLEMENTED | support-load store | source inspected; exact runtime NOT_RUN |
-| Static point/uniform accounting | IMPLEMENTED | production support distribution | analytical reproduction PASS; exact script NOT_RUN |
-| `CALCULATED_WITH_EXCEPTIONS` | IMPLEMENTED | distribution + active V1/V2 authorized publication | source inspected; exact runtime NOT_RUN |
-| Invalid-vs-missing classification | IMPLEMENTED | distribution | source inspected; 16-case runtime NOT_RUN |
-| Route-local equilibrium | IMPLEMENTED | distribution | source inspected; anti-cancellation runtime NOT_RUN |
-| Partial result UI | NOT_STARTED | active Load Calc view still legacy | NOT_RUN |
-| Unified entity-field resolver | PARTIAL | common path only | source inspected |
-| Raw Project Data consumer cutover | NOT_STARTED | support/beam paths still local | NOT_RUN |
+| Product-default profile/provider | IMPLEMENTED | common input + authorized profile | source inspected; exact runtime NOT_RUN |
+| Issue #1321 effective precedence | IMPLEMENTED_SOURCE | field registry + effective resolver | source inspected; exact runtime NOT_RUN |
+| Target-level authorized effective ledger | IMPLEMENTED | newly compiled authorized input | source inspected; exact runtime NOT_RUN |
+| Ledger-only V1 gravity projection | IMPLEMENTED | active V1 | source inspected; exact runtime NOT_RUN |
+| Ledger-only V2/V3-method projection | IMPLEMENTED | active V2 wrapper | source inspected; exact runtime NOT_RUN |
+| Selector-collision isolation | IMPLEMENTED | execution projection | falsifier added; exact runtime NOT_RUN |
+| AUTO method selector | IMPLEMENTED | support-load store | source inspected; exact runtime NOT_RUN |
+| Static/route-local support accounting | IMPLEMENTED | support distribution | independent analytical reproduction PASS; exact scripts NOT_RUN |
+| Partial-result Load Calc view | IMPLEMENTED | view | source inspected; browser NOT_RUN |
+| Partial-result controller message/routing | OPEN | controller remains legacy | NOT_RUN |
+| Direct support-distribution raw resolver removal | PARTIAL | active V1/V2 bypass neutralized; direct/legacy callers remain | NOT_RUN |
+| V3-V8 package authority convergence | OPEN | separate historical wrappers | NOT_RUN |
+| Source/up-axis effective value | OPEN | support distribution still `Z_UP` | NOT_RUN |
 
-## 6. Active Engineering Item Register
+## 5. Engineering Item Register
 
 | ID | Type | Severity | Status | Summary |
 |---|---|---:|---|---|
-| ISS-001 | ISS | HIGH | OPEN | support distribution still owns raw Project Data engineering-value/default selection |
-| ISS-002 | ISS | HIGH | PARTIALLY_RESOLVED | partial reactions now publish in active mechanics; UI/historical wrapper presentation remains |
-| ISS-003 | ISS | HIGH | RESOLVED_SOURCE | overhang/unallocated force+moment custody and route-local closure implemented |
-| ISS-004 | ISS | HIGH | OPEN | `PRODUCT_DEFAULT` not yet a canonical entity-field authority |
-| ISS-005 | ISS | MEDIUM | OPEN | historical V3–V8 execution validators retain legacy status enum |
-| ISS-006 | ISS | HIGH | OPEN | active Load Calc UI treats partial current reactions as historical/blocked presentation |
-| RISK-001 | RISK | CRITICAL | MITIGATED | zero-support loads cannot create reactions in Stack 3 accounting |
-| RISK-002 | RISK | HIGH | OPEN | resolver precedence still differs from final issue design and is not unified across consumers |
-| RISK-003 | RISK | HIGH | MITIGATED_SOURCE | per-route equilibrium prevents cross-route moment-residual cancellation |
-| DEC-001 | DEC | HIGH | ACTIVE | defaults are assumptions with provenance/hash, never fake source evidence |
-| DEC-002 | DEC | HIGH | ACTIVE | accounted incompleteness = `CALCULATED_WITH_EXCEPTIONS`; invalid/unsolved = `FAILED` |
-| DEC-003 | DEC | HIGH | ACTIVE | one-support overhang retains vertical force plus signed `F*a` member/boundary-transfer moment |
-| DEC-004 | DEC | HIGH | ACTIVE | no-support known load stays unallocated; proximity cannot create support authority |
+| ISS-001 | ISS | HIGH | PARTIALLY_RESOLVED | active V1/V2 no longer obtain mass/section values from raw Project Data; direct legacy distribution still can |
+| ISS-002 | ISS | HIGH | RESOLVED_SOURCE | bracketed/overhang/unallocated force and moment custody implemented |
+| ISS-003 | ISS | HIGH | RESOLVED_SOURCE | route-local equilibrium prevents cross-route residual cancellation |
+| ISS-004 | ISS | HIGH | RESOLVED_SOURCE | effective resolver precedence and first-class PRODUCT_DEFAULT registry aligned to #1321 |
+| ISS-005 | ISS | HIGH | OPEN | V3-V8 package wrappers retain independent enrichment/overlay authority paths and legacy status contracts |
+| ISS-006 | ISS | MEDIUM | OPEN | controller presents `CALCULATED_WITH_EXCEPTIONS` as blocked |
+| ISS-007 | ISS | HIGH | OPEN | entity-level project/product configured defaults are not yet composed into the authorized baseline ledger for all routine-missing cases |
+| ISS-008 | ISS | MEDIUM | OPEN | support distribution publishes hard-coded `Z_UP` |
+| RISK-001 | RISK | CRITICAL | MITIGATED_SOURCE | zero-support loads cannot create reactions |
+| RISK-002 | RISK | HIGH | MITIGATED_ACTIVE_PATH | same original material/insulation/catalog selectors cannot collapse distinct active V1/V2 effective values |
+| RISK-003 | RISK | HIGH | OPEN | direct/historical execution paths can still own different value authority |
+| DEC-001 | DEC | HIGH | ACTIVE | one production target-level projection seam; duplicate adapter removed |
+| DEC-002 | DEC | HIGH | ACTIVE | historical ledger-less receipts remain readable/valid under old hash projection |
+| DEC-003 | DEC | HIGH | ACTIVE | unit-preserving resolver; explicit consumer unit checks, no silent mm↔m conversion |
+| DEC-004 | DEC | HIGH | ACTIVE | V3-V8 will be reconciled deliberately, not by global status/overlay replacement |
 
-## 7. Current Technical Diagnosis
+## 6. Numerical / Authority Falsifiers Encoded
 
-The principal mechanics defect is now addressed. The next architectural defect is value authority: common input has an effective/default path, but support-load and other empirical runtimes can still read/re-resolve raw Project Data independently. Issue #1321 is not complete until those consumers receive one effective engineering-value ledger and no longer own local precedence/fallback logic.
+- 18 kN mechanics: 12 kN bracketed → 7.2/4.8 kN; 3 kN overhang → 3 kN + 6 kN·m transfer; 3 kN unsupported → 3 kN unallocated + 15 kN·m first moment; zero residual.
+- dropping unsupported 3 kN must fail force/moment custody.
+- equal/opposite route moment residuals with zero aggregate residual must still fail per-route closure.
+- accepted override must beat explicit source under Issue #1321 precedence.
+- unequal same-authority candidates must block.
+- changing a shadowed product default remains semantic-hash-visible.
+- execution projection emits no `DEFAULT` selector for the six mass/section maps.
+- same original material code may resolve to different target densities without collision.
+- same original insulation code may resolve to different target densities without collision.
+- same original component catalog key may resolve to different target masses without collision.
+- missing/ambiguous component target identity and unit mismatch fail closed.
+- V2 and V3-CoG method lanes must use the same effective execution projection for ledger-bearing input; a deliberately wrong compatibility overlay must not drive the calculation.
 
-Current falsifiers encoded in source:
-- product default cannot shadow populated Project Data;
-- changing a product default changes semantic hashes;
-- missing CoG V2 fallback is logged;
-- known eccentric CoG/moment cannot fall back;
-- dropped 3 kN branch fails force/moment custody;
-- one-support overhang retains `F*a`;
-- unsupported branch has no support contributor IDs;
-- invalid diameter/chainage remain `FAILED`;
-- equal/opposite route residuals cannot cancel into PASS.
+## 7. Validation Ledger
 
-## 8. Current Validation
+### PASS — independently observed
 
-### VAL-001 Product defaults
-Status: PASS
-Observation: SOURCE_INSPECTION
-Oracle: IMPLEMENTATION_COUPLED
-Exact runtime: NOT_RUN
+**VAL-001 18 kN analytical reproduction**
+- Observation: local arithmetic execution independent of repository runtime.
+- Oracle: analytical statics/accounting.
+- Result: 18 kN source = 15 kN reaction-resolved + 3 kN unallocated; transfer moment 6 kN·m; unallocated first moment 15 kN·m; force/moment residuals zero.
+- Limitation: not the exact repository Node script.
 
-### VAL-002 AUTO method selection
-Status: PASS
-Observation: SOURCE_INSPECTION
-Oracle: IMPLEMENTATION_COUPLED
-Exact runtime: NOT_RUN
+### PASS — source inspection / implementation-coupled
 
-### VAL-003 18 kN analytical reproduction
-Status: PASS
-Observation: LOCAL_EXECUTION
-Oracle: ANALYTICAL
-Expected/actual: 12 kN bracketed -> 7.2/4.8 kN; 3 kN overhang -> 3 kN + 6 kN·m transfer; 3 kN unsupported -> 3 kN + 15 kN·m first moment; force/moment residuals zero.
-Limitation: independent reproduction of implemented equations, not exact repository script execution.
+- product defaults do not overwrite populated Project Data;
+- Issue #1321 authority precedence is encoded in effective resolver/registry;
+- execution projection rebuilds all six mass/section maps and emits no `DEFAULT` key;
+- target-specific synthetic selectors prevent material/insulation/catalog collision;
+- V1 and V2 ledger-bearing execution wrappers select projected dataset/profile;
+- V2 receipt hashes optionally bind `effectiveExecutionProjectionSemanticHash` while historical receipts retain legacy projection;
+- CoG authority audit does not use `CATALOG_KEY`, so cloned execution-only component selector cannot alter CoG classification.
 
-### VAL-004 `support-load-static-accounting-check.mjs`
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: ANALYTICAL
+### NOT_RUN / NOT_OBSERVED
 
-### VAL-005 `support-load-partial-distribution-check.mjs`
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: ANALYTICAL
-Expected: 18/15/3 kN custody, 6 kN·m transfer, zero unsupported-branch reaction, route checks PASS.
+- `node scripts/non-fea-effective-value-resolver-check.mjs`
+- `node scripts/authorized-empirical-effective-value-ledger-check.mjs`
+- `node scripts/authorized-empirical-effective-execution-projection-check.mjs`
+- `node scripts/authorized-empirical-effective-execution-projection-collision-check.mjs`
+- `node scripts/authorized-empirical-v2-effective-execution-check.mjs`
+- product-default/AUTO/static/partial/route-local focused scripts
+- `node scripts/run-non-fea-checks.mjs`
+- build
+- browser/e2e
+- relevant exact-head CI.
 
-### VAL-006 `support-load-route-equilibrium-check.mjs`
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: ANALYTICAL
-Expected: aggregate moment residual exactly zero while two opposite route residuals force overall `FAILED`.
+Visible unrelated EMP.1 workflow runs are NOT_APPLICABLE to this Load Calc qualification.
 
-### VAL-007 updated 16-case completeness/fail-closed matrix
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: IMPLEMENTATION_COUPLED + ENGINEERING_INVARIANT
+## 8. Changed-File Ledger
 
-### VAL-008 Non-FEA aggregate
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: IMPLEMENTATION_COUPLED
+GitHub changed-file count at `4605bf80...`: **30**. Ledger count: **30**. Unexplained: **0**.
 
-### VAL-009 visible unrelated workflows
-Status: NOT_APPLICABLE
-Observation: REMOTE_EXECUTION
-Oracle: NONE
-Reason: observed EMP.1 workflows are outside this Load Calc change and cannot qualify it.
-
-## 9. Changed-File Ledger
-
-GitHub count **18 / ledger 18 / unexplained 0**:
-
-1. `agents/PR1323_workreport.md` — recovery
+1. `agents/PR1323_workreport.md` — living recovery report
 2. `agents/claims/PR1323.yaml` — coordination claim
-3. `agents/status/PR1323.yaml` — machine status
-4. `scripts/empirical-authorized-blocked-cases-check.mjs` — completeness vs failure matrix
-5. `scripts/empirical-gravity-method-selection-check.mjs` — AUTO falsifier
-6. `scripts/non-fea-product-default-profile-check.mjs` — default authority/hash falsifier
-7. `scripts/run-non-fea-checks.mjs` — aggregate registration
-8. `scripts/support-load-partial-distribution-check.mjs` — full 18 kN production fixture
-9. `scripts/support-load-route-equilibrium-check.mjs` — anti-cancellation fixture
-10. `scripts/support-load-static-accounting-check.mjs` — analytical accounting fixture
-11. `src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js` — explicit method status compatibility
-12. `src/workspace/engineering-loads/authorized-empirical-load-execution.js` — active V1 status compatibility
-13. `src/workspace/engineering-loads/empirical-gravity-method-selection.js` — AUTO receipt
-14. `src/workspace/engineering-loads/engineering-support-load-store.js` — AUTO integration
-15. `src/workspace/engineering-loads/support-load-distribution-v3.js` — completeness/status/route closure
-16. `src/workspace/engineering-loads/support-load-static-accounting.js` — statics kernel
-17. `src/workspace/non-fea-common-input-runtime.js` — effective Project Data integration
-18. `src/workspace/project-data/non-fea-product-default-profile.js` — product-default provider
+3. `agents/status/PR1323.yaml` — machine recovery state
+4. `scripts/authorized-empirical-effective-execution-projection-check.mjs` — ledger-only execution/numerical projection falsifier
+5. `scripts/authorized-empirical-effective-execution-projection-collision-check.mjs` — same-selector target-collision falsifier
+6. `scripts/authorized-empirical-effective-value-ledger-check.mjs` — baseline-to-effective-ledger authority falsifier
+7. `scripts/authorized-empirical-product-default-convergence-check.mjs` — product-default authorized-profile convergence
+8. `scripts/authorized-empirical-v2-effective-execution-check.mjs` — V2/V3-method ledger execution falsifier
+9. `scripts/empirical-authorized-blocked-cases-check.mjs` — exception vs failure matrix
+10. `scripts/empirical-gravity-method-selection-check.mjs` — AUTO selector falsifier
+11. `scripts/non-fea-effective-value-resolver-check.mjs` — precedence/conflict/hash falsifier
+12. `scripts/non-fea-product-default-profile-check.mjs` — product-default authority/hash falsifier
+13. `scripts/run-non-fea-checks.mjs` — aggregate registration
+14. `scripts/support-load-partial-distribution-check.mjs` — 18 kN full production fixture
+15. `scripts/support-load-route-equilibrium-check.mjs` — route anti-cancellation fixture
+16. `scripts/support-load-static-accounting-check.mjs` — static analytical fixture
+17. `src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js` — target-level ledger-to-gravity projection
+18. `src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js` — baseline authority adapter/ledger
+19. `src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js` — V2/V3-method effective projection cutover + legacy receipt compatibility
+20. `src/workspace/engineering-loads/authorized-empirical-load-execution.js` — V1 effective projection cutover/status compatibility/product defaults
+21. `src/workspace/engineering-loads/authorized-empirical-load-input.js` — effective ledger bound into newly compiled authorized input
+22. `src/workspace/engineering-loads/empirical-gravity-method-selection.js` — AUTO receipt/policy
+23. `src/workspace/engineering-loads/engineering-support-load-store.js` — AUTO integration
+24. `src/workspace/engineering-loads/support-load-distribution-v3.js` — completeness/status/route-local accounting
+25. `src/workspace/engineering-loads/support-load-static-accounting.js` — statics kernel
+26. `src/workspace/load-calc-consumer-view.js` — current partial-result coverage/unallocated/transfer presentation
+27. `src/workspace/non-fea-common-input-runtime.js` — non-destructive product-default effective Project Data path
+28. `src/workspace/project-data/non-fea-effective-value-resolver.js` — canonical effective-value composition seam
+29. `src/workspace/project-data/non-fea-field-registry.js` — first-class authority paths including PRODUCT_DEFAULT
+30. `src/workspace/project-data/non-fea-product-default-profile.js` — product-default provider/profile
 
-## 10. Review / CI / Coordination
+No `.github/workflows/*` paths changed.
 
-- PR remains DRAFT; merge authority OWNER_ONLY.
-- No relevant Load Calc CI observed.
-- No review threads processed because none were observed.
-- Coordination state remains `COORDINATION_REQUIRED`, no hard exact-file collision observed.
-- No workflow changes.
+## 9. Repository / Review Ground Truth
 
-## 11. Continuation State
+- PR #1323: OPEN, DRAFT, mergeable at last check.
+- Base/main: `a222e18c38bd20fb55c1c6c95f724f40e40e8532`; no base drift observed.
+- Production head used for this report: `4605bf80e68e5aae6b363e0bffdf9bbaae730dc3`.
+- Changed files: 30.
+- No merge authorization has been given.
+- No workflow modification authorization has been given.
 
-```text
-Start here:
-  active Load Calc result UI + common effective-value consumer cutover
+## 10. Exact Continuation Order
 
-First UI defect:
-  src/workspace/load-calc-consumer-controller.js::handleEngineeringChange
-  currently labels any non-CALCULATED result as blocked and only auto-opens loads for CALCULATED.
+1. **UI correctness:** change `load-calc-consumer-controller.js::handleEngineeringChange` so `CALCULATED_WITH_EXCEPTIONS` is “complete with exceptions,” auto-opens Loads, and `FAILED` remains failure. Add a focused presentation/controller falsifier.
+2. **Classify V3-V8:** determine which are live supported production packages and which are historical compatibility artifacts. Do not bulk-replace authority/status semantics.
+3. **Entity default composition:** extend the one effective ledger so project-configured/product defaults can resolve routine missing entity values without rebuilding authority independently in consumers. Preserve exact target scope and hashes.
+4. **Direct support distribution:** once all supported callers have an effective ledger, remove/contain `resolveProjectDataDensity()` and raw map precedence from the direct kernel.
+5. **Axis:** replace hard-coded `Z_UP` with effective source/project axis authority and stale/hash binding.
+6. **Qualification:** execute focused checks, aggregate, build/browser/e2e and relevant exact-head CI. Record observed evidence only.
 
-Second UI defect:
-  src/workspace/load-calc-consumer-view.js::caseMarkup
-  current partial reactions are formatted as HISTORICAL because accepted-current requires exact CALCULATED status.
+# Appendix A — Takeover Qualification
 
-Architecture defect:
-  src/workspace/engineering-loads/support-load-distribution-v3.js
-  still contains resolveProjectDataDensity() and local configured-default usage derivation.
+A takeover agent must answer these before changing engineering-critical source:
 
-Do not change:
-  static allocation formulas, support capability by proximity, engineering tolerances, source/master authority.
+1. What exact authority order does Issue #1321 require, and why is `ACCEPTED_OVERRIDE` above explicit source in this task?
+2. Why can target-level material/component values not safely be collapsed back into a map keyed only by material code or catalog key?
+3. For a 12 kN load at x=4 m between supports x=0 and x=10 m, what reactions are required and what equilibrium equations prove them?
+4. For a 3 kN load at x=12 m with only a qualified support at x=10 m, what vertical reaction and signed transfer moment are retained? Why is the REST not claimed as a rotational anchor?
+5. For a known 3 kN branch load with no qualified vertical support, what must remain in the result and what must never be invented?
+6. Why is aggregate first-moment closure insufficient when different route chainage origins exist?
+7. Under what exact CoG condition may AUTO select V2 midpoint fallback, and under what known-eccentric cases must it refuse?
+8. What does `authorized-empirical-effective-execution-projection/v1` scrub and rebuild, and why must it emit no `DEFAULT` selector?
+9. How does the projection preserve two same-catalog valves with different reviewed masses without mutating source data?
+10. Why does changing execution-only `CATALOG_KEY` on the cloned dataset not change CoG authority?
+11. Which active execution wrappers now consume the ledger projection, and which historical V3-V8 wrappers still own separate authority paths?
+12. Which validations in this report are independently observed PASS, and which exact repository tests remain NOT_RUN?
 
-Exact next action:
-  make CALCULATED_WITH_EXCEPTIONS visible/current in the guided UI with coverage/unallocated/transfer evidence; then remove local engineering-value resolution from support distribution.
-```
-
-## 12. Takeover / Custody Chain
-
-- GE-001: issue/skill/main grounded; PR #1323 allocated.
-- GE-002: AUTO stack reconciled; main unchanged; no reviews/threads.
-- GE-003: Stack 3 mechanics, regression impact and active runtime path reconciled; main still unchanged.
-
-# APPENDIX A — IMPLEMENTATION TAKEOVER QUALIFICATION
-
-```text
-PR_HEAD: df23445c0231cb3fc9704fa4f9cb1de2d159f9c2
-MAIN_HEAD: a222e18c38bd20fb55c1c6c95f724f40e40e8532
-GROUNDING_EPOCH: GE-003
-OPEN: ISS-001,004,005,006; RISK-002
-PARTIAL: UI and unified resolver cutover
-NOT_RUN: all exact repository focused/aggregate/build/browser qualification
-NEXT: UI partial-result publication, then effective-value consumer cutover
-APPENDIX_A_STATUS: CURRENT
-```
-
-A1 Production Trace (20): Trace OD, wall, material density, E, alpha, operating/hydro fluid density, insulation and component mass from source/master/project/product candidates through common input to the current support calculation. Identify every remaining raw Project Data/local-default bypass.
-
-A2 Current Failure Isolation (20): Using the active Load Calc controller/view, prove why a current `CALCULATED_WITH_EXCEPTIONS` result is currently messaged as blocked and its numeric reactions rendered as historical. Give the minimal UI-only correction without altering engineering status.
-
-A3 Authority / Invariant (20): State the final resolver precedence and how `PRODUCT_DEFAULT` evidence remains lower-authority and hash-bound. Explain why support-load code must not retain its own `DEFAULT` density precedence once cut over.
-
-A4 Independent Validation (20): Reproduce the 18 kN case and the two-route anti-cancellation case. State exactly which residuals/statuses constitute false PASS.
-
-A5 Next-Commit / Minimal Patch (20): Propose a UI-only partial-result presentation commit, followed by a separate effective-value consumer-cutover commit. Identify exact paths, negative assurances and tests for each.
-
-Takeover threshold: total >= 92/100 and every question >= 17/20; unsafe, fabricated or validation-weakening claims fail regardless of score.
-
-# HISTORICAL RECORD — NOT CURRENT AUTHORITY
-
-## Stage Execution Log
-- Stack 1: product-default effective Project Data.
-- Stack 2: deterministic gravity AUTO selector.
-- Stack 3A: static accounting kernel + 18 kN benchmark.
-- Stack 3B: completeness statuses + authorized V1/V2 publication.
-- Stack 3C: invalid-vs-missing 16-case matrix.
-- Stack 3D: per-route first-moment closure + anti-cancellation benchmark.
-
-## Recovery / Salvage Decisions
-None.
-
-## Prior Takeovers
-None.
+Any answer that proposes proximity-based support assignment, silent midpoint fallback for known eccentricity, source-first precedence contrary to #1321, hidden unit conversion, or treating NOT_RUN as PASS fails takeover qualification.

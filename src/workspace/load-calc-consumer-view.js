@@ -1,110 +1,401 @@
-import { createElement } from './dom-helpers.js';
-import { classifyLoadCalcResultPresentation } from './load-calc-result-presentation.js';
-import { TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM } from './topology-edit/topology-edit-gap-autofix-policy.js';
-
-const VIEW_TABS = Object.freeze([
-  ['topology', 'Topology'],
-  ['project-data', 'Project Data'],
-  ['masters', 'Masters'],
-  ['preflight', 'Pre-flight'],
-  ['verify', 'Verify & Run'],
-  ['loads', 'Loads'],
-]);
+/**
+ * Builds the empirical Load Calc workbench shell. Engineering values shown by
+ * this module are read from immutable empirical result and receipt contracts.
+ */
+import {
+  TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM,
+  TOPOLOGY_EDIT_MAXIMUM_AUTOFIX_GAP_MM,
+} from './topology-edit/topology-edit-gap-autofix-policy.js';
 
 export function renderLoadCalcConsumer(documentRef, state) {
-  const root = createElement(documentRef, 'section', 'load-calc-consumer');
-  root.innerHTML = `<header class="load-calc-header">
-    <div><span class="eyebrow">Engineering loads</span><h1>Load Calc</h1></div>
-    <p data-engineering-load-status>${escapeHtml(state.message || '')}</p>
-  </header>
-  ${workflowMarkup(state.currentWorkflowStepId, state.workflowReadiness)}
-  <nav class="load-calc-tabs" aria-label="Load calculation views">
-    ${VIEW_TABS.map(([id, label]) => `<button type="button" data-load-calc-tab="${id}" aria-pressed="${state.activeTab === id}">${label}</button>`).join('')}
-  </nav>
-  <div data-load-calc-pane></div>`;
-  return root;
+  const section = documentRef.createElement('section');
+  section.className = 'load-calc-consumer empirical-load-calc';
+  section.dataset.role = 'load-calc-consumer';
+  section.innerHTML = `${headerMarkup(state)}<div data-load-calc-pane class="empirical-load-calc__pane"></div>`;
+  return section;
 }
 
-export function renderEngineeringLoadPane(container, distribution, supportSiteModel, routePartitionModel, authorizedExecution, authorizationState) {
-  container.innerHTML = `${contractSummary(distribution, supportSiteModel, routePartitionModel, authorizedExecution, authorizationState)}${caseMarkup(distribution, supportSiteModel)}`;
+function runReasonText(snap, authState) {
+  const code = snap?.reasonCode || authState?.reasonCode || '';
+  const MAP = {
+    'EMPIRICAL_SCENARIO_REQUIRED': 'Configure a scenario in the Methods tab',
+    'EMPIRICAL_SCENARIO_BLOCKED':  'Scenario has blockers — check Methods tab',
+    'EMPIRICAL_SCENARIO_NOT_READY': 'Scenario not ready — authorize first',
+    'EMPIRICAL_SCENARIO_AUTHORIZATION_REQUIRED': 'Authorize the scenario first',
+    'EMPIRICAL_SCENARIO_AUTHORIZATION_STALE': 'Authorization is stale — re-authorize',
+    'NO_ACTIVE_DATASET': 'No dataset loaded — import SJSON first',
+    'EMPIRICAL_RUNTIME_ACTIVE_MODEL_MISSING': 'Load a dataset first',
+    'EMPIRICAL_INPUT_NOT_READY': 'Check Verify & Run tab — some inputs are missing',
+    'EMPIRICAL_MODELS_NOT_READY': 'Topology models not ready',
+  };
+  return MAP[code] || (code ? code.replace(/_/g, ' ').toLowerCase() : 'Not ready');
 }
 
-export function renderLoadCalcTopologyPane(container, supportSiteModel, routePartitionModel, topologyCheck, feedback = '') {
-  const status = topologyCheck?.status || 'PENDING';
-  container.innerHTML = `<section class="load-calc-error-check" data-topology-check-status="${escapeHtml(status)}">
-    <header><div><span class="eyebrow">Input / Error Check</span><h2>Topology & connectivity</h2></div><strong>${escapeHtml(status)}</strong></header>
-    <p>${escapeHtml(topologyStatusMessage(status, topologyCheck))}</p>
-    ${feedback ? `<p class="load-calc-topology-feedback">${escapeHtml(feedback)}</p>` : ''}
-    ${topologySummaryMarkup(topologyCheck)}
-    ${topologyAutoFixMarkup(topologyCheck)}
-    ${topologyDispositionMarkup(status, topologyCheck)}
-    ${topologyFindingsMarkup(topologyCheck)}
-    ${topologySkippedMarkup(topologyCheck)}
-    ${topologyModelsMarkup(supportSiteModel, routePartitionModel)}
-  </section>`;
+function resolveRunAction(state) {
+  const snap = state.empiricalScenarioState;
+  const authState = state.authorizationState;
+  if (snap?.calculationEligible) {
+    return { label: 'Run Load Calc', eligible: true, reason: 'Execute configured empirical scenario', action: 'empirical' };
+  }
+  if (authState?.calculationEligible) {
+    return { label: 'Run Load Calc — Gravity', eligible: true, reason: 'Execute authorized gravity load calc', action: 'gravity' };
+  }
+  return { label: 'Run Load Calc', eligible: false, reason: runReasonText(snap, authState), action: 'none' };
 }
 
-function workflowMarkup(currentStepId, readiness) {
-  const steps = [
-    ['import', 'Input'],
-    ['topology', 'Error Check'],
-    ['project-data', 'Project Data'],
-    ['masters', 'Masters'],
-    ['preflight', 'Pre-flight'],
-    ['verify', 'Verify & Run'],
-    ['loads', 'Output'],
-  ];
-  const currentIndex = Math.max(0, steps.findIndex(([id]) => id === currentStepId));
-  return `<ol class="load-calc-workflow">${steps.map(([id, label], index) => {
-    const ready = readiness?.[id];
-    const state = index < currentIndex ? 'complete' : index === currentIndex ? 'active' : 'pending';
-    const readinessClass = ready === false ? ' blocked' : ready === true ? ' ready' : '';
-    return `<li class="${state}${readinessClass}"><span>${index + 1}</span>${label}</li>`;
-  }).join('')}</ol>`;
+function headerMarkup(state) {
+  const freshness = state.distribution?.freshness?.status || 'NOT_CALCULATED';
+  const authorization = state.authorizationState || {};
+  const empiricalScenario = state.empiricalScenarioState || {};
+  const commonInput = state.commonInputState || {};
+  const activeMethod = empiricalScenario.method || 'CHAINAGE_TRIBUTARY_SPAN_V2';
+  const commonSeal = commonInput.commonInput
+    ? (commonInput.staleness?.stale ? 'STALE' : 'CURRENT')
+    : 'NOT_SEALED';
+  const runAction = resolveRunAction(state);
+
+  const sealStatus = commonSeal === 'CURRENT' ? 'ok' : (commonSeal === 'NOT_SEALED' ? 'warn' : 'fail');
+  const authSt = authorization.state || 'NOT_CONFIGURED';
+  const authStatus = (authSt === 'EXECUTED_CURRENT' || authSt === 'AUTHORIZED_CURRENT') ? 'ok' : (authSt.includes('AWAITING') || authSt === 'DRAFT_READY' ? 'warn' : 'fail');
+  const resultStatus = freshness === 'CURRENT' ? 'ok' : (freshness === 'NOT_CALCULATED' ? 'warn' : 'fail');
+
+  const SEAL_LABELS = { CURRENT: 'Sealed ✓', STALE: 'Seal stale ⚠', NOT_SEALED: 'Not sealed' };
+  const AUTH_LABELS = {
+    EXECUTED_CURRENT: 'Authorized ✓', AUTHORIZED_CURRENT: 'Authorized ✓',
+    DRAFT_READY: 'Ready to authorize', DRAFT_BLOCKED: 'Scenario blocked',
+    AUTHORIZED_STALE: 'Stale — re-authorize', EXECUTED_STALE: 'Results stale',
+    NOT_CONFIGURED: 'No scenario', AWAITING_AUTHORIZATION: 'Awaiting auth',
+  };
+  const RESULT_LABELS = { CURRENT: 'Results ready ✓', NOT_CALCULATED: 'Not run yet', STALE: 'Results stale' };
+  const sealLabel  = SEAL_LABELS[commonSeal]   || commonSeal;
+  const authLabel  = AUTH_LABELS[authSt]        || authSt;
+  const resultLabel = RESULT_LABELS[freshness]  || freshness;
+  const advancedOpen = !PRIMARY_TABS.has(state.activeTab);
+
+  return `<header class="empirical-load-calc__header">
+    <div><span class="panel-eyebrow">GUIDED WORKFLOW</span><h1>Support Load Calculation</h1></div>
+    <div class="empirical-load-calc__facts">
+      <span data-pill-status="${sealStatus}">${escapeHtml(sealLabel)}</span>
+      <span data-pill-status="${authStatus}">${escapeHtml(authLabel)}</span>
+      <span data-pill-status="${resultStatus}">${escapeHtml(resultLabel)}</span>
+    </div>
+    ${workflowMarkup(state, runAction)}
+    <details class="empirical-load-calc__advanced" ${advancedOpen ? 'open' : ''}>
+      <summary>Advanced tools <span>${escapeHtml(activeMethod)}</span></summary>
+      <nav class="empirical-load-calc__tabs" aria-label="Advanced load calculation views">
+        <button type="button" class="${state.activeTab === 'verify' || !state.activeTab ? 'is-active' : ''}" data-load-calc-tab="verify" title="Pre-run readiness checklist">★ Verify &amp; Run</button>
+        ${tabGroup('Setup', [
+          ['overview', 'Overview'],
+          ['project-data', 'Project Data'],
+          ['masters', 'Masters'],
+          ['enrichment', 'Enrichment & Overrides'],
+        ], state.activeTab)}
+        ${tabGroup('Scenario', [
+          ['restraints', 'Restraints'],
+          ['load-cases', 'Load Cases'],
+          ['methods', 'Methods'],
+        ], state.activeTab)}
+        ${tabGroup('Output', [
+          ['results', 'Results'],
+          ['loads', 'Load Evaluation'],
+          ['evidence', 'Evidence'],
+        ], state.activeTab)}
+        ${tabGroup('Diagnostics', [
+          ['preflight', 'Input Check'],
+          ['method-basis', 'Method Basis'],
+          ['seal-export', 'Seal & Export'],
+          ['json-trace', 'JSON Trace'],
+        ], state.activeTab)}
+        ${tabGroup('Model', [
+          ['3d', 'Model / 3D'],
+        ], state.activeTab)}
+      </nav>
+    </details>
+    <div class="empirical-load-calc__actions">
+      <button type="button" class="button button--primary" 
+        ${runAction.eligible ? '' : 'disabled'}
+        data-load-calc-run
+        title="${escapeHtml(runAction.reason)}">
+        ▶ ${escapeHtml(runAction.label)}
+      </button>
+      <output data-engineering-load-status aria-live="polite">${escapeHtml(state.message || (!runAction.eligible ? runAction.reason : ''))}</output>
+    </div>
+  </header>`;
 }
 
-function topologySummaryMarkup(topologyCheck) {
-  if (!topologyCheck) return '<p class="panel-empty">Topology check is pending.</p>';
-  return `<dl class="load-calc-topology-summary">
-    <dt>Blocking</dt><dd>${integer(topologyCheck.blockingIssueCount)}</dd>
-    <dt>Review</dt><dd>${integer(topologyCheck.reviewIssueCount)}</dd>
-    <dt>Skipped</dt><dd>${integer(topologyCheck.skippedIssueCount)}</dd>
-    <dt>Certified gap fixes</dt><dd>${integer(topologyCheck.autoFix?.certifiedExactGapCount)}</dd>
-  </dl>`;
+const PRIMARY_TABS = new Set(['topology', 'project-data', 'masters', 'preflight', 'verify', 'loads']);
+
+const WORKFLOW_STEPS = Object.freeze([
+  Object.freeze({ id: 'import', label: 'Import JSON', tab: null }),
+  Object.freeze({ id: 'topology', label: 'Topology Fix', tab: 'topology' }),
+  Object.freeze({ id: 'project-data', label: 'Project Data', tab: 'project-data' }),
+  Object.freeze({ id: 'masters', label: 'Import Masters', tab: 'masters' }),
+  Object.freeze({ id: 'preflight', label: 'Validate Input', tab: 'preflight' }),
+  Object.freeze({ id: 'verify', label: 'Run Calc', tab: 'verify' }),
+  Object.freeze({ id: 'loads', label: 'View Loads', tab: 'loads' }),
+]);
+
+function workflowMarkup(state, runAction) {
+  return `<nav class="empirical-load-calc__workflow" aria-label="Load calculation process">
+    ${WORKFLOW_STEPS.map((step, index) => workflowStep(step, index, state, runAction)).join('')}
+  </nav>`;
 }
 
-function topologyAutoFixMarkup(topologyCheck) {
-  if (!topologyCheck) return '';
-  const tolerance = topologyCheck.autoFix?.exactToleranceMm ?? TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM;
-  return `<section class="load-calc-topology-autofix"><h3>Source-backed TopoFix</h3>
-    <label>Automatic gap-fix limit (mm)<input type="number" min="0" step="0.1" value="${escapeHtml(tolerance)}" data-load-calc-topology-gap-mm></label>
-    <button type="button" class="button" data-load-calc-topology-gap-apply>Apply limit</button>
-    <button type="button" class="button button--primary" data-load-calc-topology-autofix ${topologyCheck.autoFix?.certifiedExactGapCount ? '' : 'disabled'}>Prepare auto-fix</button>
-    <button type="button" class="button" data-load-calc-topology-review-download>Export review</button>
-  </section>`;
+function workflowStep(step, index, state, runAction) {
+  const activeStepId = state.currentWorkflowStepId || 'import';
+  const active = step.id === activeStepId;
+  const stepState = workflowStepState(step.id, index, activeStepId, state, runAction);
+  const action = step.id === 'import'
+    ? 'data-load-calc-import'
+    : `data-load-calc-tab="${escapeHtml(step.tab)}"`;
+  return `<button type="button" class="empirical-load-calc__workflow-step ${active ? 'is-active' : ''}" ${action}
+    data-step-state="${escapeHtml(stepState.state)}" aria-current="${active ? 'step' : 'false'}">
+    <span class="empirical-load-calc__workflow-index">${index + 1}</span>
+    <span class="empirical-load-calc__workflow-label">${escapeHtml(step.label)}</span>
+    <span class="empirical-load-calc__workflow-status">${escapeHtml(stepState.label)}</span>
+  </button>`;
 }
 
-function topologyModelsMarkup(supportSiteModel, routePartitionModel) {
-  return `<details><summary>Canonical load-model evidence</summary><pre>${escapeHtml(JSON.stringify({ supportSiteModel, routePartitionModel }, null, 2))}</pre></details>`;
+function workflowStepState(stepId, stepIndex, activeStepId, state, runAction) {
+  const readiness = state.workflowReadiness || {};
+  const activeIndex = WORKFLOW_STEPS.findIndex((step) => step.id === activeStepId);
+  const completed = {
+    import: readiness.datasetReady,
+    topology: readiness.topologyCheckReady,
+    'project-data': readiness.projectDataReady,
+    masters: readiness.masterDataReady,
+    preflight: readiness.validationReady,
+    verify: readiness.resultsCurrent,
+    loads: readiness.resultsCurrent,
+  }[stepId] === true;
+
+  if (stepId === activeStepId) {
+    if (stepId === 'topology' && readiness.topologyBlockerCount > 0) {
+      return { state: 'blocked', label: 'Fix needed' };
+    }
+    if (stepId === 'topology' && readiness.topologyReviewIssueCount > 0) {
+      return { state: 'review', label: 'Review' };
+    }
+    if (stepId === 'verify' && runAction.eligible) return { state: 'ready', label: 'Ready' };
+    if (stepId === 'preflight' && readiness.validationState && readiness.validationState !== 'NOT_EVALUATED') {
+      return { state: 'blocked', label: 'Review' };
+    }
+    return { state: 'current', label: 'Current' };
+  }
+  if (activeIndex >= 0 && stepIndex < activeIndex) {
+    return completed
+      ? { state: 'complete', label: 'Done' }
+      : { state: 'blocked', label: 'Required' };
+  }
+  if (activeIndex < 0 && completed) return { state: 'complete', label: 'Done' };
+  return { state: 'pending', label: 'Next' };
 }
 
-function topologyFindingsMarkup(topologyCheck) {
+function tabGroup(label, tabs, activeTab) {
+  return `<span class="empirical-load-calc__tab-group" role="group" aria-label="${escapeHtml(label)}">
+    <span class="panel-eyebrow">${escapeHtml(label)}</span>
+    ${tabs.map(([id, tabLabel]) => tab(id, tabLabel, activeTab)).join('')}
+  </span>`;
+}
+
+function tab(id, label, activeTab) {
+  const selected = id === activeTab;
+  return `<button type="button" data-load-calc-tab="${id}" aria-selected="${selected}" class="${selected ? 'is-active' : ''}">${label}</button>`;
+}
+
+export function renderEngineeringLoadPane(
+  container,
+  distribution,
+  supportSiteModel,
+  routePartitionModel,
+  authorizedExecution = null,
+  authorizationState = null,
+) {
+  if (!container) return;
+  container.innerHTML = `${contractSummary(
+    distribution,
+    supportSiteModel,
+    routePartitionModel,
+    authorizedExecution,
+    authorizationState,
+  )}${caseMarkup(distribution, supportSiteModel)}`;
+}
+
+export function renderLoadCalcTopologyPane(
+  container,
+  supportSiteModel,
+  routePartitionModel,
+  topologyCheck,
+  policyFeedback,
+) {
+  if (!container) throw new TypeError('Load Calc Topology Fix requires a container.');
+  const modelBlockers = loadModelTopologyBlockers(supportSiteModel, routePartitionModel);
+  const blockingFindings = topologyCheck?.blockingFindings || [];
+  const reviewFindings = topologyCheck?.reviewFindings || [];
   const findings = topologyCheck?.findings || [];
-  if (!findings.length) return '<p class="panel-empty">No canonical topology findings.</p>';
-  return `<section class="load-calc-topology-findings"><h3>Findings</h3><ul>${findings.map((finding) => topologyFindingMarkup(finding, topologyCheck)).join('')}</ul></section>`;
+  const geometryFindings = findings.filter((finding) => !isSupportSemanticFinding(finding));
+  const semanticFindings = findings.filter(isSupportSemanticFinding);
+  const topologyReady = supportSiteModel?.status === 'READY' && routePartitionModel?.status === 'READY';
+  const requiresFix = !topologyReady || modelBlockers.length > 0 || blockingFindings.length > 0;
+  const reviewRequired = !requiresFix
+    && (reviewFindings.length > 0 || (topologyCheck?.skippedIssueCount || 0) > 0);
+  const status = requiresFix ? 'BLOCKED' : reviewRequired ? 'REVIEW_REQUIRED' : 'READY';
+  const exactFixCount = topologyCheck?.autoFix?.certifiedExactGapCount || 0;
+  const gapToleranceMm = topologyCheck?.autoFix?.exactToleranceMm
+    || TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM;
+  const continueLabel = reviewRequired
+    ? 'Acknowledge review & continue'
+    : 'Continue to Project Data';
+  const actionMarkup = `<div class="load-calc-error-check__actions">
+    ${findings.length ? '<button type="button" class="button" data-load-calc-tab="3d">Review findings in 3D</button>' : ''}
+    ${requiresFix ? '' : `<button type="button" class="button button--primary" data-load-calc-tab="project-data">${continueLabel}</button>`}
+  </div>`;
+  container.innerHTML = `<section class="load-calc-error-check load-calc-topology" data-role="load-calc-topology" data-status="${status}">
+    <header>
+      <div><span class="panel-eyebrow">STEP 2</span><h2>Topology Fix</h2>
+        <p>${topologyStatusMessage(status, topologyCheck)}</p></div>
+      ${actionMarkup}
+    </header>
+    ${topologyAutofixPolicyMarkup(gapToleranceMm, exactFixCount, policyFeedback)}
+    <div class="load-calc-error-check__summary">
+      ${diagnosticCard('Support locations', supportSiteModel?.status || 'NOT_AVAILABLE', supportSiteModel?.summary?.physicalLocationCount)}
+      ${diagnosticCard('Routes', routePartitionModel?.status || 'NOT_AVAILABLE', routePartitionModel?.summary?.routeCount)}
+      ${diagnosticCard('Geometry findings', findingSetStatus(geometryFindings), geometryFindings.length)}
+      ${diagnosticCard('Support semantic reviews', findingSetStatus(semanticFindings), semanticFindings.length)}
+      ${diagnosticCard('Certified gap auto-fixes', exactFixCount ? 'REVIEW_REQUIRED' : 'READY', exactFixCount)}
+      ${diagnosticCard('Skipped findings', topologyCheck?.skippedIssueCount ? 'REVIEW_REQUIRED' : 'READY', topologyCheck?.skippedIssueCount || 0)}
+    </div>
+    ${modelBlockerMarkup(modelBlockers)}
+    ${topologyFindingsMarkup(findings, topologyCheck)}
+    ${topologyDispositionMarkup(status, topologyCheck)}
+  </section>`;
 }
 
-function topologySkippedMarkup(topologyCheck) {
-  const skipped = topologyCheck?.skippedFindings || [];
-  if (!skipped.length) return '';
-  return `<details><summary>Skipped findings (${skipped.length})</summary><ul>${skipped.map((finding) => `<li data-topology-finding-id="${escapeHtml(finding.id)}"><strong>${escapeHtml(topologyFindingScope(finding))}</strong> ${escapeHtml(finding.message)} <small>${escapeHtml(finding.skipReason || '')} · receipt ${escapeHtml(finding.skipReceiptId || '')}</small> <button type="button" class="button" data-load-calc-topology-restore="${escapeHtml(finding.id)}">Restore blocker</button></li>`).join('')}</ul></details>`;
+function diagnosticCard(label, status, value) {
+  const presentationStatus = status === 'READY'
+    ? 'ready'
+    : status === 'REVIEW_REQUIRED'
+      ? 'review'
+      : 'blocked';
+  return `<article data-status="${presentationStatus}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(Number.isInteger(value) ? value : status)}</strong><small>${escapeHtml(status)}</small></article>`;
 }
 
-function topologyFindingMarkup(finding, topologyCheck) {
+function findingSetStatus(findings) {
+  if (findings.some((finding) => finding.disposition === 'BLOCK' && finding.reviewDisposition !== 'SKIPPED')) {
+    return 'BLOCKED';
+  }
+  return findings.length ? 'REVIEW_REQUIRED' : 'READY';
+}
+
+function loadModelTopologyBlockers(supportSiteModel, routePartitionModel) {
+  return [
+    ...(supportSiteModel?.blockers || []),
+    ...(routePartitionModel?.blockers || []),
+  ];
+}
+
+function modelBlockerMarkup(blockers) {
+  if (!blockers.length) return '';
+  return `<section class="load-calc-error-check__group"><h3>Load-model blockers</h3>
+    <ul class="load-calc-error-check__issues">${blockers.map((row) => `<li><strong>${escapeHtml(row.code || 'TOPOLOGY_BLOCKED')}</strong><span>${escapeHtml(row.message || row.path || row.routeId || row.projectDataPath || 'Topology evidence is incomplete.')}</span></li>`).join('')}</ul>
+  </section>`;
+}
+
+function topologyAutofixPolicyMarkup(gapToleranceMm, exactFixCount, policyFeedback) {
+  const candidateMessage = exactFixCount > 0
+    ? `${exactFixCount} certified source-backed endpoint gap(s) are eligible. Select Prepare auto-fix to create a 3D draft.`
+    : 'No certified source-backed endpoint gaps are eligible. Changing the limit does not make other finding types auto-fixable.';
+  const autoFixTitle = exactFixCount > 0
+    ? `Prepare ${exactFixCount} certified gap fix candidate(s) in 3D Edit.`
+    : 'No certified source-backed endpoint gap is available at the active limit.';
+  return `<section class="load-calc-topology-policy" aria-label="Automatic topology fix policy" data-topology-review-section="geometry-autofix">
+    <div><strong>Automatic gap fix</strong><span>Geometry only. Set the limit first, then prepare an eligible certified 3D draft.</span></div>
+    <label>Fix gaps strictly below
+      <input type="number" min="0.1" max="${TOPOLOGY_EDIT_MAXIMUM_AUTOFIX_GAP_MM}" step="0.1" value="${escapeHtml(gapToleranceMm)}" data-load-calc-topology-gap-mm aria-label="Automatic gap fix tolerance in millimetres">
+      mm
+    </label>
+    <button type="button" class="button" data-load-calc-topology-gap-apply>Set limit</button>
+    <button type="button" class="button button--primary" data-load-calc-topology-autofix
+      ${exactFixCount > 0 ? '' : 'disabled'} title="${escapeHtml(autoFixTitle)}">Prepare auto-fix (${escapeHtml(exactFixCount)})</button>
+    <output class="load-calc-topology-policy__status" data-load-calc-topology-policy-status aria-live="polite">${escapeHtml(policyFeedback || candidateMessage)}</output>
+    <small>Maximum setting: ${TOPOLOGY_EDIT_MAXIMUM_AUTOFIX_GAP_MM} mm. Gaps equal to the limit are excluded. Explicit Commit draft remains required. Support-semantic reviews are never made auto-fixable by changing this limit.</small>
+  </section>`;
+}
+
+function topologyFindingsMarkup(findings, topologyCheck) {
+  if (!findings.length) return '';
+  const geometryFindings = findings.filter((finding) => !isSupportSemanticFinding(finding));
+  const semanticFindings = findings.filter(isSupportSemanticFinding);
+  return `<div class="load-calc-topology-review-sections">
+    ${topologyFindingSectionMarkup({
+      title: 'Geometry & gap findings',
+      description: 'Geometric findings are reviewed here. Only certified source-backed positive SNAP_GAP findings below the active limit can enter AutoFix.',
+      findings: geometryFindings,
+      topologyCheck,
+      sectionId: 'geometry',
+    })}
+    ${topologyFindingSectionMarkup({
+      title: 'Support semantics — engineering review',
+      description: 'These are source/classification questions. Gap tolerance and AutoFix do not apply to this section; resolve them only from source or approved master evidence.',
+      findings: semanticFindings,
+      topologyCheck,
+      sectionId: 'support-semantics',
+    })}
+    <button type="button" class="button" data-load-calc-topology-review-download>Download review record</button>
+  </div>`;
+}
+
+function topologyFindingSectionMarkup({ title, description, findings, topologyCheck, sectionId }) {
+  if (!findings.length) return '';
+  const exactFixIds = new Set(topologyCheck?.autoFix?.exactGapIssueIds || []);
+  const groups = groupTopologyFindings(findings);
+  return `<section class="load-calc-error-check__group" data-topology-review-section="${escapeHtml(sectionId)}"><h3>${escapeHtml(title)}</h3>
+    <p>${escapeHtml(description)} ${findings.length} finding(s) grouped into ${groups.length} similar type(s).</p>
+    <div class="load-calc-topology-groups">${groups.map((group) => topologyFindingGroupMarkup(
+      group,
+      exactFixIds,
+    )).join('')}</div>
+  </section>`;
+}
+
+function isSupportSemanticFinding(finding) {
+  return finding?.reviewCategory === 'SUPPORT_SEMANTICS'
+    || finding?.kind === 'UNKNOWN_RESTRAINT_FAMILY';
+}
+
+function groupTopologyFindings(findings) {
+  const grouped = findings.reduce((groups, finding) => {
+    const key = `${finding.severity}:${finding.kind}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(finding);
+    return groups;
+  }, new Map());
+  return [...grouped.entries()]
+    .map(([key, rows]) => ({ key, rows }))
+    .sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function topologyFindingGroupMarkup(group, exactFixIds) {
+  const first = group.rows[0];
+  const openCount = group.rows.filter((finding) => finding.reviewDisposition !== 'SKIPPED').length;
+  const blockingCount = group.rows.filter((finding) => (
+    finding.disposition === 'BLOCK' && finding.reviewDisposition !== 'SKIPPED'
+  )).length;
+  const skippedCount = group.rows.filter((finding) => finding.reviewDisposition === 'SKIPPED').length;
+  const status = blockingCount > 0 ? 'blocked' : openCount > 0 || skippedCount > 0 ? 'review' : 'ready';
+  return `<details class="load-calc-topology-group" data-status="${status}">
+    <summary><strong>${escapeHtml(`${first.severity} ${first.kind}`)}</strong><span>${group.rows.length} finding(s) · ${openCount} open${skippedCount ? ` · ${skippedCount} skipped` : ''}</span></summary>
+    <ul class="load-calc-error-check__issues">${group.rows.map((finding) => topologyFindingRowMarkup(
+      finding,
+      exactFixIds.has(finding.id),
+    )).join('')}</ul>
+  </details>`;
+}
+
+function topologyFindingRowMarkup(finding, exactFixAvailable) {
   const scope = topologyFindingScope(finding);
-  const exactFixAvailable = topologyCheck?.autoFix?.certifiedExactGapFindingIds?.includes(finding.id);
   const fix = exactFixAvailable
-    ? 'Certified source-backed gap fix available'
+    ? `Auto-fix candidate at ${Number(finding.distanceMm).toFixed(3)} mm`
     : finding.kind === 'SNAP_GAP'
       ? 'No certified gap fix below the current limit'
       : finding.kind === 'UNKNOWN_RESTRAINT_FAMILY'
@@ -191,35 +482,8 @@ function contractSummary(distribution, supportSiteModel, routePartitionModel, au
   return `<section class="load-contract-summary"><h2>Calculation authority</h2>
     <dl><dt>Support sites</dt><dd>${escapeHtml(siteStatus)}</dd><dt>Route partitions</dt><dd>${escapeHtml(routeStatus)}</dd><dt>Distribution</dt><dd>${escapeHtml(status)}</dd><dt>Authorization</dt><dd>${escapeHtml(authorizationState?.state || 'NOT_CONFIGURED')}</dd><dt>Authorization freshness</dt><dd>${escapeHtml(authorizationState?.authorizationFreshness || 'NOT_APPLICABLE')}</dd><dt>Execution freshness</dt><dd>${escapeHtml(authorizationState?.executionFreshness || 'NOT_APPLICABLE')}</dd></dl>
     ${authorizationMarkup(authorizedExecution, distribution, authorizationState)}
-    ${engineeringAuthorityMarkup(distribution)}
     ${blockerMarkup(distribution?.blockers || [...(supportSiteModel?.blockers || []), ...(routePartitionModel?.blockers || [])])}
   </section>`;
-}
-
-function engineeringAuthorityMarkup(distribution) {
-  if (!distribution) return '';
-  const convention = distribution.gravityConventionAuthority || null;
-  const support = distribution.supportCapabilityAuthority || null;
-  if (!convention && !support) return '';
-  const supportRows = support?.rows || [];
-  const defaultRows = supportRows.filter((row) => row.fallbackUsed === true);
-  const bearingDefaults = defaultRows.filter((row) => row.vertical === true);
-  const unresolved = supportRows.filter((row) => row.resolutionAuthority === 'UNRESOLVED_NON_BEARING');
-  return `<details open class="load-engineering-authority"><summary>Engineering basis & fallback authority</summary>
-    <dl>
-      <dt>Source basis</dt><dd>${escapeHtml(distribution.sourceAxisAuthority?.mechanicsScope || distribution.sourceAxisBasis || 'LEGACY / UNBOUND')}</dd>
-      <dt>Force convention</dt><dd><code>${escapeHtml(distribution.forceOutputConvention || 'LEGACY_FIXED')}</code></dd>
-      <dt>Moment convention</dt><dd><code>${escapeHtml(distribution.momentOutputConvention || 'LEGACY_FIXED')}</code></dd>
-      <dt>Analysis basis</dt><dd><code>${escapeHtml(distribution.analysisBasis || 'LEGACY_FIXED')}</code></dd>
-      <dt>Result sign</dt><dd><code>${escapeHtml(distribution.resultSignConvention || 'LEGACY_FIXED')}</code></dd>
-      <dt>Support capability authority</dt><dd>${escapeHtml(support?.sourceAuthority || 'LEGACY / EXACT-KEY')}</dd>
-      <dt>Support DEFAULT resolutions</dt><dd>${integer(defaultRows.length)}</dd>
-      <dt>Bearing DEFAULT resolutions</dt><dd>${integer(bearingDefaults.length)}</dd>
-      <dt>Unresolved non-bearing support members</dt><dd>${integer(unresolved.length)}</dd>
-    </dl>
-    ${convention ? `<details><summary>Convention evidence</summary><pre>${escapeHtml(JSON.stringify(convention, null, 2))}</pre></details>` : ''}
-    ${support ? `<details ${defaultRows.length ? 'open' : ''}><summary>Support capability resolution (${integer(supportRows.length)})</summary><pre>${escapeHtml(JSON.stringify(supportRows, null, 2))}</pre></details>` : ''}
-  </details>`;
 }
 
 function authorizationMarkup(execution, distribution, authorizationState) {

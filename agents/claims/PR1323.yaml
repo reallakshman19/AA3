@@ -4,22 +4,33 @@ claim_state: ACTIVE
 files:
   exact:
     - src/workspace/project-data/non-fea-product-default-profile.js
+    - src/workspace/project-data/non-fea-field-registry.js
+    - src/workspace/project-data/non-fea-effective-value-resolver.js
     - src/workspace/non-fea-common-input-runtime.js
-    - scripts/non-fea-product-default-profile-check.mjs
-    - src/workspace/engineering-loads/empirical-gravity-method-selection.js
-    - src/workspace/engineering-loads/engineering-support-load-store.js
-    - scripts/empirical-gravity-method-selection-check.mjs
-    - src/workspace/engineering-loads/support-load-static-accounting.js
-    - src/workspace/engineering-loads/support-load-distribution-v3.js
+    - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
+    - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
+    - src/workspace/engineering-loads/authorized-empirical-load-input.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+    - src/workspace/engineering-loads/empirical-gravity-method-selection.js
+    - src/workspace/engineering-loads/engineering-support-load-store.js
+    - src/workspace/engineering-loads/support-load-static-accounting.js
+    - src/workspace/engineering-loads/support-load-distribution-v3.js
+    - src/workspace/load-calc-consumer-controller.js
+    - src/workspace/load-calc-consumer-view.js
+    - scripts/non-fea-product-default-profile-check.mjs
+    - scripts/non-fea-effective-value-resolver-check.mjs
+    - scripts/authorized-empirical-effective-value-ledger-check.mjs
+    - scripts/authorized-empirical-effective-execution-projection-check.mjs
+    - scripts/authorized-empirical-effective-execution-projection-collision-check.mjs
+    - scripts/authorized-empirical-v2-effective-execution-check.mjs
+    - scripts/authorized-empirical-product-default-convergence-check.mjs
+    - scripts/empirical-gravity-method-selection-check.mjs
     - scripts/support-load-static-accounting-check.mjs
     - scripts/support-load-partial-distribution-check.mjs
     - scripts/support-load-route-equilibrium-check.mjs
     - scripts/empirical-authorized-blocked-cases-check.mjs
     - scripts/run-non-fea-checks.mjs
-    - src/workspace/load-calc-consumer-controller.js
-    - src/workspace/load-calc-consumer-view.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v3.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v4.js
     - src/workspace/engineering-loads/authorized-empirical-load-execution-v5.js
@@ -33,9 +44,10 @@ files:
 authority_domains:
   - LOAD_CALC_EFFECTIVE_ENGINEERING_VALUES
   - LOAD_CALC_PRODUCT_DEFAULTS
+  - AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION
   - GRAVITY_SUPPORT_LOAD_ACCOUNTING
   - EMPIRICAL_METHOD_AUTO_SELECTION
   - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
 claim_modes:
   - COORDINATED
-last_verified_head: df23445c0231cb3fc9704fa4f9cb1de2d159f9c2
+last_verified_head: d117e4afb696c1649aba6a7481a7fffb90beeb96

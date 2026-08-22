@@ -12,6 +12,10 @@ import {
   requireAuthorizedEmpiricalSourceBasis,
 } from './authorized-empirical-source-axis-binding.js';
 import {
+  bindAuthorizedEmpiricalSupportCapabilities,
+  bindAuthorizedEmpiricalSupportCapabilityResult,
+} from './authorized-empirical-support-capability-binding.js';
+import {
   EMPIRICAL_LOAD_COG_METHOD,
   EMPIRICAL_LOAD_METHOD,
   calculateSupportLoadDistribution,
@@ -36,15 +40,19 @@ const PROJECTED_LOAD_PATHS = Object.freeze([
  * The legacy distribution kernel still consumes Project-Data-shaped maps, but
  * on this path those maps are an immutable execution projection generated from
  * the authorized target-level effective-value ledger. This guard proves that
- * projection binding before the kernel runs and forbids the legacy `DEFAULT`
- * selector entirely. Therefore the kernel may perform only exact lookups from
- * the effective projection; raw Project Data fallback authority is unreachable.
+ * projection binding before the kernel runs and forbids legacy mass-map
+ * `DEFAULT` selectors entirely.
+ *
+ * Support capability is handled separately because `DEFAULT` is a legitimate
+ * governed topology policy, not a legacy mass lookup. Immediately before
+ * statics, the execution-local support-capability binding expands only support
+ * kinds actually present in the support-site model. Exact rules win; governed
+ * DEFAULT may fill an unknown kind and every resolution is retained in the
+ * returned authority receipt. The source effective projection remains frozen.
  *
  * The implemented engineering source basis (Z-up, mm) is also validated before
- * statics execute. The available coordinate transform is rendering-only, so an
- * unsupported axis/unit cannot be repaired by relabelling result metadata.
- *
- * Historical ledger-less callers intentionally do not use this function.
+ * statics execute. Historical ledger-less callers intentionally do not use this
+ * function.
  */
 export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
   effectiveExecutionProjection,
@@ -57,11 +65,16 @@ export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
     effectiveExecutionProjection,
   );
   requireAuthorizedEmpiricalSourceBasis(projection.profile);
+  const supportCapabilityBinding = bindAuthorizedEmpiricalSupportCapabilities({
+    profile: projection.profile,
+    supportSiteModel,
+  });
+  requireAuthorizedEmpiricalSourceBasis(supportCapabilityBinding.profile);
   const requestedMethod = requireMethod(method);
 
   const calculationInput = {
     dataset: projection.dataset,
-    profile: projection.profile,
+    profile: supportCapabilityBinding.profile,
     supportSiteModel,
     routePartitionModel,
     masterData,
@@ -78,17 +91,21 @@ export function calculateAuthorizedEmpiricalEffectiveSupportLoads({
     );
   }
   assertNoLegacyFallbackConsumption(distribution);
-  return bindAuthorizedEmpiricalSourceAxis({
+  const axisBound = bindAuthorizedEmpiricalSourceAxis({
     distribution,
-    profile: projection.profile,
+    profile: supportCapabilityBinding.profile,
+  });
+  return bindAuthorizedEmpiricalSupportCapabilityResult({
+    distribution: axisBound,
+    binding: supportCapabilityBinding,
   });
 }
 
 /**
- * Validates the complete pre-execution authority boundary without invoking the
- * support-load statics kernel. Focused falsifiers can therefore prove that a
- * stale projection, unbound projected map or legacy DEFAULT selector cannot
- * reach ledger-driven V1/V2 calculation.
+ * Validates the complete projection authority boundary without invoking the
+ * support-load statics kernel. The site-specific support DEFAULT expansion is
+ * deliberately deferred until calculate-time because it depends on the active
+ * support-site model.
  */
 export function requireAuthorizedEmpiricalEffectiveSupportProjection(value) {
   const projection = requireEffectiveExecutionProjection(value);

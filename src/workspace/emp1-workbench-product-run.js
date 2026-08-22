@@ -28,6 +28,11 @@ import {
   reconcileEmp1WorkbenchChangeClasses,
 } from './emp1-workbench-run-state.js';
 
+export const EMP1_WORKBENCH_ROUTE_AUTHORITY_SNAPSHOT_SCHEMA =
+  'emp1-workbench-route-authority-snapshot/v1';
+export const EMP1_WORKBENCH_RETAINED_C_EVIDENCE_SCHEMA =
+  'emp1-workbench-retained-c-evidence/v1';
+
 export {
   EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
   EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
@@ -41,6 +46,7 @@ export {
   emp1WorkbenchRunInputHash,
   normalizeEmp1WorkbenchRunInput,
   projectEmp1WorkbenchRunReadiness,
+  projectEmp1WorkbenchCState,
 } from './emp1-workbench-run-state.js';
 
 /**
@@ -66,10 +72,16 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
   }
   const inputHashes = emp1WorkbenchInputHashes({ aDocument, bDocument, runInput });
   const previous = normalizePrevious(options.previous);
-  const changeClasses = reconcileEmp1WorkbenchChangeClasses(
+  const routeAuthority = currentEmp1WorkbenchRouteAuthority();
+  const inputChangeClasses = reconcileEmp1WorkbenchChangeClasses(
     options.changeClasses,
     previous?.inputHashes,
     inputHashes,
+  );
+  const changeClasses = reconcileRouteAuthorityChangeClass(
+    inputChangeClasses,
+    previous?.authority?.routeAuthoritySnapshot,
+    routeAuthority.snapshot,
   );
   const applicabilitySourceAuthority = requireApplicabilityGeometryForExecution(
     runInput.localMethod.applicabilityGeometry,
@@ -83,7 +95,6 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
     productSource,
   });
   const qualification = emp1Wrc537Gamma5ZeroDpOrchestrationQualification();
-  const routeAuthority = currentProductionRouteAuthority();
   const invocations = {
     loadTransfer: 0,
     sectionScreening: 0,
@@ -160,6 +171,7 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
   const routeSuspensionReasons = result.localCorrelation?.state === 'BLOCKED'
     ? [...(result.localCorrelation.routeSuspensionReasons ?? [])]
     : [];
+  const retainedLocalCorrelationHistory = retainHistoricalLocalCorrelation(previous);
 
   return deepFreeze({
     schema: EMP1_WORKBENCH_PRODUCT_EXECUTION_SCHEMA,
@@ -177,6 +189,7 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
     applicabilitySourceAuthority,
     invocations,
     result,
+    retainedLocalCorrelationHistory,
     stageExecutions: {
       loadTransfer: result.loadTransfer?.execution ?? previous?.stageExecutions?.loadTransfer ?? null,
       sectionScreening: result.sectionScreening?.execution ?? previous?.stageExecutions?.sectionScreening ?? null,
@@ -190,6 +203,7 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
       routeRegistryRegistered: routeAuthority.routeRegistryRegistered,
       routeRegistryEngineeringUseAuthorized: routeAuthority.routeRegistryEngineeringUseAuthorized,
       routeSuspensionReasons,
+      routeAuthoritySnapshot: routeAuthority.snapshot,
       globalEmp1CRouteAuthority: false,
       codeComplianceProduced: false,
       releaseQualified: false,
@@ -197,7 +211,13 @@ export async function executeEmp1WorkbenchProduct(options = {}) {
   });
 }
 
-function currentProductionRouteAuthority() {
+/**
+ * Return the live bounded-route authority and a deterministic semantic snapshot.
+ * The snapshot intentionally contains no timestamp or UI text. It binds the
+ * route module state and the retained registry method/scope/qualification data
+ * that can change whether an otherwise identical C result remains reportable.
+ */
+export function currentEmp1WorkbenchRouteAuthority() {
   const registry = emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
   const routeModuleAuthorized = EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED === true;
   const routeRegistryRegistered = registry?.registered === true;
@@ -205,25 +225,81 @@ function currentProductionRouteAuthority() {
   const productionUseAuthorized = routeModuleAuthorized
     && routeRegistryRegistered
     && routeRegistryEngineeringUseAuthorized;
-  const reasons = new Set([
+  const reasons = uniqueSorted([
     ...EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS,
     ...(registry?.suspensionReasons ?? []),
+    ...(!registry ? ['EMP1_C_BOUNDED_ROUTE_REGISTRY_ENTRY_REQUIRED'] : []),
+    ...(registry && !routeRegistryRegistered ? ['EMP1_C_BOUNDED_ROUTE_NOT_REGISTERED'] : []),
+    ...(registry && !routeRegistryEngineeringUseAuthorized
+      ? ['EMP1_C_BOUNDED_ROUTE_ENGINEERING_USE_NOT_AUTHORIZED']
+      : []),
+    ...(!routeModuleAuthorized ? ['EMP1_C_BOUNDED_ROUTE_EXECUTOR_NOT_AUTHORIZED'] : []),
   ]);
-  if (!registry) reasons.add('EMP1_C_BOUNDED_ROUTE_REGISTRY_ENTRY_REQUIRED');
-  else {
-    if (!routeRegistryRegistered) reasons.add('EMP1_C_BOUNDED_ROUTE_NOT_REGISTERED');
-    if (!routeRegistryEngineeringUseAuthorized) {
-      reasons.add('EMP1_C_BOUNDED_ROUTE_ENGINEERING_USE_NOT_AUTHORIZED');
-    }
-  }
-  if (!routeModuleAuthorized) reasons.add('EMP1_C_BOUNDED_ROUTE_EXECUTOR_NOT_AUTHORIZED');
+  const semanticPayload = {
+    schema: EMP1_WORKBENCH_ROUTE_AUTHORITY_SNAPSHOT_SCHEMA,
+    routeId: EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
+    productionUseAuthorized,
+    routeModuleAuthorized,
+    routeModuleSuspensionReasons: uniqueSorted(
+      EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS,
+    ),
+    registry: registry ? {
+      schema: registry.schema ?? null,
+      routeId: registry.routeId ?? null,
+      registered: routeRegistryRegistered,
+      engineeringUseAuthorized: routeRegistryEngineeringUseAuthorized,
+      suspensionReasons: uniqueSorted(registry.suspensionReasons ?? []),
+      method: structuredClone(registry.method ?? null),
+      scope: structuredClone(registry.scope ?? null),
+      limitations: [...(registry.limitations ?? [])],
+      remainingBlocked: [...(registry.remainingBlocked ?? [])],
+    } : null,
+  };
+  const snapshot = deepFreeze({
+    ...semanticPayload,
+    semanticHash: semanticHash(semanticPayload),
+  });
   return deepFreeze({
     productionUseAuthorized,
     routeModuleAuthorized,
     routeRegistryRegistered,
     routeRegistryEngineeringUseAuthorized,
-    reasons: [...reasons],
+    reasons,
+    snapshot,
   });
+}
+
+function reconcileRouteAuthorityChangeClass(changeClasses, previousSnapshot, currentSnapshot) {
+  const classes = new Set(changeClasses ?? []);
+  if (previousSnapshot != null
+    && previousSnapshot?.semanticHash !== currentSnapshot?.semanticHash) {
+    classes.add('ROUTE_AUTHORITY');
+  }
+  if (previousSnapshot == null && currentSnapshot != null && classes.size === 0) {
+    classes.add('ROUTE_AUTHORITY');
+  }
+  return deepFreeze([...classes]);
+}
+
+function retainHistoricalLocalCorrelation(previous) {
+  const retained = Array.isArray(previous?.retainedLocalCorrelationHistory)
+    ? previous.retainedLocalCorrelationHistory.map((item) => structuredClone(item))
+    : [];
+  if (previous?.authority?.boundedLocalRouteExecuted === true
+    && previous?.result?.localCorrelation) {
+    const payload = {
+      schema: EMP1_WORKBENCH_RETAINED_C_EVIDENCE_SCHEMA,
+      sourceHash: previous.sourceHash ?? null,
+      inputHashes: structuredClone(previous.inputHashes ?? null),
+      authoritySnapshot: structuredClone(previous.authority.routeAuthoritySnapshot ?? null),
+      localCorrelation: structuredClone(previous.result.localCorrelation),
+    };
+    const evidenceHash = semanticHash(payload);
+    if (!retained.some((item) => item.evidenceHash === evidenceHash)) {
+      retained.push({ ...payload, evidenceHash });
+    }
+  }
+  return deepFreeze(retained);
 }
 
 function suspendedLocalCorrelation(preparedSource, routeAuthority) {
@@ -317,6 +393,9 @@ function requireLayerExecution(layer, stageId) {
     throw workbenchError(`EMP1_WORKBENCH_${stageId.replace('.', '_')}_EXECUTION_REQUIRED`);
   }
   return layer.execution;
+}
+function uniqueSorted(values) {
+  return [...new Set((values ?? []).filter((value) => typeof value === 'string'))].sort();
 }
 function requireRecord(value, code) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw workbenchError(code);

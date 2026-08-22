@@ -60,16 +60,28 @@ const RESTRAINT_METHODS = Object.freeze([
 ]);
 
 const SOURCE_MASTER_OVERRIDE_DEFAULT = Object.freeze([
-  'ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER',
-  'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT',
+  'ACCEPTED_OVERRIDE',
+  'SOURCE_EXPLICIT',
+  'SOURCE_INHERITED',
+  'EXACT_APPROVED_MASTER',
+  'PROJECT_CONFIGURED_DEFAULT',
+  'PRODUCT_DEFAULT',
 ]);
 const SOURCE_MASTER_OVERRIDE_DERIVATION = Object.freeze([
-  'ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER',
+  'ACCEPTED_OVERRIDE',
+  'SOURCE_EXPLICIT',
+  'SOURCE_INHERITED',
+  'EXACT_APPROVED_MASTER',
   'CONFIGURED_DERIVATION',
 ]);
 const SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT = Object.freeze([
-  'ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER',
-  'CONFIGURED_DERIVATION', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT',
+  'ACCEPTED_OVERRIDE',
+  'SOURCE_EXPLICIT',
+  'SOURCE_INHERITED',
+  'EXACT_APPROVED_MASTER',
+  'CONFIGURED_DERIVATION',
+  'PROJECT_CONFIGURED_DEFAULT',
+  'PRODUCT_DEFAULT',
 ]);
 
 export const NON_FEA_FIELD_REGISTRY = freezeDeep({
@@ -127,15 +139,33 @@ export const NON_FEA_FIELD_REGISTRY = freezeDeep({
   ],
 });
 
-export function listNonFeaFieldDefinitions() { return NON_FEA_FIELD_REGISTRY.fields; }
-export function getNonFeaFieldDefinition(fieldId) { return NON_FEA_FIELD_REGISTRY.fields.find((row) => row.fieldId === fieldId) || null; }
+export function listNonFeaFieldDefinitions() {
+  return NON_FEA_FIELD_REGISTRY.fields;
+}
+
+export function getNonFeaFieldDefinition(fieldId) {
+  return NON_FEA_FIELD_REGISTRY.fields.find((row) => row.fieldId === fieldId) || null;
+}
 
 export function createNonFeaFieldOwnershipMatrix(profile) {
   const rows = NON_FEA_FIELD_REGISTRY.fields.map((definition) => {
     const entry = definition.projectDataPath ? readPath(profile, definition.projectDataPath) : null;
-    return freezeDeep({ fieldId: definition.fieldId, label: definition.label, canonicalUnit: definition.canonicalUnit, authorityPath: definition.authorityPath, projectDataPath: definition.projectDataPath, projectDataState: projectEntryState(entry), defaultEligible: definition.defaultEligible, methods: definition.methods });
+    return freezeDeep({
+      fieldId: definition.fieldId,
+      label: definition.label,
+      canonicalUnit: definition.canonicalUnit,
+      authorityPath: definition.authorityPath,
+      projectDataPath: definition.projectDataPath,
+      projectDataState: projectEntryState(entry),
+      defaultEligible: definition.defaultEligible,
+      methods: definition.methods,
+    });
   });
-  const base = { schema: 'non-fea-field-ownership-matrix/v1', projectDataRevision: Number.isInteger(profile?.revision) ? profile.revision : null, rows };
+  const base = {
+    schema: 'non-fea-field-ownership-matrix/v1',
+    projectDataRevision: Number.isInteger(profile?.revision) ? profile.revision : null,
+    rows,
+  };
   return freezeDeep({ ...base, semanticHash: semanticHash(base) });
 }
 
@@ -148,7 +178,10 @@ export function validateConfiguredDefaultsPolicy(value) {
   const ids = new Set();
   value.defaults.forEach((row, index) => {
     const path = `qualificationPolicy.configuredDefaults.defaults[${index}]`;
-    if (!isRecord(row)) { errors.push(issue(path, 'INVALID_CONFIGURED_DEFAULT', 'Configured default must be an object.')); return; }
+    if (!isRecord(row)) {
+      errors.push(issue(path, 'INVALID_CONFIGURED_DEFAULT', 'Configured default must be an object.'));
+      return;
+    }
     const defaultId = stringValue(row.defaultId);
     const fieldId = stringValue(row.fieldId);
     const definition = getNonFeaFieldDefinition(fieldId);
@@ -161,11 +194,14 @@ export function validateConfiguredDefaultsPolicy(value) {
     else validateFiniteValue(row.value, `${path}.value`, errors);
     if (!stringValue(row.unit)) errors.push(issue(`${path}.unit`, 'MISSING_DEFAULT_UNIT', 'Configured default unit is required.'));
     if (!stringValue(row.basis)) errors.push(issue(`${path}.basis`, 'MISSING_DEFAULT_BASIS', 'Configured default basis is required.'));
-    if (!Array.isArray(row.allowedMethods) || row.allowedMethods.length === 0) errors.push(issue(`${path}.allowedMethods`, 'MISSING_DEFAULT_METHODS', 'At least one allowed method is required.'));
-    else row.allowedMethods.forEach((methodId) => {
-      if (!NON_FEA_METHOD_IDS.includes(methodId)) errors.push(issue(`${path}.allowedMethods`, 'UNKNOWN_DEFAULT_METHOD', `Unknown method: ${methodId}.`));
-      if (definition && !definition.methods.includes(methodId)) errors.push(issue(`${path}.allowedMethods`, 'DEFAULT_METHOD_NOT_APPLICABLE', `${fieldId} is not consumed by ${methodId}.`));
-    });
+    if (!Array.isArray(row.allowedMethods) || row.allowedMethods.length === 0) {
+      errors.push(issue(`${path}.allowedMethods`, 'MISSING_DEFAULT_METHODS', 'At least one allowed method is required.'));
+    } else {
+      row.allowedMethods.forEach((methodId) => {
+        if (!NON_FEA_METHOD_IDS.includes(methodId)) errors.push(issue(`${path}.allowedMethods`, 'UNKNOWN_DEFAULT_METHOD', `Unknown method: ${methodId}.`));
+        if (definition && !definition.methods.includes(methodId)) errors.push(issue(`${path}.allowedMethods`, 'DEFAULT_METHOD_NOT_APPLICABLE', `${fieldId} is not consumed by ${methodId}.`));
+      });
+    }
   });
   return freezeDeep({ valid: errors.length === 0, errors });
 }
@@ -174,43 +210,101 @@ export function createConfiguredDefaultUsageLedger(profile, usageRows = []) {
   if (!Array.isArray(usageRows)) throw new TypeError('Configured-default usage rows must be an array.');
   const policyEntry = readPath(profile, 'qualificationPolicy.configuredDefaults');
   const policy = policyEntry?.value ?? null;
-  const approvedAuthority = policyEntry?.approved === true && isRecord(policyEntry?.evidence) && Boolean(stringValue(policyEntry.evidence.source));
-  if (usageRows.length > 0 && !approvedAuthority) throw new TypeError('Configured-default usage requires an approved Project Data policy with source evidence.');
-  const audit = policy === null ? freezeDeep({ valid: usageRows.length === 0, errors: usageRows.length ? [issue('usageRows', 'CONFIGURED_DEFAULT_POLICY_REQUIRED', 'Configured-default usage requires an approved policy.')] : [] }) : validateConfiguredDefaultsPolicy(policy);
+  const approvedAuthority = policyEntry?.approved === true
+    && isRecord(policyEntry?.evidence)
+    && Boolean(stringValue(policyEntry.evidence.source));
+  if (usageRows.length > 0 && !approvedAuthority) {
+    throw new TypeError('Configured-default usage requires an approved Project Data policy with source evidence.');
+  }
+  const audit = policy === null
+    ? freezeDeep({ valid: usageRows.length === 0, errors: usageRows.length ? [issue('usageRows', 'CONFIGURED_DEFAULT_POLICY_REQUIRED', 'Configured-default usage requires an approved policy.')] : [] })
+    : validateConfiguredDefaultsPolicy(policy);
   if (!audit.valid) throw new TypeError(audit.errors.map((row) => `${row.code}: ${row.message}`).join(' '));
   const defaults = new Map((policy?.defaults || []).map((row) => [row.defaultId, row]));
   const rows = usageRows.map((row, index) => validateUsage(row, index, defaults)).sort(usageOrder);
-  const base = { schema: NON_FEA_CONFIGURED_DEFAULT_USAGE_LEDGER_SCHEMA, projectDataRevision: Number.isInteger(profile?.revision) ? profile.revision : null, configuredDefaultPolicyHash: policy ? semanticHash(policy) : null, rows };
+  const base = {
+    schema: NON_FEA_CONFIGURED_DEFAULT_USAGE_LEDGER_SCHEMA,
+    projectDataRevision: Number.isInteger(profile?.revision) ? profile.revision : null,
+    configuredDefaultPolicyHash: policy ? semanticHash(policy) : null,
+    rows,
+  };
   return freezeDeep({ ...base, semanticHash: semanticHash(base) });
 }
 
 function field(fieldId, label, canonicalUnit, authorityPath, projectDataPath, methods, defaultEligible = false) {
   if (!authorityPath.length) throw new TypeError(`${fieldId} requires an authority path.`);
-  authorityPath.forEach((authority) => { if (!NON_FEA_AUTHORITY_KINDS.includes(authority)) throw new TypeError(`Unknown authority ${authority} for ${fieldId}.`); });
+  authorityPath.forEach((authority) => {
+    if (!NON_FEA_AUTHORITY_KINDS.includes(authority)) throw new TypeError(`Unknown authority ${authority} for ${fieldId}.`);
+  });
   const uniqueMethods = [...new Set(methods)];
-  uniqueMethods.forEach((methodId) => { if (!NON_FEA_METHOD_IDS.includes(methodId)) throw new TypeError(`Unknown method ${methodId} for ${fieldId}.`); });
-  return { fieldId, label, canonicalUnit, authorityPath: [...authorityPath], projectDataPath, methods: uniqueMethods, defaultEligible: defaultEligible === true };
+  uniqueMethods.forEach((methodId) => {
+    if (!NON_FEA_METHOD_IDS.includes(methodId)) throw new TypeError(`Unknown method ${methodId} for ${fieldId}.`);
+  });
+  return {
+    fieldId,
+    label,
+    canonicalUnit,
+    authorityPath: [...authorityPath],
+    projectDataPath,
+    methods: uniqueMethods,
+    defaultEligible: defaultEligible === true,
+  };
 }
 
 function validateUsage(row, index, defaults) {
   const path = `usageRows[${index}]`;
   if (!isRecord(row)) throw new TypeError(`${path} must be an object.`);
-  const defaultId = stringValue(row.defaultId), fieldId = stringValue(row.fieldId), methodId = stringValue(row.methodId), targetId = stringValue(row.targetId), reason = stringValue(row.reason);
+  const defaultId = stringValue(row.defaultId);
+  const fieldId = stringValue(row.fieldId);
+  const methodId = stringValue(row.methodId);
+  const targetId = stringValue(row.targetId);
+  const reason = stringValue(row.reason);
   const configured = defaults.get(defaultId);
   if (!configured) throw new TypeError(`${path} references unknown configured default ${defaultId || 'EMPTY'}.`);
   if (configured.fieldId !== fieldId) throw new TypeError(`${path} field ${fieldId} does not match configured default ${configured.fieldId}.`);
   if (!configured.allowedMethods.includes(methodId)) throw new TypeError(`${path} method ${methodId} is not permitted for ${defaultId}.`);
   if (!targetId) throw new TypeError(`${path}.targetId is required.`);
   if (!reason) throw new TypeError(`${path}.reason is required.`);
-  return freezeDeep({ defaultId, fieldId, methodId, targetId, reason, value: configured.value, unit: configured.unit, basis: configured.basis });
+  return freezeDeep({
+    defaultId,
+    fieldId,
+    methodId,
+    targetId,
+    reason,
+    value: configured.value,
+    unit: configured.unit,
+    basis: configured.basis,
+  });
 }
 
 function validateFiniteValue(value, path, errors) {
-  if (typeof value === 'number') { if (!Number.isFinite(value)) errors.push(issue(path, 'INVALID_DEFAULT_NUMBER', 'Configured default numbers must be finite.')); return; }
-  if (Array.isArray(value)) { value.forEach((item, index) => validateFiniteValue(item, `${path}[${index}]`, errors)); return; }
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) errors.push(issue(path, 'INVALID_DEFAULT_NUMBER', 'Configured default numbers must be finite.'));
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => validateFiniteValue(item, `${path}[${index}]`, errors));
+    return;
+  }
   if (isRecord(value)) Object.entries(value).forEach(([key, item]) => validateFiniteValue(item, `${path}.${key}`, errors));
 }
-function projectEntryState(entry) { if (!isRecord(entry) || !Object.hasOwn(entry, 'value')) return 'NOT_PROJECT_OWNED'; if (entry.value === null) return 'MISSING'; if (entry.approved !== true || !isRecord(entry.evidence) || !stringValue(entry.evidence.source)) return 'REVIEW'; return 'APPROVED'; }
-function readPath(value, path) { return String(path || '').split('.').reduce((current, key) => current?.[key], value); }
-function usageOrder(left, right) { return `${left.fieldId}|${left.methodId}|${left.targetId}|${left.defaultId}`.localeCompare(`${right.fieldId}|${right.methodId}|${right.targetId}|${right.defaultId}`); }
-function issue(path, code, message) { return freezeDeep({ path, code, message }); }
+
+function projectEntryState(entry) {
+  if (!isRecord(entry) || !Object.hasOwn(entry, 'value')) return 'NOT_PROJECT_OWNED';
+  if (entry.value === null) return 'MISSING';
+  if (entry.approved !== true || !isRecord(entry.evidence) || !stringValue(entry.evidence.source)) return 'REVIEW';
+  return 'APPROVED';
+}
+
+function readPath(value, path) {
+  return String(path || '').split('.').reduce((current, key) => current?.[key], value);
+}
+
+function usageOrder(left, right) {
+  return `${left.fieldId}|${left.methodId}|${left.targetId}|${left.defaultId}`
+    .localeCompare(`${right.fieldId}|${right.methodId}|${right.targetId}|${right.defaultId}`);
+}
+
+function issue(path, code, message) {
+  return freezeDeep({ path, code, message });
+}

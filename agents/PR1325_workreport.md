@@ -2,93 +2,191 @@
 
 ## Recovery header
 - `HANDOVER_READINESS: READY`
-- `PR_RECOVERY_STATE: ACTIVE_IMPLEMENTATION`
+- `PR_RECOVERY_STATE: IMPLEMENTATION_COMPLETE_VALIDATION_ENVIRONMENT_BLOCKED`
 - `CRITICALITY: ENGINEERING_CRITICAL`
 - `WORK_INTENT: IMPLEMENT`
 - `ISSUE: #1324`
 - `PR: #1325`
 - `BRANCH: agent/issue-1324-emp1-authority-currentness`
 - `BASE_MAIN: a222e18c38bd20fb55c1c6c95f724f40e40e8532`
-- `OWNER: reallaksh19`
+- `LAST_CODE_HEAD: b51593bba7ae478143635f1794b267e7fbb4ab2e`
 - `PRODUCTION_ROUTE_AUTHORIZED: false`
 - `GLOBAL_EMP1_C_ROUTE_AUTHORIZED: false`
 - `CODE_COMPLIANCE_AUTHORIZED: false`
 - `RELEASE_QUALIFIED: false`
+- `MERGE_RECOMMENDATION: DO_NOT_MERGE_UNTIL_EXECUTED_VALIDATION_EVIDENCE_IS_AVAILABLE`
 
 ## Assignment
-Implement issue #1324 in this one continuously stacked PR:
-1. make retained EMP.1.C results authority-current, so a qualification/route-authority change invalidates reportability without deleting historical evidence or rerunning A/B;
-2. add one `Load complete EMP.1 qualification sample` path that supplies only legitimate source/sample inputs and traverses the same normalization/source-binding/execution custody as real inputs;
-3. make C button/badge/result/evidence state derive from one domain projection so stale numerical C results cannot remain visible after authority changes;
-4. add engineering-critical falsifiers proving the implementation is route-specific/currentness-aware rather than a global C disable.
+Implement issue #1324 in one continuously stacked PR:
+1. bind retained EMP.1.C numerical evidence to the exact route/qualification authority under which it was produced;
+2. make route-authority changes invalidate C reportability without invalidating unchanged A/B;
+3. provide one complete deterministic EMP.1 qualification sample through normal source/import/normalization/custody APIs, with no derived WRC or result authority injected;
+4. make C workflow/run/result state authority-driven rather than hard-coded disabled;
+5. add adversarial and visible-workflow qualification for the current fail-closed route state.
 
-## Ground truth
-- Current `main` was pinned at `a222e18c38bd20fb55c1c6c95f724f40e40e8532` before branch creation.
-- No `AGENTS.md` and no `agents/MASTER_INDEX.md` are present on this base.
-- Open PR/status/claim review found no active EMP.1 ownership collision for these workbench/core files.
-- Current bounded WRC 537 gamma=5, zero-differential-pressure production route remains suspended; this assignment does not grant route, global C, code-compliance, or release authority.
-- Current run-state compares A/B/run-input hashes only; route authority/qualification is absent from retained-execution currentness.
-- `runEmp1()` may reuse previous local correlation when C is not invalidated; the dependency graph currently has no route-authority change class.
-- Current UI independently derives C route suspension from the registry instead of consuming a single domain C-state projection.
-- Existing EMP.1 workbench qualification already checks typed `r0`, WRC §4.5 source custody, spoofed nearest-end distance rejection, canonical units, and truthful `PREPARED_C_BLOCKED` behavior while the route is suspended.
-
-## Protected engineering invariants
+## Ground truth and protected boundaries
+- Branch was created from exact `main@a222e18c38bd20fb55c1c6c95f724f40e40e8532`.
+- Current bounded route remains `EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP` and is production-suspended.
+- Governing current suspension remains `WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE`.
+- This PR does not authorize production C, global/full-domain EMP.1.C, code compliance, or release.
+- No workflow YAML files are changed.
+- A retained numerical C execution is immutable historical evidence. Authority mutation changes currentness/reportability, not the historical record.
 - A/B are not invalidated merely because C route authority changes.
-- A retained numerical C execution is immutable historical evidence; authority changes alter currentness/reportability, not the historical record.
-- A stale C numerical result must be excluded from current result/report/export consumption while remaining available as explicitly historical evidence.
-- Qualification/sample code must not inject derived `Rm`, `T`, `r0`, `gamma`, `beta`, nearest-end distance, WRC load components, WRC coefficients, stresses, governing point, applicability PASS, or route authorization.
-- Sample source bindings must use the existing canonical normalizers and typed source-authority constructors.
-- Route suspension remains fail-closed unless existing exact-head engineering qualification independently authorizes a later change; no such authorization is assumed here.
-- No workflow YAML change is planned.
+- The complete sample does not author `Rm`, `T`, `r0`, gamma, beta, nearest-end distance, WRC axes, WRC load components, coefficients, stresses, governing location, route authorization, code compliance, or release status.
 
-## Implementation plan
-1. Add a route-authority change class that invalidates only C/assessment/benchmark.
-2. Build and retain a deterministic route-authority semantic snapshot binding route-module state plus registry qualification/method/scope authority.
-3. Reconcile previous/current authority snapshots before `runEmp1()` so stale C cannot be reused.
-4. Extend workbench currentness with authority-aware C reportability and create a single C-state projection for button/badge/current result/evidence behavior.
-5. Wire the controller/view to that projection and add the complete qualification sample through normal source/run-input paths.
-6. Extend focused qualification plus adversarial falsifiers; then inspect exact-head CI/status without treating environment failures as PASS.
+## Implemented engineering changes
 
-## Validation plan
-Engineering-critical adversarial checks will include:
-- Q1 retained numeric C + Q1 authority snapshot => current/reportable.
-- Q1 -> distinct authorized Q2 snapshot with unchanged A/B/input => old C stale/hidden but rerun remains enabled.
-- new Q2 retained numeric C => current/reportable.
-- Q2 suspension => retained numeric evidence preserved, current stress result hidden, production-C action disabled.
-- unrelated/no authority change => retained C remains current.
-- legacy/missing authority snapshot => fail-closed stale for numerical C.
-- authority change invalidates C/assessment only, not A/B.
-- sample follows canonical run-input/source-binding path and reaches truthful `PREPARED_C_BLOCKED` while production route is suspended.
-- attempted sample injection of derived C authority fields is rejected by exact-shape normalization.
+### 1. Route-authority currentness — P0 closed in source
+- Added change class `ROUTE_AUTHORITY`.
+- `ROUTE_AUTHORITY` invalidates only `EMP.1.C`, assessment, and benchmark; A/B are outside this invalidation set.
+- Added deterministic `emp1-workbench-route-authority-snapshot/v1` in the workbench product runtime.
+- Snapshot semantic payload binds:
+  - bounded route identity;
+  - route-module authorization state and suspension reasons;
+  - registry registration and engineering-use authorization;
+  - retained method/source/qualification/dataset authority carried by the registry method record;
+  - bounded scope semantics and source-authority identities carried by the registry scope;
+  - limitations and remaining blocked scope.
+- Timestamp/UI text are not part of the engineering semantic hash.
+- Every new product execution retains `authority.routeAuthoritySnapshot`.
+- Previous/current snapshot mismatch is reconciled before `runEmp1()` so an unchanged A/B/input transaction cannot reuse a C result under a changed authority.
+- Previous numerical C evidence is preserved as `emp1-workbench-retained-c-evidence/v1` history rather than deleted.
 
-## Validation state
-- Repository exact-head execution: `NOT_RUN`.
-- Focused EMP.1 qualification: `NOT_RUN`.
-- Authority-currentness falsifiers: `NOT_RUN`.
-- UI/product projection checks: `NOT_RUN`.
-- Full regression: `NOT_RUN`.
+### 2. Authority-aware currentness and one C-state projection
+- Workbench currentness now distinguishes:
+  - source/input currentness;
+  - C authority currentness;
+  - C reportability.
+- Missing retained/current authority snapshots fail closed for numerical C.
+- Changed authority emits governed C route-authority currentness blockers and suppresses reportability.
+- Added C states:
+  - `SOURCE_INCOMPLETE`
+  - `ROUTE_SUSPENDED`
+  - `READY_TO_RUN`
+  - `CALCULATED_CURRENT`
+  - `STALE_AUTHORITY`
+  - `STALE_INPUT`
+- The projection owns production-C button enablement/label, C badge, blockers, current reportable result, current execution evidence, and retained historical evidence.
+- The visible workbench uses `inputCurrent` to retain unchanged A/B presentations across a C-only authority mutation.
+- C setup/evidence navigation remains available while production execution is suspended; the separate production C action is disabled by authority state.
+
+### 3. Complete source-only qualification sample
+- Added `[SIMULATED] Load complete EMP.1 qualification sample`.
+- The controller imports A and B through normal stage import APIs, applies the canonical run-input normalizer, and invokes the normal unified product transaction.
+- B ancestry is refreshed through `refreshEmp1BSourceEvidence()` from a real A execution; fixture-carried A result authority is not trusted.
+- Typed C sample input is limited to:
+  - load-case identity;
+  - pressure-result identity;
+  - attachment geometry identity;
+  - attachment outside diameter at shell juncture + source reference;
+  - cylinder length between end planes + source reference;
+  - WRC attachment station from cylinder start end plane + source reference.
+- `normalizeEmp1WorkbenchRunInput()` and the existing typed source-authority constructors remain the authority boundaries.
+- Under the present suspended route, expected complete-sample truth is `A=1, B=1, prepare C=1, production C=0`, status `PREPARED_C_BLOCKED`, and no WRC stresses/code/release result.
+
+### 4. Adversarial currentness falsifier authored
+`scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs` covers:
+- Q1 authorized/current numerical C;
+- Q1 -> different authorized Q2 with identical A/B/input;
+- old Q1 result becomes stale/non-reportable while Q2 rerun remains enabled — negative control proving this is not a global C disable;
+- fresh Q2 result becomes current;
+- same Q2 subsequently suspended: C result hidden and production C disabled while A/B/input remain current;
+- semantically unchanged Q2 clone does not create false staleness;
+- legacy numerical C without retained authority snapshot fails closed;
+- input staleness remains distinguishable from authority staleness.
+
+### 5. Complete-sample production-path qualification authored
+`scripts/emp1-workbench-complete-sample-qualification.mjs` asserts:
+- exact source-only C input key shapes;
+- no derived/result/authority fields in the sample C command;
+- normal product readiness;
+- current route remains unauthorized;
+- normal product execution reaches `PREPARED_C_BLOCKED`;
+- invocations exactly `A 1 / B 1 / prepare C 1 / production C 0`;
+- no C stresses, code-compliance, or release claim;
+- gamma/beta/r0/nearest-end distance appear only after CORE derives them;
+- C projection is `ROUTE_SUSPENDED`, disabled, and has no reportable result.
+
+### 6. Browser/E2E current-truth qualification authored
+`e2e/emp1-workbench-authority.spec.js` exercises the real controller and one-click sample action. It asserts:
+- one-click sample reaches the transaction summary;
+- `A 1 / B 1 / prepare C 1 / production C 0`;
+- C navigation is enabled for setup/evidence;
+- production `Run C` is disabled with state `ROUTE_SUSPENDED`;
+- exact current requalification blocker is visible;
+- no `emp1-c-result-evidence` result card is rendered;
+- C executed = NO, code compliance = NO, release qualified = NO;
+- retained execution has a route-authority semantic hash.
+
+## Source-level renderer audit
+- `lafea-workbench-view.js` injects retained A/B executions when `emp1ExecutionCurrentness.inputCurrent === true`; therefore a C-only authority mutation does not discard unchanged A/B presentation.
+- `lafea-analytical-calc-content.js` only creates a production C result card when the overall product execution is current and the retained product says bounded C executed. Consequently a stale/suspended authority cannot expose the historical C stress card on the current path.
+- The stricter `emp1CState.currentResultAvailable/reportableResult` projection is used for product/C state and the browser qualification explicitly asserts no C result card under the current suspension.
+- No additional renderer rewrite was made because the audited path already fails closed and the proposed rewrite would be presentation-only rather than an authority-boundary correction.
+
+## Validation evidence
+### Exact-head workflow observation at `b51593bba7ae478143635f1794b267e7fbb4ab2e`
+Six PR-triggered workflows were created. All were reported by GitHub as completed/failure, but relevant jobs contain `steps=null` and `logs_url=null`; therefore no checkout, script, numerical comparison, or browser step executed. These are classified `NOT_RUN_EXECUTION_ENVIRONMENT`, not software FAIL and not PASS.
+
+Observed examples:
+- `LAFEA visible workbench qualification` run `32575727523`, job `97037690408`: `steps=null`, `logs_url=null`.
+- `EMP.1 runEmp1 bounded gamma5 orchestration` run `32575727363`, job `97037689889`: `steps=null`, `logs_url=null`.
+- `EMP.1 gamma5 bounded route on current main` run `32575727421`, job `97037690134`: `steps=null`, `logs_url=null`.
+- `EMP.1 current-main independent baseline` run `32575727420`, job `97037689922`: `steps=null`, `logs_url=null`.
+- Combined legacy commit-status API returned no individual statuses for this head.
+
+### Validation classification
+- Source/diff audit against issue #1324 acceptance: `COMPLETE`.
+- Authority-currentness falsifier execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Complete-sample Node qualification execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Browser/Playwright EMP.1 qualification execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Existing focused EMP.1 orchestration workflow execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Independent gamma5 exact-head oracle execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Full repository regression: `NOT_RUN`.
+- Live deployed-browser click-through: `NOT_RUN`.
+
+No unexecuted check is represented as PASS.
 
 ## Changed-file ledger
-- `agents/PR1325_workreport.md` — living PR recovery/validation record.
-- `agents/WIP_issue1324_reallaksh19_20260822_workreport.md` — pre-PR record, scheduled for removal immediately after this file is created.
+1. `agents/PR1325_workreport.md` — living recovery/validation/handover record.
+2. `scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs` — Q1/Q2/suspension/legacy/input adversarial currentness tests.
+3. `scripts/emp1-workbench-complete-sample-qualification.mjs` — source-only sample + real product-path suspended-C qualification.
+4. `e2e/emp1-workbench-authority.spec.js` — visible one-click sample and suspended-C truth qualification.
+5. `src/core/emp1/emp1-dependency-graph.js` — `ROUTE_AUTHORITY` C-only downstream invalidation.
+6. `src/workspace/emp1-workbench-product-run.js` — canonical route-authority snapshot, current authority resolver, pre-run invalidation, retained C history.
+7. `src/workspace/emp1-workbench-run-state.js` — authority-aware currentness and single C-state/reportability projection.
+8. `src/workspace/emp1-workbench-qualification-sample.js` — deterministic source-only complete qualification bundle.
+9. `src/workspace/lafea-workbench-controller.js` — normal import/normalize/run wiring for the complete sample and live route-authority provider.
+10. `src/workspace/lafea-workbench-view.js` — current route evaluation, A/B input-current presentation, sample action, separate state-driven production C control.
+11. `src/workspace/lafea-guided-workflow-view.js` — C setup navigation and state/badge/blocker presentation driven by product C state.
 
-## Open findings / risks
-- `ISS-1324-01` P0: route authority is not part of retained C currentness/invalidation.
-- `ISS-1324-02` P0: current C UI authority state is partly derived locally in the view and can diverge from domain currentness.
-- `ISS-1324-03` P1: qualification sample wiring must reuse current refactored controller/store architecture and must not become a privileged result injection path.
-- `RISK-1324-01`: route registry and route module jointly define production authority; snapshot semantics must bind both without hashing transient UI/time metadata.
+## Open blockers / risks
+- `VAL-1324-01`: authored Node qualification and adversarial falsifiers have not executed in the available environment.
+- `VAL-1324-02`: authored browser qualification has not executed because the exact-head runner never started a job step.
+- `VAL-1324-03`: independent exact-head gamma5 requalification is still `NOT_RUN_EXECUTION_ENVIRONMENT`; production-route suspension must therefore remain in force.
+- `RISK-1324-01`: do not interpret source-authority closure, authored tests, or historical ~72.67 MPa comparison evidence as production authorization.
+- `RISK-1324-02`: unsupported method scope remains fail-closed: nonzero differential pressure, general Kn/Kb, gamma outside bounded scope, beta outside qualified range, off-axis/global maxima, nozzle/attachment stress claims, WRC 297/nozzle-neck routes, rectangular/lug approximations, and code/release authority.
 
 ## Exact next action
-Remove the pre-PR WIP file, then implement authority snapshot/invalidation and state projection before UI/sample wiring.
+1. When an execution environment can actually start steps, execute on the exact code head:
+   - `node scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs`
+   - `node scripts/emp1-workbench-complete-sample-qualification.mjs`
+   - existing `scripts/emp1-workbench-product-run-qualification.mjs`
+   - Playwright `e2e/emp1-workbench-authority.spec.js` with the repository's LAFEA guided configuration;
+   - the independent gamma5 exact-head oracle/current-candidate comparison and required regression bundle.
+2. Record actual stdout/artifacts/hashes in this report.
+3. Only after green exact-head engineering + product-path evidence and review should a separate explicit decision consider lifting the bounded route suspension. This PR currently keeps it false.
 
 ## Appendix A — takeover qualification
-1. Why can a numerically unchanged WRC result cease to be engineering-current when A/B/input bytes are unchanged?
-2. Which route/qualification fields belong in the authority semantic hash, and which transient fields must be excluded?
-3. Why must a route-authority change invalidate C/assessment but not A/B?
-4. How does `runEmp1()` currently permit reuse of a previous local correlation?
-5. What negative control proves the fix is not a global C disable?
-6. Why must historical C evidence be retained while its reportable projection becomes null?
-7. Which fields may the complete qualification sample legitimately author, and which must CORE derive?
-8. Which existing normalization/source-authority functions must the sample traverse?
-9. What should the current C UI show when an old authorized result exists but the current route is suspended?
-10. Which engineering authorities remain false throughout this PR unless separately and explicitly qualified?
+1. Why can an unchanged numerical WRC result cease to be engineering-current when A/B/input bytes are unchanged?
+2. Which exact registry/method/scope/qualification facts are bound into `routeAuthoritySnapshot.semanticHash`, and why are timestamp/UI strings excluded?
+3. Why does `ROUTE_AUTHORITY` invalidate C/assessment/benchmark but not A/B?
+4. At what point before `runEmp1()` is previous/current route authority reconciled, and what stale-reuse failure does that prevent?
+5. Which Q1->Q2 negative control proves this implementation is not a global C disable?
+6. Where is historical numerical C evidence retained after rerun/authority mutation, and why is that distinct from reportability?
+7. Which fields may the complete sample author, and which WRC quantities must CORE derive?
+8. Which normal source/import/normalization/custody boundaries does the one-click sample traverse?
+9. What must the UI show for `source valid + route suspended`, and which control remains navigable versus disabled?
+10. Why are the six GitHub workflow conclusions not accepted as software FAIL evidence on this head?
+11. What executable evidence is still mandatory before the current route suspension can be considered for removal?
+12. Which engineering authorities remain false throughout PR #1325?

@@ -68,10 +68,37 @@ assert.equal(q2View.state, 'STALE_AUTHORITY');
 assert.equal(q2View.buttonEnabled, true,
   'authorized Q2 must permit rerun; a global C disable is an invalid fix');
 assert.equal(q2View.currentResultAvailable, false);
+assert.equal(q2View.retainedResultAvailable, true);
 assert.equal(q2View.reportableResult, null,
   'Q1 stresses must not remain in the current result projection');
 assert.equal(q2View.currentExecutionEvidence.stresses.Au, 72.67281563686576,
   'historical evidence must remain retained even when not reportable');
+
+// Persist/reload falsifier: a serialized Q1 execution loaded after Q2 becomes
+// current must be stale on its first classification. There is no in-memory
+// transition dependency and no last-writer/current-session loophole.
+const reloadedQ1 = JSON.parse(JSON.stringify(retainedQ1));
+const reloadedChangedToQ2 = classifyEmp1WorkbenchExecutionCurrentness({
+  execution: reloadedQ1,
+  aDocument,
+  bDocument,
+  runInput,
+  currentRouteAuthority: q2,
+});
+assert.equal(reloadedChangedToQ2.state, EMP1_WORKBENCH_EXECUTION_CURRENTNESS.STALE);
+assert.equal(reloadedChangedToQ2.inputCurrent, true);
+assert.equal(reloadedChangedToQ2.cReportable, false);
+assert.ok(reloadedChangedToQ2.reasons.includes('EMP1_WORKBENCH_C_ROUTE_AUTHORITY_CHANGED'));
+const reloadedQ2View = projectEmp1WorkbenchCState({
+  readiness,
+  execution: reloadedQ1,
+  currentness: reloadedChangedToQ2,
+  routeAuthority: q2,
+});
+assert.equal(reloadedQ2View.state, 'STALE_AUTHORITY');
+assert.equal(reloadedQ2View.currentResultAvailable, false);
+assert.equal(reloadedQ2View.reportableResult, null);
+assert.equal(reloadedQ2View.currentExecutionEvidence.stresses.Au, 72.67281563686576);
 
 // A fresh numerical execution carrying Q2 authority becomes current again.
 const retainedQ2 = retainedNumericalExecution(q2.snapshot, aDocument, bDocument, runInput);
@@ -161,12 +188,13 @@ assert.equal(projectEmp1WorkbenchCState({
 }).state, 'STALE_INPUT');
 
 console.log(JSON.stringify({
-  schema: 'emp1-workbench-route-authority-currentness-falsifiers/v1',
+  schema: 'emp1-workbench-route-authority-currentness-falsifiers/v2',
   status: 'PASS',
   q1AuthorityHash: q1.snapshot.semanticHash,
   q2AuthorityHash: q2.snapshot.semanticHash,
   q1ToQ2OldResultReportable: q2View.currentResultAvailable,
   q1ToQ2RerunEnabled: q2View.buttonEnabled,
+  persistedQ1ReloadedUnderQ2Reportable: reloadedQ2View.currentResultAvailable,
   suspendedResultReportable: suspendedView.currentResultAvailable,
   suspendedCActionEnabled: suspendedView.buttonEnabled,
   aBInputsRemainCurrentAcrossAuthorityMutation: suspended.inputCurrent,

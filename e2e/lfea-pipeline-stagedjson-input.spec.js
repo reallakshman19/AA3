@@ -72,9 +72,12 @@ test('StagedJSON converts to real InputXML and hands off to the existing pre-fli
 
   // Clearing the StagedJSON panel also clears the InputXML panel it fed,
   // rather than leaving a stale converted result next to an emptied
-  // source panel. The clear button lives on the StagedJSON panel, back on
-  // Input.
+  // source panel. The source-specific clear action
+  // (clear-lfea-pipeline-stagedjson-source) is not reliably visible/clickable
+  // directly once a source is active; the picker's own "Clear active
+  // source" button is visible in that state and forwards to the same
+  // action (see clearActiveSource in lfea-source-acquisition.js).
   await page.locator('[data-role="lfea-pipeline-step"][data-step-id="INPUT"]').click();
-  await page.locator('[data-action="clear-lfea-pipeline-stagedjson-source"]').click();
+  await page.locator('[data-action="lfea-source-acquisition-clear"]').click();
   await expect(inputXmlPanel).toHaveAttribute('data-source-status', 'EMPTY');
 });

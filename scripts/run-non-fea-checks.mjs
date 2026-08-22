@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 const checks = [
   ['Canvas2D render-model v3 bootstrap regression', 'scripts/non-fea-canvas-v3-bootstrap-check.mjs'],
   ['Project Data authority contract', 'scripts/non-fea-project-data-authority-check.mjs'],
+  ['Product-default authority and hash binding', 'scripts/non-fea-product-default-profile-check.mjs'],
   ['Configured-default resolver convergence', 'scripts/non-fea-configured-default-resolution-check.mjs'],
   ['Load-case authority convergence', 'scripts/non-fea-load-case-authority-check.mjs'],
   ['Mass-ledger authority convergence', 'scripts/non-fea-mass-ledger-convergence-check.mjs'],

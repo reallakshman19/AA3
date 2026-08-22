@@ -9,6 +9,9 @@ import {
   NON_FEA_METHOD_IDS,
   validateConfiguredDefaultsPolicy,
 } from './non-fea-field-registry.js';
+import {
+  validateNonFeaFluidFillPolicy,
+} from './non-fea-fluid-fill-policy.js';
 
 const AUTHORIZED_GRAVITY_LEDGER_PATHS = Object.freeze([
   'loadCalculation.pipeSectionProperties',
@@ -211,6 +214,10 @@ function validatePhase2Object(value, path, errors) {
   ]);
   if (value !== null && objectPaths.has(path) && !isRecord(value)) {
     errors.push(errorRow(path, 'INVALID_POLICY_OBJECT', 'Value must be an object keyed by governed identity or policy member.'));
+  }
+  if (path === 'thermoMechanicalBasis.fluidPhaseAndFillState' && value !== null) {
+    const audit = validateNonFeaFluidFillPolicy(value);
+    audit.errors.forEach((row) => errors.push(errorRow(path, row.code, row.message)));
   }
   if (path === 'qualificationPolicy.configuredDefaults' && value !== null) {
     const audit = validateConfiguredDefaultsPolicy(value);

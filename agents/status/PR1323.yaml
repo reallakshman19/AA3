@@ -4,7 +4,7 @@ pr_or_wip: PR1323
 mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
 workstream: ISSUE1321_LOAD_CALC
 branch: agent/issue-1321-load-calc-effective-values
-pr_head: 5ca4f6d2a6738f4de21f57f1a9a591e1a53ec837
+pr_head: da18b1bbf535aba8d76f160d5b2f3980bfdd176e
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -12,12 +12,12 @@ agent_state: ACTIVE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1323_workreport.md
-report_basis_head: 5ca4f6d2a6738f4de21f57f1a9a591e1a53ec837
+report_basis_head: da18b1bbf535aba8d76f160d5b2f3980bfdd176e
 appendix_a_status: CURRENT
-grounding_epoch: GE-006
-current_stage: STACK_4_PRE_READINESS_PROJECT_PRODUCT_EFFECTIVE_DEFAULT_AUTHORING_SOURCE_INTEGRATED
-blocker: NO_EXISTING_WORKSPACE_COMMON_ENRICHED_CANDIDATE_AUTHORING_CALLER_FOUND_AND_NO_RELEVANT_EXACT_HEAD_LOAD_CALC_EXECUTION_OBSERVED
-highest_risk: Historical V3-V8 package wrappers and direct support-distribution callers retain independent/raw value-resolution authority outside the active V1/V2 target-level ledger path.
+grounding_epoch: GE-007
+current_stage: STACK_6_ACTIVE_V1_V2_AUTHORITY_CONTAINMENT_AND_SOURCE_AXIS_BINDING_SOURCE_INTEGRATED
+blocker: EXACT_HEAD_LOAD_CALC_RUNTIME_QUALIFICATION_NOT_OBSERVED_AND_NO_EXISTING_WORKSPACE_COMMON_ENRICHED_CANDIDATE_AUTHORING_CALLER_FOUND
+highest_risk: V3-V8 remain parallel standalone Package-5 sealed-enrichment execution contracts and direct legacy support-distribution callers retain historical raw Project Data behavior outside the active guarded V1/V2 chain.
 dependencies:
   - Issue #1321 exact effective-value precedence
   - non-fea-common-enriched-effective-default-authoring/v1
@@ -26,6 +26,8 @@ dependencies:
   - non-fea-effective-value-resolution-ledger/v1
   - authorized-empirical-effective-value-ledger/v1
   - authorized-empirical-effective-execution-projection/v1
+  - authorized-empirical-effective-support-load-execution/v1
+  - authorized-empirical-source-axis-binding/v1
   - support-load-static-accounting/v1
-exact_next_action: Contain direct raw Project Data/DEFAULT re-resolution in support-load-distribution-v3.js for ledger-driven callers, then classify V3-V8 production support before authority migration.
-last_updated: 2026-08-22T18:09:17+05:30
+exact_next_action: Audit remaining Issue #1321 configurable families and prove calculation-affecting Project/Product default or effective-value changes stale current authorization/execution; keep V3-V8 outside the active runtime chain absent an explicit authority migration design.
+last_updated: 2026-08-22T18:44:29+05:30

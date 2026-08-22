@@ -5,7 +5,18 @@ const WIDTH = 760;
 const HEIGHT = 420;
 const PADDING = 34;
 const LEGEND_HEIGHT = 36;
+export const LFEA_GEOMETRY_SEGMENT_LABEL_LIMIT = 500;
 const DIMENSIONS = Object.freeze({ width: WIDTH, height: HEIGHT, padding: PADDING, legendHeight: LEGEND_HEIGHT });
+
+export function lfeaGeometryReviewDisplayDensity(segmentCount) {
+  if (!Number.isInteger(segmentCount) || segmentCount < 0) {
+    throw new TypeError('LFEA geometry display density requires a non-negative integer segment count.');
+  }
+  return Object.freeze({
+    segmentLabelsVisible: segmentCount <= LFEA_GEOMETRY_SEGMENT_LABEL_LIMIT,
+    segmentLabelLimit: LFEA_GEOMETRY_SEGMENT_LABEL_LIMIT,
+  });
+}
 
 export function renderLfeaGeometryReviewSvg(host, descriptor) {
   if (!host || typeof host.replaceChildren !== 'function') {
@@ -21,6 +32,8 @@ export function renderLfeaGeometryReviewSvg(host, descriptor) {
     return;
   }
 
+  const density = lfeaGeometryReviewDisplayDensity(descriptor.segments.length);
+  host.dataset.segmentLabels = density.segmentLabelsVisible ? 'VISIBLE' : 'SUPPRESSED_FOR_DENSITY';
   const projected = projectNodes(descriptor.nodes);
   const projectedById = new Map(projected.map((node) => [node.nodeId, node]));
   const transform = createLfeaViewport(projected, DIMENSIONS);
@@ -46,18 +59,22 @@ export function renderLfeaGeometryReviewSvg(host, descriptor) {
     line.setAttribute('class', 'lfea-geometry-review__segment');
     line.dataset.segmentId = segment.segmentId;
     line.dataset.segmentType = segment.type;
-    const title = host.ownerDocument.createElementNS(SVG_NS, 'title');
-    title.textContent = `${segment.segmentId}: ${segment.type} ${segment.startNodeId} → ${segment.endNodeId}`;
-    line.append(title);
+    if (density.segmentLabelsVisible) {
+      const title = host.ownerDocument.createElementNS(SVG_NS, 'title');
+      title.textContent = `${segment.segmentId}: ${segment.type} ${segment.startNodeId} → ${segment.endNodeId}`;
+      line.append(title);
+    }
     svg.append(line);
 
-    const label = host.ownerDocument.createElementNS(SVG_NS, 'text');
-    label.setAttribute('x', String((x1 + x2) / 2 + 4));
-    label.setAttribute('y', String((y1 + y2) / 2 - 4));
-    label.setAttribute('class', 'lfea-geometry-review__segment-label');
-    label.dataset.segmentId = segment.segmentId;
-    label.textContent = segment.type;
-    svg.append(label);
+    if (density.segmentLabelsVisible) {
+      const label = host.ownerDocument.createElementNS(SVG_NS, 'text');
+      label.setAttribute('x', String((x1 + x2) / 2 + 4));
+      label.setAttribute('y', String((y1 + y2) / 2 - 4));
+      label.setAttribute('class', 'lfea-geometry-review__segment-label');
+      label.dataset.segmentId = segment.segmentId;
+      label.textContent = segment.type;
+      svg.append(label);
+    }
   }
 
   for (const node of projected) {
@@ -76,7 +93,10 @@ export function renderLfeaGeometryReviewSvg(host, descriptor) {
   caption.setAttribute('y', '20');
   caption.setAttribute('class', 'lfea-geometry-review__caption');
   caption.dataset.role = 'lfea-geometry-review-caption';
-  caption.textContent = `${descriptor.label} · ${descriptor.nodes.length} nodes · ${descriptor.segments.length} spans · read-only isometric display`;
+  const densityNote = density.segmentLabelsVisible
+    ? ''
+    : ` · span text/tooltips hidden above ${density.segmentLabelLimit} spans; all spans/nodes retained`;
+  caption.textContent = `${descriptor.label} · ${descriptor.nodes.length} nodes · ${descriptor.segments.length} spans · read-only isometric display${densityNote}`;
   svg.append(caption);
   host.append(svg);
 }

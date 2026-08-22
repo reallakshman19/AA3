@@ -11,7 +11,8 @@
 .lfea-model-review__header p { margin: 5px 0 0; color: var(--workspace-muted); font-size: 11px; }
 .lfea-model-review__tabs { display: flex; gap: 6px; padding: 0 14px 10px; overflow-x: auto; }
 .lfea-model-review__tabs button,
-.lfea-geometry-review__controls button {
+.lfea-geometry-review__controls button,
+.lfea-model-review__pager button {
   padding: 5px 9px;
   border: 1px solid var(--workspace-border);
   border-radius: 999px;
@@ -22,6 +23,10 @@
 }
 .lfea-model-review__tabs button[data-active="true"],
 .lfea-geometry-review__controls button[data-active="true"] { border-color: var(--workspace-accent); color: var(--workspace-text); }
+.lfea-model-review__tabs button:focus-visible,
+.lfea-geometry-review__controls button:focus-visible,
+.lfea-model-review__pager button:focus-visible { outline: 2px solid var(--workspace-accent); outline-offset: 2px; }
+.lfea-model-review__pager button:disabled { cursor: not-allowed; opacity: 0.5; }
 .lfea-model-review__body { padding: 0 14px 14px; }
 .lfea-model-review__body > p { color: var(--workspace-muted); font-size: 11px; }
 .lfea-model-review__scroll { max-height: 430px; overflow: auto; border: 1px solid var(--workspace-border); }
@@ -29,6 +34,8 @@
 .lfea-model-review th,
 .lfea-model-review td { padding: 4px 8px; border-bottom: 1px solid var(--workspace-border); text-align: left; vertical-align: top; white-space: nowrap; }
 .lfea-model-review th { position: sticky; top: 0; background: var(--workspace-panel-strong); color: var(--workspace-muted); font-weight: 600; }
+.lfea-model-review__pager { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.lfea-model-review__pager p { margin: 0; color: var(--workspace-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 
 .lfea-geometry-review__controls { display: flex; gap: 6px; margin: 0 0 8px; }
 .lfea-geometry-review [data-role="lfea-geometry-review-identity"],

@@ -1,5 +1,6 @@
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { clonePlain, freezeDeep, isRecord, stringValue } from '../dataset-utils.js';
+import { upgradeProjectDataProfile } from './project-data-contract.js';
 import { NON_FEA_COMPONENT_MASS_POLICY_SCHEMA } from './non-fea-component-mass-policy.js';
 import { NON_FEA_FLUID_FILL_POLICY_SCHEMA } from './non-fea-fluid-fill-policy.js';
 
@@ -60,10 +61,7 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
     productDefault('PD-CORROSION-ALLOWANCE', 'thermoMechanicalBasis.corrosionAllowancesMm', { DEFAULT: 0 }, 'mm',
       'Zero corrosion allowance only when no project/source corrosion authority exists.'),
     productDefault('PD-ELASTIC-THERMAL', 'thermoMechanicalBasis.materialElasticProperties', {
-      DEFAULT: {
-        elasticModulusPa: 2.0e11,
-        thermalExpansionPerK: 12.0e-6,
-      },
+      DEFAULT: { elasticModulusPa: 2.0e11, thermalExpansionPerK: 12.0e-6 },
     }, 'material-policy',
     'Generic steel screening elastic/thermal properties; visible assumption, never source evidence.'),
     productDefault('PD-RESTRAINT-PRELOAD', 'restraintPolicy.restraintPreloadsN', { DEFAULT: 0 }, 'N',
@@ -74,29 +72,23 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
 });
 
 /**
- * Builds an ephemeral effective Project Data profile. Product defaults fill
- * only empty evidence values and never mutate or overwrite the stored profile.
+ * Builds an ephemeral effective Project Data profile. Legacy profiles are first
+ * additively upgraded with missing Phase-2 evidence slots; existing values are
+ * never repaired or overwritten. Product defaults then fill only empty slots.
  */
-export function createNonFeaProductDefaultProvider({
-  profile,
-  defaultProfile = LOAD_CALC_STANDARD_DEFAULTS_V1,
-} = {}) {
+export function createNonFeaProductDefaultProvider({ profile, defaultProfile = LOAD_CALC_STANDARD_DEFAULTS_V1 } = {}) {
   requireProjectProfile(profile);
   requireDefaultProfile(defaultProfile);
-  const effectiveProfile = clonePlain(profile);
+  const normalizedProfile = upgradeProjectDataProfile(profile);
+  const effectiveProfile = clonePlain(normalizedProfile);
   const usageRows = [];
   const shadowedRows = [];
   const profileHash = semanticHash(defaultProfile);
 
   defaultProfile.defaults.forEach((row) => {
     const entry = readPath(effectiveProfile, row.projectDataPath);
-    if (!isEvidenceValue(entry)) {
-      throw new TypeError(`Product default target is not a Project Data evidence field: ${row.projectDataPath}.`);
-    }
-    if (!isEmpty(entry.value)) {
-      shadowedRows.push(shadowed(row, entry));
-      return;
-    }
+    if (!isEvidenceValue(entry)) throw new TypeError(`Product default target is not a Project Data evidence field: ${row.projectDataPath}.`);
+    if (!isEmpty(entry.value)) { shadowedRows.push(shadowed(row, entry)); return; }
     writePath(effectiveProfile, row.projectDataPath, {
       value: clonePlain(row.value),
       evidence: {
@@ -128,6 +120,7 @@ export function createNonFeaProductDefaultProvider({
     profileId: defaultProfile.profileId,
     profileVersion: defaultProfile.version,
     sourceProjectDataSemanticHash: semanticHash(profile),
+    upgradedProjectDataSemanticHash: semanticHash(normalizedProfile),
     productDefaultProfileSemanticHash: profileHash,
     effectiveProjectDataProfileSemanticHash: semanticHash(frozenProfile),
     usageRows: usageRows.sort(byPath),
@@ -143,86 +136,23 @@ export function isProductDefaultEvidence(entry) {
     && Boolean(stringValue(entry.evidence?.defaultId))
     && Boolean(stringValue(entry.evidence?.defaultSemanticHash));
 }
-
-function productDefault(defaultId, projectDataPath, value, unit, basis) {
-  const base = { defaultId, projectDataPath, value, unit, basis };
-  return freezeDeep({ ...base, semanticHash: semanticHash(base) });
-}
-
-function shadowed(row, entry) {
-  return freezeDeep({
-    defaultId: row.defaultId,
-    projectDataPath: row.projectDataPath,
-    defaultSemanticHash: row.semanticHash,
-    status: 'SHADOWED_BY_HIGHER_AUTHORITY',
-    existingAuthority: stringValue(entry.evidence?.authority) || 'PROJECT_DATA',
-    existingSource: stringValue(entry.evidence?.source) || null,
-  });
-}
-
-function requireProjectProfile(profile) {
-  if (!isRecord(profile) || profile.schema !== 'project-data-profile/v1') {
-    throw new TypeError('Product-default provider requires project-data-profile/v1.');
-  }
-}
-
+function productDefault(defaultId, projectDataPath, value, unit, basis) { const base = { defaultId, projectDataPath, value, unit, basis }; return freezeDeep({ ...base, semanticHash: semanticHash(base) }); }
+function shadowed(row, entry) { return freezeDeep({ defaultId: row.defaultId, projectDataPath: row.projectDataPath, defaultSemanticHash: row.semanticHash, status: 'SHADOWED_BY_HIGHER_AUTHORITY', existingAuthority: stringValue(entry.evidence?.authority) || 'PROJECT_DATA', existingSource: stringValue(entry.evidence?.source) || null }); }
+function requireProjectProfile(profile) { if (!isRecord(profile) || profile.schema !== 'project-data-profile/v1') throw new TypeError('Product-default provider requires project-data-profile/v1.'); }
 function requireDefaultProfile(profile) {
-  if (!isRecord(profile)
-      || profile.schema !== NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA
-      || !stringValue(profile.profileId)
-      || !Number.isInteger(profile.version)
-      || profile.version < 1
-      || !Array.isArray(profile.defaults)) {
-    throw new TypeError(`Expected ${NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA}.`);
-  }
-  const ids = new Set();
-  const paths = new Set();
+  if (!isRecord(profile) || profile.schema !== NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA || !stringValue(profile.profileId) || !Number.isInteger(profile.version) || profile.version < 1 || !Array.isArray(profile.defaults)) throw new TypeError(`Expected ${NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA}.`);
+  const ids = new Set(), paths = new Set();
   profile.defaults.forEach((row) => {
-    if (!isRecord(row) || !stringValue(row.defaultId) || !stringValue(row.projectDataPath)
-        || !stringValue(row.unit) || !stringValue(row.basis)
-        || !Object.hasOwn(row, 'value')) {
-      throw new TypeError('Product default rows require ID, Project Data path, value, unit and basis.');
-    }
-    const expectedHash = semanticHash({
-      defaultId: row.defaultId,
-      projectDataPath: row.projectDataPath,
-      value: row.value,
-      unit: row.unit,
-      basis: row.basis,
-    });
-    if (row.semanticHash !== expectedHash) {
-      throw new TypeError(`Product default semantic hash mismatch: ${row.defaultId}.`);
-    }
+    if (!isRecord(row) || !stringValue(row.defaultId) || !stringValue(row.projectDataPath) || !stringValue(row.unit) || !stringValue(row.basis) || !Object.hasOwn(row, 'value')) throw new TypeError('Product default rows require ID, Project Data path, value, unit and basis.');
+    const expectedHash = semanticHash({ defaultId: row.defaultId, projectDataPath: row.projectDataPath, value: row.value, unit: row.unit, basis: row.basis });
+    if (row.semanticHash !== expectedHash) throw new TypeError(`Product default semantic hash mismatch: ${row.defaultId}.`);
     if (ids.has(row.defaultId)) throw new TypeError(`Duplicate product default ID: ${row.defaultId}.`);
     if (paths.has(row.projectDataPath)) throw new TypeError(`Duplicate product default path: ${row.projectDataPath}.`);
-    ids.add(row.defaultId);
-    paths.add(row.projectDataPath);
+    ids.add(row.defaultId); paths.add(row.projectDataPath);
   });
 }
-
-function isEvidenceValue(value) {
-  return isRecord(value) && Object.hasOwn(value, 'value')
-    && Object.hasOwn(value, 'evidence') && typeof value.approved === 'boolean';
-}
-
-function isEmpty(value) {
-  if (value === null || value === undefined || value === '') return true;
-  if (Array.isArray(value)) return value.length === 0;
-  return isRecord(value) && Object.keys(value).length === 0;
-}
-
-function readPath(value, path) {
-  return path.split('.').reduce((current, key) => current?.[key], value);
-}
-
-function writePath(value, path, entry) {
-  const [groupKey, fieldKey] = path.split('.');
-  if (!isRecord(value[groupKey]) || !Object.hasOwn(value[groupKey], fieldKey)) {
-    throw new RangeError(`Unknown Project Data field: ${path}.`);
-  }
-  value[groupKey][fieldKey] = entry;
-}
-
-function byPath(left, right) {
-  return left.projectDataPath.localeCompare(right.projectDataPath);
-}
+function isEvidenceValue(value) { return isRecord(value) && Object.hasOwn(value, 'value') && Object.hasOwn(value, 'evidence') && typeof value.approved === 'boolean'; }
+function isEmpty(value) { if (value === null || value === undefined || value === '') return true; if (Array.isArray(value)) return value.length === 0; return isRecord(value) && Object.keys(value).length === 0; }
+function readPath(value, path) { return path.split('.').reduce((current, key) => current?.[key], value); }
+function writePath(value, path, entry) { const [groupKey, fieldKey] = path.split('.'); if (!isRecord(value[groupKey]) || !Object.hasOwn(value[groupKey], fieldKey)) throw new RangeError(`Unknown Project Data field: ${path}.`); value[groupKey][fieldKey] = entry; }
+function byPath(left, right) { return left.projectDataPath.localeCompare(right.projectDataPath); }

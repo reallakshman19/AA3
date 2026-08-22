@@ -8,6 +8,16 @@ export const NON_FEA_EFFECTIVE_VALUE_RESOLUTION_ROW_SCHEMA =
   'non-fea-effective-value-resolution-row/v1';
 
 export const PRODUCT_DEFAULT_AUTHORITY = 'PRODUCT_DEFAULT';
+export const NON_FEA_EFFECTIVE_AUTHORITY_PRECEDENCE = freezeDeep([
+  'ACCEPTED_OVERRIDE',
+  'SOURCE_EXPLICIT',
+  'SOURCE_INHERITED',
+  'EXACT_APPROVED_MASTER',
+  'CONFIGURED_DERIVATION',
+  'PROJECT_POLICY',
+  'PROJECT_CONFIGURED_DEFAULT',
+  PRODUCT_DEFAULT_AUTHORITY,
+]);
 
 const CORE_RESOLUTION_LEDGER_SCHEMA = 'non-fea-field-resolution-ledger/v1';
 const SEMANTIC_HASH_PATTERN = /^fnv1a64:[0-9a-f]{16}$/u;
@@ -15,18 +25,22 @@ const SEMANTIC_HASH_PATTERN = /^fnv1a64:[0-9a-f]{16}$/u;
 /**
  * Consumer-facing authority resolver for Non-FEA engineering values.
  *
- * The existing CORE enrichment resolver remains responsible for producing
+ * The legacy CORE enrichment resolver remains responsible for producing
  * source/master/override/derivation candidates. This resolver is the single
  * composition seam that selects the value a workspace consumer is allowed to
  * use after Project Data and product-default candidates are added.
  *
- * Precedence is field-owned: the registry authorityPath is already ordered from
- * highest to lowest authority. PRODUCT_DEFAULT is appended as the final tier
- * only for a Project-Data-backed field and only when its candidate carries the
- * immutable product-default identity/hash evidence.
+ * The ordering is the governing #1321 effective-value policy, not the legacy
+ * CORE resolver ordering. In particular, an ACCEPTED_OVERRIDE intentionally
+ * supersedes SOURCE_EXPLICIT. Each field still constrains which authorities are
+ * legal through the field registry; PRODUCT_DEFAULT is legal only for a
+ * Project-Data-backed field and is always the final effective tier.
+ *
+ * PROJECT_POLICY is included only for project-owned fields such as gravity,
+ * load factor and coordinate policy; it sits above configured/product defaults.
  *
  * Units are deliberately preserved, not converted here. Legacy CORE field
- * storage includes mm/Mpa properties while the workspace registry describes
+ * storage includes mm/MPa properties while the workspace registry describes
  * conceptual canonical units. A consumer adapter must perform an explicit,
  * audited conversion instead of allowing this resolver to hide unit changes.
  */
@@ -82,10 +96,6 @@ export function resolveNonFeaEffectiveValues({
   return freezeDeep({ ...base, semanticHash: semanticHash(base) });
 }
 
-/**
- * Resolve one target/field pair. This is exported so individual consumers can
- * migrate without introducing a second local precedence implementation.
- */
 export function resolveNonFeaEffectiveValue(candidates) {
   if (!Array.isArray(candidates) || candidates.length === 0) {
     throw new TypeError('At least one effective-value candidate is required.');
@@ -99,20 +109,14 @@ export function resolveNonFeaEffectiveValue(candidates) {
   return resolveGroup(normalized[0].resolutionKey, normalized);
 }
 
-/**
- * Canonical candidate constructor. Callers should construct candidates at the
- * authority boundary where the value is observed, never after the selected
- * value has already been consumed by an engineering method.
- */
 export function createNonFeaEffectiveValueCandidate(input) {
   return normalizeCandidate(input);
 }
 
 /**
- * Adapts the existing CORE field-resolution ledger into candidates without
- * changing its selected values. This is the migration seam used to prove
- * source/master/override parity before Project Data or product defaults are
- * introduced into the same target/field key.
+ * Adapts every legacy CORE candidate, not merely the legacy selected winner.
+ * This is required because #1321 effective precedence intentionally differs
+ * from legacy CORE when ACCEPTED_OVERRIDE and source evidence coexist.
  */
 export function createNonFeaEffectiveValueCandidatesFromCoreResolution(
   resolutionLedger,
@@ -313,11 +317,16 @@ function normalizeCandidate(input) {
 }
 
 function effectiveAuthorityPath(definition) {
-  const path = [...definition.authorityPath];
-  if (definition.projectDataPath && !path.includes(PRODUCT_DEFAULT_AUTHORITY)) {
-    path.push(PRODUCT_DEFAULT_AUTHORITY);
+  const allowed = new Set(definition.authorityPath);
+  if (definition.projectDataPath) allowed.add(PRODUCT_DEFAULT_AUTHORITY);
+  const precedence = NON_FEA_EFFECTIVE_AUTHORITY_PRECEDENCE.filter((authority) => allowed.has(authority));
+  const unknown = [...allowed].filter((authority) => !precedence.includes(authority));
+  if (unknown.length > 0) {
+    throw new TypeError(
+      `Effective authority precedence is undefined for ${definition.fieldId}: ${unknown.sort(ascii).join(', ')}.`,
+    );
   }
-  return freezeDeep(path);
+  return freezeDeep(precedence);
 }
 
 function conflictingSameAuthorityCandidates(candidates) {

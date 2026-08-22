@@ -4,7 +4,7 @@ pr_or_wip: PR1323
 mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
 workstream: ISSUE1321_LOAD_CALC
 branch: agent/issue-1321-load-calc-effective-values
-pr_head: 3658e161e1046de8a5d98d6ecab1f3a31a1cd9f2
+pr_head: 51da37c1bb0997bdeaab82153cac6a6372e8461c
 main_head_last_checked: a222e18c38bd20fb55c1c6c95f724f40e40e8532
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
@@ -31,4 +31,4 @@ dependencies:
   - non-fea-component-mass-policy/v1
   - support-load-static-accounting/v1
 exact_next_action: Reconcile Verify & Run presentation with effective/default readiness so raw missing source/master fields do not appear as routine blockers when the authorized ledger path is eligible; then implement explicit ancillary/component-content mass primitives with double-count protection.
-last_updated: 2026-08-22T23:18:00+05:30
+last_updated: 2026-08-22T23:20:00+05:30

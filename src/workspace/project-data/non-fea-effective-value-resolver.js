@@ -32,9 +32,9 @@ const SEMANTIC_HASH_PATTERN = /^fnv1a64:[0-9a-f]{16}$/u;
  *
  * The ordering is the governing #1321 effective-value policy, not the legacy
  * CORE resolver ordering. In particular, an ACCEPTED_OVERRIDE intentionally
- * supersedes SOURCE_EXPLICIT. Each field still constrains which authorities are
- * legal through the field registry; PRODUCT_DEFAULT is legal only for a
- * Project-Data-backed field and is always the final effective tier.
+ * supersedes SOURCE_EXPLICIT. Each field constrains which authorities are legal
+ * through the field registry; PRODUCT_DEFAULT must be explicitly present in
+ * that field's authority path and is always the final effective tier.
  *
  * PROJECT_POLICY is included only for project-owned fields such as gravity,
  * load factor and coordinate policy; it sits above configured/product defaults.
@@ -285,8 +285,8 @@ function normalizeCandidate(input) {
 
   const definition = getNonFeaFieldDefinition(fieldId);
   if (authority === PRODUCT_DEFAULT_AUTHORITY) {
-    if (!definition?.projectDataPath) {
-      throw new TypeError(`PRODUCT_DEFAULT is not permitted for non-Project-Data field ${fieldId}.`);
+    if (!definition?.authorityPath?.includes(PRODUCT_DEFAULT_AUTHORITY)) {
+      throw new TypeError(`PRODUCT_DEFAULT is not permitted for field ${fieldId}.`);
     }
     const evidence = input.evidence;
     if (!isRecord(evidence)
@@ -318,7 +318,6 @@ function normalizeCandidate(input) {
 
 function effectiveAuthorityPath(definition) {
   const allowed = new Set(definition.authorityPath);
-  if (definition.projectDataPath) allowed.add(PRODUCT_DEFAULT_AUTHORITY);
   const precedence = NON_FEA_EFFECTIVE_AUTHORITY_PRECEDENCE.filter((authority) => allowed.has(authority));
   const unknown = [...allowed].filter((authority) => !precedence.includes(authority));
   if (unknown.length > 0) {

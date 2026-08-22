@@ -118,6 +118,14 @@ export const PROJECT_DATA_REQUIREMENTS = Object.freeze({
     'loadCalculation.componentWeightsKg', 'loadCalculation.equilibriumTolerances',
     'loadCalculation.activeLoadCases',
   ]),
+  authorizedGravityLoads: Object.freeze([
+    'loadCalculation.gravityMPerS2', 'loadCalculation.loadFactor',
+    'loadCalculation.materialDensitiesKgPerM3', 'loadCalculation.pipeSectionProperties',
+    'loadCalculation.operatingFluidDensitiesKgPerM3',
+    'loadCalculation.hydroFluidDensitiesKgPerM3',
+    'loadCalculation.insulationDensitiesKgPerM3', 'loadCalculation.componentWeightsKg',
+    'loadCalculation.equilibriumTolerances', 'loadCalculation.activeLoadCases',
+  ]),
   nonFeaPolicy: Object.freeze([
     'thermoMechanicalBasis.installationTemperatureC',
     'thermoMechanicalBasis.operatingTemperaturesC',

@@ -74,36 +74,50 @@ export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
   overall.dataset.role = 'emp1-product-state';
   const c = projection.steps.find((step) => step.shortId === 'C');
   const boundedRoute = c?.boundedProductionRoutes?.[0] ?? null;
-  const cProductionAuthorized = boundedRoute?.registered === true
-    && boundedRoute?.engineeringUseAuthorized === true;
+  const cState = c?.state ?? 'SOURCE_INCOMPLETE';
+  const cProductionAuthorized = ['READY_TO_RUN', 'CALCULATED_CURRENT', 'STALE_AUTHORITY', 'STALE_INPUT']
+    .includes(cState) && c?.runAuthorized === true;
   workflow.body.append(
     overall,
     dom(root, 'p', 'lafea-workbench__section-intro',
       c?.workspaceExecutionWired
         ? cProductionAuthorized
-          ? 'Work left to right. A is the load/reference authority; B retains nominal-screening custody; C may execute only its registered bounded route. Global/full-domain EMP.1.C and release authority remain separate and blocked.'
-          : 'Work left to right. A and B can execute and the C workspace transaction is wired, but C production WRC execution is suspended. The workspace may retain source-bound C preparation evidence only; it must not produce a WRC stress result until source authority is restored.'
+          ? 'Work left to right. A is the load/reference authority; B retains nominal-screening custody; C execution is governed by the current bounded-route authority. Global/full-domain EMP.1.C and release authority remain separate and blocked.'
+          : 'Work left to right. A and B can execute and the C workspace transaction is wired. C source preparation and evidence remain accessible even while production WRC execution is suspended or awaiting current authority.'
         : 'Work left to right. A is the current load/reference authority. B must bind to that current A evidence while retaining its own screening cases and evaluation locations. C remains separately governed and global/full-domain EMP.1.C is unregistered.'),
   );
 
   const nav = dom(root, 'nav', 'lafea-workbench__stages');
   nav.setAttribute('aria-label', 'EMP.1 assessment steps');
   for (const step of projection.steps) {
-    const button = dom(root, 'button', null, `${step.shortId} ${step.label} · ${humanState(step.state)}`);
+    const stateLabel = step.shortId === 'C' && step.currentnessBadge
+      ? step.currentnessBadge
+      : humanState(step.state);
+    const button = dom(root, 'button', null, `${step.shortId} ${step.label} · ${stateLabel}`);
     button.type = 'button';
     button.dataset.role = 'emp1-step';
     button.dataset.emp1Step = step.shortId;
     button.dataset.emp1StepId = step.stepId;
     button.dataset.state = step.state;
     button.setAttribute('aria-current', projection.activeStepId === step.stepId ? 'step' : 'false');
-    button.disabled = step.shortId === 'C';
     if (step.shortId === 'C') {
-      button.title = cProductionAuthorized
-        ? `Blocked from direct navigation: ${(step.blockers ?? []).join(', ')}`
-        : 'C production execution is suspended. Source binding and prepared-transaction evidence remain available within the A/B analytical workspace.';
+      // This is navigation to the C setup/evidence area, not production execution.
+      // It must remain navigable while the route is suspended so the engineer can
+      // inspect/repair source custody. The separate Run C control owns authority.
+      button.disabled = c?.workspaceExecutionWired !== true;
+      button.title = button.disabled
+        ? 'The analytical workspace has not wired the C transaction path.'
+        : `Open C source setup and authority evidence. Production action: ${stateLabel}.`;
     }
     button.addEventListener('click', () => {
-      if (step.backingStageId) onSelectRoute?.(step.backingStageId);
+      if (step.backingStageId) {
+        onSelectRoute?.(step.backingStageId);
+        return;
+      }
+      if (step.shortId === 'C') {
+        root.querySelector?.('[data-role="emp1-c-run-configuration"]')
+          ?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+      }
     });
     nav.append(button);
   }
@@ -111,28 +125,25 @@ export function renderEmp1AssessmentWorkflow(root, projection, onSelectRoute) {
 
   const blocker = dom(root, 'div', 'lafea-workbench__authority');
   blocker.dataset.role = 'emp1-c-blocker';
-  blocker.dataset.qualificationState = c?.qualification?.state ?? c?.state ?? 'UNKNOWN';
-  blocker.append(dom(root, 'strong', null,
-    cProductionAuthorized
-      ? c?.workspaceExecutionWired
-        ? 'EMP.1.C bounded route wired — global/full-domain and release authority remain blocked.'
-        : 'EMP.1.C bounded route qualified — workspace/full-domain authority still blocked.'
-      : 'EMP.1.C production execution suspended — no production local-correlation authority and no WRC production stress result is authorized.'));
+  blocker.dataset.qualificationState = cState;
+  blocker.append(dom(root, 'strong', null, cStatusHeading(cState, cProductionAuthorized)));
   const list = dom(root, 'ul');
-  for (const reason of boundedRoute?.suspensionReasons ?? []) {
-    const entry = dom(root, 'li', null, emp1BlockerLabel(reason));
-    entry.dataset.blockerCode = reason;
+  const blockerCodes = unique([
+    ...(c?.blockers ?? []),
+    ...(cProductionAuthorized ? [] : (boundedRoute?.suspensionReasons ?? [])),
+  ]);
+  for (const code of blockerCodes) {
+    const entry = dom(root, 'li', null, emp1BlockerLabel(code));
+    entry.dataset.blockerCode = code;
     list.append(entry);
   }
   const details = Array.isArray(c?.blockerDetails) ? c.blockerDetails : [];
-  if (details.length) {
+  if (!blockerCodes.length && details.length) {
     for (const item of details) {
       const entry = dom(root, 'li', null, item.message ?? emp1BlockerLabel(item.code));
       if (item.code) entry.dataset.blockerCode = item.code;
       list.append(entry);
     }
-  } else {
-    for (const code of c?.blockers ?? []) list.append(dom(root, 'li', null, emp1BlockerLabel(code)));
   }
   blocker.append(list);
   workflow.body.append(blocker);
@@ -195,10 +206,24 @@ function primaryReason(area) {
   return labels.length === 1 ? labels[0] : `${labels[0]} · ${labels.length - 1} more`;
 }
 
+function cStatusHeading(state, productionAuthorized) {
+  if (state === 'SOURCE_INCOMPLETE') return 'EMP.1.C source setup is incomplete — no local-correlation result is available.';
+  if (state === 'ROUTE_SUSPENDED') return 'EMP.1.C prepared / qualification pending — production WRC execution is suspended.';
+  if (state === 'STALE_AUTHORITY') return 'EMP.1.C retained result is stale under the current route authority — re-run required.';
+  if (state === 'STALE_INPUT') return 'EMP.1.C retained result is stale after an engineering input/source change — re-run required.';
+  if (state === 'CALCULATED_CURRENT') return 'EMP.1.C bounded result is current under its retained route authority.';
+  if (state === 'READY_TO_RUN' || productionAuthorized) return 'EMP.1.C source and bounded route authority are ready for governed execution.';
+  return 'EMP.1.C remains separately governed; no global/full-domain or release authority is implied.';
+}
+
 function emp1BlockerLabel(code) {
   return ({
     GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED: 'Global/full-domain EMP.1.C remains unregistered.',
     EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED: 'The analytical workspace does not yet own the C transaction path.',
+    EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED: 'The retained C result was produced under a different engineering route authority and is not current.',
+    EMP1_WORKBENCH_C_ROUTE_AUTHORITY_CHANGED: 'The retained C result was produced under a different engineering route authority and is not current.',
+    EMP1_WORKBENCH_C_CURRENT_ROUTE_NOT_AUTHORIZED: 'The current C route is suspended or not authorized for production execution.',
+    EMP1_WORKBENCH_C_ROUTE_AUTHORITY_SNAPSHOT_REQUIRED: 'The retained numerical C result lacks its execution route-authority snapshot and cannot be treated as current.',
     WRC_CYLINDRICAL_LOAD_AXIS_SIGN_UNRESOLVED: 'WRC cylindrical V_C/V_L/M_C/M_L/M_t positive directions are unresolved in the retained source authority.',
     WRC_DATASET_NOT_READY: 'WRC extraction package is not READY_FOR_IMPLEMENTATION.',
     WRC_DIMENSIONAL_CONTRACT_UNRESOLVED: 'WRC dimensional contract still has unresolved contradictions.',
@@ -234,3 +259,5 @@ function dom(root, tag, className, text) {
 function humanState(value) {
   return String(value ?? 'UNKNOWN').replaceAll('_', ' ');
 }
+
+function unique(values) { return [...new Set(values ?? [])]; }

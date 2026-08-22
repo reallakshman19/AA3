@@ -8,6 +8,7 @@ import {
   projectEmp1WorkbenchRunReadiness,
 } from '../src/workspace/emp1-workbench-product-run.js';
 import { createEmp1WorkbenchQualificationSample } from '../src/workspace/emp1-workbench-qualification-sample.js';
+import { normalizeLafeaStageDocument } from '../src/workspace/lafea-workbench-model.js';
 
 const sample = createEmp1WorkbenchQualificationSample();
 assert.equal(sample.schema, 'emp1-workbench-qualification-sample/v1');
@@ -17,9 +18,16 @@ assert.ok(sample.runInput);
 
 assertSourceOnlyCInput(sample.runInput);
 
+// The visible one-click path imports each source document through the workbench
+// store before the unified product transaction. Reproduce that same canonical
+// boundary here rather than giving the standalone qualification a privileged
+// raw-document path.
+const aDocument = normalizeLafeaStageDocument('LAFEA.1', sample.aDocument);
+const bDocument = normalizeLafeaStageDocument('LAFEA.2', sample.bDocument);
+
 const readiness = projectEmp1WorkbenchRunReadiness({
-  aDocument: sample.aDocument,
-  bDocument: sample.bDocument,
+  aDocument,
+  bDocument,
   runInput: sample.runInput,
 });
 assert.equal(readiness.state, 'READY');
@@ -33,8 +41,8 @@ assert.ok(routeAuthority.reasons.includes(
 ));
 
 const execution = await executeEmp1WorkbenchProduct({
-  aDocument: sample.aDocument,
-  bDocument: sample.bDocument,
+  aDocument,
+  bDocument,
   runInput: sample.runInput,
 });
 
@@ -67,8 +75,8 @@ assert.ok(Number.isFinite(execution.applicabilitySourceAuthority.nearestCylinder
 
 const currentness = classifyEmp1WorkbenchExecutionCurrentness({
   execution,
-  aDocument: sample.aDocument,
-  bDocument: sample.bDocument,
+  aDocument,
+  bDocument,
   runInput: sample.runInput,
   currentRouteAuthority: routeAuthority,
 });

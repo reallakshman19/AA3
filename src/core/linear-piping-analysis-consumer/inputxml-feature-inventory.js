@@ -8,6 +8,11 @@ import {
   NUMERIC_TOLERANCE, classifyRestraint, restraintDispositions, numericAttribute, normalizedNodeAttribute,
 } from './inputxml-feature-inventory-restraints.js';
 import { isSifSlotUnfilled, isForcesMomentsSlotUnfilled } from './inputxml-feature-inventory-slots.js';
+import {
+  productionAuthorizedPressureEffects,
+  productionComponentIsRepresentable,
+  productionComponentLimitation,
+} from './production-capability-profile.js';
 
 const SIF_TEE_CODES = new Set([3, 5]);
 
@@ -179,7 +184,7 @@ function fieldInventory(element, segment) {
         canonicalValue: pressure.canonicalValue,
         currentAuthorizedEffects: segment?.meta?.analysis?.pressure == null
           ? null
-          : Object.freeze({ codeStress: true, pressureStiffening: false, axialThrust: false, bourdon: false }),
+          : productionAuthorizedPressureEffects(),
       },
       dispositions: active
         ? {
@@ -219,15 +224,12 @@ function componentDispositions(componentKind, canonicalStatus) {
   if (componentKind === 'STRAIGHT_PIPE' || componentKind === 'RIGID') {
     return both(exactDisposition());
   }
-  const limitation = componentKind === 'BEND'
-    ? 'GENERIC_APPROX_BEND_STRAIGHT_CHORD'
-    : componentKind === 'REDUCER'
-      ? 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION'
-      : componentKind === 'TEE'
-        ? 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY'
-        : null;
+  const limitation = productionComponentLimitation(componentKind);
   if (limitation === null) {
-    return both(unsupportedDisposition('MODEL_COMPONENT_TYPE_UNSUPPORTED'));
+    if (!productionComponentIsRepresentable(componentKind)) {
+      return both(unsupportedDisposition('MODEL_COMPONENT_TYPE_UNSUPPORTED'));
+    }
+    return both(exactDisposition());
   }
   return {
     [STRICT]: unsupportedDisposition(`MODEL_${componentKind}_EXACT_MECHANICS_UNAVAILABLE`),

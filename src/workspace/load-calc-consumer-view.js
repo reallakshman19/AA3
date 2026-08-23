@@ -156,6 +156,10 @@ function workflowStep(step, index, state, runAction) {
   </button>`;
 }
 
+function actionRequiredState(state, count) {
+  return { state, label: `${count} action${count === 1 ? '' : 's'} required` };
+}
+
 function workflowStepState(stepId, stepIndex, activeStepId, state, runAction) {
   const readiness = state.workflowReadiness || {};
   const activeIndex = WORKFLOW_STEPS.findIndex((step) => step.id === activeStepId);
@@ -170,15 +174,33 @@ function workflowStepState(stepId, stepIndex, activeStepId, state, runAction) {
   }[stepId] === true;
 
   if (stepId === activeStepId) {
+    if (stepId === 'import' && !readiness.datasetReady) {
+      return { state: 'blocked', label: 'Import required' };
+    }
     if (stepId === 'topology' && readiness.topologyBlockerCount > 0) {
-      return { state: 'blocked', label: 'Fix needed' };
+      return actionRequiredState('blocked', readiness.topologyBlockerCount);
     }
     if (stepId === 'topology' && readiness.topologyReviewIssueCount > 0) {
-      return { state: 'review', label: 'Review' };
+      return actionRequiredState('review', readiness.topologyReviewIssueCount);
     }
     if (stepId === 'verify' && runAction.eligible) return { state: 'ready', label: 'Ready' };
+    if (stepId === 'preflight' && !readiness.validationEvaluated) {
+      return { state: 'blocked', label: 'Check required' };
+    }
+    if (stepId === 'preflight' && readiness.validationBlockerCount > 0) {
+      return actionRequiredState('blocked', readiness.validationBlockerCount);
+    }
     if (stepId === 'preflight' && readiness.validationState && readiness.validationState !== 'NOT_EVALUATED') {
       return { state: 'blocked', label: 'Review' };
+    }
+    if (stepId === 'project-data' && readiness.projectDataActionCount > 0) {
+      return actionRequiredState('blocked', readiness.projectDataActionCount);
+    }
+    if (stepId === 'masters' && readiness.masterDataActionCount > 0) {
+      return actionRequiredState('blocked', readiness.masterDataActionCount);
+    }
+    if ((stepId === 'verify' || stepId === 'loads') && !readiness.resultsCurrent) {
+      return { state: 'blocked', label: 'Action required' };
     }
     return { state: 'current', label: 'Current' };
   }
@@ -227,6 +249,7 @@ export function renderLoadCalcTopologyPane(
   routePartitionModel,
   topologyCheck,
   policyFeedback,
+  skipError = null,
 ) {
   if (!container) throw new TypeError('Load Calc Topology Fix requires a container.');
   const modelBlockers = loadModelTopologyBlockers(supportSiteModel, routePartitionModel);
@@ -266,7 +289,7 @@ export function renderLoadCalcTopologyPane(
       ${diagnosticCard('Skipped findings', topologyCheck?.skippedIssueCount ? 'REVIEW_REQUIRED' : 'READY', topologyCheck?.skippedIssueCount || 0)}
     </div>
     ${modelBlockerMarkup(modelBlockers)}
-    ${topologyFindingsMarkup(findings, topologyCheck)}
+    ${topologyFindingsMarkup(findings, topologyCheck, skipError)}
     ${topologyDispositionMarkup(status, topologyCheck)}
   </section>`;
 }
@@ -322,7 +345,7 @@ function topologyAutofixPolicyMarkup(gapToleranceMm, exactFixCount, policyFeedba
   </section>`;
 }
 
-function topologyFindingsMarkup(findings, topologyCheck) {
+function topologyFindingsMarkup(findings, topologyCheck, skipError) {
   if (!findings.length) return '';
   const geometryFindings = findings.filter((finding) => !isSupportSemanticFinding(finding));
   const semanticFindings = findings.filter(isSupportSemanticFinding);
@@ -333,6 +356,7 @@ function topologyFindingsMarkup(findings, topologyCheck) {
       findings: geometryFindings,
       topologyCheck,
       sectionId: 'geometry',
+      skipError,
     })}
     ${topologyFindingSectionMarkup({
       title: 'Support semantics — engineering review',
@@ -340,12 +364,13 @@ function topologyFindingsMarkup(findings, topologyCheck) {
       findings: semanticFindings,
       topologyCheck,
       sectionId: 'support-semantics',
+      skipError,
     })}
     <button type="button" class="button" data-load-calc-topology-review-download>Download review record</button>
   </div>`;
 }
 
-function topologyFindingSectionMarkup({ title, description, findings, topologyCheck, sectionId }) {
+function topologyFindingSectionMarkup({ title, description, findings, topologyCheck, sectionId, skipError }) {
   if (!findings.length) return '';
   const exactFixIds = new Set(topologyCheck?.autoFix?.exactGapIssueIds || []);
   const groups = groupTopologyFindings(findings);
@@ -354,6 +379,7 @@ function topologyFindingSectionMarkup({ title, description, findings, topologyCh
     <div class="load-calc-topology-groups">${groups.map((group) => topologyFindingGroupMarkup(
       group,
       exactFixIds,
+      skipError,
     )).join('')}</div>
   </section>`;
 }
@@ -375,7 +401,7 @@ function groupTopologyFindings(findings) {
     .sort((left, right) => left.key.localeCompare(right.key));
 }
 
-function topologyFindingGroupMarkup(group, exactFixIds) {
+function topologyFindingGroupMarkup(group, exactFixIds, skipError) {
   const first = group.rows[0];
   const openCount = group.rows.filter((finding) => finding.reviewDisposition !== 'SKIPPED').length;
   const blockingCount = group.rows.filter((finding) => (
@@ -383,16 +409,51 @@ function topologyFindingGroupMarkup(group, exactFixIds) {
   )).length;
   const skippedCount = group.rows.filter((finding) => finding.reviewDisposition === 'SKIPPED').length;
   const status = blockingCount > 0 ? 'blocked' : openCount > 0 || skippedCount > 0 ? 'review' : 'ready';
-  return `<details class="load-calc-topology-group" data-status="${status}">
+  return `<details class="load-calc-topology-group" data-status="${status}"${openCount > 0 ? ' open' : ''}>
     <summary><strong>${escapeHtml(`${first.severity} ${first.kind}`)}</strong><span>${group.rows.length} finding(s) · ${openCount} open${skippedCount ? ` · ${skippedCount} skipped` : ''}</span></summary>
     <ul class="load-calc-error-check__issues">${group.rows.map((finding) => topologyFindingRowMarkup(
       finding,
       exactFixIds.has(finding.id),
+      skipError,
     )).join('')}</ul>
   </details>`;
 }
 
-function topologyFindingRowMarkup(finding, exactFixAvailable) {
+const PLAIN_FINDING_GUIDANCE = Object.freeze({
+  REVIEW_CERTIFIED_GAP_FIX: {
+    summary: 'Two pipe ends are slightly apart. Use the certified auto-fix if one is available, or review it manually.',
+    fix: 'If a certified auto-fix is listed above, apply it. Otherwise, correct the pipe endpoints in the source model so they meet within the gap tolerance, then re-import the dataset.',
+  },
+  CLASSIFY_RESTRAINT_FAMILY: {
+    summary: "This support's type (guide, spring, hanger, anchor, etc.) isn't stated in the source data, so it needs to be classified before it can be used in the load calculation.",
+    fix: 'Edit this support in the source model so one of its fields (Support Type, Support Kind, MDSSUPPTYPE, or CMPSUPTYPE) clearly states its type — e.g. Guide, Anchor, Spring, Hanger, Line Stop, or Rest — then re-import. If you already know the correct type from engineering judgment or approved master data, use Skip below to record that decision and continue.',
+  },
+  ENGINEERING_REVIEW: {
+    summary: 'This needs an engineer to look at it.',
+    fix: 'Have an engineer review this finding. If it is acceptable as-is, use Skip below to record the decision and continue.',
+  },
+});
+
+function topologyFindingGuidance(finding) {
+  return PLAIN_FINDING_GUIDANCE[finding.userAction] || {
+    summary: finding.disposition === 'BLOCK'
+      ? 'This must be resolved before you can continue.'
+      : 'This needs review, but it will not stop you from continuing.',
+    fix: finding.disposition === 'BLOCK'
+      ? 'Resolve the underlying issue in the source model, then re-import the dataset.'
+      : 'Review the finding. If it is acceptable as-is, use Skip below to record the decision and continue.',
+  };
+}
+
+function topologyFindingPlainSummary(finding) {
+  const { summary } = topologyFindingGuidance(finding);
+  const stakes = finding.disposition === 'BLOCK'
+    ? 'Blocks progress until it is resolved.'
+    : 'Does not block progress, but is kept in the review record.';
+  return `${summary} ${stakes}`;
+}
+
+function topologyFindingRowMarkup(finding, exactFixAvailable, skipError) {
   const scope = topologyFindingScope(finding);
   const fix = exactFixAvailable
     ? `Auto-fix candidate at ${Number(finding.distanceMm).toFixed(3)} mm`
@@ -407,25 +468,34 @@ function topologyFindingRowMarkup(finding, exactFixAvailable) {
   const sourceEvidence = finding.sourceLabel
     ? `<small class="load-calc-topology-source-label">Source evidence: ${escapeHtml(finding.sourceLabel)}</small>`
     : '';
+  const possibleFix = finding.reviewDisposition === 'SKIPPED'
+    ? ''
+    : `<p class="load-calc-topology-possible-fix"><strong>Possible fix:</strong> ${escapeHtml(topologyFindingGuidance(finding).fix)}</p>`;
   return `<li data-topology-finding-id="${escapeHtml(finding.id)}">
-    <span><strong>${escapeHtml(scope)}</strong>${sourceEvidence}${escapeHtml(finding.message)}<small>${escapeHtml(disposition)}</small></span>
-    ${topologyFindingActionMarkup(finding, exactFixAvailable)}
+    <span><strong>${escapeHtml(scope)}</strong>${sourceEvidence}<p class="load-calc-topology-plain-summary">${escapeHtml(topologyFindingPlainSummary(finding))}</p>${possibleFix}<small class="load-calc-topology-technical-detail">${escapeHtml(finding.message)}</small><small>${escapeHtml(disposition)}</small></span>
+    ${topologyFindingActionMarkup(finding, exactFixAvailable, skipError)}
   </li>`;
 }
 
-function topologyFindingActionMarkup(finding, exactFixAvailable) {
-  if (finding.disposition !== 'BLOCK' || finding.id.startsWith('system:')) return '';
+function topologyFindingActionMarkup(finding, exactFixAvailable, skipError) {
+  if (!['BLOCK', 'REVIEW'].includes(finding.disposition) || finding.id.startsWith('system:')) return '';
   if (finding.reviewDisposition === 'SKIPPED') {
-    return `<button type="button" class="button" data-load-calc-topology-restore="${escapeHtml(finding.id)}">Restore blocker</button>`;
+    const restoreLabel = finding.disposition === 'BLOCK' ? 'Restore blocker' : 'Restore for review';
+    return `<button type="button" class="button" data-load-calc-topology-restore="${escapeHtml(finding.id)}">${restoreLabel}</button>`;
   }
   if (exactFixAvailable) return '<span class="load-calc-topology-fix-label">Use certified AutoFix above</span>';
+  const error = skipError && skipError.findingId === finding.id
+    ? `<p class="load-calc-topology-skip-error" role="alert">${escapeHtml(skipError.message)}</p>`
+    : '';
   return `<div class="load-calc-topology-skip">
+    ${error}
     <select data-load-calc-topology-skip-reason aria-label="Reason for skipping this finding">
-      <option value="">Select reviewed reason…</option>
+      <option value="">Pick a reason first (required)…</option>
       <option value="CONFIRMED_VALID_SOURCE_GEOMETRY">Confirmed valid source geometry</option>
       <option value="INTENTIONAL_INDEPENDENT_SYSTEM">Intentional independent system</option>
       <option value="KNOWN_SOURCE_DATA_LIMITATION">Known source-data limitation</option>
       <option value="ACCEPTED_FOR_CURRENT_CALCULATION">Accepted for current calculation</option>
+      <option value="CONFIRMED_BY_ENGINEER_OUTSIDE_TOOL">Confirmed by engineer using source or approved master data</option>
     </select>
     <button type="button" class="button" data-load-calc-topology-skip="${escapeHtml(finding.id)}">Skip</button>
   </div>`;
@@ -440,14 +510,20 @@ function topologyFindingScope(finding) {
 }
 
 function topologyStatusMessage(status, topologyCheck) {
+  const skipped = topologyCheck?.skippedIssueCount || 0;
+  const skippedNote = skipped ? ` ${skipped} finding(s) have been marked as reviewed and skipped.` : '';
   if (status === 'BLOCKED') {
-    const skipped = topologyCheck?.skippedIssueCount || 0;
-    return `${topologyCheck?.blockingIssueCount || 0} open blocking canonical finding(s) or load-model prerequisite(s) must be resolved.${skipped ? ` ${skipped} finding(s) have recorded skip receipts.` : ''}`;
+    const count = topologyCheck?.blockingIssueCount || 0;
+    return `${count} issue${count === 1 ? '' : 's'} must be fixed before you can continue.${skippedNote}`;
   }
   if (status === 'REVIEW_REQUIRED') {
-    return `${topologyCheck?.reviewIssueCount || 0} medium/low finding(s) and ${topologyCheck?.skippedIssueCount || 0} skipped blocker(s) remain in the review record.`;
+    const count = topologyCheck?.reviewIssueCount || 0;
+    const base = count > 0
+      ? `${count} item${count === 1 ? '' : 's'} need review, but you can continue for now.`
+      : 'You can continue for now.';
+    return `${base}${skippedNote}`;
   }
-  return 'The committed canonical topology has no findings requiring action.';
+  return 'No issues found. You can continue to the next step.';
 }
 
 function topologyDispositionMarkup(status, topologyCheck) {
@@ -458,7 +534,11 @@ function topologyDispositionMarkup(status, topologyCheck) {
     const fixMessage = exactFixCount
       ? ` ${exactFixCount} source-backed gap fix(es) strictly below ${escapeHtml(gapToleranceMm)} mm can be prepared automatically.`
       : ' No source-backed automatic fix is available for the current findings.';
-    return `<p class="load-calc-error-check__blocked">Topology is blocked. Resolve HIGH findings and load-model prerequisites before continuing.${fixMessage}</p>`;
+    const plainFix = exactFixCount
+      ? ' You can use the certified auto-fix below to resolve some of them automatically.'
+      : ' None of them can be fixed automatically, so they need manual attention.';
+    return `<p class="load-calc-error-check__blocked-plain">Some findings must be resolved before you can continue.${plainFix}</p>`
+      + `<p class="load-calc-error-check__blocked">Topology is blocked. Resolve HIGH findings and load-model prerequisites before continuing.${fixMessage}</p>`;
   }
   if (status === 'REVIEW_REQUIRED') {
     const reviewCount = topologyCheck?.reviewIssueCount || 0;
@@ -470,7 +550,10 @@ function topologyDispositionMarkup(status, topologyCheck) {
     const gapToleranceMm = topologyCheck?.autoFix?.exactToleranceMm
       || TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM;
     const findingDetail = kindSummary ? ` (${escapeHtml(kindSummary)})` : '';
-    return `<p class="load-calc-error-check__review">Review required: ${reviewCount} unresolved topology finding(s)${findingDetail}; ${topologyCheck?.skippedIssueCount || 0} recorded skip(s). Geometry findings remain governed by source-backed TopoFix policy. Support-semantic reviews require source or approved-master evidence and are never made repairable by changing the ${escapeHtml(gapToleranceMm)} mm gap limit. TopoFix only prepares certified positive SNAP_GAP merges strictly below that limit and never joins separate routes by inference.</p>`;
+    return `<p class="load-calc-error-check__review-plain">These findings only need a review — they will not stop you from continuing. The tool cannot fix them automatically (the ${escapeHtml(gapToleranceMm)} mm gap limit does not apply to them), so each one is either corrected in the source data or signed off by you. To sign one off, open a finding below, pick a reason and press "Skip". To move on without deciding yet, press "Acknowledge review &amp; continue".</p>`
+      + `<details class="load-calc-error-check__review-detail"><summary>Why these are flagged (technical)</summary>`
+      + `<p class="load-calc-error-check__review">Review required: ${reviewCount} unresolved topology finding(s)${findingDetail}; ${topologyCheck?.skippedIssueCount || 0} recorded skip(s). Geometry findings remain governed by source-backed TopoFix policy. Support-semantic reviews require source or approved-master evidence and are never made repairable by changing the ${escapeHtml(gapToleranceMm)} mm gap limit. TopoFix only prepares certified positive SNAP_GAP merges strictly below that limit and never joins separate routes by inference.</p>`
+      + `</details>`;
   }
   return '<p class="load-calc-error-check__passed">Topology check passed. Continue to the next step.</p>';
 }

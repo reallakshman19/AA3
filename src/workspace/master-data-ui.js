@@ -119,6 +119,16 @@ function masterTabReadiness(master, masterKey, effectiveFieldMap) {
   };
 }
 
+/**
+ * Surviving tab selection for this panel.
+ *
+ * Applying a mapping publishes MASTER_DATA_UPDATED, which the Load Calc pane
+ * answers by rebuilding this panel from scratch. Per-mount state would reset the
+ * operator to the first tab on every apply, so the selection is held here.
+ * Only view state is retained; no mapping or engineering value is carried over.
+ */
+let lastActiveMasterTab = 'lineList';
+
 export function renderMasterDataUI(documentRef) {
   if (!documentRef) throw new TypeError('Master Data UI requires a document.');
   const container = documentRef.createElement('div');
@@ -129,7 +139,7 @@ export function renderMasterDataUI(documentRef) {
     current: {
       masterContext: null,
       supportConfigJson: '{}',
-      activeMainTab: 'lineList',
+      activeMainTab: lastActiveMasterTab,
       importMastersLoading: false,
       importMastersWriteBackStatus: '',
       masterDraftMappings: {},
@@ -271,6 +281,7 @@ export function renderMasterDataUI(documentRef) {
       `;
       btn.addEventListener('click', () => {
         stateRef.current.activeMainTab = tab.id;
+        lastActiveMasterTab = tab.id;
         render();
       });
       header.appendChild(btn);

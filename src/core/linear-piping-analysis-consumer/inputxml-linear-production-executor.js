@@ -15,12 +15,6 @@ import { PRODUCTION_CAPABILITY_PROFILE } from './production-capability-profile.j
 export const INPUTXML_LINEAR_RAW_EXECUTION_BATCH_SCHEMA =
   'fea-inputxml-linear-raw-execution-batch/v1';
 
-/**
- * Production raw-case executor for the authorization-only InputXML solve gate.
- * Retained case evidence contains only the sealed B-3.3 execution record; the
- * non-hashed runtime factorization handle returned by compileSolverExecution
- * is deliberately discarded at this boundary.
- */
 export function executeInputXmlAuthorizedRawCases({
   preparation,
   authorization,
@@ -44,10 +38,8 @@ export function executeInputXmlAuthorizedRawCases({
     const physical = physicalCases.get(caseId) ?? null;
     const selected = selectedById.get(caseId) ?? null;
     if (physical === null || selected === null) {
-      throw executionError(
-        'INPUTXML_EXECUTION_CASE_AUTHORITY_MISSING',
-        `Authorized physical case ${caseId} is missing from retained preparation.`,
-      );
+      throw executionError('INPUTXML_EXECUTION_CASE_AUTHORITY_MISSING',
+        `Authorized physical case ${caseId} is missing from retained preparation.`);
     }
     requireCaseIdentity(selected, physical);
 
@@ -58,6 +50,7 @@ export function executeInputXmlAuthorizedRawCases({
       {
         sourcePreparation: accepted.sourcePreparation,
         bendFactorAuthority: preflight.bendFactorAuthority,
+        branchFactorAuthority: preflight.branchFactorAuthority,
         capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
       },
     );
@@ -154,47 +147,35 @@ function retainedSolverExecution(runtimeExecution) {
 
 function requireQualifiedProfileCustody(preflight, frameProfile, solverProfile) {
   if (!preflight || preflight.frameElementProfileSemanticHash !== frameProfile.semanticHash) {
-    throw executionError(
-      'INPUTXML_EXECUTION_FRAME_PROFILE_STALE',
-      'Runtime frame-element profile is not the profile qualified by stiffness pre-flight.',
-    );
+    throw executionError('INPUTXML_EXECUTION_FRAME_PROFILE_STALE',
+      'Runtime frame-element profile is not the profile qualified by stiffness pre-flight.');
   }
   if (preflight.solverProfileSemanticHash !== solverProfile.semanticHash) {
-    throw executionError(
-      'INPUTXML_EXECUTION_SOLVER_PROFILE_STALE',
-      'Runtime solver profile is not the profile qualified by stiffness pre-flight.',
-    );
+    throw executionError('INPUTXML_EXECUTION_SOLVER_PROFILE_STALE',
+      'Runtime solver profile is not the profile qualified by stiffness pre-flight.');
   }
 }
 
 function requireCurrentCapabilityCustody(preflight) {
   const current = semanticHash(PRODUCTION_CAPABILITY_PROFILE);
   if (preflight.productionCapabilityProfileHash !== current) {
-    throw executionError(
-      'INPUTXML_EXECUTION_CAPABILITY_PROFILE_STALE',
-      'Production component capability changed after stiffness pre-flight; create a new pre-flight.',
-    );
+    throw executionError('INPUTXML_EXECUTION_CAPABILITY_PROFILE_STALE',
+      'Production component capability changed after stiffness pre-flight; create a new pre-flight.');
   }
 }
 
 function requireEffectiveStiffnessCustody(preparation, preflight, elements) {
-  const runtimeHash = elements.bendExactMechanicsApplied
-    ? elements.effectiveStiffnessStateHash
-    : preparation.structuralPreparation.compilation.stiffnessStateHash;
+  const runtimeHash = elements.effectiveStiffnessStateHash;
   if (runtimeHash !== preflight.effectiveStiffnessStateHash
     || runtimeHash !== preparation.stiffnessStateHash) {
-    throw executionError(
-      'INPUTXML_EXECUTION_EFFECTIVE_STIFFNESS_STALE',
-      'Runtime effective stiffness does not match the stiffness authorized by pre-flight.',
-    );
+    throw executionError('INPUTXML_EXECUTION_EFFECTIVE_STIFFNESS_STALE',
+      'Runtime effective stiffness does not match the stiffness authorized by pre-flight.');
   }
   const qualified = semanticHash(preflight.elementLedger.map(stiffnessLedgerProjection));
   const current = semanticHash(elements.elementLedger.map(stiffnessLedgerProjection));
   if (qualified !== current) {
-    throw executionError(
-      'INPUTXML_EXECUTION_ELEMENT_STIFFNESS_LEDGER_STALE',
-      'Runtime span/component stiffness ownership differs from stiffness pre-flight.',
-    );
+    throw executionError('INPUTXML_EXECUTION_ELEMENT_STIFFNESS_LEDGER_STALE',
+      'Runtime span/component stiffness ownership differs from stiffness pre-flight.');
   }
 }
 
@@ -208,6 +189,13 @@ function stiffnessLedgerProjection(row) {
     flexibilityFactor: row.flexibilityFactor,
     flexibilityGeometryBasis: row.flexibilityGeometryBasis,
     flexibilityDoubleCountGuardAccepted: row.flexibilityDoubleCountGuardAccepted,
+    branchModifierApplied: row.branchModifierApplied,
+    branchJunctionNodeId: row.branchJunctionNodeId,
+    branchRole: row.branchRole,
+    branchFactorResultSemanticHash: row.branchFactorResultSemanticHash,
+    branchSpringRule: row.branchSpringRule,
+    branchRotationalSpringCount: row.branchRotationalSpringCount,
+    branchRigidOffset: row.branchRigidOffset,
   };
 }
 
@@ -216,10 +204,8 @@ function requireCaseIdentity(selected, physical) {
   const expectedPhysical = physical.loadCase?.physicalLoadCaseHash ?? null;
   if (selected.loadCaseSemanticHash !== expectedLoadCase
     || selected.physicalLoadCaseHash !== expectedPhysical) {
-    throw executionError(
-      'INPUTXML_EXECUTION_CASE_IDENTITY_STALE',
-      `Physical case ${physical.caseId} no longer matches the authorized case candidate.`,
-    );
+    throw executionError('INPUTXML_EXECUTION_CASE_IDENTITY_STALE',
+      `Physical case ${physical.caseId} no longer matches the authorized case candidate.`);
   }
 }
 

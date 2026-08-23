@@ -522,6 +522,9 @@ function attachAccdbBendGeometry(segment, row, declaration, elementRows, positio
   }
   segment.meta.bendArcCentre = resolved.centre;
   segment.meta.bendComputedRadius = resolved.computedRadius;
+  segment.meta.bendTangentStart = { x: tangentStart[0], y: tangentStart[1], z: tangentStart[2] };
+  segment.meta.bendTangentEnd = { x: tangentEnd[0], y: tangentEnd[1], z: tangentEnd[2] };
+  segment.meta.bendTangentBasis = 'ACCDB_CORNER_INTERSECTION_V1';
   addDiagnostic(diagnostics, 'info', 'ACCDB_BEND_ARC_GEOMETRY_RESOLVED', `Bend segment ${segment.id} arc centre resolved from exact ACCDB nodal coordinates and declared radius.`, { segmentId: segment.id });
 }
 

@@ -177,6 +177,21 @@ export function renderMasterDataUI(documentRef) {
     });
   };
 
+  const seedDefaultMappings = () => {
+    const masters = masterDataController.getMasterData();
+    Object.keys(MASTER_FIELDS).forEach((masterKey) => {
+      const master = masters?.[masterKey];
+      const rawRows = Array.isArray(master?.rawRows) ? master.rawRows : [];
+      if (rawRows.length === 0) return;
+      if (stateRef.current.masterDraftMappings[masterKey]) return;
+      if (Object.keys(master?.fieldMap || {}).length > 0) return;
+      const detected = autoMapMasterColumns(rawRows, masterKey);
+      if (detected && Object.values(detected).some(Boolean)) {
+        setDraftMapping(masterKey, detected);
+      }
+    });
+  };
+
   const render = () => {
     container.innerHTML = '';
 
@@ -185,6 +200,13 @@ export function renderMasterDataUI(documentRef) {
     // engineering authority until Apply Mapping succeeds.
     stateRef.current.masterContext = masterDataController.getLegacyContext();
     stateRef.current.supportConfigJson = JSON.stringify(stateRef.current.masterContext.config || {});
+
+    // Offer the detected column mapping as the starting draft for any loaded
+    // master that has none, so the standard columns are already selected rather
+    // than requiring Auto Map to be pressed first. It stays a draft: nothing is
+    // committed to engineering authority until Apply Mapping succeeds, and an
+    // existing committed or operator-edited mapping is never overwritten.
+    seedDefaultMappings();
 
     // Top Navigation Tabs Bar
     const header = documentRef.createElement('div');

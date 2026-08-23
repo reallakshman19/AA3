@@ -33,12 +33,13 @@ export function productionComponentIsRepresentable(componentKind) {
   return PRODUCTION_REPRESENTABLE_COMPONENT_KINDS.includes(componentKind);
 }
 
-export function productionAuthorizedPressureEffects(profile = PRODUCTION_CAPABILITY_PROFILE) {
+export function productionAuthorizedPressureEffects(profile) {
+  const resolvedProfile = profile === undefined ? PRODUCTION_CAPABILITY_PROFILE : profile;
   return Object.freeze({
-    codeStress: profile.pressureCodeStress,
-    pressureStiffening: profile.pressureStiffening,
-    axialThrust: profile.pressureAxialThrust,
-    bourdon: profile.pressureBourdon,
+    codeStress: resolvedProfile.pressureCodeStress,
+    pressureStiffening: resolvedProfile.pressureStiffening,
+    axialThrust: resolvedProfile.pressureAxialThrust,
+    bourdon: resolvedProfile.pressureBourdon,
   });
 }
 
@@ -48,15 +49,16 @@ export function productionAuthorizedPressureEffects(profile = PRODUCTION_CAPABIL
  * Callers must distinguish those two null states with
  * productionComponentIsRepresentable().
  */
-export function productionComponentLimitation(componentKind, profile = PRODUCTION_CAPABILITY_PROFILE) {
+export function productionComponentLimitation(componentKind, profile) {
+  const resolvedProfile = profile === undefined ? PRODUCTION_CAPABILITY_PROFILE : profile;
   if (componentKind === 'BEND') {
-    return profile.bendExactMechanics ? null : 'GENERIC_APPROX_BEND_STRAIGHT_CHORD';
+    return resolvedProfile.bendExactMechanics ? null : 'GENERIC_APPROX_BEND_STRAIGHT_CHORD';
   }
   if (componentKind === 'REDUCER') {
-    return profile.reducerExactMechanics ? null : 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION';
+    return resolvedProfile.reducerExactMechanics ? null : 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION';
   }
   if (componentKind === 'TEE') {
-    return profile.teeExactMechanics ? null : 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY';
+    return resolvedProfile.teeExactMechanics ? null : 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY';
   }
   return null;
 }

@@ -1,10 +1,6 @@
 import { compileInputXmlLinearElementAuthorities } from './inputxml-linear-element-authorities.js';
 
-/**
- * Runtime/recovery view of the same production element-authority chain used by
- * stiffness pre-flight. Supplying the physical load case binds distributed and
- * thermal loads without changing who owns each span's stiffness.
- */
+/** Runtime/recovery view of the same element-authority chain as pre-flight. */
 export function compileInputXmlExecutionElementAuthorities(
   structuralPreparation,
   frameProfile,
@@ -18,6 +14,7 @@ export function compileInputXmlExecutionElementAuthorities(
     frameProfile,
     loadCase,
     bendFactorAuthority: resolvedOptions.bendFactorAuthority ?? null,
+    branchFactorAuthority: resolvedOptions.branchFactorAuthority ?? null,
     capabilityProfile: resolvedOptions.capabilityProfile,
   });
 }

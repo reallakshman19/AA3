@@ -157,8 +157,17 @@ const ROOT_CAUSE_GUIDANCE = Object.freeze({
   FLEXURAL_COVERAGE_INCOMPLETE: 'Some pipes have neither a flexural rigidity nor the elastic modulus and second moment of area needed to derive one. Modulus comes from the material, and the second moment from bore and wall thickness, so this usually clears with Section coverage once the Piping Class rows match those lines.',
   MASS_COVERAGE_INCOMPLETE: 'Some entities have no mass evidence. Pipes need a unit weight, or a material density with bore and wall thickness. Valves and other fittings need a component weight from the Weights master. Operating and hydro cases each need their fluid density from the Line List, and insulated lines need an insulation weight or density.',
   MASTER_NOT_CURRENT: 'A required master has no current normalized rows or source hash. Re-apply its column mapping.',
-  BLOCKED: 'A method-level blocker with no specific code. Open Advanced validation evidence to see the underlying requirement that failed.',
 });
+
+/**
+ * Gate rows carry their state as the issue code, so a blocked gate reports
+ * BLOCKED rather than a cause. Those rows restate causes that are already
+ * listed under their own gate area, and grouping them as shared causes counts
+ * the same problem twice.
+ */
+const GATE_STATE_CODES = new Set([
+  'BLOCKED', 'PARTIALLY_READY', 'STALE', 'NOT_EVALUATED', 'NOT_SEALED',
+]);
 
 /** Masters and entity matching resolve coverage; the codes share one remedy. */
 const COVERAGE_CODES = new Set([
@@ -185,7 +194,7 @@ function rootCauseMarkup(rows, active) {
     byCode.set(code, entry);
   });
   const shared = [...byCode.values()]
-    .filter((entry) => entry.scopes.size > 1)
+    .filter((entry) => entry.scopes.size > 1 && !GATE_STATE_CODES.has(entry.code))
     .sort((left, right) => right.count - left.count);
   if (shared.length === 0) return '';
   const covered = shared.reduce((sum, entry) => sum + entry.count, 0);
@@ -250,7 +259,10 @@ function blockerSummaryMarkup(rows) {
   const other = groups.filter((group) => !blocksThis(group));
   const total = groups.reduce((sum, group) => sum + group.count, 0);
   const requiredTotal = required.reduce((sum, group) => sum + group.count, 0);
-  const item = (group) => `<li><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}</p></li>`;
+  // A gate area summarises the requirements beneath it, so it clears when those
+  // are fixed rather than needing separate work. Marking it prevents the same
+  // problem being read as two outstanding items.
+  const item = (group) => `<li${GATE_LABELS[group.scope] ? ' data-rollup="true"' : ''}><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}${GATE_LABELS[group.scope] ? ' This is a gate summary: it clears when the causes above are resolved.' : ''}</p></li>`;
   const otherSection = other.length === 0 ? '' : `<details class="non-fea-input-check__other-methods">
     <summary>${other.reduce((sum, group) => sum + group.count, 0)} issue(s) in ${other.length} area(s) that do not block this calculation</summary>
     <p>These belong to requested methods that the active implementation does not consume. They are reported for completeness and do not need to be resolved to run this load calculation.</p>
@@ -516,6 +528,8 @@ function styles() {
     .non-fea-input-check__root-causes li{display:block;padding:6px 8px;border:1px solid #3f2d14;border-radius:5px;color:#d6bb92;font-size:11px;line-height:1.4}
     .non-fea-input-check__root-causes code{color:#fcd34d;font-weight:700}
     .non-fea-input-check__root-note{margin:0 0 7px;color:#bae6fd;font-size:11px;line-height:1.4}
+    .non-fea-input-check__blocker-summary li[data-rollup="true"]{border-style:dashed;opacity:.82}
+    .non-fea-input-check__blocker-summary li[data-rollup="true"] strong{color:#fbbf24}
     .non-fea-input-check__other-methods{margin:10px 0 0;border:1px solid #293548;border-radius:6px;background:#0d1728}
     .non-fea-input-check__other-methods summary{padding:8px 10px;cursor:pointer;color:#94a3b8;font-size:11px}
     .non-fea-input-check__other-methods>p{margin:0;padding:0 10px 8px;color:#64748b;font-size:11px;line-height:1.4}

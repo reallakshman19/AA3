@@ -1,0 +1,72 @@
+{
+  "schema": "emp1-wrc537-shell-thickness-basis-source-qualification/v1",
+  "qualificationId": "EMP1_WRC537_2013_SHELL_THICKNESS_BASIS_SOURCE_Q1",
+  "sourceDocument": {
+    "path": "docs/emp1/WRC537_2013.pdf",
+    "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
+  },
+  "status": "BLOCKED_WRC_SHELL_THICKNESS_BASIS_PRIMARY_SOURCE_UNRESOLVED",
+  "primarySourceDirectlyReobserved": false,
+  "primarySourceExecutionStatus": "NOT_RUN_EXECUTION_ENVIRONMENT",
+  "currentSoftwareCustody": {
+    "foundationThicknessPolicies": [
+      "NOMINAL_MINUS_CORROSION",
+      "EXPLICIT_ASSESSMENT"
+    ],
+    "foundationAssessmentRule": {
+      "NOMINAL_MINUS_CORROSION": "assessmentPipeThickness = nominalPipeThickness - corrosionAllowance",
+      "EXPLICIT_ASSESSMENT": "assessmentPipeThickness = caller-supplied positive assessment thickness"
+    },
+    "lafea2SectionThickness": "foundationModel.thicknessBasis.assessmentPipeThickness",
+    "wrcCustodyThickness": "geometryEvidence.pipeThickness",
+    "wrcCustodyThicknessDerivationLabel": "LAFEA2_ASSESSMENT_PIPE_THICKNESS",
+    "wrcMeanRadiusDerivation": "pipeOutsideDiameter/2 - assessmentPipeThickness/2",
+    "wrcGammaDerivation": "Rm/T",
+    "internallyDeterministic": true,
+    "wrcPrimarySourceBasisQualified": false
+  },
+  "engineeringConclusions": {
+    "positiveThicknessValueAloneProvesWrcBasis": false,
+    "lafeaAssessmentPolicyEqualsWrcSourceRule": false,
+    "nominalMinusCorrosionAuthorizedByWrc": false,
+    "explicitAssessmentThicknessAuthorizedByWrc": false,
+    "automaticCorrosionAllowanceSubtractionAuthorizedByWrc": false,
+    "measuredMinimumThicknessAutomaticallyAuthorizedAsWrcT": false,
+    "reinforcementPadThicknessMaySubstituteForShellT": false,
+    "nominalRadiusMayBeMixedWithDifferentNetThicknessWithoutGeometryRule": false,
+    "currentRmAndTAreInternallyCoherent": true,
+    "productionThicknessBasisAuthority": false
+  },
+  "requiredPrimarySourceClosure": [
+    "exact WRC definition of shell thickness T for cylindrical shell",
+    "whether spherical T is semantically identical",
+    "nominal versus actual versus minimum versus corroded/assessment basis",
+    "corrosion allowance treatment",
+    "mill tolerance and forming-thinning treatment",
+    "measured local thinning treatment",
+    "required consistency between outside/inside/mean radius and selected T",
+    "local juncture thickness versus remote course thickness",
+    "locally thickened shell/insert/reinforcement treatment",
+    "source evidence required for the selected physical thickness"
+  ],
+  "prohibitions": [
+    "DO_NOT_PROMOTE_LAFEA_NOMINAL_MINUS_CORROSION_POLICY_TO_WRC_SOURCE_AUTHORITY",
+    "DO_NOT_PROMOTE_LAFEA_EXPLICIT_ASSESSMENT_POLICY_TO_WRC_SOURCE_AUTHORITY",
+    "DO_NOT_SILENTLY_SUBTRACT_CORROSION_ALLOWANCE_FOR_WRC",
+    "DO_NOT_ASSUME_MEASURED_MINIMUM_THICKNESS_IS_AUTOMATICALLY_WRC_T",
+    "DO_NOT_MIX_RADIUS_AND_THICKNESS_BASES_WITHOUT_QUALIFIED_GEOMETRY_CUSTODY",
+    "DO_NOT_USE_REINFORCEMENT_PAD_THICKNESS_AS_SHELL_T"
+  ],
+  "authorityEffect": {
+    "productionThicknessConversionChanged": false,
+    "productionNumericsChanged": false,
+    "sourceCustodyImplementationChanged": false,
+    "routeRegistryChanged": false,
+    "gammaBetaAuthorityChanged": false,
+    "pressureAuthorityChanged": false,
+    "scfAuthorityChanged": false,
+    "codeComplianceAuthority": false,
+    "releaseAuthority": false
+  }
+}

@@ -35,8 +35,15 @@ export const AUDIT_CODES = Object.freeze({
   UNSUPPORTED_COMPONENT_TYPE: 'UNSUPPORTED_COMPONENT_TYPE',
   INVALID_NEGATIVE_VALUE: 'INVALID_NEGATIVE_VALUE',
   UNIT_BLOCKED: 'UNIT_BLOCKED',
+  EXCLUDED_NEGLIGIBLE_MASS: 'EXCLUDED_NEGLIGIBLE_MASS',
 });
 export const LINEAR_TYPES = Object.freeze(['PIPE', 'STRAIGHT_PIPE', 'TUBE']);
 export const LUMPED_TYPES = Object.freeze([
   'VALVE', 'FLANGE', 'TEE', 'REDUCER', 'ELBOW', 'BEND', 'INSTRUMENT', 'OLET', 'CAP', 'BLIND',
 ]);
+/**
+ * Gasket-type components carry negligible self-weight relative to the piping
+ * they seal and are exempted from mass-evidence requirements rather than
+ * requiring a point mass. Explicit evidence, if supplied, still wins.
+ */
+export const NEGLIGIBLE_MASS_TYPES = Object.freeze(['GASKET', 'GASK']);

@@ -17,6 +17,14 @@ export const NON_FEA_COMMON_SCHEMAS = Object.freeze({
   STALENESS: 'non-fea-common-input-staleness/v1',
 });
 
+/**
+ * Mirrors model-loads/constants.js NEGLIGIBLE_MASS_TYPES. Duplicated rather
+ * than imported: this checker is an input-readiness gate independent of the
+ * execution engine, and importing across that boundary is exactly what
+ * check:imports guards against. Both lists must be kept in step by hand.
+ */
+const NEGLIGIBLE_MASS_COMPONENT_TYPES = Object.freeze(['GASKET', 'GASK']);
+
 export const NON_FEA_COMMON_METHOD_IDS = Object.freeze([
   'WEIGHT_AND_GRAVITY',
   'SUSTAINED_REACTIONS',
@@ -681,6 +689,9 @@ function analyzeModelCoverage(model, requestedLoadCases) {
         && finiteEvidence(properties.secondMomentAreaMm4, false);
       if (!directEi && !derivedEi) flexuralMissing.push(id);
       if (!finiteEvidence(properties.outerDiameterMm, false) || !finiteEvidence(properties.wallThicknessMm, false)) sectionMissing.push(id);
+    } else if (NEGLIGIBLE_MASS_COMPONENT_TYPES.includes(type)) {
+      // Matches the execution-time resolver: gasket-type components default to
+      // zero self-weight and never gate readiness on missing evidence.
     } else if (!finiteEvidence(properties.componentWeightKg, true)) {
       massMissing.push(`${id}:COMPONENT_WEIGHT`);
     }

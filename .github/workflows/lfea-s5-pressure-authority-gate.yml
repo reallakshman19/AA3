@@ -1,0 +1,28 @@
+name: LFEA S5 pressure authority prerequisite
+
+on:
+  pull_request:
+    paths:
+      - 'src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js'
+      - 'src/core/linear-piping-analysis-consumer/production-capability-profile.js'
+      - 'scripts/lfea-s5-pressure-authority-gate-check.mjs'
+      - '.github/workflows/lfea-s5-pressure-authority-gate.yml'
+      - 'agents/PR*_workreport.md'
+
+permissions:
+  contents: read
+
+jobs:
+  s5-pressure-authority-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check S5 authority surface
+        run: |
+          node --check src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js
+          node --check scripts/lfea-s5-pressure-authority-gate-check.mjs
+      - name: Run S5 pressure authority prerequisite gate
+        run: node scripts/lfea-s5-pressure-authority-gate-check.mjs

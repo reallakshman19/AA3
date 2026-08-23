@@ -10,7 +10,7 @@ on:
       - 'src/core/linear-piping-analysis-consumer/production-capability-profile.js'
       - 'src/core/linear-piping-analysis-consumer/production-bend-component-profile.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-production-bend-*.js'
-      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-element-authorities.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-element-authorit*.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-elements.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js'
@@ -65,6 +65,7 @@ jobs:
           node --check src/core/linear-piping-analysis-consumer/inputxml-production-bend-components.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-production-bend-topology.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-element-authorities.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-element-authority-support.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-elements.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js

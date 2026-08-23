@@ -5,12 +5,14 @@ import {
   calculateB31Factors,
 } from '../linear-fea-b31-factor-calculator/index.js';
 import { compilePipingComponent } from '../linear-fea-piping-components/index.js';
-import { frameProfile } from './generic-inputxml-solve-model.js';
 import { INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE } from './inputxml-linear-structural-profile.js';
 import { bendComponentId } from './inputxml-linear-structural-retopology.js';
 import { productionBendSourceEligible } from './production-capability-profile.js';
 import { productionBendComponentProfile } from './production-bend-component-profile.js';
 import { retopologiseDeclaredBends } from './bend-retopology.js';
+import {
+  requireInputXmlProductionBendFactorAuthority,
+} from './inputxml-production-bend-factor-authority.js';
 import {
   groupBendChordBindings,
   requireBendComponentMatchesTopology,
@@ -20,14 +22,15 @@ const MOMENT_DIRECTION_MAPPING = Object.freeze({ inPlaneField: 'my', outOfPlaneF
 
 /**
  * Compile S3 bend stiffness authorities from an already-governed preparation.
- * Factor edition and B31J smooth-90 policy are explicit caller authorities;
+ * Factor edition and B31J smooth-90 policy are explicit sealed authorities;
  * neither is inferred from CAESAR version, benchmark precedent, or current year.
  * S3 intentionally supplies pressure=0 so pressure-stiffened k remains S5.
  */
 export function compileInputXmlProductionBendComponents(input) {
   const sourcePreparation = requireRecord(input?.sourcePreparation, 'sourcePreparation');
   const structuralPreparation = requireRecord(input?.structuralPreparation, 'structuralPreparation');
-  const factorAuthority = requireFactorAuthority(input?.factorAuthority);
+  const frameElementProfile = requireRecord(input?.frameElementProfile, 'frameElementProfile');
+  const factorAuthority = requireInputXmlProductionBendFactorAuthority(input?.factorAuthority);
   const sourceSegments = sourcePreparation.normalizedGeometry?.segments;
   if (!Array.isArray(sourceSegments)) fail(
     'BEND_FACTOR_SOURCE_GEOMETRY_MISSING', 'Source preparation has no normalized geometry.',
@@ -78,7 +81,7 @@ export function compileInputXmlProductionBendComponents(input) {
       },
       material,
       section: analysisSection,
-      frameElementProfile: frameProfile(),
+      frameElementProfile,
       localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,
       referenceVector: null,
       factorSet: factorResult.componentFactorSet,
@@ -163,21 +166,6 @@ function requireAcceptedComponent(component, sourceSegmentId) {
   );
 }
 
-function requireFactorAuthority(value) {
-  const record = requireRecord(value, 'factorAuthority');
-  if (typeof record.editionProfileId !== 'string' || record.editionProfileId.length === 0) fail(
-    'BEND_FACTOR_EDITION_AUTHORITY_UNRESOLVED', 'S3 requires an explicit B31 factor edition profile.',
-  );
-  if (typeof record.smooth90FlexibilityCorrection !== 'boolean') fail(
-    'BEND_FACTOR_SMOOTH90_AUTHORITY_UNRESOLVED',
-    'S3 requires an explicit smooth-90 flexibility-correction policy.',
-  );
-  return Object.freeze({
-    editionProfileId: record.editionProfileId,
-    smooth90FlexibilityCorrection: record.smooth90FlexibilityCorrection,
-  });
-}
-
 function vector(value) {
   if (!value || ![value.x, value.y, value.z].every(Number.isFinite)) fail(
     'BEND_FACTOR_SOURCE_GEOMETRY_INVALID', 'Bend tangent point is missing or non-finite.',
@@ -204,5 +192,6 @@ function fail(code, message, data) {
   const error = new TypeError(message);
   error.code = code;
   error.data = data ?? null;
+  error.analysisStage = 'INPUTXML_PRODUCTION_BEND_COMPONENT';
   throw error;
 }

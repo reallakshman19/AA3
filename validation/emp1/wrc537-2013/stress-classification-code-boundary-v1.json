@@ -1,0 +1,63 @@
+{
+  "schema": "emp1-wrc537-stress-classification-code-boundary/v1",
+  "issue": 1381,
+  "status": "BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED",
+  "sourceDocument": {
+    "identity": "WRC Bulletin 537, 2013 retained source package",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "primaryPageReobservationAvailableInConnectedEnvironment": false,
+    "retainedSecondaryExtraction": "docs/01_WRC537_METHOD_DEFINITION.md",
+    "retainedExtractionAuthority": "NOT_READY_FOR_IMPLEMENTATION"
+  },
+  "currentWrcResultContract": {
+    "implementation": "src/core/emp1/emp1-wrc537-cylindrical-table5.js",
+    "domain": "HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE",
+    "recoveryLocations": ["Au", "Al", "Bu", "Bl", "Cu", "Cl", "Du", "Dl"],
+    "quantities": [
+      "circumferential shell stress",
+      "longitudinal shell stress",
+      "shell shear stress",
+      "plane-stress Tresca stress intensity over each evaluated point"
+    ],
+    "evaluatedEightPointEnvelopeOnly": true,
+    "absoluteShellMaximumAssured": false,
+    "codeStressCategoryAssigned": false,
+    "allowableComparisonPerformed": false,
+    "codeComplianceAuthority": false,
+    "releaseAuthority": false
+  },
+  "authoritySeparation": {
+    "A_WRC_ELASTIC_SHELL_STRESS_CALCULATION": "SEPARATE_CALCULATION_AUTHORITY_ONLY",
+    "B_CODE_STRESS_CLASSIFICATION": "UNQUALIFIED",
+    "C_ALLOWABLE_OR_COMPLIANCE_DECISION": "UNQUALIFIED",
+    "D_RELEASE_OR_APPROVAL": "UNQUALIFIED",
+    "rule": "AUTHORITY_FOR_A_DOES_NOT_IMPLY_B_C_OR_D"
+  },
+  "unresolvedPrimarySourceQuestions": [
+    "exact WRC statement assigning acceptability responsibility to designer/code",
+    "whether any WRC membrane/bending quantity is assigned an ASME stress category",
+    "whether WRC stress intensity has any acceptability implication",
+    "required treatment of pressure stress before downstream classification",
+    "whether local primary/secondary/peak classification depends on load origin and structural context",
+    "whether Appendix-B factors alter category or only stress magnitude",
+    "required downstream governing code, edition, service condition and allowable basis",
+    "required evidence binding one WRC result to one downstream code-assessment result"
+  ],
+  "prohibitedInferences": [
+    "WRC calculation success means code PASS",
+    "membrane component name means primary membrane stress category",
+    "bending component name means primary bending stress category",
+    "stress intensity may be compared to a generic allowable without a governing code rule",
+    "B31.3 piping allowables govern vessel-shell WRC stress by default",
+    "code compliance implies release approval"
+  ],
+  "requiredFailClosedState": {
+    "wrcCalculationAuthorityMayRemainAsSeparatelyQualified": true,
+    "codeStressClassificationAuthority": false,
+    "allowableComparisonAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseAuthority": false
+  },
+  "productionChangesAuthorizedByThisRecord": false,
+  "workflowChangesAuthorizedByThisRecord": false
+}

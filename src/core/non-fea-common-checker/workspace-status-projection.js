@@ -172,7 +172,8 @@ function buildGates(context) {
       : 'Current support-site and route-partition authority is required.'),
     gate('C_PROJECT_BASIS', projectReady ? 'READY' : 'BLOCKED', projectReady
       ? `Project Data revision ${context.projectData.revision ?? 'UNKNOWN'} passes Non-FEA prerequisite audits.`
-      : 'One or more Project Data prerequisite audits are blocked.'),
+      : `Project Data audit(s) blocked: ${blockedAuditSummary(context.projectData.audits)}. `
+        + 'This is wider than Step 3, which only covers the Project basis entry fields.'),
     gate('D_MASTER_AUTHORITY', mastersReady ? 'READY' : 'BLOCKED', mastersReady
       ? `${requiredMasters.length} required master source(s) are loaded and normalized.`
       : 'One or more required master sources are missing current normalized rows or source hashes.'),
@@ -348,6 +349,21 @@ function normalizeExecution(value) {
     empiricalAuthorizationState: nullableText(row.empiricalAuthorizationState),
     empiricalAuthorizationReasonCode: nullableText(row.empiricalAuthorizationReasonCode),
   });
+}
+
+/**
+ * Names the specific blocked Project Data audits. Reporting only "one or more"
+ * reads as stale once the Step 3 entry fields are complete, because this gate
+ * also covers normalization and the master-resolved loads workflow.
+ */
+function blockedAuditSummary(audits) {
+  const blocked = Object.entries(audits || {})
+    .filter(([, audit]) => audit?.valid !== true)
+    .map(([workflow, audit]) => {
+      const codes = [...new Set(audit?.errorCodes || [])];
+      return codes.length ? `${workflow} (${codes.join(', ')})` : workflow;
+    });
+  return blocked.length ? blocked.join('; ') : 'none';
 }
 
 function gate(gateId, state, message) {

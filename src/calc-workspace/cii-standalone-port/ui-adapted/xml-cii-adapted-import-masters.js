@@ -40,6 +40,10 @@ function configFor(state) {
 }
 
 function fieldMapFor(masterKey, state) {
+  // An in-progress draft is what the operator is currently looking at, so it
+  // takes precedence over the last committed mapping for all display purposes.
+  const draft = state?.masterDraftMappings?.[masterKey];
+  if (draft && Object.keys(draft).length > 0) return draft;
   const configKey = MASTER_FIELDS[masterKey]?.configKey;
   const contextMap = state.masterContext?.config?.[configKey]?.fieldMap;
   if (contextMap && Object.keys(contextMap).length > 0) return contextMap;
@@ -225,18 +229,31 @@ function buildColumnPreviewMap(rows, headers) {
   return previewMap;
 }
 
+/** Single source of the mapping-health sentence, reused for live repaints. */
+export function mappingHealthText(masterKey, fields, fieldMap) {
+  return renderMappingHealth(masterKey, fields, fieldMap).textContent;
+}
+
 function renderMappingHealth(masterKey, fields, fieldMap) {
   const required = fields.filter((field) => field.required);
-  const mappedRequired = required.filter((field) => !!fieldMap[field.name]).length;
+  // A derivable field (bore from NPS) counts as satisfied by its source column.
+  const satisfied = (field) => Boolean(fieldMap[field.name])
+    || Boolean(field.derivableFrom && fieldMap[field.derivableFrom]);
+  const mappedRequired = required.filter(satisfied).length;
   const mappedTotal = fields.filter((field) => !!fieldMap[field.name]).length;
+  const derived = required.filter((field) => !fieldMap[field.name] && satisfied(field));
+  const derivedNote = derived.length
+    ? ` ${derived.map((field) => field.label).join(', ')} will be derived from the mapped NPS column.`
+    : '';
   const textValue = required.length
-    ? `Mapped ${mappedTotal}/${fields.length}; required ${mappedRequired}/${required.length}`
+    ? `Mapped ${mappedTotal}/${fields.length}; required ${mappedRequired}/${required.length}.${derivedNote}`
     : `Mapped ${mappedTotal}/${fields.length}`;
   const help = masterKey === 'lineList'
     ? 'Line List uses the XML->CII Import Master detector first, then dynamic fuzzy fallback for standalone-only fields.'
     : 'Dynamic fuzzy mapping uses header aliases and row previews.';
   const row = createElement('div', '', 'xml-cii-phase-help');
-  row.textContent = `${textValue}. ${help}`;
+  row.dataset.mappingHealth = masterKey;
+  row.textContent = `${textValue} ${help}`;
   row.style.margin = '4px 0 10px 0';
   return row;
 }

@@ -164,8 +164,9 @@ function blockerSummaryMarkup(rows) {
     byScope.set(key, group);
   });
   return `<section class="non-fea-input-check__blocker-summary"><h3>What needs attention</h3>
-    <ul>${groups.slice(0, 6).map((group) => `<li><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}</p></li>`).join('')}</ul>
-    <p>${groups.length > 6 ? `${groups.length - 6} more areas are listed in Advanced validation evidence.` : 'Open Advanced validation evidence for the complete audit trail.'}</p>
+    <p class="non-fea-input-check__blocker-reconcile">${groups.reduce((sum, group) => sum + group.count, 0)} issue(s) across ${groups.length} area(s) — all listed below.</p>
+    <ul>${groups.map((group) => `<li><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}</p></li>`).join('')}</ul>
+    <p>Open Advanced validation evidence for the complete audit trail.</p>
   </section>`;
 }
 

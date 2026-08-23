@@ -3,7 +3,13 @@ import {
   buildLfeaGeometryReview,
   LFEA_GEOMETRY_REVIEW_REPRESENTATIONS,
 } from './lfea-geometry-review.js';
-import { renderLfeaGeometryReviewSvg } from './lfea-geometry-review-svg.js';
+import {
+  renderLfeaGeometryReviewSvg,
+  LFEA_GEOMETRY_VERTICAL_AXES,
+  LFEA_GEOMETRY_DEFAULT_VIEW_BOX,
+  LFEA_GEOMETRY_BUTTON_ZOOM_FACTOR,
+  zoomLfeaGeometryViewBox,
+} from './lfea-geometry-review-svg.js';
 import { createLfeaReviewRowWindow, LFEA_MODEL_REVIEW_PAGE_SIZE } from './lfea-review-row-window.js';
 
 export const LFEA_MODEL_REVIEW_PANEL_SCHEMA = 'lfea-model-review-panel/v1';
@@ -33,6 +39,8 @@ export class LfeaModelReviewPanelController {
     this.model = buildLfeaModelReview(null);
     this.activeView = 'GEOMETRY';
     this.geometryRepresentation = 'SOURCE';
+    this.verticalAxis = 'Y';
+    this.geometryViewBox = null;
     this.pageIndexByView = Object.fromEntries(TABLE_VIEWS.map((view) => [view, 0]));
     this.onRefreshRequested = () => this.refresh();
   }
@@ -85,6 +93,27 @@ export class LfeaModelReviewPanelController {
       throw new TypeError(`Unknown LFEA geometry representation ${String(representation)}.`);
     }
     this.geometryRepresentation = representation;
+    this.render();
+    return this.getSnapshot();
+  }
+
+  setVerticalAxis(axis) {
+    if (!LFEA_GEOMETRY_VERTICAL_AXES.includes(axis)) {
+      throw new TypeError(`Unknown LFEA geometry vertical axis ${String(axis)}.`);
+    }
+    this.verticalAxis = axis;
+    this.render();
+    return this.getSnapshot();
+  }
+
+  zoomGeometry(factor) {
+    this.geometryViewBox = zoomLfeaGeometryViewBox(this.geometryViewBox ?? LFEA_GEOMETRY_DEFAULT_VIEW_BOX, factor);
+    this.render();
+    return this.getSnapshot();
+  }
+
+  resetGeometryView() {
+    this.geometryViewBox = null;
     this.render();
     return this.getSnapshot();
   }
@@ -191,6 +220,48 @@ export class LfeaModelReviewPanelController {
       controls.append(button);
     }
 
+    const axisControls = this.documentRef.createElement('div');
+    axisControls.className = 'lfea-geometry-review__controls';
+    axisControls.setAttribute('role', 'group');
+    axisControls.setAttribute('aria-label', 'Vertical axis');
+    const axisLabel = this.documentRef.createElement('span');
+    axisLabel.className = 'lfea-geometry-review__controls-label';
+    axisLabel.textContent = 'Vertical axis';
+    axisControls.append(axisLabel);
+    for (const axis of LFEA_GEOMETRY_VERTICAL_AXES) {
+      const button = this.documentRef.createElement('button');
+      button.type = 'button';
+      button.dataset.action = 'lfea-geometry-vertical-axis';
+      button.dataset.axis = axis;
+      const active = axis === this.verticalAxis;
+      button.dataset.active = active ? 'true' : 'false';
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      button.textContent = axis === 'Y' ? 'Y (CAESAR)' : 'Z';
+      button.addEventListener('click', () => this.setVerticalAxis(axis));
+      axisControls.append(button);
+    }
+
+    const viewControls = this.documentRef.createElement('div');
+    viewControls.className = 'lfea-geometry-review__controls';
+    viewControls.setAttribute('role', 'group');
+    viewControls.setAttribute('aria-label', 'Zoom and pan');
+    const zoomOut = this.documentRef.createElement('button');
+    zoomOut.type = 'button';
+    zoomOut.dataset.action = 'lfea-geometry-zoom-out';
+    zoomOut.textContent = 'Zoom out';
+    zoomOut.addEventListener('click', () => this.zoomGeometry(LFEA_GEOMETRY_BUTTON_ZOOM_FACTOR));
+    const zoomIn = this.documentRef.createElement('button');
+    zoomIn.type = 'button';
+    zoomIn.dataset.action = 'lfea-geometry-zoom-in';
+    zoomIn.textContent = 'Zoom in';
+    zoomIn.addEventListener('click', () => this.zoomGeometry(1 / LFEA_GEOMETRY_BUTTON_ZOOM_FACTOR));
+    const resetView = this.documentRef.createElement('button');
+    resetView.type = 'button';
+    resetView.dataset.action = 'lfea-geometry-reset-view';
+    resetView.textContent = 'Fit all';
+    resetView.addEventListener('click', () => this.resetGeometryView());
+    viewControls.append(zoomOut, zoomIn, resetView);
+
     const identity = paragraph(this.documentRef, `${review.selected.label} · ${review.selected.authority}`);
     identity.dataset.role = 'lfea-geometry-review-identity';
     identity.dataset.objectPath = review.selected.objectPath;
@@ -199,13 +270,19 @@ export class LfeaModelReviewPanelController {
     const svgHost = this.documentRef.createElement('div');
     svgHost.className = 'lfea-geometry-review__svg';
     svgHost.dataset.role = 'lfea-geometry-review-svg-host';
-    renderLfeaGeometryReviewSvg(svgHost, review.selected);
+    renderLfeaGeometryReviewSvg(svgHost, review.selected, {
+      verticalAxis: this.verticalAxis,
+      viewBox: this.geometryViewBox ?? undefined,
+      onViewBoxChange: (viewBox) => { this.geometryViewBox = viewBox; },
+    });
 
     const custody = paragraph(this.documentRef,
       `Object: ${review.selected.objectPath} · semantic: ${review.selected.semanticHash ?? 'not retained'} · evidence: ${review.selected.evidenceHash ?? 'not retained'}`);
     custody.className = 'lfea-geometry-review__custody';
     custody.dataset.role = 'lfea-geometry-review-custody';
-    wrapper.append(controls, identity, svgHost, custody);
+    const viewHint = paragraph(this.documentRef, 'Scroll to zoom, drag to pan.');
+    viewHint.className = 'lfea-geometry-review__view-hint';
+    wrapper.append(controls, axisControls, viewControls, identity, svgHost, viewHint, custody);
     return wrapper;
   }
 
@@ -223,6 +300,7 @@ export class LfeaModelReviewPanelController {
       modelSchema: LFEA_MODEL_REVIEW_SCHEMA,
       activeView: this.activeView,
       geometryRepresentation: this.geometryRepresentation,
+      verticalAxis: this.verticalAxis,
       geometryAvailable: geometryReview.selected.available,
       counts: this.model.counts,
       elementCount: this.model.counts.elements,

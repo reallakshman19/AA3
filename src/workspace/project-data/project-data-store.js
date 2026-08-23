@@ -1,6 +1,7 @@
 import approved1885sProfile from '../../../project-data/1885s-project-data-profile.json' with { type: 'json' };
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { clonePlain, freezeDeep } from '../dataset-utils.js';
+import { createNonFeaProductDefaultProvider } from './non-fea-product-default-profile.js';
 import {
   createEmptyProjectDataProfile,
   replaceProjectDataValue,
@@ -88,6 +89,26 @@ export class ProjectDataStore {
     this.#origin = bundledOrigin(this.#profileSemanticHash);
     this.#publish('approved-profile-restored');
     return this.#profile;
+  }
+
+  /**
+   * Materialises built-in product defaults into the visible profile.
+   *
+   * Only fields that are currently empty are filled; any operator-entered value
+   * is preserved and reported as shadowed. Each filled field carries
+   * PRODUCT_DEFAULT evidence naming its definition id, basis and hashes, so an
+   * applied default is never indistinguishable from an engineering decision.
+   * Returns the provider projection, or null when nothing needed filling.
+   */
+  applyProductDefaults() {
+    this.#ensureInit();
+    const provider = createNonFeaProductDefaultProvider({ profile: this.#profile });
+    if (provider.usageRows.length === 0) return null;
+    this.#profile = freezeDeep(clonePlain(provider.effectiveProfile));
+    this.#profileSemanticHash = this.#computeProfileSemanticHash(this.#profile);
+    this.#runtimeRevision += 1;
+    this.#publish('product-defaults-applied');
+    return provider;
   }
 
   update(path, value, evidence, approved) {

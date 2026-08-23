@@ -69,16 +69,13 @@ export class LfeaCommonErrorCheckPanelController {
 
     summary.textContent = this.presentation.empty
       ? 'Load and prepare a model to review governed engineering findings.'
-      : [
-        `Pre-flight ${this.presentation.preFlightStatus}`,
-        `BLOCK ${this.presentation.counts.BLOCK}`,
-        `CONDITIONAL ${this.presentation.counts.CONDITIONAL}`,
-        `ADVISORY ${this.presentation.counts.ADVISORY}`,
-        `PASS ${this.presentation.counts.PASS}`,
-      ].join(' · ');
+      : `${this.presentation.distinctIssueCount} distinct issues across ${this.presentation.findingCount} findings · Pre-flight ${this.presentation.preFlightStatus}`;
 
     renderFilters(this, filters);
     body.replaceChildren();
+    if (!this.presentation.empty) {
+      body.append(renderTriageBanner(this.documentRef, this.presentation));
+    }
 
     if (this.presentation.empty) {
       const message = paragraph(this.documentRef,
@@ -169,6 +166,34 @@ function renderFilters(controller, root) {
   }
 }
 
+/** Headline triage: what stops the run, what needs sign-off, what is just noted. */
+function renderTriageBanner(doc, presentation) {
+  const banner = doc.createElement('div');
+  banner.className = 'lfea-common-error-check__triage';
+  banner.dataset.role = 'lfea-common-error-check-triage';
+  for (const bucket of presentation.triage) {
+    const card = doc.createElement('div');
+    card.className = 'lfea-common-error-check__triage-card';
+    card.dataset.role = 'lfea-common-error-check-triage-card';
+    card.dataset.triageId = bucket.triageId;
+    card.dataset.cleared = bucket.cleared ? 'true' : 'false';
+
+    const count = doc.createElement('strong');
+    count.dataset.role = 'lfea-common-error-check-triage-count';
+    count.textContent = bucket.cleared ? '0' : String(bucket.distinctIssueCount);
+    const title = doc.createElement('span');
+    title.className = 'lfea-common-error-check__triage-title';
+    title.textContent = bucket.title;
+    const detail = paragraph(doc, bucket.cleared
+      ? bucket.clearedText
+      : `${bucket.distinctIssueCount} distinct · ${bucket.findingCount} occurrence${bucket.findingCount === 1 ? '' : 's'}`);
+    detail.className = 'lfea-common-error-check__triage-detail';
+    card.append(count, title, detail);
+    banner.append(card);
+  }
+  return banner;
+}
+
 function renderCategory(doc, category) {
   const section = doc.createElement('section');
   section.className = 'lfea-common-error-check__category';
@@ -176,59 +201,80 @@ function renderCategory(doc, category) {
   section.dataset.categoryId = category.categoryId;
 
   const heading = doc.createElement('h4');
-  heading.textContent = `${category.title} — ${category.findingCount}`;
-  const counts = paragraph(doc, [
-    `BLOCK ${category.counts.BLOCK}`,
-    `CONDITIONAL ${category.counts.CONDITIONAL}`,
-    `ADVISORY ${category.counts.ADVISORY}`,
-    `PASS ${category.counts.PASS}`,
-  ].join(' · '));
+  const distinct = category.groups.length;
+  heading.textContent = `${category.title} — ${distinct} issue${distinct === 1 ? '' : 's'}`;
+  const counts = paragraph(doc, `${category.findingCount} finding${category.findingCount === 1 ? '' : 's'} in total`);
   counts.dataset.role = 'lfea-common-error-check-category-counts';
   section.append(heading, counts);
 
   const list = doc.createElement('div');
   list.className = 'lfea-common-error-check__findings';
-  for (const row of category.rows) {
-    list.append(renderFinding(doc, row));
+  for (const group of category.groups) {
+    list.append(renderGroup(doc, group));
   }
   section.append(list);
   return section;
 }
 
-function renderFinding(doc, row) {
+/**
+ * One reviewable item per distinct finding, with the number of places it
+ * applies rather than one row per place. The individual findings stay inside.
+ */
+function renderGroup(doc, group) {
   const details = doc.createElement('details');
   details.className = 'lfea-common-error-check__finding';
-  details.dataset.role = 'lfea-common-error-check-finding';
-  details.dataset.findingId = row.findingId;
-  details.dataset.governedCategory = row.governedCategory;
-  details.dataset.disposition = row.disposition;
-  details.dataset.presentationLevel = row.presentationLevel;
+  details.dataset.role = 'lfea-common-error-check-finding-group';
+  details.dataset.groupCode = group.code;
+  details.dataset.disposition = group.disposition;
+  details.dataset.presentationLevel = group.presentationLevel;
+  details.dataset.triageId = group.triageId;
+  details.dataset.occurrences = String(group.occurrences);
 
   const summary = doc.createElement('summary');
-  summary.textContent = `${row.presentationLabel} · ${row.plainMessage} · ${row.code}`;
+  const badge = doc.createElement('span');
+  badge.className = 'lfea-common-error-check__badge';
+  badge.dataset.role = 'lfea-common-error-check-occurrence-badge';
+  badge.textContent = group.occurrences > 1 ? `${group.occurrences}×` : '1×';
+  const text = doc.createElement('span');
+  text.className = 'lfea-common-error-check__finding-text';
+  text.textContent = group.plainMessage;
+  summary.append(badge, text);
   details.append(summary);
 
+  if (group.suggestedAction) {
+    const action = paragraph(doc, group.suggestedAction);
+    action.className = 'lfea-common-error-check__action';
+    action.dataset.role = 'lfea-common-error-check-suggested-action';
+    details.append(action);
+  }
+
+  details.append(labelledParagraph(doc, 'Applies to',
+    `${group.occurrences} location${group.occurrences === 1 ? '' : 's'}`,
+    'lfea-common-error-check-occurrences'));
+  if (group.sourceFeatureIds.length > 0) {
+    details.append(labelledParagraph(doc, 'Source features',
+      summarizeList(group.sourceFeatureIds), 'lfea-common-error-check-source-features'));
+  }
   details.append(
-    labelledParagraph(doc, 'Finding ID', row.findingId, 'lfea-common-error-check-finding-id'),
-    labelledParagraph(doc, 'Governed category', row.governedCategory, 'lfea-common-error-check-governed-category'),
-    labelledParagraph(doc, 'Authority message', row.message, 'lfea-common-error-check-authority-message'),
+    labelledParagraph(doc, 'Finding code', group.code, 'lfea-common-error-check-code'),
+    labelledParagraph(doc, 'Governed disposition', group.disposition, 'lfea-common-error-check-governed-disposition'),
+    labelledParagraph(doc, 'Authority message', group.rows[0].message, 'lfea-common-error-check-authority-message'),
   );
-  if (row.technicalBasis) {
-    details.append(labelledParagraph(doc, 'Technical basis', row.technicalBasis, 'lfea-common-error-check-technical-basis'));
+  if (group.rows[0].technicalBasis) {
+    details.append(labelledParagraph(doc, 'Technical basis', group.rows[0].technicalBasis, 'lfea-common-error-check-technical-basis'));
   }
-  if (row.sourceFeatureIds.length > 0) {
-    details.append(labelledParagraph(doc, 'Source features', row.sourceFeatureIds.join(', '), 'lfea-common-error-check-source-features'));
+  if (group.rows[0].remediation) {
+    details.append(labelledParagraph(doc, 'Remediation', group.rows[0].remediation, 'lfea-common-error-check-remediation'));
   }
-  if (row.canonicalEntityIds.length > 0) {
-    details.append(labelledParagraph(doc, 'Canonical entities', row.canonicalEntityIds.join(', '), 'lfea-common-error-check-canonical-entities'));
-  }
-  if (row.physicalCaseIds.length > 0) {
-    details.append(labelledParagraph(doc, 'Physical cases', row.physicalCaseIds.join(', '), 'lfea-common-error-check-cases'));
-  }
-  if (row.remediation) {
-    details.append(labelledParagraph(doc, 'Remediation', row.remediation, 'lfea-common-error-check-remediation'));
-  }
+  details.append(labelledParagraph(doc, 'Finding IDs',
+    summarizeList(group.findingIds), 'lfea-common-error-check-finding-id'));
   return details;
+}
+
+/** Keep long identifier lists readable without hiding how many there are. */
+function summarizeList(values, limit = 12) {
+  if (values.length <= limit) return values.join(', ');
+  return `${values.slice(0, limit).join(', ')} … and ${values.length - limit} more`;
 }
 
 function renderEvidenceSummary(doc, presentation) {

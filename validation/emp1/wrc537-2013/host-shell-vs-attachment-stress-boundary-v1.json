@@ -1,0 +1,59 @@
+{
+  "schema": "emp1-wrc537-host-shell-vs-attachment-stress-boundary/v1",
+  "status": "PASS_FAIL_CLOSED_METHOD_SCOPE_BOUNDARY",
+  "engineeringAuthority": true,
+  "productionNumericalMethodChanged": false,
+  "source": {
+    "document": "WRC537_2013.pdf",
+    "edition": "2013",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "qualifiedStatementLocator": "4.5.3",
+    "retainedAuthority": "CALCULATED_STRESSES_ARE_HOST_CYLINDRICAL_SHELL_STRESSES_AT_ATTACHMENT_SHELL_JUNCTURE"
+  },
+  "wrc537ResultDomain": {
+    "hostShellStressAuthorizedWithinQualifiedBoundedRouteSemantics": true,
+    "physicalBody": "HOST_CYLINDRICAL_SHELL",
+    "recoveryRegion": "ATTACHMENT_SHELL_JUNCTURE",
+    "nozzleWallStressAuthorized": false,
+    "attachmentWallStressAuthorized": false,
+    "nozzleNeckStressAuthorized": false,
+    "weldStressAuthorized": false,
+    "reinforcementPadStressAuthorized": false
+  },
+  "separateMethodBoundary": {
+    "wrc297CandidateMethodFamilyOnly": true,
+    "wrc297AuthorizedTechnicalSourcePresent": false,
+    "wrc297EngineeringAuthority": false,
+    "nozzleAttachmentStressAuthority": false,
+    "conversionFromWrc537ShellStressPermitted": false,
+    "relabelWrc537ShellStressAsAttachmentStressPermitted": false
+  },
+  "requiredBeforeSeparateNozzleAttachmentMethod": [
+    "EXACT_METHOD_EDITION",
+    "AUTHORIZED_TECHNICAL_SOURCE_DIGEST",
+    "GEOMETRY_AND_SYMBOL_DEFINITIONS",
+    "LOAD_AND_REFERENCE_CONVENTIONS",
+    "DIMENSIONLESS_PARAMETER_DOMAINS",
+    "GOVERNING_EQUATIONS_AND_COEFFICIENTS",
+    "STRESS_COMPONENT_AND_RECOVERY_LOCATION_DEFINITIONS",
+    "INTERPOLATION_AND_EXTRAPOLATION_POLICY",
+    "EXCLUSIONS_AND_APPLICABILITY",
+    "INDEPENDENT_BENCHMARKS_AND_HAND_CALCULATIONS"
+  ],
+  "prohibitions": [
+    "DO_NOT_INFER_WRC297_FROM_WRC537_TABLE5_RESULTS",
+    "DO_NOT_USE_APPENDIX_B_SCF_AS_NOZZLE_STRESS_METHOD_AUTHORITY",
+    "DO_NOT_RELABEL_HOST_SHELL_STRESS_AS_NOZZLE_OR_ATTACHMENT_STRESS",
+    "DO_NOT_INFER_NOZZLE_STRESS_FROM_GEOMETRY_SIMILARITY",
+    "DO_NOT_USE_PUBLIC_METHOD_DESCRIPTION_AS_TECHNICAL_IMPLEMENTATION_AUTHORITY",
+    "DO_NOT_CONFLATE_STRESS_CALCULATION_WITH_CODE_COMPLIANCE_OR_RELEASE"
+  ],
+  "authorization": {
+    "wrc537HostShellScopeBoundaryQualified": true,
+    "nozzleAttachmentStressCalculationAllowed": false,
+    "wrc297ImplementationAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "codeComplianceAuthorized": false,
+    "releaseQualified": false
+  }
+}

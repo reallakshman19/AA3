@@ -122,9 +122,8 @@ try {
 
 assert.equal(detections.length, 6);
 assert.ok(detections.every((value) => value.detected));
-const receipt = {
+const receiptPayload = {
   schema: 'emp1-wrc537-gamma5-independent-review-gate-falsifiers/v1',
-  status: 'PASS_INDEPENDENT_REVIEW_GATE_ANTI_FORGERY_FALSIFIERS',
   observedHeadSha: options.expectedHead,
   baselineIndependentReviewRequiredAndPassed: true,
   mutationCount: detections.length,
@@ -136,6 +135,11 @@ const receipt = {
     codeComplianceAuthorized: false,
     releaseQualified: false,
   },
+};
+const receipt = {
+  ...receiptPayload,
+  falsifierSemanticHash: sha256Canonical(receiptPayload),
+  status: 'PASS_INDEPENDENT_REVIEW_GATE_ANTI_FORGERY_FALSIFIERS',
 };
 if (options.writeReceipt) {
   const expectedPath = join(evidenceDir, '07-independent-review-falsifier-receipt.json');

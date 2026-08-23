@@ -28,8 +28,10 @@ export const MASTER_FIELDS = {
     configKey: 'pipingClass',
     fields: [
       { name: 'pipingClass', label: 'Piping Class', required: true, aliases: ['Piping Class', 'PIPING_CLASS', 'Class', 'SPEC', 'Spec'] },
-      { name: 'nps', label: 'NPS (in)', aliases: ['NPS', 'NPS (in)', 'Size (NPS)', 'Nominal Pipe Size', 'Nominal Size', 'Size'] },
-      { name: 'convertedBore', label: 'Bore (mm)', required: true, aliases: ['Bore (mm)', 'Bore mm', 'BORE_MM', 'convertedBore', 'Converted Bore', 'DN', 'NB', 'Bore'] },
+      { name: 'nps', label: 'NPS (in)', aliases: ['NPS', 'NPS (in)', 'Size (NPS)', 'Nominal Pipe Size', 'Nominal Size', 'Size', 'NS', 'NSfraction'] },
+      // Bore is satisfied either by a direct mm column or by deriving it from the
+      // mapped NPS column through the configured npsToDn table.
+      { name: 'convertedBore', label: 'Bore (mm)', required: true, derivableFrom: 'nps', aliases: ['Bore (mm)', 'Bore mm', 'BORE_MM', 'convertedBore', 'Converted Bore', 'DN', 'NB', 'Bore'] },
       { name: 'componentType', label: 'Component Type', aliases: ['Component Type', 'COMPONENT_TYPE', 'Type', 'Item Type'] },
       { name: 'rating', label: 'Rating', aliases: ['Rating', 'RATING', 'Pressure Class'] },
       { name: 'materialName', label: 'Material Name', aliases: ['Material_Name', 'Material', 'MATERIAL'] },
@@ -50,10 +52,13 @@ export const MASTER_FIELDS = {
   weight: {
     configKey: 'weight',
     fields: [
-      { name: 'bore', label: 'Bore', required: true, aliases: ['convertedBore', 'Converted Bore', 'Size (NPS)', 'Size', 'NPS', 'DN', 'NB', 'Bore'] },
+      // Bore accepts a direct mm column (DN) or is derived from the mapped NPS
+      // column (NS) through the configured npsToDn table.
+      { name: 'bore', label: 'Bore', required: true, derivableFrom: 'nps', aliases: ['DN', 'convertedBore', 'Converted Bore', 'NB', 'Bore'] },
+      { name: 'nps', label: 'NPS (in)', aliases: ['NS', 'NSfraction', 'NPS', 'Size (NPS)', 'Size', 'Nominal Size'] },
       { name: 'rating', label: 'Rating', required: true, aliases: ['Rating', 'RATING', 'Class', 'CLASS', 'Pressure Class'] },
       { name: 'length', label: 'Length', required: true, aliases: ['Length (RF-F/F)', 'RF-F/F', 'Length', 'LEN', 'Face To Face', 'faceToFace'] },
-      { name: 'valveType', label: 'Valve Type', aliases: ['Type Description', 'Valve Type', 'Type', 'Description'] },
+      { name: 'valveType', label: 'Valve Type', aliases: ['TypeDesc', 'Type Description', 'Valve Type', 'Type', 'Description'] },
       { name: 'weight', label: 'Weight', required: true, aliases: ['RF/RTJ KG', 'Valve Weight', 'Weight', 'weight', 'valveWeight'] }
     ]
   }

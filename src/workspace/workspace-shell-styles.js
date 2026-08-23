@@ -194,7 +194,8 @@ export function advancedShellStyles() {
     .load-calc-topology-group .load-calc-error-check__issues { padding: 0 10px 10px; }
     .load-calc-topology-group .load-calc-error-check__issues li { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
     .load-calc-topology-group .load-calc-error-check__issues li > span > strong { display: block; margin-bottom: 3px; }
-    .load-calc-topology-skip { display: flex; align-items: center; gap: 6px; }
+    .load-calc-topology-skip { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .load-calc-topology-skip-error { flex-basis: 100%; margin: 0 0 4px; padding: 5px 8px; border: 1px solid #b91c1c; border-radius: 4px; background: #2a0b0b; color: #fca5a5 !important; font-size: 12px; text-align: left; }
     .load-calc-topology-skip select { max-width: 220px; padding: 6px; border: 1px solid #334155; border-radius: 4px; background: #07101e; color: #e2e8f0; }
     .load-calc-topology-fix-label { color: #4ade80 !important; font-size: 12px; white-space: nowrap; }
     .load-calc-error-check__passed { padding: 14px; border: 1px solid #166534; border-radius: 7px; background: rgba(22, 101, 52, 0.12); color: #4ade80; }

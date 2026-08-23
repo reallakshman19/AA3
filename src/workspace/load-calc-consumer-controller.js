@@ -9,6 +9,7 @@ import {
 } from './load-calc-consumer-view.js';
 import { classifyLoadCalcResultPresentation } from './load-calc-result-presentation.js';
 import { masterDataController } from './master-data-controller.js';
+import { createCurrentNonFeaWorkspaceStatusProjection } from './non-fea-analysis-plan-runtime.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 import { sealCurrentNonFeaCommonInput } from './non-fea-common-input-runtime.js';
 import { validateProjectDataProfile } from './project-data/project-data-contract.js';
@@ -205,9 +206,14 @@ export class LoadCalcConsumerController {
         new Date().toISOString(),
       );
       this.message = `Finding recorded as skipped under receipt ${receipt.receiptId}.`;
+      this.topologySkipError = null;
       await this.refreshTopologyCheck();
     } catch (error) {
-      this.message = error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
+      this.message = message;
+      // The header status sits far from the finding row that was clicked, so the
+      // failure is also reported inline against that finding.
+      this.topologySkipError = { findingId, message };
       this.render();
     }
   }
@@ -441,6 +447,7 @@ export class LoadCalcConsumerController {
           engineeringModelStore.getRoutePartitionModel(),
           this.topologyCheck,
           this.topologyPolicyFeedback,
+          this.topologySkipError,
         );
       } else if (EMPIRICAL_SCENARIO_VIEW_TABS.has(tab)) {
         const scenarioView = await import('./engineering-loads/empirical-load-calc-scenario-view.js');
@@ -734,6 +741,17 @@ function createWorkflowReadiness(context, topologyCheck) {
   const topologyBlockerCount = (supportSites?.blockers?.length || 0)
     + (routes?.blockers?.length || 0)
     + (topologyCheck?.blockingIssueCount || 0);
+  const projectDataCheck = validateProjectDataProfile(
+    projectDataStore.getProfile(),
+    'loadCalcProjectBasis',
+    null,
+  );
+  const masterDataAudit = requiredMastersAudit(masterDataController.getMasterData());
+  // Step 5's badge must agree with the Validate Input pane. The gate projection
+  // only reports the full blocker set once the common checker has run, so the
+  // count is published as unknown until then rather than shown under-reported.
+  const validationEvaluated = Boolean(commonInput.report);
+  const validationBlockerCount = validationEvaluated ? safeValidationBlockerCount() : 0;
   return Object.freeze({
     datasetReady: Boolean(context?.datasetId),
     topologyBlockerCount,
@@ -742,10 +760,14 @@ function createWorkflowReadiness(context, topologyCheck) {
     topologyCheckReady: topologyReady
       && topologyBlockerCount === 0
       && topologyCheck?.state !== 'NOT_AVAILABLE',
-    projectDataReady: approvedProjectDataReady(projectDataStore.getProfile()),
-    masterDataReady: requiredMastersReady(masterDataController.getMasterData()),
+    projectDataReady: projectDataCheck.valid,
+    projectDataActionCount: projectDataCheck.errors.length,
+    masterDataReady: masterDataAudit.ready,
+    masterDataActionCount: masterDataAudit.missingCount,
     validationReady: commonInput.report?.packageState === 'READY',
     validationState: commonInput.report?.packageState || 'NOT_EVALUATED',
+    validationEvaluated,
+    validationBlockerCount,
     resultsCurrent: distribution?.freshness?.status === 'CURRENT',
   });
 }
@@ -806,17 +828,23 @@ function topologyCheckPlaceholder(kind, message, state) {
   });
 }
 
-function approvedProjectDataReady(profile) {
-  return validateProjectDataProfile(profile, 'loadCalcProjectBasis', null).valid;
+/** Never lets a status-projection failure hide the rest of the guided workflow. */
+function safeValidationBlockerCount() {
+  try {
+    return createCurrentNonFeaWorkspaceStatusProjection()?.blockers?.length || 0;
+  } catch {
+    return 0;
+  }
 }
 
-function requiredMastersReady(masters) {
-  return [masters?.lineList, masters?.pipingClass, masters?.weight].every((master) => (
+function requiredMastersAudit(masters) {
+  const missingCount = [masters?.lineList, masters?.pipingClass, masters?.weight].filter((master) => !(
     Array.isArray(master?.normalizedRows)
     && master.normalizedRows.length > 0
     && typeof master.sourceHash === 'string'
     && master.sourceHash.length > 0
-  ));
+  )).length;
+  return { ready: missingCount === 0, missingCount };
 }
 
 /** Preserves the prior public W10.9 readiness contract. */

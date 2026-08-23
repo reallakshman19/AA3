@@ -16,6 +16,7 @@ export const TOPOLOGY_EDIT_FINDING_REVIEW_REPORT_SCHEMA = 'TopologyEditFindingRe
 
 const STORAGE_KEY = 'advanced-analysis:topology-finding-review:v1';
 const REVIEW_ACTIONS = new Set(['SKIP', 'RESTORE']);
+const DISPOSITIONABLE_KINDS = new Set(['BLOCK', 'REVIEW']);
 
 class TopologyEditFindingReviewStore {
   #storage;
@@ -75,7 +76,9 @@ class TopologyEditFindingReviewStore {
       finding.disposition === 'BLOCK' && finding.reviewDisposition !== 'SKIPPED'
     ));
     const skippedFindings = findings.filter((finding) => finding.reviewDisposition === 'SKIPPED');
-    const reviewFindings = findings.filter((finding) => finding.disposition === 'REVIEW');
+    const reviewFindings = findings.filter((finding) => (
+      finding.disposition === 'REVIEW' && finding.reviewDisposition !== 'SKIPPED'
+    ));
     const activeReceipts = skippedFindings.map((finding) => activeSkipByFindingId.get(finding.id));
     const material = {
       ...rawSnapshot,
@@ -89,6 +92,7 @@ class TopologyEditFindingReviewStore {
           : 'READY',
       rawBlockingIssueCount: rawSnapshot.blockingIssueCount,
       blockingIssueCount: blockingFindings.length,
+      reviewIssueCount: reviewFindings.length,
       skippedIssueCount: skippedFindings.length,
       findings,
       blockingFindings,
@@ -138,8 +142,8 @@ class TopologyEditFindingReviewStore {
       throw new TypeError('Topology review requires a current dataset-bound checker snapshot.');
     }
     const finding = snapshot.findings.find((row) => row.id === findingId);
-    if (!finding || finding.disposition !== 'BLOCK' || finding.id.startsWith('system:')) {
-      throw new RangeError('Only current canonical blocking findings can receive a review disposition.');
+    if (!finding || !DISPOSITIONABLE_KINDS.has(finding.disposition) || finding.id.startsWith('system:')) {
+      throw new RangeError('Only current canonical blocking or review findings can receive a review disposition.');
     }
     const reviewedReason = requiredText(reason, 'Topology review reason');
     const storage = this.#requireStorage();

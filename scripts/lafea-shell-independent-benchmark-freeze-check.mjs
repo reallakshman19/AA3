@@ -80,10 +80,12 @@ function validateManifest(manifest) {
 
 async function proveCheckerIndependence() {
   const source = await readFile(fileURLToPath(import.meta.url), 'utf8');
-  assert.equal(/from\s+['"][^'"]*(?:\.\.\/src\/|local-shell)/u.test(source), false,
-    'Independent shell oracle checker must not import production FEM modules.');
-  assert.equal(/calculateLocalShell|buildShellElementEvidence|recoverLoadCase/u.test(source), false,
-    'Independent shell oracle checker must not call production shell calculation/recovery functions.');
+  const staticImportSpecifiers = [...source.matchAll(
+    /^\s*import\s+(?:[^'";]+?\s+from\s+)?['"]([^'"]+)['"];?\s*$/gmu,
+  )].map((match) => match[1]);
+  assert.ok(staticImportSpecifiers.length >= 4, 'Independent checker import inventory is incomplete.');
+  assert.equal(staticImportSpecifiers.every((specifier) => specifier.startsWith('node:')), true,
+    `Independent checker may import Node built-ins only: ${staticImportSpecifiers.join(', ')}`);
 }
 
 function proveAnalyticalAuthority(definition) {

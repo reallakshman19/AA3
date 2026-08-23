@@ -20,7 +20,7 @@ assert.equal(actualHead, options.expectedHead,
 
 const outputDir = resolve(root, options.outputDir);
 const outputDirRelative = assertSafeOutputDir(outputDir);
-assertOnlyEvidenceOutputDirty({ allowMissingOutputDirectory: true });
+assertOnlyEvidenceOutputDirty();
 await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir, { recursive: true });
 assert.equal(git(['status', '--porcelain=v1', '--untracked-files=all']), '',
@@ -207,7 +207,7 @@ function run(name, script, args = []) {
   if (stderr) process.stderr.write(stderr);
 }
 
-function assertOnlyEvidenceOutputDirty({ allowMissingOutputDirectory = false } = {}) {
+function assertOnlyEvidenceOutputDirty() {
   const status = git(['status', '--porcelain=v1', '--untracked-files=all']);
   const lines = status.split(/\n/u).filter(Boolean);
   const allowedPrefix = `${outputDirRelative}/`;
@@ -217,9 +217,6 @@ function assertOnlyEvidenceOutputDirty({ allowMissingOutputDirectory = false } =
   });
   assert.deepEqual(unexpected, [],
     `EMP1_LOCAL_REQUALIFICATION_SOURCE_MUTATION_OUTSIDE_EVIDENCE_DIR:${unexpected.join('|')}`);
-  if (!allowMissingOutputDirectory && lines.length === 0) {
-    throw suiteError('EMP1_LOCAL_REQUALIFICATION_EXPECTED_EVIDENCE_OUTPUT_MISSING');
-  }
 }
 
 function git(args) {

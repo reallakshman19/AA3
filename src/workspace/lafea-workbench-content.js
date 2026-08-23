@@ -6,13 +6,14 @@ import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
 import { mountLafeaLiveWorkbenchViewport } from './lafea-live-workbench-viewport.js';
 import { buildLafeaDiscretizationViewModel } from './lafea-discretization-view-model.js';
 import { renderLafeaDiscretizationPanel } from './lafea-discretization-panel.js';
+import { compactLafeaRefinementWorkspace } from './lafea-refinement-disclosure.js';
 import { buildLafeaGuidedWorkflow } from './lafea-guided-workflow.js';
 import { renderLafeaGuidedWorkflow } from './lafea-guided-workflow-view.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaNumericalVerification } from './lafea-numerical-verification-view.js';
 import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
-import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
+import { renderLafeaSolveReadiness } from './lafea-solve-readiness-panel.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import {
   renderLafeaEngineeringEvidenceDrawer,
@@ -150,6 +151,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       return navigateTo(shell, 'findings');
     },
   });
+  compactLafeaRefinementWorkspace(discretizationHost, discretization);
   discretizationCard.body.append(discretizationHost);
 
   const numericalCard = card(root, 'Numerical verification');
@@ -159,12 +161,11 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   const preflightCard = card(root, 'Solve readiness');
   preflightCard.section.dataset.guidedTarget = 'findings';
   preflightCard.section.classList.add('lafea-cae-workspace__inspector-card');
-  preflightCard.body.append(workflowSummary(root, workflow, [
-    'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
-  ]));
-  if (Array.isArray(state.diagnostics) && state.diagnostics.length) {
-    preflightCard.body.append(diagnosticList(root, state.diagnostics));
-  }
+  preflightCard.body.append(renderLafeaSolveReadiness(
+    preflightCard.body,
+    workflow,
+    Array.isArray(state.diagnostics) ? state.diagnostics : [],
+  ));
 
   const evidenceCard = card(root, 'Analysis results');
   evidenceCard.section.dataset.guidedTarget = 'results';
@@ -338,54 +339,6 @@ function validReusableViewport(value) {
   if (!value || typeof value !== 'object') return null;
   if (!value.viewport?.scene || !value.element?.ownerDocument) return null;
   return value;
-}
-
-function workflowSummary(root, workflow, ids) {
-  const section = element(root, 'div', 'lafea-guided-summary');
-  for (const id of ids) {
-    const step = workflow.steps.find((candidate) => candidate.stepId === id);
-    if (!step) continue;
-    const row = element(root, 'div', 'lafea-guided-summary__row');
-    row.dataset.stepId = id;
-    row.dataset.status = step.status;
-    row.append(
-      element(root, 'strong', null, `${step.label}: ${lafeaUiStatusPresentation(step.status).label}`),
-      element(
-        root,
-        'span',
-        null,
-        step.reasons.length ? ` — ${lafeaWorkbenchReasonLabels(step.reasons).join(' • ')}` : '',
-      ),
-    );
-    section.append(row);
-  }
-  return section;
-}
-
-function diagnosticList(root, diagnostics) {
-  const section = element(root, 'section');
-  section.dataset.role = 'lafea-diagnostics';
-  section.dataset.guidedRole = 'findings';
-  section.append(element(root, 'h3', null, 'Current findings'));
-  const list = element(root, 'ul', 'lafea-diagnostics__list');
-  diagnostics.forEach((item) => {
-    const row = element(root, 'li', 'lafea-diagnostics__item');
-    row.dataset.severity = item.severity ?? 'INFO';
-    row.append(
-      element(root, 'strong', null, diagnosticSeverityLabel(item.severity)),
-      element(root, 'span', null, item.message ?? ''),
-      element(root, 'code', null, item.code ?? 'UNKNOWN'),
-    );
-    list.append(row);
-  });
-  section.append(list);
-  return section;
-}
-
-function diagnosticSeverityLabel(value) {
-  if (value === 'ERROR' || value === 'CRITICAL') return 'Blocked';
-  if (value === 'WARNING' || value === 'WARN') return 'Attention';
-  return 'Information';
 }
 
 function truthPanel(root, registryEntry) {

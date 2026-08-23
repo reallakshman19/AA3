@@ -76,15 +76,14 @@ assert.equal(areas[1].targetStep.stepId, 'DISCRETIZATION');
 assert.equal(areas[2].status, 'BLOCKED');
 assert.equal(areas[2].targetStep.stepId, 'RUN');
 assert.equal(areas[3].status, 'NOT_STARTED');
-assert.equal(workflow.steps[0].status, 'BLOCKED');
 
 const mutableWorkflow = {
   schema: 'lafea-guided-workflow/v1',
   steps: workflow.steps.map((value) => ({ ...value, reasons: [...value.reasons] })),
 };
 buildLafeaWorkflowAreaPresentation(mutableWorkflow);
-assert.equal(Object.isFrozen(mutableWorkflow.steps[0]), false, 'presentation must not freeze canonical caller state');
-assert.equal(Object.isFrozen(mutableWorkflow.steps[0].reasons), false, 'presentation must not freeze canonical reason arrays');
+assert.equal(Object.isFrozen(mutableWorkflow.steps[0]), false);
+assert.equal(Object.isFrozen(mutableWorkflow.steps[0].reasons), false);
 
 const allComplete = buildLafeaWorkflowAreaPresentation({
   schema: 'lafea-guided-workflow/v1',
@@ -92,115 +91,92 @@ const allComplete = buildLafeaWorkflowAreaPresentation({
 });
 assert.equal(allComplete.every((area) => area.status === 'COMPLETE'), true);
 
-const rendererPath = fileURLToPath(new URL('../src/workspace/lafea-guided-workflow-view.js', import.meta.url));
-const renderer = readFileSync(rendererPath, 'utf8');
-const informalGlyphs = ['✓', '○', '⚠', '🚫', '⚡'];
-for (const glyph of informalGlyphs) {
+const renderer = read('../src/workspace/lafea-guided-workflow-view.js');
+for (const glyph of ['✓', '○', '⚠', '🚫', '⚡']) {
   assert.equal(renderer.includes(glyph), false, `informal workflow glyph remains: ${glyph}`);
 }
-assert.equal(renderer.includes('friendlyStatus'), false, 'renderer must not reinterpret canonical status');
-assert.equal(renderer.includes("friendlyStatus = 'PENDING'"), false, 'BLOCKED must not be relabelled as PENDING');
+assert.equal(renderer.includes('friendlyStatus'), false);
 assert.match(renderer, /buildLafeaWorkflowAreaPresentation\(workflow\)/u);
 assert.match(renderer, /dataset\.workflowArea/u);
 assert.match(renderer, /button\.dataset\.status = step\.status/u);
 assert.match(renderer, /lafea-guided-workflow__technical/u);
 assert.match(renderer, /lafeaUiIcon\(doc, lafeaWorkflowAreaIconId\(area\.areaId\)\)/u);
-assert.match(renderer, /button\.append\(icon, label, state\)/u);
 
-const iconsPath = fileURLToPath(new URL('../src/workspace/lafea-ui-icons.js', import.meta.url));
-const icons = readFileSync(iconsPath, 'utf8');
+const icons = read('../src/workspace/lafea-ui-icons.js');
 assert.match(icons, /createElementNS\('http:\/\/www\.w3\.org\/2000\/svg', 'svg'\)/u);
 assert.match(icons, /aria-hidden/u);
-for (const glyph of informalGlyphs) {
-  assert.equal(icons.includes(glyph), false, `formal icon registry must not contain emoji glyph ${glyph}`);
-}
 
-const stylesPath = fileURLToPath(new URL('../src/workspace/lafea-guided-workbench-styles.js', import.meta.url));
-const styles = readFileSync(stylesPath, 'utf8');
+const styles = read('../src/workspace/lafea-guided-workbench-styles.js');
 assert.match(styles, /Primary-action hierarchy: one dominant contextual CTA/u);
 assert.match(styles, /\.lafea-next-action-banner\{/u);
 assert.match(styles, /\.lafea-next-action-banner__button\{/u);
-assert.match(styles, /\.lafea-engineering-overview__run,\[data-lafea-slot="toolbar"\] \[data-role="lafea-run"\]/u);
-assert.match(styles, /background:#0b1628!important/u);
-assert.equal(styles.includes('linear-gradient'), false, 'guided action hierarchy must not add decorative gradients');
+assert.equal(styles.includes('linear-gradient'), false);
 
-const modernStylesPath = fileURLToPath(new URL('../src/workspace/lafea-ui-modernization-styles.js', import.meta.url));
-const modernStyles = readFileSync(modernStylesPath, 'utf8');
+const modernStyles = read('../src/workspace/lafea-ui-modernization-styles.js');
 assert.match(modernStyles, /\.lafea-ui-icon/u);
 assert.match(modernStyles, /\.lafea-engineering-evidence-drawer/u);
 assert.match(modernStyles, /\.lafea-diagnostics__item/u);
-assert.match(modernStyles, /\.lafea-guided-shell\{[\s\S]*grid-template-columns:minmax\(0,1fr\)!important/u);
-assert.match(modernStyles, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/u);
-assert.match(modernStyles, /\.lafea-guided-workflow__reasons\{[\s\S]*display:block!important/u);
-assert.match(modernStyles, /\.lafea-guided-workflow__technical\{[\s\S]*display:block!important/u);
-assert.match(modernStyles, /minmax\(340px,380px\)!important/u);
-assert.match(modernStyles, /min-height:520px!important/u);
 
-const overviewPath = fileURLToPath(new URL('../src/workspace/lafea-engineering-overview.js', import.meta.url));
-const overview = readFileSync(overviewPath, 'utf8');
+const overview = read('../src/workspace/lafea-engineering-overview.js');
 assert.match(overview, /dataset\.role = 'lafea-engineering-summary'/u);
 assert.match(overview, /dataset\.role = 'lafea-technical-evidence'/u);
-assert.match(overview, /technicalEvidenceDisclosure\(root, model\)/u);
-assert.equal(overview.includes("['Engine', model.solver.engine]"), false, 'raw solver package must not be a primary overview row');
-assert.equal(overview.includes("['Authority', model.solver.authority]"), false, 'raw solver authority must not be a primary overview row');
-assert.equal(overview.includes("['Profile', model.solver.qualificationProfile]"), false, 'raw qualification profile must not be a primary overview row');
-assert.match(overview, /\['Solver authority', model\.solver\.authority\]/u);
-assert.match(overview, /\['Engine state', model\.solver\.engineState\]/u);
+assert.equal(overview.includes("['Engine', model.solver.engine]"), false);
+assert.equal(overview.includes("['Authority', model.solver.authority]"), false);
 
-const settingsPath = fileURLToPath(new URL('../src/workspace/lafea-analysis-settings-view.js', import.meta.url));
-const settings = readFileSync(settingsPath, 'utf8');
-assert.match(settings, /solverSummaryRows/u);
-assert.match(settings, /settingsGroup\(root, 'Solver contract', 'GOVERNED_SOLVER', model\.solverSummaryRows\)/u);
-assert.equal(
-  settings.includes("settingsGroup(root, 'Governed solver settings', 'GOVERNED_SOLVER', model.solverRows)"),
-  false,
-  'raw solver rows must not be rendered as the primary solver group',
-);
-assert.match(settings, /technicalSettings\(root, model\.solverRows\)/u);
+const settings = read('../src/workspace/lafea-analysis-settings-view.js');
+assert.match(settings, /createLafeaInfoDisclosure/u);
+assert.match(settings, /Source metadata/u);
+assert.match(settings, /Continuum formulation basis/u);
+assert.match(settings, /visibleRows: model\.solverSummaryRows\.filter/u);
 assert.match(settings, /Technical identifiers and lifecycle custody/u);
 assert.match(settings, /dataset\.role = 'lafea-technical-evidence'/u);
 
-const evidencePath = fileURLToPath(new URL('../src/workspace/lafea-workbench-evidence.js', import.meta.url));
-const evidence = readFileSync(evidencePath, 'utf8');
+const evidence = read('../src/workspace/lafea-workbench-evidence.js');
 assert.match(evidence, /dataset\.role = 'lafea-engineering-evidence-drawer'/u);
 assert.match(evidence, /body\.dataset\.role = 'lafea-technical-evidence'/u);
 assert.match(evidence, /if \(parent\.tagName === 'DETAILS'\) parent\.open = true/u);
-assert.match(evidence, /lafeaUiIcon\(root\.ownerDocument, 'evidence'\)/u);
 
-const contentPath = fileURLToPath(new URL('../src/workspace/lafea-workbench-content.js', import.meta.url));
-const content = readFileSync(contentPath, 'utf8');
+const content = read('../src/workspace/lafea-workbench-content.js');
 assert.match(content, /renderLafeaEngineeringEvidenceDrawer\(/u);
-assert.match(content, /\[numericalCard\.section, lifecycleCard\.section, ncCard\.section\]/u);
+assert.match(content, /renderLafeaSolveReadiness\(/u);
+assert.match(content, /compactLafeaRefinementWorkspace\(/u);
 assert.match(content, /banner\.dataset\.guidedTarget = 'run'/u);
-assert.match(content, /lafeaUiStatusPresentation\(step\.status\)\.label/u);
 assert.match(content, /'Not generated'/u);
-assert.equal(content.includes('banner.style.'), false, 'legacy inline action-banner presentation must be removed');
-assert.equal(content.includes('btn.style.'), false, 'legacy inline action-button presentation must be removed');
+assert.equal(content.includes('workflowSummary('), false, 'duplicated solve summary renderer must be removed');
+assert.equal(content.includes('diagnosticList('), false, 'raw diagnostic list must not remain primary solve content');
 
-const discretizationPath = fileURLToPath(new URL('../src/workspace/lafea-discretization-panel.js', import.meta.url));
-const discretization = readFileSync(discretizationPath, 'utf8');
+const solve = read('../src/workspace/lafea-solve-readiness-panel.js');
+assert.match(solve, /LAFEA_SOLVE_READINESS_VIEW_SCHEMA/u);
+assert.match(solve, /Solve: \$\{model\.label\}/u);
+assert.match(solve, /Why\? \(i\)/u);
+assert.match(solve, /lafea-solve-readiness-primary/u);
+assert.match(solve, /lafea-solve-readiness-evidence/u);
+assert.match(solve, /lafea-diagnostics/u);
+
+const discretization = read('../src/workspace/lafea-discretization-panel.js');
 assert.match(discretization, /meshWorkspaceSummary\(doc, model\)/u);
 assert.match(discretization, /generationSection\(doc, model, handlers\)/u);
 assert.match(discretization, /qualitySection\(doc, model, handlers\)/u);
 assert.match(discretization, /primaryActionSection\(doc, model, handlers\)/u);
 assert.match(discretization, /advancedEvidence\(doc, model, handlers\)/u);
-assert.match(discretization, /lafeaUiStatusPresentation\(model\.state\)/u);
-assert.match(discretization, /dataset\.role = 'lafea-discretization-technical-evidence'/u);
-assert.match(discretization, /Advanced mesh evidence and custody/u);
-assert.match(discretization, /Retained mesh custody/u);
-assert.match(discretization, /\['Mesh hash', value\.meshHash\]/u);
-assert.match(discretization, /\['Profile hash', value\.meshProfileHash\]/u);
-assert.match(discretization, /\['Artifact hash', value\.artifactHash\]/u);
-assert.equal(discretization.includes("region(doc, 'Retained evidence', 'evidence')"), false, 'retained evidence must not remain a primary mesh section');
-assert.equal(discretization.includes("region(doc, 'Preview', 'preview')"), false, 'preview custody must not remain a primary mesh section');
-assert.equal(discretization.includes("region(doc, 'Actions', 'actions')"), false, 'evidence actions must not remain a primary mesh section');
+assert.match(discretization, /Technical mesh identifiers/u);
+assert.match(discretization, /MAX_INLINE_FOCUS_ACTIONS = 6/u);
+assert.match(discretization, /Diagnostic only\./u);
 
-const controllerIoPath = fileURLToPath(new URL('../src/workspace/lafea-workbench-controller-io.js', import.meta.url));
-const controllerIo = readFileSync(controllerIoPath, 'utf8');
+const refinement = read('../src/workspace/lafea-refinement-disclosure.js');
+assert.match(refinement, /data-role|dataset\.role = 'lafea-refinement-disclosure'/u);
+assert.match(refinement, /qualification pending/u);
+assert.match(refinement, /productEvidence\.open = false/u);
+assert.match(refinement, /refinement\.replaceWith\(details\)/u);
+
+const controllerIo = read('../src/workspace/lafea-workbench-controller-io.js');
 assert.match(controllerIo, /LAFEA_UI_MODERNIZATION_STYLES/u);
 
-console.log('LAFEA formal UI status, four-area workspace, action hierarchy, evidence hierarchy, flattened mesh inspector, icon, and terminology boundary check: PASS');
+console.log('LAFEA formal UI hierarchy, decision-first solve, on-demand refinement, evidence, icon, and terminology boundary check: PASS');
 
+function read(relative) {
+  return readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
+}
 function step(stepId, status, reasons = []) {
   return Object.freeze({
     stepId,

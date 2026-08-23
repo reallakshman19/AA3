@@ -56,14 +56,19 @@ export function buildAccdbBendDefinition(input) {
     nodeId: String(node.id),
     distance: distance(corner, node),
   }));
-  const nearestNodeId = uniqueNearest(candidates);
+  // For a circular CAESAR bend, the theoretical working point is set back
+  // equally from both tangents by R*tan(theta/2). A floating-point difference
+  // between those two distances is not engineering authority to move a support
+  // or point load onto one leg. Working-point bindings therefore remain
+  // explicitly ambiguous until a CAESAR-equivalent station treatment is
+  // independently qualified.
   input.retiredNodeRecords.set(cornerNodeId, {
     sourceNodeId: cornerNodeId,
     bendSegmentId: sourceSegmentId,
     candidates,
-    nearestNodeId,
+    nearestNodeId: null,
     codeStationNodeId: definition.midArcNodeId,
-    reason: nearestNodeId === null ? 'AMBIGUOUS_NEAREST_RETAINED_NODE' : 'UNIQUE_NEAREST_RETAINED_NODE',
+    reason: 'ACCDB_WORKING_POINT_BINDING_REQUIRES_EXPLICIT_AUTHORITY',
   });
   return definition;
 }
@@ -171,15 +176,6 @@ function generatedNode(id, point, bendSegmentId, role, generatedNodes) {
   });
   generatedNodes.set(id, node);
   return node;
-}
-
-function uniqueNearest(candidates) {
-  const ordered = [...candidates].sort((left, right) => left.distance - right.distance);
-  if (ordered.length === 0) return null;
-  if (ordered.length === 1) return ordered[0].nodeId;
-  const scaleValue = Math.max(ordered[0].distance, ordered[1].distance, Number.MIN_VALUE);
-  return Math.abs(ordered[1].distance - ordered[0].distance) / scaleValue
-    <= BEND_RETOPOLOGY_RELATIVE_TOLERANCE ? null : ordered[0].nodeId;
 }
 
 function requirePointOnOpenSpan(point, start, end, segmentId, side) {

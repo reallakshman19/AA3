@@ -123,7 +123,8 @@ try {
   assert.ok(loadCase.reactions.some((row) => row.kind === 'FORCE' && Math.abs(row.value) > 0));
   assert.equal(
     loadCase.appliedLoadEvidence.contributions.every(
-      (row) => row.type === 'PRESSURE' && row.pressure === LAFEA4_SAMPLE_PRESSURE_MPA
+      (row) => row.type === 'UNIFORM_ELEMENT_NORMAL_PRESSURE'
+        && row.pressure === LAFEA4_SAMPLE_PRESSURE_MPA
         && row.sense === LAFEA4_SAMPLE_PRESSURE_SENSE,
     ),
     true,
@@ -161,7 +162,7 @@ try {
     retainedElementCount: generated.evidence.mesh.elements.length,
     solverModelHash: stage.execution.solverModelHash,
     compiledExecutionHash: stage.execution.compiledExecutionHash,
-    recoveryArtifactHash: stage.lifecycle.artifacts.RECOVERY.artifactHash,
+    recoveryStatus: stage.lifecycle.artifacts.RECOVERY.status,
     appliedForce: loadCase.appliedLoadEvidence.appliedForce,
     appliedMomentAboutOrigin: loadCase.appliedLoadEvidence.appliedMomentAboutOrigin,
     forceEquilibriumAccepted: loadCase.forceEquilibrium.qualification.accepted,

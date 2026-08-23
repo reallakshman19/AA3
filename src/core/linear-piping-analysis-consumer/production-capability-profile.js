@@ -21,13 +21,17 @@ export const PRODUCTION_CAPABILITY_PROFILE = Object.freeze({
   pressureCodeStress: true,
 });
 
-export const PRODUCTION_REPRESENTABLE_COMPONENT_KINDS = Object.freeze(new Set([
+export const PRODUCTION_REPRESENTABLE_COMPONENT_KINDS = Object.freeze([
   'STRAIGHT_PIPE',
   'RIGID',
   'BEND',
   'REDUCER',
   'TEE',
-]));
+]);
+
+export function productionComponentIsRepresentable(componentKind) {
+  return PRODUCTION_REPRESENTABLE_COMPONENT_KINDS.includes(componentKind);
+}
 
 export function productionAuthorizedPressureEffects(profile = PRODUCTION_CAPABILITY_PROFILE) {
   return Object.freeze({
@@ -41,8 +45,8 @@ export function productionAuthorizedPressureEffects(profile = PRODUCTION_CAPABIL
 /**
  * Return the declared approximation code for a known component, or null when
  * the component is represented exactly or is outside the representable set.
- * Callers must distinguish those two null states using
- * PRODUCTION_REPRESENTABLE_COMPONENT_KINDS.
+ * Callers must distinguish those two null states with
+ * productionComponentIsRepresentable().
  */
 export function productionComponentLimitation(componentKind, profile = PRODUCTION_CAPABILITY_PROFILE) {
   if (componentKind === 'BEND') {

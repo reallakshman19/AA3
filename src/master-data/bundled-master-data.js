@@ -13,7 +13,23 @@
  */
 
 import weightRawRows from './wtValveweights.json' with { type: 'json' };
-import matMapText from './PCF_MAT_MAP.txt?raw';
+
+// Vite's `?raw` suffix inlines PCF_MAT_MAP.txt into a plain string constant
+// at build time, so the browser bundle never touches the filesystem. Plain
+// Node (the `node scripts/*.mjs` check/test convention this repo already
+// uses everywhere) has no such transform and throws ERR_UNKNOWN_FILE_EXTENSION
+// on that same static import, so it reads the identical file from disk
+// instead. Both branches are literal specifiers so Vite's dependency scan
+// still finds and inlines the `?raw` import regardless of which branch it
+// sits in.
+const isNodeRuntime = typeof process !== 'undefined' && Boolean(process.versions?.node) && typeof window === 'undefined';
+let matMapText;
+if (isNodeRuntime) {
+  const { readFileSync } = await import('node:fs');
+  matMapText = readFileSync(new URL('./PCF_MAT_MAP.txt', import.meta.url), 'utf8');
+} else {
+  ({ default: matMapText } = await import('./PCF_MAT_MAP.txt?raw'));
+}
 
 export const BUNDLED_WEIGHT_MASTER = Object.freeze({
   fileName: 'wtValveweights.json',

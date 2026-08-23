@@ -1,16 +1,22 @@
 import { freezeDeep, stringValue } from '../dataset-utils.js';
 import { projectDataValue } from '../project-data/project-data-contract.js';
+import {
+  createNonFeaProductDefaultProvider,
+} from '../project-data/non-fea-product-default-profile.js';
 
 export const SUPPORT_SITE_MODEL_SCHEMA = 'support-site-model/v1';
 
 /**
  * Converts source support members into tag-preserving assemblies and physical
  * sites. Exact coordinate equality is authoritative; a nonzero approximate
- * grouping tolerance is used only when approved in Project Data.
+ * grouping tolerance is used only when approved in Project Data. Routine empty
+ * Project Data is first composed with the visible Product-default profile; its
+ * built-in grouping tolerance is zero, so it cannot merge distinct locations.
  */
 export function buildSupportSiteModel(dataset, profile) {
   assertDataset(dataset);
-  const tolerance = projectDataValue(profile, 'topology.supportSiteGroupingToleranceMm');
+  const effectiveProfile = createNonFeaProductDefaultProvider({ profile }).effectiveProfile;
+  const tolerance = projectDataValue(effectiveProfile, 'topology.supportSiteGroupingToleranceMm');
   const members = dataset.entities.filter((entity) => entity.category === 'support').map(toMember);
   const assemblyGroups = groupMembers(members, tolerance);
   const assemblies = [...assemblyGroups.values()].map(toAssembly);

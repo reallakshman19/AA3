@@ -6,8 +6,20 @@ import {
   validateProjectDataProfile,
 } from '../project-data/project-data-contract.js';
 import { PROJECT_DATA_PROFILE_SCHEMA } from '../project-data/project-data-fields.js';
+import {
+  createNonFeaProductDefaultProvider,
+} from '../project-data/non-fea-product-default-profile.js';
 import { requireAuthorizedEmpiricalLoadInput } from './authorized-empirical-load-input.js';
-import { calculateSupportLoadDistribution } from './support-load-distribution-v3.js';
+import {
+  createAuthorizedEmpiricalEffectiveExecutionProjection,
+} from './authorized-empirical-effective-execution-projection.js';
+import {
+  calculateAuthorizedEmpiricalEffectiveSupportLoads,
+} from './authorized-empirical-effective-support-load-execution.js';
+import {
+  EMPIRICAL_LOAD_METHOD,
+  calculateSupportLoadDistribution,
+} from './support-load-distribution-v3.js';
 
 export const AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_REQUEST_SCHEMA = 'authorized-empirical-load-execution-request/v1';
 export const AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_SCHEMA = 'authorized-empirical-load-execution/v1';
@@ -16,11 +28,16 @@ const REQUEST_KEYS = [
   'schema', 'executionId', 'executedAt', 'authorizedInput', 'dataset', 'profile',
   'supportSiteModel', 'routePartitionModel', 'masterData',
 ];
-const OUTPUT_KEYS = [
+const LEGACY_OUTPUT_KEYS = [
   'schema', 'executionId', 'executedAt', 'projectId', 'datasetId', 'datasetVersion',
   'authorizedInputSemanticHash', 'overlaySemanticHash', 'baselineSemanticHash',
   'handoffSemanticHash', 'projectionPayloadSemanticHash', 'ephemeralProfileSemanticHash',
   'distributionSemanticHash', 'status', 'summary', 'distribution', 'semanticHash',
+];
+const OUTPUT_KEYS = [
+  ...LEGACY_OUTPUT_KEYS.filter((key) => key !== 'semanticHash'),
+  'effectiveExecutionProjectionSemanticHash',
+  'semanticHash',
 ];
 const OVERLAY_FIELDS = [
   'pipeSectionProperties', 'materialDensitiesKgPerM3',
@@ -28,8 +45,12 @@ const OVERLAY_FIELDS = [
   'insulationDensitiesKgPerM3', 'componentWeightsKg',
 ];
 
+/** Historical executions keep their old projection; ledger-enabled executions bind the new projection hash. */
 export function authorizedEmpiricalLoadExecutionSemanticProjection(value) {
-  return Object.fromEntries(OUTPUT_KEYS
+  const keys = Object.hasOwn(value || {}, 'effectiveExecutionProjectionSemanticHash')
+    ? OUTPUT_KEYS
+    : LEGACY_OUTPUT_KEYS;
+  return Object.fromEntries(keys
     .filter((key) => key !== 'semanticHash')
     .map((key) => [key, value[key]]));
 }
@@ -38,6 +59,13 @@ export function computeAuthorizedEmpiricalLoadExecutionSemanticHash(value) {
   return semanticHash(authorizedEmpiricalLoadExecutionSemanticProjection(value));
 }
 
+/**
+ * Builds the ephemeral profile consumed by authorized gravity execution.
+ * Product defaults fill only empty Project Data fields before the authorized
+ * six-field compatibility overlay is applied. The stored Project Data profile
+ * is never mutated. For newly compiled inputs the six fields are subsequently
+ * replaced by exact target-level effective values before calculation.
+ */
 export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
   const input = requireAuthorizedEmpiricalLoadInput(authorizedInput);
   requireProfile(profile);
@@ -48,6 +76,8 @@ export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
     });
   }
 
+  const productDefaultProvider = createNonFeaProductDefaultProvider({ profile });
+  const effectiveProfile = productDefaultProvider.effectiveProfile;
   const evidence = freezeDeep({
     source: 'AUTHORIZED_EMPIRICAL_LOAD_INPUT',
     sourceSchema: input.schema,
@@ -61,7 +91,7 @@ export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
     handoffSemanticHash: input.handoffSemanticHash,
     projectionPayloadSemanticHash: input.projectionPayloadSemanticHash,
   });
-  const loadCalculation = clonePlain(profile.loadCalculation);
+  const loadCalculation = clonePlain(effectiveProfile.loadCalculation);
   for (const field of OVERLAY_FIELDS) {
     loadCalculation[field] = createEvidenceValue(
       input.loadCalculationOverlay[field],
@@ -70,7 +100,7 @@ export function buildAuthorizedEmpiricalLoadProfile(profile, authorizedInput) {
     );
   }
   return freezeDeep({
-    ...clonePlain(profile),
+    ...clonePlain(effectiveProfile),
     loadCalculation,
   });
 }
@@ -81,22 +111,40 @@ export function calculateAuthorizedEmpiricalLoadExecution(value) {
     fail('Unsupported authorized empirical execution request.', 'EMPIRICAL_EXECUTION_SCHEMA_INVALID');
   }
   const authorizedInput = requireAuthorizedEmpiricalLoadInput(value.authorizedInput);
-  const profile = buildAuthorizedEmpiricalLoadProfile(value.profile, authorizedInput);
-  const activeHashes = masterHashes(value.masterData, value.dataset);
-  const loadAudit = validateProjectDataProfile(profile, 'loads', activeHashes);
+  const compatibilityProfile = buildAuthorizedEmpiricalLoadProfile(value.profile, authorizedInput);
+  const effectiveExecutionProjection = authorizedInput.effectiveValueLedger
+    ? createAuthorizedEmpiricalEffectiveExecutionProjection({
+      authorizedInput,
+      dataset: value.dataset,
+      profile: compatibilityProfile,
+    })
+    : null;
+  const profile = effectiveExecutionProjection?.profile || compatibilityProfile;
+  const dataset = effectiveExecutionProjection?.dataset || value.dataset;
+  const activeHashes = masterHashes(value.masterData, dataset);
+  const loadWorkflow = effectiveExecutionProjection ? 'authorizedGravityLoads' : 'loads';
+  const loadAudit = validateProjectDataProfile(profile, loadWorkflow, activeHashes);
   const topologyAudit = validateProjectDataProfile(profile, 'topology', activeHashes);
   const errors = [...loadAudit.errors, ...topologyAudit.errors];
   if (errors.length > 0) {
     fail('The ephemeral Project Data profile is not calculation-ready.', 'EMPIRICAL_EXECUTION_PROFILE_BLOCKED', { errors });
   }
 
-  const distribution = calculateSupportLoadDistribution({
-    dataset: value.dataset,
-    profile,
-    supportSiteModel: value.supportSiteModel,
-    routePartitionModel: value.routePartitionModel,
-    masterData: value.masterData,
-  });
+  const distribution = effectiveExecutionProjection
+    ? calculateAuthorizedEmpiricalEffectiveSupportLoads({
+      effectiveExecutionProjection,
+      method: EMPIRICAL_LOAD_METHOD,
+      supportSiteModel: value.supportSiteModel,
+      routePartitionModel: value.routePartitionModel,
+      masterData: value.masterData,
+    })
+    : calculateSupportLoadDistribution({
+      dataset,
+      profile,
+      supportSiteModel: value.supportSiteModel,
+      routePartitionModel: value.routePartitionModel,
+      masterData: value.masterData,
+    });
   const summary = summarize(distribution);
   const draft = {
     schema: AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_SCHEMA,
@@ -111,6 +159,9 @@ export function calculateAuthorizedEmpiricalLoadExecution(value) {
     handoffSemanticHash: authorizedInput.handoffSemanticHash,
     projectionPayloadSemanticHash: authorizedInput.projectionPayloadSemanticHash,
     ephemeralProfileSemanticHash: semanticHash(profile),
+    ...(effectiveExecutionProjection ? {
+      effectiveExecutionProjectionSemanticHash: effectiveExecutionProjection.semanticHash,
+    } : {}),
     distributionSemanticHash: semanticHash(distribution),
     status: distribution.status,
     summary,
@@ -124,10 +175,11 @@ export function calculateAuthorizedEmpiricalLoadExecution(value) {
 }
 
 export function requireAuthorizedEmpiricalLoadExecution(value) {
-  exact(value, OUTPUT_KEYS, 'authorizedEmpiricalLoadExecution');
+  exactOneOf(value, [LEGACY_OUTPUT_KEYS, OUTPUT_KEYS], 'authorizedEmpiricalLoadExecution');
   if (value.schema !== AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_SCHEMA) {
     fail('Unsupported authorized empirical execution.', 'EMPIRICAL_EXECUTION_SCHEMA_INVALID');
   }
+  const hasEffectiveProjection = Object.hasOwn(value, 'effectiveExecutionProjectionSemanticHash');
   const result = {
     ...value,
     executionId: identity(value.executionId, 'executionId'),
@@ -141,6 +193,12 @@ export function requireAuthorizedEmpiricalLoadExecution(value) {
     handoffSemanticHash: hash(value.handoffSemanticHash, 'handoffSemanticHash'),
     projectionPayloadSemanticHash: hash(value.projectionPayloadSemanticHash, 'projectionPayloadSemanticHash'),
     ephemeralProfileSemanticHash: hash(value.ephemeralProfileSemanticHash, 'ephemeralProfileSemanticHash'),
+    ...(hasEffectiveProjection ? {
+      effectiveExecutionProjectionSemanticHash: hash(
+        value.effectiveExecutionProjectionSemanticHash,
+        'effectiveExecutionProjectionSemanticHash',
+      ),
+    } : {}),
     distributionSemanticHash: hash(value.distributionSemanticHash, 'distributionSemanticHash'),
     status: status(value.status),
     summary: requireSummary(value.summary),
@@ -183,8 +241,12 @@ function summarize(distribution) {
   const cases = Array.isArray(distribution.loadCases) ? distribution.loadCases : [];
   return {
     loadCaseCount: cases.length,
-    calculatedCaseCount: cases.filter((row) => row.status === 'CALCULATED').length,
-    blockedCaseCount: cases.filter((row) => row.status === 'BLOCKED').length,
+    calculatedCaseCount: cases.filter((row) => (
+      row.status === 'CALCULATED' || row.status === 'CALCULATED_WITH_EXCEPTIONS'
+    )).length,
+    blockedCaseCount: cases.filter((row) => (
+      row.status === 'BLOCKED' || row.status === 'FAILED'
+    )).length,
     contributionCount: cases.reduce((total, row) => total + (Array.isArray(row.contributionLedger) ? row.contributionLedger.length : 0), 0),
     excludedInputCount: cases.reduce((total, row) => total + (Array.isArray(row.excludedInputs) ? row.excludedInputs.length : 0), 0),
   };
@@ -212,6 +274,22 @@ function exact(value, keys, label) {
   const expected = [...keys].sort(ascii);
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
     fail(`${label} contains unexpected or missing keys.`, 'EMPIRICAL_EXECUTION_KEYS_INVALID', { actual, expected });
+  }
+}
+
+function exactOneOf(value, keySets, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail(`${label} must be an object.`, 'EMPIRICAL_EXECUTION_TYPE_INVALID');
+  }
+  const actual = Object.keys(value).sort(ascii);
+  const matches = keySets.some((keys) => (
+    JSON.stringify(actual) === JSON.stringify([...keys].sort(ascii))
+  ));
+  if (!matches) {
+    fail(`${label} contains unexpected or missing keys.`, 'EMPIRICAL_EXECUTION_KEYS_INVALID', {
+      actual,
+      expectedVariants: keySets.map((keys) => [...keys].sort(ascii)),
+    });
   }
 }
 
@@ -253,8 +331,12 @@ function nonnegativeInteger(value, label) {
 }
 
 function status(value) {
-  if (!['CALCULATED', 'BLOCKED'].includes(value)) {
-    fail('Execution status must be CALCULATED or BLOCKED.', 'EMPIRICAL_EXECUTION_STATUS_INVALID');
+  const allowed = ['CALCULATED', 'CALCULATED_WITH_EXCEPTIONS', 'FAILED', 'BLOCKED'];
+  if (!allowed.includes(value)) {
+    fail(
+      'Execution status must be CALCULATED, CALCULATED_WITH_EXCEPTIONS, FAILED, or legacy BLOCKED.',
+      'EMPIRICAL_EXECUTION_STATUS_INVALID',
+    );
   }
   return value;
 }

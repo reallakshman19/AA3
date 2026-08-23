@@ -21,6 +21,9 @@ import {
   createNonFeaConfiguredDefaultProvider,
 } from './project-data/non-fea-configured-default-provider.js';
 import {
+  createNonFeaProductDefaultProvider,
+} from './project-data/non-fea-product-default-profile.js';
+import {
   assertRequestedLoadCasesAuthorized,
   createNonFeaLoadCaseAuthority,
 } from './project-data/non-fea-load-case-authority.js';
@@ -75,7 +78,8 @@ export function buildCurrentPreFeaRequestInput() {
   if (typeof dataset.sourceSha256 !== 'string') throw codedError('Active dataset SHA-256 is required.', 'COMMON_INPUT_SOURCE_HASH_REQUIRED');
 
   const configuration = nonFeaCommonInputStore.getSnapshot().configuration;
-  const projectDataProfile = projectDataStore.getProfile();
+  const productDefaultProvider = currentProductDefaultProvider();
+  const projectDataProfile = productDefaultProvider.effectiveProfile;
   const loadCaseAuthority = createNonFeaLoadCaseAuthority(projectDataProfile);
   if (loadCaseAuthority.state === 'READY') {
     assertRequestedLoadCasesAuthorized(loadCaseAuthority, configuration.requestedLoadCases);
@@ -159,11 +163,12 @@ export function buildCurrentPreFeaRequestInput() {
     enrichmentSidecar,
     acceptedEnrichmentSidecar,
     configuredDefaultProvider,
+    productDefaultProvider,
     loadCaseAuthority,
     resolutionLedger,
     enrichedProjection,
     projectDataProfile,
-    projectDataOrigin: projectDataStore.getOrigin(),
+    projectDataOrigin: effectiveProjectDataOrigin(productDefaultProvider),
     authorityContracts: {
       topologyGraph: TopologyStore.getGraph(),
       supportAttachmentModel: SupportRestraintStore.getAttachmentModel(),
@@ -178,7 +183,7 @@ export function buildCurrentPreFeaRequestInput() {
 }
 
 export function listCurrentQualificationProfiles() {
-  const profile = projectDataStore.getProfile();
+  const profile = currentProductDefaultProvider().effectiveProfile;
   const entry = profile?.qualificationPolicy?.qualificationProfiles;
   if (!entry || entry.approved !== true || !entry.evidence?.source) return [];
   const value = entry.value;
@@ -187,7 +192,29 @@ export function listCurrentQualificationProfiles() {
 }
 
 export function getCurrentNonFeaLoadCaseAuthority() {
-  return createNonFeaLoadCaseAuthority(projectDataStore.getProfile());
+  return createNonFeaLoadCaseAuthority(currentProductDefaultProvider().effectiveProfile);
+}
+
+export function getCurrentNonFeaProductDefaultProvider() {
+  return currentProductDefaultProvider();
+}
+
+function currentProductDefaultProvider() {
+  return createNonFeaProductDefaultProvider({ profile: projectDataStore.getProfile() });
+}
+
+function effectiveProjectDataOrigin(productDefaultProvider) {
+  return deepFreeze({
+    ...structuredClone(projectDataStore.getOrigin()),
+    productDefaults: {
+      authority: 'PRODUCT_DEFAULT',
+      profileId: productDefaultProvider.profileId,
+      profileVersion: productDefaultProvider.profileVersion,
+      providerSemanticHash: productDefaultProvider.semanticHash,
+      productDefaultProfileSemanticHash: productDefaultProvider.productDefaultProfileSemanticHash,
+      usageCount: productDefaultProvider.usageRows.length,
+    },
+  });
 }
 
 function selectQualificationProfile(projectDataProfile, configuration) {

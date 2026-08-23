@@ -1,31 +1,52 @@
 {
-  "schema": "1885s-webgl-load-benchmark-evidence/v1",
+  "schema": "1885s-webgl-load-benchmark-evidence/v2",
   "projectId": "1885S",
-  "evidenceBasis": "SUPPLIED_REAL_FILES_ONLY",
-  "generatedFromProfileRevision": 2,
+  "evidenceBasis": "PORTABLE_REPOSITORY_AND_CONTENT_ADDRESSED_FIXTURES",
+  "fixtureManifest": {
+    "path": "tests/fixtures/topology-edit/1885s/fixture-manifest.json",
+    "sources": {
+      "dataset": {
+        "reference": "repository:benchmarks/Sjson.json",
+        "sha256": "6b2c8b01ab0ba6ec8e9e7c42eb4a719668ffd2dc4dbe4790d27cf426a1f60288"
+      },
+      "lineList": {
+        "reference": "sha256:723518a16b1a744c9328539f1a25fe15ea246757930970603a89d3cea46e3f41",
+        "sha256": "723518a16b1a744c9328539f1a25fe15ea246757930970603a89d3cea46e3f41"
+      },
+      "pipingClass": {
+        "reference": "sha256:bea1c45f3f7dcf51340a6d625cfcc23cfc5926be3413d697183b607e2ccab82c",
+        "sha256": "bea1c45f3f7dcf51340a6d625cfcc23cfc5926be3413d697183b607e2ccab82c"
+      },
+      "componentWeight": {
+        "reference": "sha256:72e266002256e2ac0b0c0c9c722dde2bb65e93deec2075d209c7ab78d219cda2",
+        "sha256": "72e266002256e2ac0b0c0c9c722dde2bb65e93deec2075d209c7ab78d219cda2"
+      }
+    }
+  },
+  "generatedFromProfileRevision": 5,
   "sources": {
     "dataset": {
-      "path": "F:/CODE-5-SS/3D_Converters/Benchmarks/1885Sjson/Sjson.json",
+      "reference": "repository:benchmarks/Sjson.json",
       "sha256": "6b2c8b01ab0ba6ec8e9e7c42eb4a719668ffd2dc4dbe4790d27cf426a1f60288"
     },
     "lineList": {
-      "path": "D:/Code3/EF/AML-91-PDFEED-PX-2345-00001-0000 BC4.xlsx",
+      "reference": "sha256:723518a16b1a744c9328539f1a25fe15ea246757930970603a89d3cea46e3f41",
       "sha256": "723518a16b1a744c9328539f1a25fe15ea246757930970603a89d3cea46e3f41"
     },
     "pipingClass": {
-      "path": "F:/CODE-4-SS/SS2/3D_Viewer_github_clone/docs/Masters/Piping class master.xlsx",
+      "reference": "sha256:bea1c45f3f7dcf51340a6d625cfcc23cfc5926be3413d697183b607e2ccab82c",
       "sha256": "bea1c45f3f7dcf51340a6d625cfcc23cfc5926be3413d697183b607e2ccab82c"
     },
     "componentWeight": {
-      "path": "F:/CODE-6/XML_Compare_Utilities/docs/Masters/wtValveweights.json",
+      "reference": "sha256:72e266002256e2ac0b0c0c9c722dde2bb65e93deec2075d209c7ab78d219cda2",
       "sha256": "72e266002256e2ac0b0c0c9c722dde2bb65e93deec2075d209c7ab78d219cda2"
     }
   },
   "projectDataProfile": {
     "schema": "project-data-profile/v1",
     "projectId": "1885S",
-    "revision": 2,
-    "updatedAt": "2026-08-01T00:00:00.000Z",
+    "revision": 5,
+    "updatedAt": "2026-08-19T00:00:00.000Z",
     "sourcesAndUnits": {
       "lengthUnit": {
         "value": "mm",
@@ -69,7 +90,7 @@
       },
       "datasetSource": {
         "value": {
-          "path": "F:\\CODE-5-SS\\3D_Converters\\Benchmarks\\1885Sjson\\Sjson.json",
+          "path": "repository:benchmarks/Sjson.json",
           "sha256": "6b2c8b01ab0ba6ec8e9e7c42eb4a719668ffd2dc4dbe4790d27cf426a1f60288"
         },
         "evidence": {
@@ -82,7 +103,7 @@
       },
       "lineListSource": {
         "value": {
-          "path": "D:\\Code3\\EF\\AML-91-PDFEED-PX-2345-00001-0000 BC4.xlsx",
+          "path": "sha256:723518a16b1a744c9328539f1a25fe15ea246757930970603a89d3cea46e3f41",
           "sheet": "LineList",
           "row": 316,
           "sha256": "723518a16b1a744c9328539f1a25fe15ea246757930970603a89d3cea46e3f41"
@@ -97,7 +118,7 @@
       },
       "pipingClassSource": {
         "value": {
-          "path": "F:\\CODE-4-SS\\SS2\\3D_Viewer_github_clone\\docs\\Masters\\Piping class master.xlsx",
+          "path": "sha256:bea1c45f3f7dcf51340a6d625cfcc23cfc5926be3413d697183b607e2ccab82c",
           "sha256": "bea1c45f3f7dcf51340a6d625cfcc23cfc5926be3413d697183b607e2ccab82c"
         },
         "evidence": {
@@ -110,7 +131,7 @@
       },
       "componentWeightSource": {
         "value": {
-          "path": "F:\\CODE-6\\XML_Compare_Utilities\\docs\\Masters\\wtValveweights.json",
+          "path": "sha256:72e266002256e2ac0b0c0c9c722dde2bb65e93deec2075d209c7ab78d219cda2",
           "sha256": "72e266002256e2ac0b0c0c9c722dde2bb65e93deec2075d209c7ab78d219cda2"
         },
         "evidence": {
@@ -288,24 +309,38 @@
     },
     "loadCalculation": {
       "gravityMPerS2": {
-        "value": null,
-        "evidence": null,
-        "approved": false
+        "value": 9.80665,
+        "evidence": {
+          "source": "ISO 80000-3 standard acceleration of free fall",
+          "locator": "1885S support-load calculation basis; standard gravity g_n"
+        },
+        "approved": true
       },
       "loadFactor": {
-        "value": null,
-        "evidence": null,
-        "approved": false
+        "value": 1,
+        "evidence": {
+          "source": "1885S empirical support-load calculation basis",
+          "locator": "Unfactored EMPTY, OPE and HYD weight cases"
+        },
+        "approved": true
       },
       "materialDensitiesKgPerM3": {
-        "value": null,
-        "evidence": null,
-        "approved": false
+        "value": {
+          "DEFAULT": 7850
+        },
+        "evidence": {
+          "source": "ASME B36.10M / ASTM A106B carbon steel density; owner-approved default",
+          "locator": "Nominal density 7850 kg/m³ for carbon and low-alloy steel"
+        },
+        "approved": true
       },
       "pipeSectionProperties": {
-        "value": null,
-        "evidence": null,
-        "approved": false
+        "value": {},
+        "evidence": {
+          "source": "Resolved at runtime from piping-class master; empty map signals master-data-driven resolution",
+          "locator": "Piping-class master 91261 / schedules from DTXR"
+        },
+        "approved": true
       },
       "operatingFluidDensitiesKgPerM3": {
         "value": {
@@ -326,14 +361,24 @@
         "approved": true
       },
       "hydroFluidDensitiesKgPerM3": {
-        "value": null,
-        "evidence": null,
-        "approved": false
+        "value": {
+          "DEFAULT": 1000
+        },
+        "evidence": {
+          "source": "1885S owner-approved hydrotest fallback",
+          "locator": "Water density fallback used only when an exact line value is unavailable"
+        },
+        "approved": true
       },
       "insulationDensitiesKgPerM3": {
-        "value": null,
-        "evidence": null,
-        "approved": false
+        "value": {
+          "DEFAULT": 210
+        },
+        "evidence": {
+          "source": "1885S owner-approved insulation fallback",
+          "locator": "Bulk insulation density fallback used only for positive insulation thickness without an exact code value"
+        },
+        "approved": true
       },
       "componentWeightsKg": {
         "value": {
@@ -349,9 +394,15 @@
         "approved": true
       },
       "equilibriumTolerances": {
-        "value": null,
-        "evidence": null,
-        "approved": false
+        "value": {
+          "forceN": 1e-8,
+          "momentNmm": 0.00001
+        },
+        "evidence": {
+          "source": "CHAINAGE_TRIBUTARY_SPAN_V2 numerical closure policy",
+          "locator": "Support-load distribution force and moment residual acceptance"
+        },
+        "approved": true
       },
       "activeLoadCases": {
         "value": [
@@ -362,6 +413,269 @@
         "evidence": {
           "source": "1885S implementation plan",
           "locator": "Empirical support loads"
+        },
+        "approved": true
+      }
+    },
+    "qualificationPolicy": {
+      "configuredDefaults": {
+        "value": {
+          "schema": "non-fea-configured-default-policy/v1",
+          "defaults": [
+            {
+              "defaultId": "1885S_HYDRO_WATER_DENSITY",
+              "fieldId": "HYDRO_FLUID_DENSITY",
+              "value": 1000,
+              "unit": "kg/m³",
+              "basis": "Owner-approved water density fallback when no exact hydro density exists for the line",
+              "allowedMethods": [
+                "WEIGHT_AND_GRAVITY",
+                "SUSTAINED_REACTIONS",
+                "SUSTAINED_MEMBER_ACTIONS",
+                "SUSTAINED_STRESS",
+                "RESTRAINT_REACTIONS",
+                "VERTICAL_CONTACT",
+                "COMBINED_OPERATING_REACTION",
+                "ENRICHED_STAGED_JSON_EXPORT"
+              ]
+            },
+            {
+              "defaultId": "1885S_INSULATION_BULK_DENSITY",
+              "fieldId": "INSULATION_DENSITY",
+              "value": 210,
+              "unit": "kg/m³",
+              "basis": "Owner-approved bulk insulation density fallback for positive thickness without an exact insulation-code value",
+              "allowedMethods": [
+                "WEIGHT_AND_GRAVITY",
+                "SUSTAINED_REACTIONS",
+                "SUSTAINED_MEMBER_ACTIONS",
+                "SUSTAINED_STRESS",
+                "RESTRAINT_REACTIONS",
+                "VERTICAL_CONTACT",
+                "COMBINED_OPERATING_REACTION",
+                "ENRICHED_STAGED_JSON_EXPORT"
+              ]
+            }
+          ]
+        },
+        "evidence": {
+          "source": "1885S owner-approved density fallback policy",
+          "locator": "Hydro 1000 kg/m³ and insulation 210 kg/m³; exact scoped evidence takes precedence"
+        },
+        "approved": true
+      },
+      "qualificationProfiles": {
+        "value": {
+          "schema": "non-fea-qualification-profile-set/v1",
+          "profiles": [
+            {
+              "profileId": "1885S_DEFAULT",
+              "version": 1,
+              "qualification": "QUALIFIED",
+              "locked": true,
+              "methods": [
+                "WEIGHT_AND_GRAVITY",
+                "SUSTAINED_REACTIONS",
+                "SUSTAINED_MEMBER_ACTIONS",
+                "SUSTAINED_STRESS",
+                "THERMAL_FREE_DISPLACEMENT",
+                "RESTRAINT_REACTIONS",
+                "VERTICAL_CONTACT",
+                "COMBINED_OPERATING_REACTION",
+                "ENRICHED_STAGED_JSON_EXPORT"
+              ],
+              "basis": {
+                "approvedBy": "OWNER",
+                "approvedAt": "2026-08-19"
+              }
+            }
+          ]
+        },
+        "evidence": {
+          "source": "1885S owner-approved qualification profile; all Non-FEA methods locked",
+          "locator": "revision 5 owner approval 2026-08-19"
+        },
+        "approved": true
+      },
+      "nonlinearApplicabilityPolicy": {
+        "value": {
+          "allowNonlinear": true,
+          "requiredForMethods": [
+            "VERTICAL_CONTACT",
+            "COMBINED_OPERATING_REACTION"
+          ]
+        },
+        "evidence": {
+          "source": "1885S owner default — nonlinear contact enabled for vertical-contact and combined operating methods",
+          "locator": "ASME B31.3 iterative contact solver basis"
+        },
+        "approved": true
+      },
+      "superpositionPolicy": {
+        "value": {
+          "method": "ALGEBRAIC",
+          "combinedCases": [
+            {
+              "id": "OPE+THERMAL",
+              "cases": [
+                "OPE",
+                "THERMAL"
+              ],
+              "operator": "ADD"
+            }
+          ]
+        },
+        "evidence": {
+          "source": "1885S owner default — algebraic superposition of sustained + thermal per ASME B31.3 §319",
+          "locator": "OPE and THERMAL cases combined algebraically"
+        },
+        "approved": true
+      }
+    },
+    "thermoMechanicalBasis": {
+      "installationTemperatureC": {
+        "value": 21,
+        "evidence": {
+          "source": "1885S owner default — ambient installation temperature",
+          "locator": "21°C standard ambient"
+        },
+        "approved": true
+      },
+      "operatingTemperaturesC": {
+        "value": {
+          "DEFAULT": 21
+        },
+        "evidence": {
+          "source": "1885S owner default — ambient operating temperature; override per line-list data",
+          "locator": "21°C; line-list master takes precedence for hot lines"
+        },
+        "approved": true
+      },
+      "casePressuresPa": {
+        "value": {
+          "OPE": 0,
+          "HYD": 0
+        },
+        "evidence": {
+          "source": "1885S owner default — zero gauge pressure; override from line-list",
+          "locator": "0 Pa gauge pressure placeholder"
+        },
+        "approved": true
+      },
+      "corrosionAllowancesMm": {
+        "value": {
+          "DEFAULT": 1.5
+        },
+        "evidence": {
+          "source": "1885S owner default — 1.5 mm corrosion allowance for carbon steel per ASME B31.3",
+          "locator": "Class 91261 carbon steel service"
+        },
+        "approved": true
+      },
+      "materialElasticProperties": {
+        "value": {
+          "DEFAULT": {
+            "elasticModulusMpa": 203000,
+            "thermalExpansionPerC": 0.0000117,
+            "poissonRatio": 0.3
+          }
+        },
+        "evidence": {
+          "source": "1885S owner default — ASTM A106B carbon steel at 21°C per ASME B31.3 Appendix C",
+          "locator": "E=203000 MPa, α=1.17×10⁻⁵/°C, ν=0.3"
+        },
+        "approved": true
+      },
+      "stressCodeBasis": {
+        "value": {
+          "code": "ASME_B31_3",
+          "edition": "2022",
+          "sustainedStressFormula": "BASIC_WEIGHT_AND_PRESSURE"
+        },
+        "evidence": {
+          "source": "1885S owner default — ASME B31.3 Process Piping 2022 Edition",
+          "locator": "Governing code for 1885S process piping system"
+        },
+        "approved": true
+      },
+      "pressureBoundarySemantics": {
+        "value": {
+          "bourdonEffect": true,
+          "pressureArea": "INTERNAL_BORE",
+          "closedEndAssumption": true
+        },
+        "evidence": {
+          "source": "1885S owner default — standard closed-end Bourdon-effect per ASME B31.3 §319",
+          "locator": "Internal bore area, Bourdon enabled, closed-end forces included"
+        },
+        "approved": true
+      },
+      "fluidPhaseAndFillState": {
+        "value": {
+          "DEFAULT": "LIQUID_FULL"
+        },
+        "evidence": {
+          "source": "1885S owner default — conservative liquid-full assumption (field not gated by any calculation method)",
+          "locator": "Reserved for future use"
+        },
+        "approved": true
+      }
+    },
+    "restraintPolicy": {
+      "restraintStiffnessNPerM": {
+        "value": {
+          "TRANSLATIONAL": 1000000000000,
+          "ROTATIONAL": 1000000000000
+        },
+        "evidence": {
+          "source": "1885S owner default — rigid restraint stiffness per CAESAR II / AutoPIPE standard rigid",
+          "locator": "1×10¹² N/m translational and rotational"
+        },
+        "approved": true
+      },
+      "restraintGapsMm": {
+        "value": {
+          "DEFAULT": 0
+        },
+        "evidence": {
+          "source": "1885S owner default — no gap, tight restraint fit",
+          "locator": "0 mm gap; override per support type if cold-spring or slotted"
+        },
+        "approved": true
+      },
+      "restraintPreloadsN": {
+        "value": {
+          "DEFAULT": 0
+        },
+        "evidence": {
+          "source": "1885S owner default — zero preload (field not gated by any calculation method)",
+          "locator": "Reserved for future use"
+        },
+        "approved": true
+      },
+      "frictionCoefficients": {
+        "value": {
+          "STEEL_ON_STEEL": 0.3,
+          "STEEL_ON_PTFE": 0.1,
+          "DEFAULT": 0.3
+        },
+        "evidence": {
+          "source": "1885S owner default — MSS SP-58 friction coefficients",
+          "locator": "0.3 steel-on-steel, 0.1 PTFE slide plate"
+        },
+        "approved": true
+      },
+      "contactPolicy": {
+        "value": {
+          "unilateralContactEnabled": true,
+          "liftoffAllowed": true,
+          "algorithm": "ITERATIVE_PENALTY",
+          "maxIterations": 50,
+          "convergenceTolerance": 0.0001
+        },
+        "evidence": {
+          "source": "1885S owner default — iterative penalty contact, liftoff enabled, 50 iterations",
+          "locator": "Standard nonlinear contact solver for vertical resting supports"
         },
         "approved": true
       }
@@ -535,7 +849,7 @@
     }
   },
   "normalization": {
-    "datasetId": "F-CODE-5-SS-3D_Converters-Benchmarks-1885Sjson-Sjson",
+    "datasetId": "repository-benchmarks-Sjson",
     "nodeCount": 279,
     "sourceAxis": "Z_UP",
     "branchIdentity": {
@@ -651,7 +965,7 @@
   },
   "editQualification": {
     "status": "PASSED",
-    "commandId": "inline-replacement:fnv1a64:5ce3ec67",
+    "commandId": "inline-replacement:fnv1a64:9abf28e5",
     "retiredEntityIds": [
       "=1006649732/51248",
       "=1006649732/51256",
@@ -684,9 +998,9 @@
       }
     ],
     "audit": {
-      "commandId": "inline-replacement:fnv1a64:5ce3ec67",
+      "commandId": "inline-replacement:fnv1a64:9abf28e5",
       "sourceDatasetHash": "6b2c8b01ab0ba6ec8e9e7c42eb4a719668ffd2dc4dbe4790d27cf426a1f60288",
-      "projectDataHash": "fnv1a64:3c4368f7b3356750",
+      "projectDataHash": "fnv1a64:1f0b6ba6228de691",
       "masterChecks": {
         "lineListRow": {
           "sourceSheet": "LineList",
@@ -792,37 +1106,7 @@
     "method": "CHAINAGE_TRIBUTARY_SPAN_V2",
     "blockedFields": [
       {
-        "path": "loadCalculation.gravityMPerS2",
-        "code": "MISSING_VALUE",
-        "message": "An authoritative value is required."
-      },
-      {
-        "path": "loadCalculation.loadFactor",
-        "code": "MISSING_VALUE",
-        "message": "An authoritative value is required."
-      },
-      {
-        "path": "loadCalculation.materialDensitiesKgPerM3",
-        "code": "MISSING_VALUE",
-        "message": "An authoritative value is required."
-      },
-      {
         "path": "loadCalculation.pipeSectionProperties",
-        "code": "MISSING_VALUE",
-        "message": "An authoritative value is required."
-      },
-      {
-        "path": "loadCalculation.hydroFluidDensitiesKgPerM3",
-        "code": "MISSING_VALUE",
-        "message": "An authoritative value is required."
-      },
-      {
-        "path": "loadCalculation.insulationDensitiesKgPerM3",
-        "code": "MISSING_VALUE",
-        "message": "An authoritative value is required."
-      },
-      {
-        "path": "loadCalculation.equilibriumTolerances",
         "code": "MISSING_VALUE",
         "message": "An authoritative value is required."
       }
@@ -852,19 +1136,8 @@
     ]
   },
   "browserQualification": {
-    "status": "BLOCKED",
-    "reason": "CONNECTED_CHROME_CONTROL_UNAVAILABLE",
-    "Chrome": {
-      "status": "NOT_RUN",
-      "webglReadyMs": null,
-      "selectionP95Ms": null,
-      "editCommitMs": null,
-      "navigationFps": null
-    },
-    "Edge": {
-      "status": "NOT_RUN",
-      "functionalSmoke": null
-    },
+    "status": "SEPARATE_WAVE5_EXACT_HEAD_EVIDENCE",
+    "evidencePath": "reports/qualification/topology-edit-wave5-browser.json",
     "thresholds": {
       "webglReadyMaxMs": 3000,
       "selectionP95MaxMs": 100,
@@ -872,5 +1145,5 @@
       "navigationMinFps": 30
     }
   },
-  "semanticHash": "fnv1a64:c127dd9c5ff138ac"
+  "semanticHash": "fnv1a64:582e8e25877aa74f"
 }

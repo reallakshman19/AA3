@@ -1,22 +1,39 @@
 import { compareAscii, failBendRetopology } from './bend-retopology-contract.js';
 
-export function requireRetiredNodeBindingsResolvable(input) {
+export function collectRetopologyBindingBlockers(input) {
+  const blockers = [];
   for (const [sourceNodeId, record] of input.retiredNodeRecords) {
     if (record.nearestNodeId !== null) continue;
     const node = input.sourceNodesById.get(sourceNodeId);
     const boundKinds = boundKindsAtNode(node, sourceNodeId, input.sourceSegments);
     if (boundKinds.length === 0) continue;
-    failBendRetopology(
-      'BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS',
-      `Retired bend corner node ${sourceNodeId} carries bound engineering entities but has no unique retained target.`,
-      {
-        sourceNodeId,
-        bendSegmentId: record.bendSegmentId,
-        candidates: record.candidates,
-        boundKinds,
-      },
-    );
+    blockers.push(Object.freeze({
+      code: 'BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS',
+      sourceNodeId,
+      bendSegmentId: record.bendSegmentId,
+      candidates: Object.freeze(record.candidates.map((row) => Object.freeze({ ...row }))),
+      boundKinds: Object.freeze(boundKinds),
+      reason: record.reason,
+    }));
   }
+  return Object.freeze(blockers.sort((left, right) => compareAscii(left.sourceNodeId, right.sourceNodeId)));
+}
+
+export function requireBendRetopologyBindingsResolved(retopology) {
+  const blockers = retopology?.bindingBlockers ?? [];
+  if (blockers.length === 0) return;
+  const first = blockers[0];
+  failBendRetopology(
+    first.code,
+    `Retired bend corner node ${first.sourceNodeId} carries bound engineering entities but has no qualified retained target.`,
+    {
+      sourceNodeId: first.sourceNodeId,
+      bendSegmentId: first.bendSegmentId,
+      candidates: first.candidates,
+      boundKinds: first.boundKinds,
+      blockerCount: blockers.length,
+    },
+  );
 }
 
 export function retargetBoundSegmentEvidence(segment, retiredNodeRecords) {
@@ -24,17 +41,10 @@ export function retargetBoundSegmentEvidence(segment, retiredNodeRecords) {
   if (!Array.isArray(records) || records.length === 0) return segment;
   let changed = false;
   const forcesMoments = records.map((record) => {
-    if (record?.nodeId === null || record?.nodeId === undefined) return record;
-    const sourceNodeId = String(record.nodeId);
+    const sourceNodeId = explicitForceMomentNodeId(record, segment);
+    if (sourceNodeId === null) return record;
     const target = retiredNodeRecords.get(sourceNodeId) ?? null;
-    if (target === null) return record;
-    if (target.nearestNodeId === null) {
-      failBendRetopology(
-        'BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS',
-        `Applied force/moment at retired bend corner node ${sourceNodeId} has no unique retained target.`,
-        { sourceNodeId, bendSegmentId: target.bendSegmentId, candidates: target.candidates },
-      );
-    }
+    if (target === null || target.nearestNodeId === null) return record;
     changed = true;
     return Object.freeze({
       ...record,
@@ -82,10 +92,29 @@ function boundKindsAtNode(node, sourceNodeId, sourceSegments) {
   }
   for (const segment of sourceSegments) {
     for (const record of segment.meta?.analysis?.forcesMoments ?? []) {
-      if (record?.nodeId != null && String(record.nodeId) === String(sourceNodeId)) {
-        kinds.push('APPLIED_FORCE_MOMENT');
-      }
+      const target = explicitForceMomentNodeId(record, segment);
+      if (target === sourceNodeId) kinds.push(forceMomentBindingKind(record));
     }
   }
   return [...new Set(kinds)].sort(compareAscii);
+}
+
+function explicitForceMomentNodeId(record, segment) {
+  if (record?.nodeId !== null && record?.nodeId !== undefined) return String(record.nodeId);
+  // ACCDB stores FORCMNT_PTR on the element and vectors in INPUT_FORCMNT.
+  // The paired CAESAR InputXML supplied for BM4 places the corresponding
+  // FORCESMOMENTS declaration at that element's TO node (for example working
+  // points 20120, 20330 and 20340). This establishes the target sufficiently
+  // to BLOCK a retired-node migration; it does not authorize moving the load.
+  if (record?.forceMomentNumber !== null && record?.forceMomentNumber !== undefined
+    && segment?.meta?.sourceElementId !== null && segment?.meta?.sourceElementId !== undefined) {
+    return String(segment.endNodeId);
+  }
+  return null;
+}
+
+function forceMomentBindingKind(record) {
+  return record?.nodeId !== null && record?.nodeId !== undefined
+    ? 'APPLIED_FORCE_MOMENT'
+    : 'APPLIED_FORCE_MOMENT_ACCDB_TO_NODE_PAIRED_EXPORT';
 }

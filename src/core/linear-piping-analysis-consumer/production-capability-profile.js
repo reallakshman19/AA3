@@ -44,6 +44,16 @@ export function productionBendSourceEligible(segment) {
     && segment.meta.bendComputedRadius > 0;
 }
 
+/**
+ * Minimum source-level eligibility for exact tee mechanics. The production
+ * junction compiler performs the stronger three-leg/topology/state checks.
+ * TYPE=5 weldolets are intentionally excluded until independently qualified.
+ */
+export function productionTeeSourceEligible(segment) {
+  return (segment?.meta?.analysis?.sifs ?? []).some((sif) =>
+    Number(sif.typeCode) === 3 && sif.nodeId !== null && sif.nodeId !== undefined);
+}
+
 export function productionAuthorizedPressureEffects(profile) {
   const resolved = profile === undefined ? PRODUCTION_CAPABILITY_PROFILE : profile;
   return Object.freeze({
@@ -54,12 +64,7 @@ export function productionAuthorizedPressureEffects(profile) {
   });
 }
 
-/**
- * Return the currently declared approximation for a component. For BEND, a
- * globally enabled compiler still requires source-qualified tangent geometry;
- * unresolved/internal-station bends therefore remain disclosed as straight
- * chords instead of being falsely reported exact.
- */
+/** Return the current declared approximation, preserving source-level gates. */
 export function productionComponentLimitation(componentKind, profile, segment) {
   const resolved = profile === undefined ? PRODUCTION_CAPABILITY_PROFILE : profile;
   if (componentKind === 'BEND') {
@@ -71,7 +76,9 @@ export function productionComponentLimitation(componentKind, profile, segment) {
     return resolved.reducerExactMechanics ? null : 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION';
   }
   if (componentKind === 'TEE') {
-    return resolved.teeExactMechanics ? null : 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY';
+    return resolved.teeExactMechanics && (segment === undefined || productionTeeSourceEligible(segment))
+      ? null
+      : 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY';
   }
   return null;
 }

@@ -24,19 +24,9 @@ import {
   prepareLinearPipingAccdbPreFlight,
 } from '../src/workspace/linear-piping-accdb-intake.js';
 
-const tables = cleanBendFixture();
-const session = createLinearPipingAccdbSession(tables, {
-  fileName: 'S3_DETERMINISTIC_BEND.ACCDB',
-  requestedProfileId: DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE,
-});
-const preFlight = prepareLinearPipingAccdbPreFlight(session.intake, session.sourceBundle);
-assert.notEqual(preFlight.status, 'BLOCK',
-  `Deterministic bend source must prepare; got ${preFlight.status}.`);
+assert.equal(PRODUCTION_CAPABILITY_PROFILE.bendExactMechanics, true,
+  'S3 qualification must exercise the global production capability, not a test-only override.');
 
-const preparation = preFlight.preparation;
-const sourcePreparation = preparation.sourcePreparation;
-const structuralPreparation = preparation.structuralPreparation;
-const frameProfile = inputXmlStiffnessFrameElementProfile();
 const factorAuthority = sealInputXmlProductionBendFactorAuthority({
   authorityId: 'S3-DETERMINISTIC-B31-3-2022-B31J-2017',
   editionProfileId: 'B31_3_2022_B31J_2017',
@@ -44,20 +34,45 @@ const factorAuthority = sealInputXmlProductionBendFactorAuthority({
   sourceId: 'S3-DETERMINISTIC-ENGINEER-SELECTION',
   sourceRevision: '01',
 });
-const exactCapability = Object.freeze({
-  ...PRODUCTION_CAPABILITY_PROFILE,
-  bendExactMechanics: true,
+const tables = cleanBendFixture();
+const session = createLinearPipingAccdbSession(tables, {
+  fileName: 'S3_DETERMINISTIC_BEND.ACCDB',
+  requestedProfileId: DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE,
 });
+const preFlight = prepareLinearPipingAccdbPreFlight(
+  session.intake,
+  session.sourceBundle,
+  { bendFactorAuthority: factorAuthority },
+);
+assert.notEqual(preFlight.status, 'BLOCK',
+  `Deterministic bend source with explicit factor authority must prepare; got ${preFlight.status}.`);
+assert.equal(preFlight.preparation.stiffnessPreflight.bendExactMechanicsApplied, true,
+  'Native pre-flight must qualify exact bend mechanics when the explicit authority is supplied.');
+assert.equal(
+  preFlight.preparation.stiffnessPreflight.bendFactorAuthority.semanticHash,
+  factorAuthority.semanticHash,
+  'Native pre-flight must retain the exact supplied factor authority.',
+);
+assert.notEqual(
+  preFlight.preparation.stiffnessStateHash,
+  preFlight.preparation.structuralPreparation.compilation.stiffnessStateHash,
+  'Native pre-flight must authorize the effective post-k stiffness identity, not only the mechanical model hash.',
+);
+
+const preparation = preFlight.preparation;
+const sourcePreparation = preparation.sourcePreparation;
+const structuralPreparation = preparation.structuralPreparation;
+const frameProfile = inputXmlStiffnessFrameElementProfile();
 
 assert.throws(
   () => compileInputXmlLinearElementAuthorities({
     sourcePreparation,
     structuralPreparation,
     frameProfile,
-    capabilityProfile: exactCapability,
+    capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
   }),
   (error) => error?.code === 'BEND_FACTOR_EDITION_AUTHORITY_UNRESOLVED',
-  'Exact bend mechanics must fail closed when factor edition authority is absent.',
+  'Global exact bend mechanics must fail closed when factor edition authority is absent.',
 );
 
 const stiffness = compileInputXmlLinearElementAuthorities({
@@ -65,12 +80,14 @@ const stiffness = compileInputXmlLinearElementAuthorities({
   structuralPreparation,
   frameProfile,
   bendFactorAuthority: factorAuthority,
-  capabilityProfile: exactCapability,
+  capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
 });
 assert.equal(stiffness.eligibleBendCount, 1);
 assert.equal(stiffness.bendExactMechanicsApplied, true);
 assert.equal(stiffness.pipingComponents.length, 1);
 assert.equal(stiffness.bendFactorAuthority.semanticHash, factorAuthority.semanticHash);
+assert.equal(stiffness.effectiveStiffnessStateHash, preparation.stiffnessStateHash,
+  'Direct reconstruction must match the stiffness identity retained by native pre-flight.');
 assert.notEqual(stiffness.effectiveStiffnessStateHash, structuralPreparation.compilation.stiffnessStateHash,
   'Applying B31/B31J bend k must create a distinct effective stiffness identity.');
 
@@ -98,17 +115,6 @@ assert.deepEqual(
 );
 assert.ok(bendLedger.every((row) => row.flexibilityDoubleCountGuardAccepted));
 
-const inactive = compileInputXmlLinearElementAuthorities({
-  sourcePreparation,
-  structuralPreparation,
-  frameProfile,
-  capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
-});
-assert.equal(inactive.pipingComponents.length, 0,
-  'Global production capability remains off until source/UI authority is wired.');
-assert.equal(inactive.frameElements.length, structuralPreparation.compilation.model.elements.length);
-assert.ok(inactive.elementLedger.every((row) => row.authorityKind === 'FRAME_ELEMENT'));
-
 const thermalCase = preparation.physicalPreparation.physicalCases
   .find((row) => row.caseRole === 'WEIGHT_TEMPERATURE');
 assert.ok(thermalCase, 'The deterministic source must retain a W+T physical case.');
@@ -129,7 +135,7 @@ const loaded = compileInputXmlLinearElementAuthorities({
   frameProfile,
   loadCase: thermalCase.loadCase,
   bendFactorAuthority: factorAuthority,
-  capabilityProfile: exactCapability,
+  capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
 });
 assert.equal(loaded.effectiveStiffnessStateHash, stiffness.effectiveStiffnessStateHash,
   'Binding physical loads must not change the effective stiffness identity.');

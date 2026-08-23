@@ -2,7 +2,7 @@ import { renderStandaloneImportMastersPanel, mappingHealthText } from '../calc-w
 import { MASTER_FIELDS } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-fields-config.js';
 import { parseMasterFile, autoMapMasterColumns } from './master-data-events-handler.js';
 import { masterDataController } from './master-data-controller.js';
-import { normalizeLineList, normalizePipingClass, normalizeWeight, normalizeMaterialMap, isMappedFieldSatisfied } from './master-data-normalizers.js';
+import { normalizeLineList, normalizePipingClass, normalizeWeight, normalizeMaterialMap, isMappedFieldSatisfied, derivationYieldsValues } from './master-data-normalizers.js';
 import { saveMappingForFile, getSavedMappingsForMaster } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-state.js';
 
 /**
@@ -75,6 +75,24 @@ function masterTabReadiness(master, masterKey, effectiveFieldMap) {
   const fieldMap = effectiveFieldMap || master?.fieldMap || {};
   const requiredFields = fields.filter((field) => field.required);
   const unmapped = requiredFields.filter((field) => !isMappedFieldSatisfied(field, fieldMap));
+
+  // A derivation that yields nothing for every sampled row is not a mapping.
+  const brokenDerivation = requiredFields.find((field) => (
+    isMappedFieldSatisfied(field, fieldMap)
+    && !derivationYieldsValues(field, fieldMap, master?.rawRows)
+  ));
+  if (unmapped.length === 0 && brokenDerivation) {
+    const sourceLabel = fields.find((row) => row.name === brokenDerivation.derivableFrom)?.label
+      || brokenDerivation.derivableFrom;
+    return {
+      ...ACTION_STYLE,
+      code: 'MAP',
+      badge: 'CHECK',
+      title: `${brokenDerivation.label} is set to derive from ${sourceLabel}, but the mapped `
+        + `${sourceLabel} column produced no recognised nominal size. Map ${brokenDerivation.label} `
+        + `directly, or point ${sourceLabel} at the inch-size column.`,
+    };
+  }
   if (unmapped.length > 0) {
     const describe = (field) => {
       const alternative = field.derivableFrom

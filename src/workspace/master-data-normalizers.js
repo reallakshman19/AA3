@@ -15,6 +15,21 @@ export function isMappedFieldSatisfied(field, fieldMap) {
 }
 
 /**
+ * Reports whether a derivation actually yields values for the supplied rows.
+ *
+ * Mapping alone does not prove a derivation works: pointing the NPS column at a
+ * millimetre column leaves every derived bore empty while the mapping still
+ * looks complete. Sampling rows keeps that failure visible.
+ */
+export function derivationYieldsValues(field, fieldMap, rawRows, sampleSize = 25) {
+  if (!field.derivableFrom || fieldMap[field.name]) return true;
+  const header = fieldMap[field.derivableFrom];
+  if (!header || !Array.isArray(rawRows) || rawRows.length === 0) return true;
+  const sample = rawRows.slice(0, sampleSize);
+  return sample.some((row) => nominalBoreMmFromNps(row?.[header]) !== null);
+}
+
+/**
  * Validates if the required fields in the mapping profile are met.
  */
 export function validateMappingProfile(masterKey, fieldMap) {

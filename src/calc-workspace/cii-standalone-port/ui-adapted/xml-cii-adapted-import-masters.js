@@ -322,7 +322,19 @@ function renderColumnMapping(master, state) {
     const label = createElement('label');
     const span = createElement('span');
     span.textContent = field.label;
-    if (field.required) span.appendChild(createElement('span', '*', 'xml-cii-field-required-asterisk'));
+    // A derivable field stops being a required input once its source column is
+    // mapped, so the asterisk is dropped rather than demanding a second entry.
+    const satisfiedByDerivation = Boolean(field.derivableFrom)
+      && !fieldMap[field.name]
+      && Boolean(fieldMap[field.derivableFrom]);
+    if (field.required && !satisfiedByDerivation) {
+      span.appendChild(createElement('span', '*', 'xml-cii-field-required-asterisk'));
+    }
+    if (satisfiedByDerivation) {
+      const note = createElement('span', ` — derived from ${fields.find((row) => row.name === field.derivableFrom)?.label || field.derivableFrom}`, 'xml-cii-field-derived-note');
+      note.style.cssText = 'font-size:0.72rem; color:#4ade80; font-weight:600;';
+      span.appendChild(note);
+    }
     label.appendChild(span);
 
     const select = createElement('select');

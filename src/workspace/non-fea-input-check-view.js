@@ -149,6 +149,40 @@ function viewMarkup(state) {
   </section>`;
 }
 
+const ROOT_CAUSE_GUIDANCE = Object.freeze({
+  FLEXURAL_COVERAGE_INCOMPLETE: 'Section and material evidence is missing for some entities. It is resolved by the Piping Class master, not by editing each method.',
+  MASS_COVERAGE_INCOMPLETE: 'Mass and content evidence is missing for some entities. It is resolved by the Weights and Line List masters.',
+  MASTER_NOT_CURRENT: 'A required master has no current normalized rows or source hash. Re-apply its column mapping.',
+});
+
+/**
+ * Groups blockers by their underlying cause rather than by the method each one
+ * surfaces through. One missing master blocks many methods, so a per-method list
+ * overstates how many distinct problems there are to fix.
+ */
+function rootCauseMarkup(rows) {
+  const byCode = new Map();
+  rows.forEach((row) => {
+    const code = row.code || 'UNSPECIFIED';
+    const entry = byCode.get(code) || { code, count: 0, scopes: new Set() };
+    entry.count += 1;
+    if (row.scope) entry.scopes.add(row.scope);
+    byCode.set(code, entry);
+  });
+  const shared = [...byCode.values()]
+    .filter((entry) => entry.scopes.size > 1)
+    .sort((left, right) => right.count - left.count);
+  if (shared.length === 0) return '';
+  const covered = shared.reduce((sum, entry) => sum + entry.count, 0);
+  return `<div class="non-fea-input-check__root-causes">
+    <strong>${covered} of these come from ${shared.length} shared cause${shared.length === 1 ? '' : 's'}</strong>
+    <ul>${shared.map((entry) => `<li>
+      <code>${escapeHtml(entry.code)}</code> — blocks ${entry.scopes.size} method(s), ${entry.count} issue(s).
+      ${escapeHtml(ROOT_CAUSE_GUIDANCE[entry.code] || 'Resolve this cause to clear every method listed against it.')}
+    </li>`).join('')}</ul>
+  </div>`;
+}
+
 function blockerSummaryMarkup(rows) {
   const groups = [];
   const byScope = new Map();
@@ -165,6 +199,7 @@ function blockerSummaryMarkup(rows) {
   });
   return `<section class="non-fea-input-check__blocker-summary"><h3>What needs attention</h3>
     <p class="non-fea-input-check__blocker-reconcile">${groups.reduce((sum, group) => sum + group.count, 0)} issue(s) across ${groups.length} area(s) — all listed below.</p>
+    ${rootCauseMarkup(rows)}
     <ul>${groups.map((group) => `<li><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}</p></li>`).join('')}</ul>
     <p>Open Advanced validation evidence for the complete audit trail.</p>
   </section>`;
@@ -415,6 +450,11 @@ function styles() {
     .non-fea-input-check__result{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #7f1d1d;border-radius:7px;background:rgba(127,29,29,.12)}.non-fea-input-check__result[data-status="ready"]{border-color:#166534;background:rgba(22,101,52,.12)}.non-fea-input-check__result strong{color:#f87171}.non-fea-input-check__result[data-status="ready"] strong{color:#4ade80}.non-fea-input-check__result span{color:#cbd5e1}.non-fea-input-check__summary{display:grid;grid-template-columns:repeat(4,minmax(110px,1fr));gap:8px}.non-fea-metric{padding:10px;border:1px solid #293548;border-radius:6px;background:#0d1728}.non-fea-metric span{display:block;color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:.06em}.non-fea-metric strong{display:block;margin-top:5px;font-size:16px;overflow-wrap:anywhere}.non-fea-metric--ready{border-color:#166534}.non-fea-metric--blocked{border-color:#991b1b}.non-fea-metric--warning{border-color:#92400e}
     .non-fea-input-check__advanced{border:1px solid #293548;border-radius:7px;background:#091322}.non-fea-input-check__advanced>summary{padding:11px 13px;color:#7dd3fc;font-weight:800;cursor:pointer}.non-fea-input-check__advanced[open]>summary{border-bottom:1px solid #293548}.non-fea-input-check__advanced-intro{display:flex;flex-wrap:wrap;gap:7px;padding:12px 13px;color:#94a3b8}.non-fea-input-check__advanced-intro span{padding:3px 7px;border:1px solid #334155;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.06em}.non-fea-input-check__advanced-intro p{flex-basis:100%;margin:3px 0 0;padding:9px;border:1px solid #164e63;border-radius:6px;background:#082f49;color:#bae6fd}.non-fea-input-check__advanced .non-fea-input-check__layout{padding:0 12px 12px}
     .non-fea-input-check__blocker-summary{padding:13px;border:1px solid #3f2730;border-radius:7px;background:#0b1424}.non-fea-input-check__blocker-summary h3{margin:0 0 10px;color:#f8fafc}.non-fea-input-check__blocker-summary ul{display:grid;grid-template-columns:1fr;gap:8px;margin:0;padding:0;list-style:none}.non-fea-input-check__blocker-summary li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:9px;border:1px solid #3f2730;border-radius:6px}.non-fea-input-check__blocker-summary li strong{min-width:0;overflow-wrap:anywhere;color:#f87171}.non-fea-input-check__blocker-summary li span{color:#cbd5e1;font-size:11px}.non-fea-input-check__blocker-summary li p{grid-column:1/-1;margin:0;color:#94a3b8;font-size:11px;line-height:1.35}.non-fea-input-check__blocker-summary>p{margin:10px 0 0;color:#94a3b8;font-size:11px}
+    .non-fea-input-check__root-causes{margin:0 0 12px;padding:10px 12px;border:1px solid #92400e;border-radius:6px;background:#1c1207}
+    .non-fea-input-check__root-causes>strong{display:block;margin-bottom:6px;color:#fbbf24;font-size:12px}
+    .non-fea-input-check__root-causes ul{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none}
+    .non-fea-input-check__root-causes li{display:block;padding:6px 8px;border:1px solid #3f2d14;border-radius:5px;color:#d6bb92;font-size:11px;line-height:1.4}
+    .non-fea-input-check__root-causes code{color:#fcd34d;font-weight:700}
     .non-fea-input-check__layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:12px;align-items:start}.non-fea-input-check__layout main,.non-fea-input-check__layout aside{display:flex;flex-direction:column;gap:12px}.non-fea-panel{padding:13px;border:1px solid #293548;border-radius:7px;background:#0b1424;box-shadow:0 8px 24px rgba(0,0,0,.12)}.panel-eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}.non-fea-panel code{display:block;color:#64748b;font-size:10px;margin-top:2px;overflow-wrap:anywhere}
     .non-fea-gates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.non-fea-gate{display:grid;grid-template-columns:30px 1fr;gap:9px;padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-gate__index{display:flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:50%;background:#172033;color:#94a3b8;font-weight:800}.non-fea-gate__heading{display:flex;justify-content:space-between;gap:8px}.non-fea-gate p{margin:6px 0 0;color:#94a3b8;line-height:1.35;font-size:12px}.non-fea-gate--ready{border-color:#166534}.non-fea-gate--ready .non-fea-gate__heading span{color:#4ade80}.non-fea-gate--warning{border-color:#92400e}.non-fea-gate--warning .non-fea-gate__heading span{color:#fbbf24}.non-fea-gate--blocked,.non-fea-gate--stale{border-color:#7f1d1d}.non-fea-gate--blocked .non-fea-gate__heading span,.non-fea-gate--stale .non-fea-gate__heading span{color:#f87171}
     .non-fea-audits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.non-fea-audits article{padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-audits article>span{display:block;margin-top:4px;font-weight:800}.non-fea-audits article p{margin:6px 0 0;color:#94a3b8;font-size:11px}.non-fea-audits [data-status="READY"]{border-color:#166534}.non-fea-audits [data-status="READY"]>span{color:#4ade80}.non-fea-audits [data-status="BLOCKED"]{border-color:#7f1d1d}.non-fea-audits [data-status="BLOCKED"]>span{color:#f87171}

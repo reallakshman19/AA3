@@ -36,11 +36,20 @@ export const AUDIT_CODES = Object.freeze({
   INVALID_NEGATIVE_VALUE: 'INVALID_NEGATIVE_VALUE',
   UNIT_BLOCKED: 'UNIT_BLOCKED',
   EXCLUDED_NEGLIGIBLE_MASS: 'EXCLUDED_NEGLIGIBLE_MASS',
+  DERIVED_FROM_ADJACENT_PIPE_SECTION: 'DERIVED_FROM_ADJACENT_PIPE_SECTION',
 });
 export const LINEAR_TYPES = Object.freeze(['PIPE', 'STRAIGHT_PIPE', 'TUBE']);
 export const LUMPED_TYPES = Object.freeze([
   'VALVE', 'FLANGE', 'TEE', 'REDUCER', 'ELBOW', 'BEND', 'INSTRUMENT', 'OLET', 'CAP', 'BLIND',
 ]);
+/**
+ * Elbow-type components. Includes the short SJSON type code (ELBO) alongside
+ * the spelled-out form: this codebase's own LUMPED_TYPES above only lists
+ * "ELBOW", which does not match a real SJSON-sourced dataset's "ELBO" at all
+ * (nor do FLANGE/VALVE/REDUCER/INSTRUMENT match FLAN/VALV/REDU/INST) — a
+ * pre-existing mismatch, not something introduced or fixed here.
+ */
+export const ELBOW_TYPES = Object.freeze(['ELBOW', 'ELBO', 'BEND']);
 /**
  * Gasket-type components carry negligible self-weight relative to the piping
  * they seal and are exempted from mass-evidence requirements rather than

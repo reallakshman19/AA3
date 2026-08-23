@@ -25,6 +25,13 @@ export const NON_FEA_COMMON_SCHEMAS = Object.freeze({
  */
 const NEGLIGIBLE_MASS_COMPONENT_TYPES = Object.freeze(['GASKET', 'GASK']);
 
+/**
+ * Mirrors model-loads/elbow-derived-mass.js ELBOW_TYPES, duplicated for the
+ * same input-readiness/execution-engine boundary reason as
+ * NEGLIGIBLE_MASS_COMPONENT_TYPES above.
+ */
+const ELBOW_COMPONENT_TYPES = Object.freeze(['ELBOW', 'ELBO', 'BEND']);
+
 export const NON_FEA_COMMON_METHOD_IDS = Object.freeze([
   'WEIGHT_AND_GRAVITY',
   'SUSTAINED_REACTIONS',
@@ -657,6 +664,23 @@ function createLineage(request, report) {
   return deepFreeze({ ...base, semanticHash: semanticHash(base) });
 }
 
+/**
+ * Mirrors model-loads/elbow-derived-mass.js findSectionedSiblingPipe. Boolean
+ * only: the checker gates readiness, it does not compute the derived value
+ * itself, so it only needs to know whether execution could derive one.
+ */
+function hasSectionedSiblingOnBranch(component, components) {
+  const branchId = component.identity?.branchId;
+  if (!branchId) return false;
+  return components.some((candidate) => (
+    String(candidate.type || '').toUpperCase() === 'PIPE'
+    && candidate.identity?.branchId === branchId
+    && finiteEvidence(candidate.engineeringProperties?.outerDiameterMm, false)
+    && finiteEvidence(candidate.engineeringProperties?.wallThicknessMm, false)
+    && finiteEvidence(candidate.engineeringProperties?.materialDensityKgM3, false)
+  ));
+}
+
 function analyzeModelCoverage(model, requestedLoadCases) {
   const components = model.components || [];
   const massMissing = [];
@@ -692,7 +716,14 @@ function analyzeModelCoverage(model, requestedLoadCases) {
     } else if (NEGLIGIBLE_MASS_COMPONENT_TYPES.includes(type)) {
       // Matches the execution-time resolver: gasket-type components default to
       // zero self-weight and never gate readiness on missing evidence.
-    } else if (!finiteEvidence(properties.componentWeightKg, true)) {
+    } else if (finiteEvidence(properties.componentWeightKg, true)) {
+      // Explicit evidence present; satisfied regardless of type.
+    } else if (ELBOW_COMPONENT_TYPES.includes(type) && hasSectionedSiblingOnBranch(component, components)) {
+      // Matches model-loads/elbow-derived-mass.js: an elbow with no direct
+      // weight evidence is still satisfied once a PIPE on the same branch has
+      // a resolved section, because execution derives its weight from that
+      // section rather than requiring componentWeightKg directly.
+    } else {
       massMissing.push(`${id}:COMPONENT_WEIGHT`);
     }
   });

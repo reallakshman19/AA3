@@ -59,12 +59,25 @@ export function resolveSourceSegmentId(segment, sourceSegmentById, spanOrigin) {
   return origin;
 }
 
+/**
+ * Structural IDs are also the stiffness-authority IDs used by the production
+ * run seam. Bend chords therefore use the component builder's native identity
+ * `${base}.BEND.E#`; this lets compilePipingComponent own those spans without
+ * a translation table or duplicate stiffness authority. Non-bend conditioned
+ * spans keep the historical suffix form.
+ */
 export function structuralElementId(modelId, sourceIndex, segmentId, sourceSegmentId) {
   const base = `${modelId}.E${sourceIndex + 1}`;
   if (segmentId === sourceSegmentId) return base;
   const prefix = `${sourceSegmentId}/`;
   const suffix = segmentId.startsWith(prefix) ? segmentId.slice(prefix.length) : segmentId;
+  const bendChord = /^B([1-9][0-9]*)$/u.exec(suffix);
+  if (bendChord) return `${base}.BEND.E${bendChord[1]}`;
   return `${base}.${safeIdentifier(suffix)}`;
+}
+
+export function bendComponentId(modelId, sourceIndex) {
+  return `${modelId}.E${sourceIndex + 1}.BEND`;
 }
 
 function resolveOriginId(segment, sourceIds, spanOrigin) {

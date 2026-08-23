@@ -1,0 +1,39 @@
+schema: AgentClaim.v1
+pr_or_wip: WIP-1371C
+claim_state: ACTIVE
+files:
+  exact:
+    - agents/WIP-1371C_workreport.md
+    - agents/status/WIP-1371C.yaml
+    - agents/claims/WIP-1371C.yaml
+    - scripts/lafea.4-fixtures.mjs
+    - src/workspace/advanced-mock-data.js
+    - src/workspace/lafea-results-view.js
+    - scripts/lafea-shell-sample-parent-check.mjs
+    - scripts/lafea-shell-compiled-execution-check.mjs
+  prefixes: []
+authority_domains:
+  - LAFEA4_SAMPLE_PRESSURE_PRODUCT_ROUTE
+  - LAFEA4_RETAINED_ENGINEERING_RESULT_SUMMARY
+claim_modes:
+  - EXCLUSIVE_EXACT_FILES
+excluded_authority:
+  - LOCAL_SHELL_FORMULATION
+  - PARTIAL_BOUNDARY_CONSTRAINT_TRANSFER
+  - NODAL_LOAD_TRANSFER
+  - MESH_QUALITY_THRESHOLD_CHANGE
+  - SHELL_RECOVERY_MATHEMATICS
+  - B4_FROZEN_BENCHMARK_EXPECTED_VALUES
+  - RELEASE_AUTHORITY
+invariants:
+  - SAMPLE_SOURCE_NODES_26_UNCHANGED
+  - SAMPLE_SOURCE_ELEMENTS_24_UNCHANGED
+  - SAMPLE_RADIUS_100_UNCHANGED
+  - SAMPLE_LENGTH_50_UNCHANGED
+  - SAMPLE_SPAN_60_DEG_UNCHANGED
+  - PRESSURE_1_2_MPA_WHOLE_SURFACE_ALONG_NORMAL
+  - SURFACE_IP_STRESS_ONLY_AS_PRIMARY_STRESS_AUTHORITY
+  - NO_NODAL_STRESS_SMOOTHING_AUTHORITY
+main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
+overlap_state: SAFE
+note: PR1388 owns independent B4 freeze assets and shell-response acceptance integration only; those paths and expected values are excluded from PR-C.

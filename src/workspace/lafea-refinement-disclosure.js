@@ -10,9 +10,53 @@ const CURRENT_MESH_GENERATION_PHASES = new Set([
  */
 export function compactLafeaRefinementWorkspace(host, model) {
   if (!host?.ownerDocument) throw new TypeError('LAFEA_REFINEMENT_DISCLOSURE_HOST_REQUIRED');
+  if (compactLafeaNonApplicableMeshWorkspace(host, model)) return null;
   humanizeDiscretizationAdvance(host, model);
   compactLafeaCurrentGenerationWorkspace(host, model);
   return compactRefinementWorkspace(host, model);
+}
+
+/**
+ * A stage whose lifecycle says analysis mesh is not applicable must not render
+ * disabled generation, quality, Continue, refinement or custody workspaces as
+ * though the engineer has mesh work to perform. Preserve the canonical model
+ * state, but reduce the primary Mesh surface to one truthful applicability
+ * statement. This is presentation-only and does not create engineering state.
+ */
+export function compactLafeaNonApplicableMeshWorkspace(host, model) {
+  if (!host?.ownerDocument) throw new TypeError('LAFEA_NON_APPLICABLE_MESH_HOST_REQUIRED');
+  if (model?.applicable !== false && model?.uiPhase !== 'NOT_APPLICABLE') return null;
+
+  const workspace = host.matches?.('[data-role="lafea-discretization"]')
+    ? host
+    : host.querySelector('[data-role="lafea-discretization"]');
+  if (!workspace) return null;
+
+  const summary = workspace.querySelector('[data-role="lafea-mesh-workspace-summary"]');
+  if (summary) {
+    summary.dataset.meshApplicable = 'false';
+    const state = summary.querySelector('.lafea-mesh-workspace-summary__state');
+    if (state) {
+      state.textContent = 'Not applicable';
+      state.dataset.tone = 'neutral';
+    }
+    const intro = summary.querySelector('.lafea-mesh-workspace-summary__heading p');
+    if (intro) {
+      intro.textContent = 'This stage does not use an analysis mesh. No mesh configuration, generation, quality review or mesh custody action is required.';
+    }
+    summary.querySelector('.lafea-mesh-workspace-summary__grid')?.remove();
+  }
+
+  for (const sectionId of ['generation', 'quality', 'actions']) {
+    workspace.querySelector(`[data-discretization-section="${sectionId}"]`)?.remove();
+  }
+  workspace.querySelector('[data-role="lafea-discretization-technical-evidence"]')?.remove();
+  workspace.querySelector('[data-role="lafea-generation-disclosure"]')?.remove();
+  workspace.querySelector('[data-role="lafea-refinement-disclosure"]')?.remove();
+  workspace.querySelector('[data-role="lafea-retained-mesh-refinement"]')?.remove();
+
+  workspace.dataset.meshApplicable = 'false';
+  return summary ?? workspace;
 }
 
 /**

@@ -19,54 +19,54 @@ import {
 const fixture = makeFixture();
 const results = [];
 
-runBlocked('missing-pipe-section', {
+runException('missing-pipe-section', {
   profile: withLoadValue(fixture.profile, 'pipeSectionProperties', {
     OTHER: section(),
   }),
 }, 'EMPTY', 'MISSING_PIPE_SECTION');
 
-runBlocked('missing-material-density', {
+runException('missing-material-density', {
   profile: withLoadValue(fixture.profile, 'materialDensitiesKgPerM3', { OTHER: 7850 }),
 }, 'EMPTY', 'MISSING_MATERIAL_DENSITY');
 
-runBlocked('missing-operating-fluid-density', {
+runException('missing-operating-fluid-density', {
   profile: withLoadValue(fixture.profile, 'operatingFluidDensitiesKgPerM3', { OTHER: 800 }),
 }, 'OPE', 'MISSING_FLUID_DENSITY', 'loadCalculation.operatingFluidDensitiesKgPerM3');
 
-runBlocked('missing-hydro-fluid-density', {
+runException('missing-hydro-fluid-density', {
   profile: withLoadValue(fixture.profile, 'hydroFluidDensitiesKgPerM3', { OTHER: 1000 }),
 }, 'HYD', 'MISSING_FLUID_DENSITY', 'loadCalculation.hydroFluidDensitiesKgPerM3');
 
-runBlocked('missing-insulation-density', {
+runException('missing-insulation-density', {
   profile: withLoadValue(fixture.profile, 'insulationDensitiesKgPerM3', { OTHER: 120 }),
 }, 'EMPTY', 'MISSING_INSULATION_DENSITY');
 
-runBlocked('missing-component-mass', {
+runException('missing-component-mass', {
   profile: withLoadValue(fixture.profile, 'componentWeightsKg', { OTHER: 10 }),
 }, 'EMPTY', 'MISSING_COMPONENT_MASS');
 
-runBlocked('invalid-inside-diameter', {
+runFailed('invalid-inside-diameter', {
   profile: withLoadValue(fixture.profile, 'pipeSectionProperties', {
     'L-1': section({ wallThicknessMm: 50 }),
   }),
 }, 'EMPTY', 'INVALID_PIPE_INSIDE_DIAMETER');
 
-runBlocked('route-fewer-than-two-vertical-supports', {
+runException('route-one-vertical-support', {
   supportSiteModel: {
     ...fixture.supportSiteModel,
     sites: fixture.supportSiteModel.sites.slice(0, 1),
   },
-}, 'EMPTY', 'ROUTE_REQUIRES_TWO_QUALIFIED_VERTICAL_SUPPORTS');
+}, 'EMPTY', 'OVERHANG_CANTILEVER_TRANSFER');
 
-runBlocked('unbracketed-point-load', {
+runException('unbracketed-point-load', {
   routePartitionModel: pointOnlyRoute(1200, true),
-}, 'EMPTY', 'UNBRACKETED_ROUTE_LOAD');
+}, 'EMPTY', 'OVERHANG_CANTILEVER_TRANSFER');
 
-runBlocked('invalid-chainage', {
+runFailed('invalid-chainage', {
   routePartitionModel: pointOnlyRoute(null, false),
 }, 'EMPTY', 'MISSING_ROUTE_CHAINAGE');
 
-runBlocked('failed-equilibrium', {
+runFailed('failed-equilibrium', {
   routePartitionModel: routeWithPipeAuditPoint(600),
 }, 'EMPTY', 'EQUILIBRIUM_CHECK_FAILED');
 
@@ -76,7 +76,7 @@ expectCode(
   () => requireAuthorizedEmpiricalLoadInput(nonFinite),
   'EMPIRICAL_INPUT_NUMBER_INVALID',
 );
-results.push({ id: 'non-finite-value', status: 'BLOCKED', code: 'EMPIRICAL_INPUT_NUMBER_INVALID' });
+results.push({ id: 'non-finite-value', status: 'FAILED_INPUT', code: 'EMPIRICAL_INPUT_NUMBER_INVALID' });
 
 expectCode(
   () => calculateAuthorizedEmpiricalLoadExecution({
@@ -92,7 +92,7 @@ expectCode(
   }),
   'EMPIRICAL_EXECUTION_PROJECT_MISMATCH',
 );
-results.push({ id: 'wrong-project', status: 'BLOCKED', code: 'EMPIRICAL_EXECUTION_PROJECT_MISMATCH' });
+results.push({ id: 'wrong-project', status: 'FAILED_INPUT', code: 'EMPIRICAL_EXECUTION_PROJECT_MISMATCH' });
 
 for (const [id, field, changedHash] of [
   ['stale-baseline', 'baselineSemanticHash', 'fnv1a64:aaaaaaaaaaaaaaaa'],
@@ -106,18 +106,45 @@ for (const [id, field, changedHash] of [
     }),
     'EMPIRICAL_INPUT_HASH_MISMATCH',
   );
-  results.push({ id, status: 'BLOCKED', code: 'EMPIRICAL_INPUT_HASH_MISMATCH', field });
+  results.push({ id, status: 'FAILED_INPUT', code: 'EMPIRICAL_INPUT_HASH_MISMATCH', field });
 }
 
 assert.equal(results.length, 16);
 console.log(JSON.stringify({
   status: 'PASS',
-  matrix: 'EMP01_FAIL_CLOSED_BLOCKED_CASES',
+  matrix: 'EMP01_COMPLETENESS_AND_FAIL_CLOSED_CASES',
   caseCount: results.length,
   results,
 }, null, 2));
 
-function runBlocked(id, overrides, loadCaseId, expectedCode, expectedPath = null) {
+function runException(id, overrides, loadCaseId, expectedCode, expectedPath = null) {
+  const { distribution, loadCase, evidence } = calculateCase(id, overrides, loadCaseId);
+  const matched = evidence.find((row) => row.code === expectedCode
+    && (!expectedPath || row.path === expectedPath || row.projectDataPath === expectedPath));
+  assert.ok(matched,
+    `${id}: expected ${expectedCode}${expectedPath ? ` at ${expectedPath}` : ''}; observed ${JSON.stringify(evidence)}`);
+  assert.equal(distribution.status, 'CALCULATED_WITH_EXCEPTIONS', `${id}: distribution status`);
+  assert.equal(loadCase.status, 'CALCULATED_WITH_EXCEPTIONS', `${id}: load case status`);
+  assert.equal(loadCase.supportResults.some((row) => row.verticalForceN !== null), true,
+    `${id}: valid partial reactions must remain publishable`);
+  assert.equal(loadCase.equilibrium.passed, true, `${id}: known evaluated-load accounting must close`);
+  results.push({ id, loadCaseId, status: loadCase.status, code: expectedCode });
+}
+
+function runFailed(id, overrides, loadCaseId, expectedCode, expectedPath = null) {
+  const { distribution, loadCase, evidence } = calculateCase(id, overrides, loadCaseId);
+  const matched = evidence.find((row) => row.code === expectedCode
+    && (!expectedPath || row.path === expectedPath || row.projectDataPath === expectedPath));
+  assert.ok(matched,
+    `${id}: expected ${expectedCode}${expectedPath ? ` at ${expectedPath}` : ''}; observed ${JSON.stringify(evidence)}`);
+  assert.equal(distribution.status, 'FAILED', `${id}: distribution must fail closed`);
+  assert.equal(loadCase.status, 'FAILED', `${id}: load case must fail closed`);
+  assert.equal(loadCase.supportResults.every((row) => row.verticalForceN === null), true,
+    `${id}: a failed case exposed a production reaction`);
+  results.push({ id, loadCaseId, status: loadCase.status, code: expectedCode });
+}
+
+function calculateCase(id, overrides, loadCaseId) {
   const input = {
     dataset: overrides.dataset || fixture.dataset,
     profile: overrides.profile || fixture.profile,
@@ -130,17 +157,11 @@ function runBlocked(id, overrides, loadCaseId, expectedCode, expectedPath = null
   assert.ok(loadCase, `${id}: load case ${loadCaseId} missing`);
   const evidence = [
     ...(loadCase.excludedInputs || []),
+    ...(loadCase.exceptionLedger || []),
     ...(loadCase.blockers || []),
     ...(loadCase.equilibrium?.blockers || []),
   ];
-  const matched = evidence.find((row) => row.code === expectedCode
-    && (!expectedPath || row.path === expectedPath || row.projectDataPath === expectedPath));
-  assert.ok(matched, `${id}: expected ${expectedCode}${expectedPath ? ` at ${expectedPath}` : ''}; observed ${JSON.stringify(evidence)}`);
-  assert.equal(distribution.status, 'BLOCKED', `${id}: distribution reported success`);
-  assert.equal(loadCase.status, 'BLOCKED', `${id}: load case reported success`);
-  assert.equal(loadCase.supportResults.every((row) => row.verticalForceN === null), true,
-    `${id}: a blocked case exposed a production reaction`);
-  results.push({ id, loadCaseId, status: loadCase.status, code: expectedCode });
+  return { distribution, loadCase, evidence };
 }
 
 function withLoadValue(profile, field, value) {

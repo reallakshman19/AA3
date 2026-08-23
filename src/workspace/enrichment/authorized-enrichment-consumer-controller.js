@@ -67,11 +67,13 @@ export class AuthorizedEnrichmentConsumerController {
     this.engineeringModelStore = engineeringModelStore;
     this.masterDataController = masterDataController;
     this.commonInputStore = commonInputStore;
+    // Deliberately retain NonFeaMethodExecutionCoordinator's default
+    // requireCurrentNonFeaMethods provider. It re-evaluates the live common
+    // input before authorization freshness checks, so changes to ephemeral
+    // Product defaults, configured defaults, resolution ledgers or effective
+    // Project Data cannot leave an old empirical authorization current.
     this.executionCoordinator = commonInputStore
-      ? new NonFeaMethodExecutionCoordinator({
-        commonInputStore,
-        commonInputProvider: (methodIds) => commonInputStore.requireReadyMethods(methodIds),
-      })
+      ? new NonFeaMethodExecutionCoordinator({ commonInputStore })
       : null;
   }
 

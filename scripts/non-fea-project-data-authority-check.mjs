@@ -25,18 +25,33 @@ assert.equal(upgraded.sourcesAndUnits.datasetSource.value.sha256, approved1885sP
 for (const groupKey of ['thermoMechanicalBasis', 'restraintPolicy', 'qualificationPolicy']) {
   assert.ok(upgraded[groupKey], `missing additive group ${groupKey}`);
 }
-assert.deepEqual(upgraded.thermoMechanicalBasis.installationTemperatureC, {
-  value: null,
-  evidence: null,
-  approved: false,
-});
+// The 1885S fixture already carries an approved owner-default installation
+// temperature (added by #1283); upgradeProjectDataProfile must preserve an
+// existing field exactly rather than repair, overwrite, or empty it.
+assert.deepEqual(
+  upgraded.thermoMechanicalBasis.installationTemperatureC,
+  approved1885sProfile.thermoMechanicalBasis.installationTemperatureC,
+);
 
 const normalizationAudit = validateProjectDataProfile(upgraded, 'normalization', null);
 assert.equal(normalizationAudit.valid, true, normalizationAudit.errors.map((row) => `${row.path}:${row.code}`).join('\n'));
 const policyAudit = validateProjectDataProfile(upgraded, 'nonFeaPolicy', null);
 assert.equal(policyAudit.valid, false);
-assert.ok(policyAudit.errors.some((row) => row.path === 'thermoMechanicalBasis.installationTemperatureC' && row.code === 'MISSING_VALUE'));
-assert.ok(policyAudit.errors.some((row) => row.path === 'qualificationPolicy.configuredDefaults' && row.code === 'MISSING_VALUE'));
+// The 1885S fixture is otherwise fully populated; the #1321 force/moment/
+// analysis/sign convention fields are the still-genuinely-missing Phase 2
+// additions this stack introduced, so those are what nonFeaPolicy must flag.
+for (const path of [
+  'loadCalculation.componentMassCompositionPolicy',
+  'loadCalculation.forceOutputConvention',
+  'loadCalculation.momentOutputConvention',
+  'loadCalculation.analysisBasis',
+  'loadCalculation.resultSignConvention',
+]) {
+  assert.ok(
+    policyAudit.errors.some((row) => row.path === path && row.code === 'MISSING_VALUE'),
+    `expected ${path} to be flagged MISSING_VALUE`,
+  );
+}
 
 const signedTemperature = replaceProjectDataValue(
   upgraded,

@@ -274,7 +274,10 @@ export class EngineeringModelStore {
       runtimePackage.authorizedInput,
     );
     const activeHashes = currentMasterHashes(masterData, this.#dataset);
-    blockers.push(...validateProjectDataProfile(profile, 'loads', activeHashes).errors);
+    const loadWorkflow = runtimePackage.authorizedInput?.effectiveValueLedger
+      ? 'authorizedGravityLoads'
+      : 'loads';
+    blockers.push(...validateProjectDataProfile(profile, loadWorkflow, activeHashes).errors);
     blockers.push(...validateProjectDataProfile(profile, 'topology', activeHashes).errors);
     return freezeDeep(dedupeBlockers(blockers));
   }

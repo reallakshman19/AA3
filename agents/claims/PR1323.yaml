@@ -1,0 +1,106 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1323
+claim_state: ACTIVE
+files:
+  exact:
+    - src/core/common-enriched-properties/field.js
+    - src/master-data/bundled-master-data.js
+    - src/workspace/project-data/non-fea-product-default-profile.js
+    - src/workspace/project-data/non-fea-product-engineering-default-profile.js
+    - src/workspace/project-data/non-fea-field-registry.js
+    - src/workspace/project-data/project-data-fields.js
+    - src/workspace/project-data/project-data-contract.js
+    - src/workspace/project-data/non-fea-configured-default-provider.js
+    - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
+    - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
+    - src/workspace/project-data/non-fea-effective-value-resolver.js
+    - src/workspace/project-data/non-fea-fluid-fill-policy.js
+    - src/workspace/project-data/non-fea-component-mass-policy.js
+    - src/workspace/routes/route-partition-model.js
+    - src/workspace/support-sites/support-site-model.js
+    - src/workspace/engineering-model-store.js
+    - src/workspace/enrichment/authorized-enrichment-consumer-controller.js
+    - src/workspace/enrichment/non-fea-common-enriched-effective-default-authoring.js
+    - src/workspace/non-fea-common-input-runtime.js
+    - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
+    - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
+    - src/workspace/engineering-loads/authorized-empirical-effective-support-load-execution.js
+    - src/workspace/engineering-loads/authorized-empirical-source-axis-binding.js
+    - src/workspace/engineering-loads/authorized-empirical-support-capability-binding.js
+    - src/workspace/engineering-loads/authorized-empirical-gravity-convention-binding.js
+    - src/workspace/engineering-loads/authorized-empirical-load-input.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v3.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v4.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v5.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v6.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v7.js
+    - src/workspace/engineering-loads/authorized-empirical-load-execution-v8.js
+    - src/workspace/engineering-loads/empirical-gravity-method-selection.js
+    - src/workspace/engineering-loads/engineering-support-load-store.js
+    - src/workspace/engineering-loads/support-load-static-accounting.js
+    - src/workspace/engineering-loads/support-load-distribution-v3.js
+    - src/workspace/load-calc-consumer-controller.js
+    - src/workspace/load-calc-consumer-view.js
+    - src/workspace/load-calc-result-presentation.js
+    - scripts/non-fea-product-default-profile-check.mjs
+    - scripts/non-fea-fluid-fill-policy-check.mjs
+    - scripts/authorized-empirical-fluid-mass-composition-check.mjs
+    - scripts/authorized-empirical-component-mass-composition-check.mjs
+    - scripts/authorized-empirical-support-capability-default-check.mjs
+    - scripts/authorized-empirical-gravity-convention-binding-check.mjs
+    - scripts/non-fea-gravity-product-default-bootstrap-check.mjs
+    - scripts/non-fea-product-engineering-default-profile-check.mjs
+    - scripts/non-fea-effective-value-resolver-check.mjs
+    - scripts/non-fea-configured-default-scope-priority-check.mjs
+    - scripts/non-fea-common-enriched-configured-default-overlay-check.mjs
+    - scripts/non-fea-common-enriched-effective-default-composition-check.mjs
+    - scripts/non-fea-common-enriched-effective-default-authoring-check.mjs
+    - scripts/authorized-empirical-effective-value-ledger-check.mjs
+    - scripts/authorized-empirical-effective-execution-projection-check.mjs
+    - scripts/authorized-empirical-effective-execution-projection-collision-check.mjs
+    - scripts/authorized-empirical-effective-support-guard-check.mjs
+    - scripts/authorized-empirical-source-axis-binding-check.mjs
+    - scripts/authorized-empirical-default-staleness-check.mjs
+    - scripts/authorized-empirical-generation-boundary-check.mjs
+    - scripts/authorized-empirical-ledger-readiness-check.mjs
+    - scripts/authorized-empirical-v2-effective-execution-check.mjs
+    - scripts/authorized-empirical-product-default-convergence-check.mjs
+    - scripts/empirical-gravity-method-selection-check.mjs
+    - scripts/support-load-static-accounting-check.mjs
+    - scripts/support-load-partial-distribution-check.mjs
+    - scripts/support-load-route-equilibrium-check.mjs
+    - scripts/empirical-authorized-blocked-cases-check.mjs
+    - scripts/load-calc-result-presentation-check.mjs
+    - scripts/run-non-fea-checks.mjs
+  prefixes:
+    - src/workspace/engineering-loads/
+    - src/workspace/project-data/
+    - src/workspace/enrichment/
+    - src/workspace/routes/
+    - src/workspace/support-sites/
+    - src/core/non-fea-enrichment/
+    - src/core/common-enriched-properties/
+authority_domains:
+  - LOAD_CALC_EFFECTIVE_ENGINEERING_VALUES
+  - LOAD_CALC_PROJECT_CONFIGURED_DEFAULTS
+  - LOAD_CALC_PRODUCT_DEFAULTS
+  - LOAD_CALC_CONSERVATIVE_TOPOLOGY_BOOTSTRAP
+  - LOAD_CALC_LEDGER_AWARE_READINESS
+  - LOAD_CALC_LEDGER_BOUND_KERNEL_VALIDATION
+  - LOAD_CALC_PRE_READINESS_DEFAULT_AUTHORING
+  - LOAD_CALC_FLUID_FILL_MASS_COMPOSITION
+  - LOAD_CALC_COMPONENT_DRY_MASS_COMPOSITION
+  - LOAD_CALC_SUPPORT_DEFAULT_CAPABILITY_BINDING
+  - LOAD_CALC_GRAVITY_OUTPUT_CONVENTION_BINDING
+  - AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION
+  - AUTHORIZED_EMPIRICAL_EFFECTIVE_SUPPORT_GUARD
+  - AUTHORIZED_EMPIRICAL_SOURCE_BASIS_Z_UP_MM
+  - EMPIRICAL_EXECUTION_GENERATION_BOUNDARY
+  - GRAVITY_SUPPORT_LOAD_ACCOUNTING
+  - EMPIRICAL_METHOD_AUTO_SELECTION
+  - LOAD_CALC_PARTIAL_RESULT_PUBLICATION
+claim_modes:
+  - COORDINATED
+last_verified_head: 940ff897d723d273a3855b9798f684522593d325

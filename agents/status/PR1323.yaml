@@ -1,0 +1,40 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1323
+mission: Load Calc unified effective-value resolution and zero-routine-blocker mechanics
+workstream: ISSUE1321_LOAD_CALC
+branch: claude/pr-1323-project-data-wu1zx0
+merged_from_pr_head_branch: agent/issue-1321-load-calc-effective-values
+pr_head: 940ff897d723d273a3855b9798f684522593d325
+main_head_last_checked: 1d08bcd0fdebc86fc2daaeb752f129b877e01c74
+work_intent: IMPLEMENT_AND_VERIFY
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/PR1323_workreport.md
+report_basis_head: 940ff897d723d273a3855b9798f684522593d325
+appendix_a_status: SUPERSEDED_BY_GE012_SESSION_LOG
+grounding_epoch: GE-012
+current_stage: STACK_11_VERIFY_UI_LEDGER_RECONCILIATION_AND_EXACT_NODE_QUALIFICATION_RUN
+blocker: TWO_OF_FIFTY_NON_FEA_CHECKS_NEED_MISSING_EXTERNAL_BM2_FIXTURE_UNRELATED_TO_1321; PRE_EXISTING_BUNDLE_SIZE_BUDGET_OVERAGE_UNRELATED_TO_1321; ANCILLARY_COMPONENT_CONTENT_MASS_PRIMITIVES_REMAIN_OPEN
+highest_risk: Bounded support/convention policies must not be presented as mechanics beyond source-Z/mm scalar route-chainage gravity. Alternative conventions, X/Y-up, non-mm units and unsupported ancillary/component-content mass remain fail-closed or open.
+dependencies:
+  - Issue #1321 exact effective-value precedence
+  - LOAD_CALC_STANDARD_DEFAULTS_V1@4
+  - authorized-empirical-effective-value-ledger/v1
+  - authorized-empirical-effective-execution-projection/v1
+  - authorized-empirical-effective-support-load-execution/v1
+  - authorized-empirical-support-capability-binding/v1
+  - authorized-empirical-gravity-convention-binding/v1
+  - authorized-empirical-source-axis-binding/v1
+  - non-fea-fluid-fill-policy/v1
+  - non-fea-component-mass-policy/v1
+  - support-load-static-accounting/v1
+ge012_evidence:
+  run_non_fea_checks: "48/50 PASS (node scripts/run-non-fea-checks.mjs, actually executed)"
+  sjson_end_to_end: "PASS (node scripts/1885s-empirical-qualification.mjs against real benchmarks/Sjson.json + repo-owned master data)"
+  build: "vite build PASS; post-build bundle-chunk-check.mjs fails on a pre-existing, unrelated main-chunk size overage"
+  lint: "npx eslint on every touched file: zero findings"
+exact_next_action: Design ancillary/component-contained mass primitives (cladding/tracing, component-contained fluid) with double-count protection and native non-empty zero-fluid support; separately source benchmarks/LFEA/BM2/Input_BM2.xml to unblock the last 2/50 non-FEA checks, and run browser/e2e qualification.
+last_updated: 2026-08-22T23:59:00+05:30

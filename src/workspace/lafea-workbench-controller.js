@@ -25,6 +25,7 @@ import {
   projectEmp1WorkbenchRunReadiness,
 } from './emp1-workbench-run-state.js';
 import { currentEmp1WorkbenchRouteAuthority } from './emp1-workbench-product-run.js';
+import { issueLafeaSourceAuthority } from './lafea-source-authority.js';
 import { LafeaWorkbenchView } from './lafea-workbench-view.js';
 
 const ACCESSORY_PANEL_MANAGERS = new WeakMap();
@@ -167,13 +168,21 @@ export class LafeaWorkbenchController {
     }
     try {
       const documentValue = await this.mockDocumentFactory(stageId);
-      const initialHash = documentValue.packageHash || 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-      const result = this.importDocument(documentValue, stageId, initialHash);
-      const state = this.getState();
-      const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash || initialHash;
+      this.importDocument(documentValue, stageId);
+      const importedDocument = this.getState().stages[stageId]?.document;
+      if (!importedDocument) {
+        throw new TypeError('LAFEA_SIMULATED_SOURCE_IMPORT_REQUIRED');
+      }
+      const sourceAuthority = issueLafeaSourceAuthority(
+        stageId,
+        importedDocument,
+        'SIMULATED_SOURCE_PROVIDER',
+      );
+      this.initializeLifecycle(sourceAuthority.sourceHash, 'SIMULATED_SOURCE_PROVIDER');
+      const hash = sourceAuthority.sourceHash;
       if (stageId === 'LAFEA.3') {
         this.store.activateDomainFirstProfile();
-        if (hash && this.mockDomainAndGeometryFactory) {
+        if (this.mockDomainAndGeometryFactory) {
           const mockEv = await this.mockDomainAndGeometryFactory(stageId, hash);
           if (mockEv) {
             this.store.registerAnalysisDomain(mockEv.domain);
@@ -185,7 +194,7 @@ export class LafeaWorkbenchController {
             }
           }
         }
-      } else if (stageId === 'LAFEA.4' && hash) {
+      } else if (stageId === 'LAFEA.4') {
         const { createLafeaSimulatedShellMidsurfaceEvidence } = await import(
           './lafea-simulated-shell-midsurface-provider.js'
         );
@@ -195,7 +204,7 @@ export class LafeaWorkbenchController {
           documentValue,
         );
         if (shellParent) this.store.registerShellMidsurfaceEvidence(shellParent);
-      } else if (stageId === 'LAFEA.5' && hash) {
+      } else if (stageId === 'LAFEA.5') {
         const { createLafea5SourceShellParent } = await import(
           './lafea-source-shell-mesh-adoption.js'
         );
@@ -205,7 +214,7 @@ export class LafeaWorkbenchController {
         });
         this.store.registerShellMidsurfaceEvidence(shellParent);
       }
-      return result;
+      return this.getState();
     } catch (error) {
       return this.store.reportEditError('document', null, error);
     }

@@ -14,17 +14,20 @@ import {
   distanceBetween,
 } from './bend-retopology-geometry.js';
 import {
+  collectRetopologyBindingBlockers,
   freezeNodeRetargeting,
-  requireRetiredNodeBindingsResolvable,
+  requireBendRetopologyBindingsResolved,
   retargetBoundSegmentEvidence,
   segmentMeta,
 } from './bend-retopology-bindings.js';
 
-export { BendRetopologyError };
+export { BendRetopologyError, requireBendRetopologyBindingsResolved };
 
 /**
  * Pure source-topology rewrite that replaces evidenced bends by explicit
  * tangent-to-tangent chord chains before generic geometry conditioning.
+ * Binding ambiguity is returned as evidence; production structural compilation
+ * must call requireBendRetopologyBindingsResolved before using the topology.
  */
 export function retopologiseDeclaredBends(geometry, profile) {
   requireBendRetopologyGeometry(geometry);
@@ -67,7 +70,11 @@ export function retopologiseDeclaredBends(geometry, profile) {
     }
   }
 
-  requireRetiredNodeBindingsResolvable({ retiredNodeRecords, sourceNodesById, sourceSegments });
+  const bindingBlockers = collectRetopologyBindingBlockers({
+    retiredNodeRecords,
+    sourceNodesById,
+    sourceSegments,
+  });
   const definitionBySource = new Map(definitions.map((row) => [row.sourceSegmentId, row]));
   const outputSegments = [];
   const spanOrigin = {};
@@ -109,6 +116,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
         .sort((a, b) => compareAscii(a[0], b[0]))
         .map(([nodeId, record]) => [nodeId, freezeNodeRetargeting(record)]),
     )),
+    bindingBlockers,
     bendRecords: Object.freeze(definitions.map((row) => Object.freeze({
       sourceSegmentId: row.sourceSegmentId,
       tangentBasis: row.tangentBasis,
@@ -123,6 +131,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
       bendCount: definitions.length,
       chordCount: definitions.reduce((sum, row) => sum + row.chordSegments.length, 0),
       retiredNodeCount: retiredNodeIds.length,
+      bindingBlockerCount: bindingBlockers.length,
       sourceSegmentCount: sourceSegments.length,
       producedSegmentCount: finalSegments.length,
     }),

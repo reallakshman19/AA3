@@ -1,0 +1,58 @@
+{
+  "schema": "emp1-wrc537-non-round-attachment-source-qualification/v1",
+  "status": "BLOCKED_PRIMARY_SOURCE_NON_ROUND_METHOD_NOT_QUALIFIED",
+  "engineeringAuthority": true,
+  "productionNonRoundAuthority": false,
+  "source": {
+    "controlledWrc537RawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "retainedSecondaryExtraction": "docs/01_WRC537_METHOD_DEFINITION.md",
+    "retainedSecondaryExtractionStatus": "NOT_READY_FOR_IMPLEMENTATION",
+    "primarySourceNonRoundMethodVerified": false
+  },
+  "retainedCandidateEvidence": {
+    "cylindricalRectangularLoadingSymbolsObserved": ["C1", "C2"],
+    "candidateC1Meaning": "HALF_LENGTH_CIRCUMFERENTIAL_DIRECTION",
+    "candidateC2Meaning": "HALF_LENGTH_LONGITUDINAL_DIRECTION",
+    "candidateSquareAttachmentParameterNotePresent": true,
+    "candidateSquareAttachmentParameterNoteQualifiedForImplementation": false,
+    "candidateEvidenceMaySetProductionEquations": false
+  },
+  "currentBoundedRoute": {
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "rectangularOrSquareAttachmentsExcluded": true,
+    "equivalentRoundConversionAuthorized": false
+  },
+  "unresolvedPrimarySourceRequirements": [
+    "EXACT_NON_ROUND_GEOMETRY_FAMILIES",
+    "C1_C2_PRIMARY_DEFINITIONS_AND_ORIENTATION",
+    "NON_ROUND_DIMENSIONLESS_PARAMETERS_AND_EQUATIONS",
+    "PARAMETER_DOMAINS_AND_BOUNDARY_INCLUSIVITY",
+    "NON_ROUND_CURVE_TABLE_COEFFICIENT_INVENTORY",
+    "LOAD_REFERENCE_AND_SIGN_CONVENTION",
+    "STRESS_COMPONENTS_AND_PHYSICAL_RECOVERY_LOCATIONS",
+    "ORIGINAL_VS_EXTRAPOLATED_RULES",
+    "ASPECT_RATIO_RULES",
+    "INTERPOLATION_EXTRAPOLATION_POLICY",
+    "RIGID_FLEXIBLE_HOLLOW_SOLID_REINFORCEMENT_APPLICABILITY",
+    "PUBLISHED_OR_REFERENCE_NUMERICAL_BENCHMARK"
+  ],
+  "prohibitions": [
+    "DO_NOT_USE_EQUAL_AREA_EQUIVALENT_ROUND",
+    "DO_NOT_USE_EQUAL_PERIMETER_EQUIVALENT_ROUND",
+    "DO_NOT_USE_HYDRAULIC_DIAMETER_EQUIVALENT_ROUND",
+    "DO_NOT_REUSE_ROUND_BETA_EQUATION_FOR_NON_ROUND_ATTACHMENT",
+    "DO_NOT_REUSE_ROUND_COEFFICIENT_ROWS_FOR_NON_ROUND_ATTACHMENT",
+    "DO_NOT_PROMOTE_SECONDARY_CANDIDATE_EQUATIONS_TO_PRODUCTION_AUTHORITY",
+    "DO_NOT_MIX_ROUND_AND_NON_ROUND_METHOD_FAMILIES"
+  ],
+  "authorization": {
+    "roundBoundedRouteUnchanged": true,
+    "nonRoundSourceFamilyCandidateRecognized": true,
+    "nonRoundCalculationAllowed": false,
+    "equivalentRoundApproximationAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "codeComplianceAuthorized": false,
+    "releaseQualified": false
+  }
+}

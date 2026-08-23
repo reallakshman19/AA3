@@ -18,15 +18,13 @@ const actualHead = git(['rev-parse', 'HEAD']);
 assert.equal(actualHead, options.expectedHead,
   `EMP1_LOCAL_REQUALIFICATION_HEAD_MISMATCH:${actualHead}:${options.expectedHead}`);
 
-const dirty = git(['status', '--porcelain=v1', '--untracked-files=all']);
-assert.equal(dirty, '',
-  `EMP1_LOCAL_REQUALIFICATION_DIRTY_CHECKOUT_REJECTED:${dirty.replace(/\n/gu, '|')}`);
-
 const outputDir = resolve(root, options.outputDir);
-assertInsideEvidenceRoot(outputDir);
-const outputDirRelative = normalizePath(relative(root, outputDir));
+const outputDirRelative = assertSafeOutputDir(outputDir);
+assertOnlyEvidenceOutputDirty({ allowMissingOutputDirectory: true });
 await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir, { recursive: true });
+assert.equal(git(['status', '--porcelain=v1', '--untracked-files=all']), '',
+  'EMP1_LOCAL_REQUALIFICATION_CHECKOUT_NOT_CLEAN_AFTER_EVIDENCE_CLEANUP');
 
 const paths = Object.freeze({
   observation: relative(root, resolve(outputDir, '01-observation.json')),
@@ -209,16 +207,19 @@ function run(name, script, args = []) {
   if (stderr) process.stderr.write(stderr);
 }
 
-function assertOnlyEvidenceOutputDirty() {
+function assertOnlyEvidenceOutputDirty({ allowMissingOutputDirectory = false } = {}) {
   const status = git(['status', '--porcelain=v1', '--untracked-files=all']);
   const lines = status.split(/\n/u).filter(Boolean);
   const allowedPrefix = `${outputDirRelative}/`;
   const unexpected = lines.filter((line) => {
     const path = normalizePath(line.slice(3).replace(/^"|"$/gu, ''));
-    return !path.startsWith(allowedPrefix);
+    return path !== outputDirRelative && !path.startsWith(allowedPrefix);
   });
   assert.deepEqual(unexpected, [],
     `EMP1_LOCAL_REQUALIFICATION_SOURCE_MUTATION_OUTSIDE_EVIDENCE_DIR:${unexpected.join('|')}`);
+  if (!allowMissingOutputDirectory && lines.length === 0) {
+    throw suiteError('EMP1_LOCAL_REQUALIFICATION_EXPECTED_EVIDENCE_OUTPUT_MISSING');
+  }
 }
 
 function git(args) {
@@ -238,10 +239,14 @@ async function fileDescriptor(path) {
   };
 }
 
-function assertInsideEvidenceRoot(path) {
-  const prefix = evidenceRoot.endsWith(sep) ? evidenceRoot : `${evidenceRoot}${sep}`;
-  assert.ok(path.startsWith(prefix),
+function assertSafeOutputDir(path) {
+  const rootPrefix = evidenceRoot.endsWith(sep) ? evidenceRoot : `${evidenceRoot}${sep}`;
+  assert.ok(path.startsWith(rootPrefix),
     `EMP1_LOCAL_REQUALIFICATION_OUTPUT_OUTSIDE_EVIDENCE_ROOT:${path}`);
+  const relativeToEvidence = normalizePath(relative(evidenceRoot, path));
+  assert.match(relativeToEvidence, /^\.emp1-gamma5-[a-z0-9._-]+$/u,
+    'EMP1_LOCAL_REQUALIFICATION_OUTPUT_DIR_MUST_BE_DEDICATED_HIDDEN_GAMMA5_DIRECTORY');
+  return normalizePath(relative(root, path));
 }
 
 function normalizePath(path) {

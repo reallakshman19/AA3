@@ -6,8 +6,11 @@ files:
     - agents/WIP-1371B_workreport.md
     - agents/status/WIP-1371B.yaml
     - agents/claims/WIP-1371B.yaml
-    - src/workspace/advanced-mock-data.js
+    - src/workspace/lafea-simulated-source-provider.js
+    - src/workspace/lafea3-simulated-domain-provider.js
     - scripts/lafea3-simulated-source-authority-check.mjs
+    - scripts/lafea3-sample-generate-retain-check.mjs
+    - scripts/lafea3-visible-continuum-preflight-check.mjs
     - e2e/lafea3-sample-mesh.spec.js
   prefixes: []
 authority_domains:
@@ -25,11 +28,11 @@ excluded_authority:
   - RELEASE_AUTHORITY
 invariants:
   - CANONICAL_SOURCE_AUTHORITY_UNCHANGED
-  - SOURCE_CONSTRAINTS_PRESERVED_EXACTLY
-  - SOURCE_NODAL_LOADS_PRESERVED_EXACTLY
+  - SOURCE_CONSTRAINTS_PRESERVED_PHYSICALLY
+  - SOURCE_NODAL_LOADS_PRESERVED_PHYSICALLY
   - NO_NEAREST_NODE_MAPPING
   - T6_SAMPLE_PROFILE_30MM_UNCHANGED
   - FROZEN_NUMERICAL_ORACLES_UNCHANGED
 main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
 overlap_state: SAFE
-note: PR1270 exact-file claim does not overlap these files; B01/B02 numerical authority is protected and untouched.
+note: PR1270 exact-file claim does not overlap these files; B01/B02 numerical authority is protected and untouched. Sample BC/load equivalence is compared by source physical coordinate + DOF/value because the retained mesh owns solver node identity.

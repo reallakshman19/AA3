@@ -43,7 +43,7 @@ import { augmentPipingComponentTemperatureAuthorities } from './thermal-expansio
  */
 export function compileInputXmlLinearElementAuthorities(input) {
   const request = input ?? {};
-  const sourcePreparation = request.sourcePreparation;
+  const sourcePreparation = requireSourcePreparation(request.sourcePreparation);
   const structuralPreparation = request.structuralPreparation;
   const frameProfile = request.frameProfile;
   const loadCase = request.loadCase === undefined ? null : request.loadCase;
@@ -82,7 +82,7 @@ export function compileInputXmlLinearElementAuthorities(input) {
 
   let acceptedFactorAuthority = null;
   let pipingComponents = [];
-  const eligibleBendCount = (sourcePreparation?.normalizedGeometry?.segments ?? [])
+  const eligibleBendCount = sourcePreparation.normalizedGeometry.segments
     .filter(productionBendSourceEligible).length;
   if (capability.bendExactMechanics && eligibleBendCount > 0) {
     if (bendFactorAuthority === null) {
@@ -226,4 +226,15 @@ export function compileInputXmlLinearElementAuthorities(input) {
     eligibleBendCount,
     effectiveStiffnessStateHash,
   });
+}
+
+function requireSourcePreparation(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || !value.normalizedGeometry || !Array.isArray(value.normalizedGeometry.segments)) {
+    throw elementAuthorityError(
+      'INPUTXML_ELEMENT_SOURCE_PREPARATION_REQUIRED',
+      'Element authority compilation requires retained source preparation with normalized geometry.',
+    );
+  }
+  return value;
 }

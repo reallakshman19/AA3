@@ -1,0 +1,63 @@
+{
+  "schema": "emp1-wrc537-stress-intensity-source-qualification/v1",
+  "issue": 1383,
+  "status": "BLOCKED_PRIMARY_STRESS_INTENSITY_RECONSTRUCTION_UNQUALIFIED",
+  "sourceDocument": {
+    "identity": "WRC Bulletin 537, 2013 retained source package",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "primaryPageReobservationAvailableInConnectedEnvironment": false,
+    "retainedSecondaryExtraction": "docs/01_WRC537_METHOD_DEFINITION.md",
+    "retainedExtractionAuthority": "NOT_READY_FOR_IMPLEMENTATION"
+  },
+  "currentImplementation": {
+    "file": "src/core/emp1/emp1-wrc537-cylindrical-table5.js",
+    "function": "planeStressTresca",
+    "mathematicalConstruction": "PLANE_STRESS_PRINCIPAL_STRESSES_WITH_SIGMA3_ZERO_THEN_MAX_PRINCIPAL_DIFFERENCE",
+    "thirdPrincipalStress": 0,
+    "stressIntensityDefinitionImplemented": "max(abs(sigma1-sigma2),abs(sigma2-sigma3),abs(sigma3-sigma1))",
+    "eightPointEnvelopeBasis": "MAXIMUM_OVER_EVALUATED_TABLE5_EIGHT_POINTS_ONLY",
+    "globalAbsoluteMaximumClaim": false,
+    "implementationChangedByThisQualification": false
+  },
+  "retainedSecondarySourceClaims": {
+    "symbol": "S",
+    "meaning": "stress intensity = twice maximum shear stress",
+    "classification": "SOURCE_METHOD_CANDIDATE_PENDING_PRIMARY_VERIFICATION",
+    "detailedFormulaTextAuthority": false,
+    "ocrOrSecondaryTranscriptionRisk": true
+  },
+  "authoritySeparation": {
+    "A_MATHEMATICAL_TRESCA_CORRECTNESS": "INTERNALLY_REPRODUCIBLE",
+    "B_WRC_PRIMARY_SOURCE_RECONSTRUCTION_AUTHORITY": "UNQUALIFIED",
+    "C_CODE_ACCEPTANCE_AUTHORITY": "UNQUALIFIED",
+    "rule": "A_DOES_NOT_ESTABLISH_B_AND_B_DOES_NOT_ESTABLISH_C"
+  },
+  "unresolvedPrimarySourceQuestions": [
+    "exact WRC definition of S",
+    "exact principal-stress reconstruction equation",
+    "explicit plane-stress assumption and sigma3 treatment",
+    "inside/outside surface timing relative to stress-intensity calculation",
+    "sign handling before principal-stress reconstruction",
+    "shear superposition ordering for Vc, Vl and Mt",
+    "whether absolute values or envelopes are applied before or after component superposition",
+    "whether von Mises is provided or permitted as an alternative",
+    "whether Table 5 supplies S directly or requires post-processing",
+    "whether the eight-point envelope is WRC-defined or product post-processing"
+  ],
+  "prohibitedChangesBeforeClosure": [
+    "replace Tresca with von Mises",
+    "modify planeStressTresca to match secondary or OCR formula text",
+    "promote secondary formula transcription to production authority",
+    "claim eight-point envelope is global absolute maximum",
+    "infer code compliance from stress intensity"
+  ],
+  "requiredFailClosedState": {
+    "primaryStressIntensityReconstructionAuthority": false,
+    "vonMisesAlternativeAuthority": false,
+    "globalMaximumAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseAuthority": false
+  },
+  "productionChangesAuthorizedByThisRecord": false,
+  "workflowChangesAuthorizedByThisRecord": false
+}

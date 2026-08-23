@@ -30,7 +30,6 @@ export function retopologiseDeclaredBends(geometry, profile) {
   const lengthErrorLimit = requirePositiveDeclaredValue(profile, 'bendLengthErrorLimit');
   const sourceNodesById = new Map(geometry.nodes.map((node) => [String(node.id), node]));
   const sourceSegments = [...geometry.segments].sort((left, right) => compareAscii(left.id, right.id));
-  const sourceSegmentsById = new Map(sourceSegments.map((segment) => [String(segment.id), segment]));
 
   const definitions = [];
   const startTrimBySegmentId = new Map();
@@ -90,7 +89,11 @@ export function retopologiseDeclaredBends(geometry, profile) {
       || String(end.id) !== String(source.endNodeId)
       || bend !== null;
     const bodyLength = distance(start, end);
-    const bodyExists = bodyLength > absoluteTolerance(start, end);
+    // An ACCDB bend source includes a finite incoming straight ending at t0.
+    // A tangent-to-tangent InputXML bend does not: retaining its original
+    // start->end chord would put a parallel straight member across the arc.
+    const bodyAllowed = bend === null || bend.tangentBasis === 'ACCDB_CORNER_INTERSECTION_V1';
+    const bodyExists = bodyAllowed && bodyLength > absoluteTolerance(start, end);
     let boundEvidenceOwned = false;
 
     if (bodyExists) {
@@ -152,7 +155,9 @@ export function retopologiseDeclaredBends(geometry, profile) {
     }
   }
 
-  const referencedNodeIds = new Set(outputSegments.flatMap((segment) => [
+  const finalSegments = outputSegments.map((segment) =>
+    retargetBoundSegmentEvidence(segment, retiredNodeRecords));
+  const referencedNodeIds = new Set(finalSegments.flatMap((segment) => [
     String(segment.startNodeId), String(segment.endNodeId),
   ]));
   const retiredNodeIds = [...retiredNodeRecords.keys()].sort(compareAscii);
@@ -160,7 +165,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
   for (const node of geometry.nodes) {
     const id = String(node.id);
     if (retiredNodeRecords.has(id) && !referencedNodeIds.has(id)) continue;
-    nodes.push(retargetNodeEvidence(node, retiredNodeRecords.get(id) ?? null, generatedNodes));
+    nodes.push(node);
   }
   for (const [id, node] of [...generatedNodes.entries()].sort((left, right) => compareAscii(left[0], right[0]))) {
     if (!sourceNodesById.has(id)) nodes.push(node);
@@ -169,7 +174,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
   const geometryOut = Object.freeze({
     ...geometry,
     nodes: Object.freeze(nodes),
-    segments: Object.freeze(outputSegments),
+    segments: Object.freeze(finalSegments),
   });
   const nodeRetargeting = Object.freeze(Object.fromEntries(
     [...retiredNodeRecords.entries()]
@@ -197,7 +202,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
       chordCount: definitions.reduce((sum, row) => sum + row.chordSegments.length, 0),
       retiredNodeCount: retiredNodeIds.length,
       sourceSegmentCount: sourceSegments.length,
-      producedSegmentCount: outputSegments.length,
+      producedSegmentCount: finalSegments.length,
     }),
   });
 }
@@ -369,6 +374,39 @@ function boundKindsAtNode(node, sourceNodeId, sourceSegments) {
   return [...new Set(kinds)].sort(compareAscii);
 }
 
+function retargetBoundSegmentEvidence(segment, retiredNodeRecords) {
+  const records = segment.meta?.analysis?.forcesMoments;
+  if (!Array.isArray(records) || records.length === 0) return segment;
+  let changed = false;
+  const forcesMoments = records.map((record) => {
+    if (record?.nodeId === null || record?.nodeId === undefined) return record;
+    const sourceNodeId = String(record.nodeId);
+    const target = retiredNodeRecords.get(sourceNodeId) ?? null;
+    if (target === null) return record;
+    if (target.nearestNodeId === null) {
+      fail(
+        'BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS',
+        `Applied force/moment at retired bend corner node ${sourceNodeId} has no unique retained target.`,
+        { sourceNodeId, bendSegmentId: target.bendSegmentId, candidates: target.candidates },
+      );
+    }
+    changed = true;
+    return Object.freeze({
+      ...record,
+      nodeId: String(target.nearestNodeId),
+      retopologySourceNodeId: sourceNodeId,
+    });
+  });
+  if (!changed) return segment;
+  return Object.freeze({
+    ...segment,
+    meta: Object.freeze({
+      ...segment.meta,
+      analysis: Object.freeze({ ...segment.meta.analysis, forcesMoments: Object.freeze(forcesMoments) }),
+    }),
+  });
+}
+
 function segmentMeta(source, extra, preserveBoundEvidence) {
   const meta = { ...(source.meta ?? {}), ...extra };
   if (meta.analysis && typeof meta.analysis === 'object') {
@@ -377,13 +415,6 @@ function segmentMeta(source, extra, preserveBoundEvidence) {
     meta.analysis = Object.freeze(analysis);
   }
   return Object.freeze(meta);
-}
-
-function retargetNodeEvidence(node, retiredRecord, generatedNodes) {
-  if (retiredRecord === null || retiredRecord.nearestNodeId === null) return node;
-  const target = generatedNodes.get(retiredRecord.nearestNodeId) ?? null;
-  if (target === null) return node;
-  return node;
 }
 
 function freezeNodeRetargeting(record) {
@@ -431,8 +462,8 @@ function uniqueNearest(candidates) {
   const ordered = [...candidates].sort((left, right) => left.distance - right.distance);
   if (ordered.length === 0) return null;
   if (ordered.length === 1) return ordered[0].nodeId;
-  const scale = Math.max(ordered[0].distance, ordered[1].distance, Number.MIN_VALUE);
-  if (Math.abs(ordered[1].distance - ordered[0].distance) / scale <= RELATIVE_GEOMETRY_TOLERANCE) return null;
+  const scaleValue = Math.max(ordered[0].distance, ordered[1].distance, Number.MIN_VALUE);
+  if (Math.abs(ordered[1].distance - ordered[0].distance) / scaleValue <= RELATIVE_GEOMETRY_TOLERANCE) return null;
   return ordered[0].nodeId;
 }
 

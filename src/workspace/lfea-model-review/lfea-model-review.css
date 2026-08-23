@@ -37,16 +37,26 @@
 .lfea-model-review__pager { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .lfea-model-review__pager p { margin: 0; color: var(--workspace-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 
-.lfea-geometry-review__controls { display: flex; gap: 6px; margin: 0 0 8px; }
+.lfea-geometry-review__controls { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; }
+.lfea-geometry-review__controls-label { color: var(--workspace-muted); font-size: 11px; margin-right: 2px; }
 .lfea-geometry-review [data-role="lfea-geometry-review-identity"],
-.lfea-geometry-review__custody { margin: 6px 0; color: var(--workspace-muted); font-size: 11px; }
+.lfea-geometry-review__custody,
+.lfea-geometry-review__view-hint { margin: 6px 0; color: var(--workspace-muted); font-size: 11px; }
 .lfea-geometry-review__svg { min-height: 260px; border: 1px solid var(--workspace-border); background: var(--workspace-panel-strong); overflow: hidden; }
 .lfea-geometry-review__svg svg { display: block; width: 100%; min-height: 260px; }
-.lfea-geometry-review__segment { stroke: currentColor; stroke-width: 2; }
-.lfea-geometry-review__node { fill: currentColor; }
+.lfea-geometry-review__segment { stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.lfea-geometry-review__segment[data-segment-category="PIPE"] { stroke: #60a5fa; }
+.lfea-geometry-review__segment[data-segment-category="BEND"] { stroke: #f59e0b; }
+.lfea-geometry-review__segment[data-segment-category="FITTING"] { stroke: #c084fc; }
+.lfea-geometry-review__node { fill: #e5eefb; }
+.lfea-geometry-review__restraint { stroke: #22c55e; fill: none; stroke-width: 1.75; stroke-linecap: round; }
+.lfea-geometry-review__restraint-stub { stroke: #22c55e; fill: none; stroke-width: 1.5; stroke-linecap: round; }
+.lfea-geometry-review__restraint-glyph { cursor: help; }
+.lfea-geometry-review__restraint-hit { fill: transparent; stroke: none; pointer-events: all; }
 .lfea-geometry-review__segment-label,
 .lfea-geometry-review__caption { fill: currentColor; font-size: 10px; }
 .lfea-geometry-review__caption { font-size: 11px; }
+.lfea-geometry-review__legend-label { fill: var(--workspace-muted); font-size: 10px; }
 .lfea-geometry-review [data-role="lfea-geometry-review-unavailable"] { margin: 0; padding: 16px; color: var(--workspace-muted); font-size: 12px; }
 
 /* Model Review belongs to Input. Error Check consumes the governed diagnostic

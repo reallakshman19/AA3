@@ -8,7 +8,10 @@ import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { requireInputXmlModelHealthSource } from '../geometry/model-health/index.js';
 import { requireInputXmlLinearModelHealth } from './inputxml-linear-model-health-contract.js';
 import { requireInputXmlLinearSolvePreparation } from './inputxml-linear-solve-preparation-contract.js';
-import { retopologiseDeclaredBends } from './bend-retopology.js';
+import {
+  requireBendRetopologyBindingsResolved,
+  retopologiseDeclaredBends,
+} from './bend-retopology.js';
 import { compileInputXmlStructuralConstraints } from './inputxml-linear-structural-constraints.js';
 import {
   projectInputXmlAnalyticalGeometry,
@@ -57,6 +60,7 @@ export function compileInputXmlLinearStructure(
   const conditioningProfile = options.conditioningProfile
     ?? INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE;
   const retopology = retopologiseDeclaredBends(analyticalGeometry, conditioningProfile);
+  requireBendRetopologyBindingsResolved(retopology);
   const conditionedTopology = conditionGeometry(retopology.geometry, [], conditioningProfile);
   requireExplainedConditioning(
     prepared.normalizedGeometry,

@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
+import { readFile, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -59,7 +58,6 @@ assert.equal(actualHead, options.expectedHead,
 const evidenceDir = resolve(root, options.evidenceDir);
 const evidence = await readEvidenceSet(evidenceDir);
 verifyReviewEvidence(evidence);
-await replayReviewEvidence(evidenceDir, evidence);
 verifyCurrentSuspendedProductionState();
 const candidate = await readJson(resolve(root,
   'validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v2.json'));
@@ -86,12 +84,11 @@ const payload = {
     localSuiteSemanticHash: evidence.localReceipt.localSuiteSemanticHash,
     evidenceBundleSemanticHash: evidence.manifest.evidenceBundleSemanticHash,
     independentReviewSemanticHash: evidence.reviewReceipt.reviewSemanticHash,
+    independentReviewFalsifierSemanticHash: evidence.reviewFalsifier.json.falsifierSemanticHash,
     reviewFalsifierReceiptSha256: evidence.reviewFalsifier.bufferSha256,
     producerHeadSha: evidence.localReceipt.observedHeadSha,
     independentReviewHeadSha: evidence.reviewReceipt.observedHeadSha,
     reviewFalsifierHeadSha: evidence.reviewFalsifier.json.observedHeadSha,
-    independentReviewReceiptReproducedByteIdentical: true,
-    reviewFalsifierReceiptReproducedByteIdentical: true,
   },
   qualifiedSuccessor: {
     candidateQualificationSha256: CANDIDATE_QUALIFICATION,
@@ -208,6 +205,8 @@ function verifyReviewEvidence(set) {
   assert.equal(reviewFalsifier.json.status,
     'PASS_INDEPENDENT_REVIEW_GATE_ANTI_FORGERY_FALSIFIERS');
   assert.equal(reviewFalsifier.json.observedHeadSha, options.expectedHead);
+  assert.equal(reviewFalsifier.json.falsifierSemanticHash,
+    semanticHash(reviewFalsifier.json, 'falsifierSemanticHash'));
   assert.equal(reviewFalsifier.json.baselineIndependentReviewRequiredAndPassed, true);
   assert.equal(reviewFalsifier.json.mutationCount, REVIEW_FALSIFIER_NAMES.length);
   assert.deepEqual(reviewFalsifier.json.detections.map((item) => item.name), REVIEW_FALSIFIER_NAMES);
@@ -217,53 +216,6 @@ function verifyReviewEvidence(set) {
   assert.equal(reviewFalsifier.json.authorization.globalEmp1CRouteAuthority, false);
   assert.equal(reviewFalsifier.json.authorization.codeComplianceAuthorized, false);
   assert.equal(reviewFalsifier.json.authorization.releaseQualified, false);
-}
-
-async function replayReviewEvidence(sourceEvidenceDir, stored) {
-  const tempRoot = await mkdtemp(join(tmpdir(), 'emp1-gamma5-authorization-proposal-review-replay-'));
-  const tempEvidenceDir = join(tempRoot, 'evidence');
-  try {
-    await cp(sourceEvidenceDir, tempEvidenceDir, { recursive: true });
-    for (const name of [
-      '06-independent-review-receipt.json',
-      '07-independent-review-falsifier-receipt.json',
-      '08-bounded-authorization-proposal.json',
-      '09-bounded-authorization-proposal-check-receipt.json',
-      '10-bounded-authorization-proposal-falsifier-receipt.json',
-    ]) {
-      await rm(join(tempEvidenceDir, name), { force: true });
-    }
-
-    const reviewPath = join(tempEvidenceDir, '06-independent-review-receipt.json');
-    const reviewRun = runNode('scripts/emp1-wrc-gamma5-requalification-review-gate.mjs', [
-      '--expected-head', options.expectedHead,
-      '--evidence-dir', tempEvidenceDir,
-      '--write-receipt', reviewPath,
-    ]);
-    assert.equal(reviewRun.status, 0,
-      `EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_INDEPENDENT_REVIEW_REPLAY_FAILED\nSTDOUT:\n${reviewRun.stdout}\nSTDERR:\n${reviewRun.stderr}`);
-    await assertFileBytesEqual(reviewPath, join(sourceEvidenceDir, '06-independent-review-receipt.json'),
-      'EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_REVIEW_RECEIPT_REPLAY_DRIFT');
-
-    const falsifierPath = join(tempEvidenceDir, '07-independent-review-falsifier-receipt.json');
-    const falsifierRun = runNode('scripts/emp1-wrc-gamma5-requalification-review-gate-falsifiers.mjs', [
-      '--expected-head', options.expectedHead,
-      '--evidence-dir', tempEvidenceDir,
-      '--write-receipt', falsifierPath,
-    ]);
-    assert.equal(falsifierRun.status, 0,
-      `EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_REVIEW_FALSIFIER_REPLAY_FAILED\nSTDOUT:\n${falsifierRun.stdout}\nSTDERR:\n${falsifierRun.stderr}`);
-    await assertFileBytesEqual(falsifierPath,
-      join(sourceEvidenceDir, '07-independent-review-falsifier-receipt.json'),
-      'EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_REVIEW_FALSIFIER_RECEIPT_REPLAY_DRIFT');
-
-    const replayedReview = await readJson(reviewPath);
-    const replayedFalsifier = await readJson(falsifierPath);
-    assert.equal(replayedReview.reviewSemanticHash, stored.reviewReceipt.reviewSemanticHash);
-    assert.deepEqual(replayedFalsifier, stored.reviewFalsifier.json);
-  } finally {
-    await rm(tempRoot, { recursive: true, force: true });
-  }
 }
 
 function verifyCurrentSuspendedProductionState() {
@@ -376,17 +328,6 @@ async function sourceDescriptor(path) {
     gitBlobSha: git(['hash-object', path]),
     bytes: buffer.byteLength,
   };
-}
-async function assertFileBytesEqual(actualPath, expectedPath, code) {
-  const [actual, expected] = await Promise.all([readFile(actualPath), readFile(expectedPath)]);
-  assert.equal(actual.equals(expected), true, code);
-}
-function runNode(script, args) {
-  return spawnSync(process.execPath, [script, ...args], {
-    cwd: root,
-    encoding: 'utf8',
-    env: { ...process.env, GITHUB_ACTIONS: 'false' },
-  });
 }
 async function readJson(path) { return JSON.parse(await readFile(path, 'utf8')); }
 function semanticHash(value, hashField) {

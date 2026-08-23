@@ -9,6 +9,7 @@
 - `PREDECESSOR_PR: #1296 — stale stacked carrier, not safe to merge to current main`
 - `BASE: main@9ba280b689e77b41e035824fb86347dca965a21c`
 - `BRANCH: agent/emp1-higher-gamma-domain-current-main-20260823`
+- `REPORT_BASIS_HEAD: a575b84f4d7203619efd2f62d76605c87f47f6ba`
 - `MERGE_AUTHORITY: OWNER_GRANTED_IN_CHAT_2026-08-23`
 - `PRODUCTION_CODE_CHANGED: false`
 - `WORKFLOW_FILES_CHANGED: false`
@@ -155,6 +156,19 @@ The checker verifies:
 - status: `NOT_RUN_EXECUTION_ENVIRONMENT`
 - reason: repository-wide GitHub Actions pre-step failure remains open under #54; direct environment cannot resolve github.com for checkout.
 - no current runtime PASS is claimed.
+
+### VAL-HG-06 — PR1346 automatic workflow observation
+
+- tested head: `a575b84f4d7203619efd2f62d76605c87f47f6ba`
+- gamma5 workflow run: `32644723597`
+- job: `97207119901`
+- status: `completed/failure`
+- steps: `null`
+- logs: unavailable
+- classification: `NOT_RUN_EXECUTION_ENVIRONMENT`
+- interpretation: no checkout or Node command executed; this is infrastructure evidence only and does not change the source-domain conclusion.
+
+This report-only update does not change the engineering basis.
 
 ## Authority result
 

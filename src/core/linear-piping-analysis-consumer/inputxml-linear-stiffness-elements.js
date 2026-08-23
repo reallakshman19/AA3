@@ -1,10 +1,6 @@
 import { compileInputXmlLinearElementAuthorities } from './inputxml-linear-element-authorities.js';
 
-/**
- * Stiffness-preflight view of the single production element-authority chain.
- * No load case is supplied here, so the returned contributions carry stiffness
- * only. Runtime execution calls the same compiler with a physical load case.
- */
+/** Stiffness-preflight view of the single production element-authority chain. */
 export function compileInputXmlStiffnessElementAuthorities(
   structuralPreparation,
   frameProfile,
@@ -17,6 +13,7 @@ export function compileInputXmlStiffnessElementAuthorities(
     frameProfile,
     loadCase: null,
     bendFactorAuthority: resolvedOptions.bendFactorAuthority ?? null,
+    branchFactorAuthority: resolvedOptions.branchFactorAuthority ?? null,
     capabilityProfile: resolvedOptions.capabilityProfile,
   });
 }

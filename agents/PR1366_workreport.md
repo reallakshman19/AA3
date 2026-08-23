@@ -7,8 +7,8 @@ Make the Engineering viewport mode strip consume canonical LAFEA mesh/execution 
 - PR: #1366
 - Branch: `agent/lafea-viewport-applicability-20260823`
 - Base at PR opening: `main@8d3c5d0d906cfb19d84dc5313f9799ba7d7f20fd`
-- Draft: true
-- Merge: NOT AUTHORIZED / NOT PERFORMED
+- Draft: READY_FOR_REVIEW_PENDING_TRANSITION
+- Merge: OWNER_AUTHORIZED_IN_CHAT_2026-08-23 / PENDING
 - Validation execution: NOT_RUN
 
 ## Root defect

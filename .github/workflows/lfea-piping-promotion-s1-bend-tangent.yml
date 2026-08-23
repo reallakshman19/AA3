@@ -6,10 +6,11 @@ on:
       - 'agents/PR1348_workreport.md'
       - 'src/core/geometry/adapters/accdb-to-canonical-geometry.js'
       - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
-      - 'src/core/linear-piping-analysis-consumer/bend-retopology.js'
+      - 'src/core/linear-piping-analysis-consumer/bend-retopology*.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-retopology.js'
       - 'scripts/lfea-bend-tangent-custody-check.mjs'
       - 'scripts/lfea-bend-retopology-check.mjs'
       - 'scripts/lfea-bm4l-bend-tangent-source-check.mjs'
@@ -34,7 +35,11 @@ jobs:
       - name: Check changed JavaScript syntax
         run: |
           node --check src/core/linear-piping-analysis-consumer/bend-retopology.js
+          node --check src/core/linear-piping-analysis-consumer/bend-retopology-contract.js
+          node --check src/core/linear-piping-analysis-consumer/bend-retopology-geometry.js
+          node --check src/core/linear-piping-analysis-consumer/bend-retopology-bindings.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-retopology.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js
           node --check scripts/lfea-bend-tangent-custody-check.mjs
@@ -49,6 +54,9 @@ jobs:
 
       - name: Run existing ACCDB geometry regression
         run: node scripts/accdb-to-canonical-geometry-check.mjs
+
+      - name: Enforce linear piping anti-drift rules
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
 
   real-bm4l-s1-s2:
     needs: deterministic-s1-s2

@@ -1,4 +1,4 @@
-name: LFEA S1-S2 bend geometry promotion
+name: LFEA S1-S3 bend mechanics promotion
 
 on:
   pull_request:
@@ -7,12 +7,26 @@ on:
       - 'src/core/geometry/adapters/accdb-to-canonical-geometry.js'
       - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
       - 'src/core/linear-piping-analysis-consumer/bend-retopology*.js'
+      - 'src/core/linear-piping-analysis-consumer/production-capability-profile.js'
+      - 'src/core/linear-piping-analysis-consumer/production-bend-component-profile.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-production-bend-*.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-element-authorities.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-elements.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-production-executor.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-retopology.js'
+      - 'src/lfea/native-b31-case-chain.js'
+      - 'src/lfea/native-support-publication-case-chain.js'
       - 'scripts/lfea-bend-tangent-custody-check.mjs'
       - 'scripts/lfea-bend-retopology-check.mjs'
+      - 'scripts/lfea-s3-bend-production-authority-check.mjs'
       - 'scripts/lfea-bm4l-bend-tangent-source-check.mjs'
       - 'scripts/lfea-bm4l-bend-retopology-source-check.mjs'
       - 'scripts/lfea-bm4l-bend-tangent-source-check.ps1'
@@ -22,7 +36,7 @@ permissions:
   contents: read
 
 jobs:
-  deterministic-s1-s2:
+  deterministic-s1-s3:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -42,8 +56,24 @@ jobs:
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-retopology.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js
+          node --check src/core/linear-piping-analysis-consumer/production-capability-profile.js
+          node --check src/core/linear-piping-analysis-consumer/production-bend-component-profile.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-production-bend-factor-authority.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-production-bend-components.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-production-bend-topology.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-element-authorities.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-elements.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-production-executor.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js
+          node --check src/lfea/native-b31-case-chain.js
+          node --check src/lfea/native-support-publication-case-chain.js
           node --check scripts/lfea-bend-tangent-custody-check.mjs
           node --check scripts/lfea-bend-retopology-check.mjs
+          node --check scripts/lfea-s3-bend-production-authority-check.mjs
           node --check scripts/lfea-bm4l-bend-retopology-source-check.mjs
 
       - name: Run deterministic S1 tangent custody check
@@ -52,6 +82,9 @@ jobs:
       - name: Run deterministic S2 retopology check
         run: node scripts/lfea-bend-retopology-check.mjs
 
+      - name: Run deterministic S3 production bend authority check
+        run: node scripts/lfea-s3-bend-production-authority-check.mjs
+
       - name: Run existing ACCDB geometry regression
         run: node scripts/accdb-to-canonical-geometry-check.mjs
 
@@ -59,7 +92,7 @@ jobs:
         run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
 
   real-bm4l-s1-s2:
-    needs: deterministic-s1-s2
+    needs: deterministic-s1-s3
     runs-on: windows-latest
     timeout-minutes: 25
     steps:

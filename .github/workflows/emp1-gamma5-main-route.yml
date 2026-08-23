@@ -16,12 +16,36 @@ jobs:
           node-version: '20'
       - name: Enforce independent-oracle import firewall
         run: node scripts/emp1-wrc537-independent-oracle-import-firewall-check.mjs
-      - name: Retain exact-head requalification observation
+      - name: Replay exact-head subordinate evidence
+        run: |
+          node scripts/emp1-wrc-gamma5-requalification-observation-replay-check.mjs \
+            --record validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-observation.generated.json \
+            --expected-observed-head "${{ github.sha }}" \
+            --write-receipt validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-replay.generated.json
+      - name: Falsify tampered exact-head observations
+        run: |
+          node scripts/emp1-wrc-gamma5-requalification-observation-falsifiers.mjs \
+            --record validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-observation.generated.json \
+            --expected-observed-head "${{ github.sha }}" \
+            --write-receipt validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-falsifiers.generated.json
+      - name: Build exact-head evidence manifest
+        run: |
+          node scripts/emp1-wrc-gamma5-requalification-evidence-manifest.mjs \
+            --expected-head "${{ github.sha }}" \
+            --observation validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-observation.generated.json \
+            --replay-receipt validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-replay.generated.json \
+            --falsifier-receipt validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-falsifiers.generated.json \
+            --write-manifest validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-evidence-manifest.generated.json
+      - name: Retain exact-head requalification evidence bundle
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: emp1-gamma5-exact-head-requalification-${{ github.sha }}
-          path: validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-observation.generated.json
+          path: |
+            validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-observation.generated.json
+            validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-replay.generated.json
+            validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-falsifiers.generated.json
+            validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-evidence-manifest.generated.json
           if-no-files-found: ignore
           retention-days: 30
       - name: Qualify independent oracle interpretation decoupling

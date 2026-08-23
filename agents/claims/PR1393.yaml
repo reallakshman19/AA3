@@ -1,0 +1,33 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1393
+claim_state: ACTIVE
+files:
+  exact:
+    - agents/PR1393_workreport.md
+    - agents/status/PR1393.yaml
+    - agents/claims/PR1393.yaml
+    - scripts/lib/lafea1371-custody-assertions.mjs
+    - scripts/lafea1371-cross-stage-anti-drift-check.mjs
+  prefixes: []
+authority_domains:
+  - LAFEA3_LAFEA4_ANTI_DRIFT_REGRESSION
+  - LAFEA_EXECUTION_CUSTODY_TEST_HELPER
+claim_modes:
+  - EXCLUSIVE_EXACT_FILES
+excluded_authority:
+  - PRODUCTION_LIFECYCLE_MUTATION
+  - CONTINUUM_OR_SHELL_SOLVER_MECHANICS
+  - MESH_QUALITY_THRESHOLD_CHANGE
+  - BENCHMARK_ORACLE_CHANGE
+  - REGISTRY_LIMITATION_SOFTENING_WITHOUT_EXECUTED_EVIDENCE
+  - RELEASE_AUTHORITY
+invariants:
+  - SOURCE_HASH_DETERMINISTIC_FOR_IDENTICAL_SOURCE
+  - SOURCE_EDIT_REVOKES_OLD_DESCENDANT_AUTHORITY
+  - MESH_PROFILE_CHANGE_REVOKES_OLD_SOLVER_EXECUTION_RECOVERY_AUTHORITY
+  - UNCHANGED_GEOMETRY_PROFILE_REPRODUCES_MESH_CONTENT_HASH
+  - E_PLUS_5_PERCENT_FORCE_CONTROL_DISPLACEMENT_RATIO_1_OVER_1_05
+  - FROZEN_ORACLES_UNCHANGED
+main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
+overlap_state: SAFE
+note: Test-only PR-D; no exact product/oracle path overlap with PR1388/PR1390/PR1392. Registry cleanup is explicitly blocked pending executed exact-head evidence.

@@ -13,6 +13,13 @@ assert.match(analysis, /Source metadata/u);
 assert.match(analysis, /Continuum formulation basis/u);
 assert.doesNotMatch(analysis, /card\.append\(heading, select, status, facts\)/u);
 assert.match(analysis, /visibleRows: model\.solverSummaryRows\.filter/u);
+assert.match(analysis, /SOURCE_REQUIRED/u);
+assert.match(analysis, /SOURCE_FORMULATION_REQUIRED/u);
+assert.match(analysis, /const current = typeof documentValue\?\.formulation === 'string'[\s\S]*?: null;/u);
+assert.doesNotMatch(analysis, /: FORMULATIONS\.PLANE_STRESS;/u);
+assert.doesNotMatch(analysis, /Provided by workbench registry/u);
+assert.doesNotMatch(analysis, /Not initialized/u);
+assert.doesNotMatch(analysis, /Not declared by the active stage source contract/u);
 
 assert.match(panel, /MAX_INLINE_FOCUS_ACTIONS = 6/u);
 assert.match(panel, /High-order mapping: \$\{state\}/u);
@@ -46,6 +53,7 @@ console.log(JSON.stringify({
   custodyIdentifiersCollapsed: true,
   accessibleDisclosurePrimitive: true,
   presentationOnlyRounding: true,
+  sourceAbsenceDoesNotInventEngineeringValues: true,
   engineeringGateMathChanged: false,
 }));
 

@@ -22,6 +22,9 @@ const expectations = Object.freeze({
   ACCEPTED: ['Accepted', 'positive'],
   QUALIFIED_SOURCE_INPUT: ['Qualified source', 'positive'],
   ADVISORY: ['Advisory', 'warning'],
+  SOURCE_REQUIRED: ['Source required', 'neutral'],
+  SOURCE_FORMULATION_REQUIRED: ['Source formulation required', 'warning'],
+  SOURCE_FORMULATION_UNRECOGNIZED: ['Unrecognized source formulation', 'critical'],
   MESH_REQUIRED: ['Mesh required', 'warning'],
   MESH_REGENERATION_REQUIRED: ['Mesh regeneration required', 'warning'],
   QUALIFIED_NOT_CURRENT: ['Previous result — stale', 'warning'],
@@ -130,6 +133,10 @@ assert.match(settings, /Continuum formulation basis/u);
 assert.match(settings, /visibleRows: model\.solverSummaryRows\.filter/u);
 assert.match(settings, /Technical identifiers and lifecycle custody/u);
 assert.match(settings, /dataset\.role = 'lafea-technical-evidence'/u);
+assert.match(settings, /SOURCE_REQUIRED/u);
+assert.match(settings, /SOURCE_FORMULATION_REQUIRED/u);
+assert.doesNotMatch(settings, /Provided by workbench registry/u);
+assert.doesNotMatch(settings, /Not declared by the active stage source contract/u);
 
 const evidence = read('../src/workspace/lafea-workbench-evidence.js');
 assert.match(evidence, /dataset\.role = 'lafea-engineering-evidence-drawer'/u);
@@ -172,7 +179,7 @@ assert.match(refinement, /refinement\.replaceWith\(details\)/u);
 const controllerIo = read('../src/workspace/lafea-workbench-controller-io.js');
 assert.match(controllerIo, /LAFEA_UI_MODERNIZATION_STYLES/u);
 
-console.log('LAFEA formal UI hierarchy, decision-first solve, on-demand refinement, evidence, icon, and terminology boundary check: PASS');
+console.log('LAFEA formal UI hierarchy, decision-first solve, on-demand refinement, evidence, icon, terminology boundary check: PASS');
 
 function read(relative) {
   return readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');

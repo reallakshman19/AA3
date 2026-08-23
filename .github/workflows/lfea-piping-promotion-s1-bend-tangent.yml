@@ -1,4 +1,4 @@
-name: LFEA S1 bend tangent custody
+name: LFEA S1-S2 bend geometry promotion
 
 on:
   pull_request:
@@ -6,8 +6,14 @@ on:
       - 'agents/PR1348_workreport.md'
       - 'src/core/geometry/adapters/accdb-to-canonical-geometry.js'
       - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
+      - 'src/core/linear-piping-analysis-consumer/bend-retopology.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js'
       - 'scripts/lfea-bend-tangent-custody-check.mjs'
+      - 'scripts/lfea-bend-retopology-check.mjs'
       - 'scripts/lfea-bm4l-bend-tangent-source-check.mjs'
+      - 'scripts/lfea-bm4l-bend-retopology-source-check.mjs'
       - 'scripts/lfea-bm4l-bend-tangent-source-check.ps1'
       - '.github/workflows/lfea-piping-promotion-s1-bend-tangent.yml'
 
@@ -15,7 +21,37 @@ permissions:
   contents: read
 
 jobs:
-  qualify-s1-bend-tangents:
+  deterministic-s1-s2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check changed JavaScript syntax
+        run: |
+          node --check src/core/linear-piping-analysis-consumer/bend-retopology.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js
+          node --check scripts/lfea-bend-tangent-custody-check.mjs
+          node --check scripts/lfea-bend-retopology-check.mjs
+          node --check scripts/lfea-bm4l-bend-retopology-source-check.mjs
+
+      - name: Run deterministic S1 tangent custody check
+        run: node scripts/lfea-bend-tangent-custody-check.mjs
+
+      - name: Run deterministic S2 retopology check
+        run: node scripts/lfea-bend-retopology-check.mjs
+
+      - name: Run existing ACCDB geometry regression
+        run: node scripts/accdb-to-canonical-geometry-check.mjs
+
+  real-bm4l-s1-s2:
+    needs: deterministic-s1-s2
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
@@ -24,10 +60,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Run deterministic adapter custody check
-        shell: pwsh
-        run: node scripts/lfea-bend-tangent-custody-check.mjs
 
       - name: Acquire pinned BM4_L source and authenticated ACE provider
         shell: pwsh
@@ -68,7 +100,7 @@ jobs:
           }
           if (-not (Test-Path $progIdKey)) { throw 'Microsoft.ACE.OLEDB.12.0 is not registered after setup.' }
 
-      - name: Qualify all 10 real BM4_L bend tangents
+      - name: Qualify real BM4_L S1 tangents and S2 retopology
         shell: pwsh
         run: |
           ./scripts/lfea-bm4l-bend-tangent-source-check.ps1 `

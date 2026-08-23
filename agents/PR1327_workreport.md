@@ -11,6 +11,7 @@
 - `BASE_MAIN: eb6e4c299132644cfd2bddeb5b86dc458524e35d`
 - `CURRENT_MAIN_INTEGRATION_COMMIT: 056ccf15d71e3a7cceca327afae949f442f24489`
 - `LAST_ENGINEERING_HEAD: 9f9190c5f4d182bd71c938859fb8e088e8de6e93`
+- `CURRENT_REPORT_HEAD: c8ddd70b0620ad6210327028feb3364227cf3dd9`
 - `PRODUCTION_ROUTE_AUTHORIZED: false`
 - `GLOBAL_EMP1_C_ROUTE_AUTHORIZED: false`
 - `CODE_COMPLIANCE_AUTHORIZED: false`
@@ -60,7 +61,7 @@ Still prohibited:
 Historical Au ≈72.6728 MPa is comparison evidence only and never authorization.
 
 ## Current-main custody
-`main` remains `eb6e4c299132644cfd2bddeb5b86dc458524e35d`; PR #1327 was `0` commits behind at the start of the current batch.
+`main` remains `eb6e4c299132644cfd2bddeb5b86dc458524e35d`; PR #1327 is `0` commits behind it.
 
 Integrated production history relevant to this PR:
 1. PR #1325 merge `1d08bcd0fdebc86fc2daaeb752f129b877e01c74`;
@@ -255,7 +256,7 @@ Required invocation inputs:
 ### Base-tree anti-drift rule
 The authorization-base commit must be an ancestor of the authorization HEAD and its Git tree SHA must equal `08.observedSuspendedTreeSha` exactly.
 
-This deliberately permits a squash/merge SHA to differ from the suspended evidence SHA **only when the tree is byte-identical**. Any source drift before authorization invalidates the promotion basis and requires a new suspended-head qualification/proposal cycle.
+This permits a squash/merge SHA to differ from the suspended evidence SHA **only when the tree is byte-identical**. Any source drift before authorization invalidates the promotion basis and requires a new suspended-head qualification/proposal cycle.
 
 ### Exact changed-file rule
 Between authorization base and authorization HEAD:
@@ -264,9 +265,7 @@ Between authorization base and authorization HEAD:
 - no other path may change.
 
 ### Byte-exact source reconstruction
-The gate does not merely inspect exported booleans.
-
-It loads the route and registry bytes from the authorization base, verifies those base bytes against the source preimages frozen in file `08`, applies the exact approved textual mutations, and requires the current authorization-head route/registry files to be byte-identical to the reconstructed expected files.
+The gate loads route/registry bytes from the authorization base, verifies those base bytes against file `08` source preimages, applies the exact approved textual mutations, and requires the current authorization-head route/registry files to be byte-identical to the reconstructed expected files.
 
 This blocks extra code, hidden fallbacks, unrelated cleanup or a backdoor inserted inside either otherwise-allowed production file.
 
@@ -285,20 +284,16 @@ On the authorization HEAD the gate requires:
 - code-compliance and release authority remain false.
 
 ### Real production-path numerical requalification
-The gate executes the real `runEmp1Wrc537Gamma5ZeroDpRoute()` path using the frozen post-authority physical benchmark and source-qualified runtime custody for:
-- cylindrical axis;
-- attachment OD/r0 basis;
-- WRC §4.5 applicability geometry;
-- zero-dp load transfer.
+The gate executes the real `runEmp1Wrc537Gamma5ZeroDpRoute()` path using the frozen post-authority physical benchmark and source-qualified cylindrical-axis, attachment-OD/r0, applicability and zero-dp load custody.
 
-It then requires:
-- real production state `EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE`;
+It requires:
+- state `EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE`;
 - 6/6 WRC loads exactly equal to the frozen physical oracle;
 - all 32 Table-5 stress comparisons within `max(1e-12, max(1, |expected|) * 1e-11)`;
 - post-authority `1B / 2B` curve map;
 - global EMP.1.C authority false.
 
-It also reruns the independent oracle decoupling/refreeze and post-authority oracle falsifiers on the authorization HEAD.
+It also reruns independent oracle decoupling/refreeze and post-authority oracle falsifiers on the authorization HEAD.
 
 Optional file:
 `11-post-promotion-exact-head-receipt.json`
@@ -306,7 +301,7 @@ Optional file:
 Expected future genuine status:
 `PASS_POST_PROMOTION_EXACT_HEAD_BOUNDED_ROUTE_AUTHORIZATION_QUALIFIED_GLOBAL_C_STILL_BLOCKED`.
 
-The gate does not mutate authorization. Its receipt states `authorizationChangeAppliedByThisGate=false`; it verifies an authorization change already present on the observed head.
+The gate does not mutate authorization. Its receipt states `authorizationChangeAppliedByThisGate=false`.
 
 ## Required retained authorization record contract
 A future authorization patch must create:
@@ -319,7 +314,7 @@ Required schema/status:
 - self-verifying `authorizationRecordSemanticHash`.
 
 It must bind:
-- proposal, proposal-check and proposal-falsifier semantic hashes;
+- proposal/check/falsifier semantic hashes;
 - qualified suspended HEAD/tree;
 - authorization-base HEAD/tree;
 - candidate qualification `9ea591...`;
@@ -331,7 +326,7 @@ It must bind:
 - false global/code/release and expansion authority;
 - raw SHA-256 for files `01` through `10`.
 
-Its post-promotion field must remain **pending** inside source:
+Its post-promotion field remains pending in source:
 - `required=true`;
 - `completed=false`;
 - `observedHeadSha=null`;
@@ -339,12 +334,12 @@ Its post-promotion field must remain **pending** inside source:
 - expected gate schema `emp1-wrc537-gamma5-post-promotion-exact-head-gate/v1`;
 - expected receipt file `11-post-promotion-exact-head-receipt.json`.
 
-This avoids a self-referential commit-hash problem: the retained source record does not pretend to know or certify its own final commit SHA. Exact-head qualification is external evidence generated after the authorization commit exists.
+This avoids a self-referential commit-hash problem: the retained source record does not pretend to certify its own final Git SHA.
 
 ## 13. Post-promotion gate falsifiers
 `scripts/emp1-wrc-gamma5-post-promotion-exact-head-gate-falsifiers.mjs`
 
-A genuine future post-promotion gate baseline must pass first. The suite then rejects 12 attacks:
+A genuine future gate baseline must pass first. The suite then rejects 12 attacks:
 1. authorization-record semantic-hash corruption;
 2. proposal-hash substitution with record rehash;
 3. authorization-base-tree substitution with rehash;
@@ -356,9 +351,9 @@ A genuine future post-promotion gate baseline must pass first. The suite then re
 9. proposal global-authority escalation with rehash;
 10. proposal post-promotion-gate disablement with rehash;
 11. extra logic injected into the otherwise-allowed route source;
-12. nonzero-dp scope expansion in the otherwise-allowed registry source.
+12. nonzero-dp expansion in the otherwise-allowed registry source.
 
-Test-only source/record overrides are accepted by the gate only when `EMP1_POST_PROMOTION_FALSIFIER_MODE=true`; normal qualification cannot use those overrides.
+Test-only source/record overrides are accepted only when `EMP1_POST_PROMOTION_FALSIFIER_MODE=true`; normal qualification cannot use them.
 
 Optional future file:
 `12-post-promotion-exact-head-falsifier-receipt.json`
@@ -371,15 +366,14 @@ Expected future genuine status:
 # Validation truth
 
 ## Static/source review
-- exact-head 6-load/32-stress suspended producer: `COMPLETE_STATIC`;
+- suspended-head 6-load/32-stress producer: `COMPLETE_STATIC`;
 - workflow-independent 23-stage producer: `COMPLETE_STATIC`;
 - independent 23-stage reviewer: `COMPLETE_STATIC`;
 - observation/review/proposal anti-forgery layers: `COMPLETE_STATIC`;
 - historical-vs-post-authority qualification/oracle transition: `COMPLETE_STATIC`;
 - bounded-vs-global EMP.1.C authority separation: `COMPLETE_STATIC`;
 - exact 12-mutation future promotion contract: `COMPLETE_STATIC`;
-- three-file engineering-authority allowlist: `COMPLETE_STATIC`;
-- constrained workreport metadata exception: `COMPLETE_STATIC`;
+- three-file engineering-authority allowlist + one constrained workreport metadata path: `COMPLETE_STATIC`;
 - post-promotion base-tree equality rule: `COMPLETE_STATIC`;
 - byte-exact route/registry reconstruction: `COMPLETE_STATIC`;
 - retained authorization-record contract: `COMPLETE_STATIC`;
@@ -392,7 +386,7 @@ Local syntax-only parsing of the two newly authored scripts was performed before
 ## Runtime
 The available environment still does not contain a complete executable repository checkout.
 
-Current suspended head therefore has:
+Current suspended head:
 - files `01`–`05`: `NOT_GENERATED`;
 - local producer: `NOT_RUN_EXECUTION_ENVIRONMENT`;
 - files `06`–`07`: `NOT_GENERATED`;
@@ -473,7 +467,7 @@ node scripts/emp1-wrc-gamma5-post-promotion-exact-head-gate-falsifiers.mjs \
   --write-receipt "$EVIDENCE_DIR/12-post-promotion-exact-head-falsifier-receipt.json"
 ```
 
-A bounded authorization may be considered qualified only if both files `11` and `12` are genuine PASS evidence for the exact authorization head and global/code/release authority remain false.
+A bounded authorization may be considered qualified only if files `11` and `12` are genuine PASS evidence for the exact authorization head and global/code/release authority remain false.
 
 ---
 
@@ -507,7 +501,7 @@ No production route, bounded registry, global C qualification, code-compliance, 
 - `VAL-1327-04`: no genuine files `06`–`07` exist.
 - `VAL-1327-05`: proposal/check/falsifiers have not executed.
 - `VAL-1327-06`: no genuine files `08`–`10` exist.
-- `VAL-1327-07`: post-promotion gate is authored but intentionally not applicable while the source remains suspended.
+- `VAL-1327-07`: post-promotion gate is authored but intentionally not applicable while source remains suspended.
 - `VAL-1327-08`: no retained authorization record or files `11`–`12` exist because #1327 does not authorize the route.
 - `RISK-1327-01`: historical numerical agreement must not be represented as current route authorization.
 - `RISK-1327-02`: historical oracle `5daeb3...` must not remain active after post-authority promotion.

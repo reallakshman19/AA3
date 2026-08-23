@@ -8,6 +8,7 @@ import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
 import { compileInputXmlExecutionElementAuthorities } from '../core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js';
 import { inputXmlStiffnessFrameElementProfile } from '../core/linear-piping-analysis-consumer/inputxml-linear-stiffness-profile.js';
+import { PRODUCTION_CAPABILITY_PROFILE } from '../core/linear-piping-analysis-consumer/production-capability-profile.js';
 import { requireLfeaNativeStraightCodeStationAuthority } from './native-b31-code-stations.js';
 import { lfeaNativeB31Error } from './native-b31-authority-contract.js';
 
@@ -51,11 +52,16 @@ export function buildLfeaNativeB31CaseChains(
       preparation.structuralPreparation,
       frameProfile,
       physical.loadCase,
+      {
+        sourcePreparation: preparation.sourcePreparation,
+        bendFactorAuthority: preparation.stiffnessPreflight.bendFactorAuthority,
+        capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
+      },
     );
     if (semanticHash(rawCase.elementLedger) !== semanticHash(elements.elementLedger)) {
       throw lfeaNativeB31Error(
         'LFEA_NATIVE_B31_ELEMENT_LEDGER_MISMATCH',
-        `Case ${rawCase.caseId} frame-element authority differs from the retained solve ledger.`,
+        `Case ${rawCase.caseId} element authority differs from the retained solve ledger.`,
       );
     }
     const codeRecovery = deriveCodeRecovery(
@@ -64,13 +70,18 @@ export function buildLfeaNativeB31CaseChains(
       stationAuthority,
       tolerance,
     );
+    const frameRows = [
+      ...elements.frameElements,
+      ...elements.pipingComponents.flatMap((component) =>
+        component.elements.map((entry) => entry.frameElement)),
+    ];
     return deepFreeze({
       caseId: rawCase.caseId,
       loadCase: physical.loadCase,
       baseRecoverySemanticHash: recovered.recovery.semanticHash,
       codeRecovery,
       frameElementById: Object.freeze(Object.fromEntries(
-        elements.frameElements.map((row) => [row.elementId, row]),
+        frameRows.map((row) => [row.elementId, row]),
       )),
     });
   });
@@ -116,29 +127,41 @@ function requireCheckCaseCoverage(chains, checks) {
 
 function deriveCodeRecovery(baseRecoveryRecord, compilation, stationAuthority, tolerance) {
   const baseRecovery = requireResultRecovery(baseRecoveryRecord);
-  if (baseRecovery.componentResultants.length !== 0) {
-    throw lfeaNativeB31Error(
-      'LFEA_NATIVE_B31_BASE_COMPONENT_RESULTANTS_PRESENT',
-      'This native B31 adapter requires the current bare-frame B-3.4 recovery boundary.',
-    );
-  }
   const actionByElementId = new Map(baseRecovery.elementActions.map((row) => [
     row.elementId,
     { local: row.local, global: row.global },
   ]));
   const modelElementsById = new Map(compilation.model.elements.map((row) => [row.elementId, row]));
-  const componentResultants = stationAuthority.components.map((component) => ({
-    componentId: component.componentId,
-    componentType: component.componentType,
-    codePoints: component.stations.map((station) => recoverComponentCodePoint({
-      station,
-      componentElementIds: [component.elementId],
-      modelElementsById,
-      actionByElementId,
-      nodalLoadByNode: new Map(),
-      tolerance,
-    })),
-  }));
+  const existingIds = new Set(baseRecovery.componentResultants.map((row) => row.componentId));
+  const addedResultants = stationAuthority.components.map((component) => {
+    if (existingIds.has(component.componentId)) {
+      throw lfeaNativeB31Error(
+        'LFEA_NATIVE_B31_COMPONENT_RESULTANT_COLLISION',
+        `B31 straight code-station component ${component.componentId} collides with an existing B-3.4 component resultant.`,
+      );
+    }
+    return {
+      componentId: component.componentId,
+      componentType: component.componentType,
+      codePoints: component.stations.map((station) => recoverComponentCodePoint({
+        station,
+        componentElementIds: [component.elementId],
+        modelElementsById,
+        actionByElementId,
+        nodalLoadByNode: new Map(),
+        tolerance,
+      })),
+    };
+  });
+  // Exact bend/component recovery is already part of the solved B-3.4 parent.
+  // B31 straight-station authoring augments that evidence; it must not discard
+  // or reject the component resultants merely because B-3.2 now owns some
+  // spans. SIF/code-stress promotion for those bend resultants remains a
+  // separate code-authority stage.
+  const componentResultants = [
+    ...baseRecovery.componentResultants,
+    ...addedResultants,
+  ].sort((left, right) => compareAscii(left.componentId, right.componentId));
   const draft = {
     ...baseRecovery,
     componentResultants,

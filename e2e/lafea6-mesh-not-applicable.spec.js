@@ -12,6 +12,17 @@ test('LAFEA.6 presents mesh and solve as not applicable without dead actions', a
   await expect(workbench).toBeVisible();
   await workbench.locator('.lafea-workbench__stages [data-stage-id="LAFEA.6"]').click();
 
+  const navigator = workbench.locator('[data-role="lafea-guided-workflow"]');
+  await expect(navigator).toBeVisible();
+  for (const areaId of ['MESH', 'SOLVE', 'RESULTS']) {
+    const area = navigator.locator(`[data-workflow-area="${areaId}"]`);
+    await expect(area).toHaveAttribute('data-ui-status', 'NOT_APPLICABLE');
+    await expect(area.locator('.lafea-guided-workflow__state')).toHaveText('Not applicable');
+  }
+  await expect(
+    navigator.locator('[data-workflow-area="SOLVE"] .lafea-guided-workflow__technical'),
+  ).toHaveCount(0);
+
   const mesh = workbench.locator('[data-role="lafea-discretization"]');
   await expect(mesh).toBeVisible();
   await expect(mesh).toHaveAttribute('data-mesh-applicable', 'false');

@@ -46,19 +46,36 @@ export function buildLafeaWorkflowAreaPresentation(workflow) {
   }
   const byId = new Map(workflow.steps.map((step) => [step.stepId, step]));
   return Object.freeze(AREA_DEFINITIONS.map((definition) => {
-    const steps = Object.freeze(definition.stepIds.map((stepId) => requireStep(byId, stepId)));
+    const canonicalSteps = Object.freeze(
+      definition.stepIds.map((stepId) => requireStep(byId, stepId)),
+    );
+    const status = areaStatus(definition.areaId, workflow, canonicalSteps);
+    const presentationSteps = status === 'NOT_APPLICABLE' && canonicalSteps.length > 1
+      ? Object.freeze([canonicalSteps[canonicalSteps.length - 1]])
+      : canonicalSteps;
     return Object.freeze({
       schema: LAFEA_WORKFLOW_AREA_SCHEMA,
       areaId: definition.areaId,
       label: definition.label,
-      status: aggregateStatus(steps),
-      steps,
-      targetStep: selectTargetStep(steps),
-      reasons: Object.freeze(unique(steps
-        .filter((step) => step.status !== 'COMPLETE')
-        .flatMap((step) => step.reasons))),
+      status,
+      steps: presentationSteps,
+      targetStep: selectTargetStep(canonicalSteps),
+      reasons: status === 'NOT_APPLICABLE'
+        ? Object.freeze([])
+        : Object.freeze(unique(canonicalSteps
+          .filter((step) => step.status !== 'COMPLETE')
+          .flatMap((step) => step.reasons))),
     });
   }));
+}
+
+function areaStatus(areaId, workflow, steps) {
+  if (areaId === 'MESH' && workflow.meshApplicable === false) return 'NOT_APPLICABLE';
+  if ((areaId === 'SOLVE' || areaId === 'RESULTS')
+    && workflow.executionSupported === false) {
+    return 'NOT_APPLICABLE';
+  }
+  return aggregateStatus(steps);
 }
 
 function aggregateStatus(steps) {

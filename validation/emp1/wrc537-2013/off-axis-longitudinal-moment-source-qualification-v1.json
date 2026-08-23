@@ -1,0 +1,98 @@
+{
+  "schema": "emp1-wrc537-off-axis-longitudinal-moment-source-qualification/v1",
+  "issue": 1354,
+  "status": "BLOCKED_OFF_AXIS_PRODUCTION_AUTHORITY_RECOVERY_AND_APPLICABILITY_UNRESOLVED",
+  "engineeringAuthority": false,
+  "productionOffAxisRouteAuthorized": false,
+  "globalAbsoluteMaximumAuthority": false,
+  "currentMainAtGrounding": "d871a987a91ae843b873b7762f324bba758ed5ac",
+  "source": {
+    "document": "docs/emp1/WRC537_2013.pdf",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "retainedAuthorityLedger": "docs/emp1/WRC537_2013_Longitudinal_Moment_Eight_Point_Authority.md",
+    "retainedLocators": [
+      "WRC537_2013_TABLE5_PAGES_41_42",
+      "WRC537_2013_SECTION_4_4",
+      "WRC537_2013_SECTION_4_3_6"
+    ],
+    "primaryBinaryPageReobservationInThisIncrement": "NOT_RUN_IN_CURRENT_CONNECTED_ENVIRONMENT"
+  },
+  "currentEightPointAuthority": {
+    "authorityId": "WRC537_2013_TABLE5_EIGHT_POINT_AXIS_OF_SYMMETRY_1B_2B",
+    "recoveryLocations": ["Au", "Al", "Bu", "Bl", "Cu", "Cl", "Du", "Dl"],
+    "longitudinalMomentFigures": {
+      "circumferentialStress": "1B",
+      "longitudinalStress": "2B"
+    },
+    "continuousJunctureSearchPerformed": false,
+    "absoluteShellMaximumAssured": false,
+    "offAxisMaximumAuthorizedByThisRoute": false
+  },
+  "retainedOffAxisSourceFinding": {
+    "figures": {
+      "circumferentialStress": "1B-1",
+      "longitudinalStress": "2B-1"
+    },
+    "meaning": "MAXIMUM_LONGITUDINAL_MOMENT_BENDING_STRESS_AWAY_FROM_AXES_OF_SYMMETRY",
+    "applicabilityStatement": "ROUND_FLEXIBLE_NOZZLE_CONNECTION_TO_BEST_OF_WRC_KNOWLEDGE",
+    "maySubstituteIntoEightPointRoute": false,
+    "mayClaimGlobalAbsoluteShellMaximum": false
+  },
+  "existingComparisonSelector": {
+    "path": "src/core/emp1/emp1-wrc537-longitudinal-moment-curve-selection.js",
+    "mode": "OFF_AXIS_MAXIMUM",
+    "requiresAttachmentShape": "ROUND",
+    "requiresConnectionFlexibility": "FLEXIBLE_NOZZLE",
+    "requiresApplicabilitySourceRef": true,
+    "productionAuthorityForTable5EightPointRoute": false,
+    "engineeringClassificationQualifiedBySelectorAlone": false
+  },
+  "resolvedAuthority": [
+    {
+      "id": "OFF_AXIS_CURVE_IDENTITY",
+      "status": "RESOLVED_RETAINED_SOURCE",
+      "finding": "1B-1 and 2B-1 are the retained off-axis longitudinal-moment maximum-bending curve identities."
+    },
+    {
+      "id": "EIGHT_POINT_SEPARATION",
+      "status": "RESOLVED_RETAINED_SOURCE",
+      "finding": "The qualified eight-point route uses 1B/2B and does not perform a continuous/intermediate-point search."
+    },
+    {
+      "id": "GLOBAL_MAXIMUM_LIMIT",
+      "status": "RESOLVED_NEGATIVE_AUTHORITY",
+      "finding": "Neither the eight-point envelope nor the retained off-axis longitudinal-moment finding establishes the global absolute shell stress-intensity maximum under arbitrary loading."
+    },
+    {
+      "id": "ROUND_FLEXIBLE_NOZZLE_CONDITION",
+      "status": "RESOLVED_REQUIREMENT_NOT_CLASSIFICATION_METHOD",
+      "finding": "Retained source interpretation requires a round flexible-nozzle connection for the -1 curves; the repository does not yet hold a source-qualified method for proving FLEXIBLE_NOZZLE for production use."
+    }
+  ],
+  "unresolvedAuthority": [
+    "SOURCE_QUALIFIED_FLEXIBLE_NOZZLE_CLASSIFICATION_RULE",
+    "SOURCE_QUALIFIED_OFF_AXIS_PHYSICAL_RECOVERY_LOCATION_OR_ANGLE",
+    "WHETHER_1B_1_AND_2B_1_MAXIMA_OCCUR_AT_A_COMMON_PHYSICAL_LOCATION",
+    "WHETHER_OTHER_LOAD_FAMILY_STRESSES_MAY_BE_SUPERPOSED_AT_THE_OFF_AXIS_MAXIMUM_LOCATION",
+    "SIGN_AND_LOCATION_MAPPING_FOR_POSITIVE_AND_NEGATIVE_ML",
+    "INSIDE_OUTSIDE_SURFACE_RECOVERY_FOR_OFF_AXIS_MAXIMUM",
+    "EXACT_ORIGINAL_CURVE_DOMAIN_INTERSECTION_FOR_OFF_AXIS_PRODUCTION_USE",
+    "CONTINUOUS_SEARCH_OR_LOCATION_RECOVERY_MECHANICS_IF_SOURCE_DOES_NOT_RETURN_LOCATION",
+    "COMMON_LOCATION_COMBINED_STRESS_AUTHORITY",
+    "GLOBAL_ABSOLUTE_STRESS_INTENSITY_AUTHORITY"
+  ],
+  "claimSeparation": {
+    "A": "OFF_AXIS_LONGITUDINAL_MOMENT_COMPONENT_MAXIMUM",
+    "B": "COMBINED_SHELL_STRESS_AT_ONE_COMMON_PHYSICAL_LOCATION",
+    "C": "GLOBAL_ABSOLUTE_SHELL_STRESS_INTENSITY_UNDER_ARBITRARY_SIX_COMPONENT_LOADING",
+    "rule": "AUTHORITY_FOR_A_DOES_NOT_IMPLY_B_OR_C"
+  },
+  "prohibitions": [
+    "DO_NOT_SUBSTITUTE_1B_1_2B_1_INTO_TABLE5_EIGHT_POINT_PRODUCTION_ROUTE",
+    "DO_NOT_ACCEPT_CALLER_FLEXIBLE_NOZZLE_LABEL_AS_ENGINEERING_AUTHORITY",
+    "DO_NOT_SUPERPOSE_SEPARATELY_MAXIMIZED_COMPONENTS_WITHOUT_COMMON_LOCATION_AUTHORITY",
+    "DO_NOT_CLAIM_GLOBAL_ABSOLUTE_MAXIMUM_FROM_OFF_AXIS_LONGITUDINAL_MOMENT_CURVES",
+    "DO_NOT_ENABLE_PRODUCTION_OFF_AXIS_ROUTE_WHILE_RECOVERY_LOCATION_OR_APPLICABILITY_IS_UNRESOLVED"
+  ],
+  "nextGate": "PRIMARY_SOURCE_FLEXIBLE_NOZZLE_CLASSIFICATION_AND_OFF_AXIS_RECOVERY_LOCATION_SUPERPOSITION_QUALIFICATION"
+}

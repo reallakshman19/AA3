@@ -1,0 +1,102 @@
+{
+  "schema": "lafea-shell-independent-benchmark-definition/v1",
+  "benchmarkId": "B4-1-MEMBRANE-PATCH-01",
+  "stageId": "LAFEA.4",
+  "definitionState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
+  "engineeringPurpose": "INDEPENDENT_NUMERICAL_VERIFICATION",
+  "title": "Constant-strain membrane patch",
+  "formulationScope": {
+    "authorizedElementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+    "linearElastic": true,
+    "smallDisplacement": true,
+    "thinShellOnly": true,
+    "mitcClaim": false,
+    "drillingDofClaim": false
+  },
+  "oracleAuthority": {
+    "sourceClass": "ANALYTICAL",
+    "basis": "CLASSICAL_LINEAR_ISOTROPIC_THIN_SHELL_PATCH",
+    "productionOutputUsedToChooseDefinition": false,
+    "productionOutputUsedToChooseExpectedValues": false,
+    "importsProductionFem": false,
+    "movingMaximumUsed": false,
+    "nodalStressProjectionUsed": false,
+    "crossElementAveragingUsed": false,
+    "displayInterpolationUsed": false
+  },
+  "units": {
+    "length": "mm",
+    "stress": "MPa",
+    "force": "N",
+    "moment": "N*mm",
+    "curvature": "1/mm"
+  },
+  "geometry": {
+    "kind": "FLAT_RECTANGULAR_PATCH",
+    "width": 120,
+    "height": 70,
+    "nodes": [
+      { "nodeId": "A", "x": 0, "y": 0, "z": 0 },
+      { "nodeId": "B", "x": 120, "y": 0, "z": 0 },
+      { "nodeId": "C", "x": 120, "y": 70, "z": 0 },
+      { "nodeId": "D", "x": 0, "y": 70, "z": 0 }
+    ],
+    "triangles": [
+      { "elementId": "E1", "nodeIds": ["A", "B", "C"] },
+      { "elementId": "E2", "nodeIds": ["A", "C", "D"] }
+    ]
+  },
+  "material": {
+    "elasticModulus": 210000,
+    "poissonRatio": 0.27,
+    "thickness": 3.2
+  },
+  "prescribedField": {
+    "epsilonX": 0.0008,
+    "epsilonY": -0.00015,
+    "gammaXY": 0.00035,
+    "equations": {
+      "ux": "epsilonX*x + 0.5*gammaXY*y",
+      "uy": "epsilonY*y + 0.5*gammaXY*x",
+      "uz": "0",
+      "r1": "0",
+      "r2": "0"
+    }
+  },
+  "expected": {
+    "nodalKinematics": [
+      { "nodeId": "A", "ux": 0, "uy": 0, "uz": 0, "r1": 0, "r2": 0 },
+      { "nodeId": "B", "ux": 0.096, "uy": 0.021, "uz": 0, "r1": 0, "r2": 0 },
+      { "nodeId": "C", "ux": 0.10825, "uy": 0.010500000000000002, "uz": 0, "r1": 0, "r2": 0 },
+      { "nodeId": "D", "ux": 0.01225, "uy": -0.010499999999999999, "uz": 0, "r1": 0, "r2": 0 }
+    ],
+    "membraneStrain": {
+      "epsilonX": 0.0008,
+      "epsilonY": -0.00015,
+      "gammaXY": 0.00035
+    },
+    "membraneStress": {
+      "sigmaX": 172.0364577715457,
+      "sigmaY": 14.949843598317337,
+      "tauXY": 28.937007874015745
+    },
+    "bendingMomentResultants": { "mx": 0, "my": 0, "mxy": 0 },
+    "appliedResultantForce": [0, 0, 0],
+    "appliedResultantMomentAboutOrigin": [0, 0, 0]
+  },
+  "acceptance": {
+    "nodalDisplacementAbsoluteTolerance": 1e-10,
+    "membraneStrainAbsoluteTolerance": 1e-12,
+    "membraneStressAbsoluteToleranceMpa": 1e-8,
+    "spuriousBendingMomentAbsoluteToleranceN": 1e-8,
+    "forceEquilibrium": { "absoluteToleranceN": 1e-7, "relativeTolerance": 1e-9 },
+    "momentEquilibrium": { "absoluteToleranceNmm": 1e-6, "relativeTolerance": 1e-9 },
+    "rationale": "The prescribed field is affine and the exact membrane strain is constant. Tolerances permit deterministic binary64 roundoff only; they are frozen before production-response observation."
+  },
+  "limitations": [
+    "ANALYTICAL_PATCH_ONLY",
+    "NO_NONLINEAR_AUTHORITY",
+    "NO_THICK_SHELL_AUTHORITY",
+    "NO_RELEASE_AUTHORITY"
+  ]
+}

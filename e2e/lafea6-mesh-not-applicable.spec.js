@@ -23,6 +23,12 @@ test('LAFEA.6 presents mesh and solve as not applicable without dead actions', a
     navigator.locator('[data-workflow-area="SOLVE"] .lafea-guided-workflow__technical'),
   ).toHaveCount(0);
 
+  const viewportModes = workbench.locator('[data-role="lafea-viewport-mode-panel"]');
+  await expect(viewportModes).toHaveAttribute('data-mesh-applicable', 'false');
+  await expect(viewportModes).toHaveAttribute('data-execution-supported', 'false');
+  await expect(viewportModes.locator('[data-viewport-mode="mesh"] span')).toHaveText('Not applicable');
+  await expect(viewportModes.locator('[data-viewport-mode="result"] span')).toHaveText('Not applicable');
+
   const mesh = workbench.locator('[data-role="lafea-discretization"]');
   await expect(mesh).toBeVisible();
   await expect(mesh).toHaveAttribute('data-mesh-applicable', 'false');
@@ -46,6 +52,10 @@ test('LAFEA.6 presents mesh and solve as not applicable without dead actions', a
   await expect.poll(() => page.evaluate(() => Boolean(
     globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages['LAFEA.6'].document,
   ))).toBe(true);
+
+  await expect(viewportModes.locator('[data-viewport-mode="geometry"] span')).toHaveText('Available');
+  await expect(viewportModes.locator('[data-viewport-mode="mesh"] span')).toHaveText('Not applicable');
+  await expect(viewportModes.locator('[data-viewport-mode="result"] span')).toHaveText('Not applicable');
 
   const nextAction = workbench.locator('[data-role="lafea-next-action-banner"]');
   await expect(nextAction).toHaveAttribute('data-intent', 'unsupported');

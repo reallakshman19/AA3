@@ -116,7 +116,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     onFocusMeshElement: options.onMeshFocusChange,
   });
   viewportCard.body.append(
-    viewportModePanel(root, activeViewport.getState(), retainedMeshEvidence, stage),
+    viewportModePanel(root, activeViewport.getState(), retainedMeshEvidence, stage, workflow),
     preview,
   );
   if (!activeViewport.scene.sourcePrimitives.length) {
@@ -224,31 +224,68 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   });
 }
 
-function viewportModePanel(root, viewportState, retainedMeshEvidence, stage) {
-  const panel = element(root, 'div', 'lafea-viewport-mode-panel');
-  panel.dataset.role = 'lafea-viewport-mode-panel';
+export function buildLafeaViewportModePresentation(
+  viewportState,
+  retainedMeshEvidence,
+  stage,
+  workflow,
+) {
+  if (!workflow || typeof workflow.meshApplicable !== 'boolean'
+    || typeof workflow.executionSupported !== 'boolean') {
+    throw new TypeError('LAFEA_VIEWPORT_APPLICABILITY_REQUIRED');
+  }
   const mode = viewportState?.mode ?? 'SOURCE_AUTHORING';
   const renderer = viewportState?.renderer ?? 'SVG';
   const meshCount = Array.isArray(retainedMeshEvidence?.mesh?.elements)
     ? retainedMeshEvidence.mesh.elements.length
     : 0;
-  panel.append(
-    viewportMode(root, 'Geometry', stage.document ? 'Available' : 'Not available', mode === 'SOURCE_AUTHORING'),
-    viewportMode(root, 'Mesh', meshCount ? `${meshCount} elements` : 'Not generated', meshCount > 0),
-    viewportMode(
-      root,
-      'Result contour',
-      mode === 'QUALIFIED_RESULT' ? `Ready · ${renderer}` : 'Waiting for qualified result',
-      mode === 'QUALIFIED_RESULT',
-    ),
-  );
+  return Object.freeze([
+    Object.freeze({
+      modeId: 'geometry',
+      label: 'Geometry',
+      value: stage?.document ? 'Available' : 'Not available',
+      active: mode === 'SOURCE_AUTHORING',
+    }),
+    Object.freeze({
+      modeId: 'mesh',
+      label: 'Mesh',
+      value: workflow.meshApplicable
+        ? meshCount ? `${meshCount} elements` : 'Not generated'
+        : 'Not applicable',
+      active: workflow.meshApplicable && meshCount > 0,
+    }),
+    Object.freeze({
+      modeId: 'result',
+      label: 'Result contour',
+      value: workflow.executionSupported
+        ? mode === 'QUALIFIED_RESULT' ? `Ready · ${renderer}` : 'Waiting for qualified result'
+        : 'Not applicable',
+      active: workflow.executionSupported && mode === 'QUALIFIED_RESULT',
+    }),
+  ]);
+}
+
+function viewportModePanel(root, viewportState, retainedMeshEvidence, stage, workflow) {
+  const panel = element(root, 'div', 'lafea-viewport-mode-panel');
+  panel.dataset.role = 'lafea-viewport-mode-panel';
+  panel.dataset.meshApplicable = String(workflow.meshApplicable);
+  panel.dataset.executionSupported = String(workflow.executionSupported);
+  for (const item of buildLafeaViewportModePresentation(
+    viewportState,
+    retainedMeshEvidence,
+    stage,
+    workflow,
+  )) {
+    panel.append(viewportMode(root, item));
+  }
   return panel;
 }
 
-function viewportMode(root, label, value, active) {
+function viewportMode(root, model) {
   const item = element(root, 'div', 'lafea-viewport-mode-panel__item');
-  item.dataset.active = String(active);
-  item.append(element(root, 'strong', null, label), element(root, 'span', null, value));
+  item.dataset.viewportMode = model.modeId;
+  item.dataset.active = String(model.active);
+  item.append(element(root, 'strong', null, model.label), element(root, 'span', null, model.value));
   return item;
 }
 

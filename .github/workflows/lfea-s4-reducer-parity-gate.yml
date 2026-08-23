@@ -1,0 +1,33 @@
+name: LFEA S4 reducer parity prerequisite
+
+on:
+  pull_request:
+    paths:
+      - 'agents/PR1386_workreport.md'
+      - 'src/core/linear-fea-reducer-condensation/index.js'
+      - 'src/core/linear-fea-reducer-condensation/production-readiness.js'
+      - 'scripts/lfea-b3.23-reducer-condensation-check.mjs'
+      - '.github/workflows/lfea-s4-reducer-parity-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reducer-parity-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check changed reducer guard syntax
+        run: |
+          node --check src/core/linear-fea-reducer-condensation/production-readiness.js
+          node --check src/core/linear-fea-reducer-condensation/index.js
+          node --check scripts/lfea-b3.23-reducer-condensation-check.mjs
+
+      - name: Run B-3.23 reducer condensation and production-readiness guard
+        run: node scripts/lfea-b3.23-reducer-condensation-check.mjs

@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { retopologiseDeclaredBends, BendRetopologyError } from '../src/core/linear-piping-analysis-consumer/bend-retopology.js';
-import { INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE } from '../src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js';
 
-const PROFILE = INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE;
+const PROFILE = Object.freeze({
+  spanSeedingLimit: Object.freeze({ value: 1e9, source: 'S2 deterministic test fixture' }),
+  bendSeedingSegments: Object.freeze({ value: 4, source: 'S2 deterministic test fixture' }),
+  bendLengthErrorLimit: Object.freeze({ value: 0.02, source: 'S2 deterministic test fixture' }),
+});
 const TOL = 1e-9;
 
 function node(id, x, y, z, restraint = 'FREE', meta = {}) {
@@ -35,6 +39,19 @@ function assertArcInvariant(result, sourceSegmentId, centre, radius) {
   assert.equal(chords[1].endNodeId, result.bendRecords.find((entry) => entry.sourceSegmentId === sourceSegmentId).midArcNodeId,
     `${sourceSegmentId} must retain a deterministic mid-arc node.`);
 }
+
+const productionProfileSource = fs.readFileSync(
+  'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js',
+  'utf8',
+);
+const componentProfileBlock = productionProfileSource.match(
+  /export const INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE = Object\.freeze\(\{([\s\S]*?)\n\}\);/u,
+)?.[1] ?? '';
+assert.ok(componentProfileBlock, 'Production component conditioning profile must exist.');
+assert.match(componentProfileBlock, /bendSeedingSegments:\s*\{[\s\S]*?value:\s*4,/u,
+  'Production S2 profile must retain four bend chords.');
+assert.match(componentProfileBlock, /bendLengthErrorLimit:\s*\{[\s\S]*?value:\s*0\.02,/u,
+  'Production S2 profile must retain the 2% chord-length-error limit.');
 
 const accdbGeometry = {
   schemaVersion: 'canonical-geometry-v1',

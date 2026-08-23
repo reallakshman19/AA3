@@ -17,24 +17,31 @@ export function buildLafeaSolveReadinessViewModel(workflow, diagnostics = []) {
       status: step.status,
       reasons: Object.freeze([...(step.reasons ?? [])]),
     }));
+  const unsupported = workflow?.analysisRouteFamily === 'UNSUPPORTED';
   const run = steps.find((step) => step.stepId === 'RUN') ?? null;
-  const canonicalStatus = run?.status ?? 'BLOCKED';
+  const canonicalStatus = unsupported ? 'NOT_APPLICABLE' : run?.status ?? 'BLOCKED';
   const reasons = unique([
     ...diagnostics.map((item) => item?.code).filter(Boolean),
     ...steps.flatMap((step) => step.reasons),
   ]);
-  const primaryCode = reasons[0] ?? null;
-  const primaryMessage = primaryCode
-    ? lafeaWorkbenchReasonLabel(primaryCode)
-    : canonicalStatus === 'READY'
-      ? 'Current model, authorization, and mesh gates permit the registered solve action.'
-      : 'Additional current engineering evidence is required before solving.';
+  const primaryCode = unsupported
+    ? reasons.find((reason) => reason === 'UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED') ?? reasons[0] ?? null
+    : reasons[0] ?? null;
+  const primaryMessage = unsupported
+    ? 'No qualified analysis route is registered for this stage. Source and model review remain available, but solve execution is not applicable.'
+    : primaryCode
+      ? lafeaWorkbenchReasonLabel(primaryCode)
+      : canonicalStatus === 'READY'
+        ? 'Current model, authorization, and mesh gates permit the registered solve action.'
+        : 'Additional current engineering evidence is required before solving.';
+  const presentation = lafeaUiStatusPresentation(canonicalStatus);
 
   return Object.freeze({
     schema: LAFEA_SOLVE_READINESS_VIEW_SCHEMA,
     status: canonicalStatus,
-    label: lafeaUiStatusPresentation(canonicalStatus).label,
-    tone: lafeaUiStatusPresentation(canonicalStatus).tone,
+    label: presentation.label,
+    tone: presentation.tone,
+    executionSupported: !unsupported,
     primaryCode,
     primaryMessage,
     steps: Object.freeze(steps),
@@ -55,6 +62,7 @@ export function renderLafeaSolveReadiness(root, workflow, diagnostics = []) {
   section.className = 'lafea-solve-readiness';
   section.dataset.role = 'lafea-solve-readiness';
   section.dataset.status = model.status;
+  section.dataset.executionSupported = String(model.executionSupported);
 
   const heading = doc.createElement('div');
   heading.className = 'lafea-solve-readiness__heading';
@@ -72,7 +80,7 @@ export function renderLafeaSolveReadiness(root, workflow, diagnostics = []) {
 
   const details = createLafeaInfoDisclosure(
     doc,
-    'Solve readiness evidence',
+    model.executionSupported ? 'Solve readiness evidence' : 'Stage execution evidence',
     [
       ...model.steps.map((step) => [step.label, lafeaUiStatusPresentation(step.status).label]),
       ...model.reasons.map((reason, index) => [`Reason ${index + 1}`, `${lafeaWorkbenchReasonLabel(reason)} (${reason})`]),

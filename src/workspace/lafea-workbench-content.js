@@ -43,6 +43,9 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     { onRun: options.handlers.onRun },
   );
   engineeringOverview.dataset.guidedTarget = 'engineering-overview';
+  if (unsupportedStagePresentationRequired(workflow, discretization)) {
+    applyUnsupportedExecutionOverview(root, engineeringOverview);
+  }
 
   const nextActionBanner = renderNextActionBanner(
     root,
@@ -261,6 +264,26 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
     return banner;
   }
 
+  if (unsupportedStagePresentationRequired(workflow, discretization)) {
+    banner.dataset.intent = 'unsupported';
+    banner.dataset.runEligible = 'false';
+    banner.append(
+      element(root, 'strong', null, 'No qualified analysis route is registered for this stage'),
+      element(
+        root,
+        'span',
+        null,
+        'Source and model review remain available. Mesh generation and solve execution are not applicable.',
+      ),
+    );
+    const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review model inputs');
+    review.type = 'button';
+    review.title = 'Review the retained source model. No mesh or solve action is available for this stage.';
+    review.onclick = () => navigateTo(shell, 'source');
+    banner.append(review);
+    return banner;
+  }
+
   if (!discretization.evidence.present) {
     banner.dataset.intent = 'mesh';
     const sourceAdoption = discretization.generation.generationMode === 'SOURCE_MESH_ADOPTION';
@@ -315,6 +338,22 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
   review.onclick = () => navigateTo(shell, 'results');
   banner.append(review);
   return banner;
+}
+
+export function unsupportedStagePresentationRequired(workflow, discretization) {
+  return workflow?.analysisRouteFamily === 'UNSUPPORTED'
+    && discretization?.uiPhase === 'NOT_APPLICABLE';
+}
+
+function applyUnsupportedExecutionOverview(root, overview) {
+  overview.dataset.executionSupported = 'false';
+  const run = overview.querySelector('[data-role="lafea-overview-run"]');
+  if (!run) return;
+  const state = element(root, 'span', 'lafea-engineering-overview__badge', 'Solve not available');
+  state.dataset.role = 'lafea-overview-run-unavailable';
+  state.dataset.tone = 'neutral';
+  state.title = 'No qualified analysis route is registered for this stage.';
+  run.replaceWith(state);
 }
 
 function meshActionHeading(uiPhase, sourceAdoption) {

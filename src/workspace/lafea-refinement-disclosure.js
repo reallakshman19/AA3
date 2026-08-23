@@ -10,8 +10,27 @@ const CURRENT_MESH_GENERATION_PHASES = new Set([
  */
 export function compactLafeaRefinementWorkspace(host, model) {
   if (!host?.ownerDocument) throw new TypeError('LAFEA_REFINEMENT_DISCLOSURE_HOST_REQUIRED');
+  humanizeDiscretizationAdvance(host, model);
   compactLafeaCurrentGenerationWorkspace(host, model);
   return compactRefinementWorkspace(host, model);
+}
+
+/**
+ * Keep the canonical advance handler/gate unchanged while presenting the action
+ * in engineer-facing language. The underlying operation may prepare governed
+ * solve evidence or navigate to the existing Solve readiness surface.
+ */
+export function humanizeDiscretizationAdvance(host, model) {
+  if (!host?.ownerDocument) throw new TypeError('LAFEA_DISCRETIZATION_ADVANCE_HOST_REQUIRED');
+  const advance = host.querySelector('[data-role="lafea-discretization-advance"]');
+  if (!advance) return null;
+  advance.textContent = 'Check solve readiness';
+  advance.title = model?.actions?.warningReviewRequired
+    ? 'Review the current mesh warnings before checking solve readiness.'
+    : model?.actions?.canAdvance === true
+      ? 'Check the current analysis inputs and mesh before solving.'
+      : 'Resolve the current mesh findings before checking solve readiness.';
+  return advance;
 }
 
 /**

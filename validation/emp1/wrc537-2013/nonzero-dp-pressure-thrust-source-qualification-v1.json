@@ -1,0 +1,91 @@
+{
+  "schema": "emp1-wrc537-nonzero-dp-pressure-thrust-source-qualification/v1",
+  "issue": 1350,
+  "status": "BLOCKED_UNIVERSAL_NONZERO_DP_PRESSURE_THRUST_CUSTODY_UNRESOLVED",
+  "engineeringAuthority": false,
+  "productionRouteExpansionAuthority": false,
+  "nonzeroDpProducerImplementationAuthorized": false,
+  "globalEmp1CRouteAuthority": false,
+  "releaseQualified": false,
+  "currentMainAtGrounding": "135d4edf3c36ead3bb49f2b0e0f907a33c169de4",
+  "pinnedWrcSource": {
+    "path": "docs/emp1/WRC537_2013.pdf",
+    "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "primaryPageVerificationForThisQuestion": "NOT_RUN_IN_CURRENT_CONNECTED_ENVIRONMENT",
+    "reason": "The repository connector exposes the pinned binary identity but not readable PDF page bytes for direct pressure-thrust arbitration in this workstream."
+  },
+  "controlledSupplementalReference": {
+    "qualificationPath": "validation/emp1/caux2017-wrc01f/hexagon-wrc107-independent-precheck-qualification-v1.json",
+    "qualificationId": "HEXAGON_WRC107_PRESSURE_THRUST_PRECHECK_Q1",
+    "classification": "SUPPLEMENTAL_REFERENCE_NOT_CAUX_BENCHMARK",
+    "verdict": "QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY",
+    "mayAuthorizeEmp1CProduction": false,
+    "sourceFacts": {
+      "pressurePsi": 275,
+      "nozzleOutsideDiameterIn": 12.75,
+      "nozzleThicknessIn": 0.375,
+      "nozzleInsideDiameterIn": 12.0,
+      "restraintAxialForceLbf": -26,
+      "sourceDisplayedWrcRadialLoadLbf": -31128,
+      "sourceConstruction": "P=-26-275*pi*12^2/4",
+      "physicalStatement": "Axial pressure thrust uses pressure times inside area; some or all may need to be added depending on restraint configuration."
+    },
+    "independentArithmetic": {
+      "insideAreaIn2": "113.0973355292325565846551617980621038311",
+      "pressureThrustLbf": "31101.76727053895306078016949446707855355",
+      "totalWrcRadialLoadUnroundedLbf": "-31127.76727053895306078016949446707855355",
+      "nearestWholePoundMatchesSource": true
+    },
+    "authorityLimit": "The inside-area formula, sign and P-load construction are qualified only for the cited Hexagon example. They do not establish a universal EMP.1/WRC rule for arbitrary geometry, end condition, source-load convention or orientation."
+  },
+  "currentRepositoryContracts": {
+    "zeroDpProducerPath": "src/core/emp1/emp1-a-wrc-zero-dp-load-producer.js",
+    "zeroDpProducerQualificationSha256": "47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b",
+    "zeroDpBehavior": {
+      "rejectsNonzeroDifferentialPressure": true,
+      "differentialPressure": 0,
+      "pressureThrust": 0,
+      "pressureMode": "SOURCE_LOAD_EXCLUDES_THRUST_NOT_REQUIRED"
+    },
+    "loadCustodyPath": "src/core/emp1/emp1-wrc537-load-custody.js",
+    "pressureDisposition": "PRESSURE_THRUST_RESOLVED_UPSTREAM",
+    "declaredPressureModes": [
+      "SOURCE_LOAD_ALREADY_INCLUDES_THRUST",
+      "SOURCE_LOAD_EXCLUDES_THRUST_NOT_REQUIRED",
+      "SOURCE_LOAD_EXCLUDES_THRUST_ADDED_UPSTREAM"
+    ],
+    "doubleCountGuardRequired": true,
+    "addedUpstreamVerificationRequired": true,
+    "pipeWallPressureEnginePath": "src/core/local-stress/pressure.js",
+    "pipeWallEndConditions": ["CLOSED_END", "OPEN_END", "EXPLICIT_AXIAL_RESULTANT"],
+    "pipeWallPressureEvidenceIsAutomaticWrcLoadAuthority": false
+  },
+  "resolvedForBoundedReferenceOnly": [
+    {"id":"HEXAGON_EFFECTIVE_AREA","status":"RESOLVED_FOR_CITED_EXAMPLE_ONLY","finding":"The cited controlled example uses nozzle inside area."},
+    {"id":"HEXAGON_WRC_P_MAPPING","status":"RESOLVED_FOR_CITED_EXAMPLE_ONLY","finding":"The cited controlled example includes pressure thrust in the WRC radial load P."},
+    {"id":"HEXAGON_DIRECTION","status":"RESOLVED_FOR_CITED_EXAMPLE_ONLY","finding":"The source states pressure thrust tends to push the nozzle away from the vessel; the numerical sign is qualified only in that example."},
+    {"id":"DOUBLE_COUNT_DATA_MODEL","status":"SOFTWARE_CONTRACT_PRESENT_NOT_ENGINEERING_POLICY_QUALIFIED","finding":"The repository distinguishes source-load-includes, excludes-not-required and excludes-added-upstream modes and requires a qualified double-count guard."}
+  ],
+  "unresolvedUniversalAuthority": [
+    "PRIMARY_WRC_537_PRESSURE_THRUST_PAGE_TEXT_AND_LOCATOR",
+    "UNIVERSAL_EFFECTIVE_PRESSURE_AREA_DEFINITION",
+    "UNIVERSAL_WRC_P_SIGN_AND_AXIS_MAPPING",
+    "WRC_ATTACHMENT_REFERENCE_POINT_FOR_PRESSURE_THRUST",
+    "MOMENT_TRANSLATION_RULE_FOR_ECCENTRIC_THRUST",
+    "END_CONDITION_TO_WRC_THRUST_POLICY",
+    "EVIDENCE_REQUIRED_TO_PROVE_SOURCE_LOAD_ALREADY_CONTAINS_THRUST",
+    "EVIDENCE_REQUIRED_TO_PROVE_SOURCE_LOAD_EXCLUDES_THRUST",
+    "RELATION_OF_PIPE_WALL_AXIAL_PRESSURE_STRESS_TO_WRC_LOAD_PACKAGE",
+    "QUALIFIED_NONZERO_DP_PRODUCER_AND_POLICY_RECORD_HASH"
+  ],
+  "prohibitions": [
+    "DO_NOT_PROMOTE_HEXAGON_EXAMPLE_TO_UNIVERSAL_WRC_AUTHORITY",
+    "DO_NOT_ASSUME_F_EQUALS_DP_TIMES_AREA_WITHOUT_QUALIFIED_AREA_AND_END_CONDITION",
+    "DO_NOT_ADD_PRESSURE_THRUST_WHEN_SOURCE_LOAD_INCLUSION_IS_UNRESOLVED",
+    "DO_NOT_TREAT_PIPE_WALL_AXIAL_PRESSURE_STRESS_AS_WRC_LOAD_AUTHORITY",
+    "DO_NOT_MUTATE_HISTORICAL_ZERO_DP_PRODUCER_QUALIFICATION",
+    "DO_NOT_ENABLE_NONZERO_DP_PRODUCTION_ROUTE"
+  ],
+  "nextGate": "DIRECT_PRIMARY_WRC_PRESSURE_THRUST_ARBITRATION_PLUS_SOURCE_LOAD_INCLUSION_AND_END_CONDITION_POLICY_QUALIFICATION"
+}

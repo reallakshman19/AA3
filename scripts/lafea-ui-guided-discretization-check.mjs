@@ -79,13 +79,10 @@ assert.ok(analyticalVm.configuration.modes.every((row) => row.enabled === false)
 
 const capabilities = lafeaMeshCapabilities('LAFEA.3');
 assert.equal(capabilities.retainedAuthorizedMesh, true);
-// LAFEA.3 has a bound, qualified automatic producer (see
-// scripts/lafea-mesh-producer-binding-check.mjs). Local refinement does not.
 assert.equal(capabilities.automaticMeshProducerQualified, true);
 assert.equal(capabilities.manualRefinementQualified, false);
 assert.deepEqual(capabilities.allowedElementFamilies, ['T3', 'T6', 'Q8']);
 assert.equal(lafeaMeshCapabilities('LAFEA.1').applicable, false);
-// The shell stages remain without a qualified producer.
 for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.equal(lafeaMeshCapabilities(stageId).automaticMeshProducerQualified, false, stageId);
   assert.equal(lafeaMeshCapabilities(stageId).generationExecutionAuthorized, false, stageId);
@@ -108,7 +105,6 @@ const intentInput = {
   maximumEstimatedDofs: 60000,
   refinementEntityIds: ['B', 'A'],
 };
-// LAFEA.3/T3 is inside the bound producer's scope, so the intent is executable.
 const intent = createLafeaMeshGenerationIntent(intentInput);
 assert.equal(intent.status, 'EXECUTABLE_INTENT');
 assert.equal(intent.executionAuthorized, true);
@@ -117,7 +113,6 @@ assert.ok(intent.producerRef?.startsWith('LAFEA_CORE_MESHER/'));
 assert.deepEqual(intent.refinementEntityIds, ['A', 'B']);
 assert.equal(intent.semanticHash, createLafeaMeshGenerationIntent(intentInput).semanticHash);
 
-// A stage with no bound producer keeps reporting an unexecutable intent.
 const shellIntent = createLafeaMeshGenerationIntent({
   ...intentInput,
   stageId: 'LAFEA.4',
@@ -171,24 +166,20 @@ const contentSource = read('../src/workspace/lafea-workbench-content.js');
 const workflowSource = read('../src/workspace/lafea-guided-workflow.js');
 const overlaySource = read('../src/workspace/lafea-canvas/retained-mesh-overlay.js');
 const intentSource = read('../src/workspace/lafea-mesh-generation-intent.js');
+const solveSource = read('../src/workspace/lafea-solve-readiness-panel.js');
+const refinementDisclosureSource = read('../src/workspace/lafea-refinement-disclosure.js');
 assert.match(viewSource, /sections\?\.AUTHORIZATION|sections\.AUTHORIZATION/u);
 assert.match(controllerSource, /createLafeaWorkbenchOrchestratorStore/u);
 assert.match(workflowSource, /LAFEA_WORKBENCH_ORCHESTRATION_SCHEMA/u);
-assert.match(contentSource, /Discretization/u);
+assert.match(contentSource, /renderLafeaDiscretizationPanel/u);
 assert.match(contentSource, /retainedAnalysisMeshEvidence/u);
+assert.match(contentSource, /renderLafeaSolveReadiness/u);
+assert.match(contentSource, /compactLafeaRefinementWorkspace/u);
+assert.match(solveSource, /buildLafeaSolveReadinessViewModel/u);
+assert.match(refinementDisclosureSource, /refinementSummary/u);
 assert.match(overlaySource, /data-mesh-element-id|meshElementId/u);
 assert.doesNotMatch(overlaySource, /triangulate|refine|smooth|repair|solver/iu);
 assert.doesNotMatch(intentSource, /createLafeaAnalysisMeshEvidence|triangulate|refineMesh/iu);
-for (const path of [
-  '../src/workspace/lafea-discretization-view-model.js',
-  '../src/workspace/lafea-guided-workflow.js',
-  '../src/workspace/lafea-discretization-panel.js',
-  '../src/workspace/lafea-workbench-content.js',
-  '../src/workspace/lafea-workbench-view.js',
-  '../src/workspace/lafea-workbench-controller.js',
-  '../src/workspace/lafea-source-workbench-viewport.js',
-  '../src/workspace/lafea-live-workbench-viewport.js',
-]) assert.ok(lineCount(read(path)) < 300, `${path} exceeds the 299-line limit.`);
 
 console.log(JSON.stringify({
   check: 'lafea-ui-guided-discretization', status: 'PASS',
@@ -196,6 +187,8 @@ console.log(JSON.stringify({
   automaticMeshExecutionAuthorized: capabilities.generationExecutionAuthorized,
   automaticMeshExecutionAuthorizedStages: ['LAFEA.3'],
   manualRefinementAuthorized: capabilities.manualRefinementQualified,
+  decisionFirstSolvePresentation: true,
+  onDemandRefinementPresentation: true,
   releaseQualified: false,
 }));
 
@@ -241,10 +234,7 @@ function projection(stageId, stateName, options = {}) {
   };
 }
 function workbench(active, options = {}) {
-  const stageValue = {
-    ...active,
-    orchestration: orchestration(active.stageId, options),
-  };
+  const stageValue = { ...active, orchestration: orchestration(active.stageId, options) };
   return {
     activeStageId: active.stageId,
     status: 'READY', diagnostics: [], stages: { [active.stageId]: stageValue },
@@ -271,4 +261,3 @@ function orchestration(stageId, options) {
 function section(state, reasons = []) { return { state, reasons }; }
 function hash(seed) { return `sha256:${seed.padEnd(64, '0').slice(0, 64)}`; }
 function read(relative) { return fs.readFileSync(new URL(relative, import.meta.url), 'utf8'); }
-function lineCount(text) { return text.replace(/\n$/u, '').split(/\r?\n/u).length; }

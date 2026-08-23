@@ -65,19 +65,20 @@ assert.ok(falsifiers.detections.every((value) => value.detected === true));
 assert.equal(falsifiers.productionRouteAuthorized, false);
 assert.equal(falsifiers.authorizationChangeApplied, false);
 
+const githubActions = process.env.GITHUB_ACTIONS === 'true';
 const payload = {
   schema: 'emp1-wrc537-gamma5-requalification-evidence-manifest/v1',
   observedHeadSha: options.expectedHead,
   observedTreeSha,
   observedParentShas,
   executionContext: {
-    githubActions: process.env.GITHUB_ACTIONS === 'true',
-    githubEventName: process.env.GITHUB_EVENT_NAME ?? null,
-    githubRef: process.env.GITHUB_REF ?? null,
-    githubBaseRef: process.env.GITHUB_BASE_REF ?? null,
-    githubHeadRef: process.env.GITHUB_HEAD_REF ?? null,
-    githubRunId: process.env.GITHUB_RUN_ID ?? null,
-    githubRunAttempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
+    githubActions,
+    githubEventName: githubActions ? process.env.GITHUB_EVENT_NAME ?? null : null,
+    githubRef: githubActions ? process.env.GITHUB_REF ?? null : null,
+    githubBaseRef: githubActions ? process.env.GITHUB_BASE_REF ?? null : null,
+    githubHeadRef: githubActions ? process.env.GITHUB_HEAD_REF ?? null : null,
+    githubRunId: githubActions ? process.env.GITHUB_RUN_ID ?? null : null,
+    githubRunAttempt: githubActions ? process.env.GITHUB_RUN_ATTEMPT ?? null : null,
   },
   evidenceFiles: [
     evidenceDescriptor(options.observationPath, observationFile, observation.schema, observation.status),

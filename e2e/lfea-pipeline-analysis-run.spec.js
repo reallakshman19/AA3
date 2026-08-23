@@ -53,6 +53,18 @@ test('imports, authorizes, analyzes, and reports governing values', async ({ pag
   await caseBoxes.first().check();
   await page.locator('[data-action="lfea-pipeline-apply-cases"]').click();
   await expect(page.locator('[data-role="lfea-pipeline-case-selection-status"]')).toContainText('case(s)');
+
+  // Applying a case selection re-runs governed preparation, which seals a new
+  // preparation identity and invalidates the previous pre-flight
+  // authorization. Re-authorize before analyzing.
+  await step('ERROR_CHECK').click();
+  await page.locator('[data-role="linear-piping-inputxml-reviewer"]').fill('A. Engineer');
+  await page.locator('[data-role="linear-piping-inputxml-review-reason"]')
+    .fill('Declared approximations reviewed and accepted.');
+  await page.locator('[data-action="authorize-linear-piping-inputxml-prefea"]').click();
+  await expect(step('ERROR_CHECK')).toHaveAttribute('data-step-status', 'COMPLETE');
+
+  await step('LOAD_CASE').click();
   await page.locator('[data-action="lfea-pipeline-analyze"]').click();
 
   // Output: governing values first, then the table they came from.

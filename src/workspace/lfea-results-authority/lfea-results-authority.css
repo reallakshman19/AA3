@@ -1,0 +1,156 @@
+.lfea-results-authority {
+  margin: 12px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 8px;
+  background: var(--workspace-panel);
+}
+
+.lfea-results-authority > h3,
+.lfea-results-authority__view > h3 {
+  margin: 0 0 8px;
+}
+
+.lfea-results-authority__note,
+.lfea-results-authority__disclosure {
+  color: var(--workspace-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.lfea-results-authority__subheading {
+  margin-top: 14px;
+  font-size: 12px;
+}
+
+.lfea-results-authority__scroll {
+  max-height: 360px;
+  overflow: auto;
+  margin-top: 8px;
+  border: 1px solid var(--workspace-border);
+}
+
+.lfea-results-authority table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-results-authority th,
+.lfea-results-authority td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--workspace-border);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.lfea-results-authority th {
+  background: var(--workspace-panel-strong);
+  color: var(--workspace-muted);
+}
+
+/* UI07: RUN / OUTPUT / EXPORT share one RESULTS host but represent distinct
+   engineering authorities. The read-only panel stamps the active step from
+   the existing stepper state; no engineering record is changed. */
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="lfea-results-authority-code-view"],
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="lfea-results-authority-qualification-view"],
+[data-host-group="RESULTS"][data-active-step="OUTPUT"]
+  [data-role="lfea-results-authority-execution-view"],
+[data-host-group="RESULTS"][data-active-step="OUTPUT"]
+  [data-role="lfea-results-authority-qualification-view"],
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="lfea-results-authority-execution-view"],
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="lfea-results-authority-code-view"] {
+  display: none;
+}
+
+/* Direct linear-analysis numbers belong to Output. Export retains only the
+   current on-screen CSV action, while Run uses the execution authority panel. */
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="lfea-pipeline-results-panel"] {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="lfea-pipeline-results-panel"] > :not(.lfea-pipeline-results__export) {
+  display: none;
+}
+
+/* The legacy sealed-application workbench remains the existing authority for
+   pre-run acceptance and package/export actions, but it no longer presents a
+   second mixed result page. Its generated application tables are replaced by
+   the read-only UI07 authority projection above. */
+[data-host-group="RESULTS"][data-active-step="OUTPUT"]
+  [data-role="linear-piping-results-workbench"] {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"][data-pre-run-status="NOT_RUN"][data-run-status="IDLE"] {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"] .accordion-section-header,
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"] [data-role="linear-piping-results-root"] {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"] .linear-piping-results-workbench__toolbar {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"] .linear-piping-results-workbench__toolbar:has([data-action="authorize-linear-piping-analysis"]:not([hidden])) {
+  display: flex;
+}
+
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"] .linear-piping-results-workbench__toolbar > * {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"] label:has(> [data-role="linear-piping-prerun-reviewer"]),
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"] label:has(> [data-role="linear-piping-prerun-review-reason"]),
+[data-host-group="RESULTS"][data-active-step="RUN"]
+  [data-role="linear-piping-results-workbench"] [data-action="authorize-linear-piping-analysis"]:not([hidden]) {
+  display: inline-flex;
+}
+
+/* Export keeps the existing package/export action mechanics, not the legacy
+   mixed result rendering or pre-run controls. */
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] .accordion-section-header,
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] [data-role="linear-piping-prerun-root"],
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] [data-role="linear-piping-run-outcome"],
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] [data-role="linear-piping-results-root"] {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] .linear-piping-results-workbench__toolbar > * {
+  display: none;
+}
+
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] [data-action="import-linear-piping-results"],
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] [data-action="clear-linear-piping-results"],
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] [data-action="download-linear-piping-audit"],
+[data-host-group="RESULTS"][data-active-step="EXPORT"]
+  [data-role="linear-piping-results-workbench"] [data-action="download-linear-piping-engineering"] {
+  display: inline-flex;
+}

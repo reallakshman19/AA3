@@ -330,10 +330,19 @@ function renderColumnMapping(master, state) {
     if (field.required && !satisfiedByDerivation) {
       span.appendChild(createElement('span', '*', 'xml-cii-field-required-asterisk'));
     }
+    const sourceLabel = field.derivableFrom
+      ? fields.find((row) => row.name === field.derivableFrom)?.label || field.derivableFrom
+      : '';
     if (satisfiedByDerivation) {
-      const note = createElement('span', ` — derived from ${fields.find((row) => row.name === field.derivableFrom)?.label || field.derivableFrom}`, 'xml-cii-field-derived-note');
+      const note = createElement('span', ` — derived from ${sourceLabel}`, 'xml-cii-field-derived-note');
       note.style.cssText = 'font-size:0.72rem; color:#4ade80; font-weight:600;';
       span.appendChild(note);
+    } else if (field.required && field.derivableFrom && !fieldMap[field.name]) {
+      // Say how the requirement can be met without this column, otherwise the
+      // asterisk reads as "type a millimetre value" with no stated alternative.
+      const hint = createElement('span', ` — or map ${sourceLabel} to derive it`, 'xml-cii-field-derive-hint');
+      hint.style.cssText = 'font-size:0.72rem; color:#7dd3fc; font-weight:600;';
+      span.appendChild(hint);
     }
     label.appendChild(span);
 

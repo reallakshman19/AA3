@@ -13,6 +13,10 @@ import {
 } from '../core/linear-piping-analysis-consumer/inputxml-linear-solve-authorization.js';
 import { requireLinearPipingInputXmlSource } from '../core/linear-piping-analysis-consumer/inputxml-source-contract.js';
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
+import {
+  ensureLfeaBendFactorAuthorityControl,
+  lfeaBendFactorAuthorityForIntake,
+} from './lfea-bend-factor-authority-control.js';
 import { requireLinearPipingInputXmlIntake } from './linear-piping-inputxml-intake.js';
 
 export const LINEAR_PIPING_INPUTXML_PREFLIGHT_SCHEMA = 'linear-piping-inputxml-native-preflight/v1';
@@ -37,6 +41,13 @@ const PREFLIGHT_KEYS = Object.freeze([
  * Run the existing production diagnostics/preparation chain from one sealed
  * native-source intake. No hand-authored downstream sourceAnalysisRequest is
  * required and no solver runtime is created.
+ *
+ * S3 bend flexibility authority enters only through an explicit sealed choice.
+ * Browser use resolves that choice from the shared LFEA control; tests and
+ * other governed callers may pass `options.bendFactorAuthority` explicitly.
+ * `undefined` means use the visible UI authority. `null` is an explicit absence
+ * and therefore remains fail-closed for a source-qualified bend once exact bend
+ * mechanics are enabled.
  */
 export function prepareLinearPipingInputXmlPreFlight(value, options) {
   if (options === undefined) options = {};
@@ -50,9 +61,19 @@ export function prepareLinearPipingInputXmlPreFlight(value, options) {
     validateSourceRequest: requireNativeSourceOnlyAnalysisRequest,
     ...(options.diagnosticsOptions ?? {}),
   });
+  const bendFactorAuthority = options.bendFactorAuthority === undefined
+    ? lfeaBendFactorAuthorityForIntake(intake)
+    : options.bendFactorAuthority;
+  const preparationOptions = options.preparationOptions ?? {};
   const preparation = prepareInputXmlLinearPreFea(
     diagnostics,
-    options.preparationOptions ?? {},
+    {
+      ...preparationOptions,
+      stiffnessOptions: {
+        ...(preparationOptions.stiffnessOptions ?? {}),
+        bendFactorAuthority,
+      },
+    },
   );
   const authorization = preparation.status === 'PASS'
     ? authorizeInputXmlLinearSolve(preparation)
@@ -362,4 +383,8 @@ function failPreFlight(code, message, evidence) {
   error.evidence = evidence ?? null;
   error.analysisStage = 'INPUTXML_NATIVE_PREFLIGHT';
   throw error;
+}
+
+if (typeof document !== 'undefined' && typeof queueMicrotask === 'function') {
+  queueMicrotask(() => ensureLfeaBendFactorAuthorityControl(document));
 }

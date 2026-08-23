@@ -20,6 +20,7 @@ import {
   retargetBoundSegmentEvidence,
   segmentMeta,
 } from './bend-retopology-bindings.js';
+import { bendSourceIncomingDirection } from './bend-retopology-direction.js';
 
 export { BendRetopologyError, requireBendRetopologyBindingsResolved };
 
@@ -120,6 +121,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
     bendRecords: Object.freeze(definitions.map((row) => Object.freeze({
       sourceSegmentId: row.sourceSegmentId,
       tangentBasis: row.tangentBasis,
+      incomingDirection: bendSourceIncomingDirection(row, sourceSegments, sourceNodesById),
       chordCount,
       midArcNodeId: row.midArcNodeId,
       arcLength: row.arcLength,

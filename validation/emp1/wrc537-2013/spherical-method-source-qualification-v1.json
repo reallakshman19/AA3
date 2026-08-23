@@ -1,0 +1,84 @@
+{
+  "schema": "emp1-wrc537-spherical-method-source-qualification/v1",
+  "status": "BLOCKED_PRIMARY_SPHERICAL_SOURCE_NOT_DIRECTLY_VERIFIED",
+  "engineeringAuthority": false,
+  "productionAuthority": false,
+  "fullMethodAuthority": false,
+  "source": {
+    "document": "docs/emp1/WRC537_2013.pdf",
+    "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "connectorBinaryPayloadAvailable": false,
+    "primaryPageInspection": "NOT_RUN_EXECUTION_ENVIRONMENT"
+  },
+  "secondaryExtraction": {
+    "path": "docs/01_WRC537_METHOD_DEFINITION.md",
+    "blobSha": "69e6e83ab82a0287a2a8277b62e7e223f05befe1",
+    "declaredStatus": "NOT_READY_FOR_IMPLEMENTATION",
+    "authority": "SECONDARY_OCR_RESEARCH_ONLY"
+  },
+  "candidateSphericalSemantics": {
+    "hostFamilies": ["SPHERICAL", "HEMISPHERICAL_HEAD", "ELLIPSOIDAL_HEAD_APPROXIMATE_CANDIDATE"],
+    "attachmentFamilies": [
+      "ROUND_HOLLOW_CANDIDATE",
+      "ROUND_SOLID_CANDIDATE",
+      "SQUARE_HOLLOW_CANDIDATE",
+      "SQUARE_SOLID_CANDIDATE"
+    ],
+    "parameters": [
+      {
+        "symbol": "U",
+        "candidateEquation": "U = r0 / sqrt(Rm*T)",
+        "candidateLocator": "section 3.2.1, Eq.2",
+        "authority": "UNQUALIFIED_SECONDARY_CANDIDATE"
+      },
+      {
+        "symbol": "gamma",
+        "candidateEquation": "gamma = rm/t",
+        "candidateLocator": "section 3.2.2.2, Eq.4",
+        "candidateRange": [5, 50],
+        "boundaryInclusivity": "UNRESOLVED",
+        "authority": "UNQUALIFIED_SECONDARY_CANDIDATE"
+      },
+      {
+        "symbol": "rho",
+        "candidateEquation": "rho = T/t",
+        "candidateLocator": "section 3.2.2.2, Eq.4",
+        "candidateRange": [0.25, 10],
+        "boundaryInclusivity": "UNRESOLVED",
+        "authority": "UNQUALIFIED_SECONDARY_CANDIDATE"
+      }
+    ]
+  },
+  "requiredPrimaryClosures": [
+    "EXACT_SPHERICAL_GEOMETRY_DEFINITIONS",
+    "THICKNESS_BASIS",
+    "HOST_AND_ATTACHMENT_CONFIGURATION_SCOPE",
+    "ALL_PARAMETER_EQUATIONS_AND_DOMAINS",
+    "LOAD_AXES_SIGNS_AND_REFERENCE_POINT",
+    "GOVERNING_EQUATIONS_BY_LOAD_COMPONENT",
+    "COMPLETE_CURVE_TABLE_COEFFICIENT_INVENTORY",
+    "INTERPOLATION_AND_EXTRAPOLATION_POLICY",
+    "STRESS_COMPONENTS_SURFACES_AND_RECOVERY_LOCATIONS",
+    "SUPERPOSITION_AND_SIGN_RECONSTRUCTION",
+    "PRESSURE_AND_PRESSURE_THRUST_BOUNDARY",
+    "HOST_SHELL_VS_ATTACHMENT_STRESS_BOUNDARY",
+    "APPENDIX_B_SCF_APPLICABILITY",
+    "PRIMARY_REFERENCE_NUMERICAL_EXAMPLE"
+  ],
+  "prohibitions": [
+    "NO_CYLINDRICAL_GAMMA_OR_BETA_REUSE",
+    "NO_CYLINDRICAL_TABLE5_CURVE_REUSE",
+    "NO_CYLINDRICAL_ORACLE_OR_QUALIFICATION_HASH_REUSE",
+    "NO_SECONDARY_CANDIDATE_EQUATION_PROMOTION",
+    "NO_SPHERICAL_PRODUCTION_EVALUATOR",
+    "NO_GLOBAL_EMP1C_CODE_OR_RELEASE_AUTHORITY"
+  ],
+  "authorization": {
+    "sourceBoundaryRecordAllowed": true,
+    "sphericalHandcalcAllowed": false,
+    "sphericalProductionImplementationAllowed": false,
+    "sphericalRouteRegistrationAllowed": false,
+    "requiredNextGate": "DIRECT_PRIMARY_SPHERICAL_PAGE_EXTRACTION_AND_INDEPENDENT_REVIEW"
+  }
+}

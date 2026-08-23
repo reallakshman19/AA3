@@ -22,6 +22,31 @@ export const INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE = Object.freeze({
   },
 });
 
+/**
+ * S2 production conditioning profile.
+ *
+ * Bend retopology consumes bendSeedingSegments before generic conditioning and
+ * creates the explicit chord chain itself. `seedIntermediateNodes` recognizes
+ * those `bendChordOf` spans and therefore does not seed them again. Four is
+ * deliberately even so every bend has one retained mid-arc station; the 2%
+ * chord-length limit is the governing S2 acceptance bound from the promotion
+ * plan, not a fitted benchmark tolerance.
+ */
+export const INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE = Object.freeze({
+  spanSeedingLimit: {
+    value: 1e9,
+    source: 'S2 changes bend topology only; unrelated straight-span subdivision remains inactive.',
+  },
+  bendSeedingSegments: {
+    value: 4,
+    source: 'LFEA piping component promotion S2: even four-chord bend representation with retained mid-arc station.',
+  },
+  bendLengthErrorLimit: {
+    value: 0.02,
+    source: 'LFEA piping component promotion S2: maximum relative arc-to-chord length shortfall.',
+  },
+});
+
 const PROFILE_BY_ID = Object.freeze({
   [STRICT_INPUTXML_LINEAR_STATIC_PROFILE]: Object.freeze({
     schema: INPUTXML_LINEAR_STRUCTURAL_PROFILE_SCHEMA,

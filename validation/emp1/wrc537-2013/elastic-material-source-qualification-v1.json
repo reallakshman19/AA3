@@ -1,0 +1,58 @@
+{
+  "schema": "emp1-wrc537-elastic-material-source-qualification/v1",
+  "issue": 1379,
+  "status": "BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED",
+  "sourceCustody": {
+    "pinnedDocument": "docs/emp1/WRC537_2013.pdf",
+    "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "primaryBinaryPageReobservedThisIncrement": false,
+    "legacyExtraction": {
+      "path": "docs/01_WRC537_METHOD_DEFINITION.md",
+      "status": "NOT_READY_FOR_IMPLEMENTATION",
+      "retainedNomenclature": {
+        "E": "MODULUS_OF_ELASTICITY_OF_SHELL_MATERIAL"
+      },
+      "poissonRatioRule": "UNRESOLVED",
+      "constitutiveApplicabilityRule": "UNRESOLVED"
+    }
+  },
+  "currentSoftwareObservation": {
+    "boundedAdapterPath": "src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js",
+    "materialModulusConsumed": false,
+    "poissonRatioConsumed": false,
+    "yieldStrengthConsumed": false,
+    "constitutiveModelConsumed": false,
+    "classification": "SOFTWARE_NON_USE_IS_NOT_ENGINEERING_MATERIAL_INDEPENDENCE_AUTHORITY"
+  },
+  "authority": {
+    "modulusRoleQualified": false,
+    "absoluteModulusIndependenceQualified": false,
+    "poissonRatioTreatmentQualified": false,
+    "homogeneousIsotropicLinearElasticAssumptionQualified": false,
+    "thinShellSmallDeformationAssumptionQualified": false,
+    "hostAttachmentMaterialRelationshipQualified": false,
+    "temperatureDependentModulusTreatmentQualified": false,
+    "nonlinearPlasticCreepApplicabilityQualified": false,
+    "anisotropicOrthotropicCompositeApplicabilityQualified": false,
+    "materialDiscontinuityApplicabilityQualified": false,
+    "engineeringUseAuthorized": false,
+    "productionUseAuthorized": false
+  },
+  "prohibitedInferences": [
+    "DO_NOT_TREAT_ABSENT_MATERIAL_INPUT_AS_UNIVERSAL_MATERIAL_INDEPENDENCE",
+    "DO_NOT_INVENT_POISSON_RATIO_OR_MODULUS_CORRECTION",
+    "DO_NOT_CLAIM_NONLINEAR_PLASTIC_CREEP_OR_COMPOSITE_APPLICABILITY",
+    "DO_NOT_USE_YIELD_OR_ALLOWABLE_STRESS_TO_MODIFY_WRC_CURVE_EVALUATION",
+    "DO_NOT_ASSUME_HOST_AND_ATTACHMENT_MATERIAL_RELATIONSHIP"
+  ],
+  "requiredPrimaryClosure": [
+    "exact role of shell modulus E",
+    "Poisson-ratio treatment or embedded assumption",
+    "constitutive and shell-theory assumptions",
+    "host-shell versus attachment material requirements",
+    "temperature/material-class restrictions",
+    "source locators for every retained material/theory rule"
+  ],
+  "collateralAuthorityWidened": false,
+  "productionNumericsChanged": false
+}

@@ -79,12 +79,83 @@
 .lfea-common-error-check__finding summary {
   cursor: pointer;
   color: var(--workspace-text);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .lfea-common-error-check__finding p {
   margin: 5px 0 0;
   color: var(--workspace-muted);
 }
+
+/* How many places a grouped finding applies to. */
+.lfea-common-error-check__badge {
+  flex: none;
+  min-width: 30px;
+  padding: 1px 6px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  background: var(--workspace-panel-strong);
+  color: var(--workspace-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.lfea-common-error-check__finding-text { color: var(--workspace-text); }
+
+/* The suggested action is the point of the row, so it reads as body text
+   rather than as another muted metadata line. */
+.lfea-common-error-check__action {
+  color: var(--workspace-text) !important;
+  border-left: 2px solid var(--workspace-accent);
+  padding-left: 8px;
+}
+
+/* Triage banner: what stops the run / what needs sign-off / what is noted. */
+.lfea-common-error-check__triage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lfea-common-error-check__triage-card {
+  flex: 1 1 180px;
+  padding: 8px 10px;
+  border: 1px solid var(--workspace-border);
+  border-left-width: 3px;
+  border-radius: 6px;
+  background: var(--workspace-panel-strong);
+}
+
+.lfea-common-error-check__triage-card strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--workspace-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-common-error-check__triage-title {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--workspace-text);
+}
+
+.lfea-common-error-check__triage-detail {
+  margin: 4px 0 0 !important;
+  font-size: 10px;
+  color: var(--workspace-muted);
+}
+
+.lfea-common-error-check__triage-card[data-triage-id="BLOCKING"] { border-left-color: #f87171; }
+.lfea-common-error-check__triage-card[data-triage-id="NEEDS_ACCEPTANCE"] { border-left-color: #fbbf24; }
+.lfea-common-error-check__triage-card[data-triage-id="INFORMATIONAL"] { border-left-color: #60a5fa; }
+.lfea-common-error-check__triage-card[data-cleared="true"] { border-left-color: #22c55e; opacity: 0.72; }
+.lfea-common-error-check__triage-card[data-cleared="true"] strong { color: #22c55e; }
 
 .lfea-common-error-check__evidence {
   margin: 0 14px 14px;

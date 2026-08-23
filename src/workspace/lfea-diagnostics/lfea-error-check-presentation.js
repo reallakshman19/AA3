@@ -1,6 +1,41 @@
 import { buildLfeaDiagnosticPresentation } from './lfea-diagnostic-presentation.js';
+import { lfeaFindingSuggestedAction } from '../lfea-finding-suggested-action.js';
 
 export const LFEA_ERROR_CHECK_PRESENTATION_SCHEMA = 'lfea-error-check-presentation/v1';
+
+/**
+ * Three buckets, because a reviewer only ever asks three questions of this
+ * panel: what stops me running, what must I sign off, and what should I just
+ * be aware of. The four governed dispositions are copied verbatim on every
+ * row -- this is a display grouping over them, not a reclassification.
+ */
+export const LFEA_ERROR_CHECK_TRIAGE = Object.freeze([
+  Object.freeze({
+    triageId: 'BLOCKING',
+    title: 'Must be fixed before running',
+    lead: 'These stop the analysis. Each one is something the tool will not assume on your behalf.',
+    dispositions: Object.freeze(['BLOCK']),
+    clearedText: 'Nothing is blocking this model.',
+  }),
+  Object.freeze({
+    triageId: 'NEEDS_ACCEPTANCE',
+    title: 'Needs your acceptance',
+    lead: 'The model runs, but each of these is a simplification you are accepting. Check the ones that affect the result you care about.',
+    dispositions: Object.freeze(['CONDITIONAL']),
+    clearedText: 'Nothing needs accepting.',
+  }),
+  Object.freeze({
+    triageId: 'INFORMATIONAL',
+    title: 'For information',
+    lead: 'Nothing here stops the run or needs signing off. Worth a scan for anything that looks wrong.',
+    dispositions: Object.freeze(['ADVISORY', 'PASS']),
+    clearedText: 'No informational notes.',
+  }),
+]);
+
+const TRIAGE_BY_DISPOSITION = new Map(
+  LFEA_ERROR_CHECK_TRIAGE.flatMap((entry) => entry.dispositions.map((d) => [d, entry])),
+);
 
 export const LFEA_ERROR_CHECK_CATEGORIES = Object.freeze([
   Object.freeze({
@@ -95,6 +130,8 @@ export function buildLfeaErrorCheckPresentation(preFlight, options = {}) {
     preparationEvidenceHash: governed.preparationEvidenceHash,
     findingCount: governed.findingCount,
     counts: governed.counts,
+    triage: triageSummary(rows),
+    distinctIssueCount: new Set(rows.map((row) => `${row.code}::${row.disposition}`)).size,
     rows,
     sections,
     evidenceSummary: evidenceSummary(preFlight),
@@ -130,7 +167,75 @@ function sectionFor(entry, rows) {
     findingCount: sectionRows.length,
     counts,
     rows: sectionRows,
+    groups: groupRows(sectionRows),
   });
+}
+
+/**
+ * Collapse repeated findings of the same code into one reviewable item.
+ *
+ * A real model produces the same finding once per element it applies to: a
+ * 96-element line yields ninety-odd identical "pressure is carried for code
+ * checking only" rows. Listing them individually buries the handful of
+ * findings that are actually distinct, and no reviewer reads the ninetieth
+ * copy. Grouping states the finding once and counts the elements it covers,
+ * so the panel shows eight things to think about instead of a hundred and
+ * seventy-five things to scroll past.
+ *
+ * Every underlying row is retained inside its group -- nothing is dropped,
+ * and the individual finding IDs and affected features stay reachable.
+ * Grouping is keyed on code *and* disposition so a code that is advisory in
+ * one place and blocking in another never merges into a single misleading row.
+ */
+function groupRows(rows) {
+  const byKey = new Map();
+  for (const row of rows) {
+    const key = `${row.code}::${row.disposition}`;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key).push(row);
+  }
+  const groups = [...byKey.entries()].map(([groupId, groupRowList]) => {
+    const first = groupRowList[0];
+    const triage = TRIAGE_BY_DISPOSITION.get(first.disposition) ?? null;
+    return Object.freeze({
+      groupId,
+      code: first.code,
+      disposition: first.disposition,
+      presentationLevel: first.presentationLevel,
+      presentationLabel: first.presentationLabel,
+      triageId: triage?.triageId ?? 'INFORMATIONAL',
+      plainMessage: first.plainMessage,
+      suggestedAction: lfeaFindingSuggestedAction(first.code),
+      occurrences: groupRowList.length,
+      findingIds: Object.freeze(groupRowList.map((row) => row.findingId)),
+      sourceFeatureIds: Object.freeze(
+        [...new Set(groupRowList.flatMap((row) => row.sourceFeatureIds ?? []))].sort(compareAscii),
+      ),
+      rows: Object.freeze([...groupRowList]),
+    });
+  });
+  // Most severe first, then the widest-reaching, then stable by code.
+  return Object.freeze(groups.sort((a, b) => {
+    const severity = DISPOSITIONS.indexOf(b.disposition) - DISPOSITIONS.indexOf(a.disposition);
+    if (severity !== 0) return severity;
+    if (b.occurrences !== a.occurrences) return b.occurrences - a.occurrences;
+    return compareAscii(a.code, b.code);
+  }));
+}
+
+function triageSummary(rows) {
+  return Object.freeze(LFEA_ERROR_CHECK_TRIAGE.map((entry) => {
+    const bucketRows = rows.filter((row) => entry.dispositions.includes(row.disposition));
+    return Object.freeze({
+      triageId: entry.triageId,
+      title: entry.title,
+      lead: entry.lead,
+      clearedText: entry.clearedText,
+      findingCount: bucketRows.length,
+      distinctIssueCount: new Set(bucketRows.map((row) => `${row.code}::${row.disposition}`)).size,
+      cleared: bucketRows.length === 0,
+    });
+  }));
 }
 
 function evidenceSummary(preFlight) {
@@ -166,6 +271,8 @@ function emptyPresentation(options) {
     preparationEvidenceHash: null,
     findingCount: 0,
     counts: Object.freeze({ PASS: 0, ADVISORY: 0, CONDITIONAL: 0, BLOCK: 0 }),
+    triage: triageSummary([]),
+    distinctIssueCount: 0,
     rows: Object.freeze([]),
     sections: Object.freeze([]),
     evidenceSummary: Object.freeze({

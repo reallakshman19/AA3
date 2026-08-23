@@ -32,12 +32,15 @@ function assertArcInvariant(result, sourceSegmentId, centre, radius) {
     assert.ok(Math.abs(distance(point, centre) - radius) / radius <= TOL,
       `${sourceSegmentId} chord node ${id} is off the declared arc.`);
   }
+  const record = result.bendRecords.find((entry) => entry.sourceSegmentId === sourceSegmentId);
   const arcLength = Math.PI * radius / 2;
   const polyline = chords.reduce((sum, entry) => sum + entry.length, 0);
   assert.ok((arcLength - polyline) / arcLength < 0.02,
     `${sourceSegmentId} four-chord polyline must satisfy the 2% arc-length shortfall limit.`);
-  assert.equal(chords[1].endNodeId, result.bendRecords.find((entry) => entry.sourceSegmentId === sourceSegmentId).midArcNodeId,
+  assert.equal(chords[1].endNodeId, record.midArcNodeId,
     `${sourceSegmentId} must retain a deterministic mid-arc node.`);
+  assert.ok(Math.abs(record.chordChainLength - polyline) / polyline <= TOL,
+    `${sourceSegmentId} chord-chain evidence must match the generated polyline.`);
 }
 
 const productionProfileSource = fs.readFileSync(
@@ -86,8 +89,8 @@ const accdbGeometry = {
 const accdb = retopologiseDeclaredBends(accdbGeometry, PROFILE);
 assert.deepEqual(accdb.retiredNodeIds, ['T']);
 assert.equal(accdb.nodeRetargeting.T.nearestNodeId, null,
-  'A circular ACCDB working point is equidistant from its two tangents and must not be guessed onto one side.');
-assert.equal(accdb.nodeRetargeting.T.reason, 'AMBIGUOUS_NEAREST_RETAINED_NODE');
+  'A circular ACCDB working point must not be assigned to one tangent by numerical ordering.');
+assert.equal(accdb.nodeRetargeting.T.reason, 'ACCDB_WORKING_POINT_BINDING_REQUIRES_EXPLICIT_AUTHORITY');
 assert.ok(!accdb.geometry.nodes.some((entry) => entry.id === 'T'), 'Unbound ACCDB working point must leave structural topology.');
 assert.ok(accdb.geometry.segments.some((entry) => entry.id === 'E1/S1'
   && entry.startNodeId === 'A' && entry.endNodeId === 'E1/T0'),
@@ -108,7 +111,7 @@ assert.throws(
   (error) => error instanceof BendRetopologyError
     && error.code === 'BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS'
     && error.data?.sourceNodeId === 'T',
-  'A support on an equidistant retired working point must BLOCK rather than move to an arbitrary tangent.',
+  'A support on a retired working point must BLOCK rather than move to an arbitrary tangent.',
 );
 
 const forceBoundCorner = structuredClone(accdbGeometry);
@@ -122,7 +125,7 @@ assert.throws(
   (error) => error instanceof BendRetopologyError
     && error.code === 'BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS'
     && error.data?.boundKinds?.includes('APPLIED_FORCE_MOMENT'),
-  'A nodal load on an ambiguous retired working point must BLOCK.',
+  'A nodal load on a retired working point must BLOCK.',
 );
 
 const inputXmlGeometry = {

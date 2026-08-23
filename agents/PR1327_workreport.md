@@ -2,7 +2,7 @@
 
 ## Recovery header
 - `HANDOVER_READINESS: READY_PENDING_EXECUTABLE_EVIDENCE`
-- `PR_RECOVERY_STATE: CURRENT_MAIN_INTEGRATED_FULL_MATRIX_GATE_WITH_ARTIFACT_RETENTION_EXECUTION_ENVIRONMENT_BLOCKED`
+- `PR_RECOVERY_STATE: CURRENT_MAIN_FULL_SUITE_REPLAY_FALSIFIER_MANIFEST_AUTHORED_EXECUTION_ENVIRONMENT_BLOCKED`
 - `CRITICALITY: ENGINEERING_CRITICAL`
 - `WORK_INTENT: QUALIFY`
 - `ISSUE: #1326`
@@ -10,264 +10,301 @@
 - `BRANCH: agent/issue-1326-emp1-gamma5-requalification`
 - `BASE_MAIN: eb6e4c299132644cfd2bddeb5b86dc458524e35d`
 - `CURRENT_MAIN_INTEGRATION_COMMIT: 056ccf15d71e3a7cceca327afae949f442f24489`
-- `LAST_CODE_HEAD: 560e8217a609e164b6a18fe2d5f462896184bb52`
+- `LAST_CODE_HEAD: 61f5a52cfb797732bc0b37489bfc647fe94779e5`
 - `PRODUCTION_ROUTE_AUTHORIZED: false`
 - `GLOBAL_EMP1_C_ROUTE_AUTHORIZED: false`
 - `CODE_COMPLIANCE_AUTHORIZED: false`
 - `RELEASE_QUALIFIED: false`
-- `MERGE_RECOMMENDATION: DO_NOT_MERGE_UNTIL_EXECUTABLE_EXACT_HEAD_OBSERVATION_IS_GREEN_AND_REVIEWED`
+- `MERGE_RECOMMENDATION: DO_NOT_MERGE_UNTIL_EXACT_HEAD_FULL_EVIDENCE_BUNDLE_IS_EXECUTED_GREEN_AND_REVIEWED`
 
 ## Assignment
-Execute and bind the post-source-authority WRC 537 gamma=5, delta-p=0 requalification to the exact code tree that is actually executed. Independent oracle, production candidate comparison, complete eight-location/component evidence, source/dataset/qualification hashes, PR #1325 authority-currentness/product/sample controls, and exact commit identity are mandatory before bounded production-route authorization can even be considered.
+Execute and bind the post-source-authority WRC 537 gamma=5, delta-p=0 requalification to the exact code tree actually executed. Required evidence includes independent oracle custody, production candidate comparison, six WRC loads, complete 32-row Table-5 stress matrix, current source/dataset/qualification hashes, PR #1325 currentness/product/sample controls, exact Git identity, and durable reviewable evidence.
 
-Issue #1326 originally named `main@1d08bcd0fdebc86fc2daaeb752f129b877e01c74` as the starting base. `main` subsequently advanced twice. Exact-head qualification follows current production integration rather than certifying a stale base.
+Issue #1326 originally named `main@1d08bcd0fdebc86fc2daaeb752f129b877e01c74`. Main subsequently advanced. Stale-base qualification is not accepted.
 
-## Protected engineering boundaries
-- Current production route remains suspended by `WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE`.
+## Protected engineering boundary
+- Production route remains suspended by `WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE`.
 - Candidate qualification remains `9ea591a1918175b3e415d77f1adc4398645ca0503a699cfe8139d9dd3c69b4c7`.
 - Historical active qualification remains `3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e`.
 - Frozen post-authority independent oracle remains `60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18`.
 - Historical Au near 72.6728 MPa is comparison evidence only, not authorization.
-- This PR does not broaden into nonzero dP, general Kn/Kb, other gamma, out-of-domain beta, off-axis/global maxima, nozzle/attachment stresses, WRC 297/nozzle-neck, rectangular/lug approximations, code compliance, or release authority.
-- A generated observation may prove numerical/product readiness for engineering review; it must not itself change route/global/code/release authorization.
+- This PR does not broaden into nonzero dP, general Kn/Kb, other gamma, out-of-domain beta, off-axis/global maxima, nozzle/attachment stresses, WRC 297/nozzle-neck, rectangular/lug approximation, code compliance, or release authority.
+- No observation, receipt, manifest, artifact, or workflow PASS may itself change route/global/code/release authority.
 
-## Current-main integration history
+## Current-main integration custody
+Main progression relevant to this PR:
+1. `1d08bcd0...` — PR #1325 merged base.
+2. `b404fb4d...` — PR #1322; 53 commits later. Integrated into PR #1327 at `c404557e49bb1d71bb3d62d49aea7591d0a0ede6`.
+3. `eb6e4c299132644cfd2bddeb5b86dc458524e35d` — PR #1328; 205 commits after `b404fb4d...`. Integrated at `056ccf15d71e3a7cceca327afae949f442f24489`.
 
-### Original merged base
-- `1d08bcd0fdebc86fc2daaeb752f129b877e01c74` — merged PR #1325.
+Latest comparison before this report update:
+- `main@eb6e4c2991... -> PR head`: `0` behind;
+- current main has not advanced beyond `eb6e4c2991...` at the latest check;
+- no review comments, submitted reviews, or review threads are open on PR #1327.
 
-### First main advance
-`main` advanced to `b404fb4d01c9e76caba5034071d506b014d2c3f0` via PR #1322.
-- 53 commits ahead of `1d08bcd0...`.
-- No path overlap with PR #1327 files.
-- Integrated in PR branch by merge commit `c404557e49bb1d71bb3d62d49aea7591d0a0ede6`.
+## Existing numerical qualification assets retained
+The repository already contained the controlled engineering building blocks:
+- post-authority independent refreeze;
+- independent-oracle decoupling check;
+- post-authority oracle falsifiers;
+- production candidate vs frozen oracle comparison;
+- candidate-v2 qualification binding;
+- authority-currentness/product/sample checks.
 
-### Second main advance
-`main` then advanced to `eb6e4c299132644cfd2bddeb5b86dc458524e35d` via PR #1328.
-- 205 commits ahead of `b404fb4d...`.
-- Changes are load-calculation / support-load / project-data infrastructure and related qualification assets.
-- No direct path overlap with the four pre-existing PR #1327 files.
-- Because these changes are part of the actual current production tree, exact-head discipline requires them to be included even without direct file conflict.
-- Integrated in PR branch by two-parent merge commit `056ccf15d71e3a7cceca327afae949f442f24489`.
+PR #1327 does not replace those assets. It binds and replays them on one exact Git tree and packages the resulting evidence.
 
-The tree at `056ccf15...` is current `main@eb6e4c...` plus the PR #1327 qualification files. After adding artifact retention, comparison `main@eb6e4c... -> 560e8217...` shows:
-- `0` commits behind;
-- five effective changed files;
-- no unrelated main-side file replaced by an older branch copy.
+## Implemented qualification chain
 
-## Ground-truth audit
-The repository already contained the numerical building blocks:
-- `scripts/emp1-wrc-gamma5-post-authority-independent-refreeze.mjs` reconstructs the frozen physical/Table-5 oracle from source-controlled WRC extraction and independent oracle modules.
-- `scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs` enforces zero production-semantic imports and runs the post-authority refreeze.
-- `scripts/emp1-wrc-gamma5-post-authority-refreeze-falsifiers.mjs` falsifies statics/load/sign and historical off-axis 1B-1/2B-1 corruption.
-- `scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs` compares the current production candidate to the frozen post-authority oracle over six physical WRC load components and all 32 stress values while requiring the route to stay suspended.
-- `scripts/emp1-wrc-gamma5-route-requalification-candidate-check.mjs` binds candidate qualification v2 to current authority closure but deliberately records production observation/registration false.
+### 1. Exact-head observation gate
+`scripts/emp1-wrc-gamma5-exact-head-requalification.mjs`
 
-The missing controls were exact-head binding, full reviewable comparison custody, observation integrity verification, and durable CI evidence retention.
+Requires an explicit 40-character SHA and exact `git rev-parse HEAD` match, then:
+- validates frozen oracle and candidate-v2 semantic custody;
+- runs independent decoupling/refreeze and independent falsifiers;
+- runs candidate binding;
+- runs PR #1325 currentness, product qualification, and complete sample controls;
+- re-observes the production candidate;
+- requires six physical WRC loads;
+- requires four stress families x eight locations = 32 rows at `Au, Al, Bu, Bl, Cu, Cl, Du, Dl`;
+- applies tolerance `max(1e-12, max(1, |expected|) * 1e-11)`;
+- retains every actual/expected/delta/tolerance/tolerance-ratio value;
+- retains source/dataset/load-producer/independent-authority/candidate/oracle hashes and subordinate stdout hashes;
+- writes a record only after every assertion passes;
+- leaves production/global/code/release authority false.
 
-## Implemented
-
-### 1. Exact-head requalification gate
-Added `scripts/emp1-wrc-gamma5-exact-head-requalification.mjs`.
-
-It:
-- requires an explicit 40-character expected Git SHA;
-- verifies `git rev-parse HEAD` exactly equals the expected SHA;
-- validates the frozen oracle and candidate-v2 semantic custody;
-- executes independent decoupling/refreeze and independent falsifiers;
-- executes candidate-binding qualification;
-- executes PR #1325 route-authority-currentness falsifiers;
-- executes EMP.1 workbench product qualification;
-- executes the complete source-only qualification sample;
-- independently re-observes the production candidate;
-- requires six physical WRC load comparisons;
-- compares four stress families x eight Table-5 locations = 32 numerical comparisons at `Au, Al, Bu, Bl, Cu, Cl, Du, Dl`;
-- uses tolerance `max(1e-12, max(1, |expected|) * 1e-11)`;
-- retains every load/stress actual, expected, delta, tolerance and ratio;
-- records maximum absolute/relative drift and governing tolerance-ratio row;
-- retains source, dataset, load-producer, independent-authority, candidate and oracle hashes plus subordinate stdout SHA-256 evidence;
-- writes a JSON observation only after all assertions pass;
-- explicitly records `authorizationChangeAppliedByThisObservation: false`.
-
-Expected green observation status:
+Expected observation status:
 `PASS_EXACT_HEAD_REQUALIFICATION_READY_FOR_REVIEW_ROUTE_STILL_SUSPENDED`.
 
-### 2. Full-matrix observation verifier
-Added `scripts/emp1-wrc-gamma5-requalification-observation-check.mjs`.
+### 2. Full-matrix record verifier
+`scripts/emp1-wrc-gamma5-requalification-observation-check.mjs`
 
-A source audit found the initial observation contract retained aggregate count/max/governing evidence without retaining all 32 rows. That was insufficient because a verifier could trust `stressComparisonsPassed: 32` without independently checking the matrix. The gap was closed.
-
-Current verifier independently requires/recomputes:
-- record schema/status and semantic hash;
-- observed commit existence and optional expected observed SHA;
+Independently recomputes and verifies:
+- observation semantic hash;
+- exact observed commit identity;
 - candidate/oracle/source/dataset/producer/independent-authority hashes;
-- canonical WRC load order `P, Vc, Vl, Mc, Ml, Mt`;
-- six load expected values and zero absolute drift;
+- WRC component order `P, Vc, Vl, Mc, Ml, Mt`;
+- six zero-drift load rows;
 - exact 32-row family/location matrix;
-- every expected value from the frozen oracle;
-- every tolerance, absolute delta, relative delta and tolerance ratio;
-- every row `toleranceRatio <= 1`;
-- aggregate max absolute/relative drift and governing row;
-- retained stress-intensity vector equals the eight stress-intensity rows;
-- subordinate evidence identities/status/stdout hashes;
-- PR #1325 product/currentness/sample evidence remains fail-closed;
-- observation applies no production/global/code/release authorization change;
-- live route remains suspended while verification occurs.
+- frozen-oracle expected values;
+- tolerance, absolute/relative delta, and tolerance ratio for every row;
+- `maxToleranceRatio <= 1`;
+- aggregate maxima and governing row;
+- stress-intensity vector consistency;
+- fail-closed product/currentness/sample fields;
+- no authorization change.
 
-Verifier PASS schema/status:
-- `emp1-wrc537-gamma5-requalification-observation-check/v2`;
-- `PASS_REQUALIFICATION_OBSERVATION_FULL_MATRIX_INTEGRITY_ROUTE_STILL_SUSPENDED`.
+Expected verifier status:
+`PASS_REQUALIFICATION_OBSERVATION_FULL_MATRIX_INTEGRITY_ROUTE_STILL_SUSPENDED`.
 
-### 3. CI entry hook
-Updated `scripts/emp1-wrc537-independent-oracle-import-firewall-check.mjs`.
+### 3. CI exact-head hook
+`scripts/emp1-wrc537-independent-oracle-import-firewall-check.mjs`
 
-This script is already the first repository script executed by `.github/workflows/emp1-gamma5-main-route.yml`.
-
-Under `GITHUB_ACTIONS=true` it:
+Under `GITHUB_ACTIONS=true`, the existing first gamma5 repository step:
 - requires `GITHUB_SHA`;
-- invokes the exact-head gate using the exact checked-out SHA;
-- writes `validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-observation.generated.json`;
-- immediately verifies that record against the same SHA;
-- fails if generation or verification fails;
-- does not change production authority.
+- runs the exact-head gate against the checked-out SHA;
+- writes `.emp1-gamma5-exact-head-observation.generated.json`;
+- immediately runs the full-matrix verifier against the same SHA;
+- fails closed on either failure.
 
-For a pull-request workflow, the observation therefore binds to the exact GitHub-executed PR integration SHA. A separate later merged-main observation is still required before any production authorization promotion.
+### 4. Subordinate evidence replay — added in this batch
+`scripts/emp1-wrc-gamma5-requalification-observation-replay-check.mjs`
 
-### 4. Exact observation artifact retention
-Updated `.github/workflows/emp1-gamma5-main-route.yml` because durable evidence custody is directly required by issue #1326.
+Reason: the observation verifier previously checked subordinate stdout hashes mainly for schema/shape/PASS-looking status. A forged record could theoretically substitute another valid-looking 64-hex hash or `PASS_*` status and recompute the observation semantic hash.
 
-Immediately after the firewall/exact-head gate, the workflow now uses `actions/upload-artifact@v4` with:
-- artifact name `emp1-gamma5-exact-head-requalification-${{ github.sha }}`;
-- path `validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-observation.generated.json`;
-- `if: always()`;
-- `if-no-files-found: ignore`;
-- retention 30 days.
+The replay check closes that gap by requiring the exact observed HEAD, first requiring the base full-matrix verifier to PASS, then rerunning on the same head:
+- independent oracle decoupling/refreeze;
+- post-authority independent falsifiers;
+- candidate binding;
+- route-authority currentness falsifiers;
+- workbench product qualification;
+- complete qualification sample.
 
-Semantics:
-- if the exact-head gate passes and writes the record, the exact JSON becomes a reviewable artifact named with the observed Git SHA;
-- if the gate does not write the record, artifact upload does not fabricate evidence;
-- artifact retention does not alter route/global/code/release authority;
-- after review, a genuine observation may be committed as controlled evidence; never hand-author a PASS record.
+It requires byte-identical stdout SHA-256 values and exact stored/replayed statuses/schemas. Complete-sample production count, reportability, and route-authority hash must also match.
 
-## Validation evidence
+Expected replay status:
+`PASS_REQUALIFICATION_OBSERVATION_SUBORDINATE_REPLAY_ROUTE_STILL_SUSPENDED`.
 
-### Static/source audit
-- Full-matrix evidence contract audit: `COMPLETE`.
-- CI recursion audit: `COMPLETE`; gate subordinates do not invoke the firewall hook recursively.
-- Current-main integration/diff audit through `main@eb6e4c...`: `COMPLETE`.
-- Workflow YAML was accepted by GitHub and generated normal workflow runs on code head `560e8217...`; this proves the workflow revision is syntactically accepted by GitHub, not that repository steps executed.
+### 5. Anti-forgery mutation suite — added in this batch
+`scripts/emp1-wrc-gamma5-requalification-observation-falsifiers.mjs`
+
+The suite first requires the genuine baseline record to pass the replay check, then creates ten temporary mutated records. Except for the deliberate semantic-hash corruption case, mutations recompute the record semantic hash so the test proves deeper engineering/evidence guards rather than only hash mismatch detection.
+
+Required detections:
+1. semantic-hash corruption;
+2. candidate-qualification substitution with rehashed payload;
+3. physical WRC load drift with rehashed payload;
+4. stress-oracle substitution with rehashed payload;
+5. coherent out-of-tolerance stress with recomputed row/aggregate fields and rehashed payload;
+6. stress-matrix row deletion with rehashed payload;
+7. authorization escalation with rehashed payload;
+8. valid-looking subordinate stdout-hash substitution with rehashed payload;
+9. PASS-looking subordinate-status forgery with rehashed payload;
+10. complete-sample route-authority-hash substitution with rehashed payload.
+
+All ten must be rejected by the replay/full-matrix verification chain.
+
+Expected falsifier status:
+`PASS_REQUALIFICATION_OBSERVATION_ANTI_FORGERY_FALSIFIERS`.
+
+### 6. Exact-head evidence manifest — added in this batch
+`scripts/emp1-wrc-gamma5-requalification-evidence-manifest.mjs`
+
+The manifest is created only after the full gamma5 suite, replay check, and anti-forgery suite pass. It binds:
+- exact observed HEAD;
+- exact Git tree SHA;
+- all Git parent SHAs;
+- GitHub event/ref/base/head/run identity where available;
+- raw SHA-256 of the observation file;
+- raw SHA-256 of the replay receipt;
+- raw SHA-256 of the falsifier receipt;
+- observation semantic hash;
+- candidate/oracle/source/dataset/load-producer hashes;
+- 6/6 load count;
+- 32/32 stress count;
+- governing tolerance ratio;
+- replay/falsifier PASS counts;
+- explicit false production/global/code/release authority.
+
+Expected manifest status:
+`PASS_EXACT_HEAD_EVIDENCE_BUNDLE_READY_FOR_ENGINEERING_REVIEW_ROUTE_STILL_SUSPENDED`.
+
+### 7. Full workflow sequencing and durable bundle
+`.github/workflows/emp1-gamma5-main-route.yml`
+
+Final sequence is intentionally:
+1. checkout full history;
+2. setup Node;
+3. exact-head gate + immediate base verifier via existing firewall entry;
+4. run the complete pre-existing gamma5 qualification suite;
+5. preserve public-product truth;
+6. replay subordinate evidence and write replay receipt;
+7. run ten anti-forgery falsifiers and write falsifier receipt;
+8. build exact-head evidence manifest;
+9. upload the evidence bundle with `if: always()`.
+
+The manifest is therefore impossible to create merely because the first exact-head gate passed; every existing gamma5 workflow check before it must also pass.
+
+Artifact name:
+`emp1-gamma5-exact-head-requalification-${{ github.sha }}`
+
+Retained files when available:
+- `.emp1-gamma5-exact-head-observation.generated.json`;
+- `.emp1-gamma5-exact-head-replay.generated.json`;
+- `.emp1-gamma5-exact-head-falsifiers.generated.json`;
+- `.emp1-gamma5-exact-head-evidence-manifest.generated.json`.
+
+Retention: 30 days.
+
+`if-no-files-found: ignore` does not create PASS evidence; it only permits diagnostic retention logic when an earlier step failed before generating files.
+
+## Validation truth
+
+### Source/static audit
+- Current-main integration/diff audit: `COMPLETE`.
+- Full six-load/32-stress contract audit: `COMPLETE`.
+- CI recursion audit: `COMPLETE`; no replay/gate recursion path found.
+- Replay environment matches gate custody by propagating `EMP1_EXACT_HEAD_PARENT_SHA` and the current process environment.
+- Anti-forgery mutations are temporary and removed after execution; no forged PASS record is committed.
+- Workflow ordering now prevents complete manifest creation before the full existing gamma5 suite passes.
+- Workflow revisions have been accepted by GitHub on prior heads and generated normal workflow runs.
 - No route/registry authorization constant changed.
 
-Prior local `node --check` evidence exists for earlier gate/verifier/hook revisions. The latest current-main-integrated/full-matrix/artifact-retention head has not run in a complete repository process environment. Do not promote source review into executable PASS.
+The newly added replay/falsifier/manifest scripts have **not** executed in a complete repository runtime. Their status is `AUTHORED / NOT_RUN_EXECUTION_ENVIRONMENT`, never PASS.
 
-### Hosted execution — retention-aware code head
-Exact engineering/code head: `560e8217a609e164b6a18fe2d5f462896184bb52`.
-
-PR-triggered workflow runs include:
-- gamma5 bounded route run `32614674321`;
-- runEmp1 orchestration run `32614674324`;
-- independent WRC source oracle run `32614674309`;
-- current-main independent baseline run `32614674409`.
-
-Gamma5 job `97133299941` reports:
+### Hosted Actions blocker
+Latest workflow attempt before this batch, on code head `695614b14ff86cb0acd6fc588fdfe16974fead6c`:
+- gamma5 run `32619264816`;
+- job `97144797989`;
 - `status=completed`;
 - `conclusion=failure`;
 - `steps=null`;
 - `logs_url=null`.
 
-Artifact query for run `32614674321` returns an empty artifact list. That is expected because no job step executed and therefore no exact-head record was generated or uploaded.
+The job terminated before checkout or any repository command. Classification remains:
+`NOT_RUN_EXECUTION_ENVIRONMENT`.
 
-Classification: `NOT_RUN_EXECUTION_ENVIRONMENT`, not software FAIL and not PASS.
-
-### Prior current-main integrated attempt
-On integration head `c404557e49bb1d71bb3d62d49aea7591d0a0ede6`:
-- gamma5 run `32613763202`;
-- initial job `97130896080` -> `steps=null`, `logs_url=null`;
-- manual rerun job `97130995726` briefly queued, then completed with `steps=null`, `logs_url=null`.
-
-No checkout or repository command executed.
+The final reordered batch head `61f5a52cfb797732bc0b37489bfc647fe94779e5` had not yet produced a workflow-run record at the first immediate query; do not infer PASS or FAIL from absence of a run record.
 
 ### Alternate local execution
-The available local runtime has no mounted complete `Advanced_Analysis` checkout and cannot resolve `github.com` for a network checkout. The GitHub connector exposes file-level repository access and Actions metadata, but not a complete executable checkout/materialization path.
+No complete mounted `Advanced_Analysis` checkout is available in the local runtime, and network checkout cannot resolve `github.com`. Connector access is file-level, not an executable complete checkout.
 
-Classification: `NOT_RUN_EXECUTION_ENVIRONMENT_NETWORK_UNAVAILABLE`.
+Classification:
+`NOT_RUN_EXECUTION_ENVIRONMENT_NETWORK_UNAVAILABLE`.
 
 ## Validation classification
-- Independent/source static audit: `COMPLETE`.
-- Current-main integration/diff audit: `COMPLETE`.
-- Full 6-load / 32-stress evidence-contract audit: `COMPLETE`.
-- Workflow artifact-retention structure accepted by GitHub: `COMPLETE_STATIC_PLATFORM_PARSE`.
-- Exact-head observation execution on `560e8217...`: `NOT_RUN_EXECUTION_ENVIRONMENT`.
-- Observation full-matrix verifier execution: `NOT_RUN_EXECUTION_ENVIRONMENT`.
-- Artifact generation/upload: `NOT_RUN_EXECUTION_ENVIRONMENT`.
-- Independent refreeze/falsifier execution on exact current head: `NOT_RUN_EXECUTION_ENVIRONMENT`.
-- 6-load / 32-stress production comparison on exact current head: `NOT_RUN_EXECUTION_ENVIRONMENT`.
-- PR #1325 authority-currentness/product/sample qualification on exact current head: `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Current-main integration: `COMPLETE_STATIC`.
+- Observation contract: `COMPLETE_STATIC`.
+- Full-matrix verifier: `AUTHORED`; execution `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Subordinate replay: `AUTHORED`; execution `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Ten anti-forgery falsifiers: `AUTHORED`; execution `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Evidence manifest: `AUTHORED`; execution `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Full gamma5 suite on final batch head: `NOT_RUN_EXECUTION_ENVIRONMENT`.
+- Artifact bundle generation: `NOT_RUN_EXECUTION_ENVIRONMENT`.
 - Full regression: `NOT_RUN`.
 
 No unexecuted check is represented as PASS.
 
 ## Changed-file ledger
-1. `.github/workflows/emp1-gamma5-main-route.yml` — direct evidence-custody change: uploads a successfully generated exact-head observation artifact named by `github.sha`; no production authority change.
+1. `.github/workflows/emp1-gamma5-main-route.yml` — full-suite-before-manifest sequencing and four-file evidence-bundle retention.
 2. `agents/PR1327_workreport.md` — living recovery/evidence/handover record.
-3. `scripts/emp1-wrc-gamma5-exact-head-requalification.mjs` — exact-commit independent + production + product observation gate with full six-load and 32-stress matrices.
-4. `scripts/emp1-wrc-gamma5-requalification-observation-check.mjs` — independent observation verifier that recomputes complete matrices and aggregate drift metrics.
-5. `scripts/emp1-wrc537-independent-oracle-import-firewall-check.mjs` — one-way CI hook into exact-head gate + verifier.
+3. `scripts/emp1-wrc-gamma5-exact-head-requalification.mjs` — exact-head observation gate.
+4. `scripts/emp1-wrc-gamma5-requalification-observation-check.mjs` — full six-load/32-row verifier.
+5. `scripts/emp1-wrc537-independent-oracle-import-firewall-check.mjs` — CI gate/verification entry hook.
+6. `scripts/emp1-wrc-gamma5-requalification-observation-replay-check.mjs` — exact-head replay of stored subordinate evidence hashes/statuses.
+7. `scripts/emp1-wrc-gamma5-requalification-observation-falsifiers.mjs` — ten anti-forgery/tamper detections.
+8. `scripts/emp1-wrc-gamma5-requalification-evidence-manifest.mjs` — SHA/tree/parent/file-hash evidence manifest.
 
 ## Exact next action
-When GitHub Actions or another complete repository runtime actually reaches executable steps:
+When an executable environment becomes available, do **not** bypass the workflow chain with a hand-authored record.
 
-1. Execute the gamma5 workflow on the then-current PR integration tree.
-2. Require the first repository script to generate and verify the exact-head observation against checked-out `GITHUB_SHA`.
-3. Confirm the workflow uploads artifact `emp1-gamma5-exact-head-requalification-<observed SHA>`.
-4. Download the artifact and run:
+Run the gamma5 workflow on the then-current PR integration tree and require, in order:
+1. exact-head observation generation + full-matrix verifier PASS;
+2. every existing gamma5 workflow check PASS;
+3. subordinate replay PASS with exact stdout hashes;
+4. all 10 anti-forgery mutations detected;
+5. evidence manifest PASS;
+6. artifact bundle present with four generated JSON files.
 
-```text
-node scripts/emp1-wrc-gamma5-requalification-observation-check.mjs \
-  --record <downloaded-observation.json> \
-  --expected-observed-head <observed-sha>
-```
+Then download the artifact and review:
+- observed HEAD/tree/parents;
+- observation/replay/falsifier file SHA-256 values against manifest;
+- candidate `9ea591...`;
+- oracle `607711...`;
+- six load rows;
+- 32 stress rows;
+- `maxToleranceRatio <= 1`;
+- zero production-semantic imports in independent oracle evidence;
+- no production/global/code/release authorization change.
 
-5. Require six load rows, 32 stress rows, `maxToleranceRatio <= 1`, independent production imports = 0, candidate `9ea591...`, oracle `607711...`, and `authorizationChangeAppliedByThisObservation=false`.
-6. If `main` advances before execution, integrate current main first and move the qualification target forward; never certify a stale base.
-7. If PR #1327 is later approved/merged, repeat exact-head observation on the resulting merged-main SHA before any route-authority promotion.
-8. Commit a generated observation record only after a real executable run and review. Never hand-author a PASS record.
-9. Any later production authorization change must be a separate reviewed change validated on its own exact production head.
+If `main` advances before executable qualification, integrate current main first and move the exact-head target forward.
 
-For a complete checkout explicitly at current code head `560e8217a609e164b6a18fe2d5f462896184bb52`, the direct command is:
-
-```text
-node scripts/emp1-wrc-gamma5-exact-head-requalification.mjs \
-  --expected-head 560e8217a609e164b6a18fe2d5f462896184bb52 \
-  --write-record validation/emp1/wrc537-2013/gamma5-zero-dp-exact-head-requalification-observation-v1.json
-```
+If #1327 later merges, repeat exact-head qualification on the resulting merged-main SHA before any separate production-route authorization change.
 
 ## Open blockers / risks
-- `VAL-1327-01`: no environment has executed the current exact-head full-matrix gate.
+- `VAL-1327-01`: final exact-head/full-suite/replay/falsifier/manifest chain has not executed.
 - `VAL-1327-02`: no genuine generated exact-head observation exists.
-- `VAL-1327-03`: no exact-head observation artifact exists because hosted jobs terminate before checkout/steps/logs.
-- `VAL-1327-04`: local runtime cannot fetch/materialize a complete executable checkout.
-- `RISK-1327-01`: authored qualification code and historical ~72.67 MPa must not be interpreted as production authorization.
-- `RISK-1327-02`: a PR synthetic integration observation must not be reused as proof for a later distinct merged-main/authorization head.
-- `RISK-1327-03`: aggregate PASS counters without the full matrix are insufficient; source contract is fixed but still requires execution.
-- `RISK-1327-04`: stale-base qualification is invalid; repeated main integration is mandatory while this PR remains open.
-- `RISK-1327-05`: artifact retention is transitional evidence custody, not permanent authorization. A reviewed genuine record must be committed or otherwise controlled before future promotion.
+- `VAL-1327-03`: no genuine replay/falsifier/manifest receipt exists.
+- `VAL-1327-04`: no complete four-file evidence artifact exists.
+- `VAL-1327-05`: GitHub hosted jobs repeatedly terminate before checkout/steps/logs.
+- `VAL-1327-06`: local runtime cannot materialize a complete executable checkout.
+- `RISK-1327-01`: authored controls or historical ~72.67 MPa must never be presented as production authorization.
+- `RISK-1327-02`: a PR synthetic-merge observation cannot authorize a later distinct merged-main/authorization head.
+- `RISK-1327-03`: semantic hash alone is insufficient if a forged payload can be rehashed; replay + mutation detection now address that source-level risk but remain NOT_RUN.
+- `RISK-1327-04`: partial artifact contents are diagnostic only. Only a manifest-bearing bundle created after the full suite may be called ready for engineering review.
 
 ## Appendix A — takeover qualification
-1. Why must exact-head qualification follow current `main` when the issue’s original base has advanced?
-2. What does `CURRENT_MAIN_INTEGRATION_COMMIT=056ccf15...` contain?
-3. Why must `git rev-parse HEAD` equal the explicit expected SHA before observation generation?
-4. Which gate proves the independent oracle has zero production-semantic imports?
-5. Which six WRC components are retained and independently checked?
-6. Which four stress families and eight Table-5 locations form the 32-row matrix?
-7. What is the tolerance formula and what does `maxToleranceRatio <= 1` mean?
-8. Why is `stressComparisonsPassed: 32` without the 32 rows insufficient engineering evidence?
-9. Which source/dataset/producer/independent-authority/candidate/oracle hashes are retained?
-10. Why may an observation be ready for engineering review while `authorizationChangeAppliedByThisObservation=false`?
-11. Why is the generated observation verified separately after generation?
-12. Why was the workflow YAML change justified in this PR?
-13. What exactly does the artifact name bind to, and why is that useful for custody?
-14. Why does `if-no-files-found: ignore` not weaken the gate?
-15. Which PR #1325 authority-currentness/product/sample controls are rerun?
-16. Why does a later production authorization change require validation as a new exact production head?
-17. Which production/global/code/release authorities remain false throughout PR #1327?
+1. Why is current-main integration mandatory for exact-head qualification?
+2. Why is the historical Au ~72.67 MPa not authorization?
+3. Which six WRC components and which 32 stress rows are mandatory?
+4. What is the tolerance formula and meaning of `maxToleranceRatio <= 1`?
+5. Why is observation semantic hash verification alone insufficient against a rehashed forgery?
+6. Which subordinate scripts are replayed byte-for-byte?
+7. Which three stored subordinate fields were specifically vulnerable to valid-looking substitution before replay (stdout hash, PASS-looking status, sample route-authority hash)?
+8. What are the ten anti-forgery mutations and why is the baseline replay required first?
+9. Why must replay/falsifiers/manifest run after the full existing gamma5 workflow suite rather than immediately after observation generation?
+10. What exact Git identity is retained by the manifest?
+11. Which files must exist in the final evidence artifact?
+12. Why is a partial artifact diagnostic only?
+13. Which PR #1325 currentness/product/sample controls remain in the exact-head gate?
+14. Which authority flags must remain false throughout PR #1327?
+15. Why must any later production authorization change be validated again on its own exact production head?

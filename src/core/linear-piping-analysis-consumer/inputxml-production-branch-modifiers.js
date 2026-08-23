@@ -3,11 +3,14 @@ import {
   FACTOR_CALCULATION_REQUEST_SCHEMA,
   calculateB31Factors,
 } from '../linear-fea-b31-factor-calculator/index.js';
-import { deriveB31JDirectionalBranchEndModifiers } from '../linear-fea-piping-components/index.js';
+import {
+  classifyBranchLegs,
+  deriveB31JDirectionalBranchEndModifiers,
+} from '../linear-fea-piping-components/index.js';
+import { elementAuthorityError } from './inputxml-linear-element-authority-support.js';
 import {
   requireInputXmlProductionBranchFactorAuthority,
 } from './inputxml-production-branch-factor-authority.js';
-import { elementAuthorityError } from './inputxml-linear-element-authority-support.js';
 
 const WELDING_TEE_TYPE = 3;
 const MOMENT_DIRECTION_MAPPING = Object.freeze({ inPlaneField: 'my', outOfPlaneField: 'mz' });
@@ -20,11 +23,7 @@ const NOMINAL_DIAMETER_RELATIVE_TOLERANCE = Object.freeze({
   source: 'BM4L_CAESAR14_M047_TEE_KB_PARITY_V1',
 });
 
-/**
- * Derive B31J directional modifiers for existing production spans.
- * No duplicate tee elements are created: every accepted modifier has exactly
- * one existing structural carrier and one source welding-tee junction.
- */
+/** Derive B31J modifiers for existing spans; no duplicate tee elements exist. */
 export function compileInputXmlProductionBranchModifiers(input) {
   const sourcePreparation = requireRecord(input?.sourcePreparation, 'sourcePreparation');
   const structuralPreparation = requireRecord(input?.structuralPreparation, 'structuralPreparation');
@@ -53,12 +52,24 @@ export function compileInputXmlProductionBranchModifiers(input) {
         `Welding tee node ${junctionNodeId} requires exactly three incident source spans; found ${incident.length}.`,
         { junctionNodeId, incidentSegmentIds: incident.map((row) => String(row.id)) });
     }
-    const junction = point(nodeById, junctionNodeId);
+    const junctionPosition = point(nodeById, junctionNodeId);
     const legs = incident.map((segment) => buildLeg({
       segment, junctionNodeId, nodeById, sourceBindingById, structuralBySource,
       materialByHash, sectionByHash,
     }));
-    const factorGeometry = teeFactorGeometry(legs, junctionNodeId);
+    const topologyLegs = legs.map((leg) => ({ legId: leg.sourceSegmentId, endPoint: leg.endPoint }));
+    const classification = classifyBranchLegs(
+      topologyLegs,
+      junctionPosition,
+      RUN_COLLINEARITY_TOLERANCE,
+    );
+    const roleBySource = new Map(classification.legs.map((row) => [row.legId, row.role]));
+    const runLegs = legs.filter((leg) => roleBySource.get(leg.sourceSegmentId) === 'RUN');
+    const branchLeg = legs.find((leg) => roleBySource.get(leg.sourceSegmentId) === 'BRANCH') ?? null;
+    if (runLegs.length !== 2 || branchLeg === null) {
+      fail('BRANCH_TOPOLOGY_UNSUPPORTED', `Welding tee node ${junctionNodeId} did not resolve 2 run + 1 branch legs.`);
+    }
+    const factorGeometry = teeFactorGeometry(runLegs, branchLeg, junctionNodeId);
     const factorResult = calculateB31Factors({
       schema: FACTOR_CALCULATION_REQUEST_SCHEMA,
       calculationId: `PROD-TEE-${safe(junctionNodeId)}-FACTORS`,
@@ -90,7 +101,7 @@ export function compileInputXmlProductionBranchModifiers(input) {
     const modifiers = deriveB31JDirectionalBranchEndModifiers({
       componentId: `PROD-TEE-${safe(junctionNodeId)}`,
       factorResult,
-      junctionPosition: junction,
+      junctionPosition,
       legs: legs.map((leg) => ({
         legId: leg.sourceSegmentId,
         junctionEnd: leg.junctionEnd,
@@ -101,9 +112,6 @@ export function compileInputXmlProductionBranchModifiers(input) {
       runCollinearityTolerance: RUN_COLLINEARITY_TOLERANCE,
     });
     const legBySource = new Map(legs.map((leg) => [leg.sourceSegmentId, leg]));
-    const runLegs = modifiers.modifiers
-      .filter((modifier) => modifier.role === 'RUN')
-      .map((modifier) => legBySource.get(modifier.legId));
     const runThermalAuthority = commonRunThermalAuthority(runLegs, junctionNodeId);
 
     for (const modifier of modifiers.modifiers) {
@@ -189,21 +197,7 @@ function buildLeg(input) {
   });
 }
 
-function teeFactorGeometry(legs, junctionNodeId) {
-  const temp = deriveB31JDirectionalBranchEndModifiers;
-  void temp;
-  const directions = legs.map((leg) => ({ leg, direction: unit(leg.endPoint) }));
-  const pairs = [];
-  for (let i = 0; i < directions.length; i += 1) for (let j = i + 1; j < directions.length; j += 1) {
-    const dot = directions[i].direction.reduce((sum, value, k) => sum + value * directions[j].direction[k], 0);
-    pairs.push({ i, j, residual: Math.abs(1 + dot) });
-  }
-  pairs.sort((a, b) => a.residual - b.residual);
-  if (pairs[0].residual > RUN_COLLINEARITY_TOLERANCE.value) {
-    fail('BRANCH_RUN_NOT_IDENTIFIED', `Tee node ${junctionNodeId} has no collinear run pair.`);
-  }
-  const runLegs = [legs[pairs[0].i], legs[pairs[0].j]];
-  const branchLeg = legs.find((leg) => !runLegs.includes(leg));
+function teeFactorGeometry(runLegs, branchLeg, junctionNodeId) {
   const runOd = runLegs[0].section.dimensions.outerDiameter;
   const otherRunOd = runLegs[1].section.dimensions.outerDiameter;
   if (Math.abs(runOd - otherRunOd) > RUN_COLLINEARITY_TOLERANCE.value * Math.max(runOd, otherRunOd)) {
@@ -264,12 +258,6 @@ function point(nodeById, nodeId) {
     fail('BRANCH_NODE_POSITION_MISSING', `Tee node ${nodeId} lacks a finite source coordinate.`);
   }
   return [node.x, node.y, node.z];
-}
-
-function unit(vector) {
-  const length = Math.hypot(...vector);
-  if (!(length > 0)) fail('BRANCH_LEG_DEGENERATE', 'Tee leg endpoint is coincident with its junction.');
-  return vector.map((value) => value / length);
 }
 function requireRecord(value, field) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail('BRANCH_AUTHORITY_RECORD_REQUIRED', `${field} must be a record.`);

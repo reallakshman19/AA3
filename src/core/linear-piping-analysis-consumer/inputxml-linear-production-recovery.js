@@ -15,7 +15,6 @@ import { PRODUCTION_CAPABILITY_PROFILE } from './production-capability-profile.j
 export const INPUTXML_LINEAR_RECOVERY_BATCH_SCHEMA =
   'fea-inputxml-linear-recovery-batch/v1';
 
-/** Recover only the exact raw cases already solved under governed preparation. */
 export function recoverInputXmlAuthorizedRawCases({ preparation, rawExecutionBatch }) {
   const accepted = requireInputXmlLinearPreFeaPreparation(preparation);
   const raw = requireRawBatch(rawExecutionBatch, accepted);
@@ -73,6 +72,7 @@ function recoverCase({ accepted, row, physical, frameProfile, recoveryProfile })
     {
       sourcePreparation: accepted.sourcePreparation,
       bendFactorAuthority: accepted.stiffnessPreflight.bendFactorAuthority,
+      branchFactorAuthority: accepted.stiffnessPreflight.branchFactorAuthority,
       capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
     },
   );
@@ -139,15 +139,11 @@ function requireProfileCustody(raw, preparation, frameProfile) {
 }
 
 function requireEffectiveStiffnessCustody(preparation, elements) {
-  const rebuilt = elements.bendExactMechanicsApplied
-    ? elements.effectiveStiffnessStateHash
-    : preparation.structuralPreparation.compilation.stiffnessStateHash;
+  const rebuilt = elements.effectiveStiffnessStateHash;
   if (rebuilt !== preparation.stiffnessStateHash
     || rebuilt !== preparation.stiffnessPreflight.effectiveStiffnessStateHash) {
-    throw recoveryError(
-      'INPUTXML_RECOVERY_EFFECTIVE_STIFFNESS_STALE',
-      'Recovery rebuilt a different effective stiffness authority from the solved preparation.',
-    );
+    throw recoveryError('INPUTXML_RECOVERY_EFFECTIVE_STIFFNESS_STALE',
+      'Recovery rebuilt a different effective stiffness authority from the solved preparation.');
   }
 }
 
@@ -203,11 +199,9 @@ function caseIdentity(row) {
     recoveryEvidenceHash: row.recoveryEvidenceHash,
   };
 }
-
 function aggregateStatus(statuses) {
   return statuses.some((status) => status === 'CONDITIONAL') ? 'CONDITIONAL' : 'QUALIFIED';
 }
-
 function recoveryError(code, message) {
   const error = new TypeError(message);
   error.code = code;

@@ -13,6 +13,7 @@ import {
 import {
   LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
   LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
+  lafea5SourceShellProfileReference,
 } from './lafea-source-shell-mesh-adoption.js';
 import { buildLafea4ShellProductRefinementUiPolicy } from './lafea4-shell-product-refinement-ui-policy.js';
 
@@ -284,6 +285,9 @@ function buildGenerationModel(stage, capabilities) {
     && stage.analysisDomainProjection?.state === 'CURRENT_PASS';
   const shellParent = stage.retainedShellMidsurfaceEvidence ?? null;
   const sourceMeshAdoption = shellParent?.schema === LAFEA5_SOURCE_SHELL_PARENT_SCHEMA;
+  const sourceProfileReference = sourceMeshAdoption
+    ? lafea5SourceShellProfileReference(shellParent)
+    : null;
   const sourceHash = stage.sourceAuthority?.sourceHash ?? stage.lifecycle?.source?.sourceHash ?? null;
   const shellCurrent = shellMidsurface
     && shellParent?.qualification === 'PASS'
@@ -333,6 +337,7 @@ function buildGenerationModel(stage, capabilities) {
     qualifiedQualityPolicy: qualifiedMeshQualityPolicyForStage(stage.stageId),
     thicknessCurvatureObservation: buildLafea4ThicknessCurvatureObservation(stage),
     targetElementLength: sourceMeshAdoption ? null : meshProfile?.fields.globalTargetSize ?? null,
+    sourceProfileReference,
     declaredElementFamily: declaredFamily(stage.stageId, meshProfile),
     lengthUnit: shellMidsurface
       ? shellParent?.geometry?.lengthUnit ?? shellParent?.lengthUnit ?? null

@@ -109,12 +109,18 @@ test('LAFEA.3 Sample generates, displays, preflights and solves the retained T6 
     contentType: 'image/png',
   });
 
+  const verification = workbench.locator('[data-role="lafea-numerical-verification"]');
+  await expect(verification.locator('[data-role="lafea-verification-summary"]')).toBeVisible();
+  await expect(verification.locator('[data-role="lafea-verification-evidence"]')).toHaveCount(5);
+  await expect(verification.locator('[data-role="lafea-verification-evidence"][open]')).toHaveCount(0);
+  await expect(workbench.locator('.lafea-guided-workflow__release')).toBeHidden();
+
   const run = workbench.locator('[data-role="lafea-overview-run"]');
   await expect(run).toBeDisabled();
   const preflight = workbench.locator('[data-role="lafea-discretization-advance"]');
   await expect(preflight).toBeVisible();
   await expect(preflight).toBeEnabled();
-  await expect(preflight).toHaveText('Advance to numerical preflight');
+  await expect(preflight).toHaveText('Check solve readiness');
   await preflight.click();
 
   await expect.poll(() => page.evaluate(() =>
@@ -152,6 +158,8 @@ test('LAFEA.3 Sample generates, displays, preflights and solves the retained T6 
   expect(preflightEvidence.solverExecuted).toBe(false);
   expect(preflightEvidence.executionAuthorized).toBe(true);
   expect(preflightEvidence.releaseQualified).toBe(false);
+  await expect(verification.locator('[data-role="lafea-verification-summary"]')).toContainText('Solve checks');
+  await expect(verification.locator('[data-role="lafea-verification-summary"]')).toContainText('Qualified');
 
   await expect(run).toBeEnabled();
   await run.click();

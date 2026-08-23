@@ -139,11 +139,7 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   text-overflow:ellipsis;
 }
 .lafea-guided-workflow__release{
-  align-self:start;
-  margin:7px 0 0!important;
-  padding:0!important;
-  border:0!important;
-  white-space:nowrap;
+  display:none!important;
 }
 .lafea-cae-workspace{
   grid-template-columns:minmax(0,1fr) minmax(340px,380px)!important;
@@ -196,6 +192,59 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
 .lafea-discretization__advanced-evidence-body>.lafea-discretization__section{
   margin:0;
   background:#07111c;
+}
+.lafea-numerical-verification{
+  display:grid;
+  gap:8px;
+}
+.lafea-numerical-verification__intro{
+  margin:0;
+  color:#9fb0c5;
+  font-size:11px;
+}
+.lafea-numerical-verification__summary{
+  display:grid;
+  gap:7px;
+}
+.lafea-numerical-verification__summary>h3{
+  margin:0;
+  font-size:13px;
+}
+.lafea-numerical-verification__summary-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:6px;
+}
+.lafea-numerical-verification__summary-item{
+  display:grid;
+  gap:2px;
+  padding:7px 8px;
+  border:1px solid #26364d;
+  border-radius:5px;
+  background:#07111c;
+}
+.lafea-numerical-verification__summary-item>span{
+  color:#9fb0c5;
+  font-size:10px;
+}
+.lafea-numerical-verification__summary-item>strong{
+  font-size:12px;
+}
+.lafea-numerical-verification__summary-item>strong[data-tone="positive"]{color:#86efac}
+.lafea-numerical-verification__summary-item>strong[data-tone="warning"]{color:#fde68a}
+.lafea-numerical-verification__summary-item>strong[data-tone="critical"]{color:#fca5a5}
+.lafea-numerical-verification__evidence{
+  border-top:1px solid #26364d;
+  padding-top:7px;
+}
+.lafea-numerical-verification__evidence>summary{
+  cursor:pointer;
+  color:#9fb8cf;
+  font-size:11px;
+  font-weight:700;
+}
+.lafea-numerical-verification__evidence>section{
+  margin-top:8px;
 }
 .lafea-cae-workspace__context{
   display:grid;
@@ -310,7 +359,6 @@ export const LAFEA_UI_MODERNIZATION_STYLES = `
   .lafea-guided-workflow__areas{
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
-  .lafea-guided-workflow__release{white-space:normal}
   .lafea-cae-workspace__viewport-card .lafea-workbench__svg{
     min-height:360px!important;
   }

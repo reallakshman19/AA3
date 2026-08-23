@@ -37,11 +37,10 @@ const accdbGeometry = accdbTablesToCanonicalGeometry(buildAccdbFixtureTables(), 
 const accdbBend = accdbGeometry.segments.find((segment) => segment.meta.sourceElementId === '1');
 assert.equal(accdbBend?.type, 'BEND');
 assertTangentRadiusInvariant(accdbBend, 'ACCDB_CORNER_INTERSECTION_V1');
-assert.notDeepEqual(
-  accdbBend.meta.bendTangentEnd,
-  accdbGeometry.nodes.find((node) => node.id === accdbBend.endNodeId),
-  'ACCDB corner/intersection node must not be relabeled as the physical tangent end.',
-);
+const accdbCorner = accdbGeometry.nodes.find((node) => node.id === accdbBend.endNodeId);
+assert.ok(accdbCorner, 'Expected the ACCDB theoretical corner/intersection node.');
+assert.ok(distance(accdbBend.meta.bendTangentEnd, accdbCorner) > RELATIVE_TOLERANCE,
+  'ACCDB corner/intersection node must not be relabeled as the physical tangent end.');
 
 const validInputXml = `
 <PIPINGMODEL JOBNAME="S1_TANGENT_VALID">

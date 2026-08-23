@@ -11,7 +11,7 @@ export const PRODUCTION_CAPABILITY_PROFILE_SCHEMA = 'lfea-production-capability-
 export const PRODUCTION_CAPABILITY_PROFILE = Object.freeze({
   schema: PRODUCTION_CAPABILITY_PROFILE_SCHEMA,
   profileId: 'LFEA_PRODUCTION_CAPABILITY_R1',
-  bendExactMechanics: false, // S3 flips only after production component wiring qualifies.
+  bendExactMechanics: true,
   teeExactMechanics: false,
   reducerExactMechanics: false,
   pressureStiffening: false,

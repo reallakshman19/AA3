@@ -81,7 +81,7 @@ function createViewState(consumerContext, prepared) {
       label: GATE_LABELS[row.gateId] || row.gateId,
     }))),
     blockers: status.blockers,
-    methodRows: Object.freeze(buildMethodRows(status.commonInput.methodRows)),
+    methodRows: Object.freeze(buildMethodRows(status.commonInput.methodRows, commonSnapshot)),
     masterRows: Object.freeze(masterRows),
     sourceRows: Object.freeze(sourceEvidenceRows({ dataset, masters, supportSites, routes, consumerContext })),
     routeRows: Object.freeze(routeEvidenceRows(routes)),
@@ -335,8 +335,25 @@ function routeEvidenceMarkup(rows) {
 function methodMarkup(rows) {
   return `<section class="non-fea-panel">
     <header><div><span class="panel-eyebrow">METHOD READINESS</span><h3>Independent Non-FEA input readiness</h3></div><p>Input readiness comes only from the common checker. Implementation qualification, selection, authorization and execution remain separate.</p></header>
-    <div class="non-fea-table-wrap"><table><thead><tr><th>Method</th><th>Input state</th><th>Current basis</th></tr></thead><tbody>${rows.map((row) => `<tr data-method-id="${escapeHtml(row.methodId)}"><td><strong>${escapeHtml(row.label)}</strong><code>${escapeHtml(row.methodId)}</code></td><td><span class="non-fea-chip non-fea-chip--${statusClass(row.state)}">${escapeHtml(row.state)}</span></td><td>${escapeHtml(row.basis)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="non-fea-table-wrap"><table><thead><tr><th>Method</th><th>Input state</th><th>Current basis</th></tr></thead><tbody>${rows.map((row) => `<tr data-method-id="${escapeHtml(row.methodId)}"><td><strong>${escapeHtml(row.label)}</strong><code>${escapeHtml(row.methodId)}</code></td><td><span class="non-fea-chip non-fea-chip--${statusClass(row.state)}">${escapeHtml(row.state)}</span></td><td>${escapeHtml(row.basis)}</td></tr>${entityBlockerRowMarkup(row)}`).join('')}</tbody></table></div>
   </section>`;
+}
+
+/**
+ * Names the specific entities behind a method's blocker codes. Without this
+ * the only place the entity list existed was the raw checker report object,
+ * unreachable from the UI.
+ */
+function entityBlockerRowMarkup(row) {
+  const withEntities = (row.entityBlockers || []).filter((entry) => entry.entities.length > 0);
+  if (withEntities.length === 0) return '';
+  return `<tr class="non-fea-entity-blockers"><td colspan="3"><details>
+    <summary>${withEntities.reduce((sum, entry) => sum + entry.entities.length, 0)} unmatched entit${withEntities.reduce((sum, entry) => sum + entry.entities.length, 0) === 1 ? 'y' : 'ies'} behind ${escapeHtml(row.label)}</summary>
+    ${withEntities.map((entry) => `<div class="non-fea-entity-group"><strong>${escapeHtml(entry.code)}</strong> (${entry.entities.length})
+      <ul>${entry.entities.slice(0, 500).map((id) => `<li><code>${escapeHtml(id)}</code></li>`).join('')}</ul>
+      ${entry.entities.length > 500 ? `<p class="panel-empty">${entry.entities.length - 500} more not shown.</p>` : ''}
+    </div>`).join('')}
+  </details></td></tr>`;
 }
 
 function blockerMarkup(rows) {
@@ -395,11 +412,16 @@ function historicalAuthorityMarkup(state) {
   </section>`;
 }
 
-function buildMethodRows(statusRows) {
+function buildMethodRows(statusRows, commonSnapshot) {
   const byId = new Map((statusRows || []).map((row) => [row.methodId, row]));
+  // The status projection carries only blocker codes. The entity-level detail
+  // (which pipe or component failed to resolve) lives solely in the checker
+  // report and was previously never rendered anywhere in this view.
+  const reportById = new Map((commonSnapshot?.report?.methodRows || []).map((row) => [row.methodId, row]));
   return METHOD_ROWS.map(([methodId, label]) => {
     const row = byId.get(methodId);
     const state = row?.state || 'NOT_EVALUATED';
+    const reportBlockers = reportById.get(methodId)?.blockers || [];
     return {
       methodId,
       label,
@@ -409,8 +431,24 @@ function buildMethodRows(statusRows) {
         : row?.blockerCodes?.length
           ? row.blockerCodes.join(', ')
           : 'The common checker has not produced a current method receipt.',
+      entityBlockers: Object.freeze(reportBlockers.map((blocker) => ({
+        code: blocker.code || 'BLOCKED',
+        entities: entityListFromBlockerMessage(blocker.message),
+      }))),
     };
   });
+}
+
+/**
+ * Extracts the "missing for: A, B, C." entity list the coverage requirement
+ * writes into its message. This is a display convenience only: the entity IDs
+ * are not separately structured in the report, so nothing computed here feeds
+ * back into any pass/fail decision.
+ */
+function entityListFromBlockerMessage(message) {
+  const match = /missing for:\s*(.+)\.\s*$/.exec(String(message || ''));
+  if (!match) return [];
+  return match[1].split(',').map((entry) => entry.trim()).filter(Boolean);
 }
 
 function fallbackEnrichmentState(snapshot) {
@@ -538,6 +576,14 @@ function styles() {
     .non-fea-gates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.non-fea-gate{display:grid;grid-template-columns:30px 1fr;gap:9px;padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-gate__index{display:flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:50%;background:#172033;color:#94a3b8;font-weight:800}.non-fea-gate__heading{display:flex;justify-content:space-between;gap:8px}.non-fea-gate p{margin:6px 0 0;color:#94a3b8;line-height:1.35;font-size:12px}.non-fea-gate--ready{border-color:#166534}.non-fea-gate--ready .non-fea-gate__heading span{color:#4ade80}.non-fea-gate--warning{border-color:#92400e}.non-fea-gate--warning .non-fea-gate__heading span{color:#fbbf24}.non-fea-gate--blocked,.non-fea-gate--stale{border-color:#7f1d1d}.non-fea-gate--blocked .non-fea-gate__heading span,.non-fea-gate--stale .non-fea-gate__heading span{color:#f87171}
     .non-fea-audits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.non-fea-audits article{padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-audits article>span{display:block;margin-top:4px;font-weight:800}.non-fea-audits article p{margin:6px 0 0;color:#94a3b8;font-size:11px}.non-fea-audits [data-status="READY"]{border-color:#166534}.non-fea-audits [data-status="READY"]>span{color:#4ade80}.non-fea-audits [data-status="BLOCKED"]{border-color:#7f1d1d}.non-fea-audits [data-status="BLOCKED"]>span{color:#f87171}
     .non-fea-table-wrap{overflow:auto;margin-top:10px}.non-fea-input-check table{width:100%;border-collapse:collapse}.non-fea-input-check th,.non-fea-input-check td{text-align:left;padding:8px;border-bottom:1px solid #223047;vertical-align:top}.non-fea-input-check th{color:#7dd3fc;font-size:11px;text-transform:uppercase;letter-spacing:.05em}.non-fea-input-check td{font-size:12px}.non-fea-chip{display:inline-flex;padding:3px 7px;border-radius:999px;border:1px solid #475569;font-size:10px;font-weight:800}.non-fea-chip--ready{border-color:#166534;color:#4ade80}.non-fea-chip--warning{border-color:#92400e;color:#fbbf24}.non-fea-chip--blocked,.non-fea-chip--stale{border-color:#7f1d1d;color:#f87171}
+    .non-fea-entity-blockers td{padding:0;border:none}
+    .non-fea-entity-blockers details{margin:2px 0 8px;border:1px solid #3f2730;border-radius:6px;background:#0b1424}
+    .non-fea-entity-blockers summary{padding:8px 10px;cursor:pointer;color:#fca5a5;font-size:12px;font-weight:700}
+    .non-fea-entity-group{padding:0 10px 10px}
+    .non-fea-entity-group strong{color:#f87171;font-size:11px}
+    .non-fea-entity-group ul{list-style:none;margin:5px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:3px 8px;max-height:220px;overflow:auto}
+    .non-fea-entity-group li{color:#94a3b8;font-size:11px}
+    .non-fea-entity-group code{color:#cbd5e1}
     .non-fea-blockers{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:7px}.non-fea-blockers li{display:grid;grid-template-columns:max-content 1fr;gap:9px;padding:8px;border:1px solid #3f2730;border-radius:5px}.non-fea-blockers p{margin:3px 0 0;color:#94a3b8}.non-fea-ready-copy{color:#4ade80}.non-fea-side-panel header button{padding:5px 8px}.non-fea-facts{display:grid;grid-template-columns:110px 1fr;gap:7px;margin:12px 0}.non-fea-facts dt{color:#94a3b8}.non-fea-facts dd{margin:0;overflow-wrap:anywhere}.non-fea-master-list{list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:7px}.non-fea-master-list li{display:flex;justify-content:space-between;gap:10px;padding:8px;border:1px solid #26354a;border-radius:5px}.non-fea-master-list small{display:block;color:#64748b;margin-top:3px}.non-fea-seal{border-color:#164e63}.panel-empty{color:#94a3b8}
     @media(max-width:1100px){.non-fea-input-check__summary{grid-template-columns:repeat(3,1fr)}.non-fea-input-check__layout{grid-template-columns:1fr}.non-fea-gates{grid-template-columns:1fr}}@media(max-width:780px){.non-fea-audits{grid-template-columns:1fr}}@media(max-width:680px){.non-fea-input-check__header{flex-direction:column}.non-fea-input-check__actions{justify-content:flex-start}.non-fea-input-check__summary{grid-template-columns:repeat(2,1fr)}}
   </style>`;

@@ -9,6 +9,132 @@ are no longer true.
 
 ---
 
+## 0. Input sources
+
+Every artefact this plan reads, modifies or depends on. Repository:
+`https://github.com/reallaksh19/Advanced_Analysis`, default branch `main`.
+Remote form of any path below:
+`https://github.com/reallaksh19/Advanced_Analysis/blob/main/<repo-relative-path>`
+
+### 0.1 Production path — files this plan MODIFIES
+
+| # | Repo-relative path | Role in this plan |
+|---|---|---|
+| P1 | `src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js` | Holds **C1** (BEND→PIPE retype) and **C3** (`requireIdentityConditioning`); span→element binding |
+| P2 | `src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js` | Holds **C2** (`INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE`) |
+| P3 | `src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js` | Holds **C4** (`componentDispositions`, `currentAuthorizedEffects`) |
+| P4 | `src/core/linear-piping-analysis-consumer/generic-inputxml-solve-case.js` | **C4** hardcoded `authorizedEffects` (2 of 3) |
+| P5 | `src/core/linear-piping-analysis-consumer/inputxml-linear-preparation-load-authorities.js` | **C4** hardcoded `authorizedEffects` (3 of 3) |
+| P6 | `src/core/geometry/adapters/accdb-to-canonical-geometry.js` | **B2** — computes then discards `tangentStart`/`tangentEnd` |
+| P7 | `src/core/geometry/adapters/inputXmlToCanonicalGeometry.js` | **B3** — emits `BEND_INTERNAL_STATION_GEOMETRY_NOT_SUPPORTED` |
+
+**New files created by this plan:**
+`src/core/linear-piping-analysis-consumer/production-capability-profile.js` (S0),
+`src/core/linear-piping-analysis-consumer/bend-retopology.js` (S2).
+
+### 0.2 Production path — files READ but not modified
+
+| # | Repo-relative path | Why it matters |
+|---|---|---|
+| R1 | `src/core/centerline-beam-fea/node-seeding.js` | `seedSegment` gate + `seedBendSegment`; the endpoint==tangent assumption behind **B1** |
+| R2 | `src/core/centerline-beam-fea/bend-geometry.js` | `discretiseBend`; raises `BEND_CENTRE_INCONSISTENT` |
+| R3 | `src/core/linear-fea-model-compiler/model-compiler-contract.js` | `EXACTLY_ONE_BINDING_PER_SPAN_V1` — forces unique chord element ids |
+| R4 | `src/core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js` | Executor reconstitutes elements from the sealed model; does **not** author geometry |
+| R5 | `src/core/linear-piping-analysis-consumer/inputxml-linear-governed-solve.js` | Authorization gateway; requires an injected executor |
+
+### 0.3 Component library — the mechanics being promoted
+
+| # | Repo-relative path | Provides |
+|---|---|---|
+| C-1 | `src/core/linear-fea-piping-components/index.js` | Public exports |
+| C-2 | `src/core/linear-fea-piping-components/piping-component.js` | `compilePipingComponent`, `PIPING_COMPONENT_INPUT_KEYS` |
+| C-3 | `src/core/linear-fea-piping-components/bend-component.js` | `buildBendComponent`, `bendFlexibilityDoubleCountGuard`, `evaluateBendSubdivisionConvergence` |
+| C-4 | `src/core/linear-fea-piping-components/branch-component.js` | `classifyBranchLegs`, `branchFlexibilityGuard` (S6) |
+| C-5 | `src/core/linear-fea-piping-components/bourdon-pressure-expansion.js` | `deriveMec21BendPressureFreeState` (S5) |
+| C-6 | `src/core/linear-fea-reducer-condensation/index.js` | `compileTenCylinderReducerAuthority` (S4) |
+| C-7 | `src/core/linear-fea-b31-factor-calculator/index.js` | `calculateB31Factors` (S3) |
+
+### 0.4 Reference implementation — the pattern to follow
+
+| # | Repo-relative path | Note |
+|---|---|---|
+| X1 | `src/core/fea-benchmarks/caesar-accdb-linear-solve.js` | **2,644 lines.** The only non-test caller of `compilePipingComponent`. Bend definitions ≈ L1200–1310, Bourdon segments ≈ L1317–1365, model compile ≈ L1367+. **Read this before implementing S2/S3.** |
+
+### 0.5 Benchmark data — availability warning
+
+> **A fresh clone does NOT contain the data needed to qualify this work.**
+
+| Artefact | Repo-relative path | In git? |
+|---|---|---|
+| BM4 InputXML | `benchmarks/LFEA/BM4/InputXML_BM4.xml` | ✅ tracked |
+| BM4 InputXML (repaired) | `benchmarks/LFEA/BM4/InputXML_BM4.repaired.xml` | ✅ tracked |
+| BM4 CAESAR output | `benchmarks/LFEA/BM4/Output_BM4.xml` | ✅ tracked |
+| BM4 provenance | `benchmarks/LFEA/BM4/PROVENANCE.md` | ✅ tracked |
+| **BM4_L ACCDB model** | `benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB` | ❌ **untracked, local-only** |
+| **BM1 fixtures** | `benchmarks/LFEA/BM1/` | ❌ **absent from repository** |
+
+Consequences the implementing agent must plan around:
+
+- `BM4_L.ACCDB` is the **only** input in this repository that resolves bend arcs
+  (10/10). It is untracked, so §3's measurements cannot be reproduced from a
+  clean clone. **Obtain it from the model owner before starting S1 or S2.**
+- `benchmarks/LFEA/BM1/BM1_InputXML.xml` does not exist anywhere in the tree, so
+  `lfea-b3.15`, `lfea-b3.16` and `lfea-b3.18` fail with `ENOENT` on a clean
+  checkout — **on `main`, before any change**. S3 cannot be qualified until these
+  are restored. Do not mistake this pre-existing failure for a regression you
+  caused.
+
+### 0.6 Benchmark and check scripts
+
+| Script | Gates |
+|---|---|
+| `scripts/lfea-b3.18-bm1-bend-check.mjs` | Bend mechanics (S3) — *needs BM1* |
+| `scripts/lfea-b3.19-b31-factor-calculator-check.mjs` | B31 factor calculator |
+| `scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs` | B31J branch factors (S6) |
+| `scripts/lfea-b3.23-reducer-condensation-check.mjs` | Reducer condensation (S4) |
+| `scripts/lfea-b1-conditioning-check.mjs` | Geometry conditioning (S2) |
+| `scripts/lfea-b2.5-model-compiler-check.mjs` | Model compiler (S2) |
+| `scripts/linear-piping-analysis-consumer-check.mjs` | Consumer contract |
+| `scripts/lfea-ui-error-check-check.mjs` | Error Check presentation (S7) |
+| `scripts/doc-drift-check.mjs` | Documentation drift |
+
+Aggregate entry points in `package.json`: `check:lfea-linear-core`, `gate`.
+
+Baseline verified green on `main` before this plan was written:
+`lfea-b1-conditioning-check`, `lfea-b2.5-model-compiler-check`,
+`lfea-b3.2-piping-component-check`, `lfea-b3.19-b31-factor-calculator-check`,
+`lfea-b3.23-reducer-condensation-check`, `lfea-b3.22-rigid-element-authority-check`,
+`linear-piping-analysis-consumer-check`, `lfea-inputxml-ingest-check`.
+
+### 0.7 UI consumers — verify after any capability flip (S7)
+
+| Repo-relative path | Role |
+|---|---|
+| `src/workspace/lfea-diagnostics/lfea-error-check-presentation.js` | Groups findings; `triage`, `groups` |
+| `src/workspace/lfea-diagnostics/lfea-error-check-panel.js` | Renders grouped findings |
+| `src/workspace/lfea-finding-plain-language.js` | Finding → sentence |
+| `src/workspace/lfea-finding-suggested-action.js` | Finding → what to do |
+| `src/workspace/lfea-model-review/lfea-geometry-review.js` | SOURCE vs ANALYSIS geometry projection |
+
+### 0.8 Related documents and evidence
+
+| Path | Note |
+|---|---|
+| `docs/lfea/LFEA_Piping_Component_Promotion_Issue_Rev1.md` | Issue body for this work |
+| `src/core/geometry/adapters/accdb-restraint-type-correspondence.js` | Precedent for evidence-based, fail-closed source mapping |
+| `benchmarks/LFEA/B31_APPENDIX_D/M026_Appendix_D_Factor_Benchmarks.json` | B31 Appendix D factor benchmark data |
+| `reports/` | Where per-stage benchmark movement justifications must be written |
+
+### 0.9 External standards referenced by the code
+
+ASME B31.3 (flexibility / SIF), ASME B31J (branch flexibility, via
+`deriveB31JDirectionalBranchEndModifiers`), and CAESAR II restraint-type and
+bend-station conventions. These are **not** vendored in this repository — the
+code encodes them through factor profiles and correspondence tables, each
+carrying its own evidence reference.
+
+---
+
 ## 1. Why this exists
 
 The mechanics are already built and benchmarked. They are not reachable from
@@ -769,16 +895,20 @@ for each stage S0 .. S7:
 
 ## 14. Verification status of this document
 
-| Claim | How verified |
-|---|---|
-| Production never builds components | `grep` across `src/`, returns benchmark harness only |
-| C1 retype disables seeding | Read `seedSegment` gate in `node-seeding.js` |
-| ACCDB endpoints are not tangents | Measured BM4_L bend #1: 0.867 vs 0.539 vs radius |
-| `discretiseBend` rejects ACCDB bends | Executed: `BEND_CENTRE_INCONSISTENT`, residual 0.3786 |
-| ACCDB resolves 10/10 arcs | Executed against `BM4_L.ACCDB` |
-| InputXML resolves 0/11 arcs | Executed; `BEND_INTERNAL_STATION_GEOMETRY_NOT_SUPPORTED` ×11 |
-| Tangent points are discarded | Read adapter; `meta` keys enumerated at runtime |
-| Removing C1–C3 alone is inert | Implemented on a scratch branch; BM4 chord count stayed 0 |
+| Claim | Input used | How verified |
+|---|---|---|
+| Production never builds components | `src/**` | `grep -rn "compilePipingComponent"` → benchmark harness + `scripts/` only |
+| C1 retype disables seeding | P1, R1 | Read `projectInputXmlAnalyticalGeometry` and the `seedSegment` type gate |
+| C2 never enforces a bend limit | P2 | Read `bendLengthErrorLimit: { value: 1 }` (100%) |
+| C3 rejects 1→N expansion | P1 | Read `requireIdentityConditioning` id-list equality |
+| C4 hardcoded in 4 places | P3, P4, P5 | `grep` for the `authorizedEffects` literal + read `componentDispositions` |
+| ACCDB resolves 10/10 arcs | `BM4_L.ACCDB` (untracked) | Executed `accdbTablesToCanonicalGeometry` |
+| ACCDB endpoints are not tangents | `BM4_L.ACCDB` (untracked) | Measured bend #1: start→centre `0.867180`, end→centre `0.538815` |
+| `discretiseBend` rejects ACCDB bends | `BM4_L.ACCDB` (untracked), R2 | Executed `conditionGeometry` → `BEND_CENTRE_INCONSISTENT`, residual `0.3786583366683667` |
+| Tangent points are discarded | P6 | Enumerated `segment.meta` keys at runtime; only `bendArcCentre`, `bendComputedRadius` present |
+| InputXML resolves 0/11 arcs | `InputXML_BM4.xml`, `InputXML_BM4.repaired.xml` (tracked) | Executed; `BEND_INTERNAL_STATION_GEOMETRY_NOT_SUPPORTED` ×11 in both |
+| Removing C1–C3 alone is inert | `BM4_L.ACCDB` + scratch branch | Implemented C1–C3 removal; BM4 chord count stayed **0**, all 8 baseline checks still passed |
+| BM1 cannot run locally | `benchmarks/LFEA/BM1/` | `git ls-files` empty; `lfea-b3.15` fails `ENOENT` on unmodified `main` |
 
 Everything in §3 was executed against `benchmarks/LFEA/BM4/`. The stage designs
 in §5–§11 are **proposals and have not been implemented or benchmarked.**

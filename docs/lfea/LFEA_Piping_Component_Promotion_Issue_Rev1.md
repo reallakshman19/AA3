@@ -16,7 +16,49 @@ drives never calls them, so every model reports them as unavailable.
 Those reports are currently **accurate**. This issue tracks making them
 unnecessary — and keeping them accurate while it happens.
 
-Full plan: [`docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md`](docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md)
+## Input sources
+
+Repository `https://github.com/reallaksh19/Advanced_Analysis`, branch `main`.
+Remote form of any path below:
+`https://github.com/reallaksh19/Advanced_Analysis/blob/main/<path>`
+
+**Full plan (read first):**
+[`docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md)
+— §0 of that document lists every input source in full.
+
+**Files to modify (the four constraints):**
+
+- [`src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js) — **C1**, **C3**
+- [`src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js) — **C2**
+- [`src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js) — **C4** (1 of 3)
+- [`src/core/linear-piping-analysis-consumer/generic-inputxml-solve-case.js`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/src/core/linear-piping-analysis-consumer/generic-inputxml-solve-case.js) — **C4** (2 of 3)
+- [`src/core/linear-piping-analysis-consumer/inputxml-linear-preparation-load-authorities.js`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/src/core/linear-piping-analysis-consumer/inputxml-linear-preparation-load-authorities.js) — **C4** (3 of 3)
+- [`src/core/geometry/adapters/accdb-to-canonical-geometry.js`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/src/core/geometry/adapters/accdb-to-canonical-geometry.js) — **B2**
+- [`src/core/geometry/adapters/inputXmlToCanonicalGeometry.js`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/src/core/geometry/adapters/inputXmlToCanonicalGeometry.js) — **B3**
+
+**Reference implementation (read before S2/S3):**
+[`src/core/fea-benchmarks/caesar-accdb-linear-solve.js`](https://github.com/reallaksh19/Advanced_Analysis/blob/main/src/core/fea-benchmarks/caesar-accdb-linear-solve.js)
+— 2,644 lines; the only non-test caller of `compilePipingComponent`.
+
+**Mechanics to promote:**
+[`src/core/linear-fea-piping-components/`](https://github.com/reallaksh19/Advanced_Analysis/tree/main/src/core/linear-fea-piping-components),
+[`src/core/linear-fea-reducer-condensation/`](https://github.com/reallaksh19/Advanced_Analysis/tree/main/src/core/linear-fea-reducer-condensation),
+[`src/core/linear-fea-b31-factor-calculator/`](https://github.com/reallaksh19/Advanced_Analysis/tree/main/src/core/linear-fea-b31-factor-calculator)
+
+### ⚠ Required input data is NOT in this repository
+
+| Artefact | Path | Status |
+|---|---|---|
+| BM4 InputXML / CAESAR output | `benchmarks/LFEA/BM4/*.xml` | ✅ tracked |
+| **BM4_L ACCDB model** | `benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB` | ❌ **untracked, local-only** |
+| **BM1 fixtures** | `benchmarks/LFEA/BM1/` | ❌ **absent entirely** |
+
+- `BM4_L.ACCDB` is the **only** input here that resolves bend arcs (10/10) and is
+  not committed — the measurements in this issue cannot be reproduced from a
+  clean clone. **Obtain it from the model owner before starting.**
+- BM1 is missing, so `lfea-b3.15`, `lfea-b3.16` and `lfea-b3.18` fail with
+  `ENOENT` **on `main`, before any change**. Do not mistake this pre-existing
+  failure for a regression.
 
 ## Current state
 

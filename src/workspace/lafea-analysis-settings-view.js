@@ -3,6 +3,7 @@ import {
   FORMULATION_GUARDS,
   FORMULATIONS,
 } from '../core/local-continuum/index.js';
+import { createLafeaInfoDisclosure, rowsFromLafeaItems } from './lafea-info-disclosure.js';
 import { element } from './lafea-workbench-dom.js';
 import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
 
@@ -80,7 +81,7 @@ export function renderLafeaAnalysisSettings(
     root,
     'p',
     'lafea-analysis-settings__intro',
-    'Model formulation is an explicit governed source input. Solver authority, qualification tolerances and release state remain locked; changing formulation invalidates downstream mesh/run evidence through the normal source-replacement transaction.',
+    'Configure only the stage-authorized analysis choices here. Source identity, solver custody and qualification metadata remain available as supporting evidence without occupying the primary workflow.',
   ));
 
   if (model.formulationControl) {
@@ -90,15 +91,27 @@ export function renderLafeaAnalysisSettings(
   const groups = element(root, 'div', 'lafea-analysis-settings__groups');
   groups.dataset.role = 'lafea-analysis-settings-primary';
   groups.append(
-    settingsGroup(root, 'Model-declared analysis settings', 'MODEL_SOURCE', model.modelRows),
-    settingsGroup(root, 'Solver contract', 'GOVERNED_SOLVER', model.solverSummaryRows),
+    settingsGroup(root, {
+      title: 'Model-declared analysis settings',
+      authority: 'MODEL_SOURCE',
+      visibleRows: [],
+      infoTitle: 'Source metadata',
+      infoRows: model.modelRows,
+    }),
+    settingsGroup(root, {
+      title: 'Solver readiness',
+      authority: 'GOVERNED_SOLVER',
+      visibleRows: model.solverSummaryRows.filter((item) => (
+        item.label === 'Availability' || item.label === 'Source binding'
+      )),
+      infoTitle: 'Solver contract metadata',
+      infoRows: model.solverSummaryRows,
+    }),
   );
   section.append(groups, technicalSettings(root, model.solverRows));
 
   if (model.recoveryDisclosure) {
-    const recovery = element(root, 'p', 'lafea-analysis-settings__recovery', model.recoveryDisclosure);
-    recovery.dataset.role = 'lafea-solver-recovery-policy';
-    section.append(recovery);
+    section.append(textDisclosure(root, 'Recovery policy', model.recoveryDisclosure, 'lafea-solver-recovery-policy'));
   }
 
   if (model.qualificationDetails.length) {
@@ -130,6 +143,18 @@ function formulationControl(root, stageValue, control, handlers) {
   const heading = element(root, 'div', 'lafea-analysis-settings__group-heading');
   heading.append(
     element(root, 'h3', null, 'Continuum formulation'),
+    createLafeaInfoDisclosure(root.ownerDocument, 'Continuum formulation basis', [
+      ['Current', formulationLabel(control.current)],
+      ['Poisson ratio(s)', control.poissonRatios || 'Not declared'],
+      ['Retained mesh families', control.retainedMeshFamilies || 'No retained mesh'],
+      ['B-bar element authority', 'T6 / Q8 only; actual T3 solver mesh blocks before stiffness assembly'],
+      ['B-bar temperature authority', 'Not granted — temperature/eigenstrain loads are blocked'],
+      ['Legacy plane-strain hard block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
+      ['Qualification state', statusLabel(control.status)],
+    ], {
+      role: 'lafea3-formulation-info',
+      className: 'lafea-analysis-settings__info',
+    }),
     element(root, 'span', 'lafea-analysis-settings__lock', 'Source input'),
   );
   const select = element(root, 'select');
@@ -152,19 +177,7 @@ function formulationControl(root, stageValue, control, handlers) {
     next.formulation = select.value;
     handlers.onApplyJson(`${JSON.stringify(next, null, 2)}\n`);
   });
-  const facts = element(root, 'dl', 'lafea-analysis-settings__list');
-  [
-    ['Current', formulationLabel(control.current)],
-    ['Poisson ratio(s)', control.poissonRatios || 'Not declared'],
-    ['Retained mesh families', control.retainedMeshFamilies || 'No retained mesh'],
-    ['B-bar element authority', 'T6 / Q8 only; actual T3 solver mesh blocks before stiffness assembly'],
-    ['B-bar temperature authority', 'Not granted — temperature/eigenstrain loads are blocked'],
-    ['Legacy plane-strain hard block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
-    ['Qualification state', statusLabel(control.status)],
-  ].forEach(([label, value]) => {
-    facts.append(element(root, 'dt', null, label), element(root, 'dd', null, String(value)));
-  });
-  card.append(heading, select, status, facts);
+  card.append(heading, select, status);
   return card;
 }
 
@@ -249,22 +262,37 @@ function buildFormulationControl(stage, documentValue) {
   });
 }
 
-function settingsGroup(root, title, authority, rows) {
+function settingsGroup(root, configuration) {
+  const { title, authority, visibleRows, infoTitle, infoRows } = configuration;
   const group = element(root, 'section', 'lafea-analysis-settings__group');
   group.dataset.authority = authority;
   const heading = element(root, 'div', 'lafea-analysis-settings__group-heading');
-  heading.append(
-    element(root, 'h3', null, title),
-    element(root, 'span', 'lafea-analysis-settings__lock', authority === 'GOVERNED_SOLVER' ? 'Governed' : 'Source input'),
-  );
-  const list = element(root, 'dl', 'lafea-analysis-settings__list');
-  for (const item of rows) {
-    list.append(
-      element(root, 'dt', null, item.label),
-      element(root, 'dd', null, item.value),
-    );
+  heading.append(element(root, 'h3', null, title));
+  if (infoRows?.length) {
+    heading.append(createLafeaInfoDisclosure(
+      root.ownerDocument,
+      infoTitle,
+      rowsFromLafeaItems(infoRows),
+      { className: 'lafea-analysis-settings__info' },
+    ));
   }
-  group.append(heading, list);
+  heading.append(element(
+    root,
+    'span',
+    'lafea-analysis-settings__lock',
+    authority === 'GOVERNED_SOLVER' ? 'Governed' : 'Source',
+  ));
+  group.append(heading);
+  if (visibleRows?.length) {
+    const list = element(root, 'dl', 'lafea-analysis-settings__list');
+    for (const item of visibleRows) {
+      list.append(
+        element(root, 'dt', null, item.label),
+        element(root, 'dd', null, item.value),
+      );
+    }
+    group.append(list);
+  }
   return group;
 }
 
@@ -280,6 +308,16 @@ function technicalSettings(root, rows) {
     );
   }
   details.append(list);
+  return details;
+}
+
+function textDisclosure(root, title, text, role) {
+  const details = element(root, 'details', 'lafea-analysis-settings__details');
+  details.dataset.role = role;
+  details.append(
+    element(root, 'summary', null, title),
+    element(root, 'p', 'lafea-analysis-settings__recovery', text),
+  );
   return details;
 }
 
@@ -299,13 +337,13 @@ function registryEntry(value) {
 function recoveryDisclosure(stageId, documentValue) {
   if (stageId !== 'LAFEA.3') return null;
   if (documentValue?.formulation === FORMULATIONS.PLANE_STRAIN_BBAR) {
-    return 'Recovery authority: B-bar T6/Q8 stress uses pointwise deviatoric strain plus the retained element-mean dilatation used by stiffness. Integration-point stress remains authoritative; projected nodal stress is display-only.';
+    return 'B-bar T6/Q8 stress uses pointwise deviatoric strain plus the retained element-mean dilatation used by stiffness. Integration-point stress remains authoritative; projected nodal stress is display-only.';
   }
   const families = [...new Set((documentValue?.elements ?? [])
     .map((row) => row?.elementType)
     .filter((value) => typeof value === 'string'))];
   if (families.some((value) => value === 'T6' || value === 'Q8')) {
-    return 'Recovery authority: T6/Q8 integration-point stress is authoritative; projected nodal stress is display-only.';
+    return 'T6/Q8 integration-point stress is authoritative; projected nodal stress is display-only.';
   }
   return 'Recovery authority follows the registered LAFEA.3 continuum result contract.';
 }

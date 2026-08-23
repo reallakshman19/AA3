@@ -112,7 +112,14 @@ test('A17 failure: visible preflight veto is diagnostic, non-mutating and non-th
   await expect(advance).toHaveText('Advance to numerical preflight');
   await advance.click();
 
-  const diagnostics = root.locator('[data-role="lafea-diagnostics"]');
+  const solve = root.locator('[data-role="lafea-solve-readiness"]');
+  await expect(solve).toBeVisible();
+  await expect(root.locator('[data-role="lafea-solve-readiness-primary"]'))
+    .toContainText(/temperature semantics not qualified/i);
+  const solveEvidence = root.locator('[data-role="lafea-solve-readiness-evidence"]');
+  await expect(solveEvidence).not.toHaveAttribute('open', '');
+  await solveEvidence.locator('summary').click();
+  const diagnostics = solveEvidence.locator('[data-role="lafea-diagnostics"]');
   await expect(diagnostics).toBeVisible();
   await expect(diagnostics).toContainText(
     'LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED',

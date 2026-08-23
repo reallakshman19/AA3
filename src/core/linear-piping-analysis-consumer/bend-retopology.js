@@ -332,7 +332,7 @@ function discretisedDefinition(input) {
     chordSegments: Object.freeze(chordSegments),
     midArcNodeId: String(chain[input.chordCount / 2].id),
     arcLength: discretised.arcLength,
-    chordChainLength: discretised.chordChainLength,
+    chordChainLength: discretised.chordLength,
     lengthErrorFraction: discretised.lengthErrorFraction,
     retiredCornerNodeId: input.retiredCornerNodeId,
   });

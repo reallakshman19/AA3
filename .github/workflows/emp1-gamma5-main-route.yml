@@ -16,6 +16,36 @@ jobs:
           node-version: '20'
       - name: Enforce independent-oracle import firewall
         run: node scripts/emp1-wrc537-independent-oracle-import-firewall-check.mjs
+      - name: Qualify independent oracle interpretation decoupling
+        run: node scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs
+      - name: Prove oracle catches sign/figure/load corruption
+        run: node scripts/emp1-wrc537-independent-oracle-falsifiers.mjs
+      - name: Re-observe independent gamma5 full Table-5 oracle
+        run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
+      - name: Qualify WRC r0 outside-radius custody
+        run: node scripts/emp1-wrc537-r0-outside-radius-custody-check.mjs
+      - name: Qualify typed WRC r0 source authority
+        run: node scripts/emp1-wrc537-r0-source-authority-check.mjs
+      - name: Qualify WRC r0 unit coherence
+        run: node scripts/emp1-wrc537-r0-unit-coherence-check.mjs
+      - name: Qualify typed r0 through workbench transaction
+        run: node scripts/emp1-workbench-product-run-qualification.mjs
+      - name: Qualify WRC 4.5 cylindrical applicability
+        run: node scripts/emp1-wrc537-cylindrical-applicability-check.mjs
+      - name: Qualify WRC eight-point extrema authority
+        run: node scripts/emp1-wrc537-eight-point-extrema-scope-check.mjs
+      - name: Qualify WRC unity-only stress-concentration authority
+        run: node scripts/emp1-wrc537-stress-concentration-authority-check.mjs
+      - name: Qualify longitudinal-moment curve selection policy
+        run: node scripts/emp1-wrc537-longitudinal-moment-curve-selection-check.mjs
+      - name: Re-observe qualified zero-dp upstream load producer
+        run: node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs
+      - name: Qualify cylindrical WRC load-axis polarity
+        run: node scripts/emp1-wrc537-cylindrical-axis-authority-check.mjs
+      - name: Re-observe fail-closed gamma5 authority after axis and r0 closure
+        run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
+      - name: Preserve EMP.1 public product truth
+        run: node scripts/emp1-public-product-check.mjs
       - name: Replay exact-head subordinate evidence
         run: |
           node scripts/emp1-wrc-gamma5-requalification-observation-replay-check.mjs \
@@ -48,33 +78,3 @@ jobs:
             validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-evidence-manifest.generated.json
           if-no-files-found: ignore
           retention-days: 30
-      - name: Qualify independent oracle interpretation decoupling
-        run: node scripts/emp1-wrc537-independent-oracle-decoupling-check.mjs
-      - name: Prove oracle catches sign/figure/load corruption
-        run: node scripts/emp1-wrc537-independent-oracle-falsifiers.mjs
-      - name: Re-observe independent gamma5 full Table-5 oracle
-        run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
-      - name: Qualify WRC r0 outside-radius custody
-        run: node scripts/emp1-wrc537-r0-outside-radius-custody-check.mjs
-      - name: Qualify typed WRC r0 source authority
-        run: node scripts/emp1-wrc537-r0-source-authority-check.mjs
-      - name: Qualify WRC r0 unit coherence
-        run: node scripts/emp1-wrc537-r0-unit-coherence-check.mjs
-      - name: Qualify typed r0 through workbench transaction
-        run: node scripts/emp1-workbench-product-run-qualification.mjs
-      - name: Qualify WRC 4.5 cylindrical applicability
-        run: node scripts/emp1-wrc537-cylindrical-applicability-check.mjs
-      - name: Qualify WRC eight-point extrema authority
-        run: node scripts/emp1-wrc537-eight-point-extrema-scope-check.mjs
-      - name: Qualify WRC unity-only stress-concentration authority
-        run: node scripts/emp1-wrc537-stress-concentration-authority-check.mjs
-      - name: Qualify longitudinal-moment curve selection policy
-        run: node scripts/emp1-wrc537-longitudinal-moment-curve-selection-check.mjs
-      - name: Re-observe qualified zero-dp upstream load producer
-        run: node scripts/emp1-a-zero-dp-wrc-load-producer-qualification.mjs
-      - name: Qualify cylindrical WRC load-axis polarity
-        run: node scripts/emp1-wrc537-cylindrical-axis-authority-check.mjs
-      - name: Re-observe fail-closed gamma5 authority after axis and r0 closure
-        run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
-      - name: Preserve EMP.1 public product truth
-        run: node scripts/emp1-public-product-check.mjs

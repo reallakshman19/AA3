@@ -16,6 +16,10 @@ export const LAFEA5_SOURCE_SHELL_ADOPTION_PLAN_SCHEMA = 'lafea5-source-shell-ado
 export const LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF =
   'LAFEA5_CALLER_AUTHORED_SHELL_TEMPLATE_ADOPTION_V1';
 export const LAFEA5_SOURCE_SHELL_ADOPTION_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
+export const LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_BASIS =
+  'MEDIAN_UNIQUE_SOURCE_EDGE_LENGTH';
+export const LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_ROLE =
+  'PROFILE_IDENTITY_AND_QUALITY_CUSTODY_ONLY_NO_REMESHING';
 
 const CAPABILITY = freeze({
   schema: 'lafea5-source-shell-adoption-capability/v1',
@@ -130,12 +134,19 @@ export function validateLafea5SourceShellParent(value) {
   return freeze({ ...value, lengthUnit, mesh });
 }
 
+export function lafea5SourceShellProfileReference(parentValue) {
+  const parent = validateLafea5SourceShellParent(parentValue);
+  return sourceProfileReference(parent);
+}
+
 export function planLafea5SourceShellMeshAdoption({ parent: parentValue, meshProfile: profileValue }) {
   const parent = validateLafea5SourceShellParent(parentValue);
   const meshProfile = canonicalLafeaAnalysisMeshProfile(profileValue);
   if (meshProfile.fields.shellElement !== LAFEA5_SOURCE_SHELL_ADOPTION_ELEMENT) {
     fail('LAFEA5_SOURCE_SHELL_ADOPTION_ELEMENT_PROFILE_MISMATCH');
   }
+  const profileReference = sourceProfileReference(parent);
+  requireSourceProfileReference(meshProfile, profileReference);
   const core = {
     schema: LAFEA5_SOURCE_SHELL_ADOPTION_PLAN_SCHEMA,
     stageId: 'LAFEA.5',
@@ -154,6 +165,9 @@ export function planLafea5SourceShellMeshAdoption({ parent: parentValue, meshPro
     characteristicLengthMin: null,
     characteristicLengthMedian: null,
     characteristicLengthMax: null,
+    profileReferenceLength: profileReference.referenceLength,
+    profileReferenceBasis: profileReference.basis,
+    profileReferenceRole: profileReference.role,
     resourceDisposition: 'WITHIN_LIMITS',
     sourceShellParentHash: parent.semanticHash,
     sourceShellTemplateHash: parent.shellTemplateSemanticHash,
@@ -174,11 +188,18 @@ export function planLafea5SourceShellMeshAdoption({ parent: parentValue, meshPro
 export function produceLafea5SourceShellMeshAdoption(input) {
   const parent = validateLafea5SourceShellParent(input.parent);
   const meshProfile = canonicalLafeaAnalysisMeshProfile(input.meshProfile);
+  const profileReference = sourceProfileReference(parent);
+  requireSourceProfileReference(meshProfile, profileReference);
   const plan = input.plan ?? planLafea5SourceShellMeshAdoption({ parent, meshProfile });
   if (plan.schema !== LAFEA5_SOURCE_SHELL_ADOPTION_PLAN_SCHEMA
     || plan.sourceShellParentHash !== parent.semanticHash
     || plan.meshProfileHash !== meshProfile.semanticHash) {
     fail('LAFEA5_SOURCE_SHELL_ADOPTION_PLAN_PARENT_MISMATCH');
+  }
+  if (plan.profileReferenceLength !== profileReference.referenceLength
+    || plan.profileReferenceBasis !== profileReference.basis
+    || plan.profileReferenceRole !== profileReference.role) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_PLAN_REFERENCE_MISMATCH');
   }
   const meshHash = lafeaAnalysisMeshContentHash(parent.mesh);
   const evidence = createLafeaAnalysisMeshEvidenceV2({
@@ -278,6 +299,45 @@ function sourceMeshCanonical(mesh) {
     return freeze({ elementId: text(row.elementId), elementType: row.elementType, nodeIds: freeze(nodeIdsValue) });
   }).sort((a, b) => a.elementId.localeCompare(b.elementId));
   return freeze({ schema: 'lafea-analysis-mesh/v1', meshIdentity: text(mesh.meshIdentity), nodes, elements });
+}
+
+function sourceProfileReference(parent) {
+  const nodeById = new Map(parent.mesh.nodes.map((row) => [row.nodeId, row]));
+  const edgeKeys = new Set();
+  for (const element of parent.mesh.elements) {
+    const ids = element.nodeIds;
+    for (const [left, right] of [[ids[0], ids[1]], [ids[1], ids[2]], [ids[2], ids[0]]]) {
+      edgeKeys.add(left < right ? `${left}\u0000${right}` : `${right}\u0000${left}`);
+    }
+  }
+  const lengths = [...edgeKeys].map((key) => {
+    const [leftId, rightId] = key.split('\u0000');
+    const left = nodeById.get(leftId);
+    const right = nodeById.get(rightId);
+    const length = Math.hypot(left.x - right.x, left.y - right.y, left.z - right.z);
+    if (!(length > 0) || !Number.isFinite(length)) {
+      fail('LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_INVALID');
+    }
+    return length;
+  }).sort((left, right) => left - right);
+  if (!lengths.length) fail('LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_INVALID');
+  const middle = Math.floor(lengths.length / 2);
+  const referenceLength = lengths.length % 2
+    ? lengths[middle]
+    : (lengths[middle - 1] + lengths[middle]) / 2;
+  return freeze({
+    referenceLength,
+    lengthUnit: parent.lengthUnit,
+    basis: LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_BASIS,
+    role: LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_ROLE,
+    uniqueEdgeCount: lengths.length,
+  });
+}
+
+function requireSourceProfileReference(meshProfile, profileReference) {
+  if (meshProfile.fields.globalTargetSize !== profileReference.referenceLength) {
+    fail('LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_MISMATCH');
+  }
 }
 
 function assertIdentityPreserved(expected, actual) {

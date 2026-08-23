@@ -14,6 +14,68 @@ export const LFEA_BEND_SMOOTH90_OPTIONS = Object.freeze([
   Object.freeze({ value: 'YES', label: 'Apply smooth 90° correction where applicable' }),
 ]);
 
+const EMPTY_SELECTION = Object.freeze({
+  editionProfileId: null,
+  smooth90FlexibilityCorrection: null,
+  complete: false,
+});
+
+let currentSelection = EMPTY_SELECTION;
+let mountedControl = null;
+
+/** Return the current explicit engineer selection. No default is ever supplied. */
+export function lfeaBendFactorAuthoritySelection() {
+  return currentSelection;
+}
+
+/**
+ * Seal the visible engineering selection against one exact source intake.
+ *
+ * The UI choice may remain visible when the engineer replaces the source, but
+ * the authority record never does: sourceRevision includes the new intake
+ * semantic identity, so a prior source's stiffness authorization cannot be
+ * reused by a replacement source.
+ */
+export function lfeaBendFactorAuthorityForIntake(intake) {
+  if (!currentSelection.complete) return null;
+  const intakeSemanticHash = requireIntakeSemanticHash(intake);
+  const smoothToken = currentSelection.smooth90FlexibilityCorrection ? 'YES' : 'NO';
+  const intakeToken = safeToken(intakeSemanticHash).slice(-20).toUpperCase();
+  return sealInputXmlProductionBendFactorAuthority({
+    authorityId: `LFEA-BEND-FACTOR-${currentSelection.editionProfileId}-SMOOTH90-${smoothToken}-${intakeToken}`,
+    editionProfileId: currentSelection.editionProfileId,
+    smooth90FlexibilityCorrection: currentSelection.smooth90FlexibilityCorrection,
+    sourceId: 'LFEA_UI_EXPLICIT_BEND_FACTOR_SELECTION',
+    sourceRevision: `INTAKE-${intakeSemanticHash}`,
+  });
+}
+
+/**
+ * Mount one shared LFEA bend-factor control for InputXML, StagedJSON-derived
+ * InputXML and ACCDB. Changing either field reuses each source controller's
+ * existing profile-change path to regenerate pre-flight and invalidate any
+ * authorization sealed for the previous stiffness parent.
+ */
+export function ensureLfeaBendFactorAuthorityControl(doc) {
+  if (!doc || typeof doc.querySelector !== 'function') return null;
+  if (mountedControl?.root?.isConnected) return mountedControl;
+  const host = doc.querySelector('[data-role="linear-piping-consumer-root"]');
+  if (!host || typeof host.append !== 'function') return null;
+  const existing = host.querySelector?.('[data-role="lfea-bend-factor-authority-control"]');
+  if (existing) return mountedControl;
+
+  mountedControl = createLfeaBendFactorAuthorityControl(doc, {
+    initialSelection: currentSelection,
+    onChanged(selection) {
+      currentSelection = selection;
+      regenerateNativePreFlights(doc);
+    },
+  });
+  if (typeof host.prepend === 'function') host.prepend(mountedControl.root);
+  else host.append(mountedControl.root);
+  return mountedControl;
+}
+
 /**
  * One reusable view/controller for the source-specific engineering authority
  * S3 needs before B31/B31J bend flexibility can enter stiffness. Both fields
@@ -57,8 +119,14 @@ export function createLfeaBendFactorAuthorityControl(doc, options = {}) {
   disclosure.textContent = [
     'Required for exact bend flexibility.',
     'The app does not infer this basis from CAESAR version, file geometry, benchmark precedent or current year.',
-    'Changing either selection invalidates the current pre-flight authorization.',
+    'Changing either selection regenerates pre-flight and invalidates the current authorization.',
   ].join(' ');
+
+  const initial = normalizeSelection(options.initialSelection);
+  editionSelect.value = initial.editionProfileId ?? '';
+  smoothSelect.value = initial.smooth90FlexibilityCorrection === null
+    ? ''
+    : initial.smooth90FlexibilityCorrection ? 'YES' : 'NO';
 
   const emit = () => onChanged?.(snapshot());
   editionSelect.addEventListener('change', emit);
@@ -90,9 +158,54 @@ export function createLfeaBendFactorAuthorityControl(doc, options = {}) {
   function clear() {
     editionSelect.value = '';
     smoothSelect.value = '';
+    const state = snapshot();
+    onChanged?.(state);
+    return state;
   }
 
   return Object.freeze({ root, editionSelect, smoothSelect, snapshot, authority, clear });
+}
+
+function regenerateNativePreFlights(doc) {
+  for (const role of [
+    'linear-piping-inputxml-profile',
+    'lfea-pipeline-accdb-profile',
+  ]) {
+    const select = doc.querySelector(`[data-role="${role}"]`);
+    if (!select || typeof select.dispatchEvent !== 'function') continue;
+    const EventCtor = doc.defaultView?.Event ?? globalThis.Event;
+    if (typeof EventCtor === 'function') {
+      select.dispatchEvent(new EventCtor('change', { bubbles: true }));
+    }
+  }
+}
+
+function normalizeSelection(value) {
+  if (!value || typeof value !== 'object') return EMPTY_SELECTION;
+  const editionProfileId = typeof value.editionProfileId === 'string'
+    && LFEA_BEND_FACTOR_EDITION_OPTIONS.some((entry) => entry.value === value.editionProfileId)
+    ? value.editionProfileId
+    : null;
+  const smooth90 = typeof value.smooth90FlexibilityCorrection === 'boolean'
+    ? value.smooth90FlexibilityCorrection
+    : null;
+  return Object.freeze({
+    editionProfileId,
+    smooth90FlexibilityCorrection: smooth90,
+    complete: editionProfileId !== null && smooth90 !== null,
+  });
+}
+
+function requireIntakeSemanticHash(intake) {
+  const value = intake?.semanticHash;
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new TypeError('Bend factor authority requires a sealed source intake semantic hash.');
+  }
+  return value;
+}
+
+function safeToken(value) {
+  return String(value).replace(/[^A-Za-z0-9]/gu, '');
 }
 
 function option(doc, value, label) {

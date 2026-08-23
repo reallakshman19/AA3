@@ -24,6 +24,7 @@ assert.equal(dirty, '',
 
 const outputDir = resolve(root, options.outputDir);
 assertInsideEvidenceRoot(outputDir);
+const outputDirRelative = normalizePath(relative(root, outputDir));
 await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir, { recursive: true });
 
@@ -144,8 +145,9 @@ const receiptPayload = {
   observedParentShas: git(['show', '-s', '--format=%P', 'HEAD'])
     .split(/\s+/u).filter(Boolean),
   checkoutCleanBeforeExecution: true,
+  sourceMutationOutsideEvidenceDirectoryDetected: false,
   workflowIndependentExecution: true,
-  outputDirectory: relative(root, outputDir),
+  outputDirectory: outputDirRelative,
   executedSteps: executed,
   evidence: {
     observation: await fileDescriptor(paths.observation),
@@ -170,10 +172,10 @@ const receipt = {
   status: 'PASS_LOCAL_EXACT_HEAD_REQUALIFICATION_BUNDLE_READY_FOR_ENGINEERING_REVIEW_ROUTE_STILL_SUSPENDED',
 };
 await writeFile(resolve(root, paths.receipt), `${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
+assertOnlyEvidenceOutputDirty();
 console.log(JSON.stringify(receipt, null, 2));
 
 function run(name, script, args = []) {
-  const startedAt = new Date().toISOString();
   const completed = spawnSync(process.execPath, [script, ...args], {
     cwd: root,
     encoding: 'utf8',
@@ -198,13 +200,25 @@ function run(name, script, args = []) {
     name,
     script,
     args,
-    startedAt,
     stdoutSha256: sha256(stdout),
     stderrSha256: sha256(stderr),
     exitStatus: completed.status,
   });
+  assertOnlyEvidenceOutputDirty();
   process.stdout.write(stdout);
   if (stderr) process.stderr.write(stderr);
+}
+
+function assertOnlyEvidenceOutputDirty() {
+  const status = git(['status', '--porcelain=v1', '--untracked-files=all']);
+  const lines = status.split(/\n/u).filter(Boolean);
+  const allowedPrefix = `${outputDirRelative}/`;
+  const unexpected = lines.filter((line) => {
+    const path = normalizePath(line.slice(3).replace(/^"|"$/gu, ''));
+    return !path.startsWith(allowedPrefix);
+  });
+  assert.deepEqual(unexpected, [],
+    `EMP1_LOCAL_REQUALIFICATION_SOURCE_MUTATION_OUTSIDE_EVIDENCE_DIR:${unexpected.join('|')}`);
 }
 
 function git(args) {
@@ -228,6 +242,10 @@ function assertInsideEvidenceRoot(path) {
   const prefix = evidenceRoot.endsWith(sep) ? evidenceRoot : `${evidenceRoot}${sep}`;
   assert.ok(path.startsWith(prefix),
     `EMP1_LOCAL_REQUALIFICATION_OUTPUT_OUTSIDE_EVIDENCE_ROOT:${path}`);
+}
+
+function normalizePath(path) {
+  return path.replaceAll('\\', '/');
 }
 
 function parseArgs(args) {

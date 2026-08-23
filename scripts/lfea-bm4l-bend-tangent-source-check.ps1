@@ -105,8 +105,11 @@ $tables | ConvertTo-Json -Depth 32 | Set-Content -LiteralPath $TablesOut -Encodi
 & node scripts/lfea-bm4l-bend-tangent-source-check.mjs --tables $TablesOut
 if ($LASTEXITCODE -ne 0) { throw "BM4_L bend tangent source check failed with exit code $LASTEXITCODE." }
 
+& node scripts/lfea-bm4l-bend-retopology-source-check.mjs --tables $TablesOut
+if ($LASTEXITCODE -ne 0) { throw "BM4_L bend retopology source check failed with exit code $LASTEXITCODE." }
+
 [ordered]@{
-  schema = 'lfea-bm4l-s1-bend-tangent-source-evidence/v1'
+  schema = 'lfea-bm4l-s1-s2-bend-source-evidence/v1'
   status = 'PASS'
   accdb = [ordered]@{ byteLength = $file.Length; sha256 = $sha256 }
   provider = [ordered]@{

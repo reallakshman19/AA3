@@ -1,0 +1,45 @@
+{
+  "schema": "emp1-wrc537-cylindrical-surface-sign-source-qualification/v1",
+  "issue": 1385,
+  "status": "BLOCKED_PRIMARY_SURFACE_SIGN_SEMANTICS_UNQUALIFIED",
+  "source": {
+    "document": "WRC 537",
+    "edition": "2013",
+    "sha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
+  },
+  "currentImplementation": {
+    "table5Locations": ["Au","Al","Bu","Bl","Cu","Cl","Du","Dl"],
+    "signArraysPresent": true,
+    "productionSignArraysChangedByThisQualification": false,
+    "loadPolarityHandledByLinearity": true
+  },
+  "primarySourceAuthority": {
+    "uLowerPhysicalSurfaceMeaningQualified": false,
+    "ABCDPhysicalLocationMeaningQualified": false,
+    "membraneBendingSurfaceReconstructionQualified": false,
+    "radialLoadSignTableQualified": false,
+    "circumferentialMomentSignTableQualified": false,
+    "longitudinalMomentSignTableQualified": false,
+    "shearSignTableQualified": false,
+    "commonPhysicalPointSuperpositionQualified": false
+  },
+  "secondaryEvidence": {
+    "legacyExtractionStatus": "NOT_READY_FOR_IMPLEMENTATION",
+    "candidateMembranePlusMinusBendingRecorded": true,
+    "exactSignReconstructionMarkedUnresolved": true,
+    "implementationAuthority": false
+  },
+  "prohibitions": [
+    "NO_UL_SURFACE_INFERENCE_FROM_NAME",
+    "NO_GENERIC_SHELL_THEORY_SIGN_SUBSTITUTION",
+    "NO_ABSOLUTE_VALUE_BEFORE_ALGEBRAIC_SUPERPOSITION",
+    "NO_CAUX_OR_PRODUCTION_OUTPUT_AS_SIGN_AUTHORITY",
+    "NO_SIGN_ARRAY_CHANGE_FROM_SECONDARY_OR_OCR_EVIDENCE",
+    "NO_CODE_OR_RELEASE_AUTHORITY"
+  ],
+  "engineeringAuthority": false,
+  "productionAuthority": false,
+  "globalEmp1CAuthority": false,
+  "codeComplianceAuthority": false,
+  "releaseAuthority": false
+}

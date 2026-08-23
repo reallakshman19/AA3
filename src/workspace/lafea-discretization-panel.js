@@ -2,8 +2,11 @@
 import { renderMeshQualityPanel } from './lafea-mesh-quality-panel.js';
 import { button, node, region } from './lafea-discretization-dom.js';
 import { generationSection } from './lafea-discretization-generation-panel.js';
+import { createLafeaInfoDisclosure } from './lafea-info-disclosure.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
+
+const MAX_INLINE_FOCUS_ACTIONS = 6;
 
 export function renderLafeaDiscretizationPanel(root, model, handlers = {}) {
   if (!root?.ownerDocument) throw new TypeError('LAFEA_DISCRETIZATION_PANEL_ROOT_REQUIRED');
@@ -64,7 +67,7 @@ function meshWorkspaceSummary(doc, model) {
 function targetSize(model) {
   const value = model.generation.targetElementLength;
   if (!Number.isFinite(value)) return 'Not bound';
-  return `${value}${model.generation.lengthUnit ? ` ${model.generation.lengthUnit}` : ''}`;
+  return `${formatNumber(value, 3)}${model.generation.lengthUnit ? ` ${model.generation.lengthUnit}` : ''}`;
 }
 
 function qualitySection(doc, model, handlers) {
@@ -97,43 +100,53 @@ function qualitySection(doc, model, handlers) {
     onFocusElement: handlers.onFocusElement,
   });
   section.append(qualityHost);
+
   const mappingInspection = mappingInspectionSection(
     doc,
     model.evidence.mappingInspection,
     handlers.onFocusElement,
   );
   if (mappingInspection) section.append(mappingInspection);
-  section.append(findingList(
-    doc,
-    'Warning elements',
-    model.evidence.warningElementIds,
-    'warning',
-    handlers.onFocusElement,
-  ));
-  section.append(findingList(
-    doc,
-    'Blocking elements',
-    model.evidence.blockingElementIds,
-    'block',
-    handlers.onFocusElement,
-  ));
+
+  if (model.evidence.warningElementIds?.length) {
+    section.append(findingList(
+      doc,
+      'Warning elements',
+      model.evidence.warningElementIds,
+      'warning',
+      handlers.onFocusElement,
+    ));
+  }
+  if (model.evidence.blockingElementIds?.length) {
+    section.append(findingList(
+      doc,
+      'Blocking elements',
+      model.evidence.blockingElementIds,
+      'block',
+      handlers.onFocusElement,
+    ));
+  }
   return section;
 }
 
 function mappingInspectionSection(doc, inspection, onFocus) {
   if (!inspection) return null;
-  const section = node(doc, 'div', 'lafea-discretization__mapping-inspection');
-  section.dataset.role = 'lafea-high-order-mapping-inspection';
-  section.dataset.authority = inspection.authority;
-  section.append(
-    node(doc, 'h4', null, 'High-order mapping inspection'),
-    node(
-      doc,
-      'p',
-      'lafea-discretization__status',
-      'Derived from the retained T6/Q8 mesh on the same corner + formulation integration-point sampling used by scaled Jacobian. No qualified determinant-ratio limit is applied; this observation does not change mesh PASS/WARNING/BLOCK.',
-    ),
-  );
+  const details = node(doc, 'details', 'lafea-discretization__mapping-inspection');
+  details.dataset.role = 'lafea-high-order-mapping-inspection';
+  details.dataset.authority = inspection.authority;
+  const state = inspection.nonPositiveSampleCount > 0 ? 'REVIEW' : 'OK';
+  details.append(node(
+    doc,
+    'summary',
+    null,
+    `High-order mapping: ${state} · ${inspection.nonPositiveSampleCount} nonpositive Jacobian samples`,
+  ));
+  details.append(node(
+    doc,
+    'p',
+    'lafea-discretization__status',
+    'Diagnostic only. It uses retained T6/Q8 mapping samples and does not independently change mesh PASS/WARNING/BLOCK.',
+  ));
   const determinantUnit = inspection.lengthUnit
     ? `${inspection.lengthUnit}²`
     : 'model-length²';
@@ -141,60 +154,69 @@ function mappingInspectionSection(doc, inspection, onFocus) {
   const values = [
     ['High-order elements inspected', String(inspection.elementCount)],
     ['Jacobian samples', String(inspection.sampleCount)],
-    ['Minimum det(J)', `${inspection.minimumDeterminant} ${determinantUnit}`],
-    ['Maximum det(J)', `${inspection.maximumDeterminant} ${determinantUnit}`],
+    ['Minimum det(J)', `${formatNumber(inspection.minimumDeterminant, 3)} ${determinantUnit}`],
+    ['Maximum det(J)', `${formatNumber(inspection.maximumDeterminant, 3)} ${determinantUnit}`],
     [
       'Minimum positive det(J) ratio',
       inspection.minimumPositiveDeterminantRatio === null
         ? 'Not defined — at least one inspected mapping is nonpositive'
-        : String(inspection.minimumPositiveDeterminantRatio),
+        : formatNumber(inspection.minimumPositiveDeterminantRatio, 6),
     ],
     ['Nonpositive det(J) samples', String(inspection.nonPositiveSampleCount)],
   ];
   values.forEach(([label, value]) => {
     facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value));
   });
-  section.append(facts);
-  section.append(inspectionFocus(
+  details.append(facts);
+  details.append(inspectionFocus(
     doc,
-    'Focus minimum-det(J) element',
+    'Minimum det(J) element',
     inspection.minimumDeterminantElementIds,
     'minimum-detj',
     onFocus,
   ));
   if (inspection.minimumPositiveRatioElementIds.length) {
-    section.append(inspectionFocus(
+    details.append(inspectionFocus(
       doc,
-      'Focus minimum det(J)-ratio element',
+      'Minimum det(J) ratio element',
       inspection.minimumPositiveRatioElementIds,
       'minimum-detj-ratio',
       onFocus,
     ));
   }
   if (inspection.nonPositiveElementIds.length) {
-    section.append(inspectionFocus(
+    details.append(inspectionFocus(
       doc,
-      'Focus nonpositive-mapping element',
+      'Nonpositive mapping element',
       inspection.nonPositiveElementIds,
       'nonpositive-detj',
       onFocus,
     ));
   }
-  return section;
+  return details;
 }
 
 function inspectionFocus(doc, label, ids, kind, onFocus) {
   const row = node(doc, 'div', 'lafea-discretization__findings');
   if (!ids.length) return row;
   row.append(node(doc, 'span', null, `${label}: `));
-  ids.forEach((id) => {
-    const focus = button(doc, String(id), () => onFocus?.(id));
-    focus.dataset.role = 'lafea-mapping-inspection-focus-element';
-    focus.dataset.kind = kind;
-    focus.dataset.elementId = String(id);
-    row.append(focus);
-  });
+  const visibleIds = ids.slice(0, MAX_INLINE_FOCUS_ACTIONS);
+  visibleIds.forEach((id) => row.append(focusButton(doc, id, kind, onFocus)));
+  if (ids.length > visibleIds.length) {
+    const more = node(doc, 'details', 'lafea-discretization__more-focus');
+    more.append(node(doc, 'summary', null, `+${ids.length - visibleIds.length} more`));
+    ids.slice(MAX_INLINE_FOCUS_ACTIONS).forEach((id) => more.append(focusButton(doc, id, kind, onFocus)));
+    row.append(more);
+  }
   return row;
+}
+
+function focusButton(doc, id, kind, onFocus) {
+  const focus = button(doc, String(id), () => onFocus?.(id));
+  focus.dataset.role = 'lafea-mapping-inspection-focus-element';
+  focus.dataset.kind = kind;
+  focus.dataset.elementId = String(id);
+  return focus;
 }
 
 function primaryActionSection(doc, model, handlers) {
@@ -303,11 +325,17 @@ function retainedEvidenceSection(doc, model) {
     return section;
   }
 
-  const facts = node(doc, 'dl', 'lafea-discretization__facts');
-  for (const [label, value] of evidenceFacts(model.evidence)) {
-    facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value ?? 'NONE'));
+  const summary = node(doc, 'dl', 'lafea-discretization__facts');
+  for (const [label, value] of evidenceSummaryFacts(model.evidence)) {
+    summary.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value ?? 'NONE'));
   }
-  section.append(facts);
+  section.append(summary);
+  section.append(createLafeaInfoDisclosure(
+    doc,
+    'Technical mesh identifiers',
+    evidenceTechnicalFacts(model.evidence),
+    { summaryText: 'Technical identifiers (i)', role: 'lafea-mesh-identity-info' },
+  ));
   return section;
 }
 
@@ -337,10 +365,6 @@ function evidenceActions(doc, model, handlers) {
 function findingList(doc, title, ids, kind, onFocus) {
   const section = node(doc, 'div', 'lafea-discretization__findings');
   section.append(node(doc, 'h4', null, title));
-  if (!ids.length) {
-    section.append(node(doc, 'p', null, 'None'));
-    return section;
-  }
   const list = node(doc, 'ul');
   ids.forEach((id) => {
     const item = node(doc, 'li');
@@ -354,20 +378,29 @@ function findingList(doc, title, ids, kind, onFocus) {
   return section;
 }
 
-function evidenceFacts(value) {
+function evidenceSummaryFacts(value) {
+  return [
+    ['Profile', value.meshProfileIdentity],
+    ['Producer', value.producerRef],
+    ['Authority', value.authorityStatus],
+  ];
+}
+
+function evidenceTechnicalFacts(value) {
   return [
     ['Mesh identity', value.meshIdentity],
     ['Mesh hash', value.meshHash],
-    ['Profile', value.meshProfileIdentity],
     ['Profile hash', value.meshProfileHash],
     ['Source hash', value.sourceHash],
     ['Canonical model hash', value.canonicalModelHash],
     ['Analysis geometry hash', value.analysisGeometryHash],
     ['Artifact hash', value.artifactHash],
     ['Registration', value.registrationId],
-    ['Producer', value.producerRef],
-    ['Authority', value.authorityStatus],
-    ['Nodes', String(value.nodeCount)],
-    ['Elements', String(value.elementCount)],
   ];
+}
+
+function formatNumber(value, maximumFractionDigits) {
+  if (!Number.isFinite(value)) return String(value);
+  const fixed = Number(value).toFixed(maximumFractionDigits);
+  return fixed.replace(/\.0+$/u, '').replace(/(\.\d*?[1-9])0+$/u, '$1');
 }

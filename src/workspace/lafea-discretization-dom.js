@@ -6,6 +6,7 @@
  * own a controller, store, mutable singleton, engineering threshold, mesh
  * generator, or quality classification authority.
  */
+import { createLafeaInfoDisclosure } from './lafea-info-disclosure.js';
 
 const SEVERITY = Object.freeze({ OK: 0, WARNING: 1, BLOCK: 2 });
 const MAX_INLINE_FOCUS_ACTIONS = 6;
@@ -107,7 +108,7 @@ function toQualityRow(result, index, quality) {
     value: result.value,
     unit: METRIC_UNITS[metric],
     status: result.status,
-    threshold: thresholdOf(result),
+    threshold: thresholdOf(result, metric),
     sourcePath: `${path}.value`,
     affectedElementIds: Object.freeze(affectedElementIds(result, quality)),
   });
@@ -148,14 +149,25 @@ function uniqueSorted(values) {
   return [...new Set(values.filter((value) => typeof value === 'string' && value))].sort();
 }
 
-function thresholdOf(result) {
+function thresholdOf(result, metric) {
   const declared = [
     'minimum', 'maximum', 'minimumMultiple', 'maximumMultiple',
     'warningThreshold', 'blockingThreshold',
   ]
     .filter((key) => typeof result[key] === 'number')
-    .map((key) => `${key}=${result[key]}`);
-  return declared.length ? declared.join(' ') : null;
+    .map((key) => `${thresholdLabel(key)} ${formatQualityNumber(metric, result[key])}`);
+  return declared.length ? declared.join(' · ') : null;
+}
+
+function thresholdLabel(key) {
+  return Object.freeze({
+    minimum: 'min',
+    maximum: 'max',
+    minimumMultiple: 'min multiple',
+    maximumMultiple: 'max multiple',
+    warningThreshold: 'warning',
+    blockingThreshold: 'block',
+  })[key] ?? key;
 }
 
 /** The single place callers ask whether retained mesh evidence blocks advance. */
@@ -169,13 +181,7 @@ function requireText(value, key) {
   }
 }
 
-/**
- * Render retained mesh-quality evidence.
- *
- * `options.documentValue.meshConfig`, when present, is displayed only as an
- * unapplied workbench preference. It is not represented as a produced mesh or
- * as quality evidence.
- */
+/** Render retained mesh-quality evidence with presentation-only rounding. */
 export function renderMeshQualityPanel(rootElement, panel, options = {}) {
   if (!rootElement) return;
   rootElement.replaceChildren();
@@ -187,22 +193,21 @@ export function renderMeshQualityPanel(rootElement, panel, options = {}) {
 
   const stageId = options.stageId || panel?.stageId || 'UNKNOWN';
   const title = documentRef.createElement('h4');
-  title.textContent = `Mesh quality evidence — Stage ${stageId}`;
+  title.textContent = `Mesh quality — ${stageId}`;
   container.append(title);
 
   const meshConfig = options.documentValue?.meshConfig;
   if (meshConfig && typeof meshConfig === 'object') {
-    const preference = documentRef.createElement('p');
-    preference.className = 'lafea-mesh-quality-panel__neutral';
-    preference.textContent = `Retained workbench mesh preference: ${summarizeConfig(meshConfig)}. `
-      + 'This preference is not connected to a qualified stage mesh compiler and does not constitute mesh evidence.';
-    container.append(preference);
+    container.append(createLafeaInfoDisclosure(documentRef, 'Unapplied workbench mesh preference', [
+      ['Preference', summarizeConfig(meshConfig)],
+      ['Engineering effect', 'NONE — not connected to a qualified stage mesh compiler'],
+    ], { summaryText: 'Mesh preference (i)' }));
   }
 
   if (!panel) {
     const neutral = documentRef.createElement('p');
     neutral.className = 'lafea-mesh-quality-panel__neutral';
-    neutral.textContent = 'No retained mesh-quality result is available. No numerical quality status is asserted.';
+    neutral.textContent = 'No retained mesh-quality result is available.';
     container.append(neutral);
     rootElement.append(container);
     return;
@@ -210,9 +215,10 @@ export function renderMeshQualityPanel(rootElement, panel, options = {}) {
 
   const header = documentRef.createElement('div');
   header.className = 'lafea-mesh-quality-panel__header';
-  const profile = documentRef.createElement('p');
-  profile.textContent = `Retained mesh profile: ${panel.meshProfileIdentity}`;
-  header.append(profile);
+  header.append(createLafeaInfoDisclosure(documentRef, 'Mesh quality evidence identity', [
+    ['Retained mesh profile', panel.meshProfileIdentity],
+    ['Stage', panel.stageId],
+  ], { summaryText: 'Evidence (i)' }));
   if (panel.blocksAdvance) {
     const badge = documentRef.createElement('span');
     badge.className = 'lafea-mesh-quality-panel__badge-block';
@@ -236,9 +242,10 @@ function renderQualityRow(documentRef, row, onFocusElement) {
   item.className = `lafea-mesh-quality-panel__row lafea-mesh-quality-panel__row--${row.status.toLowerCase()}`;
   item.dataset.sourcePath = row.sourcePath;
   item.dataset.metric = row.metric;
-  const threshold = row.threshold ? `; retained gate ${row.threshold}` : '';
+  const threshold = row.threshold ? ` · limits: ${row.threshold}` : '';
   const value = documentRef.createElement('span');
-  value.textContent = `${row.label}: ${row.value} ${row.unit}${threshold} [${row.status}]`;
+  value.textContent = `${row.label}: ${formatQualityNumber(row.metric, row.value)} ${row.unit} · ${row.status}${threshold}`;
+  value.title = `Exact retained value: ${row.value}${row.threshold ? `; ${row.threshold}` : ''}`;
   item.append(value);
 
   if (row.status !== 'OK' && row.affectedElementIds.length && typeof onFocusElement === 'function') {
@@ -266,6 +273,18 @@ function renderQualityRow(documentRef, row, onFocusElement) {
     item.append(actions);
   }
   return item;
+}
+
+function formatQualityNumber(metric, value) {
+  if (!Number.isFinite(value)) return String(value);
+  if (metric === 'BOUNDARY_SEGMENT_COUNT' || metric === 'SHELL_ORIENTATION_TOPOLOGY') {
+    return String(Math.round(value));
+  }
+  const digits = metric === 'SCALED_JACOBIAN' ? 3
+    : metric === 'MINIMUM_ANGLE_DEGREES' || metric === 'SHELL_WARPAGE_DEGREES' ? 1
+      : 2;
+  const fixed = Number(value).toFixed(digits);
+  return fixed.replace(/\.0+$/u, '').replace(/(\.\d*?[1-9])0+$/u, '$1');
 }
 
 function summarizeConfig(meshConfig) {

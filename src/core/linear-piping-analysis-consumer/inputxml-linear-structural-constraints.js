@@ -10,10 +10,20 @@ const ALLOWED_DISPOSITIONS = new Set([
   'IMPLEMENTED_WITH_DECLARED_APPROXIMATION',
 ]);
 
-export function compileInputXmlStructuralConstraints({ inventory, modelId, analysisProfileId }) {
+export function compileInputXmlStructuralConstraints({
+  inventory,
+  modelId,
+  analysisProfileId,
+  nodeRetargeting,
+  conditionedNodeIds,
+}) {
   const declarations = [];
   const bindings = [];
   const occupied = new Map();
+  const retargeting = nodeRetargeting ?? {};
+  const available = conditionedNodeIds === undefined || conditionedNodeIds === null
+    ? null
+    : new Set(conditionedNodeIds.map(String));
   const restraints = inventory
     .filter((row) => row.active && row.sourceKind === 'RESTRAINT')
     .sort((left, right) => compareAscii(left.inventoryId, right.inventoryId));
@@ -36,10 +46,18 @@ export function compileInputXmlStructuralConstraints({ inventory, modelId, analy
         { inventoryId: item.inventoryId, sourceNodeId, targetDof },
       );
     }
+    const targetNodeId = structuralTargetNode(sourceNodeId, retargeting, item.inventoryId);
+    if (available !== null && !available.has(targetNodeId)) {
+      fail(
+        'INPUTXML_STRUCTURAL_RESTRAINT_TARGET_MISSING_AFTER_RETOPOLOGY',
+        `Restraint ${item.inventoryId} targets node ${targetNodeId}, which is absent after structural retopology.`,
+        { inventoryId: item.inventoryId, sourceNodeId: String(sourceNodeId), targetNodeId },
+      );
+    }
     const dofs = targetDof === 'ALL' ? DOFS : [targetDof];
     const declarationIds = [];
     for (const dof of dofs) {
-      const key = `${sourceNodeId}:${dof}`;
+      const key = `${targetNodeId}:${dof}`;
       if (occupied.has(key)) {
         fail(
           'INPUTXML_STRUCTURAL_RESTRAINT_DOF_COLLISION',
@@ -52,7 +70,7 @@ export function compileInputXmlStructuralConstraints({ inventory, modelId, analy
       declarations.push(Object.freeze({
         declarationId,
         kind: 'NODAL_RESTRAINT',
-        nodeId: `${modelId}.N${safe(sourceNodeId)}`,
+        nodeId: `${modelId}.N${safe(targetNodeId)}`,
         dof,
         behavior: 'FIXED',
       }));
@@ -63,18 +81,12 @@ export function compileInputXmlStructuralConstraints({ inventory, modelId, analy
       inventoryId: item.inventoryId,
       sourceRecordSemanticHash: item.sourceRecordSemanticHash,
       sourceNodeId: String(sourceNodeId),
+      targetNodeId,
+      retargetedByBendRetopology: targetNodeId !== String(sourceNodeId),
       targetDofs: Object.freeze([...dofs]),
       implementation: disposition.disposition,
       limitationCode: disposition.limitationCode,
-      // A restraint can rely on more than one approximation at once -- a +Y
-      // support carrying friction relies on both -- but `limitationCode` can
-      // only name the first. Reporting just that one loses the fact that the
-      // support is ALSO one-way, which is the approximation most likely to
-      // move a reaction. Every applicable code is carried here.
       limitationCodes: restraintApproximationCodes(item.classification),
-      // Non-null only for a one-way restraint: the DOF it acts on and the sign
-      // of the reaction it can physically apply. This is what lets a solved
-      // result be reviewed against what the real support could actually do.
       unilateralAction: restraintUnilateralAction(item.classification),
       declarationIds: Object.freeze(declarationIds),
     }));
@@ -86,6 +98,25 @@ export function compileInputXmlStructuralConstraints({ inventory, modelId, analy
     declarations: Object.freeze(declarations),
     bindings: Object.freeze(bindings),
   });
+}
+
+function structuralTargetNode(sourceNodeId, retargeting, inventoryId) {
+  const source = String(sourceNodeId);
+  const record = retargeting[source] ?? null;
+  if (record === null) return source;
+  if (record.nearestNodeId === null || record.nearestNodeId === undefined) {
+    fail(
+      'INPUTXML_STRUCTURAL_RESTRAINT_RETOPOLOGY_AMBIGUOUS',
+      `Restraint ${inventoryId} is bound to retired bend corner node ${source}, which has no unique retained structural target.`,
+      {
+        inventoryId,
+        sourceNodeId: source,
+        bendSegmentId: record.bendSegmentId ?? null,
+        candidates: record.candidates ?? [],
+      },
+    );
+  }
+  return String(record.nearestNodeId);
 }
 
 function fail(code, message, data) {

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
-import { basename, join, relative, resolve } from 'node:path';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
@@ -36,6 +37,14 @@ const FORBIDDEN_GLOBAL_PATHS = Object.freeze([
   'src/core/emp1/emp1-c-qualification-state.js',
   'validation/emp1/wrc537-2013/emp1-c-method-authorization-v1.json',
 ]);
+const REVIEW_FALSIFIER_NAMES = Object.freeze([
+  'local-suite-semantic-hash-corruption',
+  'local-suite-authorization-escalation-with-rehash',
+  'local-manifest-github-context-pollution-with-coordinated-rehash',
+  'producer-step-stdout-hash-substitution-with-local-rehash',
+  'manifest-qualification-count-downgrade-with-coordinated-rehash',
+  'stored-observation-authorization-escalation',
+]);
 
 if (!/^[0-9a-f]{40}$/u.test(options.expectedHead ?? '')) {
   throw proposalError('EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_EXPLICIT_EXPECTED_HEAD_REQUIRED');
@@ -50,6 +59,7 @@ assert.equal(actualHead, options.expectedHead,
 const evidenceDir = resolve(root, options.evidenceDir);
 const evidence = await readEvidenceSet(evidenceDir);
 verifyReviewEvidence(evidence);
+await replayReviewEvidence(evidenceDir, evidence);
 verifyCurrentSuspendedProductionState();
 const candidate = await readJson(resolve(root,
   'validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v2.json'));
@@ -80,6 +90,8 @@ const payload = {
     producerHeadSha: evidence.localReceipt.observedHeadSha,
     independentReviewHeadSha: evidence.reviewReceipt.observedHeadSha,
     reviewFalsifierHeadSha: evidence.reviewFalsifier.json.observedHeadSha,
+    independentReviewReceiptReproducedByteIdentical: true,
+    reviewFalsifierReceiptReproducedByteIdentical: true,
   },
   qualifiedSuccessor: {
     candidateQualificationSha256: CANDIDATE_QUALIFICATION,
@@ -164,6 +176,7 @@ function verifyReviewEvidence(set) {
   assert.equal(localReceipt.status,
     'PASS_LOCAL_EXACT_HEAD_REQUALIFICATION_BUNDLE_READY_FOR_ENGINEERING_REVIEW_ROUTE_STILL_SUSPENDED');
   assert.equal(localReceipt.observedHeadSha, options.expectedHead);
+  assert.equal(localReceipt.localSuiteSemanticHash, semanticHash(localReceipt, 'localSuiteSemanticHash'));
   assert.equal(localReceipt.authorization.productionRouteAuthorized, false);
   assert.equal(localReceipt.authorization.globalEmp1CRouteAuthority, false);
   assert.equal(localReceipt.authorization.codeComplianceAuthorized, false);
@@ -183,21 +196,74 @@ function verifyReviewEvidence(set) {
   assert.equal(reviewReceipt.authorizationReview.globalEmp1CRouteAuthority, false);
   assert.equal(reviewReceipt.authorizationReview.codeComplianceAuthorized, false);
   assert.equal(reviewReceipt.authorizationReview.releaseQualified, false);
+  assert.equal(reviewReceipt.independentReplay.exactStoredBundleVerified, true);
   assert.equal(reviewReceipt.independentReplay.all23ProducerStepsReexecuted, true);
   assert.equal(reviewReceipt.independentReplay.all23StdoutAndStderrHashesMatched, true);
+  assert.equal(reviewReceipt.independentReplay.observationByteIdentical, true);
+  assert.equal(reviewReceipt.independentReplay.replayReceiptByteIdentical, true);
+  assert.equal(reviewReceipt.independentReplay.falsifierReceiptByteIdentical, true);
+  assert.equal(reviewReceipt.independentReplay.manifestByteIdentical, true);
   assert.equal(reviewFalsifier.json.schema,
     'emp1-wrc537-gamma5-independent-review-gate-falsifiers/v1');
   assert.equal(reviewFalsifier.json.status,
     'PASS_INDEPENDENT_REVIEW_GATE_ANTI_FORGERY_FALSIFIERS');
   assert.equal(reviewFalsifier.json.observedHeadSha, options.expectedHead);
   assert.equal(reviewFalsifier.json.baselineIndependentReviewRequiredAndPassed, true);
-  assert.equal(reviewFalsifier.json.mutationCount, 6);
-  assert.equal(reviewFalsifier.json.detections.length, 6);
+  assert.equal(reviewFalsifier.json.mutationCount, REVIEW_FALSIFIER_NAMES.length);
+  assert.deepEqual(reviewFalsifier.json.detections.map((item) => item.name), REVIEW_FALSIFIER_NAMES);
   assert.ok(reviewFalsifier.json.detections.every((item) => item.detected === true));
   assert.equal(reviewFalsifier.json.authorization.productionRouteAuthorized, false);
+  assert.equal(reviewFalsifier.json.authorization.authorizationChangeAppliedByFalsifiers, false);
   assert.equal(reviewFalsifier.json.authorization.globalEmp1CRouteAuthority, false);
   assert.equal(reviewFalsifier.json.authorization.codeComplianceAuthorized, false);
   assert.equal(reviewFalsifier.json.authorization.releaseQualified, false);
+}
+
+async function replayReviewEvidence(sourceEvidenceDir, stored) {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'emp1-gamma5-authorization-proposal-review-replay-'));
+  const tempEvidenceDir = join(tempRoot, 'evidence');
+  try {
+    await cp(sourceEvidenceDir, tempEvidenceDir, { recursive: true });
+    for (const name of [
+      '06-independent-review-receipt.json',
+      '07-independent-review-falsifier-receipt.json',
+      '08-bounded-authorization-proposal.json',
+      '09-bounded-authorization-proposal-check-receipt.json',
+      '10-bounded-authorization-proposal-falsifier-receipt.json',
+    ]) {
+      await rm(join(tempEvidenceDir, name), { force: true });
+    }
+
+    const reviewPath = join(tempEvidenceDir, '06-independent-review-receipt.json');
+    const reviewRun = runNode('scripts/emp1-wrc-gamma5-requalification-review-gate.mjs', [
+      '--expected-head', options.expectedHead,
+      '--evidence-dir', tempEvidenceDir,
+      '--write-receipt', reviewPath,
+    ]);
+    assert.equal(reviewRun.status, 0,
+      `EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_INDEPENDENT_REVIEW_REPLAY_FAILED\nSTDOUT:\n${reviewRun.stdout}\nSTDERR:\n${reviewRun.stderr}`);
+    await assertFileBytesEqual(reviewPath, join(sourceEvidenceDir, '06-independent-review-receipt.json'),
+      'EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_REVIEW_RECEIPT_REPLAY_DRIFT');
+
+    const falsifierPath = join(tempEvidenceDir, '07-independent-review-falsifier-receipt.json');
+    const falsifierRun = runNode('scripts/emp1-wrc-gamma5-requalification-review-gate-falsifiers.mjs', [
+      '--expected-head', options.expectedHead,
+      '--evidence-dir', tempEvidenceDir,
+      '--write-receipt', falsifierPath,
+    ]);
+    assert.equal(falsifierRun.status, 0,
+      `EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_REVIEW_FALSIFIER_REPLAY_FAILED\nSTDOUT:\n${falsifierRun.stdout}\nSTDERR:\n${falsifierRun.stderr}`);
+    await assertFileBytesEqual(falsifierPath,
+      join(sourceEvidenceDir, '07-independent-review-falsifier-receipt.json'),
+      'EMP1_BOUNDED_AUTHORIZATION_PROPOSAL_REVIEW_FALSIFIER_RECEIPT_REPLAY_DRIFT');
+
+    const replayedReview = await readJson(reviewPath);
+    const replayedFalsifier = await readJson(falsifierPath);
+    assert.equal(replayedReview.reviewSemanticHash, stored.reviewReceipt.reviewSemanticHash);
+    assert.deepEqual(replayedFalsifier, stored.reviewFalsifier.json);
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
 }
 
 function verifyCurrentSuspendedProductionState() {
@@ -230,6 +296,10 @@ function verifyCurrentSuspendedProductionState() {
 
 function verifyCandidate(value) {
   assert.equal(value.schema, 'emp1-wrc537-gamma5-zero-dp-route-qualification/v2');
+  assert.equal(value.status, 'CANDIDATE_PENDING_EXECUTABLE_PRODUCTION_REOBSERVATION');
+  assert.equal(value.engineeringAuthority, false);
+  assert.equal(value.productionRouteAuthority, false);
+  assert.equal(value.globalEmp1CRouteAuthority, false);
   assert.equal(value.qualificationRecordSha256, CANDIDATE_QUALIFICATION);
   assert.equal(value.semanticPayload.benchmarkQualification.benchmarkHash, POST_AUTHORITY_ORACLE);
   assert.equal(value.semanticPayload.supersedesHistorical.routeQualificationSha256, HISTORICAL_QUALIFICATION);
@@ -306,6 +376,17 @@ async function sourceDescriptor(path) {
     gitBlobSha: git(['hash-object', path]),
     bytes: buffer.byteLength,
   };
+}
+async function assertFileBytesEqual(actualPath, expectedPath, code) {
+  const [actual, expected] = await Promise.all([readFile(actualPath), readFile(expectedPath)]);
+  assert.equal(actual.equals(expected), true, code);
+}
+function runNode(script, args) {
+  return spawnSync(process.execPath, [script, ...args], {
+    cwd: root,
+    encoding: 'utf8',
+    env: { ...process.env, GITHUB_ACTIONS: 'false' },
+  });
 }
 async function readJson(path) { return JSON.parse(await readFile(path, 'utf8')); }
 function semanticHash(value, hashField) {

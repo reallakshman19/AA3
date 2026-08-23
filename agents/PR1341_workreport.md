@@ -8,116 +8,101 @@
 HANDOVER_READINESS: READY
 PR_RECOVERY_STATE: HEALTHY
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
-
 EXECUTION_MODE: MANUAL
 AUTO_STATE: NOT_ACTIVE
 SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION
-PHASE_PROGRESSION: MANUAL
 MERGE_AUTHORITY: OWNER_ONLY
 
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_TASK: docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md @ 8301315710be3cfd0dca3a39e9849b0763b14f58; owner instruction 2026-08-23
-PR_OR_WIP: PR1341
+PR: 1341
 PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1341
 BRANCH: agent/lfea-piping-promotion-s0-capability-profile-20260823
 
-PR_HEAD_OBSERVED: e89484021683d14a4560c97f7f9cdac1216f5afa
-REPORT_BASIS_HEAD: 4b165dd190b700144c528af9aa1ab77871eb53fb
-MAIN_HEAD_LAST_CHECKED: 99824df74c8ef1e0dddc9c60efe0c7af54cdb69c
-MERGE_BASE: 6050e0a07b6d9f5fb07d4b093d1920e99073141a
-REPORT_SYNC: CURRENT
-
+CODE_HEAD_OBSERVED: 8e8edb567fddded1062253f80ae64e7d30b96c38
+REPORT_BASIS_HEAD: 8e8edb567fddded1062253f80ae64e7d30b96c38
+MAIN_HEAD_LAST_CHECKED: 83d14750443c85f32f87809f12cb4c6d3eabaeb2
+ORIGINAL_BRANCH_BASE: 6050e0a07b6d9f5fb07d4b093d1920e99073141a
+REPORT_SYNC: CURRENT_REPORT_ONLY_DELTA
+GROUNDING_EPOCH: GE-003
 APPENDIX_A_STATUS: CURRENT
-GROUNDING_EPOCH: GE-002
-CURRENT_TAKEOVER: NONE
 
-CURRENT_STAGE: S0 implementation complete; exact-head hosted validation pending
-LAST_COMPLETED_STAGE: S0 capability/disclosure implementation and focused guard
-CURRENT_BLOCKER: hosted execution is NOT_RUN until observed on current PR head
-HIGHEST_RISK: future capability declaration could move ahead of actual production mechanics; guard now fails that state when a protected flag is enabled
-LAST_DURABLE_CHECKPOINT: PR #1341 allocated as draft; implementation/recovery state preserved
+CURRENT_STAGE: S0 implementation complete; full exact-head runtime integration NOT_RUN
+LAST_COMPLETED_STAGE: S0 source implementation, guard correction, PR/recovery reconciliation
+CURRENT_BLOCKER: no relevant hosted S0/linear-piping execution job is attached to this PR; only unrelated EMP.1 workflows are observed
+HIGHEST_RISK: future capability publication ahead of actual production mechanics
+LAST_DURABLE_CHECKPOINT: seven-file S0 surface reconciled at code head 8e8edb567fddded1062253f80ae64e7d30b96c38
 
-EXACT_NEXT_ACTION: remove superseded WIP recovery file, then inspect PR #1341 exact-head CI/status/reviews and update this report with observed PASS/FAIL/NOT_RUN state. Do not begin S1.
+EXACT_NEXT_ACTION: review/run the existing repository linear-piping consumer check in a full execution environment if available. Do not begin S1 until its required BM4_L.ACCDB input is available and S2/S3 engineering decisions are resolved.
 ```
 
 ## 2. Handover in 60 Seconds
 
 ### What is now true
-- PR #1341 is the **S0-only** implementation PR.
-- `production-capability-profile.js` is the single declaration authority for component capability and pressure effects.
-- Current production truth is unchanged: bend/tee/reducer exact mechanics false; pressure stiffening/thrust/Bourdon false; pressure code-stress custody true.
-- `inputxml-feature-inventory.js` now distinguishes a representable exact component from a genuinely unsupported kind when a limitation is null.
-- The two load-authority paths and feature inventory consume the same `productionAuthorizedPressureEffects()` value.
-- `lfea-production-capability-profile-check.mjs` guards defaults, duplicate hardcoded declarations, immutable representable-kind custody, benchmark presence, and production reachability before selected future flags may become true.
-- The focused guard is invoked by the existing `linear-piping-analysis-consumer-check.mjs`; no `package.json` or `.github/workflows/*` change was made.
-
-### What remains unfinished
-- Exact-head execution of the focused and existing consumer checks.
-- Hosted CI/status/review reconciliation on the final recovery-metadata head.
-- Any later promotion stage S1-S7.
+- PR #1341 is **S0 only** and remains draft/unmerged.
+- `production-capability-profile.js` is the single production declaration authority for bend/tee/reducer capability and pressure effects.
+- Current production truth is unchanged: bend/tee/reducer exact mechanics `false`; pressure stiffening/axial-thrust/Bourdon `false`; pressure code-stress custody `true`.
+- `inputxml-feature-inventory.js` now distinguishes a representable exact component from a genuinely unsupported component when a limitation is `null`.
+- `generic-inputxml-solve-case.js`, `inputxml-linear-preparation-load-authorities.js`, and feature inventory consume the same pressure-effect declaration.
+- `lfea-production-capability-profile-check.mjs` guards default equivalence, duplicate declaration drift, representable-kind immutability, benchmark presence, and production reachability before protected capability flags can be enabled.
+- The focused check is invoked through the existing `linear-piping-analysis-consumer-check.mjs`; no `package.json` or workflow change was made.
+- A real pre-existing gate incompatibility was found and fixed: the consumer anti-drift check forbids hidden/default function parameters. The new profile API now resolves an omitted profile explicitly inside the function body rather than using `profile = ...` in the signature.
 
 ### What has been proven
 By live GitHub source/diff inspection:
-- all seven changed files are intended;
-- S0 changed only declaration ownership/checking plus this recovery record;
-- no stiffness, load magnitude, topology, recovery, code-method, benchmark expected value, tolerance, package-script, or workflow change is present;
-- current profile values are equal to the prior hardcoded values;
-- main drift since branch base is only `agents/PR1337_workreport.md` and has no S0 overlap.
+- PR changed-file count is exactly **7**, all intended;
+- no stiffness, topology, load magnitude, solver, recovery, B31 factor, benchmark expected value, tolerance, package-script, or workflow authority changed;
+- current profile values are value-equivalent to the hardcoded declarations they replace;
+- the new profile no longer violates the repository's no-default-parameter source guard;
+- current main is `83d1475...`; drift since the last grounding adds EMP.1 recovery and LAFEA UI analysis-settings files only, with no exact S0 file overlap.
 
-### What has NOT been proven / NOT_RUN
-- No Node execution result has yet been observed on the exact PR head.
-- No numerical byte-equivalence claim is promoted to PASS from source inspection alone.
+### What is NOT proven / NOT_RUN
+- `node scripts/lfea-production-capability-profile-check.mjs`: **NOT_RUN** in a full exact-head repository execution environment.
+- existing `check:linear-piping-analysis-consumer`: **NOT_RUN** on this PR head.
+- `check:lfea-linear-core` / full gate: **NOT_RUN** on this PR head.
+- No numerical byte-equivalence claim is promoted from source inspection to runtime PASS.
+
+### Hosted workflow classification
+The PR triggers EMP.1 qualification workflows only. They fail, but they are unrelated to S0 and do not execute the S0 linear-piping consumer check. They are classified **NOT_APPLICABLE_TO_S0**, not as an S0 PASS or FAIL. No relevant hosted S0 validation job was observed.
 
 ### Later-stage hard stops
-- **QST-001 / S1-S2:** `BM4_L.ACCDB` is untracked/local-only; the governing plan says obtain it before S1/S2.
-- **QST-002 / S2:** support/load semantics at a retired CAESAR bend working point are unresolved. Nearest-node relocation is not authorized by this PR.
-- **QST-003 / S3:** the plan's simplified double-count wording must be reconciled with existing `ARC_GEOMETRY_EXCLUDED_V1` B31 factor custody; curved centreline geometry plus B31 bend `k` is not automatically double counting.
-- **QST-004 / S3:** BM1 fixtures needed by bend qualification are absent per the governing plan.
+- **S1/S2:** `benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB` is untracked/local-only; the governing plan says obtain it before S1/S2.
+- **S2:** support/load semantics at a retired CAESAR bend working point remain an engineering decision. Do not guess nearest-node relocation.
+- **S3:** reconcile the plan's simplified double-count wording with the existing factor contract. Current B31 bend factor records declare `ARC_GEOMETRY_EXCLUDED_V1`; curved centerline geometry and local shell/ovalization flexibility are separate authorities, so curved geometry + B31 `k` is not automatically a double count.
+- **S3 qualification:** BM1 fixtures required by bend qualification remain absent.
 
 ## 3. Repository Ground Truth
 
 ```text
 repo/default: reallaksh19/Advanced_Analysis / main
-PR: 1341 (draft)
+PR: 1341, draft, open, mergeable, unmerged
 branch: agent/lfea-piping-promotion-s0-capability-profile-20260823
-branch base: 6050e0a07b6d9f5fb07d4b093d1920e99073141a
-implementation head: 4b165dd190b700144c528af9aa1ab77871eb53fb
-PR head at allocation: e89484021683d14a4560c97f7f9cdac1216f5afa
-latest main checked: 99824df74c8ef1e0dddc9c60efe0c7af54cdb69c
-changed files at allocation: 7
-MASTER_INDEX: not present on current lineage
-coordination state: SAFE for S0
+code head checked: 8e8edb567fddded1062253f80ae64e7d30b96c38
+latest main checked: 83d14750443c85f32f87809f12cb4c6d3eabaeb2
+original branch base: 6050e0a07b6d9f5fb07d4b093d1920e99073141a
+changed files: 7
+MASTER_INDEX: absent
+coordination: SAFE for S0
 ```
 
-Main drift from branch base to `99824df...` is one recovery-only file: `agents/PR1337_workreport.md`.
+Latest main drift from `99824df...` to `83d1475...` changes only:
+- `agents/PR1339_workreport.md`
+- `agents/PR1340_workreport.md`
+- LAFEA UI analysis-settings/presentation checks
+- `src/workspace/lafea-analysis-settings-view.js`
+- `src/workspace/lafea-ui-status.js`
+
+No exact S0 production/test file overlap exists. Downstream UI work remains a review consideration but does not own S0's capability declarations.
 
 ## 4. Mission / Scope / Acceptance
 
-Mission: deliver Stage S0 as a numerically inert prerequisite PR.
+Mission: deliver S0 as a numerically inert prerequisite PR.
 
-In scope:
-- central capability profile;
-- component-disposition lookup from that profile;
-- pressure-effect declarations from that profile;
-- focused anti-drift/reachability check;
-- integration through existing consumer aggregate;
-- durable PR handover state.
+In scope: central capability declaration, three production consumers, focused anti-drift/reachability check, aggregate-check wiring, recovery artifact.
 
-Out of scope:
-- bend tangent persistence/re-topology;
-- component builder promotion;
-- bend/reducer/Bourdon/tee mechanics;
-- code methodology/factor changes;
-- benchmark/tolerance/oracle changes;
-- workflow changes;
-- merge.
+Out of scope: bend tangent persistence, re-topology, component mechanics, reducer/Bourdon/tee mechanics, B31 methodology changes, benchmark/tolerance changes, workflow changes, merge.
 
-Acceptance:
-1. current default declarations remain value-equivalent;
-2. limitation ownership has one production source;
-3. future exact/null component state is not confused with unsupported kind;
-4. selected enabled capabilities cannot silently exist without benchmark/reachability evidence;
-5. runtime validation is recorded truthfully.
+Acceptance requires current-value equivalence, one declaration owner, exact-vs-unsupported distinction, future reachability guard, and truthful validation status.
 
 ## 5. Current Implementation State
 
@@ -126,32 +111,34 @@ Acceptance:
 | Capability profile | COMPLETE | COMPLETE | SOURCE_INSPECTION PASS; runtime NOT_RUN |
 | Component dispositions | COMPLETE | COMPLETE | SOURCE_INSPECTION PASS; runtime NOT_RUN |
 | Pressure declarations | COMPLETE | COMPLETE | SOURCE_INSPECTION PASS; runtime NOT_RUN |
-| Focused S0 guard | COMPLETE | COMPLETE | NOT_RUN |
-| Existing consumer aggregate wiring | COMPLETE | COMPLETE | NOT_RUN |
-| PR recovery artifact | COMPLETE | N/A | CURRENT |
+| Focused S0 guard | COMPLETE | wired | SOURCE_INSPECTION PASS; runtime NOT_RUN |
+| Existing consumer aggregate wiring | COMPLETE | COMPLETE | runtime NOT_RUN |
+| Recovery artifact | COMPLETE | N/A | CURRENT |
 
 ## 6. Active Engineering Item Register
 
 | ID | Type | Severity | Status | Summary |
 |---|---|---|---|---|
-| IMP-001 | IMP | medium | IMPLEMENTED_NOT_EXECUTED | Centralize truthful capability declarations with current-equivalent defaults. |
-| RISK-001 | RISK | high | MITIGATED_NOT_EXECUTED | False capability publication; guard checks reachability when protected flags become true. |
-| DEC-001 | DEC | medium | CLOSED | Frozen array + predicate replaces frozen Set because Set mutation methods remain callable after `Object.freeze`. |
-| DEC-002 | DEC | low | CLOSED | Reuse existing consumer aggregate instead of modifying giant package script; aggregate already participates in linear core/gate. |
-| QST-001 | QST | high | BLOCKS_S1 | BM4_L.ACCDB missing from git. |
-| QST-002 | QST | high | BLOCKS_S2 | Retired working-point restraint/load mapping requires engineering authority. |
-| QST-003 | QST | high | BLOCKS_S3 | Reconcile plan S3 with B31 factor geometry-basis contract. |
-| QST-004 | QST | high | BLOCKS_S3 | BM1 benchmark fixtures absent. |
+| IMP-001 | IMP | medium | IMPLEMENTED_NOT_EXECUTED | Centralize truthful production capability declarations. |
+| RISK-001 | RISK | high | MITIGATED_NOT_EXECUTED | Prevent future capability flags from outrunning production mechanics. |
+| DEC-001 | DEC | medium | CLOSED | Frozen array + predicate used instead of frozen `Set`; `Object.freeze(Set)` does not block `.add()`. |
+| DEC-002 | DEC | low | CLOSED | Reuse existing consumer aggregate; no package/workflow churn. |
+| DEC-003 | DEC | medium | CLOSED | Removed function-signature default parameters to satisfy existing `HIDDEN_DEFAULT_PARAMETER` anti-drift rule without weakening the rule. |
+| QST-001 | QST | high | BLOCKS_S1 | BM4_L.ACCDB unavailable in git. |
+| QST-002 | QST | high | BLOCKS_S2 | Retired working-point restraint/load mapping needs engineering authority. |
+| QST-003 | QST | high | BLOCKS_S3 | Reconcile plan S3 with `ARC_GEOMETRY_EXCLUDED_V1` B31 factor basis. |
+| QST-004 | QST | high | BLOCKS_S3 | BM1 qualification fixtures absent. |
 
-## 7. Technical Diagnosis / Falsifier
+## 7. Technical Diagnosis / Falsifiers
 
 ```text
-Observed defect: C4 capability/disclosure truth was duplicated in multiple production call sites.
-Hypothesis: centralizing declarations with unchanged values is numerically inert and prevents future disclosure drift.
-Falsifier A: any downstream numerical/result change under the unchanged default profile.
-Falsifier B: any protected future capability flag can be true while production consumer reachability remains absent.
-Next experiment: exact-head focused check + existing consumer aggregate.
-Protected invariants: mechanics/topology/load magnitudes/recovery/code method/benchmarks/tolerances/workflows unchanged.
+Observed defect: C4 capability/disclosure truth was duplicated independently of mechanics reachability.
+S0 hypothesis: centralizing unchanged declarations is numerically inert and prevents disclosure drift.
+Falsifier A: any numerical/result change under the unchanged default profile.
+Falsifier B: a protected capability flag can be true while production mechanics remain unreachable.
+Falsifier C: repository anti-drift rejects the new module's source contract.
+C status: found during review (default parameter) and corrected without guard relaxation.
+Next experiment: full-repo exact-head execution of the focused and existing consumer checks.
 ```
 
 ## 8. Authority Boundary
@@ -164,54 +151,60 @@ actual production mechanics reachability
 -> UI/error-check disclosure
 ```
 
-S0 may alter only the declaration/disclosure layers. It grants no new numerical or code authority.
+S0 grants no new solver, structural, or code-method authority.
 
 ## 9. Validation Ledger
 
-### VAL-001 Grounding / overlap
+### VAL-001 — Grounding / overlap
 ```text
 STATUS: PASS
 OBSERVATION: SOURCE_INSPECTION
-ORACLE: NONE
-HEAD/LINEAGE: main through 99824df74c8ef1e0dddc9c60efe0c7af54cdb69c
-ACTUAL: no S0 file overlap; main drift is recovery-only
+HEAD/LINEAGE: main through 83d14750443c85f32f87809f12cb4c6d3eabaeb2
+ACTUAL: no exact S0 overlap; latest drift is EMP.1 recovery + LAFEA UI settings/presentation only
 LIMITATION: not runtime evidence
 ```
 
-### VAL-002 Changed-surface/current-value inertness
+### VAL-002 — Changed-surface/current-value inertness
 ```text
 STATUS: PASS
 OBSERVATION: SOURCE_INSPECTION
-ORACLE: PRE-CHANGE DECLARATIONS + GOVERNING S0 PLAN
-HEAD: 4b165dd190b700144c528af9aa1ab77871eb53fb
-ACTUAL: seven intended files; capability values unchanged; no mechanics/benchmark/tolerance/workflow mutation
-LIMITATION: does not establish executed downstream byte identity
+HEAD: 8e8edb567fddded1062253f80ae64e7d30b96c38
+ACTUAL: seven intended files; current declarations unchanged; no numerical/code/benchmark/tolerance/workflow authority touched
+LIMITATION: does not prove executed downstream byte identity
 ```
 
-### VAL-003 Focused capability check
+### VAL-003 — Existing consumer source guard compatibility
+```text
+STATUS: PASS_AFTER_FIX
+OBSERVATION: SOURCE_INSPECTION
+HEAD: 8e8edb567fddded1062253f80ae64e7d30b96c38
+FINDING: initial helper signatures used hidden/default parameters prohibited by `HIDDEN_DEFAULT_PARAMETER`
+CORRECTION: explicit in-body resolution now used; guard was not weakened
+LIMITATION: full anti-drift script itself remains NOT_RUN
+```
+
+### VAL-004 — Focused S0 runtime
 ```text
 STATUS: NOT_RUN
 OBSERVATION: NOT_OBSERVED
-ORACLE: IMPLEMENTATION_COUPLED + STATIC ANTI-DRIFT
 COMMAND: node scripts/lfea-production-capability-profile-check.mjs
 EXPECTED: PASS
 ```
 
-### VAL-004 Existing consumer aggregate
+### VAL-005 — Existing consumer aggregate / broader gate
 ```text
 STATUS: NOT_RUN
 OBSERVATION: NOT_OBSERVED
-ORACLE: IMPLEMENTATION_COUPLED
-COMMAND: existing check:linear-piping-analysis-consumer path
-EXPECTED: existing regressions plus S0 guard PASS
+COMMANDS: check:linear-piping-analysis-consumer; check:lfea-linear-core; repository gate
+LIMITATION: no relevant hosted job observed for PR #1341
 ```
 
-### VAL-005 Broader exact-head validation
+### VAL-006 — Hosted PR workflows
 ```text
-STATUS: NOT_RUN
-OBSERVATION: NOT_OBSERVED
-ORACLE: MIXED
-EXPECTED: no S0 regression; unrelated pre-existing missing-fixture/infrastructure states classified separately
+STATUS: NOT_APPLICABLE_TO_S0
+OBSERVATION: HOSTED_WORKFLOW_METADATA
+ACTUAL: EMP.1-only qualification workflows fail; none is the S0/linear-piping consumer validation path
+INTERPRETATION: neither S0 PASS nor S0 FAIL
 ```
 
 ## 10. Changed-File Ledger
@@ -219,66 +212,66 @@ EXPECTED: no S0 regression; unrelated pre-existing missing-fixture/infrastructur
 | File | Purpose | Sensitive? | Validation |
 |---|---|---:|---|
 | `agents/PR1341_workreport.md` | durable recovery authority | no | current |
-| `src/core/linear-piping-analysis-consumer/production-capability-profile.js` | single capability declaration authority | yes | source PASS; runtime NOT_RUN |
+| `src/core/linear-piping-analysis-consumer/production-capability-profile.js` | capability declaration authority | yes | source PASS; runtime NOT_RUN |
 | `src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js` | component/pressure disclosure consumer | yes | source PASS; runtime NOT_RUN |
 | `src/core/linear-piping-analysis-consumer/generic-inputxml-solve-case.js` | pressure primitive declaration consumer | yes | source PASS; runtime NOT_RUN |
-| `src/core/linear-piping-analysis-consumer/inputxml-linear-preparation-load-authorities.js` | pressure authority declaration consumer | yes | source PASS; runtime NOT_RUN |
-| `scripts/lfea-production-capability-profile-check.mjs` | S0 default/drift/reachability guard | no | NOT_RUN |
-| `scripts/linear-piping-analysis-consumer-check.mjs` | existing aggregate invokes S0 guard | no | NOT_RUN |
+| `src/core/linear-piping-analysis-consumer/inputxml-linear-preparation-load-authorities.js` | pressure authority consumer | yes | source PASS; runtime NOT_RUN |
+| `scripts/lfea-production-capability-profile-check.mjs` | defaults/drift/reachability guard | no | source PASS; runtime NOT_RUN |
+| `scripts/linear-piping-analysis-consumer-check.mjs` | existing aggregate invokes S0 guard | no | source PASS; runtime NOT_RUN |
 
-The superseded `agents/WIP-S0CAP_workreport.md` is scheduled for deletion immediately after this PR-number artifact is created; it must not remain as a second current authority.
+GitHub changed-file count: 7. Ledger count: 7. Unexplained files: 0. Superseded WIP report was deleted; this is the sole current recovery authority.
 
 ## 11. Review / CI State
 
-PR created draft. Reviews/checks have not yet been reconciled after final recovery-file migration. No hosted PASS is claimed.
+PR #1341 remains draft/open/mergeable/unmerged. No reviewer approval is claimed. No relevant hosted S0 check is observed. Unrelated EMP.1 workflow failures are explicitly classified as not applicable to this S0 PR.
 
 ## 12. Repository Coordination
 
 ```text
 MASTER_INDEX_CHECKED: yes; absent
-FILE_OVERLAP: none identified for S0
+FILE_OVERLAP: none exact
 AUTHORITY_OVERLAP: none material for S0
-MAIN_DRIFT: recovery-only PR1337 report
-COORDINATION_STATE: SAFE
+LATEST_MAIN: 83d14750443c85f32f87809f12cb4c6d3eabaeb2
+COORDINATION_STATE: SAFE_FOR_REVIEW; NOT_AUTHORIZED_FOR_LATER_STAGES
 ```
 
 ## 13. Continuation State
 
 ```text
-Start here: delete superseded WIP report, then inspect exact PR head
+Start here: full-repo exact-head S0 validation if an execution environment is available
 Do not start: S1
-Do not change: mechanics, topology, benchmark, tolerance, code-method or workflow authority
-Validation required: VAL-003, VAL-004, hosted status/CI/review reconciliation
+Do not change: mechanics, topology, B31 factor method, benchmark/tolerance/oracle/workflow authority
 Highest risk: false future capability publication
-Exact next action: finish report migration and inspect PR #1341 exact-head checks.
+Exact next action: execute existing focused + consumer checks; if unavailable, preserve NOT_RUN and obtain S1 source/prerequisite decisions before any later-stage mutation.
 ```
 
 ## 14. Takeover / Custody Chain
 
-- GE-001: initial branch grounding at `6050e0a...`, before production mutation.
-- GE-002: post-S0 implementation reconciliation; live main `99824df...`, drift recovery-only.
-- PR allocation: #1341 created draft; WIP recovery state migrated here.
+- GE-001: branch from main `6050e0a...`, recovery record initialized before mutation.
+- GE-002: S0 implementation reconciled; initial main drift recovery-only.
+- PR allocation: #1341 created draft; WIP report migrated and retired.
+- GE-003: main re-grounded at `83d1475...`; no exact S0 overlap. Existing no-default-parameter guard conflict found and corrected at code head `8e8edb...`.
 
 # APPENDIX A — IMPLEMENTATION TAKEOVER QUALIFICATION
 
-Basis: PR #1341; implementation head `4b165dd...`; open risks/questions above; runtime VAL-003..005 NOT_RUN.
+Basis: PR #1341; code head `8e8edb567fddded1062253f80ae64e7d30b96c38`; runtime VAL-004/005 NOT_RUN.
 
-**A1 Production Trace (20):** Trace pressure capability declaration through feature inventory, preparation authority and generic load-case creation. Prove S0 does not add structural pressure mechanics.
+**A1 Production Trace (20):** Trace `productionAuthorizedPressureEffects()` through feature inventory, preparation authority and generic load-case creation. Prove S0 adds no structural pressure mechanics.
 
-**A2 Current Failure Isolation (20):** Show how `bendExactMechanics=true` could create false disclosure if production still never reaches bend mechanics, and identify the guard that must fail.
+**A2 Current Failure Isolation (20):** Demonstrate how `bendExactMechanics=true` could falsely suppress a limitation if production never reaches bend mechanics, and identify the reachability guard that must fail.
 
-**A3 Authority / Invariant (20):** Explain the two meanings of null component limitation after S0 and how `productionComponentIsRepresentable()` prevents exact components being mislabeled unsupported.
+**A3 Authority / Invariant (20):** Explain why null component limitation has two meanings after S0 and how `productionComponentIsRepresentable()` separates exact representation from unsupported kind.
 
-**A4 Independent Validation (20):** Separate source/diff evidence from exact-head execution evidence and state why implementation-coupled tests cannot authorize later numerical mechanics by themselves.
+**A4 Independent Validation (20):** Separate source/diff evidence from full exact-head execution evidence. Explain why implementation-coupled checks cannot authorize S2-S6 numerical mechanics by themselves.
 
-**A5 Next-Commit / Minimal Patch (20):** If exact-head S0 checks fail, define the smallest S0-only repair. If they pass, explain why the next action is review/handover rather than beginning S1.
+**A5 Next-Commit / Minimal Patch (20):** If full S0 execution fails, define the smallest S0-only repair. If it passes, explain why the next action is review/handover and prerequisite acquisition rather than beginning S1.
 
 Default takeover threshold: total >= 92/100 and every challenge >= 17/20.
 
 # HISTORICAL RECORD — NOT CURRENT AUTHORITY
 
-- 2026-08-23 GE-001: branch from main `6050e0a...`; WIP recovery record created before production mutation.
-- S0: central profile created; mutable-Set mistake immediately corrected to immutable array/predicate.
-- S0: component and pressure declarations rewired; focused anti-drift/reachability check added; existing consumer aggregate wiring added.
-- GE-002: seven-file implementation diff reconciled; main drift proved recovery-only.
-- PR #1341: draft allocated; recovery authority migrated from WIP ID to PR number.
+- S0 central profile created; frozen-Set mistake corrected to immutable array/predicate.
+- Component and pressure declarations rewired; focused guard added and wired through existing aggregate.
+- PR #1341 allocated; WIP recovery record retired.
+- Initial hidden/default parameter form was found incompatible with the existing consumer anti-drift rule and corrected without relaxing the guard.
+- Full exact-head runtime S0 validation remains NOT_RUN because no relevant hosted execution path is observed.

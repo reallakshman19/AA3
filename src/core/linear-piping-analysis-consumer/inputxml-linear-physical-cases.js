@@ -17,8 +17,8 @@ import {
   indexPrimitiveCases,
   loadLedgerRow,
   physicalCaseError,
-  pressurePrimitive,
   safePhysicalId,
+  pressurePrimitive,
   thermalPrimitive,
   uniqueAscii,
 } from './inputxml-linear-physical-case-builders.js';
@@ -44,12 +44,22 @@ export function compileInputXmlLinearPhysicalCases(
 
   for (const segmentBinding of [...structural.segmentBindings]
     .sort((left, right) => compareAscii(left.segmentId, right.segmentId))) {
-    const sourceLoad = sourceLoadBySegment.get(segmentBinding.segmentId) ?? null;
+    // Retopology creates analysis spans (bend chords and trimmed straights),
+    // but their load authority remains the retained CAESAR source span. Using
+    // segmentBinding.segmentId here would require a fictitious per-chord source
+    // load record and causes every resolved bend to fail preparation. The
+    // structural binding already carries exact sourceSegmentId custody; reuse
+    // that authority and target its physical line/thermal/pressure data at the
+    // generated analysis element.
+    const sourceAuthoritySegmentId = String(
+      segmentBinding.sourceSegmentId ?? segmentBinding.segmentId,
+    );
+    const sourceLoad = sourceLoadBySegment.get(sourceAuthoritySegmentId) ?? null;
     if (sourceLoad === null) {
       throw physicalCaseError(
         'INPUTXML_PHYSICAL_LOAD_BINDING_MISSING',
-        `Segment ${segmentBinding.segmentId} has no retained load authority.`,
-        { segmentId: segmentBinding.segmentId },
+        `Segment ${segmentBinding.segmentId} has no retained load authority from source span ${sourceAuthoritySegmentId}.`,
+        { segmentId: segmentBinding.segmentId, sourceAuthoritySegmentId },
       );
     }
     const gravity = gravityPrimitive(segmentBinding, sourceLoad.gravity, gravityDirection, prepared);
@@ -65,6 +75,7 @@ export function compileInputXmlLinearPhysicalCases(
       primitiveIds: [gravity.primitiveId],
       limitationCode: null,
       evidence: {
+        sourceAuthoritySegmentId,
         authoritySemanticHash: sourceLoad.gravity.semanticHash,
         sourceAuthority: sourceLoad.gravity.sourceAuthority,
         lineForcePerLength: sourceLoad.gravity.lineForcePerLength,
@@ -84,6 +95,7 @@ export function compileInputXmlLinearPhysicalCases(
         primitiveIds: [pressure.primitiveId],
         limitationCode: 'GENERIC_APPROX_PRESSURE_CODE_ONLY',
         evidence: {
+          sourceAuthoritySegmentId,
           authoritySemanticHash: sourceLoad.pressure.semanticHash,
           pressure: sourceLoad.pressure.pressure,
           pressureBasis: sourceLoad.pressure.pressureBasis,
@@ -96,7 +108,11 @@ export function compileInputXmlLinearPhysicalCases(
         sourceKind: 'PRESSURE', sourceFeatureId: sourceLoad.sourceFeatureId,
         segmentId: segmentBinding.segmentId, elementId: segmentBinding.elementId,
         disposition: 'INACTIVE', primitiveIds: [], limitationCode: null,
-        evidence: { authoritySemanticHash: sourceLoad.pressure.semanticHash, active: false },
+        evidence: {
+          sourceAuthoritySegmentId,
+          authoritySemanticHash: sourceLoad.pressure.semanticHash,
+          active: false,
+        },
       }));
     }
 
@@ -109,6 +125,7 @@ export function compileInputXmlLinearPhysicalCases(
         segmentId: segmentBinding.segmentId, elementId: segmentBinding.elementId,
         disposition: 'COMPILED', primitiveIds: [thermal.primitiveId], limitationCode: null,
         evidence: {
+          sourceAuthoritySegmentId,
           authoritySemanticHash: sourceLoad.thermal.semanticHash,
           operatingTemperature: sourceLoad.thermal.operatingTemperature,
           installationTemperature: sourceLoad.thermal.installationTemperature,
@@ -123,9 +140,11 @@ export function compileInputXmlLinearPhysicalCases(
         ledgerId: `IXLOAD:THERMAL:${safePhysicalId(segmentBinding.segmentId)}`,
         sourceKind: 'UNIFORM_TEMPERATURE', sourceFeatureId: sourceLoad.sourceFeatureId,
         segmentId: segmentBinding.segmentId, elementId: segmentBinding.elementId,
-        disposition, primitiveIds: [],
+        disposition,
+        primitiveIds: [],
         limitationCode: disposition === 'BLOCKED' ? 'THERMAL_EXPANSION_AUTHORITY_UNRESOLVED' : null,
         evidence: {
+          sourceAuthoritySegmentId,
           authoritySemanticHash: sourceLoad.thermal.semanticHash,
           status: sourceLoad.thermal.status,
           active: sourceLoad.thermal.active,

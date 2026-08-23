@@ -15,6 +15,7 @@ const analytical = buildLafeaAnalysisSettingsViewModel(stage(
 ));
 assert.equal(analytical.schema, LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA);
 assert.equal(analytical.readOnly, false);
+assert.equal(analytical.sourcePresent, true);
 assert.equal(value(analytical, 'Lifecycle profile'), 'ANALYTICAL_FOUNDATION_V1');
 assert.equal(value(analytical, 'Lifecycle source binding'), 'CURRENT');
 assert.equal(value(analytical, 'Model identity'), analyticalDocument.modelIdentity);
@@ -22,10 +23,7 @@ assert.equal(value(analytical, 'Qualification profile'), analyticalDocument.qual
 assert.equal(value(analytical, 'Thickness policy'), analyticalDocument.thicknessBasis.policy);
 assert.match(value(analytical, 'Requested analyses / cases'), /LOAD_TRANSFER/u);
 assert.match(value(analytical, 'Unit basis'), /length: mm/u);
-assert.equal(
-  value(analytical, 'Code / allowable basis'),
-  'Not declared by the active stage source contract',
-);
+assert.equal(hasRow(analytical, 'Code / allowable basis'), false);
 assert.ok(analytical.qualificationDetails.length > 0);
 
 const continuumDocument = triangleSource();
@@ -36,9 +34,45 @@ const continuum = buildLafeaAnalysisSettingsViewModel(stage(
 ));
 assert.equal(value(continuum, 'Formulation'), 'Plane stress');
 assert.equal(continuum.formulationControl.current, continuumDocument.formulation);
+assert.equal(continuum.formulationControl.sourcePresent, true);
 assert.match(value(continuum, 'Requested analyses / cases'), /L1/u);
 assert.match(value(continuum, 'Unit basis'), /stress: MPa/u);
-assert.equal(value(continuum, 'Code / allowable basis'), 'Not declared by the active stage source contract');
+assert.equal(hasRow(continuum, 'Code / allowable basis'), false);
+
+const empty = buildLafeaAnalysisSettingsViewModel({
+  stageId: 'LAFEA.3',
+  document: null,
+});
+assert.equal(empty.sourcePresent, false);
+assert.deepEqual(empty.modelRows, []);
+assert.deepEqual(empty.solverRows, []);
+assert.deepEqual(empty.solverSummaryRows, []);
+assert.equal(empty.formulationControl.current, null);
+assert.equal(empty.formulationControl.sourcePresent, false);
+assert.equal(empty.formulationControl.editable, false);
+assert.equal(empty.formulationControl.status, 'SOURCE_REQUIRED');
+assert.match(empty.formulationControl.message, /Load a governed LAFEA\.3 source model/u);
+assert.equal(empty.recoveryDisclosure, null);
+
+const incompleteSource = buildLafeaAnalysisSettingsViewModel({
+  stageId: 'LAFEA.3',
+  document: { materials: [], loadCases: [] },
+});
+assert.equal(incompleteSource.sourcePresent, true);
+assert.equal(incompleteSource.formulationControl.current, null);
+assert.equal(incompleteSource.formulationControl.editable, true);
+assert.equal(incompleteSource.formulationControl.status, 'SOURCE_FORMULATION_REQUIRED');
+assert.match(incompleteSource.formulationControl.message, /does not declare a continuum formulation/u);
+assert.equal(hasRow(incompleteSource, 'Formulation'), false);
+
+const serialized = JSON.stringify({
+  modelRows: empty.modelRows,
+  solverRows: empty.solverRows,
+  solverSummaryRows: empty.solverSummaryRows,
+});
+assert.doesNotMatch(serialized, /Provided by workbench registry/u);
+assert.doesNotMatch(serialized, /Not initialized/u);
+assert.doesNotMatch(serialized, /Not declared/u);
 
 console.log(JSON.stringify({
   check: 'lafea-ui-analysis-settings',
@@ -47,7 +81,8 @@ console.log(JSON.stringify({
   governedSolverSettingsLocked: true,
   humanReadableFormulationProjection: true,
   governedFormulationIdentityPreserved: true,
-  missingCodeBasisIsExplicit: true,
+  missingOptionalMetadataOmitted: true,
+  sourceAbsentDoesNotImplyPlaneStress: true,
   githubActionsWorkflowAdded: false,
 }));
 
@@ -55,10 +90,13 @@ function stage(stageId, document, profileId) {
   return {
     stageId,
     document,
-    lifecycle: { profileId },
-    lifecycleBinding: { status: 'CURRENT' },
+    lifecycle: profileId ? { profileId } : null,
+    lifecycleBinding: profileId ? { status: 'CURRENT' } : null,
   };
 }
 function value(model, label) {
   return model.rows.find((row) => row.label === label)?.value;
+}
+function hasRow(model, label) {
+  return model.rows.some((row) => row.label === label);
 }

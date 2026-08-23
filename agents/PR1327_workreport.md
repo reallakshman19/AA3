@@ -61,7 +61,7 @@ Still prohibited:
 Historical Au ≈72.6728 MPa is comparison evidence only and never authorization.
 
 ## Current-main custody
-`main` remains `eb6e4c299132644cfd2bddeb5b86dc458524e35d`; PR #1327 is `0` commits behind it.
+`main` remains `eb6e4c299132644cfd2bddeb5b86dc458524e35d`; PR #1327 is `0` commits behind it with 16 effective changed files as of the current custody check.
 
 Integrated production history relevant to this PR:
 1. PR #1325 merge `1d08bcd0fdebc86fc2daaeb752f129b877e01c74`;

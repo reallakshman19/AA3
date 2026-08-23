@@ -9,14 +9,15 @@ export function compileInputXmlExecutionElementAuthorities(
   structuralPreparation,
   frameProfile,
   loadCase,
-  options = {},
+  options,
 ) {
+  const resolvedOptions = options === undefined ? {} : options;
   return compileInputXmlLinearElementAuthorities({
-    sourcePreparation: options.sourcePreparation,
+    sourcePreparation: resolvedOptions.sourcePreparation,
     structuralPreparation,
     frameProfile,
     loadCase,
-    bendFactorAuthority: options.bendFactorAuthority ?? null,
-    capabilityProfile: options.capabilityProfile,
+    bendFactorAuthority: resolvedOptions.bendFactorAuthority ?? null,
+    capabilityProfile: resolvedOptions.capabilityProfile,
   });
 }

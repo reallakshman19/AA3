@@ -23,6 +23,8 @@ The production solver independently derives source authority through `issueLafea
 5. passes the same hash to simulated LAFEA.3 domain/geometry creation and LAFEA.4/.5 shell-parent creation;
 6. returns the final post-registration state.
 
+The original `advanced-mock-data.js` fake SHA package mutation has been reverted to `main`, and the obsolete WIP work report that called a format-only check PASS has been removed.
+
 No package identity is accepted as engineering source authority. No hardcoded SHA-256 fallback remains in the controller.
 
 ## Regression encoded
@@ -46,8 +48,6 @@ Do not represent the encoded regression as PASS until it has actually executed.
 - `src/workspace/lafea-workbench-controller.js` — canonical simulated source authority.
 - `scripts/lafea3-simulated-source-authority-check.mjs` — lineage regression.
 - `agents/PR1329_workreport.md` — current handover.
-- `agents/WIP-lafea3-domain-fix_workreport.md` — legacy report retained temporarily unless removed in review cleanup.
-- `src/workspace/advanced-mock-data.js` — original PR change should be reverted; package metadata must not establish engineering authority.
 
 ## Required acceptance chain
 For the LAFEA.3 sample:
@@ -55,10 +55,9 @@ For the LAFEA.3 sample:
 `load sample -> canonical source authority -> domain CURRENT_PASS -> geometry CURRENT_PASS -> generate/retain T6 mesh -> mesh CURRENT_PASS -> numerical preflight without LAFEA_CONTINUUM_SOLVER_SOURCE_PARENT_STALE`.
 
 ## Remaining work
-1. Revert the original `advanced-mock-data.js` fake SHA package mutation.
-2. Execute the targeted regression and existing LAFEA.3 sample-generate/preflight regressions when an executable checkout is available.
-3. Browser-check the sample path.
-4. Keep UI cleanup in the follow-on unified LAFEA.3–6 UI PR.
+1. Execute the targeted regression and existing LAFEA.3 sample-generate/preflight regressions when an executable checkout is available.
+2. Browser-check the sample path.
+3. Keep UI cleanup in the follow-on unified LAFEA.3–6 UI PR.
 
 ## Appendix A — takeover questions
 1. Does lifecycle `sourceHash` equal a fresh `issueLafeaSourceAuthority()` result for the normalized retained LAFEA.3 document?

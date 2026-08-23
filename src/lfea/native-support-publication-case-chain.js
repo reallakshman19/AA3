@@ -16,10 +16,6 @@ import {
   requireRunnableSupportPreFlight,
 } from './native-support-authority-contract.js';
 
-/**
- * Bind exact retained native B-3.3/B-3.4 evidence into the public result-chain
- * contract required by interface recovery. No solve or recovery is repeated.
- */
 export function buildLfeaNativeSupportCaseChains(
   preFlightRecord,
   executionState,
@@ -43,10 +39,8 @@ export function buildLfeaNativeSupportCaseChains(
     const physical = physicalById.get(rawCase.caseId);
     const recovered = recoveredById.get(rawCase.caseId);
     if (!physical || !recovered) {
-      throw lfeaNativeSupportError(
-        'LFEA_NATIVE_SUPPORT_CASE_AUTHORITY_MISSING',
-        `Current case ${rawCase.caseId} lacks physical or B-3.4 recovery authority.`,
-      );
+      throw lfeaNativeSupportError('LFEA_NATIVE_SUPPORT_CASE_AUTHORITY_MISSING',
+        `Current case ${rawCase.caseId} lacks physical or B-3.4 recovery authority.`);
     }
     const elements = compileInputXmlExecutionElementAuthorities(
       preparation.structuralPreparation,
@@ -55,6 +49,7 @@ export function buildLfeaNativeSupportCaseChains(
       {
         sourcePreparation: preparation.sourcePreparation,
         bendFactorAuthority: preparation.stiffnessPreflight.bendFactorAuthority,
+        branchFactorAuthority: preparation.stiffnessPreflight.branchFactorAuthority,
         capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
       },
     );
@@ -70,10 +65,7 @@ export function buildLfeaNativeSupportCaseChains(
       recoveryProfile,
       expectedParents: null,
     };
-    const request = {
-      ...requestBase,
-      expectedParents: deriveLinearPipingParentSet(requestBase),
-    };
+    const request = { ...requestBase, expectedParents: deriveLinearPipingParentSet(requestBase) };
     return deepFreeze({
       caseId: rawCase.caseId,
       loadCase: physical.loadCase,
@@ -93,20 +85,12 @@ export function lfeaNativeSupportPublicationCurrentnessReasons(
 ) {
   if (expected === null) return Object.freeze([]);
   const reasons = [];
-  const raw = executionState?.currentness === 'CURRENT'
-    ? executionState.execution
-    : null;
-  const recovery = resultsState?.currentness === 'CURRENT'
-    ? resultsState.results
-    : null;
+  const raw = executionState?.currentness === 'CURRENT' ? executionState.execution : null;
+  const recovery = resultsState?.currentness === 'CURRENT' ? resultsState.results : null;
   if (!raw) reasons.push('RAW_EXECUTION_NO_LONGER_CURRENT');
   if (!recovery) reasons.push('B3_4_RECOVERY_NO_LONGER_CURRENT');
-  if (raw && expected.rawExecutionSemanticHash !== raw.semanticHash) {
-    reasons.push('RAW_EXECUTION_CHANGED');
-  }
-  if (recovery && expected.recoveryBatchSemanticHash !== recovery.semanticHash) {
-    reasons.push('B3_4_RECOVERY_CHANGED');
-  }
+  if (raw && expected.rawExecutionSemanticHash !== raw.semanticHash) reasons.push('RAW_EXECUTION_CHANGED');
+  if (recovery && expected.recoveryBatchSemanticHash !== recovery.semanticHash) reasons.push('B3_4_RECOVERY_CHANGED');
   return Object.freeze([...new Set(reasons)].sort(compareAscii));
 }
 
@@ -121,25 +105,17 @@ export function lfeaNativeSupportPublicationParent(executionState, resultsState,
 function requireCurrentRaw(state) {
   const raw = state?.currentness === 'CURRENT' ? state.execution : null;
   if (!raw || !['QUALIFIED', 'CONDITIONAL'].includes(raw.status)) {
-    throw lfeaNativeSupportError(
-      'LFEA_NATIVE_SUPPORT_CURRENT_RAW_REQUIRED',
-      'Support publication requires current qualified/conditional B-3.3 execution.',
-    );
+    throw lfeaNativeSupportError('LFEA_NATIVE_SUPPORT_CURRENT_RAW_REQUIRED',
+      'Support publication requires current qualified/conditional B-3.3 execution.');
   }
   return raw;
 }
-
 function requireCurrentRecovery(state, raw) {
   const recovery = state?.currentness === 'CURRENT' ? state.results : null;
   if (!recovery || recovery.rawExecutionBatchSemanticHash !== raw.semanticHash) {
-    throw lfeaNativeSupportError(
-      'LFEA_NATIVE_SUPPORT_CURRENT_RECOVERY_REQUIRED',
-      'Support publication requires current B-3.4 recovery for the exact raw execution.',
-    );
+    throw lfeaNativeSupportError('LFEA_NATIVE_SUPPORT_CURRENT_RECOVERY_REQUIRED',
+      'Support publication requires current B-3.4 recovery for the exact raw execution.');
   }
   return recovery;
 }
-
-function compareAscii(left, right) {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
+function compareAscii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }

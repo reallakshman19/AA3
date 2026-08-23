@@ -1,3 +1,5 @@
+import { commonMethodsForImplementation } from '../core/non-fea-method-consumption/index.js';
+import { empiricalLoadCalcScenarioStore } from './engineering-loads/empirical-load-calc-scenario-store.js';
 import { engineeringModelStore } from './engineering-model-store.js';
 import { masterDataController } from './master-data-controller.js';
 import { createCurrentNonFeaWorkspaceStatusProjection } from './non-fea-analysis-plan-runtime.js';
@@ -170,9 +172,12 @@ const COVERAGE_CODES = new Set([
  * surfaces through. One missing master blocks many methods, so a per-method list
  * overstates how many distinct problems there are to fix.
  */
-function rootCauseMarkup(rows) {
+function rootCauseMarkup(rows, active) {
+  const relevant = active
+    ? rows.filter((row) => !row.scope || !METHOD_SCOPES.has(row.scope) || active.has(row.scope))
+    : rows;
   const byCode = new Map();
-  rows.forEach((row) => {
+  relevant.forEach((row) => {
     const code = row.code || 'UNSPECIFIED';
     const entry = byCode.get(code) || { code, count: 0, scopes: new Set() };
     entry.count += 1;
@@ -198,6 +203,27 @@ function rootCauseMarkup(rows) {
   </div>`;
 }
 
+/**
+ * Methods this load calculation actually consumes.
+ *
+ * The common checker is requested for every registered method, but the active
+ * implementation binds only a subset. A blocker against an unbound method never
+ * prevents this calculation, so the two are reported separately instead of
+ * being presented as one undifferentiated backlog.
+ */
+/** Scopes that name a common method, as opposed to a gate or data area. */
+const METHOD_SCOPES = new Set(METHOD_ROWS.map(([methodId]) => methodId));
+
+function activeCalculationMethods() {
+  try {
+    const method = empiricalLoadCalcScenarioStore.getProposal()?.method
+      || 'CHAINAGE_TRIBUTARY_SPAN_V2';
+    return new Set(commonMethodsForImplementation(method));
+  } catch {
+    return null;
+  }
+}
+
 function blockerSummaryMarkup(rows) {
   const groups = [];
   const byScope = new Map();
@@ -212,10 +238,29 @@ function blockerSummaryMarkup(rows) {
     groups.push(group);
     byScope.set(key, group);
   });
+  const active = activeCalculationMethods();
+  // Only a method-scoped blocker can be irrelevant. Gate and data scopes such as
+  // C_PROJECT_BASIS or MASTER_DATA are prerequisites for every method and must
+  // never be filtered out, or the summary reports zero while the run stays
+  // disabled.
+  const blocksThis = (group) => !active
+    || !METHOD_SCOPES.has(group.scope)
+    || active.has(group.scope);
+  const required = groups.filter(blocksThis);
+  const other = groups.filter((group) => !blocksThis(group));
+  const total = groups.reduce((sum, group) => sum + group.count, 0);
+  const requiredTotal = required.reduce((sum, group) => sum + group.count, 0);
+  const item = (group) => `<li><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}</p></li>`;
+  const otherSection = other.length === 0 ? '' : `<details class="non-fea-input-check__other-methods">
+    <summary>${other.reduce((sum, group) => sum + group.count, 0)} issue(s) in ${other.length} area(s) that do not block this calculation</summary>
+    <p>These belong to requested methods that the active implementation does not consume. They are reported for completeness and do not need to be resolved to run this load calculation.</p>
+    <ul>${other.map(item).join('')}</ul>
+  </details>`;
   return `<section class="non-fea-input-check__blocker-summary"><h3>What needs attention</h3>
-    <p class="non-fea-input-check__blocker-reconcile">${groups.reduce((sum, group) => sum + group.count, 0)} issue(s) across ${groups.length} area(s) — all listed below.</p>
-    ${rootCauseMarkup(rows)}
-    <ul>${groups.map((group) => `<li><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}</p></li>`).join('')}</ul>
+    <p class="non-fea-input-check__blocker-reconcile">${requiredTotal} of ${total} issue(s) block this calculation, across ${required.length} area(s).</p>
+    ${rootCauseMarkup(rows, active)}
+    <ul>${required.map(item).join('')}</ul>
+    ${otherSection}
     <p>Open Advanced validation evidence for the complete audit trail.</p>
   </section>`;
 }
@@ -471,6 +516,10 @@ function styles() {
     .non-fea-input-check__root-causes li{display:block;padding:6px 8px;border:1px solid #3f2d14;border-radius:5px;color:#d6bb92;font-size:11px;line-height:1.4}
     .non-fea-input-check__root-causes code{color:#fcd34d;font-weight:700}
     .non-fea-input-check__root-note{margin:0 0 7px;color:#bae6fd;font-size:11px;line-height:1.4}
+    .non-fea-input-check__other-methods{margin:10px 0 0;border:1px solid #293548;border-radius:6px;background:#0d1728}
+    .non-fea-input-check__other-methods summary{padding:8px 10px;cursor:pointer;color:#94a3b8;font-size:11px}
+    .non-fea-input-check__other-methods>p{margin:0;padding:0 10px 8px;color:#64748b;font-size:11px;line-height:1.4}
+    .non-fea-input-check__other-methods>ul{padding:0 10px 10px}
     .non-fea-input-check__layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:12px;align-items:start}.non-fea-input-check__layout main,.non-fea-input-check__layout aside{display:flex;flex-direction:column;gap:12px}.non-fea-panel{padding:13px;border:1px solid #293548;border-radius:7px;background:#0b1424;box-shadow:0 8px 24px rgba(0,0,0,.12)}.panel-eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}.non-fea-panel code{display:block;color:#64748b;font-size:10px;margin-top:2px;overflow-wrap:anywhere}
     .non-fea-gates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.non-fea-gate{display:grid;grid-template-columns:30px 1fr;gap:9px;padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-gate__index{display:flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:50%;background:#172033;color:#94a3b8;font-weight:800}.non-fea-gate__heading{display:flex;justify-content:space-between;gap:8px}.non-fea-gate p{margin:6px 0 0;color:#94a3b8;line-height:1.35;font-size:12px}.non-fea-gate--ready{border-color:#166534}.non-fea-gate--ready .non-fea-gate__heading span{color:#4ade80}.non-fea-gate--warning{border-color:#92400e}.non-fea-gate--warning .non-fea-gate__heading span{color:#fbbf24}.non-fea-gate--blocked,.non-fea-gate--stale{border-color:#7f1d1d}.non-fea-gate--blocked .non-fea-gate__heading span,.non-fea-gate--stale .non-fea-gate__heading span{color:#f87171}
     .non-fea-audits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.non-fea-audits article{padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-audits article>span{display:block;margin-top:4px;font-weight:800}.non-fea-audits article p{margin:6px 0 0;color:#94a3b8;font-size:11px}.non-fea-audits [data-status="READY"]{border-color:#166534}.non-fea-audits [data-status="READY"]>span{color:#4ade80}.non-fea-audits [data-status="BLOCKED"]{border-color:#7f1d1d}.non-fea-audits [data-status="BLOCKED"]>span{color:#f87171}

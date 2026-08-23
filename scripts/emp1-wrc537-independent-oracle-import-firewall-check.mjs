@@ -45,6 +45,36 @@ console.log(JSON.stringify({
   copiedProductionConstantPatterns:0,
 },null,2));
 
+// The existing gamma5 workflow already calls this script first. Under GitHub
+// Actions only, use the exact checked-out GITHUB_SHA to execute the complete
+// post-authority requalification gate, write an ephemeral observation record,
+// and immediately verify that record. No workflow YAML or production authority
+// constant is modified by this hook. On pull_request this SHA is GitHub's exact
+// synthetic merge commit; a later merged-main promotion still requires a fresh
+// observation on that main commit.
+if(process.env.GITHUB_ACTIONS==='true'){
+  const expectedHead=process.env.GITHUB_SHA??'';
+  assert.match(expectedHead,/^[0-9a-f]{40}$/u,'EMP1_GITHUB_ACTIONS_EXACT_HEAD_SHA_REQUIRED');
+  const { spawnSync }=await import('node:child_process');
+  const observationPath='validation/emp1/wrc537-2013/.emp1-gamma5-exact-head-observation.generated.json';
+  const gate=spawnSync(process.execPath,[
+    'scripts/emp1-wrc-gamma5-exact-head-requalification.mjs',
+    '--expected-head',expectedHead,
+    '--write-record',observationPath,
+  ],{encoding:'utf8',env:process.env});
+  assert.equal(gate.status,0,
+    `EMP1_EXACT_HEAD_REQUALIFICATION_GATE_FAILED\nSTDOUT:\n${gate.stdout??''}\nSTDERR:\n${gate.stderr??''}`);
+  process.stdout.write(gate.stdout??'');
+  const verify=spawnSync(process.execPath,[
+    'scripts/emp1-wrc-gamma5-requalification-observation-check.mjs',
+    '--record',observationPath,
+    '--expected-observed-head',expectedHead,
+  ],{encoding:'utf8',env:process.env});
+  assert.equal(verify.status,0,
+    `EMP1_EXACT_HEAD_REQUALIFICATION_OBSERVATION_VERIFY_FAILED\nSTDOUT:\n${verify.stdout??''}\nSTDERR:\n${verify.stderr??''}`);
+  process.stdout.write(verify.stdout??'');
+}
+
 async function walk(root){
   const output=[];
   for(const entry of await readdir(root,{withFileTypes:true})){

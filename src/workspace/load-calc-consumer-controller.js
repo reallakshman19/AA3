@@ -117,8 +117,8 @@ export class LoadCalcConsumerController {
       this.message = presentation.message;
       if (presentation.openLoads) this.selectTab('loads');
     }
-    if (reason === 'project-data-changed') this.message = 'Project Data changed; common seal, authorization and previous calculations require refresh.';
-    if (reason === 'master-data-changed') this.message = 'Master data changed; common seal, authorization and previous calculations require refresh.';
+    if (reason === 'project-data-changed') this.message = authorityChangeMessage('Project Data');
+    if (reason === 'master-data-changed') this.message = authorityChangeMessage('Master data');
     if (reason === 'authorization-changed') this.message = availabilityMessage(engineeringModelStore.getEmpiricalAuthorizationState());
     this.render();
     if ((reason === 'project-data-changed' || reason === 'master-data-changed')
@@ -861,6 +861,29 @@ export function createLoadCalcActionAvailability(context, reviewModel) {
     runScreening: hasPathModel,
     exportScreening: Boolean(reviewModel?.summary.screeningIncluded),
   });
+}
+
+/**
+ * Reports an authority change against what actually exists.
+ *
+ * Announcing that the seal, authorization and previous calculations need a
+ * refresh reads as breakage when none of them were ever established, which is
+ * the normal state while a dataset is still being prepared. Only work that
+ * exists is named as invalidated.
+ */
+function authorityChangeMessage(subject) {
+  const invalidated = [];
+  try {
+    if (nonFeaCommonInputStore.getSnapshot().commonInput) invalidated.push('the common seal');
+    const authState = engineeringModelStore.getEmpiricalAuthorizationState();
+    if (authState?.authorization || authState?.authorized) invalidated.push('authorization');
+    if (engineeringModelStore.getDistribution()) invalidated.push('previous calculations');
+  } catch {
+    return `${subject} changed.`;
+  }
+  return invalidated.length === 0
+    ? `${subject} changed. Nothing is sealed or calculated yet, so there is nothing to refresh.`
+    : `${subject} changed; ${invalidated.join(', ')} require refresh.`;
 }
 
 function availabilityMessage(state) {

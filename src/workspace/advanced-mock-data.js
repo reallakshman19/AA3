@@ -81,7 +81,7 @@ const LAFEA_BUILDERS = Object.freeze({
 export function createWorkspaceMockPackage() {
   return {
     schema: 'inputxml-managed-stage/v1',
-    packageHash: 'SIMULATED-ADVANCED-WORKSPACE-V1',
+    packageHash: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     unit: 'mm',
     project: { name: '[SIMULATED] Advanced Analysis demonstration' },
     objects: [

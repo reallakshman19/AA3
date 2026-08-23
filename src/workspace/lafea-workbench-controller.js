@@ -167,9 +167,10 @@ export class LafeaWorkbenchController {
     }
     try {
       const documentValue = await this.mockDocumentFactory(stageId);
-      const result = this.importDocument(documentValue, stageId);
+      const initialHash = documentValue.packageHash || 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      const result = this.importDocument(documentValue, stageId, initialHash);
       const state = this.getState();
-      const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash;
+      const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash || initialHash;
       if (stageId === 'LAFEA.3') {
         this.store.activateDomainFirstProfile();
         if (hash && this.mockDomainAndGeometryFactory) {

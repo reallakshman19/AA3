@@ -11,6 +11,12 @@ import { requireInputXmlLinearSolvePreparation } from './inputxml-linear-solve-p
 import { retopologiseDeclaredBends } from './bend-retopology.js';
 import { compileInputXmlStructuralConstraints } from './inputxml-linear-structural-constraints.js';
 import {
+  projectInputXmlAnalyticalGeometry,
+  requireExplainedConditioning,
+  resolveSourceSegmentId,
+  structuralElementId,
+} from './inputxml-linear-structural-retopology.js';
+import {
   INPUTXML_LINEAR_STRUCTURAL_PREPARATION_SCHEMA,
   sealInputXmlLinearStructuralPreparation,
 } from './inputxml-linear-structural-preparation-contract.js';
@@ -51,11 +57,7 @@ export function compileInputXmlLinearStructure(
   const conditioningProfile = options.conditioningProfile
     ?? INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE;
   const retopology = retopologiseDeclaredBends(analyticalGeometry, conditioningProfile);
-  const conditionedTopology = conditionGeometry(
-    retopology.geometry,
-    [],
-    conditioningProfile,
-  );
+  const conditionedTopology = conditionGeometry(retopology.geometry, [], conditioningProfile);
   requireExplainedConditioning(
     prepared.normalizedGeometry,
     conditionedTopology.geometry,
@@ -94,7 +96,12 @@ export function compileInputXmlLinearStructure(
         { segmentId, sourceSegmentId },
       );
     }
-    const elementId = structuralElementId(modelId, authority.sourceIndex, segmentId, sourceSegmentId);
+    const elementId = structuralElementId(
+      modelId,
+      authority.sourceIndex,
+      segmentId,
+      sourceSegmentId,
+    );
     return Object.freeze({
       segmentId,
       sourceSegmentId,
@@ -222,88 +229,6 @@ export function compileInputXmlLinearStructure(
   });
 }
 
-function projectInputXmlAnalyticalGeometry(prepared) {
-  const bindingBySegment = new Map(prepared.segmentBindings
-    .map((row) => [String(row.segmentId), row]));
-  const segments = prepared.normalizedGeometry.segments.map((segment) => {
-    const binding = bindingBySegment.get(String(segment.id)) ?? null;
-    if (binding?.limitationCode !== 'GENERIC_APPROX_BEND_STRAIGHT_CHORD') return segment;
-    const tangentBasis = String(segment.meta?.bendTangentBasis ?? '');
-    if (tangentBasis === 'ACCDB_CORNER_INTERSECTION_V1'
-      || tangentBasis === 'INPUTXML_TANGENT_TO_TANGENT_V1') {
-      return segment;
-    }
-    return Object.freeze({
-      ...segment,
-      type: 'PIPE',
-      meta: Object.freeze({
-        ...(segment.meta ?? {}),
-        inputXmlSourceType: segment.type,
-        analysisApproximation: 'GENERIC_APPROX_BEND_STRAIGHT_CHORD',
-      }),
-    });
-  });
-  return Object.freeze({
-    ...prepared.normalizedGeometry,
-    nodes: prepared.normalizedGeometry.nodes,
-    segments: Object.freeze(segments),
-  });
-}
-
-function requireExplainedConditioning(sourceGeometry, conditionedGeometry, spanOrigin) {
-  const sourceIds = new Set(sourceGeometry.segments.map((row) => String(row.id)));
-  const covered = new Set();
-  const unexplained = [];
-  for (const segment of conditionedGeometry.segments) {
-    const origin = resolveOriginId(segment, sourceIds, spanOrigin);
-    if (origin === null) {
-      unexplained.push(String(segment.id));
-      continue;
-    }
-    covered.add(origin);
-  }
-  const uncovered = [...sourceIds].filter((id) => !covered.has(id)).sort(compareAscii);
-  if (unexplained.length > 0 || uncovered.length > 0) {
-    fail(
-      'INPUTXML_STRUCTURAL_CONDITIONING_CHANGED_SPAN_CUSTODY',
-      'Every conditioned span must trace to exactly one retained source segment.',
-      { unexplained: unexplained.sort(compareAscii), uncovered },
-    );
-  }
-}
-
-function resolveSourceSegmentId(segment, sourceSegmentById, spanOrigin) {
-  const sourceIds = new Set(sourceSegmentById.keys());
-  const origin = resolveOriginId(segment, sourceIds, spanOrigin);
-  if (origin === null) {
-    fail(
-      'INPUTXML_STRUCTURAL_SEGMENT_AUTHORITY_MISSING',
-      `Conditioned segment ${String(segment.id)} has no source-segment origin.`,
-      { segmentId: String(segment.id) },
-    );
-  }
-  return origin;
-}
-
-function resolveOriginId(segment, sourceIds, spanOrigin) {
-  const id = String(segment.id);
-  if (sourceIds.has(id)) return id;
-  if (spanOrigin[id] && sourceIds.has(String(spanOrigin[id]))) return String(spanOrigin[id]);
-  const parent = segment.meta?.parentSegmentId == null ? null : String(segment.meta.parentSegmentId);
-  if (parent === null) return null;
-  if (sourceIds.has(parent)) return parent;
-  if (spanOrigin[parent] && sourceIds.has(String(spanOrigin[parent]))) return String(spanOrigin[parent]);
-  return null;
-}
-
-function structuralElementId(modelId, sourceIndex, segmentId, sourceSegmentId) {
-  const base = `${modelId}.E${sourceIndex + 1}`;
-  if (segmentId === sourceSegmentId) return base;
-  const prefix = `${sourceSegmentId}/`;
-  const suffix = segmentId.startsWith(prefix) ? segmentId.slice(prefix.length) : segmentId;
-  return `${base}.${safe(suffix)}`;
-}
-
 function point(nodesById, nodeId) {
   const node = nodesById.get(String(nodeId)) ?? null;
   if (node === null) {
@@ -323,9 +248,7 @@ function requireReferenceVector(value) {
 
 function normalizeModelId(value) {
   const text = String(value ?? '').trim();
-  if (!/^[A-Za-z0-9_.-]+$/u.test(text)) {
-    throw new TypeError('InputXML structural modelId is invalid.');
-  }
+  if (!/^[A-Za-z0-9_.-]+$/u.test(text)) throw new TypeError('InputXML structural modelId is invalid.');
   return text;
 }
 

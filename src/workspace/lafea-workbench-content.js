@@ -13,6 +13,7 @@ import { renderLafeaNumericalVerification } from './lafea-numerical-verification
 import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
+import { renderLafeaSolveReadiness } from './lafea-solve-readiness-panel.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import {
   renderLafeaEngineeringEvidenceDrawer,
@@ -159,12 +160,11 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   const preflightCard = card(root, 'Solve readiness');
   preflightCard.section.dataset.guidedTarget = 'findings';
   preflightCard.section.classList.add('lafea-cae-workspace__inspector-card');
-  preflightCard.body.append(workflowSummary(root, workflow, [
-    'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
-  ]));
-  if (Array.isArray(state.diagnostics) && state.diagnostics.length) {
-    preflightCard.body.append(diagnosticList(root, state.diagnostics));
-  }
+  preflightCard.body.append(renderLafeaSolveReadiness(
+    preflightCard.body,
+    workflow,
+    Array.isArray(state.diagnostics) ? state.diagnostics : [],
+  ));
 
   const evidenceCard = card(root, 'Analysis results');
   evidenceCard.section.dataset.guidedTarget = 'results';

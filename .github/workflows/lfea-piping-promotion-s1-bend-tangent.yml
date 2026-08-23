@@ -3,6 +3,7 @@ name: LFEA S1 bend tangent custody
 on:
   pull_request:
     paths:
+      - 'agents/PR1348_workreport.md'
       - 'src/core/geometry/adapters/accdb-to-canonical-geometry.js'
       - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
       - 'scripts/lfea-bend-tangent-custody-check.mjs'

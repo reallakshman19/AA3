@@ -8,14 +8,15 @@ import { compileInputXmlLinearElementAuthorities } from './inputxml-linear-eleme
 export function compileInputXmlStiffnessElementAuthorities(
   structuralPreparation,
   frameProfile,
-  options = {},
+  options,
 ) {
+  const resolvedOptions = options === undefined ? {} : options;
   return compileInputXmlLinearElementAuthorities({
-    sourcePreparation: options.sourcePreparation,
+    sourcePreparation: resolvedOptions.sourcePreparation,
     structuralPreparation,
     frameProfile,
     loadCase: null,
-    bendFactorAuthority: options.bendFactorAuthority ?? null,
-    capabilityProfile: options.capabilityProfile,
+    bendFactorAuthority: resolvedOptions.bendFactorAuthority ?? null,
+    capabilityProfile: resolvedOptions.capabilityProfile,
   });
 }

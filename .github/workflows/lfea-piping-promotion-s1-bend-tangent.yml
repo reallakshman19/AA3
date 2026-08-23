@@ -22,11 +22,14 @@ on:
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-retopology.js'
+      - 'src/workspace/lfea-bend-factor-authority-control.js'
+      - 'src/workspace/linear-piping-inputxml-prefea.js'
       - 'src/lfea/native-b31-case-chain.js'
       - 'src/lfea/native-support-publication-case-chain.js'
       - 'scripts/lfea-bend-tangent-custody-check.mjs'
       - 'scripts/lfea-bend-retopology-check.mjs'
       - 'scripts/lfea-s3-bend-production-authority-check.mjs'
+      - 'scripts/lfea-s3-bend-factor-authority-control-check.mjs'
       - 'scripts/lfea-bm4l-bend-tangent-source-check.mjs'
       - 'scripts/lfea-bm4l-bend-retopology-source-check.mjs'
       - 'scripts/lfea-bm4l-bend-tangent-source-check.ps1'
@@ -69,11 +72,14 @@ jobs:
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-production-executor.js
           node --check src/core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js
+          node --check src/workspace/lfea-bend-factor-authority-control.js
+          node --check src/workspace/linear-piping-inputxml-prefea.js
           node --check src/lfea/native-b31-case-chain.js
           node --check src/lfea/native-support-publication-case-chain.js
           node --check scripts/lfea-bend-tangent-custody-check.mjs
           node --check scripts/lfea-bend-retopology-check.mjs
           node --check scripts/lfea-s3-bend-production-authority-check.mjs
+          node --check scripts/lfea-s3-bend-factor-authority-control-check.mjs
           node --check scripts/lfea-bm4l-bend-retopology-source-check.mjs
 
       - name: Run deterministic S1 tangent custody check
@@ -81,6 +87,9 @@ jobs:
 
       - name: Run deterministic S2 retopology check
         run: node scripts/lfea-bend-retopology-check.mjs
+
+      - name: Run deterministic S3 factor UI authority check
+        run: node scripts/lfea-s3-bend-factor-authority-control-check.mjs
 
       - name: Run deterministic S3 production bend authority check
         run: node scripts/lfea-s3-bend-production-authority-check.mjs

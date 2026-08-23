@@ -105,6 +105,13 @@ function profileBindingControls(doc, generation, handlers) {
     host.append(status(doc, 'Stage-qualified mesh-quality policy is not available; profile binding is blocked.'));
     return host;
   }
+  if (sourceAdoption && !(generation.sourceProfileReference?.referenceLength > 0)) {
+    host.append(status(
+      doc,
+      'A valid source-derived profile reference is not available; source-mesh adoption profile binding is blocked.',
+    ));
+    return host;
+  }
 
   host.append(disclosure(
     doc,
@@ -120,16 +127,18 @@ function profileBindingControls(doc, generation, handlers) {
     generation.elementFamilies,
     preferredFamily(generation.elementFamilies),
   );
-  const target = numberControl(
+  const target = sourceAdoption ? null : numberControl(
     doc,
-    sourceAdoption ? 'Quality-profile reference length' : 'Target element length',
+    'Target element length',
     'lafea-profile-target-length',
     '',
     0,
   );
-  target.input.placeholder = generation.lengthUnit
-    ? `Enter length in ${generation.lengthUnit}`
-    : 'Enter governed target length';
+  if (target) {
+    target.input.placeholder = generation.lengthUnit
+      ? `Enter length in ${generation.lengthUnit}`
+      : 'Enter governed target length';
+  }
 
   const baseline = qualityBaseline(policy.fields);
   const advanced = node(doc, 'details', 'lafea-discretization__advanced');
@@ -173,12 +182,14 @@ function profileBindingControls(doc, generation, handlers) {
     }
     family.input.setCustomValidity('');
 
-    const targetValue = Number(target.input.value);
-    if (!(targetValue > 0)) {
-      invalid(target, 'Profile reference/target length must be greater than zero.');
+    const targetValue = sourceAdoption
+      ? generation.sourceProfileReference.referenceLength
+      : Number(target.input.value);
+    if (!sourceAdoption && !(targetValue > 0)) {
+      invalid(target, 'Target element length must be greater than zero.');
       return;
     }
-    target.input.setCustomValidity('');
+    if (target) target.input.setCustomValidity('');
 
     const quality = {
       adjacentSizeRatioMax: Number(ratio.input.value),
@@ -209,8 +220,27 @@ function profileBindingControls(doc, generation, handlers) {
   bind.dataset.role = 'lafea-profile-bind';
   bind.className = 'lafea-button lafea-button--primary';
 
-  host.append(family.label, target.label, advanced, bind);
+  host.append(family.label);
+  if (sourceAdoption) host.append(sourceProfileReferenceEvidence(doc, generation.sourceProfileReference));
+  else host.append(target.label);
+  host.append(advanced, bind);
   return host;
+}
+
+function sourceProfileReferenceEvidence(doc, reference) {
+  const details = node(doc, 'details', 'lafea-discretization__technical-evidence');
+  details.dataset.role = 'lafea-source-profile-reference-evidence';
+  details.append(node(doc, 'summary', null, 'Source-derived profile reference'));
+  const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  for (const [label, value] of [
+    ['Reference length', formatLength(reference.referenceLength, reference.lengthUnit)],
+    ['Basis', 'Median unique source-edge length'],
+    ['Unique source edges', String(reference.uniqueEdgeCount)],
+    ['Role', 'Profile identity and quality custody only — not a remesh target'],
+    ['Technical basis', reference.basis],
+  ]) facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value));
+  details.append(facts);
+  return details;
 }
 
 function producerEvidence(doc, generation) {

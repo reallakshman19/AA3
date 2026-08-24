@@ -10,3 +10,10 @@ export {
   sealReducerCondensationRequest,
 } from './contract.js';
 export { compileTenCylinderReducerAuthority } from './reducer-condensation.js';
+export {
+  REDUCER_CANDIDATE_PARITY_STATUS,
+  REDUCER_PRODUCTION_BLOCKER_CODES,
+  REDUCER_PRODUCTION_READINESS_SCHEMA,
+  assessReducerCondensationProductionReadiness,
+  requireReducerCondensationProductionReady,
+} from './production-readiness.js';

@@ -1,0 +1,35 @@
+name: LFEA S7 component UI disclosure
+
+on:
+  pull_request:
+    paths:
+      - 'agents/PR*_workreport.md'
+      - 'agents/WIP-S7UI_workreport.md'
+      - 'scripts/lfea-s7-component-ui-disclosure-check.mjs'
+      - '.github/workflows/lfea-piping-promotion-s7-ui.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-s7-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check S7 verification syntax
+        run: node --check scripts/lfea-s7-component-ui-disclosure-check.mjs
+
+      - name: Verify promoted-component governed disclosure
+        run: node scripts/lfea-s7-component-ui-disclosure-check.mjs
+
+      - name: Re-run common Error Check contract
+        run: node scripts/lfea-ui-error-check-check.mjs
+
+      - name: Re-run Model Review geometry contract
+        run: node scripts/lfea-ui-geometry-review-check.mjs

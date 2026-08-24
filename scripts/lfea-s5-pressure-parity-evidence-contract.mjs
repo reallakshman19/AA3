@@ -84,13 +84,13 @@ function requireRun(run) {
     requireText(run[field], `run.${field}`);
   }
   for (const field of ['pressureFields', 'material', 'section', 'restraints', 'mechanicalLoads',
-    'reportedDisplacements', 'reportedReactions']) requireRecord(run[field], `run.${field}`);
+    'reportedDisplacements', 'reportedReactions']) requireNonEmptyRecord(run[field], `run.${field}`);
   if (run.family.startsWith('Q2_') || run.family.startsWith('Q4_') || run.family.startsWith('Q5_')) {
-    requireRecord(run.bendGeometry, 'run.bendGeometry');
-    requireRecord(run.reportedRotations, 'run.reportedRotations');
+    requireNonEmptyRecord(run.bendGeometry, 'run.bendGeometry');
+    requireNonEmptyRecord(run.reportedRotations, 'run.reportedRotations');
   }
   if (run.family.startsWith('Q4_') || run.family.startsWith('Q5_')) {
-    requireRecord(run.reportedBendFactors, 'run.reportedBendFactors');
+    requireNonEmptyRecord(run.reportedBendFactors, 'run.reportedBendFactors');
   }
   requireFamilySettings(run);
   return run.runId;
@@ -207,6 +207,7 @@ function requireIndependentReview(value, runs) {
 function requireWithin(value, tolerance, code) { if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > tolerance) fail(code, { value, tolerance }); }
 function requireHash(value, field) { if (!HASH.test(String(value ?? ''))) fail('S5_PRESSURE_HASH_INVALID', { field }); }
 function requireRecord(value, field) { if (!value || typeof value !== 'object' || Array.isArray(value)) fail('S5_PRESSURE_RECORD_REQUIRED', { field }); }
+function requireNonEmptyRecord(value, field) { requireRecord(value, field); if (Object.keys(value).length === 0) fail('S5_PRESSURE_RECORD_EMPTY', { field }); }
 function requireArray(value, field) { if (!Array.isArray(value) || value.length === 0) fail('S5_PRESSURE_ARRAY_REQUIRED', { field }); return value; }
 function requireText(value, field) { if (typeof value !== 'string' || value.trim() === '') fail('S5_PRESSURE_TEXT_REQUIRED', { field }); }
 function requirePositive(value, field) { if (typeof value !== 'number' || !Number.isFinite(value) || !(value > 0)) fail('S5_PRESSURE_POSITIVE_NUMBER_REQUIRED', { field }); }

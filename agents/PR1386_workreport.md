@@ -87,21 +87,7 @@ A future S4 numerical promotion still requires a new production-authority contra
 
 ## Required real CAESAR evidence
 
-Both `LARGE_TO_SMALL` and `SMALL_TO_LARGE` are required for:
-
-```text
-STRUCTURAL_AXIAL
-STRUCTURAL_TORSION
-STRUCTURAL_TRANSVERSE_FORCE
-STRUCTURAL_END_MOMENT
-GRAVITY_METAL
-GRAVITY_FLUID
-GRAVITY_INSULATION
-THERMAL_FREE
-THERMAL_FIXED
-```
-
-A same-orientation `CODE_SIF_BASELINE` / `CODE_SIF_VARIED` pair is also required.
+Both `LARGE_TO_SMALL` and `SMALL_TO_LARGE` are required for `STRUCTURAL_AXIAL`, `STRUCTURAL_TORSION`, `STRUCTURAL_TRANSVERSE_FORCE`, `STRUCTURAL_END_MOMENT`, `GRAVITY_METAL`, `GRAVITY_FLUID`, `GRAVITY_INSULATION`, `THERMAL_FREE`, and `THERMAL_FIXED`, plus a same-orientation `CODE_SIF_BASELINE` / `CODE_SIF_VARIED` pair.
 
 Each run retains CAESAR version/build, exact From/To sections, controlled source state, family-specific reported results, raw file hashes/relative paths, locators, observer and date. Independent review is mandatory and the reviewer may not be any recorded CAESAR observer.
 
@@ -111,15 +97,10 @@ External execution tracker: Issue #1402.
 
 ```text
 node scripts/lfea-s4-reducer-parity-evidence-template.mjs /path/to/new-package
-```
-
-Then execute `docs/lfea/S4_Reducer_Parity_Protocol_20260824.md`, replace the scaffold placeholders with actual controlled observations/raw files, and validate:
-
-```text
 node scripts/lfea-s4-reducer-parity-evidence-file-check.mjs /path/to/package/evidence.json
 ```
 
-Raw files remain source custody; extracted JSON values are derivatives.
+The first command creates a draft scaffold only. Execute `docs/lfea/S4_Reducer_Parity_Protocol_20260824.md` and replace placeholders with real controlled observations/raw files before running the second command.
 
 ## Production readiness blockers
 
@@ -207,9 +188,9 @@ Takeover threshold: all ten answers must be source- and contract-grounded withou
 - Historical reducer weight evidence exposed gravity as a separate authority problem.
 - A controlled CAESAR 14.x protocol and fail-closed readiness gate were added.
 - The evidence contract was hardened from declaration-only acceptance to controlled run-level custody, unique in-tolerance candidate selection and quantitative residuals.
-- 2026-08-24 continuation added byte-level raw-artifact binding and SHA-256 recomputation plus operator package documentation.
+- Byte-level raw-artifact binding and SHA-256 recomputation were added.
 - Issue #1402 owns controlled external CAESAR execution.
 - A fail-closed scaffold generator creates the exact S4 run inventory without manufacturing evidence.
-- `REPORT_BASIS_HEAD` is the engineering-code parent; live PR head must be re-grounded from GitHub rather than embedded into integration authority.
+- `REPORT_BASIS_HEAD` is the stable engineering-code parent; live PR head must be re-grounded from GitHub rather than embedded into integration authority.
 - Hosted Actions continues to fail before step 1 under repository Issue #54.
 - No reducer numerical promotion has occurred.

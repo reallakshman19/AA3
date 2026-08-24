@@ -40,10 +40,13 @@ assert.equal(manifest.carryForward.ownerControlsAdministrativeClosure, true);
 const blocked = new Map(manifest.blockedStages.map((row) => [row.stage, row]));
 assert.equal(blocked.size, 2);
 assert.equal(blocked.get('S4')?.pr, 1386);
-assert.equal(blocked.get('S4')?.head, '508ed865129554e7c7a94b9194e84504aedb31de');
+assert.equal(blocked.get('S4')?.head, '2fc49e5ff84357c18308ca83a84f986624cfd2a3');
+assert.equal(blocked.get('S4')?.engineeringCodeHead, '7e540e6617decd23e3aec432bb08b81ebbd60a5a');
 assert.equal(blocked.get('S4')?.requiredCapabilityState, false);
 assert.equal(blocked.get('S4')?.externalEvidenceRequired, true);
 assert.equal(blocked.get('S4')?.externalEvidenceIssue, 1402);
+assert.equal(blocked.get('S4')?.evidenceScaffold, 'scripts/lfea-s4-reducer-parity-evidence-template.mjs');
+assert.equal(blocked.get('S4')?.generatedScaffoldStatus, 'DRAFT_NOT_QUALIFIED');
 assert.deepEqual(blocked.get('S4')?.blockers, [
   'REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED',
   'REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED',
@@ -51,7 +54,8 @@ assert.deepEqual(blocked.get('S4')?.blockers, [
 ]);
 
 assert.equal(blocked.get('S5')?.pr, 1391);
-assert.equal(blocked.get('S5')?.head, '2c75e3a350437b0fad130b5bfdf9cc9b0a9088a7');
+assert.equal(blocked.get('S5')?.head, '75407da9f5c6a7081ad803e67741f3f4255a9d81');
+assert.equal(blocked.get('S5')?.engineeringCodeHead, 'b62bfce16bf32e23e26560c68959ee03924377da');
 assert.deepEqual(blocked.get('S5')?.requiredCapabilities, {
   pressureBourdon: false,
   pressureStiffening: false,
@@ -59,6 +63,8 @@ assert.deepEqual(blocked.get('S5')?.requiredCapabilities, {
 });
 assert.equal(blocked.get('S5')?.externalEvidenceRequired, true);
 assert.equal(blocked.get('S5')?.externalEvidenceIssue, 1402);
+assert.equal(blocked.get('S5')?.evidenceScaffold, 'scripts/lfea-s5-pressure-parity-evidence-template.mjs');
+assert.equal(blocked.get('S5')?.generatedScaffoldStatus, 'DRAFT_NOT_QUALIFIED');
 
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.bendExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.teeExactMechanics, true);

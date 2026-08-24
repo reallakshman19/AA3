@@ -48,10 +48,19 @@ export function productionBendSourceEligible(segment) {
  * Minimum source-level eligibility for exact tee mechanics. The production
  * junction compiler performs the stronger three-leg/topology/state checks.
  * TYPE=5 weldolets are intentionally excluded until independently qualified.
+ * A TYPE=3 declaration must name an endpoint of the segment that carries it;
+ * otherwise the source record does not establish custody of that junction.
  */
 export function productionTeeSourceEligible(segment) {
+  const endpoints = new Set([
+    String(segment?.startNodeId ?? ''),
+    String(segment?.endNodeId ?? ''),
+  ]);
   return (segment?.meta?.analysis?.sifs ?? []).some((sif) =>
-    Number(sif.typeCode) === 3 && sif.nodeId !== null && sif.nodeId !== undefined);
+    Number(sif.typeCode) === 3
+      && sif.nodeId !== null
+      && sif.nodeId !== undefined
+      && endpoints.has(String(sif.nodeId)));
 }
 
 export function productionAuthorizedPressureEffects(profile) {

@@ -1,0 +1,25 @@
+schema: AgentClaim.v1
+pr_or_wip: WIP-1389H-EMP1-RELEASE-EVIDENCE-20260824
+claim_state: ACTIVE
+branch: agent/issue-1389-pr-h-release-evidence-20260824
+mission: "Issue #1389 PR-H fail-closed professional release evidence harness"
+write_scope:
+  - validation/emp1/release/emp1-professional-release-readiness-v1.json
+  - scripts/emp1-professional-release-readiness-check.mjs
+  - scripts/emp1-professional-release-candidate.mjs
+  - package.json
+  - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
+  - agents/WIP-1389H-EMP1-RELEASE-EVIDENCE-20260824_workreport.md
+  - agents/status/WIP-1389H-EMP1-RELEASE-EVIDENCE-20260824.yaml
+  - agents/claims/WIP-1389H-EMP1-RELEASE-EVIDENCE-20260824.yaml
+protected_no_mutation:
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v2.json
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - .github/workflows/
+authority_boundary: "Release evidence aggregation/execution only; no method, numerical, production, global, code, release or deployment authority mutation."
+overlap_state: SAFE_AGAINST_PR1401_RECOVERY_ONLY
+receipt_policy: "No synthetic execution PASS. Missing prerequisite evidence or execution remains BLOCKED/NOT_RUN; --release must fail closed."

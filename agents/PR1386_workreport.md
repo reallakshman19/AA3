@@ -1,10 +1,10 @@
 # PR1386 — LFEA S4 reducer parity prerequisite
 
-## Current recovery state
+# CURRENT RECOVERY STATE — READ FIRST
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT
+PR_RECOVERY_STATE: HEALTHY_DRAFT_EXTERNAL_EVIDENCE_BLOCKED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: AUTO
 AUTO_STATE: ACTIVE
@@ -15,20 +15,19 @@ REPOSITORY: reallaksh19/Advanced_Analysis
 PR: 1386
 PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1386
 BRANCH: agent/lfea-piping-promotion-s4-reducer-parity-gate-20260823
-MERGE_BASE: a5aa16af7b4298427ea6b4aac0ced05ff801ed1c
 MAIN_LAST_CHECKED: e985b50d81d0d241db27313562c8cc12cd7cc27d
-EXACT_HEAD_PRE_REPORT: e1c4f6313b3b3697aa4f7191ca2dd09a5febeb59
-CURRENT_STAGE: S4 readiness hardened; controlled current-version reducer parity protocol committed
-CURRENT_BLOCKER: current-version CAESAR section sampling, gravity ownership, structural response and thermal parity remain unresolved
-HIGHEST_RISK: mistaking the public ten-cylinder structural description for proof of midpoint sampling or ten-cylinder gravity ownership
-EXACT_NEXT_ACTION: execute docs/lfea/S4_Reducer_Parity_Protocol_20260824.md in CAESAR 14.x and retain raw source outputs/hashes
+CODE_HEAD_PRE_REPORT: 9ee64795c6a15967222ff6e9d6bd0a024d32ef7a
+CURRENT_STAGE: S4 fail-closed readiness + controlled parity protocol + machine-checkable CAESAR evidence intake contract
+CURRENT_BLOCKER: current-version CAESAR section sampling, gravity ownership, structural response and thermal parity observations remain absent
+HIGHEST_RISK: mistaking ten-cylinder structural wording or a reviewer declaration for actual current-version CAESAR parity
+EXACT_NEXT_ACTION: execute docs/lfea/S4_Reducer_Parity_Protocol_20260824.md, retain raw CAESAR artifacts/hashes, and populate an external record satisfying scripts/lfea-s4-reducer-parity-evidence-contract.mjs
 ```
 
 ## 60-second handover
 
-The S4 production target is still **not authorized**.
+S4 numerical reducer promotion remains **blocked**.
 
-Current candidate state:
+Current production truth:
 
 ```text
 REDUCER_SEGMENT_COUNT = 10
@@ -38,17 +37,45 @@ reducerExactMechanics = false
 productionUseAuthorized = false
 ```
 
-Primary Hexagon help confirms a reducer is constructed from ten successively changing cylinders, but does not state where each cylinder samples OD/wall. The Version 14 reducer export contract exposes end/control data, not ten internal section stations.
+The repository now has three layers, deliberately separated:
 
-A separate gravity issue is now explicit: independent historical CAEPIPE↔CAESAR verification reports CAESAR reducer **weight based on the From-end OD/wall**, not a progressive ten-cylinder weight distribution. That evidence is historical and third-party, so it is a falsifier—not current-version authority.
+1. **source/readiness gate** — current v1 reducer candidate can never become READY;
+2. **controlled CAESAR protocol** — defines the experiment required to establish parity;
+3. **external evidence intake contract** — rejects incomplete, fitted, declaration-only or non-independent parity packages and still cannot authorize production.
 
-S4 therefore has three independent blockers:
+No reducer stiffness/gravity/thermal formula changed in this PR.
 
-1. section-sampling authority;
-2. gravity ownership/resultant/centroid authority;
-3. controlled current-version structural/thermal response parity.
+## Governing engineering decisions
 
-## Source/evidence custody
+### DEC-S4-001 — ten cylinders do not identify the internal sampling station
+Hexagon public help establishes ten successively changing cylinders and From/To section custody. It does not establish midpoint/start/end representative OD/wall for each cylinder.
+
+### DEC-S4-002 — gravity authority is separate from stiffness discretization
+Historical independent CAEPIPE↔CAESAR evidence reports reducer weight following the From-end OD/wall for the historical tested version. This is a current-version falsifier, not CAESAR 14 authority. Metal/fluid/insulation gravity must be qualified independently.
+
+### DEC-S4-003 — parity evidence cannot itself flip production
+Even a record accepted by `validateS4ReducerParityEvidence()` returns:
+
+```text
+status = QUALIFIED_PARITY_EVIDENCE_ONLY
+productionUseAuthorized = false
+reducerExactMechanicsAuthorized = false
+```
+
+A future S4 numerical promotion requires a new explicit production-authority contract revision and owner-reviewed integration.
+
+### DEC-S4-004 — one accepted candidate must be numerically unique under a predeclared tolerance
+The evidence contract requires:
+
+- `tolerancePolicy.fittedToCaesar = false`;
+- exactly one section candidate marked accepted;
+- accepted candidate maximum normalized error <= the declared observation tolerance;
+- every competing candidate error > that tolerance;
+- the engineering decision must equal that accepted candidate.
+
+A reviewer cannot select a rule that is outside tolerance or one of multiple rules inside tolerance.
+
+## Source custody
 
 ### SRC-S4-01 — Hexagon reducer help
 
@@ -56,33 +83,23 @@ S4 therefore has three independent blockers:
 publisher: Hexagon
 product: CAESAR II
 source: Users Guide — Reducer
-observed topic: Version 12 / 1226707
+topic/version observed: Version 12 / 1226707
 classification: PRIMARY_VENDOR_PUBLIC_HELP
 ```
 
-Establishes:
+Establishes ten cylinders and From/To end section data only.
 
-- ten successively changing cylinders;
-- From-end section from current element;
-- Diameter 2 / Thickness 2 at the To end.
-
-Does not establish:
-
-- midpoint/start/end/other internal section sampling;
-- gravity ownership;
-- exact condensed response parity.
-
-### SRC-S4-02 — Hexagon Version 14 reducer export contract
+### SRC-S4-02 — Hexagon Version 14 auxiliary reducer export contract
 
 ```text
 publisher: Hexagon
 source: Users Guide — Auxiliary Element Data / #$ REDUCERS
 version: 14
-observed topic: 1471418
+topic: 1471418
 classification: PRIMARY_VENDOR_PUBLIC_HELP
 ```
 
-The record exposes Diameter 2, Thickness 2, Alpha, transition radii and L2. It does not expose ten internal cylinder section values or a representative station rule.
+Does not expose ten internal cylinder section values or sampling stations.
 
 ### SRC-S4-03 — historical independent gravity verification
 
@@ -94,13 +111,13 @@ reported CAESAR version: 4.50
 classification: INDEPENDENT_THIRD_PARTY_HISTORICAL_EVIDENCE
 ```
 
-Forward/reverse test results report reducer weight matching the From-end OD/wall. Because this is historical, it must **not** be promoted into CAESAR 14 truth. It proves only that gravity cannot be inferred from the ten-cylinder structural statement.
+Useful only as a falsifier against assuming progressive ten-cylinder gravity ownership.
 
-## Implemented in PR1386
+## Implemented prerequisite surface
 
-### Fail-closed readiness
+### Production readiness
 
-`src/core/linear-fea-reducer-condensation/production-readiness.js` now requires all three blocker families to remain explicit:
+`src/core/linear-fea-reducer-condensation/production-readiness.js` requires these independent blockers:
 
 ```text
 REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED
@@ -108,203 +125,185 @@ REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED
 REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED
 ```
 
-The current v1 candidate can never return READY. A future exact reducer authority requires a versioned contract revision carrying qualified source/parity evidence. Renaming a status or sampling token cannot unlock production.
+The current candidate has no READY path.
 
-### Controlled CAESAR qualification protocol
+### Controlled CAESAR protocol
 
-`docs/lfea/S4_Reducer_Parity_Protocol_20260824.md` defines the actual experiment needed to unlock S4.
+`docs/lfea/S4_Reducer_Parity_Protocol_20260824.md` requires:
 
-It requires:
+- LARGE_TO_SMALL and SMALL_TO_LARGE controlled models;
+- axial, torsion, transverse-force and end-moment response cases;
+- metal-only, fluid-only and insulation-only gravity pairs;
+- resultant and first-moment/centroid evidence;
+- free and fixed thermal cases;
+- structural-vs-code-SIF boundary control;
+- raw job/input/output hashes, report locators, observers and dates;
+- no benchmark or tolerance fitting.
 
-- LARGE→SMALL and SMALL→LARGE orientation pairs;
-- axial, torsional and bending response discrimination;
-- metal-only gravity;
-- fluid-only gravity;
-- insulation-only gravity;
-- total resultant and first-moment/centroid evidence;
-- thermal free-extension and restrained-reaction cases;
-- raw CAESAR source/output hashes and report locators;
-- candidate comparison without fitting tolerances or expected values to CAESAR.
+### Machine-checkable parity intake
 
-The selected geometry is deliberately strongly tapered so plausible section rules separate numerically.
+`scripts/lfea-s4-reducer-parity-evidence-contract.mjs` requires exactly one run for each orientation of these families:
 
-### B-3.23 guard
+```text
+STRUCTURAL_AXIAL
+STRUCTURAL_TORSION
+STRUCTURAL_TRANSVERSE_FORCE
+STRUCTURAL_END_MOMENT
+GRAVITY_METAL
+GRAVITY_FLUID
+GRAVITY_INSULATION
+THERMAL_FREE
+THERMAL_FIXED
+```
 
-`scripts/lfea-b3.23-reducer-condensation-check.mjs` retains its existing numerical self-consistency checks. It iterates `REDUCER_PRODUCTION_BLOCKER_CODES`, so the gravity blocker is required automatically. It also requires zero production-consumer reachability to `compileTenCylinderReducerAuthority` while readiness is BLOCK.
+It additionally requires one same-orientation `CODE_SIF_BASELINE` / `CODE_SIF_VARIED` pair.
+
+Each run must retain:
+
+- unique run identity;
+- model orientation;
+- 64-hex job/input/output hashes;
+- units/load case/restraint description;
+- non-empty reported results;
+- report and raw-artifact locators;
+- observer and observation date.
+
+The package must compare all six protocol candidate section rules and prove one unique rule under the predeclared tolerance.
+
+The decision record must separately qualify metal, fluid and insulation gravity ownership; acceptance must cover section uniqueness, axial/torsion/bending parity, gravity components and first moment, thermal response and code boundary.
+
+Independent review is mandatory and the reviewer cannot be one of the recorded CAESAR observers.
+
+### Contract falsifier check
+
+`scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs` is an in-memory contract fixture only. It is designed to prove rejection of:
+
+- missing orientation/case coverage;
+- tolerance fitting;
+- production authorization requests;
+- accepted candidates outside tolerance;
+- multiple candidates within tolerance;
+- failed thermal acceptance;
+- non-independent review;
+- non-QUALIFIED status.
+
+It is **not CAESAR evidence** and must never be used as a production oracle.
 
 ### Workflow
 
-`.github/workflows/lfea-s4-reducer-parity-gate.yml` now scopes the parity protocol document in addition to the reducer guard/check files.
+`.github/workflows/lfea-s4-reducer-parity-gate.yml` now declares syntax plus B-3.23/readiness and evidence-contract checks. Hosted execution remains subject to repository Issue #54.
 
-## Authority boundary
+## Numerical authority boundary
 
-This prerequisite changes **no reducer numerical mechanics**.
+This PR does not change or authorize:
 
-Not authorized or changed:
-
-- midpoint vs endpoint sampling;
+- the midpoint candidate sampling rule;
 - ten-cylinder count;
-- stiffness formulation;
-- static condensation equations;
+- reducer element stiffness formulation;
+- static condensation;
 - shear coefficient;
-- candidate gravity calculation;
-- candidate thermal calculation;
-- reducer SIF/code-stress treatment;
+- gravity formulas;
+- thermal formulas;
+- SIF/code-stress authority;
 - benchmark expected values;
-- numerical tolerances;
-- `reducerExactMechanics`;
-- bend/tee/pressure capabilities.
+- engineering tolerances;
+- production reachability of `compileTenCylinderReducerAuthority()`;
+- `reducerExactMechanics`.
 
-Any numerical result movement attributable to PR1386 is a falsifier.
+Any reducer numerical output movement attributable to this prerequisite is a falsifier.
 
-## Required evidence before actual S4 promotion
+## Required real evidence before actual S4 promotion
 
-A new qualified reducer-parity authority must resolve all of the following:
+1. One current-version section rule uniquely matches both orientations under a predeclared source/report-resolution tolerance.
+2. Axial, torsional, transverse-force and end-moment response parity is independently established.
+3. Metal gravity ownership is identified from forward/reverse cases.
+4. Fluid gravity ownership is independently identified.
+5. Insulation gravity ownership is independently identified.
+6. Gravity resultant and first moment/centroid agree.
+7. Free-extension and restrained thermal response agree.
+8. Structural stiffness is shown independent of code-SIF reporting choices.
+9. Raw CAESAR artifacts and hashes are retained.
+10. Independent review approves the package.
 
-1. **Section sampling** — one current-version rule uniquely matches independent observations.
-2. **Axial/torsional/bending response** — displacements/reactions agree without implementation self-comparison.
-3. **Metal gravity** — forward/reverse cases distinguish From-end, To-end, average and progressive rules.
-4. **Fluid gravity** — independently qualified.
-5. **Insulation gravity** — independently qualified.
-6. **Gravity first moment** — resultant and moment/centroid agree.
-7. **Thermal response** — free and restrained cases agree.
-8. **Code boundary** — structural reducer mechanics remain separate from SIF/code-stress authority.
-
-Only then may `compileTenCylinderReducerAuthority()` become production-reachable and `reducerExactMechanics=true` be considered.
+Only after that may a separate production-authority revision be designed.
 
 ## Repository grounding
 
-Current main:
-
 ```text
-e985b50d81d0d241db27313562c8cc12cd7cc27d
+main = e985b50d81d0d241db27313562c8cc12cd7cc27d
+PR code head before this report = 9ee64795c6a15967222ff6e9d6bd0a024d32ef7a
+PR state = open / draft / mergeable
 ```
 
-PR branch vs current main before this report update:
-
-```text
-status: diverged
-ahead: 13
-behind: 4
-merge-base: a5aa16af7b4298427ea6b4aac0ced05ff801ed1c
-```
-
-The four main-side commits since merge-base are EMP.1 authority/release changes only. Their changed files do not overlap the S4 reducer package, B-3.23, S4 workflow or parity protocol. No rebase/merge was performed because no owner merge instruction was given and there is no reducer overlap.
+Main-side drift remains EMP.1-only for the currently observed main; no S4 reducer overlap was identified. No rebase/merge is performed without owner instruction.
 
 ## Engineering item register
 
 | ID | Type | Severity | Status | Summary |
 |---|---|---:|---|---|
-| ISS-001 | ISS | high | OPEN_BLOCKS_S4 | Current-version section sampling is unresolved. |
-| ISS-002 | ISS | high | OPEN_BLOCKS_S4 | Current-version structural/thermal parity is absent. |
-| ISS-003 | ISS | high | OPEN_BLOCKS_S4 | Current-version reducer gravity ownership is unresolved. |
-| IMP-001 | IMP | high | IMPLEMENTED | Candidate readiness is fail-closed. |
-| IMP-002 | IMP | high | IMPLEMENTED | Gravity authority separated from structural ten-cylinder authority. |
-| IMP-003 | IMP | high | IMPLEMENTED | Controlled CAESAR 14 parity protocol committed. |
-| IMP-004 | IMP | medium | IMPLEMENTED_CI_NOT_EXECUTING | Narrow workflow updated; hosted runner still fails before step 1. |
-| DEC-001 | DEC | high | CLOSED | Do not infer midpoint sampling from ten-cylinder wording. |
-| DEC-002 | DEC | high | CLOSED | Do not infer gravity ownership from structural discretization. |
+| ISS-001 | ISS | high | OPEN_BLOCKS_S4 | Current-version section sampling unresolved. |
+| ISS-002 | ISS | high | OPEN_BLOCKS_S4 | Controlled structural/thermal CAESAR parity absent. |
+| ISS-003 | ISS | high | OPEN_BLOCKS_S4 | Current-version metal/fluid/insulation gravity ownership unresolved. |
+| IMP-001 | IMP | high | IMPLEMENTED | Current reducer readiness is structurally fail-closed. |
+| IMP-002 | IMP | high | IMPLEMENTED | Gravity authority separated from stiffness discretization. |
+| IMP-003 | IMP | high | IMPLEMENTED | Controlled current-version CAESAR protocol committed. |
+| IMP-004 | IMP | high | IMPLEMENTED | Machine-checkable external evidence intake contract added. |
+| IMP-005 | IMP | high | IMPLEMENTED | Unique-candidate selection bound to predeclared tolerance. |
+| IMP-006 | IMP | medium | DECLARED_CI_NOT_EXECUTED | Workflow includes contract check; hosted CI remains blocked by #54. |
 | RISK-001 | RISK | high | MITIGATED_BY_GATE | Candidate midpoint mechanics cannot be mislabeled exact. |
-| RISK-002 | RISK | high | MITIGATED_BY_GATE | Candidate ten-cylinder gravity cannot be mislabeled CAESAR parity. |
+| RISK-002 | RISK | high | MITIGATED_BY_GATE | Ten-cylinder structural wording cannot silently become gravity authority. |
+| RISK-003 | RISK | high | MITIGATED_BY_CONTRACT | Reviewer declaration alone cannot manufacture section-rule parity. |
 
 ## Validation ledger
 
-### VAL-001 — current repository grounding
-
-```text
-STATUS: PASS
-OBSERVATION: GITHUB_SOURCE_INSPECTION
-MAIN: e985b50d81d0d241db27313562c8cc12cd7cc27d
-MAIN_DRIFT_OVERLAP_WITH_S4: none
-```
-
-### VAL-002 — primary Hexagon reducer source
-
-```text
-STATUS: PASS_SOURCE_INSPECTION
-ESTABLISHED: ten cylinders + From/To end section custody
-UNRESOLVED: representative internal section station + gravity rule
-```
-
-### VAL-003 — historical gravity falsifier
-
-```text
-STATUS: PASS_EVIDENCE_CLASSIFICATION
-OBSERVED: historical independent CAESAR reducer weight follows From-end section in forward/reverse tests
-LIMITATION: CAESAR 4.50 historical evidence; not current-version authority
-DISPOSITION: current-version gravity experiment required
-```
-
-### VAL-004 — readiness hardening
-
-```text
-STATUS: PASS_SOURCE_INSPECTION
-BLOCKER_COUNT: 3
-productionUseAuthorized: false
-CURRENT_V1_READY_PATH: none
-```
-
-### VAL-005 — exact-head S4 workflow
-
-```text
-STATUS: NOT_RUN
-EXACT_HEAD: e1c4f6313b3b3697aa4f7191ca2dd09a5febeb59
-WORKFLOW_RUN: 32678331110
-JOB: 97290430252
-GITHUB_CONCLUSION: failure
-EXECUTED_STEPS: 0
-JOB_LOG: 404 BlobNotFound
-CLASSIFICATION: CI_PRE_STEP_INFRASTRUCTURE_FAILURE
-ENGINEERING_ASSERTION_FAILURE_OBSERVED: no
-```
-
-No syntax check, B-3.23 assertion or anti-reachability assertion executed. Do not classify this hosted result as software PASS or engineering FAIL.
-
-### VAL-006 — full LFEA regression
-
-```text
-STATUS: NOT_RUN
-```
-
-### VAL-007 — current-version CAESAR reducer parity
-
-```text
-STATUS: UNRESOLVED
-PROTOCOL: docs/lfea/S4_Reducer_Parity_Protocol_20260824.md
-MISSING: raw controlled CAESAR 14.x observations
-```
-
-## Changed-file ledger
-
-| File | Purpose | Validation |
+| Check | Status | Evidence |
 |---|---|---|
-| `agents/PR1386_workreport.md` | sole living recovery authority | current |
-| `.github/workflows/lfea-s4-reducer-parity-gate.yml` | focused hosted guard | source inspected; hosted NOT_RUN |
-| `docs/lfea/S4_Reducer_Parity_Protocol_20260824.md` | controlled current-version parity design | source inspected |
-| `src/core/linear-fea-reducer-condensation/production-readiness.js` | three-part fail-closed readiness | source inspected; runtime NOT_RUN |
-| `src/core/linear-fea-reducer-condensation/index.js` | readiness exports | source inspected; runtime NOT_RUN |
-| `scripts/lfea-b3.23-reducer-condensation-check.mjs` | numerical self-consistency + non-reachability guard | exact-head NOT_RUN |
+| Current main grounding | PASS — GITHUB_SOURCE_INSPECTION | `e985b50d...` |
+| Primary Hexagon source classification | PASS — SOURCE_INSPECTION | ten cylinders + end-section custody only |
+| Historical gravity evidence classification | PASS — EVIDENCE_CLASSIFICATION | current-version falsifier only |
+| Production readiness blockers | PASS — SOURCE_INSPECTION | 3 independent blockers, no READY path |
+| S4 parity protocol | PASS — SOURCE_INSPECTION | controlled experiment defined |
+| S4 evidence intake contract | PASS_AFTER_FIX — SOURCE_INSPECTION | coverage, hashes, tolerance uniqueness, review and non-promotion enforced |
+| Contract fixture execution | NOT_RUN in repository CI | declared in S4 workflow; hosted execution unavailable |
+| B-3.23 regression | NOT_RUN on current exact head | hosted execution unavailable |
+| Current-version CAESAR parity | UNRESOLVED | raw controlled observations absent |
+| Full LFEA regression | NOT_RUN | infrastructure blocker |
 
-Effective prerequisite diff: **6 files**.
+Historical hosted run `32678331110` / job `97290430252` had zero executed steps and 404 `BlobNotFound`; classify as `CI_PRE_STEP_INFRASTRUCTURE_FAILURE`, not engineering PASS/FAIL.
+
+## Changed-file ledger — 8 files
+
+| File | Purpose |
+|---|---|
+| `agents/PR1386_workreport.md` | sole living recovery authority |
+| `.github/workflows/lfea-s4-reducer-parity-gate.yml` | S4 prerequisite + evidence-contract workflow |
+| `docs/lfea/S4_Reducer_Parity_Protocol_20260824.md` | controlled current-version CAESAR protocol |
+| `src/core/linear-fea-reducer-condensation/production-readiness.js` | fail-closed readiness blockers |
+| `src/core/linear-fea-reducer-condensation/index.js` | readiness exports |
+| `scripts/lfea-b3.23-reducer-condensation-check.mjs` | internal numerical self-consistency + non-reachability guard |
+| `scripts/lfea-s4-reducer-parity-evidence-contract.mjs` | external CAESAR parity evidence intake contract |
+| `scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs` | contract-only falsifier fixture/check |
 
 ## Appendix A — expert takeover questionnaire
 
-1. Why does the Hexagon statement “ten successively changing cylinders” fail to identify the representative OD/wall station for each cylinder?
-2. Why is reducer gravity a separate authority from reducer stiffness, and what does the historical forward/reverse CAESAR weight evidence prove—and not prove?
-3. Why are B-3.23 gravity and thermal assertions internal mathematics rather than an independent CAESAR oracle?
-4. How do the reversed-orientation protocol cases discriminate From-end weight from progressive physical weight?
-5. How do axial and torsional cases discriminate midpoint/start/end section sampling without tuning to CAESAR?
-6. What evidence must be retained from each CAESAR run before it can enter a qualified parity record?
-7. Why must a future READY state use a new explicit authority-contract revision rather than a renamed parity string?
-8. What remains separate between structural reducer mechanics and reducer SIF/code-stress authority?
+1. Why does “ten successively changing cylinders” fail to identify each cylinder's representative OD/wall station?
+2. Why is gravity ownership a separate authority from reducer structural discretization?
+3. What does the historical From-end weight result prove, and what does it not prove for CAESAR 14/current production?
+4. Which orientation-paired cases are mandatory in the new evidence contract?
+5. How does the contract prove a section candidate is uniquely inside a predeclared tolerance rather than selected by reviewer declaration?
+6. Why are metal, fluid and insulation gravity decisions separate?
+7. Why is first-moment/centroid evidence necessary in addition to total weight?
+8. Why does an accepted parity record still return `productionUseAuthorized=false`?
+9. What new authority revision is required before `compileTenCylinderReducerAuthority()` can become production-reachable?
+10. Why are the in-memory contract fixtures not CAESAR evidence?
 
-Takeover threshold: expert must be able to answer all eight without guessing.
+Takeover threshold: all ten must be answerable without guessing undocumented CAESAR behavior.
 
 ## Historical record
 
-- Initial S4 audit found the midpoint rule was candidate-only and production reachability had to remain blocked.
-- A hypothetical string-only READY path was rejected and removed.
-- Hosted S4 runs repeatedly fail before checkout because of the repository-wide runner/BlobNotFound condition.
-- 2026-08-24 follow-on review found current public Hexagon help still does not define internal section sampling.
-- The same review found independent historical evidence that reducer gravity may not follow the ten-cylinder structural discretization.
-- PR1386 was hardened with `REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED` and a controlled current-version CAESAR parity protocol.
+- Initial S4 audit found midpoint sampling candidate-only and no production reachability was allowed.
+- A hypothetical string-only READY path was rejected.
+- Historical independent reducer weight evidence exposed gravity as a separate authority question.
+- PR1386 added explicit sampling/gravity/response blockers and a controlled CAESAR parity protocol.
+- 2026-08-24 continuation added a machine-checkable external evidence contract; review found and fixed two declaration-only hazards: the engineering decision is now bound to the uniquely accepted candidate, and that candidate must be uniquely within the predeclared tolerance.
+- No numerical reducer promotion has occurred.

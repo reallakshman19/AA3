@@ -40,8 +40,8 @@ assert.equal(manifest.carryForward.ownerControlsAdministrativeClosure, true);
 const blocked = new Map(manifest.blockedStages.map((row) => [row.stage, row]));
 assert.equal(blocked.size, 2);
 assert.equal(blocked.get('S4')?.pr, 1386);
-assert.equal(blocked.get('S4')?.head, '2fc49e5ff84357c18308ca83a84f986624cfd2a3');
 assert.equal(blocked.get('S4')?.engineeringCodeHead, '7e540e6617decd23e3aec432bb08b81ebbd60a5a');
+assert.equal(blocked.get('S4')?.livePrHeadMustBeGroundedFromGithub, true);
 assert.equal(blocked.get('S4')?.requiredCapabilityState, false);
 assert.equal(blocked.get('S4')?.externalEvidenceRequired, true);
 assert.equal(blocked.get('S4')?.externalEvidenceIssue, 1402);
@@ -54,8 +54,8 @@ assert.deepEqual(blocked.get('S4')?.blockers, [
 ]);
 
 assert.equal(blocked.get('S5')?.pr, 1391);
-assert.equal(blocked.get('S5')?.head, '75407da9f5c6a7081ad803e67741f3f4255a9d81');
 assert.equal(blocked.get('S5')?.engineeringCodeHead, 'b62bfce16bf32e23e26560c68959ee03924377da');
+assert.equal(blocked.get('S5')?.livePrHeadMustBeGroundedFromGithub, true);
 assert.deepEqual(blocked.get('S5')?.requiredCapabilities, {
   pressureBourdon: false,
   pressureStiffening: false,

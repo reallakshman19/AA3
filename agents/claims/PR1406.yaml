@@ -1,6 +1,6 @@
 schema: AgentClaim.v1
 pr_or_wip: PR1406
-claim_state: ACTIVE
+claim_state: RELEASED_REJECTED_HYPOTHESIS
 branch: agent/issue-54-emp1-ubuntu2404-runner-fix-20260824
 mission: "Issue #54 minimal EMP.1 hosted-runner routing repair"
 write_scope:
@@ -19,4 +19,5 @@ protected_no_mutation:
   - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
   - src/core/emp1/emp1-c-bounded-route-registry.js
 authority_boundary: "Runner routing only. No command deletion/skip, self-hosted/security expansion, engineering numerical authority, or release authority."
-overlap_state: "COORDINATION_REQUIRED_WITH_PR1401; no exact-file write overlap; PR1401 must re-ground after merged fix"
+overlap_state: "CLOSED_NO_MAIN_CHANGE; PR1401 exact target not invalidated by PR1406"
+disposition: "Explicit ubuntu-24.04 pin falsified by three zero-step jobs; do not merge."

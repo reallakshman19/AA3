@@ -1,0 +1,73 @@
+name: LFEA S6 tee branch promotion
+
+on:
+  pull_request:
+    paths:
+      - 'agents/PR*_workreport.md'
+      - 'agents/WIP-S6TEE_workreport.md'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-branch-element-augmentation.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-element-authorities.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-element-authority-support.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-frame-authority.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-production-executor.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-elements.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-production-branch-factor-authority.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-production-branch-modifiers.js'
+      - 'src/core/linear-piping-analysis-consumer/production-capability-profile.js'
+      - 'src/lfea/native-b31-case-chain.js'
+      - 'src/lfea/native-support-publication-case-chain.js'
+      - 'src/workspace/lfea-bend-factor-authority-control.js'
+      - 'src/workspace/linear-piping-inputxml-prefea.js'
+      - 'scripts/lfea-s6-tee-production-authority-check.mjs'
+      - '.github/workflows/lfea-piping-promotion-s6-tee.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-s6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check S6 JavaScript syntax
+        run: |
+          node --check src/core/linear-piping-analysis-consumer/inputxml-branch-element-augmentation.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-element-authorities.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-element-authority-support.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-frame-authority.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-production-executor.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-elements.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-production-branch-factor-authority.js
+          node --check src/core/linear-piping-analysis-consumer/inputxml-production-branch-modifiers.js
+          node --check src/core/linear-piping-analysis-consumer/production-capability-profile.js
+          node --check src/lfea/native-b31-case-chain.js
+          node --check src/lfea/native-support-publication-case-chain.js
+          node --check src/workspace/lfea-bend-factor-authority-control.js
+          node --check src/workspace/linear-piping-inputxml-prefea.js
+          node --check scripts/lfea-s6-tee-production-authority-check.mjs
+
+      - name: Run S6 production tee authority qualification
+        run: node scripts/lfea-s6-tee-production-authority-check.mjs
+
+      - name: Re-run B31J phase-2 factor benchmark
+        run: node scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs
+
+      - name: Re-run M047 tee rigid thermal qualification
+        run: node scripts/lfea-m047-tee-rigid-thermal-check.mjs
+
+      - name: Enforce linear piping anti-drift rules
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs

@@ -160,8 +160,13 @@ export function compileInputXmlProductionBranchModifiers(input) {
 function weldingTeeNodeIds(segments) {
   const ids = new Set();
   for (const segment of segments) {
+    const endpoints = new Set([String(segment.startNodeId), String(segment.endNodeId)]);
     for (const sif of segment.meta?.analysis?.sifs ?? []) {
-      if (Number(sif.typeCode) === WELDING_TEE_TYPE && sif.nodeId != null) ids.add(String(sif.nodeId));
+      if (Number(sif.typeCode) === WELDING_TEE_TYPE
+        && sif.nodeId != null
+        && endpoints.has(String(sif.nodeId))) {
+        ids.add(String(sif.nodeId));
+      }
     }
   }
   return [...ids].sort(compareAscii);
@@ -199,9 +204,15 @@ function buildLeg(input) {
 
 function teeFactorGeometry(runLegs, branchLeg, junctionNodeId) {
   const runOd = runLegs[0].section.dimensions.outerDiameter;
+  const runWall = runLegs[0].section.dimensions.wallThickness;
   const otherRunOd = runLegs[1].section.dimensions.outerDiameter;
-  if (Math.abs(runOd - otherRunOd) > RUN_COLLINEARITY_TOLERANCE.value * Math.max(runOd, otherRunOd)) {
-    fail('BRANCH_RUN_SECTION_MISMATCH', `Tee node ${junctionNodeId} run legs do not share one outside diameter.`);
+  const otherRunWall = runLegs[1].section.dimensions.wallThickness;
+  if (runOd !== otherRunOd || runWall !== otherRunWall) {
+    fail('BRANCH_RUN_SECTION_MISMATCH',
+      `Tee node ${junctionNodeId} run legs do not establish one unambiguous header section.`, {
+        runA: { outerDiameter: runOd, wallThickness: runWall },
+        runB: { outerDiameter: otherRunOd, wallThickness: otherRunWall },
+      });
   }
   const branchOd = branchLeg.section.dimensions.outerDiameter;
   if (branchOd <= runOd) return {

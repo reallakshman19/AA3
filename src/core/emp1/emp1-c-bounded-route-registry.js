@@ -28,7 +28,7 @@ export const EMP1_C_BOUNDED_ROUTE_REGISTRY_SCHEMA = 'emp1-c-bounded-route-regist
 export const EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID =
   'EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP';
 export const EMP1_C_WRC537_GAMMA5_ZERO_DP_QUALIFICATION_SHA256 =
-  '3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e';
+  '9ea591a1918175b3e415d77f1adc4398645ca0503a699cfe8139d9dd3c69b4c7';
 export const EMP1_C_WRC537_ZERO_DP_LOAD_PRODUCER_SHA256 =
   '47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b';
 export const EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON =
@@ -62,12 +62,10 @@ export const EMP1_C_WRC537_APPENDIX_B_SCF_LIMITATION =
 export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
   schema: EMP1_C_BOUNDED_ROUTE_REGISTRY_SCHEMA,
   routeId: EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
-  registered: false,
-  engineeringUseAuthorized: false,
+  registered: true,
+  engineeringUseAuthorized: true,
   comparisonQualificationAvailable: true,
-  suspensionReasons: Object.freeze([
-    EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
-  ]),
+  suspensionReasons: Object.freeze([]),
   limitations: Object.freeze([
     EMP1_C_WRC537_EXTREMA_LIMITATION,
     EMP1_C_WRC537_UNITY_SCF_LIMITATION,
@@ -82,8 +80,8 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     sourceDocumentSha256: EMP1_WRC537_BOUNDED_SOURCE_SHA256,
     datasetHash: EMP1_WRC537_BOUNDED_DATASET_HASH,
     qualificationRecordSha256: EMP1_C_WRC537_GAMMA5_ZERO_DP_QUALIFICATION_SHA256,
-    qualificationRecordRole: 'HISTORICAL_PRE_EMP1_12_TO_15_BOUNDED_NUMERICAL_QUALIFICATION',
-    routeRequalificationRequired: true,
+    qualificationRecordRole: 'POST_SOURCE_AUTHORITY_EXACT_HEAD_BOUNDED_REQUALIFICATION',
+    routeRequalificationRequired: false,
     loadProducerQualificationSha256: EMP1_C_WRC537_ZERO_DP_LOAD_PRODUCER_SHA256,
   }),
   scope: Object.freeze({
@@ -153,7 +151,6 @@ export const EMP1_C_BOUNDED_PRODUCTION_ROUTES = Object.freeze([Object.freeze({
     arbitraryLoadingExtremaRequiresEngineeringJudgment: true,
   }),
   remainingBlocked: Object.freeze([
-    EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
     'NONZERO_DIFFERENTIAL_PRESSURE',
     'NONUNITY_STRESS_CONCENTRATION',
     EMP1_C_WRC537_APPENDIX_B_SCF_LIMITATION,

@@ -9,10 +9,12 @@ files:
     - scripts/lib/lafea1371-custody-assertions.mjs
     - scripts/lafea1371-cross-stage-anti-drift-check.mjs
     - scripts/lafea-stage17-browser-run.mjs
+    - src/workspace/lafea-live-workbench-viewport.js
   prefixes: []
 authority_domains:
   - LAFEA3_LAFEA4_ANTI_DRIFT_REGRESSION
   - LAFEA_EXECUTION_CUSTODY_TEST_HELPER
+  - LAFEA_VIEWPORT_RETAINED_MESH_IDENTITY_OBSERVABILITY
   - EXISTING_CHROMIUM_QUALIFICATION_CARRIER_BINDING
 claim_modes:
   - EXCLUSIVE_EXACT_FILES
@@ -21,6 +23,7 @@ excluded_authority:
   - CONTINUUM_OR_SHELL_SOLVER_MECHANICS
   - MESH_QUALITY_THRESHOLD_CHANGE
   - BENCHMARK_ORACLE_CHANGE
+  - RESULT_RECOVERY_OR_PRESENTATION_AUTHORITY_CHANGE
   - BROWSER_E2E_CONTRACT_CHANGE
   - WORKFLOW_YAML_CHANGE
   - REGISTRY_LIMITATION_SOFTENING_WITHOUT_EXECUTED_EVIDENCE
@@ -30,9 +33,11 @@ invariants:
   - SOURCE_EDIT_REVOKES_OLD_DESCENDANT_AUTHORITY
   - MESH_PROFILE_CHANGE_REVOKES_OLD_SOLVER_EXECUTION_RECOVERY_AUTHORITY
   - UNCHANGED_GEOMETRY_PROFILE_REPRODUCES_MESH_CONTENT_HASH
+  - VIEWPORT_RETAINED_MESH_HASH_EQUALS_RETAINED_EVIDENCE_CONTENT_HASH
+  - VIEWPORT_MESH_ARTIFACT_HASH_REMAINS_SEPARATE_FROM_CONTENT_HASH
   - E_PLUS_5_PERCENT_FORCE_CONTROL_DISPLACEMENT_RATIO_1_OVER_1_05
   - FROZEN_ORACLES_UNCHANGED
   - EXISTING_CHROMIUM_TEST_SET_UNCHANGED
 main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
 overlap_state: SAFE
-note: Test-only PR-D. Exact carrier search found no active open claim on scripts/lafea-stage17-browser-run.mjs; the only carrier change is to execute the PR-D Node anti-drift gate before the existing Chromium suite. No browser spec or workflow YAML is added/changed. Registry cleanup remains blocked pending executed exact-head evidence.
+note: PR-D is cross-stage custody/anti-drift plus one bounded production viewport observability seam. The viewport continues to render the exact retained mesh evidence object; the change only exposes mesh content hash and parent-bound artifact hash separately in model/state/DOM. No browser spec or workflow YAML is changed. Registry cleanup remains blocked pending executed exact-head evidence.

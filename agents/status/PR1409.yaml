@@ -16,7 +16,7 @@ handover_readiness: READY
 report_path: agents/PR1409_workreport.md
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: NON_AUTHORIZING_POST_PROMOTION_DISPOSITION_RETAINED
+current_stage: AUDIT_COMPLETE_STACKED_DRAFT_AWAITING_PR1408_RESOLUTION
 standard_pr_f:
   prerequisite_08_10: NOT_GENERATED
   execution: NOT_RUN_PREDECESSOR_STANDARD_EVIDENCE_CHAIN_ABSENT
@@ -28,6 +28,13 @@ standard_pr_f:
 disposition_record:
   path: validation/emp1/wrc537-2013/gamma5-zero-dp-post-promotion-owner-override-disposition-v1.json
   semantic_hash: 5a06672aa51c82e0e73923f4bb5e98ac8f76686320250553f4655ee4bf43f217
+validation:
+  stacked_compare: PASS_AHEAD_10_BEHIND_0
+  changed_files: PASS_EXACT_FOUR
+  superseded_wip_records: PASS_REMOVED
+  pr_state: PASS_OPEN_DRAFT_MERGEABLE
+  review_threads: PASS_ZERO
+  authority_file_mutation_in_pr_f: PASS_NONE
 authority:
   pr_f_authority_mutation: false
   bounded_route_state_observed_on_unmerged_stack: true
@@ -35,5 +42,5 @@ authority:
   code_compliance_authorized: false
   release_qualified: false
 merge_disposition: STACKED_DRAFT_OWNER_ONLY_DO_NOT_MERGE_BEFORE_PR1408
-exact_next_action: "Delete WIP records, audit exact four-file stacked diff/reviews. Resolve PR1408 before retargeting or merging PR1409."
+exact_next_action: "Resolve PR1408 first. If merged, re-ground main and retarget/re-audit PR1409 before any merge; if PR1408 changes, invalidate and refresh this disposition against the new exact head."
 last_updated: "2026-08-24"

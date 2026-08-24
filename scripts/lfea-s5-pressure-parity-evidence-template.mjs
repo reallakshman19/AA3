@@ -64,6 +64,9 @@ function selector(family) {
     ['Q4_SELECTOR_P1', 'P1'],
     ['Q4_SELECTOR_P2', 'P2'],
     ['Q4_SELECTOR_PMAX', 'PMAX'],
+    ['Q5_GLOBAL_DEFAULT_B313', 'P1'],
+    ['Q5_GLOBAL_INCLUDE_B313', 'P1'],
+    ['Q5_GLOBAL_EXCLUDE_B313', 'P1'],
   ]);
   return values.get(family) ?? 'NONE';
 }
@@ -95,7 +98,7 @@ function runRecord(family) {
     activateBourdonEffects: bourdonMode(family),
     usePressureStiffeningOnBends: globalStiffeningMode(family),
     elbowStiffeningPressureSelector: selector(family),
-    pressureFields: { P1: null, P2: null },
+    pressureFields: Q4.has(family) ? { P1: null, P2: null } : { P1: null },
     material: { TODO: 'REPLACE_WITH_CONTROLLED_MATERIAL_STATE' },
     section: { TODO: 'REPLACE_WITH_CONTROLLED_SECTION_STATE' },
     restraints: { TODO: 'REPLACE_WITH_CONTROLLED_RESTRAINT_STATE' },
@@ -198,7 +201,8 @@ fs.writeFileSync(
     'Replace every placeholder from controlled CAESAR observations.',
     'Retain actual raw job/input/output files at the paths declared in evidence.json.',
     'Predeclare the tolerance before viewing CAESAR results.',
-    'Do not infer the BM4_NL L19/L20 Elbow Stiffening Pressure selector from provisional P1.',
+    'Q5 uses a fixed controlled P1 selector across Default/Include/Exclude so the global setting is discriminating.',
+    'Controlled Q5 P1 is not authority for BM4_NL L19/L20; their selector remains unresolved.',
     'Run the file-level checker only after the package is complete.',
     '',
   ].join('\n'),

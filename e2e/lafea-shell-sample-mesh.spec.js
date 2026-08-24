@@ -231,6 +231,24 @@ test('production LAFEA.4 and LAFEA.5 Sample retained mesh is the authoritative s
     expect(executed.orchestrationExecutionState).toBe('COMPLETE');
     expect(executed.orchestrationResultsState).toBe('COMPLETE');
 
+    if (stageId === 'LAFEA.4') {
+      const results = workbench.locator('[data-guided-target="results"]');
+      const presentation = results.locator('.lafea-result-presentation');
+      await expect(presentation).toBeVisible();
+      await expect(presentation.getByRole('heading', {
+        name: 'Engineering summary — retained shell evidence only',
+      })).toBeVisible();
+      const summaryTable = presentation.locator('.lafea-result-table').first();
+      await expect(summaryTable).toContainText('Max authoritative surface/IP von Mises');
+      await expect(summaryTable).toContainText('Max applied force resultant magnitude');
+      await expect(summaryTable).toContainText('Force equilibrium residual · PASS');
+      await expect(summaryTable).toContainText('Moment equilibrium residual · PASS');
+      await expect(summaryTable).toContainText('forceEquilibrium.qualification.actual');
+      await expect(presentation.locator('.lafea-result-governing')).toContainText(
+        'Governing retained shell surface/IP von Mises equivalent stress',
+      );
+    }
+
     if (stageId === 'LAFEA.5') {
       expect(executed.maximumDisplacement).toBeGreaterThan(1e-6);
       expect(executed.maximumDisplacement).toBeLessThan(0.01);

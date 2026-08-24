@@ -30,6 +30,7 @@ const profile = createLafeaMockMeshProfile(STAGE_ID);
 assert.ok(parent?.domain && parent?.geometryEvidence, 'Sample must supply governed domain/geometry');
 assert.equal(profile.fields.continuumElement, LAFEA3_SIMULATED_MESH_ELEMENT_FAMILY);
 assert.equal(profile.fields.globalTargetSize, LAFEA3_SIMULATED_MESH_TARGET_MM);
+assertSourceDomainPhysicsParity(normalizedSource, parent);
 
 const store = createLafeaWorkbenchStore({
   initialStage: STAGE_ID,
@@ -75,6 +76,7 @@ try {
     true,
     'Sample generation must retain a uniform T6 element family',
   );
+  assertPhysicalFeatureVerticesRetained(normalizedSource, generated.evidence.mesh);
 
   const after = store.getState().stages[STAGE_ID];
   assert.equal(after.retainedAnalysisMeshEvidenceV2?.meshHash, generated.evidence.meshHash);
@@ -120,9 +122,56 @@ try {
     elementCount: generated.evidence.mesh.elements.length,
     characteristicLengthMax: after.lastAnalysisMeshPlan.characteristicLengthMax,
     blockingElementCount: generated.evidence.quality.blockingElementIds.length,
+    sourceConstraintCount: normalizedSource.constraints.length,
+    sourceNodalForceCount: normalizedSource.loadCases.flatMap((row) => row.nodalForces).length,
+    sourcePhysicalFeaturesRetainedExactly: true,
     viewportRemountRequired: true,
     continuumPreflight: preflight.projection.state,
   }));
 } finally {
   store.destroy();
+}
+
+function assertSourceDomainPhysicsParity(sourceValue, parentValue) {
+  const caseIds = sourceValue.loadCases.map((row) => row.loadCaseId).sort();
+  assert.deepEqual(parentValue.domain.physicalCases.map((row) => row.caseId).sort(), caseIds);
+
+  const restraints = parentValue.domain.attachments.filter((row) => row.kind === 'RESTRAINT');
+  assert.equal(restraints.length, sourceValue.constraints.length);
+  for (const constraint of sourceValue.constraints) {
+    const row = restraints.find((candidate) => candidate.attachmentId === constraint.constraintId);
+    assert.ok(row, `Missing governed restraint ${constraint.constraintId}`);
+    assert.equal(row.targetType, 'VERTEX');
+    assert.equal(row.targetId, constraint.nodeId);
+    assert.deepEqual([...row.physicalCaseIds].sort(), caseIds);
+    assert.deepEqual(row.payload, constraint.dof === 'UX' ? { ux: true } : { uy: true });
+  }
+
+  const forces = parentValue.domain.attachments.filter((row) => row.kind === 'CONCENTRATED_LOAD');
+  const sourceForces = sourceValue.loadCases.flatMap((loadCase) =>
+    loadCase.nodalForces.map((row) => ({ ...row, loadCaseId: loadCase.loadCaseId })));
+  assert.equal(forces.length, sourceForces.length);
+  for (const force of sourceForces) {
+    const row = forces.find((candidate) => candidate.attachmentId === force.loadId);
+    assert.ok(row, `Missing governed nodal load ${force.loadId}`);
+    assert.equal(row.targetId, force.nodeId);
+    assert.deepEqual(row.physicalCaseIds, [force.loadCaseId]);
+    assert.deepEqual(row.payload, { fx: force.fx, fy: force.fy, unit: sourceValue.units.force });
+  }
+}
+
+function assertPhysicalFeatureVerticesRetained(sourceValue, mesh) {
+  const sourceNodeById = new Map(sourceValue.nodes.map((row) => [row.nodeId, row]));
+  const featureIds = new Set([
+    ...sourceValue.constraints.map((row) => row.nodeId),
+    ...sourceValue.loadCases.flatMap((row) => row.nodalForces.map((force) => force.nodeId)),
+  ]);
+  for (const featureId of featureIds) {
+    const sourceNode = sourceNodeById.get(featureId);
+    assert.ok(sourceNode, `Missing source node ${featureId}`);
+    const matches = mesh.nodes.filter((row) =>
+      Math.hypot(row.x - sourceNode.x, row.y - sourceNode.y, row.z ?? 0) <= 1e-9);
+    assert.equal(matches.length, 1,
+      `Source physical feature ${featureId} must map to exactly one retained mesh node.`);
+  }
 }

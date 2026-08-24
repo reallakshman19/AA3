@@ -1,0 +1,111 @@
+{
+  "schema": "lafea-shell-independent-benchmark-definition/v1",
+  "benchmarkId": "B4-2-PURE-BENDING-PATCH-01",
+  "stageId": "LAFEA.4",
+  "definitionState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
+  "engineeringPurpose": "INDEPENDENT_NUMERICAL_VERIFICATION",
+  "title": "Constant-curvature DKT bending patch",
+  "formulationScope": {
+    "authorizedElementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+    "linearElastic": true,
+    "smallDisplacement": true,
+    "thinShellOnly": true,
+    "mitcClaim": false,
+    "drillingDofClaim": false
+  },
+  "oracleAuthority": {
+    "sourceClass": "ANALYTICAL",
+    "basis": "CLASSICAL_LINEAR_ISOTROPIC_THIN_SHELL_PATCH",
+    "productionOutputUsedToChooseDefinition": false,
+    "productionOutputUsedToChooseExpectedValues": false,
+    "importsProductionFem": false,
+    "movingMaximumUsed": false,
+    "nodalStressProjectionUsed": false,
+    "crossElementAveragingUsed": false,
+    "displayInterpolationUsed": false
+  },
+  "units": {
+    "length": "mm",
+    "stress": "MPa",
+    "force": "N",
+    "moment": "N*mm",
+    "curvature": "1/mm"
+  },
+  "geometry": {
+    "kind": "FLAT_RECTANGULAR_PATCH",
+    "width": 120,
+    "height": 70,
+    "nodes": [
+      { "nodeId": "A", "x": 0, "y": 0, "z": 0 },
+      { "nodeId": "B", "x": 120, "y": 0, "z": 0 },
+      { "nodeId": "C", "x": 120, "y": 70, "z": 0 },
+      { "nodeId": "D", "x": 0, "y": 70, "z": 0 }
+    ],
+    "triangles": [
+      { "elementId": "E1", "nodeIds": ["A", "B", "C"] },
+      { "elementId": "E2", "nodeIds": ["A", "C", "D"] }
+    ]
+  },
+  "material": {
+    "elasticModulus": 210000,
+    "poissonRatio": 0.27,
+    "thickness": 3.2
+  },
+  "prescribedField": {
+    "kappaX": 8e-5,
+    "kappaY": 0,
+    "kappaXY": 0,
+    "equations": {
+      "ux": "0",
+      "uy": "0",
+      "uz": "-0.5*kappaX*x^2 - 0.5*kappaY*y^2 - 0.5*kappaXY*x*y",
+      "r1": "-kappaY*y - 0.5*kappaXY*x",
+      "r2": "kappaX*x + 0.5*kappaXY*y"
+    }
+  },
+  "expected": {
+    "nodalKinematics": [
+      { "nodeId": "A", "ux": 0, "uy": 0, "uz": 0, "r1": 0, "r2": 0 },
+      { "nodeId": "B", "ux": 0, "uy": 0, "uz": -0.5760000000000001, "r1": 0, "r2": 0.009600000000000001 },
+      { "nodeId": "C", "ux": 0, "uy": 0, "uz": -0.5760000000000001, "r1": 0, "r2": 0.009600000000000001 },
+      { "nodeId": "D", "ux": 0, "uy": 0, "uz": 0, "r1": 0, "r2": 0 }
+    ],
+    "curvature": { "kappaX": 8e-5, "kappaY": 0, "kappaXY": 0 },
+    "bendingMomentResultants": {
+      "mx": 49.48247222521844,
+      "my": 13.360267500808979,
+      "mxy": 0
+    },
+    "membraneStrain": { "epsilonX": 0, "epsilonY": 0, "gammaXY": 0 },
+    "topSurfaceBendingStress": {
+      "z": 1.6,
+      "sigmaX": 28.993636069463925,
+      "sigmaY": 7.82828173875526,
+      "tauXY": 0
+    },
+    "bottomSurfaceBendingStress": {
+      "z": -1.6,
+      "sigmaX": -28.993636069463925,
+      "sigmaY": -7.82828173875526,
+      "tauXY": 0
+    },
+    "appliedResultantForce": [0, 0, 0],
+    "appliedResultantMomentAboutOrigin": [0, 0, 0]
+  },
+  "acceptance": {
+    "nodalKinematicsAbsoluteTolerance": 1e-10,
+    "curvatureAbsoluteTolerancePerMm": 1e-12,
+    "bendingMomentAbsoluteToleranceN": 1e-8,
+    "surfaceStressAbsoluteToleranceMpa": 1e-8,
+    "membraneContaminationStrainAbsoluteTolerance": 1e-12,
+    "forceEquilibrium": { "absoluteToleranceN": 1e-7, "relativeTolerance": 1e-9 },
+    "momentEquilibrium": { "absoluteToleranceNmm": 1e-6, "relativeTolerance": 1e-9 },
+    "rationale": "The prescribed transverse field has constant curvature. Expected moments and surface stresses are obtained from the classical isotropic thin-shell constitutive matrix, not production output."
+  },
+  "limitations": [
+    "ANALYTICAL_PATCH_ONLY",
+    "NO_NONLINEAR_AUTHORITY",
+    "NO_THICK_SHELL_AUTHORITY",
+    "NO_RELEASE_AUTHORITY"
+  ]
+}

@@ -6,6 +6,7 @@ import {
   EMP1_WORKBENCH_CYLINDER_LENGTH_BASIS,
   EMP1_WORKBENCH_RUN_INPUT_SCHEMA,
 } from './emp1-workbench-run-state.js';
+import { buildEmp1ProfessionalResultPresentation } from './emp1-professional-result-presentation.js';
 import { card, element } from './lafea-workbench-dom.js';
 
 /**
@@ -185,6 +186,13 @@ export function renderEmp1WorkbenchExecutionSummary(root, execution, currentness
   panel.section.dataset.currentness = currentness?.state ?? 'UNRESOLVED';
   panel.section.dataset.cState = cState?.state ?? 'UNRESOLVED';
   const routeExecuted = execution.authority?.boundedLocalRouteExecuted === true;
+  const professional = buildEmp1ProfessionalResultPresentation({
+    execution,
+    currentness,
+    cState,
+    localCorrelation: cState?.reportableResult ?? null,
+  });
+  panel.body.append(renderProfessionalStatus(root, professional));
   panel.body.append(keyValueTable(root, [
     ['Transaction status', execution.status],
     ['Engineering decision', execution.decision],
@@ -221,6 +229,54 @@ export function renderEmp1WorkbenchExecutionSummary(root, execution, currentness
   const authorityEvidence = renderAuthorityEvidence(root, cState);
   if (authorityEvidence) panel.body.append(authorityEvidence);
   return panel.section;
+}
+
+function renderProfessionalStatus(root, professional) {
+  const wrapper = element(root, 'div', 'lafea-workbench__authority');
+  wrapper.dataset.role = 'emp1-professional-status';
+  wrapper.append(
+    element(root, 'strong', null, 'Professional assessment state — independent gates'),
+    keyValueTable(root, [
+      ['CALCULATED', yesNo(professional.status.calculated)],
+      ['METHOD QUALIFIED', yesNo(professional.status.methodQualified)],
+      ['CODE COMPLIANT', yesNo(professional.status.codeCompliant)],
+      ['RELEASED', yesNo(professional.status.released)],
+    ]),
+  );
+  const domain = element(root, 'div', 'lafea-workbench__custody-details');
+  domain.dataset.role = 'emp1-professional-bounded-domain';
+  domain.append(
+    element(root, 'strong', null, 'Current bounded method/domain authority'),
+    keyValueTable(root, [
+      ['Route', professional.domain.routeId],
+      ['Method', professional.domain.methodIdentity],
+      ['Edition', professional.domain.edition],
+      ['Shell / attachment', pair(professional.domain.shellFamily, professional.domain.attachmentShape)],
+      ['Curve / γ', pair(professional.domain.variant, professional.domain.gamma)],
+      ['β domain', range(professional.domain.betaMinimum, professional.domain.betaMaximum)],
+      ['Differential pressure', professional.domain.differentialPressure],
+      ['Kn / Kb', pair(professional.domain.Kn, professional.domain.Kb)],
+      ['Interpolation allowed', yesNoUnknown(professional.domain.interpolationAllowed)],
+      ['Cross-variant fallback allowed', yesNoUnknown(professional.domain.crossVariantFallbackAllowed)],
+      ['Stress output domain', professional.domain.stressOutputDomain],
+      ['Source SHA-256', professional.domain.sourceDocumentSha256],
+      ['Dataset hash', professional.domain.datasetHash],
+      ['Qualification hash', professional.domain.qualificationRecordSha256],
+    ]),
+  );
+  const blockers = uniqueText([
+    ...(professional.currentBlockers ?? []),
+    ...(professional.routeLimitations ?? []),
+    ...(professional.unsupportedDomain ?? []),
+  ]);
+  if (blockers.length) {
+    const list = element(root, 'ul');
+    list.dataset.role = 'emp1-professional-unsupported-domain';
+    blockers.forEach((code) => list.append(element(root, 'li', null, human(code))));
+    domain.append(element(root, 'strong', null, 'Blocked / limited outside current authority'), list);
+  }
+  wrapper.append(domain);
+  return wrapper;
 }
 
 function renderAuthorityEvidence(root, cState) {
@@ -311,7 +367,7 @@ function canonicalLengthUnit(aDocument, bDocument) {
     ?? 'UNRESOLVED';
 }
 function uniqueText(values) {
-  return [...new Set(values.filter((value) => typeof value === 'string' && value.trim()))];
+  return [...new Set((values ?? []).filter((value) => typeof value === 'string' && value.trim()))];
 }
 function selectField(root, labelText, values, selected, role) {
   const row = element(root, 'label');
@@ -361,6 +417,19 @@ function keyValueTable(root, rows) {
 function invocationText(value) {
   if (!value) return '—';
   return `A ${value.loadTransfer ?? 0} · B ${value.sectionScreening ?? 0} · prepare C ${value.localPreparation ?? 0} · production C ${value.localCorrelation ?? 0}`;
+}
+function pair(first, second) {
+  const left = first == null ? 'UNRESOLVED' : String(first);
+  const right = second == null ? 'UNRESOLVED' : String(second);
+  return `${left} / ${right}`;
+}
+function range(minimum, maximum) {
+  if (!Number.isFinite(minimum) || !Number.isFinite(maximum)) return 'UNRESOLVED';
+  return `${minimum} ≤ β ≤ ${maximum}`;
+}
+function yesNo(value) { return value === true ? 'YES' : 'NO'; }
+function yesNoUnknown(value) {
+  return value === true ? 'YES' : value === false ? 'NO' : 'UNRESOLVED';
 }
 function finiteText(value) { return Number.isFinite(value) ? String(value) : ''; }
 function human(value) { return String(value ?? 'UNRESOLVED').replaceAll('_', ' '); }

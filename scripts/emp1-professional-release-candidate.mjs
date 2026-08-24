@@ -82,14 +82,13 @@ const gates = [
     ['scripts/emp1-professional-p0-source-semantics-check.mjs', '--require-ready']],
   ['CAUX_REFERENCE_QUALIFICATION', process.execPath,
     ['scripts/emp1-caux-pp24-31-benchmark-check.mjs', '--require-direct-pdf']],
-  ['FROZEN_RELEASE_PROFILE', process.execPath,
-    ['scripts/emp1-professional-release-profile-check.mjs']],
-  ['PUBLIC_PRODUCT', process.execPath, ['scripts/emp1-public-product-check.mjs']],
-  ['CURRENTNESS_FALSIFIERS', process.execPath,
+  ['AUTHORIZED_RUNEMP1_ORCHESTRATION', process.execPath,
+    ['scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs']],
+  ['CURRENTNESS_REPLAY_FALSIFIERS', process.execPath,
     ['scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs']],
   ['PRODUCTION_BUILD', npmCommand(), ['run', 'build']],
-  ['EMP1_CHROMIUM', process.execPath,
-    ['scripts/run-playwright.mjs', 'e2e/emp1-workbench-authority.spec.js']],
+  ['EMP1_RELEASE_CHROMIUM', process.execPath,
+    ['scripts/run-playwright.mjs', 'e2e/emp1-professional-release.spec.js']],
 ];
 const executions = [readiness];
 for (const [gateId, command, args] of gates) executions.push(run(gateId, command, args));

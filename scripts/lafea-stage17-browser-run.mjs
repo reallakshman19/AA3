@@ -28,6 +28,11 @@ function runPlaywright(args) {
   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
 }
 
+// Issue #1371 PR-D anti-drift gate. This is a test-only Node prerequisite
+// carried by the existing Chromium qualification entrypoint; it adds no new
+// browser contract or workflow authority.
+runNodeScript('scripts/lafea1371-cross-stage-anti-drift-check.mjs');
+
 // The EMP.1 product contract and A-to-B evidence refresh are analytical
 // qualification prerequisites. They do not depend on the LAFEA.3 B01/B02 gate.
 runNodeScript('scripts/emp1-public-product-check.mjs');

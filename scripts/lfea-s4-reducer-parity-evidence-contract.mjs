@@ -2,17 +2,15 @@
 
 const SCHEMA = 'lfea-s4-reducer-parity-evidence/v1';
 const ORIENTATIONS = Object.freeze(['LARGE_TO_SMALL', 'SMALL_TO_LARGE']);
-const PAIRED_FAMILIES = Object.freeze([
+const STRUCTURAL_FAMILIES = Object.freeze([
   'STRUCTURAL_AXIAL',
   'STRUCTURAL_TORSION',
   'STRUCTURAL_TRANSVERSE_FORCE',
   'STRUCTURAL_END_MOMENT',
-  'GRAVITY_METAL',
-  'GRAVITY_FLUID',
-  'GRAVITY_INSULATION',
-  'THERMAL_FREE',
-  'THERMAL_FIXED',
 ]);
+const GRAVITY_FAMILIES = Object.freeze(['GRAVITY_METAL', 'GRAVITY_FLUID', 'GRAVITY_INSULATION']);
+const THERMAL_FAMILIES = Object.freeze(['THERMAL_FREE', 'THERMAL_FIXED']);
+const PAIRED_FAMILIES = Object.freeze([...STRUCTURAL_FAMILIES, ...GRAVITY_FAMILIES, ...THERMAL_FAMILIES]);
 const CODE_FAMILIES = Object.freeze(['CODE_SIF_BASELINE', 'CODE_SIF_VARIED']);
 const SECTION_CANDIDATES = Object.freeze([
   'MIDPOINT_LINEAR_INTERPOLATION',
@@ -50,9 +48,7 @@ export function validateS4ReducerParityEvidence(value) {
   requireText(value.caesarVersion, 'caesarVersion');
   requireText(value.build, 'build');
   requireRecord(value.geometry, 'geometry');
-  for (const [field, expected] of Object.entries(PROTOCOL_GEOMETRY)) {
-    requireClose(value.geometry[field], expected, field);
-  }
+  for (const [field, expected] of Object.entries(PROTOCOL_GEOMETRY)) requireClose(value.geometry[field], expected, field);
   requireRecord(value.tolerancePolicy, 'tolerancePolicy');
   requirePositive(value.tolerancePolicy.observationTolerance, 'tolerancePolicy.observationTolerance');
   requireText(value.tolerancePolicy.source, 'tolerancePolicy.source');
@@ -64,6 +60,7 @@ export function validateS4ReducerParityEvidence(value) {
   const runs = requireArray(value.runs, 'runs');
   requireUnique(runs.map((run) => requireRun(run, value.caesarVersion, value.build)));
   requirePairedCoverage(runs);
+  requirePairedControlState(runs);
   requireCodeBoundaryCoverage(runs);
   const acceptedCandidate = requireCandidateComparisons(
     value.candidateComparisons,
@@ -82,7 +79,7 @@ export function validateS4ReducerParityEvidence(value) {
       fail('S4_REDUCER_GRAVITY_DECISION_INVALID', { field, value: value.decisions[field] });
     }
   }
-  requireAcceptance(value.acceptance);
+  requireAcceptance(value.acceptance, value.tolerancePolicy.observationTolerance);
   requireIndependentReview(value.independentReview, runs);
   if (value.status !== 'QUALIFIED') fail('S4_REDUCER_EVIDENCE_STATUS_NOT_QUALIFIED', { status: value.status });
 
@@ -107,9 +104,7 @@ function requireRun(run, caesarVersion, build) {
   requireText(run.runId, 'run.runId');
   const allowedFamilies = new Set([...PAIRED_FAMILIES, ...CODE_FAMILIES]);
   if (!allowedFamilies.has(run.family)) fail('S4_REDUCER_RUN_FAMILY_INVALID', { family: run.family });
-  if (!ORIENTATIONS.includes(run.modelOrientation)) {
-    fail('S4_REDUCER_RUN_ORIENTATION_INVALID', { runId: run.runId });
-  }
+  if (!ORIENTATIONS.includes(run.modelOrientation)) fail('S4_REDUCER_RUN_ORIENTATION_INVALID', { runId: run.runId });
   requireText(run.caesarVersion, 'run.caesarVersion');
   requireText(run.build, 'run.build');
   if (run.caesarVersion !== caesarVersion || run.build !== build) {
@@ -128,6 +123,7 @@ function requireRun(run, caesarVersion, build) {
   for (const field of ['units', 'loadCase', 'restraints', 'reportLocator', 'artifactLocator', 'observer', 'observationDate']) {
     requireText(run[field], `run.${field}`);
   }
+  requireFamilySourceState(run);
   requireFamilyResults(run);
   return run.runId;
 }
@@ -144,6 +140,14 @@ function requireSectionCustody(run) {
 function requireSection(actual, expected, field) {
   requireClose(actual.outerDiameter, expected.outerDiameter, `${field}.outerDiameter`);
   requireClose(actual.wallThickness, expected.wallThickness, `${field}.wallThickness`);
+}
+
+function requireFamilySourceState(run) {
+  if (STRUCTURAL_FAMILIES.includes(run.family) || CODE_FAMILIES.includes(run.family)) {
+    requireNonEmptyRecord(run.appliedLoad, 'run.appliedLoad');
+  }
+  if (GRAVITY_FAMILIES.includes(run.family)) requireNonEmptyRecord(run.gravitySourceState, 'run.gravitySourceState');
+  if (THERMAL_FAMILIES.includes(run.family)) requireNonEmptyRecord(run.thermalState, 'run.thermalState');
 }
 
 function requireFamilyResults(run) {
@@ -165,7 +169,7 @@ function requireFamilyResults(run) {
     requireNonEmptyRecord(result.reactions, 'run.reportedResults.reactions');
     return;
   }
-  if (run.family.startsWith('GRAVITY_')) {
+  if (GRAVITY_FAMILIES.includes(run.family)) {
     requireFinite(result.totalWeight, 'run.reportedResults.totalWeight');
     requireFinite(result.firstMomentOrEquivalent, 'run.reportedResults.firstMomentOrEquivalent');
     requireNonEmptyRecord(result.reactions, 'run.reportedResults.reactions');
@@ -194,11 +198,33 @@ function requirePairedCoverage(runs) {
   }
 }
 
+function requirePairedControlState(runs) {
+  for (const family of PAIRED_FAMILIES) {
+    const pair = ORIENTATIONS.map((orientation) => runs.find((run) => (
+      run.family === family && run.modelOrientation === orientation
+    )));
+    const fields = ['materialState', 'units', 'restraints'];
+    if (STRUCTURAL_FAMILIES.includes(family)) fields.push('appliedLoad');
+    if (GRAVITY_FAMILIES.includes(family)) fields.push('gravitySourceState');
+    if (THERMAL_FAMILIES.includes(family)) fields.push('thermalState');
+    for (const field of fields) {
+      if (canonicalValue(pair[0][field]) !== canonicalValue(pair[1][field])) {
+        fail('S4_REDUCER_ORIENTATION_PAIR_CONTROL_STATE_MISMATCH', { family, field });
+      }
+    }
+  }
+}
+
 function requireCodeBoundaryCoverage(runs) {
   const baseline = runs.filter((run) => run.family === 'CODE_SIF_BASELINE');
   const varied = runs.filter((run) => run.family === 'CODE_SIF_VARIED');
   if (baseline.length !== 1 || varied.length !== 1 || baseline[0].modelOrientation !== varied[0].modelOrientation) {
     fail('S4_REDUCER_CODE_BOUNDARY_PAIR_INVALID');
+  }
+  for (const field of ['materialState', 'units', 'restraints', 'appliedLoad']) {
+    if (canonicalValue(baseline[0][field]) !== canonicalValue(varied[0][field])) {
+      fail('S4_REDUCER_CODE_BOUNDARY_CONTROL_STATE_MISMATCH', { field });
+    }
   }
 }
 
@@ -238,7 +264,7 @@ function requireCandidateComparisons(value, observationTolerance) {
   return accepted[0].candidateId;
 }
 
-function requireAcceptance(value) {
+function requireAcceptance(value, observationTolerance) {
   requireRecord(value, 'acceptance');
   const fields = [
     'sectionSamplingUnique', 'axialTorsionBendingParity', 'metalGravityQualified',
@@ -251,6 +277,13 @@ function requireAcceptance(value) {
   }
   for (const field of fields.slice(0, 8)) {
     if (value[field] !== true) fail('S4_REDUCER_ACCEPTANCE_NOT_MET', { field });
+  }
+  requireNonNegative(value.codeBoundaryNormalizedDelta, 'acceptance.codeBoundaryNormalizedDelta');
+  if (value.codeBoundaryNormalizedDelta > observationTolerance) {
+    fail('S4_REDUCER_CODE_BOUNDARY_PARITY_FAILED', {
+      value: value.codeBoundaryNormalizedDelta,
+      observationTolerance,
+    });
   }
   if (value.expectedValuesRebaselined !== false || value.tolerancesWidenedToFitCaesar !== false) {
     fail('S4_REDUCER_ACCEPTANCE_GAMING_FORBIDDEN');
@@ -267,9 +300,15 @@ function requireIndependentReview(value, runs) {
   if (observers.has(value.reviewer)) fail('S4_REDUCER_REVIEWER_NOT_INDEPENDENT', { reviewer: value.reviewer });
 }
 
-function requireDecision(value, allowed, field) {
-  if (!allowed.includes(value)) fail('S4_REDUCER_SECTION_DECISION_INVALID', { field, value });
+function canonicalValue(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalValue).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalValue(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
 }
+
+function requireDecision(value, allowed, field) { if (!allowed.includes(value)) fail('S4_REDUCER_SECTION_DECISION_INVALID', { field, value }); }
 function requireHash(value, field) { if (!HASH.test(String(value ?? ''))) fail('S4_REDUCER_HASH_INVALID', { field }); }
 function requireRecord(value, field) { if (!value || typeof value !== 'object' || Array.isArray(value)) fail('S4_REDUCER_RECORD_REQUIRED', { field }); }
 function requireNonEmptyRecord(value, field) { requireRecord(value, field); if (Object.keys(value).length === 0) fail('S4_REDUCER_RECORD_EMPTY', { field }); }

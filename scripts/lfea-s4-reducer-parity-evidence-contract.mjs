@@ -59,7 +59,10 @@ export function validateS4ReducerParityEvidence(value) {
   requireUnique(runs.map((run) => requireRun(run)));
   requirePairedCoverage(runs);
   requireCodeBoundaryCoverage(runs);
-  const acceptedCandidate = requireCandidateComparisons(value.candidateComparisons);
+  const acceptedCandidate = requireCandidateComparisons(
+    value.candidateComparisons,
+    value.tolerancePolicy.observationTolerance,
+  );
   requireRecord(value.decisions, 'decisions');
   requireDecision(value.decisions.sectionSamplingRule, SECTION_CANDIDATES, 'sectionSamplingRule');
   if (value.decisions.sectionSamplingRule !== acceptedCandidate) {
@@ -123,7 +126,7 @@ function requireCodeBoundaryCoverage(runs) {
   }
 }
 
-function requireCandidateComparisons(value) {
+function requireCandidateComparisons(value, observationTolerance) {
   const rows = requireArray(value, 'candidateComparisons');
   if (rows.length !== SECTION_CANDIDATES.length) fail('S4_REDUCER_CANDIDATE_COVERAGE_INVALID');
   const byId = new Map();
@@ -136,6 +139,22 @@ function requireCandidateComparisons(value) {
   }
   const accepted = [...byId.values()].filter((row) => row.accepted);
   if (accepted.length !== 1) fail('S4_REDUCER_SECTION_RULE_NOT_UNIQUE', { accepted: accepted.map((row) => row.candidateId) });
+  if (accepted[0].maximumNormalizedError > observationTolerance) {
+    fail('S4_REDUCER_ACCEPTED_CANDIDATE_OUTSIDE_TOLERANCE', {
+      candidateId: accepted[0].candidateId,
+      maximumNormalizedError: accepted[0].maximumNormalizedError,
+      observationTolerance,
+    });
+  }
+  const competingInsideTolerance = [...byId.values()].filter((row) => (
+    !row.accepted && row.maximumNormalizedError <= observationTolerance
+  ));
+  if (competingInsideTolerance.length > 0) {
+    fail('S4_REDUCER_SECTION_RULE_NOT_UNIQUE', {
+      competingInsideTolerance: competingInsideTolerance.map((row) => row.candidateId),
+      observationTolerance,
+    });
+  }
   return accepted[0].candidateId;
 }
 

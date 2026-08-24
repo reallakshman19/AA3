@@ -4,7 +4,7 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT
+PR_RECOVERY_STATE: HEALTHY_DRAFT_AUDITED
 CRITICALITY: ENGINEERING_CRITICAL
 WORK_INTENT: SOURCE_GOVERNANCE_RECONCILIATION
 PR: #1412
@@ -12,10 +12,10 @@ BASE: main@72a916d6c60fe61da66c997594f7763aa3f04d8e
 BASE_TREE: a996244f155619416709ac88070d81a4e2bc5a45
 BRANCH: agent/issue-1385-retained-table5-sign-reconciliation-20260824
 ISSUE: #1385
-CURRENT_STAGE: PR_ALLOCATED_REGROUNDED_FINAL_AUDIT_PENDING
+CURRENT_STAGE: IMPLEMENTATION_COMPLETE_AUDITED_AWAIT_OWNER_MERGE
 MERGE_AUTHORITY: NOT_GRANTED
 HIGHEST_RISK: promoting retained Table-5 transcription beyond the already-reviewed sign/reversal authority into unproven physical surface semantics
-EXACT_NEXT_ACTION: remove superseded WIP recovery files; audit exact six-file base diff, live-main drift, reviews/threads and protected paths; leave draft/unmerged pending explicit owner merge instruction.
+EXACT_NEXT_ACTION: remain draft/unmerged. On explicit owner merge instruction, re-ground live main and repeat the six-file/review audit before merge.
 ```
 
 ## Mission
@@ -76,7 +76,7 @@ The PR branch was then re-grounded by a non-force merge commit:
 
 using current main as second parent while preserving all six #1412 blobs byte-for-byte.
 
-## Intended final changed-file ledger
+## Final changed-file ledger
 
 1. `validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json`
 2. `scripts/emp1-wrc537-cylindrical-surface-sign-source-check.mjs`
@@ -84,6 +84,8 @@ using current main as second parent while preserving all six #1412 blobs byte-fo
 4. `agents/PR1412_workreport.md`
 5. `agents/status/PR1412.yaml`
 6. `agents/claims/PR1412.yaml`
+
+Superseded WIP recovery records were removed. Exactly one active PR recovery identity remains.
 
 ## Protected no-mutation
 
@@ -100,7 +102,7 @@ using current main as second parent while preserving all six #1412 blobs byte-fo
 
 | Check | Status | Evidence |
 |---|---|---|
-| live main/tree grounding | PASS | GitHub `72a916d6...` / `a996244f...` |
+| live main/tree grounding | PASS | GitHub `72a916d6...` / `a996244f...` at final audit |
 | old-main → current-main overlap audit | PASS | 205-commit comparison, unrelated LFEA paths only |
 | retained Table-5 authority provenance | PASS_SOURCE_INSPECTION | PR #1312 workreport |
 | reviewed interpretation identity | PASS_SOURCE_INSPECTION | semantic hash `654e33f7...` |
@@ -110,8 +112,11 @@ using current main as second parent while preserving all six #1412 blobs byte-fo
 | checker Node execution | NOT_RUN | no complete checkout execution claimed |
 | production WRC numerical comparison | NOT_APPLICABLE | no numerical mechanics changed |
 | production sign arrays | PASS_UNCHANGED_BY_DIFF_SCOPE | protected/no mutation |
+| exact PR changed-file set | PASS | six intended files only |
+| branch behind base | PASS | 0 |
+| reviews | PASS | 0 |
+| review threads | PASS | 0 |
 | engineering/production/global/code/release authority | false | retained fail-closed |
-| final six-file/review/main audit | PENDING_FINAL_AUDIT | next action |
 
 Encoded-but-unexecuted checker logic is **NOT_RUN**, never PASS.
 
@@ -135,4 +140,4 @@ A4 Independent validation — 19/20. Retained source/review identities inspected
 
 A5 Minimal patch — 20/20. Three source-governance files plus three PR recovery records only.
 
-**99/100; minimum 19/20 — HANDOVER_READY for this bounded reconciliation.**
+**99/100; minimum 19/20 — HANDOVER_READY.**

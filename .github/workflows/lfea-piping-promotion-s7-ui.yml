@@ -5,6 +5,8 @@ on:
     paths:
       - 'agents/PR*_workreport.md'
       - 'agents/WIP-S7UI_workreport.md'
+      - 'validation/lfea/piping-component-promotion/stack-candidate-v1.json'
+      - 'scripts/lfea-piping-component-promotion-stack-manifest-check.mjs'
       - 'scripts/lfea-s7-component-ui-disclosure-check.mjs'
       - 'scripts/lfea-piping-component-promotion-anti-drift-check.mjs'
       - 'scripts/lfea-production-capability-profile-check.mjs'
@@ -30,10 +32,14 @@ jobs:
 
       - name: Check S7 verification syntax
         run: |
+          node --check scripts/lfea-piping-component-promotion-stack-manifest-check.mjs
           node --check scripts/lfea-s7-component-ui-disclosure-check.mjs
           node --check scripts/lfea-piping-component-promotion-anti-drift-check.mjs
           node --check scripts/lfea-production-capability-profile-check.mjs
           node --check scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Verify fail-closed promotion stack manifest
+        run: node scripts/lfea-piping-component-promotion-stack-manifest-check.mjs
 
       - name: Verify carried-forward production capability authority
         run: node scripts/lfea-production-capability-profile-check.mjs

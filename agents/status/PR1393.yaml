@@ -5,12 +5,14 @@ branch: agent/issue-1371-pr-d-anti-drift-20260824
 state: ACTIVE
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: BLOCKED_INFRASTRUCTURE
 merge_authority: OWNER_ONLY
 current_stage: CROSS_STAGE_ANTI_DRIFT_VALIDATION
 main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
 report: agents/PR1393_workreport.md
 coordination_state: SAFE
 registry_cleanup: BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
+validation_plumbing: EXISTING_CHROMIUM_CARRIER_BOUND
+hosted_engineering_execution: NOT_RUN_STEPS_NULL_AFTER_RERUN
 highest_risk: REUSABLE_MESH_CONTENT_VS_PARENT_BOUND_AUTHORITY_CONFUSION
-exact_next_action: observe exact-head validation and reconcile four-PR series against live main
+exact_next_action: preserve NOT_RUN and registry limitation until a hosted Chromium job actually starts steps; continue only non-overlapping series work

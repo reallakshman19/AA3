@@ -1,19 +1,23 @@
-import { rankXmlCiiWeightCandidates } from '../calc-workspace/cii-standalone-port/core/weight-valve-hints.js';
+import { formatValveHint, rankXmlCiiWeightCandidates } from '../calc-workspace/cii-standalone-port/core/weight-valve-hints.js';
 
 /**
- * Builds reviewable component-weight candidates for catalogue fittings.
+ * Builds reviewable component-weight candidates for catalogue fittings, using
+ * the same ranking logic as the XML->CII standalone Weight Match phase.
  *
  * Bore and rating alone do not identify a fitting: at DN150 900# the master
- * offers ten rows spanning 26 kg to 538 kg. Face-to-face length is the
- * discriminator, so each component's own geometry is measured from its arrive
- * and leave positions and matched against the master's length column using the
- * existing XML->CII ranking logic rather than a new matching rule.
+ * offers ten rows spanning 26 kg to 538 kg. Face-to-face length narrows that
+ * (measured from each component's own arrive/leave positions), and DTXR
+ * keyword scoring decides the rest: "GATE VALVE FLGD 900#" ranks "Flanged
+ * Gate Valve" above every other 610 mm candidate because the description
+ * says GATE, not because it happens to sort first. Passing dtxr into the
+ * ranking context is what engages that scoring -- omitting it, as an
+ * earlier version of this module did, left the ranker choosing among
+ * same-length rows with no semantic signal at all, and it chose wrong.
  *
- * Length narrows but does not always decide: a DN150 900# valve at 610 mm
- * still leaves five candidates between 263 kg and 538 kg, and the ranker's
- * own best pick is not reliable for them. Nothing is therefore selected
- * automatically. This module only assembles what a reviewer needs to choose,
- * and records how many candidates a choice was made from.
+ * The pre-filled weight is therefore the ranker's best pick, not blank. It
+ * remains editable, every candidate is shown with its rank reason, and
+ * nothing is written until a reviewer explicitly applies it -- a confident
+ * automatic ranking is still a proposal, not an acceptance.
  */
 
 /** Catalogue fittings: types the weights master can describe. */
@@ -57,7 +61,7 @@ export function buildFittingWeightReviewRows({ dataset, masters } = {}) {
     let ranking;
     try {
       ranking = rankXmlCiiWeightCandidates(
-        { boreMm, rating, lengthMm, nodeName: description },
+        { boreMm, rating, lengthMm, dtxr: description, nodeName: description },
         config,
         { includeRejected: true },
       );
@@ -65,20 +69,32 @@ export function buildFittingWeightReviewRows({ dataset, masters } = {}) {
       rows.push({ ...base, candidates: [], unresolvable: 'RANKING_FAILED' });
       return;
     }
-    const candidates = [...(ranking.candidates || []), ...(ranking.rejectedCandidates || [])]
-      .map((candidate) => ({
-        typeDesc: candidate.typeDesc || candidate.valveType || 'UNSPECIFIED',
-        weightKg: candidate.weight,
-        rowLengthMm: candidate.rowLength,
-        rowBoreMm: candidate.rowBore,
-        rowRating: candidate.rowRating,
-        lengthQualified: candidate.lengthQualified === true,
-        lengthDeltaMm: Number.isFinite(candidate.rowLength) ? Math.abs(candidate.rowLength - lengthMm) : null,
-      }))
-      .sort(byLengthThenWeight);
+    const toCandidate = (candidate, rejected) => ({
+      typeDesc: candidate.typeDesc || candidate.valveType || 'UNSPECIFIED',
+      weightKg: candidate.weight,
+      rowLengthMm: candidate.rowLength,
+      rowBoreMm: candidate.rowBore,
+      rowRating: candidate.rowRating,
+      lengthQualified: candidate.lengthQualified === true,
+      lengthDeltaMm: Number.isFinite(candidate.rowLength) ? Math.abs(candidate.rowLength - lengthMm) : null,
+      tier: candidate.tier ?? candidate.semanticPotentialTier ?? 0,
+      reason: candidate.reason || candidate.semanticReason || '',
+      rejected,
+    });
+    const ranked = (ranking.candidates || []).map((candidate) => toCandidate(candidate, false));
+    const rejected = (ranking.rejectedCandidates || []).map((candidate) => toCandidate(candidate, true));
+    const candidates = [...ranked, ...rejected];
+    const best = ranked[0] || null;
+    // A clear semantic winner is a candidate whose tier leads the runner-up by
+    // more than one keyword-priority step; anything closer is left for the
+    // reviewer to decide between, not auto-selected under a false label.
+    const clearWinner = Boolean(best) && (ranked.length === 1 || best.tier > (ranked[1]?.tier ?? -Infinity) + 50);
     rows.push({
       ...base,
       candidates,
+      valveHint: formatValveHint(ranking.nodeHint) || ranking.semanticSource?.label || '',
+      bestCandidateIndex: candidates.length ? 0 : null,
+      clearWinner,
       unresolvable: candidates.length === 0 ? 'NO_CANDIDATE' : null,
     });
   });
@@ -88,7 +104,8 @@ export function buildFittingWeightReviewRows({ dataset, masters } = {}) {
       fittingCount: rows.length,
       withCandidates: rows.filter((row) => row.candidates.length > 0).length,
       singleCandidate: rows.filter((row) => row.candidates.length === 1).length,
-      needsChoice: rows.filter((row) => row.candidates.length > 1).length,
+      clearWinner: rows.filter((row) => row.candidates.length > 1 && row.clearWinner).length,
+      needsChoice: rows.filter((row) => row.candidates.length > 1 && !row.clearWinner).length,
       unresolvable: rows.filter((row) => row.unresolvable).length,
       weightMasterRowCount: weightRows.length,
     }),
@@ -102,7 +119,7 @@ export function buildFittingWeightReviewRows({ dataset, masters } = {}) {
  * length-qualified, so a single-candidate confirmation stays distinguishable
  * from a judgement call between five.
  */
-export function fittingWeightRecordFor(row, candidate, masters) {
+export function fittingWeightRecordFor(row, candidate, candidateIndex, masters) {
   return {
     recordId: `loadcalc-fitting-weight:${row.targetId}`,
     selectorKind: 'ENTITY',
@@ -116,6 +133,8 @@ export function fittingWeightRecordFor(row, candidate, masters) {
     evidence: {
       matchMode: candidate.lengthQualified ? 'BORE_RATING_LENGTH' : 'BORE_RATING_ONLY',
       selectedTypeDesc: candidate.typeDesc,
+      rankReason: candidate.reason || null,
+      wasTopRanked: candidateIndex === row.bestCandidateIndex,
       componentDescription: row.description,
       boreMm: row.boreMm,
       rating: row.rating,
@@ -128,14 +147,6 @@ export function fittingWeightRecordFor(row, candidate, masters) {
       weightMasterSourceHash: masters?.weight?.sourceHash || null,
     },
   };
-}
-
-function byLengthThenWeight(left, right) {
-  if (left.lengthQualified !== right.lengthQualified) return left.lengthQualified ? -1 : 1;
-  const leftDelta = left.lengthDeltaMm ?? Number.POSITIVE_INFINITY;
-  const rightDelta = right.lengthDeltaMm ?? Number.POSITIVE_INFINITY;
-  if (leftDelta !== rightDelta) return leftDelta - rightDelta;
-  return (left.weightKg ?? 0) - (right.weightKg ?? 0);
 }
 
 function numberFrom(value) {

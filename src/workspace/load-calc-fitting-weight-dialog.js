@@ -4,15 +4,18 @@ import {
 } from './load-calc-fitting-weight-review.js';
 
 /**
- * Review dialog for catalogue fitting weights.
+ * Review table for catalogue fitting weights, styled on the XML->CII
+ * standalone Weight Match phase (weight-match-renderer.js): a chip per
+ * candidate showing its weight and rank reason, an editable weight input
+ * pre-filled with the top-ranked candidate, and a bulk "apply all clear
+ * winners" action -- rather than a single-choice picker.
  *
- * Bore and rating leave a DN150 900# fitting with ten master rows spanning
- * 26 kg to 538 kg, and face-to-face length narrows that without always
- * deciding it. The ranker's own best pick is demonstrably wrong for valves,
- * so no candidate is preselected and nothing is written until a reviewer
- * chooses. Every candidate is shown with its weight, its catalogue length and
- * how far that sits from the component's measured length, because those are
- * what distinguish a gate valve from a globe valve of the same size.
+ * Ported the interaction model, not the file: the original renders inline
+ * inside its own workflow shell and depends on XML/Branch/Node concepts this
+ * dataset does not have (Preview Rating snapshot, DTXR-rating toggle,
+ * in->mm length conversion, editable keyword-rule tables). This keeps the
+ * part that matters for a review decision -- ranked chips, an editable
+ * weight, and visibility into why a candidate ranked where it did.
  */
 export function openFittingWeightDialog({ documentRef, dataset, masters, onAccept }) {
   const review = buildFittingWeightReviewRows({ dataset, masters });
@@ -23,24 +26,53 @@ export function openFittingWeightDialog({ documentRef, dataset, masters, onAccep
   documentRef.body.appendChild(host);
 
   const close = () => host.remove();
+  const inputFor = (targetId) => host.querySelector(`[data-lcfw-weight="${cssEscape(targetId)}"]`);
+
   host.addEventListener('click', (event) => {
     if (event.target === host || event.target.closest('[data-lcfw-close]')) return close();
-    const applyButton = event.target.closest('[data-lcfw-apply]');
-    if (!applyButton) return;
-    const selections = [...host.querySelectorAll('[data-lcfw-row]')].flatMap((rowEl) => {
-      const chosen = rowEl.querySelector('input[type="radio"]:checked');
-      if (!chosen) return [];
-      const row = review.rows.find((candidate) => candidate.targetId === rowEl.dataset.lcfwRow);
-      const candidate = row?.candidates[Number(chosen.value)];
-      return row && candidate ? [fittingWeightRecordFor(row, candidate, masters)] : [];
-    });
-    if (selections.length === 0) {
-      const note = host.querySelector('[data-lcfw-note]');
-      if (note) note.textContent = 'Select a catalogue row for at least one fitting before applying.';
+
+    const chip = event.target.closest('[data-lcfw-chip]');
+    if (chip) {
+      const input = inputFor(chip.dataset.lcfwChip);
+      if (input) {
+        input.value = chip.dataset.lcfwWeight;
+        input.dataset.lcfwSelectedIndex = chip.dataset.lcfwIndex;
+        host.querySelectorAll(`[data-lcfw-chip="${cssEscape(chip.dataset.lcfwChip)}"]`)
+          .forEach((row) => row.classList.toggle('lcfw-chip--active', row === chip));
+      }
       return;
     }
-    close();
-    onAccept?.(selections);
+
+    if (event.target.closest('[data-lcfw-apply-clear-winners]')) {
+      review.rows.filter((row) => row.clearWinner).forEach((row) => {
+        const input = inputFor(row.targetId);
+        if (input) { input.value = row.candidates[0].weightKg; input.dataset.lcfwSelectedIndex = '0'; }
+      });
+      host.querySelectorAll('[data-lcfw-chip]').forEach((row) => {
+        row.classList.toggle('lcfw-chip--active', row.dataset.lcfwIndex === '0');
+      });
+      return;
+    }
+
+    if (event.target.closest('[data-lcfw-apply]')) {
+      const records = [];
+      review.rows.forEach((row) => {
+        const input = inputFor(row.targetId);
+        if (!input) return;
+        const value = Number(input.value);
+        if (!Number.isFinite(value) || value <= 0) return;
+        const index = Number(input.dataset.lcfwSelectedIndex ?? row.bestCandidateIndex ?? -1);
+        const candidate = row.candidates[index] || { weightKg: value, typeDesc: 'MANUAL', lengthQualified: false, reason: 'Manually entered' };
+        records.push(fittingWeightRecordFor(row, { ...candidate, weightKg: value }, index, masters));
+      });
+      if (records.length === 0) {
+        const note = host.querySelector('[data-lcfw-note]');
+        if (note) note.textContent = 'Enter or select at least one weight before applying.';
+        return;
+      }
+      close();
+      onAccept?.(records);
+    }
   });
   return host;
 }
@@ -48,51 +80,75 @@ export function openFittingWeightDialog({ documentRef, dataset, masters, onAccep
 function markup(review) {
   const { rows, summary } = review;
   if (summary.weightMasterRowCount === 0) {
-    return panel('Component weight review', `
+    return panel(`
       <p class="lcfw-empty">The Weights master has no rows. Import it in Import Masters before reviewing fitting weights.</p>
       <div class="lcfw-actions"><button type="button" data-lcfw-close>Close</button></div>`);
   }
   if (rows.length === 0) {
-    return panel('Component weight review', `
+    return panel(`
       <p class="lcfw-empty">No catalogue fitting is currently missing a component weight.</p>
       <div class="lcfw-actions"><button type="button" data-lcfw-close>Close</button></div>`);
   }
-  return panel('Component weight review', `
-    <p class="lcfw-lead">${summary.fittingCount} fitting(s) need a catalogue weight.
-      ${summary.singleCandidate} match a single row on bore, rating and length;
-      ${summary.needsChoice} need a choice between rows that share the same length;
-      ${summary.unresolvable} could not be matched.
-      Nothing is preselected: a wrong row can differ by several hundred kilograms.</p>
-    <div class="lcfw-rows">${rows.map(rowMarkup).join('')}</div>
+  return panel(`
+    <p class="lcfw-lead">${summary.fittingCount} fitting(s) need a catalogue weight, ranked by bore, rating, measured
+      face-to-face length and description keyword (e.g. GATE, GLOBE, BALL) against
+      ${summary.weightMasterRowCount} Weights master rows.
+      ${summary.singleCandidate} match one row outright, ${summary.clearWinner} have a clear ranked winner among several,
+      ${summary.needsChoice} are genuinely tied, and ${summary.unresolvable} have no candidate at all.
+      Every weight below is editable before applying.</p>
+    <div class="lcfw-table-wrap">
+      <table class="lcfw-table">
+        <thead><tr>
+          <th>Description</th><th>Type</th><th>Bore</th><th>Rating</th><th>Length</th>
+          <th>Keyword</th><th>Weight (kg)</th><th>Candidates</th>
+        </tr></thead>
+        <tbody>${rows.map(rowMarkup).join('')}</tbody>
+      </table>
+    </div>
     <p class="lcfw-note" data-lcfw-note></p>
     <div class="lcfw-actions">
-      <button type="button" data-lcfw-apply class="lcfw-primary">Apply selected weights</button>
+      <button type="button" data-lcfw-apply-clear-winners>Fill all clear winners (${summary.singleCandidate + summary.clearWinner})</button>
+      <button type="button" data-lcfw-apply class="lcfw-primary">Apply weights shown</button>
       <button type="button" data-lcfw-close>Cancel</button>
     </div>`);
 }
 
 function rowMarkup(row) {
   if (row.unresolvable) {
-    return `<section class="lcfw-row lcfw-row--blocked">
-      <header><strong>${escapeHtml(row.description || row.targetId)}</strong>
-        <span>${escapeHtml(row.type)} · ${row.boreMm ? `DN${row.boreMm}` : 'no bore'} · ${row.lengthMm ? `${row.lengthMm} mm` : 'no length'}</span></header>
-      <p class="lcfw-blocked-note">${escapeHtml(unresolvableText(row.unresolvable))}</p>
-    </section>`;
+    return `<tr class="lcfw-row--blocked">
+      <td colspan="8">
+        <strong>${escapeHtml(row.description || row.targetId)}</strong>
+        <span class="lcfw-meta">${escapeHtml(row.type)} · ${row.boreMm ? `DN${row.boreMm}` : 'no bore'} · ${row.lengthMm ? `${row.lengthMm} mm` : 'no length'}</span>
+        <p class="lcfw-blocked-note">${escapeHtml(unresolvableText(row.unresolvable))}</p>
+      </td>
+    </tr>`;
   }
-  return `<section class="lcfw-row" data-lcfw-row="${escapeHtml(row.targetId)}">
-    <header><strong>${escapeHtml(row.description || row.targetId)}</strong>
-      <span>${escapeHtml(row.type)} · DN${row.boreMm} · ${row.rating ? `${escapeHtml(row.rating)}#` : 'no rating'} · measured ${row.lengthMm} mm</span></header>
-    <table>
-      <thead><tr><th></th><th>Catalogue row</th><th>Weight</th><th>Face to face</th><th>Length delta</th></tr></thead>
-      <tbody>${row.candidates.map((candidate, index) => `<tr class="${candidate.lengthQualified ? '' : 'lcfw-unqualified'}">
-        <td><input type="radio" name="lcfw-${escapeHtml(row.targetId)}" value="${index}"></td>
-        <td>${escapeHtml(candidate.typeDesc)}</td>
-        <td><strong>${escapeHtml(candidate.weightKg)} kg</strong></td>
-        <td>${escapeHtml(candidate.rowLengthMm)} mm</td>
-        <td>${candidate.lengthDeltaMm === null ? '—' : `${escapeHtml(round(candidate.lengthDeltaMm))} mm${candidate.lengthQualified ? '' : ' (outside tolerance)'}`}</td>
-      </tr>`).join('')}</tbody>
-    </table>
-  </section>`;
+  const best = row.candidates[0];
+  const rowClass = row.clearWinner ? 'lcfw-status--clear' : 'lcfw-status--tied';
+  return `<tr class="${rowClass}">
+    <td><strong>${escapeHtml(row.description || row.targetId)}</strong></td>
+    <td>${escapeHtml(row.type)}</td>
+    <td>DN${escapeHtml(row.boreMm)}</td>
+    <td>${row.rating ? `${escapeHtml(row.rating)}#` : '—'}</td>
+    <td>${escapeHtml(row.lengthMm)} mm</td>
+    <td>${row.valveHint ? `<span class="lcfw-hint">${escapeHtml(row.valveHint)}</span>` : '—'}</td>
+    <td><input type="number" min="0" step="0.001" class="lcfw-weight-input" data-lcfw-weight="${escapeHtml(row.targetId)}" data-lcfw-selected-index="0" value="${escapeHtml(best.weightKg)}"></td>
+    <td class="lcfw-chips">${row.candidates.map((candidate, index) => chipMarkup(row.targetId, candidate, index)).join('')}</td>
+  </tr>`;
+}
+
+function chipMarkup(targetId, candidate, index) {
+  const marker = index === 0 && !candidate.rejected ? '★ ' : (candidate.rejected ? '× ' : '');
+  const classes = ['lcfw-chip'];
+  if (index === 0 && !candidate.rejected) classes.push('lcfw-chip--best', 'lcfw-chip--active');
+  if (candidate.rejected) classes.push('lcfw-chip--rejected');
+  const title = [
+    candidate.typeDesc,
+    `${candidate.weightKg} kg`,
+    `F/F ${candidate.rowLengthMm} mm (Δ${round(candidate.lengthDeltaMm)} mm)`,
+    candidate.reason || '',
+  ].filter(Boolean).join(' · ');
+  return `<button type="button" class="${classes.join(' ')}" data-lcfw-chip="${escapeHtml(targetId)}" data-lcfw-index="${index}" data-lcfw-weight="${escapeHtml(candidate.weightKg)}" title="${escapeHtml(title)}">${marker}${escapeHtml(candidate.typeDesc)} · ${escapeHtml(candidate.weightKg)}kg</button>`;
 }
 
 function unresolvableText(code) {
@@ -101,15 +157,19 @@ function unresolvableText(code) {
   return 'Candidate ranking failed for this fitting.';
 }
 
-function panel(title, body) {
-  return `<div class="lcfw-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
-    <header class="lcfw-head"><h2>${escapeHtml(title)}</h2><button type="button" data-lcfw-close aria-label="Close">✕</button></header>
+function panel(body) {
+  return `<div class="lcfw-panel" role="dialog" aria-modal="true" aria-label="Component weight review">
+    <header class="lcfw-head"><h2>Component weight review</h2><button type="button" data-lcfw-close aria-label="Close">✕</button></header>
     ${body}
   </div>`;
 }
 
 function round(value) {
-  return Math.round(Number(value) * 100) / 100;
+  return Number.isFinite(Number(value)) ? Math.round(Number(value) * 100) / 100 : value;
+}
+
+function cssEscape(value) {
+  return String(value ?? '').replace(/["\\]/gu, '\\$&');
 }
 
 function escapeHtml(value) {
@@ -121,25 +181,30 @@ function escapeHtml(value) {
 function styles() {
   return `<style>
     .lcfw-backdrop{position:fixed;inset:0;z-index:9000;background:rgba(2,6,16,.72);display:flex;align-items:center;justify-content:center;padding:24px}
-    .lcfw-panel{display:flex;flex-direction:column;gap:10px;max-width:1080px;width:100%;max-height:88vh;overflow:auto;padding:16px 18px;border:1px solid #334155;border-radius:9px;background:#0b1424;color:#e2e8f0;box-shadow:0 18px 48px rgba(0,0,0,.55)}
+    .lcfw-panel{display:flex;flex-direction:column;gap:10px;max-width:1280px;width:100%;max-height:88vh;overflow:auto;padding:16px 18px;border:1px solid #334155;border-radius:9px;background:#0b1424;color:#e2e8f0;box-shadow:0 18px 48px rgba(0,0,0,.55)}
     .lcfw-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
     .lcfw-head h2{margin:0;font-size:17px}
     .lcfw-head button{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:5px 9px;cursor:pointer}
     .lcfw-lead{margin:0;color:#bae6fd;font-size:12px;line-height:1.5;padding:9px 11px;border:1px solid #155e75;border-radius:6px;background:#082f49}
     .lcfw-empty{margin:0;color:#94a3b8}
-    .lcfw-rows{display:flex;flex-direction:column;gap:9px}
-    .lcfw-row{border:1px solid #293548;border-radius:7px;background:#0d1728;padding:10px 12px}
-    .lcfw-row--blocked{border-color:#7f1d1d}
-    .lcfw-row header{display:flex;flex-direction:column;gap:2px;margin-bottom:7px}
-    .lcfw-row header strong{color:#7dd3fc;font-size:13px}
-    .lcfw-row header span{color:#94a3b8;font-size:11px}
-    .lcfw-blocked-note{margin:0;color:#fca5a5;font-size:11px}
-    .lcfw-row table{width:100%;border-collapse:collapse;font-size:12px}
-    .lcfw-row th{text-align:left;color:#94a3b8;font-size:10px;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid #26354a}
-    .lcfw-row td{padding:5px 6px;border-bottom:1px solid #1b2839}
-    .lcfw-row tr.lcfw-unqualified td{color:#94a3b8}
+    .lcfw-table-wrap{overflow:auto;max-height:56vh;border:1px solid #293548;border-radius:7px}
+    .lcfw-table{width:100%;border-collapse:collapse;font-size:12px}
+    .lcfw-table th{position:sticky;top:0;text-align:left;color:#94a3b8;font-size:10px;text-transform:uppercase;padding:7px 8px;background:#101b2d;border-bottom:1px solid #26354a;white-space:nowrap}
+    .lcfw-table td{padding:7px 8px;border-bottom:1px solid #1b2839;vertical-align:top}
+    .lcfw-table tr.lcfw-status--clear{background:#0d1728}
+    .lcfw-table tr.lcfw-status--tied{background:#1c1207}
+    .lcfw-table tr.lcfw-row--blocked{background:#1a0e0e}
+    .lcfw-meta{display:block;color:#94a3b8;font-size:11px;margin-top:2px}
+    .lcfw-blocked-note{margin:4px 0 0;color:#fca5a5;font-size:11px}
+    .lcfw-hint{padding:2px 6px;border-radius:999px;border:1px solid #334155;background:#111c2f;color:#c4b5fd;font-size:10px;white-space:nowrap}
+    .lcfw-weight-input{width:90px;padding:5px 6px;border:1px solid #334155;border-radius:4px;background:#07101e;color:#e2e8f0}
+    .lcfw-chips{display:flex;flex-wrap:wrap;gap:4px;max-width:420px}
+    .lcfw-chip{font-size:10px;line-height:1.1;padding:4px 7px;border-radius:999px;border:1px solid #334155;background:#111c2f;color:#cbd5e1;cursor:pointer;white-space:nowrap}
+    .lcfw-chip--best{border-color:#166534;color:#86efac}
+    .lcfw-chip--active{outline:2px solid #0ea5e9;outline-offset:1px}
+    .lcfw-chip--rejected{border-style:dashed;opacity:.65}
     .lcfw-note{margin:0;min-height:16px;color:#fbbf24;font-size:11px}
-    .lcfw-actions{display:flex;gap:8px;justify-content:flex-end}
+    .lcfw-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
     .lcfw-actions button{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:7px 12px;cursor:pointer}
     .lcfw-primary{border-color:#0ea5e9;background:#0c4a6e;color:#e0f2fe}
   </style>`;

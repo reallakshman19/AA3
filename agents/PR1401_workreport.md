@@ -13,11 +13,12 @@ BRANCH: agent/issue-1389-pr-d-gamma5-exact-head-20260824
 MAIN_HEAD_LAST_CHECKED: e6908671f25df784312b9e3392bc6ab83863c9c8
 MERGE_BASE: e6908671f25df784312b9e3392bc6ab83863c9c8
 EXACT_EXECUTION_TARGET: e6908671f25df784312b9e3392bc6ab83863c9c8
-GROUNDING_EPOCH: GE-D-007
+GROUNDING_EPOCH: GE-D-008
 CURRENT_STAGE: EXACT_MERGED_MAIN_EXECUTION_BLOCKED_BY_EXECUTION_ENVIRONMENT
-BLOCKER: issue #54 / hosted jobs fail before step creation; active runtime cannot access repository network
+BLOCKER: issue #54 / current hosted EMP.1 jobs still fail before step creation; active runtime has no complete checkout route
 HIGHEST_RISK: stale/fabricated files 01-10 or merging PR-D as a substitute for genuine qualification
 EXACT_NEXT_ACTION: obtain a functioning complete checkout/runner, re-check live main, then execute genuine files 01-10 on exact current main. Do not merge PR1401 until mandatory evidence exists.
+PARALLEL_SAFE_NEXT: non-authority PR-G UI/trace/currentness/unsupported-domain work may proceed only after overlap audit; PR-E/PR-F remain evidence-gated.
 ```
 
 ## 1. Predecessor sequence — complete
@@ -108,29 +109,44 @@ fatal: unable to access ... Could not resolve host: github.com
 
 Classification: **NOT_RUN_EXECUTION_ENVIRONMENT**. No repository checkout or Node command started.
 
-### Hosted Actions on refreshed PR-D head `7f37f050ebf8952ce721a908e64931562d71c09c`
+### Hosted Actions — refreshed PR-D heads
 
-Fresh runs:
+Earlier refreshed-head attempts on `7f37f050ebf8952ce721a908e64931562d71c09c`:
 
 ```text
 32693882552 / job 97332333800 / qualify-runemp1-orchestration / completed failure / steps=null / logs_url=null
 32693882557 / job 97332333797 / qualify-gamma5-route         / completed failure / steps=null / logs_url=null
 32693882559 / job 97332333873 / independent-handcalc          / completed failure / steps=null / logs_url=null
+32693882557 rerun / job 97332439103 / qualify-gamma5-route   / completed failure / steps=null / logs_url=null
 ```
 
-A controlled rerun of the gamma5 job was requested successfully. Latest rerun job:
+Latest recovery-head `4ea62f413c91034150cf6522f6ae8ec0c27ed0ab` created a fresh independent three-workflow probe:
 
 ```text
-32693882557 / job 97332439103 / qualify-gamma5-route / completed failure / steps=null / logs_url=null
+32694003833 / job 97332656709 / qualify-runemp1-orchestration / completed failure / steps=null / logs_url=null
+32694003860 / job 97332656767 / qualify-gamma5-route         / completed failure / steps=null / logs_url=null
+32694003977 / job 97332657025 / independent-handcalc          / completed failure / steps=null / logs_url=null
 ```
 
-The rerun reproduces the same pre-step condition. Classification remains:
+A second controlled rerun of the current-head gamma5 job was requested successfully. Replacement job:
+
+```text
+32694003860 rerun / job 97354684365 / qualify-gamma5-route / queued -> completed failure / steps=null / logs_url=null
+```
+
+The latest rerun reproduces the same pre-step condition. Classification remains:
 
 `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE (#54)`
 
-No checkout, Node execution, WRC calculation, independent oracle, falsifier, producer receipt, review receipt or authorization proposal executed.
+No checkout, Node execution, WRC calculation, independent oracle, falsifier, producer receipt, review receipt or authorization proposal executed. Later recovery-only commits are not an engineering execution basis.
 
-## 7. Validation ledger
+## 7. Infrastructure diagnosis boundary
+
+The three current EMP.1 workflows are ordinary `ubuntu-latest` workflows beginning with `actions/checkout@v4` and `actions/setup-node@v4`; current failures occur before those declared steps are instantiated. The connected GitHub interface exposes run inspection and rerun, but no repository/organization Actions billing, budget, hosted-runner entitlement, runner assignment or policy administration, and no workflow-dispatch action. No `.github/workflows/**` mutation is authorized by #1389/#1333 merely to bypass this gate.
+
+Therefore no engineering-code or workflow mutation is justified by the observed `steps=null` condition.
+
+## 8. Validation ledger
 
 | ID | Status | Observation / basis |
 |---|---|---|
@@ -139,14 +155,16 @@ No checkout, Node execution, WRC calculation, independent oracle, falsifier, pro
 | D-003 | PASS | #1400 merged at `e6908671...` |
 | D-004 | PASS | producer/review/proposal contracts inspected |
 | D-005 | NOT_RUN_EXECUTION_ENVIRONMENT | direct checkout DNS failure before repository access |
-| D-006 | NOT_RUN_EXECUTION_ENVIRONMENT | three fresh hosted jobs have no steps/logs |
-| D-007 | NOT_RUN_EXECUTION_ENVIRONMENT | controlled gamma5 rerun again has no steps/logs |
-| D-008 | NOT_RUN | genuine exact-main producer execution |
-| D-009 | NOT_GENERATED | files 01-10 |
-| D-010 | NOT_CLAIMED | numerical qualification PASS |
-| D-011 | PASS | production/global/code/release authority remains false |
+| D-006 | NOT_RUN_EXECUTION_ENVIRONMENT | earlier fresh hosted jobs have no steps/logs |
+| D-007 | NOT_RUN_EXECUTION_ENVIRONMENT | earlier controlled gamma5 rerun has no steps/logs |
+| D-008 | NOT_RUN_EXECUTION_ENVIRONMENT | current recovery-head three-workflow probe has no steps/logs |
+| D-009 | NOT_RUN_EXECUTION_ENVIRONMENT | second current-head gamma5 rerun has no steps/logs |
+| D-010 | NOT_RUN | genuine exact-main producer execution |
+| D-011 | NOT_GENERATED | files 01-10 |
+| D-012 | NOT_CLAIMED | numerical qualification PASS |
+| D-013 | PASS | production/global/code/release authority remains false |
 
-## 8. Changed-file ledger
+## 9. Changed-file ledger
 
 Before genuine execution the PR-D delta is exactly the three recovery files:
 - `agents/PR1401_workreport.md`
@@ -155,13 +173,15 @@ Before genuine execution the PR-D delta is exactly the three recovery files:
 
 After successful execution, only genuine generated 01-10 evidence files may be added.
 
-## 9. Merge disposition
+## 10. Merge disposition
 
-Owner authorization to fix issues and merge was applied to the predecessor sequence. PR-D remains **mandatory-evidence gated** by #1333. Because files 01-10 do not exist and no numerical execution occurred, merging #1401 now would violate the explicit release gate and would falsely substitute process metadata for engineering qualification.
+PR-D remains **mandatory-evidence gated** by #1333. Because files 01-10 do not exist and no numerical execution occurred, merging #1401 now would violate the explicit release gate and would falsely substitute process metadata for engineering qualification.
 
 Current merge disposition: `BLOCKED_MANDATORY_EXACT_HEAD_EVIDENCE_NOT_GENERATED`.
 
-## 10. Appendix A — Implementation Takeover Qualification
+PR-E bounded production authorization and PR-F post-promotion evidence remain blocked by this state. A later non-authority UI/trace phase may be developed in parallel only if an anti-overlap audit proves no authority mutation and no collision with active work.
+
+## 11. Appendix A — Implementation Takeover Qualification
 
 A1 Production trace — **20/20**. Exact main, chain, outputs and authority boundary are explicit.
 
@@ -178,8 +198,6 @@ A5 Minimal next action — **20/20**. Restore a functioning runner/checkout, re-
 ## Historical record
 
 - PR-D carrier was initially created while #1398/#1400 were unmerged and correctly generated no evidence.
-- 2026-08-24: Owner instructed fix issues, merge, proceed next.
-- #1398 merged at `8c8d602f...`.
-- #1400 was cleanly rebased with unchanged intended blobs and merged at `e6908671...`.
+- 2026-08-24: predecessor merges completed; exact target became `e6908671...`.
 - PR-D was re-grounded to exact merged main; GitHub briefly auto-closed the PR when branch equaled main, then it was reopened after refreshed recovery files were added.
-- Fresh hosted runs and one controlled rerun reproduce #54 pre-step failure. Genuine 01-10 evidence remains absent.
+- Multiple fresh hosted runs plus two controlled reruns reproduce the pre-step failure. Genuine 01-10 evidence remains absent.

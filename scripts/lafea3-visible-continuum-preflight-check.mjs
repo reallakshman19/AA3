@@ -79,6 +79,18 @@ try {
   assert.match(executed.execution.compiledExecutionHash, /^sha256:[0-9a-f]{64}$/u);
   assert.equal(executed.execution.result.qualification.state, 'ACCEPTED');
   assert.equal(executed.execution.result.loadCaseResults.length, 2);
+  assertExecutedSourcePhysics(normalized, executed.execution.canonicalInput);
+  for (const loadCase of executed.execution.result.loadCaseResults) {
+    assert.ok(Number.isFinite(loadCase.totalStrainEnergy) && loadCase.totalStrainEnergy > 0,
+      `${loadCase.loadCaseId} must retain finite nonzero physical strain energy.`);
+    assert.ok(Array.isArray(loadCase.nodalDisplacements) && loadCase.nodalDisplacements.length > 0,
+      `${loadCase.loadCaseId} must retain recovered nodal displacements.`);
+    assert.equal(loadCase.equilibrium?.accepted, true,
+      `${loadCase.loadCaseId} must pass the current continuum equilibrium contract.`);
+    assert.ok(loadCase.freeDofResiduals.every(
+      (row) => Math.abs(row.value) <= loadCase.equilibrium.freeDofTolerance,
+    ), `${loadCase.loadCaseId} free-DOF residual exceeds its retained tolerance.`);
+  }
   assert.equal(executed.lifecycle.artifacts.ANALYSIS_MESH.artifactHash, generated.evidence.meshHash);
   assert.equal(
     executed.lifecycle.artifacts.EXECUTION.artifactHash,
@@ -105,11 +117,59 @@ try {
     executionHash: executed.execution.compiledExecutionHash,
     resultQualification: executed.execution.result.qualification.state,
     loadCaseCount: executed.execution.result.loadCaseResults.length,
+    sourcePhysicsParity: true,
+    caseEnergy: Object.fromEntries(executed.execution.result.loadCaseResults.map(
+      (row) => [row.loadCaseId, row.totalStrainEnergy],
+    )),
     visibleActionBound: true,
     releaseQualified: false,
   }));
 } finally {
   store.destroy();
+}
+
+function assertExecutedSourcePhysics(sourceValue, canonicalInput) {
+  assert.ok(canonicalInput, 'Authoritative execution must retain its compiled canonical input.');
+  const sourceNodeById = new Map(sourceValue.nodes.map((row) => [row.nodeId, row]));
+  const solvedNodeById = new Map(canonicalInput.nodes.map((row) => [row.nodeId, row]));
+  assert.equal(canonicalInput.constraints.length, sourceValue.constraints.length,
+    'Compiled solve restraint count must equal the source restraint count.');
+
+  for (const constraint of sourceValue.constraints) {
+    const sourceNode = sourceNodeById.get(constraint.nodeId);
+    const solvedNodeId = uniqueSolvedNodeAt(sourceNode, canonicalInput.nodes);
+    assert.ok(canonicalInput.constraints.some((row) =>
+      row.nodeId === solvedNodeId && row.dof === constraint.dof && row.value === constraint.value),
+    `Source restraint ${constraint.constraintId} did not reach the exact physical point in the solve.`);
+  }
+
+  for (const sourceCase of sourceValue.loadCases) {
+    const compiledCase = canonicalInput.loadCases.find((row) => row.loadCaseId === sourceCase.loadCaseId);
+    assert.ok(compiledCase, `Missing compiled load case ${sourceCase.loadCaseId}.`);
+    assert.equal(compiledCase.nodalForces.length, sourceCase.nodalForces.length,
+      `${sourceCase.loadCaseId} compiled nodal-force count differs from source.`);
+    for (const force of sourceCase.nodalForces) {
+      const sourceNode = sourceNodeById.get(force.nodeId);
+      const solvedNodeId = uniqueSolvedNodeAt(sourceNode, canonicalInput.nodes);
+      assert.ok(solvedNodeById.has(solvedNodeId));
+      assert.ok(compiledCase.nodalForces.some((row) =>
+        row.nodeId === solvedNodeId && row.fx === force.fx && row.fy === force.fy),
+      `Source force ${force.loadId} did not reach the exact physical point in ${sourceCase.loadCaseId}.`);
+    }
+  }
+
+  const caseB = canonicalInput.loadCases.find((row) => row.loadCaseId === 'CASE-B');
+  assert.equal(caseB?.nodalForces.length, 2, 'CASE-B must retain both source nodal forces.');
+  assert.ok(caseB.nodalForces.some((row) => row.fx === 0 && row.fy === -15000));
+}
+
+function uniqueSolvedNodeAt(sourceNode, solvedNodes) {
+  assert.ok(sourceNode, 'Source feature node is missing.');
+  const matches = solvedNodes.filter((row) =>
+    Math.hypot(row.x - sourceNode.x, row.y - sourceNode.y) <= 1e-9);
+  assert.equal(matches.length, 1,
+    `Expected exactly one retained solver node at (${sourceNode.x}, ${sourceNode.y}).`);
+  return matches[0].nodeId;
 }
 
 function read(relative) {

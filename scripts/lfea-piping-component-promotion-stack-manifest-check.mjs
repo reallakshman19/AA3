@@ -14,6 +14,9 @@ const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 assert.equal(manifest.schema, 'lfea-piping-component-promotion-stack-candidate/v1');
 assert.equal(manifest.status, 'BLOCKED_NOT_RELEASE_CANDIDATE');
 assert.equal(manifest.program, 'LFEA_PIPING_COMPONENT_PROMOTION_S0_S7');
+assert.match(manifest.observedMain?.sha ?? '', /^[0-9a-f]{40}$/u);
+assert.equal(manifest.observedMain?.classification, 'OBSERVATION_ONLY_NOT_RELEASE_PARENT');
+assert.equal(manifest.observedMain?.mustBeRegroundedLive, true);
 
 const stages = new Map(manifest.implementedAncestry.map((row) => [row.stage, row]));
 assert.equal(stages.size, 3);

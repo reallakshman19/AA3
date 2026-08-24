@@ -19,6 +19,7 @@ STACK_BASE_HEAD: 25543a9e6c0e796d63e89841f63e41a4fd3292cc
 BRANCH: agent/lfea-piping-promotion-s5-bourdon-pressure-20260823
 MAIN_LAST_CHECKED: e6908671f25df784312b9e3392bc6ab83863c9c8
 ENGINEERING_CODE_HEAD: b62bfce16bf32e23e26560c68959ee03924377da
+REPORT_BASIS_HEAD: b62bfce16bf32e23e26560c68959ee03924377da
 CURRENT_STAGE: source-state custody + mechanism-isolated protocol + scoped parity intake + raw-artifact SHA256 verification + fail-closed package scaffolds
 CURRENT_BLOCKER: controlled CAESAR Bourdon/pressure-stiffening observations absent; BM4_NL L19/L20 Elbow Stiffening Pressure remains unresolved; external execution tracked by Issue #1402
 HIGHEST_RISK: guessing P1, collapsing DEFAULT, accepting self-declared hashes, coupling mechanisms, or relabeling Bourdon strain as thrust
@@ -46,7 +47,7 @@ Three mechanisms remain separate:
 
 BM4_NL source custody establishes an individual-file Bourdon mode of `TRANSLATION_AND_ROTATION` and a global `USE_PRESSURE_STIFFENING=DEFAULT` normalized as `DEFAULT_CODE` under B31.3-2022. The per-load-case `Elbow Stiffening Pressure` selector remains unresolved for L19/L20. Provisional P1 is not source authority.
 
-The prerequisite now has five independent layers:
+The prerequisite has five independent layers:
 
 - CAESAR setting/source-state custody;
 - mechanism-isolated controlled parity protocol;
@@ -106,30 +107,20 @@ Production integration remains a separate future stage.
 
 ## Source-state authority established
 
-### Existing-job Bourdon
-
 ```text
 BOURDON_PRESSURE = TRANSLATION_AND_ROTATION
 winning level = INDIVIDUAL_FILE_SETTING
 source = USER_VERIFIED_BM4_NL_EXISTING_JOB_SETTINGS_2026-08-09
-```
 
-### Global pressure stiffening
-
-```text
 USE_PRESSURE_STIFFENING = DEFAULT
 normalized = DEFAULT_CODE
 active code = B31.3_2022
+
+L19 Elbow Stiffening Pressure = UNRESOLVED
+L20 Elbow Stiffening Pressure = UNRESOLVED
 ```
 
-### Per-load-case elbow stiffening pressure
-
-```text
-L19 = UNRESOLVED
-L20 = UNRESOLVED
-```
-
-This blocks BM4_NL pressure-stiffening production authority before numerical parity is considered.
+The unresolved per-case selector blocks BM4_NL pressure-stiffening production authority before numerical parity is considered.
 
 ## Required real CAESAR evidence
 
@@ -159,33 +150,11 @@ Q5_GLOBAL_INCLUDE_B313
 Q5_GLOBAL_EXCLUDE_B313
 ```
 
-Q4 keeps Bourdon NONE. Q5 uses the controlled B31.3-2022 source and exact global mode correspondence.
-
-Every CAESAR run retains:
-
-- one common version/build within the evidence package;
-- exact setting states;
-- pressure fields/material/section/restraints/mechanical loads;
-- required bend geometry, rotations and bend factors where applicable;
-- reported displacement/reaction records;
-- job/input/output SHA-256 values;
-- `rawArtifacts.jobFile`, `rawArtifacts.inputSource`, `rawArtifacts.outputFile` relative paths;
-- report/artifact locators;
-- observer/date.
-
-Independent review is mandatory and the reviewer may not be any recorded CAESAR observer.
+Q4 keeps Bourdon NONE. Q5 uses controlled B31.3-2022 source state. Every run retains common version/build, exact setting states, controlled model state, required results/factors, raw-file hashes/relative paths, locators, observer and date. Independent review is mandatory and cannot be performed by a recorded CAESAR observer.
 
 ## Operator package
 
 External execution tracker: Issue #1402.
-
-Documentation:
-
-- `docs/lfea/S5_Pressure_Effect_Source_Authority_20260824.md`
-- `docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md`
-- `docs/lfea/S5_Pressure_Parity_Evidence_Package_20260824.md`
-
-Create a scope-specific fail-closed scaffold:
 
 ```text
 node scripts/lfea-s5-pressure-parity-evidence-template.mjs BOURDON_ONLY /path/to/new-bourdon-package
@@ -193,21 +162,15 @@ node scripts/lfea-s5-pressure-parity-evidence-template.mjs PRESSURE_STIFFENING_O
 node scripts/lfea-s5-pressure-parity-evidence-template.mjs BOURDON_AND_PRESSURE_STIFFENING /path/to/new-combined-package
 ```
 
-Validate only after controlled observations and independent review are complete:
+Then execute `docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md`, replace placeholders with controlled observations/raw files, and validate:
 
 ```text
 node scripts/lfea-s5-pressure-parity-evidence-file-check.mjs /path/to/package/evidence.json
 ```
 
-Raw CAESAR files must remain beneath the evidence JSON package root. JSON results are derivative evidence; the referenced bytes, report locators and recomputed hashes are retained source custody.
-
 ## Existing MEC-21 boundary
 
-`src/core/linear-fea-piping-components/bourdon-pressure-expansion.js` preserves the intended ownership split:
-
-- cumulative bend opening/rotation uses one physical bend initial a-b-c basis;
-- uniform closed-end axial pressure strain remains separate;
-- the bend-opening field does not silently add the same uniform translation twice.
+`src/core/linear-fea-piping-components/bourdon-pressure-expansion.js` preserves the intended ownership split: cumulative bend opening/rotation uses one physical bend initial a-b-c basis, uniform closed-end axial pressure strain remains separate, and the bend-opening field does not silently add the same uniform translation twice.
 
 The retained M047 review supports this architecture but is not an isolated production Bourdon oracle because other unresolved sensitivities are simultaneous.
 
@@ -292,7 +255,8 @@ Takeover threshold: all ten answers must be source- and contract-grounded withou
 - A mechanism-isolated Q1-Q6 protocol and scoped evidence contract were added.
 - Contract hardening enforced controlled non-switched state, one physical bend basis, selector discrimination, exactly-once factor ownership and pressure-thrust exclusion.
 - 2026-08-24 continuation added byte-level raw-artifact binding, SHA-256 recomputation and operator package documentation.
-- Issue #1402 now owns controlled external CAESAR execution.
-- Scope-aware fail-closed scaffold generation now creates the exact S5 run inventory without manufacturing evidence.
+- Issue #1402 owns controlled external CAESAR execution.
+- Scope-aware fail-closed scaffold generation creates the exact S5 run inventory without manufacturing evidence.
+- `REPORT_BASIS_HEAD` is the stable engineering-code parent; live PR head must be re-grounded from GitHub rather than embedded into integration authority.
 - Hosted Actions continues to fail before step 1 under repository Issue #54.
 - No S5 numerical production capability has been enabled.

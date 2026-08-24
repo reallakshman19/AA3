@@ -3,6 +3,10 @@ pr_or_wip: PR1409
 claim_state: ACTIVE
 branch: agent/issue-1389-pr-f-post-promotion-disposition-20260824
 mission: "Issue #1389 PR-F non-authorizing post-promotion source-audit disposition"
+base_branch: main
+base_sha: 14c648d485cf386f28c6817a068b7eb5da1f7689
+predecessor_pr: 1408
+predecessor_merge_sha: 14c648d485cf386f28c6817a068b7eb5da1f7689
 write_scope:
   - validation/emp1/wrc537-2013/gamma5-zero-dp-post-promotion-owner-override-disposition-v1.json
   - agents/PR1409_workreport.md
@@ -23,6 +27,6 @@ protected_no_mutation:
 forbidden_substitute_files:
   - validation/emp1/wrc537-2013/.emp1-gamma5-*/11-post-promotion-exact-head-receipt.json
   - validation/emp1/wrc537-2013/.emp1-gamma5-*/12-post-promotion-exact-head-falsifier-receipt.json
-authority_boundary: "PR-F changes no engineering authority. Source-audit disposition only; standard numerical qualification remains NOT_RUN; global/code/release remain false."
-overlap_state: STACKED_ON_PR1408_NO_AUTHORITY_FILE_WRITES
-merge_order: PR1408_FIRST_THEN_REGROUND_RETARGET_PR1409
+authority_boundary: "PR-F changes no engineering authority. Standard numerical qualification remains NOT_RUN; global/code/release remain false."
+overlap_state: REGROUNDED_ON_MERGED_PR1408_MAIN_NO_AUTHORITY_FILE_WRITES
+merge_order: PR1408_MERGED_PR1409_OWNER_AUTHORIZED

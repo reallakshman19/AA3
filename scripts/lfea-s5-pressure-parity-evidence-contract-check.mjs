@@ -48,6 +48,11 @@ function runRecord(family, index) {
     jobFileHash: hash,
     inputSourceHash: hash,
     outputFileHash: hash,
+    rawArtifacts: {
+      jobFile: `raw/${family}/job.caesar`,
+      inputSource: `raw/${family}/input.accdb`,
+      outputFile: `raw/${family}/output.out`,
+    },
     activePipingCode: 'B31.3_2022',
     ...settings,
     pressureFields: { P1: 2.0e6, P2: 4.0e6 },
@@ -168,6 +173,11 @@ expectCode(
   'BOURDON_ONLY',
   (record) => record.runs.splice(record.runs.findIndex((run) => run.family === 'Q2_BEND_BOURDON_TRANSLATION'), 1),
   'S5_PRESSURE_REQUIRED_CASE_MISSING_OR_DUPLICATED',
+);
+expectCode(
+  'BOURDON_ONLY',
+  (record) => { record.runs[0].rawArtifacts.outputFile = '../../outside.out'; },
+  'S5_PRESSURE_RAW_ARTIFACT_PATH_INVALID',
 );
 expectCode(
   'BOURDON_ONLY',

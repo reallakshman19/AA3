@@ -4,8 +4,8 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY
-WORK_INTENT: IMPLEMENT
+PR_RECOVERY_STATE: ABANDON_REJECTED_HYPOTHESIS
+WORK_INTENT: IMPLEMENT -> INVESTIGATION_COMPLETE
 CRITICALITY: ENGINEERING_CRITICAL_EVIDENCE_INFRASTRUCTURE
 MUTATION_AUTHORITY: WRITE_ALLOWED_BY_OWNER_FIX_INSTRUCTION
 MERGE_AUTHORITY: OWNER_ONLY
@@ -13,22 +13,23 @@ PR: #1406
 ISSUES: #54; #1389; #1333
 BRANCH: agent/issue-54-emp1-ubuntu2404-runner-fix-20260824
 BASE: main@c2018c4b81e4c45f151ad7e59efd7d903ad7de97
-CURRENT_STAGE: RUNNER_PIN_IMPLEMENTED_AWAITING_EXACT_HEAD_EXECUTION
-HIGHEST_RISK: mistaking step creation or a routing experiment for engineering qualification
-EXACT_NEXT_ACTION: complete WIP->PR recovery migration, then inspect exact-head workflow jobs; PASS only if real steps execute and the engineering commands themselves pass.
+FALSIFIER_HEAD: a5b22d2d068164be785f30151ef0b2da1f6a5de8
+CURRENT_STAGE: HYPOTHESIS_REJECTED_DO_NOT_MERGE
+HIGHEST_RISK: merging a falsified CI workaround or representing step creation as engineering qualification
+EXACT_NEXT_ACTION: close PR1406 unmerged; keep main unchanged; pursue account/runner capacity or another independently justified execution transport. Do not modify PR-D numerical authority.
 ```
 
 ## Mission and diagnosis
 
-Repair the current PR-D exact-head hosted execution blocker without changing WRC mechanics or engineering authority.
+PR1406 tested one surgical hypothesis for the current PR-D hosted execution blocker without changing WRC mechanics or engineering authority.
 
-Current critical EMP.1 workflows repeatedly produced GitHub jobs with `steps=null` and `logs_url=null` under `runs-on: ubuntu-latest`. Retained Issue #54 PR #117 evidence used explicit `ubuntu-24.04` and reached checkout, Node, `npm ci`, deterministic checks, browser, build and clean-tree execution. Current unrelated PR #1405 showed the same pre-step symptom on `ubuntu-latest`, so the defect is not EMP.1 numerical code.
+Current critical EMP.1 workflows repeatedly produced GitHub jobs with `steps=null` and `logs_url=null` under `runs-on: ubuntu-latest`. Retained Issue #54 PR #117 evidence had previously used explicit `ubuntu-24.04` and reached checkout, Node, `npm ci`, deterministic checks, browser, build and clean-tree execution. Current unrelated PR #1405 also reproduced the pre-step symptom, proving the recurrence is not EMP.1 numerical code.
 
-Hypothesis: current hosted routing for the mutable `ubuntu-latest` label is failing in this repository/account state. Minimal falsifier: pin only the three PR-D-critical jobs to `ubuntu-24.04`.
+Hypothesis tested: current routing for the mutable `ubuntu-latest` label was the cause. Falsifier: pin only the three PR-D-critical jobs to explicit `ubuntu-24.04` and require real step creation.
 
-## Implemented patch
+## Implemented experiment
 
-Exactly these semantic substitutions:
+Exactly these semantic substitutions were made on the disposable branch:
 
 ```text
 .github/workflows/emp1-gamma5-main-route.yml          ubuntu-latest -> ubuntu-24.04
@@ -38,9 +39,41 @@ Exactly these semantic substitutions:
 
 No workflow command, trigger, permission, artifact behavior, expected value, tolerance, oracle, production code, route/registry or release authority changed. No self-hosted runner or secret/security expansion was introduced.
 
+## Falsifier result — REJECTED
+
+Exact PR1406 head `a5b22d2d068164be785f30151ef0b2da1f6a5de8` produced:
+
+```text
+32717605012 / job 97402064994 / qualify-gamma5-route        / failure / steps=null / logs_url=null
+32717605022 / job 97402064877 / qualify-runemp1-orchestration / failure / steps=null / logs_url=null
+32717605065 / job 97402064864 / independent-handcalc         / failure / steps=null / logs_url=null
+```
+
+No checkout or repository command executed. Therefore:
+
+```text
+UBUNTU_LATEST_LABEL_HYPOTHESIS = REJECTED
+UBUNTU_24_04_PIN_FIX           = FAIL_AS_INFRASTRUCTURE_REPAIR
+ENGINEERING_COMMAND_STATUS     = NOT_RUN
+NUMERICAL_QUALIFICATION        = NOT_RUN / NOT_CLAIMED
+MERGE_DISPOSITION              = DO_NOT_MERGE
+```
+
+The explicit 24.04 pin is not the repair and must not enter `main`.
+
+## Infrastructure provenance found after falsifier
+
+Historical repository evidence shows:
+
+- PR #376 merged a B7H self-hosted route requiring `[self-hosted, linux, x64, lafea]` but no B7H executable PASS ever existed; Issue #269 remained pending a registered matching runner.
+- M001 commit `d086cc9ca5ab32866ec071d82954e375442574bb` later removed 95 obsolete/non-functional CI workflow files, including B7H.
+- M001/related repository history explicitly records exhausted GitHub Actions credits and that restoring deleted workflow scaffolding cosmetically is not a valid fix.
+
+Therefore re-adding B7H without a confirmed registered runner would not be evidence and is not justified by this failed label experiment.
+
 ## Coordination
 
-PR #1401 does not write these files but explicitly protects workflow mutation inside PR-D. This separate PR preserves that boundary. If #1406 merges, PR #1401 must re-ground to the resulting exact `main` before generating 01–10.
+PR #1401 remains separate, draft and unmerged. Since #1406 will not merge, PR1401's current exact-main target is not invalidated by this experiment.
 
 ## Validation ledger
 
@@ -50,11 +83,14 @@ PR #1401 does not write these files but explicitly protects workflow mutation in
 | #1401 exact-file overlap | PASS_NO_WRITE_OVERLAP | #1401 changes recovery files only |
 | prior current EMP.1 pre-step failure | PASS_OBSERVED | steps/logs absent |
 | unrelated #1405 current-main pre-step reproduction | PASS_OBSERVED | LAFEA job steps/logs absent |
-| retained explicit ubuntu-24.04 executable precedent | PASS_RETAINED | #117 / run 30692282812 |
-| patch scope = three runner labels only | PASS_SOURCE_INSPECTION | diff audit pending final head |
-| exact-head job step creation | NOT_RUN / pending |
-| engineering commands | NOT_RUN |
-| numerical qualification | NOT_RUN / NOT_CLAIMED |
+| retained explicit ubuntu-24.04 executable precedent | PASS_RETAINED | historical #117 / run 30692282812 |
+| patch scope = three runner labels only | PASS_SOURCE_INSPECTION | exact branch content |
+| explicit ubuntu-24.04 gamma5 job | NOT_RUN_EXECUTION_ENVIRONMENT | run 32717605012 / job 97402064994 / no steps/logs |
+| explicit ubuntu-24.04 orchestration job | NOT_RUN_EXECUTION_ENVIRONMENT | run 32717605022 / job 97402064877 / no steps/logs |
+| explicit ubuntu-24.04 independent job | NOT_RUN_EXECUTION_ENVIRONMENT | run 32717605065 / job 97402064864 / no steps/logs |
+| hypothesis | FAIL_FALSIFIED | explicit 24.04 does not restore step creation |
+| engineering commands | NOT_RUN | no step instantiated |
+| numerical qualification | NOT_RUN / NOT_CLAIMED | no engineering execution |
 
 ## Authority invariants
 
@@ -67,18 +103,18 @@ All remain false/unmodified:
 
 ## Appendix A
 
-A1 Production trace — 20/20. Runner routing is upstream of checkout and cannot itself alter WRC numerics; any merge invalidates PR-D's former exact target.
+A1 Production trace — 20/20. Runner routing is upstream of checkout and cannot itself alter WRC numerics.
 
-A2 Failure isolation — 20/20. Pre-step failure is separated from engineering assertion failure; the runner label is an explicit falsifiable hypothesis.
+A2 Failure isolation — 20/20. The explicit-24.04 falsifier rejected the routing-label hypothesis without conflating infrastructure failure and engineering failure.
 
-A3 Authority/invariant — 20/20. No self-hosted/security/numerical/source/release authority expansion.
+A3 Authority/invariant — 20/20. No self-hosted/security/numerical/source/release authority expansion occurred.
 
-A4 Independent validation — 19/20. Retained explicit-24.04 executable precedent exists; this PR's exact-head execution is still pending.
+A4 Independent validation — 20/20. All three exact-head jobs independently reproduced the same pre-step state; the hypothesis is decisively rejected.
 
-A5 Minimal patch — 20/20. Exactly three `runs-on` substitutions plus recovery metadata.
+A5 Minimal next action — 20/20. Do not merge; close experiment and pursue actual account/runner capacity or independently qualified execution transport.
 
-**99/100; minimum 19/20 — HANDOVER_READY.**
+**100/100; minimum 20/20 — HANDOVER_READY / ABANDON_REJECTED_HYPOTHESIS.**
 
 ## Historical
 
-WIP authority: `WIP-54-EMP1-RUNNER-20260824`; superseded by PR #1406 after allocation.
+WIP authority `WIP-54-EMP1-RUNNER-20260824` was retired after PR #1406 allocation. PR #1406 is a retained falsified experiment and must close unmerged.

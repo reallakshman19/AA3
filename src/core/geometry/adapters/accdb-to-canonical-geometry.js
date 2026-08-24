@@ -522,6 +522,17 @@ function attachAccdbBendGeometry(segment, row, declaration, elementRows, positio
   }
   segment.meta.bendArcCentre = resolved.centre;
   segment.meta.bendComputedRadius = resolved.computedRadius;
+  // The tangent points are where the arc actually begins and ends, and they
+  // were computed above only to be discarded. A consumer left with the centre
+  // alone has to assume the segment endpoints are the tangents. That is true
+  // for InputXML and false here: an ACCDB bend element runs FROM_NODE to the
+  // corner intersection, so the arc straddles the corner across this element
+  // and the next one. On BM4_L the two endpoints sit 0.867 m and 0.539 m from
+  // the centre against a 0.457 m radius, and discretising between them fails
+  // closed with a 37.9% residual rather than producing a wrong arc.
+  segment.meta.bendTangentStart = tangentStart;
+  segment.meta.bendTangentEnd = tangentEnd;
+  segment.meta.bendTangentBasis = 'ACCDB_CORNER_INTERSECTION_V1';
   addDiagnostic(diagnostics, 'info', 'ACCDB_BEND_ARC_GEOMETRY_RESOLVED', `Bend segment ${segment.id} arc centre resolved from exact ACCDB nodal coordinates and declared radius.`, { segmentId: segment.id });
 }
 

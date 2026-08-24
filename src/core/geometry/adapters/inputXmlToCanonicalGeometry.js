@@ -536,6 +536,14 @@ function resolveBendFromPredecessor(segment, segmentsEndingAt, nodeCoords, toler
   }
   segment.meta.bendArcCentre = resolved.centre;
   segment.meta.bendComputedRadius = resolved.computedRadius;
+  // Recorded explicitly rather than left implicit. An InputXML bend element's
+  // FROM/TO pair already are the tangent points -- that is what let the radius
+  // be derived above with no prior assumption about it -- but a consumer
+  // cannot tell that from the geometry alone, and the ACCDB convention is
+  // different. Stating the basis is what makes the two distinguishable.
+  segment.meta.bendTangentStart = { x: tangentStart.x, y: tangentStart.y, z: tangentStart.z };
+  segment.meta.bendTangentEnd = { x: tangentEnd.x, y: tangentEnd.y, z: tangentEnd.z };
+  segment.meta.bendTangentBasis = 'INPUTXML_TANGENT_TO_TANGENT_V1';
   addDiagnostic(diagnostics, 'info', 'BEND_ARC_GEOMETRY_RESOLVED', `Bend segment ${segment.id} arc centre resolved from declared radius and incoming direction.`, { segmentId: segment.id });
 }
 

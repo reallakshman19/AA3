@@ -7,7 +7,8 @@ write_scope:
   - validation/emp1/release/emp1-professional-release-readiness-v1.json
   - scripts/emp1-professional-release-readiness-check.mjs
   - scripts/emp1-professional-release-candidate.mjs
-  - package.json
+  - scripts/emp1-professional-deployment-receipt-check.mjs
+  - e2e/emp1-professional-release.spec.js
   - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
   - agents/PR1404_workreport.md
   - agents/status/PR1404.yaml

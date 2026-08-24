@@ -51,6 +51,7 @@
       "livePrHeadMustBeGroundedFromGithub": true,
       "capability": "reducerExactMechanics",
       "requiredCapabilityState": false,
+      "evidenceScaffold": "scripts/lfea-s4-reducer-parity-evidence-template.mjs",
       "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED",
       "blockers": [
         "REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED",
@@ -70,6 +71,7 @@
         "pressureStiffening": false,
         "pressureAxialThrust": false
       },
+      "evidenceScaffold": "scripts/lfea-s5-pressure-parity-evidence-template.mjs",
       "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED",
       "q5ControlledSelector": "P1",
       "q5ControlledSelectorMayAuthorizeBm4Nl": false,

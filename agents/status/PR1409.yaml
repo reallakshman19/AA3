@@ -13,13 +13,13 @@ predecessor_tree: 90eb938f40edbd424f94aa656793c85f4b231ba4
 predecessor_merged_tree: 90eb938f40edbd424f94aa656793c85f4b231ba4
 predecessor_tree_equivalent: true
 criticality: ENGINEERING_CRITICAL
-agent_state: ACTIVE_REGROUNDED_READY_FOR_OWNER_MERGE
+agent_state: OWNER_AUTHORIZED_READY_TO_MERGE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1409_workreport.md
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: REGROUNDED_ON_MERGED_PR1408_MAIN_FINAL_AUDIT
+current_stage: FINAL_LIVE_AUDIT_COMPLETE_READY_TO_MERGE
 owner_instruction: "merge, proceed next"
 standard_pr_f:
   prerequisite_08_10: NOT_GENERATED
@@ -35,7 +35,11 @@ disposition_record:
 validation:
   reground_first_parent_main: PASS
   predecessor_tree_equivalence: PASS
-  changed_files_target: EXACT_FOUR
+  merge_base: PASS_EXACT_MAIN_14C648D
+  behind_main: PASS_ZERO
+  changed_files: PASS_EXACT_FOUR
+  reviews: PASS_ZERO
+  review_threads: PASS_ZERO
   authority_file_mutation_in_pr_f: PASS_NONE
 authority:
   pr_f_authority_mutation: false
@@ -45,6 +49,6 @@ authority:
   global_emp1_c_route_authority: false
   code_compliance_authorized: false
   release_qualified: false
-merge_disposition: OWNER_AUTHORIZED_PENDING_FINAL_LIVE_AUDIT
-exact_next_action: "Audit exact four-file main diff and review state, mark ready, then merge under expected-head guard. After merge re-ground main and inspect remaining Issue #1389 blockers."
+merge_disposition: OWNER_AUTHORIZED_READY_TO_MERGE
+exact_next_action: "Mark PR ready and squash-merge with exact current head guard; verify main, then re-ground Issue #1389 for remaining work."
 last_updated: "2026-08-24"

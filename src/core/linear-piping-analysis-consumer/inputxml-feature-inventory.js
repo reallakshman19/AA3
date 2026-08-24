@@ -8,6 +8,11 @@ import {
   NUMERIC_TOLERANCE, classifyRestraint, restraintDispositions, numericAttribute, normalizedNodeAttribute,
 } from './inputxml-feature-inventory-restraints.js';
 import { isSifSlotUnfilled, isForcesMomentsSlotUnfilled } from './inputxml-feature-inventory-slots.js';
+import {
+  REPRESENTABLE_COMPONENT_KINDS,
+  productionAuthorizedPressureEffects,
+  productionComponentLimitation,
+} from './production-capability-profile.js';
 
 const SIF_TEE_CODES = new Set([3, 5]);
 
@@ -179,7 +184,7 @@ function fieldInventory(element, segment) {
         canonicalValue: pressure.canonicalValue,
         currentAuthorizedEffects: segment?.meta?.analysis?.pressure == null
           ? null
-          : Object.freeze({ codeStress: true, pressureStiffening: false, axialThrust: false, bourdon: false }),
+          : productionAuthorizedPressureEffects(),
       },
       dispositions: active
         ? {
@@ -219,15 +224,13 @@ function componentDispositions(componentKind, canonicalStatus) {
   if (componentKind === 'STRAIGHT_PIPE' || componentKind === 'RIGID') {
     return both(exactDisposition());
   }
-  const limitation = componentKind === 'BEND'
-    ? 'GENERIC_APPROX_BEND_STRAIGHT_CHORD'
-    : componentKind === 'REDUCER'
-      ? 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION'
-      : componentKind === 'TEE'
-        ? 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY'
-        : null;
+  const limitation = productionComponentLimitation(componentKind);
   if (limitation === null) {
-    return both(unsupportedDisposition('MODEL_COMPONENT_TYPE_UNSUPPORTED'));
+    // No limitation means represented exactly for a representable kind, and
+    // no formulation at all for anything else. The latter still fails closed.
+    return REPRESENTABLE_COMPONENT_KINDS.has(componentKind)
+      ? both(exactDisposition())
+      : both(unsupportedDisposition('MODEL_COMPONENT_TYPE_UNSUPPORTED'));
   }
   return {
     [STRICT]: unsupportedDisposition(`MODEL_${componentKind}_EXACT_MECHANICS_UNAVAILABLE`),

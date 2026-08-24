@@ -7,6 +7,7 @@ import {
   authoritySourceEvidence,
   finiteAuthorityValue,
 } from './inputxml-linear-preparation-authority-support.js';
+import { productionAuthorizedPressureEffects } from './production-capability-profile.js';
 
 const ZERO_TOLERANCE = 1e-12;
 
@@ -122,7 +123,7 @@ function pressureAuthority(segment, element, analysis, modelId, sourceBundleSema
     pressure: active ? pressure : null,
     pressureBasis: active ? 'GAUGE' : null,
     authorizedEffects: active
-      ? { codeStress: true, pressureStiffening: false, axialThrust: false, bourdon: false }
+      ? productionAuthorizedPressureEffects()
       : null,
   };
   return Object.freeze({

@@ -5,6 +5,7 @@ import { compileSolverExecution, elementContributionFromFrameElement } from '../
 import { compileResultRecovery } from '../linear-fea-result-recovery/index.js';
 import { DEFAULT_INSTALLATION_TEMPERATURE, point, sourceEvidence, physicalLineWeight } from './generic-inputxml-solve-authorities.js';
 import { frameProfile, loadCaseProfile, recoveryProfile, solverProfile } from './generic-inputxml-solve-model.js';
+import { productionAuthorizedPressureEffects } from './production-capability-profile.js';
 
 export function compileCase({ modelId, entries, material, compilation, label, thermal, thermalExpansionCoefficient }) {
   const primitives = [];
@@ -34,7 +35,7 @@ export function compileCase({ modelId, entries, material, compilation, label, th
         elementId: entry.elementId,
         pressure: analysis.pressure,
         pressureBasis: 'GAUGE',
-        authorizedEffects: { codeStress: true, pressureStiffening: false, axialThrust: false, bourdon: false },
+        authorizedEffects: productionAuthorizedPressureEffects(),
         sourceEvidence: sourceEvidence({ sourceId: `${modelId}-PRESSURE1`, sourceRevision: `${entry.sourceSegment.id}:${analysis.pressure}` }),
       });
     }

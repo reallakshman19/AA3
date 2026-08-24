@@ -1,0 +1,49 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1393
+claim_state: ACTIVE
+files:
+  exact:
+    - agents/PR1393_workreport.md
+    - agents/PR1393_series_integration_addendum.md
+    - agents/status/PR1393.yaml
+    - agents/claims/PR1393.yaml
+    - scripts/lib/lafea1371-custody-assertions.mjs
+    - scripts/lafea1371-cross-stage-anti-drift-check.mjs
+    - scripts/lafea1371-pr-b-merge-order-guard.mjs
+    - scripts/lafea-stage17-browser-run.mjs
+    - src/workspace/lafea-live-workbench-viewport.js
+  prefixes: []
+authority_domains:
+  - LAFEA3_LAFEA4_ANTI_DRIFT_REGRESSION
+  - LAFEA3_PR_B_SOURCE_FAITHFUL_MERGE_ORDER_GUARD
+  - LAFEA1371_SERIES_INTEGRATION_DURABLE_EVIDENCE
+  - LAFEA_EXECUTION_CUSTODY_TEST_HELPER
+  - LAFEA_VIEWPORT_RETAINED_MESH_IDENTITY_OBSERVABILITY
+  - EXISTING_CHROMIUM_QUALIFICATION_CARRIER_BINDING
+claim_modes:
+  - EXCLUSIVE_EXACT_FILES
+excluded_authority:
+  - PRODUCTION_LIFECYCLE_MUTATION
+  - CONTINUUM_OR_SHELL_SOLVER_MECHANICS
+  - MESH_QUALITY_THRESHOLD_CHANGE
+  - BENCHMARK_ORACLE_CHANGE
+  - RESULT_RECOVERY_OR_PRESENTATION_AUTHORITY_CHANGE
+  - BROWSER_E2E_CONTRACT_CHANGE
+  - WORKFLOW_YAML_CHANGE
+  - REGISTRY_LIMITATION_SOFTENING_WITHOUT_EXECUTED_EVIDENCE
+  - RELEASE_AUTHORITY
+invariants:
+  - SOURCE_HASH_DETERMINISTIC_FOR_IDENTICAL_SOURCE
+  - SOURCE_EDIT_REVOKES_OLD_DESCENDANT_AUTHORITY
+  - PR_B_MERGE_ORDER_REBUILDS_LAFEA3_PARENTS_FROM_EDITED_SOURCE
+  - PR_B_MERGE_ORDER_PRESERVES_ALL_SOURCE_RESTRAINT_AND_LOAD_ATTACHMENTS
+  - MESH_PROFILE_CHANGE_REVOKES_OLD_SOLVER_EXECUTION_RECOVERY_AUTHORITY
+  - UNCHANGED_GEOMETRY_PROFILE_REPRODUCES_MESH_CONTENT_HASH
+  - VIEWPORT_RETAINED_MESH_HASH_EQUALS_RETAINED_EVIDENCE_CONTENT_HASH
+  - VIEWPORT_MESH_ARTIFACT_HASH_REMAINS_SEPARATE_FROM_CONTENT_HASH
+  - E_PLUS_5_PERCENT_FORCE_CONTROL_DISPLACEMENT_RATIO_1_OVER_1_05
+  - FROZEN_ORACLES_UNCHANGED
+  - EXISTING_CHROMIUM_TEST_SET_UNCHANGED
+main_head_last_checked: e985b50d81d0d241db27313562c8cc12cd7cc27d
+overlap_state: SAFE
+note: Latest main drift is merged EMP.1 #1394 release-definition/source-custody work only; compare shows no #1371 exact-file or LAFEA authority overlap. PR-D remains cross-stage custody/anti-drift plus bounded viewport observability and a test-only PR-B merge-order guard. Registry cleanup remains blocked pending executed combined exact-head evidence.

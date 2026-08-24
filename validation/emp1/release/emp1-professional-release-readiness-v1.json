@@ -42,17 +42,12 @@
       "executionRequired": true
     },
     {
-      "gateId": "FROZEN_RELEASE_PROFILE",
-      "command": "node scripts/emp1-professional-release-profile-check.mjs",
+      "gateId": "AUTHORIZED_RUNEMP1_ORCHESTRATION",
+      "command": "node scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs",
       "executionRequired": true
     },
     {
-      "gateId": "PUBLIC_PRODUCT",
-      "command": "node scripts/emp1-public-product-check.mjs",
-      "executionRequired": true
-    },
-    {
-      "gateId": "CURRENTNESS_FALSIFIERS",
+      "gateId": "CURRENTNESS_REPLAY_FALSIFIERS",
       "command": "node scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs",
       "executionRequired": true
     },
@@ -62,8 +57,8 @@
       "executionRequired": true
     },
     {
-      "gateId": "EMP1_CHROMIUM",
-      "command": "node scripts/run-playwright.mjs e2e/emp1-workbench-authority.spec.js",
+      "gateId": "EMP1_RELEASE_CHROMIUM",
+      "command": "node scripts/run-playwright.mjs e2e/emp1-professional-release.spec.js",
       "executionRequired": true
     }
   ],
@@ -73,6 +68,12 @@
     "uiAuthoredEngineeringAuthorityAllowed": false,
     "staleNumericalEvidenceMayBeCurrentResult": false,
     "broaderApplicationSecurityCertificationClaimed": false
+  },
+  "replayAndExportBoundary": {
+    "persistedReloadCurrentnessCoveredBy": "scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs",
+    "separateEmp1CNumericalExportConsumerFound": false,
+    "workbenchExportExportsActiveSourceDocumentNotRetainedCNumerics": true,
+    "futureNumericExportMustConsumeReportableProjection": true
   },
   "currentStateAtFreeze": {
     "mainSha": "0f85cac384532b5cc35bc24ecedd729275027eb6",
@@ -116,6 +117,7 @@
     "productionOutputMayRegenerateOracle": false,
     "toleranceMayBeWidenedAfterMismatch": false,
     "releaseMayProceedWithMissingEvidence": false,
+    "suspendedOnlyCheckMayBeUsedAsPostPromotionReleaseGate": false,
     "releaseModeExitCodeWhenBlocked": 2
   },
   "releaseReady": false,

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { MODEL_SCHEMA, QUALIFICATION_PROFILE } from '../src/core/local-continuum/index.js';
 import { canonicalLafeaSha256 } from '../src/workspace/lafea-canonical-sha256.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
+import { runPython } from './lib/python-interpreter.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const B01 = path.join(ROOT, 'validation/lafea-benchmark-data/B01');
@@ -145,9 +146,7 @@ function runOne(options) {
   }
   let compact;
   try {
-    compact = JSON.parse(execFileSync(
-      'python3',
-      [MESH_GENERATOR, '--emit', '--family', options.family, '--mesh', options.mesh],
+    compact = JSON.parse(runPython([MESH_GENERATOR, '--emit', '--family', options.family, '--mesh', options.mesh],
       { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
     ));
   } catch (error) {

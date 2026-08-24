@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { canonicalLafeaSha256 } from '../src/workspace/lafea-canonical-sha256.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
+import { resolvePythonInterpreter } from './lib/python-interpreter.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const B01 = path.join(ROOT, 'validation/lafea-benchmark-data/B01');
@@ -32,9 +33,14 @@ const baselineIsAncestor = spawnSync(
 const changedPaths = git(['diff', '--name-only', `${FROZEN_BASELINE}..${gitHead}`])
   .split('\n').filter(Boolean).sort();
 
+// Resolved once so the recorded command evidence names the interpreter that
+// actually ran, rather than a bare "python3" that means different things on
+// Linux and Windows.
+const PYTHON = resolvePythonInterpreter();
+
 const commands = [
-  command('independent-oracle', 'python3', [path.join(B01, 'oracle/independent-oracle.py'), '--check']),
-  command('deterministic-meshes', 'python3', [path.join(B01, 'mesh-generator.py'), '--check']),
+  command('independent-oracle', PYTHON.command, [...PYTHON.prefixArgs, path.join(B01, 'oracle/independent-oracle.py'), '--check']),
+  command('deterministic-meshes', PYTHON.command, [...PYTHON.prefixArgs, path.join(B01, 'mesh-generator.py'), '--check']),
   command('shared-unit-contract', process.execPath, [path.join(ROOT, 'scripts/lafea-stage15-neutral-shared-primitives-check.mjs')]),
   command('prior-solver-control', process.execPath, [path.join(ROOT, 'scripts/lafea.3-solver-check.mjs')]),
   command('prior-imposed-displacement-control', process.execPath, [path.join(ROOT, 'scripts/lafea.3-loads-imposed-displacement-check.mjs')]),

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { MODEL_SCHEMA, QUALIFICATION_PROFILE } from '../src/core/local-continuum/index.js';
 import { canonicalLafeaSha256 } from '../src/workspace/lafea-canonical-sha256.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
+import { runPython } from './lib/python-interpreter.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const B01 = path.join(ROOT, 'validation/lafea-benchmark-data/B01');
@@ -43,7 +44,7 @@ function runMatrix(options) {
 function runOne(options) {
   const caseDef = read(CASES).cases.find((c)=>c.caseId===options.caseId), expected = read(EXPECTED).cases.find((c)=>c.caseId===options.caseId), meshSummary = read(MESH_SUMMARY).meshes.find((m)=>m.family===options.family&&m.meshId===options.mesh);
   if (!caseDef || !expected || !meshSummary) return failShell(options,'UNKNOWN_CASE_OR_MESH','Case, oracle, or mesh identity not found.');
-  let compact; try { compact = JSON.parse(execFileSync('python3',[MESH_GENERATOR,'--emit','--family',options.family,'--mesh',options.mesh],{cwd:ROOT,encoding:'utf8',maxBuffer:16*1024*1024})); } catch (e) { return failed(baseIdentity(options,null),'MESH_GENERATION',e); }
+  let compact; try { compact = JSON.parse(runPython([MESH_GENERATOR,'--emit','--family',options.family,'--mesh',options.mesh],{cwd:ROOT,encoding:'utf8',maxBuffer:16*1024*1024})); } catch (e) { return failed(baseIdentity(options,null),'MESH_GENERATION',e); }
   assert.equal(compact.meshSemanticHash,meshSummary.meshSemanticHash);
   const mesh = physicalMesh(compact,caseDef), source = sourceModel(caseDef,mesh), composition = requireLafeaStageComposition('LAFEA.3');
   const base = { ...baseIdentity(options,caseDef), route:{compositionRootId:composition.compositionRootId,registryAuthority:composition.registryEntry.authority,enginePackage:composition.registryEntry.enginePackage,sequence:['normalizeDocument','canonicalize','calculate','acceptResult','presentResult']}, custody:{casesSha256:shaFile(CASES),expectedSha256:shaFile(EXPECTED),semanticsSha256:shaFile(SEMANTICS),meshGeneratorSha256:shaFile(MESH_GENERATOR),meshSummarySha256:shaFile(MESH_SUMMARY),normalizedMeshSemanticHash:compact.meshSemanticHash,physicalMeshSemanticHash:canonicalLafeaSha256(mesh),sourceModelSemanticHash:canonicalLafeaSha256(source)}, meshArtifact:mesh, diagnostics:[] };

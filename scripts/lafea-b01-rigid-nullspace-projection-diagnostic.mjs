@@ -9,6 +9,7 @@ import { buildElementEvidence } from '../src/core/local-continuum/element.js';
 import { assembleLoadCase } from '../src/core/local-continuum/loads.js';
 import { matrixVector, zeros } from '../src/core/local-continuum/matrix.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
+import { runPython } from './lib/python-interpreter.mjs';
 
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const B01=path.join(ROOT,'validation/lafea-benchmark-data/B01');
@@ -23,7 +24,7 @@ process.stdout.write(`${JSON.stringify({schema:'lafea-b01-rigid-nullspace-projec
 
 function diagnose(summary){
   try{
-    const compact=JSON.parse(execFileSync('python3',[generator,'--emit','--family',summary.family,'--mesh',summary.meshId],{cwd:ROOT,encoding:'utf8',maxBuffer:16*1024*1024}));
+    const compact=JSON.parse(runPython([generator,'--emit','--family',summary.family,'--mesh',summary.meshId],{cwd:ROOT,encoding:'utf8',maxBuffer:16*1024*1024}));
     const physical=materialize(compact,rigid),source=makeSource(rigid,physical),normalized=composition.normalizeDocument(source),model=composition.canonicalize(normalized),elements=buildElementEvidence(model),mesh=assembleMesh(model,elements),loadCase=model.loadCases.find((r)=>r.loadCaseId==='AFFINE'),load=assembleLoadCase(model,mesh,elements,loadCase);
     if(mesh.globalStiffnessStorage!=='DENSE')return {family:summary.family,meshId:summary.meshId,status:'NOT_APPLICABLE',storage:mesh.globalStiffnessStorage};
     const exact=exactDisplacement(model,mesh.dofOrdering,rigid.affine),partition=partitionIndices(mesh.dofOrdering,load.imposedDisplacements),dofIndex=new Map(mesh.dofOrdering.map((id,i)=>[id,i])),nodeMap=new Map(model.nodes.map((n)=>[n.nodeId,n]));

@@ -10,12 +10,12 @@
  * only proves the JS message-passing wrapper around them is wired right.
  */
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inputXmlToCanonicalGeometry } from '../src/core/geometry/adapters/inputXmlToCanonicalGeometry.js';
+import { runPython } from './lib/python-interpreter.mjs';
 
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const scriptsDir = path.join(repoRoot, 'public', 'vendor', 'stagedjson-to-inputxml-scripts');
@@ -40,7 +40,7 @@ const outputPath = path.join(workDir, 'Sjson_check.xml');
 const diagnosticsPath = path.join(workDir, 'Sjson_check_stagedjson_to_inputxml_diagnostics.json');
 
 try {
-  execFileSync('python3', [
+  runPython([
     converterScript,
     '--input', sjsonFixture,
     '--output', outputPath,

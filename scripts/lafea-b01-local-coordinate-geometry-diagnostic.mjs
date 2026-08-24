@@ -13,6 +13,7 @@ import { solvePartitioned } from '../src/core/local-continuum/solver.js';
 import { T6_GAUSS_POINTS, t6ShapeFunctionsAndDerivatives } from '../src/core/local-continuum/t6-element.js';
 import { Q8_GAUSS_POINTS, q8ShapeFunctionsAndDerivatives } from '../src/core/local-continuum/q8-element.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
+import { runPython } from './lib/python-interpreter.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const B01 = path.join(ROOT, 'validation/lafea-benchmark-data/B01');
@@ -38,9 +39,7 @@ process.stdout.write(`${JSON.stringify({
 
 function diagnoseMesh(meshRow) {
   try {
-    const compact = JSON.parse(execFileSync(
-      'python3',
-      [MESH_GENERATOR, '--emit', '--family', meshRow.family, '--mesh', meshRow.meshId],
+    const compact = JSON.parse(runPython([MESH_GENERATOR, '--emit', '--family', meshRow.family, '--mesh', meshRow.meshId],
       { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
     ));
     if (compact.meshSemanticHash !== meshRow.meshSemanticHash) {

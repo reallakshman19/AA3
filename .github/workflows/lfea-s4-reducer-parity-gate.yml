@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'agents/PR1386_workreport.md'
+      - 'docs/lfea/S4_Reducer_Parity_Protocol_20260824.md'
       - 'src/core/linear-fea-reducer-condensation/index.js'
       - 'src/core/linear-fea-reducer-condensation/production-readiness.js'
       - 'scripts/lfea-b3.23-reducer-condensation-check.mjs'

@@ -8,6 +8,7 @@ on:
       - 'src/core/fea-benchmarks/caesar-configuration-authority.js'
       - 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json'
       - 'docs/lfea/S5_Pressure_Effect_Source_Authority_20260824.md'
+      - 'docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md'
       - 'scripts/lfea-s5-pressure-authority-gate-check.mjs'
       - '.github/workflows/lfea-s5-pressure-authority-gate.yml'
       - 'agents/PR1391_workreport.md'

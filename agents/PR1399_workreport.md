@@ -13,9 +13,11 @@ VALIDATION_PR_MERGE: PROHIBITED
 SOURCE_TASK: Issue #1371
 PR: #1399 (DRAFT / VALIDATION ONLY)
 BRANCH: agent/issue-1371-integration-validation-20260824
-LIVE_MAIN_AT_COMPOSITION: e985b50d81d0d241db27313562c8cc12cd7cc27d
-LATEST_RUNTIME_OVERLAY_HEAD: a1eafa5cb32dd1e0b32039794f40e13d290f8624
-CURRENT_BLOCKER: exact-head hosted jobs fail before checkout with steps=null
+LIVE_MAIN_LAST_CHECKED: e6908671f25df784312b9e3392bc6ab83863c9c8
+CURRENT_MAIN_RUNTIME_VALIDATION_HEAD: fa1e77ea90e46c05ccac3e60adf29f323dc5a481
+CURRENT_MAIN_RUNTIME_VALIDATION_RUN: 32704334959
+CURRENT_MAIN_RUNTIME_VALIDATION_JOB: 97362151619
+CURRENT_BLOCKER: exact-head hosted jobs fail before checkout with steps=null and logs_url=null
 EXACT_NEXT_ACTION: when execution is restored, run the existing visible-workbench lane and require B4-1/B4-2/B4-3, PR-B merge-order, anti-drift, continuum and Chromium gates to PASS. Never merge PR1399.
 ```
 
@@ -31,9 +33,11 @@ It does not merge, close, supersede or retarget any source PR. Owner merge autho
 
 ## Composition authority
 
-The branch is based on `main@e985b50d81d0d241db27313562c8cc12cd7cc27d`. Runtime/test paths are copied from source PRs without manual conflict resolution. PR-A was refreshed in this batch after its B4-3 source qualification; B/C/D runtime blobs remain unchanged.
+The validation branch was originally composed from `main@e985b50d81d0d241db27313562c8cc12cd7cc27d`. After owner-authorized EMP.1 merges advanced `main`, validation-only merge commit `fa1e77ea90e46c05ccac3e60adf29f323dc5a481` refreshed the branch onto `main@e6908671f25df784312b9e3392bc6ab83863c9c8` with two parents: prior validation head `c000167a83747b88d9b0c5a74c4f2e038a5a9d30` and current main `e6908671f25df784312b9e3392bc6ab83863c9c8`.
 
-Source PR heads represented by the current runtime overlay:
+The refresh inserted exactly the fourteen EMP.1 blobs introduced by merged PRs #1398 and #1400, reusing their current-main Git blob SHAs. Those paths are disjoint from the Issue #1371 LAFEA runtime/test overlay. No LAFEA source-PR blob was reserialized and no manual conflict resolution was performed. GitHub compare from current main to `fa1e77ea…` reports `status=ahead`, `ahead_by=18`, `behind_by=0`, with merge base exactly `e6908671…`.
+
+Source PR heads represented by the runtime overlay remain:
 
 - #1388: `ba307e0199b065a38ecb9e85bccd7b3a97f33770`
 - #1390: `1a6602aff6caa8404affadcc9d431fac8b2ec7c6`
@@ -43,15 +47,15 @@ Source PR heads represented by the current runtime overlay:
 The four refreshed PR-A blobs on PR1399 exactly equal the source PR blob identities:
 
 ```text
-B4-3 definition        9b6490fca45507a25b3bdf29a4e3785dfd9d7185
-B4 freeze manifest     3fbe2418ad88d0e079b8f0374305a562661b189e
+B4-3 definition         9b6490fca45507a25b3bdf29a4e3785dfd9d7185
+B4 freeze manifest      3fbe2418ad88d0e079b8f0374305a562661b189e
 independent freeze gate a84a38625b99f02044023c746d6659a380f05601
 production comparator   5ea115577c3a2c69a6a3cd11746bc0b8c9471163
 ```
 
 ## B4-3 integration state
 
-B4-3 is no longer `BLOCKED_SOURCE_REQUIRED`. PR-A now freezes the primary published Batoz–Bathe–Ho 1980 DKT twisting-square reference (`DOI 10.1002/nme.1620151205`) with exact source locations Figure 2 / p.1777, §4.2.2 / p.1793 and Figure 16 / p.1797.
+B4-3 is no longer `BLOCKED_SOURCE_REQUIRED`. PR-A freezes the primary published Batoz–Bathe–Ho 1980 DKT twisting-square reference (`DOI 10.1002/nme.1620151205`) with source locations Figure 2 / p.1777, §4.2.2 / p.1793 and Figure 16 / p.1797.
 
 The combined head therefore requires all three shell independent benchmarks:
 
@@ -77,16 +81,16 @@ The existing visible-workbench lane must execute, in its retained fail-closed or
 
 | Gate | Status | Observation | Oracle |
 |---|---|---|---|
-| live-main drift | PASS | main remains `e985b50d…`; #1394 is unrelated EMP.1 authority | SOURCE_INSPECTION |
-| exact runtime blob composition | PASS | source-PR Git blobs copied without conflict resolution | SOURCE_CONTROL |
+| current-main drift | PASS | validation runtime head includes `main@e6908671…` as parent; compare is ahead 18 / behind 0 | SOURCE_CONTROL |
+| exact runtime blob composition | PASS | LAFEA source-PR Git blobs retained without conflict resolution | SOURCE_CONTROL |
 | B4-3 primary-source qualification | PASS_SOURCE_INSPECTION | primary DOI/page/figure/source values frozen on PR-A and copied exactly | PRIMARY_PUBLISHED_REFERENCE |
 | B4-3 independent DKT source sanity | PASS_SOURCE_ORACLE_SANITY | published deflections/resultants independently reconstructed | PRIMARY_PUBLISHED_REFERENCE |
-| combined Node qualification | NOT_RUN | visible-workbench run `32684270443`, job `97306324330`, `steps=null` | PRODUCT/FROZEN |
+| combined Node qualification | NOT_RUN | exact runtime head `fa1e77ea…`; visible-workbench run `32704334959`, job `97362151619`, `steps=null`, `logs_url=null` | PRODUCT/FROZEN |
 | PR-B merge-order guard | NOT_RUN | PR-B is present; job never reached checkout | CUSTODY_REGRESSION |
 | cross-stage anti-drift | NOT_RUN | job never reached checkout | CUSTODY/MECHANICS_REGRESSION |
 | Chromium | NOT_RUN | job never reached checkout | PRODUCT_REGRESSION |
 
-No encoded-but-unexecuted test is represented as PASS and no engineering assertion failure has been observed.
+All other PR-triggered workflows observed on `fa1e77ea…` failed in the same pre-step period. No encoded-but-unexecuted test is represented as PASS and no engineering assertion failure has been observed.
 
 ## Result traceability / first-wrong-value rule
 
@@ -95,6 +99,8 @@ PR1399 introduces no new result authority. It aggregates the §14 traceability r
 ## Authority boundaries
 
 PR1399 is validation-only and **must never be merged**. It grants no production, registry, release or broader formulation authority. The LAFEA.3 registry limitation remains protected until the owner-controlled source PR sequence has executed required exact-head gates successfully.
+
+This report update is metadata-only. The runtime qualification basis is `fa1e77ea90e46c05ccac3e60adf29f323dc5a481`; any later metadata-only head does not convert its NOT_RUN result into PASS and does not alter runtime authority.
 
 ## Appendix A
 

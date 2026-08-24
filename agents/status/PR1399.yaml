@@ -8,8 +8,11 @@ execution_mode: AUTO
 auto_state: BLOCKED_INFRASTRUCTURE
 merge_authority: OWNER_ONLY
 validation_pr_merge: PROHIBITED
-current_stage: A_B_C_D_RUNTIME_EQUIVALENT_VALIDATION_WITH_B4_3
-main_head_last_checked: e985b50d81d0d241db27313562c8cc12cd7cc27d
+current_stage: CURRENT_MAIN_A_B_C_D_EXACT_HEAD_VALIDATION_WITH_B4_3
+main_head_last_checked: e6908671f25df784312b9e3392bc6ab83863c9c8
+runtime_validation_head_last_checked: fa1e77ea90e46c05ccac3e60adf29f323dc5a481
+runtime_validation_run_last_checked: 32704334959
+runtime_validation_job_last_checked: 97362151619
 report: agents/PR1399_workreport.md
 coordination_state: SAFE_NON_OWNING_OVERLAY
 source_pr_a_head: ba307e0199b065a38ecb9e85bccd7b3a97f33770
@@ -19,5 +22,5 @@ source_pr_d_head: c6246167ca4513eb7d8292135d259043fccee6c1
 b4_3_source_authority: FROZEN_PRIMARY_PUBLISHED_REFERENCE
 b4_3_production_execution: NOT_RUN_PRE_STEP_INFRASTRUCTURE_FAILURE
 hosted_engineering_execution: NOT_RUN_PRE_STEP_INFRASTRUCTURE_FAILURE
-highest_risk: FIRST_COMBINED_PRODUCTION_EXECUTION_MAY_REVEAL_REAL_CROSS_PR_OR_B4_3_DISCREPANCY
-exact_next_action: when hosted execution starts steps, require B4-1/B4-2/B4-3 comparator PASS, PR-B merge-order PASS, anti-drift PASS, continuum PASS and Chromium PASS; never merge PR1399
+highest_risk: FIRST_EXECUTED_CURRENT_MAIN_COMBINED_RUN_MAY_REVEAL_REAL_CROSS_PR_OR_B4_3_DISCREPANCY
+exact_next_action: when hosted visible-workbench steps actually start, require B4-1/B4-2/B4-3 comparator PASS, PR-B merge-order PASS, anti-drift PASS, continuum PASS and Chromium PASS; capture first wrong boundary on any failure; never merge PR1399

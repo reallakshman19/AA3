@@ -1,0 +1,32 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1410
+claim_state: ACTIVE
+claim_modes:
+  - POST_MERGE_VALIDATION_ONLY
+authority_domains:
+  - ISSUE_1371_EXACT_CURRENT_MAIN_CERTIFICATION
+files:
+  exact:
+    - agents/PR1410_workreport.md
+    - agents/status/PR1410.yaml
+    - agents/claims/PR1410.yaml
+    - .github/workflows/lafea-visible-workbench.yml
+  prefixes: []
+protected_no_mutation:
+  - src/workspace/lafea-stage-registry.js
+  - src/core/local-continuum/**
+  - src/core/local-shell/**
+  - validation/lafea-shell/**
+  - e2e/lafea-*.spec.js
+  - scripts/lafea-*.mjs
+invariants:
+  - VALIDATION_PR_MUST_NOT_BE_MERGED
+  - APPLICATION_RUNTIME_TEST_ORACLE_TREE_EQUALS_CURRENT_MAIN
+  - WORKFLOW_TRIGGER_CHANGE_COMMENT_ONLY
+  - WORKFLOW_RESTORED_BYTE_FOR_BYTE_AFTER_CLASSIFICATION
+  - NO_REGISTRY_AUTHORITY_CHANGE
+  - NO_NOT_RUN_AS_PASS
+main_head_at_branch: 14c648d485cf386f28c6817a068b7eb5da1f7689
+immutable_exact_main_ref: validation/issue-1371-merged-14c648d
+registry_cleanup: BLOCKED_PENDING_EXECUTED_ALL_GATES_PASS
+note: PR1410 exists only to trigger retained PR-path-filtered LAFEA qualification against already-merged exact current-main code; it must be closed unmerged after classification unless a separate registry-cleanup PR is unlocked by genuine all-gates PASS.

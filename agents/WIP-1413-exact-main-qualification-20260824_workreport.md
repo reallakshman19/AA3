@@ -19,10 +19,10 @@ WIP: WIP-1413-exact-main-qualification-20260824
 BRANCH: agent/issue-1413-exact-main-qualification-20260824
 REPORT_BASIS_HEAD: 72a916d6c60fe61da66c997594f7763aa3f04d8e
 LIVE_MAIN_LAST_CHECKED: 72a916d6c60fe61da66c997594f7763aa3f04d8e
-CURRENT_STAGE: B0 live-main grounding + AD-01 authority drift audit
-CURRENT_BLOCKER: Issue #54 exact-head execution environment is not currently available for HEAD 72a916d6; no associated workflow run, and same-day current-base PR evidence still shows pre-step/steps=null recurrence
+CURRENT_STAGE: B1 exact-head engineering qualification — BLOCKED_BEFORE_EXECUTION
+CURRENT_BLOCKER: Issue #54 exact-head execution environment is not currently available for HEAD 72a916d6; no associated workflow run, same-day current-base PR evidence shows renewed pre-step/steps=null recurrence, and this assistant environment cannot clone github.com
 HIGHEST_RISK: treating static/source inspection or prior-head evidence as exact-head qualification PASS
-EXACT_NEXT_ACTION: finish AD-01 critical-file drift classification against #1388/#1390/#1392/#1393 merge artifacts; do not open a validation-only PR until fresh evidence shows runner allocation can create executable steps for an eligible current-head candidate
+EXACT_NEXT_ACTION: when fresh evidence proves an executable current-head runner or equivalent exact-head environment exists, execute the B1 command matrix on one exact candidate SHA; until then do not open a validation-only PR or mutate mechanics/registry wording
 ```
 
 ## Mission
@@ -47,20 +47,22 @@ Open draft work includes LAFEA.3/LAFEA.4 numerical, refinement and shell promoti
 
 ## Batch plan
 
-### B0 — live-main re-ground + AD-01 drift audit
+### B0 — live-main re-ground + AD-01 drift audit — COMPLETE
 
 Objective:
 - bind the qualification epoch to exact live main;
 - classify changes since #1393 integration across source/domain/mesh/solver/benchmark/presenter/lifecycle/build boundaries;
 - verify Issue #54 state and whether a new exact-head execution epoch is legitimate.
 
-Acceptance:
+Acceptance result:
 - exact current main SHA recorded;
-- #1388/#1390/#1392/#1393 critical files classified as unchanged or drifted;
-- any drift is categorized by authority impact;
-- no mechanics mutation.
+- no current-main drift since Issue #1413 creation;
+- 210 post-#1393 commits classified without assuming title-based independence;
+- #1388/#1390/#1392/#1393 exact owned paths show no observed direct-file drift in the compare result;
+- current registry and stage adapter still preserve the intended LAFEA.3/.4 numerical authority and exclusions;
+- no mechanics mutation made.
 
-### B1 — exact-head engineering qualification packet
+### B1 — exact-head engineering qualification packet — BLOCKED_BEFORE_EXECUTION
 
 Only after an executable environment exists for the exact candidate head.
 
@@ -118,9 +120,7 @@ No numerical mechanics changes are permitted in B4.
 
 Re-run complete applicable acceptance on the registry PR head; verify clean tree and AD-01 against then-current main. Merge remains Owner-only. Close #1371/#1413 only from exact retained evidence.
 
-## B0 live ground truth
-
-At first grounding:
+## B0 live ground truth and AD-01 conclusion
 
 ```text
 live main = 72a916d6c60fe61da66c997594f7763aa3f04d8e
@@ -130,7 +130,70 @@ current-main drift since Issue #1413 creation = NONE
 main is 210 commits ahead of #1393 integration
 ```
 
-The 210-commit interval contains substantial EMP.1 and LFEA piping promotion work, including workspace/shared tooling changes. Title-based independence is not assumed. Critical #1371-owned files are being compared explicitly.
+The 210-commit interval contains substantial EMP.1 and LFEA piping promotion work, including workspace/shared tooling changes. Title-based independence was not assumed. Direct file lists from #1388/#1390/#1392/#1393 were compared against the interval; no exact owned path from those PRs appeared as a direct changed file in the compare result.
+
+Current shared authority seams were re-read on the exact head:
+
+### LAFEA.3
+
+`src/workspace/lafea-stage-registry.js` still declares:
+
+```text
+category = CONTINUUM_2D
+authority = T3_T6_Q8_LINEAR_CONTINUUM
+engineState = QUALIFIED_ROUTE_REGISTERED
+limitation = Production geometry-to-mesh-to-convergence orchestration is incomplete.
+```
+
+Its retained limitations still state that T6/Q8 integration-point stress is authoritative and nodal projection is display-only.
+
+`src/workspace/lafea-stage-analysis-adapter.js` still binds LAFEA.3 to exactly `T3`, `T6`, `Q8`.
+
+### LAFEA.4
+
+`src/workspace/lafea-stage-registry.js` still declares:
+
+```text
+category = THIN_SHELL
+authority = CST_DKT_TRI3_THIN_SHELL_V1
+engineState = QUALIFIED_ROUTE_REGISTERED
+limitation = No production MITC4/MITC3 or thick-shell authority.
+```
+
+The detailed limitations still exclude MITC4/MITC3 claims, drilling DOF, thick-shell claims, weld stress and code assessment.
+
+`src/workspace/lafea-stage-analysis-adapter.js` still binds LAFEA.4 to exactly `CST_DKT_TRI3_THIN_SHELL_V1`.
+
+### Cross-stage custody
+
+`scripts/lafea1371-cross-stage-anti-drift-check.mjs` still encodes:
+
+```text
+E 200000 -> 210000 MPa
+force-controlled displacement factor = 1 / 1.05
+same deterministic LAFEA.3 mesh content permitted after E-only edit
+new parent-bound mesh evidence required
+new solverModelHash required
+new compiledExecutionHash required
+registryWordingChanged = false
+registryCleanupState = BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
+frozenOracleMutation = false
+releaseAuthorityChanged = false
+```
+
+### B0 disposition
+
+```text
+AD-01_RESULT = PASS_FOR_PROCEEDING_TO_EXECUTION
+AUTHORITY_DRIFT_FOUND = false
+DIRECT_OWNED_FILE_DRIFT_FOUND = false
+REGISTRY_LIMITATION_PREMATURELY_REMOVED = false
+ENGINEERING_MUTATION_AUTHORIZED = false
+B1_EXECUTION_AUTHORIZED_BY_SCOPE = true
+B1_EXECUTION_POSSIBLE_IN_CURRENT_ENVIRONMENT = false
+```
+
+B0 is sufficient to proceed to B1 when an exact-head execution environment becomes available. It is not numerical qualification evidence.
 
 ## Issue #54 execution state
 
@@ -201,6 +264,10 @@ INFRASTRUCTURE
 | live main grounding | PASS | GitHub commit search | CUSTODY | 72a916d6... |
 | Issue #1413 creation-head drift | PASS / NONE | live main equals creation head | CUSTODY | 72a916d6... |
 | #1393 → current-main commit distance | PASS | compare = 210 ahead / 0 behind | CUSTODY | 72a916d6... |
+| direct #1388/#1390/#1392/#1393 owned-file drift | PASS / NONE_OBSERVED | no exact owned path appeared in compare result | CUSTODY | 72a916d6... |
+| current LAFEA.3 registry/adapter authority | PASS | T3/T6/Q8 + IP stress authority + protected limitation intact | SOURCE_INSPECTION | 72a916d6... |
+| current LAFEA.4 registry/adapter authority | PASS | CST_DKT_TRI3_THIN_SHELL_V1 + exclusions intact | SOURCE_INSPECTION | 72a916d6... |
+| cross-stage anti-drift contract | PASS | hash/invalidation semantics and registry block remain encoded | SOURCE_INSPECTION | 72a916d6... |
 | repository protocol read | PASS | AGENTS.md + Common engineering-pr-delivery | CUSTODY | 72a916d6... |
 | coordination scan | PASS_WITH_COORDINATION_REQUIRED | open LAFEA draft work exists; no current-main read-only qualification mutation overlap | CUSTODY | 72a916d6... |
 | exact current-head workflow execution | NOT_RUN | no associated run returned | INFRASTRUCTURE | 72a916d6... |
@@ -214,11 +281,12 @@ No unexecuted check is represented as PASS.
 ## Active ISS / RISK / DEC / QST
 
 - `ISS-1413-01` ACTIVE — exact current head has no eligible executed qualification packet.
-- `ISS-1413-02` ACTIVE — AD-01 must classify the 210-commit post-#1393 interval at critical-file/authority level.
+- `ISS-1413-02` RESOLVED_FOR_B0 — AD-01 source/authority audit found no current-main authority drift that blocks attempting exact-head qualification.
 - `RISK-1413-01` ACTIVE — stale/prior-head evidence could be mistaken for exact-main qualification.
 - `RISK-1413-02` ACTIVE — unmerged LAFEA numerical/refinement work must not contaminate current-main certification.
 - `DEC-1413-01` — do not mutate mechanics until an executed first failure identifies the boundary.
 - `DEC-1413-02` — do not open a validation-only PR while latest credible runner evidence remains pre-step recurrence and no exact-main dispatch route is available.
+- `DEC-1413-03` — B0 source inspection permits B1 execution when infrastructure exists but does not itself authorize registry cleanup.
 - `QST-1413-01` — whether hosted runner allocation has recovered for a newly eligible exact-head epoch; unresolved by current evidence.
 
 ## Changed-file ledger

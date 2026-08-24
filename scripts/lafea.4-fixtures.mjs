@@ -6,6 +6,9 @@ import {
   RESULT_REQUEST,
 } from '../src/core/local-shell/index.js';
 
+export const LAFEA4_SAMPLE_PRESSURE_MPA = 1.2;
+export const LAFEA4_SAMPLE_PRESSURE_SENSE = 'ALONG_ELEMENT_NORMAL';
+
 export function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -151,7 +154,12 @@ export function cylindricalSource(segments = 4, options = {}) {
     elements.push({ elementId: `E${index}-A`, nodeIds: [a, b, c], materialId: 'MAT', thickness: 1.5, sourceReference: `E${index}-A-SRC` });
     elements.push({ elementId: `E${index}-B`, nodeIds: [a, c, d], materialId: 'MAT', thickness: 1.5, sourceReference: `E${index}-B-SRC` });
   }
-  return baseSource({ nodes, elements, constraints: fullyFixed(nodes), ...options.override });
+  const source = baseSource({ nodes, elements, constraints: fullyFixed(nodes), ...options.override });
+  if (source.modelIdentity === 'CYLINDRICAL_PIPE_SHELL_BENCHMARK'
+    && options.override?.loadCases === undefined) {
+    source.loadCases = [uniformCylinderPressureCase(source.elements)];
+  }
+  return source;
 }
 
 export function rigidCylindricalSource(segments = 4) {
@@ -160,6 +168,21 @@ export function rigidCylindricalSource(segments = 4) {
   const translation = [1, -2, 0.5];
   source.constraints = prescribedGlobalRigidMotion(source.nodes, translation, omega);
   return source;
+}
+
+function uniformCylinderPressureCase(elements) {
+  return {
+    loadCaseId: 'PRESSURE',
+    nodalLoads: [],
+    pressureLoads: elements.map((element, index) => ({
+      pressureLoadId: `P-${index + 1}`,
+      elementId: element.elementId,
+      pressure: LAFEA4_SAMPLE_PRESSURE_MPA,
+      sense: LAFEA4_SAMPLE_PRESSURE_SENSE,
+      sourceReference: `SAMPLE-PRESSURE-${index + 1}`,
+    })),
+    sourceReference: 'SAMPLE-PRESSURE-CASE',
+  };
 }
 
 function cylinderNode(nodeId, x, radius, angle) {

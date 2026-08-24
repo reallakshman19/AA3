@@ -39,6 +39,7 @@ function runRecord(family, orientation, index) {
   const token = (index + 1).toString(16).padStart(2, '0');
   const hash = token.repeat(32);
   const largeToSmall = orientation === 'LARGE_TO_SMALL';
+  const base = `raw/${family}/${orientation}`;
   return {
     runId: `${family}-${orientation}`,
     family,
@@ -53,6 +54,11 @@ function runRecord(family, orientation, index) {
     jobFileHash: hash,
     inputSourceHash: hash,
     outputFileHash: hash,
+    rawArtifacts: {
+      jobFile: `${base}/job.caesar`,
+      inputSource: `${base}/input.accdb`,
+      outputFile: `${base}/output.out`,
+    },
     units: 'SI',
     loadCase: `${family}-LC`,
     restraints: 'CONTROLLED_PROTOCOL_RESTRAINT_SET',
@@ -156,6 +162,7 @@ expectCode(
 );
 expectCode((record) => { record.runs[0].build = 'OTHER-BUILD'; }, 'S4_REDUCER_RUN_VERSION_BUILD_MISMATCH');
 expectCode((record) => { record.runs[0].fromSection = { ...SMALL }; }, 'S4_REDUCER_PROTOCOL_GEOMETRY_MISMATCH');
+expectCode((record) => { record.runs[0].rawArtifacts.outputFile = '../outside.out'; }, 'S4_REDUCER_RAW_ARTIFACT_PATH_INVALID');
 expectCode(
   (record) => { record.runs.find((run) => run.family === 'STRUCTURAL_AXIAL' && run.modelOrientation === 'SMALL_TO_LARGE').appliedLoad.magnitude = 2000; },
   'S4_REDUCER_ORIENTATION_PAIR_CONTROL_STATE_MISMATCH',

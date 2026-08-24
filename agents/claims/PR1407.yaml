@@ -1,6 +1,6 @@
 schema: AgentClaim.v1
 pr_or_wip: PR1407
-claim_state: ACTIVE
+claim_state: CLOSED_UNMERGED
 claim_modes:
   - POST_MERGE_VALIDATION_ONLY
 authority_domains:
@@ -10,7 +10,6 @@ files:
     - agents/PR1407_workreport.md
     - agents/status/PR1407.yaml
     - agents/claims/PR1407.yaml
-    - .github/workflows/lafea-visible-workbench.yml
   prefixes: []
 protected_no_mutation:
   - src/workspace/lafea-stage-registry.js
@@ -19,14 +18,17 @@ protected_no_mutation:
   - validation/lafea-shell/**
   - e2e/lafea-*.spec.js
   - scripts/lafea-*.mjs
+  - .github/workflows/lafea-visible-workbench.yml
 invariants:
-  - VALIDATION_PR_MUST_NOT_BE_MERGED
-  - APPLICATION_RUNTIME_TEST_ORACLE_TREE_EQUALS_CURRENT_MAIN
-  - WORKFLOW_TRIGGER_CHANGE_COMMENT_ONLY
+  - VALIDATION_PR_WAS_NOT_MERGED
+  - APPLICATION_RUNTIME_TEST_ORACLE_TREE_EQUAL_TO_CERTIFIED_MAIN_EPOCH
+  - WORKFLOW_TRIGGER_WAS_COMMENT_ONLY
   - WORKFLOW_RESTORED_BYTE_FOR_BYTE_AFTER_CLASSIFICATION
+  - EXACT_HEAD_RUN_32720783742_JOB_97411545033_IS_NOT_RUN_PRE_STEP
   - NO_REGISTRY_AUTHORITY_CHANGE
   - NO_NOT_RUN_AS_PASS
-main_head_at_branch: a59547c8554b6244b2ea94aedd4d59fa0fb15d1f
+main_head_at_certification: a59547c8554b6244b2ea94aedd4d59fa0fb15d1f
 immutable_exact_main_ref: validation/issue-1371-merged-a59547c
+certification_head: 0c355076e8ea7346f2844f9b16cc330382d34132
 registry_cleanup: BLOCKED_PENDING_EXECUTED_ALL_GATES_PASS
-note: PR1407 exists only to trigger retained PR-path-filtered LAFEA qualification against already-merged current-main code; it must be closed unmerged after classification.
+note: PR1407 was a validation-only trigger surface. Its exact LAFEA job completed with steps=null/no logs, so engineering qualification remains NOT_RUN. The PR is closed unmerged and the workflow trigger comment has been removed.

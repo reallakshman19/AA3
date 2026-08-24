@@ -1,0 +1,22 @@
+schema: AgentStatus.v1
+pr_or_wip: PR1410
+source_task: ISSUE-1371
+branch: agent/issue-1371-postmerge-cert-14c648d-20260824
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: EXECUTION_PENDING
+merge_authority: OWNER_ONLY
+validation_pr_merge: PROHIBITED
+current_stage: EXACT_CURRENT_MAIN_CERTIFICATION
+main_head_last_checked: 14c648d485cf386f28c6817a068b7eb5da1f7689
+report: agents/PR1410_workreport.md
+coordination_state: SAFE_VALIDATION_ONLY
+current_main_drift: EMP1_PR1408_ONLY_NO_LAFEA1371_OVERLAP
+immutable_exact_main_ref: validation/issue-1371-merged-14c648d
+application_runtime_diff_from_main: NONE
+workflow_trigger_change: COMMENT_ONLY_PENDING
+hosted_engineering_execution: NOT_RUN_CURRENT_PR_HEAD
+registry_cleanup: BLOCKED_PENDING_EXECUTED_ALL_GATES_PASS
+highest_risk: EXACT_CURRENT_HEAD_MAY_FAIL_BEFORE_CHECKOUT
+exact_next_action: add one comment-only line to retained visible-workbench workflow; inspect exact-head steps/logs; restore workflow byte-for-byte; close PR1410 unmerged unless executed all-gates PASS unlocks separate registry cleanup

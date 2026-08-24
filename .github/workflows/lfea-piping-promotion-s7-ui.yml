@@ -7,6 +7,8 @@ on:
       - 'agents/WIP-S7UI_workreport.md'
       - 'scripts/lfea-s7-component-ui-disclosure-check.mjs'
       - 'scripts/lfea-piping-component-promotion-anti-drift-check.mjs'
+      - 'scripts/lfea-production-capability-profile-check.mjs'
+      - 'scripts/linear-piping-analysis-consumer-check.mjs'
       - 'src/core/geometry/adapters/accdb-to-canonical-geometry.js'
       - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
       - 'src/core/linear-piping-analysis-consumer/**'
@@ -30,6 +32,14 @@ jobs:
         run: |
           node --check scripts/lfea-s7-component-ui-disclosure-check.mjs
           node --check scripts/lfea-piping-component-promotion-anti-drift-check.mjs
+          node --check scripts/lfea-production-capability-profile-check.mjs
+          node --check scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Verify carried-forward production capability authority
+        run: node scripts/lfea-production-capability-profile-check.mjs
+
+      - name: Re-run governed linear-piping consumer aggregate
+        run: node scripts/linear-piping-analysis-consumer-check.mjs
 
       - name: Verify promoted-component governed disclosure
         run: node scripts/lfea-s7-component-ui-disclosure-check.mjs

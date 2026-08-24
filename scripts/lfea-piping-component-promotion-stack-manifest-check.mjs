@@ -54,7 +54,7 @@ assert.deepEqual(blocked.get('S4')?.blockers, [
 ]);
 
 assert.equal(blocked.get('S5')?.pr, 1391);
-assert.equal(blocked.get('S5')?.engineeringCodeHead, 'b62bfce16bf32e23e26560c68959ee03924377da');
+assert.equal(blocked.get('S5')?.engineeringCodeHead, 'a062068797b1a33b2cbae9fdd390cb0e18ece0df');
 assert.equal(blocked.get('S5')?.livePrHeadMustBeGroundedFromGithub, true);
 assert.deepEqual(blocked.get('S5')?.requiredCapabilities, {
   pressureBourdon: false,
@@ -65,6 +65,14 @@ assert.equal(blocked.get('S5')?.externalEvidenceRequired, true);
 assert.equal(blocked.get('S5')?.externalEvidenceIssue, 1402);
 assert.equal(blocked.get('S5')?.evidenceScaffold, 'scripts/lfea-s5-pressure-parity-evidence-template.mjs');
 assert.equal(blocked.get('S5')?.generatedScaffoldStatus, 'DRAFT_NOT_QUALIFIED');
+assert.equal(blocked.get('S5')?.q5ControlledSelector, 'P1');
+assert.equal(blocked.get('S5')?.q5ControlledSelectorMayAuthorizeBm4Nl, false);
+assert.deepEqual(blocked.get('S5')?.blockers, [
+  'CONTROLLED_BOURDON_PARITY_REQUIRED',
+  'CONTROLLED_PRESSURE_STIFFENING_PARITY_REQUIRED',
+  'L19_L20_ELBOW_STIFFENING_PRESSURE_SELECTOR_UNRESOLVED',
+  'PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY',
+]);
 
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.bendExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.teeExactMechanics, true);

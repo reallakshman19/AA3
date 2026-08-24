@@ -1,0 +1,24 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1408
+claim_state: ACTIVE
+branch: agent/issue-1389-pr-e-bounded-authorization-20260824
+mission: "Issue #1389 PR-E bounded WRC537 gamma5 zero-dp production authorization"
+write_scope:
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json
+  - agents/PR1408_workreport.md
+  - agents/status/PR1408.yaml
+  - agents/claims/PR1408.yaml
+protected_no_mutation:
+  - src/core/emp1/emp1-c-qualification-evidence.generated.js
+  - src/core/emp1/emp1-c-qualification-state.js
+  - validation/emp1/wrc537-2013/emp1-c-method-authorization-v1.json
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v2.json
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - .github/workflows/
+authority_boundary: "Exact frozen bounded gamma5 zero-dp authorization only. Global EMP.1.C, code compliance and release qualification remain false. Owner workflow skip does not create numerical qualification evidence."
+overlap_state: SAFE_NO_OPEN_PR_FOUND_ON_ROUTE_OR_REGISTRY
+standard_pr_f_gate_compatibility: FAIL_BY_DESIGN_OWNER_OVERRIDE
+merge_authority: OWNER_ONLY

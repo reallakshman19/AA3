@@ -8,8 +8,24 @@
   "fileName": "CAUx 2017 - WRC01f.pdf",
   "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
   "expectedByteCount": 7260396,
-  "rawPdfSha256": null,
+  "rawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
   "benchmarkPdfPages": [24, 25, 26, 27, 28, 29, 30, 31],
-  "custodyState": "UNRESOLVED_RAW_BYTES",
-  "qualificationState": "BLOCKED"
+  "custodyState": "VERIFIED",
+  "qualificationState": "PASS_SOURCE_CUSTODY",
+  "reconciliation": {
+    "issue": 1389,
+    "state": "CURRENT_CUSTODY_RECONCILED",
+    "previousState": {
+      "rawPdfSha256": null,
+      "custodyState": "UNRESOLVED_RAW_BYTES",
+      "qualificationState": "BLOCKED"
+    },
+    "retainedEvidence": [
+      "src/core/emp1/emp1-c-qualification-evidence.generated.js",
+      "agents/PR1264_workreport.md"
+    ],
+    "rawBytesReobservedByThisReconciliationPr": false,
+    "productionObservationUsedToSetAuthority": false,
+    "authorityBoundary": "BENCHMARK_SOURCE_CUSTODY_ONLY_NOT_WRC_METHOD_AUTHORITY"
+  }
 }

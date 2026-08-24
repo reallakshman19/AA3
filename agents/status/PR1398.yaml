@@ -5,7 +5,7 @@ mission: "Issue #1389 PR-B — reconcile bounded-route P0 source-semantics gates
 workstream: EMP1_WRC537_PROFESSIONAL_RELEASE
 branch: agent/issue-1389-pr-b-p0-source-semantics-20260824
 implementation_head: 8329762fcbab7bfc93464e774b9d3c0b0a782679
-pr_head_last_observed_before_this_status_update: 98961b645a16d3abc2a8bbb803161438e39d2b02
+pr_head_last_observed_before_this_status_update: 3e036fc768d6fad8fd2f5023471fbf921cac5ea9
 main_head_last_checked: e985b50d81d0d241db27313562c8cc12cd7cc27d
 work_intent: "Bind nine retained source-authority blockers to one deterministic release gate without changing frozen profile v1 or production authority."
 criticality: ENGINEERING_CRITICAL

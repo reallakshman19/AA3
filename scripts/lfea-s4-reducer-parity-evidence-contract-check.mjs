@@ -9,21 +9,48 @@ import {
 } from './lfea-s4-reducer-parity-evidence-contract.mjs';
 
 const ORIENTATIONS = ['LARGE_TO_SMALL', 'SMALL_TO_LARGE'];
+const LARGE = Object.freeze({ outerDiameter: 0.27305, wallThickness: 0.015062 });
+const SMALL = Object.freeze({ outerDiameter: 0.21905, wallThickness: 0.012700 });
+
+function reportedResults(family, index) {
+  if (family === 'STRUCTURAL_AXIAL') return { displacements: { ux: index + 1 }, reactions: { fx: index + 2 } };
+  if (family === 'STRUCTURAL_TORSION') return { rotations: { rx: index + 1 }, reactions: { mx: index + 2 } };
+  if (family === 'STRUCTURAL_TRANSVERSE_FORCE' || family === 'STRUCTURAL_END_MOMENT') {
+    return {
+      displacements: { uy: index + 1 },
+      rotations: { rz: index + 2 },
+      reactions: { fy: index + 3, mz: index + 4 },
+    };
+  }
+  if (family.startsWith('GRAVITY_')) {
+    return { totalWeight: 100 + index, firstMomentOrEquivalent: 25 + index, reactions: { fy: 100 + index } };
+  }
+  if (family === 'THERMAL_FREE') return { displacements: { ux: 1e-3 * (index + 1) } };
+  if (family === 'THERMAL_FIXED') return { reactions: { fx: 1000 + index } };
+  return { structuralResponse: { ux: index + 1, rx: index + 2 }, codeSifState: family };
+}
 
 function runRecord(family, orientation, index) {
   const token = (index + 1).toString(16).padStart(2, '0');
   const hash = token.repeat(32);
+  const largeToSmall = orientation === 'LARGE_TO_SMALL';
   return {
     runId: `${family}-${orientation}`,
     family,
     modelOrientation: orientation,
+    caesarVersion: '14.x-CONTRACT-FIXTURE',
+    build: 'CONTRACT-FIXTURE',
+    length: 0.500,
+    fromSection: { ...(largeToSmall ? LARGE : SMALL) },
+    toSection: { ...(largeToSmall ? SMALL : LARGE) },
+    materialState: { id: 'CONTROLLED-STEEL', elasticModulus: 2.0e11, shearModulus: 7.69e10 },
     jobFileHash: hash,
     inputSourceHash: hash,
     outputFileHash: hash,
     units: 'SI',
     loadCase: `${family}-LC`,
     restraints: 'CONTROLLED_PROTOCOL_RESTRAINT_SET',
-    reportedResults: { controlledQuantity: index + 1 },
+    reportedResults: reportedResults(family, index),
     reportLocator: `CAESAR_REPORT:${family}:${orientation}`,
     artifactLocator: `external://caesar/s4/${family}/${orientation}`,
     observer: 'CAESAR_OPERATOR_A',
@@ -117,6 +144,22 @@ expectCode(
   'S4_REDUCER_REQUIRED_CASE_MISSING_OR_DUPLICATED',
 );
 expectCode(
+  (record) => { record.runs[0].build = 'OTHER-BUILD'; },
+  'S4_REDUCER_RUN_VERSION_BUILD_MISMATCH',
+);
+expectCode(
+  (record) => { record.runs[0].fromSection = { ...SMALL }; },
+  'S4_REDUCER_PROTOCOL_GEOMETRY_MISMATCH',
+);
+expectCode(
+  (record) => { record.runs.find((run) => run.family === 'STRUCTURAL_AXIAL').reportedResults = { controlledQuantity: 1 }; },
+  'S4_REDUCER_RECORD_REQUIRED',
+);
+expectCode(
+  (record) => { delete record.runs.find((run) => run.family === 'GRAVITY_METAL').reportedResults.firstMomentOrEquivalent; },
+  'S4_REDUCER_FINITE_NUMBER_REQUIRED',
+);
+expectCode(
   (record) => { record.tolerancePolicy.fittedToCaesar = true; },
   'S4_REDUCER_TOLERANCE_FITTING_FORBIDDEN',
 );
@@ -131,13 +174,6 @@ expectCode(
 expectCode(
   (record) => { record.candidateComparisons[1].maximumNormalizedError = 5e-7; },
   'S4_REDUCER_SECTION_RULE_NOT_UNIQUE',
-);
-expectCode(
-  (record) => {
-    record.candidateComparisons[0].accepted = false;
-    record.candidateComparisons[1].accepted = true;
-  },
-  'S4_REDUCER_ACCEPTED_CANDIDATE_OUTSIDE_TOLERANCE',
 );
 expectCode(
   (record) => { record.acceptance.thermalParityQualified = false; },

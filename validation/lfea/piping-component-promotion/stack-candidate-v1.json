@@ -1,0 +1,114 @@
+{
+  "schema": "lfea-piping-component-promotion-stack-candidate/v1",
+  "status": "BLOCKED_NOT_RELEASE_CANDIDATE",
+  "program": "LFEA_PIPING_COMPONENT_PROMOTION_S0_S7",
+  "observedMain": {
+    "sha": "0f85cac384532b5cc35bc24ecedd729275027eb6",
+    "classification": "OBSERVATION_ONLY_NOT_RELEASE_PARENT",
+    "mustBeRegroundedLive": true,
+    "latestObservedDrift": "EMP1_ONLY_NO_PIPING_PROMOTION_OVERLAP"
+  },
+  "implementedAncestry": [
+    {
+      "stage": "S1_S3",
+      "pr": 1348,
+      "head": "25543a9e6c0e796d63e89841f63e41a4fd3292cc",
+      "baseKind": "MAIN_HISTORICAL",
+      "capabilities": ["bendTangentCustody", "bendRetopology", "bendExactMechanics"],
+      "runtimeQualification": "NOT_RUN_CI_PRE_STEP_INFRASTRUCTURE_FAILURE"
+    },
+    {
+      "stage": "S6",
+      "pr": 1395,
+      "head": "2b4b4762973c84690b636eab8abe918e307d5dab",
+      "basePr": 1348,
+      "baseHead": "25543a9e6c0e796d63e89841f63e41a4fd3292cc",
+      "capabilities": ["teeExactMechanicsType3Only"],
+      "runtimeQualification": "NOT_RUN_CI_PRE_STEP_INFRASTRUCTURE_FAILURE"
+    },
+    {
+      "stage": "S7_INTEGRATION",
+      "pr": 1396,
+      "headBeforeThisManifest": "b842f83042e189cb08f3009dc0aa21014e2061a9",
+      "basePr": 1395,
+      "baseHead": "2b4b4762973c84690b636eab8abe918e307d5dab",
+      "capabilities": ["uiDisclosureVerification", "promotionAntiDrift", "integratedCertificationRoute"],
+      "numericallyInert": true,
+      "runtimeQualification": "NOT_RUN_CI_PRE_STEP_INFRASTRUCTURE_FAILURE"
+    }
+  ],
+  "carryForward": {
+    "sourcePr": 1341,
+    "sourceHead": "dd2d9d1ba9ede41c82c8d6707181c61f679b5549",
+    "disposition": "FUNCTIONALLY_SUBSUMED_NOT_CLOSED",
+    "uniqueGuardCarriedToPr": 1396,
+    "ownerControlsAdministrativeClosure": true
+  },
+  "blockedStages": [
+    {
+      "stage": "S4",
+      "pr": 1386,
+      "engineeringCodeHead": "7e540e6617decd23e3aec432bb08b81ebbd60a5a",
+      "livePrHeadMustBeGroundedFromGithub": true,
+      "capability": "reducerExactMechanics",
+      "requiredCapabilityState": false,
+      "evidenceScaffold": "scripts/lfea-s4-reducer-parity-evidence-template.mjs",
+      "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED",
+      "blockers": [
+        "REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED",
+        "REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED",
+        "REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED"
+      ],
+      "externalEvidenceRequired": true,
+      "externalEvidenceIssue": 1402
+    },
+    {
+      "stage": "S5",
+      "pr": 1391,
+      "engineeringCodeHead": "a062068797b1a33b2cbae9fdd390cb0e18ece0df",
+      "livePrHeadMustBeGroundedFromGithub": true,
+      "requiredCapabilities": {
+        "pressureBourdon": false,
+        "pressureStiffening": false,
+        "pressureAxialThrust": false
+      },
+      "evidenceScaffold": "scripts/lfea-s5-pressure-parity-evidence-template.mjs",
+      "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED",
+      "q5ControlledSelector": "P1",
+      "q5ControlledSelectorMayAuthorizeBm4Nl": false,
+      "blockers": [
+        "CONTROLLED_BOURDON_PARITY_REQUIRED",
+        "CONTROLLED_PRESSURE_STIFFENING_PARITY_REQUIRED",
+        "L19_L20_ELBOW_STIFFENING_PRESSURE_SELECTOR_UNRESOLVED",
+        "PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY"
+      ],
+      "externalEvidenceRequired": true,
+      "externalEvidenceIssue": 1402
+    }
+  ],
+  "externalEvidenceGate": {
+    "issue": 1402,
+    "status": "OPEN_BLOCKING_S4_S5_NUMERICAL_PROMOTION",
+    "evidenceCollectionMayProceedWhileCiIssue54Open": true,
+    "acceptedEvidenceMayDirectlyAuthorizeProduction": false
+  },
+  "infrastructureGate": {
+    "issue": 54,
+    "status": "OPEN_BLOCKING",
+    "requiredBeforeQualificationClaim": "JOB_EXECUTES_VISIBLE_STEPS_AND_LOGS"
+  },
+  "releaseBoundary": {
+    "releaseEligible": false,
+    "engineeringQualificationComplete": false,
+    "phase6iHistoricalEvidenceMayCertifyThisTree": false,
+    "newGovernedReleaseCandidateRequiredAfterAnyOwnerAuthorizedMerge": true
+  },
+  "mergePolicy": {
+    "mergeAuthority": "OWNER_ONLY",
+    "automaticMergeAuthorized": false,
+    "doNotTreatBlockedS4S5AsQualified": true,
+    "doNotTreatNotRunAsPass": true,
+    "doNotRebaselineBenchmarks": true,
+    "doNotWidenOrFitTolerances": true
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "lafea-shell-independent-benchmark-definition/v1",
+  "benchmarkId": "B4-3-REFERENCE-PROBLEM-01",
+  "stageId": "LAFEA.4",
+  "definitionState": "BLOCKED_SOURCE_REQUIRED",
+  "engineeringPurpose": "INDEPENDENT_NUMERICAL_VERIFICATION",
+  "title": "Source-qualified classical thin-shell or plate reference problem",
+  "requiredSource": {
+    "status": "UNAVAILABLE",
+    "requirement": "A controlled or public primary/reference source with an unambiguous geometry, boundary conditions, loading, material/thickness basis, analytical or published displacement/stress response, and applicability to the current small-displacement CST+DKT thin-shell claim.",
+    "acceptableAuthorityClasses": [
+      "PRIMARY_PUBLISHED_REFERENCE",
+      "CONTROLLED_ENGINEERING_REFERENCE",
+      "ANALYTICAL_DERIVATION_WITH_INDEPENDENT_REVIEW"
+    ]
+  },
+  "expected": null,
+  "acceptance": null,
+  "executionEligible": false,
+  "fullClosureEligible": false,
+  "antiCircularity": {
+    "productionOutputMayPopulateExpectedValues": false,
+    "webFitToProductionOutputPermitted": false,
+    "sourceMustBeQualifiedBeforeExpectedValues": true
+  },
+  "limitations": [
+    "BLOCKED_SOURCE_REQUIRED",
+    "NO_SYNTHETIC_REFERENCE_VALUE",
+    "NO_RELEASE_AUTHORITY"
+  ]
+}

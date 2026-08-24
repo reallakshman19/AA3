@@ -1,0 +1,50 @@
+{
+  "schema": "lafea-shell-independent-benchmark-freeze-manifest/v1",
+  "freezeId": "LAFEA4-B4-FREEZE-2026-08-23",
+  "stageId": "LAFEA.4",
+  "groundingProvenanceMainSha": "a5aa16af7b4298427ea6b4aac0ced05ff801ed1c",
+  "definitionFreezeState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
+  "productionOutputObservedForTheseDefinitionsBeforeFreeze": false,
+  "definitions": [
+    {
+      "benchmarkId": "B4-1-MEMBRANE-PATCH-01",
+      "path": "validation/lafea-shell/B4-1-membrane-patch-v1.json",
+      "role": "EXECUTABLE_ANALYTICAL_ORACLE",
+      "definitionState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
+      "requiredForFullClosure": true,
+      "executionEligible": true
+    },
+    {
+      "benchmarkId": "B4-2-PURE-BENDING-PATCH-01",
+      "path": "validation/lafea-shell/B4-2-pure-bending-patch-v1.json",
+      "role": "EXECUTABLE_ANALYTICAL_ORACLE",
+      "definitionState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
+      "requiredForFullClosure": true,
+      "executionEligible": true
+    },
+    {
+      "benchmarkId": "B4-3-REFERENCE-PROBLEM-01",
+      "path": "validation/lafea-shell/B4-3-reference-problem-v1.json",
+      "role": "SOURCE_REQUIRED_REFERENCE",
+      "definitionState": "BLOCKED_SOURCE_REQUIRED",
+      "requiredForFullClosure": true,
+      "executionEligible": false
+    }
+  ],
+  "antiCircularity": {
+    "productionOutputMayChooseGeometry": false,
+    "productionOutputMayChooseLoadsOrPrescribedFields": false,
+    "productionOutputMayChooseExpectedValues": false,
+    "productionOutputMayChooseAcceptanceTolerance": false,
+    "movingMaximumUsed": false,
+    "nodalStressProjectionUsed": false,
+    "crossElementAveragingUsed": false,
+    "displayInterpolationUsed": false,
+    "referenceProblemMayBeInventedWhenSourceMissing": false
+  },
+  "authorityBoundary": {
+    "benchmarkFreezeGrantsProductionAuthority": false,
+    "benchmarkFreezeGrantsReleaseAuthority": false,
+    "externalReferenceBenchmarkStillRequired": true
+  }
+}

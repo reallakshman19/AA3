@@ -101,10 +101,29 @@ function requireRun(run, version, build) {
   requireSectionCustody(run);
   requireNonEmptyRecord(run.materialState, 'run.materialState');
   for (const field of ['jobFileHash', 'inputSourceHash', 'outputFileHash']) requireHash(run[field], `run.${field}`);
+  requireRawArtifacts(run.rawArtifacts);
   for (const field of ['units', 'loadCase', 'restraints', 'reportLocator', 'artifactLocator', 'observer', 'observationDate']) requireText(run[field], `run.${field}`);
   requireFamilySourceState(run);
   requireFamilyResults(run);
   return run.runId;
+}
+
+function requireRawArtifacts(value) {
+  requireRecord(value, 'run.rawArtifacts');
+  for (const field of ['jobFile', 'inputSource', 'outputFile']) {
+    requireSafeRelativePath(value[field], `run.rawArtifacts.${field}`);
+  }
+}
+
+function requireSafeRelativePath(value, field) {
+  requireText(value, field);
+  const normalized = value.replaceAll('\\', '/');
+  const segments = normalized.split('/');
+  if (normalized.startsWith('/')
+    || /^[A-Za-z]:\//u.test(normalized)
+    || segments.some((segment) => segment === '' || segment === '.' || segment === '..')) {
+    fail('S4_REDUCER_RAW_ARTIFACT_PATH_INVALID', { field, value });
+  }
 }
 
 function requireSectionCustody(run) {

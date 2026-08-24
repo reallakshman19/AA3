@@ -4,7 +4,7 @@
 
 ```text
 HANDOVER_READINESS: READY_DRAFT
-PR_RECOVERY_STATE: HEALTHY_DRAFT_RUNTIME_NOT_RUN
+PR_RECOVERY_STATE: HEALTHY_DRAFT_RUNTIME_NOT_RUN_EXTERNAL_EVIDENCE_BLOCKED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: AUTO
 AUTO_STATE: ACTIVE
@@ -13,42 +13,40 @@ MERGE_AUTHORITY: OWNER_ONLY
 
 REPOSITORY: reallaksh19/Advanced_Analysis
 PR: 1396
-PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1396
 BRANCH: agent/lfea-piping-promotion-s7-ui-disclosure-20260824
 STACK_BASE_PR: 1395
 STACK_BASE_HEAD: 2b4b4762973c84690b636eab8abe918e307d5dab
-CODE_HEAD_PRE_REPORT: 42976136555e3b4745b84d2e84b6b47630ff700f
+CODE_HEAD_PRE_REPORT: 53551fc6fbfac0f040068e489636aac36de86a9f
 MAIN_LAST_GROUNDED: e6908671f25df784312b9e3392bc6ab83863c9c8
-CURRENT_STAGE: S7 disclosure + promotion anti-drift + fail-closed stack manifest + exact-head certification route
+CURRENT_STAGE: S7 disclosure + promotion anti-drift + fail-closed stack manifest + external-evidence binding
 NUMERICAL_MUTATION_ALLOWED: false
-CURRENT_BLOCKER: GitHub Actions issue #54; exact-head jobs still fail before checkout/step 1
-EXACT_NEXT_ACTION: restore executable CI, run S7/integrated workflows, then obtain controlled CAESAR S4/S5 evidence before any claim of complete S0-S7 qualification
+CI_BLOCKER: Issue #54 — jobs fail before checkout/step 1
+EXTERNAL_EVIDENCE_BLOCKER: Issue #1402 — controlled CAESAR S4/S5 qualification evidence
+EXACT_NEXT_ACTION: collect #1402 evidence while #54 is repaired; do not claim complete qualification or release eligibility until both gates are closed by evidence
 ```
 
 ## 60-second handover
 
-PR #1396 is the numerically inert integration descendant of:
+Implemented ancestry:
 
 ```text
-#1348  S1-S3 + evolved S0 implementation
-  -> #1395  S6 exact TYPE=3 tee/branch
-     -> #1396  S7 disclosure + integration guards
+#1348  S1-S3 + evolved S0 @ 25543a9e6c0e796d63e89841f63e41a4fd3292cc
+  -> #1395  S6 TYPE=3 tee @ 2b4b4762973c84690b636eab8abe918e307d5dab
+     -> #1396  S7/integration
 ```
 
-Parallel blocked prerequisites remain:
+Parallel blocked stages:
 
 ```text
-#1386  S4 reducer prerequisite
-#1391  S5 pressure/Bourdon prerequisite
+#1386  S4 reducer @ 508ed865129554e7c7a94b9194e84504aedb31de
+#1391  S5 pressure/Bourdon @ 2c75e3a350437b0fad130b5bfdf9cc9b0a9088a7
 ```
 
-PR #1341 remains open/draft, but its unique S0 capability guard and aggregate wiring are carried forward into #1396. Administrative closure remains owner-controlled.
+PR #1341 @ `dd2d9d1ba9ede41c82c8d6707181c61f679b5549` is functionally carried forward but remains open/draft and owner-controlled.
 
-No production `src/` file is changed by #1396. Any numerical-result movement attributable to this PR is a falsifier.
+PR #1396 remains numerically inert: its effective diff contains verification/workflow/recovery/manifest files only and no production `src/` change.
 
-## Current production capability truth
-
-The descendant production profile currently declares:
+## Current production truth
 
 ```text
 bendExactMechanics = true
@@ -60,16 +58,16 @@ pressureBourdon = false
 pressureCodeStress = true
 ```
 
-The first two are implementation-level capabilities with source-specific fail-closed eligibility. Exact tee mechanics remain TYPE=3 welding-tee only; TYPE=5 remains approximate.
+Bend and tee flags are implementation-level only. Source-specific eligibility remains fail-closed; TYPE=5 remains outside exact tee mechanics.
 
-## DEC-1396-001 — fail-closed promotion-stack manifest
+## DEC-1396-001 — fail-closed machine-readable stack checkpoint
 
-Added:
+Files:
 
 - `validation/lfea/piping-component-promotion/stack-candidate-v1.json`
 - `scripts/lfea-piping-component-promotion-stack-manifest-check.mjs`
 
-The manifest deliberately identifies itself as:
+The manifest is deliberately not a release candidate:
 
 ```text
 status = BLOCKED_NOT_RELEASE_CANDIDATE
@@ -77,22 +75,27 @@ releaseEligible = false
 engineeringQualificationComplete = false
 ```
 
-It pins the engineering ancestry used by this integration checkpoint:
+It pins the implemented ancestry, #1341 carry-forward status, S4/S5 blocked heads, Issue #54, Issue #1402, historical Phase 6I ineligibility, and owner-only merge authority.
 
-| Stage | PR | Pinned head / parent |
-|---|---:|---|
-| S1-S3 | #1348 | `25543a9e6c0e796d63e89841f63e41a4fd3292cc` |
-| S6 | #1395 | `2b4b4762973c84690b636eab8abe918e307d5dab`, base = #1348 pinned head |
-| S7 pre-manifest | #1396 | `b842f83042e189cb08f3009dc0aa21014e2061a9`, base = #1395 pinned head |
-| S0 source PR | #1341 | `dd2d9d1ba9ede41c82c8d6707181c61f679b5549`, functionally subsumed only |
-| S4 blocked | #1386 | `508ed865129554e7c7a94b9194e84504aedb31de` |
-| S5 blocked | #1391 | `2c75e3a350437b0fad130b5bfdf9cc9b0a9088a7` |
+The checker imports the live `PRODUCTION_CAPABILITY_PROFILE` and fails if the manifest and production truth diverge.
 
-The observed current `main` SHA is recorded only as repository grounding, not as a release parent.
+It is executed directly by the S7 workflow and imported by `scripts/linear-piping-analysis-consumer-check.mjs`, so the governed consumer aggregate also checks the promotion checkpoint.
 
-### S4 locked blockers
+## DEC-1396-002 — S4/S5 external evidence has one governed tracker
 
-The manifest requires `reducerExactMechanics=false` and retains:
+Issue **#1402 — LFEA S4/S5 controlled CAESAR qualification evidence execution** is now the explicit external evidence gate.
+
+Manifest requirements:
+
+```text
+externalEvidenceGate.issue = 1402
+status = OPEN_BLOCKING_S4_S5_NUMERICAL_PROMOTION
+acceptedEvidenceMayDirectlyAuthorizeProduction = false
+```
+
+Both blocked stage records point to Issue #1402.
+
+### S4 remains blocked by
 
 ```text
 REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED
@@ -100,19 +103,9 @@ REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED
 REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED
 ```
 
-S4 external CAESAR evidence remains mandatory.
+`reducerExactMechanics` must remain false until a separate post-evidence production-authority/integration PR is qualified.
 
-### S5 locked blockers
-
-The manifest requires all of these false:
-
-```text
-pressureBourdon
-pressureStiffening
-pressureAxialThrust
-```
-
-and retains:
+### S5 remains blocked by
 
 ```text
 CONTROLLED_BOURDON_PARITY_REQUIRED
@@ -121,132 +114,72 @@ L19_L20_ELBOW_STIFFENING_PRESSURE_SELECTOR_UNRESOLVED
 PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY
 ```
 
-S5 external CAESAR evidence remains mandatory.
+`pressureBourdon`, `pressureStiffening`, and `pressureAxialThrust` must remain false.
 
-### Release boundary
+Issue #1402 requires controlled CAESAR raw job/source/output files, byte-level SHA-256 custody, file-level contract intake, independent review, and explicit non-production disposition.
 
-The manifest explicitly forbids treating:
+## S7 disclosure / anti-drift retained
 
-- blocked S4/S5 as qualified;
-- `NOT_RUN` as PASS;
-- historical Phase 6I evidence as certification for this changed tree;
-- benchmark re-baselining;
-- tolerance widening/fitting.
+S7 verifies:
 
-Any owner-authorized future merged promotion requires a new governed release-candidate/evidence decision.
+- qualified bend and TYPE=3 tee disclosure;
+- TYPE=5 approximation retention;
+- unresolved help/suggested actions;
+- SOURCE vs ANALYSIS geometry separation.
 
-## DEC-1396-002 — manifest is executable, not passive metadata
+Promotion anti-drift retains:
 
-`scripts/lfea-piping-component-promotion-stack-manifest-check.mjs` checks:
-
-- exact ancestry and base-head relationships;
-- #1341 carry-forward disposition;
-- S4/S5 pinned blocker records;
-- live `PRODUCTION_CAPABILITY_PROFILE` values;
-- issue #54 blocking state recorded in the manifest;
-- release ineligibility;
-- owner-only merge authority;
-- anti-gaming rules.
-
-The checker is imported by `scripts/linear-piping-analysis-consumer-check.mjs`, so any execution of the governed consumer aggregate also checks the stack manifest.
-
-The S7 workflow separately triggers on manifest/checker changes and runs the checker explicitly.
-
-## S7 disclosure verification retained
-
-`scripts/lfea-s7-component-ui-disclosure-check.mjs` verifies source-governed UI behavior:
-
-- qualified TYPE=3 welding tee clears the generic tee-flexibility limitation;
-- TYPE=5 retains the approximation finding;
-- qualified bend clears the generic bend limitation;
-- unresolved bend/tee help and suggested action text remain available;
-- SOURCE and ANALYSIS geometry remain separate;
-- S2 retopology may increase ANALYSIS node/span counts without rewriting SOURCE identity/counts.
-
-## Promotion-wide anti-drift retained
-
-`scripts/lfea-piping-component-promotion-anti-drift-check.mjs` locks:
-
-- S2 conditioned structural endpoint custody;
-- no silent nearest-node working-point retargeting;
-- S3 explicit factor authority and single-owner bend flexibility;
-- `ARC_GEOMETRY_EXCLUDED_V1`;
-- S3 pressure-stiffening exclusion;
-- S6 topology-based TYPE=3 branch ownership;
-- TYPE=5 exclusion;
-- run-section ambiguity block;
-- bend/tee ownership-overlap block;
-- S4/S5 production flags false until deliberately requalified.
+- S2 conditioned endpoint and working-point custody;
+- S3 explicit factor authority, `ARC_GEOMETRY_EXCLUDED_V1`, pressure exclusion and single-owner flexibility;
+- S6 topology-based TYPE=3 ownership, TYPE=5 exclusion, section ambiguity and bend/tee overlap blocks;
+- blocked S4/S5 production flags.
 
 ## S0 / PR #1341 carry-forward
 
-#1348 contains/evolves the S0 production implementation. Integration audit found #1341's dedicated capability guard had not initially been carried forward.
+#1348 contains/evolves the S0 implementation. #1396 restores #1341's unique capability guard and aggregate wiring:
 
-#1396 now contains:
-
-- `scripts/lfea-production-capability-profile-check.mjs`;
-- aggregate import through `scripts/linear-piping-analysis-consumer-check.mjs`.
-
-The adapted guard checks current truth rather than obsolete S0 defaults: bend/TYPE=3 tee implementation may be exact, while reducer and S5 pressure mechanics remain false.
+- `scripts/lfea-production-capability-profile-check.mjs`
+- import from `scripts/linear-piping-analysis-consumer-check.mjs`
 
 Disposition:
 
 ```text
-PR1341 = FUNCTIONALLY_SUBSUMED_NOT_CLOSED
-ADMINISTRATIVE_CLOSE_OR_MERGE = OWNER_ONLY
+FUNCTIONALLY_SUBSUMED_NOT_CLOSED
+ADMINISTRATIVE_ACTION = OWNER_ONLY
 ```
 
-## Integrated exact-head certification route
+## Integrated qualification route
 
-`.github/workflows/lfea-piping-component-promotion-stack.yml` remains the final descendant-head route for implemented S0/S1/S2/S3/S6/S7 mechanics.
+`.github/workflows/lfea-piping-component-promotion-stack.yml` declares the final S0/S1/S2/S3/S6/S7 deterministic chain and a dependent Windows real-BM4_L S1/S2 source check.
 
-Deterministic job declares:
-
-- S0 capability guard;
-- S1 tangent custody;
-- S2 retopology;
-- S3 factor authority and bend production mechanics;
-- B3.21 B31J benchmark;
-- M047 tee rigid-thermal benchmark;
-- S6 production tee mechanics;
-- S7 disclosure;
-- promotion anti-drift;
-- governed consumer aggregate;
-- core anti-drift;
-- ACCDB geometry regression.
-
-A dependent Windows job authenticates the pinned Common BM4_L source and Microsoft ACE provider before real ACCDB S1/S2 checks.
-
-This workflow does not qualify S4/S5 and does not replace a new release-candidate evidence package.
+It does not qualify S4/S5 and does not replace the external evidence issue or a future governed release candidate.
 
 ## Exact-head validation truth
 
-Latest manifest code head:
+Manifest + Issue #1402 binding code head:
 
 ```text
-head = 42976136555e3b4745b84d2e84b6b47630ff700f
+53551fc6fbfac0f040068e489636aac36de86a9f
 ```
 
 S7 workflow:
 
 ```text
-run = 32702128203
-job = 97355658917
+run = 32702513173
+job = 97356784032
 conclusion = failure
 steps = null
-logs = unavailable
 ```
 
-Integrated stack workflow:
+Integrated workflow:
 
 ```text
-run = 32702128254
-deterministic job = 97355658952
+run = 32702513152
+deterministic job = 97356784181
 conclusion = failure
 steps = null
-real BM4_L job = 97355667553
+real BM4_L job = 97356793192
 conclusion = skipped
-steps = null
 ```
 
 Classification:
@@ -257,9 +190,9 @@ SOURCE_FAILURE_PROVEN = false
 PASS_PROVEN = false
 ```
 
-Issue #54 remains open. No checkout, Node assertion, benchmark, anti-drift check, or real BM4_L source check executed on this exact head.
+Issue #54 remains open. No checkout, Node assertion, benchmark, anti-drift test, or real-source qualification executed on this head.
 
-## Main grounding
+## Repository grounding
 
 Latest observed main:
 
@@ -267,74 +200,74 @@ Latest observed main:
 e6908671f25df784312b9e3392bc6ab83863c9c8
 ```
 
-The main movement observed during this workstream is EMP.1 WRC/CAUx work and has not established a piping-promotion overlap. No rebase is performed merely to chase unrelated main movement.
+Observed movement from the prior grounding is EMP.1 WRC/CAUx work with no identified piping-promotion file overlap. No rebase is performed solely for unrelated movement.
 
 ## Validation ledger
 
-| Check | Status | Evidence |
+| Check | State | Evidence |
 |---|---|---|
-| #1395 stack base | PASS — GROUNDED | `2b4b4762...` |
-| current main grounding | PASS — GITHUB | `e6908671...` |
-| effective #1396 production mutation | PASS — NONE | no production `src/` changed |
-| S7 disclosure design | PASS — SOURCE_INSPECTION | deterministic checker retained |
-| S0 guard carry-forward | PASS_AFTER_FIX — SOURCE_INSPECTION | capability checker + aggregate import |
-| promotion anti-drift | PASS — SOURCE_INSPECTION | S2/S3/S6 + blocked S4/S5 guards |
-| stack manifest | PASS_AFTER_FIX — SOURCE_INSPECTION | fail-closed ancestry/blocker record |
-| manifest/profile coupling | PASS — SOURCE_INSPECTION | manifest checker imports production profile |
-| S7 exact-head execution | NOT_RUN | run 32702128203 / steps null |
-| integrated exact-head execution | NOT_RUN | run 32702128254 / deterministic steps null |
-| real BM4_L integrated execution | NOT_RUN — DEPENDENCY_SKIPPED | job 97355667553 |
-| S4 controlled CAESAR parity | UNRESOLVED | external evidence absent |
-| S5 controlled CAESAR parity | UNRESOLVED | external evidence/selector authority absent |
-| release eligibility | BLOCKED | manifest is `BLOCKED_NOT_RELEASE_CANDIDATE` |
+| #1395 base | PASS — GROUNDED | `2b4b4762...` |
+| current main | PASS — GROUNDED | `e6908671...` |
+| #1396 production mutation | PASS — NONE | no production `src/` change |
+| S7 disclosure design | PASS — SOURCE_INSPECTION | checker retained |
+| S0 guard carry-forward | PASS_AFTER_FIX — SOURCE_INSPECTION | guard + aggregate import |
+| promotion anti-drift | PASS — SOURCE_INSPECTION | S2/S3/S6 and S4/S5 locks |
+| stack manifest | PASS_AFTER_FIX — SOURCE_INSPECTION | ancestry/profile/release lock |
+| Issue #1402 binding | PASS — SOURCE_INSPECTION | S4/S5 point to one external evidence work package |
+| S7 exact-head runtime | NOT_RUN | run 32702513173 / steps null |
+| integrated exact-head runtime | NOT_RUN | run 32702513152 / steps null |
+| real BM4_L child | NOT_RUN — DEPENDENCY_SKIPPED | job 97356793192 |
+| S4 CAESAR parity | UNRESOLVED | Issue #1402 |
+| S5 CAESAR parity | UNRESOLVED | Issue #1402 |
+| release eligibility | BLOCKED | `BLOCKED_NOT_RELEASE_CANDIDATE` |
 
 ## Changed-file ledger — 9 files
 
 | File | Purpose |
 |---|---|
-| `.github/workflows/lfea-piping-component-promotion-stack.yml` | integrated deterministic + real BM4_L route |
-| `.github/workflows/lfea-piping-promotion-s7-ui.yml` | S7/manifest verification workflow |
+| `.github/workflows/lfea-piping-component-promotion-stack.yml` | integrated deterministic + BM4_L route |
+| `.github/workflows/lfea-piping-promotion-s7-ui.yml` | S7/manifest verification |
 | `agents/PR1396_workreport.md` | sole living recovery authority |
 | `scripts/lfea-piping-component-promotion-anti-drift-check.mjs` | promotion architecture guard |
-| `scripts/lfea-piping-component-promotion-stack-manifest-check.mjs` | fail-closed ancestry/blocker/profile checker |
-| `scripts/lfea-production-capability-profile-check.mjs` | carried-forward S0 capability guard |
-| `scripts/lfea-s7-component-ui-disclosure-check.mjs` | S7 governed disclosure verification |
-| `scripts/linear-piping-analysis-consumer-check.mjs` | governed aggregate + S0/manifest imports |
-| `validation/lfea/piping-component-promotion/stack-candidate-v1.json` | machine-readable blocked stack checkpoint |
+| `scripts/lfea-piping-component-promotion-stack-manifest-check.mjs` | ancestry/blocker/profile/evidence-gate checker |
+| `scripts/lfea-production-capability-profile-check.mjs` | carried-forward S0 guard |
+| `scripts/lfea-s7-component-ui-disclosure-check.mjs` | UI/disclosure verification |
+| `scripts/linear-piping-analysis-consumer-check.mjs` | governed aggregate + S0/manifest checks |
+| `validation/lfea/piping-component-promotion/stack-candidate-v1.json` | fail-closed machine-readable checkpoint |
 
 ## Non-claims
 
 - Source inspection is not runtime PASS.
-- `bendExactMechanics=true` does not make an unqualified source bend exact.
-- `teeExactMechanics=true` does not authorize TYPE=5.
-- S7 does not qualify S2/S3/S6 numerics.
-- The stack manifest is not a release candidate and grants no production/release authority.
-- S4 reducer mechanics remain blocked.
-- S5 Bourdon/pressure-stiffening/axial-thrust mechanics remain blocked.
-- No benchmark has been re-baselined.
-- No tolerance has been widened or fitted.
-- No merge has been authorized or performed.
+- The manifest is not release authority.
+- Issue #1402 evidence, even if accepted, cannot directly authorize production.
+- Bend capability does not make unsupported bend sources exact.
+- Tee capability does not authorize TYPE=5.
+- S4/S5 remain unqualified.
+- Historical Phase 6I evidence does not certify this tree.
+- No benchmark was re-baselined.
+- No tolerance was widened or fitted.
+- No merge was authorized or performed.
 
 ## Appendix A — expert takeover questionnaire
 
-1. Why is the stack manifest `BLOCKED_NOT_RELEASE_CANDIDATE` rather than a qualification record?
-2. Which exact heads define the #1348 → #1395 → #1396 implemented ancestry?
-3. Why is #1341 recorded as functionally subsumed but not administratively closed?
-4. Why may bend capability be true while some bend sources remain approximate?
-5. Why does TYPE=5 remain approximate despite `teeExactMechanics=true`?
-6. What three independent S4 blockers remain?
-7. Why are Bourdon, bend pressure stiffening, and pressure axial thrust independent S5 authorities?
-8. Why are runs 32702128203 and 32702128254 classified NOT_RUN rather than FAIL?
-9. Why can historical Phase 6I evidence not certify a changed promotion tree?
-10. What must happen before any claim of complete S0-S7 engineering qualification?
+1. Why is the stack checkpoint `BLOCKED_NOT_RELEASE_CANDIDATE`?
+2. What exact heads define #1348 → #1395 → #1396 ancestry?
+3. Why is #1341 functionally subsumed but still open?
+4. Why can bend/tee implementation flags be true while source cases remain approximate?
+5. What three independent S4 authority questions remain?
+6. Why are Bourdon, bend pressure stiffening and axial thrust separate S5 authorities?
+7. What does Issue #1402 collect and what can it not authorize?
+8. Why are the current workflow failures classified NOT_RUN rather than engineering FAIL?
+9. Why is historical Phase 6I evidence ineligible for this changed tree?
+10. What two gates must close before complete promotion qualification can be claimed?
 
-Takeover threshold: all ten must be answerable without treating NOT_RUN as PASS or inventing CAESAR behavior.
+Takeover threshold: all ten must be answerable without treating NOT_RUN as PASS or guessing CAESAR behavior.
 
 ## Historical summary
 
-- S7 began as UI/disclosure verification only.
-- Integration added promotion-wide anti-drift.
-- #1341's unique S0 capability guard was carried forward.
-- A final descendant certification workflow was added for S0/S1/S2/S3/S6/S7.
-- Repeated hosted workflows failed before step creation and were recorded as infrastructure NOT_RUN.
-- The 2026-08-24 continuation added a machine-readable fail-closed stack manifest and wired it into the governed aggregate/S7 workflow so ancestry, blocked S4/S5 state, issue #54, release ineligibility, and owner-only merge authority cannot drift silently.
+- S7 began as numerically inert disclosure verification.
+- Promotion-wide anti-drift and the missing #1341 S0 guard were carried forward.
+- A final integrated S0/S1/S2/S3/S6/S7 workflow was added.
+- Repeated hosted jobs failed before step creation and remain Issue #54.
+- A fail-closed machine-readable stack manifest was added and bound to the live capability profile.
+- Issue #1402 was created as the single controlled CAESAR evidence work package for S4/S5 and is now enforced by the stack manifest.

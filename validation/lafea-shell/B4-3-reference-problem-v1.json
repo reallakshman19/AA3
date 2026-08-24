@@ -2,30 +2,178 @@
   "schema": "lafea-shell-independent-benchmark-definition/v1",
   "benchmarkId": "B4-3-REFERENCE-PROBLEM-01",
   "stageId": "LAFEA.4",
-  "definitionState": "BLOCKED_SOURCE_REQUIRED",
+  "definitionState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
   "engineeringPurpose": "INDEPENDENT_NUMERICAL_VERIFICATION",
-  "title": "Source-qualified classical thin-shell or plate reference problem",
-  "requiredSource": {
-    "status": "UNAVAILABLE",
-    "requirement": "A controlled or public primary/reference source with an unambiguous geometry, boundary conditions, loading, material/thickness basis, analytical or published displacement/stress response, and applicability to the current small-displacement CST+DKT thin-shell claim.",
-    "acceptableAuthorityClasses": [
-      "PRIMARY_PUBLISHED_REFERENCE",
-      "CONTROLLED_ENGINEERING_REFERENCE",
-      "ANALYTICAL_DERIVATION_WITH_INDEPENDENT_REVIEW"
+  "title": "Batoz-Bathe-Ho DKT twisting square plate",
+  "formulationScope": {
+    "authorizedElementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+    "linearElastic": true,
+    "smallDisplacement": true,
+    "thinShellOnly": true,
+    "plateBendingReference": true,
+    "mitcClaim": false,
+    "drillingDofClaim": false
+  },
+  "oracleAuthority": {
+    "sourceClass": "PRIMARY_PUBLISHED_REFERENCE",
+    "productionOutputUsedToChooseDefinition": false,
+    "productionOutputUsedToChooseExpectedValues": false,
+    "productionOutputUsedToChooseAcceptanceTolerance": false,
+    "importsProductionFem": false,
+    "movingMaximumUsed": false,
+    "nodalStressProjectionUsed": false,
+    "crossElementAveragingUsed": false,
+    "displayInterpolationUsed": false
+  },
+  "source": {
+    "authors": ["Jean-Louis Batoz", "Klaus-Jurgen Bathe", "Lee-Wing Ho"],
+    "title": "A study of three-node triangular plate bending elements",
+    "journal": "International Journal for Numerical Methods in Engineering",
+    "volume": 15,
+    "issue": 12,
+    "year": 1980,
+    "pages": "1771-1812",
+    "doi": "10.1002/nme.1620151205",
+    "publisherVersionUrl": "https://onlinelibrary.wiley.com/doi/10.1002/nme.1620151205",
+    "publicAuthorHostedPdfUrl": "https://web.mit.edu/kjb/www/Publications_Prior_to_1998/A_Study_of_Three-Node_Triangular_Plate_Bending_Elements.pdf",
+    "locations": [
+      {
+        "section": "3.1.1 Small displacement theory of plates with transverse shear included",
+        "figure": 2,
+        "printedPage": 1777,
+        "role": "positive z,w and beta rotation directions plus curvature convention"
+      },
+      {
+        "section": "4.2.2 Twisting of a square plate",
+        "printedPage": 1793,
+        "role": "problem statement and exact thin-plate response"
+      },
+      {
+        "figure": 16,
+        "printedPage": 1797,
+        "role": "geometry, downward corner load, material, mesh (b), DKT response table and exact values"
+      }
+    ],
+    "rawPdfHashStatus": "NOT_RETAINED_BY_CONNECTED_SOURCE_READER",
+    "sourceQualificationStatus": "DOI_AND_EXACT_PAGE_FIGURE_VERIFIED"
+  },
+  "originalSourceUnits": {
+    "length": "in",
+    "stress": "psi",
+    "force": "lbf",
+    "bendingMomentResultant": "lbf*in/in"
+  },
+  "canonicalUnits": {
+    "length": "mm",
+    "stress": "MPa",
+    "force": "N",
+    "bendingMomentResultant": "N"
+  },
+  "unitConversion": {
+    "inchToMm": 25.4,
+    "psiToMpa": 0.006894757293168361,
+    "lbfToN": 4.4482216152605
+  },
+  "geometry": {
+    "kind": "FLAT_SQUARE_PLATE",
+    "widthOriginalIn": 8,
+    "heightOriginalIn": 8,
+    "width": 203.2,
+    "height": 203.2,
+    "nodes": [
+      { "nodeId": "A", "x": 0, "y": 203.2, "z": 0 },
+      { "nodeId": "B", "x": 0, "y": 0, "z": 0 },
+      { "nodeId": "C", "x": 203.2, "y": 203.2, "z": 0 },
+      { "nodeId": "D", "x": 203.2, "y": 0, "z": 0 },
+      { "nodeId": "O", "x": 101.6, "y": 101.6, "z": 0 }
+    ],
+    "meshIdentity": "FIGURE_16_MESH_B_FOUR_DKT_TRIANGLES",
+    "triangles": [
+      { "elementId": "E1", "nodeIds": ["A", "B", "O"] },
+      { "elementId": "E2", "nodeIds": ["B", "D", "O"] },
+      { "elementId": "E3", "nodeIds": ["D", "C", "O"] },
+      { "elementId": "E4", "nodeIds": ["C", "A", "O"] }
     ]
   },
-  "expected": null,
-  "acceptance": null,
-  "executionEligible": false,
-  "fullClosureEligible": false,
+  "material": {
+    "elasticModulusOriginalPsi": 10000,
+    "elasticModulus": 68.94757293168361,
+    "poissonRatio": 0.3,
+    "thicknessOriginalIn": 1,
+    "thickness": 25.4
+  },
+  "publishedSupports": [
+    { "nodeId": "A", "dof": "UZ", "value": 0 },
+    { "nodeId": "B", "dof": "UZ", "value": 0 },
+    { "nodeId": "D", "dof": "UZ", "value": 0 }
+  ],
+  "auxiliaryMembraneRigidBodyStabilization": {
+    "engineeringRole": "NUMERICAL_STABILIZATION_OF_DECOUPLED_FLAT_PLATE_MEMBRANE_SUBSPACE_ONLY",
+    "physicalSupportAuthority": false,
+    "constraints": [
+      { "nodeId": "A", "dof": "UX", "value": 0 },
+      { "nodeId": "A", "dof": "UY", "value": 0 },
+      { "nodeId": "B", "dof": "UX", "value": 0 }
+    ],
+    "rationale": "The published DKT plate has bending DOFs only. The current five-DOF shell superposes an uncoupled flat membrane field, so three in-plane rigid-body constraints remove only the unloaded membrane nullspace and must retain near-zero membrane strain."
+  },
+  "load": {
+    "loadCaseId": "BENCHMARK",
+    "nodeId": "C",
+    "component": "FZ",
+    "publishedMagnitudeOriginalLbf": 5,
+    "magnitude": 22.2411080763025,
+    "signedValue": -22.2411080763025,
+    "sense": "FIGURE_16_LOAD_IS_DOWNWARD_OPPOSITE_PAPER_POSITIVE_W_AND_GLOBAL_POSITIVE_Z"
+  },
+  "expected": {
+    "fixedNodalDisplacements": [
+      { "nodeId": "O", "dof": "UZ", "publishedMagnitudeOriginalIn": 0.0624, "signedValueOriginalIn": -0.0624, "value": -1.58496 },
+      { "nodeId": "C", "dof": "UZ", "publishedMagnitudeOriginalIn": 0.2496, "signedValueOriginalIn": -0.2496, "value": -6.33984 }
+    ],
+    "globalBendingMomentResultants": {
+      "mxOriginalLbfInPerIn": 0,
+      "myOriginalLbfInPerIn": 0,
+      "mxyOriginalLbfInPerIn": 2.5,
+      "mx": 0,
+      "my": 0,
+      "mxy": 11.12055403815125,
+      "field": "CONSTANT_EVERYWHERE"
+    },
+    "appliedResultantForce": [0, 0, -22.2411080763025],
+    "appliedResultantMomentAboutOrigin": [-4519.393161104667, 4519.393161104667, 0]
+  },
+  "acceptance": {
+    "fixedNodalDisplacementAbsoluteToleranceMm": 0.000127,
+    "bendingMomentAbsoluteToleranceN": 0.0000222411080763025,
+    "zeroBendingMomentAbsoluteToleranceN": 0.0000222411080763025,
+    "membraneContaminationStrainAbsoluteTolerance": 1e-12,
+    "inPlaneDisplacementAbsoluteToleranceMm": 1e-10,
+    "forceEquilibrium": { "absoluteToleranceN": 1e-7, "relativeTolerance": 1e-9 },
+    "momentEquilibrium": { "absoluteToleranceNmm": 1e-6, "relativeTolerance": 1e-9 },
+    "rationale": "Displacement and twisting-resultant tolerances are fixed from one-half of the last displayed source digit after exact unit conversion; zero-moment and membrane-contamination checks remain near-zero guards. No production result was observed to choose these limits."
+  },
+  "signConvention": {
+    "paperPositiveTransverseDirection": "Figure 2 shows positive z,w upward",
+    "publishedDeflectionTableRole": "Figure 16 tabulates positive deflection magnitudes for the downward load",
+    "productionSignedDisplacement": "map downward paper load to global -Z and compare signed UZ values as negative",
+    "bendingMomentResultant": "paper positive Mxy is mapped as positive global xy tensor-shear resultant",
+    "localElementComparison": "rotate the frozen global bending-resultant tensor into each retained right-handed local element frame before comparison"
+  },
+  "executionEligible": true,
+  "fullClosureEligible": true,
   "antiCircularity": {
     "productionOutputMayPopulateExpectedValues": false,
+    "productionOutputMayChooseTolerance": false,
     "webFitToProductionOutputPermitted": false,
-    "sourceMustBeQualifiedBeforeExpectedValues": true
+    "sourceQualifiedBeforeExpectedValues": true
   },
   "limitations": [
-    "BLOCKED_SOURCE_REQUIRED",
-    "NO_SYNTHETIC_REFERENCE_VALUE",
+    "PRIMARY_PUBLISHED_DKT_PLATE_REFERENCE_ONLY",
+    "AUXILIARY_MEMBRANE_STABILIZATION_NOT_PHYSICAL_SUPPORT_AUTHORITY",
+    "REFERENCE_FORMULATION_BENCHMARK_NOT_GENERAL_THICKNESS_APPLICABILITY_CLAIM",
+    "NO_NONLINEAR_AUTHORITY",
+    "NO_THICK_SHELL_AUTHORITY",
     "NO_RELEASE_AUTHORITY"
   ]
 }

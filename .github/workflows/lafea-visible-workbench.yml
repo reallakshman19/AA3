@@ -1,4 +1,5 @@
 name: LAFEA visible workbench qualification
+# Issue #1371 exact-current-main certification trigger only; no workflow semantic change.
 on:
   pull_request:
     paths:

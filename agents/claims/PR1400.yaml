@@ -1,0 +1,29 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1400
+claim_state: ACTIVE
+branch: agent/issue-1389-pr-c-caux-benchmark-20260824
+mission: "Issue #1389 PR-C — CAUx pp.24-31 benchmark/reference freeze and independent hand calculation"
+implementation_basis_head: ebe90877c5ee424506d6d7c9d92c720aacd537f0
+write_scope:
+  - validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-v1.json
+  - validation/emp1/caux2017-wrc01f/caux-pp24-31-independent-handcalc-v1.json
+  - validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-qualification-v1.json
+  - scripts/emp1-caux-pp24-31-benchmark-check.mjs
+  - docs/emp1/EMP1_CAUX_2017_WRC01F_PP24_31_BENCHMARK.md
+  - agents/PR1400_workreport.md
+  - agents/status/PR1400.yaml
+  - agents/claims/PR1400.yaml
+protected_no_mutation:
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - validation/emp1/release/emp1-wrc537-gamma5-benchmark-manifest-v1.json
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - .github/workflows/
+  - agents/PR1398_workreport.md
+  - agents/status/PR1398.yaml
+  - agents/claims/PR1398.yaml
+authority_boundary: "CAUx reference evidence only; source values frozen before production observation; no WRC method, gamma5 production, code-compliance or release authority"
+release_profile_disposition: OUTSIDE_BOUNDED_GAMMA5_ZERO_DP_RELEASE_PROFILE_REFERENCE_ONLY
+overlap_state: SAFE_PR1398_SEPARATE_OBSERVE_ONLY

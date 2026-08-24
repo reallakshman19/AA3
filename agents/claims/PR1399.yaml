@@ -12,16 +12,22 @@ files:
     - agents/claims/PR1399.yaml
   prefixes: []
 source_prs:
-  - PR1388
-  - PR1390
-  - PR1392
-  - PR1393
+  - pr: PR1388
+    head: ba307e0199b065a38ecb9e85bccd7b3a97f33770
+  - pr: PR1390
+    head: 1a6602aff6caa8404affadcc9d431fac8b2ec7c6
+  - pr: PR1392
+    head: dd48b454eb6a8073a94f90a0c08ec5a437dc184a
+  - pr: PR1393
+    head: c6246167ca4513eb7d8292135d259043fccee6c1
 invariants:
   - NO_SOURCE_PR_MERGE_OR_SUPERSESSION
   - RUNTIME_FILES_ARE_EXACT_SOURCE_PR_BLOBS
   - NO_MANUAL_CONFLICT_RESOLUTION
+  - B4_3_PRIMARY_REFERENCE_FROZEN_BEFORE_PRODUCTION_OBSERVATION
+  - B4_3_PRODUCTION_COMPARATOR_MAY_NOT_MUTATE_TARGETS_OR_TOLERANCES
   - OWNER_ONLY_MERGE_AUTHORITY_RETAINED
   - VALIDATION_PR_MUST_NOT_BE_MERGED
 main_head_last_checked: e985b50d81d0d241db27313562c8cc12cd7cc27d
 overlap_state: INTENTIONAL_NON_OWNING_AGGREGATION
-note: PR1399 does not acquire production ownership of source-PR files. It exists only to exercise the intended A->B->C->D composition on one exact head.
+note: PR1399 does not acquire production ownership of source-PR files. It exists only to exercise the intended A->B->C->D composition on one exact head. B4-3 is now source-qualified on PR1388 but remains NOT_RUN against production because hosted jobs fail before checkout.

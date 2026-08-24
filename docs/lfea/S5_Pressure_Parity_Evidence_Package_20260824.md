@@ -30,6 +30,8 @@ independent review = PENDING
 
 For Bourdon scopes, Q3 begins with `samePhysicalInitialBasis=false`; it must only be changed to true after the 4/6/8-chord evidence actually demonstrates one physical initial basis. For pressure-stiffening scopes, selector/factor/arbitration acceptance booleans begin false.
 
+For Q5, the scaffold deliberately sets `elbowStiffeningPressureSelector=P1` for all three `Default / Include / Exclude` runs. This is a controlled experiment condition so the global pressure-stiffening switch remains discriminating. It is **not** authority for BM4_NL L19/L20, whose actual selector remains unresolved.
+
 The scaffold refuses to overwrite an existing directory. Never modify it to emit a qualified status or production authorization.
 
 ## Package root
@@ -128,9 +130,20 @@ The Q1 and Q2 groups must preserve all non-switched control state. Q6 must retai
 - `Q5_GLOBAL_INCLUDE_B313`
 - `Q5_GLOBAL_EXCLUDE_B313`
 
-The Q4 group must keep Bourdon disabled and preserve all non-selector control state. The Q5 group must preserve all non-global-mode state. P1/P2 must be deliberately distinct, and the package must demonstrate selector discrimination, exactly-once factor ownership and retained curved centerline geometry.
+For Q4, keep Bourdon disabled and preserve all non-selector control state. Use deliberately different positive P1/P2 values so `None / P1 / P2 / Pmax` can prove selector behavior, exactly-once factor ownership and retained curved centerline geometry.
 
-Do not infer the unresolved BM4_NL L19/L20 `Elbow Stiffening Pressure` selector from provisional P1. Controlled run records must retain the actual selected CAESAR setting.
+For Q5, keep Bourdon disabled and hold these fields identical across the three global-mode cases:
+
+```text
+activePipingCode = B31.3_2022
+elbowStiffeningPressureSelector = P1
+pressureFields.P1 = same positive controlled value
+material / section / bend geometry / restraints / mechanical load = unchanged
+```
+
+Only `usePressureStiffeningOnBends` may vary as `DEFAULT / INCLUDE / EXCLUDE`. A Q5 record using selector `NONE` is rejected because it removes elbow pressure stiffening and cannot establish global-mode arbitration. Selector drift away from P1 is also rejected.
+
+The controlled Q5 P1 setting does **not** resolve or infer the unresolved BM4_NL L19/L20 `Elbow Stiffening Pressure` selector. A future BM4_NL production authority still requires the actual retained source setting.
 
 ## Q3 subdivision evidence
 

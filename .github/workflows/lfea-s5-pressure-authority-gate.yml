@@ -21,27 +21,15 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: lfea-s5-pressure-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-  cancel-in-progress: false
-
 jobs:
   s5-pressure-authority-gate:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout exact S5 pull-request head
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          show-progress: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
+          node-version: 22
       - name: Syntax check S5 authority surface
         run: |
           node --check src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js
@@ -50,21 +38,16 @@ jobs:
           node --check scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs
           node --check scripts/lfea-s5-pressure-parity-evidence-file-check.mjs
           node --check scripts/lfea-s5-pressure-parity-evidence-template.mjs
-
       - name: Run reusable CAESAR configuration authority check
         run: node scripts/lfea-caesar-configuration-authority-check.mjs
-
       - name: Run S5 pressure authority prerequisite gate
         run: node scripts/lfea-s5-pressure-authority-gate-check.mjs
-
       - name: Validate mechanism-scoped CAESAR pressure parity evidence contract
         run: node scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs
-
       - name: Confirm external evidence CLIs
         run: |
           node scripts/lfea-s5-pressure-parity-evidence-template.mjs --help
           node scripts/lfea-s5-pressure-parity-evidence-file-check.mjs --help
-
       - name: Prove generated evidence scaffolds are fail-closed
         shell: bash
         run: |
@@ -77,6 +60,5 @@ jobs:
               exit 1
             fi
           done
-
       - name: Enforce linear piping anti-drift rules
         run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs

@@ -4,9 +4,8 @@ pr_or_wip: PR1401
 mission: "Issue #1389 PR-D / #1333 exact-head gamma5 execution and independent review"
 workstream: EMP1_WRC537_PROFESSIONAL_RELEASE
 branch: agent/issue-1389-pr-d-gamma5-exact-head-20260824
-main_head_last_checked: e6908671f25df784312b9e3392bc6ab83863c9c8
-exact_execution_target: e6908671f25df784312b9e3392bc6ab83863c9c8
-merge_base: e6908671f25df784312b9e3392bc6ab83863c9c8
+main_head_last_checked: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+exact_execution_target: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY
@@ -15,44 +14,31 @@ report_path: agents/PR1401_workreport.md
 appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-grounding_epoch: GE-D-008
-current_stage: EXACT_MERGED_MAIN_EXECUTION_BLOCKED_BY_EXECUTION_ENVIRONMENT
+grounding_epoch: GE-D-009
+current_stage: REGROUNDED_TO_CURRENT_MAIN_EXECUTION_BLOCKED_BY_EXECUTION_ENVIRONMENT
 predecessor_gate:
   pr1398: MERGED_8c8d602f23335506d509e3cf0e2af627be0500ce
   pr1400: MERGED_e6908671f25df784312b9e3392bc6ab83863c9c8
-  state: CLEARED
-blocker: ISSUE_54_AND_DIRECT_RUNTIME_NETWORK_UNAVAILABLE
+  pr1403: MERGED_0f85cac384532b5cc35bc24ecedd729275027eb6
+  pr1404: MERGED_c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+  state: CLEARED_FOR_PR_D_EXECUTION_ONLY
+blocker: ISSUE_54_AND_NO_FUNCTIONING_COMPLETE_CHECKOUT
 highest_risk: STALE_OR_FABRICATED_01_10_EVIDENCE
 validation:
   exact_main_grounding: PASS
+  recovery_only_scope: PASS
   producer_contract_inspection: PASS
   independent_review_contract_inspection: PASS
   proposal_12_mutation_contract_inspection: PASS
-  direct_checkout: NOT_RUN_EXECUTION_ENVIRONMENT_DNS_FAILURE
-  earlier_hosted_probe: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP
-  earlier_controlled_gamma5_rerun: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP
-  current_head_hosted_runemp1: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP
-  current_head_hosted_gamma5: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP
-  current_head_hosted_independent_handcalc: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP
-  second_current_head_gamma5_rerun: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP
   genuine_exact_main_execution: NOT_RUN
   evidence_files_01_10: NOT_GENERATED
   numerical_qualification: NOT_CLAIMED
-hosted_runs:
-  - "32693882552 / job 97332333800 / qualify-runemp1-orchestration / steps=null / logs_url=null"
-  - "32693882557 / job 97332333797 / qualify-gamma5-route / steps=null / logs_url=null"
-  - "32693882559 / job 97332333873 / independent-handcalc / steps=null / logs_url=null"
-  - "32693882557 rerun / job 97332439103 / qualify-gamma5-route / steps=null / logs_url=null"
-  - "32694003833 / job 97332656709 / qualify-runemp1-orchestration / steps=null / logs_url=null"
-  - "32694003860 / job 97332656767 / qualify-gamma5-route / steps=null / logs_url=null"
-  - "32694003977 / job 97332657025 / independent-handcalc / steps=null / logs_url=null"
-  - "32694003860 rerun / job 97354684365 / qualify-gamma5-route / queued then failure / steps=null / logs_url=null"
+  latest_known_hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP
 ci_state: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-review_state: PRIOR_COMMENT_AUDIT_NO_BLOCKING_THREADS
+review_state: TO_RECHECK_AFTER_CURRENT_MAIN_REFRESH
 changed_files_expected_before_execution: 3
 expected_generated_evidence_files_after_execution: 10
 merge_disposition: BLOCKED_MANDATORY_EXACT_HEAD_EVIDENCE_NOT_GENERATED
-parallel_safe_next: PR_G_UI_TRACE_CURRENTNESS_UNSUPPORTED_DOMAIN_AFTER_OVERLAP_AUDIT
 authority:
   production_route_authorized: false
   registered: false
@@ -64,5 +50,5 @@ dependencies:
   - "#1389"
   - "#1333"
   - "#54"
-exact_next_action: "Restore a functioning complete checkout/runner, re-ground live main, then execute the genuine 01-10 producer/review/proposal chain. Do not merge PR1401 until mandatory evidence exists."
+exact_next_action: "Refresh the recovery-only branch onto current main c2018c4..., observe the exact-target hosted jobs, and execute genuine 01-10 only when a functioning runner is available. Do not merge PR1401 before evidence exists."
 last_updated: "2026-08-24"

@@ -6,24 +6,53 @@ This document defines file-level custody for controlled CAESAR S5 observations.
 
 It does **not** authorize production pressure mechanics. Accepted evidence remains `QUALIFIED_PARITY_EVIDENCE_ONLY`; `pressureBourdon`, `pressureStiffening` and `pressureAxialThrust` remain false until separate production-integration authority exists.
 
+## Create a fail-closed package scaffold
+
+Generate a new package instead of hand-authoring the run inventory:
+
+```text
+node scripts/lfea-s5-pressure-parity-evidence-template.mjs BOURDON_ONLY /path/to/new-s5-bourdon-package
+node scripts/lfea-s5-pressure-parity-evidence-template.mjs PRESSURE_STIFFENING_ONLY /path/to/new-s5-stiffening-package
+node scripts/lfea-s5-pressure-parity-evidence-template.mjs BOURDON_AND_PRESSURE_STIFFENING /path/to/new-s5-combined-package
+```
+
+The generator creates only the run families required by the selected scope, plus raw-artifact directories and a package `README.txt`.
+
+The generated `evidence.json` is intentionally **not evidence**. It contains fail-closed placeholders such as:
+
+```text
+status = DRAFT_NOT_QUALIFIED
+observationTolerance = null
+hashes = REPLACE_WITH_SHA256
+reported results/factors = unresolved placeholders
+independent review = PENDING
+```
+
+For Bourdon scopes, Q3 begins with `samePhysicalInitialBasis=false`; it must only be changed to true after the 4/6/8-chord evidence actually demonstrates one physical initial basis. For pressure-stiffening scopes, selector/factor/arbitration acceptance booleans begin false.
+
+The scaffold refuses to overwrite an existing directory. Never modify it to emit a qualified status or production authorization.
+
 ## Package root
 
 Store `evidence.json` and all raw CAESAR files under one dedicated directory. Every path in `run.rawArtifacts` must be relative to the evidence JSON directory.
 
-Example:
+Generated layout begins as:
 
 ```text
 s5-pressure-parity/
   evidence.json
+  README.txt
   raw/
     Q1_STRAIGHT_BOURDON_NONE/
-      job.caesar
-      input.accdb
-      output.out
+      job-file.bin
+      input-source.bin
+      output-file.bin
     Q1_STRAIGHT_BOURDON_TRANSLATION/
       ...
     ...
 ```
+
+The `.bin` names are placeholders for custody locations, not required CAESAR extensions. Replace them with the actual retained file names and update `rawArtifacts` accordingly.
 
 Absolute paths, drive-qualified paths, `.`/`..` traversal, missing files, symbolic links and files resolving outside the package root are rejected.
 
@@ -54,7 +83,9 @@ node scripts/lfea-s5-pressure-parity-evidence-file-check.mjs /path/to/s5-pressur
 
 The command first validates the mechanism-scoped engineering contract and then verifies every raw artifact path/hash.
 
-A successful intake still reports:
+The generated scaffold **must fail** this command until the controlled observations, predeclared tolerance, hashes, comparisons and independent review are complete.
+
+A successful completed-package intake still reports:
 
 ```text
 status = QUALIFIED_PARITY_EVIDENCE_ONLY
@@ -99,6 +130,8 @@ The Q1 and Q2 groups must preserve all non-switched control state. Q6 must retai
 
 The Q4 group must keep Bourdon disabled and preserve all non-selector control state. The Q5 group must preserve all non-global-mode state. P1/P2 must be deliberately distinct, and the package must demonstrate selector discrimination, exactly-once factor ownership and retained curved centerline geometry.
 
+Do not infer the unresolved BM4_NL L19/L20 `Elbow Stiffening Pressure` selector from provisional P1. Controlled run records must retain the actual selected CAESAR setting.
+
 ## Q3 subdivision evidence
 
 Q3 is an LFEA formulation invariant and is recorded in the evidence JSON rather than as additional CAESAR run families:
@@ -115,4 +148,4 @@ It does not replace controlled CAESAR Q2 parity.
 
 Do not delete raw CAESAR files after extracting reported values. The JSON is derivative evidence; the retained job/input/output bytes, their recomputed SHA-256 values and report locators are the source custody.
 
-Contract fixtures are not CAESAR evidence and must never be substituted for controlled external runs.
+Contract fixtures and generated scaffolds are not CAESAR evidence and must never be substituted for controlled external runs.

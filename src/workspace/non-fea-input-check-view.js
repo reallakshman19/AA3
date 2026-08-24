@@ -155,7 +155,7 @@ const ROOT_CAUSE_GUIDANCE = Object.freeze({
   QUALIFICATION_PROFILE_REQUIRED: 'No locked QUALIFIED profile is bound to these methods. This is qualification evidence from your validation programme, so there is no built-in default: load an approved profile set into Project Data under qualificationPolicy.qualificationProfiles, approve it, then select the profile and version. Every other blocker can be cleared and these methods will still not seal until that is supplied.',
   SECTION_COVERAGE_INCOMPLETE: 'Some pipes have no outer diameter and wall thickness. Both come from the Piping Class master, so check that its rows actually match the piping class and bore used by those lines — a loaded master still leaves gaps where nothing matched.',
   FLEXURAL_COVERAGE_INCOMPLETE: 'Some pipes have neither a flexural rigidity nor the elastic modulus and second moment of area needed to derive one. Modulus comes from the material, and the second moment from bore and wall thickness, so this usually clears with Section coverage once the Piping Class rows match those lines.',
-  MASS_COVERAGE_INCOMPLETE: 'Some entities have no mass evidence. Pipes need a unit weight, or a material density with bore and wall thickness. Valves and other fittings need a component weight from the Weights master. Operating and hydro cases each need their fluid density from the Line List, and insulated lines need an insulation weight or density.',
+  MASS_COVERAGE_INCOMPLETE: 'Some entities have no mass evidence. Open Enrichment &amp; Overrides, press "Generate proposals from approved masters" for pipe section and fluid density, and "Review fitting weights…" for valves and other catalogue fittings, then accept the staged proposals. Nothing is written until you accept them there.',
   MASTER_NOT_CURRENT: 'A required master has no current normalized rows or source hash. Re-apply its column mapping.',
 });
 
@@ -207,7 +207,8 @@ function rootCauseMarkup(rows, active) {
     ${coverageNote}
     <ul>${shared.map((entry) => `<li>
       <code>${escapeHtml(entry.code)}</code> — blocks ${entry.scopes.size} method(s), ${entry.count} issue(s).
-      ${escapeHtml(ROOT_CAUSE_GUIDANCE[entry.code] || 'Resolve this cause to clear every method listed against it.')}
+      ${ROOT_CAUSE_GUIDANCE[entry.code] || 'Resolve this cause to clear every method listed against it.'}
+      ${entry.code === 'MASS_COVERAGE_INCOMPLETE' ? '<button type="button" class="button" data-load-calc-tab="enrichment">Open Enrichment &amp; Overrides</button>' : ''}
     </li>`).join('')}</ul>
   </div>`;
 }

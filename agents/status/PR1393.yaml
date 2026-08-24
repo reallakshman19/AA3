@@ -7,13 +7,14 @@ criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 auto_state: BLOCKED_INFRASTRUCTURE
 merge_authority: OWNER_ONLY
-current_stage: CROSS_STAGE_ANTI_DRIFT_AND_VIEWPORT_IDENTITY_VALIDATION
+current_stage: CROSS_STAGE_ANTI_DRIFT_VIEWPORT_IDENTITY_AND_MERGE_ORDER_VALIDATION
 main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
 report: agents/PR1393_workreport.md
 coordination_state: SAFE
 registry_cleanup: BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
 validation_plumbing: EXISTING_CHROMIUM_CARRIER_BOUND
 viewport_mesh_identity: CONTENT_HASH_AND_ARTIFACT_HASH_EXPOSED_SEPARATELY
+pr_b_merge_order_guard: BOUND_NOT_APPLICABLE_UNTIL_SOURCE_FAITHFUL_PROVIDER_PRESENT
 hosted_engineering_execution: NOT_RUN_STEPS_NULL
-highest_risk: FIRST_EXECUTION_MAY_REVEAL_CUSTODY_OR_VIEWPORT_IDENTITY_ASSERTION_FAILURE
-exact_next_action: execute cross-stage anti-drift gate on exact head; preserve registry limitation until it and Chromium actually execute and pass
+highest_risk: COMBINED_A_B_C_D_HEAD_HAS_NOT_EXECUTED_SOURCE_FAITHFUL_REGENERATION_AND_CHROMIUM
+exact_next_action: on intended A->B->C->D combined head require merge-order guard PASS, anti-drift PASS and Chromium PASS before registry cleanup; preserve NOT_RUN until hosted steps actually start

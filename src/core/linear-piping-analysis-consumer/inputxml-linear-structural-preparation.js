@@ -8,13 +8,23 @@ import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { requireInputXmlModelHealthSource } from '../geometry/model-health/index.js';
 import { requireInputXmlLinearModelHealth } from './inputxml-linear-model-health-contract.js';
 import { requireInputXmlLinearSolvePreparation } from './inputxml-linear-solve-preparation-contract.js';
+import {
+  requireBendRetopologyBindingsResolved,
+  retopologiseDeclaredBends,
+} from './bend-retopology.js';
 import { compileInputXmlStructuralConstraints } from './inputxml-linear-structural-constraints.js';
+import {
+  projectInputXmlAnalyticalGeometry,
+  requireExplainedConditioning,
+  resolveSourceSegmentId,
+  structuralElementId,
+} from './inputxml-linear-structural-retopology.js';
 import {
   INPUTXML_LINEAR_STRUCTURAL_PREPARATION_SCHEMA,
   sealInputXmlLinearStructuralPreparation,
 } from './inputxml-linear-structural-preparation-contract.js';
 import {
-  INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE,
+  INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE,
   InputXmlLinearStructuralPreparationError,
   inputXmlMechanicalModelCompilerProfile,
   requireInputXmlLinearStructuralProfile,
@@ -47,19 +57,23 @@ export function compileInputXmlLinearStructure(
 
   const modelId = normalizeModelId(options.modelId ?? prepared.modelId);
   const analyticalGeometry = projectInputXmlAnalyticalGeometry(prepared);
-  const conditionedTopology = conditionGeometry(
-    analyticalGeometry,
-    [],
-    options.conditioningProfile ?? INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE,
+  const conditioningProfile = options.conditioningProfile
+    ?? INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE;
+  const retopology = retopologiseDeclaredBends(analyticalGeometry, conditioningProfile);
+  requireBendRetopologyBindingsResolved(retopology);
+  const conditionedTopology = conditionGeometry(retopology.geometry, [], conditioningProfile);
+  requireExplainedConditioning(
+    prepared.normalizedGeometry,
+    conditionedTopology.geometry,
+    retopology.spanOrigin,
   );
-  requireIdentityConditioning(prepared.normalizedGeometry, conditionedTopology.geometry);
 
   const materialByHash = new Map(prepared.materialResolutions
     .map((row) => [row.semanticHash, row]));
   const sectionByHash = new Map(prepared.sectionResolutions
     .map((row) => [row.semanticHash, row]));
   const authorityBindingBySegment = new Map(prepared.segmentBindings
-    .map((row) => [row.segmentId, row]));
+    .map((row) => [String(row.segmentId), row]));
   const sourceSegmentById = new Map(prepared.normalizedGeometry.segments
     .map((row) => [String(row.id), row]));
   const nodesById = new Map(conditionedTopology.geometry.nodes
@@ -67,13 +81,14 @@ export function compileInputXmlLinearStructure(
 
   const segmentBindings = conditionedTopology.geometry.segments.map((segment) => {
     const segmentId = String(segment.id);
-    const authority = authorityBindingBySegment.get(segmentId) ?? null;
-    const sourceSegment = sourceSegmentById.get(segmentId) ?? null;
+    const sourceSegmentId = resolveSourceSegmentId(segment, sourceSegmentById, retopology.spanOrigin);
+    const authority = authorityBindingBySegment.get(sourceSegmentId) ?? null;
+    const sourceSegment = sourceSegmentById.get(sourceSegmentId) ?? null;
     if (authority === null || sourceSegment === null) {
       fail(
         'INPUTXML_STRUCTURAL_SEGMENT_AUTHORITY_MISSING',
         `Conditioned segment ${segmentId} has no retained authority binding.`,
-        { segmentId },
+        { segmentId, sourceSegmentId },
       );
     }
     const material = materialByHash.get(authority.materialResolutionSemanticHash) ?? null;
@@ -82,12 +97,18 @@ export function compileInputXmlLinearStructure(
       fail(
         'INPUTXML_STRUCTURAL_STATE_AUTHORITY_MISSING',
         `Segment ${segmentId} has stale material or section authority.`,
-        { segmentId },
+        { segmentId, sourceSegmentId },
       );
     }
-    const elementId = `${modelId}.E${authority.sourceIndex + 1}`;
+    const elementId = structuralElementId(
+      modelId,
+      authority.sourceIndex,
+      segmentId,
+      sourceSegmentId,
+    );
     return Object.freeze({
       segmentId,
+      sourceSegmentId,
       elementId,
       sourceFeatureId: authority.sourceFeatureId,
       sourceIndex: authority.sourceIndex,
@@ -102,8 +123,10 @@ export function compileInputXmlLinearStructure(
       analysisSectionSemanticHash: section.semanticHash,
       rigidAuthoritySemanticHash: authority.rigidAuthoritySemanticHash,
       localAxisEvidenceIdentity: `AXIS-${elementId}`,
-      startNodeId: String(sourceSegment.startNodeId),
-      endNodeId: String(sourceSegment.endNodeId),
+      startNodeId: String(segment.startNodeId),
+      endNodeId: String(segment.endNodeId),
+      retopologyRole: segment.meta?.retopologyRole ?? null,
+      bendChordOf: segment.meta?.bendChordOf ?? null,
     });
   });
 
@@ -111,6 +134,8 @@ export function compileInputXmlLinearStructure(
     inventory: health.inventory,
     modelId,
     analysisProfileId: prepared.analysisProfileId,
+    nodeRetargeting: retopology.nodeRetargeting,
+    conditionedNodeIds: conditionedTopology.geometry.nodes.map((node) => String(node.id)),
   });
   const referenceVector = requireReferenceVector(options.referenceVector ?? [0, 0, 1]);
   const localAxisResults = segmentBindings.map((binding) => ({
@@ -191,6 +216,7 @@ export function compileInputXmlLinearStructure(
       sectionStateCount: compilation.model.sectionStates.length,
       mechanicalModelSemanticHash: compilation.mechanicalModelSemanticHash,
       stiffnessStateHash: compilation.stiffnessStateHash,
+      bendRetopology: retopology.summary,
     }),
     executionBoundary: Object.freeze({
       constraintsCompiled: true,
@@ -205,42 +231,6 @@ export function compileInputXmlLinearStructure(
       ]),
     }),
   });
-}
-
-function projectInputXmlAnalyticalGeometry(prepared) {
-  const bindingBySegment = new Map(prepared.segmentBindings
-    .map((row) => [String(row.segmentId), row]));
-  const segments = prepared.normalizedGeometry.segments.map((segment) => {
-    const binding = bindingBySegment.get(String(segment.id)) ?? null;
-    if (binding?.limitationCode !== 'GENERIC_APPROX_BEND_STRAIGHT_CHORD') return segment;
-    return Object.freeze({
-      ...segment,
-      type: 'PIPE',
-      meta: Object.freeze({
-        ...(segment.meta ?? {}),
-        inputXmlSourceType: segment.type,
-        analysisApproximation: 'GENERIC_APPROX_BEND_STRAIGHT_CHORD',
-      }),
-    });
-  });
-  return Object.freeze({
-    ...prepared.normalizedGeometry,
-    nodes: prepared.normalizedGeometry.nodes,
-    segments: Object.freeze(segments),
-  });
-}
-
-function requireIdentityConditioning(sourceGeometry, conditionedGeometry) {
-  const sourceIds = sourceGeometry.segments.map((row) => String(row.id)).sort(compareAscii);
-  const conditionedIds = conditionedGeometry.segments.map((row) => String(row.id)).sort(compareAscii);
-  if (sourceIds.length !== conditionedIds.length
-    || sourceIds.some((value, index) => value !== conditionedIds[index])) {
-    fail(
-      'INPUTXML_STRUCTURAL_CONDITIONING_CHANGED_SPAN_CUSTODY',
-      'Structural preparation requires one conditioned span per retained source segment.',
-      { sourceSegmentIds: sourceIds, conditionedSegmentIds: conditionedIds },
-    );
-  }
 }
 
 function point(nodesById, nodeId) {
@@ -262,9 +252,7 @@ function requireReferenceVector(value) {
 
 function normalizeModelId(value) {
   const text = String(value ?? '').trim();
-  if (!/^[A-Za-z0-9_.-]+$/u.test(text)) {
-    throw new TypeError('InputXML structural modelId is invalid.');
-  }
+  if (!/^[A-Za-z0-9_.-]+$/u.test(text)) throw new TypeError('InputXML structural modelId is invalid.');
   return text;
 }
 

@@ -10,11 +10,11 @@ import { requireInputXmlLinearPreFeaPreparation } from './inputxml-linear-prefea
 import { rawExecutionSemanticProjection } from './inputxml-linear-production-executor.js';
 import { inputXmlProductionRecoveryProfile } from './inputxml-linear-recovery-profile.js';
 import { inputXmlStiffnessFrameElementProfile } from './inputxml-linear-stiffness-profile.js';
+import { PRODUCTION_CAPABILITY_PROFILE } from './production-capability-profile.js';
 
 export const INPUTXML_LINEAR_RECOVERY_BATCH_SCHEMA =
   'fea-inputxml-linear-recovery-batch/v1';
 
-/** Recover only the exact raw cases already solved under governed preparation. */
 export function recoverInputXmlAuthorizedRawCases({ preparation, rawExecutionBatch }) {
   const accepted = requireInputXmlLinearPreFeaPreparation(preparation);
   const raw = requireRawBatch(rawExecutionBatch, accepted);
@@ -69,14 +69,21 @@ function recoverCase({ accepted, row, physical, frameProfile, recoveryProfile })
     accepted.structuralPreparation,
     frameProfile,
     physical.loadCase,
+    {
+      sourcePreparation: accepted.sourcePreparation,
+      bendFactorAuthority: accepted.stiffnessPreflight.bendFactorAuthority,
+      branchFactorAuthority: accepted.stiffnessPreflight.branchFactorAuthority,
+      capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
+    },
   );
+  requireEffectiveStiffnessCustody(accepted, elements);
   requireElementLedgerCustody(row, elements.elementLedger);
   const recovery = requireResultRecovery(compileResultRecovery({
     compilation: accepted.structuralPreparation.compilation,
     execution,
     loadCase: physical.loadCase,
     frameElements: elements.frameElements,
-    pipingComponents: [],
+    pipingComponents: elements.pipingComponents,
     recoveryProfile,
   }));
   return {
@@ -117,11 +124,26 @@ function requireRawBatch(raw, preparation) {
 }
 
 function requireProfileCustody(raw, preparation, frameProfile) {
-  const qualifiedHash = preparation.stiffnessPreflight?.frameElementProfileSemanticHash;
+  const preflight = preparation.stiffnessPreflight;
+  const qualifiedHash = preflight?.frameElementProfileSemanticHash;
   if (raw.frameElementProfileSemanticHash !== frameProfile.semanticHash
     || qualifiedHash !== frameProfile.semanticHash) {
     throw recoveryError('INPUTXML_RECOVERY_FRAME_PROFILE_STALE',
       'Recovery frame-element profile is not the profile qualified and used by raw execution.');
+  }
+  const currentCapability = semanticHash(PRODUCTION_CAPABILITY_PROFILE);
+  if (preflight.productionCapabilityProfileHash !== currentCapability) {
+    throw recoveryError('INPUTXML_RECOVERY_CAPABILITY_PROFILE_STALE',
+      'Production component capability changed after the solved pre-flight.');
+  }
+}
+
+function requireEffectiveStiffnessCustody(preparation, elements) {
+  const rebuilt = elements.effectiveStiffnessStateHash;
+  if (rebuilt !== preparation.stiffnessStateHash
+    || rebuilt !== preparation.stiffnessPreflight.effectiveStiffnessStateHash) {
+    throw recoveryError('INPUTXML_RECOVERY_EFFECTIVE_STIFFNESS_STALE',
+      'Recovery rebuilt a different effective stiffness authority from the solved preparation.');
   }
 }
 
@@ -177,11 +199,9 @@ function caseIdentity(row) {
     recoveryEvidenceHash: row.recoveryEvidenceHash,
   };
 }
-
 function aggregateStatus(statuses) {
   return statuses.some((status) => status === 'CONDITIONAL') ? 'CONDITIONAL' : 'QUALIFIED';
 }
-
 function recoveryError(code, message) {
   const error = new TypeError(message);
   error.code = code;

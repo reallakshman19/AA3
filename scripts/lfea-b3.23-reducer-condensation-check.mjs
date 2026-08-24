@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 import { frameLocalStiffness } from '../src/core/linear-fea-frame-element/index.js';
 import {
+  REDUCER_CANDIDATE_PARITY_STATUS,
   REDUCER_CONDENSATION_REQUEST_SCHEMA,
+  REDUCER_PRODUCTION_BLOCKER_CODES,
   REDUCER_SAMPLING_RULE,
+  REDUCER_SEGMENT_COUNT,
   ReducerCondensationError,
+  assessReducerCondensationProductionReadiness,
   compileTenCylinderReducerAuthority,
   computeReducerCondensationRequestSemanticHash,
+  requireReducerCondensationProductionReady,
   sealReducerCondensationRequest,
 } from '../src/core/linear-fea-reducer-condensation/index.js';
 
@@ -66,7 +72,7 @@ console.log('\n--- LFEA B-3.23 ten-cylinder reducer condensation ---');
 const accepted = sealReducerCondensationRequest({ ...request(), semanticHash: '' });
 const authority = compileTenCylinderReducerAuthority(accepted);
 assert.equal(authority.schema, 'fea-linear-reducer-condensation-authority/v1');
-assert.equal(authority.parityStatus, 'CANDIDATE_PENDING_SECTION_SAMPLING_VERIFICATION');
+assert.equal(authority.parityStatus, REDUCER_CANDIDATE_PARITY_STATUS);
 assert.equal(authority.segments.length, 10);
 assert.equal(authority.structuralParticipation.condensedInternalStationCount, 9);
 assert.equal(authority.structuralParticipation.cylinderBeamFormulation, 'PIPE_FRAME3D_TIMOSHENKO_V1');
@@ -82,6 +88,27 @@ for (const segment of authority.segments) {
   assert.equal(segment.shearFlexibility.correctionFactorY, CAESAR_PIPE_SHEAR_CORRECTION_FACTOR);
   assert.equal(segment.shearFlexibility.correctionFactorZ, CAESAR_PIPE_SHEAR_CORRECTION_FACTOR);
 }
+
+// Production-readiness is deliberately stricter than mathematical self-consistency.
+// Ten cylinders are documented; the exact section sampling station is not. The
+// current midpoint rule must therefore remain unusable as an "exact CAESAR"
+// production authority until controlled source/parity evidence changes this boundary.
+const readiness = assessReducerCondensationProductionReadiness(authority);
+assert.equal(readiness.status, 'BLOCK');
+assert.equal(readiness.productionUseAuthorized, false);
+assert.equal(readiness.samplingRule, REDUCER_SAMPLING_RULE);
+assert.equal(readiness.parityStatus, REDUCER_CANDIDATE_PARITY_STATUS);
+for (const code of REDUCER_PRODUCTION_BLOCKER_CODES) {
+  assert.ok(readiness.blockerCodes.includes(code), `Missing reducer production blocker ${code}.`);
+}
+assert.throws(
+  () => requireReducerCondensationProductionReady(authority),
+  (error) => error?.name === 'ReducerProductionReadinessError'
+    && error?.code === 'REDUCER_PRODUCTION_PARITY_NOT_QUALIFIED'
+    && error?.readiness?.productionUseAuthorized === false,
+  'Candidate reducer authority must fail closed at the production boundary.',
+);
+assertCandidateReducerNotReachedByProduction(readiness);
 
 let axialCompliance = 0;
 let torsionalCompliance = 0;
@@ -148,5 +175,24 @@ console.log(JSON.stringify({
   centroidFromEnd: authority.gravity.centroidFromEnd,
   cylinderBeamFormulation: authority.structuralParticipation.cylinderBeamFormulation,
   parityStatus: authority.parityStatus,
+  productionReadiness: readiness.status,
+  productionUseAuthorized: readiness.productionUseAuthorized,
+  productionBlockerCodes: readiness.blockerCodes,
 }, null, 2));
 console.log('LFEA B-3.23 ten-cylinder reducer condensation PASS');
+
+function assertCandidateReducerNotReachedByProduction(currentReadiness) {
+  if (currentReadiness.productionUseAuthorized) return;
+  const root = new URL('../src/core/linear-piping-analysis-consumer/', import.meta.url);
+  const offending = fs.readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.js'))
+    .filter((entry) => fs.readFileSync(new URL(entry.name, root), 'utf8')
+      .includes('compileTenCylinderReducerAuthority'))
+    .map((entry) => entry.name)
+    .sort();
+  assert.deepEqual(
+    offending,
+    [],
+    'Candidate reducer condensation authority must not be reachable from the production linear-piping consumer.',
+  );
+}

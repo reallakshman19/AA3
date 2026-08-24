@@ -22,6 +22,32 @@ export const INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE = Object.freeze({
   },
 });
 
+/**
+ * S2 production conditioning profile.
+ *
+ * Bend retopology consumes bendSeedingSegments before generic conditioning and
+ * creates the explicit chord chain itself. `seedIntermediateNodes` recognizes
+ * those `bendChordOf` spans and therefore does not seed them again. Six is the
+ * minimum even subdivision that satisfies the existing B-3.2 1% bend
+ * compliance convergence check for a 90-degree bend against 4x refinement;
+ * four chords miss that criterion (~1.21%). Six preserves a unique mid-arc
+ * station and also remains comfortably inside the 2% arc/chord length bound.
+ */
+export const INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE = Object.freeze({
+  spanSeedingLimit: {
+    value: 1e9,
+    source: 'S2 changes bend topology only; unrelated straight-span subdivision remains inactive.',
+  },
+  bendSeedingSegments: {
+    value: 6,
+    source: 'S2/B3.2 convergence reconciliation: minimum even 90-degree bend subdivision satisfying 1% compliance convergence against 4x refinement.',
+  },
+  bendLengthErrorLimit: {
+    value: 0.02,
+    source: 'LFEA piping component promotion S2: maximum relative arc-to-chord length shortfall.',
+  },
+});
+
 const PROFILE_BY_ID = Object.freeze({
   [STRICT_INPUTXML_LINEAR_STATIC_PROFILE]: Object.freeze({
     schema: INPUTXML_LINEAR_STRUCTURAL_PROFILE_SCHEMA,

@@ -430,7 +430,8 @@ function safeConvert(value, declaration, quantity, edge, diagnostics) {
     return convertInputXmlScalar(value, declaration, quantity);
   } catch (error) {
     addDiagnostic(
-      diagnostics, 'error', 'INPUTXML_UNIT_DECLARATION_REQUIRED',
+      diagnostics,
+      'error', 'INPUTXML_UNIT_DECLARATION_REQUIRED',
       error instanceof Error ? error.message : String(error),
       { elementIndex: edge.index, quantity },
     );
@@ -536,6 +537,9 @@ function resolveBendFromPredecessor(segment, segmentsEndingAt, nodeCoords, toler
   }
   segment.meta.bendArcCentre = resolved.centre;
   segment.meta.bendComputedRadius = resolved.computedRadius;
+  segment.meta.bendTangentStart = { ...tangentStart };
+  segment.meta.bendTangentEnd = { ...tangentEnd };
+  segment.meta.bendTangentBasis = 'INPUTXML_TANGENT_TO_TANGENT_V1';
   addDiagnostic(diagnostics, 'info', 'BEND_ARC_GEOMETRY_RESOLVED', `Bend segment ${segment.id} arc centre resolved from declared radius and incoming direction.`, { segmentId: segment.id });
 }
 

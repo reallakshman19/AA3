@@ -8,13 +8,13 @@ import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
 import { compileInputXmlExecutionElementAuthorities } from '../core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js';
 import { inputXmlStiffnessFrameElementProfile } from '../core/linear-piping-analysis-consumer/inputxml-linear-stiffness-profile.js';
+import { PRODUCTION_CAPABILITY_PROFILE } from '../core/linear-piping-analysis-consumer/production-capability-profile.js';
 import { requireLfeaNativeStraightCodeStationAuthority } from './native-b31-code-stations.js';
 import { lfeaNativeB31Error } from './native-b31-authority-contract.js';
 
 export const LFEA_NATIVE_B31_CODE_RECOVERY_SCHEMA =
   'lfea-native-b31-code-recovery/v1';
 
-/** Build current code-point evidence from retained B-3.4 element actions only. */
 export function buildLfeaNativeB31CaseChains(
   preFlight,
   executionState,
@@ -28,10 +28,8 @@ export function buildLfeaNativeB31CaseChains(
   );
   const tolerance = batch.recoveryProfile?.codePointConsistencyTolerance?.value;
   if (!Number.isFinite(tolerance) || !(tolerance > 0)) {
-    throw lfeaNativeB31Error(
-      'LFEA_NATIVE_B31_RECOVERY_TOLERANCE_REQUIRED',
-      'B31 code-point recovery requires the explicit retained B-3.4 consistency tolerance.',
-    );
+    throw lfeaNativeB31Error('LFEA_NATIVE_B31_RECOVERY_TOLERANCE_REQUIRED',
+      'B31 code-point recovery requires the explicit retained B-3.4 consistency tolerance.');
   }
   const preparation = preFlight.preparation;
   const physicalById = new Map(preparation.physicalPreparation.physicalCases
@@ -42,21 +40,23 @@ export function buildLfeaNativeB31CaseChains(
     const physical = physicalById.get(rawCase.caseId);
     const recovered = recoveryById.get(rawCase.caseId);
     if (!physical || !recovered) {
-      throw lfeaNativeB31Error(
-        'LFEA_NATIVE_B31_CASE_AUTHORITY_MISSING',
-        `Case ${rawCase.caseId} lacks current physical or B-3.4 authority.`,
-      );
+      throw lfeaNativeB31Error('LFEA_NATIVE_B31_CASE_AUTHORITY_MISSING',
+        `Case ${rawCase.caseId} lacks current physical or B-3.4 authority.`);
     }
     const elements = compileInputXmlExecutionElementAuthorities(
       preparation.structuralPreparation,
       frameProfile,
       physical.loadCase,
+      {
+        sourcePreparation: preparation.sourcePreparation,
+        bendFactorAuthority: preparation.stiffnessPreflight.bendFactorAuthority,
+        branchFactorAuthority: preparation.stiffnessPreflight.branchFactorAuthority,
+        capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
+      },
     );
     if (semanticHash(rawCase.elementLedger) !== semanticHash(elements.elementLedger)) {
-      throw lfeaNativeB31Error(
-        'LFEA_NATIVE_B31_ELEMENT_LEDGER_MISMATCH',
-        `Case ${rawCase.caseId} frame-element authority differs from the retained solve ledger.`,
-      );
+      throw lfeaNativeB31Error('LFEA_NATIVE_B31_ELEMENT_LEDGER_MISMATCH',
+        `Case ${rawCase.caseId} element authority differs from the retained solve ledger.`);
     }
     const codeRecovery = deriveCodeRecovery(
       recovered.recovery,
@@ -64,13 +64,18 @@ export function buildLfeaNativeB31CaseChains(
       stationAuthority,
       tolerance,
     );
+    const frameRows = [
+      ...elements.frameElements,
+      ...elements.pipingComponents.flatMap((component) =>
+        component.elements.map((entry) => entry.frameElement)),
+    ];
     return deepFreeze({
       caseId: rawCase.caseId,
       loadCase: physical.loadCase,
       baseRecoverySemanticHash: recovered.recovery.semanticHash,
       codeRecovery,
       frameElementById: Object.freeze(Object.fromEntries(
-        elements.frameElements.map((row) => [row.elementId, row]),
+        frameRows.map((row) => [row.elementId, row]),
       )),
     });
   });
@@ -106,39 +111,42 @@ function requireCheckCaseCoverage(chains, checks) {
   const currentCaseIds = new Set(chains.map((row) => row.caseId));
   for (const check of checks) {
     if (!currentCaseIds.has(check.actionSource.caseId)) {
-      throw lfeaNativeB31Error(
-        'LFEA_NATIVE_B31_CURRENT_CASE_EXECUTION_REQUIRED',
-        `B31 check ${check.checkId} requires current execution/recovery for ${check.actionSource.caseId}.`,
-      );
+      throw lfeaNativeB31Error('LFEA_NATIVE_B31_CURRENT_CASE_EXECUTION_REQUIRED',
+        `B31 check ${check.checkId} requires current execution/recovery for ${check.actionSource.caseId}.`);
     }
   }
 }
 
 function deriveCodeRecovery(baseRecoveryRecord, compilation, stationAuthority, tolerance) {
   const baseRecovery = requireResultRecovery(baseRecoveryRecord);
-  if (baseRecovery.componentResultants.length !== 0) {
-    throw lfeaNativeB31Error(
-      'LFEA_NATIVE_B31_BASE_COMPONENT_RESULTANTS_PRESENT',
-      'This native B31 adapter requires the current bare-frame B-3.4 recovery boundary.',
-    );
-  }
   const actionByElementId = new Map(baseRecovery.elementActions.map((row) => [
     row.elementId,
     { local: row.local, global: row.global },
   ]));
   const modelElementsById = new Map(compilation.model.elements.map((row) => [row.elementId, row]));
-  const componentResultants = stationAuthority.components.map((component) => ({
-    componentId: component.componentId,
-    componentType: component.componentType,
-    codePoints: component.stations.map((station) => recoverComponentCodePoint({
-      station,
-      componentElementIds: [component.elementId],
-      modelElementsById,
-      actionByElementId,
-      nodalLoadByNode: new Map(),
-      tolerance,
-    })),
-  }));
+  const existingIds = new Set(baseRecovery.componentResultants.map((row) => row.componentId));
+  const addedResultants = stationAuthority.components.map((component) => {
+    if (existingIds.has(component.componentId)) {
+      throw lfeaNativeB31Error('LFEA_NATIVE_B31_COMPONENT_RESULTANT_COLLISION',
+        `B31 straight code-station component ${component.componentId} collides with an existing B-3.4 component resultant.`);
+    }
+    return {
+      componentId: component.componentId,
+      componentType: component.componentType,
+      codePoints: component.stations.map((station) => recoverComponentCodePoint({
+        station,
+        componentElementIds: [component.elementId],
+        modelElementsById,
+        actionByElementId,
+        nodalLoadByNode: new Map(),
+        tolerance,
+      })),
+    };
+  });
+  const componentResultants = [
+    ...baseRecovery.componentResultants,
+    ...addedResultants,
+  ].sort((left, right) => compareAscii(left.componentId, right.componentId));
   const draft = {
     ...baseRecovery,
     componentResultants,
@@ -167,20 +175,16 @@ function deriveCodeRecovery(baseRecoveryRecord, compilation, stationAuthority, t
 function requireCurrentRaw(state) {
   const raw = state?.currentness === 'CURRENT' ? state.execution : null;
   if (!raw || !['QUALIFIED', 'CONDITIONAL'].includes(raw.status)) {
-    throw lfeaNativeB31Error(
-      'LFEA_NATIVE_B31_CURRENT_RAW_REQUIRED',
-      'B31 publication requires current qualified/conditional B-3.3 execution.',
-    );
+    throw lfeaNativeB31Error('LFEA_NATIVE_B31_CURRENT_RAW_REQUIRED',
+      'B31 publication requires current qualified/conditional B-3.3 execution.');
   }
   return raw;
 }
 function requireCurrentRecovery(state, raw) {
   const batch = state?.currentness === 'CURRENT' ? state.results : null;
   if (!batch || batch.rawExecutionBatchSemanticHash !== raw.semanticHash) {
-    throw lfeaNativeB31Error(
-      'LFEA_NATIVE_B31_CURRENT_RECOVERY_REQUIRED',
-      'B31 publication requires current B-3.4 recovery for the exact raw execution.',
-    );
+    throw lfeaNativeB31Error('LFEA_NATIVE_B31_CURRENT_RECOVERY_REQUIRED',
+      'B31 publication requires current B-3.4 recovery for the exact raw execution.');
   }
   return batch;
 }

@@ -1,0 +1,151 @@
+name: LFEA piping component promotion stack certification
+
+on:
+  pull_request:
+    paths:
+      - 'agents/PR1348_workreport.md'
+      - 'agents/PR1395_workreport.md'
+      - 'agents/PR1396_workreport.md'
+      - 'src/core/geometry/adapters/accdb-to-canonical-geometry.js'
+      - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
+      - 'src/core/linear-piping-analysis-consumer/**'
+      - 'src/workspace/lfea-bend-factor-authority-control.js'
+      - 'src/workspace/linear-piping-inputxml-prefea.js'
+      - 'src/lfea/native-b31-case-chain.js'
+      - 'src/lfea/native-support-publication-case-chain.js'
+      - 'scripts/lfea-production-capability-profile-check.mjs'
+      - 'scripts/lfea-bend-tangent-custody-check.mjs'
+      - 'scripts/lfea-bend-retopology-check.mjs'
+      - 'scripts/lfea-s3-bend-factor-authority-control-check.mjs'
+      - 'scripts/lfea-s3-bend-production-authority-check.mjs'
+      - 'scripts/lfea-s6-tee-production-authority-check.mjs'
+      - 'scripts/lfea-s7-component-ui-disclosure-check.mjs'
+      - 'scripts/lfea-piping-component-promotion-anti-drift-check.mjs'
+      - 'scripts/lfea-bm4l-bend-tangent-source-check.mjs'
+      - 'scripts/lfea-bm4l-bend-retopology-source-check.mjs'
+      - 'scripts/lfea-bm4l-bend-tangent-source-check.ps1'
+      - 'scripts/linear-piping-analysis-consumer-check.mjs'
+      - 'scripts/linear-piping-analysis-consumer-anti-drift-check.mjs'
+      - '.github/workflows/lfea-piping-component-promotion-stack.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-promotion-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check promotion scripts
+        run: |
+          node --check scripts/lfea-production-capability-profile-check.mjs
+          node --check scripts/lfea-bend-tangent-custody-check.mjs
+          node --check scripts/lfea-bend-retopology-check.mjs
+          node --check scripts/lfea-s3-bend-factor-authority-control-check.mjs
+          node --check scripts/lfea-s3-bend-production-authority-check.mjs
+          node --check scripts/lfea-s6-tee-production-authority-check.mjs
+          node --check scripts/lfea-s7-component-ui-disclosure-check.mjs
+          node --check scripts/lfea-piping-component-promotion-anti-drift-check.mjs
+          node --check scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Verify S0 production capability authority
+        run: node scripts/lfea-production-capability-profile-check.mjs
+
+      - name: Verify S1 tangent custody
+        run: node scripts/lfea-bend-tangent-custody-check.mjs
+
+      - name: Verify S2 bend retopology
+        run: node scripts/lfea-bend-retopology-check.mjs
+
+      - name: Verify S3 factor selection authority
+        run: node scripts/lfea-s3-bend-factor-authority-control-check.mjs
+
+      - name: Verify S3 production bend mechanics
+        run: node scripts/lfea-s3-bend-production-authority-check.mjs
+
+      - name: Re-run S6 B31J factor benchmark
+        run: node scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs
+
+      - name: Re-run S6 M047 tee rigid thermal benchmark
+        run: node scripts/lfea-m047-tee-rigid-thermal-check.mjs
+
+      - name: Verify S6 production tee mechanics
+        run: node scripts/lfea-s6-tee-production-authority-check.mjs
+
+      - name: Verify S7 governed disclosure
+        run: node scripts/lfea-s7-component-ui-disclosure-check.mjs
+
+      - name: Verify promotion-wide anti-drift
+        run: node scripts/lfea-piping-component-promotion-anti-drift-check.mjs
+
+      - name: Re-run governed linear-piping consumer aggregate
+        run: node scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Re-run core consumer anti-drift
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
+
+      - name: Re-run ACCDB geometry regression
+        run: node scripts/accdb-to-canonical-geometry-check.mjs
+
+  real-bm4l-s1-s2:
+    needs: deterministic-promotion-stack
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Acquire pinned BM4_L source and authenticated ACE provider
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zipUrl = 'https://raw.githubusercontent.com/reallaksh19/Common/3fe20c7db76feb6ea583fb658b67b3a55afd4fe3/LFEA/BM4/BM4_L.zip'
+          $zipSha = '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+          $zipBytes = [int64]582488
+          $aceUrl = 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+          $aceSha = '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+          $progIdKey = 'Registry::HKEY_CLASSES_ROOT\Microsoft.ACE.OLEDB.12.0\CLSID'
+
+          New-Item -ItemType Directory -Force artifacts/promotion-bm4l/source, artifacts/promotion-bm4l/provider | Out-Null
+          $zipPath = 'artifacts/promotion-bm4l/BM4_L.zip'
+          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+          $zip = Get-Item $zipPath
+          $actualZipSha = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($zip.Length -ne $zipBytes -or $actualZipSha -ne $zipSha) {
+            throw "Pinned BM4_L.zip custody mismatch: bytes=$($zip.Length), sha=$actualZipSha"
+          }
+          Expand-Archive $zipPath -DestinationPath artifacts/promotion-bm4l/source -Force
+          $members = @(Get-ChildItem artifacts/promotion-bm4l/source -File -Recurse)
+          if ($members.Count -ne 1 -or $members[0].Name -ne 'BM4_L.ACCDB') {
+            throw 'Pinned BM4_L.zip must contain exactly BM4_L.ACCDB.'
+          }
+
+          if (-not (Test-Path $progIdKey)) {
+            $installer = 'artifacts/promotion-bm4l/provider/accessdatabaseengine_X64.exe'
+            Invoke-WebRequest -Uri $aceUrl -OutFile $installer
+            $actualAceSha = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actualAceSha -ne $aceSha) { throw "ACE installer SHA-256 mismatch: $actualAceSha" }
+            $sig = Get-AuthenticodeSignature -LiteralPath $installer
+            if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft') {
+              throw "ACE installer Authenticode validation failed: $($sig.Status), $($sig.SignerCertificate.Subject)"
+            }
+            $process = Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+            if ($process.ExitCode -notin @(0, 3010)) { throw "ACE installer exited $($process.ExitCode)." }
+          }
+          if (-not (Test-Path $progIdKey)) { throw 'Microsoft.ACE.OLEDB.12.0 is not registered after setup.' }
+
+      - name: Qualify real BM4_L S1 tangent custody and S2 retopology
+        shell: pwsh
+        run: |
+          ./scripts/lfea-bm4l-bend-tangent-source-check.ps1 `
+            -AccdbPath 'artifacts/promotion-bm4l/source/BM4_L.ACCDB' `
+            -TablesOut 'artifacts/promotion-bm4l/accdb-tables.json'

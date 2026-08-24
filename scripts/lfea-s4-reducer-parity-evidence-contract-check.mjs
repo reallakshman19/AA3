@@ -16,15 +16,9 @@ function reportedResults(family, index) {
   if (family === 'STRUCTURAL_AXIAL') return { displacements: { ux: index + 1 }, reactions: { fx: index + 2 } };
   if (family === 'STRUCTURAL_TORSION') return { rotations: { rx: index + 1 }, reactions: { mx: index + 2 } };
   if (family === 'STRUCTURAL_TRANSVERSE_FORCE' || family === 'STRUCTURAL_END_MOMENT') {
-    return {
-      displacements: { uy: index + 1 },
-      rotations: { rz: index + 2 },
-      reactions: { fy: index + 3, mz: index + 4 },
-    };
+    return { displacements: { uy: index + 1 }, rotations: { rz: index + 2 }, reactions: { fy: index + 3, mz: index + 4 } };
   }
-  if (family.startsWith('GRAVITY_')) {
-    return { totalWeight: 100 + index, firstMomentOrEquivalent: 25 + index, reactions: { fy: 100 + index } };
-  }
+  if (family.startsWith('GRAVITY_')) return { totalWeight: 100 + index, firstMomentOrEquivalent: 25 + index, reactions: { fy: 100 + index } };
   if (family === 'THERMAL_FREE') return { displacements: { ux: 1e-3 * (index + 1) } };
   if (family === 'THERMAL_FIXED') return { reactions: { fx: 1000 + index } };
   return { structuralResponse: { normalizedResponse: 1.0 }, codeSifState: family };
@@ -32,18 +26,10 @@ function reportedResults(family, index) {
 
 function sourceState(family) {
   if (family.startsWith('STRUCTURAL_')) return { appliedLoad: { family, magnitude: 1000 } };
-  if (family === 'CODE_SIF_BASELINE' || family === 'CODE_SIF_VARIED') {
-    return { appliedLoad: { family: 'CODE_BOUNDARY_CONTROL', magnitude: 1000 } };
-  }
-  if (family === 'GRAVITY_METAL') {
-    return { gravitySourceState: { metalDensity: 7833, fluidDensity: 0, insulationDensity: 0, insulationThickness: 0 } };
-  }
-  if (family === 'GRAVITY_FLUID') {
-    return { gravitySourceState: { metalTreatment: 'QUALIFIED_SUBTRACTION', fluidDensity: 850, insulationDensity: 0, insulationThickness: 0 } };
-  }
-  if (family === 'GRAVITY_INSULATION') {
-    return { gravitySourceState: { metalTreatment: 'QUALIFIED_SUBTRACTION', fluidDensity: 0, insulationDensity: 180, insulationThickness: 0.05 } };
-  }
+  if (family === 'CODE_SIF_BASELINE' || family === 'CODE_SIF_VARIED') return { appliedLoad: { family: 'CODE_BOUNDARY_CONTROL', magnitude: 1000 } };
+  if (family === 'GRAVITY_METAL') return { gravitySourceState: { metalDensity: 7833, fluidDensity: 0, insulationDensity: 0, insulationThickness: 0 } };
+  if (family === 'GRAVITY_FLUID') return { gravitySourceState: { metalTreatment: 'QUALIFIED_SUBTRACTION', fluidDensity: 850, insulationDensity: 0, insulationThickness: 0 } };
+  if (family === 'GRAVITY_INSULATION') return { gravitySourceState: { metalTreatment: 'QUALIFIED_SUBTRACTION', fluidDensity: 0, insulationDensity: 180, insulationThickness: 0.05 } };
   if (family === 'THERMAL_FREE') return { thermalState: { deltaT: 100, alpha: 1.2e-5, boundary: 'FIXED_FREE' } };
   if (family === 'THERMAL_FIXED') return { thermalState: { deltaT: 100, alpha: 1.2e-5, boundary: 'FIXED_FIXED' } };
   return {};
@@ -128,7 +114,13 @@ function completeEvidence() {
       gravityFirstMomentQualified: true,
       thermalParityQualified: true,
       codeBoundaryQualified: true,
-      codeBoundaryNormalizedDelta: 1e-7,
+      axialTorsionBendingMaximumNormalizedError: 1e-7,
+      metalGravityNormalizedError: 2e-7,
+      fluidGravityNormalizedError: 3e-7,
+      insulationGravityNormalizedError: 4e-7,
+      gravityFirstMomentMaximumNormalizedError: 5e-7,
+      thermalMaximumNormalizedError: 6e-7,
+      codeBoundaryNormalizedDelta: 7e-7,
       expectedValuesRebaselined: false,
       tolerancesWidenedToFitCaesar: false,
     },
@@ -159,31 +151,17 @@ assert.equal(accepted.productionUseAuthorized, false);
 assert.equal(accepted.reducerExactMechanicsAuthorized, false);
 
 expectCode(
-  (record) => record.runs.splice(record.runs.findIndex((run) => (
-    run.family === 'GRAVITY_METAL' && run.modelOrientation === 'SMALL_TO_LARGE'
-  )), 1),
+  (record) => record.runs.splice(record.runs.findIndex((run) => run.family === 'GRAVITY_METAL' && run.modelOrientation === 'SMALL_TO_LARGE'), 1),
   'S4_REDUCER_REQUIRED_CASE_MISSING_OR_DUPLICATED',
 );
+expectCode((record) => { record.runs[0].build = 'OTHER-BUILD'; }, 'S4_REDUCER_RUN_VERSION_BUILD_MISMATCH');
+expectCode((record) => { record.runs[0].fromSection = { ...SMALL }; }, 'S4_REDUCER_PROTOCOL_GEOMETRY_MISMATCH');
 expectCode(
-  (record) => { record.runs[0].build = 'OTHER-BUILD'; },
-  'S4_REDUCER_RUN_VERSION_BUILD_MISMATCH',
-);
-expectCode(
-  (record) => { record.runs[0].fromSection = { ...SMALL }; },
-  'S4_REDUCER_PROTOCOL_GEOMETRY_MISMATCH',
-);
-expectCode(
-  (record) => {
-    record.runs.find((run) => run.family === 'STRUCTURAL_AXIAL' && run.modelOrientation === 'SMALL_TO_LARGE')
-      .appliedLoad.magnitude = 2000;
-  },
+  (record) => { record.runs.find((run) => run.family === 'STRUCTURAL_AXIAL' && run.modelOrientation === 'SMALL_TO_LARGE').appliedLoad.magnitude = 2000; },
   'S4_REDUCER_ORIENTATION_PAIR_CONTROL_STATE_MISMATCH',
 );
 expectCode(
-  (record) => {
-    record.runs.find((run) => run.family === 'GRAVITY_FLUID' && run.modelOrientation === 'SMALL_TO_LARGE')
-      .gravitySourceState.fluidDensity = 900;
-  },
+  (record) => { record.runs.find((run) => run.family === 'GRAVITY_FLUID' && run.modelOrientation === 'SMALL_TO_LARGE').gravitySourceState.fluidDensity = 900; },
   'S4_REDUCER_ORIENTATION_PAIR_CONTROL_STATE_MISMATCH',
 );
 expectCode(
@@ -195,36 +173,15 @@ expectCode(
   'S4_REDUCER_FINITE_NUMBER_REQUIRED',
 );
 expectCode(
-  (record) => { record.acceptance.codeBoundaryNormalizedDelta = 2e-6; },
-  'S4_REDUCER_CODE_BOUNDARY_PARITY_FAILED',
+  (record) => { record.acceptance.gravityFirstMomentMaximumNormalizedError = 2e-6; },
+  'S4_REDUCER_ACCEPTANCE_RESIDUAL_OUTSIDE_TOLERANCE',
 );
-expectCode(
-  (record) => { record.tolerancePolicy.fittedToCaesar = true; },
-  'S4_REDUCER_TOLERANCE_FITTING_FORBIDDEN',
-);
-expectCode(
-  (record) => { record.productionAuthorizationRequested = true; },
-  'S4_REDUCER_EVIDENCE_CANNOT_AUTHORIZE_PRODUCTION',
-);
-expectCode(
-  (record) => { record.candidateComparisons[0].maximumNormalizedError = 2e-6; },
-  'S4_REDUCER_ACCEPTED_CANDIDATE_OUTSIDE_TOLERANCE',
-);
-expectCode(
-  (record) => { record.candidateComparisons[1].maximumNormalizedError = 5e-7; },
-  'S4_REDUCER_SECTION_RULE_NOT_UNIQUE',
-);
-expectCode(
-  (record) => { record.acceptance.thermalParityQualified = false; },
-  'S4_REDUCER_ACCEPTANCE_NOT_MET',
-);
-expectCode(
-  (record) => { record.independentReview.reviewer = 'CAESAR_OPERATOR_A'; },
-  'S4_REDUCER_REVIEWER_NOT_INDEPENDENT',
-);
-expectCode(
-  (record) => { record.status = 'UNRESOLVED'; },
-  'S4_REDUCER_EVIDENCE_STATUS_NOT_QUALIFIED',
-);
+expectCode((record) => { record.tolerancePolicy.fittedToCaesar = true; }, 'S4_REDUCER_TOLERANCE_FITTING_FORBIDDEN');
+expectCode((record) => { record.productionAuthorizationRequested = true; }, 'S4_REDUCER_EVIDENCE_CANNOT_AUTHORIZE_PRODUCTION');
+expectCode((record) => { record.candidateComparisons[0].maximumNormalizedError = 2e-6; }, 'S4_REDUCER_ACCEPTED_CANDIDATE_OUTSIDE_TOLERANCE');
+expectCode((record) => { record.candidateComparisons[1].maximumNormalizedError = 5e-7; }, 'S4_REDUCER_SECTION_RULE_NOT_UNIQUE');
+expectCode((record) => { record.acceptance.thermalParityQualified = false; }, 'S4_REDUCER_ACCEPTANCE_NOT_MET');
+expectCode((record) => { record.independentReview.reviewer = 'CAESAR_OPERATOR_A'; }, 'S4_REDUCER_REVIEWER_NOT_INDEPENDENT');
+expectCode((record) => { record.status = 'UNRESOLVED'; }, 'S4_REDUCER_EVIDENCE_STATUS_NOT_QUALIFIED');
 
 console.log('LFEA S4 reducer parity evidence contract check PASS');

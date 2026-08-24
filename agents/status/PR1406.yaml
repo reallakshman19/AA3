@@ -5,27 +5,37 @@ mission: "Issue #54 minimal EMP.1 hosted-runner routing repair for #1401/#1333"
 workstream: EMP1_WRC537_PROFESSIONAL_RELEASE
 branch: agent/issue-54-emp1-ubuntu2404-runner-fix-20260824
 base_sha: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+falsifier_head: a5b22d2d068164be785f30151ef0b2da1f6a5de8
 criticality: ENGINEERING_CRITICAL_EVIDENCE_INFRASTRUCTURE
-agent_state: ACTIVE
-pr_recovery_state: HEALTHY
+agent_state: COMPLETE_REJECTED_EXPERIMENT
+pr_recovery_state: ABANDON_REJECTED_HYPOTHESIS
 handover_readiness: READY
 report_path: agents/PR1406_workreport.md
-appendix_a_score: 99
-appendix_a_min_question: 19
-current_stage: RUNNER_PIN_IMPLEMENTED_AWAITING_EXACT_HEAD_EXECUTION
+appendix_a_score: 100
+appendix_a_min_question: 20
+current_stage: HYPOTHESIS_REJECTED_DO_NOT_MERGE
 hypothesis: UBUNTU_LATEST_ROUTING_PATH_CAUSES_CURRENT_PRE_STEP_FAILURE
-falsifier: "Pin only PR-D critical workflows to ubuntu-24.04; reject hypothesis if jobs still create no steps/logs"
+hypothesis_result: REJECTED
 validation:
   main_grounding: PASS
   pr1401_write_overlap: PASS_NO_WRITE_OVERLAP
   current_emp1_pre_step_reproduction: PASS_OBSERVED
   unrelated_current_main_lafea_pre_step_reproduction: PASS_OBSERVED
-  retained_ubuntu2404_executable_precedent: PASS_RETAINED
-  patch_scope: PASS_SOURCE_INSPECTION
-  exact_head_step_creation: NOT_RUN_PENDING
+  retained_ubuntu2404_executable_precedent: PASS_RETAINED_HISTORICAL
+  patch_scope: PASS_THREE_RUNNER_LABEL_SUBSTITUTIONS_ONLY
+  exact_head_gamma5: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605012_JOB_97402064994_STEPS_NULL
+  exact_head_runemp1: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605022_JOB_97402064877_STEPS_NULL
+  exact_head_independent: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605065_JOB_97402064864_STEPS_NULL
+  ubuntu2404_pin_fix: FAIL_FALSIFIED
   engineering_commands: NOT_RUN
   numerical_qualification: NOT_RUN_NOT_CLAIMED
-merge_disposition: OWNER_ONLY_AFTER_FALSIFIER_RESULT
+infrastructure_provenance:
+  historical_b7h_source_route: MERGED_THEN_REMOVED
+  historical_b7h_executable_pass: NONE
+  matching_self_hosted_runner_confirmation: NONE
+  m001_workflow_cleanup: d086cc9ca5ab32866ec071d82954e375442574bb
+  actions_credit_exhaustion_recorded_historically: true
+merge_disposition: DO_NOT_MERGE_CLOSE_UNMERGED
 authority:
   production_route_authorized: false
   registered: false
@@ -33,5 +43,5 @@ authority:
   global_emp1_c_route_authority: false
   code_compliance_authorized: false
   release_qualified: false
-exact_next_action: "Finish WIP migration; inspect exact-head jobs. If steps remain absent, reject hypothesis. If steps execute, classify command results without promoting authority."
+exact_next_action: "Close PR1406 unmerged. Do not restore deleted B7H without a confirmed matching runner. Pursue account/runner capacity or another independently qualified execution transport."
 last_updated: "2026-08-24"

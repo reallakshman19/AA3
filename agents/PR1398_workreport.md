@@ -20,77 +20,67 @@ SOURCE_TASK: Issue #1389 PR-B — reconcile P0 source semantics for the bounded 
 PR_OR_WIP: PR1398
 BRANCH: agent/issue-1389-pr-b-p0-source-semantics-20260824
 
-PR_HEAD_OBSERVED: ba391159b5530e47b57b807ac1308a11390d4d37
-REPORT_BASIS_HEAD: ba391159b5530e47b57b807ac1308a11390d4d37
+IMPLEMENTATION_HEAD_OBSERVED: 8329762fcbab7bfc93464e774b9d3c0b0a782679
 MAIN_HEAD_LAST_CHECKED: e985b50d81d0d241db27313562c8cc12cd7cc27d
 MERGE_BASE: e985b50d81d0d241db27313562c8cc12cd7cc27d
 REPORT_SYNC: CURRENT
-
 APPENDIX_A_STATUS: CURRENT
-GROUNDING_EPOCH: GE-003
-CURRENT_TAKEOVER: TKO-003
+GROUNDING_EPOCH: GE-004
+CURRENT_TAKEOVER: TKO-004
 
-CURRENT_STAGE: PR-B implementation complete; draft PR checkpointed
-LAST_COMPLETED_STAGE: final six-file diff + live CI/review classification
+CURRENT_STAGE: PR-B implementation complete; independent reproduction checkpointed
+LAST_COMPLETED_STAGE: exact nine-gate independent reproduction + fail-closed readiness expectation
 CURRENT_BLOCKER: nine release-critical P0 source/acceptance authority gates remain BLOCKED by their own retained source records
 HIGHEST_RISK: false promotion of mathematical/software consistency or secondary/OCR text into WRC primary-source authority
-LAST_DURABLE_CHECKPOINT: ba391159b5530e47b57b807ac1308a11390d4d37
-EXACT_NEXT_ACTION: Owner review/merge decision for PR #1398; after merge, next Issue #1389 phase is PR-C CAUx pp.24–31 source freeze and independent hand calculation. Do not start production authorization.
+EXACT_NEXT_ACTION: Owner review/merge decision for PR #1398; after merge, re-ground and begin PR-C CAUx pp.24–31 source freeze and independent hand calculation. Do not start production authorization.
 ```
 
 Later commits containing only this work report/status/claim metadata do not invalidate the implementation basis above under the continuous-handover freshness rule.
 
 ## 2. Handover in 60 Seconds
 
-### What is now true
+### What is true
 
 - PR-A #1394 was owner-authorized and squash-merged at `main@e985b50d81d0d241db27313562c8cc12cd7cc27d`.
 - PR #1398 is open, draft and mergeable.
-- PR-B has exactly six intended changed files and zero changes to the frozen release profile, WRC production numerics, route/registry, independent oracle or workflows.
-- One aggregate machine-readable gate now binds the nine individual P0 source records to the bounded professional-release readiness boundary.
-- The checker has two distinct semantics: inspection/reconciliation mode may pass while blocked; `--require-ready` must fail while any P0 blocker remains.
+- PR-B has exactly six intended changed files and zero changes to the frozen release profile, WRC production numerics, route/registry, independent physical oracle or workflows.
+- One aggregate machine-readable P0 gate binds nine retained source-authority records to the bounded professional-release readiness boundary.
+- Normal checker semantics are reconciliation-only: a blocked but internally consistent state may produce `PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED`.
+- `--require-ready` is the authorization-facing mode and must remain non-ready while any P0 blocker exists.
+- An independent reproduction from exact fetched GitHub branch/main evidence passed all nine artifact/status/hash/profile/route/registry assertions and independently predicts readiness result `exit 2` with nine blockers.
 
 ### What remains unfinished
 
 - No primary WRC source question was newly closed by PR-B.
-- Direct primary-page observation remains unavailable through the current connected execution.
-- The checker has not executed locally/CI because GitHub Actions continues to fail before step creation under #54.
-- CAUx pp.24–31 expected values and independent hand calculation remain NOT_RUN for PR-C.
-- #1333 exact-head 6-load / 32-stress qualification remains later PR-D work.
+- Direct primary-page observation remains unavailable through the connected GitHub binary interface.
+- The actual Node checker command has not executed in a complete repository checkout.
+- GitHub Actions remains pre-step blocked under #54.
+- CAUx pp.24–31 expected-value extraction and independent hand calculation remain PR-C work.
+- #1333 exact-head 6-load / 32-stress qualification remains PR-D work.
 - Production authorization, post-promotion qualification, UI/replay and deployment remain later phases.
-
-### What has been proven
-
-- Exact main/merge base is `e985b50d81d0d241db27313562c8cc12cd7cc27d`.
-- All nine retained P0 authority artifacts exist and remain explicitly BLOCKED against the exact controlled WRC SHA-256.
-- Frozen release profile v1 binds the corresponding issues and keeps engineering/production/deployment/global-C/code/release authority false.
-- Final PR delta is exactly six PR-B files.
-- Current PR-head workflows did not execute any steps; this is infrastructure NOT_RUN, not an engineering-code failure.
-- No PR reviews or review threads are open.
 
 ### What must not be assumed
 
-- `PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED` is not source qualification.
-- Mathematical Tresca correctness is not WRC source authority.
-- `OD/2 - T/2` internal consistency is not source authority for the cylindrical WRC radius.
-- Centerline orthogonality is not proof of physical shell-normal attachment geometry.
-- `ROUND` is not attachment-class authority.
-- Missing neighbor inputs do not prove interaction isolation.
+- reconciliation PASS is not WRC source qualification;
+- mathematical Tresca correctness is not WRC source authority;
+- `OD/2 - T/2` internal consistency is not source authority for cylindrical WRC radius;
+- centerline orthogonality is not physical shell-normal proof;
+- `ROUND` geometry is not attachment-class authority;
+- missing neighbor inputs do not prove interaction isolation;
 - WRC shell stress is not code PASS.
 
 ## 3. Repository Ground Truth
 
 ```text
 PR: #1398
-PR state: OPEN / DRAFT / MERGEABLE
-implementation HEAD observed: ba391159b5530e47b57b807ac1308a11390d4d37
+PR state last observed: OPEN / DRAFT / MERGEABLE
+implementation head: 8329762fcbab7bfc93464e774b9d3c0b0a782679
 main: e985b50d81d0d241db27313562c8cc12cd7cc27d
 main tree: 487dd55a7cfad061df2061c34234d171725dbe37
-main parent: 1176f66eb94686f99d4f302930d46f17ff876083
 merge base: e985b50d81d0d241db27313562c8cc12cd7cc27d
 changed files: 6
-reviews: 0
-review threads: 0
+reviews last observed: 0
+review threads last observed: 0
 issue #54: OPEN blocking pre-step Actions infrastructure
 ```
 
@@ -106,31 +96,33 @@ Approved scope:
 - add inspection mode plus fail-closed `--require-ready` mode;
 - preserve all production/global/code/release authority false.
 
-Non-goals:
+Explicit non-goals:
 - no WRC sign/equation/curve/Table-5 change;
-- no source-issue conclusion from OCR/secondary/production/CAUx output;
-- no profile-v1 mutation;
+- no source conclusion from OCR/secondary/production/CAUx output;
+- no release-profile v1 mutation;
 - no CAUx extraction;
 - no #1333 execution;
-- no UI or workflow change;
+- no UI/workflow change;
 - no production authorization.
 
 Acceptance state:
-1. nine exact source gates mapped — IMPLEMENTED / SOURCE_INSPECTED;
-2. WRC SHA exact — PASS SOURCE_INSPECTION;
-3. exact retained blocker statuses — PASS SOURCE_INSPECTION;
-4. frozen profile issue bindings preserved — PASS SOURCE_INSPECTION;
-5. route/registry authority false — PASS SOURCE_INSPECTION;
-6. normal checker executable result — NOT_RUN;
-7. `--require-ready` non-zero result — NOT_RUN;
-8. protected paths unchanged — PASS DIFF INSPECTION.
+1. nine exact source gates mapped — PASS / SOURCE_INSPECTION;
+2. exact WRC SHA retained — PASS / SOURCE_INSPECTION;
+3. exact retained blocker statuses — PASS / SOURCE_INSPECTION;
+4. frozen profile issue bindings — PASS / SOURCE_INSPECTION;
+5. route/registry authority false — PASS / SOURCE_INSPECTION;
+6. independent reproduction of all gate assertions — PASS / INDEPENDENT_REPRODUCTION;
+7. expected readiness state with nine blockers — PASS / INDEPENDENT_REPRODUCTION (`exit 2` semantics reproduced);
+8. actual Node normal checker command — NOT_RUN_EXECUTION_ENVIRONMENT;
+9. actual Node `--require-ready` command — NOT_RUN_EXECUTION_ENVIRONMENT;
+10. protected paths unchanged — PASS / DIFF_INSPECTION.
 
 ## 5. Current Implementation State
 
 | Work item | Implementation | Integration | Validation | Remaining |
 |---|---|---|---|---|
-| P0 gate manifest | IMPLEMENTED | retained release evidence | SOURCE_INSPECTION PASS | executable replay |
-| P0 checker | IMPLEMENTED | real route/registry + frozen profile | SOURCE_INSPECTION PASS | executable normal + require-ready modes |
+| P0 gate manifest | IMPLEMENTED | retained release evidence | SOURCE_INSPECTION + INDEPENDENT_REPRODUCTION PASS | primary source closure remains external dependency |
+| P0 checker | IMPLEMENTED | real route/registry + frozen profile | SOURCE_INSPECTION + independent logic reproduction PASS | actual Node execution |
 | engineer-facing boundary | IMPLEMENTED | documentation | SOURCE_INSPECTION PASS | review |
 | source semantic closure | BLOCKED | nine individual source artifacts | primary-page NOT_RUN | direct primary closure |
 | production authorization | UNCHANGED FALSE | existing route/registry | SOURCE_INSPECTION PASS | later PR-E only |
@@ -143,27 +135,29 @@ Acceptance state:
 | RISK-1389-B-001 | RISK | P0 | OPEN | secondary/OCR or production behavior could be mistaken for primary authority |
 | DEC-1389-B-001 | DEC | P0 | ACTIVE | frozen release-profile v1 is not mutated in PR-B |
 | DEC-1389-B-002 | DEC | P0 | ACTIVE | reconciliation PASS is distinct from release-readiness PASS |
-| QST-1389-B-001 | QST | P0 | OPEN | direct primary-page closure requires an execution/source access path that exposes exact source pages |
+| QST-1389-B-001 | QST | P0 | OPEN | direct primary-page closure requires a source-access path exposing exact WRC pages |
 | DEBT-1389-B-001 | DEBT | P1 | OPEN | #54 prevents hosted executable evidence |
 
-## 7. Current Technical Diagnosis
+## 7. Technical Diagnosis / Falsifier
 
 ```text
-Observed symptom:
-The frozen professional release profile listed P0 blockers but there was no one deterministic aggregate checker tying them to exact retained authority artifacts.
+Observed defect:
+The frozen professional release profile listed nine P0 blockers, but no deterministic aggregate gate tied them to the exact retained source artifacts.
 
-Diagnosis:
-The correct PR-B is an aggregate anti-promotion gate, not another source interpretation and not a production change.
+PR-B diagnosis:
+The correct bounded mutation is an aggregate anti-promotion gate, not a new WRC interpretation and not a production change.
 
-Prediction:
-Normal checker mode should exit 0 with PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED when all current blocker records are internally consistent.
---require-ready should exit 2 while one or more blockers remain.
+Normal-mode prediction:
+PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED with blockerCount=9 and every route/release authority false.
+
+Readiness prediction:
+--require-ready remains non-ready while blockerCount > 0; current expected exit semantics = 2.
 
 Falsifier:
-Any missing artifact, source SHA drift, issue/profile-key mismatch, status drift, profile authorization, route authorization or registry authorization must make the checker fail.
+Any missing artifact, source SHA drift, issue/profile-key mismatch, status drift, frozen-profile authorization, route authorization or registry authorization must fail the gate.
 
-First unresolved engineering boundary:
-Direct WRC primary-source semantics, not numerical mechanics.
+Independent reproduction result:
+All nine rows matched their retained statuses and common WRC SHA; all frozen profile states remained BLOCKED; profile release booleans remained false; codeCompliance remained NOT_ASSESSED; route and registry authorization remained false; blockerCount=9; readiness result reproduced as non-ready.
 ```
 
 ## 8. Authority and Invariants
@@ -175,13 +169,13 @@ Controlled WRC source SHA-256:
 P0 gates:
 - #1385 surface/sign;
 - #1383 stress intensity;
-- #1375 thickness;
-- #1377 cylindrical radius;
+- #1375 shell thickness;
+- #1377 cylindrical mean radius;
 - #1379 material/shell theory;
 - #1368 physical attachment normality;
 - #1370 attachment class;
 - #1373 interaction/isolation;
-- #1381 code-acceptance boundary.
+- #1381 WRC/code-acceptance boundary.
 
 Invariants:
 - source custody PASS != method authority;
@@ -192,105 +186,79 @@ Invariants:
 - bounded/global/code/release authority remains false;
 - code compliance remains NOT_ASSESSED.
 
-## 9. Current Validation
+## 9. Validation Ledger
 
-### VAL-B-001 — base grounding
-```text
-Status: PASS
-Observation: SOURCE_INSPECTION
-Oracle: AUTHORITATIVE_REFERENCE
-Tested HEAD: main e985b50d81d0d241db27313562c8cc12cd7cc27d
-Evidence: live GitHub main branch
-Origin: PREEXISTING
-```
+### VAL-B-001 — live base grounding
+`PASS / SOURCE_INSPECTION` on `main@e985b50d81d0d241db27313562c8cc12cd7cc27d`.
 
 ### VAL-B-002 — nine retained source records
+`PASS / SOURCE_INSPECTION`: all nine exist, retain explicit `BLOCKED_*` status and exact controlled WRC source identity.
+
+### VAL-B-003 — PR-B static checker contract
+`PASS / SOURCE_INSPECTION` on implementation head `8329762fcbab7bfc93464e774b9d3c0b0a782679`.
+
+### VAL-B-004 — independent gate reproduction
 ```text
 Status: PASS
-Observation: SOURCE_INSPECTION
-Oracle: AUTHORITATIVE_REFERENCE
-Tested HEAD: main e985b50d81d0d241db27313562c8cc12cd7cc27d
-Expected: nine artifacts exist, exact WRC source identity, explicit BLOCKED status
-Actual: PASS
-Limitation: no new primary-page observation
-Origin: PREEXISTING
+Observation: INDEPENDENT_REPRODUCTION
+Oracle: AUTHORITATIVE_REFERENCE + INDEPENDENT_LOGIC
+Basis: exact fetched gate manifest, frozen profile, nine retained source artifacts, route source and registry source
+Expected normal result: PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED
+Actual reproduced result: PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED
+Expected blockerCount: 9
+Actual blockerCount: 9
+Expected route/release authority: false
+Actual reproduced authority: false
+Expected readiness disposition: non-ready
+Actual reproduced readiness semantics: exit 2 when blockerCount > 0
+Limitations: this independently reproduces assertions; it is not execution of the repository Node module graph.
+Origin: INTRODUCED_BY_PR VALIDATION
 ```
 
-### VAL-B-003 — PR-B static contract
-```text
-Status: PASS
-Observation: SOURCE_INSPECTION
-Oracle: IMPLEMENTATION_COUPLED
-Tested HEAD: ba391159b5530e47b57b807ac1308a11390d4d37
-Expected: exact nine mappings; source/profile/route authority fail closed
-Actual: encoded accordingly
-Limitation: executable replay NOT_RUN
-Origin: INTRODUCED_BY_PR
-```
-
-### VAL-B-004 — normal checker execution
+### VAL-B-005 — actual normal Node checker
 ```text
 Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: IMPLEMENTATION_COUPLED
-Tested HEAD: ba391159b5530e47b57b807ac1308a11390d4d37
 Command: node scripts/emp1-professional-p0-source-semantics-check.mjs
-Expected: exit 0, PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED
+Expected: exit 0 + PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED
 Actual: NOT_RUN_EXECUTION_ENVIRONMENT
-Origin: INTRODUCED_BY_PR
 ```
 
-### VAL-B-005 — readiness checker execution
+### VAL-B-006 — actual readiness Node checker
 ```text
 Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: IMPLEMENTATION_COUPLED
-Tested HEAD: ba391159b5530e47b57b807ac1308a11390d4d37
 Command: node scripts/emp1-professional-p0-source-semantics-check.mjs --require-ready
 Expected: exit 2 while nine blockers remain
 Actual: NOT_RUN_EXECUTION_ENVIRONMENT
-Origin: INTRODUCED_BY_PR
 ```
 
-### VAL-B-006 — hosted Actions
+### VAL-B-007 — hosted Actions
 ```text
 Status: NOT_RUN
-Observation: REMOTE_EXECUTION
-Oracle: PRODUCT_REGRESSION
-Tested HEAD: ba391159b5530e47b57b807ac1308a11390d4d37
-Observed workflow runs:
-- 32678427024 / job 97290694250 — gamma5 bounded route
-- 32678427056 / job 97290694327 — runEmp1 bounded gamma5 orchestration
-- 32678426962 / job 97290694048 — current-main independent baseline
+Observed implementation-head runs:
+- 32678427024 / 97290694250 — gamma5 bounded route
+- 32678427056 / 97290694327 — runEmp1 bounded gamma5 orchestration
+- 32678426962 / 97290694048 — current-main independent baseline
 GitHub conclusion: failure
-Actual executable evidence: every job has steps=null and logs_url=null
+Actual executable evidence: steps=null and logs_url=null for each observed job
 Classification: NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE
-Limitation: #54; no checkout or engineering command executed
-Origin: PREEXISTING INFRASTRUCTURE
+Issue: #54
 ```
 
-### VAL-B-007 — direct primary WRC page observation
-```text
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: AUTHORITATIVE_REFERENCE
-Evidence: GitHub PDF object resolves to exact blob, but connected content access provides no inspectable primary pages
-Actual: NOT_RUN_EXECUTION_ENVIRONMENT
-Origin: PREEXISTING SOURCE-ACCESS LIMITATION
-```
+### VAL-B-008 — direct primary WRC page observation
+`NOT_RUN_EXECUTION_ENVIRONMENT`: exact PDF object/blob identity is available, but connected binary access does not expose inspectable primary pages.
 
 ## 10. Changed-File Ledger
 
-Final branch delta against `main@e985b50d...`: exactly 6 files.
+Final intended delta against `main@e985b50d...`: exactly 6 files.
 
-| File | Intended | Purpose | Sensitive | Validation |
-|---|---:|---|---:|---|
-| `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json` | yes | aggregate P0 gate | yes | source inspection |
-| `scripts/emp1-professional-p0-source-semantics-check.mjs` | yes | reconciliation/readiness guard | yes | source inspection; execution NOT_RUN |
-| `docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md` | yes | authority boundary | yes | source inspection |
-| `agents/PR1398_workreport.md` | yes | living handover | no | current |
-| `agents/status/PR1398.yaml` | yes | compact recovery state | no | current |
-| `agents/claims/PR1398.yaml` | yes | scope/authority claim | no | current |
+| File | Purpose | Sensitive | Validation |
+|---|---|---:|---|
+| `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json` | aggregate P0 gate | yes | source inspection + independent reproduction |
+| `scripts/emp1-professional-p0-source-semantics-check.mjs` | reconciliation/readiness guard | yes | source inspection; independent logic reproduction; actual Node NOT_RUN |
+| `docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md` | authority boundary | yes | source inspection |
+| `agents/PR1398_workreport.md` | living handover | no | current |
+| `agents/status/PR1398.yaml` | compact recovery state | no | current |
+| `agents/claims/PR1398.yaml` | scope/authority claim | no | current |
 
 Protected and unchanged:
 - frozen bounded release-profile v1;
@@ -304,19 +272,17 @@ Unexplained changed files: 0.
 
 ## 11. Review / CI State
 
-- PR #1398: open, draft, mergeable.
-- Reviews: none.
-- Review threads: none.
-- Hosted workflows: pre-step failure, classified NOT_RUN_EXECUTION_ENVIRONMENT as detailed in VAL-B-006.
-- No engineering PASS is inferred from source inspection or failed hosted runs.
+- PR #1398: last observed open, draft, mergeable.
+- Reviews: none at last check.
+- Review threads: none at last check.
+- Hosted workflows: pre-step infrastructure failure; engineering execution classification remains NOT_RUN.
+- Independent reproduction does not convert hosted/Node NOT_RUN into PASS.
 
 ## 12. Repository Coordination / Overlap
 
 ```text
-MASTER_INDEX_CHECKED: repository coordination state inspected before branch allocation
 STATUS_RECORD: agents/status/PR1398.yaml
 CLAIM_RECORD: agents/claims/PR1398.yaml
-LAST_OVERLAP_CHECK: current PR base main e985b50d...
 FILE_OVERLAP: SAFE at allocation
 AUTHORITY_OVERLAP: OBSERVE_ONLY with individual P0 source issues; PR-B consumes but does not replace them
 DEPENDENCY_OVERLAP: HARD_DEPENDENCY on #1368/#1370/#1373/#1375/#1377/#1379/#1381/#1383/#1385 and #54
@@ -328,59 +294,54 @@ COORDINATION_STATE: SAFE_TO_REVIEW; production mutation prohibited
 ```text
 Start here: PR #1398 and this report
 Exact file/function: scripts/emp1-professional-p0-source-semantics-check.mjs
-Current value/path: nine retained BLOCKED P0 source states
+Current engineering state: nine retained BLOCKED P0 source states; aggregate gate internally reproduced as consistent
 Do not redo: PR-A custody reconciliation/profile definition
 Do not change: frozen profile v1, route, registry, Table5, oracle, workflows
-Validation still required: executable normal + --require-ready checker; genuine primary source closure
+Validation still unavailable: actual Node normal + --require-ready execution; genuine primary WRC page closure
 Highest-risk remaining item: false source-authority promotion
 Exact next action: Owner review/merge decision; if merged, re-ground and begin PR-C CAUx source freeze/handcalc only
 ```
 
 ## 14. Takeover / Custody Chain
 
-### TKO-001 / GE-001
-Re-grounded after PR-A merge and restricted write scope to aggregate P0 gate files.
-
-### TKO-002 / GE-002
-Allocated draft PR #1398 from exact `main@e985b50d...`; migrated WIP identity to PR-specific recovery records.
-
-### TKO-003 / GE-003
-Reconciled exact six-file final delta, observed PR mergeability/reviews, and classified three current-head Actions runs as pre-step infrastructure NOT_RUN. No source or production authority changed.
+- **TKO-001 / GE-001** — re-grounded after PR-A merge; write scope restricted to aggregate P0 gate files.
+- **TKO-002 / GE-002** — allocated draft PR #1398; WIP identity migrated to PR-specific recovery records.
+- **TKO-003 / GE-003** — reconciled six-file delta and classified current-head Actions as pre-step infrastructure NOT_RUN.
+- **TKO-004 / GE-004** — independently reproduced all nine gate assertions from exact fetched GitHub evidence; blockerCount=9 and readiness non-ready semantics confirmed without claiming Node execution or primary-source closure.
 
 # APPENDIX A — IMPLEMENTATION TAKEOVER QUALIFICATION
 
 ```text
-qualification_basis_pr_head: ba391159b5530e47b57b807ac1308a11390d4d37
+qualification_basis_pr_head: 8329762fcbab7bfc93464e774b9d3c0b0a782679
 qualification_basis_main_head: e985b50d81d0d241db27313562c8cc12cd7cc27d
-grounding_epoch: GE-003
-generated_from_open_items: ISS-1389-B-001, RISK-1389-B-001, QST-1389-B-001
-next_intended_stage: owner review/merge then PR-C source benchmark phase
+grounding_epoch: GE-004
+next_intended_stage: Owner merge decision then PR-C source benchmark phase
 APPENDIX_A_STATUS: CURRENT
 ```
 
 ### A1 — Production Trace Challenge — 19/20
-Traced frozen profile P0 keys through nine retained source records to real route/registry authority. Executable checker replay remains NOT_RUN.
+Frozen profile P0 keys traced through nine retained source records to real route/registry authority. Actual repository Node replay remains NOT_RUN.
 
-### A2 — Current Failure Isolation Challenge — 19/20
-Isolated missing aggregate release gate rather than altering source mechanics. Falsifier is any source/status/profile/route mismatch; runtime falsifier remains NOT_RUN.
+### A2 — Current Failure Isolation Challenge — 20/20
+The missing layer was isolated as aggregate release gating, not numerical/source mechanics. Independent reproduction exercised the defined falsifier dimensions.
 
 ### A3 — Authority / Invariant Challenge — 20/20
-Individual source records remain authority; profile v1 stays frozen; secondary/OCR/CAUx/production cannot close source gates; route/global/code/release false.
+Individual source records remain authority; profile v1 stays frozen; secondary/OCR/CAUx/production cannot close source gates; route/global/code/release remain false.
 
-### A4 — Independent Validation Challenge — 18/20
-Exact source identities/artifact statuses were independently inspected; primary-page and executable evidence unavailable in current environment.
+### A4 — Independent Validation Challenge — 19/20
+Exact source identities/status/profile/route/registry assertions were independently reproduced with nine blockers and readiness non-ready semantics. One point retained because primary-page and actual Node execution remain unavailable.
 
 ### A5 — Next-Commit / Minimal-Patch Challenge — 20/20
-Final delta is exactly six PR-B-only aggregate/recovery files; no protected production, numerical, oracle, profile or workflow mutation.
+Final delta remains exactly six PR-B-only aggregate/recovery files; no protected production, numerical, oracle, profile or workflow mutation.
 
-**Total: 96/100; minimum question 18/20 — PASS for this bounded PR-B mutation authority.**
+**Total: 98/100; minimum question 19/20 — PASS for this bounded PR-B mutation authority.**
 
 # HISTORICAL RECORD — NOT CURRENT AUTHORITY
 
 - 2026-08-24: PR #1394 squash-merged at `e985b50d...` by explicit Owner authorization.
-- 2026-08-24: PR-B re-grounded from exact new main; no pre-existing open EMP.1 PR overlap observed.
+- 2026-08-24: PR-B re-grounded from exact new main; no pre-existing open EMP.1 exact-file overlap observed.
 - 2026-08-24: nine P0 source records inspected and confirmed BLOCKED.
-- 2026-08-24: direct PDF content access attempted; source object identity available but primary pages unavailable.
-- 2026-08-24: aggregate gate/checker/doc implemented.
-- 2026-08-24: draft PR #1398 allocated and WIP records migrated.
-- 2026-08-24: final six-file delta reconciled; current-head Actions again failed before step creation; no reviews/threads.
+- 2026-08-24: direct PDF content access attempted; exact source object identity available but primary pages unavailable.
+- 2026-08-24: aggregate gate/checker/doc implemented; draft PR #1398 allocated and WIP records migrated.
+- 2026-08-24: final six-file delta reconciled; current-head Actions failed before step creation; no reviews/threads.
+- 2026-08-24: independent reproduction from exact fetched branch/main evidence passed all nine gate assertions, confirmed blockerCount=9, all authority false, and readiness non-ready semantics; actual Node execution remains NOT_RUN.

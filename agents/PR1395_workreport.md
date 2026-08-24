@@ -18,11 +18,11 @@ STACK_BASE_PR: 1348
 STACK_BASE_BRANCH: agent/lfea-piping-promotion-s1-bend-tangent-custody-20260823
 STACK_BASE_HEAD: 25543a9e6c0e796d63e89841f63e41a4fd3292cc
 BRANCH: agent/lfea-piping-promotion-s6-tee-branch-20260824
-PR_HEAD_AT_REPORT_CREATION: 21a30017e8af4c1e37293496e236b229fec6555b
-CURRENT_STAGE: S6 exact welding-tee mechanics implemented; exact-head runtime qualification pending
-CURRENT_BLOCKER: exact-head hosted workflow has not yet produced executed-step evidence
+EXACT_HEAD_WITH_PR_REPORT: 87a27bede26ce548cd88f138b375b9cb20e207c2
+CURRENT_STAGE: S6 exact welding-tee mechanics implemented; hosted exact-head execution unavailable
+CURRENT_BLOCKER: GitHub Actions completes before step 1; original and rerun jobs both returned zero executed steps
 HIGHEST_RISK: falsely promoting a non-welding-tee source, choosing header geometry by element order, or reconstructing a different tee stiffness at solve/recovery than pre-flight authorized
-EXACT_NEXT_ACTION: inspect PR1395 workflow execution; fix any code/guard failure without re-baselining; update this report and PR body with PASS/FAIL/NOT_RUN evidence
+EXACT_NEXT_ACTION: preserve S6 as draft/NOT_RUN, proceed to numerically inert S7 UI/disclosure verification on a separate stack, and re-run S6 qualification when hosted execution becomes available
 ```
 
 ## Assignment and authority
@@ -118,7 +118,7 @@ pressureCodeStress    = true   # pre-existing
 
 ### `scripts/lfea-s6-tee-production-authority-check.mjs`
 
-The new deterministic check is intended to prove:
+The deterministic check is designed to prove:
 
 1. a junction away from the global origin resolves two run legs and one branch by direction topology;
 2. exactly three existing structural carriers are modified and no duplicate tee element exists;
@@ -142,6 +142,16 @@ The new deterministic check is intended to prove:
 
 No expected benchmark value or tolerance was changed by S6.
 
+## Hosted exact-head execution evidence
+
+Workflow `LFEA S6 tee branch promotion`, run `32676191182`, was created for exact head `87a27bede26ce548cd88f138b375b9cb20e207c2`.
+
+- original job `97284632751`: GitHub reports `conclusion=failure`, but `fetch_workflow_job_steps` returned `steps=[]`; job-log retrieval returned HTTP 404 `BlobNotFound`;
+- failed-job rerun was explicitly requested and accepted by GitHub;
+- rerun job `97284764987`: again completed with `steps=[]` before any declared checkout/setup/syntax/test step executed.
+
+Therefore the correct engineering classification is **NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE**, not PASS and not an S6 assertion FAIL. This is the same pre-step execution condition previously observed on the #1348 promotion workflow.
+
 ## Validation ledger
 
 | Check | State | Evidence / note |
@@ -152,14 +162,12 @@ No expected benchmark value or tolerance was changed by S6.
 | TYPE=5 exclusion | PASS — SOURCE_INSPECTION | eligibility gate requires TYPE=3 |
 | orphan TYPE=3 exclusion | PASS — SOURCE_INSPECTION | declaration node must own segment endpoint |
 | run header OD/wall ambiguity block | PASS — SOURCE_INSPECTION | exact equality required before factor calculation |
-| guarded package `<300` lines | PASS — SOURCE_INSPECTION | largest new production JS at PR creation: `inputxml-production-branch-modifiers.js`, 279 added physical lines |
+| guarded package `<300` lines | PASS — SOURCE_INSPECTION | largest new production JS at PR creation: `inputxml-production-branch-modifiers.js`, 279 physical lines/additions, below `<300` |
 | hidden default-parameter guard review | PASS — SOURCE_INSPECTION | new guarded-package functions use explicit `undefined` handling; no `function ...(x=...)` added |
-| S6 deterministic production check | NOT_RUN — exact head | awaiting PR workflow execution |
-| B3.21 factor benchmark | NOT_RUN — exact head | awaiting PR workflow execution |
-| M047 tee rigid-thermal benchmark | NOT_RUN — exact head | awaiting PR workflow execution |
-| linear piping consumer anti-drift | NOT_RUN — exact head | awaiting PR workflow execution |
-
-A hosted job that fails before executing steps must be recorded as **NOT_RUN / infrastructure**, not an engineering FAIL or PASS.
+| S6 deterministic production check | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | run `32676191182`; jobs `97284632751`, `97284764987`; zero executed steps |
+| B3.21 factor benchmark | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | same workflow never reached test steps |
+| M047 tee rigid-thermal benchmark | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | same workflow never reached test steps |
+| linear piping consumer anti-drift | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | same workflow never reached test steps |
 
 ## Changed-file ledger
 
@@ -186,7 +194,7 @@ A hosted job that fails before executing steps must be recorded as **NOT_RUN / i
 | `src/workspace/lfea-bend-factor-authority-control.js` | shared component edition + bend-only smooth90 authority UI |
 | `src/workspace/linear-piping-inputxml-prefea.js` | seal branch factor authority into governed native pre-flight |
 
-`agents/WIP-S6TEE_workreport.md` is transitional and is to be deleted once this PR-numbered report is committed.
+The transitional `agents/WIP-S6TEE_workreport.md` has been deleted after PR #1395 allocation. `agents/PR1395_workreport.md` is the sole S6 recovery authority.
 
 ## Known exclusions / non-claims
 
@@ -196,6 +204,7 @@ A hosted job that fails before executing steps must be recorded as **NOT_RUN / i
 - reducer exact mechanics remain outside this PR.
 - pressure stiffening, axial thrust and Bourdon mechanics remain outside this PR.
 - S6 does not authorize new SIF/code-stress treatment beyond existing B31 application authority; this stage promotes structural junction flexibility.
+- S6 exact-head runtime qualification is **not established** while hosted jobs execute zero steps.
 
 ## Appendix A — expert takeover questionnaire
 
@@ -213,6 +222,6 @@ A takeover engineer should be able to answer all of the following before changin
 10. What source evidence proves both run legs share the same thermal/material authority, and what happens when they do not?
 11. Which hash/currentness records ensure runtime/recovery cannot silently rebuild a different tee stiffness than pre-flight qualified?
 12. Why must bend-component + tee-modifier overlap block rather than pick one authority?
-13. Which exact-head checks must be observed before this draft can be described as runtime-qualified?
+13. Why are run `32676191182` and its rerun classified NOT_RUN rather than engineering FAIL?
 14. What is explicitly NOT promoted by S6 (TYPE=5, reducer, pressure stiffening/thrust/Bourdon)?
 15. If a benchmark moves, what evidence is required instead of editing expected values or widening tolerance?

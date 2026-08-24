@@ -11,10 +11,12 @@ files:
     - scripts/lafea3-simulated-source-authority-check.mjs
     - scripts/lafea3-sample-generate-retain-check.mjs
     - scripts/lafea3-visible-continuum-preflight-check.mjs
+    - scripts/lafea-b01-b02-gate0-diagnostic.mjs
   prefixes: []
 authority_domains:
   - LAFEA3_SAMPLE_SOURCE_DOMAIN_FIDELITY
   - LAFEA3_PRODUCT_E2E_CUSTODY
+  - EXISTING_CONTINUUM_QUALIFICATION_GATE_BINDING
 claim_modes:
   - EXCLUSIVE_EXACT_FILES
 excluded_authority:
@@ -23,6 +25,8 @@ excluded_authority:
   - CONTINUUM_RECOVERY
   - MESH_QUALITY_THRESHOLD_CHANGE
   - B01_B02_ORACLE_CHANGE
+  - BROWSER_E2E_CONTRACT_CHANGE
+  - WORKFLOW_YAML_CHANGE
   - LOCAL_REFINEMENT_AUTHORITY
   - RELEASE_AUTHORITY
 invariants:
@@ -32,6 +36,7 @@ invariants:
   - NO_NEAREST_NODE_MAPPING
   - T6_SAMPLE_PROFILE_30MM_UNCHANGED
   - FROZEN_NUMERICAL_ORACLES_UNCHANGED
+  - B01_B02_GATES_EXECUTE_BEFORE_PRODUCT_SAMPLE_CHECKS
 main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
 overlap_state: SAFE
-note: PR1270 exact-file claim does not overlap these files; B01/B02 numerical authority is protected and untouched. Owner instructed use of existing Chromium carrier rather than adding a new browser contract.
+note: B01/B02 numerical authority remains protected and untouched. The existing diagnostic entrypoint keeps its frozen/oracle imports first, then dynamically executes the PR1390 Sample source/domain/custody checks. No browser spec or workflow YAML is added/changed.

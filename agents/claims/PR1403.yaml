@@ -1,6 +1,6 @@
 schema: AgentClaim.v1
 pr_or_wip: PR1403
-claim_state: ACTIVE
+claim_state: OWNER_AUTHORIZED_READY_TO_MERGE
 branch: agent/issue-1389-pr-g-professional-ui-trace-20260824
 mission: "Issue #1389 PR-G professional UI, trace, currentness and unsupported-domain closure"
 write_scope:
@@ -23,3 +23,4 @@ protected_no_mutation:
 authority_boundary: "Presentation only; derive from governed current execution/cState/result objects. No method, numerical, production, global, code or release authority mutation."
 overlap_state: SAFE_AGAINST_PR1401_RECOVERY_ONLY
 fallback_policy: "Missing professional/domain evidence remains UNRESOLVED; never invent, interpolate, extrapolate or infer authority in UI."
+merge_authorization: "Owner explicitly said merge,proceed next on 2026-08-24; applies to PR1403 only."

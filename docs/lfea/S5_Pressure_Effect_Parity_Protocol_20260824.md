@@ -119,6 +119,8 @@ P1..P9
 Phydro
 ```
 
+`None` is the pressure-free control: no pressure stiffening is applied to the elbow. P1/P2/Pmax are therefore the discriminating pressure-selected cases.
+
 ### Controlled model
 
 Use a simple bend/cantilever with:
@@ -154,12 +156,16 @@ Run separate load cases with selector:
 
 The Configuration Editor setting **Use Pressure Stiffening on Bends** is not the same record as Q4.
 
+Q5 must remain a discriminating pressure-stiffened experiment. Hold the load-case **Elbow Stiffening Pressure selector at `P1` for every Q5 run**, with the same positive P1 value and all other model/source state unchanged. Do **not** use selector `None` in Q5: `None` removes elbow pressure stiffening and cannot prove how the global Default/Include/Exclude switch arbitrates an active pressure-stiffening calculation.
+
 Run the controlled bend under:
 
 ```text
-Default
-Yes / Include
-No / Exclude
+Elbow Stiffening Pressure = P1  (fixed across all Q5 runs)
+
+Use Pressure Stiffening on Bends = Default
+Use Pressure Stiffening on Bends = Yes / Include
+Use Pressure Stiffening on Bends = No / Exclude
 ```
 
 for at least:
@@ -167,7 +173,9 @@ for at least:
 - active code B31.3-2022/B31J;
 - one code for which Hexagon documentation states pressure stiffening is not defined by default, if needed to discriminate global configuration behavior.
 
-Record the active code and CAESAR-reported factor behavior. Do not infer `Default` from current-year defaults or from another code family.
+Record the active code, fixed P1 selector/value, exact global setting and CAESAR-reported factor behavior. Only the global configuration switch may differ among the Q5 triplet.
+
+The Q5 controlled P1 is an **experiment setting**, not source custody for BM4_NL. It does not resolve, infer, or authorize the currently unknown L19/L20 `Elbow Stiffening Pressure` selector. Provisional P1 remains prohibited as BM4_NL production authority.
 
 A production `DEFAULT_CODE` source state requires an active-code method authority before an effective numerical decision can be sealed.
 

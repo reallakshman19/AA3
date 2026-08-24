@@ -191,7 +191,7 @@ test('synthetic current C presentation uses current authority and an eight-point
   expect(result.domainText).toContain('Interpolation allowedNO');
   expect(result.domainText).toContain('Cross-variant fallback allowedNO');
   expect(result.resultText).toContain('Eight-location shell stress trace');
-  expect(result.resultText).toContain('72.672816');
+  expect(result.resultText).toContain('72.67281564');
   expect(result.governingText).toContain('Governing among eight evaluated WRC pointsAu · stress intensity 72.67281564');
   expect(result.governingText).toContain('Continuous/global shell maximumNOT CLAIMED');
   expect(result.governingText).toContain('Nozzle / attachment-wall stressNOT CALCULATED');

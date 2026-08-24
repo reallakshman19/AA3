@@ -1,5 +1,7 @@
 import { pipeMetalMassPerLength } from './formulas.js';
-import { ELBOW_TYPES, TEE_TYPES, AUDIT_CODES } from './constants.js';
+import {
+  AUDIT_CODES, ELBOW_TYPES, OLET_TYPES, REDUCER_TYPES, TEE_TYPES,
+} from './constants.js';
 import { evidenceNumber } from './units.js';
 
 /**
@@ -13,6 +15,14 @@ import { evidenceNumber } from './units.js';
 const DEVELOPED_LENGTH_FACTOR_BY_TYPE_SET = Object.freeze([
   { types: ELBOW_TYPES, factor: 1.5 },
   { types: TEE_TYPES, factor: 1.0 },
+  // Olet and reducer factors are engineering estimates, not standards-derived
+  // like the elbow's 1.5xD long-radius developed length. A concentric reducer's
+  // B16.9 face-to-face length is close to one nominal diameter at the sizes in
+  // use here, and a branch outlet is treated as the same order of material.
+  // Both are flagged as ASSUMED on every derivation so they are visible for
+  // confirmation rather than silently trusted.
+  { types: OLET_TYPES, factor: 1.0, assumedFactor: true },
+  { types: REDUCER_TYPES, factor: 1.0, assumedFactor: true },
 ]);
 
 export function isElbowType(type) {
@@ -44,8 +54,8 @@ export function deriveTeeComponentWeightEvidence(component, allComponents) {
 
 /** Tries every known pipe-like fitting type; returns the first applicable result. */
 export function derivePipeLikeFittingWeightEvidence(component, allComponents) {
-  for (const { types, factor } of DEVELOPED_LENGTH_FACTOR_BY_TYPE_SET) {
-    const result = deriveByType(types, factor, component, allComponents);
+  for (const { types, factor, assumedFactor } of DEVELOPED_LENGTH_FACTOR_BY_TYPE_SET) {
+    const result = deriveByType(types, factor, component, allComponents, assumedFactor);
     if (result) return result;
   }
   return null;
@@ -66,7 +76,7 @@ export function derivePipeLikeFittingWeightEvidence(component, allComponents) {
  * overridden — so a consuming component always falls back to its existing
  * missing-evidence behaviour rather than receiving a fabricated value.
  */
-function deriveByType(types, developedLengthFactor, component, allComponents) {
+function deriveByType(types, developedLengthFactor, component, allComponents, assumedFactor = false) {
   if (!types.includes(String(component?.type || '').trim().toUpperCase())) return null;
   if (evidenceNumber(component.engineeringProperties?.componentWeightKg) !== null) return null;
   const sibling = findSectionedSiblingPipe(component, allComponents);
@@ -89,6 +99,7 @@ function deriveByType(types, developedLengthFactor, component, allComponents) {
       formulaId: perLength.trace.formulaId,
       developedLengthM,
       developedLengthFactor,
+      developedLengthFactorAssumed: assumedFactor,
       sourceComponentKey: sibling.componentKey || sibling.sourceEntityId || null,
       outerDiameterMm: odMm,
       wallThicknessMm: wallMm,

@@ -32,7 +32,11 @@ const NEGLIGIBLE_MASS_COMPONENT_TYPES = Object.freeze(['GASKET', 'GASK']);
  * a pipe-like derivation is possible, not which effective-length factor
  * execution will use, so both types share one list here.
  */
-const PIPE_LIKE_FITTING_COMPONENT_TYPES = Object.freeze(['ELBOW', 'ELBO', 'BEND', 'TEE']);
+const PIPE_LIKE_FITTING_COMPONENT_TYPES = Object.freeze([
+  'ELBOW', 'ELBO', 'BEND', 'TEE',
+  'OLET', 'WELDOLET', 'SOCKOLET', 'THREDOLET',
+  'REDUCER', 'REDU',
+]);
 
 export const NON_FEA_COMMON_METHOD_IDS = Object.freeze([
   'WEIGHT_AND_GRAVITY',

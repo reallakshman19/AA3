@@ -56,6 +56,13 @@ export const ELBOW_TYPES = Object.freeze(['ELBOW', 'ELBO', 'BEND']);
  */
 export const TEE_TYPES = Object.freeze(['TEE']);
 /**
+ * Branch-outlet and reducer fittings. Neither appears in the valve Weights
+ * master at all, so like elbows and tees they are treated as pipe material
+ * over an effective length rather than requiring a catalogue weight.
+ */
+export const OLET_TYPES = Object.freeze(['OLET', 'WELDOLET', 'SOCKOLET', 'THREDOLET']);
+export const REDUCER_TYPES = Object.freeze(['REDUCER', 'REDU']);
+/**
  * Gasket-type components carry negligible self-weight relative to the piping
  * they seal and are exempted from mass-evidence requirements rather than
  * requiring a point mass. Explicit evidence, if supplied, still wins.

@@ -45,14 +45,7 @@ Parallel blocked stages are represented by stable engineering code heads in the 
   b62bfce16bf32e23e26560c68959ee03924377da
 ```
 
-Latest live PR heads observed from GitHub during this grounding were:
-
-```text
-#1386 live PR head = b1aedebf5da51e5ecc7b4a2c6eeb9bfbee2e999f
-#1391 live PR head = c05c55339dc45bacb2073e46646fd8a0cd99b983
-```
-
-Those mutable PR heads are **not** embedded as authority in the manifest. Future agents must re-ground them from GitHub. This avoids a report-only commit making the promotion checkpoint stale.
+Live PR heads are mutable observations and must be re-grounded from GitHub. They are deliberately not embedded as authority in the manifest. This prevents report-only commits from making the promotion checkpoint stale.
 
 PR #1341 @ `dd2d9d1ba9ede41c82c8d6707181c61f679b5549` is functionally carried forward but remains open/draft and owner-controlled.
 
@@ -87,7 +80,7 @@ releaseEligible = false
 engineeringQualificationComplete = false
 ```
 
-It pins the implemented ancestry, #1341 carry-forward status, stable S4/S5 **engineering code heads**, Issue #54, Issue #1402, historical Phase 6I ineligibility, and owner-only merge authority.
+It pins the implemented ancestry, #1341 carry-forward status, stable S4/S5 engineering code heads, Issue #54, Issue #1402, historical Phase 6I ineligibility, and owner-only merge authority.
 
 For S4/S5 it explicitly declares:
 
@@ -95,9 +88,7 @@ For S4/S5 it explicitly declares:
 livePrHeadMustBeGroundedFromGithub = true
 ```
 
-Therefore report-only recovery commits do not require manifest churn. The checker imports the live `PRODUCTION_CAPABILITY_PROFILE` and fails if the manifest and production truth diverge.
-
-It is executed directly by the S7 workflow and imported by `scripts/linear-piping-analysis-consumer-check.mjs`, so the governed consumer aggregate also checks the promotion checkpoint.
+The checker imports the live `PRODUCTION_CAPABILITY_PROFILE` and fails if the manifest and production truth diverge. It is executed directly by the S7 workflow and imported by `scripts/linear-piping-analysis-consumer-check.mjs`.
 
 ## DEC-1396-002 — S4/S5 external evidence has one governed tracker
 
@@ -111,8 +102,6 @@ status = OPEN_BLOCKING_S4_S5_NUMERICAL_PROMOTION
 acceptedEvidenceMayDirectlyAuthorizeProduction = false
 ```
 
-Both blocked stage records point to Issue #1402.
-
 ### S4 remains blocked by
 
 ```text
@@ -121,14 +110,7 @@ REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED
 REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED
 ```
 
-Its evidence scaffold is:
-
-```text
-scripts/lfea-s4-reducer-parity-evidence-template.mjs
-generated status = DRAFT_NOT_QUALIFIED
-```
-
-`reducerExactMechanics` must remain false until a separate post-evidence production-authority/integration PR is qualified.
+Its scaffold is `scripts/lfea-s4-reducer-parity-evidence-template.mjs`, and generated packages must remain `DRAFT_NOT_QUALIFIED` until real observations and review exist.
 
 ### S5 remains blocked by
 
@@ -139,32 +121,15 @@ L19_L20_ELBOW_STIFFENING_PRESSURE_SELECTOR_UNRESOLVED
 PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY
 ```
 
-Its scope-aware evidence scaffold is:
-
-```text
-scripts/lfea-s5-pressure-parity-evidence-template.mjs
-generated status = DRAFT_NOT_QUALIFIED
-```
-
-`pressureBourdon`, `pressureStiffening`, and `pressureAxialThrust` must remain false.
+Its scope-aware scaffold is `scripts/lfea-s5-pressure-parity-evidence-template.mjs`; generated packages also remain `DRAFT_NOT_QUALIFIED`.
 
 Issue #1402 requires controlled CAESAR raw job/source/output files, byte-level SHA-256 custody, file-level contract intake, independent review, and explicit non-production disposition.
 
 ## S7 disclosure / anti-drift retained
 
-S7 verifies:
+S7 verifies qualified bend/TYPE=3 tee disclosure, TYPE=5 approximation retention, unresolved help/actions, and SOURCE vs ANALYSIS geometry separation.
 
-- qualified bend and TYPE=3 tee disclosure;
-- TYPE=5 approximation retention;
-- unresolved help/suggested actions;
-- SOURCE vs ANALYSIS geometry separation.
-
-Promotion anti-drift retains:
-
-- S2 conditioned endpoint and working-point custody;
-- S3 explicit factor authority, `ARC_GEOMETRY_EXCLUDED_V1`, pressure exclusion and single-owner flexibility;
-- S6 topology-based TYPE=3 ownership, TYPE=5 exclusion, section ambiguity and bend/tee overlap blocks;
-- blocked S4/S5 production flags.
+Promotion anti-drift retains S2 conditioned endpoint custody; S3 explicit factor authority, `ARC_GEOMETRY_EXCLUDED_V1`, pressure exclusion and single-owner flexibility; S6 topology-based TYPE=3 ownership, TYPE=5 exclusion, section ambiguity and bend/tee overlap blocks; and blocked S4/S5 production flags.
 
 ## S0 / PR #1341 carry-forward
 
@@ -173,22 +138,15 @@ Promotion anti-drift retains:
 - `scripts/lfea-production-capability-profile-check.mjs`
 - import from `scripts/linear-piping-analysis-consumer-check.mjs`
 
-Disposition:
-
-```text
-FUNCTIONALLY_SUBSUMED_NOT_CLOSED
-ADMINISTRATIVE_ACTION = OWNER_ONLY
-```
+Disposition remains `FUNCTIONALLY_SUBSUMED_NOT_CLOSED`; administrative action is owner-only.
 
 ## Integrated qualification route
 
-`.github/workflows/lfea-piping-component-promotion-stack.yml` declares the final S0/S1/S2/S3/S6/S7 deterministic chain and a dependent Windows real-BM4_L S1/S2 source check.
-
-It does not qualify S4/S5 and does not replace the external evidence issue or a future governed release candidate.
+`.github/workflows/lfea-piping-component-promotion-stack.yml` declares the final S0/S1/S2/S3/S6/S7 deterministic chain and a dependent Windows real-BM4_L S1/S2 source check. It does not qualify S4/S5 and does not replace Issue #1402 or a future governed release candidate.
 
 ## Exact-head validation truth
 
-Current stable-manifest/checker code head:
+Stable manifest/checker engineering code head:
 
 ```text
 2edd280115425ddf2d6908151d0413bad80376f0
@@ -214,25 +172,11 @@ real BM4_L job = 97369521706
 conclusion = skipped
 ```
 
-Classification:
-
-```text
-NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE
-SOURCE_FAILURE_PROVEN = false
-PASS_PROVEN = false
-```
-
-Issue #54 remains open. No checkout, Node assertion, benchmark, anti-drift test, manifest assertion, or real-source qualification executed on this head.
+Classification: `NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE`. Issue #54 remains open. No checkout, Node assertion, benchmark, anti-drift test, manifest assertion, or real-source qualification executed on this head.
 
 ## Repository grounding
 
-Latest observed main:
-
-```text
-e6908671f25df784312b9e3392bc6ab83863c9c8
-```
-
-Observed movement from the prior grounding is EMP.1 WRC/CAUx work with no identified piping-promotion file overlap. No rebase is performed solely for unrelated movement.
+Latest observed main is `e6908671f25df784312b9e3392bc6ab83863c9c8`. Observed movement is EMP.1 WRC/CAUx work with no identified piping-promotion overlap. No rebase is performed solely for unrelated movement.
 
 ## Validation ledger
 
@@ -247,7 +191,7 @@ Observed movement from the prior grounding is EMP.1 WRC/CAUx work with no identi
 | stack manifest | PASS_AFTER_FIX — SOURCE_INSPECTION | stable engineering heads; live PR heads re-grounded externally |
 | S4 scaffold binding | PASS — SOURCE_INSPECTION | engineering head `7e540e66...`, draft-only scaffold |
 | S5 scaffold binding | PASS — SOURCE_INSPECTION | engineering head `b62bfce1...`, draft-only scaffold |
-| Issue #1402 binding | PASS — SOURCE_INSPECTION | S4/S5 point to one external evidence work package |
+| Issue #1402 binding | PASS — SOURCE_INSPECTION | S4/S5 one external evidence work package |
 | S7 exact-head runtime | NOT_RUN | run 32706798512 / steps null |
 | integrated exact-head runtime | NOT_RUN | run 32706798497 / steps null |
 | real BM4_L child | NOT_RUN — DEPENDENCY_SKIPPED | job 97369521706 |

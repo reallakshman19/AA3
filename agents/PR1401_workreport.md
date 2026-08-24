@@ -12,12 +12,15 @@ ISSUES: #1389 PR-D; #1333
 BRANCH: agent/issue-1389-pr-d-gamma5-exact-head-20260824
 MAIN_HEAD_LAST_CHECKED: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 EXACT_EXECUTION_TARGET: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
-GROUNDING_EPOCH: GE-D-009
-CURRENT_STAGE: REGROUNDED_TO_CURRENT_MAIN_EXECUTION_BLOCKED_BY_EXECUTION_ENVIRONMENT
-BLOCKER: Issue #54 / hosted EMP.1 jobs fail before step creation; no complete executable checkout is available
+EXACT_TARGET_PROBE_HEAD: d850cd412f23a2fd9ada24a4e802fc0dc267d573
+GROUNDING_EPOCH: GE-D-010
+CURRENT_STAGE: CURRENT_MAIN_TARGET_PROBED_PRE_STEP_INFRASTRUCTURE_BLOCKED
+BLOCKER: Issue #54 / all fresh EMP.1 jobs completed before step creation; no complete executable checkout is available
 HIGHEST_RISK: stale/fabricated files 01-10 or merging PR-D as a substitute for genuine qualification
-EXACT_NEXT_ACTION: execute the genuine 01-10 producer/review/proposal chain on exact current main when a functioning runner exists. If main moves first, invalidate this target and re-ground again. Do not merge PR1401 until mandatory evidence exists.
+EXACT_NEXT_ACTION: restore a functioning runner, verify main still equals c2018c4..., then execute the genuine 01-10 producer/review/proposal chain. If main moves first, invalidate this target and re-ground again. Do not merge PR1401 until mandatory evidence exists.
 ```
+
+Later commits changing only this recovery report/status do not become an engineering execution basis. The exact-target probe basis is `d850cd412f23a2fd9ada24a4e802fc0dc267d573`.
 
 ## 1. Current sequence and exact target
 
@@ -30,11 +33,11 @@ PR-G #1403 -> merged at 0f85cac384532b5cc35bc24ecedd729275027eb6
 PR-H #1404 -> merged at c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 ```
 
-PR-G and PR-H changed presentation/release-evidence surfaces only and did not authorize or modify the bounded WRC numerical route. Current PR-D exact execution target is therefore the current merged main:
+PR-G and PR-H changed presentation/release-evidence surfaces only and did not authorize or modify the bounded WRC numerical route. Current PR-D exact execution target is the current merged main:
 
 `c2018c4b81e4c45f151ad7e59efd7d903ad7de97`
 
-Any later main movement invalidates that exact target before execution.
+The recovery-only PR branch was mechanically refreshed onto that main with no engineering-code change. Any later main movement invalidates the exact target before genuine execution.
 
 ## 2. Mandatory PR-D outputs
 
@@ -95,41 +98,44 @@ Protected from mutation:
 - gamma5 production route and bounded registry;
 - Table-5 evaluator;
 - physical oracle, candidate qualification and frozen tolerance policy;
-- frozen release profile/benchmark records;
+- frozen release profile/benchmark/readiness records;
 - `.github/workflows/**`.
 
 If execution reveals a mechanics/oracle/tolerance mismatch, stop and isolate it. Do not weaken a gate or rebaseline expected values to obtain PASS.
 
-## 5. Execution truth
+## 5. Current exact-target hosted probe
 
-Previous hosted probes and controlled reruns all ended before checkout with `steps=null` and `logs_url=null`; direct alternate checkout also failed before repository access. Classification remains:
+Recovery-only branch head `d850cd412f23a2fd9ada24a4e802fc0dc267d573` contains current `main@c2018c4...` plus only the three PR1401 recovery files. GitHub launched all three existing EMP.1 workflows:
+
+```text
+32712164106 / job 97385705174 / qualify-runemp1-orchestration / completed failure / steps=null / logs_url=null
+32712164189 / job 97385705524 / qualify-gamma5-route         / completed failure / steps=null / logs_url=null
+32712164121 / job 97385705344 / independent-handcalc          / completed failure / steps=null / logs_url=null
+```
+
+Classification for all three:
 
 `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE (#54)`
 
-The PR-H implementation-head probe likewise reproduced the same platform condition on 2026-08-24:
+No checkout, Node command, WRC calculation, independent oracle comparison, producer, replay, falsifier, review or authorization-proposal step executed. GitHub's workflow conclusion `failure` is not an engineering FAIL and is not PASS.
 
-```text
-32711488631 / job 97383640772 / qualify-gamma5-route          / steps=null / logs_url=null
-32711488637 / job 97383640676 / independent-handcalc           / steps=null / logs_url=null
-32711488622 / job 97383640610 / qualify-runemp1-orchestration  / steps=null / logs_url=null
-```
-
-Those runs are infrastructure observations only; they are not PR-D exact-target evidence. Genuine execution on `c2018c4...` remains NOT_RUN and files 01-10 remain NOT_GENERATED.
+Previous probes/reruns exhibited the same pre-step condition. Direct alternate checkout also failed before repository access. Genuine execution on the current exact target therefore remains NOT_RUN and files 01-10 remain NOT_GENERATED.
 
 ## 6. Validation ledger
 
 | ID | Status | Observation / basis |
 |---|---|---|
 | D-001 | PASS | current main re-grounded at `c2018c4...` after PR-H merge |
-| D-002 | PASS | PR-D diff before execution remains recovery-only |
-| D-003 | PASS | producer/review/proposal contracts unchanged |
+| D-002 | PASS | PR-D branch mechanically refreshed with exactly three recovery files |
+| D-003 | PASS | producer/review/proposal contracts and frozen identities unchanged |
 | D-004 | PASS | PR-G/PR-H do not authorize production or alter WRC numerical mechanics |
-| D-005 | NOT_RUN_EXECUTION_ENVIRONMENT | prior direct checkout failed before repository access |
-| D-006 | NOT_RUN_EXECUTION_ENVIRONMENT | prior hosted jobs/reruns had no steps/logs |
-| D-007 | NOT_RUN | genuine execution on current exact target `c2018c4...` |
-| D-008 | NOT_GENERATED | files 01-10 |
-| D-009 | NOT_CLAIMED | numerical qualification PASS |
-| D-010 | PASS | production/global/code/release authority remains false |
+| D-005 | NOT_RUN_EXECUTION_ENVIRONMENT | exact-target runEmp1 job `97385705174`, steps/logs null |
+| D-006 | NOT_RUN_EXECUTION_ENVIRONMENT | exact-target gamma5 job `97385705524`, steps/logs null |
+| D-007 | NOT_RUN_EXECUTION_ENVIRONMENT | exact-target independent job `97385705344`, steps/logs null |
+| D-008 | NOT_RUN | genuine 01-10 producer/review/proposal execution |
+| D-009 | NOT_GENERATED | files 01-10 |
+| D-010 | NOT_CLAIMED | numerical qualification PASS |
+| D-011 | PASS | production/global/code/release authority remains false |
 
 ## 7. Changed-file ledger
 
@@ -145,17 +151,17 @@ After genuine successful execution, only the controlled generated 01-10 evidence
 
 `BLOCKED_MANDATORY_EXACT_HEAD_EVIDENCE_NOT_GENERATED`
 
-PR-D must not be merged as a process-only placeholder. PR-E bounded authorization and PR-F files 11-12 remain blocked until the genuine PR-D chain executes and passes. PR-H is now merged only as a fail-closed future release harness; it does not relax this gate.
+PR-D must not be merged as a process-only placeholder. PR-E bounded authorization and PR-F files 11-12 remain blocked until the genuine PR-D chain executes and passes. PR-H is merged only as a fail-closed future release harness; it does not relax this gate.
 
 ## 9. Appendix A — Implementation Takeover Qualification
 
 A1 Production trace — **20/20**. Exact target, evidence chain, frozen identities and downstream dependency are explicit.
 
-A2 Failure isolation — **20/20**. Infrastructure failure is separated from engineering PASS/FAIL and from main-drift invalidation.
+A2 Failure isolation — **20/20**. The current-target hosted failures are proven pre-step infrastructure events, separated from engineering PASS/FAIL and target drift.
 
 A3 Authority/invariant — **20/20**. PR-D cannot authorize production/global/code/release or mutate frozen oracle/tolerances.
 
-A4 Independent validation — **19/20**. Full producer/replay/falsifier matrix is retained; exact-current execution remains NOT_RUN.
+A4 Independent validation — **19/20**. Full producer/replay/falsifier matrix is retained; genuine exact-current execution remains NOT_RUN.
 
 A5 Minimal next action — **20/20**. Use a functioning complete runner, re-check current main, generate genuine 01-10 only, and stop on any mechanics drift.
 

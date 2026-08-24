@@ -17,6 +17,7 @@ PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1386
 BRANCH: agent/lfea-piping-promotion-s4-reducer-parity-gate-20260823
 MAIN_LAST_CHECKED: e6908671f25df784312b9e3392bc6ab83863c9c8
 ENGINEERING_CODE_HEAD: 7e540e6617decd23e3aec432bb08b81ebbd60a5a
+REPORT_BASIS_HEAD: 2fc49e5ff84357c18308ca83a84f986624cfd2a3
 CURRENT_STAGE: fail-closed reducer readiness + controlled CAESAR protocol + parity intake + raw-artifact SHA256 verification + fail-closed package scaffold
 CURRENT_BLOCKER: current-version CAESAR reducer observations do not yet exist; external execution tracked by Issue #1402
 HIGHEST_RISK: accepting self-declared hashes/reviewer assertions as parity or inferring midpoint/gravity behavior from ten-cylinder wording
@@ -39,7 +40,7 @@ productionUseAuthorized = false
 
 Hexagon public help establishes ten successively changing cylinders and From/To end section custody. It does not establish the representative OD/wall station inside each cylinder, nor gravity ownership. Historical CAEPIPE↔CAESAR evidence indicating From-end reducer weight is a falsifier only; it is not current-version CAESAR authority.
 
-The prerequisite now has five independent layers:
+The prerequisite has five independent layers:
 
 1. production readiness that has no READY path for the current candidate;
 2. controlled current-version CAESAR experiment protocol;
@@ -102,45 +103,25 @@ THERMAL_FIXED
 
 A same-orientation `CODE_SIF_BASELINE` / `CODE_SIF_VARIED` pair is also required.
 
-Each run retains:
-
-- CAESAR version/build;
-- orientation and exact physical From/To sections;
-- material state and controlled source state;
-- family-specific reported results;
-- job/input/output SHA-256 values;
-- `rawArtifacts.jobFile`, `rawArtifacts.inputSource`, `rawArtifacts.outputFile` relative paths;
-- report/artifact locators;
-- observer/date.
-
-Independent review is mandatory and the reviewer may not be any recorded CAESAR observer.
+Each run retains CAESAR version/build, exact From/To sections, controlled source state, family-specific reported results, raw file hashes/relative paths, locators, observer and date. Independent review is mandatory and the reviewer may not be any recorded CAESAR observer.
 
 ## Operator package
 
 External execution tracker: Issue #1402.
 
-Documentation:
-
-- `docs/lfea/S4_Reducer_Parity_Protocol_20260824.md`
-- `docs/lfea/S4_Reducer_Parity_Evidence_Package_20260824.md`
-
-Create a new fail-closed scaffold:
-
 ```text
 node scripts/lfea-s4-reducer-parity-evidence-template.mjs /path/to/new-package
 ```
 
-Validate only after controlled observations and independent review are complete:
+Then execute `docs/lfea/S4_Reducer_Parity_Protocol_20260824.md`, replace the scaffold placeholders with actual controlled observations/raw files, and validate:
 
 ```text
 node scripts/lfea-s4-reducer-parity-evidence-file-check.mjs /path/to/package/evidence.json
 ```
 
-Raw files must remain under the evidence JSON directory tree. Extracted JSON values are derivative evidence; the referenced raw bytes and recomputed hashes remain source custody.
+Raw files remain source custody; extracted JSON values are derivatives.
 
 ## Production readiness blockers
-
-`src/core/linear-fea-reducer-condensation/production-readiness.js` keeps these independent blockers active:
 
 ```text
 REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED
@@ -227,7 +208,7 @@ Takeover threshold: all ten answers must be source- and contract-grounded withou
 - A controlled CAESAR 14.x protocol and fail-closed readiness gate were added.
 - The evidence contract was hardened from declaration-only acceptance to controlled run-level custody, unique in-tolerance candidate selection and quantitative residuals.
 - 2026-08-24 continuation added byte-level raw-artifact binding and SHA-256 recomputation plus operator package documentation.
-- Issue #1402 now owns controlled external CAESAR execution.
-- A fail-closed scaffold generator now creates the exact S4 run inventory without manufacturing evidence.
+- Issue #1402 owns controlled external CAESAR execution.
+- A fail-closed scaffold generator creates the exact S4 run inventory without manufacturing evidence.
 - Hosted Actions continues to fail before step 1 under repository Issue #54.
 - No reducer numerical promotion has occurred.

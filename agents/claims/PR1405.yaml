@@ -1,6 +1,6 @@
 schema: AgentClaim.v1
 pr_or_wip: PR1405
-claim_state: ACTIVE
+claim_state: CLOSED_UNMERGED
 claim_modes:
   - POST_MERGE_VALIDATION_ONLY
 authority_domains:
@@ -10,7 +10,6 @@ files:
     - agents/PR1405_workreport.md
     - agents/status/PR1405.yaml
     - agents/claims/PR1405.yaml
-    - .github/workflows/lafea-visible-workbench.yml
   prefixes: []
 protected_no_mutation:
   - src/workspace/lafea-stage-registry.js
@@ -21,10 +20,14 @@ protected_no_mutation:
   - scripts/lafea-*.mjs
 invariants:
   - VALIDATION_PR_MUST_NOT_BE_MERGED
-  - APPLICATION_RUNTIME_TEST_ORACLE_TREE_EQUALS_CURRENT_MAIN
-  - WORKFLOW_TRIGGER_CHANGE_COMMENT_ONLY
+  - APPLICATION_RUNTIME_TEST_ORACLE_TREE_EQUALS_CERTIFIED_CURRENT_MAIN
+  - TEMPORARY_WORKFLOW_TRIGGER_WAS_COMMENT_ONLY_AND_RESTORED
   - NO_REGISTRY_AUTHORITY_CHANGE
   - NO_NOT_RUN_AS_PASS
-main_head_at_branch: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+main_head_at_certification: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+certification_head: 00660b67de31b076f2106df8e61b280ebea881df
+certification_run: 32716626444
+certification_job: 97399145919
+certification_result: NOT_RUN_PRE_STEP_INFRASTRUCTURE_FAILURE
 registry_cleanup: BLOCKED_PENDING_EXECUTED_PASS
-note: PR1405 exists only to trigger retained PR-path-filtered LAFEA qualification against already-merged current-main code because workflow_dispatch is unavailable through the connected interface.
+note: PR1405 was closed unmerged after forcing the retained path-filtered LAFEA workflow with a comment-only workflow touch. The workflow created no steps/logs. The comment was restored after closure; final branch diff is recovery metadata only.

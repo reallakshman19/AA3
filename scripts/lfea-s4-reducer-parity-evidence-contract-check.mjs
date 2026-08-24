@@ -27,7 +27,26 @@ function reportedResults(family, index) {
   }
   if (family === 'THERMAL_FREE') return { displacements: { ux: 1e-3 * (index + 1) } };
   if (family === 'THERMAL_FIXED') return { reactions: { fx: 1000 + index } };
-  return { structuralResponse: { ux: index + 1, rx: index + 2 }, codeSifState: family };
+  return { structuralResponse: { normalizedResponse: 1.0 }, codeSifState: family };
+}
+
+function sourceState(family) {
+  if (family.startsWith('STRUCTURAL_')) return { appliedLoad: { family, magnitude: 1000 } };
+  if (family === 'CODE_SIF_BASELINE' || family === 'CODE_SIF_VARIED') {
+    return { appliedLoad: { family: 'CODE_BOUNDARY_CONTROL', magnitude: 1000 } };
+  }
+  if (family === 'GRAVITY_METAL') {
+    return { gravitySourceState: { metalDensity: 7833, fluidDensity: 0, insulationDensity: 0, insulationThickness: 0 } };
+  }
+  if (family === 'GRAVITY_FLUID') {
+    return { gravitySourceState: { metalTreatment: 'QUALIFIED_SUBTRACTION', fluidDensity: 850, insulationDensity: 0, insulationThickness: 0 } };
+  }
+  if (family === 'GRAVITY_INSULATION') {
+    return { gravitySourceState: { metalTreatment: 'QUALIFIED_SUBTRACTION', fluidDensity: 0, insulationDensity: 180, insulationThickness: 0.05 } };
+  }
+  if (family === 'THERMAL_FREE') return { thermalState: { deltaT: 100, alpha: 1.2e-5, boundary: 'FIXED_FREE' } };
+  if (family === 'THERMAL_FIXED') return { thermalState: { deltaT: 100, alpha: 1.2e-5, boundary: 'FIXED_FIXED' } };
+  return {};
 }
 
 function runRecord(family, orientation, index) {
@@ -44,6 +63,7 @@ function runRecord(family, orientation, index) {
     fromSection: { ...(largeToSmall ? LARGE : SMALL) },
     toSection: { ...(largeToSmall ? SMALL : LARGE) },
     materialState: { id: 'CONTROLLED-STEEL', elasticModulus: 2.0e11, shearModulus: 7.69e10 },
+    ...sourceState(family),
     jobFileHash: hash,
     inputSourceHash: hash,
     outputFileHash: hash,
@@ -108,6 +128,7 @@ function completeEvidence() {
       gravityFirstMomentQualified: true,
       thermalParityQualified: true,
       codeBoundaryQualified: true,
+      codeBoundaryNormalizedDelta: 1e-7,
       expectedValuesRebaselined: false,
       tolerancesWidenedToFitCaesar: false,
     },
@@ -152,12 +173,30 @@ expectCode(
   'S4_REDUCER_PROTOCOL_GEOMETRY_MISMATCH',
 );
 expectCode(
+  (record) => {
+    record.runs.find((run) => run.family === 'STRUCTURAL_AXIAL' && run.modelOrientation === 'SMALL_TO_LARGE')
+      .appliedLoad.magnitude = 2000;
+  },
+  'S4_REDUCER_ORIENTATION_PAIR_CONTROL_STATE_MISMATCH',
+);
+expectCode(
+  (record) => {
+    record.runs.find((run) => run.family === 'GRAVITY_FLUID' && run.modelOrientation === 'SMALL_TO_LARGE')
+      .gravitySourceState.fluidDensity = 900;
+  },
+  'S4_REDUCER_ORIENTATION_PAIR_CONTROL_STATE_MISMATCH',
+);
+expectCode(
   (record) => { record.runs.find((run) => run.family === 'STRUCTURAL_AXIAL').reportedResults = { controlledQuantity: 1 }; },
   'S4_REDUCER_RECORD_REQUIRED',
 );
 expectCode(
   (record) => { delete record.runs.find((run) => run.family === 'GRAVITY_METAL').reportedResults.firstMomentOrEquivalent; },
   'S4_REDUCER_FINITE_NUMBER_REQUIRED',
+);
+expectCode(
+  (record) => { record.acceptance.codeBoundaryNormalizedDelta = 2e-6; },
+  'S4_REDUCER_CODE_BOUNDARY_PARITY_FAILED',
 );
 expectCode(
   (record) => { record.tolerancePolicy.fittedToCaesar = true; },

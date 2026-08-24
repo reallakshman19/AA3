@@ -47,7 +47,8 @@
     {
       "stage": "S4",
       "pr": 1386,
-      "head": "508ed865129554e7c7a94b9194e84504aedb31de",
+      "head": "2fc49e5ff84357c18308ca83a84f986624cfd2a3",
+      "engineeringCodeHead": "7e540e6617decd23e3aec432bb08b81ebbd60a5a",
       "capability": "reducerExactMechanics",
       "requiredCapabilityState": false,
       "blockers": [
@@ -56,12 +57,15 @@
         "REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED"
       ],
       "externalEvidenceRequired": true,
-      "externalEvidenceIssue": 1402
+      "externalEvidenceIssue": 1402,
+      "evidenceScaffold": "scripts/lfea-s4-reducer-parity-evidence-template.mjs",
+      "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED"
     },
     {
       "stage": "S5",
       "pr": 1391,
-      "head": "2c75e3a350437b0fad130b5bfdf9cc9b0a9088a7",
+      "head": "75407da9f5c6a7081ad803e67741f3f4255a9d81",
+      "engineeringCodeHead": "b62bfce16bf32e23e26560c68959ee03924377da",
       "requiredCapabilities": {
         "pressureBourdon": false,
         "pressureStiffening": false,
@@ -74,7 +78,9 @@
         "PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY"
       ],
       "externalEvidenceRequired": true,
-      "externalEvidenceIssue": 1402
+      "externalEvidenceIssue": 1402,
+      "evidenceScaffold": "scripts/lfea-s5-pressure-parity-evidence-template.mjs",
+      "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED"
     }
   ],
   "externalEvidenceGate": {

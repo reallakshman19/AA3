@@ -1,0 +1,25 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1403
+claim_state: ACTIVE
+branch: agent/issue-1389-pr-g-professional-ui-trace-20260824
+mission: "Issue #1389 PR-G professional UI, trace, currentness and unsupported-domain closure"
+write_scope:
+  - src/workspace/emp1-professional-result-presentation.js
+  - src/workspace/emp1-engineering-evidence-view.js
+  - src/workspace/emp1-workbench-run-view.js
+  - e2e/emp1-workbench-authority.spec.js
+  - agents/PR1403_workreport.md
+  - agents/status/PR1403.yaml
+  - agents/claims/PR1403.yaml
+protected_no_mutation:
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v2.json
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - validation/emp1/release/emp1-wrc537-gamma5-benchmark-manifest-v1.json
+  - .github/workflows/
+authority_boundary: "Presentation only; derive from governed current execution/cState/result objects. No method, numerical, production, global, code or release authority mutation."
+overlap_state: SAFE_AGAINST_PR1401_RECOVERY_ONLY
+fallback_policy: "Missing professional/domain evidence remains UNRESOLVED; never invent, interpolate, extrapolate or infer authority in UI."

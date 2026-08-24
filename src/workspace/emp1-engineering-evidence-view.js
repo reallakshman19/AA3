@@ -1,9 +1,13 @@
 /** Read-only EMP.1 engineering custody presentation. No DOM value is calculation authority. */
+import {
+  EMP1_PROFESSIONAL_WRC_LOCATIONS,
+  governingEightPointStressIntensity,
+} from './emp1-professional-result-presentation.js';
 import { card, element } from './lafea-workbench-dom.js';
 
 const FORCE_NAMES = Object.freeze(['Fx', 'Fy', 'Fz']);
 const MOMENT_NAMES = Object.freeze(['Mx', 'My', 'Mz']);
-const WRC_LOCATIONS = Object.freeze(['Au', 'Al', 'Bu', 'Bl', 'Cu', 'Cl', 'Du', 'Dl']);
+const WRC_LOCATIONS = EMP1_PROFESSIONAL_WRC_LOCATIONS;
 
 export function renderEmp1StageEngineeringEvidence(root, stageId, stage, projection) {
   if (stageId === 'LAFEA.1') return renderStageA(root, stage);
@@ -117,8 +121,36 @@ export function renderEmp1CorrelationResultEvidence(root, localCorrelation) {
   if (stresses?.stressIntensity?.length === WRC_LOCATIONS.length) {
     result.body.append(sectionHeading(root, 'Eight-location shell stress trace'));
     result.body.append(wrcStressTable(root, stresses));
+    result.body.append(renderWrcProfessionalScope(
+      root,
+      governingEightPointStressIntensity(stresses.stressIntensity),
+    ));
   }
   return result.section;
+}
+
+function renderWrcProfessionalScope(root, governing) {
+  const scope = element(root, 'div', 'lafea-workbench__authority');
+  scope.dataset.role = 'emp1-c-eight-point-governing';
+  const governingValue = governing.state === 'AVAILABLE'
+    ? `${governing.location} · stress intensity ${engineeringNumber(governing.stressIntensity)}`
+    : `UNRESOLVED · ${human(governing.reason)}`;
+  scope.append(
+    element(root, 'strong', null, 'Professional WRC result scope'),
+    keyValueTable(root, [
+      ['Governing among eight evaluated WRC points', governingValue],
+      ['Evaluated locations', governing.evaluatedLocations.join(', ')],
+      ['Envelope basis', human(governing.basis)],
+      ['Continuous/global shell maximum', 'NOT CLAIMED'],
+      ['Stress result domain', 'HOST CYLINDRICAL SHELL AT ATTACHMENT–SHELL JUNCTURE'],
+      ['Nozzle / attachment-wall stress', 'NOT CALCULATED'],
+      ['Continuous juncture search', 'NOT PERFORMED'],
+      ['Code compliance', 'NOT ESTABLISHED BY THIS WRC RESULT'],
+    ]),
+    element(root, 'p', null,
+      'The governing value above is the maximum retained stress intensity among Au, Al, Bu, Bl, Cu, Cl, Du and Dl only. It is not a continuous or global shell maximum. Engineering judgment remains required outside these evaluated locations.'),
+  );
+  return scope;
 }
 
 function renderStageA(root, stage) {

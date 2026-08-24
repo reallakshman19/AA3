@@ -36,6 +36,15 @@ test('complete EMP.1 qualification sample reaches prepared C and remains fail-cl
   await expect(summary.getByRole('row').filter({ hasText: 'C retained numerical evidence' }))
     .toContainText('NO');
 
+  const professional = summary.locator('[data-role="emp1-professional-status"]');
+  await expect(professional).toBeVisible();
+  await expect(professional.getByRole('row').filter({ hasText: 'CALCULATED' })).toContainText('NO');
+  await expect(professional.getByRole('row').filter({ hasText: 'METHOD QUALIFIED' })).toContainText('NO');
+  await expect(professional.getByRole('row').filter({ hasText: 'CODE COMPLIANT' })).toContainText('NO');
+  await expect(professional.getByRole('row').filter({ hasText: 'RELEASED' })).toContainText('NO');
+  await expect(professional.locator('[data-role="emp1-professional-unsupported-domain"]'))
+    .toContainText('WRC GAMMA5 ROUTE REQUALIFICATION REQUIRED AFTER SOURCE AUTHORITY CLOSURE');
+
   const cRun = workbench.locator('[data-role="emp1-run-c"]');
   await expect(cRun).toBeDisabled();
   await expect(cRun).toHaveAttribute('data-c-state', 'ROUTE_SUSPENDED');
@@ -55,6 +64,7 @@ test('complete EMP.1 qualification sample reaches prepared C and remains fail-cl
   )).toHaveCount(1);
 
   await expect(workbench.locator('[data-role="emp1-c-result-evidence"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-role="emp1-c-eight-point-governing"]')).toHaveCount(0);
   await expect(summary.getByRole('row').filter({ hasText: 'C production route executed' }))
     .toContainText('NO');
   await expect(summary.getByRole('row').filter({ hasText: 'Code compliance produced' }))
@@ -115,7 +125,7 @@ test('C setup stays navigable while production C remains disabled', async ({ pag
     .toContainText('C production execution suspended');
 });
 
-test('synthetic current C presentation uses reportable result and execution authority hash', async ({ page }) => {
+test('synthetic current C presentation uses current authority and an eight-point-only governing result', async ({ page }) => {
   await page.goto(HOST_URL);
   const authoritySnapshot = authoritySnapshotForUi('Q1');
   const localCorrelation = currentCorrelationForUi();
@@ -145,6 +155,7 @@ test('synthetic current C presentation uses reportable result and execution auth
       reportableResult: fixture.localCorrelation,
       currentExecutionEvidence: fixture.localCorrelation,
       retainedHistoricalEvidence: [],
+      blockerCodes: [],
       executionAuthorityHash: fixture.authoritySnapshot.semanticHash,
       currentAuthorityHash: fixture.authoritySnapshot.semanticHash,
       executionAuthoritySnapshot: fixture.authoritySnapshot,
@@ -160,6 +171,9 @@ test('synthetic current C presentation uses reportable result and execution auth
       normalResultCards: host.querySelectorAll('[data-role="emp1-c-result-evidence"]').length,
       summaryText: summary.textContent,
       resultText: currentResult?.textContent ?? '',
+      professionalText: summary.querySelector('[data-role="emp1-professional-status"]')?.textContent ?? '',
+      domainText: summary.querySelector('[data-role="emp1-professional-bounded-domain"]')?.textContent ?? '',
+      governingText: currentResult?.querySelector('[data-role="emp1-c-eight-point-governing"]')?.textContent ?? '',
     };
   }, { authoritySnapshot, localCorrelation, execution });
   expect(result.normalResultCards).toBe(1);
@@ -167,8 +181,22 @@ test('synthetic current C presentation uses reportable result and execution auth
   expect(result.summaryText).toContain('AUTH-Q1');
   expect(result.summaryText).toContain('Code compliance producedNO');
   expect(result.summaryText).toContain('Release qualifiedNO');
+  expect(result.professionalText).toContain('CALCULATEDYES');
+  expect(result.professionalText).toContain('METHOD QUALIFIEDYES');
+  expect(result.professionalText).toContain('CODE COMPLIANTNO');
+  expect(result.professionalText).toContain('RELEASEDNO');
+  expect(result.domainText).toContain('CYLINDRICAL / ROUND');
+  expect(result.domainText).toContain('ORIGINAL / 5');
+  expect(result.domainText).toContain('0.05 ≤ β ≤ 0.5');
+  expect(result.domainText).toContain('Interpolation allowedNO');
+  expect(result.domainText).toContain('Cross-variant fallback allowedNO');
   expect(result.resultText).toContain('Eight-location shell stress trace');
-  expect(result.resultText).toContain('72.672816');
+  expect(result.resultText).toContain('72.67281564');
+  expect(result.governingText).toContain('Governing among eight evaluated WRC pointsAu · stress intensity 72.67281564');
+  expect(result.governingText).toContain('Continuous/global shell maximumNOT CLAIMED');
+  expect(result.governingText).toContain('Nozzle / attachment-wall stressNOT CALCULATED');
+  expect(result.governingText).toContain('Code complianceNOT ESTABLISHED BY THIS WRC RESULT');
+  expect(result.governingText).toContain('It is not a continuous or global shell maximum');
 });
 
 test('stale numerical C is hidden from results but retained in authority evidence', async ({ page }) => {
@@ -204,6 +232,7 @@ test('stale numerical C is hidden from results but retained in authority evidenc
       reportableResult: null,
       currentExecutionEvidence: fixture.staleLocalCorrelation,
       retainedHistoricalEvidence: [],
+      blockerCodes: ['EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED'],
       executionAuthorityHash: fixture.executionAuthoritySnapshot.semanticHash,
       currentAuthorityHash: fixture.currentAuthoritySnapshot.semanticHash,
       executionAuthoritySnapshot: fixture.executionAuthoritySnapshot,
@@ -217,6 +246,7 @@ test('stale numerical C is hidden from results but retained in authority evidenc
     if (normalResult) host.append(normalResult);
     return {
       normalResultCards: host.querySelectorAll('[data-role="emp1-c-result-evidence"]').length,
+      governingCards: host.querySelectorAll('[data-role="emp1-c-eight-point-governing"]').length,
       authorityDrawer: host.querySelectorAll('[data-role="emp1-c-authority-evidence"]').length,
       reportableFlag: host.querySelector('[data-role="emp1-c-authority-evidence"]')
         ?.dataset.currentResultAvailable ?? null,
@@ -225,9 +255,11 @@ test('stale numerical C is hidden from results but retained in authority evidenc
       stalePayload: host.querySelector('[data-role="emp1-c-retained-stale-result-payload"]')
         ?.textContent ?? null,
       summaryText: summary.textContent,
+      professionalText: summary.querySelector('[data-role="emp1-professional-status"]')?.textContent ?? '',
     };
   }, { executionAuthoritySnapshot, currentAuthoritySnapshot, staleLocalCorrelation, execution });
   expect(result.normalResultCards).toBe(0);
+  expect(result.governingCards).toBe(0);
   expect(result.authorityDrawer).toBe(1);
   expect(result.reportableFlag).toBe('false');
   expect(result.staleWarning).toContain('historical/stale evidence only');
@@ -236,6 +268,10 @@ test('stale numerical C is hidden from results but retained in authority evidenc
   expect(result.summaryText).toContain('AUTH-Q1');
   expect(result.summaryText).toContain('AUTH-Q2');
   expect(result.summaryText).toContain('C current/reportable resultNO');
+  expect(result.professionalText).toContain('CALCULATEDNO');
+  expect(result.professionalText).toContain('METHOD QUALIFIEDYES');
+  expect(result.professionalText).toContain('CODE COMPLIANTNO');
+  expect(result.professionalText).toContain('RELEASEDNO');
 });
 
 async function mountEmp1Workbench(page) {
@@ -256,14 +292,48 @@ function authoritySnapshotForUi(qualificationId) {
     schema: 'emp1-workbench-route-authority-snapshot/v1',
     routeId: 'EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP',
     productionUseAuthorized: true,
-    semanticHash: `AUTH-${qualificationId}`,
+    routeModuleAuthorized: true,
     registry: {
+      registered: true,
+      engineeringUseAuthorized: true,
+      suspensionReasons: [],
       method: {
+        identity: 'WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP',
+        edition: '2013',
         qualificationRecordSha256: `QUAL-${qualificationId}`,
         sourceDocumentSha256: `SOURCE-${qualificationId}`,
         datasetHash: `DATASET-${qualificationId}`,
       },
+      scope: {
+        shellFamily: 'CYLINDRICAL',
+        attachmentShape: 'ROUND',
+        variant: 'ORIGINAL',
+        gamma: 5,
+        betaMinimum: 0.05,
+        betaMaximum: 0.5,
+        differentialPressure: 0,
+        Kn: 1,
+        Kb: 1,
+        interpolationAllowed: false,
+        crossVariantFallbackAllowed: false,
+        stressOutputDomain: 'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE',
+        attachmentStressCalculated: false,
+        nozzleStressCalculated: false,
+        evaluatedStressLocations: 'WRC_TABLE5_EIGHT_SHELL_JUNCTURE_POINTS',
+        eightPointEnvelopeBasis: 'MAXIMUM_OVER_EVALUATED_TABLE5_EIGHT_POINTS_ONLY',
+        absoluteShellMaximumAssured: false,
+        continuousJunctureSearchPerformed: false,
+      },
+      limitations: [
+        'WRC_TABLE5_EIGHT_POINTS_NOT_GLOBAL_ABSOLUTE_MAXIMUM',
+        'UNITY_STRESS_CONCENTRATION_MULTIPLIERS_ONLY',
+      ],
+      remainingBlocked: [
+        'NONZERO_DIFFERENTIAL_PRESSURE',
+        'GAMMA_OTHER_THAN_5',
+      ],
     },
+    semanticHash: `AUTH-${qualificationId}`,
   };
 }
 

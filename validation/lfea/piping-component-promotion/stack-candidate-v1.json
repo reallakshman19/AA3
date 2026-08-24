@@ -3,8 +3,9 @@
   "status": "BLOCKED_NOT_RELEASE_CANDIDATE",
   "program": "LFEA_PIPING_COMPONENT_PROMOTION_S0_S7",
   "observedMain": {
-    "sha": "e6908671f25df784312b9e3392bc6ab83863c9c8",
+    "sha": "0f85cac384532b5cc35bc24ecedd729275027eb6",
     "classification": "OBSERVATION_ONLY_NOT_RELEASE_PARENT",
+    "mustBeRegroundedLive": true,
     "latestObservedDrift": "EMP1_ONLY_NO_PIPING_PROMOTION_OVERLAP"
   },
   "implementedAncestry": [

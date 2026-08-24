@@ -6,25 +6,40 @@ workstream: EMP1_WRC537_PROFESSIONAL_RELEASE
 branch: agent/issue-1389-pr-d-gamma5-exact-head-20260824
 main_head_last_checked: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 exact_execution_target: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
-latest_runner_probe_head: e99f40cff037051db074dce07a95c38a00abb704
 merge_base: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 criticality: ENGINEERING_CRITICAL
-agent_state: ACTIVE
+agent_state: ACTIVE_BLOCKED_EXTERNAL_EXECUTION_CAPACITY
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1401_workreport.md
 appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-grounding_epoch: GE-D-011
-current_stage: OWNER_MERGE_REQUEST_BLOCKED_BY_MANDATORY_EVIDENCE; LATEST_RERUN_PRE_STEP_FAILURE
+grounding_epoch: GE-D-012
+current_stage: SOURCE_SIDE_RUNNER_LABEL_FIX_FALSIFIED; EXACT_HEAD_EXECUTION_EXTERNALLY_BLOCKED
 predecessor_gate:
   pr1398: MERGED_8c8d602f23335506d509e3cf0e2af627be0500ce
   pr1400: MERGED_e6908671f25df784312b9e3392bc6ab83863c9c8
   pr1403: MERGED_0f85cac384532b5cc35bc24ecedd729275027eb6
   pr1404: MERGED_c2018c4b81e4c45f151ad7e59efd7d903ad7de97
   state: CLEARED_FOR_PR_D_EXECUTION_ONLY
-blocker: ISSUE_54_CURRENT_EMP1_PRE_STEP_FAILURE_AND_NO_FUNCTIONING_COMPLETE_CHECKOUT
+runner_fix_experiment:
+  pr1406: CLOSED_UNMERGED
+  hypothesis: UBUNTU_LATEST_ROUTING_PATH_CAUSES_CURRENT_PRE_STEP_FAILURE
+  result: REJECTED
+  falsifier_head: a5b22d2d068164be785f30151ef0b2da1f6a5de8
+  gamma5: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605012_JOB_97402064994_STEPS_NULL
+  runemp1: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605022_JOB_97402064877_STEPS_NULL
+  independent: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605065_JOB_97402064864_STEPS_NULL
+  main_changed: false
+historical_self_hosted_route:
+  pr376_b7h_merged: true
+  executable_pass_observed: false
+  matching_runner_was_pending: true
+  workflow_currently_present: false
+  removed_by_m001: d086cc9ca5ab32866ec071d82954e375442574bb
+  restoration_without_confirmed_runner_authorized: false
+blocker: "CURRENT ACTIONS CAPACITY/ENTITLEMENT OR AN ACTUALLY REGISTERED GOVERNED RUNNER; CONNECTED TOOLING CANNOT ADMINISTER BILLING/RUNNERS"
 highest_risk: STALE_OR_FABRICATED_01_10_EVIDENCE_OR_PROCESS_ONLY_MERGE
 validation:
   exact_main_grounding: PASS
@@ -32,18 +47,17 @@ validation:
   producer_contract_inspection: PASS
   independent_review_contract_inspection: PASS
   proposal_12_mutation_contract_inspection: PASS
-  current_target_hosted_runemp1: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32712164106_JOB_97385705174_STEPS_NULL
-  current_target_hosted_gamma5: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32712164189_JOB_97385705524_STEPS_NULL
-  current_target_hosted_independent_handcalc: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32712164121_JOB_97385705344_STEPS_NULL
-  later_gamma5_probe: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32712369510_JOB_97386330940_STEPS_NULL
-  owner_requested_gamma5_rerun: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32712369510_ATTEMPT_2_JOB_97397137459_STEPS_NULL
+  current_target_hosted_runemp1: NOT_RUN_EXECUTION_ENVIRONMENT
+  current_target_hosted_gamma5: NOT_RUN_EXECUTION_ENVIRONMENT
+  current_target_hosted_independent_handcalc: NOT_RUN_EXECUTION_ENVIRONMENT
+  ubuntu2404_runner_pin_hypothesis: FAIL_FALSIFIED
   github_admin_control_plane: NOT_AVAILABLE_IN_CONNECTED_GITHUB_SURFACE
-  additional_runner_admin_plugin: NOT_AVAILABLE
+  confirmed_registered_self_hosted_runner: NOT_OBSERVED
   genuine_exact_main_execution: NOT_RUN
   evidence_files_01_10: NOT_GENERATED
   numerical_qualification: NOT_CLAIMED
-ci_state: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-review_state: TO_RECHECK_BEFORE_ANY_FUTURE_MERGE
+ci_state: EXTERNAL_EXECUTION_CAPACITY_BLOCKED_SOURCE_SIDE_LABEL_FIX_REJECTED
+review_state: PRIOR_REVIEWS_PRESERVE_MANDATORY_EVIDENCE_GATE
 changed_files_expected_before_execution: 3
 expected_generated_evidence_files_after_execution: 10
 owner_merge_authorization_received: true
@@ -59,5 +73,5 @@ dependencies:
   - "#1389"
   - "#1333"
   - "#54"
-exact_next_action: "Obtain an executable exact-head environment, verify main remains c2018c4..., generate genuine 01-10, then reconsider PR1401 merge and only afterward PR-E. Do not merge process metadata as qualification."
+exact_next_action: "Restore GitHub Actions capacity/entitlement or register a governed runner outside this source interface; verify main still equals c2018c4...; then execute genuine 01-10. Do not merge PR1401 before evidence exists."
 last_updated: "2026-08-24"

@@ -1,0 +1,50 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1414
+mission: "Issue #1383 retained Table-5 stress-intensity reconciliation"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1383-retained-table5-stress-intensity-reconciliation-20260824
+base_sha: beee11eb99764bab078bf8ba73cf5768514aac67
+base_tree: 97102161d5224a227029b465fa3b31782e202475
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_DRAFT
+handover_readiness: READY
+report_path: agents/PR1414_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: PR_ALLOCATED_RECOVERY_MIGRATION
+merge_authority: NOT_GRANTED
+source_state:
+  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
+  retained_table5_pages: 41-42
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+partial_authority:
+  table5_combined_stress_intensity_postprocessing: QUALIFIED_RETAINED_SOURCE_TEXT
+  algebraic_component_summation_before_S: QUALIFIED_RETAINED_SOURCE_TEXT
+  combined_sigma_phi_sigma_x_tau_inputs: QUALIFIED_RETAINED_SOURCE_TEXT
+  like_unlike_zero_shear_case_structure: QUALIFIED_RETAINED_SOURCE_TEXT
+remaining_blockers:
+  explicit_plane_stress_source_statement: BLOCKED
+  explicit_sigma3_zero: BLOCKED
+  principal_stress_equations: BLOCKED
+  exact_twice_maximum_shear_definition: BLOCKED
+  von_mises_policy: BLOCKED
+  physical_surface_common_point_semantics: BLOCKED
+  eight_point_envelope_source_authority: BLOCKED
+  code_acceptance: BLOCKED
+validation:
+  retained_source_inspection: PASS
+  direct_pdf_page_observation: NOT_RUN
+  checker_node_execution: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  final_diff_review_main_audit: PENDING
+authority:
+  engineering: false
+  production: false
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+exact_next_action: "Delete WIP recovery records; verify exact six-file diff/main/reviews; leave draft pending owner merge authorization."
+last_updated: "2026-08-24"

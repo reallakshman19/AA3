@@ -16,13 +16,13 @@ PR: 1396
 BRANCH: agent/lfea-piping-promotion-s7-ui-disclosure-20260824
 STACK_BASE_PR: 1395
 STACK_BASE_HEAD: 2b4b4762973c84690b636eab8abe918e307d5dab
-CODE_HEAD_PRE_REPORT: 53551fc6fbfac0f040068e489636aac36de86a9f
+CODE_HEAD_PRE_REPORT: ef02c9d3123f26c5e16706f655b73ac48c4a6108
 MAIN_LAST_GROUNDED: e6908671f25df784312b9e3392bc6ab83863c9c8
-CURRENT_STAGE: S7 disclosure + promotion anti-drift + fail-closed stack manifest + external-evidence binding
+CURRENT_STAGE: S7 disclosure + promotion anti-drift + fail-closed stack manifest + current S4/S5 evidence-scaffold binding
 NUMERICAL_MUTATION_ALLOWED: false
 CI_BLOCKER: Issue #54 — jobs fail before checkout/step 1
 EXTERNAL_EVIDENCE_BLOCKER: Issue #1402 — controlled CAESAR S4/S5 qualification evidence
-EXACT_NEXT_ACTION: collect #1402 evidence while #54 is repaired; do not claim complete qualification or release eligibility until both gates are closed by evidence
+EXACT_NEXT_ACTION: execute controlled CAESAR evidence under #1402 while #54 is repaired; keep S4/S5 flags false and refresh this manifest whenever blocked-prerequisite heads move
 ```
 
 ## 60-second handover
@@ -35,11 +35,16 @@ Implemented ancestry:
      -> #1396  S7/integration
 ```
 
-Parallel blocked stages:
+Parallel blocked stages are now pinned at their current prerequisite heads:
 
 ```text
-#1386  S4 reducer @ 508ed865129554e7c7a94b9194e84504aedb31de
-#1391  S5 pressure/Bourdon @ 2c75e3a350437b0fad130b5bfdf9cc9b0a9088a7
+#1386  S4 reducer
+  current PR head: 2fc49e5ff84357c18308ca83a84f986624cfd2a3
+  engineering code head: 7e540e6617decd23e3aec432bb08b81ebbd60a5a
+
+#1391  S5 pressure/Bourdon
+  current PR head: 75407da9f5c6a7081ad803e67741f3f4255a9d81
+  engineering code head: b62bfce16bf32e23e26560c68959ee03924377da
 ```
 
 PR #1341 @ `dd2d9d1ba9ede41c82c8d6707181c61f679b5549` is functionally carried forward but remains open/draft and owner-controlled.
@@ -75,7 +80,7 @@ releaseEligible = false
 engineeringQualificationComplete = false
 ```
 
-It pins the implemented ancestry, #1341 carry-forward status, S4/S5 blocked heads, Issue #54, Issue #1402, historical Phase 6I ineligibility, and owner-only merge authority.
+It pins the implemented ancestry, #1341 carry-forward status, current S4/S5 prerequisite heads, their engineering-code heads, Issue #54, Issue #1402, historical Phase 6I ineligibility, and owner-only merge authority.
 
 The checker imports the live `PRODUCTION_CAPABILITY_PROFILE` and fails if the manifest and production truth diverge.
 
@@ -83,7 +88,7 @@ It is executed directly by the S7 workflow and imported by `scripts/linear-pipin
 
 ## DEC-1396-002 — S4/S5 external evidence has one governed tracker
 
-Issue **#1402 — LFEA S4/S5 controlled CAESAR qualification evidence execution** is now the explicit external evidence gate.
+Issue **#1402 — LFEA S4/S5 controlled CAESAR qualification evidence execution** is the explicit external evidence gate.
 
 Manifest requirements:
 
@@ -103,6 +108,13 @@ REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED
 REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED
 ```
 
+Its current evidence scaffold is:
+
+```text
+scripts/lfea-s4-reducer-parity-evidence-template.mjs
+generated status = DRAFT_NOT_QUALIFIED
+```
+
 `reducerExactMechanics` must remain false until a separate post-evidence production-authority/integration PR is qualified.
 
 ### S5 remains blocked by
@@ -112,6 +124,13 @@ CONTROLLED_BOURDON_PARITY_REQUIRED
 CONTROLLED_PRESSURE_STIFFENING_PARITY_REQUIRED
 L19_L20_ELBOW_STIFFENING_PRESSURE_SELECTOR_UNRESOLVED
 PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY
+```
+
+Its scope-aware evidence scaffold is:
+
+```text
+scripts/lfea-s5-pressure-parity-evidence-template.mjs
+generated status = DRAFT_NOT_QUALIFIED
 ```
 
 `pressureBourdon`, `pressureStiffening`, and `pressureAxialThrust` must remain false.
@@ -156,17 +175,17 @@ It does not qualify S4/S5 and does not replace the external evidence issue or a 
 
 ## Exact-head validation truth
 
-Manifest + Issue #1402 binding code head:
+Current manifest/checker code head:
 
 ```text
-53551fc6fbfac0f040068e489636aac36de86a9f
+ef02c9d3123f26c5e16706f655b73ac48c4a6108
 ```
 
 S7 workflow:
 
 ```text
-run = 32702513173
-job = 97356784032
+run = 32706453716
+job = 97368482752
 conclusion = failure
 steps = null
 ```
@@ -174,11 +193,11 @@ steps = null
 Integrated workflow:
 
 ```text
-run = 32702513152
-deterministic job = 97356784181
+run = 32706453737
+deterministic job = 97368483001
 conclusion = failure
 steps = null
-real BM4_L job = 97356793192
+real BM4_L job = 97368492850
 conclusion = skipped
 ```
 
@@ -190,7 +209,7 @@ SOURCE_FAILURE_PROVEN = false
 PASS_PROVEN = false
 ```
 
-Issue #54 remains open. No checkout, Node assertion, benchmark, anti-drift test, or real-source qualification executed on this head.
+Issue #54 remains open. No checkout, Node assertion, benchmark, anti-drift test, manifest assertion, or real-source qualification executed on this head.
 
 ## Repository grounding
 
@@ -212,11 +231,13 @@ Observed movement from the prior grounding is EMP.1 WRC/CAUx work with no identi
 | S7 disclosure design | PASS — SOURCE_INSPECTION | checker retained |
 | S0 guard carry-forward | PASS_AFTER_FIX — SOURCE_INSPECTION | guard + aggregate import |
 | promotion anti-drift | PASS — SOURCE_INSPECTION | S2/S3/S6 and S4/S5 locks |
-| stack manifest | PASS_AFTER_FIX — SOURCE_INSPECTION | ancestry/profile/release lock |
+| stack manifest | PASS_AFTER_REFRESH — SOURCE_INSPECTION | current prerequisite heads + profile/release locks |
+| S4 scaffold binding | PASS — SOURCE_INSPECTION | current head `2fc49e5f...`, engineering head `7e540e66...`, draft-only scaffold |
+| S5 scaffold binding | PASS — SOURCE_INSPECTION | current head `75407da9...`, engineering head `b62bfce1...`, draft-only scaffold |
 | Issue #1402 binding | PASS — SOURCE_INSPECTION | S4/S5 point to one external evidence work package |
-| S7 exact-head runtime | NOT_RUN | run 32702513173 / steps null |
-| integrated exact-head runtime | NOT_RUN | run 32702513152 / steps null |
-| real BM4_L child | NOT_RUN — DEPENDENCY_SKIPPED | job 97356793192 |
+| S7 exact-head runtime | NOT_RUN | run 32706453716 / steps null |
+| integrated exact-head runtime | NOT_RUN | run 32706453737 / steps null |
+| real BM4_L child | NOT_RUN — DEPENDENCY_SKIPPED | job 97368492850 |
 | S4 CAESAR parity | UNRESOLVED | Issue #1402 |
 | S5 CAESAR parity | UNRESOLVED | Issue #1402 |
 | release eligibility | BLOCKED | `BLOCKED_NOT_RELEASE_CANDIDATE` |
@@ -239,6 +260,7 @@ Observed movement from the prior grounding is EMP.1 WRC/CAUx work with no identi
 
 - Source inspection is not runtime PASS.
 - The manifest is not release authority.
+- Generated S4/S5 scaffolds are not CAESAR evidence and must fail intake until completed.
 - Issue #1402 evidence, even if accepted, cannot directly authorize production.
 - Bend capability does not make unsupported bend sources exact.
 - Tee capability does not authorize TYPE=5.
@@ -254,11 +276,11 @@ Observed movement from the prior grounding is EMP.1 WRC/CAUx work with no identi
 2. What exact heads define #1348 → #1395 → #1396 ancestry?
 3. Why is #1341 functionally subsumed but still open?
 4. Why can bend/tee implementation flags be true while source cases remain approximate?
-5. What three independent S4 authority questions remain?
-6. Why are Bourdon, bend pressure stiffening and axial thrust separate S5 authorities?
-7. What does Issue #1402 collect and what can it not authorize?
-8. Why are the current workflow failures classified NOT_RUN rather than engineering FAIL?
-9. Why is historical Phase 6I evidence ineligible for this changed tree?
+5. What three independent S4 authority questions remain, and which current prerequisite head owns their intake scaffold?
+6. Why are Bourdon, bend pressure stiffening and axial thrust separate S5 authorities, and which current prerequisite head owns the scope-aware scaffold?
+7. Why must both generated scaffolds report `DRAFT_NOT_QUALIFIED`?
+8. What does Issue #1402 collect and what can it not authorize?
+9. Why are the current workflow failures classified NOT_RUN rather than engineering FAIL?
 10. What two gates must close before complete promotion qualification can be claimed?
 
 Takeover threshold: all ten must be answerable without treating NOT_RUN as PASS or guessing CAESAR behavior.
@@ -270,4 +292,5 @@ Takeover threshold: all ten must be answerable without treating NOT_RUN as PASS 
 - A final integrated S0/S1/S2/S3/S6/S7 workflow was added.
 - Repeated hosted jobs failed before step creation and remain Issue #54.
 - A fail-closed machine-readable stack manifest was added and bound to the live capability profile.
-- Issue #1402 was created as the single controlled CAESAR evidence work package for S4/S5 and is now enforced by the stack manifest.
+- Issue #1402 was created as the single controlled CAESAR evidence work package for S4/S5.
+- S4/S5 prerequisite PRs added fail-closed evidence scaffold generators; the integration manifest was refreshed to their current heads and now asserts scaffold status remains `DRAFT_NOT_QUALIFIED`.

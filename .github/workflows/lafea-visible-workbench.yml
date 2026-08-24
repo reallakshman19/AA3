@@ -1,3 +1,4 @@
+# Issue #1371 post-merge certification trigger only; no workflow semantic change.
 name: LAFEA visible workbench qualification
 on:
   pull_request:

@@ -4,14 +4,20 @@ source_task: ISSUE-1371
 branch: agent/issue-1371-integration-validation-20260824
 state: ACTIVE
 criticality: ENGINEERING_CRITICAL
-execution_mode: MANUAL
-auto_state: VALIDATING_COMBINED_HEAD
+execution_mode: AUTO
+auto_state: BLOCKED_INFRASTRUCTURE
 merge_authority: OWNER_ONLY
 validation_pr_merge: PROHIBITED
-current_stage: A_B_C_D_RUNTIME_EQUIVALENT_VALIDATION
+current_stage: A_B_C_D_RUNTIME_EQUIVALENT_VALIDATION_WITH_B4_3
 main_head_last_checked: e985b50d81d0d241db27313562c8cc12cd7cc27d
 report: agents/PR1399_workreport.md
 coordination_state: SAFE_NON_OWNING_OVERLAY
-hosted_engineering_execution: NOT_RUN_PENDING_EXACT_HEAD_INSPECTION
-highest_risk: FIRST_COMBINED_EXECUTION_MAY_REVEAL_CROSS_PR_INTERACTION
-exact_next_action: inspect exact-head visible-workbench steps; require merge-order guard PASS because PR-B is present; never merge PR1399
+source_pr_a_head: ba307e0199b065a38ecb9e85bccd7b3a97f33770
+source_pr_b_head: 1a6602aff6caa8404affadcc9d431fac8b2ec7c6
+source_pr_c_head: dd48b454eb6a8073a94f90a0c08ec5a437dc184a
+source_pr_d_head: c6246167ca4513eb7d8292135d259043fccee6c1
+b4_3_source_authority: FROZEN_PRIMARY_PUBLISHED_REFERENCE
+b4_3_production_execution: NOT_RUN_PRE_STEP_INFRASTRUCTURE_FAILURE
+hosted_engineering_execution: NOT_RUN_PRE_STEP_INFRASTRUCTURE_FAILURE
+highest_risk: FIRST_COMBINED_PRODUCTION_EXECUTION_MAY_REVEAL_REAL_CROSS_PR_OR_B4_3_DISCREPANCY
+exact_next_action: when hosted execution starts steps, require B4-1/B4-2/B4-3 comparator PASS, PR-B merge-order PASS, anti-drift PASS, continuum PASS and Chromium PASS; never merge PR1399

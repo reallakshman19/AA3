@@ -182,6 +182,12 @@ function requireFamilySettings(run) {
   if (globalMode.has(run.family)) {
     if (run.activateBourdonEffects !== 'NONE') fail('S5_PRESSURE_Q5_BOURDON_MUST_BE_NONE', { family: run.family });
     if (run.activePipingCode !== 'B31.3_2022') fail('S5_PRESSURE_Q5_ACTIVE_CODE_INVALID', { family: run.family });
+    if (run.elbowStiffeningPressureSelector !== 'P1') {
+      fail('S5_PRESSURE_Q5_SELECTOR_MUST_BE_P1', {
+        family: run.family,
+        actual: run.elbowStiffeningPressureSelector,
+      });
+    }
     if (run.usePressureStiffeningOnBends !== globalMode.get(run.family)) {
       fail('S5_PRESSURE_GLOBAL_MODE_MISMATCH', { family: run.family, actual: run.usePressureStiffeningOnBends });
     }

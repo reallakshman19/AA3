@@ -17,7 +17,7 @@ PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1391
 STACK_BASE_PR: 1348
 STACK_BASE_HEAD: 25543a9e6c0e796d63e89841f63e41a4fd3292cc
 BRANCH: agent/lfea-piping-promotion-s5-bourdon-pressure-20260823
-MAIN_LAST_CHECKED: e6908671f25df784312b9e3392bc6ab83863c9c8
+MAIN_LAST_CHECKED: 0f85cac384532b5cc35bc24ecedd729275027eb6
 ENGINEERING_CODE_HEAD: a062068797b1a33b2cbae9fdd390cb0e18ece0df
 REPORT_BASIS_HEAD: a062068797b1a33b2cbae9fdd390cb0e18ece0df
 CURRENT_STAGE: source-state custody + mechanism-isolated protocol + scoped parity intake + raw SHA256 custody + fail-closed package scaffolds + discriminating Q5 global arbitration
@@ -174,7 +174,7 @@ The first command creates draft scaffolds only. Controlled observations/raw file
 | Check | Status | Evidence |
 |---|---|---|
 | Stack base #1348 | PASS — GROUNDED | `25543a9e...` |
-| Current main | PASS — SOURCE_INSPECTION | `e6908671...`; observed drift EMP.1-only |
+| Current main | PASS — SOURCE_INSPECTION | `0f85cac3...`; one new EMP.1 presentation/e2e commit; no identified piping overlap |
 | BM4_NL Bourdon source state | PASS — SOURCE_INSPECTION | individual-file `TRANSLATION_AND_ROTATION` |
 | Global stiffening source state | PASS — SOURCE_INSPECTION | raw DEFAULT → DEFAULT_CODE under B31.3-2022 |
 | BM4_NL L19/L20 selector | UNRESOLVED — SOURCE AUTHORITY | provisional P1 rejected |
@@ -247,5 +247,6 @@ Takeover threshold: answers must be source/contract grounded without guessing CA
 - BM4_NL source custody established Bourdon and global DEFAULT_CODE while leaving L19/L20 selector unresolved.
 - Q1-Q6 controlled protocols, raw-file intake and fail-closed scaffolds were added.
 - 2026-08-24 source audit found Q5 selector NONE would defeat global-arbitration discrimination; contract, fixture, scaffold and docs were corrected to fixed controlled P1 at engineering head `a0620687...`.
+- Main re-grounded at `0f85cac3...`; the intervening PR #1403 is EMP.1 presentation/e2e only and does not alter S5 authority.
 - Issue #1402 owns external CAESAR execution; Issue #54 still blocks hosted runtime qualification.
 - No S5 numerical production capability has been enabled.

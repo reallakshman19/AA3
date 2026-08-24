@@ -4,6 +4,7 @@ claim_state: ACTIVE
 files:
   exact:
     - agents/PR1393_workreport.md
+    - agents/PR1393_series_integration_addendum.md
     - agents/status/PR1393.yaml
     - agents/claims/PR1393.yaml
     - scripts/lib/lafea1371-custody-assertions.mjs
@@ -15,6 +16,7 @@ files:
 authority_domains:
   - LAFEA3_LAFEA4_ANTI_DRIFT_REGRESSION
   - LAFEA3_PR_B_SOURCE_FAITHFUL_MERGE_ORDER_GUARD
+  - LAFEA1371_SERIES_INTEGRATION_DURABLE_EVIDENCE
   - LAFEA_EXECUTION_CUSTODY_TEST_HELPER
   - LAFEA_VIEWPORT_RETAINED_MESH_IDENTITY_OBSERVABILITY
   - EXISTING_CHROMIUM_QUALIFICATION_CARRIER_BINDING
@@ -44,4 +46,4 @@ invariants:
   - EXISTING_CHROMIUM_TEST_SET_UNCHANGED
 main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
 overlap_state: SAFE
-note: PR-D is cross-stage custody/anti-drift plus bounded viewport observability and a test-only PR-B merge-order guard. The merge-order guard is NOT_APPLICABLE while the PR-B source-faithful provider is absent; on the intended A->B->C->D integration head it must regenerate LAFEA.3 domain/geometry from the edited source and prove every physical restraint/load attachment. No PR-B production file is duplicated or modified. Registry cleanup remains blocked pending executed exact-head evidence.
+note: PR-D is cross-stage custody/anti-drift plus bounded viewport observability and a test-only PR-B merge-order guard. The series-integration addendum is durable evidence for the required A->B->C->D combined-head acceptance condition. No PR-B production file is duplicated or modified. Registry cleanup remains blocked pending executed combined exact-head evidence.

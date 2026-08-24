@@ -1,0 +1,25 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1398
+claim_state: ACTIVE
+files:
+  exact:
+    - validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json
+    - scripts/emp1-professional-p0-source-semantics-check.mjs
+    - docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md
+    - agents/PR1398_workreport.md
+    - agents/status/PR1398.yaml
+    - agents/claims/PR1398.yaml
+  prefixes: []
+authority_domains:
+  - EMP1_WRC537_BOUNDED_RELEASE_P0_SOURCE_GATE
+claim_modes:
+  - EXCLUSIVE
+  - OBSERVE_ONLY
+protected_no_mutation:
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - .github/workflows/
+last_verified_head: bc41462ff2babad286d113bb6312894e51dbd957

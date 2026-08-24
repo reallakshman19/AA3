@@ -5,9 +5,12 @@ on:
     paths:
       - 'src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js'
       - 'src/core/linear-piping-analysis-consumer/production-capability-profile.js'
+      - 'src/core/fea-benchmarks/caesar-configuration-authority.js'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json'
+      - 'docs/lfea/S5_Pressure_Effect_Source_Authority_20260824.md'
       - 'scripts/lfea-s5-pressure-authority-gate-check.mjs'
       - '.github/workflows/lfea-s5-pressure-authority-gate.yml'
-      - 'agents/PR*_workreport.md'
+      - 'agents/PR1391_workreport.md'
 
 permissions:
   contents: read
@@ -15,6 +18,7 @@ permissions:
 jobs:
   s5-pressure-authority-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,5 +28,9 @@ jobs:
         run: |
           node --check src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js
           node --check scripts/lfea-s5-pressure-authority-gate-check.mjs
+      - name: Run reusable CAESAR configuration authority check
+        run: node scripts/lfea-caesar-configuration-authority-check.mjs
       - name: Run S5 pressure authority prerequisite gate
         run: node scripts/lfea-s5-pressure-authority-gate-check.mjs
+      - name: Enforce linear piping anti-drift rules
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs

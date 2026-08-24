@@ -6,225 +6,73 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY
+PR_RECOVERY_STATE: HEALTHY_WITH_INFRASTRUCTURE_BLOCKER
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 
 EXECUTION_MODE: MANUAL
 AUTO_STATE: NOT_ACTIVE
-SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION
+SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1389_PR_A
 PHASE_PROGRESSION: MANUAL
 MERGE_AUTHORITY: OWNER_ONLY
-AUTO_STOP_REASON: NOT_APPLICABLE
 
 REPOSITORY: reallaksh19/Advanced_Analysis
-SOURCE_TASK: Issue #1389 / PR-A
-PR_OR_WIP: PR1394
+ISSUE: #1389
+PR: #1394 (DRAFT)
 BRANCH: agent/issue-1389-pr-a-release-definition-20260824
 
-PR_HEAD_OBSERVED: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
-REPORT_BASIS_HEAD: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
 MAIN_HEAD_LAST_CHECKED: 1176f66eb94686f99d4f302930d46f17ff876083
 MERGE_BASE: 1176f66eb94686f99d4f302930d46f17ff876083
-REPORT_SYNC: CURRENT
+IMPLEMENTATION_HEAD: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
+PR_HEAD_LAST_OBSERVED: 793a234219d258bfd058624e80d01b5ee1ad8884
+REPORT_BASIS_HEAD: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
+REPORT_SYNC: CURRENT; later commits through observed head are recovery metadata only
 
 APPENDIX_A_STATUS: CURRENT_PASS_95_OF_100
-GROUNDING_EPOCH: GE-002
-CURRENT_TAKEOVER: WIP_TO_PR_MIGRATION
-
-CURRENT_STAGE: VALIDATING
-LAST_COMPLETED_STAGE: PR-A IMPLEMENTATION + DIFF RECONCILIATION
-CURRENT_BLOCKER: no implementation blocker; exact-head executable/CI evidence still pending
+GROUNDING_EPOCH: GE-003
+CURRENT_STAGE: VALIDATING / INFRASTRUCTURE-CLASSIFIED
+CURRENT_BLOCKER: #54 PRE_STEP_INFRASTRUCTURE_FAILURE prevents exact-head executable CI evidence
 HIGHEST_RISK: source-custody PASS being mistaken for WRC method/release authority
-LAST_DURABLE_CHECKPOINT: PR #1394 opened draft with exact intended implementation delta
 
-EXACT_NEXT_ACTION: observe queued EMP.1 workflows on exact implementation head, run/review focused source/profile guards where execution is available, reconcile feedback, then update this report without granting production authority.
+EXACT_NEXT_ACTION: execute the two focused PR-A guards in a real checkout when execution is available; until then keep PR draft, retain NOT_RUN_EXECUTION_ENVIRONMENT, and do not widen authority.
 ```
 
 ## 2. Handover in 60 Seconds
 
-### What is now true
+PR #1394 is PR-A under Issue #1389. The engineering implementation is complete and deliberately narrow: reconcile the two stale source ledgers; freeze one bounded non-authorizing release-profile definition; freeze one benchmark identity/anti-circularity manifest; add two focused fail-closed guards. Production WRC route/registry/numerics, independent oracle expected values, UI and workflows are untouched.
 
-PR #1394 implements PR-A of Issue #1389. Live base is still `main@1176f66eb94686f99d4f302930d46f17ff876083`; the implementation head at GE-002 is `6ecc95b1f35ecfd8f65692683cd5842d5a09ae45`.
+The source-custody contradiction is resolved in the patch without deleting history. Both ledgers now carry the exact retained raw SHA-256 and `VERIFIED / PASS_SOURCE_CUSTODY`; their former `null / UNRESOLVED_RAW_BYTES / BLOCKED` state is retained in `reconciliation.previousState`. Both explicitly state `rawBytesReobservedByThisReconciliationPr=false` and `productionObservationUsedToSetAuthority=false`.
 
-The pre-existing custody contradiction is corrected in the two source ledgers: WRC 537 (2013) and CAUx now carry the exact retained raw SHA-256 identities and `VERIFIED / PASS_SOURCE_CUSTODY`. Each ledger preserves its former `null / UNRESOLVED_RAW_BYTES / BLOCKED` state inside an explicit `reconciliation.previousState`, states raw bytes were not reobserved by this PR, prohibits production observation from setting authority, and limits the change to source custody only.
+The release profile is `FROZEN_BEFORE_PRODUCTION_AUTHORIZATION`. It is limited to WRC 537 (2013), cylindrical/round target, Original, exact gamma=5, beta 0.05–0.50 inclusive, deltaP=0, Kn=Kb=1, host-shell Au/Al/Bu/Bl/Cu/Cl/Du/Dl only, no continuous/global maximum, no interpolation/fallback/off-axis/nozzle-wall/code PASS. All release booleans remain false. All P0 source gates listed by #1389 remain open/blocked on live GitHub.
 
-A bounded release-profile definition and benchmark manifest are frozen before production authorization. Every engineering/production/deployment/global-C/release-qualified flag remains false. P0 source-semantic gates remain blocked by their existing issues. CAUx source identity/pages are frozen, but CAUx source values, expected values and independent hand calculation are explicitly not yet frozen/run.
+The benchmark manifest freezes exact WRC source/dataset and independent physical-oracle hash `60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18`. CAUx source identity and pp.24–31 are frozen, but source values, expected values and independent hand calculation remain explicitly not frozen / NOT_RUN. Production output may not define them.
 
-### What is currently being worked on
+Current exact-head hosted execution is not an engineering FAIL and not a PASS. On PR head `793a2342...`, all four EMP.1 workflows completed `failure`, but every job has `steps=null`/no steps and no logs; direct job-step query returns `[]`. This exactly reproduces Issue #54 and is classified `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`.
 
-Validation and review of the PR-A definition/custody patch. Four existing EMP.1 workflows were queued on implementation head `6ecc95b1...`; no reviews or threads existed at GE-002.
-
-### What remains unfinished
-
-- P0 source semantics: #1385, #1383, #1375, #1377, #1379, #1368, #1370, #1373, #1381.
-- CAUx pp.24–31 extraction/expected-value freeze/independent hand calculation (PR-C).
-- #1333 exact-head evidence 01–10 (PR-D).
-- bounded authorization / post-promotion evidence 11–12 (PR-E/F).
-- professional UI/trace/import-export/build/browser/security/deployment.
-- #54 real CI-step/log infrastructure closure for professional deployment.
-
-### What has been proven
-
-- Main/merge base exactly matches issue-creation baseline at GE-002.
-- Branch diff from base contains exactly the intended PR-A implementation/recovery files and no production WRC numerical or workflow path.
-- Source ledger current state now matches the exact hashes already retained by current-main qualification evidence.
-- Release profile cannot represent current production authority because its authority fields are explicitly false and its P0 gates explicitly blocked.
-- Benchmark manifest freezes the independent gamma5 physical-oracle hash `60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18` and CAUx source identity without freezing CAUx expected values.
-
-### What has NOT been proven / NOT_RUN
-
-- New focused scripts have not yet been observed executing on exact head in this report epoch.
-- Raw PDF bytes have not been re-read by PR #1394; this is explicit in both ledgers.
-- CAUx values/hand calculation remain NOT_RUN.
-- Exact-head #1333 qualification is not part of PR-A and remains NOT_RUN.
-- Production authorization/post-promotion/deployment are NOT_RUN and forbidden in this PR.
-
-### What must not be assumed
-
-`PASS_SOURCE_CUSTODY` is not WRC engineering method qualification. The release-profile file is a frozen target definition, not a release grant. CAUx remains benchmark/reference evidence only. A queued workflow is not PASS.
-
-### Highest-risk remaining item
-
-Any checker/reviewer wording that could collapse custody, method qualification and release authorization into one state.
-
-### Exact next action
-
-Observe exact-head workflow outcomes and focused guards; if any mismatch exists, isolate the first wrong authority/custody boundary before changing expected values.
-
-## 3. Repository Ground Truth
+## 3. Ground Truth / Release Profile Target
 
 ```text
-Issue: #1389
-PR: #1394 (draft)
-Base: main@1176f66eb94686f99d4f302930d46f17ff876083
-Implementation HEAD: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
-Merge base: 1176f66eb94686f99d4f302930d46f17ff876083
-Ahead by: 9 commits at implementation checkpoint
-Behind by: 0
-Implementation changed files: 9
-Reviews at GE-002: 0
-Review threads at GE-002: 0
+main = 1176f66eb94686f99d4f302930d46f17ff876083
+merge base = same
+branch behind main = 0 at latest compare
+implementation head = 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
+last observed PR head = 793a234219d258bfd058624e80d01b5ee1ad8884
+PR state = OPEN DRAFT
+merge authority = OWNER_ONLY
 ```
 
-Queued exact-head workflows observed on `6ecc95b1...`:
-
-- run `32676059729` — `EMP.1 gamma5 bounded route on current main` — QUEUED;
-- run `32676059728` — `EMP.1 current-main independent baseline` — QUEUED;
-- run `32676059748` — `EMP.1 runEmp1 bounded gamma5 orchestration` — QUEUED;
-- run `32676059756` — `EMP.1 independent WRC source oracle` — QUEUED.
-
-Queued is current truth; no PASS is claimed.
-
-`agents/MASTER_INDEX.md` remains absent. `agents/status/` and `agents/claims/` are used. WIP records are being migrated to PR1394 records.
-
-## 4. Mission / Scope / Acceptance
-
-### Mission
-
-PR-A of Issue #1389: establish one non-contradictory current source-custody truth and freeze the bounded professional-release target/benchmark identities before any production authorization or CAUx production comparison.
-
-### Scope implemented
-
-1. Reconcile WRC 537 (2013) source ledger current state to exact retained source SHA while preserving previous blocked state and authority boundary.
-2. Reconcile CAUx 2017 WRC01f benchmark ledger identically.
-3. Freeze `EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1` definition with all release authority false and all unresolved P0 authority gates blocked.
-4. Freeze gamma5 benchmark manifest with exact source/dataset/oracle identities and CAUx source/pages, while recording CAUx expected values/handcalc as pending and production-observation anti-circularity rules.
-5. Add a custody reconciliation checker and professional release-profile checker.
-6. Maintain PR recovery/status/claim records.
-
-### Non-goals / protected authority
-
-No route authorization, registry registration, numerical mechanics, WRC signs/curves/tolerances, independent-oracle expected values, A/B solver mechanics, UI/browser, workflow YAML, source PDF bytes, global EMP.1.C or code-compliance change.
-
-### PR-A acceptance
-
-- exact WRC custody current state: `698fcdc3... / VERIFIED / PASS_SOURCE_CUSTODY`;
-- exact CAUx custody current state: `c1e92798... / VERIFIED / PASS_SOURCE_CUSTODY`;
-- former blocked custody retained as history;
-- profile frozen before authorization with gamma=5/Original/beta=.05-.50/dp0/Kn=Kb1/eight-point/host-shell-only and all release booleans false;
-- P0 gates remain blocked;
-- oracle hash exact `60771128...`;
-- CAUx expected values/handcalc remain pending and no production output used to select them;
-- checkers reject authority/source/scope/oracle drift;
-- branch diff contains no protected production/numerical/workflow change.
-
-## 5. Current Implementation State
-
-| Work item | Implementation | Integration | Validation | Location | Remaining |
-|---|---|---|---|---|---|
-| WRC source ledger | COMPLETE | current ledger | source inspected; runtime check pending | `validation/emp1/wrc537-2013/source-ledger.json` | observe focused checker/source bytes when available |
-| CAUx source ledger | COMPLETE | current ledger | source inspected; runtime check pending | `validation/emp1/caux2017-wrc01f/source-ledger.json` | same |
-| Release profile | COMPLETE | retained definition | static/diff inspected; runtime check pending | `validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json` | observe checker |
-| Benchmark manifest | COMPLETE | retained definition | static/diff inspected; runtime check pending | `validation/emp1/release/emp1-wrc537-gamma5-benchmark-manifest-v1.json` | PR-C later freezes CAUx values |
-| Custody reconciliation guard | COMPLETE | script | NOT_RUN exact-head at GE-002 | `scripts/emp1-source-custody-reconciliation-check.mjs` | execute/observe |
-| Profile guard | COMPLETE | script | NOT_RUN exact-head at GE-002 | `scripts/emp1-professional-release-profile-check.mjs` | execute/observe |
-| Production route/registry | PROTECTED UNCHANGED | existing | no PR-A change | `src/core/emp1/**` | later PR-E only after #1333 |
-
-## 6. Active Engineering Item Register
-
-| ID | Type | Severity | Priority | Status | Summary | Evidence | Current PR? |
-|---|---|---:|---:|---|---|---|---:|
-| ISS-1389-PRA-001 | ISS | high | P0 | RESOLVED_IN_PATCH_PENDING_EXECUTION | contradictory current source ledgers | ledger diff + generated evidence | yes |
-| RISK-1389-PRA-001 | RISK | critical | P0 | OPEN_GUARDED | custody PASS could be misread as method authority | explicit ledger/profile/checker boundaries | yes |
-| DEC-1389-PRA-001 | DEC | high | P0 | ACTIVE | freeze release target while all release booleans false | profile + issue #1389 | yes |
-| DEC-1389-PRA-002 | DEC | high | P0 | ACTIVE | preserve old blocked ledger state in reconciliation history rather than silently erase it | both ledgers | yes |
-| QST-1389-PRA-001 | QST | high | P1 | DEFERRED | exact CAUx pp24–31 expected-value set/profile disposition | PR-C | no |
-| RISK-1389-PRA-002 | RISK | high | P1 | OPEN | #54 prevents professional CI/deployment proof | issue #54 | no |
-
-## 7. Current Technical Diagnosis
+Release target:
 
 ```text
-Observed symptom:
-source-ledger current fields contradicted later/current generated custody evidence.
-
-Diagnosis:
-initial ledgers intentionally stopped at pre-hash BLOCKED state; exact raw SHA source custody was later retained in generated qualification/current-main reconciliation but the original current-state ledgers were not reconciled.
-
-Patch:
-replace only current ledger state with exact retained verified custody and preserve previous state + evidence/authority boundary inside `reconciliation`.
-
-Supporting evidence:
-- pre-patch WRC/CAUx ledgers had null SHA / BLOCKED;
-- generated `emp1-c-qualification-evidence.generated.js` records exact hashes and PASS_SOURCE_CUSTODY;
-- PR1264 current-main reconciliation records same exact source states;
-- Issue #1389 freezes repo/pin/path/blob/bytes/raw-SHA for both sources.
-
-Falsifier:
-controlled-source re-observation yields any different byte count/Git blob/raw SHA; checker/source-custody execution must fail and downstream release work stops.
-
-Next isolating experiment:
-execute focused reconciliation/profile checks on exact PR implementation head; observe existing source/oracle workflows.
+profileId = EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1
+method = WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP
+WRC raw SHA256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+dataset = fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c
+oracle = 60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18
+CAUx raw SHA256 = c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e
+CAUx pages = 24..31
 ```
 
-## 8. Authority and Invariants
-
-### WRC source custody
-
-```text
-repository: reallaksh19/XML_Compare_Utilities
-pinned commit: dc1371afcd44c12de86b2dad6eddf00f1f0b3c55
-path: docs/emp.1/WRC537_2013.pdf
-blob: ce861233928154145a9257efbbf8dbef3f5a17d1
-bytes: 1443744
-raw SHA256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
-current custody: VERIFIED / PASS_SOURCE_CUSTODY
-authority: source custody only
-```
-
-### CAUx source custody
-
-```text
-repository/pin: same controlled source repository and commit
-path: docs/emp.1/CAUx 2017 - WRC01f.pdf
-blob: 76573b41462943b2987e28b23ebbbf7e51ac0a02
-bytes: 7260396
-raw SHA256: c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e
-pages: 24..31
-current custody: VERIFIED / PASS_SOURCE_CUSTODY
-authority: independent benchmark source only, never WRC method authority
-```
-
-### Protected route/release state
+Current route/release truth protected by PR-A:
 
 ```text
 EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED = false
@@ -232,258 +80,266 @@ bounded registry registered = false
 bounded registry engineeringUseAuthorized = false
 releaseQualified = false
 globalEmp1CRouteAuthority = false
-codeCompliance = NOT_ASSESSED / unauthorized
+code compliance = NOT_ASSESSED / false
 ```
 
-### Bounded target
+## 4. Source Custody Table
+
+| Source | Role | Repo pin / path | Blob | Bytes | Raw SHA-256 | Current state | PR-A re-read raw bytes? |
+|---|---|---|---|---:|---|---|---|
+| WRC537_2013 | METHOD_SOURCE | `XML_Compare_Utilities@dc1371... / docs/emp.1/WRC537_2013.pdf` | `ce861233...` | 1,443,744 | `698fcdc3...c27b2` | VERIFIED / PASS_SOURCE_CUSTODY | no |
+| CAUX_2017_WRC01F_PP24_31 | BENCHMARK_SOURCE | same pin / `docs/emp.1/CAUx 2017 - WRC01f.pdf` | `76573b41...` | 7,260,396 | `c1e92798...e83e` | VERIFIED / PASS_SOURCE_CUSTODY | no |
+
+Authority boundary: custody identity only. WRC method authority and release authority are not inferred from these PASS states.
+
+## 5. P0 Source-Semantic Gates
+
+Live open-issue search at GE-003 confirms the #1389 release-critical source gates remain open. PR-A consumes them only as blockers.
+
+| Gate | Issue | PR-A state |
+|---|---:|---|
+| cylindrical physical recovery / u-l / signs | #1385 | BLOCKED |
+| stress-intensity source semantics | #1383 | BLOCKED |
+| shell-thickness basis | #1375 | BLOCKED |
+| cylindrical mean-radius basis | #1377 | BLOCKED |
+| elastic material/shell-theory applicability | #1379 | BLOCKED |
+| physical radial/normal attachment axis | #1368 | BLOCKED |
+| cylindrical attachment class | #1370 | BLOCKED |
+| nearby attachment/discontinuity isolation | #1373 | BLOCKED |
+| WRC calculation vs code-acceptance boundary | #1381 | BLOCKED |
+
+No source-critical unknown is filled from generic mechanics, CAUx, current production output or naming intuition.
+
+## 6. Benchmark Inventory
+
+### Frozen independent gamma5 physical oracle
 
 ```text
-CYLINDRICAL / ROUND target only
-ORIGINAL
-gamma exactly 5
-beta 0.05..0.50 inclusive
-deltaP 0
-Kn=Kb=1
-Au Al Bu Bl Cu Cl Du Dl
-host shell only
-no continuous-juncture/global-maximum claim
-no interpolation / cross-variant fallback / off-axis maximum
+path = validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+semanticHash = 60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18
+productionAuthority = false
+productionObservationUsed = false
+required load comparisons = 6
+required stress comparisons = 32
+locations = Au Al Bu Bl Cu Cl Du Dl
+abs tolerance = 1e-12
+rel tolerance = 1e-11
+max tolerance ratio = 1
 ```
 
-P0 physical/source semantics not proven by PR-A remain BLOCKED.
-
-## 9. Current Validation
-
-### VAL-1394-001 — live base/merge-base grounding
+Independent statics anchor for the frozen case:
 
 ```text
-Status: PASS
-Observation: REMOTE_EXECUTION
-Oracle: NONE
-Tested HEAD: main 1176f66eb94686f99d4f302930d46f17ff876083
-Evidence: GitHub branch + compare API
-Expected: exact issue-creation base or classified drift
-Actual: exact, branch behind_by=0
-Origin: PREEXISTING
+r = [0,0,1000] mm
+r x F = [-250000,-400000,0] N.mm
+M at WRC point = [-500000,-600000,700000] N.mm
+P=-1000, Vc=250, Vl=-400, Mc=500000, Ml=-600000, Mt=700000
 ```
 
-### VAL-1394-002 — pre-patch custody contradiction
+### CAUx pp.24–31
 
 ```text
-Status: FAIL (RESOLVED_BY_PR PATCH; historical baseline)
-Observation: SOURCE_INSPECTION
-Oracle: AUTHORITATIVE_REFERENCE
-Tested HEAD: base main 1176f66e...
-Expected: one current custody truth
-Actual: two ledgers null/BLOCKED while generated evidence exact VERIFIED/PASS
-Origin: PREEXISTING
+source identity frozen = true
+source values extracted = false
+expectedValuesFrozen = false
+independentHandCalculationStatus = NOT_RUN
+releaseProfileDisposition = UNRESOLVED_PENDING_PR_C_SOURCE_EXTRACTION
+productionOutputObservedForExpectedValueSelection = false
+productionOutputUsedToChooseDefinition = false
 ```
 
-### VAL-1394-003 — changed-file scope
+PR-C must verify exact source bytes, read/extract pp.24–31, classify each datum, freeze expected values, freeze independent hand calculation, and only then compare production.
+
+## 7. Current Production Trace / Authority Boundary
+
+Current canonical route remains:
 
 ```text
-Status: PASS
-Observation: REMOTE_EXECUTION
-Oracle: NONE
-Tested HEAD: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
-Evidence: compare main..branch
-Expected: only declared PR-A implementation/recovery surface
-Actual: exactly 9 files at implementation checkpoint; no protected production/numerical/workflow path
-Origin: INTRODUCED_BY_PR
+createEmp1Source()
+  -> runEmp1()
+     -> runLoadTransfer(source)                 [EMP.1.A]
+     -> runSectionScreening(source, A)          [EMP.1.B]
+     -> prepare local source if required
+     -> evaluateEmp1LocalCorrelationGate(...)
+     -> runLocalCorrelation(...) only if METHOD_QUALIFIED [EMP.1.C]
+     -> createEmp1Assessment(...)
 ```
 
-### VAL-1394-004 — custody reconciliation checker
+The bounded WRC candidate path further uses the qualified zero-dp A load producer, qualified cylindrical axis/frame, global→WRC load projection, WRC §4.5 applicability, exact bounded dataset/figure evaluation and Table-5 recovery. `emp1-assessment.js` explicitly preserves `passIsCodeCompliance=false` and `releaseQualified=false`.
+
+Falsifier: any public path that can calculate/report an authoritative C result without current A/B lineage, local method gate and bounded route authority invalidates the trace and blocks promotion.
+
+## 8. Implementation / Changed-File Ledger
+
+Final branch diff relative to `main@1176f66e...` contains exactly 9 files after WIP→PR migration:
+
+| Path | Change | Purpose | Engineering-sensitive? |
+|---|---|---|---:|
+| `agents/PR1394_workreport.md` | add | living handover authority | no |
+| `agents/status/PR1394.yaml` | add | coordination state | no |
+| `agents/claims/PR1394.yaml` | add | exact-file/authority claim | no |
+| `validation/emp1/wrc537-2013/source-ledger.json` | modify | current WRC custody reconciliation + history | yes |
+| `validation/emp1/caux2017-wrc01f/source-ledger.json` | modify | current CAUx custody reconciliation + history | yes |
+| `validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json` | add | frozen non-authorizing target | yes |
+| `validation/emp1/release/emp1-wrc537-gamma5-benchmark-manifest-v1.json` | add | oracle/CAUx identity + anti-circularity freeze | yes |
+| `scripts/emp1-source-custody-reconciliation-check.mjs` | add | cross-record custody/authority guard | yes |
+| `scripts/emp1-professional-release-profile-check.mjs` | add | scope/oracle/route-authority guard | yes |
+
+Protected production/numerical/workflow changed paths: **0**.
+
+Explicit no-write set includes route authorization, bounded registry, cylindrical frame/adapter/Table5/index, independent oracle expected values, source PDFs, UI/browser and `.github/workflows/*`.
+
+## 9. Validation Matrix
+
+| ID | Check | Status | Observation / oracle |
+|---|---|---|---|
+| VAL-01 | live main / merge base / behind-by | PASS | GitHub remote observation; no oracle |
+| VAL-02 | pre-patch contradictory ledger current state | FAIL on base, resolved by patch | source inspection vs retained current qualification evidence |
+| VAL-03 | final changed-file reconciliation | PASS | GitHub compare: exactly 9 intended files, protected paths 0 |
+| VAL-04 | new custody reconciliation script source review | PASS_SOURCE_INSPECTION | assertions cover exact metadata/hashes, preserved old state, generated evidence, profile/manifest, downstream authority false |
+| VAL-05 | new release-profile script source review | PASS_SOURCE_INSPECTION | assertions cover exact scope/P0 blockers/oracle/CAUx anti-circularity and live route/registry false |
+| VAL-06 | `node scripts/emp1-source-custody-reconciliation-check.mjs` | NOT_RUN_EXECUTION_ENVIRONMENT | hosted jobs fail before steps; no real checkout available through connected execution |
+| VAL-07 | `node scripts/emp1-professional-release-profile-check.mjs` | NOT_RUN_EXECUTION_ENVIRONMENT | same |
+| VAL-08 | raw PDF re-observation via existing custody checker | NOT_RUN_BY_THIS_PR | ledger explicitly records no re-observation; retained prior custody is reconciled, not recreated |
+| VAL-09 | CAUx source values / handcalc | NOT_RUN | intentionally deferred PR-C |
+| VAL-10 | #1333 exact-head 01–10 | NOT_RUN | later mandatory pre-authorization gate |
+| VAL-11 | post-promotion 11–12 | NOT_RUN | later authority/post-promotion work |
+| VAL-12 | production build / Chromium / deployment | NOT_RUN | later PR-H and #54 closure required |
+
+### Exact current-head hosted workflow evidence
+
+Current observed head `793a234219d258bfd058624e80d01b5ee1ad8884`:
+
+| Workflow | Run | Job | GitHub conclusion | Steps | Logs | Engineering classification |
+|---|---:|---:|---|---|---|---|
+| EMP.1 current-main independent baseline | 32676187691 | 97284622465 | failure | null | null | NOT_RUN_EXECUTION_ENVIRONMENT |
+| EMP.1 independent WRC source oracle | 32676187776 | 97284622837 | failure | null | null | NOT_RUN_EXECUTION_ENVIRONMENT |
+| EMP.1 runEmp1 bounded gamma5 orchestration | 32676187780 | 97284622667 | failure | null | null | NOT_RUN_EXECUTION_ENVIRONMENT |
+| EMP.1 gamma5 bounded route on current main | 32676187729 | 97284622960 | failure | null | null | NOT_RUN_EXECUTION_ENVIRONMENT |
+
+Direct `fetch_workflow_job_steps` for job `97284622960` returned `steps=[]`. Therefore no checkout, install, Node WRC calculation or oracle command ran. This is the exact #54 pre-step condition, not a product result.
+
+## 10. Focused Guard Semantics
+
+`emp1-source-custody-reconciliation-check.mjs` requires:
+
+- both ledgers satisfy the existing ledger schema/pin/path/blob/byte metadata;
+- exact WRC/CAUx raw SHA values;
+- current `VERIFIED / PASS_SOURCE_CUSTODY`;
+- preserved prior blocked state;
+- no PR-A raw-byte reobservation claim;
+- no production observation used for authority;
+- current generated qualification evidence agrees;
+- release profile and benchmark manifest agree;
+- downstream engineering/production/deployment authority remains false.
+
+`emp1-professional-release-profile-check.mjs` requires:
+
+- exact profile identity/source/dataset/scope;
+- every P0 source issue remains blocked in PR-A;
+- exact oracle semantic hash;
+- CAUx expected values/handcalc remain pending and production-independent;
+- exact 6-load/32-stress/tolerance manifest contract;
+- current real route authorized flag remains false;
+- current bounded registry remains unregistered, engineering unauthorized, global-C false and releaseQualified false.
+
+Anti-drift falsifier: changing either source hash, oracle hash, gamma/beta/dp/SCF scope, a P0 blocker to PASS, a CAUx production-independence flag, or any current release-authority flag must cause a focused guard failure.
+
+## 11. Active ISS / RISK / DEC / QST
 
 ```text
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: IMPLEMENTATION_COUPLED guard against authoritative constants/retained evidence
-Tested HEAD: 6ecc95b1...
-Command: node scripts/emp1-source-custody-reconciliation-check.mjs
-Expected: PASS_SOURCE_CUSTODY_RECONCILED
-Actual: NOT_RUN at GE-002
-Origin: INTRODUCED_BY_PR
+ISS-1389-PRA-001  RESOLVED_IN_PATCH_PENDING_EXECUTABLE_REPLAY
+  contradictory current source-ledger state
+
+RISK-1389-PRA-001 OPEN_GUARDED
+  source-custody PASS may be misread as method/release authority
+
+RISK-1389-PRA-002 OPEN_EXTERNAL
+  #54 pre-step Actions failure blocks exact-head professional deployment evidence
+
+DEC-1389-PRA-001 ACTIVE
+  release-profile definition is frozen now; all release booleans remain false
+
+DEC-1389-PRA-002 ACTIVE
+  old ledger state retained in reconciliation history, not silently erased
+
+QST-1389-PRA-001 DEFERRED_TO_PR_C
+  CAUx exact pp24–31 values and inside/outside-release-profile disposition
 ```
 
-### VAL-1394-005 — professional release profile checker
+## 12. Coordination / Main Drift / Review
 
 ```text
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: IMPLEMENTATION_COUPLED authority/scope guard + frozen oracle identity
-Tested HEAD: 6ecc95b1...
-Command: node scripts/emp1-professional-release-profile-check.mjs
-Expected: PASS_DEFINITION_FROZEN_AUTHORITY_FALSE
-Actual: NOT_RUN at GE-002
-Origin: INTRODUCED_BY_PR
+agents/MASTER_INDEX.md: absent on main
+status record: agents/status/PR1394.yaml
+claim record: agents/claims/PR1394.yaml
+file overlap: no active EMP.1/WRC537-2013 exact-file collision observed at start
+adjacent authority: WRC537 Edition-4 draft lineage is separate edition/source and non-authorized
+main drift: none at latest compare; branch behind_by=0
+reviews at PR allocation: 0
+review threads at PR allocation: 0
+PR state: DRAFT
+merge: not authorized / not requested
 ```
 
-### VAL-1394-006 — raw source-byte reobservation
+Re-ground live main and review state before any further engineering mutation and immediately before Owner-authorized merge.
+
+## 13. Exact Continuation
 
 ```text
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: AUTHORITATIVE_REFERENCE when exact pinned files supplied to existing custody checker
-Command: node scripts/emp1-source-custody-check.mjs --source-root <exact pinned PDFs>
-Expected: exact byte/blob/SHA PASS
-Actual: NOT_RUN_BY_THIS_PR
-Limitation: PR-A reconciles already-retained verified custody; it does not fabricate a new raw-byte observation
-Origin: PREEXISTING_EVIDENCE / NOT_REOBSERVED
+Start here: PR #1394 exact-head validation
+Do not redo: PR-A implementation unless a guard/reviewer identifies a concrete defect
+Do not change: production route/registry/numerics/oracle expected values/tolerances/PDFs/UI/workflows
+Run first when execution exists:
+  node scripts/emp1-source-custody-reconciliation-check.mjs
+  node scripts/emp1-professional-release-profile-check.mjs
+Then run relevant existing EMP.1 source/product/oracle checks on exact head.
+If raw controlled PDFs are available:
+  node scripts/emp1-source-custody-check.mjs --source-root <exact pinned PDF directory>
+Hard stop: any source byte/blob/hash mismatch, any need to weaken expected/tolerance, or any need to grant production authority in PR-A
 ```
-
-### VAL-1394-007 — existing exact-head workflows
-
-```text
-Status: NOT_RUN / QUEUED
-Observation: REMOTE_EXECUTION
-Oracle: mixed existing product/independent workflow checks
-Tested HEAD: 6ecc95b1...
-Runs: 32676059729, 32676059728, 32676059748, 32676059756
-Expected: observe real completion; do not infer PASS from queue
-Actual: QUEUED at GE-002
-Origin: PREEXISTING workflows
-```
-
-### VAL-1394-008 — CAUx expected values/handcalc
-
-```text
-Status: NOT_RUN
-Observation: NOT_OBSERVED
-Oracle: future AUTHORITATIVE_REFERENCE + INDEPENDENT_REPRODUCTION
-Expected: PR-C source-freeze before production observation
-Actual: intentionally not part of PR-A
-```
-
-## 10. Changed-File Ledger
-
-Implementation checkpoint `main@1176f66e...` → `6ecc95b1...`: 9 files, all intended.
-
-| File | Intended? | Purpose | Sensitive? | Validation |
-|---|---:|---|---:|---|
-| `agents/WIP-EMP1-1389-PRA-20260824_workreport.md` | yes / migration metadata | pre-PR recovery | no | being superseded by PR1394 report |
-| `agents/status/WIP-EMP1-1389-PRA-20260824.yaml` | yes / migration metadata | pre-PR status | no | being superseded |
-| `agents/claims/WIP-EMP1-1389-PRA-20260824.yaml` | yes / migration metadata | pre-PR claim | no | being superseded |
-| `validation/emp1/wrc537-2013/source-ledger.json` | yes | WRC custody reconciliation | yes | focused guard pending execution |
-| `validation/emp1/caux2017-wrc01f/source-ledger.json` | yes | CAUx custody reconciliation | yes | focused guard pending execution |
-| `validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json` | yes | frozen non-authorizing release target | yes | profile guard pending execution |
-| `validation/emp1/release/emp1-wrc537-gamma5-benchmark-manifest-v1.json` | yes | benchmark identity/anti-circularity freeze | yes | profile guard pending execution |
-| `scripts/emp1-source-custody-reconciliation-check.mjs` | yes | custody consistency guard | yes | NOT_RUN |
-| `scripts/emp1-professional-release-profile-check.mjs` | yes | scope/authority/oracle guard | yes | NOT_RUN |
-
-Recovery migration commits after implementation head may add PR1394 report/status/claim and remove the WIP equivalents; such recovery-only commits do not change implementation basis.
-
-Protected production/numerical/workflow files changed: **0**.
-
-## 11. Review / CI State
-
-At GE-002:
-
-```text
-PR state: OPEN DRAFT
-reviews: 0
-review threads: 0
-CI: four EMP.1 workflows queued
-merge authority: OWNER_ONLY
-merge disposition: NOT_READY / validation pending
-```
-
-Issue #54 remains a later professional deployment blocker even if ordinary PR workflows complete; it requires actual release-candidate job steps/logs and must not be waived here.
-
-## 12. Repository Coordination / Overlap
-
-```text
-MASTER_INDEX_CHECKED: absent on main
-STATUS_RECORD: migrating to agents/status/PR1394.yaml
-CLAIM_RECORD: migrating to agents/claims/PR1394.yaml
-LAST_OVERLAP_CHECK: GE-002
-FILE_OVERLAP: no active EMP.1/WRC537-2013 exact-file collision observed
-AUTHORITY_OVERLAP: Edition-4 draft lineage adjacent but separate edition/source and non-authorized
-DEPENDENCY_OVERLAP: #1333 is later exact-head gate; #54 later deployment blocker
-COORDINATION_STATE: SAFE_FOR_PR_A_DECLARED_FILES
-```
-
-## 13. Continuation State
-
-```text
-Start here: PR1394 validation
-Exact file/function/component: two new scripts + queued EMP.1 workflows
-Current value/path under investigation: whether all frozen source/profile/manifest identities remain mutually consistent on exact head
-Do not redo: source/issue/skill grounding unless main or PR head materially changes
-Do not change: production route/registry/numerics/oracle values/tolerances/PDFs/UI/workflows
-Validation still required: focused guards, queued workflow completion, final changed-file/main-drift review
-Highest-risk remaining item: false authority promotion from custody/profile wording
-Exact next action: execute/observe checks; isolate any first mismatch; update report and PR description truthfully
-```
-
-## 14. Takeover / Custody Chain
-
-- `GE-001`: new WIP independently grounded to main/Issue #1389/pinned delivery skill.
-- `GE-002`: PR #1394 allocated; implementation diff reconciled; queued workflows/reviews inspected; WIP metadata migration started.
-- `TKO-001`: WIP identity migrated to durable PR1394 identity; no engineering conclusion changed.
 
 # APPENDIX A — IMPLEMENTATION TAKEOVER QUALIFICATION
 
-```text
-PR_HEAD: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
-MAIN_HEAD: 1176f66eb94686f99d4f302930d46f17ff876083
-GROUNDING_EPOCH: GE-002
-Generated from OPEN ISS/RISK/QST: ISS-1389-PRA-001, RISK-1389-PRA-001/002, QST-1389-PRA-001
-PARTIAL implementation: implementation complete, validation pending
-NOT_RUN validation: new focused scripts; raw-byte reobservation; CAUx expected values; #1333 exact-head release evidence
-Next intended stage: exact-head PR-A validation/review
-APPENDIX_A_STATUS: CURRENT_PASS_95_OF_100
-```
+Basis: live repository, Issue #1389, #1261, #1333, #54, current route/registry/source ledgers/generated evidence, pinned Engineering PR Delivery skill.
 
-### A1 — Production Trace Challenge — 19/20
+### A1 Production trace — 19/20
 
-Trace: canonical input enters `createEmp1Source()` (`src/core/emp1/emp1-source-contract.js`), then `runEmp1()` (`emp1-orchestrator.js`) resolves A load transfer, B section screening, prepares local C source when needed, applies `evaluateEmp1LocalCorrelationGate`, executes C only when qualified, then `createEmp1Assessment()` retains source/A/B/C parent hashes. The bounded C route consumes qualified A zero-dp WRC-reference custody, source-qualified frame/load projection, §4.5 applicability, bounded gamma/beta/dataset selection and Table-5 recovery; current assessment explicitly states code-compliance PASS is false and releaseQualified false. Falsifier: identify any public execution that bypasses the local gate/route authority or constructs WRC C authority from UI/display data.
+Current product trace was established from `createEmp1Source()` → `runEmp1()` A/B/gated-C → `createEmp1Assessment()`, with the bounded C candidate consuming qualified A zero-dp WRC-reference custody, axis/frame projection, applicability, exact dataset/curve selection and Table-5 stress recovery. Hash/currentness parents remain separate. Falsifier is any public authoritative C path bypassing current A/B/local-gate/route authority. One point withheld because UI function-by-function route trace belongs to later PR-G and is unmodified here.
 
-One point withheld because UI-level route trace belongs to later PR-G and is not mutated here.
+### A2 Source/authority reconciliation — 20/20
 
-### A2 — Current Failure / Source Reconciliation Challenge — 20/20
+The stale ledgers represent the earlier pre-hash freeze, while current generated qualification/PR1264 evidence retains exact verified hashes. Smallest auditable correction is the implemented current-state reconciliation plus explicit previous-state history and a cross-record guard. Custody remains prerequisite identity only. Exact source re-observation mismatch is a hard-stop falsifier.
 
-First wrong boundary was current source custody representation, not WRC mechanics: both v1 ledgers retained their initial null/BLOCKED pre-hash state while later generated qualification and PR1264 current-main reconciliation retained exact verified hashes. Minimal fix changes current ledger state only, preserves the old state in `reconciliation.previousState`, records retained evidence, states raw bytes were not reobserved here, and adds a consistency guard. Falsifier: any exact pinned source byte re-observation differs in byte count/blob/raw SHA; then the PR must block rather than edit the expected identity.
+### A3 Bounded WRC invariant — 18/20
 
-### A3 — Authority / Invariant Challenge — 18/20
+Target scope is exact cylindrical/round target, Original gamma5, beta .05–.50 inclusive, dp0, Kn=Kb1, host-shell eight points only, no global maximum/interpolation/off-axis/nozzle-wall/code PASS. T/Rm/material/physical normality/class/isolation/surface-sign/stress-intensity/code semantics remain blocked. Two points withheld precisely because those primary-source issues are unresolved and must not be guessed.
 
-Frozen target: WRC537 2013 cylindrical/round target, Original, exact gamma=5, beta .05–.50 inclusive, dp0, Kn=Kb1, host-shell eight points Au..Dl, no global maximum, no interpolation/cross-variant/off-axis/nozzle-wall/code PASS. Source custody is PASS only. Surface/sign, stress-intensity, T, Rm, material/theory, physical normality, attachment class, isolation and code boundary remain blocked under their existing issues. No unresolved engineering fact is silently filled.
+### A4 Independent validation — 19/20
 
-Two points withheld because the blocked source issues intentionally prevent a source-qualified literal attachment-class/axis/surface rule from being stated in PR-A.
+Frozen physical statics independently yields the six required WRC loads. Exact-head qualification requires 6/6 loads and 32/32 stress comparisons under abs 1e-12/rel 1e-11/max ratio 1 with exact oracle hash `60771128...`. CAUx source identity/pages are frozen now; values and independent handcalc must be frozen before production observation. One point withheld because CAUx numerical handcalc is intentionally NOT_RUN.
 
-### A4 — Independent Validation Challenge — 19/20
+### A5 Minimal first PR — 19/20
 
-Frozen independent statics case reproduces `r×F=[-250000,-400000,0] N.mm`, target moment `[-500000,-600000,700000] N.mm`, and WRC loads `P=-1000, Vc=250, Vl=-400, Mc=500000, Ml=-600000, Mt=700000`. Required exact-head bounded comparison is 6/6 loads plus 32/32 stress values using frozen abs `1e-12` / rel `1e-11` policy and max tolerance ratio <=1. Independent oracle semantic hash is exact `60771128...` and production observation is false. CAUx source identity/pages are frozen now; source values and independent handcalc must be frozen in PR-C before production comparison, with source precision/locators and anti-rewrite checks.
-
-One point withheld because CAUx numerical extraction/handcalc is intentionally NOT_RUN.
-
-### A5 — Next-Commit / Minimal-Patch Challenge — 19/20
-
-Current production patch surface is exactly two ledgers, two frozen artifacts and two guards. Recovery metadata is separate. Protected no-write paths include route/registry/frame/adapter/Table5/index/oracle expected values/PDFs/UI/workflows. Pre-patch falsifier is the ledger contradiction; post-patch expected guard states are `PASS_SOURCE_CUSTODY_RECONCILED` and `PASS_DEFINITION_FROZEN_AUTHORITY_FALSE`. Mutation of source/oracle hash, gamma/beta/dp/SCF boundary, a blocked authority, or any release boolean must fail. Abandon/quarantine if correctness requires changing source identity, deleting audit history, touching numerical mechanics, weakening tolerance or granting production authority.
-
-One point withheld until exact-head executable results are observed.
+Production patch is two ledgers + profile + benchmark manifest + two guards; recovery files are separate metadata. No production route/registry/numerics/oracle/UI/workflow change. Pre-patch defect is custody contradiction; expected post-patch guard outputs are `PASS_SOURCE_CUSTODY_RECONCILED` and `PASS_DEFINITION_FROZEN_AUTHORITY_FALSE`. Abandon if source identities differ, audit history must be erased, tolerance/source interpretation must be weakened, or production authority is required. One point withheld until actual executable replay is possible.
 
 ```text
-A1 19/20
-A2 20/20
-A3 18/20
-A4 19/20
-A5 19/20
-TOTAL 95/100
-MINIMUM 18/20
-QUALIFICATION: PASS
+A1 = 19/20
+A2 = 20/20
+A3 = 18/20
+A4 = 19/20
+A5 = 19/20
+TOTAL = 95/100
+MINIMUM = 18/20
+QUALIFICATION = PASS (>=92 total and each >=17)
 ```
+
+Automatic-failure checks remain satisfied: no fabricated source fact, no tolerance weakening, no production-derived oracle, no scope widening, no NOT_RUN called PASS.
 
 # HISTORICAL RECORD — NOT CURRENT AUTHORITY
 
-## Stage Execution Log
-
-- GE-001 bootstrap/qualification from main.
-- Implementation commits added reconciled ledgers, frozen profile/manifest and focused guards.
-- Compare checkpoint: 9 intended implementation/WIP files, no protected path.
-- PR #1394 opened draft at implementation HEAD `6ecc95b1...`.
-- GE-002 observed four queued workflows and zero reviews/threads.
-
-## Decision / Invariant History
-
-- DEC-1389-PRA-001: source custody PASS does not grant method/release authority.
-- DEC-1389-PRA-002: prior unresolved ledger state preserved explicitly rather than silently erased.
+- GE-001: re-grounded Issue #1389, #1261, #1333, #54, AGENTS, pinned Engineering PR Delivery skill; allocated WIP branch.
+- Implementation: reconciled both source ledgers; froze release-profile/benchmark definitions; added focused guards.
+- Compare: exactly 9 intended WIP implementation/recovery files; protected production/numerical/workflow paths 0.
+- PR #1394 opened draft at implementation head `6ecc95b1...`; WIP recovery records migrated to PR1394 durable records.
+- GE-003: final diff still exactly 9 files. Current-head workflow failures inspected to job/step level and classified #54 `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`.

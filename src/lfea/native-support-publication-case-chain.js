@@ -9,6 +9,7 @@ import {
   inputXmlStiffnessFrameElementProfile,
   inputXmlStiffnessSolverProfile,
 } from '../core/linear-piping-analysis-consumer/inputxml-linear-stiffness-profile.js';
+import { PRODUCTION_CAPABILITY_PROFILE } from '../core/linear-piping-analysis-consumer/production-capability-profile.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
 import {
   lfeaNativeSupportError,
@@ -51,6 +52,11 @@ export function buildLfeaNativeSupportCaseChains(
       preparation.structuralPreparation,
       frameProfile,
       physical.loadCase,
+      {
+        sourcePreparation: preparation.sourcePreparation,
+        bendFactorAuthority: preparation.stiffnessPreflight.bendFactorAuthority,
+        capabilityProfile: PRODUCTION_CAPABILITY_PROFILE,
+      },
     );
     const requestBase = {
       schema: LINEAR_PIPING_ANALYSIS_REQUEST_SCHEMA,
@@ -59,7 +65,7 @@ export function buildLfeaNativeSupportCaseChains(
       compilation: preparation.structuralPreparation.compilation,
       loadCase: physical.loadCase,
       frameElements: elements.frameElements,
-      pipingComponents: [],
+      pipingComponents: elements.pipingComponents,
       solverProfile,
       recoveryProfile,
       expectedParents: null,

@@ -19,12 +19,19 @@ export function preflightInputXmlLinearSolve(physicalPreparation, options) {
   const compilation = structural.compilation;
   const frameProfile = inputXmlStiffnessFrameElementProfile();
   const solverProfile = inputXmlStiffnessSolverProfile(options.solverProfile);
-  const elements = compileInputXmlStiffnessElementAuthorities(structural, frameProfile);
+  const elements = compileInputXmlStiffnessElementAuthorities(structural, frameProfile, {
+    sourcePreparation: accepted.sourcePreparation,
+    bendFactorAuthority: options.bendFactorAuthority ?? null,
+    capabilityProfile: options.capabilityProfile,
+  });
   const generic = compileLinearStiffnessPreflight({
     compilation,
     elementContributions: elements.elementContributions,
     solverProfile,
   });
+  const effectiveStiffnessStateHash = elements.bendExactMechanicsApplied
+    ? elements.effectiveStiffnessStateHash
+    : compilation.stiffnessStateHash;
   const status = generic.status === 'QUALIFIED'
     ? 'PASS'
     : generic.status === 'CONDITIONAL'
@@ -40,6 +47,11 @@ export function preflightInputXmlLinearSolve(physicalPreparation, options) {
     constrainedDofCount: generic.assembly.constrainedDofCount,
     inactiveDofCount: generic.assembly.inactiveDofCount,
     elementStiffnessCount: elements.elementLedger.length,
+    pipingComponentCount: elements.pipingComponents.length,
+    exactBendComponentCount: elements.pipingComponents
+      .filter((row) => row.componentType === 'BEND').length,
+    eligibleBendCount: elements.eligibleBendCount,
+    bendExactMechanicsApplied: elements.bendExactMechanicsApplied,
     factorizationKind: generic.factorization.kind,
     conditionEstimate: generic.factorization.conditionEstimate,
     warningCount: generic.findings.filter((row) => row.disposition === 'WARN').length,
@@ -51,7 +63,10 @@ export function preflightInputXmlLinearSolve(physicalPreparation, options) {
     preflightId: `IXPF-${semanticHash({
       profile: INPUTXML_STIFFNESS_PREFLIGHT_PROFILE_ID,
       physicalPreparation: accepted.semanticHash,
-      stiffnessState: compilation.stiffnessStateHash,
+      mechanicalStiffnessState: compilation.stiffnessStateHash,
+      effectiveStiffnessState: effectiveStiffnessStateHash,
+      capabilityProfile: elements.capabilityProfileHash,
+      bendFactorAuthority: elements.bendFactorAuthority?.semanticHash ?? null,
       genericPreflight: generic.semanticHash,
     })}`,
     analysisProfileId: accepted.analysisProfileId,
@@ -61,6 +76,11 @@ export function preflightInputXmlLinearSolve(physicalPreparation, options) {
     structuralPreparationEvidenceHash: structural.evidenceHash,
     mechanicalModelSemanticHash: compilation.mechanicalModelSemanticHash,
     stiffnessStateHash: compilation.stiffnessStateHash,
+    effectiveStiffnessStateHash,
+    productionCapabilityProfileHash: elements.capabilityProfileHash,
+    bendFactorAuthority: elements.bendFactorAuthority,
+    bendExactMechanicsApplied: elements.bendExactMechanicsApplied,
+    eligibleBendCount: elements.eligibleBendCount,
     frameElementProfileSemanticHash: frameProfile.semanticHash,
     solverProfileSemanticHash: solverProfile.semanticHash,
     genericPreflightSemanticHash: generic.semanticHash,

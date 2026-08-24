@@ -17,7 +17,8 @@ PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1396
 STACK_BASE_PR: 1395
 STACK_BASE_HEAD: 2b4b4762973c84690b636eab8abe918e307d5dab
 BRANCH: agent/lfea-piping-promotion-s7-ui-disclosure-20260824
-CODE_HEAD_BEFORE_THIS_REPORT_UPDATE: f41231c6b1d4d263a2826001c8750183cd0b6043
+CODE_HEAD_VALIDATION_BASIS: f41231c6b1d4d263a2826001c8750183cd0b6043
+REPORT_PARENT_HEAD: 0004b9d133b767237f20b4862f25e3018d73263d
 MAIN_HEAD_LAST_GROUNDED: e985b50d81d0d241db27313562c8cc12cd7cc27d
 CURRENT_STAGE: S7 governed UI/disclosure verification plus promotion-wide anti-drift guard implemented
 NUMERICAL_MUTATION_ALLOWED: false
@@ -34,7 +35,7 @@ No merge is authorized by this report.
 
 ## Effective S7 diff
 
-Against PR #1395 head `2b4b4762973c84690b636eab8abe918e307d5dab`, the branch is 8 commits ahead and 0 behind before this report-only update. The effective changed-file surface is four files:
+Against PR #1395 head `2b4b4762973c84690b636eab8abe918e307d5dab`, the effective changed-file surface is four files:
 
 1. `.github/workflows/lfea-piping-promotion-s7-ui.yml`
 2. `agents/PR1396_workreport.md`
@@ -101,7 +102,7 @@ An eventual S4/S5 numerical promotion must intentionally revise this guard in th
 
 ## Persistent workflow coverage
 
-`.github/workflows/lfea-piping-promotion-s7-ui.yml` now triggers not only on the S7 scripts/report but also on the two geometry adapters and the entire governed linear-piping consumer directory. It declares:
+`.github/workflows/lfea-piping-promotion-s7-ui.yml` now triggers on the S7 scripts/report, the two bend geometry adapters, and the governed linear-piping consumer directory. It declares:
 
 1. syntax checks for both S7/promotion guard scripts;
 2. governed UI disclosure verification;

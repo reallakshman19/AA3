@@ -1,4 +1,4 @@
-# PR1393 — Issue #1371 PR-D cross-stage anti-drift / registry closure
+# PR1393 — Issue #1371 PR-D cross-stage anti-drift / viewport identity / registry gate
 
 # CURRENT RECOVERY STATE — READ FIRST
 
@@ -7,114 +7,167 @@ HANDOVER_READINESS: READY_FOR_VALIDATION
 PR_RECOVERY_STATE: CONTINUE
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: AUTO
-AUTO_STATE: BLOCKED_INFRASTRUCTURE
+AUTO_STATE: BLOCKED_BY_HOSTED_RUNNER_INFRASTRUCTURE
 SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION
-PHASE_PROGRESSION: AUTO
 MERGE_AUTHORITY: OWNER_ONLY
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_TASK: Issue #1371
 PR_OR_WIP: PR1393
 BRANCH: agent/issue-1371-pr-d-anti-drift-20260824
-PR_HEAD_OBSERVED: 8c2442f602a222efde872c7a2a84a91152944dde
-REPORT_BASIS_HEAD: 8c2442f602a222efde872c7a2a84a91152944dde
 MAIN_HEAD_LAST_CHECKED: 1176f66eb94686f99d4f302930d46f17ff876083
 MERGE_BASE: 1176f66eb94686f99d4f302930d46f17ff876083
-APPENDIX_A_STATUS: PASS 96/100 from #1371; PR-D re-grounded
-GROUNDING_EPOCH: GE-1371D-01
-CURRENT_STAGE: PR-D exact-head validation
-CURRENT_BLOCKER: hosted Chromium runner fails before checkout/steps; engineering checks NOT_RUN
-HIGHEST_RISK: confusing reusable mesh content with current parent-bound mesh evidence after an E-only source edit
-EXACT_NEXT_ACTION: retain registry wording and anti-drift claims as NOT_RUN until a hosted Chromium job actually starts steps; proceed with non-overlapping series work only.
+APPENDIX_A_STATUS: PASS 96/100 from #1371
+CURRENT_STAGE: cross-stage custody + viewport mesh identity validation
+CURRENT_BLOCKER: hosted visible-workbench jobs fail before checkout with steps=null
+REGISTRY_CLEANUP: BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
+EXACT_NEXT_ACTION: execute scripts/lafea1371-cross-stage-anti-drift-check.mjs on exact head; only after executed PASS reconsider registry wording.
 ```
 
-## Implemented
+## Mission
 
-PR1393 remains test-only except for validation plumbing. It adds:
-- `scripts/lib/lafea1371-custody-assertions.mjs` — shared test assertions for accepted execution custody and source/mesh invalidation;
-- `scripts/lafea1371-cross-stage-anti-drift-check.mjs` — deterministic replay and real engineering-edit regression across LAFEA.3/.4;
-- one bounded line-of-authority change to `scripts/lafea-stage17-browser-run.mjs`: execute the cross-stage Node gate before the existing Chromium qualification suite.
+Prove cross-stage deterministic custody and invalidation for LAFEA.3/.4, distinguish mesh content reuse from parent-bound evidence reuse, expose the retained mesh content identity at the Engineering viewport boundary, and keep registry claims fail-closed until exact-head evidence actually executes.
 
-No Playwright spec list, browser assertion, workflow YAML, production lifecycle source, solver, mesher, presenter, benchmark oracle or registry authority is changed.
+## Implemented boundaries
 
-## LAFEA.3 anti-drift programme
+### Test-only custody helper
 
-Baseline and identical replay each execute the current Sample through canonical source authority → governed domain/geometry → T6/30 retained mesh → preflight → compiled retained-mesh solve → accepted result/recovery. Identical normalized source/profile must reproduce sourceHash, meshHash, mesh artifact hash, solverModelHash and compiledExecutionHash.
+`scripts/lib/lafea1371-custody-assertions.mjs` centralizes accepted execution and stale-authority assertions. It grants no production authority.
 
-The regression predicts before mutation:
+### Cross-stage anti-drift executable
+
+`scripts/lafea1371-cross-stage-anti-drift-check.mjs` exercises:
+
+- deterministic identical-source/profile replay;
+- LAFEA.3 real material edit `E: 200000 → 210000 MPa` through the public typed descriptor;
+- predeclared mechanics prediction `u_new/u_old = 1/1.05 = 0.9523809523809523` and approximately unchanged force-controlled stress;
+- immediate revocation of old source-parented domain/geometry/mesh/preflight/execution/recovery authority;
+- regeneration with unchanged geometry/profile reproducing the same mesh **content** hash but a different parent-bound mesh evidence artifact;
+- changed solver/execution identities after the material edit;
+- LAFEA.4 deterministic replay, material-edit invalidation and mesh-profile invalidation.
+
+### Viewport retained mesh identity
+
+`src/workspace/lafea-live-workbench-viewport.js` continues to pass the exact retained mesh evidence object into `renderLafeaRetainedMeshOverlay`. PR1393 adds identity observability only:
 
 ```text
-E: 200000 -> 210000 MPa
-E factor: 1.05
-force-controlled linear elastic displacement factor: 1/1.05 = 0.9523809523809523
-first-order displacement change: -4.7619047619%
-stress change for homogeneous force-controlled case: approximately 0%
+viewport.retainedMeshIdentity.meshHash     = retainedAnalysisMeshEvidenceV2.meshHash
+viewport.retainedMeshIdentity.artifactHash = retainedAnalysisMeshEvidenceV2.artifactHash
+getState().retainedMeshHash                = content hash
+getState().retainedMeshArtifactHash        = parent-bound evidence artifact hash
+DOM data-retained-mesh-hash                = content hash
+DOM data-retained-mesh-artifact-hash       = artifact hash
 ```
 
-The edit is applied only through the public descriptor:
+This intentionally does **not** reinterpret the generic recovery/render packet's legacy artifact-parent hash. Content identity and evidence identity stay separate instead of one being relabeled as the other.
+
+The anti-drift executable instantiates the live viewport model for both LAFEA.3 and LAFEA.4 and requires the viewport content hash to equal the exact retained v2 evidence `meshHash`. After the E-only edit/regeneration, the viewport content hash must remain equal while the artifact hash must change.
+
+## Mechanics prediction before execution
+
+For the homogeneous linear force-controlled LAFEA.3 Sample:
 
 ```text
-LAFEA.3.material.elasticModulus / MAT / 210000
+E_old = 200000 MPa
+E_new = 210000 MPa
+K_new / K_old = 1.05
+u_new / u_old = 1 / 1.05 = 0.9523809523809523
+predicted displacement change = -4.7619047619%
+stress change ≈ 0% because D ∝ E and strain ∝ 1/E
 ```
 
-Immediate acceptance requires a changed canonical source authority and revocation of old source-parented mesh/preflight/execution/recovery authority. After regenerating equivalent geometry/profile, mesh **content** hash must reproduce while parent-bound artifact/solver/execution identities change; CASE-A displacement must scale by `1/1.05` and authoritative retained integration-point von Mises remain approximately unchanged.
+A displacement-controlled problem would instead retain imposed displacement and scale stress/reactions approximately +5%; that is not the case asserted by this regression.
 
-## LAFEA.4 anti-drift programme
+## Custody expectation after E-only edit
 
-Two identical current Sample runs must reproduce deterministic source/mesh/solver/execution identities. A public material-E edit must revoke old midsurface/mesh/solver/execution/recovery authority. Separately, binding a changed qualified shell mesh profile must revoke old solver/execution/recovery authority.
+Physics:
+- geometry unchanged;
+- mesh topology/content may be reused exactly;
+- constitutive model changes;
+- solver model/execution/recovery change.
 
-No partial-boundary or nodal-load transfer authority is added.
+Custody:
+- old source authority stale;
+- old parent-bound domain/geometry/mesh evidence cannot remain current;
+- regenerated mesh content hash may repeat;
+- regenerated mesh artifact hash must change because its source parent changed;
+- solverModelHash and compiledExecutionHash must change;
+- old results cannot remain authoritative.
 
-## Existing Chromium carrier binding
+## Changed-file ledger
 
-Open-PR / claim search found no active claim on `scripts/lafea-stage17-browser-run.mjs`. PR1393 therefore binds the new Node anti-drift regression into that existing qualification entrypoint before the existing EMP.1 and Playwright work. The existing Chromium test set is unchanged.
+- `scripts/lib/lafea1371-custody-assertions.mjs` — test helper;
+- `scripts/lafea1371-cross-stage-anti-drift-check.mjs` — deterministic replay/edit/viewport identity regression;
+- `scripts/lafea-stage17-browser-run.mjs` — invokes the anti-drift Node gate before the unchanged Chromium test set;
+- `src/workspace/lafea-live-workbench-viewport.js` — bounded mesh content/artifact identity observability only;
+- `agents/PR1393_workreport.md`;
+- `agents/status/PR1393.yaml`;
+- `agents/claims/PR1393.yaml`.
 
-This solves the previous validation-plumbing defect: once a hosted visible-workbench job actually starts, the anti-drift regression is no longer merely encoded; it is a fail-closed prerequisite of the Chromium carrier.
+Protected unchanged:
+- source/lifecycle mutation semantics;
+- continuum and shell formulations, stiffness, solver and recovery;
+- mesh quality thresholds;
+- benchmark targets/tolerances;
+- browser E2E specs;
+- workflow YAML;
+- registry wording;
+- release authority.
 
-## Exact-head hosted validation evidence
+## Validation truth
 
-Observed implementation head:
+| Check | Status | Evidence |
+|---|---|---|
+| source/API invalidation trace | PASS / SOURCE_INSPECTION | typed edit descriptors and orchestrator invalidation inspected |
+| exact retained mesh overlay source | PASS / SOURCE_INSPECTION | viewport passes `input.retainedMeshEvidence` directly to retained mesh overlay |
+| viewport content/artifact identity contract | ENCODED / NOT_RUN | anti-drift executable now asserts both identities |
+| LAFEA.3 E-edit mechanics/custody regression | NOT_RUN / INFRASTRUCTURE | hosted job did not start steps |
+| LAFEA.4 source/profile invalidation regression | NOT_RUN / INFRASTRUCTURE | hosted job did not start steps |
+| Chromium product journey | NOT_RUN / INFRASTRUCTURE | visible-workbench jobs have `steps=null` |
+| registry wording update | NOT_APPLICABLE / BLOCKED | exact-head engineering evidence has not executed |
 
-```text
-8c2442f602a222efde872c7a2a84a91152944dde
-```
-
-GitHub Actions visible-workbench run:
-
-```text
-run_id: 32675657528
-workflow: LAFEA visible workbench qualification
-attempt 1 job_id: 97283183408
-attempt 1 conclusion: failure
-attempt 1 steps: null
-attempt 2 job_id: 97283224392
-attempt 2 conclusion: failure
-attempt 2 steps: null
-```
-
-Attempt 2 was an explicit rerun of only the failed visible-workbench job. Both attempts failed before checkout/any step was created. Therefore:
-
-```text
-cross-stage anti-drift executable: NOT_RUN / INFRASTRUCTURE
-Chromium product suite:            NOT_RUN / INFRASTRUCTURE
-engineering failure observed:      NO
-```
-
-No encoded-but-unexecuted check is reported as PASS.
+No encoded-but-unexecuted check is represented as PASS.
 
 ## Registry closure
 
-Protected current LAFEA.3 registry wording remains:
+Protected current LAFEA.3 wording remains:
+
+`Production geometry-to-mesh-to-convergence orchestration is incomplete.`
+
+Issue #1371 permits cleanup only after the relevant exact-head gates execute and pass. Infrastructure failure before checkout is not evidence for changing this statement.
+
+## Failure isolation if anti-drift execution fails
+
+Classify the first stale or inconsistent boundary:
 
 ```text
-Production geometry-to-mesh-to-convergence orchestration is incomplete.
+SOURCE_AUTHORITY
+DOMAIN_OR_GEOMETRY_PARENT
+MESH_CONTENT_IDENTITY
+MESH_EVIDENCE_ARTIFACT_IDENTITY
+PREFLIGHT
+SOLVER_MODEL
+COMPILED_EXECUTION
+RECOVERY
+VIEWPORT_RETAINED_MESH_IDENTITY
 ```
 
-Issue #1371 section 17 allows changing it only after relevant gates have **executed** and passed on the exact head. Because both hosted attempts have `steps=null`, registry cleanup remains `BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE`.
+Do not invalidate every descendant by assertion merely to make a test green; identify which parent contract failed first.
 
-## Coordination / drift
+## Coordination
 
-Live main remains `1176f66eb94686f99d4f302930d46f17ff876083`. PR-D is based on that exact main and remains mergeable. The carrier path had no active conflicting claim when added. PR1388/PR1390/PR1392 numerical/product/oracle authority remains separate.
+PR1388 owns frozen shell benchmark authority. PR1390 owns LAFEA.3 source/domain fidelity. PR1392 owns LAFEA.4 Sample pressure/output. PR1393 does not change those files or their numerical targets. Live main remains the merge base and overlap state is SAFE.
 
-## Completion boundary
+## EXACT_NEXT_ACTION
 
-Do not alter frozen oracles, production mechanics, registry wording, or tolerances to compensate for hosted runner non-execution. When a runner actually starts, classify the first failing engineering boundary if any. Until then retain NOT_RUN and owner-only merge authority.
+On an exact PR head, execute:
+
+```bash
+node scripts/lafea1371-cross-stage-anti-drift-check.mjs
+node scripts/lafea-stage17-browser-run.mjs
+```
+
+If the Node gate passes but Chromium fails later, classify those separately. Do not change registry wording until both the required engineering and product evidence has actually executed and passed.
+
+# Appendix A
+
+Takeover qualification remains `PASS 96/100`; this bounded viewport-observability change does not widen numerical authority or invalidate the original qualification basis.

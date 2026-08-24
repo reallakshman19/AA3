@@ -51,26 +51,28 @@
       "livePrHeadMustBeGroundedFromGithub": true,
       "capability": "reducerExactMechanics",
       "requiredCapabilityState": false,
+      "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED",
       "blockers": [
         "REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED",
         "REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED",
         "REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED"
       ],
       "externalEvidenceRequired": true,
-      "externalEvidenceIssue": 1402,
-      "evidenceScaffold": "scripts/lfea-s4-reducer-parity-evidence-template.mjs",
-      "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED"
+      "externalEvidenceIssue": 1402
     },
     {
       "stage": "S5",
       "pr": 1391,
-      "engineeringCodeHead": "b62bfce16bf32e23e26560c68959ee03924377da",
+      "engineeringCodeHead": "a062068797b1a33b2cbae9fdd390cb0e18ece0df",
       "livePrHeadMustBeGroundedFromGithub": true,
       "requiredCapabilities": {
         "pressureBourdon": false,
         "pressureStiffening": false,
         "pressureAxialThrust": false
       },
+      "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED",
+      "q5ControlledSelector": "P1",
+      "q5ControlledSelectorMayAuthorizeBm4Nl": false,
       "blockers": [
         "CONTROLLED_BOURDON_PARITY_REQUIRED",
         "CONTROLLED_PRESSURE_STIFFENING_PARITY_REQUIRED",
@@ -78,9 +80,7 @@
         "PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY"
       ],
       "externalEvidenceRequired": true,
-      "externalEvidenceIssue": 1402,
-      "evidenceScaffold": "scripts/lfea-s5-pressure-parity-evidence-template.mjs",
-      "generatedScaffoldStatus": "DRAFT_NOT_QUALIFIED"
+      "externalEvidenceIssue": 1402
     }
   ],
   "externalEvidenceGate": {

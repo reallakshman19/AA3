@@ -1,5 +1,7 @@
 # PR1390 — Issue #1371 PR-B LAFEA.3 Model → Mesh → Analyse → Output closure
 
+Issue: https://github.com/reallaksh19/Advanced_Analysis/issues/1371
+
 # CURRENT RECOVERY STATE — READ FIRST
 
 ```text
@@ -17,169 +19,217 @@ BRANCH: agent/issue-1371-pr-b-lafea3-closure-20260823
 MAIN_HEAD_LAST_CHECKED: 1176f66eb94686f99d4f302930d46f17ff876083
 MERGE_BASE: 1176f66eb94686f99d4f302930d46f17ff876083
 APPENDIX_A_STATUS: PASS 96/100
-CURRENT_STAGE: LAFEA.3 source/domain/custody + traceability validation
+CURRENT_STAGE: LAFEA.3 source/domain/custody + result traceability validation
 CURRENT_BLOCKER: hosted visible-workbench jobs fail before checkout with steps=null
-HIGHEST_RISK: source/domain physical parity or retained result identity mismatch once execution actually starts
-EXACT_NEXT_ACTION: run the chained continuum gate on an exact head; if it starts, capture the actual governing element/IP/value/hash identities below rather than changing tolerances or mechanics.
+HIGHEST_RISK: first executing run may expose source/domain physical parity or retained-result identity mismatch
+EXACT_NEXT_ACTION: execute the chained continuum gate on an exact head and capture actual governing element/IP/node/hash/value identities before any mechanics or tolerance change.
 ```
 
-## Root cause and correction
+## Mission
 
-The normalized `pipePadContinuumSource()` Sample contains five restraints and six nodal forces across CASE-A/CASE-B. The previous governed domain retained only the N01/N04 restraints and CASE-A F1–F4. N02/N03 were not geometry features, and CASE-B F5/F6 were omitted.
+Close the LAFEA.3 Sample Model → Mesh → Analyse → Output custody gap by making the governed domain a lossless transcription of the normalized Sample physics, while preserving the current T6/30 mm product profile and the existing independent continuum benchmark authority.
 
-PR1390 adds `src/workspace/lafea3-simulated-domain-provider.js`, preserves N02/N03 as explicit collinear boundary vertices, and derives every RESTRAINT and CONCENTRATED_LOAD attachment from the normalized source document. Physics parity is matched at exact physical coordinates; generated mesh node IDs remain implementation identities and no nearest-node mapping is introduced.
-
-Protected unchanged:
-- T6 / 30 mm Sample profile and mesh-quality thresholds;
-- `src/core/local-continuum/**` formulation, stiffness, solver and recovery;
-- B01/B02 frozen definitions, probes, expected values and tolerances;
-- browser specs/workflow YAML/release authority.
-
-## Hosted gate wiring
-
-The existing Chromium carrier executes `scripts/lafea-b01-b02-gate0-diagnostic.mjs`. PR1390 preserves all existing frozen B01/B02 imports first, then runs:
+## Current route trace
 
 ```text
-scripts/lafea3-simulated-source-authority-check.mjs
-scripts/lafea3-sample-generate-retain-check.mjs
-scripts/lafea3-visible-continuum-preflight-check.mjs
-```
-
-Thus independent continuum benchmark gates execute before the Sample product/custody checks. No browser contract was added.
-
-## §14 LAFEA.3 result traceability — authoritative von Mises
-
-The required trace is encoded even though the hosted runner has not yet produced the actual governing runtime ID/value. The visible accepted-result path is:
-
-```text
-Visible output row
-  Analysis results → Engineering result summary → "Max von Mises"
-  and detailed presenter row
-  "<CASE> · Element <ELEMENT_ID> · <GP_ID> · von Mises equivalent stress"
-
-→ presenter selection
-  src/workspace/lafea-results-view.js::buildContinuumHighlights()
-  scans result.loadCaseResults[*].elementResults[*].gaussPointResults[*].vonMises
-  for T6/Q8
-
-→ registered detailed presenter
-  src/workspace/lafea-result-presenters/local-continuum.js::presentLocalContinuum()
-  requires recoveryLayer === "INTEGRATION_POINT"
-  sourcePath =
-  result.loadCaseResults[caseIndex]
-    .elementResults[elementIndex]
-    .gaussPointResults[pointIndex]
-    .vonMises
-
-→ retained result field / recovery location
-  loadCaseResult.elementResults[<element>].gaussPointResults[<ip>].vonMises
-  authority = INTEGRATION_POINT_RETAINED_ENGINEERING_RESULT
-  no nodal stress projection / no cross-element averaging is accepted as authority
-
-→ element / integration point
-  <ELEMENT_ID> = the exact retained T6 elementResult.elementId
-  <GP_ID>      = the retained gaussPointResults[<ip>].pointId
-  ACTUAL_RUNTIME_ELEMENT_ID = NOT_RUN / INFRASTRUCTURE
-  ACTUAL_RUNTIME_GP_ID      = NOT_RUN / INFRASTRUCTURE
-  ACTUAL_RUNTIME_VALUE_MPA  = NOT_RUN / INFRASTRUCTURE
-
-→ compiled solver model
-  src/workspace/lafea-continuum-solver-model.js
-  compileElements(meshEvidence, ...)
-  copies retained row.elementId, row.elementType and [...row.nodeIds] exactly
-  compileNodes(meshEvidence)
-  copies retained nodeId/x/y/z exactly
-  compiled.parents.meshHash = meshEvidence.meshHash
-  compiled.parents.meshArtifactHash = meshEvidence.artifactHash
-
-→ retained mesh identities
-  stage.retainedAnalysisMeshEvidenceV2.mesh.elements
-    .find(row => row.elementId === <ELEMENT_ID>)
-  gives the exact nodeIds consumed by the compiled solver model;
-  those nodeIds resolve in retainedAnalysisMeshEvidenceV2.mesh.nodes.
-  The existing Chromium Sample spec also requires
-  preflight.meshHash === retained.meshHash
-  and execution.meshHash === retained.meshHash.
-
-→ source authority
-  compiled.parents.sourceHash
-  === stage.sourceAuthority.sourceHash
-  === domain.sourceHash
-  === geometryEvidence.sourceHash
-  === meshEvidence.sourceHash
-  ACTUAL_RUNTIME_SOURCE_HASH = NOT_RUN / INFRASTRUCTURE
-```
-
-### First-wrong-value isolation for the continuum trace
-
-If the visible Max von Mises differs from a frozen benchmark, inspect in this order and stop at the first mismatch:
-
-1. visible row `sourcePath` and governing element/IP identity;
-2. retained `gaussPointResults[ip].vonMises` and stress tensor at that exact IP;
-3. retained `elementResult.elementId` versus compiled solver `elements[*].elementId`;
-4. exact compiled `nodeIds`/node coordinates versus retained mesh element/node identities;
-5. compiled `parents.meshHash` versus retained evidence `meshHash`;
-6. compiled `parents.sourceHash` versus stage source authority;
-7. only after those identities agree, inspect T6 B-matrix/Jacobian/recovery mechanics.
-
-Do **not** substitute a moving maximum, smoothed nodal field, nearby element, or changed tolerance.
-
-## Source → solve custody trace
-
-```text
-pipePadContinuumSource() normalized document
+createLafeaMockDocument('LAFEA.3') / pipePadContinuumSource()
+→ registered composition normalization
 → issueLafeaSourceAuthority().sourceHash
-→ source-faithful governed domain + geometry evidence
-→ retainedAnalysisMeshEvidenceV2 (T6 / 30 mm, CURRENT_PASS)
+→ domain-first profile
+→ source-faithful retained analysis domain
+→ retained analysis geometry evidence
+→ bound T6 / 30 mm mesh profile
+→ retainedAnalysisMeshEvidenceV2
+→ continuum preflight
+→ authorization READY
 → compileLafeaContinuumSolverModel()
-→ retainedContinuumPreflightEvidence (no solver execution)
-→ registered route DOMAIN_FIRST_COMPILED_SOLVER_MODEL
+→ DOMAIN_FIRST_COMPILED_SOLVER_MODEL
+→ local-continuum calculation
 → accepted LOCAL_CONTINUUM_RESULT
-→ lifecycle EXECUTION + RECOVERY artifacts
-→ result highlights + retained detailed presenter
-→ exact retained mesh overlay in Engineering viewport
+→ lifecycle EXECUTION / RECOVERY current
+→ continuum engineering highlights + retained detailed presenter
+→ exact retained mesh overlay
 ```
 
-## Validation truth
+## Source authority
 
-Observed exact-head jobs still fail before checkout. Representative visible-workbench evidence:
+The normalized Sample physics is:
 
 ```text
-run 32676052562
-job 97284253375
-conclusion failure
-steps null
+material MAT: E=200000 MPa, nu=0.3
+thickness: 12.5 mm
+constraints:
+  C1 N01 UX=0
+  C2 N01 UY=0
+  C3 N04 UY=0
+  C4 N02 UY=0
+  C5 N03 UY=0
+CASE-A:
+  F1 N13 ( 8500,-24000) N
+  F2 N14 (-4500,-24000) N
+  F3 N09 ( 2000, -6000) N
+  F4 N12 (-2000, -6000) N
+CASE-B:
+  F5 N13 (0,-15000) N
+  F6 N14 (0,-15000) N
 ```
 
-Earlier explicit retry likewise returned `steps=null`. Therefore:
+The previous governed Sample domain omitted C4/C5 and F5/F6. PR1390 adds `src/workspace/lafea3-simulated-domain-provider.js`, keeps N02/N03 as explicit collinear boundary features, and derives every restraint/load attachment from the normalized source. Physics parity is checked at exact physical coordinates. No nearest-node mapping is introduced.
 
-| Check | Status |
-|---|---|
-| source/domain source inspection | PASS / SOURCE_INSPECTION |
-| source/domain/custody executable checks | NOT_RUN / INFRASTRUCTURE |
-| frozen Kirsch/B02C/B-bar programme in hosted attempt | NOT_RUN / INFRASTRUCTURE |
-| Chromium Model→Mesh→Analyse→Output journey | NOT_RUN / INFRASTRUCTURE |
-| actual governing element/IP/value/hash capture | NOT_RUN / INFRASTRUCTURE |
-| engineering assertion failure observed | NO |
+The compiler requires one source authority chain:
 
-No encoded-but-unexecuted check is represented as PASS.
+```text
+authority.sourceHash
+== domain.sourceHash
+== geometryEvidence.sourceHash
+== meshEvidence.sourceHash
+== compiled.parents.sourceHash
+```
+
+It also requires meshEvidence domain/geometry parents, CURRENT/PASS status, and exact case-ID parity before compiling.
+
+## Benchmark authority
+
+PR1390 is PRODUCT_REGRESSION / custody work. It does not own or modify the independent continuum numerical oracles. The frozen programme remains:
+
+- Kirsch fixed physical probes / B02C;
+- plane-strain B-bar / Lame benchmark and convergence programme;
+- fixed probe semantics with no moving maximum, nodal stress projection, cross-element averaging, or display interpolation as acceptance authority.
+
+Expected values and tolerances are protected and execute before the PR-B Sample checks in the existing continuum gate.
+
+## Product implementation
+
+Changed production seam:
+
+- `src/workspace/lafea3-simulated-domain-provider.js` — source-faithful Sample governed domain;
+- `src/workspace/lafea-simulated-source-provider.js` — uses that provider for the LAFEA.3 Sample.
+
+Focused checks:
+
+- `scripts/lafea3-simulated-source-authority-check.mjs`;
+- `scripts/lafea3-sample-generate-retain-check.mjs`;
+- `scripts/lafea3-visible-continuum-preflight-check.mjs`.
+
+The existing Chromium carrier runs `scripts/lafea-b01-b02-gate0-diagnostic.mjs`. PR1390 leaves the frozen B01/B02 imports first, then invokes the three Sample checks. No new browser file or workflow YAML is added.
+
+## §14 retained result traceability — T6/Q8 von Mises
+
+```text
+visible output
+  Engineering result summary → "Max von Mises"
+  and detailed row:
+  "<CASE> · Element <ELEMENT_ID> · <GP_ID> · von Mises equivalent stress"
+→ src/workspace/lafea-results-view.js::buildContinuumHighlights()
+  selects gaussPointResults[*].vonMises for high-order elements
+→ src/workspace/lafea-result-presenters/local-continuum.js::presentLocalContinuum()
+  requires recoveryLayer == INTEGRATION_POINT
+  sourcePath = result.loadCaseResults[caseIndex]
+    .elementResults[elementIndex]
+    .gaussPointResults[pointIndex].vonMises
+→ retained LOCAL_CONTINUUM_RESULT gauss-point evidence
+→ exact elementResult.elementId + pointId
+→ compileLafeaContinuumSolverModel()
+  compileElements() copies retained elementId / elementType / nodeIds exactly
+  compileNodes() copies retained nodeId / x / y / z exactly
+→ compiled.parents.meshHash == retained evidence meshHash
+→ compiled.parents.meshArtifactHash == retained evidence artifactHash
+→ compiled.parents.sourceHash == canonical source authority hash
+```
+
+Runtime values remain truthfully unfilled:
+
+```text
+ACTUAL_RUNTIME_ELEMENT_ID = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_GP_ID = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_NODE_IDS = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_VALUE_MPA = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_SOURCE_HASH = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_MESH_HASH = NOT_RUN / INFRASTRUCTURE
+```
+
+First-wrong-value order if a visible value disagrees with a benchmark:
+
+1. presenter sourcePath and exact case/element/GP;
+2. retained `gaussPointResults[gp].vonMises` and stress tensor;
+3. retained element ID versus compiled element ID;
+4. compiled nodeIds/coordinates versus retained mesh;
+5. compiled meshHash/sourceHash parent chain;
+6. only then T6 B-matrix/Jacobian/recovery mechanics.
+
+Do not replace the fixed location with a moving maximum, smoothed nodal field, nearby element or changed tolerance.
+
+## ISS / RISK / DEC / QST
+
+- `ISS-1371B-01` RESOLVED_BY_IMPLEMENTATION_PENDING_EXECUTION — C4/C5 and CASE-B F5/F6 are now represented in the governed Sample domain.
+- `ISS-1371B-02` RESOLVED_BY_IMPLEMENTATION_PENDING_EXECUTION — focused source→retained mesh→compiled execution parity checks are chained into the existing hosted continuum gate.
+- `RISK-1371B-01` ACTIVE — first actual run may expose a non-unique physical feature mapping after explicit N02/N03 boundary retention.
+- `RISK-1371B-02` CONTROLLED — generated solver node IDs remain implementation identities; no nearest-node physics mapping is permitted.
+- `DEC-1371B-01` — source physical parity is compared by exact coordinates/values rather than generated node IDs.
+- `DEC-1371B-02` — keep T6/30 mm and all frozen mesh-quality thresholds unchanged.
+- `QST-1371B-01` NONE_OPEN within PR scope; numerical benchmark failures, if any, must be isolated against their frozen oracle rather than adjusted here.
 
 ## Changed-file ledger
 
-- `src/workspace/lafea-simulated-source-provider.js`
-- `src/workspace/lafea3-simulated-domain-provider.js`
-- `scripts/lafea3-simulated-source-authority-check.mjs`
-- `scripts/lafea3-sample-generate-retain-check.mjs`
-- `scripts/lafea3-visible-continuum-preflight-check.mjs`
-- `scripts/lafea-b01-b02-gate0-diagnostic.mjs`
-- report/status/claim metadata.
+- `src/workspace/lafea-simulated-source-provider.js`;
+- `src/workspace/lafea3-simulated-domain-provider.js`;
+- `scripts/lafea3-simulated-source-authority-check.mjs`;
+- `scripts/lafea3-sample-generate-retain-check.mjs`;
+- `scripts/lafea3-visible-continuum-preflight-check.mjs`;
+- `scripts/lafea-b01-b02-gate0-diagnostic.mjs` — existing gate binding only;
+- `agents/PR1390_workreport.md`;
+- `agents/status/PR1390.yaml`;
+- `agents/claims/PR1390.yaml`.
 
-## Hypothesis / falsifier
+Protected: `src/core/local-continuum/**`, solver/recovery formulation, mesh thresholds, B01/B02 definitions/probes/tolerances, local-refinement authority, browser specs, workflow YAML, registry/release authority.
 
-Hypothesis: exact source-derived attachments plus explicit N02/N03 geometry features restore physical fidelity without changing numerical authority.
+## Validation matrix
 
-Falsifier: a runner shows a blocked retained T6 mesh, non-unique exact feature mapping, CASE-B/constraint parity mismatch, compiled source-parent mismatch, or any need for nearest-node mapping, threshold weakening, solver edits or oracle edits.
+| Check | Status | Observation | Oracle |
+|---|---|---|---|
+| source/domain authority trace | PASS | SOURCE_INSPECTION | PRODUCT_REGRESSION |
+| source/domain/custody focused checks | NOT_RUN | hosted job never started steps | IMPLEMENTATION_COUPLED |
+| T6 Sample retained mesh/preflight/solve route | NOT_RUN | hosted job never started steps | PRODUCT_REGRESSION |
+| Kirsch/B02C frozen programme | NOT_RUN | same runner infrastructure period | FROZEN_ANALYTICAL |
+| B-bar/Lame frozen programme | NOT_RUN | same runner infrastructure period | FROZEN_ANALYTICAL |
+| existing Chromium LAFEA.3 product journey | NOT_RUN | visible-workbench jobs have `steps=null` | PRODUCT_REGRESSION |
+| actual governing result/hash identity capture | NOT_RUN | no executing exact-head run | retained-result trace |
 
-## Completion boundary
+Representative visible-workbench evidence: run `32676052562`, job `97284253375`, failure with `steps=null`; prior explicit retry likewise had no steps. Engineering assertion failure observed: **NO**. No encoded-but-unexecuted check is represented as PASS.
 
-Keep PR draft and owner-only. On first real execution, record actual `<ELEMENT_ID>`, `<GP_ID>`, retained node IDs, sourceHash, meshHash, solverModelHash, compiledExecutionHash and reported value into this trace. Until then the trace structure is SOURCE_INSPECTION-complete but runtime evidence remains NOT_RUN.
+## Independent oracle classification
+
+```text
+LAFEA.3 Sample checks / Chromium = PRODUCT_REGRESSION / IMPLEMENTATION_COUPLED
+Kirsch fixed-probe programme     = FROZEN_ANALYTICAL / independent of production output
+B02C production comparison       = production execution consuming frozen definition
+B-bar/Lame programme             = FROZEN_ANALYTICAL / fixed physical probes + convergence
+```
+
+## Main-drift audit
+
+Live main last checked: `1176f66eb94686f99d4f302930d46f17ff876083`. PR1390 was grounded on that merge base and was 0 commits behind at the last AD-01 comparison. PR1388/PR1392/PR1393 own separate authority/files. Re-run overlap comparison before owner merge request.
+
+## Highest remaining risk
+
+The first executing exact-head run may show that exact source constraints/loads do not map uniquely into the generated retained mesh or that CASE-B physical parity differs after compilation. If so, stop at the first source/domain/feature/mesh mapping mismatch. Do not weaken mesh quality or edit frozen benchmarks.
+
+## EXACT_NEXT_ACTION
+
+On an exact PR head run:
+
+```bash
+node scripts/lafea3-sample-generate-mesh-enable-check.mjs
+node scripts/lafea3-sample-generate-retain-check.mjs
+node scripts/lafea3-visible-continuum-preflight-check.mjs
+node scripts/lafea-bucket-01-kirsch-fixed-probes-check.mjs
+node scripts/lafea-b02c-production-check.mjs
+node scripts/lafea-plane-strain-bbar-lame-check.mjs
+npx playwright test e2e/lafea3-sample-mesh.spec.js
+```
+
+Record actual sourceHash, meshHash, solverModelHash, compiledExecutionHash, governing element/GP/node IDs and values here.
+
+## Appendix A qualification
+
+Takeover qualification remains `PASS 96/100`; every A1–A5 score exceeded the issue threshold. This PR does not widen the numerical authority used in that qualification.

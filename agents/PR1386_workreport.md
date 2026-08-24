@@ -15,12 +15,12 @@ REPOSITORY: reallaksh19/Advanced_Analysis
 PR: 1386
 PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1386
 BRANCH: agent/lfea-piping-promotion-s4-reducer-parity-gate-20260823
-MAIN_LAST_CHECKED: e985b50d81d0d241db27313562c8cc12cd7cc27d
-ENGINEERING_CODE_HEAD: 1764d0306da90f55f9b27fa8f532b6b36b97f360
-CURRENT_STAGE: fail-closed reducer readiness + controlled CAESAR protocol + machine-checkable parity intake + raw-artifact SHA256 verification
-CURRENT_BLOCKER: current-version CAESAR reducer observations do not yet exist
+MAIN_LAST_CHECKED: e6908671f25df784312b9e3392bc6ab83863c9c8
+ENGINEERING_CODE_HEAD: 7e540e6617decd23e3aec432bb08b81ebbd60a5a
+CURRENT_STAGE: fail-closed reducer readiness + controlled CAESAR protocol + parity intake + raw-artifact SHA256 verification + fail-closed package scaffold
+CURRENT_BLOCKER: current-version CAESAR reducer observations do not yet exist; external execution tracked by Issue #1402
 HIGHEST_RISK: accepting self-declared hashes/reviewer assertions as parity or inferring midpoint/gravity behavior from ten-cylinder wording
-EXACT_NEXT_ACTION: execute docs/lfea/S4_Reducer_Parity_Protocol_20260824.md, retain raw files under one package root, populate evidence.json, run scripts/lfea-s4-reducer-parity-evidence-file-check.mjs
+EXACT_NEXT_ACTION: generate a fresh package with scripts/lfea-s4-reducer-parity-evidence-template.mjs, execute docs/lfea/S4_Reducer_Parity_Protocol_20260824.md, retain raw files, complete evidence.json, then run the file-level checker
 ```
 
 ## 60-second handover
@@ -39,12 +39,13 @@ productionUseAuthorized = false
 
 Hexagon public help establishes ten successively changing cylinders and From/To end section custody. It does not establish the representative OD/wall station inside each cylinder, nor gravity ownership. Historical CAEPIPE↔CAESAR evidence indicating From-end reducer weight is a falsifier only; it is not current-version CAESAR authority.
 
-The prerequisite now has four independent layers:
+The prerequisite now has five independent layers:
 
 1. production readiness that has no READY path for the current candidate;
 2. controlled current-version CAESAR experiment protocol;
 3. machine-checkable engineering parity contract;
-4. file-level raw-artifact verifier that recomputes SHA-256 against retained CAESAR job/input/output bytes.
+4. file-level raw-artifact verifier that recomputes SHA-256 against retained CAESAR job/input/output bytes;
+5. a package scaffold generator that creates the complete run inventory but deliberately remains `DRAFT_NOT_QUALIFIED`.
 
 Even accepted evidence remains `QUALIFIED_PARITY_EVIDENCE_ONLY` and cannot enable production.
 
@@ -66,7 +67,7 @@ All six credible section candidates must be compared. Exactly one must be inside
 The intake requires quantitative normalized residuals for structural response, each gravity component, first moment, thermal response and code-boundary invariance, all inside the same predeclared non-fitted tolerance.
 
 ### DEC-S4-006 — claimed hashes are not evidence custody
-Each run now carries safe relative paths in `rawArtifacts`. The file intake rejects absolute/traversal paths, missing files, symlinks and files resolving outside the evidence package, and recomputes SHA-256 before acceptance.
+Each run carries safe relative paths in `rawArtifacts`. The file intake rejects absolute/traversal paths, missing files, symlinks and files resolving outside the evidence package, and recomputes SHA-256 before acceptance.
 
 ### DEC-S4-007 — parity evidence cannot authorize production
 Accepted intake returns:
@@ -79,6 +80,9 @@ reducerExactMechanicsAuthorized = false
 ```
 
 A future S4 numerical promotion still requires a new production-authority contract and integration PR.
+
+### DEC-S4-008 — generated scaffolds are intentionally non-evidence
+`scripts/lfea-s4-reducer-parity-evidence-template.mjs` pre-populates the required run families and raw-artifact paths but leaves the tolerance, hashes, observations, decisions, acceptance and review unresolved. It emits `status=DRAFT_NOT_QUALIFIED` and refuses to overwrite an existing package directory. The workflow is designed to fail if a generated draft ever passes the real file-level intake.
 
 ## Required real CAESAR evidence
 
@@ -113,12 +117,20 @@ Independent review is mandatory and the reviewer may not be any recorded CAESAR 
 
 ## Operator package
 
+External execution tracker: Issue #1402.
+
 Documentation:
 
 - `docs/lfea/S4_Reducer_Parity_Protocol_20260824.md`
 - `docs/lfea/S4_Reducer_Parity_Evidence_Package_20260824.md`
 
-Validation command:
+Create a new fail-closed scaffold:
+
+```text
+node scripts/lfea-s4-reducer-parity-evidence-template.mjs /path/to/new-package
+```
+
+Validate only after controlled observations and independent review are complete:
 
 ```text
 node scripts/lfea-s4-reducer-parity-evidence-file-check.mjs /path/to/package/evidence.json
@@ -142,34 +154,36 @@ The current reducer authority cannot become READY by changing a status string.
 
 | Check | Status | Evidence |
 |---|---|---|
-| Current repository grounding | PASS — SOURCE_INSPECTION | `main=e985b50d...` |
+| Current repository grounding | PASS — SOURCE_INSPECTION | `main=e6908671...`; observed drift remains EMP.1-only |
 | S4 source classification | PASS — SOURCE_INSPECTION | ten cylinders/end custody only; internal sampling unresolved |
 | Fail-closed production readiness | PASS — SOURCE_INSPECTION | 3 blocker families, no current READY path |
 | Controlled protocol | PASS — SOURCE_INSPECTION | current-version discriminating experiment defined |
 | Engineering evidence contract | PASS_AFTER_HARDENING — SOURCE_INSPECTION | run-level physical custody, controlled pairs, quantitative residuals, unique candidate, independent review |
-| Raw-artifact binding | PASS_AFTER_HARDENING — SOURCE_INSPECTION | relative paths + SHA-256 recomputation designed; symlink/path escape rejected |
-| Exact code-head S4 workflow | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | run `32693654723`, job `97331702642`, `steps=null` |
-| Current-version CAESAR reducer parity | UNRESOLVED | controlled raw observations absent |
-| Full LFEA regression | NOT_RUN | repository-wide #54 runner blocker |
+| Raw-artifact binding | PASS_AFTER_HARDENING — SOURCE_INSPECTION | relative paths + SHA-256 recomputation; symlink/path escape rejected |
+| Fail-closed scaffold design | PASS — SOURCE_INSPECTION | complete run inventory; unresolved values; `DRAFT_NOT_QUALIFIED`; no overwrite |
+| Exact scaffold-head S4 workflow | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | head `7e540e66...`; run `32705897120`; job `97366828622`; `steps=null` |
+| Current-version CAESAR reducer parity | UNRESOLVED | controlled raw observations absent; Issue #1402 |
+| Full LFEA regression | NOT_RUN | repository-wide Issue #54 runner blocker |
 
-No checkout or assertion executed in run `32693654723`; its GitHub conclusion `failure` is not an engineering FAIL and not a PASS.
+No checkout or assertion executed in run `32705897120`; its GitHub conclusion `failure` is not an engineering FAIL and not a PASS.
 
 No benchmark was re-baselined, no engineering tolerance widened, no expected value fitted to CAESAR, and no guard disabled.
 
-## Changed-file ledger — 10 files
+## Changed-file ledger — 11 files
 
 | File | Purpose |
 |---|---|
-| `.github/workflows/lfea-s4-reducer-parity-gate.yml` | S4 prerequisite/evidence workflow |
+| `.github/workflows/lfea-s4-reducer-parity-gate.yml` | S4 prerequisite/evidence/scaffold workflow |
 | `agents/PR1386_workreport.md` | sole living recovery authority |
 | `docs/lfea/S4_Reducer_Parity_Protocol_20260824.md` | controlled current-version CAESAR experiment |
-| `docs/lfea/S4_Reducer_Parity_Evidence_Package_20260824.md` | operator package layout/raw custody |
+| `docs/lfea/S4_Reducer_Parity_Evidence_Package_20260824.md` | operator package layout/raw custody/scaffold usage |
 | `src/core/linear-fea-reducer-condensation/production-readiness.js` | fail-closed production blockers |
 | `src/core/linear-fea-reducer-condensation/index.js` | readiness exports |
 | `scripts/lfea-b3.23-reducer-condensation-check.mjs` | internal numerical self-consistency/non-reachability guard |
 | `scripts/lfea-s4-reducer-parity-evidence-contract.mjs` | external parity evidence schema/validator |
 | `scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs` | contract falsifier fixture |
 | `scripts/lfea-s4-reducer-parity-evidence-file-check.mjs` | real evidence JSON + raw-byte/hash verifier |
+| `scripts/lfea-s4-reducer-parity-evidence-template.mjs` | fail-closed complete package scaffold generator |
 
 ## Engineering item register
 
@@ -182,11 +196,13 @@ No benchmark was re-baselined, no engineering tolerance widened, no expected val
 | IMP-002 | IMP | high | IMPLEMENTED | Controlled parity protocol committed. |
 | IMP-003 | IMP | high | IMPLEMENTED | Engineering evidence intake requires quantitative, controlled, independent parity. |
 | IMP-004 | IMP | high | IMPLEMENTED | Raw CAESAR files are path-bound and SHA-256 verified at intake. |
-| IMP-005 | IMP | medium | DECLARED_CI_NOT_EXECUTED | Workflow covers contract and file intake CLI, but runner fails pre-step. |
+| IMP-005 | IMP | medium | DECLARED_CI_NOT_EXECUTED | Workflow covers contract/file intake; runner fails pre-step. |
+| IMP-006 | IMP | medium | IMPLEMENTED_SOURCE_INSPECTED | Scaffold generator eliminates manual case-inventory construction while remaining non-authoritative. |
 | RISK-001 | RISK | high | MITIGATED_BY_GATE | Midpoint candidate cannot be mislabeled exact. |
 | RISK-002 | RISK | high | MITIGATED_BY_GATE | Structural ten-cylinder wording cannot become gravity authority. |
 | RISK-003 | RISK | high | MITIGATED_BY_CONTRACT | Reviewer declaration cannot manufacture parity. |
 | RISK-004 | RISK | high | MITIGATED_BY_FILE_INTAKE | Invented 64-hex strings cannot substitute for retained raw CAESAR bytes. |
+| RISK-005 | RISK | medium | MITIGATED_BY_SCAFFOLD | Operator cannot accidentally omit required run families when starting a package. |
 
 ## Appendix A — expert takeover questionnaire
 
@@ -198,8 +214,8 @@ No benchmark was re-baselined, no engineering tolerance widened, no expected val
 6. How is a section candidate proven uniquely acceptable under a predeclared tolerance?
 7. Which quantitative residuals must be within tolerance before a parity package can be accepted?
 8. How are raw CAESAR job/input/output bytes cryptographically bound to each run record?
-9. Why does accepted parity evidence still return `reducerExactMechanicsAuthorized=false`?
-10. What separate authority/integration step is required after real parity exists?
+9. Why must the generated scaffold fail the real evidence intake before observations/review are supplied?
+10. Why does accepted parity evidence still return `reducerExactMechanicsAuthorized=false`, and what separate integration step follows?
 
 Takeover threshold: all ten answers must be source- and contract-grounded without guessing undocumented CAESAR behavior.
 
@@ -211,5 +227,7 @@ Takeover threshold: all ten answers must be source- and contract-grounded withou
 - A controlled CAESAR 14.x protocol and fail-closed readiness gate were added.
 - The evidence contract was hardened from declaration-only acceptance to controlled run-level custody, unique in-tolerance candidate selection and quantitative residuals.
 - 2026-08-24 continuation added byte-level raw-artifact binding and SHA-256 recomputation plus operator package documentation.
+- Issue #1402 now owns controlled external CAESAR execution.
+- A fail-closed scaffold generator now creates the exact S4 run inventory without manufacturing evidence.
 - Hosted Actions continues to fail before step 1 under repository Issue #54.
 - No reducer numerical promotion has occurred.

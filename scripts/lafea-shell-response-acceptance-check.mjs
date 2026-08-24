@@ -2,10 +2,15 @@
 import assert from 'node:assert/strict';
 
 import { calculateLocalTrunnionFootprint } from '../src/core/local-trunnion-footprint/index.js';
+import { runLafea4ShellIndependentBenchmarkCheck } from './lafea4-shell-independent-benchmark-check.mjs';
 import { runLafeaShellIndependentBenchmarkFreezeCheck } from './lafea-shell-independent-benchmark-freeze-check.mjs';
 import { stableShellTemplate, workflowSource } from './lafea.5-fixtures.mjs';
 
 await runLafeaShellIndependentBenchmarkFreezeCheck({ emit: false });
+const independentBenchmarkExecution = await runLafea4ShellIndependentBenchmarkCheck({
+  emit: false,
+  freezeAlreadyChecked: true,
+});
 
 const source = workflowSource();
 const fixedNodeIds = [...new Set(source.shellTemplate.constraints.map((row) => row.nodeId))].sort();
@@ -72,6 +77,7 @@ console.log(JSON.stringify({
   schema: 'lafea-shell-response-acceptance-check/v1',
   status: 'PASS',
   independentBenchmarkFreeze: 'PASS_REQUIRED_BEFORE_PRODUCT_RESPONSE_ACCEPTANCE',
+  independentBenchmarkExecution: independentBenchmarkExecution.status,
   workflowSample: {
     fixedNodeIds,
     freeDofCount: shellCase.freeDofIdentities.length,

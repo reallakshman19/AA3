@@ -4,27 +4,35 @@ pr_or_wip: PR1394
 mission: "Issue #1389 PR-A — release definition, source-custody reconciliation, benchmark identity freeze"
 workstream: EMP1_WRC537_2013_BOUNDED_RELEASE
 branch: agent/issue-1389-pr-a-release-definition-20260824
-pr_head_observed: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
+implementation_head: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
+pr_head_last_observed: 2f7b18d8faea510170a32e878c051eb8bccf0f1e
 report_basis_head: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
 main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
 merge_base: 1176f66eb94686f99d4f302930d46f17ff876083
 work_intent: IMPLEMENT
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY
+pr_recovery_state: HEALTHY_WITH_INFRASTRUCTURE_BLOCKER
 handover_readiness: READY
 report_path: agents/PR1394_workreport.md
-report_sync: CURRENT
+report_sync: CURRENT_RECOVERY_METADATA_ONLY_AFTER_IMPLEMENTATION_BASIS
 appendix_a_status: CURRENT_PASS_95_OF_100
-grounding_epoch: GE-002
-current_stage: VALIDATING
-blocker: "no PR-A implementation blocker; exact-head executable/CI evidence pending"
+grounding_epoch: GE-003
+current_stage: VALIDATING_INFRASTRUCTURE_CLASSIFIED
+blocker: "Issue #54 PRE_STEP_INFRASTRUCTURE_FAILURE: current-head EMP.1 jobs have zero steps and no logs"
 highest_risk: "source-custody PASS must not be interpreted as WRC method/release authority"
+validation_truth:
+  changed_file_scope: PASS
+  focused_guard_source_inspection: PASS
+  focused_guard_execution: NOT_RUN_EXECUTION_ENVIRONMENT
+  raw_source_byte_reobservation: NOT_RUN_BY_THIS_PR
+  caux_expected_values_handcalc: NOT_RUN
+  exact_head_ci: NOT_RUN_EXECUTION_ENVIRONMENT
 dependencies:
   - "Issue #1389 umbrella"
   - "Issue #1333 later exact-head qualification gate"
-  - "Issue #54 later CI/deployment blocker"
-exact_next_action: "observe exact-head workflows and focused guards; reconcile any first mismatch without widening authority"
+  - "Issue #54 blocking CI/deployment infrastructure"
+exact_next_action: "execute focused guards in a real checkout when available; keep PR draft and authority false until observed"
 execution_mode: MANUAL
 merge_authority: OWNER_ONLY
 last_updated: "2026-08-24"

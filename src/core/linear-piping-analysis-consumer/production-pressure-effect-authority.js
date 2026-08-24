@@ -8,51 +8,29 @@ export const CAESAR_BOURDON_MODES = Object.freeze([
   'TRANSLATION_ONLY',
   'TRANSLATION_AND_ROTATION',
 ]);
-
 export const CAESAR_BEND_PRESSURE_STIFFENING_CONFIGURATIONS = Object.freeze([
   'DEFAULT_CODE',
   'INCLUDE',
   'EXCLUDE',
 ]);
-
 export const CAESAR_ELBOW_STIFFENING_PRESSURE_SELECTORS = Object.freeze([
-  'UNRESOLVED',
-  'NONE',
-  'PMAX',
-  'P1',
-  'P2',
-  'P3',
-  'P4',
-  'P5',
-  'P6',
-  'P7',
-  'P8',
-  'P9',
-  'PHYDRO',
+  'UNRESOLVED', 'NONE', 'PMAX', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'PHYDRO',
 ]);
 
 const INPUT_KEYS = Object.freeze([
-  'schema',
-  'authorityId',
-  'activePipingCode',
-  'bourdonMode',
-  'bendPressureStiffeningConfiguration',
-  'elbowStiffeningPressureSelector',
-  'settingEvidence',
+  'schema', 'authorityId', 'activePipingCode', 'bourdonMode',
+  'bendPressureStiffeningConfiguration', 'elbowStiffeningPressureSelector', 'settingEvidence',
 ]);
 const EVIDENCE_KEYS = Object.freeze([
-  'activePipingCode',
-  'bourdonMode',
-  'bendPressureStiffeningConfiguration',
+  'activePipingCode', 'bourdonMode', 'bendPressureStiffeningConfiguration',
   'elbowStiffeningPressureSelector',
+]);
+const EVIDENCE_ENTRY_KEYS = Object.freeze([
+  'authorityLevel', 'caseId', 'normalizedValue', 'rawValue', 'reason', 'resolutionStatus', 'source',
 ]);
 const RESOLUTION_STATUSES = Object.freeze(['RESOLVED', 'UNRESOLVED']);
 const AUTHORITY_LEVELS = Object.freeze([
-  'OVERALL_GLOBAL_DEFAULT',
-  'INDIVIDUAL_FILE_SETTING',
-  'LOAD_CASE_SETTING',
-  'MODEL_INPUT',
-  'UNRESOLVED',
+  'OVERALL_GLOBAL_DEFAULT', 'INDIVIDUAL_FILE_SETTING', 'LOAD_CASE_SETTING', 'MODEL_INPUT', 'UNRESOLVED',
 ]);
 
 /**
@@ -60,11 +38,12 @@ const AUTHORITY_LEVELS = Object.freeze([
  *
  * The global pressure-stiffening configuration and per-load-case elbow
  * stiffening-pressure selector are separate CAESAR settings. `DEFAULT_CODE`
- * delegates the global choice to the active piping code; it is not an alias
- * for INCLUDE or EXCLUDE. An unresolved per-case selector remains unresolved.
+ * preserves CAESAR raw `DEFAULT`: the effective choice is delegated to the
+ * active piping code, not silently converted to INCLUDE or EXCLUDE.
  *
- * This record establishes source settings only. It never proves that the LFEA
- * production formulation implements the corresponding mechanics.
+ * Raw and normalized source values are both retained. An unresolved per-case
+ * selector remains unresolved. This record establishes source state only and
+ * never proves LFEA numerical implementation authority.
  */
 export function sealProductionPressureEffectAuthority(input) {
   requireRecord(input, 'pressureEffectAuthority');
@@ -90,11 +69,8 @@ export function sealProductionPressureEffectAuthority(input) {
   const settingEvidence = requireSettingEvidence(input.settingEvidence);
   requireResolvedValue(settingEvidence.activePipingCode, activePipingCode, 'activePipingCode');
   requireResolvedValue(settingEvidence.bourdonMode, bourdonMode, 'bourdonMode');
-  requireResolvedValue(
-    settingEvidence.bendPressureStiffeningConfiguration,
-    bendPressureStiffeningConfiguration,
-    'bendPressureStiffeningConfiguration',
-  );
+  requireResolvedValue(settingEvidence.bendPressureStiffeningConfiguration,
+    bendPressureStiffeningConfiguration, 'bendPressureStiffeningConfiguration');
   requireSelectorEvidence(settingEvidence.elbowStiffeningPressureSelector, elbowStiffeningPressureSelector);
 
   const draft = {
@@ -111,10 +87,7 @@ export function sealProductionPressureEffectAuthority(input) {
   return Object.freeze({ ...draft, settingEvidence: freezeEvidence(settingEvidence) });
 }
 
-/**
- * Report source disposition without converting code-controlled or unresolved
- * settings into an implementation-authorization boolean.
- */
+/** Report source disposition without collapsing code-controlled state to a boolean. */
 export function sourcePressureEffectDisposition(authority) {
   const accepted = sealProductionPressureEffectAuthority({
     schema: authority?.schema,
@@ -153,45 +126,41 @@ function requireSettingEvidence(value) {
     activePipingCode: requireEvidenceEntry(value.activePipingCode, 'activePipingCode'),
     bourdonMode: requireEvidenceEntry(value.bourdonMode, 'bourdonMode'),
     bendPressureStiffeningConfiguration: requireEvidenceEntry(
-      value.bendPressureStiffeningConfiguration,
-      'bendPressureStiffeningConfiguration',
-    ),
+      value.bendPressureStiffeningConfiguration, 'bendPressureStiffeningConfiguration'),
     elbowStiffeningPressureSelector: requireEvidenceEntry(
-      value.elbowStiffeningPressureSelector,
-      'elbowStiffeningPressureSelector',
-    ),
+      value.elbowStiffeningPressureSelector, 'elbowStiffeningPressureSelector'),
   };
 }
 
 function requireEvidenceEntry(value, field) {
   requireRecord(value, `settingEvidence.${field}`);
-  requireExactKeys(value, ['authorityLevel', 'caseId', 'rawValue', 'reason', 'resolutionStatus', 'source'],
-    `settingEvidence.${field}`);
+  requireExactKeys(value, EVIDENCE_ENTRY_KEYS, `settingEvidence.${field}`);
   const resolutionStatus = requireMember(value.resolutionStatus, RESOLUTION_STATUSES,
     `settingEvidence.${field}.resolutionStatus`);
   const authorityLevel = requireMember(value.authorityLevel, AUTHORITY_LEVELS,
     `settingEvidence.${field}.authorityLevel`);
   const source = requireText(value.source, `settingEvidence.${field}.source`);
-  const caseId = value.caseId === null ? null : requireText(value.caseId, `settingEvidence.${field}.caseId`);
-  const rawValue = value.rawValue === null ? null : requireText(value.rawValue, `settingEvidence.${field}.rawValue`);
-  const reason = value.reason === null ? null : requireText(value.reason, `settingEvidence.${field}.reason`);
-  if (resolutionStatus === 'RESOLVED' && (authorityLevel === 'UNRESOLVED' || rawValue === null || reason !== null)) {
+  const caseId = nullableText(value.caseId, `settingEvidence.${field}.caseId`);
+  const rawValue = nullableText(value.rawValue, `settingEvidence.${field}.rawValue`);
+  const normalizedValue = nullableText(value.normalizedValue, `settingEvidence.${field}.normalizedValue`);
+  const reason = nullableText(value.reason, `settingEvidence.${field}.reason`);
+  if (resolutionStatus === 'RESOLVED'
+    && (authorityLevel === 'UNRESOLVED' || rawValue === null || normalizedValue === null || reason !== null)) {
     fail('PRESSURE_EFFECT_SETTING_EVIDENCE_INVALID', `Resolved ${field} evidence is internally inconsistent.`);
   }
   if (resolutionStatus === 'UNRESOLVED'
-    && (authorityLevel !== 'UNRESOLVED' || rawValue !== null || reason === null)) {
+    && (authorityLevel !== 'UNRESOLVED' || rawValue !== null || normalizedValue !== null || reason === null)) {
     fail('PRESSURE_EFFECT_SETTING_EVIDENCE_INVALID', `Unresolved ${field} evidence is internally inconsistent.`);
   }
-  return { resolutionStatus, authorityLevel, source, caseId, rawValue, reason };
+  return { resolutionStatus, authorityLevel, source, caseId, rawValue, normalizedValue, reason };
 }
 
 function requireResolvedValue(evidence, expected, field) {
-  if (evidence.resolutionStatus !== 'RESOLVED' || evidence.rawValue !== expected) {
+  if (evidence.resolutionStatus !== 'RESOLVED' || evidence.normalizedValue !== expected) {
     fail('PRESSURE_EFFECT_SETTING_EVIDENCE_MISMATCH',
-      `${field} must equal its resolved CAESAR setting evidence.`);
+      `${field} must equal its normalized resolved CAESAR setting evidence.`);
   }
 }
-
 function requireSelectorEvidence(evidence, selector) {
   if (selector === 'UNRESOLVED') {
     if (evidence.resolutionStatus !== 'UNRESOLVED') {
@@ -202,12 +171,13 @@ function requireSelectorEvidence(evidence, selector) {
   }
   requireResolvedValue(evidence, selector, 'elbowStiffeningPressureSelector');
 }
-
 function freezeEvidence(value) {
   return Object.freeze(Object.fromEntries(Object.entries(value)
     .map(([key, entry]) => [key, Object.freeze({ ...entry })])));
 }
-
+function nullableText(value, field) {
+  return value === null ? null : requireText(value, field);
+}
 function requireRecord(value, field) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     fail('PRESSURE_EFFECT_AUTHORITY_RECORD_REQUIRED', `${field} must be a record.`);

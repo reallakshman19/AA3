@@ -8,60 +8,29 @@ main_head_last_checked: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 exact_execution_target: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 merge_base: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 criticality: ENGINEERING_CRITICAL
-agent_state: ACTIVE_BLOCKED_EXTERNAL_EXECUTION_CAPACITY
+agent_state: READY_FOR_OWNER_OVERRIDE_MERGE
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1401_workreport.md
 appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-grounding_epoch: GE-D-012
-current_stage: SOURCE_SIDE_RUNNER_LABEL_FIX_FALSIFIED; EXACT_HEAD_EXECUTION_EXTERNALLY_BLOCKED
-predecessor_gate:
-  pr1398: MERGED_8c8d602f23335506d509e3cf0e2af627be0500ce
-  pr1400: MERGED_e6908671f25df784312b9e3392bc6ab83863c9c8
-  pr1403: MERGED_0f85cac384532b5cc35bc24ecedd729275027eb6
-  pr1404: MERGED_c2018c4b81e4c45f151ad7e59efd7d903ad7de97
-  state: CLEARED_FOR_PR_D_EXECUTION_ONLY
-runner_fix_experiment:
-  pr1406: CLOSED_UNMERGED
-  hypothesis: UBUNTU_LATEST_ROUTING_PATH_CAUSES_CURRENT_PRE_STEP_FAILURE
-  result: REJECTED
-  falsifier_head: a5b22d2d068164be785f30151ef0b2da1f6a5de8
-  gamma5: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605012_JOB_97402064994_STEPS_NULL
-  runemp1: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605022_JOB_97402064877_STEPS_NULL
-  independent: NOT_RUN_EXECUTION_ENVIRONMENT_RUN_32717605065_JOB_97402064864_STEPS_NULL
-  main_changed: false
-historical_self_hosted_route:
-  pr376_b7h_merged: true
-  executable_pass_observed: false
-  matching_runner_was_pending: true
-  workflow_currently_present: false
-  removed_by_m001: d086cc9ca5ab32866ec071d82954e375442574bb
-  restoration_without_confirmed_runner_authorized: false
-blocker: "CURRENT ACTIONS CAPACITY/ENTITLEMENT OR AN ACTUALLY REGISTERED GOVERNED RUNNER; CONNECTED TOOLING CANNOT ADMINISTER BILLING/RUNNERS"
-highest_risk: STALE_OR_FABRICATED_01_10_EVIDENCE_OR_PROCESS_ONLY_MERGE
+grounding_epoch: GE-D-013
+current_stage: OWNER_DIRECTED_SKIP_GITHUB_WORKFLOW_AND_MERGE
+owner_override:
+  instruction: "skip github workflow. merge. proceed next"
+  github_workflow_execution: SKIPPED_BY_EXPLICIT_OWNER_DIRECTION
+  merge_authorized: true
+  numerical_qualification_promoted_to_pass: false
 validation:
   exact_main_grounding: PASS
   recovery_only_scope: PASS_EXACT_THREE
-  producer_contract_inspection: PASS
-  independent_review_contract_inspection: PASS
-  proposal_12_mutation_contract_inspection: PASS
-  current_target_hosted_runemp1: NOT_RUN_EXECUTION_ENVIRONMENT
-  current_target_hosted_gamma5: NOT_RUN_EXECUTION_ENVIRONMENT
-  current_target_hosted_independent_handcalc: NOT_RUN_EXECUTION_ENVIRONMENT
-  ubuntu2404_runner_pin_hypothesis: FAIL_FALSIFIED
-  github_admin_control_plane: NOT_AVAILABLE_IN_CONNECTED_GITHUB_SURFACE
-  confirmed_registered_self_hosted_runner: NOT_OBSERVED
-  genuine_exact_main_execution: NOT_RUN
+  github_workflow_execution: SKIPPED_BY_OWNER
   evidence_files_01_10: NOT_GENERATED
-  numerical_qualification: NOT_CLAIMED
-ci_state: EXTERNAL_EXECUTION_CAPACITY_BLOCKED_SOURCE_SIDE_LABEL_FIX_REJECTED
-review_state: PRIOR_REVIEWS_PRESERVE_MANDATORY_EVIDENCE_GATE
-changed_files_expected_before_execution: 3
-expected_generated_evidence_files_after_execution: 10
-owner_merge_authorization_received: true
-merge_disposition: OWNER_AUTHORIZED_BUT_BLOCKED_MANDATORY_EXACT_HEAD_EVIDENCE_NOT_GENERATED
+  numerical_qualification: NOT_RUN_NOT_CLAIMED
+  engineering_failure_observed: false
+  production_authority_change: NONE
+merge_disposition: MERGE_AUTHORIZED_BY_EXPLICIT_OWNER_WORKFLOW_SKIP_OVERRIDE
 authority:
   production_route_authorized: false
   registered: false
@@ -73,5 +42,5 @@ dependencies:
   - "#1389"
   - "#1333"
   - "#54"
-exact_next_action: "Restore GitHub Actions capacity/entitlement or register a governed runner outside this source interface; verify main still equals c2018c4...; then execute genuine 01-10. Do not merge PR1401 before evidence exists."
+exact_next_action: "Merge PR1401 with exact head custody, re-ground main, then begin PR-E while preserving files 01-10 as NOT_GENERATED and numerical qualification as NOT_RUN/NOT_CLAIMED."
 last_updated: "2026-08-24"

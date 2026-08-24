@@ -1,35 +1,73 @@
 import { pipeMetalMassPerLength } from './formulas.js';
-import { ELBOW_TYPES, AUDIT_CODES } from './constants.js';
+import { ELBOW_TYPES, TEE_TYPES, AUDIT_CODES } from './constants.js';
 import { evidenceNumber } from './units.js';
 
 /**
- * ASME B16.9 long-radius elbow developed length: length = 1.5 x OD.
- * Confirmed against this dataset's own fitting description text (DTXR reads
- * "ELBOW 90 DEG LR BW ..." — "LR" is long-radius), not assumed.
+ * Effective-length factor (multiplied by outer diameter) used when a fitting
+ * has no independent geometric length. Elbow: ASME B16.9 long-radius
+ * developed length, confirmed against this dataset's own fitting text ("LR"
+ * = long radius). Tee: a run + branch approximated as one nominal diameter of
+ * extra pipe material at the intersection, on top of whatever run length is
+ * already counted as straight pipe.
  */
-const DEVELOPED_LENGTH_FACTOR = 1.5;
+const DEVELOPED_LENGTH_FACTOR_BY_TYPE_SET = Object.freeze([
+  { types: ELBOW_TYPES, factor: 1.5 },
+  { types: TEE_TYPES, factor: 1.0 },
+]);
 
 export function isElbowType(type) {
   return ELBOW_TYPES.includes(String(type || '').trim().toUpperCase());
 }
 
+export function isTeeType(type) {
+  return TEE_TYPES.includes(String(type || '').trim().toUpperCase());
+}
+
+export function isPipeLikeFittingType(type) {
+  return DEVELOPED_LENGTH_FACTOR_BY_TYPE_SET.some((row) => row.types.includes(String(type || '').trim().toUpperCase()));
+}
+
 /**
  * Derives an elbow's dry metal weight from its own line's already-resolved
- * pipe section (outer diameter, wall thickness, material density), using the
- * same PIPE_METAL_MASS_PER_LENGTH_V1 formula as straight pipe over a standard
- * long-radius developed length rather than a geometric segment length.
- *
- * An elbow carries no independent section evidence source in this codebase;
- * it shares its adjoining pipe's bore and schedule in the general case, so
- * this borrows that already-qualified per-line resolution rather than
- * re-deriving section properties independently. Returns null whenever a
- * confident derivation is not possible — including when the elbow already
- * carries explicit weight evidence, which is never overridden — so a
- * consuming component always falls back to its existing missing-evidence
- * behaviour rather than receiving a fabricated value.
+ * pipe section. Kept as a distinct export (rather than folded into the
+ * generic function below) because it is the established name existing
+ * callers already use.
  */
 export function deriveElbowComponentWeightEvidence(component, allComponents) {
-  if (!isElbowType(component?.type)) return null;
+  return deriveByType(ELBOW_TYPES, 1.5, component, allComponents);
+}
+
+/** Same derivation as the elbow, using the tee's own effective-length factor. */
+export function deriveTeeComponentWeightEvidence(component, allComponents) {
+  return deriveByType(TEE_TYPES, 1.0, component, allComponents);
+}
+
+/** Tries every known pipe-like fitting type; returns the first applicable result. */
+export function derivePipeLikeFittingWeightEvidence(component, allComponents) {
+  for (const { types, factor } of DEVELOPED_LENGTH_FACTOR_BY_TYPE_SET) {
+    const result = deriveByType(types, factor, component, allComponents);
+    if (result) return result;
+  }
+  return null;
+}
+
+/**
+ * Derives a fitting's dry metal weight from its own line's already-resolved
+ * pipe section (outer diameter, wall thickness, material density), using the
+ * same PIPE_METAL_MASS_PER_LENGTH_V1 formula as straight pipe over a standard
+ * effective length rather than a geometric segment length.
+ *
+ * A fitting of this kind carries no independent section evidence source in
+ * this codebase; it shares its adjoining pipe's bore and schedule in the
+ * general case, so this borrows that already-qualified per-line resolution
+ * rather than re-deriving section properties independently. Returns null
+ * whenever a confident derivation is not possible — including when the
+ * fitting already carries explicit weight evidence, which is never
+ * overridden — so a consuming component always falls back to its existing
+ * missing-evidence behaviour rather than receiving a fabricated value.
+ */
+function deriveByType(types, developedLengthFactor, component, allComponents) {
+  if (!types.includes(String(component?.type || '').trim().toUpperCase())) return null;
   if (evidenceNumber(component.engineeringProperties?.componentWeightKg) !== null) return null;
   const sibling = findSectionedSiblingPipe(component, allComponents);
   if (!sibling) return null;
@@ -40,7 +78,7 @@ export function deriveElbowComponentWeightEvidence(component, allComponents) {
   if (odMm === null || wallMm === null || densityKgM3 === null) return null;
   if (!(odMm > 0) || !(wallMm > 0) || wallMm >= odMm / 2 || !(densityKgM3 > 0)) return null;
 
-  const developedLengthM = DEVELOPED_LENGTH_FACTOR * (odMm / 1000);
+  const developedLengthM = developedLengthFactor * (odMm / 1000);
   const perLength = pipeMetalMassPerLength(odMm / 1000, wallMm / 1000, densityKgM3, [
     evidence.outerDiameterMm, evidence.wallThicknessMm, evidence.materialDensityKgM3,
   ]);
@@ -50,7 +88,7 @@ export function deriveElbowComponentWeightEvidence(component, allComponents) {
     derivation: {
       formulaId: perLength.trace.formulaId,
       developedLengthM,
-      developedLengthFactor: DEVELOPED_LENGTH_FACTOR,
+      developedLengthFactor,
       sourceComponentKey: sibling.componentKey || sibling.sourceEntityId || null,
       outerDiameterMm: odMm,
       wallThicknessMm: wallMm,
@@ -60,9 +98,9 @@ export function deriveElbowComponentWeightEvidence(component, allComponents) {
 }
 
 /**
- * A PIPE-type component on the same branch as the elbow, already carrying a
+ * A PIPE-type component on the same branch as the fitting, already carrying a
  * resolved section (outer diameter, wall thickness, material density). Exact
- * branchId match only: a reducing elbow whose neighbours differ in bore is
+ * branchId match only: a reducing fitting whose neighbours differ in bore is
  * intentionally not matched, rather than risk borrowing the wrong section.
  */
 function findSectionedSiblingPipe(component, components) {

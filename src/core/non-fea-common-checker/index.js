@@ -26,11 +26,13 @@ export const NON_FEA_COMMON_SCHEMAS = Object.freeze({
 const NEGLIGIBLE_MASS_COMPONENT_TYPES = Object.freeze(['GASKET', 'GASK']);
 
 /**
- * Mirrors model-loads/elbow-derived-mass.js ELBOW_TYPES, duplicated for the
- * same input-readiness/execution-engine boundary reason as
- * NEGLIGIBLE_MASS_COMPONENT_TYPES above.
+ * Mirrors model-loads/elbow-derived-mass.js ELBOW_TYPES/TEE_TYPES combined,
+ * duplicated for the same input-readiness/execution-engine boundary reason as
+ * NEGLIGIBLE_MASS_COMPONENT_TYPES above. The gate only needs to know whether
+ * a pipe-like derivation is possible, not which effective-length factor
+ * execution will use, so both types share one list here.
  */
-const ELBOW_COMPONENT_TYPES = Object.freeze(['ELBOW', 'ELBO', 'BEND']);
+const PIPE_LIKE_FITTING_COMPONENT_TYPES = Object.freeze(['ELBOW', 'ELBO', 'BEND', 'TEE']);
 
 export const NON_FEA_COMMON_METHOD_IDS = Object.freeze([
   'WEIGHT_AND_GRAVITY',
@@ -718,11 +720,11 @@ function analyzeModelCoverage(model, requestedLoadCases) {
       // zero self-weight and never gate readiness on missing evidence.
     } else if (finiteEvidence(properties.componentWeightKg, true)) {
       // Explicit evidence present; satisfied regardless of type.
-    } else if (ELBOW_COMPONENT_TYPES.includes(type) && hasSectionedSiblingOnBranch(component, components)) {
-      // Matches model-loads/elbow-derived-mass.js: an elbow with no direct
-      // weight evidence is still satisfied once a PIPE on the same branch has
-      // a resolved section, because execution derives its weight from that
-      // section rather than requiring componentWeightKg directly.
+    } else if (PIPE_LIKE_FITTING_COMPONENT_TYPES.includes(type) && hasSectionedSiblingOnBranch(component, components)) {
+      // Matches model-loads/elbow-derived-mass.js: an elbow or tee with no
+      // direct weight evidence is still satisfied once a PIPE on the same
+      // branch has a resolved section, because execution derives its weight
+      // from that section rather than requiring componentWeightKg directly.
     } else {
       massMissing.push(`${id}:COMPONENT_WEIGHT`);
     }

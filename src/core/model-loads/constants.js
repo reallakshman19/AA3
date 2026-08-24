@@ -51,6 +51,11 @@ export const LUMPED_TYPES = Object.freeze([
  */
 export const ELBOW_TYPES = Object.freeze(['ELBOW', 'ELBO', 'BEND']);
 /**
+ * Tee-type components. The SJSON short code already matches this codebase's
+ * own LUMPED_TYPES entry ("TEE" both places), unlike ELBOW/FLANGE/VALVE.
+ */
+export const TEE_TYPES = Object.freeze(['TEE']);
+/**
  * Gasket-type components carry negligible self-weight relative to the piping
  * they seal and are exempted from mass-evidence requirements rather than
  * requiring a point mass. Explicit evidence, if supplied, still wins.

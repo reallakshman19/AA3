@@ -16,6 +16,7 @@ function settingsFor(family) {
     Q2_BEND_BOURDON_NONE: 'NONE',
     Q2_BEND_BOURDON_TRANSLATION: 'TRANSLATION_ONLY',
     Q2_BEND_BOURDON_TRANSLATION_ROTATION: 'TRANSLATION_AND_ROTATION',
+    Q6_PRESSURE_THRUST_NEGATIVE_CONTROL: 'TRANSLATION_ONLY',
   };
   const selector = {
     Q4_SELECTOR_NONE: 'NONE',
@@ -50,12 +51,12 @@ function runRecord(family, index) {
     activePipingCode: 'B31.3_2022',
     ...settings,
     pressureFields: { P1: 2.0e6, P2: 4.0e6 },
-    material: { id: 'STEEL-CONTROLLED' },
-    section: { id: 'PIPE-CONTROLLED' },
+    material: { id: 'STEEL-CONTROLLED', elasticModulus: 2.0e11 },
+    section: { id: 'PIPE-CONTROLLED', outerDiameter: 0.1683, wallThickness: 0.00711 },
     restraints: { id: 'CONTROLLED-RESTRAINTS' },
     mechanicalLoads: { id: family.startsWith('Q4_') || family.startsWith('Q5_') ? 'END-MOMENT' : 'NONE' },
-    reportedDisplacements: { ux: index * 1e-6 },
-    reportedReactions: { fx: index },
+    reportedDisplacements: { ux: (index + 1) * 1e-6 },
+    reportedReactions: { fx: index + 1 },
     reportLocator: `CAESAR_REPORT:${family}`,
     artifactLocator: `external://caesar/s5/${family}`,
     observer: 'CAESAR_OPERATOR_A',
@@ -63,10 +64,16 @@ function runRecord(family, index) {
   };
   if (family.startsWith('Q2_') || family.startsWith('Q4_') || family.startsWith('Q5_')) {
     record.bendGeometry = { radius: 0.4572, angleDegrees: 90 };
-    record.reportedRotations = { rz: index * 1e-7 };
+    record.reportedRotations = { rz: (index + 1) * 1e-7 };
   }
   if (family.startsWith('Q4_') || family.startsWith('Q5_')) {
     record.reportedBendFactors = { k: 1 + index * 0.01, ii: 1.2, io: 1.1 };
+  }
+  if (family === 'Q6_PRESSURE_THRUST_NEGATIVE_CONTROL') {
+    record.pressureThrustMechanics = {
+      genericPressureThrustApplied: false,
+      effectiveAreaForceApplied: false,
+    };
   }
   return record;
 }
@@ -164,6 +171,11 @@ expectCode(
 );
 expectCode(
   'BOURDON_ONLY',
+  (record) => { record.runs.find((run) => run.family === 'Q1_STRAIGHT_BOURDON_TRANSLATION').material.id = 'OTHER-MATERIAL'; },
+  'S5_PRESSURE_Q1_CONTROL_STATE_MISMATCH',
+);
+expectCode(
+  'BOURDON_ONLY',
   (record) => { record.bourdonComparisons.straightLfeaClosedEndStrainError = 2e-6; },
   'S5_PRESSURE_Q1_LFEA_PARITY_FAILED',
 );
@@ -173,11 +185,24 @@ expectCode(
   'S5_PRESSURE_Q3_INITIAL_BASIS_INVALID',
 );
 expectCode(
+  'BOURDON_ONLY',
+  (record) => { record.runs.find((run) => run.family === 'Q6_PRESSURE_THRUST_NEGATIVE_CONTROL').pressureThrustMechanics.effectiveAreaForceApplied = true; },
+  'S5_PRESSURE_Q6_THRUST_EXCLUSION_FAILED',
+);
+expectCode(
   'PRESSURE_STIFFENING_ONLY',
-  (record) => {
-    record.runs.find((run) => run.family === 'Q4_SELECTOR_P1').elbowStiffeningPressureSelector = 'P2';
-  },
+  (record) => { record.runs.find((run) => run.family === 'Q4_SELECTOR_P1').elbowStiffeningPressureSelector = 'P2'; },
   'S5_PRESSURE_SELECTOR_MISMATCH',
+);
+expectCode(
+  'PRESSURE_STIFFENING_ONLY',
+  (record) => { record.runs.find((run) => run.family === 'Q4_SELECTOR_P2').section.outerDiameter = 0.2; },
+  'S5_PRESSURE_Q4_CONTROL_STATE_MISMATCH',
+);
+expectCode(
+  'PRESSURE_STIFFENING_ONLY',
+  (record) => { record.runs.find((run) => run.family === 'Q4_SELECTOR_P2').pressureFields.P2 = 2.0e6; },
+  'S5_PRESSURE_Q4_PRESSURES_NOT_DISCRIMINATING',
 );
 expectCode(
   'PRESSURE_STIFFENING_ONLY',
@@ -188,6 +213,11 @@ expectCode(
   'PRESSURE_STIFFENING_ONLY',
   (record) => { record.stiffeningComparisons.factorAppliedExactlyOnce = false; },
   'S5_PRESSURE_Q4_FACTOR_OWNERSHIP_FAILED',
+);
+expectCode(
+  'PRESSURE_STIFFENING_ONLY',
+  (record) => { record.runs.find((run) => run.family === 'Q5_GLOBAL_INCLUDE_B313').elbowStiffeningPressureSelector = 'P1'; },
+  'S5_PRESSURE_Q5_CONTROL_STATE_MISMATCH',
 );
 expectCode(
   'BOURDON_AND_PRESSURE_STIFFENING',

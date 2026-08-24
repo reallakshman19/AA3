@@ -6,24 +6,33 @@ const SCOPES = Object.freeze([
   'PRESSURE_STIFFENING_ONLY',
   'BOURDON_AND_PRESSURE_STIFFENING',
 ]);
-const BOURDON_FAMILIES = Object.freeze([
+const Q1_FAMILIES = Object.freeze([
   'Q1_STRAIGHT_BOURDON_NONE',
   'Q1_STRAIGHT_BOURDON_TRANSLATION',
   'Q1_STRAIGHT_BOURDON_TRANSLATION_ROTATION',
+]);
+const Q2_FAMILIES = Object.freeze([
   'Q2_BEND_BOURDON_NONE',
   'Q2_BEND_BOURDON_TRANSLATION',
   'Q2_BEND_BOURDON_TRANSLATION_ROTATION',
+]);
+const BOURDON_FAMILIES = Object.freeze([
+  ...Q1_FAMILIES,
+  ...Q2_FAMILIES,
   'Q6_PRESSURE_THRUST_NEGATIVE_CONTROL',
 ]);
-const STIFFENING_FAMILIES = Object.freeze([
+const Q4_FAMILIES = Object.freeze([
   'Q4_SELECTOR_NONE',
   'Q4_SELECTOR_P1',
   'Q4_SELECTOR_P2',
   'Q4_SELECTOR_PMAX',
+]);
+const Q5_FAMILIES = Object.freeze([
   'Q5_GLOBAL_DEFAULT_B313',
   'Q5_GLOBAL_INCLUDE_B313',
   'Q5_GLOBAL_EXCLUDE_B313',
 ]);
+const STIFFENING_FAMILIES = Object.freeze([...Q4_FAMILIES, ...Q5_FAMILIES]);
 const HASH = /^[0-9a-f]{64}$/u;
 
 export function validateS5PressureParityEvidence(value) {
@@ -85,15 +94,29 @@ function requireRun(run) {
   }
   for (const field of ['pressureFields', 'material', 'section', 'restraints', 'mechanicalLoads',
     'reportedDisplacements', 'reportedReactions']) requireNonEmptyRecord(run[field], `run.${field}`);
-  if (run.family.startsWith('Q2_') || run.family.startsWith('Q4_') || run.family.startsWith('Q5_')) {
+  requirePressureFields(run.pressureFields, run.family);
+  if (Q2_FAMILIES.includes(run.family) || Q4_FAMILIES.includes(run.family) || Q5_FAMILIES.includes(run.family)) {
     requireNonEmptyRecord(run.bendGeometry, 'run.bendGeometry');
     requireNonEmptyRecord(run.reportedRotations, 'run.reportedRotations');
   }
-  if (run.family.startsWith('Q4_') || run.family.startsWith('Q5_')) {
+  if (Q4_FAMILIES.includes(run.family) || Q5_FAMILIES.includes(run.family)) {
     requireNonEmptyRecord(run.reportedBendFactors, 'run.reportedBendFactors');
+    requirePositive(run.reportedBendFactors.k, 'run.reportedBendFactors.k');
+    requireOptionalPositive(run.reportedBendFactors.ii, 'run.reportedBendFactors.ii');
+    requireOptionalPositive(run.reportedBendFactors.io, 'run.reportedBendFactors.io');
   }
   requireFamilySettings(run);
   return run.runId;
+}
+
+function requirePressureFields(fields, family) {
+  requirePositive(fields.P1, 'run.pressureFields.P1');
+  if (Q4_FAMILIES.includes(family)) {
+    requirePositive(fields.P2, 'run.pressureFields.P2');
+    if (fields.P1 === fields.P2) fail('S5_PRESSURE_Q4_PRESSURES_NOT_DISCRIMINATING');
+  } else if (fields.P2 !== undefined) {
+    requirePositive(fields.P2, 'run.pressureFields.P2');
+  }
 }
 
 function requireFamilySettings(run) {
@@ -108,6 +131,17 @@ function requireFamilySettings(run) {
   if (bourdonMode.has(run.family) && run.activateBourdonEffects !== bourdonMode.get(run.family)) {
     fail('S5_PRESSURE_BOURDON_MODE_MISMATCH', { family: run.family, actual: run.activateBourdonEffects });
   }
+  if (run.family === 'Q6_PRESSURE_THRUST_NEGATIVE_CONTROL') {
+    if (run.activateBourdonEffects !== 'TRANSLATION_ONLY') {
+      fail('S5_PRESSURE_Q6_BOURDON_MODE_INVALID', { actual: run.activateBourdonEffects });
+    }
+    requireNonEmptyRecord(run.pressureThrustMechanics, 'run.pressureThrustMechanics');
+    if (run.pressureThrustMechanics.genericPressureThrustApplied !== false
+      || run.pressureThrustMechanics.effectiveAreaForceApplied !== false) {
+      fail('S5_PRESSURE_Q6_THRUST_EXCLUSION_FAILED');
+    }
+  }
+
   const selector = new Map([
     ['Q4_SELECTOR_NONE', 'NONE'],
     ['Q4_SELECTOR_P1', 'P1'],
@@ -120,12 +154,14 @@ function requireFamilySettings(run) {
       fail('S5_PRESSURE_SELECTOR_MISMATCH', { family: run.family, actual: run.elbowStiffeningPressureSelector });
     }
   }
+
   const globalMode = new Map([
     ['Q5_GLOBAL_DEFAULT_B313', 'DEFAULT'],
     ['Q5_GLOBAL_INCLUDE_B313', 'INCLUDE'],
     ['Q5_GLOBAL_EXCLUDE_B313', 'EXCLUDE'],
   ]);
   if (globalMode.has(run.family)) {
+    if (run.activateBourdonEffects !== 'NONE') fail('S5_PRESSURE_Q5_BOURDON_MUST_BE_NONE', { family: run.family });
     if (run.activePipingCode !== 'B31.3_2022') fail('S5_PRESSURE_Q5_ACTIVE_CODE_INVALID', { family: run.family });
     if (run.usePressureStiffeningOnBends !== globalMode.get(run.family)) {
       fail('S5_PRESSURE_GLOBAL_MODE_MISMATCH', { family: run.family, actual: run.usePressureStiffeningOnBends });
@@ -135,6 +171,15 @@ function requireFamilySettings(run) {
 
 function requireBourdonEvidence(value, runs) {
   requireExactCoverage(runs, BOURDON_FAMILIES);
+  requireControlGroup(runs, Q1_FAMILIES, [
+    'pressureFields', 'material', 'section', 'restraints', 'mechanicalLoads',
+    'activePipingCode', 'usePressureStiffeningOnBends', 'elbowStiffeningPressureSelector',
+  ], 'S5_PRESSURE_Q1_CONTROL_STATE_MISMATCH');
+  requireControlGroup(runs, Q2_FAMILIES, [
+    'pressureFields', 'material', 'section', 'bendGeometry', 'restraints', 'mechanicalLoads',
+    'activePipingCode', 'usePressureStiffeningOnBends', 'elbowStiffeningPressureSelector',
+  ], 'S5_PRESSURE_Q2_CONTROL_STATE_MISMATCH');
+
   requireRecord(value.bourdonComparisons, 'bourdonComparisons');
   const tolerance = value.tolerancePolicy.observationTolerance;
   requireWithin(value.bourdonComparisons.straightTranslationVsTranslationRotationError, tolerance,
@@ -156,6 +201,15 @@ function requireBourdonEvidence(value, runs) {
 
 function requireStiffeningEvidence(value, runs) {
   requireExactCoverage(runs, STIFFENING_FAMILIES);
+  requireControlGroup(runs, Q4_FAMILIES, [
+    'pressureFields', 'material', 'section', 'bendGeometry', 'restraints', 'mechanicalLoads',
+    'activePipingCode', 'activateBourdonEffects', 'usePressureStiffeningOnBends',
+  ], 'S5_PRESSURE_Q4_CONTROL_STATE_MISMATCH');
+  requireControlGroup(runs, Q5_FAMILIES, [
+    'pressureFields', 'material', 'section', 'bendGeometry', 'restraints', 'mechanicalLoads',
+    'activePipingCode', 'activateBourdonEffects', 'elbowStiffeningPressureSelector',
+  ], 'S5_PRESSURE_Q5_CONTROL_STATE_MISMATCH');
+
   requireRecord(value.stiffeningComparisons, 'stiffeningComparisons');
   const tolerance = value.tolerancePolicy.observationTolerance;
   requireWithin(value.stiffeningComparisons.p1SelectedPressureError, tolerance, 'S5_PRESSURE_Q4_P1_PARITY_FAILED');
@@ -169,6 +223,26 @@ function requireStiffeningEvidence(value, runs) {
     || value.stiffeningComparisons.excludeOverrideObserved !== true) {
     fail('S5_PRESSURE_Q5_GLOBAL_ARBITRATION_FAILED');
   }
+}
+
+function requireControlGroup(runs, families, fields, code) {
+  const rows = families.map((family) => runs.find((run) => run.family === family));
+  const baseline = rows[0];
+  for (const row of rows.slice(1)) {
+    for (const field of fields) {
+      if (canonicalValue(row[field]) !== canonicalValue(baseline[field])) {
+        fail(code, { field, baselineFamily: baseline.family, comparedFamily: row.family });
+      }
+    }
+  }
+}
+
+function canonicalValue(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalValue).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalValue(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function requireExactCoverage(runs, families) {
@@ -188,7 +262,9 @@ function requireProductionBoundary(value) {
     'productionAuthorizationRequested', 'pressureBourdonRequested',
     'pressureStiffeningRequested', 'pressureAxialThrustRequested',
   ];
-  for (const field of fields) if (value[field] !== false) fail('S5_PRESSURE_EVIDENCE_CANNOT_AUTHORIZE_PRODUCTION', { field });
+  for (const field of fields) {
+    if (value[field] !== false) fail('S5_PRESSURE_EVIDENCE_CANNOT_AUTHORIZE_PRODUCTION', { field });
+  }
   if (value.expectedValuesRebaselined !== false || value.tolerancesWidenedToFitCaesar !== false) {
     fail('S5_PRESSURE_ACCEPTANCE_GAMING_FORBIDDEN');
   }
@@ -211,5 +287,6 @@ function requireNonEmptyRecord(value, field) { requireRecord(value, field); if (
 function requireArray(value, field) { if (!Array.isArray(value) || value.length === 0) fail('S5_PRESSURE_ARRAY_REQUIRED', { field }); return value; }
 function requireText(value, field) { if (typeof value !== 'string' || value.trim() === '') fail('S5_PRESSURE_TEXT_REQUIRED', { field }); }
 function requirePositive(value, field) { if (typeof value !== 'number' || !Number.isFinite(value) || !(value > 0)) fail('S5_PRESSURE_POSITIVE_NUMBER_REQUIRED', { field }); }
+function requireOptionalPositive(value, field) { if (value !== undefined) requirePositive(value, field); }
 function requireEqual(actual, expected, code) { if (actual !== expected) fail(code, { actual, expected }); }
 function fail(code, evidence) { const error = new Error(code); error.code = code; error.evidence = evidence ?? null; throw error; }

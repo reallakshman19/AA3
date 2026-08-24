@@ -6,25 +6,25 @@
 HANDOVER_READINESS: READY
 PR_RECOVERY_STATE: HEALTHY
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_FOR_EXECUTION_EVIDENCE_ONLY
-MERGE_AUTHORITY: OWNER_ONLY_AND_MANDATORY_EVIDENCE_GATED
+MERGE_AUTHORITY: OWNER_AUTHORIZED_BUT_MANDATORY_EVIDENCE_GATE_NOT_SATISFIED
 PR: #1401
-ISSUES: #1389 PR-D; #1333
+ISSUES: #1389 PR-D; #1333; #54
 BRANCH: agent/issue-1389-pr-d-gamma5-exact-head-20260824
 MAIN_HEAD_LAST_CHECKED: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 EXACT_EXECUTION_TARGET: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
-EXACT_TARGET_PROBE_HEAD: d850cd412f23a2fd9ada24a4e802fc0dc267d573
-GROUNDING_EPOCH: GE-D-010
-CURRENT_STAGE: CURRENT_MAIN_TARGET_PROBED_PRE_STEP_INFRASTRUCTURE_BLOCKED
-BLOCKER: Issue #54 / all fresh EMP.1 jobs completed before step creation; no complete executable checkout is available
-HIGHEST_RISK: stale/fabricated files 01-10 or merging PR-D as a substitute for genuine qualification
-EXACT_NEXT_ACTION: restore a functioning runner, verify main still equals c2018c4..., then execute the genuine 01-10 producer/review/proposal chain. If main moves first, invalidate this target and re-ground again. Do not merge PR1401 until mandatory evidence exists.
+LATEST_RUNNER_PROBE_HEAD: e99f40cff037051db074dce07a95c38a00abb704
+GROUNDING_EPOCH: GE-D-011
+CURRENT_STAGE: OWNER_MERGE_REQUEST_RECEIVED_BUT_EVIDENCE_GATE_BLOCKS_MERGE; LATEST_RUNNER_RERUN_PRE_STEP_FAILED
+BLOCKER: Issue #54 / current EMP.1 hosted job still fails before step creation; connected GitHub control plane exposes rerun/inspection but no runner/billing/policy administration or repository archive checkout
+HIGHEST_RISK: merging recovery metadata as a substitute for genuine files 01-10, or fabricating stale execution evidence
+EXACT_NEXT_ACTION: obtain an executable exact-head environment; verify main is still c2018c4...; generate genuine 01-10 through the retained producer/review/proposal chain; only then reconsider merge and PR-E.
 ```
 
-Later commits changing only this recovery report/status do not become an engineering execution basis. The exact-target probe basis is `d850cd412f23a2fd9ada24a4e802fc0dc267d573`.
+Owner instruction `merge, proceed next` on 2026-08-24 is explicit merge authority, but it does not satisfy the repository's mandatory engineering-evidence acceptance gate. PR1401 therefore remains unmerged until genuine execution evidence exists.
 
 ## 1. Current sequence and exact target
 
-Merged predecessor/release-support phases now include:
+Merged predecessor/support phases:
 
 ```text
 PR-B #1398 -> merged
@@ -33,11 +33,7 @@ PR-G #1403 -> merged at 0f85cac384532b5cc35bc24ecedd729275027eb6
 PR-H #1404 -> merged at c2018c4b81e4c45f151ad7e59efd7d903ad7de97
 ```
 
-PR-G and PR-H changed presentation/release-evidence surfaces only and did not authorize or modify the bounded WRC numerical route. Current PR-D exact execution target is the current merged main:
-
-`c2018c4b81e4c45f151ad7e59efd7d903ad7de97`
-
-The recovery-only PR branch was mechanically refreshed onto that main with no engineering-code change. Any later main movement invalidates the exact target before genuine execution.
+PR-D is mechanically based on current `main@c2018c4b81e4c45f151ad7e59efd7d903ad7de97` and changes only its three recovery records until successful execution. Any later movement of main invalidates the execution target.
 
 ## 2. Mandatory PR-D outputs
 
@@ -56,22 +52,22 @@ Only script-generated evidence is valid:
 10-bounded-authorization-proposal-falsifier-receipt.json
 ```
 
-No file 01-10 may be hand-authored, reconstructed from static inspection, copied from an older head, or retained after target drift.
+No file 01-10 may be hand-authored, reconstructed from static inspection, copied from an older head, generated from production output, or retained after exact-target drift.
 
 ## 3. Existing execution contract
 
-Merged PR #1327 tooling remains the execution authority for this phase. Acceptance requires:
+Merged PR #1327 tooling remains authoritative for PR-D. Acceptance requires:
 
 - exact `--expected-head` equality and clean checkout;
 - exact HEAD/tree/parent custody;
 - 6/6 loads `P,Vc,Vl,Mc,Ml,Mt`;
-- 32/32 stress comparisons across four families and eight points;
+- 32/32 stress comparisons across four stress families and Au..Dl;
 - every tolerance ratio `<= 1` under frozen abs `1e-12`, rel `1e-11` policy;
-- 10/10 producer falsifiers;
+- 10/10 producer anti-forgery falsifiers;
 - independent 23-stage replay and byte/hash custody;
 - 6/6 review-layer falsifiers;
-- bounded proposal/check/falsifier receipts 08-10;
-- false production/global/code/release authority throughout PR-D.
+- bounded non-authorizing proposal/check/falsifier receipts 08-10;
+- production/global/code/release authority false throughout PR-D.
 
 Frozen identities:
 
@@ -93,49 +89,69 @@ codeCompliance = false / NOT_ASSESSED
 releaseQualified = false
 ```
 
-Protected from mutation:
+Protected from PR-D mutation:
 
 - gamma5 production route and bounded registry;
 - Table-5 evaluator;
-- physical oracle, candidate qualification and frozen tolerance policy;
+- physical oracle, candidate qualification and tolerance policy;
 - frozen release profile/benchmark/readiness records;
 - `.github/workflows/**`.
 
-If execution reveals a mechanics/oracle/tolerance mismatch, stop and isolate it. Do not weaken a gate or rebaseline expected values to obtain PASS.
+If execution reveals a mechanics/oracle/tolerance mismatch, stop and isolate it. Never weaken a gate or rebaseline expected values to obtain PASS.
 
-## 5. Current exact-target hosted probe
+## 5. Execution truth
 
-Recovery-only branch head `d850cd412f23a2fd9ada24a4e802fc0dc267d573` contains current `main@c2018c4...` plus only the three PR1401 recovery files. GitHub launched all three existing EMP.1 workflows:
+### Current-main probe family
+
+A clean recovery-only probe based on current main previously created these jobs:
 
 ```text
-32712164106 / job 97385705174 / qualify-runemp1-orchestration / completed failure / steps=null / logs_url=null
-32712164189 / job 97385705524 / qualify-gamma5-route         / completed failure / steps=null / logs_url=null
-32712164121 / job 97385705344 / independent-handcalc          / completed failure / steps=null / logs_url=null
+32712164106 / job 97385705174 / qualify-runemp1-orchestration / failure / steps=null / logs_url=null
+32712164189 / job 97385705524 / qualify-gamma5-route         / failure / steps=null / logs_url=null
+32712164121 / job 97385705344 / independent-handcalc          / failure / steps=null / logs_url=null
 ```
 
-Classification for all three:
+A later recovery-only head `e99f40cff037051db074dce07a95c38a00abb704` created run `32712369510`, gamma5 job `97386330940`, also with `steps=null` / `logs_url=null`.
 
-`NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE (#54)`
+### Owner-authorized latest retry
 
-No checkout, Node command, WRC calculation, independent oracle comparison, producer, replay, falsifier, review or authorization-proposal step executed. GitHub's workflow conclusion `failure` is not an engineering FAIL and is not PASS.
+After the current `merge, proceed next` instruction, job `97386330940` was explicitly rerun. GitHub created replacement job:
 
-Previous probes/reruns exhibited the same pre-step condition. Direct alternate checkout also failed before repository access. Genuine execution on the current exact target therefore remains NOT_RUN and files 01-10 remain NOT_GENERATED.
+```text
+run 32712369510 / attempt 2
+job 97397137459 / qualify-gamma5-route
+status completed / conclusion failure
+steps = null
+logs_url = null
+run_started_at = 2026-08-24T10:16:41Z
+```
+
+Classification:
+
+`NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`
+
+No checkout, Node command, WRC calculation, independent oracle comparison, producer/replay/falsifier/review/proposal step executed. The GitHub conclusion `failure` is neither engineering FAIL nor PASS.
+
+Issue #54 contains historical heads where hosted execution recovered and reached checkout, but the current EMP.1 exact-head family has again reproduced the pre-step condition. Therefore historical runner recovery cannot be substituted for current PR-D evidence.
+
+The connected GitHub surface exposes workflow inspection and rerun, but no Actions billing/quota/policy/runner administration and no complete repository archive/checkout path. Plugin discovery found no additional GitHub Actions/runner administration plugin. No workflow mutation is authorized merely to make CI green.
 
 ## 6. Validation ledger
 
 | ID | Status | Observation / basis |
 |---|---|---|
-| D-001 | PASS | current main re-grounded at `c2018c4...` after PR-H merge |
-| D-002 | PASS | PR-D branch mechanically refreshed with exactly three recovery files |
-| D-003 | PASS | producer/review/proposal contracts and frozen identities unchanged |
-| D-004 | PASS | PR-G/PR-H do not authorize production or alter WRC numerical mechanics |
-| D-005 | NOT_RUN_EXECUTION_ENVIRONMENT | exact-target runEmp1 job `97385705174`, steps/logs null |
-| D-006 | NOT_RUN_EXECUTION_ENVIRONMENT | exact-target gamma5 job `97385705524`, steps/logs null |
-| D-007 | NOT_RUN_EXECUTION_ENVIRONMENT | exact-target independent job `97385705344`, steps/logs null |
-| D-008 | NOT_RUN | genuine 01-10 producer/review/proposal execution |
-| D-009 | NOT_GENERATED | files 01-10 |
-| D-010 | NOT_CLAIMED | numerical qualification PASS |
-| D-011 | PASS | production/global/code/release authority remains false |
+| D-001 | PASS | live main remains `c2018c4...` |
+| D-002 | PASS | PR-D effective diff remains recovery-only |
+| D-003 | PASS | producer/review/proposal contracts and frozen identities retained |
+| D-004 | NOT_RUN_EXECUTION_ENVIRONMENT | current-main runEmp1 job `97385705174`: no steps/logs |
+| D-005 | NOT_RUN_EXECUTION_ENVIRONMENT | current-main gamma5 job `97385705524`: no steps/logs |
+| D-006 | NOT_RUN_EXECUTION_ENVIRONMENT | current-main independent job `97385705344`: no steps/logs |
+| D-007 | NOT_RUN_EXECUTION_ENVIRONMENT | later gamma5 job `97386330940`: no steps/logs |
+| D-008 | NOT_RUN_EXECUTION_ENVIRONMENT | owner-requested rerun job `97397137459`: no steps/logs |
+| D-009 | NOT_RUN | genuine 01-10 producer/review/proposal execution |
+| D-010 | NOT_GENERATED | files 01-10 |
+| D-011 | NOT_CLAIMED | numerical qualification PASS |
+| D-012 | PASS | production/global/code/release authority remains false |
 
 ## 7. Changed-file ledger
 
@@ -145,24 +161,24 @@ Before genuine execution PR-D changes exactly:
 2. `agents/status/PR1401.yaml`
 3. `agents/claims/PR1401.yaml`
 
-After genuine successful execution, only the controlled generated 01-10 evidence files may be added.
+After successful execution, only the controlled generated 01-10 evidence files may be added.
 
 ## 8. Merge disposition
 
-`BLOCKED_MANDATORY_EXACT_HEAD_EVIDENCE_NOT_GENERATED`
+`OWNER_AUTHORIZED_BUT_BLOCKED_MANDATORY_EXACT_HEAD_EVIDENCE_NOT_GENERATED`
 
-PR-D must not be merged as a process-only placeholder. PR-E bounded authorization and PR-F files 11-12 remain blocked until the genuine PR-D chain executes and passes. PR-H is merged only as a fail-closed future release harness; it does not relax this gate.
+Do not merge PR1401 as a process-only placeholder. PR-E bounded production authorization and PR-F post-promotion evidence remain blocked until PR-D genuinely executes and passes. PR-H being merged does not relax this prerequisite.
 
 ## 9. Appendix A — Implementation Takeover Qualification
 
 A1 Production trace — **20/20**. Exact target, evidence chain, frozen identities and downstream dependency are explicit.
 
-A2 Failure isolation — **20/20**. The current-target hosted failures are proven pre-step infrastructure events, separated from engineering PASS/FAIL and target drift.
+A2 Failure isolation — **20/20**. Current pre-step failure is separated from engineering PASS/FAIL and from historical runner recovery on unrelated heads.
 
 A3 Authority/invariant — **20/20**. PR-D cannot authorize production/global/code/release or mutate frozen oracle/tolerances.
 
 A4 Independent validation — **19/20**. Full producer/replay/falsifier matrix is retained; genuine exact-current execution remains NOT_RUN.
 
-A5 Minimal next action — **20/20**. Use a functioning complete runner, re-check current main, generate genuine 01-10 only, and stop on any mechanics drift.
+A5 Minimal next action — **20/20**. Obtain an executable exact-head environment, re-ground main, generate genuine 01-10 only, and stop on mechanics drift.
 
 **Total: 99/100; minimum 19/20 — HANDOVER_READY / MERGE_BLOCKED_BY_MANDATORY_EVIDENCE.**

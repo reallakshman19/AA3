@@ -9,10 +9,14 @@
     "addendumId": "LAFEA4-B4-3-PRIMARY-REFERENCE-2026-08-24",
     "benchmarkId": "B4-3-REFERENCE-PROBLEM-01",
     "mainShaAtSourceQualification": "e985b50d81d0d241db27313562c8cc12cd7cc27d",
-    "definitionCommit": "bce516f42feec12022d0d9b070d912a771d02bac",
+    "definitionCommit": "c0d3ec551fef6be7a5d15484fdac8dda30f023c7",
     "sourceClass": "PRIMARY_PUBLISHED_REFERENCE",
     "doi": "10.1002/nme.1620151205",
-    "sourceLocations": ["Section 4.2.2 / printed page 1793", "Figure 16 / printed page 1797"],
+    "sourceLocations": [
+      "Figure 2 / printed page 1777 — positive z,w and curvature convention",
+      "Section 4.2.2 / printed page 1793 — exact response statement",
+      "Figure 16 / printed page 1797 — geometry, downward load, mesh and values"
+    ],
     "productionOutputObservedForReferenceBeforeFreeze": false
   },
   "definitions": [

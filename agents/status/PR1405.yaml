@@ -2,19 +2,22 @@ schema: AgentStatus.v1
 pr_or_wip: PR1405
 source_task: ISSUE-1371
 branch: agent/issue-1371-postmerge-cert-20260824
-state: ACTIVE
+state: CLOSED_UNMERGED
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: EXECUTION_PENDING
+auto_state: BLOCKED_INFRASTRUCTURE_CURRENT_EXACT_HEAD
 merge_authority: OWNER_ONLY
 validation_pr_merge: PROHIBITED
-current_stage: POST_MERGE_EXACT_CURRENT_MAIN_CERTIFICATION
+current_stage: POST_MERGE_CERTIFICATION_ATTEMPT_COMPLETE
 main_head_last_checked: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+certification_head: 00660b67de31b076f2106df8e61b280ebea881df
+visible_workbench_run: 32716626444
+visible_workbench_job: 97399145919
 report: agents/PR1405_workreport.md
-coordination_state: SAFE_VALIDATION_ONLY
-application_runtime_diff_from_main: NONE
-workflow_trigger_change: COMMENT_ONLY_PENDING
-hosted_engineering_execution: NOT_RUN_CURRENT_PR_HEAD
+coordination_state: CLOSED_VALIDATION_ONLY
+application_runtime_test_oracle_diff_from_main: NONE
+workflow_semantic_diff_from_main: NONE
+hosted_engineering_execution: NOT_RUN_PRE_STEP_INFRASTRUCTURE_FAILURE
 registry_cleanup: BLOCKED_PENDING_EXECUTED_PASS
-highest_risk: FIRST_EXECUTED_POST_MERGE_RUN_MAY_REVEAL_REAL_ENGINEERING_FAILURE
-exact_next_action: add one comment-only line to retained visible-workbench workflow to satisfy its existing pull_request path filter; inspect exact-head steps/logs; never merge PR1405
+highest_risk: FUTURE_REGISTRY_CLEANUP_WITHOUT_EXECUTED_EXACT_HEAD_PASS
+exact_next_action: execute retained visible-workbench qualification on an eligible exact current head when hosted steps are available; require all Issue 1371 gates PASS before registry cleanup; never merge PR1405

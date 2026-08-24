@@ -1,0 +1,33 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1394
+claim_state: ACTIVE
+files:
+  exact:
+    - validation/emp1/wrc537-2013/source-ledger.json
+    - validation/emp1/caux2017-wrc01f/source-ledger.json
+    - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+    - validation/emp1/release/emp1-wrc537-gamma5-benchmark-manifest-v1.json
+    - scripts/emp1-source-custody-reconciliation-check.mjs
+    - scripts/emp1-professional-release-profile-check.mjs
+    - agents/PR1394_workreport.md
+    - agents/status/PR1394.yaml
+    - agents/claims/PR1394.yaml
+  prefixes:
+    - validation/emp1/release/
+authority_domains:
+  - EMP1_WRC537_2013_SOURCE_CUSTODY
+  - EMP1_WRC537_2013_BOUNDED_RELEASE_PROFILE_DEFINITION
+  - EMP1_GAMMA5_BENCHMARK_IDENTITY
+claim_modes:
+  - EXCLUSIVE
+protected_no_write:
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - src/core/emp1/emp1-wrc537-cylindrical-frame.js
+  - src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js
+  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
+  - src/core/emp1/emp1-wrc537-cylindrical-index.js
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - .github/workflows/
+last_verified_implementation_head: 6ecc95b1f35ecfd8f65692683cd5842d5a09ae45
+coordination_state: SAFE_FOR_DECLARED_PR_A_FILES

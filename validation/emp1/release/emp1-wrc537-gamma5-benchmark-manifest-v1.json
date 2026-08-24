@@ -1,0 +1,62 @@
+{
+  "schema": "emp1-wrc537-gamma5-benchmark-manifest/v1",
+  "manifestId": "EMP1_WRC537_2013_GAMMA5_BOUNDED_BENCHMARKS_V1",
+  "definitionState": "FROZEN_BEFORE_PRODUCTION_AUTHORIZATION",
+  "issue": 1389,
+  "method": {
+    "identity": "WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP",
+    "sourceSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "datasetHash": "fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c"
+  },
+  "physicalOracle": {
+    "path": "validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json",
+    "semanticHash": "60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18",
+    "engineeringAuthority": true,
+    "authorityScope": "BOUNDED_GAMMA5_ROUTE_REQUALIFICATION_ORACLE_ONLY",
+    "productionAuthority": false,
+    "productionObservationUsed": false,
+    "requiredWrcLoadComparisons": 6,
+    "requiredStressComparisons": 32,
+    "locations": ["Au", "Al", "Bu", "Bl", "Cu", "Cl", "Du", "Dl"],
+    "stressFamilies": ["circumferential", "longitudinal", "shear", "stressIntensity"],
+    "tolerancePolicy": {
+      "absolute": 1e-12,
+      "relative": 1e-11,
+      "formula": "max(absolute,max(1,abs(expected))*relative)",
+      "maximumToleranceRatio": 1
+    }
+  },
+  "caux": {
+    "document": "CAUx 2017 - WRC01f.pdf",
+    "authorityRole": "INDEPENDENT_BENCHMARK_REFERENCE_NOT_WRC_METHOD_AUTHORITY",
+    "repository": "reallaksh19/XML_Compare_Utilities",
+    "pinnedCommit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+    "path": "docs/emp.1/CAUx 2017 - WRC01f.pdf",
+    "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
+    "expectedByteCount": 7260396,
+    "rawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "pdfPages": [24, 25, 26, 27, 28, 29, 30, 31],
+    "sourceIdentityFrozen": true,
+    "sourceValuesExtracted": false,
+    "expectedValuesFrozen": false,
+    "independentHandCalculationStatus": "NOT_RUN",
+    "releaseProfileDisposition": "UNRESOLVED_PENDING_PR_C_SOURCE_EXTRACTION",
+    "productionOutputObservedForExpectedValueSelection": false,
+    "productionOutputUsedToChooseDefinition": false,
+    "nextRequiredSequence": [
+      "VERIFY_EXACT_SOURCE_BYTES",
+      "READ_PAGES_24_TO_31",
+      "EXTRACT_SOURCE_REPORTED_INPUTS_LOADS_METHOD_PARAMETERS_STRESSES",
+      "MARK_AMBIGUOUS_OR_UNREADABLE_VALUES_UNRESOLVED",
+      "FREEZE_EXPECTED_VALUE_ARTIFACT",
+      "FREEZE_INDEPENDENT_HAND_CALCULATION",
+      "ONLY_THEN_COMPARE_PRODUCTION"
+    ]
+  },
+  "antiCircularity": {
+    "productionExpectedValueRegenerationProhibited": true,
+    "toleranceWideningAfterMismatchProhibited": true,
+    "productionEvaluatorImportIntoIndependentOracleProhibited": true,
+    "cauxMayDefineWrcEquationsSignsCurvesDomainsOrTolerances": false
+  }
+}

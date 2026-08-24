@@ -1,0 +1,132 @@
+{
+  "schema": "emp1-release-profile/v1",
+  "releaseProfileId": "EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1",
+  "definitionState": "FROZEN_BEFORE_PRODUCTION_AUTHORIZATION",
+  "issue": 1389,
+  "product": {
+    "id": "EMP.1",
+    "title": "Local Attachment Analytical Assessment"
+  },
+  "method": {
+    "identity": "WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP",
+    "edition": "2013",
+    "sourceSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "datasetHash": "fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c"
+  },
+  "scope": {
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "attachmentClass": "BLOCKED_PENDING_ISSUE_1370_SOURCE_QUALIFICATION",
+    "axisApplicability": "BLOCKED_PENDING_ISSUE_1368_PHYSICAL_SHELL_NORMAL_QUALIFICATION",
+    "interactionIsolation": "BLOCKED_PENDING_ISSUE_1373_SOURCE_QUALIFICATION_OR_EXPLICIT_RESTRICTED_SCOPE",
+    "variant": "ORIGINAL",
+    "gamma": 5,
+    "beta": {
+      "min": 0.05,
+      "max": 0.5,
+      "inclusive": true
+    },
+    "differentialPressure": 0,
+    "Kn": 1,
+    "Kb": 1,
+    "recoveryLocations": ["Au", "Al", "Bu", "Bl", "Cu", "Cl", "Du", "Dl"],
+    "absoluteMaximumAssured": false,
+    "continuousJunctureSearchPerformed": false,
+    "hostShellStressOnly": true,
+    "attachmentStressCalculated": false,
+    "nozzleStressCalculated": false,
+    "interpolationAllowed": false,
+    "crossVariantFallbackAllowed": false,
+    "offAxisMaximumAuthorized": false
+  },
+  "requiredAuthorities": {
+    "sourceCustody": {
+      "state": "PASS_SOURCE_CUSTODY",
+      "scope": "EXACT_CONTROLLED_SOURCE_BYTES_ONLY_NOT_METHOD_AUTHORITY"
+    },
+    "surfaceSignSemantics": {
+      "state": "BLOCKED",
+      "issue": 1385
+    },
+    "stressIntensitySemantics": {
+      "state": "BLOCKED",
+      "issue": 1383
+    },
+    "thicknessBasis": {
+      "state": "BLOCKED",
+      "issue": 1375
+    },
+    "meanRadiusBasis": {
+      "state": "BLOCKED",
+      "issue": 1377
+    },
+    "materialTheory": {
+      "state": "BLOCKED",
+      "issue": 1379
+    },
+    "attachmentAxis": {
+      "state": "BLOCKED",
+      "issue": 1368
+    },
+    "attachmentClass": {
+      "state": "BLOCKED",
+      "issue": 1370
+    },
+    "interactionIsolation": {
+      "state": "BLOCKED",
+      "issue": 1373
+    },
+    "codeAcceptanceBoundary": {
+      "state": "BLOCKED_PENDING_EXPLICIT_RELEASE_BOUNDARY_CLOSURE",
+      "issue": 1381
+    },
+    "cauxBenchmark": {
+      "state": "NOT_RUN_PENDING_PR_C_SOURCE_FREEZE",
+      "sourcePages": "24-31"
+    },
+    "gamma5ExactHeadQualification": {
+      "state": "NOT_RUN_PENDING_ISSUE_1333"
+    },
+    "postPromotionQualification": {
+      "state": "NOT_RUN_PENDING_POST_AUTHORIZATION_PR"
+    },
+    "ciExecution": {
+      "state": "BLOCKED_BY_ISSUE_54_PRE_STEP_INFRASTRUCTURE",
+      "issue": 54
+    }
+  },
+  "benchmark": {
+    "manifest": "validation/emp1/release/emp1-wrc537-gamma5-benchmark-manifest-v1.json",
+    "physicalOraclePath": "validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json",
+    "physicalOracleHash": "60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18",
+    "cauxBenchmarkState": "SOURCE_IDENTITY_FROZEN_EXPECTED_VALUES_NOT_YET_FROZEN"
+  },
+  "codeCompliance": {
+    "performed": false,
+    "authorized": false,
+    "state": "NOT_ASSESSED"
+  },
+  "releaseAuthority": {
+    "engineeringUseAuthorized": false,
+    "productionUseAuthorized": false,
+    "deploymentAuthorized": false,
+    "globalEmp1CRouteAuthority": false,
+    "releaseQualified": false
+  },
+  "prohibitions": [
+    "NO_NONZERO_DP",
+    "NO_NONUNITY_SCF",
+    "NO_GAMMA_INTERPOLATION",
+    "NO_GAMMA_OTHER_THAN_5",
+    "NO_BETA_OUTSIDE_0P05_TO_0P50",
+    "NO_EXTRAPOLATED_VARIANT",
+    "NO_OFF_AXIS_GLOBAL_MAXIMUM",
+    "NO_SPHERICAL_ROUTE",
+    "NO_NONROUND_ATTACHMENT",
+    "NO_WRC297",
+    "NO_NOZZLE_WALL_STRESS",
+    "NO_CODE_PASS"
+  ],
+  "authorityBoundary": "DEFINITION_ONLY_NO_ENGINEERING_PRODUCTION_DEPLOYMENT_OR_CODE_AUTHORITY",
+  "productionObservationUsedToChooseDefinition": false
+}

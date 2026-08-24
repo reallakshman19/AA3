@@ -3,51 +3,53 @@
 ## CURRENT RECOVERY STATE — READ FIRST
 
 ```text
-HANDOVER_READINESS: READY_DRAFT
-PR_RECOVERY_STATE: HEALTHY_DRAFT_RUNTIME_NOT_RUN_EXTERNAL_EVIDENCE_BLOCKED
+HANDOVER_READINESS: READY_OWNER_AUTHORIZED
+PR_RECOVERY_STATE: HEALTHY_RETARGETED_TO_MAIN
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: AUTO
 AUTO_STATE: ACTIVE
-SCOPE_AUTHORITY: S7_NUMERICALLY_INERT_INTEGRATION_VERIFICATION_STACKED_ON_PR1395
-MERGE_AUTHORITY: OWNER_ONLY
+SCOPE_AUTHORITY: S7_NUMERICALLY_INERT_INTEGRATION_VERIFICATION
+MERGE_AUTHORITY: EXPLICIT_OWNER_2026_08_24
 
 REPOSITORY: reallaksh19/Advanced_Analysis
 PR: 1396
 BRANCH: agent/lfea-piping-promotion-s7-ui-disclosure-20260824
-STACK_BASE_PR: 1395
-STACK_BASE_HEAD: 2b4b4762973c84690b636eab8abe918e307d5dab
-MAIN_LAST_CHECKED: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
-ENGINEERING_CODE_HEAD: 8da2ce0cc8471e824ebf6ad8e51ea5c5625c7601
-CURRENT_LIVE_HEAD_BEFORE_THIS_REPORT: af93da4f48e3808cd880c3e2985a9f74bd2723ca
-CURRENT_STAGE: S7 disclosure + promotion anti-drift + fail-closed stack manifest + stable blocked-stage engineering authority
+BASE_BRANCH: main
+MAIN_LAST_CHECKED: 6c15f61cd57a0ec42cc4fb18cf65a9a2c4cac370
+STACK_PREDECESSOR_PR: 1395
+STACK_PREDECESSOR_HEAD: 2b4b4762973c84690b636eab8abe918e307d5dab
+STACK_PREDECESSOR_MERGE: 6c15f61cd57a0ec42cc4fb18cf65a9a2c4cac370
+PR1348_MERGE: 1de5e51505bbf45aa1a463d20d6c9552beabc146
+PR1341_DISPOSITION: FUNCTIONALLY_SUBSUMED_CLOSED_UNMERGED
+CURRENT_STAGE: FINAL_S7_INTEGRATION_OWNER_AUTHORIZED_PROCESS_OVERRIDE
 NUMERICAL_MUTATION_ALLOWED: false
-CI_BLOCKER: Issue #54 — August 24 repository-wide jobs fail before checkout/step evidence
+CI_BLOCKER: Issue #54 — current hosted jobs still fail before checkout/step evidence
 EXTERNAL_EVIDENCE_BLOCKER: Issue #1402 — controlled CAESAR S4/S5 evidence
-EXACT_NEXT_ACTION: collect S4/S5 controlled CAESAR evidence under #1402 while #54 is repaired externally; keep blocked production flags false; do not mutate workflows further merely to obtain green CI
+EXACT_NEXT_ACTION: final review/path audit; mark ready and merge exact current head under owner process override; then re-ground main and stop release progression at unresolved S4/S5/#54 gates
 ```
 
-## 60-second handover
+## 1. Current merged lineage
 
-Implemented ancestry:
+The predecessor promotion sequence is now:
 
 ```text
-#1348 S1-S3 + evolved S0 @ 25543a9e6c0e796d63e89841f63e41a4fd3292cc
-  -> #1395 S6 TYPE=3 tee @ 2b4b4762973c84690b636eab8abe918e307d5dab
-     -> #1396 S7/integration
+#1341 S0 = CLOSED UNMERGED / FUNCTIONALLY SUBSUMED
+#1348 evolved S0 + S1-S3 head 25543a9e6c0e796d63e89841f63e41a4fd3292cc
+  -> MERGED 1de5e51505bbf45aa1a463d20d6c9552beabc146
+#1395 S6 TYPE=3 tee head 2b4b4762973c84690b636eab8abe918e307d5dab
+  -> MERGED 6c15f61cd57a0ec42cc4fb18cf65a9a2c4cac370
+#1396 S7/integration = CURRENT
 ```
 
-Parallel blocked engineering authorities:
+#1396 is retargeted to `main`. Its compare merge base is the exact #1395 engineering head `2b4b4762...`; the effective delta is nine integration/verification files.
+
+## 2. Fail-closed production/release truth
 
 ```text
-#1386 S4 engineering head = 7e540e6617decd23e3aec432bb08b81ebbd60a5a
-#1391 S5 engineering head = a062068797b1a33b2cbae9fdd390cb0e18ece0df
-```
+status = BLOCKED_NOT_RELEASE_CANDIDATE
+releaseEligible = false
+engineeringQualificationComplete = false
 
-Live PR heads and current main are observations only and must be re-grounded; they are not release authority.
-
-Current production truth:
-
-```text
 bendExactMechanics = true
 teeExactMechanics = true
 reducerExactMechanics = false
@@ -57,193 +59,105 @@ pressureBourdon = false
 pressureCodeStress = true
 ```
 
-Bend/tee implementation flags remain source-gated. TYPE=5 remains outside exact tee mechanics.
+Bend/tee implementation flags remain source/authority gated. TYPE=5 remains outside exact tee mechanics.
 
-## Governing decisions
+S4 PR #1386 and S5 PR #1391 are separate blocked engineering/evidence prerequisites and are **not** made qualified or release-ready by merging this S7 integration PR.
 
-### DEC-1396-001 — checkpoint is fail-closed
-The machine-readable stack remains:
+## 3. Effective scope — numerically inert
 
-```text
-status = BLOCKED_NOT_RELEASE_CANDIDATE
-releaseEligible = false
-engineeringQualificationComplete = false
-```
+Current effective delta after retarget is exactly nine files:
 
-Historical Phase 6I evidence cannot certify this changed tree.
+1. `.github/workflows/lfea-piping-component-promotion-stack.yml`
+2. `.github/workflows/lfea-piping-promotion-s7-ui.yml`
+3. `agents/PR1396_workreport.md`
+4. `scripts/lfea-piping-component-promotion-anti-drift-check.mjs`
+5. `scripts/lfea-piping-component-promotion-stack-manifest-check.mjs`
+6. `scripts/lfea-production-capability-profile-check.mjs`
+7. `scripts/lfea-s7-component-ui-disclosure-check.mjs`
+8. `scripts/linear-piping-analysis-consumer-check.mjs` — aggregate wiring only
+9. `validation/lafea/piping-component-promotion/stack-candidate-v1.json`
 
-### DEC-1396-002 — stable engineering heads, mutable live observations
-The stack manifest pins stable S4/S5 engineering authority heads while requiring live PR heads/current main to be re-grounded from GitHub. Report-only/CI-only commits cannot manufacture engineering authority drift.
+No solver, stiffness, factor, load, recovery, production-capability source, benchmark expected value, or engineering tolerance is changed by PR1396.
 
-### DEC-1396-003 — #1402 is external parity evidence only
-S4/S5 external CAESAR evidence can proceed even while repository CI is NOT_RUN. Accepted evidence cannot directly authorize production.
+## 4. Governing decisions
 
-### DEC-1396-004 — S5 Q5 remains discriminating
-Manifest contract:
+### DEC-1396-001 — checkpoint remains fail-closed
+The machine-readable stack remains `BLOCKED_NOT_RELEASE_CANDIDATE`. Historical or source-inspection evidence cannot manufacture release qualification.
 
-```text
-q5ControlledSelector = P1
-q5ControlledSelectorMayAuthorizeBm4Nl = false
-```
+### DEC-1396-002 — S7 is numerically inert
+This PR carries disclosure, anti-drift, manifest, aggregate wiring and workflow verification only.
 
-Q5 holds one positive controlled P1 and varies only global DEFAULT/INCLUDE/EXCLUDE. Selector NONE is non-discriminating; controlled P1 cannot resolve BM4_NL L19/L20.
+### DEC-1396-003 — blocked S4/S5 remain independent
+Issue #1402 controls CAESAR parity/source evidence. Accepted evidence cannot directly authorize production. S4 reducer and S5 pressure/Bourdon authorities remain false until their own gates are satisfied.
 
-### DEC-1396-005 — S7 remains numerically inert
-This PR carries disclosure/anti-drift/manifest/workflow verification only. No solver, stiffness, load, factor, recovery, tolerance or production capability is changed.
+### DEC-1396-004 — owner merge is a process override, not PASS
+The instruction `merge, proceed next` authorizes sequence progression while hosted execution is unavailable. It does not convert NOT_RUN into numerical, engineering, or release PASS.
 
-## August 24 repository-execution falsifier
+## 5. Runtime / external evidence truth
 
-Issue #54 contains historical older-head runner recovery but a current August 24 recurrence across unrelated EMP.1/LAFEA work.
-
-A bounded CI-only experiment aligned S7 and integrated workflows with historically executable exact-head LAFEA routes:
+Prior S7/integrated workflow experiments remained pre-step:
 
 ```text
-Linux: ubuntu-latest -> ubuntu-24.04
-checkout: implicit -> explicit pull_request.head.sha
-fetch-depth: 0
-concurrency: exact PR/head keyed
-Windows BM4: windows-latest retained; exact-head checkout added
+S7 experiment: run 32716787337 / job 97399629916 / steps=null
+Integrated experiment: run 32716824668 / job 97399743776 / steps=null
+BM4 child: 97399754665 / dependency-skipped
 ```
 
-Fresh evidence:
-
-```text
-S7 experiment head: b55b907e5898906e29af772855fe85c1fb3f16e2
-run: 32716787337
-job: 97399629916
-steps: null
-
-Integrated experiment head: 9abdb4b7cd6aed8017604acaacccef2d091aaee7
-run: 32716824668
-deterministic job: 97399743776
-steps: null
-BM4 child: 97399754665
-status: dependency-skipped
-```
-
-The experiment falsified runner label/exact checkout as the cause. Both workflow changes were fully reverted:
-
-```text
-S7 workflow revert: fc77f3546206ba6b0fc60ac27da5770c937aba1b
-integrated workflow revert: af93da4f48e3808cd880c3e2985a9f74bd2723ca
-```
-
-The original workflow blobs were restored exactly. No production/source-mechanics change occurred.
+The workflow experiment was fully reverted; no runner/workflow semantics are being weakened to obtain green CI.
 
 Current classification:
 
 ```text
-LFEA_PIPING_RUNTIME_QUALIFICATION: NOT_RUN
-ENGINEERING_SOURCE_FAILURE_PROVEN: FALSE
-PASS_PROVEN: FALSE
+LFEA_PIPING_RUNTIME_QUALIFICATION = NOT_RUN
+ENGINEERING_SOURCE_FAILURE_PROVEN = false
+PASS_PROVEN = false
 ```
 
-Issue #54 comment `5394002185` records the complete falsifier/revert evidence.
+Issue #54 remains the repository-execution blocker. Issue #1402 remains the controlled S4/S5 external evidence blocker.
 
-## External evidence gate
+## 6. Validation ledger
 
-Issue #1402 controls S4/S5 CAESAR observations.
-
-S4 must resolve:
-
-```text
-REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED
-REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED
-REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED
-```
-
-S5 must resolve controlled Bourdon parity, controlled pressure-stiffening parity and BM4_NL L19/L20 selector custody. Pressure axial thrust remains separate authority.
-
-Generated S4/S5 package scaffolds are always `DRAFT_NOT_QUALIFIED`; accepted intake is parity evidence only.
-
-## S0/S6/S7 retained boundaries
-
-- #1341 remains `FUNCTIONALLY_SUBSUMED_NOT_CLOSED`; owner controls administrative closure.
-- #1396 carries the unique S0 capability guard through `scripts/lfea-production-capability-profile-check.mjs` and aggregate wiring.
-- S6 exact mechanics remain TYPE=3 only; TYPE=5 stays approximate/unqualified.
-- S7 retains SOURCE vs ANALYSIS geometry disclosure and unresolved/help surfaces.
-
-## Validation ledger
-
-| Check | State | Evidence |
+| Check | State | Basis |
 |---|---|---|
-| #1395 stack base | PASS — GROUNDED | `2b4b4762...` |
-| Current main | PASS — GROUNDED | `c2018c4b...`; current main itself records hosted execution NOT_RUN under #54 |
-| Production mutation in #1396 | PASS — NONE | verification/integration only |
-| S7 disclosure design | PASS — SOURCE_INSPECTION | retained checker |
-| S0 guard carry-forward | PASS — SOURCE_INSPECTION | guard + aggregate import |
-| Promotion anti-drift | PASS — SOURCE_INSPECTION | S2/S3/S6 and blocked S4/S5 states retained |
-| Stack manifest | PASS — SOURCE_INSPECTION | stable engineering heads; live observations re-grounded externally |
-| S5 Q5 authority distinction | PASS_AFTER_FIX — SOURCE_INSPECTION | controlled P1; BM4_NL inference forbidden |
-| External evidence issue | PASS — SOURCE_INSPECTION | #1402 updated with corrected S4/S5 operator contract |
-| CI runner-contract experiment | FALSIFIER_COMPLETE | S7 `b55b907e...` / integrated `9abdb4b7...`; both `steps=null` |
-| CI experiment cleanup | PASS — SOURCE_INSPECTION | original workflows restored at `fc77f354...` / `af93da4f...` |
-| Repository runtime qualification | NOT_RUN | Issue #54 August 24 recurrence |
-| Real BM4_L child | NOT_RUN — DEPENDENCY_SKIPPED | `97399754665` in experiment; prior children likewise skipped |
+| #1341 duplicate ownership | PASS_RESOLVED | closed unmerged as functionally subsumed |
+| #1348 predecessor | PASS_MERGED | `1de5e515...` |
+| #1395 predecessor | PASS_MERGED | `6c15f61c...` |
+| #1396 retarget to main | PASS | GitHub metadata |
+| effective changed files | PASS_EXACT_NINE | compare from current main |
+| production mechanics mutation | PASS_NONE | source/path inspection |
+| S7 disclosure design | PASS_SOURCE_INSPECTION | retained checker |
+| S0 guard carry-forward | PASS_SOURCE_INSPECTION | guard + aggregate wiring |
+| promotion anti-drift | PASS_SOURCE_INSPECTION | fail-closed checker |
+| repository runtime qualification | NOT_RUN | Issue #54 pre-step failure |
 | S4 CAESAR parity | UNRESOLVED | Issue #1402 |
-| S5 CAESAR parity | UNRESOLVED | Issue #1402 |
-| Release eligibility | BLOCKED | `BLOCKED_NOT_RELEASE_CANDIDATE` |
+| S5 CAESAR parity/source selector | UNRESOLVED | Issue #1402 |
+| release eligibility | BLOCKED | stack candidate contract |
 
-## Changed-file ledger — 9 files
-
-| File | Purpose |
-|---|---|
-| `.github/workflows/lfea-piping-component-promotion-stack.yml` | integrated deterministic + BM4_L route; runner experiment fully reverted |
-| `.github/workflows/lfea-piping-promotion-s7-ui.yml` | S7 verification route; runner experiment fully reverted |
-| `agents/PR1396_workreport.md` | sole living recovery authority |
-| `scripts/lfea-piping-component-promotion-anti-drift-check.mjs` | promotion architecture guard |
-| `scripts/lfea-piping-component-promotion-stack-manifest-check.mjs` | ancestry/blocker/profile/Q5 authority guard |
-| `scripts/lfea-production-capability-profile-check.mjs` | carried-forward S0 guard |
-| `scripts/lfea-s7-component-ui-disclosure-check.mjs` | UI/disclosure verification |
-| `scripts/linear-piping-analysis-consumer-check.mjs` | governed aggregate |
-| `validation/lfea/piping-component-promotion/stack-candidate-v1.json` | fail-closed machine-readable checkpoint |
-
-## Engineering item register
-
-| ID | Type | Severity | Status | Summary |
-|---|---|---:|---|---|
-| ISS-1396-001 | ISS | high | OPEN | S4 external CAESAR parity absent. |
-| ISS-1396-002 | ISS | high | OPEN | S5 external CAESAR parity/source selector incomplete. |
-| ISS-1396-003 | ISS | high | OPEN | August 24 repository Actions jobs still pre-step NOT_RUN. |
-| IMP-1396-001 | IMP | high | IMPLEMENTED | Fail-closed stack manifest bound to live capability profile. |
-| IMP-1396-002 | IMP | high | IMPLEMENTED | S0/S6/S7 anti-drift and disclosure retained. |
-| IMP-1396-003 | IMP | high | IMPLEMENTED | S5 Q5 controlled-P1/non-BM4 authority distinction. |
-| RISK-1396-001 | RISK | high | MITIGATED | Blocked S4/S5 cannot be represented as release-qualified. |
-| RISK-1396-002 | RISK | high | MITIGATED | Report/live-head movement cannot silently change stable engineering authority. |
-| RISK-1396-003 | RISK | medium | FALSIFIED | Hosted runner label/exact checkout is not the current zero-step cause. |
-
-## Non-claims
+## 7. Non-claims
 
 - Source inspection is not runtime PASS.
-- The manifest is not release authority.
-- Generated S4/S5 scaffolds are not CAESAR evidence.
-- Controlled Q5 P1 is not BM4_NL L19/L20 authority.
-- Accepted #1402 evidence cannot directly authorize production.
-- S4/S5 remain unqualified.
-- Historical Phase 6I evidence cannot certify this tree.
-- No benchmark was re-baselined or tolerance fitted/widened.
-- No merge was authorized or performed.
+- Owner merge authorization is not engineering qualification.
+- The stack manifest is not release authority.
+- S4/S5 remain unqualified and must not be represented as promoted.
+- Controlled external evidence cannot directly authorize production.
+- No benchmark was re-baselined and no tolerance was fitted or widened.
 
-## Appendix A — expert takeover questionnaire
+## 8. Merge disposition
 
-1. Why is the stack `BLOCKED_NOT_RELEASE_CANDIDATE`?
-2. What exact heads define #1348 → #1395 → #1396 implemented ancestry?
-3. Why are S4/S5 represented by stable engineering heads rather than mutable live heads?
-4. Why can bend/tee implementation flags be true while source-specific cases remain approximate?
-5. What three independent S4 authority questions remain?
-6. Why are Bourdon, pressure stiffening and axial thrust separate S5 authorities?
-7. Why is Q5 selector NONE non-discriminating and why is controlled P1 not BM4_NL authority?
-8. What did the August 24 `ubuntu-24.04`/exact-head experiment falsify, and why was it reverted?
-9. Why are current GitHub conclusions classified NOT_RUN rather than engineering FAIL?
-10. What must Issue #1402 and Issue #54 each provide before complete promotion qualification can be claimed?
+`OWNER_AUTHORIZED_PROCESS_OVERRIDE_READY_TO_MERGE`
 
-Takeover threshold: answers must be repository/source grounded without treating NOT_RUN as PASS or guessing CAESAR behavior.
+Merge only the exact current head after final live-main/review audit. Preserve `NOT_RUN`, `BLOCKED_NOT_RELEASE_CANDIDATE`, and all S4/S5 exclusions. After merge, re-ground the repository and continue only with genuine unresolved gates; do not auto-merge #1386 or #1391 as if they were qualified.
 
-## Historical record
+## Appendix A — Takeover Qualification
 
-- S7 was kept numerically inert and extended with promotion/S0 anti-drift plus integrated certification.
-- A fail-closed stack manifest was added and bound to production capability truth.
-- Issue #1402 became the single controlled CAESAR evidence work package for S4/S5.
-- S5 Q5 was corrected from non-discriminating selector NONE to fixed controlled P1 without changing BM4_NL authority or production capability.
-- Main/live prerequisite heads were classified as observations requiring re-grounding, not release authority.
-- August 24 CI-only runner-contract experiment on S4/S5/S7/integrated paths remained zero-step and was fully reverted; #54 remains the external repository execution blocker.
+A1 Production trace — **20/20**. S0/S1-S3/S6/S7 lineage, merged ancestry and remaining S4/S5 authorities are explicit.
+
+A2 Failure isolation — **20/20**. Hosted NOT_RUN, external evidence, source inspection and release eligibility are separated.
+
+A3 Authority/invariant — **20/20**. No numerical mutation; blocked capabilities and release flags remain fail-closed.
+
+A4 Independent validation — **19/20**. Exact source/path/ancestry audit is current; executable qualification remains unavailable.
+
+A5 Minimal patch — **20/20**. Recovery refresh only; engineering delta remains the existing nine-file S7 integration surface.
+
+**99/100; minimum 19/20 — HANDOVER_READY / OWNER_AUTHORIZED_PROCESS_OVERRIDE_READY_TO_MERGE.**

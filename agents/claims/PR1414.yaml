@@ -1,0 +1,22 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1414
+claim_state: ACTIVE
+branch: agent/issue-1383-retained-table5-stress-intensity-reconciliation-20260824
+mission: "Issue #1383 retained WRC Table-5 stress-intensity reconciliation"
+write_scope:
+  - validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json
+  - scripts/emp1-wrc537-stress-intensity-source-check.mjs
+  - docs/emp1/WRC537_2013_Stress_Intensity_Authority.md
+  - agents/PR1414_workreport.md
+  - agents/status/PR1414.yaml
+  - agents/claims/PR1414.yaml
+protected_no_mutation:
+  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json
+  - validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - .github/workflows/
+authority_boundary: "Retained Table-5 Combined Stress Intensity post-processing/order only; explicit plane stress, sigma3, principal-stress derivation, physical-surface/common-point, von-Mises, code/global/release authority remain blocked."
+overlap_state: SAFE_NO_ACTIVE_EMP1_STRESS_INTENSITY_PR_FOUND

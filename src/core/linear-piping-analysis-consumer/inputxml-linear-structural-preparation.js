@@ -9,11 +9,13 @@ import { requireInputXmlModelHealthSource } from '../geometry/model-health/index
 import { requireInputXmlLinearModelHealth } from './inputxml-linear-model-health-contract.js';
 import { requireInputXmlLinearSolvePreparation } from './inputxml-linear-solve-preparation-contract.js';
 import { compileInputXmlStructuralConstraints } from './inputxml-linear-structural-constraints.js';
+import { retopologiseDeclaredBends } from './bend-retopology.js';
 import {
   INPUTXML_LINEAR_STRUCTURAL_PREPARATION_SCHEMA,
   sealInputXmlLinearStructuralPreparation,
 } from './inputxml-linear-structural-preparation-contract.js';
 import {
+  INPUTXML_LINEAR_BEND_RETOPOLOGY_PROFILE,
   INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE,
   InputXmlLinearStructuralPreparationError,
   inputXmlMechanicalModelCompilerProfile,
@@ -47,12 +49,16 @@ export function compileInputXmlLinearStructure(
 
   const modelId = normalizeModelId(options.modelId ?? prepared.modelId);
   const analyticalGeometry = projectInputXmlAnalyticalGeometry(prepared);
-  const conditionedTopology = conditionGeometry(
+  const retopology = retopologiseDeclaredBends(
     analyticalGeometry,
+    options.bendRetopologyProfile ?? INPUTXML_LINEAR_BEND_RETOPOLOGY_PROFILE,
+  );
+  const conditionedTopology = conditionGeometry(
+    retopology.geometry,
     [],
     options.conditioningProfile ?? INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE,
   );
-  requireIdentityConditioning(prepared.normalizedGeometry, conditionedTopology.geometry);
+  requireExplainedConditioning(analyticalGeometry, conditionedTopology.geometry, retopology);
 
   const materialByHash = new Map(prepared.materialResolutions
     .map((row) => [row.semanticHash, row]));
@@ -65,16 +71,29 @@ export function compileInputXmlLinearStructure(
   const nodesById = new Map(conditionedTopology.geometry.nodes
     .map((row) => [String(row.id), row]));
 
+  // A bend chord carries no authority of its own: it inherits the binding of
+  // the source span it was cut from, and the chord ordinal keeps its element id
+  // unique. Without the ordinal every chord of one bend would compile under the
+  // same element id and the model compiler would reject the model.
+  const chordOrdinal = new Map();
   const segmentBindings = conditionedTopology.geometry.segments.map((segment) => {
     const segmentId = String(segment.id);
-    const authority = authorityBindingBySegment.get(segmentId) ?? null;
-    const sourceSegment = sourceSegmentById.get(segmentId) ?? null;
+    const originId = retopology.spanOrigin.get(segmentId)
+      ?? (segment.meta?.parentSegmentId == null ? segmentId : String(segment.meta.parentSegmentId));
+    const authority = authorityBindingBySegment.get(originId) ?? null;
+    const sourceSegment = sourceSegmentById.get(originId) ?? null;
     if (authority === null || sourceSegment === null) {
       fail(
         'INPUTXML_STRUCTURAL_SEGMENT_AUTHORITY_MISSING',
         `Conditioned segment ${segmentId} has no retained authority binding.`,
-        { segmentId },
+        { segmentId, originId },
       );
+    }
+    const isChord = originId !== segmentId;
+    let chordIndex = null;
+    if (isChord) {
+      chordIndex = (chordOrdinal.get(originId) ?? 0) + 1;
+      chordOrdinal.set(originId, chordIndex);
     }
     const material = materialByHash.get(authority.materialResolutionSemanticHash) ?? null;
     const section = sectionByHash.get(authority.analysisSectionSemanticHash) ?? null;
@@ -85,10 +104,14 @@ export function compileInputXmlLinearStructure(
         { segmentId },
       );
     }
-    const elementId = `${modelId}.E${authority.sourceIndex + 1}`;
+    const elementId = isChord
+      ? `${modelId}.E${authority.sourceIndex + 1}.B${chordIndex}`
+      : `${modelId}.E${authority.sourceIndex + 1}`;
     return Object.freeze({
       segmentId,
       elementId,
+      parentSegmentId: isChord ? originId : null,
+      bendChordIndex: chordIndex,
       sourceFeatureId: authority.sourceFeatureId,
       sourceIndex: authority.sourceIndex,
       componentKind: authority.componentKind,
@@ -102,8 +125,8 @@ export function compileInputXmlLinearStructure(
       analysisSectionSemanticHash: section.semanticHash,
       rigidAuthoritySemanticHash: authority.rigidAuthoritySemanticHash,
       localAxisEvidenceIdentity: `AXIS-${elementId}`,
-      startNodeId: String(sourceSegment.startNodeId),
-      endNodeId: String(sourceSegment.endNodeId),
+      startNodeId: String(segment.startNodeId),
+      endNodeId: String(segment.endNodeId),
     });
   });
 
@@ -213,6 +236,14 @@ function projectInputXmlAnalyticalGeometry(prepared) {
   const segments = prepared.normalizedGeometry.segments.map((segment) => {
     const binding = bindingBySegment.get(String(segment.id)) ?? null;
     if (binding?.limitationCode !== 'GENERIC_APPROX_BEND_STRAIGHT_CHORD') return segment;
+    // A bend whose arc is placeable keeps its declared type and geometry so the
+    // re-topology pass below can represent the curvature. Retyping every bend to
+    // PIPE here is what made "bends are modelled as straight pieces" true: the
+    // curvature was discarded at preparation and then reported downstream as a
+    // limitation of the solver. A bend with no resolvable arc still degrades to
+    // a straight chord, and still says so, because that is a real limitation of
+    // that model's data rather than of this path.
+    if (placeableBendArc(segment)) return segment;
     return Object.freeze({
       ...segment,
       type: 'PIPE',
@@ -230,15 +261,49 @@ function projectInputXmlAnalyticalGeometry(prepared) {
   });
 }
 
-function requireIdentityConditioning(sourceGeometry, conditionedGeometry) {
-  const sourceIds = sourceGeometry.segments.map((row) => String(row.id)).sort(compareAscii);
-  const conditionedIds = conditionedGeometry.segments.map((row) => String(row.id)).sort(compareAscii);
-  if (sourceIds.length !== conditionedIds.length
-    || sourceIds.some((value, index) => value !== conditionedIds[index])) {
+function placeableBendArc(segment) {
+  const meta = segment?.meta ?? {};
+  const point = (value) => Boolean(value)
+    && [value.x, value.y, value.z].every((n) => typeof n === 'number' && Number.isFinite(n));
+  return point(meta.bendArcCentre) && point(meta.bendTangentStart) && point(meta.bendTangentEnd);
+}
+
+/**
+ * Every conditioned span must trace to exactly one retained source segment.
+ *
+ * This replaces an identity check that required the conditioned span id list to
+ * equal the source list. That guarantee cannot survive representing a bend as
+ * an element chain, but the custody question behind it still has to be
+ * answered: nothing may appear in the analysis model that did not come from the
+ * source. So instead of requiring the lists to match, each conditioned span
+ * must declare the source span it came from, and every source span must still
+ * be represented. An unexplained or orphaned span fails closed exactly as an
+ * identity mismatch did.
+ */
+function requireExplainedConditioning(sourceGeometry, conditionedGeometry, retopology) {
+  const sourceIds = new Set(sourceGeometry.segments.map((row) => String(row.id)));
+  const covered = new Set();
+  const unexplained = [];
+  for (const segment of conditionedGeometry.segments) {
+    const id = String(segment.id);
+    const declared = retopology.spanOrigin.get(id)
+      ?? (segment.meta?.parentSegmentId == null ? null : String(segment.meta.parentSegmentId));
+    const origin = sourceIds.has(id) ? id : declared;
+    if (origin === null || !sourceIds.has(origin)) {
+      unexplained.push(id);
+      continue;
+    }
+    covered.add(origin);
+  }
+  const unrepresented = [...sourceIds].filter((id) => !covered.has(id)).sort(compareAscii);
+  if (unexplained.length > 0 || unrepresented.length > 0) {
     fail(
       'INPUTXML_STRUCTURAL_CONDITIONING_CHANGED_SPAN_CUSTODY',
-      'Structural preparation requires one conditioned span per retained source segment.',
-      { sourceSegmentIds: sourceIds, conditionedSegmentIds: conditionedIds },
+      'Every conditioned span must trace to exactly one retained source segment.',
+      {
+        unexplainedConditionedSegmentIds: unexplained.sort(compareAscii).slice(0, 12),
+        unrepresentedSourceSegmentIds: unrepresented.slice(0, 12),
+      },
     );
   }
 }

@@ -22,6 +22,24 @@ export const INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE = Object.freeze({
   },
 });
 
+/**
+ * Bend re-topology profile.
+ *
+ * `bendChordCount` is even because a bend component requires an exact mid-arc
+ * station: that station is where a code stress check reads the bend, and an odd
+ * chord count has no node there.
+ *
+ * `bendLengthErrorLimit` is the fraction by which the summed chord length may
+ * fall short of the true arc. Four chords across a 90-degree bend understate
+ * the arc by about 0.64% -- the measured figure on BM4_L -- so 2% accepts the
+ * declared subdivision while still failing closed on a bend too coarse to
+ * represent its own geometry.
+ */
+export const INPUTXML_LINEAR_BEND_RETOPOLOGY_PROFILE = Object.freeze({
+  bendChordCount: 4,
+  bendLengthErrorLimit: 0.02,
+});
+
 const PROFILE_BY_ID = Object.freeze({
   [STRICT_INPUTXML_LINEAR_STATIC_PROFILE]: Object.freeze({
     schema: INPUTXML_LINEAR_STRUCTURAL_PROFILE_SCHEMA,

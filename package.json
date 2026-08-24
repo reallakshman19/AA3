@@ -118,7 +118,7 @@
     "preview": "vite preview",
     "syntax": "node scripts/syntax-check.mjs",
     "syntax:strict": "node scripts/syntax-check.mjs --strict",
-    "gate": "npm run syntax:strict && npm run check:imports && npm run check:doc-drift && npm run check:shared-analysis && npm run check:first-cut && npm run check:lafea-foundation && npm run check:lafea-meshing && npm run check:lafea-solver && npm run check:core-fea && npm run check:lfea-m047-stage2 && npm run check:lfea-piping-release-policy && npm run check:lfea-linear-core && npm run check:lfea-solver-residual-conditioning && npm run check:linear-piping-analysis-consumer && npm run check:stagedjson-to-inputxml && npm run check:lfea-bend-tangent-custody && npm run check:accdb-to-canonical-geometry && npm run check:lfea-load-case-authoring && npm run check:lfea-pipeline-verification-drawer && npm run check:lfea-pipeline-analysis && npm run check:lfea-svg && npm run check:lafea-canvas && npm run check:sequential-sketcher && npm run check:lafea-agent1-stack && npm run check:lafea-core && npm run check:workspace-contracts && npm run check:lafea-workbench && npm run check:lfea-workbench && npm run check:fea-ui-upgrade && npm run check:ui-invariants && npm run build",
+    "gate": "npm run syntax:strict && npm run check:imports && npm run check:doc-drift && npm run check:shared-analysis && npm run check:first-cut && npm run check:lafea-foundation && npm run check:lafea-meshing && npm run check:lafea-solver && npm run check:core-fea && npm run check:lfea-m047-stage2 && npm run check:lfea-piping-release-policy && npm run check:lfea-linear-core && npm run check:lfea-solver-residual-conditioning && npm run check:linear-piping-analysis-consumer && npm run check:stagedjson-to-inputxml && npm run check:lfea-bend-retopology && npm run check:lfea-bend-tangent-custody && npm run check:accdb-to-canonical-geometry && npm run check:lfea-load-case-authoring && npm run check:lfea-pipeline-verification-drawer && npm run check:lfea-pipeline-analysis && npm run check:lfea-svg && npm run check:lafea-canvas && npm run check:sequential-sketcher && npm run check:lafea-agent1-stack && npm run check:lafea-core && npm run check:workspace-contracts && npm run check:lafea-workbench && npm run check:lfea-workbench && npm run check:fea-ui-upgrade && npm run check:ui-invariants && npm run build",
     "test": "npm run check:advanced-shell && npm run check:lafea-workbench && npm run check:lfea-workbench && npm run check:lfea-svg && npm run check:sequential-sketcher",
     "check:lfea-b3.18": "node scripts/lfea-b3.18-bm1-bend-check.mjs",
     "check:lfea-b3.19": "node scripts/lfea-b3.19-b31-factor-calculator-check.mjs",
@@ -133,7 +133,8 @@
     "check:lfea-m047-local-production-harness": "node scripts/lfea-m047-bm4l-local-production-harness-check.mjs",
     "check:lfea-m047-stage2": "npm run check:lfea-caesar-configuration-authority && npm run check:lfea-m047-stage2-friction && npm run check:lfea-m047-local-production-harness",
     "check:lfea-solver-residual-conditioning": "node scripts/lfea-solver-residual-conditioning-check.mjs",
-    "check:lfea-bend-tangent-custody": "node scripts/lfea-bend-tangent-custody-check.mjs"
+    "check:lfea-bend-tangent-custody": "node scripts/lfea-bend-tangent-custody-check.mjs",
+    "check:lfea-bend-retopology": "node scripts/lfea-bend-retopology-check.mjs"
   },
   "dependencies": {
     "buffer": "^6.0.3",

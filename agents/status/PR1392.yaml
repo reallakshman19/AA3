@@ -5,11 +5,13 @@ branch: agent/issue-1371-pr-c-lafea4-closure-20260824
 state: ACTIVE
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: BLOCKED_INFRASTRUCTURE
 merge_authority: OWNER_ONLY
 current_stage: LAFEA4_VALIDATION_AND_CHROMIUM
 main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
 report: agents/PR1392_workreport.md
 coordination_state: SAFE
+validation_plumbing: EXISTING_SHELL_SAMPLE_GATE_BOUND
+hosted_engineering_execution: NOT_RUN_STEPS_NULL_AFTER_RERUN
 highest_risk: SHELL_RESULT_AUTHORITY_OR_CONSTRAINT_SCOPE_DRIFT
-exact_next_action: observe exact-head shell/Chromium validation, checkpoint PR1392, then proceed to PR-D anti-drift/registry cleanup
+exact_next_action: preserve NOT_RUN until hosted visible-workbench steps actually start; continue only non-overlapping series work

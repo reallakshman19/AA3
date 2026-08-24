@@ -9,6 +9,7 @@ import {
   migrateFirstCutEnrichment,
   resolveNonFeaEnrichment,
 } from '../../core/non-fea-enrichment/index.js';
+import { openFittingWeightDialog } from '../load-calc-fitting-weight-dialog.js';
 import { buildLoadCalcMasterEnrichmentProposals } from '../load-calc-master-candidates.js';
 import { masterDataController } from '../master-data-controller.js';
 import { projectDataStore } from '../project-data/project-data-store.js';
@@ -60,6 +61,7 @@ function markup(snapshot, derived, sourceModel) {
       <div class="nfe__actions">
         <label>Import legacy records / sidecar<input type="file" accept=".json,.csv,application/json,text/csv" data-enrichment-import hidden></label>
         <button type="button" data-enrichment-generate-master>Generate proposals from approved masters</button>
+        <button type="button" data-enrichment-review-fitting-weights>Review fitting weights…</button>
         <button type="button" data-enrichment-export ${derived.sidecar ? '' : 'disabled'}>Export accepted sidecar</button>
         <button type="button" data-enrichment-clear>Clear staged state</button>
       </div>
@@ -192,6 +194,9 @@ function bind(container, sourceModel, derived, onChanged) {
     if (event.target.closest('[data-enrichment-generate-master]')) {
       return attempt(() => generateMasterProposals(), onChanged);
     }
+    if (event.target.closest('[data-enrichment-review-fitting-weights]')) {
+      return attempt(() => reviewFittingWeights(container.ownerDocument, onChanged), onChanged, false);
+    }
     if (event.target.closest('[data-enrichment-clear]')) return attempt(() => nonFeaEnrichmentStore.clear(), onChanged);
     if (event.target.closest('[data-enrichment-export]')) return attempt(() => downloadSidecar(container.ownerDocument, derived.sidecar), onChanged, false);
     if (event.target.closest('[data-enrichment-rebind]')) return attempt(() => rebind(sourceModel), onChanged);
@@ -250,6 +255,29 @@ function generateMasterProposals() {
   }
   result.proposals.forEach((proposal) => nonFeaEnrichmentStore.stageProposal(proposal));
   return result;
+}
+
+/**
+ * Opens the catalogue fitting weight review. Selections are staged as
+ * proposals rather than accepted directly, so a reviewer's choice still
+ * passes through the same explicit acceptance step as every other record.
+ */
+function reviewFittingWeights(documentRef, onChanged) {
+  const dataset = WorkspaceState.getSnapshot()?.dataset;
+  if (!dataset?.sharedModel) throw new TypeError('An active dataset is required.');
+  openFittingWeightDialog({
+    documentRef,
+    dataset,
+    masters: masterDataController.getMasterData(),
+    onAccept: (records) => {
+      records.forEach((record) => nonFeaEnrichmentStore.stageProposal({
+        proposalId: record.recordId,
+        rationale: `Reviewer selected ${record.evidence.selectedTypeDesc} from ${record.evidence.candidateCount} catalogue candidate(s) for ${record.evidence.componentDescription || record.selectorKey}.`,
+        record,
+      }));
+      onChanged?.();
+    },
+  });
 }
 
 function rebind(sourceModel) {

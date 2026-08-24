@@ -4,7 +4,7 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT
+PR_RECOVERY_STATE: HEALTHY_DRAFT_AUDIT_COMPLETE
 CRITICALITY: ENGINEERING_CRITICAL
 WORK_INTENT: SOURCE_GOVERNANCE_RECONCILIATION
 PR: #1414
@@ -12,15 +12,15 @@ BASE: main@beee11eb99764bab078bf8ba73cf5768514aac67
 BASE_TREE: 97102161d5224a227029b465fa3b31782e202475
 BRANCH: agent/issue-1383-retained-table5-stress-intensity-reconciliation-20260824
 ISSUE: #1383
-CURRENT_STAGE: PR_ALLOCATED_RECOVERY_MIGRATION
+CURRENT_STAGE: FINAL_AUDIT_COMPLETE_AWAIT_OWNER_MERGE
 MERGE_AUTHORITY: NOT_GRANTED
 HIGHEST_RISK: promoting mathematical equivalence of planeStressTresca into an explicit WRC plane-stress/sigma3-zero source statement
-EXACT_NEXT_ACTION: remove WIP records; verify exact six-file diff, live main, reviews/threads and protected paths; remain draft/unmerged pending owner authorization.
+EXACT_NEXT_ACTION: await explicit owner merge instruction; before merge re-ground live main/head/reviews and preserve the exact six-file source-governance scope.
 ```
 
 ## Mission
 
-Refine #1383 using retained WRC Table 5 pp.41–42 source text without changing production numerical mechanics. The source transcription contains a `COMBINED STRESS INTENSITY` section after algebraic formation of the normal/shear stress totals.
+Refine #1383 using retained WRC Table 5 pp.41–42 source text without changing production numerical mechanics. The retained source transcription contains a `COMBINED STRESS INTENSITY` section after algebraic formation of the normal/shear stress totals.
 
 ## Reconciled retained-source subset
 
@@ -49,7 +49,7 @@ Direct PDF re-observation remains `NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPOR
 
 `src/core/emp1/emp1-wrc537-cylindrical-table5.js` remains unchanged. `planeStressTresca()` still computes the two in-plane principal stresses, takes `p3=0`, and returns the maximum principal-stress difference. This PR does not claim that every one of those implementation details is explicitly stated by WRC.
 
-## Final intended changed-file ledger
+## Final changed-file ledger
 
 1. `validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json`
 2. `scripts/emp1-wrc537-stress-intensity-source-check.mjs`
@@ -57,6 +57,8 @@ Direct PDF re-observation remains `NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPOR
 4. `agents/PR1414_workreport.md`
 5. `agents/status/PR1414.yaml`
 6. `agents/claims/PR1414.yaml`
+
+Temporary WIP recovery records are removed.
 
 ## Protected no-mutation
 
@@ -70,17 +72,20 @@ Direct PDF re-observation remains `NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPOR
 
 ## Validation ledger
 
-| Check | Status |
-|---|---|
-| live base main/tree | PASS |
-| retained Table-5 text inspection | PASS_SOURCE_INSPECTION |
-| direct PDF page observation | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT |
-| checker source inspection | PASS |
-| checker Node execution | NOT_RUN |
-| production WRC numerical comparison | NOT_APPLICABLE |
-| production stress-intensity equation | UNCHANGED |
-| engineering/production/global/code/release authority | false |
-| final six-file/main/review audit | PENDING |
+| Check | Status | Evidence |
+|---|---|---|
+| live base main/tree | PASS | `beee11eb...` / `97102161...` |
+| retained Table-5 text inspection | PASS_SOURCE_INSPECTION | retained WRC Table 5 pp.41–42 |
+| direct PDF page observation | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT | binary connector limitation |
+| checker source inspection | PASS | exact source/fail-closed assertions encoded |
+| checker Node execution | NOT_RUN | no complete checkout execution claimed |
+| production WRC numerical comparison | NOT_APPLICABLE | no mechanics changed |
+| production stress-intensity equation | UNCHANGED | protected path absent from diff |
+| final changed files | PASS | exactly 6 |
+| behind main | PASS | 0 |
+| reviews | PASS | 0 |
+| review threads | PASS | 0 |
+| engineering/production/global/code/release authority | false | retained fail-closed |
 
 Encoded-but-unexecuted checker logic remains NOT_RUN.
 

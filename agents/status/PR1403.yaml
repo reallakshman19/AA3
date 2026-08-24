@@ -1,0 +1,42 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1403
+mission: "Issue #1389 PR-G professional UI, trace, currentness and unsupported-domain closure"
+workstream: EMP1_WRC537_PROFESSIONAL_RELEASE
+branch: agent/issue-1389-pr-g-professional-ui-trace-20260824
+main_head_last_checked: e6908671f25df784312b9e3392bc6ab83863c9c8
+merge_base: e6908671f25df784312b9e3392bc6ab83863c9c8
+criticality: ENGINEERING_CRITICAL_RESULT_PUBLICATION
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/PR1403_workreport.md
+appendix_a_status: CURRENT
+appendix_a_score: 99
+appendix_a_min_question: 19
+grounding_epoch: GE-G-002
+current_stage: PR_ALLOCATED_BEFORE_PRODUCT_MUTATION
+overlap_state: SAFE_AGAINST_EMP1_PR1401
+highest_risk: UI_AUTHORITY_WIDENING_OR_STALE_RESULT_PUBLICATION
+validation:
+  main_grounding: PASS
+  open_pr_overlap_audit: PASS
+  current_presentation_trace: PASS_SOURCE_INSPECTION
+  exact_head_browser: NOT_RUN
+  production_build: NOT_RUN
+ci_state: NOT_RUN
+review_state: NONE_AT_PR_ALLOCATION
+merge_disposition: DRAFT_OWNER_ONLY_NEW_AUTHORIZATION_REQUIRED
+authority:
+  production_route_authorized: false
+  registered: false
+  engineering_use_authorized: false
+  global_emp1_c_route_authority: false
+  code_compliance_authorized: false
+  release_qualified: false
+dependencies:
+  - "#1389"
+  - "#1401 remains exact-head evidence blocked but file-disjoint"
+  - "#54 blocks hosted execution"
+exact_next_action: "Delete superseded WIP recovery records, then implement the pure professional presentation projection and narrow UI/browser changes without core numerical/authority mutation."
+last_updated: "2026-08-24"

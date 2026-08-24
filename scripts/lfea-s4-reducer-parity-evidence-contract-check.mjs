@@ -63,7 +63,7 @@ function completeEvidence() {
     runs,
     candidateComparisons: S4_REDUCER_SECTION_CANDIDATES.map((candidateId, candidateIndex) => ({
       candidateId,
-      maximumNormalizedError: candidateIndex === 0 ? 0.1 : candidateIndex + 1,
+      maximumNormalizedError: candidateIndex === 0 ? 1e-7 : 1e-3 * (candidateIndex + 1),
       accepted: candidateIndex === 0,
     })),
     decisions: {
@@ -125,11 +125,19 @@ expectCode(
   'S4_REDUCER_EVIDENCE_CANNOT_AUTHORIZE_PRODUCTION',
 );
 expectCode(
+  (record) => { record.candidateComparisons[0].maximumNormalizedError = 2e-6; },
+  'S4_REDUCER_ACCEPTED_CANDIDATE_OUTSIDE_TOLERANCE',
+);
+expectCode(
+  (record) => { record.candidateComparisons[1].maximumNormalizedError = 5e-7; },
+  'S4_REDUCER_SECTION_RULE_NOT_UNIQUE',
+);
+expectCode(
   (record) => {
     record.candidateComparisons[0].accepted = false;
     record.candidateComparisons[1].accepted = true;
   },
-  'S4_REDUCER_SECTION_DECISION_COMPARISON_MISMATCH',
+  'S4_REDUCER_ACCEPTED_CANDIDATE_OUTSIDE_TOLERANCE',
 );
 expectCode(
   (record) => { record.acceptance.thermalParityQualified = false; },

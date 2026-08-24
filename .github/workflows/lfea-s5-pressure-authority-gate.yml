@@ -10,6 +10,8 @@ on:
       - 'docs/lfea/S5_Pressure_Effect_Source_Authority_20260824.md'
       - 'docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md'
       - 'scripts/lfea-s5-pressure-authority-gate-check.mjs'
+      - 'scripts/lfea-s5-pressure-parity-evidence-contract.mjs'
+      - 'scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs'
       - '.github/workflows/lfea-s5-pressure-authority-gate.yml'
       - 'agents/PR1391_workreport.md'
 
@@ -29,9 +31,13 @@ jobs:
         run: |
           node --check src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js
           node --check scripts/lfea-s5-pressure-authority-gate-check.mjs
+          node --check scripts/lfea-s5-pressure-parity-evidence-contract.mjs
+          node --check scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs
       - name: Run reusable CAESAR configuration authority check
         run: node scripts/lfea-caesar-configuration-authority-check.mjs
       - name: Run S5 pressure authority prerequisite gate
         run: node scripts/lfea-s5-pressure-authority-gate-check.mjs
+      - name: Validate mechanism-scoped CAESAR pressure parity evidence contract
+        run: node scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs
       - name: Enforce linear piping anti-drift rules
         run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs

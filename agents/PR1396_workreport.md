@@ -16,13 +16,13 @@ PR: 1396
 BRANCH: agent/lfea-piping-promotion-s7-ui-disclosure-20260824
 STACK_BASE_PR: 1395
 STACK_BASE_HEAD: 2b4b4762973c84690b636eab8abe918e307d5dab
-CODE_HEAD_PRE_REPORT: ef02c9d3123f26c5e16706f655b73ac48c4a6108
+CODE_HEAD_PRE_REPORT: 2edd280115425ddf2d6908151d0413bad80376f0
 MAIN_LAST_GROUNDED: e6908671f25df784312b9e3392bc6ab83863c9c8
-CURRENT_STAGE: S7 disclosure + promotion anti-drift + fail-closed stack manifest + current S4/S5 evidence-scaffold binding
+CURRENT_STAGE: S7 disclosure + promotion anti-drift + fail-closed stack manifest + stable S4/S5 engineering-head evidence binding
 NUMERICAL_MUTATION_ALLOWED: false
 CI_BLOCKER: Issue #54 — jobs fail before checkout/step 1
 EXTERNAL_EVIDENCE_BLOCKER: Issue #1402 — controlled CAESAR S4/S5 qualification evidence
-EXACT_NEXT_ACTION: execute controlled CAESAR evidence under #1402 while #54 is repaired; keep S4/S5 flags false and refresh this manifest whenever blocked-prerequisite heads move
+EXACT_NEXT_ACTION: execute controlled CAESAR evidence under #1402 while #54 is repaired; keep S4/S5 flags false; refresh manifest only when engineering authority/code heads change, not for report-only commits
 ```
 
 ## 60-second handover
@@ -35,17 +35,24 @@ Implemented ancestry:
      -> #1396  S7/integration
 ```
 
-Parallel blocked stages are now pinned at their current prerequisite heads:
+Parallel blocked stages are represented by stable engineering code heads in the machine-readable manifest:
 
 ```text
-#1386  S4 reducer
-  current PR head: 2fc49e5ff84357c18308ca83a84f986624cfd2a3
-  engineering code head: 7e540e6617decd23e3aec432bb08b81ebbd60a5a
+#1386  S4 reducer engineering code head
+  7e540e6617decd23e3aec432bb08b81ebbd60a5a
 
-#1391  S5 pressure/Bourdon
-  current PR head: 75407da9f5c6a7081ad803e67741f3f4255a9d81
-  engineering code head: b62bfce16bf32e23e26560c68959ee03924377da
+#1391  S5 pressure/Bourdon engineering code head
+  b62bfce16bf32e23e26560c68959ee03924377da
 ```
+
+Latest live PR heads observed from GitHub during this grounding were:
+
+```text
+#1386 live PR head = 02428d155fe929ed8bce73a966e333bfd9b0d921
+#1391 live PR head = 75407da9f5c6a7081ad803e67741f3f4255a9d81
+```
+
+Those mutable PR heads are **not** embedded as authority in the manifest. Future agents must re-ground them from GitHub. This avoids a report-only commit making the promotion checkpoint stale.
 
 PR #1341 @ `dd2d9d1ba9ede41c82c8d6707181c61f679b5549` is functionally carried forward but remains open/draft and owner-controlled.
 
@@ -80,9 +87,15 @@ releaseEligible = false
 engineeringQualificationComplete = false
 ```
 
-It pins the implemented ancestry, #1341 carry-forward status, current S4/S5 prerequisite heads, their engineering-code heads, Issue #54, Issue #1402, historical Phase 6I ineligibility, and owner-only merge authority.
+It pins the implemented ancestry, #1341 carry-forward status, stable S4/S5 **engineering code heads**, Issue #54, Issue #1402, historical Phase 6I ineligibility, and owner-only merge authority.
 
-The checker imports the live `PRODUCTION_CAPABILITY_PROFILE` and fails if the manifest and production truth diverge.
+For S4/S5 it explicitly declares:
+
+```text
+livePrHeadMustBeGroundedFromGithub = true
+```
+
+Therefore report-only recovery commits do not require manifest churn. The checker imports the live `PRODUCTION_CAPABILITY_PROFILE` and fails if the manifest and production truth diverge.
 
 It is executed directly by the S7 workflow and imported by `scripts/linear-piping-analysis-consumer-check.mjs`, so the governed consumer aggregate also checks the promotion checkpoint.
 
@@ -108,7 +121,7 @@ REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED
 REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED
 ```
 
-Its current evidence scaffold is:
+Its evidence scaffold is:
 
 ```text
 scripts/lfea-s4-reducer-parity-evidence-template.mjs
@@ -175,17 +188,17 @@ It does not qualify S4/S5 and does not replace the external evidence issue or a 
 
 ## Exact-head validation truth
 
-Current manifest/checker code head:
+Current stable-manifest/checker code head:
 
 ```text
-ef02c9d3123f26c5e16706f655b73ac48c4a6108
+2edd280115425ddf2d6908151d0413bad80376f0
 ```
 
 S7 workflow:
 
 ```text
-run = 32706453716
-job = 97368482752
+run = 32706798512
+job = 97369511076
 conclusion = failure
 steps = null
 ```
@@ -193,11 +206,11 @@ steps = null
 Integrated workflow:
 
 ```text
-run = 32706453737
-deterministic job = 97368483001
+run = 32706798497
+deterministic job = 97369510871
 conclusion = failure
 steps = null
-real BM4_L job = 97368492850
+real BM4_L job = 97369521706
 conclusion = skipped
 ```
 
@@ -231,13 +244,13 @@ Observed movement from the prior grounding is EMP.1 WRC/CAUx work with no identi
 | S7 disclosure design | PASS — SOURCE_INSPECTION | checker retained |
 | S0 guard carry-forward | PASS_AFTER_FIX — SOURCE_INSPECTION | guard + aggregate import |
 | promotion anti-drift | PASS — SOURCE_INSPECTION | S2/S3/S6 and S4/S5 locks |
-| stack manifest | PASS_AFTER_REFRESH — SOURCE_INSPECTION | current prerequisite heads + profile/release locks |
-| S4 scaffold binding | PASS — SOURCE_INSPECTION | current head `2fc49e5f...`, engineering head `7e540e66...`, draft-only scaffold |
-| S5 scaffold binding | PASS — SOURCE_INSPECTION | current head `75407da9...`, engineering head `b62bfce1...`, draft-only scaffold |
+| stack manifest | PASS_AFTER_FIX — SOURCE_INSPECTION | stable engineering heads; live PR heads re-grounded externally |
+| S4 scaffold binding | PASS — SOURCE_INSPECTION | engineering head `7e540e66...`, draft-only scaffold |
+| S5 scaffold binding | PASS — SOURCE_INSPECTION | engineering head `b62bfce1...`, draft-only scaffold |
 | Issue #1402 binding | PASS — SOURCE_INSPECTION | S4/S5 point to one external evidence work package |
-| S7 exact-head runtime | NOT_RUN | run 32706453716 / steps null |
-| integrated exact-head runtime | NOT_RUN | run 32706453737 / steps null |
-| real BM4_L child | NOT_RUN — DEPENDENCY_SKIPPED | job 97368492850 |
+| S7 exact-head runtime | NOT_RUN | run 32706798512 / steps null |
+| integrated exact-head runtime | NOT_RUN | run 32706798497 / steps null |
+| real BM4_L child | NOT_RUN — DEPENDENCY_SKIPPED | job 97369521706 |
 | S4 CAESAR parity | UNRESOLVED | Issue #1402 |
 | S5 CAESAR parity | UNRESOLVED | Issue #1402 |
 | release eligibility | BLOCKED | `BLOCKED_NOT_RELEASE_CANDIDATE` |
@@ -276,10 +289,10 @@ Observed movement from the prior grounding is EMP.1 WRC/CAUx work with no identi
 2. What exact heads define #1348 → #1395 → #1396 ancestry?
 3. Why is #1341 functionally subsumed but still open?
 4. Why can bend/tee implementation flags be true while source cases remain approximate?
-5. What three independent S4 authority questions remain, and which current prerequisite head owns their intake scaffold?
-6. Why are Bourdon, bend pressure stiffening and axial thrust separate S5 authorities, and which current prerequisite head owns the scope-aware scaffold?
+5. What three independent S4 authority questions remain, and which engineering code head owns their scaffold implementation?
+6. Why are Bourdon, bend pressure stiffening and axial thrust separate S5 authorities, and which engineering code head owns the scope-aware scaffold?
 7. Why must both generated scaffolds report `DRAFT_NOT_QUALIFIED`?
-8. What does Issue #1402 collect and what can it not authorize?
+8. Why does the manifest refuse to pin mutable S4/S5 live PR heads?
 9. Why are the current workflow failures classified NOT_RUN rather than engineering FAIL?
 10. What two gates must close before complete promotion qualification can be claimed?
 
@@ -293,4 +306,5 @@ Takeover threshold: all ten must be answerable without treating NOT_RUN as PASS 
 - Repeated hosted jobs failed before step creation and remain Issue #54.
 - A fail-closed machine-readable stack manifest was added and bound to the live capability profile.
 - Issue #1402 was created as the single controlled CAESAR evidence work package for S4/S5.
-- S4/S5 prerequisite PRs added fail-closed evidence scaffold generators; the integration manifest was refreshed to their current heads and now asserts scaffold status remains `DRAFT_NOT_QUALIFIED`.
+- S4/S5 prerequisite PRs added fail-closed evidence scaffold generators.
+- The manifest was corrected to pin stable engineering code heads and require live PR heads to be re-grounded from GitHub, avoiding report-only self-reference/staleness.

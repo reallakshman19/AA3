@@ -28,6 +28,12 @@ function runPlaywright(args) {
   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
 }
 
+// Issue #1371 series-order guard. Before PR-B is present this reports
+// NOT_APPLICABLE. On the intended A -> B -> C -> D integration head it must
+// rebuild the LAFEA.3 governed parents from the edited source itself and prove
+// all physical restraints/load attachments remain source-faithful.
+runNodeScript('scripts/lafea1371-pr-b-merge-order-guard.mjs');
+
 // Issue #1371 PR-D anti-drift gate. This is a test-only Node prerequisite
 // carried by the existing Chromium qualification entrypoint; it adds no new
 // browser contract or workflow authority.

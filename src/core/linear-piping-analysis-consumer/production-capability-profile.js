@@ -12,7 +12,7 @@ export const PRODUCTION_CAPABILITY_PROFILE = Object.freeze({
   schema: PRODUCTION_CAPABILITY_PROFILE_SCHEMA,
   profileId: 'LFEA_PRODUCTION_CAPABILITY_R1',
   bendExactMechanics: true,
-  teeExactMechanics: false,
+  teeExactMechanics: true,
   reducerExactMechanics: false,
   pressureStiffening: false,
   pressureAxialThrust: false,
@@ -44,6 +44,25 @@ export function productionBendSourceEligible(segment) {
     && segment.meta.bendComputedRadius > 0;
 }
 
+/**
+ * Minimum source-level eligibility for exact tee mechanics. The production
+ * junction compiler performs the stronger three-leg/topology/state checks.
+ * TYPE=5 weldolets are intentionally excluded until independently qualified.
+ * A TYPE=3 declaration must name an endpoint of the segment that carries it;
+ * otherwise the source record does not establish custody of that junction.
+ */
+export function productionTeeSourceEligible(segment) {
+  const endpoints = new Set([
+    String(segment?.startNodeId ?? ''),
+    String(segment?.endNodeId ?? ''),
+  ]);
+  return (segment?.meta?.analysis?.sifs ?? []).some((sif) =>
+    Number(sif.typeCode) === 3
+      && sif.nodeId !== null
+      && sif.nodeId !== undefined
+      && endpoints.has(String(sif.nodeId)));
+}
+
 export function productionAuthorizedPressureEffects(profile) {
   const resolved = profile === undefined ? PRODUCTION_CAPABILITY_PROFILE : profile;
   return Object.freeze({
@@ -54,12 +73,7 @@ export function productionAuthorizedPressureEffects(profile) {
   });
 }
 
-/**
- * Return the currently declared approximation for a component. For BEND, a
- * globally enabled compiler still requires source-qualified tangent geometry;
- * unresolved/internal-station bends therefore remain disclosed as straight
- * chords instead of being falsely reported exact.
- */
+/** Return the current declared approximation, preserving source-level gates. */
 export function productionComponentLimitation(componentKind, profile, segment) {
   const resolved = profile === undefined ? PRODUCTION_CAPABILITY_PROFILE : profile;
   if (componentKind === 'BEND') {
@@ -71,7 +85,9 @@ export function productionComponentLimitation(componentKind, profile, segment) {
     return resolved.reducerExactMechanics ? null : 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION';
   }
   if (componentKind === 'TEE') {
-    return resolved.teeExactMechanics ? null : 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY';
+    return resolved.teeExactMechanics && (segment === undefined || productionTeeSourceEligible(segment))
+      ? null
+      : 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY';
   }
   return null;
 }

@@ -32,6 +32,13 @@ export function componentLedgerRow(modelElement, owner, contribution) {
     flexibilityFactor: component.flexibility?.factor ?? null,
     flexibilityGeometryBasis: component.flexibility?.geometryBasis ?? null,
     flexibilityDoubleCountGuardAccepted: component.flexibility?.doubleCountGuard?.accepted ?? false,
+    branchModifierApplied: false,
+    branchJunctionNodeId: null,
+    branchRole: null,
+    branchFactorResultSemanticHash: null,
+    branchSpringRule: null,
+    branchRotationalSpringCount: 0,
+    branchRigidOffset: null,
   });
 }
 
@@ -42,7 +49,9 @@ export function frameLedgerRow(
   axes,
   distributedByElement,
   temperatureByElement,
+  branchModifier,
 ) {
+  const modifier = branchModifier === undefined ? null : branchModifier;
   return Object.freeze({
     elementId: modelElement.elementId,
     nodeI: modelElement.nodeI,
@@ -70,6 +79,13 @@ export function frameLedgerRow(
     flexibilityFactor: null,
     flexibilityGeometryBasis: null,
     flexibilityDoubleCountGuardAccepted: false,
+    branchModifierApplied: modifier !== null,
+    branchJunctionNodeId: modifier?.junctionNodeId ?? null,
+    branchRole: modifier?.role ?? null,
+    branchFactorResultSemanticHash: modifier?.factorResultSemanticHash ?? null,
+    branchSpringRule: modifier?.springRule ?? null,
+    branchRotationalSpringCount: modifier?.rotationalSprings?.length ?? 0,
+    branchRigidOffset: modifier?.rigidOffset ?? null,
   });
 }
 
@@ -128,15 +144,26 @@ export function requireCapabilityProfile(value) {
   return Object.freeze({ ...value });
 }
 
-export function effectiveStiffnessHash(compilation, capabilityProfileHash, factorAuthority, elementLedger) {
+export function effectiveStiffnessHash(
+  compilation,
+  capabilityProfileHash,
+  bendFactorAuthority,
+  branchFactorAuthority,
+  elementLedger,
+) {
   return semanticHash({
     mechanicalStiffnessStateHash: compilation.stiffnessStateHash,
     capabilityProfileHash,
-    bendFactorAuthoritySemanticHash: factorAuthority?.semanticHash ?? null,
+    bendFactorAuthoritySemanticHash: bendFactorAuthority?.semanticHash ?? null,
+    branchFactorAuthoritySemanticHash: branchFactorAuthority?.semanticHash ?? null,
     elementStiffness: elementLedger.map((row) => ({
       elementId: row.elementId,
       authorityKind: row.authorityKind,
       globalStiffnessHash: row.globalStiffnessHash,
+      branchModifierApplied: row.branchModifierApplied,
+      branchJunctionNodeId: row.branchJunctionNodeId,
+      branchRole: row.branchRole,
+      branchFactorResultSemanticHash: row.branchFactorResultSemanticHash,
     })),
   });
 }

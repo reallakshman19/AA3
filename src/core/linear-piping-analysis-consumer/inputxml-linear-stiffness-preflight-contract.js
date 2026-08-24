@@ -5,13 +5,14 @@ import { requireInputXmlLinearPhysicalCasePreparation } from './inputxml-linear-
 import {
   requireInputXmlProductionBendFactorAuthority,
 } from './inputxml-production-bend-factor-authority.js';
+import {
+  requireInputXmlProductionBranchFactorAuthority,
+} from './inputxml-production-branch-factor-authority.js';
 
 export const INPUTXML_LINEAR_STIFFNESS_PREFLIGHT_SCHEMA =
   'fea-inputxml-linear-stiffness-preflight/v1';
 export const INPUTXML_LINEAR_STIFFNESS_PREFLIGHT_STATUSES = Object.freeze([
-  'PASS',
-  'WARN',
-  'BLOCK',
+  'PASS', 'WARN', 'BLOCK',
 ]);
 
 const HASH_PATTERN = /^fnv1a64:[0-9a-f]{16}$/u;
@@ -62,8 +63,11 @@ export function stiffnessAssessmentProjection(value) {
     effectiveStiffnessStateHash: value.effectiveStiffnessStateHash,
     productionCapabilityProfileHash: value.productionCapabilityProfileHash,
     bendFactorAuthority: value.bendFactorAuthority,
+    branchFactorAuthority: value.branchFactorAuthority,
     bendExactMechanicsApplied: value.bendExactMechanicsApplied,
+    teeExactMechanicsApplied: value.teeExactMechanicsApplied,
     eligibleBendCount: value.eligibleBendCount,
+    eligibleTeeJunctionCount: value.eligibleTeeJunctionCount,
     frameElementProfileSemanticHash: value.frameElementProfileSemanticHash,
     solverProfileSemanticHash: value.solverProfileSemanticHash,
     genericAssessment: {
@@ -106,26 +110,31 @@ function requireDraft(value) {
     }
   }
   for (const key of [
-    'stiffnessStateHash',
-    'effectiveStiffnessStateHash',
-    'productionCapabilityProfileHash',
+    'stiffnessStateHash', 'effectiveStiffnessStateHash', 'productionCapabilityProfileHash',
   ]) {
     if (!HASH_PATTERN.test(value[key])) {
       throw new TypeError(`InputXML stiffness preflight ${key} is not a semantic hash.`);
     }
   }
   if (typeof value.bendExactMechanicsApplied !== 'boolean'
-    || !Number.isInteger(value.eligibleBendCount) || value.eligibleBendCount < 0) {
-    throw new TypeError('InputXML stiffness preflight bend authority summary is invalid.');
+    || typeof value.teeExactMechanicsApplied !== 'boolean'
+    || !Number.isInteger(value.eligibleBendCount) || value.eligibleBendCount < 0
+    || !Number.isInteger(value.eligibleTeeJunctionCount) || value.eligibleTeeJunctionCount < 0) {
+    throw new TypeError('InputXML stiffness preflight component authority summary is invalid.');
   }
   if (value.bendFactorAuthority !== null) {
     requireInputXmlProductionBendFactorAuthority(value.bendFactorAuthority);
   }
-  if (value.bendExactMechanicsApplied && value.bendFactorAuthority === null) {
-    throw new TypeError('Exact bend mechanics cannot be retained without bend factor authority.');
+  if (value.branchFactorAuthority !== null) {
+    requireInputXmlProductionBranchFactorAuthority(value.branchFactorAuthority);
   }
-  if (value.bendExactMechanicsApplied && value.eligibleBendCount < 1) {
-    throw new TypeError('Exact bend mechanics claims no eligible bend source.');
+  if (value.bendExactMechanicsApplied
+    && (value.bendFactorAuthority === null || value.eligibleBendCount < 1)) {
+    throw new TypeError('Exact bend mechanics lacks source/factor authority.');
+  }
+  if (value.teeExactMechanicsApplied
+    && (value.branchFactorAuthority === null || value.eligibleTeeJunctionCount < 1)) {
+    throw new TypeError('Exact tee mechanics lacks source/factor authority.');
   }
 
   const generic = requireLinearStiffnessPreflight(value.genericPreflight);
@@ -149,13 +158,21 @@ function requireDraft(value) {
       || typeof row.frameElementSemanticHash !== 'string'
       || typeof row.globalStiffnessHash !== 'string'
       || !Array.isArray(row.stiffnessRelevantLimitationCodes)
-      || !['FRAME_ELEMENT', 'PIPING_COMPONENT'].includes(row.authorityKind)) {
+      || !['FRAME_ELEMENT', 'PIPING_COMPONENT'].includes(row.authorityKind)
+      || typeof row.branchModifierApplied !== 'boolean') {
       throw new TypeError('InputXML stiffness preflight element ledger is malformed or duplicated.');
     }
     if (row.authorityKind === 'PIPING_COMPONENT'
       && (typeof row.pipingComponentSemanticHash !== 'string'
         || row.flexibilityDoubleCountGuardAccepted !== true)) {
       throw new TypeError('InputXML stiffness preflight component ledger lacks qualified flexibility evidence.');
+    }
+    if (row.branchModifierApplied
+      && (row.authorityKind !== 'FRAME_ELEMENT'
+        || typeof row.branchJunctionNodeId !== 'string'
+        || !['RUN', 'BRANCH'].includes(row.branchRole)
+        || typeof row.branchFactorResultSemanticHash !== 'string')) {
+      throw new TypeError('InputXML stiffness preflight branch modifier evidence is incomplete.');
     }
     ids.add(row.elementId);
   }
@@ -178,8 +195,11 @@ function semanticProjection(value) {
     effectiveStiffnessStateHash: value.effectiveStiffnessStateHash,
     productionCapabilityProfileHash: value.productionCapabilityProfileHash,
     bendFactorAuthority: value.bendFactorAuthority,
+    branchFactorAuthority: value.branchFactorAuthority,
     bendExactMechanicsApplied: value.bendExactMechanicsApplied,
+    teeExactMechanicsApplied: value.teeExactMechanicsApplied,
     eligibleBendCount: value.eligibleBendCount,
+    eligibleTeeJunctionCount: value.eligibleTeeJunctionCount,
     frameElementProfileSemanticHash: value.frameElementProfileSemanticHash,
     solverProfileSemanticHash: value.solverProfileSemanticHash,
     genericPreflightSemanticHash: value.genericPreflightSemanticHash,
@@ -207,7 +227,6 @@ function inputXmlStatus(status) {
   if (status === 'CONDITIONAL') return 'WARN';
   return 'BLOCK';
 }
-
 function statusAvailability(status) {
   if (status === 'PASS') return 'QUALIFIED';
   if (status === 'WARN') return 'CONDITIONAL';

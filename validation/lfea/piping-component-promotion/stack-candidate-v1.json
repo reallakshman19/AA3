@@ -55,7 +55,8 @@
         "REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED",
         "REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED"
       ],
-      "externalEvidenceRequired": true
+      "externalEvidenceRequired": true,
+      "externalEvidenceIssue": 1402
     },
     {
       "stage": "S5",
@@ -72,9 +73,16 @@
         "L19_L20_ELBOW_STIFFENING_PRESSURE_SELECTOR_UNRESOLVED",
         "PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY"
       ],
-      "externalEvidenceRequired": true
+      "externalEvidenceRequired": true,
+      "externalEvidenceIssue": 1402
     }
   ],
+  "externalEvidenceGate": {
+    "issue": 1402,
+    "status": "OPEN_BLOCKING_S4_S5_NUMERICAL_PROMOTION",
+    "evidenceCollectionMayProceedWhileCiIssue54Open": true,
+    "acceptedEvidenceMayDirectlyAuthorizeProduction": false
+  },
   "infrastructureGate": {
     "issue": 54,
     "status": "OPEN_BLOCKING",

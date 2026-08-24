@@ -88,6 +88,7 @@ function requireRun(run) {
   requireText(run.caesarVersion, 'run.caesarVersion');
   requireText(run.build, 'run.build');
   for (const field of ['jobFileHash', 'inputSourceHash', 'outputFileHash']) requireHash(run[field], `run.${field}`);
+  requireRawArtifacts(run.rawArtifacts);
   for (const field of ['activePipingCode', 'activateBourdonEffects', 'usePressureStiffeningOnBends',
     'elbowStiffeningPressureSelector', 'reportLocator', 'artifactLocator', 'observer', 'observationDate']) {
     requireText(run[field], `run.${field}`);
@@ -107,6 +108,24 @@ function requireRun(run) {
   }
   requireFamilySettings(run);
   return run.runId;
+}
+
+function requireRawArtifacts(value) {
+  requireRecord(value, 'run.rawArtifacts');
+  for (const field of ['jobFile', 'inputSource', 'outputFile']) {
+    requireSafeRelativePath(value[field], `run.rawArtifacts.${field}`);
+  }
+}
+
+function requireSafeRelativePath(value, field) {
+  requireText(value, field);
+  const normalized = value.replaceAll('\\', '/');
+  const segments = normalized.split('/');
+  if (normalized.startsWith('/')
+    || /^[A-Za-z]:\//u.test(normalized)
+    || segments.some((segment) => segment === '' || segment === '.' || segment === '..')) {
+    fail('S5_PRESSURE_RAW_ARTIFACT_PATH_INVALID', { field, value });
+  }
 }
 
 function requirePressureFields(fields, family) {

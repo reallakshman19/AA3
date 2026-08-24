@@ -59,9 +59,15 @@ export function validateS4ReducerParityEvidence(value) {
   requireUnique(runs.map((run) => requireRun(run)));
   requirePairedCoverage(runs);
   requireCodeBoundaryCoverage(runs);
-  requireCandidateComparisons(value.candidateComparisons);
+  const acceptedCandidate = requireCandidateComparisons(value.candidateComparisons);
   requireRecord(value.decisions, 'decisions');
   requireDecision(value.decisions.sectionSamplingRule, SECTION_CANDIDATES, 'sectionSamplingRule');
+  if (value.decisions.sectionSamplingRule !== acceptedCandidate) {
+    fail('S4_REDUCER_SECTION_DECISION_COMPARISON_MISMATCH', {
+      decision: value.decisions.sectionSamplingRule,
+      acceptedCandidate,
+    });
+  }
   for (const field of ['metalGravityRule', 'fluidGravityRule', 'insulationGravityRule']) {
     if (!GRAVITY_RULES.has(value.decisions[field])) fail('S4_REDUCER_GRAVITY_DECISION_INVALID', { field, value: value.decisions[field] });
   }
@@ -130,6 +136,7 @@ function requireCandidateComparisons(value) {
   }
   const accepted = [...byId.values()].filter((row) => row.accepted);
   if (accepted.length !== 1) fail('S4_REDUCER_SECTION_RULE_NOT_UNIQUE', { accepted: accepted.map((row) => row.candidateId) });
+  return accepted[0].candidateId;
 }
 
 function requireAcceptance(value) {

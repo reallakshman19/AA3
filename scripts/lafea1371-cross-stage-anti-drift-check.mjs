@@ -18,6 +18,7 @@ import {
 import { createLafeaSimulatedShellMidsurfaceEvidence } from '../src/workspace/lafea-simulated-shell-midsurface-provider.js';
 import { issueLafeaSourceAuthority } from '../src/workspace/lafea-source-authority.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
+import { createLafeaLiveWorkbenchViewportModel } from '../src/workspace/lafea-live-workbench-viewport.js';
 import { createLafeaWorkbenchOrchestratorStore } from '../src/workspace/lafea-workbench-orchestrator-store.js';
 
 const CONTINUUM_ROUTE = 'DOMAIN_FIRST_COMPILED_SOLVER_MODEL';
@@ -34,6 +35,7 @@ assert.equal(continuumA.snapshot.meshHash, continuumB.snapshot.meshHash);
 assert.equal(continuumA.snapshot.meshArtifactHash, continuumB.snapshot.meshArtifactHash);
 assert.equal(continuumA.snapshot.solverModelHash, continuumB.snapshot.solverModelHash);
 assert.equal(continuumA.snapshot.compiledExecutionHash, continuumB.snapshot.compiledExecutionHash);
+const continuumViewportIdentity = assertViewportRetainedMeshIdentity(continuumA.stage, 137103);
 
 const baselineCase = continuumA.stage.execution.result.loadCaseResults
   .find((row) => row.loadCaseId === 'CASE-A');
@@ -83,6 +85,9 @@ assert.equal(continuumAfterSnapshot.meshHash, continuumA.snapshot.meshHash);
 assert.notEqual(continuumAfterSnapshot.meshArtifactHash, continuumA.snapshot.meshArtifactHash);
 assert.notEqual(continuumAfterSnapshot.solverModelHash, continuumA.snapshot.solverModelHash);
 assert.notEqual(continuumAfterSnapshot.compiledExecutionHash, continuumA.snapshot.compiledExecutionHash);
+const editedContinuumViewportIdentity = assertViewportRetainedMeshIdentity(continuumAfterEdit, 137113);
+assert.equal(editedContinuumViewportIdentity.meshHash, continuumViewportIdentity.meshHash);
+assert.notEqual(editedContinuumViewportIdentity.artifactHash, continuumViewportIdentity.artifactHash);
 
 const editedCase = continuumAfterEdit.execution.result.loadCaseResults
   .find((row) => row.loadCaseId === 'CASE-A');
@@ -104,6 +109,7 @@ assert.equal(shellA.snapshot.meshHash, shellB.snapshot.meshHash);
 assert.equal(shellA.snapshot.meshArtifactHash, shellB.snapshot.meshArtifactHash);
 assert.equal(shellA.snapshot.solverModelHash, shellB.snapshot.solverModelHash);
 assert.equal(shellA.snapshot.compiledExecutionHash, shellB.snapshot.compiledExecutionHash);
+const shellViewportIdentity = assertViewportRetainedMeshIdentity(shellA.stage, 137104);
 
 const shellBeforeEdit = shellA.store.getState().stages['LAFEA.4'];
 shellA.store.setScalar('LAFEA.4.material.elasticModulus', 'MAT', String(MODULUS_AFTER));
@@ -117,7 +123,7 @@ const shellAfterProfileChange = shellB.store.getState().stages['LAFEA.4'];
 assertMeshChangeRevokesOldAuthority(shellBeforeProfileChange, shellAfterProfileChange);
 
 console.log(JSON.stringify({
-  schema: 'lafea1371-cross-stage-anti-drift-check/v1',
+  schema: 'lafea1371-cross-stage-anti-drift-check/v2',
   status: 'PASS',
   mechanicsPredictionBeforeExecution: {
     edit: `E ${MODULUS_BEFORE} -> ${MODULUS_AFTER} MPa`,
@@ -134,9 +140,11 @@ console.log(JSON.stringify({
       solverModelHash: continuumB.snapshot.solverModelHash,
       compiledExecutionHash: continuumB.snapshot.compiledExecutionHash,
     },
+    viewportRetainedMeshIdentity: continuumViewportIdentity,
     beforeEdit: continuumA.snapshot,
     invalidatedSourceHash: continuumInvalidated.sourceAuthority.sourceHash,
     afterRegeneration: continuumAfterSnapshot,
+    viewportAfterRegeneration: editedContinuumViewportIdentity,
     meshContentHashLegallyReused: continuumAfterSnapshot.meshHash === continuumA.snapshot.meshHash,
     meshEvidenceArtifactReissued: continuumAfterSnapshot.meshArtifactHash !== continuumA.snapshot.meshArtifactHash,
     baselineCaseA: {
@@ -152,6 +160,7 @@ console.log(JSON.stringify({
   },
   lafea4: {
     deterministicReplay: shellB.snapshot,
+    viewportRetainedMeshIdentity: shellViewportIdentity,
     sourceEditOldAuthorityRevoked: true,
     meshProfileEditOldAuthorityRevoked: true,
   },
@@ -218,6 +227,30 @@ async function runShellSample(suffix, profile) {
     resultAccepted: (result) => assert.equal(result.qualification?.accepted, true),
   });
   return { store, stage, normalized, authority, parent, profile, snapshot };
+}
+
+function assertViewportRetainedMeshIdentity(stage, sceneRevision) {
+  const evidence = stage.retainedAnalysisMeshEvidenceV2;
+  assert.ok(evidence, `${stage.stageId} retained v2 mesh evidence required`);
+  const viewport = createLafeaLiveWorkbenchViewportModel({
+    stageId: stage.stageId,
+    document: stage.document,
+    lifecycle: stage.lifecycle,
+    lifecycleBinding: stage.lifecycleBinding,
+    sceneRevision,
+    renderPacket: null,
+    selection: null,
+    retainedMeshEvidence: evidence,
+    analysisMeshCustodyState: stage.analysisMeshCustodyProjection?.state ?? null,
+  });
+  assert.equal(viewport.retainedMeshIdentity.meshHash, evidence.meshHash,
+    `${stage.stageId} viewport content mesh hash must equal retained evidence meshHash`);
+  assert.equal(viewport.retainedMeshIdentity.artifactHash, evidence.artifactHash,
+    `${stage.stageId} viewport evidence artifact hash must remain separately observable`);
+  return Object.freeze({
+    meshHash: viewport.retainedMeshIdentity.meshHash,
+    artifactHash: viewport.retainedMeshIdentity.artifactHash,
+  });
 }
 
 function shellProfile(target, suffix) {

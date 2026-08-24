@@ -1,4 +1,4 @@
-# PR1396 work report — LFEA S7 UI/disclosure + integration anti-drift verification
+# PR1396 work report — LFEA S7 UI/disclosure + integration certification
 
 # CURRENT RECOVERY STATE — READ FIRST
 
@@ -17,80 +17,78 @@ PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1396
 STACK_BASE_PR: 1395
 STACK_BASE_HEAD: 2b4b4762973c84690b636eab8abe918e307d5dab
 BRANCH: agent/lfea-piping-promotion-s7-ui-disclosure-20260824
-CODE_HEAD_VALIDATION_BASIS: f936cd58519240975603e80c6b4babb658faef2f
+CODE_HEAD_VALIDATION_BASIS: ee9c49f622ebc98af5ffeb911c2fe6bcaecd97a8
 MAIN_HEAD_LAST_GROUNDED: e985b50d81d0d241db27313562c8cc12cd7cc27d
-CURRENT_STAGE: S7 UI/disclosure, promotion anti-drift, and carried-forward S0 capability guard implemented without production src changes
+CURRENT_STAGE: S7 UI/disclosure, promotion anti-drift, S0 guard carry-forward and exact-head promotion-stack certification declared without production src changes
 NUMERICAL_MUTATION_ALLOWED: false
-CURRENT_BLOCKER: GitHub Actions completes before checkout/step 1; all exact-head execution remains NOT_RUN
-HIGHEST_RISK: merging a promoted capability stack after losing source-specific eligibility, builder reachability, single-owner mechanics, or the original S0 disclosure guard
-EXACT_NEXT_ACTION: keep draft; recover executable CI under issue #54, then qualify #1348/#1395/#1396 in ancestry order before any owner-authorized merge
+CURRENT_BLOCKER: GitHub Actions completes before checkout/step 1; integrated deterministic and real-source qualification remain NOT_RUN
+HIGHEST_RISK: merging promoted capability ancestry without executable exact-head evidence or after source-gating/single-owner protections drift
+EXACT_NEXT_ACTION: keep draft; recover Actions execution under issue #54, then run the integrated stack workflow and ancestor stage workflows before any owner-authorized merge
 ```
 
-## Assignment and stage authority
+## Assignment and authority
 
-Stage S7 from `docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md` is numerically inert. The same plan requires promotion-wide anti-drift after S7. Integration review also found that the older S0-only PR #1341 contained one unique capability guard that had not been carried into #1348. This PR now carries that guard forward, adapted to the current S3/S6 source-gated semantics.
+Stage S7 from `docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md` is numerically inert. The governing plan also requires promotion-wide anti-drift. Integration review additionally found one S0 capability guard in older PR #1341 that had not been carried into the promoted ancestry. All of those verification obligations now live on this S7 descendant without changing production `src/` files.
 
-No production `src/` file is modified by this PR. No merge is authorized by this report.
+No merge is authorized by this report.
 
-## Effective S7 / integration diff
+## Effective integration diff
 
-Against PR #1395 head `2b4b4762973c84690b636eab8abe918e307d5dab`, the changed-file surface is six verification/recovery files:
+Against PR #1395 head `2b4b4762973c84690b636eab8abe918e307d5dab`, the effective surface is seven verification/recovery/workflow files:
 
 1. `.github/workflows/lfea-piping-promotion-s7-ui.yml`
-2. `agents/PR1396_workreport.md`
-3. `scripts/lfea-s7-component-ui-disclosure-check.mjs`
-4. `scripts/lfea-piping-component-promotion-anti-drift-check.mjs`
-5. `scripts/lfea-production-capability-profile-check.mjs`
-6. `scripts/linear-piping-analysis-consumer-check.mjs`
+2. `.github/workflows/lfea-piping-component-promotion-stack.yml`
+3. `agents/PR1396_workreport.md`
+4. `scripts/lfea-s7-component-ui-disclosure-check.mjs`
+5. `scripts/lfea-piping-component-promotion-anti-drift-check.mjs`
+6. `scripts/lfea-production-capability-profile-check.mjs`
+7. `scripts/linear-piping-analysis-consumer-check.mjs`
 
-There is no production `src/` change. Any numerical movement attributable to S7 is a falsifier.
+There is no production `src/` change. Any numerical result movement attributable to S7 is a falsifier.
 
-## S7 governed disclosure verification
+## Governed S7 disclosure
 
-`scripts/lfea-s7-component-ui-disclosure-check.mjs` verifies the governed data path rather than rendered wording:
+`scripts/lfea-s7-component-ui-disclosure-check.mjs` verifies:
 
-- source-qualified TYPE=3 welding tee clears `MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE`;
-- TYPE=5 weldolet retains the tee approximation finding;
-- source-qualified exact bend clears `MODEL_BEND_EXACT_MECHANICS_UNAVAILABLE`;
-- unresolved bend/tee plain-language and suggested-action mappings remain registered;
-- SOURCE and ANALYSIS geometry remain separate authority records;
-- bend retopology may increase ANALYSIS nodes/spans without changing SOURCE identity/count evidence.
+- exact source-qualified TYPE=3 welding tee clears the generic tee-flexibility finding;
+- TYPE=5 weldolet remains approximate;
+- exact source-qualified bend clears the generic bend finding;
+- unresolved bend/tee help and suggested-action vocabulary remains available;
+- SOURCE and ANALYSIS geometry remain independent records;
+- S2 retopology may increase ANALYSIS nodes/spans without rewriting SOURCE identity/count evidence.
 
 ## Promotion-wide anti-drift
 
-`scripts/lfea-piping-component-promotion-anti-drift-check.mjs` locks the implemented S1-S7 architecture.
+`scripts/lfea-piping-component-promotion-anti-drift-check.mjs` locks the implemented architecture:
 
-### S2 custody
+### S2
 
-- structural bindings use conditioned `segment.startNodeId` / `segment.endNodeId`;
-- source-parent endpoints may not return to the structural binding path;
-- `retopologiseDeclaredBends`, `requireBendRetopologyBindingsResolved` and `requireExplainedConditioning` remain reachable.
+- conditioned structural endpoints must come from produced spans;
+- parent source endpoints cannot silently return to the structural binding path;
+- bend retopology, binding resolution and explained-conditioning gates remain reachable.
 
-### S3 exact bend
+### S3
 
 When `bendExactMechanics=true`:
 
-- governed production element authority reaches `compileInputXmlProductionBendComponents`;
-- the bend path reaches `compilePipingComponent`;
+- governed production reaches `compileInputXmlProductionBendComponents` and `compilePipingComponent`;
 - source tangent/arc eligibility remains mandatory;
-- factor basis remains `ARC_GEOMETRY_EXCLUDED_V1`;
-- S3 still rejects pressure-corrected factors;
-- component convergence and double-count/single-owner evidence remain required.
+- `ARC_GEOMETRY_EXCLUDED_V1` remains required;
+- S3 rejects pressure-corrected factors;
+- convergence, double-count and one-owner flexibility evidence remain mandatory.
 
-### S6 exact welding tee
+### S6
 
 When `teeExactMechanics=true`:
 
-- governed element authority reaches `compileInputXmlProductionBranchModifiers`;
-- branch roles use `classifyBranchLegs`;
-- directional flexibility uses `deriveB31JDirectionalBranchEndModifiers`;
-- TYPE=3 is the exact source eligibility and TYPE=5 is not widened;
-- bend/tee overlap and run OD/wall ambiguity remain fail-closed;
-- one element cannot receive both bend-component and tee-modifier ownership.
+- governed production reaches `compileInputXmlProductionBranchModifiers`;
+- topology uses `classifyBranchLegs`;
+- flexibility uses `deriveB31JDirectionalBranchEndModifiers`;
+- TYPE=3 is exact-source eligible; TYPE=5 is not widened;
+- run OD/wall ambiguity and bend/tee overlap remain blocked;
+- one structural carrier cannot receive duplicate component ownership.
 
-### S4/S5 locked state
-
-The integrated stack deliberately requires:
+### S4/S5 current locked truth
 
 ```text
 reducerExactMechanics = false
@@ -99,69 +97,88 @@ pressureAxialThrust = false
 pressureBourdon = false
 ```
 
-A future qualified S4/S5 numerical PR must intentionally revise this guard in the same stage. An accidental flag flip fails.
+A future qualified S4/S5 numerical stage must intentionally revise these assertions together with its new evidence. An accidental flag flip fails the guard.
 
-## S0 guard carry-forward / PR #1341 audit
+## S0 guard carry-forward / PR #1341
 
-PR #1341 changed seven files. Its four production/disclosure files are already represented and evolved in #1348/#1395:
+PR #1341's production/disclosure implementation is already represented and evolved in the #1348/#1395 ancestry:
 
 - `production-capability-profile.js`
 - `inputxml-feature-inventory.js`
 - `generic-inputxml-solve-case.js`
 - `inputxml-linear-preparation-load-authorities.js`
 
-The integration audit found one unique functional guard missing from the promoted stack:
+The audit found its unique `scripts/lfea-production-capability-profile-check.mjs` and aggregate import were missing. They are now carried forward and adapted to current S3/S6 truth:
 
-- `scripts/lfea-production-capability-profile-check.mjs`
-- plus its import from `scripts/linear-piping-analysis-consumer-check.mjs`.
-
-This PR now carries that protection forward, updated for current truth:
-
-- bend exact implementation capability = true, but unqualified bend source still discloses approximation;
-- tee exact implementation capability = true, but TYPE=5 still discloses approximation;
+- implementation-level bend and tee exact flags are true;
+- an unqualified bend still discloses approximation;
+- TYPE=5 still discloses approximation;
 - reducer and S5 pressure mechanics remain false;
-- all capability consumers must use shared pressure-disclosure authority;
-- enabled bend and tee capabilities require retained benchmark scripts and governed production builder reachability;
-- the capability check must remain wired into `check:linear-piping-analysis-consumer` through the aggregate script.
+- pressure disclosure has one shared authority;
+- enabled bend/tee flags require retained benchmark scripts and governed production builder reachability;
+- the check remains wired through `scripts/linear-piping-analysis-consumer-check.mjs`, hence through existing `check:linear-piping-analysis-consumer`.
 
-**Disposition of #1341:** functionally subsumed on the #1396 descendant stack by source inspection, but still open/draft and owner-controlled. This report does not close, merge, or supersede #1341 administratively.
+**#1341 is functionally subsumed by the descendant stack by source inspection, but remains open/draft and owner-controlled. No administrative close/merge/supersession action is taken.**
 
-## Persistent workflow coverage
+## Integrated exact-head certification workflow
 
-`.github/workflows/lfea-piping-promotion-s7-ui.yml` now triggers on the S7/integration scripts, geometry adapters, aggregate consumer check and governed linear-piping consumer directory. It declares:
+Added `.github/workflows/lfea-piping-component-promotion-stack.yml` so one final descendant head can execute the complete implemented promotion chain when infrastructure recovers.
 
-1. syntax checks for S7, promotion and capability guards plus consumer aggregate;
-2. production capability profile guard;
-3. governed linear-piping consumer aggregate;
-4. S7 UI disclosure verification;
-5. promotion-wide engineering anti-drift;
-6. existing linear-piping consumer anti-drift;
-7. existing common Error Check contract;
-8. existing Model Review geometry contract.
+### Ubuntu deterministic chain
+
+- S0 production capability guard;
+- S1 tangent custody;
+- S2 bend retopology;
+- S3 factor-selection authority;
+- S3 production bend mechanics;
+- B3.21 B31J factor benchmark;
+- M047 tee rigid-thermal benchmark;
+- S6 production tee mechanics;
+- S7 governed disclosure;
+- promotion-wide anti-drift;
+- governed linear-piping consumer aggregate;
+- core consumer anti-drift;
+- ACCDB geometry regression.
+
+### Windows pinned-source chain
+
+After deterministic success only:
+
+- fetch exact Common `BM4_L.zip` at commit `3fe20c7db76feb6ea583fb658b67b3a55afd4fe3`;
+- gate ZIP bytes/SHA;
+- extract exactly `BM4_L.ACCDB`;
+- authenticate/install Microsoft ACE only if absent;
+- run the retained real-source S1 tangent + S2 retopology PowerShell qualification.
+
+This workflow does **not** qualify S4 or S5 and does not replace Phase 6I release evidence. It exists to qualify the implemented S0/S1/S2/S3/S6/S7 promotion ancestry at one exact head.
 
 ## CI / Issue #54 evidence
 
-The repository-wide pre-step infrastructure failure remains active and has been consolidated into Issue #54.
+The repository-wide pre-step infrastructure failure remains active.
 
-### Prior promotion-wide guard run
-
-```text
-run: 32680483733
-job: 97296191210
-code head: f41231c6b1d4d263a2826001c8750183cd0b6043
-steps: []
-```
-
-### Carried-forward S0 guard run
+### Carried-forward S0 guard head
 
 ```text
+head: f936cd58519240975603e80c6b4babb658faef2f
 run: 32680966223
 job: 97297487753
-code head: f936cd58519240975603e80c6b4babb658faef2f
 steps: []
 ```
 
-Both jobs completed before checkout. This is:
+### Integrated certification head
+
+```text
+head: ee9c49f622ebc98af5ffeb911c2fe6bcaecd97a8
+workflow: LFEA piping component promotion stack certification
+run: 32681178175
+deterministic job: 97298045771
+conclusion: failure
+steps: []
+real BM4_L job: 97298054035
+conclusion: skipped because deterministic parent never executed
+```
+
+Classification:
 
 ```text
 NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE
@@ -169,60 +186,64 @@ SOURCE_FAILURE_PROVEN: false
 PASS_PROVEN: false
 ```
 
-Issue #54 now contains the LFEA piping S1-S7 reproductions. The documented B7H self-hosted route is deliberately bounded to a different `C2D-LUG-PINHOLE -> LAFEA.3` pilot and has not been silently repurposed for piping qualification.
+Issue #54 now contains the S1-S7 piping reproductions. The existing B7H self-hosted route is intentionally bounded to a separate C2D-LUG-PINHOLE -> LAFEA.3 pilot and has not been silently repurposed.
+
+## Existing release policy relationship
+
+Repository Phase 6I Issue #60 is pinned to historical immutable candidate `617f7c2be0c65196a44bc88b6a2bb5ad3b5f1b54`. It cannot certify this unmerged promotion ancestry. After any future owner-authorized merge sequence, release qualification requires a new governed candidate/evidence decision; old-candidate Phase 6I evidence must not be reused for a changed production tree.
 
 ## Validation ledger
 
 | Check | State | Evidence / note |
 |---|---|---|
-| Stack base #1395 | PASS — GROUNDED | exact base head `2b4b4762973c84690b636eab8abe918e307d5dab` |
-| Effective integration scope | PASS — DIFF_INSPECTION | six files, no production `src/` modification |
-| S2 conditioned-endpoint custody | PASS — SOURCE_INSPECTION | current structural preparation |
-| S3 builder/source/double-count path | PASS — SOURCE_INSPECTION | current bend compiler + element authority |
-| S6 TYPE=3/topology/single-owner path | PASS — SOURCE_INSPECTION | current branch compiler + element authority |
-| S4/S5 capability state | PASS — SOURCE_INSPECTION | all blocked flags false |
-| #1341 production/disclosure implementation carry-forward | PASS — SOURCE_INSPECTION | equivalent/evolved shared profile consumers present |
-| #1341 unique capability guard carry-forward | PASS_AFTER_FIX — SOURCE_INSPECTION | adapted guard added and aggregate import restored |
-| S7 governed disclosure execution | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | no checkout |
-| capability guard execution | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | run 32680966223 / job 97297487753 |
-| consumer aggregate execution | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | same job did not start |
-| promotion anti-drift execution | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | no checkout |
-| existing consumer/Error Check/geometry contracts | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | no checkout |
+| Stack base #1395 | PASS — GROUNDED | `2b4b4762973c84690b636eab8abe918e307d5dab` |
+| Effective integration scope | PASS — DIFF_INSPECTION | seven files, no production `src/` modification |
+| S2 conditioned endpoint custody | PASS — SOURCE_INSPECTION | governed structural preparation |
+| S3 source/factor/single-owner path | PASS — SOURCE_INSPECTION | bend compiler + element authority |
+| S6 TYPE=3/topology/single-owner path | PASS — SOURCE_INSPECTION | branch compiler + element authority |
+| S4/S5 blocked flag truth | PASS — SOURCE_INSPECTION | exact reducer/pressure mechanics false |
+| #1341 production implementation carry-forward | PASS — SOURCE_INSPECTION | equivalent/evolved consumers present |
+| #1341 unique guard carry-forward | PASS_AFTER_FIX — SOURCE_INSPECTION | adapted guard + aggregate import restored |
+| integrated workflow path existence | PASS — SOURCE_INSPECTION | required stage scripts present on descendant branch |
+| integrated deterministic execution | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | run 32681178175 / job 97298045771 / `steps=[]` |
+| real BM4_L integrated execution | NOT_RUN — DEPENDENCY_SKIPPED_AFTER_PRE_STEP_FAILURE | job 97298054035 |
+| S7/capability/consumer/anti-drift execution | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | no checkout on exact heads |
 
 ## Stack and merge sequencing
 
-Current safe ancestry/order when qualification and owner authorization eventually exist:
+When executable qualification and owner authorization eventually exist:
 
 ```text
-#1348  S1-S3 + evolved S0 capability implementation
+#1348  S1-S3 + evolved S0 implementation
   -> #1395  S6 TYPE=3 tee/branch
-     -> #1396  S7 + global promotion/S0 carry-forward guards
+     -> #1396  S7 + S0/global anti-drift + integrated certification
 ```
 
 Parallel blocked prerequisites:
 
-- #1386 — S4 reducer prerequisite; exact S4 needs current-version CAESAR section sampling, gravity ownership and response parity.
-- #1391 — S5 pressure/Bourdon prerequisite on #1348; exact S5 needs isolated numerical parity and per-case Elbow Stiffening Pressure authority.
+- #1386 — S4 reducer prerequisite; exact S4 requires current-version CAESAR section sampling, gravity ownership and structural/thermal response parity.
+- #1391 — S5 pressure/Bourdon prerequisite on #1348; exact S5 requires isolated numerical parity and per-case Elbow Stiffening Pressure authority.
 
-PR #1341 is functionally carried forward by the descendant stack but remains an open owner-controlled coordination item. No administrative action is authorized here.
+PR #1341 is functionally carried forward but remains an owner-controlled open draft.
 
 ## Non-claims
 
 - Source inspection is not runtime PASS.
 - S7 does not qualify S2/S3/S6 numerics.
+- The integrated workflow has not executed any Node assertion.
 - S7 does not promote reducer or pressure mechanics.
-- The hosted Actions outage is not repaired.
+- Existing Phase 6I evidence for another immutable candidate is not promotion evidence.
 - No benchmark was re-baselined, no tolerance widened, and no engineering guard weakened.
 
 # APPENDIX A — expert takeover questionnaire
 
-1. Why must conditioned structural endpoints come from produced spans rather than source parents after S2?
-2. Why can `bendExactMechanics=true` coexist with unresolved bends still disclosed approximate?
-3. Explain `ARC_GEOMETRY_EXCLUDED_V1` and the single-application bend flexibility proof.
-4. Why is TYPE=5 excluded from S6 despite global `teeExactMechanics=true`?
-5. Why must bend/tee dual ownership of one structural carrier block?
-6. Which exact S0 guard was missing from #1348 and how was it adapted on #1396?
-7. Why does the capability guard require both benchmark presence and production builder reachability?
-8. Why are S4/S5 flags asserted false by the global guard today?
-9. Why is a job with `steps=[]` NOT_RUN rather than engineering FAIL?
-10. State the safe stack merge order and explain why #1341 is functionally subsumed but not administratively closed.
+1. Why must S2 structural endpoints come from produced conditioned spans rather than source parents?
+2. Explain why global bend capability can be true while an unqualified source bend remains approximate.
+3. Explain `ARC_GEOMETRY_EXCLUDED_V1` and the one-application flexibility ownership proof.
+4. Why is TYPE=5 excluded from S6 despite `teeExactMechanics=true`?
+5. Why must bend/tee ownership overlap block?
+6. What unique S0 guard was missing from #1348 and how was it carried forward?
+7. Why does the capability guard require benchmark presence and production builder reachability?
+8. What does the integrated workflow prove if it eventually passes, and what does it explicitly not prove?
+9. Why is run 32681178175 NOT_RUN rather than engineering FAIL?
+10. Why can historical Phase 6I candidate evidence not certify a different merged production tree?

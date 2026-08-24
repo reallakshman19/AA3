@@ -83,7 +83,10 @@ function validateManifest(manifest) {
   assert.equal(manifest.sourceQualificationAddendum?.doi, '10.1002/nme.1620151205');
   assert.equal(manifest.sourceQualificationAddendum?.productionOutputObservedForReferenceBeforeFreeze, false);
   assert.match(manifest.sourceQualificationAddendum?.mainShaAtSourceQualification ?? '', /^[0-9a-f]{40}$/u);
-  assert.match(manifest.sourceQualificationAddendum?.definitionCommit ?? '', /^[0-9a-f]{40}$/u);
+  assert.equal(
+    manifest.sourceQualificationAddendum?.definitionCommit,
+    'c0d3ec551fef6be7a5d15484fdac8dda30f023c7',
+  );
 }
 
 async function proveCheckerIndependence() {
@@ -231,11 +234,12 @@ function provePublishedReference(definition, addendum) {
   assert.equal(definition.source?.volume, 15);
   assert.equal(definition.source?.sourceQualificationStatus, 'DOI_AND_EXACT_PAGE_FIGURE_VERIFIED');
   assert.deepEqual(definition.source?.locations?.map((row) => [row.section ?? null, row.figure ?? null, row.printedPage]), [
+    ['3.1.1 Small displacement theory of plates with transverse shear included', 2, 1777],
     ['4.2.2 Twisting of a square plate', null, 1793],
     [null, 16, 1797],
   ]);
   assert.equal(addendum?.doi, definition.source.doi);
-  assert.equal(addendum?.definitionCommit, 'bce516f42feec12022d0d9b070d912a771d02bac');
+  assert.equal(addendum?.definitionCommit, 'c0d3ec551fef6be7a5d15484fdac8dda30f023c7');
 
   const { inchToMm, psiToMpa, lbfToN } = definition.unitConversion;
   assert.equal(inchToMm, 25.4);
@@ -264,23 +268,24 @@ function provePublishedReference(definition, addendum) {
     { nodeId: 'B', dof: 'UX', value: 0 },
   ]);
 
-  const force = 5 * lbfToN;
-  closeScalar(definition.load.magnitude, force, 1e-13, 'B4-3 load conversion');
+  const forceMagnitude = 5 * lbfToN;
+  closeScalar(definition.load.magnitude, forceMagnitude, 1e-13, 'B4-3 load magnitude conversion');
+  closeScalar(definition.load.signedValue, -forceMagnitude, 1e-13, 'B4-3 signed downward load');
   const expectedByNode = new Map(definition.expected.fixedNodalDisplacements.map((row) => [row.nodeId, row]));
-  closeScalar(expectedByNode.get('O').value, 0.0624 * inchToMm, 1e-13, 'B4-3 center deflection');
-  closeScalar(expectedByNode.get('C').value, 0.2496 * inchToMm, 1e-13, 'B4-3 corner deflection');
+  closeScalar(expectedByNode.get('O').value, -0.0624 * inchToMm, 1e-13, 'B4-3 center signed deflection');
+  closeScalar(expectedByNode.get('C').value, -0.2496 * inchToMm, 1e-13, 'B4-3 corner signed deflection');
   closeScalar(definition.expected.globalBendingMomentResultants.mx, 0, 0, 'B4-3 Mx');
   closeScalar(definition.expected.globalBendingMomentResultants.my, 0, 0, 'B4-3 My');
   closeScalar(definition.expected.globalBendingMomentResultants.mxy, 2.5 * lbfToN, 1e-13, 'B4-3 Mxy');
   compareRecord({
     x: definition.expected.appliedResultantForce[0], y: definition.expected.appliedResultantForce[1],
     z: definition.expected.appliedResultantForce[2],
-  }, { x: 0, y: 0, z: force }, ['x', 'y', 'z'], 1e-13, 'B4-3 applied force');
+  }, { x: 0, y: 0, z: -forceMagnitude }, ['x', 'y', 'z'], 1e-13, 'B4-3 applied force');
   compareRecord({
     x: definition.expected.appliedResultantMomentAboutOrigin[0],
     y: definition.expected.appliedResultantMomentAboutOrigin[1],
     z: definition.expected.appliedResultantMomentAboutOrigin[2],
-  }, { x: 203.2 * force, y: -203.2 * force, z: 0 }, ['x', 'y', 'z'], 1e-13,
+  }, { x: -203.2 * forceMagnitude, y: 203.2 * forceMagnitude, z: 0 }, ['x', 'y', 'z'], 1e-13,
   'B4-3 applied moment');
 
   closeScalar(definition.acceptance.fixedNodalDisplacementAbsoluteToleranceMm,

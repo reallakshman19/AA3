@@ -11,12 +11,15 @@ PR: #1404
 ISSUE: #1389 PR-H
 BRANCH: agent/issue-1389-pr-h-release-evidence-20260824
 ORIGINAL_BASE: main@0f85cac384532b5cc35bc24ecedd729275027eb6
-MAIN_HEAD_LAST_CHECKED: ff5a7353f3759d72ba27be37095c7f5e06b5f7e2
-GROUNDING_EPOCH: GE-H-004
-CURRENT_STAGE: IMPLEMENTED_AUDITED_OWNER_MERGE_AUTHORIZED_PENDING_DISJOINT_MAIN_REFRESH
+REFRESHED_BASE: main@ff5a7353f3759d72ba27be37095c7f5e06b5f7e2
+IMPLEMENTATION_BASIS_HEAD: 5417dc589de328ba3b623e5264ca522e56c3d833
+GROUNDING_EPOCH: GE-H-005
+CURRENT_STAGE: IMPLEMENTED_REFRESHED_VALIDATION_CLASSIFIED_OWNER_MERGE_AUTHORIZED
 HIGHEST_RISK: encoded release checks mistaken for executed professional-release evidence
-EXACT_NEXT_ACTION: refresh the nine-file PR-H tree onto current main, re-audit exact head/reviews/CI, then squash-merge with expected_head_sha. After merge, proceed only to work that does not fabricate PR-D/E/F evidence.
+EXACT_NEXT_ACTION: final metadata-only audit, mark ready, squash-merge with expected_head_sha, verify main, then proceed only to work that cannot fabricate PR-D/E/F evidence.
 ```
+
+Later commits changing only this work report/status metadata do not upgrade or invalidate the implementation-basis validation classification.
 
 ## 1. Mission and implemented result
 
@@ -36,14 +39,9 @@ Implemented:
 
 ## 2. Critical release-gate correction found during final audit
 
-The initial PR-H draft reused:
+The initial PR-H draft reused `scripts/emp1-public-product-check.mjs` and `e2e/emp1-workbench-authority.spec.js`. Both deliberately contain suspended-route assertions and would reject a correctly promoted PR-E route.
 
-- `scripts/emp1-public-product-check.mjs`;
-- `e2e/emp1-workbench-authority.spec.js`.
-
-Both deliberately contain suspended-route assertions and are valid pre-promotion regressions, but would reject a correctly promoted PR-E route. That would make the release harness structurally incapable of passing after successful authorization.
-
-PR-H now deliberately uses:
+PR-H now uses:
 
 ```text
 node scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs
@@ -65,13 +63,13 @@ This is an engineering candidate qualification, not a release-authority mutation
 
 Prior EMP.1 currentness work established that serialized/persisted C evidence reloaded under changed route authority becomes stale and non-reportable. PR-H explicitly carries that falsifier as the replay/currentness gate.
 
-Repository consumer audit found no separate EMP.1.C numerical export/report consumer. Existing workbench export exports the active source document, not retained C numerical evidence. Therefore no additional numerical export patch is required. Any future numerical C export must consume the governed `reportableResult` projection rather than raw historical `execution.result.localCorrelation`.
+Repository consumer audit found no separate EMP.1.C numerical export/report consumer. Existing workbench export exports the active source document, not retained C numerical evidence. Any future numerical C export must consume the governed `reportableResult` projection rather than raw historical `execution.result.localCorrelation`.
 
 ## 4. Evidence and release rules
 
 Release prerequisite inventory is exact files 01–12. Files 11 and 12 are not accepted by existence alone: PR-H verifies expected status, common authorization head, false global/code/release authority boundary, and canonical semantic hashes.
 
-The readiness checker also reasserts the immutable bounded profile: cylindrical/round, Original gamma=5, beta 0.05–0.50 inclusive, zero dp, Kn=Kb=1, Au..Dl host-shell recovery, no interpolation/cross-variant fallback/off-axis authority, no continuous/global maximum, no nozzle/attachment-wall result and no code-compliance claim.
+The readiness checker reasserts the immutable bounded profile: cylindrical/round, Original gamma=5, beta 0.05–0.50 inclusive, zero dp, Kn=Kb=1, Au..Dl host-shell recovery, no interpolation/cross-variant fallback/off-axis authority, no continuous/global maximum, no nozzle/attachment-wall result and no code-compliance claim.
 
 `--release` cannot pass until P0 semantics, direct CAUx page re-observation, genuine 01–10, bounded authorization, verified 11–12, exact candidate product/currentness/build/browser execution and deployment receipt all succeed.
 
@@ -91,7 +89,7 @@ No `package.json`, workflow, WRC numerical evaluator, route/registry, oracle, qu
 
 ## 6. Main drift / overlap
 
-Live main advanced from `0f85cac...` to `ff5a735...` through Issue #1371 LAFEA merges. Compare from the PR-H base shows LAFEA/recovery paths only; none of PR-H's nine files is touched. This is `SAFE_DISJOINT_MAIN_DRIFT` and requires a mechanical tree refresh, not engineering reconciliation.
+Live main advanced from `0f85cac...` to `ff5a735...` through Issue #1371 LAFEA merges. Compare from the PR-H base showed only LAFEA/recovery paths; none of PR-H's nine files was touched. The branch was refreshed by a non-force merge commit using the exact current-main tree plus the nine existing PR-H blobs. GitHub then reported PR #1404 mergeable.
 
 PR-D #1401 remains separate/open/draft and recovery-only. Its genuine #1333 files 01–10 remain NOT_GENERATED. PR-H does not satisfy or override that gate.
 
@@ -99,20 +97,22 @@ PR-D #1401 remains separate/open/draft and recovery-only. Its genuine #1333 file
 
 | ID | Status | Observation |
 |---|---|---|
-| H-001 | PASS | source/diff audit: nine intended files only |
+| H-001 | PASS | final diff contains exactly nine intended files |
 | H-002 | PASS | protected route/registry/Table-5/oracle/profile/workflow paths unchanged |
 | H-003 | PASS_AFTER_FIX | suspended-only release gates replaced with promotion-compatible orchestration/browser gates |
 | H-004 | PASS | replay/export consumer audit: persisted/reloaded currentness covered; no separate C numerical export bypass found |
 | H-005 | PASS | 11/12 status/head/authority/semantic-hash verification encoded |
 | H-006 | PASS | deployment receipt tied to exact candidate head/tree and deterministic build-artifact hash |
-| H-007 | PASS | live-main drift is file-disjoint from PR-H |
-| H-008 | PASS | reviews none; unresolved review threads none at final pre-refresh audit |
-| H-009 | NOT_RUN | exact-head Node readiness/release execution |
-| H-010 | NOT_RUN | production build |
-| H-011 | NOT_RUN | release-candidate Chromium |
-| H-012 | NOT_RUN_EXECUTION_ENVIRONMENT | hosted execution remains subject to #54 pre-step infrastructure failure |
+| H-007 | PASS | live-main drift was file-disjoint and refresh preserved PR-H blobs |
+| H-008 | PASS | reviews none; unresolved review threads none |
+| H-009 | NOT_RUN | exact-head PR-H readiness/release scripts did not execute in a repository runtime |
+| H-010 | NOT_RUN | production build did not execute |
+| H-011 | NOT_RUN | release-candidate Chromium did not execute |
+| H-012 | NOT_RUN_EXECUTION_ENVIRONMENT | hosted gamma5 route run 32711488631 / job 97383640772: `steps=null`, `logs_url=null` |
+| H-013 | NOT_RUN_EXECUTION_ENVIRONMENT | hosted independent handcalc run 32711488637 / job 97383640676: `steps=null`, `logs_url=null` |
+| H-014 | NOT_RUN_EXECUTION_ENVIRONMENT | hosted runEmp1 run 32711488622 / job 97383640610: `steps=null`, `logs_url=null` |
 
-No encoded or source-inspected check is promoted into runtime PASS.
+Hosted classification is `PRE_STEP_INFRASTRUCTURE_FAILURE` under Issue #54. No checkout, Node assertion, build or browser step executed. GitHub's workflow `failure` conclusion is neither engineering FAIL nor PASS.
 
 ## 8. Authority state
 

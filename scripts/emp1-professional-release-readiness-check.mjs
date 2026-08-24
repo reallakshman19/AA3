@@ -43,12 +43,12 @@ const expectedCommands = [
   'node scripts/emp1-source-custody-reconciliation-check.mjs',
   'node scripts/emp1-professional-p0-source-semantics-check.mjs --require-ready',
   'node scripts/emp1-caux-pp24-31-benchmark-check.mjs --require-direct-pdf',
-  'node scripts/emp1-professional-release-profile-check.mjs',
-  'node scripts/emp1-public-product-check.mjs',
+  'node scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs',
   'node scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs',
   'npm run build',
-  'node scripts/run-playwright.mjs e2e/emp1-workbench-authority.spec.js',
+  'node scripts/run-playwright.mjs e2e/emp1-professional-release.spec.js',
 ];
+const locations = ['Au', 'Al', 'Bu', 'Bl', 'Cu', 'Cl', 'Du', 'Dl'];
 
 assert.equal(contract.schema, 'emp1-professional-release-readiness/v1');
 assert.equal(contract.issue, 1389);
@@ -64,6 +64,27 @@ assert.deepEqual(contract.evidenceInventory.preAuthorization, expectedPre);
 assert.deepEqual(contract.evidenceInventory.postPromotion, expectedPost);
 assert.deepEqual(contract.requiredExecutionGates.map((gate) => gate.command), expectedCommands);
 assert.ok(contract.requiredExecutionGates.every((gate) => gate.executionRequired === true));
+
+assert.equal(profile.scope.shellFamily, 'CYLINDRICAL');
+assert.equal(profile.scope.attachmentShape, 'ROUND');
+assert.equal(profile.scope.variant, 'ORIGINAL');
+assert.equal(profile.scope.gamma, 5);
+assert.deepEqual(profile.scope.beta, { min: 0.05, max: 0.5, inclusive: true });
+assert.equal(profile.scope.differentialPressure, 0);
+assert.equal(profile.scope.Kn, 1);
+assert.equal(profile.scope.Kb, 1);
+assert.deepEqual(profile.scope.recoveryLocations, locations);
+assert.equal(profile.scope.hostShellStressOnly, true);
+assert.equal(profile.scope.attachmentStressCalculated, false);
+assert.equal(profile.scope.nozzleStressCalculated, false);
+assert.equal(profile.scope.absoluteMaximumAssured, false);
+assert.equal(profile.scope.continuousJunctureSearchPerformed, false);
+assert.equal(profile.scope.interpolationAllowed, false);
+assert.equal(profile.scope.crossVariantFallbackAllowed, false);
+assert.equal(profile.scope.offAxisMaximumAuthorized, false);
+assert.equal(profile.codeCompliance.performed, false);
+assert.equal(profile.codeCompliance.authorized, false);
+
 assert.deepEqual(contract.securityBoundary, {
   scope: 'EMP1_RELEASE_BOUNDARY_ONLY',
   requiresStrictSourceAndCurrentnessValidation: true,
@@ -71,11 +92,18 @@ assert.deepEqual(contract.securityBoundary, {
   staleNumericalEvidenceMayBeCurrentResult: false,
   broaderApplicationSecurityCertificationClaimed: false,
 });
+assert.deepEqual(contract.replayAndExportBoundary, {
+  persistedReloadCurrentnessCoveredBy: 'scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs',
+  separateEmp1CNumericalExportConsumerFound: false,
+  workbenchExportExportsActiveSourceDocumentNotRetainedCNumerics: true,
+  futureNumericExportMustConsumeReportableProjection: true,
+});
 assert.equal(contract.policy.encodedGateIsExecutionPass, false);
 assert.equal(contract.policy.notRunMayBePromotedToPass, false);
 assert.equal(contract.policy.productionOutputMayRegenerateOracle, false);
 assert.equal(contract.policy.toleranceMayBeWidenedAfterMismatch, false);
 assert.equal(contract.policy.releaseMayProceedWithMissingEvidence, false);
+assert.equal(contract.policy.suspendedOnlyCheckMayBeUsedAsPostPromotionReleaseGate, false);
 assert.equal(contract.policy.releaseModeExitCodeWhenBlocked, 2);
 
 assert.equal(sourceLedger.rawPdfSha256, contract.sourceSha256);
@@ -172,6 +200,8 @@ const result = {
     releaseQualified: route.releaseQualified === true,
   },
   exactCandidateExecutionRequiredAfterPrerequisites: true,
+  promotionCompatibleProductGateRequired: true,
+  persistedReloadReplayRequired: true,
   deploymentEvidenceRequiredAfterCandidateExecution: true,
   codeComplianceAuthorizedByThisGate: false,
   deploymentAuthorizedByThisGate: false,
@@ -228,6 +258,7 @@ async function verifyPostPromotionReceipts(directory) {
     };
   }
 }
+
 async function findEvidenceDirectories(start) {
   const out = [];
   await walk(start, 0);
@@ -249,6 +280,7 @@ async function findEvidenceDirectories(start) {
     }
   }
 }
+
 async function exists(path) {
   try {
     await access(path);

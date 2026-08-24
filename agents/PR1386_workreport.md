@@ -17,7 +17,7 @@ PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1386
 BRANCH: agent/lfea-piping-promotion-s4-reducer-parity-gate-20260823
 MAIN_LAST_CHECKED: e6908671f25df784312b9e3392bc6ab83863c9c8
 ENGINEERING_CODE_HEAD: 7e540e6617decd23e3aec432bb08b81ebbd60a5a
-REPORT_BASIS_HEAD: 2fc49e5ff84357c18308ca83a84f986624cfd2a3
+REPORT_BASIS_HEAD: 7e540e6617decd23e3aec432bb08b81ebbd60a5a
 CURRENT_STAGE: fail-closed reducer readiness + controlled CAESAR protocol + parity intake + raw-artifact SHA256 verification + fail-closed package scaffold
 CURRENT_BLOCKER: current-version CAESAR reducer observations do not yet exist; external execution tracked by Issue #1402
 HIGHEST_RISK: accepting self-declared hashes/reviewer assertions as parity or inferring midpoint/gravity behavior from ten-cylinder wording
@@ -210,5 +210,6 @@ Takeover threshold: all ten answers must be source- and contract-grounded withou
 - 2026-08-24 continuation added byte-level raw-artifact binding and SHA-256 recomputation plus operator package documentation.
 - Issue #1402 owns controlled external CAESAR execution.
 - A fail-closed scaffold generator creates the exact S4 run inventory without manufacturing evidence.
+- `REPORT_BASIS_HEAD` is the engineering-code parent; live PR head must be re-grounded from GitHub rather than embedded into integration authority.
 - Hosted Actions continues to fail before step 1 under repository Issue #54.
 - No reducer numerical promotion has occurred.

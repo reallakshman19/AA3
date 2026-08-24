@@ -1,0 +1,17 @@
+schema: AgentStatus.v1
+pr_or_wip: PR1399
+source_task: ISSUE-1371
+branch: agent/issue-1371-integration-validation-20260824
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: MANUAL
+auto_state: VALIDATING_COMBINED_HEAD
+merge_authority: OWNER_ONLY
+validation_pr_merge: PROHIBITED
+current_stage: A_B_C_D_RUNTIME_EQUIVALENT_VALIDATION
+main_head_last_checked: e985b50d81d0d241db27313562c8cc12cd7cc27d
+report: agents/PR1399_workreport.md
+coordination_state: SAFE_NON_OWNING_OVERLAY
+hosted_engineering_execution: NOT_RUN_PENDING_EXACT_HEAD_INSPECTION
+highest_risk: FIRST_COMBINED_EXECUTION_MAY_REVEAL_CROSS_PR_INTERACTION
+exact_next_action: inspect exact-head visible-workbench steps; require merge-order guard PASS because PR-B is present; never merge PR1399

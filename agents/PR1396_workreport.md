@@ -1,152 +1,178 @@
-# PR1396 work report — LFEA S7 component UI/disclosure verification
+# PR1396 work report — LFEA S7 UI/disclosure + promotion anti-drift verification
 
 # CURRENT RECOVERY STATE — READ FIRST
 
 ```text
-HANDOVER_READINESS: IN_PROGRESS
-PR_RECOVERY_STATE: ACTIVE_DRAFT
+HANDOVER_READINESS: READY_DRAFT
+PR_RECOVERY_STATE: HEALTHY_DRAFT_RUNTIME_NOT_RUN
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: AUTO
 AUTO_STATE: ACTIVE
-SCOPE_AUTHORITY: S7_ONLY_STACKED_ON_PR1395
+SCOPE_AUTHORITY: S7_NUMERICALLY_INERT_VERIFICATION_STACKED_ON_PR1395
 MERGE_AUTHORITY: OWNER_ONLY
 
 REPOSITORY: reallaksh19/Advanced_Analysis
 PR: 1396
 PR_URL: https://github.com/reallaksh19/Advanced_Analysis/pull/1396
 STACK_BASE_PR: 1395
-STACK_BASE_BRANCH: agent/lfea-piping-promotion-s6-tee-branch-20260824
 STACK_BASE_HEAD: 2b4b4762973c84690b636eab8abe918e307d5dab
 BRANCH: agent/lfea-piping-promotion-s7-ui-disclosure-20260824
-EXACT_HEAD_WITH_NUMBERED_REPORT: 1d9b9c759ea304989b3f297687d2496f7545304f
-CURRENT_STAGE: S7 governed UI/disclosure verification implemented; hosted exact-head execution unavailable
+CODE_HEAD_BEFORE_THIS_REPORT_UPDATE: f41231c6b1d4d263a2826001c8750183cd0b6043
+MAIN_HEAD_LAST_GROUNDED: e985b50d81d0d241db27313562c8cc12cd7cc27d
+CURRENT_STAGE: S7 governed UI/disclosure verification plus promotion-wide anti-drift guard implemented
 NUMERICAL_MUTATION_ALLOWED: false
-CURRENT_BLOCKER: GitHub Actions completed before step 1; no S7 test step executed
-HIGHEST_RISK: hiding unresolved component limitations merely because a global capability flag is true, or replacing SOURCE geometry with ANALYSIS geometry after retopology
-EXACT_NEXT_ACTION: preserve S7 as draft/NOT_RUN and re-run its narrow verification when hosted execution is available
+CURRENT_BLOCKER: GitHub Actions jobs complete before checkout/step 1; deterministic/runtime checks remain NOT_RUN
+HIGHEST_RISK: future capability/disclosure drift causing exactness to be advertised after source gates, builder reachability, or single-owner mechanics are lost
+EXACT_NEXT_ACTION: preserve draft state; resolve upstream #1348 runtime qualification/mergeability and external S4/S5 CAESAR evidence before release sequencing
 ```
 
-## Assignment and authority
+## Assignment and stage authority
 
-Implement Stage S7 from `docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md` as a numerically inert verification stage stacked on PR #1395.
+Stage S7 from `docs/lfea/LFEA_Piping_Component_Promotion_Plan_Rev1.md` is numerically inert. The governing plan also requires a promotion-wide anti-drift check after S7. This PR now contains both verification responsibilities and **no production `src/` modifications** relative to its S6 stack base.
 
-No merge is authorized. PR remains draft until owner instruction.
+No merge is authorized by this report.
 
-## Scope proof
+## Effective S7 diff
 
-At PR creation the S7 branch was exactly 3 commits ahead and 0 behind PR #1395. The diff contained only a workflow, a recovery record and the S7 verification script. There was **no `src/` modification**.
-
-After PR-number allocation, the transitional WIP report was deleted. The effective S7 diff therefore remains three files:
+Against PR #1395 head `2b4b4762973c84690b636eab8abe918e307d5dab`, the branch is 8 commits ahead and 0 behind before this report-only update. The effective changed-file surface is four files:
 
 1. `.github/workflows/lfea-piping-promotion-s7-ui.yml`
 2. `agents/PR1396_workreport.md`
 3. `scripts/lfea-s7-component-ui-disclosure-check.mjs`
+4. `scripts/lfea-piping-component-promotion-anti-drift-check.mjs`
 
-Therefore S7 cannot itself change production geometry, stiffness, loads, factors, constraints, solver execution, result recovery, capability flags, UI behavior, benchmark expected values or engineering tolerances.
+There is no production `src/` change. Any numerical movement attributable to S7 is therefore a falsifier.
 
-## Engineering verification decisions
+## Governed UI/disclosure verification
 
-### DEC-S7-01 — Governed findings are the UI authority
+`scripts/lfea-s7-component-ui-disclosure-check.mjs` verifies the governed path rather than rendered text:
 
-S7 verifies the actual governed finding code/disposition projected by `buildLfeaErrorCheckPresentation()`. It does not search rendered message text and does not reclassify from severity or wording.
+- source-qualified TYPE=3 welding tee clears `MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE`;
+- TYPE=5 weldolet retains the tee approximation finding;
+- source-qualified exact bend clears `MODEL_BEND_EXACT_MECHANICS_UNAVAILABLE`;
+- unresolved bend/tee plain-language and suggested-action mappings remain registered;
+- SOURCE and ANALYSIS geometry remain independent authority records;
+- bend retopology may increase ANALYSIS nodes/spans without changing SOURCE identities/count evidence.
 
-### DEC-S7-02 — Exact capability is source-gated
+## Promotion-wide anti-drift guard
 
-A source-qualified TYPE=3 welding tee should no longer emit `MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE` after S6. TYPE=5 remains outside S6 and must continue to emit the approximation finding.
+`scripts/lfea-piping-component-promotion-anti-drift-check.mjs` encodes the actual S1-S7 implementation invariants rather than the original plan snippets.
 
-The S7 UI must follow the source-gated production disposition; it must not interpret `teeExactMechanics=true` as “all TEE-labelled source records are exact.”
+### S2 custody invariants
 
-### DEC-S7-03 — Help vocabulary remains even when one model is exact
+- structural bindings use `segment.startNodeId` / `segment.endNodeId` from conditioned topology;
+- source-parent endpoints may not return to the structural binding path;
+- `retopologiseDeclaredBends`, `requireBendRetopologyBindingsResolved` and `requireExplainedConditioning` remain reachable.
 
-`MODEL_BEND_EXACT_MECHANICS_UNAVAILABLE` and `MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE` must remain in both:
+### S3 bend invariants
 
-- `lfea-finding-plain-language.js`
-- `lfea-finding-suggested-action.js`
+When `bendExactMechanics=true`:
 
-because unresolved/out-of-domain sources can still emit those findings.
+- governed production element authority must call `compileInputXmlProductionBendComponents`;
+- the bend compiler must reach `compilePipingComponent`;
+- source eligibility remains tangent/arc gated;
+- `ARC_GEOMETRY_EXCLUDED_V1` remains required;
+- S3 must still reject pressure-corrected factors;
+- double-count/single-owner flexibility evidence must be checked, not bypassed.
 
-### DEC-S7-04 — SOURCE and ANALYSIS geometry have different authority
+### S6 tee invariants
 
-Model Review deliberately retains:
+When `teeExactMechanics=true`:
 
-- SOURCE = imported/source-derived canonical geometry;
-- ANALYSIS = conditioned structural geometry actually compiled for analysis.
+- governed element authority must call `compileInputXmlProductionBranchModifiers`;
+- the production branch compiler must use `classifyBranchLegs` and `deriveB31JDirectionalBranchEndModifiers`;
+- TYPE=3 is the exact source eligibility; TYPE=5 is not silently widened;
+- bend/tee overlap remains blocked;
+- run OD/wall ambiguity remains blocked;
+- one element cannot receive both bend-component and tee-modifier ownership.
 
-S2 bend retopology can legitimately make ANALYSIS contain more nodes/spans than SOURCE. That difference must be visible; ANALYSIS must not overwrite SOURCE identities or source node count evidence.
+### S4/S5 locked blockers
 
-## Deterministic S7 verification
+The current integrated S7 stack deliberately requires:
 
-`scripts/lfea-s7-component-ui-disclosure-check.mjs` is designed to verify:
+```text
+reducerExactMechanics = false
+pressureStiffening = false
+pressureAxialThrust = false
+pressureBourdon = false
+```
 
-1. exact TYPE=3 welding tee → no `MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE` group;
-2. TYPE=5 weldolet → one grouped tee approximation finding remains conditional;
-3. exact qualified bend → no `MODEL_BEND_EXACT_MECHANICS_UNAVAILABLE` group;
-4. unresolved bend/tee plain-language entries remain registered;
-5. unresolved bend/tee suggested actions remain registered;
-6. SOURCE and ANALYSIS geometry descriptors are both available;
-7. SOURCE counts equal imported source bundle counts;
-8. ANALYSIS bend topology has more nodes and spans than SOURCE;
-9. SOURCE segment identities remain unchanged when ANALYSIS is selected;
-10. Error Check evidence reports source node count rather than conditioned analysis count.
+An eventual S4/S5 numerical promotion must intentionally revise this guard in the same qualified stage. An accidental flag flip now fails the guard.
 
-The exact tee and exact bend cases pass explicit B31/B31J factor authorities into governed native pre-flight; the TYPE=5 case deliberately does not receive exact branch authority.
+## Persistent workflow coverage
 
-## Workflow and exact-head execution evidence
+`.github/workflows/lfea-piping-promotion-s7-ui.yml` now triggers not only on the S7 scripts/report but also on the two geometry adapters and the entire governed linear-piping consumer directory. It declares:
 
-`.github/workflows/lfea-piping-promotion-s7-ui.yml` declares only:
+1. syntax checks for both S7/promotion guard scripts;
+2. governed UI disclosure verification;
+3. promotion-wide engineering anti-drift;
+4. existing linear-piping consumer anti-drift;
+5. existing common Error Check contract;
+6. existing Model Review geometry contract.
 
-- syntax check for the S7 script;
-- S7 governed component disclosure check;
-- existing common Error Check contract `scripts/lfea-ui-error-check-check.mjs`;
-- existing Model Review geometry contract `scripts/lfea-ui-geometry-review-check.mjs`.
+This makes the promotion guard persist after merge instead of existing only as a one-time PR check.
 
-For exact head `1d9b9c759ea304989b3f297687d2496f7545304f`, workflow `LFEA S7 component UI disclosure` created run `32676597655`, job `97285781196`.
+## Exact-head validation evidence
 
-GitHub reports the job conclusion as failure, but its step list is `steps=[]`; job-log retrieval returns HTTP 404 `BlobNotFound`. Therefore **no checkout, Node setup, syntax check or S7 test executed**. The correct classification is **NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE**, not an engineering FAIL and not PASS.
+### Historical S7 run
 
-The same commit also shows the stacked S6 workflow failing under the repository-wide pre-step runner condition, corroborating the infrastructure classification.
+Run `32676597655`, job `97285781196`, on exact head `1d9b9c759ea304989b3f297687d2496f7545304f` completed before step 1. `steps=[]`; logs returned `BlobNotFound`.
+
+### Promotion-wide guard run
+
+Run `32680483733`, job `97296191210`, on code head `f41231c6b1d4d263a2826001c8750183cd0b6043` also completed with `steps=[]` before checkout.
+
+Therefore all declared Node execution remains:
+
+```text
+NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE
+```
+
+The GitHub conclusion `failure` is not an engineering assertion failure because no workflow step executed.
 
 ## Validation ledger
 
 | Check | State | Evidence / note |
 |---|---|---|
 | Stack base PR #1395 | PASS — GROUNDED | exact base head `2b4b4762973c84690b636eab8abe918e307d5dab` |
-| Branch ancestry at PR creation | PASS — GROUNDED | 3 commits ahead, 0 behind #1395 |
-| No production `src/` changes | PASS — DIFF_INSPECTION | effective S7 diff contains only workflow, numbered report and S7 script |
-| Common Error Check architecture | PASS — SOURCE_INSPECTION | presentation projects governed findings; no message/severity inference |
-| Bend/tee plain-language retention | PASS — SOURCE_INSPECTION | both limitation codes remain explicitly mapped |
-| Bend/tee suggested-action retention | PASS — SOURCE_INSPECTION | both limitation codes remain explicitly mapped |
-| Model Review SOURCE/ANALYSIS separation | PASS — SOURCE_INSPECTION | two independently described governed geometry records |
-| S7 deterministic governed disclosure | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | run `32676597655`, job `97285781196`, zero executed steps |
-| Existing Error Check contract | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | same job never reached declared test steps |
-| Existing geometry review contract | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | same job never reached declared test steps |
+| Effective S7 scope | PASS — DIFF_INSPECTION | 4 files, no `src/` modification |
+| Common Error Check architecture | PASS — SOURCE_INSPECTION | governed finding projection retained |
+| SOURCE/ANALYSIS geometry separation | PASS — SOURCE_INSPECTION | independent records retained |
+| S2 endpoint/custody implementation | PASS — SOURCE_INSPECTION | conditioned segment endpoints + retopology guards present |
+| S3 builder/source/double-count ownership | PASS — SOURCE_INSPECTION | governed element-authority chain + exact bend guard present |
+| S6 TYPE=3/topology/single-owner path | PASS — SOURCE_INSPECTION | branch modifier compiler and overlap/run-section gates present |
+| S4/S5 capability state | PASS — SOURCE_INSPECTION | reducer + pressure mechanics remain false on this stack |
+| S7 deterministic disclosure | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | job never reached step 1 |
+| promotion anti-drift script | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | run 32680483733 / job 97296191210 |
+| existing consumer anti-drift | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | same job never executed |
+| Error Check / geometry contracts | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | same job never executed |
 
-## Changed-file ledger
+## Upstream/downstream coordination
 
-| File | Purpose |
-|---|---|
-| `.github/workflows/lfea-piping-promotion-s7-ui.yml` | narrow numerically inert S7 workflow |
-| `agents/PR1396_workreport.md` | sole living S7 recovery authority |
-| `scripts/lfea-s7-component-ui-disclosure-check.mjs` | governed promoted/unresolved component disclosure verification |
-
-The transitional `agents/WIP-S7UI_workreport.md` has been deleted.
+- PR #1348 supplies S1-S3 and is the ancestor of PR #1395. It remains draft and runtime-NOT_RUN.
+- PR #1395 supplies S6 and remains draft/runtime-NOT_RUN.
+- PR #1396 cannot be merged independently of its stack ancestry.
+- PR #1386 is the independent S4 reducer prerequisite. Exact S4 remains blocked on current-version CAESAR section sampling, gravity ownership and structural/thermal parity.
+- PR #1391 is the S5 pressure/Bourdon prerequisite stacked on #1348. Exact S5 remains blocked on isolated numerical parity and unresolved per-case Elbow Stiffening Pressure authority.
+- PR #1341 is an older S0-only draft whose production capability/disclosure surface overlaps #1348. No close/merge/supersession action is taken without owner instruction.
 
 ## Non-claims
 
-- S7 does not qualify or change bend/tee mechanics; those belong to S3/S6.
-- S7 does not promote reducer mechanics.
-- S7 does not promote pressure stiffening, axial thrust or Bourdon mechanics.
-- S7 does not change source or analysis geometry.
-- S7 does not change any result or benchmark expected value.
-- S7 runtime PASS is **not established** while hosted jobs execute zero steps.
+- S7 does not qualify S2/S3/S6 runtime behavior.
+- Source inspection is not represented as execution PASS.
+- S7 does not promote reducers or pressure mechanics.
+- S7 does not resolve #1348 mergeability or the #1341 overlap.
+- No benchmark was re-baselined and no engineering tolerance was widened.
 
 # APPENDIX A — expert takeover questionnaire
 
-1. Why must S7 inspect governed finding codes/dispositions instead of rendered message text?
-2. Why does global `teeExactMechanics=true` not authorize TYPE=5 UI disclosure as exact?
-3. Why must bend/tee plain-language and suggested-action mappings remain after exact promotion?
-4. What is the authority difference between SOURCE and ANALYSIS geometry?
-5. Why are larger ANALYSIS node/span counts expected after bend retopology?
-6. Which source identity/count evidence must remain tied to SOURCE rather than ANALYSIS?
-7. Why would any S7 `src/` mechanics change violate the stage's numerical-inertness requirement?
-8. Why is run `32676597655` classified NOT_RUN rather than engineering FAIL?
+1. Why must conditioned structural endpoints come from the produced span rather than its source parent after bend retopology?
+2. Why can `bendExactMechanics=true` coexist with an unresolved bend source still being disclosed as approximate?
+3. Explain `ARC_GEOMETRY_EXCLUDED_V1` and why true curved centreline geometry plus one B31/B31J flexibility factor is not inherently double counting.
+4. What exact evidence proves bend flexibility is owned once in the production chain?
+5. Why does S6 qualify TYPE=3 welding tees but not TYPE=5 weldolets?
+6. Why must a structural carrier block if both a bend component and tee modifier attempt ownership?
+7. Why does the promotion anti-drift guard intentionally assert S4/S5 flags false today?
+8. What evidence must a future S4/S5 PR add before changing those guard assertions?
+9. Why is a GitHub job with `steps=[]` classified NOT_RUN rather than engineering FAIL?
+10. State the safe stack merge order and the unresolved role of PR #1341.

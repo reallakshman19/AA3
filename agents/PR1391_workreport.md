@@ -3,8 +3,8 @@
 # CURRENT RECOVERY STATE — READ FIRST
 
 ```text
-HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT_EXTERNAL_EVIDENCE_BLOCKED
+HANDOVER_READINESS: READY_EXTERNAL_EVIDENCE_BLOCKED
+PR_RECOVERY_STATE: HEALTHY_DRAFT
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: AUTO
 AUTO_STATE: ACTIVE
@@ -18,18 +18,19 @@ STACK_BASE_PR: 1348
 STACK_BASE_HEAD: 25543a9e6c0e796d63e89841f63e41a4fd3292cc
 BRANCH: agent/lfea-piping-promotion-s5-bourdon-pressure-20260823
 MAIN_LAST_CHECKED: e985b50d81d0d241db27313562c8cc12cd7cc27d
-CODE_HEAD_PRE_REPORT: 6df85ec82e6a608a75159ea94d6049953a6a5cc2
-CURRENT_STAGE: CAESAR source-state custody + mechanism-isolated parity protocol + machine-checkable external parity intake
-CURRENT_BLOCKER: controlled CAESAR Bourdon/pressure-stiffening observations absent; BM4_NL L19/L20 elbow stiffening pressure selector remains unresolved
-HIGHEST_RISK: collapsing DEFAULT to a boolean, guessing P1, coupling Bourdon and pressure-stiffening qualification, or relabeling Bourdon strain as pressure thrust
-EXACT_NEXT_ACTION: execute docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md and create external evidence satisfying scripts/lfea-s5-pressure-parity-evidence-contract.mjs for the mechanism scope being promoted
+CODE_HEAD_VALIDATION_BASIS: ef4acf8f187be5bcb2ed36e8beb1939640a30d33
+REPORT_SYNC: CURRENT_REPORT_ONLY_DELTA
+CURRENT_STAGE: source-setting custody + mechanism-isolated CAESAR protocol + controlled external parity-evidence intake complete
+CURRENT_BLOCKER: no controlled CAESAR parity observations; BM4_NL L19/L20 Elbow Stiffening Pressure selector remains unresolved
+HIGHEST_RISK: guessing P1, collapsing DEFAULT_CODE to a boolean, comparing non-identical controls, double-owning bend flexibility, or relabeling Bourdon strain as pressure thrust
+EXACT_NEXT_ACTION: execute docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md and populate a real evidence record for BOURDON_ONLY, PRESSURE_STIFFENING_ONLY, or BOTH as justified
 ```
 
 ## 60-second handover
 
-S5 production mechanics remain **blocked**.
+S5 numerical pressure mechanics are **not authorized**.
 
-Production capability stays:
+Current production truth remains:
 
 ```text
 pressureStiffening = false
@@ -38,32 +39,26 @@ pressureBourdon = false
 pressureCodeStress = true
 ```
 
-Three mechanisms remain distinct:
+Three different mechanics remain separated:
 
-1. **Bourdon pressure displacement** — closed-end axial strain plus optional bend opening/rotation.
+1. **Bourdon pressure displacement** — uniform closed-end axial strain plus optional bend translation/opening/rotation.
 2. **Bend pressure stiffening** — pressure-dependent B31/B31J flexibility/SIF behavior.
-3. **Pressure/end thrust** — separate force/effective-area mechanics, still outside this qualification.
+3. **Pressure/end thrust** — force/effective-area mechanics requiring a separate future authority package.
 
-The PR now has four deliberately separate layers:
+This PR changes source/evidence governance only; governed production solve/recovery is not modified.
 
-- source-setting custody;
-- mechanism-isolated CAESAR protocol;
-- machine-checkable external parity intake;
-- production flags still false and production solve/recovery still unmodified.
+## Source-setting custody
 
-## Source authority established
+### Existing-job Bourdon mode
 
-### Bourdon existing-job mode
-
-BM4_NL retains:
+BM4_NL source authority retains:
 
 ```text
 BOURDON_PRESSURE = TRANSLATION_AND_ROTATION
 winning authority = INDIVIDUAL_FILE_SETTING
-source = USER_VERIFIED_BM4_NL_EXISTING_JOB_SETTINGS_2026-08-09
 ```
 
-This is source custody, not numerical parity.
+This is source-state custody, not numerical qualification.
 
 ### Global bend pressure-stiffening configuration
 
@@ -75,25 +70,26 @@ normalized = DEFAULT_CODE
 active code = B31.3_2022
 ```
 
-`DEFAULT_CODE` is a real state and is not silently rewritten as INCLUDE or EXCLUDE.
+`DEFAULT_CODE` remains a first-class state and is not silently converted to INCLUDE or EXCLUDE.
 
 ### Per-load-case Elbow Stiffening Pressure
 
-This is a separate setting from the global configuration. BM4_NL L19/L20 remain:
+This is a separate setting from the global configuration. For BM4_NL:
 
 ```text
-ELBOW_STIFFENING_PRESSURE = UNRESOLVED
+L19 selector = UNRESOLVED
+L20 selector = UNRESOLVED
 ```
 
-The provisional benchmark `pressureSource=P1` is not source authority and is not promoted.
+The provisional benchmark value `pressureSource=P1` is not promoted into source authority.
 
 ## Governing engineering decisions
 
-### DEC-S5-001 — global pressure-stiffening configuration and per-case selector are independent records
-No invented conflict is created between `Use Pressure Stiffening on Bends` and `Elbow Stiffening Pressure`. Both must be retained and resolved at their real CAESAR scopes.
+### DEC-S5-001 — global configuration and per-case pressure selector are independent authorities
+`Use Pressure Stiffening on Bends` and `Elbow Stiffening Pressure` are retained separately at their actual CAESAR scopes. No conflict or boolean simplification is invented.
 
 ### DEC-S5-002 — Bourdon and pressure stiffening may qualify independently
-The new evidence contract supports:
+The external evidence schema supports:
 
 ```text
 BOURDON_ONLY
@@ -101,105 +97,88 @@ PRESSURE_STIFFENING_ONLY
 BOURDON_AND_PRESSURE_STIFFENING
 ```
 
-Bourdon qualification does not wait for pressure-stiffening parity if Q1–Q3 and Q6 are independently complete. Pressure-stiffening qualification does not imply Bourdon parity.
+Bourdon parity does not imply pressure-stiffening parity, and vice versa.
 
-### DEC-S5-003 — pressure axial thrust remains outside every S5 parity scope
-Even a fully accepted parity record returns:
+### DEC-S5-003 — controlled cases must differ only by the intended switch
+The evidence contract now checks non-switched source state within each family:
+
+- Q1: pressure/material/section/restraints/loads/code/global stiffening/selector constant; only Bourdon mode changes.
+- Q2: same plus bend geometry constant; only Bourdon mode changes.
+- Q4: pressure/material/section/bend/restraints/load/code/Bourdon/global stiffening constant; only selector changes.
+- Q5: pressure/material/section/bend/restraints/load/code/Bourdon/selector constant; only global Default/Include/Exclude changes.
+
+A parity claim cannot be manufactured by changing material, pressure, geometry, restraint or load state between cases.
+
+### DEC-S5-004 — Q6 is positive Bourdon / negative thrust evidence
+Q6 requires:
 
 ```text
+activateBourdonEffects = TRANSLATION_ONLY
+genericPressureThrustApplied = false
+effectiveAreaForceApplied = false
+```
+
+This proves the intended mechanism boundary rather than merely asserting `pressureThrustForceAdded=false` at package level.
+
+### DEC-S5-005 — accepted evidence cannot authorize any production pressure mechanism
+Even accepted evidence returns:
+
+```text
+status = QUALIFIED_PARITY_EVIDENCE_ONLY
+productionUseAuthorized = false
+pressureBourdonAuthorized = false
+pressureStiffeningAuthorized = false
 pressureAxialThrustQualified = false
 pressureAxialThrustAuthorized = false
 ```
 
-Any future axial-thrust capability needs separate effective-area/reference/sign/source and numerical qualification.
-
-### DEC-S5-004 — parity intake cannot authorize production
-Accepted evidence returns `QUALIFIED_PARITY_EVIDENCE_ONLY`; all production authorization outputs remain false. A separate production-integration stage is required.
+A separate production-integration authority revision is mandatory.
 
 ## Implemented source-state contract
 
-`src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js` uses schema:
+`src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js` uses:
 
 ```text
 lfea-production-pressure-effect-authority/v2
 ```
 
-It separately retains:
+It retains active code, Bourdon mode, global pressure-stiffening configuration, per-load-case selector, raw CAESAR value, normalized engineering value, resolution status, authority layer/source and unresolved reason.
 
-- active piping code;
-- Bourdon mode;
-- global pressure-stiffening configuration `DEFAULT_CODE | INCLUDE | EXCLUDE`;
-- per-load-case elbow pressure selector, including `UNRESOLVED`;
-- resolution status;
-- authority layer;
-- raw CAESAR value;
-- normalized engineering value;
-- unresolved reason.
-
-Raw `DEFAULT` → normalized `DEFAULT_CODE` is explicit translation, not source rewriting.
-
-## Existing BM4_NL prerequisite gate
-
-`scripts/lfea-s5-pressure-authority-gate-check.mjs` reuses the repository configuration precedence:
-
-```text
-OVERALL_GLOBAL_DEFAULT
-  < INDIVIDUAL_FILE_SETTING
-  < LOAD_CASE_SETTING
-  < MODEL_INPUT
-```
-
-It guards:
-
-- individual-file Bourdon precedence;
-- retained `DEFAULT_CODE`;
-- active B31.3-2022 code;
-- unresolved L19/L20 selector;
-- no P1 spoofing;
-- independence of global config vs selector;
-- all numerical S5 production flags false.
-
-## Controlled parity protocol
+## Controlled CAESAR protocol
 
 `docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md` defines:
 
-- Q1 straight-pipe Bourdon None / Translation only / Translation+Rotation;
-- Q2 single-bend Bourdon mode separation;
-- Q3 4/6/8-chord LFEA subdivision invariance from one physical initial bend basis;
-- Q4 elbow stiffening selector None/P1/P2/Pmax with Bourdon disabled;
-- Q5 global Default/Include/Exclude active-code arbitration;
-- Q6 negative control proving Bourdon strain is not generic pressure thrust.
-
-Raw CAESAR inputs/outputs and hashes are mandatory; tolerances and expected values cannot be fitted to CAESAR.
-
-## Machine-checkable external parity intake
-
-`scripts/lfea-s5-pressure-parity-evidence-contract.mjs` adds schema:
-
 ```text
-lfea-s5-pressure-parity-evidence/v1
+Q1 straight pipe: None / Translation only / Translation+Rotation
+Q2 bend: None / Translation only / Translation+Rotation
+Q3 LFEA: 4 / 6 / 8 chords from one physical initial bend basis
+Q4 selector: None / P1 / P2 / Pmax with Bourdon disabled
+Q5 global: Default / Include / Exclude under active B31.3-2022
+Q6 negative thrust control
 ```
 
-Every run must retain non-empty source/result records plus:
+Raw CAESAR job/input/output artifacts and hashes are mandatory. Expected values and tolerances cannot be fitted to CAESAR.
 
-- one CAESAR version/build across the evidence package;
+## Hardened external parity intake
+
+`scripts/lfea-s5-pressure-parity-evidence-contract.mjs` requires each run to retain:
+
+- one common CAESAR version/build across the package;
 - 64-hex job/input/output hashes;
 - active piping code;
 - exact Bourdon mode;
-- exact global pressure-stiffening mode;
-- exact per-case elbow selector;
-- pressure fields;
-- material and section;
-- restraints and mechanical-load declaration;
-- reported displacements/reactions;
-- bend geometry/rotations where applicable;
-- bend factors where applicable;
-- raw report and artifact locators;
-- observer and date.
+- exact global pressure-stiffening setting;
+- exact per-case selector;
+- non-empty pressure/material/section/restraint/mechanical-load source state;
+- non-empty displacement/reaction output;
+- bend geometry/rotation output for bend cases;
+- positive reported bend `k` and optional positive SIF values for Q4/Q5;
+- report/raw-artifact locator;
+- observer/date.
 
-### Bourdon-only qualification requirements
+### Bourdon scope
 
-Exactly one case each:
+Exactly one of each:
 
 ```text
 Q1_STRAIGHT_BOURDON_NONE
@@ -211,17 +190,19 @@ Q2_BEND_BOURDON_TRANSLATION_ROTATION
 Q6_PRESSURE_THRUST_NEGATIVE_CONTROL
 ```
 
-The contract additionally requires all Q1/Q2 LFEA comparison errors within the **predeclared** observation tolerance, `pressureThrustForceAdded=false`, and Q3:
+Required quantitative comparisons within the **predeclared** tolerance:
 
-```text
-chordCounts = [4,6,8]
-samePhysicalInitialBasis = true
-terminalFreeStateNormalizedDelta <= observationTolerance
-```
+- straight Translation-only versus Translation+Rotation translational equivalence;
+- CAESAR straight elongation versus LFEA closed-end strain;
+- bend Translation-only response;
+- bend Translation+Rotation response;
+- Q3 terminal free-state 4/6/8-chord invariance.
 
-### Pressure-stiffening-only qualification requirements
+Q3 requires one physical initial bend basis for all chord counts.
 
-Exactly one case each:
+### Pressure-stiffening scope
+
+Exactly one of each:
 
 ```text
 Q4_SELECTOR_NONE
@@ -233,169 +214,167 @@ Q5_GLOBAL_INCLUDE_B313
 Q5_GLOBAL_EXCLUDE_B313
 ```
 
-Q4 enforces:
+Q4 requires:
 
 - Bourdon mode NONE;
-- selector value matches the case family;
-- P1/P2/Pmax comparison errors within tolerance;
-- P1 and P2 response discrimination observed;
-- factor applied exactly once;
+- positive, distinct P1/P2 controlled pressure fields;
+- selector exactly matches None/P1/P2/Pmax case;
+- P1/P2/Pmax selected-pressure comparison residuals within tolerance;
+- P1/P2 response discrimination;
+- pressure factor owned exactly once;
 - curved S2 centerline retained.
 
-Q5 enforces B31.3-2022 for the controlled current source and exact `DEFAULT / INCLUDE / EXCLUDE` mode correspondence, with default matching active-code method and both overrides observed.
+Q5 requires:
 
-### Independent review and anti-gaming
+- Bourdon mode NONE;
+- active B31.3-2022 controlled case;
+- exact Default/Include/Exclude state;
+- identical selector and other non-switched source state across the three cases;
+- Default observed to follow active-code method;
+- Include and Exclude override effects observed.
 
-Every accepted package requires an APPROVED independent reviewer who is not any recorded CAESAR observer.
+## Anti-gaming and independent review
 
-The contract rejects:
+Rejected automatically if any of these are true:
 
 ```text
 tolerancePolicy.fittedToCaesar != false
 expectedValuesRebaselined != false
 tolerancesWidenedToFitCaesar != false
-any production/capability request != false
+productionAuthorizationRequested != false
+pressureBourdonRequested != false
+pressureStiffeningRequested != false
+pressureAxialThrustRequested != false
 ```
 
-## Contract falsifier check
+An APPROVED independent reviewer is required and cannot be any recorded CAESAR observer.
 
-`scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs` is an in-memory contract fixture only. It is designed to prove:
+## Contract falsifier fixture
 
-- BOTH scope accepts complete Bourdon + stiffening structure but authorizes nothing;
-- BOURDON_ONLY and PRESSURE_STIFFENING_ONLY validate independently;
-- missing required families block;
-- Q1/Q2 parity outside tolerance blocks;
-- Q3 per-chord basis reset blocks;
-- wrong Q4 selector blocks;
-- missing P1/P2 discrimination blocks;
-- duplicate factor ownership blocks;
-- axial-thrust authorization request blocks;
-- fitted tolerance blocks;
-- non-independent reviewer blocks.
+`scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs` is not CAESAR evidence. It is designed to reject:
 
-The fixture is not CAESAR evidence.
+- missing required families;
+- changed Q1 material/control state;
+- Q1/Q2 residual outside tolerance;
+- Q3 reset of the physical bend initial basis;
+- Q6 effective-area/generic thrust activation;
+- wrong Q4 selector;
+- changed Q4 section/control state;
+- non-discriminating P1/P2 pressures;
+- missing P1/P2 response discrimination;
+- duplicate factor ownership;
+- changed Q5 selector/control state;
+- axial-thrust authorization request;
+- fitted tolerance;
+- non-independent review.
 
-## Existing MEC-21 evidence — bounded interpretation
+## MEC-21 boundary — bounded interpretation
 
-`src/core/linear-fea-piping-components/bourdon-pressure-expansion.js` already implements MEC-21 equation (2.25) with the intended ownership split:
+`src/core/linear-fea-piping-components/bourdon-pressure-expansion.js` already retains the intended architecture:
 
-- cumulative bend opening/rotation uses one physical bend initial a-b-c basis;
-- uniform closed-end axial pressure strain remains separate;
-- bend opening does not silently add the uniform translation again.
+- cumulative bend opening/rotation references one physical initial bend a-b-c basis;
+- uniform closed-end axial pressure strain remains separately owned;
+- bend opening does not silently add uniform translation again.
 
-The retained M047 technical review supports that architecture but does not qualify full BM4_NL production response because multiple unrelated sensitivities were simultaneous. BM4_NL full-system response therefore remains ineligible as an isolated Bourdon oracle.
+The retained M047 review supports that architecture but does not isolate full BM4_NL response sufficiently to serve as a production Bourdon oracle.
 
 ## Numerical authority boundary
 
-This prerequisite does not:
+Not changed or authorized:
 
-- integrate MEC-21 into governed production InputXML/ACCDB solve/recovery;
-- flip `pressureBourdon`;
-- pressure-correct production B31/B31J bend factors;
-- flip `pressureStiffening`;
-- create generic pressure/end thrust;
-- flip `pressureAxialThrust`;
-- change S1-S3 bend geometry/flexibility;
-- rebaseline benchmark values;
-- widen engineering tolerances.
+- production MEC-21 solve/recovery integration;
+- `pressureBourdon`;
+- pressure-corrected production B31/B31J factor application;
+- `pressureStiffening`;
+- generic pressure/end thrust;
+- `pressureAxialThrust`;
+- S1-S3 bend geometry/flexibility;
+- benchmark expected values;
+- engineering tolerances.
 
-Any numerical result movement attributable to this prerequisite is a falsifier.
+Any S5 numerical result movement attributable to PR1391 is a falsifier.
 
-## Required real evidence before production promotion
+## Required evidence before production integration
 
 ### Bourdon
 
-Requires source existing-job mode, Q1/Q2 controlled CAESAR parity, Q3 same-initial-basis subdivision invariance, Q6 thrust exclusion, retained raw hashes/artifacts, independent review, then a separate production solve/recovery integration with common currentness authority.
+1. Existing-job source mode retained.
+2. Q1 controlled straight-pipe parity within tolerance.
+3. Q2 controlled bend parity within tolerance.
+4. Q3 4/6/8-chord same-initial-basis invariance within tolerance.
+5. Q6 Bourdon-on/thrust-off negative control retained.
+6. Raw artifacts/hashes and independent review retained.
+7. Separate production solve/recovery currentness and single-owner integration designed.
 
 ### Pressure stiffening
 
-Requires explicit source selector, active-code method authority, Q4 pressure selection response, Q5 global arbitration, exactly-one pressure-corrected factor ownership on the S3 component, retained raw hashes/artifacts, independent review, then a separate production integration.
+1. Per-case pressure selector resolved from source.
+2. Active-code method authority retained.
+3. Q4 None/P1/P2/Pmax selection and response parity retained.
+4. Q5 Default/Include/Exclude arbitration retained.
+5. Pressure-corrected factor applied exactly once on the curved S3 bend component.
+6. Raw artifacts/hashes and independent review retained.
+7. Separate production integration designed.
 
-### Axial thrust
+### Pressure axial thrust
 
-Still outside scope; requires a separate authority package.
-
-## Repository grounding
-
-```text
-main = e985b50d81d0d241db27313562c8cc12cd7cc27d
-stack base #1348 = 25543a9e6c0e796d63e89841f63e41a4fd3292cc
-PR code head before this report = 6df85ec82e6a608a75159ea94d6049953a6a5cc2
-PR state = open / draft / mergeable
-```
-
-No merge/rebase is performed without owner instruction.
-
-## Engineering item register
-
-| ID | Type | Severity | Status | Summary |
-|---|---|---:|---|---|
-| ISS-001 | ISS | high | OPEN_BLOCKS_STIFFENING | BM4_NL L19/L20 Elbow Stiffening Pressure source selector unresolved. |
-| ISS-002 | ISS | high | OPEN_BLOCKS_BOURDON | Controlled CAESAR Bourdon parity absent. |
-| ISS-003 | ISS | high | OPEN_BLOCKS_STIFFENING | Controlled selector/global-arbitration response parity absent. |
-| IMP-001 | IMP | high | IMPLEMENTED | CAESAR pressure-setting custody corrected and raw/normalized states retained. |
-| IMP-002 | IMP | high | IMPLEMENTED | Mechanism-isolated parity protocol committed. |
-| IMP-003 | IMP | high | IMPLEMENTED | Mechanism-scoped external parity intake added. |
-| IMP-004 | IMP | high | IMPLEMENTED | Bourdon and stiffening qualification scopes decoupled. |
-| IMP-005 | IMP | high | IMPLEMENTED | Axial thrust explicitly excluded from every parity scope. |
-| IMP-006 | IMP | medium | DECLARED_CI_NOT_EXECUTED | Workflow includes new contract check; hosted CI remains blocked by #54. |
-| RISK-001 | RISK | high | MITIGATED_BY_GATE | DEFAULT cannot silently become INCLUDE/EXCLUDE. |
-| RISK-002 | RISK | high | MITIGATED_BY_GATE | Provisional P1 cannot become L19/L20 source authority. |
-| RISK-003 | RISK | high | MITIGATED_BY_CONTRACT | Bourdon evidence cannot silently authorize pressure thrust. |
-| RISK-004 | RISK | high | MITIGATED_BY_CONTRACT | Pressure-stiffening evidence cannot remove curved centerline or apply factor more than once. |
+Still outside S5 parity. Requires a separate effective-area/reference-point/sign/source and numerical qualification package.
 
 ## Validation ledger
 
 | Check | Status | Evidence |
 |---|---|---|
-| Stack base #1348 | PASS — GROUNDED | `25543a9e...` |
-| BM4_NL existing-job Bourdon state | PASS — SOURCE_INSPECTION | `TRANSLATION_AND_ROTATION` individual-file setting |
-| Global pressure stiffening | PASS — SOURCE_INSPECTION | raw DEFAULT → DEFAULT_CODE, active B31.3-2022 |
-| L19/L20 elbow selector | UNRESOLVED — SOURCE AUTHORITY | no P1 promotion |
-| v2 source-state contract | PASS — SOURCE_INSPECTION | raw + normalized + authority layer retained |
-| S5 parity protocol | PASS — SOURCE_INSPECTION | Q1-Q6 mechanism isolation defined |
-| S5 external parity intake | PASS_AFTER_FIX — SOURCE_INSPECTION | independent scopes, non-empty observations, anti-gaming, single ownership and thrust exclusion |
-| Contract fixture execution | NOT_RUN in repository CI | workflow declared; hosted execution unavailable |
-| Numerical Bourdon parity | UNRESOLVED | controlled CAESAR runs absent |
-| Numerical pressure-stiffening parity | UNRESOLVED | controlled CAESAR runs and L19/L20 source selector absent |
-| Production numerical promotion | BLOCKED | all S5 mechanics flags false |
+| Stack base #1348 | PASS — GROUNDED | `25543a9e6c0e796d63e89841f63e41a4fd3292cc` |
+| BM4_NL Bourdon setting | PASS — SOURCE_INSPECTION | individual-file Translation+Rotation |
+| Global pressure stiffening | PASS — SOURCE_INSPECTION | raw DEFAULT -> DEFAULT_CODE, active B31.3-2022 |
+| L19/L20 selector | UNRESOLVED — SOURCE AUTHORITY | P1 not promoted |
+| v2 source-state contract | PASS — SOURCE_INSPECTION | raw/normalized setting custody retained |
+| Q1-Q6 protocol | PASS — SOURCE_INSPECTION | mechanism isolation defined |
+| External parity intake | PASS_AFTER_FIX — SOURCE_INSPECTION | mechanism scopes, controlled-state pairing, Q3 basis, Q4 ownership/selector, Q5 arbitration, Q6 thrust exclusion, anti-gaming enforced |
+| Contract/source prerequisite execution | NOT_RUN — CI_PRE_STEP_INFRASTRUCTURE_FAILURE | run `32683986237`, job `97305562385`, steps null |
+| Controlled Bourdon parity | UNRESOLVED | no real controlled CAESAR observations supplied |
+| Controlled pressure-stiffening parity | UNRESOLVED | no real controlled CAESAR observations; L19/L20 selector unresolved |
+| Production S5 promotion | BLOCKED | all numerical S5 flags false |
 
-Historical hosted run `32678959386` / job `97292100341` had `steps=[]` and 404 `BlobNotFound`; classify as `CI_PRE_STEP_INFRASTRUCTURE_FAILURE`, not software PASS/engineering FAIL.
+No GitHub test assertion executed on the exact code head; the workflow conclusion is not a software/engineering FAIL. Issue #54 remains the execution-environment blocker.
 
 ## Changed-file ledger — 8 files
 
 | File | Purpose |
 |---|---|
-| `.github/workflows/lfea-s5-pressure-authority-gate.yml` | S5 source/prerequisite/parity-contract workflow |
+| `.github/workflows/lfea-s5-pressure-authority-gate.yml` | source/prerequisite/parity-contract workflow |
 | `agents/PR1391_workreport.md` | sole living recovery authority |
-| `docs/lfea/S5_Pressure_Effect_Source_Authority_20260824.md` | Hexagon/source-setting authority ledger |
-| `docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md` | mechanism-isolated CAESAR protocol |
-| `scripts/lfea-s5-pressure-authority-gate-check.mjs` | BM4_NL source/config falsifier gate |
-| `src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js` | source-state authority v2 |
-| `scripts/lfea-s5-pressure-parity-evidence-contract.mjs` | external CAESAR parity evidence intake |
-| `scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs` | contract-only falsifier fixture/check |
+| `docs/lfea/S5_Pressure_Effect_Source_Authority_20260824.md` | vendor/source-setting authority ledger |
+| `docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md` | controlled Q1-Q6 CAESAR protocol |
+| `scripts/lfea-s5-pressure-authority-gate-check.mjs` | BM4_NL setting custody/falsifier gate |
+| `src/core/linear-piping-analysis-consumer/production-pressure-effect-authority.js` | source-state contract v2 |
+| `scripts/lfea-s5-pressure-parity-evidence-contract.mjs` | external controlled parity intake |
+| `scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs` | contract falsifier fixture |
 
-## Appendix A — expert takeover questionnaire
+# APPENDIX A — expert takeover questionnaire
 
-1. Why is `Use Pressure Stiffening on Bends=Default` not equivalent to INCLUDE?
-2. What is the authority difference between global pressure stiffening and per-load-case Elbow Stiffening Pressure?
-3. Which BM4_NL authority layer proves the existing-job Bourdon mode?
-4. Why is provisional P1 not authority for L19/L20?
-5. What exactly does MEC-21 bend opening own, and where is uniform closed-end axial pressure strain owned?
-6. Why must 4/6/8-chord Q3 evaluations share one physical initial bend basis?
-7. Why can Bourdon qualify independently of pressure stiffening in the new contract?
-8. Which Q4 conditions prove P1/P2/Pmax selection rather than incidental case ordering?
-9. Why must pressure-stiffening factor ownership be exactly once on the curved S3 bend component?
-10. Why does successful Bourdon parity still leave `pressureAxialThrust=false`?
-11. Why does an accepted parity package still authorize no production capability?
-12. Why are in-memory contract fixtures not CAESAR evidence?
+1. Why is global `Use Pressure Stiffening on Bends=Default` not equivalent to INCLUDE?
+2. Why is `Elbow Stiffening Pressure` a separate authority from the global setting?
+3. Which BM4_NL layer establishes existing-job Bourdon Translation+Rotation?
+4. Why is provisional P1 ineligible as L19/L20 source authority?
+5. What source state must remain constant across Q1, Q2, Q4 and Q5 respectively?
+6. Why must Q4 use positive distinct P1/P2 values?
+7. Why does Q3 require one physical bend initial basis for 4/6/8 chords?
+8. What does the exactly-once pressure-factor requirement protect against on the S3 curved bend?
+9. What does Q6 prove that a package-level boolean alone does not?
+10. Why can Bourdon qualify without pressure-stiffening parity?
+11. Why does successful Bourdon parity leave `pressureAxialThrust=false`?
+12. Why does an accepted external parity record authorize no production flag?
+13. Why are the in-memory contract fixtures not CAESAR evidence?
+14. What separate production integration is required after real parity evidence exists?
 
-Takeover threshold: all twelve must be answerable without guessing undocumented CAESAR behavior.
+Takeover threshold: all fourteen must be answerable without guessing undocumented CAESAR behavior.
 
 ## Historical record
 
-- S5 audit separated Bourdon displacement, bend pressure stiffening and pressure/end thrust.
-- BM4_NL source custody established existing-job Bourdon Translation+Rotation, global DEFAULT_CODE/B31.3-2022, and unresolved L19/L20 elbow selector.
-- A controlled Q1-Q6 parity protocol was committed; full BM4_NL response was rejected as an isolated oracle.
-- 2026-08-24 continuation added a machine-checkable external evidence contract that supports independent Bourdon and pressure-stiffening qualification while hard-locking axial thrust and all production flags false.
+- S5 audit separated Bourdon displacement, pressure stiffening and pressure/end thrust.
+- BM4_NL established existing-job Bourdon Translation+Rotation, global DEFAULT_CODE/B31.3-2022, and unresolved L19/L20 selector custody.
+- Full BM4_NL response was rejected as an isolated oracle because multiple unrelated sensitivities were simultaneous.
+- A controlled Q1-Q6 protocol was committed.
+- The external evidence contract was then hardened to allow independent Bourdon/stiffening scopes while requiring non-empty observations, controlled non-switched state, one physical Q3 basis, exact Q4 selector ownership, Q5 arbitration, explicit Q6 thrust exclusion, anti-gaming and independent review.
 - No numerical S5 production promotion has occurred.

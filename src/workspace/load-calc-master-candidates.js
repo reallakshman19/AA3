@@ -122,6 +122,25 @@ export function buildLoadCalcMasterEnrichmentProposals({ dataset, masters, proje
     } else {
       proposals.push(proposalFor('MATERIAL_DENSITY', densityKgM3, 'kg/m3', context, masters));
     }
+
+    // Operating fluid density is already resolved per line by the Line List
+    // normalizer, which records which column it came from in densitySource.
+    // Hydro density is not proposed here: an approved Project Data configured
+    // default already supplies it, and proposing a second authority for the
+    // same field would create a conflicting record rather than resolve one.
+    const operatingFluidDensity = finite(lineRow.operatingFluidDensity ?? lineRow.density);
+    if (operatingFluidDensity === null) {
+      blockers.push(issue('LOAD_CALC_MASTER_OPERATING_FLUID_DENSITY_MISSING', targetId,
+        `Line List row ${lineRow.lineKey} carries no usable operating fluid density.`));
+    } else {
+      proposals.push(proposalFor(
+        'OPERATING_FLUID_DENSITY',
+        operatingFluidDensity,
+        'kg/m3',
+        { ...context, fluidDensitySource: lineRow.densitySource || 'linelist' },
+        masters,
+      ));
+    }
     if (match.needsReview) {
       reviewRequired.push({
         targetId,
@@ -157,13 +176,20 @@ export function buildLoadCalcMasterEnrichmentProposals({ dataset, masters, proje
  * a rubber stamp.
  */
 function proposalFor(fieldId, value, unit, context, masters) {
-  const { targetId, boreMm, requestedClass, match, lineRow } = context;
-  const approximate = Boolean(match.needsReview);
+  const { targetId, boreMm, requestedClass, match, lineRow, fluidDensitySource } = context;
+  // Fluid density comes from the Line List, every other field from the Piping
+  // Class master. Attributing all of them to one master would misstate which
+  // approved source a value can be traced back to.
+  const fromLineList = fieldId === 'OPERATING_FLUID_DENSITY';
+  const master = fromLineList ? masters?.lineList : masters?.pipingClass;
+  const approximate = !fromLineList && Boolean(match.needsReview);
   return createNonFeaEnrichmentProposal({
     proposalId: `loadcalc-master:${fieldId}:${targetId}`,
-    rationale: approximate
-      ? `Approved master value for ${fieldId} at DN${boreMm}. Piping class ${requestedClass} resolved approximately to ${match.resolvedPipingClass} (${match.method}, confidence ${round(match.confidence)}); confirm the class is correct before accepting.`
-      : `Approved master value for ${fieldId} at DN${boreMm} from piping class ${match.resolvedPipingClass}.`,
+    rationale: fromLineList
+      ? `Operating fluid density for line ${lineRow.lineKey} from the Line List (${fluidDensitySource}).`
+      : approximate
+        ? `Approved master value for ${fieldId} at DN${boreMm}. Piping class ${requestedClass} resolved approximately to ${match.resolvedPipingClass} (${match.method}, confidence ${round(match.confidence)}); confirm the class is correct before accepting.`
+        : `Approved master value for ${fieldId} at DN${boreMm} from piping class ${match.resolvedPipingClass}.`,
     record: {
       recordId: `loadcalc-master:${fieldId}:${targetId}`,
       selectorKind: 'ENTITY',
@@ -172,9 +198,15 @@ function proposalFor(fieldId, value, unit, context, masters) {
       value,
       unit,
       authority: 'EXACT_APPROVED_MASTER',
-      sourceId: masters?.pipingClass?.fileName || 'pipingClass',
-      revision: masters?.pipingClass?.sourceHash || 'NOT_AVAILABLE',
-      evidence: {
+      sourceId: master?.fileName || (fromLineList ? 'lineList' : 'pipingClass'),
+      revision: master?.sourceHash || 'NOT_AVAILABLE',
+      evidence: fromLineList ? {
+        matchMode: 'EXACT',
+        boreMm,
+        lineKey: lineRow.lineKey,
+        fluidDensitySource,
+        lineListSourceHash: masters?.lineList?.sourceHash || null,
+      } : {
         matchMode: approximate ? 'APPROXIMATE_CLASS_MATCH' : 'EXACT',
         requestedPipingClass: requestedClass,
         resolvedPipingClass: match.resolvedPipingClass,

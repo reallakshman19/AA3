@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { access, readFile, readdir } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,
@@ -91,16 +92,25 @@ for (const directory of evidenceDirectories) {
   for (const file of [...expectedPre, ...expectedPost]) {
     if (await exists(join(directory, file))) present.push(file);
   }
+  const complete01To10 = expectedPre.every((file) => present.includes(file));
+  const complete01To12 = [...expectedPre, ...expectedPost].every((file) => present.includes(file));
+  const postPromotion = complete01To12
+    ? await verifyPostPromotionReceipts(directory)
+    : { verified: false, authorizationHeadSha: null, reasons: ['EVIDENCE_01_TO_12_INCOMPLETE'] };
   evidenceInventory.push({
-    directory: relative(directory),
+    directory: portableRelative(directory),
     preAuthorizationCount: expectedPre.filter((file) => present.includes(file)).length,
     postPromotionCount: expectedPost.filter((file) => present.includes(file)).length,
-    complete01To10: expectedPre.every((file) => present.includes(file)),
-    complete01To12: [...expectedPre, ...expectedPost].every((file) => present.includes(file)),
+    complete01To10,
+    complete01To12,
+    postPromotionReceiptsVerified: postPromotion.verified,
+    authorizationHeadSha: postPromotion.authorizationHeadSha,
+    receiptVerificationReasons: postPromotion.reasons,
   });
 }
 const complete01To10 = evidenceInventory.find((entry) => entry.complete01To10) ?? null;
-const complete01To12 = evidenceInventory.find((entry) => entry.complete01To12) ?? null;
+const qualified01To12 = evidenceInventory.find((entry) =>
+  entry.complete01To12 && entry.postPromotionReceiptsVerified) ?? null;
 
 const route = EMP1_C_BOUNDED_PRODUCTION_ROUTES.find(
   (entry) => entry.routeId === EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
@@ -122,7 +132,7 @@ const prerequisiteStates = {
   cauxDirectPdfReobservation: cauxDirectPdfReady ? 'PASS' : 'NOT_RUN',
   evidence01To10: complete01To10 ? 'PASS' : 'NOT_GENERATED',
   boundedAuthorization: boundedAuthorizationReady ? 'PASS' : 'NOT_AUTHORIZED',
-  evidence11To12: complete01To12 ? 'PASS' : 'NOT_GENERATED',
+  evidence11To12: qualified01To12 ? 'PASS' : 'NOT_GENERATED_OR_UNVERIFIED',
 };
 const dynamicBlockers = [];
 if (!sourceReady) dynamicBlockers.push('SOURCE_CUSTODY_NOT_READY');
@@ -130,7 +140,7 @@ if (!p0Ready) dynamicBlockers.push('P0_SOURCE_SEMANTICS_NOT_READY');
 if (!cauxDirectPdfReady) dynamicBlockers.push('CAUX_DIRECT_PDF_REOBSERVATION_NOT_RUN');
 if (!complete01To10) dynamicBlockers.push('PR_D_EVIDENCE_01_TO_10_NOT_GENERATED');
 if (!boundedAuthorizationReady) dynamicBlockers.push('PR_E_BOUNDED_AUTHORIZATION_NOT_EXECUTED');
-if (!complete01To12) dynamicBlockers.push('PR_F_EVIDENCE_11_TO_12_NOT_GENERATED');
+if (!qualified01To12) dynamicBlockers.push('PR_F_EVIDENCE_11_TO_12_NOT_GENERATED_OR_UNVERIFIED');
 
 const prerequisitesReady = dynamicBlockers.length === 0;
 const currentFrozenSnapshotMatchesBlockedState = contract.state === 'BLOCKED_FAIL_CLOSED'
@@ -162,12 +172,62 @@ const result = {
     releaseQualified: route.releaseQualified === true,
   },
   exactCandidateExecutionRequiredAfterPrerequisites: true,
+  deploymentEvidenceRequiredAfterCandidateExecution: true,
   codeComplianceAuthorizedByThisGate: false,
   deploymentAuthorizedByThisGate: false,
 };
 console.log(JSON.stringify(result, null, 2));
 if (requireRelease && !prerequisitesReady) process.exit(2);
 
+async function verifyPostPromotionReceipts(directory) {
+  const reasons = [];
+  try {
+    const eleven = JSON.parse(await readFile(join(directory, expectedPost[0]), 'utf8'));
+    const twelve = JSON.parse(await readFile(join(directory, expectedPost[1]), 'utf8'));
+    if (eleven.status !==
+      'PASS_POST_PROMOTION_EXACT_HEAD_BOUNDED_ROUTE_AUTHORIZATION_QUALIFIED_GLOBAL_C_STILL_BLOCKED') {
+      reasons.push('RECEIPT_11_STATUS_INVALID');
+    }
+    if (twelve.status !== 'PASS_POST_PROMOTION_EXACT_HEAD_GATE_ANTI_FORGERY_FALSIFIERS') {
+      reasons.push('RECEIPT_12_STATUS_INVALID');
+    }
+    if (!/^[0-9a-f]{40}$/u.test(eleven.observedAuthorizationHeadSha ?? '')) {
+      reasons.push('RECEIPT_11_AUTHORIZATION_HEAD_INVALID');
+    }
+    if (eleven.observedAuthorizationHeadSha !== twelve.observedAuthorizationHeadSha) {
+      reasons.push('POST_PROMOTION_AUTHORIZATION_HEAD_MISMATCH');
+    }
+    if (eleven.authority?.productionRouteAuthorizedOnObservedHead !== true
+      || eleven.authority?.globalEmp1CRouteAuthority !== false
+      || eleven.authority?.codeComplianceAuthorized !== false
+      || eleven.authority?.releaseQualified !== false) {
+      reasons.push('RECEIPT_11_AUTHORITY_BOUNDARY_INVALID');
+    }
+    if (twelve.authorization?.productionRouteAuthorizedOnObservedHead !== true
+      || twelve.authorization?.globalEmp1CRouteAuthority !== false
+      || twelve.authorization?.codeComplianceAuthorized !== false
+      || twelve.authorization?.releaseQualified !== false) {
+      reasons.push('RECEIPT_12_AUTHORITY_BOUNDARY_INVALID');
+    }
+    if (eleven.gateSemanticHash !== semanticHash(eleven, 'gateSemanticHash')) {
+      reasons.push('RECEIPT_11_SEMANTIC_HASH_INVALID');
+    }
+    if (twelve.falsifierSemanticHash !== semanticHash(twelve, 'falsifierSemanticHash')) {
+      reasons.push('RECEIPT_12_SEMANTIC_HASH_INVALID');
+    }
+    return {
+      verified: reasons.length === 0,
+      authorizationHeadSha: eleven.observedAuthorizationHeadSha ?? null,
+      reasons,
+    };
+  } catch (error) {
+    return {
+      verified: false,
+      authorizationHeadSha: null,
+      reasons: [`POST_PROMOTION_RECEIPT_READ_FAILED:${error?.code ?? 'UNKNOWN'}`],
+    };
+  }
+}
 async function findEvidenceDirectories(start) {
   const out = [];
   await walk(start, 0);
@@ -189,7 +249,6 @@ async function findEvidenceDirectories(start) {
     }
   }
 }
-
 async function exists(path) {
   try {
     await access(path);
@@ -201,8 +260,22 @@ async function exists(path) {
 async function readJson(path) {
   return JSON.parse(await readFile(resolve(root, path), 'utf8'));
 }
-function relative(path) {
-  return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
+function portableRelative(path) {
+  return relative(root, path).replaceAll('\\', '/');
+}
+function semanticHash(value, hashField) {
+  const { [hashField]: _hash, status: _status, ...payload } = value;
+  return sha256Canonical(payload);
+}
+function sha256Canonical(value) {
+  return createHash('sha256').update(JSON.stringify(sortValue(value)), 'utf8').digest('hex');
+}
+function sortValue(value) {
+  if (Array.isArray(value)) return value.map(sortValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sortValue(value[key])]));
+  }
+  return value;
 }
 function gateError(code) {
   const error = new TypeError(code);

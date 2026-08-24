@@ -1,0 +1,72 @@
+{
+  "schema": "emp1-wrc537-gamma5-post-promotion-owner-override-disposition/v1",
+  "issue": 1389,
+  "phase": "PR-F",
+  "dispositionIsNumericalQualification": false,
+  "stackedPredecessor": {
+    "pr": 1408,
+    "state": "OPEN_DRAFT_UNMERGED",
+    "headSha": "b594581b3ec49bee26bea53d7e9dc88b6598f619",
+    "treeSha": "90eb938f40edbd424f94aa656793c85f4b231ba4",
+    "parentSha": "99284205fa411cea6009c9f67867b099b8480e9f",
+    "mainBaseSha": "a59547c8554b6244b2ea94aedd4d59fa0fb15d1f"
+  },
+  "predecessorAuthorizationRecord": {
+    "path": "validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json",
+    "gitBlobSha": "afa5678233f09b9c048bb740dc30f66a331b2ae0",
+    "semanticHash": "4a7bec7c84dd03ec547ae2ee7157efc91edef70f9662901d40d616e8cb8d0566",
+    "schema": "emp1-wrc537-gamma5-bounded-route-owner-override-authorization/v1",
+    "standardEvidenceContractSatisfied": false,
+    "standardPostPromotionGateCompatible": false
+  },
+  "sourceAudit": {
+    "pr1408ChangedFiles": 6,
+    "routeMutationCount": 5,
+    "registryMutationCount": 7,
+    "approvedSemanticMutationCount": 12,
+    "widerBlockedDomainCount": 8,
+    "unexpectedEngineeringMutationObserved": false,
+    "routeAuthorizedOnStackedSource": true,
+    "registryRegisteredOnStackedSource": true,
+    "boundedEngineeringUseAuthorizedOnStackedSource": true,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthorized": false,
+    "releaseQualified": false
+  },
+  "standardPostPromotionGate": {
+    "script": "scripts/emp1-wrc-gamma5-post-promotion-exact-head-gate.mjs",
+    "falsifierScript": "scripts/emp1-wrc-gamma5-post-promotion-exact-head-gate-falsifiers.mjs",
+    "prerequisite08": "NOT_GENERATED",
+    "prerequisite09": "NOT_GENERATED",
+    "prerequisite10": "NOT_GENERATED",
+    "executionState": "NOT_RUN_PREDECESSOR_STANDARD_EVIDENCE_CHAIN_ABSENT",
+    "standardReceipt11": "NOT_GENERATED",
+    "standardFalsifier12": "NOT_GENERATED",
+    "passClaimed": false,
+    "failClaimed": false,
+    "gateWeakenedOrModified": false
+  },
+  "ownerProgressionContext": {
+    "instruction": "skip github workflow. merge. proceed next",
+    "scopeAppliedSoFar": "PR_D_WORKFLOW_SKIP_AND_SEQUENCE_PROGRESSION",
+    "doesNotCreateNumericalEvidence": true
+  },
+  "authorityBoundary": {
+    "boundedRouteSourceStateObserved": "AUTHORIZED_ON_UNMERGED_PR_E_STACK_ONLY",
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthorized": false,
+    "releaseQualified": false,
+    "nonzeroDifferentialPressureAllowed": false,
+    "nonUnityStressConcentrationAllowed": false,
+    "offAxisLongitudinalMomentMaximumAllowed": false,
+    "gammaOtherThan5Allowed": false,
+    "betaOutside0p05To0p5Allowed": false,
+    "nonTabulatedGammaAllowed": false
+  },
+  "standardFiles11And12CreationPolicy": {
+    "substituteHandAuthoredFilesAllowed": false,
+    "filesRemainAbsentUntilGenuineStandardGateExecution": true
+  },
+  "dispositionSemanticHash": "5a06672aa51c82e0e73923f4bb5e98ac8f76686320250553f4655ee4bf43f217",
+  "status": "SOURCE_AUDIT_COMPLETE_STANDARD_POST_PROMOTION_GATE_NOT_RUN_PREDECESSOR_EVIDENCE_WAIVED"
+}

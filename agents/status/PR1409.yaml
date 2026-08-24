@@ -1,0 +1,46 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1409
+mission: "Issue #1389 PR-F non-authorizing post-promotion owner-override disposition"
+workstream: EMP1_WRC537_PROFESSIONAL_RELEASE
+branch: agent/issue-1389-pr-f-post-promotion-disposition-20260824
+base_branch: agent/issue-1389-pr-e-bounded-authorization-20260824
+base_pr: 1408
+base_pr_head: b594581b3ec49bee26bea53d7e9dc88b6598f619
+base_pr_tree: 90eb938f40edbd424f94aa656793c85f4b231ba4
+main_sha: a59547c8554b6244b2ea94aedd4d59fa0fb15d1f
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE_STACKED_DRAFT
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/PR1409_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: AUDIT_COMPLETE_STACKED_DRAFT_AWAITING_PR1408_RESOLUTION
+standard_pr_f:
+  prerequisite_08_10: NOT_GENERATED
+  execution: NOT_RUN_PREDECESSOR_STANDARD_EVIDENCE_CHAIN_ABSENT
+  receipt_11: NOT_GENERATED
+  falsifier_12: NOT_GENERATED
+  pass_claimed: false
+  fail_claimed: false
+  standard_gate_modified: false
+disposition_record:
+  path: validation/emp1/wrc537-2013/gamma5-zero-dp-post-promotion-owner-override-disposition-v1.json
+  semantic_hash: 5a06672aa51c82e0e73923f4bb5e98ac8f76686320250553f4655ee4bf43f217
+validation:
+  stacked_compare: PASS_AHEAD_10_BEHIND_0
+  changed_files: PASS_EXACT_FOUR
+  superseded_wip_records: PASS_REMOVED
+  pr_state: PASS_OPEN_DRAFT_MERGEABLE
+  review_threads: PASS_ZERO
+  authority_file_mutation_in_pr_f: PASS_NONE
+authority:
+  pr_f_authority_mutation: false
+  bounded_route_state_observed_on_unmerged_stack: true
+  global_emp1_c_route_authority: false
+  code_compliance_authorized: false
+  release_qualified: false
+merge_disposition: STACKED_DRAFT_OWNER_ONLY_DO_NOT_MERGE_BEFORE_PR1408
+exact_next_action: "Resolve PR1408 first. If merged, re-ground main and retarget/re-audit PR1409 before any merge; if PR1408 changes, invalidate and refresh this disposition against the new exact head."
+last_updated: "2026-08-24"

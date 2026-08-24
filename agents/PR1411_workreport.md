@@ -4,7 +4,7 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT
+PR_RECOVERY_STATE: HEALTHY_READY_TO_MERGE
 CRITICALITY: ENGINEERING_CRITICAL
 WORK_INTENT: IMPLEMENT_CLOSEOUT_RECONCILIATION
 PR: #1411
@@ -12,10 +12,10 @@ BASE: main@4c7b5c7e4d4ee1a2144d1764fd15e93813719a19
 BASE_TREE: 182e5da09af1076b6dd382474ff1638da0d7862b
 BRANCH: agent/issue-1389-post-sequence-release-state-20260824
 ISSUE: #1389 post A-H current-state reconciliation
-CURRENT_STAGE: PR_ALLOCATED_RECOVERY_MIGRATION_AND_FINAL_AUDIT
+CURRENT_STAGE: FINAL_AUDIT_COMPLETE_OWNER_AUTHORIZED_READY_TO_MERGE
 MERGE_AUTHORITY: OWNER_AUTHORIZED_BY_2026-08-24_INSTRUCTION
 HIGHEST_RISK: mutating frozen PR-H evidence or presenting owner-skipped execution as release qualification
-EXACT_NEXT_ACTION: remove superseded WIP records; verify exact six-file diff, live main, reviews and protected paths; then merge only if unchanged.
+EXACT_NEXT_ACTION: mark PR ready and squash-merge using the exact audited head; then re-ground main and continue only with a genuine remaining #1389 blocker.
 ```
 
 ## Mission
@@ -47,10 +47,11 @@ This PR is non-authorizing. It does not alter WRC numerics, route/registry autho
 
 `DEC-1389I-02`: the new current-state artifact/checker is additive and non-authorizing.
 
-`DEC-1389I-03`: owner instruction `allocate PR, merge, proceed next` authorizes PR1411 merge only after exact final scope/review/base audit remains clean.
+`DEC-1389I-03`: owner instruction `allocate PR, merge, proceed next` authorizes PR1411 merge after the final scope/review/base audit remains clean.
 
-## Intended final changed-file ledger
+## Final changed-file ledger
 
+Exactly six files:
 1. `validation/emp1/release/emp1-professional-release-current-state-v1.json`
 2. `scripts/emp1-professional-release-current-state-check.mjs`
 3. `docs/emp1/EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE.md`
@@ -58,25 +59,31 @@ This PR is non-authorizing. It does not alter WRC numerics, route/registry autho
 5. `agents/status/PR1411.yaml`
 6. `agents/claims/PR1411.yaml`
 
-Temporary WIP records are superseded and must be deleted before merge.
+Superseded WIP workreport/status/claim were deleted. No duplicate active WIP claim remains.
 
 ## Protected no-mutation
 
-- `validation/emp1/release/emp1-professional-release-readiness-v1.json`
-- `validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json`
-- `src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js`
-- `src/core/emp1/emp1-c-bounded-route-registry.js`
-- `src/core/emp1/emp1-c-qualification-state.js`
-- `validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json`
-- `validation/emp1/wrc537-2013/gamma5-zero-dp-post-promotion-owner-override-disposition-v1.json`
+- frozen PR-H readiness snapshot
+- frozen bounded release profile
+- WRC gamma5 route and bounded registry
+- global qualification/code/release state
+- PR-E authorization and PR-F disposition
+- oracle/tolerance/Table-5 mechanics
 - standard 01–12 evidence scripts/receipts
 - `.github/workflows/**`
 
-## Validation ledger
+## Final validation ledger
 
-- live main/tree grounding: PASS — GitHub
-- A–H phase completion inventory: PASS — merged PR history
-- source custody: PASS_SOURCE_CUSTODY — retained ledger
+- live main/tree grounding: PASS — unchanged at audit
+- merge base: PASS — exact `4c7b5c7...`
+- branch behind main: PASS — 0
+- changed files: PASS — exact six intended files
+- protected path mutation: PASS — none
+- WIP migration: PASS — superseded WIP records removed
+- reviews: PASS — zero
+- review threads: PASS — zero
+- current-state semantic hash: PASS — independent canonical SHA-256 reproduction `5ca53c66ac77162e16dc3a400a7331ca84bf2db89eddbb464ed38ac8feabb2c7`
+- source custody: PASS_SOURCE_CUSTODY
 - bounded route current state: PASS_SOURCE_INSPECTION — authorized/registered/engineering-use true
 - P0 gate: BLOCKED — 9 blockers
 - CAUx direct PDF: NOT_RUN
@@ -84,7 +91,6 @@ Temporary WIP records are superseded and must be deleted before merge.
 - standard 11–12: NOT_GENERATED
 - build/Chromium/replay/deploy: NOT_RUN
 - professional releaseReady: false
-- final PR diff/reviews/main drift: PENDING_FINAL_AUDIT
 
 ## Appendix A
 
@@ -94,8 +100,8 @@ A2 Failure isolation — 20/20. Bounded authorization is separated from source/e
 
 A3 Authority/invariant — 20/20. Frozen evidence and global/code/release boundaries protected.
 
-A4 Independent validation — 19/20. Current records are source-inspected; executable release evidence remains NOT_RUN/NOT_GENERATED.
+A4 Independent validation — 19/20. Current state and semantic hash independently reproduced; executable release evidence remains NOT_RUN/NOT_GENERATED.
 
 A5 Minimal patch — 20/20. Current-state artifact + checker + document + three recovery records only.
 
-**99/100; minimum 19/20 — HANDOVER_READY.**
+**99/100; minimum 19/20 — HANDOVER_READY / OWNER_AUTHORIZED_READY_TO_MERGE.**

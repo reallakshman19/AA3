@@ -1,0 +1,97 @@
+{
+  "schema": "lfea-piping-component-promotion-stack-candidate/v1",
+  "status": "BLOCKED_NOT_RELEASE_CANDIDATE",
+  "program": "LFEA_PIPING_COMPONENT_PROMOTION_S0_S7",
+  "observedMain": {
+    "sha": "e6908671f25df784312b9e3392bc6ab83863c9c8",
+    "classification": "OBSERVATION_ONLY_NOT_RELEASE_PARENT",
+    "latestObservedDrift": "EMP1_ONLY_NO_PIPING_PROMOTION_OVERLAP"
+  },
+  "implementedAncestry": [
+    {
+      "stage": "S1_S3",
+      "pr": 1348,
+      "head": "25543a9e6c0e796d63e89841f63e41a4fd3292cc",
+      "baseKind": "MAIN_HISTORICAL",
+      "capabilities": ["bendTangentCustody", "bendRetopology", "bendExactMechanics"],
+      "runtimeQualification": "NOT_RUN_CI_PRE_STEP_INFRASTRUCTURE_FAILURE"
+    },
+    {
+      "stage": "S6",
+      "pr": 1395,
+      "head": "2b4b4762973c84690b636eab8abe918e307d5dab",
+      "basePr": 1348,
+      "baseHead": "25543a9e6c0e796d63e89841f63e41a4fd3292cc",
+      "capabilities": ["teeExactMechanicsType3Only"],
+      "runtimeQualification": "NOT_RUN_CI_PRE_STEP_INFRASTRUCTURE_FAILURE"
+    },
+    {
+      "stage": "S7_INTEGRATION",
+      "pr": 1396,
+      "headBeforeThisManifest": "b842f83042e189cb08f3009dc0aa21014e2061a9",
+      "basePr": 1395,
+      "baseHead": "2b4b4762973c84690b636eab8abe918e307d5dab",
+      "capabilities": ["uiDisclosureVerification", "promotionAntiDrift", "integratedCertificationRoute"],
+      "numericallyInert": true,
+      "runtimeQualification": "NOT_RUN_CI_PRE_STEP_INFRASTRUCTURE_FAILURE"
+    }
+  ],
+  "carryForward": {
+    "sourcePr": 1341,
+    "sourceHead": "dd2d9d1ba9ede41c82c8d6707181c61f679b5549",
+    "disposition": "FUNCTIONALLY_SUBSUMED_NOT_CLOSED",
+    "uniqueGuardCarriedToPr": 1396,
+    "ownerControlsAdministrativeClosure": true
+  },
+  "blockedStages": [
+    {
+      "stage": "S4",
+      "pr": 1386,
+      "head": "508ed865129554e7c7a94b9194e84504aedb31de",
+      "capability": "reducerExactMechanics",
+      "requiredCapabilityState": false,
+      "blockers": [
+        "REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED",
+        "REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED",
+        "REDUCER_CONTROLLED_CAESAR_RESPONSE_PARITY_REQUIRED"
+      ],
+      "externalEvidenceRequired": true
+    },
+    {
+      "stage": "S5",
+      "pr": 1391,
+      "head": "2c75e3a350437b0fad130b5bfdf9cc9b0a9088a7",
+      "requiredCapabilities": {
+        "pressureBourdon": false,
+        "pressureStiffening": false,
+        "pressureAxialThrust": false
+      },
+      "blockers": [
+        "CONTROLLED_BOURDON_PARITY_REQUIRED",
+        "CONTROLLED_PRESSURE_STIFFENING_PARITY_REQUIRED",
+        "L19_L20_ELBOW_STIFFENING_PRESSURE_SELECTOR_UNRESOLVED",
+        "PRESSURE_AXIAL_THRUST_REQUIRES_SEPARATE_AUTHORITY"
+      ],
+      "externalEvidenceRequired": true
+    }
+  ],
+  "infrastructureGate": {
+    "issue": 54,
+    "status": "OPEN_BLOCKING",
+    "requiredBeforeQualificationClaim": "JOB_EXECUTES_VISIBLE_STEPS_AND_LOGS"
+  },
+  "releaseBoundary": {
+    "releaseEligible": false,
+    "engineeringQualificationComplete": false,
+    "phase6iHistoricalEvidenceMayCertifyThisTree": false,
+    "newGovernedReleaseCandidateRequiredAfterAnyOwnerAuthorizedMerge": true
+  },
+  "mergePolicy": {
+    "mergeAuthority": "OWNER_ONLY",
+    "automaticMergeAuthorized": false,
+    "doNotTreatBlockedS4S5AsQualified": true,
+    "doNotTreatNotRunAsPass": true,
+    "doNotRebaselineBenchmarks": true,
+    "doNotWidenOrFitTolerances": true
+  }
+}

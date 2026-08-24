@@ -1,0 +1,34 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1400
+mission: "Issue #1389 PR-C — freeze CAUx pp.24-31 benchmark/reference and independent hand calculation"
+workstream: EMP1_WRC537_PROFESSIONAL_RELEASE
+branch: agent/issue-1389-pr-c-caux-benchmark-20260824
+pr_head_implementation_basis: ebe90877c5ee424506d6d7c9d92c720aacd537f0
+last_diff_validation_head: b3f890c37a5e2043a04786652a119ea8e80d45eb
+main_head_last_checked: e985b50d81d0d241db27313562c8cc12cd7cc27d
+work_intent: "Freeze retained page-qualified CAUx values and independent arithmetic before production observation; preserve outside-gamma5 reference disposition and all false production/code authority."
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/PR1400_workreport.md
+report_basis_head: ebe90877c5ee424506d6d7c9d92c720aacd537f0
+appendix_a_status: CURRENT_99_OF_100_MIN_19
+current_stage: PR_C_COMPLETE_DRAFT_OWNER_REVIEW
+blocker: DIRECT_CAUX_PDF_PAGE_REOBSERVATION_NOT_RUN
+highest_risk: CAUX_REFERENCE_PROMOTED_INTO_WRC_METHOD_OR_GAMMA5_AUTHORITY
+ci_state: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+local_validation_state: PASS_INDEPENDENT_REPRODUCTION_AND_NODE_SYNTAX_CHECK
+checker_execution_state: NOT_RUN_FULL_CHECKER_RETAINED_TRANSCRIPTION_NOT_MATERIALIZED
+review_state: NO_REVIEWS_NO_THREADS
+changed_files_final: 8
+semantic_hashes:
+  benchmark: 741bfbc21496c2f126dbbeec18b2f88d4424e90a94b1d2cc7444776a16dfb7fe
+  independent_handcalc: e7e4e7d21188e4b6c1f53c2d7b89a73036a52ccccc61a65fd69c24f6a13ae227
+  qualification: 27e5f468c409071270ceea3a388ee2f33b77f3ea71b02f4cc5b7646c8eca14ef
+dependencies:
+  - "#1389"
+  - "#54"
+exact_next_action: "Owner review/merge decision for PR #1400. Direct PDF re-observation may later upgrade source qualification; do not perform a gamma48 production comparison or authorize production from PR-C."
+last_updated: "2026-08-24"

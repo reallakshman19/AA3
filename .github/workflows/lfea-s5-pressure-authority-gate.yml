@@ -9,6 +9,7 @@ on:
       - 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json'
       - 'docs/lfea/S5_Pressure_Effect_Source_Authority_20260824.md'
       - 'docs/lfea/S5_Pressure_Effect_Parity_Protocol_20260824.md'
+      - 'docs/lfea/S5_Pressure_Parity_Evidence_Package_20260824.md'
       - 'scripts/lfea-s5-pressure-authority-gate-check.mjs'
       - 'scripts/lfea-s5-pressure-parity-evidence-contract.mjs'
       - 'scripts/lfea-s5-pressure-parity-evidence-contract-check.mjs'

@@ -47,8 +47,8 @@
     {
       "stage": "S4",
       "pr": 1386,
-      "head": "2fc49e5ff84357c18308ca83a84f986624cfd2a3",
       "engineeringCodeHead": "7e540e6617decd23e3aec432bb08b81ebbd60a5a",
+      "livePrHeadMustBeGroundedFromGithub": true,
       "capability": "reducerExactMechanics",
       "requiredCapabilityState": false,
       "blockers": [
@@ -64,8 +64,8 @@
     {
       "stage": "S5",
       "pr": 1391,
-      "head": "75407da9f5c6a7081ad803e67741f3f4255a9d81",
       "engineeringCodeHead": "b62bfce16bf32e23e26560c68959ee03924377da",
+      "livePrHeadMustBeGroundedFromGithub": true,
       "requiredCapabilities": {
         "pressureBourdon": false,
         "pressureStiffening": false,

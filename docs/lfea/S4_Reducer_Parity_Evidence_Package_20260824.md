@@ -6,27 +6,56 @@ This document defines the file-level custody required to submit controlled CAESA
 
 It does **not** authorize reducer production mechanics. A package accepted by the intake remains `QUALIFIED_PARITY_EVIDENCE_ONLY`; `reducerExactMechanics` and production authorization remain false until a separate production-authority revision is reviewed and implemented.
 
+## Create a fail-closed package scaffold
+
+Do not hand-create the run inventory. Generate a new package directory from the repository script:
+
+```text
+node scripts/lfea-s4-reducer-parity-evidence-template.mjs /path/to/new-s4-package
+```
+
+The generator creates:
+
+- `evidence.json` with all required forward/reverse run families plus the code-SIF control pair;
+- one raw-artifact directory for every declared run;
+- safe relative `rawArtifacts` paths;
+- the exact protocol geometry and From/To section orientation;
+- a short package `README.txt`.
+
+The generated file is intentionally **not evidence**. It contains:
+
+```text
+status = DRAFT_NOT_QUALIFIED
+observationTolerance = null
+hashes = REPLACE_WITH_SHA256
+section/gravity decisions = UNRESOLVED
+acceptance flags = false
+independent review = PENDING
+```
+
+The scaffold refuses to overwrite an existing directory. Never change the generator to emit a qualified status or production authorization.
+
 ## Package root
 
 Place the evidence JSON and all raw CAESAR files under one dedicated directory. Raw files may be nested, but every path recorded in `run.rawArtifacts` must be relative to the evidence JSON directory.
 
-Example layout:
+Generated layout begins as:
 
 ```text
 s4-reducer-parity/
   evidence.json
+  README.txt
   raw/
-    STRUCTURAL_AXIAL/
-      LARGE_TO_SMALL/
-        job.caesar
-        input.accdb
-        output.out
-      SMALL_TO_LARGE/
-        job.caesar
-        input.accdb
-        output.out
+    STRUCTURAL_AXIAL__LARGE_TO_SMALL/
+      job-file.bin
+      input-source.bin
+      output-file.bin
+    STRUCTURAL_AXIAL__SMALL_TO_LARGE/
+      ...
     ...
 ```
+
+The `.bin` names are placeholders for custody locations, not required CAESAR extensions. Replace them with the actual retained file names and update `rawArtifacts` accordingly.
 
 Absolute paths, drive-qualified paths, `.`/`..` traversal, missing files, symbolic links and files resolving outside the package root are rejected.
 
@@ -40,9 +69,9 @@ Every run must contain:
   "inputSourceHash": "<sha256>",
   "outputFileHash": "<sha256>",
   "rawArtifacts": {
-    "jobFile": "raw/<family>/<orientation>/job.caesar",
-    "inputSource": "raw/<family>/<orientation>/input.accdb",
-    "outputFile": "raw/<family>/<orientation>/output.out"
+    "jobFile": "raw/<run>/job.caesar",
+    "inputSource": "raw/<run>/input.accdb",
+    "outputFile": "raw/<run>/output.out"
   }
 }
 ```
@@ -62,7 +91,9 @@ The command performs two distinct checks:
 1. validates the engineering evidence contract: controlled case coverage, orientation-pair state, section custody, quantitative residuals, predeclared tolerance, unique candidate decision and independent review;
 2. resolves every `rawArtifacts` path under the evidence package root and recomputes SHA-256 for the job, input source and output file.
 
-A successful result includes:
+The generated scaffold **must fail** this command until real controlled observations, predeclared tolerance, hashes, engineering decisions and independent review have been supplied.
+
+A successful completed-package result includes:
 
 ```text
 status = QUALIFIED_PARITY_EVIDENCE_ONLY
@@ -93,4 +124,4 @@ The paired orientation cases must preserve the same non-orientation control stat
 
 Do not delete the raw CAESAR files after extracting JSON values. The JSON is derivative evidence; the files referenced by `rawArtifacts`, their byte-level SHA-256 values and the CAESAR report locators are the retained source custody.
 
-Do not copy fixture hashes or fixture result values into a real evidence package. Contract fixtures exist only to exercise rejection/acceptance logic and are not CAESAR evidence.
+Do not copy fixture hashes or fixture result values into a real evidence package. Contract fixtures and generated scaffolds exist only to support controlled intake and are not CAESAR evidence.

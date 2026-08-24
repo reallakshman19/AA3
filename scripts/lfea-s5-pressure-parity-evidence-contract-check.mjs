@@ -23,6 +23,9 @@ function settingsFor(family) {
     Q4_SELECTOR_P1: 'P1',
     Q4_SELECTOR_P2: 'P2',
     Q4_SELECTOR_PMAX: 'PMAX',
+    Q5_GLOBAL_DEFAULT_B313: 'P1',
+    Q5_GLOBAL_INCLUDE_B313: 'P1',
+    Q5_GLOBAL_EXCLUDE_B313: 'P1',
   };
   const globalMode = {
     Q5_GLOBAL_DEFAULT_B313: 'DEFAULT',
@@ -55,7 +58,7 @@ function runRecord(family, index) {
     },
     activePipingCode: 'B31.3_2022',
     ...settings,
-    pressureFields: { P1: 2.0e6, P2: 4.0e6 },
+    pressureFields: family.startsWith('Q4_') ? { P1: 2.0e6, P2: 4.0e6 } : { P1: 2.0e6 },
     material: { id: 'STEEL-CONTROLLED', elasticModulus: 2.0e11 },
     section: { id: 'PIPE-CONTROLLED', outerDiameter: 0.1683, wallThickness: 0.00711 },
     restraints: { id: 'CONTROLLED-RESTRAINTS' },
@@ -226,7 +229,12 @@ expectCode(
 );
 expectCode(
   'PRESSURE_STIFFENING_ONLY',
-  (record) => { record.runs.find((run) => run.family === 'Q5_GLOBAL_INCLUDE_B313').elbowStiffeningPressureSelector = 'P1'; },
+  (record) => { record.runs.find((run) => run.family === 'Q5_GLOBAL_DEFAULT_B313').elbowStiffeningPressureSelector = 'NONE'; },
+  'S5_PRESSURE_Q5_SELECTOR_MUST_BE_P1',
+);
+expectCode(
+  'PRESSURE_STIFFENING_ONLY',
+  (record) => { record.runs.find((run) => run.family === 'Q5_GLOBAL_INCLUDE_B313').material.id = 'OTHER-MATERIAL'; },
   'S5_PRESSURE_Q5_CONTROL_STATE_MISMATCH',
 );
 expectCode(

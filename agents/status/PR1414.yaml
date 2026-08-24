@@ -8,12 +8,12 @@ base_sha: beee11eb99764bab078bf8ba73cf5768514aac67
 base_tree: 97102161d5224a227029b465fa3b31782e202475
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT
+pr_recovery_state: HEALTHY_DRAFT_AUDIT_COMPLETE
 handover_readiness: READY
 report_path: agents/PR1414_workreport.md
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: PR_ALLOCATED_RECOVERY_MIGRATION
+current_stage: FINAL_AUDIT_COMPLETE_AWAIT_OWNER_MERGE
 merge_authority: NOT_GRANTED
 source_state:
   wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
@@ -39,12 +39,16 @@ validation:
   direct_pdf_page_observation: NOT_RUN
   checker_node_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-  final_diff_review_main_audit: PENDING
+  final_diff_review_main_audit: PASS
+  changed_files: 6
+  behind_main: 0
+  reviews: 0
+  review_threads: 0
 authority:
   engineering: false
   production: false
   global_emp1_c: false
   code_compliance: false
   release: false
-exact_next_action: "Delete WIP recovery records; verify exact six-file diff/main/reviews; leave draft pending owner merge authorization."
+exact_next_action: "Await explicit owner merge authorization for PR1414; if granted, re-ground live main/head/reviews and merge only if the six-file source-governance scope remains unchanged."
 last_updated: "2026-08-24"

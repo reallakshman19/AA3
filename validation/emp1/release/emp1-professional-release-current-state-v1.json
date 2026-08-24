@@ -1,0 +1,168 @@
+{
+  "schema": "emp1-professional-release-current-state/v1",
+  "issue": 1389,
+  "releaseProfileId": "EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1",
+  "reconciliationBasis": {
+    "mainSha": "4c7b5c7e4d4ee1a2144d1764fd15e93813719a19",
+    "mainTreeSha": "182e5da09af1076b6dd382474ff1638da0d7862b",
+    "basisMeaning": "POST_PR_A_THROUGH_H_SEQUENCE_MERGED_STATE",
+    "artifactMayNotClaimContainingCommitAsBasis": true
+  },
+  "frozenReadinessContract": {
+    "path": "validation/emp1/release/emp1-professional-release-readiness-v1.json",
+    "gitBlobSha": "0d28fac3f75bb70c9caaa19a91872ef7432ebe2d",
+    "role": "FROZEN_PRE_AUTHORIZATION_SNAPSHOT_DO_NOT_MUTATE_IN_PLACE",
+    "freezeMainSha": "0f85cac384532b5cc35bc24ecedd729275027eb6",
+    "historicalState": "BLOCKED_FAIL_CLOSED"
+  },
+  "phaseDelivery": [
+    {
+      "phase": "PR-A",
+      "pr": 1394,
+      "state": "MERGED",
+      "role": "RELEASE_DEFINITION_SOURCE_CUSTODY_BENCHMARK_FREEZE"
+    },
+    {
+      "phase": "PR-B",
+      "pr": 1398,
+      "state": "MERGED",
+      "role": "P0_SOURCE_SEMANTICS_RECONCILIATION_BLOCKED"
+    },
+    {
+      "phase": "PR-C",
+      "pr": 1400,
+      "state": "MERGED",
+      "role": "CAUX_REFERENCE_FREEZE_DIRECT_PDF_PENDING"
+    },
+    {
+      "phase": "PR-D",
+      "pr": 1401,
+      "state": "MERGED_OWNER_WORKFLOW_SKIP",
+      "mergeSha": "a59547c8554b6244b2ea94aedd4d59fa0fb15d1f",
+      "role": "EXACT_HEAD_EVIDENCE_CARRIER_NO_NUMERICAL_PASS"
+    },
+    {
+      "phase": "PR-E",
+      "pr": 1408,
+      "state": "MERGED_OWNER_OVERRIDE_BOUNDED_AUTHORIZATION",
+      "mergeSha": "14c648d485cf386f28c6817a068b7eb5da1f7689",
+      "role": "EXACT_12_BOUNDED_AUTHORIZATION_MUTATIONS"
+    },
+    {
+      "phase": "PR-F",
+      "pr": 1409,
+      "state": "MERGED_NON_AUTHORIZING_DISPOSITION",
+      "mergeSha": "4c7b5c7e4d4ee1a2144d1764fd15e93813719a19",
+      "role": "POST_PROMOTION_SOURCE_AUDIT_NO_NUMERICAL_PASS"
+    },
+    {
+      "phase": "PR-G",
+      "pr": 1403,
+      "state": "MERGED",
+      "role": "PROFESSIONAL_UI_TRACE_DISCLOSURE"
+    },
+    {
+      "phase": "PR-H",
+      "pr": 1404,
+      "state": "MERGED",
+      "role": "FAIL_CLOSED_RELEASE_EVIDENCE_HARNESS"
+    }
+  ],
+  "sequenceStatus": {
+    "recommendedPrAThroughHDelivered": true,
+    "definitionOfDoneComplete": false,
+    "professionalReleaseReady": false,
+    "issueMayBeClosed": false
+  },
+  "sourceState": {
+    "wrcSourceCustody": "PASS_SOURCE_CUSTODY",
+    "wrcSourceSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "p0SourceSemantics": "BLOCKED_P0_SOURCE_SEMANTICS",
+    "p0BlockerCount": 9,
+    "directPrimaryWrcPageObservationAvailable": false,
+    "cauxDirectPdfPageReobservation": "NOT_RUN_EXECUTION_ENVIRONMENT",
+    "cauxFinalQualification": "BLOCKED_FINAL_CAUX_SOURCE_QUALIFICATION_DIRECT_PDF_REOBSERVATION_NOT_RUN_REFERENCE_FREEZE_COMPLETE"
+  },
+  "evidenceState": {
+    "standardPreAuthorization01To10": "NOT_GENERATED",
+    "standardPostPromotion11To12": "NOT_GENERATED",
+    "prDNumericalQualification": "NOT_RUN_NOT_CLAIMED",
+    "postPromotionNumericalQualification": "NOT_RUN_NOT_CLAIMED",
+    "ownerOverrideAuthorizationRecord": {
+      "path": "validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json",
+      "semanticHash": "4a7bec7c84dd03ec547ae2ee7157efc91edef70f9662901d40d616e8cb8d0566",
+      "isNumericalPassSubstitute": false
+    },
+    "ownerOverridePostPromotionDisposition": {
+      "path": "validation/emp1/wrc537-2013/gamma5-zero-dp-post-promotion-owner-override-disposition-v1.json",
+      "semanticHash": "910ee8f4f334c57451b1b6f2d6f7f4b5f64b70ea7241c242553bb261127a8d4c",
+      "isNumericalQualification": false
+    }
+  },
+  "runtimeAuthority": {
+    "boundedProductionRouteAuthorized": true,
+    "registryRegistered": true,
+    "boundedEngineeringUseAuthorized": true,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthorized": false,
+    "releaseQualified": false,
+    "deploymentAuthorized": false
+  },
+  "boundedScope": {
+    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP",
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "variant": "ORIGINAL",
+    "gamma": 5,
+    "betaMinimum": 0.05,
+    "betaMaximum": 0.5,
+    "differentialPressure": 0,
+    "Kn": 1,
+    "Kb": 1,
+    "hostShellStressOnly": true,
+    "evaluatedStressLocations": [
+      "Au",
+      "Al",
+      "Bu",
+      "Bl",
+      "Cu",
+      "Cl",
+      "Du",
+      "Dl"
+    ],
+    "continuousJunctureSearchPerformed": false,
+    "globalAbsoluteMaximumClaim": false
+  },
+  "executionState": {
+    "githubHostedExecution": "NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE",
+    "issue54": "OPEN_EXECUTION_DEPENDENCY",
+    "productionBuild": "NOT_RUN",
+    "chromium": "NOT_RUN",
+    "releaseReplay": "NOT_RUN",
+    "deploymentEvidence": "NOT_RUN"
+  },
+  "currentBlockers": [
+    "P0_SOURCE_SEMANTICS_NOT_READY",
+    "CAUX_DIRECT_PDF_REOBSERVATION_NOT_RUN",
+    "PR_D_EVIDENCE_01_TO_10_NOT_GENERATED",
+    "PR_F_EVIDENCE_11_TO_12_NOT_GENERATED",
+    "ISSUE_54_PRE_STEP_EXECUTION_BLOCKER",
+    "PRODUCTION_BUILD_NOT_RUN",
+    "CHROMIUM_NOT_RUN",
+    "RELEASE_REPLAY_NOT_RUN",
+    "DEPLOYMENT_EVIDENCE_NOT_RUN"
+  ],
+  "authorityBoundary": {
+    "boundedRouteAuthorizationIsProfessionalRelease": false,
+    "ownerWorkflowSkipIsNumericalQualification": false,
+    "ownerOverrideRecordsMaySubstituteForStandardEvidence": false,
+    "codeComplianceMayBeInferred": false,
+    "globalEmp1CAuthorityMayBeInferred": false,
+    "releaseMayProceedWithCurrentBlockers": false,
+    "frozenReadinessSnapshotMayBeRewrittenAsCurrent": false
+  },
+  "releaseReady": false,
+  "state": "BLOCKED_FAIL_CLOSED_POST_SEQUENCE",
+  "currentStateSemanticHash": "5ca53c66ac77162e16dc3a400a7331ca84bf2db89eddbb464ed38ac8feabb2c7",
+  "status": "POST_SEQUENCE_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED"
+}

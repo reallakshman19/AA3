@@ -1,5 +1,7 @@
 # PR1392 — Issue #1371 PR-C LAFEA.4 Model → Mesh → Analyse → Output closure
 
+Issue: https://github.com/reallaksh19/Advanced_Analysis/issues/1371
+
 # CURRENT RECOVERY STATE — READ FIRST
 
 ```text
@@ -17,223 +19,78 @@ BRANCH: agent/issue-1371-pr-c-lafea4-closure-20260824
 MAIN_HEAD_LAST_CHECKED: 1176f66eb94686f99d4f302930d46f17ff876083
 MERGE_BASE: 1176f66eb94686f99d4f302930d46f17ff876083
 APPENDIX_A_STATUS: PASS 96/100
-CURRENT_STAGE: LAFEA.4 Sample/output + result/equilibrium traceability validation
+CURRENT_STAGE: LAFEA.4 Sample/output + Chromium output + traceability validation
 CURRENT_BLOCKER: hosted visible-workbench jobs fail before checkout with steps=null
 HIGHEST_RISK: first executable run may expose shell result authority, pressure sign, or equilibrium discrepancy
-EXACT_NEXT_ACTION: execute the focused Sample/output gate on an exact head and capture the actual governing element/IP/surface/reaction identities below without changing frozen B4 authority or shell mechanics.
+EXACT_NEXT_ACTION: execute the focused Sample/output and existing Chromium scenario on an exact head; capture concrete governing element/IP/surface/reaction/hash identities without changing frozen B4 authority or shell mechanics.
 ```
 
-## Root cause and correction
+## Mission
 
-The named `CYLINDRICAL_PIPE_SHELL_BENCHMARK` Sample had the correct 26-node / 24-triangle cylindrical source but inherited an empty load case. Existing compiler qualification separately injected a uniform 1.2 MPa whole-surface pressure. Product and qualification therefore exercised different source physics.
+Close the LAFEA.4 product path from the named source Sample through retained qualified shell mesh, registered solver execution and retained engineer-facing output, while preserving the existing CST+DKT authority boundary and leaving independent numerical accuracy to the frozen PR-A benchmark programme.
 
-PR1392 makes the named Sample itself own that already-qualified pressure case:
-
-- pressure = 1.2 MPa;
-- sense = `ALONG_ELEMENT_NORMAL`;
-- all 24 source triangles covered exactly once;
-- no nodal loads;
-- existing all-surface zero restraints retained.
-
-Geometry remains R=100 mm, L=50 mm, 60° span, 26 source nodes and 24 source triangles.
-
-The local-shell presenter adds an engineering-summary section sourced only from retained `LOCAL_SHELL_RESULT` evidence. Authoritative stress remains element integration-point surface stress. No nodal stress, averaging, smoothing, or contour interpolation is promoted to engineering authority.
-
-## Current compiler authority preserved
-
-The retained-shell compiler remains bounded:
-
-- sourceHash must match canonical source authority;
-- retained mesh must be CURRENT/PASS with shell orientation qualification PASS;
-- one material and uniform thickness;
-- global translation constraints only as whole-surface identical values;
-- local R1/R2 only as whole-surface zero;
-- no source nodal-force remapping;
-- pressure only as whole-surface uniform pressure + sense;
-- no partial-boundary or partial-pressure transfer.
-
-`compileLafea4()` copies exact retained mesh `elementId` and `nodeIds` into the kernel model and `proveKernelMeshBinding()` requires every retained node position and element node set to match the canonical shell model. `compiled.parents.meshHash` is the retained v2 content hash and `compiled.parents.meshArtifactHash` is the parent-bound evidence artifact.
-
-## Hosted validation plumbing
-
-The existing visible-workbench workflow already executes:
+## Current route trace
 
 ```text
-node scripts/lafea-shell-sample-parent-check.mjs
+createLafeaMockDocument('LAFEA.4') / CYLINDRICAL_PIPE_SHELL_BENCHMARK
+→ registered composition normalization
+→ issueLafeaSourceAuthority().sourceHash
+→ createLafeaSimulatedShellMidsurfaceEvidence()
+→ qualified retained shell mesh profile
+→ retainedAnalysisMeshEvidenceV2
+→ compileLafeaShellSolverModel()
+→ shellSolverModelProjection CURRENT_PASS / authorization READY
+→ SHELL_RETAINED_MESH_COMPILED_SOLVER_MODEL
+→ calculateLocalShell()
+→ accepted LOCAL_SHELL_RESULT
+→ lifecycle EXECUTION / RECOVERY current
+→ presentLocalShell()
+→ retained engineering summary + detailed IP/surface evidence
+→ existing Chromium LAFEA.4 Sample journey
 ```
 
-PR1392 adds one import so `scripts/lafea4-sample-pressure-output-check.mjs` executes before that existing shell gate may report PASS. No browser spec list or workflow YAML is changed.
+## Source authority
 
-## §14 LAFEA.4 shell result traceability — authoritative surface/IP von Mises
-
-The accepted-result trace is encoded; actual runtime governing identity/value remains unavailable because hosted execution has not started.
+The named Sample remains:
 
 ```text
-Visible output row
-  registered presenter section:
-  "Engineering summary — retained shell evidence only"
-  row:
-  "Max authoritative surface/IP von Mises · <CASE> · Element <ELEMENT_ID> · <IP_ID> · <SURFACE>"
-
-→ result presenter field
-  src/workspace/lafea-result-presenters/local-shell.js::presentLocalShell()
-  scans:
-  result.loadCaseResults[caseIndex]
-    .elementResults[elementIndex]
-    .integrationPoints[pointIndex]
-    .surfaces[surfaceIndex]
-    .vonMises
-
-→ retained result field
-  exact presenter sourcePath is the path above;
-  detailed row uses the same retained surface.vonMises value
-
-→ recovery location
-  src/core/local-shell/recovery.js::recoverPoint()
-  computes retained integrationPoints[];
-  recoverSurface() creates BOTTOM/MIDSURFACE/TOP and stores:
-    membraneStress
-    bendingStress
-    combinedStress
-    principalMaximum/principalMinimum
-    maximumInPlaneShear
-    vonMises
-
-→ element / integration point / surface
-  <ELEMENT_ID> = retained elementResult.elementId
-  <IP_ID>      = retained integrationPointId
-  <SURFACE>    = BOTTOM | MIDSURFACE | TOP
-  ACTUAL_RUNTIME_ELEMENT_ID = NOT_RUN / INFRASTRUCTURE
-  ACTUAL_RUNTIME_IP_ID      = NOT_RUN / INFRASTRUCTURE
-  ACTUAL_RUNTIME_SURFACE    = NOT_RUN / INFRASTRUCTURE
-  ACTUAL_RUNTIME_VALUE_MPA  = NOT_RUN / INFRASTRUCTURE
-
-→ compiled solver model
-  src/workspace/lafea-shell-solver-model.js::compileLafea4()
-  retained mesh element row becomes kernel source element with:
-    elementId: row.elementId
-    nodeIds: [...row.nodeIds]
-    materialId/thickness from qualified uniform section
-  sourceReference includes retained meshHash + elementId
-
-→ retained mesh identities
-  proveKernelMeshBinding() requires:
-    every retained nodeId resolves to a kernel node at identical [x,y,z]
-    every kernel elementId resolves to the retained elementId
-    retained/kernel node-set hashes are identical
-  transferEvidence.meshBinding.retainedMeshHash
-  is computed from the exact retained mesh
-
-→ source authority hash
-  compiled.parents.sourceHash
-  === midsurfaceEvidence.sourceHash
-  === meshEvidence.sourceHash
-  === canonical source-authority hash
-  ACTUAL_RUNTIME_SOURCE_HASH = NOT_RUN / INFRASTRUCTURE
+modelIdentity = CYLINDRICAL_PIPE_SHELL_BENCHMARK
+source nodes = 26
+source elements = 24
+surface = CYLINDER
+R = 100 mm
+L = 50 mm
+span = 60 deg
 ```
 
-### First-wrong-value isolation for shell stress
-
-If the visible shell stress differs from B4 or another benchmark, inspect in this order:
-
-1. presenter `sourcePath` and exact element/IP/surface selected;
-2. retained `surface.vonMises` and `surface.combinedStress` at that location;
-3. retained `point.curvature`, `surface.bendingStress`, and element `membraneStress`;
-4. exact kernel elementId/nodeIds versus retained mesh binding;
-5. local frame/director and canonical orientation evidence for that element;
-6. compiled material/thickness and sourceHash/meshHash parents;
-7. only then inspect CST membrane / DKT curvature / stress-recovery formulation.
-
-A contour tooltip, averaged node value, neighboring element, or moved maximum is not a substitute for this retained location.
-
-## §14 reaction/equilibrium trace — force equilibrium residual
-
-The visible summary includes:
+PR1392 adds the source-owned case previously injected only by compiler qualification:
 
 ```text
-"<CASE> · Force equilibrium residual · PASS|FAIL"
-sourcePath:
-result.loadCaseResults[caseIndex].forceEquilibrium.qualification.actual
+loadCaseId = PRESSURE
+pressure = 1.2 MPa
+sense = ALONG_ELEMENT_NORMAL
+coverage = every one of the 24 source triangles
+nodal loads = none
 ```
 
-Full trace:
+Existing all-surface zero restraints remain because partial-boundary constraint transfer is not qualified.
 
-```text
-reported value
-  presentLocalShell() → appendEquilibriumRow()
-  value = loadCase.forceEquilibrium.qualification.actual
+The shell compiler requires `sourceHash` to equal the canonical source-authority payload and requires the midsurface and mesh parents to carry that same hash. It rejects stale or non-PASS retained mesh parents.
 
-→ raw solver/reaction evidence
-  src/core/local-shell/solver.js::solveLoadCase()
-  reaction = K*u - applied force vector
-  constrained support components are retained through
-  recovery.js::constrainedReactions() as loadCase.reactions[]
+## Benchmark authority
 
-→ load case
-  current named Sample load case = PRESSURE
-  source case contains no nodal loads and whole-surface pressure rows
+PR1392 is a PRODUCT_REGRESSION / IMPLEMENTATION_COUPLED closure PR, not the independent shell oracle. Independent LAFEA.4 numerical authority is owned by PR1388:
 
-→ compiled applied load
-  shell-solver-model.js::compileWholeSurfacePressure()
-  requires source pressure coverage == every source element,
-  one unique pressure/sense signature,
-  then maps that same 1.2 / ALONG_ELEMENT_NORMAL signature to every retained mesh element
+- B4-1 frozen analytical membrane patch;
+- B4-2 frozen analytical pure-bending patch;
+- B4-3 `BLOCKED_SOURCE_REQUIRED` until a controlled/public source exists;
+- production-vs-frozen comparator remains separate.
 
-→ element pressure assembly
-  src/core/local-shell/loads.js::addPressureLoad()
-  sign = +1 for ALONG_ELEMENT_NORMAL
-  nodalForce = localFrame.ez * pressure * area / 3
-  each contribution retains:
-    type = UNIFORM_ELEMENT_NORMAL_PRESSURE
-    elementId
-    pressure
-    sense
-    signedNormal
-    representedArea
-    nodalForce
-    totalForce
+PR1392 does not modify those expected values or tolerances.
 
-→ assembled load case evidence
-  assembleLoadCase() computes generalizedTotals(...)
-  and retains:
-    appliedLoadEvidence.appliedForce
-    appliedLoadEvidence.appliedMomentAboutOrigin
-    appliedLoadEvidence.contributions[]
+## Product/output correction
 
-→ equilibrium residual / qualification
-  solver.js::equilibriumEvidence()
-  supportTotals = generalizedTotals(model.nodes, constrained reaction vector)
-  forceResidual = appliedForce + supportTotals.force
-  momentResidual = appliedMomentAboutOrigin + supportTotals.moment
-  qualification.actual = maxAbs(residual)
-  qualification.accepted is evaluated with the frozen/current solver qualification profile
-
-→ visible summary / reaction context
-  presenter separately exposes:
-    Max translational reaction component from loadCase.reactions[kind=FORCE]
-    Max tangent reaction moment component from loadCase.reactions[kind=MOMENT]
-    Max applied force resultant magnitude from appliedLoadEvidence.appliedForce
-    Max applied moment resultant magnitude from appliedLoadEvidence.appliedMomentAboutOrigin
-```
-
-Actual runtime pressure resultant, governing reaction node/DOF, force residual and moment residual are `NOT_RUN / INFRASTRUCTURE`; none is fabricated in this report.
-
-### First-wrong-value isolation for pressure equilibrium
-
-If force equilibrium fails while pressure compilation appears valid:
-
-1. sum retained `appliedLoadEvidence.contributions[*].totalForce` and compare with `appliedForce`;
-2. recompute each `signedNormal * pressure * representedArea` from the exact retained element;
-3. compare compiled pressure element IDs/sense with retained mesh element IDs/orientation;
-4. sum retained FORCE reactions and compare with supportTotals.force;
-5. evaluate `appliedForce + supportTotals.force` exactly;
-6. inspect the solver only after the first four agree.
-
-If force passes but moment fails, isolate the application/reference location before altering solver mechanics: recompute `Σ(r_i × f_i)` from retained nodal/pressure contributions and compare to `appliedMomentAboutOrigin` and support moment about the same origin.
-
-## Product result rows added by PR1392
-
-From retained evidence only:
+`src/workspace/lafea-result-presenters/local-shell.js` now exposes retained-only rows for:
 
 - Max translational displacement magnitude;
 - Max authoritative surface/IP von Mises;
@@ -242,43 +99,181 @@ From retained evidence only:
 - Max tangent reaction moment component;
 - Max applied force resultant magnitude;
 - Max applied moment resultant magnitude;
-- force equilibrium residual/status per load case;
-- moment equilibrium residual/status per load case;
-- detailed IP/surface stress rows and nodal UZ rows.
+- force-equilibrium residual/status per case;
+- moment-equilibrium residual/status per case;
+- detailed integration-point/surface von Mises evidence;
+- nodal UZ evidence.
 
-## Validation truth
+No nodal stress, stress smoothing, cross-element averaging, or contour value is promoted to engineering authority.
 
-Representative exact-head visible-workbench attempts:
+## Compiler/mesh invariants
+
+`compileLafea4()` copies exact retained mesh `elementId` and `nodeIds` into the kernel source. `proveKernelMeshBinding()` requires every retained node position and every retained/kernel element node set to match. Parents retain both:
 
 ```text
-run 32675901300 / job 97283839977 → failure, steps=null
-prior run 32675832397 + explicit retry → failure, steps=null
+compiled.parents.meshHash         = retained mesh content hash
+compiled.parents.meshArtifactHash = parent-bound retained evidence artifact
 ```
 
-Therefore:
+Pressure transfer remains deliberately bounded to a whole-surface uniform pressure/sense. Source nodal loads, partial pressure transfer and nonzero local R1/R2 mapping remain blocked.
 
-| Check | Status |
-|---|---|
-| source/schema/authority trace | PASS / SOURCE_INSPECTION |
-| focused Sample pressure/output executable | NOT_RUN / INFRASTRUCTURE |
-| shell Sample/compiled execution gates | NOT_RUN / INFRASTRUCTURE |
-| independent B4 production comparison (PR-A authority) | NOT_RUN / INFRASTRUCTURE |
-| Chromium Model→Mesh→Analyse→Output journey | NOT_RUN / INFRASTRUCTURE |
-| actual governing shell element/IP/surface/reaction capture | NOT_RUN / INFRASTRUCTURE |
-| engineering assertion failure observed | NO |
+## Chromium product route
 
-No encoded-but-unexecuted test is represented as PASS.
+The existing file `e2e/lafea-shell-sample-mesh.spec.js` already performs for LAFEA.4:
+
+```text
+load Sample
+→ verify source identity / 26 nodes / 24 elements
+→ generate retained qualified mesh
+→ orientation/topology PASS
+→ solver binding CURRENT_PASS
+→ authorization READY
+→ retained mesh visible
+→ Run
+→ route SHELL_RETAINED_MESH_COMPILED_SOLVER_MODEL
+→ execution QUALIFIED
+→ result accepted
+→ force equilibrium accepted
+→ moment equilibrium accepted
+→ execution.meshHash == retained.meshHash
+→ lifecycle mesh/execution/recovery current
+```
+
+PR1392 minimally extends that same Chromium scenario after Run to assert the new retained output is visible:
+
+```text
+heading: Engineering summary — retained shell evidence only
+row: Max authoritative surface/IP von Mises
+row: Max applied force resultant magnitude
+row: Force equilibrium residual · PASS
+row: Moment equilibrium residual · PASS
+retained source path includes forceEquilibrium.qualification.actual
+governing row states retained shell surface/IP von Mises authority
+```
+
+No new browser file or workflow route was added.
+
+## §14 shell result traceability
+
+```text
+visible row
+  Max authoritative surface/IP von Mises · <CASE> · Element <ELEMENT_ID> · <IP_ID> · <SURFACE>
+→ presentLocalShell()
+→ result.loadCaseResults[caseIndex]
+   .elementResults[elementIndex]
+   .integrationPoints[pointIndex]
+   .surfaces[surfaceIndex].vonMises
+→ recovery.js::recoverPoint() / recoverSurface()
+→ exact elementResult.elementId / integrationPointId / BOTTOM|MIDSURFACE|TOP
+→ compileLafea4() exact retained elementId + nodeIds
+→ proveKernelMeshBinding() exact retained/kernel node positions and node sets
+→ compiled.parents.meshHash / meshArtifactHash
+→ compiled.parents.sourceHash == midsurface.sourceHash == meshEvidence.sourceHash
+```
+
+Runtime identities remain correctly unfilled:
+
+```text
+ACTUAL_RUNTIME_ELEMENT_ID = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_IP_ID = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_SURFACE = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_VALUE_MPA = NOT_RUN / INFRASTRUCTURE
+ACTUAL_RUNTIME_SOURCE_HASH = NOT_RUN / INFRASTRUCTURE
+```
+
+First-wrong-value order: presenter source path → retained surface value/tensor → retained curvature/membrane stress → kernel/retained element identity → frame/director/orientation → material/thickness + parent hashes → CST/DKT/recovery mechanics.
+
+## §14 reaction/equilibrium trace
+
+```text
+visible row
+  <CASE> · Force equilibrium residual · PASS|FAIL
+→ presentLocalShell() / appendEquilibriumRow()
+→ loadCase.forceEquilibrium.qualification.actual
+→ solver reaction q = K*u - f
+→ constrained reactions retained as loadCase.reactions[]
+→ source load case PRESSURE
+→ compileWholeSurfacePressure()
+   requires every source element + one 1.2/ALONG_ELEMENT_NORMAL signature
+→ retained-element pressure loads
+→ loads.js::addPressureLoad()
+   nodalForce = localFrame.ez * pressure * area / 3
+   retained contribution includes signedNormal, representedArea, nodalForce, totalForce
+→ assembleLoadCase().appliedForce / appliedMomentAboutOrigin
+→ solver.js::equilibriumEvidence()
+   forceResidual = appliedForce + supportTotals.force
+   momentResidual = appliedMomentAboutOrigin + supportTotals.moment
+→ qualification.actual / accepted
+```
+
+If force fails, first compare Σ contribution.totalForce with `appliedForce`, then element normals/areas/sense, then FORCE reactions, then the residual. If force passes but moment fails, recompute Σ(r×f) about the same global origin before touching solver mechanics.
+
+## ISS / RISK / DEC / QST
+
+- `ISS-1371C-01` RESOLVED_BY_IMPLEMENTATION_PENDING_EXECUTION — Sample now owns the qualified 1.2 MPa pressure case.
+- `ISS-1371C-02` RESOLVED_BY_IMPLEMENTATION_PENDING_EXECUTION — retained shell engineering summary exists and the existing Chromium route asserts it.
+- `RISK-1371C-01` ACTIVE — first real run may expose pressure sign/orientation or moment-equilibrium discrepancy.
+- `RISK-1371C-02` CONTROLLED — no partial-boundary/nodal-load/nonzero-local-rotation mapping authority was added.
+- `DEC-1371C-01` — keep Sample fully restrained rather than invent an unqualified partial clamp mapping; independent mechanics response is qualified by PR-A patches.
+- `DEC-1371C-02` — surface/IP stress is primary authority; no nodal stress/smoothing authority.
+- `QST-1371C-01` BLOCKED_EXTERNAL_SOURCE — B4-3 remains outside this PR pending source qualification.
 
 ## Changed-file ledger
 
-- `scripts/lafea.4-fixtures.mjs`
-- `src/workspace/lafea-result-presenters/local-shell.js`
-- `scripts/lafea4-sample-pressure-output-check.mjs`
-- `scripts/lafea-shell-sample-parent-check.mjs`
-- report/status/claim metadata.
+- `scripts/lafea.4-fixtures.mjs` — named Sample pressure case;
+- `src/workspace/lafea-result-presenters/local-shell.js` — retained engineering summary;
+- `scripts/lafea4-sample-pressure-output-check.mjs` — focused product route;
+- `scripts/lafea-shell-sample-parent-check.mjs` — existing hosted gate binding;
+- `e2e/lafea-shell-sample-mesh.spec.js` — existing Chromium scenario extended only with retained-output assertions;
+- `agents/PR1392_workreport.md`;
+- `agents/status/PR1392.yaml`;
+- `agents/claims/PR1392.yaml`.
 
-Protected unchanged: local-shell mechanics, compiler transfer authority, mesh thresholds, frozen B4 values/tolerances, browser specs, workflow YAML, registry/release authority.
+Protected: `src/core/local-shell/**`, compiler mapping authority, mesh thresholds, frozen B4 values/tolerances, workflow YAML, registry/release authority.
 
-## Completion boundary
+## Validation matrix
 
-Keep PR draft and owner-only. On first real exact-head execution, record the concrete shell `<ELEMENT_ID>/<IP_ID>/<SURFACE>`, retained node IDs, sourceHash, meshHash, solverModelHash, pressure resultant, governing reaction, force residual and moment residual in this report. Until then the trace topology is source-inspection complete, but runtime numerical evidence remains NOT_RUN.
+| Check | Status | Observation | Oracle |
+|---|---|---|---|
+| source/schema/compiler trace | PASS | SOURCE_INSPECTION | PRODUCT_REGRESSION |
+| focused Sample pressure/output command | NOT_RUN | hosted runner has not started steps | IMPLEMENTATION_COUPLED |
+| shell Sample/compiled execution gates | NOT_RUN | hosted runner has not started steps | PRODUCT_REGRESSION |
+| existing Chromium LAFEA.4 journey + summary assertion | NOT_RUN | latest run `32677373889`, job `97287851981`, `steps=null` | PRODUCT_REGRESSION |
+| independent B4 production comparison | NOT_RUN | PR1388 runner infrastructure blocked | FROZEN_ANALYTICAL targets + production comparator |
+| actual governing element/IP/surface/reaction capture | NOT_RUN | no executing exact-head run | retained-result trace |
+
+Engineering assertion failure observed: **NO**. No encoded-but-unexecuted test is represented as PASS.
+
+## Independent oracle classification
+
+```text
+PR1392 Sample/focused/Chromium tests = PRODUCT_REGRESSION / IMPLEMENTATION_COUPLED
+PR1388 B4-1/B4-2 definitions        = FROZEN_ANALYTICAL
+PR1388 production comparator         = production execution consuming frozen authority
+B4-3                                 = BLOCKED_SOURCE_REQUIRED
+```
+
+## Main-drift audit
+
+Live main last checked: `1176f66eb94686f99d4f302930d46f17ff876083`. PR1392 was grounded on that merge base and had no exact-file or numerical-authority overlap with PR1388/PR1390/PR1393 at the last comparison. Re-check before owner merge request; do not resolve overlapping engineering authority blindly.
+
+## Highest remaining risk
+
+The first executable exact-head run may show that a compiled retained pressure orientation/result differs from the source-level trace. If so, stop at the first wrong pressure contribution/frame/reaction/result location. Do not alter B4 oracle values, mesh thresholds, or mapping authority to obtain PASS.
+
+## EXACT_NEXT_ACTION
+
+Run on the exact PR head:
+
+```bash
+node scripts/lafea4-sample-pressure-output-check.mjs
+node scripts/lafea-shell-sample-parent-check.mjs
+node scripts/lafea-shell-compiled-execution-check.mjs
+npx playwright test e2e/lafea-shell-sample-mesh.spec.js
+```
+
+Then record actual hashes, element/IP/surface, pressure resultant, reaction and equilibrium values here.
+
+## Appendix A qualification
+
+Takeover qualification remains `PASS 96/100`; every A1–A5 item exceeded the issue minimum. This PR does not widen the formulation or mapping authority used for that qualification.

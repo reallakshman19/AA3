@@ -10,6 +10,7 @@ on:
       - 'scripts/lfea-b3.23-reducer-condensation-check.mjs'
       - 'scripts/lfea-s4-reducer-parity-evidence-contract.mjs'
       - 'scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs'
+      - 'scripts/lfea-s4-reducer-parity-evidence-file-check.mjs'
       - '.github/workflows/lfea-s4-reducer-parity-gate.yml'
 
 permissions:
@@ -33,9 +34,13 @@ jobs:
           node --check scripts/lfea-b3.23-reducer-condensation-check.mjs
           node --check scripts/lfea-s4-reducer-parity-evidence-contract.mjs
           node --check scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs
+          node --check scripts/lfea-s4-reducer-parity-evidence-file-check.mjs
 
       - name: Run B-3.23 reducer condensation and production-readiness guard
         run: node scripts/lfea-b3.23-reducer-condensation-check.mjs
 
       - name: Validate controlled CAESAR reducer parity evidence contract
         run: node scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs
+
+      - name: Confirm external evidence file checker CLI
+        run: node scripts/lfea-s4-reducer-parity-evidence-file-check.mjs --help

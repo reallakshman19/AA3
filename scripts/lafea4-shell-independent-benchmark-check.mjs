@@ -315,11 +315,13 @@ function sourceFromPublishedReference(definition) {
   const load = definition.load;
   assert.equal(load.loadCaseId, 'BENCHMARK');
   assert.equal(load.component, 'FZ');
+  assert.ok(Number.isFinite(load.signedValue) && load.signedValue < 0,
+    `${definition.benchmarkId} signed corner load must be downward`);
   return shellSource(definition, nodes, constraints, {
     loadCaseId: 'BENCHMARK',
     nodalLoads: [{
       loadId: 'P-C', nodeId: load.nodeId,
-      fx: 0, fy: 0, fz: load.magnitude, m1: 0, m2: 0,
+      fx: 0, fy: 0, fz: load.signedValue, m1: 0, m2: 0,
       sourceReference: `${definition.benchmarkId}/FIGURE-16/CORNER-C-LOAD`,
     }],
     pressureLoads: [],

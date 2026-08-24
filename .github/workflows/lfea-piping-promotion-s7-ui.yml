@@ -6,6 +6,10 @@ on:
       - 'agents/PR*_workreport.md'
       - 'agents/WIP-S7UI_workreport.md'
       - 'scripts/lfea-s7-component-ui-disclosure-check.mjs'
+      - 'scripts/lfea-piping-component-promotion-anti-drift-check.mjs'
+      - 'src/core/geometry/adapters/accdb-to-canonical-geometry.js'
+      - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
+      - 'src/core/linear-piping-analysis-consumer/**'
       - '.github/workflows/lfea-piping-promotion-s7-ui.yml'
 
 permissions:
@@ -23,10 +27,18 @@ jobs:
           node-version: '22'
 
       - name: Check S7 verification syntax
-        run: node --check scripts/lfea-s7-component-ui-disclosure-check.mjs
+        run: |
+          node --check scripts/lfea-s7-component-ui-disclosure-check.mjs
+          node --check scripts/lfea-piping-component-promotion-anti-drift-check.mjs
 
       - name: Verify promoted-component governed disclosure
         run: node scripts/lfea-s7-component-ui-disclosure-check.mjs
+
+      - name: Enforce promotion-wide engineering anti-drift
+        run: node scripts/lfea-piping-component-promotion-anti-drift-check.mjs
+
+      - name: Re-run core linear-piping anti-drift
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
 
       - name: Re-run common Error Check contract
         run: node scripts/lfea-ui-error-check-check.mjs

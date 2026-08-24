@@ -2,21 +2,24 @@ schema: AgentStatus.v1
 pr_or_wip: PR1407
 source_task: ISSUE-1371
 branch: agent/issue-1371-postmerge-cert-a59547c-20260824
-state: ACTIVE
+state: CLOSED_UNMERGED
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: EXECUTION_PENDING
+auto_state: BLOCKED_INFRASTRUCTURE
 merge_authority: OWNER_ONLY
 validation_pr_merge: PROHIBITED
-current_stage: EXACT_CURRENT_MAIN_CERTIFICATION
+current_stage: TERMINAL_VALIDATION_CHECKPOINT
 main_head_last_checked: a59547c8554b6244b2ea94aedd4d59fa0fb15d1f
 report: agents/PR1407_workreport.md
 coordination_state: SAFE_VALIDATION_ONLY
 current_main_drift: EMP1_PR1401_RECOVERY_ONLY_NO_LAFEA_OVERLAP
 immutable_exact_main_ref: validation/issue-1371-merged-a59547c
+certification_head: 0c355076e8ea7346f2844f9b16cc330382d34132
+visible_workbench_run: 32720783742
+visible_workbench_job: 97411545033
 application_runtime_diff_from_main: NONE
-workflow_trigger_change: COMMENT_ONLY_PENDING
-hosted_engineering_execution: NOT_RUN_CURRENT_PR_HEAD
+workflow_trigger_change: COMMENT_ONLY_RESTORED_BYTE_FOR_BYTE
+hosted_engineering_execution: NOT_RUN_PRE_STEP_INFRASTRUCTURE_FAILURE
 registry_cleanup: BLOCKED_PENDING_EXECUTED_ALL_GATES_PASS
-highest_risk: EXACT_CURRENT_HEAD_MAY_AGAIN_FAIL_BEFORE_CHECKOUT
-exact_next_action: add one comment-only line to retained visible-workbench workflow; inspect exact-head steps/logs; restore workflow byte-for-byte; close PR1407 unmerged
+highest_risk: DOWNSTREAM_MISCLASSIFYING_ZERO_STEP_FAILURE_AS_ENGINEERING_RESULT
+exact_next_action: preserve current registry limitation; wait for an exact eligible head where checkout/repository steps actually start, then capture all required gate results before any registry-cleanup PR

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import './lafea4-sample-pressure-output-check.mjs';
 
 import { PROFILE_KINDS, canonicalProfile } from '../src/core/lafea-profile-contract/index.js';
 import { createLafeaMockDocument } from '../src/workspace/advanced-mock-data.js';

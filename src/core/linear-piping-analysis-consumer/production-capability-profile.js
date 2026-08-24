@@ -12,7 +12,7 @@ export const PRODUCTION_CAPABILITY_PROFILE = Object.freeze({
   schema: PRODUCTION_CAPABILITY_PROFILE_SCHEMA,
   profileId: 'LFEA_PRODUCTION_CAPABILITY_R1',
   bendExactMechanics: true,
-  teeExactMechanics: false,
+  teeExactMechanics: true,
   reducerExactMechanics: false,
   pressureStiffening: false,
   pressureAxialThrust: false,

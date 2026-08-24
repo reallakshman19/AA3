@@ -429,6 +429,16 @@ export function renderMasterDataUI(documentRef) {
     });
 
     container.appendChild(body);
+
+    const masterRowsLoaded = ['pipingClass', 'lineList', 'weight']
+      .some((key) => (masterState?.[key]?.rawRows?.length || 0) > 0);
+    if (masterRowsLoaded) {
+      const nudge = documentRef.createElement('div');
+      nudge.style.cssText = 'flex:none; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 20px; border-top:1px solid #1e293b; background:#0f172a; color:#94a3b8; font-size:12px;';
+      nudge.innerHTML = `<span>Masters loaded. Pipe section, fluid density and fitting weights are not filled in yet -- both are generated and reviewed in Enrichment &amp; Overrides, never written automatically.</span>
+        <button type="button" data-load-calc-tab="enrichment" style="flex:none; border:1px solid #0284c7; border-radius:4px; background:#0c253a; color:#e2e8f0; padding:6px 12px; font-weight:700; cursor:pointer;">Open Enrichment &amp; Overrides</button>`;
+      container.appendChild(nudge);
+    }
   };
 
   render();

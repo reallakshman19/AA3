@@ -62,7 +62,7 @@ function markup(snapshot, derived, sourceModel) {
         <label>Import legacy records / sidecar<input type="file" accept=".json,.csv,application/json,text/csv" data-enrichment-import hidden></label>
         <button type="button" data-enrichment-generate-master>Generate proposals from approved masters</button>
         <button type="button" data-enrichment-review-fitting-weights>Review fitting weights…</button>
-        <button type="button" data-enrichment-export ${derived.sidecar ? '' : 'disabled'}>Export accepted sidecar</button>
+        <button type="button" data-enrichment-export ${derived.sidecar ? '' : 'disabled'}>Export accepted overrides (sidecar)</button>
         <button type="button" data-enrichment-clear>Clear staged state</button>
       </div>
     </header>

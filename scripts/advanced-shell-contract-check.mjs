@@ -65,23 +65,40 @@ const loadCalcTabGroups = [...loadCalcViewSource.matchAll(/tabGroup\('([^']+)', 
     label: match[1],
     tabs: [...match[2].matchAll(/\['([^']+)',\s*'[^']+'\]/g)].map((tabMatch) => tabMatch[1]),
   }));
+// The Advanced nav (tile 8) no longer repeats project-data, masters, loads
+// or preflight -- those five entries pointed at tabs already reachable from
+// the seven numbered workflow tiles (same tab id, second button, no second
+// view), which read as duplicated navigation rather than governance. Every
+// governed tab must still be reachable from exactly one place in the header:
+// either the numbered row or the Advanced nav, never neither.
 assert.deepEqual(loadCalcTabGroups, [
-  { label: 'Setup', tabs: ['overview', 'project-data', 'masters', 'enrichment'] },
+  { label: 'Setup', tabs: ['overview', 'enrichment'] },
   { label: 'Scenario', tabs: ['restraints', 'load-cases', 'methods'] },
-  { label: 'Output', tabs: ['results', 'loads', 'evidence'] },
-  { label: 'Diagnostics', tabs: ['preflight', 'method-basis', 'seal-export', 'json-trace'] },
+  { label: 'Output', tabs: ['results', 'evidence'] },
+  { label: 'Diagnostics', tabs: ['method-basis', 'seal-export', 'json-trace'] },
   { label: 'Model', tabs: ['3d'] },
 ]);
 const loadCalcTabs = loadCalcTabGroups.flatMap((group) => group.tabs);
-assert.equal(new Set(loadCalcTabs).size, 15, 'Load Calc must retain exactly fifteen unique governed tabs.');
+assert.equal(new Set(loadCalcTabs).size, 11,
+  'Load Calc must retain exactly eleven unique tabs in the Advanced nav (five duplicates of numbered workflow steps were deliberately removed).');
+
+const workflowStepsBlock = loadCalcViewSource.match(/const WORKFLOW_STEPS = Object\.freeze\(\[([\s\S]*?)\n\]\);/u)?.[1] || '';
+const primaryWorkflowTabs = [...workflowStepsBlock.matchAll(/tab: '([a-z0-9-]+)'/gu)].map((match) => match[1]);
+assert.equal(primaryWorkflowTabs.length, 6,
+  'Load Calc must retain exactly six tab-bearing numbered workflow steps (Import JSON has no tab of its own).');
+
+const allLoadCalcTabs = new Set([...loadCalcTabs, ...primaryWorkflowTabs]);
 for (const requiredTab of ['overview', '3d', 'restraints', 'load-cases', 'methods', 'results', 'evidence', 'loads', 'preflight', 'project-data', 'masters', 'json-trace']) {
-  assert.equal(loadCalcTabs.includes(requiredTab), true, `Load Calc must retain ${requiredTab}.`);
+  assert.equal(allLoadCalcTabs.has(requiredTab), true,
+    `Load Calc must retain ${requiredTab}, reachable from the numbered row or the Advanced nav.`);
 }
 for (const governedTab of ['enrichment', 'method-basis', 'seal-export']) {
   assert.equal(loadCalcTabs.includes(governedTab), true, `Load Calc must mount governed Non-FEA tab ${governedTab}.`);
 }
-assert.match(loadCalcViewSource, /Load Evaluation/u);
-assert.doesNotMatch(loadCalcViewSource, /Legacy Load Evaluation/u);
+assert.match(loadCalcViewSource, /View Loads/u,
+  'Load Calc must retain a single, unambiguous label for the loads view.');
+assert.doesNotMatch(loadCalcViewSource, /Load Evaluation/u,
+  'The loads view must not regain a second, differently-worded entry point.');
 assert.match(loadCalcViewSource, /state\.empiricalScenarioState/u,
   'Load Calc must continue to consume the governed empirical scenario state.');
 assert.match(loadCalcViewSource, /snap\?\.calculationEligible/u,
@@ -90,8 +107,10 @@ assert.match(loadCalcViewSource, /authState\?\.calculationEligible/u,
   'The single run action must retain the authorized gravity fallback.');
 assert.match(loadCalcViewSource, /data-pill-status=/u,
   'Load Calc must retain visible governed status pills.');
-assert.match(loadCalcViewSource, /Verify &amp; Run/u,
-  'Load Calc must retain the pre-run verification entry point.');
+assert.match(loadCalcViewSource, /id: 'verify', label: 'Run Calc', tab: 'verify'/u,
+  'Load Calc must retain the pre-run verification entry point as the numbered Run Calc step.');
+assert.doesNotMatch(loadCalcViewSource, /★ Verify &amp; Run/u,
+  'The pre-run verification entry point must not regain a second, redundant button.');
 assert.match(loadCalcViewSource, /data-load-calc-run/u,
   'Load Calc must expose one governed run control.');
 assert.match(loadCalcViewSource, /Run Load Calc — Gravity/u,

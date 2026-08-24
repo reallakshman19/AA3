@@ -22,4 +22,9 @@ protected_no_mutation:
   - src/core/emp1/emp1-wrc537-cylindrical-table5.js
   - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
   - .github/workflows/
-last_verified_head: ba391159b5530e47b57b807ac1308a11390d4d37
+validation_custody:
+  independent_gate_reproduction: PASS
+  actual_node_execution: NOT_RUN_EXECUTION_ENVIRONMENT
+  primary_source_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT
+last_verified_implementation_head: 8329762fcbab7bfc93464e774b9d3c0b0a782679
+last_verified_main_head: e985b50d81d0d241db27313562c8cc12cd7cc27d

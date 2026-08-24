@@ -48,8 +48,8 @@ Parallel blocked stages are represented by stable engineering code heads in the 
 Latest live PR heads observed from GitHub during this grounding were:
 
 ```text
-#1386 live PR head = 02428d155fe929ed8bce73a966e333bfd9b0d921
-#1391 live PR head = 75407da9f5c6a7081ad803e67741f3f4255a9d81
+#1386 live PR head = b1aedebf5da51e5ecc7b4a2c6eeb9bfbee2e999f
+#1391 live PR head = c05c55339dc45bacb2073e46646fd8a0cd99b983
 ```
 
 Those mutable PR heads are **not** embedded as authority in the manifest. Future agents must re-ground them from GitHub. This avoids a report-only commit making the promotion checkpoint stale.

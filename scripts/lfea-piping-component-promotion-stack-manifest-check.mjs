@@ -43,6 +43,7 @@ assert.equal(blocked.get('S4')?.pr, 1386);
 assert.equal(blocked.get('S4')?.head, '508ed865129554e7c7a94b9194e84504aedb31de');
 assert.equal(blocked.get('S4')?.requiredCapabilityState, false);
 assert.equal(blocked.get('S4')?.externalEvidenceRequired, true);
+assert.equal(blocked.get('S4')?.externalEvidenceIssue, 1402);
 assert.deepEqual(blocked.get('S4')?.blockers, [
   'REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED',
   'REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED',
@@ -57,6 +58,7 @@ assert.deepEqual(blocked.get('S5')?.requiredCapabilities, {
   pressureAxialThrust: false,
 });
 assert.equal(blocked.get('S5')?.externalEvidenceRequired, true);
+assert.equal(blocked.get('S5')?.externalEvidenceIssue, 1402);
 
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.bendExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.teeExactMechanics, true);
@@ -65,6 +67,11 @@ assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureBourdon, false);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureStiffening, false);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureAxialThrust, false);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureCodeStress, true);
+
+assert.equal(manifest.externalEvidenceGate.issue, 1402);
+assert.equal(manifest.externalEvidenceGate.status, 'OPEN_BLOCKING_S4_S5_NUMERICAL_PROMOTION');
+assert.equal(manifest.externalEvidenceGate.evidenceCollectionMayProceedWhileCiIssue54Open, true);
+assert.equal(manifest.externalEvidenceGate.acceptedEvidenceMayDirectlyAuthorizeProduction, false);
 
 assert.equal(manifest.infrastructureGate.issue, 54);
 assert.equal(manifest.infrastructureGate.status, 'OPEN_BLOCKING');

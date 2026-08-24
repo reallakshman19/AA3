@@ -81,6 +81,8 @@ Exit code `2` means the release is correctly blocked. The gate requires, at mini
 - bounded route/registry authorization from the controlled PR-E mutation;
 - verified post-promotion 11/12 evidence.
 
+The readiness checker also reasserts the immutable release envelope: cylindrical/round, Original gamma=5, beta 0.05–0.50 inclusive, zero dp, Kn=Kb=1, Au..Dl host-shell recovery, no interpolation/cross-variant fallback/off-axis authority, and no continuous/global maximum or nozzle-wall/code-compliance claim.
+
 ## Exact candidate execution
 
 Policy-only inspection:
@@ -105,20 +107,42 @@ node scripts/emp1-professional-release-candidate.mjs \
   --write-receipt validation/emp1/release/<release-candidate-receipt>.json
 ```
 
-Before deployment verification, the harness executes the existing governed chain:
+Before deployment verification, the harness executes the promotion-compatible governed chain:
 
 ```text
 source custody reconciliation
 P0 source semantics --require-ready
 CAUx benchmark --require-direct-pdf
-frozen release-profile check
-public-product check
-route-authority/currentness falsifiers
+authorized runEmp1 bounded-route orchestration qualification
+route-authority/currentness + persisted/reloaded replay falsifiers
 production build
-EMP.1 Chromium authority/currentness journey
+EMP.1 release-candidate Chromium journey
 ```
 
+The historical `emp1-public-product-check.mjs` and the general `emp1-workbench-authority.spec.js` deliberately assert the **suspended** route in part of their coverage. They remain valuable pre-promotion regression gates but are not used as post-promotion release gates. PR-H uses `emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs` and `e2e/emp1-professional-release.spec.js` instead so a correctly authorized bounded route is not rejected merely because promotion succeeded.
+
 Every invocation retains command identity, exit code, signal/error code, stdout SHA-256, stderr SHA-256 and byte counts. Environment/tool launch failure is `NOT_RUN_EXECUTION_ENVIRONMENT`; a nonzero exit from an actually launched command is FAIL.
+
+## Replay and export boundary
+
+The retained-route currentness falsifier covers serialized/persisted numerical C evidence reloaded under changed route authority and requires it to become stale/non-reportable. That is the release replay/currentness gate.
+
+Repository consumer audit found no separate EMP.1.C numerical export/report consumer. The existing workbench export action exports the active source document, not a retained C numerical result. Any future numerical C report/export must consume the same `reportableResult` currentness projection and may not read stale `execution.result.localCorrelation` directly.
+
+## Release browser gate
+
+`e2e/emp1-professional-release.spec.js` is intentionally post-promotion. It drives the real qualification sample through the real workbench and requires:
+
+- A=1, B=1, prepare C=1, production C=1;
+- a current/reportable C result;
+- `CALCULATED=YES`, `METHOD QUALIFIED=YES`;
+- `CODE COMPLIANT=NO` and `RELEASED=NO` at this engineering-candidate stage;
+- an eight-point governing result only;
+- no global/continuous maximum claim;
+- no nozzle/attachment-wall stress claim;
+- route-authority hash equality between execution and retained authority snapshot.
+
+The browser gate verifies the promoted bounded calculation without pretending that calculation alone grants code or final release authority.
 
 ## Build artifact identity
 

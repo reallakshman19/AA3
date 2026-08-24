@@ -5,11 +5,14 @@
   "dispositionIsNumericalQualification": false,
   "stackedPredecessor": {
     "pr": 1408,
-    "state": "OPEN_DRAFT_UNMERGED",
+    "state": "MERGED_TO_MAIN_BY_SQUASH",
     "headSha": "b594581b3ec49bee26bea53d7e9dc88b6598f619",
     "treeSha": "90eb938f40edbd424f94aa656793c85f4b231ba4",
     "parentSha": "99284205fa411cea6009c9f67867b099b8480e9f",
-    "mainBaseSha": "a59547c8554b6244b2ea94aedd4d59fa0fb15d1f"
+    "mainBaseSha": "a59547c8554b6244b2ea94aedd4d59fa0fb15d1f",
+    "mergedMainSha": "14c648d485cf386f28c6817a068b7eb5da1f7689",
+    "mergedMainTreeSha": "90eb938f40edbd424f94aa656793c85f4b231ba4",
+    "mergedTreeByteEquivalentToAuditedPrHead": true
   },
   "predecessorAuthorizationRecord": {
     "path": "validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json",
@@ -31,7 +34,10 @@
     "boundedEngineeringUseAuthorizedOnStackedSource": true,
     "globalEmp1CRouteAuthority": false,
     "codeComplianceAuthorized": false,
-    "releaseQualified": false
+    "releaseQualified": false,
+    "routeAuthorizedOnMergedMain": true,
+    "registryRegisteredOnMergedMain": true,
+    "boundedEngineeringUseAuthorizedOnMergedMain": true
   },
   "standardPostPromotionGate": {
     "script": "scripts/emp1-wrc-gamma5-post-promotion-exact-head-gate.mjs",
@@ -48,11 +54,12 @@
   },
   "ownerProgressionContext": {
     "instruction": "skip github workflow. merge. proceed next",
-    "scopeAppliedSoFar": "PR_D_WORKFLOW_SKIP_AND_SEQUENCE_PROGRESSION",
-    "doesNotCreateNumericalEvidence": true
+    "scopeAppliedSoFar": "PR_D_WORKFLOW_SKIP_PR_E_MERGED_PR_F_SEQUENCE_PROGRESSION",
+    "doesNotCreateNumericalEvidence": true,
+    "currentInstruction": "merge, proceed next"
   },
   "authorityBoundary": {
-    "boundedRouteSourceStateObserved": "AUTHORIZED_ON_UNMERGED_PR_E_STACK_ONLY",
+    "boundedRouteSourceStateObserved": "AUTHORIZED_ON_MERGED_MAIN_PR_E",
     "globalEmp1CRouteAuthority": false,
     "codeComplianceAuthorized": false,
     "releaseQualified": false,
@@ -67,6 +74,6 @@
     "substituteHandAuthoredFilesAllowed": false,
     "filesRemainAbsentUntilGenuineStandardGateExecution": true
   },
-  "dispositionSemanticHash": "5a06672aa51c82e0e73923f4bb5e98ac8f76686320250553f4655ee4bf43f217",
-  "status": "SOURCE_AUDIT_COMPLETE_STANDARD_POST_PROMOTION_GATE_NOT_RUN_PREDECESSOR_EVIDENCE_WAIVED"
+  "dispositionSemanticHash": "910ee8f4f334c57451b1b6f2d6f7f4b5f64b70ea7241c242553bb261127a8d4c",
+  "status": "SOURCE_AUDIT_COMPLETE_PR_E_MERGED_STANDARD_POST_PROMOTION_GATE_NOT_RUN_PREDECESSOR_EVIDENCE_WAIVED"
 }

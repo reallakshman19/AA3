@@ -36,6 +36,8 @@ const LINE_FIELD_MAP = Object.freeze({
   HYDRO_FLUID_DENSITY: ['fluid.hydroDensityKgM3', 'kg/m3'],
   INSULATION_THICKNESS: ['insulation.thicknessMm', 'mm'],
   INSULATION_DENSITY: ['insulation.densityKgM3', 'kg/m3'],
+  CLADDING_WEIGHT: ['permanent.claddingWeightKgPerM', 'kg/m'],
+  TRACING_WEIGHT: ['permanent.tracingWeightKgPerM', 'kg/m'],
 });
 const COMPONENT_FIELD_MAP = Object.freeze({
   COMPONENT_WEIGHT: ['component.weightKg', 'kg'],

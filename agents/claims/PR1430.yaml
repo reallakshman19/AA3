@@ -20,6 +20,7 @@ claimed_paths:
   - src/workspace/engineering-loads/support-load-distribution-v3.js
   - scripts/authorized-empirical-ancillary-distributed-mass-check.mjs
   - scripts/non-fea-ancillary-default-authority-check.mjs
+  - scripts/run-non-fea-checks.mjs
   - agents/PR1430_workreport.md
   - agents/status/PR1430.yaml
   - agents/claims/PR1430.yaml
@@ -27,12 +28,13 @@ protected_paths:
   - .github/workflows/**
   - src/core/model-loads/**
   - src/core/fea/**
-authority_boundary: "Add optional line-scoped cladding/tracing kg/m through the existing configured/product default -> common-enriched LINE -> authorized effective-value -> PIPE distributed-mass chain. No universal default, no source-column guess, no component-point ownership change, no fluid/statics/equilibrium change."
+authority_boundary: "Add optional line-scoped cladding/tracing kg/m through the existing configured/product default -> common-enriched LINE -> authorized effective-value -> PIPE distributed-mass chain, and bind its focused regressions into the canonical Non-FEA aggregate. No universal default, no source-column guess, no component-point ownership change, no fluid/statics/equilibrium change."
 invariants:
   - ANCILLARY_ABSENCE_DOES_NOT_FABRICATE_ZERO_EVIDENCE
   - ANCILLARY_MASS_IS_CASE_INDEPENDENT_PIPE_DISTRIBUTED_MASS
   - ANCILLARY_MASS_IS_APPLIED_EXACTLY_ONCE
   - COMPONENT_POINT_MASS_OWNERSHIP_UNCHANGED
   - FLUID_AND_STATIC_ACCOUNTING_UNCHANGED
+  - STANDARD_NON_FEA_AGGREGATE_MUST_EXECUTE_BOTH_PR1430_FOCUSED_REGRESSIONS
 merge_authority: OWNER_ONLY
 state: ACTIVE_HANDOVER_READY_WITH_EXECUTION_NOT_RUN

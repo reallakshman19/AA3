@@ -6,24 +6,31 @@
 HANDOVER_READINESS: READY
 PR_RECOVERY_STATE: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_RECOVERY_ONLY
+EXECUTION_MODE: AUTO
+AUTO_STATE: RUNNING
+SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION
+PHASE_PROGRESSION: AUTO
 MERGE_AUTHORITY: NOT_GRANTED
 CRITICALITY: ENGINEERING_CRITICAL
 PR: #1415
 ISSUE: #1377
 UMBRELLA: #1389
 BRANCH: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
-PRE_REFRESH_HEAD: fbe1f53bcaccb74f191f1f6f9e74ec0ec69913a7
+PRE_AUTO_HEAD: e401fd042bec49d2aeb8c5384cf3214ac1f12284
 ENGINEERING_CONTENT_HEAD: 4d4608ab3fcb703e30fb8fd39b0d63fc2f45b9f5
-MAIN_HEAD_LAST_CHECKED: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
+REPORT_BASIS_HEAD: e401fd042bec49d2aeb8c5384cf3214ac1f12284
+MAIN_HEAD_LAST_CHECKED: ee76cf461c33fc7efde36f96536db1a9ba8ab069
 MERGE_BASE: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-REPORT_SYNC: CURRENT_RECOVERY_METADATA_ONLY
+REPORT_SYNC: CURRENT_AUTO_RECOVERY_METADATA_ONLY
 APPENDIX_A_STATUS: CURRENT
-GROUNDING_EPOCH: GE-PR1415-003
-CURRENT_STAGE: RECOVERY_ONLY_CURRENT_MAIN_AUDIT_COMPLETE
-CURRENT_BLOCKER: exact physical cylindrical R_m definition remains primary-source blocked; direct WRC page observation and mean-radius checker execution remain NOT_RUN; Owner merge authorization not granted
+GROUNDING_EPOCH: GE-PR1415-004
+CURRENT_STAGE: AUTO_RECOVERY_CURRENT_MAIN_RECONCILED
+CURRENT_BLOCKER: exact physical cylindrical R_m definition remains primary-source blocked; direct WRC page observation and mean-radius checker execution remain NOT_RUN; merge authority is not granted
 HIGHEST_RISK: deterministic OD/2-minus-assessment-T/2 software behavior or bounded-route authorization being misrepresented as primary WRC physical-radius construction authority
-EXACT_NEXT_ACTION: leave PR1415 draft/unmerged pending explicit Owner merge authorization; keep #1377 open for genuine primary-source R_m physical-definition closure.
+EXACT_NEXT_ACTION: leave PR1415 draft/unmerged; continue AUTO progression to aggregate PR1427 and reconcile the P0 source-semantics gate against current main and the explicit unmerged status of PR1415.
 ```
+
+AUTO MODE was activated by the Owner instruction on 2026-08-25. It authorizes phase progression only; it does not authorize merge, scope expansion, engineering-authority changes, destructive operations, or validation weakening.
 
 This grounding epoch changes recovery metadata only. No Rm source ledger, source checker, authority note, production geometry, WRC mechanics, route/registry, release, oracle/tolerance, UI, or workflow file is modified.
 
@@ -43,23 +50,23 @@ The bounded gamma=5 / zero-dp route is separately authorized. The governing inva
 
 `BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_CYLINDRICAL_RM_PHYSICAL_DEFINITION_SOURCE_AUTHORITY`
 
-## Live re-ground — GE-PR1415-003
+## Live re-ground — GE-PR1415-004
 
-Observed after PR #1426 merged:
+Observed after PR #1418 merged:
 
 ```text
-live main       = 920d0ec367edbb6cd23b3fbd2616ec4322613e70
-pre-refresh PR  = fbe1f53bcaccb74f191f1f6f9e74ec0ec69913a7
+live main       = ee76cf461c33fc7efde36f96536db1a9ba8ab069
+pre-auto PR     = e401fd042bec49d2aeb8c5384cf3214ac1f12284
 merge base      = 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-ahead / behind  = 25 / 10
+ahead / behind  = 28 / 12
 changed files   = exactly 6
 reviews         = 0
 review threads  = 0
 ```
 
-The ten commits on main after the merge base do not touch any PR1415 path. They include merged source-governance work for shell thickness (#1426), stress semantics (#1425), code acceptance (#1423), and material/theory (#1417), plus unrelated UI/LFEA/load-calc work.
+Since the prior grounding, main added unrelated Load Calc PR #1430 and merged physical-applicability PR #1418. Neither touches any PR1415 path. The #1418 source-governance merge is semantically adjacent but explicitly does not qualify physical shell-normality/class/isolation by Table-5 silence and does not define physical `R_m`; it preserves existing §4.5 `R_m` use without converting that use into physical radius-definition authority.
 
-The neighboring #1426 shell-thickness merge does not qualify `R_m`; it explicitly retains physical `R_m/T` consistency as unresolved. Therefore the #1415 source conclusion is unchanged. Coordination classification: `SAFE_RECOVERY_ONLY_NO_EXACT_PATH_OR_AUTHORITY_CONFLICT`.
+The neighboring #1426 shell-thickness merge likewise retains physical `R_m/T` consistency as unresolved. Therefore the #1415 source conclusion is unchanged. Coordination classification: `SAFE_RECOVERY_ONLY_NO_EXACT_PATH_OR_AUTHORITY_CONFLICT`.
 
 ## Production / authority trace
 
@@ -86,6 +93,7 @@ Current authority split remains:
 retained Table-5 R_m symbol/parameter role    = qualified retained text
 physical mean/midsurface definition           = false
 OD/ID/T physical construction authority       = false
+physical R_m/T consistency authority          = false
 source-record engineering/production grant    = false
 
 bounded route authorized                      = true
@@ -133,37 +141,39 @@ Still blocked:
 5. `agents/status/PR1415.yaml`
 6. `agents/claims/PR1415.yaml`
 
-Current recovery epoch modifies only items 4–6.
+Current AUTO recovery epoch modifies only items 4–6.
 
 Protected unchanged:
 - `src/core/emp1/**` production geometry/WRC route/registry;
 - aggregate P0 gate and professional release state/profile;
 - WRC oracle/tolerance/qualification evidence outside #1377;
 - #1375 shell-thickness source paths;
+- merged #1418 physical-applicability source paths;
 - `.github/workflows/**`.
 
 ## Validation ledger
 
 | ID | Status | Evidence |
 |---|---|---|
-| R-001 | PASS | live main `920d0ec3...`, pre-refresh head `fbe1f53b...`, merge base `4461e769...` |
-| R-002 | PASS | compare = 25 ahead / 10 behind, exactly six effective PR paths |
-| R-003 | PASS | ten-commit main drift has no exact PR1415 path overlap |
-| R-004 | PASS | merged #1426 preserves unresolved physical Rm/T consistency; no semantic widening |
-| R-005 | PASS | reviews 0; review threads 0 |
-| R-006 | PASS_SOURCE_INSPECTION | retained R_m symbol and gamma/beta role remain qualified only to retained text |
-| R-007 | PASS_SOURCE_INSPECTION | physical definition / OD-ID-T construction remain blocked |
-| R-008 | PASS_SOURCE_INSPECTION | bounded route true while global/code/release remain false |
-| R-009 | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT | direct WRC page observation |
-| R-010 | NOT_RUN | `node scripts/emp1-wrc537-cylindrical-mean-radius-source-check.mjs` in complete checkout |
-| R-011 | NOT_APPLICABLE | numerical comparison; production mechanics unchanged |
-| R-012 | NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE | current-head hosted EMP.1 jobs |
+| R-001 | PASS | live main `ee76cf46...`, pre-auto head `e401fd04...`, merge base `4461e769...` |
+| R-002 | PASS | compare = 28 ahead / 12 behind, exactly six effective PR paths |
+| R-003 | PASS | main drift through #1430/#1418 has no exact PR1415 path overlap |
+| R-004 | PASS | merged #1426 preserves unresolved physical Rm/T consistency; no authority widening |
+| R-005 | PASS | merged #1418 preserves physical-applicability blockers and does not define physical Rm |
+| R-006 | PASS | reviews 0; review threads 0 |
+| R-007 | PASS_SOURCE_INSPECTION | retained R_m symbol and gamma/beta role remain qualified only to retained text |
+| R-008 | PASS_SOURCE_INSPECTION | physical definition / OD-ID-T construction remain blocked |
+| R-009 | PASS_SOURCE_INSPECTION | bounded route true while global/code/release remain false |
+| R-010 | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT | direct WRC page observation |
+| R-011 | NOT_RUN | `node scripts/emp1-wrc537-cylindrical-mean-radius-source-check.mjs` in complete checkout |
+| R-012 | NOT_APPLICABLE | numerical comparison; production mechanics unchanged |
+| R-013 | NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE | current-head hosted EMP.1 jobs |
 
-Current-head hosted evidence on `fbe1f53bcaccb74f191f1f6f9e74ec0ec69913a7`:
+Current-head hosted evidence on `e401fd042bec49d2aeb8c5384cf3214ac1f12284`:
 
 ```text
-source oracle  32848812559 / 97804666873 / steps=null / logs_url=null
-gamma5 route   32848812632 / 97804666899 / steps=null / logs_url=null
+source oracle  32871121889 / 97878111938 / steps=null / logs_url=null
+gamma5 route   32871121891 / 97878112208 / steps=null / logs_url=null
 ```
 
 Classification: `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE` under #54. This is neither product PASS nor engineering FAIL.
@@ -176,7 +186,20 @@ Classification: `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE
 - `DEC-1377-002` P0 ACTIVE — `OD/2 - assessmentThickness/2` remains software custody behavior, not universal WRC authority.
 - `DEC-1377-003` P0 ACTIVE — source-record and bounded-runtime authority are orthogonal.
 - `DEC-1377-004` P0 ACTIVE — #1426 does not close physical R_m/T consistency.
+- `DEC-1377-005` P0 ACTIVE — merged #1418 does not convert §4.5/Table-5 Rm use into physical Rm-definition authority.
 - `DEBT-1377-001` P1 OPEN — direct PDF and executable checker remain unavailable.
+
+## AUTO MODE state
+
+```text
+EXECUTION_MODE = AUTO
+AUTO_STATE = RUNNING
+SCOPE_AUTHORITY = LOCKED_TO_APPROVED_MISSION
+PHASE_PROGRESSION = AUTO
+MERGE_AUTHORITY = OWNER_ONLY
+```
+
+This PR is not auto-merged. The next approved non-merge phase is aggregate PR #1427 current-state reconciliation.
 
 ## Appendix A — implementation takeover qualification
 
@@ -186,8 +209,8 @@ A2 Failure Isolation — **20/20**. No numerical defect is inferred; the open de
 
 A3 Authority / Invariant — **20/20**. Retained symbol/role, physical construction, bounded runtime, global C, code and release authority remain orthogonal.
 
-A4 Independent Validation — **19/20**. Live main/branch, source record, neighboring #1426 boundary, diff, reviews and hosted pre-step failure were cross-checked; direct PDF/checker execution remain NOT_RUN.
+A4 Independent Validation — **19/20**. Live main/branch, source record, merged #1426/#1418 boundaries, diff, reviews and hosted pre-step failures were cross-checked; direct PDF/checker execution remain NOT_RUN.
 
-A5 Minimal Patch / Next Commit — **20/20**. Recovery metadata only; no engineering/source/numerical mutation is justified.
+A5 Minimal Patch / Next Commit — **20/20**. Recovery metadata only; no engineering/source/numerical mutation is justified. AUTO proceeds to #1427 without merging this PR.
 
 **Total: 99/100; minimum 19/20 — TAKEOVER QUALIFIED / HANDOVER READY.**

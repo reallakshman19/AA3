@@ -1,0 +1,36 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP-1379-TABLE5-MATERIAL-INPUT-20260825
+mission: "Issue #1379 retained Table-5 material-input reconciliation"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1379-table5-material-input-reconciliation-20260825
+base_sha: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+base_tree: 2f9dd6023a9bfa9522518085142ebf23bf264412
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_WIP
+handover_readiness: READY
+report_path: agents/WIP-1379-TABLE5-MATERIAL-INPUT-20260825_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: CLAIMED_BEFORE_PATCH
+source_state:
+  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  retained_table5_pages: 41-42
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+expected_partial_authority:
+  table5_explicit_e_input_absent: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+  table5_explicit_poisson_input_absent: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+  displayed_table5_equations_explicit_e_free: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+  displayed_table5_equations_explicit_poisson_free: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+  modulus_role: BLOCKED
+  constitutive_shell_theory: BLOCKED
+  universal_material_independence: BLOCKED
+authority:
+  engineering: false
+  production: false
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+exact_next_action: "Patch only the three #1379 source-governance files; preserve production/material mechanics and aggregate P0 gate."
+last_updated: "2026-08-25"

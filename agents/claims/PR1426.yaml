@@ -1,6 +1,6 @@
 schema: AgentClaim.v1
 pr_or_wip: PR1426
-claim_state: ACTIVE
+claim_state: ACTIVE_CURRENT_MAIN_RECOVERY
 branch: agent/issue-1375-thickness-basis-current-state-20260825
 mission: "Current authorized-route WRC shell-thickness basis reconciliation for Issue #1375"
 write_scope:
@@ -20,5 +20,6 @@ protected_no_mutation:
   - validation/emp1/wrc537-2013/table5-reviewed-interpretation-v1.json
   - .github/workflows/
 authority_boundary: "Reconcile current bounded route authorization against still-blocked WRC physical shell-thickness basis source authority. No numerical, route/registry, global, code, release or neighboring source-authority widening."
-overlap_state: SAFE_NO_OPEN_1375_OR_SHELL_THICKNESS_PATH_PR_FOUND
+overlap_state: "SAFE_RECOVERY_ONLY: six PR1426 paths are disjoint from the six commits now on main; merged PR1425 is stress-semantics-only and does not alter shell-thickness authority."
+invariant: "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY"
 merge_authority: NOT_GRANTED

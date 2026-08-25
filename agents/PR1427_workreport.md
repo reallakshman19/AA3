@@ -11,20 +11,20 @@ PR: #1427
 ISSUE: #1389
 BRANCH: agent/issue-1389-p0-gate-current-state-20260825
 CRITICALITY: ENGINEERING_CRITICAL
-PR_HEAD_OBSERVED: db6264aeec96f9ea7ad493dd8033b8b1907b56ad
+PR_HEAD_OBSERVED: beed343b65307a132062ad5fe365a3411892d906
 REPORT_BASIS_HEAD: db6264aeec96f9ea7ad493dd8033b8b1907b56ad
 MAIN_HEAD_LAST_CHECKED: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 MERGE_BASE: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-REPORT_SYNC: CURRENT
+REPORT_SYNC: CURRENT_RECOVERY_METADATA_ONLY_AFTER_BASIS
 APPENDIX_A_STATUS: CURRENT
-GROUNDING_EPOCH: GE-PR1427-001
-CURRENT_STAGE: AGGREGATE_P0_CURRENT_STATE_RECONCILED_FINAL_AUDIT_PENDING
-CURRENT_BLOCKER: nine professional P0 source-semantics gates remain blocked; direct primary-page observation unavailable; Owner merge authorization not granted
+GROUNDING_EPOCH: GE-PR1427-002
+CURRENT_STAGE: HANDOVER_READY_OWNER_DECISION
+CURRENT_BLOCKER: nine professional P0 source-semantics gates remain blocked; direct primary-page observation and repository checker execution unavailable; Owner merge authorization not granted
 HIGHEST_RISK: interpreting already-authorized bounded runtime execution as proof that professional P0 source semantics or release authority are closed
-EXACT_NEXT_ACTION: complete exact six-file/main/review/CI audit; leave PR1427 draft and unmerged pending explicit Owner merge authorization.
+EXACT_NEXT_ACTION: Owner review/merge decision for PR1427; keep the nine individual source-domain issues and professional release gates fail-closed regardless of this aggregate bookkeeping repair.
 ```
 
-`REPORT_BASIS_HEAD` is the engineering-content head containing only the three aggregate governance updates. Later commits are PR recovery metadata only.
+`REPORT_BASIS_HEAD` is the engineering-content head containing only the three aggregate governance updates. Commits after that head are PR recovery metadata only.
 
 ## Handover in 60 seconds
 
@@ -84,7 +84,7 @@ blockerCount = 9
 professionalP0SourceSemanticsReady = false
 ```
 
-The frozen v1 release profile remains definition-only and still has release-authority booleans false. PR #1427 does not rewrite that historical/frozen definition to mirror later runtime route authorization.
+The frozen v1 release profile remains definition-only and still has release-authority booleans false. PR #1427 does not rewrite that frozen definition to mirror later runtime route authorization.
 
 ## Pre-patch failure isolation
 
@@ -148,7 +148,7 @@ Actual Node execution remains `NOT_RUN` until run in a complete checkout.
 
 Replaces the obsolete statement that the bounded route is unauthorized with an explicit authority matrix and preserves professional release blocking.
 
-## Expected final changed-file ledger — exactly six
+## Final changed-file ledger — exactly six
 
 1. `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json`
 2. `scripts/emp1-professional-p0-source-semantics-check.mjs`
@@ -156,6 +156,18 @@ Replaces the obsolete statement that the bounded route is unauthorized with an e
 4. `agents/PR1427_workreport.md`
 5. `agents/status/PR1427.yaml`
 6. `agents/claims/PR1427.yaml`
+
+Immutable audit at head `beed343b65307a132062ad5fe365a3411892d906`:
+
+```text
+main / merge base = 9887ec1c3eb6184c0d590841b23c04ed449f9414
+ahead / behind    = 6 / 0
+changed files     = 6
+reviews           = 0
+review threads    = 0
+```
+
+Live main was rechecked after the audit and remained `9887ec1c3eb6184c0d590841b23c04ed449f9414`.
 
 ## Protected no-mutation
 
@@ -171,7 +183,7 @@ Replaces the obsolete statement that the bounded route is unauthorized with an e
 
 ## Coordination
 
-Active source-domain drafts were inspected before branch creation:
+Active source-domain drafts inspected before branch creation:
 
 - #1415 — #1377 mean radius;
 - #1417 — #1379 material/theory;
@@ -182,21 +194,49 @@ Active source-domain drafts were inspected before branch creation:
 
 PR #1427 changes none of those individual artifacts. It owns only the aggregate P0 reconciliation layer originally introduced by merged PR #1398.
 
+## Hosted current-head execution truth
+
+At audited head `beed343b65307a132062ad5fe365a3411892d906`:
+
+```text
+run 32843076650 / job 97786653503 / qualify-gamma5-route
+steps = null
+logs_url = null
+
+run 32843076639 / job 97786653390 / independent-handcalc
+steps = null
+logs_url = null
+
+run 32843076672 / job 97786653711 / qualify-runemp1-orchestration
+steps = null
+logs_url = null
+```
+
+Classification for all three:
+
+`NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`
+
+No checkout or engineering assertion executed. These runs are not product PASS and are not engineering FAIL.
+
+The dedicated aggregate Node checker is not exposed as a separately executed hosted job on this head and remains `NOT_RUN`.
+
 ## Validation ledger
 
 | ID | Status | Observation / oracle |
 |---|---|---|
-| C-001 | PASS | live main `9887ec1c3eb6184c0d590841b23c04ed449f9414` before branch creation |
+| C-001 | PASS | live main `9887ec1c3eb6184c0d590841b23c04ed449f9414` before and after audit |
 | C-002 | PASS_SOURCE_INSPECTION | current route authorization/use true; global/release false |
 | C-003 | PASS_SOURCE_INSPECTION | aggregate P0 pre-patch checker required stale unauthorized route state |
 | C-004 | PASS_SOURCE_INSPECTION | #1385/#1383/#1375 current blocked status strings reconciled |
 | C-005 | PASS_SOURCE_INSPECTION | release-readiness consumer derives P0 readiness from blocker state/gates and reads runtime route independently |
 | C-006 | PASS_SOURCE_INSPECTION | three aggregate governance files changed; protected runtime/profile/domain files untouched |
-| C-007 | NOT_RUN_EXECUTION_ENVIRONMENT | direct WRC primary-page observation unavailable through connected binary transport |
+| C-007 | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT | direct WRC primary-page observation unavailable |
 | C-008 | NOT_RUN | `node scripts/emp1-professional-p0-source-semantics-check.mjs` |
 | C-009 | NOT_RUN | `node scripts/emp1-professional-p0-source-semantics-check.mjs --require-ready` |
 | C-010 | NOT_APPLICABLE | numerical comparison; WRC mechanics unchanged |
-| C-011 | PENDING_FINAL_AUDIT | exact six-file compare, reviews/threads and current-head hosted CI |
+| C-011 | PASS | exact six-file compare; 6 ahead / 0 behind; main unchanged |
+| C-012 | PASS | reviews 0; review threads 0 |
+| C-013 | NOT_RUN_EXECUTION_ENVIRONMENT | current-head hosted EMP.1 jobs terminated pre-step |
 
 ## Active register
 
@@ -215,8 +255,8 @@ A2 Failure Isolation — **20/20**. First defect is stale aggregate route/status
 
 A3 Authority / Invariant — **20/20**. Bounded runtime authorization is explicitly prohibited from closing P0 professional source semantics or global/code/release authority.
 
-A4 Independent Validation — **19/20**. Live route/registry/profile/source records and release-readiness consumer were cross-checked; direct PDF and executable checker remain NOT_RUN.
+A4 Independent Validation — **19/20**. Live route/registry/profile/source records, exact diff and current-head CI were cross-checked; direct PDF and executable aggregate checker remain NOT_RUN.
 
 A5 Minimal Patch — **20/20**. Three aggregate governance files plus three PR recovery files; all production/profile/source-domain/oracle/workflow paths protected.
 
-**Total: 99/100; minimum 19/20 — HANDOVER_READY after final immutable audit.**
+**Total: 99/100; minimum 19/20 — HANDOVER_READY.**

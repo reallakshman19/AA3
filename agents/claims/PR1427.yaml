@@ -4,8 +4,12 @@ pr_or_wip: PR1427
 branch: agent/issue-1389-p0-gate-current-state-20260825
 issue: 1389
 criticality: ENGINEERING_CRITICAL
-claim_state: ACTIVE
-coordination_state: SAFE_AGGREGATE_ONLY
+claim_state: ACTIVE_AUTO_COMPLETE
+execution_mode: AUTO
+auto_state: COMPLETE
+scope_authority: LOCKED_TO_APPROVED_MISSION
+phase_progression: AUTO
+coordination_state: SAFE_AGGREGATE_ONLY_CURRENT_MAIN
 scope:
   authority: EMP1_WRC537_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION
   paths:
@@ -15,6 +19,10 @@ scope:
     - agents/PR1427_workreport.md
     - agents/status/PR1427.yaml
     - agents/claims/PR1427.yaml
+current_auto_write_scope:
+  - agents/PR1427_workreport.md
+  - agents/status/PR1427.yaml
+  - agents/claims/PR1427.yaml
 protected_exclusions:
   - src/core/emp1/**
   - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
@@ -26,8 +34,24 @@ protected_exclusions:
 authority_boundary:
   bounded_runtime_route_authority_mutation: false
   individual_source_gate_mutation: false
+  blocker_count_reduction_without_source_closure: false
   professional_release_authority_granted: false
   global_emp1_c_authority_granted: false
   code_compliance_authority_granted: false
-merge_authority: OWNER_ONLY
+main_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
+merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+grounding_epoch: GE-PR1427-004
+aggregate_current_main_truth:
+  all_nine_status_strings_match: true
+  blocker_count: 9
+  bounded_route_authorized: true
+  bounded_engineering_production_use: true
+  global_emp1_c: false
+  code_compliance: false
+  professional_release_ready: false
+neighbor_dependency:
+  pr1415_state: OPEN_DRAFT_UNMERGED
+  rule: "Unmerged PR1415 is not current-main authority. If PR1415 merges before PR1427, re-ground #1377 aggregate currentStatus before PR1427 merge."
+merge_authority: NOT_GRANTED
 handover_report: agents/PR1427_workreport.md
+exact_next_action: "Preserve PR1427 draft/unmerged pending explicit Owner merge authorization; re-ground first if PR1415 is merged before it."

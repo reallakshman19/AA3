@@ -11,14 +11,50 @@ PR: #1423
 ISSUE: #1381
 UMBRELLA: #1389
 BRANCH: agent/issue-1381-code-acceptance-reconciliation-20260825
+PR_HEAD_OBSERVED: ee7fb6567c9ac6619567637db491e31010eb46a6
+REPORT_BASIS_HEAD: ee7fb6567c9ac6619567637db491e31010eb46a6
 MAIN_HEAD_LAST_CHECKED: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 MERGE_BASE: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+REPORT_SYNC: CURRENT
+APPENDIX_A_STATUS: CURRENT
+GROUNDING_EPOCH: GE-1423-TKO-002
 CRITICALITY: ENGINEERING_CRITICAL
 COORDINATION: SAFE
 CURRENT_STAGE: SOURCE_BOUNDARY_RECONCILIATION_COMPLETE_DRAFT_OWNER_REVIEW
+CURRENT_BLOCKER: direct primary-WRC/code acceptance authority and executable checkout remain unavailable
 HIGHEST_RISK: treating bounded WRC route authorization as downstream code-classification or allowable authority
 EXACT_NEXT_ACTION: Owner review/merge decision for PR #1423. Keep #1381 open after merge for genuine primary-WRC plus governing-code/edition/service closure.
 ```
+
+`REPORT_SYNC=CURRENT` is valid after the recovery-only synchronization commit because later movement from `REPORT_BASIS_HEAD` is limited to allowed recovery metadata; no production, source-authority, benchmark, test, route or numerical content is changed by that synchronization.
+
+## Handover in 60 seconds
+
+- PR #1423 is a six-file source-governance reconciliation for #1381; no production WRC mechanics or code-allowable evaluator is introduced.
+- Current main and merge base are both `9887ec1c3eb6184c0d590841b23c04ed449f9414`; pre-refresh PR head was `ee7fb6567c9ac6619567637db491e31010eb46a6`, 14 ahead / 0 behind.
+- The core invariant is `BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_CODE_ACCEPTANCE`.
+- Bounded route/registry engineering-use authority is true; global EMP.1.C, code stress classification, allowable comparison, code compliance and release authority remain false.
+- Exact changed-file set is six paths and contains no `src/core/emp1/**`, release, oracle/tolerance, UI or workflow mutation.
+- Direct WRC primary-page observation and Node checker execution remain `NOT_RUN`; current-head hosted EMP.1 jobs still fail before step creation with `steps=null` / `logs_url=null`.
+- #1381 must remain open after any merge because genuine WRC/code classification and acceptance authority is still unresolved.
+
+## Grounding epoch GE-1423-TKO-002
+
+Verified from live GitHub during takeover continuation on 2026-08-25:
+
+```text
+MAIN_HEAD: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+PR_HEAD: ee7fb6567c9ac6619567637db491e31010eb46a6
+MERGE_BASE: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+AHEAD_BEHIND: 14 / 0
+CHANGED_FILES: 6 exact claimed paths
+REVIEWS: 0
+REVIEW_THREADS: 0
+PR_STATE: OPEN / DRAFT / MERGEABLE / UNMERGED
+COORDINATION: SAFE — no duplicate source-authority mutation created; #1415/#1417/#1418 are distinct source subdomains
+```
+
+Takeover decision: `CONTINUE`. The live diff, authority boundary, issue mission and recovery artifacts are mutually consistent. No quarantine, salvage or supersession trigger was found.
 
 ## Mission and result
 
@@ -145,18 +181,20 @@ Unexplained changed files: 0.
 | C-006 | NOT_RUN_EXECUTION_ENVIRONMENT | exact WRC PDF pages: exact blob resolves but binary/base64 payload is empty |
 | C-007 | NOT_RUN | `node scripts/emp1-wrc537-stress-classification-code-boundary-check.mjs` not executed in a complete checkout |
 | C-008 | NOT_APPLICABLE | numerical WRC comparison: production mechanics unchanged |
-| C-009 | PASS | GitHub compare: exactly 6 intended files, branch 0 behind current main at implementation reconciliation |
-| C-010 | PASS | PR reviews/comments/inline threads: none |
-| C-011 | NOT_RUN_EXECUTION_ENVIRONMENT | hosted EMP.1 workflows all failed before step creation; no engineering command executed |
+| C-009 | PASS | GitHub compare at `ee7fb656...`: exactly 6 intended files, 14 ahead / 0 behind current main |
+| C-010 | PASS | live PR reviews = 0; live review threads = 0 |
+| C-011 | NOT_RUN_EXECUTION_ENVIRONMENT | current-head hosted EMP.1 workflows fail before step creation; no engineering command executed |
 
-Hosted PR-head evidence at `09ab3d2df61fcfd0a3907a80e024d3175df99c26`:
+Earlier hosted evidence at implementation/recovery head `09ab3d2df61fcfd0a3907a80e024d3175df99c26` is retained historically.
+
+Current-head hosted evidence at `ee7fb6567c9ac6619567637db491e31010eb46a6`:
 
 ```text
-32813470694 / 97697146828 / independent-source-oracle       / steps=null / logs_url=null
-32813470652 / 97697146629 / independent-handcalc            / steps=null / logs_url=null
-32813470633 / 97697146844 / qualify-gamma5-route            / steps=null / logs_url=null
-32813470637 / 97697146673 / qualify-runemp1-orchestration    / steps=null / logs_url=null
+32813616043 / 97697550854 / independent-source-oracle / steps=null / logs_url=null
+32813616032 / 97697550644 / qualify-gamma5-route      / steps=null / logs_url=null
 ```
+
+Additional current-head EMP.1 runs also concluded failure before executable evidence; the two jobs above directly re-confirm the source-oracle and bounded-route pre-step condition.
 
 Classification: `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE` under #54. This is neither product PASS nor engineering FAIL.
 
@@ -168,6 +206,28 @@ Classification: `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE
 - `DEC-1423-002` P0 ACTIVE — CAUx classification is reference evidence only; no authority promotion.
 - `QST-1423-001` P0 OPEN — future governing code/edition/service/classification method selection.
 - `DEBT-1423-001` P1 OPEN — #54 prevents hosted executable evidence.
+
+## Takeover chain
+
+### TKO-001 — original PR implementation/recovery
+
+Inherited state: source-boundary reconciliation complete; Appendix A 99/100; draft/Owner-only; direct primary page and executable checker unavailable.
+
+### TKO-002 — live continuation re-grounding
+
+Incoming head `ee7fb6567c9ac6619567637db491e31010eb46a6` was independently compared to live `main@9887ec1c3eb6184c0d590841b23c04ed449f9414`.
+
+Reconciled facts:
+
+- exactly six changed files;
+- 14 commits ahead / 0 behind;
+- merge base exactly current main;
+- zero reviews and zero review threads;
+- no protected production/release/oracle/workflow mutation;
+- current-head source-oracle and gamma5 jobs still have `steps=null` / `logs_url=null`;
+- issue #1381 remains genuinely open for primary/code authority.
+
+Decision: `CONTINUE` and synchronize recovery metadata only. No engineering/source-authority conclusion changed.
 
 ## Appendix A — implementation takeover qualification
 

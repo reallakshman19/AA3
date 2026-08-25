@@ -4,16 +4,21 @@ pr_or_wip: PR1418
 mission: "Combined physical-applicability source reconciliation for #1368 #1370 #1373"
 workstream: EMP1_WRC537_SOURCE_SEMANTICS
 branch: agent/issue-1389-physical-applicability-batch-20260825
-base_sha: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-base_tree: f26e894dd80751bb9e69720b514f2a0defaf64ea
+main_head_last_checked: 8145b83aaf0f54aedbd971373be5db18f76898f3
+merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+pr_head_observed_before_refresh: de3f93127117e4e5e609f936a0d018ef92208c8f
+report_basis_head: 779d72a8c371e1d9453e8e02ba0d785b1944e3f1
+grounding_epoch: GE-PR1418-003
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT
+pr_recovery_state: HEALTHY_DRAFT_RECOVERY_REFRESHED
 handover_readiness: READY
+takeover_authority: WRITE_ALLOWED_RECOVERY_ONLY
 report_path: agents/PR1418_workreport.md
+appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: FINAL_15_FILE_MAIN_REVIEW_AUDIT_COMPLETE
+current_stage: RECOVERY_REFRESH_COMPLETE_OWNER_DECISION
 merge_authority: NOT_GRANTED
 issues:
   - 1368
@@ -41,28 +46,40 @@ physical_applicability:
   interaction_isolation_authority: false
   applicability_by_table5_silence: PROHIBITED
 validation:
-  retained_source_inspection: PASS
-  direct_pdf_page_observation: NOT_RUN
+  live_grounding: PASS
+  changed_files_effective: 15
+  ahead_main: 24
+  behind_main: 3
+  main_drift_exact_path_overlap: NONE
+  reviews: 0
+  review_threads: 0
+  mergeable: true
+  retained_source_inspection: PASS_SOURCE_INSPECTION
+  direct_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
   checker_node_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
   production_mechanics: UNCHANGED
-  changed_files: 15
-  behind_main: 0
-  reviews: 0
-  review_threads: 0
   protected_path_mutation: NONE
-  final_diff_review_main_audit: PASS_SOURCE_AND_DIFF_INSPECTION
+  hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+hosted_ci_evidence:
+  gamma5_run: 32834577006
+  gamma5_job: 97760482707
+  steps: null
+  logs_url: null
 base_drift:
-  previous_base_sha: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
-  new_base_sha: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-  classification: UNRELATED_LFEA_BEND_WORK
+  prior_grounded_main: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+  current_main: 8145b83aaf0f54aedbd971373be5db18f76898f3
+  commits_since_prior_grounding: 3
   overlap_with_pr1418_paths: false
-  reground_method: NON_FORCE_TWO_PARENT_MERGE_PRESERVING_15_PR_BLOBS
-  reground_commit: 779d72a8c371e1d9453e8e02ba0d785b1944e3f1
+  classification: UNRELATED_UI_LAFEA_PLUS_MERGED_PR1417_MATERIAL_SOURCE_AUTHORITY
+  rebase_required: false
 authority:
   physical_applicability_source_pass: false
+  bounded_runtime_engineering: true
+  bounded_runtime_production: true
   global_emp1_c: false
   code_compliance: false
   release: false
-exact_next_action: "Leave PR1418 draft/unmerged pending explicit Owner merge authorization; direct primary-source closure remains required for physical normality, attachment class, and interaction/isolation."
+merge_disposition: OWNER_ONLY_DRAFT_UNMERGED
+exact_next_action: "Leave PR1418 draft/unmerged pending explicit Owner merge authorization; keep #1368/#1370/#1373 open until direct primary-source physical-applicability closure."
 last_updated: "2026-08-25"

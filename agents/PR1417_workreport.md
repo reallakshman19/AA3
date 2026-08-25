@@ -10,12 +10,13 @@ WORK_INTENT: SOURCE_GOVERNANCE_RECONCILIATION
 PR: #1417
 BASE: main@e2a44a85b808c0dd3f09a02d7825df26cf92f92f
 BASE_TREE: 2f9dd6023a9bfa9522518085142ebf23bf264412
+REPORT_BASIS_HEAD: 50813b6be3b32f7f30eeb26a9517dc00a26c6f5b
 BRANCH: agent/issue-1379-table5-material-input-reconciliation-20260825
 ISSUE: #1379
-CURRENT_STAGE: PR_ALLOCATED_RECOVERY_MIGRATION
+CURRENT_STAGE: HANDOFF_AUDIT_COMPLETE
 MERGE_AUTHORITY: NOT_GRANTED
 HIGHEST_RISK: converting retained Table-5 non-use of explicit E/nu fields into unsupported universal material independence or shell-theory authority
-EXACT_NEXT_ACTION: retire WIP records; verify exact six-file diff, live main and reviews/threads; remain draft/unmerged pending owner authorization.
+EXACT_NEXT_ACTION: await explicit owner merge authorization; re-ground main/head/reviews immediately before merge.
 ```
 
 ## Mission
@@ -69,7 +70,7 @@ Qualification boundary:
 
 The bounded adapter currently consumes no `E`, `nu`, yield strength or constitutive-model field. That software fact is consistent with the retained Table-5 explicit-input structure but is not independent material/theory authority.
 
-## Final intended changed-file ledger
+## Final changed-file ledger
 
 1. `validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json`
 2. `scripts/emp1-wrc537-elastic-material-source-check.mjs`
@@ -77,6 +78,8 @@ The bounded adapter currently consumes no `E`, `nu`, yield strength or constitut
 4. `agents/PR1417_workreport.md`
 5. `agents/status/PR1417.yaml`
 6. `agents/claims/PR1417.yaml`
+
+Temporary WIP workreport/status/claim are retired; only PR1417 recovery identity remains active.
 
 ## Protected no-mutation
 
@@ -100,10 +103,23 @@ The bounded adapter currently consumes no `E`, `nu`, yield strength or constitut
 | checker Node execution | NOT_RUN |
 | production numerical comparison | NOT_APPLICABLE |
 | production material/numerical mechanics | UNCHANGED |
+| final changed files | PASS — exactly 6 |
+| branch behind live main | PASS — 0 |
+| reviews | PASS — 0 |
+| review threads | PASS — 0 |
 | engineering/production/global/code/release authority | false |
-| final six-file/main/review audit | PENDING |
 
 Encoded-but-unexecuted checker logic remains NOT_RUN.
+
+## Main-drift / overlap audit
+
+- live `main` at audit: `e2a44a85b808c0dd3f09a02d7825df26cf92f92f`;
+- branch merge base: exact same SHA;
+- behind-by: `0`;
+- exact changed files: six intended files only;
+- production/route/registry/release/oracle/workflow overlap: none;
+- open PR #1415 owns separate cylindrical-radius source files and remains untouched;
+- overlap disposition: `SAFE_PARALLEL_DISTINCT_FILES_AND_AUTHORITY_SUBDOMAIN`.
 
 ## Decisions
 

@@ -52,6 +52,7 @@
     "provesUniversalMaterialApplicability": false,
     "provesConstitutiveOrShellTheoryApplicability": false
   },
+  "authorityScope": "THIS_SOURCE_RECORD_ONLY_NOT_LIVE_ROUTE_STATE",
   "authority": {
     "table5ExplicitMaterialInputNonUseQualified": true,
     "table5DisplayedStressEquationExplicitMaterialInputNonUseQualified": true,
@@ -68,6 +69,24 @@
     "engineeringUseAuthorized": false,
     "productionUseAuthorized": false
   },
+  "currentLiveRouteState": {
+    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP",
+    "boundedRouteAuthorized": true,
+    "registryRegistered": true,
+    "boundedEngineeringUseAuthorized": true,
+    "boundedProductionUseAuthorized": true,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseQualified": false,
+    "professionalReleaseReady": false
+  },
+  "authoritySeparation": {
+    "materialTheorySourceAuthority": false,
+    "currentRouteMayExecuteUnderSeparateBoundedAuthorization": true,
+    "currentRouteExecutionProvesMaterialTheoryAuthority": false,
+    "routeAuthorizationMayBackPropagateIntoMaterialTheorySourceAuthority": false,
+    "rule": "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_ELASTIC_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY"
+  },
   "prohibitedInferences": [
     "DO_NOT_TREAT_TABLE5_EXPLICIT_E_NON_USE_AS_PROOF_OF_ABSOLUTE_MODULUS_INDEPENDENCE",
     "DO_NOT_TREAT_TABLE5_EXPLICIT_NU_NON_USE_AS_PROOF_OF_POISSON_RATIO_IRRELEVANCE",
@@ -75,7 +94,8 @@
     "DO_NOT_INVENT_POISSON_RATIO_OR_MODULUS_CORRECTION",
     "DO_NOT_CLAIM_NONLINEAR_PLASTIC_CREEP_OR_COMPOSITE_APPLICABILITY",
     "DO_NOT_USE_YIELD_OR_ALLOWABLE_STRESS_TO_MODIFY_WRC_CURVE_EVALUATION",
-    "DO_NOT_ASSUME_HOST_AND_ATTACHMENT_MATERIAL_RELATIONSHIP"
+    "DO_NOT_ASSUME_HOST_AND_ATTACHMENT_MATERIAL_RELATIONSHIP",
+    "DO_NOT_INFER_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY_FROM_BOUNDED_ROUTE_AUTHORIZATION"
   ],
   "requiredPrimaryClosure": [
     "exact role of shell modulus E in WRC derivation and cylindrical method",
@@ -92,6 +112,11 @@
     "table5EvaluatorChanged": false,
     "routeRegistryChanged": false,
     "aggregateP0GateChanged": false,
+    "thisRecordWidensBoundedRouteAuthority": false,
+    "thisRecordGrantsMaterialTheorySourceAuthority": false,
+    "globalEmp1CAuthorityChanged": false,
+    "codeComplianceAuthorityChanged": false,
+    "releaseAuthorityChanged": false,
     "codeComplianceAuthority": false,
     "releaseAuthority": false
   },

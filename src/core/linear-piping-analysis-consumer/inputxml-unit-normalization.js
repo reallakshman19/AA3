@@ -21,6 +21,8 @@ import {
 } from './inputxml-unit-contract.js';
 
 const LENGTH_META_FIELDS = Object.freeze(['bendDeclaredRadius', 'bendComputedRadius']);
+/** Coordinate triples in segment metadata. Every component is a length. */
+const LENGTH_POINT_META_FIELDS = Object.freeze(['bendArcCentre', 'bendTangentStart', 'bendTangentEnd']);
 const DIMENSIONLESS_META_FIELDS = new Set([
   'materialNumber', 'sourceType', 'sourceIndex', 'bendAngle1', 'bendAngle2',
   'numMiter', 'bendCompoundMiter', 'bendAngle1Automatic',
@@ -126,19 +128,26 @@ function normalizeSegment(segment, scale, index) {
         meta[field] = scaleNumber(meta[field], scale, `segments[${index}].meta.${field}`);
       }
     }
-    if (meta.bendArcCentre) {
-      meta.bendArcCentre = normalizePoint(
-        meta.bendArcCentre,
-        scale,
-        `segments[${index}].meta.bendArcCentre`,
-      );
+    // Bend tangent points are coordinates exactly like the arc centre, so they
+    // convert with it. They were added to the adapters without being classified
+    // here, and this normalizer rejects numeric metadata it does not recognise
+    // -- correctly, because an unconverted length is far worse than a refused
+    // model. The effect was that every ACCDB model reached BLOCK before
+    // structural preparation ran at all. Carrying them unconverted would have
+    // been the worse outcome: on a model declared in millimetres the tangent
+    // points would sit a factor of a thousand from their own centre, and the
+    // geometry would still look structurally valid.
+    for (const field of LENGTH_POINT_META_FIELDS) {
+      if (meta[field]) {
+        meta[field] = normalizePoint(meta[field], scale, `segments[${index}].meta.${field}`);
+      }
     }
     if (meta.reducer) {
       meta.reducer = normalizeReducer(meta.reducer, scale, `segments[${index}].meta.reducer`);
     }
     rejectUnknownNumericMetadata(
       meta,
-      new Set([...DIMENSIONLESS_META_FIELDS, ...LENGTH_META_FIELDS, 'bendArcCentre', 'reducer']),
+      new Set([...DIMENSIONLESS_META_FIELDS, ...LENGTH_META_FIELDS, ...LENGTH_POINT_META_FIELDS, 'reducer']),
       `segments[${index}].meta`,
     );
     result.meta = meta;

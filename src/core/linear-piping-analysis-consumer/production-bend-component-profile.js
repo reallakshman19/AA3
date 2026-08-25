@@ -1,4 +1,4 @@
-import { sealPipingComponentProfile } from '../linear-fea-piping-components/index.js';
+import { PIPING_COMPONENT_PROFILE_ID, sealPipingComponentProfile } from '../linear-fea-piping-components/index.js';
 
 const SOURCE = 'LFEA-PIPING-PROMOTION-S3-CONVERGENCE-QUALIFICATION';
 
@@ -16,7 +16,12 @@ const SOURCE = 'LFEA-PIPING-PROMOTION-S3-CONVERGENCE-QUALIFICATION';
 export function productionBendComponentProfile() {
   return sealPipingComponentProfile({
     schema: 'fea-linear-piping-component-profile/v1',
-    profileId: 'LFEA-PRODUCTION-BEND-S3-R1',
+    // Must equal the piping-component kernel's own contract identity -- this
+    // is not a caller-chosen label. caesar-accdb-linear-solve.js seals the
+    // identical benchmark-qualified profile the same way. A different string
+    // here does not create a distinct profile; it fails PIPING_COMPONENT_PROFILE_INVALID
+    // on every bend, unconditionally, regardless of what factor authority is supplied.
+    profileId: PIPING_COMPONENT_PROFILE_ID,
     bendFormulation: 'PIPE_BEND_CORRECTED_FRAME_V1',
     bendSubdivisionPurpose: 'STRESS_RECOVERY_V1',
     bendPressureStiffeningRule: 'BEND_PRESSURE_STIFFENING_EXCLUDED_V1',

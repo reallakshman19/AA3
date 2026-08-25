@@ -1,5 +1,5 @@
 import { deepFreeze } from '../shared-piping-model/index.js';
-import { AUDIT_CODES } from './constants.js';
+import { AUDIT_CODES, NEGLIGIBLE_MASS_TYPES } from './constants.js';
 import { classifyLoadComponent } from './composition-profile.js';
 import {
   fluidMassPerLength,
@@ -11,10 +11,35 @@ import { evidenceNumber } from './units.js';
 export function resolveComponentCaseMass(component, loadCaseId, compositionProfile) {
   const projectionBlocker = blockingProjectionCode(component.diagnostics);
   if (projectionBlocker) return blocked(projectionBlocker);
+  if (NEGLIGIBLE_MASS_TYPES.includes(String(component.type || '').trim().toUpperCase())) {
+    return resolveNegligibleMass(component);
+  }
   const classification = classifyLoadComponent(component.type, compositionProfile);
   if (classification === 'LINEAR') return resolveLinear(component, loadCaseId);
   if (classification === 'LUMPED') return resolveLumped(component);
   return resolveUnknown(component);
+}
+
+/**
+ * Gasket-type components default to zero self-weight rather than blocking on
+ * missing evidence. Explicit source evidence, if present, still wins and is
+ * never overridden, and a non-zero mass still requires its application point
+ * so it is placed correctly rather than silently dropped.
+ */
+function resolveNegligibleMass(component) {
+  const evidence = component.engineeringProperties;
+  const pointMass = evidenceNumber(evidence.componentWeightKg);
+  if (isNegative(pointMass)) return blocked(AUDIT_CODES.INVALID_NEGATIVE_VALUE);
+  const massKg = pointMass ?? 0;
+  if (massKg > 0 && !component.geometry.applicationPoint) return blocked(AUDIT_CODES.MISSING_COMPONENT_COG);
+  return deepFreeze({
+    ok: true,
+    mode: 'POINT',
+    pointMassKg: massKg,
+    applicationPoint: component.geometry.applicationPoint || null,
+    sourceEvidence: evidence.componentWeightKg || null,
+    diagnostics: [diagnostic(AUDIT_CODES.EXCLUDED_NEGLIGIBLE_MASS)],
+  });
 }
 
 function resolveLinear(component, loadCaseId) {

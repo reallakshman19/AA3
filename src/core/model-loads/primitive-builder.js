@@ -2,6 +2,7 @@ import { deepFreeze, semanticHash } from '../shared-piping-model/index.js';
 import { GRAVITY_DIRECTION, MODEL_LOAD_PRIMITIVE_SET_SCHEMA, PRIMITIVE_TYPES } from './constants.js';
 import { massToWeightForce } from './formulas.js';
 import { resolveComponentCaseMass } from './component-mass-resolver.js';
+import { derivePipeLikeFittingWeightEvidence } from './elbow-derived-mass.js';
 
 export function buildModelLoadPrimitiveSet(projection, loadCaseSet, gravityProfile, compositionProfile) {
   const state = { primitives: [], componentOutcomes: [] };
@@ -36,7 +37,8 @@ export function validateModelLoadPrimitiveSet(value) {
 
 function buildCase(components, loadCase, gravity, composition, state) {
   components.forEach((component) => {
-    const result = resolveComponentCaseMass(component, loadCase.loadCaseId, composition);
+    const resolvedComponent = withDerivedFittingWeight(component, components);
+    const result = resolveComponentCaseMass(resolvedComponent, loadCase.loadCaseId, composition);
     state.componentOutcomes.push(outcome(component, loadCase, result));
     const moment = explicitMomentPrimitive(component, loadCase);
     if (moment) state.primitives.push(moment);
@@ -102,6 +104,22 @@ function explicitMomentPrimitive(component, loadCase) {
     sourceEvidence: component.loadEvidence.explicitPointMomentNm,
     diagnostics: [],
   });
+}
+
+/**
+ * Returns a component whose componentWeightKg is derived from an adjacent
+ * pipe's resolved section when the component itself supplies none. The
+ * original component is never mutated: a copy is only ever handed to mass
+ * resolution for this one call, so the persisted model and every other
+ * consumer of these components sees the unmodified original, underived value.
+ */
+function withDerivedFittingWeight(component, components) {
+  const derived = derivePipeLikeFittingWeightEvidence(component, components);
+  if (!derived) return component;
+  return {
+    ...component,
+    engineeringProperties: { ...component.engineeringProperties, componentWeightKg: derived },
+  };
 }
 
 function outcome(component, loadCase, result) {

@@ -1,4 +1,5 @@
 import {
+  ARC_BEARING_COMPONENT_TYPES,
   BEND_RETOPOLOGY_TYPES,
   BendRetopologyError,
   compareAscii,
@@ -42,11 +43,19 @@ export function retopologiseDeclaredBends(geometry, profile) {
   const endTrimBySegmentId = new Map();
   const generatedNodes = new Map();
   const retiredNodeRecords = new Map();
+  const repositionedNodes = new Map();
 
   for (const segment of sourceSegments) {
-    if (!BEND_RETOPOLOGY_TYPES.includes(String(segment.type))) continue;
+    // Selected by declared arc, not by declared type. A bend element that also
+    // carries a tee at its node is classified TEE while still resolving a real
+    // arc from its own coordinates and radius -- BM4_L has two. Filtering on
+    // type left their curvature discarded and their working point unbound,
+    // which is the same defect this pass exists to remove, hidden behind a
+    // classification rather than behind a retype.
     const tangentBasis = String(segment.meta?.bendTangentBasis ?? '');
     if (tangentBasis === '') continue;
+    if (!BEND_RETOPOLOGY_TYPES.includes(String(segment.type))
+      && !ARC_BEARING_COMPONENT_TYPES.includes(String(segment.type))) continue;
     const shared = {
       segment,
       sourceSegments,
@@ -55,6 +64,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
       endTrimBySegmentId,
       generatedNodes,
       retiredNodeRecords,
+      repositionedNodes,
       chordCount,
       lengthErrorLimit,
     };
@@ -98,8 +108,16 @@ export function retopologiseDeclaredBends(geometry, profile) {
     String(segment.startNodeId), String(segment.endNodeId),
   ]));
   const retiredNodeIds = [...retiredNodeRecords.keys()].sort(compareAscii);
-  const nodes = geometry.nodes.filter((node) =>
-    !retiredNodeRecords.has(String(node.id)) || referencedNodeIds.has(String(node.id)));
+  // A repositioned node keeps its identity and everything bound to it; only its
+  // coordinate moves, from the working point onto the arc.
+  const nodes = geometry.nodes
+    .filter((node) => !retiredNodeRecords.has(String(node.id)) || referencedNodeIds.has(String(node.id)))
+    .map((node) => {
+      const moved = repositionedNodes.get(String(node.id));
+      return moved === undefined
+        ? node
+        : Object.freeze({ ...node, x: moved.x, y: moved.y, z: moved.z, meta: Object.freeze({ ...(node.meta ?? {}), ...moved.meta }) });
+    });
   for (const [id, node] of [...generatedNodes.entries()].sort((a, b) => compareAscii(a[0], b[0]))) {
     if (!sourceNodesById.has(id)) nodes.push(node);
   }
@@ -155,7 +173,7 @@ function appendSourceRepresentation(input) {
   let evidenceOwned = false;
 
   if (bodyExists) {
-    const id = changedBody ? `${sourceId}/S1` : sourceId;
+    const id = changedBody ? `${sourceId}.S1` : sourceId;
     input.outputSegments.push(Object.freeze({
       ...input.source,
       id,

@@ -1,5 +1,22 @@
 import { semanticHash } from '../core/shared-piping-model/index.js';
+import { commonMethodsForImplementation } from '../core/non-fea-method-consumption/index.js';
 import { freezeDeep } from './dataset-utils.js';
+
+/**
+ * Methods requested by default.
+ *
+ * The registry holds every common method, but this workspace runs the empirical
+ * support-load implementation, which binds only these two. Requesting the rest
+ * produced blocked method rows for calculations that are never executed here.
+ * Every requirement of the bound methods is unchanged, and Method Basis can
+ * still request any other method explicitly.
+ *
+ * Declared before the store is constructed: emptySnapshot() reads it during
+ * module initialisation, so a later const would sit in its temporal dead zone.
+ */
+const DEFAULT_REQUESTED_METHODS = Object.freeze(
+  commonMethodsForImplementation('AUTHORIZED_EMPIRICAL_SUPPORT_LOADS_V1'),
+);
 import {
   NON_FEA_COMMON_METHOD_IDS,
   assessCommonInputStaleness,
@@ -230,7 +247,7 @@ export const nonFeaCommonInputStore = new NonFeaCommonInputStore();
 function emptySnapshot(version) {
   return freezeDeep({
     configuration: {
-      requestedMethods: [...NON_FEA_COMMON_METHOD_IDS],
+      requestedMethods: [...DEFAULT_REQUESTED_METHODS],
       requestedLoadCases: ['EMPTY', 'OPE', 'HYD'],
       qualificationProfileId: null,
       qualificationProfileVersion: null,

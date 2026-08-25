@@ -1,5 +1,12 @@
 export const BEND_RETOPOLOGY_RELATIVE_TOLERANCE = 1e-9;
 export const BEND_RETOPOLOGY_TYPES = Object.freeze(['BEND', 'ELBOW']);
+/**
+ * Types that are not bends but can still declare a bend arc.
+ *
+ * A bend element carrying a tee at its node is classified by that tee, and the
+ * classification says nothing about whether the element curves.
+ */
+export const ARC_BEARING_COMPONENT_TYPES = Object.freeze(['TEE']);
 
 export class BendRetopologyError extends Error {
   constructor(message, code, data = null) {

@@ -2,7 +2,7 @@ import { renderStandaloneImportMastersPanel, mappingHealthText } from '../calc-w
 import { MASTER_FIELDS } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-fields-config.js';
 import { parseMasterFile, autoMapMasterColumns } from './master-data-events-handler.js';
 import { masterDataController } from './master-data-controller.js';
-import { normalizeLineList, normalizePipingClass, normalizeWeight, normalizeMaterialMap, isMappedFieldSatisfied } from './master-data-normalizers.js';
+import { normalizeLineList, normalizePipingClass, normalizeWeight, normalizeMaterialMap, isMappedFieldSatisfied, derivationYieldsValues } from './master-data-normalizers.js';
 import { saveMappingForFile, getSavedMappingsForMaster } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-state.js';
 
 /**
@@ -75,6 +75,24 @@ function masterTabReadiness(master, masterKey, effectiveFieldMap) {
   const fieldMap = effectiveFieldMap || master?.fieldMap || {};
   const requiredFields = fields.filter((field) => field.required);
   const unmapped = requiredFields.filter((field) => !isMappedFieldSatisfied(field, fieldMap));
+
+  // A derivation that yields nothing for every sampled row is not a mapping.
+  const brokenDerivation = requiredFields.find((field) => (
+    isMappedFieldSatisfied(field, fieldMap)
+    && !derivationYieldsValues(field, fieldMap, master?.rawRows)
+  ));
+  if (unmapped.length === 0 && brokenDerivation) {
+    const sourceLabel = fields.find((row) => row.name === brokenDerivation.derivableFrom)?.label
+      || brokenDerivation.derivableFrom;
+    return {
+      ...ACTION_STYLE,
+      code: 'MAP',
+      badge: 'CHECK',
+      title: `${brokenDerivation.label} is set to derive from ${sourceLabel}, but the mapped `
+        + `${sourceLabel} column produced no recognised nominal size. Map ${brokenDerivation.label} `
+        + `directly, or point ${sourceLabel} at the inch-size column.`,
+    };
+  }
   if (unmapped.length > 0) {
     const describe = (field) => {
       const alternative = field.derivableFrom
@@ -101,6 +119,16 @@ function masterTabReadiness(master, masterKey, effectiveFieldMap) {
   };
 }
 
+/**
+ * Surviving tab selection for this panel.
+ *
+ * Applying a mapping publishes MASTER_DATA_UPDATED, which the Load Calc pane
+ * answers by rebuilding this panel from scratch. Per-mount state would reset the
+ * operator to the first tab on every apply, so the selection is held here.
+ * Only view state is retained; no mapping or engineering value is carried over.
+ */
+let lastActiveMasterTab = 'lineList';
+
 export function renderMasterDataUI(documentRef) {
   if (!documentRef) throw new TypeError('Master Data UI requires a document.');
   const container = documentRef.createElement('div');
@@ -111,7 +139,7 @@ export function renderMasterDataUI(documentRef) {
     current: {
       masterContext: null,
       supportConfigJson: '{}',
-      activeMainTab: 'lineList',
+      activeMainTab: lastActiveMasterTab,
       importMastersLoading: false,
       importMastersWriteBackStatus: '',
       masterDraftMappings: {},
@@ -159,6 +187,21 @@ export function renderMasterDataUI(documentRef) {
     });
   };
 
+  const seedDefaultMappings = () => {
+    const masters = masterDataController.getMasterData();
+    Object.keys(MASTER_FIELDS).forEach((masterKey) => {
+      const master = masters?.[masterKey];
+      const rawRows = Array.isArray(master?.rawRows) ? master.rawRows : [];
+      if (rawRows.length === 0) return;
+      if (stateRef.current.masterDraftMappings[masterKey]) return;
+      if (Object.keys(master?.fieldMap || {}).length > 0) return;
+      const detected = autoMapMasterColumns(rawRows, masterKey);
+      if (detected && Object.values(detected).some(Boolean)) {
+        setDraftMapping(masterKey, detected);
+      }
+    });
+  };
+
   const render = () => {
     container.innerHTML = '';
 
@@ -167,6 +210,13 @@ export function renderMasterDataUI(documentRef) {
     // engineering authority until Apply Mapping succeeds.
     stateRef.current.masterContext = masterDataController.getLegacyContext();
     stateRef.current.supportConfigJson = JSON.stringify(stateRef.current.masterContext.config || {});
+
+    // Offer the detected column mapping as the starting draft for any loaded
+    // master that has none, so the standard columns are already selected rather
+    // than requiring Auto Map to be pressed first. It stays a draft: nothing is
+    // committed to engineering authority until Apply Mapping succeeds, and an
+    // existing committed or operator-edited mapping is never overwritten.
+    seedDefaultMappings();
 
     // Top Navigation Tabs Bar
     const header = documentRef.createElement('div');
@@ -231,6 +281,7 @@ export function renderMasterDataUI(documentRef) {
       `;
       btn.addEventListener('click', () => {
         stateRef.current.activeMainTab = tab.id;
+        lastActiveMasterTab = tab.id;
         render();
       });
       header.appendChild(btn);
@@ -378,6 +429,16 @@ export function renderMasterDataUI(documentRef) {
     });
 
     container.appendChild(body);
+
+    const masterRowsLoaded = ['pipingClass', 'lineList', 'weight']
+      .some((key) => (masterState?.[key]?.rawRows?.length || 0) > 0);
+    if (masterRowsLoaded) {
+      const nudge = documentRef.createElement('div');
+      nudge.style.cssText = 'flex:none; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 20px; border-top:1px solid #1e293b; background:#0f172a; color:#94a3b8; font-size:12px;';
+      nudge.innerHTML = `<span>Masters loaded. Pipe section, fluid density and fitting weights are not filled in yet -- both are generated and reviewed in Enrichment &amp; Overrides, never written automatically.</span>
+        <button type="button" data-load-calc-tab="enrichment" style="flex:none; border:1px solid #0284c7; border-radius:4px; background:#0c253a; color:#e2e8f0; padding:6px 12px; font-weight:700; cursor:pointer;">Open Enrichment &amp; Overrides</button>`;
+      container.appendChild(nudge);
+    }
   };
 
   render();

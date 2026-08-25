@@ -4,25 +4,30 @@ pr_or_wip: PR1425
 mission: "Current authorized-route WRC stress-semantics reconciliation for #1383 and #1385"
 workstream: EMP1_WRC537_P0_SOURCE_BOUNDARY
 branch: agent/issue-1383-1385-stress-semantics-reconciliation-20260825
-main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+main_head_last_checked: cf0ee98ecf2de1ec359961a1588af324ea51ef3f
 merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-pr_head_observed: 127293a76acd89e41f9cf8d0233acf5e7a249981
-report_basis_head: 91f60f1ced041d785b7c826d802eb98b893b96a7
-report_sync: CURRENT
-grounding_epoch: GE-PR1425-002
+pre_recovery_head: cb4fda012279e6c737f3ff2b9fe3a266e8b8a778
+engineering_content_basis: 91f60f1ced041d785b7c826d802eb98b893b96a7
+report_sync_commit: 4a1db1caa26147c6ef3702378a263ba9f2cd49f7
+grounding_epoch: GE-PR1425-003
+report_sync: CURRENT_RECOVERY_METADATA_ONLY_AFTER_BASIS
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT_AUDIT_COMPLETE
+pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
 handover_readiness: READY
 report_path: agents/PR1425_workreport.md
 appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE
-current_stage: FINAL_SIX_FILE_MAIN_REVIEW_AUDIT_COMPLETE
+coordination: SAFE_RECOVERY_ONLY_NO_PATH_OVERLAP
+current_stage: RECOVERY_ONLY_CURRENT_MAIN_AUDIT_COMPLETE
 highest_risk: ROUTE_AUTHORIZATION_FALSELY_PROPAGATED_TO_STRESS_SEMANTICS
 validation:
   live_grounding: PASS
+  changed_file_scope: PASS_EXACTLY_SIX
+  ahead_behind_at_grounding: "8 / 5"
+  main_drift_path_overlap: NONE
+  merged_pr1423_semantic_overlap: NONE_CODE_BOUNDARY_ONLY
   route_authority_inspection: PASS
   registry_authority_inspection: PASS
   professional_release_state_inspection: PASS
@@ -32,13 +37,15 @@ validation:
   direct_primary_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
   aggregate_checker_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-  final_changed_file_scope: PASS_EXACTLY_SIX
-  ahead_behind: PASS_6_AHEAD_0_BEHIND
-  reviews_and_threads: PASS_NONE
+  reviews: 0
+  review_threads: 0
+  protected_path_mutation: NONE
   hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-hosted_runs:
-  - "32836998041 / job 97767971657 / qualify-gamma5-route / steps=null / logs_url=null"
-  - "32836998030 / job 97767971623 / independent-source-oracle / steps=null / logs_url=null"
+current_head_recheck:
+  basis_head: cb4fda012279e6c737f3ff2b9fe3a266e8b8a778
+  source_oracle: "32837168862 / job 97768507376 / steps=null / logs_url=null"
+  gamma5_route: "32837168904 / job 97768507117 / steps=null / logs_url=null"
+  classification: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
 authority:
   bounded_wrc_route_authorized_current_main: true
   registry_registered_current_main: true
@@ -56,3 +63,4 @@ dependencies:
   - "#1389"
   - "#54"
 exact_next_action: "Leave PR #1425 draft/unmerged pending explicit Owner merge authorization. If merged later, keep #1383 and #1385 open for genuine primary-source closure."
+last_updated: "2026-08-25"

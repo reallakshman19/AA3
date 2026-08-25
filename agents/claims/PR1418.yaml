@@ -1,6 +1,6 @@
 schema: AgentClaim.v1
 pr_or_wip: PR1418
-claim_state: ACTIVE_RECOVERY_REFRESHED
+claim_state: ACTIVE_RECOVERY_REFRESHED_CURRENT_MAIN
 branch: agent/issue-1389-physical-applicability-batch-20260825
 mission: "Combined #1368/#1370/#1373 retained WRC physical-applicability source reconciliation"
 write_scope:
@@ -25,8 +25,12 @@ protected_no_mutation:
   - .github/workflows/
   - validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json
   - validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json
+  - validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json
 authority_boundary: "Explicit retained Table-5/§4.5 source-content reconciliation only; physical normality, attachment-class equivalence, neighbor-isolation and overlapping-field superposition remain source-blocked. Bounded runtime authorization is separate and grants no global, code, release, or physical-applicability source authority."
-invariant: "BOUNDED_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_PHYSICAL_APPLICABILITY_SOURCE_AUTHORITY"
-overlap_state: SAFE_AGAINST_CURRENT_MAIN_AND_OPEN_PR1415;_PR1417_MERGED_DISTINCT_SOURCE_DOMAIN
-current_main_checked: 8145b83aaf0f54aedbd971373be5db18f76898f3
+invariant: BOUNDED_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_PHYSICAL_APPLICABILITY_SOURCE_AUTHORITY
+overlap_state: SAFE_CURRENT_MAIN_NO_EXACT_PATH_OVERLAP;_MERGED_1426_ADJACENT_THICKNESS_DOMAIN_NO_AUTHORITY_WIDENING
+grounding_epoch: GE-PR1418-004
+current_main_checked: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
+merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+takeover_authority: WRITE_ALLOWED_RECOVERY_ONLY
 merge_authorization: NOT_GRANTED

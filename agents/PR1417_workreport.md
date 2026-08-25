@@ -4,7 +4,7 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT_RECONCILED_TO_CURRENT_ROUTE_STATE
+PR_RECOVERY_STATE: HEALTHY_DRAFT_AUDIT_COMPLETE
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_SOURCE_GOVERNANCE_ONLY
 MERGE_AUTHORITY: NOT_GRANTED
 CRITICALITY: ENGINEERING_CRITICAL
@@ -15,73 +15,111 @@ UMBRELLA: #1389
 BRANCH: agent/issue-1379-table5-material-input-reconciliation-20260825
 PR_HEAD_OBSERVED_BEFORE_RECOVERY: ec0f4ee8ce273def7befbdc953565f42030f62b9
 REPORT_BASIS_HEAD: 4e0b241f05a2eb117fb0c45aa4b3128742e908d5
+AUDIT_EVIDENCE_HEAD: 46c9191992eb8895f69c9056b50159d2977ceceb
 MAIN_HEAD_LAST_CHECKED: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 MERGE_BASE: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
 REPORT_SYNC: CURRENT
 APPENDIX_A_STATUS: CURRENT
 GROUNDING_EPOCH: GE-PR1417-002
-CURRENT_STAGE: CURRENT_ROUTE_STATE_RECONCILED_FINAL_AUDIT_PENDING
+CURRENT_STAGE: FINAL_SIX_FILE_MAIN_REVIEW_AUDIT_COMPLETE
 CURRENT_BLOCKER: elastic-material/shell-theory semantics remain primary-source blocked; direct WRC page observation and checker execution are NOT_RUN; Owner merge authorization not granted
-HIGHEST_RISK: allowing bounded route authorization or runtime non-use of E/nu to masquerade as source proof of absolute modulus independence, Poisson irrelevance, or universal material/theory applicability
-EXACT_NEXT_ACTION: audit exact six-file diff against live main, reviews/threads and hosted execution; synchronize evidence metadata only; leave PR1417 draft/unmerged pending explicit Owner merge authorization.
+HIGHEST_RISK: bounded route authorization or runtime non-use of E/nu being misrepresented as source proof of modulus independence, Poisson irrelevance, or universal material/theory applicability
+EXACT_NEXT_ACTION: leave PR1417 draft/unmerged; keep #1379 open for genuine primary-source material/theory closure; immediately re-ground main/head/reviews before any Owner-authorized merge.
 ```
 
-`REPORT_BASIS_HEAD` is the engineering-content head containing the three source-governance updates. Later commits may update only PR recovery metadata.
+`REPORT_BASIS_HEAD` is the engineering-content head. `AUDIT_EVIDENCE_HEAD` is the immutable recovery head on which the six-file diff, reviews/threads and hosted execution were audited. Later report/status-only synchronization commits do not change engineering scope.
 
 ## Handover in 60 seconds
 
-PR #1417 remains a **partial source qualification** for Issue #1379. The retained WRC Table-5 computation sheet supports only this narrow observation:
+PR #1417 is a **partial source qualification** for Issue #1379. It qualifies only the retained Table-5 observation that explicit runtime `E` and `nu` inputs are absent and that the displayed final cylindrical stress equations contain no explicit `E` or `nu` term.
 
-```text
-explicit E input on retained Table 5                  = absent
-explicit Poisson-ratio input on retained Table 5      = absent
-displayed final cylindrical equations explicit E      = absent
-displayed final cylindrical equations explicit nu     = absent
-```
+It does **not** qualify:
 
-It still does **not** qualify:
-
-- exact derivation/theory role of `E`;
+- the exact derivation/theory role of `E`;
 - absolute-modulus cancellation/independence;
 - Poisson-ratio treatment or embedded value;
-- homogeneous/isotropic/linear-elastic assumptions;
+- homogeneous/isotropic/linear-elastic applicability;
 - thin-shell/small-deformation assumptions;
 - host/attachment material relationship;
-- temperature-dependent modulus treatment;
-- nonlinear/plastic/creep/composite/anisotropic/orthotropic applicability;
+- temperature-dependent modulus;
+- yielding/plasticity/creep/viscoelasticity;
+- composite/anisotropic/orthotropic applicability;
 - clad/lining/material-discontinuity treatment;
 - code allowable/yield acceptance.
 
-The original PR recovery records predated the later bounded-route authorization and could be read as though `engineering=false / production=false` described the live route. Those booleans belong to **this source record only**. The separately governed gamma=5 / zero-dp route is currently authorized.
+The original PR recovery records predated the later bounded-route authorization. Their `engineering=false / production=false` values describe authority granted by **this source record**, not current runtime state.
 
 Governing invariant:
 
 `BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_ELASTIC_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY`
 
-No production material input, WRC equation, numerical evaluator, route/registry, aggregate P0 gate, release profile/state, oracle/tolerance/evidence, UI, or workflow is changed.
+## Current authority split
+
+```text
+TABLE-5 MATERIAL/THEORY SOURCE RECORD
+explicit E input absent                            = QUALIFIED RETAINED TEXT
+explicit nu input absent                           = QUALIFIED RETAINED TEXT
+displayed final equations explicit-E-free          = QUALIFIED RETAINED TEXT
+displayed final equations explicit-nu-free         = QUALIFIED RETAINED TEXT
+absolute E independence                            = BLOCKED
+Poisson treatment                                  = BLOCKED
+constitutive / shell-theory applicability           = BLOCKED
+engineering use granted by this record             = false
+production use granted by this record              = false
+
+CURRENT BOUNDED RUNTIME
+bounded gamma5 / zero-dp route authorized           = true
+registry registered                                 = true
+bounded engineering use                             = true
+bounded production use                              = true
+global EMP.1.C                                      = false
+code compliance                                     = false
+release qualified                                   = false
+professional release ready                          = false
+```
+
+The bounded route may execute under its separately governed authorization while #1379 remains source-blocked.
 
 ## Live repository grounding — GE-PR1417-002
 
-Observed before mutation:
+Pre-recovery observation:
 
 ```text
 live main      = 9887ec1c3eb6184c0d590841b23c04ed449f9414
 PR head        = ec0f4ee8ce273def7befbdc953565f42030f62b9
 merge base     = e2a44a85b808c0dd3f09a02d7825df26cf92f92f
 branch state   = 14 ahead / 2 behind
-PR             = OPEN / DRAFT / MERGEABLE / UNMERGED
+changed paths  = 6
 reviews        = 0
 review threads = 0
-changed paths  = 6
 ```
 
-The two main commits after the merge base do not touch any of PR #1417's six paths. Coordination classification: `SAFE_SOURCE_GOVERNANCE_RECOVERY`; no conflict resolution requires guessing engineering intent.
+The two main commits after the merge base do not touch PR #1417's six paths. Recovery disposition: `CONTINUE / SAFE_SOURCE_GOVERNANCE_RECOVERY`.
 
-## Production / semantic trace
+Final audited engineering/recovery head:
 
-### 1. Retained Table-5 source
+```text
+AUDIT_EVIDENCE_HEAD = 46c9191992eb8895f69c9056b50159d2977ceceb
+ahead / behind      = 20 / 2
+changed paths       = exactly 6
+reviews             = 0
+review threads      = 0
+PR                   = OPEN / DRAFT / MERGEABLE / UNMERGED
+```
 
-`docs/emp1/WRC537_2013_Tables_and_Charts.md`, Table 5 pp.41–42 retains explicit runtime input groups:
+## Source and production trace
+
+### Retained Table-5 source
+
+Controlled source:
+
+- WRC 537 (2013)
+- raw SHA-256 `698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2`
+- Git blob `ce861233928154145a9257efbbf8dbef3f5a17d1`
+- retained transcription `docs/emp1/WRC537_2013_Tables_and_Charts.md`, Table 5, pp.41–42
+- direct PDF page observation `NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`
+
+Retained explicit runtime groups:
 
 ```text
 loads      = P, Mc, Ml, Mt, Vc, Vl
@@ -90,119 +128,60 @@ parameters = gamma, beta
 SCF        = Kn, Kb
 ```
 
-Within that retained computation sheet and its displayed final cylindrical stress expressions, no explicit `E` or `nu` runtime input appears.
-
-### 2. Current bounded software
-
-`src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js` consumes geometry, load custody, WRC dataset/domain authority, applicability authority, longitudinal-moment authority, stress-concentration authority and the Table-5 evaluator. It does not consume shell `E`, `nu`, yield strength or a constitutive model.
-
-That is a software-interface fact only. It does not establish why the source method can omit those values.
-
-### 3. Current bounded route
-
-On both current main and the PR branch:
-
-```text
-EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED = true
-method engineeringUseAuthorized             = true
-method productionUseAuthorized              = true
-registry registered                         = true
-registry engineeringUseAuthorized           = true
-globalEmp1CRouteAuthority                   = false
-releaseQualified                            = false
-```
-
-### 4. Professional release state
-
-The retained professional current-state contract independently records:
-
-```text
-boundedProductionRouteAuthorized = true
-registryRegistered                = true
-boundedEngineeringUseAuthorized   = true
-globalEmp1CRouteAuthority         = false
-codeComplianceAuthorized          = false
-releaseQualified                  = false
-professionalReleaseReady          = false
-releaseReady                      = false
-```
-
-Runtime authorization is therefore orthogonal to unresolved material/theory source semantics and to professional/code/release authority.
-
-## Retained source custody
-
-- document: WRC 537 (2013)
-- raw SHA-256: `698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2`
-- Git blob SHA-1: `ce861233928154145a9257efbbf8dbef3f5a17d1`
-- retained transcription: `docs/emp1/WRC537_2013_Tables_and_Charts.md`, Table 5, pp.41–42
-- direct current-turn PDF page observation: `NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`
-
-## Qualified retained-source subset
-
 Qualification boundary:
 
 `TABLE5_COMPUTATION_SHEET_EXPLICIT_INPUT_AND_DISPLAYED_EQUATION_CONTENT_ONLY`
 
-Qualified only:
+### Current software
 
-- explicit Table-5 `E` input absent;
-- explicit Table-5 Poisson-ratio input absent;
-- displayed final cylindrical stress equations contain no explicit `E` term;
-- displayed final cylindrical stress equations contain no explicit Poisson-ratio term.
+`src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js` consumes geometry, loads, dataset/domain authority, applicability, longitudinal-moment authority, stress concentration and Table-5 numerics. It does not consume `E`, `nu`, yield strength or a constitutive model.
 
-## Still blocked
+That runtime interface fact does not explain the source-theory reason for material-field non-use.
 
-- exact role of shell modulus `E` in WRC derivation;
-- whether absolute `E` cancels and under which assumptions;
-- Poisson-ratio treatment/embedded source value;
-- homogeneous/isotropic/linear-elastic applicability;
-- thin-shell/small-deformation theory basis and limits;
-- host-shell versus attachment material/stiffness relationship;
-- temperature-dependent modulus;
-- local yielding/plasticity/creep/viscoelasticity;
-- anisotropic/orthotropic/composite applicability;
-- clad/lining/material discontinuity treatment;
-- code allowable/yield acceptance.
+### Current route / release
+
+Both current main and the PR branch contain:
+
+```text
+EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED = true
+method.engineeringUseAuthorized              = true
+method.productionUseAuthorized               = true
+registry.registered                          = true
+registry.engineeringUseAuthorized            = true
+globalEmp1CRouteAuthority                    = false
+releaseQualified                             = false
+```
+
+The professional current-state artifact independently keeps code compliance, release qualification, deployment and professional release readiness false.
 
 ## Implemented recovery
 
-### Source qualification JSON
+### 1. `validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json`
 
-`validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json`
+Preserves the source-blocked status and retained Table-5 conclusions, labels the source-record authority scope explicitly, records the separate live bounded-route state, adds the no-back-propagation invariant, and prohibits using route authorization as material/theory source proof.
 
-- preserves the existing blocked status and retained Table-5 conclusions;
-- labels `authority` as authority granted by this source record only;
-- keeps material/theory source authority and source-record engineering/production authority false;
-- records the separately authorized current bounded route;
-- adds the no-back-propagation invariant;
-- adds an explicit prohibition against using route authorization as material/theory source proof.
+### 2. `scripts/emp1-wrc537-elastic-material-source-check.mjs`
 
-### Static checker
+Requires simultaneously:
 
-`scripts/emp1-wrc537-elastic-material-source-check.mjs`
-
-Now requires both sides of current truth simultaneously:
-
-1. retained Table-5 explicit material-input/equation non-use is qualified;
-2. absolute E independence, Poisson treatment and material/theory applicability remain false/unqualified;
+1. Table-5 explicit E/nu non-use is retained;
+2. absolute E independence, Poisson treatment and material/theory applicability remain false;
 3. source-record engineering/production authority remains false;
 4. bounded route module/method/registry authority is true;
-5. professional current state keeps global C/code/release/readiness false;
-6. this record changes/grants no production or protected authority.
+5. professional global-C/code/release/readiness remain false;
+6. this source record mutates/grants none of the protected authorities.
 
-Intended executable success string:
+Intended success string:
 
 `PASS_CURRENT_AUTHORIZED_ROUTE_TABLE5_MATERIAL_INPUT_NON_USE_MATERIAL_THEORY_STILL_BLOCKED`
 
-Actual Node execution remains `NOT_RUN` until observed in a complete checkout.
+Actual Node execution remains **NOT_RUN**.
 
-### Authority note
+### 3. `docs/emp1/WRC537_2013_Elastic_Material_Authority.md`
 
-`docs/emp1/WRC537_2013_Elastic_Material_Authority.md`
+Adds the two-layer current authority matrix and the no-back-propagation rule. No new engineering material theory is inferred.
 
-Now contains an explicit two-layer authority matrix and the no-back-propagation invariant.
-
-## Effective changed-file ledger — must remain exactly six
+## Effective changed-file ledger — exactly six
 
 1. `validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json`
 2. `scripts/emp1-wrc537-elastic-material-source-check.mjs`
@@ -211,76 +190,79 @@ Now contains an explicit two-layer authority matrix and the no-back-propagation 
 5. `agents/status/PR1417.yaml`
 6. `agents/claims/PR1417.yaml`
 
-## Protected no-mutation
+Protected unchanged:
 
 - `src/core/emp1/**`
 - `validation/emp1/release/**`
-- aggregate P0 source-semantics gate
-- all individual adjacent source-domain records
-- all oracle/tolerance/qualification/evidence artifacts
+- aggregate P0 gate and adjacent source-domain records
+- oracle/tolerance/qualification/evidence artifacts
 - UI/browser product code
 - `.github/workflows/**`
 
 ## Validation ledger
 
-| ID | Status | Observation / oracle |
+| ID | Status | Evidence |
 |---|---|---|
-| R-001 | PASS | live main `9887ec1...`; PR pre-recovery head `ec0f4ee...`; merge base `e2a44a85...` |
-| R-002 | PASS | effective PR scope was exactly six paths before recovery |
-| R-003 | PASS | branch was 14 ahead / 2 behind; main drift did not overlap the six PR paths |
-| R-004 | PASS | reviews 0; review threads 0 |
-| R-005 | PASS_SOURCE_INSPECTION | retained Table-5 explicit input/equation non-use boundary established |
-| R-006 | PASS_SOURCE_INSPECTION | bounded adapter material-field non-use inspected |
-| R-007 | PASS_SOURCE_INSPECTION | current branch/main route module and registry are authorized; global/release remain false |
-| R-008 | PASS_SOURCE_INSPECTION | professional current state keeps code/release/readiness false |
-| R-009 | PASS_SOURCE_INSPECTION | source-record authority and bounded-runtime authority explicitly separated |
-| R-010 | NOT_RUN_EXECUTION_ENVIRONMENT | direct WRC primary-page observation unavailable through connected binary transport |
+| R-001 | PASS | live main `9887ec1...`, merge base `e2a44a85...` |
+| R-002 | PASS | main drift has no exact-path overlap with six PR files |
+| R-003 | PASS_SOURCE_INSPECTION | retained Table-5 input/equation boundary |
+| R-004 | PASS_SOURCE_INSPECTION | bounded adapter material-field non-use |
+| R-005 | PASS_SOURCE_INSPECTION | route/module/registry authorized on branch and main |
+| R-006 | PASS_SOURCE_INSPECTION | professional global/code/release readiness remains false |
+| R-007 | PASS_SOURCE_INSPECTION | source authority and runtime authority separated |
+| R-008 | PASS | audited head `46c9191...`: exactly six files, 20 ahead / 2 behind |
+| R-009 | PASS | reviews 0; review threads 0 |
+| R-010 | NOT_RUN_EXECUTION_ENVIRONMENT | direct WRC primary-page observation unavailable |
 | R-011 | NOT_RUN | `node scripts/emp1-wrc537-elastic-material-source-check.mjs` |
 | R-012 | NOT_APPLICABLE | numerical comparison; production WRC mechanics unchanged |
-| R-013 | PENDING_FINAL_AUDIT | final exact six-file compare / reviews / threads / hosted execution |
+| R-013 | NOT_RUN_EXECUTION_ENVIRONMENT | hosted EMP.1 jobs failed before step creation |
 
-No `NOT_RUN` is represented as PASS.
+Hosted evidence on `46c9191992eb8895f69c9056b50159d2977ceceb`:
+
+```text
+gamma5 route       run 32854882871 / job 97824313115
+runEmp1             run 32854882878 / job 97824313249
+source oracle       run 32854882894 / job 97824313549
+independent handcalc run 32854883015 / job 97824313917
+
+steps    = null
+logs_url = null
+```
+
+Classification:
+
+`NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`
+
+No product PASS or engineering FAIL is inferred from these jobs.
 
 ## Active register
 
-- `ISS-1379-001` P0 OPEN — exact elastic-material and shell-theory source authority remains unresolved.
-- `RISK-1379-001` P0 OPEN — route authorization or runtime non-use of E/nu may be misread as universal material independence.
-- `DEC-1379-001` P0 ACTIVE — qualify only retained Table-5 explicit input/equation non-use.
-- `DEC-1379-002` P0 ACTIVE — do not infer absolute modulus independence or Poisson irrelevance from non-use.
-- `DEC-1379-003` P0 ACTIVE — source-record authority and bounded-runtime authority are orthogonal.
-- `DEC-1379-004` P0 ACTIVE — no production material/numerical mutation is authorized by this reconciliation.
-- `DEBT-1379-001` P1 OPEN — direct primary PDF re-observation and executable checker remain unavailable in the connected environment.
+- `ISS-1379-001` P0 OPEN — elastic-material and shell-theory primary-source authority unresolved.
+- `RISK-1379-001` P0 OPEN — route authorization/runtime non-use may be misread as universal material independence.
+- `DEC-1379-001` P0 ACTIVE — qualify only retained Table-5 explicit E/nu input/equation non-use.
+- `DEC-1379-002` P0 ACTIVE — do not infer modulus independence or Poisson irrelevance.
+- `DEC-1379-003` P0 ACTIVE — source-record and bounded-runtime authorities are orthogonal.
+- `DEC-1379-004` P0 ACTIVE — no production material/numerical mutation follows from this reconciliation.
+- `DEBT-1379-001` P1 OPEN — direct PDF re-observation and executable checker remain NOT_RUN.
 
 ## Takeover chain
 
 Original engineering basis: `50813b6be3b32f7f30eeb26a9517dc00a26c6f5b`.
 
-Previous audited head before current takeover: `ec0f4ee8ce273def7befbdc953565f42030f62b9`.
+Previous audited head: `ec0f4ee8ce273def7befbdc953565f42030f62b9`.
 
-Current takeover grounding epoch: `GE-PR1417-002` against `main@9887ec1c3eb6184c0d590841b23c04ed449f9414`.
+Current engineering-content basis: `4e0b241f05a2eb117fb0c45aa4b3128742e908d5`.
 
-Recovery decision: `CONTINUE`. No quarantine/supersession required because intent is reconstructible, six-file scope remains coherent, main drift has no exact-path overlap, and no expected numerical value/tolerance changed.
+Immutable recovery audit head: `46c9191992eb8895f69c9056b50159d2977ceceb`.
+
+Recovery decision: `CONTINUE`. No quarantine/supersession required.
 
 ## Appendix A — implementation takeover qualification
 
-### A1 Production Trace — 20/20
+- **A1 Production Trace — 20/20:** retained Table-5 input/equation surface → bounded adapter interface → route/registry/professional authority layers traced.
+- **A2 Current Failure Isolation — 20/20:** defect is authority bookkeeping ambiguity, not numerical mechanics.
+- **A3 Authority / Invariant — 20/20:** source non-use, derivation-level theory authority, runtime authorization, code and release remain separate.
+- **A4 Independent Validation — 19/20:** live source/diff/authority/review evidence cross-checked; direct PDF and checker execution remain NOT_RUN.
+- **A5 Minimal Patch — 20/20:** existing three source-governance files plus three recovery records only.
 
-Traced the retained Table-5 runtime input/equation surface, then inspected the bounded adapter's current material-field non-use and the live route/registry/professional authority layers.
-
-### A2 Current Failure Isolation — 20/20
-
-No numerical defect is inferred. The recovery target is authority bookkeeping ambiguity after later bounded-route authorization: source-record false authority must not be read as live route false, and live route true must not back-propagate into unresolved E/nu/material/theory semantics.
-
-### A3 Authority / Invariant — 20/20
-
-Table-5 explicit non-use, derivation-level material/theory authority, bounded runtime authorization, global C authority, code acceptance and release authority are explicitly separated.
-
-### A4 Independent Validation — 19/20
-
-Live main/branch route and registry, professional release state, PR diff, retained source record, adapter interface and review state were independently cross-checked. Direct PDF page observation and checker execution remain NOT_RUN.
-
-### A5 Minimal Patch / Next Commit — 20/20
-
-Only the existing three source-governance files plus three recovery records are in scope. Production route/registry/adapter/numerics, aggregate P0 gate, release state/profile, oracle/tolerance and workflows remain protected.
-
-**Total: 99/100; minimum 19/20 — TAKEOVER QUALIFIED / HANDOVER READY.**
+**Total 99/100; minimum 19/20 — TAKEOVER QUALIFIED / HANDOVER READY.**

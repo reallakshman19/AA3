@@ -1,7 +1,7 @@
 # WIP-1413 — LAFEA.3/.4 exact-main qualification and registry closure
 
-Issue: #1413
-Repository: reallaksh19/Advanced_Analysis
+Issue: #1413  
+Repository: `reallaksh19/Advanced_Analysis`
 
 # CURRENT RECOVERY STATE — READ FIRST
 
@@ -10,26 +10,25 @@ HANDOVER_READINESS: READY_FOR_CONTINUATION
 PR_RECOVERY_STATE: CONTINUE
 TAKEOVER_AUTHORITY: READ_ONLY_FOR_ENGINEERING_MUTATION
 EXECUTION_MODE: BATCHED_OWNER_DIRECTED
-AUTO_STATE: NOT_APPLICABLE
 SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1413
 MERGE_AUTHORITY: OWNER_ONLY
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_TASK: Issue #1413
 WIP: WIP-1413-exact-main-qualification-20260824
 BRANCH: agent/issue-1413-exact-main-qualification-20260824
-REPORT_BASIS_HEAD: 72a916d6c60fe61da66c997594f7763aa3f04d8e
-LIVE_MAIN_LAST_CHECKED: 72a916d6c60fe61da66c997594f7763aa3f04d8e
+ISSUE_CREATION_HEAD: 72a916d6c60fe61da66c997594f7763aa3f04d8e
+LIVE_MAIN_LAST_CHECKED: beee11eb99764bab078bf8ba73cf5768514aac67
 CURRENT_STAGE: B1 exact-head engineering qualification — BLOCKED_BEFORE_EXECUTION
-CURRENT_BLOCKER: Issue #54 exact-head execution environment is not currently available for HEAD 72a916d6; no associated workflow run, same-day current-base PR evidence shows renewed pre-step/steps=null recurrence, and this assistant environment cannot clone github.com
+CURRENT_BLOCKER: Issue #54 pre-step GitHub Actions failure reproduced on a fresh rerun from a PR based on current main; rerun job 97643768654 completed failure with steps=null and logs=null
 HIGHEST_RISK: treating static/source inspection or prior-head evidence as exact-head qualification PASS
-EXACT_NEXT_ACTION: when fresh evidence proves an executable current-head runner or equivalent exact-head environment exists, execute the B1 command matrix on one exact candidate SHA; until then do not open a validation-only PR or mutate mechanics/registry wording
+EXACT_NEXT_ACTION: when an executable current-head environment exists, re-ground to then-current main and execute the complete B1 frozen numerical/custody matrix on one exact candidate SHA; until then do not mutate mechanics, frozen oracles, tolerances or registry wording
 ```
 
 ## Mission
 
-Certify the already-merged LAFEA.3/LAFEA.4 Model → Mesh → Analyse → Output implementation on one exact current-main SHA, isolate the first executed failure if any, and only after complete qualification open a narrow registry/documentation closure PR.
+Certify the already-merged LAFEA.3/LAFEA.4 Model → Mesh → Analyse → Output implementation on one exact current-main-derived SHA, isolate the first executed wrong boundary if any, and only after complete qualification open a narrow registry/documentation closure PR.
 
-This WIP owns qualification/custody evidence only. It does not own mechanics, frozen benchmark values, tolerances, mesh-quality thresholds, source/sign/unit conventions, or broad workflow infrastructure changes.
+This WIP owns qualification/custody evidence only. It does **not** own mechanics, frozen benchmark values, benchmark tolerances, mesh-quality thresholds, source/sign/unit conventions, or broad workflow-infrastructure changes.
 
 ## Classification
 
@@ -41,32 +40,29 @@ CRITICALITY: ENGINEERING_CRITICAL
 COORDINATION: COORDINATION_REQUIRED_BUT_NONBLOCKING_FOR_READ_ONLY_QUALIFICATION
 ```
 
-Open draft work includes LAFEA.3/LAFEA.4 numerical, refinement and shell promotion branches. No production file from those branches may be copied into this work. Current-main qualification remains isolated from unmerged candidates.
+Open LAFEA numerical/refinement/shell work remains outside this qualification branch. No unmerged candidate mechanics may be copied into #1413 qualification.
 
-`agents/MASTER_INDEX.md` is absent on current main; this WIP report is the durable recovery authority for Issue #1413 until a real repair or registry PR is justified.
+## Batch plan and status
 
-## Batch plan
+### B0 — live-main re-ground + AD-01 authority drift audit — COMPLETE
 
-### B0 — live-main re-ground + AD-01 drift audit — COMPLETE
+Acceptance:
+- exact live main recorded;
+- source/domain/mesh/solver/benchmark/presenter/lifecycle authority drift classified;
+- no mechanics mutation;
+- current registry limitations preserved until executed qualification.
 
-Objective:
-- bind the qualification epoch to exact live main;
-- classify changes since #1393 integration across source/domain/mesh/solver/benchmark/presenter/lifecycle/build boundaries;
-- verify Issue #54 state and whether a new exact-head execution epoch is legitimate.
+Result:
 
-Acceptance result:
-- exact current main SHA recorded;
-- no current-main drift since Issue #1413 creation;
-- 210 post-#1393 commits classified without assuming title-based independence;
-- #1388/#1390/#1392/#1393 exact owned paths show no observed direct-file drift in the compare result;
-- current registry and stage adapter still preserve the intended LAFEA.3/.4 numerical authority and exclusions;
-- no mechanics mutation made.
+```text
+AD-01_RESULT = PASS_FOR_PROCEEDING_TO_EXECUTION
+AUTHORITY_DRIFT_FOUND = false
+ENGINEERING_MUTATION_AUTHORIZED = false
+```
 
 ### B1 — exact-head engineering qualification packet — BLOCKED_BEFORE_EXECUTION
 
-Only after an executable environment exists for the exact candidate head.
-
-Required minimum commands from Issue #1413:
+Required minimum matrix from Issue #1413:
 
 ```bash
 node scripts/lafea-bucket-01-kirsch-fixed-probes-check.mjs
@@ -83,9 +79,9 @@ node scripts/lafea-shell-sample-parent-check.mjs
 node scripts/lafea-shell-compiled-execution-check.mjs
 ```
 
-Then run applicable repository import/full/build/clean-tree gates. Every command must record exact HEAD, exit status, stdout/stderr or retained artifact/log identity and oracle class.
+Then run applicable import/full/build/clean-tree gates. Every command must retain exact HEAD, exit status, output/log identity, oracle class and first-failure context.
 
-### B2 — first-failure isolation / minimal repair
+### B2 — first-failure isolation / minimal repair — NOT TRIGGERED
 
 Triggered only by an actually executed engineering failure.
 
@@ -94,49 +90,61 @@ Rules:
 - retain expected/actual/delta/tolerance and exact node/element/IP/surface/hash context;
 - one mechanics boundary per repair PR;
 - do not widen tolerance, rewrite frozen expected values, delete benchmarks, or promote display-smoothed results;
-- re-run B0/B1 on the repaired exact head.
+- repeat B0/B1 on the repaired exact head.
 
-### B3 — Chromium product/output qualification
+### B3 — Chromium product/output qualification — PENDING B1
 
 On the same exact qualified head:
 - LAFEA.3 Sample → source/domain/geometry → retained T6 mesh → Run → accepted result → engineering output;
 - LAFEA.4 cylindrical Sample → retained CST+DKT mesh → Run → force/moment equilibrium → retained shell output;
-- record retained mesh hash through preflight/compiler/execution/lifecycle/viewport;
-- record actual governing element/IP/surface and pressure/reaction resultants.
+- retain mesh hash through preflight/compiler/execution/lifecycle/viewport;
+- retain governing element/IP/surface and pressure/reaction resultants.
 
-Browser PASS is PRODUCT_REGRESSION evidence, not the independent numerical oracle.
+Browser PASS is `PRODUCT_REGRESSION`, not the independent numerical oracle.
 
-### B4 — registry/documentation closure PR
+### B4 — registry/documentation closure PR — PROTECTED
 
-Only after B1+B3 complete PASS on one exact current-main head.
+Only after B1+B3 complete PASS on one exact head.
 
-LAFEA.3: replace `Production geometry-to-mesh-to-convergence orchestration is incomplete.` only with wording proven by the executed envelope.
+LAFEA.3: replace `Production geometry-to-mesh-to-convergence orchestration is incomplete.` only with wording proven by executed evidence.
 
-LAFEA.4: retain `CST_DKT_TRI3_THIN_SHELL_V1` and all MITC/drilling/thick-shell/contact/weld/code exclusions.
+LAFEA.4: retain `CST_DKT_TRI3_THIN_SHELL_V1` and MITC/drilling/thick-shell/contact/weld/code exclusions.
 
 No numerical mechanics changes are permitted in B4.
 
-### B5 — final closure-head requalification
+### B5 — final closure-head requalification — PENDING
 
-Re-run complete applicable acceptance on the registry PR head; verify clean tree and AD-01 against then-current main. Merge remains Owner-only. Close #1371/#1413 only from exact retained evidence.
+Repeat complete applicable acceptance on the closure PR head, verify clean tree and AD-01 against then-current main. Merge remains Owner-only.
 
-## B0 live ground truth and AD-01 conclusion
+## Live-main chronology
+
+Initial Issue #1413 qualification ground:
 
 ```text
-live main = 72a916d6c60fe61da66c997594f7763aa3f04d8e
-issue-creation main = same SHA
-current-main drift since Issue #1413 creation = NONE
-#1393 integration head = ff5a7353f3759d72ba27be37095c7f5e06b5f7e2
-main is 210 commits ahead of #1393 integration
+72a916d6c60fe61da66c997594f7763aa3f04d8e
 ```
 
-The 210-commit interval contains substantial EMP.1 and LFEA piping promotion work, including workspace/shared tooling changes. Title-based independence was not assumed. Direct file lists from #1388/#1390/#1392/#1393 were compared against the interval; no exact owned path from those PRs appeared as a direct changed file in the compare result.
+Current main at latest continuation:
 
-Current shared authority seams were re-read on the exact head:
+```text
+beee11eb99764bab078bf8ba73cf5768514aac67
+```
+
+The one intervening main commit is PR #1412, EMP.1 retained WRC Table-5 sign-authority reconciliation. Its retained changed-file ledger is confined to EMP.1 validation/script/docs/agent records; it does not alter LAFEA.3/.4 source/domain/mesh/solver/recovery/presenter/registry authority. Therefore the one-commit drift does not invalidate B0/AD-01.
+
+#1393 integration head remains:
+
+```text
+ff5a7353f3759d72ba27be37095c7f5e06b5f7e2
+```
+
+The earlier 210-commit audit from #1393 to Issue-creation main found no direct change to #1388/#1390/#1392/#1393 owned qualification paths. The new one-commit drift was separately classified above.
+
+## Protected authority / invariants
 
 ### LAFEA.3
 
-`src/workspace/lafea-stage-registry.js` still declares:
+Current registered authority remains:
 
 ```text
 category = CONTINUUM_2D
@@ -145,96 +153,93 @@ engineState = QUALIFIED_ROUTE_REGISTERED
 limitation = Production geometry-to-mesh-to-convergence orchestration is incomplete.
 ```
 
-Its retained limitations still state that T6/Q8 integration-point stress is authoritative and nodal projection is display-only.
-
-`src/workspace/lafea-stage-analysis-adapter.js` still binds LAFEA.3 to exactly `T3`, `T6`, `Q8`.
+Retained rules:
+- T6/Q8 integration-point stress is engineering authority;
+- nodal projection/smoothing is display-only;
+- no frozen Kirsch/B02C/B-bar expected value or tolerance mutation;
+- protected orchestration limitation remains until exact-head B1+B3 evidence passes.
 
 ### LAFEA.4
 
-`src/workspace/lafea-stage-registry.js` still declares:
+Current authority remains:
 
 ```text
-category = THIN_SHELL
 authority = CST_DKT_TRI3_THIN_SHELL_V1
-engineState = QUALIFIED_ROUTE_REGISTERED
-limitation = No production MITC4/MITC3 or thick-shell authority.
 ```
 
-The detailed limitations still exclude MITC4/MITC3 claims, drilling DOF, thick-shell claims, weld stress and code assessment.
-
-`src/workspace/lafea-stage-analysis-adapter.js` still binds LAFEA.4 to exactly `CST_DKT_TRI3_THIN_SHELL_V1`.
+Retained exclusions:
+- no MITC4/MITC3 production claim;
+- no drilling DOF;
+- no thick-shell claim;
+- no contact authority;
+- no weld-stress authority;
+- no code-assessment authority;
+- no frozen B4 benchmark/tolerance mutation.
 
 ### Cross-stage custody
 
-`scripts/lafea1371-cross-stage-anti-drift-check.mjs` still encodes:
+Retained anti-drift contract still requires:
 
 ```text
 E 200000 -> 210000 MPa
 force-controlled displacement factor = 1 / 1.05
-same deterministic LAFEA.3 mesh content permitted after E-only edit
-new parent-bound mesh evidence required
-new solverModelHash required
-new compiledExecutionHash required
+same deterministic LAFEA.3 mesh content may be reused after E-only edit
+new parent-bound mesh evidence is required
+new solverModelHash is required
+new compiledExecutionHash is required
 registryWordingChanged = false
 registryCleanupState = BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
 frozenOracleMutation = false
 releaseAuthorityChanged = false
 ```
 
-### B0 disposition
+## Issue #54 — fresh infrastructure evidence
+
+At continuation, the newest current-base PR workflow available was:
 
 ```text
-AD-01_RESULT = PASS_FOR_PROCEEDING_TO_EXECUTION
-AUTHORITY_DRIFT_FOUND = false
-DIRECT_OWNED_FILE_DRIFT_FOUND = false
-REGISTRY_LIMITATION_PREMATURELY_REMOVED = false
-ENGINEERING_MUTATION_AUTHORIZED = false
-B1_EXECUTION_AUTHORIZED_BY_SCOPE = true
-B1_EXECUTION_POSSIBLE_IN_CURRENT_ENVIRONMENT = false
+PR = #1414
+base = main@beee11eb99764bab078bf8ba73cf5768514aac67
+head = a8ff309051ea9512492ef9a52755906721ec7c08
+workflow run = 32761507413
+workflow = LFEA S7 component UI disclosure
+original job = 97541176349
 ```
 
-B0 is sufficient to proceed to B1 when an exact-head execution environment becomes available. It is not numerical qualification evidence.
+Original job state:
 
-## Issue #54 execution state
+```text
+conclusion = failure
+steps = null
+logs = null
+```
 
-Source evidence shows mixed infrastructure state:
+A deliberate rerun was requested as a runner-availability probe. GitHub accepted it and created:
 
-- a prior PR head successfully executed checkout, exact-head verification, `npm ci`, full gate, clean-tree and artifact upload, proving the historical failure mode can clear;
-- subsequent same-day LAFEA workflow retries again failed before step creation with `steps:null` / no logs;
-- no workflow run is associated with exact current main `72a916d6...` via available commit-run lookup;
-- the current assistant environment cannot clone github.com (`Could not resolve host: github.com`), so local execution cannot substitute for the missing exact-head runner.
+```text
+rerun job = 97643768654
+observed status = queued -> completed
+final conclusion = failure
+steps = null
+logs = null
+```
+
+No checkout, `npm ci`, repository script, benchmark, build, browser or clean-tree command executed.
 
 Classification:
 
 ```text
-B1 EXACT_HEAD_EXECUTION = NOT_RUN
+B1_EXACT_HEAD_EXECUTION = NOT_RUN
 ORIGIN = INFRASTRUCTURE / EXECUTION_ENVIRONMENT
 ENGINEERING_FAILURE_PROVEN = false
+TRANSIENT_SINGLE_ATTEMPT_HYPOTHESIS = FALSIFIED
 ```
 
-Do not create a new validation-only PR merely to reproduce `steps:null` while this remains the latest credible infrastructure state.
-
-## Protected authority / invariants
-
-### LAFEA.3
-
-- registered continuum authority remains T3/T6/Q8 linear continuum;
-- T6/Q8 integration-point stress remains engineering authority;
-- nodal projection/smoothing remains display-only;
-- protected limitation remains until exact-head matrix passes;
-- no frozen Kirsch/B02C/B-bar expected value or tolerance mutation.
-
-### LAFEA.4
-
-- authority remains `CST_DKT_TRI3_THIN_SHELL_V1`;
-- no MITC4/MITC3, drilling DOF, thick-shell, contact, weld-stress or code-assessment authority;
-- no frozen B4 definition/tolerance mutation;
-- source topology custody and solver canonicalization remain distinct;
-- whole-surface pressure direction/sign authority remains unchanged.
+This fresh reproduction was recorded on Issue #54 and Issue #1413. Per #1413 anti-churn rules, do not open a validation-only PR merely to reproduce the same pre-step condition.
 
 ## First-failure protocol
 
-If execution starts and fails, stop broad changes and classify the first wrong boundary as one of:
+If execution starts and fails, classify the first wrong boundary before any repair:
 
 ```text
 SOURCE / UNITS
@@ -257,46 +262,46 @@ BUILD / BROWSER
 INFRASTRUCTURE
 ```
 
+For engineering failures retain expected, actual, delta, tolerance, exact element/node/IP/surface and all relevant source/domain/mesh/solver/execution/recovery hashes before editing production code.
+
 ## Validation ledger
 
-| Check | Status | Observation | Oracle | Head |
-|---|---|---|---|---|
-| live main grounding | PASS | GitHub commit search | CUSTODY | 72a916d6... |
-| Issue #1413 creation-head drift | PASS / NONE | live main equals creation head | CUSTODY | 72a916d6... |
-| #1393 → current-main commit distance | PASS | compare = 210 ahead / 0 behind | CUSTODY | 72a916d6... |
-| direct #1388/#1390/#1392/#1393 owned-file drift | PASS / NONE_OBSERVED | no exact owned path appeared in compare result | CUSTODY | 72a916d6... |
-| current LAFEA.3 registry/adapter authority | PASS | T3/T6/Q8 + IP stress authority + protected limitation intact | SOURCE_INSPECTION | 72a916d6... |
-| current LAFEA.4 registry/adapter authority | PASS | CST_DKT_TRI3_THIN_SHELL_V1 + exclusions intact | SOURCE_INSPECTION | 72a916d6... |
-| cross-stage anti-drift contract | PASS | hash/invalidation semantics and registry block remain encoded | SOURCE_INSPECTION | 72a916d6... |
-| repository protocol read | PASS | AGENTS.md + Common engineering-pr-delivery | CUSTODY | 72a916d6... |
-| coordination scan | PASS_WITH_COORDINATION_REQUIRED | open LAFEA draft work exists; no current-main read-only qualification mutation overlap | CUSTODY | 72a916d6... |
-| exact current-head workflow execution | NOT_RUN | no associated run returned | INFRASTRUCTURE | 72a916d6... |
-| local clone/execution | NOT_RUN | environment DNS cannot resolve github.com | INFRASTRUCTURE | 72a916d6... |
-| B1 numerical/product gates | NOT_RUN | blocked pending executable exact head | mixed frozen/product/custody | 72a916d6... |
-| B3 Chromium | NOT_RUN | blocked pending executable exact head | PRODUCT_REGRESSION | 72a916d6... |
-| registry closure | NOT_APPLICABLE | qualification not yet complete | CUSTODY | 72a916d6... |
+| Check | Status | Observation | Oracle |
+|---|---|---|---|
+| live main grounding | PASS | `beee11eb99764bab078bf8ba73cf5768514aac67` | CUSTODY |
+| one-commit drift from prior checkpoint | PASS / NON_LAFEA_AUTHORITY | PR #1412 EMP.1-only retained ledger | CUSTODY |
+| prior #1393 → Issue-creation main drift audit | PASS | 210-commit authority audit completed | CUSTODY |
+| LAFEA.3 registry/adapter authority | PASS_SOURCE_INSPECTION | T3/T6/Q8 + IP authority + protected limitation intact | SOURCE_INSPECTION |
+| LAFEA.4 registry/adapter authority | PASS_SOURCE_INSPECTION | CST_DKT_TRI3 + exclusions intact | SOURCE_INSPECTION |
+| cross-stage anti-drift contract | PASS_SOURCE_INSPECTION | hash/invalidation semantics + registry block retained | SOURCE_INSPECTION |
+| fresh current-base Actions original job | FAIL_INFRASTRUCTURE | run 32761507413 / job 97541176349 / steps=null | INFRASTRUCTURE |
+| explicit rerun probe | FAIL_INFRASTRUCTURE | job 97643768654 / queued→completed / steps=null / logs=null | INFRASTRUCTURE |
+| B1 numerical/custody matrix | NOT_RUN | blocked before checkout/execution | MIXED FROZEN/CUSTODY |
+| B3 Chromium | NOT_RUN | pending executable exact head | PRODUCT_REGRESSION |
+| registry closure | NOT_APPLICABLE | B1+B3 qualification absent | CUSTODY |
 
-No unexecuted check is represented as PASS.
+No unexecuted engineering check is represented as PASS.
 
-## Active ISS / RISK / DEC / QST
+## Active ISS / RISK / DEC
 
-- `ISS-1413-01` ACTIVE — exact current head has no eligible executed qualification packet.
-- `ISS-1413-02` RESOLVED_FOR_B0 — AD-01 source/authority audit found no current-main authority drift that blocks attempting exact-head qualification.
-- `RISK-1413-01` ACTIVE — stale/prior-head evidence could be mistaken for exact-main qualification.
-- `RISK-1413-02` ACTIVE — unmerged LAFEA numerical/refinement work must not contaminate current-main certification.
-- `DEC-1413-01` — do not mutate mechanics until an executed first failure identifies the boundary.
-- `DEC-1413-02` — do not open a validation-only PR while latest credible runner evidence remains pre-step recurrence and no exact-main dispatch route is available.
-- `DEC-1413-03` — B0 source inspection permits B1 execution when infrastructure exists but does not itself authorize registry cleanup.
-- `QST-1413-01` — whether hosted runner allocation has recovered for a newly eligible exact-head epoch; unresolved by current evidence.
+- `ISS-1413-01` ACTIVE — no exact current-main-derived qualification packet has executed.
+- `ISS-1413-02` RESOLVED_FOR_B0 — no LAFEA.3/.4 authority drift found that blocks attempting B1.
+- `ISS-1413-03` ACTIVE — Issue #54 pre-step failure reproduced on fresh current-base rerun.
+- `RISK-1413-01` ACTIVE — stale/prior-head evidence could be mistaken for exact-head qualification.
+- `RISK-1413-02` ACTIVE — unmerged LAFEA candidate work must not contaminate current-main certification.
+- `DEC-1413-01` — no mechanics mutation until an executed first failure identifies the boundary.
+- `DEC-1413-02` — no validation-only PR while latest runner probe still dies before step creation.
+- `DEC-1413-03` — B0 source inspection permits B1 execution when infrastructure exists but does not authorize registry cleanup.
+- `DEC-1413-04` — main movement requires re-grounding, but PR #1412 does not invalidate LAFEA.3/.4 AD-01 because its changed authority is EMP.1-only.
 
 ## Changed-file ledger
 
 Current WIP branch changes only:
 
-- `agents/WIP-1413-exact-main-qualification-20260824_workreport.md` — durable qualification/blocked-state recovery record.
+- `agents/WIP-1413-exact-main-qualification-20260824_workreport.md` — living qualification/recovery record.
 
-No production, benchmark, workflow, registry or test file has been changed.
+No production, benchmark, workflow, registry or test file has been changed by this WIP.
 
 ## Appendix A
 
-Not required for current B0 source-inspection/qualification coordination because no existing engineering-critical PR is being taken over and no engineering production mutation is authorized. If B2 requires a mechanics repair, Appendix A becomes mandatory before WRITE_ALLOWED production mutation.
+Not required while work remains read-only qualification/infrastructure classification. If B2 requires an engineering-critical mechanics repair, Appendix A becomes mandatory before production mutation.

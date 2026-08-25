@@ -4,8 +4,8 @@ pr_or_wip: PR1418
 mission: "Combined physical-applicability source reconciliation for #1368 #1370 #1373"
 workstream: EMP1_WRC537_SOURCE_SEMANTICS
 branch: agent/issue-1389-physical-applicability-batch-20260825
-base_sha: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
-base_tree: 2f9dd6023a9bfa9522518085142ebf23bf264412
+base_sha: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+base_tree: f26e894dd80751bb9e69720b514f2a0defaf64ea
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY_DRAFT
@@ -13,7 +13,7 @@ handover_readiness: READY
 report_path: agents/PR1418_workreport.md
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: PR_ALLOCATED_RECOVERY_MIGRATION
+current_stage: FINAL_15_FILE_MAIN_REVIEW_AUDIT_COMPLETE
 merge_authority: NOT_GRANTED
 issues:
   - 1368
@@ -46,11 +46,23 @@ validation:
   checker_node_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
   production_mechanics: UNCHANGED
-  final_diff_review_main_audit: PENDING
+  changed_files: 15
+  behind_main: 0
+  reviews: 0
+  review_threads: 0
+  protected_path_mutation: NONE
+  final_diff_review_main_audit: PASS_SOURCE_AND_DIFF_INSPECTION
+base_drift:
+  previous_base_sha: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+  new_base_sha: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+  classification: UNRELATED_LFEA_BEND_WORK
+  overlap_with_pr1418_paths: false
+  reground_method: NON_FORCE_TWO_PARENT_MERGE_PRESERVING_15_PR_BLOBS
+  reground_commit: 779d72a8c371e1d9453e8e02ba0d785b1944e3f1
 authority:
   physical_applicability_source_pass: false
   global_emp1_c: false
   code_compliance: false
   release: false
-exact_next_action: "Retire WIP recovery; verify exact 15-file diff/main/reviews and protected paths; leave draft pending owner merge authorization."
+exact_next_action: "Leave PR1418 draft/unmerged pending explicit Owner merge authorization; direct primary-source closure remains required for physical normality, attachment class, and interaction/isolation."
 last_updated: "2026-08-25"

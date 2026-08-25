@@ -4,13 +4,17 @@ pr_or_wip: PR1415
 mission: "Issue #1377 retained Table-5 cylindrical Rm reconciliation against current authorized bounded route"
 workstream: EMP1_WRC537_SOURCE_SEMANTICS
 branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
-main_head_last_checked: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_APPROVED_MISSION
+phase_progression: AUTO
+main_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
 merge_base: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-pre_refresh_head: fbe1f53bcaccb74f191f1f6f9e74ec0ec69913a7
+pre_auto_head: e401fd042bec49d2aeb8c5384cf3214ac1f12284
 engineering_content_head: 4d4608ab3fcb703e30fb8fd39b0d63fc2f45b9f5
-report_refresh_commit: 9c4e957721a4651aa756100a3e57ecc8c1f5976a
-report_sync: CURRENT_RECOVERY_METADATA_ONLY
-grounding_epoch: GE-PR1415-003
+report_refresh_commit: 38406a979c3ff2c8a015926c43f15166e4649d94
+report_sync: CURRENT_AUTO_RECOVERY_METADATA_ONLY
+grounding_epoch: GE-PR1415-004
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
@@ -21,7 +25,7 @@ appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
 coordination: SAFE_RECOVERY_ONLY_NO_EXACT_PATH_OR_AUTHORITY_CONFLICT
-current_stage: RECOVERY_ONLY_CURRENT_MAIN_AUDIT_COMPLETE
+current_stage: AUTO_RECOVERY_CURRENT_MAIN_RECONCILED
 highest_risk: BOUNDED_ROUTE_OR_SOFTWARE_RM_CONSTRUCTION_FALSELY_PROMOTED_TO_PRIMARY_WRC_PHYSICAL_RM_AUTHORITY
 source_state:
   wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
@@ -54,9 +58,10 @@ current_bounded_route:
 validation:
   live_grounding: PASS
   changed_file_scope: PASS_EXACTLY_SIX
-  ahead_behind_at_grounding: "25 / 10"
+  ahead_behind_at_grounding: "28 / 12"
   main_drift_exact_path_overlap: NONE
   merged_pr1426_semantic_effect: REINFORCES_RM_T_CONSISTENCY_BLOCKER_NO_AUTHORITY_WIDENING
+  merged_pr1418_semantic_effect: PRESERVES_PHYSICAL_APPLICABILITY_BLOCKERS_NO_RM_DEFINITION_AUTHORITY
   retained_source_inspection: PASS
   production_rm_trace: PASS_SOURCE_INSPECTION
   current_route_authority_inspection: PASS_SOURCE_INSPECTION
@@ -68,8 +73,8 @@ validation:
   review_threads: 0
   hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
 hosted_ci_evidence:
-  source_oracle: "32848812559/97804666873 steps=null logs_url=null"
-  gamma5_route: "32848812632/97804666899 steps=null logs_url=null"
+  source_oracle: "32871121889/97878111938 steps=null logs_url=null"
+  gamma5_route: "32871121891/97878112208 steps=null logs_url=null"
 authority:
   source_record_engineering: false
   source_record_production: false
@@ -86,5 +91,5 @@ dependencies:
   - "#1377"
   - "#1389"
   - "#54"
-exact_next_action: "Leave PR1415 draft/unmerged pending explicit Owner merge authorization. Keep #1377 open for genuine primary-source R_m physical-definition closure."
+exact_next_action: "Leave PR1415 draft/unmerged; continue AUTO progression to PR1427 aggregate P0 source-semantics reconciliation."
 last_updated: "2026-08-25"

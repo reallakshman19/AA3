@@ -24,8 +24,9 @@ protected_paths:
   - validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json
   - validation/emp1/release/**
   - .github/workflows/**
-authority_boundary: "Aggregate source-governance reconciliation only. Current bounded route authorization remains true while physical surface/common-point and explicit plane-stress/sigma3/Tresca source semantics remain false. No numerical, global, code, or release authority."
-overlap_state: "SAFE: six aggregate/recovery paths are disjoint from current main drift; merged PR1423 changes code-acceptance boundary only and does not alter #1383/#1385 source records."
+authority_boundary: "Aggregate source-governance reconciliation only. Bounded route authorization remains true while physical surface/common-point and explicit plane-stress/sigma3/Tresca source semantics remain false. No numerical, global, code, or release authority."
+overlap_state: "SAFE: six aggregate/recovery paths are disjoint from current main drift; merged PR1423 is code-boundary-only."
 invariant: "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_STRESS_RECONSTRUCTION_OR_STRESS_INTENSITY_SOURCE_SEMANTICS"
-merge_authority: NOT_GRANTED
-state: ACTIVE_CURRENT_MAIN_RECOVERY
+merge_authority: GRANTED_BY_OWNER_2026_08_25
+merge_authorization_scope: PR1425_ONLY_AFTER_GOVERNANCE_SYNC_AND_FINAL_LIVE_AUDIT
+state: ACTIVE_READY_FOR_AUTHORIZED_MERGE

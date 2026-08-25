@@ -6,6 +6,11 @@ workstream: EMP1_WRC537_P0_SOURCE_BOUNDARY
 branch: agent/issue-1381-code-acceptance-reconciliation-20260825
 main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+pr_head_observed_before_recovery_sync: ee7fb6567c9ac6619567637db491e31010eb46a6
+report_basis_head: ee7fb6567c9ac6619567637db491e31010eb46a6
+workreport_sync_commit: 93047efae7a3acee660e2968cc5a587b206fb586
+grounding_epoch: GE-1423-TKO-002
+report_sync: CURRENT_RECOVERY_METADATA_ONLY_AFTER_BASIS
 implementation_ci_basis_head: 09ab3d2df61fcfd0a3907a80e024d3175df99c26
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
@@ -21,6 +26,7 @@ highest_risk: ROUTE_AUTHORIZATION_FALSELY_PROPAGATED_TO_CODE_ACCEPTANCE
 validation:
   live_grounding: PASS
   changed_file_scope: PASS_EXACTLY_SIX
+  ahead_behind_at_grounding: "14 / 0"
   existing_boundary_inspection: PASS
   route_registry_authority_inspection: PASS
   professional_release_state_inspection: PASS
@@ -29,12 +35,19 @@ validation:
   updated_checker_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
   hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-  reviews_and_threads: PASS_NONE
-hosted_runs:
+  reviews: 0
+  review_threads: 0
+  protected_path_mutation: NONE
+historical_hosted_runs:
   - "32813470694 / job 97697146828 / independent-source-oracle / steps=null / logs_url=null"
   - "32813470652 / job 97697146629 / independent-handcalc / steps=null / logs_url=null"
   - "32813470633 / job 97697146844 / qualify-gamma5-route / steps=null / logs_url=null"
   - "32813470637 / job 97697146673 / qualify-runemp1-orchestration / steps=null / logs_url=null"
+current_head_recheck:
+  basis_head: ee7fb6567c9ac6619567637db491e31010eb46a6
+  source_oracle: "32813616043 / job 97697550854 / steps=null / logs_url=null"
+  gamma5_route: "32813616032 / job 97697550644 / steps=null / logs_url=null"
+  classification: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
 authority:
   bounded_wrc_route_authorized_current_main: true
   registry_registered_current_main: true

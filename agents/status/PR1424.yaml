@@ -7,7 +7,7 @@ branch: agent/issue-1422-validate-input-progress
 main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 implementation_test_head: 280ceeeb7591b3c6ab4da45e14d799b2cc6ff263
-recovery_report_head: a70d4a2d4cd40742664bd885216cb335de1addda
+recovery_report_head: 91473b84bffb4577a6cafd7dadd256bb14dec626
 criticality: ENGINEERING_CRITICAL
 agent_state: VALIDATION_BLOCKED
 pr_recovery_state: HEALTHY

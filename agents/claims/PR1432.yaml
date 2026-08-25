@@ -10,17 +10,20 @@ authority_domain:
   - LAFEA.3 retained local refinement
   - source-authoritative affine mapped remesh
   - actual shared-edge adjacent-size retention gate
+  - current-main LAFEA.3 refinement UI policy alignment
 exact_paths:
   - src/core/lafea-meshing/refinement-fields.js
   - src/workspace/lafea-analysis-mesh-evidence-v2.js
   - src/workspace/lafea-retained-mesh-refinement-grading.js
   - src/workspace/lafea-retained-mesh-refinement.js
+  - src/workspace/lafea-discretization-generation-panel.js
   - scripts/lafea3-mapped-refinement-envelope-check.mjs
+  - scripts/lafea-refinement-solve-ui-check.mjs
 excluded_authority:
   - EMP.1
   - LAFEA.3 Mesh Workspace v3 activation
   - B01/B02 solver or benchmark authority
-  - LAFEA.4 TECH-13 refinement
+  - LAFEA.4 TECH-13 refinement semantics
   - workflow YAML
   - stage registry or release authority
 coordination:
@@ -34,5 +37,5 @@ coordination:
     - pr: 1259
       classification: BOUNDED_NO_B02_AUTHORITY_TOUCHED
     - pr: 1246
-      classification: BOUNDED_LAFEA4_OUT_OF_SCOPE
+      classification: BOUNDED_LAFEA4_PRODUCT_BRANCH_PRESERVED
 merge_authority: OWNER_ONLY

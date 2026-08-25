@@ -1,0 +1,33 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1427
+branch: agent/issue-1389-p0-gate-current-state-20260825
+issue: 1389
+criticality: ENGINEERING_CRITICAL
+claim_state: ACTIVE
+coordination_state: SAFE_AGGREGATE_ONLY
+scope:
+  authority: EMP1_WRC537_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION
+  paths:
+    - validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json
+    - scripts/emp1-professional-p0-source-semantics-check.mjs
+    - docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md
+    - agents/PR1427_workreport.md
+    - agents/status/PR1427.yaml
+    - agents/claims/PR1427.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - validation/emp1/wrc537-2013/** individual P0 source-authority records
+  - validation/emp1/caux2017-wrc01f/**
+  - gamma5 oracle/tolerance/exact-head evidence
+  - UI/browser product paths
+  - .github/workflows/**
+authority_boundary:
+  bounded_runtime_route_authority_mutation: false
+  individual_source_gate_mutation: false
+  professional_release_authority_granted: false
+  global_emp1_c_authority_granted: false
+  code_compliance_authority_granted: false
+merge_authority: OWNER_ONLY
+handover_report: agents/PR1427_workreport.md

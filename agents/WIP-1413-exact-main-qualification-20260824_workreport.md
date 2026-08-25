@@ -15,9 +15,9 @@ MERGE_AUTHORITY: OWNER_ONLY
 WIP: WIP-1413-exact-main-qualification-20260824
 BRANCH: agent/issue-1413-exact-main-qualification-20260824
 ISSUE_CREATION_HEAD: 72a916d6c60fe61da66c997594f7763aa3f04d8e
-LIVE_MAIN_LAST_CHECKED: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+LIVE_MAIN_LAST_CHECKED: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
 CURRENT_STAGE: B1 exact-head qualification — EXECUTION_PROTOCOL_AND_B4_CLOSURE_MAPPING_COMPLETE / EXECUTION_BLOCKED
-CURRENT_BLOCKER: Hosted Actions continue to fail before step allocation. Latest PR #1416 runs at 2026-08-25T01:23Z again completed failure with steps=null/logs=null. Local runtime independently cannot resolve github.com, so it cannot materialize an exact-head checkout.
+CURRENT_BLOCKER: Fresh exact-main push run 32798593746 for main@e2a44a85... completed failure before step allocation. Build job 97654893850 has steps=null/logs=null; deploy job 97654904148 was skipped. Local runtime independently cannot resolve github.com, so it cannot materialize an exact-head checkout.
 HIGHEST_RISK: treating static inspection, prior-head evidence, partial workflow coverage, or encoded-but-unexecuted checks as exact-head qualification PASS
 EXACT_NEXT_ACTION: on the first current exact-head environment that produces executable steps, re-ground live main and execute Q0 -> Q4 in the frozen order below. Stop on the first authoritative engineering mismatch. Do not mutate mechanics, frozen oracles, tolerances, workflow semantics, or registry wording before classification.
 ```
@@ -39,18 +39,37 @@ CRITICALITY: ENGINEERING_CRITICAL
 
 # 1. Exact grounding / AD-01
 
-Current live main remains:
+Current live main:
 
 ```text
-4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+e2a44a85b808c0dd3f09a02d7825df26cf92f92f
 ```
 
-Current main movement since prior checkpoint was owner-merged PR #1414, a six-file EMP.1 Table-5 stress-intensity source-governance reconciliation. No LAFEA.3/.4 source/domain/mesh/solver/recovery/presenter/registry path was touched.
+Latest main movement is owner-merged PR #1416:
+
+```text
+parent = 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+merge  = e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+subject = EMP.1 retained WRC Table-5 shell-thickness authority for #1375
+```
+
+The merged #1416 exact six-file scope was audited before merge and is:
+
+1. `validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json`
+2. `scripts/emp1-wrc537-shell-thickness-basis-source-check.mjs`
+3. `docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md`
+4. `agents/PR1416_workreport.md`
+5. `agents/status/PR1416.yaml`
+6. `agents/claims/PR1416.yaml`
+
+No LAFEA.3/.4 source/domain/mesh/solver/recovery/presenter/registry, benchmark, source-provider, workbench-orchestrator, or #1371 custody script is in the merge ledger.
 
 ```text
 AD-01_RESULT = PASS_FOR_PROCEEDING_TO_EXECUTION
 AUTHORITY_DRIFT_FOUND = false
 DIRECT_LAFEA_QUALIFICATION_PATH_DRIFT_FOUND = false
+PR1416_DIRECT_PATH_OVERLAP = false
+PR1416_LAFEA_AUTHORITY_OVERLAP = false
 ENGINEERING_MUTATION_AUTHORIZED = false
 ```
 
@@ -60,30 +79,7 @@ ENGINEERING_MUTATION_AUTHORIZED = false
 ff5a7353f3759d72ba27be37095c7f5e06b5f7e2
 ```
 
-## Prospective main movement — PR #1416
-
-PR #1416 is still open/draft, mergeable, and based on the same current main. Latest head checked:
-
-```text
-0768245d9473fbfcf464654efaaea4cf48656d60
-```
-
-Its exact six-file scope remains:
-
-1. `validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json`
-2. `scripts/emp1-wrc537-shell-thickness-basis-source-check.mjs`
-3. `docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md`
-4. `agents/PR1416_workreport.md`
-5. `agents/status/PR1416.yaml`
-6. `agents/claims/PR1416.yaml`
-
-```text
-PR1416_DIRECT_PATH_OVERLAP = false
-PR1416_LAFEA_AUTHORITY_OVERLAP = false
-PR1416_MERGE_WOULD_REQUIRE_NEW_B0_REGROUND = true
-```
-
-If #1416 or any other PR merges before execution, re-ground before accepting any B1/B3 result.
+Any later main movement requires another AD-01 re-ground before accepting B1/B3 evidence.
 
 # 2. Protected current authority
 
@@ -151,17 +147,7 @@ node scripts/lafea-b02-definition-freeze-check.mjs
 node scripts/lafea-shell-independent-benchmark-freeze-check.mjs
 ```
 
-Retain:
-
-```text
-exact HEAD/tree/parents
-command / exit status
-B02 frozen git-blob and SHA-256 custody
-B02 definitionState and anti-circularity flags
-shell B4 frozen manifest/definition hashes
-source locators / source-presence checks
-stdout/stderr/artifact identity
-```
+Retain exact HEAD/tree/parents, command/exit status, B02 frozen git-blob/SHA-256 custody, anti-circularity state, B4 manifest/definition hashes, source-presence checks, and stdout/stderr/artifact identity.
 
 Ownership if Q0 fails:
 
@@ -183,7 +169,7 @@ node scripts/lafea-plane-strain-bbar-lame-check.mjs
 node scripts/lafea4-shell-independent-benchmark-check.mjs
 ```
 
-Kirsch must retain:
+Kirsch retain:
 
 ```text
 exactHeadSha
@@ -199,7 +185,7 @@ crossElementAveragingUsed = false
 status
 ```
 
-B-bar/Lamé must retain:
+B-bar/Lamé retain:
 
 ```text
 definitionHash
@@ -216,7 +202,7 @@ moving/nodal/smoothed acceptance flags = false
 semanticHash / status
 ```
 
-Shell independent benchmark must retain:
+Shell independent benchmark retain:
 
 ```text
 oracleClass = FROZEN_ANALYTICAL_AND_PRIMARY_PUBLISHED
@@ -239,37 +225,9 @@ node scripts/lafea-b02c-production-check.mjs
 node scripts/lafea-shell-response-acceptance-check.mjs
 ```
 
-B02C must retain:
+B02C retain required T3/T6/Q8 method rows, definition/convergence hashes, per-level mesh/execution/recovery hashes, equilibrium, authoritative fixed-probe values, analytical references/errors/limits, convergence/GCI, and anti-smoothed-authority flags.
 
-```text
-definitionHash / convergencePolicyHash
-required T3/T6/Q8 method rows
-per-level meshHash / executionHash / recoveryHash
-node/element counts
-force/moment equilibrium
-fixed-probe authoritative values
-analytical references / relative error / limit
-convergence classification / GCI
-movingMaximumUsed = false
-nodalAveragedStressUsedAsSoleAuthority = false
-status
-```
-
-Shell response must retain:
-
-```text
-independent freeze PASS
-independent benchmark execution PASS
-fixed/free DOF counts
-minimumPivot / pivotRatio
-maximum displacement
-maximum retained surface/IP von Mises
-transferred force / moment
-force equilibrium
-moment equilibrium
-retained all-fixed contract fixture
-status
-```
+Shell response retain independent benchmark PASS, fixed/free DOF counts, minimumPivot/pivotRatio, maximum displacement, maximum retained surface/IP von Mises, transferred force/moment, equilibrium, all-fixed retained contract fixture, and status.
 
 The shell response checker re-runs the independent shell benchmark before accepting workflow response; response-only observation cannot bypass Q1.
 
@@ -396,7 +354,7 @@ FIRST_EXECUTED_AUTHORITATIVE_FAILURE_WINS = true
 CONTINUE_AFTER_FIRST_AUTHORITATIVE_FAILURE = false
 ```
 
-Continuation is allowed only to localize the **same** first wrong boundary without mutating state.
+Continuation is allowed only to localize the same first wrong boundary without mutating state.
 
 Forbidden after observation:
 
@@ -445,57 +403,57 @@ FIRST_WRONG = first wrong quantity/intermediate if FAIL
 
 # 5. Execution transport state / Issue #54
 
-## Exact-main push run
+## Current exact-main push run — strongest evidence
+
+```text
+head = e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+workflow = Deploy Vite site to GitHub Pages
+run = 32798593746
+created = 2026-08-25T01:42:37Z
+conclusion = failure
+build job = 97654893850
+build steps = null
+build logs = null
+deploy job = 97654904148
+deploy conclusion = skipped
+checkout = NOT_EXECUTED
+repository command = NOT_EXECUTED
+```
+
+This is now stronger than all prior runner evidence because it targets the exact current main after #1416 merged.
+
+## Previous exact-main evidence
 
 ```text
 head = 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
 run = 32794926660
 attempt 1 build job = 97644116755 -> failure / zero steps
 explicit rerun build job = 97649703034 -> queued -> failure / steps=null / logs=null
-deploy = skipped
-checkout = NOT_EXECUTED
-repository command = NOT_EXECUTED
 ```
 
-## Latest PR #1416 recurrence
+## PR #1416 pre-merge recurrence
 
-Latest head observed:
+Latest pre-merge head:
 
 ```text
 0768245d9473fbfcf464654efaaea4cf48656d60
 ```
 
-Newest runs checked:
+Newest pre-merge jobs checked:
 
 ```text
-EMP.1 gamma5 bounded route on current main
-run = 32797355766
-job = 97651267884
-created = 2026-08-25T01:23:29Z
-conclusion = failure
-steps = null
-logs = null
-
-LFEA S7 component UI disclosure
-run = 32797355751
-job = 97651267894
-conclusion = failure
-steps = null
-logs = null
+run 32797355766 / job 97651267884 -> failure / steps=null / logs=null
+run 32797355751 / job 97651267894 -> failure / steps=null / logs=null
 ```
 
-Earlier same-PR evidence also showed:
+Earlier same-PR evidence:
 
 ```text
 run 32797259751 / job 97650996654 -> failure / steps=null
 run 32797259689 / job 97650996582 -> failure / steps=null
 ```
 
-This confirms recurrence across unrelated workflows after the exact-main rerun.
-
 ## Local execution transport
-
-Fresh local probe:
 
 ```bash
 git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git refs/heads/main
@@ -555,7 +513,7 @@ B4_STATUS = NOT_AUTHORIZED
 B4_TRIGGER = B1 PASS + B3 PASS on one exact current-main-derived SHA
 ```
 
-This section freezes the **future closure delta** before product observation. It is a plan, not current authority.
+This section freezes the future closure delta before product observation. It is a plan, not current authority.
 
 ## 8.1 Current source truth
 
@@ -599,7 +557,7 @@ Integration-point stress is authoritative for T6/Q8; nodal projection is display
 Qualified orchestration is bounded to governed Sample/registered benchmark paths and current retained-mesh custody; no general arbitrary-geometry convergence automation authority is claimed.
 ```
 
-Do **not** change:
+Do not change:
 
 ```text
 category = CONTINUUM_2D
@@ -615,7 +573,7 @@ The candidate wording may be narrowed further if executed evidence proves a smal
 
 ## 8.3 #1393 evidence-state hazard discovered
 
-Current `scripts/lafea1371-cross-stage-anti-drift-check.mjs` does **not** assert old registry wording. It emits these hard-coded report fields:
+Current `scripts/lafea1371-cross-stage-anti-drift-check.mjs` does not assert old registry wording. It emits these hard-coded report fields:
 
 ```text
 registryWordingChanged: false
@@ -624,17 +582,14 @@ frozenOracleMutation: false
 releaseAuthorityChanged: false
 ```
 
-Therefore a future B4 registry edit would not automatically fail this checker. However leaving those two registry fields unchanged after legitimate closure would produce **false/stale evidence** on B5.
+Therefore a future B4 registry edit would not automatically fail this checker. However leaving those two registry fields unchanged after legitimate closure would produce false/stale B5 evidence.
 
 B4 must therefore correct the evidence-state reporting without touching mechanics. Preferred approach:
 
 1. make the anti-drift checker read the actual LAFEA.3 registry entry;
 2. assert the exact post-qualification bounded limitation expected by B4;
 3. derive/report registry state from that source rather than hard-code pre-closure state;
-4. retain:
-   - `frozenOracleMutation = false`;
-   - `releaseAuthorityChanged = false`;
-   - all source/mesh/execution anti-drift mechanics unchanged.
+4. retain `frozenOracleMutation=false`, `releaseAuthorityChanged=false`, and all source/mesh/execution anti-drift mechanics unchanged.
 
 Proposed post-closure reporting semantics:
 
@@ -645,7 +600,7 @@ frozenOracleMutation = false
 releaseAuthorityChanged = false
 ```
 
-This is a **qualification/evidence-state mutation**, not a numerical mechanics mutation.
+This is a qualification/evidence-state mutation, not a numerical mechanics mutation.
 
 ## 8.4 Predicted B4 write set
 
@@ -656,7 +611,9 @@ src/workspace/lafea-stage-registry.js
 scripts/lafea1371-cross-stage-anti-drift-check.mjs
 ```
 
-Documentation/evidence files may include one narrow #1413/#1371 closure note plus the mandatory PR workreport/status/claims. Do not alter:
+Documentation/evidence files may include one narrow #1413/#1371 closure note plus the mandatory PR workreport/status/claims.
+
+Do not alter:
 
 ```text
 src/core/local-continuum/**
@@ -695,16 +652,14 @@ On the B4 PR head:
 
 | Check | Status | Observation |
 |---|---|---|
-| live main grounding | PASS | `4461e7699d08b8a1acbbc89cdbea3fd998368ca6` |
-| AD-01 from prior main | PASS / NON_LAFEA_AUTHORITY | PR #1414 six-file EMP.1 scope |
-| prospective PR #1416 drift | PASS_SOURCE_INSPECTION / NON_LAFEA_AUTHORITY | six EMP.1 source-governance files; PR remains draft/open |
+| live main grounding | PASS | `e2a44a85b808c0dd3f09a02d7825df26cf92f92f` |
+| AD-01 latest movement | PASS / NON_LAFEA_AUTHORITY | merged PR #1416 six-file EMP.1 scope |
 | B1 script/oracle inventory | PASS_SOURCE_INSPECTION | required scripts and frozen sources present |
 | Q0-Q4 execution protocol | PASS_SOURCE_INSPECTION | order/receipt/failure ownership frozen before execution |
 | registry current source audit | PASS_SOURCE_INSPECTION | LAFEA.3 old limitation confirmed; LAFEA.4 bounded wording confirmed |
 | registry consumer dependency audit | PASS_SOURCE_INSPECTION | no exact LAFEA.3 limitation text pin in consumer check |
 | #1393 registry evidence-state audit | FINDING / CONTROLLED | hard-coded pre-closure fields must be corrected in eventual B4 |
-| exact-main Actions execution | FAIL_INFRASTRUCTURE / NOT_RUN | run `32794926660`; both attempts pre-step |
-| newest PR1416 Actions execution | FAIL_INFRASTRUCTURE / NOT_RUN | runs `32797355766`, `32797355751`; steps/logs null |
+| current exact-main Actions execution | FAIL_INFRASTRUCTURE / NOT_RUN | run `32798593746`, build job `97654893850`, steps/logs null |
 | local exact-head checkout | FAIL_INFRASTRUCTURE / NOT_RUN | DNS cannot resolve github.com |
 | B1 numerical/custody matrix | NOT_RUN | no exact executable environment |
 | B3 Chromium | NOT_RUN | no exact executable environment |
@@ -717,13 +672,13 @@ No unexecuted engineering check is represented as PASS.
 # 11. Active ISS / RISK / DEC
 
 - `ISS-1413-01` ACTIVE — no complete exact-main qualification packet has executed.
-- `ISS-1413-02` RESOLVED_FOR_B0 — no current LAFEA.3/.4 authority drift blocks attempting B1.
-- `ISS-1413-03` ACTIVE — #54 pre-step recurrence proven on exact main, rerun, and latest current-base PR #1416.
+- `ISS-1413-02` RESOLVED_FOR_B0 — latest main movement #1416 has no LAFEA.3/.4 authority overlap.
+- `ISS-1413-03` ACTIVE — #54 pre-step recurrence proven directly on exact current main `e2a44a85...`.
 - `ISS-1413-04` RESOLVED_SOURCE_PREFLIGHT — no missing required script/oracle/browser-spec defect.
 - `ISS-1413-05` RESOLVED_DISPATCH_AUDIT — visible-workbench lane exists but is partial versus full B1.
 - `ISS-1413-06` RESOLVED_TRANSPORT_AUDIT — historical B7H route is retired and not current authority.
 - `ISS-1413-07` RESOLVED_EXECUTION_PROTOCOL — Q0-Q4 and first-failure ownership frozen.
-- `ISS-1413-08` ACTIVE_EXECUTION_ENVIRONMENT — hosted Actions have no steps; local DNS prevents exact checkout.
+- `ISS-1413-08` ACTIVE_EXECUTION_ENVIRONMENT — current-main hosted Actions have no steps; local DNS prevents exact checkout.
 - `ISS-1413-09` RESOLVED_B4_MAPPING — future registry closure delta and #1393 evidence-state correction identified before execution.
 
 - `RISK-1413-01` ACTIVE — static/prior-head evidence could be mistaken for executed qualification.
@@ -755,6 +710,7 @@ No production, benchmark, workflow, registry, test, solver, recovery, or product
 ea0edb0d5592f18dda1f18e4b1d65208aa4bd625  exact-main #54 recurrence checkpoint
 f79bedc655b6b5a021b46ca914ef445c8a570bc9  transport/B7H retirement audit checkpoint
 7b24dab8fba99e200fe2f76cadfcaab025e61b43  Q0-Q4 receipt / first-failure contract checkpoint
+a4e8a747a0e0a710e5071c39234954f1720a1d94  B4 registry/evidence-state closure mapping checkpoint
 ```
 
 # Appendix A

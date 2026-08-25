@@ -55,6 +55,21 @@ fields = meshState.fields('LAFEA.3');
 assert.equal(fields.retainedAnalysisMeshCandidateV3.validation.qualification, 'PASS');
 assert.equal(fields.retainedAnalysisMeshCandidateV3.gates.highOrder.qualification, 'PASS');
 
+// Portable v2 replay cannot preserve or recreate v3 producer/validation lineage.
+// Even when the v2 artifact is byte-for-byte the already retained artifact,
+// candidate custody must be cleared and the state change must be observable.
+const recoveredSameV2 = meshState.recoverEvidence(generatedQ8.evidence, 'LAFEA.3');
+assert.equal(recoveredSameV2.changed, true);
+assert.equal(recoveredSameV2.v3CandidateCleared, true);
+fields = meshState.fields('LAFEA.3');
+assert.equal(fields.retainedAnalysisMeshEvidenceV2.meshHash, generatedQ8.evidence.meshHash);
+assert.equal(fields.retainedAnalysisMeshCandidateV3, null);
+
+// Re-running the qualified producer can construct fresh v3 lineage for the same v2 parents.
+const regeneratedQ8 = meshState.generateMesh(stage);
+assert.equal(regeneratedQ8.evidence.meshHash, generatedQ8.evidence.meshHash);
+assert.ok(meshState.fields('LAFEA.3').retainedAnalysisMeshCandidateV3);
+
 // Any lifecycle invalidation discards both descendants while keeping the bound profile.
 assert.equal(meshState.invalidate('LAFEA.3'), true);
 fields = meshState.fields('LAFEA.3');
@@ -77,6 +92,7 @@ console.log(JSON.stringify({
   trustedAuthorityStillRequired: true,
   sameProfileNoOpPreservesCandidate: true,
   profileChangeInvalidatesBothVersions: true,
+  portableV2ReplayClearsV3Candidate: true,
   lifecycleInvalidatesBothVersions: true,
   runAuthorityChanged: false,
 }));

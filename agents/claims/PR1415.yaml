@@ -1,0 +1,21 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1415
+claim_state: ACTIVE
+branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
+mission: "Issue #1377 retained WRC Table-5 cylindrical R_m symbol/role reconciliation"
+write_scope:
+  - validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json
+  - scripts/emp1-wrc537-cylindrical-mean-radius-source-check.mjs
+  - docs/emp1/WRC537_2013_Cylindrical_Mean_Radius_Authority.md
+  - agents/PR1415_workreport.md
+  - agents/status/PR1415.yaml
+  - agents/claims/PR1415.yaml
+protected_no_mutation:
+  - src/core/emp1/emp1-wrc537-source-custody.js
+  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json
+  - .github/workflows/
+authority_boundary: "Retained Table-5 `Vessel Radius R_m` symbol and gamma/beta parameter role only; physical mean/midsurface meaning, OD/ID/T construction, corrosion/assessment geometry, section-4.5 radius identity, ovality/local geometry and production transformation remain blocked/unchanged."
+overlap_state: SAFE_NO_ACTIVE_EMP1_MEAN_RADIUS_PR_FOUND

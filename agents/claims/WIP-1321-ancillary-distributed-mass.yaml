@@ -1,0 +1,23 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: WIP-1321-ancillary-distributed-mass
+owner: ChatGPT
+mission: "Issue #1321 cladding and tracing permanent distributed mass"
+branch: agent/issue-1321-ancillary-distributed-mass
+issue: 1321
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE_AFTER_STALE_REGISTRY_RECONCILIATION
+stale_registry_note: "PR1323 broad claim is stale by live PR lineage; no open PR found for cladding/tracing ancillary distributed mass."
+claimed_paths:
+  - src/workspace/project-data/non-fea-field-registry.js
+  - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
+  - src/workspace/project-data/project-data-contract.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - scripts/authorized-empirical-ancillary-distributed-mass-check.mjs
+protected_paths:
+  - .github/workflows/**
+  - src/core/model-loads/**
+  - src/core/fea/**
+authority_boundary: "Add optional line-scoped cladding/tracing kg/m through existing effective-value authority and pipe distributed mass only. No universal default, no component-point ownership change, no statics/equilibrium change."
+merge_authority: OWNER_ONLY
+state: ACTIVE

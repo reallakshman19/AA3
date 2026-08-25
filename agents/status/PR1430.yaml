@@ -4,10 +4,9 @@ pr_or_wip: PR1430
 mission: "Issue #1321 cladding and tracing permanent distributed mass"
 workstream: ISSUE1321_ANCILLARY_DISTRIBUTED_MASS
 branch: agent/issue-1321-ancillary-distributed-mass
-main_head_last_checked: 761632915155e0e9eb31c4cde74af539e69ec015
+main_head_last_checked: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
 merge_base: 6d4a7cbdd75208b918540be0bbea12d04af83ae4
 engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
-recovery_basis: 642d175482a32c1d04c34466a80736bba3927a4f
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY_DRAFT_SOURCE_AUDITED
@@ -18,13 +17,12 @@ appendix_a_score: 96
 appendix_a_min_question: 17
 coordination: SAFE_AFTER_STALE_REGISTRY_AND_MAIN_DRIFT_RECONCILIATION
 current_stage: IMPLEMENTATION_AND_STANDARD_AGGREGATE_WIRING_COMPLETE_EXECUTION_NOT_RUN
-highest_risk: "A duplicate or partially-authorized ancillary mass path could overstate/understate permanent pipe gravity; source audit shows one PIPE base-mass composition site, complete-LINE default promotion, and both focused regressions are now owned by the canonical Non-FEA aggregate."
+highest_risk: "A duplicate or partially-authorized ancillary mass path could overstate/understate permanent pipe gravity; source audit shows one PIPE base-mass composition site, complete-LINE default promotion, and both focused regressions are owned by the canonical Non-FEA aggregate."
 validation:
   live_grounding: PASS
-  main_head: 761632915155e0e9eb31c4cde74af539e69ec015
+  main_head: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
   engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
-  recovery_basis: 642d175482a32c1d04c34466a80736bba3927a4f
-  main_only_commit_count_since_merge_base: 2
+  main_only_commit_count_since_merge_base: 3
   main_drift_overlap: NONE_WRC_EMP1_SOURCE_GOVERNANCE_ONLY
   open_overlap: PASS_STALE_PR1323_ONLY_CLOSED_UNMERGED
   changed_file_scope: PASS_14_DECLARED_PATHS

@@ -306,7 +306,7 @@ function normalizeCommonInput(value) {
   })).sort((left, right) => ascii(left.methodId, right.methodId)) : [];
   return deepFreeze({
     requestedMethodIds: uniqueStrings(row.requestedMethodIds),
-    requestedLoadCaseIds: uniqueStrings(row.requestedLoadCases || row.requestedLoadCaseIds),
+    requestedLoadCaseIds: uniqueStrings(row.requestedLoadCaseIds),
     error: nullableText(row.error),
     reportPackageState: nullableGateState(row.reportPackageState),
     reportSemanticHash: nullableText(row.reportSemanticHash),

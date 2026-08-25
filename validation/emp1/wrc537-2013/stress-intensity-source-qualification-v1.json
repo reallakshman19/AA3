@@ -1,13 +1,27 @@
 {
   "schema": "emp1-wrc537-stress-intensity-source-qualification/v1",
   "issue": 1383,
-  "status": "BLOCKED_PRIMARY_STRESS_INTENSITY_RECONSTRUCTION_UNQUALIFIED",
+  "status": "BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED",
   "sourceDocument": {
     "identity": "WRC Bulletin 537, 2013 retained source package",
     "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
     "primaryPageReobservationAvailableInConnectedEnvironment": false,
-    "retainedSecondaryExtraction": "docs/01_WRC537_METHOD_DEFINITION.md",
-    "retainedExtractionAuthority": "NOT_READY_FOR_IMPLEMENTATION"
+    "currentTurnDirectPdfObservationState": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT"
+  },
+  "retainedTable5Authority": {
+    "classification": "RETAINED_WRC_TABLE5_COMBINED_STRESS_INTENSITY_SOURCE_TEXT",
+    "retainedPath": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "table": "Table 5",
+    "pages": "41-42",
+    "combinedStressIntensitySectionPresent": true,
+    "inputStressComponents": ["sigma_phi", "sigma_x", "tau"],
+    "algebraicNormalStressSummationBeforeStressIntensity": true,
+    "algebraicShearStressSummationBeforeStressIntensity": true,
+    "likeSignNormalStressCasePresent": true,
+    "unlikeSignNormalStressCasePresent": true,
+    "zeroShearCasePresent": true,
+    "tablePresentsSAsPostProcessingFromCombinedStressComponents": true
   },
   "currentImplementation": {
     "file": "src/core/emp1/emp1-wrc537-cylindrical-table5.js",
@@ -19,40 +33,50 @@
     "globalAbsoluteMaximumClaim": false,
     "implementationChangedByThisQualification": false
   },
-  "retainedSecondarySourceClaims": {
-    "symbol": "S",
-    "meaning": "stress intensity = twice maximum shear stress",
-    "classification": "SOURCE_METHOD_CANDIDATE_PENDING_PRIMARY_VERIFICATION",
-    "detailedFormulaTextAuthority": false,
-    "ocrOrSecondaryTranscriptionRisk": true
+  "qualifiedSourceClaims": {
+    "table5CombinedStressIntensityPostProcessingQualified": true,
+    "combinedSigmaPhiSigmaXTauInputsQualified": true,
+    "algebraicComponentSummationBeforeSQualified": true,
+    "likeUnlikeAndZeroShearCaseStructureQualified": true,
+    "table5SIsDerivedAfterComponentStressFormationQualified": true
+  },
+  "unqualifiedPrimarySourceClaims": {
+    "explicitStressIntensityEqualsTwiceMaximumShearDefinitionQualified": false,
+    "explicitPlaneStressAssumptionQualified": false,
+    "explicitThirdPrincipalStressZeroQualified": false,
+    "principalStressEquationsQualified": false,
+    "physicalInsideOutsideSurfaceTimingQualified": false,
+    "commonPhysicalPointIdentityQualified": false,
+    "vonMisesAlternativePolicyQualified": false,
+    "eightPointEnvelopeDefinedByWrcQualified": false,
+    "codeAcceptanceImplicationQualified": false
   },
   "authoritySeparation": {
     "A_MATHEMATICAL_TRESCA_CORRECTNESS": "INTERNALLY_REPRODUCIBLE",
-    "B_WRC_PRIMARY_SOURCE_RECONSTRUCTION_AUTHORITY": "UNQUALIFIED",
-    "C_CODE_ACCEPTANCE_AUTHORITY": "UNQUALIFIED",
-    "rule": "A_DOES_NOT_ESTABLISH_B_AND_B_DOES_NOT_ESTABLISH_C"
+    "B_TABLE5_COMBINED_STRESS_INTENSITY_TEXT_ORDER": "QUALIFIED_FROM_RETAINED_SOURCE_TEXT",
+    "C_EXPLICIT_PLANE_STRESS_AND_PRINCIPAL_STRESS_SOURCE_AUTHORITY": "UNQUALIFIED",
+    "D_CODE_ACCEPTANCE_AUTHORITY": "UNQUALIFIED",
+    "rule": "TABLE5_POST_PROCESSING_AUTHORITY_DOES_NOT_ESTABLISH_EXPLICIT_PLANE_STRESS_OR_CODE_ACCEPTANCE"
   },
   "unresolvedPrimarySourceQuestions": [
-    "exact WRC definition of S",
-    "exact principal-stress reconstruction equation",
+    "exact WRC definition of S as twice maximum shear stress / maximum principal-stress difference",
     "explicit plane-stress assumption and sigma3 treatment",
-    "inside/outside surface timing relative to stress-intensity calculation",
-    "sign handling before principal-stress reconstruction",
-    "shear superposition ordering for Vc, Vl and Mt",
-    "whether absolute values or envelopes are applied before or after component superposition",
+    "exact principal-stress reconstruction equations",
+    "inside/outside physical surface timing and common physical point identity",
     "whether von Mises is provided or permitted as an alternative",
-    "whether Table 5 supplies S directly or requires post-processing",
-    "whether the eight-point envelope is WRC-defined or product post-processing"
+    "whether the eight-point stress-intensity envelope is WRC-defined or product post-processing",
+    "exact code-acceptance boundary locator"
   ],
   "prohibitedChangesBeforeClosure": [
     "replace Tresca with von Mises",
-    "modify planeStressTresca to match secondary or OCR formula text",
-    "promote secondary formula transcription to production authority",
+    "modify planeStressTresca to infer explicit source plane-stress semantics",
+    "promote mathematical equivalence into an unobserved primary-source statement",
     "claim eight-point envelope is global absolute maximum",
     "infer code compliance from stress intensity"
   ],
   "requiredFailClosedState": {
-    "primaryStressIntensityReconstructionAuthority": false,
+    "fullPrimaryStressIntensityReconstructionAuthority": false,
+    "explicitPlaneStressSourceAuthority": false,
     "vonMisesAlternativeAuthority": false,
     "globalMaximumAuthority": false,
     "codeComplianceAuthority": false,

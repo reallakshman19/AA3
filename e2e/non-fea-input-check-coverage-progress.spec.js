@@ -27,7 +27,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => { globalThis.__WORKSPACE_VIEWPORT_BACKEND__ = 'canvas2d'; });
 });
 
-test('shows unique-entity progress while mass coverage remains fail-closed', async ({ page }) => {
+test('shows unique-entity progress and coherent cause navigation while mass coverage stays fail-closed', async ({ page }) => {
   await page.goto('/');
   await uploadJson(page, 'partial-mass-coverage.json', PARTIAL_MASS_PACKAGE);
   await page.getByRole('navigation', { name: 'Application views' })
@@ -39,7 +39,14 @@ test('shows unique-entity progress while mass coverage remains fail-closed', asy
   const inputCheck = page.locator('[data-role="non-fea-input-check"]');
   const massCause = inputCheck.locator('[data-root-cause-code="MASS_COVERAGE_INCOMPLETE"]');
   await expect(massCause).toBeVisible();
+  await expect(massCause).toHaveAttribute('data-cause-kind', 'shared');
   await expect(inputCheck).toHaveAttribute('data-state', 'BLOCKED');
+
+  const causeLegend = inputCheck.locator('[aria-label="Blocker grouping legend"]');
+  await expect(causeLegend.locator('[data-cause-kind="shared"]')).toContainText('SHARED CAUSE');
+  await expect(causeLegend.locator('[data-cause-kind="single"]')).toContainText('SINGLE CAUSE');
+  await expect(causeLegend.locator('[data-cause-kind="rollup"]')).toContainText('GATE ROLLUP');
+  await expect(inputCheck.locator('[data-rollup="true"]').filter({ hasText: 'F_METHOD_READINESS' })).toBeVisible();
 
   const initialProgress = massCause.locator('[data-coverage-code="MASS_COVERAGE_INCOMPLETE"]');
   await expect(initialProgress).toHaveAttribute('data-coverage-total', '3');
@@ -59,26 +66,50 @@ test('shows unique-entity progress while mass coverage remains fail-closed', asy
   await expect(initialDetail).toContainText('PIPE_MASS');
   await expect(consumer.locator('[data-load-calc-run]')).toBeDisabled();
 
-  await loadCalcTab(consumer, 'enrichment').click();
+  await massCause.getByRole('button', { name: 'Open Enrichment & Overrides' }).click();
   const enrichment = page.locator('[data-role="non-fea-enrichment"]');
-  const form = enrichment.locator('[data-enrichment-proposal-form]');
-  await form.locator('[name="recordId"]').fill('PARTIAL-PIPE-B-OPE');
-  await form.locator('[name="selectorKind"]').selectOption('ENTITY');
-  await form.locator('[name="selectorKey"]').fill('PIPE-B');
-  await form.locator('[name="fieldId"]').selectOption('OPERATING_FLUID_WEIGHT');
-  await form.locator('[name="value"]').fill('2');
-  await form.locator('[name="unit"]').fill('kg/m');
-  await form.locator('[name="authority"]').selectOption('ACCEPTED_OVERRIDE');
-  await form.locator('[name="sourceId"]').fill('PARTIAL-COVERAGE-TEST');
-  await form.locator('[name="revision"]').fill('1');
-  await form.locator('[name="rationale"]').fill('Resolve only PIPE-B operating-fluid evidence; leave PIPE-C deliberately unresolved.');
-  await form.getByRole('button', { name: 'Stage proposal' }).click();
-  const proposals = enrichment.locator('[data-role="enrichment-proposals"]');
-  await expect(proposals).toContainText('PARTIAL-PIPE-B-OPE');
-  await proposals.getByRole('button', { name: 'Accept exact' }).click();
-  await expect(enrichment.locator('[data-role="enrichment-accepted"]')).toContainText('PARTIAL-PIPE-B-OPE');
+  await expect(enrichment).toBeVisible();
+  await expect(enrichment.locator('.nfe__boundary')).toContainText('only the common checker can clear a blocker');
 
-  await loadCalcTab(consumer, 'preflight').click();
+  const form = enrichment.locator('[data-enrichment-proposal-form]');
+  await fillProposal(form, {
+    recordId: 'PARTIAL-PIPE-B-OPE',
+    selectorKey: 'PIPE-B',
+    fieldId: 'OPERATING_FLUID_WEIGHT',
+    value: '2',
+    unit: 'kg/m',
+    rationale: 'Resolve only PIPE-B operating-fluid evidence; leave PIPE-C deliberately unresolved.',
+  });
+  await form.getByRole('button', { name: 'Stage proposal' }).click();
+
+  const proposals = enrichment.locator('[data-role="enrichment-proposals"]');
+  const opeProposal = proposals.locator('tr').filter({ hasText: 'PARTIAL-PIPE-B-OPE' });
+  await expect(opeProposal).toBeVisible();
+  await expect(opeProposal.locator('[data-validate-input-cause="MASS_COVERAGE_INCOMPLETE"]')).toBeVisible();
+  await opeProposal.getByRole('button', { name: 'Accept exact' }).click();
+
+  const accepted = enrichment.locator('[data-role="enrichment-accepted"]');
+  const acceptedOpe = accepted.locator('tr').filter({ hasText: 'PARTIAL-PIPE-B-OPE' });
+  await expect(acceptedOpe).toBeVisible();
+  await expect(acceptedOpe.locator('[data-validate-input-cause="MASS_COVERAGE_INCOMPLETE"]')).toBeVisible();
+
+  await fillProposal(form, {
+    recordId: 'PARTIAL-PIPE-C-OD',
+    selectorKey: 'PIPE-C',
+    fieldId: 'PIPE_OUTER_DIAMETER',
+    value: '114.3',
+    unit: 'mm',
+    rationale: 'Exercise cross-tab dependency disclosure without accepting section evidence.',
+  });
+  await form.getByRole('button', { name: 'Stage proposal' }).click();
+  const odProposal = proposals.locator('tr').filter({ hasText: 'PARTIAL-PIPE-C-OD' });
+  await expect(odProposal.locator('[data-validate-input-cause="SECTION_COVERAGE_INCOMPLETE"]')).toBeVisible();
+  await expect(odProposal.locator('[data-validate-input-cause="FLEXURAL_COVERAGE_INCOMPLETE"]')).toBeVisible();
+  await expect(odProposal.locator('[data-validate-input-cause="MASS_COVERAGE_INCOMPLETE"]')).toBeVisible();
+  await odProposal.getByRole('button', { name: 'Reject' }).click();
+  await expect(proposals.locator('tr').filter({ hasText: 'PARTIAL-PIPE-C-OD' })).toHaveCount(0);
+
+  await enrichment.getByRole('button', { name: 'Open Validate Input' }).click();
   const updatedMassCause = inputCheck.locator('[data-root-cause-code="MASS_COVERAGE_INCOMPLETE"]');
   await expect(updatedMassCause).toBeVisible();
   const updatedProgress = updatedMassCause.locator('[data-coverage-code="MASS_COVERAGE_INCOMPLETE"]');
@@ -122,6 +153,19 @@ async function uploadJson(page, name, payload) {
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(payload)),
   });
+}
+
+async function fillProposal(form, { recordId, selectorKey, fieldId, value, unit, rationale }) {
+  await form.locator('[name="recordId"]').fill(recordId);
+  await form.locator('[name="selectorKind"]').selectOption('ENTITY');
+  await form.locator('[name="selectorKey"]').fill(selectorKey);
+  await form.locator('[name="fieldId"]').selectOption(fieldId);
+  await form.locator('[name="value"]').fill(value);
+  await form.locator('[name="unit"]').fill(unit);
+  await form.locator('[name="authority"]').selectOption('ACCEPTED_OVERRIDE');
+  await form.locator('[name="sourceId"]').fill('PARTIAL-COVERAGE-TEST');
+  await form.locator('[name="revision"]').fill('1');
+  await form.locator('[name="rationale"]').fill(rationale);
 }
 
 function pipe(id, startPoint, endPoint, massEvidence) {

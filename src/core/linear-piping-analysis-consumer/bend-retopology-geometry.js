@@ -34,11 +34,24 @@ export function buildAccdbBendDefinition(input) {
   requirePointOnOpenSpan(tangentStartPoint, incomingStart, corner, sourceSegmentId, 'incoming');
   requirePointOnOpenSpan(tangentEndPoint, corner, outgoingEnd, sourceSegmentId, 'outgoing');
 
+  // The benchmark solve binds the arc to the source's own station nodes:
+  // NODE2 to the near tangent, NODE1 to the mid-arc station, and the element's
+  // TO_NODE to the far tangent. That last binding is the important one. The
+  // adapter reads TO_NODE's coordinate as the corner intersection, which is
+  // correct for deriving the arc, but in an analysis model that node belongs at
+  // the far tangent -- which is where caesar-accdb-linear-solve.js puts it, and
+  // that reading is the one CAESAR's own output validated.
+  //
+  // Binding it here rather than retiring it is what removes the whole
+  // corner-load problem. Every BM4_L bend declares a force/moment at TO_NODE,
+  // so retiring it stranded a real applied load on all twelve bends. The node
+  // now survives, carries its load, and simply sits at the tangent.
   const tangentStartNode = generatedNode(
-    `${sourceSegmentId}/T0`, tangentStartPoint, sourceSegmentId, 'START', input.generatedNodes,
+    stationNodeId(segment.meta?.bendStationNode2) ?? `${sourceSegmentId}.T0`,
+    tangentStartPoint, sourceSegmentId, 'START', input.generatedNodes,
   );
-  const tangentEndNode = generatedNode(
-    `${sourceSegmentId}/T1`, tangentEndPoint, sourceSegmentId, 'END', input.generatedNodes,
+  const tangentEndNode = repositionedNode(
+    cornerNodeId, tangentEndPoint, sourceSegmentId, 'END_WORKING_POINT', input.repositionedNodes,
   );
   registerTrim(input.endTrimBySegmentId, sourceSegmentId, tangentStartNode, sourceSegmentId, 'end');
   registerTrim(input.startTrimBySegmentId, String(outgoingSegment.id), tangentEndNode, sourceSegmentId, 'start');
@@ -50,26 +63,11 @@ export function buildAccdbBendDefinition(input) {
     chordCount: input.chordCount,
     lengthErrorLimit: input.lengthErrorLimit,
     generatedNodes: input.generatedNodes,
-    retiredCornerNodeId: cornerNodeId,
+    midArcStationNodeId: segment.meta?.bendStationNode1 ?? null,
+    retiredCornerNodeId: null,
   });
-  const candidates = [tangentStartNode, tangentEndNode].map((node) => Object.freeze({
-    nodeId: String(node.id),
-    distance: distance(corner, node),
-  }));
-  // For a circular CAESAR bend, the theoretical working point is set back
-  // equally from both tangents by R*tan(theta/2). A floating-point difference
-  // between those two distances is not engineering authority to move a support
-  // or point load onto one leg. Working-point bindings therefore remain
-  // explicitly ambiguous until a CAESAR-equivalent station treatment is
-  // independently qualified.
-  input.retiredNodeRecords.set(cornerNodeId, {
-    sourceNodeId: cornerNodeId,
-    bendSegmentId: sourceSegmentId,
-    candidates,
-    nearestNodeId: null,
-    codeStationNodeId: definition.midArcNodeId,
-    reason: 'ACCDB_WORKING_POINT_BINDING_REQUIRES_EXPLICIT_AUTHORITY',
-  });
+  // No retired-node record: the working point is rebound onto the arc rather
+  // than removed, so there is nothing to re-target and no binding to resolve.
   return definition;
 }
 
@@ -100,6 +98,43 @@ export function absoluteGeometryTolerance(left, right) {
   return BEND_RETOPOLOGY_RELATIVE_TOLERANCE * Math.max(norm(left), norm(right), 1);
 }
 
+/**
+ * A CAESAR bend station node, when the source declares one.
+ *
+ * ACCDB carries NODE1/NODE2 on the bend record. The benchmark solve binds them
+ * onto the arc rather than generating names for those stations, and a code
+ * stress check reads the bend at NODE1, so losing them would move the station a
+ * reader is looking for.
+ */
+/**
+ * A source node kept, with its analysis-model position.
+ *
+ * Distinct from a generated node because the id already exists in the source:
+ * anything bound to it -- an applied load, a support -- stays bound. Only the
+ * coordinate changes, from the working point to the tangent it represents.
+ */
+function repositionedNode(nodeId, point, sourceSegmentId, role, repositionedNodes) {
+  const id = String(nodeId);
+  const existing = repositionedNodes.get(id);
+  if (existing) return existing;
+  const node = Object.freeze({
+    id,
+    x: point.x,
+    y: point.y,
+    z: point.z,
+    meta: Object.freeze({ bendWorkingPointOf: sourceSegmentId, bendArcRole: role }),
+  });
+  repositionedNodes.set(id, node);
+  return node;
+}
+
+function stationNodeId(value) {
+  if (value === null || value === undefined) return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return null;
+  return String(numeric);
+}
+
 function discretisedDefinition(input) {
   const sourceSegmentId = String(input.segment.id);
   const centre = requirePoint(input.segment.meta?.bendArcCentre, sourceSegmentId, 'bendArcCentre');
@@ -118,11 +153,13 @@ function discretisedDefinition(input) {
   }
   const chain = [input.tangentStartNode];
   for (let index = 1; index < discretised.points.length - 1; index += 1) {
+    const isMidArc = index === input.chordCount / 2;
+    const declaredMidArc = isMidArc ? stationNodeId(input.midArcStationNodeId) : null;
     chain.push(generatedNode(
-      `${sourceSegmentId}/A${index}`,
+      declaredMidArc ?? `${sourceSegmentId}.A${index}`,
       discretised.points[index],
       sourceSegmentId,
-      index === input.chordCount / 2 ? 'MID_ARC' : 'ARC',
+      isMidArc ? 'MID_ARC' : 'ARC',
       input.generatedNodes,
     ));
   }
@@ -130,7 +167,7 @@ function discretisedDefinition(input) {
   const chordSegments = [];
   for (let index = 1; index < chain.length; index += 1) {
     chordSegments.push(Object.freeze({
-      id: `${sourceSegmentId}/B${index}`,
+      id: `${sourceSegmentId}.B${index}`,
       startNodeId: String(chain[index - 1].id),
       endNodeId: String(chain[index].id),
       length: distance(chain[index - 1], chain[index]),

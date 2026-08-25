@@ -42,6 +42,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
   const endTrimBySegmentId = new Map();
   const generatedNodes = new Map();
   const retiredNodeRecords = new Map();
+  const repositionedNodes = new Map();
 
   for (const segment of sourceSegments) {
     if (!BEND_RETOPOLOGY_TYPES.includes(String(segment.type))) continue;
@@ -55,6 +56,7 @@ export function retopologiseDeclaredBends(geometry, profile) {
       endTrimBySegmentId,
       generatedNodes,
       retiredNodeRecords,
+      repositionedNodes,
       chordCount,
       lengthErrorLimit,
     };
@@ -98,8 +100,16 @@ export function retopologiseDeclaredBends(geometry, profile) {
     String(segment.startNodeId), String(segment.endNodeId),
   ]));
   const retiredNodeIds = [...retiredNodeRecords.keys()].sort(compareAscii);
-  const nodes = geometry.nodes.filter((node) =>
-    !retiredNodeRecords.has(String(node.id)) || referencedNodeIds.has(String(node.id)));
+  // A repositioned node keeps its identity and everything bound to it; only its
+  // coordinate moves, from the working point onto the arc.
+  const nodes = geometry.nodes
+    .filter((node) => !retiredNodeRecords.has(String(node.id)) || referencedNodeIds.has(String(node.id)))
+    .map((node) => {
+      const moved = repositionedNodes.get(String(node.id));
+      return moved === undefined
+        ? node
+        : Object.freeze({ ...node, x: moved.x, y: moved.y, z: moved.z, meta: Object.freeze({ ...(node.meta ?? {}), ...moved.meta }) });
+    });
   for (const [id, node] of [...generatedNodes.entries()].sort((a, b) => compareAscii(a[0], b[0]))) {
     if (!sourceNodesById.has(id)) nodes.push(node);
   }
@@ -155,7 +165,7 @@ function appendSourceRepresentation(input) {
   let evidenceOwned = false;
 
   if (bodyExists) {
-    const id = changedBody ? `${sourceId}/S1` : sourceId;
+    const id = changedBody ? `${sourceId}.S1` : sourceId;
     input.outputSegments.push(Object.freeze({
       ...input.source,
       id,

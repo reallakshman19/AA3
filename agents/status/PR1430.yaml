@@ -7,6 +7,7 @@ branch: agent/issue-1321-ancillary-distributed-mass
 main_head_last_checked: 761632915155e0e9eb31c4cde74af539e69ec015
 merge_base: 6d4a7cbdd75208b918540be0bbea12d04af83ae4
 engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
+recovery_basis: 0e61cda070197c643ca64e9d01b6ba6ca8497859
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY_DRAFT_SOURCE_AUDITED
@@ -22,6 +23,7 @@ validation:
   live_grounding: PASS
   main_head: 761632915155e0e9eb31c4cde74af539e69ec015
   engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
+  recovery_basis: 0e61cda070197c643ca64e9d01b6ba6ca8497859
   main_only_commit_count_since_merge_base: 2
   main_drift_overlap: NONE_WRC_EMP1_SOURCE_GOVERNANCE_ONLY
   open_overlap: PASS_STALE_PR1323_ONLY_CLOSED_UNMERGED
@@ -42,8 +44,7 @@ validation:
   focused_default_authority_regression: NOT_RUN
   canonical_non_fea_aggregate: NOT_RUN
   standard_import_build_browser_checks: NOT_RUN
-  hosted_ci_current_head: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_RUNNER_UNAVAILABLE
-  hosted_ci_observation: "exact-head PR jobs are created but expose no steps; earlier/current observations have runner_id=0 or steps=[]"
+  hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_RUNNER_UNAVAILABLE
   workflow_mutation: NONE
 authority:
   owner_proceed_next_instruction_current_turn: true

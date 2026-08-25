@@ -158,10 +158,10 @@ function validateInputCausesForRecords(records) {
   return [...new Set((records || []).flatMap((record) => validateInputCausesForField(record?.fieldId)))].sort();
 }
 
-function validateInputCauseMessage(records) {
+function validateInputCauseMessage(records, subject = 'These proposals', verb = 'provide') {
   const causes = validateInputCausesForRecords(records);
-  if (!causes.length) return 'No coverage cause mapping is declared for these fields.';
-  return `These proposals provide evidence used by Validate Input cause(s): ${causes.join(', ')}. Validate Input must re-evaluate before any blocker can be considered cleared.`;
+  if (!causes.length) return `${subject} have no declared coverage cause mapping.`;
+  return `${subject} ${verb} evidence used by Validate Input cause(s): ${causes.join(', ')}. Validate Input must re-evaluate before any blocker can be considered cleared.`;
 }
 
 function resolutionTable(derived) {
@@ -224,12 +224,28 @@ function bind(container, sourceModel, derived, onChanged) {
   });
   container.addEventListener('click', (event) => {
     const accept = event.target.closest('[data-enrichment-accept]')?.dataset.enrichmentAccept;
-    if (accept) return attempt(() => nonFeaEnrichmentStore.acceptProposal(accept), onChanged);
+    if (accept) return attempt(() => {
+      const proposal = nonFeaEnrichmentStore.getSnapshot().proposals
+        .find((row) => row.proposalId === accept);
+      nonFeaEnrichmentStore.acceptProposal(accept);
+      if (proposal) {
+        nonFeaEnrichmentStore.setMessage(
+          `Accepted exact enrichment record ${proposal.record.recordId}. ${validateInputCauseMessage([proposal.record], 'This accepted record', 'provides')}`,
+        );
+      }
+    }, onChanged);
     const reject = event.target.closest('[data-enrichment-reject]')?.dataset.enrichmentReject;
     if (reject) return attempt(() => nonFeaEnrichmentStore.rejectProposal(reject), onChanged);
     const remove = event.target.closest('[data-enrichment-remove]')?.dataset.enrichmentRemove;
     if (remove) return attempt(() => nonFeaEnrichmentStore.removeAccepted(remove), onChanged);
-    if (event.target.closest('[data-enrichment-accept-all]')) return attempt(() => nonFeaEnrichmentStore.acceptAllProposals(), onChanged);
+    if (event.target.closest('[data-enrichment-accept-all]')) return attempt(() => {
+      const proposals = [...nonFeaEnrichmentStore.getSnapshot().proposals];
+      const records = proposals.map((proposal) => proposal.record);
+      nonFeaEnrichmentStore.acceptAllProposals();
+      nonFeaEnrichmentStore.setMessage(
+        `Accepted ${records.length} exact enrichment record(s). ${validateInputCauseMessage(records, 'These accepted records', 'provide')}`,
+      );
+    }, onChanged);
     if (event.target.closest('[data-enrichment-generate-master]')) {
       return attempt(() => generateMasterProposals(), onChanged);
     }

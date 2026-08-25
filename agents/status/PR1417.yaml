@@ -1,21 +1,27 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1417
-mission: "Issue #1379 retained Table-5 material-input reconciliation"
+mission: "Issue #1379 retained Table-5 material-input reconciliation against current authorized bounded route"
 workstream: EMP1_WRC537_SOURCE_SEMANTICS
 branch: agent/issue-1379-table5-material-input-reconciliation-20260825
-base_sha: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
-base_tree: 2f9dd6023a9bfa9522518085142ebf23bf264412
-report_basis_head: 50813b6be3b32f7f30eeb26a9517dc00a26c6f5b
+main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+merge_base: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+pr_head_observed_before_recovery: ec0f4ee8ce273def7befbdc953565f42030f62b9
+report_basis_head: 4e0b241f05a2eb117fb0c45aa4b3128742e908d5
+report_sync: CURRENT
+grounding_epoch: GE-PR1417-002
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT
+pr_recovery_state: HEALTHY_DRAFT_RECONCILED_TO_CURRENT_ROUTE_STATE
 handover_readiness: READY
+takeover_authority: WRITE_ALLOWED_SOURCE_GOVERNANCE_ONLY
 report_path: agents/PR1417_workreport.md
+appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: HANDOFF_AUDIT_COMPLETE
-merge_authority: NOT_GRANTED
+coordination: SAFE_SOURCE_GOVERNANCE_RECOVERY
+current_stage: CURRENT_ROUTE_STATE_RECONCILED_FINAL_AUDIT_PENDING
+highest_risk: BOUNDED_ROUTE_AUTHORIZATION_OR_RUNTIME_E_NU_NON_USE_FALSELY_PROMOTED_TO_MATERIAL_SHELL_THEORY_SOURCE_AUTHORITY
 source_state:
   wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
   wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
@@ -31,21 +37,43 @@ partial_authority:
   poisson_treatment: BLOCKED
   constitutive_shell_theory: BLOCKED
   universal_material_applicability: BLOCKED
+  source_record_engineering_use_authorized: false
+  source_record_production_use_authorized: false
+current_bounded_route:
+  route_authorized: true
+  registry_registered: true
+  bounded_engineering_use_authorized: true
+  bounded_production_use_authorized: true
+  global_emp1_c_route_authority: false
+  code_compliance_authority: false
+  release_qualified: false
+  professional_release_ready: false
 validation:
+  live_grounding: PASS
   retained_source_inspection: PASS
-  direct_pdf_page_observation: NOT_RUN
+  bounded_adapter_material_non_use: PASS_SOURCE_INSPECTION
+  current_route_authority_inspection: PASS_SOURCE_INSPECTION
+  professional_release_authority_inspection: PASS_SOURCE_INSPECTION
+  source_vs_runtime_authority_separation: PASS_SOURCE_INSPECTION
+  main_drift_exact_path_overlap: NONE
+  direct_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
   checker_node_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-  changed_files_final: 6
-  behind_main: 0
-  reviews: 0
-  review_threads: 0
-  final_diff_review_main_audit: PASS
+  final_changed_file_scope: PENDING_FINAL_AUDIT
+  reviews_and_threads: PENDING_FINAL_AUDIT
+  hosted_ci: PENDING_FINAL_AUDIT
 authority:
-  engineering: false
-  production: false
+  source_record_engineering: false
+  source_record_production: false
+  bounded_runtime_engineering: true
+  bounded_runtime_production: true
   global_emp1_c: false
   code_compliance: false
   release: false
-exact_next_action: "Await explicit owner merge authorization for PR1417; re-ground main/head/reviews immediately before any merge."
+merge_disposition: OWNER_ONLY_DRAFT_FINAL_AUDIT_PENDING
+dependencies:
+  - "#1379"
+  - "#1389"
+  - "#54"
+exact_next_action: "Audit exact six-file diff against live main, reviews/threads and hosted execution; synchronize evidence metadata only; leave PR1417 draft/unmerged pending explicit Owner merge authorization."
 last_updated: "2026-08-25"

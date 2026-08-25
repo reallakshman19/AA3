@@ -12,21 +12,19 @@ TAKEOVER_AUTHORITY: READ_ONLY_FOR_ENGINEERING_MUTATION
 EXECUTION_MODE: BATCHED_OWNER_DIRECTED
 SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1413
 MERGE_AUTHORITY: OWNER_ONLY
-REPOSITORY: reallaksh19/Advanced_Analysis
-SOURCE_TASK: Issue #1413
 WIP: WIP-1413-exact-main-qualification-20260824
 BRANCH: agent/issue-1413-exact-main-qualification-20260824
 ISSUE_CREATION_HEAD: 72a916d6c60fe61da66c997594f7763aa3f04d8e
 LIVE_MAIN_LAST_CHECKED: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
 CURRENT_STAGE: B1 exact-head qualification — SOURCE_PACKET_AND_DISPATCH_PREFLIGHT_COMPLETE / EXECUTION_BLOCKED
-CURRENT_BLOCKER: Issue #54 pre-step GitHub Actions failure remains active. Fresh PR #1415 run 32795419092 / job 97645586842 on base main@4461e769... completed failure with runner_id=0, runner_name empty and zero steps.
-HIGHEST_RISK: treating source inspection, partial workflow coverage or prior-head evidence as exact-head executed qualification PASS
-EXACT_NEXT_ACTION: when runner allocation produces executable steps, re-ground to then-current main and execute the complete B1 matrix on one exact candidate SHA. Existing manual LAFEA visible-workbench workflow may carry product/shell/custody coverage but is not by itself the complete #1413 numerical matrix.
+CURRENT_BLOCKER: Issue #54 is reproduced on the exact current main itself. Push run 32794926660 build job 97644116755 for main@4461e769... completed failure with runner_id=0, empty runner name and steps=[].
+HIGHEST_RISK: treating static inspection, partial workflow coverage or prior-head evidence as exact-head executed qualification PASS
+EXACT_NEXT_ACTION: when runner allocation produces executable steps, re-ground to then-current main and execute the complete B1 matrix on one exact candidate SHA. Until then do not mutate mechanics, oracles, tolerances, workflow semantics or registry wording.
 ```
 
 ## Mission
 
-Certify the already-merged LAFEA.3/LAFEA.4 Model → Mesh → Analyse → Output implementation on one exact current-main-derived SHA, isolate the first actually executed wrong engineering boundary if any, and only after complete qualification create the narrow registry/documentation closure PR.
+Certify the already-merged LAFEA.3/LAFEA.4 Model → Mesh → Analyse → Output implementation on one exact current-main-derived SHA, isolate the first actually executed wrong engineering boundary if any, and only after complete qualification create a narrow registry/documentation closure PR.
 
 This WIP owns qualification/custody evidence only. It does **not** own mechanics, frozen expected values, tolerances, source/sign/unit conventions, mesh-quality policy or broad workflow infrastructure changes.
 
@@ -37,7 +35,6 @@ WORK_INTENT: INVESTIGATE / QUALIFY
 REPOSITORY_STATE: NO_PROMOTABLE_PR_YET
 MUTATION_AUTHORITY: READ_ONLY_FOR_ENGINEERING_CRITICAL_FILES
 CRITICALITY: ENGINEERING_CRITICAL
-COORDINATION: REQUIRED_BUT_NONBLOCKING_FOR_READ_ONLY_QUALIFICATION
 ```
 
 ## Batch status
@@ -50,13 +47,7 @@ Current live main:
 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
 ```
 
-Movement since the previous checkpoint `beee11eb99764bab078bf8ba73cf5768514aac67` is PR #1414:
-
-```text
-EMP.1: reconcile retained WRC Table-5 stress-intensity authority for #1383 (#1414)
-```
-
-PR #1414 retained exactly a six-file EMP.1 source-governance ledger:
+Movement from previous checkpoint `beee11eb99764bab078bf8ba73cf5768514aac67` is PR #1414, an EMP.1 Table-5 stress-intensity source-governance reconciliation. Its retained ledger is exactly:
 
 1. `validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json`
 2. `scripts/emp1-wrc537-stress-intensity-source-check.mjs`
@@ -65,9 +56,7 @@ PR #1414 retained exactly a six-file EMP.1 source-governance ledger:
 5. `agents/status/PR1414.yaml`
 6. `agents/claims/PR1414.yaml`
 
-No LAFEA.3/.4 source/domain/mesh/solver/recovery/presenter/registry path is in that retained ledger. Production WRC numerical implementation and `.github/workflows/**` were explicitly protected unchanged by #1414.
-
-Disposition:
+No LAFEA.3/.4 qualification path is in that ledger; production WRC numerical implementation and workflows were explicitly protected unchanged.
 
 ```text
 AD-01_RESULT = PASS_FOR_PROCEEDING_TO_EXECUTION
@@ -76,11 +65,11 @@ DIRECT_LAFEA_QUALIFICATION_PATH_DRIFT_FOUND = false
 ENGINEERING_MUTATION_AUTHORIZED = false
 ```
 
-#1393 integration head remains `ff5a7353f3759d72ba27be37095c7f5e06b5f7e2`. Earlier audit through issue-creation head found no direct drift of #1388/#1390/#1392/#1393 owned qualification paths.
+#1393 integration head remains `ff5a7353f3759d72ba27be37095c7f5e06b5f7e2`.
 
-### B1 — exact-head engineering qualification — SOURCE + DISPATCH PREFLIGHT COMPLETE / EXECUTION NOT_RUN
+### B1 — exact-head engineering qualification — SOURCE PREFLIGHT COMPLETE / EXECUTION NOT_RUN
 
-Required minimum matrix remains:
+Required minimum matrix:
 
 ```bash
 node scripts/lafea-bucket-01-kirsch-fixed-probes-check.mjs
@@ -97,9 +86,9 @@ node scripts/lafea-shell-sample-parent-check.mjs
 node scripts/lafea-shell-compiled-execution-check.mjs
 ```
 
-Then execute applicable import/full/build/clean-tree gates on the same exact head.
+Then applicable import/full/build/clean-tree gates on the same exact head.
 
-Source preflight already established:
+Source packet preflight disposition:
 
 ```text
 MANDATED_SCRIPT_MISSING = false
@@ -114,26 +103,26 @@ No B1 numerical command has executed in this qualification epoch.
 
 ### B1 dispatch-path audit — COMPLETE
 
-Current main contains `.github/workflows/lafea-visible-workbench.yml` with `workflow_dispatch:`. The lane performs:
+`.github/workflows/lafea-visible-workbench.yml` has `workflow_dispatch` and already provides useful exact-head/product execution infrastructure:
 
-- exact-head and clean-tree verification;
+- exact-head/clean-tree verification;
 - `npm ci`;
-- shell Sample parent/compiler/response qualification;
-- standalone LAFEA and production Pages builds;
+- shell parent/compiler/response qualification;
+- standalone and production builds;
 - pinned Chromium installation;
 - `scripts/lafea-stage17-browser-run.mjs`.
 
-`lafea-stage17-browser-run.mjs` itself carries:
+The Stage-17 carrier includes:
 
 - `lafea1371-pr-b-merge-order-guard.mjs`;
 - `lafea1371-cross-stage-anti-drift-check.mjs`;
-- B01/B02 diagnostic/production sequence through `lafea-b01-b02-gate0-diagnostic.mjs`;
-- LAFEA.3 Sample retained mesh / preflight checks;
-- Chromium `e2e/lafea3-sample-mesh.spec.js` and `e2e/lafea-shell-sample-mesh.spec.js` plus inherited LAFEA journeys.
+- B01/B02 production-sequence diagnostics;
+- LAFEA.3 Sample retained-mesh/preflight checks;
+- LAFEA.3 and shell retained-mesh Chromium journeys.
 
-The B02 production sequence explicitly executes B02A/B02B/B02C/B02D and produces B02E receipt semantics.
+B02 production sequence explicitly executes B02A/B02B/B02C/B02D and produces B02E receipt semantics.
 
-However this manual lane is **partial relative to #1413 B1 closure**. It does not itself explicitly establish every required independent numerical item, notably the standalone B-bar/Lamé qualification and the explicit Kirsch fixed-probe command in the issue matrix. Therefore:
+But the manual lane is **not complete B1 closure by itself**. It does not explicitly establish every #1413 independent numerical item, notably the standalone B-bar/Lamé command and the explicit Kirsch fixed-probe command/current equivalent.
 
 ```text
 MANUAL_DISPATCH_PATH_EXISTS = true
@@ -142,7 +131,7 @@ MANUAL_DISPATCH_PATH_ALONE_SATISFIES_B1 = false
 WORKFLOW_SEMANTIC_MUTATION_AUTHORIZED = false
 ```
 
-The connected GitHub capability can inspect/rerun existing workflow runs but cannot create a new `workflow_dispatch` event. No workflow mutation or validation-only PR was created to work around that limitation.
+The connected GitHub capability can inspect and rerun existing runs but cannot create a new `workflow_dispatch` event. No validation-only PR or workflow mutation was created as a workaround.
 
 ### B2 — first-failure isolation / minimal repair — NOT TRIGGERED
 
@@ -153,26 +142,26 @@ Rules:
 - first wrong boundary controls the repair;
 - one mechanics boundary per repair PR;
 - no tolerance widening;
-- no frozen-value rewrite from production output;
+- no frozen expected-value rewrite from production output;
 - no benchmark deletion;
 - no nodal/display-smoothed stress promoted to engineering authority.
 
 ### B3 — Chromium product/output qualification — SOURCE PREFLIGHT COMPLETE / EXECUTION NOT_RUN
 
-Required retained product journeys exist:
+Required product journeys exist:
 
 ```text
 e2e/lafea3-sample-mesh.spec.js
 e2e/lafea-shell-sample-mesh.spec.js
 ```
 
-`lafea-visible-workbench.yml` already invokes the Stage-17 browser carrier that includes both. Actual Chromium qualification remains `NOT_RUN` while jobs die before checkout.
+The existing visible-workbench lane invokes both through the Stage-17 carrier. Actual Chromium qualification remains `NOT_RUN` under #54.
 
 ### B4 — registry/documentation closure PR — PROTECTED
 
 Only after B1+B3 execute and PASS on one exact head.
 
-LAFEA.3 limitation may only be narrowed to the proven executed envelope. LAFEA.4 must retain:
+LAFEA.3 limitation may only be narrowed to the proven executed envelope. LAFEA.4 retains:
 
 ```text
 CST_DKT_TRI3_THIN_SHELL_V1
@@ -215,8 +204,6 @@ No MITC/drilling/thick-shell/contact/weld/code widening.
 
 ### Cross-stage custody
 
-Predeclared material edit remains:
-
 ```text
 E 200000 -> 210000 MPa
 force-controlled displacement factor = 1/1.05 = 0.9523809523809523
@@ -224,7 +211,7 @@ predicted displacement change = -4.7619047619%
 predicted stress change = approximately 0% for homogeneous force-controlled linear elasticity
 ```
 
-Required custody behavior:
+Required custody:
 
 ```text
 same deterministic mesh content may be reused after E-only edit
@@ -240,7 +227,7 @@ registryCleanupState = BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
 Continuum:
 
 - classical Kirsch fixed physical probes; production output not used;
-- B02C/B02E frozen before observation; moving maximum/display interpolation/nodal averaging forbidden as acceptance authority;
+- B02C/B02E frozen before production observation; moving maximum/display interpolation/nodal averaging forbidden as acceptance authority;
 - B-bar/Lamé frozen before production observation with T6/Q8 near-incompressible ladder.
 
 Shell:
@@ -248,11 +235,45 @@ Shell:
 - B4-1 analytical membrane patch;
 - B4-2 analytical constant-curvature bending patch;
 - B4-3 primary published Batoz/Bathe/Ho DKT twisting-square reference;
-- frozen-definition manifest explicitly forbids production-derived geometry, targets, tolerances, moving maxima, nodal projection, cross-element averaging and display interpolation.
+- frozen manifest forbids production-derived geometry, targets, tolerances, moving maxima, nodal projection, cross-element averaging and display interpolation.
 
-## Issue #54 — latest infrastructure evidence
+## Issue #54 — strongest current evidence
 
-Prior explicit rerun probe:
+### Exact current main push run
+
+```text
+head = main@4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+workflow = Deploy Vite site to GitHub Pages
+run = 32794926660
+event = push
+build job = 97644116755
+build conclusion = failure
+runner_id = 0
+runner_name = empty
+steps = []
+deploy job = 97644124988
+deploy conclusion = skipped
+checkout = NOT_EXECUTED
+repository command = NOT_EXECUTED
+```
+
+This is stronger than current-base PR evidence because it is the exact current main SHA itself.
+
+### Fresh current-base PR reproduction
+
+```text
+PR = #1415
+base = main@4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+head = f43d7b82883524c7f83d45e9fdd59b63bc379328
+workflow run = 32795419092
+job = 97645586842
+conclusion = failure
+runner_id = 0
+runner_name = empty
+steps = []
+```
+
+### Prior explicit rerun probe
 
 ```text
 PR = #1414
@@ -260,24 +281,6 @@ base = beee11eb99764bab078bf8ba73cf5768514aac67
 run = 32761507413
 original job = 97541176349 -> failure / steps=null / logs=null
 rerun job = 97643768654 -> failure / steps=null / logs=null
-```
-
-Newest current-base reproduction after main advanced:
-
-```text
-PR = #1415
-base = main@4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-head = f43d7b82883524c7f83d45e9fdd59b63bc379328
-workflow = EMP.1 independent WRC source oracle
-run = 32795419092
-job = 97645586842
-status = completed
-conclusion = failure
-runner_id = 0
-runner_name = empty
-steps = []
-checkout = NOT_EXECUTED
-repository command = NOT_EXECUTED
 ```
 
 Classification:
@@ -288,6 +291,8 @@ ORIGIN = INFRASTRUCTURE / EXECUTION_ENVIRONMENT
 ENGINEERING_FAILURE_PROVEN = false
 TRANSIENT_SINGLE_ATTEMPT_HYPOTHESIS = FALSIFIED
 CURRENT_BASE_RECURRENCE_CONFIRMED = true
+EXACT_MAIN_RECURRENCE_CONFIRMED = true
+FIRST_DEMONSTRATED_FAILURE_BOUNDARY = INFRASTRUCTURE
 ```
 
 Do not create another validation-only PR merely to reproduce this known pre-step state.
@@ -320,13 +325,13 @@ INFRASTRUCTURE
 | Check | Status | Observation |
 |---|---|---|
 | live main grounding | PASS | `4461e7699d08b8a1acbbc89cdbea3fd998368ca6` |
-| drift from prior checkpoint | PASS / NON_LAFEA_AUTHORITY | PR #1414 six-file EMP.1 source-governance scope |
+| drift from prior checkpoint | PASS / NON_LAFEA_AUTHORITY | PR #1414 six-file EMP.1 scope |
 | B1 mandated script inventory | PASS_SOURCE_INSPECTION | required paths present |
 | frozen continuum oracle inventory | PASS_SOURCE_INSPECTION | Kirsch/B02/B-bar retained |
 | frozen shell oracle inventory | PASS_SOURCE_INSPECTION | B4-1/B4-2/B4-3 + manifest retained |
-| manual dispatch lane existence | PASS_SOURCE_INSPECTION | `lafea-visible-workbench.yml` has `workflow_dispatch` |
-| manual lane full-B1 equivalence | NO | useful partial coverage; not complete #1413 numerical matrix |
-| latest current-base workflow | FAIL_INFRASTRUCTURE | #1415 run `32795419092`, job `97645586842`, runner_id 0, zero steps |
+| manual dispatch lane | PASS_SOURCE_INSPECTION | exists, useful, partial |
+| exact-main push workflow | FAIL_INFRASTRUCTURE | run `32794926660`, job `97644116755`, runner_id 0, zero steps |
+| current-base PR workflow | FAIL_INFRASTRUCTURE | run `32795419092`, job `97645586842`, runner_id 0, zero steps |
 | B1 numerical/custody matrix | NOT_RUN | blocked before checkout |
 | B3 Chromium | NOT_RUN | blocked before checkout |
 | B2 mechanics repair | NOT_TRIGGERED | no engineering failure executed |
@@ -336,17 +341,17 @@ No unexecuted engineering check is represented as PASS.
 
 ## Active ISS / RISK / DEC
 
-- `ISS-1413-01` ACTIVE — no exact current-main-derived complete qualification packet has executed.
+- `ISS-1413-01` ACTIVE — no complete exact-main qualification packet has executed.
 - `ISS-1413-02` RESOLVED_FOR_B0 — no LAFEA.3/.4 authority drift blocks attempting B1.
-- `ISS-1413-03` ACTIVE — #54 pre-step failure reproduced again on current base `4461e769...`.
-- `ISS-1413-04` RESOLVED_SOURCE_PREFLIGHT — no missing required script/oracle/browser-spec defect found.
+- `ISS-1413-03` ACTIVE — #54 pre-step failure now proven directly on exact main.
+- `ISS-1413-04` RESOLVED_SOURCE_PREFLIGHT — no missing required script/oracle/browser-spec defect.
 - `ISS-1413-05` RESOLVED_DISPATCH_AUDIT — manual visible-workbench lane exists but is partial relative to full B1.
-- `RISK-1413-01` ACTIVE — partial lane or prior-head/static evidence could be mistaken for complete exact-head execution evidence.
+- `RISK-1413-01` ACTIVE — partial lane or prior-head/static evidence could be mistaken for full exact-head execution evidence.
 - `RISK-1413-02` ACTIVE — unmerged LAFEA work must not contaminate current-main certification.
 - `DEC-1413-01` — no mechanics mutation until an executed first engineering failure identifies the boundary.
 - `DEC-1413-02` — no validation-only PR while runner fails before step creation.
 - `DEC-1413-03` — no workflow-semantic change solely to bypass #54.
-- `DEC-1413-04` — use the existing manual visible-workbench lane as supplementary B1/B3 coverage when executable, but retain explicit execution of any #1413 matrix items it does not cover.
+- `DEC-1413-04` — use existing visible-workbench lane as supplementary B1/B3 coverage when executable; separately execute any B1 matrix items it does not cover.
 
 ## Changed-file ledger
 

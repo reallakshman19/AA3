@@ -116,8 +116,33 @@ assert.match(inputCheckViewSource, /GATE ROLLUP/u, 'derived gate rollups must be
 const enrichmentViewSource = readFileSync(new URL('../src/workspace/enrichment/non-fea-enrichment-view.js', import.meta.url), 'utf8');
 assert.match(
   enrichmentViewSource,
-  /PIPE_OUTER_DIAMETER:\s*Object\.freeze\(\['SECTION_COVERAGE_INCOMPLETE',\s*'FLEXURAL_COVERAGE_INCOMPLETE',\s*'MASS_COVERAGE_INCOMPLETE'\]\)/u,
-  'pipe diameter evidence must disclose section, flexural and mass coverage dependencies',
+  /PIPE_OUTER_DIAMETER:\s*Object\.freeze\(\['SECTION_COVERAGE_INCOMPLETE',\s*'MASS_COVERAGE_INCOMPLETE'\]\)/u,
+  'pipe diameter evidence must disclose only section and mass coverage dependencies',
+);
+assert.doesNotMatch(
+  enrichmentViewSource,
+  /PIPE_OUTER_DIAMETER:[^\n]*FLEXURAL_COVERAGE_INCOMPLETE/u,
+  'pipe diameter evidence must not claim flexural coverage impact without a governed I derivation',
+);
+assert.match(
+  enrichmentViewSource,
+  /PIPE_WALL_THICKNESS:\s*Object\.freeze\(\['SECTION_COVERAGE_INCOMPLETE',\s*'MASS_COVERAGE_INCOMPLETE'\]\)/u,
+  'pipe wall-thickness evidence must disclose only section and mass coverage dependencies',
+);
+assert.match(
+  enrichmentViewSource,
+  /ELASTIC_MODULUS:\s*Object\.freeze\(\['FLEXURAL_COVERAGE_INCOMPLETE'\]\)/u,
+  'elastic modulus evidence must disclose its flexural coverage dependency',
+);
+assert.match(
+  enrichmentViewSource,
+  /SECOND_MOMENT_AREA:\s*Object\.freeze\(\['FLEXURAL_COVERAGE_INCOMPLETE'\]\)/u,
+  'second-moment evidence must disclose its flexural coverage dependency',
+);
+assert.match(
+  enrichmentViewSource,
+  /FLEXURAL_RIGIDITY:\s*Object\.freeze\(\['FLEXURAL_COVERAGE_INCOMPLETE'\]\)/u,
+  'direct flexural-rigidity evidence must disclose its flexural coverage dependency',
 );
 assert.match(
   enrichmentViewSource,

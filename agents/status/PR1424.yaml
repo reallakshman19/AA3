@@ -6,7 +6,7 @@ workstream: LOADCALC_VALIDATE_INPUT_PROGRESS
 branch: agent/issue-1422-validate-input-progress
 main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-implementation_test_head: 54caa9ca141579c68f9d5f741de9ea5688e0e024
+implementation_test_head: 280ceeeb7591b3c6ab4da45e14d799b2cc6ff263
 recovery_report_head: a70d4a2d4cd40742664bd885216cb335de1addda
 criticality: ENGINEERING_CRITICAL
 agent_state: VALIDATION_BLOCKED
@@ -17,13 +17,13 @@ appendix_a_status: FAIL_A4_NOT_RUN_OWNER_MUTATION_AUTHORITY_ONLY
 appendix_a_score: null
 appendix_a_min_question: A4
 coordination: SAFE
-current_stage: IMPLEMENTATION_COMPLETE_ACCEPTANCE_MATRIX_ENCODED_SEMANTIC_DEPENDENCY_AUDITED_REQUIRED_EXECUTION_VALIDATION_NOT_RUN
+current_stage: IMPLEMENTATION_COMPLETE_ACCEPTANCE_MATRIX_ENCODED_THREE_REAL_CAUSE_STATES_DEFINED_REQUIRED_EXECUTION_VALIDATION_NOT_RUN
 highest_risk: BROWSER_AND_WORKSPACE_REGRESSIONS_NOT_EXECUTED
 validation:
   live_grounding: PASS
   issue_1421_superseded: PASS
   overlap_check: PASS_NO_PRODUCTION_OVERLAP_FOUND
-  exact_head_reconciliation: PASS_9_EXPECTED_PATHS
+  exact_head_reconciliation: PASS_10_EXPECTED_PATHS
   protected_paths_unchanged: PASS_SOURCE_INSPECTION
   checker_readiness_source_unchanged: PASS_SOURCE_INSPECTION
   reverse_dependency_semantic_audit: PASS_OD_WALL_SECTION_MASS_E_I_EI_FLEXURAL
@@ -33,14 +33,18 @@ validation:
   non_mass_flexural_fixture_path: PASS_SOURCE_INSPECTION
   non_mass_consumption_profile: PASS_SOURCE_INSPECTION
   non_mass_e2e_definition: PASS_SOURCE_INSPECTION
+  grouping_three_real_states_definition: PASS_SOURCE_INSPECTION
+  grouping_single_master_bootstrap_basis: PASS_SOURCE_INSPECTION_LINE_LIST_NOT_BUNDLED
   anti_drift_dependency_boundary: PASS_SOURCE_DEFINITION
   reconstructed_coverage_logic: PASS_RECONSTRUCTED_LOCAL
-  git_clone: FAIL_ENVIRONMENT_DNS_AND_OUTBOUND_HTTPS
+  faithful_checkout_transport: FAIL_ENVIRONMENT_NO_RAW_OR_ARCHIVE_MATERIALIZATION
+  local_dependency_cache: FAIL_ENVIRONMENT_EMPTY
   exact_head_combined_status: NONE_AT_LAST_CHECK
   exact_head_automatic_workflows: NOT_APPLICABLE_UNRELATED_EMP1_LFEA_FAILURES
   focused_projection_checker: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   advanced_shell_contract: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   focused_e2e: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  grouping_e2e: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   existing_input_check_e2e: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   workspace_contracts: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
 authority:
@@ -52,4 +56,4 @@ authority:
   master_data_authority_change_authorized: false
   workflow_change_authorized: false
 merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE_REQUIRED_VALIDATION_NOT_RUN
-exact_next_action: "Obtain a faithful checkout of PR1424, re-ground main and overlap, run the focused projection check, advanced shell contract, focused MASS/FLEXURAL partial-coverage E2E, existing input-check E2E, and workspace contracts; record exact outputs, fix only evidenced failures, then mark review-ready only if all required validation is genuinely green."
+exact_next_action: "Obtain a faithful checkout of PR1424, re-ground main and overlap, run the focused projection check, advanced shell contract, focused MASS/FLEXURAL coverage E2E plus the three-state grouping E2E, existing input-check E2E, and workspace contracts; record exact outputs, fix only evidenced failures, then mark review-ready only if all required validation is genuinely green."

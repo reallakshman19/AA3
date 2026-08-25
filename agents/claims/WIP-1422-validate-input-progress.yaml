@@ -1,0 +1,25 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: WIP-1422-validate-input-progress
+owner: ChatGPT
+mission: "Implement Issue #1422 Validate Input progress visibility without weakening checker gates"
+branch: agent/issue-1422-validate-input-progress
+pr: null
+issue: 1422
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE
+claimed_paths:
+  - src/workspace/non-fea-analysis-plan-runtime.js
+  - src/core/non-fea-common-checker/workspace-status-projection.js
+  - src/workspace/non-fea-input-check-view.js
+  - src/workspace/enrichment/non-fea-enrichment-view.js
+  - e2e/non-fea-input-check-load-calc.spec.js
+  - scripts/non-fea-input-check-coverage-projection-check.mjs
+protected_paths:
+  - src/core/non-fea-common-checker/index.js
+  - src/calc-workspace/**
+  - src/core/model-loads/**
+  - .github/workflows/**
+authority_boundary: "Presentation/status evidence custody only. coverageResult().ready, method readiness, seal, authorization and calculation execution semantics remain unchanged."
+merge_authority: OWNER_ONLY
+state: ACTIVE

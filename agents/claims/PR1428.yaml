@@ -2,11 +2,12 @@ schema: AgentClaim.v1
 pr_or_wip: PR1428
 claim_state: ACTIVE
 branch: agent/issue-1413-validation-isolation-20260825
-mission: "Isolate #1413 LAFEA.3/.4 qualification ownership without changing engineering authority."
+mission: "Isolate #1413 LAFEA.3/.4 qualification ownership and provide canonical exact-head Q0 plumbing without changing engineering authority."
 write_scope:
   - scripts/lafea-b02-definition-freeze-check.mjs
   - scripts/lafea-b02-route-expressibility-check.mjs
   - scripts/lafea1413-validation-isolation-check.mjs
+  - scripts/lafea1413-exact-head-preflight-check.mjs
   - e2e/lafea4-sample-mesh.spec.js
   - agents/PR1428_workreport.md
   - agents/status/PR1428.yaml
@@ -22,8 +23,10 @@ protected_no_mutation:
   - e2e/lafea-shell-sample-mesh.spec.js
   - .github/workflows/
 authority_boundary: >-
-  Validation isolation only. Frozen definition custody, current route expressibility, and LAFEA.4
-  browser qualification are independently reportable. No mechanics, oracle, tolerance, registry,
-  release, or workflow authority is changed.
-overlap_state: SAFE_ON_CURRENT_MAIN_PENDING_RECHECK_IF_MAIN_MOVES
+  Validation isolation and qualification plumbing only. Frozen definition custody, current route
+  expressibility, exact-head Q0 control flow, and LAFEA.4 browser qualification are independently
+  reportable. No mechanics, oracle, tolerance, registry, release, or workflow authority is changed.
+grounding_epoch: AD-04_AFTER_PR1424
+base_main: 8b3dc79ed827e74c4b708c8d77e6354374a27154
+overlap_state: SAFE_AD04_MAIN_REBASED_Q4_REQUALIFICATION_REQUIRED
 merge_authority: NOT_GRANTED

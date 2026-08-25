@@ -288,6 +288,12 @@ function stageMigration(sourceModel, payload) {
   nonFeaEnrichmentStore.stageMigratedRecords(report);
 }
 
+/**
+ * Stages Load Calc enrichment proposals derived from already-approved Master
+ * Data. Proposals only: nothing is accepted here, and an approximate piping
+ * class match is reported rather than silently accepted, so the count of
+ * approximate matches is surfaced in the resulting status message.
+ */
 function generateMasterProposals() {
   const dataset = WorkspaceState.getSnapshot()?.dataset;
   if (!dataset?.sharedModel) throw new TypeError('An active dataset is required.');
@@ -309,6 +315,11 @@ function generateMasterProposals() {
   return result;
 }
 
+/**
+ * Opens the catalogue fitting weight review. Selections are staged as
+ * proposals rather than accepted directly, so a reviewer's choice still
+ * passes through the same explicit acceptance step as every other record.
+ */
 function reviewFittingWeights(documentRef, onChanged) {
   const dataset = WorkspaceState.getSnapshot()?.dataset;
   if (!dataset?.sharedModel) throw new TypeError('An active dataset is required.');

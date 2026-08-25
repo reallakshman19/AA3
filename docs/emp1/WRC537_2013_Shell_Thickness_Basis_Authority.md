@@ -2,7 +2,7 @@
 
 ## Decision
 
-Retained WRC 537 Table 5 pp.41–42 provides a bounded source fact that was previously hidden by the broader blocked disposition:
+Retained WRC 537 Table 5 pp.41–42 provides a bounded source fact:
 
 ```text
 Vessel Thickness  T
@@ -14,13 +14,37 @@ Table 5 also uses that same `T` in the cylindrical geometry parameter:
 gamma = R_m / T
 ```
 
-and in the cylindrical membrane/bending stress scale factors, which contain `T` and `T^2` denominators.
+and in cylindrical membrane/bending stress scale factors containing `T` and `T^2` denominators.
 
 Those facts qualify the **Table-5 symbol and mathematical role of `T`**. They do **not** define which physical vessel thickness value must be selected for a professional assessment.
 
 Current disposition:
 
 `BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED`
+
+## Current authorized-route reconciliation
+
+The bounded gamma=5 / zero-differential-pressure WRC route is authorized on current production main. That is a separate runtime decision and must not be read as primary-source qualification of the physical thickness basis.
+
+Current truth is deliberately split:
+
+```text
+bounded route is authorized                         = true
+bounded engineering use is authorized               = true
+bounded production use is authorized                = true
+physical thickness-basis source authority remains false
+production thickness-basis authority                = false
+global EMP.1.C authority                            = false
+code compliance authority                           = false
+release qualification                               = false
+professional release ready                          = false
+```
+
+Governing invariant:
+
+`BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY`
+
+The route may continue to consume its already-established historical bounded thickness custody. Its ability to calculate does not prove that `NOMINAL_MINUS_CORROSION`, `EXPLICIT_ASSESSMENT`, measured minimum wall, nominal wall, or any other physical basis is the WRC-required basis.
 
 ## Source custody
 
@@ -50,7 +74,7 @@ The retained Table-5 computation sheet also establishes that:
 - cylindrical local-stress scale factors use `T` and `T^2`;
 - `T` is therefore a source-defined input to the Table-5 cylindrical calculations, not merely a software field name.
 
-This increment does not alter any coefficient, curve, sign, stress or numerical implementation.
+This reconciliation does not alter any coefficient, curve, sign, stress or numerical implementation.
 
 ## What Table 5 does not establish
 
@@ -106,7 +130,7 @@ meanRadius = PIPE_OD_OVER_2_MINUS_ASSESSMENT_THICKNESS_OVER_2
 gamma = R_m/T
 ```
 
-This is an internally consistent and deterministic software chain. The new Table-5 reconciliation proves that the WRC cylindrical computation sheet consumes a vessel thickness `T`; it still does **not** prove that either upstream assessment policy is the WRC-required physical basis.
+This is an internally consistent and deterministic software chain. Table-5 source authority proves that the cylindrical computation sheet consumes a vessel thickness `T`; it still does **not** prove that either upstream assessment policy is the WRC-required physical basis.
 
 ## Protected inference boundary
 
@@ -135,6 +159,13 @@ current software uses the same assessment thickness in R_m and T
     => the physical WRC radius/thickness basis is source-qualified
 ```
 
+or:
+
+```text
+bounded WRC route is authorized
+    => its inherited assessment thickness is now primary-source-qualified WRC T
+```
+
 ## Radius/thickness relationship
 
 Current software derives:
@@ -161,7 +192,7 @@ Professional thickness-basis authority still requires exact source evidence for:
 8. locally thickened shell, insert plate and reinforcement-pad treatment;
 9. source evidence required for the selected physical thickness.
 
-## Authority effect
+## Authority effect of this reconciliation
 
 This source-governance increment does not:
 
@@ -170,6 +201,7 @@ This source-governance increment does not:
 - change source-custody runtime code;
 - change route or registry authority;
 - change the aggregate P0 source gate;
-- widen pressure, SCF, off-axis, spherical, attachment-class, interaction, code or release authority.
+- widen pressure, SCF, off-axis, spherical, attachment-class, interaction, code or release authority;
+- grant physical thickness-basis source authority.
 
-The current production thickness basis remains historical bounded-route custody, not newly qualified WRC physical-thickness authority.
+The important distinction is that **this record grants no new engineering authority**, while the bounded route is independently already authorized. The current production thickness basis remains historical bounded-route custody, not newly qualified WRC physical-thickness authority.

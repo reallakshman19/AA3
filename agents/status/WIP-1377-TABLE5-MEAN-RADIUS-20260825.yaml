@@ -1,7 +1,7 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: WIP-1377-TABLE5-MEAN-RADIUS-20260825
-mission: "Issue #1377 retained Table-5 mean-radius reconciliation"
+mission: "Issue #1377 retained Table-5 cylindrical Rm reconciliation"
 workstream: EMP1_WRC537_SOURCE_SEMANTICS
 branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
 base_sha: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
@@ -12,17 +12,23 @@ handover_readiness: READY
 report_path: agents/WIP-1377-TABLE5-MEAN-RADIUS-20260825_workreport.md
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: CLAIMED_BEFORE_PATCH
+current_stage: SOURCE_PATCH_COMPLETE_PR_ALLOCATION_PENDING
 source_state:
   wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
-  retained_table5_authority: VESSEL_MEAN_RADIUS_LABEL
+  retained_table5_label: VESSEL_RADIUS
+  retained_table5_symbol: R_m
+  retained_table5_gamma_role: QUALIFIED_RETAINED_SOURCE_TEXT
+  retained_table5_beta_role: QUALIFIED_RETAINED_SOURCE_TEXT
   direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
-expected_partial_authority:
-  cylindrical_mean_radius_role: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+partial_authority:
+  cylindrical_source_symbol_rm: QUALIFIED_RETAINED_SOURCE_TEXT
+  cylindrical_radius_parameter_role: QUALIFIED_RETAINED_SOURCE_TEXT
+  physical_mean_midsurface_definition: BLOCKED
   od_id_t_construction: BLOCKED
   corrosion_assessment_basis: BLOCKED
   local_nominal_diameter_basis: BLOCKED
   ovality_nonuniform_geometry: BLOCKED
+  section45_radius_identity: BLOCKED_BY_THIS_INCREMENT
   production_geometry_transformation: UNCHANGED
 authority:
   engineering: false
@@ -30,5 +36,10 @@ authority:
   global_emp1_c: false
   code_compliance: false
   release: false
-exact_next_action: "Patch only the three #1377 source-governance files; preserve current production geometry transformation and aggregate P0 gate."
+validation:
+  retained_source_inspection: PASS
+  direct_pdf_page_observation: NOT_RUN
+  checker_node_execution: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+exact_next_action: "Allocate draft PR, migrate WIP records to PR-number records, audit exact six-file diff/main/reviews, remain unmerged pending owner authorization."
 last_updated: "2026-08-25"

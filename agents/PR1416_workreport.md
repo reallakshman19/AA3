@@ -4,7 +4,7 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT
+PR_RECOVERY_STATE: HEALTHY_DRAFT_AUDIT_COMPLETE
 CRITICALITY: ENGINEERING_CRITICAL
 WORK_INTENT: SOURCE_GOVERNANCE_RECONCILIATION
 PR: #1416
@@ -12,10 +12,10 @@ BASE: main@4461e7699d08b8a1acbbc89cdbea3fd998368ca6
 BASE_TREE: 7f825983f3bc2c706214a318bc1d9ffe1d46d0e3
 BRANCH: agent/issue-1375-retained-table5-shell-thickness-reconciliation-20260825
 ISSUE: #1375
-CURRENT_STAGE: PR_ALLOCATED_RECOVERY_MIGRATION
+CURRENT_STAGE: FINAL_AUDIT_COMPLETE_AWAIT_OWNER_MERGE
 MERGE_AUTHORITY: NOT_GRANTED
 HIGHEST_RISK: turning retained Table-5 `Vessel Thickness T` into an unsupported nominal/corroded/measured physical thickness rule
-EXACT_NEXT_ACTION: remove WIP recovery records; verify exact six-file diff, live main, reviews/threads and protected paths; remain draft/unmerged pending owner authorization.
+EXACT_NEXT_ACTION: remain draft/unmerged; on explicit Owner merge authorization re-ground live main/head and repeat the exact six-file/review audit before merge.
 ```
 
 ## Mission
@@ -52,7 +52,7 @@ Reconcile only the retained WRC 537 Table-5 cylindrical thickness identity/role 
 
 The upstream foundation model retains `NOMINAL_MINUS_CORROSION` and `EXPLICIT_ASSESSMENT` policies. EMP.1 currently consumes `LAFEA2_ASSESSMENT_PIPE_THICKNESS`. This remains deterministic software custody only; this PR does not promote either policy into a WRC physical-thickness rule.
 
-## Final intended changed-file ledger
+## Final changed-file ledger
 
 1. `validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json`
 2. `scripts/emp1-wrc537-shell-thickness-basis-source-check.mjs`
@@ -60,6 +60,8 @@ The upstream foundation model retains `NOMINAL_MINUS_CORROSION` and `EXPLICIT_AS
 4. `agents/PR1416_workreport.md`
 5. `agents/status/PR1416.yaml`
 6. `agents/claims/PR1416.yaml`
+
+Temporary WIP recovery records are removed. PR1416 is the sole active recovery/claim identity for this branch.
 
 ## Protected no-mutation
 
@@ -83,10 +85,15 @@ The upstream foundation model retains `NOMINAL_MINUS_CORROSION` and `EXPLICIT_AS
 | checker Node execution | NOT_RUN |
 | production numerical comparison | NOT_APPLICABLE |
 | production thickness conversion | UNCHANGED |
+| changed files | PASS — exactly 6 |
+| branch behind main | PASS — 0 |
+| reviews | PASS — 0 |
+| review threads | PASS — 0 |
+| protected-path mutation | PASS — none |
 | engineering/production/global/code/release authority | false |
-| final six-file/main/review audit | PENDING |
+| final six-file/main/review audit | PASS |
 
-Encoded-but-unexecuted checker logic remains NOT_RUN.
+Encoded-but-unexecuted checker logic remains `NOT_RUN`, never PASS.
 
 ## Decisions
 

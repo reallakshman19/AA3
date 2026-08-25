@@ -6,25 +6,27 @@
 HANDOVER_READINESS: READY_FOR_VALIDATION
 PR_RECOVERY_STATE: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
-EXECUTION_MODE: OWNER_PROCEED
+EXECUTION_MODE: AUTO_MODE
 CRITICALITY: ENGINEERING_CRITICAL
 MERGE_AUTHORITY: OWNER_ONLY
 REPOSITORY: reallaksh19/Advanced_Analysis
-SOURCE_PREDECESSOR: PR #1270
+SOURCE_PREDECESSOR: PR #1270 (CLOSED_SUPERSEDED)
 PR: #1432
 BRANCH: agent/lafea3-local-refinement-current-main-salvage-20260825
-MAIN_HEAD_LAST_CHECKED: a8631581eb440fc69e0164f0a397086bf53bbb52
-CURRENT_STAGE: CURRENT_MAIN_PRODUCTION_SALVAGE_PENDING_EXECUTION
+REPORT_BASIS_HEAD: be2c490ddeb19b4f55e9182a4de3dffbc3f57eb6
+MAIN_HEAD_LAST_CHECKED: ee76cf461c33fc7efde36f96536db1a9ba8ab069
+CURRENT_STAGE: VALIDATION_BLOCKED_BY_HOSTED_RUNNER_ALLOCATION
 APPENDIX_A_STATUS: PASS 98/100, minimum 19/20
+ENGINEERING_FAILURE_PROVEN: false
 ```
 
 ## Handover in 60 seconds
 
-PR1432 is the clean current-main successor to stale/contaminated PR1270. It carries only the real LAFEA.3 retained-refinement production correction: one source-authoritative mapped remesh route plus an independent actual shared-edge adjacent-size gate before v2 mesh custody. It deliberately excludes PR1270's unrelated EMP.1 repairs, stale UI copies, workflow changes, registry changes, B01/B02 mechanics, and LAFEA.4 TECH-13 work.
+PR1432 is the clean current-main successor to contaminated/stale PR1270. It carries exactly five LAFEA.3 engineering/qualification files plus three recovery records. All five engineering/qualification files are byte-identical to the retained predecessor candidate blobs. PR1270 was durably marked superseded and closed on 2026-08-25.
 
-Current exact base `a8631581...` differs from the initial grounding base only by merged Load Calc PR1430, which has no LAFEA path/authority overlap.
+The branch was replayed as one clean commit on exact main `ee76cf46...`; intervening main movements were unrelated Load Calc and EMP.1 source-governance changes with no LAFEA path/authority overlap.
 
-Current-head executable qualification is NOT_RUN because hosted runners still fail before steps and no exact local checkout is available. Historical predecessor evidence is provenance only, not current-head PASS.
+Fresh PR-head hosted runs still fail before step creation: LAFEA visible-workbench job `97892673779` and EMP.1 independent-handcalc job `97892673495` both have `runner_id=0`, empty runner name and `steps=[]`. Therefore current-head Node/browser/build qualification is `NOT_RUN / INFRASTRUCTURE`, not FAIL and not PASS.
 
 ## Mission / production trace
 
@@ -38,28 +40,25 @@ current LAFEA.3 source authority
 -> actual shared-edge characteristic-length ratio
 -> v2 analysis-mesh evidence
 -> retained mesh custody
--> existing preflight/solver consumes that retained mesh
+-> existing preflight/solver consumes retained mesh
 ```
 
 ## Takeover / salvage decision
 
 `SALVAGE_PARTIAL + CLEAN_SUCCESSOR`.
 
-Reasons:
+Grounding facts:
 
-- PR1270 remained open/draft with 78 commits and 19 files.
-- its live diff included unrelated EMP.1 production/test files despite a LAFEA.3 assignment;
-- its original stack parent PR1268 is already merged;
-- it had no reviews or review threads to preserve;
-- current main is hundreds of commits beyond its old merge base;
-- the critical retained-refinement core files were byte-identical from PR1270 merge base `d24a5a1...` through initial salvage base `920d0ec...`, proving the core correction was not superseded;
-- presentation files did move and are intentionally not copied from the stale branch.
+- PR1270: stale 78-commit / 19-file draft;
+- live diff carried unrelated EMP.1 production/test files outside LAFEA.3 scope;
+- original stack dependency PR1268 already merged;
+- no review threads/review objections required preservation;
+- core retained-refinement source on current main remained at the predecessor baseline, so the actual first-failure repair was not superseded;
+- current UI/presentation files had moved and were deliberately not copied from the stale branch.
 
-PR1270 remains provenance for the first-failure RCA and historical exact-head evidence, not a promotion vehicle.
+PR1270 comment `5413912938` records supersession; PR1270 is closed and remains provenance only.
 
-## First proven failure and retained correction
-
-Predecessor RCA:
+## First proven predecessor failure
 
 ```text
 parent max adjacent ratio ~= 1.34088    PASS
@@ -68,35 +67,43 @@ radial halo candidate     ~= 1.97822    BLOCK
 qualified limit                       = 1.5
 ```
 
-The failure was post-generation actual topology, not the planned sizing field and not a solver/benchmark/tolerance problem. The threshold was not relaxed.
+This isolated the first wrong boundary to actual post-generation topology. The planned sizing preview, solver, benchmark and tolerance were not the failure. No threshold relaxation was permitted.
 
-The retained correction uses `SOURCE_AFFINE_BALANCED_METRIC_GRID_V1` inside a deliberately narrow first-production envelope. It does not self-certify: `createLafeaAnalysisMeshEvidenceV2()` independently recomputes actual shared-edge longest-corner-edge ratios for LAFEA.3 `:LOCAL_REFINEMENT:` meshes before custody.
+## Retained engineering correction
 
-## Exact scope
+The candidate uses `SOURCE_AFFINE_BALANCED_METRIC_GRID_V1` in a deliberately narrow first-production envelope. It does not self-certify. For LAFEA.3 `:LOCAL_REFINEMENT:` meshes, `createLafeaAnalysisMeshEvidenceV2()` independently recomputes actual shared-edge longest-corner-edge ratios using the bound mesh-profile `adjacentSizeRatioMax` before custody.
 
-Production:
+## Exact changed-file ledger
 
-1. `src/core/lafea-meshing/refinement-fields.js`
-2. `src/workspace/lafea-analysis-mesh-evidence-v2.js`
-3. `src/workspace/lafea-retained-mesh-refinement-grading.js`
-4. `src/workspace/lafea-retained-mesh-refinement.js`
+Engineering / qualification:
 
-Focused qualification:
-
-5. `scripts/lafea3-mapped-refinement-envelope-check.mjs`
+```text
+src/core/lafea-meshing/refinement-fields.js
+  blob 2629c25e025c652b56a25c4498e1339b68bd86b6
+src/workspace/lafea-analysis-mesh-evidence-v2.js
+  blob 06dc9d0cc52bb5b755a62961aff893b7bd2cb10b
+src/workspace/lafea-retained-mesh-refinement-grading.js
+  blob 101954a58f4cff5e93dec47141029c1540440e36
+src/workspace/lafea-retained-mesh-refinement.js
+  blob 51f9ffa992aeb664313fb3d12efb934297647f41
+scripts/lafea3-mapped-refinement-envelope-check.mjs
+  blob bf4109b2a3ac140195ce93b3fc26759062de1000
+```
 
 Recovery:
 
-6. `agents/PR1432_workreport.md`
-7. `agents/status/PR1432.yaml`
-8. `agents/claims/PR1432.yaml`
+```text
+agents/PR1432_workreport.md
+agents/status/PR1432.yaml
+agents/claims/PR1432.yaml
+```
 
-No workflow YAML, EMP.1, stage registry, release authority, solver, recovery, B01/B02 benchmark definition, or LAFEA.4 refinement file is in scope.
+No EMP.1, workflow YAML, stage registry, release authority, solver, recovery, B01/B02 benchmark, LAFEA.4 TECH-13 or stale presentation file is in the PR.
 
 ## Protected engineering invariants
 
 ```text
-bound adjacentSizeRatioMax remains authoritative; historical product value 1.5
+bound adjacentSizeRatioMax remains authoritative; current qualified value historically 1.5
 minimum LAFEA.3 local/global target ratio remains 0.25
 scaled-Jacobian threshold unchanged
 Q8 local refinement remains unqualified
@@ -125,24 +132,25 @@ minimum angle                     13.726327548800704 deg
 threshold changes                 false
 ```
 
-Fail-closed cases included unqualified 55°/65° geometry, side ratio 4, target offset 0.14, multiple targets, growth 1.4 and Q8.
-
-This does not count as execution PASS for PR1432.
+Fail-closed negatives covered 55°/65° geometry, side ratio 4, target offset 0.14, multiple targets, growth 1.4 and Q8. This evidence does not count as PR1432 current-head execution PASS.
 
 ## Current validation ledger
 
-| ID | Gate | Status | Observation | Oracle |
+| ID | Gate | Status | Observation | Oracle / evidence |
 |---|---|---|---|---|
-| V1432-01 | exact-file custody from predecessor for unchanged-base core files | PASS | SOURCE_INSPECTION / Git blob identity | repository custody |
-| V1432-02 | current-main base movement `920d0ec -> a863158` | PASS / unrelated | SOURCE_INSPECTION | path + authority classification |
-| V1432-03 | focused mapped-envelope Node check | NOT_RUN | execution environment unavailable | product regression + actual topology gate |
-| V1432-04 | existing retained-refinement replay/custody check | NOT_RUN | execution environment unavailable | product regression |
-| V1432-05 | LAFEA.3 browser path | NOT_RUN | hosted runner unavailable | product regression |
-| V1432-06 | broad build/import checks | NOT_RUN | hosted/local execution unavailable | repository closure |
+| V1432-01 | predecessor/current salvage blob custody | PASS | SOURCE_INSPECTION | exact Git blob identity for all five files |
+| V1432-02 | base drift `920d0ec -> a863158 -> ee76cf4` | PASS / UNRELATED | SOURCE_INSPECTION | Load Calc + EMP.1 only; no LAFEA path/authority overlap |
+| V1432-03 | clean current-main PR ledger | PASS | SOURCE_INSPECTION | exactly 8 files, one clean rebased commit |
+| V1432-04 | focused mapped-envelope Node check | NOT_RUN | NOT_OBSERVED | hosted runner allocation unavailable |
+| V1432-05 | retained-refinement replay/custody checks | NOT_RUN | NOT_OBSERVED | hosted/local execution unavailable |
+| V1432-06 | LAFEA visible-workbench Chromium | NOT_RUN | REMOTE_PRE_STEP_ONLY | run 32875613970 / job 97892673779: runner_id=0, steps=[] |
+| V1432-07 | independent current repo hosted allocation control | NOT_RUN | REMOTE_PRE_STEP_ONLY | run 32875613790 / job 97892673495: runner_id=0, steps=[] |
+| V1432-08 | broad build/import checks | NOT_RUN | NOT_OBSERVED | hosted/local execution unavailable |
+| V1432-09 | merge/release authority | NOT_APPLICABLE | SOURCE_INSPECTION | Owner-only; no authorization in current scope |
 
-No unexecuted check is PASS.
+No unexecuted engineering/product check is PASS.
 
-## Failure classification after execution recovers
+## Failure classification once execution recovers
 
 Stop at the first executed authoritative failure:
 
@@ -161,7 +169,7 @@ Do not weaken the 1.5 adjacency authority, 0.2 scaled-Jacobian gate, 0.25 target
 
 ## Coordination
 
-- PR1270: predecessor/superseded promotion vehicle; contamination is intentionally not carried.
+- PR1270: closed predecessor; provenance only.
 - PR1174: Mesh Workspace v3 pre-authority; no v3 activation here.
 - PR1258/1259: B01/B02 numerical mechanics; untouched.
 - PR1246: LAFEA.4 TECH-13 refinement; untouched.
@@ -180,8 +188,19 @@ TOTAL                           98/100
 MINIMUM                         19/20
 ```
 
-Points withheld only because current-main execution is unavailable.
+Points withheld only because current-main executable qualification is unavailable.
+
+## AUTO MODE continuation rule
+
+Do not rerun the same zero-step PR workflows. Re-probe only if one of these becomes true:
+
+1. `main` moves to a new exact SHA;
+2. a current repository workflow proves real hosted allocation (`runner_id != 0` plus actual steps/logs);
+3. Issue #54 receives independent recovery evidence;
+4. exact local checkout/runtime becomes available.
+
+When recovered, execute focused mapped-envelope and retained-refinement replay first, then LAFEA source/build/browser and broad closure gates. Stop at first authoritative executed failure before changing mechanics.
 
 ## EXACT_NEXT_ACTION
 
-When a real runner or exact local checkout is available, on the exact PR head run the focused mapped-envelope and existing retained-refinement replay first. If both pass, continue LAFEA source/build/browser checks. If the first authoritative failure is in this five-file seam, isolate that boundary before any mechanics change. Do not merge until current-head execution evidence is green or the Owner explicitly changes the evidence requirement.
+While infrastructure remains blocked, perform no further LAFEA.3 mechanics/oracle/tolerance/registry work on this PR. Keep the PR draft and handover-ready, monitor only legitimate recovery triggers/base drift, and resume execution immediately when a real runner/local checkout exists. Merge remains Owner-only.

@@ -1,75 +1,77 @@
-# WIP-1413 — LAFEA.3/.4 exact-main qualification and registry closure
+# WIP-1413 — exact-main LAFEA.3/.4 qualification and registry closure
 
 Issue: #1413  
 Repository: `reallaksh19/Advanced_Analysis`
 
-# CURRENT RECOVERY STATE — READ FIRST
+# RECOVERY HEADER — READ FIRST
 
 ```text
 HANDOVER_READINESS: READY_FOR_CONTINUATION
 PR_RECOVERY_STATE: CONTINUE
+WORK_INTENT: INVESTIGATE / QUALIFY
+CRITICALITY: ENGINEERING_CRITICAL
 TAKEOVER_AUTHORITY: READ_ONLY_FOR_ENGINEERING_MUTATION
 EXECUTION_MODE: BATCHED_OWNER_DIRECTED
 SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1413
 MERGE_AUTHORITY: OWNER_ONLY
-WIP: WIP-1413-exact-main-qualification-20260824
-BRANCH: agent/issue-1413-exact-main-qualification-20260824
-ISSUE_CREATION_HEAD: 72a916d6c60fe61da66c997594f7763aa3f04d8e
+WIP_BRANCH: agent/issue-1413-exact-main-qualification-20260824
 LIVE_MAIN_LAST_CHECKED: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
-CURRENT_STAGE: B1 exact-head qualification — EXECUTION_PROTOCOL_AND_B4_CLOSURE_MAPPING_COMPLETE / EXECUTION_BLOCKED
-CURRENT_BLOCKER: Fresh exact-main push run 32798593746 for main@e2a44a85... completed failure before step allocation. Build job 97654893850 has steps=null/logs=null; deploy job 97654904148 was skipped. Local runtime independently cannot resolve github.com, so it cannot materialize an exact-head checkout.
-HIGHEST_RISK: treating static inspection, prior-head evidence, partial workflow coverage, or encoded-but-unexecuted checks as exact-head qualification PASS
-EXACT_NEXT_ACTION: on the first current exact-head environment that produces executable steps, re-ground live main and execute Q0 -> Q4 in the frozen order below. Stop on the first authoritative engineering mismatch. Do not mutate mechanics, frozen oracles, tolerances, workflow semantics, or registry wording before classification.
+CURRENT_STAGE: B1/B3 execution-ready packet complete; exact-head execution blocked by infrastructure
+CURRENT_BLOCKER: current exact-main and current-base Actions jobs still fail before step creation; local runtime cannot resolve github.com
+FIRST_PROVEN_FAILURE_BOUNDARY: INFRASTRUCTURE
+ENGINEERING_FAILURE_PROVEN: false
+B2_MECHANICS_REPAIR_AUTHORIZED: false
+B4_REGISTRY_CLOSURE_AUTHORIZED: false
+EXACT_NEXT_ACTION: on the first exact current-main environment that obtains executable steps or a materialized exact checkout, re-ground main and execute Q0 -> Q4 below without reordering; stop at the first authoritative engineering failure.
 ```
 
-## Mission
+This report is intentionally consolidated. Current truth and the executable qualification packet are authoritative; detailed historical progress remains in Issue #1413 / #54 comments and prior report commits.
 
-Certify the already-merged LAFEA.3/LAFEA.4 Model -> Mesh -> Analyse -> Output implementation on one exact current-main-derived SHA, isolate the first actually executed wrong engineering boundary if any, and only after complete qualification create a narrow registry/evidence-state closure PR.
+## 1. Mission and protected boundary
 
-This WIP owns qualification/custody evidence only. It does **not** own solver mechanics, recovery equations, source/sign/unit conventions, mesh-quality thresholds, frozen expected values/tolerances, or broad CI architecture.
+Certify the **already merged** LAFEA.3/LAFEA.4 Model -> Mesh -> Analyse -> Output implementation on one exact current-main-derived SHA, isolate the first actually executed engineering mismatch if any, and only after complete qualification reconcile the remaining registry/evidence wording.
 
-## Classification
+This WIP owns qualification and custody only. It does **not** own or authorize changes to:
 
-```text
-WORK_INTENT: INVESTIGATE / QUALIFY
-REPOSITORY_STATE: NO_PROMOTABLE_PR_YET
-MUTATION_AUTHORITY: READ_ONLY_FOR_ENGINEERING_CRITICAL_FILES
-CRITICALITY: ENGINEERING_CRITICAL
-```
+- continuum/shell stiffness or formulation;
+- solver algorithms, pivoting, rank or residual tolerances;
+- recovery equations or local/global transformation;
+- source/sign/unit conventions;
+- mesh-quality thresholds;
+- frozen benchmark values or tolerances;
+- workflow semantics merely to bypass Issue #54;
+- LAFEA.4 MITC/drilling/thick-shell/contact/weld/code authority;
+- release/code authority.
 
-# 1. Exact grounding / AD-01
+First executed authoritative failure controls any future repair. No tolerance widening, benchmark deletion, expected-value rewrite from production output, or nodal/display smoothing promotion is permitted.
 
-Current live main:
+## 2. Exact live ground truth / AD-01
+
+Current main:
 
 ```text
 e2a44a85b808c0dd3f09a02d7825df26cf92f92f
 ```
 
-Latest main movement is owner-merged PR #1416:
+It is owner-merged PR #1416, parent `4461e7699d08b8a1acbbc89cdbea3fd998368ca6`.
+
+PR #1416 changed only EMP.1 shell-thickness source-governance artifacts:
 
 ```text
-parent = 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-merge  = e2a44a85b808c0dd3f09a02d7825df26cf92f92f
-subject = EMP.1 retained WRC Table-5 shell-thickness authority for #1375
+agents/PR1416_workreport.md
+agents/claims/PR1416.yaml
+agents/status/PR1416.yaml
+docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md
+scripts/emp1-wrc537-shell-thickness-basis-source-check.mjs
+validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json
 ```
 
-The merged #1416 exact six-file scope was audited before merge and is:
-
-1. `validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json`
-2. `scripts/emp1-wrc537-shell-thickness-basis-source-check.mjs`
-3. `docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md`
-4. `agents/PR1416_workreport.md`
-5. `agents/status/PR1416.yaml`
-6. `agents/claims/PR1416.yaml`
-
-No LAFEA.3/.4 source/domain/mesh/solver/recovery/presenter/registry, benchmark, source-provider, workbench-orchestrator, or #1371 custody script is in the merge ledger.
+No LAFEA.3/.4 solver, mesher, recovery, presenter, registry, #1371 custody script, frozen oracle or browser-spec path was changed by that merge.
 
 ```text
 AD-01_RESULT = PASS_FOR_PROCEEDING_TO_EXECUTION
 AUTHORITY_DRIFT_FOUND = false
 DIRECT_LAFEA_QUALIFICATION_PATH_DRIFT_FOUND = false
-PR1416_DIRECT_PATH_OVERLAP = false
-PR1416_LAFEA_AUTHORITY_OVERLAP = false
 ENGINEERING_MUTATION_AUTHORIZED = false
 ```
 
@@ -79,47 +81,116 @@ ENGINEERING_MUTATION_AUTHORIZED = false
 ff5a7353f3759d72ba27be37095c7f5e06b5f7e2
 ```
 
-Any later main movement requires another AD-01 re-ground before accepting B1/B3 evidence.
+## 3. Current execution-environment evidence
 
-# 2. Protected current authority
-
-## LAFEA.3
+### Exact current main
 
 ```text
-stageId       = LAFEA.3
-category      = CONTINUUM_2D
-authority     = T3_T6_Q8_LINEAR_CONTINUUM
-engineState   = QUALIFIED_ROUTE_REGISTERED
-enginePackage = local-continuum
+head = e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+workflow = Deploy Vite site to GitHub Pages
+run = 32798593746
+build job = 97654893850
+conclusion = failure
+runner_id = 0
+steps = null/empty
+logs = unavailable
+deploy = skipped
+checkout = NOT_EXECUTED
+repository command = NOT_EXECUTED
 ```
 
-Current protected registry limitation:
+### Latest current-base PR #1417
+
+PR #1417 is open/draft on the same exact base and changes exactly six EMP.1 material-input source-governance files; no direct #1413 path overlap.
+
+Latest fresh jobs:
 
 ```text
-Production geometry-to-mesh-to-convergence orchestration is incomplete.
+run 32799259020 / job 97656773629 / qualify-gamma5-route
+runner_id = 0
+steps = []
+conclusion = failure
+
+run 32799258986 / job 97656773581 / deterministic-s6
+runner_id = 0
+steps = []
+conclusion = failure
 ```
 
-Current stress authority:
+### Local runtime
+
+Fresh probe:
+
+```bash
+git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git refs/heads/main
+```
+
+Observed:
 
 ```text
+Could not resolve host: github.com
+exit = 128
+```
+
+Classification:
+
+```text
+B1_EXACT_HEAD_EXECUTION = NOT_RUN
+B3_CHROMIUM_EXECUTION = NOT_RUN
+ORIGIN = INFRASTRUCTURE / EXECUTION_ENVIRONMENT
+ENGINEERING_FAILURE_PROVEN = false
+```
+
+Do not create another validation-only PR merely to reproduce this known pre-step state.
+
+## 4. Multi-agent coordination state
+
+Repository `agents/MASTER_INDEX.md` is not present on current main, so coordination was performed against live open PRs and exact changed-file ledgers.
+
+Relevant active work:
+
+- PR #1417 — EMP.1 material source governance: exact-file/authority overlap with #1413 = SAFE.
+- PR #1270 — LAFEA.3 local-refinement UX/retained-mesh work: no exact future B4 file overlap, but LAFEA.3 mesh/product authority overlap = COORDINATION_REQUIRED_IF_MERGED_BEFORE_QUALIFICATION.
+- PR #1258 — LAFEA B01 B-bar/solver repair: no exact future B4 file overlap, but directly overlaps Q1 continuum numerical authority = COORDINATION_REQUIRED_IF_MERGED_BEFORE_QUALIFICATION.
+- PR #1259 — B02D V2 qualification: no exact future B4 file overlap, but B02 qualification authority overlap = COORDINATION_REQUIRED_IF_MERGED_BEFORE_QUALIFICATION.
+- PR #1246 — LAFEA.4 TECH-13 refinement; includes shell workbench route and Vite configs: no exact future B4 file overlap, but LAFEA.4/Q4 product/build authority overlap = COORDINATION_REQUIRED_IF_MERGED_BEFORE_QUALIFICATION.
+
+Current exact-main certification is not contaminated by those unmerged branches. **Any relevant merge before execution invalidates the grounding epoch and requires AD-01 re-ground before Q0.**
+
+Future B4 candidate exact files are currently not claimed by those reviewed active PR ledgers:
+
+```text
+src/workspace/lafea-stage-registry.js
+scripts/lafea1371-cross-stage-anti-drift-check.mjs
+```
+
+This is not B4 authorization; it only establishes current coordination readiness.
+
+## 5. Frozen qualification authority
+
+### LAFEA.3
+
+Retain:
+
+```text
+authority = T3_T6_Q8_LINEAR_CONTINUUM
 T6/Q8 integration-point stress = engineering authority
-nodal projection / smoothing   = display only
+nodal projection/smoothing = display only
 ```
 
-No frozen Kirsch/B02/B-bar expected value or tolerance mutation.
+Independent/frozen programme:
 
-## LAFEA.4
+- classical Kirsch fixed physical probes;
+- frozen B02 definitions and convergence policy, pre-production observation;
+- frozen B-bar/Lame plane-strain near-incompressible ladder;
+- moving maximum/display interpolation/cross-element averaging/nodal projection forbidden as acceptance authority.
 
-```text
-stageId       = LAFEA.4
-authority     = CST_DKT_TRI3_THIN_SHELL_V1
-engineState   = QUALIFIED_ROUTE_REGISTERED
-enginePackage = local-shell
-```
+### LAFEA.4
 
-Preserve all exclusions:
+Retain:
 
 ```text
+authority = CST_DKT_TRI3_THIN_SHELL_V1
 NO MITC4/MITC3 authority
 NO drilling DOF authority
 NO thick-shell authority
@@ -128,112 +199,88 @@ NO weld-stress authority
 NO code-assessment authority
 ```
 
-# 3. B1 qualification — frozen Q0 -> Q4 order
+Independent/frozen programme:
 
-No B1 numerical command has executed in this qualification epoch.
+- B4-1 analytical membrane patch;
+- B4-2 analytical constant-curvature bending patch;
+- B4-3 primary published Batoz/Bathe/Ho DKT reference;
+- production result cannot redefine source geometry, signs, expected values or tolerances.
 
-```text
-B1_EXACT_HEAD_EXECUTION = NOT_RUN
-ENGINEERING_FAILURE_PROVEN = false
-FIRST_DEMONSTRATED_FAILURE_BOUNDARY = INFRASTRUCTURE
+## 6. One-pass exact-head qualification packet
+
+The order is authority-bearing. Do not run product observations ahead of the independent numerical programme.
+
+### Epoch setup
+
+On the candidate runner:
+
+```bash
+export QUAL_HEAD="<exact current main SHA>"
+export EVIDENCE_ROOT="${RUNNER_TEMP:-/tmp}/issue-1413-${QUAL_HEAD}"
+mkdir -p "$EVIDENCE_ROOT"
+
+test "$(git rev-parse HEAD)" = "$QUAL_HEAD"
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
+git diff --check
+node --version
+npm --version
+npm ci
 ```
 
-## Q0 — frozen definition/source custody
+Target runtime parity is Node 22, matching `.github/workflows/lafea-visible-workbench.yml`.
 
-Execute first:
+For every command retain:
+
+```text
+HEAD_SHA
+COMMAND
+EXIT_CODE
+STATUS = PASS | FAIL | NOT_RUN | NOT_APPLICABLE
+OBSERVATION = LOCAL_EXECUTION | REMOTE_EXECUTION
+ORACLE = SOURCE_PRIMARY | FROZEN_INDEPENDENT | IMPLEMENTATION_COUPLED | PRODUCT_REGRESSION
+STDOUT/STDERR or log hash
+artifact/report paths + hashes
+FIRST_WRONG quantity/intermediate if FAIL
+```
+
+### Q0 — frozen-definition/source custody
+
+Execute before new production numerical observation:
 
 ```bash
 node scripts/lafea-b02-definition-freeze-check.mjs
 node scripts/lafea-shell-independent-benchmark-freeze-check.mjs
 ```
 
-Retain exact HEAD/tree/parents, command/exit status, B02 frozen git-blob/SHA-256 custody, anti-circularity state, B4 manifest/definition hashes, source-presence checks, and stdout/stderr/artifact identity.
+Required outcome: frozen bytes, definition state and anti-circularity flags valid. Any failure here is SOURCE AUTHORITY / HASH or BENCHMARK / ORACLE. **Stop.**
 
-Ownership if Q0 fails:
-
-```text
-frozen bytes/hash mismatch      -> SOURCE AUTHORITY / HASH or BENCHMARK / ORACLE
-anti-circularity violation      -> BENCHMARK / ORACLE
-missing frozen source           -> SOURCE AUTHORITY / HASH
-```
-
-Do not observe or alter production to make Q0 pass.
-
-## Q1 — independent/frozen numerical qualification
-
-Execute only after Q0 PASS:
+### Q1 — independent numerical qualification
 
 ```bash
-node scripts/lafea-bucket-01-kirsch-fixed-probes-check.mjs
+LAFEA_BUCKET_01_KIRSCH_PROBE_REPORT_PATH="$EVIDENCE_ROOT/kirsch-fixed-probes.json" \
+  node scripts/lafea-bucket-01-kirsch-fixed-probes-check.mjs
 node scripts/lafea-plane-strain-bbar-lame-check.mjs
 node scripts/lafea4-shell-independent-benchmark-check.mjs
 ```
 
-Kirsch retain:
+Retain fixed-probe/mesh/recovery/result hashes, analytical comparisons, T6/Q8 near-incompressible matrices, equilibrium evidence, B4-1/B4-2/B4-3 production-vs-frozen evidence and all anti-circularity flags.
 
-```text
-exactHeadSha
-oracleId / oracleHash
-mesh ladder / meshHash per level
-recoveryHash per level
-result payload hash per level
-fixed physical probe values + mapping residuals
-closed-form comparison / convergence evidence
-movingMaximumUsed = false
-nodalProjectionUsed = false
-crossElementAveragingUsed = false
-status
-```
+At the first nonzero exit, preserve expected/actual/delta/tolerance plus exact element/node/IP/surface/hash and **stop before Q2**.
 
-B-bar/Lamé retain:
+### Q2 — production numerical acceptance
 
-```text
-definitionHash
-convergencePolicyHash
-probeMeshPolicyHash
-T6/Q8 matrices
-Poisson ladder through 0.4999
-distortion / mesh identity
-seriesCount / solveCount
-fixed-probe mapping evidence
-force/moment equilibrium
-near-incompressible displacement-error-growth evidence
-moving/nodal/smoothed acceptance flags = false
-semanticHash / status
-```
-
-Shell independent benchmark retain:
-
-```text
-oracleClass = FROZEN_ANALYTICAL_AND_PRIMARY_PUBLISHED
-B4-1 membrane patch evidence
-B4-2 pure-bending patch evidence
-B4-3 Batoz/Bathe/Ho published-reference evidence
-production result hashes
-externalReferenceBenchmarkQualified
-frozenTargetsModifiedByThisCheck = false
-releaseAuthorityGranted = false
-status
-```
-
-## Q2 — production numerical acceptance
-
-Execute only after Q0/Q1 PASS:
+Only after Q0/Q1 PASS:
 
 ```bash
 node scripts/lafea-b02c-production-check.mjs
 node scripts/lafea-shell-response-acceptance-check.mjs
 ```
 
-B02C retain required T3/T6/Q8 method rows, definition/convergence hashes, per-level mesh/execution/recovery hashes, equilibrium, authoritative fixed-probe values, analytical references/errors/limits, convergence/GCI, and anti-smoothed-authority flags.
+Retain B02 per-level mesh/execution/recovery/GCI evidence and shell displacement/stress/pivot/equilibrium/force/moment evidence.
 
-Shell response retain independent benchmark PASS, fixed/free DOF counts, minimumPivot/pivotRatio, maximum displacement, maximum retained surface/IP von Mises, transferred force/moment, equilibrium, all-fixed retained contract fixture, and status.
+### Q3 — integrated Model -> Mesh -> Analyse -> Output custody
 
-The shell response checker re-runs the independent shell benchmark before accepting workflow response; response-only observation cannot bypass Q1.
-
-## Q3 — integrated Model -> Mesh -> Analyse -> Output custody
-
-Execute only after Q0-Q2 PASS:
+Only after Q0-Q2 PASS:
 
 ```bash
 node scripts/lafea1371-pr-b-merge-order-guard.mjs
@@ -245,127 +292,123 @@ node scripts/lafea4-sample-pressure-output-check.mjs
 node scripts/lafea1371-cross-stage-anti-drift-check.mjs
 ```
 
-LAFEA.3 required custody:
+LAFEA.3 must prove source physics parity, T6 30 mm retained mesh, current parentage, preflight PASS, `DOMAIN_FIRST_COMPILED_SOLVER_MODEL`, accepted two-case execution, current recovery, deterministic anti-drift and E-edit invalidation.
+
+Predeclared anti-drift prediction:
 
 ```text
-merge-order guard = PASS, not NOT_APPLICABLE
-editedSourceHash / analysisDomainHash / analysisGeometryHash
-T6 governed target = 30 mm
-source restraint/load parity including N02/N03 and CASE-A/CASE-B
-retained source physical features
-meshHash / meshProfileHash / parent-bound mesh artifact identity
-mesh quality not BLOCK
-preflightHash
-solverModelHash
-topologyQualificationHash
-highOrderJacobianQualificationHash
-compiledExecutionHash
-route = DOMAIN_FIRST_COMPILED_SOLVER_MODEL
-execution = QUALIFIED
-result = ACCEPTED
-loadCaseCount = 2
-finite/nonzero strain energy
-free-DOF/equilibrium acceptance
-RECOVERY current/PASS
-viewport mesh content identity == retained mesh content identity
+E 200000 -> 210000 MPa
+factor = 1.05
+force-controlled displacement factor = 1/1.05 = 0.9523809523809523
+predicted displacement change = -4.7619047619%
+predicted stress change = approximately 0%
 ```
 
-LAFEA.4 required custody:
+LAFEA.4 must prove source-topology custody, retained CST+DKT solver-mesh identity, pressure transfer to every retained solver element, force/moment equilibrium and retained integration-point/surface result authority.
+
+Independent Sample mechanics expectation:
 
 ```text
-Sample = CYLINDRICAL_PIPE_SHELL_BENCHMARK
+p = 1.2 MPa
 R = 100 mm
 L = 50 mm
 span = 60 deg
-source nodes = 26
-source triangles = 24
-whole-surface p = 1.2 MPa
-pressure sense = ALONG_ELEMENT_NORMAL
-source topology retained through normalization
-source topology custody distinct from solver winding canonicalization
-orientation/topology PASS
-weakened mesh policy rejected
-route = SHELL_RETAINED_MESH_COMPILED_SOLVER_MODEL
-solverModelHash / solverModelBindingHash / kernel hash
-compiledExecutionHash
-pressure contribution on every retained solver element
-force equilibrium PASS
-moment equilibrium PASS
-unsupported remeshed nodal-load mapping rejected
-unsupported nonzero local R1/R2 mapping rejected
-presenter governing path contains integrationPoints[] + surfaces[]
-NO_NODAL_STRESS
-NO_STRESS_AVERAGING_OR_SMOOTHING
-NO_CONTOUR_AUTHORITY
+applied force = [0, 0, +6000] N
+applied moment about global origin = [0, -150000, 0] N.mm
+fully fixed reaction force = [0, 0, -6000] N
+fully fixed support moment = [0, +150000, 0] N.mm
 ```
 
-Frozen LAFEA.4 hand comparator:
+A force/moment mismatch must first be recomputed about the same origin before shell mechanics are touched.
+
+### Q4 — repository/build/browser qualification
+
+Only after Q0-Q3 PASS.
+
+#### Q4A — source/repository checks
+
+```bash
+npm run check:imports
+npm run syntax:strict
+node scripts/full-check.mjs
+npm run check:lafea-core
+npm run check:lafea-workbench
+npm run check:lafea-standalone
+```
+
+`node scripts/full-check.mjs` runs package-json, imports, strict syntax, registry, benchmarks and smoke checks in sequence.
+
+#### Q4B — standalone-boundary comparator and builds
+
+The current visible-workbench workflow does **not** blindly require `npm run build:lafea`, because the standalone boundary may carry an inherited exact-base failure. Reproduce its comparator semantics using:
 
 ```text
-applied force                   = [0, 0, +6000] N
-applied moment about origin     = [0, -150000, 0] N.mm
-fully fixed reaction force      = [0, 0, -6000] N
-fully fixed support moment      = [0, +150000, 0] N.mm
+QUALIFICATION_BASE = 162c88ee4715bc46c3c768c1086e74e7165bd3fb
 ```
 
-Any moment mismatch must first confirm the same global origin/reference.
+Acceptance:
 
-Cross-stage E-edit prediction before execution:
+1. if current `lafea-standalone-boundary-check.mjs` passes, proceed;
+2. if it fails, exact qualification-base execution must fail with the **same first** `FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY` signature;
+3. archive failure, a passing base with failing head, missing signature, or changed first signature = FAIL.
 
-```text
-E: 200000 -> 210000 MPa
-modulus factor = 1.05
-force-controlled displacement factor = 1/1.05 = 0.9523809523809523
-predicted displacement change = -4.7619047619%
-predicted stress change = 0% for homogeneous force-controlled linear elasticity
+Then execute the actual builds used by the hosted lane:
+
+```bash
+npx vite build --config vite.lafea.config.js
+node scripts/lafea-standalone-build-artifact-check.mjs
+npm run build
 ```
 
-Required anti-drift outcome:
+#### Q4C — targeted #1413 Chromium proof
 
-```text
-same deterministic mesh content may persist after E-only edit
-old parent-bound mesh evidence may not remain current
-new parent-bound mesh artifact issued
-sourceHash changes
-solverModelHash changes
-compiledExecutionHash changes
-viewport may retain same meshHash but not stale artifact identity
+Install the same browser runtime:
+
+```bash
+export PLAYWRIGHT_BROWSERS_PATH=0
+npx playwright install --with-deps chromium
 ```
 
-## Q4 — repository/product qualification
+Then run the two #1413 journeys **directly**, before the broader Stage-17 carrier:
 
-Only after Q0-Q3 PASS on the same exact SHA:
-
-```text
-applicable strict syntax/import/full LAFEA gates
-standalone build
-production build
-Chromium LAFEA.3 Sample Model -> Mesh -> Analyse -> Output
-Chromium LAFEA.4 Sample Model -> Mesh -> Analyse -> Output
-final clean tracked worktree
+```bash
+CI=1 node node_modules/playwright/cli.js test \
+  --config=playwright.lafea-visible.config.js \
+  e2e/lafea3-sample-mesh.spec.js \
+  e2e/lafea-shell-sample-mesh.spec.js
 ```
 
-Browser class is `PRODUCT_REGRESSION`, never the independent numerical oracle.
+Why direct execution is mandatory for this issue: `lafea-stage17-browser-run.mjs` executes EMP.1/UI08 prerequisites before these two specs. An unrelated prerequisite failure could otherwise leave the actual #1413 product journeys `NOT_RUN`.
 
-# 4. First-failure contract
+After the targeted run, copy `test-results/**` and `playwright-report/**` into `$EVIDENCE_ROOT/targeted-browser/` before another Playwright run can replace them.
 
-```text
-FIRST_EXECUTED_AUTHORITATIVE_FAILURE_WINS = true
-CONTINUE_AFTER_FIRST_AUTHORITATIVE_FAILURE = false
+Targeted LAFEA.3 proof includes retained T6 mesh identity, 30 mm target, preflight hashes, compiled execution hash, accepted two-case solve, lifecycle recovery, visible retained mesh and result evidence.
+
+Targeted shell proof includes retained mesh == solver mesh, solver/binding/execution hashes, force+moment equilibrium, current recovery and LAFEA.4 evidence-derived engineering summary. The current shell spec also exercises LAFEA.5; its LAFEA.5 portion is repository regression, not an expansion of #1413 engineering authority.
+
+#### Q4D — full current integration carrier
+
+After targeted #1413 Chromium PASS:
+
+```bash
+CI=1 node scripts/lafea-stage17-browser-run.mjs
 ```
 
-Continuation is allowed only to localize the same first wrong boundary without mutating state.
+Copy resulting `test-results/**` and `playwright-report/**` into `$EVIDENCE_ROOT/stage17-integration/`.
 
-Forbidden after observation:
+Stage-17 includes #1371 merge-order + anti-drift, EMP.1 prerequisites, B01/B02 diagnostic and broader production journeys. A failure **inside a #1413-relevant prerequisite or target journey** blocks closure. An unrelated EMP.1/UI08 failure after targeted #1413 PASS must be recorded with its own origin; it is not evidence that LAFEA.3/.4 numerics failed.
 
-```text
-TOLERANCE_WIDENING
-FROZEN_EXPECTED_VALUE_REWRITE
-BENCHMARK_DELETION
-DISPLAY/NODAL_SMOOTHING_PROMOTION
+#### Q4E — final clean-tree custody
+
+```bash
+git diff --check
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
+test "$(git rev-parse HEAD)" = "$QUAL_HEAD"
 ```
 
-First-failure ownership vocabulary:
+Evidence must remain outside the tracked worktree.
+
+## 7. First-failure ownership
 
 ```text
 SOURCE / UNITS
@@ -388,331 +431,135 @@ BUILD / BROWSER
 INFRASTRUCTURE
 ```
 
-For every executed command record:
+Rules:
 
 ```text
-STATUS      = PASS | FAIL | NOT_RUN | NOT_APPLICABLE
-HEAD_SHA    = exact 40-char SHA
-ORACLE      = SOURCE_PRIMARY | FROZEN_INDEPENDENT | PRODUCT_REGRESSION | IMPLEMENTATION_COUPLED
-EXIT_CODE   = exact process exit status
-STDOUT      = retained text or hash/artifact identity
-STDERR      = retained text or hash/artifact identity
-ARTIFACTS   = paths + semantic/blob/content identities
-FIRST_WRONG = first wrong quantity/intermediate if FAIL
+FIRST_EXECUTED_AUTHORITATIVE_FAILURE_WINS = true
+CONTINUE_AFTER_FIRST_AUTHORITATIVE_FAILURE = false, except to localize the same boundary without mutation
+TOLERANCE_WIDENING_AFTER_OBSERVATION = forbidden
+FROZEN_EXPECTED_VALUE_REWRITE = forbidden
+BENCHMARK_DELETION = forbidden
+DISPLAY/NODAL_SMOOTHING_PROMOTION = forbidden
 ```
 
-# 5. Execution transport state / Issue #54
+Only an actually executed engineering failure can trigger B2. If B2 is triggered, Appendix A becomes mandatory before production mutation.
 
-## Current exact-main push run — strongest evidence
+## 8. B4 closure mapping — frozen, NOT AUTHORIZED
+
+Current registry truth:
+
+### LAFEA.3
 
 ```text
-head = e2a44a85b808c0dd3f09a02d7825df26cf92f92f
-workflow = Deploy Vite site to GitHub Pages
-run = 32798593746
-created = 2026-08-25T01:42:37Z
-conclusion = failure
-build job = 97654893850
-build steps = null
-build logs = null
-deploy job = 97654904148
-deploy conclusion = skipped
-checkout = NOT_EXECUTED
-repository command = NOT_EXECUTED
-```
-
-This is now stronger than all prior runner evidence because it targets the exact current main after #1416 merged.
-
-## Previous exact-main evidence
-
-```text
-head = 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-run = 32794926660
-attempt 1 build job = 97644116755 -> failure / zero steps
-explicit rerun build job = 97649703034 -> queued -> failure / steps=null / logs=null
-```
-
-## PR #1416 pre-merge recurrence
-
-Latest pre-merge head:
-
-```text
-0768245d9473fbfcf464654efaaea4cf48656d60
-```
-
-Newest pre-merge jobs checked:
-
-```text
-run 32797355766 / job 97651267884 -> failure / steps=null / logs=null
-run 32797355751 / job 97651267894 -> failure / steps=null / logs=null
-```
-
-Earlier same-PR evidence:
-
-```text
-run 32797259751 / job 97650996654 -> failure / steps=null
-run 32797259689 / job 97650996582 -> failure / steps=null
-```
-
-## Local execution transport
-
-```bash
-git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git refs/heads/main
-```
-
-Observed:
-
-```text
-Could not resolve host: github.com
-exit = 128
-```
-
-Therefore:
-
-```text
-HOSTED_EXACT_HEAD_EXECUTION = NOT_RUN / PRE_STEP_INFRASTRUCTURE_FAILURE
-LOCAL_EXACT_HEAD_CHECKOUT = NOT_AVAILABLE / DNS
-ENGINEERING_FAILURE_PROVEN = false
-TRANSIENT_SINGLE_ATTEMPT_HYPOTHESIS = FALSIFIED
-HISTORICAL_INTERMITTENT_RECOVERY_EXISTS = true
-```
-
-Historical self-hosted B7H existed in PR #376 but was later retired during repository CI cleanup. It is not present on current main. Restoring it would be a new CI semantic change and is not authorized by #1413.
-
-# 6. B2 — repair gate
-
-```text
-B2_STATUS = NOT_TRIGGERED
-```
-
-Only an actually executed engineering failure can trigger B2. If triggered:
-
-- preserve expected/actual/delta/tolerance and exact node/element/IP/surface/hash evidence before editing;
-- one mechanics boundary per repair PR;
-- Appendix A expert handover becomes mandatory before production mutation;
-- re-run B0 + Q0-Q4 after repair.
-
-# 7. B3 — Chromium product qualification
-
-```text
-B3_STATUS = NOT_RUN
-```
-
-Required product journeys already exist:
-
-```text
-e2e/lafea3-sample-mesh.spec.js
-e2e/lafea-shell-sample-mesh.spec.js
-```
-
-The retained visible-workbench workflow invokes both through Stage-17. Actual Chromium execution remains blocked by #54.
-
-# 8. B4 — precomputed registry/evidence-state closure mapping
-
-```text
-B4_STATUS = NOT_AUTHORIZED
-B4_TRIGGER = B1 PASS + B3 PASS on one exact current-main-derived SHA
-```
-
-This section freezes the future closure delta before product observation. It is a plan, not current authority.
-
-## 8.1 Current source truth
-
-Current `src/workspace/lafea-stage-registry.js` contains for LAFEA.3:
-
-```text
-limitation:
-  Production geometry-to-mesh-to-convergence orchestration is incomplete.
-
-detailed limitation:
-  Production geometry-to-mesh-to-convergence orchestration is not complete.
-```
-
-The exact detailed limitation string occurs only in the registry source; current registry-consumer certification does not assert this wording. The registry consumer derives composition/preview/execution support from registry state and hashes the current registry, but does not pin the LAFEA.3 limitation text.
-
-LAFEA.4 already carries the correct bounded authority:
-
-```text
-CST_DKT_TRI3_THIN_SHELL_V1
-No production MITC4/MITC3 claim
-No drilling DOF
-No thick-shell claim
-No weld stress
-No code assessment
-```
-
-No LAFEA.4 authority widening is required or permitted by B4.
-
-## 8.2 Candidate LAFEA.3 closure wording — only after executed PASS
-
-Preferred bounded replacement for the short limitation:
-
-```text
-Production source/domain/geometry -> retained mesh -> preflight -> compiled solve -> retained output is qualified for the governed Sample and registered benchmark paths; broader arbitrary-geometry convergence automation remains outside authority.
-```
-
-Preferred detailed limitation pair:
-
-```text
-Integration-point stress is authoritative for T6/Q8; nodal projection is display-only.
-Qualified orchestration is bounded to governed Sample/registered benchmark paths and current retained-mesh custody; no general arbitrary-geometry convergence automation authority is claimed.
-```
-
-Do not change:
-
-```text
-category = CONTINUUM_2D
+stageId = LAFEA.3
 authority = T3_T6_Q8_LINEAR_CONTINUUM
 engineState = QUALIFIED_ROUTE_REGISTERED
-enginePackage = local-continuum
-input/result/presenter roles
-T6/Q8 integration-point authority
-releaseStateBinding = RELEASE_NOT_QUALIFIED
+current limitation = Production geometry-to-mesh-to-convergence orchestration is incomplete.
 ```
 
-The candidate wording may be narrowed further if executed evidence proves a smaller envelope. It may not be broadened beyond observed/executed evidence.
+### LAFEA.4
 
-## 8.3 #1393 evidence-state hazard discovered
+Current wording already matches the intended bounded authority. **No LAFEA.4 registry widening is planned.**
 
-Current `scripts/lafea1371-cross-stage-anti-drift-check.mjs` does not assert old registry wording. It emits these hard-coded report fields:
-
-```text
-registryWordingChanged: false
-registryCleanupState: BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
-frozenOracleMutation: false
-releaseAuthorityChanged: false
-```
-
-Therefore a future B4 registry edit would not automatically fail this checker. However leaving those two registry fields unchanged after legitimate closure would produce false/stale B5 evidence.
-
-B4 must therefore correct the evidence-state reporting without touching mechanics. Preferred approach:
-
-1. make the anti-drift checker read the actual LAFEA.3 registry entry;
-2. assert the exact post-qualification bounded limitation expected by B4;
-3. derive/report registry state from that source rather than hard-code pre-closure state;
-4. retain `frozenOracleMutation=false`, `releaseAuthorityChanged=false`, and all source/mesh/execution anti-drift mechanics unchanged.
-
-Proposed post-closure reporting semantics:
-
-```text
-registryWordingChanged = true
-registryCleanupState = CLOSED_AFTER_EXECUTED_EXACT_HEAD_QUALIFICATION
-frozenOracleMutation = false
-releaseAuthorityChanged = false
-```
-
-This is a qualification/evidence-state mutation, not a numerical mechanics mutation.
-
-## 8.4 Predicted B4 write set
-
-After B1+B3 PASS, prefer the smallest attributable PR. Expected engineering files:
+After B1 + targeted B3 + applicable Q4 checks execute and PASS on one exact head, B4 may be opened as one coherent registry/evidence-state closure PR. The currently predicted technical write set is:
 
 ```text
 src/workspace/lafea-stage-registry.js
 scripts/lafea1371-cross-stage-anti-drift-check.mjs
 ```
 
-Documentation/evidence files may include one narrow #1413/#1371 closure note plus the mandatory PR workreport/status/claims.
+plus the PR workreport/status/claims and narrowly necessary closure documentation.
 
-Do not alter:
-
-```text
-src/core/local-continuum/**
-src/core/local-shell/**
-mesh producer mechanics
-solver/recovery formulas
-frozen benchmark/oracle files
-acceptance tolerances
-browser journeys
-workflow YAML
-LAFEA.4 registry authority
-release/code authority
-```
-
-No closure PR should be opened before executed B1+B3 PASS.
-
-# 9. B5 — closure-head requalification
+Intended LAFEA.3 reconciliation principle:
 
 ```text
-B5_STATUS = PENDING
+Model -> retained mesh -> preflight -> solve -> evidence-derived output is qualified for the registered continuum routes.
+General automatic convergence/adaptive-meshing orchestration beyond the executed qualified benchmark/workflow envelope is not claimed.
 ```
 
-On the B4 PR head:
+Do not widen beyond what the exact-head receipts prove.
 
-1. re-ground against then-current main / AD-01;
-2. execute applicable Q0-Q4 again;
-3. require updated #1393 anti-drift checker to report legitimate closed registry state while all mechanics/hash invalidation assertions still PASS;
-4. require Chromium PASS;
-5. require build + clean tree;
-6. verify frozen oracle blobs/tolerances unchanged;
-7. verify LAFEA.4 exclusions unchanged;
-8. retain exact head/log/artifact identities;
-9. merge only on explicit Owner instruction.
+The #1393 anti-drift checker currently **prints**, but does not assert, the old evidence state:
 
-# 10. Validation ledger
+```text
+registryWordingChanged: false
+registryCleanupState: BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
+```
 
-| Check | Status | Observation |
-|---|---|---|
-| live main grounding | PASS | `e2a44a85b808c0dd3f09a02d7825df26cf92f92f` |
-| AD-01 latest movement | PASS / NON_LAFEA_AUTHORITY | merged PR #1416 six-file EMP.1 scope |
-| B1 script/oracle inventory | PASS_SOURCE_INSPECTION | required scripts and frozen sources present |
-| Q0-Q4 execution protocol | PASS_SOURCE_INSPECTION | order/receipt/failure ownership frozen before execution |
-| registry current source audit | PASS_SOURCE_INSPECTION | LAFEA.3 old limitation confirmed; LAFEA.4 bounded wording confirmed |
-| registry consumer dependency audit | PASS_SOURCE_INSPECTION | no exact LAFEA.3 limitation text pin in consumer check |
-| #1393 registry evidence-state audit | FINDING / CONTROLLED | hard-coded pre-closure fields must be corrected in eventual B4 |
-| current exact-main Actions execution | FAIL_INFRASTRUCTURE / NOT_RUN | run `32798593746`, build job `97654893850`, steps/logs null |
-| local exact-head checkout | FAIL_INFRASTRUCTURE / NOT_RUN | DNS cannot resolve github.com |
-| B1 numerical/custody matrix | NOT_RUN | no exact executable environment |
-| B3 Chromium | NOT_RUN | no exact executable environment |
-| B2 mechanics repair | NOT_TRIGGERED | no engineering failure executed |
-| B4 registry closure | NOT_AUTHORIZED | B1+B3 PASS absent |
-| B5 closure requalification | NOT_RUN | B4 not authorized |
+If B4 is legitimately reached, leaving those outputs unchanged would create stale/false evidence. B4 therefore must make registry-state reporting current/derived rather than merely editing display text. This is qualification-evidence maintenance, not numerical mechanics.
 
-No unexecuted engineering check is represented as PASS.
+B4 must not change:
 
-# 11. Active ISS / RISK / DEC
+- continuum/shell formulation;
+- solver or recovery;
+- source/sign/unit mappings;
+- mesh thresholds;
+- frozen numerical definitions/tolerances;
+- browser journey semantics;
+- workflows;
+- LAFEA.4 authority;
+- release/code authority.
+
+## 9. B5 closure-head gate
+
+A B4 PR head is a new exact SHA. Before merge request:
+
+1. re-ground against then-current main;
+2. rerun AD-01;
+3. execute applicable Q0-Q4 again on the closure PR head;
+4. prove only intended registry/evidence-state changes occurred;
+5. clean tree;
+6. Owner-only merge authority.
+
+No source-inspection-only closure is acceptable.
+
+## 10. Batch status
+
+```text
+B0 live-main / AD-01                       PASS on e2a44a85...
+B1 source/oracle readiness                 COMPLETE
+B1 one-pass execution runbook              COMPLETE
+B1 numerical/custody execution             NOT_RUN
+B2 first-failure mechanics repair          NOT_TRIGGERED
+B3 targeted Chromium execution             NOT_RUN
+Q4 full repository/build/integration       NOT_RUN
+B4 registry/evidence-state closure         NOT_AUTHORIZED
+B5 closure-head requalification            NOT_RUN
+```
+
+## 11. Active ISS / RISK / DEC
 
 - `ISS-1413-01` ACTIVE — no complete exact-main qualification packet has executed.
-- `ISS-1413-02` RESOLVED_FOR_B0 — latest main movement #1416 has no LAFEA.3/.4 authority overlap.
-- `ISS-1413-03` ACTIVE — #54 pre-step recurrence proven directly on exact current main `e2a44a85...`.
-- `ISS-1413-04` RESOLVED_SOURCE_PREFLIGHT — no missing required script/oracle/browser-spec defect.
-- `ISS-1413-05` RESOLVED_DISPATCH_AUDIT — visible-workbench lane exists but is partial versus full B1.
-- `ISS-1413-06` RESOLVED_TRANSPORT_AUDIT — historical B7H route is retired and not current authority.
-- `ISS-1413-07` RESOLVED_EXECUTION_PROTOCOL — Q0-Q4 and first-failure ownership frozen.
-- `ISS-1413-08` ACTIVE_EXECUTION_ENVIRONMENT — current-main hosted Actions have no steps; local DNS prevents exact checkout.
-- `ISS-1413-09` RESOLVED_B4_MAPPING — future registry closure delta and #1393 evidence-state correction identified before execution.
+- `ISS-1413-03` ACTIVE — Issue #54 pre-step recurrence remains active on exact current main and fresh current-base PRs.
+- `ISS-1413-08` ACTIVE_EXECUTION_ENVIRONMENT — hosted Actions cannot allocate a runner and local runtime cannot resolve GitHub.
+- `ISS-1413-09` RESOLVED_RUNBOOK — exact Q0-Q4 command/evidence packet is now frozen.
+- `ISS-1413-10` RESOLVED_BROWSER_ISOLATION — #1413 targeted Chromium specs are explicitly run before the broader Stage-17 carrier so unrelated prerequisites cannot hide their execution state.
+- `ISS-1413-11` RESOLVED_B4_MAPPING — future registry/evidence write boundary is pre-scoped; no mechanics or LAFEA.4 widening.
 
-- `RISK-1413-01` ACTIVE — static/prior-head evidence could be mistaken for executed qualification.
-- `RISK-1413-02` ACTIVE — unmerged LAFEA work must not contaminate current-main certification.
-- `RISK-1413-03` ACTIVE — restoring retired self-hosted CI would silently expand this issue into CI architecture work.
-- `RISK-1413-04` CONTROLLED — execution order now prevents production observation preceding frozen independent oracles.
-- `RISK-1413-05` CONTROLLED — B4 must not leave #1393 reporting `registryWordingChanged=false/BLOCKED` after a legitimate closure.
+- `RISK-1413-01` ACTIVE — partial/prior/static evidence may be mistaken for exact-head PASS.
+- `RISK-1413-02` CONTROLLED — unmerged LAFEA work can change future authority; any relevant merge forces a new grounding epoch.
+- `RISK-1413-03` CONTROLLED — no retired self-hosted workflow restoration or new workflow semantics under #1413.
+- `RISK-1413-05` CONTROLLED — full Stage-17 has unrelated prerequisites; direct #1413 browser execution now prevents false NOT_RUN ambiguity.
 
-- `DEC-1413-01` — no mechanics mutation until an executed first engineering failure identifies the boundary.
-- `DEC-1413-02` — no validation-only PR while runner fails before step creation.
+- `DEC-1413-01` — no mechanics mutation before first executed engineering failure.
+- `DEC-1413-02` — no validation-only PR to reproduce known zero-step infrastructure failure.
 - `DEC-1413-03` — no workflow semantic change solely to bypass #54.
-- `DEC-1413-04` — visible-workbench is supplementary B1/B3 coverage; separately execute uncovered B1 items.
-- `DEC-1413-05` — do not restore B7H without separate Owner CI authority.
-- `DEC-1413-06` — order is Q0 frozen custody -> Q1 independent numerical -> Q2 production numerical -> Q3 integrated custody -> Q4 product/browser.
-- `DEC-1413-07` — B4 is a bounded registry + qualification-evidence-state reconciliation only; LAFEA.4 and numerical mechanics remain unchanged.
+- `DEC-1413-06` — Q0 -> Q1 -> Q2 -> Q3 -> Q4 order is authority-bearing.
+- `DEC-1413-07` — browser order is targeted #1413 specs first, then full Stage-17 integration.
+- `DEC-1413-08` — future B4 is one coherent registry/evidence-state closure, not micro coding.
 
-# 12. Changed-file ledger
+## 12. Changed-file ledger for this WIP
 
-Current WIP branch changes only:
-
-- `agents/WIP-1413-exact-main-qualification-20260824_workreport.md` — living qualification/recovery record.
-
-No production, benchmark, workflow, registry, test, solver, recovery, or product file has been changed by this WIP.
-
-# 13. Checkpoint history
+Only:
 
 ```text
-6f0dddec29c8c182b8f21951e1d51124bca25eaa  initial B0 durable checkpoint
-ea0edb0d5592f18dda1f18e4b1d65208aa4bd625  exact-main #54 recurrence checkpoint
-f79bedc655b6b5a021b46ca914ef445c8a570bc9  transport/B7H retirement audit checkpoint
-7b24dab8fba99e200fe2f76cadfcaab025e61b43  Q0-Q4 receipt / first-failure contract checkpoint
-a4e8a747a0e0a710e5071c39234954f1720a1d94  B4 registry/evidence-state closure mapping checkpoint
+agents/WIP-1413-exact-main-qualification-20260824_workreport.md
 ```
 
-# Appendix A
+No production mechanics, benchmark/oracle, tolerance, registry, workflow, browser spec or product source has been modified by this WIP.
 
-Not required while work remains read-only qualification/infrastructure classification. If B2 requires engineering-critical mechanics repair, Appendix A becomes mandatory **before** production mutation.
+## Appendix A
+
+`NOT_REQUIRED_WHILE_READ_ONLY`.
+
+If an executed engineering failure triggers B2 production mutation, create and pass the repository-specific five-part Appendix A takeover qualification before editing engineering-critical production code.

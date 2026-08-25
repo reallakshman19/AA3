@@ -19,7 +19,7 @@
       "category": "WRC_METHOD_SEMANTICS",
       "artifact": "validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json",
       "authorityDocument": "docs/emp1/WRC537_2013_Cylindrical_Surface_Sign_Authority.md",
-      "currentStatus": "BLOCKED_PRIMARY_SURFACE_SIGN_SEMANTICS_UNQUALIFIED",
+      "currentStatus": "BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED",
       "profileAuthorityKey": "surfaceSignSemantics"
     },
     {
@@ -28,7 +28,7 @@
       "category": "WRC_METHOD_SEMANTICS",
       "artifact": "validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json",
       "authorityDocument": "docs/emp1/WRC537_2013_Stress_Intensity_Authority.md",
-      "currentStatus": "BLOCKED_PRIMARY_STRESS_INTENSITY_RECONSTRUCTION_UNQUALIFIED",
+      "currentStatus": "BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED",
       "profileAuthorityKey": "stressIntensitySemantics"
     },
     {
@@ -37,7 +37,7 @@
       "category": "WRC_GEOMETRY_CUSTODY",
       "artifact": "validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json",
       "authorityDocument": "docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md",
-      "currentStatus": "BLOCKED_WRC_SHELL_THICKNESS_BASIS_PRIMARY_SOURCE_UNRESOLVED",
+      "currentStatus": "BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED",
       "profileAuthorityKey": "thicknessBasis"
     },
     {
@@ -101,13 +101,27 @@
     "engineeringAssumptionsMustBeExplicitlyDistinguishedFromWrcSourceRules": true,
     "codeComplianceRemainsNotAssessedAfterBoundaryClosure": true,
     "productionRouteMutationAllowedByThisArtifact": false,
-    "releaseAuthorityGrantedByThisArtifact": false
+    "releaseAuthorityGrantedByThisArtifact": false,
+    "boundedRuntimeRouteAuthorizationDoesNotCloseP0SourceSemantics": true
   },
+  "authorityScope": "AUTHORITY_GRANTED_BY_THIS_AGGREGATE_GATE_ONLY_NOT_CURRENT_RUNTIME_ROUTE_STATE",
   "authority": {
     "engineeringUseAuthorized": false,
     "productionUseAuthorized": false,
     "deploymentAuthorized": false,
     "globalEmp1CRouteAuthority": false,
     "codeComplianceAuthorized": false
+  },
+  "currentLiveRouteState": {
+    "boundedRouteAuthorized": true,
+    "registryRegistered": true,
+    "boundedEngineeringUseAuthorized": true,
+    "boundedProductionUseAuthorized": true,
+    "globalEmp1CRouteAuthority": false,
+    "releaseQualified": false,
+    "codeComplianceAuthorized": false,
+    "professionalP0SourceSemanticsReady": false,
+    "professionalReleaseReady": false,
+    "invariant": "BOUNDED_ROUTE_AUTHORIZATION_DOES_NOT_CLOSE_P0_SOURCE_SEMANTICS_OR_PROFESSIONAL_RELEASE_GATES"
   }
 }

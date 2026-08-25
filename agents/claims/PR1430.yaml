@@ -1,0 +1,42 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: PR1430
+owner: ChatGPT
+mission: "Issue #1321 cladding and tracing permanent distributed mass"
+branch: agent/issue-1321-ancillary-distributed-mass
+pr: 1430
+issue: 1321
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE_AFTER_STALE_REGISTRY_AND_MAIN_DRIFT_RECONCILIATION
+stale_registry_note: "Historical PR1323 is closed/unmerged. No live competing cladding/tracing ancillary-mass PR or review thread found. Current main 920d0ec3 is three WRC/EMP.1 source-governance commits ahead of the merge base with no #1430 path/authority overlap."
+engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
+recovery_basis: 04e8bef9ce3ea939e258790b7b269920ce9edde3
+claimed_paths:
+  - src/workspace/project-data/non-fea-field-registry.js
+  - src/workspace/project-data/non-fea-configured-default-provider.js
+  - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
+  - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
+  - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
+  - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
+  - src/workspace/project-data/project-data-contract.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - scripts/authorized-empirical-ancillary-distributed-mass-check.mjs
+  - scripts/non-fea-ancillary-default-authority-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1430_workreport.md
+  - agents/status/PR1430.yaml
+  - agents/claims/PR1430.yaml
+protected_paths:
+  - .github/workflows/**
+  - src/core/model-loads/**
+  - src/core/fea/**
+authority_boundary: "Add optional line-scoped cladding/tracing kg/m through the existing configured/product default -> common-enriched LINE -> authorized effective-value -> PIPE distributed-mass chain, and bind its focused regressions into the canonical Non-FEA aggregate. No universal default, no source-column guess, no component-point ownership change, no fluid/statics/equilibrium change."
+invariants:
+  - ANCILLARY_ABSENCE_DOES_NOT_FABRICATE_ZERO_EVIDENCE
+  - ANCILLARY_MASS_IS_CASE_INDEPENDENT_PIPE_DISTRIBUTED_MASS
+  - ANCILLARY_MASS_IS_APPLIED_EXACTLY_ONCE
+  - COMPONENT_POINT_MASS_OWNERSHIP_UNCHANGED
+  - FLUID_AND_STATIC_ACCOUNTING_UNCHANGED
+  - STANDARD_NON_FEA_AGGREGATE_MUST_EXECUTE_BOTH_PR1430_FOCUSED_REGRESSIONS
+merge_authority: OWNER_ONLY
+state: ACTIVE_HANDOVER_READY_WITH_EXECUTION_NOT_RUN

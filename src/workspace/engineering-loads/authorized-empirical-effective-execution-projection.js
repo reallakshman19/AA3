@@ -27,6 +27,10 @@ const LINE_FIELDS = Object.freeze([
   ['HYDRO_FLUID_DENSITY', 'kg/m3'],
   ['INSULATION_THICKNESS', 'mm'],
 ]);
+const OPTIONAL_ANCILLARY_LINE_FIELDS = Object.freeze([
+  ['CLADDING_WEIGHT', 'kg/m', 'claddingMassPerLengthKgPerM'],
+  ['TRACING_WEIGHT', 'kg/m', 'tracingMassPerLengthKgPerM'],
+]);
 const FLUID_COMPOSITION_RULE = 'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION';
 const COMPONENT_MASS_COMPOSITION_RULE = 'ONE_DRY_MASS_POLICY_PER_PHYSICAL_COMPONENT';
 const ACTIVE_COMPONENT_MASS_MODE = 'COMPONENT_EXPLICIT_POINT_MASS';
@@ -36,6 +40,11 @@ const ACTIVE_COMPONENT_MASS_MODE = 'COMPONENT_EXPLICIT_POINT_MASS';
  * selector maps. No DEFAULT key is emitted. Per-line material/insulation and
  * per-component mass selectors are synthetic and execution-local, preventing
  * selector collisions from erasing target-level authority.
+ *
+ * Optional permanent ancillary line mass is projected into each line section
+ * only when a resolved CLADDING_WEIGHT or TRACING_WEIGHT effective value exists.
+ * Absence therefore remains absence rather than fabricated zero evidence, while
+ * an explicit governed zero remains traceable as an exact selected value.
  *
  * Raw OPE/HYD fluid density remains authoritative in the effective-value
  * ledger. The projected density consumed by the scalar gravity kernel is an
@@ -73,6 +82,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
 
   for (const binding of authorizedInput.lineBindings || []) {
     const values = Object.fromEntries(LINE_FIELDS.map(([fieldId, unit]) => [fieldId, requiredEffective(ledger, 'LINE', binding.targetId, fieldId, unit)]));
+    const ancillaryValues = Object.fromEntries(OPTIONAL_ANCILLARY_LINE_FIELDS.map(([fieldId, unit]) => [fieldId, optionalEffective(ledger, 'LINE', binding.targetId, fieldId, unit)]));
     const insulationThickness = values.INSULATION_THICKNESS.value;
     const insulationDensity = insulationThickness === 0 ? null : requiredEffective(ledger, 'LINE', binding.targetId, 'INSULATION_DENSITY', 'kg/m3');
     validateSection(values.PIPE_OUTER_DIAMETER.value, values.PIPE_WALL_THICKNESS.value, binding.targetId);
@@ -91,6 +101,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
       materialCode: materialSelector,
       insulationCode: insulationSelector,
       insulationThicknessMm: insulationThickness,
+      ...ancillarySectionProperties(ancillaryValues),
     };
     materials[materialSelector] = values.MATERIAL_DENSITY.value;
     operating[binding.lineKey] = operatingComposition.projectedDensity;
@@ -103,6 +114,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
       insulationSelector,
       selectedSemanticHashes: [
         ...Object.values(values).map((row) => row.semanticHash),
+        ...Object.values(ancillaryValues).filter(Boolean).map((row) => row.semanticHash),
         ...(insulationDensity ? [insulationDensity.semanticHash] : []),
         operatingFill.semanticHash,
         hydroFill.semanticHash,
@@ -215,9 +227,25 @@ function componentEvidenceBySelector(rows) {
   return sortedObject(Object.fromEntries(rows.map((row) => [row.effectiveSelector, { rule: row.rule, mode: row.mode, targetId: row.targetId, entityId: row.entityId, componentWeightKg: row.componentWeightKg, componentWeightSemanticHash: row.componentWeightSemanticHash, policySelector: row.policySelector, policySemanticHash: row.policySemanticHash, compositionSemanticHash: row.semanticHash }])));
 }
 
+function ancillarySectionProperties(values) {
+  return Object.fromEntries(OPTIONAL_ANCILLARY_LINE_FIELDS.flatMap(([fieldId, _unit, property]) => {
+    const selected = values[fieldId];
+    return selected ? [[property, selected.value]] : [];
+  }));
+}
+
+function optionalEffective(ledger, targetKind, targetId, fieldId, unit) {
+  const selected = findAuthorizedEmpiricalEffectiveValue(ledger, targetKind, targetId, fieldId);
+  return selected ? validateEffective(selected, targetKind, targetId, fieldId, unit) : null;
+}
+
 function requiredEffective(ledger, targetKind, targetId, fieldId, unit) {
   const selected = findAuthorizedEmpiricalEffectiveValue(ledger, targetKind, targetId, fieldId);
   if (!selected) throw codedError(`Effective value ${targetKind}:${targetId}:${fieldId} is required for gravity execution.`, 'EMPIRICAL_EFFECTIVE_EXECUTION_VALUE_REQUIRED', { targetKind, targetId, fieldId });
+  return validateEffective(selected, targetKind, targetId, fieldId, unit);
+}
+
+function validateEffective(selected, targetKind, targetId, fieldId, unit) {
   if (selected.unit !== unit) throw codedError(`Effective value ${targetKind}:${targetId}:${fieldId} must use ${unit}; got ${selected.unit}.`, 'EMPIRICAL_EFFECTIVE_EXECUTION_UNIT_UNSUPPORTED', { targetKind, targetId, fieldId, expectedUnit: unit, actualUnit: selected.unit });
   if (typeof selected.value !== 'number' || !Number.isFinite(selected.value) || selected.value < 0) throw codedError(`Effective value ${targetKind}:${targetId}:${fieldId} must be a finite non-negative number.`, 'EMPIRICAL_EFFECTIVE_EXECUTION_VALUE_INVALID', { targetKind, targetId, fieldId });
   return selected;

@@ -121,6 +121,8 @@ export const NON_FEA_FIELD_REGISTRY = freezeDeep({
     field('INSULATION_DENSITY', 'Insulation density', 'kg/m³', SOURCE_MASTER_OVERRIDE_DEFAULT, 'loadCalculation.insulationDensitiesKgPerM3', WEIGHT_METHODS, true),
     field('INSULATION_THICKNESS', 'Insulation thickness', 'm', SOURCE_MASTER_OVERRIDE_DEFAULT, null, WEIGHT_METHODS, true),
     field('INSULATION_WEIGHT', 'Insulation weight', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),
+    field('CLADDING_WEIGHT', 'Cladding/jacket mass per length', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),
+    field('TRACING_WEIGHT', 'Tracing/permanent ancillary mass per length', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),
     field('INSTALLATION_TEMPERATURE', 'Installation temperature', '°C', ['SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'PROJECT_POLICY', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT'], 'thermoMechanicalBasis.installationTemperatureC', THERMAL_METHODS, true),
     field('OPERATING_TEMPERATURE', 'Operating temperature', '°C', ['ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER', 'PROJECT_POLICY', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT'], 'thermoMechanicalBasis.operatingTemperaturesC', THERMAL_METHODS, true),
     field('CASE_PRESSURE', 'Load-case pressure', 'Pa', ['ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER', 'PROJECT_POLICY', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT'], 'thermoMechanicalBasis.casePressuresPa', PRESSURE_METHODS, true),

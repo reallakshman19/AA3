@@ -5,7 +5,7 @@ source_task: PR1270 salvage / LAFEA.3 retained refinement
 branch: agent/lafea3-local-refinement-current-main-salvage-20260825
 base_branch: main
 base_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
-report_basis_head: f56cae3bebee3a98c859431936e6c17d3b5fd407
+report_basis_head: 8384420ac23199c717f48b26b5dd478753e2450f
 criticality: ENGINEERING_CRITICAL
 recovery_state: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
 handover_readiness: READY_FOR_VALIDATION
@@ -22,26 +22,30 @@ engineering_failure_proven: false
 predecessor:
   pr: 1270
   state: CLOSED_SUPERSEDED
+scope:
+  changed_files: 10
+  engineering_and_product_files: 7
+  recovery_files: 3
+  ui_integration_issue: CLOSED_BY_CURRENT_MAIN_POLICY_BINDING
 validation:
   source_custody: PASS
   clean_pr_ledger: PASS
+  current_main_ui_policy_alignment: PASS_SOURCE_INSPECTION
+  existing_ui_regression_reconciled: PASS_SOURCE_INSPECTION
   focused_mapped_envelope: NOT_RUN
   retained_refinement_replay: NOT_RUN
   browser: NOT_RUN
   broad_build: NOT_RUN
 runner_evidence:
-  lafea_run: 32875613970
-  lafea_job: 97892673779
+  lafea_run: 32875823752
+  lafea_job: 97893340634
   lafea_runner_id: 0
   lafea_steps: 0
-  independent_control_run: 32875613790
-  independent_control_job: 97892673495
-  independent_control_runner_id: 0
-  independent_control_steps: 0
 protected:
   workflow_mutation: false
   registry_widening: false
   release_authority_changed: false
   solver_changed: false
   benchmark_or_tolerance_changed: false
-exact_next_action: Wait only for a legitimate recovery trigger or new-main drift; once execution is available, run focused mapped-envelope and retained-refinement replay first and stop at the first authoritative failure.
+  lafea4_tech13_semantics_changed: false
+exact_next_action: Complete source-diff/review reconciliation. If no source defect or review blocker is found, keep draft and wait only for a legitimate execution-recovery trigger; once execution exists, run the mapped-envelope and UI/refinement regression first and stop at the first authoritative failure.

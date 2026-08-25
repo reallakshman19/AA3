@@ -6,8 +6,7 @@ workstream: ISSUE1321_ANCILLARY_DISTRIBUTED_MASS
 branch: agent/issue-1321-ancillary-distributed-mass
 main_head_last_checked: 761632915155e0e9eb31c4cde74af539e69ec015
 merge_base: 6d4a7cbdd75208b918540be0bbea12d04af83ae4
-engineering_content_basis: 560f13254917ca05cb78dc4edf4033a76f0d393c
-hosted_recovery_basis: a5c7c24df98d7ee93abec8b1cce2917081e7254d
+engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY_DRAFT_SOURCE_AUDITED
@@ -17,17 +16,16 @@ appendix_a_status: CURRENT
 appendix_a_score: 96
 appendix_a_min_question: 17
 coordination: SAFE_AFTER_STALE_REGISTRY_AND_MAIN_DRIFT_RECONCILIATION
-current_stage: IMPLEMENTATION_COMPLETE_SOURCE_AUDITED_EXECUTION_NOT_RUN
-highest_risk: "A duplicate or partially-authorized ancillary mass path could overstate/understate permanent pipe gravity; source audit shows one PIPE base-mass composition site and complete-LINE default promotion."
+current_stage: IMPLEMENTATION_AND_STANDARD_AGGREGATE_WIRING_COMPLETE_EXECUTION_NOT_RUN
+highest_risk: "A duplicate or partially-authorized ancillary mass path could overstate/understate permanent pipe gravity; source audit shows one PIPE base-mass composition site, complete-LINE default promotion, and both focused regressions are now owned by the canonical Non-FEA aggregate."
 validation:
   live_grounding: PASS
   main_head: 761632915155e0e9eb31c4cde74af539e69ec015
-  engineering_content_basis: 560f13254917ca05cb78dc4edf4033a76f0d393c
-  hosted_recovery_basis: a5c7c24df98d7ee93abec8b1cce2917081e7254d
+  engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
   main_only_commit_count_since_merge_base: 2
   main_drift_overlap: NONE_WRC_EMP1_SOURCE_GOVERNANCE_ONLY
   open_overlap: PASS_STALE_PR1323_ONLY_CLOSED_UNMERGED
-  changed_file_scope: PASS_13_DECLARED_PATHS
+  changed_file_scope: PASS_14_DECLARED_PATHS
   production_diff_source_audit: PASS
   field_registry: PASS_SOURCE_INSPECTION
   configured_default_chain: PASS_SOURCE_INSPECTION
@@ -35,15 +33,17 @@ validation:
   effective_ledger_mapping: PASS_SOURCE_INSPECTION
   execution_projection: PASS_SOURCE_INSPECTION
   pipe_base_mass_composition: PASS_SOURCE_INSPECTION
+  aggregate_validation_wiring: PASS_SOURCE_INSPECTION_TWO_ENTRIES_ONLY
   independent_analytical_delta: PASS_EXACTLY_3_KG_PER_1M_2_PLUS_1_CASE
   reviews: PASS_NONE
   review_threads: PASS_NONE
   local_checkout: NOT_RUN_EXECUTION_ENVIRONMENT_DNS
   focused_mass_regression: NOT_RUN
   focused_default_authority_regression: NOT_RUN
-  standard_non_fea_import_build_browser_checks: NOT_RUN
-  hosted_ci_on_recovery_basis: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_RUNNER_UNAVAILABLE
-  hosted_ci_observation: "job 97875533686 on a5c7c24d had steps=[] and runner_id=0"
+  canonical_non_fea_aggregate: NOT_RUN
+  standard_import_build_browser_checks: NOT_RUN
+  hosted_ci_current_head: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_RUNNER_UNAVAILABLE
+  hosted_ci_observation: "exact-head PR jobs are created but expose no steps; earlier/current observations have runner_id=0 or steps=[]"
   workflow_mutation: NONE
 authority:
   owner_proceed_next_instruction_current_turn: true
@@ -56,4 +56,4 @@ authority:
   workflow_change_authorized: false
   merge_authority: NOT_GRANTED
 merge_disposition: OWNER_ONLY_DRAFT_UNMERGED
-exact_next_action: "On a functioning checkout/runner, execute scripts/authorized-empirical-ancillary-distributed-mass-check.mjs and scripts/non-fea-ancillary-default-authority-check.mjs, then standard Non-FEA/import/build checks. If all pass, record exact-head evidence and request Owner merge decision; otherwise patch only the failing falsifier."
+exact_next_action: "On a functioning checkout/runner, execute node scripts/run-non-fea-checks.mjs (which now includes both PR1430 focused regressions), then check:imports, build, and relevant browser/E2E validation. Patch only an evidenced failing falsifier; otherwise record exact-head PASS evidence and request Owner merge decision."

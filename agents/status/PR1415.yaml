@@ -1,21 +1,27 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1415
-mission: "Issue #1377 retained Table-5 cylindrical Rm reconciliation"
+mission: "Issue #1377 retained Table-5 cylindrical Rm reconciliation against current authorized bounded route"
 workstream: EMP1_WRC537_SOURCE_SEMANTICS
 branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
-base_sha: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-base_tree: 7f825983f3bc2c706214a318bc1d9ffe1d46d0e3
+main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+merge_base: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+pr_head_observed_before_recovery: b58f2bf3902f844db58be4205afa3ff816b951d0
+report_basis_head: 4d4608ab3fcb703e30fb8fd39b0d63fc2f45b9f5
+report_sync: CURRENT
+grounding_epoch: GE-PR1415-002
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT
+pr_recovery_state: HEALTHY_DRAFT_RECONCILED_TO_CURRENT_ROUTE_STATE
 handover_readiness: READY
+takeover_authority: WRITE_ALLOWED_SOURCE_GOVERNANCE_ONLY
 report_path: agents/PR1415_workreport.md
+appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: FINAL_AUDIT_COMPLETE_OWNER_MERGE_REQUIRED
-merge_authority: NOT_GRANTED
-implementation_basis_head: f43d7b82883524c7f83d45e9fdd59b63bc379328
+coordination: SAFE_SOURCE_GOVERNANCE_RECOVERY
+current_stage: CURRENT_ROUTE_STATE_RECONCILED_FINAL_AUDIT_PENDING
+highest_risk: BOUNDED_ROUTE_AUTHORIZATION_FALSELY_PROMOTED_TO_PRIMARY_WRC_RM_PHYSICAL_CONSTRUCTION_AUTHORITY
 source_state:
   wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
   wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
@@ -33,23 +39,41 @@ partial_authority:
   corrosion_assessment_basis: BLOCKED
   section45_radius_identity: BLOCKED_BY_THIS_INCREMENT
   ovality_nonuniform_geometry: BLOCKED
-  production_geometry_transformation: UNCHANGED
+  source_record_engineering_use_authorized: false
+  source_record_production_use_authorized: false
+current_bounded_route:
+  route_authorized: true
+  registry_registered: true
+  bounded_engineering_use_authorized: true
+  bounded_production_use_authorized: true
+  global_emp1_c_route_authority: false
+  code_compliance_authority: false
+  release_qualified: false
 validation:
+  live_grounding: PASS
   retained_source_inspection: PASS
-  direct_pdf_page_observation: NOT_RUN
+  production_rm_trace: PASS_SOURCE_INSPECTION
+  current_route_authority_inspection: PASS_SOURCE_INSPECTION
+  source_vs_runtime_authority_separation: PASS_SOURCE_INSPECTION
+  main_drift_exact_path_overlap: NONE
+  direct_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
   checker_node_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-  changed_files_final: 6
-  behind_main: 0
-  reviews: 0
-  review_threads: 0
-  mergeable: true
-  final_diff_review_main_audit: PASS
+  final_changed_file_scope: PENDING_FINAL_AUDIT
+  reviews_and_threads: PENDING_FINAL_AUDIT
+  hosted_ci: PENDING_FINAL_AUDIT
 authority:
-  engineering: false
-  production: false
+  source_record_engineering: false
+  source_record_production: false
+  bounded_runtime_engineering: true
+  bounded_runtime_production: true
   global_emp1_c: false
   code_compliance: false
   release: false
-exact_next_action: "Await explicit Owner merge authorization for PR1415; immediately before merge re-ground live main/head/reviews and preserve all physical-radius construction blockers."
+merge_disposition: OWNER_ONLY_DRAFT_FINAL_AUDIT_PENDING
+dependencies:
+  - "#1377"
+  - "#1389"
+  - "#54"
+exact_next_action: "Audit exact six-file diff against live main, reviews/threads and hosted execution; synchronize evidence metadata only; leave PR1415 draft/unmerged pending explicit Owner merge authorization."
 last_updated: "2026-08-25"

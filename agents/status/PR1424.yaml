@@ -1,0 +1,36 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1424
+mission: "Issue #1422 Validate Input progress visibility and blocker navigation"
+workstream: LOADCALC_VALIDATE_INPUT_PROGRESS
+branch: agent/issue-1422-validate-input-progress
+main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/PR1424_workreport.md
+appendix_a_status: PARTIAL_OWNER_START_OVERRIDE
+appendix_a_score: null
+appendix_a_min_question: null
+coordination: SAFE
+current_stage: PR_RECOVERY_MIGRATED_READY_FOR_COMMIT_1
+highest_risk: MASS_COVERAGE_PROGRESS_MISLABELS_OBLIGATIONS_AS_UNIQUE_ENTITIES
+validation:
+  live_grounding: PASS
+  issue_1421_superseded: PASS
+  overlap_check: PASS_NO_PRODUCTION_OVERLAP_FOUND
+  current_main_advanced_shell_contract: NOT_RUN
+  current_main_focused_e2e: NOT_RUN
+  current_main_workspace_contracts: NOT_RUN
+authority:
+  owner_start_coding_instruction: true
+  coverage_ready_semantics_change_authorized: false
+  method_readiness_change_authorized: false
+  seal_authorization_change_authorized: false
+  execution_gate_change_authorized: false
+  master_data_authority_change_authorized: false
+  workflow_change_authorized: false
+merge_disposition: OWNER_ONLY_DRAFT
+exact_next_action: "Remove superseded WIP recovery files, then implement structured coverage projection in non-fea-analysis-plan-runtime.js and workspace-status-projection.js without editing checker readiness semantics."

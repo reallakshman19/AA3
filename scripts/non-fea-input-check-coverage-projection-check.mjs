@@ -88,6 +88,48 @@ assert.match(
   'coverageResult ready semantics must remain all-or-nothing',
 );
 
+const inputCheckViewSource = readFileSync(new URL('../src/workspace/non-fea-input-check-view.js', import.meta.url), 'utf8');
+assert.match(
+  inputCheckViewSource,
+  /SECTION_COVERAGE_INCOMPLETE:\s*Object\.freeze\(\{\s*tab:\s*'enrichment'/u,
+  'section coverage must navigate to its owning enrichment surface',
+);
+assert.match(
+  inputCheckViewSource,
+  /FLEXURAL_COVERAGE_INCOMPLETE:\s*Object\.freeze\(\{\s*tab:\s*'enrichment'/u,
+  'flexural coverage must navigate to its owning enrichment surface',
+);
+assert.match(
+  inputCheckViewSource,
+  /MASS_COVERAGE_INCOMPLETE:\s*Object\.freeze\(\{\s*tab:\s*'enrichment'/u,
+  'mass coverage must navigate to its owning enrichment surface',
+);
+assert.match(
+  inputCheckViewSource,
+  /MASTER_NOT_READY:\s*Object\.freeze\(\{\s*tab:\s*'masters'/u,
+  'master readiness must navigate to Import Masters rather than enrichment',
+);
+assert.match(inputCheckViewSource, /SHARED CAUSE/u, 'shared causes must be labeled explicitly');
+assert.match(inputCheckViewSource, /SINGLE CAUSE/u, 'single-scope causes must be labeled explicitly');
+assert.match(inputCheckViewSource, /GATE ROLLUP/u, 'derived gate rollups must be labeled explicitly');
+
+const enrichmentViewSource = readFileSync(new URL('../src/workspace/enrichment/non-fea-enrichment-view.js', import.meta.url), 'utf8');
+assert.match(
+  enrichmentViewSource,
+  /PIPE_OUTER_DIAMETER:\s*Object\.freeze\(\['SECTION_COVERAGE_INCOMPLETE',\s*'FLEXURAL_COVERAGE_INCOMPLETE',\s*'MASS_COVERAGE_INCOMPLETE'\]\)/u,
+  'pipe diameter evidence must disclose section, flexural and mass coverage dependencies',
+);
+assert.match(
+  enrichmentViewSource,
+  /OPERATING_FLUID_WEIGHT:\s*Object\.freeze\(\['MASS_COVERAGE_INCOMPLETE'\]\)/u,
+  'operating-fluid weight evidence must disclose its mass coverage dependency',
+);
+assert.match(
+  enrichmentViewSource,
+  /only the common checker can clear a blocker/u,
+  'enrichment must not present dependency disclosure as readiness authority',
+);
+
 console.log('Non-FEA Validate Input coverage projection anti-drift check passed.');
 
 function projectionInput({ total, covered, missing, ready = false, state = 'BLOCKED' }) {

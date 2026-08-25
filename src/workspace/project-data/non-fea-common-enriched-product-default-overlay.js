@@ -36,6 +36,8 @@ const LINE_FIELD_MAP = Object.freeze({
   HYDRO_FLUID_DENSITY: ['fluid.hydroDensityKgM3', 'kg/m3'],
   INSULATION_THICKNESS: ['insulation.thicknessMm', 'mm'],
   INSULATION_DENSITY: ['insulation.densityKgM3', 'kg/m3'],
+  CLADDING_WEIGHT: ['permanent.claddingWeightKgPerM', 'kg/m'],
+  TRACING_WEIGHT: ['permanent.tracingWeightKgPerM', 'kg/m'],
 });
 const COMPONENT_FIELD_MAP = Object.freeze({
   COMPONENT_WEIGHT: ['component.weightKg', 'kg'],
@@ -50,7 +52,8 @@ const NON_MISSING_BLOCKED = new Set([
  * Projects an explicitly supplied, versioned product engineering-default table
  * onto the LINE/COMPONENT target model used by common-enriched EMPIRICAL_LOADS
  * readiness. The shipped product table is empty; this overlay invents no OD,
- * wall, density, insulation or component mass on its own.
+ * wall, density, insulation, ancillary distributed mass, or component mass on
+ * its own.
  *
  * Component-scoped line values may promote to one LINE field only when every
  * exact source component on the line is covered by one identical product row

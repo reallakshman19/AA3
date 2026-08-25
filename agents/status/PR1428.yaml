@@ -2,28 +2,37 @@ schema: AgentStatus.v1
 pr: 1428
 issue: 1413
 branch: agent/issue-1413-validation-isolation-20260825
-state: IMPLEMENTED_VALIDATION_ISOLATION_EXECUTION_PENDING
+state: AD04_REBASED_ENTRYPOINT_HARDENED_EXECUTION_PENDING
 criticality: ENGINEERING_CRITICAL
 handover_readiness: READY_FOR_CONTINUATION
 takeover_authority: WRITE_ALLOWED_VALIDATION_ISOLATION_ONLY
 merge_authority: OWNER_ONLY
-base_main: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-report_basis_head: c9f097bea0aa436bac81d9957057288340d44927
+base_main: 8b3dc79ed827e74c4b708c8d77e6354374a27154
+grounding_epoch: AD-04_AFTER_PR1424
+report_basis_head: 35a424081429e4bebed27e36311d93fd52c7ee1d
 engineering_failure_proven: false
 b2_mechanics_repair_authorized: false
 b4_registry_closure_authorized: false
 validation:
-  live_main_grounding: PASS_SOURCE_INSPECTION
+  ad04_live_main_grounding: PASS_SOURCE_INSPECTION
+  ad04_q0_q3_authority_drift: NO_DRIFT_FOUND
   appendix_a: PASS_99_OF_100_MIN_19
   source_isolation: PASS_SOURCE_INSPECTION
-  submitted_bytes_syntax: PASS_LOCAL_SYNTAX_ONLY
-  exact_repo_q0a: NOT_RUN
+  lafea4_contract_parity_guard: PASS_SOURCE_INSPECTION_AND_LOCAL_CONTROLLER_HARNESS
+  exact_head_preflight_controller: PASS_LOCAL_CONTROLLER_HARNESS_ONLY
+  exact_repo_q0a_continuum: NOT_RUN
+  exact_repo_q0a_shell: NOT_RUN
   exact_repo_q0b: NOT_RUN
   exact_repo_q0c: NOT_RUN
-  chromium_lafea4: NOT_RUN
   q1_q4e: NOT_RUN
-blocker: EXECUTABLE_EXACT_HEAD_ENVIRONMENT_REQUIRED
-exact_next_action: >-
-  Recheck PR-head hosted runner and live main. If an executable exact-head environment exists,
-  execute Q0A then Q0B then Q0C then Q1-Q4E in the PR1428 workreport order; otherwise preserve
-  NOT_RUN and make no mechanics/oracle/tolerance/registry/workflow mutation.
+  rebased_pr_head_hosted_execution: NOT_RUN_PRE_STEP_INFRASTRUCTURE
+infrastructure:
+  latest_lafea_run: 32855515597
+  latest_lafea_job: 97826397659
+  runner_allocated: false
+  steps: 0
+  logs_available: false
+  local_github_dns: unavailable
+next_action: >-
+  Re-ground if main moves. Otherwise, when an executable exact PR checkout exists, set QUAL_HEAD to
+  the exact PR head, run scripts/lafea1413-exact-head-preflight-check.mjs, then continue Q1 through Q4E.

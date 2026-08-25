@@ -283,6 +283,10 @@ function allowsZeroEngineeringLeaf(path, key, parent, entry) {
   if (key === 'insulationThicknessMm' && path.startsWith('loadCalculation.pipeSectionProperties.')) {
     return isExplicitlyUninsulated(parent);
   }
+  if (path.startsWith('loadCalculation.pipeSectionProperties.')
+      && ['claddingMassPerLengthKgPerM', 'tracingMassPerLengthKgPerM'].includes(key)) {
+    return true;
+  }
   if (path === 'loadCalculation.insulationDensitiesKgPerM3') {
     return ['NONE', 'UNINSULATED'].includes(String(key).trim().toUpperCase());
   }

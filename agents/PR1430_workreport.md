@@ -12,10 +12,10 @@ WORK_INTENT: IMPLEMENT
 PR: #1430
 ISSUE: #1321
 BRANCH: agent/issue-1321-ancillary-distributed-mass
-MAIN_HEAD_LAST_CHECKED: 761632915155e0e9eb31c4cde74af539e69ec015
+MAIN_HEAD_LAST_CHECKED: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
 MERGE_BASE: 6d4a7cbdd75208b918540be0bbea12d04af83ae4
 ENGINEERING_CONTENT_BASIS: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
-MAIN_DRIFT: 2 unrelated WRC/EMP.1 source-governance commits behind
+MAIN_DRIFT: 3 unrelated WRC/EMP.1 source-governance commits behind
 COORDINATION: SAFE_AFTER_STALE_REGISTRY_AND_MAIN_DRIFT_RECONCILIATION
 CURRENT_STAGE: IMPLEMENTATION_AND_STANDARD_AGGREGATE_WIRING_COMPLETE_EXECUTION_NOT_RUN
 CURRENT_BLOCKER: exact-head executable validation unavailable in current infrastructure
@@ -140,9 +140,10 @@ The canonical Non-FEA aggregate now owns both focused regressions. A future aggr
 
 ## Coordination / drift
 
-- live `main = 761632915155e0e9eb31c4cde74af539e69ec015` at last grounding;
+- live `main = 920d0ec367edbb6cd23b3fbd2616ec4322613e70` at last grounding;
 - merge base = `6d4a7cbdd75208b918540be0bbea12d04af83ae4`;
-- both main-only commits are WRC/EMP.1 source-governance/evidence work with no #1430 overlap;
+- all three main-only commits are WRC/EMP.1 source-governance/evidence work with no #1430 overlap;
+- latest main-only commit modifies PR1426 WRC537 shell-thickness source-authority evidence only;
 - historical PR #1323 is closed/unmerged and its broad claim is stale by live lineage;
 - no reviews or review threads were present when last checked;
 - PR remains OPEN / DRAFT / MERGEABLE / UNMERGED.
@@ -151,7 +152,7 @@ The canonical Non-FEA aggregate now owns both focused regressions. A future aggr
 
 | ID | Status | Observation |
 |---|---|---|
-| C-001 | PASS | live repository grounding and non-overlapping main drift |
+| C-001 | PASS | live repository grounding and three non-overlapping main-only commits |
 | C-002 | PASS | exactly 14 declared changed paths after aggregate wiring |
 | C-003 | PASS_SOURCE_INSPECTION | field registry adds only the two ancillary kg/m fields |
 | C-004 | PASS_SOURCE_INSPECTION | configured/product defaults reuse existing scope precedence and complete-LINE promotion |

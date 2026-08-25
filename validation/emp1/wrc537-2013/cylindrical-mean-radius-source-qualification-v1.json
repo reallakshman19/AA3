@@ -51,6 +51,7 @@
     "classification": "INTERNALLY_DETERMINISTIC_SOFTWARE_DERIVATION_NOT_PRIMARY_WRC_PHYSICAL_RADIUS_CONSTRUCTION_AUTHORITY",
     "productionNumericsChangedByThisReconciliation": false
   },
+  "authorityScope": "THIS_SOURCE_QUALIFICATION_RECORD_ONLY_NOT_CURRENT_BOUNDED_ROUTE_AUTHORITY",
   "authority": {
     "cylindricalSourceSymbolQualified": true,
     "cylindricalRadiusParameterRoleQualified": true,
@@ -64,6 +65,17 @@
     "engineeringUseAuthorized": false,
     "productionUseAuthorized": false
   },
+  "currentBoundedRouteState": {
+    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP",
+    "routeAuthorized": true,
+    "registryRegistered": true,
+    "boundedEngineeringUseAuthorized": true,
+    "boundedProductionUseAuthorized": true,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseQualified": false
+  },
+  "authorityInvariant": "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_CYLINDRICAL_RM_PHYSICAL_DEFINITION_SOURCE_AUTHORITY",
   "prohibitedInferences": [
     "DO_NOT_TREAT_TABLE5_RM_SYMBOL_AS_PROOF_OF_MIDSURFACE_OR_MEAN_RADIUS_PHYSICAL_DEFINITION",
     "DO_NOT_TREAT_CURRENT_OD_OVER_2_MINUS_T_OVER_2_AS_UNIVERSAL_WRC_RULE",
@@ -71,7 +83,8 @@
     "DO_NOT_SUBSTITUTE_ID_OVER_2_OR_OD_OVER_2_FOR_TABLE5_RM",
     "DO_NOT_MIX_NOMINAL_DIAMETER_WITH_DIFFERENT_THICKNESS_BASIS_WITHOUT_QUALIFIED_POLICY",
     "DO_NOT_CLAIM_OVALITY_OR_LOCAL_THICKNESS_GEOMETRY_IS_COVERED",
-    "DO_NOT_EXTEND_THIS_TABLE5_RM_RECONCILIATION_TO_SECTION_4_5_RADIUS_AUTHORITY_WITHOUT_SEPARATE_SOURCE_PROOF"
+    "DO_NOT_EXTEND_THIS_TABLE5_RM_RECONCILIATION_TO_SECTION_4_5_RADIUS_AUTHORITY_WITHOUT_SEPARATE_SOURCE_PROOF",
+    "DO_NOT_TREAT_BOUNDED_ROUTE_AUTHORIZATION_AS_PRIMARY_SOURCE_PROOF_OF_RM_PHYSICAL_CONSTRUCTION"
   ],
   "requiredPrimaryClosure": [
     "exact physical definition of cylindrical Table-5 R_m",

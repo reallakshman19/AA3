@@ -1,0 +1,29 @@
+schema: AgentClaim.v1
+pr_or_wip: WIP-1389-PHYSICAL-APPLICABILITY-BATCH-20260825
+claim_state: ACTIVE
+branch: agent/issue-1389-physical-applicability-batch-20260825
+mission: "Combined #1368/#1370/#1373 retained WRC physical-applicability source reconciliation"
+write_scope:
+  - validation/emp1/wrc537-2013/attachment-axis-intersection-source-qualification-v1.json
+  - scripts/emp1-wrc537-attachment-axis-source-check.mjs
+  - docs/emp1/WRC537_2013_Attachment_Axis_Authority.md
+  - validation/emp1/wrc537-2013/cylindrical-attachment-class-source-qualification-v1.json
+  - scripts/emp1-wrc537-cylindrical-attachment-class-source-check.mjs
+  - docs/emp1/WRC537_2013_Cylindrical_Attachment_Class_Authority.md
+  - validation/emp1/wrc537-2013/nearby-attachment-interaction-source-qualification-v1.json
+  - scripts/emp1-wrc537-nearby-attachment-interaction-source-check.mjs
+  - docs/emp1/WRC537_2013_Nearby_Attachment_Interaction_Authority.md
+  - validation/emp1/wrc537-2013/cylindrical-physical-applicability-source-reconciliation-v1.json
+  - scripts/emp1-wrc537-cylindrical-physical-applicability-source-check.mjs
+  - docs/emp1/WRC537_2013_Cylindrical_Physical_Applicability_Authority.md
+  - agents/WIP-1389-PHYSICAL-APPLICABILITY-BATCH-20260825_workreport.md
+  - agents/status/WIP-1389-PHYSICAL-APPLICABILITY-BATCH-20260825.yaml
+  - agents/claims/WIP-1389-PHYSICAL-APPLICABILITY-BATCH-20260825.yaml
+protected_no_mutation:
+  - src/core/emp1/
+  - validation/emp1/release/
+  - .github/workflows/
+  - validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json
+  - validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json
+authority_boundary: "Explicit retained Table-5/§4.5 source-content reconciliation only; no physical normality, attachment-class equivalence, neighbor-isolation, production, global, code or release authority."
+overlap_state: SAFE_PARALLEL_TO_PR1415_AND_PR1417_DISTINCT_FILES

@@ -12,10 +12,11 @@ BASE: main@4461e7699d08b8a1acbbc89cdbea3fd998368ca6
 BASE_TREE: 7f825983f3bc2c706214a318bc1d9ffe1d46d0e3
 BRANCH: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
 ISSUE: #1377
-CURRENT_STAGE: PR_ALLOCATED_RECOVERY_MIGRATION
+CURRENT_STAGE: FINAL_AUDIT_COMPLETE_OWNER_MERGE_REQUIRED
 MERGE_AUTHORITY: NOT_GRANTED
+IMPLEMENTATION_BASIS_HEAD: f43d7b82883524c7f83d45e9fdd59b63bc379328
 HIGHEST_RISK: turning retained Table-5 `Vessel Radius R_m` into an unsupported physical mean/midsurface or OD/ID/corrosion construction rule
-EXACT_NEXT_ACTION: delete superseded WIP recovery files; verify exact six-file diff, live main, reviews/threads and protected paths; remain draft/unmerged pending owner authorization.
+EXACT_NEXT_ACTION: await explicit Owner merge authorization; immediately before merge re-ground live main/head/reviews and preserve all physical-radius construction blockers.
 ```
 
 ## Mission
@@ -73,7 +74,7 @@ meanRadius = pipeOutsideDiameter/2 - assessmentPipeThickness/2
 
 and uses that field for gamma/beta and existing §4.5 ratios. This PR classifies that as deterministic software behavior, not WRC physical-radius construction authority.
 
-## Final intended changed-file ledger
+## Final changed-file ledger
 
 1. `validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json`
 2. `scripts/emp1-wrc537-cylindrical-mean-radius-source-check.mjs`
@@ -81,6 +82,8 @@ and uses that field for gamma/beta and existing §4.5 ratios. This PR classifies
 4. `agents/PR1415_workreport.md`
 5. `agents/status/PR1415.yaml`
 6. `agents/claims/PR1415.yaml`
+
+Temporary WIP recovery records are removed.
 
 ## Protected no-mutation
 
@@ -96,7 +99,7 @@ and uses that field for gamma/beta and existing §4.5 ratios. This PR classifies
 
 | Check | Status |
 |---|---|
-| live base main/tree | PASS |
+| live base main/tree | PASS — `4461e769...` / `7f825983...` |
 | retained Table-5 text inspection | PASS_SOURCE_INSPECTION |
 | Table-5 `Vessel Radius R_m` + gamma/beta role | PASS_SOURCE_INSPECTION |
 | direct PDF page observation | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT |
@@ -104,8 +107,12 @@ and uses that field for gamma/beta and existing §4.5 ratios. This PR classifies
 | checker Node execution | NOT_RUN |
 | production WRC numerical comparison | NOT_APPLICABLE |
 | production geometry transformation | UNCHANGED |
+| final changed-file count | PASS — 6 |
+| branch behind live main | PASS — 0 |
+| reviews | PASS — 0 |
+| review threads | PASS — 0 |
+| PR mergeability | PASS — mergeable |
 | engineering/production/global/code/release authority | false |
-| final six-file/main/review audit | PENDING |
 
 Encoded-but-unexecuted checker logic remains NOT_RUN.
 

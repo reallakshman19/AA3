@@ -8,13 +8,13 @@
 - Branch: `agent/issue-1422-validate-input-progress`
 - Base / merge base: `9887ec1c3eb6184c0d590841b23c04ed449f9414`
 - Main last re-grounded: `9887ec1c3eb6184c0d590841b23c04ed449f9414`
-- Implementation/test head before this recovery refresh: `7c036ddab3c8e64e948d9677750305e549d584fb`
-- Divergence before this recovery refresh: ahead 29 / behind 0
+- Implementation/test head before this recovery refresh: `54caa9ca141579c68f9d5f741de9ea5688e0e024`
+- Divergence before this recovery refresh: ahead 38 / behind 0
 - Work intent: IMPLEMENT
 - Criticality: ENGINEERING_CRITICAL
 - Merge authority: OWNER_ONLY
 - Owner mutation instruction: `Start coding` on 2026-08-25
-- Current disposition: IMPLEMENTATION_COMPLETE / ACCEPTANCE_MATRIX_ENCODED / REQUIRED_EXECUTION_VALIDATION_NOT_RUN
+- Current disposition: IMPLEMENTATION_COMPLETE / ACCEPTANCE_MATRIX_ENCODED / SEMANTIC_DEPENDENCY_AUDITED / REQUIRED_EXECUTION_VALIDATION_NOT_RUN
 
 ## Handover in 60 seconds
 
@@ -27,25 +27,29 @@ The PR now:
 3. exposes every unresolved entity/reason directly from that primary list;
 4. distinguishes shared causes, single-scope causes, and gate rollups;
 5. routes MASS / SECTION / FLEXURAL coverage causes to Enrichment and `MASTER_NOT_READY` to Import Masters;
-6. discloses from Enrichment which Validate Input causes staged **and accepted** records provide evidence for;
+6. discloses from Enrichment which Validate Input causes staged **and accepted** records can provide evidence for;
 7. keeps the calculation BLOCKED until checker `missing.length === 0`;
 8. adds a genuine partial MASS browser regression;
 9. adds a **non-mass FLEXURAL browser regression using real checker evidence and a real implementation consumption profile**, satisfying #1422's explicit non-mass cross-link acceptance item;
-10. adds a deterministic anti-drift projection script.
+10. adds a deterministic anti-drift projection script;
+11. pins the checker-consistent reverse dependency boundary: **OD/wall -> SECTION + MASS only; E/I/EI -> FLEXURAL**.
 
-Two late review gaps were found and closed before freeze:
+Three late review gaps were found and closed before freeze:
 
 - **ISS-1422-06:** acceptance overwrote the cause-aware staged message. Fixed in the view after the authoritative store accept; `non-fea-enrichment-store.js` remains unchanged.
 - **ISS-1422-07:** the original browser regression proved non-mass reverse disclosure from Enrichment but did not satisfy the issue's explicit E2E requirement for a non-mass Validate Input root-cause link. Added a second real-checker FLEXURAL case.
+- **ISS-1422-08:** Enrichment reverse mapping and FLEXURAL guidance overstated the effect of pipe OD/wall evidence. The live checker accepts direct `flexuralRigidityNm2` or `elasticModulusMpa + secondMomentAreaMm4`; it does **not** derive flexural readiness from OD/wall. Mapping, guidance, source anti-drift assertions, and browser assertions now match that contract.
+
+Two unrelated Enrichment JSDoc blocks accidentally removed during earlier whole-file writes were restored from base before freeze. No functionality changed in that cleanup.
 
 Coding/test-definition scope is complete again. Do **not** merge or mark ready-for-review: required real-checkout execution remains `NOT_RUN` because the current environment cannot faithfully materialize the repository/dependency graph. No `NOT_RUN` is represented as PASS.
 
 ## Exact repository state at this recovery refresh
 
 - Live `main`: `9887ec1c3eb6184c0d590841b23c04ed449f9414`.
-- Implementation/test head before this recovery-record commit: `7c036ddab3c8e64e948d9677750305e549d584fb`.
+- Implementation/test head before this recovery-record commit: `54caa9ca141579c68f9d5f741de9ea5688e0e024`.
 - Merge base equals live main.
-- Ahead 29 / behind 0 before this recovery-record commit.
+- Ahead 38 / behind 0 before this recovery-record commit.
 - PR is open, draft, mergeable, not merged.
 - Effective changed paths remain exactly 9.
 - Protected `src/core/non-fea-common-checker/index.js` is absent from the PR diff.
@@ -142,7 +146,7 @@ Presentation-owned action map:
 
 Issue #1422 says `MASTER_NOT_CURRENT`; live status projection emits `MASTER_NOT_READY`, so the PR follows the live contract.
 
-### 5. Reverse Enrichment feedback and acceptance-time closure
+### 5. Reverse Enrichment feedback and exact dependency boundary
 
 `src/workspace/enrichment/non-fea-enrichment-view.js`
 
@@ -151,6 +155,25 @@ Issue #1422 says `MASTER_NOT_CURRENT`; live status projection emits `MASTER_NOT_
 - Generated-master/fitting proposal messages name affected causes where the dependency is statically known.
 - Boundary text states these are dependency disclosures only and **only the common checker can clear a blocker**.
 - No checker evaluation or readiness authority is moved into Enrichment.
+
+Checker-consistent reverse dependency map after ISS-1422-08:
+
+```text
+PIPE_OUTER_DIAMETER   -> SECTION_COVERAGE_INCOMPLETE + MASS_COVERAGE_INCOMPLETE
+PIPE_WALL_THICKNESS   -> SECTION_COVERAGE_INCOMPLETE + MASS_COVERAGE_INCOMPLETE
+MATERIAL_DENSITY      -> MASS_COVERAGE_INCOMPLETE
+UNIT_PIPE_WEIGHT      -> MASS_COVERAGE_INCOMPLETE
+fluid evidence        -> MASS_COVERAGE_INCOMPLETE
+insulation evidence   -> MASS_COVERAGE_INCOMPLETE
+COMPONENT_WEIGHT      -> MASS_COVERAGE_INCOMPLETE
+ELASTIC_MODULUS       -> FLEXURAL_COVERAGE_INCOMPLETE
+SECOND_MOMENT_AREA    -> FLEXURAL_COVERAGE_INCOMPLETE
+FLEXURAL_RIGIDITY     -> FLEXURAL_COVERAGE_INCOMPLETE
+```
+
+Why OD/wall do not claim FLEXURAL: live `analyzeModelCoverage()` requires either direct `flexuralRigidityNm2` or both `elasticModulusMpa` and `secondMomentAreaMm4`. No governed OD/wall -> `secondMomentAreaMm4` derivation exists in this common checker/enrichment path. The UI must not promise an effect that the checker will not recognize.
+
+Validate Input guidance now says explicitly: resolve `FLEXURAL_RIGIDITY` directly, or provide both `ELASTIC_MODULUS` and `SECOND_MOMENT_AREA`; OD/wall alone do not satisfy flexural coverage.
 
 Acceptance sequence after ISS-1422-06 closure:
 
@@ -177,14 +200,14 @@ Single accept and `Accept all unblocked` both retain this feedback. `non-fea-enr
 - MASS -> Enrichment button exercised;
 - staged and accepted reverse cause disclosure asserted;
 - acceptance confirmation must name `MASS_COVERAGE_INCOMPLETE` and checker re-evaluation requirement;
-- a `PIPE_OUTER_DIAMETER` proposal is staged/rejected to assert SECTION + FLEXURAL + MASS reverse dependency disclosure without accepting new engineering evidence;
+- a `PIPE_OUTER_DIAMETER` proposal is staged/rejected to assert **SECTION + MASS are present and FLEXURAL is absent**, without accepting new engineering evidence;
 - Enrichment -> Validate Input return button exercised.
 
-### 7. Browser regression — real non-mass FLEXURAL forward link
+### 7. Browser regression — real non-mass FLEXURAL forward/reverse link
 
-Issue #1422 final acceptance matrix explicitly requires an E2E assertion for at least one non-mass coverage cause. The first test did not fully satisfy that because it only showed non-mass cause labels inside Enrichment.
+Issue #1422 final acceptance matrix explicitly requires an E2E assertion for at least one non-mass coverage cause. The first test did not fully satisfy that because it only exercised the default support-load implementation's MASS path.
 
-Second test now uses `PARTIAL_FLEXURAL_PACKAGE`:
+Second test uses `PARTIAL_FLEXURAL_PACKAGE`:
 
 - PIPE-A and PIPE-B carry direct `EI_N_M2`;
 - PIPE-C deliberately omits `EI_N_M2` and has no E+I derivation evidence;
@@ -226,6 +249,10 @@ missing obligations = 1
 PIPE-C shown directly in entity detail
 Calculation remains BLOCKED
 Open Enrichment & Overrides -> real Enrichment pane visible
+stage direct FLEXURAL_RIGIDITY for PIPE-C
+FLEXURAL reverse cause visible
+SECTION reverse cause absent
+MASS reverse cause absent
 ```
 
 This closes the explicit non-mass E2E cross-link acceptance item at the test-definition level; execution remains NOT_RUN.
@@ -240,7 +267,10 @@ This closes the explicit non-mass E2E cross-link acceptance item at the test-def
 - rejects state/readiness contradiction;
 - rejects duplicate missing evidence;
 - pins `coverageResult(): ready: normalized.length === 0`;
-- pins MASS/SECTION/FLEXURAL owner routes and Enrichment dependency mappings.
+- pins MASS/SECTION/FLEXURAL owner routes;
+- pins OD/wall -> SECTION + MASS and explicitly rejects OD -> FLEXURAL drift;
+- pins E/I/EI -> FLEXURAL;
+- pins Enrichment's no-readiness-authority boundary.
 
 ## Protected invariants
 
@@ -278,10 +308,12 @@ Do not change UI counts/readiness to conceal an upstream discrepancy.
 | Check | Status | Observation | Oracle |
 |---|---|---|---|
 | live main exact head | PASS | `9887ec1c3eb6184c0d590841b23c04ed449f9414` | GitHub source inspection |
-| branch divergence | PASS | ahead 29 / behind 0 before this recovery refresh | GitHub compare |
+| branch divergence | PASS | ahead 38 / behind 0 before this recovery refresh | GitHub compare |
 | changed-path reconciliation | PASS | exactly 9 expected paths | GitHub compare |
 | protected checker `index.js` unchanged | PASS | absent from PR file list | GitHub compare |
 | protected solver/load/workflow paths unchanged | PASS | absent from PR file list | GitHub compare |
+| reverse dependency semantic audit | PASS_SOURCE_INSPECTION | checker requires direct EI or E+I; OD/wall mapping corrected to SECTION+MASS only | checker/enrichment source inspection |
+| Enrichment incidental-doc cleanup | PASS_DIFF_INSPECTION | base JSDoc for master proposal and fitting review restored | PR patch |
 | `EI_N_M2` fixture alias | PASS_SOURCE_INSPECTION | production property spec maps to `flexuralRigidityNm2` | source inspection |
 | beam/contact method consumption | PASS_SOURCE_INSPECTION | real implementation consumes member-actions/contact methods requiring flexural coverage | source inspection |
 | browser dynamic-import seam precedent | PASS_SOURCE_INSPECTION | existing repository Playwright specs use `/src/...` dynamic imports | source inspection |
@@ -290,7 +322,7 @@ Do not change UI counts/readiness to conceal an upstream discrepancy.
 | #1422 acceptance-matrix test definitions | PASS_SOURCE_INSPECTION | partial progress, direct detail, 3-state legend, MASS and non-mass cross-link cases encoded | source inspection |
 | reconstructed coverage normalization/presentation | PASS_RECONSTRUCTED_LOCAL | exact new logic produced `1/3 -> 2/3` unique progress and rejected readiness/state contradictions | local reconstruction |
 | direct git clone | FAIL_ENVIRONMENT | DNS/outbound HTTPS unavailable | local environment |
-| exact-head combined commit statuses | NONE | no classic commit statuses reported | GitHub inspection |
+| exact-head combined commit statuses | NONE | no classic commit statuses reported at last check | GitHub inspection |
 | exact-head automatic workflows | NOT_APPLICABLE_TO_1422 | only unrelated EMP.1/LFEA workflows ran and failed; none execute required #1422 commands | GitHub Actions inspection |
 | focused projection script in real checkout | NOT_RUN | no faithful checkout | NONE |
 | advanced shell contract | NOT_RUN | no faithful checkout | NONE |
@@ -338,27 +370,29 @@ PASS by source inspection. Structured evidence is preserved/presented without to
 - ISS-1422-04 — IMPLEMENTED / execution validation pending: coverage owner navigation.
 - ISS-1422-05 — IMPLEMENTED / execution validation pending: Enrichment reverse disclosure.
 - ISS-1422-06 — CLOSED / execution validation pending: acceptance message overwrite fixed in view; store unchanged.
-- ISS-1422-07 — CLOSED / execution validation pending: explicit non-mass E2E cross-link now encoded with real FLEXURAL checker evidence.
+- ISS-1422-07 — CLOSED / execution validation pending: explicit non-mass E2E cross-link encoded with real FLEXURAL checker evidence.
+- ISS-1422-08 — CLOSED / execution validation pending: OD/wall -> FLEXURAL overclaim removed; mapping/guidance/tests now match checker E/I/EI semantics.
 - RISK-1422-01 — MITIGATED: unique entities separated from raw obligations.
 - RISK-1422-02 — MITIGATED_BY_CONTRACT: status identity changes with coverage evidence without changing readiness.
 - RISK-1422-03 — OPEN: browser/workspace regressions are encoded but not executed in a faithful checkout.
-- RISK-1422-04 — OPEN: unrelated automatic workflows fail on this branch and provide no #1422 evidence.
+- RISK-1422-04 — OPEN: unrelated automatic workflows provide no #1422 validation evidence.
 - DEC-1422-01 — checker readiness semantics immutable.
 - DEC-1422-02 — unique-entity progress is presentation-only.
 - DEC-1422-03 — use live `MASTER_NOT_READY`, not stale issue token.
 - DEC-1422-04 — Enrichment mapping is dependency disclosure, not readiness authority.
 - DEC-1422-05 — acceptance feedback stays in view; store is not coupled to UI blocker taxonomy.
 - DEC-1422-06 — non-mass E2E uses a real checker fixture + real implementation consumption profile; only active-profile selection is a test seam.
+- DEC-1422-07 — reverse cause mapping follows checker-observable evidence semantics; do not infer unstated engineering derivations from field relationships.
 
 ## Changed-file ledger
 
 1. `agents/PR1424_workreport.md` — living recovery/evidence record.
-2. `agents/claims/PR1424.yaml` — active mutation claim.
+2. `agents/claims/PR1424.yaml` — active validation-pending claim.
 3. `agents/status/PR1424.yaml` — machine-readable delivery state.
 4. `src/workspace/non-fea-analysis-plan-runtime.js` — checker coverage evidence projection.
 5. `src/core/non-fea-common-checker/workspace-status-projection.js` — fail-closed coverage normalization.
-6. `src/workspace/non-fea-input-check-view.js` — progress/detail/grouping/forward navigation.
-7. `src/workspace/enrichment/non-fea-enrichment-view.js` — reverse dependency/acceptance feedback/navigation.
+6. `src/workspace/non-fea-input-check-view.js` — progress/detail/grouping/forward navigation and checker-consistent FLEXURAL guidance.
+7. `src/workspace/enrichment/non-fea-enrichment-view.js` — exact reverse dependency/acceptance feedback/navigation.
 8. `scripts/non-fea-input-check-coverage-projection-check.mjs` — focused anti-drift contract.
 9. `e2e/non-fea-input-check-coverage-progress.spec.js` — MASS partial + non-mass FLEXURAL browser regressions.
 
@@ -373,9 +407,10 @@ No protected source path is in this ledger.
 5. Which blocker codes route to Enrichment/Import Masters, and why is `MASTER_NOT_READY` used?
 6. Why does Enrichment say an accepted record *provides evidence for* a cause rather than saying it cleared the cause?
 7. Trace single-record acceptance and prove the engineering store remains unchanged.
-8. Explain why the second Playwright test's FLEXURAL blocker is checker-generated rather than fabricated.
-9. Run and paste exact outputs of the required commands below. Do not inherit `NOT_RUN` as PASS.
-10. If a test fails, record exact output and isolate enrichment -> checker -> rendering before changing expected values.
+8. Explain why OD/wall map to SECTION+MASS but not FLEXURAL, and name the exact evidence combinations the checker accepts for FLEXURAL.
+9. Explain why the second Playwright test's FLEXURAL blocker is checker-generated rather than fabricated.
+10. Run and paste exact outputs of the required commands below. Do not inherit `NOT_RUN` as PASS.
+11. If a test fails, record exact output and isolate enrichment -> checker -> rendering before changing expected values.
 
 ## Required next commands in a faithful real checkout
 

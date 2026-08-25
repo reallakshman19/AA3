@@ -1,0 +1,38 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP-1375-TABLE5-SHELL-THICKNESS-20260825
+mission: "Issue #1375 retained Table-5 shell-thickness reconciliation"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1375-retained-table5-shell-thickness-reconciliation-20260825
+base_sha: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+base_tree: 7f825983f3bc2c706214a318bc1d9ffe1d46d0e3
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_WIP
+handover_readiness: READY
+report_path: agents/WIP-1375-TABLE5-SHELL-THICKNESS-20260825_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: CLAIMED_BEFORE_PATCH
+source_state:
+  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  retained_table5_pages: 41-42
+  retained_table5_label: VESSEL_THICKNESS
+  retained_table5_symbol: T
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+expected_partial_authority:
+  cylindrical_shell_thickness_symbol_t: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+  t_used_in_gamma: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+  t_used_in_stress_scales: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+  physical_thickness_basis: BLOCKED
+  corrosion_assessment_basis: BLOCKED
+  local_measured_basis: BLOCKED
+  production_thickness_conversion: UNCHANGED
+authority:
+  engineering: false
+  production: false
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+exact_next_action: "Patch only the three #1375 source-governance files; preserve current production thickness conversion and aggregate P0 gate."
+last_updated: "2026-08-25"

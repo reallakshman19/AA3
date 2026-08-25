@@ -15,23 +15,24 @@ EXECUTION_MODE: BATCHED_OWNER_DIRECTED
 SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1413
 MERGE_AUTHORITY: OWNER_ONLY
 WIP_BRANCH: agent/issue-1413-exact-main-qualification-20260824
-LIVE_MAIN_LAST_CHECKED: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
-CURRENT_STAGE: exact-head qualification packet + gate-origin policy complete; execution blocked before checkout
-CURRENT_BLOCKER: exact-main hosted Actions attempt 2 also failed before step creation; local exact checkout remains unavailable
+LIVE_MAIN_LAST_CHECKED: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+GROUNDING_EPOCH: AD-03_AFTER_PR1419_PR1420
+CURRENT_STAGE: Q0-Q4 execution packet frozen; Q0-Q3 authority drift audit clean; execution still blocked before checkout
+CURRENT_BLOCKER: exact-current-main Actions attempt 2 failed before step creation and local github.com DNS remains unavailable
 FIRST_PROVEN_FAILURE_BOUNDARY: INFRASTRUCTURE
 ENGINEERING_FAILURE_PROVEN: false
 B2_MECHANICS_REPAIR_AUTHORIZED: false
 B4_REGISTRY_CLOSURE_AUTHORIZED: false
-EXACT_NEXT_ACTION: when any exact current-main environment obtains executable steps/materialized checkout, re-ground main and execute the frozen sequence below. Preserve gate-local PASS/FAIL truth, stop at first authoritative #1413 engineering mismatch, and do not misclassify unrelated repository failures as LAFEA mechanics failures.
+EXACT_NEXT_ACTION: on the first exact-current-main environment with real checkout/steps, execute the frozen Q0 -> Q4 sequence below. Stop at the first authoritative Class-A/#1413 Class-B failure; do not convert unrelated Class-C failures into mechanics authority.
 ```
 
 This is the single living recovery authority for #1413. Historical investigation remains in Issue #1413 / #54 comments and earlier report commits.
 
-## 1. Mission
+## 1. Mission and protected boundary
 
-Certify the **already merged** LAFEA.3/LAFEA.4 Model -> Mesh -> Analyse -> Output implementation on one exact current-main SHA and, only after complete exact-head qualification, reconcile the remaining registry/evidence wording.
+Certify the already-merged LAFEA.3/LAFEA.4 **Model -> Mesh -> Analyse -> Output** implementation on one exact current-main SHA. Only after exact-head engineering, product, build and clean-tree qualification may the remaining registry/evidence wording be reconciled.
 
-This is qualification + first-failure isolation, not a broad implementation programme.
+This is qualification + first-failure isolation, not another implementation programme.
 
 Protected until actual execution proves otherwise:
 
@@ -45,7 +46,7 @@ Protected until actual execution proves otherwise:
 - no LAFEA.4 MITC/drilling/thick-shell/contact/weld/code widening;
 - no release/code authority grant.
 
-Validation integrity:
+Integrity rules:
 
 ```text
 FIRST_EXECUTED_AUTHORITATIVE_FAILURE_WINS = true
@@ -55,28 +56,89 @@ BENCHMARK_DELETION = forbidden
 DISPLAY/NODAL_SMOOTHING_PROMOTION = forbidden
 ```
 
-## 2. Exact ground truth / AD-01
+## 2. AD-03 — exact live ground truth after #1419 / #1420
 
-Current main:
+Previous grounded main:
 
 ```text
 e2a44a85b808c0dd3f09a02d7825df26cf92f92f
 ```
 
-This is owner-merged PR #1416, parent:
+Current exact main:
 
 ```text
-4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+9887ec1c3eb6184c0d590841b23c04ed449f9414
 ```
 
-#1416 changed only EMP.1 shell-thickness source-governance artifacts and did not touch LAFEA.3/.4 solver, mesher, recovery, presenter, registry, #1371 custody scripts, frozen oracles, or browser specs.
+Current main is two commits ahead / zero behind the previous epoch:
 
 ```text
-AD-01_RESULT = PASS_FOR_PROCEEDING_TO_EXECUTION
-AUTHORITY_DRIFT_FOUND = false
-DIRECT_LAFEA_QUALIFICATION_PATH_DRIFT_FOUND = false
+7042f720f75869e4bf84b632afb2d66617d05af6  #1419 Loadcalc bore derivation and root causes
+9887ec1c3eb6184c0d590841b23c04ed449f9414  #1420 LFEA S3 bend-factor / bend-retopology authority work
+```
+
+Combined compare changed 28 files. Main changed areas are:
+
+```text
+package.json
+scripts/advanced-shell-contract-check.mjs
+LFEA linear-piping bend retopology / unit normalization / production bend profile
+Load Calc / non-FEA common checker / model-loads / master-data / shell UI styles
+```
+
+No direct changed path exists in:
+
+```text
+src/core/local-continuum/**
+src/core/local-shell/**
+src/workspace/lafea-stage-registry.js
+scripts/lafea1371-cross-stage-anti-drift-check.mjs
+frozen LAFEA.3/.4 benchmark/oracle definitions
+e2e/lafea3-sample-mesh.spec.js
+e2e/lafea-shell-sample-mesh.spec.js
+```
+
+Current exact seam custody confirms the important #1413 files are unchanged from the prior qualification epoch:
+
+```text
+scripts/lafea1371-cross-stage-anti-drift-check.mjs
+  blob = 6f7b26be38254c027e1b7ca8a35c7de8af3fe340
+
+e2e/lafea3-sample-mesh.spec.js
+  blob = 3bde7e9629938033e42bd08a14e9bc35bf3dbb98
+
+e2e/lafea-shell-sample-mesh.spec.js
+  blob = ce8e626d5a702978c9735cd3327d3a7c0e2705fb
+
+src/workspace/lafea-stage-registry.js
+  blob = bb0d506fbf3a6d8291943d6a1da12fdd164c2484
+```
+
+AD-03 disposition:
+
+```text
+CLASS_A_Q0_Q3_AUTHORITY_DRIFT = false
+DIRECT_LAFEA_NUMERICAL_PATH_DRIFT = false
+FROZEN_ORACLE_DRIFT = false
+#1371_CUSTODY_SCRIPT_DRIFT = false
+TARGET_BROWSER_SPEC_DRIFT = false
+REGISTRY_DRIFT = false
+
+GLOBAL_PACKAGE_BUILD_SURFACE_DRIFT = true
+GLOBAL_APP_SHELL_SURFACE_DRIFT = true
+Q4_REQUALIFICATION_REQUIRED = true
+```
+
+Therefore:
+
+```text
+AD-03_RESULT = PASS_FOR_Q0_Q3_EXECUTION_ON_9887ec1c...
+OLD_HEAD_Q0_Q4_PASS_REUSE = forbidden
 ENGINEERING_MUTATION_AUTHORIZED = false
+B4_AUTHORIZED = false
 ```
+
+The two new merges do not themselves prove or disprove LAFEA.3/.4 numerics. `package.json`, the global shell contract and shared application surfaces moved, so **all Class-B/Class-C product/build gates still require fresh exact-head execution**.
 
 #1393 integration head remains:
 
@@ -84,100 +146,94 @@ ENGINEERING_MUTATION_AUTHORIZED = false
 ff5a7353f3759d72ba27be37095c7f5e06b5f7e2
 ```
 
-Any relevant main movement before execution invalidates this grounding epoch and requires a new AD-01 before Q0.
+Any further relevant main movement invalidates AD-03 and requires a new grounding epoch before Q0.
 
 ## 3. Current execution-environment evidence
 
-### Exact-main hosted Actions
+### Exact current main
 
 Workflow:
 
 ```text
 Deploy Vite site to GitHub Pages
-run = 32798593746
-head = e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+run = 32802245487
+head = 9887ec1c3eb6184c0d590841b23c04ed449f9414
 ```
 
 Attempt 1:
 
 ```text
-build job = 97654893850
+build job = 97665263048
 conclusion = failure
-steps = null/empty
+steps = null
 logs = unavailable
-checkout = NOT_EXECUTED
-```
-
-Attempt 2 — explicit no-source-change rerun on 2026-08-25:
-
-```text
-rerun accepted = true
-build job = 97662167911
-observed = queued -> completed
-conclusion = failure
-steps = [] / null
-logs = unavailable
-deploy job = 97662175665 -> skipped
+deploy = skipped
 checkout = NOT_EXECUTED
 repository command = NOT_EXECUTED
 ```
 
-Therefore runner allocation has **not** recovered on exact current main.
-
-### Current-base PR #1417
-
-PR #1417 remains draft/open on the same exact base and changes only six EMP.1 material-source-governance files; direct #1413 overlap = SAFE.
-
-Fresh jobs also failed pre-step:
+Attempt 2 — explicit no-source-change rerun during AD-03:
 
 ```text
-run 32799259020 / job 97656773629 / runner_id 0 / steps []
-run 32799258986 / job 97656773581 / runner_id 0 / steps []
+rerun accepted = true
+build job = 97735600940
+observed = queued -> completed
+conclusion = failure
+steps = null
+deploy job = 97735619959 -> skipped
+checkout = NOT_EXECUTED
+repository command = NOT_EXECUTED
 ```
+
+The current-main rerun therefore again falsifies a one-off stale-attempt explanation.
 
 ### Local runtime
 
-Last direct probe:
+Current probe:
 
 ```bash
 git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git refs/heads/main
 ```
 
-returned DNS failure resolving `github.com` with exit 128. No exact local checkout exists.
+Observed:
+
+```text
+fatal: unable to access ...
+Could not resolve host: github.com
+exit = 128
+```
 
 Classification:
 
 ```text
 B1_EXACT_HEAD_EXECUTION = NOT_RUN
 B3_CHROMIUM_EXECUTION = NOT_RUN
+Q4_BUILD_EXECUTION = NOT_RUN
 ORIGIN = INFRASTRUCTURE / EXECUTION_ENVIRONMENT
 ENGINEERING_FAILURE_PROVEN = false
-TRANSIENT_SINGLE_ATTEMPT_HYPOTHESIS = falsified
 EXACT_MAIN_RERUN_RECURRENCE_CONFIRMED = true
 ```
 
-Do not create a validation-only PR or mutate workflows merely to reproduce this known zero-step state.
+Do not create a validation-only PR or mutate workflows merely to reproduce this zero-step state.
 
 ## 4. Multi-agent coordination
 
-Repository `agents/MASTER_INDEX.md` is not present on current main; coordination is based on live PRs and exact ledgers.
+Relevant open work remains separate from current-main certification:
 
-Relevant active work:
+- #1270 LAFEA.3 local-refinement/product-mesh work -> coordination required if merged before qualification.
+- #1258 B01 B-bar/solver repair -> direct Q1 numerical-authority overlap if merged.
+- #1259 B02D V2 -> B02 qualification overlap if merged.
+- #1246 / related TECH-13 LAFEA.4 refinement/build work -> shell/product/build overlap if merged.
+- #1391 LFEA S5 pressure/Bourdon -> LFEA piping authority, not current LAFEA.3/.4 Class-A authority.
 
-- #1417 EMP.1 material source governance -> SAFE for #1413.
-- #1270 LAFEA.3 refinement/product mesh work -> COORDINATION_REQUIRED_IF_MERGED_BEFORE_QUALIFICATION.
-- #1258 B01 B-bar/solver work -> COORDINATION_REQUIRED_IF_MERGED_BEFORE_QUALIFICATION; directly overlaps Q1 numerical authority.
-- #1259 B02D V2 qualification -> COORDINATION_REQUIRED_IF_MERGED_BEFORE_QUALIFICATION.
-- #1246 LAFEA.4 TECH-13/product/build work -> COORDINATION_REQUIRED_IF_MERGED_BEFORE_QUALIFICATION.
-
-None of those reviewed branches currently claims the predicted B4 technical files:
+No reviewed active branch currently owns the predicted B4 exact files:
 
 ```text
 src/workspace/lafea-stage-registry.js
 scripts/lafea1371-cross-stage-anti-drift-check.mjs
 ```
 
-That is coordination readiness only, not B4 authorization.
+This is coordination readiness only. Any relevant merge before execution requires another AD-01/AD-03 style re-ground.
 
 ## 5. Frozen engineering authority
 
@@ -213,50 +269,38 @@ Independent programme:
 - B4-1 analytical membrane patch;
 - B4-2 analytical constant-curvature bending patch;
 - B4-3 retained primary Batoz/Bathe/Ho DKT reference;
-- production output cannot redefine geometry, signs, targets, or tolerances.
+- production output cannot redefine geometry, signs, targets or tolerances.
 
-## 6. Gate classes — do not collapse distinct failure origins
+## 6. Gate classes — preserve failure origin
 
-A central #1413 rule is that all required gates remain mandatory for closure, but **not every required gate failure is a LAFEA engineering failure**.
+All required gates remain mandatory for final closure, but not every gate failure is a LAFEA engineering failure.
 
-### Class A — authority-bearing #1413 engineering gates
+### Class A — authority-bearing #1413 engineering
 
-Includes Q0-Q3 below.
+Q0-Q3. A real nonzero result after checkout/dependency installation can establish first authoritative engineering mismatch.
 
-A real nonzero result after successful checkout/dependency installation can establish the first authoritative engineering mismatch. Preserve exact expected/actual/delta/tolerance and localize the first wrong boundary before any patch.
+Only a Class-A failure or a directly traced Class-B product failure may trigger B2, after infrastructure/runtime causes are excluded.
 
-Only Class-A or directly traced Class-B product failures may trigger B2, and only after infrastructure/runtime causes are excluded.
+### Class B — #1413 direct product path
 
-### Class B — #1413 product-path gates
+LAFEA-focused source/build checks and direct LAFEA.3/LAFEA.4 Chromium journeys.
 
-Includes the direct LAFEA.3 and LAFEA.4 Chromium journeys and issue-local standalone/product mapping checks.
+If Q0-Q3 PASS, classify an initial Class-B failure as mapping/presentation/build-browser until evidence traces it to numerical mechanics.
 
-Failure blocks B4. If Q0-Q3 already PASS, classify a Class-B failure first as mapping/presentation/build-browser unless evidence traces it back to an engineering calculation boundary.
+### Class C — repository-wide closure
 
-### Class C — repository-wide closure gates
-
-Includes broad `full-check`, production bundle/build, and non-#1413 Stage-17 prerequisites such as unrelated EMP.1/UI08 checks.
-
-These gates are still mandatory for final closure on the exact head. However:
+Broad imports/syntax/full-check, production bundle/build, and non-#1413 Stage-17 prerequisites.
 
 ```text
 unrelated Class-C failure != LAFEA.3/.4 engineering FAIL
 unrelated Class-C failure != B2 mechanics authorization
 ```
 
-Record it as `EXTERNAL_REPOSITORY_GATE_BLOCKER` with the first failing command/path. Preserve earlier Q0-Q3/Class-B PASS truth, but **B4 remains blocked**. If another PR later fixes the blocker and main moves, the exact-head rule requires re-running the full packet on the new main.
+An unrelated Class-C failure is `EXTERNAL_REPOSITORY_GATE_BLOCKER`; it blocks B4 but does not erase already observed Q0-Q3/Class-B evidence. Because closure requires one exact head, if another merge fixes it then the entire packet must be rerun on the new head.
 
 ### Class D — infrastructure/runtime
 
-Examples:
-
-- no runner allocation / zero steps;
-- checkout failure;
-- `npm ci` transport failure;
-- Chromium installation/runtime acquisition failure;
-- unavailable exact checkout.
-
-Disposition:
+No runner, checkout failure, `npm ci` transport failure, Chromium acquisition/runtime failure, or unavailable exact checkout.
 
 ```text
 STATUS = NOT_RUN
@@ -264,9 +308,7 @@ ENGINEERING_FAILURE_PROVEN = false
 B2 = NOT_TRIGGERED
 ```
 
-## 7. Frozen one-pass execution order
-
-The order deliberately obtains the issue-specific engineering/product evidence **before broad unrelated repository gates can short-circuit it**.
+## 7. Frozen exact-head execution sequence
 
 ### Epoch setup — Class D precondition
 
@@ -295,7 +337,7 @@ STATUS = PASS | FAIL | NOT_RUN | NOT_APPLICABLE
 GATE_CLASS = A | B | C | D
 OBSERVATION = LOCAL_EXECUTION | REMOTE_EXECUTION
 ORACLE = SOURCE_PRIMARY | FROZEN_INDEPENDENT | IMPLEMENTATION_COUPLED | PRODUCT_REGRESSION | NONE
-STDOUT/STDERR or log hash
+STDOUT/STDERR or hash
 artifact/report identities
 FIRST_WRONG quantity/intermediate if FAIL
 FAILURE_ORIGIN = #1413_ENGINEERING | #1413_PRODUCT | EXTERNAL_REPOSITORY_GATE | INFRASTRUCTURE
@@ -303,14 +345,12 @@ FAILURE_ORIGIN = #1413_ENGINEERING | #1413_PRODUCT | EXTERNAL_REPOSITORY_GATE | 
 
 ### Q0 — Class A frozen custody
 
-Run before production numerical observation:
-
 ```bash
 node scripts/lafea-b02-definition-freeze-check.mjs
 node scripts/lafea-shell-independent-benchmark-freeze-check.mjs
 ```
 
-Failure ownership: SOURCE AUTHORITY / HASH or BENCHMARK / ORACLE. Stop.
+Failure ownership: SOURCE AUTHORITY/HASH or BENCHMARK/ORACLE. Stop.
 
 ### Q1 — Class A independent numerical
 
@@ -332,7 +372,7 @@ node scripts/lafea-b02c-production-check.mjs
 node scripts/lafea-shell-response-acceptance-check.mjs
 ```
 
-Retain per-level mesh/execution/recovery/GCI and shell displacement/stress/pivot/equilibrium/force/moment evidence.
+Retain B02 per-level mesh/execution/recovery/GCI and shell displacement/stress/pivot/equilibrium/force/moment evidence.
 
 ### Q3 — Class A integrated Model -> Mesh -> Analyse -> Output custody
 
@@ -348,7 +388,7 @@ node scripts/lafea4-sample-pressure-output-check.mjs
 node scripts/lafea1371-cross-stage-anti-drift-check.mjs
 ```
 
-LAFEA.3 must prove:
+LAFEA.3 required control:
 
 ```text
 source physics parity
@@ -357,23 +397,32 @@ current source/domain/geometry/mesh/preflight parentage
 route = DOMAIN_FIRST_COMPILED_SOLVER_MODEL
 execution = QUALIFIED
 result = ACCEPTED
-current recovery
-2 load cases with finite nonzero response
+2 load cases
+current recovery / retained output
 ```
 
-Cross-stage predeclared control:
+Cross-stage material edit prediction:
 
 ```text
 E 200000 -> 210000 MPa
 factor = 1.05
 force-controlled displacement factor = 0.9523809523809523
 predicted displacement change = -4.7619047619%
-predicted stress change ≈ 0%
+predicted stress change ~= 0%
 ```
 
-LAFEA.4 must prove retained source topology, current CST+DKT solver-mesh binding, pressure transfer, force/moment equilibrium and retained IP/surface result authority.
+LAFEA.4 required control:
 
-Independent Sample mechanics control:
+```text
+retained source topology
+current CST+DKT solver-mesh binding
+pressure transferred to every retained solver element
+force equilibrium PASS
+moment equilibrium PASS
+retained integration-point/surface result authority
+```
+
+Independent Sample mechanics:
 
 ```text
 p = 1.2 MPa
@@ -388,13 +437,11 @@ fully fixed support moment = [0, +150000, 0] N.mm
 
 Any moment mismatch must first be recomputed about the same origin/reference.
 
-## 8. Q4 product + closure sequence
+## 8. Q4 product + closure
 
 Q4 starts only after Q0-Q3 PASS.
 
-### Q4A — Class B issue-local source/build readiness
-
-Run LAFEA-focused checks first:
+### Q4A — Class B LAFEA-focused source/build readiness
 
 ```bash
 npm run check:lafea-core
@@ -402,56 +449,39 @@ npm run check:lafea-workbench
 npm run check:lafea-standalone
 ```
 
-Standalone boundary uses the existing visible-workbench comparator semantics rather than blindly invoking `npm run build:lafea`.
-
-Comparator base:
+Standalone boundary uses the existing comparator semantics with:
 
 ```text
-162c88ee4715bc46c3c768c1086e74e7165bd3fb
+QUALIFICATION_BASE = 162c88ee4715bc46c3c768c1086e74e7165bd3fb
 ```
 
-Acceptance:
+Acceptance: head boundary PASS, or an inherited failure only when the exact comparator base has the identical first `FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY` signature.
 
-1. current boundary checker PASS -> proceed; or
-2. current failure is accepted only when the exact comparator base fails with the identical first `FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY` signature;
-3. changed signature, failing head with passing base, or inability to establish comparator evidence -> FAIL/BLOCK.
-
-Then standalone build:
+Then:
 
 ```bash
 npx vite build --config vite.lafea.config.js
 node scripts/lafea-standalone-build-artifact-check.mjs
 ```
 
-### Q4B — Class B targeted Chromium #1413 proof
-
-Install runtime:
+### Q4B — Class B direct Chromium #1413 proof
 
 ```bash
 export PLAYWRIGHT_BROWSERS_PATH=0
 npx playwright install --with-deps chromium
-```
-
-Run the #1413 journeys directly before the broad Stage-17 carrier:
-
-```bash
 CI=1 node node_modules/playwright/cli.js test \
   --config=playwright.lafea-visible.config.js \
   e2e/lafea3-sample-mesh.spec.js \
   e2e/lafea-shell-sample-mesh.spec.js
 ```
 
-Immediately retain/copy `test-results/**` and `playwright-report/**` under `$EVIDENCE_ROOT/targeted-browser/`.
+Retain/copy `test-results/**` and `playwright-report/**` under `$EVIDENCE_ROOT/targeted-browser/` immediately.
 
-Why direct execution is mandatory: Stage-17 executes unrelated EMP.1/UI08 prerequisites before reaching these specs, so a broad prerequisite failure could otherwise leave the actual issue journeys `NOT_RUN`.
-
-LAFEA.3 browser proof must retain T6 mesh identity, 30 mm target, preflight hashes, compiled execution hash, accepted two-case solve, lifecycle recovery and visible retained results.
-
-LAFEA.4 browser proof must retain mesh == solver mesh, solver/binding/execution hashes, force+moment equilibrium, current recovery and evidence-derived engineering summary. The current shell spec also exercises LAFEA.5; that portion is repository regression only and does not widen #1413 authority.
+Direct execution is required because the Stage-17 carrier runs unrelated EMP.1/UI prerequisites first and could otherwise leave the actual #1413 journeys NOT_RUN.
 
 ### Q4C — Class C repository-wide source/build closure
 
-After targeted #1413 browser PASS, execute broad repository gates:
+Only after direct #1413 browser PASS:
 
 ```bash
 npm run check:imports
@@ -460,32 +490,21 @@ node scripts/full-check.mjs
 npm run build
 ```
 
-`full-check.mjs` runs package-json, imports, strict syntax, registry, benchmarks and smoke in sequence.
+This phase must be fresh on `9887ec1c...` because #1419/#1420 changed `package.json`, `scripts/advanced-shell-contract-check.mjs`, shared workspace/UI surfaces and other global application code.
 
-`npm run build` executes production build plus the production bundle-chunk check. The bundle checker applies a global hard ceiling and required chunk topology, including a required `lafea-discretization-generation` chunk; therefore its failure must be localized before assigning #1413 ownership.
+A failure here blocks B4. It authorizes B2 only if trace evidence connects the first failure back into #1413 engineering mechanics.
 
-Disposition for any Class-C failure:
-
-```text
-if first failing path/contract is #1413-owned -> #1413_PRODUCT or #1413_ENGINEERING as traced
-otherwise -> EXTERNAL_REPOSITORY_GATE_BLOCKER
-B4 remains blocked either way
-B2 mechanics only if actual #1413 engineering boundary is proven
-```
-
-### Q4D — Class C full Stage-17 integration carrier
-
-Only after targeted #1413 PASS and repository build/source gates complete:
+### Q4D — Class C full Stage-17 integration
 
 ```bash
 CI=1 node scripts/lafea-stage17-browser-run.mjs
 ```
 
-Retain its browser artifacts under `$EVIDENCE_ROOT/stage17-integration/`.
+Retain/copy resulting browser evidence under `$EVIDENCE_ROOT/stage17-integration/`.
 
-Stage-17 includes #1371 merge-order/anti-drift, EMP.1 prerequisites, B01/B02 diagnostics, standalone/product journeys and the two #1413 specs. Since the targeted specs already ran directly, an unrelated EMP.1/UI08 failure here cannot erase their PASS; it remains a mandatory **closure blocker**, not evidence of LAFEA numerical failure.
+An unrelated EMP.1/UI/LFEA failure is recorded by its own origin and does not rewrite Q0-Q3/Class-B truth.
 
-### Q4E — final exact-head/clean-tree custody
+### Q4E — exact-head / clean-tree custody
 
 ```bash
 git diff --check
@@ -493,133 +512,111 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 test "$(git rev-parse HEAD)" = "$QUAL_HEAD"
 ```
 
-Evidence storage must not dirty the tracked worktree.
+Evidence stays outside the tracked worktree.
 
-## 9. First-failure ownership vocabulary
-
-```text
-SOURCE / UNITS
-SOURCE AUTHORITY / HASH
-GEOMETRY / TOPOLOGY
-MESH GENERATION
-MESH PARENTAGE / MAPPING
-ELEMENT FORMULATION
-LOAD VECTOR / PRESSURE INTEGRATION
-CONSTRAINT MAPPING
-ASSEMBLY
-SOLVER / RANK / CONDITIONING
-REACTION / EQUILIBRIUM
-RECOVERY
-LOCAL/GLOBAL TRANSFORMATION
-RESULT MAPPING
-PRESENTATION
-BENCHMARK / ORACLE
-BUILD / BROWSER
-EXTERNAL REPOSITORY GATE
-INFRASTRUCTURE
-```
-
-A failed command does not automatically identify its engineering owner. Preserve the first wrong intermediate and trace the semantic boundary.
-
-## 10. B2 trigger
-
-B2 remains `NOT_TRIGGERED` until a Class-A or traced Class-B execution on an exact qualifying head proves a #1413 engineering/product defect.
-
-If triggered:
-
-1. preserve expected/actual/delta/tolerance and exact node/element/IP/surface/hash;
-2. complete Appendix A implementation takeover qualification before production mutation;
-3. patch one minimal engineering boundary;
-4. do not widen tolerance or change oracle with implementation;
-5. re-run the complete exact-head packet after the repair.
-
-## 11. B4 closure mapping — protected until complete PASS
-
-Current LAFEA.3 protected limitation remains:
+## 9. First-failure ownership
 
 ```text
-Production geometry-to-mesh-to-convergence orchestration is incomplete.
+Q0 source/hash/anti-circularity       -> SOURCE AUTHORITY / BENCHMARK ORACLE
+Q1 analytical mismatch                -> ELEMENT / SOLVER / RECOVERY at first differing intermediate
+Q1 fixed-probe mapping                -> RESULT MAPPING / RECOVERY
+Q1 equilibrium                        -> LOAD / ASSEMBLY / REACTION EQUILIBRIUM
+Q2 production-only mismatch           -> production numerical boundary after Q1 control
+Q3 parent/hash invalidation           -> CUSTODY / ORCHESTRATION
+Q3 shell force/moment                 -> LOAD MAPPING / REFERENCE ORIGIN / TRANSFORMATION
+Q4B browser after Q0-Q3 PASS          -> PRODUCT MAPPING / PRESENTATION / BROWSER first
+Q4C unrelated repository gate         -> EXTERNAL_REPOSITORY_GATE_BLOCKER
+no checkout / no steps                -> INFRASTRUCTURE / NOT_RUN
 ```
 
-Current LAFEA.4 authority/exclusions remain unchanged.
+Stop after the first authoritative Class-A failure. Do not change several numerical mechanisms together.
 
-Only after Q0-Q4 complete on one exact head with no unresolved Class-C closure blocker may B4 begin.
+## 10. B4 closure — precomputed but NOT AUTHORIZED
 
-Predicted technical write set:
+B4 requires all of the following on one exact head:
+
+```text
+Q0 PASS
+Q1 PASS
+Q2 PASS
+Q3 PASS
+Q4A PASS
+Q4B PASS
+Q4C PASS
+Q4D PASS
+Q4E PASS
+```
+
+Predicted technical write set after qualification:
 
 ```text
 src/workspace/lafea-stage-registry.js
 scripts/lafea1371-cross-stage-anti-drift-check.mjs
 ```
 
-plus narrow workreport/status/claims/docs.
+plus narrow closure docs/workreport/status/claims.
 
-Reason for the second file: the #1393 checker currently reports hard-coded pre-closure evidence fields equivalent to:
+LAFEA.4 authority is **not widened**.
 
-```text
-registryWordingChanged = false
-registryCleanupState = BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
-```
+LAFEA.3 may only replace the obsolete blanket orchestration limitation with wording bounded to what the executed Sample/registered benchmark paths actually prove. General arbitrary-geometry convergence automation remains outside authority unless separately qualified.
 
-Those are reporting fields, not assertions. After legitimate closure they must not remain stale/misleading. B4 may correct/derive the registry-status evidence without changing numerical mechanics.
-
-LAFEA.3 wording may be narrowed **only to the executed envelope**. Do not claim automatic/adaptive convergence or broader orchestration beyond evidence.
-
-LAFEA.4 receives no authority widening.
-
-## 12. B5 final closure-head requalification
-
-After B4 changes, the closure PR head is a new exact head. Re-run all applicable Q0-Q4 gates, AD-01 against then-current main, changed-file reconciliation, browser evidence and final clean tree.
-
-Merge remains owner-only.
-
-## 13. Current status matrix
+The #1393 anti-drift checker must stop hard-coding the pre-closure registry state and instead verify/report the actual bounded post-qualification registry state while keeping:
 
 ```text
-B0 / AD-01                         PASS
-B1 source/authority preflight      COMPLETE
-B1 execution choreography          COMPLETE
-B1 gate-origin policy              COMPLETE
-B1 numerical/custody execution     NOT_RUN
-B2 first-failure repair            NOT_TRIGGERED
-B3 targeted Chromium               NOT_RUN
-Q4 broad repository/build          NOT_RUN
-B4 registry/evidence closure       NOT_AUTHORIZED
-B5 closure-head requalification    NOT_RUN
-engineering failure proven         false
-first proven failure boundary      INFRASTRUCTURE
+frozenOracleMutation = false
+releaseAuthorityChanged = false
 ```
 
-No unexecuted check is represented as PASS.
+B4 does not authorize mechanics, oracle, tolerance or workflow changes.
 
-## 14. Active ISS / RISK / DEC
+## 11. B5 closure-head requalification
 
-- `ISS-1413-01` ACTIVE — complete exact-main numerical/product packet has not executed.
-- `ISS-1413-03` ACTIVE — Issue #54 zero-step recurrence persists on exact main and current-base PRs.
-- `ISS-1413-08` ACTIVE — no exact local checkout/runtime path.
-- `ISS-1413-09` RESOLVED_POLICY — broad repository failures are now separated from #1413 engineering failure authority; all remain closure gates.
-- `RISK-1413-01` ACTIVE — static/prior-head/partial evidence could be mistaken for exact-head PASS.
-- `RISK-1413-02` ACTIVE — relevant unmerged LAFEA work could move main and invalidate grounding.
-- `RISK-1413-03` CONTROLLED — broad Stage-17/full-check failure could short-circuit/misclassify targeted product evidence; targeted #1413 execution now precedes broad gates.
-- `DEC-1413-01` — no mechanics mutation until executed first #1413 engineering failure.
-- `DEC-1413-02` — no validation-only PR to reproduce #54.
-- `DEC-1413-03` — no workflow semantic bypass under this issue.
-- `DEC-1413-04` — run Q0 -> Q1 -> Q2 -> Q3 before product observation.
-- `DEC-1413-05` — execute direct LAFEA.3/.4 Chromium before Stage-17 integration.
-- `DEC-1413-06` — unrelated repository gate failure blocks B4 but does not authorize B2 or erase prior issue-local PASS evidence.
+After the narrow B4 PR exists:
 
-## 15. Changed-file ledger
+1. re-ground then-current main;
+2. verify no relevant overlap/authority drift;
+3. execute the complete Q0-Q4 packet again on the closure PR exact head;
+4. prove frozen oracle/tolerance blobs unchanged;
+5. prove LAFEA.4 exclusions unchanged;
+6. retain Chromium/build/clean-tree evidence;
+7. reconcile the changed-file ledger;
+8. owner-only merge.
 
-Current WIP branch changes only:
+No merge authority is inferred from batch continuation instructions.
+
+## 12. Current validation ledger
+
+```text
+AD-03 live-main grounding                     PASS / SOURCE_INSPECTION
+AD-03 compare e2a44a85 -> 9887ec1c            PASS / SOURCE_INSPECTION
+Class-A path drift                            PASS: NO DRIFT FOUND
+#1371 anti-drift blob custody                 PASS / SOURCE_INSPECTION
+LAFEA.3 target browser-spec custody           PASS / SOURCE_INSPECTION
+LAFEA.4 target browser-spec custody           PASS / SOURCE_INSPECTION
+registry custody                              PASS / SOURCE_INSPECTION
+exact-main hosted Actions attempt 1           NOT_RUN / PRE_STEP_INFRASTRUCTURE
+exact-main hosted Actions attempt 2           NOT_RUN / PRE_STEP_INFRASTRUCTURE
+local exact checkout                          NOT_RUN / DNS
+Q0                                             NOT_RUN
+Q1                                             NOT_RUN
+Q2                                             NOT_RUN
+Q3                                             NOT_RUN
+Q4A                                            NOT_RUN
+Q4B targeted Chromium                         NOT_RUN
+Q4C broad repo/build                           NOT_RUN
+Q4D Stage-17                                   NOT_RUN
+Q4E clean-tree exact-head                      NOT_RUN
+B2                                             NOT_TRIGGERED
+B4                                             NOT_AUTHORIZED
+B5                                             NOT_RUN
+```
+
+## 13. Changed-file ledger for this workstream
+
+Only:
 
 ```text
 agents/WIP-1413-exact-main-qualification-20260824_workreport.md
 ```
 
-No production, solver, recovery, mesher, benchmark, registry, workflow, browser spec, tolerance, or product source file has been changed by this WIP.
-
-## Appendix A
-
-`NOT_REQUIRED` while work remains read-only qualification/infrastructure classification.
-
-If B2 requires engineering-critical production mutation, Appendix A becomes mandatory before that mutation.
+No production source, solver, mesher, recovery, benchmark, oracle, tolerance, workflow, registry, browser spec or product source has been modified by #1413 WIP.

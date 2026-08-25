@@ -1,8 +1,8 @@
 schema: AgentClaim.v1
 pr_or_wip: PR1417
-claim_state: ACTIVE
+claim_state: ACTIVE_CURRENT_ROUTE_RECONCILIATION
 branch: agent/issue-1379-table5-material-input-reconciliation-20260825
-mission: "Issue #1379 retained WRC Table-5 material-input reconciliation"
+mission: "Issue #1379 retained WRC Table-5 material-input reconciliation against current bounded-route authority"
 write_scope:
   - validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json
   - scripts/emp1-wrc537-elastic-material-source-check.mjs
@@ -13,6 +13,10 @@ write_scope:
 protected_no_mutation:
   - src/core/emp1/
   - validation/emp1/release/
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v2.json
   - .github/workflows/
-authority_boundary: "Retained Table-5 explicit material-input/equation non-use only; E role, Poisson treatment, constitutive/shell-theory assumptions and material applicability remain blocked."
-overlap_state: SAFE_PARALLEL_TO_PR1415_DISTINCT_FILES_AND_AUTHORITY_SUBDOMAIN
+authority_boundary: "Retained Table-5 explicit E/nu input/equation non-use only. This source record grants no material/theory engineering or production authority. Current bounded runtime authorization is a separate fact and must not back-propagate into E role, Poisson treatment, constitutive/shell-theory assumptions or universal material applicability."
+invariant: "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_ELASTIC_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY"
+overlap_state: SAFE_SOURCE_GOVERNANCE_RECOVERY_DISTINCT_FROM_PR1415_PR1418_PR1423_PR1425_PR1426_PR1427
+merge_authorization: NOT_GRANTED

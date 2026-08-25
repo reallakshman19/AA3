@@ -3,18 +3,15 @@ import path from 'node:path';
 import process from 'node:process';
 
 const root = process.cwd();
-const ledger = JSON.parse(fs.readFileSync(path.join(
-  root,
-  'validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json',
-), 'utf8'));
-const authority = fs.readFileSync(path.join(
-  root,
-  'docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md',
-), 'utf8');
-const retainedSource = fs.readFileSync(path.join(
-  root,
-  'docs/emp1/WRC537_2013_Tables_and_Charts.md',
-), 'utf8');
+const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
+const readJson = (p) => JSON.parse(read(p));
+
+const ledger = readJson('validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json');
+const authority = read('docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md');
+const retainedSource = read('docs/emp1/WRC537_2013_Tables_and_Charts.md');
+const routeSource = read('src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js');
+const registrySource = read('src/core/emp1/emp1-c-bounded-route-registry.js');
+const professionalState = readJson('validation/emp1/release/emp1-professional-release-current-state-v1.json');
 
 const failures = [];
 const requireTrue = (condition, code) => { if (!condition) failures.push(code); };
@@ -50,7 +47,10 @@ requireTrue(
 requireTrue(ledger.retainedSourceAuthority?.cylindricalGeometryLabel === 'Vessel Thickness', 'TABLE5_LABEL_MISMATCH');
 requireTrue(ledger.retainedSourceAuthority?.cylindricalThicknessSymbol === 'T', 'TABLE5_SYMBOL_MISMATCH');
 requireTrue(ledger.retainedSourceAuthority?.gammaRelationship === 'gamma = R_m/T', 'TABLE5_GAMMA_ROLE_MISMATCH');
-requireTrue(ledger.retainedSourceAuthority?.physicalThicknessBasisDefinitionPresentInRetainedTable5 === false, 'TABLE5_MUST_NOT_CLAIM_PHYSICAL_BASIS');
+requireTrue(
+  ledger.retainedSourceAuthority?.physicalThicknessBasisDefinitionPresentInRetainedTable5 === false,
+  'TABLE5_MUST_NOT_CLAIM_PHYSICAL_BASIS',
+);
 
 for (const key of [
   'cylindricalThicknessSymbolQualified',
@@ -86,7 +86,10 @@ requireTrue(
   'WRC_MEAN_RADIUS_DERIVATION_MISMATCH',
 );
 requireTrue(ledger.currentSoftwareCustody?.internallyDeterministic === true, 'CURRENT_CHAIN_MUST_BE_DETERMINISTIC');
-requireTrue(ledger.currentSoftwareCustody?.wrcPrimaryPhysicalThicknessBasisQualified === false, 'PHYSICAL_THICKNESS_BASIS_MUST_REMAIN_UNQUALIFIED');
+requireTrue(
+  ledger.currentSoftwareCustody?.wrcPrimaryPhysicalThicknessBasisQualified === false,
+  'PHYSICAL_THICKNESS_BASIS_MUST_REMAIN_UNQUALIFIED',
+);
 
 for (const key of [
   'positiveThicknessValueAloneProvesWrcBasis',
@@ -104,6 +107,54 @@ requireTrue(ledger.engineeringConclusions?.table5UsesTInGamma === true, 'TABLE5_
 requireTrue(ledger.engineeringConclusions?.table5UsesTInStressScaling === true, 'TABLE5_T_STRESS_ROLE_MUST_BE_RETAINED');
 requireTrue(ledger.engineeringConclusions?.currentRmAndTAreInternallyCoherent === true, 'CURRENT_RM_T_COHERENCE_MUST_BE_RETAINED');
 
+// Current runtime authority and this source record's authority are intentionally orthogonal.
+requireTrue(
+  routeSource.includes('export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED = true;'),
+  'CURRENT_BOUNDED_ROUTE_MUST_BE_AUTHORIZED',
+);
+requireTrue(
+  routeSource.includes('engineeringUseAuthorized: true') && routeSource.includes('productionUseAuthorized: true'),
+  'CURRENT_METHOD_USE_AUTHORITY_MUST_BE_TRUE',
+);
+requireTrue(
+  registrySource.includes('registered: true') && registrySource.includes('engineeringUseAuthorized: true'),
+  'CURRENT_REGISTRY_BOUNDED_USE_MUST_BE_TRUE',
+);
+requireTrue(
+  registrySource.includes('globalEmp1CRouteAuthority: false') && registrySource.includes('releaseQualified: false'),
+  'CURRENT_REGISTRY_GLOBAL_RELEASE_MUST_REMAIN_FALSE',
+);
+
+for (const key of [
+  'boundedRouteAuthorized',
+  'registryRegistered',
+  'boundedEngineeringUseAuthorized',
+  'boundedProductionUseAuthorized',
+]) requireTrue(ledger.currentLiveRouteState?.[key] === true, `CURRENT_ROUTE_STATE_MUST_BE_TRUE:${key}`);
+for (const key of [
+  'globalEmp1CAuthority',
+  'codeComplianceAuthority',
+  'releaseQualified',
+  'professionalReleaseReady',
+]) requireTrue(ledger.currentLiveRouteState?.[key] === false, `CURRENT_ROUTE_WIDER_AUTHORITY_MUST_BE_FALSE:${key}`);
+
+requireTrue(ledger.authoritySeparation?.physicalThicknessBasisSourceAuthority === false, 'THICKNESS_SOURCE_AUTHORITY_MUST_REMAIN_FALSE');
+requireTrue(ledger.authoritySeparation?.currentRouteMayExecuteWithHistoricalBoundedThicknessCustody === true, 'HISTORICAL_BOUNDED_CUSTODY_ROUTE_STATE_MISMATCH');
+requireTrue(ledger.authoritySeparation?.currentRouteExecutionProvesPhysicalThicknessBasis === false, 'ROUTE_EXECUTION_MUST_NOT_PROVE_THICKNESS_BASIS');
+requireTrue(ledger.authoritySeparation?.routeAuthorizationMayBackPropagateIntoThicknessSourceAuthority === false, 'ROUTE_AUTHORITY_BACK_PROPAGATION_PROHIBITED');
+requireTrue(
+  ledger.authoritySeparation?.rule ===
+    'BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY',
+  'AUTHORITY_SEPARATION_RULE_MISMATCH',
+);
+
+requireTrue(professionalState.runtimeAuthority?.boundedProductionRouteAuthorized === true, 'PROFESSIONAL_STATE_BOUNDED_ROUTE_MUST_BE_TRUE');
+requireTrue(professionalState.runtimeAuthority?.boundedEngineeringUseAuthorized === true, 'PROFESSIONAL_STATE_ENGINEERING_USE_MUST_BE_TRUE');
+requireTrue(professionalState.runtimeAuthority?.globalEmp1CRouteAuthority === false, 'PROFESSIONAL_STATE_GLOBAL_AUTHORITY_MUST_BE_FALSE');
+requireTrue(professionalState.runtimeAuthority?.codeComplianceAuthorized === false, 'PROFESSIONAL_STATE_CODE_AUTHORITY_MUST_BE_FALSE');
+requireTrue(professionalState.runtimeAuthority?.releaseQualified === false, 'PROFESSIONAL_STATE_RELEASE_MUST_BE_FALSE');
+requireTrue(professionalState.releaseReady === false, 'PROFESSIONAL_RELEASE_READY_MUST_BE_FALSE');
+
 for (const key of [
   'productionThicknessConversionChanged',
   'productionNumericsChanged',
@@ -113,18 +164,20 @@ for (const key of [
   'aggregateP0GateChanged',
   'pressureAuthorityChanged',
   'scfAuthorityChanged',
-  'engineeringUseAuthorized',
-  'productionUseAuthorized',
-  'globalEmp1CAuthority',
-  'codeComplianceAuthority',
-  'releaseAuthority',
+  'thisRecordWidensBoundedRouteAuthority',
+  'thisRecordGrantsThicknessBasisSourceAuthority',
+  'globalEmp1CAuthorityChanged',
+  'codeComplianceAuthorityChanged',
+  'releaseAuthorityChanged',
 ]) requireTrue(ledger.authorityEffect?.[key] === false, `AUTHORITY_EFFECT_MUST_REMAIN_FALSE:${key}`);
 
 for (const phrase of [
   'Table 5 identifies the cylindrical geometry quantity as `Vessel Thickness T`',
   'does not define which physical thickness basis must be selected',
-  'do not promote `NOMINAL_MINUS_CORROSION` to a WRC source rule',
-  'BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED',
+  'Do not promote `NOMINAL_MINUS_CORROSION` to a WRC source rule',
+  'BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY',
+  'bounded route is authorized',
+  'physical thickness-basis source authority remains false',
 ]) requireTrue(authority.includes(phrase), `AUTHORITY_NOTE_MISSING:${phrase}`);
 
 if (failures.length) {
@@ -133,9 +186,12 @@ if (failures.length) {
 }
 
 console.log(JSON.stringify({
-  status: 'PASS_RETAINED_TABLE5_T_ROLE_PHYSICAL_BASIS_STILL_BLOCKED',
+  status: 'PASS_CURRENT_AUTHORIZED_ROUTE_THICKNESS_SOURCE_BOUNDARY_STATIC_CHECK',
   qualificationId: ledger.qualificationId,
   disposition: ledger.status,
-  table5ThicknessSymbol: ledger.retainedSourceAuthority.cylindricalThicknessSymbol,
+  boundedRouteAuthorized: ledger.currentLiveRouteState.boundedRouteAuthorized,
   productionThicknessBasisAuthority: ledger.engineeringConclusions.productionThicknessBasisAuthority,
+  globalEmp1CAuthority: ledger.currentLiveRouteState.globalEmp1CAuthority,
+  codeComplianceAuthority: ledger.currentLiveRouteState.codeComplianceAuthority,
+  releaseQualified: ledger.currentLiveRouteState.releaseQualified,
 }, null, 2));

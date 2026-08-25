@@ -81,6 +81,7 @@ function createViewState(consumerContext, prepared) {
       label: GATE_LABELS[row.gateId] || row.gateId,
     }))),
     blockers: status.blockers,
+    coverageProgressByCode: buildCoverageProgressByCode(status.commonInput.methodRows),
     methodRows: Object.freeze(buildMethodRows(status.commonInput.methodRows, commonSnapshot)),
     masterRows: Object.freeze(masterRows),
     sourceRows: Object.freeze(sourceEvidenceRows({ dataset, masters, supportSites, routes, consumerContext })),
@@ -122,7 +123,7 @@ function viewMarkup(state) {
       ${metric('Blockers', state.blockers.length, state.blockers.length ? 'blocked' : 'ready')}
     </section>
 
-    ${state.blockers.length ? blockerSummaryMarkup(state.blockers) : '<p class="non-fea-ready-copy">All required checks currently pass. Continue to Run Calc.</p>'}
+    ${state.blockers.length ? blockerSummaryMarkup(state.blockers, state.coverageProgressByCode) : '<p class="non-fea-ready-copy">All required checks currently pass. Continue to Run Calc.</p>'}
 
     <details class="non-fea-input-check__advanced">
       <summary>Advanced validation evidence</summary>
@@ -177,11 +178,106 @@ const COVERAGE_CODES = new Set([
 ]);
 
 /**
+ * Builds display-only coverage progress from checker-owned missing evidence.
+ * MASS coverage may carry several missing obligations for one component, so
+ * unique unresolved entities are derived separately from the raw obligation
+ * count. This never feeds back into readiness or execution.
+ */
+function buildCoverageProgressByCode(statusRows) {
+  const byCode = new Map();
+  (statusRows || []).forEach((method) => (method.coverageRequirements || []).forEach((coverage) => {
+    if (!COVERAGE_CODES.has(coverage.code)) return;
+    const candidate = coverageProgress(coverage);
+    const existing = byCode.get(coverage.code);
+    if (!existing) {
+      byCode.set(coverage.code, candidate);
+      return;
+    }
+    if (!sameCoverageEvidence(existing, candidate)) {
+      byCode.set(coverage.code, Object.freeze({ ...existing, consistent: false }));
+    }
+  }));
+  return Object.freeze(Object.fromEntries([...byCode.entries()].sort(([left], [right]) => ascii(left, right))));
+}
+
+function coverageProgress(coverage) {
+  const entities = new Map();
+  (coverage.missing || []).forEach((token) => {
+    const { entityId, reason } = coverageMissingParts(coverage.requirementId, coverage.code, token);
+    const reasons = entities.get(entityId) || new Set();
+    reasons.add(reason);
+    entities.set(entityId, reasons);
+  });
+  const unresolvedEntities = [...entities.entries()]
+    .map(([entityId, reasons]) => Object.freeze({
+      entityId,
+      reasons: Object.freeze([...reasons].sort(ascii)),
+    }))
+    .sort((left, right) => ascii(left.entityId, right.entityId));
+  const unresolvedEntityCount = unresolvedEntities.length;
+  return Object.freeze({
+    requirementId: coverage.requirementId,
+    code: coverage.code,
+    total: coverage.total,
+    checkerCovered: coverage.covered,
+    resolvedEntityCount: Math.max(0, coverage.total - unresolvedEntityCount),
+    unresolvedEntityCount,
+    missingObligationCount: coverage.missing.length,
+    missingTokens: Object.freeze([...coverage.missing]),
+    unresolvedEntities: Object.freeze(unresolvedEntities),
+    ready: coverage.ready,
+    state: coverage.state,
+    consistent: true,
+  });
+}
+
+function coverageMissingParts(requirementId, code, token) {
+  const value = String(token || '').trim();
+  if (requirementId !== 'MASS_COVERAGE') return { entityId: value, reason: code };
+  const separator = value.lastIndexOf(':');
+  if (separator <= 0 || separator === value.length - 1) return { entityId: value, reason: 'MASS_EVIDENCE' };
+  return { entityId: value.slice(0, separator), reason: value.slice(separator + 1) };
+}
+
+function sameCoverageEvidence(left, right) {
+  return left.requirementId === right.requirementId
+    && left.total === right.total
+    && left.checkerCovered === right.checkerCovered
+    && left.ready === right.ready
+    && left.state === right.state
+    && left.missingTokens.length === right.missingTokens.length
+    && left.missingTokens.every((token, index) => token === right.missingTokens[index]);
+}
+
+function coverageProgressMarkup(progress) {
+  if (!progress) return '';
+  if (!progress.consistent) {
+    return `<p class="non-fea-input-check__coverage-conflict" data-coverage-consistency="conflict">Coverage evidence differs between method scopes. The calculation remains blocked; use Advanced validation evidence to reconcile the status projection before relying on a progress count.</p>`;
+  }
+  const entityLabel = progress.unresolvedEntityCount === 1 ? 'entity' : 'entities';
+  const obligationLabel = progress.missingObligationCount === 1 ? 'obligation' : 'obligations';
+  return `<div class="non-fea-input-check__coverage-progress"
+      data-coverage-code="${escapeHtml(progress.code)}"
+      data-coverage-total="${progress.total}"
+      data-coverage-resolved-entities="${progress.resolvedEntityCount}"
+      data-coverage-unresolved-entities="${progress.unresolvedEntityCount}"
+      data-coverage-missing-obligations="${progress.missingObligationCount}"
+      data-coverage-checker-covered="${progress.checkerCovered}">
+      <strong>${progress.resolvedEntityCount} of ${progress.total} governed entities resolved</strong>
+      <span>${progress.unresolvedEntityCount} unresolved ${entityLabel} · ${progress.missingObligationCount} missing evidence ${obligationLabel}. Calculation remains BLOCKED until every required item is resolved.</span>
+    </div>
+    <details class="non-fea-input-check__coverage-detail" data-coverage-entity-detail="${escapeHtml(progress.code)}">
+      <summary>Show ${progress.unresolvedEntityCount} unresolved ${entityLabel}</summary>
+      <ul>${progress.unresolvedEntities.map((row) => `<li><code>${escapeHtml(row.entityId)}</code><span>${row.reasons.map(escapeHtml).join(', ')}</span></li>`).join('')}</ul>
+    </details>`;
+}
+
+/**
  * Groups blockers by their underlying cause rather than by the method each one
  * surfaces through. One missing master blocks many methods, so a per-method list
  * overstates how many distinct problems there are to fix.
  */
-function rootCauseMarkup(rows, active) {
+function rootCauseMarkup(rows, active, coverageProgressByCode) {
   const relevant = active
     ? rows.filter((row) => !row.scope || !METHOD_SCOPES.has(row.scope) || active.has(row.scope))
     : rows;
@@ -200,13 +296,14 @@ function rootCauseMarkup(rows, active) {
   const covered = shared.reduce((sum, entry) => sum + entry.count, 0);
   const coverage = shared.filter((entry) => COVERAGE_CODES.has(entry.code));
   const coverageNote = coverage.length > 1
-    ? `<p class="non-fea-input-check__root-note">The ${coverage.length} coverage causes below are one problem, not ${coverage.length}: entities that no master row resolved. Fixing the match clears them together. Open Advanced validation evidence for the entity list.</p>`
+    ? `<p class="non-fea-input-check__root-note">The ${coverage.length} coverage causes below are related evidence gaps. Expand a coverage cause for the exact unresolved entities and reason codes; resolving one master match may advance several causes together.</p>`
     : '';
   return `<div class="non-fea-input-check__root-causes">
     <strong>${covered} of these come from ${shared.length} shared cause${shared.length === 1 ? '' : 's'}</strong>
     ${coverageNote}
-    <ul>${shared.map((entry) => `<li>
+    <ul>${shared.map((entry) => `<li data-root-cause-code="${escapeHtml(entry.code)}">
       <code>${escapeHtml(entry.code)}</code> — blocks ${entry.scopes.size} method(s), ${entry.count} issue(s).
+      ${coverageProgressMarkup(coverageProgressByCode?.[entry.code])}
       ${ROOT_CAUSE_GUIDANCE[entry.code] || 'Resolve this cause to clear every method listed against it.'}
       ${entry.code === 'MASS_COVERAGE_INCOMPLETE' ? '<button type="button" class="button" data-load-calc-tab="enrichment">Open Enrichment &amp; Overrides</button>' : ''}
     </li>`).join('')}</ul>
@@ -234,7 +331,7 @@ function activeCalculationMethods() {
   }
 }
 
-function blockerSummaryMarkup(rows) {
+function blockerSummaryMarkup(rows, coverageProgressByCode) {
   const groups = [];
   const byScope = new Map();
   rows.forEach((row) => {
@@ -271,7 +368,7 @@ function blockerSummaryMarkup(rows) {
   </details>`;
   return `<section class="non-fea-input-check__blocker-summary"><h3>What needs attention</h3>
     <p class="non-fea-input-check__blocker-reconcile">${requiredTotal} of ${total} issue(s) block this calculation, across ${required.length} area(s).</p>
-    ${rootCauseMarkup(rows, active)}
+    ${rootCauseMarkup(rows, active, coverageProgressByCode)}
     <ul>${required.map(item).join('')}</ul>
     ${otherSection}
     <p>Open Advanced validation evidence for the complete audit trail.</p>
@@ -341,9 +438,9 @@ function methodMarkup(rows) {
 }
 
 /**
- * Names the specific entities behind a method's blocker codes. Without this
- * the only place the entity list existed was the raw checker report object,
- * unreachable from the UI.
+ * Names the specific entities behind a method's blocker codes. This remains a
+ * secondary audit surface: coverage progress/detail is now retained in the
+ * status projection and exposed directly in What needs attention.
  */
 function entityBlockerRowMarkup(row) {
   const withEntities = (row.entityBlockers || []).filter((entry) => entry.entities.length > 0);
@@ -415,9 +512,9 @@ function historicalAuthorityMarkup(state) {
 
 function buildMethodRows(statusRows, commonSnapshot) {
   const byId = new Map((statusRows || []).map((row) => [row.methodId, row]));
-  // The status projection carries only blocker codes. The entity-level detail
-  // (which pipe or component failed to resolve) lives solely in the checker
-  // report and was previously never rendered anywhere in this view.
+  // The status projection now retains coverage details for the primary progress
+  // surface. The raw checker report remains here only for the legacy advanced
+  // method-by-method blocker display.
   const reportById = new Map((commonSnapshot?.report?.methodRows || []).map((row) => [row.methodId, row]));
   return METHOD_ROWS.map(([methodId, label]) => {
     const row = byId.get(methodId);
@@ -442,9 +539,8 @@ function buildMethodRows(statusRows, commonSnapshot) {
 
 /**
  * Extracts the "missing for: A, B, C." entity list the coverage requirement
- * writes into its message. This is a display convenience only: the entity IDs
- * are not separately structured in the report, so nothing computed here feeds
- * back into any pass/fail decision.
+ * writes into its message. This remains only a legacy advanced display aid;
+ * primary coverage progress uses structured status evidence instead.
  */
 function entityListFromBlockerMessage(message) {
   const match = /missing for:\s*(.+)\.\s*$/.exec(String(message || ''));
@@ -552,6 +648,7 @@ function isSemanticHash(value) { return typeof value === 'string' && /^fnv1a64:[
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
 }
+function ascii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
 
 function styles() {
   return `<style>
@@ -567,6 +664,16 @@ function styles() {
     .non-fea-input-check__root-causes li{display:block;padding:6px 8px;border:1px solid #3f2d14;border-radius:5px;color:#d6bb92;font-size:11px;line-height:1.4}
     .non-fea-input-check__root-causes code{color:#fcd34d;font-weight:700}
     .non-fea-input-check__root-note{margin:0 0 7px;color:#bae6fd;font-size:11px;line-height:1.4}
+    .non-fea-input-check__coverage-progress{display:flex;flex-direction:column;gap:3px;margin:7px 0;padding:8px;border:1px solid #7c5c18;border-radius:5px;background:#120f08}
+    .non-fea-input-check__coverage-progress strong{color:#fde68a;font-size:12px}
+    .non-fea-input-check__coverage-progress span{color:#d6bb92;font-size:11px}
+    .non-fea-input-check__coverage-detail{margin:0 0 7px;border:1px solid #3f2d14;border-radius:5px;background:#0d0c09}
+    .non-fea-input-check__coverage-detail summary{padding:6px 8px;cursor:pointer;color:#fcd34d;font-weight:700}
+    .non-fea-input-check__coverage-detail ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 8px;max-height:260px;overflow:auto;padding:0 8px 8px;margin:0;list-style:none}
+    .non-fea-input-check__coverage-detail li{display:flex;flex-direction:column;gap:2px;padding:5px;border:1px solid #2d281b;border-radius:4px;background:#0b0b09}
+    .non-fea-input-check__coverage-detail li code{overflow-wrap:anywhere}
+    .non-fea-input-check__coverage-detail li span{color:#94a3b8;font-size:10px;overflow-wrap:anywhere}
+    .non-fea-input-check__coverage-conflict{margin:7px 0;padding:7px;border:1px solid #991b1b;border-radius:5px;background:#2b1115;color:#fecaca}
     .non-fea-input-check__blocker-summary li[data-rollup="true"]{border-style:dashed;opacity:.82}
     .non-fea-input-check__blocker-summary li[data-rollup="true"] strong{color:#fbbf24}
     .non-fea-input-check__other-methods{margin:10px 0 0;border:1px solid #293548;border-radius:6px;background:#0d1728}

@@ -254,6 +254,9 @@ function generateMasterProposals() {
     throw new TypeError(`No approved-master proposal could be derived for ${result.summary.pipeCount} pipe(s).${detail}`);
   }
   result.proposals.forEach((proposal) => nonFeaEnrichmentStore.stageProposal(proposal));
+  nonFeaEnrichmentStore.setMessage(
+    `Staged ${result.proposals.length} proposal(s) from approved masters. Nothing is written yet -- review them in Staged proposals below and press "Accept all unblocked".`,
+  );
   return result;
 }
 
@@ -275,6 +278,11 @@ function reviewFittingWeights(documentRef, onChanged) {
         rationale: `Reviewer selected ${record.evidence.selectedTypeDesc} from ${record.evidence.candidateCount} catalogue candidate(s) for ${record.evidence.componentDescription || record.selectorKey}.`,
         record,
       }));
+      if (records.length > 0) {
+        nonFeaEnrichmentStore.setMessage(
+          `Staged ${records.length} fitting-weight proposal(s). Nothing is written yet -- review them in Staged proposals below and press "Accept all unblocked".`,
+        );
+      }
       onChanged?.();
     },
   });

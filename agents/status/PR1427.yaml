@@ -4,57 +4,73 @@ pr_or_wip: PR1427
 mission: "Reconcile authorized-route current state in the aggregate P0 source-semantics gate"
 workstream: EMP1_WRC537_P0_AGGREGATE_RECONCILIATION
 branch: agent/issue-1389-p0-gate-current-state-20260825
-main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+execution_mode: AUTO
+auto_state: COMPLETE
+scope_authority: LOCKED_TO_APPROVED_MISSION
+phase_progression: AUTO
+main_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
 merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-pr_head_observed_before_final_evidence_sync: 73a80462af78de345740f7cc4c93ea8d68370151
+pre_auto_head: 992c978d9b7bab3ee2be3616d00c38ca13a6601c
 report_basis_head: db6264aeec96f9ea7ad493dd8033b8b1907b56ad
-final_evidence_workreport_commit: de40b5b66b2183b88d7bc1526d51b9fb8dccf7d6
-report_sync: CURRENT_RECOVERY_METADATA_ONLY_AFTER_BASIS
-grounding_epoch: GE-PR1427-003
+report_refresh_commit: 56200d321ed16d53ed164c482e15a7d298ec5d5a
+report_sync: CURRENT_AUTO_RECOVERY_METADATA_ONLY_AFTER_ENGINEERING_BASIS
+grounding_epoch: GE-PR1427-004
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT
+pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
 handover_readiness: READY
 report_path: agents/PR1427_workreport.md
 appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_AGGREGATE_ONLY
-current_stage: HANDOVER_READY_OWNER_DECISION
-highest_risk: ROUTE_AUTHORIZATION_FALSELY_PROPAGATED_TO_PROFESSIONAL_P0_OR_RELEASE_READINESS
+coordination: SAFE_AGGREGATE_ONLY_CURRENT_MAIN
+current_stage: AUTO_FINAL_AGGREGATE_RECONCILIATION_COMPLETE
+highest_risk: ROUTE_AUTHORIZATION_OR_GOVERNANCE_MERGE_FALSELY_PROPAGATED_TO_PROFESSIONAL_P0_OR_RELEASE_READINESS
 validation:
   live_grounding: PASS
-  route_authority_inspection: PASS
-  registry_authority_inspection: PASS
-  aggregate_prepatch_failure_isolation: PASS_SOURCE_INSPECTION
-  three_source_status_reconciliation: PASS_SOURCE_INSPECTION
-  release_readiness_consumer_audit: PASS_SOURCE_INSPECTION
+  route_authority_inspection: PASS_SOURCE_INSPECTION
+  registry_authority_inspection: PASS_SOURCE_INSPECTION
+  all_nine_current_status_match_current_main: PASS_SOURCE_INSPECTION
+  release_profile_authority_boundary: PASS_SOURCE_INSPECTION
+  professional_release_state_audit: PASS_SOURCE_INSPECTION
+  pr1415_unmerged_dependency_handling: PASS
   direct_primary_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
   checker_execution_normal: NOT_RUN
   checker_execution_require_ready: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-  final_changed_file_scope: PASS_EXACT_SIX_FILES
-  ahead_behind_at_audited_head: "8/0"
+  changed_file_scope: PASS_EXACT_SIX_FILES
+  ahead_behind_before_auto_refresh: "10/9"
   reviews: 0
   review_threads: 0
-  pr_state_at_audited_head: OPEN_DRAFT_MERGEABLE_UNMERGED
   hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-  final_head_gamma5_run_job: "32843235178/97787145264"
-  final_head_independent_run_job: "32843235293/97787145714"
-  final_head_orchestration_run_job: "32843235334/97787146173"
+  gamma5_run_job: "32843384927/97787612431 steps=null logs_url=null"
+  orchestration_run_job: "32843384935/97787612214 steps=null logs_url=null"
+  independent_handcalc_run_job: "32843384977/97787612526 steps=null logs_url=null"
 authority:
   bounded_wrc_route_authorized_current_main: true
   registry_registered_current_main: true
   bounded_engineering_use_authorized_current_main: true
   bounded_production_use_authorized_current_main: true
   professional_p0_source_semantics_ready: false
+  p0_blocker_count: 9
   aggregate_gate_grants_engineering_authority: false
   global_emp1_c_route_authority: false
   code_compliance_authority: false
   release_authority: false
+  professional_release_ready: false
+individual_source_pr_state:
+  pr1415_mean_radius: OPEN_DRAFT_UNMERGED
+  pr1417_material_theory: MERGED
+  pr1418_physical_applicability: MERGED
+  pr1423_code_acceptance: MERGED
+  pr1425_stress_semantics: MERGED
+  pr1426_shell_thickness: MERGED
 merge_disposition: OWNER_ONLY_DRAFT_HANDOVER_READY
+merge_authorization: NOT_GRANTED
 dependencies:
   - "#1389"
   - "#54"
   - "nine P0 source-domain issues remain independently source-gated"
-exact_next_action: "Owner review/merge decision for PR #1427; keep professional P0 source semantics, global EMP.1.C, code compliance and release authority fail-closed."
+  - "If PR1415 merges before PR1427, re-ground aggregate #1377 currentStatus before any PR1427 merge"
+exact_next_action: "Preserve PR1427 draft/unmerged pending explicit Owner merge authorization. If PR1415 is merged first, re-ground PR1427 before merge."
+last_updated: "2026-08-25"

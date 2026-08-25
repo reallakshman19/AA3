@@ -1,0 +1,34 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP-1377-TABLE5-MEAN-RADIUS-20260825
+mission: "Issue #1377 retained Table-5 mean-radius reconciliation"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
+base_sha: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_WIP
+handover_readiness: READY
+report_path: agents/WIP-1377-TABLE5-MEAN-RADIUS-20260825_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: CLAIMED_BEFORE_PATCH
+source_state:
+  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  retained_table5_authority: VESSEL_MEAN_RADIUS_LABEL
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+expected_partial_authority:
+  cylindrical_mean_radius_role: QUALIFY_FROM_RETAINED_TABLE5_TEXT
+  od_id_t_construction: BLOCKED
+  corrosion_assessment_basis: BLOCKED
+  local_nominal_diameter_basis: BLOCKED
+  ovality_nonuniform_geometry: BLOCKED
+  production_geometry_transformation: UNCHANGED
+authority:
+  engineering: false
+  production: false
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+exact_next_action: "Patch only the three #1377 source-governance files; preserve current production geometry transformation and aggregate P0 gate."
+last_updated: "2026-08-25"

@@ -68,6 +68,24 @@
     "currentRmAndTAreInternallyCoherent": true,
     "productionThicknessBasisAuthority": false
   },
+  "currentLiveRouteState": {
+    "basis": "CURRENT_MAIN_ROUTE_AND_REGISTRY_SOURCE_RECONCILIATION",
+    "boundedRouteAuthorized": true,
+    "registryRegistered": true,
+    "boundedEngineeringUseAuthorized": true,
+    "boundedProductionUseAuthorized": true,
+    "globalEmp1CAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseQualified": false,
+    "professionalReleaseReady": false
+  },
+  "authoritySeparation": {
+    "physicalThicknessBasisSourceAuthority": false,
+    "currentRouteMayExecuteWithHistoricalBoundedThicknessCustody": true,
+    "currentRouteExecutionProvesPhysicalThicknessBasis": false,
+    "routeAuthorizationMayBackPropagateIntoThicknessSourceAuthority": false,
+    "rule": "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY"
+  },
   "requiredPrimarySourceClosure": [
     "physical WRC basis of cylindrical shell thickness T: nominal versus actual versus minimum versus corroded/assessment",
     "whether spherical T is semantically identical",
@@ -86,7 +104,8 @@
     "DO_NOT_ASSUME_MEASURED_MINIMUM_THICKNESS_IS_AUTOMATICALLY_WRC_T",
     "DO_NOT_MIX_RADIUS_AND_THICKNESS_BASES_WITHOUT_QUALIFIED_GEOMETRY_CUSTODY",
     "DO_NOT_USE_REINFORCEMENT_PAD_THICKNESS_AS_SHELL_T",
-    "DO_NOT_INFER_PHYSICAL_THICKNESS_BASIS_FROM_TABLE5_SYMBOL_T"
+    "DO_NOT_INFER_PHYSICAL_THICKNESS_BASIS_FROM_TABLE5_SYMBOL_T",
+    "DO_NOT_INFER_PHYSICAL_THICKNESS_BASIS_FROM_BOUNDED_ROUTE_AUTHORIZATION"
   ],
   "authorityEffect": {
     "productionThicknessConversionChanged": false,
@@ -97,10 +116,10 @@
     "aggregateP0GateChanged": false,
     "pressureAuthorityChanged": false,
     "scfAuthorityChanged": false,
-    "engineeringUseAuthorized": false,
-    "productionUseAuthorized": false,
-    "globalEmp1CAuthority": false,
-    "codeComplianceAuthority": false,
-    "releaseAuthority": false
+    "thisRecordWidensBoundedRouteAuthority": false,
+    "thisRecordGrantsThicknessBasisSourceAuthority": false,
+    "globalEmp1CAuthorityChanged": false,
+    "codeComplianceAuthorityChanged": false,
+    "releaseAuthorityChanged": false
   }
 }

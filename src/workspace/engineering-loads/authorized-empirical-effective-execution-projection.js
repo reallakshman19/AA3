@@ -41,9 +41,10 @@ const ACTIVE_COMPONENT_MASS_MODE = 'COMPONENT_EXPLICIT_POINT_MASS';
  * ledger. The projected density consumed by the scalar gravity kernel is an
  * explicitly derived bulk density, rho_bulk = rho_raw * fillFraction, with a
  * separate receipt binding the raw-density row and the governed fill policy.
- * Full-fill projections retain the historical numeric density shape; genuine
- * partial fill uses a `{ selected, rawDensityKgPerM3, fillFraction, ... }`
- * record which the legacy density reader consumes through `.selected`.
+ * Full-fill projections retain the historical numeric density shape; partial
+ * and zero fill use a `{ selected, rawDensityKgPerM3, fillFraction, ... }`
+ * record which the density reader consumes through `.selected`. A zero selected
+ * value therefore never masquerades as a raw zero-density authority.
  *
  * Non-pipe dry mass is governed separately. The current kernel implements one
  * explicit point mass per physical component only. A second binding to the same
@@ -199,7 +200,7 @@ function composeFluidDensity(binding, loadCaseId, rawDensityRow, fillPolicy) {
   const rawDensityKgPerM3 = Number(rawDensityRow.value);
   if (!(rawDensityKgPerM3 > 0)) throw codedError(`${loadCaseId} raw fluid density must be positive before fill composition.`, 'EMPIRICAL_EFFECTIVE_FLUID_DENSITY_INVALID', { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, rawDensityKgPerM3 });
   const bulkDensityKgPerM3 = rawDensityKgPerM3 * fillPolicy.fillFraction;
-  if (!(bulkDensityKgPerM3 > 0)) throw codedError(`${loadCaseId} derived bulk density must be positive on the current legacy statics path.`, 'EMPIRICAL_EFFECTIVE_FLUID_BULK_DENSITY_INVALID', { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, bulkDensityKgPerM3 });
+  if (!Number.isFinite(bulkDensityKgPerM3) || bulkDensityKgPerM3 < 0) throw codedError(`${loadCaseId} derived bulk density must be finite and non-negative.`, 'EMPIRICAL_EFFECTIVE_FLUID_BULK_DENSITY_INVALID', { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, bulkDensityKgPerM3 });
   const receiptMaterial = { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, rule: FLUID_COMPOSITION_RULE, rawDensityKgPerM3, rawDensitySemanticHash: rawDensityRow.semanticHash, fillFraction: fillPolicy.fillFraction, phase: fillPolicy.phase, fillState: fillPolicy.state, fillPolicySelector: fillPolicy.selector, fillPolicySemanticHash: fillPolicy.semanticHash, bulkDensityKgPerM3 };
   const receipt = freezeDeep({ ...receiptMaterial, semanticHash: semanticHash(receiptMaterial) });
   const projectedDensity = fillPolicy.fillFraction === 1 ? bulkDensityKgPerM3 : { selected: bulkDensityKgPerM3, rawDensityKgPerM3, fillFraction: fillPolicy.fillFraction, phase: fillPolicy.phase, fillState: fillPolicy.state, rawDensitySemanticHash: rawDensityRow.semanticHash, fillPolicySemanticHash: fillPolicy.semanticHash, compositionSemanticHash: receipt.semanticHash };

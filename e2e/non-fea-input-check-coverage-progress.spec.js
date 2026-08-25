@@ -92,6 +92,10 @@ test('shows unique-entity progress and coherent cause navigation while mass cove
   const acceptedOpe = accepted.locator('tr').filter({ hasText: 'PARTIAL-PIPE-B-OPE' });
   await expect(acceptedOpe).toBeVisible();
   await expect(acceptedOpe.locator('[data-validate-input-cause="MASS_COVERAGE_INCOMPLETE"]')).toBeVisible();
+  const acceptanceMessage = enrichment.locator('.message')
+    .filter({ hasText: 'Accepted exact enrichment record PARTIAL-PIPE-B-OPE.' });
+  await expect(acceptanceMessage).toContainText('MASS_COVERAGE_INCOMPLETE');
+  await expect(acceptanceMessage).toContainText('Validate Input must re-evaluate before any blocker can be considered cleared');
 
   await fillProposal(form, {
     recordId: 'PARTIAL-PIPE-C-OD',

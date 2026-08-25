@@ -22,6 +22,8 @@ const FIELD_MAP = freezeDeep({
   'permanent.claddingWeightKgPerM': ['CLADDING_WEIGHT', 'kg/m'],
   'permanent.tracingWeightKgPerM': ['TRACING_WEIGHT', 'kg/m'],
   'component.weightKg': ['COMPONENT_WEIGHT', 'kg'],
+  'component.fluidWeightOpeKg': ['COMPONENT_OPERATING_FLUID_WEIGHT', 'kg'],
+  'component.fluidWeightHydKg': ['COMPONENT_HYDRO_FLUID_WEIGHT', 'kg'],
 });
 
 const MASTER_SOURCE_KINDS = new Set([

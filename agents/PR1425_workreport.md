@@ -1,36 +1,36 @@
 # PR1425 Work Report — authorized-route WRC stress-semantics reconciliation
 
-## Current recovery state
+## CURRENT RECOVERY STATE — READ FIRST
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT_AUDIT_COMPLETE
+PR_RECOVERY_STATE: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_SOURCE_GOVERNANCE_ONLY
-MERGE_AUTHORITY: OWNER_ONLY
+MERGE_AUTHORITY: NOT_GRANTED
+CRITICALITY: ENGINEERING_CRITICAL
+WORK_INTENT: SOURCE_GOVERNANCE_RECONCILIATION
 PR: #1425
 ISSUES: #1383 #1385
 UMBRELLA: #1389
 BRANCH: agent/issue-1383-1385-stress-semantics-reconciliation-20260825
-CRITICALITY: ENGINEERING_CRITICAL
-PR_HEAD_OBSERVED: b4ad1dda5a62bd2bb2787e4fabfb37301c533078
-REPORT_BASIS_HEAD: 91f60f1ced041d785b7c826d802eb98b893b96a7
-MAIN_HEAD_LAST_CHECKED: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+PRE_RECOVERY_HEAD: cb4fda012279e6c737f3ff2b9fe3a266e8b8a778
+ENGINEERING_CONTENT_BASIS: 91f60f1ced041d785b7c826d802eb98b893b96a7
+MAIN_HEAD_LAST_CHECKED: cf0ee98ecf2de1ec359961a1588af324ea51ef3f
 MERGE_BASE: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 REPORT_SYNC: CURRENT
 APPENDIX_A_STATUS: CURRENT
-GROUNDING_EPOCH: GE-PR1425-002
-LAST_DURABLE_CHECKPOINT: 2026-08-25 immutable six-file/main/review/hosted-CI audit complete
-CURRENT_STAGE: FINAL_SIX_FILE_MAIN_REVIEW_AUDIT_COMPLETE
-CURRENT_BLOCKER: direct WRC primary-page observation unavailable; explicit Owner merge authorization not granted
+GROUNDING_EPOCH: GE-PR1425-003
+CURRENT_STAGE: RECOVERY_ONLY_CURRENT_MAIN_AUDIT_COMPLETE
+CURRENT_BLOCKER: direct WRC primary-page observation and aggregate checker execution remain NOT_RUN; physical stress reconstruction and explicit plane-stress/Tresca source semantics remain unresolved; Owner merge authorization not granted
 HIGHEST_RISK: treating an authorized bounded numerical route as proof of physical surface/common-point or explicit plane-stress/Tresca source semantics
 EXACT_NEXT_ACTION: leave PR1425 draft/unmerged pending explicit Owner merge authorization; keep #1383 and #1385 open for genuine primary-source closure.
 ```
 
-`REPORT_BASIS_HEAD` is the engineering-content head containing the three aggregate governance files. Commits after that head are PR recovery metadata only, so `REPORT_SYNC=CURRENT` under the continuous-handover freshness rule.
+`ENGINEERING_CONTENT_BASIS` is the aggregate source-governance implementation head. This TKO-003 changes recovery metadata only; no production, source-authority, numerical, oracle, release, UI, or workflow file is modified.
 
 ## Handover in 60 seconds
 
-PR #1425 is a source-governance-only successor under umbrella #1389. It does not alter WRC calculations. It aggregates the already-merged partial source records for #1385 (Table-5 sign/reversal subset) and #1383 (Table-5 Combined Stress Intensity order/subset) and reconciles them against the current runtime fact that the bounded gamma=5 / zero-dp route is authorized.
+PR #1425 is the aggregate current-state source-governance successor for #1383 and #1385. It does not alter WRC calculations. It preserves the already-merged partial Table-5 sign/reversal authority (#1385) and Combined Stress Intensity order/formula-subset authority (#1383) while keeping unresolved physical and stress-intensity semantics fail-closed.
 
 The central invariant is:
 
@@ -41,30 +41,27 @@ bounded WRC route authorization = true
 != code acceptance / release authority
 ```
 
-Final live audit at observed head `b4ad1dda...`:
+## Live re-ground — GE-PR1425-003
+
+Observed after PR #1423 merged:
 
 ```text
-main / merge base = 9887ec1c3eb6184c0d590841b23c04ed449f9414
-ahead / behind    = 6 / 0
-changed files     = 6 exact claimed paths
-reviews           = 0
-review threads    = 0
-PR state          = OPEN / DRAFT / MERGEABLE / UNMERGED
-protected mutation = NONE
+live main       = cf0ee98ecf2de1ec359961a1588af324ea51ef3f
+pre-recovery PR = cb4fda012279e6c737f3ff2b9fe3a266e8b8a778
+merge base      = 9887ec1c3eb6184c0d590841b23c04ed449f9414
+ahead / behind  = 8 / 5
+changed files   = exactly 6
+reviews         = 0
+review threads  = 0
 ```
 
-## Mission
+The five commits on `main` after the merge base are unrelated UI/LFEA/Load-Calc work plus merged #1417 and #1423 source-governance work. None touches a PR #1425 path. #1423 changes the code-acceptance boundary only and does not alter the #1383/#1385 source records consumed by this aggregate. Coordination classification: `SAFE_RECOVERY_ONLY_NO_PATH_OVERLAP`.
 
-Prevent post-authorization authority back-propagation into two stress-semantic P0 gates:
+Takeover decision: `CONTINUE`. No quarantine, salvage, source reinterpretation, numerical change, or authority widening is justified.
 
-1. #1385 — physical `u/l`, A/B/C/D, membrane/bending surface reconstruction and common-point superposition;
-2. #1383 — explicit plane-stress, `sigma3=0`, principal-stress/Tresca definition, von-Mises policy, eight-point-envelope meaning and code implication.
+## Live production and release truth
 
-This increment does not attempt to close either issue from unavailable primary-page evidence.
-
-## Live production trace
-
-Current production route and registry at `main@9887ec1c3eb6184c0d590841b23c04ed449f9414` state:
+Current bounded route/registry state remains:
 
 ```text
 EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED = true
@@ -76,7 +73,7 @@ registry globalEmp1CRouteAuthority            = false
 registry releaseQualified                     = false
 ```
 
-Current professional-release state separately records:
+Professional state remains bounded-authorized but not globally/code/release qualified:
 
 ```text
 boundedProductionRouteAuthorized = true
@@ -89,48 +86,43 @@ professionalReleaseReady          = false
 releaseReady                      = false
 ```
 
-The aggregate record/checker binds both sides of that state simultaneously.
+Merged PR #1423 reinforces the downstream code boundary and does not close either stress-semantics source gate.
 
 ## Retained source authority preserved
 
-### #1385 sign/reversal subset
+### #1385 — sign/reversal subset
 
-Existing retained record:
+Record: `validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json`.
 
-`validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json`
+Qualified only: Table-5 radial-load, circumferential-moment, longitudinal-moment, shear/torsion sign placement and reversal for opposite load direction.
 
-Qualified subset remains radial-load, circumferential-moment, longitudinal-moment, shear/torsion sign placement plus reversal for opposite load direction.
-
-Still false:
+Still unqualified:
 
 - physical `u/l` surface meaning;
 - physical A/B/C/D location meaning;
 - membrane/bending physical-surface reconstruction;
 - common physical point superposition before stress intensity.
 
-### #1383 Combined Stress Intensity subset
+### #1383 — Combined Stress Intensity subset
 
-Existing retained record:
+Record: `validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json`.
 
-`validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json`
-
-Qualified subset remains:
+Qualified only:
 
 - Table 5 contains Combined Stress Intensity post-processing;
-- algebraic normal/shear component formation occurs before `S`;
-- combined `sigma_phi`, `sigma_x`, `tau` are retained inputs;
-- like-sign, unlike-sign and zero-shear formula cases are retained.
+- algebraic component formation precedes `S`;
+- combined `sigma_phi`, `sigma_x`, and `tau` are the retained inputs;
+- retained like-sign, unlike-sign, and zero-shear formula cases.
 
-Still false:
+Still unqualified:
 
 - explicit WRC plane-stress assumption;
-- explicit `sigma3=0` statement;
-- primary-source principal-stress equations;
-- exact primary-source twice-maximum-shear / maximum-principal-difference definition;
+- explicit `sigma3 = 0` source statement;
+- exact primary-source principal-stress/Tresca definition;
 - von-Mises alternative policy;
 - physical inside/outside/common-point semantics;
-- WRC-defined eight-point/global envelope authority;
-- code acceptance implication.
+- WRC-defined eight-point/global-envelope authority;
+- code-acceptance implication.
 
 ## Source custody
 
@@ -144,21 +136,9 @@ Pages: 41-42
 Direct primary-page re-observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
 ```
 
-No secondary extraction, CAUx result, current production output, or mathematical equivalence is promoted into missing primary authority.
+No secondary extraction, CAUx result, production output, or mathematical equivalence is promoted into missing primary authority.
 
-## Implemented engineering-governance files
-
-1. `validation/emp1/wrc537-2013/cylindrical-stress-semantics-source-reconciliation-v1.json`
-2. `scripts/emp1-wrc537-cylindrical-stress-semantics-source-check.mjs`
-3. `docs/emp1/WRC537_2013_Cylindrical_Stress_Semantics_Authority.md`
-
-The aggregate checker requires bounded route authorization true while all unresolved physical-surface/plane-stress/code/release gates remain false. Intended executable result:
-
-`PASS_CURRENT_ROUTE_STRESS_SEMANTICS_BOUNDARY_STATIC_CHECK`
-
-Actual checker execution is **NOT_RUN** in this connected environment. Encoded logic is not reported as execution PASS.
-
-## Final changed-file ledger — exactly six
+## Effective changed-file ledger — exactly six
 
 1. `agents/PR1425_workreport.md`
 2. `agents/claims/PR1425.yaml`
@@ -167,56 +147,39 @@ Actual checker execution is **NOT_RUN** in this connected environment. Encoded l
 5. `scripts/emp1-wrc537-cylindrical-stress-semantics-source-check.mjs`
 6. `validation/emp1/wrc537-2013/cylindrical-stress-semantics-source-reconciliation-v1.json`
 
-## Protected no-mutation
+Protected unchanged:
 
 - `src/core/emp1/**`;
 - individual #1383/#1385 source authority records;
 - `validation/emp1/release/**` and aggregate P0 release gate;
-- reviewed interpretation/oracle/tolerance/exact-head evidence;
+- oracle/tolerance/qualification/exact-head evidence;
 - UI/browser code;
 - `.github/workflows/**`.
 
-Unexplained changed files: **0**.
-
-## Coordination
-
-Active EMP.1 drafts inspected before branch creation:
-
-- #1415 — cylindrical `Rm` source role;
-- #1417 — material-input/source-theory boundary;
-- #1418 — physical applicability batch (#1368/#1370/#1373);
-- #1423 — code-acceptance boundary (#1381).
-
-PR #1425 uses distinct aggregate paths. Prior #1412/#1414 are merged historical inputs, not active path claims.
-
 ## Validation ledger
 
-| ID | Status | Observation / oracle |
+| ID | Status | Evidence |
 |---|---|---|
-| C-001 | PASS | live main and merge base = `9887ec1c3eb6184c0d590841b23c04ed449f9414` |
-| C-002 | PASS | current route: authorization true; engineering/production use true |
-| C-003 | PASS | current registry: registered/engineering use true; global/release false |
-| C-004 | PASS | professional current state: bounded route true; code/release/professional readiness false |
-| C-005 | PASS | #1385 sign/reversal subset qualified; physical surface/common-point source semantics false |
-| C-006 | PASS | #1383 Table-5 `S` order subset qualified; explicit plane-stress/Tresca source semantics false |
-| C-007 | PASS_SOURCE_INSPECTION | aggregate JSON/doc/checker preserve fail-closed authority split |
-| C-008 | NOT_RUN_EXECUTION_ENVIRONMENT | direct WRC primary-page observation unavailable through connected binary transport |
-| C-009 | NOT_RUN | `node scripts/emp1-wrc537-cylindrical-stress-semantics-source-check.mjs` not executed in a complete checkout |
-| C-010 | NOT_APPLICABLE | numerical WRC comparison; production mechanics unchanged |
-| C-011 | PASS | GitHub compare = exactly 6 intended files, 6 ahead / 0 behind, merge base current main |
-| C-012 | PASS | PR reviews = 0; review threads = 0 |
-| C-013 | NOT_RUN_EXECUTION_ENVIRONMENT | current-head hosted EMP.1 jobs fail before step creation; no engineering command executed |
+| C-001 | PASS | live main `cf0ee98e...`; pre-recovery head `cb4fda01...`; merge base `9887ec1...` |
+| C-002 | PASS | compare = 8 ahead / 5 behind; exactly six PR paths |
+| C-003 | PASS | no exact-path overlap with current main drift; merged #1423 is code-boundary-only |
+| C-004 | PASS | reviews 0; review threads 0 |
+| C-005 | PASS_SOURCE_INSPECTION | bounded route/registry true; global/code/release false |
+| C-006 | PASS_PARTIAL_SOURCE_AUTHORITY | #1385 sign/reversal subset preserved; physical surface/common-point authority false |
+| C-007 | PASS_PARTIAL_SOURCE_AUTHORITY | #1383 Table-5 `S` subset preserved; explicit plane-stress/Tresca authority false |
+| C-008 | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT | direct WRC primary-page observation |
+| C-009 | NOT_RUN | `node scripts/emp1-wrc537-cylindrical-stress-semantics-source-check.mjs` |
+| C-010 | NOT_APPLICABLE | numerical comparison; production mechanics unchanged |
+| C-011 | NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE | current-head hosted EMP.1 jobs |
 
-Current-head hosted evidence at `b4ad1dda5a62bd2bb2787e4fabfb37301c533078`:
+Current-head hosted evidence on `cb4fda012279e6c737f3ff2b9fe3a266e8b8a778`:
 
 ```text
-32836998041 / job 97767971657 / qualify-gamma5-route      / steps=null / logs_url=null
-32836998030 / job 97767971623 / independent-source-oracle / steps=null / logs_url=null
+independent source oracle  run 32837168862 / job 97768507376 / steps=null / logs_url=null
+gamma5 route               run 32837168904 / job 97768507117 / steps=null / logs_url=null
 ```
 
-Classification:
-
-`NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE` under #54. This is neither product PASS nor engineering FAIL.
+Classification: `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE` under #54. This is neither product PASS nor engineering FAIL.
 
 ## Active register
 
@@ -225,19 +188,15 @@ Classification:
 - `RISK-1425-001` P0 OPEN — bounded route authorization could be misread as full WRC stress-semantic authority.
 - `DEC-1425-001` P0 ACTIVE — route authority and source-semantic authority remain orthogonal.
 - `DEC-1425-002` P0 ACTIVE — existing partial #1383/#1385 retained authority is preserved, not broadened.
-- `DEC-1425-003` P0 ACTIVE — no production numerical or code/release mutation belongs in this PR.
+- `DEC-1425-003` P0 ACTIVE — merged #1423 strengthens code-boundary separation and does not close #1383/#1385.
 - `DEBT-1425-001` P1 OPEN — direct primary PDF observation and executable checker remain unavailable.
 
 ## Appendix A — implementation takeover qualification
 
-A1 Production Trace — **20/20**. Current route, bounded registry, professional release state, #1385 source-sign record and #1383 stress-intensity record are traced explicitly.
+- A1 Production Trace — **20/20**.
+- A2 Failure Isolation — **20/20**.
+- A3 Authority / Invariant — **20/20**.
+- A4 Independent Validation — **19/20**; direct PDF page inspection and checker execution remain NOT_RUN.
+- A5 Minimal Patch — **20/20**; recovery metadata only, no engineering/source/numerical mutation.
 
-A2 Failure Isolation — **20/20**. Remaining failures are source-semantic authority gaps, not evidence of a numerical WRC defect.
-
-A3 Authority / Invariant — **20/20**. Aggregate checker requires route authorization true while unresolved physical surface/plane-stress/code/release gates remain false.
-
-A4 Independent Validation — **19/20**. Independent current-state records and retained source ledgers are cross-checked; direct PDF page inspection and checker execution remain NOT_RUN.
-
-A5 Minimal Patch — **20/20**. Three aggregate governance files plus three recovery files; production mechanics and predecessor authority artifacts are protected.
-
-**Total: 99/100; minimum 19/20 — HANDOVER_READY.**
+**Total: 99/100; minimum 19/20 — TAKEOVER QUALIFIED / HANDOVER READY.**

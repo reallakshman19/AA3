@@ -18,86 +18,143 @@ SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1413_VALIDATION_ISOLATION
 MERGE_AUTHORITY: OWNER_ONLY
 PR: 1428
 BRANCH: agent/issue-1413-validation-isolation-20260825
-BASE_MAIN: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-MERGE_BASE: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-REPORT_BASIS_HEAD: c9f097bea0aa436bac81d9957057288340d44927
-PR_HEAD_LAST_INSPECTED: 4fee30b0044f96fb66d2e0a38c73c94cff9c9abf
-PREDECESSOR_WIP: agent/issue-1413-exact-main-qualification-20260824@fd07ff6de98f3c3d29811718d304de2e14a237c1
-CURRENT_STAGE: VALIDATION_ISOLATION_IMPLEMENTED; EXACT_HEAD_EXECUTION_BLOCKED_PRE_STEP
-CURRENT_BLOCKER: PR-head LAFEA visible-workbench job 97804806804 has runner_id=0, steps=[], logs_url=null; local github.com DNS also unavailable
+LIVE_MAIN_LAST_CHECKED: 8b3dc79ed827e74c4b708c8d77e6354374a27154
+GROUNDING_EPOCH: AD-04_AFTER_PR1424
+MERGE_BASE: 8b3dc79ed827e74c4b708c8d77e6354374a27154
+REPORT_BASIS_HEAD: 35a424081429e4bebed27e36311d93fd52c7ee1d
+CURRENT_STAGE: AD04_REBASED_AND_QUALIFICATION_ENTRYPOINT_HARDENED; EXACT_HEAD_EXECUTION_BLOCKED_PRE_STEP
+CURRENT_BLOCKER: rebased PR-head LAFEA job 97826397659 completed failure with steps=[] and no logs; local github.com DNS remains unavailable
 FIRST_PROVEN_FAILURE_BOUNDARY: INFRASTRUCTURE
 ENGINEERING_FAILURE_PROVEN: false
 B2_MECHANICS_REPAIR_AUTHORIZED: false
 B4_REGISTRY_CLOSURE_AUTHORIZED: false
 RUNNER_PROBE_POLICY: BACKOFF_UNTIL_MAIN_MOVES_OR_INDEPENDENT_EXECUTABLE_RUNNER_EVIDENCE
-EXACT_NEXT_ACTION: if main moves, re-ground PR1428 before any qualification. If any current repository workflow demonstrates runner_id != 0 plus real executable steps/logs, or an exact local checkout becomes available, execute Q0A -> Q0B -> Q0C -> Q1 -> Q4E on the exact PR head. Otherwise preserve NOT_RUN and make no mechanics/oracle/tolerance/registry/workflow mutation.
+EXACT_NEXT_ACTION: if main moves, re-ground before execution. If a current repository workflow demonstrates runner_id != 0 plus executable steps/logs, or an exact local checkout becomes available, set QUAL_HEAD to the exact PR head and execute scripts/lafea1413-exact-head-preflight-check.mjs followed by Q1 -> Q4E. Otherwise preserve NOT_RUN and make no mechanics/oracle/tolerance/registry/workflow mutation.
 ```
 
-`REPORT_BASIS_HEAD` is the engineering-content checkpoint containing the two validation-isolation repairs plus their anti-drift checker. Later report/status/claim commits are recovery metadata only; no impossible self-referential report-head rule is used.
+`REPORT_BASIS_HEAD` is the rebased engineering-content checkpoint. Later report/status/claim commits are recovery metadata only.
 
 ## 1. Current result
 
-PR #1428 repairs two qualification-architecture defects identified before exact-head execution:
+PR #1428 repairs qualification ownership and execution plumbing for Issue #1413 only.
+
+The current qualification boundaries are:
 
 ```text
-Q0A = immutable frozen B02 definition/source custody
-Q0B = current production mesh-intent route expressibility
-Q0C = validation-isolation anti-drift proof
-Q4B-LAFEA4 = dedicated LAFEA.4 browser journey
-Q4D/full regression = existing combined LAFEA.4/LAFEA.5 journey retained
+Q0A_CONTINUUM = immutable frozen B02 definition/source custody
+Q0A_SHELL     = immutable independent shell benchmark custody
+Q0B           = current production mesh-intent route expressibility
+Q0C           = validation-isolation / LAFEA.4 parity anti-drift
+Q4B-LAFEA4    = dedicated LAFEA.4 browser journey
+Q4D           = existing combined LAFEA.4/LAFEA.5 integration regression
 ```
 
-This PR does **not** prove LAFEA.3/.4 numerical or browser qualification. Current PR-head hosted execution still fails before runner allocation, so Q0A-Q4E remain NOT_RUN on an exact repository checkout.
+This PR does **not** prove LAFEA.3/.4 numerical or browser qualification. Exact repository execution still fails before runner allocation, so Q0A-Q4E remain NOT_RUN on an exact repository checkout.
 
-## 2. Grounding / branch recovery
+## 2. Grounding chain
 
-The predecessor investigation branch was not used for implementation because it had become five commits behind current main and diverged from merge base `72a916d6c60fe61da66c997594f7763aa3f04d8e` while containing only a workreport as its effective diff.
+### AD-03 predecessor
 
-PR #1428 was created fresh from exact main:
+Previous exact main:
 
 ```text
 9887ec1c3eb6184c0d590841b23c04ed449f9414
 ```
 
-Latest live-main recheck during this batch returned the same SHA. PR comparison at head `4fee30b...` was:
+The original #1428 branch was created fresh from that exact main. The older investigation WIP branch was deliberately not used for implementation ancestry because it was five commits behind and its effective diff was only its workreport.
+
+### AD-04 — current
+
+During the 2026-08-25 continuation, PR #1424 merged and moved `main` to:
 
 ```text
-status = ahead
-ahead_by = 10
-behind_by = 0
-merge_base = 9887ec1c...
-changed files = 7
+8b3dc79ed827e74c4b708c8d77e6354374a27154
 ```
 
-PR is open, draft, mergeable and unmerged. Merge authority is not granted.
+`9887ec1c... -> 8b3dc79e...` is exactly one commit. Changed files are limited to:
 
-## 3. Implementation
+```text
+agents/PR1424_workreport.md
+agents/claims/PR1424.yaml
+agents/status/PR1424.yaml
+e2e/non-fea-input-check-cause-grouping.spec.js
+e2e/non-fea-input-check-coverage-progress.spec.js
+scripts/non-fea-input-check-coverage-projection-check.mjs
+src/core/non-fea-common-checker/workspace-status-projection.js
+src/workspace/enrichment/non-fea-enrichment-view.js
+src/workspace/non-fea-analysis-plan-runtime.js
+src/workspace/non-fea-input-check-view.js
+```
 
-### 3.1 Q0A — frozen B02 custody is production-route independent
+Classification:
+
+```text
+DIRECT_LAFEA3_4_MECHANICS_OVERLAP = false
+LAFEA_MESHING_OVERLAP = false
+FROZEN_DEFINITION_OR_ORACLE_OVERLAP = false
+REGISTRY_OVERLAP = false
+#1371_CUSTODY_OVERLAP = false
+TARGET_BROWSER_SPEC_OVERLAP = false
+PACKAGE_BUILD_CONFIG_OVERLAP = false
+PLAYWRIGHT_CONFIG_OVERLAP = false
+SHARED_WORKSPACE_UI_MOVEMENT = true
+Q0_Q3_SOURCE_AUTHORITY_DRIFT = false
+Q4_PRODUCT_INTEGRATION_REQUALIFICATION_REQUIRED = true
+```
+
+Protected seam blobs on `8b3dc79e...` remain:
+
+```text
+scripts/lafea1371-cross-stage-anti-drift-check.mjs  6f7b26be38254c027e1b7ca8a35c7de8af3fe340
+e2e/lafea3-sample-mesh.spec.js                     3bde7e9629938033e42bd08a14e9bc35bf3dbb98
+e2e/lafea-shell-sample-mesh.spec.js                ce8e626d5a702978c9735cd3327d3a7c0e2705fb
+src/workspace/lafea-stage-registry.js               bb0d506fbf3a6d8291943d6a1da12fdd164c2484
+```
+
+PR #1428 was then rebuilt on the AD-04 main tree and branch-ref updated to:
+
+```text
+35a424081429e4bebed27e36311d93fd52c7ee1d
+```
+
+Comparison at that checkpoint:
+
+```text
+base       = 8b3dc79ed827e74c4b708c8d77e6354374a27154
+status     = ahead
+ahead_by   = 1
+behind_by  = 0
+merge_base = 8b3dc79ed827e74c4b708c8d77e6354374a27154
+changed files = 8
+```
+
+No stale-base qualification evidence is reusable for final closure.
+
+## 3. Implemented validation architecture
+
+### 3.1 Q0A continuum — frozen B02 custody only
 
 `scripts/lafea-b02-definition-freeze-check.mjs`
 
-- removed production import/use of `createLafeaMeshGenerationIntentV2()`;
-- retained frozen manifest, original Git blob, method-matrix, probe, convergence and pre-observation assertions;
-- retained request-schema/ladder structural checks without invoking production code;
-- renamed the retained source-semantics helper to `validateFrozenCantileverAttachmentSemantics()`;
-- self-checks that every static import is a Node built-in;
-- receipt schema is `lafea-b02-definition-freeze-receipt/v3`;
-- authority boundary is `IMMUTABLE_FROZEN_DEFINITION_CUSTODY_ONLY`;
-- receipt states `registeredMeshIntentContractCheckedSeparately=true` and `productionRouteImportedByCustodyCheck=false`.
+- no longer imports or executes `createLafeaMeshGenerationIntentV2()`;
+- retains frozen manifest/blob/method/probe/convergence/pre-observation checks;
+- retains frozen request-schema and ladder structure without invoking production code;
+- self-checks that static imports are Node built-ins only;
+- receipt schema: `lafea-b02-definition-freeze-receipt/v3`;
+- authority boundary: `IMMUTABLE_FROZEN_DEFINITION_CUSTODY_ONLY`;
+- explicitly states `productionRouteImportedByCustodyCheck=false`.
 
 Failure ownership:
 
 ```text
-Q0A failure
--> SOURCE AUTHORITY / HASH / FROZEN DEFINITION CUSTODY
+Q0A continuum FAIL -> SOURCE AUTHORITY / HASH / FROZEN DEFINITION CUSTODY
 ```
 
-### 3.2 Q0B — live production route expressibility
+### 3.2 Q0B — current production route expressibility
 
 `scripts/lafea-b02-route-expressibility-check.mjs`
 
-Owns the moved call to `createLafeaMeshGenerationIntentV2()` for registered B02A/B02B/B02C/B02D ladders and checks:
+Owns the current `createLafeaMeshGenerationIntentV2()` call for B02A/B02B/B02C/B02D registered ladders and verifies:
 
 ```text
 request schema = REGISTERED_LAFEA_MESH_GENERATION_INTENT_V2
@@ -111,79 +168,147 @@ producerRef exists
 
 Authority boundary:
 
-`CURRENT_PRODUCTION_MESH_INTENT_ROUTE_EXPRESSIBILITY`
-
-The receipt explicitly states:
-
 ```text
-frozenDefinitionCustodyGrantedByThisCheck = false
-benchmarkAuthorityChanged = false
-releaseAuthorityGranted = false
+CURRENT_PRODUCTION_MESH_INTENT_ROUTE_EXPRESSIBILITY
 ```
+
+It grants no frozen-definition, benchmark, registry or release authority.
 
 Failure ownership:
 
 ```text
 Q0A PASS + Q0B FAIL
 -> LIVE PRODUCTION CONTRACT / ROUTE EXPRESSIBILITY
--> not frozen source/oracle corruption
+-> not source/oracle corruption
 ```
 
-### 3.3 Q4B — dedicated LAFEA.4 Chromium journey
+### 3.3 Dedicated LAFEA.4 Chromium gate
 
 `e2e/lafea4-sample-mesh.spec.js`
 
-The test is bound by:
+The test is stage-constant:
 
 ```text
 STAGE_ID = LAFEA.4
 ```
 
-and contains no LAFEA.5 path. It retains the existing LAFEA.4 product assertions for:
+and contains no LAFEA.5 path. It proves the existing LAFEA.4 product contract including:
 
 - `CYLINDRICAL_PIPE_SHELL_BENCHMARK` source identity;
-- 26 source nodes / 24 source elements;
-- cylindrical parent, R=100 mm;
+- source geometry identity and retained shell parent;
 - retained mesh qualification/custody;
-- solver-model state/hash/binding hash;
+- solver-model hash/binding;
 - `PARAMETRIC_MIDSURFACE_UNIFORM_REGION_TRANSFER_V1`;
 - run authorization;
-- retained cylinder geometry;
-- visible retained-mesh identity/count;
+- visible retained mesh;
 - route `SHELL_RETAINED_MESH_COMPILED_SOLVER_MODEL`;
 - execution/mesh/solver/binding custody;
 - result acceptance;
-- force equilibrium PASS;
-- moment equilibrium PASS;
+- force and moment equilibrium PASS;
 - lifecycle mesh/execution/recovery current;
 - calculation/result readiness;
-- evidence-derived output showing authoritative surface/IP von Mises and equilibrium evidence;
-- screenshot attachment.
+- evidence-derived authoritative surface/IP result presentation.
 
-Protected existing regression:
+The existing combined `e2e/lafea-shell-sample-mesh.spec.js` remains unchanged and continues to exercise both `LAFEA.4` and `LAFEA.5`, preserving trunnion coverage.
 
-`e2e/lafea-shell-sample-mesh.spec.js`
-
-is unchanged by the PR and still loops over `['LAFEA.4', 'LAFEA.5']`, preserving LAFEA.5/trunnion coverage.
-
-### 3.4 Validation-isolation anti-drift
+### 3.4 Q0C — validation-isolation and LAFEA.4 parity guard
 
 `scripts/lafea1413-validation-isolation-check.mjs`
 
-Node-built-in-only checker requiring:
+Now emits `lafea1413-validation-isolation-check/v2` and requires:
 
-- Q0A does not import/use `createLafeaMeshGenerationIntentV2`;
-- Q0A imports are Node built-ins only;
-- Q0A/Q0B authority labels stay separated;
-- Q0B owns the live production route import;
-- dedicated browser spec is LAFEA.4-only;
-- required route/equilibrium/surface-IP assertions remain present;
-- existing combined LAFEA.4/LAFEA.5 regression and `TRUNNION-WORKFLOW-1` coverage remain present;
-- SHA-256 hashes of the protected validation files are emitted.
+- Q0A production independence;
+- Q0A/Q0B authority separation;
+- dedicated browser stage isolation;
+- combined LAFEA.4/LAFEA.5 regression retention;
+- LAFEA.5 `TRUNNION-WORKFLOW-1` retention;
+- the dedicated and combined browser sources to retain the same core LAFEA.4 qualification tokens for source identity, route, mesh custody, mapping mode, execution, force/moment equilibrium, lifecycle custody and authoritative surface/IP presentation.
 
-## 4. Protected invariants / negative assurance
+The checker records:
 
-No PR #1428 diff exists under:
+```text
+lafea4CoreContractParityGuard = true
+```
+
+This avoids silently allowing the isolated #1413 test and the established combined regression to drift apart while deliberately avoiding a refactor of the established browser journey before executable evidence exists.
+
+### 3.5 Canonical #1413 exact-head Q0 preflight
+
+New file:
+
+`scripts/lafea1413-exact-head-preflight-check.mjs`
+
+This is the canonical issue-specific Q0 entrypoint. It requires:
+
+```text
+QUAL_HEAD = full exact 40-hex commit
+checked-out HEAD == QUAL_HEAD
+clean worktree
+```
+
+Then executes in fixed order:
+
+```text
+Q0A_CONTINUUM_FROZEN_CUSTODY
+Q0A_SHELL_FROZEN_CUSTODY
+Q0B_ROUTE_EXPRESSIBILITY
+Q0C_VALIDATION_ISOLATION
+```
+
+Properties:
+
+- first non-PASS gate stops later execution;
+- later gates are explicitly `NOT_RUN / FIRST_FAILURE_SHORT_CIRCUIT`;
+- each executed gate records exit code/signal plus SHA-256 of stdout/stderr and byte counts;
+- process-spawn failure is `NOT_RUN / EXECUTION_ENVIRONMENT`;
+- exact-head or dirty-tree failure is `NOT_RUN / EXECUTION_CUSTODY`;
+- Q0B executed failure is classified `LIVE_PRODUCTION_CONTRACT_OR_ROUTE_EXPRESSIBILITY`;
+- no engineering, browser, registry or release authority is granted merely by preflight PASS.
+
+## 4. Local controller validation — not repository qualification
+
+Because the full repository cannot be checked out locally, the preflight controller was tested in an isolated temporary Git repository with stub gates.
+
+Observed controller tests:
+
+```text
+CASE 1 — exact clean head, all four gates exit 0
+preflight status = PASS
+receipts = [PASS, PASS, PASS, PASS]
+
+CASE 2 — QUAL_HEAD does not match checked-out HEAD
+preflight exits nonzero
+firstFailure.code = QUAL_HEAD_MISMATCH
+all Q0 gates = NOT_RUN
+
+CASE 3 — exact clean head; Q0B exits 3
+firstFailure.gate = Q0B_ROUTE_EXPRESSIBILITY
+firstFailure.failureOrigin = LIVE_PRODUCTION_CONTRACT_OR_ROUTE_EXPRESSIBILITY
+firstFailure.exitCode = 3
+Q0C = NOT_RUN
+```
+
+The LAFEA.4 parity guard was also self-tested in a temporary fixture:
+
+```text
+complete shared core tokens -> PASS
+remove one shared core token from combined regression -> checker exits nonzero
+```
+
+Classification:
+
+```text
+OBSERVATION = LOCAL_CONTROLLER_HARNESS
+ORACLE = TEST_HARNESS
+ENGINEERING_NUMERICAL_QUALIFICATION = NOT_RUN
+PRODUCT_BROWSER_QUALIFICATION = NOT_RUN
+```
+
+These tests validate control-flow and anti-drift behavior only. They are not substitutes for exact repository execution.
+
+## 5. Protected invariants / negative assurance
+
+PR #1428 has no diff under:
 
 ```text
 src/core/local-continuum/**
@@ -197,61 +322,45 @@ e2e/lafea-shell-sample-mesh.spec.js
 .github/workflows/**
 ```
 
-Therefore this PR changes no continuum/shell formulation, stiffness/load assembly, solver method, mesh algorithm/threshold, recovery convention, frozen expected value, tolerance, registered engineering authority, release authority or workflow semantics.
+No continuum/shell formulation, stiffness/load assembly, solver method, mesh algorithm/threshold, recovery convention, frozen expected value, tolerance, registered engineering authority, release authority or workflow semantic is changed.
 
-## 5. Validation truth
+## 6. Current validation truth
 
-### Source/diff validation
+### Source/diff evidence
 
 ```text
-LIVE_MAIN_GROUNDING                         PASS / SOURCE_INSPECTION
-PR_BASE_EQUALS_CURRENT_MAIN                 PASS / SOURCE_INSPECTION
-PR_BEHIND_CURRENT_MAIN                      0 / COMPARE
-CHANGED_FILE_LEDGER                         PASS / DIFF_INSPECTION
-Q0A_PRODUCTION_IMPORT_ABSENT                PASS / SOURCE_INSPECTION
-Q0B_LIVE_ROUTE_IMPORT_PRESENT               PASS / SOURCE_INSPECTION
-LAFEA4_DEDICATED_SPEC_STAGE_ISOLATED        PASS / SOURCE_INSPECTION
-OLD_COMBINED_SHELL_SPEC_MODIFIED            false / DIFF_INSPECTION
-APPENDIX_A                                  PASS 99/100; min 19/20
+AD04_LIVE_MAIN_GROUNDING                    PASS / SOURCE_INSPECTION
+PR_BASE_REBUILT_ON_AD04_MAIN                PASS / GIT_TREE_RECONCILIATION
+PR_BEHIND_AD04_MAIN                         0
+AD04_Q0_Q3_AUTHORITY_DRIFT                  false / SOURCE_INSPECTION
+#1371_CUSTODY_BLOB_UNCHANGED                 PASS / SOURCE_INSPECTION
+LAFEA3_TARGET_SPEC_BLOB_UNCHANGED            PASS / SOURCE_INSPECTION
+COMBINED_SHELL_TARGET_SPEC_BLOB_UNCHANGED    PASS / SOURCE_INSPECTION
+REGISTRY_BLOB_UNCHANGED                      PASS / SOURCE_INSPECTION
+Q0A_PRODUCTION_IMPORT_ABSENT                 PASS / SOURCE_INSPECTION
+Q0B_LIVE_ROUTE_IMPORT_PRESENT                PASS / SOURCE_INSPECTION
+LAFEA4_DEDICATED_SPEC_STAGE_ISOLATED         PASS / SOURCE_INSPECTION
+LAFEA4_CORE_CONTRACT_PARITY_GUARD            PASS / SOURCE_INSPECTION + LOCAL_CONTROLLER_HARNESS
+PREFLIGHT_CONTROL_FLOW                       PASS / LOCAL_CONTROLLER_HARNESS
+APPENDIX_A                                   PASS 99/100; minimum 19/20
 ```
 
-### Syntax-only validation
+### Hosted exact-PR-head evidence
 
-Exact submitted JavaScript bytes for these files were copied to the local tool runtime and checked with `node --check`:
+Before AD-04 rebase, PR head `cb11c06f...` triggered LAFEA run `32854899961`; job `97824370897` completed failure with `steps=[]`.
 
-```text
-scripts/lafea-b02-definition-freeze-check.mjs       PASS_SYNTAX_ONLY
-scripts/lafea-b02-route-expressibility-check.mjs    PASS_SYNTAX_ONLY
-e2e/lafea4-sample-mesh.spec.js                      PASS_SYNTAX_ONLY
-scripts/lafea1413-validation-isolation-check.mjs     PASS_SYNTAX_ONLY
-```
-
-This does **not** prove module resolution, repository execution, engineering numerical behavior or browser behavior.
-
-### Exact PR-head hosted evidence
-
-Current inspected PR head:
+After AD-04 rebase, head `35a42408...` triggered:
 
 ```text
-4fee30b0044f96fb66d2e0a38c73c94cff9c9abf
-```
-
-Automatically triggered workflow:
-
-```text
-run  = 32848856855
+run  = 32855515597
 name = LAFEA visible workbench qualification
-job  = 97804806804 / visible-workbench
+job  = 97826397659 / visible-workbench
 conclusion = failure
-runner_id = 0
-runner_name = ""
 steps = []
 logs_url = null
-created  = 2026-08-25T12:40:06Z
-completed = 2026-08-25T12:40:08Z
 ```
 
-Direct step retrieval also returned `[]`.
+Direct step retrieval returned `[]`.
 
 Classification:
 
@@ -263,48 +372,36 @@ REPOSITORY_COMMAND = NOT_EXECUTED
 ENGINEERING_FAILURE_PROVEN = false
 ```
 
-Local recovery probe:
-
-```bash
-git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git refs/heads/main
-```
-
-still returns:
-
-```text
-Could not resolve host: github.com
-exit 128
-```
+Local GitHub access remains unavailable due DNS (`Could not resolve host: github.com`, exit 128).
 
 ### Gate matrix
 
 ```text
-Q0A frozen custody                    NOT_RUN
-Q0B current route expressibility      NOT_RUN
-Q0C isolation anti-drift              NOT_RUN
-Q1 independent numerical              NOT_RUN
-Q2 production numerical               NOT_RUN
-Q3 integrated custody                 NOT_RUN
-Q4A LAFEA source/build                NOT_RUN
-Q4B isolated LAFEA.3/LAFEA.4 Chromium NOT_RUN
-Q4C broad repo/build                  NOT_RUN
-Q4D Stage-17 combined integration     NOT_RUN
-Q4E exact-head clean-tree             NOT_RUN
-B2                                    NOT_TRIGGERED
-B4                                    NOT_AUTHORIZED
-B5                                    NOT_RUN
+Q0A continuum frozen custody            NOT_RUN
+Q0A shell frozen custody                NOT_RUN
+Q0B current route expressibility        NOT_RUN
+Q0C isolation/parity anti-drift         NOT_RUN
+Q1 independent numerical                NOT_RUN
+Q2 production numerical                 NOT_RUN
+Q3 integrated custody                   NOT_RUN
+Q4A LAFEA source/build                  NOT_RUN
+Q4B isolated LAFEA.3/LAFEA.4 Chromium  NOT_RUN
+Q4C broad repo/build                    NOT_RUN
+Q4D Stage-17 combined integration       NOT_RUN
+Q4E exact-head clean-tree               NOT_RUN
+B2                                      NOT_TRIGGERED
+B4                                      NOT_AUTHORIZED
+B5                                      NOT_RUN
 ```
 
-No unexecuted check is called PASS.
+No unexecuted engineering/product check is called PASS.
 
-## 6. Hardened exact-head execution packet
+## 7. Exact-head execution packet
 
-Use one exact PR head. Stop at the first actually executed authoritative failure.
-
-### Epoch
+When an executable exact PR checkout exists:
 
 ```bash
-export QUAL_HEAD="<exact PR head>"
+export QUAL_HEAD="<exact PR head SHA>"
 export EVIDENCE_ROOT="${RUNNER_TEMP:-/tmp}/issue-1413-${QUAL_HEAD}"
 mkdir -p "$EVIDENCE_ROOT"
 test "$(git rev-parse HEAD)" = "$QUAL_HEAD"
@@ -315,26 +412,13 @@ npm --version
 npm ci
 ```
 
-### Q0A — immutable frozen custody
+Run canonical Q0:
 
 ```bash
-node scripts/lafea-b02-definition-freeze-check.mjs
-node scripts/lafea-shell-independent-benchmark-freeze-check.mjs
+node scripts/lafea1413-exact-head-preflight-check.mjs
 ```
 
-### Q0B — current route expressibility
-
-```bash
-node scripts/lafea-b02-route-expressibility-check.mjs
-```
-
-### Q0C — isolation anti-drift
-
-```bash
-node scripts/lafea1413-validation-isolation-check.mjs
-```
-
-### Q1 — independent numerical
+Then Q1:
 
 ```bash
 LAFEA_BUCKET_01_KIRSCH_PROBE_REPORT_PATH="$EVIDENCE_ROOT/kirsch-fixed-probes.json" \
@@ -343,14 +427,14 @@ node scripts/lafea-plane-strain-bbar-lame-check.mjs
 node scripts/lafea4-shell-independent-benchmark-check.mjs
 ```
 
-### Q2 — production numerical
+Q2:
 
 ```bash
 node scripts/lafea-b02c-production-check.mjs
 node scripts/lafea-shell-response-acceptance-check.mjs
 ```
 
-### Q3 — integrated custody
+Q3:
 
 ```bash
 node scripts/lafea1371-pr-b-merge-order-guard.mjs
@@ -362,7 +446,7 @@ node scripts/lafea4-sample-pressure-output-check.mjs
 node scripts/lafea1371-cross-stage-anti-drift-check.mjs
 ```
 
-### Q4A — direct LAFEA source/build
+Q4A:
 
 ```bash
 npm run check:lafea-core
@@ -372,9 +456,13 @@ npx vite build --config vite.lafea.config.js
 node scripts/lafea-standalone-build-artifact-check.mjs
 ```
 
-Standalone comparator base remains `162c88ee4715bc46c3c768c1086e74e7165bd3fb`.
+Standalone comparator base remains:
 
-### Q4B — stage-isolated targeted Chromium
+```text
+162c88ee4715bc46c3c768c1086e74e7165bd3fb
+```
+
+Q4B — stage-isolated browser proof:
 
 ```bash
 export PLAYWRIGHT_BROWSERS_PATH=0
@@ -385,9 +473,7 @@ CI=1 node node_modules/playwright/cli.js test \
   e2e/lafea4-sample-mesh.spec.js
 ```
 
-A LAFEA.5 failure cannot erase these issue-local browser results.
-
-### Q4C — broad repository closure
+Q4C:
 
 ```bash
 npm run check:imports
@@ -396,15 +482,13 @@ node scripts/full-check.mjs
 npm run build
 ```
 
-### Q4D — full Stage-17 / combined regression
+Q4D:
 
 ```bash
 CI=1 node scripts/lafea-stage17-browser-run.mjs
 ```
 
-The pre-existing combined LAFEA.4/LAFEA.5 journey remains part of this broader integration layer. An unrelated LAFEA.5 failure blocks final B4 closure but must be recorded as the correct Class-C/product blocker; it does not retroactively turn an isolated Q4B LAFEA.4 PASS into an engineering FAIL.
-
-### Q4E — exact-head / clean-tree
+Q4E:
 
 ```bash
 git diff --check
@@ -412,40 +496,50 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 test "$(git rev-parse HEAD)" = "$QUAL_HEAD"
 ```
 
-## 7. Active register
-
-- `ISS-1428-001` RESOLVED_IN_SOURCE — Q0 frozen custody/live-route ownership mixed.
-- `ISS-1428-002` RESOLVED_IN_SOURCE — LAFEA.4 browser result coupled to LAFEA.5 inside one Playwright test.
-- `RISK-1428-001` ACTIVE — source repair is not exact-head qualification PASS.
-- `RISK-1428-002` ACTIVE — main movement requires re-grounding before execution/merge consideration.
-- `DEC-1428-001` ACTIVE — original combined shell browser regression remains unchanged.
-- `DEC-1428-002` ACTIVE — Q0A/Q0B failures must retain distinct ownership.
-- `DEC-1428-003` ACTIVE — no B2/B4/release authority is granted by this PR.
-- `DEBT-1428-001` ACTIVE — exact Node/import/runtime and Chromium execution blocked by #54/current DNS environment.
-
-## 8. Appendix A — implementation takeover qualification
-
-Threshold: total >= 92/100; every challenge >= 17/20.
+Rules:
 
 ```text
-A1 Production trace       20/20
-A2 Failure isolation      20/20
-A3 Authority/invariant    20/20
-A4 Independent validation 19/20
-A5 Minimal patch          20/20
+FIRST_EXECUTED_AUTHORITATIVE_FAILURE_WINS = true
+CONTINUE_AFTER_FIRST_AUTHORITATIVE_FAILURE = false
+TOLERANCE_WIDENING_AFTER_OBSERVATION = forbidden
+FROZEN_EXPECTED_VALUE_REWRITE = forbidden
+BENCHMARK_DELETION = forbidden
+DISPLAY_NODAL_SMOOTHING_PROMOTION = forbidden
+```
+
+## 8. Active register
+
+- `ISS-1428-001` RESOLVED_IN_SOURCE — frozen custody/live-route ownership was mixed.
+- `ISS-1428-002` RESOLVED_IN_SOURCE — LAFEA.4 browser result was coupled to LAFEA.5 inside one test.
+- `ISS-1428-003` RESOLVED_IN_SOURCE — #1413 Q0 sequence existed only as workreport commands; canonical exact-head preflight now exists.
+- `RISK-1428-001` ACTIVE — source/controller PASS is not exact-head engineering qualification.
+- `RISK-1428-002` ACTIVE — any further main movement requires another grounding epoch.
+- `RISK-1428-003` ACTIVE — shared workspace UI changed in #1424, so Q4 product/integration evidence must be fresh.
+- `DEC-1428-001` ACTIVE — original combined shell browser regression remains unchanged.
+- `DEC-1428-002` ACTIVE — Q0A/Q0B failure ownership remains separate.
+- `DEC-1428-003` ACTIVE — isolated and combined LAFEA.4 journeys are parity-guarded rather than refactored before execution evidence.
+- `DEC-1428-004` ACTIVE — no B2/B4/release authority is granted by this PR.
+- `DEBT-1428-001` ACTIVE — exact repository Node/import/runtime and Chromium execution remain blocked by #54/current local DNS.
+
+## 9. Appendix A — implementation takeover qualification
+
+Threshold: total >= 92/100 and every challenge >= 17/20.
+
+```text
+A1 Production Trace       20/20
+A2 Failure Isolation      20/20
+A3 Authority / Invariant  20/20
+A4 Independent Validation 19/20
+A5 Minimal Patch          20/20
 TOTAL                     99/100
 MINIMUM                   19/20
 ```
 
-Qualification conclusion:
+Implementation authority remains limited to validation isolation and qualification plumbing.
 
-`WRITE_ALLOWED_VALIDATION_ISOLATION_ONLY`
+## 10. Changed-file ledger
 
-The 1-point deduction remains because exact repository execution is still NOT_RUN. No numerical validation weakness is hidden by the score.
-
-## 9. Changed-file ledger
-
-Exactly seven files:
+Exactly eight PR files at AD-04 engineering-content checkpoint:
 
 ```text
 agents/PR1428_workreport.md
@@ -454,7 +548,8 @@ agents/status/PR1428.yaml
 e2e/lafea4-sample-mesh.spec.js
 scripts/lafea-b02-definition-freeze-check.mjs
 scripts/lafea-b02-route-expressibility-check.mjs
+scripts/lafea1413-exact-head-preflight-check.mjs
 scripts/lafea1413-validation-isolation-check.mjs
 ```
 
-No WIP recovery file remains in the PR diff.
+No other production, mechanics, oracle, tolerance, registry, workflow or combined-browser source is modified by PR #1428.

@@ -7,26 +7,31 @@ branch: agent/issue-1422-validate-input-progress
 main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 criticality: ENGINEERING_CRITICAL
-agent_state: ACTIVE
+agent_state: VALIDATION_BLOCKED
 pr_recovery_state: HEALTHY
 handover_readiness: READY
 report_path: agents/PR1424_workreport.md
-appendix_a_status: PARTIAL_OWNER_START_OVERRIDE
+appendix_a_status: FAIL_A4_NOT_RUN_OWNER_MUTATION_AUTHORITY_ONLY
 appendix_a_score: null
-appendix_a_min_question: null
+appendix_a_min_question: A4
 coordination: SAFE
-current_stage: COVERAGE_PROJECTION_IMPLEMENTED_RENDERING_NEXT
-highest_risk: MASS_COVERAGE_PROGRESS_MISLABELS_OBLIGATIONS_AS_UNIQUE_ENTITIES
+current_stage: IMPLEMENTATION_COMPLETE_REQUIRED_EXECUTION_VALIDATION_NOT_RUN
+highest_risk: BROWSER_AND_WORKSPACE_REGRESSIONS_NOT_EXECUTED
 validation:
   live_grounding: PASS
   issue_1421_superseded: PASS
   overlap_check: PASS_NO_PRODUCTION_OVERLAP_FOUND
-  commit1_diff_scope: PASS_SOURCE_INSPECTION
+  exact_head_reconciliation: PASS_9_EXPECTED_PATHS
+  protected_paths_unchanged: PASS_SOURCE_INSPECTION
   checker_readiness_source_unchanged: PASS_SOURCE_INSPECTION
-  focused_projection_checker: NOT_RUN
-  advanced_shell_contract: NOT_RUN
-  focused_e2e: NOT_RUN
-  workspace_contracts: NOT_RUN
+  cross_tab_integration: PASS_SOURCE_INSPECTION
+  reconstructed_coverage_logic: PASS_RECONSTRUCTED_LOCAL
+  git_clone: FAIL_ENVIRONMENT_DNS_GITHUB
+  focused_projection_checker: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  advanced_shell_contract: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  focused_e2e: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  existing_input_check_e2e: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  workspace_contracts: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
 authority:
   owner_start_coding_instruction: true
   coverage_ready_semantics_change_authorized: false
@@ -35,5 +40,5 @@ authority:
   execution_gate_change_authorized: false
   master_data_authority_change_authorized: false
   workflow_change_authorized: false
-merge_disposition: OWNER_ONLY_DRAFT
-exact_next_action: "Render unique-entity coverage progress and complete entity/reason detail from retained coverageRequirements in the primary Validate Input blocker surface; do not change checker or run eligibility."
+merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE_REQUIRED_VALIDATION_NOT_RUN
+exact_next_action: "Obtain a real checkout of PR1424, re-ground main and overlap, run the focused projection check, advanced shell contract, focused partial-coverage E2E, existing input-check E2E, and workspace contracts; record exact outputs, fix only evidenced failures, then mark review-ready only if all required validation is genuinely green."

@@ -20,10 +20,13 @@ export const EMPIRICAL_LOAD_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V2';
 export const EMPIRICAL_LOAD_COG_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V3_COG';
 
 const FLUID_COMPOSITION_RULE = 'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION';
+const COMPONENT_CONTENT_COMPOSITION_RULE = 'COMPONENT_CASE_MASS=DRY_POINT_MASS+OPTIONAL_AUTHORIZED_CONTAINED_FLUID';
 const FATAL_EXCLUSION_CODES = new Set([
   'INVALID_PIPE_SECTION',
   'INVALID_PIPE_INSIDE_DIAMETER',
   'MISSING_ROUTE_CHAINAGE',
+  'INVALID_COMPONENT_CONTENT_MASS',
+  'UNAPPROVED_COMPONENT_CONTENT_MASS',
   'EMPIRICAL_COMPONENT_LOAD_AUTHORITY_RECORD_MISSING',
   'EMPIRICAL_COMPONENT_LOAD_AUTHORITY_BLOCKED',
   'EMPIRICAL_COMPONENT_COG_CHAINAGE_INVALID',
@@ -356,7 +359,8 @@ function resolveBaseMass(entity, edge, profile) {
 
 function resolveCaseMass(baseMass, entity, caseId, profile) {
   supportLoadPerformanceMetrics.caseMassCompositions += 1;
-  if (!baseMass.qualified || entity.entityType !== 'PIPE') return baseMass;
+  if (!baseMass.qualified) return baseMass;
+  if (entity.entityType !== 'PIPE') return componentCaseMass(baseMass, caseId, profile);
   supportLoadPerformanceMetrics.fluidMassComputations += 1;
   const fluid = fluidMass(caseId, baseMass.section, entity, baseMass.insideDiameterMm, baseMass.lengthM, profile);
   if (!fluid.qualified) return fluid;
@@ -375,6 +379,36 @@ function resolveCaseMass(baseMass, entity, caseId, profile) {
       outsideDiameterMm: baseMass.formula.outsideDiameterMm,
       insideDiameterMm: baseMass.formula.insideDiameterMm,
       projectDataSources: [...baseMass.formula.projectDataSources, fluid.source].filter(Boolean),
+    },
+  };
+}
+
+function componentCaseMass(baseMass, caseId, profile) {
+  if (caseId === 'EMPTY') return baseMass;
+  const path = caseId === 'OPE'
+    ? 'loadCalculation.componentOperatingFluidWeightsKg'
+    : 'loadCalculation.componentHydroFluidWeightsKg';
+  const entry = projectDataEntry(profile, path);
+  const contentMap = entry?.value || {};
+  if (!Object.hasOwn(contentMap, baseMass.componentSelector)) return baseMass;
+  if (entry?.approved !== true || !stringValue(entry?.evidence?.source)) {
+    return excluded('UNAPPROVED_COMPONENT_CONTENT_MASS', path);
+  }
+  const contentMassKg = Number(contentMap[baseMass.componentSelector]);
+  if (!Number.isFinite(contentMassKg) || contentMassKg < 0) {
+    return excluded('INVALID_COMPONENT_CONTENT_MASS', path);
+  }
+  const contentSource = sourceRef(profile, path);
+  return {
+    qualified: true,
+    massKg: baseMass.massKg + contentMassKg,
+    formula: {
+      ...baseMass.formula,
+      rule: COMPONENT_CONTENT_COMPOSITION_RULE,
+      loadCaseId: caseId,
+      dryComponentMassKg: baseMass.massKg,
+      containedFluidMassKg: contentMassKg,
+      projectDataSources: [...baseMass.formula.projectDataSources, contentSource].filter(Boolean),
     },
   };
 }
@@ -421,10 +455,12 @@ function componentMass(entity, profile) {
   const value = typeof weights[key] === 'object' ? weights[key].massKg : weights[key];
   return {
     qualified: true,
+    componentSelector: key,
     massKg: Number(value),
     formula: {
       catalogKey: key,
       massKg: Number(value),
+      dryComponentMassKg: Number(value),
       projectDataSources: [sourceRef(profile, 'loadCalculation.componentWeightsKg')],
     },
   };

@@ -7,11 +7,11 @@ branch: agent/issue-1321-ancillary-distributed-mass
 pr: 1430
 issue: 1321
 criticality: ENGINEERING_CRITICAL
-coordination_state: SAFE_AFTER_STALE_REGISTRY_RECONCILIATION
-stale_registry_note: "PR1323 broad claim is stale by live PR lineage; no open PR found for cladding/tracing ancillary distributed mass. Current main drift cf0ee98e is WRC source-governance only with no path/authority overlap."
+coordination_state: SAFE_AFTER_STALE_REGISTRY_AND_MAIN_DRIFT_RECONCILIATION
+stale_registry_note: "Historical PR1323 is closed/unmerged. No live competing cladding/tracing ancillary-mass PR or review thread found. Current main drift cf0ee98e is WRC source-governance only with no path/authority overlap."
 claimed_paths:
   - src/workspace/project-data/non-fea-field-registry.js
-  - src/core/non-fea-enrichment/index.js
+  - src/workspace/project-data/non-fea-configured-default-provider.js
   - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
   - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
   - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
@@ -19,6 +19,7 @@ claimed_paths:
   - src/workspace/project-data/project-data-contract.js
   - src/workspace/engineering-loads/support-load-distribution-v3.js
   - scripts/authorized-empirical-ancillary-distributed-mass-check.mjs
+  - scripts/non-fea-ancillary-default-authority-check.mjs
   - agents/PR1430_workreport.md
   - agents/status/PR1430.yaml
   - agents/claims/PR1430.yaml
@@ -26,6 +27,12 @@ protected_paths:
   - .github/workflows/**
   - src/core/model-loads/**
   - src/core/fea/**
-authority_boundary: "Add optional line-scoped cladding/tracing kg/m through the existing enrichment -> common-enriched LINE -> authorized effective-value -> PIPE distributed-mass chain. No universal default, no source-column guess, no component-point ownership change, no fluid/statics/equilibrium change."
+authority_boundary: "Add optional line-scoped cladding/tracing kg/m through the existing configured/product default -> common-enriched LINE -> authorized effective-value -> PIPE distributed-mass chain. No universal default, no source-column guess, no component-point ownership change, no fluid/statics/equilibrium change."
+invariants:
+  - ANCILLARY_ABSENCE_DOES_NOT_FABRICATE_ZERO_EVIDENCE
+  - ANCILLARY_MASS_IS_CASE_INDEPENDENT_PIPE_DISTRIBUTED_MASS
+  - ANCILLARY_MASS_IS_APPLIED_EXACTLY_ONCE
+  - COMPONENT_POINT_MASS_OWNERSHIP_UNCHANGED
+  - FLUID_AND_STATIC_ACCOUNTING_UNCHANGED
 merge_authority: OWNER_ONLY
-state: ACTIVE
+state: ACTIVE_HANDOVER_READY_WITH_EXECUTION_NOT_RUN

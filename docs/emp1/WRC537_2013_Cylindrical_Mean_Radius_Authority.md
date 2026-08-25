@@ -4,6 +4,28 @@
 
 `BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED`
 
+## Current authority split
+
+This source-qualification record and the bounded runtime route answer different questions and must not be collapsed into one boolean.
+
+Current branch/live bounded state is:
+
+```text
+bounded gamma5 / zero-dp route authorized = true
+registry registered                       = true
+bounded engineering use                  = true
+bounded production use                   = true
+global EMP.1.C authority                 = false
+code compliance                          = false
+release qualified                        = false
+```
+
+This **does not** close the cylindrical physical-radius source question. The governing invariant is:
+
+`BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_CYLINDRICAL_RM_PHYSICAL_DEFINITION_SOURCE_AUTHORITY`
+
+Accordingly, `engineeringUseAuthorized=false` and `productionUseAuthorized=false` in the source-qualification record mean **authority granted by this source record itself**, not the current state of the separately governed bounded route.
+
 ## Retained Table-5 source fact now reconciled
 
 The retained WRC 537 transcription at:
@@ -49,22 +71,29 @@ Therefore the following remain unqualified:
 - locally thickened shell, insert plate, taper or transition treatment;
 - whether the same `R_m` identity governs every §4.5 applicability ratio.
 
-## Current software observation
+## Current production trace
 
 Current source custody derives:
 
 ```text
 outerRadius = pipeOutsideDiameter / 2
 meanRadius  = outerRadius - assessmentPipeThickness / 2
-gamma       = meanRadius / shellThickness
-beta        = 0.875 * attachmentOutsideRadius / meanRadius
 ```
 
-That software path is deterministic and currently maps its `meanRadius` field into the Table-5 `R_m` role. This PR does **not** make the construction:
+then passes that value to the bounded cylindrical geometry adapter, which computes:
+
+```text
+gamma = meanRadius / shellThickness
+beta  = 0.875 * attachmentOutsideRadius / meanRadius
+```
+
+The same `meanRadius` is also supplied to the cylindrical §4.5 applicability evaluator and to the Table-5 calculation geometry.
+
+This path is deterministic software behavior. It does not make:
 
 `OD/2 - assessmentThickness/2`
 
-into a universal WRC rule. No production geometry transformation is changed.
+into a universal WRC physical-radius construction rule. No production geometry transformation or numerical mechanism is changed by this reconciliation.
 
 ## Source-custody boundary
 
@@ -96,6 +125,13 @@ software field is named meanRadius
     => WRC primary source has qualified the physical midsurface/mean-radius construction
 ```
 
+Do not infer:
+
+```text
+bounded route is authorized
+    => the unresolved physical R_m construction has become primary-source qualified
+```
+
 Do not import spherical-shell radius definitions into the cylindrical route.
 
 ## Authority effect
@@ -112,16 +148,22 @@ This source-governance increment changes no:
 - code/release/global authority;
 - workflow.
 
-Current authority remains:
+Current authority is therefore represented as two orthogonal layers:
 
 ```text
+THIS SOURCE RECORD
 Table-5 cylindrical R_m symbol/role     = qualified retained source text
 physical R_m construction               = blocked
-engineering use from this record        = false
-production use from this record         = false
+engineering use granted by this record  = false
+production use granted by this record   = false
+
+CURRENT BOUNDED RUNTIME
+bounded route authorized                = true
+registry registered                     = true
+bounded engineering/production use      = true
 global EMP.1.C                           = false
 code compliance                          = false
-release authority                        = false
+release qualified                        = false
 ```
 
 ## Closure evidence still required
@@ -134,4 +176,4 @@ Issue #1377 can be fully closed only when primary evidence establishes:
 4. the source identity of the radius used in §4.5 applicability ratios;
 5. behavior for nominal, measured, oval, corroded and locally modified geometry.
 
-Until those are proven, the aggregate P0 source-semantics gate remains blocked.
+Until those are proven, the #1377 physical-radius source gate remains blocked. Bounded route authorization is not accepted as substitute source evidence.

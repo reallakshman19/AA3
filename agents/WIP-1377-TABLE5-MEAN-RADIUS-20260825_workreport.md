@@ -1,4 +1,4 @@
-# WIP-1377-TABLE5-MEAN-RADIUS-20260825 — EMP.1 retained Table-5 mean-radius reconciliation
+# WIP-1377-TABLE5-MEAN-RADIUS-20260825 — EMP.1 retained Table-5 cylindrical Rm reconciliation
 
 ## CURRENT RECOVERY STATE
 
@@ -10,31 +10,48 @@ WORK_INTENT: SOURCE_GOVERNANCE_RECONCILIATION
 BASE: main@4461e7699d08b8a1acbbc89cdbea3fd998368ca6
 BRANCH: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
 ISSUE: #1377
-CURRENT_STAGE: CLAIMED_BEFORE_PATCH
-HIGHEST_RISK: turning the retained Table-5 label “Vessel Mean Radius” into an unsupported OD/ID/corrosion construction rule
-EXACT_NEXT_ACTION: reconcile only the retained cylindrical Table-5 mean-radius label/role; preserve OD/ID/T construction, corrosion/assessment basis, ovality/local geometry and production transformation as blocked.
+CURRENT_STAGE: SOURCE_PATCH_COMPLETE_PR_ALLOCATION_PENDING
+HIGHEST_RISK: turning retained Table-5 `Vessel Radius R_m` into an unsupported physical mean/midsurface or OD/ID/corrosion construction rule
+EXACT_NEXT_ACTION: allocate draft PR, migrate WIP recovery to PR-number records, audit exact six-file diff/main/reviews, remain unmerged pending owner authorization.
 ```
 
 ## Mission
 
-Issue #1377 currently treats the cylindrical radius identity as wholly unresolved. The retained WRC 537 Table-5 transcription at `docs/emp1/WRC537_2013_Tables_and_Charts.md` explicitly labels the cylindrical geometry input as `Vessel Mean Radius`. This increment recognizes only that retained source-text fact.
+Issue #1377 treated the cylindrical radius symbol/role and physical definition as wholly unresolved. Retained WRC 537 Table 5 pp.41–42 actually states the cylindrical geometry item as:
+
+```text
+Vessel Radius      R_m
+```
+
+and uses that same quantity in:
+
+```text
+gamma = R_m / T
+beta  = 0.875 * r_o / R_m
+```
+
+This increment recognizes those retained source-text facts only. It deliberately does not infer the missing physical construction of `R_m`.
 
 The exact controlled PDF remains raw SHA-256 `698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2`, Git blob `ce861233928154145a9257efbbf8dbef3f5a17d1`; direct current-turn PDF page observation remains `NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`.
 
-## May be reconciled from retained Table 5
+## Reconciled retained Table-5 subset
 
-- cylindrical Table 5 requires a vessel mean-radius quantity;
-- the retained symbol/label role is the host-shell mean radius used in the cylindrical geometry block;
-- Table-5 cylindrical equations/parameterization consume that mean-radius quantity rather than OD/2 or ID/2 directly.
+- cylindrical Table-5 source symbol: `R_m`;
+- geometry label: `Vessel Radius`;
+- `R_m` is the vessel-radius input used in Table-5 `gamma`;
+- `R_m` is the vessel-radius input used in Table-5 `beta`;
+- older legacy cylindrical `R_c` notation is superseded for this Table-5 symbol/role only.
 
 ## Must remain blocked
 
-- exact source construction from OD/ID/T;
+- proof that `R_m` is physically a midsurface/mean radius;
+- exact construction from OD/ID/T;
 - nominal vs corroded/assessment/measured geometry basis;
-- whether the same T basis must construct the radius;
+- whether the same T basis must construct `R_m`;
 - internal/external/two-sided corrosion geometry model;
-- local vs nominal diameter, ovality/out-of-roundness;
+- local vs nominal diameter and ovality/out-of-roundness;
 - locally thickened/insert/tapered shell treatment;
+- §4.5 radius identity from this increment;
 - any production change to `meanRadius = OD/2 - assessmentThickness/2`.
 
 ## Protected no-mutation
@@ -61,10 +78,13 @@ The exact controlled PDF remains raw SHA-256 `698fcdc3e676e3bc6bbf710bc28ea8b666
 - live main grounding: PASS
 - retained Table-5 text inspection: PASS_SOURCE_INSPECTION
 - direct PDF page re-observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+- checker source inspection: PASS
 - checker Node execution: NOT_RUN
 - numerical comparison: NOT_APPLICABLE
-- production geometry transformation: unchanged
+- production geometry transformation: UNCHANGED
 - engineering/production/global/code/release authority: false
+
+Encoded-but-unexecuted checker logic is NOT_RUN, never PASS.
 
 ## Appendix A
 
@@ -74,4 +94,4 @@ A3 Authority/invariant — 20/20.
 A4 Independent validation — 19/20; direct PDF and executable checker remain NOT_RUN.
 A5 Minimal patch — 20/20.
 
-**99/100; minimum 19/20 — WRITE_ALLOWED for partial #1377 reconciliation only.**
+**99/100; minimum 19/20 — HANDOVER_READY for partial #1377 reconciliation.**

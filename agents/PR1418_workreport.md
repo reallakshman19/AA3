@@ -5,18 +5,38 @@
 ```text
 HANDOVER_READINESS: READY
 PR_RECOVERY_STATE: HEALTHY_DRAFT
+TAKEOVER_AUTHORITY: RESTRICTED
 CRITICALITY: ENGINEERING_CRITICAL
 WORK_INTENT: SOURCE_GOVERNANCE_RECONCILIATION
 PR: #1418
-BASE: main@e2a44a85b808c0dd3f09a02d7825df26cf92f92f
-BASE_TREE: 2f9dd6023a9bfa9522518085142ebf23bf264412
+BASE: main@9887ec1c3eb6184c0d590841b23c04ed449f9414
+BASE_TREE: f26e894dd80751bb9e69720b514f2a0defaf64ea
 BRANCH: agent/issue-1389-physical-applicability-batch-20260825
 ISSUES: #1368 #1370 #1373; umbrella #1389
-CURRENT_STAGE: PR_ALLOCATED_RECOVERY_MIGRATION
+PR_HEAD_OBSERVED: b9f6905f14dfd8e1c04454a9d74fccda207450b7
+REPORT_BASIS_HEAD: 779d72a8c371e1d9453e8e02ba0d785b1944e3f1
+MAIN_HEAD_LAST_CHECKED: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+MERGE_BASE: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+REPORT_SYNC: CURRENT
+APPENDIX_A_STATUS: CURRENT
+GROUNDING_EPOCH: GE-PR1418-002
+LAST_DURABLE_CHECKPOINT: 2026-08-25 final live GitHub re-ground and 15-file audit
+CURRENT_STAGE: FINAL_15_FILE_MAIN_REVIEW_AUDIT_COMPLETE
+CURRENT_BLOCKER: explicit Owner merge authorization not granted; three physical-applicability primary-source gates remain unresolved
 MERGE_AUTHORITY: NOT_GRANTED
 HIGHEST_RISK: converting absence of angle/class/neighbor fields in Table 5 into unsupported physical applicability authority
-EXACT_NEXT_ACTION: retire WIP recovery; verify exact 15-file diff, live main, reviews/threads and protected paths; remain draft/unmerged.
+EXACT_NEXT_ACTION: leave PR1418 draft/unmerged pending explicit Owner merge authorization; direct primary-source closure remains required for physical normality, attachment class, and interaction/isolation.
 ```
+
+`REPORT_BASIS_HEAD` is the non-metadata re-ground commit that preserved the audited 15-file PR tree while merging current `main`. The later observed PR head only updates recovery/status metadata, so `REPORT_SYNC=CURRENT` under the continuous-handover freshness rule.
+
+## Handover in 60 Seconds
+
+PR #1418 is a source-governance reconciliation only. It combines the open physical-applicability source questions in #1368, #1370 and #1373 under umbrella #1389. The live comparison against `main@9887ec1c3eb6184c0d590841b23c04ed449f9414` is exactly 15 files, 23 commits ahead and 0 behind, with merge-base equal to current main. No production EMP.1 mechanics, route/registry, numerical evaluator, oracle/tolerance, release, aggregate P0 release gate or workflow file is changed.
+
+The retained-source conclusion is intentionally fail-closed: Table 5 explicitly contains the six WRC loads, `T/r0/Rm`, `gamma/beta`, and `Kn/Kb`, but its lack of explicit angle, attachment-class/wall, or neighbor-interaction fields is **not** authority to ignore those physical properties. Existing WRC §4.5 rules remain unchanged. The bounded gamma=5 zero-dp route remains separately Owner-authorized, but that authorization does not back-propagate into unresolved physical-applicability semantics.
+
+Reviews = 0; review threads = 0. Current-head EMP.1 Actions remain `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`: the relevant gamma5 job is `completed/failure` with `steps=null` and `logs_url=null`. Direct PDF page re-observation and Node checker execution remain NOT_RUN. No merge authority exists.
 
 ## Mission
 
@@ -103,7 +123,7 @@ Route authorization is not allowed to back-propagate into missing source semanti
 
 `DEC-PHYS-06`: all three physical-applicability source gates remain BLOCKED; no production/global/code/release authority is widened.
 
-## Final intended changed-file ledger — exactly 15
+## Final changed-file ledger — exactly 15
 
 ### #1368 axis/intersection
 1. `validation/emp1/wrc537-2013/attachment-axis-intersection-source-qualification-v1.json`
@@ -142,22 +162,71 @@ Route authorization is not allowed to back-propagate into missing source semanti
 
 ## Validation ledger
 
-| Check | Status |
-|---|---|
-| live base main/tree | PASS |
-| coordination with #1415/#1417 | PASS — distinct files/authority subdomains |
-| retained Table-5 inspection | PASS_SOURCE_INSPECTION |
-| retained §4.5 authority inspection | PASS_SOURCE_INSPECTION |
-| current production route-state inspection | PASS_SOURCE_INSPECTION |
-| direct WRC PDF page observation | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT |
-| individual checker source inspection | PASS |
-| aggregate checker source inspection | PASS |
-| Node checker execution | NOT_RUN |
-| numerical comparison | NOT_APPLICABLE |
-| production mechanics | UNCHANGED |
-| final 15-file/main/review audit | PENDING |
+| Check | Status | Observation / oracle |
+|---|---|---|
+| live base main/tree | PASS | live GitHub: `main=9887ec1c3eb6184c0d590841b23c04ed449f9414`, tree `f26e894dd80751bb9e69720b514f2a0defaf64ea` |
+| PR/main comparison | PASS | live GitHub comparison: 23 ahead, 0 behind, merge-base = current main |
+| exact changed-file ledger | PASS | live GitHub: exactly 15 claimed paths |
+| protected-path mutation | PASS | none of `src/core/emp1/**`, release, oracle/tolerance, P0 release gate or workflows changed |
+| coordination with #1415/#1417 | PASS | distinct files/authority subdomains; no audited overlap |
+| retained Table-5 inspection | PASS_SOURCE_INSPECTION | authoritative retained transcription boundary only |
+| retained §4.5 authority inspection | PASS_SOURCE_INSPECTION | existing rules preserved unchanged |
+| current production route-state inspection | PASS_SOURCE_INSPECTION | bounded route currently authorized; no back-propagation into source gates |
+| aggregate authority artifact inspection | PASS_SOURCE_AND_DIFF_INSPECTION | all three physical-applicability gates false; fail-closed prohibitions retained |
+| individual checker source inspection | PASS | source inspection only |
+| aggregate checker source inspection | PASS | source inspection only |
+| direct WRC PDF page observation | NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT | no direct page observation performed |
+| Node checker execution | NOT_RUN | encoded checker logic not executed in this environment |
+| numerical comparison | NOT_APPLICABLE | no numerical production change |
+| production mechanics | UNCHANGED | no production mechanics path changed |
+| PR reviews | PASS_STATE_INSPECTION | 0 reviews |
+| PR review threads | PASS_STATE_INSPECTION | 0 threads |
+| GitHub Actions / EMP.1 gamma5 job | NOT_RUN_EXECUTION_ENVIRONMENT | run `32802815598`, job `97666918258`: completed/failure, `steps=null`, `logs_url=null`; classify PRE_STEP_INFRASTRUCTURE_FAILURE |
+| final 15-file/main/review audit | PASS_SOURCE_AND_DIFF_INSPECTION | completed against observed head `b9f6905f14dfd8e1c04454a9d74fccda207450b7` |
 
-Encoded-but-unexecuted checker logic remains NOT_RUN.
+Encoded-but-unexecuted checker logic remains NOT_RUN. Pre-step GitHub Actions failure is neither product PASS nor engineering-code FAIL.
+
+## Base drift reconciliation
+
+Previous recorded base:
+
+```text
+e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+```
+
+Current main/base:
+
+```text
+9887ec1c3eb6184c0d590841b23c04ed449f9414
+```
+
+The drift is unrelated LFEA bend work with no overlap in the 15 PR1418 paths. It was re-grounded non-force through two-parent merge commit:
+
+```text
+779d72a8c371e1d9453e8e02ba0d785b1944e3f1
+```
+
+whose parents are the prior PR branch head and current `main@9887ec1c3eb6184c0d590841b23c04ed449f9414`. Post-re-ground comparison is 0 behind main.
+
+## Grounding epoch GE-PR1418-002
+
+```text
+verified_at: 2026-08-25
+PR_HEAD: b9f6905f14dfd8e1c04454a9d74fccda207450b7
+MAIN_HEAD: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+MERGE_BASE: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+changed_files_verified: 15 exact claimed paths
+behind_main: 0
+reviews_verified: 0
+review_threads_verified: 0
+checks_verified: GitHub Actions pre-step failure retained as NOT_RUN_EXECUTION_ENVIRONMENT
+claims_verified: agents/claims/PR1418.yaml matches exact 15-file scope
+status_verified: agents/status/PR1418.yaml matches current base and final-audit state
+```
+
+## Takeover / recovery chain
+
+`TKO-PR1418-002`: incoming recovery pass independently re-read umbrella #1389, repository `AGENTS.md`, the pinned engineering-pr-delivery protocol, live PR metadata/diff, status/claim records, aggregate authority artifact/checker, live main, reviews/threads and workflow state. Inherited stale workreport base/audit metadata was confirmed as the only repository recovery inconsistency. Decision: `CONTINUE` for recovery-metadata synchronization only; no engineering/source-mechanics mutation justified.
 
 ## Appendix A
 
@@ -171,4 +240,6 @@ A4 Independent validation — 19/20; direct PDF and executable checker remain NO
 
 A5 Minimal/coherent batch — 20/20; one 12-file source package plus three recovery files, no mechanics.
 
-**99/100; minimum 19/20 — HANDOVER_READY for combined physical-applicability source reconciliation.**
+**99/100; minimum 19/20 — CURRENT and handover-ready for the combined physical-applicability source reconciliation.**
+
+The unresolved technical problem did not materially change during re-grounding, so Appendix A remains current. No further production/source implementation authority is implied by this recovery-only update.

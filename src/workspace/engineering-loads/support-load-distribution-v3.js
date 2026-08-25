@@ -325,15 +325,23 @@ function resolveBaseMass(entity, edge, profile) {
   const metalKg = annulusAreaM2(section.outsideDiameterMm, insideDiameterMm) * lengthM * materialDensity;
   const insulation = insulationMass(section, lengthM, profile);
   if (!insulation.qualified) return insulation;
+  const claddingMassPerLengthKgPerM = section.claddingMassPerLengthKgPerM ?? 0;
+  const tracingMassPerLengthKgPerM = section.tracingMassPerLengthKgPerM ?? 0;
+  const claddingKg = claddingMassPerLengthKgPerM * lengthM;
+  const tracingKg = tracingMassPerLengthKgPerM * lengthM;
   return {
     qualified: true,
-    baseMassKg: metalKg + insulation.massKg,
+    baseMassKg: metalKg + insulation.massKg + claddingKg + tracingKg,
     section,
     insideDiameterMm,
     lengthM,
     formula: {
       metalKg,
       insulationKg: insulation.massKg,
+      claddingKg,
+      tracingKg,
+      claddingMassPerLengthKgPerM,
+      tracingMassPerLengthKgPerM,
       lengthM,
       outsideDiameterMm: section.outsideDiameterMm,
       insideDiameterMm,
@@ -358,6 +366,10 @@ function resolveCaseMass(baseMass, entity, caseId, profile) {
     formula: {
       metalKg: baseMass.formula.metalKg,
       insulationKg: baseMass.formula.insulationKg,
+      claddingKg: baseMass.formula.claddingKg,
+      tracingKg: baseMass.formula.tracingKg,
+      claddingMassPerLengthKgPerM: baseMass.formula.claddingMassPerLengthKgPerM,
+      tracingMassPerLengthKgPerM: baseMass.formula.tracingMassPerLengthKgPerM,
       fluidKg: fluid.massKg,
       lengthM: baseMass.formula.lengthM,
       outsideDiameterMm: baseMass.formula.outsideDiameterMm,

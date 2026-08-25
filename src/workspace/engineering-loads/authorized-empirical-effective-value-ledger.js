@@ -19,6 +19,8 @@ const FIELD_MAP = freezeDeep({
   'fluid.hydroDensityKgM3': ['HYDRO_FLUID_DENSITY', 'kg/m3'],
   'insulation.thicknessMm': ['INSULATION_THICKNESS', 'mm'],
   'insulation.densityKgM3': ['INSULATION_DENSITY', 'kg/m3'],
+  'permanent.claddingWeightKgPerM': ['CLADDING_WEIGHT', 'kg/m'],
+  'permanent.tracingWeightKgPerM': ['TRACING_WEIGHT', 'kg/m'],
   'component.weightKg': ['COMPONENT_WEIGHT', 'kg'],
 });
 

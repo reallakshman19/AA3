@@ -15,6 +15,7 @@ const checks = [
   ['Authorized support DEFAULT capability binding', 'scripts/authorized-empirical-support-capability-default-check.mjs'],
   ['Authorized gravity output convention binding', 'scripts/authorized-empirical-gravity-convention-binding-check.mjs'],
   ['Product engineering-default profile and scope', 'scripts/non-fea-product-engineering-default-profile-check.mjs'],
+  ['Component content Project/Product default authority', 'scripts/non-fea-component-content-default-authority-check.mjs'],
   ['Ancillary Project/Product default authority', 'scripts/non-fea-ancillary-default-authority-check.mjs'],
   ['Effective-value authority resolver', 'scripts/non-fea-effective-value-resolver-check.mjs'],
   ['Authorized baseline effective-value ledger', 'scripts/authorized-empirical-effective-value-ledger-check.mjs'],

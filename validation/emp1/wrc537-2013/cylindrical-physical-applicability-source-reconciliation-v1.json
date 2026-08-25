@@ -1,0 +1,94 @@
+{
+  "schema": "emp1-wrc537-cylindrical-physical-applicability-source-reconciliation/v1",
+  "issues": [1368, 1370, 1373, 1389],
+  "status": "BLOCKED_PHYSICAL_APPLICABILITY_SOURCE_GATES_REMAIN_OPEN",
+  "sourceCustody": {
+    "wrcDocument": "docs/emp1/WRC537_2013.pdf",
+    "wrcGitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "wrcRawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "retainedTable5Path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "retainedTable5GitBlobSha": "810a39d845e15bae92d9c30abb8d452401e711d2",
+    "retainedTable5Pages": "41-42",
+    "directPdfReobservation": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT"
+  },
+  "currentBoundedRoute": {
+    "path": "src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js",
+    "authorized": true,
+    "engineeringUseAuthorized": true,
+    "productionUseAuthorized": true,
+    "globalEmp1CAuthority": false,
+    "codeComplianceAuthority": false,
+    "professionalReleaseReady": false,
+    "authorizationClassification": "OWNER_AUTHORIZED_BOUNDED_ROUTE_WITH_SOURCE_GATES_STILL_OPEN"
+  },
+  "retainedTable5ExplicitInputBoundary": {
+    "loads": ["P", "Mc", "Ml", "Mt", "Vc", "Vl"],
+    "geometry": ["T", "r0", "Rm"],
+    "parameters": ["gamma", "beta"],
+    "stressConcentrationFactors": ["Kn", "Kb"],
+    "intersectionAngleInputPresent": false,
+    "attachmentWallThicknessInputPresent": false,
+    "solidHollowClassificationInputPresent": false,
+    "rigidityFlexibilityInputPresent": false,
+    "neighborAttachmentGeometryInputPresent": false,
+    "neighborSpacingInputPresent": false,
+    "interactionCorrectionInputPresent": false,
+    "classification": "EXPLICIT_TABLE5_INPUT_CONTENT_ONLY_NO_APPLICABILITY_BY_SILENCE"
+  },
+  "existingQualifiedApplicabilityPreserved": {
+    "radialLoadCylinderLength": "l >= Rm when P is active",
+    "externalMomentEndDistance": "nearest cylinder end distance >= 0.5*Rm when Mc or Ml is active",
+    "offAxisLongitudinalBoundary": "1B-1/2B-1 retained source interpretation limited to round flexible-nozzle connection",
+    "changedByThisBatch": false
+  },
+  "gates": {
+    "attachmentAxis": {
+      "artifact": "validation/emp1/wrc537-2013/attachment-axis-intersection-source-qualification-v1.json",
+      "status": "BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED",
+      "qualifiedSubset": "TABLE5_EXPLICIT_ANGLE_INPUT_ABSENCE_ONLY",
+      "physicalNormalityAuthority": false,
+      "obliqueAuthority": false
+    },
+    "attachmentClass": {
+      "artifact": "validation/emp1/wrc537-2013/cylindrical-attachment-class-source-qualification-v1.json",
+      "status": "BLOCKED_PRIMARY_SOURCE_ATTACHMENT_CLASS_UNRESOLVED",
+      "qualifiedSubset": "TABLE5_EXPLICIT_CLASS_AND_WALL_THICKNESS_INPUT_ABSENCE_ONLY",
+      "solidHollowEquivalenceAuthority": false,
+      "rigidityIndependenceAuthority": false
+    },
+    "interactionIsolation": {
+      "artifact": "validation/emp1/wrc537-2013/nearby-attachment-interaction-source-qualification-v1.json",
+      "status": "BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED",
+      "qualifiedSubset": "TABLE5_EXPLICIT_NEIGHBOR_INPUT_ABSENCE_PLUS_EXISTING_4_5_RULE_PRESERVATION",
+      "neighborIsolationAuthority": false,
+      "spacingCriterionAuthority": false,
+      "overlappingStressFieldSuperpositionAuthority": false
+    }
+  },
+  "professionalReleaseDisposition": {
+    "attachmentAxisGatePass": false,
+    "attachmentClassGatePass": false,
+    "interactionIsolationGatePass": false,
+    "allPhysicalApplicabilityGatesPass": false,
+    "boundedCalculationMayExecuteUnderCurrentOwnerAuthorization": true,
+    "calculationExecutionProvesProfessionalSourceApplicability": false,
+    "releaseReady": false
+  },
+  "prohibitions": [
+    "NO_APPLICABILITY_BY_TABLE5_SILENCE",
+    "NO_PHYSICAL_NORMALITY_FROM_VECTOR_ORTHOGONALITY_ALONE",
+    "NO_ARBITRARY_ROUND_ATTACHMENT_CLASS",
+    "NO_SOLID_HOLLOW_EQUIVALENCE_BY_FIELD_ABSENCE",
+    "NO_RIGIDITY_INDEPENDENCE_BY_FIELD_ABSENCE",
+    "NO_NEIGHBOR_ISOLATION_BY_MISSING_INPUT",
+    "NO_INVENTED_SPACING_THRESHOLD",
+    "NO_OVERLAPPING_WRC_SUPERPOSITION_WITHOUT_AUTHORITY",
+    "NO_ROUTE_AUTHORIZATION_BACK_PROPAGATION_INTO_SOURCE_AUTHORITY"
+  ],
+  "productionNumericsChanged": false,
+  "routeRegistryChanged": false,
+  "aggregateP0GateChanged": false,
+  "globalAuthorityChanged": false,
+  "codeAuthorityChanged": false,
+  "releaseAuthorityChanged": false
+}

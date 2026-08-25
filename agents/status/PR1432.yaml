@@ -1,0 +1,33 @@
+schema: engineering-pr-status/v1
+pr: 1432
+repository: reallaksh19/Advanced_Analysis
+source_task: PR1270 salvage / LAFEA.3 retained refinement
+branch: agent/lafea3-local-refinement-current-main-salvage-20260825
+base_branch: main
+base_head_last_checked: a8631581eb440fc69e0164f0a397086bf53bbb52
+criticality: ENGINEERING_CRITICAL
+recovery_state: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
+handover_readiness: READY_FOR_VALIDATION
+takeover_authority: WRITE_ALLOWED
+execution_mode: OWNER_PROCEED
+merge_authority: OWNER_ONLY
+appendix_a:
+  status: PASS
+  total: 98
+  minimum_question: 19
+current_stage: CURRENT_MAIN_PRODUCTION_SALVAGE_PENDING_EXECUTION
+current_blocker: HOSTED_RUNNER_AND_EXACT_LOCAL_EXECUTION_UNAVAILABLE
+engineering_failure_proven: false
+validation:
+  source_custody: PASS
+  focused_mapped_envelope: NOT_RUN
+  retained_refinement_replay: NOT_RUN
+  browser: NOT_RUN
+  broad_build: NOT_RUN
+protected:
+  workflow_mutation: false
+  registry_widening: false
+  release_authority_changed: false
+  solver_changed: false
+  benchmark_or_tolerance_changed: false
+exact_next_action: Execute focused mapped-envelope and retained-refinement replay on the exact PR head when a real runner/local checkout is available; stop at first authoritative failure.

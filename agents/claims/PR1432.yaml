@@ -1,0 +1,38 @@
+schema: engineering-pr-claim/v1
+pr: 1432
+repository: reallaksh19/Advanced_Analysis
+owner: reallaksh19
+branch: agent/lafea3-local-refinement-current-main-salvage-20260825
+source_task: PR1270 salvage / LAFEA.3 retained refinement
+state: ACTIVE_BOUNDED
+criticality: ENGINEERING_CRITICAL
+authority_domain:
+  - LAFEA.3 retained local refinement
+  - source-authoritative affine mapped remesh
+  - actual shared-edge adjacent-size retention gate
+exact_paths:
+  - src/core/lafea-meshing/refinement-fields.js
+  - src/workspace/lafea-analysis-mesh-evidence-v2.js
+  - src/workspace/lafea-retained-mesh-refinement-grading.js
+  - src/workspace/lafea-retained-mesh-refinement.js
+  - scripts/lafea3-mapped-refinement-envelope-check.mjs
+excluded_authority:
+  - EMP.1
+  - LAFEA.3 Mesh Workspace v3 activation
+  - B01/B02 solver or benchmark authority
+  - LAFEA.4 TECH-13 refinement
+  - workflow YAML
+  - stage registry or release authority
+coordination:
+  predecessor_pr: 1270
+  predecessor_disposition: SALVAGE_PARTIAL_SUPERSEDED_PROMOTION_VEHICLE
+  overlaps:
+    - pr: 1174
+      classification: BOUNDED_NO_V3_AUTHORITY_TOUCHED
+    - pr: 1258
+      classification: BOUNDED_NO_SOLVER_AUTHORITY_TOUCHED
+    - pr: 1259
+      classification: BOUNDED_NO_B02_AUTHORITY_TOUCHED
+    - pr: 1246
+      classification: BOUNDED_LAFEA4_OUT_OF_SCOPE
+merge_authority: OWNER_ONLY

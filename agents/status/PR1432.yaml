@@ -4,30 +4,44 @@ repository: reallaksh19/Advanced_Analysis
 source_task: PR1270 salvage / LAFEA.3 retained refinement
 branch: agent/lafea3-local-refinement-current-main-salvage-20260825
 base_branch: main
-base_head_last_checked: a8631581eb440fc69e0164f0a397086bf53bbb52
+base_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
+report_basis_head: f56cae3bebee3a98c859431936e6c17d3b5fd407
 criticality: ENGINEERING_CRITICAL
 recovery_state: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
 handover_readiness: READY_FOR_VALIDATION
 takeover_authority: WRITE_ALLOWED
-execution_mode: OWNER_PROCEED
+execution_mode: AUTO_MODE
 merge_authority: OWNER_ONLY
 appendix_a:
   status: PASS
   total: 98
   minimum_question: 19
-current_stage: CURRENT_MAIN_PRODUCTION_SALVAGE_PENDING_EXECUTION
-current_blocker: HOSTED_RUNNER_AND_EXACT_LOCAL_EXECUTION_UNAVAILABLE
+current_stage: VALIDATION_BLOCKED_BY_HOSTED_RUNNER_ALLOCATION
+current_blocker: GITHUB_HOSTED_RUNNER_ALLOCATION_PRE_STEP
 engineering_failure_proven: false
+predecessor:
+  pr: 1270
+  state: CLOSED_SUPERSEDED
 validation:
   source_custody: PASS
+  clean_pr_ledger: PASS
   focused_mapped_envelope: NOT_RUN
   retained_refinement_replay: NOT_RUN
   browser: NOT_RUN
   broad_build: NOT_RUN
+runner_evidence:
+  lafea_run: 32875613970
+  lafea_job: 97892673779
+  lafea_runner_id: 0
+  lafea_steps: 0
+  independent_control_run: 32875613790
+  independent_control_job: 97892673495
+  independent_control_runner_id: 0
+  independent_control_steps: 0
 protected:
   workflow_mutation: false
   registry_widening: false
   release_authority_changed: false
   solver_changed: false
   benchmark_or_tolerance_changed: false
-exact_next_action: Execute focused mapped-envelope and retained-refinement replay on the exact PR head when a real runner/local checkout is available; stop at first authoritative failure.
+exact_next_action: Wait only for a legitimate recovery trigger or new-main drift; once execution is available, run focused mapped-envelope and retained-refinement replay first and stop at the first authoritative failure.

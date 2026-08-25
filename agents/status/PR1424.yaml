@@ -6,8 +6,8 @@ workstream: LOADCALC_VALIDATE_INPUT_PROGRESS
 branch: agent/issue-1422-validate-input-progress
 main_head_last_checked: 9887ec1c3eb6184c0d590841b23c04ed449f9414
 merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-implementation_head: 7699afc56478048a226cb9770c842ce851ffd1c9
-recovery_report_head: 182c4fdc3fda4c47166b7caeb1814db9da347e88
+implementation_test_head: 7c036ddab3c8e64e948d9677750305e549d584fb
+recovery_report_head: b45d13e49a72168ccc665d0d454df666da1d8313
 criticality: ENGINEERING_CRITICAL
 agent_state: VALIDATION_BLOCKED
 pr_recovery_state: HEALTHY
@@ -17,7 +17,7 @@ appendix_a_status: FAIL_A4_NOT_RUN_OWNER_MUTATION_AUTHORITY_ONLY
 appendix_a_score: null
 appendix_a_min_question: A4
 coordination: SAFE
-current_stage: IMPLEMENTATION_COMPLETE_ACCEPTANCE_FEEDBACK_CLOSED_REQUIRED_EXECUTION_VALIDATION_NOT_RUN
+current_stage: IMPLEMENTATION_COMPLETE_ACCEPTANCE_MATRIX_ENCODED_REQUIRED_EXECUTION_VALIDATION_NOT_RUN
 highest_risk: BROWSER_AND_WORKSPACE_REGRESSIONS_NOT_EXECUTED
 validation:
   live_grounding: PASS
@@ -27,10 +27,13 @@ validation:
   protected_paths_unchanged: PASS_SOURCE_INSPECTION
   checker_readiness_source_unchanged: PASS_SOURCE_INSPECTION
   cross_tab_integration: PASS_SOURCE_INSPECTION
-  acceptance_feedback_diagnosis: PASS_SOURCE_INSPECTION
   acceptance_feedback_fix: PASS_SOURCE_INSPECTION
+  non_mass_flexural_fixture_path: PASS_SOURCE_INSPECTION
+  non_mass_consumption_profile: PASS_SOURCE_INSPECTION
+  non_mass_e2e_definition: PASS_SOURCE_INSPECTION
   reconstructed_coverage_logic: PASS_RECONSTRUCTED_LOCAL
   git_clone: FAIL_ENVIRONMENT_DNS_AND_OUTBOUND_HTTPS
+  exact_head_combined_status: NONE
   exact_head_automatic_workflows: NOT_APPLICABLE_UNRELATED_EMP1_LFEA_FAILURES
   focused_projection_checker: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   advanced_shell_contract: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
@@ -46,4 +49,4 @@ authority:
   master_data_authority_change_authorized: false
   workflow_change_authorized: false
 merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE_REQUIRED_VALIDATION_NOT_RUN
-exact_next_action: "Obtain a faithful checkout of PR1424, re-ground main and overlap, run the focused projection check, advanced shell contract, focused partial-coverage E2E, existing input-check E2E, and workspace contracts; record exact outputs, fix only evidenced failures, then mark review-ready only if all required validation is genuinely green."
+exact_next_action: "Obtain a faithful checkout of PR1424, re-ground main and overlap, run the focused projection check, advanced shell contract, focused MASS/FLEXURAL partial-coverage E2E, existing input-check E2E, and workspace contracts; record exact outputs, fix only evidenced failures, then mark review-ready only if all required validation is genuinely green."

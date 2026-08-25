@@ -15,6 +15,9 @@ import {
   createEvidenceValue,
 } from '../src/workspace/project-data/project-data-contract.js';
 import {
+  getNonFeaFieldDefinition,
+} from '../src/workspace/project-data/non-fea-field-registry.js';
+import {
   createNonFeaCommonEnrichedConfiguredDefaultOverlay,
 } from '../src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js';
 import {
@@ -28,6 +31,14 @@ assert.deepEqual(ENGINEERING_PROPERTY_SPECS.componentFluidWeightOpeKg.aliases, [
   'component OPE content must not infer arbitrary source columns');
 assert.deepEqual(ENGINEERING_PROPERTY_SPECS.componentFluidWeightHydKg.aliases, [],
   'component HYD content must not infer arbitrary source columns');
+for (const fieldId of ['COMPONENT_OPERATING_FLUID_WEIGHT', 'COMPONENT_HYDRO_FLUID_WEIGHT']) {
+  const definition = getNonFeaFieldDefinition(fieldId);
+  assert.ok(definition);
+  assert.deepEqual(definition.authorityPath, [
+    'PROJECT_CONFIGURED_DEFAULT',
+    'PRODUCT_DEFAULT',
+  ], `${fieldId} must not advertise an unwired source/master/manual authority`);
+}
 
 const sourceModel = makeSourceModel();
 const inventory = createCommonEnrichedTargetInventory({
@@ -95,6 +106,7 @@ console.log(JSON.stringify({
   productConfiguredHydKg: 10,
   explicitZeroPreserved: true,
   sourceColumnAliasesAdded: false,
+  authorityBoundary: 'PROJECT_CONFIGURED_DEFAULT_OR_PRODUCT_DEFAULT_ONLY',
 }, null, 2));
 
 function projectProfile(defaults) {

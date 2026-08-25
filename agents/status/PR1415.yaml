@@ -13,8 +13,9 @@ handover_readiness: READY
 report_path: agents/PR1415_workreport.md
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: PR_ALLOCATED_RECOVERY_MIGRATION
+current_stage: FINAL_AUDIT_COMPLETE_OWNER_MERGE_REQUIRED
 merge_authority: NOT_GRANTED
+implementation_basis_head: f43d7b82883524c7f83d45e9fdd59b63bc379328
 source_state:
   wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
   wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
@@ -38,12 +39,17 @@ validation:
   direct_pdf_page_observation: NOT_RUN
   checker_node_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-  final_diff_review_main_audit: PENDING
+  changed_files_final: 6
+  behind_main: 0
+  reviews: 0
+  review_threads: 0
+  mergeable: true
+  final_diff_review_main_audit: PASS
 authority:
   engineering: false
   production: false
   global_emp1_c: false
   code_compliance: false
   release: false
-exact_next_action: "Delete WIP recovery records; verify exact six-file diff/main/reviews; leave draft pending owner merge authorization."
+exact_next_action: "Await explicit Owner merge authorization for PR1415; immediately before merge re-ground live main/head/reviews and preserve all physical-radius construction blockers."
 last_updated: "2026-08-25"

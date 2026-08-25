@@ -1,0 +1,34 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1431
+mission: "Issue #1321 component-contained fluid mass"
+workstream: ISSUE1321_COMPONENT_CONTAINED_FLUID
+branch: agent/issue-1321-component-contained-fluid
+main_head_last_checked: a8631581eb440fc69e0164f0a397086bf53bbb52
+merge_base: a8631581eb440fc69e0164f0a397086bf53bbb52
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY_FOR_IMPLEMENTATION
+report_path: agents/PR1431_workreport.md
+coordination: SAFE_NO_LIVE_1321_CONTENT_PR_FOUND
+current_stage: PR_ALLOCATED_READY_FOR_IMPLEMENTATION
+highest_risk: "Contained fluid could be double-counted with dry vendor mass or pipe fluid if case/selector ownership is not explicit."
+validation:
+  live_grounding: PASS
+  predecessor_pr1430: PASS_MERGED
+  open_overlap: PASS_NONE_FOUND
+  component_dry_mass_boundary: PASS_SOURCE_INSPECTION
+  component_content_gap: PASS_SOURCE_INSPECTION
+  execution_checks: NOT_RUN
+authority:
+  owner_proceed_next_instruction_current_turn: true
+  dry_mass_reinterpretation_authorized: false
+  component_volume_derivation_authorized: false
+  universal_content_default_authorized: false
+  pipe_fluid_change_authorized: false
+  statics_change_authorized: false
+  workflow_change_authorized: false
+  merge_authority: NOT_GRANTED
+merge_disposition: OWNER_ONLY_DRAFT
+exact_next_action: "Implement component OPE/HYD contained-fluid effective fields and exactly-once non-PIPE case composition with focused regression; keep EMPTY dry and PIPE content unchanged."

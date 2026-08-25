@@ -1,21 +1,8 @@
 schema: AgentClaim.v1
 pr_or_wip: WIP-1375-TABLE5-SHELL-THICKNESS-20260825
-claim_state: ACTIVE
+claim_state: RETIRED_SUPERSEDED_BY_PR1416
 branch: agent/issue-1375-retained-table5-shell-thickness-reconciliation-20260825
 mission: "Issue #1375 retained WRC Table-5 shell-thickness reconciliation"
-write_scope:
-  - validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json
-  - scripts/emp1-wrc537-shell-thickness-basis-source-check.mjs
-  - docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md
-  - agents/WIP-1375-TABLE5-SHELL-THICKNESS-20260825_workreport.md
-  - agents/status/WIP-1375-TABLE5-SHELL-THICKNESS-20260825.yaml
-  - agents/claims/WIP-1375-TABLE5-SHELL-THICKNESS-20260825.yaml
-protected_no_mutation:
-  - src/core/emp1/emp1-wrc537-source-custody.js
-  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
-  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
-  - src/core/emp1/emp1-c-bounded-route-registry.js
-  - validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json
-  - .github/workflows/
-authority_boundary: "Retained Table-5 Vessel Thickness T symbol/role and equation participation only; physical thickness basis, corrosion/assessment conversion, local measured basis and production transformation remain blocked/unchanged."
-overlap_state: SAFE_PARALLEL_TO_PR1415_DISTINCT_FILES
+superseded_by: PR1416
+authority_boundary: "No active authority remains under this WIP identity. PR1416 is the sole active recovery/claim identity."
+overlap_state: RETIRED

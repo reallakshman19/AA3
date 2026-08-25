@@ -40,6 +40,10 @@ import {
   createLafeaAnalysisMeshEvidenceV2,
 } from './lafea-analysis-mesh-evidence-v2.js';
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
+import {
+  buildLafeaContinuumMeshCandidateV3,
+  createLafeaContinuumMeshCandidateFailureV3,
+} from './lafea-continuum-mesh-v3-production.js';
 import { requireLafeaStageAnalysisAdapter } from './lafea-stage-analysis-adapter.js';
 import {
   buildLafeaMeshTopology,
@@ -256,6 +260,27 @@ export function produceLafeaAnalysisMeshEvidence(stage, configuration) {
     },
   });
   return Object.freeze({ planned, output, evidence });
+}
+
+/**
+ * Preserve the v2 producer as the numerical authority, then derive the parallel
+ * v3 engineering candidate behind this already-manual-chunked producer seam.
+ * Candidate construction is fail-closed and never revokes or widens v2 authority.
+ */
+export function produceLafeaAnalysisMeshEvidenceWithV3Candidate(stage, configuration) {
+  const produced = produceLafeaAnalysisMeshEvidence(stage, configuration);
+  const meshProfile = requireMeshProfile(configuration, produced.planned);
+  let candidateV3;
+  try {
+    candidateV3 = buildLafeaContinuumMeshCandidateV3({
+      stage,
+      meshProfile,
+      produced,
+    });
+  } catch (error) {
+    candidateV3 = createLafeaContinuumMeshCandidateFailureV3(stage, error);
+  }
+  return Object.freeze({ ...produced, candidateV3 });
 }
 
 function buildIntent(stage, configuration) {

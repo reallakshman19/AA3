@@ -1,4 +1,6 @@
+import { commonMethodsForImplementation } from '../../core/non-fea-method-consumption/index.js';
 import { APPLICATION_EVENTS, EVENT_TOPICS } from '../event-topics.js';
+import { nonFeaCommonInputStore } from '../non-fea-common-input-store.js';
 import {
   nonFeaMethodExecutionCoordinator,
 } from '../non-fea-method-execution-coordinator.js';
@@ -105,8 +107,33 @@ export class EmpiricalLoadCalcScenarioController {
   configure(value) {
     return this.#run('configure', () => {
       this.#assertLoadCaseAuthority(value?.caseConfigurations);
-      return this.store.configure(value);
+      const configured = this.store.configure(value);
+      this.#syncRequestedCommonMethods(configured?.method || value?.method);
+      return configured;
     });
+  }
+
+  /**
+   * Keeps the common-input request aligned with the selected implementation.
+   *
+   * Each implementation binds its own common methods, and the checker only
+   * evaluates requested methods. Without this, selecting an implementation
+   * whose methods are not requested would execute it with those requirements
+   * never checked. Methods are only added, never removed, so an explicit
+   * Method Basis selection is preserved.
+   */
+  #syncRequestedCommonMethods(methodId) {
+    if (!methodId) return;
+    let bound;
+    try {
+      bound = commonMethodsForImplementation(methodId);
+    } catch {
+      return;
+    }
+    const requested = nonFeaCommonInputStore.getSnapshot().configuration.requestedMethods || [];
+    const missing = bound.filter((id) => !requested.includes(id));
+    if (missing.length === 0) return;
+    nonFeaCommonInputStore.configure({ requestedMethods: [...requested, ...missing] });
   }
 
   authorize(value = {}) {

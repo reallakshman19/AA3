@@ -148,10 +148,11 @@ export function advancedShellStyles() {
     .empirical-load-calc__workflow-step[data-step-state="ready"] .empirical-load-calc__workflow-status { color: #fbbf24; }
     .empirical-load-calc__workflow-step[data-step-state="blocked"] .empirical-load-calc__workflow-status { color: #f87171; }
     .empirical-load-calc__workflow-step[data-step-state="review"] .empirical-load-calc__workflow-status { color: #fbbf24; }
-    .empirical-load-calc__advanced { grid-column: 1 / -1; min-width: 0; border-top: 1px solid #1e293b; padding-top: 4px; }
-    .empirical-load-calc__advanced > summary { display: flex; align-items: center; gap: 8px; width: max-content; color: #94a3b8; font-size: 10px; font-weight: 700; cursor: pointer; }
-    .empirical-load-calc__advanced > summary span { color: #64748b; font-weight: 500; }
-    .empirical-load-calc__advanced[open] > summary { margin-bottom: 5px; color: #7dd3fc; }
+    .empirical-load-calc__advanced { min-width: 0; }
+    .empirical-load-calc__advanced[open] { grid-column: 1 / -1; border-top: 1px solid #1e293b; margin-top: 6px; padding-top: 8px; }
+    .empirical-load-calc__advanced > summary { list-style: none; }
+    .empirical-load-calc__advanced > summary::-webkit-details-marker { display: none; }
+    .empirical-load-calc__advanced > summary::marker { content: ''; }
     .empirical-load-calc__tabs { grid-column: 1 / -1; display: flex; align-items: center; gap: 3px; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
     .empirical-load-calc__tabs button { flex: 0 0 auto; min-height: 30px; border: 1px solid transparent; border-radius: 5px; padding: 4px 9px; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer; }
     .empirical-load-calc__tabs button:hover, .empirical-load-calc__tabs button:focus-visible, .empirical-load-calc__tabs button.is-active { border-color: #315070; background: #101b2b; color: var(--text-main); outline: none; }

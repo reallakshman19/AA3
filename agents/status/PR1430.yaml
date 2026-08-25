@@ -4,9 +4,10 @@ pr_or_wip: PR1430
 mission: "Issue #1321 cladding and tracing permanent distributed mass"
 workstream: ISSUE1321_ANCILLARY_DISTRIBUTED_MASS
 branch: agent/issue-1321-ancillary-distributed-mass
-main_head_last_checked: cf0ee98ecf2de1ec359961a1588af324ea51ef3f
+main_head_last_checked: 761632915155e0e9eb31c4cde74af539e69ec015
 merge_base: 6d4a7cbdd75208b918540be0bbea12d04af83ae4
 engineering_content_basis: 560f13254917ca05cb78dc4edf4033a76f0d393c
+hosted_recovery_basis: a5c7c24df98d7ee93abec8b1cce2917081e7254d
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY_DRAFT_SOURCE_AUDITED
@@ -20,10 +21,11 @@ current_stage: IMPLEMENTATION_COMPLETE_SOURCE_AUDITED_EXECUTION_NOT_RUN
 highest_risk: "A duplicate or partially-authorized ancillary mass path could overstate/understate permanent pipe gravity; source audit shows one PIPE base-mass composition site and complete-LINE default promotion."
 validation:
   live_grounding: PASS
-  main_head: cf0ee98ecf2de1ec359961a1588af324ea51ef3f
+  main_head: 761632915155e0e9eb31c4cde74af539e69ec015
   engineering_content_basis: 560f13254917ca05cb78dc4edf4033a76f0d393c
-  ahead_behind_before_recovery_refresh: "20 / 1"
-  main_drift_overlap: NONE_WRC_SOURCE_GOVERNANCE_ONLY
+  hosted_recovery_basis: a5c7c24df98d7ee93abec8b1cce2917081e7254d
+  main_only_commit_count_since_merge_base: 2
+  main_drift_overlap: NONE_WRC_EMP1_SOURCE_GOVERNANCE_ONLY
   open_overlap: PASS_STALE_PR1323_ONLY_CLOSED_UNMERGED
   changed_file_scope: PASS_13_DECLARED_PATHS
   production_diff_source_audit: PASS
@@ -40,7 +42,8 @@ validation:
   focused_mass_regression: NOT_RUN
   focused_default_authority_regression: NOT_RUN
   standard_non_fea_import_build_browser_checks: NOT_RUN
-  hosted_ci_on_engineering_basis: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_RUNNER_UNAVAILABLE
+  hosted_ci_on_recovery_basis: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_RUNNER_UNAVAILABLE
+  hosted_ci_observation: "job 97875533686 on a5c7c24d had steps=[] and runner_id=0"
   workflow_mutation: NONE
 authority:
   owner_proceed_next_instruction_current_turn: true

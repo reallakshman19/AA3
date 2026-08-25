@@ -19,6 +19,7 @@ export const SUPPORT_LOAD_DISTRIBUTION_COG_SCHEMA = 'support-load-distribution/v
 export const EMPIRICAL_LOAD_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V2';
 export const EMPIRICAL_LOAD_COG_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V3_COG';
 
+const FLUID_COMPOSITION_RULE = 'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION';
 const FATAL_EXCLUSION_CODES = new Set([
   'INVALID_PIPE_SECTION',
   'INVALID_PIPE_INSIDE_DIAMETER',
@@ -388,8 +389,9 @@ function fluidMass(caseId, section, entity, insideDiameterMm, lengthM, profile) 
   const path = caseId === 'OPE'
     ? 'loadCalculation.operatingFluidDensitiesKgPerM3'
     : 'loadCalculation.hydroFluidDensitiesKgPerM3';
-  const densities = projectDataValue(profile, path) || {};
-  const densityResolution = resolveProjectDataDensity(densities, entity.lineKey);
+  const entry = projectDataEntry(profile, path);
+  const densities = entry?.value || {};
+  const densityResolution = resolveProjectDataDensity(densities, entity.lineKey, entry?.evidence);
   if (!densityResolution) return excluded('MISSING_FLUID_DENSITY', path);
   return {
     qualified: true,
@@ -755,8 +757,9 @@ function sourceRef(profile, path) {
   return entry ? { projectDataPath: path, evidence: entry.evidence } : null;
 }
 
-export function resolveProjectDataDensity(densities, exactSelector) {
-  const exactDensity = densityValue(densities[exactSelector]);
+export function resolveProjectDataDensity(densities, exactSelector, evidence = null) {
+  const exactValue = densities[exactSelector];
+  const exactDensity = densityValue(exactValue);
   if (positive(exactDensity)) {
     return {
       densityKgPerM3: Number(exactDensity),
@@ -765,6 +768,8 @@ export function resolveProjectDataDensity(densities, exactSelector) {
       fallbackUsed: false,
     };
   }
+  const authorizedZero = resolveAuthorizedZeroFluidDensity(exactValue, exactSelector, evidence);
+  if (authorizedZero) return authorizedZero;
   const fallbackDensity = densityValue(densities.DEFAULT);
   if (!positive(fallbackDensity)) return null;
   return {
@@ -772,6 +777,42 @@ export function resolveProjectDataDensity(densities, exactSelector) {
     selector: 'DEFAULT',
     authority: 'PROJECT_CONFIGURED_DEFAULT',
     fallbackUsed: true,
+  };
+}
+
+function resolveAuthorizedZeroFluidDensity(value, exactSelector, evidence) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (evidence?.source !== 'AUTHORIZED_EMPIRICAL_EFFECTIVE_VALUE_LEDGER') return null;
+  if (evidence?.massCompositionRule !== FLUID_COMPOSITION_RULE) return null;
+  if (!stringValue(evidence?.sourceSemanticHash)
+      || !stringValue(evidence?.authorizedInputSemanticHash)
+      || !stringValue(evidence?.effectiveExecutionProjectionSemanticHash)) return null;
+  const receipt = evidence?.fluidCompositionBySelector?.[exactSelector];
+  if (!receipt || typeof receipt !== 'object' || Array.isArray(receipt)) return null;
+  if (value.selected !== 0
+      || !positive(value.rawDensityKgPerM3)
+      || value.fillFraction !== 0
+      || !stringValue(value.rawDensitySemanticHash)
+      || !stringValue(value.fillPolicySemanticHash)
+      || !stringValue(value.compositionSemanticHash)) return null;
+  if (receipt.rule !== FLUID_COMPOSITION_RULE
+      || receipt.rawDensityKgPerM3 !== value.rawDensityKgPerM3
+      || receipt.rawDensitySemanticHash !== value.rawDensitySemanticHash
+      || receipt.fillFraction !== 0
+      || receipt.fillPolicySemanticHash !== value.fillPolicySemanticHash
+      || receipt.bulkDensityKgPerM3 !== 0
+      || receipt.compositionSemanticHash !== value.compositionSemanticHash) return null;
+  return {
+    densityKgPerM3: 0,
+    selector: exactSelector,
+    authority: 'AUTHORIZED_ZERO_FLUID_COMPOSITION',
+    fallbackUsed: false,
+    zeroFluid: true,
+    rawDensityKgPerM3: Number(value.rawDensityKgPerM3),
+    fillFraction: 0,
+    rawDensitySemanticHash: value.rawDensitySemanticHash,
+    fillPolicySemanticHash: value.fillPolicySemanticHash,
+    compositionSemanticHash: value.compositionSemanticHash,
   };
 }
 
@@ -787,6 +828,14 @@ function resolvedDensitySourceRef(profile, path, resolution) {
     resolutionAuthority: resolution.authority,
     fallbackUsed: resolution.fallbackUsed,
     densityKgPerM3: resolution.densityKgPerM3,
+    ...(resolution.zeroFluid === true ? {
+      zeroFluid: true,
+      rawDensityKgPerM3: resolution.rawDensityKgPerM3,
+      fillFraction: 0,
+      rawDensitySemanticHash: resolution.rawDensitySemanticHash,
+      fillPolicySemanticHash: resolution.fillPolicySemanticHash,
+      compositionSemanticHash: resolution.compositionSemanticHash,
+    } : {}),
   } : null;
 }
 

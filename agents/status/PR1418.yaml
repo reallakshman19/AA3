@@ -4,21 +4,21 @@ pr_or_wip: PR1418
 mission: "Combined physical-applicability source reconciliation for #1368 #1370 #1373"
 workstream: EMP1_WRC537_SOURCE_SEMANTICS
 branch: agent/issue-1389-physical-applicability-batch-20260825
-main_head_last_checked: 8145b83aaf0f54aedbd971373be5db18f76898f3
+main_head_last_checked: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
 merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-pr_head_observed_before_refresh: de3f93127117e4e5e609f936a0d018ef92208c8f
-report_basis_head: 779d72a8c371e1d9453e8e02ba0d785b1944e3f1
-grounding_epoch: GE-PR1418-003
+pre_refresh_head: b99df85d4458ab9fb5f02e65818f5b526d496e96
+engineering_content_basis: 779d72a8c371e1d9453e8e02ba0d785b1944e3f1
+grounding_epoch: GE-PR1418-004
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT_RECOVERY_REFRESHED
+pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
 handover_readiness: READY
 takeover_authority: WRITE_ALLOWED_RECOVERY_ONLY
 report_path: agents/PR1418_workreport.md
 appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-current_stage: RECOVERY_REFRESH_COMPLETE_OWNER_DECISION
+current_stage: RECOVERY_ONLY_CURRENT_MAIN_AUDIT_COMPLETE
 merge_authority: NOT_GRANTED
 issues:
   - 1368
@@ -48,8 +48,8 @@ physical_applicability:
 validation:
   live_grounding: PASS
   changed_files_effective: 15
-  ahead_main: 24
-  behind_main: 3
+  ahead_main_before_refresh: 27
+  behind_main: 7
   main_drift_exact_path_overlap: NONE
   reviews: 0
   review_threads: 0
@@ -62,16 +62,18 @@ validation:
   protected_path_mutation: NONE
   hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
 hosted_ci_evidence:
-  gamma5_run: 32834577006
-  gamma5_job: 97760482707
+  gamma5_run: 32858680960
+  gamma5_job: 97836933441
+  source_oracle_run: 32858681059
+  source_oracle_job: 97836934365
   steps: null
   logs_url: null
 base_drift:
-  prior_grounded_main: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-  current_main: 8145b83aaf0f54aedbd971373be5db18f76898f3
-  commits_since_prior_grounding: 3
+  prior_grounded_main: 8145b83aaf0f54aedbd971373be5db18f76898f3
+  current_main: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
+  commits_since_merge_base: 7
   overlap_with_pr1418_paths: false
-  classification: UNRELATED_UI_LAFEA_PLUS_MERGED_PR1417_MATERIAL_SOURCE_AUTHORITY
+  neighboring_1426_semantic_effect: NO_AUTHORITY_WIDENING
   rebase_required: false
 authority:
   physical_applicability_source_pass: false

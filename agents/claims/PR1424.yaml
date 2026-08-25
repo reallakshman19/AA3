@@ -14,6 +14,7 @@ claimed_paths:
   - src/workspace/non-fea-input-check-view.js
   - src/workspace/enrichment/non-fea-enrichment-view.js
   - e2e/non-fea-input-check-load-calc.spec.js
+  - e2e/non-fea-input-check-coverage-progress.spec.js
   - scripts/non-fea-input-check-coverage-projection-check.mjs
 protected_paths:
   - src/core/non-fea-common-checker/index.js

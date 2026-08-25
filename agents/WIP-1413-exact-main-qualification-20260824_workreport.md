@@ -16,10 +16,10 @@ WIP: WIP-1413-exact-main-qualification-20260824
 BRANCH: agent/issue-1413-exact-main-qualification-20260824
 ISSUE_CREATION_HEAD: 72a916d6c60fe61da66c997594f7763aa3f04d8e
 LIVE_MAIN_LAST_CHECKED: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-CURRENT_STAGE: B1 exact-head qualification — SOURCE_PACKET_AND_DISPATCH_PREFLIGHT_COMPLETE / EXECUTION_BLOCKED
-CURRENT_BLOCKER: Issue #54 is reproduced on the exact current main itself. Push run 32794926660 build job 97644116755 for main@4461e769... completed failure with runner_id=0, empty runner name and steps=[].
-HIGHEST_RISK: treating static inspection, partial workflow coverage or prior-head evidence as exact-head executed qualification PASS
-EXACT_NEXT_ACTION: when runner allocation produces executable steps, re-ground to then-current main and execute the complete B1 matrix on one exact candidate SHA. Until then do not mutate mechanics, oracles, tolerances, workflow semantics or registry wording.
+CURRENT_STAGE: B1 exact-head qualification — SOURCE_PACKET_AND_EXECUTION_PATH_AUDIT_COMPLETE / EXECUTION_BLOCKED
+CURRENT_BLOCKER: Exact-main push run 32794926660 was explicitly re-run without creating a new PR. New build job 97649703034 queued then completed failure with steps=null and logs=null; deploy job 97649711341 was skipped. Fresh runner recovery therefore did not occur.
+HIGHEST_RISK: treating static inspection, partial workflow coverage, historical self-hosted routes or prior-head evidence as exact-head executed qualification PASS
+EXACT_NEXT_ACTION: when any current exact-head run creates executable steps, re-ground to then-current main and execute the complete B1 matrix on one exact candidate SHA. Until then do not mutate mechanics, oracles, tolerances, workflow semantics or registry wording.
 ```
 
 ## Mission
@@ -133,6 +133,39 @@ WORKFLOW_SEMANTIC_MUTATION_AUTHORIZED = false
 
 The connected GitHub capability can inspect and rerun existing runs but cannot create a new `workflow_dispatch` event. No validation-only PR or workflow mutation was created as a workaround.
 
+### B1 execution-transport audit — COMPLETE
+
+Historical Issue #54 evidence proves the zero-step condition has previously recovered intermittently on other heads; therefore the current condition is a **recurrence**, not proof that GitHub-hosted runners can never execute this repository.
+
+A historical self-hosted escape route also existed:
+
+```text
+PR #376
+merge = 9c35ae6586e7f4816e0b29a509e23258b6087cc9
+workflow = .github/workflows/lafea-template-b7h-self-hosted-gate-closure.yml
+required labels = [self-hosted, linux, x64, lafea]
+```
+
+However that workflow is not present on current main. Later CI cleanup commit:
+
+```text
+d086cc9ca5ab32866ec071d82954e375442574bb
+```
+
+explicitly removed 95 obsolete/non-functional CI workflow files, and comparison from the B7H merge to current main shows the B7H workflow among removed paths. A later repository CI-retirement merge also records removal of obsolete workflows.
+
+Therefore:
+
+```text
+B7H_HISTORICAL_ROUTE_EXISTED = true
+B7H_WORKFLOW_PRESENT_ON_CURRENT_MAIN = false
+B7H_RESTORE_IS_EXISTING_ROUTE_USAGE = false
+B7H_RESTORE_WOULD_BE_NEW_CI_SEMANTIC_CHANGE = true
+B7H_RESTORE_AUTHORIZED_BY_ISSUE_1413 = false
+```
+
+Do not restore B7H under #1413 merely to bypass hosted-runner recurrence.
+
 ### B2 — first-failure isolation / minimal repair — NOT TRIGGERED
 
 Trigger only from an actually executed engineering failure. Retain expected/actual/delta/tolerance and exact node/element/IP/surface/hash evidence before editing production code.
@@ -155,7 +188,7 @@ e2e/lafea3-sample-mesh.spec.js
 e2e/lafea-shell-sample-mesh.spec.js
 ```
 
-The existing visible-workbench lane invokes both through the Stage-17 carrier. Actual Chromium qualification remains `NOT_RUN` under #54.
+The existing visible-workbench lane invokes both through the Stage-17 carrier. Actual Chromium qualification remains `NOT_RUN` under current runner recurrence.
 
 ### B4 — registry/documentation closure PR — PROTECTED
 
@@ -239,25 +272,34 @@ Shell:
 
 ## Issue #54 — strongest current evidence
 
-### Exact current main push run
+### Exact current main push run + explicit no-churn rerun
 
 ```text
 head = main@4461e7699d08b8a1acbbc89cdbea3fd998368ca6
 workflow = Deploy Vite site to GitHub Pages
 run = 32794926660
 event = push
-build job = 97644116755
-build conclusion = failure
-runner_id = 0
-runner_name = empty
-steps = []
-deploy job = 97644124988
-deploy conclusion = skipped
+
+attempt 1 build job = 97644116755
+attempt 1 conclusion = failure
+attempt 1 runner_id = 0
+attempt 1 runner_name = empty
+attempt 1 steps = []
+
+explicit rerun accepted = true
+attempt 2 build job = 97649703034
+attempt 2 observed = queued -> completed
+attempt 2 conclusion = failure
+attempt 2 steps = null
+attempt 2 logs = null
+attempt 2 deploy job = 97649711341 -> skipped
+
 checkout = NOT_EXECUTED
 repository command = NOT_EXECUTED
+fresh runner recovery = false
 ```
 
-This is stronger than current-base PR evidence because it is the exact current main SHA itself.
+This rerun is the strongest current #1413 transport probe because it targets the existing exact-main run and creates no validation-only PR or source mutation.
 
 ### Fresh current-base PR reproduction
 
@@ -292,6 +334,8 @@ ENGINEERING_FAILURE_PROVEN = false
 TRANSIENT_SINGLE_ATTEMPT_HYPOTHESIS = FALSIFIED
 CURRENT_BASE_RECURRENCE_CONFIRMED = true
 EXACT_MAIN_RECURRENCE_CONFIRMED = true
+EXACT_MAIN_RERUN_RECURRENCE_CONFIRMED = true
+HISTORICAL_INTERMITTENT_RECOVERY_EXISTS = true
 FIRST_DEMONSTRATED_FAILURE_BOUNDARY = INFRASTRUCTURE
 ```
 
@@ -329,9 +373,11 @@ INFRASTRUCTURE
 | B1 mandated script inventory | PASS_SOURCE_INSPECTION | required paths present |
 | frozen continuum oracle inventory | PASS_SOURCE_INSPECTION | Kirsch/B02/B-bar retained |
 | frozen shell oracle inventory | PASS_SOURCE_INSPECTION | B4-1/B4-2/B4-3 + manifest retained |
-| manual dispatch lane | PASS_SOURCE_INSPECTION | exists, useful, partial |
-| exact-main push workflow | FAIL_INFRASTRUCTURE | run `32794926660`, job `97644116755`, runner_id 0, zero steps |
-| current-base PR workflow | FAIL_INFRASTRUCTURE | run `32795419092`, job `97645586842`, runner_id 0, zero steps |
+| manual hosted dispatch lane | PASS_SOURCE_INSPECTION | exists, useful, partial |
+| historical B7H self-hosted route | HISTORICAL_ONLY | merged by #376, later retired from current main |
+| exact-main push workflow attempt 1 | FAIL_INFRASTRUCTURE | run `32794926660`, job `97644116755`, zero steps |
+| exact-main explicit rerun attempt 2 | FAIL_INFRASTRUCTURE | job `97649703034`, queued -> failure, steps/logs null |
+| current-base PR workflow | FAIL_INFRASTRUCTURE | run `32795419092`, job `97645586842`, zero steps |
 | B1 numerical/custody matrix | NOT_RUN | blocked before checkout |
 | B3 Chromium | NOT_RUN | blocked before checkout |
 | B2 mechanics repair | NOT_TRIGGERED | no engineering failure executed |
@@ -343,15 +389,18 @@ No unexecuted engineering check is represented as PASS.
 
 - `ISS-1413-01` ACTIVE — no complete exact-main qualification packet has executed.
 - `ISS-1413-02` RESOLVED_FOR_B0 — no LAFEA.3/.4 authority drift blocks attempting B1.
-- `ISS-1413-03` ACTIVE — #54 pre-step failure now proven directly on exact main.
+- `ISS-1413-03` ACTIVE — #54 pre-step recurrence is proven directly on exact main and again on explicit exact-main rerun.
 - `ISS-1413-04` RESOLVED_SOURCE_PREFLIGHT — no missing required script/oracle/browser-spec defect.
 - `ISS-1413-05` RESOLVED_DISPATCH_AUDIT — manual visible-workbench lane exists but is partial relative to full B1.
+- `ISS-1413-06` RESOLVED_TRANSPORT_AUDIT — historical B7H self-hosted route was retired; it is not an available current-main execution path.
 - `RISK-1413-01` ACTIVE — partial lane or prior-head/static evidence could be mistaken for full exact-head execution evidence.
 - `RISK-1413-02` ACTIVE — unmerged LAFEA work must not contaminate current-main certification.
+- `RISK-1413-03` ACTIVE — restoring a historically retired self-hosted workflow would silently turn a qualification issue into CI architecture mutation.
 - `DEC-1413-01` — no mechanics mutation until an executed first engineering failure identifies the boundary.
 - `DEC-1413-02` — no validation-only PR while runner fails before step creation.
 - `DEC-1413-03` — no workflow-semantic change solely to bypass #54.
-- `DEC-1413-04` — use existing visible-workbench lane as supplementary B1/B3 coverage when executable; separately execute any B1 matrix items it does not cover.
+- `DEC-1413-04` — use existing visible-workbench lane as supplementary B1/B3 coverage when executable; separately execute B1 items it does not cover.
+- `DEC-1413-05` — do not restore retired B7H under #1413 without separate Owner CI authority.
 
 ## Changed-file ledger
 

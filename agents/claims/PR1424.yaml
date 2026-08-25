@@ -23,4 +23,4 @@ protected_paths:
   - .github/workflows/**
 authority_boundary: "Presentation/status evidence custody only. coverageResult().ready, method readiness, seal, authorization and calculation execution semantics remain unchanged."
 merge_authority: OWNER_ONLY
-state: ACTIVE
+state: ACTIVE_VALIDATION_PENDING

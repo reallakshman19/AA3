@@ -1,0 +1,57 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1425
+mission: "Current authorized-route WRC stress-semantics reconciliation for #1383 and #1385"
+workstream: EMP1_WRC537_P0_SOURCE_BOUNDARY
+branch: agent/issue-1383-1385-stress-semantics-reconciliation-20260825
+main_head_last_checked: cf0ee98ecf2de1ec359961a1588af324ea51ef3f
+merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
+pre_authorization_sync_head: d711de36698eae8c7372095d484ddf0f6b0f4c28
+engineering_content_basis: 91f60f1ced041d785b7c826d802eb98b893b96a7
+workreport_authorization_sync_commit: 162a7e9860e07d35931f5db5d84e4328e4b88bae
+grounding_epoch: GE-PR1425-004
+report_sync: CURRENT_AUTHORIZATION_METADATA_ONLY_AFTER_BASIS
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_READY_FOR_AUTHORIZED_MERGE
+handover_readiness: READY
+report_path: agents/PR1425_workreport.md
+appendix_a_status: CURRENT
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: SAFE_RECOVERY_ONLY_NO_PATH_OVERLAP
+current_stage: OWNER_AUTHORIZATION_SYNC_COMPLETE_PRE_MERGE
+highest_risk: ROUTE_AUTHORIZATION_FALSELY_PROPAGATED_TO_STRESS_SEMANTICS
+validation:
+  live_grounding: PASS
+  changed_file_scope: PASS_EXACTLY_SIX
+  ahead_behind_before_auth_sync: "11 / 5"
+  main_drift_path_overlap: NONE
+  merged_pr1423_semantic_overlap: NONE_CODE_BOUNDARY_ONLY
+  route_authority_inspection: PASS
+  registry_authority_inspection: PASS
+  surface_sign_record_inspection: PASS_PARTIAL_SOURCE_AUTHORITY
+  stress_intensity_record_inspection: PASS_PARTIAL_SOURCE_AUTHORITY
+  direct_primary_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+  aggregate_checker_execution: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  reviews: 0
+  review_threads: 0
+  protected_path_mutation: NONE
+  hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+authority:
+  bounded_wrc_route_authorized_current_main: true
+  physical_surface_common_point_source_authority: false
+  explicit_plane_stress_sigma3_tresca_source_authority: false
+  global_emp1_c_route_authority: false
+  code_compliance_authority: false
+  release_authority: false
+merge_authority: GRANTED_BY_OWNER_2026_08_25
+merge_disposition: EXACT_HEAD_SQUASH_MERGE_AFTER_FINAL_LIVE_AUDIT
+dependencies:
+  - "#1383"
+  - "#1385"
+  - "#1389"
+  - "#54"
+exact_next_action: "Final live audit, mark ready if still draft, exact-head squash-merge PR1425, verify main, and keep #1383/#1385 open for primary-source closure."
+last_updated: "2026-08-25"

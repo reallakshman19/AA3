@@ -1,0 +1,32 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: PR1425
+owner: ChatGPT
+mission: "Reconcile current authorized-route WRC stress-semantics boundary for Issues #1383 and #1385"
+branch: agent/issue-1383-1385-stress-semantics-reconciliation-20260825
+pr: 1425
+issues:
+  - 1383
+  - 1385
+umbrella_issue: 1389
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE_RECOVERY_ONLY_NO_PATH_OVERLAP
+claimed_paths:
+  - validation/emp1/wrc537-2013/cylindrical-stress-semantics-source-reconciliation-v1.json
+  - scripts/emp1-wrc537-cylindrical-stress-semantics-source-check.mjs
+  - docs/emp1/WRC537_2013_Cylindrical_Stress_Semantics_Authority.md
+  - agents/PR1425_workreport.md
+  - agents/status/PR1425.yaml
+  - agents/claims/PR1425.yaml
+protected_paths:
+  - src/core/emp1/**
+  - validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json
+  - validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json
+  - validation/emp1/release/**
+  - .github/workflows/**
+authority_boundary: "Aggregate source-governance reconciliation only. Bounded route authorization remains true while physical surface/common-point and explicit plane-stress/sigma3/Tresca source semantics remain false. No numerical, global, code, or release authority."
+overlap_state: "SAFE: six aggregate/recovery paths are disjoint from current main drift; merged PR1423 is code-boundary-only."
+invariant: "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_STRESS_RECONSTRUCTION_OR_STRESS_INTENSITY_SOURCE_SEMANTICS"
+merge_authority: GRANTED_BY_OWNER_2026_08_25
+merge_authorization_scope: PR1425_ONLY_AFTER_GOVERNANCE_SYNC_AND_FINAL_LIVE_AUDIT
+state: ACTIVE_READY_FOR_AUTHORIZED_MERGE

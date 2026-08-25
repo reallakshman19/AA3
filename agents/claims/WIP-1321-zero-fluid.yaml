@@ -1,0 +1,25 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: WIP-1321-zero-fluid
+owner: ChatGPT
+mission: "Issue #1321 native governed zero-fluid support"
+branch: agent/issue-1321-native-zero-fluid
+issue: 1321
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE_AFTER_STALE_REGISTRY_RECONCILIATION
+stale_registry_note: "PR1323 claim says ACTIVE, but PR1323 is closed and continuation PR1328 is merged; no live open PR owns these paths."
+claimed_paths:
+  - src/workspace/project-data/non-fea-fluid-fill-policy.js
+  - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
+  - src/workspace/project-data/project-data-contract.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - scripts/non-fea-fluid-fill-policy-check.mjs
+  - scripts/authorized-empirical-fluid-mass-composition-check.mjs
+  - scripts/authorized-empirical-zero-fluid-support-load-check.mjs
+protected_paths:
+  - .github/workflows/**
+  - src/core/model-loads/**
+  - src/core/fea/**
+authority_boundary: "Admit exactly zero derived fluid bulk mass only from authorized positive raw density times governed zero fill. Do not admit naked zero density or alter statics/equilibrium mechanics."
+merge_authority: OWNER_ONLY
+state: ACTIVE

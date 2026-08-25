@@ -23,6 +23,33 @@ const PARTIAL_MASS_PACKAGE = {
   ],
 };
 
+const PARTIAL_FLEXURAL_PACKAGE = {
+  schema: 'inputxml-managed-stage/v1',
+  packageHash: 'NON-FEA-PARTIAL-FLEXURAL-COVERAGE',
+  unit: 'mm',
+  objects: [
+    {
+      id: 'PIPES', name: 'Pipes', type: 'BRANCH',
+      children: [
+        pipe('PIPE-A', [0, 0, 0], [1000, 0, 0], { unitPipeWeightKgPerM: 10, opeFluidWeightKgPerM: 2 }),
+        pipe('PIPE-B', [1000, 0, 0], [2000, 0, 0], { unitPipeWeightKgPerM: 10, opeFluidWeightKgPerM: 2 }),
+        pipe('PIPE-C', [2000, 0, 0], [3000, 0, 0], {
+          unitPipeWeightKgPerM: 10,
+          opeFluidWeightKgPerM: 2,
+          flexuralRigidityNm2: null,
+        }),
+      ],
+    },
+    {
+      id: 'SUPPORTS', name: 'Supports', type: 'GROUP',
+      children: [
+        support('SUP-START', [0, 0, 0], 'PIPE-A:port:start'),
+        support('SUP-END', [3000, 0, 0], 'PIPE-C:port:end'),
+      ],
+    },
+  ],
+};
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => { globalThis.__WORKSPACE_VIEWPORT_BACKEND__ = 'canvas2d'; });
 });
@@ -30,8 +57,7 @@ test.beforeEach(async ({ page }) => {
 test('shows unique-entity progress and coherent cause navigation while mass coverage stays fail-closed', async ({ page }) => {
   await page.goto('/');
   await uploadJson(page, 'partial-mass-coverage.json', PARTIAL_MASS_PACKAGE);
-  await page.getByRole('navigation', { name: 'Application views' })
-    .getByRole('button', { name: 'Edit, Topo fix and Load Calc', exact: true }).click();
+  await openLoadCalc(page);
 
   const consumer = page.locator('[data-role="load-calc-consumer"]');
   await loadCalcTab(consumer, 'preflight').click();
@@ -136,6 +162,57 @@ test('shows unique-entity progress and coherent cause navigation while mass cove
   await expect(consumer.locator('[data-load-calc-run]')).toBeDisabled();
 });
 
+test('routes a real non-mass flexural coverage cause to Enrichment', async ({ page }) => {
+  await page.goto('/');
+  await uploadJson(page, 'partial-flexural-coverage.json', PARTIAL_FLEXURAL_PACKAGE);
+  await openLoadCalc(page);
+
+  await page.evaluate(async () => {
+    const { nonFeaCommonInputStore } = await import('/src/workspace/non-fea-common-input-store.js');
+    const { empiricalLoadCalcScenarioStore } = await import('/src/workspace/engineering-loads/empirical-load-calc-scenario-store.js');
+    nonFeaCommonInputStore.configure({
+      requestedMethods: [
+        'WEIGHT_AND_GRAVITY',
+        'SUSTAINED_REACTIONS',
+        'SUSTAINED_MEMBER_ACTIONS',
+        'VERTICAL_CONTACT',
+      ],
+    });
+    Object.defineProperty(empiricalLoadCalcScenarioStore, 'getProposal', {
+      configurable: true,
+      value: () => ({ method: 'EMPIRICAL_BEAM_CONTACT_V1' }),
+    });
+  });
+
+  const consumer = page.locator('[data-role="load-calc-consumer"]');
+  await loadCalcTab(consumer, 'preflight').click();
+
+  const inputCheck = page.locator('[data-role="non-fea-input-check"]');
+  const flexuralCause = inputCheck.locator('[data-root-cause-code="FLEXURAL_COVERAGE_INCOMPLETE"]');
+  await expect(flexuralCause).toBeVisible();
+  await expect(flexuralCause).toHaveAttribute('data-cause-kind', 'shared');
+
+  const progress = flexuralCause.locator('[data-coverage-code="FLEXURAL_COVERAGE_INCOMPLETE"]');
+  await expect(progress).toHaveAttribute('data-coverage-total', '3');
+  await expect(progress).toHaveAttribute('data-coverage-resolved-entities', '2');
+  await expect(progress).toHaveAttribute('data-coverage-unresolved-entities', '1');
+  await expect(progress).toHaveAttribute('data-coverage-missing-obligations', '1');
+  await expect(progress).toContainText('Calculation remains BLOCKED');
+
+  const detail = flexuralCause.locator('[data-coverage-entity-detail="FLEXURAL_COVERAGE_INCOMPLETE"]');
+  await detail.locator('summary').click();
+  await expect(detail).toContainText('PIPE-C');
+  await expect(detail).toContainText('FLEXURAL_COVERAGE_INCOMPLETE');
+
+  await flexuralCause.getByRole('button', { name: 'Open Enrichment & Overrides' }).click();
+  await expect(page.locator('[data-role="non-fea-enrichment"]')).toBeVisible();
+});
+
+async function openLoadCalc(page) {
+  await page.getByRole('navigation', { name: 'Application views' })
+    .getByRole('button', { name: 'Edit, Topo fix and Load Calc', exact: true }).click();
+}
+
 function loadCalcTab(consumer, tabId) {
   const primary = consumer.locator('.empirical-load-calc__workflow').locator(`[data-load-calc-tab="${tabId}"]`);
   const advanced = consumer.locator('.empirical-load-calc__advanced');
@@ -175,10 +252,13 @@ async function fillProposal(form, { recordId, selectorKey, fieldId, value, unit,
 function pipe(id, startPoint, endPoint, massEvidence) {
   const sourceAttributes = {
     LINE_ID: 'LINE-NON-FEA', SYSTEM_ID: 'SYS-NON-FEA',
-    EI_N_M2: 2000000,
     INSULATION_THICKNESS_MM: 0,
     FLUID_WT_HYD_KG_M: 3,
   };
+  const flexuralRigidityNm2 = massEvidence.flexuralRigidityNm2 === null
+    ? null
+    : massEvidence.flexuralRigidityNm2 ?? 2000000;
+  if (Number.isFinite(flexuralRigidityNm2)) sourceAttributes.EI_N_M2 = flexuralRigidityNm2;
   if (Number.isFinite(massEvidence.unitPipeWeightKgPerM)) {
     sourceAttributes.UNIT_PIPE_WEIGHT_KG_PER_M = massEvidence.unitPipeWeightKgPerM;
   }

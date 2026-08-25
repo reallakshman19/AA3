@@ -10,6 +10,7 @@ criticality: ENGINEERING_CRITICAL
 coordination_state: SAFE_AFTER_STALE_REGISTRY_AND_MAIN_DRIFT_RECONCILIATION
 stale_registry_note: "Historical PR1323 is closed/unmerged. No live competing cladding/tracing ancillary-mass PR or review thread found. Current main 920d0ec3 is three WRC/EMP.1 source-governance commits ahead of the merge base with no #1430 path/authority overlap."
 engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
+recovery_basis: 04e8bef9ce3ea939e258790b7b269920ce9edde3
 claimed_paths:
   - src/workspace/project-data/non-fea-field-registry.js
   - src/workspace/project-data/non-fea-configured-default-provider.js

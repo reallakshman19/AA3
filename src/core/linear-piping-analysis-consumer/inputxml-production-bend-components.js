@@ -92,6 +92,7 @@ export function compileInputXmlProductionBendComponents(input) {
       sourceSegmentId,
       bindings: chordBindingsBySource.get(sourceSegmentId) ?? [],
       conditionedGeometry: structuralPreparation.conditionedTopology.geometry,
+      bendRecord,
     });
     components.push(component);
     factorResults.push(factorResult);

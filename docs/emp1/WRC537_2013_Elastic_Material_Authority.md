@@ -2,15 +2,55 @@
 
 ## Decision
 
-The retained WRC 537 Table 5 cylindrical computation sheet provides one bounded source fact that can now be separated from the broader unresolved material/theory questions:
+The retained WRC 537 Table 5 cylindrical computation sheet provides one bounded source fact that can be separated from the broader unresolved material/theory questions:
 
 > The Table-5 calculation sheet explicitly lists loads, geometry, geometric parameters and stress-concentration factors, and its displayed cylindrical stress equations do not contain an explicit shell modulus `E` or Poisson-ratio `nu` input.
 
 This is **not** authority that WRC 537 is universally independent of material properties. It does not establish the derivation-level role of `E`, the Poisson-ratio assumption, the constitutive model, the shell-theory assumptions, or applicability to arbitrary materials.
 
-Current disposition therefore remains:
+Current source disposition therefore remains:
 
 `BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED`
+
+## Current authority split
+
+The bounded gamma=5 / zero-dp route is currently authorized by a separate Owner-authorized route chain. That runtime state does not close this source-semantic gate.
+
+```text
+TABLE-5 MATERIAL/THEORY SOURCE RECORD
+explicit E input absent on retained Table 5        = qualified retained text
+explicit nu input absent on retained Table 5       = qualified retained text
+displayed final equations explicit-E-free          = qualified retained text
+displayed final equations explicit-nu-free         = qualified retained text
+absolute E independence                            = not qualified
+Poisson-ratio irrelevance/treatment                 = not qualified
+constitutive / shell-theory applicability           = not qualified
+engineering use granted by this source record       = false
+production use granted by this source record        = false
+
+CURRENT BOUNDED RUNTIME
+bounded gamma5 / zero-dp route authorized           = true
+registry registered                                 = true
+bounded engineering use                             = true
+bounded production use                              = true
+global EMP.1.C                                      = false
+code compliance                                     = false
+release qualified                                   = false
+professional release ready                          = false
+```
+
+Governing invariant:
+
+`BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_ELASTIC_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY`
+
+Do not infer:
+
+```text
+bounded route is authorized
+    => E / nu / constitutive / shell-theory source semantics are qualified
+```
+
+The bounded route may execute under its separately governed authorization while Issue #1379 remains open for primary-source material/theory closure.
 
 ## Retained primary-source transcription
 
@@ -109,6 +149,8 @@ temperature-dependent modulus
 
 This software non-use is consistent with the retained Table-5 explicit-input structure, but consistency is not a substitute for material/theory authority.
 
+The current production route and registry independently report bounded route authorization/engineering use as true. The professional release current-state contract independently reports global EMP.1.C, code compliance, release qualification and professional release readiness as false. Those are separate authority layers, not evidence that the material/theory source questions have been answered.
+
 ## Still-required primary closure
 
 Before material/theory applicability is promoted, source work must still establish:
@@ -135,6 +177,7 @@ This source-governance increment changes no production mechanics. It does not:
 - add a Poisson-ratio or modulus correction;
 - add nonlinear or temperature-dependent constitutive behavior;
 - change attachment-class, thickness, radius, pressure, SCF, off-axis, spherical, non-round or interaction authority;
+- change the bounded route or registry;
 - change the aggregate P0 source-semantics gate;
 - grant code-compliance, global EMP.1.C or release authority.
 

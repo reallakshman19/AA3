@@ -1,0 +1,46 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1417
+mission: "Issue #1379 retained Table-5 material-input reconciliation"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1379-table5-material-input-reconciliation-20260825
+base_sha: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+base_tree: 2f9dd6023a9bfa9522518085142ebf23bf264412
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_DRAFT
+handover_readiness: READY
+report_path: agents/PR1417_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: PR_ALLOCATED_RECOVERY_MIGRATION
+merge_authority: NOT_GRANTED
+source_state:
+  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
+  retained_table5_pages: 41-42
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+partial_authority:
+  table5_explicit_e_input_absent: QUALIFIED_RETAINED_SOURCE_TEXT
+  table5_explicit_poisson_input_absent: QUALIFIED_RETAINED_SOURCE_TEXT
+  displayed_table5_equations_explicit_e_free: QUALIFIED_RETAINED_SOURCE_TEXT
+  displayed_table5_equations_explicit_poisson_free: QUALIFIED_RETAINED_SOURCE_TEXT
+  modulus_role: BLOCKED
+  absolute_modulus_independence: BLOCKED
+  poisson_treatment: BLOCKED
+  constitutive_shell_theory: BLOCKED
+  universal_material_applicability: BLOCKED
+validation:
+  retained_source_inspection: PASS
+  direct_pdf_page_observation: NOT_RUN
+  checker_node_execution: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  final_diff_review_main_audit: PENDING
+authority:
+  engineering: false
+  production: false
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+exact_next_action: "Remove WIP recovery records; verify exact six-file diff/main/reviews; leave draft pending owner merge authorization."
+last_updated: "2026-08-25"

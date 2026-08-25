@@ -134,7 +134,7 @@ test('shows unique-entity progress and coherent cause navigation while mass cove
   await form.getByRole('button', { name: 'Stage proposal' }).click();
   const odProposal = proposals.locator('tr').filter({ hasText: 'PARTIAL-PIPE-C-OD' });
   await expect(odProposal.locator('[data-validate-input-cause="SECTION_COVERAGE_INCOMPLETE"]')).toBeVisible();
-  await expect(odProposal.locator('[data-validate-input-cause="FLEXURAL_COVERAGE_INCOMPLETE"]')).toBeVisible();
+  await expect(odProposal.locator('[data-validate-input-cause="FLEXURAL_COVERAGE_INCOMPLETE"]')).toHaveCount(0);
   await expect(odProposal.locator('[data-validate-input-cause="MASS_COVERAGE_INCOMPLETE"]')).toBeVisible();
   await odProposal.getByRole('button', { name: 'Reject' }).click();
   await expect(proposals.locator('tr').filter({ hasText: 'PARTIAL-PIPE-C-OD' })).toHaveCount(0);
@@ -205,7 +205,24 @@ test('routes a real non-mass flexural coverage cause to Enrichment', async ({ pa
   await expect(detail).toContainText('FLEXURAL_COVERAGE_INCOMPLETE');
 
   await flexuralCause.getByRole('button', { name: 'Open Enrichment & Overrides' }).click();
-  await expect(page.locator('[data-role="non-fea-enrichment"]')).toBeVisible();
+  const enrichment = page.locator('[data-role="non-fea-enrichment"]');
+  await expect(enrichment).toBeVisible();
+
+  const form = enrichment.locator('[data-enrichment-proposal-form]');
+  await fillProposal(form, {
+    recordId: 'PARTIAL-PIPE-C-EI',
+    selectorKey: 'PIPE-C',
+    fieldId: 'FLEXURAL_RIGIDITY',
+    value: '2000000',
+    unit: 'N*m2',
+    rationale: 'Exercise exact reverse disclosure for direct flexural-rigidity evidence.',
+  });
+  await form.getByRole('button', { name: 'Stage proposal' }).click();
+  const proposal = enrichment.locator('[data-role="enrichment-proposals"] tr')
+    .filter({ hasText: 'PARTIAL-PIPE-C-EI' });
+  await expect(proposal.locator('[data-validate-input-cause="FLEXURAL_COVERAGE_INCOMPLETE"]')).toBeVisible();
+  await expect(proposal.locator('[data-validate-input-cause="SECTION_COVERAGE_INCOMPLETE"]')).toHaveCount(0);
+  await expect(proposal.locator('[data-validate-input-cause="MASS_COVERAGE_INCOMPLETE"]')).toHaveCount(0);
 });
 
 async function openLoadCalc(page) {

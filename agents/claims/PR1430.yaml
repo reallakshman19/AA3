@@ -8,17 +8,24 @@ pr: 1430
 issue: 1321
 criticality: ENGINEERING_CRITICAL
 coordination_state: SAFE_AFTER_STALE_REGISTRY_RECONCILIATION
-stale_registry_note: "PR1323 broad claim is stale by live PR lineage; no open PR found for cladding/tracing ancillary distributed mass."
+stale_registry_note: "PR1323 broad claim is stale by live PR lineage; no open PR found for cladding/tracing ancillary distributed mass. Current main drift cf0ee98e is WRC source-governance only with no path/authority overlap."
 claimed_paths:
   - src/workspace/project-data/non-fea-field-registry.js
+  - src/core/non-fea-enrichment/index.js
+  - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
+  - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
+  - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
   - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
   - src/workspace/project-data/project-data-contract.js
   - src/workspace/engineering-loads/support-load-distribution-v3.js
   - scripts/authorized-empirical-ancillary-distributed-mass-check.mjs
+  - agents/PR1430_workreport.md
+  - agents/status/PR1430.yaml
+  - agents/claims/PR1430.yaml
 protected_paths:
   - .github/workflows/**
   - src/core/model-loads/**
   - src/core/fea/**
-authority_boundary: "Add optional line-scoped cladding/tracing kg/m through existing effective-value authority and PIPE distributed mass only. No universal default, no component-point ownership change, no fluid/statics/equilibrium change."
+authority_boundary: "Add optional line-scoped cladding/tracing kg/m through the existing enrichment -> common-enriched LINE -> authorized effective-value -> PIPE distributed-mass chain. No universal default, no source-column guess, no component-point ownership change, no fluid/statics/equilibrium change."
 merge_authority: OWNER_ONLY
 state: ACTIVE

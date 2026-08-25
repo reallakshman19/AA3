@@ -7,6 +7,7 @@ branch: agent/issue-1321-ancillary-distributed-mass
 main_head_last_checked: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
 merge_base: 6d4a7cbdd75208b918540be0bbea12d04af83ae4
 engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
+recovery_basis: e7cf4936ab98f6fdfdb1cb07750756436bddd5a1
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY_DRAFT_SOURCE_AUDITED
@@ -22,21 +23,14 @@ validation:
   live_grounding: PASS
   main_head: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
   engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
+  recovery_basis: e7cf4936ab98f6fdfdb1cb07750756436bddd5a1
   main_only_commit_count_since_merge_base: 3
   main_drift_overlap: NONE_WRC_EMP1_SOURCE_GOVERNANCE_ONLY
   open_overlap: PASS_STALE_PR1323_ONLY_CLOSED_UNMERGED
   changed_file_scope: PASS_14_DECLARED_PATHS
   production_diff_source_audit: PASS
-  field_registry: PASS_SOURCE_INSPECTION
-  configured_default_chain: PASS_SOURCE_INSPECTION
-  product_default_chain: PASS_SOURCE_INSPECTION
-  effective_ledger_mapping: PASS_SOURCE_INSPECTION
-  execution_projection: PASS_SOURCE_INSPECTION
-  pipe_base_mass_composition: PASS_SOURCE_INSPECTION
   aggregate_validation_wiring: PASS_SOURCE_INSPECTION_TWO_ENTRIES_ONLY
   independent_analytical_delta: PASS_EXACTLY_3_KG_PER_1M_2_PLUS_1_CASE
-  reviews: PASS_NONE
-  review_threads: PASS_NONE
   local_checkout: NOT_RUN_EXECUTION_ENVIRONMENT_DNS
   focused_mass_regression: NOT_RUN
   focused_default_authority_regression: NOT_RUN

@@ -1,0 +1,56 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1418
+mission: "Combined physical-applicability source reconciliation for #1368 #1370 #1373"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1389-physical-applicability-batch-20260825
+base_sha: e2a44a85b808c0dd3f09a02d7825df26cf92f92f
+base_tree: 2f9dd6023a9bfa9522518085142ebf23bf264412
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_DRAFT
+handover_readiness: READY
+report_path: agents/PR1418_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: PR_ALLOCATED_RECOVERY_MIGRATION
+merge_authority: NOT_GRANTED
+issues:
+  - 1368
+  - 1370
+  - 1373
+  - 1389
+source_state:
+  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
+  retained_table5_blob: 810a39d845e15bae92d9c30abb8d452401e711d2
+  retained_table5_pages: 41-42
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+current_route_state:
+  bounded_route_authorized: true
+  bounded_engineering_use: true
+  bounded_production_use: true
+  global_emp1_c: false
+  code_compliance: false
+  professional_release_ready: false
+physical_applicability:
+  table5_input_content_reconciled: true
+  existing_wrc_4_5_rules_preserved: true
+  physical_normality_authority: false
+  attachment_class_authority: false
+  interaction_isolation_authority: false
+  applicability_by_table5_silence: PROHIBITED
+validation:
+  retained_source_inspection: PASS
+  direct_pdf_page_observation: NOT_RUN
+  checker_node_execution: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  production_mechanics: UNCHANGED
+  final_diff_review_main_audit: PENDING
+authority:
+  physical_applicability_source_pass: false
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+exact_next_action: "Retire WIP recovery; verify exact 15-file diff/main/reviews and protected paths; leave draft pending owner merge authorization."
+last_updated: "2026-08-25"

@@ -1,8 +1,0 @@
-schema: AgentClaim.v1
-pr_or_wip: WIP-1375-TABLE5-SHELL-THICKNESS-20260825
-claim_state: RETIRED_SUPERSEDED_BY_PR1416
-branch: agent/issue-1375-retained-table5-shell-thickness-reconciliation-20260825
-mission: "Issue #1375 retained WRC Table-5 shell-thickness reconciliation"
-superseded_by: PR1416
-authority_boundary: "No active authority remains under this WIP identity. PR1416 is the sole active recovery/claim identity."
-overlap_state: RETIRED

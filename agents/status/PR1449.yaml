@@ -7,6 +7,7 @@ branch: agent/issue-1321-governed-v2-currentness
 stack_base_pr: 1440
 stack_base_head: 8637638188d5478d01b0001ee9f8cd740bbb2180
 main_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+implementation_head_last_checked: 993eb265dc92863d38fc715a5c96663eca5b24ce
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 agent_state: ACTIVE
@@ -20,6 +21,7 @@ validation:
   live_main_grounding: PASS
   upstream_pr_1440_grounding: PASS
   overlap: PASS_NO_UNDECLARED_OVERLAP_FOUND
+  exact_diff: PASS_9_EXPECTED_PATHS_11_AHEAD_0_BEHIND
   exact_patch_source_inspection: PASS
   governed_profile_cross_binding_source_inspection: PASS
   same_method_changed_receipt_stales_source_inspection: PASS
@@ -29,6 +31,7 @@ validation:
   legacy_execute_bypass_blocked_source_inspection: PASS
   bare_v2_compatibility_source_inspection: PASS
   production_cutover: NOT_APPLICABLE_NOT_CHANGED
+  local_checkout: NOT_RUN_ENVIRONMENT_DNS_COULD_NOT_RESOLVE_GITHUB_COM
   focused_package_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   focused_currentness_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   authorized_execution_aggregate: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE

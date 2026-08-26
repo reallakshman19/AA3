@@ -8,6 +8,7 @@ state: ACTIVE_BOUNDED_EVIDENCE_INFRASTRUCTURE_ONLY
 criticality: ENGINEERING_CRITICAL
 authority_domain:
   - local exact-head environment/custody preflight for merged Q1-Q5 authorization gate
+  - machine-readable separation of preflight NOT_RUN from delegated engineering-gate failure
   - repeatable runtime receipt custody for the one exact generated authorization JSON path
 exact_paths:
   - scripts/lafea-implementation-authorization-local-preflight.mjs
@@ -24,6 +25,10 @@ excluded_authority:
   - registry/release authority
   - package command surface
   - UI/build/workflow files
+current_main_drift:
+  base_head: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+  exact_file_overlap: SAFE_NONE
+  downstream_route_effect: REEXECUTION_REQUIRED_BEFORE_ANY_ENGINEERING_AUTHORIZATION_CLAIM
 coordination:
   - pr: 1432
     classification: COORDINATION_REQUIRED_BEFORE_FINAL_EXECUTED_RECEIPT_LAFEA3_MESH_CAN_MOVE

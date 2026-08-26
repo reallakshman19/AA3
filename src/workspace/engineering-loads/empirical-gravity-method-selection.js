@@ -75,6 +75,8 @@ export function createGovernedEmpiricalGravityMethodSelection(input = {}) {
   const base = {
     schema: EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA,
     gravityMethodAuthority: authority,
+    componentAuthorityAuditProjectDataProfileSemanticHash:
+      audit.projectDataProfileSemanticHash,
     selection,
   };
   return deepFreeze({ ...base, semanticHash: semanticHash(base) });
@@ -141,6 +143,20 @@ export function requireGovernedEmpiricalGravityMethodSelection(value) {
     throw codedError(
       'Governed selector request differs from gravity-method authority.',
       'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_REQUEST_MISMATCH',
+    );
+  }
+  if (
+    value.componentAuthorityAuditProjectDataProfileSemanticHash
+    !== authority.projectDataSemanticHash
+  ) {
+    throw codedError(
+      'Governed selector audit profile differs from gravity-method authority.',
+      'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_PROFILE_MISMATCH',
+      {
+        authorityProjectDataSemanticHash: authority.projectDataSemanticHash,
+        auditProjectDataProfileSemanticHash:
+          value.componentAuthorityAuditProjectDataProfileSemanticHash,
+      },
     );
   }
   return deepFreeze(structuredClone(value));

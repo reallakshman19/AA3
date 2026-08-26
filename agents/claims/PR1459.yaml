@@ -1,0 +1,47 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1459
+branch: agent/issue-1458-emp1-runtime-error-redaction-20260826
+issue: 1458
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: AUTO
+auto_state: COMPLETE
+coordination_state: SAFE_PR1450_DRIFT_ZERO_EXACT_PATH_OVERLAP
+scope:
+  authority: EMP1_RUNTIME_ERROR_PRESENTATION_SECURITY
+  paths:
+    - src/workspace/lafea-public-failure.js
+    - src/workspace/lafea-workbench-orchestrator-api.js
+    - src/workspace/lafea-workbench-controller.js
+    - scripts/emp1-professional-runtime-error-redaction-check.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
+    - agents/PR1459_workreport.md
+    - agents/status/PR1459.yaml
+    - agents/claims/PR1459.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - WRC mechanics/route/registry/source/dataset/oracle/tolerances
+  - mesh/solver/load/pressure mechanics
+  - file intake policy owned by PR1454
+  - build artifact scanner owned by PR1457
+  - CSP/security headers
+  - dependency vulnerability policy
+  - .github/workflows/**
+authority_boundary:
+  failure_state_hidden: false
+  diagnostic_code_preserved: true
+  arbitrary_error_message_public: false
+  governed_readiness_reasons_preserved: true
+  internal_diagnostic_custody_mutated: false
+  engineering_method_mutation: false
+  runtime_route_authority_mutation: false
+  source_authority_granted: false
+  code_compliance_authority_granted: false
+  release_authority_granted: false
+  deployment_authority_granted: false
+merge_authority: GRANTED_BY_OWNER_2026-08-26T10:11:19Z
+technical_basis_head: 68c2442ccb232aefb5edf794e933c6a84e796c78
+grounding_epoch: GE-PR1459-003
+handover_report: agents/PR1459_workreport.md
+exact_next_action: "Perform exact-head merge audit and squash-merge only if final branch remains current-main compatible and review-clean."

@@ -1,6 +1,0 @@
-schema: AgentWipMarker.v1
-issue: 1321
-state: TAKEOVER_READ_ONLY
-stack_base_pr: 1461
-stack_base_head: 46a7b6735b746f612e28b0adfad847869b7b7ff4
-merge_authority: OWNER_ONLY_NOT_GRANTED

@@ -371,7 +371,7 @@ function normalizeQualifiedCaseMasses(value) {
     const source = row?.source;
     if (!source || typeof source !== 'object' || Array.isArray(source)
         || source.kind !== 'QUALIFIED_CASE_MASS_RECEIPT'
-        || !requiredQualifiedMassText(source.authority, `qualifiedCaseMasses[${index}].source.authority`)
+        || source.authority !== 'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION'
         || !qualifiedSemanticHash(source.semanticHash)
         || !qualifiedSemanticHash(source.caseSemanticHash)
         || !['DISTRIBUTED', 'POINT'].includes(source.mode)) {

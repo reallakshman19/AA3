@@ -58,6 +58,17 @@ assert.ok(productAuthority.provenance.defaultSemanticHash);
 assert.ok(productAuthority.provenance.productDefaultProfileSemanticHash);
 assert.ok(productProvider.usageRows.some((row) => row.defaultId === 'PD-ACTIVE-CASES'));
 
+// Product-default evidence is accepted only when every authority dimension and
+// the effective value itself cross-bind to the exact built-in catalog row.
+assertProductEvidenceTamperBlocked('wrong default ID', (entry) => { entry.evidence.defaultId = 'PD-GRAVITY'; });
+assertProductEvidenceTamperBlocked('wrong default semantic hash', (entry) => { entry.evidence.defaultSemanticHash = 'forged-default-hash'; });
+assertProductEvidenceTamperBlocked('wrong profile ID', (entry) => { entry.evidence.profileId = 'FORGED_PROFILE'; });
+assertProductEvidenceTamperBlocked('wrong profile version', (entry) => { entry.evidence.profileVersion = LOAD_CALC_STANDARD_DEFAULTS_V1.version + 1; });
+assertProductEvidenceTamperBlocked('wrong profile semantic hash', (entry) => { entry.evidence.productDefaultProfileSemanticHash = 'forged-profile-hash'; });
+assertProductEvidenceTamperBlocked('wrong basis', (entry) => { entry.evidence.basis = 'forged basis'; });
+assertProductEvidenceTamperBlocked('wrong source', (entry) => { entry.evidence.source = 'FORGED-PRODUCT-DEFAULT'; });
+assertProductEvidenceTamperBlocked('wrong effective value with copied legitimate evidence', (entry) => { entry.value = ['OPE']; });
+
 const projectShadowProfile = structuredClone(createEmptyProjectDataProfile());
 projectShadowProfile.loadCalculation.activeLoadCases = {
   value: ['OPE'],
@@ -130,6 +141,8 @@ console.log(JSON.stringify({
   canonicalCases: authorityA.approvedLoadCases,
   productDefaultCanonicalCases: productAuthority.approvedLoadCases,
   productDefaultId: productAuthority.provenance.defaultId,
+  exactProductDefaultCrossBinding: true,
+  forgedProductDefaultDimensionsBlocked: 8,
   projectAuthorityShadowsProductDefault: true,
   invalidExplicitDoesNotFallBack: true,
   malformedProductDefaultEvidenceBlocked: true,
@@ -142,6 +155,18 @@ console.log(JSON.stringify({
   unknownCaseBlocked: true,
   deterministic: true,
 }, null, 2));
+
+function assertProductEvidenceTamperBlocked(label, mutate) {
+  const tampered = structuredClone(productProvider.effectiveProfile);
+  const entry = tampered.loadCalculation.activeLoadCases;
+  mutate(entry);
+  const authority = createNonFeaLoadCaseAuthority(tampered);
+  assert.equal(authority.state, 'BLOCKED', `${label} must fail closed`);
+  assert.ok(
+    authority.blockers.some((row) => row.code === 'ACTIVE_LOAD_CASES_PRODUCT_DEFAULT_EVIDENCE_INVALID'),
+    `${label} must raise Product-default evidence blocker`,
+  );
+}
 
 function profile(activeLoadCases) {
   return {

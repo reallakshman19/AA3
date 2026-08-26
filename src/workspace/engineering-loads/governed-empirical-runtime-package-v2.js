@@ -102,6 +102,22 @@ export function requireGovernedEmpiricalRuntimePackageProjectionV2(value) {
       },
     );
   }
+  const governedProjectDataSemanticHash =
+    governedSelection.gravityMethodAuthority.projectDataSemanticHash;
+  if (
+    runtimePackage.bindings.projectDataProfileSemanticHash
+    !== governedProjectDataSemanticHash
+  ) {
+    fail(
+      'Runtime package Project Data binding differs from the governed method authority profile.',
+      'EMPIRICAL_GOVERNED_RUNTIME_PROFILE_BINDING_MISMATCH',
+      {
+        governedProjectDataSemanticHash,
+        runtimePackageProjectDataProfileSemanticHash:
+          runtimePackage.bindings.projectDataProfileSemanticHash,
+      },
+    );
+  }
   if (governedSelection.selection.policy?.selectionIsNotExecutionAuthorization !== true) {
     fail(
       'Governed method selection must remain explicitly non-authorizing.',

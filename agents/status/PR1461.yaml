@@ -3,25 +3,39 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1461
 issue: 1321
 branch: agent/issue-1321-run-ready-snapshot
-state: PR_ALLOCATED_READY_FOR_IMPLEMENTATION
+state: TAKEOVER_QUALIFIED_READY_FOR_IMPLEMENTATION
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 auto_state: RUNNING
-stack_base_pr: 1460
-stack_base_head: e246a51235b8c8fd98a67e6fece3a9be87825071
+base_branch: main
+base_sha: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+re_ground_commit: 605cfd521f057add27bf81918e2a9b88b8253ae9
+historical_stack_base_pr: 1460
+historical_stack_base_head: e246a51235b8c8fd98a67e6fece3a9be87825071
 validation:
   live_grounding: PASS
-  upstream_stack_exact: PASS
-  overlap: PASS_NONE_FOUND
-  execution_checks: NOT_RUN
+  exact_base_reground: PASS
+  overlap: PASS_SAFE
+  run_control_flow_source_trace: PASS
+  upstream_ready_only_contract_source_trace: PASS
+  focused_run_routing_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
 invariants:
   run_may_obtain_ready_snapshot: true
+  ready_snapshot_is_execution_authorization: false
   empirical_auto_authorization_authorized: false
   partial_auto_accept_permitted: false
   blocked_auto_accept_permitted: false
   scenario_path_change_authorized: false
   numerical_mechanics_change_authorized: false
+  checker_or_seal_contract_change_authorized: false
   workflow_change_authorized: false
-appendix_a_qualified: false
-merge_disposition: OWNER_ONLY_DRAFT
-exact_next_action: "Remove WIP; update LoadCalc Run path to obtain/reuse READY snapshot before empirical authorization check; add focused routing regression."
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_disposition: DRAFT_UNMERGED
+exact_next_action: "Implement LoadCalc ordinary Run READY snapshot provider ordering and focused routing regression; then reconcile exact diff and validation truth."

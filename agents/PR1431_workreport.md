@@ -12,6 +12,7 @@ EXECUTION_MODE: AUTO
 MAIN_HEAD_LAST_CHECKED: 7b2a8119aa5faeee7cc102c894991851019c5a7b
 MERGE_BASE: 7b2a8119aa5faeee7cc102c894991851019c5a7b
 SYNC_COMMIT: 808254b88aaba40d946f2482bd2517fb7713408b
+VALIDATION_BASIS_HEAD: b47930898f3b6d986ccd8936c084260a4d86d0f1
 CURRENT_STAGE: IMPLEMENTATION_COMPLETE_REQUIRED_EXECUTION_VALIDATION_NOT_RUN
 HANDOVER_READINESS: READY
 MERGE_AUTHORITY: OWNER_ONLY / NOT_GRANTED
@@ -23,8 +24,8 @@ Add optional case-dependent contained-fluid mass for non-PIPE components while p
 
 ```text
 EMPTY = authorized dry component mass
-OPE   = dry component mass + optional authorized OPE component-contained fluid mass
-HYD   = dry component mass + optional authorized HYD component-contained fluid mass
+OPE   = dry mass + optional authorized OPE component-contained fluid mass
+HYD   = dry mass + optional authorized HYD component-contained fluid mass
 ```
 
 All component mass terms remain at the existing component application point/CoG. No content term is applied to PIPE entities.
@@ -307,7 +308,11 @@ No `.github/workflows/**` path is changed.
 | canonical `run-non-fea-checks.mjs` | NOT_RUN | faithful checkout unavailable |
 | imports | NOT_RUN | faithful checkout unavailable |
 | build | NOT_RUN | faithful checkout unavailable |
-| local clone | FAIL_ENVIRONMENT | DNS cannot resolve `github.com` |
+| local clone retry | FAIL_ENVIRONMENT | `Could not resolve host: github.com` |
+| exact-head combined status contexts | EMPTY | no commit status contexts |
+| hosted run observation | NOT_RUN_PRE_STEP_HOSTED_RUNNER_ALLOCATION | run `32917851396`, job `98025211360`, zero steps |
+
+Hosted observation is from an unrelated EMP.1 workflow automatically attached to validation-basis head `b4793089...`; it is not #1431 qualification. The run concluded failure before any step executed, so it is not evidence of an engineering regression. Other automatically attached runs were also unrelated EMP.1/LFEA workflows. No focused #1431 or canonical Non-FEA command was observed executing.
 
 `NOT_RUN` is not represented as PASS.
 

@@ -1,0 +1,36 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1485
+mission: Add explicit opt-in B02D V2 producer binding while preserving V1/default route
+workstream: LAFEA_B02D_V2_PRODUCER_BINDING
+branch: agent/lafea-b02d-v2-producer-binding-20260827
+base_main: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
+work_intent: IMPLEMENT_AND_QUALIFY_BINDING
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+agent_state: ACTIVE
+pr_recovery_state: CURRENT_MAIN_BINDING_SUCCESSOR
+handover_readiness: READY_FOR_VALIDATION
+report_path: agents/PR1485_workreport.md
+current_stage: OPT_IN_BINDING_IMPLEMENTED_EXECUTION_NOT_RUN
+engineering_failure_proven: false
+validation:
+  frozen_asset_merge_grounding: { state: PASS_GITHUB_READBACK }
+  binding_base_blob_equality: { state: PASS_GIT_BLOB_EQUALITY }
+  reviewed_binding_blob_transplant: { state: PASS_GIT_OBJECT_CUSTODY }
+  focused_checker_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  focused_binding_execution: { state: NOT_RUN }
+  v1_regression_replay: { state: NOT_RUN }
+  b01_exact_head_prerequisite: { state: NOT_RUN }
+  b02_response_qualification: { state: NOT_RUN }
+producer_binding_changed: true
+v2_opt_in_only: true
+v1_default_preserved_by_design: true
+response_solver_changed: false
+galerkin_correction_included: false
+b02_prerequisite_evidence_available: false
+b02_numerical_authority_granted: false
+release_authority_granted: false
+trust_authority_granted: false
+merge_authority: OWNER_ONLY_NOT_GRANTED
+exact_next_action: node scripts/lafea-b02d-v2-producer-binding-check.mjs

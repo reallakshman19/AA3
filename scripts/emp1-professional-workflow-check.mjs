@@ -55,11 +55,20 @@ assert.equal(current.productId, 'EMP.1');
 assert.deepEqual(current.steps.map((step) => step.label), labels);
 assert.deepEqual(current.steps.map((step) => step.ordinal), [1, 2, 3, 4, 5, 6, 7]);
 assert.deepEqual(current.steps.map((step) => [...step.backingStepIds]), backing);
+assert.deepEqual(current.steps.map((step) => step.statusLabel), [
+  'SOURCE EVIDENCE RETAINED',
+  'CALCULATED CURRENT',
+  'CALCULATED',
+  'CALCULATED',
+  'CALCULATED',
+  'CALCULATED CURRENT',
+  'CURRENT LOCAL RESULT',
+]);
+assert.ok(current.steps.every((step) => !/^(?:A|B|C)\b/u.test(step.statusLabel)),
+  'primary professional statuses must not expose A/B/C controller labels');
 assert.ok(current.steps.every((step) => step.canOpen === true));
 assert.ok(current.steps.every((step) => step.createsEngineeringAuthority === false));
 assert.ok(current.steps.every((step) => step.exposesNumericalResult === false));
-assert.equal(current.steps[5].statusLabel, 'C CALCULATED CURRENT');
-assert.equal(current.steps[6].statusLabel, 'CURRENT C RESULT');
 assert.deepEqual(current.backingCalculators.map((step) => step.shortId), ['A', 'B', 'C']);
 assert.deepEqual(current.backingCalculators.map((step) => step.backingStageId), ['LAFEA.1', 'LAFEA.2', null]);
 assert.deepEqual(current.authorityBoundary, {
@@ -79,8 +88,8 @@ const stale = buildEmp1ProfessionalWorkflowPresentation(projection({
 }));
 assert.equal(stale.steps[5].canOpen, true,
   'Local Correlation must remain navigable while retained C evidence is stale');
-assert.equal(stale.steps[5].statusLabel, 'C STALE AUTHORITY');
-assert.equal(stale.steps[6].statusLabel, 'C HISTORICAL / NOT REPORTABLE');
+assert.equal(stale.steps[5].statusLabel, 'STALE AUTHORITY');
+assert.equal(stale.steps[6].statusLabel, 'HISTORICAL LOCAL RESULT / NOT REPORTABLE');
 assert.equal(stale.authorityBoundary.staleNumericalResultMayBecomeCurrent, false);
 
 const noC = buildEmp1ProfessionalWorkflowPresentation(projection({
@@ -91,7 +100,20 @@ const noC = buildEmp1ProfessionalWorkflowPresentation(projection({
 }));
 assert.equal(noC.steps[5].canOpen, true,
   'Local Correlation setup/evidence must remain inspectable while production execution is suspended');
-assert.equal(noC.steps[6].statusLabel, 'B EVIDENCE ONLY');
+assert.equal(noC.steps[5].statusLabel, 'ROUTE SUSPENDED');
+assert.equal(noC.steps[6].statusLabel, 'SECTION SCREENING EVIDENCE ONLY');
+
+const sourceMissing = buildEmp1ProfessionalWorkflowPresentation(projection({
+  cState: 'SOURCE_INCOMPLETE',
+  cBadge: 'SOURCE INCOMPLETE',
+  cResultAvailable: false,
+  cRetainedResultAvailable: false,
+  aDocumentLoaded: false,
+  bDocumentLoaded: false,
+  aResultAvailable: false,
+  bResultAvailable: false,
+}));
+assert.equal(sourceMissing.steps[0].statusLabel, 'SOURCE INPUT REQUIRED');
 
 const analyticalSource = await read('src/workspace/lafea-analytical-calc-content.js');
 assert.match(analyticalSource,
@@ -118,6 +140,7 @@ console.log(JSON.stringify({
   status: 'PASS_SEVEN_STEP_PROFESSIONAL_WORKFLOW_PRESENTATION',
   labels,
   backing,
+  primaryStatusesExposeBackingControllerLabels: false,
   currentReviewState: current.steps[6].statusLabel,
   staleReviewState: stale.steps[6].statusLabel,
   suspendedLocalCorrelationNavigable: noC.steps[5].canOpen,
@@ -128,18 +151,29 @@ console.log(JSON.stringify({
   numericalComparison: 'NOT_APPLICABLE_PRESENTATION_ONLY',
 }, null, 2));
 
-function projection({ cState, cBadge, cResultAvailable, cRetainedResultAvailable }) {
+function projection({
+  cState,
+  cBadge,
+  cResultAvailable,
+  cRetainedResultAvailable,
+  aDocumentLoaded = true,
+  bDocumentLoaded = true,
+  aResultAvailable = true,
+  bResultAvailable = true,
+}) {
   return {
     schema: 'emp1-product-projection/v1',
     product: { productId: 'EMP.1' },
     steps: [
       {
         shortId: 'A', stepId: 'EMP.1.A', label: 'Load & reference', backingStageId: 'LAFEA.1',
-        state: 'CALCULATED', resultAvailable: true, runAuthorized: true,
+        state: aResultAvailable ? 'CALCULATED' : aDocumentLoaded ? 'SOURCE_LOADED' : 'INPUT_REQUIRED',
+        documentLoaded: aDocumentLoaded, resultAvailable: aResultAvailable, runAuthorized: true,
       },
       {
         shortId: 'B', stepId: 'EMP.1.B', label: 'Section screening', backingStageId: 'LAFEA.2',
-        state: 'CALCULATED', resultAvailable: true, runAuthorized: true,
+        state: bResultAvailable ? 'CALCULATED' : bDocumentLoaded ? 'SOURCE_LOADED' : 'INPUT_REQUIRED',
+        documentLoaded: bDocumentLoaded, resultAvailable: bResultAvailable, runAuthorized: true,
       },
       {
         shortId: 'C', stepId: 'EMP.1.C', label: 'Local correlation', backingStageId: null,

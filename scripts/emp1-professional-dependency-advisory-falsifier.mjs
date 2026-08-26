@@ -48,6 +48,7 @@ try {
     resolve(root, 'scripts/emp1-professional-release-candidate.mjs'),
     'utf8',
   );
+  const advisorySource = await readFile(checker, 'utf8');
   const orderedGateIds = [
     'CURRENTNESS_REPLAY_FALSIFIERS',
     'DEPENDENCY_LOCK_CUSTODY',
@@ -71,6 +72,12 @@ try {
     'live advisory exit 3 must remain NOT_RUN rather than FAIL/PASS');
   assert.match(candidateSource, /vulnerabilityFreeClaimedByThisHarness:\s*false/u,
     'candidate harness must not claim vulnerability-free status');
+  assert.match(advisorySource, /auditEnvironmentUnavailable\(auditRun\)/u,
+    'npm advisory transport failure must be classified before audit JSON parsing');
+  assert.match(advisorySource, /DEPENDENCY_ADVISORY_SERVICE_UNAVAILABLE/u,
+    'transport failure must retain deterministic NOT_RUN code');
+  assert.match(advisorySource, /EAI_AGAIN/u,
+    'network-resolution failure must remain an explicit environment signature');
 
   console.log(JSON.stringify({
     schema: 'emp1-professional-dependency-advisory-falsifier/v1',
@@ -82,6 +89,7 @@ try {
       'ADVISORY_SERVICE_UNAVAILABLE_IS_NOT_RUN',
       'NONZERO_EXIT_CANNOT_FORGE_CLEAN_PASS',
       'INVALID_AUDIT_SCHEMA_CANNOT_FORGE_PASS',
+      'STDERR_ONLY_TRANSPORT_FAILURE_BOUND_TO_NOT_RUN',
       'DEPENDENCY_GATE_ORDER_BOUND_BEFORE_BUILD',
       'PACKAGE_LOCK_SHA_BOUND_IN_CANDIDATE_RECEIPT',
       'ADVISORY_EXIT3_BOUND_TO_NOT_RUN',

@@ -43,6 +43,12 @@ const SPECIAL_IMPLEMENTATIONS = Object.freeze([
   }),
 ]);
 
+const COVERAGE_REQUIREMENT_IDS = Object.freeze([
+  'MASS_COVERAGE',
+  'FLEXURAL_COVERAGE',
+  'SECTION_COVERAGE',
+]);
+
 export function createCurrentNonFeaImplementationRegistry() {
   const empiricalRows = EMPIRICAL_METHOD_REGISTRY.methods.map((row) => ({
     implementationId: row.methodId,
@@ -223,6 +229,10 @@ function commonInputStatus(snapshot) {
       methodId: row.methodId,
       state: row.state,
       blockerCodes: (row.blockers || []).map((blocker) => blocker.code || 'METHOD_BLOCKED'),
+      coverageRequirements: (row.requirements || [])
+        .map(coverageRequirementStatus)
+        .filter(Boolean)
+        .sort((left, right) => ascii(left.requirementId, right.requirementId)),
     })),
     requestSourceModelSemanticHash: request?.sourceModel?.semanticHash || null,
     requestResolutionLedgerStatus: request?.resolutionLedger?.status || null,
@@ -241,6 +251,26 @@ function commonInputStatus(snapshot) {
     executionReceiptCount: snapshot.consumptionExecutions?.length || 0,
   };
 }
+
+function coverageRequirementStatus(requirement) {
+  if (!COVERAGE_REQUIREMENT_IDS.includes(requirement?.requirementId) || requirement?.state !== 'BLOCKED') return null;
+  const details = requirement.details;
+  if (!details || typeof details !== 'object' || Array.isArray(details)
+    || !Number.isInteger(details.total) || details.total < 0
+    || !Number.isInteger(details.covered) || details.covered < 0
+    || !Array.isArray(details.missing)
+    || typeof details.ready !== 'boolean') return null;
+  return {
+    requirementId: requirement.requirementId,
+    state: requirement.state,
+    code: requirement.code,
+    total: details.total,
+    covered: details.covered,
+    missing: [...details.missing],
+    ready: details.ready,
+  };
+}
+
 function masterRows(masters) {
   return [
     masterRow('lineList', masters?.lineList, true),

@@ -19,9 +19,11 @@ const PHASES = new Set(['EMPTY', 'LIQUID', 'GAS', 'MIXED', 'UNSPECIFIED']);
  * rule fails closed. This preserves legacy `{ DEFAULT: 'LIQUID_FULL' }` policy
  * without turning the EMPTY case into a fluid-filled case.
  *
- * OPE/HYD zero fill is intentionally fail-closed for now because the legacy
- * statics kernel rejects zero effective density; no epsilon-density
- * approximation is allowed.
+ * OPE/HYD zero fill is a valid governed content state. This resolver only
+ * authorizes the fraction; downstream execution must still prove that an exact
+ * zero fluid mass comes from positive raw-density authority times this governed
+ * zero fill. Naked zero density and epsilon-density substitution are not
+ * authorized here.
  */
 export function resolveNonFeaFluidFillPolicy({ profile, loadCaseId, lineKey } = {}) {
   const caseId = stringValue(loadCaseId).toUpperCase();
@@ -52,13 +54,6 @@ export function resolveNonFeaFluidFillPolicy({ profile, loadCaseId, lineKey } = 
       'Canonical EMPTY gravity case must remain zero fluid content.',
       'EMPIRICAL_FLUID_EMPTY_CASE_NONZERO_UNSUPPORTED',
       { lineKey: key, fillFraction: normalized.fillFraction, selector: selected.selector },
-    );
-  }
-  if (caseId !== 'EMPTY' && normalized.fillFraction === 0) {
-    throw codedError(
-      `${caseId} zero fill requires native zero-fluid support in the statics kernel; epsilon-density substitution is forbidden.`,
-      'EMPIRICAL_FLUID_ZERO_FILL_NONEMPTY_CASE_UNSUPPORTED',
-      { lineKey: key, loadCaseId: caseId, selector: selected.selector },
     );
   }
 

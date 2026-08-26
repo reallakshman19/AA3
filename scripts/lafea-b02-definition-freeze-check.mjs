@@ -5,7 +5,6 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createLafeaMeshGenerationIntentV2 } from '../src/workspace/lafea-domain-first-requests.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = path.join(ROOT, 'validation/lafea-b02-definitions');
@@ -16,6 +15,7 @@ const definitions = Object.fromEntries(Object.entries(manifest.definitionFiles).
   JSON.parse(fs.readFileSync(path.join(ROOT, relative), 'utf8')),
 ]));
 
+proveCustodyCheckerIndependence();
 assert.equal(manifest.schema, 'lafea-b02-frozen-definition-manifest/v2');
 assert.equal(manifest.stageId, 'LAFEA.3');
 assert.equal(manifest.originalFreeze.adoptedG4ParentExactHead, 'c3fb24b5fc354763e5fd8f86161da14ac228e80b');
@@ -61,11 +61,11 @@ assert.deepEqual(definitions.B02D.globalResponseLadder.methods, pickMethods(matr
 assert.deepEqual(definitions.B02E.methods, pickMethods(matrixById.get('B02E')));
 
 for (const id of ['B02A', 'B02B', 'B02C']) {
-  validateRegisteredLadder(definitions[id].meshLadder, definitions[id].meshLadder.methods);
+  assertFrozenLadder(definitions[id].meshLadder);
 }
-validateRegisteredLadder(definitions.B02D.globalResponseLadder, definitions.B02D.globalResponseLadder.methods);
-validateRouteExpressibleCantilever(definitions.B02A);
-validateRouteExpressibleCantilever(definitions.B02B);
+assertFrozenLadder(definitions.B02D.globalResponseLadder);
+validateFrozenCantileverAttachmentSemantics(definitions.B02A);
+validateFrozenCantileverAttachmentSemantics(definitions.B02B);
 assert.deepEqual(definitions.B02D.globalResponseLadder.levels.map((row) => row.historicalT6ControlElementCount), [64, 256, 1024, 4096]);
 assert.deepEqual(definitions.B02D.globalResponseLadder.evaluatedConvergenceLevels, ['L2', 'L3', 'L4']);
 assert.equal(definitions.B02D.globalResponseLadder.historicalCountsAreControlsNotProducerGuarantees, true);
@@ -113,8 +113,9 @@ const definitionHashes = Object.fromEntries(Object.entries(manifest.definitionFi
   return [id, `sha256:${crypto.createHash('sha256').update(bytes).digest('hex')}`];
 }));
 console.log(JSON.stringify({
-  schema: 'lafea-b02-definition-freeze-receipt/v2',
+  schema: 'lafea-b02-definition-freeze-receipt/v3',
   status: 'PASS',
+  authorityBoundary: 'IMMUTABLE_FROZEN_DEFINITION_CUSTODY_ONLY',
   originalFreezeHead: manifest.originalFreeze.definitionFreezeExactHead,
   integratedG4ExactHead: manifest.integration.integratedG4ExactHead,
   integratedG4CustodyMode,
@@ -122,7 +123,8 @@ console.log(JSON.stringify({
   definitionHashes,
   definitionsByteIdenticalToOriginalFreeze: true,
   methodsMatchGate0Matrix: true,
-  registeredMeshIntentContractSatisfied: true,
+  registeredMeshIntentContractCheckedSeparately: true,
+  productionRouteImportedByCustodyCheck: false,
   b02bIsGenuinelyNonUniformShear: true,
   historicalResultsPromotedToQualification: false,
   productionOutputUsedToChooseDefinitions: false,
@@ -131,6 +133,15 @@ console.log(JSON.stringify({
   temperatureAuthorityGranted: false,
 }));
 
+function proveCustodyCheckerIndependence() {
+  const source = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8');
+  const staticImportSpecifiers = [...source.matchAll(
+    /^\s*import\s+(?:[^'";]+?\s+from\s+)?['"]([^'"]+)['"];?\s*$/gmu,
+  )].map((match) => match[1]);
+  assert.ok(staticImportSpecifiers.length >= 6, 'Frozen-custody checker import inventory is incomplete.');
+  assert.equal(staticImportSpecifiers.every((specifier) => specifier.startsWith('node:')), true,
+    `Frozen-custody checker may import Node built-ins only: ${staticImportSpecifiers.join(', ')}`);
+}
 function verifyIntegratedG4Custody() {
   try {
     execFileSync('git', ['cat-file', '-e', `${manifest.integration.integratedG4ExactHead}^{commit}`], { cwd: ROOT, stdio: 'ignore' });
@@ -153,42 +164,14 @@ function assertRatio2(levels) {
     assert.ok(Math.abs(levels[i - 1].h / levels[i].h - 2) < 1e-12, 'frozen h ratio must equal 2');
   }
 }
-function validateRegisteredLadder(ladder, methods) {
+function assertFrozenLadder(ladder) {
   assert.equal(ladder.requestSchema, 'REGISTERED_LAFEA_MESH_GENERATION_INTENT_V2');
   assertRatio2(ladder.levels);
   for (const level of ladder.levels) {
     assert.equal(level.h, level.targetElementLength);
-    for (const [elementFamily, applicability] of Object.entries(methods)) {
-      if (applicability === 'NOT_APPLICABLE') continue;
-      const policy = ladder.familyRequestPolicy[elementFamily];
-      const common = ladder.commonRequestPolicy;
-      const intent = createLafeaMeshGenerationIntentV2({
-        schema: 'lafea-mesh-generation-intent/v2',
-        stageId: 'LAFEA.3',
-        sourceHash: `sha256:${'1'.repeat(64)}`,
-        analysisDomainHash: `sha256:${'2'.repeat(64)}`,
-        analysisGeometryHash: `sha256:${'3'.repeat(64)}`,
-        meshProfileHash: 'freeze-contract-profile',
-        targetElementLength: level.targetElementLength,
-        lengthUnit: common.lengthUnit,
-        elementFamily,
-        curvatureToleranceDegrees: level.curvatureToleranceDegrees,
-        growthLimit: common.growthLimit,
-        maximumNodes: common.maximumNodes,
-        maximumElements: common.maximumElements,
-        maximumEstimatedDofs: common.maximumEstimatedDofs,
-        refinementFeatureIds: common.refinementFeatureIds,
-        allowT3Fallback: policy.allowT3Fallback,
-        stageAdapterId: 'LAFEA.3:FREEZE_CHECK',
-        stageAdapterRevision: 'FREEZE_CHECK',
-      });
-      assert.equal(intent.status, 'EXECUTABLE_INTENT');
-      assert.equal(intent.executionAuthorized, true);
-      assert.ok(intent.producerRef);
-    }
   }
 }
-function validateRouteExpressibleCantilever(definition) {
+function validateFrozenCantileverAttachmentSemantics(definition) {
   const rows = definition.loadCase.routeAttachmentSemantics;
   assert.equal(rows.length, 2);
   const restraint = rows.find((row) => row.kind === 'RESTRAINT');

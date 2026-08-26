@@ -1,5 +1,6 @@
 {
   "schema": "emp1-wrc537-attachment-axis-intersection-source-qualification/v1",
+  "issue": 1368,
   "status": "BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED",
   "engineeringAuthority": false,
   "obliqueAttachmentAuthority": false,
@@ -7,7 +8,23 @@
     "document": "docs/emp1/WRC537_2013.pdf",
     "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
     "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
-    "primaryPageInspection": "NOT_RUN_EXECUTION_ENVIRONMENT"
+    "primaryPageInspection": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT"
+  },
+  "retainedSourceEvidence": {
+    "path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "gitBlobSha": "810a39d845e15bae92d9c30abb8d452401e711d2",
+    "table": "Table 5",
+    "pages": "41-42",
+    "explicitInputGroups": {
+      "loads": ["P", "Mc", "Ml", "Mt", "Vc", "Vl"],
+      "geometry": ["T", "r0", "Rm"],
+      "parameters": ["gamma", "beta"],
+      "stressConcentrationFactors": ["Kn", "Kb"]
+    },
+    "explicitIntersectionAngleInputPresent": false,
+    "explicitObliquityInputPresent": false,
+    "explicitPhysicalNormalityRulePresentInRetainedTable5": false,
+    "classification": "QUALIFIED_TABLE5_EXPLICIT_INPUT_CONTENT_ONLY_NOT_PHYSICAL_NORMALITY_AUTHORITY"
   },
   "secondaryResearch": {
     "path": "docs/01_WRC537_METHOD_DEFINITION.md",
@@ -23,7 +40,14 @@
     "nonOrthogonalDiagnostic": "EMP1_WRC537_FRAME_NON_ORTHOGONAL",
     "classification": "MATHEMATICAL_VECTOR_GUARD_ONLY_NOT_PRIMARY_APPLICABILITY_PROOF"
   },
+  "currentBoundedRouteObservation": {
+    "path": "src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js",
+    "routeAuthorized": true,
+    "authorizationBasis": "OWNER_WORKFLOW_SKIP_OVERRIDE_RETAINED_SEPARATELY",
+    "classification": "ROUTE_AUTHORIZATION_DOES_NOT_CLOSE_ATTACHMENT_AXIS_SOURCE_GATE"
+  },
   "authorityDistinction": {
+    "table5ExplicitAngleInputAbsence": "QUALIFIED_RETAINED_SOURCE_TEXT",
     "vectorOrthogonality": "IMPLEMENTED_FAIL_CLOSED_GUARD",
     "physicalShellNormalProof": "UNRESOLVED",
     "obliqueWrcApplicability": "NOT_AUTHORIZED",
@@ -34,7 +58,8 @@
     "NO_EQUIVALENT_PERPENDICULAR_SURROGATE",
     "NO_ENGINEERING_ANGLE_ALLOWANCE_FROM_1E_10_TOLERANCE",
     "NO_PHYSICAL_NORMALITY_CLAIM_FROM_CENTERLINE_ORTHOGONALITY_ALONE",
-    "NO_OBLIQUE_PRODUCTION_ROUTE"
+    "NO_OBLIQUE_PRODUCTION_ROUTE",
+    "NO_APPLICABILITY_INFERENCE_FROM_TABLE5_ANGLE_FIELD_ABSENCE"
   ],
   "requiredPrimaryClosures": [
     "EXACT_NORMAL_RADIAL_PERPENDICULAR_SOURCE_WORDING",
@@ -50,6 +75,9 @@
     "retainCurrentNonOrthogonalRejection": true,
     "widenOrthogonalityTolerance": false,
     "obliqueGeometryImplementationAllowed": false,
+    "physicalNormalitySourceGateClosed": false,
     "requiredNextGate": "DIRECT_PRIMARY_INTERSECTION_RULE_EXTRACTION_AND_PHYSICAL_NORMALITY_MODEL_REVIEW"
-  }
+  },
+  "productionNumericsChanged": false,
+  "collateralAuthorityWidened": false
 }

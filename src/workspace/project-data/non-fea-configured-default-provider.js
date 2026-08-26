@@ -28,6 +28,10 @@ const SCOPE_KEYS = Object.freeze([
 const ENRICHMENT_FIELD_BY_ID = new Map(
   listNonFeaEnrichmentFields().map((definition) => [definition.fieldId, definition]),
 );
+const ANCILLARY_DEFAULT_FIELD_BY_ID = new Map([
+  ['CLADDING_WEIGHT', freezeDeep({ fieldId: 'CLADDING_WEIGHT', targetKind: 'COMPONENT' })],
+  ['TRACING_WEIGHT', freezeDeep({ fieldId: 'TRACING_WEIGHT', targetKind: 'COMPONENT' })],
+]);
 
 /**
  * Compiles approved Project Data configured defaults into ephemeral exact
@@ -36,6 +40,12 @@ const ENRICHMENT_FIELD_BY_ID = new Map(
  * Project Data remains the authority store. No record is written to the user
  * enrichment sidecar, no geometry/proximity matching is permitted, and a POS
  * scope only matches an explicit governed POS identifier carried by the model.
+ *
+ * CLADDING_WEIGHT and TRACING_WEIGHT are optional permanent line-mass inputs.
+ * They intentionally have no source-column aliases in this slice; this provider
+ * only gives existing configured/product default authority a governed
+ * component-scoped record which the common-enriched overlay may promote to one
+ * LINE value when exact line coverage is complete and consistent.
  *
  * Matching defaults are ranked by the Issue #1321 scope policy rather than by
  * raw scope-key count. This prevents a broad multi-key system/zone declaration
@@ -73,7 +83,8 @@ export function createNonFeaConfiguredDefaultProvider({
 
   const candidatesByTargetField = new Map();
   for (const configured of policy.defaults) {
-    const field = ENRICHMENT_FIELD_BY_ID.get(configured.fieldId);
+    const field = ENRICHMENT_FIELD_BY_ID.get(configured.fieldId)
+      || ANCILLARY_DEFAULT_FIELD_BY_ID.get(configured.fieldId);
     if (!field) continue; // Project-level defaults are consumed by their owning Project Data path, not entity enrichment.
     const allowedMethods = configured.allowedMethods.filter((methodId) => methods.includes(methodId));
     if (!allowedMethods.length) continue;
@@ -202,7 +213,7 @@ export function createConfiguredDefaultUsageRowsFromResolution({
 
 function createProviderRecord(candidate, profile, policyEvidence, policy) {
   const { configured, target, scope, scopePriority, allowedMethods } = candidate;
-  return createNonFeaEnrichmentRecord({
+  const record = {
     recordId: `project-default:${configured.defaultId}:${target.targetId}`,
     selectorKind: 'ENTITY',
     selectorKey: target.targetId,
@@ -223,7 +234,11 @@ function createProviderRecord(candidate, profile, policyEvidence, policy) {
       projectDataRevision: profile.revision,
       configuredDefaultPolicyHash: semanticHash(policy),
     },
-  });
+    migration: null,
+  };
+  return ANCILLARY_DEFAULT_FIELD_BY_ID.has(configured.fieldId)
+    ? freezeDeep(record)
+    : createNonFeaEnrichmentRecord(record);
 }
 
 function providerResult(profile, policy, requestedMethods, records, blockers) {

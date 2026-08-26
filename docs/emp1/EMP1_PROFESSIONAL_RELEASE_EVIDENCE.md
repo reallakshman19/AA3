@@ -97,7 +97,7 @@ Optional diagnostic execution, which may intentionally expose currently failing/
 node scripts/emp1-professional-release-candidate.mjs --execute-diagnostics
 ```
 
-Final release execution requires a clean worktree and an immutable expected head:
+Final release execution requires a clean worktree, an immutable expected head and a retained receipt path:
 
 ```text
 node scripts/emp1-professional-release-candidate.mjs \
@@ -106,6 +106,8 @@ node scripts/emp1-professional-release-candidate.mjs \
   --deployment-receipt <deployment-receipt.json> \
   --write-receipt validation/emp1/release/<release-candidate-receipt>.json
 ```
+
+`--release` without `--write-receipt` is rejected. A professionally qualified candidate must therefore leave retained candidate evidence rather than exist only on stdout.
 
 Before deployment verification, the harness executes the promotion-compatible governed chain:
 
@@ -122,6 +124,56 @@ EMP.1 release-candidate Chromium journey
 The historical `emp1-public-product-check.mjs` and the general `emp1-workbench-authority.spec.js` deliberately assert the **suspended** route in part of their coverage. They remain valuable pre-promotion regression gates but are not used as post-promotion release gates. PR-H uses `emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs` and `e2e/emp1-professional-release.spec.js` instead so a correctly authorized bounded route is not rejected merely because promotion succeeded.
 
 Every invocation retains command identity, exit code, signal/error code, stdout SHA-256, stderr SHA-256 and byte counts. Environment/tool launch failure is `NOT_RUN_EXECUTION_ENVIRONMENT`; a nonzero exit from an actually launched command is FAIL.
+
+## Deterministic exact-candidate provenance manifest
+
+Every candidate receipt now contains one first-class `releaseManifest` with schema:
+
+```text
+emp1-release-candidate/v1
+```
+
+The manifest is generated from the same exact candidate execution receipt. It is not a parallel authority source. Its semantic payload binds:
+
+```text
+git.head / git.tree / git.parents
+product.id = EMP.1
+releaseProfileId
+WRC controlled PDF SHA-256
+CAUx controlled PDF SHA-256
+method identity
+dataset hash
+authorized route qualification hash
+independent physical-oracle hash
+per-gate execution status / exit code / stdout SHA-256 / stderr SHA-256
+deterministic dist/ build artifact SHA-256
+bounded engineering / production authority
+false global EMP.1.C and code-compliance authority
+actual releaseCandidateQualified state
+```
+
+No timestamp or random identifier participates in the manifest semantic hash. Source, dataset and oracle identities are cross-checked against the controlled source ledgers, frozen release profile and bounded authorization record before a manifest is created.
+
+A blocked or diagnostic receipt can have a valid manifest-custody PASS while `releaseCandidateQualified=false`. That means provenance is internally consistent; it is not a release PASS.
+
+Verify a retained receipt independently with:
+
+```text
+node scripts/emp1-professional-release-manifest-check.mjs \
+  --receipt validation/emp1/release/<release-candidate-receipt>.json
+```
+
+To require an actually qualified release candidate:
+
+```text
+node scripts/emp1-professional-release-manifest-check.mjs \
+  --receipt validation/emp1/release/<release-candidate-receipt>.json \
+  --require-qualified
+```
+
+`--require-qualified` exits `2` while the retained receipt is blocked/unqualified. The checker recomputes both candidate-manifest and parent-receipt semantic hashes, cross-checks source/profile/authorization identities, and verifies that every manifest evidence row is exactly the corresponding execution row in the retained receipt. It also requires a qualified receipt to be release-mode, clean-worktree, all-PASS, build-artifact-bound and to contain the deployment-evidence gate.
+
+The manifest itself grants no engineering method authority, code compliance, global EMP.1.C authority, release authority or deployment authority.
 
 ## Replay and export boundary
 
@@ -148,7 +200,7 @@ The browser gate verifies the promoted bounded calculation without pretending th
 
 After a successful production build, PR-H calculates one deterministic SHA-256 over all regular files in `dist/` using sorted relative paths and each file's SHA-256. Symlinks are prohibited in the release artifact.
 
-That `buildArtifactSha256` binds the candidate receipt to the exact deployable bytes.
+That `buildArtifactSha256` binds the candidate receipt and its nested candidate manifest to the exact deployable bytes.
 
 ## Deployment receipt
 
@@ -218,4 +270,4 @@ At `main@0f85cac384532b5cc35bc24ecedd729275027eb6`:
 - build/browser/release replay/deployment evidence remain NOT_RUN;
 - production/global/code/release/deployment authority is not widened by PR-H.
 
-This is a valid fail-closed state. It is not a professional release declaration.
+This historical PR-H creation state is retained for audit. Later route authorization and source-governance changes do not convert missing execution evidence into PASS.

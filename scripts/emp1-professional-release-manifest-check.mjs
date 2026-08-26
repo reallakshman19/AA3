@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const options = parseArgs(process.argv.slice(2));
-const receipt = await readJson(options.receipt);
+const receiptPath = retainedReceiptPath(options.receipt);
+const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
 const profile = await readJson('validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json');
 const wrcSourceLedger = await readJson('validation/emp1/wrc537-2013/source-ledger.json');
 const cauxSourceLedger = await readJson('validation/emp1/caux2017-wrc01f/source-ledger.json');
@@ -123,6 +124,14 @@ function parseArgs(args) {
   }
   if (!out.receipt) throw checkError('EMP1_RELEASE_MANIFEST_CHECK_RECEIPT_REQUIRED');
   return out;
+}
+function retainedReceiptPath(path) {
+  const resolved = resolve(root, path);
+  const allowedRoot = resolve(root, 'validation/emp1/release');
+  if (resolved !== allowedRoot && !resolved.startsWith(`${allowedRoot}/`)) {
+    throw checkError('EMP1_RELEASE_MANIFEST_CHECK_RECEIPT_PATH_OUTSIDE_RELEASE_VALIDATION');
+  }
+  return resolved;
 }
 async function readJson(path) {
   return JSON.parse(await readFile(resolve(root, path), 'utf8'));

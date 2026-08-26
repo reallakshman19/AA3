@@ -1,0 +1,27 @@
+schema: engineering-pr-status/v1
+pr: 1450
+repository: reallaksh19/Advanced_Analysis
+source_task: LAFEA.3/.4 implementation authorization gate
+branch: agent/lafea-authorization-gate-evidence-20260826
+base_branch: main
+base_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+initial_engineering_head: cb951d9a44007aee6bed28fb5792f6fb7683cdb2
+state: OPEN_DRAFT
+criticality: ENGINEERING_CRITICAL
+recovery_state: CONTINUE
+takeover_authority: WRITE_ALLOWED_EVIDENCE_ONLY
+execution_mode: OWNER_DIRECTED
+current_stage: EXACT_RECEIPT_IMPLEMENTED_PENDING_EXECUTION
+engineering_failure_proven: false
+validation:
+  live_grounding: PASS_SOURCE_INSPECTION
+  checker_scope: PASS_SOURCE_INSPECTION
+  q1_retained_t6_hand_jacobian: NOT_RUN
+  q2_kirsch_fixed_probe: NOT_RUN
+  q3_shell_pressure_equilibrium: NOT_RUN
+  q4_orientation_parity: NOT_RUN
+  q5_material_edit_invalidation: NOT_RUN
+  browser_build: NOT_RUN
+blocker: NO_EXECUTABLE_REPOSITORY_CHECKOUT_IN_SESSION
+merge_authority: OWNER_ONLY_NOT_GRANTED
+exact_next_action: node scripts/lafea-implementation-authorization-gate-check.mjs > /tmp/lafea-implementation-authorization-gate-receipt.json

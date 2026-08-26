@@ -14,25 +14,27 @@ criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
 pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
 handover_readiness: READY
-live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
-current_main_tree: ea619d56311f4be6c1f27a4ca433794979ddee33
-report_basis_head: 922570990764c083f454864bf193e25be281b9bf
+live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
+current_main_tree: ef461365bc77db46b5a6d24cf4fe0ef8d32387ce
+pre_reground_head: a849cfa7fb6a8ee8e3288b37dc1c1fbca0772204
+structural_reground_head: 0b4c50cefac72b7ef289119eed310de7788e8e17
+structural_reground_tree: 452b3b95a4a7809a5ddda50aaf12f541182ff460
+report_basis_head: 0b4c50cefac72b7ef289119eed310de7788e8e17
 technical_basis_head: 28970fe78f0ad1a41a706d927aaeb92793e05552
-grounding_epoch: GE-PR1457-005
+grounding_epoch: GE-PR1457-006
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: CURRENT_MAIN_EXACT_BLOB_REGROUND_COMPLETE_CHILD_PROPAGATION_NEXT
-current_stage: CURRENT_MAIN_EXACT_BLOB_REGROUND_VALIDATED
+coordination: LATEST_MAIN_REGROUNDED_PR1464_PROPAGATION_NEXT
+current_stage: LATEST_MAIN_EXACT_BLOB_REGROUND_VALIDATED
 merge_authorization: NOT_GRANTED
 validation:
-  main_drift_exact_path_overlap: PASS_NONE
-  reground_compare: PASS_5_AHEAD_0_BEHIND_7_FILES_BEFORE_RECOVERY_SYNC
-  artifact_security_source: PASS_PRIOR_AUDIT
-  scanner_execution: NOT_RUN
-  falsifier_execution: NOT_RUN
-  production_build_browser_execution: NOT_RUN_CURRENT_EPOCH
-  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+  latest_main_drift_exact_path_overlap: PASS_NONE
+  structural_reground: PASS_EXACT_7_BLOBS_FORCE_FALSE
+  scanner_execution: NOT_RUN_CURRENT_EPOCH
+  falsifier_execution: NOT_RUN_CURRENT_EPOCH
+  build_browser_execution: NOT_RUN_CURRENT_EPOCH
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RETAINED
   numerical_comparison: NOT_APPLICABLE
 current_blocker: "Executable scanner/falsifier/build/browser evidence remains NOT_RUN; merge authority not granted."
-exact_next_action: "Keep PR1457 draft/unmerged and re-ground child PR1464 onto this recovery-synchronized parent head."
+exact_next_action: "Keep PR1457 draft/unmerged and propagate this parent head into PR1464 without changing its 16-file bounded delta."

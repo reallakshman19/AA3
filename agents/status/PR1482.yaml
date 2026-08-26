@@ -1,0 +1,54 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1482
+mission: Seal current-main B01 integrated qualification in one exact-head envelope
+workstream: LAFEA_B01_INTEGRATED_EXACT_HEAD
+branch: agent/lafea-b01-integrated-exact-head-20260826
+base_main: 20e0abb5301363bef0659cf615bc8a37559ac869
+work_intent: QUALIFY
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: CURRENT_MAIN_MERGE_AUTHORIZED
+handover_readiness: MERGE_READY_OWNER_AUTHORIZED
+report_path: agents/PR1482_workreport.md
+current_stage: MERGE_AUTHORIZED_ENVELOPE_EXECUTION_NOT_RUN
+engineering_failure_proven: false
+validation:
+  live_main_and_1480_merge: { state: PASS_GITHUB_READBACK }
+  exact_seven_file_scope: { state: PASS }
+  zero_behind_current_main: { state: PASS }
+  reviews: { state: PASS, count: 0 }
+  review_threads: { state: PASS, count: 0 }
+  commit_statuses: { state: PASS, count: 0 }
+  verifier_classifier_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  self_test_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  wrapper_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  synthetic_suite: { state: PASS_LOCAL_NODE_EXECUTION, cases: 9 }
+  post_nullspace_boundary_execution: { state: NOT_RUN }
+  historical_integrated_b01_execution: { state: NOT_RUN }
+  final_exact_head_envelope_execution: { state: NOT_RUN }
+blocker: NO_EXACT_EXECUTABLE_REPOSITORY_CHECKOUT_IN_AGENT_CONTAINER
+blocker_detail: direct Git materialization fails with Could not resolve host github.com
+runtime_receipt: reports/qualification/B01/integrated-exact-head.json
+required_ancestor: 20e0abb5301363bef0659cf615bc8a37559ac869
+integrated_b01_qualified: false
+b02_prerequisite_evidence_available: false
+solver_repair_authorized: false
+b02_numerical_authority_granted: false
+release_authority_granted: false
+trust_authority_granted: false
+excluded_authority:
+  - PRODUCTION_MECHANICS
+  - SPARSE_SOLVER_MECHANICS
+  - POST_CAP_REFINEMENT
+  - ENGINEERING_TOLERANCES
+  - BENCHMARK_EXPECTED_VALUES
+  - MESH_DEFINITIONS
+  - B02_NUMERICS
+  - REGISTRY_AUTHORITY
+  - RELEASE_AUTHORITY
+  - TRUST_ROOT
+  - WORKFLOW_MUTATION
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+merge_disposition: AUTHORIZED_WITH_NOT_RUN_PRESERVED
+exact_next_action_after_merge: node scripts/lafea-b01-integrated-exact-head-check.mjs

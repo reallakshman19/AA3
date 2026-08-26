@@ -6,6 +6,7 @@ import {
   NON_FEA_PRODUCT_SCREENING_SNAPSHOT_ACTOR,
   NON_FEA_PRODUCT_SCREENING_SNAPSHOT_STATEMENT,
   createNonFeaReadyProductScreeningConfirmation,
+  isCurrentReadyNonFeaCalculationSnapshot,
 } from '../src/workspace/non-fea-common-input-runtime.js';
 
 const REPORT_HASH = 'fnv1a64:1234567890abcdef';
@@ -97,6 +98,60 @@ for (const invalidTime of [
   );
 }
 
+const currentReadySeal = Object.freeze({
+  commonInput: Object.freeze({
+    packageState: 'READY',
+    sealedMethodIds: Object.freeze(['WEIGHT_AND_GRAVITY']),
+    blockedMethodIds: Object.freeze([]),
+  }),
+  staleness: Object.freeze({ stale: false }),
+  error: null,
+});
+assert.equal(
+  isCurrentReadyNonFeaCalculationSnapshot(currentReadySeal),
+  true,
+  'A fully READY current seal is reusable for routine screening.',
+);
+
+for (const [label, snapshot] of [
+  ['partial-current-seal', {
+    ...currentReadySeal,
+    commonInput: {
+      ...currentReadySeal.commonInput,
+      packageState: 'PARTIALLY_READY',
+      blockedMethodIds: ['SUSTAINED_MEMBER_ACTIONS'],
+    },
+  }],
+  ['ready-with-zero-sealed-methods', {
+    ...currentReadySeal,
+    commonInput: {
+      ...currentReadySeal.commonInput,
+      sealedMethodIds: [],
+    },
+  }],
+  ['ready-with-blocked-method', {
+    ...currentReadySeal,
+    commonInput: {
+      ...currentReadySeal.commonInput,
+      blockedMethodIds: ['SUSTAINED_MEMBER_ACTIONS'],
+    },
+  }],
+  ['stale-ready-seal', {
+    ...currentReadySeal,
+    staleness: { stale: true },
+  }],
+  ['errored-ready-seal', {
+    ...currentReadySeal,
+    error: 'COMMON_INPUT_EVALUATION_FAILED',
+  }],
+]) {
+  assert.equal(
+    isCurrentReadyNonFeaCalculationSnapshot(snapshot),
+    false,
+    `${label} must not be reused as a READY product screening snapshot.`,
+  );
+}
+
 const runtimeSource = await readFile(
   new URL('../src/workspace/non-fea-common-input-runtime.js', import.meta.url),
   'utf8',
@@ -108,8 +163,23 @@ assert.match(
 );
 assert.match(
   runtimeSource,
-  /before\.commonInput && before\.staleness\?\.stale === false && !before\.error/u,
-  'Current sealed Common Input must be reused instead of needlessly resealed.',
+  /isCurrentReadyNonFeaCalculationSnapshot\(before\)/u,
+  'Existing Common Input reuse must pass the READY-only sealed-state gate.',
+);
+assert.match(
+  runtimeSource,
+  /commonInput\.packageState === 'READY'/u,
+  'Reusable screening seals must themselves be READY.',
+);
+assert.match(
+  runtimeSource,
+  /commonInput\.sealedMethodIds\.length > 0/u,
+  'Reusable screening seals must contain at least one sealed method.',
+);
+assert.match(
+  runtimeSource,
+  /commonInput\.blockedMethodIds\.length === 0/u,
+  'Reusable screening seals must contain zero blocked methods.',
 );
 assert.match(
   runtimeSource,
@@ -136,6 +206,7 @@ console.log(JSON.stringify({
   acceptPartial: confirmation.acceptPartial,
   acknowledgedBlockedMethodCount: confirmation.acknowledgedBlockedMethods.length,
   partialAndBlockedAutoAcceptanceRejected: true,
+  partialCurrentSealReuseRejected: true,
   userApprovalAsserted: false,
   runtimeUsesExistingSealContract: true,
 }, null, 2));

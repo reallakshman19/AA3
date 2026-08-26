@@ -103,14 +103,34 @@ export function createNonFeaReadyProductScreeningConfirmation(report, capturedAt
 }
 
 /**
+ * Returns true only when an existing seal itself satisfies the READY-only
+ * screening contract. A current PARTIALLY_READY seal may be valid for the
+ * explicit human partial-acceptance workflow, but it is never reusable as a
+ * routine product screening snapshot.
+ */
+export function isCurrentReadyNonFeaCalculationSnapshot(snapshot) {
+  const commonInput = snapshot?.commonInput;
+  return Boolean(
+    commonInput
+    && snapshot?.staleness?.stale === false
+    && !snapshot?.error
+    && commonInput.packageState === 'READY'
+    && Array.isArray(commonInput.sealedMethodIds)
+    && commonInput.sealedMethodIds.length > 0
+    && Array.isArray(commonInput.blockedMethodIds)
+    && commonInput.blockedMethodIds.length === 0
+  );
+}
+
+/**
  * Creates the current routine screening snapshot without pretending that a user
  * approved it. Only a fully READY checker report is eligible. PARTIALLY_READY
  * still requires the explicit human acceptance path in sealCurrentNonFeaCommonInput().
- * An already-current sealed Common Input is reused rather than resealed.
+ * An already-current fully READY sealed Common Input is reused rather than resealed.
  */
 export function sealCurrentReadyNonFeaCalculationSnapshot({ capturedAt = new Date().toISOString() } = {}) {
   const before = nonFeaCommonInputStore.getSnapshot();
-  if (before.commonInput && before.staleness?.stale === false && !before.error) {
+  if (isCurrentReadyNonFeaCalculationSnapshot(before)) {
     assertCommonInputMethodPartition(before.commonInput);
     return before;
   }

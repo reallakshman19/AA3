@@ -11,20 +11,25 @@ criticality: ENGINEERING_CRITICAL
 recovery_state: CONTINUE
 takeover_authority: WRITE_ALLOWED_EVIDENCE_INFRASTRUCTURE_ONLY
 execution_mode: OWNER_DIRECTED
-current_stage: SECTION17_READINESS_AND_CLEANUP_PROPOSAL_CONTRACT_IMPLEMENTED_PENDING_REAL_EXACT_HEAD_Q1_Q5
+current_stage: SECTION17_DUAL_SEMANTIC_AND_SOURCE_CUSTODY_IMPLEMENTED_PENDING_REAL_EXACT_HEAD_Q1_Q5
 engineering_failure_proven: false
 validation:
   live_grounding: PASS_GITHUB_READBACK_MAIN_F7E3241
   three_commit_main_drift: PASS_SAFE_ISSUE1321_ONLY_NO_LAFEA_AUTHORITY_OVERLAP
   current_main_synchronization: PASS_TWO_PARENT_TREE_CUSTODY
+  exact_checkout_retry: NOT_RUN_EXECUTION_ENVIRONMENT_DNS_COULD_NOT_RESOLVE_GITHUB_COM
   pr1432_authority_coordination: OPEN_DRAFT_UNMERGED_REEXECUTE_IF_MERGED
   pr1258_authority_coordination: OPEN_DRAFT_UNMERGED_REEXECUTE_IF_MERGED
   protected_lafea3_registry_state: PASS_SOURCE_INSPECTION_UNCHANGED
   protected_lafea4_authority_state: PASS_SOURCE_INSPECTION_UNCHANGED
-  readiness_schema: V2_FULL_REGISTRY_BASELINE_HASH_AND_RETAINED_RECEIPT
+  readiness_schema: V3_FULL_REGISTRY_SEMANTIC_HASH_PLUS_FULL_SOURCE_TEMPLATE_HASH
   readiness_synthetic_policy_suite: PASS_LOCAL_POLICY_EXECUTION_NO_MECHANICS
-  cleanup_proposal_guard: IMPLEMENTED_QUALIFIED_BASE_ANCESTRY_PLUS_WORDING_ONLY_SEMANTICS
+  cleanup_proposal_guard: V2_QUALIFIED_BASE_ANCESTRY_PLUS_SEMANTIC_AND_SOURCE_TEMPLATE_CUSTODY
   cleanup_proposal_synthetic_policy_suite: PASS_LOCAL_POLICY_EXECUTION_NO_MECHANICS
+  hidden_registry_helper_code_mutation_control: PASS_REJECTED
+  hidden_registry_comment_mutation_control: PASS_REJECTED
+  hidden_registry_whitespace_mutation_control: PASS_REJECTED
+  authored_source_blob_binding: PASS_GITHUB_BLOBS_MATCH_LOCAL_EXECUTED_SOURCES
   real_q1_q5_exact_head_execution: NOT_RUN
   real_section17_readiness: NOT_RUN
   actual_registry_cleanup_proposal: NOT_PROPOSED
@@ -39,20 +44,37 @@ readiness_contract:
   protected_lafea3_limitation_required_before_cleanup: true
   protected_lafea4_cst_dkt_authority_required: true
   full_registry_baseline_hash_required: true
+  full_registry_source_hash_required: true
+  normalized_registry_source_template_hash_required: true
+  normalized_source_allows_only:
+    - LAFEA.3.limitation string literal contents
+    - LAFEA.3.limitations[1] string literal contents
   readiness_receipt_path: reports/qualification/lafea1371-registry-closure-readiness.json
   registry_mutation_performed: false
   release_authority_granted: false
 cleanup_proposal_contract:
   qualified_base_must_be_ancestor_of_candidate: true
   only_non_agent_production_path: src/workspace/lafea-stage-registry.js
+  qualified_registry_source_loaded_from_git_history: true
+  candidate_registry_source_loaded_from_worktree: true
+  qualified_source_hash_must_match_readiness_receipt: true
+  candidate_source_template_hash_must_match_qualified_template: true
   permitted_semantic_fields:
     - LAFEA.3.limitation
     - LAFEA.3.limitations[1]
   integration_point_stress_authority_must_remain_exact: true
   all_other_registry_semantics_must_match_baseline_hash: true
+  all_other_registry_source_bytes_must_match_template_hash: true
   wording_approved_by_guard: false
   merge_authority_granted_by_guard: false
   release_authority_granted_by_guard: false
+local_executed_blob_binding:
+  readiness_library: 8332f537f908f6211f92bcb13c9905c40392185b
+  cleanup_guard_library: e125e58a83ede501ffaf050c5dd165a56e3e2fdc
+  readiness_command: c482d1da673e0cb458cd60517dd33bc0259bee86
+  cleanup_guard_command: 76f34af2c7b53e155d1f1273ae73c62bc8e7d44f
+  readiness_self_test: 3590f5a79b1d05249fa2c0f4363f6ab4ddacf567
+  cleanup_guard_self_test: 8ec45ef66a1090e80e6691f813436f3ca49f3419
 blocker: REAL_EXACT_HEAD_Q1_Q5_REPORT_NOT_EXECUTED
 exact_next_action: node scripts/lafea-implementation-authorization-local-preflight.mjs && node scripts/lafea1371-registry-closure-readiness-check.mjs
 future_cleanup_candidate_check: node scripts/lafea1371-registry-cleanup-proposal-guard.mjs

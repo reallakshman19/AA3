@@ -4,13 +4,15 @@ repository: reallaksh19/Advanced_Analysis
 owner: reallaksh19
 branch: agent/lafea3-local-refinement-current-main-salvage-20260825
 source_task: PR1270 salvage / LAFEA.3 retained refinement
-state: ACTIVE_BOUNDED
+state: ACTIVE_BOUNDED_ENGINEERING_CRITICAL
 criticality: ENGINEERING_CRITICAL
 authority_domain:
-  - LAFEA.3 retained local refinement
-  - source-authoritative affine mapped remesh
-  - actual shared-edge adjacent-size retention gate
-  - current-main UI enforcement of qualified one-target refinement policy
+  - source-authoritative retained LAFEA.3 local refinement within the qualified first envelope
+  - T3/T6 single-target affine mapped retained-child production
+  - actual shared-edge adjacent-size qualification before v2 custody
+  - UI binding to the same production refinement policy
+  - invalidation of parallel v3 pre-authority candidate after local v2 refinement
+  - source-inspection proof that merged exact-head Q1-Q5 and Section 17 custody cannot silently reuse pre-refinement/stale-head evidence
 exact_paths:
   - src/core/lafea-meshing/refinement-fields.js
   - src/workspace/lafea-analysis-mesh-evidence-v2.js
@@ -19,25 +21,46 @@ exact_paths:
   - src/workspace/lafea-discretization-generation-panel.js
   - scripts/lafea3-mapped-refinement-envelope-check.mjs
   - scripts/lafea-refinement-solve-ui-check.mjs
+  - agents/PR1432_workreport.md
+  - agents/status/PR1432.yaml
+  - agents/claims/PR1432.yaml
 excluded_authority:
-  - EMP.1
-  - v3 local-refinement lineage or CURRENT_PASS authority
-  - B01/B02 solver or benchmark authority
-  - LAFEA.4 TECH-13 refinement semantics
-  - workflow YAML
+  - Q8 local refinement
+  - multiple simultaneous refinement targets
+  - v3 local-refinement authority
+  - continuum solver/formulation/recovery changes
+  - B01/B02 benchmark values or probes
+  - tolerance or quality-threshold widening
+  - LAFEA.4 TECH-13 implementation
   - stage registry or release authority
+  - Issue 1371 Section 17 cleanup wording
+  - workflow changes
+  - Issue 1321 load-calc mechanics
+current_main:
+  head: 3d79ea6889c08cf6a37229655ecbd3ec3dc89a20
+  synchronization_commits:
+    - 1d3d06581610f075ea5751fbcb26b08d822ccc29
+    - 39a911ef406d37d08e99067931e1288203e83e4e
+  behind_after_sync: 0
+  exact_path_overlap_with_intervening_main: NONE
+cross_chain_custody:
+  refined_child_must_change_retained_mesh_hash_or_fail: true
+  v3_candidate_cleared_after_local_v2_refinement: true
+  q1_receipt_retains_retained_mesh_hash: true
+  q1_direct_addendum_same_trace_required: true
+  exact_head_envelope_records_repository_head: true
+  section17_requires_verification_head_equal_current_head: true
+  duplicate_invalidation_patch_required: false
+validation_truth:
+  source_and_custody_audit: PASS_SOURCE_INSPECTION
+  current_head_executable_refinement_qualification: NOT_RUN
+  engineering_failure_proven: false
 coordination:
-  predecessor_pr: 1270
-  predecessor_disposition: CLOSED_SUPERSEDED
-  integrated_base:
-    pr: 1433
-    merge_sha: 7b2a8119aa5faeee7cc102c894991851019c5a7b
-    classification: BASELINE_GENERIC_V3_PRE_AUTHORITY_CUSTODY
-  overlaps:
-    - pr: 1258
-      classification: BOUNDED_NO_SOLVER_AUTHORITY_TOUCHED
-    - pr: 1259
-      classification: BOUNDED_NO_B02_AUTHORITY_TOUCHED
-    - pr: 1246
-      classification: BOUNDED_LAFEA4_PRODUCT_ROUTE_PRESERVED
-merge_authority: OWNER_ONLY
+  - pr: 1258
+    classification: CONTINUUM_SOLVER_AUTHORITY_SEPARATE_REEXECUTE_FINAL_Q1_Q5_IF_MERGED
+  - pr: 1474
+    classification: MERGED_SECTION17_EXACT_HEAD_CUSTODY_REQUIRES_CURRENT_RECEIPT
+merge_authority: OWNER_ONLY_NOT_GRANTED
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 19

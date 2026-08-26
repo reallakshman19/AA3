@@ -4,15 +4,14 @@
 - Repository: `reallaksh19/Advanced_Analysis`
 - PR: #1481 — `Load Calc: route ordinary Run to current Common Input runtime`
 - Branch: `agent/issue-1321-run-current-runtime-routing`
-- Reconciled base: `main@20e0abb5301363bef0659cf615bc8a37559ac869`
-- Upstream: merged #1478, #1475, #1471, #1465, #1461
+- Live production base for merge reconciliation: `main@f9570d4bd86fa73cb070c95a0386fd3c79ec35ff`
 - Criticality: ENGINEERING_CRITICAL
 - Execution mode: AUTO
-- Merge authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR
-- State: SOURCE_COMPLETE_AWAITING_OWNER
+- Merge authority: **OWNER_AUTHORIZED** by user message `merge, proceed next` at 2026-08-26T23:12:22Z
+- State: SOURCE_COMPLETE_RECONCILE_AND_MERGE
 
 ## Handover in 60 seconds
-This PR completes the ordinary product Run cutover onto the merged current-Common-Input execution chain while keeping scenario execution and explicit historical authorization flows intact.
+This PR completes the ordinary product Run cutover onto the merged current-Common-Input execution chain while preserving scenario execution and explicit historical authorization flows.
 
 ```text
 scenario-ready Run
@@ -27,68 +26,16 @@ ordinary Run
 → CURRENT_COMMON_INPUT_SYSTEM_RUN presentation
 ```
 
-The historical `ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED → executeEmpirical()` path remains available for explicit legacy/historical callers. A current-system failure never retries through it.
+The historical `CALCULATE_REQUESTED → executeEmpirical()` path remains available for explicit legacy/historical callers. Current-system failure never retries through it.
 
-## Final production changes
-### 1. Ordinary Run routing
-`src/workspace/load-calc-consumer-controller.js`
-- scenario-ready behavior is unchanged;
-- ordinary Run publishes exactly one `CURRENT_COMMON_INPUT_CALCULATE_REQUESTED` event;
-- ordinary Run does not call the UI READY-snapshot provider, legacy `refreshEmpirical()`, manual `sealCurrentNonFeaCommonInput()`, or the legacy calculate event;
-- READY snapshot creation/reuse and system authorization are runtime-owned.
-
-Constructor injection for the old READY provider / explicit authorization controller is retained for compatibility with existing callers, but ordinary Run no longer consumes those dependencies.
-
-### 2. Single execution ownership
-`src/workspace/engineering-model-controller.js`
-- adds the current-system event and one `calculateCurrentCommonInput()` owner;
-- production default is merged `executeCurrentCommonInputEmpiricalRun()`;
-- publishes the established `CHANGED` / `FAILED` event surface;
-- no catch/retry into legacy calculation.
-
-### 3. Authority custody and presentation
-`src/workspace/engineering-model-store.js`
-- exposes current Common Input execution separately;
-- classifies current routine results as `CURRENT_COMMON_INPUT_SYSTEM_RUN`;
-- does not relabel them `AUTHORIZED_HANDOFF` or `UNAUTHORIZED_LEGACY_RESULT`.
-
-`src/workspace/sequential-sketcher/support-load-presenter.js`
-- preserves the same distinct current-system authority in inspector/table presentation.
-
-### 4. Thin current-system view adapter
-`src/workspace/load-calc-current-system-view.js`
-- deliberately delegates the existing `load-calc-consumer-view.js` unchanged for legacy/scenario rendering;
-- enables ordinary Run from a fully READY checker report even before a manual seal exists;
-- recognizes a current READY seal using `sealedMethodIds`;
-- recognizes an unsealed READY checker result using `readyMethodIds`;
-- allows a fresh READY report to supersede a stale retained seal because the runtime will reseal it;
-- stale seal without a READY report remains ineligible;
-- current-system execution evidence shows actual Common Input, seal, run-authorization, mass-projection, distribution and receipt hashes;
-- never synthesizes legacy baseline/handoff or human-approval evidence.
-
-Manual seal remains available as an explicit audit action. It is not an ordinary Run prerequisite.
-
-## Focused falsifiers
-### `scripts/load-calc-run-ready-snapshot-check.mjs`
-Migrated the registered #1461 regression to the final architecture:
-- scenario path unchanged;
-- ordinary Run publishes exactly one current-system request;
-- UI Run path performs zero READY-provider calls and zero legacy authorization refreshes;
-- no manual seal, legacy calculate event or scenario auto-authorization from ordinary Run.
-
-### `scripts/load-calc-current-common-input-run-routing-check.mjs`
-Source/focused design covers:
-- READY report before manual seal;
-- current READY sealed Common Input;
-- stale retained seal + fresh READY report reseal path;
-- PARTIALLY_READY / blocked / zero-ready-method / checker-error rejection;
-- exactly one #1478 current-runtime execution per request;
-- zero legacy execution on current-system success/failure;
-- historical explicit event retained;
-- distinct current-system authority and exact receipt hashes;
-- no fake baseline/handoff presentation.
-
-Existing `scripts/authorized-empirical-execution-view-check.mjs` and `src/workspace/load-calc-consumer-view.js` are intentionally unchanged so legacy `AUTHORIZED_HANDOFF` presentation remains independently protected.
+## Final engineering boundary
+- ordinary Run does not call UI READY-snapshot provider, legacy `refreshEmpirical()`, manual `sealCurrentNonFeaCommonInput()`, or the legacy calculate event;
+- READY snapshot creation/reuse and routine-system authorization remain runtime-owned;
+- a current READY seal uses `sealedMethodIds`; an unsealed READY checker report uses `readyMethodIds`;
+- stale retained seal + fresh READY report may proceed because the runtime reseals; stale seal alone remains ineligible;
+- current results are presented as `CURRENT_COMMON_INPUT_SYSTEM_RUN`, distinct from `AUTHORIZED_HANDOFF` and `UNAUTHORIZED_LEGACY_RESULT`;
+- current evidence shows actual Common Input/seal/run-authorization/mass-projection/distribution/receipt hashes and never synthesizes legacy baseline/handoff or human approval;
+- no mass, statics, CoG, allocation, equilibrium, tolerance or method-fallback mechanics change.
 
 ## Exact changed-file ledger — 11 files
 1. `agents/PR1481_workreport.md`
@@ -103,44 +50,24 @@ Existing `scripts/authorized-empirical-execution-view-check.mjs` and `src/worksp
 10. `src/workspace/load-calc-current-system-view.js`
 11. `src/workspace/sequential-sketcher/support-load-presenter.js`
 
-Temporary WIP files are absent from the final net tree. `load-calc-consumer-view.js` and the legacy authorized-view regression are not modified.
+Temporary WIP files are absent. `src/workspace/load-calc-consumer-view.js` and `scripts/authorized-empirical-execution-view-check.mjs` remain unchanged.
 
-## Reconciliation
-`main` advanced from merged #1478 to `20e0abb5301363bef0659cf615bc8a37559ac869` via unrelated LAFEA qualification work. Those paths did not overlap this Load Calc slice.
-
-The branch was deterministically synchronized using the current-main tree plus exactly the 11 PR1481 blobs. Final compare at reconciliation:
-- behind main: 0
-- changed files: 11 exact intended files
-- LAFEA contamination: none
-
-A transient content-SHA race while transitioning recovery custody created an intermediate commit that truncated only the status record. No production source was altered by that race. It was repaired without force-push by a fast-forward two-parent reconciliation commit restoring the verified 11-file tree.
+## Reconciliation history
+The branch was previously source-reconciled to `main@20e0abb5301363bef0659cf615bc8a37559ac869` with exactly 11 paths. Production `main` subsequently advanced to `f9570d4bd86fa73cb070c95a0386fd3c79ec35ff` through disjoint LAFEA work; live compare confirms the PR's net diff remains the same 11 Load Calc paths. Before merge, deterministic tree synchronization must overlay exactly these 11 blobs on the live main tree and verify `behind=0` with no LAFEA contamination.
 
 ## Validation truth
-Source/repository validation:
-- live main grounding: PASS
-- production call-path trace: PASS
-- READY report vs sealed Common Input semantic audit: PASS
-- stale-seal + READY-report reseal audit: PASS
-- ordinary one-event routing source review: PASS
-- scenario-ready path preservation source review: PASS
-- legacy explicit event preservation source review: PASS
-- no-legacy-fallback source review: PASS
-- distinct authority presentation source review: PASS
-- legacy view delegated unchanged: PASS
-- temporary WIP removal: PASS
-- exact 11-file scope: PASS
-- branch behind main: 0
+Source/repository validation already PASS: production trace, READY-report vs seal semantics, stale-seal reseal behavior, one-event routing, scenario preservation, legacy explicit-event preservation, no legacy retry, distinct authority presentation, legacy view unchanged, exact-scope audit.
 
-Executable validation:
-- migrated final routing check: NOT_RUN
-- current-system routing/presentation check: NOT_RUN
-- legacy authorized-view check: NOT_RUN
-- Non-FEA aggregate: NOT_RUN
-- `npm run check:imports`: NOT_RUN
-- `npm run build`: NOT_RUN
-- `git diff --check`: NOT_RUN
+Executable validation remains **NOT_RUN**:
+- migrated final routing check;
+- current-system routing/presentation check;
+- legacy authorized-view check;
+- Non-FEA aggregate;
+- `npm run check:imports`;
+- `npm run build`;
+- `git diff --check`.
 
-The faithful local checkout path previously failed before materialization with `Could not resolve host: github.com`. No NOT_RUN item is represented as PASS.
+Faithful local checkout previously failed before materialization with `Could not resolve host: github.com`. No NOT_RUN is represented as PASS.
 
 ## Appendix A — takeover qualification
 - A1 Production trace: 20/20
@@ -152,4 +79,4 @@ The faithful local checkout path previously failed before materialization with `
 **Score: 98/100; minimum 18/20.**
 
 ## EXACT_NEXT_ACTION
-Owner review/merge of #1481 when authorized. After #1481, continue Issue #1321 with #1439 exact `PD-ACTIVE-CASES` Product-default provenance/hash cross-binding hardening. Do not merge this successor without explicit owner authority.
+Deterministically re-ground the exact 11-file PR onto live main, verify behind 0 / exact scope / clean reviews, squash-merge under current owner authorization, then complete and merge #1439 exact `PD-ACTIVE-CASES` Product-default cross-binding under the same explicit merge instruction.

@@ -5,130 +5,193 @@
 - PR: #1465 — `Load Calc: create current Common Input Run authorization seam`
 - Branch: `agent/issue-1321-run-internal-authorization`
 - Stack base: PR #1461 exact head `46a7b6735b746f612e28b0adfad847869b7b7ff4`
-- Current main at takeover: `dd7f13e2c73e596c7ac6625fbe211779bc61ce94`
+- Main at takeover: `dd7f13e2c73e596c7ac6625fbe211779bc61ce94`
 - Criticality: ENGINEERING_CRITICAL
 - Execution mode: AUTO
 - Merge authority: OWNER_ONLY_NOT_GRANTED
-- Takeover state: WRITE_ALLOWED_BOUNDED_AUTHORIZATION_CONTRACT
+- Source-complete basis before final recovery refresh: `d250347cbd215ec5f988ae7934d5c9b4f93fd858`
 
 ## Handover in 60 seconds
-PR #1465 is intentionally narrower than the full one-click execution cutover. It introduces the missing **system Run authorization decision/currentness seam** from a fully READY current Common Input without pretending that a legacy common-enriched publication/handoff was approved by a human.
+PR #1465 closes the authority gap between a fully READY current Common Input and a future one-click numerical path **without fabricating the legacy common-enriched publication/handoff authority** used by the existing empirical V1/V2 runtime.
 
-The live trace shows the current governed V2 runtime is still rooted in `authorized-empirical-load-input/v1`, which can only be compiled from a published `common-enriched-consumer-handoff/v1`. That legacy handoff contains explicit `APPROVE` / `AUTHORIZE`, authority IDs, evidence hashes and publication chronology. Manufacturing equivalent baseline/handoff records from a routine READY snapshot would launder authority and is prohibited.
-
-This PR therefore owns only:
+It adds two production seams:
 
 ```text
-current fully READY Common Input snapshot
-→ explicit routine-product system Run authorization decision
-→ exact Common Input / authority-revision / implementation-method binding
-→ immutable semantic receipt
+fully READY current Common Input snapshot
+→ non-fea-empirical-run-authorization/v1 system decision
+→ exact Common Input seal + authority revision binding
+→ existing NonFeaMethodExecutionCoordinator
+→ common-input-bound method authorization receipt
 ```
 
-It does **not** yet project current Common Input engineering values into the authorized V2 numerical request and does not execute the gravity kernel. That numerical projection is a separate successor because READY coverage deliberately includes negligible gasket mass and same-branch fitting mass derivation; those semantics must be preserved explicitly rather than bypassed.
+The receipt explicitly states:
+- no human approval is asserted;
+- legacy publication/handoff authority is neither required nor asserted for this routine product-screening policy;
+- it is **not standalone execution eligibility**;
+- implementation qualification, Engineering Foundation, qualified numerical projection and governed method selection remain mandatory at execution.
+
+This PR creates **no numerical projection, no governed runtime package and no calculation request**. The immediate stacked successor must build the exact current-Common-Input numerical projection and then consume this bridge. That split is intentional because checker READY semantics include negligible gasket mass and qualified same-branch fitting mass derivation; a direct shortcut into the current kernel could otherwise make checker and execution disagree.
+
+## Why the legacy authorization shape cannot be synthesized
+The live governed production path still requires `authorized-empirical-load-input/v1`, compiled from an `AUTHORIZED` `common-enriched-consumer-handoff/v1`. The underlying publication/handoff contracts carry `APPROVE` / `AUTHORIZE`, authority IDs, evidence hashes and chronology. Creating those records from a routine READY seal would falsely manufacture publication/approval custody.
+
+PR #1465 therefore introduces a distinct system-run policy contract rather than impersonating that historical route.
+
+## Production implementation
+### `src/workspace/engineering-loads/non-fea-empirical-run-authorization.js`
+Creates and validates `non-fea-empirical-run-authorization/v1`.
+
+Required creation state:
+- store snapshot exists;
+- `commonInput.packageState === READY`;
+- `staleness.stale === false`;
+- no snapshot error;
+- at least one sealed method;
+- zero blocked methods;
+- exact methods required by `AUTHORIZED_EMPIRICAL_SUPPORT_LOADS_V1` are sealed.
+
+Fixed non-caller-controlled authority fields include:
+- `decision = AUTHORIZE_ROUTINE_RUN`;
+- `authorityKind = SYSTEM_READY_COMMON_INPUT_RUN_POLICY`;
+- fixed no-human/legacy-authority statement;
+- `humanApprovalRequired = false`;
+- `humanApprovalAsserted = false`;
+- fixed implementation ID and required Common Input method set.
+
+The receipt binds:
+- exact Common Input semantic hash;
+- exact Common Input seal semantic hash;
+- existing Non-FEA authority revision vector and its semantic hash;
+- deterministic authorization identity from implementation + Common Input identity.
+
+`requireCurrentNonFeaEmpiricalRunAuthorization()` rejects reseal or authority-revision drift.
+
+### `src/workspace/engineering-loads/non-fea-empirical-run-authorization-runtime.js`
+Binds the system decision into the existing `NonFeaMethodExecutionCoordinator` rather than creating parallel currentness logic.
+
+The coordinator must return the same:
+- authorization identity/time;
+- implementation ID;
+- method-request semantic hash = system decision hash;
+- Common Input semantic hash;
+- required Common Input method set.
+
+It also must prepare against the same exact Common Input. Only then is the existing common-input-bound method authorization receipt recorded.
+
+No calculation/execution API is imported or called.
 
 ## Locked invariants
 1. `READY Common Input != legacy human publication/handoff authorization`.
-2. A routine system Run authorization may exist only for a current, error-free, fully `READY` Common Input with zero blocked methods and all methods required by `AUTHORIZED_EMPIRICAL_SUPPORT_LOADS_V1` sealed.
-3. `PARTIALLY_READY` and `BLOCKED` cannot produce this receipt.
-4. The receipt explicitly states that no human approval is asserted or required by this routine product-screening policy.
-5. Caller cannot inject authority kind, statement, authorization ID, implementation ID or required method set.
-6. Receipt identity is bound to the exact Common Input semantic hash and implementation identity.
-7. Authority revision changes must change currentness/receipt identity through existing Common Input authority revision custody.
-8. Existing explicit legacy authorization API remains unchanged and supported.
-9. Governed AUTO selection remains non-authorizing and is not modified here.
-10. No support-load/statics mechanics, mass formula, allocation, fallback, equilibrium, numerical tolerance, solver, core checker or workflow change.
+2. PARTIALLY_READY/BLOCKED/stale/errored Common Input cannot routine-authorize.
+3. Caller cannot replace authority kind, statement, implementation identity or method set.
+4. System authorization itself is not `calculationEligible` and cannot be mutated into standalone execution eligibility.
+5. Implementation qualification and Engineering Foundation remain downstream requirements through existing method-currentness custody.
+6. Qualified numerical projection and governed concrete method selection remain downstream requirements.
+7. Existing explicit legacy authorization API is unchanged.
+8. No support-load/statics formula, mass formula, load allocation, equilibrium, tolerance, solver, fallback, core checker or workflow change.
+9. No Run-controller routing change occurs in #1465.
+10. No legacy baseline/handoff publication identity is synthesized.
 
-## Live production trace
-### Existing ordinary Run ordering — upstream PR #1461
-`src/workspace/load-calc-consumer-controller.js`
+## Live source findings retained for successor
+### Exact identity
+`workspace-dataset-to-shared.js` maps `componentKey = entity.entityId` and `supportKey = entity.entityId`. Current Common Input enriched targets can therefore map to the live calculation dataset exactly, with no fuzzy/heuristic identity bridge.
 
-```text
-Run click
-→ scenario-ready path first
-→ ordinary READY snapshot provider
-→ refresh existing empirical authorization
-→ execute only when existing authorization is current
-```
+### Checker/execution parity requirements
+Common checker READY recognizes:
+- PIPE section/density or direct pipe mass;
+- OPE/HYD content evidence;
+- insulation evidence;
+- negligible `GASKET/GASK` mass;
+- pipe-like fitting derived mass where same-branch PIPE section+density is qualified.
 
-#1465 does not rewrite that controller yet. The successor will consume the new system Run authorization seam only after its numerical/effective-value projection is independently qualified.
+The successor numerical projection must preserve those exact semantics plus already-authorized ancillary mass and component-contained-fluid evidence. It must not silently drop an input because the legacy baseline ledger is no longer the route.
 
-### READY snapshot authority
-`src/workspace/non-fea-common-input-runtime.js`
-- `sealCurrentReadyNonFeaCalculationSnapshot()` reuses only a current fully READY seal or creates a new READY-only system screening seal.
-- `createNonFeaReadyProductScreeningConfirmation()` never claims human approval or accepts partial/blocked methods.
-- `buildCurrentPreFeaRequestInput()` binds live source/model, effective Product-default Project Data, resolution ledger, configured-default usage, qualification and topology/support/load authority contracts.
+## Focused falsifier definition
+`scripts/non-fea-empirical-run-authorization-check.mjs` pins:
+- fully READY creation;
+- no human/legacy authority fields;
+- no standalone execution eligibility;
+- required downstream qualification/Foundation/projection/method gates;
+- current authority revision acceptance;
+- PARTIALLY_READY rejection;
+- BLOCKED rejection;
+- missing required method rejection;
+- READY-with-blocked-method rejection;
+- stale snapshot rejection;
+- evaluation-error rejection;
+- malformed timestamp rejection;
+- fully rehashed caller authority forgery rejection;
+- fully rehashed standalone-eligibility forgery rejection;
+- authority revision staleness;
+- reseal staleness;
+- runtime coordinator Common Input cross-binding;
+- runtime receipt cross-binding;
+- no numerical execution from the runtime bridge;
+- absence of legacy authorized-input / handoff / publication dependencies.
 
-### Sealed Common Input contract
-`src/core/non-fea-common-checker/index.js`
-- sealed input retains enriched model, resolution ledger, effective Project Data, configured-default usage, qualification, authority contracts, method readiness, lineage and seal;
-- `requireCommonEnrichedPipingInput()` accepts READY/PARTIALLY_READY, so this PR must impose its own stricter READY-only Run policy;
-- checker mass readiness intentionally recognizes negligible gasket mass and qualified pipe-like fitting derived mass.
+The check is registered in `scripts/run-non-fea-checks.mjs`.
 
-### Existing method-currentness contract
-`src/workspace/non-fea-method-execution-coordinator.js`
-- `prepareAuthorization()` and `requireCurrentAuthorization()` bind implementation ID, required Common Input methods, implementation qualification bindings, Engineering Foundation handoff and authority revision vector;
-- this remains the technical currentness layer. PR #1465 does not duplicate those mechanics.
-
-### Legacy empirical authorization boundary
-`src/workspace/enrichment/authorized-enrichment-consumer-controller.js`
-`src/workspace/engineering-loads/authorized-empirical-runtime-package.js`
-`src/workspace/engineering-loads/authorized-empirical-load-input.js`
-- current production configuration still requires a legacy authorized runtime package;
-- legacy authorized input requires an `AUTHORIZED` common-enriched consumer handoff with a published baseline;
-- therefore a routine system Run receipt must be a distinct contract, not a synthetic legacy handoff.
-
-## Exact identity finding
-`src/core/shared-piping-model/adapters/workspace-dataset-to-shared.js` sets `componentKey = entity.entityId` and `supportKey = entity.entityId`. Current Common Input enriched-model target IDs therefore map exactly to live workspace entity IDs. No heuristic identity bridge is necessary in the later numerical projection.
-
-## Takeover Appendix A — implementation qualification
-### A1 — Production trace — 20/20
-Traced ordinary Run through PR1461 READY snapshot ordering, the current Common Input seal/evaluation path, method-consumption currentness coordinator, legacy authorized consumer, governed V2 package/controller and support-load execution boundary.
-
-### A2 — Failure isolation — 20/20
-Primary architectural blocker isolated: routine Run has no legitimate producer of legacy `authorized-empirical-load-input/v1`; that contract requires published baseline/handoff authority. Falsifier: if a proposed fix invents `baselineId`, `authorityId`, `APPROVE` or `AUTHORIZE` records merely from the READY seal, it violates source custody.
-
-### A3 — Authority invariant — 20/20
-READY is engineering input readiness, not human approval. The new receipt must explicitly encode routine system policy and no-human-approval assertion while preserving existing technical currentness/qualification gates.
-
-### A4 — Independent validation — 18/20
-Independent source contracts were cross-checked: Common Input seal/currentness, consumer handoff/publication schemas, method-consumption receipt, exact workspace/shared identity, fitting/negligible mass readiness. Executable validation remains NOT_RUN in this environment.
-
-### A5 — Minimal patch — 20/20
-Smallest safe first patch is a standalone immutable system Run authorization contract plus focused falsifier and aggregate registration. It must not yet modify numerical execution or Run routing.
-
-**Score: 98/100; minimum: 18/20. TAKEOVER_AUTHORITY = WRITE_ALLOWED for this bounded authorization-contract slice.**
-
-## Planned bounded production scope
+## Exact net path ledger at source-complete basis
 1. `src/workspace/engineering-loads/non-fea-empirical-run-authorization.js`
-2. `scripts/non-fea-empirical-run-authorization-check.mjs`
-3. `scripts/run-non-fea-checks.mjs` — registration only
-4. `agents/PR1465_workreport.md`
-5. `agents/claims/PR1465.yaml`
-6. `agents/status/PR1465.yaml`
+2. `src/workspace/engineering-loads/non-fea-empirical-run-authorization-runtime.js`
+3. `scripts/non-fea-empirical-run-authorization-check.mjs`
+4. `scripts/run-non-fea-checks.mjs`
+5. `agents/PR1465_workreport.md`
+6. `agents/claims/PR1465.yaml`
+7. `agents/status/PR1465.yaml`
 
-Temporary WIP files are to be removed from the net diff.
+Stack compare at source-complete basis: 15 commits ahead / 0 behind / exact merge base #1461 head. Temporary WIP files are absent from the net diff. Reviews: none. Review threads: none.
 
-Protected in this PR:
+Protected and unchanged:
 - `src/workspace/load-calc-consumer-controller.js`
 - `src/workspace/enrichment/authorized-enrichment-consumer-controller.js`
-- `src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js`
-- `src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js`
-- `src/workspace/engineering-loads/support-load-distribution-v3.js`
-- `src/core/non-fea-common-checker/**`
-- `.github/workflows/**`
+- authorized empirical numerical execution/projection files
+- support-load distribution/statics mechanics
+- common checker/seal contract
+- workflows.
 
-## Validation truth
-Source inspection is observed. Executable validation remains **NOT_RUN** because a faithful local checkout/materialization previously failed before checkout with:
+## Validation ledger
+| Check | Status | Observation |
+|---|---|---|
+| Live stack grounding | PASS | REMOTE |
+| Issue/authority trace | PASS | SOURCE_INSPECTION |
+| Exact 7-file stacked diff | PASS | REMOTE |
+| Reviews / threads | PASS_NONE | REMOTE |
+| Authorization contract review | PASS | SOURCE_INSPECTION |
+| Method-currentness runtime bridge review | PASS | SOURCE_INSPECTION |
+| Focused falsifier design/source review | PASS | SOURCE_INSPECTION |
+| Aggregate registration | PASS | SOURCE_INSPECTION |
+| Focused Node check | NOT_RUN | NOT_OBSERVED |
+| Non-FEA aggregate | NOT_RUN | NOT_OBSERVED |
+| `npm run check:imports` | NOT_RUN | NOT_OBSERVED |
+| `npm run build` | NOT_RUN | NOT_OBSERVED |
+| `git diff --check` | NOT_RUN | NOT_OBSERVED |
+| Local checkout | FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION | prior `Could not resolve host: github.com` |
 
-`Could not resolve host: github.com`
+No NOT_RUN item is represented as PASS.
 
-No NOT_RUN result is represented as PASS.
+## Appendix A — takeover qualification
+- A1 Production trace: 20/20
+- A2 Failure isolation: 20/20
+- A3 Authority invariant: 20/20
+- A4 Independent validation design/source cross-check: 18/20
+- A5 Minimal patch: 20/20
+
+**Total 98/100; minimum 18/20.**
+
+## Decisions / risks
+- `DEC-1465-01`: routine READY product policy may create a system authorization without claiming human approval.
+- `DEC-1465-02`: legacy common-enriched publication/handoff is not synthesized.
+- `DEC-1465-03`: system receipt is not standalone execution eligibility.
+- `DEC-1465-04`: existing `NonFeaMethodExecutionCoordinator` remains the implementation/Foundation/currentness custody owner.
+- `DEC-1465-05`: numerical projection is deferred to a separate immediate stacked successor to preserve checker/execution mass semantics.
+- `RISK-1465-01`: executable qualification remains NOT_RUN because a faithful checkout is unavailable in this environment.
+- `RISK-1465-02`: #1465 is stacked on unmerged #1461 and must be re-grounded after upstream merge/base movement.
 
 ## EXACT_NEXT_ACTION
-1. Replace temporary WIP custody with PR1465 claim/status records and remove WIP files.
-2. Implement the standalone READY Common Input system Run authorization receipt.
-3. Add focused negative controls for partial/blocked/stale/error/missing-method and caller authority injection.
-4. Register the check in the existing Non-FEA aggregate.
-5. Reconcile the exact stacked diff against PR #1461 head and keep draft/unmerged.
-6. Successor only: qualify exact current-Common-Input effective numerical projection including fitting/negligible/ancillary/component-content semantics before routing Run through it.
+1. Keep #1465 DRAFT / UNMERGED; owner merge authority has not been granted.
+2. Open a successor stacked on exact #1465 head.
+3. Successor must build a source-current Common Input effective numerical projection with exact dataset/entity/hash custody.
+4. Preserve negligible gasket and same-branch fitting derived-mass behavior; preserve component contained fluid and ancillary mass evidence; do not modify support statics formulas.
+5. Bind the projected request to the #1465 system decision + recorded method authorization + governed concrete method selection.
+6. Only after that projection is independently qualified should ordinary Run consume the new path.

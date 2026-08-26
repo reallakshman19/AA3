@@ -3,14 +3,15 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1465
 issue: 1321
 branch: agent/issue-1321-run-internal-authorization
-state: ACTIVE
+state: SOURCE_COMPLETE
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 base_branch: agent/issue-1321-run-ready-snapshot
 base_sha: 46a7b6735b746f612e28b0adfad847869b7b7ff4
-mission: "Create a distinct routine system Run authorization receipt from fully READY current Common Input without fabricating legacy published-baseline or consumer-handoff authority"
+mission: "Create and record a distinct routine system Run authorization from fully READY current Common Input without fabricating legacy published-baseline or consumer-handoff authority"
 claimed_paths:
   - src/workspace/engineering-loads/non-fea-empirical-run-authorization.js
+  - src/workspace/engineering-loads/non-fea-empirical-run-authorization-runtime.js
   - scripts/non-fea-empirical-run-authorization-check.mjs
   - scripts/run-non-fea-checks.mjs
   - agents/PR1465_workreport.md
@@ -24,7 +25,7 @@ protected_paths:
   - src/workspace/engineering-loads/support-load-distribution-v3.js
   - src/core/non-fea-common-checker/**
   - .github/workflows/**
-authority_boundary: "This PR creates only a system routine-Run authorization decision bound to a fully READY current Common Input and existing authority revision custody. It does not fabricate legacy APPROVE/AUTHORIZE handoffs, does not project numerical inputs, and does not execute."
+authority_boundary: "This PR creates the system routine-Run decision and binds it into existing method-currentness custody. The receipt is explicitly not standalone execution eligibility. It does not fabricate legacy APPROVE/AUTHORIZE handoffs, does not project numerical inputs, and does not execute."
 appendix_a_qualified: true
 appendix_a_score: 98
 appendix_a_minimum: 18

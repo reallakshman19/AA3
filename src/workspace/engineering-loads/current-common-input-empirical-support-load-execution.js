@@ -347,13 +347,17 @@ function requireDatasetBinding(dataset, commonInput, projection) {
       { expected: commonInput.sourceDatasetSha256, actual: dataset.sourceSha256 || null },
     );
   }
-  if (dataset.sharedModel.semanticHash !== commonInput.sourceModelSemanticHash
-      || dataset.sharedModel.semanticHash !== projection.sourceModelSemanticHash) {
+  const sharedModelSemanticHash = requireCurrentSemanticHash(
+    'dataset.sharedModel',
+    dataset.sharedModel,
+  );
+  if (sharedModelSemanticHash !== commonInput.sourceModelSemanticHash
+      || sharedModelSemanticHash !== projection.sourceModelSemanticHash) {
     throw codedError(
       'Execution shared model differs from the source model bound by Common Input and the mass projection.',
       'CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_SOURCE_MODEL_STALE',
       {
-        datasetSharedModelSemanticHash: dataset.sharedModel.semanticHash || null,
+        datasetSharedModelSemanticHash: sharedModelSemanticHash,
         commonInputSourceModelSemanticHash: commonInput.sourceModelSemanticHash,
         projectionSourceModelSemanticHash: projection.sourceModelSemanticHash,
       },
@@ -379,17 +383,38 @@ function requireAuthorityBinding(label, value, contract) {
       { label },
     );
   }
-  const currentHash = typeof value.semanticHash === 'string'
-    ? value.semanticHash
-    : semanticHash(value);
-  if (currentHash !== contract.semanticHash) {
+  const expectedHash = requireSemanticHash(contract.semanticHash, `${label}.semanticHash`);
+  const currentHash = requireCurrentSemanticHash(label, value);
+  if (currentHash !== expectedHash) {
     throw codedError(
       `Current ${label} differs from the Common Input authority contract.`,
       'CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_AUTHORITY_STALE',
-      { label, expected: contract.semanticHash, actual: currentHash },
+      { label, expected: expectedHash, actual: currentHash },
     );
   }
   return currentHash;
+}
+
+function requireCurrentSemanticHash(label, value) {
+  if (!isRecord(value)) {
+    throw codedError(
+      `${label} must be an object with deterministic semantic identity.`,
+      'CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_AUTHORITY_BINDING_REQUIRED',
+      { label },
+    );
+  }
+  const declared = typeof value.semanticHash === 'string' ? value.semanticHash : null;
+  const material = structuredClone(value);
+  delete material.semanticHash;
+  const computed = semanticHash(material);
+  if (declared !== null && declared !== computed) {
+    throw codedError(
+      `${label} declared semantic hash does not match its current content.`,
+      'CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_AUTHORITY_HASH_MISMATCH',
+      { label, declared, computed },
+    );
+  }
+  return declared || computed;
 }
 
 function requireCurrentReadyCommonInput(snapshot) {

@@ -1,0 +1,29 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1470
+mission: "Require observed production CSP/security headers before EMP.1 release"
+workstream: EMP1_DEPLOYED_SECURITY_HEADERS
+branch: agent/issue-1466-emp1-deployed-security-headers-20260826
+issue: 1466
+umbrella: 1389
+dependency_base_pr: 1464
+base_branch: agent/issue-1463-emp1-dependency-security-20260826
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_ISSUE_1466
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_STACKED_DRAFT
+handover_readiness: READY
+stack_base_head: 4b6eab2474ca0728ffc455698aa99b01f2d716a5
+pr_head_at_allocation: 440b89b8e708d3fd88a79f8637d6556c31cd9ee0
+live_main_last_observed: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+grounding_epoch: GE-PR1470-001
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: STACKED_ON_PR1464_EXACT_OVERLAP_INTENTIONAL
+current_stage: WIP_TO_PR_RECOVERY_MIGRATION
+merge_authorization: NOT_GRANTED
+current_blocker: "Actual deployed header observation and browser compatibility require executable HTTPS deployment evidence."
+exact_next_action: "Retire WIP records and implement provider-neutral deployed-header gate."

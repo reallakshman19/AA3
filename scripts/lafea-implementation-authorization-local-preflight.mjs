@@ -15,59 +15,92 @@ const REQUIRED_PATHS = Object.freeze([
   'scripts/lafea-implementation-authorization-gate-retain.mjs',
 ]);
 
-assert.equal(
-  path.resolve(process.cwd()),
-  ROOT,
-  `run from repository root: ${ROOT}`,
-);
+let executionPhase = 'ENVIRONMENT_PREFLIGHT';
+let repositoryHead = null;
 
-const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-assert.equal(packageJson?.name, 'advanced-analysis', 'unexpected repository package identity');
-assert.equal(packageJson?.type, 'module', 'authorization runner requires the repository ESM contract');
-assert.equal(typeof globalThis.structuredClone, 'function', 'Node runtime lacks structuredClone');
-assert.equal(typeof globalThis.URL, 'function', 'Node runtime lacks URL');
-assert.ok(process.versions?.node, 'Node runtime version identity is unavailable');
+try {
+  const preflight = runEnvironmentPreflight();
+  console.error(JSON.stringify(preflight, null, 2));
 
-for (const relativePath of REQUIRED_PATHS) {
-  const absolutePath = path.join(ROOT, relativePath);
-  assert.equal(fs.existsSync(absolutePath), true, `required authorization path missing: ${relativePath}`);
-  assert.equal(fs.statSync(absolutePath).isFile(), true, `required authorization path is not a file: ${relativePath}`);
+  executionPhase = 'DELEGATED_ENGINEERING_GATE';
+  execFileSync(process.execPath, [RETAIN], {
+    cwd: ROOT,
+    env: process.env,
+    encoding: 'utf8',
+    maxBuffer: 128 * 1024 * 1024,
+    stdio: ['ignore', 'inherit', 'inherit'],
+  });
+} catch (error) {
+  const delegatedGateFailed = executionPhase === 'DELEGATED_ENGINEERING_GATE';
+  const exitStatus = Number.isInteger(error?.status) && error.status !== 0
+    ? error.status
+    : 1;
+
+  console.error(JSON.stringify({
+    schema: 'lafea-implementation-authorization-local-failure/v1',
+    status: 'FAIL',
+    repository: 'reallaksh19/Advanced_Analysis',
+    repositoryHead,
+    phase: executionPhase,
+    classification: delegatedGateFailed
+      ? 'ENGINEERING_GATE_FAILED_STOP_AT_FIRST_ASSERTION'
+      : 'NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED',
+    q1ToQ5Executed: delegatedGateFailed,
+    engineeringAuthorityCreated: false,
+    releaseAuthorityGranted: false,
+    exitStatus,
+    message: conciseError(error),
+  }, null, 2));
+
+  process.exit(exitStatus);
 }
 
-const gitTopLevel = git(['rev-parse', '--show-toplevel']).trim();
-assert.equal(path.resolve(gitTopLevel), ROOT, 'Git top-level directory does not match repository root');
+function runEnvironmentPreflight() {
+  assert.equal(
+    path.resolve(process.cwd()),
+    ROOT,
+    `run from repository root: ${ROOT}`,
+  );
 
-const repositoryHead = git(['rev-parse', '--verify', 'HEAD']).trim();
-assert.match(repositoryHead, /^[0-9a-f]{40}$/u, 'exact repository HEAD must be a full Git SHA');
+  const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  assert.equal(packageJson?.name, 'advanced-analysis', 'unexpected repository package identity');
+  assert.equal(packageJson?.type, 'module', 'authorization runner requires the repository ESM contract');
+  assert.equal(typeof globalThis.structuredClone, 'function', 'Node runtime lacks structuredClone');
+  assert.equal(typeof globalThis.URL, 'function', 'Node runtime lacks URL');
+  assert.ok(process.versions?.node, 'Node runtime version identity is unavailable');
 
-const dirty = git(['status', '--porcelain=v1', '--untracked-files=all']).trim();
-assert.equal(dirty, '', `authorization execution requires a clean checkout; dirty state:\n${dirty}`);
+  for (const relativePath of REQUIRED_PATHS) {
+    const absolutePath = path.join(ROOT, relativePath);
+    assert.equal(fs.existsSync(absolutePath), true, `required authorization path missing: ${relativePath}`);
+    assert.equal(fs.statSync(absolutePath).isFile(), true, `required authorization path is not a file: ${relativePath}`);
+  }
 
-const preflight = Object.freeze({
-  schema: 'lafea-implementation-authorization-local-preflight/v1',
-  status: 'PASS',
-  repository: 'reallaksh19/Advanced_Analysis',
-  repositoryHead,
-  repositoryRoot: ROOT,
-  packageIdentity: packageJson.name,
-  packageType: packageJson.type,
-  nodeVersion: process.versions.node,
-  gitAvailable: true,
-  checkoutClean: true,
-  requiredPaths: REQUIRED_PATHS,
-  engineeringAuthorityCreated: false,
-  releaseAuthorityGranted: false,
-  delegatedEntryPoint: 'scripts/lafea-implementation-authorization-gate-retain.mjs',
-});
+  const gitTopLevel = git(['rev-parse', '--show-toplevel']).trim();
+  assert.equal(path.resolve(gitTopLevel), ROOT, 'Git top-level directory does not match repository root');
 
-console.error(JSON.stringify(preflight, null, 2));
-execFileSync(process.execPath, [RETAIN], {
-  cwd: ROOT,
-  env: process.env,
-  encoding: 'utf8',
-  maxBuffer: 128 * 1024 * 1024,
-  stdio: ['ignore', 'inherit', 'inherit'],
-});
+  repositoryHead = git(['rev-parse', '--verify', 'HEAD']).trim();
+  assert.match(repositoryHead, /^[0-9a-f]{40}$/u, 'exact repository HEAD must be a full Git SHA');
+
+  const dirty = git(['status', '--porcelain=v1', '--untracked-files=all']).trim();
+  assert.equal(dirty, '', `authorization execution requires a clean checkout; dirty state:\n${dirty}`);
+
+  return Object.freeze({
+    schema: 'lafea-implementation-authorization-local-preflight/v1',
+    status: 'PASS',
+    repository: 'reallaksh19/Advanced_Analysis',
+    repositoryHead,
+    repositoryRoot: ROOT,
+    packageIdentity: packageJson.name,
+    packageType: packageJson.type,
+    nodeVersion: process.versions.node,
+    gitAvailable: true,
+    checkoutClean: true,
+    requiredPaths: REQUIRED_PATHS,
+    engineeringAuthorityCreated: false,
+    releaseAuthorityGranted: false,
+    delegatedEntryPoint: 'scripts/lafea-implementation-authorization-gate-retain.mjs',
+  });
+}
 
 function git(args) {
   return execFileSync('git', args, {
@@ -76,4 +109,11 @@ function git(args) {
     maxBuffer: 4 * 1024 * 1024,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+}
+
+function conciseError(error) {
+  const message = typeof error?.message === 'string' && error.message.trim()
+    ? error.message.trim()
+    : String(error ?? 'unknown failure');
+  return message.split(/\r?\n/u)[0].slice(0, 500);
 }

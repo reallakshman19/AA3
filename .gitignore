@@ -40,3 +40,7 @@ artifacts/
 
 # Temporary test directories
 .tmp/
+
+# Runtime-only exact-head LAFEA implementation-authorization receipt.
+# Keep the path specific: other reports remain visible to Git custody.
+/reports/qualification/lafea-implementation-authorization-gate.json

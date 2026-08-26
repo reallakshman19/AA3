@@ -40,6 +40,7 @@ const rawProfile = Object.freeze({
 });
 const provider = createNonFeaProductDefaultProvider({ profile: rawProfile });
 const effectiveProfile = provider.effectiveProfile;
+const rawProfileHash = provider.sourceProjectDataSemanticHash;
 const dataset = Object.freeze({
   datasetId: 'DATASET-PRODUCTION-GOVERNED-CUTOVER',
   version: 7,
@@ -76,7 +77,7 @@ const currentBindings = Object.freeze({
   sharedModelSemanticHash: semanticHash(dataset.sharedModel),
   supportSiteModelSemanticHash: semanticHash(supportSiteModel),
   routePartitionModelSemanticHash: semanticHash(routePartitionModel),
-  projectDataProfileSemanticHash: semanticHash(rawProfile),
+  projectDataProfileSemanticHash: rawProfileHash,
   masterSourceHashes: HASHES,
 });
 const legacyRuntimePackage = sealAuthorizedEmpiricalRuntimePackage({
@@ -89,14 +90,7 @@ const legacyRuntimePackage = sealAuthorizedEmpiricalRuntimePackage({
   bindings: currentBindings,
 });
 
-const projection = createProductionGovernedEmpiricalProjection({
-  legacyRuntimePackage,
-  dataset,
-  effectiveProfile,
-  supportSiteModel,
-  routePartitionModel,
-  masterData,
-});
+const projection = createProductionGovernedEmpiricalProjection(productionInput(legacyRuntimePackage));
 
 assert.equal(
   projection.governedSelection.gravityMethodAuthority.requestedMethod,
@@ -130,7 +124,7 @@ assert.equal(
 assert.notEqual(
   projection.runtimePackage.bindings.projectDataProfileSemanticHash,
   legacyRuntimePackage.bindings.projectDataProfileSemanticHash,
-  'The raw Project Data binding is the one intentional binding upgrade.',
+  'The exact current raw Project Data binding is the one intentional binding upgrade.',
 );
 
 const rebuilt = rebuildProductionGovernedEmpiricalProjection({
@@ -143,6 +137,24 @@ const rebuilt = rebuildProductionGovernedEmpiricalProjection({
 });
 assert.equal(rebuilt.semanticHash, projection.semanticHash,
   'Unchanged live authority must rebuild the identical governed projection.');
+
+const staleRawProjectPackage = sealAuthorizedEmpiricalRuntimePackage({
+  schema: AUTHORIZED_EMPIRICAL_RUNTIME_PACKAGE_SCHEMA,
+  packageId: legacyRuntimePackage.packageId,
+  configuredAt: legacyRuntimePackage.configuredAt,
+  executionId: legacyRuntimePackage.executionId,
+  executedAt: legacyRuntimePackage.executedAt,
+  authorizedInput,
+  bindings: {
+    ...currentBindings,
+    projectDataProfileSemanticHash: 'fnv1a64:9999999999999999',
+  },
+});
+assert.throws(
+  () => createProductionGovernedEmpiricalProjection(productionInput(staleRawProjectPackage)),
+  (error) => error?.code === 'EMPIRICAL_PRODUCTION_GOVERNED_SOURCE_PROJECT_DATA_MISMATCH',
+  'Only the exact current raw Project Data binding may be upgraded to the effective Product-default profile.',
+);
 
 const staleDatasetPackage = sealAuthorizedEmpiricalRuntimePackage({
   schema: AUTHORIZED_EMPIRICAL_RUNTIME_PACKAGE_SCHEMA,
@@ -157,14 +169,7 @@ const staleDatasetPackage = sealAuthorizedEmpiricalRuntimePackage({
   },
 });
 assert.throws(
-  () => createProductionGovernedEmpiricalProjection({
-    legacyRuntimePackage: staleDatasetPackage,
-    dataset,
-    effectiveProfile,
-    supportSiteModel,
-    routePartitionModel,
-    masterData,
-  }),
+  () => createProductionGovernedEmpiricalProjection(productionInput(staleDatasetPackage)),
   (error) => error?.code === 'EMPIRICAL_PRODUCTION_GOVERNED_UPGRADE_BINDING_MISMATCH'
     && error.details?.some((row) => row.field === 'datasetVersion'),
   'Stale dataset/model/master authorization context must not be upgraded merely by replacing Project Data binding.',
@@ -186,14 +191,7 @@ const staleMasterPackage = sealAuthorizedEmpiricalRuntimePackage({
   },
 });
 assert.throws(
-  () => createProductionGovernedEmpiricalProjection({
-    legacyRuntimePackage: staleMasterPackage,
-    dataset,
-    effectiveProfile,
-    supportSiteModel,
-    routePartitionModel,
-    masterData,
-  }),
+  () => createProductionGovernedEmpiricalProjection(productionInput(staleMasterPackage)),
   (error) => error?.code === 'EMPIRICAL_PRODUCTION_GOVERNED_UPGRADE_BINDING_MISMATCH'
     && error.details?.some((row) => row.field === 'masterSourceHashes.lineList'),
   'Stale master authority must block production upgrade.',
@@ -208,10 +206,23 @@ console.log(JSON.stringify({
   selectedMethod: projection.runtimePackage.method,
   rawProjectDataHash: legacyRuntimePackage.bindings.projectDataProfileSemanticHash,
   effectiveProjectDataHash: projection.runtimePackage.bindings.projectDataProfileSemanticHash,
+  staleRawProjectDataUpgradeBlocked: true,
   staleDatasetUpgradeBlocked: true,
   staleMasterUpgradeBlocked: true,
   unchangedRebuildStable: true,
 }, null, 2));
+
+function productionInput(runtimePackage) {
+  return {
+    legacyRuntimePackage: runtimePackage,
+    sourceProjectDataSemanticHash: rawProfileHash,
+    dataset,
+    effectiveProfile,
+    supportSiteModel,
+    routePartitionModel,
+    masterData,
+  };
+}
 
 function makeAuthorizedInput(projectId) {
   const overlay = {

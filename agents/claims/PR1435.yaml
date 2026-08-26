@@ -1,0 +1,43 @@
+schema: engineering-pr-claim/v1
+pr: 1435
+repository: reallaksh19/Advanced_Analysis
+owner: reallaksh19
+branch: agent/lafea4-tech13h-retained-authority-current-main-20260826
+source_task: PR1246 salvage / LAFEA.4 TECH-13H retained refinement authority
+state: ACTIVE_BOUNDED
+criticality: ENGINEERING_CRITICAL
+authority_domain:
+  - LAFEA.4 TECH-13H promotion-bound retained refinement authority
+  - TECH-13 product evidence generic-V2-recovery exclusion
+  - exact-head H qualification/program policy
+exact_paths:
+  - src/workspace/lafea4-shell-product-refinement-retention-authority.js
+  - src/workspace/lafea-workbench-mesh-generation-actions.js
+  - scripts/lafea-tech13h-retained-refinement-authority-check.mjs
+  - scripts/lafea-tech13g-active-promotion-path-check.mjs
+  - scripts/lafea-tech13-product-refinement-bundle-verifier.mjs
+  - validation/lafea4-refinement/product-refinement-exact-head-plan-v1.json
+  - validation/lafea4-refinement/product-refinement-promotion-v1.json
+  - validation/lafea4-refinement/tech13-product-local-refinement-program-v1.json
+excluded_authority:
+  - TECH-13I promoted replay/export/recovery
+  - TECH-13J implementation currentness or source fingerprint
+  - production promotion trust-root activation
+  - release authority
+  - CST/DKT formulation and solver mechanics
+  - parent-normal mathematics
+  - mesh-quality or benchmark tolerance changes
+  - workflow or Vite bundle policy
+  - LAFEA.3 authority
+coordination:
+  predecessor_pr: 1246
+  predecessor_h_disposition: SUPERSEDED_BY_PR1435
+  predecessor_i_j_disposition: UNRESOLVED_PROVENANCE_REMAINS
+  overlaps:
+    - pr: 1432
+      classification: SAFE_LAFEA3_DIFFERENT_PATHS_AND_AUTHORITY
+    - pr: 1258
+      classification: BOUNDED_NO_B01_SOLVER_AUTHORITY_TOUCHED
+    - pr: 1259
+      classification: BOUNDED_NO_B02_AUTHORITY_TOUCHED
+merge_authority: OWNER_ONLY

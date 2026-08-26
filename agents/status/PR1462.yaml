@@ -11,7 +11,7 @@ criticality: ENGINEERING_CRITICAL
 recovery_state: CONTINUE
 takeover_authority: WRITE_ALLOWED_EVIDENCE_INFRASTRUCTURE_ONLY
 execution_mode: OWNER_DIRECTED
-current_stage: CURRENT_MAIN_SYNCHRONIZED_LOCAL_ENTRYPOINT_PENDING_EXECUTION
+current_stage: CURRENT_MAIN_SYNCHRONIZED_LOCAL_ENTRYPOINT_SELF_TESTED_PENDING_REAL_Q1_Q5_EXECUTION
 engineering_failure_proven: false
 validation:
   live_grounding: PASS_GITHUB_READBACK
@@ -19,14 +19,22 @@ validation:
   downstream_lafea_route_drift: REEXECUTION_REQUIRED_BEFORE_AUTHORIZATION_CLAIM
   current_main_synchronization: PASS_GIT_TREE_PARENT_CUSTODY
   local_preflight_source_contract: PASS_SOURCE_INSPECTION
-  local_preflight_failure_phase_classification: PASS_SOURCE_INSPECTION
   local_preflight_syntax: PASS_LOCAL_NODE_CHECK
+  local_preflight_self_test_syntax: PASS_LOCAL_NODE_CHECK
+  local_preflight_failure_contract_self_test: PASS_LOCAL_SYNTHETIC_GIT_REPOS
+  delegated_failure_does_not_overstate_q1_q5: PASS_LOCAL_SYNTHETIC_GIT_REPOS
   generated_receipt_repeatability: PASS_SOURCE_INSPECTION_EXACT_PATH_IGNORED_ONLY
   exact_local_repository_execution: NOT_RUN
   q1_q5_engineering_execution: NOT_RUN
 failure_semantics:
-  environment_preflight: NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED
-  delegated_engineering_gate: ENGINEERING_GATE_FAILED_STOP_AT_FIRST_ASSERTION
+  environment_preflight:
+    classification: NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED
+    delegated_engineering_gate_entered: false
+    q1_q5_disposition: NOT_RUN
+  delegated_nonzero:
+    classification: DELEGATED_ENGINEERING_GATE_NONZERO_STOP_AT_FIRST_CHILD_FAILURE
+    delegated_engineering_gate_entered: true
+    q1_q5_disposition: UNKNOWN_OR_PARTIAL_SEE_FIRST_CHILD_FAILURE
 blocker: NO_EXACT_EXECUTABLE_REPOSITORY_CHECKOUT_IN_AGENT_CONTAINER
 retained_report_path: reports/qualification/lafea-implementation-authorization-gate.json
 merge_authority: OWNER_ONLY_NOT_GRANTED

@@ -17,6 +17,9 @@ import {
   requireCurrentNonFeaEmpiricalRunAuthorization,
   requireNonFeaEmpiricalRunAuthorization,
 } from '../src/workspace/engineering-loads/non-fea-empirical-run-authorization.js';
+import {
+  authorizeCurrentNonFeaEmpiricalRun,
+} from '../src/workspace/engineering-loads/non-fea-empirical-run-authorization-runtime.js';
 
 const AUTHORIZED_AT = '2026-08-26T11:55:00.000Z';
 const readySnapshot = snapshot(commonInput());
@@ -43,9 +46,13 @@ assert.equal(authorization.commonInputSealSemanticHash, readySnapshot.commonInpu
 assert.equal(authorization.authorityRevisionVectorSemanticHash, authorization.authorityRevisionVector.semanticHash);
 assert.equal(authorization.policy.legacyPublicationOrHandoffRequired, false);
 assert.equal(authorization.policy.legacyPublicationOrHandoffAsserted, false);
+assert.equal(authorization.policy.standaloneExecutionEligibility, false);
 assert.equal(authorization.policy.currentnessRequiredAtExecution, true);
+assert.equal(authorization.policy.implementationQualificationRequiredAtExecution, true);
+assert.equal(authorization.policy.engineeringFoundationRequiredAtExecution, true);
 assert.equal(authorization.policy.qualifiedNumericalProjectionRequiredAtExecution, true);
 assert.equal(authorization.policy.governedMethodSelectionRequiredAtExecution, true);
+assert.equal(Object.hasOwn(authorization, 'calculationEligible'), false);
 assert.equal(Object.hasOwn(authorization, 'authorityId'), false);
 assert.equal(Object.hasOwn(authorization, 'baselineId'), false);
 assert.equal(Object.hasOwn(authorization, 'handoffId'), false);
@@ -53,6 +60,43 @@ assert.equal(Object.hasOwn(authorization, 'handoffId'), false);
 const current = requireCurrentNonFeaEmpiricalRunAuthorization(authorization, readySnapshot);
 assert.equal(current.freshness.stale, false);
 assert.equal(current.currentRevisionVector.semanticHash, authorization.authorityRevisionVectorSemanticHash);
+
+const coordinatorCalls = { prepared: [], recorded: [] };
+const runtimeAuthorization = authorizeCurrentNonFeaEmpiricalRun(readySnapshot, {
+  authorizedAt: AUTHORIZED_AT,
+  executionCoordinator: fakeCoordinator(readySnapshot, coordinatorCalls),
+});
+assert.equal(coordinatorCalls.prepared.length, 1);
+assert.equal(coordinatorCalls.recorded.length, 1);
+assert.equal(
+  coordinatorCalls.prepared[0].authorizationId,
+  runtimeAuthorization.decision.authorizationId,
+);
+assert.equal(
+  coordinatorCalls.prepared[0].methodRequestSemanticHash,
+  runtimeAuthorization.decision.semanticHash,
+);
+assert.equal(
+  coordinatorCalls.prepared[0].scenarioId,
+  `ROUTINE-RUN:${readySnapshot.commonInput.semanticHash}`,
+);
+assert.equal(
+  runtimeAuthorization.methodAuthorization.semanticHash,
+  coordinatorCalls.recorded[0].semanticHash,
+);
+assert.equal(Object.hasOwn(runtimeAuthorization, 'execution'), false,
+  'authorization runtime must not create numerical execution');
+
+expectCode(
+  () => authorizeCurrentNonFeaEmpiricalRun(readySnapshot, {
+    authorizedAt: AUTHORIZED_AT,
+    executionCoordinator: fakeCoordinator(
+      snapshot(commonInput({ projectDataProfileSemanticHash: semanticHash({ wrong: true }) })),
+      { prepared: [], recorded: [] },
+    ),
+  }),
+  'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_COORDINATOR_COMMON_INPUT_MISMATCH',
+);
 
 expectCode(
   () => createNonFeaEmpiricalRunAuthorization(snapshot(commonInput({
@@ -111,6 +155,17 @@ expectCode(
   'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_POLICY_INVALID',
 );
 
+const forgedEligibility = rehashAuthorization(authorization, {
+  policy: {
+    ...authorization.policy,
+    standaloneExecutionEligibility: true,
+  },
+});
+expectCode(
+  () => requireNonFeaEmpiricalRunAuthorization(forgedEligibility),
+  'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_POLICY_INVALID',
+);
+
 const changedProjectData = snapshot(commonInput({
   projectDataProfileSemanticHash: semanticHash({ profile: 'changed' }),
 }));
@@ -135,16 +190,25 @@ const resealedAuthorization = createNonFeaEmpiricalRunAuthorization(resealed, {
 assert.notEqual(resealedAuthorization.authorizationId, authorization.authorizationId);
 assert.notEqual(resealedAuthorization.semanticHash, authorization.semanticHash);
 
-const source = readFileSync(new URL(
+const contractSource = readFileSync(new URL(
   '../src/workspace/engineering-loads/non-fea-empirical-run-authorization.js',
   import.meta.url,
 ), 'utf8');
-assert.equal(source.includes('authorized-empirical-load-input'), false,
+assert.equal(contractSource.includes('authorized-empirical-load-input'), false,
   'system Run authorization must not depend on the legacy authorized input contract');
-assert.equal(source.includes('common-enriched-consumer-handoff'), false,
+assert.equal(contractSource.includes('common-enriched-consumer-handoff'), false,
   'system Run authorization must not synthesize a legacy consumer handoff');
-assert.equal(source.includes('publishCommonEnrichedPropertiesBaseline'), false,
+assert.equal(contractSource.includes('publishCommonEnrichedPropertiesBaseline'), false,
   'system Run authorization must not synthesize a published baseline');
+
+const runtimeSource = readFileSync(new URL(
+  '../src/workspace/engineering-loads/non-fea-empirical-run-authorization-runtime.js',
+  import.meta.url,
+), 'utf8');
+assert.match(runtimeSource, /nonFeaMethodExecutionCoordinator/u,
+  'runtime bridge must use existing method-currentness custody');
+assert.doesNotMatch(runtimeSource, /calculateAuthorized|calculateSupportLoad|executeGoverned/u,
+  'authorization runtime must not create or execute a numerical request');
 
 console.log(JSON.stringify({
   status: 'PASS',
@@ -159,10 +223,43 @@ console.log(JSON.stringify({
   fullyReadyRequired: true,
   partialAndBlockedRejected: true,
   staleAndErroredRejected: true,
+  standaloneExecutionEligibility: false,
+  downstreamImplementationQualificationRequired: true,
+  downstreamEngineeringFoundationRequired: true,
+  methodCurrentnessReceiptRecorded: true,
   callerAuthorityInjectionRejected: true,
   legacyPublicationHandoffSynthesized: false,
   numericalProjectionCreated: false,
 }, null, 2));
+
+function fakeCoordinator(snapshotValue, calls) {
+  return {
+    prepareAuthorization(input) {
+      calls.prepared.push(structuredClone(input));
+      const receiptMaterial = {
+        authorizationId: input.authorizationId,
+        authorizedAt: input.authorizedAt,
+        implementationId: input.implementationId,
+        scenarioId: input.scenarioId,
+        methodRequestSemanticHash: input.methodRequestSemanticHash,
+        commonInputSemanticHash: snapshotValue.commonInput.semanticHash,
+        requiredCommonMethodIds: ['SUSTAINED_REACTIONS', 'WEIGHT_AND_GRAVITY'],
+      };
+      const receipt = {
+        ...receiptMaterial,
+        semanticHash: semanticHash(receiptMaterial),
+      };
+      return {
+        receipt,
+        commonInput: snapshotValue.commonInput,
+      };
+    },
+    recordAuthorization(receipt) {
+      calls.recorded.push(structuredClone(receipt));
+      return receipt;
+    },
+  };
+}
 
 function snapshot(commonInputValue) {
   return {

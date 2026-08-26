@@ -8,15 +8,18 @@ state: ACTIVE_BOUNDED_EVIDENCE_INFRASTRUCTURE_ONLY
 criticality: ENGINEERING_CRITICAL
 authority_domain:
   - local exact-head environment/custody preflight for merged Q1-Q5 authorization gate
-  - machine-readable separation of preflight NOT_RUN from delegated engineering-gate failure
+  - machine-readable separation of preflight NOT_RUN from delegated-gate nonzero without overstating Q1-Q5 depth
+  - synthetic temporary-Git self-test of wrapper process/exit classification only
   - repeatable runtime receipt custody for the one exact generated authorization JSON path
 exact_paths:
   - scripts/lafea-implementation-authorization-local-preflight.mjs
+  - scripts/lafea-implementation-authorization-local-preflight-self-test.mjs
   - .gitignore
   - agents/PR1462_workreport.md
   - agents/status/PR1462.yaml
   - agents/claims/PR1462.yaml
 excluded_authority:
+  - Q1-Q5 numerical PASS or engineering execution evidence
   - local-continuum formulation or solver mechanics
   - local-shell formulation, pressure mechanics or orientation convention
   - mesher algorithms or mesh-quality thresholds

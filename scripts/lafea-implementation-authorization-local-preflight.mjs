@@ -14,6 +14,9 @@ const REQUIRED_PATHS = Object.freeze([
   'scripts/lafea4-independent-pressure-resultant-authorization-check.mjs',
   'scripts/lafea-implementation-authorization-gate-retain.mjs',
 ]);
+const NODE_SYNTAX_PATHS = Object.freeze(
+  REQUIRED_PATHS.filter((relativePath) => relativePath.endsWith('.mjs')),
+);
 
 let executionPhase = 'ENVIRONMENT_PREFLIGHT';
 let repositoryHead = null;
@@ -87,6 +90,10 @@ function runEnvironmentPreflight() {
   const dirty = git(['status', '--porcelain=v1', '--untracked-files=all']).trim();
   assert.equal(dirty, '', `authorization execution requires a clean checkout; dirty state:\n${dirty}`);
 
+  for (const relativePath of NODE_SYNTAX_PATHS) {
+    nodeSyntaxCheck(relativePath);
+  }
+
   return Object.freeze({
     schema: 'lafea-implementation-authorization-local-preflight/v1',
     status: 'PASS',
@@ -99,9 +106,19 @@ function runEnvironmentPreflight() {
     gitAvailable: true,
     checkoutClean: true,
     requiredPaths: REQUIRED_PATHS,
+    nodeSyntaxCheckedPaths: NODE_SYNTAX_PATHS,
     engineeringAuthorityCreated: false,
     releaseAuthorityGranted: false,
     delegatedEntryPoint: 'scripts/lafea-implementation-authorization-gate-retain.mjs',
+  });
+}
+
+function nodeSyntaxCheck(relativePath) {
+  execFileSync(process.execPath, ['--check', path.join(ROOT, relativePath)], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 4 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
 }
 

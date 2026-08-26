@@ -1,3 +1,5 @@
+import { commonMethodsForImplementation } from '../core/non-fea-method-consumption/index.js';
+import { empiricalLoadCalcScenarioStore } from './engineering-loads/empirical-load-calc-scenario-store.js';
 import { engineeringModelStore } from './engineering-model-store.js';
 import { masterDataController } from './master-data-controller.js';
 import { createCurrentNonFeaWorkspaceStatusProjection } from './non-fea-analysis-plan-runtime.js';
@@ -79,7 +81,8 @@ function createViewState(consumerContext, prepared) {
       label: GATE_LABELS[row.gateId] || row.gateId,
     }))),
     blockers: status.blockers,
-    methodRows: Object.freeze(buildMethodRows(status.commonInput.methodRows)),
+    coverageProgressByCode: buildCoverageProgressByCode(status.commonInput.methodRows),
+    methodRows: Object.freeze(buildMethodRows(status.commonInput.methodRows, commonSnapshot)),
     masterRows: Object.freeze(masterRows),
     sourceRows: Object.freeze(sourceEvidenceRows({ dataset, masters, supportSites, routes, consumerContext })),
     routeRows: Object.freeze(routeEvidenceRows(routes)),
@@ -120,7 +123,7 @@ function viewMarkup(state) {
       ${metric('Blockers', state.blockers.length, state.blockers.length ? 'blocked' : 'ready')}
     </section>
 
-    ${state.blockers.length ? blockerSummaryMarkup(state.blockers) : '<p class="non-fea-ready-copy">All required checks currently pass. Continue to Run Calc.</p>'}
+    ${state.blockers.length ? blockerSummaryMarkup(state.blockers, state.coverageProgressByCode) : '<p class="non-fea-ready-copy">All required checks currently pass. Continue to Run Calc.</p>'}
 
     <details class="non-fea-input-check__advanced">
       <summary>Advanced validation evidence</summary>
@@ -149,7 +152,209 @@ function viewMarkup(state) {
   </section>`;
 }
 
-function blockerSummaryMarkup(rows) {
+const ROOT_CAUSE_GUIDANCE = Object.freeze({
+  QUALIFICATION_PROFILE_REQUIRED: 'No locked QUALIFIED profile is bound to these methods. This is qualification evidence from your validation programme, so there is no built-in default: load an approved profile set into Project Data under qualificationPolicy.qualificationProfiles, approve it, then select the profile and version. Every other blocker can be cleared and these methods will still not seal until that is supplied.',
+  SECTION_COVERAGE_INCOMPLETE: 'Some pipes have no outer diameter and wall thickness. Both come from the Piping Class master, so check that its rows actually match the piping class and bore used by those lines — a loaded master still leaves gaps where nothing matched.',
+  FLEXURAL_COVERAGE_INCOMPLETE: 'Some pipes have neither direct flexural rigidity nor both elastic modulus and second moment of area. Resolve FLEXURAL_RIGIDITY directly, or provide both ELASTIC_MODULUS and SECOND_MOMENT_AREA for the common checker to derive EI. Pipe outer diameter and wall thickness alone do not satisfy flexural coverage.',
+  MASS_COVERAGE_INCOMPLETE: 'Some entities have no mass evidence. Open Enrichment &amp; Overrides, press "Generate proposals from approved masters" for pipe section and fluid density, and "Review fitting weights…" for valves and other catalogue fittings, then accept the staged proposals. Nothing is written until you accept them there.',
+  MASTER_NOT_READY: 'A required master has no current normalized rows or source hash. Re-apply its column mapping in Import Masters.',
+});
+
+const ROOT_CAUSE_ACTIONS = Object.freeze({
+  SECTION_COVERAGE_INCOMPLETE: Object.freeze({ tab: 'enrichment', label: 'Open Enrichment & Overrides' }),
+  FLEXURAL_COVERAGE_INCOMPLETE: Object.freeze({ tab: 'enrichment', label: 'Open Enrichment & Overrides' }),
+  MASS_COVERAGE_INCOMPLETE: Object.freeze({ tab: 'enrichment', label: 'Open Enrichment & Overrides' }),
+  MASTER_NOT_READY: Object.freeze({ tab: 'masters', label: 'Open Import Masters' }),
+});
+
+/**
+ * Gate rows carry their state as the issue code, so a blocked gate reports
+ * BLOCKED rather than a cause. Those rows restate causes that are already
+ * listed under their own gate area, and grouping them as shared causes counts
+ * the same problem twice.
+ */
+const GATE_STATE_CODES = new Set([
+  'BLOCKED', 'PARTIALLY_READY', 'STALE', 'NOT_EVALUATED', 'NOT_SEALED',
+]);
+
+/** Masters and entity matching resolve coverage; the codes share one remedy. */
+const COVERAGE_CODES = new Set([
+  'SECTION_COVERAGE_INCOMPLETE',
+  'FLEXURAL_COVERAGE_INCOMPLETE',
+  'MASS_COVERAGE_INCOMPLETE',
+]);
+
+/**
+ * Builds display-only coverage progress from checker-owned missing evidence.
+ * MASS coverage may carry several missing obligations for one component, so
+ * unique unresolved entities are derived separately from the raw obligation
+ * count. This never feeds back into readiness or execution.
+ */
+function buildCoverageProgressByCode(statusRows) {
+  const byCode = new Map();
+  (statusRows || []).forEach((method) => (method.coverageRequirements || []).forEach((coverage) => {
+    if (!COVERAGE_CODES.has(coverage.code)) return;
+    const candidate = coverageProgress(coverage);
+    const existing = byCode.get(coverage.code);
+    if (!existing) {
+      byCode.set(coverage.code, candidate);
+      return;
+    }
+    if (!sameCoverageEvidence(existing, candidate)) {
+      byCode.set(coverage.code, Object.freeze({ ...existing, consistent: false }));
+    }
+  }));
+  return Object.freeze(Object.fromEntries([...byCode.entries()].sort(([left], [right]) => ascii(left, right))));
+}
+
+function coverageProgress(coverage) {
+  const entities = new Map();
+  (coverage.missing || []).forEach((token) => {
+    const { entityId, reason } = coverageMissingParts(coverage.requirementId, coverage.code, token);
+    const reasons = entities.get(entityId) || new Set();
+    reasons.add(reason);
+    entities.set(entityId, reasons);
+  });
+  const unresolvedEntities = [...entities.entries()]
+    .map(([entityId, reasons]) => Object.freeze({
+      entityId,
+      reasons: Object.freeze([...reasons].sort(ascii)),
+    }))
+    .sort((left, right) => ascii(left.entityId, right.entityId));
+  const unresolvedEntityCount = unresolvedEntities.length;
+  return Object.freeze({
+    requirementId: coverage.requirementId,
+    code: coverage.code,
+    total: coverage.total,
+    checkerCovered: coverage.covered,
+    resolvedEntityCount: Math.max(0, coverage.total - unresolvedEntityCount),
+    unresolvedEntityCount,
+    missingObligationCount: coverage.missing.length,
+    missingTokens: Object.freeze([...coverage.missing]),
+    unresolvedEntities: Object.freeze(unresolvedEntities),
+    ready: coverage.ready,
+    state: coverage.state,
+    consistent: true,
+  });
+}
+
+function coverageMissingParts(requirementId, code, token) {
+  const value = String(token || '').trim();
+  if (requirementId !== 'MASS_COVERAGE') return { entityId: value, reason: code };
+  const separator = value.lastIndexOf(':');
+  if (separator <= 0 || separator === value.length - 1) return { entityId: value, reason: 'MASS_EVIDENCE' };
+  return { entityId: value.slice(0, separator), reason: value.slice(separator + 1) };
+}
+
+function sameCoverageEvidence(left, right) {
+  return left.requirementId === right.requirementId
+    && left.total === right.total
+    && left.checkerCovered === right.checkerCovered
+    && left.ready === right.ready
+    && left.state === right.state
+    && left.missingTokens.length === right.missingTokens.length
+    && left.missingTokens.every((token, index) => token === right.missingTokens[index]);
+}
+
+function coverageProgressMarkup(progress) {
+  if (!progress) return '';
+  if (!progress.consistent) {
+    return `<p class="non-fea-input-check__coverage-conflict" data-coverage-consistency="conflict">Coverage evidence differs between method scopes. The calculation remains blocked; use Advanced validation evidence to reconcile the status projection before relying on a progress count.</p>`;
+  }
+  const entityLabel = progress.unresolvedEntityCount === 1 ? 'entity' : 'entities';
+  const obligationLabel = progress.missingObligationCount === 1 ? 'obligation' : 'obligations';
+  return `<div class="non-fea-input-check__coverage-progress"
+      data-coverage-code="${escapeHtml(progress.code)}"
+      data-coverage-total="${progress.total}"
+      data-coverage-resolved-entities="${progress.resolvedEntityCount}"
+      data-coverage-unresolved-entities="${progress.unresolvedEntityCount}"
+      data-coverage-missing-obligations="${progress.missingObligationCount}"
+      data-coverage-checker-covered="${progress.checkerCovered}">
+      <strong>${progress.resolvedEntityCount} of ${progress.total} governed entities resolved</strong>
+      <span>${progress.unresolvedEntityCount} unresolved ${entityLabel} · ${progress.missingObligationCount} missing evidence ${obligationLabel}. Calculation remains BLOCKED until every required item is resolved.</span>
+    </div>
+    <details class="non-fea-input-check__coverage-detail" data-coverage-entity-detail="${escapeHtml(progress.code)}">
+      <summary>Show ${progress.unresolvedEntityCount} unresolved ${entityLabel}</summary>
+      <ul>${progress.unresolvedEntities.map((row) => `<li><code>${escapeHtml(row.entityId)}</code><span>${row.reasons.map(escapeHtml).join(', ')}</span></li>`).join('')}</ul>
+    </details>`;
+}
+
+function rootCauseActionMarkup(code) {
+  const action = ROOT_CAUSE_ACTIONS[code];
+  if (!action) return '';
+  return `<button type="button" class="button non-fea-input-check__cause-action" data-load-calc-tab="${escapeHtml(action.tab)}">${escapeHtml(action.label)}</button>`;
+}
+
+function causeLegendMarkup() {
+  return `<div class="non-fea-input-check__cause-legend" aria-label="Blocker grouping legend">
+    <span data-cause-kind="shared"><strong>SHARED CAUSE</strong> affects 2+ method/data scopes</span>
+    <span data-cause-kind="single"><strong>SINGLE CAUSE</strong> belongs to one scope</span>
+    <span data-cause-kind="rollup"><strong>GATE ROLLUP</strong> clears automatically when its causes clear</span>
+  </div>`;
+}
+
+/**
+ * Groups blockers by their underlying cause rather than by the method each one
+ * surfaces through. Shared and single-scope causes are both actionable; gate
+ * state rows are excluded because they are derived rollups rendered separately.
+ */
+function rootCauseMarkup(rows, active, coverageProgressByCode) {
+  const relevant = active
+    ? rows.filter((row) => !row.scope || !METHOD_SCOPES.has(row.scope) || active.has(row.scope))
+    : rows;
+  const byCode = new Map();
+  relevant.forEach((row) => {
+    const code = row.code || 'UNSPECIFIED';
+    const entry = byCode.get(code) || { code, count: 0, scopes: new Set() };
+    entry.count += 1;
+    if (row.scope) entry.scopes.add(row.scope);
+    byCode.set(code, entry);
+  });
+  const causes = [...byCode.values()]
+    .filter((entry) => !GATE_STATE_CODES.has(entry.code))
+    .sort((left, right) => {
+      const sharedDifference = Number(right.scopes.size > 1) - Number(left.scopes.size > 1);
+      return sharedDifference || right.count - left.count || ascii(left.code, right.code);
+    });
+  if (causes.length === 0) return '';
+  const sharedCount = causes.filter((entry) => entry.scopes.size > 1).length;
+  const singleCount = causes.length - sharedCount;
+  const coverage = causes.filter((entry) => COVERAGE_CODES.has(entry.code));
+  const coverageNote = coverage.length > 1
+    ? `<p class="non-fea-input-check__root-note">The ${coverage.length} coverage causes below are related evidence gaps. Expand a coverage cause for the exact unresolved entities and reason codes; resolving one master match may advance several causes together.</p>`
+    : '';
+  return `<div class="non-fea-input-check__root-causes">
+    <strong>${causes.length} actionable cause${causes.length === 1 ? '' : 's'} · ${sharedCount} shared · ${singleCount} single-scope</strong>
+    ${causeLegendMarkup()}
+    ${coverageNote}
+    <ul>${causes.map((entry) => {
+    const kind = entry.scopes.size > 1 ? 'shared' : 'single';
+    const scopeText = entry.scopes.size === 1 ? '1 scope' : `${entry.scopes.size} scopes`;
+    return `<li data-root-cause-code="${escapeHtml(entry.code)}" data-cause-kind="${kind}">
+      <span class="non-fea-input-check__cause-kind">${kind === 'shared' ? 'SHARED CAUSE' : 'SINGLE CAUSE'}</span>
+      <code>${escapeHtml(entry.code)}</code> — ${scopeText}, ${entry.count} issue(s).
+      ${coverageProgressMarkup(coverageProgressByCode?.[entry.code])}
+      <p>${ROOT_CAUSE_GUIDANCE[entry.code] || 'Resolve this cause to clear every affected scope listed against it.'}</p>
+      ${rootCauseActionMarkup(entry.code)}
+    </li>`;
+  }).join('')}</ul>
+  </div>`;
+}
+
+/** Scopes that name a common method, as opposed to a gate or data area. */
+const METHOD_SCOPES = new Set(METHOD_ROWS.map(([methodId]) => methodId));
+
+function activeCalculationMethods() {
+  try {
+    const method = empiricalLoadCalcScenarioStore.getProposal()?.method
+      || 'CHAINAGE_TRIBUTARY_SPAN_V2';
+    return new Set(commonMethodsForImplementation(method));
+  } catch {
+    return null;
+  }
+}
+
+function blockerSummaryMarkup(rows, coverageProgressByCode) {
   const groups = [];
   const byScope = new Map();
   rows.forEach((row) => {
@@ -163,9 +368,30 @@ function blockerSummaryMarkup(rows) {
     groups.push(group);
     byScope.set(key, group);
   });
+  const active = activeCalculationMethods();
+  const blocksThis = (group) => !active
+    || !METHOD_SCOPES.has(group.scope)
+    || active.has(group.scope);
+  const required = groups.filter(blocksThis);
+  const other = groups.filter((group) => !blocksThis(group));
+  const total = groups.reduce((sum, group) => sum + group.count, 0);
+  const requiredTotal = required.reduce((sum, group) => sum + group.count, 0);
+  const item = (group) => {
+    const rollup = Boolean(GATE_LABELS[group.scope]);
+    return `<li${rollup ? ' data-rollup="true" data-cause-kind="rollup"' : ''}><strong>${escapeHtml(group.scope)}${rollup ? '<small class="non-fea-input-check__cause-kind">GATE ROLLUP</small>' : ''}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}${rollup ? ' This is a derived gate summary: it clears when the underlying causes above are resolved.' : ''}</p></li>`;
+  };
+  const otherSection = other.length === 0 ? '' : `<details class="non-fea-input-check__other-methods">
+    <summary>${other.reduce((sum, group) => sum + group.count, 0)} issue(s) in ${other.length} area(s) that do not block this calculation</summary>
+    <p>These belong to requested methods that the active implementation does not consume. They are reported for completeness and do not need to be resolved to run this load calculation.</p>
+    <ul>${other.map(item).join('')}</ul>
+  </details>`;
   return `<section class="non-fea-input-check__blocker-summary"><h3>What needs attention</h3>
-    <ul>${groups.slice(0, 6).map((group) => `<li><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}</p></li>`).join('')}</ul>
-    <p>${groups.length > 6 ? `${groups.length - 6} more areas are listed in Advanced validation evidence.` : 'Open Advanced validation evidence for the complete audit trail.'}</p>
+    <p class="non-fea-input-check__blocker-reconcile">${requiredTotal} of ${total} issue(s) block this calculation, across ${required.length} area(s).</p>
+    ${rootCauseMarkup(rows, active, coverageProgressByCode)}
+    <h4 class="non-fea-input-check__area-heading">Affected areas and gate rollups</h4>
+    <ul>${required.map(item).join('')}</ul>
+    ${otherSection}
+    <p>Open Advanced validation evidence for the complete audit trail.</p>
   </section>`;
 }
 
@@ -227,8 +453,20 @@ function routeEvidenceMarkup(rows) {
 function methodMarkup(rows) {
   return `<section class="non-fea-panel">
     <header><div><span class="panel-eyebrow">METHOD READINESS</span><h3>Independent Non-FEA input readiness</h3></div><p>Input readiness comes only from the common checker. Implementation qualification, selection, authorization and execution remain separate.</p></header>
-    <div class="non-fea-table-wrap"><table><thead><tr><th>Method</th><th>Input state</th><th>Current basis</th></tr></thead><tbody>${rows.map((row) => `<tr data-method-id="${escapeHtml(row.methodId)}"><td><strong>${escapeHtml(row.label)}</strong><code>${escapeHtml(row.methodId)}</code></td><td><span class="non-fea-chip non-fea-chip--${statusClass(row.state)}">${escapeHtml(row.state)}</span></td><td>${escapeHtml(row.basis)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="non-fea-table-wrap"><table><thead><tr><th>Method</th><th>Input state</th><th>Current basis</th></tr></thead><tbody>${rows.map((row) => `<tr data-method-id="${escapeHtml(row.methodId)}"><td><strong>${escapeHtml(row.label)}</strong><code>${escapeHtml(row.methodId)}</code></td><td><span class="non-fea-chip non-fea-chip--${statusClass(row.state)}">${escapeHtml(row.state)}</span></td><td>${escapeHtml(row.basis)}</td></tr>${entityBlockerRowMarkup(row)}`).join('')}</tbody></table></div>
   </section>`;
+}
+
+function entityBlockerRowMarkup(row) {
+  const withEntities = (row.entityBlockers || []).filter((entry) => entry.entities.length > 0);
+  if (withEntities.length === 0) return '';
+  return `<tr class="non-fea-entity-blockers"><td colspan="3"><details>
+    <summary>${withEntities.reduce((sum, entry) => sum + entry.entities.length, 0)} unmatched entit${withEntities.reduce((sum, entry) => sum + entry.entities.length, 0) === 1 ? 'y' : 'ies'} behind ${escapeHtml(row.label)}</summary>
+    ${withEntities.map((entry) => `<div class="non-fea-entity-group"><strong>${escapeHtml(entry.code)}</strong> (${entry.entities.length})
+      <ul>${entry.entities.slice(0, 500).map((id) => `<li><code>${escapeHtml(id)}</code></li>`).join('')}</ul>
+      ${entry.entities.length > 500 ? `<p class="panel-empty">${entry.entities.length - 500} more not shown.</p>` : ''}
+    </div>`).join('')}
+  </details></td></tr>`;
 }
 
 function blockerMarkup(rows) {
@@ -287,11 +525,13 @@ function historicalAuthorityMarkup(state) {
   </section>`;
 }
 
-function buildMethodRows(statusRows) {
+function buildMethodRows(statusRows, commonSnapshot) {
   const byId = new Map((statusRows || []).map((row) => [row.methodId, row]));
+  const reportById = new Map((commonSnapshot?.report?.methodRows || []).map((row) => [row.methodId, row]));
   return METHOD_ROWS.map(([methodId, label]) => {
     const row = byId.get(methodId);
     const state = row?.state || 'NOT_EVALUATED';
+    const reportBlockers = reportById.get(methodId)?.blockers || [];
     return {
       methodId,
       label,
@@ -301,8 +541,18 @@ function buildMethodRows(statusRows) {
         : row?.blockerCodes?.length
           ? row.blockerCodes.join(', ')
           : 'The common checker has not produced a current method receipt.',
+      entityBlockers: Object.freeze(reportBlockers.map((blocker) => ({
+        code: blocker.code || 'BLOCKED',
+        entities: entityListFromBlockerMessage(blocker.message),
+      }))),
     };
   });
+}
+
+function entityListFromBlockerMessage(message) {
+  const match = /missing for:\s*(.+)\.\s*$/.exec(String(message || ''));
+  if (!match) return [];
+  return match[1].split(',').map((entry) => entry.trim()).filter(Boolean);
 }
 
 function fallbackEnrichmentState(snapshot) {
@@ -405,6 +655,7 @@ function isSemanticHash(value) { return typeof value === 'string' && /^fnv1a64:[
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
 }
+function ascii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
 
 function styles() {
   return `<style>
@@ -413,12 +664,35 @@ function styles() {
     .non-fea-input-check__title-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.non-fea-input-check__scope,.non-fea-input-check__phase{padding:3px 8px;border:1px solid #0ea5e9;border-radius:999px;color:#7dd3fc;font-size:10px;font-weight:800;letter-spacing:.08em}.non-fea-input-check__phase{border-color:#6d28d9;color:#c4b5fd}.non-fea-input-check__actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.non-fea-input-check button{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:7px 10px;cursor:pointer}.non-fea-input-check button:hover{border-color:#38bdf8;color:#7dd3fc}
     .non-fea-input-check__result{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #7f1d1d;border-radius:7px;background:rgba(127,29,29,.12)}.non-fea-input-check__result[data-status="ready"]{border-color:#166534;background:rgba(22,101,52,.12)}.non-fea-input-check__result strong{color:#f87171}.non-fea-input-check__result[data-status="ready"] strong{color:#4ade80}.non-fea-input-check__result span{color:#cbd5e1}.non-fea-input-check__summary{display:grid;grid-template-columns:repeat(4,minmax(110px,1fr));gap:8px}.non-fea-metric{padding:10px;border:1px solid #293548;border-radius:6px;background:#0d1728}.non-fea-metric span{display:block;color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:.06em}.non-fea-metric strong{display:block;margin-top:5px;font-size:16px;overflow-wrap:anywhere}.non-fea-metric--ready{border-color:#166534}.non-fea-metric--blocked{border-color:#991b1b}.non-fea-metric--warning{border-color:#92400e}
     .non-fea-input-check__advanced{border:1px solid #293548;border-radius:7px;background:#091322}.non-fea-input-check__advanced>summary{padding:11px 13px;color:#7dd3fc;font-weight:800;cursor:pointer}.non-fea-input-check__advanced[open]>summary{border-bottom:1px solid #293548}.non-fea-input-check__advanced-intro{display:flex;flex-wrap:wrap;gap:7px;padding:12px 13px;color:#94a3b8}.non-fea-input-check__advanced-intro span{padding:3px 7px;border:1px solid #334155;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.06em}.non-fea-input-check__advanced-intro p{flex-basis:100%;margin:3px 0 0;padding:9px;border:1px solid #164e63;border-radius:6px;background:#082f49;color:#bae6fd}.non-fea-input-check__advanced .non-fea-input-check__layout{padding:0 12px 12px}
-    .non-fea-input-check__blocker-summary{padding:13px;border:1px solid #3f2730;border-radius:7px;background:#0b1424}.non-fea-input-check__blocker-summary h3{margin:0 0 10px;color:#f8fafc}.non-fea-input-check__blocker-summary ul{display:grid;grid-template-columns:1fr;gap:8px;margin:0;padding:0;list-style:none}.non-fea-input-check__blocker-summary li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:9px;border:1px solid #3f2730;border-radius:6px}.non-fea-input-check__blocker-summary li strong{min-width:0;overflow-wrap:anywhere;color:#f87171}.non-fea-input-check__blocker-summary li span{color:#cbd5e1;font-size:11px}.non-fea-input-check__blocker-summary li p{grid-column:1/-1;margin:0;color:#94a3b8;font-size:11px;line-height:1.35}.non-fea-input-check__blocker-summary>p{margin:10px 0 0;color:#94a3b8;font-size:11px}
+    .non-fea-input-check__blocker-summary{padding:13px;border:1px solid #3f2730;border-radius:7px;background:#0b1424}.non-fea-input-check__blocker-summary h3{margin:0 0 10px;color:#f8fafc}.non-fea-input-check__blocker-summary h4{margin:12px 0 7px;color:#cbd5e1;font-size:11px}.non-fea-input-check__blocker-summary ul{display:grid;grid-template-columns:1fr;gap:8px;margin:0;padding:0;list-style:none}.non-fea-input-check__blocker-summary li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:9px;border:1px solid #3f2730;border-radius:6px}.non-fea-input-check__blocker-summary li strong{min-width:0;overflow-wrap:anywhere;color:#f87171}.non-fea-input-check__blocker-summary li span{color:#cbd5e1;font-size:11px}.non-fea-input-check__blocker-summary li p{grid-column:1/-1;margin:0;color:#94a3b8;font-size:11px;line-height:1.35}.non-fea-input-check__blocker-summary>p{margin:10px 0 0;color:#94a3b8;font-size:11px}
+    .non-fea-input-check__root-causes{margin:0 0 12px;padding:10px 12px;border:1px solid #92400e;border-radius:6px;background:#1c1207}
+    .non-fea-input-check__root-causes>strong{display:block;margin-bottom:6px;color:#fbbf24;font-size:12px}
+    .non-fea-input-check__root-causes ul{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none}
+    .non-fea-input-check__root-causes li{display:block;padding:8px;border:1px solid #3f2d14;border-radius:5px;color:#d6bb92;font-size:11px;line-height:1.4}
+    .non-fea-input-check__root-causes li[data-cause-kind="shared"]{border-color:#92400e;background:#181006}
+    .non-fea-input-check__root-causes li[data-cause-kind="single"]{border-color:#334155;background:#10151d}
+    .non-fea-input-check__root-causes code{color:#fcd34d;font-weight:700}
+    .non-fea-input-check__root-note{margin:0 0 7px;color:#bae6fd;font-size:11px;line-height:1.4}
+    .non-fea-input-check__cause-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 8px}.non-fea-input-check__cause-legend>span{padding:6px;border:1px solid #334155;border-radius:5px;color:#94a3b8;font-size:10px}.non-fea-input-check__cause-legend strong{display:block;color:#e2e8f0;font-size:9px;letter-spacing:.06em}.non-fea-input-check__cause-legend [data-cause-kind="shared"]{border-color:#92400e}.non-fea-input-check__cause-legend [data-cause-kind="rollup"]{border-style:dashed}
+    .non-fea-input-check__cause-kind{display:inline-flex;margin:0 6px 4px 0;padding:2px 5px;border:1px solid #475569;border-radius:999px;color:#cbd5e1!important;font-size:8px!important;font-weight:800;letter-spacing:.06em}.non-fea-input-check__cause-action{margin-top:7px}
+    .non-fea-input-check__coverage-progress{display:flex;flex-direction:column;gap:3px;margin:7px 0;padding:8px;border:1px solid #7c5c18;border-radius:5px;background:#120f08}
+    .non-fea-input-check__coverage-progress strong{color:#fde68a;font-size:12px}
+    .non-fea-input-check__coverage-progress span{color:#d6bb92;font-size:11px}
+    .non-fea-input-check__coverage-detail{margin:0 0 7px;border:1px solid #3f2d14;border-radius:5px;background:#0d0c09}
+    .non-fea-input-check__coverage-detail summary{padding:6px 8px;cursor:pointer;color:#fcd34d;font-weight:700}
+    .non-fea-input-check__coverage-detail ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 8px;max-height:260px;overflow:auto;padding:0 8px 8px;margin:0;list-style:none}
+    .non-fea-input-check__coverage-detail li{display:flex;flex-direction:column;gap:2px;padding:5px;border:1px solid #2d281b;border-radius:4px;background:#0b0b09}
+    .non-fea-input-check__coverage-detail li code{overflow-wrap:anywhere}
+    .non-fea-input-check__coverage-detail li span{color:#94a3b8;font-size:10px;overflow-wrap:anywhere}
+    .non-fea-input-check__coverage-conflict{margin:7px 0;padding:7px;border:1px solid #991b1b;border-radius:5px;background:#2b1115;color:#fecaca}
+    .non-fea-input-check__blocker-summary li[data-rollup="true"]{border-style:dashed;opacity:.9}.non-fea-input-check__blocker-summary li[data-rollup="true"] strong{color:#fbbf24}
+    .non-fea-input-check__other-methods{margin:10px 0 0;border:1px solid #293548;border-radius:6px;background:#0d1728}.non-fea-input-check__other-methods summary{padding:8px 10px;cursor:pointer;color:#94a3b8;font-size:11px}.non-fea-input-check__other-methods>p{margin:0;padding:0 10px 8px;color:#64748b;font-size:11px;line-height:1.4}.non-fea-input-check__other-methods>ul{padding:0 10px 10px}
     .non-fea-input-check__layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:12px;align-items:start}.non-fea-input-check__layout main,.non-fea-input-check__layout aside{display:flex;flex-direction:column;gap:12px}.non-fea-panel{padding:13px;border:1px solid #293548;border-radius:7px;background:#0b1424;box-shadow:0 8px 24px rgba(0,0,0,.12)}.panel-eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}.non-fea-panel code{display:block;color:#64748b;font-size:10px;margin-top:2px;overflow-wrap:anywhere}
     .non-fea-gates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.non-fea-gate{display:grid;grid-template-columns:30px 1fr;gap:9px;padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-gate__index{display:flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:50%;background:#172033;color:#94a3b8;font-weight:800}.non-fea-gate__heading{display:flex;justify-content:space-between;gap:8px}.non-fea-gate p{margin:6px 0 0;color:#94a3b8;line-height:1.35;font-size:12px}.non-fea-gate--ready{border-color:#166534}.non-fea-gate--ready .non-fea-gate__heading span{color:#4ade80}.non-fea-gate--warning{border-color:#92400e}.non-fea-gate--warning .non-fea-gate__heading span{color:#fbbf24}.non-fea-gate--blocked,.non-fea-gate--stale{border-color:#7f1d1d}.non-fea-gate--blocked .non-fea-gate__heading span,.non-fea-gate--stale .non-fea-gate__heading span{color:#f87171}
     .non-fea-audits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.non-fea-audits article{padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-audits article>span{display:block;margin-top:4px;font-weight:800}.non-fea-audits article p{margin:6px 0 0;color:#94a3b8;font-size:11px}.non-fea-audits [data-status="READY"]{border-color:#166534}.non-fea-audits [data-status="READY"]>span{color:#4ade80}.non-fea-audits [data-status="BLOCKED"]{border-color:#7f1d1d}.non-fea-audits [data-status="BLOCKED"]>span{color:#f87171}
     .non-fea-table-wrap{overflow:auto;margin-top:10px}.non-fea-input-check table{width:100%;border-collapse:collapse}.non-fea-input-check th,.non-fea-input-check td{text-align:left;padding:8px;border-bottom:1px solid #223047;vertical-align:top}.non-fea-input-check th{color:#7dd3fc;font-size:11px;text-transform:uppercase;letter-spacing:.05em}.non-fea-input-check td{font-size:12px}.non-fea-chip{display:inline-flex;padding:3px 7px;border-radius:999px;border:1px solid #475569;font-size:10px;font-weight:800}.non-fea-chip--ready{border-color:#166534;color:#4ade80}.non-fea-chip--warning{border-color:#92400e;color:#fbbf24}.non-fea-chip--blocked,.non-fea-chip--stale{border-color:#7f1d1d;color:#f87171}
+    .non-fea-entity-blockers td{padding:0;border:none}.non-fea-entity-blockers details{margin:2px 0 8px;border:1px solid #3f2730;border-radius:6px;background:#0b1424}.non-fea-entity-blockers summary{padding:8px 10px;cursor:pointer;color:#fca5a5;font-size:12px;font-weight:700}.non-fea-entity-group{padding:0 10px 10px}.non-fea-entity-group strong{color:#f87171;font-size:11px}.non-fea-entity-group ul{list-style:none;margin:5px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:3px 8px;max-height:220px;overflow:auto}.non-fea-entity-group li{color:#94a3b8;font-size:11px}.non-fea-entity-group code{color:#cbd5e1}
     .non-fea-blockers{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:7px}.non-fea-blockers li{display:grid;grid-template-columns:max-content 1fr;gap:9px;padding:8px;border:1px solid #3f2730;border-radius:5px}.non-fea-blockers p{margin:3px 0 0;color:#94a3b8}.non-fea-ready-copy{color:#4ade80}.non-fea-side-panel header button{padding:5px 8px}.non-fea-facts{display:grid;grid-template-columns:110px 1fr;gap:7px;margin:12px 0}.non-fea-facts dt{color:#94a3b8}.non-fea-facts dd{margin:0;overflow-wrap:anywhere}.non-fea-master-list{list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:7px}.non-fea-master-list li{display:flex;justify-content:space-between;gap:10px;padding:8px;border:1px solid #26354a;border-radius:5px}.non-fea-master-list small{display:block;color:#64748b;margin-top:3px}.non-fea-seal{border-color:#164e63}.panel-empty{color:#94a3b8}
-    @media(max-width:1100px){.non-fea-input-check__summary{grid-template-columns:repeat(3,1fr)}.non-fea-input-check__layout{grid-template-columns:1fr}.non-fea-gates{grid-template-columns:1fr}}@media(max-width:780px){.non-fea-audits{grid-template-columns:1fr}}@media(max-width:680px){.non-fea-input-check__header{flex-direction:column}.non-fea-input-check__actions{justify-content:flex-start}.non-fea-input-check__summary{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:1100px){.non-fea-input-check__summary{grid-template-columns:repeat(3,1fr)}.non-fea-input-check__layout{grid-template-columns:1fr}.non-fea-gates{grid-template-columns:1fr}}@media(max-width:780px){.non-fea-audits{grid-template-columns:1fr}.non-fea-input-check__cause-legend{grid-template-columns:1fr}}@media(max-width:680px){.non-fea-input-check__header{flex-direction:column}.non-fea-input-check__actions{justify-content:flex-start}.non-fea-input-check__summary{grid-template-columns:repeat(2,1fr)}}
   </style>`;
 }

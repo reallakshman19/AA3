@@ -1,0 +1,61 @@
+name: LFEA S4 reducer parity prerequisite
+
+on:
+  pull_request:
+    paths:
+      - 'agents/PR1386_workreport.md'
+      - 'docs/lfea/S4_Reducer_Parity_Protocol_20260824.md'
+      - 'docs/lfea/S4_Reducer_Parity_Evidence_Package_20260824.md'
+      - 'src/core/linear-fea-reducer-condensation/index.js'
+      - 'src/core/linear-fea-reducer-condensation/production-readiness.js'
+      - 'scripts/lfea-b3.23-reducer-condensation-check.mjs'
+      - 'scripts/lfea-s4-reducer-parity-evidence-contract.mjs'
+      - 'scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs'
+      - 'scripts/lfea-s4-reducer-parity-evidence-file-check.mjs'
+      - 'scripts/lfea-s4-reducer-parity-evidence-template.mjs'
+      - '.github/workflows/lfea-s4-reducer-parity-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reducer-parity-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check changed reducer guard syntax
+        run: |
+          node --check src/core/linear-fea-reducer-condensation/production-readiness.js
+          node --check src/core/linear-fea-reducer-condensation/index.js
+          node --check scripts/lfea-b3.23-reducer-condensation-check.mjs
+          node --check scripts/lfea-s4-reducer-parity-evidence-contract.mjs
+          node --check scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs
+          node --check scripts/lfea-s4-reducer-parity-evidence-file-check.mjs
+          node --check scripts/lfea-s4-reducer-parity-evidence-template.mjs
+
+      - name: Run B-3.23 reducer condensation and production-readiness guard
+        run: node scripts/lfea-b3.23-reducer-condensation-check.mjs
+
+      - name: Validate controlled CAESAR reducer parity evidence contract
+        run: node scripts/lfea-s4-reducer-parity-evidence-contract-check.mjs
+
+      - name: Confirm external evidence CLIs
+        run: |
+          node scripts/lfea-s4-reducer-parity-evidence-template.mjs --help
+          node scripts/lfea-s4-reducer-parity-evidence-file-check.mjs --help
+
+      - name: Prove generated evidence scaffold is fail-closed
+        shell: bash
+        run: |
+          rm -rf artifacts/s4-reducer-draft
+          node scripts/lfea-s4-reducer-parity-evidence-template.mjs artifacts/s4-reducer-draft
+          if node scripts/lfea-s4-reducer-parity-evidence-file-check.mjs artifacts/s4-reducer-draft/evidence.json; then
+            echo 'Generated S4 draft scaffold unexpectedly qualified.' >&2
+            exit 1
+          fi

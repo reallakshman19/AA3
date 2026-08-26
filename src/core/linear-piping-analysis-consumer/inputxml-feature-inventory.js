@@ -8,6 +8,11 @@ import {
   NUMERIC_TOLERANCE, classifyRestraint, restraintDispositions, numericAttribute, normalizedNodeAttribute,
 } from './inputxml-feature-inventory-restraints.js';
 import { isSifSlotUnfilled, isForcesMomentsSlotUnfilled } from './inputxml-feature-inventory-slots.js';
+import {
+  productionAuthorizedPressureEffects,
+  productionComponentIsRepresentable,
+  productionComponentLimitation,
+} from './production-capability-profile.js';
 
 const SIF_TEE_CODES = new Set([3, 5]);
 
@@ -42,16 +47,11 @@ export function buildInputXmlFeatureInventory(sourceBundle) {
         canonicalStatus: element.canonicalStatus,
         canonicalSegmentType: segment?.type ?? element.canonicalSegmentType ?? null,
       },
-      dispositions: componentDispositions(componentKind, element.canonicalStatus),
+      dispositions: componentDispositions(componentKind, element.canonicalStatus, segment),
     }));
 
     for (const feature of element.childFeatures ?? []) {
-      rows.push(childInventory({
-        element,
-        feature,
-        segment,
-        componentInventoryId,
-      }));
+      rows.push(childInventory({ element, feature, segment, componentInventoryId }));
     }
     rows.push(...fieldInventory(element, segment));
   }
@@ -78,11 +78,8 @@ function childInventory({ element, feature, segment, componentInventoryId }) {
   if (['BEND', 'REDUCER', 'RIGID'].includes(kind)) {
     return inventoryRow({
       ...common,
-      classification: {
-        kind,
-        mechanicsOwnedByInventoryId: componentInventoryId,
-      },
-      dispositions: componentDispositions(kind, element.canonicalStatus),
+      classification: { kind, mechanicsOwnedByInventoryId: componentInventoryId },
+      dispositions: componentDispositions(kind, element.canonicalStatus, segment),
     });
   }
   if (kind === 'SIF') {
@@ -90,35 +87,19 @@ function childInventory({ element, feature, segment, componentInventoryId }) {
     const typeCode = numericAttribute(feature.rawAttributes, ['TYPE']);
     return inventoryRow({
       ...common,
-      classification: {
-        kind,
-        typeCode,
-        codeInputSupported: typeCode !== null && SIF_TEE_CODES.has(typeCode),
-      },
+      classification: { kind, typeCode, codeInputSupported: typeCode !== null && SIF_TEE_CODES.has(typeCode) },
       dispositions: both(codeOnlyDisposition('CODE_STRESS_INPUT_ONLY')),
     });
   }
   if (kind === 'ALLOWABLE_STRESS') {
-    return inventoryRow({
-      ...common,
-      classification: { kind },
-      dispositions: both(codeOnlyDisposition('CODE_STRESS_INPUT_ONLY')),
-    });
+    return inventoryRow({ ...common, classification: { kind }, dispositions: both(codeOnlyDisposition('CODE_STRESS_INPUT_ONLY')) });
   }
   if (kind === 'HANGER') {
-    return inventoryRow({
-      ...common,
-      classification: { kind },
-      dispositions: both(unsupportedDisposition('MODEL_HANGER_UNSUPPORTED')),
-    });
+    return inventoryRow({ ...common, classification: { kind }, dispositions: both(unsupportedDisposition('MODEL_HANGER_UNSUPPORTED')) });
   }
   if (kind === 'FORCES_MOMENTS') {
     if (isForcesMomentsSlotUnfilled(feature.rawAttributes)) return unfilledSlotRow(common, kind);
-    return inventoryRow({
-      ...common,
-      classification: { kind },
-      dispositions: both(unsupportedDisposition('MODEL_NODAL_FORCE_VECTOR_NOT_COMPILED')),
-    });
+    return inventoryRow({ ...common, classification: { kind }, dispositions: both(exactDisposition()) });
   }
   if (kind === 'RESTRAINT') {
     const classification = classifyRestraint(feature.rawAttributes, element, segment);
@@ -144,14 +125,11 @@ function fieldInventory(element, segment) {
     rows.push(inventoryRow({
       inventoryId: `${element.sourceFeatureId}/FIELD[TEMP_EXP_C1]`,
       sourceFeatureId: `${element.sourceFeatureId}/FIELD[TEMP_EXP_C1]`,
-      sourceKind: 'TEMPERATURE_INPUT',
-      active,
-      sourceIndex: element.sourceIndex,
+      sourceKind: 'TEMPERATURE_INPUT', active, sourceIndex: element.sourceIndex,
       targetIds: { nodeIds: [], segmentIds: [element.canonicalSegmentId] },
       sourceRecord: temperature,
       classification: {
-        field: 'TEMP_EXP_C1',
-        sourceDisposition: temperature.disposition,
+        field: 'TEMP_EXP_C1', sourceDisposition: temperature.disposition,
         canonicalValue: temperature.canonicalValue,
       },
       dispositions: active ? both(exactDisposition()) : both(inactiveDisposition()),
@@ -164,25 +142,19 @@ function fieldInventory(element, segment) {
     rows.push(inventoryRow({
       inventoryId: `${element.sourceFeatureId}/FIELD[PRESSURE1]`,
       sourceFeatureId: `${element.sourceFeatureId}/FIELD[PRESSURE1]`,
-      sourceKind: 'PRESSURE_INPUT',
-      active,
-      sourceIndex: element.sourceIndex,
+      sourceKind: 'PRESSURE_INPUT', active, sourceIndex: element.sourceIndex,
       targetIds: { nodeIds: [], segmentIds: [element.canonicalSegmentId] },
       sourceRecord: pressure,
       classification: {
-        field: 'PRESSURE1',
-        sourceDisposition: pressure.disposition,
+        field: 'PRESSURE1', sourceDisposition: pressure.disposition,
         canonicalValue: pressure.canonicalValue,
         currentAuthorizedEffects: segment?.meta?.analysis?.pressure == null
-          ? null
-          : Object.freeze({ codeStress: true, pressureStiffening: false, axialThrust: false, bourdon: false }),
+          ? null : productionAuthorizedPressureEffects(),
       },
-      dispositions: active
-        ? {
-          [STRICT]: unsupportedDisposition('MODEL_PRESSURE_STRUCTURAL_EFFECTS_UNREPRESENTED'),
-          [APPROXIMATE]: approximationDisposition('GENERIC_APPROX_PRESSURE_CODE_ONLY'),
-        }
-        : both(inactiveDisposition()),
+      dispositions: active ? {
+        [STRICT]: unsupportedDisposition('MODEL_PRESSURE_STRUCTURAL_EFFECTS_UNREPRESENTED'),
+        [APPROXIMATE]: approximationDisposition('GENERIC_APPROX_PRESSURE_CODE_ONLY'),
+      } : both(inactiveDisposition()),
     }));
   }
   return rows;
@@ -205,25 +177,18 @@ function hasTeeSif(features) {
   ));
 }
 
-function componentDispositions(componentKind, canonicalStatus) {
-  const resolvedCanonicalStatus = canonicalStatus === undefined
-    ? 'RECONCILED'
-    : canonicalStatus;
+function componentDispositions(componentKind, canonicalStatus, segment) {
+  const resolvedCanonicalStatus = canonicalStatus === undefined ? 'RECONCILED' : canonicalStatus;
   if (resolvedCanonicalStatus !== 'RECONCILED') {
     return both(invalidDisposition('MODEL_COMPONENT_SOURCE_UNRECONCILED'));
   }
-  if (componentKind === 'STRAIGHT_PIPE' || componentKind === 'RIGID') {
-    return both(exactDisposition());
-  }
-  const limitation = componentKind === 'BEND'
-    ? 'GENERIC_APPROX_BEND_STRAIGHT_CHORD'
-    : componentKind === 'REDUCER'
-      ? 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION'
-      : componentKind === 'TEE'
-        ? 'GENERIC_APPROX_TEE_FRAME_BRANCH_NO_FLEXIBILITY'
-        : null;
+  if (componentKind === 'STRAIGHT_PIPE' || componentKind === 'RIGID') return both(exactDisposition());
+  const limitation = productionComponentLimitation(componentKind, undefined, segment);
   if (limitation === null) {
-    return both(unsupportedDisposition('MODEL_COMPONENT_TYPE_UNSUPPORTED'));
+    if (!productionComponentIsRepresentable(componentKind)) {
+      return both(unsupportedDisposition('MODEL_COMPONENT_TYPE_UNSUPPORTED'));
+    }
+    return both(exactDisposition());
   }
   return {
     [STRICT]: unsupportedDisposition(`MODEL_${componentKind}_EXACT_MECHANICS_UNAVAILABLE`),
@@ -262,9 +227,7 @@ function inventoryRow(value) {
 function requireUniqueInventory(rows) {
   const ids = new Set();
   for (const row of rows) {
-    if (ids.has(row.inventoryId)) {
-      throw new TypeError(`InputXML feature inventory identity ${row.inventoryId} is duplicated.`);
-    }
+    if (ids.has(row.inventoryId)) throw new TypeError(`InputXML feature inventory identity ${row.inventoryId} is duplicated.`);
     ids.add(row.inventoryId);
   }
 }
@@ -284,7 +247,6 @@ function uniqueAscii(values) {
 }
 
 function compareAscii(left, right) {
-  const a = String(left);
-  const b = String(right);
+  const a = String(left); const b = String(right);
   return a < b ? -1 : a > b ? 1 : 0;
 }

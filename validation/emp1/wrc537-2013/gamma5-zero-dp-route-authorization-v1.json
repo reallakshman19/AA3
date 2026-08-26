@@ -1,0 +1,126 @@
+{
+  "schema": "emp1-wrc537-gamma5-bounded-route-owner-override-authorization/v1",
+  "authorizationChangeApplied": true,
+  "authorizationBasis": {
+    "issue": 1389,
+    "phase": "PR-E",
+    "ownerInstruction": "skip github workflow. merge. proceed next",
+    "ownerInstructionDate": "2026-08-24",
+    "predecessorPr": 1401,
+    "predecessorMergeSha": "a59547c8554b6244b2ea94aedd4d59fa0fb15d1f",
+    "authorizationBaseHeadSha": "a59547c8554b6244b2ea94aedd4d59fa0fb15d1f",
+    "authorizationBaseTreeSha": "333c8924e66d39f80d6159e21f1566fcd2968d70",
+    "standardExecutableEvidenceGateWaivedForProgression": true,
+    "waiverScope": "GITHUB_WORKFLOW_EXECUTION_AND_PR_D_FILES_01_THROUGH_10_ONLY"
+  },
+  "standardEvidenceContract": {
+    "satisfied": false,
+    "githubWorkflowExecution": "SKIPPED_BY_EXPLICIT_OWNER_DIRECTION",
+    "files01Through10": "NOT_GENERATED",
+    "numericalQualification": "NOT_RUN_NOT_CLAIMED",
+    "engineeringPassClaimed": false,
+    "engineeringFailureObserved": false,
+    "proposal08Present": false,
+    "proposalCheck09Present": false,
+    "proposalFalsifier10Present": false,
+    "proposalSemanticHash": null,
+    "proposalCheckSemanticHash": null,
+    "proposalFalsifierSemanticHash": null,
+    "qualifiedSuspendedHeadSha": null,
+    "qualifiedSuspendedTreeSha": null,
+    "standardPostPromotionGateCompatible": false,
+    "incompatibilityReason": "STANDARD_GATE_REQUIRES_GENUINE_FILES_01_THROUGH_10_AND_PROPOSAL_CHAIN"
+  },
+  "authorizedIdentity": {
+    "qualificationRecordSha256": "9ea591a1918175b3e415d77f1adc4398645ca0503a699cfe8139d9dd3c69b4c7",
+    "postAuthorityOracleSemanticHash": "60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18",
+    "sourceDocumentSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "datasetHash": "fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c"
+  },
+  "authorizedScope": {
+    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP",
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "variant": "ORIGINAL",
+    "gamma": 5,
+    "betaMinimum": 0.05,
+    "betaMaximum": 0.5,
+    "differentialPressure": 0,
+    "Kn": 1,
+    "Kb": 1,
+    "loadReference": "WRC_ATTACHMENT_REFERENCE_POINT",
+    "evaluatedStressLocations": [
+      "Au",
+      "Al",
+      "Bu",
+      "Bl",
+      "Cu",
+      "Cl",
+      "Du",
+      "Dl"
+    ],
+    "hostShellOnly": true,
+    "continuousJunctureSearch": false,
+    "globalAbsoluteMaximumClaim": false
+  },
+  "engineeringChangeFileAllowlist": [
+    "src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js",
+    "src/core/emp1/emp1-c-bounded-route-registry.js",
+    "validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json"
+  ],
+  "approvedSemanticMutationCount": 12,
+  "approvedSemanticMutations": [
+    "ROUTE_QUALIFICATION_HASH_HISTORICAL_TO_CANDIDATE",
+    "ROUTE_TABLE5_ORACLE_HISTORICAL_TO_POST_AUTHORITY_ORACLE",
+    "ROUTE_AUTHORIZED_FALSE_TO_TRUE",
+    "ROUTE_CLEAR_ONLY_REQUALIFICATION_SUSPENSION",
+    "METHOD_PRODUCTION_USE_AUTHORIZED_FALSE_TO_TRUE",
+    "REGISTRY_QUALIFICATION_HASH_HISTORICAL_TO_CANDIDATE",
+    "REGISTRY_REGISTERED_FALSE_TO_TRUE",
+    "REGISTRY_ENGINEERING_USE_AUTHORIZED_FALSE_TO_TRUE",
+    "REGISTRY_CLEAR_ONLY_REQUALIFICATION_SUSPENSION",
+    "REGISTRY_QUALIFICATION_ROLE_TO_POST_SOURCE_AUTHORITY_EXACT_HEAD",
+    "REGISTRY_ROUTE_REQUALIFICATION_REQUIRED_TRUE_TO_FALSE",
+    "REGISTRY_REMOVE_ONLY_REQUALIFICATION_REASON_FROM_REMAINING_BLOCKED"
+  ],
+  "remainingBlocked": [
+    "NONZERO_DIFFERENTIAL_PRESSURE",
+    "NONUNITY_STRESS_CONCENTRATION",
+    "WRC_APPENDIX_B_GENERAL_SCF_NOT_SOURCE_QUALIFIED",
+    "OFF_AXIS_LONGITUDINAL_MOMENT_MAXIMUM",
+    "GAMMA_OTHER_THAN_5",
+    "BETA_OUTSIDE_0P05_TO_0P5",
+    "NON_TABULATED_GAMMA",
+    "GLOBAL_EMP1_C_ROUTE"
+  ],
+  "authorityBoundary": {
+    "boundedProductionRouteAuthorized": true,
+    "boundedEngineeringUseAuthorized": true,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthorized": false,
+    "releaseQualified": false,
+    "nonzeroDifferentialPressureAllowed": false,
+    "nonUnityStressConcentrationAllowed": false,
+    "offAxisLongitudinalMomentMaximumAllowed": false,
+    "gammaOtherThan5Allowed": false,
+    "betaOutside0p05To0p5Allowed": false,
+    "nonTabulatedGammaAllowed": false
+  },
+  "postPromotionQualification": {
+    "required": true,
+    "completed": false,
+    "observedHeadSha": null,
+    "receiptSemanticHash": null,
+    "expectedStandardReceiptFile": "11-post-promotion-exact-head-receipt.json",
+    "expectedStandardFalsifierFile": "12-post-promotion-exact-head-falsifier-receipt.json",
+    "currentExecutionState": "NOT_RUN",
+    "note": "Owner workflow-skip progression does not constitute post-promotion numerical qualification."
+  },
+  "processMetadataPolicy": {
+    "engineeringAuthority": false,
+    "workreportPattern": "agents/PR[0-9]+_workreport.md",
+    "statusAndClaimRecordsAreNonAuthority": true
+  },
+  "authorizationRecordSemanticHash": "4a7bec7c84dd03ec547ae2ee7157efc91edef70f9662901d40d616e8cb8d0566",
+  "status": "BOUNDED_AUTHORIZATION_CHANGE_APPLIED_BY_EXPLICIT_OWNER_WORKFLOW_SKIP_OVERRIDE_PENDING_POST_PROMOTION_QUALIFICATION"
+}

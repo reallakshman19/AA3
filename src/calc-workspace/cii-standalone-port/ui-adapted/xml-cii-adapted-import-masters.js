@@ -40,6 +40,10 @@ function configFor(state) {
 }
 
 function fieldMapFor(masterKey, state) {
+  // An in-progress draft is what the operator is currently looking at, so it
+  // takes precedence over the last committed mapping for all display purposes.
+  const draft = state?.masterDraftMappings?.[masterKey];
+  if (draft && Object.keys(draft).length > 0) return draft;
   const configKey = MASTER_FIELDS[masterKey]?.configKey;
   const contextMap = state.masterContext?.config?.[configKey]?.fieldMap;
   if (contextMap && Object.keys(contextMap).length > 0) return contextMap;
@@ -225,18 +229,31 @@ function buildColumnPreviewMap(rows, headers) {
   return previewMap;
 }
 
+/** Single source of the mapping-health sentence, reused for live repaints. */
+export function mappingHealthText(masterKey, fields, fieldMap) {
+  return renderMappingHealth(masterKey, fields, fieldMap).textContent;
+}
+
 function renderMappingHealth(masterKey, fields, fieldMap) {
   const required = fields.filter((field) => field.required);
-  const mappedRequired = required.filter((field) => !!fieldMap[field.name]).length;
+  // A derivable field (bore from NPS) counts as satisfied by its source column.
+  const satisfied = (field) => Boolean(fieldMap[field.name])
+    || Boolean(field.derivableFrom && fieldMap[field.derivableFrom]);
+  const mappedRequired = required.filter(satisfied).length;
   const mappedTotal = fields.filter((field) => !!fieldMap[field.name]).length;
+  const derived = required.filter((field) => !fieldMap[field.name] && satisfied(field));
+  const derivedNote = derived.length
+    ? ` ${derived.map((field) => field.label).join(', ')} will be derived from the mapped NPS column.`
+    : '';
   const textValue = required.length
-    ? `Mapped ${mappedTotal}/${fields.length}; required ${mappedRequired}/${required.length}`
+    ? `Mapped ${mappedTotal}/${fields.length}; required ${mappedRequired}/${required.length}.${derivedNote}`
     : `Mapped ${mappedTotal}/${fields.length}`;
   const help = masterKey === 'lineList'
     ? 'Line List uses the XML->CII Import Master detector first, then dynamic fuzzy fallback for standalone-only fields.'
     : 'Dynamic fuzzy mapping uses header aliases and row previews.';
   const row = createElement('div', '', 'xml-cii-phase-help');
-  row.textContent = `${textValue}. ${help}`;
+  row.dataset.mappingHealth = masterKey;
+  row.textContent = `${textValue} ${help}`;
   row.style.margin = '4px 0 10px 0';
   return row;
 }
@@ -305,7 +322,28 @@ function renderColumnMapping(master, state) {
     const label = createElement('label');
     const span = createElement('span');
     span.textContent = field.label;
-    if (field.required) span.appendChild(createElement('span', '*', 'xml-cii-field-required-asterisk'));
+    // A derivable field stops being a required input once its source column is
+    // mapped, so the asterisk is dropped rather than demanding a second entry.
+    const satisfiedByDerivation = Boolean(field.derivableFrom)
+      && !fieldMap[field.name]
+      && Boolean(fieldMap[field.derivableFrom]);
+    if (field.required && !satisfiedByDerivation) {
+      span.appendChild(createElement('span', '*', 'xml-cii-field-required-asterisk'));
+    }
+    const sourceLabel = field.derivableFrom
+      ? fields.find((row) => row.name === field.derivableFrom)?.label || field.derivableFrom
+      : '';
+    if (satisfiedByDerivation) {
+      const note = createElement('span', ` — derived from ${sourceLabel}`, 'xml-cii-field-derived-note');
+      note.style.cssText = 'font-size:0.72rem; color:#4ade80; font-weight:600;';
+      span.appendChild(note);
+    } else if (field.required && field.derivableFrom && !fieldMap[field.name]) {
+      // Say how the requirement can be met without this column, otherwise the
+      // asterisk reads as "type a millimetre value" with no stated alternative.
+      const hint = createElement('span', ` — or map ${sourceLabel} to derive it`, 'xml-cii-field-derive-hint');
+      hint.style.cssText = 'font-size:0.72rem; color:#7dd3fc; font-weight:600;';
+      span.appendChild(hint);
+    }
     label.appendChild(span);
 
     const select = createElement('select');

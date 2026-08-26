@@ -1,5 +1,10 @@
 import { EventBus } from './event-bus.js';
 import { WorkspaceState } from './workspace-state.js';
+import {
+  BUNDLED_WEIGHT_MASTER,
+  BUNDLED_MAT_MAP_MASTER,
+  PIPING_CLASS_MASTER_DESCRIPTOR,
+} from '../master-data/bundled-master-data.js';
 
 const MASTER_DATA_DB_NAME = 'MasterDataDB';
 const MASTER_DATA_STORE_NAME = 'masters';
@@ -164,7 +169,11 @@ export class MasterDataController {
   async restorePersistedRows(basisRevision) {
     try {
       const stored = await readPersistedMasterRows();
-      if (!stored || basisRevision !== this._mutationRevision) return false;
+      if (!stored || basisRevision !== this._mutationRevision) {
+        // Nothing in IndexedDB — seed bundled defaults for keys that are still empty.
+        this._seedBundledDefaults();
+        return false;
+      }
       let restored = false;
       for (const key of MASTER_KEYS) {
         const source = stored[key];
@@ -182,13 +191,96 @@ export class MasterDataController {
         this._masterRevisions[key] += 1;
         restored = true;
       }
-      if (restored && basisRevision === this._mutationRevision) {
+      // Seed bundled defaults for any key that still has no rows after IDB restore.
+      this._seedBundledDefaults();
+      if (basisRevision === this._mutationRevision) {
         this.publishMasterUpdated({ action: 'idb_restore', revisions: this.getRevisionSnapshot() });
       }
       return restored;
     } catch (error) {
       console.warn('Failed to restore master data rows from IndexedDB', error);
+      this._seedBundledDefaults();
       return false;
+    }
+  }
+
+  /**
+   * Seeds bundled master data for 'weight' and 'materialMap' synchronously
+   * (both are small enough to parse on the main thread without freezing).
+   * 'pipingClass' is 2.4 MB and is fetched asynchronously via
+   * _seedPipingClassAsync() so the browser is never blocked.
+   *
+   * Only runs when a key has zero rawRows — IDB/user-uploaded data always wins.
+   */
+  _seedBundledDefaults() {
+    const SYNC_BUNDLED = {
+      weight: BUNDLED_WEIGHT_MASTER,
+      materialMap: BUNDLED_MAT_MAP_MASTER,
+    };
+    let seeded = false;
+    for (const [key, bundled] of Object.entries(SYNC_BUNDLED)) {
+      if (!this.masterData[key]) continue;
+      if (this.masterData[key].rawRows.length > 0) continue; // IDB data wins
+      Object.assign(this.masterData[key], {
+        rawRows: bundled.rawRows,
+        normalizedRows: bundled.normalizedRows,
+        fileName: bundled.fileName,
+        sheetName: bundled.sheetName,
+        diagnostics: bundled.diagnostics,
+        sourceHash: bundled.sourceHash,
+        byteLength: bundled.byteLength,
+      });
+      this._masterRevisions[key] += 1;
+      seeded = true;
+    }
+    if (seeded) {
+      this.publishMasterUpdated({ action: 'bundled_seed', revisions: this.getRevisionSnapshot() });
+    }
+    // Kick off the async piping-class seed without awaiting it — it completes
+    // in the background and publishes its own MASTER_DATA_UPDATED event.
+    this._seedPipingClassAsync();
+  }
+
+  /**
+   * Asynchronously fetches the piping-class master from public/master-data/
+   * and seeds it into the controller. Uses fetch() so parsing happens off
+   * the critical startup path and the browser is never blocked.
+   *
+   * Skipped if the key already has rows (IDB or user upload wins).
+   */
+  async _seedPipingClassAsync() {
+    if (!this.masterData.pipingClass) return;
+    if (this.masterData.pipingClass.rawRows.length > 0) return; // already populated
+    try {
+      // Resolve the public-dir URL relative to the Vite base path.
+      // import.meta.env.BASE_URL is '/Advanced_Analysis/' in production and '/' in dev.
+      const base = (import.meta.env?.BASE_URL ?? '/').replace(/\/$/, '');
+      const url = `${base}/master-data/${PIPING_CLASS_MASTER_DESCRIPTOR.publicPath.replace(/^master-data\//, '')}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.warn(`[MasterDataController] Could not fetch bundled piping class master (${response.status}). Skipping.`);
+        return;
+      }
+      const rows = await response.json();
+      if (!Array.isArray(rows) || rows.length === 0) {
+        console.warn('[MasterDataController] Bundled piping class master returned empty or non-array. Skipping.');
+        return;
+      }
+      // Double-check IDB data hasn't arrived in the meantime.
+      if (this.masterData.pipingClass.rawRows.length > 0) return;
+      Object.assign(this.masterData.pipingClass, {
+        rawRows: rows,
+        normalizedRows: [],
+        fileName: PIPING_CLASS_MASTER_DESCRIPTOR.fileName,
+        sheetName: '',
+        diagnostics: [],
+        sourceHash: PIPING_CLASS_MASTER_DESCRIPTOR.sourceHash,
+        byteLength: PIPING_CLASS_MASTER_DESCRIPTOR.byteLength,
+      });
+      this._masterRevisions.pipingClass += 1;
+      this.publishMasterUpdated({ action: 'bundled_seed_async', key: 'pipingClass', revisions: this.getRevisionSnapshot() });
+    } catch (error) {
+      console.warn('[MasterDataController] Failed to async-seed piping class master:', error);
     }
   }
 

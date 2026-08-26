@@ -1,0 +1,92 @@
+{
+  "schema": "emp1-wrc537-cylindrical-attachment-class-source-qualification/v1",
+  "qualificationId": "EMP1_WRC537_2013_CYLINDRICAL_ATTACHMENT_CLASS_SOURCE_Q1",
+  "issue": 1370,
+  "sourceDocument": {
+    "title": "WRC Bulletin 537",
+    "editionBasis": "2013 retained source package",
+    "repositoryPath": "docs/emp1/WRC537_2013.pdf",
+    "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
+  },
+  "status": "BLOCKED_PRIMARY_SOURCE_ATTACHMENT_CLASS_UNRESOLVED",
+  "primarySourceDirectlyReobserved": false,
+  "primarySourceExecutionStatus": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
+  "retainedTable5Evidence": {
+    "path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "gitBlobSha": "810a39d845e15bae92d9c30abb8d452401e711d2",
+    "table": "Table 5",
+    "pages": "41-42",
+    "explicitAttachmentGeometryInputs": ["r0"],
+    "attachmentWallThicknessInputPresent": false,
+    "solidHollowClassificationInputPresent": false,
+    "rigidityFlexibilityInputPresent": false,
+    "classification": "QUALIFIED_TABLE5_EXPLICIT_INPUT_CONTENT_ONLY_NOT_ATTACHMENT_CLASS_EQUIVALENCE_AUTHORITY"
+  },
+  "currentRoute": {
+    "shellFamily": "CYLINDRICAL",
+    "attachmentShape": "ROUND",
+    "standardTable5EightPointFiguresForLongitudinalMoment": ["1B", "2B"],
+    "attachmentWallThicknessRequiredByCurrentAdapter": false,
+    "solidHollowClassificationRequiredByCurrentAdapter": false,
+    "rigidityClassificationRequiredByCurrentAdapter": false,
+    "productionRouteAuthority": true,
+    "productionRouteAuthorityClassification": "OWNER_AUTHORIZED_BOUNDED_ROUTE_DOES_NOT_CLOSE_ATTACHMENT_CLASS_SOURCE_GATE"
+  },
+  "retainedEvidence": {
+    "legacyMethodExtraction": {
+      "path": "docs/01_WRC537_METHOD_DEFINITION.md",
+      "authority": "SECONDARY_OCR_RESEARCH_NOT_IMPLEMENTATION_AUTHORITY",
+      "statement": "Legacy research states that the solid/hollow distinction is dropped for cylindrical-shell attachments, but it is explicitly NOT_READY_FOR_IMPLEMENTATION and is not primary-source authority."
+    },
+    "offAxisLongitudinalMoment": {
+      "path": "docs/emp1/WRC537_2013_Off_Axis_Longitudinal_Moment_Authority.md",
+      "authority": "RETAINED_SOURCE_INTERPRETATION_BOUNDARY_ONLY",
+      "statement": "Off-axis 1B-1/2B-1 applicability is limited to a round flexible-nozzle connection, but the source-qualified flexible-nozzle classification method remains unresolved."
+    }
+  },
+  "engineeringConclusions": {
+    "standardTable5ExplicitAttachmentWallThicknessInputAbsent": true,
+    "standardTable5ExplicitSolidHollowInputAbsent": true,
+    "standardTable5ExplicitRigidityFlexibilityInputAbsent": true,
+    "roundGeometryAloneProvesAttachmentClass": false,
+    "standardEightPointSolidHollowEquivalencePrimaryVerified": false,
+    "standardEightPointRigidityIndependencePrimaryVerified": false,
+    "attachmentWallThicknessIrrelevancePrimaryVerified": false,
+    "offAxisFlexibleNozzleClassificationQualified": false,
+    "arbitraryRoundObjectAuthorized": false,
+    "structuralLugOrPadAuthorizedByRoundSurrogate": false,
+    "sphericalAttachmentParametersTransferToCylindrical": false,
+    "table5InputSilenceProvesPhysicalIrrelevance": false
+  },
+  "requiredPrimarySourceClosure": [
+    "exact standard cylindrical Table-5 attachment classes",
+    "whether solid and hollow round attachments share the same shell-stress method",
+    "whether rigidity/flexibility affects the standard eight-point curves",
+    "whether attachment wall thickness is absent by source design or merely absent from the computation sheet",
+    "definitions and qualification criteria for rigid attachment and flexible nozzle where used",
+    "relationship between standard 1B/2B and off-axis 1B-1/2B-1 attachment-class requirements",
+    "reinforcement or locally thickened attachment restrictions",
+    "canonical evidence required to prove attachment class"
+  ],
+  "prohibitions": [
+    "DO_NOT_PROMOTE_SECONDARY_SOLID_HOLLOW_EQUIVALENCE_TO_ENGINEERING_AUTHORITY",
+    "DO_NOT_ASSUME_ROUND_GEOMETRY_ALONE_PROVES_WRC_ATTACHMENT_CLASS",
+    "DO_NOT_INVENT_FLEXIBILITY_OR_RIGIDITY_THRESHOLD",
+    "DO_NOT_APPLY_OFF_AXIS_FLEXIBLE_NOZZLE_AUTHORITY_TO_RIGID_OR_UNCLASSIFIED_ATTACHMENTS",
+    "DO_NOT_IMPORT_SPHERICAL_GAMMA_RHO_ATTACHMENT_SEMANTICS",
+    "DO_NOT_REPRESENT_STRUCTURAL_LUGS_OR_PADS_AS_EQUIVALENT_ROUND_ATTACHMENTS",
+    "DO_NOT_INFER_CLASS_EQUIVALENCE_FROM_TABLE5_INPUT_SILENCE"
+  ],
+  "authorityEffect": {
+    "productionNumericsChanged": false,
+    "routeRegistryChanged": false,
+    "wrcCoefficientsChanged": false,
+    "gammaBetaAuthorityChanged": false,
+    "pressureAuthorityChanged": false,
+    "scfAuthorityChanged": false,
+    "offAxisAuthorityChanged": false,
+    "codeComplianceAuthority": false,
+    "releaseAuthority": false
+  }
+}

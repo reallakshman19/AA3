@@ -1,0 +1,52 @@
+{
+  "schema": "emp1-source-discrepancy/v1",
+  "discrepancyId": "WRC537_SPHERICAL_MOMENT_CONVENTION_HEXAGON_CROSSCHECK",
+  "classification": "DISCREPANCY_REQUIRES_PINNED_WRC_ARBITRATION",
+  "status": "OPEN_BLOCKING_FOR_SIGN_MAPPING",
+  "productionAuthority": false,
+  "baselineDerivedDataset": {
+    "repository": "reallaksh19/Advanced_Analysis",
+    "commit": "67317dc9cb47de8897fa7952b86107ab91b1f75c",
+    "path": "docs/03_WRC537_DATASET.json",
+    "blob": "0ffdc3f54adc0ff8025c4b3d2629272bab6860b4",
+    "declaredExtractionStatus": "NOT_READY_FOR_IMPLEMENTATION",
+    "values": {
+      "sphericalV1Positive": "B to A",
+      "sphericalV2Positive": "D to C",
+      "sphericalM1Positive": "D to C",
+      "sphericalM2Positive": "B to A"
+    }
+  },
+  "officialProductCrosscheck": {
+    "publisher": "Hexagon",
+    "product": "CAESAR II",
+    "document": "CAESAR II Users Guide",
+    "topic": "WRC 107/537 Load Conventions",
+    "values": {
+      "sphericalP": "Radial load",
+      "sphericalV1": "Shear load from points B to A",
+      "sphericalV2": "Shear load from points D to C",
+      "sphericalM1": "Moment from points A to B",
+      "sphericalM2": "Moment from points D to C",
+      "sphericalMt": "Torsional moment"
+    },
+    "authorityRole": "INDEPENDENT_OFFICIAL_PRODUCT_CROSSCHECK_NOT_WRC_BULLETIN_AUTHORITY"
+  },
+  "comparison": {
+    "V1": "CONSISTENT",
+    "V2": "CONSISTENT",
+    "M1": "CONFLICT",
+    "M2": "CONFLICT"
+  },
+  "requiredResolution": [
+    "Read the exact pinned WRC537_2013.pdf load/sign convention figure/table and determine the bulletin-defined M1/M2 positive sense.",
+    "Do not change docs/03_WRC537_DATASET.json from this crosscheck alone.",
+    "If the pinned WRC source confirms a correction, update the extraction with exact page/figure/table locator and add a regression that distinguishes M1 from M2.",
+    "If the pinned WRC source differs from Hexagon product convention, preserve both conventions explicitly and implement an audited transform rather than silently equating them."
+  ],
+  "guardrails": [
+    "No production EMP.1.C load mapping may depend on the disputed M1/M2 fields while this discrepancy is OPEN.",
+    "No sign may be guessed from stress output or tuned to CAUx benchmark results.",
+    "CAUx remains benchmark authority only and must not arbitrate the WRC method convention."
+  ]
+}

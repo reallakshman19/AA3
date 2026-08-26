@@ -1,0 +1,10 @@
+asset_type,lof_score_range,risk_classification,mandatory_action_summary,governing_modules,source_table,page_ref
+Main Line,LOF >= 1.0,High / Immediate Concern,"Main line shall be redesigned, resupported, or detailed dynamic stress analysis conducted (TM-09). Baseline vibration monitoring required (TM-07/08). Apply corrective actions (TM-10). All SBCs on line must be assessed (TM-03). Visual survey for geometry/support (TM-05/06).","TM-09, TM-07, TM-08, TM-10, TM-03, TM-05, TM-06",Table 3-1,PDF 34 / Doc 26
+Main Line,0.5 <= LOF < 1.0,Medium Concern,"Preventive redesign/resupport should be examined, or visual survey (TM-05) and vibration monitoring (TM-07) conducted. Assess all SBCs on the line (TM-03).","TM-03, TM-05, TM-07, TM-10",Table 3-1,PDF 34 / Doc 26
+Main Line,0.3 <= LOF < 0.5,Low Concern,Visual survey (TM-05) to check for poor construction/geometry/support. SBC assessment if high consequence line.,"TM-05, TM-03",Table 3-1,PDF 34 / Doc 26
+Main Line,LOF < 0.3,No Action,No further action required under baseline operating envelope.,None,Table 3-1,PDF 34 / Doc 26
+SBC,LOF >= 0.7,High / Immediate Concern,"SBC shall be redesigned, resupported, or detailed FEA/dynamic analysis conducted (TM-11). Baseline vibration monitoring required (TM-07/08). Visual survey of all SBC and tubing geometries (TM-05/06).","TM-11, TM-07, TM-08, TM-05, TM-06",Table 3-2,PDF 35 / Doc 27
+SBC,0.4 <= LOF < 0.7,Medium Concern,SBC should be visually inspected (TM-05) and baseline vibration measurements taken (TM-07). Consider proactive bracing per TM-11.,"TM-05, TM-07, TM-11",Table 3-2,PDF 35 / Doc 27
+SBC,LOF < 0.4,No Action,No further action required unless subject to severe external excitation.,None,Table 3-2,PDF 35 / Doc 27
+Thermowell,LOF = 1.0,High / Immediate Concern,"Modify thermowell (shorten insertion length, increase root diameter, or install velocity collar) or conduct detailed fluid-structure interaction analysis (TM-12).","TM-12, TM-04",Table 3-3,PDF 35 / Doc 27
+Thermowell,LOF < 1.0,Acceptable,Acceptable for continuous service.,None,Table 3-3,PDF 35 / Doc 27

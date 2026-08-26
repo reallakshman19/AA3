@@ -1,0 +1,24 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1401
+claim_state: READY_TO_CLOSE_ON_MERGE
+branch: agent/issue-1389-pr-d-gamma5-exact-head-20260824
+mission: "Issue #1389 PR-D / #1333 exact-head gamma5 execution and independent review"
+exact_execution_target: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+write_scope:
+  - agents/PR1401_workreport.md
+  - agents/status/PR1401.yaml
+  - agents/claims/PR1401.yaml
+protected_no_mutation:
+  - src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js
+  - src/core/emp1/emp1-c-bounded-route-registry.js
+  - src/core/emp1/emp1-wrc537-cylindrical-table5.js
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v2.json
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - validation/emp1/release/emp1-wrc537-gamma5-benchmark-manifest-v1.json
+  - validation/emp1/release/emp1-professional-release-readiness-v1.json
+  - .github/workflows/
+authority_boundary: "Owner skips GitHub workflow for progression only. Numerical qualification remains NOT_RUN/NOT_CLAIMED; production/global/code/release authority remains false."
+overlap_state: CURRENT_MAIN_REGROUNDED_AFTER_PR1403_PR1404_RELEASE_SUPPORT_MERGES
+receipt_policy: "Files 01-10 were not generated and must not be reconstructed or relabeled as PASS downstream."
+owner_override: "2026-08-24: skip github workflow. merge. proceed next"

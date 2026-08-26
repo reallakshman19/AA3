@@ -1,0 +1,123 @@
+{
+  "schema": "emp1-wrc537-gamma5-zero-dp-route-qualification/v2",
+  "status": "CANDIDATE_PENDING_EXECUTABLE_PRODUCTION_REOBSERVATION",
+  "engineeringAuthority": false,
+  "productionRouteAuthority": false,
+  "globalEmp1CRouteAuthority": false,
+  "productionObservationUsedToSetAuthority": false,
+  "semanticPayload": {
+    "methodIdentity": "WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP",
+    "methodEdition": "2013",
+    "sourceDocumentSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "datasetHash": "fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c",
+    "scope": {
+      "type": "CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_BOUNDED",
+      "shellFamily": "CYLINDRICAL",
+      "attachmentShape": "ROUND",
+      "variant": "ORIGINAL",
+      "gamma": 5,
+      "betaMinimum": 0.05,
+      "betaMaximum": 0.5,
+      "gammaSelectionPolicy": "EXACT_SOURCE_TABULATED_GAMMA_ONLY",
+      "interpolationAllowed": false,
+      "crossVariantFallbackAllowed": false,
+      "loadReference": "WRC_ATTACHMENT_REFERENCE_POINT",
+      "pressureDomain": "DIFFERENTIAL_PRESSURE_EXACTLY_ZERO",
+      "pressureThrustDisposition": "PRESSURE_THRUST_RESOLVED_UPSTREAM",
+      "canonicalLengthUnit": "mm",
+      "stressConcentration": {
+        "Kn": 1,
+        "Kb": 1,
+        "policy": "UNITY_ONLY"
+      },
+      "recoveryDomain": "WRC_TABLE5_EIGHT_SHELL_JUNCTURE_POINTS",
+      "absoluteShellMaximumAssured": false,
+      "globalEmp1CRouteAuthority": false
+    },
+    "authorityClosure": {
+      "cylindricalAxis": {
+        "authorityId": "WRC537_2013_FIGURE2_TABLE4_TABLE5_CYLINDRICAL_LOAD_BASIS_V1",
+        "sourceDocumentSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+        "positiveP": "SOURCE_REFERENCE_TOWARD_ATTACHMENT_TARGET",
+        "rawFoundationRadialHintIsPolarityAuthority": false
+      },
+      "attachmentR0": {
+        "schema": "emp1-wrc537-attachment-source-authority/v1",
+        "authority": "EMP1_TYPED_ENGINEERING_SOURCE_BINDING_V1",
+        "sourceQualification": "QUALIFIED_FOR_BOUNDED_R0_CUSTODY",
+        "diameterBasis": "OUTSIDE_DIAMETER_AT_SHELL_JUNCTURE",
+        "physicalLocation": "ATTACHMENT_SHELL_JUNCTURE"
+      },
+      "longitudinalMoment": {
+        "schema": "emp1-wrc537-table5-eight-point-longitudinal-moment-authority/v1",
+        "authorityId": "WRC537_2013_TABLE5_EIGHT_POINT_AXIS_OF_SYMMETRY_1B_2B",
+        "semanticHash": "fnv1a64:7c99811e1382efa1",
+        "circumferentialFigure": "1B",
+        "longitudinalFigure": "2B",
+        "offAxisFiguresAuthorizedByThisRoute": false
+      },
+      "applicability": {
+        "schema": "emp1-wrc537-applicability-source-authority/v1",
+        "authority": "EMP1_TYPED_WRC537_4_5_GEOMETRY_SOURCE_BINDING_V1",
+        "sourceQualification": "QUALIFIED_FOR_BOUNDED_WRC537_4_5_GEOMETRY",
+        "cylinderLengthBasis": "BETWEEN_CYLINDER_END_PLANES",
+        "attachmentStationBasis": "FROM_CYLINDER_START_END_PLANE_TO_WRC_ATTACHMENT_REFERENCE_POINT",
+        "nearestEndDistanceBasis": "DERIVED_MIN_X_L_MINUS_X"
+      }
+    },
+    "loadProducerQualificationSha256": "47a9157ba88a5646021fabd41cd803028e1880c8d6f712095afda429f2c2622b",
+    "benchmarkQualification": {
+      "status": "PASS_FROZEN_INDEPENDENT_POST_AUTHORITY_ORACLE",
+      "benchmarkHash": "60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18"
+    },
+    "independentAuthority": {
+      "sourceSemanticHash": "ccc3715aeefe71cbca4fffbee36c24d037e45a531636d65d24bf475312518890",
+      "table5InterpretationHash": "654e33f7fa7124c78e827bffeae06570d7feb401624291c823a6218b6bd012d2",
+      "signAuthorityHash": "be95253de1fb7d07a3662b92b29364da4b29e4251e2c8af2383618d99c82e985"
+    },
+    "supersedesHistorical": {
+      "routeQualificationSha256": "3b4375407dc9484c80144f2d9a5b555000d0257021108cd799923ed6fede1a8e",
+      "historicalOracleHash": "5daeb3a84828cf19017e6d1d0a70bd3478929713973948f875f21cec463a80aa",
+      "reason": "POST_EMP1_12_TO_15_SOURCE_AUTHORITY_CLOSURE_AND_1B_2B_EIGHT_POINT_REFREEZE"
+    },
+    "prohibitions": [
+      "NONZERO_DIFFERENTIAL_PRESSURE",
+      "NON_TABULATED_GAMMA",
+      "GAMMA_OTHER_THAN_5",
+      "BETA_OUTSIDE_0P05_TO_0P5",
+      "EXTRAPOLATED_VARIANT",
+      "NON_ROUND_ATTACHMENT",
+      "INTERPOLATION",
+      "CROSS_VARIANT_FALLBACK",
+      "UNQUALIFIED_LOAD_CUSTODY",
+      "PRODUCER_QUALIFICATION_HASH_MISMATCH",
+      "UNQUALIFIED_CYLINDRICAL_AXIS_AUTHORITY",
+      "UNQUALIFIED_ATTACHMENT_R0_SOURCE_AUTHORITY",
+      "UNQUALIFIED_WRC_4_5_APPLICABILITY_AUTHORITY",
+      "OFF_AXIS_LONGITUDINAL_MOMENT_MAXIMUM",
+      "NONUNITY_STRESS_CONCENTRATION",
+      "GLOBAL_EMP1_C_ROUTE",
+      "CODE_COMPLIANCE",
+      "RELEASE_QUALIFICATION"
+    ]
+  },
+  "qualificationRecordSha256": "9ea591a1918175b3e415d77f1adc4398645ca0503a699cfe8139d9dd3c69b4c7",
+  "reobservation": {
+    "status": "NOT_RUN_EXECUTION_ENVIRONMENT",
+    "stressComparisonsRequired": 32,
+    "stressComparisonsPassed": 0,
+    "physicalWrcLoadComparisonRequired": true,
+    "physicalWrcLoadComparisonPassed": false,
+    "currentProductionCandidateObserved": false
+  },
+  "authorization": {
+    "boundedMethodGateAllowed": false,
+    "boundedRouteRegistrationAllowed": false,
+    "boundedRunEmp1OrchestrationAllowed": false,
+    "nonzeroDifferentialPressureAllowed": false,
+    "nonUnityStressConcentrationAllowed": false,
+    "offAxisLongitudinalMomentMaximumAllowed": false,
+    "globalEmp1CRouteRegistrationAllowed": false,
+    "releaseQualified": false
+  }
+}

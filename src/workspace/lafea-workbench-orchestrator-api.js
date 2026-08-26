@@ -12,6 +12,7 @@ import {
   buildLafeaMeshGenerationIntentV2FromStage,
   buildLafeaPreparationRequestV2FromStage,
 } from './lafea-domain-first-requests.js';
+import { requireLafeaInputDescriptor } from './lafea-stage-input-descriptors.js';
 
 export function createLafeaWorkbenchOrchestratorApi(context) {
   const c = requireContext(context);
@@ -31,6 +32,16 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     setScalar: (descriptorId, entityId, rawText, surface) => c.mutateDocument(
       `SET_SCALAR:${descriptorId}`, 'setScalar', [descriptorId, entityId, rawText, surface],
     ),
+    setScalarBatch: (edits, surface = 'FORM_GROUP') => {
+      const stageId = activeStageId();
+      const invalidationClass = scalarBatchInvalidationClass(stageId, edits);
+      return c.mutateDocument(
+        `SET_SCALAR_BATCH:${invalidationClass}`,
+        'setScalarBatch',
+        [edits, surface],
+        invalidationClass,
+      );
+    },
     replaceDocument: (value, surface) => c.mutateDocument(
       'REPLACE_DOCUMENT', 'replaceDocument', [value, surface], 'GEOMETRY',
     ),
@@ -179,6 +190,16 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
       c.listeners.clear();
     },
   });
+}
+
+function scalarBatchInvalidationClass(stageId, edits) {
+  if (!Array.isArray(edits) || !edits.length) throw apiError('LAFEA_SCALAR_BATCH_REQUIRED');
+  const classes = new Set(edits.map((edit) => requireLafeaInputDescriptor(
+    stageId,
+    edit?.descriptorId,
+  ).invalidation.invalidationClass));
+  if (classes.size !== 1) throw apiError('LAFEA_SCALAR_BATCH_MIXED_INVALIDATION_CLASS');
+  return [...classes][0];
 }
 
 function apiError(code) { const error = new TypeError(code); error.code = code; return error; }

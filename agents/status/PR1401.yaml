@@ -1,0 +1,46 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1401
+mission: "Issue #1389 PR-D / #1333 exact-head gamma5 execution and independent review"
+workstream: EMP1_WRC537_PROFESSIONAL_RELEASE
+branch: agent/issue-1389-pr-d-gamma5-exact-head-20260824
+main_head_last_checked: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+exact_execution_target: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+merge_base: c2018c4b81e4c45f151ad7e59efd7d903ad7de97
+criticality: ENGINEERING_CRITICAL
+agent_state: READY_FOR_OWNER_OVERRIDE_MERGE
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/PR1401_workreport.md
+appendix_a_status: CURRENT
+appendix_a_score: 99
+appendix_a_min_question: 19
+grounding_epoch: GE-D-013
+current_stage: OWNER_DIRECTED_SKIP_GITHUB_WORKFLOW_AND_MERGE
+owner_override:
+  instruction: "skip github workflow. merge. proceed next"
+  github_workflow_execution: SKIPPED_BY_EXPLICIT_OWNER_DIRECTION
+  merge_authorized: true
+  numerical_qualification_promoted_to_pass: false
+validation:
+  exact_main_grounding: PASS
+  recovery_only_scope: PASS_EXACT_THREE
+  github_workflow_execution: SKIPPED_BY_OWNER
+  evidence_files_01_10: NOT_GENERATED
+  numerical_qualification: NOT_RUN_NOT_CLAIMED
+  engineering_failure_observed: false
+  production_authority_change: NONE
+merge_disposition: MERGE_AUTHORIZED_BY_EXPLICIT_OWNER_WORKFLOW_SKIP_OVERRIDE
+authority:
+  production_route_authorized: false
+  registered: false
+  engineering_use_authorized: false
+  global_emp1_c_route_authority: false
+  code_compliance_authorized: false
+  release_qualified: false
+dependencies:
+  - "#1389"
+  - "#1333"
+  - "#54"
+exact_next_action: "Merge PR1401 with exact head custody, re-ground main, then begin PR-E while preserving files 01-10 as NOT_GENERATED and numerical qualification as NOT_RUN/NOT_CLAIMED."
+last_updated: "2026-08-24"

@@ -1,0 +1,17 @@
+schema: AgentStatus.v1
+pr_or_wip: PR1390
+source_task: ISSUE-1371
+branch: agent/issue-1371-pr-b-lafea3-closure-20260823
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: BLOCKED_INFRASTRUCTURE
+merge_authority: OWNER_ONLY
+current_stage: LAFEA3_VALIDATION_AND_CHROMIUM
+main_head_last_checked: 1176f66eb94686f99d4f302930d46f17ff876083
+report: agents/PR1390_workreport.md
+coordination_state: SAFE
+validation_plumbing: EXISTING_CONTINUUM_GATE_BOUND_AFTER_FROZEN_ORACLES
+hosted_engineering_execution: NOT_RUN_STEPS_NULL_AFTER_RERUN
+highest_risk: SOURCE_DOMAIN_BC_LOAD_SEMANTICS_DRIFT
+exact_next_action: preserve NOT_RUN until hosted visible-workbench steps actually start; continue only non-overlapping series work

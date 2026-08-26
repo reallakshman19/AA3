@@ -1,0 +1,83 @@
+{
+  "schema": "emp1-wrc537-cylindrical-surface-sign-source-qualification/v1",
+  "issue": 1385,
+  "status": "BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED",
+  "source": {
+    "document": "WRC 537",
+    "edition": "2013",
+    "sha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
+  },
+  "retainedPrimaryValidationAuthority": {
+    "classification": "RETAINED_WRC_TABLE5_PRIMARY_VALIDATION_AUTHORITY",
+    "retainedPath": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "table": "Table 5",
+    "pages": "41-42",
+    "priorAuthorityRecord": "agents/PR1312_workreport.md",
+    "priorAuthorityStatement": "TABLE5_ALLOWED_REFERENCE_CELLS_ALGEBRAIC_SIGN_PLACEMENT_AND_OPPOSITE_LOAD_DIRECTION_REVERSAL",
+    "reviewedInterpretationPath": "validation/emp1/wrc537-2013/table5-reviewed-interpretation-v1.json",
+    "reviewedInterpretationSemanticHash": "654e33f7fa7124c78e827bffeae06570d7feb401624291c823a6218b6bd012d2",
+    "currentTurnDirectPdfReobserved": false,
+    "currentTurnDirectPdfObservationState": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT"
+  },
+  "currentImplementation": {
+    "table5Locations": ["Au","Al","Bu","Bl","Cu","Cl","Du","Dl"],
+    "signArraysPresent": true,
+    "productionSignArraysChangedByThisQualification": false,
+    "loadPolarityHandledByLinearity": true
+  },
+  "retainedTable5SignAuthority": {
+    "radialLoadSignPlacementQualified": true,
+    "circumferentialMomentSignPlacementQualified": true,
+    "longitudinalMomentSignPlacementQualified": true,
+    "shearAndTorsionSignPlacementQualified": true,
+    "oppositeLoadDirectionReversesApplicableSignsQualified": true,
+    "reviewedSigns": {
+      "pMem": [-1,-1,-1,-1,-1,-1,-1,-1],
+      "pBend": [-1,1,-1,1,-1,1,-1,1],
+      "mcMem": [0,0,0,0,-1,-1,1,1],
+      "mcBend": [0,0,0,0,-1,1,1,-1],
+      "mlMem": [-1,-1,1,1,0,0,0,0],
+      "mlBend": [-1,1,1,-1,0,0,0,0],
+      "vc": [1,1,-1,-1,0,0,0,0],
+      "vl": [0,0,0,0,-1,-1,1,1],
+      "mt": [1,1,1,1,1,1,1,1]
+    }
+  },
+  "primarySourceAuthority": {
+    "uLowerPhysicalSurfaceMeaningQualified": false,
+    "ABCDPhysicalLocationMeaningQualified": false,
+    "membraneBendingSurfaceReconstructionQualified": false,
+    "radialLoadSignTableQualified": true,
+    "circumferentialMomentSignTableQualified": true,
+    "longitudinalMomentSignTableQualified": true,
+    "shearSignTableQualified": true,
+    "loadDirectionReversalQualified": true,
+    "commonPhysicalPointSuperpositionQualified": false
+  },
+  "unresolvedClosureRequirements": [
+    "DIRECT_OR_SEPARATELY_PROVEN_PRIMARY_AUTHORITY_FOR_UL_PHYSICAL_SURFACE_MEANING",
+    "DIRECT_OR_SEPARATELY_PROVEN_PRIMARY_AUTHORITY_FOR_ABCD_PHYSICAL_LOCATION_MEANING",
+    "PRIMARY_AUTHORITY_FOR_MEMBRANE_BENDING_PHYSICAL_SURFACE_RECONSTRUCTION",
+    "PRIMARY_AUTHORITY_FOR_COMMON_PHYSICAL_POINT_SUPERPOSITION_BEFORE_STRESS_INTENSITY"
+  ],
+  "secondaryEvidence": {
+    "legacyExtractionStatus": "NOT_READY_FOR_IMPLEMENTATION",
+    "candidateMembranePlusMinusBendingRecorded": true,
+    "exactSignReconstructionMarkedUnresolved": true,
+    "implementationAuthority": false
+  },
+  "prohibitions": [
+    "NO_UL_SURFACE_INFERENCE_FROM_NAME",
+    "NO_ABCD_PHYSICAL_MAPPING_FROM_SECONDARY_SUMMARY",
+    "NO_GENERIC_SHELL_THEORY_SIGN_SUBSTITUTION",
+    "NO_ABSOLUTE_VALUE_BEFORE_ALGEBRAIC_SUPERPOSITION",
+    "NO_CAUX_OR_PRODUCTION_OUTPUT_AS_SIGN_AUTHORITY",
+    "NO_PRODUCTION_SIGN_ARRAY_CHANGE_IN_THIS_RECONCILIATION",
+    "NO_CODE_OR_RELEASE_AUTHORITY"
+  ],
+  "engineeringAuthority": false,
+  "productionAuthority": false,
+  "globalEmp1CAuthority": false,
+  "codeComplianceAuthority": false,
+  "releaseAuthority": false
+}

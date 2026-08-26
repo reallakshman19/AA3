@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import './lafea4-sample-pressure-output-check.mjs';
 
 import { PROFILE_KINDS, canonicalProfile } from '../src/core/lafea-profile-contract/index.js';
 import { createLafeaMockDocument } from '../src/workspace/advanced-mock-data.js';
@@ -8,7 +9,10 @@ import { createLafeaSimulatedShellMidsurfaceEvidence } from '../src/workspace/la
 import { cylindricalShellUvAtPoint3d } from '../src/workspace/lafea-shell-curved-midsurface-contract.js';
 import { produceLafeaShellAnalysisMesh } from '../src/workspace/lafea-shell-mesh-producer.js';
 import {
+  LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_BASIS,
+  LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_ROLE,
   createLafea5SourceShellParent,
+  lafea5SourceShellProfileReference,
   planLafea5SourceShellMeshAdoption,
   produceLafea5SourceShellMeshAdoption,
 } from '../src/workspace/lafea-source-shell-mesh-adoption.js';
@@ -114,7 +118,15 @@ const parent5 = createLafea5SourceShellParent({
   sourceHash: SOURCE_HASH,
   shellTemplate: lafea5.shellTemplate,
 });
-const profile5 = shellProfile('LAFEA.5');
+const reference5 = lafea5SourceShellProfileReference(parent5);
+assert.ok(reference5.referenceLength > 0);
+assert.equal(reference5.lengthUnit, parent5.lengthUnit);
+assert.equal(reference5.basis, LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_BASIS);
+assert.equal(reference5.role, LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_ROLE);
+assert.ok(reference5.uniqueEdgeCount > 0);
+const profile5 = shellProfile('LAFEA.5', {
+  fields: { globalTargetSize: reference5.referenceLength },
+});
 const plan5 = planLafea5SourceShellMeshAdoption({ parent: parent5, meshProfile: profile5 });
 const produced5 = produceLafea5SourceShellMeshAdoption({
   parent: parent5,
@@ -129,6 +141,12 @@ assert.equal(parent5.qualification, 'PASS');
 assert.equal(plan5.generationMode, 'SOURCE_MESH_ADOPTION');
 assert.equal(plan5.topologyMutation, false);
 assert.equal(plan5.coordinateMutation, false);
+assert.equal(plan5.characteristicLengthMin, null);
+assert.equal(plan5.characteristicLengthMedian, null);
+assert.equal(plan5.characteristicLengthMax, null);
+assert.equal(plan5.profileReferenceLength, reference5.referenceLength);
+assert.equal(plan5.profileReferenceBasis, reference5.basis);
+assert.equal(plan5.profileReferenceRole, reference5.role);
 assert.equal(produced5.evidence.qualification, 'PASS');
 assert.equal(produced5.evidence.quality.blockingElementIds.length, 0);
 assert.equal(produced5.evidence.quality.shellOrientationTopology?.qualification, 'PASS');
@@ -150,6 +168,19 @@ assert.deepEqual(
   })).sort((a, b) => a.elementId.localeCompare(b.elementId)),
 );
 
+const mismatchedReferenceProfile = shellProfile('LAFEA.5', {
+  profileSuffix: 'REFERENCE-MISMATCH',
+  fields: { globalTargetSize: reference5.referenceLength * 1.01 },
+});
+assert.throws(
+  () => planLafea5SourceShellMeshAdoption({
+    parent: parent5,
+    meshProfile: mismatchedReferenceProfile,
+  }),
+  (error) => error?.code === 'LAFEA5_SOURCE_SHELL_PROFILE_REFERENCE_MISMATCH',
+  'Lossless source adoption must reject a caller-invented profile reference length.',
+);
+
 const reversedTemplate = structuredClone(lafea5.shellTemplate);
 reversedTemplate.elements[0].nodeIds = [
   reversedTemplate.elements[0].nodeIds[0],
@@ -163,7 +194,8 @@ assert.throws(
 );
 
 const weakProfile5 = shellProfile('LAFEA.5', {
-  profileSuffix: 'WEAKENED', fields: { aspectRatioWarn: 6 },
+  profileSuffix: 'WEAKENED',
+  fields: { globalTargetSize: reference5.referenceLength, aspectRatioWarn: 6 },
 });
 const weakPlan5 = planLafea5SourceShellMeshAdoption({ parent: parent5, meshProfile: weakProfile5 });
 assert.throws(
@@ -176,7 +208,7 @@ assert.throws(
 );
 
 console.log(JSON.stringify({
-  schema: 'lafea-shell-sample-parent-check/v4',
+  schema: 'lafea-shell-sample-parent-check/v5',
   status: 'PASS',
   lafea4: {
     sampleGeometry: 'CYLINDRICAL_PIPE_SHELL_BENCHMARK',
@@ -211,6 +243,8 @@ console.log(JSON.stringify({
     shellOrientationTopology: produced5.evidence.quality.shellOrientationTopology?.qualification,
     reversedSourceWindingRejected: true,
     weakenedPolicyRejected: true,
+    callerReferenceOverrideRejected: true,
+    sourceProfileReference: reference5,
     topologyMutation: false,
     coordinateMutation: false,
   },

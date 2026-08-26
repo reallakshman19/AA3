@@ -8,7 +8,12 @@ import './workspace/enrichment/first-cut-workbench.css';
 import './workspace/linear-piping-results-workbench.css';
 import './workspace/lfea-preflight-phase1.css';
 import './workspace/empirical-v3-safety-workbench.css';
+import './workspace/lfea-pipeline-shell.css';
 import { bootstrapAnalysisWorkspace } from './workspace/bootstrap.js';
+import { LfeaPipelineShellController } from './workspace/lfea-pipeline-shell-controller.js';
+import { mountLfeaGlobalSettingsPopover } from './workspace/lfea-global-settings-popover.js';
+import { buildInputXmlRunRequestCase } from './core/linear-piping-analysis-consumer/inputxml-run-request-cases.js';
+import { LINEAR_PIPING_WORKBENCH_RUN_REQUEST_SCHEMA } from './workspace/linear-piping-run-request.js';
 import { WORKSPACE_ANALYSIS_TARGET_ID } from './workspace/analysis-context.js';
 import { authorizedEnrichmentConsumerController } from './workspace/enrichment/authorized-enrichment-runtime.js';
 import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/authorized-enrichment-workspace-api.js';
@@ -29,12 +34,24 @@ import { ENGINEERING_MODEL_EVENTS } from './workspace/engineering-model-controll
 import { EventBus } from './workspace/event-bus.js';
 import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping-analyzer-integration.js';
 import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-piping-inputxml-source-workflow.js';
+import { mountLfeaPipelineStagedJsonInputPanel } from './workspace/lfea-pipeline-stagedjson-input-panel.js';
+import { mountLfeaPipelineAccdbInputPanel } from './workspace/lfea-pipeline-accdb-input-panel.js';
+import { mountLfeaPipelineVerificationDrawer } from './workspace/lfea-pipeline-verification-drawer.js';
+import { mergeAuthoredInputXmlLinearPhysicalCase } from './core/linear-piping-analysis-consumer/inputxml-linear-authored-physical-cases.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
 import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
 import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety-workbench.js';
 import { EVENT_TOPICS } from './workspace/event-topics.js';
 import { SUPPORT_RESTRAINT_EVENTS } from './workspace/support-restraint-events.js';
 import { TOPOLOGY_EVENTS } from './workspace/topology-events.js';
+import {
+  LFEA_ENGINEERING_PREPARATION_OWNERS,
+  LFEA_ENGINEERING_SOURCE_KINDS,
+  createLfeaEngineeringSession,
+  lfeaSessionPreFlight,
+  lfeaSessionPreparationOwner,
+  lfeaSessionSourceKind,
+} from './workspace/lfea-session/lfea-engineering-session.js';
 
 const applicationRoot = document.getElementById('root');
 const coreWorkspace = bootstrapAnalysisWorkspace(applicationRoot);
@@ -45,8 +62,460 @@ const authorizedEnrichmentApi = createAuthorizedEnrichmentWorkspaceApi({
   onEmpiricalChanged(execution) { EventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, { reason: 'calculated', distribution: execution.distribution, execution }); },
   onEmpiricalFailed(error) { EventBus.publish(ENGINEERING_MODEL_EVENTS.FAILED, { message: error instanceof Error ? error.message : String(error), code: error?.code || 'EMPIRICAL_RUNTIME_EXECUTION_FAILED' }); },
 });
-const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, { documentRef: applicationRoot.ownerDocument });
-const linearPipingResults = mountLinearPipingResultsWorkbench(applicationRoot, { documentRef: applicationRoot.ownerDocument, urlApi: applicationRoot.ownerDocument.defaultView?.URL });
+const lfeaApplicationView = applicationRoot.querySelector('[data-application-view="LFEA"]');
+const linearPipingConsumerRoot = applicationRoot.querySelector('[data-role="linear-piping-consumer-root"]');
+const lfeaPipelineShellRoot = applicationRoot.ownerDocument.createElement('div');
+lfeaPipelineShellRoot.dataset.role = 'lfea-pipeline-shell-root';
+lfeaApplicationView.insertBefore(lfeaPipelineShellRoot, linearPipingConsumerRoot);
+const lfeaPipelineShell = new LfeaPipelineShellController(lfeaPipelineShellRoot).init();
+lfeaPipelineShell.getSourceHost().append(linearPipingConsumerRoot);
+const lfeaEngineeringSession = createLfeaEngineeringSession();
+let lfeaAnalysisSurface = null;
+let lfeaStepGuidanceReady = false;
+let lfeaStagedJsonHandoff = null;
+const lfeaEngineeringSessionUnsubscribe = lfeaEngineeringSession.subscribe((_state, event) => {
+  if (['SOURCE_REPLACED', 'SOURCE_CLEARED', 'PREFLIGHT_CHANGED'].includes(event?.type)) {
+    invalidateLfeaDownstreamPresentation(event.type);
+  }
+});
+
+const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
+  documentRef: applicationRoot.ownerDocument,
+  onStateChanged: (snapshot) => {
+    if (lfeaStepGuidanceReady) {
+      if (snapshot.fileName !== null && lfeaAccdbInputPanel.getSnapshot().fileName !== null) {
+        lfeaAccdbInputPanel.clear();
+      }
+      syncLfeaInputXmlEngineeringSession(snapshot);
+    }
+    lfeaAnalysisSurface?.refreshLoadCaseStep();
+    lfeaAnalysisSurface?.refreshSourceStep();
+    refreshLfeaStepGuidance();
+  },
+});
+const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipelineShell.getSourceHost(), {
+  documentRef: applicationRoot.ownerDocument,
+  onConversionComplete: (result) => {
+    const staged = lfeaStagedJsonInputPanel.getSnapshot();
+    lfeaStagedJsonHandoff = Object.freeze({
+      identityKey: `STAGED_JSON:${staged.fileName ?? result.outputName}`,
+      fileName: staged.fileName ?? result.outputName,
+      provenance: Object.freeze({
+        derivedInputXmlFileName: result.outputName,
+        diagnosticsSummary: result.diagnostics?.summary ?? null,
+      }),
+    });
+    try {
+      return linearPipingInputXmlSource.loadSource(
+        { fileName: result.outputName, content: result.inputXmlText },
+        { fallbackUnit: 'mm' },
+      );
+    } finally {
+      lfeaStagedJsonHandoff = null;
+    }
+  },
+  onClear: () => linearPipingInputXmlSource.clear(),
+});
+const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
+  documentRef: applicationRoot.ownerDocument,
+  onStateChanged: (snapshot) => {
+    if (lfeaStepGuidanceReady) {
+      if (snapshot.fileName !== null && snapshot.elementCount !== null
+        && linearPipingInputXmlSource.getSnapshot().fileName !== null) {
+        linearPipingInputXmlSource.clear();
+      }
+      syncLfeaAccdbEngineeringSession(snapshot);
+    }
+    refreshLfeaStepGuidance();
+  },
+});
+const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surface.js')
+  .then(({ mountLfeaPipelineAnalysisSurface }) => {
+    lfeaAnalysisSurface = mountLfeaPipelineAnalysisSurface({
+      documentRef: applicationRoot.ownerDocument,
+      loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
+      resultsHost: lfeaPipelineShell.getResultsHost(),
+      getPreFlight: () => activeLfeaPreFlight(),
+      onApplyCaseSelection: (caseIds) => applyLfeaCaseSelection(caseIds),
+      onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
+      onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
+      sourceHost: lfeaPipelineShell.getSourceHost(),
+      getSourceText: () => lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+        === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
+        ? linearPipingInputXmlSource.getSourceText()
+        : null,
+      onRepaired: (repairedXml) => {
+        if (lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+          !== LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
+          throw new Error('Model repair is only available for the active InputXML-derived source.');
+        }
+        const fileName = linearPipingInputXmlSource.getSnapshot().fileName ?? 'model.xml';
+        linearPipingInputXmlSource.loadSource(
+          { fileName: `${fileName.replace(/\.xml$/iu, '')}.corrected.xml`, content: repairedXml },
+          { fallbackUnit: 'mm' },
+        );
+      },
+      getNodeIds: () => activeLfeaPreFlight()
+        ?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
+        ?.map((node) => node.id) ?? [],
+    });
+    lfeaAnalysisSurface.refreshLoadCaseStep();
+    lfeaAnalysisSurface.refreshSourceStep();
+    return lfeaAnalysisSurface;
+  });
+
+syncLfeaEngineeringSessionFromControllers();
+lfeaStepGuidanceReady = true;
+refreshLfeaStepGuidance();
+const lfeaVerificationDrawer = mountLfeaPipelineVerificationDrawer(lfeaPipelineShell.getVerificationDrawerHost(), {
+  documentRef: applicationRoot.ownerDocument,
+});
+const linearPipingResultsMountRoot = { querySelector: () => lfeaPipelineShell.getResultsHost() };
+const linearPipingResults = mountLinearPipingResultsWorkbench(linearPipingResultsMountRoot, { documentRef: applicationRoot.ownerDocument, urlApi: applicationRoot.ownerDocument.defaultView?.URL });
+const globalSettingsPopover = mountLfeaGlobalSettingsPopover(
+  applicationRoot.querySelector('.application-navigation-shell'),
+  { getProfile: () => coreWorkspace.getEngineeringSettingsProfile() },
+);
+let lfeaAuthoritySupplement = null;
+lfeaPipelineShell.setAssemblyHandlers({
+  onStepActivated(stepId) {
+    if (stepId === 'LOAD_CASE') {
+      lfeaAnalysisSurface?.refreshLoadCaseStep();
+    }
+  },
+  async onAuthoritySupplementSelected(file) {
+    if (!file) {
+      lfeaAuthoritySupplement = null;
+      lfeaPipelineShell.setAuthoritySupplementStatus('No authority supplement loaded');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(await file.text());
+      requireLfeaAuthoritySupplementShape(parsed);
+      lfeaAuthoritySupplement = parsed;
+      lfeaPipelineShell.setAuthoritySupplementStatus(`Loaded: ${file.name}`);
+    } catch (error) {
+      lfeaAuthoritySupplement = null;
+      lfeaPipelineShell.setAuthoritySupplementStatus(`Rejected: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+  onAssembleAndSendToRun() {
+    try {
+      const runRequest = assembleLfeaInputXmlRunRequest();
+      lfeaPipelineShell.setActiveStep('LOAD_CASE');
+      lfeaPipelineShell.setStepStatus('ERROR_CHECK', { complete: true });
+      const existingCheck = linearPipingResults.getPreRunCheck();
+      const alreadyAuthorized = existingCheck?.applicationId === runRequest.applicationId
+        && existingCheck.solveAuthorized;
+      const preRunCheck = alreadyAuthorized ? existingCheck : linearPipingResults.checkRequest(runRequest);
+      if (preRunCheck.status === 'BLOCK') {
+        throw new Error(`Pre-run gate BLOCK for ${preRunCheck.applicationId}.`);
+      }
+      if (!preRunCheck.solveAuthorized) {
+        lfeaPipelineShell.setActiveStep('RUN');
+        lfeaPipelineShell.setAssembleStatus(
+          `Assembled ${runRequest.applicationId} (${runRequest.cases.length} case(s)) — pre-run gate WARN. Review the disclosed limitations below, accept explicitly, then click Assemble & send to Run again.`,
+          false,
+        );
+        return;
+      }
+      linearPipingResults.runRequest(runRequest);
+      lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
+      lfeaPipelineShell.setAssembleStatus(`Sent to Run: ${runRequest.applicationId} (${runRequest.cases.length} case(s)).`, false);
+      lfeaPipelineShell.setActiveStep('RUN');
+    } catch (error) {
+      lfeaPipelineShell.setAssembleStatus(error instanceof Error ? error.message : String(error), true);
+    }
+  },
+});
+
+function activeLfeaPreFlight() {
+  return lfeaSessionPreFlight(lfeaEngineeringSession.getState());
+}
+
+function applyLfeaCaseSelection(caseIds) {
+  const owner = lfeaSessionPreparationOwner(lfeaEngineeringSession.getState());
+  if (owner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
+    return linearPipingInputXmlSource.setRequestedCaseIds(caseIds);
+  }
+  if (owner === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB) {
+    return lfeaAccdbInputPanel.setRequestedCaseIds(caseIds);
+  }
+  throw new Error('Load a model before applying a load-case selection.');
+}
+
+function syncLfeaEngineeringSessionFromControllers() {
+  const inputXml = linearPipingInputXmlSource.getSnapshot();
+  const accdb = lfeaAccdbInputPanel.getSnapshot();
+  if (inputXml.fileName !== null) {
+    syncLfeaInputXmlEngineeringSession(inputXml);
+  } else if (accdb.fileName !== null && accdb.elementCount !== null) {
+    syncLfeaAccdbEngineeringSession(accdb);
+  }
+}
+
+function syncLfeaInputXmlEngineeringSession(snapshot) {
+  if (snapshot?.fileName === null || snapshot?.fileName === undefined) {
+    lfeaEngineeringSession.clearSource(LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML);
+    return;
+  }
+  const preFlight = linearPipingInputXmlSource.getPreFlight();
+  const providerIdentityKey = snapshot.contentSha256
+    ?? preFlight?.semanticHash
+    ?? `INPUTXML:${snapshot.fileName}`;
+  const current = lfeaEngineeringSession.getState();
+  const retainStagedIdentity = lfeaStagedJsonHandoff === null
+    && current.source.kind === LFEA_ENGINEERING_SOURCE_KINDS.STAGED_JSON
+    && current.source.preparationOwner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
+    && current.source.providerIdentityKey === providerIdentityKey;
+  const staged = lfeaStagedJsonHandoff;
+  lfeaEngineeringSession.setSource({
+    kind: staged || retainStagedIdentity
+      ? LFEA_ENGINEERING_SOURCE_KINDS.STAGED_JSON
+      : LFEA_ENGINEERING_SOURCE_KINDS.INPUTXML,
+    identityKey: staged?.identityKey
+      ?? (retainStagedIdentity ? current.source.identityKey : providerIdentityKey),
+    providerIdentityKey,
+    preparationOwner: LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML,
+    fileName: staged?.fileName
+      ?? (retainStagedIdentity ? current.source.fileName : snapshot.fileName),
+    provenance: staged?.provenance
+      ?? (retainStagedIdentity ? current.source.provenance : Object.freeze({})),
+    preFlight,
+    requestedProfileId: snapshot.requestedProfileId,
+    requestedCaseIds: snapshot.requestedCaseIds,
+  });
+}
+
+function syncLfeaAccdbEngineeringSession(snapshot) {
+  if (snapshot?.fileName === null || snapshot?.fileName === undefined || snapshot.elementCount === null) {
+    lfeaEngineeringSession.clearSource(LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB);
+    return;
+  }
+  const preFlight = lfeaAccdbInputPanel.getPreFlight();
+  const identityKey = preFlight?.intake?.contentSha256
+    ?? preFlight?.semanticHash
+    ?? `ACCDB:${snapshot.fileName}:OVERRIDES=${snapshot.overrideCount ?? 0}`;
+  lfeaEngineeringSession.setSource({
+    kind: LFEA_ENGINEERING_SOURCE_KINDS.ACCDB,
+    identityKey,
+    providerIdentityKey: identityKey,
+    preparationOwner: LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB,
+    fileName: snapshot.fileName,
+    provenance: Object.freeze({ overrideCount: snapshot.overrideCount ?? 0 }),
+    preFlight,
+    requestedProfileId: snapshot.requestedProfileId,
+    requestedCaseIds: preFlight?.preparation?.requestedCaseIds ?? [],
+  });
+}
+
+function invalidateLfeaDownstreamPresentation(reason) {
+  lfeaAnalysisSurface?.analysisController.clear();
+  lfeaAnalysisSurface?.resultsPanel.setState(null);
+  for (const stepId of ['LOAD_CASE', 'RUN', 'OUTPUT', 'EXPORT']) {
+    lfeaPipelineShell.setStepStatus(stepId, { complete: false });
+  }
+  if (reason) lfeaPipelineShell.setAssembleStatus(`Analysis state invalidated: ${reason}.`, false);
+}
+
+function refreshLfeaStepGuidance() {
+  if (!lfeaStepGuidanceReady) return;
+  const engineering = lfeaEngineeringSession.getState();
+  const sourceKind = lfeaSessionSourceKind(engineering);
+  const owner = lfeaSessionPreparationOwner(engineering);
+  const inputXml = owner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
+    ? linearPipingInputXmlSource.getSnapshot()
+    : null;
+  const accdb = owner === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB
+    ? lfeaAccdbInputPanel.getSnapshot()
+    : null;
+  const inputXmlLoaded = inputXml?.fileName !== null && inputXml !== null;
+  const accdbLoaded = accdb?.fileName !== null && accdb?.elementCount !== null && accdb !== null;
+  const sourceLoaded = sourceKind !== LFEA_ENGINEERING_SOURCE_KINDS.NONE
+    && (inputXmlLoaded || accdbLoaded);
+
+  lfeaPipelineShell.setActiveSourceKind(
+    owner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
+      ? 'INPUTXML'
+      : owner === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB ? 'ACCDB' : 'NONE',
+  );
+
+  lfeaPipelineShell.setStepStatus('INPUT', {
+    available: true,
+    complete: sourceLoaded,
+    detail: sourceLoaded
+      ? `Loaded ${engineering.source.fileName}.`
+      : 'Import an InputXML, StagedJSON or CAESAR II ACCDB model.',
+  });
+
+  if (inputXmlLoaded) {
+    const cleared = inputXml.preFlightStatus === 'PASS' || inputXml.preFlightSolveAuthorized;
+    const blocked = inputXml.preFlightStatus === 'BLOCK';
+    lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+      available: true,
+      complete: cleared,
+      detail: cleared
+        ? 'Pre-flight cleared.'
+        : blocked
+          ? 'Pre-flight BLOCK — resolve the blocking findings below.'
+          : 'Review the disclosed limitations and accept them to proceed.',
+    });
+    lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+      available: cleared,
+      detail: cleared ? 'Choose the cases to analyze, then Analyze.' : null,
+      blockedReason: cleared ? null : 'The pre-flight is not authorized yet — clear Error check first.',
+    });
+    return;
+  }
+
+  if (accdbLoaded) {
+    const cleared = accdb.preFlightStatus === 'PASS' || accdb.preFlightSolveAuthorized;
+    const failed = accdb.preFlightStatus === 'FAILED';
+    lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+      available: true,
+      complete: cleared,
+      detail: cleared
+        ? 'Pre-flight cleared.'
+        : failed
+          ? `Pre-flight could not be prepared: ${accdb.preFlightError}`
+          : `Pre-flight ${accdb.preFlightStatus} — see the grouped findings.`,
+    });
+    lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+      available: cleared,
+      detail: cleared ? `Choose from ${accdb.availableCaseIds.length} case(s), then Analyze.` : null,
+      blockedReason: cleared
+        ? null
+        : failed
+          ? `The ACCDB pre-flight failed closed: ${accdb.preFlightError}`
+          : 'The ACCDB pre-flight is not authorized yet — clear the blocking findings on Error check first.',
+    });
+    return;
+  }
+
+  lfeaPipelineShell.setStepStatus('ERROR_CHECK', {
+    available: false,
+    blockedReason: 'Load a model on the Input step first.',
+  });
+  lfeaPipelineShell.setStepStatus('LOAD_CASE', {
+    available: false,
+    blockedReason: 'Load a model on the Input step first.',
+  });
+}
+
+function runLfeaPipelineAnalysis(caseIds) {
+  try {
+    const preFlight = activeLfeaPreFlight();
+    if (!preFlight) throw new Error('Load a model and run Error check before analyzing.');
+    const requested = preFlight.preparation.requestedCaseIds ?? [];
+    const missing = caseIds.filter((caseId) => !requested.includes(caseId));
+    if (missing.length > 0) {
+      throw new Error(`Choose "Apply selection" first — ${missing.join(', ')} is not in the current pre-flight.`);
+    }
+    if (lfeaAnalysisSurface === null) throw new Error('The analysis surface is still loading; try again in a moment.');
+    const state = lfeaAnalysisSurface.analysisController.analyze(preFlight, caseIds);
+    lfeaEngineeringSession.bindAnalysisResult(state);
+    lfeaAnalysisSurface.resultsPanel.setState(state);
+    lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
+    lfeaPipelineShell.setStepStatus('RUN', { complete: true });
+    lfeaPipelineShell.setActiveStep('OUTPUT');
+    return state;
+  } catch (error) {
+    lfeaPipelineShell.setAssembleStatus(error instanceof Error ? error.message : String(error), true);
+    throw error;
+  }
+}
+
+function downloadLfeaCsv(csvText, fileName) {
+  const doc = applicationRoot.ownerDocument;
+  const view = doc.defaultView;
+  const urlApi = view?.URL;
+  if (!urlApi?.createObjectURL || typeof view.Blob !== 'function') return false;
+  const url = urlApi.createObjectURL(new view.Blob([csvText], { type: 'text/csv' }));
+  const anchorNode = doc.createElement('a');
+  anchorNode.href = url;
+  anchorNode.download = fileName;
+  anchorNode.click();
+  urlApi.revokeObjectURL(url);
+  return true;
+}
+
+function requireLfeaAuthoritySupplementShape(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('Authority supplement must be a JSON object.');
+  }
+  for (const key of ['applicationId', 'interfaceAuthority', 'nozzleAllowableProfiles', 'b31Authority']) {
+    if (!(key in value)) throw new TypeError(`Authority supplement is missing "${key}".`);
+  }
+}
+
+function assembleLfeaInputXmlRunRequest() {
+  if (lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+    !== LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
+    throw new Error('Optional interface/B31 code checks currently require an active InputXML-derived source.');
+  }
+  if (!lfeaAuthoritySupplement) {
+    throw new Error(
+      'Nozzle interface mechanics and B31 code checks need an authority supplement '
+      + '(interface authority, nozzle allowables, B31 edition data) — licensed project data '
+      + 'no InputXML file carries. For displacements, support loads and element forces, '
+      + 'use Analyze on the Load case step instead; it needs none of this.',
+    );
+  }
+  const snapshot = linearPipingInputXmlSource.getSnapshot();
+  const preFlight = activeLfeaPreFlight();
+  if (!snapshot.preFlightSolveAuthorized || !preFlight?.solveAuthorized) {
+    throw new Error('Authorize the active InputXML-derived pre-flight before assembling a run request.');
+  }
+  const authorizedCaseIds = preFlight.preparation.authorizedCaseCandidates.map((row) => row.caseId);
+  const applicationId = lfeaAuthoritySupplement.applicationId;
+  const authoredCasePayload = lfeaAnalysisSurface?.loadCaseAuthoringPanel.getAuthoredCasePayload() ?? null;
+  let authoredPreparation = preFlight.preparation;
+  let authoredCaseId = null;
+  if (authoredCasePayload) {
+    const mergedPhysicalPreparation = mergeAuthoredInputXmlLinearPhysicalCase(
+      preFlight.preparation.physicalPreparation,
+      authoredCasePayload,
+    );
+    authoredPreparation = { ...preFlight.preparation, physicalPreparation: mergedPhysicalPreparation };
+    authoredCaseId = mergedPhysicalPreparation.physicalCases
+      .map((row) => row.caseId)
+      .find((caseId) => !authorizedCaseIds.includes(caseId));
+  }
+
+  if (authorizedCaseIds.length === 0 && !authoredCaseId) {
+    throw new Error('No authorized physical cases are available from this pre-flight to assemble.');
+  }
+  const cases = authorizedCaseIds.map((caseId) => ({
+    caseId,
+    inputXmlAnalysisRequest: buildInputXmlRunRequestCase({
+      intake: preFlight.intake,
+      preparation: preFlight.preparation,
+      caseId,
+      analysisIdentity: `${applicationId}-${caseId}`,
+      analysisRevision: 1,
+    }),
+  }));
+  if (authoredCaseId) {
+    cases.push({
+      caseId: authoredCaseId,
+      inputXmlAnalysisRequest: buildInputXmlRunRequestCase({
+        intake: preFlight.intake,
+        preparation: authoredPreparation,
+        caseId: authoredCaseId,
+        analysisIdentity: `${applicationId}-${authoredCaseId}`,
+        analysisRevision: 1,
+      }),
+    });
+  }
+  return {
+    schema: LINEAR_PIPING_WORKBENCH_RUN_REQUEST_SCHEMA,
+    applicationId,
+    cases,
+    interfaceAuthority: lfeaAuthoritySupplement.interfaceAuthority,
+    nozzleAllowableProfiles: lfeaAuthoritySupplement.nozzleAllowableProfiles,
+    b31Authority: lfeaAuthoritySupplement.b31Authority,
+  };
+}
 let empiricalV3ObservedDatasetBasis = null;
 const empiricalV3Safety = mountEmpiricalV3SafetyWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
@@ -95,6 +564,17 @@ const workspace = Object.freeze({
   getLinearPipingInputXmlPreFlight() { return linearPipingInputXmlSource.getPreFlight(); },
   getLinearPipingInputXmlAnalyzerIntegrationPolicy() { return linearPipingAnalyzerIntegration; },
   clearLinearPipingInputXmlSource() { linearPipingInputXmlSource.clear(); },
+  getLfeaEngineeringSessionState() { return lfeaEngineeringSession.getState(); },
+  getLfeaStagedJsonInputPanelState() { return lfeaStagedJsonInputPanel.getSnapshot(); },
+  getLfeaAccdbInputPanelState() { return lfeaAccdbInputPanel.getSnapshot(); },
+  getLfeaLoadCaseAuthoringPanelState() { return lfeaAnalysisSurface?.loadCaseAuthoringPanel.getSnapshot() ?? null; },
+  getLfeaCaseSelectionState() { return lfeaAnalysisSurface?.caseSelectionPanel.getSnapshot() ?? null; },
+  getLfeaModelRepairState() { return lfeaAnalysisSurface?.modelRepairPanel.getSnapshot() ?? null; },
+  getLfeaLayoutPanelState() { return lfeaAnalysisSurface?.layoutPanel.getSnapshot() ?? null; },
+  getLfeaResultsPanelState() { return lfeaAnalysisSurface?.resultsPanel.getSnapshot() ?? null; },
+  getLfeaAnalysisState() { return lfeaAnalysisSurface?.analysisController.getState() ?? null; },
+  whenLfeaAnalysisSurfaceReady() { return lfeaAnalysisSurfaceReady; },
+  getLfeaVerificationDrawerState() { return lfeaVerificationDrawer.getSnapshot(); },
   importLinearPipingResultPackage(value) { return linearPipingResults.loadPackage(value); },
   checkLinearPipingRunRequest(value) { return linearPipingResults.checkRequest(value); },
   getLinearPipingPreRunCheck() { return linearPipingResults.getPreRunCheck(); },
@@ -142,7 +622,24 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); coreWorkspace.destroy(); },
+  destroy() {
+    lfeaEngineeringSessionUnsubscribe();
+    preflightSubscriptions.forEach((unsubscribe) => unsubscribe());
+    empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe());
+    clearEmpiricalV3GovernedPreparedExecution();
+    empiricalV3Safety.destroy();
+    preflightUi.destroy();
+    globalSettingsPopover.destroy();
+    linearPipingResults.destroy();
+    linearPipingInputXmlSource.destroy();
+    lfeaStagedJsonInputPanel.destroy();
+    lfeaAccdbInputPanel.destroy();
+    lfeaAnalysisSurface?.destroy();
+    lfeaVerificationDrawer.destroy();
+    lfeaPipelineShell.destroy();
+    lfeaEngineeringSession.destroy();
+    coreWorkspace.destroy();
+  },
 });
 
 globalThis.AnalysisWorkspace = workspace;

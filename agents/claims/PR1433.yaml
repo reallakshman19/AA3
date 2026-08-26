@@ -1,0 +1,46 @@
+schema: engineering-pr-claim/v1
+pr: 1433
+repository: reallaksh19/Advanced_Analysis
+owner: reallaksh19
+branch: agent/lafea3-mesh-v3-current-main-salvage-20260825
+source_task: PR1174 salvage / LAFEA.3 Mesh Workspace v3 pre-authority custody
+state: ACTIVE_BOUNDED
+criticality: ENGINEERING_CRITICAL
+authority_domain:
+  - LAFEA.3 generic Mesh Workspace v3 pre-authority candidate construction
+  - straight-boundary continuum domain-conformance proof
+  - parallel v2/v3 workbench mesh custody
+  - v3 lineage invalidation for profile/refinement/recovery/lifecycle changes
+exact_paths:
+  - src/workspace/lafea-continuum-mesh-domain-conformance-v3.js
+  - src/workspace/lafea-continuum-mesh-v3-production.js
+  - src/workspace/lafea-continuum-mesh-v3-producer-bridge.js
+  - src/workspace/lafea-workbench-mesh-generation-state.js
+  - scripts/lafea-continuum-mesh-v3-production-check.mjs
+  - scripts/lafea-continuum-mesh-v3-workbench-state-check.mjs
+  - scripts/lafea-continuum-mesh-v3-authority-isolation-check.mjs
+excluded_authority:
+  - v3 trusted authority receipt issuance
+  - v3 CURRENT_PASS promotion
+  - Run/readiness cutover
+  - v3 local-refinement authority
+  - v3 portable-recovery authority
+  - LAFEA.4/LAFEA.5 continuum-v3 candidate generation
+  - solver/formulation/recovery mechanics
+  - mesh quality thresholds or FEM tolerances
+  - workflow YAML
+  - registry/release authority
+  - Bucket-01 candidate projection
+coordination:
+  predecessor_pr: 1174
+  predecessor_disposition: SALVAGE_PARTIAL_SUPERSEDED_PROMOTION_VEHICLE
+  overlaps:
+    - pr: 1432
+      classification: BOUNDED_V2_REFINEMENT_NO_EXACT_FILE_OVERLAP
+    - pr: 1246
+      classification: BOUNDED_LAFEA4_PRODUCT_ROUTE_PRESERVED
+    - pr: 1258
+      classification: BOUNDED_NO_SOLVER_AUTHORITY_TOUCHED
+    - pr: 1259
+      classification: BOUNDED_NO_B02_AUTHORITY_TOUCHED
+merge_authority: OWNER_ONLY

@@ -1,0 +1,53 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1416
+mission: "Issue #1375 retained Table-5 shell-thickness reconciliation"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1375-retained-table5-shell-thickness-reconciliation-20260825
+base_sha: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
+base_tree: 7f825983f3bc2c706214a318bc1d9ffe1d46d0e3
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_DRAFT_AUDIT_COMPLETE
+handover_readiness: READY
+report_path: agents/PR1416_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: FINAL_AUDIT_COMPLETE_AWAIT_OWNER_MERGE
+merge_authority: NOT_GRANTED
+source_state:
+  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
+  retained_table5_pages: 41-42
+  retained_table5_label: VESSEL_THICKNESS
+  retained_table5_symbol: T
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+partial_authority:
+  cylindrical_thickness_symbol_t: QUALIFIED_RETAINED_SOURCE_TEXT
+  t_used_in_gamma: QUALIFIED_RETAINED_SOURCE_TEXT
+  t_used_in_table5_stress_scaling: QUALIFIED_RETAINED_SOURCE_TEXT
+  physical_thickness_basis: BLOCKED
+  corrosion_assessment_basis: BLOCKED
+  measured_local_basis: BLOCKED
+  radius_thickness_physical_consistency: BLOCKED
+  production_thickness_conversion: UNCHANGED
+validation:
+  retained_source_inspection: PASS
+  direct_pdf_page_observation: NOT_RUN
+  checker_node_execution: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  changed_files_final: 6
+  behind_main: 0
+  reviews: 0
+  review_threads: 0
+  protected_path_mutation: false
+  final_diff_review_main_audit: PASS
+  encoded_unexecuted_checker_is_pass: false
+authority:
+  engineering: false
+  production: false
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+exact_next_action: "Remain draft/unmerged until explicit Owner merge authorization; if authorized, re-ground live main/head and repeat six-file/review audit immediately before merge."
+last_updated: "2026-08-25"

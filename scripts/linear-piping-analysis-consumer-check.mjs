@@ -213,4 +213,7 @@ test('PIPING-T0-13', 'A missing mandatory parent hash blocks the request', () =>
   );
 });
 
+await import('./lfea-production-capability-profile-check.mjs');
+await import('./lfea-piping-component-promotion-stack-manifest-check.mjs');
+
 console.log('\n[SIMULATED] Linear piping analysis consumer T0 check PASS\n');

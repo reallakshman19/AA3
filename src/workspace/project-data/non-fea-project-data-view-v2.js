@@ -6,6 +6,7 @@ import {
   createConfiguredDefaultUsageLedger,
   createNonFeaFieldOwnershipMatrix,
 } from './non-fea-field-registry.js';
+import { isProductDefaultEvidence } from './non-fea-product-default-profile.js';
 import { projectDataStore } from './project-data-store.js';
 
 const NON_FEA_GROUP_KEYS = Object.freeze([
@@ -61,6 +62,10 @@ const TOPOLOGY_FIELDS = new Set([
 /** Renders the Phase 2 authoritative Project Data surface for Non-FEA Load Calc. */
 export function renderNonFeaProjectDataViewV2(container, onChanged) {
   if (!container) throw new TypeError('Non-FEA Project Data requires a container.');
+  // Built-in product defaults are materialised before the step is presented so
+  // convention fields are not hand-typed. Only empty fields are filled; operator
+  // values are preserved, and every filled field keeps PRODUCT_DEFAULT evidence.
+  projectDataStore.applyProductDefaults();
   container.replaceChildren(buildView(container.ownerDocument, onChanged));
 }
 
@@ -126,7 +131,40 @@ function headerMarkup(profile, origin, stage) {
     ${auditBadge('Topology policy', stage.topologyAudit)}
     <span data-status="NEXT">Import Masters: ${stage.masterPending.length} field(s) checked in Step 4</span>
     <span data-status="DEFERRED">Advanced method policy: ${stage.methodPending.length} field(s) deferred</span>
-  </div>`;
+  </div>
+  ${outstandingFieldsMarkup(stage.projectBasisAudit)}`;
+}
+
+/**
+ * Names the exact fields still blocking this step. The counts alone do not tell
+ * the operator which decisions remain, so each row links to the field editor.
+ */
+function outstandingFieldsMarkup(audit) {
+  const rows = uniqueErrorPaths(audit).map((path) => ({
+    path,
+    label: fieldLabelForPath(path),
+    reason: (audit.errors || []).find((error) => error.path === path)?.message || '',
+  }));
+  if (rows.length === 0) return '';
+  return `<section class="phase2-outstanding" data-role="project-data-outstanding">
+    <h3>${rows.length} field${rows.length === 1 ? '' : 's'} still needed on this step</h3>
+    <p>Each one needs a value, supporting evidence and the Approved box ticked. Select a row to jump to it.</p>
+    <ol>${rows.map((row) => `<li>
+      <button type="button" data-project-data-goto="${escape(row.path)}">
+        <strong>${escape(row.label)}</strong>
+        <small>${escape(row.reason)}</small>
+      </button>
+    </li>`).join('')}</ol>
+  </section>`;
+}
+
+function fieldLabelForPath(path) {
+  const [groupKey, fieldKey] = String(path).split('.');
+  const group = PROJECT_DATA_GROUPS.find((candidate) => candidate.key === groupKey);
+  const field = group?.fields.find((candidate) => candidate.key === fieldKey);
+  if (!field) return path;
+  const groupLabel = NON_FEA_GROUP_LABELS[groupKey] || group.label || groupKey;
+  return `${groupLabel} · ${field.label}`;
 }
 
 /** Separates current Project Data authority from downstream and method scope. */
@@ -248,6 +286,11 @@ function fieldMarkup(groupKey, field, entry) {
 }
 
 function fieldState(path, entry) {
+  // A product default is auto-applied, not an engineering decision. It is
+  // labelled distinctly so it is never read as an operator approval.
+  if (isProductDefaultEvidence(entry)) {
+    return { code: 'PRODUCT_DEFAULT', label: 'PRODUCT DEFAULT', emptyLabel: '(default)' };
+  }
   if (entry.value !== null && entry.approved === true) {
     return { code: 'APPROVED', label: 'APPROVED', emptyLabel: '(set)' };
   }
@@ -323,6 +366,16 @@ function bindActions(root, onChanged) {
       event.target.reportValidity();
     }
   });
+  root.addEventListener('click', (event) => {
+    const target = event.target.closest('[data-project-data-goto]');
+    if (!target) return;
+    const path = target.dataset.projectDataGoto;
+    const input = root.querySelector(`[data-project-value="${cssEscape(path)}"]`);
+    if (!input) return;
+    input.closest('details')?.setAttribute('open', '');
+    input.scrollIntoView({ block: 'center' });
+    input.focus();
+  });
   root.querySelector('[data-project-data-export]').addEventListener('click', () => downloadProfile(root.ownerDocument));
   root.querySelector('[data-project-data-restore]').addEventListener('click', () => { projectDataStore.restoreApprovedProfile(); onChanged?.(); });
   root.querySelector('[data-project-data-clear]').addEventListener('click', () => { projectDataStore.clear(); onChanged?.(); });
@@ -360,6 +413,18 @@ function escape(value) { return String(value ?? '').replace(/[&<>"']/g, (char) =
 function styles() {
   return `<style>
     .non-fea-project-data-v2{height:100%;overflow:auto;padding:16px;background:#07101e;color:#e2e8f0;box-sizing:border-box}.phase2-header{display:flex;gap:16px;justify-content:space-between;align-items:flex-start}.phase2-header h2{margin:3px 0;font-size:25px}.phase2-header p{margin:4px 0;color:#94a3b8;overflow-wrap:anywhere}.phase2-title{display:flex;gap:9px;align-items:center}.eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}.phase2-badge{padding:3px 8px;border:1px solid #0ea5e9;border-radius:999px;color:#7dd3fc;font-size:10px;font-weight:800}.phase2-actions{display:flex;gap:7px;flex-wrap:wrap}.phase2-actions button,.phase2-actions label{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:7px 10px;cursor:pointer}.phase2-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:13px}.phase2-summary article{padding:10px;border:1px solid #293548;border-radius:6px;background:#0d1728}.phase2-summary span{display:block;color:#94a3b8;font-size:10px;text-transform:uppercase}.phase2-summary strong{display:block;margin-top:4px;font-size:15px;overflow-wrap:anywhere}.phase2-summary [data-state="ready"]{border-color:#166534}.phase2-summary [data-state="warning"]{border-color:#92400e}.phase2-summary [data-state="blocked"]{border-color:#7f1d1d}.phase2-audits{display:flex;gap:8px;margin:9px 0;flex-wrap:wrap}.phase2-audits span{padding:4px 8px;border-radius:999px;border:1px solid #334155}.phase2-audits [data-status="READY"]{color:#4ade80;border-color:#166534}.phase2-audits [data-status="BLOCKED"]{color:#fbbf24;border-color:#92400e}.phase2-audits [data-status="NEXT"]{color:#7dd3fc;border-color:#155e75}.phase2-audits [data-status="DEFERRED"]{color:#94a3b8;border-color:#475569}.phase2-scope{padding:10px 12px;border:1px solid #155e75;border-radius:6px;background:#082f49;color:#bae6fd;margin:10px 0}.phase2-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;align-items:start}.phase2-rail{position:sticky;top:0;padding:10px;border:1px solid #293548;border-radius:7px;background:#0b1424}.phase2-rail a{display:block;padding:9px 10px;border-radius:5px;color:#cbd5e1;text-decoration:none}.phase2-rail a:hover{background:#10243a;color:#7dd3fc}.phase2-rail a span,.phase2-rail p{display:block;color:#64748b;font-size:10px;margin-top:2px}.phase2-main{display:flex;flex-direction:column;gap:9px}.phase2-group,.phase2-panel{border:1px solid #334155;border-radius:7px;background:#0b1424;overflow:hidden}.phase2-group summary{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;cursor:pointer;background:#101b2d}.phase2-group summary strong{display:block;color:#7dd3fc}.phase2-group summary>span{color:#94a3b8;overflow-wrap:anywhere}.phase2-fields{display:grid;grid-template-columns:minmax(190px,1fr) minmax(220px,1.2fr) minmax(240px,1.4fr) 100px;gap:6px;padding:9px 12px;align-items:start}.phase2-fields>strong{color:#94a3b8;font-size:10px;text-transform:uppercase}.phase2-fields label{padding-top:6px}.phase2-fields label strong,.phase2-fields label small{display:block}.phase2-fields label small{color:#64748b}.phase2-fields input[type="number"],.phase2-fields textarea{width:100%;box-sizing:border-box;border:1px solid #334155;border-radius:4px;background:#07101e;color:#e2e8f0;padding:7px}.phase2-approval{display:flex;gap:5px;align-items:center}.phase2-approval[data-state="APPROVED"]{color:#4ade80}.phase2-approval[data-state="REQUIRED"]{color:#f87171}.phase2-approval[data-state="NEXT"]{color:#7dd3fc}.phase2-approval[data-state="DEFERRED"]{color:#94a3b8}.phase2-table-wrap{overflow:auto}.phase2-table-wrap table{width:100%;border-collapse:collapse}.phase2-table-wrap th,.phase2-table-wrap td{padding:8px;border-bottom:1px solid #26354a;text-align:left;vertical-align:top}.phase2-table-wrap th{color:#7dd3fc;font-size:10px;text-transform:uppercase}.phase2-table-wrap code,.phase2-table-wrap small{display:block;color:#64748b}.phase2-table-wrap td span{font-size:10px}.phase2-panel{padding:13px}.phase2-panel header{display:flex;justify-content:space-between;gap:10px}.phase2-panel h3{margin:3px 0}.phase2-panel p,.phase2-panel dt{color:#94a3b8}.phase2-panel dl{display:grid;grid-template-columns:120px 1fr;gap:6px}.phase2-panel dd{margin:0;overflow-wrap:anywhere}.phase2-policy{display:grid;grid-template-columns:1fr 1fr;gap:9px}.phase2-policy article{border:1px solid #293548;border-radius:7px;background:#0b1424;padding:13px}.phase2-policy h3{margin:3px 0}.phase2-policy p{color:#94a3b8}.phase2-actions button:focus,.phase2-actions label:focus-within,.phase2-rail a:focus{outline:2px solid #38bdf8;outline-offset:2px}
+    /* Outstanding-field checklist: names the decisions still blocking this step */
+    .phase2-approval[data-state="PRODUCT_DEFAULT"]{color:#c084fc}
+    .phase2-outstanding{margin:10px 0;padding:12px 14px;border:1px solid #92400e;border-radius:7px;background:#1c1207}
+    .phase2-outstanding h3{margin:0 0 4px;font-size:14px;color:#fbbf24}
+    .phase2-outstanding>p{margin:0 0 9px;color:#d6bb92;font-size:12px}
+    .phase2-outstanding ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+    .phase2-outstanding li{color:#94a3b8}
+    .phase2-outstanding li button{display:block;width:100%;text-align:left;padding:7px 9px;border:1px solid #3f2d14;border-radius:5px;background:#120c04;color:#e2e8f0;cursor:pointer;font:inherit}
+    .phase2-outstanding li button:hover{background:#241905;border-color:#92400e}
+    .phase2-outstanding li button:focus{outline:2px solid #f59e0b;outline-offset:2px}
+    .phase2-outstanding li button strong{display:block;color:#fcd34d;font-size:13px}
+    .phase2-outstanding li button small{display:block;margin-top:2px;color:#94a3b8;font-size:11px}
     /* Evidence cell: show human summary, raw JSON only on hover/focus */
     .phase2-evidence-cell{position:relative;display:flex;flex-direction:column;gap:4px}
     .phase2-evidence-raw{font-size:10px;font-family:monospace;display:none}

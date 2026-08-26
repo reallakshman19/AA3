@@ -19,12 +19,18 @@ export function preflightInputXmlLinearSolve(physicalPreparation, options) {
   const compilation = structural.compilation;
   const frameProfile = inputXmlStiffnessFrameElementProfile();
   const solverProfile = inputXmlStiffnessSolverProfile(options.solverProfile);
-  const elements = compileInputXmlStiffnessElementAuthorities(structural, frameProfile);
+  const elements = compileInputXmlStiffnessElementAuthorities(structural, frameProfile, {
+    sourcePreparation: accepted.sourcePreparation,
+    bendFactorAuthority: options.bendFactorAuthority ?? null,
+    branchFactorAuthority: options.branchFactorAuthority ?? null,
+    capabilityProfile: options.capabilityProfile,
+  });
   const generic = compileLinearStiffnessPreflight({
     compilation,
     elementContributions: elements.elementContributions,
     solverProfile,
   });
+  const effectiveStiffnessStateHash = elements.effectiveStiffnessStateHash;
   const status = generic.status === 'QUALIFIED'
     ? 'PASS'
     : generic.status === 'CONDITIONAL'
@@ -40,6 +46,14 @@ export function preflightInputXmlLinearSolve(physicalPreparation, options) {
     constrainedDofCount: generic.assembly.constrainedDofCount,
     inactiveDofCount: generic.assembly.inactiveDofCount,
     elementStiffnessCount: elements.elementLedger.length,
+    pipingComponentCount: elements.pipingComponents.length,
+    exactBendComponentCount: elements.pipingComponents
+      .filter((row) => row.componentType === 'BEND').length,
+    eligibleBendCount: elements.eligibleBendCount,
+    bendExactMechanicsApplied: elements.bendExactMechanicsApplied,
+    eligibleTeeJunctionCount: elements.eligibleTeeJunctionCount,
+    exactTeeJunctionCount: elements.branchJunctions.length,
+    teeExactMechanicsApplied: elements.teeExactMechanicsApplied,
     factorizationKind: generic.factorization.kind,
     conditionEstimate: generic.factorization.conditionEstimate,
     warningCount: generic.findings.filter((row) => row.disposition === 'WARN').length,
@@ -51,7 +65,11 @@ export function preflightInputXmlLinearSolve(physicalPreparation, options) {
     preflightId: `IXPF-${semanticHash({
       profile: INPUTXML_STIFFNESS_PREFLIGHT_PROFILE_ID,
       physicalPreparation: accepted.semanticHash,
-      stiffnessState: compilation.stiffnessStateHash,
+      mechanicalStiffnessState: compilation.stiffnessStateHash,
+      effectiveStiffnessState: effectiveStiffnessStateHash,
+      capabilityProfile: elements.capabilityProfileHash,
+      bendFactorAuthority: elements.bendFactorAuthority?.semanticHash ?? null,
+      branchFactorAuthority: elements.branchFactorAuthority?.semanticHash ?? null,
       genericPreflight: generic.semanticHash,
     })}`,
     analysisProfileId: accepted.analysisProfileId,
@@ -61,6 +79,14 @@ export function preflightInputXmlLinearSolve(physicalPreparation, options) {
     structuralPreparationEvidenceHash: structural.evidenceHash,
     mechanicalModelSemanticHash: compilation.mechanicalModelSemanticHash,
     stiffnessStateHash: compilation.stiffnessStateHash,
+    effectiveStiffnessStateHash,
+    productionCapabilityProfileHash: elements.capabilityProfileHash,
+    bendFactorAuthority: elements.bendFactorAuthority,
+    branchFactorAuthority: elements.branchFactorAuthority,
+    bendExactMechanicsApplied: elements.bendExactMechanicsApplied,
+    teeExactMechanicsApplied: elements.teeExactMechanicsApplied,
+    eligibleBendCount: elements.eligibleBendCount,
+    eligibleTeeJunctionCount: elements.eligibleTeeJunctionCount,
     frameElementProfileSemanticHash: frameProfile.semanticHash,
     solverProfileSemanticHash: solverProfile.semanticHash,
     genericPreflightSemanticHash: generic.semanticHash,

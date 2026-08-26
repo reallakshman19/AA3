@@ -26,7 +26,14 @@ function applicationMarkup() {
     <div data-application-view="WORKSPACE" class="application-view application-view--workspace">${workspaceMarkup()}</div>
     <div data-application-view="LOAD_CALC" hidden aria-hidden="true"></div>
     <div class="application-view application-view--lafea" data-application-view="LAFEA" hidden aria-hidden="true"><div data-role="lafea-consumer-root"></div></div>
-    <div class="application-view application-view--lfea" data-application-view="LFEA" hidden aria-hidden="true"><div data-role="linear-piping-consumer-root"></div><div data-role="lfea-preflight-root"></div><div data-role="lfea-consumer-root"></div></div>
+    <div class="application-view application-view--lfea" data-application-view="LFEA" hidden aria-hidden="true"><div data-role="linear-piping-consumer-root"></div><details class="lfea-preflight-disclosure" data-role="lfea-preflight-disclosure"><summary>Source Enrichment Pre-Flight (reviews the Workspace tab's own dataset — separate from the pipeline above)</summary><div data-role="lfea-preflight-root"></div></details></div>
+    <!-- The T3/Q4 continuum workbench belongs to the LAFEA track, not to F LFEA's
+       piping pipeline (2 DOF/node planar vs. 6 DOF/node 3D beam -- a documented,
+       audited architectural boundary). Its controller stays constructed, because
+       the workspace public API (importLfeaDocument/runLfea/...) and the standalone
+       lfea.html app both depend on it, but it no longer renders on the F LFEA tab
+       where it was dead weight. -->
+    <div class="application-detached-host" data-role="lfea-detached-host" hidden aria-hidden="true"><div data-role="lfea-consumer-root"></div></div>
     <div class="application-view application-view--empirical" data-application-view="EMPIRICAL" hidden aria-hidden="true"><div data-role="empirical-lafea-consumer-root"></div></div>
     ${nativeModelDialogMarkup()}
   </div>`;

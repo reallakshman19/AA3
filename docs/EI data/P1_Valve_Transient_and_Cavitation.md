@@ -51,7 +51,11 @@ Fast closure of an inline valve (such as an Emergency Shutdown Valve / ESDV) gen
 
 ---
 
-### 1.3 Rapid Valve Opening Assessment (Flowchart T2-6 & T2-8)
+### 1.3 Rapid Valve Opening Assessment (Flowchart T2-6b [Surge] & Flowchart T2-8)
+
+> [!NOTE]
+> **Source Document Numbering Disambiguation:**
+> In the printed Energy Institute Guidelines (2nd Edition), page 74 (PDF page 74) labels the dry gas rapid opening workflow as *Flowchart T2-6*, which duplicates the numbering of *Flowchart T2-6 (AIV Discontinuity Assessment)* on page 69. In our controlled database architecture, the dry gas surge flowchart is designated **Flowchart T2-6b (Surge)** to ensure zero ambiguity with AIV fatigue calculations.
 
 Rapid opening of a valve into an unpressurized downstream header or vent line creates transient dynamic momentum and shock loading.
 

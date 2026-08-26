@@ -13,6 +13,11 @@ import {
 } from '../core/linear-piping-analysis-consumer/inputxml-linear-solve-authorization.js';
 import { requireLinearPipingInputXmlSource } from '../core/linear-piping-analysis-consumer/inputxml-source-contract.js';
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
+import {
+  ensureLfeaBendFactorAuthorityControl,
+  lfeaBendFactorAuthorityForIntake,
+  lfeaBranchFactorAuthorityForIntake,
+} from './lfea-bend-factor-authority-control.js';
 import { requireLinearPipingInputXmlIntake } from './linear-piping-inputxml-intake.js';
 
 export const LINEAR_PIPING_INPUTXML_PREFLIGHT_SCHEMA = 'linear-piping-inputxml-native-preflight/v1';
@@ -34,9 +39,9 @@ const PREFLIGHT_KEYS = Object.freeze([
 ]);
 
 /**
- * Run the existing production diagnostics/preparation chain from one sealed
- * native-source intake. No hand-authored downstream sourceAnalysisRequest is
- * required and no solver runtime is created.
+ * Run the production diagnostics/preparation chain from one sealed intake.
+ * B31/B31J bend and tee factor authorities enter only through explicit sealed
+ * engineer choices. No code edition is inferred from file type or CAESAR version.
  */
 export function prepareLinearPipingInputXmlPreFlight(value, options) {
   if (options === undefined) options = {};
@@ -50,9 +55,23 @@ export function prepareLinearPipingInputXmlPreFlight(value, options) {
     validateSourceRequest: requireNativeSourceOnlyAnalysisRequest,
     ...(options.diagnosticsOptions ?? {}),
   });
+  const bendFactorAuthority = options.bendFactorAuthority === undefined
+    ? lfeaBendFactorAuthorityForIntake(intake)
+    : options.bendFactorAuthority;
+  const branchFactorAuthority = options.branchFactorAuthority === undefined
+    ? lfeaBranchFactorAuthorityForIntake(intake)
+    : options.branchFactorAuthority;
+  const preparationOptions = options.preparationOptions ?? {};
   const preparation = prepareInputXmlLinearPreFea(
     diagnostics,
-    options.preparationOptions ?? {},
+    {
+      ...preparationOptions,
+      stiffnessOptions: {
+        ...(preparationOptions.stiffnessOptions ?? {}),
+        bendFactorAuthority,
+        branchFactorAuthority,
+      },
+    },
   );
   const authorization = preparation.status === 'PASS'
     ? authorizeInputXmlLinearSolve(preparation)
@@ -105,10 +124,7 @@ export function authorizeLinearPipingInputXmlPreFlight(record, approval) {
   });
 }
 
-/**
- * Revalidate the complete source → diagnostics → preparation → authorization
- * custody chain before a native pre-flight receipt is reused by later stages.
- */
+/** Revalidate the complete source → preparation → authorization custody chain. */
 export function requireLinearPipingInputXmlPreFlight(record) {
   requireRecord(record, 'nativePreFlight');
   requireExactKeys(record, PREFLIGHT_KEYS, 'nativePreFlight');
@@ -362,4 +378,8 @@ function failPreFlight(code, message, evidence) {
   error.evidence = evidence ?? null;
   error.analysisStage = 'INPUTXML_NATIVE_PREFLIGHT';
   throw error;
+}
+
+if (typeof document !== 'undefined' && typeof queueMicrotask === 'function') {
+  queueMicrotask(() => ensureLfeaBendFactorAuthorityControl(document));
 }

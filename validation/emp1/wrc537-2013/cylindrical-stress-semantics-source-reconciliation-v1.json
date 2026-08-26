@@ -1,0 +1,91 @@
+{
+  "schema": "emp1-wrc537-cylindrical-stress-semantics-source-reconciliation/v1",
+  "issues": [1383, 1385],
+  "umbrellaIssue": 1389,
+  "status": "BLOCKED_CURRENT_ROUTE_AUTHORIZED_STRESS_SEMANTICS_SOURCE_GATES_UNQUALIFIED",
+  "source": {
+    "document": "WRC 537",
+    "edition": "2013",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "retainedTable5Path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "retainedTable5Pages": "41-42",
+    "directPrimaryPageObservation": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT"
+  },
+  "inputAuthorityRecords": {
+    "surfaceSign": "validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json",
+    "stressIntensity": "validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json",
+    "professionalCurrentState": "validation/emp1/release/emp1-professional-release-current-state-v1.json"
+  },
+  "currentBoundedRuntimeState": {
+    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP",
+    "routeAuthorized": true,
+    "registryRegistered": true,
+    "boundedEngineeringUseAuthorized": true,
+    "boundedProductionUseAuthorized": true,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseQualified": false,
+    "professionalReleaseReady": false
+  },
+  "qualifiedRetainedSubset": {
+    "table5SignPlacementAndLoadReversal": true,
+    "combinedStressIntensitySectionPresent": true,
+    "algebraicNormalAndShearSummationBeforeS": true,
+    "combinedSigmaPhiSigmaXTauInputs": true,
+    "likeUnlikeAndZeroShearCaseStructure": true
+  },
+  "sourceAuthorityStillFalse": {
+    "uLowerPhysicalSurfaceMeaning": false,
+    "ABCDPhysicalLocationMeaning": false,
+    "membraneBendingPhysicalSurfaceReconstruction": false,
+    "commonPhysicalPointSuperpositionBeforeStressIntensity": false,
+    "explicitPlaneStressAssumption": false,
+    "explicitThirdPrincipalStressZero": false,
+    "principalStressEquations": false,
+    "exactStressIntensityTwiceMaximumShearDefinition": false,
+    "vonMisesAlternativePolicy": false,
+    "wrcDefinedEightPointEnvelopeAuthority": false,
+    "codeAcceptanceImplication": false
+  },
+  "authoritySeparation": {
+    "rule": "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_STRESS_RECONSTRUCTION_OR_STRESS_INTENSITY_SOURCE_SEMANTICS",
+    "routeAuthorizationMayRemainTrueWhileSourceSemanticsRemainBlocked": true,
+    "mathematicalImplementationMayNotSubstituteForPrimarySourceAuthority": true,
+    "retainedTable5ComputationOrderMayNotSubstituteForPhysicalSurfaceIdentity": true,
+    "codeAcceptanceMayNotBeInferredFromStressIntensity": true
+  },
+  "prohibitions": [
+    "NO_UL_SURFACE_INFERENCE_FROM_ARRAY_LABELS",
+    "NO_ABCD_PHYSICAL_MAPPING_FROM_SECONDARY_SUMMARY",
+    "NO_MEMBRANE_PLUS_MINUS_BENDING_SURFACE_RECONSTRUCTION_WITHOUT_PRIMARY_AUTHORITY",
+    "NO_COMMON_POINT_SUPERPOSITION_ASSUMPTION_FROM_NUMERICAL_ARRAY_ORDER",
+    "NO_EXPLICIT_PLANE_STRESS_SOURCE_CLAIM_FROM_PLANE_STRESS_TRESCA_IMPLEMENTATION",
+    "NO_SIGMA3_ZERO_SOURCE_CLAIM_FROM_IMPLEMENTATION",
+    "NO_TRESCA_SOURCE_DEFINITION_BY_MATHEMATICAL_EQUIVALENCE",
+    "NO_VON_MISES_SUBSTITUTION",
+    "NO_GLOBAL_MAXIMUM_CLAIM_FROM_EIGHT_EVALUATED_TABLE5_POINTS",
+    "NO_CODE_COMPLIANCE_FROM_WRC_STRESS_INTENSITY",
+    "NO_ROUTE_AUTHORIZATION_BACK_PROPAGATION_INTO_SOURCE_AUTHORITY"
+  ],
+  "closureRequirements": [
+    "PRIMARY_AUTHORITY_FOR_UL_PHYSICAL_SURFACE_MEANING",
+    "PRIMARY_AUTHORITY_FOR_ABCD_PHYSICAL_LOCATION_MEANING",
+    "PRIMARY_AUTHORITY_FOR_MEMBRANE_BENDING_PHYSICAL_SURFACE_RECONSTRUCTION",
+    "PRIMARY_AUTHORITY_FOR_COMMON_PHYSICAL_POINT_SUPERPOSITION",
+    "PRIMARY_AUTHORITY_FOR_PLANE_STRESS_SIGMA3_AND_STRESS_INTENSITY_DEFINITION",
+    "PRIMARY_AUTHORITY_FOR_EIGHT_POINT_ENVELOPE_MEANING_IF_CLAIMED",
+    "SEPARATE_GOVERNING_CODE_ACCEPTANCE_AUTHORITY"
+  ],
+  "changeBoundary": {
+    "productionNumericsChanged": false,
+    "routeOrRegistryChanged": false,
+    "individualSourceAuthorityRecordsChanged": false,
+    "aggregateP0ReleaseGateChanged": false,
+    "oracleOrToleranceChanged": false,
+    "workflowChanged": false,
+    "globalAuthorityChanged": false,
+    "codeAuthorityChanged": false,
+    "releaseAuthorityChanged": false
+  }
+}

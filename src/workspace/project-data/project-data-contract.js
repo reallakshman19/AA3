@@ -9,6 +9,22 @@ import {
   NON_FEA_METHOD_IDS,
   validateConfiguredDefaultsPolicy,
 } from './non-fea-field-registry.js';
+import {
+  validateNonFeaComponentMassPolicy,
+} from './non-fea-component-mass-policy.js';
+import {
+  validateNonFeaFluidFillPolicy,
+} from './non-fea-fluid-fill-policy.js';
+
+const AUTHORIZED_GRAVITY_LEDGER_PATHS = Object.freeze([
+  'loadCalculation.pipeSectionProperties',
+  'loadCalculation.materialDensitiesKgPerM3',
+  'loadCalculation.operatingFluidDensitiesKgPerM3',
+  'loadCalculation.hydroFluidDensitiesKgPerM3',
+  'loadCalculation.insulationDensitiesKgPerM3',
+  'loadCalculation.componentWeightsKg',
+]);
+const FLUID_COMPOSITION_RULE = 'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION';
 
 /**
  * Creates a visible, intentionally incomplete profile. No engineering value is
@@ -61,6 +77,13 @@ export function createEvidenceValue(value, evidence, approved) {
 /**
  * Validates profile structure, evidence, approvals, numeric ranges, source
  * hashes, and a named workflow requirement set.
+ *
+ * The legacy gravity kernel still asks for the historical `loads` workflow.
+ * When — and only when — all six gravity mass/section maps are bound to the
+ * same authorized effective-value ledger/projection evidence, that request is
+ * resolved to `authorizedGravityLoads`. This prevents a ledger-bearing profile
+ * from re-demanding source-sheet presence after exact target authorization,
+ * while ordinary/legacy profiles keep the historical `loads` requirements.
  */
 export function validateProjectDataProfile(profile, workflow, activeHashes) {
   const errors = [];
@@ -69,7 +92,8 @@ export function validateProjectDataProfile(profile, workflow, activeHashes) {
     return freezeDeep({ valid: false, workflow, errors });
   }
   const normalized = upgradeProjectDataProfile(profile);
-  const required = PROJECT_DATA_REQUIREMENTS[workflow];
+  const effectiveWorkflow = resolveValidationWorkflow(normalized, workflow);
+  const required = PROJECT_DATA_REQUIREMENTS[effectiveWorkflow];
   validateAllFields(normalized, activeHashes, errors, new Set(required || []));
   if (!required) errors.push(errorRow('workflow', 'UNKNOWN_WORKFLOW', `Unknown Project Data workflow: ${workflow}.`));
   (required || []).forEach((path) => validateRequired(readPath(normalized, path), path, errors));
@@ -117,7 +141,7 @@ function validateAllFields(profile, activeHashes, errors, requiredPaths) {
     }
     validateNumber(entry.value, path, field.numericPolicy, errors);
     validateNestedNumbers(entry.value, path, field.numericPolicy, errors);
-    validateFieldRules(entry.value, path, errors);
+    validateFieldRules(entry.value, path, errors, entry);
     validateSourceHash(entry, path, activeHashes, errors, requiredPaths.has(path));
   }));
   const near = projectDataValue(profile, 'webglNavigation.cameraNearMm');
@@ -148,7 +172,7 @@ function validateNestedNumbers(value, path, numericPolicy, errors) {
   });
 }
 
-function validateFieldRules(value, path, errors) {
+function validateFieldRules(value, path, errors, entry) {
   const positive = new Set([
     'loadCalculation.gravityMPerS2', 'loadCalculation.loadFactor',
     'webglNavigation.supportMarkerSize', 'webglNavigation.pickingRadius', 'webglNavigation.cameraFitMargin',
@@ -168,7 +192,7 @@ function validateFieldRules(value, path, errors) {
     'loadCalculation.insulationDensitiesKgPerM3',
     'loadCalculation.pipeSectionProperties',
     'thermoMechanicalBasis.materialElasticProperties',
-  ].includes(path)) validatePositiveLeaves(value, path, errors);
+  ].includes(path)) validatePositiveLeaves(value, path, errors, entry);
   if (path === 'loadCalculation.activeLoadCases' && value !== null && (!Array.isArray(value) || value.some((row) => !['EMPTY', 'OPE', 'HYD'].includes(row)) || new Set(value).size !== value.length)) errors.push(errorRow(path, 'INVALID_LOAD_CASES', 'Active load cases must be unique EMPTY, OPE, or HYD identifiers.'));
   if (path.endsWith('Source') && isRecord(value) && stringValue(value.sha256) && !/^[a-f0-9]{64}$/i.test(stringValue(value.sha256))) errors.push(errorRow(`${path}.sha256`, 'INVALID_SOURCE_HASH', 'Source SHA-256 must contain 64 hexadecimal characters.'));
   validatePhase2Object(value, path, errors);
@@ -176,6 +200,7 @@ function validateFieldRules(value, path, errors) {
 
 function validatePhase2Object(value, path, errors) {
   const objectPaths = new Set([
+    'loadCalculation.componentMassCompositionPolicy',
     'thermoMechanicalBasis.operatingTemperaturesC',
     'thermoMechanicalBasis.casePressuresPa',
     'thermoMechanicalBasis.corrosionAllowancesMm',
@@ -194,6 +219,14 @@ function validatePhase2Object(value, path, errors) {
   ]);
   if (value !== null && objectPaths.has(path) && !isRecord(value)) {
     errors.push(errorRow(path, 'INVALID_POLICY_OBJECT', 'Value must be an object keyed by governed identity or policy member.'));
+  }
+  if (path === 'loadCalculation.componentMassCompositionPolicy' && value !== null) {
+    const audit = validateNonFeaComponentMassPolicy(value);
+    audit.errors.forEach((row) => errors.push(errorRow(path, row.code, row.message)));
+  }
+  if (path === 'thermoMechanicalBasis.fluidPhaseAndFillState' && value !== null) {
+    const audit = validateNonFeaFluidFillPolicy(value);
+    audit.errors.forEach((row) => errors.push(errorRow(path, row.code, row.message)));
   }
   if (path === 'qualificationPolicy.configuredDefaults' && value !== null) {
     const audit = validateConfiguredDefaultsPolicy(value);
@@ -236,42 +269,101 @@ function validateQualificationProfiles(value, path, errors) {
 
 function isExplicitlyUninsulated(section) {
   if (!isRecord(section)) return false;
+  // The target-level effective-value ledger (authorized-empirical-effective-
+  // execution-projection.js) and the sealed-enrichment load input both encode
+  // "no insulation for this target" as insulationCode: null, matching
+  // EMPIRICAL_INPUT_INSULATION_INVALID's own null/zero-thickness pairing.
+  // Raw/master-sourced sections instead carry an explicit NONE/UNINSULATED
+  // catalog code. Both are legitimate "explicitly uninsulated" declarations.
+  if (section.insulationCode === null) return true;
   return ['NONE', 'UNINSULATED'].includes(stringValue(section.insulationCode).toUpperCase());
 }
 
-function allowsZeroEngineeringLeaf(path, key, parent) {
+function allowsZeroEngineeringLeaf(path, key, parent, entry) {
   if (key === 'insulationThicknessMm' && path.startsWith('loadCalculation.pipeSectionProperties.')) {
     return isExplicitlyUninsulated(parent);
+  }
+  if (path.startsWith('loadCalculation.pipeSectionProperties.')
+      && ['claddingMassPerLengthKgPerM', 'tracingMassPerLengthKgPerM'].includes(key)) {
+    return true;
   }
   if (path === 'loadCalculation.insulationDensitiesKgPerM3') {
     return ['NONE', 'UNINSULATED'].includes(String(key).trim().toUpperCase());
   }
+  if (['selected', 'fillFraction'].includes(key)) {
+    return isAuthorizedZeroFluidComposition(path, parent, entry);
+  }
   return false;
 }
 
-function validatePositiveLeaves(value, path, errors) {
+function isAuthorizedZeroFluidComposition(path, value, entry) {
+  const roots = [
+    'loadCalculation.operatingFluidDensitiesKgPerM3',
+    'loadCalculation.hydroFluidDensitiesKgPerM3',
+  ];
+  const root = roots.find((candidate) => path.startsWith(`${candidate}.`));
+  if (!root || !isRecord(value) || !isAuthorizedGravityLedgerEntry(entry)) return false;
+  if (entry.evidence?.massCompositionRule !== FLUID_COMPOSITION_RULE) return false;
+  const receipts = entry.evidence?.fluidCompositionBySelector;
+  if (!isRecord(receipts)) return false;
+  const selector = Object.keys(receipts).find((candidate) => `${root}.${candidate}` === path);
+  if (!selector) return false;
+  const receipt = receipts[selector];
+  if (!isRecord(receipt)) return false;
+  return value.selected === 0
+    && Number.isFinite(value.rawDensityKgPerM3)
+    && value.rawDensityKgPerM3 > 0
+    && value.fillFraction === 0
+    && Boolean(stringValue(value.rawDensitySemanticHash))
+    && Boolean(stringValue(value.fillPolicySemanticHash))
+    && Boolean(stringValue(value.compositionSemanticHash))
+    && receipt.rule === FLUID_COMPOSITION_RULE
+    && receipt.rawDensityKgPerM3 === value.rawDensityKgPerM3
+    && receipt.rawDensitySemanticHash === value.rawDensitySemanticHash
+    && receipt.fillFraction === 0
+    && receipt.fillPolicySemanticHash === value.fillPolicySemanticHash
+    && receipt.bulkDensityKgPerM3 === 0
+    && receipt.compositionSemanticHash === value.compositionSemanticHash;
+}
+
+function validatePositiveLeaves(value, path, errors, entry) {
   if (Array.isArray(value)) {
-    value.forEach((item, index) => validatePositiveLeaves(item, `${path}[${index}]`, errors));
+    value.forEach((item, index) => validatePositiveLeaves(item, `${path}[${index}]`, errors, entry));
     return;
   }
   if (isRecord(value)) {
     Object.entries(value).forEach(([key, item]) => {
       const itemPath = `${path}.${key}`;
-      if (allowsZeroEngineeringLeaf(path, key, value) && typeof item === 'number') {
+      if (allowsZeroEngineeringLeaf(path, key, value, entry) && typeof item === 'number') {
         if (!Number.isFinite(item) || item < 0) {
-          errors.push(errorRow(itemPath, 'NEGATIVE_ENGINEERING_VALUE', 'Explicit uninsulated thickness or density must be finite and non-negative.'));
+          errors.push(errorRow(itemPath, 'NEGATIVE_ENGINEERING_VALUE', 'Authorized zero-valued engineering evidence must be finite and non-negative.'));
         }
         return;
       }
-      validatePositiveLeaves(item, itemPath, errors);
+      validatePositiveLeaves(item, itemPath, errors, entry);
     });
     return;
   }
   if (typeof value === 'number' && value <= 0) errors.push(errorRow(path, 'NON_POSITIVE_ENGINEERING_VALUE', 'Engineering density, elastic, thermal, and section values must be greater than zero.'));
 }
 
+// These two target-level maps are legitimately empty when the dataset has no
+// insulated line or no explicit-point-mass component: the effective-value
+// ledger projection only ever admits a resolved-and-approved entry for a
+// target that actually needs one (requiredEffective throws otherwise), so an
+// approved empty object here is a complete answer, not a missing one.
+const EMPTY_MAP_ALLOWED_PATHS = new Set([
+  'loadCalculation.insulationDensitiesKgPerM3',
+  'loadCalculation.componentWeightsKg',
+]);
+
 function validateRequired(entry, path, errors) {
-  if (!isEvidenceValue(entry) || isEmpty(entry.value)) {
+  if (!isEvidenceValue(entry)) {
+    errors.push(errorRow(path, 'MISSING_VALUE', 'An authoritative value is required.'));
+    return;
+  }
+  const emptyMapAllowed = EMPTY_MAP_ALLOWED_PATHS.has(path) && isRecord(entry.value);
+  if (!emptyMapAllowed && isEmpty(entry.value)) {
     errors.push(errorRow(path, 'MISSING_VALUE', 'An authoritative value is required.'));
     return;
   }
@@ -295,6 +387,27 @@ function validateSourceHash(entry, path, activeHashes, errors, validateActiveSou
   if (active && active !== expected) {
     errors.push(errorRow(path, 'STALE_SOURCE_HASH', `Evidence hash does not match active ${sourceKey} source.`));
   }
+}
+
+function resolveValidationWorkflow(profile, workflow) {
+  if (workflow !== 'loads') return workflow;
+  const entries = AUTHORIZED_GRAVITY_LEDGER_PATHS.map((path) => readPath(profile, path));
+  if (!entries.every((entry) => isAuthorizedGravityLedgerEntry(entry))) return workflow;
+  const ledgerHashes = new Set(entries.map((entry) => entry.evidence.sourceSemanticHash));
+  const inputHashes = new Set(entries.map((entry) => entry.evidence.authorizedInputSemanticHash));
+  const projectionHashes = new Set(entries.map((entry) => entry.evidence.effectiveExecutionProjectionSemanticHash));
+  return ledgerHashes.size === 1 && inputHashes.size === 1 && projectionHashes.size === 1
+    ? 'authorizedGravityLoads'
+    : workflow;
+}
+
+function isAuthorizedGravityLedgerEntry(entry) {
+  return isEvidenceValue(entry)
+    && entry.approved === true
+    && entry.evidence?.source === 'AUTHORIZED_EMPIRICAL_EFFECTIVE_VALUE_LEDGER'
+    && Boolean(stringValue(entry.evidence?.sourceSemanticHash))
+    && Boolean(stringValue(entry.evidence?.authorizedInputSemanticHash))
+    && Boolean(stringValue(entry.evidence?.effectiveExecutionProjectionSemanticHash));
 }
 
 function emptyEvidenceValue() {

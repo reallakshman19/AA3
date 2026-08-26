@@ -1,0 +1,295 @@
+import {
+  evaluateEmp1LocalCorrelationGate,
+  requireEmp1LocalCorrelationExecutionAuthority,
+} from './emp1-local-correlation-gate.js';
+import {
+  EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256,
+  createEmp1AZeroDpWrcQualifiedLoadCustody,
+  deriveEmp1AZeroDpWrcLoadPackageCandidate,
+} from './emp1-a-wrc-zero-dp-load-producer.js';
+import {
+  deriveEmp1Wrc537CylindricalBoundedGeometry,
+  evaluateEmp1Wrc537CylindricalBoundedQualifiedNumerics,
+} from './emp1-wrc537-cylindrical-bounded-adapter.js';
+import {
+  EMP1_WRC537_CYLINDRICAL_AXIS_AUTHORITY_ID,
+  EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
+  requireEmp1Wrc537QualifiedCylindricalAxisAuthority,
+} from './emp1-wrc537-cylindrical-axis-authority.js';
+import {
+  buildEmp1Wrc537CylindricalFrame,
+  emp1GlobalLoadsToWrc537,
+} from './emp1-wrc537-cylindrical-frame.js';
+import {
+  requireEmp1Wrc537QualifiedAttachmentSourceAuthority,
+} from './emp1-wrc537-attachment-source-authority.js';
+import {
+  EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+  EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  requireEmp1Wrc537QualifiedApplicabilitySourceAuthority,
+} from './emp1-wrc537-applicability-source-authority.js';
+import {
+  evaluateEmp1Wrc537CylindricalApplicability,
+  requireEmp1Wrc537QualifiedCylindricalApplicability,
+} from './emp1-wrc537-cylindrical-applicability.js';
+import {
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
+  EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
+} from './emp1-wrc537-longitudinal-moment-curve-selection.js';
+
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256 =
+  '9ea591a1918175b3e415d77f1adc4398645ca0503a699cfe8139d9dd3c69b4c7';
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED = true;
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS = Object.freeze([]);
+export const EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SCHEMA =
+  'emp1-wrc537-gamma5-zero-dp-route-result/v1';
+
+const SOURCE_SHA = '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2';
+const DATASET_HASH = 'fb440a292f8794430977f60f5365a678a9aff62a4dae3397621902964a0db73c';
+const FULL_TABLE5_ORACLE_HASH =
+  '60771128f8261057bf73fa6c183ace5df25f3ee98f417f58da25a6135d8b2e18';
+const ROUTE_LENGTH_UNIT = 'mm';
+
+export const EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION = deepFreeze({
+  engineeringUseAuthorized: true,
+  productionUseAuthorized: true,
+  cylindricalLoadAxisSignAuthority: 'SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED',
+  cylindricalLoadAxisAuthorityId: EMP1_WRC537_CYLINDRICAL_AXIS_AUTHORITY_ID,
+  cylindricalLoadAxisSourceSha256: EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
+  longitudinalMomentCurveSelectionAuthority:
+    'SOURCE_QUALIFIED_TABLE5_EIGHT_POINT_AXIS_OF_SYMMETRY',
+  longitudinalMomentCurveSelectionAuthorityId:
+    EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
+  longitudinalMomentFigures: Object.freeze({ circumferential: '1B', longitudinal: '2B' }),
+  offAxisLongitudinalMomentMaximumAuthority: 'NOT_AUTHORIZED_BY_THIS_ROUTE',
+  attachmentOutsideRadiusSourceAuthority: 'TYPED_ENGINEERING_SOURCE_BINDING_RUNTIME_REQUIRED',
+  attachmentOutsideRadiusSourceQualification: 'QUALIFIED_FOR_BOUNDED_R0_CUSTODY',
+  cylindricalApplicabilitySourceAuthority: EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+  cylindricalApplicabilitySourceQualification: EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+  cylindricalApplicabilityNearestEndDistanceBasis: 'DERIVED_MIN_X_L_MINUS_X',
+  stressOutputDomain: 'HOST_CYLINDRICAL_SHELL_ONLY_NO_ATTACHMENT_OR_NOZZLE_STRESS',
+  methodIdentity: 'WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP',
+  methodEdition: '2013',
+  sourceDocumentSha256: SOURCE_SHA,
+  datasetHash: DATASET_HASH,
+  qualificationRecordHash: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
+  scopeContract: {
+    schema: 'emp1-local-method-scope/v1',
+    type: 'CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_BOUNDED',
+    gammaSelectionPolicy: 'EXACT_SOURCE_TABULATED_GAMMA_ONLY',
+    nonTabulatedGamma: 'BLOCKED',
+    interpolationAllowed: false,
+    crossVariantFallbackAllowed: false,
+    machineRoundOffRelativeTolerance: 1e-12,
+    sourceDocumentSha256: SOURCE_SHA,
+    datasetHash: DATASET_HASH,
+    shellFamily: 'CYLINDRICAL',
+    attachmentShape: 'ROUND',
+    variant: 'ORIGINAL',
+    gamma: 5,
+    betaMinimum: 0.05,
+    betaMaximum: 0.5,
+    canonicalLengthUnit: ROUTE_LENGTH_UNIT,
+    attachmentRadiusBasis: 'OUTSIDE_RADIUS_AT_SHELL_JUNCTURE',
+    attachmentRadiusSourceAuthority: 'EMP1_TYPED_ENGINEERING_SOURCE_BINDING_V1',
+    attachmentRadiusSourceQualification: 'QUALIFIED_FOR_BOUNDED_R0_CUSTODY',
+    runtimeAttachmentSourceEvidenceRequired: true,
+    legacyAttachmentSourceAuthorized: false,
+    longitudinalMomentRecoveryDomain: 'WRC_TABLE5_EIGHT_SHELL_JUNCTURE_POINTS',
+    longitudinalMomentCurveSelectionAuthority:
+      'SOURCE_QUALIFIED_TABLE5_EIGHT_POINT_AXIS_OF_SYMMETRY',
+    longitudinalMomentCurveSelectionAuthorityId:
+      EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
+    longitudinalMomentCircumferentialFigure: '1B',
+    longitudinalMomentLongitudinalFigure: '2B',
+    offAxisLongitudinalMomentMaximumAuthorized: false,
+    radialLoadCylinderLengthRule: 'P_REQUIRES_L_GE_RM',
+    externalMomentEndDistanceRule: 'MC_OR_ML_REQUIRES_NEAREST_END_DISTANCE_GE_0P5_RM',
+    applicabilitySourceAuthority: EMP1_WRC537_APPLICABILITY_SOURCE_AUTHORITY,
+    applicabilitySourceQualification: EMP1_WRC537_APPLICABILITY_SOURCE_QUALIFIED,
+    applicabilityNearestEndDistanceBasis: 'DERIVED_MIN_X_L_MINUS_X',
+    runtimeApplicabilitySourceEvidenceRequired: true,
+    legacyApplicabilityEvidenceAuthorizedForProduction: false,
+    stressOutputDomain: 'HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE',
+    attachmentStressCalculated: false,
+    nozzleStressCalculated: false,
+    loadReference: 'WRC_ATTACHMENT_REFERENCE_POINT',
+    cylindricalLoadAxisAuthority: 'SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED',
+    cylindricalLoadAxisAuthorityId: EMP1_WRC537_CYLINDRICAL_AXIS_AUTHORITY_ID,
+    cylindricalLoadAxisSourceSha256: EMP1_WRC537_CYLINDRICAL_AXIS_SOURCE_SHA256,
+    rawFoundationRadialHintIsPolarityAuthority: false,
+    pressureThrustDisposition: 'PRESSURE_THRUST_RESOLVED_UPSTREAM',
+    loadProducerQualificationHash: EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256,
+    scopeContractHash: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
+  },
+});
+
+export const EMP1_WRC537_GAMMA5_ZERO_DP_BENCHMARK_QUALIFICATION = deepFreeze({
+  status: 'PASS',
+  benchmarkHash: FULL_TABLE5_ORACLE_HASH,
+});
+
+export function evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input) {
+  if (!record(input)) throw routeError('EMP1_WRC537_ZERO_DP_ROUTE_INPUT_REQUIRED');
+  requireUnityStressConcentration(input.stressConcentration);
+  const axisAuthority = requireEmp1Wrc537QualifiedCylindricalAxisAuthority(input.axisAuthority);
+  const applicabilitySourceAuthority = requireQualifiedApplicabilityAuthorityForRoute(
+    input.applicabilitySourceAuthority,
+  );
+  const geometry = deriveEmp1Wrc537CylindricalBoundedGeometry(input.geometry);
+  const loadCandidate = deriveEmp1AZeroDpWrcLoadPackageCandidate({
+    result: input.loadTransferResult,
+    loadCaseIdentity: input.loadCaseIdentity,
+    pressureResultIdentity: input.pressureResultIdentity,
+    wrcReferencePointGlobal: input.wrcReferencePointGlobal,
+    productionObservationUsedToSetAuthority: false,
+  });
+  const loadCustody = createEmp1AZeroDpWrcQualifiedLoadCustody(loadCandidate);
+  const frame = buildEmp1Wrc537CylindricalFrame(axisAuthority.frameInput);
+  const wrcLoads = emp1GlobalLoadsToWrc537(frame, loadCandidate.loadsAtWrcReference);
+  const qualifiedApplicability = evaluateEmp1Wrc537CylindricalApplicability({
+    meanRadius: geometry.meanRadius,
+    loads: wrcLoads,
+    sourceAuthority: applicabilitySourceAuthority,
+  });
+  requireEmp1Wrc537QualifiedCylindricalApplicability(qualifiedApplicability);
+  const source = {
+    localMethod: {
+      requested: true,
+      sourceSha256: SOURCE_SHA,
+      datasetHash: DATASET_HASH,
+      shellFamily: 'CYLINDRICAL',
+      attachmentShape: 'ROUND',
+      gammaSelectionPolicy: 'EXACT_SOURCE_TABULATED_GAMMA_ONLY',
+      sourceParameterResolved: true,
+      interpolationUsed: false,
+      extrapolationFallbackUsed: false,
+      variant: 'ORIGINAL',
+      gamma: geometry.gamma,
+      sourceGamma: 5,
+      beta: geometry.beta,
+      loadCustody,
+    },
+  };
+  const gate = evaluateEmp1LocalCorrelationGate({
+    methodQualification: EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION,
+    benchmarkQualification: EMP1_WRC537_GAMMA5_ZERO_DP_BENCHMARK_QUALIFICATION,
+    source,
+  });
+  requireEmp1LocalCorrelationExecutionAuthority(gate);
+  const numerics = evaluateEmp1Wrc537CylindricalBoundedQualifiedNumerics({
+    sourceDocumentSha256: SOURCE_SHA,
+    datasetHash: DATASET_HASH,
+    shellFamily: 'CYLINDRICAL',
+    attachmentShape: 'ROUND',
+    variant: 'ORIGINAL',
+    units: {
+      force: 'N',
+      length: ROUTE_LENGTH_UNIT,
+      moment: 'N*mm',
+      stress: 'N/mm^2',
+    },
+    geometry: input.geometry,
+    axes: axisAuthority.frameInput,
+    loadsAtWrcReference: loadCandidate.loadsAtWrcReference,
+    loadCustody,
+    stressConcentration: { Kn: 1, Kb: 1 },
+    longitudinalMomentBendingAuthority:
+      EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
+    applicabilitySourceAuthority,
+  }, {
+    expectedProducerQualificationHash: EMP1_A_WRC_ZERO_DP_PRODUCER_QUALIFICATION_SHA256,
+  });
+  return deepFreeze({
+    schema: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SCHEMA,
+    state: 'PASS_BOUNDED_ROUTE_COMPARISON_CANDIDATE',
+    engineeringUseAuthorized: false,
+    engineeringComparisonUseAuthorized: true,
+    productionRouteAuthority: false,
+    globalEmp1CRouteAuthority: false,
+    routeSuspensionReasons: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS,
+    routeQualificationSha256: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_QUALIFICATION_SHA256,
+    methodGate: gate,
+    axisAuthority,
+    applicabilitySourceAuthority,
+    qualifiedApplicability,
+    longitudinalMomentBendingAuthority:
+      EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
+    loadCandidate,
+    loadCustody,
+    applicability: numerics.applicability,
+    stressScope: numerics.stressScope,
+    numerics,
+    stresses: numerics.stresses,
+  });
+}
+
+export function requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority(input) {
+  if (!record(input)) throw routeError('EMP1_WRC537_ZERO_DP_ROUTE_INPUT_REQUIRED');
+  const geometry = deriveEmp1Wrc537CylindricalBoundedGeometry(input.geometry);
+  const attachmentSourceAuthority = requireEmp1Wrc537QualifiedAttachmentSourceAuthority(
+    input.attachmentSourceAuthority,
+  );
+  const applicabilitySourceAuthority = requireQualifiedApplicabilityAuthorityForRoute(
+    input.applicabilitySourceAuthority,
+  );
+  if (attachmentSourceAuthority.unit !== ROUTE_LENGTH_UNIT) {
+    throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_R0_SOURCE_UNIT_MISMATCH');
+  }
+  if (attachmentSourceAuthority.outsideDiameter / 2 !== geometry.attachmentOutsideRadius) {
+    throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_R0_SOURCE_VALUE_MISMATCH');
+  }
+  return deepFreeze({
+    attachmentSourceAuthority,
+    applicabilitySourceAuthority,
+    attachmentOutsideRadius: geometry.attachmentOutsideRadius,
+    canonicalLengthUnit: ROUTE_LENGTH_UNIT,
+    longitudinalMomentBendingAuthority:
+      EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY,
+  });
+}
+
+export function runEmp1Wrc537Gamma5ZeroDpRoute(input) {
+  if (EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED !== true) throw suspendedRouteError();
+  const runtimeSourceAuthority = requireEmp1Wrc537Gamma5ZeroDpRuntimeSourceAuthority(input);
+  const result = evaluateEmp1Wrc537Gamma5ZeroDpRouteCandidate(input);
+  return deepFreeze({
+    ...result,
+    state: 'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE',
+    engineeringUseAuthorized: true,
+    productionRouteAuthority: true,
+    globalEmp1CRouteAuthority: false,
+    runtimeSourceAuthority,
+  });
+}
+
+function requireQualifiedApplicabilityAuthorityForRoute(value) {
+  const authority = requireEmp1Wrc537QualifiedApplicabilitySourceAuthority(value);
+  if (authority.unit !== ROUTE_LENGTH_UNIT) {
+    throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_4_5_SOURCE_UNIT_MISMATCH');
+  }
+  return authority;
+}
+function requireUnityStressConcentration(value) {
+  if (!record(value) || value.Kn !== 1 || value.Kb !== 1) {
+    throw routeError('EMP1_WRC537_GAMMA5_ZERO_DP_UNITY_STRESS_CONCENTRATION_REQUIRED');
+  }
+}
+function suspendedRouteError() {
+  const error = routeError('EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED');
+  error.reasons = [...EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS];
+  return error;
+}
+function record(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+function routeError(code) {
+  const error = new TypeError(code);
+  error.code = code;
+  return error;
+}
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(deepFreeze);
+  return Object.freeze(value);
+}

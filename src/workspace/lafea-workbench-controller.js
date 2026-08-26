@@ -20,6 +20,12 @@ import {
   lafeaWorkbenchDisplayRenderPacket,
   lafeaWorkbenchThreeNamespace,
 } from './lafea-workbench-render-evidence.js';
+import {
+  normalizeEmp1WorkbenchRunInput,
+  projectEmp1WorkbenchRunReadiness,
+} from './emp1-workbench-run-state.js';
+import { currentEmp1WorkbenchRouteAuthority } from './emp1-workbench-product-run.js';
+import { issueLafeaSourceAuthority } from './lafea-source-authority.js';
 import { LafeaWorkbenchView } from './lafea-workbench-view.js';
 
 const ACCESSORY_PANEL_MANAGERS = new WeakMap();
@@ -28,7 +34,7 @@ const DESTROYED_CONTROLLERS = new WeakSet();
 export class LafeaWorkbenchController {
   constructor(rootElement, options) {
     const configuration = isLafeaRecord(options) ? options : {};
-    const { accessoryPanels, THREE, ...storeOptions } = configuration;
+    const { accessoryPanels, THREE, emp1RunInput, ...storeOptions } = configuration;
     const {
       benchmarkPanelFactory,
       mockDocumentFactory,
@@ -39,6 +45,10 @@ export class LafeaWorkbenchController {
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
     this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
+    this.emp1RunInput = emp1RunInput == null ? null : normalizeEmp1WorkbenchRunInput(emp1RunInput);
+    this.emp1Execution = null;
+    this.emp1RunFailure = null;
+    this.emp1RunSerial = 0;
     this.mockDocumentFactory = typeof mockDocumentFactory === 'function' ? mockDocumentFactory : null;
     const companionMockDomainAndGeometryFactory = this.mockDocumentFactory?.domainAndGeometryFactory;
     this.mockDomainAndGeometryFactory = typeof mockDomainAndGeometryFactory === 'function'
@@ -49,6 +59,10 @@ export class LafeaWorkbenchController {
     initializeLafeaWorkbenchRenderEvidence(this, THREE ?? null);
     this.view = new LafeaWorkbenchView(rootElement, {
       getRenderPacket: (stageId) => lafeaWorkbenchDisplayRenderPacket(this, stageId),
+      getEmp1RunInput: () => this.emp1RunInput,
+      getEmp1Execution: () => this.emp1Execution,
+      getEmp1RunFailure: () => this.emp1RunFailure,
+      getEmp1RouteAuthority: () => currentEmp1WorkbenchRouteAuthority(),
       THREE: lafeaWorkbenchThreeNamespace(this),
       presentationMode,
       analyticalOnly,
@@ -77,13 +91,17 @@ export class LafeaWorkbenchController {
     this.view.init({
       onStage: (stageId) => this.store.selectStage(stageId),
       onMock: (stageId) => this.loadMockData(stageId),
+      onLoadEmp1QualificationSample: () => this.loadEmp1QualificationSample(),
       onFile: (file) => this.loadFile(file),
       onRun: () => this.run(),
+      onRunEmp1: () => this.runEmp1Product(),
+      onEmp1RunInput: (value) => this.setEmp1RunInput(value),
       onPrepareContinuum: () => this.attemptContinuumPreflight(),
       onExport: () => this.downloadDocument(),
       onUndo: () => this.undo(),
       onRedo: () => this.redo(),
       onSetScalar: (descriptorId, entityId, rawText) => this.setScalar(descriptorId, entityId, rawText),
+      onSetScalarBatch: (edits) => this.setScalarBatch(edits),
       onApplyJson: (text) => this.applyDocumentText(text),
       onMoveNode: (path, nodeId, x, y) => this.store.moveNode(path, nodeId, x, y),
       onBenchmark: () => this.runBenchmark(),
@@ -150,12 +168,21 @@ export class LafeaWorkbenchController {
     }
     try {
       const documentValue = await this.mockDocumentFactory(stageId);
-      const result = this.importDocument(documentValue, stageId);
-      const state = this.getState();
-      const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash;
+      this.importDocument(documentValue, stageId);
+      const importedDocument = this.getState().stages[stageId]?.document;
+      if (!importedDocument) {
+        throw new TypeError('LAFEA_SIMULATED_SOURCE_IMPORT_REQUIRED');
+      }
+      const sourceAuthority = issueLafeaSourceAuthority(
+        stageId,
+        importedDocument,
+        'SIMULATED_SOURCE_PROVIDER',
+      );
+      this.initializeLifecycle(sourceAuthority.sourceHash, 'SIMULATED_SOURCE_PROVIDER');
+      const hash = sourceAuthority.sourceHash;
       if (stageId === 'LAFEA.3') {
         this.store.activateDomainFirstProfile();
-        if (hash && this.mockDomainAndGeometryFactory) {
+        if (this.mockDomainAndGeometryFactory) {
           const mockEv = await this.mockDomainAndGeometryFactory(stageId, hash);
           if (mockEv) {
             this.store.registerAnalysisDomain(mockEv.domain);
@@ -167,7 +194,7 @@ export class LafeaWorkbenchController {
             }
           }
         }
-      } else if (stageId === 'LAFEA.4' && hash) {
+      } else if (stageId === 'LAFEA.4') {
         const { createLafeaSimulatedShellMidsurfaceEvidence } = await import(
           './lafea-simulated-shell-midsurface-provider.js'
         );
@@ -177,7 +204,7 @@ export class LafeaWorkbenchController {
           documentValue,
         );
         if (shellParent) this.store.registerShellMidsurfaceEvidence(shellParent);
-      } else if (stageId === 'LAFEA.5' && hash) {
+      } else if (stageId === 'LAFEA.5') {
         const { createLafea5SourceShellParent } = await import(
           './lafea-source-shell-mesh-adoption.js'
         );
@@ -187,9 +214,40 @@ export class LafeaWorkbenchController {
         });
         this.store.registerShellMidsurfaceEvidence(shellParent);
       }
-      return result;
+      return this.getState();
     } catch (error) {
       return this.store.reportEditError('document', null, error);
+    }
+  }
+
+  async loadEmp1QualificationSample() {
+    try {
+      const { createEmp1WorkbenchQualificationSample } = await import(
+        './emp1-workbench-qualification-sample.js'
+      );
+      const sample = createEmp1WorkbenchQualificationSample();
+      this.importDocument(sample.aDocument, 'LAFEA.1');
+      this.importDocument(sample.bDocument, 'LAFEA.2');
+      const applied = this.setEmp1RunInput(sample.runInput);
+      if (applied.status !== 'APPLIED') {
+        const error = new TypeError(applied.code ?? 'EMP1_QUALIFICATION_SAMPLE_RUN_INPUT_REJECTED');
+        error.code = applied.code ?? 'EMP1_QUALIFICATION_SAMPLE_RUN_INPUT_REJECTED';
+        throw error;
+      }
+      this.store.selectStage('LAFEA.2');
+      const execution = await this.runEmp1Product();
+      return Object.freeze({
+        schema: sample.schema,
+        status: execution?.status ?? 'FAILED',
+        execution,
+      });
+    } catch (error) {
+      this.emp1RunFailure = Object.freeze({
+        code: error?.code ?? 'EMP1_QUALIFICATION_SAMPLE_LOAD_FAILED',
+        message: error instanceof Error ? error.message : 'EMP.1 qualification sample load failed.',
+      });
+      if (this.unsubscribe) this.view.render(this.getState());
+      return Object.freeze({ status: 'FAILED', ...this.emp1RunFailure });
     }
   }
 
@@ -315,11 +373,80 @@ export class LafeaWorkbenchController {
     }
   }
 
+  setScalarBatch(edits) {
+    try {
+      return this.store.setScalarBatch(edits, 'FORM_GROUP');
+    } catch (error) {
+      return this.store.reportEditError('scalarBatch', null, error);
+    }
+  }
+
   applyDocumentText(text) {
     try {
       return this.store.replaceDocument(parseLafeaJsonObject(text, 'LAFEA document'), 'RAW_JSON');
     } catch (error) {
       return this.store.reportEditError('document', null, error);
+    }
+  }
+
+  setEmp1RunInput(value) {
+    try {
+      this.emp1RunInput = normalizeEmp1WorkbenchRunInput(value);
+      this.emp1RunFailure = null;
+      if (this.unsubscribe) this.view.render(this.getState());
+      return Object.freeze({ status: 'APPLIED', input: this.emp1RunInput });
+    } catch (error) {
+      return Object.freeze({
+        status: 'REJECTED',
+        code: error?.code ?? 'EMP1_WORKBENCH_RUN_INPUT_REJECTED',
+        message: error instanceof Error ? error.message : 'EMP.1 source binding was rejected.',
+      });
+    }
+  }
+
+  getEmp1RunInput() { return this.emp1RunInput; }
+  getEmp1Execution() { return this.emp1Execution; }
+
+  async runEmp1Product() {
+    const state = this.getState();
+    const readiness = projectEmp1WorkbenchRunReadiness({
+      aDocument: state.stages?.['LAFEA.1']?.document,
+      bDocument: state.stages?.['LAFEA.2']?.document,
+      runInput: this.emp1RunInput,
+    });
+    if (!readiness.runAuthorized) {
+      this.emp1RunFailure = Object.freeze({
+        code: 'EMP1_WORKBENCH_RUN_NOT_READY',
+        message: readiness.reasons.join(', '),
+      });
+      if (this.unsubscribe) this.view.render(state);
+      return Object.freeze({ status: 'BLOCKED', reasons: readiness.reasons });
+    }
+
+    const serial = ++this.emp1RunSerial;
+    this.emp1RunFailure = null;
+    try {
+      const { executeEmp1WorkbenchProduct } = await import('./emp1-workbench-product-run.js');
+      const execution = await executeEmp1WorkbenchProduct({
+        aDocument: state.stages['LAFEA.1'].document,
+        bDocument: state.stages['LAFEA.2'].document,
+        runInput: this.emp1RunInput,
+        previous: this.emp1Execution,
+      });
+      if (serial !== this.emp1RunSerial || DESTROYED_CONTROLLERS.has(this)) return null;
+      this.emp1Execution = execution;
+      this.emp1RunFailure = null;
+      if (this.unsubscribe) this.view.render(this.getState());
+      return execution;
+    } catch (error) {
+      if (serial !== this.emp1RunSerial || DESTROYED_CONTROLLERS.has(this)) return null;
+      this.emp1Execution = null;
+      this.emp1RunFailure = Object.freeze({
+        code: error?.code ?? 'EMP1_WORKBENCH_RUN_FAILED',
+        message: error instanceof Error ? error.message : 'EMP.1 execution failed.',
+      });
+      if (this.unsubscribe) this.view.render(this.getState());
+      return Object.freeze({ status: 'FAILED', ...this.emp1RunFailure });
     }
   }
 
@@ -344,6 +471,10 @@ export class LafeaWorkbenchController {
   destroy() {
     if (DESTROYED_CONTROLLERS.has(this)) return;
     DESTROYED_CONTROLLERS.add(this);
+    this.emp1RunSerial += 1;
+    this.emp1RunInput = null;
+    this.emp1Execution = null;
+    this.emp1RunFailure = null;
     const accessoryPanelManager = ACCESSORY_PANEL_MANAGERS.get(this);
     accessoryPanelManager?.destroy();
     ACCESSORY_PANEL_MANAGERS.delete(this);

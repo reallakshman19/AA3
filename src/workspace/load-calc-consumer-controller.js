@@ -7,7 +7,9 @@ import {
   renderLoadCalcConsumer,
   renderLoadCalcTopologyPane,
 } from './load-calc-consumer-view.js';
+import { classifyLoadCalcResultPresentation } from './load-calc-result-presentation.js';
 import { masterDataController } from './master-data-controller.js';
+import { createCurrentNonFeaWorkspaceStatusProjection } from './non-fea-analysis-plan-runtime.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 import { sealCurrentNonFeaCommonInput } from './non-fea-common-input-runtime.js';
 import { validateProjectDataProfile } from './project-data/project-data-contract.js';
@@ -76,7 +78,7 @@ export class LoadCalcConsumerController {
       this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, () => { void this.refreshTopologyCheck(); }),
       this.eventBus.subscribe(TOPOLOGY_EVENTS.CHANGED, () => { void this.refreshTopologyCheck(); }),
       this.eventBus.subscribe(SUPPORT_RESTRAINT_EVENTS.CHANGED, () => { void this.refreshTopologyCheck(); }),
-      this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason, distribution }) => this.handleEngineeringChange(reason, distribution)),
+      this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason, distribution, topologyCheckAffected }) => this.handleEngineeringChange(reason, distribution, topologyCheckAffected)),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.FAILED, ({ message }) => this.handleFailure(message)),
       this.eventBus.subscribe(EVENT_TOPICS.LOAD_CALC_SUBTAB_REQUESTED, ({ tab }) => { this.selectTab(tab); this.render(); }),
       this.eventBus.subscribe(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CHANGED, ({ snapshot }) => {
@@ -109,16 +111,18 @@ export class LoadCalcConsumerController {
     if (datasetChanged) void this.refreshTopologyCheck();
   }
 
-  handleEngineeringChange(reason, distribution) {
+  handleEngineeringChange(reason, distribution, topologyCheckAffected) {
     if (reason === 'calculated') {
-      this.message = distribution?.status === 'CALCULATED' ? 'Authorized calculation complete.' : 'Authorized calculation blocked; review the listed inputs.';
-      if (distribution?.status === 'CALCULATED') this.selectTab('loads');
+      const presentation = classifyLoadCalcResultPresentation(distribution);
+      this.message = presentation.message;
+      if (presentation.openLoads) this.selectTab('loads');
     }
-    if (reason === 'project-data-changed') this.message = 'Project Data changed; common seal, authorization and previous calculations require refresh.';
-    if (reason === 'master-data-changed') this.message = 'Master data changed; common seal, authorization and previous calculations require refresh.';
+    if (reason === 'project-data-changed') this.message = authorityChangeMessage('Project Data');
+    if (reason === 'master-data-changed') this.message = authorityChangeMessage('Master data');
     if (reason === 'authorization-changed') this.message = availabilityMessage(engineeringModelStore.getEmpiricalAuthorizationState());
     this.render();
-    if (reason === 'project-data-changed' || reason === 'master-data-changed') {
+    if ((reason === 'project-data-changed' || reason === 'master-data-changed')
+        && topologyCheckAffected !== false) {
       void this.refreshTopologyCheck();
     }
   }
@@ -202,9 +206,14 @@ export class LoadCalcConsumerController {
         new Date().toISOString(),
       );
       this.message = `Finding recorded as skipped under receipt ${receipt.receiptId}.`;
+      this.topologySkipError = null;
       await this.refreshTopologyCheck();
     } catch (error) {
-      this.message = error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
+      this.message = message;
+      // The header status sits far from the finding row that was clicked, so the
+      // failure is also reported inline against that finding.
+      this.topologySkipError = { findingId, message };
       this.render();
     }
   }
@@ -438,6 +447,7 @@ export class LoadCalcConsumerController {
           engineeringModelStore.getRoutePartitionModel(),
           this.topologyCheck,
           this.topologyPolicyFeedback,
+          this.topologySkipError,
         );
       } else if (EMPIRICAL_SCENARIO_VIEW_TABS.has(tab)) {
         const scenarioView = await import('./engineering-loads/empirical-load-calc-scenario-view.js');
@@ -558,8 +568,7 @@ export class LoadCalcConsumerController {
     const factorSet    = fieldVal('lc', 'loadFactor') !== null && fieldVal('lc', 'loadFactor') > 0;
     const equilSet     = fieldVal('lc', 'equilibriumTolerances') !== null;
     const casesSet     = Array.isArray(fieldVal('lc', 'activeLoadCases')) && fieldVal('lc', 'activeLoadCases').length > 0;
-    const allSafeSet   = gravitySet && factorSet && equilSet && casesSet;
-  
+
     const pipeSectSet  = fieldVal('lc', 'pipeSectionProperties') !== null;
     const matDensSet   = fieldVal('lc', 'materialDensitiesKgPerM3') !== null;
     const opFluidSet   = fieldVal('lc', 'operatingFluidDensitiesKgPerM3') !== null;
@@ -569,19 +578,41 @@ export class LoadCalcConsumerController {
     const lineListSet  = fieldVal('su', 'lineListSource') !== null;
     const pipClassSet  = fieldVal('su', 'pipingClassSource') !== null;
     const compSrcSet   = fieldVal('su', 'componentWeightSource') !== null;
-  
-    const masterFieldsSet = pipeSectSet && matDensSet && opFluidSet && hydFluidSet && insulSet && compWtSet;
-    const sourceFieldsSet = lineListSet && pipClassSet && compSrcSet;
-  
+
+    // The raw-field checks above predate the #1321 effective-value/default
+    // ledger: they only see literal Project Data values, never Product/Project
+    // defaults or ledger-resolved targets. `authState.calculationEligible` is
+    // the same readiness signal the Run button already trusts
+    // (engineeringModelStore#currentEmpiricalReadiness runs the ledger-aware
+    // validateProjectDataProfile(..., 'authorizedGravityLoads'/'loads', ...)),
+    // so a raw field showing empty must not be presented as a blocker once
+    // that authorized path is eligible.
+    const ledgerAuthorized = authState?.calculationEligible === true;
+
+    const allSafeSet       = (gravitySet && factorSet && equilSet && casesSet) || ledgerAuthorized;
+    const masterFieldsSet  = (pipeSectSet && matDensSet && opFluidSet && hydFluidSet && insulSet && compWtSet) || ledgerAuthorized;
+    const sourceFieldsSet  = (lineListSet && pipClassSet && compSrcSet) || ledgerAuthorized;
+
     // Count blockers for the loads gate
-    const loadsBlockerCount = [gravitySet, factorSet, equilSet, casesSet, pipeSectSet, matDensSet,
+    const rawLoadsBlockerCount = [gravitySet, factorSet, equilSet, casesSet, pipeSectSet, matDensSet,
       opFluidSet, hydFluidSet, insulSet, compWtSet, lineListSet, pipClassSet, compSrcSet
     ].filter((v) => !v).length;
+    const loadsBlockerCount = ledgerAuthorized ? 0 : rawLoadsBlockerCount;
     const loadsOk = loadsBlockerCount === 0;
-  
+
     const esc = (val) => String(val ?? '').replace(/[&<>'"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[c]);
-  
+
+    // Renders a field's status: the raw value when present, a distinct
+    // ledger-resolved note when the authorized path filled it via governed
+    // defaults instead, or the original missing/blocked copy otherwise. This
+    // never lets default/ledger evidence masquerade as raw source evidence.
+    function fieldStatus(rawOk, rawLabel, missingLabel) {
+      if (rawOk) return rawLabel;
+      if (ledgerAuthorized) return '<em>resolved via effective-value ledger</em>';
+      return missingLabel;
+    }
+
     function gate(ok, label, detail, actionHtml = '') {
       return `<li class="verify-gate" data-status="${ok ? 'ok' : 'fail'}">
         <span class="verify-gate__icon">${ok ? '✅' : '❌'}</span>
@@ -590,12 +621,14 @@ export class LoadCalcConsumerController {
         ${actionHtml}
       </li>`;
     }
-  
+
     const sealBtn  = !sealOk  ? `<button class="verify-gate__action" data-seal-inputs title="Seal all common inputs now">→ Seal inputs</button>` : '';
     const authNote = !authOk && sealOk ? `<button class="verify-gate__action" data-empirical-authorize title="Authorize the configured scenario">→ Authorize</button>` : (!authOk ? `<span class="verify-gate__blocked">(seal first)</span>` : '');
-  
+
     const loadsDetail = loadsOk
-      ? 'All 13 fields ready'
+      ? (ledgerAuthorized && rawLoadsBlockerCount > 0
+        ? `Ready — effective-value ledger resolved ${rawLoadsBlockerCount} field${rawLoadsBlockerCount > 1 ? 's' : ''} via governed defaults`
+        : 'All 13 fields ready')
       : `${loadsBlockerCount} field${loadsBlockerCount > 1 ? 's' : ''} need values`;
   
     container.innerHTML = `
@@ -633,10 +666,10 @@ export class LoadCalcConsumerController {
                 <span class="verify-card__subtitle">${allSafeSet ? 'Approved values loaded' : 'Configuration required'}</span>
               </div>
               <dl class="verify-defaults-dl">
-                <dt>Gravity</dt><dd>${gravitySet ? `${esc(fieldVal('lc', 'gravityMPerS2'))} m/s²` : '<em>empty</em>'}</dd>
-                <dt>Load factor</dt><dd>${factorSet ? (fieldVal('lc','loadFactor') + ' (ratio)') : '<em>0 — invalid</em>'}</dd>
-                <dt>Equilibrium tolerances</dt><dd>${equilSet ? esc(JSON.stringify(fieldVal('lc', 'equilibriumTolerances'))) : '<em>missing</em>'}</dd>
-                <dt>Active load cases</dt><dd>${casesSet ? esc(JSON.stringify(fieldVal('lc','activeLoadCases'))) : '<em>missing</em>'}</dd>
+                <dt>Gravity</dt><dd>${fieldStatus(gravitySet, `${esc(fieldVal('lc', 'gravityMPerS2'))} m/s²`, '<em>empty</em>')}</dd>
+                <dt>Load factor</dt><dd>${fieldStatus(factorSet, fieldVal('lc','loadFactor') + ' (ratio)', '<em>0 — invalid</em>')}</dd>
+                <dt>Equilibrium tolerances</dt><dd>${fieldStatus(equilSet, esc(JSON.stringify(fieldVal('lc', 'equilibriumTolerances'))), '<em>missing</em>')}</dd>
+                <dt>Active load cases</dt><dd>${fieldStatus(casesSet, esc(JSON.stringify(fieldVal('lc','activeLoadCases'))), '<em>missing</em>')}</dd>
               </dl>
               ${!allSafeSet ? '<p class="engineering-note">Configure and approve the missing project-owned values in Project Data.</p>' : ''}
             </div>
@@ -648,16 +681,16 @@ export class LoadCalcConsumerController {
                 <span class="verify-card__subtitle">Must come from master data</span>
               </div>
               <dl class="verify-defaults-dl">
-                <dt>Pipe section properties</dt><dd>${pipeSectSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Material densities</dt><dd>${matDensSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Operating fluid densities</dt><dd>${opFluidSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Hydro fluid densities</dt><dd>${hydFluidSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Insulation densities</dt><dd>${insulSet ? '✓ Set' : '<em>missing</em>'}</dd>
-                <dt>Component weights</dt><dd>${compWtSet ? '✓ Set' : '<em>missing</em>'}</dd>
+                <dt>Pipe section properties</dt><dd>${fieldStatus(pipeSectSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Material densities</dt><dd>${fieldStatus(matDensSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Operating fluid densities</dt><dd>${fieldStatus(opFluidSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Hydro fluid densities</dt><dd>${fieldStatus(hydFluidSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Insulation densities</dt><dd>${fieldStatus(insulSet, '✓ Set', '<em>missing</em>')}</dd>
+                <dt>Component weights</dt><dd>${fieldStatus(compWtSet, '✓ Set', '<em>missing</em>')}</dd>
               </dl>
               ${!masterFieldsSet ? '<button class="verify-gate__action verify-gate__action--secondary" style="width:100%;margin-top:8px" data-goto-tab="masters">→ Open Masters tab</button>' : ''}
             </div>
-  
+
             <!-- Source fields card -->
             <div class="verify-card verify-card--info" style="margin-top:12px">
               <div class="verify-card__header">
@@ -665,9 +698,9 @@ export class LoadCalcConsumerController {
                 <span class="verify-card__subtitle">Auto-resolve when masters are loaded</span>
               </div>
               <dl class="verify-defaults-dl">
-                <dt>Line-list source</dt><dd>${lineListSet ? '✓ Bound' : '<em>not bound</em>'}</dd>
-                <dt>Piping-class source</dt><dd>${pipClassSet ? '✓ Bound' : '<em>not bound</em>'}</dd>
-                <dt>Component-weight source</dt><dd>${compSrcSet ? '✓ Bound' : '<em>not bound</em>'}</dd>
+                <dt>Line-list source</dt><dd>${fieldStatus(lineListSet, '✓ Bound', '<em>not bound</em>')}</dd>
+                <dt>Piping-class source</dt><dd>${fieldStatus(pipClassSet, '✓ Bound', '<em>not bound</em>')}</dd>
+                <dt>Component-weight source</dt><dd>${fieldStatus(compSrcSet, '✓ Bound', '<em>not bound</em>')}</dd>
               </dl>
             </div>
   
@@ -708,6 +741,17 @@ function createWorkflowReadiness(context, topologyCheck) {
   const topologyBlockerCount = (supportSites?.blockers?.length || 0)
     + (routes?.blockers?.length || 0)
     + (topologyCheck?.blockingIssueCount || 0);
+  const projectDataCheck = validateProjectDataProfile(
+    projectDataStore.getProfile(),
+    'loadCalcProjectBasis',
+    null,
+  );
+  const masterDataAudit = requiredMastersAudit(masterDataController.getMasterData());
+  // Step 5's badge must agree with the Validate Input pane. The gate projection
+  // only reports the full blocker set once the common checker has run, so the
+  // count is published as unknown until then rather than shown under-reported.
+  const validationEvaluated = Boolean(commonInput.report);
+  const validationBlockerCount = validationEvaluated ? safeValidationBlockerCount() : 0;
   return Object.freeze({
     datasetReady: Boolean(context?.datasetId),
     topologyBlockerCount,
@@ -716,10 +760,14 @@ function createWorkflowReadiness(context, topologyCheck) {
     topologyCheckReady: topologyReady
       && topologyBlockerCount === 0
       && topologyCheck?.state !== 'NOT_AVAILABLE',
-    projectDataReady: approvedProjectDataReady(projectDataStore.getProfile()),
-    masterDataReady: requiredMastersReady(masterDataController.getMasterData()),
+    projectDataReady: projectDataCheck.valid,
+    projectDataActionCount: projectDataCheck.errors.length,
+    masterDataReady: masterDataAudit.ready,
+    masterDataActionCount: masterDataAudit.missingCount,
     validationReady: commonInput.report?.packageState === 'READY',
     validationState: commonInput.report?.packageState || 'NOT_EVALUATED',
+    validationEvaluated,
+    validationBlockerCount,
     resultsCurrent: distribution?.freshness?.status === 'CURRENT',
   });
 }
@@ -780,17 +828,23 @@ function topologyCheckPlaceholder(kind, message, state) {
   });
 }
 
-function approvedProjectDataReady(profile) {
-  return validateProjectDataProfile(profile, 'loadCalcProjectBasis', null).valid;
+/** Never lets a status-projection failure hide the rest of the guided workflow. */
+function safeValidationBlockerCount() {
+  try {
+    return createCurrentNonFeaWorkspaceStatusProjection()?.blockers?.length || 0;
+  } catch {
+    return 0;
+  }
 }
 
-function requiredMastersReady(masters) {
-  return [masters?.lineList, masters?.pipingClass, masters?.weight].every((master) => (
+function requiredMastersAudit(masters) {
+  const missingCount = [masters?.lineList, masters?.pipingClass, masters?.weight].filter((master) => !(
     Array.isArray(master?.normalizedRows)
     && master.normalizedRows.length > 0
     && typeof master.sourceHash === 'string'
     && master.sourceHash.length > 0
-  ));
+  )).length;
+  return { ready: missingCount === 0, missingCount };
 }
 
 /** Preserves the prior public W10.9 readiness contract. */
@@ -807,6 +861,29 @@ export function createLoadCalcActionAvailability(context, reviewModel) {
     runScreening: hasPathModel,
     exportScreening: Boolean(reviewModel?.summary.screeningIncluded),
   });
+}
+
+/**
+ * Reports an authority change against what actually exists.
+ *
+ * Announcing that the seal, authorization and previous calculations need a
+ * refresh reads as breakage when none of them were ever established, which is
+ * the normal state while a dataset is still being prepared. Only work that
+ * exists is named as invalidated.
+ */
+function authorityChangeMessage(subject) {
+  const invalidated = [];
+  try {
+    if (nonFeaCommonInputStore.getSnapshot().commonInput) invalidated.push('the common seal');
+    const authState = engineeringModelStore.getEmpiricalAuthorizationState();
+    if (authState?.authorization || authState?.authorized) invalidated.push('authorization');
+    if (engineeringModelStore.getDistribution()) invalidated.push('previous calculations');
+  } catch {
+    return `${subject} changed.`;
+  }
+  return invalidated.length === 0
+    ? `${subject} changed. Nothing is sealed or calculated yet, so there is nothing to refresh.`
+    : `${subject} changed; ${invalidated.join(', ')} require refresh.`;
 }
 
 function availabilityMessage(state) {

@@ -128,7 +128,12 @@ export function prepareInputXmlLinearPreFea(diagnostics, options) {
     sourceBundleEvidenceHash: accepted.sourceAuthority.sourceBundleEvidenceHash,
     modelSemanticHash: structuralPreparation.compilation?.mechanicalModelSemanticHash
       ?? structuralPreparation.summary?.mechanicalModelSemanticHash,
-    stiffnessStateHash: stiffnessPreflight.stiffnessStateHash,
+    // This is the stiffness actually qualified for solve authorization. With
+    // no B-3.2 component correction it is deliberately identical to the
+    // historical mechanical-model stiffness hash; when exact bend k is active
+    // it is the component-aware effective stiffness identity retained by the
+    // preflight.
+    stiffnessStateHash: stiffnessPreflight.effectiveStiffnessStateHash,
     loadStateHash: loadIdentity,
     sourcePreparation,
     structuralPreparation,

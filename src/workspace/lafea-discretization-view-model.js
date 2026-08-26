@@ -1,4 +1,5 @@
 /** Pure presentation model for the governed Discretization step. */
+import { jacobianDeterminantStatisticsOf } from '../core/lafea-meshing/index.js';
 import { qualifiedMeshQualityPolicyForStage } from '../core/lafea-profile-contract/index.js';
 import { buildLafea4ThicknessCurvatureObservation } from './lafea-shell-thickness-curvature-observation.js';
 import { buildMeshQualityPanel } from './lafea-mesh-quality-panel.js';
@@ -12,6 +13,7 @@ import {
 import {
   LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
   LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
+  lafea5SourceShellProfileReference,
 } from './lafea-source-shell-mesh-adoption.js';
 import { buildLafea4ShellProductRefinementUiPolicy } from './lafea4-shell-product-refinement-ui-policy.js';
 
@@ -56,10 +58,12 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
     generation,
   });
   const reasons = custodyReasons(custody);
+  const mappingInspection = buildHighOrderMappingInspection(evidence, generation.lengthUnit);
   const qualityPanel = custody.gateResults.length && custody.meshProfileIdentity
     ? buildMeshQualityPanel(custody.gateResults, {
       stageId: stage.stageId,
       meshProfileIdentity: custody.meshProfileIdentity,
+      quality: evidence?.quality ?? null,
     })
     : null;
   const retainedElementFamily = retainedFamily(stage.stageId, evidence?.meshProfile ?? null);
@@ -115,7 +119,9 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       retainedNodeCount: custody.nodeCount,
       retainedElementCount: custody.elementCount,
     },
-    evidence: evidence ? evidenceModel(custody, retainedElementFamily, qualityPanel) : emptyEvidence(),
+    evidence: evidence
+      ? evidenceModel(custody, retainedElementFamily, qualityPanel, mappingInspection)
+      : emptyEvidence(),
     actions: {
       canImportAuthorizedMesh: profile.meshApplicable,
       canValidateEvidence: profile.meshApplicable,
@@ -279,6 +285,9 @@ function buildGenerationModel(stage, capabilities) {
     && stage.analysisDomainProjection?.state === 'CURRENT_PASS';
   const shellParent = stage.retainedShellMidsurfaceEvidence ?? null;
   const sourceMeshAdoption = shellParent?.schema === LAFEA5_SOURCE_SHELL_PARENT_SCHEMA;
+  const sourceProfileReference = sourceMeshAdoption
+    ? lafea5SourceShellProfileReference(shellParent)
+    : null;
   const sourceHash = stage.sourceAuthority?.sourceHash ?? stage.lifecycle?.source?.sourceHash ?? null;
   const shellCurrent = shellMidsurface
     && shellParent?.qualification === 'PASS'
@@ -328,6 +337,7 @@ function buildGenerationModel(stage, capabilities) {
     qualifiedQualityPolicy: qualifiedMeshQualityPolicyForStage(stage.stageId),
     thicknessCurvatureObservation: buildLafea4ThicknessCurvatureObservation(stage),
     targetElementLength: sourceMeshAdoption ? null : meshProfile?.fields.globalTargetSize ?? null,
+    sourceProfileReference,
     declaredElementFamily: declaredFamily(stage.stageId, meshProfile),
     lengthUnit: shellMidsurface
       ? shellParent?.geometry?.lengthUnit ?? shellParent?.lengthUnit ?? null
@@ -336,7 +346,7 @@ function buildGenerationModel(stage, capabilities) {
   };
 }
 
-function evidenceModel(custody, retainedElementFamily, qualityPanel) {
+function evidenceModel(custody, retainedElementFamily, qualityPanel, mappingInspection) {
   return {
     present: true,
     meshIdentity: custody.meshIdentity,
@@ -356,6 +366,7 @@ function evidenceModel(custody, retainedElementFamily, qualityPanel) {
     warningElementIds: [...custody.warningElementIds],
     blockingElementIds: [...custody.blockingElementIds],
     qualityPanel,
+    mappingInspection,
   };
 }
 
@@ -379,7 +390,68 @@ function emptyEvidence() {
     warningElementIds: [],
     blockingElementIds: [],
     qualityPanel: null,
+    mappingInspection: null,
   };
+}
+
+function buildHighOrderMappingInspection(evidence, lengthUnit) {
+  const mesh = evidence?.mesh;
+  const elements = mesh?.elements?.filter((element) => (
+    element.elementType === 'T6' || element.elementType === 'Q8'
+  )) ?? [];
+  if (!elements.length) return null;
+  const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
+  const rows = elements.map((element) => {
+    const nodes = element.nodeIds.map((nodeId) => nodeById.get(nodeId));
+    if (nodes.some((node) => !node)) {
+      throw new TypeError('LAFEA_MAPPING_INSPECTION_NODE_NOT_FOUND');
+    }
+    return Object.freeze({
+      elementId: element.elementId,
+      elementType: element.elementType,
+      ...jacobianDeterminantStatisticsOf(element.elementType, nodes),
+    });
+  });
+  const minimumDeterminant = Math.min(...rows.map((row) => row.minimum));
+  const maximumDeterminant = Math.max(...rows.map((row) => row.maximum));
+  const positiveRows = rows.filter((row) => Number.isFinite(row.positiveDeterminantRatio));
+  const minimumPositiveDeterminantRatio = positiveRows.length
+    ? Math.min(...positiveRows.map((row) => row.positiveDeterminantRatio))
+    : null;
+  return Object.freeze({
+    schema: 'lafea-high-order-mapping-inspection/v1',
+    authority: 'DERIVED_INSPECTION_ONLY_NO_QUALIFIED_LIMIT',
+    sampleDomain: 'SCALED_JACOBIAN_CORNERS_PLUS_FORMULATION_INTEGRATION_POINTS',
+    lengthUnit: lengthUnit ?? null,
+    elementCount: rows.length,
+    sampleCount: rows.reduce((sum, row) => sum + row.sampleCount, 0),
+    minimumDeterminant,
+    maximumDeterminant,
+    minimumDeterminantElementIds: Object.freeze(rows
+      .filter((row) => sameNumber(row.minimum, minimumDeterminant))
+      .map((row) => row.elementId)
+      .sort()),
+    minimumPositiveDeterminantRatio,
+    minimumPositiveRatioElementIds: Object.freeze(minimumPositiveDeterminantRatio === null
+      ? []
+      : rows
+        .filter((row) => sameNumber(
+          row.positiveDeterminantRatio, minimumPositiveDeterminantRatio,
+        ))
+        .map((row) => row.elementId)
+        .sort()),
+    nonPositiveSampleCount: rows.reduce((sum, row) => sum + row.nonPositiveSampleCount, 0),
+    nonPositiveElementIds: Object.freeze(rows
+      .filter((row) => row.nonPositiveSampleCount > 0)
+      .map((row) => row.elementId)
+      .sort()),
+  });
+}
+
+function sameNumber(left, right) {
+  const scale = Math.max(1, Math.abs(left ?? 0), Math.abs(right ?? 0));
+  return Number.isFinite(left) && Number.isFinite(right)
+    && Math.abs(left - right) <= 64 * Number.EPSILON * scale;
 }
 
 function governedV2Route(stage) {

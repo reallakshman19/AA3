@@ -17,6 +17,7 @@ import { issueLafeaSourceAuthority } from '../src/workspace/lafea-source-authori
 import { LAFEA_SHELL_ELEMENT, produceLafeaShellAnalysisMesh } from '../src/workspace/lafea-shell-mesh-producer.js';
 import {
   createLafea5SourceShellParent,
+  lafea5SourceShellProfileReference,
   planLafea5SourceShellMeshAdoption,
   produceLafea5SourceShellMeshAdoption,
 } from '../src/workspace/lafea-source-shell-mesh-adoption.js';
@@ -38,9 +39,6 @@ assert.equal(
   LAFEA4_SHELL_SOLVER_COMPANION_AUTHORIZATION_EFFECT,
 );
 
-// ---------------------------------------------------------------------------
-// LAFEA.4 real product chain: Sample -> retained companion -> compiler -> run.
-// ---------------------------------------------------------------------------
 const raw4 = structuredClone(createLafeaMockDocument('LAFEA.4'));
 raw4.loadCases = [{
   loadCaseId: 'TECH12C-PRESSURE',
@@ -176,10 +174,6 @@ const mutatedSolverModelBindingHash = canonicalLafeaSha256({
 });
 assert.notEqual(mutatedSolverModelBindingHash, compiled4.solverModelBindingHash);
 
-// ---------------------------------------------------------------------------
-// Adversarial reversed retained mesh: custody BLOCK is carried, not activated.
-// Do not execute this fixture.
-// ---------------------------------------------------------------------------
 const reversedMesh = {
   ...structuredClone(generated4.evidence.mesh),
   meshIdentity: `${generated4.evidence.mesh.meshIdentity}:TECH12C-GLOBAL-REVERSE`,
@@ -240,9 +234,6 @@ assert.equal(
 );
 assert.equal(reversedCompiled.releaseQualified, false);
 
-// ---------------------------------------------------------------------------
-// LAFEA.5 remains explicit NOT_APPLICABLE.
-// ---------------------------------------------------------------------------
 const document5 = normalizeLafeaStageDocument('LAFEA.5', createLafeaMockDocument('LAFEA.5'));
 const authority5 = issueLafeaSourceAuthority(
   'LAFEA.5', document5, 'TECH12C-LAFEA5-NOT-APPLICABLE',
@@ -251,8 +242,12 @@ const parent5 = createLafea5SourceShellParent({
   sourceHash: authority5.sourceHash,
   shellTemplate: document5.shellTemplate,
 });
-const profile5 = shellProfile('LAFEA5_TECH12C_H15', 'TECH12C-R1', 15);
+const reference5 = lafea5SourceShellProfileReference(parent5);
+const profile5 = shellProfile(
+  'LAFEA5_TECH12C_SOURCE_REFERENCE', 'TECH12C-R2', reference5.referenceLength,
+);
 const plan5 = planLafea5SourceShellMeshAdoption({ parent: parent5, meshProfile: profile5 });
+assert.equal(plan5.profileReferenceLength, reference5.referenceLength);
 const produced5 = produceLafea5SourceShellMeshAdoption({
   parent: parent5,
   meshProfile: profile5,
@@ -298,6 +293,8 @@ console.log(JSON.stringify({
     executionAuthorizedUnchanged: reversedCompiled.executionAuthorized,
   },
   lafea5: {
+    sourceProfileReferenceLength: reference5.referenceLength,
+    sourceProfileReferenceBasis: reference5.basis,
     parentNormalCompanionHash: compiled5.parents.parentNormalCompanionHash,
     parentNormalCustodyStatus: compiled5.parentNormalCustody.status,
     authorizationEffect: compiled5.parentNormalCustody.authorizationEffect,

@@ -5,6 +5,7 @@ import { compileSolverExecution, elementContributionFromFrameElement } from '../
 import { compileResultRecovery } from '../linear-fea-result-recovery/index.js';
 import { DEFAULT_INSTALLATION_TEMPERATURE, point, sourceEvidence, physicalLineWeight } from './generic-inputxml-solve-authorities.js';
 import { frameProfile, loadCaseProfile, recoveryProfile, solverProfile } from './generic-inputxml-solve-model.js';
+import { productionAuthorizedPressureEffects } from './production-capability-profile.js';
 
 export function compileCase({ modelId, entries, material, compilation, label, thermal, thermalExpansionCoefficient }) {
   const primitives = [];
@@ -16,8 +17,7 @@ export function compileCase({ modelId, entries, material, compilation, label, th
       primitiveId: `${modelId}-${label}-WEIGHT-${entry.elementId}`,
       kind: 'DISTRIBUTED_LOAD',
       elementId: entry.elementId,
-      basis: 'GLOBAL',
-      variation: 'UNIFORM',
+      basis: 'GLOBAL', variation: 'UNIFORM',
       startIntensity: { fx: 0, fy: -lineWeight, fz: 0 },
       endIntensity: { fx: 0, fy: -lineWeight, fz: 0 },
       units: { distributedForce: 'N/m', length: 'm' },
@@ -30,25 +30,28 @@ export function compileCase({ modelId, entries, material, compilation, label, th
       primitives.push({
         schema: 'fea-linear-load-primitive/v1',
         primitiveId: `${modelId}-${label}-PRESSURE-${entry.elementId}`,
-        kind: 'PRESSURE',
-        elementId: entry.elementId,
-        pressure: analysis.pressure,
-        pressureBasis: 'GAUGE',
-        authorizedEffects: { codeStress: true, pressureStiffening: false, axialThrust: false, bourdon: false },
-        sourceEvidence: sourceEvidence({ sourceId: `${modelId}-PRESSURE1`, sourceRevision: `${entry.sourceSegment.id}:${analysis.pressure}` }),
+        kind: 'PRESSURE', elementId: entry.elementId,
+        pressure: analysis.pressure, pressureBasis: 'GAUGE',
+        authorizedEffects: productionAuthorizedPressureEffects(),
+        sourceEvidence: sourceEvidence({
+          sourceId: `${modelId}-PRESSURE1`,
+          sourceRevision: `${entry.sourceSegment.id}:${analysis.pressure}`,
+        }),
       });
     }
     if (thermal) {
       primitives.push({
         schema: 'fea-linear-load-primitive/v1',
         primitiveId: `${modelId}-${label}-TEMPERATURE-${entry.elementId}`,
-        kind: 'TEMPERATURE',
-        elementId: entry.elementId,
+        kind: 'TEMPERATURE', elementId: entry.elementId,
         operatingTemperature: analysis.operatingTemperature,
         installationTemperature: DEFAULT_INSTALLATION_TEMPERATURE,
         stiffnessEvaluationMaterialStateId: material.materialState.materialStateId,
         thermalStrainProfileId: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
-        sourceEvidence: sourceEvidence({ sourceId: `${modelId}-TEMP_EXP_C1`, sourceRevision: `${entry.sourceSegment.id}:${analysis.operatingTemperature}:${thermalExpansionCoefficient}` }),
+        sourceEvidence: sourceEvidence({
+          sourceId: `${modelId}-TEMP_EXP_C1`,
+          sourceRevision: `${entry.sourceSegment.id}:${analysis.operatingTemperature}:${thermalExpansionCoefficient}`,
+        }),
       });
     }
   }
@@ -90,9 +93,7 @@ export function analyse({ modelId, geometry, entries, material, compilation, lab
     profile,
     distributedLoads: distributedByElement.get(entry.elementId) ?? [],
     temperature: temperatureByElement.get(entry.elementId) ?? null,
-    releases: [],
-    endSprings: [],
-    rigidOffsets: null,
+    releases: [], endSprings: [], rigidOffsets: null,
   }));
   const execution = compileSolverExecution({
     compilation,
@@ -101,12 +102,7 @@ export function analyse({ modelId, geometry, entries, material, compilation, lab
     solverProfile: solverProfile(),
   });
   const recovery = compileResultRecovery({
-    compilation,
-    execution,
-    loadCase,
-    frameElements,
-    pipingComponents: [],
-    recoveryProfile: recoveryProfile(),
+    compilation, execution, loadCase, frameElements, pipingComponents: [], recoveryProfile: recoveryProfile(),
   });
   return Object.freeze({ loadCase, frameElements, execution, recovery });
 }

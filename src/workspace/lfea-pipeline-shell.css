@@ -1,0 +1,554 @@
+@import './lfea-source-acquisition.css';
+
+.lfea-pipeline-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  color: var(--workspace-text);
+}
+
+.lfea-pipeline-shell__toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--workspace-border);
+  background: var(--workspace-panel-strong);
+}
+
+.lfea-pipeline-shell__load-sample {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+  color: var(--workspace-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.lfea-pipeline-shell__load-sample svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lfea-pipeline-shell__load-sample:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.lfea-pipeline-shell__authority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+  color: var(--workspace-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.lfea-pipeline-shell__assemble {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--workspace-accent);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+  color: var(--workspace-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.lfea-pipeline-shell__assemble svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[data-role="lfea-pipeline-assemble-status"] {
+  font-size: 11px;
+  color: var(--workspace-muted);
+}
+
+[data-role="lfea-pipeline-assemble-status"][data-status="error"] {
+  color: #f87171;
+}
+
+.lfea-pipeline-shell__verification-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  margin-left: auto;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+  color: var(--workspace-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.lfea-pipeline-shell__verification-toggle--open {
+  border-color: var(--workspace-accent);
+  color: var(--workspace-text);
+}
+
+.lfea-pipeline-shell__verification-toggle .lfea-pipeline-icon {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lfea-pipeline-shell__verification-drawer {
+  flex: 0 0 auto;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: 12px;
+  border-top: 1px solid var(--workspace-border);
+  background: var(--workspace-panel);
+}
+
+.lfea-pipeline-shell__verification-drawer[hidden] {
+  display: none;
+}
+
+[data-role="lfea-pipeline-verification-drawer-intro"] {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--workspace-muted);
+}
+
+.lfea-pipeline-shell__stepper {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--workspace-border);
+  background: var(--workspace-panel);
+}
+
+.lfea-pipeline-shell__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--workspace-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.lfea-pipeline-shell__step:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lfea-pipeline-shell__step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 10px;
+}
+
+.lfea-pipeline-shell__step--active {
+  border-color: var(--workspace-accent);
+  color: var(--workspace-text);
+}
+
+.lfea-pipeline-shell__step--active .lfea-pipeline-shell__step-index {
+  background: var(--workspace-accent);
+  border-color: var(--workspace-accent);
+  color: var(--workspace-panel-strong);
+}
+
+/* The tick replaces the step number in the view (render()); a ::after glyph
+   here would print a second one next to it. */
+.lfea-pipeline-shell__step--complete {
+  color: var(--workspace-text);
+}
+
+.lfea-pipeline-shell__step--complete .lfea-pipeline-shell__step-index {
+  border-color: currentColor;
+}
+
+/* The one step the engineer is meant to act on next. */
+.lfea-pipeline-shell__step--next:not(:disabled) {
+  border-color: var(--workspace-accent);
+  color: var(--workspace-text);
+  box-shadow: 0 0 0 1px var(--workspace-accent) inset;
+}
+
+.lfea-pipeline-shell__guidance {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--workspace-border);
+  background: var(--workspace-panel);
+  color: var(--workspace-muted);
+  font-size: 12px;
+}
+
+.lfea-pipeline-shell__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.lfea-pipeline-shell__host[hidden] {
+  display: none;
+}
+
+.application-navigation-shell {
+  position: relative;
+}
+
+.global-settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--workspace-border, #1e293b);
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.global-settings-button svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+.global-settings-button[aria-expanded="true"] {
+  color: #e5eefb;
+  border-color: #60a5fa;
+}
+
+.global-settings-popover {
+  position: absolute;
+  top: 42px;
+  right: 12px;
+  z-index: 50;
+  width: min(320px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border: 1px solid #315070;
+  border-radius: 8px;
+  background: #081321;
+  color: #e2e8f0;
+  box-shadow: 0 24px 80px #020617cc;
+}
+
+.global-settings-popover h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.global-settings-popover__list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.global-settings-popover__list dt {
+  color: #8ca0b8;
+}
+
+.global-settings-popover__hint {
+  margin: 10px 0 0;
+  color: #8ca0b8;
+  font-size: 11px;
+}
+
+.global-settings-popover__empty {
+  margin: 0;
+  color: #8ca0b8;
+  font-size: 12px;
+}
+
+/* ---- Load case step: the model's own analysis cases ---- */
+.lfea-pipeline-case-selection {
+  padding: 14px 16px;
+}
+
+.lfea-pipeline-case-selection__category {
+  margin: 14px 0 6px;
+  color: #8ca0b8;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lfea-pipeline-case-selection__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+.lfea-pipeline-case-selection__row strong {
+  min-width: 84px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-pipeline-case-selection__row span {
+  color: #8ca0b8;
+  font-size: 12px;
+}
+
+.lfea-pipeline-case-selection__toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* ---- Output step ---- */
+.lfea-pipeline-results {
+  padding: 14px 16px;
+}
+
+.lfea-pipeline-results__cases,
+.lfea-pipeline-results__views {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.lfea-pipeline-results__cases button[data-active="true"],
+.lfea-pipeline-results__views button[data-active="true"] {
+  outline: 2px solid #4c8ed9;
+}
+
+.lfea-pipeline-results__warning {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-left: 3px solid #d9a441;
+  background: rgba(217, 164, 65, 0.08);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Governing values, before the table of everything. */
+.lfea-pipeline-results__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px 12px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  background: var(--workspace-panel);
+}
+
+.lfea-pipeline-results__summary dt {
+  grid-row: 1;
+  color: var(--workspace-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lfea-pipeline-results__summary dd {
+  grid-row: 2;
+  margin: 0;
+  color: var(--workspace-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-pipeline-results__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+/* Sorting is a column header action, so the header reads as one. */
+.lfea-pipeline-results__table th button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* The rows the summary above is pointing at. */
+.lfea-pipeline-results__table tr[data-extreme="true"] {
+  background: color-mix(in srgb, var(--workspace-accent) 12%, transparent);
+}
+
+.lfea-pipeline-results__scroll {
+  max-height: 460px;
+  overflow: auto;
+  border: 1px solid var(--workspace-border, #2b3a4d);
+}
+
+.lfea-pipeline-results__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-pipeline-results__table th,
+.lfea-pipeline-results__table td {
+  padding: 4px 10px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--workspace-border, #2b3a4d);
+}
+
+.lfea-pipeline-results__table th:first-child,
+.lfea-pipeline-results__table td:first-child {
+  text-align: left;
+}
+
+.lfea-pipeline-results__table th {
+  position: sticky;
+  top: 0;
+  background: var(--workspace-panel, #16202c);
+}
+
+.lfea-pipeline-results__export {
+  margin-top: 12px;
+}
+
+/* ---- Layout grid ---- */
+.lfea-pipeline-layout {
+  margin: 16px;
+  border: 1px solid var(--workspace-border, #2b3a4d);
+}
+
+.lfea-pipeline-layout > summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.lfea-pipeline-layout__body {
+  padding: 0 14px 14px;
+}
+
+.lfea-pipeline-layout__scroll {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--workspace-border, #2b3a4d);
+}
+
+.lfea-pipeline-layout__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-pipeline-layout__table th,
+.lfea-pipeline-layout__table td {
+  padding: 3px 8px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--workspace-border, #2b3a4d);
+}
+
+.lfea-pipeline-layout__table td[data-align="right"],
+.lfea-pipeline-layout__table th[data-align="right"] {
+  text-align: right;
+}
+
+.lfea-pipeline-layout__table th {
+  position: sticky;
+  top: 0;
+  background: var(--workspace-panel, #16202c);
+  text-align: left;
+}
+
+.lfea-pipeline-layout__note {
+  margin: 8px 0 0;
+  color: #8ca0b8;
+  font-size: 11px;
+}
+
+/* ---- Input vs Error check ----
+   Both steps render into the SOURCE host, but they answer different
+   questions. Input is the file and the statistics read from it; Error check is
+   the review of what those mean and what to do about it. Showing findings on
+   Input made the two steps indistinguishable. */
+[data-host-group="SOURCE"][data-active-step="INPUT"]
+  [data-role="linear-piping-inputxml-review"],
+[data-host-group="SOURCE"][data-active-step="INPUT"]
+  [data-role="lfea-pipeline-model-repair-panel"] {
+  display: none;
+}
+
+/* StagedJSON converts into InputXML and has no review of its own, so its
+   panel belongs to Input only. The ACCDB panel is not like that: it owns its
+   model's whole verdict -- capabilities, findings, and the acceptance that
+   releases the analysis -- so hiding it here sent an engineer to the one step
+   that hid what it told them to look at. It stays, and shows its review half
+   instead. */
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-stagedjson-input-panel"] {
+  display: none;
+}
+
+/* ---- One loaded model, one source panel ----
+   The three source panels share this host so an engineer can pick one while
+   nothing is loaded. Once something IS loaded the other two only mislead --
+   an imported ACCDB left the InputXML panel below it announcing "No native
+   InputXML source is loaded", including on the step reviewing the ACCDB
+   model. Clearing the loaded source brings the choice back. */
+[data-host-group="SOURCE"][data-active-source="ACCDB"]
+  [data-role="linear-piping-inputxml-source-workflow"],
+[data-host-group="SOURCE"][data-active-source="ACCDB"]
+  [data-role="lfea-pipeline-stagedjson-input-panel"],
+[data-host-group="SOURCE"][data-active-source="ACCDB"]
+  [data-role="lfea-pipeline-model-repair-panel"],
+[data-host-group="SOURCE"][data-active-source="INPUTXML"]
+  [data-role="lfea-pipeline-accdb-input-panel"],
+[data-host-group="SOURCE"][data-active-source="INPUTXML"]
+  [data-role="lfea-pipeline-stagedjson-input-panel"] {
+  display: none;
+}
+
+[data-host-group="SOURCE"][data-active-step="INPUT"]
+  [data-role="lfea-pipeline-accdb-review-view"],
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-accdb-source-view"] {
+  display: none;
+}

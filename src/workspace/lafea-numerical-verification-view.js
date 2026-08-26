@@ -32,16 +32,109 @@ export function renderLafeaNumericalVerification(root, stageValue) {
   const model = buildLafeaNumericalVerificationViewModel(stageValue);
   const wrapper = element(root, 'section', 'lafea-numerical-verification');
   wrapper.dataset.role = 'lafea-numerical-verification';
+
   wrapper.append(
-    element(root, 'p', null,
-      'Read-only numerical verification from retained governed evidence. Missing detail is reported as unavailable rather than reconstructed from display data.'),
-    preflightSection(root, model.preflight),
-    renderLafeaVerificationRelease(root, stageValue),
-    convergenceSection(root, model.convergence),
-    meshSection(root, model.meshQuality),
-    renderLafeaT6GeometryQualification(root, stageValue),
+    element(root, 'p', 'lafea-numerical-verification__intro',
+      'Verification evidence is read-only. Decision status stays visible; detailed numerical, custody and release evidence opens only when needed.'),
+    verificationSummary(root, model),
+    evidenceDisclosure(
+      root,
+      'Solve-check evidence',
+      'solve-checks',
+      preflightSection(root, model.preflight),
+    ),
+    evidenceDisclosure(
+      root,
+      'Convergence evidence',
+      'convergence',
+      convergenceSection(root, model.convergence),
+    ),
+    evidenceDisclosure(
+      root,
+      'Mesh-quality evidence',
+      'mesh-quality',
+      meshSection(root, model.meshQuality),
+    ),
+    evidenceDisclosure(
+      root,
+      'T6 geometry qualification evidence',
+      't6-geometry',
+      renderLafeaT6GeometryQualification(root, stageValue),
+    ),
+    evidenceDisclosure(
+      root,
+      'Release / production qualification evidence',
+      'release',
+      renderLafeaVerificationRelease(root, stageValue),
+    ),
   );
   return wrapper;
+}
+
+function verificationSummary(root, model) {
+  const section = element(root, 'section', 'lafea-numerical-verification__summary');
+  section.dataset.role = 'lafea-verification-summary';
+  section.append(element(root, 'h3', null, 'Verification status'));
+
+  const items = [
+    ['Solve checks', model.preflight.status],
+    ['Convergence', model.convergence.status],
+    ['Mesh quality', model.meshQuality.status],
+    ['T6 geometry', model.t6GeometryQualification.status],
+  ].filter(([, status]) => status !== 'ABSENT');
+
+  if (!items.length) {
+    section.append(element(
+      root,
+      'p',
+      'lafea-numerical-verification__empty',
+      'No numerical verification evidence is retained yet.',
+    ));
+    return section;
+  }
+
+  const grid = element(root, 'div', 'lafea-numerical-verification__summary-grid');
+  for (const [label, status] of items) {
+    const item = element(root, 'div', 'lafea-numerical-verification__summary-item');
+    const presentation = verificationStatusPresentation(status);
+    item.dataset.status = status;
+    item.append(
+      element(root, 'span', null, label),
+      element(root, 'strong', null, presentation.label),
+    );
+    item.lastElementChild.dataset.tone = presentation.tone;
+    grid.append(item);
+  }
+  section.append(grid);
+  return section;
+}
+
+function evidenceDisclosure(root, title, kind, content) {
+  const details = element(root, 'details', 'lafea-numerical-verification__evidence');
+  details.dataset.role = 'lafea-verification-evidence';
+  details.dataset.evidenceKind = kind;
+  const summary = element(root, 'summary', null, title);
+  summary.title = `Open ${title.toLowerCase()}.`;
+  details.append(summary, content);
+  return details;
+}
+
+function verificationStatusPresentation(status) {
+  const presentations = {
+    PASS: ['Qualified', 'positive'],
+    OK: ['Qualified', 'positive'],
+    CURRENT_PASS: ['Qualified', 'positive'],
+    CURRENT_WARNING: ['Qualified with warnings', 'warning'],
+    WARNING: ['Attention required', 'warning'],
+    HASH_ONLY: ['Evidence identity only', 'neutral'],
+    DIAGNOSTIC: ['Diagnostic only', 'neutral'],
+    STALE: ['Stale evidence', 'warning'],
+    BLOCKED: ['Blocked', 'critical'],
+    CURRENT_BLOCK: ['Blocked', 'critical'],
+    INVALID: ['Invalid', 'critical'],
+  };
+  const [label, tone] = presentations[status] ?? [humanize(status), 'neutral'];
+  return { label, tone };
 }
 
 function preflightModel(evidence) {
@@ -189,7 +282,8 @@ function meshQualityModel(stage) {
 
 function preflightSection(root, model) {
   const section = element(root, 'section');
-  section.append(element(root, 'h3', null, `Solve preflight proofs — ${model.status}`));
+  section.dataset.role = 'lafea-solve-check-evidence';
+  section.append(element(root, 'h3', null, `Solve-check evidence — ${model.status}`));
   if (model.rows.length) section.append(rows(root, model.rows));
   section.append(element(root, 'p', null, model.note));
   return section;
@@ -197,6 +291,7 @@ function preflightSection(root, model) {
 
 function convergenceSection(root, model) {
   const section = element(root, 'section');
+  section.dataset.role = 'lafea-convergence-evidence';
   section.append(element(root, 'h3', null, `Convergence — ${model.status}`));
   if (model.custody) section.append(element(root, 'p', null, `Custody: ${model.custody}`));
   if (model.method) section.append(element(root, 'p', null, `Method: ${model.method}`));
@@ -208,6 +303,7 @@ function convergenceSection(root, model) {
 
 function meshSection(root, model) {
   const section = element(root, 'section');
+  section.dataset.role = 'lafea-verification-mesh-quality-evidence';
   section.append(element(root, 'h3', null, `Retained mesh quality — ${model.status}`));
   if (model.rows.length) section.append(rows(root, model.rows));
   section.append(element(root, 'p', null, model.note));

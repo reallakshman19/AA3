@@ -1,0 +1,58 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1412
+mission: "Issue #1385 retained Table-5 sign authority reconciliation"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1385-retained-table5-sign-reconciliation-20260824
+base_sha: 72a916d6c60fe61da66c997594f7763aa3f04d8e
+base_tree: a996244f155619416709ac88070d81a4e2bc5a45
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_DRAFT_AUDITED
+handover_readiness: READY
+report_path: agents/PR1412_workreport.md
+appendix_a_score: 99
+appendix_a_min_question: 19
+current_stage: IMPLEMENTATION_COMPLETE_AUDITED_AWAIT_OWNER_MERGE
+merge_authority: NOT_GRANTED
+source_state:
+  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
+  retained_table5_pages: 41-42
+  reviewed_interpretation_hash: 654e33f7fa7124c78e827bffeae06570d7feb401624291c823a6218b6bd012d2
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+partial_authority:
+  table5_radial_sign_placement: QUALIFIED_RETAINED_SOURCE_VALIDATION
+  table5_circumferential_moment_sign_placement: QUALIFIED_RETAINED_SOURCE_VALIDATION
+  table5_longitudinal_moment_sign_placement: QUALIFIED_RETAINED_SOURCE_VALIDATION
+  table5_shear_torsion_sign_placement: QUALIFIED_RETAINED_SOURCE_VALIDATION
+  opposite_load_direction_reversal: QUALIFIED_RETAINED_SOURCE_VALIDATION
+remaining_blockers:
+  physical_ul_surface_meaning: BLOCKED
+  physical_abcd_mapping: BLOCKED
+  membrane_bending_surface_reconstruction: BLOCKED
+  common_physical_point_superposition: BLOCKED
+validation:
+  retained_source_inspection: PASS
+  direct_pdf_page_observation: NOT_RUN
+  checker_node_execution: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  final_diff_review_main_audit: PASS
+  final_changed_files: 6
+  behind_base: 0
+  reviews: 0
+  review_threads: 0
+authority:
+  engineering: false
+  production: false
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+drift:
+  initial_base_sha: 3218b9a84e4fc5bb6e483d98aa556ac6564f9662
+  current_base_sha: 72a916d6c60fe61da66c997594f7763aa3f04d8e
+  intervening_commits: 205
+  overlap: NONE_IDENTIFIED_LFEA_ONLY
+  reground_commit: 04b177a02bfca7964240b453fefe5a6ba65b180e
+exact_next_action: "Remain draft/unmerged. On explicit owner merge instruction, re-ground live main and repeat six-file/review audit before merge. Otherwise continue only if new primary provenance becomes available."
+last_updated: "2026-08-24"

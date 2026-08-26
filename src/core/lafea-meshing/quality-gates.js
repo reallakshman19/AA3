@@ -2,6 +2,7 @@ import { LafeaMeshingError } from './errors.js';
 import {
   Q8_CORNER_NATURAL_POINTS,
   T6_CORNER_NATURAL_POINTS,
+  jacobianAt,
   q8ShapeFunctions,
   scaledJacobianAt,
   t6ShapeFunctions,
@@ -79,6 +80,57 @@ export function qualifyMinimumAngle(triangleCorners, { warn, block }) {
   return Object.freeze({ metric: 'MINIMUM_ANGLE_DEGREES', value, status: classify(value, { warnAt: warn, blockAt: block, worseIsHigher: false }) });
 }
 
+function highOrderQualitySampling(nodeType) {
+  return nodeType === 'T6'
+    ? {
+      shapeFn: t6ShapeFunctions,
+      samplePoints: [...T6_CORNER_NATURAL_POINTS, ...T6_INTEGRATION_NATURAL_POINTS],
+    }
+    : {
+      shapeFn: q8ShapeFunctions,
+      samplePoints: [...Q8_CORNER_NATURAL_POINTS, ...Q8_INTEGRATION_NATURAL_POINTS],
+    };
+}
+
+/**
+ * Determinant mapping statistics on the exact natural-point set used by the
+ * high-order scaled-Jacobian gate. This is inspection evidence only: no
+ * determinant-ratio acceptance threshold is defined here.
+ *
+ * `positiveDeterminantRatio` is min(detJ)/max(detJ) only when every sampled
+ * determinant is strictly positive. If any sampled determinant is nonpositive
+ * the ratio is null; the existing scaled-Jacobian gate remains the qualified
+ * fail-closed authority for inversion/nonpositive mapping.
+ */
+export function jacobianDeterminantStatisticsOf(nodeType, physicalNodes) {
+  if (nodeType !== 'T6' && nodeType !== 'Q8') {
+    throw new LafeaMeshingError(
+      'jacobianDeterminantStatisticsOf requires T6 or Q8',
+      'HIGH_ORDER_ELEMENT_REQUIRED',
+    );
+  }
+  const { shapeFn, samplePoints } = highOrderQualitySampling(nodeType);
+  const determinants = samplePoints.map(({ xi, eta }) => (
+    jacobianAt(shapeFn(xi, eta), physicalNodes).determinant
+  ));
+  if (determinants.some((value) => !Number.isFinite(value))) {
+    throw new LafeaMeshingError(
+      'Non-finite Jacobian determinant in high-order mapping inspection',
+      'NONFINITE_JACOBIAN_DETERMINANT',
+    );
+  }
+  const minimum = Math.min(...determinants);
+  const maximum = Math.max(...determinants);
+  const nonPositiveSampleCount = determinants.filter((value) => value <= 0).length;
+  return Object.freeze({
+    sampleCount: determinants.length,
+    minimum,
+    maximum,
+    positiveDeterminantRatio: minimum > 0 && maximum > 0 ? minimum / maximum : null,
+    nonPositiveSampleCount,
+  });
+}
+
 /**
  * Minimum scaled Jacobian for a high-order element. The mesh-quality gate
  * samples both the natural corners and every integration point used by the
@@ -88,15 +140,7 @@ export function qualifyMinimumAngle(triangleCorners, { warn, block }) {
  * non-positive mapping at one of its own Gauss points.
  */
 export function minimumScaledJacobianOf(nodeType, physicalNodes) {
-  const { shapeFn, samplePoints } = nodeType === 'T6'
-    ? {
-      shapeFn: t6ShapeFunctions,
-      samplePoints: [...T6_CORNER_NATURAL_POINTS, ...T6_INTEGRATION_NATURAL_POINTS],
-    }
-    : {
-      shapeFn: q8ShapeFunctions,
-      samplePoints: [...Q8_CORNER_NATURAL_POINTS, ...Q8_INTEGRATION_NATURAL_POINTS],
-    };
+  const { shapeFn, samplePoints } = highOrderQualitySampling(nodeType);
   const values = samplePoints.map(({ xi, eta }) => (
     scaledJacobianAt(shapeFn(xi, eta), physicalNodes)
   ));

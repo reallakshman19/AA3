@@ -5,6 +5,9 @@ import {
   defaultProfileFields,
   qualifiedMeshQualityPolicyForStage,
 } from '../core/lafea-profile-contract/index.js';
+import {
+  createLafea3SimulatedDomainAndGeometryEvidence,
+} from './lafea3-simulated-domain-provider.js';
 
 export const LAFEA3_SIMULATED_MESH_TARGET_MM = 30;
 export const LAFEA3_SIMULATED_MESH_ELEMENT_FAMILY = 'T6';
@@ -12,10 +15,25 @@ export const LAFEA3_SIMULATED_MESH_PROFILE_ID = 'LAFEA3_SIMULATED_T6_H30_V1';
 
 export async function createLafeaMockDocument(stageId) {
   const provider = await import('./advanced-mock-data.js');
+  if (stageId === 'LAFEA.1') {
+    const screening = provider.createLafeaMockDocument('LAFEA.2');
+    const canonicalFoundation = screening?.sourceEvidence?.foundationModel;
+    if (!canonicalFoundation?.sourceEvidence || !canonicalFoundation?.schema) {
+      throw new TypeError('EMP1_SIMULATED_A_SOURCE_FROM_B_REQUIRED');
+    }
+    return {
+      ...structuredClone(canonicalFoundation.sourceEvidence),
+      schema: canonicalFoundation.schema,
+    };
+  }
   return provider.createLafeaMockDocument(stageId);
 }
 
 export async function createLafeaMockDomainAndGeometryEvidence(stageId, sourceHash) {
+  if (stageId === 'LAFEA.3') {
+    const source = await createLafeaMockDocument(stageId);
+    return createLafea3SimulatedDomainAndGeometryEvidence(sourceHash, source);
+  }
   const provider = await import('./advanced-mock-data.js');
   if (typeof provider.createLafeaMockDomainAndGeometryEvidence === 'function') {
     return provider.createLafeaMockDomainAndGeometryEvidence(stageId, sourceHash);

@@ -1,0 +1,49 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1263
+mission: EMP.1 source custody, WRC/CAUx qualification, and unified analytical product
+workstream: EMP1
+branch: agent/emp1-core-scaffold-issue1261
+pr_head: d1e1f81f083bf0542c8f5f03b1484d892c664642
+main_head_last_checked: 67317dc9cb47de8897fa7952b86107ab91b1f75c
+work_intent: IMPLEMENT
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: RECOVERABLE
+handover_readiness: READY
+report_path: agents/PR1263_workreport.md
+report_basis_head: d1e1f81f083bf0542c8f5f03b1484d892c664642
+appendix_a_status: BLOCKED_WRC_DATASET_QUALIFICATION_AND_CAUX_PAGE_EXTRACTION
+grounding_epoch: GE-009
+current_stage: EMP1_PUBLIC_PRODUCT_INTEGRATION_WITH_C_BLOCKED
+blocker: EMP.1.C remains unqualified; exact WRC coefficient/sign/source closure and CAUx pp24-31 freeze/reproduction remain outstanding
+highest_risk: UI implying live A-to-B or qualified C authority that backend does not possess
+dependencies:
+  - issue: 1261
+  - main_reconciliation: required_before_release_or_merge
+  - wrc_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/WRC537_2013.pdf
+  - caux_source: reallaksh19/XML_Compare_Utilities@dc1371afcd44c12de86b2dad6eddf00f1f0b3c55/docs/emp.1/CAUx 2017 - WRC01f.pdf
+validation_state:
+  emp1_public_product_projection: PASS
+  emp1_public_product_projection_check: PASS
+  new_workspace_js_syntax: PASS
+  updated_playwright_spec_syntax: PASS
+  authored_git_blob_identity: PASS
+  public_navigation_one_emp1: AUTHORED_NOT_RUN_BROWSER
+  internal_steps_a_b_c: AUTHORED_NOT_RUN_BROWSER
+  emp1c_visible_blocker: AUTHORED_NOT_RUN_BROWSER
+  a_retained_engine: IMPLEMENTED_BACKING_LAFEA1
+  b_retained_engine: IMPLEMENTED_BACKING_LAFEA2
+  automatic_a_to_b_sync: false
+  b_retained_a_snapshot_warning: IMPLEMENTED
+  emp1c_production_authority: NOT_AUTHORIZED
+  lafea3_plus_mechanics_changed: false
+  bounded_hexagon_precheck: QUALIFIED_FOR_BOUNDED_SANITY_CHECK_ONLY
+  wrc_readiness: BLOCKED_21_7_120_0
+  wrc_sign_arbitration: BLOCKED_PENDING_PINNED_WRC_PDF
+  caux_pages_24_31: NOT_RUN
+  chromium_navigation: NOT_RUN
+  remote_ci: NOT_RUN
+  merge: NOT_AUTHORIZED
+exact_next_action: run authored Chromium navigation regression when runnable checkout exists, while continuing exact WRC/CAUx qualification before any EMP.1.C mechanics
+last_updated: 2026-08-19T11:46:00+04:00

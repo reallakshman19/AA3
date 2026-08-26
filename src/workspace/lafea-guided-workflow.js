@@ -59,6 +59,8 @@ export function buildLafeaGuidedWorkflow(stateValue) {
     stageId: stage.stageId,
     stageAdapterId: orchestration.stageAdapterId,
     analysisRouteFamily: adapter.routeFamily,
+    meshApplicable: adapter.discretization.applicable,
+    executionSupported,
     canonicalOrchestrationSchema: orchestration.schema,
     steps,
     activeBlockingStepId: steps.find((step) => step.status === 'BLOCKED')?.stepId ?? null,

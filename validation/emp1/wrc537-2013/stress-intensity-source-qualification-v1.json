@@ -1,0 +1,87 @@
+{
+  "schema": "emp1-wrc537-stress-intensity-source-qualification/v1",
+  "issue": 1383,
+  "status": "BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED",
+  "sourceDocument": {
+    "identity": "WRC Bulletin 537, 2013 retained source package",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "primaryPageReobservationAvailableInConnectedEnvironment": false,
+    "currentTurnDirectPdfObservationState": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT"
+  },
+  "retainedTable5Authority": {
+    "classification": "RETAINED_WRC_TABLE5_COMBINED_STRESS_INTENSITY_SOURCE_TEXT",
+    "retainedPath": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "table": "Table 5",
+    "pages": "41-42",
+    "combinedStressIntensitySectionPresent": true,
+    "inputStressComponents": ["sigma_phi", "sigma_x", "tau"],
+    "algebraicNormalStressSummationBeforeStressIntensity": true,
+    "algebraicShearStressSummationBeforeStressIntensity": true,
+    "likeSignNormalStressCasePresent": true,
+    "unlikeSignNormalStressCasePresent": true,
+    "zeroShearCasePresent": true,
+    "tablePresentsSAsPostProcessingFromCombinedStressComponents": true
+  },
+  "currentImplementation": {
+    "file": "src/core/emp1/emp1-wrc537-cylindrical-table5.js",
+    "function": "planeStressTresca",
+    "mathematicalConstruction": "PLANE_STRESS_PRINCIPAL_STRESSES_WITH_SIGMA3_ZERO_THEN_MAX_PRINCIPAL_DIFFERENCE",
+    "thirdPrincipalStress": 0,
+    "stressIntensityDefinitionImplemented": "max(abs(sigma1-sigma2),abs(sigma2-sigma3),abs(sigma3-sigma1))",
+    "eightPointEnvelopeBasis": "MAXIMUM_OVER_EVALUATED_TABLE5_EIGHT_POINTS_ONLY",
+    "globalAbsoluteMaximumClaim": false,
+    "implementationChangedByThisQualification": false
+  },
+  "qualifiedSourceClaims": {
+    "table5CombinedStressIntensityPostProcessingQualified": true,
+    "combinedSigmaPhiSigmaXTauInputsQualified": true,
+    "algebraicComponentSummationBeforeSQualified": true,
+    "likeUnlikeAndZeroShearCaseStructureQualified": true,
+    "table5SIsDerivedAfterComponentStressFormationQualified": true
+  },
+  "unqualifiedPrimarySourceClaims": {
+    "explicitStressIntensityEqualsTwiceMaximumShearDefinitionQualified": false,
+    "explicitPlaneStressAssumptionQualified": false,
+    "explicitThirdPrincipalStressZeroQualified": false,
+    "principalStressEquationsQualified": false,
+    "physicalInsideOutsideSurfaceTimingQualified": false,
+    "commonPhysicalPointIdentityQualified": false,
+    "vonMisesAlternativePolicyQualified": false,
+    "eightPointEnvelopeDefinedByWrcQualified": false,
+    "codeAcceptanceImplicationQualified": false
+  },
+  "authoritySeparation": {
+    "A_MATHEMATICAL_TRESCA_CORRECTNESS": "INTERNALLY_REPRODUCIBLE",
+    "B_TABLE5_COMBINED_STRESS_INTENSITY_TEXT_ORDER": "QUALIFIED_FROM_RETAINED_SOURCE_TEXT",
+    "C_EXPLICIT_PLANE_STRESS_AND_PRINCIPAL_STRESS_SOURCE_AUTHORITY": "UNQUALIFIED",
+    "D_CODE_ACCEPTANCE_AUTHORITY": "UNQUALIFIED",
+    "rule": "TABLE5_POST_PROCESSING_AUTHORITY_DOES_NOT_ESTABLISH_EXPLICIT_PLANE_STRESS_OR_CODE_ACCEPTANCE"
+  },
+  "unresolvedPrimarySourceQuestions": [
+    "exact WRC definition of S as twice maximum shear stress / maximum principal-stress difference",
+    "explicit plane-stress assumption and sigma3 treatment",
+    "exact principal-stress reconstruction equations",
+    "inside/outside physical surface timing and common physical point identity",
+    "whether von Mises is provided or permitted as an alternative",
+    "whether the eight-point stress-intensity envelope is WRC-defined or product post-processing",
+    "exact code-acceptance boundary locator"
+  ],
+  "prohibitedChangesBeforeClosure": [
+    "replace Tresca with von Mises",
+    "modify planeStressTresca to infer explicit source plane-stress semantics",
+    "promote mathematical equivalence into an unobserved primary-source statement",
+    "claim eight-point envelope is global absolute maximum",
+    "infer code compliance from stress intensity"
+  ],
+  "requiredFailClosedState": {
+    "fullPrimaryStressIntensityReconstructionAuthority": false,
+    "explicitPlaneStressSourceAuthority": false,
+    "vonMisesAlternativeAuthority": false,
+    "globalMaximumAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseAuthority": false
+  },
+  "productionChangesAuthorizedByThisRecord": false,
+  "workflowChangesAuthorizedByThisRecord": false
+}

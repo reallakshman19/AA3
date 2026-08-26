@@ -10,6 +10,7 @@ import {
 } from './non-fea-field-registry.js';
 
 export const NON_FEA_CONFIGURED_DEFAULT_PROVIDER_SCHEMA = 'non-fea-configured-default-evidence-provider/v1';
+export const NON_FEA_CONFIGURED_DEFAULT_SCOPE_PRECEDENCE = 'ISSUE_1321_SCOPE_PRECEDENCE_V1';
 
 const SCOPE_KEYS = Object.freeze([
   'entityIds',
@@ -27,6 +28,10 @@ const SCOPE_KEYS = Object.freeze([
 const ENRICHMENT_FIELD_BY_ID = new Map(
   listNonFeaEnrichmentFields().map((definition) => [definition.fieldId, definition]),
 );
+const ANCILLARY_DEFAULT_FIELD_BY_ID = new Map([
+  ['CLADDING_WEIGHT', freezeDeep({ fieldId: 'CLADDING_WEIGHT', targetKind: 'COMPONENT' })],
+  ['TRACING_WEIGHT', freezeDeep({ fieldId: 'TRACING_WEIGHT', targetKind: 'COMPONENT' })],
+]);
 
 /**
  * Compiles approved Project Data configured defaults into ephemeral exact
@@ -35,6 +40,17 @@ const ENRICHMENT_FIELD_BY_ID = new Map(
  * Project Data remains the authority store. No record is written to the user
  * enrichment sidecar, no geometry/proximity matching is permitted, and a POS
  * scope only matches an explicit governed POS identifier carried by the model.
+ *
+ * CLADDING_WEIGHT and TRACING_WEIGHT are optional permanent line-mass inputs.
+ * They intentionally have no source-column aliases in this slice; this provider
+ * only gives existing configured/product default authority a governed
+ * component-scoped record which the common-enriched overlay may promote to one
+ * LINE value when exact line coverage is complete and consistent.
+ *
+ * Matching defaults are ranked by the Issue #1321 scope policy rather than by
+ * raw scope-key count. This prevents a broad multi-key system/zone declaration
+ * from outranking an exact line, POS, or entity declaration merely because the
+ * broad declaration contains more keys.
  */
 export function createNonFeaConfiguredDefaultProvider({
   profile,
@@ -67,7 +83,8 @@ export function createNonFeaConfiguredDefaultProvider({
 
   const candidatesByTargetField = new Map();
   for (const configured of policy.defaults) {
-    const field = ENRICHMENT_FIELD_BY_ID.get(configured.fieldId);
+    const field = ENRICHMENT_FIELD_BY_ID.get(configured.fieldId)
+      || ANCILLARY_DEFAULT_FIELD_BY_ID.get(configured.fieldId);
     if (!field) continue; // Project-level defaults are consumed by their owning Project Data path, not entity enrichment.
     const allowedMethods = configured.allowedMethods.filter((methodId) => methods.includes(methodId));
     if (!allowedMethods.length) continue;
@@ -86,24 +103,30 @@ export function createNonFeaConfiguredDefaultProvider({
       ));
       continue;
     }
-    const specificity = scopeSpecificity(scopeAudit.scope);
+    const scopePriority = configuredDefaultScopePriority(scopeAudit.scope);
     targets.forEach((target) => {
       const key = `${field.targetKind}|${target.targetId}|${configured.fieldId}`;
       const list = candidatesByTargetField.get(key) || [];
-      list.push({ configured, field, target, scope: scopeAudit.scope, specificity, allowedMethods });
+      list.push({ configured, field, target, scope: scopeAudit.scope, scopePriority, allowedMethods });
       candidatesByTargetField.set(key, list);
     });
   }
 
   [...candidatesByTargetField.entries()].sort(([left], [right]) => left.localeCompare(right)).forEach(([key, candidates]) => {
-    const maximumSpecificity = Math.max(...candidates.map((row) => row.specificity));
-    const finalists = candidates.filter((row) => row.specificity === maximumSpecificity);
+    const best = candidates.reduce((winner, candidate) => (
+      compareScopePriority(candidate.scopePriority, winner.scopePriority) > 0
+        ? candidate
+        : winner
+    ));
+    const finalists = candidates.filter((row) => (
+      compareScopePriority(row.scopePriority, best.scopePriority) === 0
+    ));
     const fingerprints = new Set(finalists.map((row) => valueFingerprint(row.configured)));
     if (fingerprints.size > 1) {
       blockers.push(issue(
         'CONFIGURED_DEFAULT_SCOPE_CONFLICT',
         key,
-        `Equally specific configured defaults conflict: ${finalists.map((row) => row.configured.defaultId).sort().join(', ')}.`,
+        `Equally ranked configured defaults conflict: ${finalists.map((row) => row.configured.defaultId).sort().join(', ')}.`,
       ));
       return;
     }
@@ -112,6 +135,45 @@ export function createNonFeaConfiguredDefaultProvider({
   });
 
   return providerResult(profile, policy, methods, records, blockers);
+}
+
+/**
+ * Returns a lexicographic priority vector implementing Issue #1321:
+ * entity > POS > line > branch > piping-class+NB > component-type+NB
+ * > piping class > component type > support kind > nominal bore
+ * > system > zone > project global.
+ *
+ * Additional exact constraints within the same governing tier are retained in
+ * the vector, so a more constrained match can win without allowing a lower
+ * tier to leapfrog a higher one.
+ */
+export function configuredDefaultScopePriority(scopeValue) {
+  const scope = isRecord(scopeValue) ? scopeValue : {};
+  const has = (key) => Array.isArray(scope[key]) && scope[key].length > 0;
+  const pipingClass = has('pipingClasses');
+  const componentType = has('componentTypes');
+  const nominalBore = has('nominalBoreMm');
+  const vector = [
+    has('entityIds'),
+    has('posIds'),
+    has('lineIds'),
+    has('branchIds'),
+    pipingClass && nominalBore,
+    componentType && nominalBore,
+    pipingClass,
+    componentType,
+    has('supportKinds'),
+    nominalBore,
+    has('systemIds'),
+    has('zoneIds'),
+    Object.keys(scope).length,
+  ].map((value) => (value === true ? 1 : value === false ? 0 : value));
+  return freezeDeep(vector);
+}
+
+/** Positive means left outranks right; zero means identical effective priority. */
+export function compareConfiguredDefaultScopePriority(left, right) {
+  return compareScopePriority(left, right);
 }
 
 /**
@@ -150,8 +212,8 @@ export function createConfiguredDefaultUsageRowsFromResolution({
 }
 
 function createProviderRecord(candidate, profile, policyEvidence, policy) {
-  const { configured, target, scope, allowedMethods } = candidate;
-  return createNonFeaEnrichmentRecord({
+  const { configured, target, scope, scopePriority, allowedMethods } = candidate;
+  const record = {
     recordId: `project-default:${configured.defaultId}:${target.targetId}`,
     selectorKind: 'ENTITY',
     selectorKey: target.targetId,
@@ -166,11 +228,17 @@ function createProviderRecord(candidate, profile, policyEvidence, policy) {
       defaultId: configured.defaultId,
       basis: configured.basis,
       scope,
+      scopePrecedence: NON_FEA_CONFIGURED_DEFAULT_SCOPE_PRECEDENCE,
+      scopePriority,
       allowedMethods,
       projectDataRevision: profile.revision,
       configuredDefaultPolicyHash: semanticHash(policy),
     },
-  });
+    migration: null,
+  };
+  return ANCILLARY_DEFAULT_FIELD_BY_ID.has(configured.fieldId)
+    ? freezeDeep(record)
+    : createNonFeaEnrichmentRecord(record);
 }
 
 function providerResult(profile, policy, requestedMethods, records, blockers) {
@@ -271,8 +339,14 @@ function scopeMatches(scope, identity) {
   });
 }
 
-function scopeSpecificity(scope) {
-  return Object.keys(scope).length;
+function compareScopePriority(left, right) {
+  const length = Math.max(left.length, right.length);
+  for (let index = 0; index < length; index += 1) {
+    const leftValue = Number(left[index] || 0);
+    const rightValue = Number(right[index] || 0);
+    if (leftValue !== rightValue) return leftValue - rightValue;
+  }
+  return 0;
 }
 
 function valueFingerprint(configured) {

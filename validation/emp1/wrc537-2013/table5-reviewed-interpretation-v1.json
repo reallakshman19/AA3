@@ -1,0 +1,70 @@
+{
+  "schema": "emp1-wrc537-table5-reviewed-interpretation/v1",
+  "source": {
+    "document": "WRC 537",
+    "edition": "2013",
+    "table": "Table 5",
+    "pages": "41-42",
+    "retainedPath": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "secondaryHistoricalPath": "docs/emp1/CAUx_2017_WRC01f_pages_24-31.md"
+  },
+  "authority": {
+    "class": "SOURCE_DERIVED_REVIEWED_VALIDATION_INTERPRETATION",
+    "productionMethodAuthority": false,
+    "cauxRole": "HISTORICAL_WORKED_CASE_LOCATION_SELECTION_VALIDATION_ONLY",
+    "longitudinalMomentProductionSelection": "SEPARATE_EMP1_06_AUTHORITY_REQUIRED"
+  },
+  "locations": ["Au", "Al", "Bu", "Bl", "Cu", "Cl", "Du", "Dl"],
+  "requiredSourceAnchors": [
+    "3C",
+    "1C OR 2C-1",
+    "3A",
+    "1A",
+    "3B",
+    "1B or 1B-1",
+    "4C",
+    "1C-1 OR 2C",
+    "4A",
+    "2A",
+    "4B",
+    "2B or 2B-1",
+    "Shear stress due to Torsion",
+    "Shear stress due to load V C",
+    "Shear stress due to load V L",
+    "If load is opposite that shown, reverse signs shown"
+  ],
+  "figureAuthority": {
+    "circumferential": {
+      "Pmem_AB": {"wrcReferenceCell": "4C", "allowedFigures": ["4C"], "historicalGamma5Figure": "4C", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE"},
+      "Pmem_CD": {"wrcReferenceCell": "3C", "allowedFigures": ["3C"], "historicalGamma5Figure": "3C", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE"},
+      "Pbend_AB": {"wrcReferenceCell": "1C OR 2C-1", "allowedFigures": ["1C", "2C-1"], "historicalGamma5Figure": "2C-1", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE"},
+      "Pbend_CD": {"wrcReferenceCell": "1C OR 2C-1", "allowedFigures": ["1C", "2C-1"], "historicalGamma5Figure": "1C", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE"},
+      "Mcmem": {"wrcReferenceCell": "3A", "allowedFigures": ["3A"], "historicalGamma5Figure": "3A", "locationBindingAuthority": "WRC_TABLE5"},
+      "Mcbend": {"wrcReferenceCell": "1A", "allowedFigures": ["1A"], "historicalGamma5Figure": "1A", "locationBindingAuthority": "WRC_TABLE5"},
+      "Mlmem": {"wrcReferenceCell": "3B", "allowedFigures": ["3B"], "historicalGamma5Figure": "3B", "locationBindingAuthority": "WRC_TABLE5"},
+      "Mlbend": {"wrcReferenceCell": "1B or 1B-1", "allowedFigures": ["1B", "1B-1"], "historicalGamma5Figure": "1B-1", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE", "selectionRequiresSeparateProductionAuthority": true}
+    },
+    "longitudinal": {
+      "Pmem_AB": {"wrcReferenceCell": "3C", "allowedFigures": ["3C"], "historicalGamma5Figure": "3C", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE"},
+      "Pmem_CD": {"wrcReferenceCell": "4C", "allowedFigures": ["4C"], "historicalGamma5Figure": "4C", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE"},
+      "Pbend_AB": {"wrcReferenceCell": "1C-1 OR 2C", "allowedFigures": ["1C-1", "2C"], "historicalGamma5Figure": "1C-1", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE"},
+      "Pbend_CD": {"wrcReferenceCell": "1C-1 OR 2C", "allowedFigures": ["1C-1", "2C"], "historicalGamma5Figure": "2C", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE"},
+      "Mcmem": {"wrcReferenceCell": "4A", "allowedFigures": ["4A"], "historicalGamma5Figure": "4A", "locationBindingAuthority": "WRC_TABLE5"},
+      "Mcbend": {"wrcReferenceCell": "2A", "allowedFigures": ["2A"], "historicalGamma5Figure": "2A", "locationBindingAuthority": "WRC_TABLE5"},
+      "Mlmem": {"wrcReferenceCell": "4B", "allowedFigures": ["4B"], "historicalGamma5Figure": "4B", "locationBindingAuthority": "WRC_TABLE5"},
+      "Mlbend": {"wrcReferenceCell": "2B or 2B-1", "allowedFigures": ["2B", "2B-1"], "historicalGamma5Figure": "2B-1", "locationBindingAuthority": "CAUX_HISTORICAL_WORKED_CASE", "selectionRequiresSeparateProductionAuthority": true}
+    }
+  },
+  "reviewedSigns": {
+    "pMem": [-1, -1, -1, -1, -1, -1, -1, -1],
+    "pBend": [-1, 1, -1, 1, -1, 1, -1, 1],
+    "mcMem": [0, 0, 0, 0, -1, -1, 1, 1],
+    "mcBend": [0, 0, 0, 0, -1, 1, 1, -1],
+    "mlMem": [-1, -1, 1, 1, 0, 0, 0, 0],
+    "mlBend": [-1, 1, 1, -1, 0, 0, 0, 0],
+    "vc": [1, 1, -1, -1, 0, 0, 0, 0],
+    "vl": [0, 0, 0, 0, -1, -1, 1, 1],
+    "mt": [1, 1, 1, 1, 1, 1, 1, 1]
+  },
+  "semanticHash": "654e33f7fa7124c78e827bffeae06570d7feb401624291c823a6218b6bd012d2"
+}

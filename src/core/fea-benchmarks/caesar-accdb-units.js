@@ -51,12 +51,30 @@ const STRESS_UNITS = Object.freeze({
   KSI: Object.freeze({ factor: 6894757.293168, unit: 'Pa' }),
 });
 
+/**
+ * Density labels CAESAR actually writes, keyed by the normalized token rather
+ * than by one literal spelling: real exports write the same unit both
+ * slash-separated ("kg. / cu.cm.", BM1/BM2/BM3) and dot-separated
+ * ("kg.cu.cm.", BM4), and keying on a single spelling made every BM4-style
+ * export fail conversion on PDENS/IDENS/FDENS. Mirrors the density registry
+ * and label folding already used by the InputXML adapter
+ * (inputxml-unit-system.js) so both source formats accept the same labels.
+ * Only confirmed units are declared; anything else still fails closed rather
+ * than converting with a guessed factor.
+ */
+const DENSITY_UNITS = Object.freeze({
+  'KG/CUCM': Object.freeze({ factor: 1e6, unit: 'kg/m^3' }),
+  'KG/M3': Object.freeze({ factor: 1, unit: 'kg/m^3' }),
+  'LB/CUIN': Object.freeze({ factor: 27679.9047102, unit: 'kg/m^3' }),
+});
+
 const UNIT_MAPS = Object.freeze({
   LENGTH: LENGTH_UNITS,
   ROTATION: ROTATION_UNITS,
   FORCE: FORCE_UNITS,
   MOMENT: MOMENT_UNITS,
   STRESS: STRESS_UNITS,
+  DENSITY: DENSITY_UNITS,
 });
 
 /** Convert a finite CAESAR scalar to the benchmark SI row contract. */
@@ -88,7 +106,21 @@ export function normalizeCaesarUnitToken(rawUnit) {
     .toUpperCase()
     .replace(/\s+/gu, '')
     .replace(/·/gu, '.')
-    .replace(/\.+$/gu, '');
+    .replace(/\.+$/gu, '')
+    // Real CAESAR ACCDB exports label bar pressure as the plural "bars"; the
+    // stress/pressure table only declares the singular BAR. Matches the
+    // equivalent fold already applied to InputXML's own unit labels
+    // (inputxml-unit-system.js), so both adapters accept the same real-world
+    // label variant rather than one silently rejecting it.
+    .replace(/\bBARS\b/u, 'BAR')
+    // Compound density labels fold to the canonical DENSITY_UNITS key. The
+    // separator between the mass and volume parts is optional because CAESAR
+    // writes both "kg. / cu.cm." and "kg.cu.cm."; whitespace and any trailing
+    // dot are already gone by this point. No other dimension's label can match
+    // these patterns, so folding them here is safe for every dimension.
+    .replace(/^KG\.?[/.]?CU\.?CM$/u, 'KG/CUCM')
+    .replace(/^KG\.?[/.]?M\^?3$/u, 'KG/M3')
+    .replace(/^LBS?\.?[/.]?CU\.?IN$/u, 'LB/CUIN');
   if (!compact) throw new TypeError('CAESAR unit is required.');
   return compact;
 }

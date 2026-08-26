@@ -1,0 +1,22 @@
+schema: AgentStatus.v1
+pr_or_wip: PR1393
+source_task: ISSUE-1371
+branch: agent/issue-1371-pr-d-anti-drift-20260824
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: BLOCKED_INFRASTRUCTURE
+merge_authority: OWNER_ONLY
+current_stage: CROSS_STAGE_ANTI_DRIFT_VIEWPORT_IDENTITY_AND_MERGE_ORDER_VALIDATION
+main_head_last_checked: e985b50d81d0d241db27313562c8cc12cd7cc27d
+report: agents/PR1393_workreport.md
+series_integration_addendum: agents/PR1393_series_integration_addendum.md
+coordination_state: SAFE
+main_drift_classification: EMP1_1394_ONLY_NO_LAFEA1371_AUTHORITY_OVERLAP
+registry_cleanup: BLOCKED_PENDING_EXECUTED_EXACT_HEAD_EVIDENCE
+validation_plumbing: EXISTING_CHROMIUM_CARRIER_BOUND
+viewport_mesh_identity: CONTENT_HASH_AND_ARTIFACT_HASH_EXPOSED_SEPARATELY
+pr_b_merge_order_guard: BOUND_NOT_APPLICABLE_UNTIL_SOURCE_FAITHFUL_PROVIDER_PRESENT
+hosted_engineering_execution: NOT_RUN_STEPS_NULL
+highest_risk: COMBINED_A_B_C_D_HEAD_HAS_NOT_EXECUTED_SOURCE_FAITHFUL_REGENERATION_AND_CHROMIUM
+exact_next_action: on intended A->B->C->D combined head require merge-order guard PASS, anti-drift PASS, frozen continuum PASS, B4 production-vs-frozen PASS and Chromium PASS before registry cleanup; preserve NOT_RUN until hosted steps actually start

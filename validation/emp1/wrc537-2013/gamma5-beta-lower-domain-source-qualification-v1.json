@@ -1,0 +1,78 @@
+{
+  "schema": "emp1-wrc537-gamma5-beta-lower-domain-source-qualification/v1",
+  "issue": 1356,
+  "status": "BLOCKED_BETA_BELOW_0P05_PRIMARY_LOWER_ENDPOINT_UNQUALIFIED",
+  "engineeringAuthority": true,
+  "productionRouteExpansionAuthority": false,
+  "gamma5ProductionRouteAuthority": false,
+  "globalEmp1CRouteAuthority": false,
+  "releaseQualified": false,
+  "productionObservationUsedToSetAuthority": false,
+  "grounding": {
+    "main": "c0ebe83323ab735297a67a147e14809c16213a73",
+    "sourceDocumentSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
+  },
+  "currentQualifiedProductDomain": {
+    "gamma": 5,
+    "variant": "ORIGINAL",
+    "betaMinimum": 0.05,
+    "betaMinimumInclusive": true,
+    "betaMinimumClassification": "CONSERVATIVE_PRODUCT_BOUNDARY_INSIDE_ALL_REVIEWED_GAMMA5_CURVES_NOT_CLAIMED_AS_GENERAL_WRC_LIMIT",
+    "betaMaximum": 0.5,
+    "betaMaximumInclusive": true,
+    "betaMaximumClassification": "PRIMARY_CHART_LIMIT_FOR_GAMMA5_REQUIRED_ORIGINAL_CURVES"
+  },
+  "actualEightPointRouteOriginalFigures": [
+    "1A", "2A", "3A", "4A",
+    "1B", "2B", "3B", "4B",
+    "1C", "1C-1", "2C", "2C-1", "3C", "4C"
+  ],
+  "routeFigureSetBasis": {
+    "table5ReviewedInterpretation": "validation/emp1/wrc537-2013/table5-reviewed-interpretation-v1.json",
+    "longitudinalMomentAuthority": "docs/emp1/WRC537_2013_Longitudinal_Moment_Eight_Point_Authority.md",
+    "note": "The current eight-point route uses 1B/2B. Historical 1B-1/2B-1 off-axis figures are comparison-only and are excluded from this route-domain intersection."
+  },
+  "retainedSourceEvidence": {
+    "curveLimitSection": "4.4",
+    "curveLimitRule": "ORIGINAL_CURVES_MUST_NOT_BE_USED_BEYOND_LIMITS_INDICATED",
+    "gamma5CoverageObservedForCurrentProductBand": true,
+    "observedProductBand": {"minimum": 0.05, "maximum": 0.5},
+    "exactNumericLowerEndpointsRetainedForCompleteRouteSet": false,
+    "directPrimaryPageReobservationForLowerEndpoints": "NOT_RUN_IN_CURRENT_CONNECTED_ENVIRONMENT",
+    "graphicalDigitizationAuthorizedForProductionAuthority": false,
+    "rationalFitEndpointInferenceAuthorized": false,
+    "coefficientPresenceIsDomainAuthority": false
+  },
+  "lowerDomainDecision": {
+    "betaBelow0p05Authorized": false,
+    "exactQualifiedMinimumBeta": 0.05,
+    "reason": "The existing source-qualified record proves coverage of the complete gamma5 product route at beta >= 0.05 but does not retain an exact primary-source lower endpoint for every required Original curve below 0.05. The route intersection therefore cannot be widened without direct numeric source custody or separately authorized digitization."
+  },
+  "unresolvedSourceItems": [
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_1A_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_2A_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_3A_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_4A_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_1B_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_2B_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_3B_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_4B_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_1C_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_1C_MINUS_1_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_2C_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_2C_MINUS_1_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_3C_GAMMA5",
+    "PRIMARY_NUMERIC_LOWER_ENDPOINT_4C_GAMMA5",
+    "LOWER_ENDPOINT_INCLUSIVITY_FOR_COMPLETE_ROUTE_INTERSECTION"
+  ],
+  "prohibitions": [
+    "DO_NOT_INFER_LOWER_BETA_ENDPOINT_FROM_RATIONAL_FIT_BEHAVIOR",
+    "DO_NOT_TREAT_COEFFICIENT_EXISTENCE_AS_CURVE_DOMAIN_AUTHORITY",
+    "DO_NOT_DIGITIZE_GRAPHICAL_LOWER_ENDPOINT_FOR_PRODUCTION_AUTHORITY_WITHOUT_SEPARATE_AUTHORIZATION",
+    "DO_NOT_USE_EXTRAPOLATED_CURVES_AS_ORIGINAL_FALLBACK",
+    "DO_NOT_SUBSTITUTE_OFF_AXIS_1B_MINUS_1_2B_MINUS_1_INTO_EIGHT_POINT_ROUTE",
+    "DO_NOT_WIDEN_BETA_ABOVE_0P5",
+    "DO_NOT_ENABLE_BETA_BELOW_0P05_PRODUCTION_ROUTE"
+  ],
+  "nextGate": "DIRECT_PRIMARY_NUMERIC_LOWER_ENDPOINT_CUSTODY_FOR_ALL_14_EIGHT_POINT_ROUTE_ORIGINAL_FIGURES"
+}

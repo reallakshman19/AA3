@@ -1,0 +1,63 @@
+name: LFEA S7 component UI disclosure
+
+on:
+  pull_request:
+    paths:
+      - 'agents/PR*_workreport.md'
+      - 'agents/WIP-S7UI_workreport.md'
+      - 'validation/lfea/piping-component-promotion/stack-candidate-v1.json'
+      - 'scripts/lfea-piping-component-promotion-stack-manifest-check.mjs'
+      - 'scripts/lfea-s7-component-ui-disclosure-check.mjs'
+      - 'scripts/lfea-piping-component-promotion-anti-drift-check.mjs'
+      - 'scripts/lfea-production-capability-profile-check.mjs'
+      - 'scripts/linear-piping-analysis-consumer-check.mjs'
+      - 'src/core/geometry/adapters/accdb-to-canonical-geometry.js'
+      - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
+      - 'src/core/linear-piping-analysis-consumer/**'
+      - '.github/workflows/lfea-piping-promotion-s7-ui.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-s7-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check S7 verification syntax
+        run: |
+          node --check scripts/lfea-piping-component-promotion-stack-manifest-check.mjs
+          node --check scripts/lfea-s7-component-ui-disclosure-check.mjs
+          node --check scripts/lfea-piping-component-promotion-anti-drift-check.mjs
+          node --check scripts/lfea-production-capability-profile-check.mjs
+          node --check scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Verify fail-closed promotion stack manifest
+        run: node scripts/lfea-piping-component-promotion-stack-manifest-check.mjs
+
+      - name: Verify carried-forward production capability authority
+        run: node scripts/lfea-production-capability-profile-check.mjs
+
+      - name: Re-run governed linear-piping consumer aggregate
+        run: node scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Verify promoted-component governed disclosure
+        run: node scripts/lfea-s7-component-ui-disclosure-check.mjs
+
+      - name: Enforce promotion-wide engineering anti-drift
+        run: node scripts/lfea-piping-component-promotion-anti-drift-check.mjs
+
+      - name: Re-run core linear-piping anti-drift
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
+
+      - name: Re-run common Error Check contract
+        run: node scripts/lfea-ui-error-check-check.mjs
+
+      - name: Re-run Model Review geometry contract
+        run: node scripts/lfea-ui-geometry-review-check.mjs

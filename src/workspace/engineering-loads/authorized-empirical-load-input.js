@@ -4,18 +4,27 @@ import {
   requireCommonEnrichedConsumerHandoff,
   requireCommonEnrichedConsumerProjectionPayload,
 } from '../../core/common-enriched-properties/index.js';
+import {
+  createAuthorizedEmpiricalEffectiveValueLedger,
+  requireAuthorizedEmpiricalEffectiveValueLedger,
+} from './authorized-empirical-effective-value-ledger.js';
 
 export const AUTHORIZED_EMPIRICAL_LOAD_INPUT_REQUEST_SCHEMA = 'authorized-empirical-load-input-request/v1';
 export const AUTHORIZED_EMPIRICAL_LOAD_INPUT_SCHEMA = 'authorized-empirical-load-input/v1';
 export const AUTHORIZED_EMPIRICAL_LOAD_PROJECTION_SCHEMA = 'advanced-analysis-empirical-load-input/v1';
 
 const REQUEST_KEYS = ['schema', 'intakeId', 'handoff', 'projectionPayload'];
-const OUTPUT_KEYS = [
+const LEGACY_OUTPUT_KEYS = [
   'schema', 'intakeId', 'projectId', 'baselineId', 'baselineRevision',
   'baselineSemanticHash', 'readinessEvaluationSemanticHash', 'readinessSemanticHash',
   'handoffSemanticHash', 'projectionPayloadSemanticHash', 'adapterVersion',
   'configurationHash', 'createdAt', 'lineBindings', 'componentBindings',
   'loadCalculationOverlay', 'overlaySemanticHash', 'summary', 'semanticHash',
+];
+const OUTPUT_KEYS = [
+  ...LEGACY_OUTPUT_KEYS.filter((key) => key !== 'semanticHash'),
+  'effectiveValueLedger',
+  'semanticHash',
 ];
 const LINE_KEYS = [
   'hydroFluidDensityKgM3', 'insulationCode', 'insulationDensityKgM3',
@@ -30,8 +39,16 @@ const OVERLAY_KEYS = [
 ];
 const UNSAFE_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
+/**
+ * Historical v1 receipts without an effective-value ledger retain their exact
+ * semantic projection. Newly compiled v1 receipts add the ledger and bind it
+ * into the hash. This permits staged migration without rewriting old evidence.
+ */
 export function authorizedEmpiricalLoadInputSemanticProjection(value) {
-  return Object.fromEntries(OUTPUT_KEYS.filter((key) => key !== 'semanticHash').map((key) => [key, value[key]]));
+  const keys = Object.hasOwn(value || {}, 'effectiveValueLedger')
+    ? OUTPUT_KEYS
+    : LEGACY_OUTPUT_KEYS;
+  return Object.fromEntries(keys.filter((key) => key !== 'semanticHash').map((key) => [key, value[key]]));
 }
 
 export function computeAuthorizedEmpiricalLoadInputSemanticHash(value) {
@@ -46,6 +63,7 @@ export function compileAuthorizedEmpiricalLoadInput(input) {
   const handoff = requireCommonEnrichedConsumerHandoff(input.handoff);
   const payload = requireCommonEnrichedConsumerProjectionPayload(input.projectionPayload);
   bindAuthority(handoff, payload);
+  const effectiveValueLedger = createAuthorizedEmpiricalEffectiveValueLedger(handoff);
 
   const sections = new Map();
   const materials = new Map();
@@ -76,7 +94,7 @@ export function compileAuthorizedEmpiricalLoadInput(input) {
         fail('Insulated line requires code and positive density.', 'EMPIRICAL_INPUT_INSULATION_INVALID', { targetId: record.targetId });
       }
       sections.set(lineKey, { outsideDiameterMm: od, wallThicknessMm: wall, materialCode, insulationCode, insulationThicknessMm });
-      consistent(materials, materialCode, positive(record.values.materialDensityKgM3, `${record.targetId}.materialDensityKgM3`), 'EMPIRICAL_INPUT_MATERIAL_DENSITY_CONFLICT');
+      consistent(materials, materialCode, positive(record.values.materialDensityKgPerM3 ?? record.values.materialDensityKgM3, `${record.targetId}.materialDensityKgM3`), 'EMPIRICAL_INPUT_MATERIAL_DENSITY_CONFLICT');
       operating.set(lineKey, positive(record.values.operatingFluidDensityKgM3, `${record.targetId}.operatingFluidDensityKgM3`));
       hydro.set(lineKey, positive(record.values.hydroFluidDensityKgM3, `${record.targetId}.hydroFluidDensityKgM3`));
       if (insulationCode !== null) consistent(insulation, insulationCode, insulationDensity, 'EMPIRICAL_INPUT_INSULATION_DENSITY_CONFLICT');
@@ -121,6 +139,7 @@ export function compileAuthorizedEmpiricalLoadInput(input) {
     componentBindings,
     loadCalculationOverlay,
     overlaySemanticHash: semanticHash(loadCalculationOverlay),
+    effectiveValueLedger,
     summary: {
       lineCount: lineBindings.length,
       componentCount: componentBindings.length,
@@ -134,9 +153,12 @@ export function compileAuthorizedEmpiricalLoadInput(input) {
 }
 
 export function requireAuthorizedEmpiricalLoadInput(value) {
-  exact(value, OUTPUT_KEYS, 'authorizedEmpiricalLoadInput');
+  exactOneOf(value, [LEGACY_OUTPUT_KEYS, OUTPUT_KEYS], 'authorizedEmpiricalLoadInput');
   if (value.schema !== AUTHORIZED_EMPIRICAL_LOAD_INPUT_SCHEMA) fail('Unsupported empirical-load input.', 'EMPIRICAL_INPUT_SCHEMA_INVALID');
   const overlay = validateOverlay(value.loadCalculationOverlay);
+  const effectiveValueLedger = Object.hasOwn(value, 'effectiveValueLedger')
+    ? requireAuthorizedEmpiricalEffectiveValueLedger(value.effectiveValueLedger)
+    : null;
   const result = {
     ...value,
     intakeId: identity(value.intakeId, 'intakeId'),
@@ -155,10 +177,17 @@ export function requireAuthorizedEmpiricalLoadInput(value) {
     componentBindings: validateBindings(value.componentBindings, false),
     loadCalculationOverlay: overlay,
     overlaySemanticHash: hash(value.overlaySemanticHash, 'overlaySemanticHash'),
+    ...(effectiveValueLedger ? { effectiveValueLedger } : {}),
     summary: validateSummary(value.summary),
     semanticHash: hash(value.semanticHash, 'semanticHash'),
   };
   if (result.overlaySemanticHash !== semanticHash(overlay)) fail('Overlay hash is stale.', 'EMPIRICAL_INPUT_HASH_MISMATCH');
+  if (effectiveValueLedger) {
+    if (effectiveValueLedger.handoffSemanticHash !== result.handoffSemanticHash
+        || effectiveValueLedger.baselineSemanticHash !== result.baselineSemanticHash) {
+      fail('Effective-value ledger is bound to different authorized evidence.', 'EMPIRICAL_INPUT_EFFECTIVE_LEDGER_BINDING_MISMATCH');
+    }
+  }
   checkRelations(result);
   if (result.semanticHash !== computeAuthorizedEmpiricalLoadInputSemanticHash(result)) fail('Input hash is stale.', 'EMPIRICAL_INPUT_HASH_MISMATCH');
   return deepFreeze(result);
@@ -226,6 +255,18 @@ function checkRelations(value) {
   if (JSON.stringify(catalogs) !== JSON.stringify(Object.keys(value.loadCalculationOverlay.componentWeightsKg))) fail('Weight overlay mismatch.', 'EMPIRICAL_INPUT_OVERLAY_BINDING_MISMATCH');
   const summary = value.summary;
   if (summary.lineCount !== value.lineBindings.length || summary.componentCount !== value.componentBindings.length || summary.materialCodeCount !== materials.size || summary.insulationCodeCount !== insulations.size || summary.componentCatalogCount !== catalogs.length) fail('Summary mismatch.', 'EMPIRICAL_INPUT_SUMMARY_INVALID');
+  if (value.effectiveValueLedger) {
+    const lineTargetIds = new Set(value.lineBindings.map((row) => row.targetId));
+    const componentTargetIds = new Set(value.componentBindings.map((row) => row.targetId));
+    const unexpected = value.effectiveValueLedger.rows.filter((row) => (
+      (row.targetKind === 'LINE' && !lineTargetIds.has(row.targetId))
+      || (row.targetKind === 'COMPONENT' && !componentTargetIds.has(row.targetId))
+      || !['LINE', 'COMPONENT'].includes(row.targetKind)
+    ));
+    if (unexpected.length) {
+      fail('Effective-value ledger contains targets outside the authorized projection.', 'EMPIRICAL_INPUT_EFFECTIVE_LEDGER_TARGET_MISMATCH', { resolutionKeys: unexpected.map((row) => row.resolutionKey) });
+    }
+  }
 }
 
 function binding(record, extra) { return { targetId: record.targetId, sourceRecordId: record.sourceRecordId, ...extra, projectionRecordSemanticHash: record.semanticHash }; }
@@ -233,6 +274,7 @@ function consistent(map, keyValue, value, code) { const key = safe(keyValue, 'bi
 function sorted(map) { return Object.fromEntries([...map.entries()].sort(([a], [b]) => ascii(a, b))); }
 function objectMap(value, label, validator) { if (!value || Array.isArray(value) || typeof value !== 'object') fail(`${label} must be an object.`, 'EMPIRICAL_INPUT_TYPE_INVALID'); const keys = Object.keys(value); if (JSON.stringify(keys) !== JSON.stringify([...keys].sort(ascii))) fail(`${label} must be sorted.`, 'EMPIRICAL_INPUT_ORDER_INVALID'); return Object.fromEntries(keys.map((key) => [safe(key, `${label}.key`), validator(value[key], `${label}.${key}`)])); }
 function exact(value, keys, label) { if (!value || Array.isArray(value) || typeof value !== 'object') fail(`${label} must be an object.`, 'EMPIRICAL_INPUT_TYPE_INVALID'); const actual = Object.keys(value).sort(ascii); const expected = [...keys].sort(ascii); if (JSON.stringify(actual) !== JSON.stringify(expected)) fail(`${label} has unexpected keys.`, 'EMPIRICAL_INPUT_KEYS_INVALID', { actual, expected }); }
+function exactOneOf(value, keySets, label) { if (!value || Array.isArray(value) || typeof value !== 'object') fail(`${label} must be an object.`, 'EMPIRICAL_INPUT_TYPE_INVALID'); const actual = Object.keys(value).sort(ascii); const matches = keySets.some((keys) => JSON.stringify(actual) === JSON.stringify([...keys].sort(ascii))); if (!matches) fail(`${label} has unexpected keys.`, 'EMPIRICAL_INPUT_KEYS_INVALID', { actual, expectedVariants: keySets.map((keys) => [...keys].sort(ascii)) }); }
 function identity(value, label) { if (typeof value !== 'string' || value.trim() === '') fail(`${label} must be non-empty.`, 'EMPIRICAL_INPUT_IDENTITY_INVALID'); return value; }
 function safe(value, label) { const key = identity(value, label); if (UNSAFE_KEYS.has(key)) fail(`${label} is unsafe.`, 'EMPIRICAL_INPUT_UNSAFE_KEY'); return key; }
 function positive(value, label) { if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) fail(`${label} must be positive.`, 'EMPIRICAL_INPUT_NUMBER_INVALID'); return value; }

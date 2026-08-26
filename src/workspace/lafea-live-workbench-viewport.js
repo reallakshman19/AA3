@@ -26,6 +26,7 @@ export function createLafeaLiveWorkbenchViewportModel(input) {
     lifecycle: input.lifecycle ?? null, lifecycleBinding: input.lifecycleBinding ?? null });
   const mode = intake.status === 'READY' ? 'QUALIFIED_RESULT' : 'SOURCE_AUTHORING';
   return Object.freeze({ schema: LAFEA_LIVE_WORKBENCH_VIEWPORT_SCHEMA, mode, sourceModel, intake,
+    retainedMeshIdentity: retainedMeshIdentity(input.retainedMeshEvidence),
     resultViewport: intake.status === 'READY' ? resultViewport(sourceModel.viewport, intake.packet) : null });
 }
 
@@ -45,17 +46,30 @@ export function mountLafeaLiveWorkbenchViewport(root, input) {
     blockedStatus = renderBlockedStatus(root, model.intake.blockingReasons);
   }
   root.dataset.liveViewportMode = model.mode;
+  if (model.retainedMeshIdentity.meshHash) {
+    root.dataset.retainedMeshHash = model.retainedMeshIdentity.meshHash;
+  } else {
+    delete root.dataset.retainedMeshHash;
+  }
+  if (model.retainedMeshIdentity.artifactHash) {
+    root.dataset.retainedMeshArtifactHash = model.retainedMeshIdentity.artifactHash;
+  } else {
+    delete root.dataset.retainedMeshArtifactHash;
+  }
 
   function currentState() {
+    const meshIdentity = model.retainedMeshIdentity;
     if (model.mode === 'QUALIFIED_RESULT') {
       const state = mounted.getState(); return freeze({ schema: LAFEA_LIVE_WORKBENCH_VIEWPORT_SCHEMA, mode: model.mode,
         stageId: state.stageId, sceneRevision: state.sceneRevision, status: state.status, renderer: state.renderer,
-        blockingReasons: [...state.blockingReasons], selection: state.selection, focusedMeshElementId });
+        blockingReasons: [...state.blockingReasons], selection: state.selection, focusedMeshElementId,
+        retainedMeshHash: meshIdentity.meshHash, retainedMeshArtifactHash: meshIdentity.artifactHash });
     }
     return freeze({ schema: LAFEA_LIVE_WORKBENCH_VIEWPORT_SCHEMA, mode: model.mode,
       stageId: model.sourceModel.registryEntry.stageId, sceneRevision: model.sourceModel.scene.sceneRevision,
       status: 'BLOCKED', renderer: mounted.getRenderer(), blockingReasons: [...model.intake.blockingReasons],
-      selection: mounted.getSelection(), focusedMeshElementId });
+      selection: mounted.getSelection(), focusedMeshElementId,
+      retainedMeshHash: meshIdentity.meshHash, retainedMeshArtifactHash: meshIdentity.artifactHash });
   }
   function refresh() { if (destroyed) throw liveViewportError('LAFEA_LIVE_VIEWPORT_DESTROYED'); if (model.mode === 'QUALIFIED_RESULT') { mounted.refresh(); renderResultOverlays(); } return currentState(); }
   function focusRetainedMeshElement(elementId) { if (destroyed) throw liveViewportError('LAFEA_LIVE_VIEWPORT_DESTROYED'); focusedMeshElementId = elementId; if (model.mode === 'QUALIFIED_RESULT') renderResultOverlays(); const found = focusLafeaRetainedMeshElement(viewportHost, elementId); input.onFocusMeshElement?.(elementId, found); return found; }
@@ -72,7 +86,7 @@ export function mountLafeaLiveWorkbenchViewport(root, input) {
   return Object.freeze({ schema: LAFEA_LIVE_WORKBENCH_VIEWPORT_SCHEMA, scene: model.sourceModel.scene,
     getMode: () => model.mode, getState: currentState, getSelection: mounted.getSelection,
     selectSource: mounted.selectSource, clearSelection: mounted.clearSelection, refresh,
-    destroy() { if (destroyed) return; destroyed = true; mounted.destroy(); blockedStatus?.remove?.(); root.replaceChildren(); root.dataset.liveViewportMode = 'DESTROYED'; } });
+    destroy() { if (destroyed) return; destroyed = true; mounted.destroy(); blockedStatus?.remove?.(); root.replaceChildren(); root.dataset.liveViewportMode = 'DESTROYED'; delete root.dataset.retainedMeshHash; delete root.dataset.retainedMeshArtifactHash; } });
 }
 
 function sourceInput(input, selection = input.selection ?? null) {
@@ -94,6 +108,13 @@ function displayGlyphBinding(input) {
     throw liveViewportError('LAFEA_LIVE_VIEWPORT_BC_LOAD_GLYPH_EXECUTION_MISMATCH');
   }
   return Object.freeze({ executionHash, projection });
+}
+function retainedMeshIdentity(evidence) {
+  if (!isRecord(evidence)) return Object.freeze({ meshHash: null, artifactHash: null });
+  return Object.freeze({
+    meshHash: typeof evidence.meshHash === 'string' ? evidence.meshHash : null,
+    artifactHash: typeof evidence.artifactHash === 'string' ? evidence.artifactHash : null,
+  });
 }
 function projectSelectionForSource(value, sceneRevision) { if (!isRecord(value) || value.sourceEntityId === null || value.meshEntityId === null || value.sceneRevision !== sceneRevision) return value; return { sceneRevision, sourceEntityId: value.sourceEntityId, meshEntityId: null, entityRole: 'SOURCE' }; }
 function resultViewport(sourceViewport, packet) { const value = structuredClone(sourceViewport); value.displayOptions = { sourceAuthoring: false, wireframe: false, fieldBounds: structuredClone(packet.field.bounds), colorMapId: packet.field.colorMapId, deformationScale: 0 }; return freeze(value); }

@@ -172,7 +172,8 @@ function buildGates(context) {
       : 'Current support-site and route-partition authority is required.'),
     gate('C_PROJECT_BASIS', projectReady ? 'READY' : 'BLOCKED', projectReady
       ? `Project Data revision ${context.projectData.revision ?? 'UNKNOWN'} passes Non-FEA prerequisite audits.`
-      : 'One or more Project Data prerequisite audits are blocked.'),
+      : `Project Data audit(s) blocked: ${blockedAuditSummary(context.projectData.audits)}. `
+        + 'This is wider than Step 3, which only covers the Project basis entry fields.'),
     gate('D_MASTER_AUTHORITY', mastersReady ? 'READY' : 'BLOCKED', mastersReady
       ? `${requiredMasters.length} required master source(s) are loaded and normalized.`
       : 'One or more required master sources are missing current normalized rows or source hashes.'),
@@ -301,6 +302,7 @@ function normalizeCommonInput(value) {
     methodId: requiredText(method?.methodId, 'methodId'),
     state: normalizeGateState(method?.state || 'BLOCKED'),
     blockerCodes: uniqueStrings(method?.blockerCodes),
+    coverageRequirements: normalizeCoverageRequirements(method?.coverageRequirements),
   })).sort((left, right) => ascii(left.methodId, right.methodId)) : [];
   return deepFreeze({
     requestedMethodIds: uniqueStrings(row.requestedMethodIds),
@@ -327,6 +329,50 @@ function normalizeCommonInput(value) {
     executionReceiptCount: nonnegativeInteger(row.executionReceiptCount),
   });
 }
+
+function normalizeCoverageRequirements(value) {
+  if (!Array.isArray(value)) return deepFreeze([]);
+  const rows = value.map((coverage) => {
+    if (!isRecord(coverage)) throw new TypeError('Coverage requirement status must be an object.');
+    const requirementId = requiredText(coverage.requirementId, 'coverage requirementId');
+    const state = normalizeGateState(coverage.state || 'BLOCKED');
+    const code = requiredText(coverage.code, 'coverage code');
+    if (!Number.isInteger(coverage.total) || coverage.total < 0) {
+      throw new TypeError(`Coverage ${requirementId} total must be a non-negative integer.`);
+    }
+    if (!Number.isInteger(coverage.covered) || coverage.covered < 0 || coverage.covered > coverage.total) {
+      throw new TypeError(`Coverage ${requirementId} covered count is invalid.`);
+    }
+    if (!Array.isArray(coverage.missing)) {
+      throw new TypeError(`Coverage ${requirementId} missing evidence must be an array.`);
+    }
+    const missing = coverage.missing
+      .map((item, index) => requiredText(item, `coverage ${requirementId} missing[${index}]`))
+      .sort(ascii);
+    assertUnique(missing, `coverage ${requirementId} missing evidence`);
+    if (typeof coverage.ready !== 'boolean') {
+      throw new TypeError(`Coverage ${requirementId} ready state must be boolean.`);
+    }
+    if (coverage.ready !== (missing.length === 0)) {
+      throw new TypeError(`Coverage ${requirementId} ready state disagrees with its missing evidence.`);
+    }
+    if (state !== (coverage.ready ? 'READY' : 'BLOCKED')) {
+      throw new TypeError(`Coverage ${requirementId} gate state disagrees with its ready state.`);
+    }
+    return deepFreeze({
+      requirementId,
+      state,
+      code,
+      total: coverage.total,
+      covered: coverage.covered,
+      missing: deepFreeze(missing),
+      ready: coverage.ready,
+    });
+  }).sort((left, right) => ascii(left.requirementId, right.requirementId));
+  assertUnique(rows.map((row) => row.requirementId), 'coverage requirementId');
+  return deepFreeze(rows);
+}
+
 function normalizeImplementation(value) {
   const row = isRecord(value) ? value : {};
   const implementations = Array.isArray(row.implementations) ? row.implementations.map((item) => deepFreeze({
@@ -348,6 +394,21 @@ function normalizeExecution(value) {
     empiricalAuthorizationState: nullableText(row.empiricalAuthorizationState),
     empiricalAuthorizationReasonCode: nullableText(row.empiricalAuthorizationReasonCode),
   });
+}
+
+/**
+ * Names the specific blocked Project Data audits. Reporting only "one or more"
+ * reads as stale once the Step 3 entry fields are complete, because this gate
+ * also covers normalization and the master-resolved loads workflow.
+ */
+function blockedAuditSummary(audits) {
+  const blocked = Object.entries(audits || {})
+    .filter(([, audit]) => audit?.valid !== true)
+    .map(([workflow, audit]) => {
+      const codes = [...new Set(audit?.errorCodes || [])];
+      return codes.length ? `${workflow} (${codes.join(', ')})` : workflow;
+    });
+  return blocked.length ? blocked.join('; ') : 'none';
 }
 
 function gate(gateId, state, message) {

@@ -1,0 +1,62 @@
+{
+  "schema": "emp1-wrc537-cylindrical-mean-radius-source-qualification/v1",
+  "issue": 1377,
+  "status": "BLOCKED_PRIMARY_CYLINDRICAL_RADIUS_DEFINITION_UNRESOLVED",
+  "sourceCustody": {
+    "pinnedDocument": "docs/emp1/WRC537_2013.pdf",
+    "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "primaryBinaryPageReobservedThisIncrement": false,
+    "legacyExtraction": {
+      "path": "docs/01_WRC537_METHOD_DEFINITION.md",
+      "status": "NOT_READY_FOR_IMPLEMENTATION",
+      "retainedCylindricalNotation": "Rc",
+      "retainedCylindricalMeaning": "Mean radius of cylindrical shell",
+      "exactGeometricDefinition": "UNRESOLVED_EXACT_DEFINITION_NOT_OCR_READABLE",
+      "retainedSphericalNotation": "Rm",
+      "retainedSphericalDefinition": "MEAN_MIDSURFACE_RADIUS_CONFIRMED_FOR_SPHERICAL_SHELL_ONLY"
+    }
+  },
+  "currentSoftwareObservation": {
+    "sourceCustodyPath": "src/core/emp1/emp1-wrc537-source-custody.js",
+    "upstreamOutsideDiameterQuantity": "LAFEA2_PIPE_OUTSIDE_DIAMETER",
+    "upstreamThicknessQuantity": "LAFEA2_ASSESSMENT_PIPE_THICKNESS",
+    "derivation": "meanRadius = pipeOutsideDiameter/2 - assessmentPipeThickness/2",
+    "downstreamUses": [
+      "gamma = meanRadius/shellThickness",
+      "beta = 0.875*attachmentOutsideRadius/meanRadius",
+      "WRC537_4_5_CYLINDER_LENGTH_RATIO",
+      "WRC537_4_5_NEAREST_END_DISTANCE_RATIO"
+    ],
+    "classification": "INTERNALLY_DETERMINISTIC_SOFTWARE_DERIVATION_NOT_PRIMARY_WRC_RADIUS_AUTHORITY"
+  },
+  "authority": {
+    "cylindricalSourceSymbolQualified": false,
+    "cylindricalMeanRadiusDefinitionQualified": false,
+    "outsideDiameterToMeanRadiusConstructionQualified": false,
+    "insideDiameterToMeanRadiusConstructionQualified": false,
+    "assessmentGeometryConsistencyQualified": false,
+    "localDiameterOrOvalityTreatmentQualified": false,
+    "locallyThickenedOrTaperedShellTreatmentQualified": false,
+    "sphericalRadiusSemanticsTransferAuthorized": false,
+    "engineeringUseAuthorized": false,
+    "productionUseAuthorized": false
+  },
+  "prohibitedInferences": [
+    "DO_NOT_TREAT_CURRENT_OD_OVER_2_MINUS_T_OVER_2_AS_UNIVERSAL_WRC_RULE",
+    "DO_NOT_RENAME_CYLINDRICAL_RC_TO_RM_AS_SOURCE_FACT_WITHOUT_PRIMARY_LOCATOR",
+    "DO_NOT_IMPORT_SPHERICAL_RM_DEFINITION_INTO_CYLINDRICAL_ROUTE",
+    "DO_NOT_SUBSTITUTE_ID_OVER_2_OR_OD_OVER_2_FOR_CYLINDRICAL_MEAN_RADIUS",
+    "DO_NOT_MIX_NOMINAL_DIAMETER_WITH_DIFFERENT_THICKNESS_BASIS_WITHOUT_QUALIFIED_POLICY",
+    "DO_NOT_CLAIM_OVALITY_OR_LOCAL_THICKNESS_GEOMETRY_IS_COVERED"
+  ],
+  "requiredPrimaryClosure": [
+    "exact cylindrical shell radius symbol and definition",
+    "exact OD/ID/T relationship for cylindrical radius",
+    "physical geometry basis consistent with WRC shell thickness T",
+    "radius used in cylindrical dimensionless parameters and section 4.5 ratios",
+    "treatment of nominal, corroded, measured, locally thickened or nonuniform geometry",
+    "exact source locators for every retained rule"
+  ],
+  "collateralAuthorityWidened": false,
+  "productionNumericsChanged": false
+}

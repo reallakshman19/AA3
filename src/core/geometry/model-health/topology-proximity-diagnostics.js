@@ -26,6 +26,19 @@ const DEFAULT_TOLERANCES = Object.freeze({
   segmentRelative: 1e-9,
   segmentNear: 1e-3,
   angular: 1e-10,
+  // How much overlap or clearance between two spans an engineer is willing to
+  // accept as a modelling artefact rather than a defect, in the geometry's own
+  // unit. Zero means "none", which is the behaviour every existing caller
+  // keeps: nothing below changes unless a caller declares an allowance.
+  //
+  // Real CAESAR models routinely carry millimetre-scale overlaps where a
+  // support or SIF node was placed with a sign slip -- BM4_L overlaps by 1 mm
+  // in three places on 273 mm pipe. Blocking a whole analysis on that is
+  // stricter than the engineering warrants; silently ignoring it is not
+  // acceptable either. Within the allowance the finding is still raised, still
+  // named, and still counted -- it is dispositioned ADVISORY instead of BLOCK,
+  // and it says the allowance it was accepted under.
+  smallDiscrepancyAllowance: 0,
 });
 
 export function diagnoseInputXmlTopologyProximity(sourceBundle, options = {}) {
@@ -108,12 +121,21 @@ export function diagnoseInputXmlTopologyProximity(sourceBundle, options = {}) {
   for (const row of segmentInteractions) {
     const definition = segmentFindingDefinition(row.classification);
     if (!definition) continue;
+    const accepted = withinSmallDiscrepancyAllowance(row, tolerances.smallDiscrepancyAllowance);
     findings.push(finding({
       ...definition,
+      effect: accepted ? 'ADVISORY' : definition.effect,
       scopeKey: `SEGMENT_PAIR:${row.segmentIds.join('|')}`,
-      message: `${row.segmentIds.join(' and ')} classify as ${readable(row.classification)}.`,
+      message: accepted
+        ? `${row.segmentIds.join(' and ')} classify as ${readable(row.classification)}, accepted within the declared ${tolerances.smallDiscrepancyAllowance} allowance.`
+        : `${row.segmentIds.join(' and ')} classify as ${readable(row.classification)}.`,
       entities: { segmentIds: row.segmentIds, nodeIds: row.sharedNodeIds },
-      evidence: row,
+      evidence: accepted
+        ? { ...row, smallDiscrepancyAllowance: tolerances.smallDiscrepancyAllowance, acceptedWithinAllowance: true }
+        : row,
+      remediation: accepted
+        ? `Accepted under the declared ${tolerances.smallDiscrepancyAllowance} geometry allowance; correct the source model to remove it.`
+        : definition.remediation,
     }));
   }
 
@@ -291,8 +313,13 @@ function collectNodeProximities(nodes, tolerances) {
 function collectSegmentInteractions(segments, tolerances) {
   if (segments.length < 2) return Object.freeze([]);
   const maxLength = Math.max(...segments.map((segment) => segment.length), 1);
+  // A clearance inside the declared allowance has to be found before it can be
+  // disclosed: outside the near band a pair is DISJOINT and never examined, so
+  // an allowance that did not widen the search would silently pass gaps it was
+  // meant to surface.
+  const nearTolerance = Math.max(tolerances.segmentNear, tolerances.smallDiscrepancyAllowance);
   const globalBroadphaseTolerance = Math.max(
-    tolerances.segmentNear,
+    nearTolerance,
     tolerances.segmentAbsolute + tolerances.segmentRelative * maxLength,
   );
   const sorted = [...segments]
@@ -307,7 +334,7 @@ function collectSegmentInteractions(segments, tolerances) {
       const row = classifySegmentPair(left, right, {
         absoluteTolerance: tolerances.segmentAbsolute,
         relativeTolerance: tolerances.segmentRelative,
-        nearTolerance: tolerances.segmentNear,
+        nearTolerance,
         angularTolerance: tolerances.angular,
       });
       if (row.classification !== 'DISJOINT') rows.push(row);
@@ -371,6 +398,28 @@ function segmentFindingDefinition(classification) {
   return null;
 }
 
+/**
+ * Whether one span-pair defect is small enough to fall inside the engineer's
+ * declared allowance.
+ *
+ * Only the two kinds the allowance is about: how far two spans overlap, and
+ * how far apart two spans that nearly touch are. A duplicate span, an unnoded
+ * crossing or a degenerate span is not a matter of degree -- no allowance
+ * makes those acceptable, so none of them is considered here.
+ */
+function withinSmallDiscrepancyAllowance(row, allowance) {
+  if (!(allowance > 0)) return false;
+  if (row.classification === 'COLLINEAR_OVERLAP') {
+    const overlap = row.evidence?.overlapLength;
+    return typeof overlap === 'number' && overlap <= allowance;
+  }
+  if (row.classification === 'NEAR_MISS') {
+    const separation = row.evidence?.distance;
+    return typeof separation === 'number' && separation <= allowance;
+  }
+  return false;
+}
+
 function finding({ code, effect, scopeKey, message, entities = {}, evidence = {}, remediation }) {
   const blocking = effect === 'BLOCK';
   return Object.freeze({
@@ -394,6 +443,10 @@ function resolveTolerances(options) {
     nodeAbsolute: positive(options.nodeAbsoluteTolerance ?? DEFAULT_TOLERANCES.nodeAbsolute, 'nodeAbsoluteTolerance'),
     nodeRelative: nonnegative(options.nodeRelativeTolerance ?? DEFAULT_TOLERANCES.nodeRelative, 'nodeRelativeTolerance'),
     nodeNear: positive(options.nodeNearTolerance ?? DEFAULT_TOLERANCES.nodeNear, 'nodeNearTolerance'),
+    smallDiscrepancyAllowance: nonnegative(
+      options.smallDiscrepancyAllowance ?? DEFAULT_TOLERANCES.smallDiscrepancyAllowance,
+      'smallDiscrepancyAllowance',
+    ),
     segmentAbsolute: positive(options.segmentAbsoluteTolerance ?? DEFAULT_TOLERANCES.segmentAbsolute, 'segmentAbsoluteTolerance'),
     segmentRelative: nonnegative(options.segmentRelativeTolerance ?? DEFAULT_TOLERANCES.segmentRelative, 'segmentRelativeTolerance'),
     segmentNear: positive(options.segmentNearTolerance ?? DEFAULT_TOLERANCES.segmentNear, 'segmentNearTolerance'),

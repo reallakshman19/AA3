@@ -1,0 +1,49 @@
+name: EMP.1 runEmp1 bounded gamma5 orchestration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-runemp1-orchestration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enforce historical EMP1-03 scope
+        if: github.event_name == 'pull_request' && github.head_ref == 'agent/emp1-03-runemp1-orchestration-issue1261'
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          git diff --name-only "$base"...HEAD | tee /tmp/emp1-03-files.txt
+          allowed='^(src/core/emp1/(emp1-orchestrator|emp1-wrc537-gamma5-zero-dp-orchestration|index)\.js|scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification\.mjs|\.github/workflows/(emp1-03-runemp1-orchestration|emp1-gamma5-main-route)\.yml|agents/PR[0-9]+_workreport\.md)$'
+          unexpected="$(grep -Ev "$allowed" /tmp/emp1-03-files.txt || true)"
+          if [ -n "$unexpected" ]; then
+            echo 'EMP1_03_SCOPE_VIOLATION: unexpected files:'
+            echo "$unexpected"
+            exit 1
+          fi
+
+      - name: Re-observe independent gamma5 hand calculation
+        run: node scripts/emp1-wrc-gamma5-full-table5-independent-handcalc.mjs
+
+      - name: Qualify cylindrical WRC load-axis polarity
+        run: node scripts/emp1-wrc537-cylindrical-axis-authority-check.mjs
+
+      - name: Re-observe remaining fail-closed authority after axis closure
+        run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs
+
+      - name: Preserve EMP.1 public product truth
+        run: node scripts/emp1-public-product-check.mjs
+
+      - name: Preserve EMP.1 core scaffold compatibility
+        run: node scripts/emp1-core-scaffold-check.mjs

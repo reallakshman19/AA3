@@ -1,0 +1,78 @@
+{
+  "schema": "emp1-wrc537-non-tabulated-gamma-interpolation-source-qualification/v1",
+  "issue": 1358,
+  "status": "BLOCKED_PRIMARY_GAMMA_INTERPOLATION_RULE_UNQUALIFIED",
+  "engineeringAuthority": true,
+  "productionInterpolationAuthority": false,
+  "productionRouteExpansionAuthority": false,
+  "globalEmp1CRouteAuthority": false,
+  "releaseQualified": false,
+  "productionObservationUsedToSetAuthority": false,
+  "grounding": {
+    "main": "fe448749f23e5795309df714c66db5bb6af6ba7e",
+    "sourceDocumentSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
+  },
+  "existingExactGammaAuthority": {
+    "path": "validation/emp1/wrc537-2013/exact-gamma-capability-v1.json",
+    "status": "PASS_BOUNDED_EXACT_TABULATED_GAMMA_SELECTION",
+    "gammaSelection": "EXACT_SOURCE_TABULATED_GAMMA_ONLY",
+    "machineRoundOffRelativeTolerance": 1e-12,
+    "nonTabulatedGamma": "BLOCKED_NO_INTERPOLATION_AUTHORITY",
+    "interpolationUsed": false,
+    "originalVsExtrapolated": "EXPLICIT_VARIANT_REQUIRED_NO_FALLBACK",
+    "blankGammaRows": "UNSELECTABLE",
+    "independentExactGammaOracleHash": "809178dc3ef3ed4f81443777918d91048d0008fa6eeca074c93fc315691bc41e"
+  },
+  "retainedSourceObservation": {
+    "sourceExtractionPath": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+    "sourceReconciliationPath": "docs/emp1/EMP1_MAIN_RECONCILIATION_20260820.md",
+    "rationalCurveFitIndependentVariable": "BETA",
+    "exactGammaRowsPresent": true,
+    "explicitGammaInterpolationRuleRetained": false,
+    "directPrimaryPageReobservationForGammaInterpolation": "NOT_RUN_IN_CURRENT_CONNECTED_ENVIRONMENT",
+    "interpretation": "The retained source package supports rational evaluation in beta after exact source-tabulated gamma selection. It does not retain a primary-source rule defining interpolation between gamma rows."
+  },
+  "unresolvedInterpolationAuthority": [
+    "PRIMARY_SOURCE_PERMISSION_TO_INTERPOLATE_BETWEEN_GAMMA_ROWS",
+    "PRIMARY_SOURCE_GAMMA_INTERPOLATION_LOCATOR",
+    "INTERPOLATED_QUANTITY_Y_VS_COEFFICIENTS_VS_OTHER",
+    "INTERPOLATION_COORDINATE_LINEAR_GAMMA_LOG_GAMMA_INVERSE_GAMMA_OR_OTHER",
+    "PER_FIGURE_INTERPOLATION_RULE",
+    "ORIGINAL_EXTRAPOLATED_VARIANT_INTERPOLATION_RULE",
+    "BRACKETING_GAMMA_SELECTION_RULE",
+    "BLANK_GAMMA_ROW_CROSSING_RULE",
+    "BETA_DOMAIN_INTERSECTION_RULE_FOR_GAMMA_BRACKETS",
+    "SOURCE_DELETED_SEGMENT_INTERPOLATION_RULE",
+    "CURVE_AVAILABILITY_TOPOLOGY_CROSSING_RULE",
+    "OUTER_GAMMA_EXTRAPOLATION_RULE",
+    "GRAPHICAL_INTERPOLATION_PRECISION_AND_SOURCE_RESOLUTION_POLICY"
+  ],
+  "requiredProductionSemanticsBeforeImplementation": {
+    "interpolationQuantity": null,
+    "interpolationCoordinate": null,
+    "bracketingPolicy": null,
+    "betaDomainPolicy": null,
+    "variantMixingAllowed": false,
+    "blankRowCrossingAllowed": false,
+    "gammaExtrapolationAllowed": false,
+    "reason": "No primary-source interpolation semantics are qualified. Null values are deliberate unresolved authority, not defaults."
+  },
+  "prohibitions": [
+    "DO_NOT_ASSUME_LINEAR_GAMMA_INTERPOLATION",
+    "DO_NOT_ASSUME_LOG_GAMMA_INTERPOLATION",
+    "DO_NOT_INTERPOLATE_RATIONAL_COEFFICIENTS_WITHOUT_PRIMARY_SOURCE_AUTHORITY",
+    "DO_NOT_INFER_INTERPOLATION_RULE_FROM_SMOOTH_NUMERICAL_OUTPUT",
+    "DO_NOT_INTERPOLATE_ACROSS_BLANK_GAMMA_ROW",
+    "DO_NOT_MIX_ORIGINAL_AND_EXTRAPOLATED_VARIANTS_WITHOUT_SOURCE_AUTHORITY",
+    "DO_NOT_BYPASS_BETA_CURVE_DOMAIN_LIMITS_DURING_GAMMA_INTERPOLATION",
+    "DO_NOT_EXTRAPOLATE_GAMMA_OUTSIDE_SOURCE_ROWS",
+    "DO_NOT_ENABLE_NON_TABULATED_GAMMA_PRODUCTION"
+  ],
+  "currentDecision": {
+    "authorizedSelectionPolicy": "EXACT_SOURCE_TABULATED_GAMMA_ONLY",
+    "nonTabulatedGammaAuthorized": false,
+    "gammaInterpolationAuthorized": false,
+    "gammaExtrapolationAuthorized": false
+  },
+  "nextGate": "DIRECT_PRIMARY_WRC_GAMMA_INTERPOLATION_RULE_AND_BRACKET_DOMAIN_AUTHORITY"
+}

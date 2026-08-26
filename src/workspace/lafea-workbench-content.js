@@ -6,13 +6,19 @@ import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
 import { mountLafeaLiveWorkbenchViewport } from './lafea-live-workbench-viewport.js';
 import { buildLafeaDiscretizationViewModel } from './lafea-discretization-view-model.js';
 import { renderLafeaDiscretizationPanel } from './lafea-discretization-panel.js';
+import { compactLafeaRefinementWorkspace } from './lafea-refinement-disclosure.js';
 import { buildLafeaGuidedWorkflow } from './lafea-guided-workflow.js';
 import { renderLafeaGuidedWorkflow } from './lafea-guided-workflow-view.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaNumericalVerification } from './lafea-numerical-verification-view.js';
 import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
+import { renderLafeaSolveReadiness } from './lafea-solve-readiness-panel.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
+import {
+  renderLafeaEngineeringEvidenceDrawer,
+  revealLafeaGuidedTarget,
+} from './lafea-workbench-evidence.js';
 import { focusLafeaRetainedMeshElement } from './lafea-canvas/retained-mesh-overlay.js';
 
 export function renderLafeaWorkbenchContent(root, state, stage, options) {
@@ -26,11 +32,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   let activeViewport = null;
   renderLafeaGuidedWorkflow(navHost, workflow, (step) => {
     const target = shell.querySelector(`[data-guided-target="${step.focusTarget}"]`);
-    if (target) {
-      target.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-      target.querySelector?.('button,input,select,textarea,[tabindex]')?.focus?.({ preventScroll: true });
-      return;
-    }
+    if (revealLafeaGuidedTarget(target)) return;
     options.onNavigateTarget?.(step.focusTarget);
   });
 
@@ -41,6 +43,9 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     { onRun: options.handlers.onRun },
   );
   engineeringOverview.dataset.guidedTarget = 'engineering-overview';
+  if (unsupportedStagePresentationRequired(workflow, discretization)) {
+    applyUnsupportedExecutionOverview(root, engineeringOverview);
+  }
 
   const nextActionBanner = renderNextActionBanner(
     root,
@@ -111,7 +116,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     onFocusMeshElement: options.onMeshFocusChange,
   });
   viewportCard.body.append(
-    viewportModePanel(root, activeViewport.getState(), retainedMeshEvidence, stage),
+    viewportModePanel(root, activeViewport.getState(), retainedMeshEvidence, stage, workflow),
     preview,
   );
   if (!activeViewport.scene.sourcePrimitives.length) {
@@ -146,9 +151,10 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
         && stage.preparationProjection?.state !== 'CURRENT_PASS') {
         return options.handlers.onPrepareContinuum?.();
       }
-      return navigateTo(shell, 'numerical-verification');
+      return navigateTo(shell, 'findings');
     },
   });
+  compactLafeaRefinementWorkspace(discretizationHost, discretization);
   discretizationCard.body.append(discretizationHost);
 
   const numericalCard = card(root, 'Numerical verification');
@@ -158,12 +164,11 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   const preflightCard = card(root, 'Solve readiness');
   preflightCard.section.dataset.guidedTarget = 'findings';
   preflightCard.section.classList.add('lafea-cae-workspace__inspector-card');
-  preflightCard.body.append(workflowSummary(root, workflow, [
-    'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
-  ]));
-  if (Array.isArray(state.diagnostics) && state.diagnostics.length) {
-    preflightCard.body.append(diagnosticList(root, state.diagnostics));
-  }
+  preflightCard.body.append(renderLafeaSolveReadiness(
+    preflightCard.body,
+    workflow,
+    Array.isArray(state.diagnostics) ? state.diagnostics : [],
+  ));
 
   const evidenceCard = card(root, 'Analysis results');
   evidenceCard.section.dataset.guidedTarget = 'results';
@@ -199,28 +204,15 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   context.append(
     sourceCard.section,
     profileCard.section,
-    numericalCard.section,
     evidenceCard.section,
-    lifecycleCard.section,
-    ncCard.section,
+    renderLafeaEngineeringEvidenceDrawer(
+      root,
+      [numericalCard.section, lifecycleCard.section, ncCard.section],
+      options.benchmarkHost,
+    ),
   );
 
   main.append(nextActionBanner, engineeringOverview, caeWorkspace, context);
-
-  if (options.benchmarkHost) {
-    const benchmarkCard = card(root, 'Verification output');
-    benchmarkCard.section.dataset.guidedTarget = 'verification';
-    benchmarkCard.body.append(
-      element(
-        root,
-        'p',
-        null,
-        'A rendered verification report or demonstration run is not release qualification. Exact-head benchmark manifests and independent expected values remain required.',
-      ),
-      options.benchmarkHost,
-    );
-    context.append(benchmarkCard.section);
-  }
 
   return Object.freeze({
     element: shell,
@@ -232,54 +224,105 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   });
 }
 
-function viewportModePanel(root, viewportState, retainedMeshEvidence, stage) {
-  const panel = element(root, 'div', 'lafea-viewport-mode-panel');
-  panel.dataset.role = 'lafea-viewport-mode-panel';
+export function buildLafeaViewportModePresentation(
+  viewportState,
+  retainedMeshEvidence,
+  stage,
+  workflow,
+) {
+  if (!workflow || typeof workflow.meshApplicable !== 'boolean'
+    || typeof workflow.executionSupported !== 'boolean') {
+    throw new TypeError('LAFEA_VIEWPORT_APPLICABILITY_REQUIRED');
+  }
   const mode = viewportState?.mode ?? 'SOURCE_AUTHORING';
   const renderer = viewportState?.renderer ?? 'SVG';
   const meshCount = Array.isArray(retainedMeshEvidence?.mesh?.elements)
     ? retainedMeshEvidence.mesh.elements.length
     : 0;
-  panel.append(
-    viewportMode(root, 'Geometry', stage.document ? 'VISIBLE' : 'EMPTY', mode === 'SOURCE_AUTHORING'),
-    viewportMode(root, 'Mesh', meshCount ? `${meshCount} ELEMENTS` : 'NOT RETAINED', meshCount > 0),
-    viewportMode(
-      root,
-      'Result contour',
-      mode === 'QUALIFIED_RESULT' ? `READY · ${renderer}` : 'WAITING FOR QUALIFIED RESULT',
-      mode === 'QUALIFIED_RESULT',
-    ),
-  );
+  return Object.freeze([
+    Object.freeze({
+      modeId: 'geometry',
+      label: 'Geometry',
+      value: stage?.document ? 'Available' : 'Not available',
+      active: mode === 'SOURCE_AUTHORING',
+    }),
+    Object.freeze({
+      modeId: 'mesh',
+      label: 'Mesh',
+      value: workflow.meshApplicable
+        ? meshCount ? `${meshCount} elements` : 'Not generated'
+        : 'Not applicable',
+      active: workflow.meshApplicable && meshCount > 0,
+    }),
+    Object.freeze({
+      modeId: 'result',
+      label: 'Result contour',
+      value: workflow.executionSupported
+        ? mode === 'QUALIFIED_RESULT' ? `Ready · ${renderer}` : 'Waiting for qualified result'
+        : 'Not applicable',
+      active: workflow.executionSupported && mode === 'QUALIFIED_RESULT',
+    }),
+  ]);
+}
+
+function viewportModePanel(root, viewportState, retainedMeshEvidence, stage, workflow) {
+  const panel = element(root, 'div', 'lafea-viewport-mode-panel');
+  panel.dataset.role = 'lafea-viewport-mode-panel';
+  panel.dataset.meshApplicable = String(workflow.meshApplicable);
+  panel.dataset.executionSupported = String(workflow.executionSupported);
+  for (const item of buildLafeaViewportModePresentation(
+    viewportState,
+    retainedMeshEvidence,
+    stage,
+    workflow,
+  )) {
+    panel.append(viewportMode(root, item));
+  }
   return panel;
 }
 
-function viewportMode(root, label, value, active) {
+function viewportMode(root, model) {
   const item = element(root, 'div', 'lafea-viewport-mode-panel__item');
-  item.dataset.active = String(active);
-  item.append(element(root, 'strong', null, label), element(root, 'span', null, value));
+  item.dataset.viewportMode = model.modeId;
+  item.dataset.active = String(model.active);
+  item.append(element(root, 'strong', null, model.label), element(root, 'span', null, model.value));
   return item;
 }
 
 function renderNextActionBanner(root, stage, discretization, workflow, options, shell) {
   const banner = element(root, 'div', 'lafea-next-action-banner');
   banner.dataset.role = 'lafea-next-action-banner';
+  banner.dataset.guidedTarget = 'run';
   banner.dataset.meshUiPhase = discretization.uiPhase;
-  banner.style.padding = '16px';
-  banner.style.margin = '16px 0';
-  banner.style.background = '#e3f2fd';
-  banner.style.border = '1px solid #90caf9';
-  banner.style.borderRadius = '8px';
-  banner.style.display = 'flex';
-  banner.style.alignItems = 'center';
-  banner.style.justifyContent = 'space-between';
-  banner.style.color = '#0d47a1';
 
   if (!stage.document) {
+    banner.dataset.intent = 'model';
     banner.append(element(root, 'strong', null, 'Step 1: Load a model to begin'));
     return banner;
   }
 
+  if (unsupportedStagePresentationRequired(workflow, discretization)) {
+    banner.dataset.intent = 'unsupported';
+    banner.dataset.runEligible = 'false';
+    banner.append(
+      element(root, 'strong', null, 'No qualified analysis route is registered for this stage'),
+      element(
+        root,
+        'span',
+        null,
+        'Source and model review remain available. Mesh generation and solve execution are not applicable.',
+      ),
+    );
+    const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review model inputs');
+    review.type = 'button';
+    review.title = 'Review the retained source model. No mesh or solve action is available for this stage.';
+    review.onclick = () => navigateTo(shell, 'source');
+    banner.append(review);
+    return banner;
+  }
+
   if (!discretization.evidence.present) {
+    banner.dataset.intent = 'mesh';
     const sourceAdoption = discretization.generation.generationMode === 'SOURCE_MESH_ADOPTION';
     banner.append(element(
       root,
@@ -294,13 +337,6 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
       meshActionLabel(discretization.uiPhase),
     );
     btn.type = 'button';
-    btn.style.padding = '8px 16px';
-    btn.style.background = '#1976d2';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
-    btn.style.fontWeight = 'bold';
     btn.title = 'Open the governed meshing controls. This navigation action does not bind a profile or generate a mesh.';
     btn.onclick = () => navigateTo(shell, 'discretization');
     banner.append(btn);
@@ -308,13 +344,12 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
   }
 
   if (stage.execution?.status !== 'QUALIFIED') {
+    banner.dataset.intent = 'solve';
     const runStep = workflow.steps.find((step) => step.stepId === 'RUN');
     const eligible = workflow.runEligibleByCurrentUiGate === true
       && discretization.actions.canRun === true
       && runStep?.status === 'READY';
-    banner.style.background = eligible ? '#e8f5e9' : '#fff8e1';
-    banner.style.border = eligible ? '1px solid #a5d6a7' : '1px solid #ffe082';
-    banner.style.color = eligible ? '#1b5e20' : '#6d4c00';
+    banner.dataset.runEligible = String(eligible);
     banner.append(element(
       root,
       'strong',
@@ -323,13 +358,6 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
     ));
     const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Run analysis');
     btn.type = 'button';
-    btn.style.padding = '8px 16px';
-    btn.style.background = eligible ? '#2e7d32' : '#9e9e9e';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = eligible ? 'pointer' : 'not-allowed';
-    btn.style.fontWeight = 'bold';
     btn.disabled = !eligible;
     btn.title = eligible
       ? 'Run the canonically authorized registered stage calculation.'
@@ -339,22 +367,30 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
     return banner;
   }
 
-  banner.style.background = '#f3e5f5';
-  banner.style.border = '1px solid #ce93d8';
-  banner.style.color = '#4a148c';
+  banner.dataset.intent = 'results';
   banner.append(element(root, 'strong', null, 'Analysis result retained'));
   const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review retained results');
   review.type = 'button';
-  review.style.padding = '6px 12px';
-  review.style.background = '#7b1fa2';
-  review.style.color = 'white';
-  review.style.border = 'none';
-  review.style.borderRadius = '4px';
-  review.style.cursor = 'pointer';
   review.title = 'Review retained solver/recovery evidence. Display contours are not substituted for numerical authority.';
   review.onclick = () => navigateTo(shell, 'results');
   banner.append(review);
   return banner;
+}
+
+export function unsupportedStagePresentationRequired(workflow, discretization) {
+  return workflow?.analysisRouteFamily === 'UNSUPPORTED'
+    && discretization?.uiPhase === 'NOT_APPLICABLE';
+}
+
+function applyUnsupportedExecutionOverview(root, overview) {
+  overview.dataset.executionSupported = 'false';
+  const run = overview.querySelector('[data-role="lafea-overview-run"]');
+  if (!run) return;
+  const state = element(root, 'span', 'lafea-engineering-overview__badge', 'Solve not available');
+  state.dataset.role = 'lafea-overview-run-unavailable';
+  state.dataset.tone = 'neutral';
+  state.title = 'No qualified analysis route is registered for this stage.';
+  run.replaceWith(state);
 }
 
 function meshActionHeading(uiPhase, sourceAdoption) {
@@ -381,46 +417,6 @@ function validReusableViewport(value) {
   return value;
 }
 
-function workflowSummary(root, workflow, ids) {
-  const section = element(root, 'div', 'lafea-guided-summary');
-  for (const id of ids) {
-    const step = workflow.steps.find((candidate) => candidate.stepId === id);
-    if (!step) continue;
-    const row = element(root, 'div', 'lafea-guided-summary__row');
-    row.dataset.stepId = id;
-    row.dataset.status = step.status;
-    row.append(
-      element(root, 'strong', null, `${step.label}: ${step.status}`),
-      element(
-        root,
-        'span',
-        null,
-        step.reasons.length ? ` — ${lafeaWorkbenchReasonLabels(step.reasons).join(' • ')}` : '',
-      ),
-    );
-    section.append(row);
-  }
-  return section;
-}
-
-function diagnosticList(root, diagnostics) {
-  const section = element(root, 'section');
-  section.dataset.role = 'lafea-diagnostics';
-  section.dataset.guidedRole = 'findings';
-  section.append(element(root, 'h3', null, 'Current findings'));
-  const list = element(root, 'ul');
-  diagnostics.forEach((item) => {
-    list.append(element(
-      root,
-      'li',
-      null,
-      `${item.severity ?? 'INFO'} ${item.code ?? 'UNKNOWN'} — ${item.message ?? ''}`,
-    ));
-  });
-  section.append(list);
-  return section;
-}
-
 function truthPanel(root, registryEntry) {
   const section = element(root, 'details', 'lafea-workbench__truth');
   section.append(element(root, 'summary', null, 'Solver authority and current limitations'));
@@ -441,5 +437,5 @@ function truthPanel(root, registryEntry) {
 
 function navigateTo(shell, targetName) {
   const target = shell.querySelector(`[data-guided-target="${targetName}"]`);
-  target?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  revealLafeaGuidedTarget(target);
 }

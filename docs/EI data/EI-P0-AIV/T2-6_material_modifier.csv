@@ -1,0 +1,4 @@
+material_condition,action,formula,authority_state,qualification_note
+DUPLEX,APPLY_FLM3,FLM3 = 0.263 + 0.087*tanh((PWL-172)/2.9),SOURCE_CORROBORATED_FLOWCHART_BRANCH,"Apply N = N*FLM3 before calculating Lf; exact pinned-PDF visual parity remains NOT_RUN."
+NOT_DUPLEX,NO_FLM3_MULTIPLIER,,SOURCE_CORROBORATED_FLOWCHART_BRANCH,"Proceed directly to Lf; this matches the D2.3 non-duplex worked example."
+OTHER_OR_UNRESOLVED_MATERIAL_CLASSIFICATION,FAIL_CLOSED_NO_CLASSIFICATION_INFERENCE,,NOT_AUTHORIZED,"Do not infer duplex/non-duplex status from alloy family names not explicitly resolved by governed project data."

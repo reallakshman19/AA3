@@ -1,0 +1,125 @@
+{
+  "schema": "emp1-wrc537-elastic-material-source-qualification/v1",
+  "issue": 1379,
+  "status": "BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED",
+  "sourceCustody": {
+    "pinnedDocument": "docs/emp1/WRC537_2013.pdf",
+    "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "primaryBinaryPageReobservedThisIncrement": false,
+    "primaryBinaryObservationStatus": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
+    "retainedPrimaryTranscription": {
+      "path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+      "table": "Table 5 - Computation Sheet for Local Stresses in Cylindrical Shells",
+      "pdfPages": [41, 42],
+      "explicitInputGroups": {
+        "appliedLoads": ["P", "Mc", "Ml", "Mt", "Vc", "Vl"],
+        "geometry": ["T", "r0", "Rm"],
+        "geometricParameters": ["gamma", "beta"],
+        "stressConcentrationFactors": ["Kn", "Kb"]
+      },
+      "explicitMaterialModulusInputPresent": false,
+      "explicitPoissonRatioInputPresent": false,
+      "displayedStressEquationsContainExplicitMaterialModulus": false,
+      "displayedStressEquationsContainExplicitPoissonRatio": false,
+      "qualificationBoundary": "TABLE5_COMPUTATION_SHEET_EXPLICIT_INPUT_AND_DISPLAYED_EQUATION_CONTENT_ONLY"
+    },
+    "legacyExtraction": {
+      "path": "docs/01_WRC537_METHOD_DEFINITION.md",
+      "status": "NOT_READY_FOR_IMPLEMENTATION",
+      "retainedNomenclature": {
+        "E": "MODULUS_OF_ELASTICITY_OF_SHELL_MATERIAL"
+      },
+      "poissonRatioRule": "UNRESOLVED",
+      "constitutiveApplicabilityRule": "UNRESOLVED"
+    }
+  },
+  "currentSoftwareObservation": {
+    "boundedAdapterPath": "src/core/emp1/emp1-wrc537-cylindrical-bounded-adapter.js",
+    "materialModulusConsumed": false,
+    "poissonRatioConsumed": false,
+    "yieldStrengthConsumed": false,
+    "constitutiveModelConsumed": false,
+    "classification": "SOFTWARE_NON_USE_IS_NOT_ENGINEERING_MATERIAL_INDEPENDENCE_AUTHORITY"
+  },
+  "retainedTable5Conclusions": {
+    "explicitMaterialModulusInputAbsent": true,
+    "explicitPoissonRatioInputAbsent": true,
+    "displayedStressEquationsExplicitMaterialModulusFree": true,
+    "displayedStressEquationsExplicitPoissonRatioFree": true,
+    "provesAbsoluteModulusIndependence": false,
+    "provesPoissonRatioIrrelevance": false,
+    "provesUniversalMaterialApplicability": false,
+    "provesConstitutiveOrShellTheoryApplicability": false
+  },
+  "authorityScope": "THIS_SOURCE_RECORD_ONLY_NOT_LIVE_ROUTE_STATE",
+  "authority": {
+    "table5ExplicitMaterialInputNonUseQualified": true,
+    "table5DisplayedStressEquationExplicitMaterialInputNonUseQualified": true,
+    "modulusRoleQualified": false,
+    "absoluteModulusIndependenceQualified": false,
+    "poissonRatioTreatmentQualified": false,
+    "homogeneousIsotropicLinearElasticAssumptionQualified": false,
+    "thinShellSmallDeformationAssumptionQualified": false,
+    "hostAttachmentMaterialRelationshipQualified": false,
+    "temperatureDependentModulusTreatmentQualified": false,
+    "nonlinearPlasticCreepApplicabilityQualified": false,
+    "anisotropicOrthotropicCompositeApplicabilityQualified": false,
+    "materialDiscontinuityApplicabilityQualified": false,
+    "engineeringUseAuthorized": false,
+    "productionUseAuthorized": false
+  },
+  "currentLiveRouteState": {
+    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP",
+    "boundedRouteAuthorized": true,
+    "registryRegistered": true,
+    "boundedEngineeringUseAuthorized": true,
+    "boundedProductionUseAuthorized": true,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseQualified": false,
+    "professionalReleaseReady": false
+  },
+  "authoritySeparation": {
+    "materialTheorySourceAuthority": false,
+    "currentRouteMayExecuteUnderSeparateBoundedAuthorization": true,
+    "currentRouteExecutionProvesMaterialTheoryAuthority": false,
+    "routeAuthorizationMayBackPropagateIntoMaterialTheorySourceAuthority": false,
+    "rule": "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_ELASTIC_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY"
+  },
+  "prohibitedInferences": [
+    "DO_NOT_TREAT_TABLE5_EXPLICIT_E_NON_USE_AS_PROOF_OF_ABSOLUTE_MODULUS_INDEPENDENCE",
+    "DO_NOT_TREAT_TABLE5_EXPLICIT_NU_NON_USE_AS_PROOF_OF_POISSON_RATIO_IRRELEVANCE",
+    "DO_NOT_TREAT_ABSENT_MATERIAL_INPUT_AS_UNIVERSAL_MATERIAL_INDEPENDENCE",
+    "DO_NOT_INVENT_POISSON_RATIO_OR_MODULUS_CORRECTION",
+    "DO_NOT_CLAIM_NONLINEAR_PLASTIC_CREEP_OR_COMPOSITE_APPLICABILITY",
+    "DO_NOT_USE_YIELD_OR_ALLOWABLE_STRESS_TO_MODIFY_WRC_CURVE_EVALUATION",
+    "DO_NOT_ASSUME_HOST_AND_ATTACHMENT_MATERIAL_RELATIONSHIP",
+    "DO_NOT_INFER_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY_FROM_BOUNDED_ROUTE_AUTHORIZATION"
+  ],
+  "requiredPrimaryClosure": [
+    "exact role of shell modulus E in WRC derivation and cylindrical method",
+    "whether absolute E cancels from final stress coefficients and under which assumptions",
+    "Poisson-ratio treatment or embedded assumption",
+    "constitutive and shell-theory assumptions",
+    "host-shell versus attachment material requirements",
+    "temperature/material-class restrictions",
+    "source locators for every retained material/theory applicability rule"
+  ],
+  "authorityEffect": {
+    "productionMaterialInputsChanged": false,
+    "productionNumericsChanged": false,
+    "table5EvaluatorChanged": false,
+    "routeRegistryChanged": false,
+    "aggregateP0GateChanged": false,
+    "thisRecordWidensBoundedRouteAuthority": false,
+    "thisRecordGrantsMaterialTheorySourceAuthority": false,
+    "globalEmp1CAuthorityChanged": false,
+    "codeComplianceAuthorityChanged": false,
+    "releaseAuthorityChanged": false,
+    "codeComplianceAuthority": false,
+    "releaseAuthority": false
+  },
+  "collateralAuthorityWidened": false,
+  "productionNumericsChanged": false
+}

@@ -3,7 +3,9 @@ import {
   FORMULATION_GUARDS,
   FORMULATIONS,
 } from '../core/local-continuum/index.js';
+import { createLafeaInfoDisclosure, rowsFromLafeaItems } from './lafea-info-disclosure.js';
 import { element } from './lafea-workbench-dom.js';
+import { lafeaUiStatusPresentation } from './lafea-ui-status.js';
 
 export const LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA = 'lafea-analysis-settings-view/v1';
 
@@ -19,34 +21,46 @@ export function buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryVal
   const documentValue = stage.document ?? null;
   const profile = documentValue?.qualificationProfile ?? null;
   const requests = documentValue?.resultRequests ?? null;
-  const modelRows = [
-    row('Model identity', textOr(documentValue?.modelIdentity)),
-    row('Model version', textOr(documentValue?.modelVersion)),
+
+  const modelRows = compactRows([
+    row('Model identity', textValue(documentValue?.modelIdentity)),
+    row('Model version', textValue(documentValue?.modelVersion)),
     row('Formulation', formulationLabel(documentValue?.formulation)),
-    row('Thickness policy', textOr(documentValue?.thicknessBasis?.policy)),
+    row('Thickness policy', textValue(documentValue?.thicknessBasis?.policy)),
     row('Requested analyses / cases', requestSummary(requests)),
     row('Unit basis', unitSummary(documentValue?.units)),
     row('Code / allowable basis', codeBasisSummary(documentValue)),
     row('Load combinations', loadCombinationSummary(documentValue)),
-    row('Stress quantity', textOr(documentValue?.analysisSettings?.stressQuantity) ?? 'Not declared'),
+    row('Stress quantity', textValue(documentValue?.analysisSettings?.stressQuantity)),
     row('Allowable value', allowableValueSummary(documentValue)),
-  ];
-  const solverRows = [
-    row('Registered engine', registry.enginePackage ? `src/core/${registry.enginePackage}` : 'Provided by workbench registry'),
-    row('Registered authority', registry.authority ?? 'Provided by workbench registry'),
-    row('Engine state', registry.engineState ?? 'Provided by workbench registry'),
-    row('Result presenter', registry.presenterRole ?? 'Provided by workbench registry'),
-    row('Lifecycle profile', stage.lifecycle?.profileId ?? 'Not initialized'),
-    row('Lifecycle source binding', stage.lifecycleBinding?.status ?? 'UNINITIALIZED'),
-    row('Qualification profile', textOr(profile?.identity)),
-    row('Source schema', textOr(documentValue?.schema)),
-  ];
+  ]);
+
+  const solverRows = compactRows([
+    row('Registered engine', registry.enginePackage ? `src/core/${registry.enginePackage}` : null),
+    row('Registered authority', registry.authority),
+    row('Engine state', registry.engineState),
+    row('Result presenter', registry.presenterRole),
+    row('Lifecycle profile', textValue(stage.lifecycle?.profileId)),
+    row('Lifecycle source binding', textValue(stage.lifecycleBinding?.status)),
+    row('Qualification profile', textValue(profile?.identity)),
+    row('Source schema', textValue(documentValue?.schema)),
+  ]);
+
+  const solverSummaryRows = compactRows([
+    row('Solver route', solverRouteLabel(registry.enginePackage)),
+    row('Availability', registry.engineState ? statusLabel(registry.engineState) : null),
+    row('Source binding', stage.lifecycleBinding?.status ? statusLabel(stage.lifecycleBinding.status) : null),
+    row('Qualification profile', profile?.identity ? 'Configured' : null),
+  ]);
+
   return freeze({
     schema: LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA,
     stageId: stage.stageId,
     readOnly: false,
+    sourcePresent: Boolean(documentValue),
     modelRows,
     solverRows,
+    solverSummaryRows,
     rows: [...modelRows, ...solverRows],
     formulationControl: stage.stageId === 'LAFEA.3'
       ? buildFormulationControl(stage, documentValue)
@@ -68,11 +82,12 @@ export function renderLafeaAnalysisSettings(
   const section = element(root, 'section', 'lafea-analysis-settings');
   section.dataset.role = 'lafea-analysis-settings';
   section.dataset.readOnly = 'false';
+  section.dataset.sourcePresent = String(model.sourcePresent);
   section.append(element(
     root,
     'p',
     'lafea-analysis-settings__intro',
-    'Model formulation is an explicit governed source input. Solver authority, qualification tolerances and release state remain locked; changing formulation invalidates downstream mesh/run evidence through the normal source-replacement transaction.',
+    'Configure only the stage-authorized analysis choices here. Source identity, solver custody and qualification metadata remain available as supporting evidence without occupying the primary workflow.',
   ));
 
   if (model.formulationControl) {
@@ -80,20 +95,37 @@ export function renderLafeaAnalysisSettings(
   }
 
   const groups = element(root, 'div', 'lafea-analysis-settings__groups');
+  groups.dataset.role = 'lafea-analysis-settings-primary';
   groups.append(
-    settingsGroup(root, 'Model-declared analysis settings', 'MODEL_SOURCE', model.modelRows),
-    settingsGroup(root, 'Governed solver settings', 'GOVERNED_SOLVER', model.solverRows),
+    settingsGroup(root, {
+      title: 'Model-declared analysis settings',
+      authority: 'MODEL_SOURCE',
+      visibleRows: [],
+      infoTitle: 'Source metadata',
+      infoRows: model.modelRows,
+      emptyText: 'Load a governed source model to view source-declared analysis settings.',
+    }),
+    settingsGroup(root, {
+      title: 'Solver readiness',
+      authority: 'GOVERNED_SOLVER',
+      visibleRows: model.solverSummaryRows.filter((item) => (
+        item.label === 'Availability' || item.label === 'Source binding'
+      )),
+      infoTitle: 'Solver contract metadata',
+      infoRows: model.solverSummaryRows,
+      emptyText: 'Solver readiness is not established until governed solver and source-binding evidence exist.',
+    }),
   );
   section.append(groups);
+  if (model.solverRows.length) section.append(technicalSettings(root, model.solverRows));
 
   if (model.recoveryDisclosure) {
-    const recovery = element(root, 'p', 'lafea-analysis-settings__recovery', model.recoveryDisclosure);
-    recovery.dataset.role = 'lafea-solver-recovery-policy';
-    section.append(recovery);
+    section.append(textDisclosure(root, 'Recovery policy', model.recoveryDisclosure, 'lafea-solver-recovery-policy'));
   }
 
   if (model.qualificationDetails.length) {
     const details = element(root, 'details', 'lafea-analysis-settings__details');
+    details.dataset.role = 'lafea-technical-evidence';
     details.append(element(root, 'summary', null, `Locked qualification tolerances (${model.qualificationDetails.length})`));
     const qualificationList = element(root, 'ul');
     model.qualificationDetails.forEach((value) => qualificationList.append(element(root, 'li', null, value)));
@@ -117,14 +149,39 @@ function formulationControl(root, stageValue, control, handlers) {
   card.dataset.role = 'lafea3-formulation-selector';
   card.dataset.authority = 'MODEL_SOURCE';
   card.dataset.status = control.status;
+  card.dataset.sourcePresent = String(control.sourcePresent);
+
   const heading = element(root, 'div', 'lafea-analysis-settings__group-heading');
+  const basisRows = compactPairs([
+    ['Current', formulationLabel(control.current)],
+    ['Poisson ratio(s)', control.poissonRatios || null],
+    ['Retained mesh families', control.retainedMeshFamilies || null],
+    ['B-bar element authority', 'T6 / Q8 only; actual T3 solver mesh blocks before stiffness assembly'],
+    ['B-bar temperature authority', 'Not granted — temperature/eigenstrain loads are blocked'],
+    ['Legacy plane-strain hard block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
+    ['Qualification state', statusLabel(control.status)],
+  ]);
   heading.append(
     element(root, 'h3', null, 'Continuum formulation'),
-    element(root, 'span', 'lafea-analysis-settings__lock', 'SOURCE'),
+    createLafeaInfoDisclosure(root.ownerDocument, 'Continuum formulation basis', basisRows, {
+      role: 'lafea3-formulation-info',
+      className: 'lafea-analysis-settings__info',
+    }),
+    element(root, 'span', 'lafea-analysis-settings__lock', 'Source input'),
   );
+
   const select = element(root, 'select');
   select.dataset.role = 'lafea3-formulation-select';
   select.disabled = !control.editable || typeof handlers.onApplyJson !== 'function';
+  if (!control.current) {
+    const placeholder = element(root, 'option', null, control.sourcePresent
+      ? 'Select source formulation'
+      : 'No source model loaded');
+    placeholder.value = '';
+    placeholder.selected = true;
+    placeholder.disabled = true;
+    select.append(placeholder);
+  }
   for (const optionValue of control.options) {
     const option = element(root, 'option', null, optionValue.label);
     option.value = optionValue.value;
@@ -133,35 +190,25 @@ function formulationControl(root, stageValue, control, handlers) {
     if (optionValue.reason) option.title = optionValue.reason;
     select.append(option);
   }
+
   const status = element(root, 'p', 'lafea-analysis-settings__recovery', control.message);
   status.dataset.role = 'lafea3-formulation-selector-status';
   status.dataset.status = control.status;
   select.addEventListener('change', () => {
-    if (typeof handlers.onApplyJson !== 'function' || !stageValue?.document) return;
+    if (!select.value || typeof handlers.onApplyJson !== 'function' || !stageValue?.document) return;
     const next = structuredClone(stageValue.document);
     next.formulation = select.value;
     handlers.onApplyJson(`${JSON.stringify(next, null, 2)}\n`);
   });
-  const facts = element(root, 'dl', 'lafea-analysis-settings__list');
-  [
-    ['Current', formulationLabel(control.current)],
-    ['Poisson ratio(s)', control.poissonRatios || 'Not declared'],
-    ['Retained mesh families', control.retainedMeshFamilies || 'No retained mesh'],
-    ['B-bar element authority', 'T6 / Q8 only; actual T3 solver mesh blocks before stiffness assembly'],
-    ['B-bar temperature authority', 'Not granted — temperature/eigenstrain loads are blocked'],
-    ['Legacy plane-strain hard block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
-    ['Qualification state', control.status],
-  ].forEach(([label, value]) => {
-    facts.append(element(root, 'dt', null, label), element(root, 'dd', null, String(value)));
-  });
-  card.append(heading, select, status, facts);
+  card.append(heading, select, status);
   return card;
 }
 
 function buildFormulationControl(stage, documentValue) {
+  const sourcePresent = Boolean(documentValue && typeof documentValue === 'object');
   const current = typeof documentValue?.formulation === 'string'
     ? documentValue.formulation
-    : FORMULATIONS.PLANE_STRESS;
+    : null;
   const ratios = (documentValue?.materials ?? [])
     .map((row) => Number.isFinite(row?.poissonRatio) ? row.poissonRatio : null)
     .filter((value) => value !== null);
@@ -196,11 +243,20 @@ function buildFormulationControl(stage, documentValue) {
         ? 'B-bar thermal/eigenstrain authority is not yet qualified. Remove temperature loads before selecting B-bar.'
         : null,
     },
-  ].map((row) => freeze({ ...row, disabled: Boolean(row.disabled) }));
+  ].map((item) => freeze({ ...item, disabled: Boolean(item.disabled) }));
 
-  let status = 'QUALIFIED_SOURCE_INPUT';
-  let message = 'Plane stress uses the existing qualified continuum route.';
-  if (current === FORMULATIONS.PLANE_STRAIN) {
+  let status;
+  let message;
+  if (!sourcePresent) {
+    status = 'SOURCE_REQUIRED';
+    message = 'Load a governed LAFEA.3 source model before selecting a continuum formulation.';
+  } else if (!current) {
+    status = 'SOURCE_FORMULATION_REQUIRED';
+    message = 'The current source model does not declare a continuum formulation. Select one before analysis can proceed.';
+  } else if (current === FORMULATIONS.PLANE_STRESS) {
+    status = 'QUALIFIED_SOURCE_INPUT';
+    message = 'Plane stress uses the existing qualified continuum route.';
+  } else if (current === FORMULATIONS.PLANE_STRAIN) {
     if (standardBlocked) {
       status = 'BLOCKED';
       message = `Standard displacement plane strain is blocked for ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}.`;
@@ -225,11 +281,15 @@ function buildFormulationControl(stage, documentValue) {
       status = 'EXACT_HEAD_QUALIFICATION_REQUIRED';
       message = 'T6/Q8 B-bar mechanical route is configured. Exact-head frozen ν/distortion qualification evidence is required before any broader release claim.';
     }
+  } else {
+    status = 'SOURCE_FORMULATION_UNRECOGNIZED';
+    message = `The source formulation ${current} is not recognized by this LAFEA.3 settings control.`;
   }
 
   return freeze({
     current,
-    editable: Boolean(documentValue),
+    sourcePresent,
+    editable: sourcePresent,
     poissonRatios: ratios.join(', '),
     retainedMeshFamilies: retainedFamilies.join(' / '),
     hasTemperature,
@@ -239,14 +299,48 @@ function buildFormulationControl(stage, documentValue) {
   });
 }
 
-function settingsGroup(root, title, authority, rows) {
+function settingsGroup(root, configuration) {
+  const {
+    title, authority, visibleRows, infoTitle, infoRows, emptyText,
+  } = configuration;
   const group = element(root, 'section', 'lafea-analysis-settings__group');
   group.dataset.authority = authority;
   const heading = element(root, 'div', 'lafea-analysis-settings__group-heading');
-  heading.append(
-    element(root, 'h3', null, title),
-    element(root, 'span', 'lafea-analysis-settings__lock', authority === 'GOVERNED_SOLVER' ? 'LOCKED' : 'SOURCE'),
-  );
+  heading.append(element(root, 'h3', null, title));
+  if (infoRows?.length) {
+    heading.append(createLafeaInfoDisclosure(
+      root.ownerDocument,
+      infoTitle,
+      rowsFromLafeaItems(infoRows),
+      { className: 'lafea-analysis-settings__info' },
+    ));
+  }
+  heading.append(element(
+    root,
+    'span',
+    'lafea-analysis-settings__lock',
+    authority === 'GOVERNED_SOLVER' ? 'Governed' : 'Source',
+  ));
+  group.append(heading);
+  if (visibleRows?.length) {
+    const list = element(root, 'dl', 'lafea-analysis-settings__list');
+    for (const item of visibleRows) {
+      list.append(
+        element(root, 'dt', null, item.label),
+        element(root, 'dd', null, item.value),
+      );
+    }
+    group.append(list);
+  } else if (!infoRows?.length && emptyText) {
+    group.append(element(root, 'p', 'lafea-analysis-settings__recovery', emptyText));
+  }
+  return group;
+}
+
+function technicalSettings(root, rows) {
+  const details = element(root, 'details', 'lafea-analysis-settings__details');
+  details.dataset.role = 'lafea-technical-evidence';
+  details.append(element(root, 'summary', null, 'Technical identifiers and lifecycle custody'));
   const list = element(root, 'dl', 'lafea-analysis-settings__list');
   for (const item of rows) {
     list.append(
@@ -254,8 +348,18 @@ function settingsGroup(root, title, authority, rows) {
       element(root, 'dd', null, item.value),
     );
   }
-  group.append(heading, list);
-  return group;
+  details.append(list);
+  return details;
+}
+
+function textDisclosure(root, title, text, role) {
+  const details = element(root, 'details', 'lafea-analysis-settings__details');
+  details.dataset.role = role;
+  details.append(
+    element(root, 'summary', null, title),
+    element(root, 'p', 'lafea-analysis-settings__recovery', text),
+  );
+  return details;
 }
 
 function registryEntry(value) {
@@ -272,60 +376,59 @@ function registryEntry(value) {
 }
 
 function recoveryDisclosure(stageId, documentValue) {
-  if (stageId !== 'LAFEA.3') return null;
+  if (stageId !== 'LAFEA.3' || !documentValue) return null;
   if (documentValue?.formulation === FORMULATIONS.PLANE_STRAIN_BBAR) {
-    return 'Recovery authority: B-bar T6/Q8 stress uses pointwise deviatoric strain plus the retained element-mean dilatation used by stiffness. Integration-point stress remains authoritative; projected nodal stress is display-only.';
+    return 'B-bar T6/Q8 stress uses pointwise deviatoric strain plus the retained element-mean dilatation used by stiffness. Integration-point stress remains authoritative; projected nodal stress is display-only.';
   }
   const families = [...new Set((documentValue?.elements ?? [])
-    .map((row) => row?.elementType)
+    .map((item) => item?.elementType)
     .filter((value) => typeof value === 'string'))];
   if (families.some((value) => value === 'T6' || value === 'Q8')) {
-    return 'Recovery authority: T6/Q8 integration-point stress is authoritative; projected nodal stress is display-only.';
+    return 'T6/Q8 integration-point stress is authoritative; projected nodal stress is display-only.';
   }
   return 'Recovery authority follows the registered LAFEA.3 continuum result contract.';
 }
 
 function requestSummary(value) {
-  if (!value || typeof value !== 'object') return 'Not declared';
+  if (!value || typeof value !== 'object') return null;
   if (Array.isArray(value.requestedAnalyses) && value.requestedAnalyses.length) return value.requestedAnalyses.join(', ');
   if (Array.isArray(value.loadCaseIds) && value.loadCaseIds.length) return `Load cases: ${value.loadCaseIds.join(', ')}`;
   if (Array.isArray(value.transformedLoadCaseIdentities) && value.transformedLoadCaseIdentities.length) {
     return `Load cases: ${value.transformedLoadCaseIdentities.join(', ')}`;
   }
-  return 'Not declared';
+  return null;
 }
 
 function unitSummary(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'Not declared';
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const rows = Object.entries(value)
     .filter(([, unit]) => typeof unit === 'string' && unit)
     .map(([quantity, unit]) => `${quantity}: ${unit}`);
-  return rows.length ? rows.join(' • ') : 'Not declared';
+  return rows.length ? rows.join(' • ') : null;
 }
 
 function codeBasisSummary(documentValue) {
-  if (!documentValue || typeof documentValue !== 'object') return 'Not declared by the active stage source contract';
+  if (!documentValue || typeof documentValue !== 'object') return null;
   const direct = displayValue(documentValue.codeBasis);
   if (direct) return direct;
   const settings = documentValue.analysisSettings;
-  const nested = settings && typeof settings === 'object' ? displayValue(settings.codeBasis) : null;
-  return nested ?? 'Not declared by the active stage source contract';
+  return settings && typeof settings === 'object' ? displayValue(settings.codeBasis) : null;
 }
 
 function loadCombinationSummary(documentValue) {
   const factors = documentValue?.analysisSettings?.loadCombinationFactors;
-  if (!factors || typeof factors !== 'object' || Array.isArray(factors)) return 'Not declared';
+  if (!factors || typeof factors !== 'object' || Array.isArray(factors)) return null;
   const rows = Object.entries(factors)
     .map(([caseId, factor]) => `${caseId}: ${factor}`);
-  return rows.length ? rows.join(', ') : 'Not declared';
+  return rows.length ? rows.join(', ') : null;
 }
 
 function allowableValueSummary(documentValue) {
   const val = documentValue?.analysisSettings?.allowableValue;
   if (typeof val === 'number') return String(val);
-  if (!val || typeof val !== 'object') return 'Not declared';
+  if (!val || typeof val !== 'object') return null;
   if (typeof val.value === 'number') return `${val.value} ${val.unit ?? ''}`.trim();
-  return 'Not declared';
+  return null;
 }
 
 function qualificationDetails(profile) {
@@ -356,10 +459,25 @@ function displayValue(value) {
 }
 
 function formulationLabel(value) {
-  return FORMULATION_LABELS[value] ?? textOr(value);
+  return FORMULATION_LABELS[value] ?? textValue(value);
 }
-function row(label, value) { return freeze({ label, value }); }
-function textOr(value) { return typeof value === 'string' && value ? value : 'Not declared'; }
+function solverRouteLabel(enginePackage) {
+  if (enginePackage === 'local-continuum') return 'Linear continuum solver';
+  if (enginePackage === 'local-shell') return 'Linear thin-shell solver';
+  if (!enginePackage) return null;
+  return 'Registered stage solver';
+}
+function statusLabel(value) { return lafeaUiStatusPresentation(value).label; }
+function row(label, value) { return { label, value }; }
+function compactRows(rows) {
+  return rows.filter((item) => item && item.value !== null && item.value !== undefined && item.value !== '')
+    .map((item) => freeze(item));
+}
+function compactPairs(rows) {
+  return rows.filter((item) => Array.isArray(item) && item.length >= 2
+    && item[1] !== null && item[1] !== undefined && item[1] !== '');
+}
+function textValue(value) { return typeof value === 'string' && value ? value : null; }
 function stringArray(value) { return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item) : []; }
 function requireStage(value) {
   if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') throw new TypeError('LAFEA_ANALYSIS_SETTINGS_STAGE_REQUIRED');

@@ -1,0 +1,39 @@
+schema: AgentClaim.v1
+pr_or_wip: PR1255
+claim_state: HANDOVER_READY
+files:
+  exact:
+    - src/workspace/lafea-ui-status.js
+    - src/workspace/lafea-guided-workflow-presentation.js
+    - src/workspace/lafea-guided-workflow-view.js
+    - src/workspace/lafea-guided-workbench-styles.js
+    - src/workspace/lafea-ui-icons.js
+    - src/workspace/lafea-ui-modernization-styles.js
+    - src/workspace/lafea-engineering-overview.js
+    - src/workspace/lafea-analysis-settings-view.js
+    - src/workspace/lafea-workbench-evidence.js
+    - src/workspace/lafea-workbench-content.js
+    - src/workspace/lafea-workbench-controller-io.js
+    - src/workspace/lafea-discretization-panel.js
+    - scripts/lafea-ui-formal-presentation-check.mjs
+    - e2e/lafea-visible-workbench.spec.js
+  prefixes:
+    - src/workspace/lafea-
+    - e2e/lafea-
+authority_domains:
+  - UI_PRESENTATION
+  - ENGINEERING_STATUS_COMMUNICATION
+  - ENGINEERING_INFORMATION_ARCHITECTURE
+claim_modes:
+  - COORDINATED
+  - SHARED_READ
+excluded_authority:
+  - SOLVER_MECHANICS
+  - MESH_PRODUCER
+  - MESH_QUALITY_THRESHOLDS
+  - NUMERICAL_QUALIFICATION
+  - LIFECYCLE_AUTHORITY
+  - RELEASE_AUTHORITY
+  - TRUST_ROOT
+qualified_production_head: 57b0c8e49ff892a35e9fb8e1fdbf5b5cfc48c770
+last_verified_head: 57b0c8e49ff892a35e9fb8e1fdbf5b5cfc48c770

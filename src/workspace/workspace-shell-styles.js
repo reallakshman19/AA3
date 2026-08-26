@@ -148,10 +148,11 @@ export function advancedShellStyles() {
     .empirical-load-calc__workflow-step[data-step-state="ready"] .empirical-load-calc__workflow-status { color: #fbbf24; }
     .empirical-load-calc__workflow-step[data-step-state="blocked"] .empirical-load-calc__workflow-status { color: #f87171; }
     .empirical-load-calc__workflow-step[data-step-state="review"] .empirical-load-calc__workflow-status { color: #fbbf24; }
-    .empirical-load-calc__advanced { grid-column: 1 / -1; min-width: 0; border-top: 1px solid #1e293b; padding-top: 4px; }
-    .empirical-load-calc__advanced > summary { display: flex; align-items: center; gap: 8px; width: max-content; color: #94a3b8; font-size: 10px; font-weight: 700; cursor: pointer; }
-    .empirical-load-calc__advanced > summary span { color: #64748b; font-weight: 500; }
-    .empirical-load-calc__advanced[open] > summary { margin-bottom: 5px; color: #7dd3fc; }
+    .empirical-load-calc__advanced { min-width: 0; }
+    .empirical-load-calc__advanced[open] { grid-column: 1 / -1; border-top: 1px solid #1e293b; margin-top: 6px; padding-top: 8px; }
+    .empirical-load-calc__advanced > summary { list-style: none; }
+    .empirical-load-calc__advanced > summary::-webkit-details-marker { display: none; }
+    .empirical-load-calc__advanced > summary::marker { content: ''; }
     .empirical-load-calc__tabs { grid-column: 1 / -1; display: flex; align-items: center; gap: 3px; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
     .empirical-load-calc__tabs button { flex: 0 0 auto; min-height: 30px; border: 1px solid transparent; border-radius: 5px; padding: 4px 9px; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer; }
     .empirical-load-calc__tabs button:hover, .empirical-load-calc__tabs button:focus-visible, .empirical-load-calc__tabs button.is-active { border-color: #315070; background: #101b2b; color: var(--text-main); outline: none; }
@@ -194,7 +195,8 @@ export function advancedShellStyles() {
     .load-calc-topology-group .load-calc-error-check__issues { padding: 0 10px 10px; }
     .load-calc-topology-group .load-calc-error-check__issues li { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
     .load-calc-topology-group .load-calc-error-check__issues li > span > strong { display: block; margin-bottom: 3px; }
-    .load-calc-topology-skip { display: flex; align-items: center; gap: 6px; }
+    .load-calc-topology-skip { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .load-calc-topology-skip-error { flex-basis: 100%; margin: 0 0 4px; padding: 5px 8px; border: 1px solid #b91c1c; border-radius: 4px; background: #2a0b0b; color: #fca5a5 !important; font-size: 12px; text-align: left; }
     .load-calc-topology-skip select { max-width: 220px; padding: 6px; border: 1px solid #334155; border-radius: 4px; background: #07101e; color: #e2e8f0; }
     .load-calc-topology-fix-label { color: #4ade80 !important; font-size: 12px; white-space: nowrap; }
     .load-calc-error-check__passed { padding: 14px; border: 1px solid #166534; border-radius: 7px; background: rgba(22, 101, 52, 0.12); color: #4ade80; }

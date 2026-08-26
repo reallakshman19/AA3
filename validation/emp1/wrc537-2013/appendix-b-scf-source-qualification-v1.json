@@ -1,0 +1,91 @@
+{
+  "schema": "emp1-wrc537-appendix-b-scf-source-qualification/v1",
+  "status": "BLOCKED_PINNED_PRIMARY_PDF_NOT_BINARY_READABLE_IN_CURRENT_EXECUTION_INTERFACE",
+  "engineeringAuthority": false,
+  "productionImplementationAuthority": false,
+  "source": {
+    "document": "docs/emp1/WRC537_2013.pdf",
+    "edition": "2013 repository copy",
+    "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "gitBlob": "ce861233928154145a9257efbbf8dbef3f5a17d1",
+    "repositoryHeadAtQualificationStart": "66ddca891b9bac1339891b7229ec1e3163c9e933",
+    "binaryReadStatus": "PRESENT_BUT_CONTENT_NOT_RETURNED_BY_CONNECTED_REPOSITORY_INTERFACE",
+    "primarySourceVerifiedForImplementation": false
+  },
+  "existingSecondaryExtraction": {
+    "path": "docs/01_WRC537_METHOD_DEFINITION.md",
+    "state": "NOT_READY_FOR_IMPLEMENTATION",
+    "candidateEquationIds": ["B.3", "B.4", "B.5"],
+    "candidateFormulaTextAuthority": "REJECTED_FOR_IMPLEMENTATION_PENDING_PRIMARY_PAGE_VERIFICATION",
+    "reason": "The retained extraction was not made from the licensed primary PDF and its compact coefficient/exponent placement is not safely corroborated by the independent reproduction."
+  },
+  "nonAuthoritativeCorroboration": {
+    "sourceClass": "PUBLIC_REPRODUCTION_NOT_PINNED_PRIMARY_AUTHORITY",
+    "documentIdentityObserved": "WRC 537 Local Stresses in Spherical and Cylindrical Shells Due to External Loading",
+    "appendix": "B",
+    "observations": {
+      "appendixPurpose": "LOCAL_STRESS_CONCENTRATION_AT_FILLETS_AND_TRANSITIONS_FOR_EXTERNAL_LOAD_STRESS_APPLICATIONS",
+      "KnMeaning": "MEMBRANE_PORTION_STRESS_CONCENTRATION_FACTOR_FOR_EXTERNAL_NOZZLE_LOADINGS",
+      "KbMeaning": "BENDING_PORTION_STRESS_CONCENTRATION_FACTOR_FOR_EXTERNAL_NOZZLE_LOADINGS",
+      "filletShellJunctureLocation": "POINT_A_FIGURE_B4",
+      "shellFigureSelection": "FIGURE_B2_TENSION_FOR_Kn_AND_BENDING_FOR_Kb",
+      "shellRatio": "rA_over_T",
+      "generalInfinitePlateBasis": {
+        "shell_h": "2T",
+        "nozzle_h": "dn",
+        "dnMeaning": "OUTSIDE_DIAMETER_OF_NOZZLE"
+      },
+      "bendingAlternative": "ALTERNATE_RELATION_STATED_MORE_CONSISTENT_WITH_PETERSON_AND_SOMEWHAT_CONSERVATIVE_RELATIVE_TO_HEYWOOD",
+      "stressOrientation": "APPLIED_TO_STRESSES_PERPENDICULAR_TO_CHANGE_IN_SECTION",
+      "nozzlePipeJuncture": "SEPARATE_POINT_B_PROCEDURE_USES_EXTERNAL_REFERENCE_FIGURES_AND_FIGURE_B3",
+      "structuralAttachment": "B4_ALLOWS_POINT_A_TREATMENT_ANALOGOUS_TO_NOZZLE_WITH_SEPARATE_POINT_C_CONVENTIONAL_STRESS_APPLICATION"
+    },
+    "normalizedCandidateRelationsForReconciliationOnly": {
+      "tensionInfinitePlate": "KT = 1 + [1/(5.6*(r/h))]^0.65",
+      "bendingHeywoodInfinitePlate": "KB = 1 + [1/(10.74*(r/h))]^0.85",
+      "bendingPetersonConsistentAlternative": "KB = 1 + [1/(9.4*(r/h))]^0.80",
+      "authority": "NON_AUTHORITATIVE_RECONSTRUCTION_PENDING_PINNED_PRIMARY_PAGE_RENDER"
+    }
+  },
+  "transcriptionRisk": {
+    "classification": "MATERIAL_NUMERICAL_RISK",
+    "secondaryCandidateForm": {
+      "Kn": "1 + 0.65/(r/(2T))^5.6",
+      "KbHeywood": "1 + 0.85/(r/(2T))^10.75",
+      "KbPeterson": "1 + 0.80/(r/(2T))^9.4"
+    },
+    "disposition": "DO_NOT_IMPLEMENT_OR_HANDCALC_FROM_SECONDARY_CANDIDATE_FORM",
+    "reason": "Coefficient/exponent placement differs materially from the independently reproduced Appendix-B layout."
+  },
+  "resolvedWithoutPrimaryPromotion": {
+    "KnAndKbAreNotCosmetic": true,
+    "KnAppliesToMembranePortion": true,
+    "KbAppliesToBendingPortion": true,
+    "shellFilletRatioUses_rA_over_T": true,
+    "shellInfinitePlate_h_is_2T": true,
+    "nozzleInfinitePlate_h_is_dn": true,
+    "generalScfProductionAuthorityMayBeEnabled": false
+  },
+  "unresolvedPrimarySourceItems": [
+    "EXACT_PINNED_PDF_PAGE_RENDER_AND_PRINTED_PAGE_CUSTODY",
+    "EXACT_EQUATION_TYPOGRAPHY_FOR_B3_B4_B5",
+    "EXACT_EQUATION_NUMBER_MAPPING_ON_PINNED_2013_COPY",
+    "EXACT_BENDING_RELATION_SELECTION_POLICY_FOR_PRODUCT_USE",
+    "EXACT_APPLICABILITY_LIMITS_FOR_r_over_h_AND_GEOMETRY",
+    "EXACT_STATUS_OF_Kn_GE_1_AND_Kb_GE_1_AS_SOURCE_RULE_VS_RELATION_BEHAVIOR",
+    "EXACT_SCOPE_BOUNDARY_BETWEEN_SHELL_FILLET_POINT_A_NOZZLE_PIPE_POINT_B_AND_ATTACHMENT_POINT_C",
+    "EXACT_EXTERNAL_REFERENCE_DEPENDENCY_REQUIRED_FOR_POINT_B_OR_TAPERED_CASES"
+  ],
+  "authority": {
+    "historicalUnityCustodyMustRemainUnchanged": true,
+    "generalAppendixBAuthority": false,
+    "nonUnityAuthorized": false,
+    "equationSelectionPolicyQualified": false,
+    "licensedPrimarySourceVerifiedForImplementation": false,
+    "gammaExpansionAuthorized": false,
+    "pressureExpansionAuthorized": false,
+    "globalEmp1CRouteAuthority": false,
+    "releaseQualified": false
+  },
+  "nextGate": "RENDER_AND_INDEPENDENTLY_REVIEW_PINNED_WRC537_2013_APPENDIX_B_PAGES_BEFORE_ANY_FORMULA_IMPLEMENTATION"
+}

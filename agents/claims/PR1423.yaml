@@ -1,0 +1,28 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: PR1423
+owner: ChatGPT
+mission: "Reconcile Issue #1381 current WRC/code-acceptance authority boundary"
+branch: agent/issue-1381-code-acceptance-reconciliation-20260825
+pr: 1423
+issue: 1381
+umbrella_issue: 1389
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE_RECOVERY_ONLY_NO_PATH_OVERLAP
+claimed_paths:
+  - validation/emp1/wrc537-2013/stress-classification-code-boundary-v1.json
+  - scripts/emp1-wrc537-stress-classification-code-boundary-check.mjs
+  - docs/emp1/WRC537_2013_Stress_Classification_Code_Authority.md
+  - agents/PR1423_workreport.md
+  - agents/status/PR1423.yaml
+  - agents/claims/PR1423.yaml
+protected_paths:
+  - src/core/emp1/**
+  - validation/emp1/release/**
+  - validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json
+  - validation/emp1/wrc537-2013/gamma5-zero-dp-route-qualification-v2.json
+  - .github/workflows/**
+authority_boundary: "Source-governance reconciliation only; bounded WRC route authorization must not imply code stress classification, allowable comparison, code compliance, or release authority."
+invariant: "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_CODE_ACCEPTANCE"
+merge_authority: NOT_GRANTED
+state: ACTIVE_CURRENT_MAIN_RECOVERY

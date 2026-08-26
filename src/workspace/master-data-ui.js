@@ -1,7 +1,8 @@
-import { renderStandaloneImportMastersPanel } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-import-masters.js';
+import { renderStandaloneImportMastersPanel, mappingHealthText } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-import-masters.js';
+import { MASTER_FIELDS } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-fields-config.js';
 import { parseMasterFile, autoMapMasterColumns } from './master-data-events-handler.js';
 import { masterDataController } from './master-data-controller.js';
-import { normalizeLineList, normalizePipingClass, normalizeWeight, normalizeMaterialMap } from './master-data-normalizers.js';
+import { normalizeLineList, normalizePipingClass, normalizeWeight, normalizeMaterialMap, isMappedFieldSatisfied, derivationYieldsValues } from './master-data-normalizers.js';
 import { saveMappingForFile, getSavedMappingsForMaster } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-state.js';
 
 /**
@@ -21,6 +22,113 @@ function copyMapping(mapping) {
   return { ...(mapping || {}) };
 }
 
+/** Masters the Load Calc readiness projection counts as required in Step 4. */
+const LOAD_CALC_REQUIRED_MASTERS = Object.freeze(new Set(['lineList', 'pipingClass', 'weight']));
+
+const ACTION_STYLE = Object.freeze({
+  badgeBg: '#450a0a', badgeColor: '#fca5a5', borderColor: '#7f1d1d',
+});
+
+/**
+ * Mirrors the Step 4 readiness rule exactly: a required master counts as ready
+ * only with normalized rows and a source hash. The badge names the next actual
+ * step, because "imported" and "mapped" are separate states and a loaded file
+ * with unmapped columns is still not usable authority.
+ */
+function masterTabReadiness(master, masterKey, effectiveFieldMap) {
+  const ready = Array.isArray(master?.normalizedRows)
+    && master.normalizedRows.length > 0
+    && typeof master.sourceHash === 'string'
+    && master.sourceHash.length > 0;
+  if (ready) {
+    return {
+      code: 'READY',
+      badge: '✓',
+      badgeBg: '#052e16',
+      badgeColor: '#4ade80',
+      borderColor: '#166534',
+      title: `${master.normalizedRows.length} normalized row(s) with a source hash.`,
+    };
+  }
+  if (!LOAD_CALC_REQUIRED_MASTERS.has(masterKey)) {
+    return {
+      code: 'OPTIONAL',
+      badge: '',
+      badgeBg: '',
+      badgeColor: '',
+      borderColor: '#334155',
+      title: 'Optional for this load calculation.',
+    };
+  }
+
+  const rawRowCount = Array.isArray(master?.rawRows) ? master.rawRows.length : 0;
+  if (rawRowCount === 0) {
+    return {
+      ...ACTION_STYLE,
+      code: 'IMPORT',
+      badge: 'IMPORT',
+      title: 'No rows loaded. Choose a source file or fetch it from a path/URL.',
+    };
+  }
+
+  const fields = MASTER_FIELDS[masterKey]?.fields || [];
+  const fieldMap = effectiveFieldMap || master?.fieldMap || {};
+  const requiredFields = fields.filter((field) => field.required);
+  const unmapped = requiredFields.filter((field) => !isMappedFieldSatisfied(field, fieldMap));
+
+  // A derivation that yields nothing for every sampled row is not a mapping.
+  const brokenDerivation = requiredFields.find((field) => (
+    isMappedFieldSatisfied(field, fieldMap)
+    && !derivationYieldsValues(field, fieldMap, master?.rawRows)
+  ));
+  if (unmapped.length === 0 && brokenDerivation) {
+    const sourceLabel = fields.find((row) => row.name === brokenDerivation.derivableFrom)?.label
+      || brokenDerivation.derivableFrom;
+    return {
+      ...ACTION_STYLE,
+      code: 'MAP',
+      badge: 'CHECK',
+      title: `${brokenDerivation.label} is set to derive from ${sourceLabel}, but the mapped `
+        + `${sourceLabel} column produced no recognised nominal size. Map ${brokenDerivation.label} `
+        + `directly, or point ${sourceLabel} at the inch-size column.`,
+    };
+  }
+  if (unmapped.length > 0) {
+    const describe = (field) => {
+      const alternative = field.derivableFrom
+        ? ` (or ${fields.find((row) => row.name === field.derivableFrom)?.label || field.derivableFrom} to derive it)`
+        : '';
+      return `${field.label || field.name}${alternative}`;
+    };
+    return {
+      ...ACTION_STYLE,
+      code: 'MAP',
+      badge: `MAP ${requiredFields.length - unmapped.length}/${requiredFields.length}`,
+      title: `${rawRowCount} row(s) loaded, but required column(s) are not mapped: `
+        + `${unmapped.map(describe).join(', ')}. `
+        + 'Use Auto Map Fields or pick the columns, then press Apply Mapping.',
+    };
+  }
+
+  return {
+    ...ACTION_STYLE,
+    code: 'APPLY',
+    badge: 'APPLY',
+    title: `${rawRowCount} row(s) loaded and required columns are mapped, but the mapping `
+      + 'has not been applied yet. Press Apply Mapping to normalize the rows.',
+  };
+}
+
+/**
+ * Surviving tab selection for this panel.
+ *
+ * Applying a mapping publishes MASTER_DATA_UPDATED, which the Load Calc pane
+ * answers by rebuilding this panel from scratch. Per-mount state would reset the
+ * operator to the first tab on every apply, so the selection is held here.
+ * Only view state is retained; no mapping or engineering value is carried over.
+ */
+let lastActiveMasterTab = 'lineList';
+
 export function renderMasterDataUI(documentRef) {
   if (!documentRef) throw new TypeError('Master Data UI requires a document.');
   const container = documentRef.createElement('div');
@@ -31,7 +139,7 @@ export function renderMasterDataUI(documentRef) {
     current: {
       masterContext: null,
       supportConfigJson: '{}',
-      activeMainTab: 'lineList',
+      activeMainTab: lastActiveMasterTab,
       importMastersLoading: false,
       importMastersWriteBackStatus: '',
       masterDraftMappings: {},
@@ -51,6 +159,10 @@ export function renderMasterDataUI(documentRef) {
     stateRef.current.masterDraftMappings[masterKey] = copyMapping(mapping);
     stateRef.current.masterDraftDirty[masterKey] = true;
   };
+
+  // Assigned when the tab bar is built; lets draft edits repaint the badges
+  // without a full re-render that would drop focus from the select being used.
+  let repaintMasterTabBadges = () => {};
 
   const clearDraftMapping = (masterKey) => {
     delete stateRef.current.masterDraftMappings[masterKey];
@@ -75,6 +187,21 @@ export function renderMasterDataUI(documentRef) {
     });
   };
 
+  const seedDefaultMappings = () => {
+    const masters = masterDataController.getMasterData();
+    Object.keys(MASTER_FIELDS).forEach((masterKey) => {
+      const master = masters?.[masterKey];
+      const rawRows = Array.isArray(master?.rawRows) ? master.rawRows : [];
+      if (rawRows.length === 0) return;
+      if (stateRef.current.masterDraftMappings[masterKey]) return;
+      if (Object.keys(master?.fieldMap || {}).length > 0) return;
+      const detected = autoMapMasterColumns(rawRows, masterKey);
+      if (detected && Object.values(detected).some(Boolean)) {
+        setDraftMapping(masterKey, detected);
+      }
+    });
+  };
+
   const render = () => {
     container.innerHTML = '';
 
@@ -83,6 +210,13 @@ export function renderMasterDataUI(documentRef) {
     // engineering authority until Apply Mapping succeeds.
     stateRef.current.masterContext = masterDataController.getLegacyContext();
     stateRef.current.supportConfigJson = JSON.stringify(stateRef.current.masterContext.config || {});
+
+    // Offer the detected column mapping as the starting draft for any loaded
+    // master that has none, so the standard columns are already selected rather
+    // than requiring Auto Map to be pressed first. It stays a draft: nothing is
+    // committed to engineering authority until Apply Mapping succeeds, and an
+    // existing committed or operator-edited mapping is never overwritten.
+    seedDefaultMappings();
 
     // Top Navigation Tabs Bar
     const header = documentRef.createElement('div');
@@ -95,18 +229,59 @@ export function renderMasterDataUI(documentRef) {
       { id: 'materialMap', label: 'Material Map' }
     ];
 
+    // Step 4 reports one combined action count, so each sub-tab states its own
+    // readiness; otherwise the operator cannot tell which master is missing.
+    const masterState = masterDataController.getMasterData();
+
+    // The badge reflects the draft mapping, not just the committed one, so the
+    // required-field count responds while columns are still being selected.
+    const paintTab = (btn, tab) => {
+      const readiness = masterTabReadiness(
+        masterState?.[tab.id],
+        tab.id,
+        draftMappingFor(tab.id),
+      );
+      btn.textContent = tab.label;
+      btn.dataset.masterTab = tab.id;
+      btn.dataset.masterTabState = readiness.code;
+      btn.title = readiness.title;
+      if (readiness.badge) {
+        const badge = documentRef.createElement('span');
+        badge.textContent = readiness.badge;
+        badge.style.cssText = `margin-left:7px; padding:1px 6px; border-radius:999px; font-size:10px; font-weight:800; background:${readiness.badgeBg}; color:${readiness.badgeColor};`;
+        btn.appendChild(badge);
+      }
+      return readiness;
+    };
+    repaintMasterTabBadges = () => {
+      tabs.forEach((tab) => {
+        const btn = header.querySelector(`button[data-master-tab="${tab.id}"]`);
+        if (btn) paintTab(btn, tab);
+      });
+      const health = container.querySelector(`[data-mapping-health="${stateRef.current.activeMainTab}"]`);
+      if (health) {
+        const key = stateRef.current.activeMainTab;
+        health.textContent = mappingHealthText(
+          key,
+          MASTER_FIELDS[key]?.fields || [],
+          draftMappingFor(key),
+        );
+      }
+    };
+
     tabs.forEach(tab => {
       const btn = documentRef.createElement('button');
-      btn.textContent = tab.label;
+      const readiness = paintTab(btn, tab);
       const isActive = stateRef.current.activeMainTab === tab.id;
       btn.style.cssText = `
         background: ${isActive ? '#0284c7' : '#1e293b'};
         color: ${isActive ? '#fff' : '#94a3b8'};
-        border: 1px solid ${isActive ? '#0284c7' : '#334155'};
+        border: 1px solid ${isActive ? '#0284c7' : readiness.borderColor};
         padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;
       `;
       btn.addEventListener('click', () => {
         stateRef.current.activeMainTab = tab.id;
+        lastActiveMasterTab = tab.id;
         render();
       });
       header.appendChild(btn);
@@ -144,6 +319,7 @@ export function renderMasterDataUI(documentRef) {
           const mapping = autoMapMasterColumns(rawRows, masterKey);
           setDraftMapping(masterKey, mapping);
           projectDraftIntoControls(body, masterKey);
+          repaintMasterTabBadges();
           updateVisibleStatus(`Auto-mapped columns for ${masterKey}. Draft only — select Apply Mapping to validate and commit.`);
         }
       } else if (action === 'save-master-mapping') {
@@ -205,6 +381,7 @@ export function renderMasterDataUI(documentRef) {
         if (val) currentMap[fieldName] = val;
         else delete currentMap[fieldName];
         setDraftMapping(masterKey, currentMap);
+        repaintMasterTabBadges();
         updateVisibleStatus(`Mapping modified for ${masterKey}; draft only — select Apply Mapping to validate and commit.`);
         return;
       }
@@ -252,6 +429,16 @@ export function renderMasterDataUI(documentRef) {
     });
 
     container.appendChild(body);
+
+    const masterRowsLoaded = ['pipingClass', 'lineList', 'weight']
+      .some((key) => (masterState?.[key]?.rawRows?.length || 0) > 0);
+    if (masterRowsLoaded) {
+      const nudge = documentRef.createElement('div');
+      nudge.style.cssText = 'flex:none; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 20px; border-top:1px solid #1e293b; background:#0f172a; color:#94a3b8; font-size:12px;';
+      nudge.innerHTML = `<span>Masters loaded. Pipe section, fluid density and fitting weights are not filled in yet -- both are generated and reviewed in Enrichment &amp; Overrides, never written automatically.</span>
+        <button type="button" data-load-calc-tab="enrichment" style="flex:none; border:1px solid #0284c7; border-radius:4px; background:#0c253a; color:#e2e8f0; padding:6px 12px; font-weight:700; cursor:pointer;">Open Enrichment &amp; Overrides</button>`;
+      container.appendChild(nudge);
+    }
   };
 
   render();

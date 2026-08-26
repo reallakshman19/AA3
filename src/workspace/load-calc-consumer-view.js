@@ -46,9 +46,7 @@ function resolveRunAction(state) {
 function headerMarkup(state) {
   const freshness = state.distribution?.freshness?.status || 'NOT_CALCULATED';
   const authorization = state.authorizationState || {};
-  const empiricalScenario = state.empiricalScenarioState || {};
   const commonInput = state.commonInputState || {};
-  const activeMethod = empiricalScenario.method || 'CHAINAGE_TRIBUTARY_SPAN_V2';
   const commonSeal = commonInput.commonInput
     ? (commonInput.staleness?.stale ? 'STALE' : 'CURRENT')
     : 'NOT_SEALED';
@@ -59,7 +57,6 @@ function headerMarkup(state) {
   const authStatus = (authSt === 'EXECUTED_CURRENT' || authSt === 'AUTHORIZED_CURRENT') ? 'ok' : (authSt.includes('AWAITING') || authSt === 'DRAFT_READY' ? 'warn' : 'fail');
   const resultStatus = freshness === 'CURRENT' ? 'ok' : (freshness === 'NOT_CALCULATED' ? 'warn' : 'fail');
 
-  // Human-readable pill labels
   const SEAL_LABELS = { CURRENT: 'Sealed ✓', STALE: 'Seal stale ⚠', NOT_SEALED: 'Not sealed' };
   const AUTH_LABELS = {
     EXECUTED_CURRENT: 'Authorized ✓', AUTHORIZED_CURRENT: 'Authorized ✓',
@@ -71,7 +68,6 @@ function headerMarkup(state) {
   const sealLabel  = SEAL_LABELS[commonSeal]   || commonSeal;
   const authLabel  = AUTH_LABELS[authSt]        || authSt;
   const resultLabel = RESULT_LABELS[freshness]  || freshness;
-  const advancedOpen = !PRIMARY_TABS.has(state.activeTab);
 
   return `<header class="empirical-load-calc__header">
     <div><span class="panel-eyebrow">GUIDED WORKFLOW</span><h1>Support Load Calculation</h1></div>
@@ -81,37 +77,6 @@ function headerMarkup(state) {
       <span data-pill-status="${resultStatus}">${escapeHtml(resultLabel)}</span>
     </div>
     ${workflowMarkup(state, runAction)}
-    <details class="empirical-load-calc__advanced" ${advancedOpen ? 'open' : ''}>
-      <summary>Advanced tools <span>${escapeHtml(activeMethod)}</span></summary>
-      <nav class="empirical-load-calc__tabs" aria-label="Advanced load calculation views">
-        <button type="button" class="${state.activeTab === 'verify' || !state.activeTab ? 'is-active' : ''}" data-load-calc-tab="verify" title="Pre-run readiness checklist">★ Verify &amp; Run</button>
-        ${tabGroup('Setup', [
-          ['overview', 'Overview'],
-          ['project-data', 'Project Data'],
-          ['masters', 'Masters'],
-          ['enrichment', 'Enrichment & Overrides'],
-        ], state.activeTab)}
-        ${tabGroup('Scenario', [
-          ['restraints', 'Restraints'],
-          ['load-cases', 'Load Cases'],
-          ['methods', 'Methods'],
-        ], state.activeTab)}
-        ${tabGroup('Output', [
-          ['results', 'Results'],
-          ['loads', 'Load Evaluation'],
-          ['evidence', 'Evidence'],
-        ], state.activeTab)}
-        ${tabGroup('Diagnostics', [
-          ['preflight', 'Input Check'],
-          ['method-basis', 'Method Basis'],
-          ['seal-export', 'Seal & Export'],
-          ['json-trace', 'JSON Trace'],
-        ], state.activeTab)}
-        ${tabGroup('Model', [
-          ['3d', 'Model / 3D'],
-        ], state.activeTab)}
-      </nav>
-    </details>
     <div class="empirical-load-calc__actions">
       <button type="button" class="button button--primary" 
         ${runAction.eligible ? '' : 'disabled'}
@@ -136,11 +101,78 @@ const WORKFLOW_STEPS = Object.freeze([
   Object.freeze({ id: 'loads', label: 'View Loads', tab: 'loads' }),
 ]);
 
-/** Renders the owner-approved process without creating engineering readiness. */
 function workflowMarkup(state, runAction) {
   return `<nav class="empirical-load-calc__workflow" aria-label="Load calculation process">
     ${WORKFLOW_STEPS.map((step, index) => workflowStep(step, index, state, runAction)).join('')}
+    ${advancedToolsTileMarkup(state)}
   </nav>`;
+}
+
+/**
+ * Every view the 7 numbered steps don't cover (scenario configuration,
+ * diagnostics, export, 3D) lives behind one 8th tile instead of a permanently
+ * open strip underneath the guided row. It renders as a <details>/<summary>
+ * pair -- not a styled button -- so the disclosure semantics (and the e2e
+ * helper that opens it via `summary`) are unchanged; only its position and
+ * visual treatment move to match tiles 1-7.
+ *
+ * Five of its former entries (Verify & Run, Project Data, Masters, Load
+ * Evaluation, Input Check) pointed at tabs already reachable from the
+ * numbered row above -- same tab id, second button, no second view. They are
+ * intentionally not reproduced here; ADVANCED_TAB_GROUPS lists only tabs
+ * with no other entry point.
+ */
+// Keep in sync with the tabGroup(...) calls in advancedToolsTileMarkup()
+// below: one entry per tab rendered there, same id, same label. Used only to
+// show which advanced view is active in the tile-8 status line.
+const ADVANCED_TAB_LABELS = Object.freeze({
+  overview: 'Overview',
+  enrichment: 'Enrichment & Overrides',
+  restraints: 'Restraints',
+  'load-cases': 'Load Cases',
+  methods: 'Methods',
+  results: 'Results',
+  evidence: 'Evidence',
+  'method-basis': 'Method Basis',
+  'seal-export': 'Seal & Export',
+  'json-trace': 'JSON Trace',
+  '3d': 'Model / 3D',
+});
+const ADVANCED_TAB_COUNT = Object.keys(ADVANCED_TAB_LABELS).length;
+
+function advancedToolsTileMarkup(state) {
+  const advancedOpen = !PRIMARY_TABS.has(state.activeTab);
+  const statusLabel = advancedOpen ? (ADVANCED_TAB_LABELS[state.activeTab] || 'Open') : `${ADVANCED_TAB_COUNT} views`;
+  return `<details class="empirical-load-calc__advanced" ${advancedOpen ? 'open' : ''}>
+    <summary class="empirical-load-calc__workflow-step ${advancedOpen ? 'is-active' : ''}" data-step-state="${advancedOpen ? 'current' : 'pending'}">
+      <span class="empirical-load-calc__workflow-index">8</span>
+      <span class="empirical-load-calc__workflow-label">Advanced Tools</span>
+      <span class="empirical-load-calc__workflow-status">${escapeHtml(statusLabel)}</span>
+    </summary>
+    <nav class="empirical-load-calc__tabs" aria-label="Advanced load calculation views">
+      ${tabGroup('Setup', [
+        ['overview', 'Overview'],
+        ['enrichment', 'Enrichment & Overrides'],
+      ], state.activeTab)}
+      ${tabGroup('Scenario', [
+        ['restraints', 'Restraints'],
+        ['load-cases', 'Load Cases'],
+        ['methods', 'Methods'],
+      ], state.activeTab)}
+      ${tabGroup('Output', [
+        ['results', 'Results'],
+        ['evidence', 'Evidence'],
+      ], state.activeTab)}
+      ${tabGroup('Diagnostics', [
+        ['method-basis', 'Method Basis'],
+        ['seal-export', 'Seal & Export'],
+        ['json-trace', 'JSON Trace'],
+      ], state.activeTab)}
+      ${tabGroup('Model', [
+        ['3d', 'Model / 3D'],
+      ], state.activeTab)}
+    </nav>
+  </details>`;
 }
 
 function workflowStep(step, index, state, runAction) {
@@ -158,6 +190,10 @@ function workflowStep(step, index, state, runAction) {
   </button>`;
 }
 
+function actionRequiredState(state, count) {
+  return { state, label: `${count} action${count === 1 ? '' : 's'} required` };
+}
+
 function workflowStepState(stepId, stepIndex, activeStepId, state, runAction) {
   const readiness = state.workflowReadiness || {};
   const activeIndex = WORKFLOW_STEPS.findIndex((step) => step.id === activeStepId);
@@ -172,15 +208,33 @@ function workflowStepState(stepId, stepIndex, activeStepId, state, runAction) {
   }[stepId] === true;
 
   if (stepId === activeStepId) {
+    if (stepId === 'import' && !readiness.datasetReady) {
+      return { state: 'blocked', label: 'Import required' };
+    }
     if (stepId === 'topology' && readiness.topologyBlockerCount > 0) {
-      return { state: 'blocked', label: 'Fix needed' };
+      return actionRequiredState('blocked', readiness.topologyBlockerCount);
     }
     if (stepId === 'topology' && readiness.topologyReviewIssueCount > 0) {
-      return { state: 'review', label: 'Review' };
+      return actionRequiredState('review', readiness.topologyReviewIssueCount);
     }
     if (stepId === 'verify' && runAction.eligible) return { state: 'ready', label: 'Ready' };
+    if (stepId === 'preflight' && !readiness.validationEvaluated) {
+      return { state: 'blocked', label: 'Check required' };
+    }
+    if (stepId === 'preflight' && readiness.validationBlockerCount > 0) {
+      return actionRequiredState('blocked', readiness.validationBlockerCount);
+    }
     if (stepId === 'preflight' && readiness.validationState && readiness.validationState !== 'NOT_EVALUATED') {
       return { state: 'blocked', label: 'Review' };
+    }
+    if (stepId === 'project-data' && readiness.projectDataActionCount > 0) {
+      return actionRequiredState('blocked', readiness.projectDataActionCount);
+    }
+    if (stepId === 'masters' && readiness.masterDataActionCount > 0) {
+      return actionRequiredState('blocked', readiness.masterDataActionCount);
+    }
+    if ((stepId === 'verify' || stepId === 'loads') && !readiness.resultsCurrent) {
+      return { state: 'blocked', label: 'Action required' };
     }
     return { state: 'current', label: 'Current' };
   }
@@ -223,16 +277,13 @@ export function renderEngineeringLoadPane(
   )}${caseMarkup(distribution, supportSiteModel)}`;
 }
 
-/**
- * Keeps topology review inside Load Calc. The full editor remains an explicit
- * advanced action and is never opened merely by selecting workflow Step 2.
- */
 export function renderLoadCalcTopologyPane(
   container,
   supportSiteModel,
   routePartitionModel,
   topologyCheck,
   policyFeedback,
+  skipError = null,
 ) {
   if (!container) throw new TypeError('Load Calc Topology Fix requires a container.');
   const modelBlockers = loadModelTopologyBlockers(supportSiteModel, routePartitionModel);
@@ -272,7 +323,7 @@ export function renderLoadCalcTopologyPane(
       ${diagnosticCard('Skipped findings', topologyCheck?.skippedIssueCount ? 'REVIEW_REQUIRED' : 'READY', topologyCheck?.skippedIssueCount || 0)}
     </div>
     ${modelBlockerMarkup(modelBlockers)}
-    ${topologyFindingsMarkup(findings, topologyCheck)}
+    ${topologyFindingsMarkup(findings, topologyCheck, skipError)}
     ${topologyDispositionMarkup(status, topologyCheck)}
   </section>`;
 }
@@ -307,7 +358,6 @@ function modelBlockerMarkup(blockers) {
   </section>`;
 }
 
-/** Shows configuration and execution as separate actions with local feedback. */
 function topologyAutofixPolicyMarkup(gapToleranceMm, exactFixCount, policyFeedback) {
   const candidateMessage = exactFixCount > 0
     ? `${exactFixCount} certified source-backed endpoint gap(s) are eligible. Select Prepare auto-fix to create a 3D draft.`
@@ -329,7 +379,7 @@ function topologyAutofixPolicyMarkup(gapToleranceMm, exactFixCount, policyFeedba
   </section>`;
 }
 
-function topologyFindingsMarkup(findings, topologyCheck) {
+function topologyFindingsMarkup(findings, topologyCheck, skipError) {
   if (!findings.length) return '';
   const geometryFindings = findings.filter((finding) => !isSupportSemanticFinding(finding));
   const semanticFindings = findings.filter(isSupportSemanticFinding);
@@ -340,6 +390,7 @@ function topologyFindingsMarkup(findings, topologyCheck) {
       findings: geometryFindings,
       topologyCheck,
       sectionId: 'geometry',
+      skipError,
     })}
     ${topologyFindingSectionMarkup({
       title: 'Support semantics — engineering review',
@@ -347,12 +398,13 @@ function topologyFindingsMarkup(findings, topologyCheck) {
       findings: semanticFindings,
       topologyCheck,
       sectionId: 'support-semantics',
+      skipError,
     })}
     <button type="button" class="button" data-load-calc-topology-review-download>Download review record</button>
   </div>`;
 }
 
-function topologyFindingSectionMarkup({ title, description, findings, topologyCheck, sectionId }) {
+function topologyFindingSectionMarkup({ title, description, findings, topologyCheck, sectionId, skipError }) {
   if (!findings.length) return '';
   const exactFixIds = new Set(topologyCheck?.autoFix?.exactGapIssueIds || []);
   const groups = groupTopologyFindings(findings);
@@ -361,6 +413,7 @@ function topologyFindingSectionMarkup({ title, description, findings, topologyCh
     <div class="load-calc-topology-groups">${groups.map((group) => topologyFindingGroupMarkup(
       group,
       exactFixIds,
+      skipError,
     )).join('')}</div>
   </section>`;
 }
@@ -382,7 +435,7 @@ function groupTopologyFindings(findings) {
     .sort((left, right) => left.key.localeCompare(right.key));
 }
 
-function topologyFindingGroupMarkup(group, exactFixIds) {
+function topologyFindingGroupMarkup(group, exactFixIds, skipError) {
   const first = group.rows[0];
   const openCount = group.rows.filter((finding) => finding.reviewDisposition !== 'SKIPPED').length;
   const blockingCount = group.rows.filter((finding) => (
@@ -390,16 +443,51 @@ function topologyFindingGroupMarkup(group, exactFixIds) {
   )).length;
   const skippedCount = group.rows.filter((finding) => finding.reviewDisposition === 'SKIPPED').length;
   const status = blockingCount > 0 ? 'blocked' : openCount > 0 || skippedCount > 0 ? 'review' : 'ready';
-  return `<details class="load-calc-topology-group" data-status="${status}">
+  return `<details class="load-calc-topology-group" data-status="${status}"${openCount > 0 ? ' open' : ''}>
     <summary><strong>${escapeHtml(`${first.severity} ${first.kind}`)}</strong><span>${group.rows.length} finding(s) · ${openCount} open${skippedCount ? ` · ${skippedCount} skipped` : ''}</span></summary>
     <ul class="load-calc-error-check__issues">${group.rows.map((finding) => topologyFindingRowMarkup(
       finding,
       exactFixIds.has(finding.id),
+      skipError,
     )).join('')}</ul>
   </details>`;
 }
 
-function topologyFindingRowMarkup(finding, exactFixAvailable) {
+const PLAIN_FINDING_GUIDANCE = Object.freeze({
+  REVIEW_CERTIFIED_GAP_FIX: {
+    summary: 'Two pipe ends are slightly apart. Use the certified auto-fix if one is available, or review it manually.',
+    fix: 'If a certified auto-fix is listed above, apply it. Otherwise, correct the pipe endpoints in the source model so they meet within the gap tolerance, then re-import the dataset.',
+  },
+  CLASSIFY_RESTRAINT_FAMILY: {
+    summary: "This support's type (guide, spring, hanger, anchor, etc.) isn't stated in the source data, so it needs to be classified before it can be used in the load calculation.",
+    fix: 'Edit this support in the source model so one of its fields (Support Type, Support Kind, MDSSUPPTYPE, or CMPSUPTYPE) clearly states its type — e.g. Guide, Anchor, Spring, Hanger, Line Stop, or Rest — then re-import. If you already know the correct type from engineering judgment or approved master data, use Skip below to record that decision and continue.',
+  },
+  ENGINEERING_REVIEW: {
+    summary: 'This needs an engineer to look at it.',
+    fix: 'Have an engineer review this finding. If it is acceptable as-is, use Skip below to record the decision and continue.',
+  },
+});
+
+function topologyFindingGuidance(finding) {
+  return PLAIN_FINDING_GUIDANCE[finding.userAction] || {
+    summary: finding.disposition === 'BLOCK'
+      ? 'This must be resolved before you can continue.'
+      : 'This needs review, but it will not stop you from continuing.',
+    fix: finding.disposition === 'BLOCK'
+      ? 'Resolve the underlying issue in the source model, then re-import the dataset.'
+      : 'Review the finding. If it is acceptable as-is, use Skip below to record the decision and continue.',
+  };
+}
+
+function topologyFindingPlainSummary(finding) {
+  const { summary } = topologyFindingGuidance(finding);
+  const stakes = finding.disposition === 'BLOCK'
+    ? 'Blocks progress until it is resolved.'
+    : 'Does not block progress, but is kept in the review record.';
+  return `${summary} ${stakes}`;
+}
+
+function topologyFindingRowMarkup(finding, exactFixAvailable, skipError) {
   const scope = topologyFindingScope(finding);
   const fix = exactFixAvailable
     ? `Auto-fix candidate at ${Number(finding.distanceMm).toFixed(3)} mm`
@@ -414,25 +502,34 @@ function topologyFindingRowMarkup(finding, exactFixAvailable) {
   const sourceEvidence = finding.sourceLabel
     ? `<small class="load-calc-topology-source-label">Source evidence: ${escapeHtml(finding.sourceLabel)}</small>`
     : '';
+  const possibleFix = finding.reviewDisposition === 'SKIPPED'
+    ? ''
+    : `<p class="load-calc-topology-possible-fix"><strong>Possible fix:</strong> ${escapeHtml(topologyFindingGuidance(finding).fix)}</p>`;
   return `<li data-topology-finding-id="${escapeHtml(finding.id)}">
-    <span><strong>${escapeHtml(scope)}</strong>${sourceEvidence}${escapeHtml(finding.message)}<small>${escapeHtml(disposition)}</small></span>
-    ${topologyFindingActionMarkup(finding, exactFixAvailable)}
+    <span><strong>${escapeHtml(scope)}</strong>${sourceEvidence}<p class="load-calc-topology-plain-summary">${escapeHtml(topologyFindingPlainSummary(finding))}</p>${possibleFix}<small class="load-calc-topology-technical-detail">${escapeHtml(finding.message)}</small><small>${escapeHtml(disposition)}</small></span>
+    ${topologyFindingActionMarkup(finding, exactFixAvailable, skipError)}
   </li>`;
 }
 
-function topologyFindingActionMarkup(finding, exactFixAvailable) {
-  if (finding.disposition !== 'BLOCK' || finding.id.startsWith('system:')) return '';
+function topologyFindingActionMarkup(finding, exactFixAvailable, skipError) {
+  if (!['BLOCK', 'REVIEW'].includes(finding.disposition) || finding.id.startsWith('system:')) return '';
   if (finding.reviewDisposition === 'SKIPPED') {
-    return `<button type="button" class="button" data-load-calc-topology-restore="${escapeHtml(finding.id)}">Restore blocker</button>`;
+    const restoreLabel = finding.disposition === 'BLOCK' ? 'Restore blocker' : 'Restore for review';
+    return `<button type="button" class="button" data-load-calc-topology-restore="${escapeHtml(finding.id)}">${restoreLabel}</button>`;
   }
   if (exactFixAvailable) return '<span class="load-calc-topology-fix-label">Use certified AutoFix above</span>';
+  const error = skipError && skipError.findingId === finding.id
+    ? `<p class="load-calc-topology-skip-error" role="alert">${escapeHtml(skipError.message)}</p>`
+    : '';
   return `<div class="load-calc-topology-skip">
+    ${error}
     <select data-load-calc-topology-skip-reason aria-label="Reason for skipping this finding">
-      <option value="">Select reviewed reason…</option>
+      <option value="">Pick a reason first (required)…</option>
       <option value="CONFIRMED_VALID_SOURCE_GEOMETRY">Confirmed valid source geometry</option>
       <option value="INTENTIONAL_INDEPENDENT_SYSTEM">Intentional independent system</option>
       <option value="KNOWN_SOURCE_DATA_LIMITATION">Known source-data limitation</option>
       <option value="ACCEPTED_FOR_CURRENT_CALCULATION">Accepted for current calculation</option>
+      <option value="CONFIRMED_BY_ENGINEER_OUTSIDE_TOOL">Confirmed by engineer using source or approved master data</option>
     </select>
     <button type="button" class="button" data-load-calc-topology-skip="${escapeHtml(finding.id)}">Skip</button>
   </div>`;
@@ -447,14 +544,20 @@ function topologyFindingScope(finding) {
 }
 
 function topologyStatusMessage(status, topologyCheck) {
+  const skipped = topologyCheck?.skippedIssueCount || 0;
+  const skippedNote = skipped ? ` ${skipped} finding(s) have been marked as reviewed and skipped.` : '';
   if (status === 'BLOCKED') {
-    const skipped = topologyCheck?.skippedIssueCount || 0;
-    return `${topologyCheck?.blockingIssueCount || 0} open blocking canonical finding(s) or load-model prerequisite(s) must be resolved.${skipped ? ` ${skipped} finding(s) have recorded skip receipts.` : ''}`;
+    const count = topologyCheck?.blockingIssueCount || 0;
+    return `${count} issue${count === 1 ? '' : 's'} must be fixed before you can continue.${skippedNote}`;
   }
   if (status === 'REVIEW_REQUIRED') {
-    return `${topologyCheck?.reviewIssueCount || 0} medium/low finding(s) and ${topologyCheck?.skippedIssueCount || 0} skipped blocker(s) remain in the review record.`;
+    const count = topologyCheck?.reviewIssueCount || 0;
+    const base = count > 0
+      ? `${count} item${count === 1 ? '' : 's'} need review, but you can continue for now.`
+      : 'You can continue for now.';
+    return `${base}${skippedNote}`;
   }
-  return 'The committed canonical topology has no findings requiring action.';
+  return 'No issues found. You can continue to the next step.';
 }
 
 function topologyDispositionMarkup(status, topologyCheck) {
@@ -465,7 +568,11 @@ function topologyDispositionMarkup(status, topologyCheck) {
     const fixMessage = exactFixCount
       ? ` ${exactFixCount} source-backed gap fix(es) strictly below ${escapeHtml(gapToleranceMm)} mm can be prepared automatically.`
       : ' No source-backed automatic fix is available for the current findings.';
-    return `<p class="load-calc-error-check__blocked">Topology is blocked. Resolve HIGH findings and load-model prerequisites before continuing.${fixMessage}</p>`;
+    const plainFix = exactFixCount
+      ? ' You can use the certified auto-fix below to resolve some of them automatically.'
+      : ' None of them can be fixed automatically, so they need manual attention.';
+    return `<p class="load-calc-error-check__blocked-plain">Some findings must be resolved before you can continue.${plainFix}</p>`
+      + `<p class="load-calc-error-check__blocked">Topology is blocked. Resolve HIGH findings and load-model prerequisites before continuing.${fixMessage}</p>`;
   }
   if (status === 'REVIEW_REQUIRED') {
     const reviewCount = topologyCheck?.reviewIssueCount || 0;
@@ -477,7 +584,10 @@ function topologyDispositionMarkup(status, topologyCheck) {
     const gapToleranceMm = topologyCheck?.autoFix?.exactToleranceMm
       || TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM;
     const findingDetail = kindSummary ? ` (${escapeHtml(kindSummary)})` : '';
-    return `<p class="load-calc-error-check__review">Review required: ${reviewCount} unresolved topology finding(s)${findingDetail}; ${topologyCheck?.skippedIssueCount || 0} recorded skip(s). Geometry findings remain governed by source-backed TopoFix policy. Support-semantic reviews require source or approved-master evidence and are never made repairable by changing the ${escapeHtml(gapToleranceMm)} mm gap limit. TopoFix only prepares certified positive SNAP_GAP merges strictly below that limit and never joins separate routes by inference.</p>`;
+    return `<p class="load-calc-error-check__review-plain">These findings only need a review — they will not stop you from continuing. The tool cannot fix them automatically (the ${escapeHtml(gapToleranceMm)} mm gap limit does not apply to them), so each one is either corrected in the source data or signed off by you. To sign one off, open a finding below, pick a reason and press "Skip". To move on without deciding yet, press "Acknowledge review &amp; continue".</p>`
+      + `<details class="load-calc-error-check__review-detail"><summary>Why these are flagged (technical)</summary>`
+      + `<p class="load-calc-error-check__review">Review required: ${reviewCount} unresolved topology finding(s)${findingDetail}; ${topologyCheck?.skippedIssueCount || 0} recorded skip(s). Geometry findings remain governed by source-backed TopoFix policy. Support-semantic reviews require source or approved-master evidence and are never made repairable by changing the ${escapeHtml(gapToleranceMm)} mm gap limit. TopoFix only prepares certified positive SNAP_GAP merges strictly below that limit and never joins separate routes by inference.</p>`
+      + `</details>`;
   }
   return '<p class="load-calc-error-check__passed">Topology check passed. Continue to the next step.</p>';
 }
@@ -529,19 +639,47 @@ function caseMarkup(distribution, supportSiteModel) {
   if (!distribution?.loadCases?.length) return '<p class="panel-empty">A current authorized empirical package is required before calculation.</p>';
   const primaryBySite = new Map((supportSiteModel?.sites || []).map((site) => [site.siteId, site.primaryEntityId]));
   const current = distribution.freshness?.status === 'CURRENT';
-  return distribution.loadCases.map((loadCase) => `<section class="load-case-evidence">
+  return distribution.loadCases.map((loadCase) => {
+    const acceptedCurrent = current && isPublishableCaseStatus(loadCase.status);
+    return `<section class="load-case-evidence" data-load-case-status="${escapeHtml(loadCase.status)}">
     <h2>${escapeHtml(loadCase.loadCaseId)} <span>${escapeHtml(loadCase.status)}${current ? '' : ' / STALE'}</span></h2>
+    ${completenessMarkup(loadCase.completenessAudit, loadCase.status, current)}
     ${blockerMarkup(loadCase.blockers)}
-    <table><thead><tr><th>Support site</th><th>Status</th><th>Vertical force (N, source Z-up)</th><th>Contributors</th></tr></thead>
-    <tbody>${loadCase.supportResults.map((row) => `<tr><td><button type="button" data-load-support-entity-id="${escapeHtml(primaryBySite.get(row.supportSiteId) || '')}">${escapeHtml(row.supportSiteId)}</button></td><td>${escapeHtml(row.status)}${current ? '' : ' / STALE'}</td><td>${force(row.verticalForceN, current && loadCase.status === 'CALCULATED' && row.status === 'CALCULATED')}</td><td>${integer(row.contributorIds?.length)}</td></tr>`).join('')}</tbody></table>
+    <table><thead><tr><th>Support site</th><th>Status</th><th>Vertical force (N, source Z-up)</th><th>Transfer moment demand (N·mm)</th><th>Contributors</th></tr></thead>
+    <tbody>${loadCase.supportResults.map((row) => `<tr><td><button type="button" data-load-support-entity-id="${escapeHtml(primaryBySite.get(row.supportSiteId) || '')}">${escapeHtml(row.supportSiteId)}</button></td><td>${escapeHtml(row.status)}${current ? '' : ' / STALE'}</td><td>${force(row.verticalForceN, acceptedCurrent && isPublishableCaseStatus(row.status))}</td><td>${moment(row.cantileverMomentDemandNmm, acceptedCurrent && isPublishableCaseStatus(row.status))}</td><td>${integer(row.contributorIds?.length)}</td></tr>`).join('')}</tbody></table>
+    <details ${loadCase.status === 'CALCULATED_WITH_EXCEPTIONS' ? 'open' : ''}><summary>Exceptions (${integer(loadCase.exceptionLedger?.length)})</summary><pre>${escapeHtml(JSON.stringify(loadCase.exceptionLedger || [], null, 2))}</pre></details>
     <details><summary>Contribution ledger (${integer(loadCase.contributionLedger?.length)})</summary><pre>${escapeHtml(JSON.stringify(loadCase.contributionLedger || [], null, 2))}</pre></details>
     <details><summary>Excluded inputs (${integer(loadCase.excludedInputs?.length)})</summary><pre>${escapeHtml(JSON.stringify(loadCase.excludedInputs || [], null, 2))}</pre></details>
-  </section>`).join('');
+    <details><summary>Equilibrium / route closure</summary><pre>${escapeHtml(JSON.stringify(loadCase.equilibrium || null, null, 2))}</pre></details>
+  </section>`;
+  }).join('');
+}
+
+function completenessMarkup(audit, status, current) {
+  if (!audit) return '';
+  const state = status === 'CALCULATED_WITH_EXCEPTIONS'
+    ? 'exceptions'
+    : status === 'CALCULATED'
+      ? 'complete'
+      : 'failed';
+  return `<section class="load-case-completeness" data-completeness-state="${state}">
+    <strong>${current ? 'Current result' : 'Historical result'} · ${escapeHtml(status)}</strong>
+    <dl>
+      <dt>Evaluated force</dt><dd>${engineeringNumber(audit.evaluatedForceN, 'N')}</dd>
+      <dt>Allocated force</dt><dd>${engineeringNumber(audit.allocatedForceN, 'N')}</dd>
+      <dt>Unallocated force</dt><dd>${engineeringNumber(audit.unallocatedForceN, 'N')}</dd>
+      <dt>Coverage</dt><dd>${percentage(audit.coverageRatio)}</dd>
+      <dt>Boundary-transfer moment</dt><dd>${engineeringNumber(audit.boundaryTransferMomentNmm, 'N·mm')}</dd>
+      <dt>Unallocated first moment</dt><dd>${engineeringNumber(audit.unallocatedFirstMomentNmm, 'N·mm')}</dd>
+      <dt>Exceptions</dt><dd>${integer(audit.exceptionCount)}</dd>
+      <dt>Excluded inputs</dt><dd>${integer(audit.excludedContributionCount)}</dd>
+    </dl>
+  </section>`;
 }
 
 function blockerMarkup(blockers) {
   if (!blockers?.length) return '';
-  return `<details open class="load-blockers"><summary>Blocked inputs (${blockers.length})</summary><ul>${blockers.map((row) => `<li><strong>${escapeHtml(row.code || 'BLOCKED')}</strong> ${escapeHtml(row.path || row.routeId || '')} ${escapeHtml(row.message || '')}</li>`).join('')}</ul></details>`;
+  return `<details open class="load-blockers"><summary>Blocking failures (${blockers.length})</summary><ul>${blockers.map((row) => `<li><strong>${escapeHtml(row.code || 'BLOCKED')}</strong> ${escapeHtml(row.path || row.routeId || '')} ${escapeHtml(row.message || '')}</li>`).join('')}</ul></details>`;
 }
 
 function authorizationReason(state) {
@@ -571,13 +709,31 @@ function authorizationReason(state) {
     : 'Authorized empirical calculation is disabled.';
 }
 
-function force(value, acceptedCurrent) {
-  if (!acceptedCurrent) return Number.isFinite(value) ? `${value.toFixed(3)} (HISTORICAL)` : 'BLOCKED';
-  return Number.isFinite(value) ? value.toFixed(3) : 'BLOCKED';
+function isPublishableCaseStatus(value) {
+  return value === 'CALCULATED' || value === 'CALCULATED_WITH_EXCEPTIONS';
 }
+
+function force(value, acceptedCurrent) {
+  if (!acceptedCurrent) return Number.isFinite(value) ? `${value.toFixed(3)} (HISTORICAL)` : 'FAILED';
+  return Number.isFinite(value) ? value.toFixed(3) : '—';
+}
+
+function moment(value, acceptedCurrent) {
+  if (!acceptedCurrent) return Number.isFinite(value) ? `${value.toFixed(3)} (HISTORICAL)` : '—';
+  return Number.isFinite(value) ? value.toFixed(3) : '—';
+}
+
+function engineeringNumber(value, unit) {
+  return Number.isFinite(value) ? `${value.toFixed(3)} ${unit}` : '—';
+}
+
+function percentage(value) {
+  return Number.isFinite(value) ? `${(value * 100).toFixed(1)} %` : '—';
+}
+
 function integer(value) { return Number.isInteger(value) ? String(value) : '—'; }
 function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>\"]/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;',
+  return String(value ?? '').replace(/[&<>"]/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
   })[character]);
 }

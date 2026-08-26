@@ -9,8 +9,30 @@ import {
   migrateFirstCutEnrichment,
   resolveNonFeaEnrichment,
 } from '../../core/non-fea-enrichment/index.js';
+import { openFittingWeightDialog } from '../load-calc-fitting-weight-dialog.js';
+import { buildLoadCalcMasterEnrichmentProposals } from '../load-calc-master-candidates.js';
+import { masterDataController } from '../master-data-controller.js';
+import { projectDataStore } from '../project-data/project-data-store.js';
 import { WorkspaceState } from '../workspace-state.js';
 import { nonFeaEnrichmentStore } from './non-fea-enrichment-store.js';
+
+const VALIDATE_INPUT_CAUSES_BY_FIELD = Object.freeze({
+  PIPE_OUTER_DIAMETER: Object.freeze(['SECTION_COVERAGE_INCOMPLETE', 'MASS_COVERAGE_INCOMPLETE']),
+  PIPE_WALL_THICKNESS: Object.freeze(['SECTION_COVERAGE_INCOMPLETE', 'MASS_COVERAGE_INCOMPLETE']),
+  MATERIAL_DENSITY: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  UNIT_PIPE_WEIGHT: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  OPERATING_FLUID_DENSITY: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  HYDRO_FLUID_DENSITY: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  OPERATING_FLUID_WEIGHT: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  HYDRO_FLUID_WEIGHT: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  INSULATION_THICKNESS: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  INSULATION_DENSITY: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  INSULATION_WEIGHT: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  COMPONENT_WEIGHT: Object.freeze(['MASS_COVERAGE_INCOMPLETE']),
+  ELASTIC_MODULUS: Object.freeze(['FLEXURAL_COVERAGE_INCOMPLETE']),
+  SECOND_MOMENT_AREA: Object.freeze(['FLEXURAL_COVERAGE_INCOMPLETE']),
+  FLEXURAL_RIGIDITY: Object.freeze(['FLEXURAL_COVERAGE_INCOMPLETE']),
+});
 
 /** Common exact enrichment and override review surface. */
 export function renderNonFeaEnrichmentView(container, onChanged) {
@@ -55,12 +77,15 @@ function markup(snapshot, derived, sourceModel) {
       <div><div class="nfe__title"><span class="panel-eyebrow">COMMON PREPROCESSING</span><span class="nfe__badge">PHASE 3 · ENRICHMENT & OVERRIDES</span></div>
         <h2>Enrichment & Overrides</h2><p>Review exact source-bound evidence without mutating the imported model or repairing topology.</p></div>
       <div class="nfe__actions">
+        <button type="button" data-load-calc-tab="preflight">Open Validate Input</button>
         <label>Import legacy records / sidecar<input type="file" accept=".json,.csv,application/json,text/csv" data-enrichment-import hidden></label>
-        <button type="button" data-enrichment-export ${derived.sidecar ? '' : 'disabled'}>Export accepted sidecar</button>
+        <button type="button" data-enrichment-generate-master>Generate proposals from approved masters</button>
+        <button type="button" data-enrichment-review-fitting-weights>Review fitting weights…</button>
+        <button type="button" data-enrichment-export ${derived.sidecar ? '' : 'disabled'}>Export accepted overrides (sidecar)</button>
         <button type="button" data-enrichment-clear>Clear staged state</button>
       </div>
     </header>
-    <section class="nfe__boundary"><strong>Boundary:</strong> exact selectors only. Fuzzy candidates remain proposals. Enrichment cannot alter coordinates, ports, connectivity, attachment, support membership, or canonical topology.</section>
+    <section class="nfe__boundary"><strong>Boundary:</strong> exact selectors only. Fuzzy candidates remain proposals. Enrichment cannot alter coordinates, ports, connectivity, attachment, support membership, or canonical topology. Validate Input cause labels below are dependency disclosures only; only the common checker can clear a blocker.</section>
     ${messages(snapshot, derived)}
     <section class="nfe__metrics">
       ${metric('Source', sourceModel ? 'CURRENT' : 'NOT_LOADED', sourceModel ? 'ready' : 'blocked')}
@@ -104,8 +129,8 @@ function proposalForm() {
 function proposalTable(snapshot) {
   return `<section class="nfe-panel" data-role="enrichment-proposals"><header><div><span class="panel-eyebrow">PROPOSAL / ACCEPTANCE</span><h3>Staged proposals</h3></div>${snapshot.proposals.length ? '<button type="button" data-enrichment-accept-all>Accept all unblocked</button>' : ''}</header>
     ${snapshot.proposals.length ? table(
-      ['Proposal', 'Exact selector', 'Field / value', 'Authority', 'Decision'],
-      snapshot.proposals.map((proposal) => `<tr><td><strong>${escape(proposal.proposalId)}</strong><small>${escape(proposal.rationale)}</small></td><td>${escape(proposal.record.selectorKind)}<code>${escape(proposal.record.selectorKey)}</code></td><td>${escape(proposal.record.fieldId)}<code>${escape(proposal.record.value)} ${escape(proposal.record.unit)}</code></td><td>${escape(proposal.record.authority)}</td><td><button type="button" data-enrichment-accept="${escape(proposal.proposalId)}">Accept exact</button><button type="button" data-enrichment-reject="${escape(proposal.proposalId)}">Reject</button></td></tr>`),
+      ['Proposal', 'Exact selector', 'Field / value', 'Validate Input evidence', 'Authority', 'Decision'],
+      snapshot.proposals.map((proposal) => `<tr><td><strong>${escape(proposal.proposalId)}</strong><small>${escape(proposal.rationale)}</small></td><td>${escape(proposal.record.selectorKind)}<code>${escape(proposal.record.selectorKey)}</code></td><td>${escape(proposal.record.fieldId)}<code>${escape(proposal.record.value)} ${escape(proposal.record.unit)}</code></td><td>${validateInputImpactMarkup(proposal.record.fieldId)}</td><td>${escape(proposal.record.authority)}</td><td><button type="button" data-enrichment-accept="${escape(proposal.proposalId)}">Accept exact</button><button type="button" data-enrichment-reject="${escape(proposal.proposalId)}">Reject</button></td></tr>`),
     ) : '<p class="empty">No proposals are staged.</p>'}
   </section>`;
 }
@@ -113,10 +138,30 @@ function proposalTable(snapshot) {
 function acceptedTable(snapshot) {
   return `<section class="nfe-panel" data-role="enrichment-accepted"><header><div><span class="panel-eyebrow">ACCEPTED SIDECAR</span><h3>Exact reusable records</h3></div><strong>${snapshot.acceptedRecords.length}</strong></header>
     ${snapshot.acceptedRecords.length ? table(
-      ['Record', 'Selector', 'Field / value', 'Source', ''],
-      snapshot.acceptedRecords.map((row) => `<tr><td><strong>${escape(row.recordId)}</strong><small>${escape(row.authority)}</small></td><td>${escape(row.selectorKind)}<code>${escape(row.selectorKey)}</code></td><td>${escape(row.fieldId)}<code>${escape(row.value)} ${escape(row.unit)}</code></td><td>${escape(row.sourceId)}@${escape(row.revision)}</td><td><button type="button" data-enrichment-remove="${escape(row.recordId)}">Remove</button></td></tr>`),
+      ['Record', 'Selector', 'Field / value', 'Validate Input evidence', 'Source', ''],
+      snapshot.acceptedRecords.map((row) => `<tr><td><strong>${escape(row.recordId)}</strong><small>${escape(row.authority)}</small></td><td>${escape(row.selectorKind)}<code>${escape(row.selectorKey)}</code></td><td>${escape(row.fieldId)}<code>${escape(row.value)} ${escape(row.unit)}</code></td><td>${validateInputImpactMarkup(row.fieldId)}</td><td>${escape(row.sourceId)}@${escape(row.revision)}</td><td><button type="button" data-enrichment-remove="${escape(row.recordId)}">Remove</button></td></tr>`),
     ) : '<p class="empty">No accepted records. Source values remain unchanged.</p>'}
   </section>`;
+}
+
+function validateInputImpactMarkup(fieldId) {
+  const causes = validateInputCausesForField(fieldId);
+  if (!causes.length) return '<span class="nfe-impact-none">No coverage cause mapping</span>';
+  return `<div class="nfe-impact-causes">${causes.map((code) => `<code data-validate-input-cause="${escape(code)}">${escape(code)}</code>`).join('')}</div>`;
+}
+
+function validateInputCausesForField(fieldId) {
+  return VALIDATE_INPUT_CAUSES_BY_FIELD[fieldId] || [];
+}
+
+function validateInputCausesForRecords(records) {
+  return [...new Set((records || []).flatMap((record) => validateInputCausesForField(record?.fieldId)))].sort();
+}
+
+function validateInputCauseMessage(records, subject = 'These proposals', verb = 'provide') {
+  const causes = validateInputCausesForRecords(records);
+  if (!causes.length) return `${subject} have no declared coverage cause mapping.`;
+  return `${subject} ${verb} evidence used by Validate Input cause(s): ${causes.join(', ')}. Validate Input must re-evaluate before any blocker can be considered cleared.`;
 }
 
 function resolutionTable(derived) {
@@ -179,12 +224,34 @@ function bind(container, sourceModel, derived, onChanged) {
   });
   container.addEventListener('click', (event) => {
     const accept = event.target.closest('[data-enrichment-accept]')?.dataset.enrichmentAccept;
-    if (accept) return attempt(() => nonFeaEnrichmentStore.acceptProposal(accept), onChanged);
+    if (accept) return attempt(() => {
+      const proposal = nonFeaEnrichmentStore.getSnapshot().proposals
+        .find((row) => row.proposalId === accept);
+      nonFeaEnrichmentStore.acceptProposal(accept);
+      if (proposal) {
+        nonFeaEnrichmentStore.setMessage(
+          `Accepted exact enrichment record ${proposal.record.recordId}. ${validateInputCauseMessage([proposal.record], 'This accepted record', 'provides')}`,
+        );
+      }
+    }, onChanged);
     const reject = event.target.closest('[data-enrichment-reject]')?.dataset.enrichmentReject;
     if (reject) return attempt(() => nonFeaEnrichmentStore.rejectProposal(reject), onChanged);
     const remove = event.target.closest('[data-enrichment-remove]')?.dataset.enrichmentRemove;
     if (remove) return attempt(() => nonFeaEnrichmentStore.removeAccepted(remove), onChanged);
-    if (event.target.closest('[data-enrichment-accept-all]')) return attempt(() => nonFeaEnrichmentStore.acceptAllProposals(), onChanged);
+    if (event.target.closest('[data-enrichment-accept-all]')) return attempt(() => {
+      const proposals = [...nonFeaEnrichmentStore.getSnapshot().proposals];
+      const records = proposals.map((proposal) => proposal.record);
+      nonFeaEnrichmentStore.acceptAllProposals();
+      nonFeaEnrichmentStore.setMessage(
+        `Accepted ${records.length} exact enrichment record(s). ${validateInputCauseMessage(records, 'These accepted records', 'provide')}`,
+      );
+    }, onChanged);
+    if (event.target.closest('[data-enrichment-generate-master]')) {
+      return attempt(() => generateMasterProposals(), onChanged);
+    }
+    if (event.target.closest('[data-enrichment-review-fitting-weights]')) {
+      return attempt(() => reviewFittingWeights(container.ownerDocument, onChanged), onChanged, false);
+    }
     if (event.target.closest('[data-enrichment-clear]')) return attempt(() => nonFeaEnrichmentStore.clear(), onChanged);
     if (event.target.closest('[data-enrichment-export]')) return attempt(() => downloadSidecar(container.ownerDocument, derived.sidecar), onChanged, false);
     if (event.target.closest('[data-enrichment-rebind]')) return attempt(() => rebind(sourceModel), onChanged);
@@ -219,6 +286,61 @@ function stageMigration(sourceModel, payload) {
     bindings: payload.bindings || [],
   });
   nonFeaEnrichmentStore.stageMigratedRecords(report);
+}
+
+/**
+ * Stages Load Calc enrichment proposals derived from already-approved Master
+ * Data. Proposals only: nothing is accepted here, and an approximate piping
+ * class match is reported rather than silently accepted, so the count of
+ * approximate matches is surfaced in the resulting status message.
+ */
+function generateMasterProposals() {
+  const dataset = WorkspaceState.getSnapshot()?.dataset;
+  if (!dataset?.sharedModel) throw new TypeError('An active dataset is required.');
+  const result = buildLoadCalcMasterEnrichmentProposals({
+    dataset,
+    masters: masterDataController.getMasterData(),
+    projectProfile: projectDataStore.getProfile(),
+  });
+  if (result.proposals.length === 0) {
+    const detail = result.blockers.length
+      ? ` ${result.blockers.length} blocker(s): ${[...new Set(result.blockers.map((row) => row.code))].join(', ')}.`
+      : '';
+    throw new TypeError(`No approved-master proposal could be derived for ${result.summary.pipeCount} pipe(s).${detail}`);
+  }
+  result.proposals.forEach((proposal) => nonFeaEnrichmentStore.stageProposal(proposal));
+  nonFeaEnrichmentStore.setMessage(
+    `Staged ${result.proposals.length} proposal(s) from approved masters. Nothing is written yet -- review them in Staged proposals below and press "Accept all unblocked". ${validateInputCauseMessage(result.proposals.map((proposal) => proposal.record))}`,
+  );
+  return result;
+}
+
+/**
+ * Opens the catalogue fitting weight review. Selections are staged as
+ * proposals rather than accepted directly, so a reviewer's choice still
+ * passes through the same explicit acceptance step as every other record.
+ */
+function reviewFittingWeights(documentRef, onChanged) {
+  const dataset = WorkspaceState.getSnapshot()?.dataset;
+  if (!dataset?.sharedModel) throw new TypeError('An active dataset is required.');
+  openFittingWeightDialog({
+    documentRef,
+    dataset,
+    masters: masterDataController.getMasterData(),
+    onAccept: (records) => {
+      records.forEach((record) => nonFeaEnrichmentStore.stageProposal({
+        proposalId: record.recordId,
+        rationale: `Reviewer selected ${record.evidence.selectedTypeDesc} from ${record.evidence.candidateCount} catalogue candidate(s) for ${record.evidence.componentDescription || record.selectorKey}.`,
+        record,
+      }));
+      if (records.length > 0) {
+        nonFeaEnrichmentStore.setMessage(
+          `Staged ${records.length} fitting-weight proposal(s). Nothing is written yet -- review them in Staged proposals below and press "Accept all unblocked". ${validateInputCauseMessage(records)}`,
+        );
+      }
+      onChanged?.();
+    },
+  });
 }
 
 function rebind(sourceModel) {
@@ -288,6 +410,6 @@ function escape(value) { return String(value ?? '').replace(/[&<>"']/g, (charact
 
 function styles() {
   return `<style>
-    .nfe{height:100%;overflow:auto;padding:16px 16px 96px;scroll-padding-block:160px 96px;box-sizing:border-box;background:#07101e;color:#e2e8f0}.nfe__header,.nfe-panel>header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.nfe h2,.nfe h3{margin:3px 0}.nfe p{color:#94a3b8}.nfe__title{display:flex;gap:8px;align-items:center}.nfe__badge,.chip{padding:3px 7px;border:1px solid #0ea5e9;border-radius:999px;font-size:10px}.nfe__actions{display:flex;gap:6px;flex-wrap:wrap}.nfe button,.nfe__actions label{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:7px 9px;cursor:pointer}.nfe button:disabled{opacity:.45}.nfe__boundary{margin:12px 0;padding:10px;border:1px solid #155e75;border-radius:6px;background:#082f49;color:#bae6fd}.nfe__metrics{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:8px}.metric,.nfe-panel{padding:11px;border:1px solid #293548;border-radius:7px;background:#0b1424}.metric span{display:block;color:#94a3b8;font-size:10px}.metric strong{display:block;margin-top:4px}.metric.ready,.chip.ready{border-color:#166534}.metric.blocked,.chip.blocked{border-color:#7f1d1d}.nfe__layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(320px,1fr);gap:12px;margin-top:12px;align-items:start}.nfe__layout main,.nfe__layout aside{display:flex;flex-direction:column;gap:12px;min-width:0}.nfe-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.nfe-form button[type="submit"]{min-height:36px;scroll-margin-block:160px 96px}.nfe-form label{display:flex;flex-direction:column;gap:4px}.nfe-form .wide{grid-column:span 2}.nfe input,.nfe select{padding:7px;border:1px solid #334155;background:#07101e;color:#e2e8f0}.table-wrap{overflow:auto}.nfe table{width:100%;border-collapse:collapse}.nfe th,.nfe td{text-align:left;vertical-align:top;padding:7px;border-bottom:1px solid #223047;font-size:12px}.nfe th{color:#7dd3fc;font-size:10px}.nfe code,.nfe small{display:block;color:#64748b;overflow-wrap:anywhere}.nfe dl{display:grid;grid-template-columns:120px 1fr;gap:6px}.nfe dd{margin:0;overflow-wrap:anywhere}.blockers{color:#fca5a5;padding-left:18px}.message{padding:8px;border:1px solid #155e75;background:#082f49}.message.error{border-color:#7f1d1d;background:#3f1118;color:#fecaca}.panel-eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}@media(max-width:1100px){.nfe__metrics{grid-template-columns:repeat(3,1fr)}.nfe__layout{grid-template-columns:1fr}}@media(max-width:700px){.nfe-form{grid-template-columns:1fr}.nfe-form .wide{grid-column:auto}.nfe__metrics{grid-template-columns:repeat(2,1fr)}}
+    .nfe{height:100%;overflow:auto;padding:16px 16px 96px;scroll-padding-block:160px 96px;box-sizing:border-box;background:#07101e;color:#e2e8f0}.nfe__header,.nfe-panel>header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.nfe h2,.nfe h3{margin:3px 0}.nfe p{color:#94a3b8}.nfe__title{display:flex;gap:8px;align-items:center}.nfe__badge,.chip{padding:3px 7px;border:1px solid #0ea5e9;border-radius:999px;font-size:10px}.nfe__actions{display:flex;gap:6px;flex-wrap:wrap}.nfe button,.nfe__actions label{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:7px 9px;cursor:pointer}.nfe button:disabled{opacity:.45}.nfe__boundary{margin:12px 0;padding:10px;border:1px solid #155e75;border-radius:6px;background:#082f49;color:#bae6fd}.nfe__metrics{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:8px}.metric,.nfe-panel{padding:11px;border:1px solid #293548;border-radius:7px;background:#0b1424}.metric span{display:block;color:#94a3b8;font-size:10px}.metric strong{display:block;margin-top:4px}.metric.ready,.chip.ready{border-color:#166534}.metric.blocked,.chip.blocked{border-color:#7f1d1d}.nfe__layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(320px,1fr);gap:12px;margin-top:12px;align-items:start}.nfe__layout main,.nfe__layout aside{display:flex;flex-direction:column;gap:12px;min-width:0}.nfe-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.nfe-form button[type="submit"]{min-height:36px;scroll-margin-block:160px 96px}.nfe-form label{display:flex;flex-direction:column;gap:4px}.nfe-form .wide{grid-column:span 2}.nfe input,.nfe select{padding:7px;border:1px solid #334155;background:#07101e;color:#e2e8f0}.table-wrap{overflow:auto}.nfe table{width:100%;border-collapse:collapse}.nfe th,.nfe td{text-align:left;vertical-align:top;padding:7px;border-bottom:1px solid #223047;font-size:12px}.nfe th{color:#7dd3fc;font-size:10px}.nfe code,.nfe small{display:block;color:#64748b;overflow-wrap:anywhere}.nfe-impact-causes{display:flex;flex-direction:column;gap:3px}.nfe-impact-causes code{color:#7dd3fc}.nfe-impact-none{color:#64748b;font-size:10px}.nfe dl{display:grid;grid-template-columns:120px 1fr;gap:6px}.nfe dd{margin:0;overflow-wrap:anywhere}.blockers{color:#fca5a5;padding-left:18px}.message{padding:8px;border:1px solid #155e75;background:#082f49}.message.error{border-color:#7f1d1d;background:#3f1118;color:#fecaca}.panel-eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}@media(max-width:1100px){.nfe__metrics{grid-template-columns:repeat(3,1fr)}.nfe__layout{grid-template-columns:1fr}}@media(max-width:700px){.nfe-form{grid-template-columns:1fr}.nfe-form .wide{grid-column:auto}.nfe__metrics{grid-template-columns:repeat(2,1fr)}}
   </style>`;
 }

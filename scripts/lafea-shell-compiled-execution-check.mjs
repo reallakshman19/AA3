@@ -13,6 +13,7 @@ import { createLafeaSimulatedShellMidsurfaceEvidence } from '../src/workspace/la
 import { produceLafeaShellAnalysisMesh } from '../src/workspace/lafea-shell-mesh-producer.js';
 import {
   createLafea5SourceShellParent,
+  lafea5SourceShellProfileReference,
   planLafea5SourceShellMeshAdoption,
   produceLafea5SourceShellMeshAdoption,
 } from '../src/workspace/lafea-source-shell-mesh-adoption.js';
@@ -83,7 +84,6 @@ assert.ok(
   'Nontrivial pressure benchmark must retain nonzero compiled surface loading.',
 );
 
-// Unsupported source-node loads must remain fail-closed after remeshing.
 const nodalLoad4 = structuredClone(lafea4);
 nodalLoad4.loadCases = [{
   loadCaseId: 'UNMAPPED-NODAL',
@@ -118,9 +118,6 @@ assert.throws(
   'A remeshed LAFEA.4 model must reject source-node loads until a qualified load-transfer rule exists.',
 );
 
-// R1/R2 are node-local tangent-basis rotations. A nonzero scalar cannot be
-// copied onto a remeshed node whose tangent basis differs; only zero is
-// invariant without a separately qualified rotational field map.
 const rotated4 = structuredClone(lafea4);
 for (const row of rotated4.constraints) {
   if (row.dof === 'R1') row.value = 0.01;
@@ -158,8 +155,11 @@ const parent5 = createLafea5SourceShellParent({
   sourceHash: authority5.sourceHash,
   shellTemplate: lafea5.shellTemplate,
 });
-const profile5 = shellProfile('LAFEA.5', 15);
+const reference5 = lafea5SourceShellProfileReference(parent5);
+const profile5 = shellProfile('LAFEA.5', reference5.referenceLength, 'SOURCE-REFERENCE');
 const plan5 = planLafea5SourceShellMeshAdoption({ parent: parent5, meshProfile: profile5 });
+assert.equal(plan5.profileReferenceLength, reference5.referenceLength);
+assert.equal(plan5.characteristicLengthMedian, null);
 const produced5 = produceLafea5SourceShellMeshAdoption({
   parent: parent5,
   meshProfile: profile5,
@@ -184,10 +184,6 @@ assertGeneratedShellMatchesRetained(produced5.evidence.mesh, result5.generatedSh
 assert.ok(result5.loadDistributionEvidence.length > 0);
 assert.ok(result5.rawShellResult?.loadCaseResults?.length > 0);
 
-// ---------------------------------------------------------------------------
-// Product route: rebuild the source chain from the exact normalized document
-// retained by the workbench, then prove mesh -> compiler -> execution custody.
-// ---------------------------------------------------------------------------
 const workbenchDocument4 = normalizeLafeaStageDocument('LAFEA.4', lafea4);
 const workbenchAuthority4 = issueLafeaSourceAuthority(
   'LAFEA.4', workbenchDocument4, 'SHELL-COMPILED-CHECK/LAFEA4-WORKBENCH',
@@ -235,13 +231,17 @@ const workbenchParent5 = createLafea5SourceShellParent({
   sourceHash: workbenchAuthority5.sourceHash,
   shellTemplate: workbenchDocument5.shellTemplate,
 });
+const workbenchReference5 = lafea5SourceShellProfileReference(workbenchParent5);
+const workbenchProfile5 = shellProfile(
+  'LAFEA.5', workbenchReference5.referenceLength, 'WORKBENCH-SOURCE-REFERENCE',
+);
 const workbenchPlan5 = planLafea5SourceShellMeshAdoption({
   parent: workbenchParent5,
-  meshProfile: profile5,
+  meshProfile: workbenchProfile5,
 });
 const workbenchProduced5 = produceLafea5SourceShellMeshAdoption({
   parent: workbenchParent5,
-  meshProfile: profile5,
+  meshProfile: workbenchProfile5,
   plan: workbenchPlan5,
 });
 const workbenchCompiled5 = compileLafeaShellSolverModel({
@@ -257,7 +257,7 @@ const workbench5 = createLafeaWorkbenchOrchestratorStore({
   initialSourceHash: workbenchAuthority5.sourceHash,
 });
 qualifyAndRunWorkbench(
-  workbench5, 'LAFEA.5', workbenchParent5, profile5, 'SOURCE_MESH_ADOPTION',
+  workbench5, 'LAFEA.5', workbenchParent5, workbenchProfile5, 'SOURCE_MESH_ADOPTION',
 );
 const workbenchState5 = workbench5.getState().stages['LAFEA.5'];
 assertWorkbenchExecutionBinding(workbenchState5, workbenchProduced5.evidence.mesh.nodes.length);
@@ -273,7 +273,7 @@ assertGeneratedShellMatchesRetained(
 workbench5.destroy();
 
 console.log(JSON.stringify({
-  schema: 'lafea-shell-compiled-execution-check/v3',
+  schema: 'lafea-shell-compiled-execution-check/v4',
   status: 'PASS',
   lafea4: {
     sourceElements: lafea4.elements.length,
@@ -293,6 +293,8 @@ console.log(JSON.stringify({
   lafea5: {
     retainedNodes: produced5.evidence.mesh.nodes.length,
     retainedElements: produced5.evidence.mesh.elements.length,
+    sourceProfileReferenceLength: reference5.referenceLength,
+    sourceProfileReferenceBasis: reference5.basis,
     solverModelHash: compiled5.solverModelHash,
     solverModelBindingHash: compiled5.solverModelBindingHash,
     canonicalWorkflowModelHash: result5.canonicalWorkflowModelHash,
@@ -357,7 +359,7 @@ function shellProfile(stageId, target, suffix = 'QUALIFIED') {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: `SHELL_COMPILED_${stageId.replace('.', '_')}_${suffix}`,
-    sourceRevision: 'SHELL-COMPILED-CHECK-V3',
+    sourceRevision: 'SHELL-COMPILED-CHECK-V4',
     semanticHash: undefined,
     fields: {
       continuumElement: 'T3',

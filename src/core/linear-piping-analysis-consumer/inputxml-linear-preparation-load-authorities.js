@@ -7,6 +7,7 @@ import {
   authoritySourceEvidence,
   finiteAuthorityValue,
 } from './inputxml-linear-preparation-authority-support.js';
+import { productionAuthorizedPressureEffects } from './production-capability-profile.js';
 
 const ZERO_TOLERANCE = 1e-12;
 
@@ -49,16 +50,14 @@ function gravityAuthority({
   if (rigidAuthority !== null) {
     const payload = {
       kind: 'DISTRIBUTED_GRAVITY_LINE_LOAD',
-      basis: 'GLOBAL',
-      direction: [0, -1, 0],
+      basis: 'GLOBAL', direction: [0, -1, 0],
       lineForcePerLength: rigidAuthority.gravity.totalLineWeight,
       componentWeightsPerLength: null,
       sourceAuthority: 'RIGID_ELEMENT_AUTHORITY',
       rigidAuthoritySemanticHash: rigidAuthority.semanticHash,
     };
     return Object.freeze({
-      ...payload,
-      semanticHash: semanticHash(payload),
+      ...payload, semanticHash: semanticHash(payload),
       sourceEvidence: authoritySourceEvidence({
         sourceId: `${modelId}-GRAVITY-${segment.id}`,
         sourceRevision: sourceBundleSemanticHash,
@@ -84,20 +83,14 @@ function gravityAuthority({
     contents: contentsMassPerLength * INPUTXML_GRAVITY_ACCELERATION.value,
     insulation: insulationMassPerLength * INPUTXML_GRAVITY_ACCELERATION.value,
   };
-  const lineForcePerLength = Object.values(componentWeightsPerLength)
-    .reduce((sum, value) => sum + value, 0);
+  const lineForcePerLength = Object.values(componentWeightsPerLength).reduce((sum, value) => sum + value, 0);
   const payload = {
-    kind: 'DISTRIBUTED_GRAVITY_LINE_LOAD',
-    basis: 'GLOBAL',
-    direction: [0, -1, 0],
-    lineForcePerLength,
-    componentWeightsPerLength,
-    sourceAuthority: 'PREPARED_PHYSICAL_LINE_WEIGHT',
-    rigidAuthoritySemanticHash: null,
+    kind: 'DISTRIBUTED_GRAVITY_LINE_LOAD', basis: 'GLOBAL', direction: [0, -1, 0],
+    lineForcePerLength, componentWeightsPerLength,
+    sourceAuthority: 'PREPARED_PHYSICAL_LINE_WEIGHT', rigidAuthoritySemanticHash: null,
   };
   return Object.freeze({
-    ...payload,
-    semanticHash: semanticHash(payload),
+    ...payload, semanticHash: semanticHash(payload),
     sourceEvidence: authoritySourceEvidence({
       sourceId: `${modelId}-GRAVITY-${segment.id}`,
       sourceRevision: sourceBundleSemanticHash,
@@ -117,17 +110,13 @@ function pressureAuthority(segment, element, analysis, modelId, sourceBundleSema
   const pressure = finiteAuthorityValue(analysis.pressure);
   const active = pressure !== null && Math.abs(pressure) > ZERO_TOLERANCE;
   const payload = {
-    kind: 'PRESSURE_INPUT_CUSTODY',
-    active,
+    kind: 'PRESSURE_INPUT_CUSTODY', active,
     pressure: active ? pressure : null,
     pressureBasis: active ? 'GAUGE' : null,
-    authorizedEffects: active
-      ? { codeStress: true, pressureStiffening: false, axialThrust: false, bourdon: false }
-      : null,
+    authorizedEffects: active ? productionAuthorizedPressureEffects() : null,
   };
   return Object.freeze({
-    ...payload,
-    semanticHash: semanticHash(payload),
+    ...payload, semanticHash: semanticHash(payload),
     sourceEvidence: authoritySourceEvidence({
       sourceId: `${modelId}-PRESSURE-${segment.id}`,
       sourceRevision: sourceBundleSemanticHash,
@@ -148,26 +137,19 @@ function thermalLoadAuthority(
   const operatingTemperature = finiteAuthorityValue(analysis.operatingTemperature);
   const active = operatingTemperature !== null;
   const resolved = active && thermalAuthority.status === 'RESOLVED';
-  const deltaTemperature = active
-    ? operatingTemperature - INPUTXML_INSTALLATION_TEMPERATURE.value
-    : null;
-  const thermalStrain = resolved
-    ? thermalAuthority.coefficientPerKelvin * deltaTemperature
-    : null;
+  const deltaTemperature = active ? operatingTemperature - INPUTXML_INSTALLATION_TEMPERATURE.value : null;
+  const thermalStrain = resolved ? thermalAuthority.coefficientPerKelvin * deltaTemperature : null;
   const payload = {
-    kind: 'UNIFORM_TEMPERATURE_INPUT_CUSTODY',
-    active,
+    kind: 'UNIFORM_TEMPERATURE_INPUT_CUSTODY', active,
     status: !active ? 'NOT_ACTIVE' : resolved ? 'RESOLVED' : 'UNRESOLVED',
     installationTemperature: INPUTXML_INSTALLATION_TEMPERATURE.value,
-    operatingTemperature,
-    deltaTemperature,
+    operatingTemperature, deltaTemperature,
     coefficientPerKelvin: resolved ? thermalAuthority.coefficientPerKelvin : null,
     thermalStrain,
     thermalAuthoritySemanticHash: thermalAuthority.semanticHash,
   };
   return Object.freeze({
-    ...payload,
-    semanticHash: semanticHash(payload),
+    ...payload, semanticHash: semanticHash(payload),
     sourceEvidence: authoritySourceEvidence({
       sourceId: `${modelId}-THERMAL-${segment.id}`,
       sourceRevision: sourceBundleSemanticHash,

@@ -6,7 +6,7 @@ branch: agent/lafea-authorization-gate-evidence-20260826
 base_branch: main
 base_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
 initial_engineering_head: cb951d9a44007aee6bed28fb5792f6fb7683cdb2
-observed_technical_head_before_recovery_refresh: 80c2f1d8c7a8614c99a431d36373668bea60c7c0
+observed_pr_head_before_status_refresh: 24a919957ea9f9a26e38c423c8968c9eac5ac2e4
 state: OPEN_DRAFT_MERGEABLE
 criticality: ENGINEERING_CRITICAL
 recovery_state: CONTINUE
@@ -17,12 +17,13 @@ engineering_failure_proven: false
 review_state:
   reviews: 0
   review_threads: 0
-  commit_statuses: 0
 validation:
   live_grounding: PASS_SOURCE_INSPECTION
+  changed_file_reconciliation: PASS_GITHUB_READBACK_5_PATHS
   checker_scope: PASS_SOURCE_INSPECTION
   checker_contract_static_consistency: PASS_SOURCE_INSPECTION
   exact_head_retention_wrapper: PASS_SOURCE_INSPECTION
+  exact_head_retention_wrapper_syntax: PASS_LOCAL_NODE_CHECK
   local_checkout_attempt: NOT_RUN_DNS_PRECHECKOUT_FAILURE
   q1_retained_t6_hand_jacobian: NOT_RUN
   q2_kirsch_fixed_probe: NOT_RUN

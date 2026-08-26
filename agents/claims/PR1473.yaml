@@ -6,10 +6,10 @@ issue: 1472
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: AUTO
-auto_state: COMPLETE
-coordination_state: STACKED_ON_PR1470_EXACT_OVERLAP_INTENTIONAL
+auto_state: RUNNING
+coordination_state: RETARGETED_TO_PR1464_PR1477_REGROUND_NEXT
 scope:
-  authority: EMP1_DEPLOYMENT_OPERATIONS_CUSTODY
+  authority: EMP1_DEPLOYMENT_OPERATIONS
   paths:
     - scripts/emp1-professional-deployment-operations-check.mjs
     - scripts/emp1-professional-deployment-operations-falsifier.mjs
@@ -19,27 +19,28 @@ scope:
     - agents/status/PR1473.yaml
     - agents/claims/PR1473.yaml
 protected_exclusions:
-  - provider-specific deployment configuration or APIs
+  - provider configuration/APIs
   - .github/workflows/**
-  - index.html
-  - analyze.html
-  - package.json
-  - package-lock.json
+  - HTML entrypoints
+  - package files
   - src/core/emp1/**
-  - WRC source/dataset/oracle/tolerance/mechanics
-  - route/registry/code-compliance authority widening
+  - WRC mechanics/source/dataset/oracle/tolerance
+  - route/registry/code-compliance authority
 authority_boundary:
   deployment_operations_can_block_release: true
-  receipt_proves_actual_provider_promotion: false
-  receipt_proves_rollback_execution_success: false
-  rollback_readiness_is_custody_not_execution: true
+  rollback_custody_is_rollback_execution: false
+  rollback_custody_is_rollback_success: false
   engineering_authority_granted: false
-  release_authority_granted: false
   deployment_authority_granted: false
-stack_base_head: c0c1a30d5b79bd67963e0d8f2dee9b4a19d9a757
-pre_takeover_head: 2a70d03e67a90a93736baa1b559d1ddf95538cfb
-technical_basis_head: 3e40cf7f13c91d09336ea871796638053777ad57
-live_main_last_observed: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+  release_authority_granted: false
+parent_head: 169e045cacedb4930a6aca97fa92d95e3eeb5201
+pre_retarget_head: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
+structural_retarget_head: 51b2d3acaad3795b77e64e6978d2b769c9c25e70
+structural_retarget_tree: 937739935f8c26673075493f57f567b622bd1f93
+report_basis_head: 51b2d3acaad3795b77e64e6978d2b769c9c25e70
+technical_basis: 3e40cf7f13c91d09336ea871796638053777ad57
+live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1473-002
+grounding_epoch: GE-PR1473-003
 handover_report: agents/PR1473_workreport.md
+exact_next_action: "Keep PR1473 draft/unmerged; re-ground PR1477 onto this recovery-synchronized head while preserving its exact release-manifest salvage delta."

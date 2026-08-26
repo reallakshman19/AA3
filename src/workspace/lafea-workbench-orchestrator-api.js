@@ -12,6 +12,10 @@ import {
   buildLafeaMeshGenerationIntentV2FromStage,
   buildLafeaPreparationRequestV2FromStage,
 } from './lafea-domain-first-requests.js';
+import {
+  sanitizeLafeaPublicResult,
+  sanitizeLafeaPublicState,
+} from './lafea-public-failure.js';
 import { requireLafeaInputDescriptor } from './lafea-stage-input-descriptors.js';
 
 export function createLafeaWorkbenchOrchestratorApi(context) {
@@ -23,7 +27,7 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     const stage = c.readStageState(stageId);
     return stage.domainFirstProfileActive === true || stage.shellMidsurfaceProfileActive === true;
   };
-  return Object.freeze({
+  const api = {
     selectStage: (stageId) => c.delegate('selectStage', [stageId]),
     importDocument: c.importDocument,
     applyEditCommand: (command) => c.mutateDocument(
@@ -178,14 +182,27 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
       c.meshGeneration.selectPlan(stageId),
     buildOrchestrationProjection: (stageId = activeStageId()) =>
       c.deriveStage(stageId).orchestration,
-    subscribe: c.subscribe,
+    subscribe: (listener) => c.subscribe((state) => listener(sanitizeLafeaPublicState(state))),
     getState: c.deriveState,
     destroy: () => {
       c.unsubscribe();
       c.retained.destroy();
       c.listeners.clear();
     },
-  });
+  };
+  return Object.freeze(Object.fromEntries(Object.entries(api).map(([name, value]) => [
+    name,
+    typeof value === 'function'
+      ? (...args) => exposePublicResult(value(...args))
+      : value,
+  ])));
+}
+
+function exposePublicResult(value) {
+  if (value && typeof value.then === 'function') {
+    return value.then((resolved) => sanitizeLafeaPublicResult(resolved));
+  }
+  return sanitizeLafeaPublicResult(value);
 }
 
 function scalarBatchInvalidationClass(stageId, edits) {

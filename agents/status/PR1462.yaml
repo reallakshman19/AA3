@@ -1,0 +1,65 @@
+schema: engineering-pr-status/v1
+pr: 1462
+repository: reallaksh19/Advanced_Analysis
+source_task: Issue #1371 local authorization runner successor
+branch: agent/lafea-authorization-local-runner-20260826
+base_branch: main
+base_head_last_checked: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+synchronization_commit: 4056369cde466d01dc9d6b38c9821cd56192d1ad
+state: OPEN_DRAFT
+criticality: ENGINEERING_CRITICAL
+recovery_state: CONTINUE
+takeover_authority: WRITE_ALLOWED_EVIDENCE_INFRASTRUCTURE_ONLY
+execution_mode: OWNER_DIRECTED
+current_stage: COMPLETE_LOCAL_EXECUTION_HARNESS_PENDING_REAL_EXACT_HEAD_Q1_Q5_EXECUTION
+engineering_failure_proven: false
+validation:
+  live_grounding: PASS_GITHUB_READBACK
+  current_main_synchronization: PASS_BEHIND_ZERO
+  downstream_lafea_route_drift: REEXECUTION_REQUIRED_BEFORE_AUTHORIZATION_CLAIM
+  harness_source_blob_binding: PASS_LOCAL_GIT_HASH_OBJECT_EQUALS_GITHUB_BLOB_FOR_FOUR_EXECUTED_HARNESS_SOURCES
+  harness_syntax: PASS_LOCAL_NODE_CHECK
+  synthetic_complete_harness_v2: PASS_LOCAL_TEMP_GIT_10_CASES
+  bootstrap_missing_runtime_classification: PASS_PREDELEGATION_NOT_RUN
+  parser_failure_classification: PASS_PREDELEGATION_NOT_RUN
+  missing_transitive_static_import_classification: PASS_PREDELEGATION_NOT_RUN
+  delegated_exit_7_classification: PASS_EXIT_PROPAGATED_UNKNOWN_OR_PARTIAL_Q1_Q5
+  tampered_retained_report_rejection: PASS_POST_GATE_EVIDENCE_VERIFICATION_FAILED
+  repository_head_mismatch_rejection: PASS_POST_GATE_EVIDENCE_VERIFICATION_FAILED
+  valid_synthetic_v4_hash_file_head_binding: PASS
+  retention_post_engineering_checkout_guard: PASS_SOURCE_INSPECTION
+  real_production_static_import_graph: NOT_RUN
+  exact_local_repository_harness_execution: NOT_RUN
+  q1_q5_engineering_execution: NOT_RUN
+failure_semantics:
+  environment_preflight:
+    includes_bootstrap_runtime_parser_static_import_failure: true
+    classification: NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED
+    delegated_engineering_gate_entered: false
+    q1_q5_disposition: NOT_RUN
+  delegated_nonzero:
+    classification: DELEGATED_ENGINEERING_GATE_NONZERO_STOP_AT_FIRST_CHILD_FAILURE
+    delegated_engineering_gate_entered: true
+    q1_q5_disposition: UNKNOWN_OR_PARTIAL_SEE_FIRST_CHILD_FAILURE
+  post_gate_verification:
+    classification: POST_GATE_EVIDENCE_VERIFICATION_FAILED
+    delegated_engineering_gate_entered: true
+    q1_q5_disposition: CHILD_RETURNED_ZERO_BUT_EXACT_HEAD_EVIDENCE_NOT_ACCEPTED
+custody_invariants:
+  checkout_clean_before_runtime_checks: REQUIRED
+  parser_checks_use_current_process_exec_path: REQUIRED
+  four_authorization_entrypoints_parse_before_delegation: REQUIRED
+  static_relative_imports_remain_inside_repository: REQUIRED
+  static_bare_imports_resolve_from_repository_package_context: REQUIRED
+  checkout_clean_before_engineering_checks: REQUIRED
+  checkout_clean_after_engineering_checks_before_receipt_write: REQUIRED
+  retained_envelope_head_equals_preflight_head: REQUIRED
+  retained_envelope_hash_recomputes: REQUIRED
+  retained_file_matches_delegated_stdout_envelope: REQUIRED
+  checkout_clean_after_ignored_receipt_write: REQUIRED
+limitations:
+  static_import_closure: DOES_NOT_ENUMERATE_DYNAMIC_IMPORT_EXPRESSIONS
+blocker: LOCAL_GIT_CLONE_DNS_FAILURE_COULD_NOT_RESOLVE_GITHUB_COM
+retained_report_path: reports/qualification/lafea-implementation-authorization-gate.json
+merge_authority: OWNER_ONLY_NOT_GRANTED
+exact_next_action: node scripts/lafea-implementation-authorization-local-preflight.mjs

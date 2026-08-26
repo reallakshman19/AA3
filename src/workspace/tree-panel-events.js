@@ -2,6 +2,10 @@
 import { EVENT_TOPICS } from './event-topics.js';
 import { MODEL_ZONE_EVENTS } from './model-zone-selector.js';
 import {
+  measureNonFeaP0AsyncStage,
+  measureNonFeaP0Stage,
+} from './non-fea-p0-observability.js';
+import {
   createTopologyEditSelectionRequest,
   TOPOLOGY_EDIT_SELECTION_EVENTS,
 } from './topology-edit/editor-state/topology-edit-selection-events.js';
@@ -67,7 +71,10 @@ export async function handleTreeChange(panel, event) {
   const file = panel.fileElement.files?.[0];
   if (!file) return;
   try {
-    const sourceBytes = new Uint8Array(await file.arrayBuffer());
+    const sourceBytes = new Uint8Array(await measureNonFeaP0AsyncStage(
+      'SJSON_FILE_READ',
+      () => file.arrayBuffer(),
+    ));
     panel.clearError();
     panel.statusElement.textContent = `Loading ${file.name}…`;
     await publishDatasetLoad(panel, file.name, sourceBytes);
@@ -180,7 +187,10 @@ function encodeJsonPackage(value) {
 
 async function publishDatasetLoad(panel, sourceName, sourceBytes, parsedPackage = null) {
   const rawPackage = parsedPackage ?? parseJsonBytes(sourceBytes);
-  const sourceSha256 = await sha256(sourceBytes);
+  const sourceSha256 = await measureNonFeaP0AsyncStage(
+    'SJSON_SHA256',
+    () => sha256(sourceBytes),
+  );
   panel.eventBus.publish(EVENT_TOPICS.DATASET_LOAD_REQUESTED, {
     rawPackage,
     sourceName,
@@ -190,7 +200,10 @@ async function publishDatasetLoad(panel, sourceName, sourceBytes, parsedPackage 
 }
 
 function parseJsonBytes(sourceBytes) {
-  const text = decodeJsonBytes(sourceBytes)
+  const text = measureNonFeaP0Stage(
+    'SJSON_DECODE',
+    () => decodeJsonBytes(sourceBytes),
+  )
     .replace(/^\uFEFF/u, '')
     // Deliberate control character: some exported SJSON/JSON files are
     // NUL-padded to a block boundary, and that padding must come off
@@ -200,7 +213,7 @@ function parseJsonBytes(sourceBytes) {
     .trim();
   if (!text) throw new TypeError('Dataset SJSON/JSON file is empty.');
   try {
-    return JSON.parse(text);
+    return measureNonFeaP0Stage('SJSON_PARSE', () => JSON.parse(text));
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     throw new SyntaxError(`Dataset SJSON/JSON is invalid: ${detail}`);

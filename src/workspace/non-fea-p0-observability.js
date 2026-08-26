@@ -1,5 +1,6 @@
 const QUERY_PARAMETER = 'nonFeaP0Evidence';
 const MEASURE_PREFIX = 'workspace:p0:';
+const operationCounts = new Map();
 
 export function isNonFeaP0ObservabilityEnabled() {
   const search = globalThis.location?.search;
@@ -11,7 +12,10 @@ export function measureNonFeaP0Stage(stageId, callback) {
   if (typeof callback !== 'function') {
     throw new TypeError('P0 stage measurement requires a callback.');
   }
-  if (!isNonFeaP0ObservabilityEnabled() || !hasUserTiming()) return callback();
+  if (!isNonFeaP0ObservabilityEnabled()) return callback();
+  validateStageId(stageId);
+  recordNonFeaP0Operation(stageId);
+  if (!hasUserTiming()) return callback();
   const startedAtMs = globalThis.performance.now();
   try {
     return callback();
@@ -20,11 +24,25 @@ export function measureNonFeaP0Stage(stageId, callback) {
   }
 }
 
+export async function measureNonFeaP0AsyncStage(stageId, callback) {
+  if (typeof callback !== 'function') {
+    throw new TypeError('P0 async stage measurement requires a callback.');
+  }
+  if (!isNonFeaP0ObservabilityEnabled()) return callback();
+  validateStageId(stageId);
+  recordNonFeaP0Operation(stageId);
+  if (!hasUserTiming()) return callback();
+  const startedAtMs = globalThis.performance.now();
+  try {
+    return await callback();
+  } finally {
+    recordNonFeaP0Duration(stageId, globalThis.performance.now() - startedAtMs);
+  }
+}
+
 export function recordNonFeaP0Duration(stageId, durationMs) {
   if (!isNonFeaP0ObservabilityEnabled() || !hasUserTiming()) return;
-  if (typeof stageId !== 'string' || !/^[A-Z0-9_]+$/u.test(stageId)) {
-    throw new TypeError('P0 stage ID must use uppercase identifier syntax.');
-  }
+  validateStageId(stageId);
   if (!Number.isFinite(durationMs) || durationMs < 0) {
     throw new TypeError('P0 stage duration must be finite and non-negative.');
   }
@@ -33,6 +51,12 @@ export function recordNonFeaP0Duration(stageId, durationMs) {
     start: Math.max(0, endAtMs - durationMs),
     end: endAtMs,
   });
+}
+
+export function recordNonFeaP0Operation(stageId) {
+  if (!isNonFeaP0ObservabilityEnabled()) return;
+  validateStageId(stageId);
+  operationCounts.set(stageId, (operationCounts.get(stageId) ?? 0) + 1);
 }
 
 export function readNonFeaP0StageDurations() {
@@ -49,6 +73,20 @@ export function readNonFeaP0StageDurations() {
       Number(durationMs.toFixed(3)),
     ]),
   ));
+}
+
+export function readNonFeaP0OperationCounts() {
+  return Object.freeze(Object.fromEntries(operationCounts));
+}
+
+export function resetNonFeaP0OperationCounts() {
+  operationCounts.clear();
+}
+
+function validateStageId(stageId) {
+  if (typeof stageId !== 'string' || !/^[A-Z0-9_]+$/u.test(stageId)) {
+    throw new TypeError('P0 stage ID must use uppercase identifier syntax.');
+  }
 }
 
 function hasUserTiming() {

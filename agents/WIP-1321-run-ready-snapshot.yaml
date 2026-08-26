@@ -1,0 +1,21 @@
+schema: AgentPrWip.v1
+repository: reallaksh19/Advanced_Analysis
+issue: 1321
+branch: agent/issue-1321-run-ready-snapshot
+stack_base_pr: 1460
+stack_base_head: e246a51235b8c8fd98a67e6fece3a9be87825071
+mission: "Make ordinary Load Calc Run obtain/reuse READY product screening Common Input snapshot before execution authorization check"
+state: ACTIVE_PRE_PR
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+claimed_paths:
+  - src/workspace/load-calc-consumer-controller.js
+  - scripts/load-calc-run-ready-snapshot-check.mjs
+protected_paths:
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/workspace/engineering-loads/**
+  - src/core/non-fea-common-checker/**
+  - .github/workflows/**
+authority_boundary: "Run may obtain/reuse PR1460 READY-only system screening snapshot. It may execute only an already-current explicit scenario/empirical authorization. It may not manufacture empirical authorization or accept partial/blocked Common Input."
+merge_authority: OWNER_ONLY_NOT_GRANTED
+validation: NOT_RUN

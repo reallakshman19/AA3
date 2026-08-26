@@ -1,0 +1,28 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: PR1440
+owner: ChatGPT
+mission: "Issue #1321 governed gravity-method request authority"
+branch: agent/issue-1321-gravity-method-request-authority
+pr: 1440
+issue: 1321
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE_NO_OPEN_GRAVITY_METHOD_AUTHORITY_PR
+claimed_paths:
+  - src/workspace/project-data/project-data-fields.js
+  - src/workspace/project-data/non-fea-product-default-profile.js
+  - src/workspace/project-data/non-fea-gravity-method-authority.js
+  - src/workspace/engineering-loads/empirical-gravity-method-selection.js
+  - scripts/non-fea-gravity-method-authority-check.mjs
+  - agents/PR1440_workreport.md
+  - agents/claims/PR1440.yaml
+  - agents/status/PR1440.yaml
+protected_paths:
+  - src/workspace/engineering-loads/authorized-empirical-runtime-package-v2.js
+  - src/workspace/engineering-loads/configured-empirical-method-controller-v2.js
+  - src/workspace/engineering-loads/empirical-load-calc-scenario-store.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - .github/workflows/**
+authority_boundary: "Add effective AUTO/V2/V3 gravity-method request authority and bridge it to existing selector. No selector policy change, execution package, scenario authorization, mechanics, tolerance, solver, or workflow change."
+merge_authority: OWNER_ONLY
+state: ACTIVE

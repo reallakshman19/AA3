@@ -16,94 +16,46 @@ PR: #1464
 ISSUE: #1463
 UMBRELLA: #1389
 DEPENDENCY_BASE_PR: #1457
-BASE_BRANCH: agent/issue-1456-emp1-build-artifact-security-20260826
-PARENT_HEAD: a849cfa7fb6a8ee8e3288b37dc1c1fbca0772204
-PARENT_TREE: 297e2aee8f2baa3e3482b1ccbc7848bae717f7f6
-PRE_PROPAGATION_HEAD: 1cc37a834294199450c79551d8be9b1fd0cea5be
-STRUCTURAL_PROPAGATION_HEAD: c4eaa69ca4922079024e65bec57ed85a071d5c40
-STRUCTURAL_PROPAGATION_TREE: 52764ac89ff32ed3f58fcd42c6a821e57e0f2c7f
-REPORT_BASIS_HEAD: c4eaa69ca4922079024e65bec57ed85a071d5c40
+PARENT_HEAD: eba35c045b3adc09885b73fcb3738f9125de4cee
+PRE_PROPAGATION_HEAD: 169e045cacedb4930a6aca97fa92d95e3eeb5201
+STRUCTURAL_PROPAGATION_HEAD: edb4a7e4f00ec33ee33745d9ed3131706365e4dd
+STRUCTURAL_PROPAGATION_TREE: f425c0383d6d25d100f9772ddd0d234bef2078b4
+REPORT_BASIS_HEAD: edb4a7e4f00ec33ee33745d9ed3131706365e4dd
 ABSORBED_CHILD_PR: #1470
-ABSORBED_CHILD_MERGE_SHA: 9f73e0fc8c5db06cec137fb0041190596ae4acf3
-LIVE_MAIN_LAST_OBSERVED: 20e0abb5301363bef0659cf615bc8a37559ac869
-GROUNDING_EPOCH: GE-PR1464-005
-CURRENT_STAGE: PARENT_PROPAGATION_VALIDATED_DOWNSTREAM_RECONCILIATION_NEXT
-CURRENT_BLOCKER: live advisory/build/browser/deployment/header execution remains NOT_RUN; merge authority not granted
-HIGHEST_RISK: treating stack normalization or encoded security gates as executed professional-release evidence
-EXACT_NEXT_ACTION: keep PR1464 draft/unmerged; retarget/re-ground PR1473 onto this absorbed #1464 parent while preserving its seven-file deployment-operations delta.
+LIVE_MAIN_LAST_OBSERVED: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
+GROUNDING_EPOCH: GE-PR1464-006
+CURRENT_STAGE: LATEST_PARENT_PROPAGATION_VALIDATED
+CURRENT_BLOCKER: live advisory/build/browser/deployment/header evidence remains NOT_RUN; merge authority not granted
+EXACT_NEXT_ACTION: keep PR1464 draft/unmerged and propagate this exact parent into PR1473, retaining PR1473's seven deployment-operations blobs.
 ```
 
-## Handover in 60 Seconds
+## Current propagation
 
-PR1457 was re-grounded to current `main` and recovery-synchronized at `a849cfa7...`. That parent movement made PR1464 seven commits behind. PR1464 was therefore structurally propagated without technical changes.
+The latest #1457 re-ground was propagated into PR1464 by a two-parent, non-force recovery commit. The resulting tree is current PR1457 plus the same exact 16 effective PR1464 blobs; no dependency-security or deployed-header technical content changed.
 
 ```text
-old child head = 1cc37a834294199450c79551d8be9b1fd0cea5be
-new parent     = a849cfa7fb6a8ee8e3288b37dc1c1fbca0772204
-new child head = c4eaa69ca4922079024e65bec57ed85a071d5c40
-new child tree = 52764ac89ff32ed3f58fcd42c6a821e57e0f2c7f
-compare        = 29 ahead / 0 behind parent
-changed files  = exactly 16
+parent = eba35c045b3adc09885b73fcb3738f9125de4cee
+head   = edb4a7e4f00ec33ee33745d9ed3131706365e4dd
+files  = exactly 16 expected
 ```
 
-The propagation commit has the previous PR1464 head as first parent and current PR1457 head as second parent. Its tree is current PR1457 tree plus the exact 16 retained PR1464 blobs. Branch movement used `force=false`.
+The effective scope remains the six PR1464/PR1470 recovery records, two EMP.1 release/header docs, four dependency checks/falsifiers, three header policy/check/falsifier files, and the shared release-candidate harness. Protected package/HTML/provider/workflow/core WRC/route/code-authority surfaces remain unchanged.
 
-## Effective 16-file ledger
+## Validation truth
 
-1. `agents/PR1464_workreport.md`
-2. `agents/PR1470_workreport.md`
-3. `agents/claims/PR1464.yaml`
-4. `agents/claims/PR1470.yaml`
-5. `agents/status/PR1464.yaml`
-6. `agents/status/PR1470.yaml`
-7. `docs/emp1/EMP1_PROFESSIONAL_DEPLOYED_SECURITY_HEADERS.md`
-8. `docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md`
-9. `scripts/emp1-professional-dependency-advisory-check.mjs`
-10. `scripts/emp1-professional-dependency-advisory-falsifier.mjs`
-11. `scripts/emp1-professional-dependency-lock-check.mjs`
-12. `scripts/emp1-professional-dependency-lock-falsifier.mjs`
-13. `scripts/emp1-professional-deployment-security-headers-check.mjs`
-14. `scripts/emp1-professional-deployment-security-headers-falsifier.mjs`
-15. `scripts/emp1-professional-release-candidate.mjs`
-16. `scripts/emp1-professional-security-header-policy.mjs`
-
-The structural phase preserved every one of these blobs exactly. This recovery sync changes only PR1464's own workreport/status/claim records; PR1470 recovery blobs and all technical/security blobs remain unchanged.
-
-Protected exclusions remain: package dependency versions/lockfile, HTML entrypoints, provider configuration, `.github/workflows/**`, `src/core/emp1/**`, WRC mechanics/source/dataset/oracle/tolerance, route/registry/code-compliance authority.
-
-## Validation ledger
-
-- parent propagation exact blob custody — `PASS`; `SOURCE_INSPECTION`; 16 exact blobs captured.
-- branch update — `PASS`; fast-forward with `force=false`.
-- parent compare — `PASS`; `a849cfa7... -> c4eaa69c...`; 0 behind / exactly 16 files.
-- dependency/header source validation — retained `PASS_PRIOR_AUDIT`; no technical mutation this epoch.
-- dependency advisory execution — `NOT_RUN` in this epoch.
-- build execution — `NOT_RUN` in this epoch.
-- browser execution — `NOT_RUN`.
-- live deployed-header observation — `NOT_RUN`.
-- hosted runEmp1/gamma5 — retained `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`.
-- WRC numerical comparison — `NOT_APPLICABLE`.
+- exact 16-blob custody: `PASS`.
+- non-force parent propagation: `PASS`.
+- dependency/header source validation: retained `PASS_PRIOR_AUDIT`.
+- live dependency advisory/build/browser/header execution: `NOT_RUN` in this epoch.
+- hosted execution: retained pre-step infrastructure `NOT_RUN` where applicable.
+- WRC numerical comparison: `NOT_APPLICABLE`.
 
 No `NOT_RUN` is promoted to PASS.
 
-## Authority boundary
+## Authority
 
-`DEPENDENCY_SECURITY_CAN_BLOCK_RELEASE_BUT_CANNOT_CREATE_ENGINEERING_OR_RELEASE_AUTHORITY`
-
-`DEPLOYED_SECURITY_HEADERS_CAN_BLOCK_RELEASE_BUT_CANNOT_CREATE_ENGINEERING_RELEASE_OR_BROWSER_COMPATIBILITY_AUTHORITY`
-
-Structural propagation grants no engineering, code, release, deployment, browser-compatibility, vulnerability-free, or merge authority. Prior owner authorization for PR1470 was consumed by that merge and does not authorize PR1457/PR1464.
-
-## Downstream topology decision
-
-PR1470's content is already absorbed into PR1464. PR1473 is still based on the historical PR1470 branch. To restore a coherent live stack without duplicating absorbed ancestry, the next safe structural action is to retarget PR1473 to PR1464's branch and re-ground its exact seven-file deployment-operations delta onto the current PR1464 head. This is coordination/recovery only and does not widen Issue #1472 authority.
+Dependency security and deployed headers may block release; neither structural recovery nor encoded policy creates engineering/code/release/deployment/browser/merge authority. Prior PR1470 merge authorization remains consumed.
 
 ## Appendix A
-
-A1 Production Trace — 20/20.
-A2 Failure Isolation — 20/20.
-A3 Authority/Invariant — 20/20.
-A4 Independent Validation — 19/20; live release execution remains NOT_RUN.
-A5 Next-Commit/Minimal Patch — 20/20; next phase is exact-blob downstream reconciliation.
 
 **99/100; minimum 19/20.**

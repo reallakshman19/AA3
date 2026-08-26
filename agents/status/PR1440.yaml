@@ -20,7 +20,7 @@ validation:
   stacked_base_grounding: PASS_PR1431_HEAD_306F6D76
   overlap_initial: FAIL_EXACT_PATH_PR1431_PROJECT_DATA_FIELDS_AND_CANONICAL_SUITE
   overlap_resolution: PASS_TWO_PARENT_STACK_PRESERVES_PR1431
-  stacked_compare: PASS_10_PATHS_26_AHEAD_0_BEHIND
+  stacked_compare: PASS_10_PATHS_29_AHEAD_0_BEHIND
   product_default_gravity_method: PASS_SOURCE_INSPECTION
   gravity_method_authority: PASS_SOURCE_INSPECTION
   governed_selector_profile_binding: PASS_SOURCE_INSPECTION

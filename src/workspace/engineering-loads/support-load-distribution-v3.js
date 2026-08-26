@@ -26,6 +26,7 @@ const FATAL_EXCLUSION_CODES = new Set([
   'INVALID_PIPE_SECTION',
   'INVALID_PIPE_INSIDE_DIAMETER',
   'MISSING_ROUTE_CHAINAGE',
+  'MISSING_QUALIFIED_CASE_MASS',
   'INVALID_COMPONENT_CONTENT_MASS',
   'UNAPPROVED_COMPONENT_CONTENT_MASS',
   'UNAUTHORIZED_COMPONENT_CONTENT_MASS',
@@ -105,10 +106,53 @@ export function calculateSupportLoadDistributionWithComponentCog(input) {
   });
 }
 
+/**
+ * Low-level non-authorizing seam for callers that already hold exact
+ * per-entity/per-case mass authority. It changes only mass acquisition and the
+ * Project Data requirement set; gravity, route/support projection, allocation,
+ * first-moment accounting and equilibrium use the same implementation below.
+ */
+export function calculateSupportLoadDistributionFromQualifiedCaseMasses(
+  input,
+  qualifiedCaseMasses,
+) {
+  return calculateDistribution(input, {
+    schema: SUPPORT_LOAD_DISTRIBUTION_SCHEMA,
+    method: EMPIRICAL_LOAD_METHOD,
+    componentLoadAuthorityAudit: null,
+    profileWorkflow: 'loadCalcProjectBasis',
+    qualifiedCaseMassByKey: normalizeQualifiedCaseMasses(qualifiedCaseMasses),
+  });
+}
+
+/** CoG-aware counterpart of the non-authorizing qualified-case-mass seam. */
+export function calculateSupportLoadDistributionWithComponentCogFromQualifiedCaseMasses(
+  input,
+  qualifiedCaseMasses,
+) {
+  assertInput(input);
+  const componentLoadAuthorityAudit = auditEmpiricalComponentLoadAuthority({
+    dataset: input.dataset,
+    profile: input.profile,
+    routePartitionModel: input.routePartitionModel,
+  });
+  return calculateDistribution(input, {
+    schema: SUPPORT_LOAD_DISTRIBUTION_COG_SCHEMA,
+    method: EMPIRICAL_LOAD_COG_METHOD,
+    componentLoadAuthorityAudit,
+    profileWorkflow: 'loadCalcProjectBasis',
+    qualifiedCaseMassByKey: normalizeQualifiedCaseMasses(qualifiedCaseMasses),
+  });
+}
+
 function calculateDistribution(input, configuration) {
   assertInput(input);
   const activeHashes = masterHashes(input.masterData, input.dataset);
-  const profileAudit = validateProjectDataProfile(input.profile, 'loads', activeHashes);
+  const profileAudit = validateProjectDataProfile(
+    input.profile,
+    configuration.profileWorkflow || 'loads',
+    activeHashes,
+  );
   const topologyAudit = validateProjectDataProfile(input.profile, 'topology', activeHashes);
   const globalBlockers = [...profileAudit.errors, ...topologyAudit.errors];
   const caseIds = projectDataValue(input.profile, 'loadCalculation.activeLoadCases') || [];
@@ -119,7 +163,7 @@ function calculateDistribution(input, configuration) {
   const execution = {
     ...configuration,
     componentAuthorityById,
-    ...buildExecutionIndex(input, globalBlockers, caseIds.length > 0),
+    ...buildExecutionIndex(input, globalBlockers, caseIds.length > 0, configuration),
   };
   const cases = caseIds.map((caseId) => calculateCase(
     String(caseId),
@@ -165,7 +209,7 @@ function calculateDistribution(input, configuration) {
   });
 }
 
-function buildExecutionIndex(input, globalBlockers, hasActiveCases) {
+function buildExecutionIndex(input, globalBlockers, hasActiveCases, configuration) {
   supportLoadPerformanceMetrics.executionIndexBuilds += 1;
   const entityById = new Map(input.dataset.entities.map((entity) => [entity.entityId, entity]));
   supportLoadPerformanceMetrics.entityIndexEntries += input.dataset.entities.length;
@@ -173,7 +217,8 @@ function buildExecutionIndex(input, globalBlockers, hasActiveCases) {
   supportLoadPerformanceMetrics.edgeIndexEntries += input.routePartitionModel.edges.length;
   const routeById = new Map();
   const baseMassByEntityId = new Map();
-  if (globalBlockers.length === 0 && hasActiveCases) {
+  const usesQualifiedCaseMasses = configuration.qualifiedCaseMassByKey instanceof Map;
+  if (globalBlockers.length === 0 && hasActiveCases && !usesQualifiedCaseMasses) {
     supportLoadPerformanceMetrics.baseMassArtifactBuilds += 1;
   }
 
@@ -187,7 +232,7 @@ function buildExecutionIndex(input, globalBlockers, hasActiveCases) {
     if (globalBlockers.length === 0 && route.status === 'READY') {
       supports = routeSupports(route, input.supportSiteModel, edgeById, input.profile);
       supportLoadPerformanceMetrics.supportProjectionBuilds += 1;
-      if (hasActiveCases) {
+      if (hasActiveCases && !usesQualifiedCaseMasses) {
         route.physicalEdgeIds.forEach((entityId) => {
           const entity = entityById.get(entityId);
           const edge = edgeById.get(entityId);
@@ -251,11 +296,9 @@ function calculateRoute(route, input, state, execution) {
       state.excludedInputs.push({ code: 'MISSING_ROUTE_CHAINAGE', routeId: route.routeId, entityId });
       return;
     }
-    if (!execution.baseMassByEntityId.has(entityId)) {
-      throw new Error(`Missing case-independent mass artifact for entity ${entityId}.`);
-    }
-    const baseMass = execution.baseMassByEntityId.get(entityId);
-    const mass = resolveCaseMass(baseMass, entity, state.caseId, input.profile);
+    const mass = execution.qualifiedCaseMassByKey instanceof Map
+      ? resolveQualifiedCaseMass(execution.qualifiedCaseMassByKey, entityId, state.caseId)
+      : resolveLegacyCaseMass(execution, entity, edge, state.caseId, input.profile);
     const application = resolveApplicationPoint(entity, chainage, execution);
     if (!mass.qualified) {
       state.excludedInputs.push({ ...mass.exclusion, routeId: route.routeId, entityId });
@@ -277,6 +320,90 @@ function calculateRoute(route, input, state, execution) {
       : allocateSupportPointLoad({ chainageMm: application.chainageMm, forceN, supports });
     recordContribution(state, route, entity, chainage, application, mass, forceN, accounting);
   });
+}
+
+function resolveLegacyCaseMass(execution, entity, edge, caseId, profile) {
+  if (!execution.baseMassByEntityId.has(entity.entityId)) {
+    throw new Error(`Missing case-independent mass artifact for entity ${entity.entityId}.`);
+  }
+  const baseMass = execution.baseMassByEntityId.get(entity.entityId);
+  return resolveCaseMass(baseMass, entity, caseId, profile);
+}
+
+function resolveQualifiedCaseMass(qualifiedCaseMassByKey, entityId, caseId) {
+  supportLoadPerformanceMetrics.caseMassCompositions += 1;
+  const row = qualifiedCaseMassByKey.get(qualifiedCaseMassKey(entityId, caseId));
+  if (!row) {
+    return {
+      qualified: false,
+      exclusion: { code: 'MISSING_QUALIFIED_CASE_MASS', entityId, loadCaseId: caseId },
+    };
+  }
+  return {
+    qualified: true,
+    massKg: row.massKg,
+    formula: {
+      massAuthority: structuredClone(row.source),
+      massKg: row.massKg,
+      projectDataSources: [],
+    },
+  };
+}
+
+function normalizeQualifiedCaseMasses(value) {
+  if (!Array.isArray(value)) {
+    throw new TypeError('qualifiedCaseMasses must be an array.');
+  }
+  const result = new Map();
+  value.forEach((row, index) => {
+    const entityId = requiredQualifiedMassText(row?.entityId, `qualifiedCaseMasses[${index}].entityId`);
+    const loadCaseId = requiredQualifiedMassText(
+      row?.loadCaseId,
+      `qualifiedCaseMasses[${index}].loadCaseId`,
+    );
+    if (!['EMPTY', 'HYD', 'OPE'].includes(loadCaseId)) {
+      throw new RangeError(`Unsupported qualified case mass load case: ${loadCaseId}.`);
+    }
+    const massKg = Number(row?.massKg);
+    if (!Number.isFinite(massKg) || massKg < 0) {
+      throw new RangeError(`qualifiedCaseMasses[${index}].massKg must be finite and non-negative.`);
+    }
+    const source = row?.source;
+    if (!source || typeof source !== 'object' || Array.isArray(source)
+        || source.kind !== 'QUALIFIED_CASE_MASS_RECEIPT'
+        || !requiredQualifiedMassText(source.authority, `qualifiedCaseMasses[${index}].source.authority`)
+        || !qualifiedSemanticHash(source.semanticHash)
+        || !qualifiedSemanticHash(source.caseSemanticHash)
+        || !['DISTRIBUTED', 'POINT'].includes(source.mode)) {
+      throw new TypeError(`qualifiedCaseMasses[${index}].source is not a qualified mass receipt.`);
+    }
+    const key = qualifiedCaseMassKey(entityId, loadCaseId);
+    if (result.has(key)) {
+      throw new RangeError(`Duplicate qualified case mass: ${entityId}:${loadCaseId}.`);
+    }
+    result.set(key, freezeDeep({
+      entityId,
+      loadCaseId,
+      massKg,
+      source: freezeDeep(structuredClone(source)),
+    }));
+  });
+  return result;
+}
+
+function qualifiedCaseMassKey(entityId, caseId) {
+  return `${entityId}\u0000${caseId}`;
+}
+
+function requiredQualifiedMassText(value, label) {
+  if (typeof value !== 'string' || value.trim() !== value || value.length === 0) {
+    throw new TypeError(`${label} must be a non-empty trimmed string.`);
+  }
+  return value;
+}
+
+function qualifiedSemanticHash(value) {
+  return typeof value === 'string' && /^fnv1a64:[0-9a-f]{16}$/u.test(value);
 }
 
 function resolveApplicationPoint(entity, chainage, execution) {

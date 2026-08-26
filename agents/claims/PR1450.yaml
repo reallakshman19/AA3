@@ -12,11 +12,15 @@ authority_domain:
   - LAFEA.4 pressure force/moment/reaction equilibrium receipt
   - LAFEA.4 source/canonical/retained-kernel orientation evidence
   - cross-stage material-property invalidation/anti-drift receipt
+  - exact clean Git HEAD binding and retained qualification-envelope custody
 exact_paths:
   - scripts/lafea-implementation-authorization-gate-check.mjs
+  - scripts/lafea-implementation-authorization-gate-retain.mjs
   - agents/PR1450_workreport.md
   - agents/status/PR1450.yaml
   - agents/claims/PR1450.yaml
+runtime_output_path:
+  - reports/qualification/lafea-implementation-authorization-gate.json
 excluded_authority:
   - local-continuum formulation or solver mechanics
   - local-shell formulation, pressure mechanics or orientation convention
@@ -24,7 +28,7 @@ excluded_authority:
   - B01/B02 expected values, probes or tolerances
   - source topology custody
   - registry/release authority
-  - workflow YAML
+  - UI/build/workflow files
 coordination:
   - pr: 1432
     classification: COORDINATION_REQUIRED_BEFORE_FINAL_EXECUTION_LAFEA3_MESH_CAN_MOVE

@@ -6,8 +6,8 @@ issue: 1456
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: AUTO
-auto_state: COMPLETE
-coordination_state: SAFE_NO_OPEN_PR_EXACT_FILE_OVERLAP
+auto_state: RUNNING
+coordination_state: CURRENT_MAIN_EXACT_BLOB_REGROUND_COMPLETE_CHILD_PROPAGATION_NEXT
 scope:
   authority: EMP1_PROFESSIONAL_BUILD_ARTIFACT_SECURITY
   paths:
@@ -23,37 +23,20 @@ protected_exclusions:
   - WRC mechanics/route/registry
   - WRC source/dataset/oracle/tolerances
   - validation/emp1/wrc537-2013/**
-  - controlled source PDF bytes
-  - CSP policy
-  - dependency vulnerability policy
-  - runtime error presentation policy
+  - dependency-vulnerability policy
+  - CSP/security-header policy
   - .github/workflows/**
 authority_boundary:
-  engineering_method_mutation: false
-  runtime_route_authority_mutation: false
-  source_authority_granted: false
+  artifact_security_can_block_release: true
+  engineering_authority_granted: false
   code_compliance_authority_granted: false
   release_authority_granted: false
-  deployment_authority_granted: false
-  deployable_byte_rejection_only: true
-security_scope:
-  complete_dist_scanned_by_policy: true
-  controlled_source_name_and_hash_rules: true
-  source_maps_blocked: true
-  credential_containers_blocked: true
-  high_confidence_secret_signatures_blocked: true
-  matched_secret_value_echo_allowed: false
-  csp_qualified: false
-  dependency_vulnerability_review_qualified: false
-  runtime_error_content_leakage_qualified: false
-  general_security_certification_claimed: false
-validation_boundary:
-  scanner_execution: NOT_RUN
-  falsifier_execution: NOT_RUN
-  hosted_final_head_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-merge_authority: NOT_GRANTED
+  broader_security_certification_claimed: false
+live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
+current_main_tree: ea619d56311f4be6c1f27a4ca433794979ddee33
+report_basis_head: 922570990764c083f454864bf193e25be281b9bf
 technical_basis_head: 28970fe78f0ad1a41a706d927aaeb92793e05552
-pre_recovery_head_observed: 11c44cf3cf4968928047848572595637b9ec169a
-grounding_epoch: GE-PR1457-003
+merge_authority: NOT_GRANTED
+grounding_epoch: GE-PR1457-005
 handover_report: agents/PR1457_workreport.md
-exact_next_action: "Leave PR1457 draft/unmerged pending explicit Owner merge authorization; re-ground immediately before any merge."
+exact_next_action: "Keep PR1457 draft/unmerged and re-ground child PR1464 onto this recovery-synchronized parent head."

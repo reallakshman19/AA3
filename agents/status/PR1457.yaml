@@ -7,51 +7,32 @@ branch: agent/issue-1456-emp1-build-artifact-security-20260826
 issue: 1456
 umbrella: 1389
 execution_mode: AUTO
-auto_state: COMPLETE
-scope_authority: LOCKED_TO_ISSUE_1456
+auto_state: RUNNING
+phase_progression: AUTO
+scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1456
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_DRAFT_IMPLEMENTATION_COMPLETE
+pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
 handover_readiness: READY
-base_main: 29c688db4a021db900d1f8c67f56f777f73f4ddc
-base_tree: 60d0fa231c52a561b9d6cc50d1099abff8500880
+live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
+current_main_tree: ea619d56311f4be6c1f27a4ca433794979ddee33
+report_basis_head: 922570990764c083f454864bf193e25be281b9bf
 technical_basis_head: 28970fe78f0ad1a41a706d927aaeb92793e05552
-pre_recovery_head_observed: 11c44cf3cf4968928047848572595637b9ec169a
-grounding_epoch: GE-PR1457-003
+grounding_epoch: GE-PR1457-005
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_NO_OPEN_PR_EXACT_FILE_OVERLAP
-current_stage: FINAL_EXACT_HEAD_EXECUTION_REOBSERVED
+coordination: CURRENT_MAIN_EXACT_BLOB_REGROUND_COMPLETE_CHILD_PROPAGATION_NEXT
+current_stage: CURRENT_MAIN_EXACT_BLOB_REGROUND_VALIDATED
 merge_authorization: NOT_GRANTED
 validation:
-  exact_seven_path_scope: PASS_SOURCE_INSPECTION
-  complete_dist_walk: PASS_SOURCE_INSPECTION
-  controlled_source_basename_guard: PASS_SOURCE_INSPECTION
-  controlled_wrc_sha256_guard: PASS_SOURCE_INSPECTION
-  controlled_caux_sha256_guard: PASS_SOURCE_INSPECTION
-  source_map_guard: PASS_SOURCE_INSPECTION
-  key_and_credential_container_guard: PASS_SOURCE_INSPECTION
-  high_confidence_secret_signature_guard: PASS_SOURCE_INSPECTION
-  violation_value_suppression: PASS_SOURCE_INSPECTION
-  symlink_guard: PASS_SOURCE_INSPECTION
-  release_harness_ordering: PASS_SOURCE_INSPECTION
-  artifact_hash_and_deployment_chain_preserved: PASS_SOURCE_INSPECTION
-  repo_secret_signature_search: PASS_NO_OBVIOUS_MATCH
+  main_drift_exact_path_overlap: PASS_NONE
+  reground_compare: PASS_5_AHEAD_0_BEHIND_7_FILES_BEFORE_RECOVERY_SYNC
+  artifact_security_source: PASS_PRIOR_AUDIT
   scanner_execution: NOT_RUN
   falsifier_execution: NOT_RUN
-  hosted_runemp1: NOT_RUN_EXECUTION_ENVIRONMENT
-  hosted_gamma5: NOT_RUN_EXECUTION_ENVIRONMENT
+  production_build_browser_execution: NOT_RUN_CURRENT_EPOCH
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
   numerical_comparison: NOT_APPLICABLE
-unqualified_security_scope:
-  csp_security_headers: NOT_QUALIFIED
-  dependency_vulnerability_review: NOT_QUALIFIED
-  runtime_error_content_leakage: NOT_QUALIFIED_OUTSIDE_THIS_ARTIFACT_GATE
-  general_penetration_test: NOT_CLAIMED
-hosted_evidence:
-  runemp1_run: 32947344631
-  runemp1_job: 98110849057
-  gamma5_run: 32947344620
-  gamma5_job: 98110847342
-  classification: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-exact_next_action: "Leave PR1457 draft/unmerged pending explicit Owner merge authorization; re-ground live main/head/diff/reviews immediately before any merge."
+current_blocker: "Executable scanner/falsifier/build/browser evidence remains NOT_RUN; merge authority not granted."
+exact_next_action: "Keep PR1457 draft/unmerged and re-ground child PR1464 onto this recovery-synchronized parent head."

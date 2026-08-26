@@ -6,6 +6,9 @@ import {
   requireAuthorizedEmpiricalRuntimePackageV2,
 } from './authorized-empirical-runtime-package-v2.js';
 import {
+  requireGovernedEmpiricalRuntimePackageProjectionV2,
+} from './governed-empirical-runtime-package-v2.js';
+import {
   EMPIRICAL_AUTHORIZATION_STATES,
 } from './authorized-empirical-runtime-store.js';
 import {
@@ -15,6 +18,7 @@ import {
 /** Retains explicit method-bound authorization without altering the V1 store. */
 export class AuthorizedEmpiricalRuntimeStoreV2 {
   #runtimePackage = null;
+  #governedProjection = null;
   #execution = null;
   #snapshot = snapshot(
     EMPIRICAL_AUTHORIZATION_STATES.NOT_CONFIGURED,
@@ -27,55 +31,55 @@ export class AuthorizedEmpiricalRuntimeStoreV2 {
 
   configure(runtimePackage, currentBindings) {
     this.#runtimePackage = requireAuthorizedEmpiricalRuntimePackageV2(runtimePackage);
+    this.#governedProjection = null;
     this.#execution = null;
     return this.refresh(currentBindings);
   }
 
+  configureGoverned(governedProjection, currentBindings) {
+    const projection = requireGovernedEmpiricalRuntimePackageProjectionV2(governedProjection);
+    this.#runtimePackage = projection.runtimePackage;
+    this.#governedProjection = projection;
+    this.#execution = null;
+    return this.refreshGoverned(currentBindings, projection);
+  }
+
   refresh(currentBindings) {
-    if (!this.#runtimePackage) {
-      this.#snapshot = currentBindings
-        ? snapshot(
-          EMPIRICAL_AUTHORIZATION_STATES.AWAITING_AUTHORIZATION,
-          false,
-          'EMPIRICAL_PACKAGE_V2_REQUIRED',
-          [],
-          null,
-          null,
-        )
-        : snapshot(
-          EMPIRICAL_AUTHORIZATION_STATES.NOT_CONFIGURED,
-          false,
-          'NO_ACTIVE_DATASET',
-          [],
-          null,
-          null,
-        );
-      return this.#snapshot;
-    }
-    if (!currentBindings) {
-      return this.#setStale('NO_ACTIVE_DATASET', [{
-        code: 'EMPIRICAL_RUNTIME_V2_ACTIVE_BINDINGS_MISSING',
+    if (this.#governedProjection) {
+      return this.#setStale('GOVERNED_PROJECTION_CURRENTNESS_REQUIRED', [{
+        code: 'EMPIRICAL_RUNTIME_V2_GOVERNED_PROJECTION_REQUIRED',
+        configuredGovernedProjectionSemanticHash: this.#governedProjection.semanticHash,
       }]);
     }
-    const mismatches = compareAuthorizedEmpiricalRuntimeBindings(
-      this.#runtimePackage.bindings,
-      currentBindings,
-    );
-    if (mismatches.length > 0) {
-      return this.#setStale('AUTHORIZATION_BINDINGS_CHANGED', mismatches);
+    return this.#refreshBindings(currentBindings);
+  }
+
+  refreshGoverned(currentBindings, currentGovernedProjection) {
+    if (!this.#runtimePackage) return this.#refreshBindings(currentBindings);
+    if (!this.#governedProjection) {
+      return this.#setStale('GOVERNED_PROJECTION_NOT_CONFIGURED', [{
+        code: 'EMPIRICAL_RUNTIME_V2_GOVERNED_PROJECTION_NOT_CONFIGURED',
+      }]);
     }
-    const state = this.#execution
-      ? EMPIRICAL_AUTHORIZATION_STATES.EXECUTED_CURRENT
-      : EMPIRICAL_AUTHORIZATION_STATES.AUTHORIZED_CURRENT;
-    this.#snapshot = snapshot(
-      state,
-      true,
-      null,
-      [],
-      this.#runtimePackage,
-      this.#execution,
+    if (!currentGovernedProjection) {
+      return this.#setStale('GOVERNED_PROJECTION_CURRENTNESS_REQUIRED', [{
+        code: 'EMPIRICAL_RUNTIME_V2_GOVERNED_PROJECTION_REQUIRED',
+        configuredGovernedProjectionSemanticHash: this.#governedProjection.semanticHash,
+      }]);
+    }
+    const current = requireGovernedEmpiricalRuntimePackageProjectionV2(
+      currentGovernedProjection,
     );
-    return this.#snapshot;
+    if (current.semanticHash !== this.#governedProjection.semanticHash) {
+      return this.#setStale('GOVERNED_PROJECTION_CHANGED', [{
+        code: 'EMPIRICAL_RUNTIME_V2_GOVERNED_PROJECTION_CHANGED',
+        configuredGovernedProjectionSemanticHash: this.#governedProjection.semanticHash,
+        currentGovernedProjectionSemanticHash: current.semanticHash,
+        configuredMethod: this.#governedProjection.runtimePackage.method,
+        currentMethod: current.runtimePackage.method,
+      }]);
+    }
+    return this.#refreshBindings(currentBindings);
   }
 
   markStale(reason, details = []) {
@@ -181,10 +185,12 @@ export class AuthorizedEmpiricalRuntimeStoreV2 {
 
   getSnapshot() { return this.#snapshot; }
   getPackage() { return this.#runtimePackage; }
+  getGovernedProjection() { return this.#governedProjection; }
   getExecution() { return this.#execution; }
 
   clear() {
     this.#runtimePackage = null;
+    this.#governedProjection = null;
     this.#execution = null;
     this.#snapshot = snapshot(
       EMPIRICAL_AUTHORIZATION_STATES.NOT_CONFIGURED,
@@ -194,6 +200,53 @@ export class AuthorizedEmpiricalRuntimeStoreV2 {
       null,
       null,
     );
+  }
+
+  #refreshBindings(currentBindings) {
+    if (!this.#runtimePackage) {
+      this.#snapshot = currentBindings
+        ? snapshot(
+          EMPIRICAL_AUTHORIZATION_STATES.AWAITING_AUTHORIZATION,
+          false,
+          'EMPIRICAL_PACKAGE_V2_REQUIRED',
+          [],
+          null,
+          null,
+        )
+        : snapshot(
+          EMPIRICAL_AUTHORIZATION_STATES.NOT_CONFIGURED,
+          false,
+          'NO_ACTIVE_DATASET',
+          [],
+          null,
+          null,
+        );
+      return this.#snapshot;
+    }
+    if (!currentBindings) {
+      return this.#setStale('NO_ACTIVE_DATASET', [{
+        code: 'EMPIRICAL_RUNTIME_V2_ACTIVE_BINDINGS_MISSING',
+      }]);
+    }
+    const mismatches = compareAuthorizedEmpiricalRuntimeBindings(
+      this.#runtimePackage.bindings,
+      currentBindings,
+    );
+    if (mismatches.length > 0) {
+      return this.#setStale('AUTHORIZATION_BINDINGS_CHANGED', mismatches);
+    }
+    const state = this.#execution
+      ? EMPIRICAL_AUTHORIZATION_STATES.EXECUTED_CURRENT
+      : EMPIRICAL_AUTHORIZATION_STATES.AUTHORIZED_CURRENT;
+    this.#snapshot = snapshot(
+      state,
+      true,
+      null,
+      [],
+      this.#runtimePackage,
+      this.#execution,
+    );
+    return this.#snapshot;
   }
 
   #setStale(reason, details) {

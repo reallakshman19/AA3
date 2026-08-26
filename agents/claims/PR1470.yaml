@@ -38,7 +38,8 @@ authority_boundary:
   deployment_authority_granted: false
 stack_base_head: 4b6eab2474ca0728ffc455698aa99b01f2d716a5
 technical_basis: f115af6fbe929bda1b5770c0614b2f1bfb588872
-live_main_last_observed: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
-merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1470-002
+pre_merge_audited_head: c0c1a30d5b79bd67963e0d8f2dee9b4a19d9a757
+live_main_last_observed: f15bab4af0009888f41b856f820cb3ab7a152520
+merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-26T15:24:12Z
+grounding_epoch: GE-PR1470-003
 handover_report: agents/PR1470_workreport.md

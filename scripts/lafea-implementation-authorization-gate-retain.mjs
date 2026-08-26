@@ -93,11 +93,21 @@ vectorClose(
   1e-6,
 );
 
+const dirtyAfterEngineeringChecks = git([
+  'status', '--porcelain=v1', '--untracked-files=all',
+]).trim();
+assert.equal(
+  dirtyAfterEngineeringChecks,
+  '',
+  `authorization engineering checks changed the checkout before receipt sealing; dirty state:\n${dirtyAfterEngineeringChecks}`,
+);
+
 const body = Object.freeze({
-  schema: 'lafea-implementation-authorization-exact-head-envelope/v3',
+  schema: 'lafea-implementation-authorization-exact-head-envelope/v4',
   repository: 'reallaksh19/Advanced_Analysis',
   repositoryHead,
   checkoutCleanBeforeExecution: true,
+  checkoutCleanAfterEngineeringChecks: true,
   checkerPaths: Object.freeze([
     'scripts/lafea-implementation-authorization-gate-check.mjs',
     'scripts/lafea3-direct-loaded-element-authorization-check.mjs',
@@ -113,7 +123,7 @@ const body = Object.freeze({
 const envelope = Object.freeze({
   ...body,
   evidenceArtifactHash: canonicalLafeaSha256({
-    schema: 'lafea-implementation-authorization-exact-head-envelope-hash-input/v3',
+    schema: 'lafea-implementation-authorization-exact-head-envelope-hash-input/v4',
     evidence: body,
   }),
 });

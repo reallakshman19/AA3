@@ -1,1 +1,41 @@
 schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1481
+issue: 1321
+branch: agent/issue-1321-run-current-runtime-routing
+state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: IMPLEMENT_ROUTING_PRESENTATION_CUTOVER
+base_branch: main
+base_sha: d24eac2a865cd748832825dc552cd7070b919f16
+validation:
+  live_main_grounding: PASS
+  ordinary_run_obsolete_path_trace: PASS
+  controller_execution_ownership_trace: PASS
+  authority_presentation_trace: PASS
+  obsolete_registered_regression_trace: PASS
+  focused_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    error: "Could not resolve host: github.com"
+invariants:
+  scenario_ready_path_unchanged: true
+  ordinary_run_current_system_event_exactly_once: true
+  ordinary_run_legacy_authorization_refresh_forbidden: true
+  ordinary_run_manual_seal_forbidden: true
+  legacy_explicit_calculate_event_retained: true
+  current_runtime_execution_exactly_once: true
+  no_legacy_retry_after_current_failure: true
+  routine_system_authority_distinct: true
+  mechanics_change_authorized: false
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR
+merge_disposition: DRAFT_IMPLEMENTATION_IN_PROGRESS
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Implement bounded routing and authority presentation plus focused/legacy falsifiers; reconcile exact scope; do not merge without new owner authority."

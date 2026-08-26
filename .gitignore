@@ -35,7 +35,7 @@ slice-r-final.patch
 
 # Locally fetched pinned ACCDB source material for M047 Stage 2 local
 # measurement runs - third-party binary, not project source. Re-fetched
-# reproducibly per scripts/lfea-m047-stage2-source-custody-manifest.mjs.
+# reproducibly per scripts/lafea-m047-stage2-source-custody-manifest.mjs.
 artifacts/
 
 # Temporary test directories
@@ -48,3 +48,7 @@ artifacts/
 # Runtime-only Issue #1371 Section 17 registry-closure readiness receipt.
 # The future cleanup proposal guard consumes this exact ignored receipt.
 /reports/qualification/lafea1371-registry-closure-readiness.json
+
+# Runtime-only B01 post-nullspace boundary discriminator receipt.
+# Keep the path exact so unrelated B01 reports remain visible to Git custody.
+/reports/qualification/B01/post-nullspace-boundary.json

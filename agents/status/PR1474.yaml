@@ -4,25 +4,30 @@ repository: reallaksh19/Advanced_Analysis
 source_task: Issue #1371 Section 17 registry/documentation closure
 branch: agent/lafea1371-registry-closure-readiness-20260826
 base_branch: main
-base_head_last_checked: 5afab7ecdf0573d5faf60276dc0c688458c483fb
+base_head_last_checked: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+synchronization_commit: 8c033330b63f291a1c81f13cb1a143ebdd65c0d4
 state: OPEN_DRAFT
 criticality: ENGINEERING_CRITICAL
 recovery_state: CONTINUE
 takeover_authority: WRITE_ALLOWED_EVIDENCE_INFRASTRUCTURE_ONLY
 execution_mode: OWNER_DIRECTED
-current_stage: SECTION17_READINESS_GATE_IMPLEMENTED_PENDING_REAL_EXACT_HEAD_EXECUTION
+current_stage: SECTION17_READINESS_AND_CLEANUP_PROPOSAL_CONTRACT_IMPLEMENTED_PENDING_REAL_EXACT_HEAD_Q1_Q5
 engineering_failure_proven: false
 validation:
-  live_grounding: PASS_GITHUB_READBACK
-  issue_section17_requirement: PASS_SOURCE_INSPECTION
-  protected_lafea3_registry_state: PASS_SOURCE_INSPECTION
-  protected_lafea4_authority_state: PASS_SOURCE_INSPECTION
-  evaluator_syntax: PASS_LOCAL_NODE_CHECK
-  command_syntax: PASS_LOCAL_NODE_CHECK
-  self_test_syntax: PASS_LOCAL_NODE_CHECK
-  synthetic_section17_policy_suite: PASS_LOCAL_EXECUTION
+  live_grounding: PASS_GITHUB_READBACK_MAIN_F7E3241
+  three_commit_main_drift: PASS_SAFE_ISSUE1321_ONLY_NO_LAFEA_AUTHORITY_OVERLAP
+  current_main_synchronization: PASS_TWO_PARENT_TREE_CUSTODY
+  pr1432_authority_coordination: OPEN_DRAFT_UNMERGED_REEXECUTE_IF_MERGED
+  pr1258_authority_coordination: OPEN_DRAFT_UNMERGED_REEXECUTE_IF_MERGED
+  protected_lafea3_registry_state: PASS_SOURCE_INSPECTION_UNCHANGED
+  protected_lafea4_authority_state: PASS_SOURCE_INSPECTION_UNCHANGED
+  readiness_schema: V2_FULL_REGISTRY_BASELINE_HASH_AND_RETAINED_RECEIPT
+  readiness_synthetic_policy_suite: PASS_LOCAL_POLICY_EXECUTION_NO_MECHANICS
+  cleanup_proposal_guard: IMPLEMENTED_QUALIFIED_BASE_ANCESTRY_PLUS_WORDING_ONLY_SEMANTICS
+  cleanup_proposal_synthetic_policy_suite: PASS_LOCAL_POLICY_EXECUTION_NO_MECHANICS
   real_q1_q5_exact_head_execution: NOT_RUN
   real_section17_readiness: NOT_RUN
+  actual_registry_cleanup_proposal: NOT_PROPOSED
   registry_cleanup_authority: NOT_GRANTED
 readiness_contract:
   current_head_must_equal_verified_evidence_head: true
@@ -33,11 +38,22 @@ readiness_contract:
   clean_git_after_receipt_required: true
   protected_lafea3_limitation_required_before_cleanup: true
   protected_lafea4_cst_dkt_authority_required: true
+  full_registry_baseline_hash_required: true
+  readiness_receipt_path: reports/qualification/lafea1371-registry-closure-readiness.json
   registry_mutation_performed: false
   release_authority_granted: false
-coordination:
-  pr_1432: COORDINATION_REQUIRED_IF_MERGED_REEXECUTE_Q1_Q5
-  pr_1258: COORDINATION_REQUIRED_IF_MERGED_REEXECUTE_Q1_Q5
+cleanup_proposal_contract:
+  qualified_base_must_be_ancestor_of_candidate: true
+  only_non_agent_production_path: src/workspace/lafea-stage-registry.js
+  permitted_semantic_fields:
+    - LAFEA.3.limitation
+    - LAFEA.3.limitations[1]
+  integration_point_stress_authority_must_remain_exact: true
+  all_other_registry_semantics_must_match_baseline_hash: true
+  wording_approved_by_guard: false
+  merge_authority_granted_by_guard: false
+  release_authority_granted_by_guard: false
 blocker: REAL_EXACT_HEAD_Q1_Q5_REPORT_NOT_EXECUTED
 exact_next_action: node scripts/lafea-implementation-authorization-local-preflight.mjs && node scripts/lafea1371-registry-closure-readiness-check.mjs
+future_cleanup_candidate_check: node scripts/lafea1371-registry-cleanup-proposal-guard.mjs
 merge_authority: OWNER_ONLY_NOT_GRANTED

@@ -1,21 +1,13 @@
 schema: AgentWipMarker.v1
 issue: 1321
-state: READ_ONLY_TAKEOVER
+state: SUPERSEDED_BY_NUMBERED_PR_CUSTODY
 branch: agent/issue-1321-current-run-execution-runtime
 base_main: 3d79ea6889c08cf6a37229655ecbd3ec3dc89a20
 upstream_pr: 1475
-mission: "Create a single runtime coordinator for the current Common Input empirical chain before changing the Run-button routing."
-locked_invariants:
-  ready_common_input_required: true
-  system_run_authorization_required: true
-  governed_method_selection_required: true
-  current_mass_projection_required: true
-  current_support_execution_required: true
-  legacy_explicit_authority_path_unchanged: true
-  scenario_ready_path_unchanged: true
-  run_controller_change_authorized: false
-validation:
-  live_main_grounding: PASS
-  controller_gap_trace: PASS
-  executable_checks: NOT_RUN
-merge_authority: OWNER_ONLY_NOT_GRANTED
+numbered_pr: 1478
+superseded_by:
+  - agents/PR1478_workreport.md
+  - agents/claims/PR1478.yaml
+  - agents/status/PR1478.yaml
+mission: "Historical takeover marker only; PR1478 numbered custody is authoritative."
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR

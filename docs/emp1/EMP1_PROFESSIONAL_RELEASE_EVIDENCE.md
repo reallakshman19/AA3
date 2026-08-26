@@ -204,6 +204,31 @@ PR-H security evidence is deliberately bounded. It verifies the EMP.1 release bo
 
 It does **not** claim a general web-application penetration test, supply-chain certification, cryptographic signature infrastructure, or broader security accreditation.
 
+### Public runtime failure-content boundary
+
+Product-visible failure state must preserve the fact of failure and a bounded machine-readable diagnostic code without copying arbitrary exception text from source/parser/normalizer/worker/EMP.1 execution into the UI or serializable workbench failure state.
+
+The public boundary therefore applies these rules:
+
+- an explicit error `code` is retained only when the entire value matches the bounded engineering diagnostic-code grammar;
+- a legacy exception message may be promoted to the code field only when the entire message itself matches that same code grammar;
+- all other exception-message content is replaced by a deterministic operation-class message plus the retained/fallback diagnostic code;
+- import/edit rejection remains FAILED or RUNNING-with-diagnostic according to existing state semantics;
+- worker/solver execution failure remains FAILED and retains run identity;
+- EMP.1 run-input, qualification-sample and product-run exceptions remain REJECTED/FAILED as applicable;
+- explicit governed readiness/blocker reasons are **not** exception messages and remain visible;
+- redaction never converts a failure to PASS and never creates source, route, code-compliance, release or deployment authority.
+
+Independent source-level falsification is encoded by:
+
+```text
+node scripts/emp1-professional-runtime-error-redaction-check.mjs
+```
+
+The checker injects a proprietary sentinel into exception/worker-message channels and requires the sentinel to be absent from public diagnostic messages, serialized execution failure, forged worker failure, EMP.1 controller exception presentation and checker output while safe diagnostic codes remain visible.
+
+This encoded redaction policy is not browser execution evidence and does not qualify CSP/security headers, dependency-vulnerability status, penetration testing or broader application-security certification.
+
 ## Current repository state at PR-H creation
 
 At `main@0f85cac384532b5cc35bc24ecedd729275027eb6`:

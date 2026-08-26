@@ -1,4 +1,3 @@
-import { LAFEA_WORKBENCH_DOCUMENT_SCHEMA } from './lafea-workbench-model.js';
 import { LAFEA_WORKBENCH_STYLES } from './lafea-workbench-styles.js';
 import { LAFEA_GUIDED_WORKBENCH_STYLES } from './lafea-guided-workbench-styles.js';
 import { LAFEA_UI_MODERNIZATION_STYLES } from './lafea-ui-modernization-styles.js';
@@ -10,6 +9,11 @@ export const LAFEA_JSON_INTAKE_ALLOWED_MIME_TYPES = Object.freeze([
   'text/json',
 ]);
 
+// Keep this module import-light. vite.config.js deliberately isolates it as a
+// leaf chunk; importing the workbench model/composition graph here can recreate
+// evaluation-order cycles. The focused security checker cross-checks this exact
+// discriminator against the canonical exported workbench schema.
+export const LAFEA_JSON_INTAKE_WORKBENCH_DOCUMENT_SCHEMA = 'lafea-workbench-document/v1';
 const LAFEA_WORKBENCH_DOCUMENT_SCHEMA_PREFIX = 'lafea-workbench-document/';
 const JSON_FILE_EXTENSION = /\.json$/iu;
 
@@ -172,7 +176,7 @@ function requireLafeaJsonFile(file, maxBytes) {
 function assertSupportedWorkbenchEnvelope(value) {
   const schema = typeof value?.schema === 'string' ? value.schema.trim() : '';
   if (!schema.startsWith(LAFEA_WORKBENCH_DOCUMENT_SCHEMA_PREFIX)) return;
-  if (schema === LAFEA_WORKBENCH_DOCUMENT_SCHEMA) return;
+  if (schema === LAFEA_JSON_INTAKE_WORKBENCH_DOCUMENT_SCHEMA) return;
   throw intakeError(
     TypeError,
     'LAFEA_WORKBENCH_DOCUMENT_SCHEMA_UNSUPPORTED',

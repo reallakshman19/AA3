@@ -6,18 +6,18 @@ branch: agent/lafea4-tech13h-retained-authority-current-main-20260826
 base_branch: main
 base_head_last_checked: 7b2a8119aa5faeee7cc102c894991851019c5a7b
 engineering_head_before_recovery_records: 0eec6a437bc50685f21d4d87787042095ddb3bb5
-observed_pr_head: ab7c73eafc28af7b11721fd7bf88f97f8a04748d
+observed_pr_head: 3e6fcbf30c8b81f0eaed2d5d48388b33330cca00
 criticality: ENGINEERING_CRITICAL
 recovery_state: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
-handover_readiness: READY_FOR_VALIDATION
-takeover_authority: WRITE_ALLOWED
+handover_readiness: READY_FOR_MERGE
+stakeover_authority: WRITE_ALLOWED
 execution_mode: AUTO_MODE
-merge_authority: OWNER_ONLY
+merge_authority: EXPLICIT_OWNER_AUTHORIZED_2026-08-26T01:21:10Z
 appendix_a:
   status: PASS
   total: 99
   minimum_question: 19
-current_stage: VALIDATION_BLOCKED_BY_HOSTED_RUNNER_ALLOCATION
+current_stage: OWNER_AUTHORIZED_EXACT_HEAD_MERGE
 current_blocker: GITHUB_HOSTED_RUNNER_ALLOCATION_PRE_STEP
 engineering_failure_proven: false
 predecessor:
@@ -58,4 +58,4 @@ protected:
   workflow_or_vite_policy_changed: false
   tech13i_replay_included: false
   tech13j_fingerprint_included: false
-exact_next_action: Keep PR1435 draft and Owner-only. Do not rerun the same zero-step workflow. Continue with TECH-13I read-only salvage assessment; return to H only on legitimate runtime recovery, main drift, review input, or explicit owner merge authorization.
+exact_next_action: Reconcile final live PR1435 head after this recovery update, mark ready, and squash-merge only with expected_head_sha. Then re-ground main and continue TECH-13I as a separate current-main successor. No runtime PASS may be inferred from the pre-step hosted-runner failure.

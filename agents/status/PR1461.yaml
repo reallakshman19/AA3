@@ -1,0 +1,27 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1461
+issue: 1321
+branch: agent/issue-1321-run-ready-snapshot
+state: PR_ALLOCATED_READY_FOR_IMPLEMENTATION
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: RUNNING
+stack_base_pr: 1460
+stack_base_head: e246a51235b8c8fd98a67e6fece3a9be87825071
+validation:
+  live_grounding: PASS
+  upstream_stack_exact: PASS
+  overlap: PASS_NONE_FOUND
+  execution_checks: NOT_RUN
+invariants:
+  run_may_obtain_ready_snapshot: true
+  empirical_auto_authorization_authorized: false
+  partial_auto_accept_permitted: false
+  blocked_auto_accept_permitted: false
+  scenario_path_change_authorized: false
+  numerical_mechanics_change_authorized: false
+  workflow_change_authorized: false
+appendix_a_qualified: false
+merge_disposition: OWNER_ONLY_DRAFT
+exact_next_action: "Remove WIP; update LoadCalc Run path to obtain/reuse READY snapshot before empirical authorization check; add focused routing regression."

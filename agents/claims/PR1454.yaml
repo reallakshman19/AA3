@@ -4,22 +4,22 @@ pr_or_wip: PR1454
 branch: agent/issue-1451-emp1-json-intake-security-20260826
 issue: 1451
 criticality: ENGINEERING_CRITICAL
-claim_state: ACTIVE
+claim_state: HANDOVER_READY
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: COMPLETE
 coordination_state: SAFE_NO_OPEN_PR_EXACT_FILE_OVERLAP
 scope:
   authority: EMP1_PROFESSIONAL_JSON_INTAKE_SECURITY
   paths:
     - src/workspace/lafea-workbench-controller-io.js
-    - src/workspace/lafea-workbench-controller.js
-    - src/workspace/lafea-workbench-store.js
     - scripts/emp1-professional-json-intake-security-check.mjs
     - agents/PR1454_workreport.md
     - agents/status/PR1454.yaml
     - agents/claims/PR1454.yaml
 protected_exclusions:
   - src/core/emp1/**
+  - src/workspace/lafea-workbench-controller.js
+  - src/workspace/lafea-workbench-store.js
   - WRC mechanics/route/registry
   - WRC source/dataset/oracle/tolerances
   - validation/emp1/release/**
@@ -32,5 +32,6 @@ authority_boundary:
   code_compliance_authority_granted: false
   release_authority_granted: false
 merge_authority: NOT_GRANTED
+technical_basis_head: 079d28c4dcce943db338c9da4513b5f07b4cab2e
 handover_report: agents/PR1454_workreport.md
-exact_next_action: "Finish WIP migration; implement JSON intake guards and focused regression only."
+exact_next_action: "Leave PR1454 draft/unmerged pending explicit Owner merge authorization; re-ground immediately before any merge."

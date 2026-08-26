@@ -3,14 +3,15 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1481
 issue: 1321
 branch: agent/issue-1321-run-current-runtime-routing
-state: SOURCE_COMPLETE_AWAITING_OWNER
+state: SOURCE_COMPLETE_OWNER_AUTHORIZED
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: READY_FOR_REVIEW
+auto_state: RECONCILE_AND_MERGE
 base_branch: main
-base_sha: 20e0abb5301363bef0659cf615bc8a37559ac869
+base_sha: f9570d4bd86fa73cb070c95a0386fd3c79ec35ff
 validation:
   live_main_grounding: PASS
+  intervening_main_path_overlap: NONE
   production_call_path_trace: PASS
   ready_report_vs_sealed_common_input_semantic_audit: PASS
   stale_seal_ready_report_reseal_audit: PASS
@@ -21,8 +22,8 @@ validation:
   distinct_authority_presentation_source_review: PASS
   legacy_view_delegated_unchanged: PASS
   wip_markers_removed_from_net_tree: PASS
-  exact_eleven_file_scope: PASS
-  branch_behind_main: 0
+  intended_file_scope: 11
+  final_branch_behind_main: PENDING_POST_SYNC
   migrated_final_routing_check: NOT_RUN
   current_system_routing_presentation_check: NOT_RUN
   legacy_authorized_view_check: NOT_RUN
@@ -47,9 +48,9 @@ invariants:
   routine_system_authority_distinct: true
   fake_legacy_baseline_handoff_forbidden: true
   mechanics_change_authorized: false
-merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR
-merge_disposition: READY_FOR_REVIEW_NOT_AUTHORIZED_TO_MERGE
+merge_authority: OWNER_AUTHORIZED_2026-08-26T23:12:22Z
+merge_disposition: RECONCILE_EXACT_SCOPE_THEN_SQUASH_MERGE
 appendix_a_qualified: true
 appendix_a_score: 98
 appendix_a_minimum: 18
-exact_next_action: "Owner review/merge #1481 when authorized; then harden #1439 PD-ACTIVE-CASES exact Product-default provenance/hash cross-binding."
+exact_next_action: "Synchronize exact 11-file tree onto live main, verify behind=0 and clean review state, then squash-merge #1481 and proceed to #1439."

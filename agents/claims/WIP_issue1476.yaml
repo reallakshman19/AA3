@@ -1,0 +1,40 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP_issue1476
+branch: agent/issue-1476-release-manifest-salvage-20260826
+issue: 1476
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: AUTO
+auto_state: RUNNING
+coordination_state: STACKED_ON_PR1473_SALVAGE_FROM_PR1444
+scope:
+  authority: EMP1_RELEASE_MANIFEST_SALVAGE
+  paths:
+    - scripts/emp1-professional-release-candidate.mjs
+    - scripts/emp1-professional-release-manifest-check.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_MANIFEST.md
+    - agents/WIP_issue1476_workreport.md
+    - agents/status/WIP_issue1476.yaml
+    - agents/claims/WIP_issue1476.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - WRC source/dataset/oracle/tolerance/mechanics
+  - package.json
+  - package-lock.json
+  - provider-specific deployment configuration or APIs
+  - index.html
+  - analyze.html
+  - .github/workflows/**
+authority_boundary:
+  manifest_records_authority: true
+  manifest_creates_authority: false
+  inherited_release_gates_may_be_replaced: false
+  engineering_authority_granted: false
+  release_authority_granted: false
+  deployment_authority_granted: false
+stack_base_head: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
+live_main_last_observed: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+merge_authority: NOT_GRANTED
+grounding_epoch: GE-WIP1476-001
+handover_report: agents/WIP_issue1476_workreport.md

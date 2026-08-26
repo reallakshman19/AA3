@@ -2,8 +2,9 @@ schema: AgentPrClaim.v1
 repository: reallaksh19/Advanced_Analysis
 pr: 1480
 mission: Post-nullspace B01 governing-boundary discriminator
-base_main: e74d2d3c45d918895d3a613014f08aa7c0abce79
+base_main: d24eac2a865cd748832825dc552cd7070b919f16
 required_ancestor: e74d2d3c45d918895d3a613014f08aa7c0abce79
+sync_commit: 8b27f58d11736f81e89c2aa507b50c44d7782898
 authority_domain:
   - EXACT_HEAD_B01_POST_NULLSPACE_QUALIFICATION_DISCRIMINATION
   - GOVERNING_LAME_CASE_FIRST_VETO
@@ -32,6 +33,7 @@ claims:
   integrated_b01_qualified: false
   release_authority_granted: false
   trust_authority_granted: false
+  current_main_sync_preserves_disjoint_issue1321_commit: true
 validation_truth:
   policy_self_test: PASS_LOCAL_NODE_EXECUTION
   real_engineering_execution: NOT_RUN
@@ -45,4 +47,5 @@ excluded_authority:
   - ENGINEERING_TOLERANCES
   - B02_NUMERICS
   - REGISTRY_RELEASE_TRUST
-merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+merge_truth: OWNER_AUTHORIZED_INTEGRATION_WITH_NOT_RUN_PRESERVED

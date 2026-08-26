@@ -1,0 +1,59 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1457
+branch: agent/issue-1456-emp1-build-artifact-security-20260826
+issue: 1456
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: AUTO
+auto_state: COMPLETE
+coordination_state: SAFE_NO_OPEN_PR_EXACT_FILE_OVERLAP
+scope:
+  authority: EMP1_PROFESSIONAL_BUILD_ARTIFACT_SECURITY
+  paths:
+    - scripts/emp1-professional-build-artifact-security-check.mjs
+    - scripts/emp1-professional-build-artifact-security-falsifier.mjs
+    - scripts/emp1-professional-release-candidate.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
+    - agents/PR1457_workreport.md
+    - agents/status/PR1457.yaml
+    - agents/claims/PR1457.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - WRC mechanics/route/registry
+  - WRC source/dataset/oracle/tolerances
+  - validation/emp1/wrc537-2013/**
+  - controlled source PDF bytes
+  - CSP policy
+  - dependency vulnerability policy
+  - runtime error presentation policy
+  - .github/workflows/**
+authority_boundary:
+  engineering_method_mutation: false
+  runtime_route_authority_mutation: false
+  source_authority_granted: false
+  code_compliance_authority_granted: false
+  release_authority_granted: false
+  deployment_authority_granted: false
+  deployable_byte_rejection_only: true
+security_scope:
+  complete_dist_scanned_by_policy: true
+  controlled_source_name_and_hash_rules: true
+  source_maps_blocked: true
+  credential_containers_blocked: true
+  high_confidence_secret_signatures_blocked: true
+  matched_secret_value_echo_allowed: false
+  csp_qualified: false
+  dependency_vulnerability_review_qualified: false
+  runtime_error_content_leakage_qualified: false
+  general_security_certification_claimed: false
+validation_boundary:
+  scanner_execution: NOT_RUN
+  falsifier_execution: NOT_RUN
+  hosted_final_head_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+merge_authority: NOT_GRANTED
+technical_basis_head: 28970fe78f0ad1a41a706d927aaeb92793e05552
+pre_recovery_head_observed: 11c44cf3cf4968928047848572595637b9ec169a
+grounding_epoch: GE-PR1457-003
+handover_report: agents/PR1457_workreport.md
+exact_next_action: "Leave PR1457 draft/unmerged pending explicit Owner merge authorization; re-ground immediately before any merge."

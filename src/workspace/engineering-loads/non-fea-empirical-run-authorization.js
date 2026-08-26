@@ -310,7 +310,10 @@ function normalizePolicy(value) {
     qualifiedNumericalProjectionRequiredAtExecution: true,
     governedMethodSelectionRequiredAtExecution: true,
   };
-  if (JSON.stringify(value) !== JSON.stringify(expected)) {
+  const differs = Object.entries(expected).some(([key, expectedValue]) => (
+    value[key] !== expectedValue
+  ));
+  if (differs) {
     fail(
       'Non-FEA empirical Run authorization policy was altered.',
       'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_POLICY_INVALID',
@@ -346,7 +349,8 @@ function requiredText(value, label) {
 
 function canonicalTimestamp(value, label) {
   const text = requiredText(value, label);
-  if (new Date(text).toISOString() !== text) {
+  const parsed = new Date(text);
+  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString() !== text) {
     fail(
       `${label} must be a canonical ISO-8601 timestamp.`,
       'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_TIMESTAMP_INVALID',

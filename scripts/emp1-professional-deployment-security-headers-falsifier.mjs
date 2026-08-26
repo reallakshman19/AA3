@@ -43,10 +43,10 @@ try {
   assert.equal(good.authorityBoundary.browserCompatibilityEstablishedByStaticPolicy, false);
 
   expectFail({ ...BASE, headers: omit(GOOD_HEADERS, 'content-security-policy') }, 'EMP1_SECURITY_HEADERS_CSP_REQUIRED');
-  expectFail(cspMutation("script-src 'self' 'unsafe-inline'"), 'EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_TOKEN_UNSAFE_INLINE');
-  expectFail(cspMutation("script-src 'self' 'unsafe-eval'"), 'EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_TOKEN_UNSAFE_EVAL');
-  expectFail(cspMutation("script-src 'self' *"), 'EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_TOKEN_TOKEN');
-  expectFail(cspMutation("script-src 'self' https://cdn.example.com"));
+  expectFail(cspMutation("script-src 'self' 'unsafe-inline'"), 'EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_UNSAFE_INLINE');
+  expectFail(cspMutation("script-src 'self' 'unsafe-eval'"), 'EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_UNSAFE_EVAL');
+  expectFail(cspMutation("script-src 'self' *"), 'EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_WILDCARD');
+  expectFail(cspMutation("script-src 'self' https://cdn.example.com"), 'EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_EXTERNAL_ORIGIN');
   expectFail(cspRemove('object-src'), 'EMP1_SECURITY_HEADERS_CSP_OBJECT_SRC_REQUIRED');
   expectFail(cspRemove('frame-ancestors'), 'EMP1_SECURITY_HEADERS_CSP_FRAME_ANCESTORS_REQUIRED');
   expectFail(cspRemove('base-uri'), 'EMP1_SECURITY_HEADERS_CSP_BASE_URI_REQUIRED');
@@ -88,6 +88,34 @@ try {
   assert.equal(networkPayload.status, 'NOT_RUN_EXECUTION_ENVIRONMENT');
   assert.equal(networkPayload.liveHeadersObserved, false);
 
+  const sentinel = 'PROPRIETARY_RECEIPT_SENTINEL_DO_NOT_ECHO';
+  const badReceiptPath = join(temp, 'bad-deployment-receipt.json');
+  await writeFile(badReceiptPath, `${JSON.stringify({
+    schema: `wrong-schema-${sentinel}`,
+    candidate: { headSha: sentinel },
+    deployment: { url: `https://example.invalid/${sentinel}` },
+  }, null, 2)}\n`, 'utf8');
+  const receiptRun = spawnSync(process.execPath, [
+    checker,
+    '--receipt', badReceiptPath,
+    '--expected-head', 'a'.repeat(40),
+    '--expected-tree', 'b'.repeat(40),
+    '--expected-artifact-sha256', 'c'.repeat(64),
+  ], {
+    cwd: root,
+    encoding: 'utf8',
+    maxBuffer: 4 * 1024 * 1024,
+  });
+  assert.equal(receiptRun.error, undefined);
+  assert.equal(receiptRun.status, 1);
+  const receiptPayload = JSON.parse(receiptRun.stdout);
+  assert.equal(receiptPayload.status, 'FAIL');
+  assert.equal(receiptPayload.code, 'EMP1_SECURITY_HEADERS_DEPLOYMENT_RECEIPT_SCHEMA_INVALID');
+  assert.equal(receiptPayload.deploymentUrl, null);
+  assert.doesNotMatch(receiptRun.stdout, new RegExp(sentinel, 'u'));
+  assert.doesNotMatch(receiptRun.stderr, new RegExp(sentinel, 'u'));
+  assert.doesNotMatch(receiptRun.stderr, /AssertionError/u);
+
   const candidateSource = await readFile(resolve(root, 'scripts/emp1-professional-release-candidate.mjs'), 'utf8');
   const deploymentIndex = candidateSource.indexOf("runNode('DEPLOYMENT_EVIDENCE'");
   const headersIndex = candidateSource.indexOf("runNode('DEPLOYMENT_SECURITY_HEADERS'");
@@ -104,10 +132,10 @@ try {
     status: 'PASS',
     falsifiers: [
       'MISSING_CSP_REJECTED',
-      'SCRIPT_UNSAFE_INLINE_REJECTED',
-      'SCRIPT_UNSAFE_EVAL_REJECTED',
-      'SCRIPT_WILDCARD_REJECTED',
-      'EXTERNAL_SCRIPT_ORIGIN_REJECTED',
+      'SCRIPT_UNSAFE_INLINE_REJECTED_WITH_CATEGORY_ONLY_DIAGNOSTIC',
+      'SCRIPT_UNSAFE_EVAL_REJECTED_WITH_CATEGORY_ONLY_DIAGNOSTIC',
+      'SCRIPT_WILDCARD_REJECTED_WITH_CATEGORY_ONLY_DIAGNOSTIC',
+      'EXTERNAL_SCRIPT_ORIGIN_REJECTED_WITHOUT_ORIGIN_ECHO',
       'OBJECT_FRAME_BASE_FORM_RESTRICTIONS_REQUIRED',
       'CURRENT_STYLE_INLINE_COMPATIBILITY_BOUND',
       'NOSNIFF_REFERRER_PERMISSIONS_REQUIRED',
@@ -115,6 +143,7 @@ try {
       'HTTP_NON_SUCCESS_REJECTED',
       'FIXTURE_PASS_CANNOT_CREATE_LIVE_HEADER_OR_BROWSER_AUTHORITY',
       'NETWORK_FAILURE_IS_NOT_RUN',
+      'MALFORMED_DEPLOYMENT_RECEIPT_FAILS_WITH_BOUNDED_JSON_NO_CONTENT_ECHO',
       'HEADER_GATE_ORDERED_AFTER_DEPLOYMENT_RECEIPT',
       'HEADER_GATE_EXIT3_BOUND_TO_NOT_RUN',
       'BROWSER_COMPATIBILITY_CLAIM_FORBIDDEN',

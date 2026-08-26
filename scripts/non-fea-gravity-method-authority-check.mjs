@@ -117,7 +117,22 @@ assert.equal(governedV3.selection.requestedMethod, NON_FEA_GRAVITY_METHOD_AUTO);
 assert.equal(governedV3.selection.selectedMethod, NON_FEA_GRAVITY_METHOD_V3_COG);
 assert.equal(governedV3.selection.selectionState, 'SELECTED_V3_COG');
 assert.equal(governedV3.gravityMethodAuthority.semanticHash, productAuthority.semanticHash);
+assert.equal(
+  governedV3.componentAuthorityAuditProjectDataProfileSemanticHash,
+  productAuthority.projectDataSemanticHash,
+);
 requireGovernedEmpiricalGravityMethodSelection(governedV3);
+
+const tamperedGoverned = structuredClone(governedV3);
+tamperedGoverned.componentAuthorityAuditProjectDataProfileSemanticHash =
+  'fnv1a64:aaaaaaaaaaaaaaaa';
+const { semanticHash: _tamperedHash, ...tamperedBase } = tamperedGoverned;
+tamperedGoverned.semanticHash = semanticHash(tamperedBase);
+assert.throws(
+  () => requireGovernedEmpiricalGravityMethodSelection(tamperedGoverned),
+  (error) => error?.code === 'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_PROFILE_MISMATCH',
+  'Rehydration must reject a governed selector whose retained audit-profile binding changed.',
+);
 
 const governedV2Fallback = createGovernedEmpiricalGravityMethodSelection({
   gravityMethodAuthority: productAuthority,
@@ -193,6 +208,7 @@ console.log(JSON.stringify({
   governedAutoFallsBackToV2OnlyForMissingCog: true,
   governedAutoRefusesKnownEccentricityFallback: true,
   profileHashMismatchBlocked: true,
+  rehydrationProfileBindingChecked: true,
   selectionIsNotExecutionAuthorization: governedV3.selection.policy.selectionIsNotExecutionAuthorization,
 }, null, 2));
 

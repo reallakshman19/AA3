@@ -1,0 +1,39 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1444
+branch: agent/issue-1441-release-candidate-manifest-20260826
+issue: 1441
+criticality: ENGINEERING_CRITICAL
+claim_state: ACTIVE
+execution_mode: AUTO
+auto_state: RUNNING
+coordination_state: SAFE_RELEASE_PROVENANCE_NO_OPEN_PR_EXACT_FILE_OVERLAP
+scope:
+  authority: EMP1_RELEASE_CANDIDATE_PROVENANCE_MANIFEST
+  paths:
+    - scripts/emp1-professional-release-candidate.mjs
+    - scripts/emp1-professional-release-manifest-check.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
+    - agents/PR1444_workreport.md
+    - agents/status/PR1444.yaml
+    - agents/claims/PR1444.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - validation/emp1/release/emp1-professional-release-readiness-v1.json
+  - P0 source-semantics aggregate and individual source records
+  - WRC/CAUx source bytes and benchmark expected values
+  - gamma5 oracle/tolerances/evidence 01-12
+  - UI/browser production code
+  - .github/workflows/**
+authority_boundary:
+  engineering_method_mutation: false
+  runtime_route_authority_mutation: false
+  source_authority_granted: false
+  code_compliance_authority_granted: false
+  release_authority_granted: false
+  deployment_authority_granted: false
+base_main: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+merge_authority: NOT_GRANTED
+handover_report: agents/PR1444_workreport.md
+exact_next_action: "Finish WIP migration; implement first-class manifest in existing candidate receipt and independent checker."

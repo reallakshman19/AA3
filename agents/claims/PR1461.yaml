@@ -13,6 +13,7 @@ mission: "Wire ordinary Run to obtain/reuse READY product screening snapshot bef
 claimed_paths:
   - src/workspace/load-calc-consumer-controller.js
   - scripts/load-calc-run-ready-snapshot-check.mjs
+  - scripts/run-non-fea-checks.mjs
   - agents/PR1461_workreport.md
   - agents/claims/PR1461.yaml
   - agents/status/PR1461.yaml

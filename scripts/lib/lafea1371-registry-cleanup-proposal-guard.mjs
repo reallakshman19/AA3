@@ -2,19 +2,23 @@ import assert from 'node:assert/strict';
 
 import {
   LAFEA1371_REGISTRY_CLOSURE_READINESS_SCHEMA,
+  LAFEA1371_REGISTRY_SOURCE_RELATIVE_PATH,
   PROTECTED_LAFEA3_LIMITATION,
   PROTECTED_LAFEA3_LIMITATIONS,
   hashRegistryProjection,
   lafea1371RegistryBaselineProjection,
+  lafea1371RegistrySourceFingerprint,
 } from './lafea1371-registry-closure-readiness.mjs';
 
 export const LAFEA1371_REGISTRY_CLEANUP_PROPOSAL_SCHEMA =
-  'lafea1371-registry-cleanup-proposal-guard/v1';
+  'lafea1371-registry-cleanup-proposal-guard/v2';
 
 export function evaluateLafea1371RegistryCleanupProposal({
   readiness,
   candidateRegistry,
   changedPaths,
+  qualifiedRegistrySource,
+  candidateRegistrySource,
 } = {}) {
   requireReadiness(readiness);
   assert.ok(Array.isArray(changedPaths), 'registry cleanup proposal requires changed paths');
@@ -24,8 +28,29 @@ export function evaluateLafea1371RegistryCleanupProposal({
     .sort();
   assert.deepEqual(
     productionPaths,
-    ['src/workspace/lafea-stage-registry.js'],
+    [LAFEA1371_REGISTRY_SOURCE_RELATIVE_PATH],
     'Section 17 cleanup proposal may mutate only the LAFEA stage registry outside recovery records',
+  );
+
+  const qualifiedSourceFingerprint = lafea1371RegistrySourceFingerprint(qualifiedRegistrySource, {
+    requireProtectedWording: true,
+  });
+  assert.equal(
+    qualifiedSourceFingerprint.sourceHash,
+    readiness.registrySourceHash,
+    'qualified registry source bytes do not match the readiness receipt',
+  );
+  assert.equal(
+    qualifiedSourceFingerprint.templateHash,
+    readiness.registrySourceTemplateHash,
+    'qualified registry source template does not match the readiness receipt',
+  );
+
+  const candidateSourceFingerprint = lafea1371RegistrySourceFingerprint(candidateRegistrySource);
+  assert.equal(
+    candidateSourceFingerprint.templateHash,
+    readiness.registrySourceTemplateHash,
+    'registry cleanup proposal changes source bytes outside the two permitted LAFEA.3 wording literals',
   );
 
   const candidateProjection = lafea1371RegistryBaselineProjection(candidateRegistry);
@@ -93,6 +118,9 @@ export function evaluateLafea1371RegistryCleanupProposal({
     section: 17,
     qualifiedRepositoryHead: readiness.qualifiedRepositoryHead,
     registryBaselineHash: readiness.registryBaselineHash,
+    qualifiedRegistrySourceHash: readiness.registrySourceHash,
+    registrySourceTemplateHash: readiness.registrySourceTemplateHash,
+    candidateRegistrySourceHash: candidateSourceFingerprint.sourceHash,
     productionPaths: Object.freeze(productionPaths),
     permittedRegistryFieldsChanged: Object.freeze([
       'LAFEA.3.limitation',
@@ -113,6 +141,9 @@ function requireReadiness(readiness) {
   assert.equal(readiness.disposition, 'READY_FOR_REGISTRY_CLEANUP_PR');
   assert.match(readiness.qualifiedRepositoryHead ?? '', /^[0-9a-f]{40}$/u);
   assert.match(readiness.registryBaselineHash ?? '', /^sha256:[0-9a-f]{64}$/u);
+  assert.equal(readiness.registrySourcePath, LAFEA1371_REGISTRY_SOURCE_RELATIVE_PATH);
+  assert.match(readiness.registrySourceHash ?? '', /^sha256:[0-9a-f]{64}$/u);
+  assert.match(readiness.registrySourceTemplateHash ?? '', /^sha256:[0-9a-f]{64}$/u);
   assert.equal(readiness.cleanupProposalMayNowBeOpened, true);
   assert.equal(readiness.cleanupWordingAuthorizedByThisGate, false);
   assert.equal(readiness.registryMutationPerformed, false);

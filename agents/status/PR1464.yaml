@@ -1,8 +1,8 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1464
-mission: "Bind npm dependency lock custody and live advisory status into EMP.1 release candidate"
-workstream: EMP1_DEPENDENCY_SECURITY
+mission: "Bind dependency security and carry absorbed deployed-header child into EMP.1 release candidate"
+workstream: EMP1_DEPENDENCY_SECURITY_WITH_ABSORBED_HEADER_CHILD
 branch: agent/issue-1463-emp1-dependency-security-20260826
 issue: 1463
 umbrella: 1389
@@ -10,33 +10,32 @@ dependency_base_pr: 1457
 base_branch: agent/issue-1456-emp1-build-artifact-security-20260826
 execution_mode: AUTO
 auto_state: COMPLETE
-scope_authority: LOCKED_TO_ISSUE_1463
+scope_authority: ISSUE_1463_WITH_MERGED_CHILD_1466_CUSTODY
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_STACKED_DRAFT_COMPLETE
+pr_recovery_state: HEALTHY_STACKED_DRAFT_CHILD_PR1470_ABSORBED
 handover_readiness: READY
 stack_base_head: f2462a7a09e7a4a0bc36a398095efdd796c98a4a
-technical_basis_head: c44c8444a1e2961b9b548386f2cfd8dc2776e472
-live_main_last_observed: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
-grounding_epoch: GE-PR1464-002
+dependency_technical_basis: c44c8444a1e2961b9b548386f2cfd8dc2776e472
+absorbed_child_pr: 1470
+absorbed_child_merge_sha: 9f73e0fc8c5db06cec137fb0041190596ae4acf3
+live_main_last_observed: f15bab4af0009888f41b856f820cb3ab7a152520
+grounding_epoch: GE-PR1464-003
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: STACKED_ON_PR1457_EXACT_OVERLAP_INTENTIONAL
-current_stage: TECHNICAL_IMPLEMENTATION_AND_SOURCE_AUDIT_COMPLETE
+coordination: STACKED_ON_PR1457_CHILD_PR1470_ABSORBED
+current_stage: CHILD_STACK_ABSORPTION_RECONCILED
 merge_authorization: NOT_GRANTED
 validation:
-  npm_lockfile_v3: PASS_SOURCE_INSPECTION
-  package_lock_present: PASS_SOURCE_INSPECTION
-  exact_stacked_diff: PASS_18_AHEAD_0_BEHIND_9_FILES
+  dependency_security_source: PASS_PRIOR_AUDIT
+  deployed_header_child_source: PASS_PR1470_MERGE_GATE
+  effective_diff: PASS_16_FILES_BEFORE_RECOVERY_SYNC
   reviews: PASS_ZERO
   review_threads: PASS_ZERO
-  lock_custody_checker: ENCODED_SOURCE_AUDITED_EXECUTION_NOT_RUN
-  lock_custody_falsifier: ENCODED_SOURCE_AUDITED_EXECUTION_NOT_RUN
   dependency_advisory_execution: NOT_RUN_EXECUTION_ENVIRONMENT
-  advisory_falsifier: ENCODED_SOURCE_AUDITED_EXECUTION_NOT_RUN
-  runemp1_hosted: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-  gamma5_hosted: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+  deployed_header_observation: NOT_RUN
+  browser_execution: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-current_blocker: "Live npm advisory/build/browser execution is unavailable; hosted EMP.1 jobs remain pre-step NOT_RUN under #54."
-exact_next_action: "Leave PR1464 draft/unmerged; re-ground against PR1457 before any future merge decision."
+current_blocker: "PR1457 remains unmerged and current main has advanced independently; live advisory/build/browser/deployed-header evidence remain NOT_RUN."
+exact_next_action: "Leave PR1464 draft/unmerged; re-ground PR1457 against current main before any future stack merge decision."

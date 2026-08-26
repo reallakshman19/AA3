@@ -41,11 +41,12 @@ const governedConfiguredController = new ConfiguredEmpiricalMethodControllerV2({
 const governedProjectionProvider = Object.freeze({
   createFromLegacy(runtimePackage, masterData) {
     const dataset = governedModelStore.getDataset();
-    const effectiveProfile = effectiveProjectDataStore.getProfile();
+    const productDefaults = getCurrentNonFeaProductDefaultProvider();
     return createProductionGovernedEmpiricalProjection({
       legacyRuntimePackage: runtimePackage,
+      sourceProjectDataSemanticHash: productDefaults.sourceProjectDataSemanticHash,
       dataset,
-      effectiveProfile,
+      effectiveProfile: productDefaults.effectiveProfile,
       supportSiteModel: governedModelStore.getSupportSiteModel(),
       routePartitionModel: governedModelStore.getRoutePartitionModel(),
       masterData,

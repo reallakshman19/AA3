@@ -101,12 +101,13 @@ export function renderEngineeringLoadPane(
 export function isRoutineRunReady(commonState) {
   if (commonState?.error) return false;
   const commonInput = commonState?.commonInput;
-  if (commonInput) {
-    return commonState?.staleness?.stale === false
-      && commonInput.packageState === 'READY'
-      && nonemptyArray(commonInput.sealedMethodIds)
-      && emptyArray(commonInput.blockedMethodIds);
-  }
+  const currentReadySeal = commonInput
+    && commonState?.staleness?.stale === false
+    && commonInput.packageState === 'READY'
+    && nonemptyArray(commonInput.sealedMethodIds)
+    && emptyArray(commonInput.blockedMethodIds);
+  if (currentReadySeal) return true;
+
   const report = commonState?.report;
   return report?.packageState === 'READY'
     && nonemptyArray(report.readyMethodIds)

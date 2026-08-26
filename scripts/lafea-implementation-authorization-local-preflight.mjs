@@ -31,7 +31,7 @@ try {
     stdio: ['ignore', 'inherit', 'inherit'],
   });
 } catch (error) {
-  const delegatedGateFailed = executionPhase === 'DELEGATED_ENGINEERING_GATE';
+  const delegatedGateEntered = executionPhase === 'DELEGATED_ENGINEERING_GATE';
   const exitStatus = Number.isInteger(error?.status) && error.status !== 0
     ? error.status
     : 1;
@@ -42,10 +42,13 @@ try {
     repository: 'reallaksh19/Advanced_Analysis',
     repositoryHead,
     phase: executionPhase,
-    classification: delegatedGateFailed
-      ? 'ENGINEERING_GATE_FAILED_STOP_AT_FIRST_ASSERTION'
+    classification: delegatedGateEntered
+      ? 'DELEGATED_ENGINEERING_GATE_NONZERO_STOP_AT_FIRST_CHILD_FAILURE'
       : 'NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED',
-    q1ToQ5Executed: delegatedGateFailed,
+    delegatedEngineeringGateEntered: delegatedGateEntered,
+    q1ToQ5Disposition: delegatedGateEntered
+      ? 'UNKNOWN_OR_PARTIAL_SEE_FIRST_CHILD_FAILURE'
+      : 'NOT_RUN',
     engineeringAuthorityCreated: false,
     releaseAuthorityGranted: false,
     exitStatus,

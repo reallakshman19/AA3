@@ -3,16 +3,23 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1471
 issue: 1321
 branch: agent/issue-1321-current-common-input-effective-projection
-state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+state: SOURCE_COMPLETE_AUTHORITY_REPAIRED_EXECUTION_NOT_RUN
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: IMPLEMENT_CURRENT_COMMON_INPUT_MASS_PROJECTION
+auto_state: FINAL_RECONCILE_AND_MERGE
 base_branch: agent/issue-1321-run-internal-authorization
-base_sha: 1912bfa2fb3516643b4a5331e77c704c16b8969a
+base_sha_at_takeover: 1912bfa2fb3516643b4a5331e77c704c16b8969a
+current_main: 9832b9cc418ecbffe54edb96bbb90ca08f05426a
+critical_defect:
+  code: WORKSPACE_LOAD_PRIMITIVE_SET_RAW_SHARED_MODEL_NOT_ENRICHED_COMMON_INPUT_MASS_AUTHORITY
+  disposition: REPAIRED_BEFORE_MERGE
+  final_mass_basis: SEALED_COMMON_INPUT_ENRICHED_MODEL
 validation:
   live_grounding: PASS
-  pr1465_stack_base_trace: PASS
-  common_input_mass_coverage_trace: PASS
+  pr1465_authorization_trace: PASS
+  workspace_primitive_source_trace: PASS
+  raw_vs_enriched_authority_defect_isolation: PASS
+  model_load_source_projection_trace: PASS
   model_load_mass_resolver_trace: PASS
   fitting_derivation_trace: PASS
   negligible_gasket_trace: PASS
@@ -26,11 +33,14 @@ validation:
   git_diff_check: NOT_RUN
   local_checkout:
     status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
-    observation: PRIOR_LOCAL_EXECUTION
     error: "Could not resolve host: github.com"
 invariants:
   current_ready_common_input_required: true
   current_run_authorization_required: true
+  numerical_mass_basis_is_enriched_model: true
+  source_workspace_primitive_used_as_numerical_basis: false
+  source_workspace_primitive_hash_retained_for_currentness: true
+  execution_gravity_consumed: false
   fabricated_legacy_authority_permitted: false
   direct_mass_basis_may_be_rewritten_as_density: false
   fitting_derivation_must_be_preserved: true
@@ -44,6 +54,6 @@ invariants:
 appendix_a_qualified: true
 appendix_a_score: 98
 appendix_a_minimum: 18
-merge_authority: OWNER_ONLY_NOT_GRANTED
-merge_disposition: DRAFT_UNMERGED
-exact_next_action: "Implement projection contract and focused falsifier; remove WIP custody; reconcile exact stacked diff."
+merge_authority: GRANTED_BY_OWNER_CURRENT_TURN
+merge_disposition: PENDING_FINAL_SYNC_AND_SOURCE_REVIEW
+exact_next_action: "Synchronize exact six-file delta onto current main 9832b9cc..., retarget to main, verify exact diff/reviews, then squash merge."

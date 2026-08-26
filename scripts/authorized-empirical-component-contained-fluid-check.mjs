@@ -165,6 +165,8 @@ for (const loadCaseId of ['EMPTY', 'OPE', 'HYD']) {
     assert.equal(contentValve.formula.containedFluidMassKg, loadCaseId === 'OPE' ? 8 : 10);
     assert.equal(contentValve.formula.rule,
       'COMPONENT_CASE_MASS=DRY_POINT_MASS+OPTIONAL_AUTHORIZED_CONTAINED_FLUID');
+    assert.ok(contentValve.formula.containedFluidSemanticHash);
+    assert.ok(contentValve.formula.contentCompositionSemanticHash);
   }
 }
 
@@ -181,6 +183,37 @@ const forgedOpe = forgedDistribution.loadCases.find((row) => row.loadCaseId === 
 assert.equal(forgedOpe.status, 'FAILED');
 assert.ok(forgedOpe.excludedInputs.some((row) => row.code === 'UNAPPROVED_COMPONENT_CONTENT_MASS'),
   'a content map without approved source evidence must fail closed');
+
+const approvedRawProfile = structuredClone(contentProjection.profile);
+approvedRawProfile.loadCalculation.componentOperatingFluidWeightsKg.evidence = {
+  source: 'FORGED_APPROVED_PROJECT_DATA',
+};
+const approvedRawDistribution = calculateSupportLoadDistribution({
+  dataset: contentProjection.dataset,
+  profile: approvedRawProfile,
+  supportSiteModel,
+  routePartitionModel,
+  masterData,
+});
+const approvedRawOpe = approvedRawDistribution.loadCases.find((row) => row.loadCaseId === 'OPE');
+assert.equal(approvedRawOpe.status, 'FAILED');
+assert.ok(approvedRawOpe.excludedInputs.some((row) => row.code === 'UNAUTHORIZED_COMPONENT_CONTENT_MASS'),
+  'approved raw Project Data must not bypass the authorized effective-value ledger');
+
+const receiptMismatchProfile = structuredClone(contentProjection.profile);
+receiptMismatchProfile.loadCalculation.componentOperatingFluidWeightsKg.evidence
+  .componentContentBySelector[selector].containedFluidMassKg = 9;
+const receiptMismatchDistribution = calculateSupportLoadDistribution({
+  dataset: contentProjection.dataset,
+  profile: receiptMismatchProfile,
+  supportSiteModel,
+  routePartitionModel,
+  masterData,
+});
+const receiptMismatchOpe = receiptMismatchDistribution.loadCases.find((row) => row.loadCaseId === 'OPE');
+assert.equal(receiptMismatchOpe.status, 'FAILED');
+assert.ok(receiptMismatchOpe.excludedInputs.some((row) => row.code === 'UNAUTHORIZED_COMPONENT_CONTENT_MASS'),
+  'content-map value and ledger composition receipt must remain identical');
 
 assert.notEqual(contentProjection.semanticHash, absentProjection.semanticHash,
   'component content evidence must change effective execution identity');
@@ -199,6 +232,8 @@ console.log(JSON.stringify({
   explicitZeroPreserved: true,
   negativeRejected: true,
   unapprovedContentRejected: true,
+  approvedRawContentRejected: true,
+  mismatchedReceiptRejected: true,
   dryWeightMapInvariant: true,
   pipeMassInvariant: true,
   applicationPointInvariant: true,

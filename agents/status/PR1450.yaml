@@ -6,26 +6,28 @@ branch: agent/lafea-authorization-gate-evidence-20260826
 base_branch: main
 base_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
 initial_engineering_head: cb951d9a44007aee6bed28fb5792f6fb7683cdb2
-observed_pr_head_before_status_refresh: 24a919957ea9f9a26e38c423c8968c9eac5ac2e4
+observed_pr_head_before_status_refresh: 504d46934a6022179610f11cb44bd04606a2d9de
 state: OPEN_DRAFT_MERGEABLE
 criticality: ENGINEERING_CRITICAL
 recovery_state: CONTINUE
 takeover_authority: WRITE_ALLOWED_EVIDENCE_ONLY
 execution_mode: OWNER_DIRECTED
-current_stage: EXACT_HEAD_RETAINED_RECEIPT_IMPLEMENTED_PENDING_EXECUTION
+current_stage: EXACT_HEAD_RECEIPT_PLUS_DIRECT_LOADED_Q1_IMPLEMENTED_PENDING_EXECUTION
 engineering_failure_proven: false
 review_state:
   reviews: 0
   review_threads: 0
 validation:
   live_grounding: PASS_SOURCE_INSPECTION
-  changed_file_reconciliation: PASS_GITHUB_READBACK_5_PATHS
+  changed_file_reconciliation: PASS_GITHUB_READBACK_6_PATHS
   checker_scope: PASS_SOURCE_INSPECTION
   checker_contract_static_consistency: PASS_SOURCE_INSPECTION
   exact_head_retention_wrapper: PASS_SOURCE_INSPECTION
-  exact_head_retention_wrapper_syntax: PASS_LOCAL_NODE_CHECK
+  direct_loaded_q1_addendum: PASS_SOURCE_INSPECTION
+  q1_cross_receipt_hash_binding: PASS_SOURCE_INSPECTION
   local_checkout_attempt: NOT_RUN_DNS_PRECHECKOUT_FAILURE
   q1_retained_t6_hand_jacobian: NOT_RUN
+  q1_direct_compiled_load_incident_element: NOT_RUN
   q2_kirsch_fixed_probe: NOT_RUN
   q3_shell_pressure_equilibrium: NOT_RUN
   q4_orientation_parity: NOT_RUN

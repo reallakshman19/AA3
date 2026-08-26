@@ -93,6 +93,7 @@ function effectiveAuthorityProvenance(evidence) {
   return freezeDeep({
     authority: stringValue(evidence.authority) || 'PROJECT_DATA_APPROVED',
     source: stringValue(evidence.source),
+    basis: stringValue(evidence.basis) || null,
     defaultId: stringValue(evidence.defaultId) || null,
     defaultSemanticHash: stringValue(evidence.defaultSemanticHash) || null,
     profileId: stringValue(evidence.profileId) || null,
@@ -103,7 +104,8 @@ function effectiveAuthorityProvenance(evidence) {
 
 function validProductDefaultProvenance(provenance) {
   return Boolean(
-    provenance.defaultId
+    provenance.basis
+    && provenance.defaultId
     && provenance.defaultSemanticHash
     && provenance.profileId
     && Number.isInteger(provenance.profileVersion)

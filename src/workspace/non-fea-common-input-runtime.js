@@ -30,6 +30,11 @@ import {
 import { WorkspaceState } from './workspace-state.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 
+export const NON_FEA_PRODUCT_SCREENING_SNAPSHOT_ACTOR =
+  'Load Calc product screening snapshot (system)';
+export const NON_FEA_PRODUCT_SCREENING_SNAPSHOT_STATEMENT =
+  'System-generated READY-only screening snapshot; no user approval or partial-method acceptance is asserted.';
+
 export function evaluateCurrentNonFeaCommonInput() {
   try {
     const input = buildCurrentPreFeaRequestInput();
@@ -46,6 +51,50 @@ export function sealCurrentNonFeaCommonInput(confirmation) {
     throw codedError(nonFeaCommonInputStore.getSnapshot().error, 'COMMON_INPUT_EVALUATION_FAILED');
   }
   const snapshot = nonFeaCommonInputStore.seal(confirmation);
+  assertCommonInputMethodPartition(snapshot.commonInput);
+  return snapshot;
+}
+
+/**
+ * Creates the current routine screening snapshot without pretending that a user
+ * approved it. Only a fully READY checker report is eligible. PARTIALLY_READY
+ * still requires the explicit human acceptance path in sealCurrentNonFeaCommonInput().
+ * An already-current sealed Common Input is reused rather than resealed.
+ */
+export function sealCurrentReadyNonFeaCalculationSnapshot({ capturedAt = new Date().toISOString() } = {}) {
+  const before = nonFeaCommonInputStore.getSnapshot();
+  if (before.commonInput && before.staleness?.stale === false && !before.error) {
+    assertCommonInputMethodPartition(before.commonInput);
+    return before;
+  }
+
+  const evaluated = evaluateCurrentNonFeaCommonInput();
+  if (evaluated.error) {
+    throw codedError(evaluated.error, 'COMMON_INPUT_EVALUATION_FAILED');
+  }
+  const report = evaluated.report;
+  if (!report || report.packageState !== 'READY') {
+    const error = codedError(
+      'A product screening snapshot requires a fully READY Common Input checker report.',
+      'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_NOT_READY',
+    );
+    error.details = deepFreeze({
+      packageState: report?.packageState || null,
+      readyMethodIds: [...(report?.readyMethodIds || [])],
+      blockedMethodIds: [...(report?.blockedMethodIds || [])],
+      blockers: structuredClone(report?.blockers || []),
+    });
+    throw error;
+  }
+
+  const snapshot = nonFeaCommonInputStore.seal({
+    confirmationId: `PRODUCT-SCREENING:${report.semanticHash}`,
+    confirmedAt: capturedAt,
+    confirmedBy: NON_FEA_PRODUCT_SCREENING_SNAPSHOT_ACTOR,
+    acceptPartial: false,
+    acknowledgedBlockedMethods: [],
+    statement: NON_FEA_PRODUCT_SCREENING_SNAPSHOT_STATEMENT,
+  });
   assertCommonInputMethodPartition(snapshot.commonInput);
   return snapshot;
 }

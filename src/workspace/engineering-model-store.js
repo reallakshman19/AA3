@@ -307,14 +307,14 @@ export class EngineeringModelStore {
     const site = findSupportSiteByEntityId(this.#supportSiteModel, entity.entityId);
     if (!site) return entity;
     const distribution = engineeringSupportLoadStore.getDistribution();
-    
+
     const scenarioExecution = empiricalLoadCalcScenarioStore.getExecution();
     const scenarioCoreResult = scenarioExecution?.coreResult || null;
 
     const loadCases = (distribution?.loadCases || []).map((loadCase) => {
       const result = loadCase.supportResults.find((row) => row.supportSiteId === site.siteId);
       const ledgers = loadCase.contributionLedger.filter((row) => row.allocations.some((allocation) => allocation.siteId === site.siteId));
-      
+
       const scenarioCaseResult = scenarioCoreResult?.loadCases?.find((lc) => lc.loadCaseId === loadCase.loadCaseId);
       const scenarioSupportResult = scenarioCaseResult?.supportResults?.find((row) => row.supportSiteId === site.siteId);
 
@@ -332,7 +332,16 @@ export class EngineeringModelStore {
       };
     });
     const runtimeStore = activeEmpiricalRuntimeStore();
+    const currentSystemExecution = engineeringSupportLoadStore.getCurrentCommonInputExecution();
     const authorizedExecution = runtimeStore.getExecution() || engineeringSupportLoadStore.getAuthorizedExecution();
+    const authority = currentSystemExecution
+      ? 'CURRENT_COMMON_INPUT_SYSTEM_RUN'
+      : authorizedExecution
+        ? 'AUTHORIZED_HANDOFF'
+        : 'UNAUTHORIZED_LEGACY_RESULT';
+    const authorizationState = currentSystemExecution
+      ? 'EXECUTED_CURRENT_SYSTEM'
+      : runtimeStore.getSnapshot().state;
     return freezeDeep({
       ...entity,
       entityId: site.primaryEntityId,
@@ -349,8 +358,8 @@ export class EngineeringModelStore {
         },
         engineeringSupportLoads: distribution ? {
           method: distribution.method,
-          authority: authorizedExecution ? 'AUTHORIZED_HANDOFF' : 'UNAUTHORIZED_LEGACY_RESULT',
-          authorizationState: runtimeStore.getSnapshot().state,
+          authority,
+          authorizationState,
           freshness: distribution.freshness,
           sourceAxisBasis: distribution.sourceAxisBasis,
           loadCases,
@@ -371,6 +380,9 @@ export class EngineeringModelStore {
     return topologyEditCheckSnapshotStore.getSnapshot(this.#dataset?.datasetId);
   }
   getDistribution() { return engineeringSupportLoadStore.getDistribution(); }
+  getCurrentCommonInputExecution() {
+    return engineeringSupportLoadStore.getCurrentCommonInputExecution();
+  }
   getAuthorizedExecution() {
     return activeEmpiricalRuntimeStore().getExecution()
       || engineeringSupportLoadStore.getAuthorizedExecution();

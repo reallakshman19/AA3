@@ -6,12 +6,18 @@ branch: agent/issue-1321-run-current-runtime-routing
 state: SOURCE_COMPLETE_OWNER_AUTHORIZED
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: RECONCILE_AND_MERGE
+auto_state: READY_TO_SQUASH_MERGE
 base_branch: main
 base_sha: f9570d4bd86fa73cb070c95a0386fd3c79ec35ff
 validation:
   live_main_grounding: PASS
   intervening_main_path_overlap: NONE
+  deterministic_tree_sync: PASS
+  final_merge_base_exact_main: PASS
+  exact_eleven_file_scope: PASS
+  branch_behind_main: 0
+  review_submissions: NONE
+  review_threads: NONE
   production_call_path_trace: PASS
   ready_report_vs_sealed_common_input_semantic_audit: PASS
   stale_seal_ready_report_reseal_audit: PASS
@@ -22,8 +28,6 @@ validation:
   distinct_authority_presentation_source_review: PASS
   legacy_view_delegated_unchanged: PASS
   wip_markers_removed_from_net_tree: PASS
-  intended_file_scope: 11
-  final_branch_behind_main: PENDING_POST_SYNC
   migrated_final_routing_check: NOT_RUN
   current_system_routing_presentation_check: NOT_RUN
   legacy_authorized_view_check: NOT_RUN
@@ -49,8 +53,8 @@ invariants:
   fake_legacy_baseline_handoff_forbidden: true
   mechanics_change_authorized: false
 merge_authority: OWNER_AUTHORIZED_2026-08-26T23:12:22Z
-merge_disposition: RECONCILE_EXACT_SCOPE_THEN_SQUASH_MERGE
+merge_disposition: SQUASH_MERGE_AUTHORIZED
 appendix_a_qualified: true
 appendix_a_score: 98
 appendix_a_minimum: 18
-exact_next_action: "Synchronize exact 11-file tree onto live main, verify behind=0 and clean review state, then squash-merge #1481 and proceed to #1439."
+exact_next_action: "Squash-merge exact current head, verify new main SHA, then complete #1439 Product-default cross-binding and merge under current owner instruction."

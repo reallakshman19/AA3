@@ -1,0 +1,35 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1448
+branch: agent/issue-1447-emp1-seven-step-workflow-20260826
+issue: 1447
+criticality: ENGINEERING_CRITICAL
+claim_state: ACTIVE
+execution_mode: AUTO
+auto_state: RUNNING
+coordination_state: SAFE_PRESENTATION_ONLY_NO_OPEN_PR_EXACT_FILE_OVERLAP
+scope:
+  authority: EMP1_PROFESSIONAL_WORKFLOW_PRESENTATION
+  paths:
+    - src/workspace/emp1-professional-workflow-presentation.js
+    - src/workspace/lafea-guided-workflow-view.js
+    - scripts/emp1-professional-workflow-check.mjs
+    - agents/PR1448_workreport.md
+    - agents/status/PR1448.yaml
+    - agents/claims/PR1448.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - WRC source/dataset/oracle/tolerances
+  - P0 source-semantic records
+  - validation/emp1/release/**
+  - validation/emp1/wrc537-2013/**
+  - .github/workflows/**
+authority_boundary:
+  engineering_method_mutation: false
+  runtime_route_authority_mutation: false
+  source_authority_granted: false
+  code_compliance_authority_granted: false
+  release_authority_granted: false
+merge_authority: NOT_GRANTED
+handover_report: agents/PR1448_workreport.md
+exact_next_action: "Finish WIP migration; implement seven-step pure presentation and focused regression only."

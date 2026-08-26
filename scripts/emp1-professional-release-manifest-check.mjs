@@ -1,11 +1,26 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { readFile, readdir } from 'node:fs/promises';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const expectedEvidenceFiles = [
+  '01-observation.json',
+  '02-replay-receipt.json',
+  '03-falsifier-receipt.json',
+  '04-evidence-manifest.json',
+  '05-local-execution-receipt.json',
+  '06-independent-review-receipt.json',
+  '07-independent-review-falsifier-receipt.json',
+  '08-bounded-authorization-proposal.json',
+  '09-bounded-authorization-proposal-check-receipt.json',
+  '10-bounded-authorization-proposal-falsifier-receipt.json',
+  '11-post-promotion-exact-head-receipt.json',
+  '12-post-promotion-exact-head-falsifier-receipt.json',
+];
 const options = parseArgs(process.argv.slice(2));
 const receiptPath = retainedReceiptPath(options.receipt);
 const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
@@ -13,6 +28,9 @@ const profile = await readJson('validation/emp1/release/emp1-wrc537-gamma5-bound
 const wrcSourceLedger = await readJson('validation/emp1/wrc537-2013/source-ledger.json');
 const cauxSourceLedger = await readJson('validation/emp1/caux2017-wrc01f/source-ledger.json');
 const authorization = await readJson('validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json');
+const retainedEvidenceSets = await collectRetainedEvidenceSets(
+  resolve(root, 'validation/emp1/wrc537-2013'),
+);
 
 assert.equal(receipt.schema, 'emp1-professional-release-candidate-receipt/v1');
 assert.ok(receipt.releaseManifest, 'EMP1_RELEASE_MANIFEST_REQUIRED');
@@ -31,6 +49,12 @@ assert.deepEqual(manifest.git, {
 assert.match(manifest.git.head, /^[0-9a-f]{40}$/u);
 assert.match(manifest.git.tree, /^[0-9a-f]{40}$/u);
 assert.deepEqual(manifest.git.parents.map((value) => /^[0-9a-f]{40}$/u.test(value)), [true]);
+assert.equal(git(['rev-parse', 'HEAD']), manifest.git.head,
+  'EMP1_RELEASE_MANIFEST_CHECKOUT_HEAD_DRIFT');
+assert.equal(git(['rev-parse', 'HEAD^{tree}']), manifest.git.tree,
+  'EMP1_RELEASE_MANIFEST_CHECKOUT_TREE_DRIFT');
+assert.equal(git(['rev-parse', 'HEAD^']), manifest.git.parents[0],
+  'EMP1_RELEASE_MANIFEST_CHECKOUT_PARENT_DRIFT');
 
 assert.equal(profile.schema, 'emp1-release-profile/v1');
 assert.deepEqual(manifest.product, {
@@ -59,6 +83,10 @@ assert.equal(authorization.authorizedIdentity.sourceDocumentSha256, manifest.sou
 assert.equal(authorization.authorizedIdentity.datasetHash, manifest.method.datasetHash);
 assert.equal(profile.benchmark.physicalOracleHash, manifest.method.independentOracleHash);
 
+assert.deepEqual(manifest.evidence.expectedRetainedFiles, expectedEvidenceFiles,
+  'EMP1_RELEASE_MANIFEST_EXPECTED_EVIDENCE_INVENTORY_DRIFT');
+assert.deepEqual(manifest.evidence.retainedEvidenceSets, retainedEvidenceSets,
+  'EMP1_RELEASE_MANIFEST_RETAINED_EVIDENCE_HASH_DRIFT');
 const expectedGateEvidence = Object.fromEntries(receipt.executions.map((item) => [item.gateId, {
   status: item.status,
   exitCode: item.exitCode,
@@ -106,6 +134,7 @@ const result = {
   candidateTreeSha: manifest.git.tree,
   releaseProfileId: manifest.product.releaseProfileId,
   manifestSemanticHash: manifest.semanticHash,
+  retainedEvidenceSetCount: manifest.evidence.retainedEvidenceSets.length,
   executionGateCount: Object.keys(manifest.evidence.gates).length,
   releaseCandidateQualified: receipt.releaseCandidateQualified === true,
   codeComplianceAuthorizedByManifest: false,
@@ -114,6 +143,52 @@ const result = {
 };
 console.log(JSON.stringify(result, null, 2));
 if (options.requireQualified && receipt.releaseCandidateQualified !== true) process.exit(2);
+
+async function collectRetainedEvidenceSets(start) {
+  const directories = [];
+  await walk(start, 0);
+  const sets = [];
+  for (const directory of directories.sort()) {
+    const files = [];
+    for (const name of expectedEvidenceFiles) {
+      const path = join(directory, name);
+      try {
+        const bytes = await readFile(path);
+        files.push({
+          name,
+          path: portableRelative(path),
+          state: 'PRESENT',
+          sha256: createHash('sha256').update(bytes).digest('hex'),
+        });
+      } catch (error) {
+        if (error?.code !== 'ENOENT') throw error;
+        files.push({
+          name,
+          path: portableRelative(path),
+          state: 'NOT_PRESENT',
+          sha256: null,
+        });
+      }
+    }
+    sets.push({ directory: portableRelative(directory), files });
+  }
+  return sets;
+
+  async function walk(directory, depth) {
+    if (depth > 3) return;
+    let entries;
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    const names = new Set(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
+    if (names.has('01-observation.json')) directories.push(directory);
+    for (const entry of entries) {
+      if (entry.isDirectory()) await walk(join(directory, entry.name), depth + 1);
+    }
+  }
+}
 
 function parseArgs(args) {
   const out = { receipt: null, requireQualified: false };
@@ -135,6 +210,16 @@ function retainedReceiptPath(path) {
 }
 async function readJson(path) {
   return JSON.parse(await readFile(resolve(root, path), 'utf8'));
+}
+function portableRelative(path) {
+  return relative(root, path).replaceAll('\\', '/');
+}
+function git(args) {
+  const result = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+  if (result.error || result.status !== 0) {
+    throw checkError(`EMP1_RELEASE_MANIFEST_CHECK_GIT_REQUIRED:${args.join('_')}`);
+  }
+  return String(result.stdout ?? '').trim();
 }
 function semanticHash(value, excluded) {
   const omitted = new Set(excluded);

@@ -87,6 +87,10 @@ const gates = [
   ['CURRENTNESS_REPLAY_FALSIFIERS', process.execPath,
     ['scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs']],
   ['PRODUCTION_BUILD', npmCommand(), ['run', 'build']],
+  ['BUILD_ARTIFACT_SECURITY', process.execPath,
+    ['scripts/emp1-professional-build-artifact-security-check.mjs']],
+  ['BUILD_ARTIFACT_SECURITY_FALSIFIER', process.execPath,
+    ['scripts/emp1-professional-build-artifact-security-falsifier.mjs']],
   ['EMP1_RELEASE_CHROMIUM', process.execPath,
     ['scripts/run-playwright.mjs', 'e2e/emp1-professional-release.spec.js']],
 ];

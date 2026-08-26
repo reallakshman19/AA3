@@ -7,22 +7,24 @@ source_task: Issue #1371 local authorization runner successor
 state: ACTIVE_BOUNDED_EVIDENCE_INFRASTRUCTURE_ONLY
 criticality: ENGINEERING_CRITICAL
 authority_domain:
-  - local exact-head environment/custody preflight for merged Q1-Q5 authorization gate
-  - Node parser compatibility proof for all authorization MJS entrypoints before engineering delegation
-  - machine-readable separation of preflight NOT_RUN from delegated-gate nonzero without overstating Q1-Q5 depth
-  - synthetic temporary-Git self-test of wrapper process/exit classification only
-  - repeatable runtime receipt custody for the one exact generated authorization JSON path
-  - post-engineering Git cleanliness proof before exact-head receipt sealing
+  - complete local exact-head execution harness around merged Q1-Q5 implementation-authorization gate
+  - environment, bootstrap-runtime, parser and transitive static-import custody before engineering delegation
+  - machine-readable separation of preflight NOT_RUN, delegated nonzero and post-gate evidence-verification failure
+  - post-gate verification of retained v4 envelope schema, repository HEAD, Q1-Q5 status, canonical hash and retained-file equality
+  - repeatable generated-report custody and clean Git proof before and after engineering checks/report write
+  - synthetic temporary-Git qualification of harness process/file/hash controls only
 exact_paths:
   - scripts/lafea-implementation-authorization-local-preflight.mjs
   - scripts/lafea-implementation-authorization-local-preflight-self-test.mjs
+  - scripts/lib/lafea-implementation-authorization-local-runtime.mjs
+  - scripts/lib/lafea-implementation-authorization-static-import-closure.mjs
   - scripts/lafea-implementation-authorization-gate-retain.mjs
   - .gitignore
   - agents/PR1462_workreport.md
   - agents/status/PR1462.yaml
   - agents/claims/PR1462.yaml
 excluded_authority:
-  - Q1-Q5 numerical PASS or engineering execution evidence
+  - Q1-Q5 numerical PASS or real engineering execution evidence until exact checkout execution occurs
   - local-continuum formulation or solver mechanics
   - local-shell formulation, pressure mechanics or orientation convention
   - mesher algorithms or mesh-quality thresholds
@@ -36,15 +38,31 @@ current_main_drift:
   exact_file_overlap: SAFE_NONE
   downstream_route_effect: REEXECUTION_REQUIRED_BEFORE_ANY_ENGINEERING_AUTHORIZATION_CLAIM
 predelegation_runtime_custody:
-  clean_head_required_before_parser_checks: true
+  dynamic_runtime_import_guarded_inside_failure_boundary: true
+  clean_head_required_before_parser_and_static_import_checks: true
   node_executable: process.execPath
-  syntax_checked_entrypoints: 4
-  parser_failure_means_q1_q5_not_run: true
-retention_custody:
-  envelope_schema: lafea-implementation-authorization-exact-head-envelope/v4
-  clean_before_engineering_checks: REQUIRED
-  clean_after_engineering_checks_before_receipt_write: REQUIRED
+  syntax_checked_authorization_entrypoints: 4
+  recursive_static_import_closure: REQUIRED
+  repository_escape_rejected: true
+  bare_static_package_resolution_required: true
+  bootstrap_parser_or_static_import_failure_means_q1_q5_not_run: true
+post_gate_verification:
+  exact_head_envelope_schema: lafea-implementation-authorization-exact-head-envelope/v4
+  repository_head_must_equal_preflight_head: true
+  q1_q5_status_pass_required: true
+  q1_direct_loaded_addendum_pass_required: true
+  q3_independent_pressure_addendum_pass_required: true
+  canonical_evidence_artifact_hash_recomputed: true
+  retained_report_must_equal_delegated_stdout_envelope: true
+  git_clean_after_receipt_write_required: true
   release_authority_created: false
+synthetic_harness_validation:
+  schema: lafea-implementation-authorization-local-preflight-self-test/v2
+  cases: 10
+  mechanics_executed: false
+  source_blob_identity_bound_to_branch: true
+limitations:
+  - static import closure does not independently enumerate dynamic import expressions
 coordination:
   - pr: 1432
     classification: COORDINATION_REQUIRED_BEFORE_FINAL_EXECUTED_RECEIPT_LAFEA3_MESH_CAN_MOVE

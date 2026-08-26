@@ -4,9 +4,9 @@ pr_or_wip: PR1464
 branch: agent/issue-1463-emp1-dependency-security-20260826
 issue: 1463
 criticality: ENGINEERING_CRITICAL
-claim_state: ACTIVE
+claim_state: HANDOVER_READY
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: COMPLETE
 coordination_state: STACKED_ON_PR1457_EXACT_OVERLAP_INTENTIONAL
 scope:
   authority: EMP1_DEPENDENCY_SECURITY
@@ -33,7 +33,10 @@ authority_boundary:
   code_compliance_authority_granted: false
   release_authority_granted: false
   vulnerability_free_claim_without_live_audit: false
+stack_base_head: f2462a7a09e7a4a0bc36a398095efdd796c98a4a
+technical_basis_head: c44c8444a1e2961b9b548386f2cfd8dc2776e472
+live_main_last_observed: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1464-001
+grounding_epoch: GE-PR1464-002
 handover_report: agents/PR1464_workreport.md
-exact_next_action: "Retire WIP records then implement lock/advisory gates and inherited candidate/doc updates only."
+exact_next_action: "Leave PR1464 draft/unmerged; re-ground against PR1457 before any future merge decision."

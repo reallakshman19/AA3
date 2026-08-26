@@ -125,6 +125,12 @@ export class AuthorizedEnrichmentConsumerController {
     if (input !== undefined) this.configureEmpirical(input);
     const masterData = this.masterDataController.getMasterData();
     const active = this.#activeAuthorization(masterData, true);
+    if (this.#governedEnabled() && !active.governedProjection) {
+      fail(
+        'Governed V2 production execution requires an explicit current governed authorization.',
+        'AUTHORIZED_ENRICHMENT_GOVERNED_AUTHORIZATION_REQUIRED',
+      );
+    }
     if (this.executionCoordinator) {
       if (!active.runtimePackage) {
         fail('An authorized empirical runtime package is required.',
@@ -135,7 +141,7 @@ export class AuthorizedEnrichmentConsumerController {
         implementationId: AUTHORIZED_EMPIRICAL_METHOD_ID,
       });
     }
-    const execution = active.governedProjection
+    const execution = this.#governedEnabled()
       ? this.governedEmpiricalController.executeGoverned(
         active.governedProjection,
         masterData,
@@ -174,9 +180,12 @@ export class AuthorizedEnrichmentConsumerController {
         }
       }
     }
-    if (this.#governedConfigured()) {
+    if (this.#governedEnabled()) {
+      const configuredProjection = this.governedEmpiricalController.getGovernedProjection();
+      if (!configuredProjection) {
+        return this.governedEmpiricalController.refreshGoverned(null, masterData);
+      }
       try {
-        const configuredProjection = this.governedEmpiricalController.getGovernedProjection();
         const currentProjection = this.governedProjectionProvider.rebuild(
           configuredProjection,
           masterData,
@@ -199,7 +208,7 @@ export class AuthorizedEnrichmentConsumerController {
   }
 
   getEmpiricalAuthorizationState() {
-    return this.#governedConfigured()
+    return this.#governedEnabled()
       ? this.governedEmpiricalController.getState()
       : this.engineeringModelStore.getEmpiricalAuthorizationState();
   }
@@ -259,23 +268,19 @@ export class AuthorizedEnrichmentConsumerController {
     return Boolean(this.governedEmpiricalController && this.governedProjectionProvider);
   }
 
-  #governedConfigured() {
-    return Boolean(
-      this.#governedEnabled()
-      && this.governedEmpiricalController.getGovernedProjection(),
-    );
-  }
-
   #configuredRuntimePackage() {
-    if (this.#governedConfigured()) {
-      return this.governedEmpiricalController.getGovernedProjection().runtimePackage;
+    if (this.#governedEnabled()) {
+      return this.governedEmpiricalController.getGovernedProjection()?.runtimePackage || null;
     }
     return this.engineeringModelStore.getAuthorizedEmpiricalPackage?.() || null;
   }
 
   #activeAuthorization(masterData, rebuildGoverned) {
-    if (this.#governedConfigured()) {
+    if (this.#governedEnabled()) {
       const configuredProjection = this.governedEmpiricalController.getGovernedProjection();
+      if (!configuredProjection) {
+        return { governedProjection: null, runtimePackage: null };
+      }
       const governedProjection = rebuildGoverned
         ? this.governedProjectionProvider.rebuild(configuredProjection, masterData)
         : configuredProjection;
@@ -291,7 +296,7 @@ export class AuthorizedEnrichmentConsumerController {
   }
 
   #markActiveStale(reason, datasetVersion = null) {
-    return this.#governedConfigured()
+    return this.#governedEnabled()
       ? this.governedEmpiricalController.markStale(reason, datasetVersion)
       : this.engineeringModelStore.markEmpiricalStale(reason, datasetVersion);
   }

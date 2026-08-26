@@ -13,6 +13,10 @@ const Q1_DIRECT_LOADED_CHECKER = path.join(
   ROOT,
   'scripts/lafea3-direct-loaded-element-authorization-check.mjs',
 );
+const Q3_INDEPENDENT_PRESSURE_CHECKER = path.join(
+  ROOT,
+  'scripts/lafea4-independent-pressure-resultant-authorization-check.mjs',
+);
 const REPORT_PATH = path.resolve(
   ROOT,
   process.env.LAFEA_IMPLEMENTATION_AUTHORIZATION_REPORT_PATH
@@ -42,51 +46,74 @@ assert.equal(
 );
 assert.equal(q1DirectLoadedElementEvidence?.status, 'PASS');
 assert.match(q1DirectLoadedElementEvidence?.semanticHash ?? '', /^sha256:[0-9a-f]{64}$/u);
-assert.equal(
-  q1DirectLoadedElementEvidence.trace.sourceHash,
-  receipt.q1.trace.sourceHash,
-  'Q1 direct-loaded addendum must use the same source authority as the main receipt',
+assertTraceParity(
+  q1DirectLoadedElementEvidence.trace,
+  receipt.q1.trace,
+  'Q1 direct-loaded addendum',
 );
+
+const q3IndependentPressureEvidence = runJson(Q3_INDEPENDENT_PRESSURE_CHECKER);
 assert.equal(
-  q1DirectLoadedElementEvidence.trace.retainedMeshHash,
-  receipt.q1.trace.retainedMeshHash,
-  'Q1 direct-loaded addendum must use the same retained mesh as the main receipt',
+  q3IndependentPressureEvidence?.schema,
+  'lafea4-independent-pressure-resultant-authorization-addendum/v1',
 );
+assert.equal(q3IndependentPressureEvidence?.status, 'PASS');
+assert.match(q3IndependentPressureEvidence?.semanticHash ?? '', /^sha256:[0-9a-f]{64}$/u);
 assert.equal(
-  q1DirectLoadedElementEvidence.trace.solverModelHash,
-  receipt.q1.trace.solverModelHash,
-  'Q1 direct-loaded addendum must use the same compiled solver model',
+  q3IndependentPressureEvidence.calculationAuthority.productionLoadAssemblerUsedForIndependentSum,
+  false,
 );
-assert.equal(
-  q1DirectLoadedElementEvidence.trace.compiledExecutionHash,
-  receipt.q1.trace.compiledExecutionHash,
-  'Q1 direct-loaded addendum must use the same execution',
+assertTraceParity(
+  q3IndependentPressureEvidence.trace,
+  receipt.q3.trace,
+  'Q3 independent-pressure addendum',
 );
-assert.equal(
-  q1DirectLoadedElementEvidence.trace.recoveryArtifactHash,
-  receipt.q1.trace.recoveryArtifactHash,
-  'Q1 direct-loaded addendum must use the same retained recovery artifact',
+vectorClose(
+  q3IndependentPressureEvidence.analyticalCylinder.force,
+  receipt.q3.analyticalForce,
+  2e-10,
+  1e-7,
+);
+vectorClose(
+  q3IndependentPressureEvidence.analyticalCylinder.momentAboutOrigin,
+  receipt.q3.analyticalMomentAboutOrigin,
+  2e-10,
+  1e-6,
+);
+vectorClose(
+  q3IndependentPressureEvidence.independentRetainedFacetResultant.force,
+  receipt.q3.compiledAppliedForce,
+  2e-10,
+  1e-7,
+);
+vectorClose(
+  q3IndependentPressureEvidence.independentRetainedFacetResultant.momentAboutOrigin,
+  receipt.q3.compiledAppliedMomentAboutOrigin,
+  2e-10,
+  1e-6,
 );
 
 const body = Object.freeze({
-  schema: 'lafea-implementation-authorization-exact-head-envelope/v2',
+  schema: 'lafea-implementation-authorization-exact-head-envelope/v3',
   repository: 'reallaksh19/Advanced_Analysis',
   repositoryHead,
   checkoutCleanBeforeExecution: true,
   checkerPaths: Object.freeze([
     'scripts/lafea-implementation-authorization-gate-check.mjs',
     'scripts/lafea3-direct-loaded-element-authorization-check.mjs',
+    'scripts/lafea4-independent-pressure-resultant-authorization-check.mjs',
   ]),
   reportPath: path.relative(ROOT, REPORT_PATH).split(path.sep).join('/'),
   evidenceStatus: 'PASS',
   releaseAuthorityGranted: false,
   receipt,
   q1DirectLoadedElementEvidence,
+  q3IndependentPressureEvidence,
 });
 const envelope = Object.freeze({
   ...body,
   evidenceArtifactHash: canonicalLafeaSha256({
-    schema: 'lafea-implementation-authorization-exact-head-envelope-hash-input/v2',
+    schema: 'lafea-implementation-authorization-exact-head-envelope-hash-input/v3',
     evidence: body,
   }),
 });
@@ -94,6 +121,33 @@ const envelope = Object.freeze({
 fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
 fs.writeFileSync(REPORT_PATH, `${JSON.stringify(envelope, null, 2)}\n`, 'utf8');
 console.log(JSON.stringify(envelope, null, 2));
+
+function assertTraceParity(addendumTrace, mainTrace, label) {
+  for (const key of [
+    'sourceHash',
+    'retainedMeshHash',
+    'solverModelHash',
+    'compiledExecutionHash',
+    'recoveryArtifactHash',
+  ]) {
+    assert.equal(
+      addendumTrace[key],
+      mainTrace[key],
+      `${label} must use the same ${key} as the main receipt`,
+    );
+  }
+}
+
+function vectorClose(actual, expected, relative, absolute) {
+  assert.equal(actual.length, expected.length);
+  actual.forEach((value, index) => {
+    const tolerance = Math.max(absolute, relative * Math.max(1, Math.abs(expected[index])));
+    assert.ok(
+      Math.abs(value - expected[index]) <= tolerance,
+      `${value} differs from ${expected[index]} by more than ${tolerance}`,
+    );
+  });
+}
 
 function runJson(scriptPath) {
   const stdout = execFileSync(process.execPath, [scriptPath], {

@@ -4,143 +4,76 @@
 
 ```text
 HANDOVER_READINESS: READY_FOR_VALIDATION
-PR_RECOVERY_STATE: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
-TAKEOVER_AUTHORITY: WRITE_ALLOWED
-EXECUTION_MODE: AUTO_MODE
+PR_RECOVERY_STATE: CONTINUE_CURRENT_MAIN
+TAKEOVER_AUTHORITY: WRITE_ALLOWED_WITHIN_EXISTING_REFINEMENT_SCOPE
+EXECUTION_MODE: OWNER_DIRECTED
 CRITICALITY: ENGINEERING_CRITICAL
-MERGE_AUTHORITY: OWNER_ONLY
+MERGE_AUTHORITY: OWNER_ONLY_NOT_GRANTED
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_PREDECESSOR: PR #1270 (CLOSED_SUPERSEDED)
 PR: #1432
 BRANCH: agent/lafea3-local-refinement-current-main-salvage-20260825
-MAIN_HEAD_LAST_CHECKED: 7b2a8119aa5faeee7cc102c894991851019c5a7b
-INTEGRATION_HEAD: 24bb22bf7092f493fbc536ff39bbbad06876d6bf
-CURRENT_STAGE: INTEGRATED_CURRENT_MAIN_VALIDATION_BLOCKED_BY_HOSTED_RUNNER_ALLOCATION
-APPENDIX_A_STATUS: PASS 98/100, minimum 19/20
+MAIN_HEAD_LAST_CHECKED: 3d79ea6889c08cf6a37229655ecbd3ec3dc89a20
+CURRENT_SYNC_HEAD_BEFORE_RECOVERY_UPDATE: 39a911ef406d37d08e99067931e1288203e83e4e
+CURRENT_STAGE: CURRENT_MAIN_SYNCHRONIZED_CROSS_CHAIN_INVALIDATION_AUDITED_EXECUTION_NOT_RUN
 ENGINEERING_FAILURE_PROVEN: false
+EXACT_NEXT_ACTION: execute the retained-refinement qualification suite from an exact clean checkout when runtime becomes available; keep PR draft/unmerged until separate owner merge authority is granted.
 ```
 
 ## Handover in 60 seconds
 
-PR #1432 is the clean successor to stale/contaminated #1270 and carries one bounded LAFEA.3 retained-refinement vertical slice:
+PR #1432 is the clean successor to contaminated PR #1270. It carries one bounded LAFEA.3 retained-refinement vertical slice:
 
 ```text
 current source/domain/geometry
--> retained parent v2 mesh
--> one governed retained NODE/ELEMENT target
--> source-authoritative affine mapped remesh
--> generic mesh quality
--> independent actual shared-edge adjacency gate
--> v2 retained evidence/custody
--> Discretization UI bound to the same producer envelope
--> existing preflight/solver consumes retained child
+→ retained parent v2 mesh
+→ one governed retained NODE/ELEMENT target
+→ source-authoritative affine mapped remesh
+→ generic mesh quality
+→ independent actual shared-edge adjacency gate
+→ v2 retained evidence/custody
+→ Discretization UI bound to the same producer envelope
+→ existing preflight/solver consumes retained child
 ```
 
-After PR #1433 merged, #1432 was one commit behind current main. Its branch was reconciled **without history rewrite** by a two-parent merge commit:
+The branch has now been re-grounded onto current `main@3d79ea6889c08cf6a37229655ecbd3ec3dc89a20` without history rewrite and without changing the reviewed ten-path delta.
+
+Real current-head executable qualification is still `NOT_RUN` in this agent environment. No `NOT_RUN` result is represented as PASS.
+
+## Current-main synchronization — 2026-08-26
+
+The branch had drifted behind main after later Issue #1371 and Issue #1321 merges. Exact overlap review found no changes to any of the seven #1432 production/qualification paths in the intervening main commits.
+
+The first synchronization preserved the reviewed ten blobs exactly on top of:
 
 ```text
-parent 1 = prior PR1432 head 7f397c8f01f18415579568ff11d785d53cae0721
-parent 2 = current main 7b2a8119aa5faeee7cc102c894991851019c5a7b
-merge     = 24bb22bf7092f493fbc536ff39bbbad06876d6bf
+main = f15bab4af0009888f41b856f820cb3ab7a152520
+sync = 1d3d06581610f075ea5751fbcb26b08d822ccc29
 ```
 
-The resulting tree is current main plus exactly the ten reviewed #1432 paths. No #1433 production path was overwritten.
-
-## Mission / authority trace
+While that synchronization was being completed, main advanced one further commit:
 
 ```text
-source authority
--> analysis domain + geometry evidence
--> retained parent v2 analysis mesh
--> retained-mesh refinement command/plan
--> SOURCE_AFFINE_BALANCED_METRIC_GRID_V1
--> producer output
--> generic mesh quality
--> actual shared-edge longest-corner-edge ratio
--> v2 evidence construction
--> retained v2 custody
--> UI disclosure/input gating
--> existing preflight / solve consumption
+3d79ea6889c08cf6a37229655ecbd3ec3dc89a20
+Load Calc: consume current mass receipt in support statics (#1475)
 ```
 
-Current numerical/Run authority remains the retained v2 mesh. This PR does **not** grant v3 refinement lineage or authority.
-
-## Retained engineering correction
-
-The predecessor first falsified the prior local-remesh route against the unchanged actual-topology adjacency authority:
+That commit is Issue #1321 support-load statics work and has no LAFEA refinement path or authority overlap. A second two-parent synchronization produced:
 
 ```text
-parent max adjacent ratio ~= 1.34088    PASS
-old radial/Delaunay child ~= 1.98579    BLOCK
-radial halo candidate     ~= 1.97822    BLOCK
-qualified limit                       = 1.5
+39a911ef406d37d08e99067931e1288203e83e4e
 ```
 
-The first wrong boundary was generated child topology/size transition, not solver, benchmark, oracle or tolerance.
-
-Qualified first production envelope:
+After that synchronization:
 
 ```text
-stage                         LAFEA.3
-construction                  SOURCE_AFFINE_BALANCED_METRIC_GRID_V1
-families                      T3 / T6
-maximum targets               1
-source geometry               one straight 4-sided affine/parallelogram outer loop
-holes                         not qualified
-minimum included angle        75 deg
-maximum side-length ratio     10/3
-minimum target param offset   0.15
-minimum local/global ratio    0.25
-adjacent size authority       bound mesh-profile value; candidate qualified at 1.5
-Q8                            not qualified
+behind main = 0
+changed paths = exactly 10
 ```
 
-`createLafeaAnalysisMeshEvidenceV2()` independently recomputes actual shared-edge characteristic-length ratios for LAFEA.3 `:LOCAL_REFINEMENT:` meshes before custody. Planned spacing does not self-certify the child.
+No production/qualification #1432 blob was rewritten during either synchronization.
 
-## Current-main UI correction
-
-The original current-main UI invited multiple target IDs even though the qualified producer permits `maximumTargets = 1`, and it duplicated the LAFEA.3 minimum ratio as a hidden `global * 0.25` literal.
-
-The current PR panel now:
-
-- imports `LAFEA_RETAINED_MESH_REFINEMENT_POLICY` from production;
-- discloses one-target/minimum-ratio authority;
-- uses a one-ID placeholder for LAFEA.3;
-- rejects multiple IDs before dispatch;
-- derives the LAFEA.3 minimum target ratio from production policy;
-- discloses actual-topology acceptance before custody;
-- leaves the LAFEA.4 TECH-13 product branch unchanged.
-
-The existing `scripts/lafea-refinement-solve-ui-check.mjs` was reconciled to assert the production-policy binding.
-
-## Integration with merged PR #1433 v3 custody
-
-Merged main now creates a parallel `retainedAnalysisMeshCandidateV3` only after generic LAFEA.3 automatic mesh generation.
-
-The integrated #1432 head proves in production source that local refinement does **not** inherit that lineage:
-
-```js
-const produced = produceLafeaRetainedMeshRefinement(...);
-const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
-evidence.set(stageId, validated);
-v3Candidates.set(stageId, null);
-```
-
-Therefore the combined behavior is:
-
-```text
-qualified automatic LAFEA.3 generation
--> v2 retained mesh + parallel v3 pre-authority candidate
-
-then governed local v2 refinement
--> new retained v2 child
--> v3 candidate cleared
--> no v3 refinement authority implied
-```
-
-This is the correct authority boundary until an independent v3 local-refinement qualification exists.
-
-## Exact changed-file ledger — 10 files
+## Exact changed-file ledger — 10 paths
 
 Production/product:
 
@@ -167,24 +100,171 @@ agents/status/PR1432.yaml
 agents/claims/PR1432.yaml
 ```
 
-No workflow, registry/release, solver, B01/B02 benchmark, EMP.1, LAFEA.4 TECH-13 implementation, or v3-candidate production file is changed by the PR diff.
+No workflow, stage-registry/release, continuum solver, B01/B02 benchmark, LAFEA.4 TECH-13 implementation, EMP.1 or Issue #1321 production path belongs to the PR diff.
 
-## Protected invariants
+## Production authority and engineering correction
+
+The predecessor falsified its former local-remesh route against the unchanged actual-topology adjacency authority:
 
 ```text
-no adjacency threshold weakening
-no scaled-Jacobian threshold weakening
-no target-ratio weakening
-no Q8 promotion
-no multi-target promotion
-no solver/formulation/recovery change
-no frozen benchmark/expected-value change
-no tolerance widening
-no registry/release-authority widening
-no workflow mutation
-no LAFEA.4 TECH-13 semantic mutation
-no v3 local-refinement authority
+parent max adjacent ratio ~= 1.34088    PASS
+old radial/Delaunay child ~= 1.98579    BLOCK
+radial halo candidate     ~= 1.97822    BLOCK
+qualified limit                       = 1.5
 ```
+
+The first wrong boundary was the generated child topology/size transition, not the continuum solver, benchmark, oracle or tolerance.
+
+The retained correction uses:
+
+```text
+SOURCE_AFFINE_BALANCED_METRIC_GRID_V1
+```
+
+within the deliberately narrow first-production envelope:
+
+```text
+stage                         LAFEA.3
+families                      T3 / T6
+maximum targets               1
+source geometry               straight four-sided affine/parallelogram outer loop
+holes                         not qualified
+minimum included angle        75 deg
+maximum side-length ratio     10/3
+minimum target param offset   0.15
+minimum local/global ratio    0.25
+adjacent size authority       bound mesh-profile value; candidate basis 1.5
+Q8                            not qualified
+```
+
+No threshold, oracle or tolerance is weakened.
+
+## Retained-child custody
+
+`planLafeaRetainedMeshRefinement()` binds the exact retained parent through:
+
+```text
+parentMeshArtifactHash
+parentMeshHash
+sourceHash
+analysisDomainHash
+analysisGeometryHash
+meshProfileHash
+commandHash
+planHash
+```
+
+The producer refuses a stale parent, wrong source/domain/geometry, unqualified family, multiple targets, or a local/global target ratio below the qualified envelope.
+
+`produceLafeaRetainedMeshRefinement()` requires the child to be physically different from its parent:
+
+```text
+changed = evidence.meshHash !== parentEvidence.meshHash
+if !changed → LAFEA_RETAINED_MESH_REFINEMENT_NO_MESH_CHANGE
+```
+
+A BLOCK child is also rejected before custody.
+
+`createLafeaAnalysisMeshEvidenceV2()` independently recomputes actual shared-edge longest-corner-edge adjacency for LAFEA.3 `:LOCAL_REFINEMENT:` meshes before accepting the child. Planned spacing does not self-certify the retained mesh.
+
+## v3-lineage invalidation
+
+Current main has a parallel Mesh Workspace v3 pre-authority candidate for ordinary automatic LAFEA.3 generation. Local v2 refinement must not inherit that lineage.
+
+The integrated workbench route performs:
+
+```text
+produce retained v2 refinement
+→ validate new v2 evidence
+→ replace retained v2 evidence
+→ v3Candidates.set(stageId, null)
+```
+
+Therefore:
+
+```text
+automatic generation
+→ retained v2 + possible v3 pre-authority candidate
+
+then governed local v2 refinement
+→ new retained v2 child
+→ v3 candidate cleared
+→ no v3 local-refinement authority implied
+```
+
+This remains the correct boundary until v3 local refinement has an independent qualification.
+
+## Interaction with merged Q1–Q5 implementation-authorization chain
+
+Merged main now includes PR #1450/#1462 implementation-authorization custody and PR #1474 Section 17 readiness/cleanup-proposal custody. This interaction was audited after the current-main synchronization.
+
+### Mesh identity
+
+The Q1 implementation-authorization gate retains:
+
+```text
+retainedMeshHash
+retainedMeshArtifactHash
+solverModelHash
+compiledExecutionHash
+recoveryArtifactHash
+viewportMeshHash
+viewportMeshArtifactHash
+```
+
+and proves the viewport mesh identity equals the retained analysis-mesh evidence.
+
+The exact-head retention wrapper additionally requires the Q1 direct-loaded-element addendum to use the same:
+
+```text
+sourceHash
+retainedMeshHash
+solverModelHash
+compiledExecutionHash
+recoveryArtifactHash
+```
+
+as the main Q1 receipt.
+
+### Exact-head invalidation
+
+The retained implementation-authorization envelope records the full Git `repositoryHead` and is sealed only from a clean checkout.
+
+Section 17 readiness then requires:
+
+```text
+implementationAuthorizationVerification.repositoryHead
+== current repositoryHead
+```
+
+and rejects any mismatch as stale evidence.
+
+Consequences:
+
+1. If #1432 later merges after an older Q1–Q5 receipt was produced, that receipt becomes stale solely because the exact Git HEAD changed, even if the default Sample mesh happened to remain numerically identical.
+2. If a governed local refinement changes a retained child, the child `meshHash` also changes and downstream retained-v2/v3 custody cannot silently reuse the old mesh identity.
+3. Section 17 cannot use a pre-#1432 implementation receipt on a post-#1432 main line.
+4. No duplicate invalidation mechanism or additional solver/mesher patch is required in #1432.
+
+Cross-chain disposition:
+
+```text
+PASS_SOURCE_INSPECTION
+NO_NEW_MECHANICS_CHANGE_REQUIRED
+REAL_EXECUTION_STILL_NOT_RUN
+```
+
+## Current-main UI/producer alignment
+
+The current panel:
+
+- imports `LAFEA_RETAINED_MESH_REFINEMENT_POLICY` from production;
+- discloses the one-target and minimum-ratio envelope;
+- uses a one-ID LAFEA.3 target placeholder;
+- blocks multiple IDs before dispatch using `maximumTargets`;
+- uses production `minimumTargetRatio` rather than a duplicate hidden literal;
+- discloses that a retained local-refinement child reaches custody only after actual shared-edge transition acceptance;
+- leaves the LAFEA.4 TECH-13 product branch unchanged.
 
 ## Historical predecessor evidence — provenance only
 
@@ -199,55 +279,96 @@ minimum angle                     13.726327548800704 deg
 threshold changes                 false
 ```
 
-This is provenance only, not current-head execution PASS.
+This remains provenance only and is not current-head executable PASS.
 
-## Current validation ledger
-
-| Gate | Status | Observation | Evidence / oracle |
-|---|---|---|---|
-| predecessor salvage blob custody | PASS | SOURCE_INSPECTION | exact Git blob identity |
-| clean PR ledger | PASS | SOURCE_INSPECTION | exactly 10 bounded files |
-| current-main UI/producer alignment | PASS | SOURCE_INSPECTION | production policy imported/enforced |
-| integrated current-main ancestry | PASS | SOURCE_INSPECTION | two-parent merge, no history rewrite |
-| automatic generation creates v3 candidate | PASS | SOURCE_INSPECTION | merged #1433 production state |
-| local v2 refinement clears v3 candidate | PASS | SOURCE_INSPECTION | integrated `refineMesh()` route |
-| v2 numerical authority preserved | PASS | SOURCE_INSPECTION | retained v2 evidence remains consumer |
-| mapped-envelope Node | NOT_RUN | NOT_OBSERVED | no executable runtime |
-| retained refinement replay/UI | NOT_RUN | NOT_OBSERVED | no executable runtime |
-| LAFEA visible-workbench | NOT_RUN | REMOTE_PRE_STEP_ONLY | run 32917049552 / job 98022830986, runner_id=0, steps=[] |
-| broad source/build/browser | NOT_RUN | NOT_OBSERVED | infrastructure |
-
-No unexecuted engineering/product check is PASS.
-
-## Failure classification when execution recovers
-
-Stop at the first executed authoritative failure:
+## Protected invariants
 
 ```text
-SOURCE/DOMAIN/GEOMETRY PARENT
--> COMMAND/PLAN
--> MAPPED CONSTRUCTION
--> GENERIC QUALITY
--> ACTUAL ADJACENCY
--> V2 EVIDENCE
--> CUSTODY
--> V3-LINEAGE INVALIDATION
--> CURRENT-MAIN UI/COMMAND DISPATCH
--> PREFLIGHT/SOLVER CONSUMPTION
+no adjacency-threshold weakening
+no scaled-Jacobian-threshold weakening
+no target-ratio weakening
+no Q8 promotion
+no multi-target promotion
+no solver/formulation/recovery change
+no benchmark expected-value change
+no tolerance widening
+no stage-registry/release widening
+no workflow mutation
+no LAFEA.4 semantic mutation
+no v3 local-refinement authority
+no reuse of stale exact-head Q1-Q5/Section 17 evidence
+```
+
+## Validation ledger
+
+| Gate | Status | Observation | Oracle |
+|---|---|---|---|
+| current main grounding | PASS | `main@3d79ea6889c08cf6a37229655ecbd3ec3dc89a20` | GitHub readback |
+| 13-commit prior drift | PASS_SAFE | no exact overlap in seven production/qualification paths | commit/path compare |
+| #1475 during-sync drift | PASS_SAFE | Issue #1321 only | commit/source inspection |
+| current-main synchronization | PASS | two non-destructive two-parent custody commits | Git ancestry/tree custody |
+| exact ten-path diff | PASS | no extra path | Git compare |
+| retained child changes mesh identity or blocks | PASS_SOURCE_INSPECTION | `NO_MESH_CHANGE` guard + meshHash comparison | production source |
+| actual adjacency independently rechecked | PASS_SOURCE_INSPECTION | v2 evidence gate | production source |
+| local refinement clears v3 candidate | PASS_SOURCE_INSPECTION | integrated mesh-generation state | production source |
+| Q1 retains mesh/solver/execution/recovery identity | PASS_SOURCE_INSPECTION | merged implementation gate | current main source |
+| Q1 direct addendum trace parity | PASS_SOURCE_INSPECTION | exact-head retain wrapper | current main source |
+| Section 17 rejects stale repository HEAD | PASS_SOURCE_INSPECTION | readiness v3 | current main source |
+| mapped-envelope executable check | NOT_RUN | no executable checkout | retained-refinement qualification |
+| refinement solve/UI executable check | NOT_RUN | no executable checkout | product regression |
+| broad LAFEA/browser/build | NOT_RUN | execution environment unavailable | runtime/build gates |
+
+No unexecuted check is represented as PASS.
+
+## Failure isolation when execution becomes available
+
+Stop at the first authoritative failure:
+
+```text
+SOURCE / DOMAIN / GEOMETRY PARENT
+→ COMMAND / PLAN
+→ MAPPED CONSTRUCTION
+→ GENERIC QUALITY
+→ ACTUAL ADJACENCY
+→ V2 EVIDENCE
+→ CUSTODY
+→ V3-LINEAGE INVALIDATION
+→ UI / COMMAND DISPATCH
+→ PREFLIGHT / SOLVER CONSUMPTION
+→ Q1 EXACT-HEAD CUSTODY IF RUN AS PART OF ISSUE #1371 QUALIFICATION
 ```
 
 Do not mutate upstream mechanics until the first wrong boundary is established.
 
+## Required execution sequence when a real checkout is available
+
+```bash
+node scripts/lafea3-mapped-refinement-envelope-check.mjs
+node scripts/lafea-refinement-solve-ui-check.mjs
+node scripts/lafea-retained-mesh-refinement-check.mjs
+npm run check:lafea-core
+npm run check:lafea-workbench
+npm run check:lafea-standalone
+```
+
+If #1432 is merged before Issue #1371 implementation authorization is executed, the later Q1–Q5 command must run from the resulting new exact main HEAD.
+
 ## Coordination
 
-- #1270: CLOSED_SUPERSEDED, provenance only.
-- #1433: MERGED at `7b2a8119aa5faeee7cc102c894991851019c5a7b`; generic v3 pre-authority custody is now base behavior.
-- #1258/#1259: B01/B02 numerical mechanics, untouched.
-- #1246: LAFEA.4 TECH-13, shared panel branch preserved.
+- #1270: `CLOSED_SUPERSEDED`, provenance only.
+- #1433: merged v3 pre-authority custody; local v2 refinement clears its candidate.
+- #1450/#1462: merged Q1–Q5 exact-head implementation-authorization gate/harness.
+- #1474: merged Section 17 exact-head registry-closure readiness contract.
+- #1258/#1259: continuum/B01/B02 numerical mechanics, untouched by #1432.
+- Issue #1321 load-calc work through #1475: exact-file/authority disjoint.
 
-Classification: `COORDINATION_REQUIRED_BUT_BOUNDED`.
+Classification:
 
-## Appendix A
+```text
+COORDINATION_REQUIRED_BUT_BOUNDED
+```
+
+## Appendix A — takeover qualification
 
 ```text
 A1 Production Trace            20/20
@@ -257,29 +378,10 @@ A4 Independent Validation      19/20
 A5 Next-Commit / Minimal Patch 19/20
 TOTAL                           98/100
 MINIMUM                         19/20
-TAKEOVER_AUTHORITY              WRITE_ALLOWED
 ```
 
 Points remain withheld only because current-head executable qualification is unavailable.
 
-## AUTO MODE continuation
-
-Do not manually rerun the same zero-step job. Re-open execution only when a legitimate recovery trigger exists.
-
-When execution becomes available, run in this order:
-
-```text
-node scripts/lafea3-mapped-refinement-envelope-check.mjs
-node scripts/lafea-refinement-solve-ui-check.mjs
-node scripts/lafea-retained-mesh-refinement-check.mjs
-npm run check:lafea-core
-npm run check:lafea-workbench
-npm run check:lafea-standalone
-then targeted Chromium / broad closure as applicable
-```
-
-Stop at the first authoritative executed failure.
-
 ## EXACT_NEXT_ACTION
 
-Keep #1432 draft and Owner-only. No further #1432 production mutation is justified while runtime remains unavailable. Proceed to the next non-overlapping production workstream; return to #1432 only on legitimate execution recovery, new main drift, review input, or explicit owner merge authorization.
+Keep PR #1432 draft/unmerged. No further production mutation is justified by the current-main or authorization-chain audit. Execute the listed qualification suite when a real exact checkout becomes available, or re-ground only on new main drift/review input. Merge requires a new explicit owner instruction for #1432.

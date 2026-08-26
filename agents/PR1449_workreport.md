@@ -11,6 +11,7 @@ stacked base PR         = #1440
 stacked base exact head = 8637638188d5478d01b0001ee9f8cd740bbb2180
 predecessor #1446       = squash-merged into #1440 at 8637638188d5478d01b0001ee9f8cd740bbb2180
 live main last checked  = 29c688db4a021db900d1f8c67f56f777f73f4ddc
+implementation basis    = 993eb265dc92863d38fc715a5c96663eca5b24ce
 criticality             = ENGINEERING_CRITICAL
 execution mode          = AUTO
 merge authority         = OWNER_ONLY / NOT_GRANTED
@@ -141,6 +142,10 @@ This remains opt-in V2 infrastructure. It is not the ordinary production Run-pat
 
 Source and exact patch inspection: PASS.
 
+Final source reconciliation at implementation basis `993eb265dc92863d38fc715a5c96663eca5b24ce` showed exactly 9 expected paths, 11 commits ahead and 0 behind the stacked #1440 base. A fresh local checkout attempt then failed before repository materialization with:
+
+`Could not resolve host: github.com`
+
 Required executable checks:
 
 ```bash
@@ -152,7 +157,7 @@ npm run build
 git diff --check
 ```
 
-Current status: **NOT_RUN_REAL_CHECKOUT_UNAVAILABLE** until a faithful checkout can be materialized. No NOT_RUN is represented as PASS.
+Current status: **NOT_RUN_REAL_CHECKOUT_UNAVAILABLE**. No NOT_RUN is represented as PASS. Per owner instruction, workflow gating is skipped as a continuation blocker and no workflow mutation is introduced.
 
 ## Appendix A
 

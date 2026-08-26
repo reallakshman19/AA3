@@ -1,0 +1,19 @@
+schema: AgentPrWip.v1
+repository: reallaksh19/Advanced_Analysis
+issue: 1321
+branch: agent/issue-1321-governed-v2-currentness
+stack_base_pr: 1440
+stack_base_head: 8637638188d5478d01b0001ee9f8cd740bbb2180
+mission: "Bind governed runtime-package projection receipt into opt-in V2 runtime currentness without production cutover"
+state: ACTIVE_PRE_PR
+claimed_paths:
+  - src/workspace/engineering-loads/authorized-empirical-runtime-store-v2.js
+  - src/workspace/engineering-loads/configured-empirical-method-controller-v2.js
+  - scripts/governed-empirical-runtime-currentness-v2-check.mjs
+  - scripts/run-authorized-empirical-load-execution-checks.mjs
+protected_paths:
+  - src/workspace/engineering-model-store.js
+  - src/workspace/enrichment/authorized-enrichment-consumer-controller.js
+  - .github/workflows/**
+merge_authority: OWNER_ONLY_NOT_GRANTED
+validation: NOT_RUN

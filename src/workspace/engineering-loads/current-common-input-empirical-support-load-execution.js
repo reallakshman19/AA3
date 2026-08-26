@@ -130,7 +130,7 @@ export function calculateCurrentCommonInputEmpiricalSupportLoads({
     schema: CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_LOAD_EXECUTION_SCHEMA,
     requestedMethod,
     executedMethod: distribution.method,
-    projectId: requiredText(commonInput.projectDataProfile?.projectId, 'projectId'),
+    projectId: stringValue(commonInput.projectDataProfile?.projectId) || null,
     datasetId: requiredText(executionDataset.datasetId, 'datasetId'),
     datasetVersion: nullableVersion(executionDataset.version),
     commonInputSemanticHash: commonInput.semanticHash,

@@ -25,19 +25,23 @@ import {
   NON_FEA_GRAVITY_METHOD_AUTO,
 } from '../src/workspace/project-data/non-fea-gravity-method-authority.js';
 
-const PROFILE_HASH_A = 'fnv1a64:aaaaaaaaaaaaaaaa';
-const PROFILE_HASH_B = 'fnv1a64:bbbbbbbbbbbbbbbb';
-const context = packageContext();
+const PROFILE_HASH = 'fnv1a64:4444444444444444';
+const ALT_PROFILE_HASH = 'fnv1a64:bbbbbbbbbbbbbbbb';
+const AUDIT_HASH_A = 'fnv1a64:cccccccccccccccc';
+const AUDIT_HASH_B = 'fnv1a64:dddddddddddddddd';
+const context = packageContext(PROFILE_HASH);
 
 const governedV2 = governedSelection({
   selectedMethod: EMPIRICAL_LOAD_METHOD,
   selectionState: 'SELECTED_V2_MISSING_COG_FALLBACK',
-  projectDataSemanticHash: PROFILE_HASH_A,
+  projectDataSemanticHash: PROFILE_HASH,
+  componentAuthorityAuditSemanticHash: AUDIT_HASH_A,
 });
 const governedV3 = governedSelection({
   selectedMethod: EMPIRICAL_LOAD_COG_METHOD,
   selectionState: 'SELECTED_V3_COG',
-  projectDataSemanticHash: PROFILE_HASH_A,
+  projectDataSemanticHash: PROFILE_HASH,
+  componentAuthorityAuditSemanticHash: AUDIT_HASH_A,
 });
 
 const projectionV2 = project(governedV2);
@@ -56,27 +60,40 @@ assert.equal(Object.hasOwn(projectionV2, 'calculationEligible'), false,
 assert.equal(Object.hasOwn(projectionV2, 'authorizationStatus'), false,
   'Projection receipt must not create authorization state.');
 
-const sameMethodDifferentAuthority = project(governedSelection({
+const sameMethodDifferentSelectionEvidence = project(governedSelection({
   selectedMethod: EMPIRICAL_LOAD_METHOD,
   selectionState: 'SELECTED_V2_MISSING_COG_FALLBACK',
-  projectDataSemanticHash: PROFILE_HASH_B,
+  projectDataSemanticHash: PROFILE_HASH,
+  componentAuthorityAuditSemanticHash: AUDIT_HASH_B,
 }));
 assert.equal(
-  sameMethodDifferentAuthority.runtimePackage.semanticHash,
+  sameMethodDifferentSelectionEvidence.runtimePackage.semanticHash,
   projectionV2.runtimePackage.semanticHash,
-  'Bare V2 package intentionally cannot distinguish a different selection authority when all package context is unchanged.',
+  'Bare V2 package can remain identical when bound profile/package context and selected method are unchanged.',
 );
 assert.notEqual(
-  sameMethodDifferentAuthority.semanticHash,
+  sameMethodDifferentSelectionEvidence.semanticHash,
   projectionV2.semanticHash,
-  'Governed projection receipt must retain authority identity even when the selected executable method is unchanged.',
+  'Governed projection receipt must retain changed selection evidence beyond the bare package.',
+);
+
+assert.throws(
+  () => project(governedSelection({
+    selectedMethod: EMPIRICAL_LOAD_METHOD,
+    selectionState: 'SELECTED_V2_MISSING_COG_FALLBACK',
+    projectDataSemanticHash: ALT_PROFILE_HASH,
+    componentAuthorityAuditSemanticHash: AUDIT_HASH_A,
+  })),
+  (error) => error?.code === 'EMPIRICAL_GOVERNED_RUNTIME_PROFILE_BINDING_MISMATCH',
+  'Governed method authority and runtime package must bind the same effective Project Data profile.',
 );
 
 assert.throws(
   () => project(governedSelection({
     selectedMethod: null,
     selectionState: 'EXCEPTION_POLICY_REQUIRED',
-    projectDataSemanticHash: PROFILE_HASH_A,
+    projectDataSemanticHash: PROFILE_HASH,
+    componentAuthorityAuditSemanticHash: AUDIT_HASH_A,
   })),
   (error) => error?.code === 'EMPIRICAL_GOVERNED_RUNTIME_SELECTION_NOT_EXECUTABLE',
   'A blocked/null governed selection must never produce an executable runtime package.',
@@ -125,7 +142,8 @@ console.log(JSON.stringify({
   selectedV3SealedExactly: projectionV3.runtimePackage.method,
   blockedSelectionCannotPackage: true,
   callerCannotInjectMethod: true,
-  selectionAuthorityRetainedBeyondBarePackage: true,
+  selectionEvidenceRetainedBeyondBarePackage: true,
+  profileCrossBindingEnforced: true,
   fullyRehashedMethodMismatchBlocked: true,
   nestedSelectionTamperBlocked: true,
   productionControllerCutover: false,
@@ -140,7 +158,12 @@ function project(governedSelectionValue) {
   });
 }
 
-function governedSelection({ selectedMethod, selectionState, projectDataSemanticHash }) {
+function governedSelection({
+  selectedMethod,
+  selectionState,
+  projectDataSemanticHash,
+  componentAuthorityAuditSemanticHash,
+}) {
   const authorityBase = {
     schema: NON_FEA_GRAVITY_METHOD_AUTHORITY_SCHEMA,
     projectDataRevision: 1,
@@ -170,7 +193,7 @@ function governedSelection({ selectedMethod, selectionState, projectDataSemantic
     requestedMethod: NON_FEA_GRAVITY_METHOD_AUTO,
     selectedMethod,
     selectionState,
-    componentAuthorityAuditSemanticHash: 'fnv1a64:cccccccccccccccc',
+    componentAuthorityAuditSemanticHash,
     candidates: [],
     fallbackLedger: [],
     assumptions: [],
@@ -202,7 +225,7 @@ function governedSelection({ selectedMethod, selectionState, projectDataSemantic
   };
 }
 
-function packageContext() {
+function packageContext(projectDataProfileSemanticHash) {
   const authorizedInput = makeAuthorizedInput();
   return {
     packageId: 'PACKAGE-GOVERNED-RUNTIME-PROJECTION',
@@ -218,7 +241,7 @@ function packageContext() {
       sharedModelSemanticHash: 'fnv1a64:1111111111111111',
       supportSiteModelSemanticHash: 'fnv1a64:2222222222222222',
       routePartitionModelSemanticHash: 'fnv1a64:3333333333333333',
-      projectDataProfileSemanticHash: 'fnv1a64:4444444444444444',
+      projectDataProfileSemanticHash,
       masterSourceHashes: {
         dataset: '1'.repeat(64),
         lineList: '2'.repeat(64),

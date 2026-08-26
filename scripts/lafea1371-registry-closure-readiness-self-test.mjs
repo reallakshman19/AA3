@@ -39,7 +39,7 @@ expectFailure('incomplete Q1-Q5', (fixture) => {
 
 expectFailure('release authority contamination', (fixture) => {
   fixture.implementationAuthorizationVerification.releaseAuthorityGranted = true;
-}, /true !== false/u);
+}, /must not contain release authority/u);
 
 expectFailure('premature LAFEA.3 wording softening', (fixture) => {
   fixture.lafea3RegistryEntry.limitation = 'Production orchestration complete.';
@@ -51,7 +51,7 @@ expectFailure('premature LAFEA.3 detailed limitation softening', (fixture) => {
 
 expectFailure('LAFEA.4 authority widening', (fixture) => {
   fixture.lafea4RegistryEntry.authority = 'MITC4_PRODUCTION';
-}, /CST_DKT_TRI3_THIN_SHELL_V1/u);
+}, /CST\+DKT authority changed/u);
 
 expectFailure('LAFEA.4 exclusion weakening', (fixture) => {
   fixture.lafea4RegistryEntry.limitations[1] = 'MITC4 production claim permitted.';

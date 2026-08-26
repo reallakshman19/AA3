@@ -1,112 +1,219 @@
 # PR1471 Work Report — Issue #1321 current Common Input empirical mass projection
 
-## Recovery header
-- Repository: `reallaksh19/Advanced_Analysis`
-- PR: #1471 — `Load Calc: project current Common Input into empirical execution values`
-- Branch: `agent/issue-1321-current-common-input-effective-projection`
-- Stack base: PR #1465 exact head `1912bfa2fb3516643b4a5331e77c704c16b8969a`
-- Upstream: PR #1461 -> PR #1465 -> PR #1471
-- Current main observed at takeover: `dd7f13e2c73e596c7ac6625fbe211779bc61ce94`
-- Criticality: ENGINEERING_CRITICAL
-- Execution mode: AUTO
-- Merge authority: OWNER_ONLY_NOT_GRANTED
-- State: WRITE_ALLOWED_BOUNDED_MASS_PROJECTION
-
-## Handover in 60 seconds
-PR #1471 owns only the numerical **mass projection** from a fully READY/current Common Input plus the #1465 system Run authorization. It must not publish/authorize a legacy common-enriched baseline/handoff and must not yet route Run or execute support statics.
-
-The decisive source finding is that neither existing numerical source can be reused unchanged:
-
-1. `model-load primitive set` preserves direct-vs-derived pipe/fluid/insulation mass, same-branch fitting derivation and negligible gasket zero mass, but does not include Issue #1321 cladding/tracing or case-dependent component-contained fluid.
-2. `authorized-empirical-effective-execution-projection/v1` includes ancillary/content composition, but is rooted in legacy `authorized-empirical-load-input/v1` and published baseline/handoff authority and forces line density/section maps that do not represent every Common Input READY mass basis.
-
-Therefore the bounded successor projection is:
+## CURRENT RECOVERY STATE — READ FIRST
 
 ```text
-#1465 current system Run decision
-+ fully READY/current Common Input
-+ enriched shared model
-+ existing model-load mass resolver
-+ existing exact configured-default ancillary overlay
-→ per physical entity / per requested load case mass receipt
+HANDOVER_READINESS: READY_FOR_CONTINUATION
+PR_RECOVERY_STATE: SOURCE_COMPLETE_AUTHORITY_REPAIRED_EXECUTION_NOT_RUN
+CRITICALITY: ENGINEERING_CRITICAL
+EXECUTION_MODE: AUTO
+REPOSITORY: reallaksh19/Advanced_Analysis
+PR: #1471
+BRANCH: agent/issue-1321-current-common-input-effective-projection
+UPSTREAM: merged #1461 -> merged #1465 -> #1471
+CURRENT_MAIN: 9832b9cc418ecbffe54edb96bbb90ca08f05426a
+MERGE_AUTHORITY: GRANTED_BY_OWNER_CURRENT_TURN
+EXACT_NEXT_ACTION: synchronize exact six-file #1471 delta onto current main, re-read final patch/reviews, then squash merge if unchanged
 ```
 
-The projection reuses `resolveComponentCaseMass()` and `derivePipeLikeFittingWeightEvidence()` for the established model-load mass rules. It adds only the two Issue #1321 composition layers those functions do not own: line cladding/tracing and component OPE/HYD contained fluid.
+## Handover in 60 seconds
 
-## Locked invariants
-1. No `baselineId`, `handoffId`, publication decision, reviewer identity, legacy authority ID or synthetic legacy hash.
-2. `runAuthorization` must be current against the exact Common Input snapshot through PR #1465 currentness validation.
-3. Common Input must be READY/current/error-free; PARTIALLY_READY/BLOCKED cannot project routine execution masses.
-4. Exact physical identity comes from the existing common-enriched target inventory and `componentKey`; no fuzzy/nearest mapping.
-5. The projection consumes already-selected enriched-model evidence; it does not define a second source/master/default rank table.
-6. Existing model-load resolver owns direct-vs-derived pipe/fluid/insulation mass semantics.
-7. Existing `derivePipeLikeFittingWeightEvidence()` owns missing fitting dry-mass derivation.
-8. Existing negligible gasket behavior remains exact zero; no epsilon mass.
-9. Ancillary cladding/tracing uses the existing configured-default common-enriched overlay and exact full-line coverage rule.
-10. Component-contained fluid remains additive by OPE/HYD case and never overwrites dry component mass.
-11. No support allocation/statics equation, reaction distribution, equilibrium tolerance, gravity factor, solver or workflow change.
-12. Projection is not execution authorization and does not publish a calculation event.
+PR #1471 creates a **projection-only per-entity/per-load-case mass receipt** for routine Load Calc execution. It requires the merged #1465 current system Run authorization and the exact fully READY Common Input, then derives numerical mass only from the **sealed `commonInput.enrichedModel`**.
 
-## Important parity findings
-### A. `loadPrimitiveSet` is incomplete for current Issue #1321 execution
-`src/core/model-loads/primitive-builder.js` and `component-mass-resolver.js` correctly retain:
-- direct or density-derived PIPE mass;
-- direct or density-derived OPE/HYD line fluid;
-- direct or density-derived insulation;
+Final authority flow:
+
+```text
+fully READY/current Common Input
++ #1465 system Run authorization/currentness
++ sealed enriched shared model
+→ existing model-load geometry projection
+→ existing fitting derivation + mass resolver
+→ existing exact configured-default ancillary overlay
+→ add component OPE/HYD contained-fluid evidence
+→ immutable per-entity/per-case mass receipt
+```
+
+It does **not** create legacy common-enriched publication/handoff authority, a governed runtime package, reactions, support allocation, equilibrium results, or execution authorization.
+
+## Critical defect found before merge and repaired
+
+### Defect
+
+An intermediate implementation treated the Common Input-bound workspace `loadPrimitiveSet` as the numerical base because its semantic hash was already sealed.
+
+Live production tracing falsified that assumption:
+
+`src/workspace/model-load-controller.js::buildAndCommit()` builds `ModelLoadStore` from:
+
+```text
+SHARED_MODEL_EVENTS.CHANGED
+→ this.sharedModel
+→ buildModelLoadFoundation(this.sharedModel, this.topologyGraph)
+→ ModelLoadStore.setFoundation()
+```
+
+That is the ordinary shared-model stream. It is **not proof that the exact enriched engineering properties sealed by Common Input were the primitive set's mass basis**. A hash-current workspace primitive set could therefore be numerically different from the enriched Common Input and silently discard master/default enrichment.
+
+Classification:
+
+```text
+DEFECT: WORKSPACE_LOAD_PRIMITIVE_SET_RAW_SHARED_MODEL_NOT_ENRICHED_COMMON_INPUT_MASS_AUTHORITY
+SEVERITY: ENGINEERING_AUTHORITY / NUMERICAL INPUT
+DISPOSITION: REPAIRED_BEFORE_MERGE
+```
+
+### Repair
+
+The final implementation never accepts or consumes an external/workspace primitive set as its numerical mass source.
+
+It now uses:
+
+```text
+commonInput.enrichedModel
+→ buildPipingPortTopologyGraph()
+→ projectEngineeringLoadSources()
+→ derivePipeLikeFittingWeightEvidence()
+→ resolveComponentCaseMass()
+```
+
+This is the existing model-load source-normalization and mass-resolution stack, applied to the exact sealed enriched model. No second mass formulas or precedence table are introduced.
+
+The Common Input `authorityContracts.loadPrimitiveSet.semanticHash` remains recorded only as **currentness/source-authority evidence**. Fixed policy explicitly states:
+
+```text
+massBasisSource = SEALED_COMMON_INPUT_ENRICHED_MODEL
+sourceLoadPrimitiveSetUsedAsNumericalBasis = false
+effectiveLoadSourceProjectionRebuiltDeterministically = true
+existingMassResolverReused = true
+executionGravityConsumed = false
+supportStaticsExecuted = false
+```
+
+## Numerical semantics preserved
+
+The existing model-load resolver remains authoritative for:
+
+- direct `unitPipeWeightKgPerM` versus section/density-derived pipe mass;
+- direct `fluidWeightOpeKgPerM` / `fluidWeightHydKgPerM` versus density-derived fluid mass;
+- direct `insulationWeightKgPerM` versus geometry/density-derived insulation mass;
 - same-branch pipe-like fitting derived dry mass;
-- negligible gasket zero dry mass.
+- negligible `GASKET` / `GASK` exact zero dry mass;
+- negative/double-count/missing-evidence blocking semantics.
 
-But they do not add:
-- `CLADDING_WEIGHT` / `TRACING_WEIGHT`;
-- `COMPONENT_OPERATING_FLUID_WEIGHT` / `COMPONENT_HYDRO_FLUID_WEIGHT`.
+PR #1471 adds only two qualified Issue #1321 layers not owned by that resolver:
 
-Therefore the load primitive set cannot be treated as the full current numerical authority.
+1. `CLADDING_WEIGHT` / `TRACING_WEIGHT`, promoted through the existing `createNonFeaCommonEnrichedConfiguredDefaultOverlay()` full-line exact-coverage rule and added only to PIPE distributed mass.
+2. `componentFluidWeightOpeKg` / `componentFluidWeightHydKg`, added by case to non-PIPE point dry mass while retaining their selected enriched evidence.
 
-### B. Legacy execution projection is also not a universal Common Input adapter
-The Common Input checker allows MASS_COVERAGE from direct kg/m evidence. `WEIGHT_AND_GRAVITY` and `SUSTAINED_REACTIONS` require MASS_COVERAGE but not SECTION_COVERAGE. A fully READY routine model may therefore legitimately use direct `unitPipeWeightKgPerM`, `fluidWeight*KgPerM` or `insulationWeightKgPerM` without a density-derived mass basis. A current projection must retain that basis rather than manufacture equivalent density.
+No equivalent density is manufactured for direct kg/m evidence.
 
-### C. Existing support-load kernel has a later input-semantic blocker
-`support-load-distribution-v3.js::componentMass()` currently requires positive non-PIPE `componentWeightsKg`. Common Input/model-load readiness permits gasket types as exact zero self-weight. A later kernel-input cutover must consume the sealed #1471 mass projection (or equivalently admit the explicit authorized zero) rather than fabricate epsilon mass or mutate topology. This is deferred from #1471 because #1471 is projection-only.
+## Focused falsifier
 
-## Takeover Appendix A
-### A1 — Production trace — 20/20
-Traced #1461 Run -> #1465 system Run authorization -> current Common Input -> model-load foundation/primitive builder -> component mass resolver -> legacy effective execution projection -> support-load kernel mass composition.
+`scripts/current-common-input-empirical-mass-projection-check.mjs` deliberately separates raw workspace/source mass from enriched Common Input mass.
 
-### A2 — Failure isolation — 20/20
-Two incompatible assumptions isolated: `loadPrimitiveSet` omits newer ancillary/content mass; legacy execution projection assumes the published handoff/effective-ledger chain and density-oriented line maps. Falsifier: any proposed adapter that either drops cladding/content or invents baseline/handoff/density evidence is invalid.
+Raw source/workspace fixture:
 
-### A3 — Authority invariant — 20/20
-Projection must consume current selected evidence and existing default overlays only; it cannot establish approval. PR #1465 remains the product-policy decision/currentness layer and projection remains a downstream numerical receipt.
+```text
+PIPE dry       4.0 kg/m
+insulation     0.5 kg/m
+OPE fluid      1.0 kg/m
+HYD fluid      1.5 kg/m
+VALVE dry      50 kg
+component fluid absent
+```
 
-### A4 — Independent validation — 18/20
-Cross-checked Common Input MASS_COVERAGE, model-load resolver, fitting/gasket behavior, ancillary default overlay, component-content fields and support-load composition source. Executable repository checks remain NOT_RUN.
+The raw EMPTY PIPE primitive is therefore `4.5 kg/m`.
 
-### A5 — Minimal patch — 20/20
-Smallest safe implementation is a new current mass projection contract + focused falsifier + aggregate registration. No legacy contract rewrite and no support-load kernel modification in this PR.
+Sealed enriched Common Input fixture:
 
-**Score: 98/100; minimum 18/20. TAKEOVER_AUTHORITY = WRITE_ALLOWED for the bounded mass-projection slice.**
+```text
+PIPE dry       10 kg/m
+insulation      1 kg/m
+OPE fluid       2 kg/m
+HYD fluid       3 kg/m
+cladding         2 kg/m
+tracing          1 kg/m
+VALVE dry      100 kg
+VALVE OPE        8 kg
+VALVE HYD       10 kg
+```
 
-## Planned exact scope
+Expected projected masses:
+
+```text
+PIPE EMPTY = (10 + 1 + 2 + 1) * 2 m = 28 kg
+PIPE OPE   = (10 + 1 + 2 + 2 + 1) * 2 m = 32 kg
+PIPE HYD   = (10 + 1 + 3 + 2 + 1) * 2 m = 34 kg
+VALVE EMPTY/OPE/HYD = 100 / 108 / 110 kg
+GASK EMPTY/OPE/HYD  = 0 / 0 / 0 kg
+```
+
+The regression also changes the raw workspace primitive authority while holding the enriched model fixed. Projected masses must remain identical while source-currentness/projection identity changes. This directly falsifies any accidental return to raw primitive numerical authority.
+
+Other encoded negative controls cover altered projection policy, rehashed mass composition, stale summary, forged effective load-source-projection hash, reseal/currentness drift, legacy handoff/publication dependencies, and any support-statistics call.
+
+## Authority / protected boundaries
+
+- READY Common Input is required; PARTIALLY_READY/BLOCKED cannot use the routine #1465 path.
+- #1465 system Run authorization must be current against the exact Common Input seal and authority revision vector.
+- No `baselineId`, `handoffId`, publication decision, reviewer identity or legacy authorized-input identity is synthesized.
+- Product engineering default table remains the shipped empty profile; if it becomes non-empty without Common Input currentness custody, this projection fails closed.
+- No Run-controller routing is changed here.
+- No support-load allocation/statics, equilibrium, load factor, gravity execution, tolerance, solver, fallback or workflow file is changed.
+- Existing explicit legacy authorization path remains supported.
+
+## Exact changed-file ledger
+
+Expected net scope is exactly six paths:
+
 1. `src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js`
 2. `scripts/current-common-input-empirical-mass-projection-check.mjs`
-3. `scripts/run-non-fea-checks.mjs` — registration only
+3. `scripts/run-non-fea-checks.mjs` — one focused-check registration
 4. `agents/PR1471_workreport.md`
 5. `agents/claims/PR1471.yaml`
 6. `agents/status/PR1471.yaml`
 
-Temporary WIP custody is removed after claim/status creation.
+Protected and unchanged:
 
-Protected:
 - `src/workspace/load-calc-consumer-controller.js`
 - `src/workspace/engineering-loads/support-load-distribution-v3.js`
 - `src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js`
-- legacy authorized input/handoff schemas
 - `src/core/non-fea-common-checker/**`
 - support allocation/equilibrium/tolerances
 - `.github/workflows/**`
 
-## Validation truth
-Source inspection is observed. Executable checks are **NOT_RUN** because the available faithful checkout path previously failed before materialization with `Could not resolve host: github.com`. No NOT_RUN result is represented as PASS.
+## Appendix A — implementation takeover qualification
 
-## EXACT_NEXT_ACTION
-Implement the immutable per-entity/per-load-case mass projection using the model-load mass resolver, exact configured-default ancillary overlay and explicit component-content addition. Add falsifiers for direct-mass basis, fitting derivation, gasket zero, ancillary/content retention, stale Run authorization/Common Input and absence of legacy authority identities. Keep #1471 draft/unmerged.
+- A1 Production trace: **20/20** — traced #1461 Run, #1465 authorization, Common Input enrichment, workspace ModelLoadStore source, model-load source projection/resolver, ancillary/content composition and support-load kernel boundary.
+- A2 Failure isolation: **20/20** — proved raw workspace primitives can be current yet not be the enriched Common Input numerical mass basis; defect repaired before merge.
+- A3 Authority/invariant: **20/20** — exact enriched Common Input is numerical basis; raw primitive is currentness-only; no legacy/human authority or execution eligibility created.
+- A4 Independent validation: **18/20** — live cross-module source/falsifier review complete; exact repository execution remains unavailable.
+- A5 Minimal patch: **20/20** — new projection + focused regression + aggregate registration + recovery only; no kernel/statics change.
+
+**Score: 98/100; minimum 18/20.**
+
+## Validation truth
+
+```text
+live source trace / defect isolation              PASS
+exact intended source-scope review                PASS
+raw-vs-enriched falsifier design inspection       PASS
+authority/fail-closed review                      PASS
+focused projection checker execution              NOT_RUN
+Non-FEA aggregate execution                       NOT_RUN
+npm run check:imports                             NOT_RUN
+npm run build                                     NOT_RUN
+git diff --check                                  NOT_RUN
+```
+
+A faithful local repository materialization previously failed before checkout with:
+
+```text
+Could not resolve host: github.com
+```
+
+No `NOT_RUN` is represented as PASS.
+
+## Successor boundary
+
+The next bounded slice may make the support-load kernel consume this sealed per-entity/per-case mass receipt. It must preserve the existing force formula, route allocation, CoG/application-point rules, first-moment accounting and equilibrium checks. In particular it must admit the projection's authorized zero-mass gasket without epsilon mass or topology mutation, and must not re-add ancillary/content mass already included by #1471.

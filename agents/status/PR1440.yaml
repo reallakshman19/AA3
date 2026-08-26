@@ -5,22 +5,35 @@ mission: "Issue #1321 governed gravity-method request authority"
 workstream: ISSUE1321_GRAVITY_METHOD_REQUEST_AUTHORITY
 branch: agent/issue-1321-gravity-method-request-authority
 main_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
-merge_base: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+stacked_base_pr: 1431
+stacked_base_head: 306f6d764cb0780e360d5b9bc8b08183c94b98fd
+merge_base: 306f6d764cb0780e360d5b9bc8b08183c94b98fd
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-agent_state: ACTIVE
+agent_state: SOURCE_COMPLETE_VALIDATION_NOT_RUN
 pr_recovery_state: HEALTHY
-handover_readiness: READY_FOR_IMPLEMENTATION
-coordination: SAFE_NO_OPEN_GRAVITY_METHOD_AUTHORITY_PR
-current_stage: IMPLEMENT_GRAVITY_METHOD_REQUEST_AUTHORITY
+handover_readiness: READY
+coordination: STACKED_ON_PR1431_EXACT_PATH_CONFLICT_RESOLVED
+current_stage: IMPLEMENTATION_COMPLETE_REQUIRED_EXECUTION_VALIDATION_NOT_RUN
 validation:
-  live_grounding: PASS
-  overlap: PASS_NONE_FOUND
-  existing_auto_selector: PASS_SOURCE_INSPECTION
-  missing_project_data_gravity_method: PASS_SOURCE_INSPECTION
-  missing_product_default_gravity_method: PASS_SOURCE_INSPECTION
-  execution_checks: NOT_RUN
+  live_main_grounding: PASS_MAIN_29C688DB
+  stacked_base_grounding: PASS_PR1431_HEAD_306F6D76
+  overlap_initial: FAIL_EXACT_PATH_PR1431_PROJECT_DATA_FIELDS_AND_CANONICAL_SUITE
+  overlap_resolution: PASS_TWO_PARENT_STACK_PRESERVES_PR1431
+  stacked_compare: PASS_10_PATHS_26_AHEAD_0_BEHIND
+  product_default_gravity_method: PASS_SOURCE_INSPECTION
+  gravity_method_authority: PASS_SOURCE_INSPECTION
+  governed_selector_profile_binding: PASS_SOURCE_INSPECTION
+  selector_fallback_policy_unchanged: PASS_SOURCE_INSPECTION
+  protected_execution_paths_unchanged: PASS_SOURCE_INSPECTION
+  product_default_version_scan: PASS_NO_ADDITIONAL_LOAD_CALC_PROFILE_VERSION_LITERAL_FOUND
+  local_clone: FAIL_ENVIRONMENT_DNS_GITHUB
+  focused_gravity_method_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  product_default_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  existing_gravity_selector_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  canonical_non_fea_suite: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+appendix_a_status: FAIL_A4_EXECUTION_NOT_RUN
 workflow_policy: OWNER_SKIP_WORKFLOW_GATING_FOR_CONTINUATION
 merge_authority: NOT_GRANTED
-merge_disposition: OWNER_ONLY_DRAFT
-exact_next_action: "Implement Project Data/Product default request authority and bridge to existing AUTO selector."
+merge_disposition: OWNER_ONLY_DRAFT_STACKED_DO_NOT_MERGE
+exact_next_action: "After PR1431 changes or merges, re-ground this stack. Successor work may consume the governed selection to seal an exact V2/V3 runtime package without changing authorization semantics."

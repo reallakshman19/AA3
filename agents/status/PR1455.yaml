@@ -1,0 +1,41 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1455
+issue: 1321
+branch: agent/issue-1321-production-governed-v2-cutover
+state: SOURCE_IMPLEMENTED_RECONCILING
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: RUNNING
+stack_base_pr: 1449
+stack_base_head: 3687a1b51107d525b8f7d4a9e1853209f26d12f7
+implementation_basis_head: 61c16b97e114c86f0945c447d805ab3ef0fe8361
+live_main_at_grounding: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+validation:
+  live_grounding: PASS
+  upstream_stack_exact: PASS
+  open_overlap: PASS_NONE_FOUND
+  reviews: PASS_NONE
+  review_threads: PASS_NONE
+  source_authority_trace: PASS_SOURCE_INSPECTION
+  topology_product_default_consistency: PASS_SOURCE_INSPECTION
+  focused_projection_check: NOT_RUN
+  focused_cutover_check: NOT_RUN
+  authorized_consumer_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  workflow_gating: NOT_APPLICABLE_OWNER_SKIPPED
+invariants:
+  explicit_authorization_required: true
+  production_v1_fallback_permitted: false
+  auto_may_enter_executable_method_slot: false
+  raw_to_effective_project_data_transition_requires_current_raw_hash: true
+  dataset_model_master_binding_replacement_permitted: false
+  v3_to_v2_catch_retry_permitted: false
+  statics_formula_change_authorized: false
+  tolerance_change_authorized: false
+  workflow_change_authorized: false
+appendix_a_qualified: false
+merge_disposition: OWNER_ONLY_DRAFT
+exact_next_action: "Remove WIP record, reconcile exact PR diff/head, retry faithful local execution; preserve NOT_RUN on environment failure; update PR description to source-complete truth."

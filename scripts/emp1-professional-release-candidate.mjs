@@ -16,6 +16,12 @@ const dependencyLockSha256 = await requiredFileSha256(
   'package-lock.json',
   'EMP1_RELEASE_CANDIDATE_DEPENDENCY_LOCK_REQUIRED',
 );
+const deploymentOperationsReceiptSha256 = options.deploymentOperationsReceipt
+  ? await requiredFileSha256(
+    options.deploymentOperationsReceipt,
+    'EMP1_RELEASE_CANDIDATE_DEPLOYMENT_OPERATIONS_RECEIPT_REQUIRED',
+  )
+  : null;
 
 if (options.expectedHead && options.expectedHead !== candidateHead) {
   throw releaseError(`EMP1_RELEASE_CANDIDATE_HEAD_MISMATCH:${candidateHead}:${options.expectedHead}`);
@@ -158,11 +164,41 @@ if (options.release && !fail && !notRun) {
     fail = executions.find((item) => item.status === 'FAIL');
     notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
   }
+
+  if (!fail && !notRun) {
+    if (!options.deploymentOperationsReceipt) {
+      const receipt = createReceipt({
+        candidateHead,
+        candidateTree,
+        candidateParent,
+        worktreeStatus,
+        mode: 'RELEASE',
+        executions,
+        buildArtifactSha256,
+        status: 'BLOCKED_DEPLOYMENT_OPERATIONS_EVIDENCE_REQUIRED',
+        releaseCandidateQualified: false,
+      });
+      await maybeWriteReceipt(receipt, options.writeReceipt);
+      console.log(JSON.stringify(receipt, null, 2));
+      process.exit(2);
+    }
+    executions.push(runNode('DEPLOYMENT_OPERATIONS', [
+      'scripts/emp1-professional-deployment-operations-check.mjs',
+      '--receipt', options.deploymentOperationsReceipt,
+      '--deployment-receipt', options.deploymentReceipt,
+      '--expected-head', candidateHead,
+      '--expected-tree', candidateTree,
+      '--expected-artifact-sha256', buildArtifactSha256,
+    ]));
+    fail = executions.find((item) => item.status === 'FAIL');
+    notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
+  }
 }
 
 const allExecutedPass = executions.every((item) => item.status === 'PASS');
 const releaseCandidateQualified = options.release
   && Boolean(options.deploymentReceipt)
+  && Boolean(options.deploymentOperationsReceipt)
   && allExecutedPass;
 const status = releaseCandidateQualified
   ? 'PASS_EMP1_PROFESSIONAL_RELEASE_CANDIDATE_AND_DEPLOYMENT_EVIDENCE'
@@ -208,6 +244,12 @@ function createReceipt(input) {
         liveObservationGateId: 'DEPLOYMENT_SECURITY_HEADERS',
         browserCompatibilityEstablishedByHeaderPolicy: false,
       },
+      deploymentOperations: {
+        deploymentOperationsReceiptSha256,
+        gateId: 'DEPLOYMENT_OPERATIONS',
+        rollbackExecutionObservedByThisHarness: false,
+        rollbackSuccessAuthorizedByThisHarness: false,
+      },
     },
     mode: input.mode,
     executions: input.executions,
@@ -219,6 +261,9 @@ function createReceipt(input) {
       vulnerabilityFreeClaimedByThisHarness: false,
       deployedSecurityHeadersCanBlockRelease: true,
       browserCompatibilityEstablishedByHeaderPolicy: false,
+      deploymentOperationsCanBlockRelease: true,
+      rollbackExecutionObservedByThisHarness: false,
+      rollbackSuccessAuthorizedByThisHarness: false,
       codeComplianceAuthorizedByThisHarness: false,
       deploymentAuthorityGrantedByThisHarness: false,
       broaderApplicationSecurityCertificationClaimed: false,
@@ -317,6 +362,7 @@ function parseArgs(args) {
     expectedHead: null,
     writeReceipt: null,
     deploymentReceipt: null,
+    deploymentOperationsReceipt: null,
   };
   for (let index = 0; index < args.length; index += 1) {
     if (args[index] === '--release') out.release = true;
@@ -324,6 +370,7 @@ function parseArgs(args) {
     else if (args[index] === '--expected-head') out.expectedHead = args[++index] ?? null;
     else if (args[index] === '--write-receipt') out.writeReceipt = args[++index] ?? null;
     else if (args[index] === '--deployment-receipt') out.deploymentReceipt = args[++index] ?? null;
+    else if (args[index] === '--deployment-operations-receipt') out.deploymentOperationsReceipt = args[++index] ?? null;
     else throw releaseError(`EMP1_RELEASE_CANDIDATE_UNKNOWN_ARGUMENT:${args[index]}`);
   }
   if (out.release && out.executeDiagnostics) {
@@ -331,6 +378,9 @@ function parseArgs(args) {
   }
   if (out.deploymentReceipt && !out.release) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_DEPLOYMENT_RECEIPT_REQUIRES_RELEASE_MODE');
+  }
+  if (out.deploymentOperationsReceipt && !out.release) {
+    throw releaseError('EMP1_RELEASE_CANDIDATE_DEPLOYMENT_OPERATIONS_RECEIPT_REQUIRES_RELEASE_MODE');
   }
   if (out.expectedHead && !/^[0-9a-f]{40}$/u.test(out.expectedHead)) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_EXPECTED_HEAD_INVALID');

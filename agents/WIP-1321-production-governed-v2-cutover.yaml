@@ -1,0 +1,25 @@
+schema: AgentPrWip.v1
+repository: reallaksh19/Advanced_Analysis
+issue: 1321
+branch: agent/issue-1321-production-governed-v2-cutover
+stack_base_pr: 1449
+stack_base_head: 3687a1b51107d525b8f7d4a9e1853209f26d12f7
+mission: "Cut ordinary authorized empirical consumer from V1 runtime execution to governed AUTO-selected V2/V3 execution while preserving explicit authorization ceremony"
+state: ACTIVE_PRE_PR
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+claimed_paths:
+  - src/workspace/engineering-model-store.js
+  - src/workspace/enrichment/authorized-enrichment-consumer-controller.js
+  - src/workspace/enrichment/authorized-enrichment-runtime.js
+  - src/workspace/enrichment/authorized-enrichment-workspace-api.js
+  - src/workspace/engineering-loads/production-governed-empirical-projection.js
+  - scripts/authorized-enrichment-consumer-controller-check.mjs
+  - scripts/authorized-enrichment-workspace-api-check.mjs
+  - scripts/run-authorized-enrichment-consumer-controller-checks.mjs
+protected_paths:
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+  - .github/workflows/**
+merge_authority: OWNER_ONLY_NOT_GRANTED
+validation: NOT_RUN

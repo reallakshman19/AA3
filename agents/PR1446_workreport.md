@@ -10,6 +10,7 @@ branch                  = agent/issue-1321-governed-runtime-package-projection
 stacked base PR         = #1440
 stacked base exact head = 0209109ddf7835f74885fb3af571167a99e90fbe
 live main last checked  = 29c688db4a021db900d1f8c67f56f777f73f4ddc
+validation basis head   = b1f78f9bc4623f86e437fdbf99aaa1a8929cc3b6
 criticality             = ENGINEERING_CRITICAL
 execution mode          = AUTO
 merge authority         = OWNER_ONLY / NOT_GRANTED
@@ -150,17 +151,41 @@ Expected result:
 
 `EMPIRICAL_GOVERNED_RUNTIME_METHOD_MISMATCH`
 
-## Coordination
+## Coordination / exact diff
 
-No separate open PR matching the new governed runtime-package projection path was found. PR #1440 is the intentional upstream base. The aggregate qualification file was not identified in PR #1431's changed-file ledger; #1431 remains upstream through #1440.
+No separate open PR matching the new governed runtime-package projection path was found. PR #1440 is the intentional upstream base.
+
+Exact stacked reconciliation at validation basis head:
+
+```text
+base / merge base = 0209109ddf7835f74885fb3af571167a99e90fbe
+head              = b1f78f9bc4623f86e437fdbf99aaa1a8929cc3b6
+ahead / behind    = 6 / 0
+changed paths     = exactly 6
+reviews           = 0
+review threads    = 0
+```
+
+The six paths are exactly the ledger below. No protected production execution path and no `.github/workflows/**` path appears.
 
 ## Validation truth
 
-Source/diff grounding is complete. A faithful local repository checkout remains unavailable because direct GitHub DNS resolution previously failed with:
+A bounded local checkout retry was performed after source completion:
 
-`Could not resolve host: github.com`
+```text
+git clone --depth 1 --branch agent/issue-1321-governed-runtime-package-projection \
+  https://github.com/reallaksh19/Advanced_Analysis.git
+```
 
-Per owner instruction, no workflow mutation is introduced to manufacture execution evidence.
+Result:
+
+`fatal: unable to access ... Could not resolve host: github.com`
+
+Classification:
+
+`FAIL_ENVIRONMENT_DNS_GITHUB`
+
+This is not an engineering regression and is not a test PASS. Per owner instruction, no workflow mutation is introduced to manufacture execution evidence.
 
 Required commands remain:
 
@@ -188,7 +213,7 @@ No NOT_RUN is represented as PASS.
 
 ## Changed-file ledger
 
-Expected net successor paths:
+Exact net successor paths:
 
 1. `src/workspace/engineering-loads/governed-empirical-runtime-package-v2.js`
 2. `scripts/governed-empirical-runtime-package-v2-check.mjs`

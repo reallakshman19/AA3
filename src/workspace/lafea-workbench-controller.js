@@ -25,6 +25,7 @@ import {
   projectEmp1WorkbenchRunReadiness,
 } from './emp1-workbench-run-state.js';
 import { currentEmp1WorkbenchRouteAuthority } from './emp1-workbench-product-run.js';
+import { publicLafeaFailure } from './lafea-public-failure.js';
 import { issueLafeaSourceAuthority } from './lafea-source-authority.js';
 import { LafeaWorkbenchView } from './lafea-workbench-view.js';
 
@@ -242,10 +243,11 @@ export class LafeaWorkbenchController {
         execution,
       });
     } catch (error) {
-      this.emp1RunFailure = Object.freeze({
-        code: error?.code ?? 'EMP1_QUALIFICATION_SAMPLE_LOAD_FAILED',
-        message: error instanceof Error ? error.message : 'EMP.1 qualification sample load failed.',
-      });
+      this.emp1RunFailure = publicLafeaFailure(
+        error,
+        'EMP1_QUALIFICATION_SAMPLE_LOAD_FAILED',
+        'EMP.1 qualification sample load failed.',
+      );
       if (this.unsubscribe) this.view.render(this.getState());
       return Object.freeze({ status: 'FAILED', ...this.emp1RunFailure });
     }
@@ -396,11 +398,12 @@ export class LafeaWorkbenchController {
       if (this.unsubscribe) this.view.render(this.getState());
       return Object.freeze({ status: 'APPLIED', input: this.emp1RunInput });
     } catch (error) {
-      return Object.freeze({
-        status: 'REJECTED',
-        code: error?.code ?? 'EMP1_WORKBENCH_RUN_INPUT_REJECTED',
-        message: error instanceof Error ? error.message : 'EMP.1 source binding was rejected.',
-      });
+      const failure = publicLafeaFailure(
+        error,
+        'EMP1_WORKBENCH_RUN_INPUT_REJECTED',
+        'EMP.1 source binding was rejected.',
+      );
+      return Object.freeze({ status: 'REJECTED', ...failure });
     }
   }
 
@@ -441,10 +444,11 @@ export class LafeaWorkbenchController {
     } catch (error) {
       if (serial !== this.emp1RunSerial || DESTROYED_CONTROLLERS.has(this)) return null;
       this.emp1Execution = null;
-      this.emp1RunFailure = Object.freeze({
-        code: error?.code ?? 'EMP1_WORKBENCH_RUN_FAILED',
-        message: error instanceof Error ? error.message : 'EMP.1 execution failed.',
-      });
+      this.emp1RunFailure = publicLafeaFailure(
+        error,
+        'EMP1_WORKBENCH_RUN_FAILED',
+        'EMP.1 execution failed.',
+      );
       if (this.unsubscribe) this.view.render(this.getState());
       return Object.freeze({ status: 'FAILED', ...this.emp1RunFailure });
     }

@@ -2,6 +2,9 @@
 
 import assert from 'node:assert/strict';
 import {
+  createNonFeaEnrichmentRecord,
+} from '../src/core/non-fea-enrichment/index.js';
+import {
   createCommonEnrichedTargetInventory,
 } from '../src/core/common-enriched-properties/target-inventory.js';
 import {
@@ -38,6 +41,23 @@ for (const fieldId of ['COMPONENT_OPERATING_FLUID_WEIGHT', 'COMPONENT_HYDRO_FLUI
     'PROJECT_CONFIGURED_DEFAULT',
     'PRODUCT_DEFAULT',
   ], `${fieldId} must not advertise an unwired source/master/manual authority`);
+  for (const authority of ['SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER', 'ACCEPTED_OVERRIDE']) {
+    assert.throws(
+      () => createNonFeaEnrichmentRecord({
+        recordId: `FORBIDDEN-${fieldId}-${authority}`,
+        selectorKind: 'ENTITY',
+        selectorKey: 'VALVE-1',
+        fieldId,
+        value: 1,
+        unit: 'kg',
+        authority,
+        sourceId: 'FORBIDDEN-CONTENT-AUTHORITY',
+        revision: '1',
+      }),
+      new RegExp(`${authority} is not permitted for ${fieldId}`),
+      `${fieldId} must reject unwired ${authority} enrichment authority`,
+    );
+  }
 }
 
 const sourceModel = makeSourceModel();
@@ -106,6 +126,7 @@ console.log(JSON.stringify({
   productConfiguredHydKg: 10,
   explicitZeroPreserved: true,
   sourceColumnAliasesAdded: false,
+  unwiredEnrichmentAuthoritiesRejected: true,
   authorityBoundary: 'PROJECT_CONFIGURED_DEFAULT_OR_PRODUCT_DEFAULT_ONLY',
 }, null, 2));
 

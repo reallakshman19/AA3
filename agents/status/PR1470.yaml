@@ -13,19 +13,20 @@ auto_state: COMPLETE
 scope_authority: LOCKED_TO_ISSUE_1466
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_STACKED_DRAFT_CURRENT_BASE_RECONCILED
+pr_recovery_state: MERGE_AUTHORIZED_EXACT_BASE_RECONCILED
 handover_readiness: READY
 stack_base_head: 4b6eab2474ca0728ffc455698aa99b01f2d716a5
 technical_basis: f115af6fbe929bda1b5770c0614b2f1bfb588872
-live_main_last_observed: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
-grounding_epoch: GE-PR1470-002
+pre_merge_audited_head: c0c1a30d5b79bd67963e0d8f2dee9b4a19d9a757
+live_main_last_observed: f15bab4af0009888f41b856f820cb3ab7a152520
+grounding_epoch: GE-PR1470-003
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
 coordination: STACKED_ON_PR1464_EXACT_OVERLAP_INTENTIONAL
-current_stage: TECHNICAL_IMPLEMENTATION_AND_RECOVERY_COMPLETE
-merge_authorization: NOT_GRANTED
+current_stage: OWNER_AUTHORIZED_MERGE_GATE
+merge_authorization: GRANTED_EXPLICIT_OWNER_2026-08-26T15:24:12Z
 hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
 focused_local_execution: NOT_RUN_EXECUTION_ENVIRONMENT_DNS_SOURCE_MATERIALIZATION_FAILURE
-current_blocker: "A real production HTTPS deployment/receipt and executable browser environment are still required to observe headers and prove runtime compatibility; hosted jobs remain pre-step NOT_RUN."
-exact_next_action: "Leave PR1470 draft/unmerged pending Owner merge authorization and upstream #1464/#1457 disposition; re-ground exact stacked base/head before any future merge decision."
+current_blocker: "No declared-base merge blocker; live deployment/header observation and browser compatibility remain future release evidence."
+exact_next_action: "Re-audit recovery-only head; squash-merge PR1470 into declared PR1464 base with expected-head guard."

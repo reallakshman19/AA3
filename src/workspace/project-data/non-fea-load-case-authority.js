@@ -4,34 +4,54 @@ import { freezeDeep, isRecord, stringValue } from '../dataset-utils.js';
 export const NON_FEA_LOAD_CASE_AUTHORITY_SCHEMA = 'non-fea-load-case-authority/v1';
 export const NON_FEA_CANONICAL_LOAD_CASE_IDS = Object.freeze(['EMPTY', 'OPE', 'HYD']);
 
-/** Project Data is the sole authority for the active canonical load-case set. */
+/**
+ * Resolves the active canonical load-case set from the effective Project Data
+ * profile. The effective profile may contain a higher-authority project/source
+ * value or a hash-bound Product default composed by the Product-default
+ * provider. Raw missing, unapproved, empty, unknown, or malformed default
+ * authority remains fail-closed.
+ */
 export function createNonFeaLoadCaseAuthority(profile) {
   if (!isRecord(profile)) throw new TypeError('Load-case authority requires a Project Data profile.');
   const entry = profile?.loadCalculation?.activeLoadCases;
   const blockers = [];
   let approvedLoadCases = [];
+  let provenance = null;
 
   if (!entry || !Object.hasOwn(entry, 'value')) {
-    blockers.push(issue('ACTIVE_LOAD_CASES_MISSING', 'loadCalculation.activeLoadCases', 'Project Data active Load Cases are missing.'));
+    blockers.push(issue('ACTIVE_LOAD_CASES_MISSING', 'loadCalculation.activeLoadCases', 'Effective active Load Cases are missing.'));
   } else if (entry.approved !== true || !isRecord(entry.evidence) || !stringValue(entry.evidence.source)) {
-    blockers.push(issue('ACTIVE_LOAD_CASES_NOT_APPROVED', 'loadCalculation.activeLoadCases', 'Active Load Cases require approved Project Data source evidence.'));
-  } else if (!Array.isArray(entry.value) || entry.value.length === 0) {
-    blockers.push(issue('ACTIVE_LOAD_CASES_EMPTY', 'loadCalculation.activeLoadCases', 'At least one active Load Case is required.'));
+    blockers.push(issue('ACTIVE_LOAD_CASES_NOT_APPROVED', 'loadCalculation.activeLoadCases', 'Active Load Cases require approved effective authority evidence.'));
   } else {
-    const supplied = [...new Set(entry.value.map((value) => stringValue(value).toUpperCase()).filter(Boolean))];
-    const unsupported = supplied.filter((value) => !NON_FEA_CANONICAL_LOAD_CASE_IDS.includes(value)).sort();
-    if (unsupported.length) {
-      blockers.push(issue('ACTIVE_LOAD_CASE_UNKNOWN', 'loadCalculation.activeLoadCases', `Unknown canonical Load Cases: ${unsupported.join(', ')}.`));
+    provenance = effectiveAuthorityProvenance(entry.evidence);
+    if (provenance.authority === 'PRODUCT_DEFAULT' && !validProductDefaultProvenance(provenance)) {
+      blockers.push(issue(
+        'ACTIVE_LOAD_CASES_PRODUCT_DEFAULT_EVIDENCE_INVALID',
+        'loadCalculation.activeLoadCases',
+        'Product-default active Load Cases require bound default/profile provenance.',
+      ));
     }
-    approvedLoadCases = NON_FEA_CANONICAL_LOAD_CASE_IDS.filter((value) => supplied.includes(value));
+    if (!Array.isArray(entry.value) || entry.value.length === 0) {
+      blockers.push(issue('ACTIVE_LOAD_CASES_EMPTY', 'loadCalculation.activeLoadCases', 'At least one active Load Case is required.'));
+    } else {
+      const supplied = [...new Set(entry.value.map((value) => stringValue(value).toUpperCase()).filter(Boolean))];
+      const unsupported = supplied.filter((value) => !NON_FEA_CANONICAL_LOAD_CASE_IDS.includes(value)).sort();
+      if (unsupported.length) {
+        blockers.push(issue('ACTIVE_LOAD_CASE_UNKNOWN', 'loadCalculation.activeLoadCases', `Unknown canonical Load Cases: ${unsupported.join(', ')}.`));
+      }
+      approvedLoadCases = NON_FEA_CANONICAL_LOAD_CASE_IDS.filter((value) => supplied.includes(value));
+    }
   }
 
+  const ready = blockers.length === 0;
   const base = {
     schema: NON_FEA_LOAD_CASE_AUTHORITY_SCHEMA,
     projectDataRevision: Number.isInteger(profile.revision) ? profile.revision : null,
-    state: blockers.length ? 'BLOCKED' : 'READY',
-    approvedLoadCases: blockers.length ? [] : approvedLoadCases,
-    evidenceSource: blockers.length ? null : stringValue(entry.evidence.source),
+    state: ready ? 'READY' : 'BLOCKED',
+    approvedLoadCases: ready ? approvedLoadCases : [],
+    effectiveAuthority: ready ? provenance.authority : null,
+    evidenceSource: ready ? provenance.source : null,
+    provenance: ready ? provenance : null,
     blockers: blockers.sort((left, right) => `${left.code}|${left.path}`.localeCompare(`${right.code}|${right.path}`)),
   };
   return freezeDeep({ ...base, semanticHash: semanticHash(base) });
@@ -49,7 +69,7 @@ export function assertRequestedLoadCasesAuthorized(authority, requestedLoadCases
   const rejected = [...unknown, ...unauthorized];
   if (rejected.length) {
     const error = codedError(
-      `Requested Load Cases are outside approved Project Data authority: ${rejected.join(', ')}.`,
+      `Requested Load Cases are outside approved effective authority: ${rejected.join(', ')}.`,
       'LOAD_CASE_NOT_PROJECT_DATA_APPROVED',
     );
     error.details = rejected;
@@ -69,12 +89,34 @@ export function assertEmpiricalCaseConfigurationsAuthorized(authority, caseConfi
   return assertRequestedLoadCasesAuthorized(authority, primitiveCases);
 }
 
+function effectiveAuthorityProvenance(evidence) {
+  return freezeDeep({
+    authority: stringValue(evidence.authority) || 'PROJECT_DATA_APPROVED',
+    source: stringValue(evidence.source),
+    defaultId: stringValue(evidence.defaultId) || null,
+    defaultSemanticHash: stringValue(evidence.defaultSemanticHash) || null,
+    profileId: stringValue(evidence.profileId) || null,
+    profileVersion: Number.isInteger(evidence.profileVersion) ? evidence.profileVersion : null,
+    productDefaultProfileSemanticHash: stringValue(evidence.productDefaultProfileSemanticHash) || null,
+  });
+}
+
+function validProductDefaultProvenance(provenance) {
+  return Boolean(
+    provenance.defaultId
+    && provenance.defaultSemanticHash
+    && provenance.profileId
+    && Number.isInteger(provenance.profileVersion)
+    && provenance.productDefaultProfileSemanticHash
+  );
+}
+
 function requireAuthority(authority) {
   if (!isRecord(authority) || authority.schema !== NON_FEA_LOAD_CASE_AUTHORITY_SCHEMA) {
     throw codedError(`Expected ${NON_FEA_LOAD_CASE_AUTHORITY_SCHEMA}.`, 'LOAD_CASE_AUTHORITY_INVALID');
   }
   if (authority.state !== 'READY') {
-    const error = codedError('Project Data Load Case authority is not ready.', 'LOAD_CASE_AUTHORITY_NOT_READY');
+    const error = codedError('Effective Load Case authority is not ready.', 'LOAD_CASE_AUTHORITY_NOT_READY');
     error.details = authority.blockers || [];
     throw error;
   }

@@ -1,0 +1,28 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP_issue1476
+mission: "Salvage deterministic release manifest onto current EMP.1 release stack"
+workstream: EMP1_RELEASE_MANIFEST_SALVAGE
+branch: agent/issue-1476-release-manifest-salvage-20260826
+issue: 1476
+umbrella: 1389
+source_pr: 1444
+dependency_base_pr: 1473
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_ISSUE_1476
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_STACKED_WIP
+handover_readiness: READY
+stack_base_head: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
+live_main_last_observed: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+grounding_epoch: GE-WIP1476-001
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: STACKED_ON_PR1473_SALVAGE_FROM_PR1444
+current_stage: PRE_TECHNICAL_SALVAGE_FREEZE
+merge_authorization: NOT_GRANTED
+current_blocker: "Executable release qualification remains blocked; salvage must preserve all current release-security/deployment gates."
+exact_next_action: "Allocate successor PR and port manifest/checker semantics onto exact PR1473 candidate."

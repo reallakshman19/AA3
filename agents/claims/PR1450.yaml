@@ -8,6 +8,7 @@ state: ACTIVE_BOUNDED_EVIDENCE_ONLY
 criticality: ENGINEERING_CRITICAL
 authority_domain:
   - LAFEA.3 retained T6 mesh/solver/result/viewport identity receipt
+  - LAFEA.3 direct compiled CASE-A load-to-retained-element binding receipt
   - B02C frozen Kirsch fixed-probe production comparison receipt
   - LAFEA.4 pressure force/moment/reaction equilibrium receipt
   - LAFEA.4 source/canonical/retained-kernel orientation evidence
@@ -15,6 +16,7 @@ authority_domain:
   - exact clean Git HEAD binding and retained qualification-envelope custody
 exact_paths:
   - scripts/lafea-implementation-authorization-gate-check.mjs
+  - scripts/lafea3-direct-loaded-element-authorization-check.mjs
   - scripts/lafea-implementation-authorization-gate-retain.mjs
   - agents/PR1450_workreport.md
   - agents/status/PR1450.yaml

@@ -1,0 +1,25 @@
+schema: engineering-pr-status/v1
+pr: 1462
+repository: reallaksh19/Advanced_Analysis
+source_task: Issue #1371 local authorization runner successor
+branch: agent/lafea-authorization-local-runner-20260826
+base_branch: main
+base_head_last_checked: b4d1137d0be67a4723ae08df90976f4218b6515e
+state: OPEN_DRAFT
+criticality: ENGINEERING_CRITICAL
+recovery_state: CONTINUE
+takeover_authority: WRITE_ALLOWED_EVIDENCE_INFRASTRUCTURE_ONLY
+execution_mode: OWNER_DIRECTED
+current_stage: LOCAL_EXACT_HEAD_ENTRYPOINT_IMPLEMENTED_PENDING_EXECUTION
+engineering_failure_proven: false
+validation:
+  live_grounding: PASS_GITHUB_READBACK
+  overlap_review: PASS_SOURCE_INSPECTION
+  local_preflight_source_contract: PASS_SOURCE_INSPECTION
+  local_preflight_syntax: PASS_LOCAL_NODE_CHECK
+  exact_local_repository_execution: NOT_RUN
+  q1_q5_engineering_execution: NOT_RUN
+blocker: NO_EXACT_EXECUTABLE_REPOSITORY_CHECKOUT_IN_AGENT_CONTAINER
+retained_report_path: reports/qualification/lafea-implementation-authorization-gate.json
+merge_authority: OWNER_ONLY_NOT_GRANTED
+exact_next_action: node scripts/lafea-implementation-authorization-local-preflight.mjs

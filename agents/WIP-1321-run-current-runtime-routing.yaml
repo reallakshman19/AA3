@@ -1,0 +1,30 @@
+schema: AgentWipClaim.v1
+repository: reallaksh19/Advanced_Analysis
+issue: 1321
+branch: agent/issue-1321-run-current-runtime-routing
+state: TAKEOVER_READ_ONLY
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_main: d24eac2a865cd748832825dc552cd7070b919f16
+upstream_pr: 1478
+mission: "Route ordinary Load Calc Run to the merged current Common Input runtime and present routine-system execution distinctly, without changing scenario, legacy explicit-authority, or engineering mechanics."
+planned_paths:
+  - src/workspace/load-calc-consumer-controller.js
+  - src/workspace/engineering-model-controller.js
+  - src/workspace/engineering-model-store.js
+  - src/workspace/load-calc-consumer-view.js
+  - src/workspace/sequential-sketcher/support-load-presenter.js
+  - scripts/load-calc-run-ready-snapshot-check.mjs
+  - scripts/load-calc-current-common-input-run-routing-check.mjs
+  - scripts/authorized-empirical-execution-view-check.mjs
+  - scripts/run-non-fea-checks.mjs
+protected_invariants:
+  - "Scenario-ready Run remains unchanged and executes exactly once."
+  - "Ordinary Run publishes exactly one current-system calculation request."
+  - "Legacy ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED remains supported for explicit historical workflows."
+  - "No manual seal or legacy authorization refresh is a prerequisite for ordinary Run."
+  - "Routine-system execution authority is distinct from AUTHORIZED_HANDOFF and UNAUTHORIZED_LEGACY_RESULT."
+  - "No mass/statics/CoG/allocation/equilibrium/tolerance mechanics change."
+  - "No post-failure method retry."
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR
+exact_next_action: "Open draft PR, establish numbered custody, complete live takeover trace, then implement bounded routing/presentation cutover."

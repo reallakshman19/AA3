@@ -1,0 +1,26 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1439
+mission: "Issue #1321 effective canonical load-case authority"
+workstream: ISSUE1321_EFFECTIVE_LOAD_CASE_AUTHORITY
+branch: agent/issue-1321-effective-load-case-authority
+main_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+merge_base: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY_FOR_IMPLEMENTATION
+coordination: SAFE_NO_OPEN_LOAD_CASE_AUTHORITY_PR
+current_stage: IMPLEMENT_EFFECTIVE_LOAD_CASE_AUTHORITY
+validation:
+  live_grounding: PASS
+  overlap: PASS_NONE_FOUND
+  product_default_active_cases: PASS_SOURCE_INSPECTION
+  raw_load_case_authority_gap: PASS_SOURCE_INSPECTION
+  appendix_a_preimplementation: PASS_97_OF_100_MIN_18
+  execution_checks: NOT_RUN
+workflow_policy: OWNER_SKIP_WORKFLOW_GATING_FOR_CONTINUATION
+merge_authority: NOT_GRANTED
+merge_disposition: OWNER_ONLY_DRAFT
+exact_next_action: "Implement effective authority/provenance and strengthen load-case authority regression, then reconcile."

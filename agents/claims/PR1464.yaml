@@ -7,36 +7,49 @@ criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: AUTO
 auto_state: COMPLETE
-coordination_state: STACKED_ON_PR1457_EXACT_OVERLAP_INTENTIONAL
+coordination_state: STACKED_ON_PR1457_CHILD_PR1470_ABSORBED
 scope:
-  authority: EMP1_DEPENDENCY_SECURITY
+  authority: ISSUE_1463_WITH_MERGED_CHILD_1466_CUSTODY
   paths:
     - scripts/emp1-professional-dependency-lock-check.mjs
     - scripts/emp1-professional-dependency-lock-falsifier.mjs
     - scripts/emp1-professional-dependency-advisory-check.mjs
     - scripts/emp1-professional-dependency-advisory-falsifier.mjs
+    - scripts/emp1-professional-security-header-policy.mjs
+    - scripts/emp1-professional-deployment-security-headers-check.mjs
+    - scripts/emp1-professional-deployment-security-headers-falsifier.mjs
     - scripts/emp1-professional-release-candidate.mjs
     - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
+    - docs/emp1/EMP1_PROFESSIONAL_DEPLOYED_SECURITY_HEADERS.md
     - agents/PR1464_workreport.md
     - agents/status/PR1464.yaml
     - agents/claims/PR1464.yaml
+    - agents/PR1470_workreport.md
+    - agents/status/PR1470.yaml
+    - agents/claims/PR1470.yaml
 protected_exclusions:
   - package.json dependency version changes
   - package-lock.json dependency version changes
+  - index.html
+  - analyze.html
+  - provider-specific deployment configuration
   - src/core/emp1/**
   - WRC mechanics/source/dataset/oracle/tolerance
-  - CSP/security-header policy
   - .github/workflows/**
 authority_boundary:
   dependency_security_can_block_release: true
+  deployed_header_security_can_block_release: true
   dependency_security_can_create_engineering_authority: false
+  static_csp_can_establish_browser_compatibility: false
   code_compliance_authority_granted: false
   release_authority_granted: false
   vulnerability_free_claim_without_live_audit: false
 stack_base_head: f2462a7a09e7a4a0bc36a398095efdd796c98a4a
-technical_basis_head: c44c8444a1e2961b9b548386f2cfd8dc2776e472
-live_main_last_observed: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+dependency_technical_basis: c44c8444a1e2961b9b548386f2cfd8dc2776e472
+absorbed_child_pr: 1470
+absorbed_child_merge_sha: 9f73e0fc8c5db06cec137fb0041190596ae4acf3
+live_main_last_observed: f15bab4af0009888f41b856f820cb3ab7a152520
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1464-002
+grounding_epoch: GE-PR1464-003
 handover_report: agents/PR1464_workreport.md
-exact_next_action: "Leave PR1464 draft/unmerged; re-ground against PR1457 before any future merge decision."
+exact_next_action: "Leave PR1464 draft/unmerged; re-ground PR1457 against current main before any future stack merge decision."

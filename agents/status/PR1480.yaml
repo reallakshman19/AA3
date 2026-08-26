@@ -4,35 +4,28 @@ pr_or_wip: PR1480
 mission: Discriminate the first post-nullspace B01 governing boundary without changing mechanics
 workstream: LAFEA_B01_POST_NULLSPACE_BOUNDARY
 branch: agent/lafea-b01-post-nullspace-boundary-20260826
-base_main: e74d2d3c45d918895d3a613014f08aa7c0abce79
+base_main: d24eac2a865cd748832825dc552cd7070b919f16
+sync_commit: 8b27f58d11736f81e89c2aa507b50c44d7782898
 work_intent: QUALIFY
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: CURRENT_MAIN_CLEAN_SUCCESSOR
-handover_readiness: READY_FOR_VALIDATION
+pr_recovery_state: CURRENT_MAIN_SYNCHRONIZED
+handover_readiness: MERGE_READY_OWNER_AUTHORIZED
 report_path: agents/PR1480_workreport.md
-current_stage: POST_NULLSPACE_BOUNDARY_GATE_IMPLEMENTED_EXECUTION_NOT_RUN
+current_stage: MERGE_AUTHORIZED_QUALIFICATION_GATE_EXECUTION_NOT_RUN
 engineering_failure_proven: false
 validation:
-  live_main_and_1479_merge:
-    state: PASS_GITHUB_READBACK
-  classifier_syntax:
-    state: PASS_LOCAL_NODE_CHECK
-  boundary_wrapper_syntax:
-    state: PASS_LOCAL_NODE_CHECK
-  lame_diagnostic_v2_syntax:
-    state: PASS_LOCAL_NODE_CHECK
-  classifier_synthetic_suite:
-    state: PASS_LOCAL_NODE_EXECUTION
-    cases: 6
-  focused_nullspace_execution:
-    state: NOT_RUN
-  bbar_kernel_execution:
-    state: NOT_RUN
-  governing_lame_execution:
-    state: NOT_RUN
-  integrated_b01_execution:
-    state: NOT_RUN
+  live_main_and_1479_merge: { state: PASS_GITHUB_READBACK }
+  current_main_non_overlap: { state: PASS_SOURCE_REVIEW }
+  current_main_sync: { state: PASS }
+  classifier_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  boundary_wrapper_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  lame_diagnostic_v2_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  classifier_synthetic_suite: { state: PASS_LOCAL_NODE_EXECUTION, cases: 6 }
+  focused_nullspace_execution: { state: NOT_RUN }
+  bbar_kernel_execution: { state: NOT_RUN }
+  governing_lame_execution: { state: NOT_RUN }
+  integrated_b01_execution: { state: NOT_RUN }
 blocker: NO_EXACT_EXECUTABLE_REPOSITORY_CHECKOUT_IN_AGENT_CONTAINER
 blocker_detail: direct Git materialization fails with Could not resolve host github.com
 runtime_receipt: reports/qualification/B01/post-nullspace-boundary.json
@@ -53,5 +46,6 @@ excluded_authority:
   - RELEASE_AUTHORITY
   - TRUST_ROOT
   - WORKFLOW_MUTATION
-merge_authority: OWNER_ONLY_NOT_GRANTED
-exact_next_action: node scripts/lafea-b01-post-nullspace-boundary-check.mjs
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+merge_disposition: AUTHORIZED_WITH_NOT_RUN_PRESERVED
+exact_next_action_after_merge: node scripts/lafea-b01-post-nullspace-boundary-check.mjs

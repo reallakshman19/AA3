@@ -109,7 +109,7 @@ export function isRoutineRunReady(commonState) {
   }
   const report = commonState?.report;
   return report?.packageState === 'READY'
-    && nonemptyArray(report.sealedMethodIds)
+    && nonemptyArray(report.readyMethodIds)
     && emptyArray(report.blockedMethodIds);
 }
 

@@ -6,6 +6,20 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const expectedEvidenceFiles = [
+  '01-observation.json',
+  '02-replay-receipt.json',
+  '03-falsifier-receipt.json',
+  '04-evidence-manifest.json',
+  '05-local-execution-receipt.json',
+  '06-independent-review-receipt.json',
+  '07-independent-review-falsifier-receipt.json',
+  '08-bounded-authorization-proposal.json',
+  '09-bounded-authorization-proposal-check-receipt.json',
+  '10-bounded-authorization-proposal-falsifier-receipt.json',
+  '11-post-promotion-exact-head-receipt.json',
+  '12-post-promotion-exact-head-falsifier-receipt.json',
+];
 const options = parseArgs(process.argv.slice(2));
 const candidateHead = git(['rev-parse', 'HEAD']);
 const candidateTree = git(['rev-parse', 'HEAD^{tree}']);
@@ -17,6 +31,9 @@ const wrcSourceLedger = await readJson('validation/emp1/wrc537-2013/source-ledge
 const cauxSourceLedger = await readJson('validation/emp1/caux2017-wrc01f/source-ledger.json');
 const authorization = await readJson('validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json');
 assertManifestAuthorityInputs();
+const retainedEvidenceSets = await collectRetainedEvidenceSets(
+  resolve(root, 'validation/emp1/wrc537-2013'),
+);
 
 if (options.expectedHead && options.expectedHead !== candidateHead) {
   throw releaseError(`EMP1_RELEASE_CANDIDATE_HEAD_MISMATCH:${candidateHead}:${options.expectedHead}`);
@@ -217,6 +234,8 @@ function createReleaseManifest(input) {
       independentOracleHash: authorization.authorizedIdentity.postAuthorityOracleSemanticHash,
     },
     evidence: {
+      expectedRetainedFiles: expectedEvidenceFiles,
+      retainedEvidenceSets,
       gates: executionEvidence(input.executions),
       buildArtifactSha256: input.buildArtifactSha256,
     },
@@ -282,6 +301,52 @@ function assertManifestAuthorityInputs() {
     || authorization.authorityBoundary.codeComplianceAuthorized !== false
     || authorization.authorityBoundary.releaseQualified !== false) {
     throw releaseError('EMP1_RELEASE_MANIFEST_AUTHORITY_BOUNDARY_INVALID');
+  }
+}
+
+async function collectRetainedEvidenceSets(start) {
+  const directories = [];
+  await walk(start, 0);
+  const sets = [];
+  for (const directory of directories.sort()) {
+    const files = [];
+    for (const name of expectedEvidenceFiles) {
+      const path = join(directory, name);
+      try {
+        const bytes = await readFile(path);
+        files.push({
+          name,
+          path: portableRelative(path),
+          state: 'PRESENT',
+          sha256: createHash('sha256').update(bytes).digest('hex'),
+        });
+      } catch (error) {
+        if (error?.code !== 'ENOENT') throw error;
+        files.push({
+          name,
+          path: portableRelative(path),
+          state: 'NOT_PRESENT',
+          sha256: null,
+        });
+      }
+    }
+    sets.push({ directory: portableRelative(directory), files });
+  }
+  return sets;
+
+  async function walk(directory, depth) {
+    if (depth > 3) return;
+    let entries;
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    const names = new Set(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
+    if (names.has('01-observation.json')) directories.push(directory);
+    for (const entry of entries) {
+      if (entry.isDirectory()) await walk(join(directory, entry.name), depth + 1);
+    }
   }
 }
 
@@ -357,6 +422,9 @@ async function maybeWriteReceipt(receipt, path) {
 }
 async function readJson(path) {
   return JSON.parse(await readFile(resolve(root, path), 'utf8'));
+}
+function portableRelative(path) {
+  return relative(root, path).replaceAll('\\', '/');
 }
 function parseArgs(args) {
   const out = {

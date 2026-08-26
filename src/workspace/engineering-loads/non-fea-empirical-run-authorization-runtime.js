@@ -27,6 +27,16 @@ export function authorizeCurrentNonFeaEmpiricalRun(
     scenarioId: `ROUTINE-RUN:${decision.commonInputSemanticHash}`,
     methodRequestSemanticHash: decision.semanticHash,
   });
+  if (prepared?.commonInput?.semanticHash !== decision.commonInputSemanticHash) {
+    fail(
+      'Method-currentness coordinator used a different Common Input than the system Run authorization.',
+      'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_COORDINATOR_COMMON_INPUT_MISMATCH',
+      {
+        expected: decision.commonInputSemanticHash,
+        actual: prepared?.commonInput?.semanticHash || null,
+      },
+    );
+  }
   const receipt = prepared?.receipt;
   if (!receipt
       || receipt.authorizationId !== decision.authorizationId
@@ -43,16 +53,6 @@ export function authorizeCurrentNonFeaEmpiricalRun(
         authorizationId: receipt?.authorizationId || null,
         implementationId: receipt?.implementationId || null,
         commonInputSemanticHash: receipt?.commonInputSemanticHash || null,
-      },
-    );
-  }
-  if (prepared?.commonInput?.semanticHash !== decision.commonInputSemanticHash) {
-    fail(
-      'Method-currentness coordinator used a different Common Input than the system Run authorization.',
-      'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_COORDINATOR_COMMON_INPUT_MISMATCH',
-      {
-        expected: decision.commonInputSemanticHash,
-        actual: prepared?.commonInput?.semanticHash || null,
       },
     );
   }

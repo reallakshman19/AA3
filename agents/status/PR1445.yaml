@@ -17,14 +17,19 @@ appendix_a:
   status: PASS
   total: 99
   minimum_question: 19
-current_stage: FINAL_LEDGER_AND_RUNTIME_OBSERVATION
+current_stage: RUNTIME_OBSERVATION
 engineering_failure_proven: false
 scope:
   engineering_files: 15
-  expected_recovery_files: 3
+  recovery_files: 3
+  total_changed_files: 18
 validation:
   live_grounding: PASS
-  engineering_ledger: PASS_15_FILES
+  prerequisite_i_head_unchanged: PASS
+  main_head_unchanged: PASS
+  final_pr_ledger: PASS_18_FILES
+  review_submissions: PASS_ZERO
+  review_threads: PASS_ZERO
   historical_non_vite_blob_identity: PASS_13_OF_13
   current_vite_reconciliation: PASS_SOURCE_AND_DIFF_INSPECTION
   promotion_schema_v2: PASS_SOURCE_INSPECTION
@@ -57,4 +62,4 @@ coordination:
   stale_combined_prs:
     - 1246
     - 1249
-exact_next_action: Reconcile the final 18-file PR ledger, reviews and threads; observe one automatically triggered workflow on the final exact PR head. If runner_id=0 and steps are empty, classify PRE_STEP_HOSTED_RUNNER_ALLOCATION, leave executable J/build/browser gates NOT_RUN, do not rerun, and durably mark #1246/#1249 J roles superseded by #1445. Keep draft and Owner-only.
+exact_next_action: Observe one automatically triggered workflow on this frozen PR head. If runner_id=0 and steps are empty, classify PRE_STEP_HOSTED_RUNNER_ALLOCATION, leave executable J/build/browser gates NOT_RUN, do not rerun the same head, and record the exact run plus #1246/#1249 J supersession in PR comments without moving the branch. Keep draft and Owner-only.

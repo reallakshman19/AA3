@@ -3,9 +3,14 @@ import { engineeringModelStore } from './engineering-model-store.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 import { projectDataStore } from './project-data/project-data-store.js';
 import { authorizedEnrichmentConsumerController } from './enrichment/authorized-enrichment-runtime.js';
+import {
+  executeCurrentCommonInputEmpiricalRun,
+} from './engineering-loads/current-common-input-empirical-run-runtime.js';
 
 export const ENGINEERING_MODEL_EVENTS = Object.freeze({
   CALCULATE_REQUESTED: 'engineering-support-loads:calculate-requested',
+  CURRENT_COMMON_INPUT_CALCULATE_REQUESTED:
+    'engineering-support-loads:current-common-input-calculate-requested',
   CHANGED: 'engineering-support-loads:changed',
   FAILED: 'engineering-support-loads:failed',
 });
@@ -19,7 +24,12 @@ const PROJECT_DATA_TOPOLOGY_MODEL_PATHS = Object.freeze([
 
 /** Rebuilds derived contracts and runs loads only on an explicit request. */
 export class EngineeringModelController {
-  constructor(eventBus, workspaceState, candidateController = authorizedEnrichmentConsumerController) {
+  constructor(
+    eventBus,
+    workspaceState,
+    candidateController = authorizedEnrichmentConsumerController,
+    { currentCommonInputExecutor = executeCurrentCommonInputEmpiricalRun } = {},
+  ) {
     const isAuthorizedConsumer = candidateController
       && typeof candidateController.executeEmpirical === 'function'
       && typeof candidateController.refreshEmpirical === 'function';
@@ -35,9 +45,17 @@ export class EngineeringModelController {
       error.code = 'EMPIRICAL_RUNTIME_AUTHORIZED_CONSUMER_REQUIRED';
       throw error;
     }
+    if (typeof currentCommonInputExecutor !== 'function') {
+      const error = new TypeError(
+        'Engineering model controller requires the current Common Input empirical executor.',
+      );
+      error.code = 'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_EXECUTOR_REQUIRED';
+      throw error;
+    }
     this.eventBus = eventBus;
     this.workspaceState = workspaceState;
     this.authorizedConsumerController = authorizedConsumerController;
+    this.currentCommonInputExecutor = currentCommonInputExecutor;
     this.unsubscribers = [];
     this.datasetId = '';
     this.datasetVersion = null;
@@ -51,6 +69,10 @@ export class EngineeringModelController {
     this.unsubscribers = [
       this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, ({ snapshot }) => this.handleSnapshot(snapshot)),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, () => this.calculate()),
+      this.eventBus.subscribe(
+        ENGINEERING_MODEL_EVENTS.CURRENT_COMMON_INPUT_CALCULATE_REQUESTED,
+        () => this.calculateCurrentCommonInput(),
+      ),
       this.eventBus.subscribe('MASTER_DATA_UPDATED', () => this.handleMasterDataChanged()),
       this.eventBus.subscribe('MASTER_DATA_CLEARED', () => this.handleMasterDataChanged()),
       projectDataStore.subscribe((event) => this.handleProjectDataChanged(event)),
@@ -149,6 +171,7 @@ export class EngineeringModelController {
     });
   }
 
+  /** Retained explicit historical authorized-runtime execution path. */
   calculate() {
     try {
       const execution = this.authorizedConsumerController.executeEmpirical();
@@ -159,6 +182,30 @@ export class EngineeringModelController {
       this.eventBus.publish(ENGINEERING_MODEL_EVENTS.FAILED, {
         message: error instanceof Error ? error.message : String(error),
         code: error?.code || 'EMPIRICAL_RUNTIME_EXECUTION_FAILED',
+      });
+      return null;
+    }
+  }
+
+  /** Ordinary product Run path: exactly one #1478 current-system execution. */
+  calculateCurrentCommonInput() {
+    try {
+      const runtime = this.currentCommonInputExecutor();
+      const execution = runtime.supportExecution;
+      const distribution = execution.distribution;
+      this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
+        reason: 'calculated',
+        distribution,
+        execution,
+        currentCommonInputRuntime: runtime,
+        authority: 'CURRENT_COMMON_INPUT_SYSTEM_RUN',
+      });
+      return runtime;
+    } catch (error) {
+      this.eventBus.publish(ENGINEERING_MODEL_EVENTS.FAILED, {
+        message: error instanceof Error ? error.message : String(error),
+        code: error?.code || 'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_FAILED',
+        authority: 'CURRENT_COMMON_INPUT_SYSTEM_RUN',
       });
       return null;
     }

@@ -1,0 +1,25 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1461
+issue: 1321
+branch: agent/issue-1321-run-ready-snapshot
+stack_base_pr: 1460
+stack_base_head: e246a51235b8c8fd98a67e6fece3a9be87825071
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+mission: "Wire ordinary Run to obtain/reuse READY product screening snapshot before checking existing explicit authorization"
+claimed_paths:
+  - src/workspace/load-calc-consumer-controller.js
+  - scripts/load-calc-run-ready-snapshot-check.mjs
+  - agents/PR1461_workreport.md
+  - agents/claims/PR1461.yaml
+  - agents/status/PR1461.yaml
+protected_paths:
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/workspace/engineering-loads/**
+  - src/core/non-fea-common-checker/**
+  - .github/workflows/**
+authority_boundary: "Run may obtain/reuse PR1460 READY-only snapshot and execute only existing current scenario/empirical authorization. No authorization creation or partial/blocked acceptance."
+merge_authority: OWNER_ONLY_NOT_GRANTED
+overlap: SAFE_NO_LIVE_CONTROLLER_OVERLAP

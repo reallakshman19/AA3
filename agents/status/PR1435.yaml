@@ -6,6 +6,7 @@ branch: agent/lafea4-tech13h-retained-authority-current-main-20260826
 base_branch: main
 base_head_last_checked: 7b2a8119aa5faeee7cc102c894991851019c5a7b
 engineering_head_before_recovery_records: 0eec6a437bc50685f21d4d87787042095ddb3bb5
+observed_pr_head: ab7c73eafc28af7b11721fd7bf88f97f8a04748d
 criticality: ENGINEERING_CRITICAL
 recovery_state: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
 handover_readiness: READY_FOR_VALIDATION
@@ -17,16 +18,21 @@ appendix_a:
   total: 99
   minimum_question: 19
 current_stage: VALIDATION_BLOCKED_BY_HOSTED_RUNNER_ALLOCATION
+current_blocker: GITHUB_HOSTED_RUNNER_ALLOCATION_PRE_STEP
 engineering_failure_proven: false
 predecessor:
   pr: 1246
   h_disposition: SUPERSEDED_BY_PR1435
   i_j_disposition: UNRESOLVED_PROVENANCE_REMAINS
 scope:
+  changed_files: 11
   engineering_and_qualification_files: 8
   recovery_files: 3
 validation:
   live_grounding: PASS
+  clean_pr_ledger: PASS_11_FILES
+  reviews: PASS_NONE
+  review_threads: PASS_NONE
   historical_h_checkpoint: PASS
   shared_parent_blob_currentness: PASS
   candidate_retention_authority_defect: PASS_DEFECT_PROVEN
@@ -36,6 +42,13 @@ validation:
   active_promotion_path: NOT_RUN
   exact_head_bundle: NOT_RUN
   browser_build: NOT_RUN
+runner_evidence:
+  lafea_run: 32918135094
+  lafea_job: 98026042727
+  tested_head: ab7c73eafc28af7b11721fd7bf88f97f8a04748d
+  runner_id: 0
+  steps: 0
+  classification: PRE_STEP_HOSTED_RUNNER_ALLOCATION
 protected:
   production_trust_root_null: true
   release_authority_changed: false
@@ -45,4 +58,4 @@ protected:
   workflow_or_vite_policy_changed: false
   tech13i_replay_included: false
   tech13j_fingerprint_included: false
-exact_next_action: Reconcile live PR1435 ledger/reviews and one automatically triggered exact-head workflow. Keep draft and Owner-only if execution remains pre-step NOT_RUN. Then continue with TECH-13I read-only salvage assessment; do not activate promotion or merge without explicit owner authority.
+exact_next_action: Keep PR1435 draft and Owner-only. Do not rerun the same zero-step workflow. Continue with TECH-13I read-only salvage assessment; return to H only on legitimate runtime recovery, main drift, review input, or explicit owner merge authorization.

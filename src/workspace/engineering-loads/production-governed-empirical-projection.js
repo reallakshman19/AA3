@@ -16,24 +16,41 @@ import {
   createNonFeaGravityMethodAuthority,
 } from '../project-data/non-fea-gravity-method-authority.js';
 
-const ALLOWED_LEGACY_UPGRADE_MISMATCH = 'projectDataProfileSemanticHash';
+const PROJECT_DATA_BINDING = 'projectDataProfileSemanticHash';
 
 /**
  * Upgrades the existing explicit V1 authorization context into the governed
  * method-bound V2 production package. The caller's identity, timestamps and
  * authorized input are retained. Dataset/model/master bindings must already be
- * current; only the raw Project Data binding is intentionally replaced by the
- * effective Product-default Project Data profile binding.
+ * current. The V1 Project Data binding must equal the exact current raw profile
+ * hash and is then replaced by the effective Product-default profile hash.
  */
 export function createProductionGovernedEmpiricalProjection(input = {}) {
   const legacyRuntimePackage = requireAuthorizedEmpiricalRuntimePackage(
     input.legacyRuntimePackage,
   );
   const current = requireCurrentContext(input);
+  const sourceProjectDataSemanticHash = hash(
+    input.sourceProjectDataSemanticHash,
+    'sourceProjectDataSemanticHash',
+  );
+  if (
+    legacyRuntimePackage.bindings.projectDataProfileSemanticHash
+    !== sourceProjectDataSemanticHash
+  ) {
+    fail(
+      'Legacy empirical authorization does not bind the exact current raw Project Data profile.',
+      'EMPIRICAL_PRODUCTION_GOVERNED_SOURCE_PROJECT_DATA_MISMATCH',
+      {
+        expected: sourceProjectDataSemanticHash,
+        actual: legacyRuntimePackage.bindings.projectDataProfileSemanticHash,
+      },
+    );
+  }
   const mismatches = compareAuthorizedEmpiricalRuntimeBindings(
     legacyRuntimePackage.bindings,
     current.bindings,
-  ).filter((row) => row.field !== ALLOWED_LEGACY_UPGRADE_MISMATCH);
+  ).filter((row) => row.field !== PROJECT_DATA_BINDING);
   if (mismatches.length > 0) {
     fail(
       'Legacy empirical authorization context is stale against the live governed runtime context.',
@@ -133,6 +150,13 @@ function object(value, label) {
 function identity(value, label) {
   if (typeof value !== 'string' || value.trim() !== value || value.length === 0) {
     fail(`${label} must be a non-empty trimmed string.`, 'EMPIRICAL_PRODUCTION_GOVERNED_IDENTITY_INVALID');
+  }
+  return value;
+}
+
+function hash(value, label) {
+  if (typeof value !== 'string' || !/^fnv1a64:[0-9a-f]{16}$/u.test(value)) {
+    fail(`${label} must be an FNV-1a semantic hash.`, 'EMPIRICAL_PRODUCTION_GOVERNED_HASH_INVALID');
   }
   return value;
 }

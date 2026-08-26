@@ -5,14 +5,21 @@ mission: "Issue #1321 effective canonical load-case authority"
 workstream: ISSUE1321_EFFECTIVE_LOAD_CASE_AUTHORITY
 branch: agent/issue-1321-effective-load-case-authority
 main_head_last_checked: bea5013d2ddfd4d11bf2a03400f3aad2134b220e
+merge_base: bea5013d2ddfd4d11bf2a03400f3aad2134b220e
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 agent_state: SOURCE_COMPLETE_OWNER_AUTHORIZED
 pr_recovery_state: HEALTHY
 handover_readiness: READY
-current_stage: RECONCILE_AND_MERGE
+current_stage: READY_TO_SQUASH_MERGE
 validation:
   live_grounding: PASS
+  deterministic_tree_sync: PASS
+  final_merge_base_exact_main: PASS
+  changed_file_ledger: PASS_5_PATHS
+  branch_behind_main: 0
+  review_submissions: NONE
+  review_threads: NONE
   effective_profile_trace: PASS_SOURCE_INSPECTION
   exact_product_default_catalog_row: PASS_SOURCE_INSPECTION
   exact_product_default_provenance_binding: PASS_SOURCE_INSPECTION
@@ -20,16 +27,7 @@ validation:
   raw_profile_fail_closed: PASS_SOURCE_INSPECTION
   explicit_project_shadows_product_default: PASS_SOURCE_INSPECTION
   invalid_explicit_no_fallback: PASS_SOURCE_INSPECTION
-  forged_default_id_blocked_design: PASS
-  forged_default_hash_blocked_design: PASS
-  forged_profile_id_blocked_design: PASS
-  forged_profile_version_blocked_design: PASS
-  forged_profile_hash_blocked_design: PASS
-  forged_basis_blocked_design: PASS
-  forged_source_blocked_design: PASS
-  copied_evidence_changed_value_blocked_design: PASS
-  intended_changed_file_ledger: 5
-  final_branch_behind_main: PENDING_POST_SYNC
+  eight_product_default_falsifiers: PASS_DESIGN
   focused_node: NOT_RUN
   canonical_non_fea_aggregate: NOT_RUN
   imports_build: NOT_RUN
@@ -37,5 +35,5 @@ validation:
 appendix_a_status: PASS_SOURCE_TAKEOVER_98_OF_100_MIN_18_EXECUTION_NOT_OBSERVED
 workflow_policy: OWNER_SKIP_WORKFLOW_GATING_FOR_CONTINUATION_NOT_A_PASS
 merge_authority: OWNER_AUTHORIZED_2026-08-26T23:12:22Z
-merge_disposition: RECONCILE_EXACT_SCOPE_THEN_SQUASH_MERGE
-exact_next_action: "Synchronize exact five-file tree onto live main, verify behind=0 and clean review state, then squash-merge #1439 and proceed to the next #1321 acceptance gap."
+merge_disposition: SQUASH_MERGE_AUTHORIZED
+exact_next_action: "Squash-merge exact current head, verify new main SHA, then audit the next Issue #1321 acceptance gap."

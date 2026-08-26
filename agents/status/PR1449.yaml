@@ -1,0 +1,41 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1449
+mission: "Issue #1321 governed V2 runtime currentness and stale invalidation"
+workstream: ISSUE1321_GOVERNED_V2_CURRENTNESS
+branch: agent/issue-1321-governed-v2-currentness
+stack_base_pr: 1440
+stack_base_head: 8637638188d5478d01b0001ee9f8cd740bbb2180
+main_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY
+handover_readiness: READY_FOR_VALIDATION
+coordination: SAFE_STACKED_ON_PR1440
+current_stage: IMPLEMENTATION_SOURCE_COMPLETE_EXECUTION_VALIDATION_NOT_RUN
+appendix_a_status: FAIL_A4_NOT_RUN
+appendix_a_score: null
+validation:
+  live_main_grounding: PASS
+  upstream_pr_1440_grounding: PASS
+  overlap: PASS_NO_UNDECLARED_OVERLAP_FOUND
+  exact_patch_source_inspection: PASS
+  governed_profile_cross_binding_source_inspection: PASS
+  same_method_changed_receipt_stales_source_inspection: PASS
+  method_change_stales_source_inspection: PASS
+  missing_receipt_stales_source_inspection: PASS
+  legacy_refresh_bypass_blocked_source_inspection: PASS
+  legacy_execute_bypass_blocked_source_inspection: PASS
+  bare_v2_compatibility_source_inspection: PASS
+  production_cutover: NOT_APPLICABLE_NOT_CHANGED
+  focused_package_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  focused_currentness_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  authorized_execution_aggregate: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  imports: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  build: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  diff_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+workflow_policy: OWNER_SKIP_WORKFLOW_GATING_FOR_CONTINUATION
+merge_authority: NOT_GRANTED
+merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE
+exact_next_action: "Run focused/aggregate/import/build/diff checks in a faithful checkout; if green, design separate ordinary production consumer cutover to governed V2 currentness."

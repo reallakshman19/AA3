@@ -3,12 +3,10 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1471
 issue: 1321
 branch: agent/issue-1321-current-common-input-effective-projection
-state: ACTIVE
+state: ACTIVE_SOURCE_COMPLETE
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-base_branch: agent/issue-1321-run-internal-authorization
-base_sha: 1912bfa2fb3516643b4a5331e77c704c16b8969a
-mission: "Seal exact per-entity/per-load-case empirical masses from current fully READY Common Input without fabricating legacy publication/handoff authority"
+mission: "Seal exact per-entity/per-load-case empirical masses from current fully READY Common Input using the sealed enriched model as numerical authority, without fabricating legacy publication/handoff authority"
 claimed_paths:
   - src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js
   - scripts/current-common-input-empirical-mass-projection-check.mjs
@@ -22,9 +20,12 @@ protected_paths:
   - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
   - src/core/non-fea-common-checker/**
   - .github/workflows/**
-authority_boundary: "Projection-only. Reuses existing model-load resolver and default overlay; adds ancillary and component-content composition receipts; creates no execution authorization or calculation request."
+authority_boundary: "Projection-only. Numerical mass basis is the exact sealed Common Input enriched model passed through existing model-load source projection, fitting derivation and mass resolver. Workspace loadPrimitiveSet is currentness evidence only. Adds ancillary and component-content composition; creates no execution authorization, gravity execution, support statics, or calculation request."
+critical_repair:
+  defect: WORKSPACE_LOAD_PRIMITIVE_SET_RAW_SHARED_MODEL_NOT_ENRICHED_COMMON_INPUT_MASS_AUTHORITY
+  disposition: REPAIRED_BEFORE_MERGE
 appendix_a_qualified: true
 appendix_a_score: 98
 appendix_a_minimum: 18
-merge_authority: OWNER_ONLY_NOT_GRANTED
-overlap: STACKED_ON_PR1465
+merge_authority: GRANTED_BY_OWNER_CURRENT_TURN
+overlap: STACK_DEPENDENCY_NOW_MERGED_REQUIRES_FINAL_MAIN_SYNC

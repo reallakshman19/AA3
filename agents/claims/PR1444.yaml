@@ -4,9 +4,9 @@ pr_or_wip: PR1444
 branch: agent/issue-1441-release-candidate-manifest-20260826
 issue: 1441
 criticality: ENGINEERING_CRITICAL
-claim_state: ACTIVE
+claim_state: HANDOVER_READY
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: COMPLETE
 coordination_state: SAFE_RELEASE_PROVENANCE_NO_OPEN_PR_EXACT_FILE_OVERLAP
 scope:
   authority: EMP1_RELEASE_CANDIDATE_PROVENANCE_MANIFEST
@@ -34,6 +34,8 @@ authority_boundary:
   release_authority_granted: false
   deployment_authority_granted: false
 base_main: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+technical_basis_head: 78b4f238467d9b56833ceefd3a4b34dd47a9f352
+grounding_epoch: GE-PR1444-002
 merge_authority: NOT_GRANTED
 handover_report: agents/PR1444_workreport.md
-exact_next_action: "Finish WIP migration; implement first-class manifest in existing candidate receipt and independent checker."
+exact_next_action: "Leave PR1444 draft/unmerged pending explicit Owner merge authorization; re-ground live main and exact PR head before any merge."

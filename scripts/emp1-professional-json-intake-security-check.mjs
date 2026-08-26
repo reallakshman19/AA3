@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import {
   LAFEA_JSON_INTAKE_ALLOWED_MIME_TYPES,
   LAFEA_JSON_INTAKE_MAX_BYTES,
+  LAFEA_JSON_INTAKE_WORKBENCH_DOCUMENT_SCHEMA,
   parseLafeaJsonObject,
   readLafeaUtf8,
 } from '../src/workspace/lafea-workbench-controller-io.js';
@@ -15,6 +16,11 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 assert.equal(LAFEA_JSON_INTAKE_MAX_BYTES, 5 * 1024 * 1024);
 assert.deepEqual([...LAFEA_JSON_INTAKE_ALLOWED_MIME_TYPES], ['application/json', 'text/json']);
+assert.equal(
+  LAFEA_JSON_INTAKE_WORKBENCH_DOCUMENT_SCHEMA,
+  LAFEA_WORKBENCH_DOCUMENT_SCHEMA,
+  'import-light intake discriminator must equal the canonical workbench schema',
+);
 
 const accepted = fakeJsonFile({
   name: 'emp1-source.json',
@@ -136,8 +142,14 @@ assert.match(ioSource, /file\.slice\(0, policy\.maxBytes \+ 1\)/u);
 assert.match(ioSource, /TextDecoder\('utf-8', \{ fatal: true \}\)/u);
 assert.match(ioSource, /parseLafeaJsonObject\(text, 'Selected LAFEA JSON'\)/u);
 assert.match(ioSource, /LAFEA_WORKBENCH_DOCUMENT_SCHEMA_UNSUPPORTED/u);
+assert.equal(ioSource.includes("from './lafea-workbench-model.js'"), false,
+  'production intake I/O must remain import-light and must not pull the model/composition graph into its manual chunk');
 assert.equal(/\beval\s*\(/u.test(ioSource), false);
 assert.equal(/new\s+Function\s*\(/u.test(ioSource), false);
+
+const viteSource = await read('vite.config.js');
+assert.match(viteSource, /lafea-workbench-controller-io\.js/u);
+assert.match(viteSource, /return 'lafea-workbench-io'/u);
 
 const controllerSource = await read('src/workspace/lafea-workbench-controller.js');
 assert.match(controllerSource, /JSON\.parse\(await readLafeaUtf8\(file\)\)/u);
@@ -148,6 +160,8 @@ console.log(JSON.stringify({
   schema: 'emp1-professional-json-intake-security-check/v1',
   status: 'PASS_FAIL_CLOSED_JSON_INTAKE_POLICY',
   maxBytes: LAFEA_JSON_INTAKE_MAX_BYTES,
+  workbenchSchemaCrossChecked: true,
+  intakeIoManualChunkBoundaryPreserved: true,
   runtimeExtensionGuard: true,
   runtimeMimeGuard: true,
   preReadSizeGuard: true,

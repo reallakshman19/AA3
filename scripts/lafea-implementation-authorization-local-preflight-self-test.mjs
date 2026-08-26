@@ -11,7 +11,12 @@ const PRODUCTION_PREFLIGHT = path.join(
   REPOSITORY_ROOT,
   'scripts/lafea-implementation-authorization-local-preflight.mjs',
 );
+const PRODUCTION_RETAIN = path.join(
+  REPOSITORY_ROOT,
+  'scripts/lafea-implementation-authorization-gate-retain.mjs',
+);
 const productionSource = fs.readFileSync(PRODUCTION_PREFLIGHT, 'utf8');
+const retentionSource = fs.readFileSync(PRODUCTION_RETAIN, 'utf8');
 const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'lafea-auth-local-preflight-'));
 
 try {
@@ -79,6 +84,8 @@ try {
     'successful delegated execution must not emit a failure classification',
   );
 
+  assertRetentionCustodyOrder(retentionSource);
+
   process.stdout.write(`${JSON.stringify({
     schema: 'lafea-implementation-authorization-local-preflight-self-test/v1',
     status: 'PASS',
@@ -88,6 +95,8 @@ try {
       delegatedFailureDoesNotOverstateQ1ToQ5: true,
       delegatedExitStatusPropagated: true,
       successfulDelegationRemainsZero: true,
+      postEngineeringCheckoutCleanlinessBoundBeforeReceipt: true,
+      exactHeadEnvelopeV4RequiresCleanAfterEngineeringChecks: true,
     }),
     engineeringMechanicsExecuted: false,
     engineeringAuthorityCreated: false,
@@ -95,6 +104,38 @@ try {
   }, null, 2)}\n`);
 } finally {
   fs.rmSync(sandbox, { recursive: true, force: true });
+}
+
+function assertRetentionCustodyOrder(source) {
+  assert.match(
+    source,
+    /schema: 'lafea-implementation-authorization-exact-head-envelope\/v4'/u,
+    'retention envelope must use v4 after adding post-engineering checkout custody',
+  );
+  assert.match(
+    source,
+    /checkoutCleanAfterEngineeringChecks: true/u,
+    'retention envelope must retain the post-engineering clean-checkout fact',
+  );
+
+  const q3Run = source.indexOf('const q3IndependentPressureEvidence = runJson');
+  const cleanAfter = source.indexOf('const dirtyAfterEngineeringChecks = git');
+  const body = source.indexOf('const body = Object.freeze');
+  const writeReceipt = source.indexOf('fs.writeFileSync(REPORT_PATH');
+
+  for (const [label, index] of [
+    ['Q3 independent checker execution', q3Run],
+    ['post-engineering cleanliness check', cleanAfter],
+    ['envelope construction', body],
+    ['receipt write', writeReceipt],
+  ]) {
+    assert.ok(index >= 0, `${label} must remain present in retention source`);
+  }
+
+  assert.ok(
+    q3Run < cleanAfter && cleanAfter < body && body < writeReceipt,
+    'retention order must be engineering checks -> clean checkout proof -> envelope -> receipt write',
+  );
 }
 
 function createSyntheticRepository(root, delegatedExitCode) {

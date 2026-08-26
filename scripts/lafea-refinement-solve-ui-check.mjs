@@ -58,7 +58,11 @@ assert.match(refinement, /productEvidence\.open = false/u);
 assert.match(solve, /summaryText: 'Why\? \(i\)'/u);
 assert.match(solve, /dataset\.role = 'lafea-diagnostics'/u);
 assert.match(generation, /Local target length must be greater than zero and smaller than the global target/u);
-assert.match(generation, /global \* 0\.25/u);
+assert.match(generation, /LAFEA_RETAINED_MESH_REFINEMENT_POLICY/u);
+assert.match(generation, /targetIds\.length > LAFEA_RETAINED_MESH_REFINEMENT_POLICY\.maximumTargets/u);
+assert.match(generation, /minimumTargetRatio = legacyLafea3/u);
+assert.doesNotMatch(generation, /global \* 0\.25/u);
+assert.match(generation, /actual shared-edge size transition against the bound mesh-profile limit/u);
 assert.match(generation, /Length unit is required; it is never inferred silently/u);
 
 console.log(JSON.stringify({
@@ -68,6 +72,8 @@ console.log(JSON.stringify({
   canonicalSolveEvidenceRetained: true,
   refinementDefaultCollapsed: true,
   refinementEngineeringValidationUnchanged: true,
+  lafea3RefinementUiPolicyBoundToProduction: true,
+  lafea3SingleTargetEnvelopeDisclosed: true,
 }));
 
 function step(stepId, label, status, reasons = []) {

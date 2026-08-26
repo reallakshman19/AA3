@@ -1,0 +1,26 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1460
+issue: 1321
+branch: agent/issue-1321-ready-screening-snapshot
+stack_base_pr: 1455
+stack_base_head: 1ecc9b1fee8f98075b1c40065c792d7119f1564f
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+mission: "Create READY-only product screening Common Input snapshot without asserting user approval"
+claimed_paths:
+  - src/workspace/non-fea-common-input-runtime.js
+  - scripts/non-fea-ready-screening-snapshot-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1460_workreport.md
+  - agents/claims/PR1460.yaml
+  - agents/status/PR1460.yaml
+protected_paths:
+  - src/core/non-fea-common-checker/index.js
+  - src/workspace/load-calc-consumer-controller.js
+  - src/workspace/engineering-loads/**
+  - .github/workflows/**
+authority_boundary: "READY reports only; system/product snapshot provenance must not claim user approval; no partial/blocker acceptance, Run wiring, empirical authorization, numerical mechanics, tolerance, solver or workflow change."
+merge_authority: OWNER_ONLY_NOT_GRANTED
+overlap: SAFE_WITH_DECLARED_UPSTREAM_AGGREGATE_ANCESTRY

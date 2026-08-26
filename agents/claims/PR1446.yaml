@@ -1,0 +1,33 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: PR1446
+owner: ChatGPT
+mission: "Issue #1321 governed gravity selection to exact V2/V3 runtime-package projection"
+branch: agent/issue-1321-governed-runtime-package-projection
+pr: 1446
+issue: 1321
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE_STACKED_ON_PR1440
+stack:
+  base_pr: 1440
+  base_head: 0209109ddf7835f74885fb3af571167a99e90fbe
+claimed_paths:
+  - src/workspace/engineering-loads/governed-empirical-runtime-package-v2.js
+  - scripts/governed-empirical-runtime-package-v2-check.mjs
+  - scripts/run-authorized-empirical-load-execution-checks.mjs
+  - agents/PR1446_workreport.md
+  - agents/claims/PR1446.yaml
+  - agents/status/PR1446.yaml
+protected_paths:
+  - src/workspace/engineering-model-store.js
+  - src/workspace/enrichment/authorized-enrichment-consumer-controller.js
+  - src/workspace/engineering-loads/configured-empirical-method-controller-v2.js
+  - src/workspace/engineering-loads/authorized-empirical-runtime-store-v2.js
+  - src/workspace/engineering-loads/authorized-empirical-runtime-package-v2.js
+  - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/engineering-loads/empirical-load-calc-scenario-store.js
+  - .github/workflows/**
+authority_boundary: "Projection only: validate governed selection, derive its exact selected V2/V3 method, seal the existing V2 runtime package, and retain both in one semantic receipt. No execution authorization/currentness, production controller/store cutover, mechanics, fallback policy, tolerance, solver, scenario, UI, release, or workflow change."
+merge_authority: OWNER_ONLY
+state: ACTIVE

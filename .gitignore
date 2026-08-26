@@ -44,3 +44,7 @@ artifacts/
 # Runtime-only exact-head LAFEA implementation-authorization receipt.
 # Keep the path specific: other reports remain visible to Git custody.
 /reports/qualification/lafea-implementation-authorization-gate.json
+
+# Runtime-only Issue #1371 Section 17 registry-closure readiness receipt.
+# The future cleanup proposal guard consumes this exact ignored receipt.
+/reports/qualification/lafea1371-registry-closure-readiness.json

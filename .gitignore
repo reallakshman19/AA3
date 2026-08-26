@@ -52,3 +52,7 @@ artifacts/
 # Runtime-only B01 post-nullspace boundary discriminator receipt.
 # Keep the path exact so unrelated B01 reports remain visible to Git custody.
 /reports/qualification/B01/post-nullspace-boundary.json
+
+# Runtime-only B01 integrated exact-head envelope.
+# The historical final-qualification matrix stays in /tmp; only this sealed envelope is ignored.
+/reports/qualification/B01/integrated-exact-head.json

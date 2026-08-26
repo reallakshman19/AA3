@@ -4,31 +4,38 @@ pr_or_wip: PR1439
 mission: "Issue #1321 effective canonical load-case authority"
 workstream: ISSUE1321_EFFECTIVE_LOAD_CASE_AUTHORITY
 branch: agent/issue-1321-effective-load-case-authority
-main_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
-merge_base: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+main_head_last_checked: bea5013d2ddfd4d11bf2a03400f3aad2134b220e
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-agent_state: VALIDATION_SKIPPED_CONTINUATION_ALLOWED
+agent_state: SOURCE_COMPLETE_OWNER_AUTHORIZED
 pr_recovery_state: HEALTHY
 handover_readiness: READY
-coordination: SAFE_NO_OPEN_LOAD_CASE_AUTHORITY_PR
-current_stage: IMPLEMENTATION_COMPLETE_EXECUTION_SKIPPED_NOT_RUN
+current_stage: RECONCILE_AND_MERGE
 validation:
   live_grounding: PASS
-  overlap: PASS_NONE_FOUND
-  product_default_active_cases: PASS_SOURCE_INSPECTION
-  common_runtime_effective_profile_trace: PASS_SOURCE_INSPECTION
-  effective_authority_provenance: PASS_SOURCE_INSPECTION
+  effective_profile_trace: PASS_SOURCE_INSPECTION
+  exact_product_default_catalog_row: PASS_SOURCE_INSPECTION
+  exact_product_default_provenance_binding: PASS_SOURCE_INSPECTION
+  exact_effective_value_binding: PASS_SOURCE_INSPECTION
   raw_profile_fail_closed: PASS_SOURCE_INSPECTION
-  malformed_product_default_fail_closed: PASS_SOURCE_INSPECTION
   explicit_project_shadows_product_default: PASS_SOURCE_INSPECTION
   invalid_explicit_no_fallback: PASS_SOURCE_INSPECTION
-  changed_file_ledger: PASS_5_PATHS
+  forged_default_id_blocked_design: PASS
+  forged_default_hash_blocked_design: PASS
+  forged_profile_id_blocked_design: PASS
+  forged_profile_version_blocked_design: PASS
+  forged_profile_hash_blocked_design: PASS
+  forged_basis_blocked_design: PASS
+  forged_source_blocked_design: PASS
+  copied_evidence_changed_value_blocked_design: PASS
+  intended_changed_file_ledger: 5
+  final_branch_behind_main: PENDING_POST_SYNC
   focused_node: NOT_RUN
   canonical_non_fea_aggregate: NOT_RUN
   imports_build: NOT_RUN
+  git_diff_check: NOT_RUN
 appendix_a_status: PASS_SOURCE_TAKEOVER_98_OF_100_MIN_18_EXECUTION_NOT_OBSERVED
 workflow_policy: OWNER_SKIP_WORKFLOW_GATING_FOR_CONTINUATION_NOT_A_PASS
-merge_authority: NOT_GRANTED
-merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE
-exact_next_action: "No further core authority patch. Continue non-overlapping #1321 batch; merge only on explicit owner authorization."
+merge_authority: OWNER_AUTHORIZED_2026-08-26T23:12:22Z
+merge_disposition: RECONCILE_EXACT_SCOPE_THEN_SQUASH_MERGE
+exact_next_action: "Synchronize exact five-file tree onto live main, verify behind=0 and clean review state, then squash-merge #1439 and proceed to the next #1321 acceptance gap."

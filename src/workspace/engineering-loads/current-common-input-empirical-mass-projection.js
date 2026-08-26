@@ -2,9 +2,8 @@ import {
   COMMON_ENRICHED_TARGET_INVENTORY_SCHEMA,
   createCommonEnrichedTargetInventory,
 } from '../../core/common-enriched-properties/target-inventory.js';
-import { createPipingLoadCompositionProfile } from '../../core/model-loads/composition-profile.js';
-import { resolveComponentCaseMass } from '../../core/model-loads/component-mass-resolver.js';
-import { derivePipeLikeFittingWeightEvidence } from '../../core/model-loads/elbow-derived-mass.js';
+import { PRIMITIVE_TYPES } from '../../core/model-loads/constants.js';
+import { validateModelLoadPrimitiveSet } from '../../core/model-loads/primitive-builder.js';
 import { evidenceNumber } from '../../core/model-loads/units.js';
 import { deepFreeze, semanticHash } from '../../core/shared-piping-model/index.js';
 import {
@@ -29,6 +28,7 @@ const FIXED_POLICY = Object.freeze({
   projectionOnly: true,
   executionAuthorizationGranted: false,
   legacyPublicationOrHandoffAuthorityAsserted: false,
+  sealedLoadPrimitiveSetRequired: true,
   directMassBasisPreserved: true,
   fittingDerivationPreserved: true,
   negligibleMassZeroPreserved: true,
@@ -38,72 +38,34 @@ const FIXED_POLICY = Object.freeze({
 });
 
 /**
- * Seals exact per-entity/per-load-case masses from the current READY Common
- * Input. The existing model-load resolver owns direct-vs-derived pipe/fluid/
- * insulation mass, fitting derivation and negligible-mass behavior. This seam
- * adds only the Issue #1321 ancillary line mass and component-contained-fluid
- * composition that are not currently owned by the model-load primitive set.
+ * Seals exact per-entity/per-load-case masses from a fully READY current Common
+ * Input and the exact model-load primitive set already bound by that seal.
  *
- * The receipt is projection-only. It does not create a legacy baseline/handoff,
- * empirical runtime package, support reaction, or calculation authorization.
+ * The primitive set remains authoritative for dry/base mass: direct-vs-derived
+ * PIPE/fluid/insulation mass, fitting derivation and negligible zero-mass
+ * behavior are never recomputed here. This projection adds only the two Issue
+ * #1321 layers that the current primitive set does not own: permanent line
+ * cladding/tracing and optional OPE/HYD component-contained fluid.
+ *
+ * This receipt is projection-only. It does not create a legacy baseline or
+ * consumer handoff, a governed runtime package, a reaction, or an execution
+ * authorization.
  */
 export function createCurrentCommonInputEmpiricalMassProjection({
   snapshot,
   runAuthorization,
+  loadPrimitiveSet,
 } = {}) {
   const current = requireCurrentNonFeaEmpiricalRunAuthorization(runAuthorization, snapshot);
   const commonInput = current.commonInput;
-  const model = commonInput.enrichedModel;
-  if (!model || model.schema !== 'shared-piping-model/v1' || !Array.isArray(model.components)) {
-    throw codedError(
-      'Current Common Input does not contain a valid enriched shared piping model.',
-      'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_MODEL_INVALID',
-    );
-  }
-
   const loadCaseIds = normalizeLoadCases(commonInput.requestedLoadCases);
-  const inventory = createCommonEnrichedTargetInventory({
-    schema: COMMON_ENRICHED_TARGET_INVENTORY_SCHEMA,
-    inventoryId: 'CURRENT-COMMON-INPUT-EMPIRICAL-MASS-TARGETS',
-    sharedModel: model,
-  });
-  const ancillaryOverlay = createNonFeaCommonEnrichedConfiguredDefaultOverlay({
-    profile: commonInput.projectDataProfile,
-    sourceModel: model,
-    inventory,
-    requestedMethods: ['WEIGHT_AND_GRAVITY'],
-  });
-  if (ancillaryOverlay.blockers.length) {
-    throw codedError(
-      'Current Common Input ancillary configured-default overlay is blocked.',
-      'CURRENT_COMMON_INPUT_EMPIRICAL_ANCILLARY_OVERLAY_BLOCKED',
-      ancillaryOverlay.blockers,
-    );
-  }
-
-  // The shipped Product engineering table is deliberately empty. If this ever
-  // changes, it must first become part of Common Input currentness before this
-  // projection may consume it. Do not silently introduce an unbound authority.
-  if (LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1.defaults.length !== 0) {
-    throw codedError(
-      'Product engineering defaults changed without Common Input currentness custody.',
-      'CURRENT_COMMON_INPUT_EMPIRICAL_PRODUCT_DEFAULT_CUSTODY_REQUIRED',
-    );
-  }
-
-  const ancillaryByLine = ancillaryByLineTarget(inventory, ancillaryOverlay);
-  const compositionProfile = createPipingLoadCompositionProfile();
-  const targetBySourceRecordId = new Map(
-    inventory.componentTargets.map((target) => [target.sourceRecordId, target]),
-  );
-  const components = model.components;
-  const entityRows = components.map((component) => projectComponent({
+  const basis = buildProjectionBasis(commonInput, loadPrimitiveSet, loadCaseIds);
+  const entityRows = commonInput.enrichedModel.components.map((component) => projectComponent({
     component,
-    components,
-    target: targetBySourceRecordId.get(component.componentKey),
+    target: basis.targetBySourceRecordId.get(component.componentKey),
     loadCaseIds,
-    ancillaryByLine,
-    compositionProfile,
+    primitiveByEntityCase: basis.primitiveByEntityCase,
+    ancillaryByLine: basis.ancillaryByLine,
   })).sort((left, right) => ascii(left.entityId, right.entityId));
 
   const base = {
@@ -116,11 +78,13 @@ export function createCurrentCommonInputEmpiricalMassProjection({
     projectDataProfileSemanticHash: commonInput.projectDataProfileSemanticHash,
     configuredDefaultUsageLedgerSemanticHash:
       commonInput.configuredDefaultUsageLedgerSemanticHash || null,
-    targetInventorySemanticHash: inventory.semanticHash,
-    ancillaryOverlaySemanticHash: ancillaryOverlay.semanticHash,
+    loadPrimitiveSetSemanticHash: loadPrimitiveSet.semanticHash,
+    targetInventorySemanticHash: basis.inventory.semanticHash,
+    ancillaryOverlaySemanticHash: basis.ancillaryOverlay.semanticHash,
     productEngineeringDefaultProfileSemanticHash:
       LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1.semanticHash,
-    compositionProfileSemanticHash: compositionProfile.semanticHash,
+    compositionProfileSemanticHash: loadPrimitiveSet.compositionProfile.semanticHash,
+    gravityProfileSemanticHash: loadPrimitiveSet.gravityProfile.semanticHash,
     loadCaseIds,
     entityRows,
     summary: projectionSummary(entityRows, loadCaseIds),
@@ -170,6 +134,13 @@ export function requireCurrentCommonInputEmpiricalMassProjection(value) {
     );
   }
   value.entityRows.forEach((row) => validateEntityRow(row, loadCaseIds));
+  const expectedSummary = projectionSummary(value.entityRows, loadCaseIds);
+  if (semanticHash(expectedSummary) !== semanticHash(value.summary)) {
+    throw codedError(
+      'Projection summary does not match its entity rows.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_SUMMARY_INVALID',
+    );
+  }
   for (const key of [
     'runAuthorizationSemanticHash',
     'commonInputSemanticHash',
@@ -177,10 +148,12 @@ export function requireCurrentCommonInputEmpiricalMassProjection(value) {
     'authorityRevisionVectorSemanticHash',
     'resolutionLedgerSemanticHash',
     'projectDataProfileSemanticHash',
+    'loadPrimitiveSetSemanticHash',
     'targetInventorySemanticHash',
     'ancillaryOverlaySemanticHash',
     'productEngineeringDefaultProfileSemanticHash',
     'compositionProfileSemanticHash',
+    'gravityProfileSemanticHash',
     'semanticHash',
   ]) semanticHashText(value[key], key);
   if (value.configuredDefaultUsageLedgerSemanticHash !== null) {
@@ -192,48 +165,145 @@ export function requireCurrentCommonInputEmpiricalMassProjection(value) {
   return deepFreeze(value);
 }
 
-/** Rechecks the #1465 authorization and exact Common Input bindings. */
+/** Rebuilds the deterministic projection from live current authority. */
 export function requireCurrentCurrentCommonInputEmpiricalMassProjection(
   value,
-  { snapshot, runAuthorization } = {},
+  { snapshot, runAuthorization, loadPrimitiveSet } = {},
 ) {
   const projection = requireCurrentCommonInputEmpiricalMassProjection(value);
-  const current = requireCurrentNonFeaEmpiricalRunAuthorization(runAuthorization, snapshot);
-  const commonInput = current.commonInput;
-  const expected = {
-    runAuthorizationSemanticHash: runAuthorization.semanticHash,
-    commonInputSemanticHash: commonInput.semanticHash,
-    commonInputSealSemanticHash: commonInput.seal.semanticHash,
-    authorityRevisionVectorSemanticHash: runAuthorization.authorityRevisionVectorSemanticHash,
-    resolutionLedgerSemanticHash: commonInput.resolutionLedgerSemanticHash,
-    projectDataProfileSemanticHash: commonInput.projectDataProfileSemanticHash,
-    configuredDefaultUsageLedgerSemanticHash:
-      commonInput.configuredDefaultUsageLedgerSemanticHash || null,
-  };
-  const changes = Object.entries(expected)
-    .filter(([key, expectedValue]) => projection[key] !== expectedValue)
-    .map(([key, expectedValue]) => ({
-      path: key,
-      expected: expectedValue,
-      actual: projection[key],
-    }));
-  if (changes.length) {
+  const rebuilt = createCurrentCommonInputEmpiricalMassProjection({
+    snapshot,
+    runAuthorization,
+    loadPrimitiveSet,
+  });
+  if (projection.semanticHash !== rebuilt.semanticHash) {
     throw codedError(
       'Current Common Input empirical mass projection is stale.',
       'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_STALE',
-      changes,
+      {
+        expected: rebuilt.semanticHash,
+        actual: projection.semanticHash,
+      },
     );
   }
   return projection;
 }
 
+function buildProjectionBasis(commonInput, loadPrimitiveSet, loadCaseIds) {
+  const model = commonInput.enrichedModel;
+  if (!model || model.schema !== 'shared-piping-model/v1' || !Array.isArray(model.components)) {
+    throw codedError(
+      'Current Common Input does not contain a valid enriched shared piping model.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_MODEL_INVALID',
+    );
+  }
+  const primitiveAudit = validateModelLoadPrimitiveSet(loadPrimitiveSet);
+  if (!primitiveAudit.ok) {
+    throw codedError(
+      'Current model-load primitive set is invalid.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_LOAD_PRIMITIVE_SET_INVALID',
+      primitiveAudit.errors,
+    );
+  }
+  const primitiveContract = commonInput.authorityContracts?.loadPrimitiveSet || null;
+  if (!primitiveContract
+      || primitiveContract.semanticHash !== loadPrimitiveSet.semanticHash
+      || ['BLOCKED', 'STALE', 'NOT_AVAILABLE', 'NOT_BUILT'].includes(primitiveContract.status)) {
+    throw codedError(
+      'The supplied model-load primitive set is not the exact current Common Input authority.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_LOAD_PRIMITIVE_BINDING_MISMATCH',
+      {
+        commonInputSemanticHash: primitiveContract?.semanticHash || null,
+        suppliedSemanticHash: loadPrimitiveSet?.semanticHash || null,
+        status: primitiveContract?.status || null,
+      },
+    );
+  }
+  if (loadPrimitiveSet.datasetId !== model.project?.datasetId) {
+    throw codedError(
+      'The supplied model-load primitive set belongs to a different dataset.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_LOAD_PRIMITIVE_DATASET_MISMATCH',
+      {
+        expected: model.project?.datasetId || null,
+        actual: loadPrimitiveSet.datasetId || null,
+      },
+    );
+  }
+
+  const inventory = createCommonEnrichedTargetInventory({
+    schema: COMMON_ENRICHED_TARGET_INVENTORY_SCHEMA,
+    inventoryId: 'CURRENT-COMMON-INPUT-EMPIRICAL-MASS-TARGETS',
+    sharedModel: model,
+  });
+  const ancillaryOverlay = createNonFeaCommonEnrichedConfiguredDefaultOverlay({
+    profile: commonInput.projectDataProfile,
+    sourceModel: model,
+    inventory,
+    requestedMethods: ['WEIGHT_AND_GRAVITY'],
+  });
+  if (ancillaryOverlay.blockers.length) {
+    throw codedError(
+      'Current Common Input ancillary configured-default overlay is blocked.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_ANCILLARY_OVERLAY_BLOCKED',
+      ancillaryOverlay.blockers,
+    );
+  }
+
+  // The shipped Product engineering table is deliberately empty. If this ever
+  // changes, it must first be included in Common Input currentness custody.
+  if (LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1.defaults.length !== 0) {
+    throw codedError(
+      'Product engineering defaults changed without Common Input currentness custody.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_PRODUCT_DEFAULT_CUSTODY_REQUIRED',
+    );
+  }
+
+  const primitiveByEntityCase = massPrimitiveIndex(loadPrimitiveSet, model, loadCaseIds);
+  return {
+    inventory,
+    ancillaryOverlay,
+    ancillaryByLine: ancillaryByLineTarget(inventory, ancillaryOverlay),
+    targetBySourceRecordId: new Map(
+      inventory.componentTargets.map((target) => [target.sourceRecordId, target]),
+    ),
+    primitiveByEntityCase,
+  };
+}
+
+function massPrimitiveIndex(loadPrimitiveSet, model, loadCaseIds) {
+  const index = new Map();
+  for (const primitive of loadPrimitiveSet.primitives) {
+    if (![PRIMITIVE_TYPES.DISTRIBUTED, PRIMITIVE_TYPES.POINT].includes(primitive.primitiveType)) {
+      continue;
+    }
+    const key = `${primitive.componentKey}\0${primitive.loadCaseId}`;
+    if (index.has(key)) {
+      throw codedError(
+        `Multiple mass primitives claim ${primitive.componentKey}:${primitive.loadCaseId}.`,
+        'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PRIMITIVE_MULTIPLE_CLAIMS',
+      );
+    }
+    index.set(key, primitive);
+  }
+  for (const component of model.components) {
+    for (const loadCaseId of loadCaseIds) {
+      if (!index.has(`${component.componentKey}\0${loadCaseId}`)) {
+        throw codedError(
+          `No sealed mass primitive exists for ${component.componentKey}:${loadCaseId}.`,
+          'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PRIMITIVE_REQUIRED',
+        );
+      }
+    }
+  }
+  return index;
+}
+
 function projectComponent({
   component,
-  components,
   target,
   loadCaseIds,
+  primitiveByEntityCase,
   ancillaryByLine,
-  compositionProfile,
 }) {
   if (!target || target.sourceRecordId !== component.componentKey) {
     throw codedError(
@@ -241,25 +311,15 @@ function projectComponent({
       'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_TARGET_MISMATCH',
     );
   }
-  const derivedDryMass = derivePipeLikeFittingWeightEvidence(component, components);
-  const resolvedComponent = derivedDryMass
-    ? {
-      ...component,
-      engineeringProperties: {
-        ...(component.engineeringProperties || {}),
-        componentWeightKg: derivedDryMass,
-      },
-    }
-    : component;
   const ancillary = target.lineTargetId
     ? ancillaryByLine.get(target.lineTargetId) || zeroAncillary()
     : zeroAncillary();
-  const cases = loadCaseIds.map((loadCaseId) => projectCase({
-    component: resolvedComponent,
+  const cases = loadCaseIds.map((loadCaseId) => projectPrimitiveCase({
+    component,
     target,
     loadCaseId,
+    primitive: primitiveByEntityCase.get(`${component.componentKey}\0${loadCaseId}`),
     ancillary,
-    compositionProfile,
   }));
   return deepFreeze({
     targetId: target.targetId,
@@ -268,38 +328,26 @@ function projectComponent({
     componentType: String(component.type || 'OBJECT').toUpperCase(),
     lineTargetId: target.lineTargetId,
     lineKey: target.lineKey,
-    derivedDryMassEvidence: derivedDryMass
-      ? deepFreeze({
-        valueKg: derivedDryMass.value,
-        source: derivedDryMass.source,
-        derivation: structuredClone(derivedDryMass.derivation),
-        semanticHash: semanticHash(derivedDryMass),
-      })
-      : null,
     cases,
   });
 }
 
-function projectCase({ component, target, loadCaseId, ancillary, compositionProfile }) {
-  const result = resolveComponentCaseMass(component, loadCaseId, compositionProfile);
-  if (!result.ok) {
+function projectPrimitiveCase({ component, target, loadCaseId, primitive, ancillary }) {
+  if (!primitive) {
     throw codedError(
-      `Current Common Input component ${component.componentKey} cannot project ${loadCaseId} mass.`,
-      'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_NOT_PROJECTABLE',
-      {
-        targetId: target.targetId,
-        entityId: component.componentKey,
-        loadCaseId,
-        blockers: structuredClone(result.blockers || []),
-      },
+      `Missing mass primitive for ${component.componentKey}:${loadCaseId}.`,
+      'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PRIMITIVE_REQUIRED',
     );
   }
-  if (result.mode === 'DISTRIBUTED') {
-    const sourceLengthM = Number(component.geometry?.sourceLengthM);
-    if (!(sourceLengthM > 0)) {
+  const basePrimitiveSemanticHash = semanticHash(primitive);
+  if (primitive.primitiveType === PRIMITIVE_TYPES.DISTRIBUTED) {
+    const sourceLengthM = Number(primitive.sourceLengthM);
+    if (!(sourceLengthM > 0)
+        || !Number.isFinite(primitive.massPerLengthKgM)
+        || primitive.massPerLengthKgM < 0) {
       throw codedError(
-        `Distributed component ${component.componentKey} has no positive source length.`,
-        'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_LENGTH_INVALID',
+        `Distributed primitive ${primitive.primitiveId} has invalid mass or source length.`,
+        'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PRIMITIVE_INVALID',
       );
     }
     const includeAncillary = String(component.type || '').toUpperCase() === 'PIPE';
@@ -309,44 +357,50 @@ function projectCase({ component, target, loadCaseId, ancillary, compositionProf
     const tracingMassPerLengthKgPerM = includeAncillary
       ? ancillary.tracingMassPerLengthKgPerM
       : 0;
-    const ancillaryMassPerLengthKgPerM =
-      claddingMassPerLengthKgPerM + tracingMassPerLengthKgPerM;
-    const totalMassPerLengthKgPerM = result.massPerLengthKgM + ancillaryMassPerLengthKgPerM;
-    const massKg = totalMassPerLengthKgPerM * sourceLengthM;
+    const totalMassPerLengthKgPerM = primitive.massPerLengthKgM
+      + claddingMassPerLengthKgPerM
+      + tracingMassPerLengthKgPerM;
     return deepFreeze({
       loadCaseId,
       mode: 'DISTRIBUTED',
-      sourceMassPerLengthKgPerM: result.massPerLengthKgM,
+      basePrimitiveId: primitive.primitiveId,
+      basePrimitiveSemanticHash,
+      sourceMassPerLengthKgPerM: primitive.massPerLengthKgM,
       claddingMassPerLengthKgPerM,
       tracingMassPerLengthKgPerM,
       totalMassPerLengthKgPerM,
       sourceLengthM,
-      massKg,
-      sourceMassBreakdown: structuredClone(result.massSourceBreakdown || []),
-      formulaTrace: structuredClone(result.formulaTrace || []),
+      massKg: totalMassPerLengthKgPerM * sourceLengthM,
+      sourceMassBreakdown: structuredClone(primitive.massSourceBreakdown || []),
+      formulaTrace: structuredClone(primitive.formulaTrace || []),
+      basePrimitiveSourceEvidence: primitive.sourceEvidence || null,
       ancillaryEvidence: includeAncillary ? ancillary.evidence : [],
-      diagnostics: structuredClone(result.diagnostics || []),
+      diagnostics: structuredClone(primitive.diagnostics || []),
     });
   }
-  if (result.mode !== 'POINT') {
+  if (primitive.primitiveType !== PRIMITIVE_TYPES.POINT
+      || !Number.isFinite(primitive.pointMassKg)
+      || primitive.pointMassKg < 0) {
     throw codedError(
-      `Unsupported projected mass mode ${result.mode || '<missing>'}.`,
-      'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_MODE_INVALID',
+      `Point primitive ${primitive.primitiveId || '<missing>'} has invalid mass.`,
+      'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PRIMITIVE_INVALID',
     );
   }
   const containedFluid = componentContainedFluid(component, loadCaseId);
-  const dryPointMassKg = result.pointMassKg;
-  const massKg = dryPointMassKg + containedFluid.massKg;
+  const dryPointMassKg = primitive.pointMassKg;
   return deepFreeze({
     loadCaseId,
     mode: 'POINT',
+    basePrimitiveId: primitive.primitiveId,
+    basePrimitiveSemanticHash,
     dryPointMassKg,
     containedFluidMassKg: containedFluid.massKg,
-    massKg,
-    applicationPoint: result.applicationPoint || null,
-    dryMassEvidence: result.sourceEvidence || null,
+    massKg: dryPointMassKg + containedFluid.massKg,
+    applicationPoint: primitive.applicationPoint || null,
+    basePrimitiveSourceEvidence: primitive.sourceEvidence || null,
     containedFluidEvidence: containedFluid.evidence,
-    diagnostics: structuredClone(result.diagnostics || []),
+    formulaTrace: structuredClone(primitive.formulaTrace || []),
+    diagnostics: structuredClone(primitive.diagnostics || []),
   });
 }
 
@@ -429,6 +483,7 @@ function validateEntityRow(row, loadCaseIds) {
       'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_INVALID',
     );
   }
+  requiredText(row.targetId, 'targetId');
   const ids = row.cases.map((item) => item.loadCaseId);
   if (JSON.stringify(ids) !== JSON.stringify(loadCaseIds)) {
     throw codedError(
@@ -437,6 +492,8 @@ function validateEntityRow(row, loadCaseIds) {
     );
   }
   row.cases.forEach((item) => {
+    requiredText(item.basePrimitiveId, 'basePrimitiveId');
+    semanticHashText(item.basePrimitiveSemanticHash, 'basePrimitiveSemanticHash');
     if (!Number.isFinite(item.massKg) || item.massKg < 0) {
       throw codedError(
         `Projection entity ${row.entityId} has invalid ${item.loadCaseId} mass.`,

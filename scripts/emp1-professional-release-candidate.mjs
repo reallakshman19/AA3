@@ -12,6 +12,12 @@ const candidateTree = git(['rev-parse', 'HEAD^{tree}']);
 const candidateParent = git(['rev-parse', 'HEAD^']);
 const worktreeStatus = git(['status', '--porcelain']);
 
+const profile = await readJson('validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json');
+const wrcSourceLedger = await readJson('validation/emp1/wrc537-2013/source-ledger.json');
+const cauxSourceLedger = await readJson('validation/emp1/caux2017-wrc01f/source-ledger.json');
+const authorization = await readJson('validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json');
+assertManifestAuthorityInputs();
+
 if (options.expectedHead && options.expectedHead !== candidateHead) {
   throw releaseError(`EMP1_RELEASE_CANDIDATE_HEAD_MISMATCH:${candidateHead}:${options.expectedHead}`);
 }
@@ -160,6 +166,7 @@ if (fail) process.exit(1);
 if (options.release && !releaseCandidateQualified) process.exit(2);
 
 function createReceipt(input) {
+  const releaseManifest = createReleaseManifest(input);
   const payload = {
     schema: 'emp1-professional-release-candidate-receipt/v1',
     candidate: {
@@ -171,6 +178,7 @@ function createReceipt(input) {
     },
     mode: input.mode,
     executions: input.executions,
+    releaseManifest,
     releaseCandidateQualified: input.releaseCandidateQualified,
     authorityBoundary: {
       thisHarnessMutatesEngineeringAuthority: false,
@@ -184,6 +192,97 @@ function createReceipt(input) {
     receiptSemanticHash: sha256Canonical(payload),
     status: input.status,
   };
+}
+
+function createReleaseManifest(input) {
+  const payload = {
+    schema: 'emp1-release-candidate/v1',
+    git: {
+      head: input.candidateHead,
+      tree: input.candidateTree,
+      parents: [input.candidateParent],
+    },
+    product: {
+      id: profile.product.id,
+      releaseProfileId: profile.releaseProfileId,
+    },
+    source: {
+      wrcSha256: wrcSourceLedger.rawPdfSha256,
+      cauxSha256: cauxSourceLedger.rawPdfSha256,
+    },
+    method: {
+      identity: profile.method.identity,
+      datasetHash: profile.method.datasetHash,
+      routeQualificationHash: authorization.authorizedIdentity.qualificationRecordSha256,
+      independentOracleHash: authorization.authorizedIdentity.postAuthorityOracleSemanticHash,
+    },
+    evidence: {
+      gates: executionEvidence(input.executions),
+      buildArtifactSha256: input.buildArtifactSha256,
+    },
+    authority: {
+      boundedEngineeringUse: authorization.authorityBoundary.boundedEngineeringUseAuthorized === true,
+      boundedProductionUse: authorization.authorityBoundary.boundedProductionRouteAuthorized === true,
+      globalEmp1C: authorization.authorityBoundary.globalEmp1CRouteAuthority === true,
+      codeCompliance: authorization.authorityBoundary.codeComplianceAuthorized === true,
+      releaseQualifiedByUnderlyingRoute: authorization.authorityBoundary.releaseQualified === true,
+      releaseCandidateQualified: input.releaseCandidateQualified === true,
+      deploymentAuthorityGrantedByManifest: false,
+    },
+    retention: {
+      releaseModeRequiresRetainedReceipt: true,
+      timestampsParticipateInSemanticAuthority: false,
+      randomIdentifiersParticipateInSemanticAuthority: false,
+    },
+  };
+  return {
+    ...payload,
+    semanticHash: sha256Canonical(payload),
+  };
+}
+
+function executionEvidence(executions) {
+  return Object.fromEntries(executions.map((item) => [item.gateId, {
+    status: item.status,
+    exitCode: item.exitCode,
+    stdoutSha256: item.stdoutSha256,
+    stderrSha256: item.stderrSha256,
+  }]));
+}
+
+function assertManifestAuthorityInputs() {
+  if (profile.schema !== 'emp1-release-profile/v1' || profile.product?.id !== 'EMP.1') {
+    throw releaseError('EMP1_RELEASE_MANIFEST_PROFILE_IDENTITY_INVALID');
+  }
+  if (wrcSourceLedger.qualificationState !== 'PASS_SOURCE_CUSTODY'
+    || wrcSourceLedger.custodyState !== 'VERIFIED') {
+    throw releaseError('EMP1_RELEASE_MANIFEST_WRC_SOURCE_CUSTODY_NOT_VERIFIED');
+  }
+  if (cauxSourceLedger.qualificationState !== 'PASS_SOURCE_CUSTODY'
+    || cauxSourceLedger.custodyState !== 'VERIFIED') {
+    throw releaseError('EMP1_RELEASE_MANIFEST_CAUX_SOURCE_CUSTODY_NOT_VERIFIED');
+  }
+  if (profile.method.sourceSha256 !== wrcSourceLedger.rawPdfSha256
+    || authorization.authorizedIdentity.sourceDocumentSha256 !== wrcSourceLedger.rawPdfSha256) {
+    throw releaseError('EMP1_RELEASE_MANIFEST_WRC_SOURCE_IDENTITY_DRIFT');
+  }
+  if (authorization.authorizedIdentity.datasetHash !== profile.method.datasetHash) {
+    throw releaseError('EMP1_RELEASE_MANIFEST_DATASET_IDENTITY_DRIFT');
+  }
+  if (authorization.authorizedIdentity.postAuthorityOracleSemanticHash
+    !== profile.benchmark.physicalOracleHash) {
+    throw releaseError('EMP1_RELEASE_MANIFEST_ORACLE_IDENTITY_DRIFT');
+  }
+  if (!/^[0-9a-f]{64}$/u.test(cauxSourceLedger.rawPdfSha256 ?? '')) {
+    throw releaseError('EMP1_RELEASE_MANIFEST_CAUX_SOURCE_HASH_INVALID');
+  }
+  if (authorization.authorityBoundary.boundedEngineeringUseAuthorized !== true
+    || authorization.authorityBoundary.boundedProductionRouteAuthorized !== true
+    || authorization.authorityBoundary.globalEmp1CRouteAuthority !== false
+    || authorization.authorityBoundary.codeComplianceAuthorized !== false
+    || authorization.authorityBoundary.releaseQualified !== false) {
+    throw releaseError('EMP1_RELEASE_MANIFEST_AUTHORITY_BOUNDARY_INVALID');
+  }
 }
 
 function runNode(gateId, args) {
@@ -256,6 +355,9 @@ async function maybeWriteReceipt(receipt, path) {
   }
   await writeFile(resolved, `${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
 }
+async function readJson(path) {
+  return JSON.parse(await readFile(resolve(root, path), 'utf8'));
+}
 function parseArgs(args) {
   const out = {
     release: false,
@@ -274,6 +376,9 @@ function parseArgs(args) {
   }
   if (out.release && out.executeDiagnostics) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_RELEASE_AND_DIAGNOSTIC_ARE_MUTUALLY_EXCLUSIVE');
+  }
+  if (out.release && !out.writeReceipt) {
+    throw releaseError('EMP1_RELEASE_CANDIDATE_RETAINED_RECEIPT_REQUIRED');
   }
   if (out.deploymentReceipt && !out.release) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_DEPLOYMENT_RECEIPT_REQUIRES_RELEASE_MODE');

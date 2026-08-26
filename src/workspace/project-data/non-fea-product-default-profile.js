@@ -81,7 +81,7 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
     productDefault('PD-RESTRAINT-PRELOAD', 'restraintPolicy.restraintPreloadsN', { DEFAULT: 0 }, 'N',
       'Zero preload screening default when no restraint preload authority exists.'),
     productDefault('PD-FRICTION', 'restraintPolicy.frictionCoefficients', { DEFAULT: 0 }, 'ratio',
-      'Frictionless screening default when no source/project friction authority exists.'),
+      'Frictionless screening default when no project/source friction authority exists.'),
   ],
 });
 

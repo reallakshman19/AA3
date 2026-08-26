@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -44,6 +44,34 @@ try {
   assert.equal(invalidSchema.payload.status, 'FAIL');
   assert.equal(invalidSchema.payload.code, 'DEPENDENCY_ADVISORY_RESULT_SCHEMA_INVALID');
 
+  const candidateSource = await readFile(
+    resolve(root, 'scripts/emp1-professional-release-candidate.mjs'),
+    'utf8',
+  );
+  const orderedGateIds = [
+    'CURRENTNESS_REPLAY_FALSIFIERS',
+    'DEPENDENCY_LOCK_CUSTODY',
+    'DEPENDENCY_LOCK_CUSTODY_FALSIFIER',
+    'DEPENDENCY_ADVISORY',
+    'DEPENDENCY_ADVISORY_FALSIFIER',
+    'PRODUCTION_BUILD',
+    'BUILD_ARTIFACT_SECURITY',
+    'BUILD_ARTIFACT_SECURITY_FALSIFIER',
+    'EMP1_RELEASE_CHROMIUM',
+  ];
+  const positions = orderedGateIds.map((gateId) => candidateSource.indexOf(`['${gateId}'`));
+  assert.equal(positions.every((value) => value >= 0), true, 'all dependency/release gate IDs must exist');
+  for (let index = 1; index < positions.length; index += 1) {
+    assert.ok(positions[index] > positions[index - 1], `gate order drift at ${orderedGateIds[index]}`);
+  }
+  assert.match(candidateSource, /packageLockSha256:\s*dependencyLockSha256/u,
+    'candidate receipt must bind exact package-lock SHA-256');
+  assert.match(candidateSource,
+    /gateId === 'DEPENDENCY_ADVISORY' && result\.status === 3/u,
+    'live advisory exit 3 must remain NOT_RUN rather than FAIL/PASS');
+  assert.match(candidateSource, /vulnerabilityFreeClaimedByThisHarness:\s*false/u,
+    'candidate harness must not claim vulnerability-free status');
+
   console.log(JSON.stringify({
     schema: 'emp1-professional-dependency-advisory-falsifier/v1',
     status: 'PASS',
@@ -54,6 +82,10 @@ try {
       'ADVISORY_SERVICE_UNAVAILABLE_IS_NOT_RUN',
       'NONZERO_EXIT_CANNOT_FORGE_CLEAN_PASS',
       'INVALID_AUDIT_SCHEMA_CANNOT_FORGE_PASS',
+      'DEPENDENCY_GATE_ORDER_BOUND_BEFORE_BUILD',
+      'PACKAGE_LOCK_SHA_BOUND_IN_CANDIDATE_RECEIPT',
+      'ADVISORY_EXIT3_BOUND_TO_NOT_RUN',
+      'VULNERABILITY_FREE_CLAIM_FORBIDDEN',
     ],
     authorityBoundary: {
       liveAdvisoryStatusEstablished: false,

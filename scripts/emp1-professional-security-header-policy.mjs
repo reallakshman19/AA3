@@ -80,8 +80,8 @@ export function validateEmp1ProfessionalSecurityHeaders(input) {
   const csp = parseCsp(cspRaw);
   if (!csp) return fail('EMP1_SECURITY_HEADERS_CSP_PARSE_FAILED');
 
-  const forbidden = findForbiddenCspToken(csp);
-  if (forbidden) return fail(`EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_TOKEN_${sanitizeCodeToken(forbidden)}`);
+  const forbiddenCategory = findForbiddenCspCategory(csp);
+  if (forbiddenCategory) return fail(`EMP1_SECURITY_HEADERS_CSP_FORBIDDEN_${forbiddenCategory}`);
 
   for (const [directive, expected] of Object.entries(
     EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY.contentSecurityPolicy.requiredDirectives,
@@ -167,16 +167,19 @@ export function parsePermissionsPolicy(value) {
   return out.size > 0 ? out : null;
 }
 
-function findForbiddenCspToken(csp) {
+function findForbiddenCspCategory(csp) {
   const forbidden = new Set(
     EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY.contentSecurityPolicy.forbiddenTokensAnywhere,
   );
   for (const [directive, tokens] of csp.entries()) {
     for (const token of tokens) {
-      if (forbidden.has(token)) return token;
-      if (/^https?:\/\//u.test(token)) return token;
+      if (token === '*') return 'WILDCARD';
+      if (token === "'unsafe-eval'") return 'UNSAFE_EVAL';
+      if (token === "'wasm-unsafe-eval'") return 'WASM_UNSAFE_EVAL';
+      if (token === 'http:' || token === 'https:' || /^https?:\/\//u.test(token)) return 'EXTERNAL_ORIGIN';
+      if (forbidden.has(token)) return 'UNQUALIFIED_SOURCE';
       if (directive !== 'style-src' && directive !== 'style-src-elem' && directive !== 'style-src-attr'
-        && token === "'unsafe-inline'") return token;
+        && token === "'unsafe-inline'") return 'UNSAFE_INLINE';
     }
   }
   return null;

@@ -44,6 +44,7 @@ const checks = [
   ['READY-only product screening Common Input snapshot', 'scripts/non-fea-ready-screening-snapshot-check.mjs'],
   ['Load Calc Run READY snapshot routing', 'scripts/load-calc-run-ready-snapshot-check.mjs'],
   ['READY Common Input system Run authorization', 'scripts/non-fea-empirical-run-authorization-check.mjs'],
+  ['Current Common Input empirical mass projection', 'scripts/current-common-input-empirical-mass-projection-check.mjs'],
   ['Analysis plan', 'scripts/non-fea-analysis-plan-check.mjs'],
   ['Method consumption', 'scripts/non-fea-method-consumption-check.mjs'],
   ['Empirical gravity AUTO method selection', 'scripts/empirical-gravity-method-selection-check.mjs'],

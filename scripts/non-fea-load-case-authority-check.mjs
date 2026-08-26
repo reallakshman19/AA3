@@ -4,6 +4,7 @@ import {
 } from '../src/workspace/project-data/project-data-contract.js';
 import {
   createNonFeaProductDefaultProvider,
+  LOAD_CALC_STANDARD_DEFAULTS_V1,
 } from '../src/workspace/project-data/non-fea-product-default-profile.js';
 import {
   assertEmpiricalCaseConfigurationsAuthorized,
@@ -42,7 +43,7 @@ assert.throws(
 const rawEmptyProfile = createEmptyProjectDataProfile();
 const rawEmptyAuthority = createNonFeaLoadCaseAuthority(rawEmptyProfile);
 assert.equal(rawEmptyAuthority.state, 'BLOCKED', 'raw empty Project Data must remain fail-closed');
-assert.ok(rawEmptyAuthority.blockers.some((row) => row.code === 'ACTIVE_LOAD_CASES_EMPTY'));
+assert.ok(rawEmptyAuthority.blockers.some((row) => row.code === 'ACTIVE_LOAD_CASES_NOT_APPROVED'));
 
 const productProvider = createNonFeaProductDefaultProvider({ profile: rawEmptyProfile });
 const productAuthority = createNonFeaLoadCaseAuthority(productProvider.effectiveProfile);
@@ -51,13 +52,13 @@ assert.deepEqual(productAuthority.approvedLoadCases, ['EMPTY', 'OPE', 'HYD']);
 assert.equal(productAuthority.effectiveAuthority, 'PRODUCT_DEFAULT');
 assert.equal(productAuthority.provenance.source, 'Load Calc built-in product default');
 assert.equal(productAuthority.provenance.defaultId, 'PD-ACTIVE-CASES');
-assert.equal(productAuthority.provenance.profileId, 'LOAD_CALC_STANDARD_DEFAULTS_V1');
-assert.equal(productAuthority.provenance.profileVersion, 4);
+assert.equal(productAuthority.provenance.profileId, LOAD_CALC_STANDARD_DEFAULTS_V1.profileId);
+assert.equal(productAuthority.provenance.profileVersion, LOAD_CALC_STANDARD_DEFAULTS_V1.version);
 assert.ok(productAuthority.provenance.defaultSemanticHash);
 assert.ok(productAuthority.provenance.productDefaultProfileSemanticHash);
 assert.ok(productProvider.usageRows.some((row) => row.defaultId === 'PD-ACTIVE-CASES'));
 
-const projectShadowProfile = createEmptyProjectDataProfile();
+const projectShadowProfile = structuredClone(createEmptyProjectDataProfile());
 projectShadowProfile.loadCalculation.activeLoadCases = {
   value: ['OPE'],
   evidence: {
@@ -76,7 +77,7 @@ assert.ok(shadowProvider.shadowedRows.some((row) => row.defaultId === 'PD-ACTIVE
 assert.equal(shadowProvider.usageRows.some((row) => row.defaultId === 'PD-ACTIVE-CASES'), false,
   'Product default must not overwrite an explicit project case set');
 
-const invalidExplicitProfile = createEmptyProjectDataProfile();
+const invalidExplicitProfile = structuredClone(createEmptyProjectDataProfile());
 invalidExplicitProfile.loadCalculation.activeLoadCases = {
   value: ['EMPTY', 'STARTUP'],
   evidence: { source: 'INVALID-PROJECT-CASE-BASIS' },
@@ -90,7 +91,7 @@ assert.ok(invalidExplicitProvider.shadowedRows.some((row) => row.defaultId === '
 assert.equal(invalidExplicitProvider.usageRows.some((row) => row.defaultId === 'PD-ACTIVE-CASES'), false,
   'Invalid explicit project cases must never be silently repaired by Product default');
 
-const malformedProduct = createEmptyProjectDataProfile();
+const malformedProduct = structuredClone(createEmptyProjectDataProfile());
 malformedProduct.loadCalculation.activeLoadCases = {
   value: ['EMPTY', 'OPE', 'HYD'],
   evidence: {

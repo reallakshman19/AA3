@@ -1,0 +1,39 @@
+schema: engineering-pr-claim/v1
+pr: 1450
+repository: reallaksh19/Advanced_Analysis
+owner: reallaksh19
+branch: agent/lafea-authorization-gate-evidence-20260826
+source_task: LAFEA.3/.4 implementation authorization gate
+state: ACTIVE_BOUNDED_EVIDENCE_ONLY
+criticality: ENGINEERING_CRITICAL
+authority_domain:
+  - LAFEA.3 retained T6 mesh/solver/result/viewport identity receipt
+  - B02C frozen Kirsch fixed-probe production comparison receipt
+  - LAFEA.4 pressure force/moment/reaction equilibrium receipt
+  - LAFEA.4 source/canonical/retained-kernel orientation evidence
+  - cross-stage material-property invalidation/anti-drift receipt
+exact_paths:
+  - scripts/lafea-implementation-authorization-gate-check.mjs
+  - agents/PR1450_workreport.md
+  - agents/status/PR1450.yaml
+  - agents/claims/PR1450.yaml
+excluded_authority:
+  - local-continuum formulation or solver mechanics
+  - local-shell formulation, pressure mechanics or orientation convention
+  - LAFEA mesher algorithms or quality thresholds
+  - B01/B02 expected values, probes or tolerances
+  - source topology custody
+  - registry/release authority
+  - workflow YAML
+coordination:
+  - pr: 1432
+    classification: COORDINATION_REQUIRED_BEFORE_FINAL_EXECUTION_LAFEA3_MESH_CAN_MOVE
+  - pr: 1239
+    classification: SAFE_EXACT_FILE_LAFEA4_TECH13_REPLAY_DIFFERENT_AUTHORITY
+  - pr: 1445
+    classification: SAFE_EXACT_FILE_LAFEA4_TECH13_CURRENTNESS_DIFFERENT_AUTHORITY
+  - pr: 1258
+    classification: COORDINATION_REQUIRED_IF_MERGED_BEFORE_NUMERICAL_RECEIPT
+  - pr: 1259
+    classification: SAFE_DIFFERENT_B02D_BENCHMARK
+merge_authority: OWNER_ONLY_NOT_GRANTED

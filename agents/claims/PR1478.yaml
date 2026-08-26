@@ -1,0 +1,31 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1478
+issue: 1321
+branch: agent/issue-1321-current-run-execution-runtime
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: 3d79ea6889c08cf6a37229655ecbd3ec3dc89a20
+mission: "Assemble the current Common Input empirical execution runtime without changing Run-button routing or engineering mechanics."
+claimed_paths:
+  - src/workspace/engineering-loads/current-common-input-empirical-run-runtime.js
+  - src/workspace/engineering-loads/engineering-support-load-store.js
+  - scripts/current-common-input-empirical-run-runtime-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1478_workreport.md
+  - agents/claims/PR1478.yaml
+  - agents/status/PR1478.yaml
+protected_paths:
+  - src/workspace/load-calc-consumer-controller.js
+  - src/workspace/engineering-model-controller.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js
+  - src/workspace/engineering-loads/current-common-input-empirical-support-load-execution.js
+  - .github/workflows/**
+authority_boundary: "Runtime assembly only. No UI routing, no mechanics, no legacy authority fabrication, no V3 failure retry to V2."
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18

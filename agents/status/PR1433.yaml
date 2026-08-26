@@ -5,28 +5,31 @@ source_task: PR1174 salvage / LAFEA.3 Mesh Workspace v3 pre-authority custody
 branch: agent/lafea3-mesh-v3-current-main-salvage-20260825
 base_branch: main
 base_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
-report_basis_head: 65a85d74f81b811ad29f8fabf3648d9eb2b328de
+report_basis_head: c85154b8d11877ea72361bd6add1a021d0c5bcdb
 criticality: ENGINEERING_CRITICAL
 recovery_state: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
-handover_readiness: READY_FOR_VALIDATION
-takeover_authority: WRITE_ALLOWED
+handover_readiness: READY_FOR_OWNER_AUTHORIZED_MERGE
 execution_mode: AUTO_MODE
-merge_authority: OWNER_ONLY
+merge_authority: OWNER_AUTHORIZED_2026-08-26T00:49:33Z
 appendix_a:
   status: PASS
   total: 98
   minimum_question: 19
-current_stage: SOURCE_RECONCILIATION_AND_VALIDATION
+current_stage: OWNER_AUTHORIZED_MERGE_GATE
 engineering_failure_proven: false
 predecessor:
   pr: 1174
-  disposition: SUPERSEDE_PENDING_DURABLE_CLOSE
+  disposition: CLOSED_SUPERSEDED_BY_PR1433
 scope:
   production_files: 4
   focused_checks: 3
   recovery_files: 3
 validation:
   live_grounding: PASS
+  exact_base_unchanged: PASS
+  changed_file_ledger: PASS_10_FILES
+  reviews: PASS_NONE
+  review_threads: PASS_NONE
   generic_v3_receipt_invariant: PASS_SOURCE_INSPECTION
   run_readiness_isolation: PASS_SOURCE_INSPECTION
   action_parent_supply: PASS_SOURCE_INSPECTION
@@ -37,6 +40,12 @@ validation:
   workbench_state_node: NOT_RUN
   authority_isolation_node: NOT_RUN
   browser_build: NOT_RUN
+infrastructure:
+  latest_lafea_run: 32878593396
+  latest_lafea_job: 97902416739
+  runner_id: 0
+  steps: 0
+  classification: PRE_STEP_HOSTED_RUNNER_ALLOCATION
 protected:
   v2_run_authority_preserved: true
   v3_current_pass_without_receipt: forbidden
@@ -46,4 +55,4 @@ protected:
   workflow_mutation: false
   threshold_or_tolerance_changed: false
   registry_or_release_changed: false
-exact_next_action: Finish PR recovery migration and predecessor supersession, then inspect live PR diff/reviews/Actions. If no source defect exists, keep draft READY_FOR_VALIDATION and wait for legitimate execution recovery.
+exact_next_action: Mark PR1433 ready, squash-merge only at the reconciled exact head, verify the merge SHA is live main, then re-ground open LAFEA workstreams and advance the next non-overlapping production batch. Do not represent NOT_RUN execution gates as PASS.

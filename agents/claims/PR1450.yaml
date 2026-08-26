@@ -10,6 +10,7 @@ authority_domain:
   - LAFEA.3 retained T6 mesh/solver/result/viewport identity receipt
   - LAFEA.3 direct compiled CASE-A load-to-retained-element binding receipt
   - B02C frozen Kirsch fixed-probe production comparison receipt
+  - LAFEA.4 independent retained-facet pressure resultant/moment receipt
   - LAFEA.4 pressure force/moment/reaction equilibrium receipt
   - LAFEA.4 source/canonical/retained-kernel orientation evidence
   - cross-stage material-property invalidation/anti-drift receipt
@@ -17,6 +18,7 @@ authority_domain:
 exact_paths:
   - scripts/lafea-implementation-authorization-gate-check.mjs
   - scripts/lafea3-direct-loaded-element-authorization-check.mjs
+  - scripts/lafea4-independent-pressure-resultant-authorization-check.mjs
   - scripts/lafea-implementation-authorization-gate-retain.mjs
   - agents/PR1450_workreport.md
   - agents/status/PR1450.yaml
@@ -42,4 +44,7 @@ coordination:
     classification: COORDINATION_REQUIRED_IF_MERGED_BEFORE_NUMERICAL_RECEIPT
   - pr: 1259
     classification: SAFE_DIFFERENT_B02D_BENCHMARK
+scratch_refs_non_authoritative:
+  - agent/lafea-authorization-gate-evidence-20260826-q3tmp
+  - agent/lafea-authorization-gate-evidence-20260826-q3tmp2
 merge_authority: OWNER_ONLY_NOT_GRANTED

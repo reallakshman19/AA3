@@ -9,7 +9,7 @@ execution_mode: AUTO
 auto_state: COMPLETE
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
-coordination_state: SAFE_AGGREGATE_ONLY_CURRENT_MAIN
+coordination_state: SAFE_RECOVERY_ONLY_NO_NEW_EMP1_OVERLAP
 scope:
   authority: EMP1_WRC537_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION
   paths:
@@ -19,13 +19,16 @@ scope:
     - agents/PR1427_workreport.md
     - agents/status/PR1427.yaml
     - agents/claims/PR1427.yaml
-current_auto_write_scope:
+current_epoch_write_scope:
   - agents/PR1427_workreport.md
   - agents/status/PR1427.yaml
   - agents/claims/PR1427.yaml
 protected_exclusions:
   - src/core/emp1/**
   - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - validation/emp1/release/emp1-professional-release-current-state-v1.json
+  - scripts/emp1-professional-release-current-state-check.mjs
+  - docs/emp1/EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE.md
   - validation/emp1/wrc537-2013/** individual P0 source-authority records
   - validation/emp1/caux2017-wrc01f/**
   - gamma5 oracle/tolerance/exact-head evidence
@@ -38,17 +41,21 @@ authority_boundary:
   professional_release_authority_granted: false
   global_emp1_c_authority_granted: false
   code_compliance_authority_granted: false
-main_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
-merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-grounding_epoch: GE-PR1427-004
+main_head_last_checked: 7b2a8119aa5faeee7cc102c894991851019c5a7b
+main_tree_last_checked: b6c5744973c6ef57eb9a98af54c34761a13f3a7e
+merge_base_after_refresh: 7b2a8119aa5faeee7cc102c894991851019c5a7b
+pre_refresh_head: 43f860e140145036b083b3215e16317a16e2a28b
+current_main_refresh_commit: ae8a9545d1b960056bb4964be26edbaf19c9ca1a
+engineering_content_basis: db6264aeec96f9ea7ad493dd8033b8b1907b56ad
+grounding_epoch: GE-PR1427-005
 aggregate_current_main_truth:
-  all_nine_status_strings_match: true
   blocker_count: 9
   bounded_route_authorized: true
   bounded_engineering_production_use: true
   global_emp1_c: false
   code_compliance: false
   professional_release_ready: false
+  engineering_content_rewrite_required_by_current_main_drift: false
 neighbor_dependency:
   pr1415_state: OPEN_DRAFT_UNMERGED
   rule: "Unmerged PR1415 is not current-main authority. If PR1415 merges before PR1427, re-ground #1377 aggregate currentStatus before PR1427 merge."

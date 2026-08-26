@@ -16,86 +16,64 @@ BRANCH: agent/lafea1371-registry-closure-readiness-20260826
 BASE_BRANCH: main
 BASE_HEAD_LAST_CHECKED: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
 MAIN_SYNCHRONIZATION_COMMIT: 8c033330b63f291a1c81f13cb1a143ebdd65c0d4
-CURRENT_STAGE: SECTION17_READINESS_AND_CLEANUP_PROPOSAL_CONTRACT_IMPLEMENTED_PENDING_REAL_EXACT_HEAD_Q1_Q5
+CURRENT_STAGE: SECTION17_DUAL_SEMANTIC_AND_SOURCE_CUSTODY_IMPLEMENTED_PENDING_REAL_EXACT_HEAD_Q1_Q5
 ENGINEERING_FAILURE_PROVEN: false
 EXACT_NEXT_ACTION: from one exact clean checkout run `node scripts/lafea-implementation-authorization-local-preflight.mjs`; only after verified Q1-Q5 PASS on that exact HEAD run `node scripts/lafea1371-registry-closure-readiness-check.mjs`. A later registry-only cleanup candidate descended from that qualified HEAD must run `node scripts/lafea1371-registry-cleanup-proposal-guard.mjs`.
 ```
 
 ## Handover in 60 seconds
 
-PR #1462 is merged and supplies the local exact-head Q1-Q5 authorization harness. Real production Q1-Q5 execution remains `NOT_RUN` in this agent environment.
+PR #1462 is merged and supplies the exact-head Q1-Q5 implementation-authorization harness. Real production Q1-Q5 execution remains `NOT_RUN` because this agent still cannot materialize the repository through Git; the latest retry fails before checkout with `Could not resolve host: github.com`.
 
-PR #1474 now closes both process boundaries required by Issue #1371 Section 17 without modifying the registry:
+PR #1474 does **not** modify `src/workspace/lafea-stage-registry.js`. It defines a two-phase Issue #1371 Section 17 closure contract:
 
 ```text
-PHASE 1 — qualify the current protected base
-clean exact HEAD
-+ retained v4 Q1-Q5 report
-+ PR1462 independent envelope verification
-+ protected LAFEA.3 registry wording
-+ protected LAFEA.4 CST+DKT authority/exclusions
-+ full projected registry semantic baseline hash
-→ retained Section 17 readiness receipt
+PHASE 1 — qualify protected base
+exact clean HEAD
++ verified PR1462 Q1-Q5 evidence
++ protected LAFEA.3/LAFEA.4 registry state
++ full projected registry semantic hash
++ full registry source hash
++ source-template hash with only two LAFEA.3 wording literals normalized
+→ retained readiness receipt
 → READY_FOR_REGISTRY_CLEANUP_PR
 
-PHASE 2 — qualify a later wording-only candidate
-qualified base HEAD is ancestor of candidate HEAD
-+ retained Section 17 readiness receipt
-+ candidate production diff limited to lafea-stage-registry.js
-+ only LAFEA.3 limitation + limitations[1] differ from qualified baseline
-+ LAFEA.3 integration-point stress authority remains exact
-+ all other registry semantics hash back to qualified baseline
+PHASE 2 — qualify later wording candidate
+qualified base is ancestor of candidate
++ only registry production path changed
++ only LAFEA.3 limitation and limitations[1] change semantically
++ candidate source template equals qualified source template
 → STRUCTURALLY_ADMISSIBLE_FOR_HUMAN_WORDING_REVIEW
 ```
 
-Neither phase approves actual cleanup wording. Neither phase grants merge/release authority. PR #1474 itself does not change `src/workspace/lafea-stage-registry.js`.
+Neither phase approves wording. Neither phase grants merge/release authority.
 
-## Live grounding and current-main synchronization
+## Live grounding
 
-PR #1474 was originally based on the PR #1462 merge `5afab7ecdf0573d5faf60276dc0c688458c483fb`.
-
-Live `main` later advanced three commits to:
+Current main at the last full reconciliation:
 
 ```text
 f7e3241ad36c64eed8192c8f9d11400cba1d3e69
 ```
 
-The three commits changed 17 Issue #1321 Load Calc / Common Input paths only. They introduced/updated load-calc Run snapshot, empirical authorization and current-Common-Input mass projection paths. There was no exact-file overlap with PR #1474 and no LAFEA solver, mesher, recovery, benchmark, registry or source-topology authority movement.
-
-Classification:
+PR #1474 was synchronized to that main with two-parent commit:
 
 ```text
-SAFE_EXACT_FILE
-SAFE_LAFEA_AUTHORITY_DOMAIN
-SYNCHRONIZATION_REQUIRED_FOR_CURRENTNESS
+8c033330b63f291a1c81f13cb1a143ebdd65c0d4
 ```
 
-PR #1474 was synchronized without history rewrite using two-parent commit:
+The three intervening main commits were Issue #1321 Load Calc/Common Input work only. No LAFEA exact-file, solver, mesher, recovery, benchmark, registry or topology authority overlap was found.
 
-```text
-prior PR head  = f9ca9287416cf4070c6aff9eae959364f127c9df
-current main   = f7e3241ad36c64eed8192c8f9d11400cba1d3e69
-sync commit    = 8c033330b63f291a1c81f13cb1a143ebdd65c0d4
-```
+Known authority-moving LAFEA drafts remain:
 
-The synchronized tree retained current main plus the reviewed #1474 paths.
-
-## Active authority coordination
-
-Two known authority-moving LAFEA PRs remain open/draft/unmerged:
-
-- PR #1432 — retained LAFEA.3 mesh/refinement authority.
+- PR #1432 — retained LAFEA.3 refinement/mesh authority.
 - PR #1258 — B01 / continuum B-bar solver authority.
 
-If either merges before the real Q1-Q5 run, the harness simply executes on the new exact HEAD. If either merges after a Q1-Q5/readiness receipt is produced but before the cleanup proposal, the qualified HEAD changes and the old engineering receipt is not current qualification for the new main line; re-ground and re-execute before proposing cleanup.
-
-The cleanup proposal command also requires the qualified readiness HEAD to be an ancestor of the wording candidate, preventing an unrelated branch from presenting the receipt as its qualification basis.
+If either merges, the final Q1-Q5/readiness evidence must be executed on the new exact HEAD.
 
 ## Protected current registry state
 
-PR #1474 does not mutate the registry.
-
-LAFEA.3 remains exactly:
+LAFEA.3 remains:
 
 ```text
 authority = T3_T6_Q8_LINEAR_CONTINUUM
@@ -104,278 +82,205 @@ limitations[0] = Integration-point stress is authoritative for T6/Q8; nodal proj
 limitations[1] = Production geometry-to-mesh-to-convergence orchestration is not complete.
 ```
 
-LAFEA.4 remains exactly within the current production boundary:
+LAFEA.4 remains:
 
 ```text
 authority = CST_DKT_TRI3_THIN_SHELL_V1
 limitation = No production MITC4/MITC3 or thick-shell authority.
 ```
 
-Its current legacy CST+DKT / no-MITC / no-drilling / no-thick-shell / no-weld / no-code exclusion sentence remains protected.
+No registry production mutation is present in PR #1474.
 
-## Phase 1 implementation — retained Section 17 readiness
+## Phase 1 — readiness v3
 
-### `scripts/lib/lafea1371-registry-closure-readiness.mjs`
-
-Readiness schema is now:
+`scripts/lib/lafea1371-registry-closure-readiness.mjs` now emits:
 
 ```text
-lafea1371-registry-closure-readiness/v2
+lafea1371-registry-closure-readiness/v3
 ```
 
-It retains the original engineering prerequisites:
+It requires the existing engineering prerequisites:
 
-- full exact repository HEAD;
-- PR1462 local verification schema/status;
-- verification repository/HEAD identity;
-- independently verified implementation-authorization evidence;
-- retained-file/delegated-envelope identity;
-- clean Git after the engineering receipt;
+- exact repository HEAD;
+- verified PR1462 local authorization receipt;
+- Q1/Q2/Q3/Q4/Q5 PASS;
 - Q1 direct-loaded-element addendum PASS;
 - Q3 independent-pressure addendum PASS;
-- Q1/Q2/Q3/Q4/Q5 all PASS;
-- canonical evidence SHA-256 shape;
-- no local harness authority creation;
-- no release authority;
+- retained-file/delegated-envelope identity;
+- clean Git custody;
+- no local-harness or release authority;
 - exact protected LAFEA.3 state;
 - exact protected LAFEA.4 state.
 
-It now additionally projects the complete serializable LAFEA stage registry semantics and hashes that qualified baseline.
-
-Projected fields per stage:
+It retains three independent registry-custody values:
 
 ```text
-schema
-stageId
-label
-purpose
-limitation
-category
-authority
-engineState
-enginePackage
-inputContractRole
-resultContractRole
-presenterRole
-unitSourceRole
-previewPolicy
-previewSource
-collectionPaths
-limitations
-```
-
-Function-bearing composition internals are intentionally excluded from the projection. The projection requires unique stage IDs and the presence of LAFEA.3 and LAFEA.4.
-
-The canonical baseline hash is SHA-256 over key-sorted JSON using:
-
-```text
-schema = lafea1371-registry-baseline-hash-input/v1
-```
-
-A successful readiness receipt therefore includes:
-
-```text
-qualifiedRepositoryHead
-implementationAuthorizationEvidenceHash
 registryBaselineHash
-readinessReportPath
-q1ToQ5 = PASS/PASS/PASS/PASS/PASS
-cleanupProposalMayNowBeOpened = true
-cleanupWordingAuthorizedByThisGate = false
-registryMutationPerformed = false
-releaseAuthorityGranted = false
+registrySourceHash
+registrySourceTemplateHash
 ```
 
-### `scripts/lafea1371-registry-closure-readiness-check.mjs`
+### Semantic baseline
 
-The exact real command:
+`registryBaselineHash` covers the complete serializable stage-registry projection for every stage, including identity, label/purpose/limitation, category/authority, engine state/package, contracts/presenter, unit/preview policy/source, collection paths and limitations.
 
-```bash
-node scripts/lafea1371-registry-closure-readiness-check.mjs
-```
+### Full source hash
 
-It:
-
-1. requires repository-root CWD;
-2. obtains the full current Git HEAD;
-3. requires clean Git custody;
-4. requires the governed Q1-Q5 report from PR #1462;
-5. reuses `verifyRetainedAuthorizationEnvelope()` rather than duplicating Q1-Q5/hash authority;
-6. reads live LAFEA.3/LAFEA.4 entries plus the full `LAFEA_STAGE_REGISTRY`;
-7. evaluates Section 17 readiness;
-8. writes the exact runtime-only receipt:
-   `reports/qualification/lafea1371-registry-closure-readiness.json`;
-9. proves Git remains clean after that ignored receipt write;
-10. emits the readiness JSON.
-
-`.gitignore` ignores only that exact readiness receipt in addition to the already-governed implementation-authorization receipt. The reports directory is not broadly ignored.
-
-### `scripts/lafea1371-registry-closure-readiness-self-test.mjs`
-
-Synthetic v2 policy qualification covers:
-
-```text
-valid exact-head verification + protected registry → READY
-registry baseline hash retained                    → PASS
-change another stage semantic                     → baseline hash changes
-stale engineering evidence HEAD                   → reject
-Q1-Q5 incomplete                                  → reject
-release-authority contamination                   → reject
-premature LAFEA.3 wording softening               → reject
-LAFEA.4 authority/exclusion widening              → reject
-incomplete full registry                          → reject
-```
-
-This is software/authority-policy qualification only; it does not execute FEA mechanics.
-
-## Phase 2 implementation — future cleanup proposal structural guard
-
-### `scripts/lib/lafea1371-registry-cleanup-proposal-guard.mjs`
-
-This module evaluates a future registry cleanup candidate only after a valid v2 readiness receipt exists.
-
-Outside `agents/**`, the candidate may change exactly one production path:
+`registrySourceHash` binds the exact bytes of:
 
 ```text
 src/workspace/lafea-stage-registry.js
 ```
 
-Within the projected registry semantics, only these two fields may differ from the qualified base:
+at the qualified engineering HEAD.
+
+### Source-template hash
+
+`registrySourceTemplateHash` is computed after locating the canonical LAFEA.3 source block and replacing **only** the contents of these two string literals with fixed sentinels:
 
 ```text
 LAFEA.3.limitation
 LAFEA.3.limitations[1]
 ```
 
-The candidate must actually replace both obsolete incomplete-orchestration statements with non-empty wording.
+Everything else in the file remains byte-significant. The source locator requires:
 
-The following remain protected:
+- one canonical `stageId: 'LAFEA.3'` block;
+- a following canonical LAFEA.4 boundary;
+- one canonical top-level `limitation` string literal;
+- exactly two canonical `limitations` string literals;
+- the qualified base source contains the exact protected old wording.
+
+Therefore comments, whitespace, imports, helper functions, composition plumbing or any other source mutation change the template hash even when the exported registry projection would remain identical.
+
+The readiness command reads the live registry source bytes, writes only the governed ignored receipt:
 
 ```text
-LAFEA.3 authority = T3_T6_Q8_LINEAR_CONTINUUM
-LAFEA.3 engine state/package/contracts/presenter
-LAFEA.3 limitations[0] integration-point stress authority statement
-all LAFEA.1/LAFEA.2/LAFEA.4/LAFEA.5/LAFEA.6 projected registry semantics
-LAFEA.4 CST_DKT_TRI3_THIN_SHELL_V1 authority and exclusions
+reports/qualification/lafea1371-registry-closure-readiness.json
 ```
 
-The guard proves this by reconstructing the candidate projection with the two old LAFEA.3 wording strings and requiring that reconstructed hash to equal the readiness receipt's `registryBaselineHash`.
+and proves Git remains clean afterward.
+
+## Phase 2 — cleanup proposal guard v2
+
+`scripts/lib/lafea1371-registry-cleanup-proposal-guard.mjs` now emits:
+
+```text
+lafea1371-registry-cleanup-proposal-guard/v2
+```
+
+A future cleanup candidate must:
+
+1. descend from `readiness.qualifiedRepositoryHead`;
+2. change no non-agent production file except `src/workspace/lafea-stage-registry.js`;
+3. load the **qualified registry source directly from Git history** using `git show <qualifiedHead>:src/workspace/lafea-stage-registry.js`;
+4. prove that qualified source hash/template hash match the readiness receipt;
+5. prove that candidate source template hash equals the qualified template hash;
+6. prove projected semantics differ only in `LAFEA.3.limitation` and `LAFEA.3.limitations[1]`;
+7. preserve the integration-point stress authority statement exactly;
+8. preserve all other LAFEA stage projected semantics.
 
 A PASS means only:
 
 ```text
-status = PASS
-disposition = STRUCTURALLY_ADMISSIBLE_FOR_HUMAN_WORDING_REVIEW
+STRUCTURALLY_ADMISSIBLE_FOR_HUMAN_WORDING_REVIEW
 wordingApproved = false
 engineeringEvidenceRecomputed = false
-registryMutationPerformedByGuard = false
 mergeAuthorityGranted = false
 releaseAuthorityGranted = false
 ```
 
-### `scripts/lafea1371-registry-cleanup-proposal-guard.mjs`
+## Defect closed in this batch — non-projected source mutation seam
 
-Future cleanup-candidate command:
+Before this increment the candidate guard protected projected registry semantics but intentionally excluded function-bearing composition internals from the projection. Because the allowed production path is the entire registry source file, a malicious or accidental candidate could theoretically change helper code/comments/whitespace in that same file while leaving the projected registry object unchanged.
 
-```bash
-node scripts/lafea1371-registry-cleanup-proposal-guard.mjs
-```
-
-It requires:
-
-- clean candidate checkout;
-- retained Section 17 readiness receipt;
-- `readiness.qualifiedRepositoryHead` is an ancestor of candidate `HEAD`;
-- changed paths are computed from `qualifiedHead..HEAD`;
-- live candidate registry satisfies the structural guard.
-
-It does not edit the candidate and does not approve the wording.
-
-### `scripts/lafea1371-registry-cleanup-proposal-guard-self-test.mjs`
-
-Synthetic proposal-policy controls cover:
+That seam is now closed by the source-template hash. Synthetic controls prove rejection of:
 
 ```text
-only two LAFEA.3 wording fields changed       → structurally admissible
-no-op old wording                             → reject
-integration-point authority statement changed → reject
-continuum authority widened                   → reject
-LAFEA.4 semantic changed                      → reject
-other stage semantic changed                  → reject
-extra production path changed                 → reject
-wording still requires human review           → true
+hidden helper-code mutation
+hidden comment addition
+whitespace mutation outside the two wording literals
+qualified baseline source bytes differing from the retained readiness receipt
 ```
 
-No mechanics are executed by this suite.
+This is a substantive custody correction, not a numerical/solver change.
 
-## Engineering truth / current stop condition
+## Synthetic validation executed locally
+
+Exact authored-source suites passed:
 
 ```text
-real production Q1-Q5 exact-head execution     = NOT_RUN
-retained implementation-authorization report   = NOT_AVAILABLE_IN_AGENT_CHECKOUT
-real Section 17 readiness                       = NOT_RUN
-real readiness receipt                          = NOT_AVAILABLE
-actual registry cleanup wording                 = NOT_PROPOSED
-registry mutation                               = NONE
-registry cleanup authority                      = NOT_GRANTED
-engineering failure proven                      = false
+lafea1371-registry-closure-readiness-self-test/v3    PASS
+lafea1371-registry-cleanup-proposal-guard-self-test/v2 PASS
 ```
 
-No `NOT_RUN` is represented as PASS.
+Readiness controls include semantic-baseline coverage, full-source hash, template hash, protected source wording, canonical literal form, stale HEAD, incomplete Q1-Q5 and authority contamination.
 
-## Required future execution sequence
+Cleanup controls include valid two-wording-literal candidate plus rejection of helper-code, comment, whitespace, integration-point authority, continuum authority, other-stage semantics and extra production paths.
 
-From one exact clean qualified base checkout:
+No FEA mechanics are executed by these synthetic suites.
+
+## Exact blob binding for locally executed authored files
+
+The locally executed sources match the GitHub branch blobs exactly:
+
+```text
+scripts/lib/lafea1371-registry-closure-readiness.mjs
+  8332f537f908f6211f92bcb13c9905c40392185b
+scripts/lib/lafea1371-registry-cleanup-proposal-guard.mjs
+  e125e58a83ede501ffaf050c5dd165a56e3e2fdc
+scripts/lafea1371-registry-closure-readiness-check.mjs
+  c482d1da673e0cb458cd60517dd33bc0259bee86
+scripts/lafea1371-registry-cleanup-proposal-guard.mjs
+  76f34af2c7b53e155d1f1273ae73c62bc8e7d44f
+scripts/lafea1371-registry-closure-readiness-self-test.mjs
+  3590f5a79b1d05249fa2c0f4363f6ab4ddacf567
+scripts/lafea1371-registry-cleanup-proposal-guard-self-test.mjs
+  8ec45ef66a1090e80e6691f813436f3ca49f3419
+```
+
+This binds the policy PASS to actual branch source. It is not an engineering mechanics PASS.
+
+## Engineering truth
+
+```text
+real production Q1-Q5 exact-head execution   = NOT_RUN
+real implementation-authorization report     = NOT_AVAILABLE_IN_AGENT_CHECKOUT
+real Section 17 readiness                     = NOT_RUN
+real readiness receipt                        = NOT_AVAILABLE
+actual registry cleanup wording               = NOT_PROPOSED
+registry mutation                             = NONE
+registry cleanup authority                    = NOT_GRANTED
+engineering failure proven                    = false
+```
+
+Latest exact-checkout retry:
+
+```text
+git clone ...
+fatal: Could not resolve host: github.com
+```
+
+This remains an execution-environment blocker, not an engineering FAIL.
+
+## Required real execution sequence
+
+From one exact clean qualified-base checkout:
 
 ```bash
 node scripts/lafea-implementation-authorization-local-preflight.mjs
 node scripts/lafea1371-registry-closure-readiness-check.mjs
 ```
 
-Only if both succeed may a separate registry-only cleanup PR be opened from that qualified base. On that candidate:
+Only after both succeed may a separate registry-only wording candidate be opened from that qualified base. The candidate must then run:
 
 ```bash
 node scripts/lafea1371-registry-cleanup-proposal-guard.mjs
 ```
 
-A structural PASS still requires human engineering wording review and separate owner merge authorization.
+Human engineering wording review and separate owner merge authority remain mandatory.
 
-## ISS / RISK / DEC
-
-- `ISS-1474-01` ACTIVE — real exact-head Q1-Q5 receipt has not executed.
-- `ISS-1474-02` RESOLVED_BY_IMPLEMENTATION_PENDING_REAL_RUN — Section 17 readiness is deterministic and fail closed.
-- `ISS-1474-03` RESOLVED_BY_IMPLEMENTATION_PENDING_REAL_RUN — the qualified-base/future-wording-candidate HEAD transition now has an explicit contract.
-- `RISK-1474-01` CONTROLLED — stale Q1-Q5 evidence is rejected by exact HEAD equality during readiness.
-- `RISK-1474-02` CONTROLLED — premature LAFEA.3 registry softening fails readiness.
-- `RISK-1474-03` CONTROLLED — LAFEA.4 authority/exclusion widening fails readiness or proposal baseline comparison.
-- `RISK-1474-04` CONTROLLED — future cleanup PR cannot smuggle another production path or another registry semantic change through Section 17.
-- `RISK-1474-05` CONTROLLED — readiness does not imply wording approval; structural guard explicitly returns `wordingApproved=false`.
-- `DEC-1474-01` — reuse merged PR1462 envelope verification; do not duplicate Q1-Q5/hash authority.
-- `DEC-1474-02` — readiness authorizes only opening a cleanup proposal, never wording content.
-- `DEC-1474-03` — current registry remains untouched until executed evidence exists.
-- `DEC-1474-04` — retain a full projected registry baseline hash at the qualified base HEAD.
-- `DEC-1474-05` — permit only the two obsolete LAFEA.3 orchestration wording fields in a later candidate.
-- `DEC-1474-06` — candidate structural admissibility and human wording approval are separate authority steps.
-
-## Validation ledger
-
-| Check | Status | Observation | Oracle |
-|---|---|---|---|
-| live main grounding | PASS | `main@f7e3241...` | GitHub readback |
-| three-commit main drift | PASS_SAFE | 17 Issue #1321 paths; no LAFEA authority overlap | Git compare |
-| current-main synchronization | PASS | two-parent sync `8c033330...` | Git ancestry/tree custody |
-| PR #1432 authority coordination | OPEN_UNMERGED | retained LAFEA.3 refinement can move later | live PR readback |
-| PR #1258 authority coordination | OPEN_UNMERGED | continuum solver can move later | live PR readback |
-| current protected registry | PASS_SOURCE_INSPECTION | no registry mutation in #1474 | current main/PR diff |
-| readiness v2 parser/source contract | PASS | full registry baseline + retained receipt | source inspection / authored local checks |
-| readiness v2 synthetic policy | PASS_LOCAL_POLICY_EXECUTION | positive/negative fixtures, no mechanics | synthetic oracle |
-| cleanup proposal guard parser/source contract | PASS | ancestry/path/baseline semantics encoded | source inspection / authored local checks |
-| cleanup proposal synthetic policy | PASS_LOCAL_POLICY_EXECUTION | wording-only positive + mutation negatives | synthetic oracle |
-| real Q1-Q5 implementation authorization | NOT_RUN | exact executable checkout unavailable | retained engineering evidence |
-| real Section 17 readiness | NOT_RUN | prerequisite engineering receipt absent | readiness command |
-| actual registry cleanup proposal | NOT_RUN / NOT_PROPOSED | Section 17 readiness not yet real PASS | owner/process boundary |
-
-## Changed-file ledger — target current PR scope
+## Changed-file ledger
 
 ```text
 .gitignore
@@ -393,19 +298,48 @@ scripts/lib/lafea1371-registry-closure-readiness.mjs
 Negative assurance:
 
 ```text
-src/workspace/lafea-stage-registry.js           unchanged
-src/core/**                                     unchanged
-local-continuum solver/formulation              unchanged
-local-shell solver/pressure/orientation         unchanged
-mesher / mesh thresholds                       unchanged
-recovery / stress authority                    unchanged
-benchmarks / probes / expected values          unchanged
-tolerances                                     unchanged
-source topology                                unchanged
-package command surface                        unchanged
-UI/build/workflow                              unchanged
-release authority                              unchanged
+src/workspace/lafea-stage-registry.js unchanged
+src/core/** unchanged
+solver/mesher/recovery unchanged
+benchmark/oracle/tolerance unchanged
+source topology unchanged
+package command surface unchanged
+UI/build/workflow unchanged
+release authority unchanged
 ```
+
+## ISS / RISK / DEC
+
+- `ISS-1474-01` ACTIVE — real Q1-Q5 exact-head receipt has not executed.
+- `ISS-1474-02` RESOLVED_BY_IMPLEMENTATION_PENDING_REAL_RUN — Section 17 readiness is deterministic and fail closed.
+- `ISS-1474-03` RESOLVED_BY_IMPLEMENTATION_PENDING_REAL_RUN — qualified-base to later wording-candidate ancestry is explicit.
+- `ISS-1474-04` RESOLVED_BY_IMPLEMENTATION_PENDING_REAL_RUN — projected-semantic guard alone did not cover non-projected source edits inside the registry file; dual source-template custody now does.
+- `RISK-1474-01` CONTROLLED — stale engineering evidence rejected by exact HEAD equality.
+- `RISK-1474-02` CONTROLLED — premature registry softening fails readiness.
+- `RISK-1474-03` CONTROLLED — LAFEA.4 authority/exclusion widening fails.
+- `RISK-1474-04` CONTROLLED — unrelated registry semantic mutation fails baseline hash comparison.
+- `RISK-1474-05` CONTROLLED — helper/comment/whitespace or other hidden source mutation fails source-template hash comparison.
+- `DEC-1474-01` — reuse merged PR1462 envelope verifier.
+- `DEC-1474-02` — readiness never approves cleanup wording.
+- `DEC-1474-03` — current registry remains untouched until real evidence exists.
+- `DEC-1474-04` — retain both semantic and source custody at the qualified base.
+- `DEC-1474-05` — allow only the two obsolete LAFEA.3 orchestration wording literals to vary in a later candidate.
+- `DEC-1474-06` — candidate structural admissibility and human wording approval remain separate authority steps.
+
+## Validation ledger
+
+| Check | Status | Observation | Oracle |
+|---|---|---|---|
+| current main grounding | PASS | main `f7e3241...` | GitHub readback |
+| main synchronization | PASS | two-parent `8c033330...` | Git ancestry/tree custody |
+| registry unchanged in #1474 | PASS | no registry production diff | PR compare |
+| readiness v3 local policy suite | PASS | source/semantic positive + negatives | Node/assert synthetic oracle |
+| cleanup guard v2 local policy suite | PASS | source/semantic positive + negatives | Node/assert synthetic oracle |
+| authored-source blob binding | PASS | all six Git blobs equal local executed sources | Git blob identity |
+| exact checkout materialization | NOT_RUN | DNS failure before checkout | Git clone observation |
+| real Q1-Q5 implementation authorization | NOT_RUN | no exact checkout | engineering receipt |
+| real Section 17 readiness | NOT_RUN | prerequisite engineering receipt absent | readiness command |
+| actual cleanup proposal | NOT_PROPOSED | readiness not real PASS | process boundary |
 
 ## Appendix A — takeover qualification
 
@@ -413,10 +347,20 @@ release authority                              unchanged
 A1 Production Trace             20/20
 A2 Current Failure Isolation    20/20
 A3 Authority / Invariant        20/20
-A4 Independent Validation       20/20
-A5 Next-Commit / Minimal Patch  19/20
+A4 Independent Validation       19/20
+A5 Next-Commit / Minimal Patch  20/20
 TOTAL                            99/100
 MINIMUM                          19/20
 ```
 
-This qualifies continuation of Section 17 evidence/process infrastructure only. It does not authorize registry cleanup wording, solver/mesher changes, release promotion, Issue #1371 closure, or a Q1-Q5 numerical PASS claim.
+A1: exact closure chain is PR1462 Q1-Q5 → retained readiness v3 semantic/source custody → future descendant wording candidate → guard v2 → human wording review.
+
+A2: current blocker is still execution-environment checkout availability. No numerical engineering failure is proven.
+
+A3: the future cleanup may change only two LAFEA.3 wording literal contents. Integration-point stress authority, all other registry semantics and all other registry source bytes remain protected.
+
+A4: independent policy controls now falsify both semantic and byte-level hidden mutation paths. Real engineering mechanics remain NOT_RUN.
+
+A5: no further surrogate gate is justified before real exact-head execution or a new live authority change.
+
+This report qualifies continuation of Section 17 evidence/process infrastructure only. It does not authorize registry cleanup wording, solver/mesher changes, release promotion, Issue #1371 closure, or a Q1-Q5 numerical PASS claim.

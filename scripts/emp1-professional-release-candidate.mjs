@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { lstat, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH } from './emp1-professional-security-header-policy.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const options = parseArgs(process.argv.slice(2));
@@ -145,6 +146,18 @@ if (options.release && !fail && !notRun) {
   ]));
   fail = executions.find((item) => item.status === 'FAIL');
   notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
+
+  if (!fail && !notRun) {
+    executions.push(runNode('DEPLOYMENT_SECURITY_HEADERS', [
+      'scripts/emp1-professional-deployment-security-headers-check.mjs',
+      '--receipt', options.deploymentReceipt,
+      '--expected-head', candidateHead,
+      '--expected-tree', candidateTree,
+      '--expected-artifact-sha256', buildArtifactSha256,
+    ]));
+    fail = executions.find((item) => item.status === 'FAIL');
+    notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
+  }
 }
 
 const allExecutedPass = executions.every((item) => item.status === 'PASS');
@@ -190,6 +203,11 @@ function createReceipt(input) {
         advisoryAuditLevel: 'HIGH',
         liveAdvisoryGateId: 'DEPENDENCY_ADVISORY',
       },
+      deployedSecurityHeaders: {
+        policySemanticHash: EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH,
+        liveObservationGateId: 'DEPLOYMENT_SECURITY_HEADERS',
+        browserCompatibilityEstablishedByHeaderPolicy: false,
+      },
     },
     mode: input.mode,
     executions: input.executions,
@@ -199,6 +217,8 @@ function createReceipt(input) {
       dependencySecurityCanBlockRelease: true,
       dependencySecurityCreatesEngineeringAuthority: false,
       vulnerabilityFreeClaimedByThisHarness: false,
+      deployedSecurityHeadersCanBlockRelease: true,
+      browserCompatibilityEstablishedByHeaderPolicy: false,
       codeComplianceAuthorizedByThisHarness: false,
       deploymentAuthorityGrantedByThisHarness: false,
       broaderApplicationSecurityCertificationClaimed: false,
@@ -226,7 +246,8 @@ function run(gateId, command, args) {
   const notRun = Boolean(result.error)
     || result.status == null
     || result.error?.code === 'ENOENT'
-    || (gateId === 'DEPENDENCY_ADVISORY' && result.status === 3);
+    || (gateId === 'DEPENDENCY_ADVISORY' && result.status === 3)
+    || (gateId === 'DEPLOYMENT_SECURITY_HEADERS' && result.status === 3);
   return Object.freeze({
     gateId,
     command: [command, ...args].join(' '),

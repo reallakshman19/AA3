@@ -21,12 +21,12 @@ export function buildEmp1ProfessionalWorkflowPresentation(projection) {
   const cLabel = c.currentnessBadge ?? c.state ?? 'UNRESOLVED';
 
   const statusByStep = Object.freeze({
-    BASIS_SOURCE: `A ${a.state} · B ${b.state} · C ${cLabel}`,
-    GEOMETRY: `C ${cLabel}`,
-    LOADS: `A ${a.state}`,
-    LOAD_TRANSFER: `A ${a.state}`,
-    SECTION_SCREENING: `B ${b.state}`,
-    LOCAL_CORRELATION: `C ${cLabel}`,
+    BASIS_SOURCE: sourceBasisStatus(a, b),
+    GEOMETRY: cLabel,
+    LOADS: a.state,
+    LOAD_TRANSFER: a.state,
+    SECTION_SCREENING: b.state,
+    LOCAL_CORRELATION: cLabel,
     REVIEW_EVIDENCE: reviewEvidenceStatus(a, b, c),
   });
 
@@ -56,11 +56,18 @@ export function buildEmp1ProfessionalWorkflowPresentation(projection) {
   });
 }
 
+function sourceBasisStatus(a, b) {
+  if (a.documentLoaded === false && b.documentLoaded === false) return 'SOURCE INPUT REQUIRED';
+  if (a.documentLoaded === false || b.documentLoaded === false) return 'SOURCE BASIS PARTIAL';
+  if (a.resultAvailable === true && b.resultAvailable === true) return 'SOURCE EVIDENCE RETAINED';
+  return 'SOURCE LOADED';
+}
+
 function reviewEvidenceStatus(a, b, c) {
-  if (c.resultAvailable === true) return 'CURRENT C RESULT';
-  if (c.retainedResultAvailable === true) return 'C HISTORICAL / NOT REPORTABLE';
-  if (b.resultAvailable === true) return 'B EVIDENCE ONLY';
-  if (a.resultAvailable === true) return 'A EVIDENCE ONLY';
+  if (c.resultAvailable === true) return 'CURRENT LOCAL RESULT';
+  if (c.retainedResultAvailable === true) return 'HISTORICAL LOCAL RESULT / NOT REPORTABLE';
+  if (b.resultAvailable === true) return 'SECTION SCREENING EVIDENCE ONLY';
+  if (a.resultAvailable === true) return 'LOAD TRANSFER EVIDENCE ONLY';
   return 'NO RETAINED RESULT';
 }
 

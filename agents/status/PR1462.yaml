@@ -11,7 +11,7 @@ criticality: ENGINEERING_CRITICAL
 recovery_state: CONTINUE
 takeover_authority: WRITE_ALLOWED_EVIDENCE_INFRASTRUCTURE_ONLY
 execution_mode: OWNER_DIRECTED
-current_stage: CURRENT_MAIN_SYNCHRONIZED_LOCAL_ENTRYPOINT_SELF_TESTED_PENDING_REAL_Q1_Q5_EXECUTION
+current_stage: CURRENT_MAIN_SYNCHRONIZED_LOCAL_ENTRYPOINT_PLUS_POST_ENGINEERING_CUSTODY_PENDING_REAL_Q1_Q5_EXECUTION
 engineering_failure_proven: false
 validation:
   live_grounding: PASS_GITHUB_READBACK
@@ -19,11 +19,14 @@ validation:
   downstream_lafea_route_drift: REEXECUTION_REQUIRED_BEFORE_AUTHORIZATION_CLAIM
   current_main_synchronization: PASS_GIT_TREE_PARENT_CUSTODY
   local_preflight_source_contract: PASS_SOURCE_INSPECTION
-  local_preflight_syntax: PASS_LOCAL_NODE_CHECK
-  local_preflight_self_test_syntax: PASS_LOCAL_NODE_CHECK
-  local_preflight_failure_contract_self_test: PASS_LOCAL_SYNTHETIC_GIT_REPOS
-  delegated_failure_does_not_overstate_q1_q5: PASS_LOCAL_SYNTHETIC_GIT_REPOS
+  local_preflight_syntax: PASS_LOCAL_NODE_CHECK_PREVIOUS_EXACT_AUTHORED_SOURCE
+  local_preflight_failure_contract_self_test: PASS_LOCAL_SYNTHETIC_GIT_REPOS_PRE_V4_CUSTODY_INCREMENT
+  delegated_failure_does_not_overstate_q1_q5: PASS_LOCAL_SYNTHETIC_GIT_REPOS_PRE_V4_CUSTODY_INCREMENT
   generated_receipt_repeatability: PASS_SOURCE_INSPECTION_EXACT_PATH_IGNORED_ONLY
+  retention_post_engineering_checkout_guard: PASS_SOURCE_INSPECTION
+  retention_envelope_schema: V4_CHECKOUT_CLEAN_BEFORE_AND_AFTER_ENGINEERING_CHECKS
+  retention_source_order_guard: IMPLEMENTED_NOT_RERUN_AFTER_V4_EDIT
+  exact_checkout_retry: NOT_RUN_DNS_PRECHECKOUT_FAILURE
   exact_local_repository_execution: NOT_RUN
   q1_q5_engineering_execution: NOT_RUN
 failure_semantics:
@@ -35,7 +38,11 @@ failure_semantics:
     classification: DELEGATED_ENGINEERING_GATE_NONZERO_STOP_AT_FIRST_CHILD_FAILURE
     delegated_engineering_gate_entered: true
     q1_q5_disposition: UNKNOWN_OR_PARTIAL_SEE_FIRST_CHILD_FAILURE
-blocker: NO_EXACT_EXECUTABLE_REPOSITORY_CHECKOUT_IN_AGENT_CONTAINER
+custody_invariants:
+  checkout_clean_before_engineering_checks: REQUIRED
+  checkout_clean_after_engineering_checks_before_receipt_write: REQUIRED
+  report_write_occurs_after_post_engineering_cleanliness_assertion: REQUIRED
+blocker: LOCAL_GIT_CLONE_DNS_FAILURE_COULD_NOT_RESOLVE_GITHUB_COM
 retained_report_path: reports/qualification/lafea-implementation-authorization-gate.json
 merge_authority: OWNER_ONLY_NOT_GRANTED
 exact_next_action: node scripts/lafea-implementation-authorization-local-preflight.mjs

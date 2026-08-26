@@ -2,6 +2,7 @@ import { createLoadCalculationReviewModel, validateLoadCalculationReviewModel } 
 import { APPLICATION_EVENTS, EVENT_TOPICS } from './event-topics.js';
 import { ENGINEERING_MODEL_EVENTS } from './engineering-model-controller.js';
 import { engineeringModelStore } from './engineering-model-store.js';
+import { authorizedEnrichmentConsumerController } from './enrichment/authorized-enrichment-runtime.js';
 import {
   renderEngineeringLoadPane,
   renderLoadCalcConsumer,
@@ -11,7 +12,10 @@ import { classifyLoadCalcResultPresentation } from './load-calc-result-presentat
 import { masterDataController } from './master-data-controller.js';
 import { createCurrentNonFeaWorkspaceStatusProjection } from './non-fea-analysis-plan-runtime.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
-import { sealCurrentNonFeaCommonInput } from './non-fea-common-input-runtime.js';
+import {
+  sealCurrentNonFeaCommonInput,
+  sealCurrentReadyNonFeaCalculationSnapshot,
+} from './non-fea-common-input-runtime.js';
 import { validateProjectDataProfile } from './project-data/project-data-contract.js';
 import { projectDataStore } from './project-data/project-data-store.js';
 import {
@@ -47,11 +51,23 @@ const WORKFLOW_STEP_BY_TAB = Object.freeze({
 
 /** Coordinates the real empirical load workflow without generating inputs. */
 export class LoadCalcConsumerController {
-  constructor(rootElement, consumerController, eventBus) {
+  constructor(rootElement, consumerController, eventBus, {
+    readyCalculationSnapshotProvider = sealCurrentReadyNonFeaCalculationSnapshot,
+    empiricalAuthorizationController = authorizedEnrichmentConsumerController,
+  } = {}) {
     if (!rootElement) throw new TypeError('Load Calc requires a stable root element.');
+    if (typeof readyCalculationSnapshotProvider !== 'function') {
+      throw new TypeError('Load Calc requires a READY calculation snapshot provider.');
+    }
+    if (!empiricalAuthorizationController
+        || typeof empiricalAuthorizationController.refreshEmpirical !== 'function') {
+      throw new TypeError('Load Calc requires an empirical authorization currentness controller.');
+    }
     this.rootElement = rootElement;
     this.consumerController = consumerController;
     this.eventBus = eventBus;
+    this.readyCalculationSnapshotProvider = readyCalculationSnapshotProvider;
+    this.empiricalAuthorizationController = empiricalAuthorizationController;
     this.context = consumerController?.getContext() || null;
     this.reviewModel = buildReviewModel(this.context);
     this.activeTab = 'topology';
@@ -258,6 +274,30 @@ export class LoadCalcConsumerController {
     }
   }
 
+  runCurrentCalculation() {
+    const snap = empiricalLoadCalcScenarioStore.getSnapshot();
+    if (snap?.calculationEligible) {
+      this.message = 'Executing the current common-seal-bound empirical method…';
+      this.eventBus.publish(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CALCULATE_REQUESTED, {});
+      return;
+    }
+
+    try {
+      this.readyCalculationSnapshotProvider();
+      const authorization = this.empiricalAuthorizationController.refreshEmpirical();
+      if (authorization?.calculationEligible) {
+        this.message = 'Executing current authorized empirical package against the common seal…';
+        this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, { source: 'load-calc' });
+      } else {
+        this.message = 'Explicit empirical authorization still required.';
+        this.render();
+      }
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : String(error);
+      this.render();
+    }
+  }
+
   handleClick(event) {
     const supportEntityId = event.target.closest('[data-load-support-entity-id]')?.dataset.loadSupportEntityId;
     if (supportEntityId) { this.eventBus.publish(EVENT_TOPICS.VIEWPORT_SELECTION_REQUESTED, { entityId: supportEntityId, source: 'load-table' }); return; }
@@ -346,19 +386,7 @@ export class LoadCalcConsumerController {
       return;
     }
     if (event.target.closest('[data-load-calc-run]')) {
-      const snap = empiricalLoadCalcScenarioStore.getSnapshot();
-      const authorization = engineeringModelStore.getEmpiricalAuthorizationState();
-      
-      if (snap?.calculationEligible) {
-        this.message = 'Executing the current common-seal-bound empirical method…';
-        this.eventBus.publish(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CALCULATE_REQUESTED, {});
-      } else if (authorization.calculationEligible) {
-        this.message = 'Executing current authorized empirical package against the common seal…';
-        this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, { source: 'load-calc' });
-      } else {
-        this.message = snap?.reasonCode || 'Not ready — check Verify & Run tab';
-        this.render();
-      }
+      this.runCurrentCalculation();
       return;
     }
 

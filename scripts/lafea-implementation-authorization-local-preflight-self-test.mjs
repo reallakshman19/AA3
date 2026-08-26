@@ -30,6 +30,13 @@ try {
   assert.notEqual(wrongCwd.status, 0);
   assertFailure(wrongCwd, 'NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED', false, 'NOT_RUN');
 
+  const missingRuntimeRepo = createSyntheticRepository(path.join(sandbox, 'missing-runtime'), 'SUCCESS', {
+    omitRuntime: true,
+  });
+  const missingRuntime = runHarness(missingRuntimeRepo);
+  assert.notEqual(missingRuntime.status, 0);
+  assertFailure(missingRuntime, 'NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED', false, 'NOT_RUN');
+
   const malformedRepo = createSyntheticRepository(path.join(sandbox, 'malformed'), 'SUCCESS', {
     mainSource: 'export const broken = ;\n',
   });
@@ -95,6 +102,7 @@ try {
     status: 'PASS',
     checks: Object.freeze({
       wrongCwdRemainsNotRun: true,
+      missingRuntimeBootstrapRemainsNotRun: true,
       parserFailureRemainsNotRun: true,
       missingTransitiveStaticImportRemainsNotRun: true,
       delegatedExitStatusPropagated: true,
@@ -140,7 +148,7 @@ function createSyntheticRepository(root, mode, options = {}) {
   }, null, 2)}\n`);
   fs.writeFileSync(path.join(root, '.gitignore'), '/reports/qualification/lafea-implementation-authorization-gate.json\n');
   fs.writeFileSync(path.join(root, PATHS.preflight), productionSources.preflight);
-  fs.writeFileSync(path.join(root, PATHS.runtime), productionSources.runtime);
+  if (!options.omitRuntime) fs.writeFileSync(path.join(root, PATHS.runtime), productionSources.runtime);
   fs.writeFileSync(path.join(root, PATHS.importClosure), productionSources.importClosure);
   fs.writeFileSync(path.join(root, PATHS.main), options.mainSource ?? 'export {};\n');
   fs.writeFileSync(path.join(root, PATHS.q1), 'export {};\n');

@@ -72,8 +72,12 @@ export function evaluateLafea1371RegistryClosureReadiness({
 
 function requireImplementationAuthorizationVerification(verification, repositoryHead) {
   assertRecord(verification, 'implementation authorization verification');
-  assert.equal(verification.schema, 'lafea-implementation-authorization-local-verification/v1');
-  assert.equal(verification.status, 'PASS');
+  assert.equal(
+    verification.schema,
+    'lafea-implementation-authorization-local-verification/v1',
+    'Section 17 requires the verified local implementation-authorization receipt schema',
+  );
+  assert.equal(verification.status, 'PASS', 'Section 17 implementation authorization is not PASS');
   assert.equal(
     verification.repository,
     'reallaksh19/Advanced_Analysis',
@@ -84,13 +88,41 @@ function requireImplementationAuthorizationVerification(verification, repository
     repositoryHead,
     'Section 17 evidence is stale for the current repository HEAD',
   );
-  assert.equal(verification.implementationAuthorizationEvidenceVerified, true);
-  assert.equal(verification.retainedFileMatchesDelegatedEnvelope, true);
-  assert.equal(verification.checkoutCleanAfterReceiptWrite, true);
-  assert.equal(verification.q1DirectLoadedElementEvidence, 'PASS');
-  assert.equal(verification.q3IndependentPressureEvidence, 'PASS');
-  assert.equal(verification.localHarnessAuthorityCreated, false);
-  assert.equal(verification.releaseAuthorityGranted, false);
+  assert.equal(
+    verification.implementationAuthorizationEvidenceVerified,
+    true,
+    'Section 17 requires independently verified implementation-authorization evidence',
+  );
+  assert.equal(
+    verification.retainedFileMatchesDelegatedEnvelope,
+    true,
+    'Section 17 requires retained-file/delegated-envelope identity',
+  );
+  assert.equal(
+    verification.checkoutCleanAfterReceiptWrite,
+    true,
+    'Section 17 requires clean Git custody after the retained receipt write',
+  );
+  assert.equal(
+    verification.q1DirectLoadedElementEvidence,
+    'PASS',
+    'Section 17 requires the Q1 direct-loaded-element addendum PASS',
+  );
+  assert.equal(
+    verification.q3IndependentPressureEvidence,
+    'PASS',
+    'Section 17 requires the Q3 independent-pressure addendum PASS',
+  );
+  assert.equal(
+    verification.localHarnessAuthorityCreated,
+    false,
+    'Section 17 local harness must not create engineering/release authority',
+  );
+  assert.equal(
+    verification.releaseAuthorityGranted,
+    false,
+    'Section 17 evidence must not contain release authority',
+  );
   assert.match(
     verification.evidenceArtifactHash ?? '',
     /^sha256:[0-9a-f]{64}$/u,
@@ -113,7 +145,11 @@ function requireProtectedLafea3RegistryState(entry) {
   assert.equal(entry.stageId, 'LAFEA.3');
   assert.equal(entry.category, 'CONTINUUM_2D');
   assert.equal(entry.engineState, 'QUALIFIED_ROUTE_REGISTERED');
-  assert.equal(entry.authority, 'T3_T6_Q8_LINEAR_CONTINUUM');
+  assert.equal(
+    entry.authority,
+    'T3_T6_Q8_LINEAR_CONTINUUM',
+    'LAFEA.3 registered continuum authority changed before Section 17 readiness',
+  );
   assert.equal(entry.enginePackage, 'local-continuum');
   assert.equal(entry.inputContractRole, 'LOCAL_CONTINUUM_MODEL');
   assert.equal(entry.resultContractRole, 'LOCAL_CONTINUUM_RESULT');
@@ -136,12 +172,20 @@ function requireProtectedLafea4RegistryState(entry) {
   assert.equal(entry.stageId, 'LAFEA.4');
   assert.equal(entry.category, 'THIN_SHELL');
   assert.equal(entry.engineState, 'QUALIFIED_ROUTE_REGISTERED');
-  assert.equal(entry.authority, 'CST_DKT_TRI3_THIN_SHELL_V1');
+  assert.equal(
+    entry.authority,
+    'CST_DKT_TRI3_THIN_SHELL_V1',
+    'LAFEA.4 CST+DKT authority changed during LAFEA.3 closure readiness',
+  );
   assert.equal(entry.enginePackage, 'local-shell');
   assert.equal(entry.inputContractRole, 'LOCAL_SHELL_MODEL');
   assert.equal(entry.resultContractRole, 'LOCAL_SHELL_RESULT');
   assert.equal(entry.presenterRole, 'SHELL_RESULT_EVIDENCE');
-  assert.equal(entry.limitation, PROTECTED_LAFEA4_LIMITATION);
+  assert.equal(
+    entry.limitation,
+    PROTECTED_LAFEA4_LIMITATION,
+    'LAFEA.4 production limitation changed during LAFEA.3 closure readiness',
+  );
   assert.deepEqual(
     entry.limitations,
     PROTECTED_LAFEA4_LIMITATIONS,

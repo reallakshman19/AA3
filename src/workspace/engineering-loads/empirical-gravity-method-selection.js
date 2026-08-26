@@ -1,6 +1,10 @@
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../../core/shared-piping-model/immutable.js';
 import {
+  NON_FEA_GRAVITY_METHOD_AUTO,
+  requireReadyNonFeaGravityMethodAuthority,
+} from '../project-data/non-fea-gravity-method-authority.js';
+import {
   EMPIRICAL_COMPONENT_COG_CLASSIFICATION,
   auditEmpiricalComponentLoadAuthority,
   requireEmpiricalComponentLoadAuthorityAudit,
@@ -11,9 +15,11 @@ import {
   EMPIRICAL_LOAD_METHOD,
 } from './support-load-distribution-v3.js';
 
-export const EMPIRICAL_GRAVITY_AUTO = 'AUTO';
+export const EMPIRICAL_GRAVITY_AUTO = NON_FEA_GRAVITY_METHOD_AUTO;
 export const EMPIRICAL_GRAVITY_METHOD_SELECTION_SCHEMA =
   'empirical-gravity-method-selection/v1';
+export const EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA =
+  'empirical-governed-gravity-method-selection/v1';
 
 const BEAM_CONTACT = 'EMPIRICAL_BEAM_CONTACT_V1';
 const ALLOWED_REQUESTS = Object.freeze([
@@ -30,6 +36,48 @@ export function evaluateEmpiricalGravityMethodSelection(input = {}) {
     routePartitionModel: input.routePartitionModel,
   });
   return createEmpiricalGravityMethodSelection({ requestedMethod, componentAuthorityAudit });
+}
+
+/**
+ * Evaluates the existing selector from a hash-bound effective Project Data
+ * method request. This wrapper does not authorize execution and does not alter
+ * the selector policy or result schema.
+ */
+export function evaluateGovernedEmpiricalGravityMethodSelection(input = {}) {
+  const componentAuthorityAudit = auditEmpiricalComponentLoadAuthority({
+    dataset: input.dataset,
+    profile: input.profile,
+    routePartitionModel: input.routePartitionModel,
+  });
+  return createGovernedEmpiricalGravityMethodSelection({
+    gravityMethodAuthority: input.gravityMethodAuthority,
+    componentAuthorityAudit,
+  });
+}
+
+export function createGovernedEmpiricalGravityMethodSelection(input = {}) {
+  const authority = requireReadyNonFeaGravityMethodAuthority(input.gravityMethodAuthority);
+  const audit = requireEmpiricalComponentLoadAuthorityAudit(input.componentAuthorityAudit);
+  if (audit.projectDataProfileSemanticHash !== authority.projectDataSemanticHash) {
+    throw codedError(
+      'Gravity-method authority and component-load audit do not bind the same effective Project Data profile.',
+      'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_PROFILE_MISMATCH',
+      {
+        authorityProjectDataSemanticHash: authority.projectDataSemanticHash,
+        auditProjectDataProfileSemanticHash: audit.projectDataProfileSemanticHash,
+      },
+    );
+  }
+  const selection = createEmpiricalGravityMethodSelection({
+    requestedMethod: authority.requestedMethod,
+    componentAuthorityAudit: audit,
+  });
+  const base = {
+    schema: EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA,
+    gravityMethodAuthority: authority,
+    selection,
+  };
+  return deepFreeze({ ...base, semanticHash: semanticHash(base) });
 }
 
 export function createEmpiricalGravityMethodSelection(input = {}) {
@@ -76,6 +124,25 @@ export function requireEmpiricalGravityMethodSelection(value) {
   }
   methodRequest(value.requestedMethod);
   if (value.selectedMethod !== null) methodRequest(value.selectedMethod);
+  return deepFreeze(structuredClone(value));
+}
+
+export function requireGovernedEmpiricalGravityMethodSelection(value) {
+  if (!value || value.schema !== EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA) {
+    throw new TypeError(`Expected ${EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA}.`);
+  }
+  const { semanticHash: supplied, ...base } = value;
+  if (supplied !== semanticHash(base)) {
+    throw new TypeError('Governed empirical gravity method-selection semantic hash mismatch.');
+  }
+  const authority = requireReadyNonFeaGravityMethodAuthority(value.gravityMethodAuthority);
+  const selection = requireEmpiricalGravityMethodSelection(value.selection);
+  if (selection.requestedMethod !== authority.requestedMethod) {
+    throw codedError(
+      'Governed selector request differs from gravity-method authority.',
+      'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_REQUEST_MISMATCH',
+    );
+  }
   return deepFreeze(structuredClone(value));
 }
 
@@ -243,6 +310,13 @@ function methodRequest(value) {
     throw new RangeError(`Unsupported empirical gravity method request: ${method || 'EMPTY'}.`);
   }
   return method;
+}
+
+function codedError(message, code, details = null) {
+  const error = new Error(message);
+  error.code = code;
+  error.details = details;
+  return error;
 }
 
 function byEntity(left, right) {

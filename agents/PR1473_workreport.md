@@ -4,7 +4,7 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_STACKED_DRAFT_RETARGETED_TO_ABSORBED_PARENT
+PR_RECOVERY_STATE: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_STACK_RECONCILIATION_ONLY
 EXECUTION_MODE: AUTO
 AUTO_STATE: RUNNING
@@ -16,76 +16,25 @@ PR: #1473
 ISSUE: #1472
 UMBRELLA: #1389
 BASE_PR: #1464
-BASE_BRANCH: agent/issue-1463-emp1-dependency-security-20260826
-PARENT_HEAD: 169e045cacedb4930a6aca97fa92d95e3eeb5201
-PRE_RETARGET_HEAD: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
-STRUCTURAL_RETARGET_HEAD: 51b2d3acaad3795b77e64e6978d2b769c9c25e70
-STRUCTURAL_RETARGET_TREE: 937739935f8c26673075493f57f567b622bd1f93
-REPORT_BASIS_HEAD: 51b2d3acaad3795b77e64e6978d2b769c9c25e70
+PARENT_HEAD: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
+PRE_PROPAGATION_HEAD: 54cc3e7af128f748e41b3595a7dff176e30ddc84
+STRUCTURAL_PROPAGATION_HEAD: d1a9c47347d764422e249440f9fd6a2f036a49e0
+STRUCTURAL_PROPAGATION_TREE: e15c42957a7221906af8107d651c672784ed4288
+REPORT_BASIS_HEAD: d1a9c47347d764422e249440f9fd6a2f036a49e0
 TECHNICAL_BASIS: 3e40cf7f13c91d09336ea871796638053777ad57
-LIVE_MAIN_LAST_OBSERVED: 20e0abb5301363bef0659cf615bc8a37559ac869
-GROUNDING_EPOCH: GE-PR1473-003
-CURRENT_STAGE: RETARGET_AND_EXACT_BLOB_REGROUND_VALIDATED
-CURRENT_BLOCKER: focused checker/provider promotion/rollback execution remains NOT_RUN; merge authority not granted
-HIGHEST_RISK: treating rollback custody as observed rollback success or deployment authority
-EXACT_NEXT_ACTION: keep PR1473 draft/unmerged; re-ground child PR1477 onto this recovery-synchronized head while preserving its exact release-manifest salvage delta.
+LIVE_MAIN_LAST_OBSERVED: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
+GROUNDING_EPOCH: GE-PR1473-004
+CURRENT_STAGE: LATEST_PARENT_PROPAGATION_VALIDATED
+CURRENT_BLOCKER: provider promotion/rollback and focused execution remain NOT_RUN; merge authority not granted
+EXACT_NEXT_ACTION: keep PR1473 draft/unmerged and propagate this exact parent into PR1477 while preserving its six-file manifest-salvage delta.
 ```
 
-## Handover in 60 Seconds
+PR1473 remains based on PR1464's branch. The latest PR1464 recovery was propagated using a two-parent, non-force commit whose tree is current PR1464 plus the exact same seven PR1473 blobs. No deployment-operations technical content changed.
 
-PR1470's deployed-header content was already absorbed into PR1464. PR1473 still pointed at the historical PR1470 branch, so its GitHub base no longer represented the authoritative effective security stack. AUTO recovery repaired that topology without changing deployment-operations semantics.
+Exact scope remains the deployment-operations checker/falsifier, shared release-candidate harness, deployment-operations doc, and three PR1473 recovery records. The release-harness technical blob remains `f9f63bdcf3d7f753c877aa520e45b48916572f01` at structural lock.
 
-```text
-old base branch = agent/issue-1466-emp1-deployed-security-headers-20260826
-old base head   = c0c1a30d5b79bd67963e0d8f2dee9b4a19d9a757
-new base branch = agent/issue-1463-emp1-dependency-security-20260826
-new base head   = 169e045cacedb4930a6aca97fa92d95e3eeb5201
-old PR1473 head = bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
-new PR1473 head = 51b2d3acaad3795b77e64e6978d2b769c9c25e70
-compare         = 38 ahead / 0 behind new base
-changed files   = exactly 7
-```
+Validation: exact seven-blob custody `PASS`; non-force propagation `PASS`; source audit retained `PASS_PRIOR_AUDIT`; real provider promotion/rollback and focused execution `NOT_RUN`; hosted pre-step infrastructure evidence retained `NOT_RUN` where applicable; WRC numerical comparison `NOT_APPLICABLE`. No `NOT_RUN` is promoted to PASS.
 
-The structural commit used old PR1473 as first parent and current PR1464 as second parent. Its tree is current PR1464 plus the exact seven retained PR1473 blobs. Branch movement used `force=false`; PR base metadata was then retargeted to PR1464's branch.
+Invariant: `DEPLOYMENT_OPERATIONS_CUSTODY_CAN_BLOCK_RELEASE_BUT_CANNOT_CREATE_ENGINEERING_DEPLOYMENT_OR_ROLLBACK_SUCCESS_AUTHORITY`.
 
-## Exact seven-file ledger
-
-1. `scripts/emp1-professional-deployment-operations-check.mjs`
-2. `scripts/emp1-professional-deployment-operations-falsifier.mjs`
-3. `scripts/emp1-professional-release-candidate.mjs`
-4. `docs/emp1/EMP1_PROFESSIONAL_DEPLOYMENT_OPERATIONS.md`
-5. `agents/PR1473_workreport.md`
-6. `agents/status/PR1473.yaml`
-7. `agents/claims/PR1473.yaml`
-
-The shared release harness blob at structural lock is `f9f63bdcf3d7f753c877aa520e45b48916572f01`; it preserves the deployment-operations integration on top of the absorbed dependency/header stack.
-
-## Engineering / authority invariant
-
-`DEPLOYMENT_OPERATIONS_CUSTODY_CAN_BLOCK_RELEASE_BUT_CANNOT_CREATE_ENGINEERING_DEPLOYMENT_OR_ROLLBACK_SUCCESS_AUTHORITY`
-
-The implementation retains PREVIEW/STAGING/PRODUCTION identities, exact no-rebuild staging→production artifact promotion, previous-production whole-artifact custody, whole-artifact rollback mode, and explicit false rollback-executed/success claims unless separately observed. No provider API/configuration, WRC mechanics, route authority or code-compliance authority is added.
-
-## Validation ledger
-
-- exact seven retained blob identities — `PASS`; source inspection.
-- structural re-ground and non-force branch update — `PASS`.
-- PR retarget to #1464 branch — `PASS`.
-- compare new base → structural head — `PASS`; 0 behind / exactly 7 files.
-- deployment-operations source validation — retained `PASS_PRIOR_AUDIT`; no technical mutation this epoch.
-- focused checker/falsifier execution — `NOT_RUN` in this epoch.
-- real provider promotion/rollback execution — `NOT_RUN`.
-- hosted runEmp1/gamma5 — retained `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`.
-- WRC numerical comparison — `NOT_APPLICABLE`.
-
-No `NOT_RUN` is promoted to PASS.
-
-## Appendix A
-
-A1 Production Trace — 20/20.
-A2 Failure Isolation — 20/20.
-A3 Authority/Invariant — 20/20.
-A4 Independent Validation — 19/20; provider execution remains NOT_RUN.
-A5 Next-Commit/Minimal Patch — 20/20; next phase is child manifest-stack reconciliation only.
-
-**99/100; minimum 19/20.**
+Appendix A: **99/100; minimum 19/20.**

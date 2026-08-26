@@ -7,22 +7,13 @@ criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: AUTO
 auto_state: RUNNING
-coordination_state: RETARGETED_TO_PR1464_PR1477_REGROUND_NEXT
+coordination_state: LATEST_PARENT_PROPAGATED_PR1477_NEXT
 scope:
   authority: EMP1_DEPLOYMENT_OPERATIONS
-  paths:
-    - scripts/emp1-professional-deployment-operations-check.mjs
-    - scripts/emp1-professional-deployment-operations-falsifier.mjs
-    - scripts/emp1-professional-release-candidate.mjs
-    - docs/emp1/EMP1_PROFESSIONAL_DEPLOYMENT_OPERATIONS.md
-    - agents/PR1473_workreport.md
-    - agents/status/PR1473.yaml
-    - agents/claims/PR1473.yaml
 protected_exclusions:
   - provider configuration/APIs
   - .github/workflows/**
-  - HTML entrypoints
-  - package files
+  - HTML/package files
   - src/core/emp1/**
   - WRC mechanics/source/dataset/oracle/tolerance
   - route/registry/code-compliance authority
@@ -33,14 +24,13 @@ authority_boundary:
   engineering_authority_granted: false
   deployment_authority_granted: false
   release_authority_granted: false
-parent_head: 169e045cacedb4930a6aca97fa92d95e3eeb5201
-pre_retarget_head: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
-structural_retarget_head: 51b2d3acaad3795b77e64e6978d2b769c9c25e70
-structural_retarget_tree: 937739935f8c26673075493f57f567b622bd1f93
-report_basis_head: 51b2d3acaad3795b77e64e6978d2b769c9c25e70
-technical_basis: 3e40cf7f13c91d09336ea871796638053777ad57
-live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
+parent_head: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
+pre_propagation_head: 54cc3e7af128f748e41b3595a7dff176e30ddc84
+structural_propagation_head: d1a9c47347d764422e249440f9fd6a2f036a49e0
+structural_propagation_tree: e15c42957a7221906af8107d651c672784ed4288
+report_basis_head: d1a9c47347d764422e249440f9fd6a2f036a49e0
+live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1473-003
+grounding_epoch: GE-PR1473-004
 handover_report: agents/PR1473_workreport.md
-exact_next_action: "Keep PR1473 draft/unmerged; re-ground PR1477 onto this recovery-synchronized head while preserving its exact release-manifest salvage delta."
+exact_next_action: "Keep PR1473 draft/unmerged and propagate this exact parent into PR1477 while preserving its six-file manifest-salvage delta."

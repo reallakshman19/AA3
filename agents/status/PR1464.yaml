@@ -7,7 +7,6 @@ branch: agent/issue-1463-emp1-dependency-security-20260826
 issue: 1463
 umbrella: 1389
 dependency_base_pr: 1457
-base_branch: agent/issue-1456-emp1-build-artifact-security-20260826
 execution_mode: AUTO
 auto_state: RUNNING
 phase_progression: AUTO
@@ -16,32 +15,26 @@ criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
 pr_recovery_state: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
 handover_readiness: READY
-parent_head: a849cfa7fb6a8ee8e3288b37dc1c1fbca0772204
-parent_tree: 297e2aee8f2baa3e3482b1ccbc7848bae717f7f6
-pre_propagation_head: 1cc37a834294199450c79551d8be9b1fd0cea5be
-structural_propagation_head: c4eaa69ca4922079024e65bec57ed85a071d5c40
-structural_propagation_tree: 52764ac89ff32ed3f58fcd42c6a821e57e0f2c7f
-report_basis_head: c4eaa69ca4922079024e65bec57ed85a071d5c40
+parent_head: eba35c045b3adc09885b73fcb3738f9125de4cee
+pre_propagation_head: 169e045cacedb4930a6aca97fa92d95e3eeb5201
+structural_propagation_head: edb4a7e4f00ec33ee33745d9ed3131706365e4dd
+structural_propagation_tree: f425c0383d6d25d100f9772ddd0d234bef2078b4
+report_basis_head: edb4a7e4f00ec33ee33745d9ed3131706365e4dd
 absorbed_child_pr: 1470
-absorbed_child_merge_sha: 9f73e0fc8c5db06cec137fb0041190596ae4acf3
-live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
-grounding_epoch: GE-PR1464-005
+live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
+grounding_epoch: GE-PR1464-006
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: PARENT_PROPAGATED_PR1473_RETARGET_REGROUND_NEXT
-current_stage: PARENT_PROPAGATION_VALIDATED_DOWNSTREAM_RECONCILIATION_NEXT
+coordination: LATEST_PARENT_PROPAGATED_PR1473_NEXT
+current_stage: LATEST_PARENT_PROPAGATION_VALIDATED
 merge_authorization: NOT_GRANTED
 validation:
   retained_blob_custody: PASS_EXACT_16_BLOBS
   structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
-  parent_compare: PASS_29_AHEAD_0_BEHIND_EXACT_16_FILES
   dependency_header_source: PASS_PRIOR_AUDIT
-  dependency_advisory_execution: NOT_RUN_CURRENT_EPOCH
-  build_execution: NOT_RUN_CURRENT_EPOCH
-  deployed_header_observation: NOT_RUN
-  browser_execution: NOT_RUN
+  dependency_advisory_build_browser_header_execution: NOT_RUN_CURRENT_EPOCH
   hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RETAINED
   numerical_comparison: NOT_APPLICABLE
 current_blocker: "Live advisory/build/browser/deployment/header evidence remains NOT_RUN; merge authority not granted."
-exact_next_action: "Keep PR1464 draft/unmerged; retarget and re-ground PR1473 onto this absorbed PR1464 parent while preserving its exact seven-file deployment-operations delta."
+exact_next_action: "Keep PR1464 draft/unmerged and propagate this exact parent into PR1473, retaining PR1473's seven deployment-operations blobs."

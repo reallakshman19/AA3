@@ -14,31 +14,28 @@ phase_progression: AUTO
 scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1472
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_STACKED_DRAFT_RETARGETED_TO_ABSORBED_PARENT
+pr_recovery_state: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
 handover_readiness: READY
-parent_head: 169e045cacedb4930a6aca97fa92d95e3eeb5201
-pre_retarget_head: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
-structural_retarget_head: 51b2d3acaad3795b77e64e6978d2b769c9c25e70
-structural_retarget_tree: 937739935f8c26673075493f57f567b622bd1f93
-report_basis_head: 51b2d3acaad3795b77e64e6978d2b769c9c25e70
+parent_head: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
+pre_propagation_head: 54cc3e7af128f748e41b3595a7dff176e30ddc84
+structural_propagation_head: d1a9c47347d764422e249440f9fd6a2f036a49e0
+structural_propagation_tree: e15c42957a7221906af8107d651c672784ed4288
+report_basis_head: d1a9c47347d764422e249440f9fd6a2f036a49e0
 technical_basis: 3e40cf7f13c91d09336ea871796638053777ad57
-live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
-grounding_epoch: GE-PR1473-003
+live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
+grounding_epoch: GE-PR1473-004
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: RETARGETED_TO_PR1464_PR1477_REGROUND_NEXT
-current_stage: RETARGET_AND_EXACT_BLOB_REGROUND_VALIDATED
+coordination: LATEST_PARENT_PROPAGATED_PR1477_NEXT
+current_stage: LATEST_PARENT_PROPAGATION_VALIDATED
 merge_authorization: NOT_GRANTED
 validation:
   retained_blob_custody: PASS_EXACT_7_BLOBS
   structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
-  base_retarget: PASS_TO_PR1464_BRANCH
-  parent_compare: PASS_38_AHEAD_0_BEHIND_EXACT_7_FILES
   deployment_operations_source: PASS_PRIOR_AUDIT
-  focused_execution: NOT_RUN_CURRENT_EPOCH
   provider_promotion_rollback_execution: NOT_RUN
-  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RETAINED
+  focused_execution: NOT_RUN_CURRENT_EPOCH
   numerical_comparison: NOT_APPLICABLE
-current_blocker: "Focused checker/provider promotion/rollback execution remains NOT_RUN; merge authority not granted."
-exact_next_action: "Keep PR1473 draft/unmerged; re-ground PR1477 onto this recovery-synchronized head while preserving its exact release-manifest salvage delta."
+current_blocker: "Provider promotion/rollback and focused execution remain NOT_RUN; merge authority not granted."
+exact_next_action: "Keep PR1473 draft/unmerged and propagate this exact parent into PR1477 while preserving its six-file manifest-salvage delta."

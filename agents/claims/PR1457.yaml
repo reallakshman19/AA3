@@ -7,7 +7,7 @@ criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: AUTO
 auto_state: RUNNING
-coordination_state: CURRENT_MAIN_EXACT_BLOB_REGROUND_COMPLETE_CHILD_PROPAGATION_NEXT
+coordination_state: LATEST_MAIN_REGROUNDED_PR1464_PROPAGATION_NEXT
 scope:
   authority: EMP1_PROFESSIONAL_BUILD_ARTIFACT_SECURITY
   paths:
@@ -20,9 +20,7 @@ scope:
     - agents/claims/PR1457.yaml
 protected_exclusions:
   - src/core/emp1/**
-  - WRC mechanics/route/registry
-  - WRC source/dataset/oracle/tolerances
-  - validation/emp1/wrc537-2013/**
+  - WRC mechanics/route/registry/source/dataset/oracle/tolerances
   - dependency-vulnerability policy
   - CSP/security-header policy
   - .github/workflows/**
@@ -31,12 +29,13 @@ authority_boundary:
   engineering_authority_granted: false
   code_compliance_authority_granted: false
   release_authority_granted: false
-  broader_security_certification_claimed: false
-live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
-current_main_tree: ea619d56311f4be6c1f27a4ca433794979ddee33
-report_basis_head: 922570990764c083f454864bf193e25be281b9bf
-technical_basis_head: 28970fe78f0ad1a41a706d927aaeb92793e05552
+live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
+current_main_tree: ef461365bc77db46b5a6d24cf4fe0ef8d32387ce
+pre_reground_head: a849cfa7fb6a8ee8e3288b37dc1c1fbca0772204
+structural_reground_head: 0b4c50cefac72b7ef289119eed310de7788e8e17
+structural_reground_tree: 452b3b95a4a7809a5ddda50aaf12f541182ff460
+report_basis_head: 0b4c50cefac72b7ef289119eed310de7788e8e17
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1457-005
+grounding_epoch: GE-PR1457-006
 handover_report: agents/PR1457_workreport.md
-exact_next_action: "Keep PR1457 draft/unmerged and re-ground child PR1464 onto this recovery-synchronized parent head."
+exact_next_action: "Keep PR1457 draft/unmerged and propagate this parent head into PR1464 without changing its 16-file bounded delta."

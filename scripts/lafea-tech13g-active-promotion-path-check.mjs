@@ -16,6 +16,9 @@ import {
   evaluateLafea4ShellProductRefinementPromotion,
   requireLafea4ShellProductRefinementPromotionAuthorized,
 } from '../src/workspace/lafea4-shell-product-refinement-promotion.js';
+import {
+  LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_PRODUCER_REF,
+} from '../src/workspace/lafea4-shell-product-refinement-retention-authority.js';
 
 if (LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD === null) {
   const error = new Error('TECH13G_ACTIVE_PROMOTION_TRUST_ROOT_REQUIRED');
@@ -85,6 +88,20 @@ assert.equal(result.productRefinement, true);
 assert.equal(result.productRetentionAuthorized, true);
 assert.equal(result.uiBindingAuthorized, true);
 assert.equal(result.releaseQualified, false);
+assert.ok(result.retentionAuthority);
+assert.equal(result.retentionAuthority.productRetentionAuthorized, true);
+assert.equal(result.retentionAuthority.releaseQualified, false);
+assert.equal(result.evidence.authority.producerRef,
+  LAFEA4_SHELL_PRODUCT_REFINEMENT_RETAINED_PRODUCER_REF);
+assert.equal(result.evidence.authority.qualificationHash,
+  result.retentionAuthority.retainedQualification.qualificationHash);
+assert.equal(result.evidence.authority.planHash,
+  result.retentionAuthority.retentionPlan.planHash);
+assert.equal(result.evidence.meshHash, result.retentionAuthority.candidateEvidence.meshHash,
+  'promotion-time rewrap must preserve exact candidate mesh bytes/hash');
+assert.notEqual(result.evidence.artifactHash,
+  result.retentionAuthority.candidateEvidence.artifactHash,
+  'retained product artifact must not retain candidate-only authority');
 assert.notEqual(result.evidence.artifactHash, parent.artifactHash);
 assert.notEqual(result.evidence.meshHash, parent.meshHash);
 assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId)?.artifactHash,
@@ -92,9 +109,8 @@ assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId)?.artifactHa
 assert.equal(workbench.getState().stages[stageId].analysisMeshCustodyProjection.state,
   'CURRENT_PASS');
 
-// Force only the child recovery to reject. Because authority comes from the
-// source-controlled trust root, the same production action must restore the
-// exact original parent before surfacing the failure diagnostic.
+// Force only the final retained-product child recovery to reject. The action
+// must restore the exact original parent before surfacing the failure.
 const rollbackHarness = createRollbackHarness({ stage, parent });
 const failed = rollbackHarness.actions.refineAnalysisMesh(request, stageId);
 assert.equal(failed, null);
@@ -111,8 +127,12 @@ console.log(JSON.stringify({
   promotionRecordHash: promotion.promotionRecord.semanticHash,
   uiCanRefine: ui.canRefine,
   parentArtifactHash: parent.artifactHash,
+  candidateArtifactHash: result.retentionAuthority.candidateEvidence.artifactHash,
   childArtifactHash: result.evidence.artifactHash,
   childMeshHash: result.evidence.meshHash,
+  retainedProducerRef: result.evidence.authority.producerRef,
+  retainedQualificationHash: result.evidence.authority.qualificationHash,
+  retainedPlanHash: result.evidence.authority.planHash,
   custodyStateAfterSuccess: workbench.getState().stages[stageId].analysisMeshCustodyProjection.state,
   rollbackRestoredParent: true,
   releaseQualified: false,

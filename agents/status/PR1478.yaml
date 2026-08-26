@@ -1,0 +1,45 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1478
+issue: 1321
+branch: agent/issue-1321-current-run-execution-runtime
+state: MERGE_AUTHORIZED_SOURCE_COMPLETE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: FINAL_SYNCHRONIZE_AND_MERGE
+base_branch: main
+base_sha: e74d2d3c45d918895d3a613014f08aa7c0abce79
+validation:
+  live_main_grounding: PASS
+  current_common_input_chain_trace: PASS
+  controller_gap_trace: PASS
+  no_circular_dependency_source_review: PASS
+  no_legacy_runtime_import_source_review: PASS
+  no_post_failure_retry_source_review: PASS
+  focused_falsifier_source_review: PASS
+  exact_seven_file_scope: PASS
+  current_main_non_overlap_review: PASS
+  focused_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  ready_common_input_required: true
+  active_runtime_context_required_before_authorization: true
+  system_run_authorization_required: true
+  governed_method_selection_required: true
+  no_post_failure_method_fallback: true
+  current_mass_projection_required: true
+  current_support_execution_required: true
+  current_execution_recorded_separately: true
+  legacy_explicit_authority_path_unchanged: true
+  scenario_ready_path_unchanged: true
+  run_routing_change_authorized: false
+  routine_authority_presentation_deferred_to_routing_successor: true
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+merge_disposition: AUTHORIZED_TO_MERGE_AFTER_EXACT_SYNC
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Synchronize exact seven-file scope onto current main and squash-merge PR1478; then start ordinary Run routing plus routine-system authority presentation successor."

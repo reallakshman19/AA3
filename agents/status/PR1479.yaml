@@ -1,0 +1,54 @@
+schema: engineering-pr-status/v1
+pr: 1479
+repository: reallaksh19/Advanced_Analysis
+issue: 1100
+branch: agent/lafea-b01-nullspace-current-main-20260826
+base_branch: main
+base_head_last_checked: bd51eb25875702322b60c706f6b6c7af507c1665
+state: OPEN_DRAFT
+criticality: ENGINEERING_CRITICAL
+execution_mode: OWNER_DIRECTED
+current_stage: ELEMENT_TRANSLATION_NULLSPACE_REPAIR_IMPLEMENTED_EXECUTION_NOT_RUN
+engineering_failure_proven_on_current_head: false
+predecessor:
+  pr: 1258
+  disposition: STALE_MIXED_MECHANISM_PROVENANCE_ONLY
+  behind_current_main_at_takeover: 691
+first_wrong_boundary: BBAR_ELEMENT_STIFFNESS_BINARY64_TRANSLATION_REPRESENTATION
+validation:
+  live_main_grounding: PASS_GITHUB_READBACK
+  predecessor_staleness: PASS_GITHUB_COMPARE
+  first_boundary_rca: PASS_HISTORICAL_PROVENANCE
+  mechanism_scope_separation: PASS_SOURCE_INSPECTION
+  roundoff_guard_source_contract: PASS_SOURCE_INSPECTION
+  t6_nullspace_evidence_custody: PASS_SOURCE_INSPECTION
+  q8_nullspace_evidence_custody: PASS_SOURCE_INSPECTION
+  non_bbar_dispatch_unchanged: PASS_SOURCE_INSPECTION
+  focused_translation_nullspace_execution: NOT_RUN
+  bbar_kernel_execution: NOT_RUN
+  frozen_lame_governing_case_execution: NOT_RUN
+  integrated_b01_execution: NOT_RUN
+blocker:
+  code: NO_EXACT_EXECUTABLE_REPOSITORY_CHECKOUT_IN_AGENT_CONTAINER
+  observation: "Could not resolve host: github.com"
+invariants:
+  bbar_constitutive_changed: false
+  bbar_quadrature_changed: false
+  rotation_projected: false
+  sparse_solver_changed: false
+  iteration_cap_changed: false
+  engineering_tolerance_changed: false
+  benchmark_expected_value_changed: false
+  probe_or_mesh_definition_changed: false
+  mesh_quality_policy_changed: false
+  b02_authority_changed: false
+  registry_or_release_authority_changed: false
+  workflow_changed: false
+  roundoff_correction_limit: "4096 * Number.EPSILON * localDofCount"
+  non_roundoff_change_fails_closed: true
+merge_authority: OWNER_ONLY_NOT_GRANTED
+release_authority_granted: false
+exact_next_action: "From an exact clean checkout run node scripts/lafea-b01-bbar-translation-nullspace-check.mjs; if PASS continue existing B-bar kernel and frozen Lame governing-case gates without changing solver mechanics."
+appendix_a_qualified: true
+appendix_a_score: 99
+appendix_a_minimum: 19

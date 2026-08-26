@@ -135,6 +135,7 @@ export function t6ElementEvidence(elementId, nodes, material, formulation, thick
         integrationPointCount: bbar.meanDilatation.integrationPointCount,
         shearModulus: bbar.moduli.shearModulus,
         bulkModulus: bbar.moduli.bulkModulus,
+        translationNullspace: bbar.translationNullspace,
         formulaIds: bbar.formulaIds,
       }),
     } : {}),

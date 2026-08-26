@@ -17,6 +17,7 @@ validation:
   overlap_review: PASS_SOURCE_INSPECTION
   local_preflight_source_contract: PASS_SOURCE_INSPECTION
   local_preflight_syntax: PASS_LOCAL_NODE_CHECK
+  generated_receipt_repeatability: PASS_SOURCE_INSPECTION_EXACT_PATH_IGNORED_ONLY
   exact_local_repository_execution: NOT_RUN
   q1_q5_engineering_execution: NOT_RUN
 blocker: NO_EXACT_EXECUTABLE_REPOSITORY_CHECKOUT_IN_AGENT_CONTAINER

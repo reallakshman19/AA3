@@ -3,19 +3,29 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1481
 issue: 1321
 branch: agent/issue-1321-run-current-runtime-routing
-state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+state: SOURCE_COMPLETE_AWAITING_OWNER
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: IMPLEMENT_ROUTING_PRESENTATION_CUTOVER
+auto_state: READY_FOR_REVIEW
 base_branch: main
-base_sha: d24eac2a865cd748832825dc552cd7070b919f16
+base_sha: 20e0abb5301363bef0659cf615bc8a37559ac869
 validation:
   live_main_grounding: PASS
-  ordinary_run_obsolete_path_trace: PASS
-  controller_execution_ownership_trace: PASS
-  authority_presentation_trace: PASS
-  obsolete_registered_regression_trace: PASS
-  focused_execution_check: NOT_RUN
+  production_call_path_trace: PASS
+  ready_report_vs_sealed_common_input_semantic_audit: PASS
+  stale_seal_ready_report_reseal_audit: PASS
+  ordinary_one_event_routing_source_review: PASS
+  scenario_ready_path_source_review: PASS
+  legacy_explicit_event_source_review: PASS
+  no_legacy_fallback_source_review: PASS
+  distinct_authority_presentation_source_review: PASS
+  legacy_view_delegated_unchanged: PASS
+  wip_markers_removed_from_net_tree: PASS
+  exact_eleven_file_scope: PASS
+  branch_behind_main: 0
+  migrated_final_routing_check: NOT_RUN
+  current_system_routing_presentation_check: NOT_RUN
+  legacy_authorized_view_check: NOT_RUN
   non_fea_aggregate: NOT_RUN
   check_imports: NOT_RUN
   build: NOT_RUN
@@ -27,15 +37,19 @@ invariants:
   scenario_ready_path_unchanged: true
   ordinary_run_current_system_event_exactly_once: true
   ordinary_run_legacy_authorization_refresh_forbidden: true
-  ordinary_run_manual_seal_forbidden: true
+  ordinary_run_manual_seal_prerequisite: false
+  ready_checker_report_can_drive_runtime_seal: true
+  stale_seal_alone_ineligible: true
+  stale_seal_plus_ready_report_can_reseal: true
   legacy_explicit_calculate_event_retained: true
   current_runtime_execution_exactly_once: true
   no_legacy_retry_after_current_failure: true
   routine_system_authority_distinct: true
+  fake_legacy_baseline_handoff_forbidden: true
   mechanics_change_authorized: false
 merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR
-merge_disposition: DRAFT_IMPLEMENTATION_IN_PROGRESS
+merge_disposition: READY_FOR_REVIEW_NOT_AUTHORIZED_TO_MERGE
 appendix_a_qualified: true
 appendix_a_score: 98
 appendix_a_minimum: 18
-exact_next_action: "Implement bounded routing and authority presentation plus focused/legacy falsifiers; reconcile exact scope; do not merge without new owner authority."
+exact_next_action: "Owner review/merge #1481 when authorized; then harden #1439 PD-ACTIVE-CASES exact Product-default provenance/hash cross-binding."

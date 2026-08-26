@@ -6,13 +6,13 @@ branch: agent/lafea-authorization-gate-evidence-20260826
 base_branch: main
 base_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
 initial_engineering_head: cb951d9a44007aee6bed28fb5792f6fb7683cdb2
-observed_pr_head_before_status_refresh: 3fdd72d2d0e45d91a37f98bbdc89ef444ca60172
+observed_technical_head_before_recovery_refresh: 80c2f1d8c7a8614c99a431d36373668bea60c7c0
 state: OPEN_DRAFT_MERGEABLE
 criticality: ENGINEERING_CRITICAL
 recovery_state: CONTINUE
 takeover_authority: WRITE_ALLOWED_EVIDENCE_ONLY
 execution_mode: OWNER_DIRECTED
-current_stage: EXACT_RECEIPT_IMPLEMENTED_PENDING_EXECUTION
+current_stage: EXACT_HEAD_RETAINED_RECEIPT_IMPLEMENTED_PENDING_EXECUTION
 engineering_failure_proven: false
 review_state:
   reviews: 0
@@ -22,12 +22,15 @@ validation:
   live_grounding: PASS_SOURCE_INSPECTION
   checker_scope: PASS_SOURCE_INSPECTION
   checker_contract_static_consistency: PASS_SOURCE_INSPECTION
+  exact_head_retention_wrapper: PASS_SOURCE_INSPECTION
+  local_checkout_attempt: NOT_RUN_DNS_PRECHECKOUT_FAILURE
   q1_retained_t6_hand_jacobian: NOT_RUN
   q2_kirsch_fixed_probe: NOT_RUN
   q3_shell_pressure_equilibrium: NOT_RUN
   q4_orientation_parity: NOT_RUN
   q5_material_edit_invalidation: NOT_RUN
   browser_build: NOT_RUN
-blocker: NO_EXECUTABLE_REPOSITORY_CHECKOUT_IN_SESSION
+blocker: LOCAL_DNS_CANNOT_RESOLVE_GITHUB_NO_EXECUTABLE_EXACT_CHECKOUT
+retained_report_path: reports/qualification/lafea-implementation-authorization-gate.json
 merge_authority: OWNER_ONLY_NOT_GRANTED
-exact_next_action: node scripts/lafea-implementation-authorization-gate-check.mjs > /tmp/lafea-implementation-authorization-gate-receipt.json
+exact_next_action: node scripts/lafea-implementation-authorization-gate-retain.mjs

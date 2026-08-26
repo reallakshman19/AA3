@@ -56,6 +56,51 @@ export function sealCurrentNonFeaCommonInput(confirmation) {
 }
 
 /**
+ * Creates the exact system provenance used for a READY-only routine screening
+ * snapshot. This is not a human approval and cannot acknowledge partial or
+ * blocked methods.
+ */
+export function createNonFeaReadyProductScreeningConfirmation(report, capturedAt) {
+  const readyMethodIds = Array.isArray(report?.readyMethodIds) ? report.readyMethodIds : [];
+  const blockedMethodIds = Array.isArray(report?.blockedMethodIds) ? report.blockedMethodIds : [];
+  if (report?.packageState !== 'READY' || readyMethodIds.length === 0 || blockedMethodIds.length !== 0) {
+    const error = codedError(
+      'A product screening snapshot requires a fully READY Common Input checker report.',
+      'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_NOT_READY',
+    );
+    error.details = deepFreeze({
+      packageState: report?.packageState || null,
+      readyMethodIds: [...readyMethodIds],
+      blockedMethodIds: [...blockedMethodIds],
+      blockers: structuredClone(report?.blockers || []),
+    });
+    throw error;
+  }
+  if (typeof report.semanticHash !== 'string' || report.semanticHash.length === 0) {
+    throw codedError(
+      'READY screening snapshot requires the checker report semantic hash.',
+      'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_REPORT_HASH_REQUIRED',
+    );
+  }
+  if (typeof capturedAt !== 'string'
+      || capturedAt.trim() !== capturedAt
+      || new Date(capturedAt).toISOString() !== capturedAt) {
+    throw codedError(
+      'READY screening snapshot timestamp must be canonical ISO-8601.',
+      'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_TIMESTAMP_INVALID',
+    );
+  }
+  return deepFreeze({
+    confirmationId: `PRODUCT-SCREENING:${report.semanticHash}`,
+    confirmedAt: capturedAt,
+    confirmedBy: NON_FEA_PRODUCT_SCREENING_SNAPSHOT_ACTOR,
+    acceptPartial: false,
+    acknowledgedBlockedMethods: [],
+    statement: NON_FEA_PRODUCT_SCREENING_SNAPSHOT_STATEMENT,
+  });
+}
+
+/**
  * Creates the current routine screening snapshot without pretending that a user
  * approved it. Only a fully READY checker report is eligible. PARTIALLY_READY
  * still requires the explicit human acceptance path in sealCurrentNonFeaCommonInput().
@@ -72,29 +117,11 @@ export function sealCurrentReadyNonFeaCalculationSnapshot({ capturedAt = new Dat
   if (evaluated.error) {
     throw codedError(evaluated.error, 'COMMON_INPUT_EVALUATION_FAILED');
   }
-  const report = evaluated.report;
-  if (!report || report.packageState !== 'READY') {
-    const error = codedError(
-      'A product screening snapshot requires a fully READY Common Input checker report.',
-      'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_NOT_READY',
-    );
-    error.details = deepFreeze({
-      packageState: report?.packageState || null,
-      readyMethodIds: [...(report?.readyMethodIds || [])],
-      blockedMethodIds: [...(report?.blockedMethodIds || [])],
-      blockers: structuredClone(report?.blockers || []),
-    });
-    throw error;
-  }
-
-  const snapshot = nonFeaCommonInputStore.seal({
-    confirmationId: `PRODUCT-SCREENING:${report.semanticHash}`,
-    confirmedAt: capturedAt,
-    confirmedBy: NON_FEA_PRODUCT_SCREENING_SNAPSHOT_ACTOR,
-    acceptPartial: false,
-    acknowledgedBlockedMethods: [],
-    statement: NON_FEA_PRODUCT_SCREENING_SNAPSHOT_STATEMENT,
-  });
+  const confirmation = createNonFeaReadyProductScreeningConfirmation(
+    evaluated.report,
+    capturedAt,
+  );
+  const snapshot = nonFeaCommonInputStore.seal(confirmation);
   assertCommonInputMethodPartition(snapshot.commonInput);
   return snapshot;
 }

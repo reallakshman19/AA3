@@ -1,0 +1,49 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1471
+issue: 1321
+branch: agent/issue-1321-current-common-input-effective-projection
+state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: IMPLEMENT_CURRENT_COMMON_INPUT_MASS_PROJECTION
+base_branch: agent/issue-1321-run-internal-authorization
+base_sha: 1912bfa2fb3516643b4a5331e77c704c16b8969a
+validation:
+  live_grounding: PASS
+  pr1465_stack_base_trace: PASS
+  common_input_mass_coverage_trace: PASS
+  model_load_mass_resolver_trace: PASS
+  fitting_derivation_trace: PASS
+  negligible_gasket_trace: PASS
+  ancillary_overlay_trace: PASS
+  component_content_trace: PASS
+  legacy_projection_boundary_trace: PASS
+  focused_projection_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    observation: PRIOR_LOCAL_EXECUTION
+    error: "Could not resolve host: github.com"
+invariants:
+  current_ready_common_input_required: true
+  current_run_authorization_required: true
+  fabricated_legacy_authority_permitted: false
+  direct_mass_basis_may_be_rewritten_as_density: false
+  fitting_derivation_must_be_preserved: true
+  negligible_gasket_zero_must_be_preserved: true
+  ancillary_mass_must_be_preserved: true
+  component_content_mass_must_be_preserved: true
+  run_routing_change_authorized: false
+  support_statics_change_authorized: false
+  numerical_tolerance_change_authorized: false
+  workflow_change_authorized: false
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_disposition: DRAFT_UNMERGED
+exact_next_action: "Implement projection contract and focused falsifier; remove WIP custody; reconcile exact stacked diff."

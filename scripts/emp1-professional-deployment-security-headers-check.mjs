@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { request } from 'node:https';
@@ -74,32 +73,34 @@ emit(Object.freeze({
 }));
 
 async function readDeploymentReceipt(options) {
-  if (!options.receipt) throw controlledError('EMP1_SECURITY_HEADERS_DEPLOYMENT_RECEIPT_REQUIRED');
+  if (!options.receipt) emit(fail('EMP1_SECURITY_HEADERS_DEPLOYMENT_RECEIPT_REQUIRED', null, false));
   let receipt;
   try {
     receipt = JSON.parse(await readFile(resolve(root, options.receipt), 'utf8'));
   } catch {
-    throw controlledError('EMP1_SECURITY_HEADERS_DEPLOYMENT_RECEIPT_INVALID');
+    emit(fail('EMP1_SECURITY_HEADERS_DEPLOYMENT_RECEIPT_INVALID', null, false));
   }
-  assert.equal(receipt.schema, 'emp1-professional-deployment-receipt/v1',
+  requireReceipt(receipt.schema === 'emp1-professional-deployment-receipt/v1',
     'EMP1_SECURITY_HEADERS_DEPLOYMENT_RECEIPT_SCHEMA_INVALID');
-  assert.equal(receipt.candidate?.headSha, options.expectedHead,
+  requireReceipt(receipt.candidate?.headSha === options.expectedHead,
     'EMP1_SECURITY_HEADERS_DEPLOYMENT_HEAD_MISMATCH');
-  assert.equal(receipt.candidate?.treeSha, options.expectedTree,
+  requireReceipt(receipt.candidate?.treeSha === options.expectedTree,
     'EMP1_SECURITY_HEADERS_DEPLOYMENT_TREE_MISMATCH');
-  assert.equal(receipt.candidate?.buildArtifactSha256, options.expectedArtifactSha256,
+  requireReceipt(receipt.candidate?.buildArtifactSha256 === options.expectedArtifactSha256,
     'EMP1_SECURITY_HEADERS_DEPLOYMENT_ARTIFACT_MISMATCH');
-  assert.equal(receipt.deployment?.deployedArtifactSha256, options.expectedArtifactSha256,
+  requireReceipt(receipt.deployment?.deployedArtifactSha256 === options.expectedArtifactSha256,
     'EMP1_SECURITY_HEADERS_DEPLOYED_ARTIFACT_MISMATCH');
-  assert.equal(receipt.deployment?.environment, 'PRODUCTION',
+  requireReceipt(receipt.deployment?.environment === 'PRODUCTION',
     'EMP1_SECURITY_HEADERS_PRODUCTION_DEPLOYMENT_REQUIRED');
-  assert.equal(receipt.deployment?.state, 'DEPLOYED',
+  requireReceipt(receipt.deployment?.state === 'DEPLOYED',
     'EMP1_SECURITY_HEADERS_DEPLOYED_STATE_REQUIRED');
-  assert.ok(safeHttpsUrl(receipt.deployment?.url), 'EMP1_SECURITY_HEADERS_DEPLOYMENT_HTTPS_URL_REQUIRED');
-  assert.equal(receipt.smokeCheck?.status, 'PASS', 'EMP1_SECURITY_HEADERS_DEPLOYMENT_SMOKE_PASS_REQUIRED');
-  assert.equal(receipt.smokeCheck?.url, receipt.deployment.url,
+  requireReceipt(Boolean(safeHttpsUrl(receipt.deployment?.url)),
+    'EMP1_SECURITY_HEADERS_DEPLOYMENT_HTTPS_URL_REQUIRED');
+  requireReceipt(receipt.smokeCheck?.status === 'PASS',
+    'EMP1_SECURITY_HEADERS_DEPLOYMENT_SMOKE_PASS_REQUIRED');
+  requireReceipt(receipt.smokeCheck?.url === receipt.deployment.url,
     'EMP1_SECURITY_HEADERS_DEPLOYMENT_SMOKE_URL_MISMATCH');
-  assert.equal(receipt.receiptSemanticHash, semanticHash(receipt),
+  requireReceipt(receipt.receiptSemanticHash === semanticHash(receipt),
     'EMP1_SECURITY_HEADERS_DEPLOYMENT_RECEIPT_SEMANTIC_HASH_MISMATCH');
   return receipt;
 }
@@ -170,6 +171,9 @@ function requestUrl(url, initialOrigin, redirectDepth) {
 }
 
 function failTransport(code) { return Object.freeze({ status: 'FAIL', code }); }
+function requireReceipt(condition, code) {
+  if (!condition) emit(fail(code, null, false));
+}
 function notRun(code, deploymentUrl, liveHeadersObserved) {
   return Object.freeze({
     schema: 'emp1-professional-deployment-security-headers/v1',

@@ -41,6 +41,8 @@ const LINE_FIELD_MAP = Object.freeze({
 });
 const COMPONENT_FIELD_MAP = Object.freeze({
   COMPONENT_WEIGHT: ['component.weightKg', 'kg'],
+  COMPONENT_OPERATING_FLUID_WEIGHT: ['component.fluidWeightOpeKg', 'kg'],
+  COMPONENT_HYDRO_FLUID_WEIGHT: ['component.fluidWeightHydKg', 'kg'],
 });
 const NON_MISSING_BLOCKED = new Set([
   'BLOCKED_AMBIGUOUS',

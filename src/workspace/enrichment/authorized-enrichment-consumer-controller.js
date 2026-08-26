@@ -39,7 +39,13 @@ export function computeAuthorizedStagedJsonConsumerResultSemanticHash(value) {
 }
 
 export class AuthorizedEnrichmentConsumerController {
-  constructor({ engineeringModelStore, masterDataController, commonInputStore = null }) {
+  constructor({
+    engineeringModelStore,
+    masterDataController,
+    commonInputStore = null,
+    governedEmpiricalController = null,
+    governedProjectionProvider = null,
+  }) {
     if (!engineeringModelStore
         || typeof engineeringModelStore.configureAuthorizedEmpiricalPackage !== 'function'
         || typeof engineeringModelStore.executeConfiguredAuthorized !== 'function'
@@ -64,9 +70,20 @@ export class AuthorizedEnrichmentConsumerController {
       fail('Common-input-bound production execution requires a compatible common-input store.',
         'AUTHORIZED_ENRICHMENT_COMMON_INPUT_STORE_INVALID');
     }
+    const governedSupplied = governedEmpiricalController !== null
+      || governedProjectionProvider !== null;
+    if (governedSupplied && !validGovernedDependencies(
+      governedEmpiricalController,
+      governedProjectionProvider,
+    )) {
+      fail('Governed V2 production execution requires compatible controller and projection dependencies.',
+        'AUTHORIZED_ENRICHMENT_GOVERNED_EMPIRICAL_DEPENDENCY_INVALID');
+    }
     this.engineeringModelStore = engineeringModelStore;
     this.masterDataController = masterDataController;
     this.commonInputStore = commonInputStore;
+    this.governedEmpiricalController = governedEmpiricalController;
+    this.governedProjectionProvider = governedProjectionProvider;
     // Deliberately retain NonFeaMethodExecutionCoordinator's default
     // requireCurrentNonFeaMethods provider. It re-evaluates the live common
     // input before authorization freshness checks, so changes to ephemeral
@@ -84,42 +101,57 @@ export class AuthorizedEnrichmentConsumerController {
         'AUTHORIZED_ENRICHMENT_SCHEMA_INVALID');
     }
     const runtimePackage = requireAuthorizedEmpiricalRuntimePackage(input.runtimePackage);
+    const masterData = this.masterDataController.getMasterData();
+    const governedProjection = this.#governedEnabled()
+      ? this.governedProjectionProvider.createFromLegacy(runtimePackage, masterData)
+      : null;
+    const methodRequestSemanticHash = governedProjection?.semanticHash
+      || runtimePackage.authorizedInput.semanticHash;
     const prepared = this.executionCoordinator?.prepareAuthorization({
       authorizationId: runtimePackage.packageId,
       authorizedAt: runtimePackage.configuredAt,
       implementationId: AUTHORIZED_EMPIRICAL_METHOD_ID,
       scenarioId: runtimePackage.packageId,
-      methodRequestSemanticHash: runtimePackage.authorizedInput.semanticHash,
+      methodRequestSemanticHash,
     }) || null;
-    const configured = this.engineeringModelStore.configureAuthorizedEmpiricalPackage(
-      runtimePackage,
-      this.masterDataController.getMasterData(),
-    );
+    const configured = governedProjection
+      ? this.governedEmpiricalController.configureGoverned(governedProjection, masterData)
+      : this.engineeringModelStore.configureAuthorizedEmpiricalPackage(runtimePackage, masterData);
     if (prepared) this.executionCoordinator.recordAuthorization(prepared.receipt);
     return configured;
   }
 
   executeEmpirical(input = undefined) {
     if (input !== undefined) this.configureEmpirical(input);
-    const runtimePackage = this.engineeringModelStore.getAuthorizedEmpiricalPackage?.() || null;
+    const masterData = this.masterDataController.getMasterData();
+    const active = this.#activeAuthorization(masterData, true);
+    if (this.#governedEnabled() && !active.governedProjection) {
+      fail(
+        'Governed V2 production execution requires an explicit current governed authorization.',
+        'AUTHORIZED_ENRICHMENT_GOVERNED_AUTHORIZATION_REQUIRED',
+      );
+    }
     if (this.executionCoordinator) {
-      if (!runtimePackage) {
+      if (!active.runtimePackage) {
         fail('An authorized empirical runtime package is required.',
           'AUTHORIZED_ENRICHMENT_RUNTIME_PACKAGE_REQUIRED');
       }
       this.executionCoordinator.requireCurrentAuthorization({
-        authorizationId: runtimePackage.packageId,
+        authorizationId: active.runtimePackage.packageId,
         implementationId: AUTHORIZED_EMPIRICAL_METHOD_ID,
       });
     }
-    const execution = this.engineeringModelStore.executeConfiguredAuthorized(
-      this.masterDataController.getMasterData(),
-    );
+    const execution = this.#governedEnabled()
+      ? this.governedEmpiricalController.executeGoverned(
+        active.governedProjection,
+        masterData,
+      )
+      : this.engineeringModelStore.executeConfiguredAuthorized(masterData);
     if (this.executionCoordinator) {
       this.executionCoordinator.recordExecution({
-        executionId: execution.executionId || runtimePackage.executionId,
-        executedAt: execution.executedAt || runtimePackage.executedAt,
-        authorizationId: runtimePackage.packageId,
+        executionId: execution.executionId || active.runtimePackage.executionId,
+        executedAt: execution.executedAt || active.runtimePackage.executedAt,
+        authorizationId: active.runtimePackage.packageId,
         implementationId: AUTHORIZED_EMPIRICAL_METHOD_ID,
         engineExecutionSemanticHash: execution.semanticHash,
         resultSemanticHash: execution.distribution?.semanticHash || null,
@@ -130,12 +162,13 @@ export class AuthorizedEnrichmentConsumerController {
   }
 
   refreshEmpirical() {
+    const masterData = this.masterDataController.getMasterData();
     if (this.commonInputStore) {
       const commonState = this.commonInputStore.getSnapshot();
       if (!commonState.commonInput || commonState.staleness?.stale !== false) {
-        return this.engineeringModelStore.markEmpiricalStale('COMMON_INPUT_STALE');
+        return this.#markActiveStale('COMMON_INPUT_STALE');
       }
-      const runtimePackage = this.engineeringModelStore.getAuthorizedEmpiricalPackage?.() || null;
+      const runtimePackage = this.#configuredRuntimePackage();
       if (runtimePackage) {
         try {
           this.executionCoordinator.requireCurrentAuthorization({
@@ -143,21 +176,41 @@ export class AuthorizedEnrichmentConsumerController {
             implementationId: AUTHORIZED_EMPIRICAL_METHOD_ID,
           });
         } catch {
-          return this.engineeringModelStore.markEmpiricalStale('COMMON_INPUT_AUTHORIZATION_STALE');
+          return this.#markActiveStale('COMMON_INPUT_AUTHORIZATION_STALE');
         }
       }
     }
-    return this.engineeringModelStore.refreshAuthorizedEmpiricalPackage(
-      this.masterDataController.getMasterData(),
-    );
+    if (this.#governedEnabled()) {
+      const configuredProjection = this.governedEmpiricalController.getGovernedProjection();
+      if (!configuredProjection) {
+        return this.governedEmpiricalController.refreshGoverned(null, masterData);
+      }
+      try {
+        const currentProjection = this.governedProjectionProvider.rebuild(
+          configuredProjection,
+          masterData,
+        );
+        return this.governedEmpiricalController.refreshGoverned(
+          currentProjection,
+          masterData,
+        );
+      } catch (error) {
+        return this.governedEmpiricalController.markStale(
+          error?.code || 'GOVERNED_PROJECTION_REBUILD_FAILED',
+        );
+      }
+    }
+    return this.engineeringModelStore.refreshAuthorizedEmpiricalPackage(masterData);
   }
 
   markEmpiricalStale(reason, datasetVersion = null) {
-    return this.engineeringModelStore.markEmpiricalStale(reason, datasetVersion);
+    return this.#markActiveStale(reason, datasetVersion);
   }
 
   getEmpiricalAuthorizationState() {
-    return this.engineeringModelStore.getEmpiricalAuthorizationState();
+    return this.#governedEnabled()
+      ? this.governedEmpiricalController.getState()
+      : this.engineeringModelStore.getEmpiricalAuthorizationState();
   }
 
   async downloadStagedJson(input, documentRef, runtime) {
@@ -210,6 +263,43 @@ export class AuthorizedEnrichmentConsumerController {
       semanticHash: computeAuthorizedStagedJsonConsumerResultSemanticHash(draft),
     });
   }
+
+  #governedEnabled() {
+    return Boolean(this.governedEmpiricalController && this.governedProjectionProvider);
+  }
+
+  #configuredRuntimePackage() {
+    if (this.#governedEnabled()) {
+      return this.governedEmpiricalController.getGovernedProjection()?.runtimePackage || null;
+    }
+    return this.engineeringModelStore.getAuthorizedEmpiricalPackage?.() || null;
+  }
+
+  #activeAuthorization(masterData, rebuildGoverned) {
+    if (this.#governedEnabled()) {
+      const configuredProjection = this.governedEmpiricalController.getGovernedProjection();
+      if (!configuredProjection) {
+        return { governedProjection: null, runtimePackage: null };
+      }
+      const governedProjection = rebuildGoverned
+        ? this.governedProjectionProvider.rebuild(configuredProjection, masterData)
+        : configuredProjection;
+      return {
+        governedProjection,
+        runtimePackage: configuredProjection.runtimePackage,
+      };
+    }
+    return {
+      governedProjection: null,
+      runtimePackage: this.engineeringModelStore.getAuthorizedEmpiricalPackage?.() || null,
+    };
+  }
+
+  #markActiveStale(reason, datasetVersion = null) {
+    return this.#governedEnabled()
+      ? this.governedEmpiricalController.markStale(reason, datasetVersion)
+      : this.engineeringModelStore.markEmpiricalStale(reason, datasetVersion);
+  }
 }
 
 export function requireAuthorizedStagedJsonConsumerResult(value) {
@@ -242,6 +332,21 @@ export function requireAuthorizedStagedJsonConsumerResult(value) {
       'AUTHORIZED_ENRICHMENT_HASH_MISMATCH');
   }
   return deepFreeze(result);
+}
+
+function validGovernedDependencies(controller, provider) {
+  return Boolean(
+    controller
+    && typeof controller.configureGoverned === 'function'
+    && typeof controller.refreshGoverned === 'function'
+    && typeof controller.executeGoverned === 'function'
+    && typeof controller.getGovernedProjection === 'function'
+    && typeof controller.getState === 'function'
+    && typeof controller.markStale === 'function'
+    && provider
+    && typeof provider.createFromLegacy === 'function'
+    && typeof provider.rebuild === 'function'
+  );
 }
 
 function exact(value, keys, label) {

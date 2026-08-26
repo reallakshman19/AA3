@@ -7,6 +7,9 @@ import {
   requireAuthorizedEmpiricalRuntimePackageV2,
 } from './authorized-empirical-runtime-package-v2.js';
 import {
+  requireGovernedEmpiricalRuntimePackageProjectionV2,
+} from './governed-empirical-runtime-package-v2.js';
+import {
   AuthorizedEmpiricalRuntimeStoreV2,
 } from './authorized-empirical-runtime-store-v2.js';
 
@@ -42,9 +45,33 @@ export class ConfiguredEmpiricalMethodControllerV2 {
     return this.runtimeStore.configure(packageV2, current.bindings);
   }
 
+  configureGoverned(governedProjection, masterData) {
+    requireFunction(this.runtimeStore, 'configureGoverned');
+    const projection = requireGovernedEmpiricalRuntimePackageProjectionV2(
+      governedProjection,
+    );
+    const current = this.#current(masterData);
+    if (!current) {
+      return this.runtimeStore.markBlockedNotReady(
+        'EMPIRICAL_RUNTIME_V2_CONTEXT_NOT_READY',
+        [{ code: 'EMPIRICAL_RUNTIME_V2_CONTEXT_NOT_READY' }],
+      );
+    }
+    return this.runtimeStore.configureGoverned(projection, current.bindings);
+  }
+
   refresh(masterData) {
     const current = this.#current(masterData);
     return this.runtimeStore.refresh(current?.bindings || null);
+  }
+
+  refreshGoverned(currentGovernedProjection, masterData) {
+    requireFunction(this.runtimeStore, 'refreshGoverned');
+    const current = this.#current(masterData);
+    return this.runtimeStore.refreshGoverned(
+      current?.bindings || null,
+      currentGovernedProjection,
+    );
   }
 
   execute(masterData) {
@@ -57,6 +84,46 @@ export class ConfiguredEmpiricalMethodControllerV2 {
         state,
       );
     }
+    return this.#executeCurrent(current);
+  }
+
+  executeGoverned(currentGovernedProjection, masterData) {
+    requireFunction(this.runtimeStore, 'refreshGoverned');
+    const current = this.#current(masterData);
+    const state = this.runtimeStore.refreshGoverned(
+      current?.bindings || null,
+      currentGovernedProjection,
+    );
+    if (!state.calculationEligible || !current) {
+      fail(
+        'Governed configured empirical method execution is not current and eligible.',
+        'EMPIRICAL_RUNTIME_V2_NOT_CALCULATION_ELIGIBLE',
+        state,
+      );
+    }
+    return this.#executeCurrent(current);
+  }
+
+  markStale(reason, datasetVersion = null) {
+    this.supportLoadStore.markStale(reason, datasetVersion);
+    return this.runtimeStore.markStale(reason, [{ datasetVersion }]);
+  }
+
+  getState() { return this.runtimeStore.getSnapshot(); }
+  getPackage() { return this.runtimeStore.getPackage(); }
+  getGovernedProjection() {
+    return typeof this.runtimeStore.getGovernedProjection === 'function'
+      ? this.runtimeStore.getGovernedProjection()
+      : null;
+  }
+  getExecution() { return this.runtimeStore.getExecution(); }
+
+  clear() {
+    this.runtimeStore.clear();
+    this.supportLoadStore.clear();
+  }
+
+  #executeCurrent(current) {
     const runtimePackage = this.runtimeStore.requireCurrentPackage();
     const request = projectAuthorizedEmpiricalExecutionV2Request({
       runtimePackage,
@@ -69,20 +136,6 @@ export class ConfiguredEmpiricalMethodControllerV2 {
     const execution = this.supportLoadStore.calculateAuthorizedV2(request);
     this.runtimeStore.recordExecution(execution);
     return execution;
-  }
-
-  markStale(reason, datasetVersion = null) {
-    this.supportLoadStore.markStale(reason, datasetVersion);
-    return this.runtimeStore.markStale(reason, [{ datasetVersion }]);
-  }
-
-  getState() { return this.runtimeStore.getSnapshot(); }
-  getPackage() { return this.runtimeStore.getPackage(); }
-  getExecution() { return this.runtimeStore.getExecution(); }
-
-  clear() {
-    this.runtimeStore.clear();
-    this.supportLoadStore.clear();
   }
 
   #current(masterData) {

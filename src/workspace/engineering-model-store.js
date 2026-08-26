@@ -10,6 +10,7 @@ import {
   buildAuthorizedEmpiricalLoadProfile,
 } from './engineering-loads/authorized-empirical-load-execution.js';
 import { authorizedEmpiricalRuntimeStore } from './engineering-loads/authorized-empirical-runtime-store.js';
+import { authorizedEmpiricalRuntimeStoreV2 } from './engineering-loads/authorized-empirical-runtime-store-v2.js';
 import { empiricalLoadCalcScenarioStore } from './engineering-loads/empirical-load-calc-scenario-store.js';
 import {
   topologyEditCheckSnapshotStore,
@@ -143,7 +144,13 @@ export class EngineeringModelStore {
 
   markEmpiricalStale(reason, datasetVersion = null) {
     engineeringSupportLoadStore.markStale(reason, datasetVersion);
-    return authorizedEmpiricalRuntimeStore.markStale(reason, [{ datasetVersion }]);
+    const v2 = authorizedEmpiricalRuntimeStoreV2.getPackage()
+      ? authorizedEmpiricalRuntimeStoreV2.markStale(reason, [{ datasetVersion }])
+      : null;
+    const v1 = authorizedEmpiricalRuntimeStore.getPackage()
+      ? authorizedEmpiricalRuntimeStore.markStale(reason, [{ datasetVersion }])
+      : null;
+    return v2 || v1 || authorizedEmpiricalRuntimeStore.markStale(reason, [{ datasetVersion }]);
   }
 
   executeConfiguredAuthorized(masterData) {
@@ -168,6 +175,9 @@ export class EngineeringModelStore {
   deactivate(reason = 'NO_ACTIVE_DATASET') {
     this.rebuild(null);
     engineeringSupportLoadStore.markStale(reason, null);
+    if (authorizedEmpiricalRuntimeStoreV2.getPackage()) {
+      return authorizedEmpiricalRuntimeStoreV2.markStale(reason, [{ datasetVersion: null }]);
+    }
     return authorizedEmpiricalRuntimeStore.getPackage()
       ? authorizedEmpiricalRuntimeStore.markStale(reason, [{ datasetVersion: null }])
       : authorizedEmpiricalRuntimeStore.refresh(null);
@@ -321,7 +331,8 @@ export class EngineeringModelStore {
         restraintId: scenarioSupportResult?.restraintId ?? null,
       };
     });
-    const authorizedExecution = authorizedEmpiricalRuntimeStore.getExecution() || engineeringSupportLoadStore.getAuthorizedExecution();
+    const runtimeStore = activeEmpiricalRuntimeStore();
+    const authorizedExecution = runtimeStore.getExecution() || engineeringSupportLoadStore.getAuthorizedExecution();
     return freezeDeep({
       ...entity,
       entityId: site.primaryEntityId,
@@ -339,13 +350,13 @@ export class EngineeringModelStore {
         engineeringSupportLoads: distribution ? {
           method: distribution.method,
           authority: authorizedExecution ? 'AUTHORIZED_HANDOFF' : 'UNAUTHORIZED_LEGACY_RESULT',
-          authorizationState: authorizedEmpiricalRuntimeStore.getSnapshot().state,
+          authorizationState: runtimeStore.getSnapshot().state,
           freshness: distribution.freshness,
           sourceAxisBasis: distribution.sourceAxisBasis,
           loadCases,
         } : {
-          authority: authorizedEmpiricalRuntimeStore.getPackage() ? 'AUTHORIZED_HANDOFF' : 'NOT_CALCULATED',
-          authorizationState: authorizedEmpiricalRuntimeStore.getSnapshot().state,
+          authority: runtimeStore.getPackage() ? 'AUTHORIZED_HANDOFF' : 'NOT_CALCULATED',
+          authorizationState: runtimeStore.getSnapshot().state,
           freshness: { status: 'NOT_CALCULATED' },
           sourceAxisBasis: 'Z_UP',
           loadCases: [],
@@ -360,9 +371,12 @@ export class EngineeringModelStore {
     return topologyEditCheckSnapshotStore.getSnapshot(this.#dataset?.datasetId);
   }
   getDistribution() { return engineeringSupportLoadStore.getDistribution(); }
-  getAuthorizedExecution() { return authorizedEmpiricalRuntimeStore.getExecution() || engineeringSupportLoadStore.getAuthorizedExecution(); }
-  getEmpiricalAuthorizationState() { return authorizedEmpiricalRuntimeStore.getSnapshot(); }
-  getAuthorizedEmpiricalPackage() { return authorizedEmpiricalRuntimeStore.getPackage(); }
+  getAuthorizedExecution() {
+    return activeEmpiricalRuntimeStore().getExecution()
+      || engineeringSupportLoadStore.getAuthorizedExecution();
+  }
+  getEmpiricalAuthorizationState() { return activeEmpiricalRuntimeStore().getSnapshot(); }
+  getAuthorizedEmpiricalPackage() { return activeEmpiricalRuntimeStore().getPackage(); }
   getPerformanceMetrics() {
     return {
       modelRuntimeRevision: this.#modelRuntimeRevision,
@@ -377,7 +391,14 @@ export class EngineeringModelStore {
     this.rebuild(null);
     engineeringSupportLoadStore.clear();
     authorizedEmpiricalRuntimeStore.clear();
+    authorizedEmpiricalRuntimeStoreV2.clear();
   }
+}
+
+function activeEmpiricalRuntimeStore() {
+  return authorizedEmpiricalRuntimeStoreV2.getPackage()
+    ? authorizedEmpiricalRuntimeStoreV2
+    : authorizedEmpiricalRuntimeStore;
 }
 
 function identity(value, label) {

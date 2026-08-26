@@ -1,0 +1,49 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1459
+mission: "Prevent proprietary source content in runtime error presentation"
+workstream: EMP1_RUNTIME_ERROR_PRESENTATION_SECURITY
+branch: agent/issue-1458-emp1-runtime-error-redaction-20260826
+issue: 1458
+umbrella: 1389
+execution_mode: AUTO
+auto_state: COMPLETE
+scope_authority: LOCKED_TO_ISSUE_1458
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_REBUILT_CURRENT_MAIN
+handover_readiness: READY
+main_head_last_checked: b4d1137d0be67a4723ae08df90976f4218b6515e
+merge_base: b4d1137d0be67a4723ae08df90976f4218b6515e
+technical_basis_head: 68c2442ccb232aefb5edf794e933c6a84e796c78
+pre_hosted_recovery_head: c732785fa7dbfc64fd6fa991a76843e6e0a200ad
+grounding_epoch: GE-PR1459-004
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: SAFE_PR1450_DRIFT_ZERO_EXACT_PATH_OVERLAP
+current_stage: READY_FOR_OWNER_AUTHORIZED_EXACT_HEAD_MERGE
+merge_authorization: GRANTED_BY_OWNER_2026-08-26T10:11:19Z
+validation:
+  corrected_current_main_architecture: PASS_SOURCE_INSPECTION
+  exact_five_file_technical_scope: PASS_SOURCE_INSPECTION
+  bounded_diagnostic_code_projection: PASS_SOURCE_INSPECTION
+  canonical_api_result_projection: PASS_SOURCE_INSPECTION
+  canonical_api_subscription_projection: PASS_SOURCE_INSPECTION
+  emp1_controller_exception_projection: PASS_SOURCE_INSPECTION
+  governed_readiness_reason_preservation: PASS_SOURCE_INSPECTION
+  proprietary_sentinel_falsifier_encoded: PASS_SOURCE_INSPECTION
+  pr1450_exact_path_overlap: PASS_NONE
+  reviews: PASS_NONE
+  review_threads: PASS_NONE
+  node_falsifier_execution: NOT_RUN
+  hosted_runemp1: NOT_RUN_EXECUTION_ENVIRONMENT
+  hosted_gamma5: NOT_RUN_EXECUTION_ENVIRONMENT
+  numerical_comparison: NOT_APPLICABLE
+hosted_evidence:
+  runemp1_run: 32958370293
+  runemp1_job: 98145007797
+  gamma5_run: 32958370284
+  gamma5_job: 98145007860
+  classification: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+exact_next_action: "Re-observe final recovery head and live main; if exact eight-file diff, zero reviews/threads and hosted jobs remain pre-step NOT_RUN, mark ready and squash-merge with exact expected head SHA."

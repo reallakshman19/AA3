@@ -1,0 +1,47 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1485
+mission: Explicit opt-in B02D V2 mesh producer binding on current main
+base_main: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
+predecessor_frozen_assets_pr: 1484
+historical_provenance_pr: 1259
+authority_domain:
+  - B02D_V2_PROFILE_CONTROLLED_PRODUCER_SELECTION
+  - V1_BINDING_PRESERVATION
+  - V2_BINDING_FAIL_CLOSED_MISUSE_CHECKS
+changed_paths:
+  - src/workspace/lafea-mesh-producer-binding.js
+  - scripts/lafea-b02d-v2-producer-binding-check.mjs
+  - agents/PR1485_workreport.md
+  - agents/status/PR1485.yaml
+  - agents/claims/PR1485.yaml
+source_custody:
+  current_prechange_binding_blob: 5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
+  historical_prechange_binding_blob: 5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
+  reviewed_v2_binding_blob: e8307066293314ad952608872db596cf1898d5c1
+claims:
+  producer_binding_changed: true
+  v2_selected_only_by_v2_profile_identity_and_source_revision: true
+  v1_strategy_preserved_in_binding: true
+  generic_strategy_preserved_in_binding: true
+  nonempty_v2_refinement_features_fail_closed: true
+  response_solver_changed: false
+  historical_galerkin_candidate_included: false
+  b01_prerequisite_evidence_available: false
+  b02_numerical_authority_granted: false
+  release_authority_granted: false
+  trust_authority_granted: false
+validation_truth:
+  binding_blob_custody: PASS
+  focused_checker_syntax: PASS_LOCAL_NODE_CHECK
+  current_head_binding_execution: NOT_RUN
+excluded_authority:
+  - RESPONSE_SOLVER_MECHANICS
+  - REACTION_EQUILIBRIUM_CORRECTION
+  - GALERKIN_TRANSLATION_CORRECTION
+  - V1_DEFAULT_REPLACEMENT
+  - BENCHMARK_OR_TOLERANCE_CHANGE
+  - B02_NUMERICAL_AUTHORITY
+  - RELEASE_LIFECYCLE_TRUST
+  - WORKFLOW_MUTATION
+merge_authority: OWNER_ONLY_NOT_GRANTED

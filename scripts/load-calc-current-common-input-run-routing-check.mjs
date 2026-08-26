@@ -31,6 +31,12 @@ assert.equal(isRoutineRunReady({
   staleness: { stale: false },
   error: null,
 }), true, 'current READY sealed Common Input must remain routine-run eligible');
+assert.equal(isRoutineRunReady({
+  commonInput: READY_COMMON_INPUT,
+  staleness: { stale: true },
+  report: READY_REPORT,
+  error: null,
+}), true, 'a fresh READY checker report must allow the runtime to reseal over stale retained evidence');
 for (const state of [
   { report: { ...READY_REPORT, packageState: 'PARTIALLY_READY' }, error: null },
   { report: { ...READY_REPORT, blockedMethodIds: ['SUSTAINED_REACTIONS'] }, error: null },
@@ -241,6 +247,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   benchmark: 'ISSUE1321_CURRENT_COMMON_INPUT_RUN_CUTOVER',
   readyReportEnablesRun: true,
+  staleSealCanBeResealedFromReadyReport: true,
   manualSealPrerequisite: false,
   legacyAuthorizationPrerequisite: false,
   currentRuntimeExecutionsPerRequest: 1,

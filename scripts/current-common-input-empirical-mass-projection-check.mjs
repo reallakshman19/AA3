@@ -2,22 +2,12 @@
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import {
-  NON_FEA_COMMON_SCHEMAS,
-} from '../src/core/non-fea-common-checker/index.js';
+import { NON_FEA_COMMON_SCHEMAS } from '../src/core/non-fea-common-checker/index.js';
 import { buildModelLoadFoundation } from '../src/core/model-loads/model-load-foundation.js';
 import { buildPipingPortTopologyGraph } from '../src/core/piping-topology/index.js';
-import {
-  createSharedPipingModel,
-  semanticHash,
-} from '../src/core/shared-piping-model/index.js';
-import {
-  createEvidenceValue,
-  createEmptyProjectDataProfile,
-} from '../src/workspace/project-data/project-data-contract.js';
-import {
-  createNonFeaEmpiricalRunAuthorization,
-} from '../src/workspace/engineering-loads/non-fea-empirical-run-authorization.js';
+import { createSharedPipingModel, semanticHash } from '../src/core/shared-piping-model/index.js';
+import { createEvidenceValue, createEmptyProjectDataProfile } from '../src/workspace/project-data/project-data-contract.js';
+import { createNonFeaEmpiricalRunAuthorization } from '../src/workspace/engineering-loads/non-fea-empirical-run-authorization.js';
 import {
   CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_SCHEMA,
   createCurrentCommonInputEmpiricalMassProjection,
@@ -48,13 +38,8 @@ const readySnapshot = snapshot(commonInput({
   projectDataProfile: profile,
   sourceLoadPrimitiveSet,
 }));
-const runAuthorization = createNonFeaEmpiricalRunAuthorization(readySnapshot, {
-  authorizedAt: AUTHORIZED_AT,
-});
-const projection = createCurrentCommonInputEmpiricalMassProjection({
-  snapshot: readySnapshot,
-  runAuthorization,
-});
+const runAuthorization = createNonFeaEmpiricalRunAuthorization(readySnapshot, { authorizedAt: AUTHORIZED_AT });
+const projection = createCurrentCommonInputEmpiricalMassProjection({ snapshot: readySnapshot, runAuthorization });
 
 assert.equal(projection.schema, CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_SCHEMA);
 assert.deepEqual(requireCurrentCommonInputEmpiricalMassProjection(projection), projection);
@@ -68,17 +53,14 @@ assert.deepEqual(
 assert.equal(projection.sourceModelSemanticHash, rawModel.semanticHash);
 assert.equal(projection.enrichedModelSemanticHash, enrichedModel.semanticHash);
 assert.equal(projection.sourceLoadPrimitiveSetSemanticHash, sourceLoadPrimitiveSet.semanticHash);
-assert.notEqual(
-  projection.effectiveMassPrimitiveSetSemanticHash,
-  sourceLoadPrimitiveSet.semanticHash,
-  'effective mass primitives must be rebuilt from the sealed enriched model, not copied from raw workspace primitives',
-);
 assert.equal(projection.policy.projectionOnly, true);
 assert.equal(projection.policy.executionAuthorizationGranted, false);
 assert.equal(projection.policy.legacyPublicationOrHandoffAuthorityAsserted, false);
 assert.equal(projection.policy.massBasisSource, 'SEALED_COMMON_INPUT_ENRICHED_MODEL');
 assert.equal(projection.policy.sourceLoadPrimitiveSetUsedAsNumericalBasis, false);
-assert.equal(projection.policy.effectiveModelLoadFoundationRebuiltDeterministically, true);
+assert.equal(projection.policy.effectiveLoadSourceProjectionRebuiltDeterministically, true);
+assert.equal(projection.policy.existingMassResolverReused, true);
+assert.equal(projection.policy.executionGravityConsumed, false);
 assert.equal(projection.policy.directMassBasisPreserved, true);
 assert.equal(projection.policy.fittingDerivationPreserved, true);
 assert.equal(projection.policy.negligibleMassZeroPreserved, true);
@@ -95,7 +77,7 @@ const rawPipeEmpty = sourceLoadPrimitiveSet.primitives.find((row) => (
   && row.primitiveType === 'DISTRIBUTED_GRAVITY_LOAD'
 ));
 assert.equal(rawPipeEmpty.massPerLengthKgM, 4.5,
-  'fixture must prove the source primitive is numerically different from enriched Common Input');
+  'fixture must prove source workspace primitives differ from enriched Common Input mass');
 
 const pipe = entity('PIPE-A');
 assert.deepEqual(caseMasses(pipe), { EMPTY: 28, HYD: 34, OPE: 32 });
@@ -111,7 +93,7 @@ assert.deepEqual(
   ['PIPE_METAL', 'INSULATION'],
 );
 assert.ok(caseRow(pipe, 'EMPTY').sourceMassBreakdown.every((row) => row.sourceEvidence),
-  'direct kg/m mass basis must remain source evidence in the effective primitive');
+  'direct kg/m mass basis must remain source evidence');
 assert.equal(
   caseRow(pipe, 'EMPTY').formulaTrace.some((trace) => trace.formulaId === 'PIPE_METAL_MASS_PER_LENGTH_V1'),
   false,
@@ -121,9 +103,9 @@ assert.equal(caseRow(pipe, 'EMPTY').ancillaryEvidence.length, 2);
 
 const fitting = entity('ELBO-A');
 assert.equal(
-  caseRow(fitting, 'EMPTY').basePrimitiveSourceEvidence?.source,
+  caseRow(fitting, 'EMPTY').dryMassEvidence?.source,
   'DERIVED_FROM_ADJACENT_PIPE_SECTION',
-  'fitting mass must be derived by the existing model-load primitive builder from enriched pipe evidence',
+  'fitting mass must use the existing same-branch derivation against enriched pipe evidence',
 );
 assert.equal(caseRow(fitting, 'EMPTY').massKg, caseRow(fitting, 'OPE').massKg);
 assert.equal(caseRow(fitting, 'EMPTY').massKg, caseRow(fitting, 'HYD').massKg);
@@ -150,30 +132,24 @@ for (const forbidden of ['baselineId', 'handoffId', 'authorityId', 'publicationD
 const forgedPolicy = rehashProjection(projection, {
   policy: { ...projection.policy, executionAuthorizationGranted: true },
 });
-expectCode(
-  () => requireCurrentCommonInputEmpiricalMassProjection(forgedPolicy),
-  'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_POLICY_INVALID',
-);
+expectCode(() => requireCurrentCommonInputEmpiricalMassProjection(forgedPolicy),
+  'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_POLICY_INVALID');
 
 const tamperedRows = structuredClone(projection.entityRows);
 const pipeIndex = tamperedRows.findIndex((row) => row.entityId === 'PIPE-A');
 tamperedRows[pipeIndex].cases[0].massKg += 1;
 const tamperedMass = rehashProjection(projection, { entityRows: tamperedRows });
-expectCode(
-  () => requireCurrentCommonInputEmpiricalMassProjection(tamperedMass),
-  'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_COMPOSITION_INVALID',
-);
+expectCode(() => requireCurrentCommonInputEmpiricalMassProjection(tamperedMass),
+  'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_COMPOSITION_INVALID');
 
 const forgedSummary = rehashProjection(projection, {
   summary: { ...projection.summary, zeroMassEntityCaseCount: 999 },
 });
-expectCode(
-  () => requireCurrentCommonInputEmpiricalMassProjection(forgedSummary),
-  'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_SUMMARY_INVALID',
-);
+expectCode(() => requireCurrentCommonInputEmpiricalMassProjection(forgedSummary),
+  'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_SUMMARY_INVALID');
 
 const forgedEffectiveBasis = rehashProjection(projection, {
-  effectiveMassPrimitiveSetSemanticHash: semanticHash({ wrong: 'effective-mass-basis' }),
+  effectiveLoadSourceProjectionSemanticHash: semanticHash({ wrong: 'effective-mass-basis' }),
 });
 expectCode(
   () => requireCurrentCurrentCommonInputEmpiricalMassProjection(forgedEffectiveBasis, {
@@ -183,7 +159,7 @@ expectCode(
   'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_STALE',
 );
 
-const resealedInput = commonInput({
+const resealedSnapshot = snapshot(commonInput({
   sourceModel: rawModel,
   enrichedModel,
   projectDataProfile: profile,
@@ -194,8 +170,7 @@ const resealedInput = commonInput({
       confirmedBy: 'different READY seal',
     },
   },
-});
-const resealedSnapshot = snapshot(resealedInput);
+}));
 expectCode(
   () => requireCurrentCurrentCommonInputEmpiricalMassProjection(projection, {
     snapshot: resealedSnapshot,
@@ -204,9 +179,8 @@ expectCode(
   'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_SEAL_STALE',
 );
 
-// Same enriched model, different current source primitive authority: numerical
-// masses remain identical, but the projection binds the changed source contract
-// and therefore has a different semantic identity/currentness basis.
+// Same enriched model, different source/workspace primitive authority: projected
+// masses remain identical, while currentness identity must change.
 const alternateRawModel = makeModel({
   pipeMassKgPerM: 7,
   insulationMassKgPerM: 0.25,
@@ -237,10 +211,8 @@ assert.deepEqual(
   projection.entityRows.map((row) => [row.entityId, caseMasses(row)]),
   'source workspace primitive changes must not alter masses when sealed enriched Common Input is unchanged',
 );
-assert.notEqual(
-  alternateProjection.sourceLoadPrimitiveSetSemanticHash,
-  projection.sourceLoadPrimitiveSetSemanticHash,
-);
+assert.notEqual(alternateProjection.sourceLoadPrimitiveSetSemanticHash,
+  projection.sourceLoadPrimitiveSetSemanticHash);
 assert.notEqual(alternateProjection.semanticHash, projection.semanticHash);
 
 const source = readFileSync(new URL(
@@ -248,18 +220,19 @@ const source = readFileSync(new URL(
   import.meta.url,
 ), 'utf8');
 assert.match(source, /buildPipingPortTopologyGraph\(model\)/u,
-  'projection must build an effective topology from the exact sealed enriched model');
-assert.match(source, /buildModelLoadFoundation\(model, effectiveTopologyGraph\)/u,
-  'projection must reuse the existing model-load resolver/primitive stack against the enriched model');
+  'projection must normalize topology from the sealed enriched model');
+assert.match(source, /projectEngineeringLoadSources\(model, effectiveTopologyGraph\)/u,
+  'projection must normalize model-load geometry from the sealed enriched model');
+assert.match(source, /resolveComponentCaseMass\(component, loadCaseId, compositionProfile\)/u,
+  'projection must reuse the established model-load mass resolver');
+assert.match(source, /derivePipeLikeFittingWeightEvidence\(component, components\)/u,
+  'projection must reuse the established same-branch fitting derivation');
 assert.match(source, /commonInput\.enrichedModel/u,
   'numerical mass basis must be the sealed Common Input enriched model');
 assert.match(source, /createNonFeaCommonEnrichedConfiguredDefaultOverlay/u,
   'ancillary projection must reuse the existing exact configured-default overlay');
-assert.match(
-  source,
-  /createCurrentCommonInputEmpiricalMassProjection\(\{\s*snapshot,\s*runAuthorization,\s*\} = \{\}\)/u,
-  'public projection API must not accept an external primitive set as its numerical basis',
-);
+assert.doesNotMatch(source, /buildModelLoadFoundation/u,
+  'mass projection must not create a weight-force primitive set under a separate gravity profile');
 assert.doesNotMatch(source, /authorized-empirical-load-input/u,
   'projection must not depend on legacy authorized empirical input');
 assert.doesNotMatch(source, /common-enriched-consumer-handoff/u,
@@ -274,11 +247,12 @@ console.log(JSON.stringify({
   commonInputSemanticHash: projection.commonInputSemanticHash,
   runAuthorizationSemanticHash: projection.runAuthorizationSemanticHash,
   sourceLoadPrimitiveSetSemanticHash: projection.sourceLoadPrimitiveSetSemanticHash,
-  effectiveMassPrimitiveSetSemanticHash: projection.effectiveMassPrimitiveSetSemanticHash,
+  effectiveLoadSourceProjectionSemanticHash: projection.effectiveLoadSourceProjectionSemanticHash,
   entityCount: projection.summary.entityCount,
   entityCaseCount: projection.summary.entityCaseCount,
   enrichedModelMassBasisPreserved: true,
-  rawPrimitiveNumericalOverrideRejectedByDesign: true,
+  sourcePrimitiveNumericalOverrideRejectedByDesign: true,
+  executionGravityConsumed: false,
   directMassBasisPreserved: true,
   fittingDerivedMassPreserved: true,
   negligibleGasketZeroPreserved: true,
@@ -293,32 +267,18 @@ function entity(entityId) {
   assert.ok(row, `missing projection entity ${entityId}`);
   return row;
 }
-
 function caseRow(entityRow, loadCaseId) {
   const row = entityRow.cases.find((item) => item.loadCaseId === loadCaseId);
   assert.ok(row, `missing ${entityRow.entityId}:${loadCaseId}`);
   return row;
 }
-
 function caseMasses(entityRow) {
   return Object.fromEntries(entityRow.cases.map((row) => [row.loadCaseId, row.massKg]));
 }
-
 function snapshot(commonInputValue) {
-  return {
-    commonInput: commonInputValue,
-    staleness: { stale: false, changes: [] },
-    error: '',
-  };
+  return { commonInput: commonInputValue, staleness: { stale: false, changes: [] }, error: '' };
 }
-
-function commonInput({
-  sourceModel,
-  enrichedModel,
-  projectDataProfile,
-  sourceLoadPrimitiveSet,
-  overrides = {},
-}) {
+function commonInput({ sourceModel, enrichedModel, projectDataProfile, sourceLoadPrimitiveSet, overrides = {} }) {
   const base = {
     schema: NON_FEA_COMMON_SCHEMAS.COMMON_INPUT,
     packageState: 'READY',
@@ -355,23 +315,14 @@ function commonInput({
     },
     methodReadiness: [],
     lineage: { schema: 'fixture-lineage/v1' },
-    seal: {
-      semanticHash: semanticHash({ seal: 'first' }),
-      confirmedBy: 'fixture READY seal',
-    },
+    seal: { semanticHash: semanticHash({ seal: 'first' }), confirmedBy: 'fixture READY seal' },
   };
   const material = { ...base, ...overrides };
   return { ...material, semanticHash: semanticHash(material) };
 }
-
 function contract(id) {
-  return {
-    schema: `fixture-${id}/v1`,
-    status: 'READY',
-    semanticHash: semanticHash({ contract: id }),
-  };
+  return { schema: `fixture-${id}/v1`, status: 'READY', semanticHash: semanticHash({ contract: id }) };
 }
-
 function projectProfile() {
   const empty = createEmptyProjectDataProfile();
   return {
@@ -387,25 +338,17 @@ function projectProfile() {
           ancillaryDefault('PROJECT-CLADDING', 'CLADDING_WEIGHT', 2),
           ancillaryDefault('PROJECT-TRACING', 'TRACING_WEIGHT', 1),
         ],
-      }, {
-        source: 'Focused current Common Input mass projection fixture',
-      }, true),
+      }, { source: 'Focused current Common Input mass projection fixture' }, true),
     },
   };
 }
-
 function ancillaryDefault(defaultId, fieldId, value) {
   return {
-    defaultId,
-    fieldId,
-    value,
-    unit: 'kg/m',
+    defaultId, fieldId, value, unit: 'kg/m',
     basis: 'Qualified permanent ancillary distributed mass for projection parity.',
-    allowedMethods: ['WEIGHT_AND_GRAVITY'],
-    scope: { lineIds: ['L-1'] },
+    allowedMethods: ['WEIGHT_AND_GRAVITY'], scope: { lineIds: ['L-1'] },
   };
 }
-
 function makeModel({
   pipeMassKgPerM = 10,
   insulationMassKgPerM = 1,
@@ -425,19 +368,12 @@ function makeModel({
       schema: 'source-package-snapshot/v1',
       datasetId: 'CURRENT-MASS-PROJECTION-DATASET',
       sourceSchema: 'fixture/v1',
-      sourceSemanticHash: semanticHash({
-        source: 'current-mass-projection',
-        pipeMassKgPerM,
-        valveDryMassKg,
-      }),
+      sourceSemanticHash: semanticHash({ source: 'current-mass-projection', pipeMassKgPerM, valveDryMassKg }),
       sourceByteHash: null,
     },
     components: [
       component({
-        key: 'PIPE-A',
-        type: 'PIPE',
-        start: point(0),
-        end: point(2000),
+        key: 'PIPE-A', type: 'PIPE', start: point(0), end: point(2000),
         engineeringProperties: {
           unitPipeWeightKgPerM: evidence(pipeMassKgPerM, 'kg/m', 'UNIT_PIPE_WEIGHT_KG_PER_M'),
           outerDiameterMm: evidence(100, 'mm', 'OUTSIDE_DIAMETER_MM'),
@@ -452,10 +388,7 @@ function makeModel({
       component({ key: 'ELBO-A', type: 'ELBO', start: point(2000), end: point(2100) }),
       component({ key: 'GASK-A', type: 'GASK', start: point(2100), end: point(2110) }),
       component({
-        key: 'VALVE-A',
-        type: 'VALVE',
-        start: point(2110),
-        end: point(2210),
+        key: 'VALVE-A', type: 'VALVE', start: point(2110), end: point(2210),
         engineeringProperties: {
           componentWeightKg: evidence(valveDryMassKg, 'kg', 'COMPONENT_WEIGHT_KG'),
           ...(componentContent ? {
@@ -465,86 +398,39 @@ function makeModel({
         },
       }),
     ],
-    supports: [],
-    sourceReferences: { nodes: [] },
-    diagnostics: [],
+    supports: [], sourceReferences: { nodes: [] }, diagnostics: [],
   });
 }
-
 function component({ key, type, start, end, engineeringProperties = {} }) {
-  const center = {
-    x: (start.x + end.x) / 2,
-    y: 0,
-    z: 0,
-  };
+  const center = { x: (start.x + end.x) / 2, y: 0, z: 0 };
   return {
-    componentKey: key,
-    sourceEntityId: key,
-    name: key,
-    type,
+    componentKey: key, sourceEntityId: key, name: key, type,
     identity: { lineId: 'L-1', branchId: 'B-1', systemId: 'SYS-1', zoneId: 'Z-1' },
     geometry: {
-      start,
-      end,
-      center,
-      points: [start, end],
-      branchPoints: [],
-      explicitCenter: type !== 'PIPE',
-      boreMm: null,
-      ports: [port(key, 'start', start), port(key, 'end', end)],
-      sources: {
-        start: `${key}.start`,
-        end: `${key}.end`,
-        center: type === 'PIPE' ? 'derived.midpoint' : `${key}.center`,
-        branches: [],
-      },
+      start, end, center, points: [start, end], branchPoints: [], explicitCenter: type !== 'PIPE',
+      boreMm: null, ports: [port(key, 'start', start), port(key, 'end', end)],
+      sources: { start: `${key}.start`, end: `${key}.end`, center: type === 'PIPE' ? 'derived.midpoint' : `${key}.center`, branches: [] },
     },
-    engineeringProperties,
-    compatibilityEvidence: {},
-    sourceReferences: {
-      sourceNodeKey: `node:${key}`,
-      sourceEntityId: key,
-      jsonPointer: `/objects/${key}`,
-      sourcePath: `/MODEL/${key}`,
-    },
+    engineeringProperties, compatibilityEvidence: {},
+    sourceReferences: { sourceNodeKey: `node:${key}`, sourceEntityId: key, jsonPointer: `/objects/${key}`, sourcePath: `/MODEL/${key}` },
     diagnostics: [],
   };
 }
-
 function point(x) { return { x, y: 0, z: 0 }; }
 function port(key, role, position) {
-  return {
-    portKey: `${key}:port:${role}`,
-    role,
-    position,
-    sourceReference: { sourcePath: `${key}.${role}` },
-  };
+  return { portKey: `${key}:port:${role}`, role, position, sourceReference: { sourcePath: `${key}.${role}` } };
 }
 function evidence(value, unit, field) {
-  return {
-    value,
-    unit,
-    sourcePath: `sourceAttributes.${field}`,
-    sourceRoot: 'sourceAttributes',
-    sourceKind: 'sourceAttributes',
-  };
+  return { value, unit, sourcePath: `sourceAttributes.${field}`, sourceRoot: 'sourceAttributes', sourceKind: 'sourceAttributes' };
 }
 function configuredEvidence(value, unit, field) {
-  return {
-    value,
-    unit,
-    sourcePath: `nonFeaEnrichment.${field}`,
-    sourceRoot: 'PROJECT_CONFIGURED_DEFAULT',
-    sourceKind: 'PROJECT_CONFIGURED_DEFAULT',
-  };
+  return { value, unit, sourcePath: `nonFeaEnrichment.${field}`, sourceRoot: 'PROJECT_CONFIGURED_DEFAULT', sourceKind: 'PROJECT_CONFIGURED_DEFAULT' };
 }
-
 function rehashProjection(value, patch) {
   const material = { ...structuredClone(value), ...patch };
   delete material.semanticHash;
   return { ...material, semanticHash: semanticHash(material) };
 }
-
 function expectCode(fn, code) {
   assert.throws(fn, (error) => {
     assert.equal(error?.code, code, error?.stack || error?.message);

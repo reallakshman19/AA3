@@ -24,10 +24,7 @@ claims:
   clean_checkout_required: true
   post_nullspace_boundary_pass_required_before_integrated_matrix: true
   boundary_source_custody_reverified: true
-  integrated_matrix_counts_reverified:
-    base: 54
-    metamorphic: 270
-    fail_closed: 16
+  integrated_matrix_counts_reverified: { base: 54, metamorphic: 270, fail_closed: 16 }
   integrated_b01_qualified: false
   b02_prerequisite_evidence_available: false
   solver_repair_authorized: false
@@ -35,6 +32,7 @@ claims:
   release_authority_granted: false
   trust_authority_granted: false
 validation_truth:
+  live_merge_reconciliation: PASS
   synthetic_verifier_suite: PASS_LOCAL_NODE_EXECUTION
   synthetic_case_count: 9
   real_engineering_execution: NOT_RUN
@@ -47,4 +45,5 @@ excluded_authority:
   - BENCHMARK_EXPECTED_VALUES
   - B02_NUMERICS
   - REGISTRY_RELEASE_TRUST
-merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+merge_truth: OWNER_AUTHORIZED_INTEGRATION_WITH_NOT_RUN_PRESERVED

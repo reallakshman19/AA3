@@ -3,7 +3,8 @@ import {
   createCommonEnrichedTargetInventory,
 } from '../../core/common-enriched-properties/target-inventory.js';
 import { PRIMITIVE_TYPES } from '../../core/model-loads/constants.js';
-import { validateModelLoadPrimitiveSet } from '../../core/model-loads/primitive-builder.js';
+import { buildModelLoadFoundation } from '../../core/model-loads/model-load-foundation.js';
+import { buildPipingPortTopologyGraph } from '../../core/piping-topology/index.js';
 import { evidenceNumber } from '../../core/model-loads/units.js';
 import { deepFreeze, semanticHash } from '../../core/shared-piping-model/index.js';
 import {
@@ -24,11 +25,14 @@ const ANCILLARY_FIELDS = Object.freeze({
   'permanent.claddingWeightKgPerM': 'claddingMassPerLengthKgPerM',
   'permanent.tracingWeightKgPerM': 'tracingMassPerLengthKgPerM',
 });
+const BLOCKED_AUTHORITY_STATUSES = new Set(['BLOCKED', 'STALE', 'NOT_AVAILABLE', 'NOT_BUILT']);
 const FIXED_POLICY = Object.freeze({
   projectionOnly: true,
   executionAuthorizationGranted: false,
   legacyPublicationOrHandoffAuthorityAsserted: false,
-  sealedLoadPrimitiveSetRequired: true,
+  massBasisSource: 'SEALED_COMMON_INPUT_ENRICHED_MODEL',
+  sourceLoadPrimitiveSetUsedAsNumericalBasis: false,
+  effectiveModelLoadFoundationRebuiltDeterministically: true,
   directMassBasisPreserved: true,
   fittingDerivationPreserved: true,
   negligibleMassZeroPreserved: true,
@@ -38,28 +42,34 @@ const FIXED_POLICY = Object.freeze({
 });
 
 /**
- * Seals exact per-entity/per-load-case masses from a fully READY current Common
- * Input and the exact model-load primitive set already bound by that seal.
+ * Seals exact per-entity/per-load-case masses from the fully READY current
+ * Common Input. The numerical base is rebuilt deterministically from the exact
+ * sealed enriched model through the existing model-load topology/projection/
+ * resolver/primitive stack. This is deliberate: the workspace ModelLoadStore
+ * is built from SHARED_MODEL_EVENTS and is a separate authority/currentness
+ * contract; it is not proof that the same enriched properties used by Common
+ * Input were the numerical mass basis.
  *
- * The primitive set remains authoritative for dry/base mass: direct-vs-derived
- * PIPE/fluid/insulation mass, fitting derivation and negligible zero-mass
- * behavior are never recomputed here. This projection adds only the two Issue
- * #1321 layers that the current primitive set does not own: permanent line
+ * The source load-primitive contract remains bound as current authority through
+ * the Common Input/run-authorization vector, but is never consumed here as the
+ * numerical mass source. The effective primitive set created from the sealed
+ * enriched model owns direct-vs-derived PIPE/fluid/insulation mass, same-branch
+ * fitting derivation and negligible gasket behavior. This projection adds only
+ * the two Issue #1321 layers not owned by that primitive set: permanent line
  * cladding/tracing and optional OPE/HYD component-contained fluid.
  *
  * This receipt is projection-only. It does not create a legacy baseline or
- * consumer handoff, a governed runtime package, a reaction, or an execution
+ * consumer handoff, a governed runtime package, a reaction, or execution
  * authorization.
  */
 export function createCurrentCommonInputEmpiricalMassProjection({
   snapshot,
   runAuthorization,
-  loadPrimitiveSet,
 } = {}) {
   const current = requireCurrentNonFeaEmpiricalRunAuthorization(runAuthorization, snapshot);
   const commonInput = current.commonInput;
   const loadCaseIds = normalizeLoadCases(commonInput.requestedLoadCases);
-  const basis = buildProjectionBasis(commonInput, loadPrimitiveSet, loadCaseIds);
+  const basis = buildProjectionBasis(commonInput, loadCaseIds);
   const entityRows = commonInput.enrichedModel.components.map((component) => projectComponent({
     component,
     target: basis.targetBySourceRecordId.get(component.componentKey),
@@ -74,17 +84,20 @@ export function createCurrentCommonInputEmpiricalMassProjection({
     commonInputSemanticHash: commonInput.semanticHash,
     commonInputSealSemanticHash: commonInput.seal.semanticHash,
     authorityRevisionVectorSemanticHash: runAuthorization.authorityRevisionVectorSemanticHash,
+    sourceModelSemanticHash: commonInput.sourceModelSemanticHash,
+    enrichedModelSemanticHash: commonInput.enrichedModel.semanticHash,
     resolutionLedgerSemanticHash: commonInput.resolutionLedgerSemanticHash,
     projectDataProfileSemanticHash: commonInput.projectDataProfileSemanticHash,
     configuredDefaultUsageLedgerSemanticHash:
       commonInput.configuredDefaultUsageLedgerSemanticHash || null,
-    loadPrimitiveSetSemanticHash: loadPrimitiveSet.semanticHash,
+    sourceLoadPrimitiveSetSemanticHash: basis.sourceLoadPrimitiveSetSemanticHash,
+    effectiveMassTopologyGraphSemanticHash: basis.effectiveTopologyGraph.semanticHash,
+    effectiveMassPrimitiveSetSemanticHash: basis.effectivePrimitiveSet.semanticHash,
     targetInventorySemanticHash: basis.inventory.semanticHash,
     ancillaryOverlaySemanticHash: basis.ancillaryOverlay.semanticHash,
     productEngineeringDefaultProfileSemanticHash:
       LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1.semanticHash,
-    compositionProfileSemanticHash: loadPrimitiveSet.compositionProfile.semanticHash,
-    gravityProfileSemanticHash: loadPrimitiveSet.gravityProfile.semanticHash,
+    compositionProfileSemanticHash: basis.effectivePrimitiveSet.compositionProfile.semanticHash,
     loadCaseIds,
     entityRows,
     summary: projectionSummary(entityRows, loadCaseIds),
@@ -146,14 +159,17 @@ export function requireCurrentCommonInputEmpiricalMassProjection(value) {
     'commonInputSemanticHash',
     'commonInputSealSemanticHash',
     'authorityRevisionVectorSemanticHash',
+    'sourceModelSemanticHash',
+    'enrichedModelSemanticHash',
     'resolutionLedgerSemanticHash',
     'projectDataProfileSemanticHash',
-    'loadPrimitiveSetSemanticHash',
+    'sourceLoadPrimitiveSetSemanticHash',
+    'effectiveMassTopologyGraphSemanticHash',
+    'effectiveMassPrimitiveSetSemanticHash',
     'targetInventorySemanticHash',
     'ancillaryOverlaySemanticHash',
     'productEngineeringDefaultProfileSemanticHash',
     'compositionProfileSemanticHash',
-    'gravityProfileSemanticHash',
     'semanticHash',
   ]) semanticHashText(value[key], key);
   if (value.configuredDefaultUsageLedgerSemanticHash !== null) {
@@ -168,13 +184,12 @@ export function requireCurrentCommonInputEmpiricalMassProjection(value) {
 /** Rebuilds the deterministic projection from live current authority. */
 export function requireCurrentCurrentCommonInputEmpiricalMassProjection(
   value,
-  { snapshot, runAuthorization, loadPrimitiveSet } = {},
+  { snapshot, runAuthorization } = {},
 ) {
   const projection = requireCurrentCommonInputEmpiricalMassProjection(value);
   const rebuilt = createCurrentCommonInputEmpiricalMassProjection({
     snapshot,
     runAuthorization,
-    loadPrimitiveSet,
   });
   if (projection.semanticHash !== rebuilt.semanticHash) {
     throw codedError(
@@ -189,7 +204,7 @@ export function requireCurrentCurrentCommonInputEmpiricalMassProjection(
   return projection;
 }
 
-function buildProjectionBasis(commonInput, loadPrimitiveSet, loadCaseIds) {
+function buildProjectionBasis(commonInput, loadCaseIds) {
   const model = commonInput.enrichedModel;
   if (!model || model.schema !== 'shared-piping-model/v1' || !Array.isArray(model.components)) {
     throw codedError(
@@ -197,38 +212,32 @@ function buildProjectionBasis(commonInput, loadPrimitiveSet, loadCaseIds) {
       'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_MODEL_INVALID',
     );
   }
-  const primitiveAudit = validateModelLoadPrimitiveSet(loadPrimitiveSet);
-  if (!primitiveAudit.ok) {
+  if (model.semanticHash !== semanticHash(withoutSemanticHash(model))) {
     throw codedError(
-      'Current model-load primitive set is invalid.',
-      'CURRENT_COMMON_INPUT_EMPIRICAL_LOAD_PRIMITIVE_SET_INVALID',
-      primitiveAudit.errors,
+      'Current Common Input enriched model semantic hash is stale.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_MODEL_STALE',
     );
   }
-  const primitiveContract = commonInput.authorityContracts?.loadPrimitiveSet || null;
-  if (!primitiveContract
-      || primitiveContract.semanticHash !== loadPrimitiveSet.semanticHash
-      || ['BLOCKED', 'STALE', 'NOT_AVAILABLE', 'NOT_BUILT'].includes(primitiveContract.status)) {
+
+  const sourcePrimitiveContract = commonInput.authorityContracts?.loadPrimitiveSet || null;
+  if (!sourcePrimitiveContract
+      || typeof sourcePrimitiveContract.semanticHash !== 'string'
+      || BLOCKED_AUTHORITY_STATUSES.has(sourcePrimitiveContract.status)) {
     throw codedError(
-      'The supplied model-load primitive set is not the exact current Common Input authority.',
-      'CURRENT_COMMON_INPUT_EMPIRICAL_LOAD_PRIMITIVE_BINDING_MISMATCH',
+      'Current Common Input requires a current source model-load primitive authority contract.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_SOURCE_LOAD_PRIMITIVE_AUTHORITY_REQUIRED',
       {
-        commonInputSemanticHash: primitiveContract?.semanticHash || null,
-        suppliedSemanticHash: loadPrimitiveSet?.semanticHash || null,
-        status: primitiveContract?.status || null,
+        semanticHash: sourcePrimitiveContract?.semanticHash || null,
+        status: sourcePrimitiveContract?.status || null,
       },
     );
   }
-  if (loadPrimitiveSet.datasetId !== model.project?.datasetId) {
-    throw codedError(
-      'The supplied model-load primitive set belongs to a different dataset.',
-      'CURRENT_COMMON_INPUT_EMPIRICAL_LOAD_PRIMITIVE_DATASET_MISMATCH',
-      {
-        expected: model.project?.datasetId || null,
-        actual: loadPrimitiveSet.datasetId || null,
-      },
-    );
-  }
+  semanticHashText(sourcePrimitiveContract.semanticHash, 'authorityContracts.loadPrimitiveSet.semanticHash');
+
+  const effectiveTopologyGraph = buildPipingPortTopologyGraph(model);
+  const effectiveFoundation = buildModelLoadFoundation(model, effectiveTopologyGraph);
+  const effectivePrimitiveSet = effectiveFoundation.loadPrimitiveSet;
+  const primitiveByEntityCase = massPrimitiveIndex(effectivePrimitiveSet, model, loadCaseIds);
 
   const inventory = createCommonEnrichedTargetInventory({
     schema: COMMON_ENRICHED_TARGET_INVENTORY_SCHEMA,
@@ -258,8 +267,10 @@ function buildProjectionBasis(commonInput, loadPrimitiveSet, loadCaseIds) {
     );
   }
 
-  const primitiveByEntityCase = massPrimitiveIndex(loadPrimitiveSet, model, loadCaseIds);
   return {
+    sourceLoadPrimitiveSetSemanticHash: sourcePrimitiveContract.semanticHash,
+    effectiveTopologyGraph,
+    effectivePrimitiveSet,
     inventory,
     ancillaryOverlay,
     ancillaryByLine: ancillaryByLineTarget(inventory, ancillaryOverlay),
@@ -289,7 +300,7 @@ function massPrimitiveIndex(loadPrimitiveSet, model, loadCaseIds) {
     for (const loadCaseId of loadCaseIds) {
       if (!index.has(`${component.componentKey}\0${loadCaseId}`)) {
         throw codedError(
-          `No sealed mass primitive exists for ${component.componentKey}:${loadCaseId}.`,
+          `No effective mass primitive exists for ${component.componentKey}:${loadCaseId}.`,
           'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PRIMITIVE_REQUIRED',
         );
       }
@@ -335,7 +346,7 @@ function projectComponent({
 function projectPrimitiveCase({ component, target, loadCaseId, primitive, ancillary }) {
   if (!primitive) {
     throw codedError(
-      `Missing mass primitive for ${component.componentKey}:${loadCaseId}.`,
+      `Missing effective mass primitive for ${component.componentKey}:${loadCaseId}.`,
       'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PRIMITIVE_REQUIRED',
     );
   }
@@ -625,6 +636,11 @@ function requiredText(value, label) {
     );
   }
   return value;
+}
+
+function withoutSemanticHash(value) {
+  const { semanticHash: _semanticHash, ...material } = value;
+  return material;
 }
 
 function isRecord(value) {

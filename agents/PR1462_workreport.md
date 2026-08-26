@@ -17,17 +17,23 @@ BASE_BRANCH: main
 BASE_HEAD_AT_GROUNDING: b4d1137d0be67a4723ae08df90976f4218b6515e
 CURRENT_STAGE: LOCAL_EXACT_HEAD_ENTRYPOINT_IMPLEMENTED_PENDING_EXECUTION
 ENGINEERING_FAILURE_PROVEN: false
-EXACT_NEXT_ACTION: from an exact clean checkout run `node scripts/lafea-implementation-authorization-local-preflight.mjs`; retain the existing `reports/qualification/lafea-implementation-authorization-gate.json`; if preflight fails, fix environment/custody only; if Q1-Q5 fails, stop at the first engineering boundary.
+EXACT_NEXT_ACTION: from an exact clean checkout run `node scripts/lafea-implementation-authorization-local-preflight.mjs`; retain `reports/qualification/lafea-implementation-authorization-gate.json`; if preflight fails, fix environment/custody only; if Q1-Q5 fails, stop at the first engineering boundary.
 ```
 
 ## Handover in 60 seconds
 
 PR #1450 is merged on `main@b4d1137d0be67a4723ae08df90976f4218b6515e`. It supplied the Q1-Q5 exact-head authorization gate, direct compiled-load Q1 binding, and independent retained-facet Q3 pressure resultant/moment evidence. Its numerical execution remained `NOT_RUN` because no exact executable checkout was available in the agent container. The merge explicitly granted no release/registry authority.
 
-PR #1462 does not change any engineering mechanics. It adds one local execution preflight:
+PR #1462 does not change engineering mechanics. It adds one local execution preflight:
 
 ```text
 scripts/lafea-implementation-authorization-local-preflight.mjs
+```
+
+and one narrowly scoped local-output custody rule:
+
+```text
+.gitignore -> /reports/qualification/lafea-implementation-authorization-gate.json
 ```
 
 The preflight proves local repository/runtime custody and then delegates unchanged to the merged exact-head retention gate.
@@ -67,12 +73,25 @@ engineeringAuthorityCreated=false
 releaseAuthorityGranted=false
 ```
 
+## Repeatability defect found and fixed
+
+Source inspection found that PR #1450's gate writes the retained JSON under `reports/qualification/`, while current `.gitignore` did not ignore that path. A successful first local run would therefore leave its own runtime receipt untracked; the next run would correctly fail the clean-checkout guard because of that prior receipt.
+
+PR #1462 fixes only the exact generated path:
+
+```text
+/reports/qualification/lafea-implementation-authorization-gate.json
+```
+
+The directory is **not** ignored. Other reports and arbitrary files remain visible to Git custody. This preserves the clean-tree invariant while making repeated exact-head qualification runs possible.
+
 ## Scope / negative assurance
 
-Technical change:
+Technical / execution-infrastructure changes:
 
 ```text
 scripts/lafea-implementation-authorization-local-preflight.mjs
+.gitignore   # one exact runtime-output path only
 ```
 
 Recovery:
@@ -110,9 +129,11 @@ Classification: `SAFE_EXACT_FILE / COORDINATION_REQUIRED_BEFORE_FINAL_EXECUTED_R
 ## ISS / RISK / DEC
 
 - `ISS-1462-01` ACTIVE_PENDING_EXECUTION — merged Q1-Q5 gate lacked one explicit local environment/custody preflight command.
+- `ISS-1462-02` RESOLVED_BY_IMPLEMENTATION_PENDING_EXECUTION — the exact generated receipt path would dirty the checkout after a successful first run and block repeat execution.
 - `RISK-1462-01` CONTROLLED — environment failures must remain distinguishable from engineering assertion failures.
 - `DEC-1462-01` — direct Node script is sufficient; do not mutate `package.json` merely to add an alias.
 - `DEC-1462-02` — local preflight may reject environment/custody but may not create engineering PASS, release, or registry authority.
+- `DEC-1462-03` — ignore only the exact generated authorization receipt, never the whole reports directory.
 
 ## Validation ledger
 
@@ -122,10 +143,21 @@ Classification: `SAFE_EXACT_FILE / COORDINATION_REQUIRED_BEFORE_FINAL_EXECUTED_R
 | open LAFEA overlap review | PASS | GitHub PR inspection | coordination policy |
 | local-preflight source contract | PASS | source inspection | fail-closed custody contract |
 | local-preflight syntax | PASS | local `node --check` on identical authored source | Node parser |
+| generated receipt repeatability | PASS | `.gitignore` source inspection; exact path only | Git custody invariant |
 | exact local repository execution | NOT_RUN | agent container has no exact checkout | execution environment |
 | Q1-Q5 engineering execution | NOT_RUN | delegated gate not executed | merged independent/production evidence |
 
 No `NOT_RUN` is represented as PASS.
+
+## Changed-file ledger
+
+```text
+scripts/lafea-implementation-authorization-local-preflight.mjs
+.gitignore
+agents/PR1462_workreport.md
+agents/status/PR1462.yaml
+agents/claims/PR1462.yaml
+```
 
 ## Appendix A
 

@@ -8,13 +8,16 @@ execution_mode: AUTO
 auto_state: COMPLETE
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
-main_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
-merge_base: 9887ec1c3eb6184c0d590841b23c04ed449f9414
-pre_auto_head: 992c978d9b7bab3ee2be3616d00c38ca13a6601c
-report_basis_head: db6264aeec96f9ea7ad493dd8033b8b1907b56ad
-report_refresh_commit: 56200d321ed16d53ed164c482e15a7d298ec5d5a
-report_sync: CURRENT_AUTO_RECOVERY_METADATA_ONLY_AFTER_ENGINEERING_BASIS
-grounding_epoch: GE-PR1427-004
+main_head_last_checked: 7b2a8119aa5faeee7cc102c894991851019c5a7b
+main_tree_last_checked: b6c5744973c6ef57eb9a98af54c34761a13f3a7e
+merge_base_after_refresh: 7b2a8119aa5faeee7cc102c894991851019c5a7b
+pre_refresh_head: 43f860e140145036b083b3215e16317a16e2a28b
+current_main_refresh_commit: ae8a9545d1b960056bb4964be26edbaf19c9ca1a
+engineering_content_basis: db6264aeec96f9ea7ad493dd8033b8b1907b56ad
+report_basis_head: ae8a9545d1b960056bb4964be26edbaf19c9ca1a
+report_refresh_commit: 24300d283252d739925a26e8818c7e1635d40ce8
+report_sync: CURRENT_RECOVERY_ONLY_AFTER_NON_FORCE_MAIN_REFRESH
+grounding_epoch: GE-PR1427-005
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
 pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
@@ -23,29 +26,25 @@ report_path: agents/PR1427_workreport.md
 appendix_a_status: CURRENT
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_AGGREGATE_ONLY_CURRENT_MAIN
-current_stage: AUTO_FINAL_AGGREGATE_RECONCILIATION_COMPLETE
+coordination: SAFE_RECOVERY_ONLY_NO_NEW_EMP1_OVERLAP
+current_stage: CURRENT_MAIN_REFRESH_COMPLETE_AGGREGATE_ENGINEERING_CONTENT_UNCHANGED
 highest_risk: ROUTE_AUTHORIZATION_OR_GOVERNANCE_MERGE_FALSELY_PROPAGATED_TO_PROFESSIONAL_P0_OR_RELEASE_READINESS
 validation:
   live_grounding: PASS
-  route_authority_inspection: PASS_SOURCE_INSPECTION
-  registry_authority_inspection: PASS_SOURCE_INSPECTION
-  all_nine_current_status_match_current_main: PASS_SOURCE_INSPECTION
-  release_profile_authority_boundary: PASS_SOURCE_INSPECTION
-  professional_release_state_audit: PASS_SOURCE_INSPECTION
+  one_commit_main_drift_classification: PASS_UNRELATED_LAFEA3_ONLY
+  non_force_main_refresh: PASS
+  post_refresh_merge_base_current_main: PASS
+  post_refresh_ahead_behind: "14/0 before recovery-only commits"
+  changed_file_scope: PASS_EXACT_SIX_FILES
+  aggregate_engineering_content_unchanged: PASS_BYTE_PRESERVED
+  bounded_route_authority_inspection: PASS_SOURCE_INSPECTION
+  p0_blocker_count: 9
   pr1415_unmerged_dependency_handling: PASS
   direct_primary_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
   checker_execution_normal: NOT_RUN
   checker_execution_require_ready: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-  changed_file_scope: PASS_EXACT_SIX_FILES
-  ahead_behind_before_auto_refresh: "10/9"
-  reviews: 0
-  review_threads: 0
   hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-  gamma5_run_job: "32843384927/97787612431 steps=null logs_url=null"
-  orchestration_run_job: "32843384935/97787612214 steps=null logs_url=null"
-  independent_handcalc_run_job: "32843384977/97787612526 steps=null logs_url=null"
 authority:
   bounded_wrc_route_authorized_current_main: true
   registry_registered_current_main: true
@@ -73,4 +72,4 @@ dependencies:
   - "nine P0 source-domain issues remain independently source-gated"
   - "If PR1415 merges before PR1427, re-ground aggregate #1377 currentStatus before any PR1427 merge"
 exact_next_action: "Preserve PR1427 draft/unmerged pending explicit Owner merge authorization. If PR1415 is merged first, re-ground PR1427 before merge."
-last_updated: "2026-08-25"
+last_updated: "2026-08-26"

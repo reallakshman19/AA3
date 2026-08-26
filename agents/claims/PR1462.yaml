@@ -8,6 +8,7 @@ state: ACTIVE_BOUNDED_EVIDENCE_INFRASTRUCTURE_ONLY
 criticality: ENGINEERING_CRITICAL
 authority_domain:
   - local exact-head environment/custody preflight for merged Q1-Q5 authorization gate
+  - Node parser compatibility proof for all authorization MJS entrypoints before engineering delegation
   - machine-readable separation of preflight NOT_RUN from delegated-gate nonzero without overstating Q1-Q5 depth
   - synthetic temporary-Git self-test of wrapper process/exit classification only
   - repeatable runtime receipt custody for the one exact generated authorization JSON path
@@ -34,6 +35,11 @@ current_main_drift:
   base_head: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
   exact_file_overlap: SAFE_NONE
   downstream_route_effect: REEXECUTION_REQUIRED_BEFORE_ANY_ENGINEERING_AUTHORIZATION_CLAIM
+predelegation_runtime_custody:
+  clean_head_required_before_parser_checks: true
+  node_executable: process.execPath
+  syntax_checked_entrypoints: 4
+  parser_failure_means_q1_q5_not_run: true
 retention_custody:
   envelope_schema: lafea-implementation-authorization-exact-head-envelope/v4
   clean_before_engineering_checks: REQUIRED

@@ -6,6 +6,7 @@ workstream: ISSUE1321_COMPONENT_CONTAINED_FLUID
 branch: agent/issue-1321-component-contained-fluid
 main_head_last_checked: 7b2a8119aa5faeee7cc102c894991851019c5a7b
 merge_base: 7b2a8119aa5faeee7cc102c894991851019c5a7b
+validation_basis_head: b47930898f3b6d986ccd8936c084260a4d86d0f1
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 auto_state: VALIDATION_BLOCKED
@@ -21,7 +22,7 @@ highest_risk: "Focused component-content mechanics/authority regressions and agg
 validation:
   live_grounding: PASS
   predecessor_pr1430: PASS_MERGED
-  current_main_sync: PASS_AHEAD_31_BEHIND_0
+  current_main_sync: PASS_AHEAD_31_BEHIND_0_AT_SYNC
   main_drift_overlap: PASS_NO_PRODUCTION_PATH_OVERLAP
   changed_file_ledger: PASS_15_EXPECTED_PATHS
   component_dry_mass_boundary: PASS_SOURCE_INSPECTION
@@ -36,7 +37,13 @@ validation:
   aggregate_non_fea_checks: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   imports: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
   build: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
-  git_clone: FAIL_ENVIRONMENT_DNS_GITHUB
+  local_clone_retry: FAIL_ENVIRONMENT_DNS_GITHUB
+  commit_combined_status: EMPTY_NO_STATUS_CONTEXTS_AT_VALIDATION_BASIS_HEAD
+  hosted_observation_run: 32917851396
+  hosted_observation_job: 98025211360
+  hosted_observation_classification: NOT_RUN_PRE_STEP_HOSTED_RUNNER_ALLOCATION
+  hosted_observation_steps: 0
+  hosted_observation_scope: UNRELATED_EMP1_WORKFLOW_NOT_PR1431_QUALIFICATION
 appendix_a_status: FAIL_A4_EXECUTION_NOT_RUN
 appendix_a_score: null
 authority:

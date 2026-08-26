@@ -3,17 +3,36 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1460
 issue: 1321
 branch: agent/issue-1321-ready-screening-snapshot
-state: PR_ALLOCATED_READY_FOR_IMPLEMENTATION
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: COMPLETE_FOR_BOUNDED_SLICE
 stack_base_pr: 1455
 stack_base_head: 1ecc9b1fee8f98075b1c40065c792d7119f1564f
+source_complete_basis_head: 68ff70a3619f1f52089261fd94bc56df23a88f31
+stack_compare:
+  ahead: 10
+  behind: 0
+  changed_paths: 6
 validation:
   live_grounding: PASS
   upstream_stack_exact: PASS
+  exact_diff_reconciliation: PASS
   overlap: PASS_DECLARED_UPSTREAM_ONLY
-  execution_checks: NOT_RUN
+  reviews: PASS_NONE
+  review_threads: PASS_NONE
+  ready_only_authority_contract: PASS_SOURCE_INSPECTION
+  focused_ready_snapshot_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    observation: LOCAL_EXECUTION
+    command: "git clone --depth 1 --branch agent/issue-1321-ready-screening-snapshot https://github.com/reallaksh19/Advanced_Analysis.git /tmp/advanced_analysis_pr1460"
+    error: "Could not resolve host: github.com"
+  workflow_gating: NOT_APPLICABLE_OWNER_SKIPPED
 invariants:
   ready_only: true
   partial_auto_accept_permitted: false
@@ -24,5 +43,5 @@ invariants:
   numerical_mechanics_change_authorized: false
   workflow_change_authorized: false
 appendix_a_qualified: false
-merge_disposition: OWNER_ONLY_DRAFT
-exact_next_action: "Remove WIP record, implement READY-only system screening snapshot helper and focused regression, register test in inherited Non-FEA aggregate."
+merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE
+exact_next_action: "Update PR1460 description to source-complete truth. Continue with a separate Run-wiring slice that may obtain/reuse this READY snapshot but must not manufacture empirical authorization or accept partial/blocked methods."

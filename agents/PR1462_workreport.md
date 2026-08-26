@@ -14,204 +14,204 @@ SOURCE_TASK: Issue #1371 successor after merged PR #1450
 PR: #1462
 BRANCH: agent/lafea-authorization-local-runner-20260826
 BASE_BRANCH: main
-BASE_HEAD_AT_GROUNDING: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
-CURRENT_STAGE: CURRENT_MAIN_SYNCHRONIZED_LOCAL_ENTRYPOINT_SELF_TESTED_PENDING_REAL_Q1_Q5_EXECUTION
+BASE_HEAD_AT_LAST_GROUNDING: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+CURRENT_STAGE: CURRENT_MAIN_SYNCHRONIZED_LOCAL_ENTRYPOINT_PLUS_POST_ENGINEERING_CUSTODY_PENDING_REAL_Q1_Q5_EXECUTION
 ENGINEERING_FAILURE_PROVEN: false
-EXACT_NEXT_ACTION: from an exact clean checkout of the current PR head run `node scripts/lafea-implementation-authorization-local-preflight.mjs`; retain `reports/qualification/lafea-implementation-authorization-gate.json`; environment/preflight failure means Q1-Q5 NOT_RUN; delegated non-zero means stop at the first child failure without assuming how far Q1-Q5 progressed.
+EXACT_NEXT_ACTION: from an exact clean checkout of the current PR head run `node scripts/lafea-implementation-authorization-local-preflight.mjs`; preserve the first delegated child failure if non-zero; retain `reports/qualification/lafea-implementation-authorization-gate.json` only if the gate reaches PASS.
 ```
 
 ## Handover in 60 seconds
 
-PR #1450 merged the exact-head Q1-Q5 implementation-authorization receipt infrastructure at `b4d1137d0be67a4723ae08df90976f4218b6515e`. Its numerical execution remained `NOT_RUN`; merge granted no release/registry authority.
+PR #1450 merged the Q1-Q5 implementation-authorization evidence stack at `b4d1137d0be67a4723ae08df90976f4218b6515e`. Numerical execution remained `NOT_RUN`; no release or registry authority was created.
 
-PR #1462 adds only local execution/custody infrastructure:
-
-```text
-scripts/lafea-implementation-authorization-local-preflight.mjs
-scripts/lafea-implementation-authorization-local-preflight-self-test.mjs
-.gitignore -> /reports/qualification/lafea-implementation-authorization-gate.json
-```
-
-The local preflight proves repository/runtime custody, then delegates unchanged to the merged retention gate. The self-test validates only wrapper control flow in synthetic temporary Git repositories. It does not execute or simulate LAFEA mechanics.
-
-## Current-main synchronization
-
-While this PR was open, `main` advanced from `b4d1137d...` to:
-
-```text
-dd7f13e2c73e596c7ac6625fbe211779bc61ce94
-```
-
-The six intervening main commits have no exact-file overlap with this PR. They are principally Non-FEA/Load Calc changes, but also modify downstream LAFEA integration paths:
-
-```text
-src/workspace/lafea-workbench-controller.js
-src/workspace/lafea-workbench-orchestrator-api.js
-src/workspace/lafea-public-failure.js   # added
-```
-
-Because the Q1-Q5 gate exercises the live workbench/orchestration route, the drift classification is:
-
-```text
-SAFE_EXACT_FILE
-+
-MANDATORY_REEXECUTION_BEFORE_ANY_ENGINEERING_AUTHORIZATION_CLAIM
-```
-
-The branch was synchronized non-destructively onto exact current main in merge commit:
-
-```text
-4056369cde466d01dc9d6b38c9821cd56192d1ad
-```
-
-with current-main tree + PR paths. No main change was dropped.
-
-## Local execution contract
-
-Before delegation the entrypoint requires:
-
-```text
-process.cwd() == repository root
-package.name == advanced-analysis
-package.type == module
-required Node runtime primitives available
-all merged authorization scripts exist as files
-git executable callable
-git rev-parse --show-toplevel == repository root
-HEAD is a full 40-character SHA
-git status --porcelain=v1 --untracked-files=all is empty
-```
-
-It then delegates unchanged to:
-
-```text
-node scripts/lafea-implementation-authorization-gate-retain.mjs
-```
-
-The delegated gate owns the retained engineering receipt:
-
-```text
-reports/qualification/lafea-implementation-authorization-gate.json
-```
-
-## Failure-classification hardening
-
-The wrapper now avoids overstating execution depth:
-
-```text
-ENVIRONMENT_PREFLIGHT failure
-  classification = NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED
-  delegatedEngineeringGateEntered = false
-  q1ToQ5Disposition = NOT_RUN
-
-DELEGATED_ENGINEERING_GATE non-zero
-  classification = DELEGATED_ENGINEERING_GATE_NONZERO_STOP_AT_FIRST_CHILD_FAILURE
-  delegatedEngineeringGateEntered = true
-  q1ToQ5Disposition = UNKNOWN_OR_PARTIAL_SEE_FIRST_CHILD_FAILURE
-```
-
-This matters because the retained gate may fail on custody/import/cross-binding before a numerical Q1 assertion. Entering the delegated gate is therefore not represented as proof that every Q1-Q5 calculation ran.
-
-The child process output is inherited and its non-zero exit status is propagated. Both failure receipts explicitly retain:
-
-```text
-engineeringAuthorityCreated = false
-releaseAuthorityGranted     = false
-```
-
-## Executable wrapper self-test
-
-New:
-
-```text
-scripts/lafea-implementation-authorization-local-preflight-self-test.mjs
-```
-
-The self-test reads the production preflight source, places it into temporary synthetic Git repositories, and verifies three software-contract cases:
-
-1. wrong working directory fails non-zero as environment/preflight `NOT_RUN`, with delegated gate not entered;
-2. clean preflight followed by a synthetic delegated exit `7` propagates exit `7`, records gate entry, and leaves Q1-Q5 disposition unknown/partial rather than falsely claiming full execution;
-3. clean preflight followed by delegated exit `0` succeeds and emits no failure receipt.
-
-Observed locally on exact authored source:
-
-```text
-schema: lafea-implementation-authorization-local-preflight-self-test/v1
-status: PASS
-environmentFailureRemainsNotRun: true
-delegatedGateEntryDistinguished: true
-delegatedFailureDoesNotOverstateQ1ToQ5: true
-delegatedExitStatusPropagated: true
-successfulDelegationRemainsZero: true
-engineeringMechanicsExecuted: false
-engineeringAuthorityCreated: false
-releaseAuthorityGranted: false
-```
-
-This PASS qualifies only the wrapper control-flow contract. It is not Q1-Q5 engineering evidence.
-
-## Repeatability defect and correction
-
-PR #1450 writes the retained JSON under `reports/qualification/`. Without an ignore rule, a successful first run would leave its own receipt untracked and the next run would fail the clean-checkout gate.
-
-PR #1462 ignores only:
-
-```text
-/reports/qualification/lafea-implementation-authorization-gate.json
-```
-
-The directory is not ignored. Other reports and arbitrary files remain visible to Git custody.
-
-## Exact scope / negative assurance
-
-Current PR paths:
+PR #1462 remains evidence/custody infrastructure only. It now owns seven paths:
 
 ```text
 scripts/lafea-implementation-authorization-local-preflight.mjs
 scripts/lafea-implementation-authorization-local-preflight-self-test.mjs
+scripts/lafea-implementation-authorization-gate-retain.mjs
 .gitignore
 agents/PR1462_workreport.md
 agents/status/PR1462.yaml
 agents/claims/PR1462.yaml
 ```
 
-`package.json` remains unchanged. No `src/core/**`, mesher, shell compiler, benchmark/oracle/tolerance, source topology, registry/release authority, UI/build, or `.github/workflows/**` file is changed by this PR.
+No solver formulation, shell pressure mechanics, mesh algorithm, benchmark/oracle/tolerance, source topology, release/registry, UI/build, or workflow authority is changed.
 
-## Coordination / overlap
+## Current-main synchronization
 
-- #1432 LAFEA.3 retained refinement: re-ground/re-execute if merged before final receipt.
-- #1258 B01 solver: re-ground/re-execute if solver authority merges.
-- #1259 B02D successor: separate B02D benchmark; authorization fixed probe remains B02C.
-- #1239/#1445/#1246: separate LAFEA.4 TECH-13 replay/currentness/promotion authority.
-- six-commit current-main drift after #1450: exact-file SAFE, downstream-route REEXECUTION_REQUIRED.
+While open, this PR was synchronized non-destructively onto:
+
+```text
+main@dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+synchronization commit = 4056369cde466d01dc9d6b38c9821cd56192d1ad
+```
+
+The intervening six main commits had no exact-file overlap with this PR, but changed downstream LAFEA workbench/controller integration. Therefore they are `SAFE_EXACT_FILE` but require re-execution of the live authorization route before any engineering authorization claim.
+
+## Local preflight contract
+
+The local runner fails before delegation unless all are true:
+
+```text
+cwd == repository root
+package.name == advanced-analysis
+package.type == module
+required Node primitives exist
+all authorization scripts exist as files
+Git top-level == repository root
+HEAD is a full 40-character SHA
+checkout is clean including untracked files
+```
+
+Failure before delegation is machine-classified:
+
+```text
+NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED
+delegatedEngineeringGateEntered = false
+q1ToQ5Disposition = NOT_RUN
+```
+
+A delegated non-zero is classified without overstating execution depth:
+
+```text
+DELEGATED_ENGINEERING_GATE_NONZERO_STOP_AT_FIRST_CHILD_FAILURE
+delegatedEngineeringGateEntered = true
+q1ToQ5Disposition = UNKNOWN_OR_PARTIAL_SEE_FIRST_CHILD_FAILURE
+```
+
+The child output and exit status remain authoritative.
+
+## Wrapper self-test
+
+`scripts/lafea-implementation-authorization-local-preflight-self-test.mjs` uses temporary synthetic Git repositories to test wrapper process/exit semantics without executing LAFEA mechanics.
+
+Previously executed on the exact authored wrapper before the current v4 custody increment:
+
+```text
+status = PASS
+environmentFailureRemainsNotRun = true
+delegatedGateEntryDistinguished = true
+delegatedFailureDoesNotOverstateQ1ToQ5 = true
+delegatedExitStatusPropagated = true
+successfulDelegationRemainsZero = true
+engineeringMechanicsExecuted = false
+engineeringAuthorityCreated = false
+releaseAuthorityGranted = false
+```
+
+The latest self-test source additionally guards the retention ordering described below. That updated source-order guard has not been rerun after the v4 edit in this agent environment; do not report it as an executed PASS until it is run.
+
+## New custody defect closed — clean after engineering checks
+
+Source audit found the merged retention gate only proved:
+
+```text
+checkout clean BEFORE engineering execution
+```
+
+It then ran:
+
+```text
+main Q1-Q5 checker
+Q1 direct-loaded-element addendum
+Q3 independent pressure-resultant addendum
+```
+
+and wrote the PASS envelope without proving those scripts left the repository unchanged.
+
+PR #1462 now adds a second fail-closed Git status assertion after all engineering checks and cross-bindings but before envelope construction and receipt writing:
+
+```text
+engineering checks complete
+→ git status --porcelain=v1 --untracked-files=all
+→ must be empty
+→ construct v4 envelope
+→ write ignored exact receipt
+```
+
+The envelope is now:
+
+```text
+schema = lafea-implementation-authorization-exact-head-envelope/v4
+checkoutCleanBeforeExecution = true
+checkoutCleanAfterEngineeringChecks = true
+```
+
+The evidence hash input is correspondingly `...hash-input/v4`.
+
+This closes a custody hole: a checker that mutates tracked/untracked repository state can no longer leave behind a sealed PASS receipt.
+
+The updated self-test source guards ordering:
+
+```text
+Q3 independent checker run
+< post-engineering clean-status check
+< envelope construction
+< receipt write
+```
+
+## Repeat-run receipt custody
+
+The default generated receipt remains narrowly ignored:
+
+```text
+/reports/qualification/lafea-implementation-authorization-gate.json
+```
+
+Only that path is ignored. The `reports/` directory and unrelated evidence stay visible to Git custody.
+
+## Exact checkout retry
+
+A fresh attempt to obtain the exact PR branch locally failed before checkout materialization:
+
+```text
+git clone --branch agent/lafea-authorization-local-runner-20260826 ...
+fatal: unable to access 'https://github.com/reallaksh19/Advanced_Analysis.git/':
+Could not resolve host: github.com
+```
+
+Disposition:
+
+```text
+INFRASTRUCTURE/DNS FAILURE
+exact repository execution = NOT_RUN
+Q1-Q5 engineering execution = NOT_RUN
+engineering assertion failure proven = false
+```
+
+Do not reconstruct a partial repository and treat it as exact-head evidence.
 
 ## ISS / RISK / DEC
 
-- `ISS-1462-01` ACTIVE_PENDING_EXECUTION — exact-head Q1-Q5 engineering receipt still has not executed.
-- `ISS-1462-02` RESOLVED_BY_IMPLEMENTATION_PENDING_REAL_RUN — exact generated receipt no longer dirties repeat runs.
-- `ISS-1462-03` RESOLVED_BY_SYNCHRONIZATION_PENDING_REAL_RUN — branch divergence reconciled onto `dd7f13e2...`.
-- `RISK-1462-01` CONTROLLED — environment failure and delegated-gate non-zero have distinct machine-readable semantics.
-- `RISK-1462-02` CONTROLLED_PENDING_EXECUTION — downstream workbench APIs changed on main; no authorization claim until synchronized head executes.
-- `DEC-1462-01` — direct Node script is sufficient; no `package.json` alias.
-- `DEC-1462-02` — local wrapper cannot create engineering PASS/release authority.
-- `DEC-1462-03` — ignore only the exact generated authorization receipt.
-- `DEC-1462-04` — delegated-gate entry does not prove all Q1-Q5 ran; child failure remains authoritative.
-- `DEC-1462-05` — synthetic self-test qualifies wrapper classification only, never numerical mechanics.
+- `ISS-1462-01` ACTIVE — real exact-head Q1-Q5 receipt has not executed.
+- `ISS-1462-02` RESOLVED_BY_IMPLEMENTATION_PENDING_REAL_RUN — default receipt no longer dirties repeat runs.
+- `ISS-1462-03` RESOLVED_BY_SYNCHRONIZATION_PENDING_REAL_RUN — branch synchronized to `dd7f13e2...`.
+- `ISS-1462-04` RESOLVED_BY_IMPLEMENTATION_PENDING_REAL_RUN — retention now proves checkout cleanliness after engineering checks before sealing receipt.
+- `RISK-1462-01` CONTROLLED — environment and delegated-gate failures are separately classified.
+- `RISK-1462-02` CONTROLLED_PENDING_EXECUTION — downstream workbench drift requires re-execution.
+- `RISK-1462-03` CONTROLLED — child scripts cannot mutate visible Git state and still obtain a sealed v4 PASS envelope.
+- `DEC-1462-01` — no package alias; direct Node entrypoint remains sufficient.
+- `DEC-1462-02` — wrapper/retention infrastructure cannot create release authority.
+- `DEC-1462-03` — ignore only the exact generated receipt path.
+- `DEC-1462-04` — delegated entry does not imply full Q1-Q5 execution.
+- `DEC-1462-05` — synthetic self-test qualifies control flow only, not mechanics.
+- `DEC-1462-06` — receipt sealing requires clean Git state both before and after engineering checks.
 
 ## Validation ledger
 
 | Check | Status | Observation | Oracle |
 |---|---|---|---|
 | live main grounding | PASS | `main@dd7f13e2...` GitHub readback | repository state |
-| six-commit drift exact-file overlap | PASS | no overlap with PR paths | compare ledger |
-| downstream route drift classification | PASS | workbench controller/API changed | Q1-Q5 route custody |
-| current-main branch synchronization | PASS | merge tree = current main + PR paths | Git tree/parent custody |
-| production preflight syntax | PASS | local `node --check` exact authored source | Node parser |
-| self-test syntax | PASS | local `node --check` exact authored source | Node parser |
-| synthetic wrapper contract self-test | PASS | three temp-Git cases | independent process/exit behavior |
-| generated receipt repeatability | PASS | exact `.gitignore` path only | Git custody invariant |
-| exact synchronized repository execution | NOT_RUN | no executable checkout in agent container | execution environment |
-| Q1-Q5 engineering execution | NOT_RUN | delegated real gate not executed | merged independent/production evidence |
+| current-main branch synchronization | PASS | current-main tree retained with PR changes | Git tree/parents |
+| wrapper failure-phase semantics | PASS_PREVIOUS_INCREMENT | synthetic temp-Git execution | process/exit contract |
+| exact generated receipt ignore rule | PASS_SOURCE_INSPECTION | one exact path only | Git custody invariant |
+| post-engineering clean-checkout gate | PASS_SOURCE_INSPECTION | second Git status assertion before envelope/write | source/order contract |
+| v4 envelope fields/hash schema | PASS_SOURCE_INSPECTION | before+after cleanliness facts retained | evidence custody contract |
+| updated self-test v4 order guard | NOT_RUN_AFTER_V4_EDIT | source implemented; not rerun | Node/self-test |
+| exact checkout retry | NOT_RUN | DNS failure before clone materialization | infrastructure |
+| exact synchronized repository execution | NOT_RUN | no exact checkout | execution environment |
+| Q1-Q5 engineering execution | NOT_RUN | real delegated gate not executed | implementation-authorization evidence |
 
 No `NOT_RUN` is represented as PASS.
 
@@ -227,4 +227,4 @@ TOTAL                            99/100
 MINIMUM                          19/20
 ```
 
-This qualifies evidence-infrastructure continuation only. It does not qualify Q1-Q5 numerical execution, mechanics mutation, registry cleanup, or release authority.
+This qualifies evidence-infrastructure continuation only. It does not authorize mechanics mutation, registry cleanup, release promotion, or claim Q1-Q5 numerical PASS.

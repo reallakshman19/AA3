@@ -4,7 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { requireLafeaStageRegistryEntry } from '../src/workspace/lafea-stage-registry.js';
+import {
+  LAFEA_STAGE_REGISTRY,
+  requireLafeaStageRegistryEntry,
+} from '../src/workspace/lafea-stage-registry.js';
 import {
   AUTHORIZATION_REPORT_RELATIVE_PATH,
   assertCleanCheckout,
@@ -12,6 +15,7 @@ import {
   verifyRetainedAuthorizationEnvelope,
 } from './lib/lafea-implementation-authorization-local-runtime.mjs';
 import {
+  LAFEA1371_REGISTRY_CLOSURE_READINESS_REPORT_RELATIVE_PATH,
   evaluateLafea1371RegistryClosureReadiness,
 } from './lib/lafea1371-registry-closure-readiness.mjs';
 
@@ -46,6 +50,15 @@ const readiness = evaluateLafea1371RegistryClosureReadiness({
   implementationAuthorizationVerification: verification,
   lafea3RegistryEntry: requireLafeaStageRegistryEntry('LAFEA.3'),
   lafea4RegistryEntry: requireLafeaStageRegistryEntry('LAFEA.4'),
+  stageRegistry: LAFEA_STAGE_REGISTRY,
 });
+
+const readinessPath = path.resolve(
+  ROOT,
+  LAFEA1371_REGISTRY_CLOSURE_READINESS_REPORT_RELATIVE_PATH,
+);
+fs.mkdirSync(path.dirname(readinessPath), { recursive: true });
+fs.writeFileSync(readinessPath, `${JSON.stringify(readiness, null, 2)}\n`, 'utf8');
+assertCleanCheckout(ROOT, 'Section 17 readiness receipt write must preserve clean Git custody');
 
 process.stdout.write(`${JSON.stringify(readiness, null, 2)}\n`);

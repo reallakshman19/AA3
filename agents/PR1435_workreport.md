@@ -3,22 +3,39 @@
 ## CURRENT RECOVERY STATE — READ FIRST
 
 ```text
-HANDOVER_READINESS: READY_FOR_VALIDATION
+HANDOVER_READINESS: READY_FOR_MERGE
 PR_RECOVERY_STATE: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: AUTO_MODE
 CRITICALITY: ENGINEERING_CRITICAL
-MERGE_AUTHORITY: OWNER_ONLY
+MERGE_AUTHORITY: EXPLICIT_OWNER_AUTHORIZED_2026-08-26T01:21:10Z
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_PREDECESSOR: PR #1246 (H role superseded; I/J remain unresolved there)
 PR: #1435
 BRANCH: agent/lafea4-tech13h-retained-authority-current-main-20260826
 MAIN_HEAD_AT_GROUNDING: 7b2a8119aa5faeee7cc102c894991851019c5a7b
 ENGINEERING_HEAD_BEFORE_RECOVERY_RECORDS: 0eec6a437bc50685f21d4d87787042095ddb3bb5
-CURRENT_STAGE: VALIDATION_BLOCKED_BY_HOSTED_RUNNER_ALLOCATION
+CURRENT_STAGE: OWNER_AUTHORIZED_EXACT_HEAD_MERGE
 APPENDIX_A_STATUS: PASS 99/100, minimum 19/20
 ENGINEERING_FAILURE_PROVEN: false
 ```
+
+## Owner authorization checkpoint
+
+At `2026-08-26T01:21:10Z` the owner explicitly instructed `merge, proceed` in direct reference to the parked #1435 frontier. This authorizes #1435 itself to merge. It does not convert any unexecuted Node/browser/build gate to PASS and does not authorize TECH-13I/J merge or promotion activation.
+
+Final pre-authorization live grounding:
+
+```text
+main = 7b2a8119aa5faeee7cc102c894991851019c5a7b
+PR #1435 head before recovery-record update = 3e6fcbf30c8b81f0eaed2d5d48388b33330cca00
+mergeable = true
+reviews = none
+review threads = none
+hosted execution = NOT_RUN / PRE_STEP_HOSTED_RUNNER_ALLOCATION
+```
+
+The merge must use the final live PR head after this recovery-record update as `expected_head_sha`.
 
 ## Handover in 60 seconds
 
@@ -223,8 +240,8 @@ TAKEOVER_AUTHORITY              WRITE_ALLOWED
 
 ## EXACT_NEXT_ACTION
 
-1. Reconcile live #1435 changed-file/review state after recovery-record migration.
-2. Observe the newly-triggered exact-head workflow once; classify zero-step as NOT_RUN if runner allocation still fails and do not rerun.
-3. If source ledger remains clean, park #1435 draft / Owner-only pending executable qualification.
-4. Mark #1246 H as superseded by #1435 without closing I/J provenance.
-5. Proceed to TECH-13I read-only salvage assessment only after H’s boundaries are durably recorded; do not merge or activate H without explicit owner authority.
+1. Reconcile final live #1435 head after owner-authorization recovery updates.
+2. Mark ready for review and squash-merge only with the exact final `expected_head_sha` while `main` remains the verified base.
+3. After merge, re-ground `main`; do not infer executable qualification from the merge.
+4. Continue TECH-13I read-only salvage assessment from the new current-main H baseline and create a separate I-only successor only if currentness/authority checks pass.
+5. Keep TECH-13J, promotion activation and release authority out of I unless separately justified and authorized.

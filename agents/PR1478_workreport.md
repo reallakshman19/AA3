@@ -4,98 +4,31 @@
 - Repository: `reallaksh19/Advanced_Analysis`
 - PR: #1478 — `Load Calc: assemble current Common Input empirical execution runtime`
 - Branch: `agent/issue-1321-current-run-execution-runtime`
-- Base: `main@3d79ea6889c08cf6a37229655ecbd3ec3dc89a20`
+- Original base: `main@3d79ea6889c08cf6a37229655ecbd3ec3dc89a20`
+- Final synchronized main: `e74d2d3c45d918895d3a613014f08aa7c0abce79`
 - Upstream: merged #1475, #1471, #1465, #1461
 - Criticality: ENGINEERING_CRITICAL
 - Execution mode: AUTO
-- Merge authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR
-- State: SOURCE_COMPLETE_AWAITING_OWNER
+- Merge authority: OWNER_GRANTED_CURRENT_TURN
+- State: MERGE_AUTHORIZED_SOURCE_COMPLETE
 
 ## Handover in 60 seconds
 PR #1478 assembles the routine Common Input empirical calculation chain but deliberately does not route the UI Run button to it.
 
 ```text
-READY/current Common Input screening snapshot
-→ verify active dataset + support-site + route-partition + master context
-→ authorizeCurrentNonFeaEmpiricalRun()
-→ createNonFeaGravityMethodAuthority()
-→ evaluateGovernedEmpiricalGravityMethodSelection()
-→ createCurrentCommonInputEmpiricalMassProjection()
-→ calculateCurrentCommonInputEmpiricalSupportLoads()
-→ engineeringSupportLoadStore.recordCurrentCommonInputExecution()
+READY/current Common Input
+→ verify active dataset/support/route/master context
+→ system routine Run authorization
+→ governed gravity-method authority + one pre-execution selection
+→ #1471 current mass projection
+→ #1475 current support-load execution
+→ separate current-system execution custody
 → immutable current-common-input-empirical-run-runtime/v1 receipt
 ```
 
-Method selection occurs once before mass projection/statics. A selected-method failure propagates. There is no catch/retry path from V3 to V2.
+Method selection occurs once before mass/statics. A selected-method failure propagates. There is no V3→V2 catch/retry fallback.
 
-## Production changes
-### 1. `current-common-input-empirical-run-runtime.js`
-New coordinator with production defaults and injectable dependencies for focused falsifiers.
-
-Execution order is fail closed:
-1. obtain/reuse READY-only routine screening snapshot;
-2. reject stale/PARTIALLY_READY/BLOCKED Common Input;
-3. require current active workspace dataset, support-site model, route-partition model and master-data context **before** recording system Run authorization;
-4. create/record existing routine system Run authorization;
-5. create governed gravity-method authority from the sealed effective Project Data profile;
-6. evaluate the governed selector once;
-7. if no method is selected, stop before mass projection/statics;
-8. build current #1471 mass projection;
-9. execute exactly the preselected method through #1475 support-load execution;
-10. verify executed/distribution method equals the selected method;
-11. record the exact #1475 support execution in separate current-Common-Input store custody;
-12. return an immutable semantic-hash-bound runtime receipt.
-
-Fixed runtime policy asserts:
-- `routineProductRun = true`
-- `runControllerRouted = false`
-- `legacyExplicitAuthorityConsumed = false`
-- `legacyPublicationOrHandoffAuthorityAsserted = false`
-- `methodSelectedBeforeExecution = true`
-- `postFailureMethodFallbackAllowed = false`
-- `massRecompositionPerformed = false`
-- `staticsMechanicsChanged = false`
-
-### 2. `engineering-support-load-store.js`
-Adds separate `#currentCommonInputExecution` custody and `recordCurrentCommonInputExecution()`.
-
-The current routine execution:
-- is validated as the exact #1475 support-execution contract;
-- becomes the active distribution;
-- clears the low-level legacy `#authorizedExecution` field;
-- is not labelled/stored as legacy `AUTHORIZED_HANDOFF`;
-- is cleared on stale/legacy replacement/clear.
-
-Legacy calculate/AUTO/authorized entrypoints retain their existing behavior and clear current routine custody when they replace the active distribution.
-
-## Focused falsifier source coverage
-`scripts/current-common-input-empirical-run-runtime-check.mjs` covers:
-- deterministic call order;
-- current execution context before authorization;
-- V3 and V2 preselection pass-through;
-- selected support execution attempted exactly once;
-- support failure propagates and is never recorded/retried;
-- selector with no selected method stops before mass/statics;
-- PARTIALLY_READY, BLOCKED and stale snapshots stop before authorization;
-- missing active dataset stops before authorization;
-- missing support/route models stop before authorization;
-- execution-store semantic mismatch fails closed;
-- source guards prohibit legacy explicit runtime imports and catch/retry logic;
-- source guards confirm separate routine execution custody.
-
-The check is registered in `scripts/run-non-fea-checks.mjs`.
-
-## Deferred atomic successor boundary
-The current `load-calc-consumer-controller.js` ordinary Run path still calls the legacy explicit-authority controller. PR #1478 does **not** change it.
-
-`engineeringModelStore.decorateEntity()` also currently derives authority presentation from the legacy runtime stores. Therefore the next PR must atomically:
-1. route ordinary Run to the new current Common Input runtime;
-2. keep the scenario-ready path unchanged;
-3. surface routine-system execution as its own authority class, not `AUTHORIZED_HANDOFF` and not `UNAUTHORIZED_LEGACY_RESULT`;
-4. preserve legacy explicit-authority execution for explicitly authorized historical workflows;
-5. publish the existing calculated/failed events without duplicate execution.
-
-## Exact intended changed-file ledger
+## Production scope
 1. `src/workspace/engineering-loads/current-common-input-empirical-run-runtime.js`
 2. `src/workspace/engineering-loads/engineering-support-load-store.js`
 3. `scripts/current-common-input-empirical-run-runtime-check.mjs`
@@ -104,32 +37,39 @@ The current `load-calc-consumer-controller.js` ordinary Run path still calls the
 6. `agents/claims/PR1478.yaml`
 7. `agents/status/PR1478.yaml`
 
-The temporary WIP marker is superseded and must not remain in the final net PR tree.
+No Run-button/controller routing, scenario-path change, legacy explicit-runtime removal, support statics mechanics, mass formulas, CoG mechanics, allocation, equilibrium, tolerances, workflows or release authority are changed here.
+
+## Locked invariants
+- READY current Common Input required.
+- Active dataset/support/route/master context required before system authorization.
+- Governed method selection occurs before execution and only once.
+- #1471 mass projection and #1475 support execution are mandatory.
+- Routine-system execution is stored separately from legacy authorized handoff.
+- PARTIALLY_READY/BLOCKED/stale fails closed.
+- No legacy publication/handoff identity is fabricated.
+- No post-failure method downgrade.
+
+## Final synchronization
+Current main advanced after source completion through unrelated LAFEA work. The final merge preparation uses current `main@e74d2d3c45d918895d3a613014f08aa7c0abce79` as the tree base and overlays only the seven PR1478 files. No intervening-main path overlaps the PR1478 scope.
 
 ## Validation truth
-- live main grounding: PASS
-- current Common Input chain trace: PASS
-- ordinary Run legacy-path gap trace: PASS
+- live source trace: PASS
 - no-circular-dependency source review: PASS
 - no-legacy-runtime-import source review: PASS
 - no-post-failure-retry source review: PASS
-- focused falsifier source review: PASS
-- executable focused check: NOT_RUN
+- focused-falsifier source review: PASS
+- exact seven-file scope: PASS
+- current-main non-overlap review: PASS
+- focused executable check: NOT_RUN
 - Non-FEA aggregate: NOT_RUN
 - `npm run check:imports`: NOT_RUN
 - `npm run build`: NOT_RUN
 - `git diff --check`: NOT_RUN
 
-Prior faithful checkout remained unavailable because repository materialization failed with `Could not resolve host: github.com`. No NOT_RUN is represented as PASS.
+Faithful local checkout remained unavailable because Git materialization failed with `Could not resolve host: github.com`. No NOT_RUN result is represented as PASS.
 
-## Appendix A — takeover qualification
-- A1 Production trace: 20/20
-- A2 Failure isolation: 20/20
-- A3 Authority invariant: 20/20
-- A4 Independent validation: 18/20
-- A5 Minimal patch: 20/20
-
-**Score: 98/100; minimum 18/20.**
+## Appendix A
+A1 20/20; A2 20/20; A3 20/20; A4 18/20; A5 20/20. **98/100; minimum 18/20.**
 
 ## EXACT_NEXT_ACTION
-Reconcile the final seven-file net diff against current `main`, remove the superseded WIP marker from the net tree, mark #1478 ready for review, and await explicit owner merge authority. After merge, create the atomic ordinary-Run routing + routine-authority-presentation successor.
+Synchronize the seven-file tree onto current main and squash-merge #1478 under the owner's current instruction. Then create the atomic ordinary-Run routing + routine-system authority-presentation successor from the resulting main.

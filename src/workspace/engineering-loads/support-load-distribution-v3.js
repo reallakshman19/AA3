@@ -20,6 +20,7 @@ export const EMPIRICAL_LOAD_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V2';
 export const EMPIRICAL_LOAD_COG_METHOD = 'CHAINAGE_TRIBUTARY_SPAN_V3_COG';
 
 const FLUID_COMPOSITION_RULE = 'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION';
+const COMPONENT_MASS_COMPOSITION_RULE = 'ONE_DRY_MASS_POLICY_PER_PHYSICAL_COMPONENT';
 const COMPONENT_CONTENT_COMPOSITION_RULE = 'COMPONENT_CASE_MASS=DRY_POINT_MASS+OPTIONAL_AUTHORIZED_CONTAINED_FLUID';
 const FATAL_EXCLUSION_CODES = new Set([
   'INVALID_PIPE_SECTION',
@@ -27,6 +28,7 @@ const FATAL_EXCLUSION_CODES = new Set([
   'MISSING_ROUTE_CHAINAGE',
   'INVALID_COMPONENT_CONTENT_MASS',
   'UNAPPROVED_COMPONENT_CONTENT_MASS',
+  'UNAUTHORIZED_COMPONENT_CONTENT_MASS',
   'EMPIRICAL_COMPONENT_LOAD_AUTHORITY_RECORD_MISSING',
   'EMPIRICAL_COMPONENT_LOAD_AUTHORITY_BLOCKED',
   'EMPIRICAL_COMPONENT_COG_CHAINAGE_INVALID',
@@ -398,6 +400,14 @@ function componentCaseMass(baseMass, caseId, profile) {
   if (!Number.isFinite(contentMassKg) || contentMassKg < 0) {
     return excluded('INVALID_COMPONENT_CONTENT_MASS', path);
   }
+  const authorization = resolveAuthorizedComponentContent(
+    baseMass,
+    caseId,
+    profile,
+    entry,
+    contentMassKg,
+  );
+  if (!authorization) return excluded('UNAUTHORIZED_COMPONENT_CONTENT_MASS', path);
   const contentSource = sourceRef(profile, path);
   return {
     qualified: true,
@@ -408,9 +418,57 @@ function componentCaseMass(baseMass, caseId, profile) {
       loadCaseId: caseId,
       dryComponentMassKg: baseMass.massKg,
       containedFluidMassKg: contentMassKg,
+      containedFluidSemanticHash: authorization.contentReceipt.containedFluidSemanticHash,
+      contentCompositionSemanticHash: authorization.contentReceipt.compositionSemanticHash,
       projectDataSources: [...baseMass.formula.projectDataSources, contentSource].filter(Boolean),
     },
   };
+}
+
+function resolveAuthorizedComponentContent(baseMass, caseId, profile, entry, contentMassKg) {
+  const evidence = entry?.evidence;
+  if (evidence?.source !== 'AUTHORIZED_EMPIRICAL_EFFECTIVE_VALUE_LEDGER') return null;
+  if (evidence?.massCompositionRule !== COMPONENT_CONTENT_COMPOSITION_RULE) return null;
+  if (!stringValue(evidence?.sourceSemanticHash)
+      || !stringValue(evidence?.authorizedInputSemanticHash)
+      || !stringValue(evidence?.effectiveExecutionProjectionSemanticHash)
+      || !stringValue(evidence?.baselineSemanticHash)
+      || !stringValue(evidence?.handoffSemanticHash)) return null;
+
+  const contentReceipt = evidence?.componentContentBySelector?.[baseMass.componentSelector];
+  if (!contentReceipt || typeof contentReceipt !== 'object' || Array.isArray(contentReceipt)) return null;
+  if (contentReceipt.rule !== COMPONENT_CONTENT_COMPOSITION_RULE
+      || contentReceipt.loadCaseId !== caseId
+      || contentReceipt.containedFluidMassKg !== contentMassKg
+      || !stringValue(contentReceipt.targetId)
+      || !stringValue(contentReceipt.entityId)
+      || !stringValue(contentReceipt.containedFluidSemanticHash)
+      || !stringValue(contentReceipt.compositionSemanticHash)) return null;
+
+  const dryEntry = projectDataEntry(profile, 'loadCalculation.componentWeightsKg');
+  const dryEvidence = dryEntry?.evidence;
+  if (dryEntry?.approved !== true
+      || dryEvidence?.source !== 'AUTHORIZED_EMPIRICAL_EFFECTIVE_VALUE_LEDGER'
+      || dryEvidence?.massCompositionRule !== COMPONENT_MASS_COMPOSITION_RULE) return null;
+  for (const key of [
+    'sourceSemanticHash',
+    'authorizedInputSemanticHash',
+    'effectiveExecutionProjectionSemanticHash',
+    'baselineSemanticHash',
+    'handoffSemanticHash',
+  ]) {
+    if (dryEvidence?.[key] !== evidence[key]) return null;
+  }
+  const dryReceipt = dryEvidence?.componentMassCompositionBySelector?.[baseMass.componentSelector];
+  if (!dryReceipt || typeof dryReceipt !== 'object' || Array.isArray(dryReceipt)) return null;
+  if (dryReceipt.rule !== COMPONENT_MASS_COMPOSITION_RULE
+      || dryReceipt.targetId !== contentReceipt.targetId
+      || dryReceipt.entityId !== contentReceipt.entityId
+      || Number(dryReceipt.componentWeightKg) !== baseMass.massKg
+      || !stringValue(dryReceipt.componentWeightSemanticHash)
+      || !stringValue(dryReceipt.compositionSemanticHash)) return null;
+
+  return { contentReceipt, dryReceipt };
 }
 
 function insulationMass(section, lengthM, profile) {

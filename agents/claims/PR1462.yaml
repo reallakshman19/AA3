@@ -8,8 +8,10 @@ state: ACTIVE_BOUNDED_EVIDENCE_INFRASTRUCTURE_ONLY
 criticality: ENGINEERING_CRITICAL
 authority_domain:
   - local exact-head environment/custody preflight for merged Q1-Q5 authorization gate
+  - repeatable runtime receipt custody for the one exact generated authorization JSON path
 exact_paths:
   - scripts/lafea-implementation-authorization-local-preflight.mjs
+  - .gitignore
   - agents/PR1462_workreport.md
   - agents/status/PR1462.yaml
   - agents/claims/PR1462.yaml

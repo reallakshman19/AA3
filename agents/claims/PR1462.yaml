@@ -11,9 +11,11 @@ authority_domain:
   - machine-readable separation of preflight NOT_RUN from delegated-gate nonzero without overstating Q1-Q5 depth
   - synthetic temporary-Git self-test of wrapper process/exit classification only
   - repeatable runtime receipt custody for the one exact generated authorization JSON path
+  - post-engineering Git cleanliness proof before exact-head receipt sealing
 exact_paths:
   - scripts/lafea-implementation-authorization-local-preflight.mjs
   - scripts/lafea-implementation-authorization-local-preflight-self-test.mjs
+  - scripts/lafea-implementation-authorization-gate-retain.mjs
   - .gitignore
   - agents/PR1462_workreport.md
   - agents/status/PR1462.yaml
@@ -32,6 +34,11 @@ current_main_drift:
   base_head: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
   exact_file_overlap: SAFE_NONE
   downstream_route_effect: REEXECUTION_REQUIRED_BEFORE_ANY_ENGINEERING_AUTHORIZATION_CLAIM
+retention_custody:
+  envelope_schema: lafea-implementation-authorization-exact-head-envelope/v4
+  clean_before_engineering_checks: REQUIRED
+  clean_after_engineering_checks_before_receipt_write: REQUIRED
+  release_authority_created: false
 coordination:
   - pr: 1432
     classification: COORDINATION_REQUIRED_BEFORE_FINAL_EXECUTED_RECEIPT_LAFEA3_MESH_CAN_MOVE

@@ -1,0 +1,50 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1482
+mission: Integrated exact-head B01 qualification envelope after #1479/#1480
+base_main: 20e0abb5301363bef0659cf615bc8a37559ac869
+required_ancestor: 20e0abb5301363bef0659cf615bc8a37559ac869
+authority_domain:
+  - EXACT_HEAD_B01_INTEGRATED_QUALIFICATION_CUSTODY
+  - POST_NULLSPACE_BOUNDARY_PREREQUISITE_VERIFICATION
+  - HISTORICAL_FINAL_RECEIPT_VERIFICATION
+  - CURRENT_HEAD_SOURCE_CUSTODY_OVERLAY
+changed_paths:
+  - .gitignore
+  - scripts/lib/lafea-b01-integrated-exact-head.js
+  - scripts/lafea-b01-integrated-exact-head-self-test.mjs
+  - scripts/lafea-b01-integrated-exact-head-check.mjs
+  - agents/PR1482_workreport.md
+  - agents/status/PR1482.yaml
+  - agents/claims/PR1482.yaml
+claims:
+  production_mechanics_changed: false
+  historical_final_qualifier_changed: false
+  exact_head_required: true
+  clean_checkout_required: true
+  post_nullspace_boundary_pass_required_before_integrated_matrix: true
+  boundary_source_custody_reverified: true
+  integrated_matrix_counts_reverified:
+    base: 54
+    metamorphic: 270
+    fail_closed: 16
+  integrated_b01_qualified: false
+  b02_prerequisite_evidence_available: false
+  solver_repair_authorized: false
+  b02_numerical_authority_granted: false
+  release_authority_granted: false
+  trust_authority_granted: false
+validation_truth:
+  synthetic_verifier_suite: PASS_LOCAL_NODE_EXECUTION
+  synthetic_case_count: 9
+  real_engineering_execution: NOT_RUN
+excluded_authority:
+  - src/**
+  - validation/**
+  - .github/workflows/**
+  - SPARSE_SOLVER_MECHANICS
+  - ENGINEERING_TOLERANCES
+  - BENCHMARK_EXPECTED_VALUES
+  - B02_NUMERICS
+  - REGISTRY_RELEASE_TRUST
+merge_authority: OWNER_ONLY_NOT_GRANTED

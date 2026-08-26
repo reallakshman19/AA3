@@ -10,6 +10,7 @@ criticality: ENGINEERING_CRITICAL
 coordination_state: SAFE_NO_OPEN_LOAD_CASE_AUTHORITY_PR
 claimed_paths:
   - src/workspace/project-data/non-fea-load-case-authority.js
+  - src/workspace/non-fea-method-basis-view.js
   - scripts/non-fea-load-case-authority-check.mjs
   - agents/PR1439_workreport.md
   - agents/claims/PR1439.yaml
@@ -18,6 +19,6 @@ protected_paths:
   - src/workspace/engineering-loads/empirical-load-calc-scenario-store.js
   - src/workspace/engineering-loads/support-load-distribution-v3.js
   - .github/workflows/**
-authority_boundary: "Expose effective canonical load-case authority/provenance after Product-default composition; preserve raw-profile fail-closed behavior. No scenario authorization, method AUTO, mechanics, tolerance, solver, or workflow change."
+authority_boundary: "Expose effective canonical load-case authority/provenance after Product-default composition and disclose it in Method Basis; preserve raw-profile fail-closed behavior. No scenario authorization, method AUTO, mechanics, tolerance, solver, or workflow change."
 merge_authority: OWNER_ONLY
 state: ACTIVE

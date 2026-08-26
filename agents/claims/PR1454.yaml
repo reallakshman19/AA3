@@ -31,7 +31,13 @@ authority_boundary:
   source_authority_granted: false
   code_compliance_authority_granted: false
   release_authority_granted: false
+  file_intake_rejection_only: true
+chunk_boundary:
+  io_module_imports_workbench_model: false
+  io_leaf_chunk_preserved: true
+  canonical_schema_cross_check_owned_by_checker: true
 merge_authority: NOT_GRANTED
-technical_basis_head: 079d28c4dcce943db338c9da4513b5f07b4cab2e
+technical_basis_head: 3535a34b7ef880e5e587733a243a01b78f9cf25a
+grounding_epoch: GE-PR1454-003
 handover_report: agents/PR1454_workreport.md
 exact_next_action: "Leave PR1454 draft/unmerged pending explicit Owner merge authorization; re-ground immediately before any merge."

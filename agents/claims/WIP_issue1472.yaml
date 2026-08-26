@@ -1,0 +1,42 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: WIP_issue1472
+branch: agent/issue-1472-emp1-deployment-operations-20260826
+issue: 1472
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: AUTO
+auto_state: RUNNING
+coordination_state: STACKED_ON_PR1470_EXACT_OVERLAP_INTENTIONAL
+scope:
+  authority: EMP1_DEPLOYMENT_OPERATIONS_CUSTODY
+  paths:
+    - scripts/emp1-professional-deployment-operations-check.mjs
+    - scripts/emp1-professional-deployment-operations-falsifier.mjs
+    - scripts/emp1-professional-release-candidate.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_DEPLOYMENT_OPERATIONS.md
+    - agents/WIP_issue1472_workreport.md
+    - agents/status/WIP_issue1472.yaml
+    - agents/claims/WIP_issue1472.yaml
+protected_exclusions:
+  - provider-specific deployment configuration or APIs
+  - .github/workflows/**
+  - index.html
+  - analyze.html
+  - package.json
+  - package-lock.json
+  - src/core/emp1/**
+  - WRC source/dataset/oracle/tolerance/mechanics
+  - route/registry/code-compliance authority widening
+authority_boundary:
+  deployment_operations_can_block_release: true
+  receipt_proves_actual_provider_promotion: false
+  receipt_proves_rollback_execution_success: false
+  engineering_authority_granted: false
+  release_authority_granted: false
+  deployment_authority_granted: false
+stack_base_head: c0c1a30d5b79bd67963e0d8f2dee9b4a19d9a757
+live_main_last_observed: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+merge_authority: NOT_GRANTED
+grounding_epoch: GE-WIP1472-001
+handover_report: agents/WIP_issue1472_workreport.md

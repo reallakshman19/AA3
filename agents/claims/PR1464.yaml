@@ -1,0 +1,39 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1464
+branch: agent/issue-1463-emp1-dependency-security-20260826
+issue: 1463
+criticality: ENGINEERING_CRITICAL
+claim_state: ACTIVE
+execution_mode: AUTO
+auto_state: RUNNING
+coordination_state: STACKED_ON_PR1457_EXACT_OVERLAP_INTENTIONAL
+scope:
+  authority: EMP1_DEPENDENCY_SECURITY
+  paths:
+    - scripts/emp1-professional-dependency-lock-check.mjs
+    - scripts/emp1-professional-dependency-lock-falsifier.mjs
+    - scripts/emp1-professional-dependency-advisory-check.mjs
+    - scripts/emp1-professional-dependency-advisory-falsifier.mjs
+    - scripts/emp1-professional-release-candidate.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
+    - agents/PR1464_workreport.md
+    - agents/status/PR1464.yaml
+    - agents/claims/PR1464.yaml
+protected_exclusions:
+  - package.json dependency version changes
+  - package-lock.json dependency version changes
+  - src/core/emp1/**
+  - WRC mechanics/source/dataset/oracle/tolerance
+  - CSP/security-header policy
+  - .github/workflows/**
+authority_boundary:
+  dependency_security_can_block_release: true
+  dependency_security_can_create_engineering_authority: false
+  code_compliance_authority_granted: false
+  release_authority_granted: false
+  vulnerability_free_claim_without_live_audit: false
+merge_authority: NOT_GRANTED
+grounding_epoch: GE-PR1464-001
+handover_report: agents/PR1464_workreport.md
+exact_next_action: "Retire WIP records then implement lock/advisory gates and inherited candidate/doc updates only."

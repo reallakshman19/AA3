@@ -8,29 +8,39 @@
 - Re-ground commit: `605cfd521f057add27bf81918e2a9b88b8253ae9`
 - Historical stack base: PR #1460 pre-merge head `e246a51235b8c8fd98a67e6fece3a9be87825071`
 - Criticality: ENGINEERING_CRITICAL
-- Execution mode: AUTO (inherited active PR state)
+- Execution mode: AUTO
 - Merge authority: OWNER_ONLY_NOT_GRANTED
-- REPORT_BASIS_HEAD: `605cfd521f057add27bf81918e2a9b88b8253ae9`
+- REPORT_BASIS_HEAD: `a2c370dc4c1e9df31cf1ae2c3f8d823bad14fc2a`
 
 ## Handover in 60 seconds
-This bounded slice makes the ordinary Load Calc Run action obtain/reuse the already-merged READY-only product screening Common Input snapshot before it checks existing empirical execution authorization. It must not manufacture authorization. Scenario-ready execution remains untouched.
+This bounded slice is **source-complete**. Ordinary Load Calc Run now obtains/reuses the already-merged READY-only product screening Common Input snapshot before it refreshes and inspects existing empirical execution authorization. It never manufactures authorization. Scenario-ready execution remains unchanged.
 
-Current `main` already contains PR #1460's repaired helper `sealCurrentReadyNonFeaCalculationSnapshot()`, which may reuse only a current sealed package that is itself `READY`, has at least one sealed method, and has zero blocked methods. A valid human-confirmed `PARTIALLY_READY` seal is not routine-screening authority.
+Current `main` contains PR #1460's repaired helper `sealCurrentReadyNonFeaCalculationSnapshot()`, which may reuse only a current sealed package that is itself `READY`, has at least one sealed method, and has zero blocked methods. A valid human-confirmed `PARTIALLY_READY` seal is not routine-screening authority.
 
-The current production Run handler still checks scenario state and empirical authorization directly and never invokes the READY-only helper. That is the first missing production boundary for this PR.
-
-## Mission
-For an ordinary Run click:
+The implementation adds no calculation mechanics or authority producer. It only orders existing boundaries correctly:
 
 ```text
-scenario calculationEligible?
-  YES -> existing scenario CALCULATE_REQUESTED path unchanged
-  NO  -> obtain/reuse current READY screening snapshot
-          -> failure: render failure; publish no calculation request
-          -> success: refresh/inspect existing empirical authorization currentness
-              -> current: publish existing ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED
-              -> absent/stale: render "Explicit empirical authorization still required."; publish no calculation request
+Run
+├─ current explicit scenario authorization
+│  └─ existing scenario CALCULATE_REQUESTED
+└─ ordinary path
+   ├─ obtain/reuse READY-only Common Input snapshot
+   ├─ refresh existing empirical authorization currentness
+   ├─ current authorization -> existing engineering CALCULATE_REQUESTED
+   └─ absent/stale authorization -> no execution + explicit authorization required
 ```
+
+Executable checks remain `NOT_RUN`: this environment cannot materialize the private repository because `git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git HEAD` fails with `Could not resolve host: github.com`.
+
+## Mission / acceptance
+- scenario already calculation-eligible: preserve existing scenario execution path;
+- otherwise invoke READY-only screening snapshot provider exactly once;
+- if snapshot creation fails: show failure and execute nothing;
+- refresh authorization currentness **after** snapshot creation/reuse;
+- execute ordinary governed path only when existing empirical authorization remains current;
+- otherwise show `Explicit empirical authorization still required.`;
+- never call manual human-style `sealCurrentNonFeaCommonInput()` from ordinary Run;
+- never publish an authorization request from ordinary Run.
 
 ## Protected authority / invariants
 - READY Common Input snapshot is **not** empirical execution authorization.
@@ -43,86 +53,121 @@ scenario calculationEligible?
 
 ## Live production trace
 1. `src/workspace/load-calc-consumer-controller.js`
-   - `LoadCalcConsumerController.handleClick()` owns `[data-load-calc-run]`.
-   - Current main reads `empiricalLoadCalcScenarioStore.getSnapshot()` and `engineeringModelStore.getEmpiricalAuthorizationState()`.
-   - Scenario-ready publishes `EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CALCULATE_REQUESTED`.
-   - Ordinary authorized publishes `ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED`.
-2. `src/workspace/non-fea-common-input-runtime.js`
-   - `sealCurrentReadyNonFeaCalculationSnapshot()` is the already-merged product-screening producer.
+   - `LoadCalcConsumerController.handleClick()` owns `[data-load-calc-run]` and now delegates to `runCurrentCalculation()`.
+   - scenario-ready publishes `EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CALCULATE_REQUESTED` before any ordinary snapshot work.
+   - ordinary path invokes the injected/default READY snapshot provider, then calls the injected/default authorization currentness controller, then may publish `ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED`.
+2. `src/workspace/non-fea-common-input-runtime.js` — unchanged/protected
+   - `sealCurrentReadyNonFeaCalculationSnapshot()` is the merged product-screening producer.
    - `isCurrentReadyNonFeaCalculationSnapshot()` rejects current partial/blocked/stale/error/zero-sealed states.
    - fresh creation crosses `evaluateCurrentNonFeaCommonInput()` -> `createNonFeaReadyProductScreeningConfirmation()` -> existing `nonFeaCommonInputStore.seal()`.
-3. `src/workspace/enrichment/authorized-enrichment-consumer-controller.js`
+3. `src/workspace/enrichment/authorized-enrichment-consumer-controller.js` — unchanged/protected
    - `refreshEmpirical()` rechecks current Common Input/consumption authorization and governed projection currentness.
    - `executeEmpirical()` still requires a current authorization through `NonFeaMethodExecutionCoordinator` before governed execution.
-4. `src/workspace/engineering-model-controller.js`
+4. `src/workspace/engineering-model-controller.js` — unchanged/protected
    - listens to `ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED` and delegates to the authorized consumer; failures publish `ENGINEERING_MODEL_EVENTS.FAILED`.
 
-## Current failure isolation
-The current ordinary Run branch cannot build the READY screening snapshot because it never calls the #1460 helper. It checks authorization first and otherwise displays a not-ready reason. The helper exists on main but is not wired into Run.
+## Implementation
+### Production
+`src/workspace/load-calc-consumer-controller.js`
+- imports production `authorizedEnrichmentConsumerController` and merged READY snapshot helper;
+- constructor accepts optional test seams:
+  - `readyCalculationSnapshotProvider`, production default `sealCurrentReadyNonFeaCalculationSnapshot`;
+  - `empiricalAuthorizationController`, production default `authorizedEnrichmentConsumerController`;
+- validates both seams;
+- adds `runCurrentCalculation()` with scenario-first / READY-snapshot / post-snapshot-currentness ordering;
+- ordinary absent/stale authorization produces exact guidance and publishes no calculation request;
+- `[data-load-calc-run]` delegates to this focused method.
 
-A second currentness concern is ordering: after a snapshot is obtained, authorization must be refreshed/inspected **after** that operation. Reusing an authorization state captured before the snapshot would not prove currentness against the resulting Common Input state.
+Implementation commit: `6177e9cc2b178e732a8480d34e2319158c603394`.
 
-## Implementation decision
-Smallest coherent patch:
-- add an optional injected `readyCalculationSnapshotProvider` to `LoadCalcConsumerController`, defaulting to `sealCurrentReadyNonFeaCalculationSnapshot`;
-- scenario-ready branch returns before invoking that provider;
-- ordinary branch invokes provider inside fail-closed `try/catch`;
-- after success call the existing authorized empirical consumer refresh/currentness path;
-- publish the existing engineering calculation request only when the refreshed authorization is calculation-eligible;
-- otherwise render exact authorization-required guidance;
-- add one focused Node regression with scenario, provider-failure, current-auth, absent/stale-auth and source-boundary falsifiers.
+### Focused regression
+`scripts/load-calc-run-ready-snapshot-check.mjs`
+- scenario-ready: snapshot provider 0 calls, ordinary auth refresh 0 calls, scenario execution event exactly once;
+- ordinary READY + current authorization: provider once, refresh once, ordinary calculation event exactly once;
+- READY + absent authorization: no calculation event + exact authorization-required guidance;
+- READY + stale authorization: no calculation event + exact authorization-required guidance;
+- READY snapshot failure: no authorization refresh and no execution even if a supplied fixture says authorization is eligible;
+- PARTIALLY_READY upstream rejection remains fail-closed;
+- source guards enforce scenario -> snapshot -> refresh -> execute ordering;
+- source guards prohibit manual seal and `AUTHORIZE_REQUESTED` in `runCurrentCalculation()`.
 
-No application-shell change is needed because the constructor option is optional and production uses the default provider.
+Regression commit: `567a360bd055176675b30f2176ef2c3add9c6f7d`.
+
+### Aggregate registration
+`scripts/run-non-fea-checks.mjs`
+- registers `Load Calc Run READY snapshot routing` immediately after the PR1460 READY-only snapshot check;
+- final newline preserved; no other aggregate semantics changed.
+
+Registration commits: `7440dc4273aa4ccb61c0add3c7d4c8814643ee3a`, newline cleanup `a2c370dc4c1e9df31cf1ae2c3f8d823bad14fc2a`.
+
+## Exact current changed-file ledger vs `main@dd7f13e...`
+1. `src/workspace/load-calc-consumer-controller.js` — production orchestration only.
+2. `scripts/load-calc-run-ready-snapshot-check.mjs` — focused routing falsifiers.
+3. `scripts/run-non-fea-checks.mjs` — focused check registration only.
+4. `agents/PR1461_workreport.md` — living recovery authority.
+5. `agents/claims/PR1461.yaml` — exact path/authority claim.
+6. `agents/status/PR1461.yaml` — current state/validation truth.
+
+Obsolete `agents/WIP-1321-run-ready-snapshot.yaml` was removed after PR allocation and is **not** in the net PR diff.
+
+## Diff reconciliation
+Live `main...agent/issue-1321-run-ready-snapshot` merge base is exact current main `dd7f13e...`; behind = 0. Git history retains predecessor ancestry through the two-parent synchronization commit, so commit-count/ahead-count is not the scope measure. Net PR scope is the exact six files above.
+
+Controller net patch was reviewed: only imports/options validation, the focused `runCurrentCalculation()` method and Run delegation changed. No hidden whole-file drift.
+
+Aggregate patch was reviewed: one check registration; newline-only noise was removed.
 
 ## Appendix A — implementation takeover qualification
-
 ### A1 — Production Trace — 20/20
-Live trace completed across the Run handler, READY-only Common Input producer, authorized consumer currentness check, engineering-model event boundary and governed execution path. First missing boundary identified: ordinary Run does not invoke the READY snapshot producer.
+Live trace completed across Run handler, READY-only Common Input producer, authorized consumer currentness check, engineering-model event boundary and governed execution path.
 
 ### A2 — Current Failure Isolation — 20/20
-Observed on current main: ordinary Run checks authorization without first producing the routine READY snapshot. Prediction: a normal model that can evaluate to READY but has not been manually sealed cannot use the ordinary Run action to establish that snapshot. Falsifier: if current main's `[data-load-calc-run]` branch already calls `sealCurrentReadyNonFeaCalculationSnapshot`, this diagnosis is wrong; source inspection shows it does not.
+Current-main defect before this PR: ordinary Run checked authorization without first producing the routine READY snapshot. Source falsifier passed by inspection: old `[data-load-calc-run]` did not call the READY helper.
 
 ### A3 — Authority / Invariant — 20/20
-`READY snapshot != execution authorization`. The upstream helper cannot accept `PARTIALLY_READY`/`BLOCKED`; this PR additionally must not publish execution merely because snapshot creation succeeded. Falsifier: READY provider success plus absent/stale authorization publishes either scenario or engineering calculation request.
+`READY snapshot != execution authorization`. This PR does not publish execution merely because snapshot creation succeeds. Falsifier is encoded: READY provider success plus absent/stale authorization must publish no scenario or engineering calculation request.
 
 ### A4 — Independent Validation — 18/20
-Independent source-boundary validation is available from the already-merged PR1460 READY-only helper/check and the existing authorized-consumer currentness contract. The new focused routing regression will be implementation-adjacent but uses injected/mocked boundary states to falsify illegal event publication. Executable Node/import/build checks remain NOT_RUN in this environment and are not represented as PASS.
+Independent boundary evidence exists from merged PR1460 READY-only contract and existing authorized-consumer currentness contract. The new routing regression is implementation-adjacent and uses injected boundary states. Executable checks are unavailable in this environment and remain NOT_RUN.
 
 ### A5 — Next Commit / Minimal Patch — 20/20
-Expected production change is one controller plus one focused script. Recovery files are additive custody only. No mechanics/checker/helper/workflow file should change. Falsifiers: scenario-ready invokes snapshot provider; provider failure publishes calculation; READY+stale/absent authorization publishes calculation; manual human seal appears inside the Run branch; or the diff touches protected mechanics/checker paths.
+Actual net production/check scope matches the predicted controller + focused script + aggregate registration. No mechanics/checker/helper/workflow file changed.
 
 **Score: 98/100; minimum: 18/20. TAKEOVER_AUTHORITY = WRITE_ALLOWED for this bounded slice.**
-
-## Coordination / overlap
-- `agents/MASTER_INDEX.md`: absent on current main.
-- PR1461 claim owns `src/workspace/load-calc-consumer-controller.js` and `scripts/load-calc-run-ready-snapshot-check.mjs`.
-- Historical #1460 ownership is now merged into main and protected, not an active overlapping production edit.
-- Current classification: `SAFE` for the declared two production/check paths, subject to final live PR reconciliation before closure.
 
 ## Validation ledger
 | Check | Status | Observation | Oracle / note |
 |---|---|---|---|
 | live main / base / PR grounding | PASS | GitHub inspection | live mutable state |
 | current Run control-flow diagnosis | PASS | source inspection | production source |
-| #1460 READY-only upstream invariant | PASS | source inspection | merged contract + source guard |
-| focused Run routing regression | NOT_RUN | not yet implemented/executed | pending |
-| existing Non-FEA aggregate | NOT_RUN | no faithful checkout | pending |
-| `npm run check:imports` | NOT_RUN | no faithful checkout | pending |
-| `npm run build` | NOT_RUN | no faithful checkout | pending |
-| `git diff --check` | NOT_RUN | no faithful checkout | pending |
+| #1460 READY-only upstream invariant | PASS | source inspection | merged contract |
+| authorization currentness boundary | PASS | source inspection | existing authorized consumer |
+| exact six-file diff reconciliation | PASS | GitHub compare/PR patches | live diff |
+| controller source patch | PASS | source inspection | intended-only delta |
+| focused regression source/falsifiers | PASS | source inspection | encoded assertions, **not execution** |
+| focused Run routing regression execution | NOT_RUN | repository not materialized | local DNS failure |
+| existing Non-FEA aggregate execution | NOT_RUN | repository not materialized | local DNS failure |
+| `npm run check:imports` | NOT_RUN | repository not materialized | local DNS failure |
+| `npm run build` | NOT_RUN | repository not materialized | local DNS failure |
+| `git diff --check` | NOT_RUN | repository not materialized | local DNS failure |
+| local checkout probe | FAIL | local execution | `Could not resolve host: github.com`; environment/pre-materialization, not product failure |
 
 No NOT_RUN result is represented as PASS.
 
-## Changed-file ledger — current before implementation
-1. `agents/PR1461_workreport.md`
-2. `agents/WIP-1321-run-ready-snapshot.yaml` — obsolete after PR allocation; remove before implementation checkpoint
-3. `agents/claims/PR1461.yaml`
-4. `agents/status/PR1461.yaml`
+## Coordination / overlap
+- `agents/MASTER_INDEX.md`: absent on current main.
+- PR1461 claim owns exactly the six net paths above.
+- Historical #1460 ownership is merged into main and protected, not an active overlapping production edit.
+- Current classification: `SAFE`, subject to final live PR/review reconciliation.
 
-## Active risks
-- `RISK-1461-01`: authorization state must be checked after READY snapshot creation/reuse, not captured before it.
-- `RISK-1461-02`: controller must not turn the system READY snapshot into implicit human or execution authorization.
-- `RISK-1461-03`: stacked ancestry was stale; fixed by deterministic two-parent re-ground commit `605cfd5...`; final PR diff must remain narrow against current main.
+## Active risks / limitations
+- `RISK-1461-01` mitigated by ordering: authorization currentness is refreshed after READY snapshot creation/reuse.
+- `RISK-1461-02` protected: READY screening snapshot does not create execution authorization.
+- `RISK-1461-03` reconciled: stale stacked base replaced by exact-current-main two-parent synchronization.
+- `RISK-1461-04` remains: focused/aggregate/import/build checks have not executed on the exact head.
+- Issue #1321 PR-E is **not complete** after this slice: normal one-click Run still stops when explicit empirical authorization does not already exist. A separate successor must define and qualify run-specific internal authorization/evidence without laundering human approval.
 
 ## EXACT_NEXT_ACTION
-Remove obsolete WIP custody, update claim/status to current main and qualified takeover state, then implement the controller wiring plus `scripts/load-calc-run-ready-snapshot-check.mjs`. Reconcile exact diff and keep PR draft/unmerged unless owner separately grants merge authority.
+1. Refresh live PR metadata, reviews/threads and exact diff after this report/status checkpoint.
+2. Keep #1461 draft/unmerged because owner merge authority has not been granted and executable validation is NOT_RUN.
+3. Continue Issue #1321 with a separate successor workstream for one-click internal run-specific authorization/evidence; do not broaden #1461 into that authority change.

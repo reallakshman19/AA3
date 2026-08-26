@@ -26,19 +26,34 @@ import {
 } from '../src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js';
 
 const AUTHORIZED_AT = '2026-08-26T12:48:00.000Z';
-const model = makeModel();
-const topologyGraph = buildPipingPortTopologyGraph(model);
-const modelLoadFoundation = buildModelLoadFoundation(model, topologyGraph);
-const loadPrimitiveSet = modelLoadFoundation.loadPrimitiveSet;
+
+// Deliberately make the workspace/source primitive basis numerically different
+// from the Common Input enriched model. The projection must use the latter.
+const rawModel = makeModel({
+  pipeMassKgPerM: 4,
+  insulationMassKgPerM: 0.5,
+  opeFluidMassKgPerM: 1,
+  hydFluidMassKgPerM: 1.5,
+  valveDryMassKg: 50,
+  componentContent: false,
+});
+const rawTopology = buildPipingPortTopologyGraph(rawModel);
+const sourceLoadPrimitiveSet = buildModelLoadFoundation(rawModel, rawTopology).loadPrimitiveSet;
+
+const enrichedModel = makeModel();
 const profile = projectProfile();
-const readySnapshot = snapshot(commonInput(model, profile, loadPrimitiveSet));
+const readySnapshot = snapshot(commonInput({
+  sourceModel: rawModel,
+  enrichedModel,
+  projectDataProfile: profile,
+  sourceLoadPrimitiveSet,
+}));
 const runAuthorization = createNonFeaEmpiricalRunAuthorization(readySnapshot, {
   authorizedAt: AUTHORIZED_AT,
 });
 const projection = createCurrentCommonInputEmpiricalMassProjection({
   snapshot: readySnapshot,
   runAuthorization,
-  loadPrimitiveSet,
 });
 
 assert.equal(projection.schema, CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_SCHEMA);
@@ -47,15 +62,23 @@ assert.deepEqual(
   requireCurrentCurrentCommonInputEmpiricalMassProjection(projection, {
     snapshot: readySnapshot,
     runAuthorization,
-    loadPrimitiveSet,
   }),
   projection,
 );
-assert.equal(projection.loadPrimitiveSetSemanticHash, loadPrimitiveSet.semanticHash);
+assert.equal(projection.sourceModelSemanticHash, rawModel.semanticHash);
+assert.equal(projection.enrichedModelSemanticHash, enrichedModel.semanticHash);
+assert.equal(projection.sourceLoadPrimitiveSetSemanticHash, sourceLoadPrimitiveSet.semanticHash);
+assert.notEqual(
+  projection.effectiveMassPrimitiveSetSemanticHash,
+  sourceLoadPrimitiveSet.semanticHash,
+  'effective mass primitives must be rebuilt from the sealed enriched model, not copied from raw workspace primitives',
+);
 assert.equal(projection.policy.projectionOnly, true);
 assert.equal(projection.policy.executionAuthorizationGranted, false);
 assert.equal(projection.policy.legacyPublicationOrHandoffAuthorityAsserted, false);
-assert.equal(projection.policy.sealedLoadPrimitiveSetRequired, true);
+assert.equal(projection.policy.massBasisSource, 'SEALED_COMMON_INPUT_ENRICHED_MODEL');
+assert.equal(projection.policy.sourceLoadPrimitiveSetUsedAsNumericalBasis, false);
+assert.equal(projection.policy.effectiveModelLoadFoundationRebuiltDeterministically, true);
 assert.equal(projection.policy.directMassBasisPreserved, true);
 assert.equal(projection.policy.fittingDerivationPreserved, true);
 assert.equal(projection.policy.negligibleMassZeroPreserved, true);
@@ -65,6 +88,14 @@ assert.equal(projection.policy.supportStaticsExecuted, false);
 assert.equal(projection.summary.entityCount, 4);
 assert.equal(projection.summary.entityCaseCount, 12);
 assert.equal(projection.summary.zeroMassEntityCaseCount, 3);
+
+const rawPipeEmpty = sourceLoadPrimitiveSet.primitives.find((row) => (
+  row.componentKey === 'PIPE-A'
+  && row.loadCaseId === 'EMPTY'
+  && row.primitiveType === 'DISTRIBUTED_GRAVITY_LOAD'
+));
+assert.equal(rawPipeEmpty.massPerLengthKgM, 4.5,
+  'fixture must prove the source primitive is numerically different from enriched Common Input');
 
 const pipe = entity('PIPE-A');
 assert.deepEqual(caseMasses(pipe), { EMPTY: 28, HYD: 34, OPE: 32 });
@@ -80,7 +111,7 @@ assert.deepEqual(
   ['PIPE_METAL', 'INSULATION'],
 );
 assert.ok(caseRow(pipe, 'EMPTY').sourceMassBreakdown.every((row) => row.sourceEvidence),
-  'direct kg/m mass basis must remain source evidence in the sealed primitive');
+  'direct kg/m mass basis must remain source evidence in the effective primitive');
 assert.equal(
   caseRow(pipe, 'EMPTY').formulaTrace.some((trace) => trace.formulaId === 'PIPE_METAL_MASS_PER_LENGTH_V1'),
   false,
@@ -92,7 +123,7 @@ const fitting = entity('ELBO-A');
 assert.equal(
   caseRow(fitting, 'EMPTY').basePrimitiveSourceEvidence?.source,
   'DERIVED_FROM_ADJACENT_PIPE_SECTION',
-  'fitting mass must be retained from the sealed model-load primitive derivation',
+  'fitting mass must be derived by the existing model-load primitive builder from enriched pipe evidence',
 );
 assert.equal(caseRow(fitting, 'EMPTY').massKg, caseRow(fitting, 'OPE').massKg);
 assert.equal(caseRow(fitting, 'EMPTY').massKg, caseRow(fitting, 'HYD').massKg);
@@ -141,44 +172,27 @@ expectCode(
   'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_SUMMARY_INVALID',
 );
 
-const differentPrimitiveMaterial = structuredClone(loadPrimitiveSet);
-const differentPrimitive = differentPrimitiveMaterial.primitives.find((row) => (
-  row.componentKey === 'VALVE-A'
-  && row.loadCaseId === 'EMPTY'
-  && row.primitiveType === 'POINT_GRAVITY_LOAD'
-));
-differentPrimitive.pointMassKg = 101;
-differentPrimitive.pointForceN = differentPrimitive.pointForceN / 100 * 101;
-delete differentPrimitiveMaterial.semanticHash;
-const differentPrimitiveSet = {
-  ...differentPrimitiveMaterial,
-  semanticHash: semanticHash(differentPrimitiveMaterial),
-};
-expectCode(
-  () => createCurrentCommonInputEmpiricalMassProjection({
-    snapshot: readySnapshot,
-    runAuthorization,
-    loadPrimitiveSet: differentPrimitiveSet,
-  }),
-  'CURRENT_COMMON_INPUT_EMPIRICAL_LOAD_PRIMITIVE_BINDING_MISMATCH',
-);
-
-const forgedPrimitiveBinding = rehashProjection(projection, {
-  loadPrimitiveSetSemanticHash: semanticHash({ wrong: 'primitive-set' }),
+const forgedEffectiveBasis = rehashProjection(projection, {
+  effectiveMassPrimitiveSetSemanticHash: semanticHash({ wrong: 'effective-mass-basis' }),
 });
 expectCode(
-  () => requireCurrentCurrentCommonInputEmpiricalMassProjection(forgedPrimitiveBinding, {
+  () => requireCurrentCurrentCommonInputEmpiricalMassProjection(forgedEffectiveBasis, {
     snapshot: readySnapshot,
     runAuthorization,
-    loadPrimitiveSet,
   }),
   'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_STALE',
 );
 
-const resealedInput = commonInput(model, profile, loadPrimitiveSet, {
-  seal: {
-    semanticHash: semanticHash({ seal: 'second' }),
-    confirmedBy: 'different READY seal',
+const resealedInput = commonInput({
+  sourceModel: rawModel,
+  enrichedModel,
+  projectDataProfile: profile,
+  sourceLoadPrimitiveSet,
+  overrides: {
+    seal: {
+      semanticHash: semanticHash({ seal: 'second' }),
+      confirmedBy: 'different READY seal',
+    },
   },
 });
 const resealedSnapshot = snapshot(resealedInput);
@@ -186,21 +200,66 @@ expectCode(
   () => requireCurrentCurrentCommonInputEmpiricalMassProjection(projection, {
     snapshot: resealedSnapshot,
     runAuthorization,
-    loadPrimitiveSet,
   }),
   'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_SEAL_STALE',
 );
+
+// Same enriched model, different current source primitive authority: numerical
+// masses remain identical, but the projection binds the changed source contract
+// and therefore has a different semantic identity/currentness basis.
+const alternateRawModel = makeModel({
+  pipeMassKgPerM: 7,
+  insulationMassKgPerM: 0.25,
+  opeFluidMassKgPerM: 0.5,
+  hydFluidMassKgPerM: 0.75,
+  valveDryMassKg: 30,
+  componentContent: false,
+});
+const alternateRawPrimitiveSet = buildModelLoadFoundation(
+  alternateRawModel,
+  buildPipingPortTopologyGraph(alternateRawModel),
+).loadPrimitiveSet;
+const alternateSnapshot = snapshot(commonInput({
+  sourceModel: alternateRawModel,
+  enrichedModel,
+  projectDataProfile: profile,
+  sourceLoadPrimitiveSet: alternateRawPrimitiveSet,
+}));
+const alternateAuthorization = createNonFeaEmpiricalRunAuthorization(alternateSnapshot, {
+  authorizedAt: AUTHORIZED_AT,
+});
+const alternateProjection = createCurrentCommonInputEmpiricalMassProjection({
+  snapshot: alternateSnapshot,
+  runAuthorization: alternateAuthorization,
+});
+assert.deepEqual(
+  alternateProjection.entityRows.map((row) => [row.entityId, caseMasses(row)]),
+  projection.entityRows.map((row) => [row.entityId, caseMasses(row)]),
+  'source workspace primitive changes must not alter masses when sealed enriched Common Input is unchanged',
+);
+assert.notEqual(
+  alternateProjection.sourceLoadPrimitiveSetSemanticHash,
+  projection.sourceLoadPrimitiveSetSemanticHash,
+);
+assert.notEqual(alternateProjection.semanticHash, projection.semanticHash);
 
 const source = readFileSync(new URL(
   '../src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js',
   import.meta.url,
 ), 'utf8');
-assert.match(source, /validateModelLoadPrimitiveSet/u,
-  'projection must validate the exact sealed model-load primitive set');
+assert.match(source, /buildPipingPortTopologyGraph\(model\)/u,
+  'projection must build an effective topology from the exact sealed enriched model');
+assert.match(source, /buildModelLoadFoundation\(model, effectiveTopologyGraph\)/u,
+  'projection must reuse the existing model-load resolver/primitive stack against the enriched model');
+assert.match(source, /commonInput\.enrichedModel/u,
+  'numerical mass basis must be the sealed Common Input enriched model');
 assert.match(source, /createNonFeaCommonEnrichedConfiguredDefaultOverlay/u,
   'ancillary projection must reuse the existing exact configured-default overlay');
-assert.doesNotMatch(source, /resolveComponentCaseMass|derivePipeLikeFittingWeightEvidence/u,
-  'projection must not independently rerun base mass resolution after sealing');
+assert.match(
+  source,
+  /createCurrentCommonInputEmpiricalMassProjection\(\{\s*snapshot,\s*runAuthorization,\s*\} = \{\}\)/u,
+  'public projection API must not accept an external primitive set as its numerical basis',
+);
 assert.doesNotMatch(source, /authorized-empirical-load-input/u,
   'projection must not depend on legacy authorized empirical input');
 assert.doesNotMatch(source, /common-enriched-consumer-handoff/u,
@@ -214,10 +273,12 @@ console.log(JSON.stringify({
   schema: projection.schema,
   commonInputSemanticHash: projection.commonInputSemanticHash,
   runAuthorizationSemanticHash: projection.runAuthorizationSemanticHash,
-  loadPrimitiveSetSemanticHash: projection.loadPrimitiveSetSemanticHash,
+  sourceLoadPrimitiveSetSemanticHash: projection.sourceLoadPrimitiveSetSemanticHash,
+  effectiveMassPrimitiveSetSemanticHash: projection.effectiveMassPrimitiveSetSemanticHash,
   entityCount: projection.summary.entityCount,
   entityCaseCount: projection.summary.entityCaseCount,
-  sealedPrimitiveBasePreserved: true,
+  enrichedModelMassBasisPreserved: true,
+  rawPrimitiveNumericalOverrideRejectedByDesign: true,
   directMassBasisPreserved: true,
   fittingDerivedMassPreserved: true,
   negligibleGasketZeroPreserved: true,
@@ -251,7 +312,13 @@ function snapshot(commonInputValue) {
   };
 }
 
-function commonInput(sharedModel, projectDataProfile, primitiveSet, overrides = {}) {
+function commonInput({
+  sourceModel,
+  enrichedModel,
+  projectDataProfile,
+  sourceLoadPrimitiveSet,
+  overrides = {},
+}) {
   const base = {
     schema: NON_FEA_COMMON_SCHEMAS.COMMON_INPUT,
     packageState: 'READY',
@@ -259,17 +326,17 @@ function commonInput(sharedModel, projectDataProfile, primitiveSet, overrides = 
     reportSemanticHash: semanticHash({ report: 'mass-projection' }),
     candidateSemanticHash: semanticHash({ candidate: 'mass-projection' }),
     sourceDatasetSha256: 'a'.repeat(64),
-    sourceModelSemanticHash: sharedModel.semanticHash,
+    sourceModelSemanticHash: sourceModel.semanticHash,
     enrichmentSidecarSemanticHash: semanticHash({ sidecar: 'mass-projection' }),
     resolutionLedgerSemanticHash: semanticHash({ resolution: 'mass-projection' }),
-    enrichedProjectionSemanticHash: semanticHash({ projection: 'mass-projection' }),
+    enrichedProjectionSemanticHash: semanticHash({ projection: enrichedModel.semanticHash }),
     projectDataProfileSemanticHash: semanticHash(projectDataProfile),
     configuredDefaultUsageLedgerSemanticHash: null,
     qualificationProfileSemanticHash: null,
     requestedLoadCases: ['EMPTY', 'HYD', 'OPE'],
     sealedMethodIds: ['SUSTAINED_REACTIONS', 'WEIGHT_AND_GRAVITY'],
     blockedMethodIds: [],
-    enrichedModel: sharedModel,
+    enrichedModel,
     resolutionLedger: { schema: 'fixture-resolution/v1' },
     projectDataProfile,
     configuredDefaultUsageLedger: null,
@@ -281,9 +348,9 @@ function commonInput(sharedModel, projectDataProfile, primitiveSet, overrides = 
       supportSiteModel: contract('support-site'),
       routePartitionModel: contract('route'),
       loadPrimitiveSet: {
-        schema: primitiveSet.schema,
+        schema: sourceLoadPrimitiveSet.schema,
         status: 'READY',
-        semanticHash: primitiveSet.semanticHash,
+        semanticHash: sourceLoadPrimitiveSet.semanticHash,
       },
     },
     methodReadiness: [],
@@ -339,7 +406,14 @@ function ancillaryDefault(defaultId, fieldId, value) {
   };
 }
 
-function makeModel() {
+function makeModel({
+  pipeMassKgPerM = 10,
+  insulationMassKgPerM = 1,
+  opeFluidMassKgPerM = 2,
+  hydFluidMassKgPerM = 3,
+  valveDryMassKg = 100,
+  componentContent = true,
+} = {}) {
   return createSharedPipingModel({
     project: {
       datasetId: 'CURRENT-MASS-PROJECTION-DATASET',
@@ -351,7 +425,11 @@ function makeModel() {
       schema: 'source-package-snapshot/v1',
       datasetId: 'CURRENT-MASS-PROJECTION-DATASET',
       sourceSchema: 'fixture/v1',
-      sourceSemanticHash: semanticHash({ source: 'current-mass-projection' }),
+      sourceSemanticHash: semanticHash({
+        source: 'current-mass-projection',
+        pipeMassKgPerM,
+        valveDryMassKg,
+      }),
       sourceByteHash: null,
     },
     components: [
@@ -361,14 +439,14 @@ function makeModel() {
         start: point(0),
         end: point(2000),
         engineeringProperties: {
-          unitPipeWeightKgPerM: evidence(10, 'kg/m', 'UNIT_PIPE_WEIGHT_KG_PER_M'),
+          unitPipeWeightKgPerM: evidence(pipeMassKgPerM, 'kg/m', 'UNIT_PIPE_WEIGHT_KG_PER_M'),
           outerDiameterMm: evidence(100, 'mm', 'OUTSIDE_DIAMETER_MM'),
           wallThicknessMm: evidence(5, 'mm', 'WALL_THICKNESS_MM'),
           materialDensityKgM3: evidence(7850, 'kg/m3', 'MATERIAL_DENSITY_KG_M3'),
-          insulationWeightKgPerM: evidence(1, 'kg/m', 'INSULATION_WEIGHT_KG_PER_M'),
+          insulationWeightKgPerM: evidence(insulationMassKgPerM, 'kg/m', 'INSULATION_WEIGHT_KG_PER_M'),
           insulationThicknessMm: evidence(0, 'mm', 'INSULATION_THICKNESS_MM'),
-          fluidWeightOpeKgPerM: evidence(2, 'kg/m', 'FLUID_WEIGHT_OPE_KG_PER_M'),
-          fluidWeightHydKgPerM: evidence(3, 'kg/m', 'FLUID_WEIGHT_HYD_KG_PER_M'),
+          fluidWeightOpeKgPerM: evidence(opeFluidMassKgPerM, 'kg/m', 'FLUID_WEIGHT_OPE_KG_PER_M'),
+          fluidWeightHydKgPerM: evidence(hydFluidMassKgPerM, 'kg/m', 'FLUID_WEIGHT_HYD_KG_PER_M'),
         },
       }),
       component({ key: 'ELBO-A', type: 'ELBO', start: point(2000), end: point(2100) }),
@@ -379,9 +457,11 @@ function makeModel() {
         start: point(2110),
         end: point(2210),
         engineeringProperties: {
-          componentWeightKg: evidence(100, 'kg', 'COMPONENT_WEIGHT_KG'),
-          componentFluidWeightOpeKg: configuredEvidence(8, 'kg', 'COMPONENT_OPERATING_FLUID_WEIGHT'),
-          componentFluidWeightHydKg: configuredEvidence(10, 'kg', 'COMPONENT_HYDRO_FLUID_WEIGHT'),
+          componentWeightKg: evidence(valveDryMassKg, 'kg', 'COMPONENT_WEIGHT_KG'),
+          ...(componentContent ? {
+            componentFluidWeightOpeKg: configuredEvidence(8, 'kg', 'COMPONENT_OPERATING_FLUID_WEIGHT'),
+            componentFluidWeightHydKg: configuredEvidence(10, 'kg', 'COMPONENT_HYDRO_FLUID_WEIGHT'),
+          } : {}),
         },
       }),
     ],

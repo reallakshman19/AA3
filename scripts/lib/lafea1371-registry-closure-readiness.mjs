@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 
 export const LAFEA1371_REGISTRY_CLOSURE_READINESS_SCHEMA =
-  'lafea1371-registry-closure-readiness/v1';
+  'lafea1371-registry-closure-readiness/v2';
+
+export const LAFEA1371_REGISTRY_CLOSURE_READINESS_REPORT_RELATIVE_PATH =
+  'reports/qualification/lafea1371-registry-closure-readiness.json';
 
 export const PROTECTED_LAFEA3_LIMITATION =
   'Production geometry-to-mesh-to-convergence orchestration is incomplete.';
@@ -19,11 +23,32 @@ export const PROTECTED_LAFEA4_LIMITATIONS = Object.freeze([
   'No production MITC4/MITC3 claim, drilling DOF, thick-shell claim, weld stress or code assessment.',
 ]);
 
+const REGISTRY_PROJECTION_FIELDS = Object.freeze([
+  'schema',
+  'stageId',
+  'label',
+  'purpose',
+  'limitation',
+  'category',
+  'authority',
+  'engineState',
+  'enginePackage',
+  'inputContractRole',
+  'resultContractRole',
+  'presenterRole',
+  'unitSourceRole',
+  'previewPolicy',
+  'previewSource',
+  'collectionPaths',
+  'limitations',
+]);
+
 export function evaluateLafea1371RegistryClosureReadiness({
   repositoryHead,
   implementationAuthorizationVerification,
   lafea3RegistryEntry,
   lafea4RegistryEntry,
+  stageRegistry,
 } = {}) {
   assert.match(
     repositoryHead ?? '',
@@ -38,6 +63,8 @@ export function evaluateLafea1371RegistryClosureReadiness({
   requireProtectedLafea3RegistryState(lafea3RegistryEntry);
   requireProtectedLafea4RegistryState(lafea4RegistryEntry);
 
+  const registryBaselineHash = lafea1371RegistryBaselineHash(stageRegistry);
+
   return Object.freeze({
     schema: LAFEA1371_REGISTRY_CLOSURE_READINESS_SCHEMA,
     status: 'PASS',
@@ -49,6 +76,9 @@ export function evaluateLafea1371RegistryClosureReadiness({
     implementationAuthorizationEvidenceHash:
       implementationAuthorizationVerification.evidenceArtifactHash,
     implementationAuthorizationEvidenceVerified: true,
+    registryBaselineHash,
+    readinessReportPath:
+      LAFEA1371_REGISTRY_CLOSURE_READINESS_REPORT_RELATIVE_PATH,
     q1ToQ5: Object.freeze({
       q1: 'PASS',
       q2: 'PASS',
@@ -68,6 +98,44 @@ export function evaluateLafea1371RegistryClosureReadiness({
     localGateAuthorityCreated: false,
     releaseAuthorityGranted: false,
   });
+}
+
+export function lafea1371RegistryBaselineProjection(stageRegistry) {
+  assert.ok(Array.isArray(stageRegistry), 'Section 17 registry baseline requires the full stage registry');
+  assert.ok(stageRegistry.length > 0, 'Section 17 stage registry must not be empty');
+
+  const projection = stageRegistry.map((entry) => {
+    assertRecord(entry, 'stage registry entry');
+    const projected = {};
+    for (const field of REGISTRY_PROJECTION_FIELDS) {
+      projected[field] = cloneSerializable(entry[field] ?? null);
+    }
+    return projected;
+  });
+
+  const stageIds = projection.map((entry) => entry.stageId);
+  assert.equal(
+    new Set(stageIds).size,
+    stageIds.length,
+    'Section 17 registry baseline contains duplicate stage identities',
+  );
+  assert.ok(stageIds.includes('LAFEA.3'), 'Section 17 registry baseline is missing LAFEA.3');
+  assert.ok(stageIds.includes('LAFEA.4'), 'Section 17 registry baseline is missing LAFEA.4');
+
+  return projection;
+}
+
+export function lafea1371RegistryBaselineHash(stageRegistry) {
+  return hashRegistryProjection(lafea1371RegistryBaselineProjection(stageRegistry));
+}
+
+export function hashRegistryProjection(projection) {
+  assert.ok(Array.isArray(projection), 'registry projection must be an array');
+  const canonical = canonicalJson({
+    schema: 'lafea1371-registry-baseline-hash-input/v1',
+    registry: projection,
+  });
+  return `sha256:${createHash('sha256').update(canonical).digest('hex')}`;
 }
 
 function requireImplementationAuthorizationVerification(verification, repositoryHead) {
@@ -191,6 +259,29 @@ function requireProtectedLafea4RegistryState(entry) {
     PROTECTED_LAFEA4_LIMITATIONS,
     'LAFEA.4 authority/exclusion wording changed during LAFEA.3 closure readiness',
   );
+}
+
+function canonicalJson(value) {
+  return JSON.stringify(sortCanonical(value));
+}
+
+function sortCanonical(value) {
+  if (Array.isArray(value)) return value.map(sortCanonical);
+  if (!value || typeof value !== 'object') return value;
+  const result = {};
+  for (const key of Object.keys(value).sort()) result[key] = sortCanonical(value[key]);
+  return result;
+}
+
+function cloneSerializable(value) {
+  if (Array.isArray(value)) return value.map(cloneSerializable);
+  if (!value || typeof value !== 'object') return value;
+  const result = {};
+  for (const [key, child] of Object.entries(value)) {
+    if (typeof child === 'function' || typeof child === 'undefined') continue;
+    result[key] = cloneSerializable(child);
+  }
+  return result;
 }
 
 function assertRecord(value, label) {

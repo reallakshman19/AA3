@@ -1,1 +1,0 @@
-Issue 1321 routing slice is claimed in READ_ONLY takeover state pending numbered PR custody.

@@ -4,9 +4,9 @@ pr_or_wip: PR1436
 branch: agent/issue-1389-release-current-state-refresh-20260826
 issue: 1389
 criticality: ENGINEERING_CRITICAL
-claim_state: ACTIVE
+claim_state: ACTIVE_AUTO_COMPLETE
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: COMPLETE
 coordination_state: SAFE_STACKED_ON_PR1427_NO_EXACT_FILE_OVERLAP
 scope:
   authority: EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE_RECONCILIATION
@@ -23,19 +23,33 @@ protected_exclusions:
   - docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md
   - validation/emp1/wrc537-2013/** individual source-authority records
   - src/core/emp1/**
-  - frozen PR-H readiness and bounded release profile
-  - WRC/CAUx source bytes and benchmark expected values
+  - validation/emp1/release/emp1-professional-release-readiness-v1.json
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - WRC/CAUx source bytes/transcription and benchmark expected values
   - gamma5 oracle/tolerance/exact-head evidence
   - UI/browser production code
   - .github/workflows/**
 authority_boundary:
   bounded_runtime_route_authority_mutation: false
   p0_source_gate_mutation: false
+  retained_caux_transcription_becomes_direct_pdf_authority: false
   code_compliance_authority_granted: false
   release_authority_granted: false
   deployment_authority_granted: false
 stacked_base_pr: 1427
-stacked_base_head_at_allocation: ed599b037b861aa8f6a3089792d81157e46d887a
+stacked_base_head: ed599b037b861aa8f6a3089792d81157e46d887a
+implementation_basis_head: d8244350dc56373108a06044a8e32e03c1eb87a7
+latest_live_main_observed: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+grounding_epoch: GE-PR1436-002
+current_truth:
+  bounded_route_authorized: true
+  p0_blocker_count: 9
+  p0_source_semantics_ready: false
+  global_emp1_c: false
+  code_compliance: false
+  release_qualified: false
+  deployment_authorized: false
+  professional_release_ready: false
 merge_authority: NOT_GRANTED
 handover_report: agents/PR1436_workreport.md
-exact_next_action: "Complete WIP recovery migration and implement current-state-only reconciliation."
+exact_next_action: "Preserve draft/unmerged. Resolve/re-ground upstream PR1427 first; then retarget and exact-head re-ground PR1436 before any merge consideration."

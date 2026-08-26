@@ -3,11 +3,12 @@
 ## Current recovery state
 
 ```text
-HANDOVER_READINESS: READY_FOR_VALIDATION
-PR_RECOVERY_STATE: CURRENT_MAIN_CLEAN_SUCCESSOR
+HANDOVER_READINESS: MERGE_READY_OWNER_AUTHORIZED
+PR_RECOVERY_STATE: CURRENT_MAIN_MERGE_AUTHORIZED
+EXECUTION_MODE: AUTO
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_WITHIN_INTEGRATED_QUALIFICATION_SCOPE
 CRITICALITY: ENGINEERING_CRITICAL
-MERGE_AUTHORITY: OWNER_ONLY_NOT_GRANTED
+MERGE_AUTHORITY: OWNER_GRANTED_CURRENT_TURN
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_ISSUE: #1100
 PREDECESSOR_MECHANICS: PR #1479 MERGED
@@ -15,54 +16,30 @@ PREDECESSOR_BOUNDARY_GATE: PR #1480 MERGED
 PR: #1482
 BRANCH: agent/lafea-b01-integrated-exact-head-20260826
 BASE_MAIN: 20e0abb5301363bef0659cf615bc8a37559ac869
-CURRENT_STAGE: INTEGRATED_EXACT_HEAD_ENVELOPE_IMPLEMENTED_EXECUTION_NOT_RUN
+CURRENT_STAGE: MERGE_AUTHORIZED_ENVELOPE_EXECUTION_NOT_RUN
 ENGINEERING_FAILURE_PROVEN: false
-EXACT_NEXT_ACTION: node scripts/lafea-b01-integrated-exact-head-check.mjs
+EXACT_NEXT_ACTION_AFTER_MERGE: node scripts/lafea-b01-integrated-exact-head-check.mjs
 ```
 
 ## Mission
 
-PR #1482 changes no production mechanics. It closes the final B01 qualification-custody gap after #1479 and #1480 by wrapping the existing historical integrated B01 final qualifier in one current-head evidence chain:
+PR #1482 changes no production mechanics. It wraps the existing stable B01 final qualifier in a current-head evidence envelope:
 
 ```text
-exact clean HEAD containing merged #1480
+exact clean HEAD containing #1480
 → post-nullspace boundary gate
-→ independent boundary-receipt + source-custody verification
+→ independently verify boundary PASS + current source custody
 → existing B01 final qualifier with --expected-head HEAD
-→ independent final-receipt verification
-→ bind missing #1479/#1480 mechanics and gate blobs
-→ seal integrated exact-head envelope
+→ independently verify 54/270/16 + B-bar + route + authority flags
+→ bind #1479/#1480 source custody
+→ seal reports/qualification/B01/integrated-exact-head.json
 ```
 
 The historical final qualifier remains unchanged. The outer envelope validates rather than replaces its 54 base + 270 metamorphic + 16 fail-closed + B-bar matrix.
 
-## Why this batch exists
-
-The historical `scripts/lafea-b01-final-qualification.mjs` predates the current-main #1479/#1480 sequence. It already retains the frozen B01 source/oracle/mesh/route and integrated matrix, but it does not itself bind:
-
-```text
-src/core/local-continuum/planar-translation-nullspace.js
-scripts/lafea-b01-bbar-translation-nullspace-check.mjs
-scripts/lafea-b01-post-nullspace-boundary-check.mjs
-scripts/lib/lafea-b01-post-nullspace-boundary.js
-scripts/lafea-b01-bbar-lame-diagnostic.mjs
-```
-
-It can also be invoked directly without first proving the post-nullspace governing boundary cleared. PR #1482 closes both gaps externally without changing the stable historical matrix.
-
 ## Sequential authority gate
 
-The wrapper accepts only this progression:
-
-```text
-boundary command PASS
-→ boundary receipt verification PASS
-→ historical integrated command PASS
-→ historical receipt verification PASS
-→ INTEGRATED_B01_EXACT_HEAD_PASS
-```
-
-Failure dispositions:
+Allowed dispositions:
 
 ```text
 POST_NULLSPACE_BOUNDARY_NOT_CLEARED
@@ -72,82 +49,6 @@ INTEGRATED_B01_RECEIPT_VERIFICATION_FAILED
 INTEGRATED_B01_EXACT_HEAD_PASS
 ```
 
-Impossible sequences fail closed; for example, integrated execution cannot be represented as PASS after a failed boundary command.
-
-## Boundary receipt verification
-
-The outer verifier requires:
-
-```text
-schema       lafea-b01-post-nullspace-boundary-receipt/v1
-status       PASS
-HEAD         exact current HEAD
-clean start  true
-clean end    true
-disposition  POST_NULLSPACE_GOVERNING_CASE_CLEARED
-```
-
-and requires all three child commands to have exit code 0:
-
-```text
-focused-nullspace
-bbar-kernel
-governing-lame
-```
-
-It also re-derives current Git blob identities and compares them with the boundary receipt for the nullspace mechanics, T6/Q8, solver, focused check and Lamé diagnostic.
-
-## Historical integrated receipt verification
-
-The outer verifier requires the existing final receipt to report:
-
-```text
-schema                    lafea-b01-final-integrated-receipt/v1
-status                    PASS
-branchHead                exact current HEAD
-expectedBranchHead        exact current HEAD
-exactHeadMatches          true
-clean start/end           true
-frozen baseline ancestor  true
-route authority           T3_T6_Q8_LINEAR_CONTINUUM
-engine package            local-continuum
-```
-
-Frozen matrix counts are verified independently:
-
-```text
-registered base       54 / 54 PASS
-metamorphic          270 / 270 PASS
-fail-closed           16 / 16 PASS
-plane-strain B-bar     PASS
-```
-
-Every historical command is required to have exit code 0. Release authority and B-bar temperature authority must remain false.
-
-## Added current-head custody
-
-The final envelope adds exact Git blob custody for:
-
-```text
-src/core/local-continuum/planar-translation-nullspace.js
-src/core/local-continuum/bbar-plane-strain.js
-src/core/local-continuum/t6-element.js
-src/core/local-continuum/q8-element.js
-src/core/local-continuum/solver.js
-scripts/lafea-b01-bbar-translation-nullspace-check.mjs
-scripts/lafea-b01-post-nullspace-boundary-check.mjs
-scripts/lib/lafea-b01-post-nullspace-boundary.js
-scripts/lafea-b01-bbar-lame-diagnostic.mjs
-scripts/lafea-plane-strain-bbar-qualification-check.mjs
-scripts/lafea-b01-final-qualification.mjs
-validation/lafea-incompressible/plane-strain-bbar-v1.json
-validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json
-```
-
-The final envelope also hashes both child command stdout/stderr, the boundary receipt bytes, historical final receipt bytes, and the historical receipt evidence hash.
-
-## Authority semantics
-
 Only `INTEGRATED_B01_EXACT_HEAD_PASS` may set:
 
 ```text
@@ -155,7 +56,7 @@ integratedB01Qualified = true
 b02PrerequisiteEvidenceAvailable = true
 ```
 
-Even on that PASS:
+Even then:
 
 ```text
 solverRepairAuthorized = false
@@ -164,21 +65,13 @@ releaseAuthorityGranted = false
 trustAuthorityGranted = false
 ```
 
-B02 remains a separate qualification workstream. This envelope provides prerequisite evidence only.
+## Exact source custody overlay
 
-## Runtime custody
+The final envelope binds current Git blobs for the planar-nullspace repair, B-bar mechanics, T6/Q8, current solver, focused nullspace check, #1480 boundary gate/classifier, governing Lamé diagnostic, historical B-bar qualification, historical B01 final qualifier, and the frozen B-bar definition/probe-mesh policy.
 
-The historical integrated matrix is executed in an OS temporary directory. Only the outer final envelope is retained under the repository runtime path:
-
-```text
-reports/qualification/B01/integrated-exact-head.json
-```
-
-Only that exact generated JSON path is added to `.gitignore`; the B01 report directory remains visible to Git custody.
+Boundary and historical final receipts must both bind the exact current HEAD. Wrong HEAD, wrong 54/270/16 counts, authority widening, or impossible sequencing fails closed.
 
 ## Exact changed-file ledger
-
-Expected PR scope after recovery records:
 
 ```text
 .gitignore
@@ -196,6 +89,11 @@ No `src/**`, `validation/**`, `.github/workflows/**`, solver mechanics, sparse m
 
 ```text
 live main/#1480 grounding                 PASS_GITHUB_READBACK
+exact seven-file scope                    PASS
+zero behind current main                  PASS
+reviews                                   0
+review threads                            0
+commit statuses                           0
 pure verifier/classifier syntax           PASS_LOCAL_NODE_CHECK
 self-test syntax                          PASS_LOCAL_NODE_CHECK
 exact-head wrapper syntax                 PASS_LOCAL_NODE_CHECK
@@ -205,23 +103,18 @@ historical integrated B01 execution       NOT_RUN
 final exact-head envelope execution        NOT_RUN
 ```
 
-The synthetic suite rejects wrong HEAD, wrong base run count, release-authority widening and impossible sequencing. It is software/custody evidence only, not B01 engineering evidence.
+Exact repository execution remains blocked in this agent container because direct Git materialization fails with `Could not resolve host: github.com`. This is `NOT_RUN_EXECUTION_ENVIRONMENT`, not engineering FAIL.
 
-Exact repository execution remains blocked in this agent container because direct Git materialization fails with:
-
-```text
-Could not resolve host: github.com
-```
-
-That is `NOT_RUN_EXECUTION_ENVIRONMENT`, not engineering FAIL.
+Owner-authorized merge does not convert any NOT_RUN result to PASS.
 
 ## Decision ledger
 
-- `DEC-1482-01`: preserve the historical integrated qualifier; add current-head custody in an outer envelope.
-- `DEC-1482-02`: the integrated 54/270/16 matrix must not run unless the post-nullspace boundary receipt independently verifies PASS.
-- `DEC-1482-03`: final B01 PASS provides B02 prerequisite evidence only; it grants no B02 numerical authority.
-- `DEC-1482-04`: no solver repair is authorized by this gate under any disposition.
+- `DEC-1482-01`: preserve the historical integrated qualifier and add current-head custody externally.
+- `DEC-1482-02`: do not run/accept the integrated 54/270/16 matrix unless the post-nullspace boundary independently verifies PASS.
+- `DEC-1482-03`: final B01 PASS provides B02 prerequisite evidence only; no B02 numerical authority is inherited.
+- `DEC-1482-04`: no solver repair is authorized by any disposition in this gate.
 - `DEC-1482-05`: no workflow mutation may manufacture missing runtime evidence.
+- `DEC-1482-06`: owner authorized integration in this turn with real engineering execution remaining NOT_RUN; records preserve that truth.
 
 ## Failure isolation
 
@@ -233,21 +126,21 @@ boundary receipt verification FAIL
 → repair custody/evidence mismatch; integrated matrix stays NOT_RUN
 
 historical integrated execution FAIL
-→ inspect first failing historical child; retain frozen definitions/tolerances
+→ inspect first failing historical child; keep frozen definitions/tolerances
 
 historical receipt verification FAIL
 → repair receipt/custody contract; do not change mechanics
 
 all PASS
-→ B01 integrated prerequisite evidence exists
-→ next workstream may re-ground B02 qualification; no B02 authority is inherited
+→ B01 prerequisite evidence exists
+→ re-ground B02 qualification separately; no B02 authority is inherited
 ```
 
 ## Appendix A — takeover qualification
 
 A1 — Trace the two-layer receipt chain and explain why the historical qualifier is not modified. Target 20.
 A2 — Enumerate the 54/270/16/B-bar conditions independently verified by the outer layer. Target 20.
-A3 — Explain the added #1479/#1480 blob custody and how stale-head evidence is rejected. Target 20.
+A3 — Explain the #1479/#1480 blob custody and stale-head rejection. Target 20.
 A4 — Explain why B01 PASS is only prerequisite evidence for B02 and grants no B02 numerical authority. Target 20.
 A5 — Give the first owning boundary for each non-PASS disposition and all protected authorities. Target 20.
 

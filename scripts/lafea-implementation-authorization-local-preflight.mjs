@@ -3,19 +3,14 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import {
-  AUTHORIZATION_REPORT_RELATIVE_PATH,
-  runLocalAuthorizationPreflight,
-  verifyRetainedAuthorizationEnvelope,
-} from './lib/lafea-implementation-authorization-local-runtime.mjs';
-
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RETAIN = path.join(ROOT, 'scripts/lafea-implementation-authorization-gate-retain.mjs');
 let executionPhase = 'ENVIRONMENT_PREFLIGHT';
 let repositoryHead = null;
 
 try {
-  const preflight = runLocalAuthorizationPreflight({ root: ROOT });
+  const runtime = await import('./lib/lafea-implementation-authorization-local-runtime.mjs');
+  const preflight = runtime.runLocalAuthorizationPreflight({ root: ROOT });
   repositoryHead = preflight.repositoryHead;
   process.stderr.write(`${JSON.stringify(preflight, null, 2)}\n`);
 
@@ -24,7 +19,7 @@ try {
     cwd: ROOT,
     env: {
       ...process.env,
-      LAFEA_IMPLEMENTATION_AUTHORIZATION_REPORT_PATH: AUTHORIZATION_REPORT_RELATIVE_PATH,
+      LAFEA_IMPLEMENTATION_AUTHORIZATION_REPORT_PATH: runtime.AUTHORIZATION_REPORT_RELATIVE_PATH,
     },
     encoding: 'utf8',
     maxBuffer: 128 * 1024 * 1024,
@@ -41,7 +36,7 @@ try {
 
   const envelope = JSON.parse(child.stdout);
   executionPhase = 'POST_GATE_RECEIPT_VERIFICATION';
-  const verification = verifyRetainedAuthorizationEnvelope({
+  const verification = runtime.verifyRetainedAuthorizationEnvelope({
     root: ROOT,
     repositoryHead,
     envelope,

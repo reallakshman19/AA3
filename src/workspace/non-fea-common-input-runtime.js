@@ -82,9 +82,11 @@ export function createNonFeaReadyProductScreeningConfirmation(report, capturedAt
       'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_REPORT_HASH_REQUIRED',
     );
   }
+  const parsedCapturedAt = typeof capturedAt === 'string' ? new Date(capturedAt) : null;
   if (typeof capturedAt !== 'string'
       || capturedAt.trim() !== capturedAt
-      || new Date(capturedAt).toISOString() !== capturedAt) {
+      || !Number.isFinite(parsedCapturedAt?.getTime())
+      || parsedCapturedAt.toISOString() !== capturedAt) {
     throw codedError(
       'READY screening snapshot timestamp must be canonical ISO-8601.',
       'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_TIMESTAMP_INVALID',

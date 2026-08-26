@@ -142,8 +142,8 @@ function emptyArray(value) {
 }
 
 function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>\"]/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;',
+  return String(value ?? '').replace(/[&<>"]/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
   })[character]);
 }
 

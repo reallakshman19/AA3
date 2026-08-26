@@ -1,0 +1,50 @@
+schema: engineering-pr-claim/v1
+pr: 1479
+repository: reallaksh19/Advanced_Analysis
+issue: 1100
+owner: reallaksh19
+branch: agent/lafea-b01-nullspace-current-main-20260826
+state: IMPLEMENTED_PENDING_EXECUTION
+criticality: ENGINEERING_CRITICAL
+mission: "Repair only the binary64 representation loss of the two planar rigid-translation null modes in T6/Q8 PLANE_STRAIN_BBAR element stiffness, with fail-closed roundoff custody and retained production evidence."
+authority_domain:
+  - PLANE_STRAIN_BBAR_T6_Q8_LOCAL_STIFFNESS_TRANSLATION_REPRESENTATION
+  - ROUND_OFF_BOUNDED_DEPENDENT_BLOCK_RECONSTRUCTION
+  - T6_Q8_NULLSPACE_EVIDENCE_CUSTODY
+claimed_paths:
+  - src/core/local-continuum/planar-translation-nullspace.js
+  - src/core/local-continuum/bbar-plane-strain.js
+  - src/core/local-continuum/t6-element.js
+  - src/core/local-continuum/q8-element.js
+  - scripts/lafea-b01-bbar-translation-nullspace-check.mjs
+  - agents/PR1479_workreport.md
+  - agents/status/PR1479.yaml
+  - agents/claims/PR1479.yaml
+excluded_authority:
+  - SPARSE_SOLVER_ALGORITHM
+  - JACOBI_EQUILIBRATED_CG
+  - POST_CAP_RESIDUAL_REFINEMENT
+  - CSR_DOUBLE_DOUBLE_ARITHMETIC
+  - ITERATION_CAP_OR_CONVERGENCE_TARGET
+  - ENGINEERING_TOLERANCES
+  - MESH_QUALITY_POLICY
+  - BENCHMARK_EXPECTED_VALUES
+  - BENCHMARK_PROBES_OR_MESH_DEFINITIONS
+  - B02_NUMERICS
+  - REGISTRY_AUTHORITY
+  - RELEASE_AUTHORITY
+  - TRUST_ROOT
+  - WORKFLOW_AUTHORITY
+protected_paths:
+  - src/core/local-continuum/solver.js
+  - src/core/local-continuum/sparse-matrix.js
+  - src/workspace/lafea-analysis-mesh-quality.js
+  - validation/**
+  - .github/workflows/**
+authority_boundary: "The repair may only normalize binary64 representation of PLANE_STRAIN_BBAR T6/Q8 element stiffness so planar translations remain null modes. It must preserve physical formulation, reject non-roundoff corrections, project no rotation, and create no solver, benchmark, tolerance, registry or release authority."
+current_head_execution: NOT_RUN
+merge_authority: OWNER_ONLY_NOT_GRANTED
+release_authority_granted: false
+appendix_a_qualified: true
+appendix_a_score: 99
+appendix_a_minimum: 19

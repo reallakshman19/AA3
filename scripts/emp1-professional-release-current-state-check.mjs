@@ -25,9 +25,12 @@ const current = await readJson('validation/emp1/release/emp1-professional-releas
 const frozenReadinessBuffer = await readBuffer('validation/emp1/release/emp1-professional-release-readiness-v1.json');
 const frozenReadiness = JSON.parse(frozenReadinessBuffer.toString('utf8'));
 const profile = await readJson('validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json');
-const p0 = await readJson('validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json');
+const p0Buffer = await readBuffer('validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json');
+const p0 = JSON.parse(p0Buffer.toString('utf8'));
 const caux = await readJson('validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-qualification-v1.json');
-const sourceLedger = await readJson('validation/emp1/wrc537-2013/source-ledger.json');
+const wrcSourceLedger = await readJson('validation/emp1/wrc537-2013/source-ledger.json');
+const cauxSourceLedger = await readJson('validation/emp1/caux2017-wrc01f/source-ledger.json');
+const cauxTranscriptionBuffer = await readBuffer(current.sourceState.cauxRetainedTranscription.path);
 const authorization = await readJson('validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json');
 const disposition = await readJson('validation/emp1/wrc537-2013/gamma5-zero-dp-post-promotion-owner-override-disposition-v1.json');
 
@@ -48,17 +51,28 @@ const expectedBlockers = [
 assert.equal(current.schema, 'emp1-professional-release-current-state/v1');
 assert.equal(current.issue, 1389);
 assert.equal(current.releaseProfileId, profile.releaseProfileId);
-assert.equal(current.currentStateSemanticHash,
-  semanticHash(current, ['currentStateSemanticHash', 'status']));
-assert.equal(current.status,
-  'POST_SEQUENCE_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED');
-assert.equal(current.reconciliationBasis.mainSha,
-  '4c7b5c7e4d4ee1a2144d1764fd15e93813719a19');
-assert.equal(current.reconciliationBasis.mainTreeSha,
-  '182e5da09af1076b6dd382474ff1638da0d7862b');
-assert.equal(current.reconciliationBasis.artifactMayNotClaimContainingCommitAsBasis, true);
+assert.equal(
+  current.currentStateSemanticHash,
+  semanticHash(current, ['currentStateSemanticHash', 'status']),
+);
+assert.equal(
+  current.status,
+  'POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED',
+);
+assert.deepEqual(current.reconciliationBasis, {
+  basisKind: 'STACKED_POST_SOURCE_GOVERNANCE_CURRENT_STATE_CANDIDATE',
+  previousCurrentStateMainSha: '4c7b5c7e4d4ee1a2144d1764fd15e93813719a19',
+  stackedBasePr: 1427,
+  stackedBaseHead: 'ed599b037b861aa8f6a3089792d81157e46d887a',
+  stackedBaseContainsMainThrough: '7b2a8119aa5faeee7cc102c894991851019c5a7b',
+  latestLiveMainObserved: '29c688db4a021db900d1f8c67f56f777f73f4ddc',
+  latestLiveMainTreeObserved: '60d0fa231c52a561b9d6cc50d1099abff8500880',
+  laterMainDriftClassification: 'UNRELATED_LAFEA_ONLY_NO_EMP1_AUTHORITY_OVERLAP',
+  basisMeaning: 'POST_PR_A_THROUGH_H_PLUS_LATER_WRC_SOURCE_GOVERNANCE_STACKED_ON_PR1427',
+  artifactMayNotClaimContainingCommitAsBasis: true,
+});
 
-// PR-H readiness is intentionally a frozen pre-authorization snapshot.
+// PR-H readiness remains a frozen pre-authorization snapshot.
 assert.equal(current.frozenReadinessContract.path,
   'validation/emp1/release/emp1-professional-release-readiness-v1.json');
 assert.equal(gitBlobSha(frozenReadinessBuffer), current.frozenReadinessContract.gitBlobSha);
@@ -86,27 +100,68 @@ assert.equal(profile.releaseAuthority.releaseQualified, false);
 assert.equal(profile.codeCompliance.authorized, false);
 assert.equal(profile.productionObservationUsedToChooseDefinition, false);
 
-// Source custody passed; method/application source semantics remain blocked.
-assert.equal(sourceLedger.rawPdfSha256, current.sourceState.wrcSourceSha256);
-assert.equal(sourceLedger.custodyState, 'VERIFIED');
-assert.equal(sourceLedger.qualificationState, 'PASS_SOURCE_CUSTODY');
-assert.equal(current.sourceState.wrcSourceCustody, sourceLedger.qualificationState);
+// Both controlled source identities are reconciled. This is custody authority only.
+assert.equal(wrcSourceLedger.rawPdfSha256, current.sourceState.wrcSourceSha256);
+assert.equal(wrcSourceLedger.custodyState, 'VERIFIED');
+assert.equal(wrcSourceLedger.qualificationState, 'PASS_SOURCE_CUSTODY');
+assert.equal(current.sourceState.wrcSourceCustody, wrcSourceLedger.qualificationState);
+assert.equal(cauxSourceLedger.rawPdfSha256, current.sourceState.cauxSourceSha256);
+assert.equal(cauxSourceLedger.custodyState, 'VERIFIED');
+assert.equal(cauxSourceLedger.qualificationState, 'PASS_SOURCE_CUSTODY');
+assert.equal(current.sourceState.cauxSourceCustody, cauxSourceLedger.qualificationState);
+
+// The retained CAUx transcription is controlled evidence, but not direct PDF page observation.
+assert.equal(
+  gitBlobSha(cauxTranscriptionBuffer),
+  current.sourceState.cauxRetainedTranscription.gitBlobSha1,
+);
+assert.equal(current.sourceState.cauxRetainedTranscription.inspected, true);
+assert.equal(current.sourceState.cauxRetainedTranscription.isDirectPdfObservation, false);
+assert.equal(current.authorityBoundary.retainedCauxTranscriptionMayBeCalledDirectPdfObservation, false);
+
+// Consume the stacked PR1427 aggregate exactly, rather than duplicating the old PR-B snapshot.
+assert.equal(current.sourceState.p0Aggregate.path,
+  'validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json');
+assert.equal(current.sourceState.p0Aggregate.stackedPr, 1427);
+assert.equal(current.sourceState.p0Aggregate.stackedHead,
+  current.reconciliationBasis.stackedBaseHead);
+assert.equal(gitBlobSha(p0Buffer), current.sourceState.p0Aggregate.gitBlobSha1);
 assert.equal(p0.state, 'BLOCKED_P0_SOURCE_SEMANTICS');
 assert.equal(p0.blockerCount, 9);
 assert.equal(p0.gates.length, 9);
 assert.ok(p0.gates.every((gate) => String(gate.currentStatus).startsWith('BLOCKED')));
-assert.equal(p0.sourceObservation.directPrimaryPageObservationAvailableInCurrentConnectedExecution, false);
+assert.deepEqual(
+  current.sourceState.p0GateStatuses,
+  p0.gates.map(({ issue, currentStatus }) => ({ issue, currentStatus })),
+);
 assert.equal(current.sourceState.p0SourceSemantics, p0.state);
 assert.equal(current.sourceState.p0BlockerCount, p0.blockerCount);
+assert.equal(p0.sourceObservation.directPrimaryPageObservationAvailableInCurrentConnectedExecution, false);
 assert.equal(current.sourceState.directPrimaryWrcPageObservationAvailable, false);
+assert.equal(current.authorityBoundary.postSequenceSourceGovernanceMayCloseBlockedPrimarySourceSemantics, false);
+
+// CAUx remains reference-only and final direct-PDF re-observation remains NOT_RUN.
+assert.equal(caux.source.sourceCustodyQualified, true);
 assert.equal(caux.source.directPdfPageReobservation, 'NOT_RUN_EXECUTION_ENVIRONMENT');
 assert.equal(caux.status,
   'BLOCKED_FINAL_CAUX_SOURCE_QUALIFICATION_DIRECT_PDF_REOBSERVATION_NOT_RUN_REFERENCE_FREEZE_COMPLETE');
 assert.equal(current.sourceState.cauxDirectPdfPageReobservation,
   caux.source.directPdfPageReobservation);
 assert.equal(current.sourceState.cauxFinalQualification, caux.status);
+assert.equal(caux.releaseProfileDisposition.state,
+  'OUTSIDE_BOUNDED_GAMMA5_ZERO_DP_RELEASE_PROFILE_REFERENCE_ONLY');
+assert.equal(caux.releaseProfileDisposition.mayAuthorizeProduction, false);
 
-// Owner override authorization is real bounded source state, not numerical qualification evidence.
+// Post-sequence governance is reconciliation, not source closure.
+const governanceByPr = new Map(current.postSequenceSourceGovernance.map((row) => [row.pr, row]));
+assert.equal(governanceByPr.get(1415)?.state, 'OPEN_DRAFT_UNMERGED');
+assert.equal(governanceByPr.get(1427)?.state, 'OPEN_DRAFT_STACKED_BASE_UNMERGED');
+assert.equal(governanceByPr.get(1427)?.head, current.reconciliationBasis.stackedBaseHead);
+for (const pr of [1412, 1414, 1417, 1418, 1423, 1425, 1426]) {
+  assert.equal(governanceByPr.get(pr)?.state, 'MERGED');
+}
+
+// Owner override authorization is real bounded runtime state, not numerical qualification evidence.
 assert.equal(authorization.schema,
   'emp1-wrc537-gamma5-bounded-route-owner-override-authorization/v1');
 assert.equal(authorization.authorizationChangeApplied, true);
@@ -145,8 +200,9 @@ assert.equal(disposition.standardPostPromotionGate.gateWeakenedOrModified, false
 assert.equal(disposition.dispositionSemanticHash,
   current.evidenceState.ownerOverridePostPromotionDisposition.semanticHash);
 assert.equal(current.evidenceState.ownerOverridePostPromotionDisposition.isNumericalQualification, false);
+assert.equal(current.evidenceState.successorExecutionIssue, 1434);
 
-// Current merged runtime authority is bounded only.
+// Current runtime authority remains bounded only.
 const route = EMP1_C_BOUNDED_PRODUCTION_ROUTES.find(
   (entry) => entry.routeId === EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
 );
@@ -171,6 +227,7 @@ assert.equal(current.runtimeAuthority.releaseQualified, false);
 assert.equal(current.runtimeAuthority.deploymentAuthorized, false);
 
 assert.equal(current.sequenceStatus.recommendedPrAThroughHDelivered, true);
+assert.equal(current.sequenceStatus.postSequenceSourceGovernanceReconciledInThisCandidate, true);
 assert.equal(current.sequenceStatus.definitionOfDoneComplete, false);
 assert.equal(current.sequenceStatus.professionalReleaseReady, false);
 assert.equal(current.sequenceStatus.issueMayBeClosed, false);
@@ -184,14 +241,18 @@ assert.equal(current.state, 'BLOCKED_FAIL_CLOSED_POST_SEQUENCE');
 assert.equal(current.authorityBoundary.boundedRouteAuthorizationIsProfessionalRelease, false);
 assert.equal(current.authorityBoundary.ownerWorkflowSkipIsNumericalQualification, false);
 assert.equal(current.authorityBoundary.ownerOverrideRecordsMaySubstituteForStandardEvidence, false);
+assert.equal(current.authorityBoundary.codeComplianceMayBeInferred, false);
+assert.equal(current.authorityBoundary.globalEmp1CAuthorityMayBeInferred, false);
 assert.equal(current.authorityBoundary.releaseMayProceedWithCurrentBlockers, false);
 
 const result = {
   schema: 'emp1-professional-release-current-state-check/v1',
-  status: 'PASS_POST_SEQUENCE_RELEASE_STATE_RECONCILED_FAIL_CLOSED',
+  status: 'PASS_POST_SOURCE_GOVERNANCE_RELEASE_STATE_RECONCILED_FAIL_CLOSED',
   reconciliationBasis: current.reconciliationBasis,
   currentStateSemanticHash: current.currentStateSemanticHash,
   phaseAThroughHDelivered: true,
+  postSequenceSourceGovernanceReconciled: true,
+  p0BlockerCount: current.sourceState.p0BlockerCount,
   boundedRuntimeAuthority: {
     productionRouteAuthorized: true,
     registryRegistered: true,

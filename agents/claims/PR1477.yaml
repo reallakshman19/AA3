@@ -7,34 +7,38 @@ criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: AUTO
 auto_state: RUNNING
-coordination_state: STACKED_ON_PR1473_SALVAGE_FROM_CLOSED_PR1444
+coordination_state: PARENT_PROPAGATED_WHOLE_STACK_RECONCILIATION_NEXT
 scope:
   authority: EMP1_RELEASE_MANIFEST_SALVAGE
   paths:
+    - agents/PR1477_workreport.md
+    - agents/claims/PR1477.yaml
+    - agents/status/PR1477.yaml
     - scripts/emp1-professional-release-candidate.mjs
     - scripts/emp1-professional-release-manifest-check.mjs
-    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_MANIFEST.md
-    - agents/PR1477_workreport.md
-    - agents/status/PR1477.yaml
-    - agents/claims/PR1477.yaml
+    - scripts/emp1-professional-release-manifest.mjs
 protected_exclusions:
-  - src/core/emp1/**
-  - WRC source/dataset/oracle/tolerance/mechanics
-  - package.json
-  - package-lock.json
-  - provider-specific deployment configuration or APIs
-  - index.html
-  - analyze.html
+  - core WRC/EMP.1 mechanics
+  - package mutation
+  - provider configuration/API
+  - HTML/UI
   - .github/workflows/**
+  - evidence 01-12 generation
+  - engineering/code/release/deployment authority
 authority_boundary:
   manifest_records_authority: true
   manifest_creates_authority: false
-  inherited_release_gates_may_be_replaced: false
+  manifest_replaces_authority: false
   engineering_authority_granted: false
   release_authority_granted: false
   deployment_authority_granted: false
-stack_base_head: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
-live_main_last_observed: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+parent_head: 54cc3e7af128f748e41b3595a7dff176e30ddc84
+pre_propagation_head: ca84e15767ef03a29982766dba65a62be63e7719
+structural_propagation_head: 6daaa210084e8defef41a57673d5e372e3933412
+structural_propagation_tree: e70f35bb53e3910cbc4bd9dedbcf11d7c303a873
+report_basis_head: 6daaa210084e8defef41a57673d5e372e3933412
+live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1477-001
+grounding_epoch: GE-PR1477-002
 handover_report: agents/PR1477_workreport.md
+exact_next_action: "Keep PR1477 draft/unmerged; reconcile current main plus PR1457/1464/1473/1477 review/check/diff state and stop only at the first AUTO hard-stop boundary."

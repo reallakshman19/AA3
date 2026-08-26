@@ -1,7 +1,7 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1477
-mission: "Salvage deterministic release manifest onto current EMP.1 release stack"
+mission: "Salvage exact-candidate manifest onto the current EMP.1 release stack"
 workstream: EMP1_RELEASE_MANIFEST_SALVAGE
 branch: agent/issue-1476-release-manifest-salvage-20260826
 issue: 1476
@@ -11,20 +11,33 @@ dependency_base_pr: 1473
 base_branch: agent/issue-1472-emp1-deployment-operations-20260826
 execution_mode: AUTO
 auto_state: RUNNING
-scope_authority: LOCKED_TO_ISSUE_1476
+phase_progression: AUTO
+scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1476
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_STACKED_DRAFT_SALVAGE
+pr_recovery_state: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
 handover_readiness: READY
-stack_base_head: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
-pr_head_at_allocation: 064b6d1ca0f0cb4116c136216c81279fb9d72767
-live_main_last_observed: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
-grounding_epoch: GE-PR1477-001
+parent_head: 54cc3e7af128f748e41b3595a7dff176e30ddc84
+pre_propagation_head: ca84e15767ef03a29982766dba65a62be63e7719
+structural_propagation_head: 6daaa210084e8defef41a57673d5e372e3933412
+structural_propagation_tree: e70f35bb53e3910cbc4bd9dedbcf11d7c303a873
+report_basis_head: 6daaa210084e8defef41a57673d5e372e3933412
+live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
+grounding_epoch: GE-PR1477-002
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: STACKED_ON_PR1473_SALVAGE_FROM_CLOSED_PR1444
-current_stage: WIP_TO_PR_RECOVERY_MIGRATION
+coordination: PARENT_PROPAGATED_WHOLE_STACK_RECONCILIATION_NEXT
+current_stage: PARENT_PROPAGATION_VALIDATED_STACK_RECONCILIATION_NEXT
 merge_authorization: NOT_GRANTED
-current_blocker: "Executable release qualification remains blocked; manifest salvage must preserve inherited release gates."
-exact_next_action: "Retire WIP records and port manifest/checker semantics onto exact PR1473 candidate."
+validation:
+  retained_blob_custody: PASS_EXACT_6_BLOBS
+  structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
+  parent_compare: PASS_13_AHEAD_0_BEHIND_EXACT_6_FILES
+  manifest_release_source: PASS_PRIOR_AUDIT
+  release_execution: NOT_RUN_CURRENT_EPOCH
+  build_browser_deployment_execution: NOT_RUN
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RETAINED
+  numerical_comparison: NOT_APPLICABLE
+current_blocker: "Executable exact-candidate release qualification remains source/runtime/#54 blocked; merge authority not granted."
+exact_next_action: "Keep PR1477 draft/unmerged; reconcile current main plus PR1457/1464/1473/1477 review/check/diff state and stop only at the first AUTO hard-stop boundary."

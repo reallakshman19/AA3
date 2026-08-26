@@ -1,0 +1,31 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1436
+mission: "Refresh EMP.1 professional release current state after later source-governance reconciliation"
+workstream: EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE_SUCCESSOR
+branch: agent/issue-1389-release-current-state-refresh-20260826
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_ISSUE_1389_RELEASE_CURRENT_STATE_RECONCILIATION
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_STACKED_DRAFT
+handover_readiness: READY
+stacked_base_pr: 1427
+stacked_base_branch: agent/issue-1389-p0-gate-current-state-20260825
+stacked_base_head_at_allocation: ed599b037b861aa8f6a3089792d81157e46d887a
+latest_live_main_observed: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+grounding_epoch: GE-PR1436-001
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: SAFE_STACKED_ON_PR1427_NO_EXACT_FILE_OVERLAP
+current_stage: WIP_TO_PR_RECOVERY_MIGRATION
+merge_authorization: NOT_GRANTED
+authority:
+  bounded_route_authorization_mutation: false
+  p0_source_gate_mutation: false
+  code_compliance_authority_granted: false
+  release_authority_granted: false
+  deployment_authority_granted: false
+exact_next_action: "Complete WIP recovery-file migration, then update only release-current-state artifact/checker/doc."

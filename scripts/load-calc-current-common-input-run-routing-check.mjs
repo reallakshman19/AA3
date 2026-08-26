@@ -15,6 +15,11 @@ import {
 const CURRENT = 'CURRENT_COMMON_INPUT_SYSTEM_RUN';
 const READY_REPORT = Object.freeze({
   packageState: 'READY',
+  readyMethodIds: Object.freeze(['WEIGHT_AND_GRAVITY']),
+  blockedMethodIds: Object.freeze([]),
+});
+const READY_COMMON_INPUT = Object.freeze({
+  packageState: 'READY',
   sealedMethodIds: Object.freeze(['WEIGHT_AND_GRAVITY']),
   blockedMethodIds: Object.freeze([]),
 });
@@ -22,15 +27,16 @@ const READY_REPORT = Object.freeze({
 assert.equal(isRoutineRunReady({ report: READY_REPORT, error: null }), true,
   'READY report must enable the routine system Run before a manual seal exists');
 assert.equal(isRoutineRunReady({
-  commonInput: READY_REPORT,
+  commonInput: READY_COMMON_INPUT,
   staleness: { stale: false },
   error: null,
 }), true, 'current READY sealed Common Input must remain routine-run eligible');
 for (const state of [
   { report: { ...READY_REPORT, packageState: 'PARTIALLY_READY' }, error: null },
   { report: { ...READY_REPORT, blockedMethodIds: ['SUSTAINED_REACTIONS'] }, error: null },
-  { report: { ...READY_REPORT, sealedMethodIds: [] }, error: null },
-  { commonInput: READY_REPORT, staleness: { stale: true }, error: null },
+  { report: { ...READY_REPORT, readyMethodIds: [] }, error: null },
+  { commonInput: READY_COMMON_INPUT, staleness: { stale: true }, error: null },
+  { commonInput: { ...READY_COMMON_INPUT, sealedMethodIds: [] }, staleness: { stale: false }, error: null },
   { report: READY_REPORT, error: { code: 'CHECK_FAILED' } },
 ]) assert.equal(isRoutineRunReady(state), false, 'non-current/non-READY state must fail closed');
 

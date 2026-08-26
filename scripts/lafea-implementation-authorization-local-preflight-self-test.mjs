@@ -43,6 +43,31 @@ try {
     'environment/preflight failure must explicitly leave Q1-Q5 NOT_RUN',
   );
 
+  const syntaxRepo = createSyntheticRepository(path.join(sandbox, 'syntax'), 0, {
+    malformedChecker: true,
+  });
+  const syntaxFailure = spawnSync(process.execPath, [syntaxRepo.preflightPath], {
+    cwd: syntaxRepo.root,
+    encoding: 'utf8',
+  });
+
+  assert.notEqual(syntaxFailure.status, 0, 'malformed authorization checker must fail preflight');
+  assert.match(
+    syntaxFailure.stderr,
+    /"classification": "NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED"/u,
+    'Node parser incompatibility must remain pre-delegation NOT_RUN',
+  );
+  assert.match(
+    syntaxFailure.stderr,
+    /"delegatedEngineeringGateEntered": false/u,
+    'Node parser failure must not be represented as engineering-gate entry',
+  );
+  assert.match(
+    syntaxFailure.stderr,
+    /"q1ToQ5Disposition": "NOT_RUN"/u,
+    'Node parser failure must leave Q1-Q5 NOT_RUN',
+  );
+
   const engineeringRepo = createSyntheticRepository(path.join(sandbox, 'engineering'), 7);
   const delegatedFailure = spawnSync(process.execPath, [engineeringRepo.preflightPath], {
     cwd: engineeringRepo.root,
@@ -78,6 +103,11 @@ try {
     /"schema": "lafea-implementation-authorization-local-preflight\/v1"/u,
     'successful environment preflight must emit its non-authoritative receipt',
   );
+  assert.match(
+    delegatedSuccess.stderr,
+    /"nodeSyntaxCheckedPaths": \[/u,
+    'successful preflight must retain which authorization entrypoints were parser-checked',
+  );
   assert.doesNotMatch(
     delegatedSuccess.stderr,
     /lafea-implementation-authorization-local-failure\/v1/u,
@@ -91,6 +121,7 @@ try {
     status: 'PASS',
     checks: Object.freeze({
       environmentFailureRemainsNotRun: true,
+      parserFailureRemainsNotRunBeforeDelegation: true,
       delegatedGateEntryDistinguished: true,
       delegatedFailureDoesNotOverstateQ1ToQ5: true,
       delegatedExitStatusPropagated: true,
@@ -138,7 +169,7 @@ function assertRetentionCustodyOrder(source) {
   );
 }
 
-function createSyntheticRepository(root, delegatedExitCode) {
+function createSyntheticRepository(root, delegatedExitCode, options = {}) {
   fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
   fs.writeFileSync(
     path.join(root, 'package.json'),
@@ -153,7 +184,9 @@ function createSyntheticRepository(root, delegatedExitCode) {
     'scripts/lafea3-direct-loaded-element-authorization-check.mjs',
     'scripts/lafea4-independent-pressure-resultant-authorization-check.mjs',
   ]) {
-    fs.writeFileSync(path.join(root, relativePath), 'export {};\n');
+    const malformed = options.malformedChecker
+      && relativePath === 'scripts/lafea-implementation-authorization-gate-check.mjs';
+    fs.writeFileSync(path.join(root, relativePath), malformed ? 'export {\n' : 'export {};\n');
   }
   fs.writeFileSync(
     path.join(root, 'scripts/lafea-implementation-authorization-gate-retain.mjs'),

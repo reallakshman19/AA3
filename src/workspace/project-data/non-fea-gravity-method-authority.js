@@ -77,6 +77,7 @@ export function createNonFeaGravityMethodAuthority(profile) {
   const base = {
     schema: NON_FEA_GRAVITY_METHOD_AUTHORITY_SCHEMA,
     projectDataRevision: Number.isInteger(profile.revision) ? profile.revision : null,
+    projectDataSemanticHash: semanticHash(profile),
     state: ready ? 'READY' : 'BLOCKED',
     requestedMethod: ready ? requestedMethod : null,
     effectiveAuthority: ready ? provenance.authority : null,
@@ -99,6 +100,12 @@ export function requireNonFeaGravityMethodAuthority(value) {
     throw codedError(
       'Gravity-method authority semantic hash mismatch.',
       'GRAVITY_METHOD_AUTHORITY_HASH_MISMATCH',
+    );
+  }
+  if (!stringValue(value.projectDataSemanticHash)) {
+    throw codedError(
+      'Gravity-method authority requires an effective Project Data semantic hash.',
+      'GRAVITY_METHOD_AUTHORITY_PROFILE_HASH_INVALID',
     );
   }
   if (!['READY', 'BLOCKED'].includes(value.state) || !Array.isArray(value.blockers)) {

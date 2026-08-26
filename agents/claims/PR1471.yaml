@@ -1,0 +1,30 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1471
+issue: 1321
+branch: agent/issue-1321-current-common-input-effective-projection
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: agent/issue-1321-run-internal-authorization
+base_sha: 1912bfa2fb3516643b4a5331e77c704c16b8969a
+mission: "Seal exact per-entity/per-load-case empirical masses from current fully READY Common Input without fabricating legacy publication/handoff authority"
+claimed_paths:
+  - src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js
+  - scripts/current-common-input-empirical-mass-projection-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1471_workreport.md
+  - agents/claims/PR1471.yaml
+  - agents/status/PR1471.yaml
+protected_paths:
+  - src/workspace/load-calc-consumer-controller.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+  - src/core/non-fea-common-checker/**
+  - .github/workflows/**
+authority_boundary: "Projection-only. Reuses existing model-load resolver and default overlay; adds ancillary and component-content composition receipts; creates no execution authorization or calculation request."
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+merge_authority: OWNER_ONLY_NOT_GRANTED
+overlap: STACKED_ON_PR1465

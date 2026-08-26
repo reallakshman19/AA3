@@ -1,0 +1,44 @@
+schema: engineering-pr-claim/v1
+pr: 1474
+repository: reallaksh19/Advanced_Analysis
+owner: reallaksh19
+branch: agent/lafea1371-registry-closure-readiness-20260826
+source_task: Issue #1371 Section 17 registry/documentation closure
+state: ACTIVE_BOUNDED_EVIDENCE_INFRASTRUCTURE_ONLY
+criticality: ENGINEERING_CRITICAL
+authority_domain:
+  - Section 17 readiness evaluation for a later LAFEA.3 registry-cleanup proposal
+  - exact-head binding between current Git HEAD and PR1462 verified Q1-Q5 implementation-authorization evidence
+  - protection of current LAFEA.3 registry limitation before cleanup readiness
+  - protection of current LAFEA.4 CST+DKT and exclusion authority during LAFEA.3 closure readiness
+exact_paths:
+  - scripts/lib/lafea1371-registry-closure-readiness.mjs
+  - scripts/lafea1371-registry-closure-readiness-check.mjs
+  - scripts/lafea1371-registry-closure-readiness-self-test.mjs
+  - agents/PR1474_workreport.md
+  - agents/status/PR1474.yaml
+  - agents/claims/PR1474.yaml
+excluded_authority:
+  - src/workspace/lafea-stage-registry.js mutation
+  - LAFEA.3 cleanup wording content
+  - Q1-Q5 numerical PASS or engineering execution evidence
+  - local-continuum solver or formulation
+  - local-shell solver, pressure or orientation mechanics
+  - mesher algorithms or thresholds
+  - benchmark expected values, probes or tolerances
+  - source topology
+  - package command surface
+  - UI/build/workflow files
+  - release authority
+readiness_semantics:
+  pass_disposition: READY_FOR_REGISTRY_CLEANUP_PR
+  pass_allows_cleanup_proposal_to_be_opened: true
+  pass_authorizes_cleanup_wording: false
+  pass_mutates_registry: false
+  pass_grants_release_authority: false
+coordination:
+  - pr: 1432
+    classification: COORDINATION_REQUIRED_IF_MERGED_PRIOR_EVIDENCE_BECOMES_STALE
+  - pr: 1258
+    classification: COORDINATION_REQUIRED_IF_MERGED_PRIOR_EVIDENCE_BECOMES_STALE
+merge_authority: OWNER_ONLY_NOT_GRANTED

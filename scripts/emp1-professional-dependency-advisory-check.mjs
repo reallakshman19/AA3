@@ -58,6 +58,9 @@ const auditRun = spawnSync(npmCommand(), ['audit', '--package-lock-only', '--jso
 if (launchNotRun(auditRun)) {
   emit(notRun('DEPENDENCY_ADVISORY_NPM_AUDIT_NOT_RUN', lockSha256, npmVersion, auditRun));
 }
+if (auditEnvironmentUnavailable(auditRun)) {
+  emit(notRun('DEPENDENCY_ADVISORY_SERVICE_UNAVAILABLE', lockSha256, npmVersion, auditRun));
+}
 let payload;
 try {
   payload = JSON.parse(String(auditRun.stdout ?? ''));
@@ -197,6 +200,25 @@ function validVulnerabilityCounts(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return ['info', 'low', 'moderate', 'high', 'critical', 'total']
     .every((key) => Number.isInteger(value[key]) && value[key] >= 0);
+}
+function auditEnvironmentUnavailable(run) {
+  if (!run || run.status === 0) return false;
+  const text = `${run.stdout ?? ''}\n${run.stderr ?? ''}`.toUpperCase();
+  return [
+    'ENETWORK',
+    'EAI_AGAIN',
+    'ENOTFOUND',
+    'ECONNRESET',
+    'ECONNREFUSED',
+    'ETIMEDOUT',
+    'ERR_SOCKET',
+    'ENOAUDIT',
+    'E401',
+    'E403',
+    'CERT_HAS_EXPIRED',
+    'UNABLE_TO_GET_ISSUER_CERT',
+    'SELF_SIGNED_CERT',
+  ].some((token) => text.includes(token));
 }
 function safeCode(value) {
   return typeof value === 'string' && /^[A-Z][A-Z0-9_]{1,63}$/u.test(value) ? value : null;

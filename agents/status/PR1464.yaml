@@ -8,46 +8,40 @@ issue: 1463
 umbrella: 1389
 dependency_base_pr: 1457
 base_branch: agent/issue-1456-emp1-build-artifact-security-20260826
-execution_mode: MANUAL
-auto_state: NOT_ACTIVE_CURRENT_TURN
-historical_auto_state: COMPLETE_PRIOR_EPOCH
-scope_authority: ISSUE_1463_WITH_MERGED_CHILD_1466_CUSTODY
+execution_mode: AUTO
+auto_state: RUNNING
+phase_progression: AUTO
+scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1463_WITH_ABSORBED_1466
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_STACKED_DRAFT_STRUCTURALLY_REGROUNDED
+pr_recovery_state: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
 handover_readiness: READY
-lock_base: f11e4ccb291db26f067dc7e2bfe2f5a304f7095d
-lock_base_tree: 588c2b97bbd3beb82e5ce829c193f57cf9b61b5a
-pre_reground_head: a084c48ec9b8ac33eed554c23adbd1c9cb913508
-structural_lock_head: 6f13613816d077ef3924cbb5a52a9409f9a8b180
-structural_lock_tree: 18112cdb0a5792be3301e1628d33ab4723820b7a
+parent_head: a849cfa7fb6a8ee8e3288b37dc1c1fbca0772204
+parent_tree: 297e2aee8f2baa3e3482b1ccbc7848bae717f7f6
+pre_propagation_head: 1cc37a834294199450c79551d8be9b1fd0cea5be
+structural_propagation_head: c4eaa69ca4922079024e65bec57ed85a071d5c40
+structural_propagation_tree: 52764ac89ff32ed3f58fcd42c6a821e57e0f2c7f
+report_basis_head: c4eaa69ca4922079024e65bec57ed85a071d5c40
 absorbed_child_pr: 1470
 absorbed_child_merge_sha: 9f73e0fc8c5db06cec137fb0041190596ae4acf3
 live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
-downstream_pr1473_head_observed: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
-downstream_pr1477_head_observed: ca84e15767ef03a29982766dba65a62be63e7719
-grounding_epoch: GE-PR1464-004
-appendix_a_status: PASS_RETAINED_PRIOR
+grounding_epoch: GE-PR1464-005
+appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: REGROUNDED_ON_PR1457_DOWNSTREAM_RECONCILIATION_PENDING
-current_stage: STRUCTURAL_REGROUND_COMPLETE_RECOVERY_SYNC
+coordination: PARENT_PROPAGATED_PR1473_RETARGET_REGROUND_NEXT
+current_stage: PARENT_PROPAGATION_VALIDATED_DOWNSTREAM_RECONCILIATION_NEXT
 merge_authorization: NOT_GRANTED
-safe_stop: true
 validation:
-  live_grounding: PASS
-  pre_reground_effective_diff: PASS_EXACT_16_FILES
   retained_blob_custody: PASS_EXACT_16_BLOBS
   structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
-  parent_compare: PASS_EXACT_16_FILES_ZERO_BEHIND
-  reviews: PASS_ZERO_LAST_OBSERVED
-  review_threads: PASS_ZERO_LAST_OBSERVED
-  github_mergeable_state: FAIL_CLOSED_FALSE_LAST_OBSERVED
-  dependency_advisory_execution: NOT_RUN_EXECUTION_ENVIRONMENT_NO_NEW_EXECUTION
-  build_execution: NOT_RUN_NO_NEW_EXECUTION
+  parent_compare: PASS_29_AHEAD_0_BEHIND_EXACT_16_FILES
+  dependency_header_source: PASS_PRIOR_AUDIT
+  dependency_advisory_execution: NOT_RUN_CURRENT_EPOCH
+  build_execution: NOT_RUN_CURRENT_EPOCH
   deployed_header_observation: NOT_RUN
   browser_execution: NOT_RUN
   hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RETAINED
   numerical_comparison: NOT_APPLICABLE
-current_blocker: "PR1457 remains draft/unmerged and behind current main; GitHub reports PR1464 mergeable=false; live advisory/build/browser/deployment/header evidence remain NOT_RUN."
-exact_next_action: "Leave PR1464 draft/unmerged. Before any merge decision re-ground PR1457 to then-current main; if continuing the stack, separately reconcile downstream #1470/#1473/#1477 without widening authority."
+current_blocker: "Live advisory/build/browser/deployment/header evidence remains NOT_RUN; merge authority not granted."
+exact_next_action: "Keep PR1464 draft/unmerged; retarget and re-ground PR1473 onto this absorbed PR1464 parent while preserving its exact seven-file deployment-operations delta."

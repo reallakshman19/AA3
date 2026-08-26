@@ -1,0 +1,38 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1478
+issue: 1321
+branch: agent/issue-1321-current-run-execution-runtime
+state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: IMPLEMENT_CURRENT_RUN_RUNTIME
+base_branch: main
+base_sha: 3d79ea6889c08cf6a37229655ecbd3ec3dc89a20
+validation:
+  live_main_grounding: PASS
+  current_common_input_chain_trace: PASS
+  controller_gap_trace: PASS
+  focused_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  ready_common_input_required: true
+  active_runtime_context_required: true
+  system_run_authorization_required: true
+  governed_method_selection_required: true
+  no_post_failure_method_fallback: true
+  current_mass_projection_required: true
+  current_support_execution_required: true
+  current_execution_recorded_separately: true
+  legacy_explicit_authority_path_unchanged: true
+  scenario_ready_path_unchanged: true
+  run_routing_change_authorized: false
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR
+merge_disposition: DRAFT_IMPLEMENTATION_IN_PROGRESS
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Implement runtime coordinator and separate execution-store custody with focused falsifiers; do not merge without a new owner instruction."

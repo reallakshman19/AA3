@@ -42,6 +42,7 @@ const checks = [
   ['Enrichment migration', 'scripts/non-fea-enrichment-migration-check.mjs'],
   ['Common checker and seal', 'scripts/non-fea-common-checker-check.mjs'],
   ['READY-only product screening Common Input snapshot', 'scripts/non-fea-ready-screening-snapshot-check.mjs'],
+  ['Load Calc Run READY snapshot routing', 'scripts/load-calc-run-ready-snapshot-check.mjs'],
   ['Analysis plan', 'scripts/non-fea-analysis-plan-check.mjs'],
   ['Method consumption', 'scripts/non-fea-method-consumption-check.mjs'],
   ['Empirical gravity AUTO method selection', 'scripts/empirical-gravity-method-selection-check.mjs'],

@@ -1,0 +1,34 @@
+schema: AgentClaim.v1
+repository: reallaksh19/Advanced_Analysis
+claim_id: PR1431
+owner: ChatGPT
+mission: "Issue #1321 component-contained fluid mass"
+branch: agent/issue-1321-component-contained-fluid
+pr: 1431
+issue: 1321
+criticality: ENGINEERING_CRITICAL
+coordination_state: SAFE_CURRENT_MAIN_SYNCED_NO_PRODUCTION_OVERLAP
+claimed_paths:
+  - src/core/shared-piping-model/property-specs.js
+  - src/core/non-fea-enrichment/index.js
+  - src/workspace/project-data/non-fea-field-registry.js
+  - src/workspace/project-data/non-fea-common-enriched-configured-default-overlay.js
+  - src/workspace/project-data/non-fea-common-enriched-product-default-overlay.js
+  - src/workspace/project-data/project-data-fields.js
+  - src/workspace/engineering-loads/authorized-empirical-effective-value-ledger.js
+  - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - scripts/authorized-empirical-component-contained-fluid-check.mjs
+  - scripts/non-fea-component-content-default-authority-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1431_workreport.md
+  - agents/status/PR1431.yaml
+  - agents/claims/PR1431.yaml
+protected_paths:
+  - src/core/model-loads/**
+  - src/core/fea/**
+  - src/workspace/project-data/project-data-contract.js
+  - .github/workflows/**
+authority_boundary: "V1 component OPE/HYD contained-fluid mass is optional, component-scoped kg and may become effective only through PROJECT_CONFIGURED_DEFAULT or versioned PRODUCT_DEFAULT authority. Shared-model properties remain alias-free. The execution kernel accepts content only when the projected Project Data entry is cross-bound to AUTHORIZED_EMPIRICAL_EFFECTIVE_VALUE_LEDGER evidence, the exact selector/case content receipt, and the matching dry-component receipt. SOURCE_EXPLICIT, SOURCE_INHERITED, EXACT_APPROVED_MASTER and ACCEPTED_OVERRIDE component-content authority are intentionally not advertised until a dedicated common-enriched source resolver exists. No dry-mass reinterpretation, PIPE fluid, CoG/application-point, support statics/allocation/equilibrium, tolerance, solver, or workflow change."
+merge_authority: OWNER_ONLY
+state: ACTIVE_VALIDATION_BLOCKED

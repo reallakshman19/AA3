@@ -18,15 +18,6 @@
   "callerSuppliedPromotionRecordMayActivate": false,
   "productionRecordMayBeSynthetic": false,
   "productionRecordMayBeInferred": false,
-  "candidateArtifactMayUseGenericV2Recovery": false,
-  "promotedArtifactMayUseGenericV2Recovery": false,
-  "promotedArtifactRequiresDistinctRetainedCapability": true,
-  "promotedArtifactRequiresDistinctRetainedQualification": true,
-  "promotedArtifactRequiresDistinctRetentionPlan": true,
-  "promotedArtifactMustPreserveCandidateMeshHash": true,
-  "promotedArtifactMustPreserveCandidateMeshBytes": true,
-  "promotedArtifactMustHaveDistinctArtifactHash": true,
-  "dedicatedPromotedReplayRequiresSeparateQualification": true,
   "releaseQualifiedOnPromotion": false,
   "productRetentionAuthorizedNow": false,
   "uiBindingAuthorizedNow": false,
@@ -34,6 +25,5 @@
   "activationRequiresActualActivePathCheck": true,
   "activationActivePathCheck": "scripts/lafea-tech13g-active-promotion-path-check.mjs",
   "futurePromotionChangePolicy": "QUALIFIED_BASE_PLUS_TRUST_ROOT_RECORD_ONLY_ACTIVATION_DIFF",
-  "qualificationSeamPolicy": "CALLER_SUPPLIED_PROMOTION_RECORDS_MUST_BE_IGNORED_BY_PRODUCTION_UI_AND_RETENTION_PATHS",
-  "recoveryAuthorityPolicy": "TECH13_PRODUCT_ARTIFACTS_REQUIRE_DEDICATED_CUSTODY_AND_MAY_NOT_BE_LAUNDERED_THROUGH_GENERIC_V2_RECOVERY"
+  "qualificationSeamPolicy": "CALLER_SUPPLIED_PROMOTION_RECORDS_MUST_BE_IGNORED_BY_PRODUCTION_UI_AND_RETENTION_PATHS"
 }

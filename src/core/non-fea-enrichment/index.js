@@ -60,6 +60,9 @@ const SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT = Object.freeze([
 const SUPPORT_AUTHORITIES = Object.freeze([
   'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER', 'ACCEPTED_OVERRIDE',
 ]);
+const COMPONENT_CONTENT_DEFAULT_AUTHORITIES = Object.freeze([
+  'PROJECT_CONFIGURED_DEFAULT',
+]);
 
 const FIELD_DEFINITIONS = Object.freeze([
   componentField('PIPE_OUTER_DIAMETER', 'outerDiameterMm', ['outerDiameterMm'], ['model-load-foundation', 'vertical-beam-foundation']),
@@ -74,6 +77,8 @@ const FIELD_DEFINITIONS = Object.freeze([
   componentField('INSULATION_DENSITY', 'insulationDensityKgM3', ['insulationDensityKgM3'], ['model-load-foundation', 'mass-ledger']),
   componentField('INSULATION_WEIGHT', 'insulationWeightKgPerM', ['insulationWeightKgPerM'], ['model-load-foundation', 'mass-ledger']),
   componentField('COMPONENT_WEIGHT', 'componentWeightKg', ['componentWeightKg'], ['model-load-foundation', 'mass-ledger']),
+  componentField('COMPONENT_OPERATING_FLUID_WEIGHT', 'componentFluidWeightOpeKg', ['componentFluidWeightOpeKg'], ['model-load-foundation', 'mass-ledger']),
+  componentField('COMPONENT_HYDRO_FLUID_WEIGHT', 'componentFluidWeightHydKg', ['componentFluidWeightHydKg'], ['model-load-foundation', 'mass-ledger']),
   componentField('ELASTIC_MODULUS', 'elasticModulusMpa', ['elasticModulusMpa'], ['vertical-beam-foundation']),
   componentField('SECOND_MOMENT_AREA', 'secondMomentAreaMm4', ['secondMomentAreaMm4'], ['vertical-beam-foundation']),
   componentField('FLEXURAL_RIGIDITY', 'flexuralRigidityNm2', ['flexuralRigidityNm2'], ['vertical-beam-foundation']),
@@ -97,6 +102,8 @@ const FIELD_AUTHORITY_RULES = new Map([
   ['INSULATION_DENSITY', SOURCE_MASTER_OVERRIDE_DEFAULT],
   ['INSULATION_WEIGHT', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT],
   ['COMPONENT_WEIGHT', SOURCE_MASTER_OVERRIDE_DEFAULT],
+  ['COMPONENT_OPERATING_FLUID_WEIGHT', COMPONENT_CONTENT_DEFAULT_AUTHORITIES],
+  ['COMPONENT_HYDRO_FLUID_WEIGHT', COMPONENT_CONTENT_DEFAULT_AUTHORITIES],
   ['ELASTIC_MODULUS', SOURCE_MASTER_OVERRIDE_DEFAULT],
   ['SECOND_MOMENT_AREA', SOURCE_MASTER_OVERRIDE_DERIVATION],
   ['FLEXURAL_RIGIDITY', SOURCE_MASTER_OVERRIDE_DERIVATION],

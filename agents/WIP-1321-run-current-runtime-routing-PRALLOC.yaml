@@ -1,0 +1,5 @@
+schema: AgentWipMarker.v1
+issue: 1321
+state: PR_ALLOCATION
+base_main: d24eac2a865cd748832825dc552cd7070b919f16
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_SUCCESSOR

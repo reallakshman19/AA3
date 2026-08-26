@@ -5,6 +5,8 @@ import { readFileSync } from 'node:fs';
 import {
   NON_FEA_COMMON_SCHEMAS,
 } from '../src/core/non-fea-common-checker/index.js';
+import { buildModelLoadFoundation } from '../src/core/model-loads/model-load-foundation.js';
+import { buildPipingPortTopologyGraph } from '../src/core/piping-topology/index.js';
 import {
   createSharedPipingModel,
   semanticHash,
@@ -25,14 +27,18 @@ import {
 
 const AUTHORIZED_AT = '2026-08-26T12:48:00.000Z';
 const model = makeModel();
+const topologyGraph = buildPipingPortTopologyGraph(model);
+const modelLoadFoundation = buildModelLoadFoundation(model, topologyGraph);
+const loadPrimitiveSet = modelLoadFoundation.loadPrimitiveSet;
 const profile = projectProfile();
-const readySnapshot = snapshot(commonInput(model, profile));
+const readySnapshot = snapshot(commonInput(model, profile, loadPrimitiveSet));
 const runAuthorization = createNonFeaEmpiricalRunAuthorization(readySnapshot, {
   authorizedAt: AUTHORIZED_AT,
 });
 const projection = createCurrentCommonInputEmpiricalMassProjection({
   snapshot: readySnapshot,
   runAuthorization,
+  loadPrimitiveSet,
 });
 
 assert.equal(projection.schema, CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_SCHEMA);
@@ -41,12 +47,15 @@ assert.deepEqual(
   requireCurrentCurrentCommonInputEmpiricalMassProjection(projection, {
     snapshot: readySnapshot,
     runAuthorization,
+    loadPrimitiveSet,
   }),
   projection,
 );
+assert.equal(projection.loadPrimitiveSetSemanticHash, loadPrimitiveSet.semanticHash);
 assert.equal(projection.policy.projectionOnly, true);
 assert.equal(projection.policy.executionAuthorizationGranted, false);
 assert.equal(projection.policy.legacyPublicationOrHandoffAuthorityAsserted, false);
+assert.equal(projection.policy.sealedLoadPrimitiveSetRequired, true);
 assert.equal(projection.policy.directMassBasisPreserved, true);
 assert.equal(projection.policy.fittingDerivationPreserved, true);
 assert.equal(projection.policy.negligibleMassZeroPreserved, true);
@@ -66,17 +75,25 @@ assert.equal(caseRow(pipe, 'EMPTY').totalMassPerLengthKgPerM, 14);
 assert.equal(caseRow(pipe, 'EMPTY').sourceLengthM, 2);
 assert.equal(caseRow(pipe, 'OPE').sourceMassPerLengthKgPerM, 13);
 assert.equal(caseRow(pipe, 'HYD').sourceMassPerLengthKgPerM, 14);
-assert.equal(caseRow(pipe, 'EMPTY').formulaTrace.length, 0,
-  'direct kg/m PIPE and insulation evidence must not be rewritten as derived density formulas');
 assert.deepEqual(
   caseRow(pipe, 'EMPTY').sourceMassBreakdown.map((row) => row.sourceId),
   ['PIPE_METAL', 'INSULATION'],
 );
+assert.ok(caseRow(pipe, 'EMPTY').sourceMassBreakdown.every((row) => row.sourceEvidence),
+  'direct kg/m mass basis must remain source evidence in the sealed primitive');
+assert.equal(
+  caseRow(pipe, 'EMPTY').formulaTrace.some((trace) => trace.formulaId === 'PIPE_METAL_MASS_PER_LENGTH_V1'),
+  false,
+  'direct PIPE kg/m authority must not be rewritten as a derived section formula',
+);
 assert.equal(caseRow(pipe, 'EMPTY').ancillaryEvidence.length, 2);
 
 const fitting = entity('ELBO-A');
-assert.ok(fitting.derivedDryMassEvidence?.valueKg > 0,
-  'missing fitting dry mass must use the existing same-branch derivation');
+assert.equal(
+  caseRow(fitting, 'EMPTY').basePrimitiveSourceEvidence?.source,
+  'DERIVED_FROM_ADJACENT_PIPE_SECTION',
+  'fitting mass must be retained from the sealed model-load primitive derivation',
+);
 assert.equal(caseRow(fitting, 'EMPTY').massKg, caseRow(fitting, 'OPE').massKg);
 assert.equal(caseRow(fitting, 'EMPTY').massKg, caseRow(fitting, 'HYD').massKg);
 assert.equal(caseRow(fitting, 'EMPTY').mode, 'POINT');
@@ -116,7 +133,49 @@ expectCode(
   'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_COMPOSITION_INVALID',
 );
 
-const resealedInput = commonInput(model, profile, {
+const forgedSummary = rehashProjection(projection, {
+  summary: { ...projection.summary, zeroMassEntityCaseCount: 999 },
+});
+expectCode(
+  () => requireCurrentCommonInputEmpiricalMassProjection(forgedSummary),
+  'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_SUMMARY_INVALID',
+);
+
+const differentPrimitiveMaterial = structuredClone(loadPrimitiveSet);
+const differentPrimitive = differentPrimitiveMaterial.primitives.find((row) => (
+  row.componentKey === 'VALVE-A'
+  && row.loadCaseId === 'EMPTY'
+  && row.primitiveType === 'POINT_GRAVITY_LOAD'
+));
+differentPrimitive.pointMassKg = 101;
+differentPrimitive.pointForceN = differentPrimitive.pointForceN / 100 * 101;
+delete differentPrimitiveMaterial.semanticHash;
+const differentPrimitiveSet = {
+  ...differentPrimitiveMaterial,
+  semanticHash: semanticHash(differentPrimitiveMaterial),
+};
+expectCode(
+  () => createCurrentCommonInputEmpiricalMassProjection({
+    snapshot: readySnapshot,
+    runAuthorization,
+    loadPrimitiveSet: differentPrimitiveSet,
+  }),
+  'CURRENT_COMMON_INPUT_EMPIRICAL_LOAD_PRIMITIVE_BINDING_MISMATCH',
+);
+
+const forgedPrimitiveBinding = rehashProjection(projection, {
+  loadPrimitiveSetSemanticHash: semanticHash({ wrong: 'primitive-set' }),
+});
+expectCode(
+  () => requireCurrentCurrentCommonInputEmpiricalMassProjection(forgedPrimitiveBinding, {
+    snapshot: readySnapshot,
+    runAuthorization,
+    loadPrimitiveSet,
+  }),
+  'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJECTION_STALE',
+);
+
+const resealedInput = commonInput(model, profile, loadPrimitiveSet, {
   seal: {
     semanticHash: semanticHash({ seal: 'second' }),
     confirmedBy: 'different READY seal',
@@ -127,6 +186,7 @@ expectCode(
   () => requireCurrentCurrentCommonInputEmpiricalMassProjection(projection, {
     snapshot: resealedSnapshot,
     runAuthorization,
+    loadPrimitiveSet,
   }),
   'NON_FEA_EMPIRICAL_RUN_AUTHORIZATION_SEAL_STALE',
 );
@@ -135,12 +195,12 @@ const source = readFileSync(new URL(
   '../src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js',
   import.meta.url,
 ), 'utf8');
-assert.match(source, /resolveComponentCaseMass/u,
-  'projection must reuse the existing model-load mass resolver');
-assert.match(source, /derivePipeLikeFittingWeightEvidence/u,
-  'projection must reuse existing fitting derivation');
+assert.match(source, /validateModelLoadPrimitiveSet/u,
+  'projection must validate the exact sealed model-load primitive set');
 assert.match(source, /createNonFeaCommonEnrichedConfiguredDefaultOverlay/u,
   'ancillary projection must reuse the existing exact configured-default overlay');
+assert.doesNotMatch(source, /resolveComponentCaseMass|derivePipeLikeFittingWeightEvidence/u,
+  'projection must not independently rerun base mass resolution after sealing');
 assert.doesNotMatch(source, /authorized-empirical-load-input/u,
   'projection must not depend on legacy authorized empirical input');
 assert.doesNotMatch(source, /common-enriched-consumer-handoff/u,
@@ -154,8 +214,10 @@ console.log(JSON.stringify({
   schema: projection.schema,
   commonInputSemanticHash: projection.commonInputSemanticHash,
   runAuthorizationSemanticHash: projection.runAuthorizationSemanticHash,
+  loadPrimitiveSetSemanticHash: projection.loadPrimitiveSetSemanticHash,
   entityCount: projection.summary.entityCount,
   entityCaseCount: projection.summary.entityCaseCount,
+  sealedPrimitiveBasePreserved: true,
   directMassBasisPreserved: true,
   fittingDerivedMassPreserved: true,
   negligibleGasketZeroPreserved: true,
@@ -189,7 +251,7 @@ function snapshot(commonInputValue) {
   };
 }
 
-function commonInput(sharedModel, projectDataProfile, overrides = {}) {
+function commonInput(sharedModel, projectDataProfile, primitiveSet, overrides = {}) {
   const base = {
     schema: NON_FEA_COMMON_SCHEMAS.COMMON_INPUT,
     packageState: 'READY',
@@ -218,7 +280,11 @@ function commonInput(sharedModel, projectDataProfile, overrides = {}) {
       restraintCapabilityModel: contract('restraint'),
       supportSiteModel: contract('support-site'),
       routePartitionModel: contract('route'),
-      loadPrimitiveSet: contract('loads'),
+      loadPrimitiveSet: {
+        schema: primitiveSet.schema,
+        status: 'READY',
+        semanticHash: primitiveSet.semanticHash,
+      },
     },
     methodReadiness: [],
     lineage: { schema: 'fixture-lineage/v1' },

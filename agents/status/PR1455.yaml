@@ -3,17 +3,22 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1455
 issue: 1321
 branch: agent/issue-1321-production-governed-v2-cutover
-state: SOURCE_IMPLEMENTED_RECONCILING
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: COMPLETE_FOR_BOUNDED_SLICE
 stack_base_pr: 1449
 stack_base_head: 3687a1b51107d525b8f7d4a9e1853209f26d12f7
-implementation_basis_head: 61c16b97e114c86f0945c447d805ab3ef0fe8361
+source_complete_basis_head: 86157f03a43dd56050619881b67488059f16d3fc
 live_main_at_grounding: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+stack_compare:
+  ahead: 16
+  behind: 0
+  changed_paths: 10
 validation:
   live_grounding: PASS
   upstream_stack_exact: PASS
+  exact_diff_reconciliation: PASS
   open_overlap: PASS_NONE_FOUND
   reviews: PASS_NONE
   review_threads: PASS_NONE
@@ -25,6 +30,11 @@ validation:
   check_imports: NOT_RUN
   build: NOT_RUN
   git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    observation: LOCAL_EXECUTION
+    command: "git clone --depth 1 --branch agent/issue-1321-production-governed-v2-cutover https://github.com/reallaksh19/Advanced_Analysis.git /tmp/advanced_analysis_pr1455"
+    error: "Could not resolve host: github.com"
   workflow_gating: NOT_APPLICABLE_OWNER_SKIPPED
 invariants:
   explicit_authorization_required: true
@@ -37,5 +47,5 @@ invariants:
   tolerance_change_authorized: false
   workflow_change_authorized: false
 appendix_a_qualified: false
-merge_disposition: OWNER_ONLY_DRAFT
-exact_next_action: "Remove WIP record, reconcile exact PR diff/head, retry faithful local execution; preserve NOT_RUN on environment failure; update PR description to source-complete truth."
+merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE
+exact_next_action: "Update PR1455 description to source-complete truth. Then continue Issue #1321 with the next non-overlapping zero-blocker/configurable-default gap; do not merge PR1455 without explicit owner authority."

@@ -8,34 +8,46 @@ issue: 1463
 umbrella: 1389
 dependency_base_pr: 1457
 base_branch: agent/issue-1456-emp1-build-artifact-security-20260826
-execution_mode: AUTO
-auto_state: COMPLETE
+execution_mode: MANUAL
+auto_state: NOT_ACTIVE_CURRENT_TURN
+historical_auto_state: COMPLETE_PRIOR_EPOCH
 scope_authority: ISSUE_1463_WITH_MERGED_CHILD_1466_CUSTODY
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_STACKED_DRAFT_CHILD_PR1470_ABSORBED
+pr_recovery_state: HEALTHY_STACKED_DRAFT_STRUCTURALLY_REGROUNDED
 handover_readiness: READY
-stack_base_head: f2462a7a09e7a4a0bc36a398095efdd796c98a4a
-dependency_technical_basis: c44c8444a1e2961b9b548386f2cfd8dc2776e472
+lock_base: f11e4ccb291db26f067dc7e2bfe2f5a304f7095d
+lock_base_tree: 588c2b97bbd3beb82e5ce829c193f57cf9b61b5a
+pre_reground_head: a084c48ec9b8ac33eed554c23adbd1c9cb913508
+structural_lock_head: 6f13613816d077ef3924cbb5a52a9409f9a8b180
+structural_lock_tree: 18112cdb0a5792be3301e1628d33ab4723820b7a
 absorbed_child_pr: 1470
 absorbed_child_merge_sha: 9f73e0fc8c5db06cec137fb0041190596ae4acf3
-live_main_last_observed: f15bab4af0009888f41b856f820cb3ab7a152520
-grounding_epoch: GE-PR1464-003
-appendix_a_status: PASS
+live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
+downstream_pr1473_head_observed: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
+downstream_pr1477_head_observed: ca84e15767ef03a29982766dba65a62be63e7719
+grounding_epoch: GE-PR1464-004
+appendix_a_status: PASS_RETAINED_PRIOR
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: STACKED_ON_PR1457_CHILD_PR1470_ABSORBED
-current_stage: CHILD_STACK_ABSORPTION_RECONCILED
+coordination: REGROUNDED_ON_PR1457_DOWNSTREAM_RECONCILIATION_PENDING
+current_stage: STRUCTURAL_REGROUND_COMPLETE_RECOVERY_SYNC
 merge_authorization: NOT_GRANTED
+safe_stop: true
 validation:
-  dependency_security_source: PASS_PRIOR_AUDIT
-  deployed_header_child_source: PASS_PR1470_MERGE_GATE
-  effective_diff: PASS_16_FILES_BEFORE_RECOVERY_SYNC
-  reviews: PASS_ZERO
-  review_threads: PASS_ZERO
-  dependency_advisory_execution: NOT_RUN_EXECUTION_ENVIRONMENT
+  live_grounding: PASS
+  pre_reground_effective_diff: PASS_EXACT_16_FILES
+  retained_blob_custody: PASS_EXACT_16_BLOBS
+  structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
+  parent_compare: PASS_EXACT_16_FILES_ZERO_BEHIND
+  reviews: PASS_ZERO_LAST_OBSERVED
+  review_threads: PASS_ZERO_LAST_OBSERVED
+  github_mergeable_state: FAIL_CLOSED_FALSE_LAST_OBSERVED
+  dependency_advisory_execution: NOT_RUN_EXECUTION_ENVIRONMENT_NO_NEW_EXECUTION
+  build_execution: NOT_RUN_NO_NEW_EXECUTION
   deployed_header_observation: NOT_RUN
   browser_execution: NOT_RUN
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RETAINED
   numerical_comparison: NOT_APPLICABLE
-current_blocker: "PR1457 remains unmerged and current main has advanced independently; live advisory/build/browser/deployed-header evidence remain NOT_RUN."
-exact_next_action: "Leave PR1464 draft/unmerged; re-ground PR1457 against current main before any future stack merge decision."
+current_blocker: "PR1457 remains draft/unmerged and behind current main; GitHub reports PR1464 mergeable=false; live advisory/build/browser/deployment/header evidence remain NOT_RUN."
+exact_next_action: "Leave PR1464 draft/unmerged. Before any merge decision re-ground PR1457 to then-current main; if continuing the stack, separately reconcile downstream #1470/#1473/#1477 without widening authority."

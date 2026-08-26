@@ -5,51 +5,61 @@ branch: agent/issue-1463-emp1-dependency-security-20260826
 issue: 1463
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
-execution_mode: AUTO
-auto_state: COMPLETE
-coordination_state: STACKED_ON_PR1457_CHILD_PR1470_ABSORBED
+execution_mode: MANUAL
+auto_state: NOT_ACTIVE_CURRENT_TURN
+historical_auto_state: COMPLETE_PRIOR_EPOCH
+coordination_state: REGROUNDED_ON_PR1457_DOWNSTREAM_RECONCILIATION_PENDING
 scope:
   authority: ISSUE_1463_WITH_MERGED_CHILD_1466_CUSTODY
   paths:
-    - scripts/emp1-professional-dependency-lock-check.mjs
-    - scripts/emp1-professional-dependency-lock-falsifier.mjs
+    - agents/PR1464_workreport.md
+    - agents/PR1470_workreport.md
+    - agents/claims/PR1464.yaml
+    - agents/claims/PR1470.yaml
+    - agents/status/PR1464.yaml
+    - agents/status/PR1470.yaml
+    - docs/emp1/EMP1_PROFESSIONAL_DEPLOYED_SECURITY_HEADERS.md
+    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
     - scripts/emp1-professional-dependency-advisory-check.mjs
     - scripts/emp1-professional-dependency-advisory-falsifier.mjs
-    - scripts/emp1-professional-security-header-policy.mjs
+    - scripts/emp1-professional-dependency-lock-check.mjs
+    - scripts/emp1-professional-dependency-lock-falsifier.mjs
     - scripts/emp1-professional-deployment-security-headers-check.mjs
     - scripts/emp1-professional-deployment-security-headers-falsifier.mjs
     - scripts/emp1-professional-release-candidate.mjs
-    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
-    - docs/emp1/EMP1_PROFESSIONAL_DEPLOYED_SECURITY_HEADERS.md
-    - agents/PR1464_workreport.md
-    - agents/status/PR1464.yaml
-    - agents/claims/PR1464.yaml
-    - agents/PR1470_workreport.md
-    - agents/status/PR1470.yaml
-    - agents/claims/PR1470.yaml
+    - scripts/emp1-professional-security-header-policy.mjs
 protected_exclusions:
   - package.json dependency version changes
   - package-lock.json dependency version changes
   - index.html
   - analyze.html
   - provider-specific deployment configuration
+  - .github/workflows/**
   - src/core/emp1/**
   - WRC mechanics/source/dataset/oracle/tolerance
-  - .github/workflows/**
+  - route/registry/code-compliance authority
 authority_boundary:
   dependency_security_can_block_release: true
   deployed_header_security_can_block_release: true
+  structural_reground_can_create_engineering_authority: false
+  structural_reground_can_create_release_authority: false
+  structural_reground_can_create_merge_authority: false
   dependency_security_can_create_engineering_authority: false
   static_csp_can_establish_browser_compatibility: false
   code_compliance_authority_granted: false
   release_authority_granted: false
   vulnerability_free_claim_without_live_audit: false
-stack_base_head: f2462a7a09e7a4a0bc36a398095efdd796c98a4a
-dependency_technical_basis: c44c8444a1e2961b9b548386f2cfd8dc2776e472
+lock_base: f11e4ccb291db26f067dc7e2bfe2f5a304f7095d
+lock_base_tree: 588c2b97bbd3beb82e5ce829c193f57cf9b61b5a
+pre_reground_head: a084c48ec9b8ac33eed554c23adbd1c9cb913508
+structural_lock_head: 6f13613816d077ef3924cbb5a52a9409f9a8b180
+structural_lock_tree: 18112cdb0a5792be3301e1628d33ab4723820b7a
 absorbed_child_pr: 1470
 absorbed_child_merge_sha: 9f73e0fc8c5db06cec137fb0041190596ae4acf3
-live_main_last_observed: f15bab4af0009888f41b856f820cb3ab7a152520
+live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
+downstream_pr1473_head_observed: bb8c7669427913a64d8c1c7e2cef1f3ab13d0d72
+downstream_pr1477_head_observed: ca84e15767ef03a29982766dba65a62be63e7719
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1464-003
+grounding_epoch: GE-PR1464-004
 handover_report: agents/PR1464_workreport.md
-exact_next_action: "Leave PR1464 draft/unmerged; re-ground PR1457 against current main before any future stack merge decision."
+exact_next_action: "Leave PR1464 draft/unmerged. Re-ground PR1457 to then-current main before any merge decision; downstream #1470/#1473/#1477 require separate reconciliation if continuing."

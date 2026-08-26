@@ -20,8 +20,9 @@ STACK_BASE_HEAD: 4b6eab2474ca0728ffc455698aa99b01f2d716a5
 BRANCH: agent/issue-1466-emp1-deployed-security-headers-20260826
 PR_HEAD_AT_ALLOCATION: 440b89b8e708d3fd88a79f8637d6556c31cd9ee0
 TECHNICAL_BASIS: f115af6fbe929bda1b5770c0614b2f1bfb588872
+FINAL_AUDIT_HEAD_BEFORE_THIS_REPORT_SYNC: ec4d02592e06e1587e8c9e758755919499bf5741
 LIVE_MAIN_LAST_OBSERVED: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
-REPORT_SYNC: CURRENT_FOR_TECHNICAL_AND_VALIDATION_STATE
+REPORT_SYNC: CURRENT_FOR_TECHNICAL_VALIDATION_AND_FINAL_AUDIT_STATE
 APPENDIX_A_STATUS: PASS_99_MIN19
 GROUNDING_EPOCH: GE-PR1470-002
 CURRENT_STAGE: TECHNICAL_IMPLEMENTATION_AND_RECOVERY_COMPLETE
@@ -86,7 +87,17 @@ Transport/tool failure is classified `NOT_RUN_EXECUTION_ENVIRONMENT`; policy vio
 
 ## Changed-file ledger — exact stacked scope
 
-Against stack base `4b6eab2474ca0728ffc455698aa99b01f2d716a5`, technical basis `f115af6fbe929bda1b5770c0614b2f1bfb588872` is 17 ahead / 0 behind with exactly eight paths:
+Final immutable audit before this report synchronization used exact head `ec4d02592e06e1587e8c9e758755919499bf5741` against stack base `4b6eab2474ca0728ffc455698aa99b01f2d716a5`:
+
+```text
+status       = ahead
+commits      = 20 ahead / 0 behind
+changedFiles = exactly 8
+reviews      = 0
+threads      = 0
+```
+
+The eight paths are:
 
 1. `scripts/emp1-professional-security-header-policy.mjs`
 2. `scripts/emp1-professional-deployment-security-headers-check.mjs`
@@ -104,13 +115,13 @@ Protected and unchanged in this batch: `index.html`, `analyze.html`, provider-sp
 | Gate | Status | Observation / oracle |
 |---|---|---|
 | Live main grounding | PASS | `main=dd7f13e2c73e596c7ac6625fbe211779bc61ce94`; repository custody |
-| Exact stacked diff | PASS | `4b6eab24... -> f115af6f...`; 17 ahead / 0 behind; exactly 8 paths |
+| Final exact stacked diff | PASS | `4b6eab24... -> ec4d0259...`; 20 ahead / 0 behind; exactly 8 paths |
 | Source-level policy/observer integration inspection | PASS | deployment receipt precedes live header gate; header exit 3 retained as NOT_RUN; no browser authority |
-| Reviews | PASS | 0 submitted reviews observed |
-| Review threads | PASS | 0 review threads observed |
+| Reviews | PASS | 0 submitted reviews observed on final audit |
+| Review threads | PASS | 0 review threads observed on final audit |
 | Focused Node falsifier execution in local container | NOT_RUN_EXECUTION_ENVIRONMENT | exact branch source could not be materialized because container DNS could not resolve `raw.githubusercontent.com`; no encoded test is promoted to PASS |
-| Exact-head hosted runEmp1 | NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE | run `32970361014`, job `98182390554`, `steps=null`, `logs_url=null` |
-| Exact-head hosted gamma5 | NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE | run `32970361196`, job `98182390982`, `steps=null`, `logs_url=null` |
+| Final-head hosted runEmp1 | NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE | run `32970742447`, job `98183631258`, `steps=null`, `logs_url=null` |
+| Final-head hosted gamma5 | NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE | run `32970742495`, job `98183631391`, `steps=null`, `logs_url=null` |
 | Live deployment header observation | NOT_RUN | no qualified production deployment receipt/HTTPS observation executed in this epoch |
 | Browser compatibility under deployed CSP | NOT_RUN | explicitly separate from static policy; requires actual deployed browser execution |
 | WRC numerical comparison | NOT_APPLICABLE | no mechanics/source/oracle/tolerance mutation |

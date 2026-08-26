@@ -18,18 +18,19 @@ BRANCH: agent/issue-1458-emp1-runtime-error-redaction-20260826
 MAIN_HEAD_LAST_CHECKED: b4d1137d0be67a4723ae08df90976f4218b6515e
 MERGE_BASE: b4d1137d0be67a4723ae08df90976f4218b6515e
 TECHNICAL_BASIS_HEAD: 68c2442ccb232aefb5edf794e933c6a84e796c78
-GROUNDING_EPOCH: GE-PR1459-003
-CURRENT_STAGE: OWNER_AUTHORIZED_PRE_MERGE_AUDIT
-CURRENT_BLOCKER: executable Node/browser validation remains NOT_RUN until an executable repository runtime is available; hosted jobs must be re-observed on final recovery head
+PRE_HOSTED_RECOVERY_HEAD: c732785fa7dbfc64fd6fa991a76843e6e0a200ad
+GROUNDING_EPOCH: GE-PR1459-004
+CURRENT_STAGE: READY_FOR_OWNER_AUTHORIZED_EXACT_HEAD_MERGE
+CURRENT_BLOCKER: none beyond hosted execution environment; final observed EMP.1 jobs failed before step creation and are classified NOT_RUN_EXECUTION_ENVIRONMENT
 HIGHEST_RISK: either leaking arbitrary exception/source-derived text or over-redacting governed readiness reasons/support codes
-EXACT_NEXT_ACTION: audit final recovery head against live main, reviews/threads and hosted workflow jobs; if unchanged and mergeable, mark ready and squash-merge using exact expected head SHA.
+EXACT_NEXT_ACTION: re-observe live main/final recovery head after this report sync; if exact eight-file diff, zero reviews/threads and hosted jobs remain pre-step NOT_RUN, mark ready and squash-merge using exact expected head SHA.
 ```
 
 ## 1. Recovery incident and correction
 
 The first implementation attempt used four modular LAFEA store files surfaced by a higher-level lookup. Exact GitHub Contents/compare evidence proved those files were absent from live `main@29c688db...`; the PR showed them as new files. That basis was rejected before merge.
 
-The owned branch was reset to live main, which temporarily auto-closed the PR when head equalled base. The PR was reopened after the corrected commits were present. During recovery `main` advanced by PR #1450 to `b4d1137d...`; its seven added authorization-evidence/recovery files have zero exact-path overlap with this PR.
+The owned branch was reset to live main, which temporarily auto-closed the PR when head equalled base. The PR was reopened after corrected commits were present. During recovery `main` advanced by PR #1450 to `b4d1137d...`; its seven added authorization-evidence/recovery files have zero exact-path overlap with this PR.
 
 The corrected technical snapshot was rebuilt from the current-main tree, preserving all #1450 files, with exactly five technical paths. No obsolete modular store path remains in the diff.
 
@@ -99,9 +100,37 @@ Controller:
 - controller has exactly three `publicLafeaFailure()` call sites and no raw `error.message` EMP.1 projection;
 - obsolete modular store paths are not introduced as API dependencies.
 
-Executable checker result remains `NOT_RUN` unless a real repository runtime executes the Node script. Source/diff inspection is not promoted to executable PASS.
+Executable checker result remains `NOT_RUN`; no source inspection is promoted to executable PASS.
 
-## 5. Authority boundary
+## 5. Final hosted execution observation
+
+Final pre-report recovery head `c732785fa7dbfc64fd6fa991a76843e6e0a200ad` triggered the normal hosted workflows.
+
+Relevant EMP.1 observations:
+
+```text
+runEmp1 orchestration
+run 32958370293
+job 98145007797
+status completed / conclusion failure
+steps = null
+logs_url = null
+
+gamma5 bounded route
+run 32958370284
+job 98145007860
+status completed / conclusion failure
+steps = null
+logs_url = null
+```
+
+Classification:
+
+`NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`
+
+These jobs did not create executable steps, so their workflow-level `failure` conclusion is neither product PASS nor engineering FAIL.
+
+## 6. Authority boundary
 
 Invariant:
 
@@ -125,7 +154,7 @@ build-artifact security policy (#1457)
 
 A redacted failure remains a failure. A redaction PASS cannot create engineering, source, code, release or deployment authority.
 
-## 6. Validation ledger
+## 7. Validation ledger
 
 | ID | Status | Observation |
 |---|---|---|
@@ -138,10 +167,12 @@ A redacted failure remains a failure. A redaction PASS cannot create engineering
 | ERRSEC-007 | PASS_SOURCE_INSPECTION | proprietary-sentinel falsifier encoded |
 | ERRSEC-008 | PASS_SOURCE_INSPECTION | PR #1450 drift has zero exact-path overlap |
 | ERRSEC-009 | NOT_RUN | Node falsifier execution |
-| ERRSEC-010 | NOT_RUN_EXECUTION_ENVIRONMENT | hosted workflow execution to be re-observed on final recovery head |
-| ERRSEC-011 | NOT_APPLICABLE | WRC numerical comparison; no mechanics/expected values/tolerances changed |
+| ERRSEC-010 | NOT_RUN_EXECUTION_ENVIRONMENT | runEmp1 run 32958370293 / job 98145007797; steps=null; logs_url=null |
+| ERRSEC-011 | NOT_RUN_EXECUTION_ENVIRONMENT | gamma5 run 32958370284 / job 98145007860; steps=null; logs_url=null |
+| ERRSEC-012 | PASS_NONE | PR reviews = 0; review threads = 0 at pre-report recovery head |
+| ERRSEC-013 | NOT_APPLICABLE | WRC numerical comparison; no mechanics/expected values/tolerances changed |
 
-## 7. Appendix A — implementation takeover qualification
+## 8. Appendix A — implementation takeover qualification
 
 ### A1 Production Trace — 20/20
 Exception/source-derived failure -> internal retained/orchestrator diagnostic custody -> canonical orchestrator API public projection -> controller/view/caller. EMP.1 controller-owned exceptions are separately projected before `emp1RunFailure` or returned rejection/failure objects.
@@ -153,9 +184,9 @@ The defect is arbitrary exception-message disclosure at the product boundary. It
 FAILED/REJECTED/BLOCKED semantics and safe diagnostic codes remain. Readiness reasons remain governed. No engineering/source/route/code/release/deployment authority is created.
 
 ### A4 Independent Validation — 19/20
-The sentinel matrix independently exercises code preservation, malformed-code fallback, top-level/execution/edit redaction, warning/readiness preservation, nonmutation and static controller/API wiring. Real Node/browser execution remains NOT_RUN until executable runtime evidence exists.
+The sentinel matrix independently exercises code preservation, malformed-code fallback, top-level/execution/edit redaction, warning/readiness preservation, nonmutation and static controller/API wiring. Real Node/browser execution remains NOT_RUN; hosted jobs are independently confirmed pre-step infrastructure failures.
 
 ### A5 Minimal Patch / Next Commit — 20/20
 Five technical files plus three recovery records only. The erroneous modular-store attempt was removed from branch ancestry by rebuilding from current main.
 
-**Total: 99/100; minimum 19/20 — READY FOR OWNER-AUTHORIZED EXACT-HEAD MERGE AUDIT.**
+**Total: 99/100; minimum 19/20 — READY FOR OWNER-AUTHORIZED EXACT-HEAD MERGE.**

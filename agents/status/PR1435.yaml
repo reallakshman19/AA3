@@ -10,7 +10,7 @@ observed_pr_head: 3e6fcbf30c8b81f0eaed2d5d48388b33330cca00
 criticality: ENGINEERING_CRITICAL
 recovery_state: SALVAGE_PARTIAL_CLEAN_SUCCESSOR
 handover_readiness: READY_FOR_MERGE
-stakeover_authority: WRITE_ALLOWED
+takeover_authority: WRITE_ALLOWED
 execution_mode: AUTO_MODE
 merge_authority: EXPLICIT_OWNER_AUTHORIZED_2026-08-26T01:21:10Z
 appendix_a:

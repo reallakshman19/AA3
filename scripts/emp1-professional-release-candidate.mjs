@@ -5,6 +5,7 @@ import { lstat, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH } from './emp1-professional-security-header-policy.mjs';
+import { createEmp1ReleaseManifest } from './emp1-professional-release-manifest.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const options = parseArgs(process.argv.slice(2));
@@ -225,34 +226,45 @@ if (fail) process.exit(1);
 if (options.release && !releaseCandidateQualified) process.exit(2);
 
 function createReceipt(input) {
+  const candidate = {
+    headSha: input.candidateHead,
+    treeSha: input.candidateTree,
+    parentSha: input.candidateParent,
+    cleanWorktree: input.worktreeStatus === '',
+    buildArtifactSha256: input.buildArtifactSha256,
+    dependencySecurity: {
+      packageLockPath: 'package-lock.json',
+      packageLockSha256: dependencyLockSha256,
+      advisoryAuditLevel: 'HIGH',
+      liveAdvisoryGateId: 'DEPENDENCY_ADVISORY',
+    },
+    deployedSecurityHeaders: {
+      policySemanticHash: EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH,
+      liveObservationGateId: 'DEPLOYMENT_SECURITY_HEADERS',
+      browserCompatibilityEstablishedByHeaderPolicy: false,
+    },
+    deploymentOperations: {
+      deploymentOperationsReceiptSha256,
+      gateId: 'DEPLOYMENT_OPERATIONS',
+      rollbackExecutionObservedByThisHarness: false,
+      rollbackSuccessAuthorizedByThisHarness: false,
+    },
+  };
+  const releaseManifest = createEmp1ReleaseManifest({
+    candidateHead: input.candidateHead,
+    candidateTree: input.candidateTree,
+    candidateParent: input.candidateParent,
+    executions: input.executions,
+    buildArtifactSha256: input.buildArtifactSha256,
+    releaseCandidateQualified: input.releaseCandidateQualified,
+    currentCandidateProvenance: candidate,
+  });
   const payload = {
     schema: 'emp1-professional-release-candidate-receipt/v1',
-    candidate: {
-      headSha: input.candidateHead,
-      treeSha: input.candidateTree,
-      parentSha: input.candidateParent,
-      cleanWorktree: input.worktreeStatus === '',
-      buildArtifactSha256: input.buildArtifactSha256,
-      dependencySecurity: {
-        packageLockPath: 'package-lock.json',
-        packageLockSha256: dependencyLockSha256,
-        advisoryAuditLevel: 'HIGH',
-        liveAdvisoryGateId: 'DEPENDENCY_ADVISORY',
-      },
-      deployedSecurityHeaders: {
-        policySemanticHash: EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH,
-        liveObservationGateId: 'DEPLOYMENT_SECURITY_HEADERS',
-        browserCompatibilityEstablishedByHeaderPolicy: false,
-      },
-      deploymentOperations: {
-        deploymentOperationsReceiptSha256,
-        gateId: 'DEPLOYMENT_OPERATIONS',
-        rollbackExecutionObservedByThisHarness: false,
-        rollbackSuccessAuthorizedByThisHarness: false,
-      },
-    },
+    candidate,
     mode: input.mode,
     executions: input.executions,
+    releaseManifest,
     releaseCandidateQualified: input.releaseCandidateQualified,
     authorityBoundary: {
       thisHarnessMutatesEngineeringAuthority: false,
@@ -375,6 +387,9 @@ function parseArgs(args) {
   }
   if (out.release && out.executeDiagnostics) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_RELEASE_AND_DIAGNOSTIC_ARE_MUTUALLY_EXCLUSIVE');
+  }
+  if (out.release && !out.writeReceipt) {
+    throw releaseError('EMP1_RELEASE_CANDIDATE_RETAINED_RECEIPT_REQUIRED');
   }
   if (out.deploymentReceipt && !out.release) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_DEPLOYMENT_RECEIPT_REQUIRES_RELEASE_MODE');

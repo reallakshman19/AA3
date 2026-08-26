@@ -1,0 +1,50 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1475
+issue: 1321
+branch: agent/issue-1321-mass-receipt-support-kernel
+state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: IMPLEMENT_MASS_RECEIPT_SUPPORT_KERNEL
+base_branch: main
+base_sha: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+validation:
+  live_main_grounding: PASS
+  pr1471_mass_projection_trace: PASS
+  raw_model_identity_trace: PASS
+  route_support_kernel_trace: PASS
+  project_data_loadCalcProjectBasis_trace: PASS
+  exact_entity_mapping_rule_trace: PASS
+  focused_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    observation: CURRENT_LOCAL_EXECUTION
+    error: "Could not resolve host: github.com"
+invariants:
+  legacy_entrypoints_unchanged: true
+  current_mass_projection_required: true
+  current_run_authorization_required: true
+  raw_dataset_common_input_hash_binding_required: true
+  support_and_route_contract_binding_required: true
+  exact_component_to_execution_entity_mapping_required: true
+  ambiguous_mapping_blocks_before_statics: true
+  zero_gasket_mass_remains_qualified: true
+  ancillary_or_content_recomposition_forbidden: true
+  project_data_workflow: loadCalcProjectBasis
+  force_formula_unchanged: "massKg * gravityMPerS2 * loadFactor"
+  allocation_functions_unchanged: true
+  application_point_authority_unchanged: true
+  equilibrium_functions_unchanged: true
+  numerical_tolerance_change_authorized: false
+  run_routing_change_authorized: false
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+merge_disposition: DRAFT_IMPLEMENTATION_IN_PROGRESS
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Implement non-authorizing qualified-case-mass kernel seam plus current-authority wrapper and focused falsifier, then reconcile exact PR diff before merge."

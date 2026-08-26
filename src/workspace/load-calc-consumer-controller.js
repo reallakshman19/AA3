@@ -2,7 +2,6 @@ import { createLoadCalculationReviewModel, validateLoadCalculationReviewModel } 
 import { APPLICATION_EVENTS, EVENT_TOPICS } from './event-topics.js';
 import { ENGINEERING_MODEL_EVENTS } from './engineering-model-controller.js';
 import { engineeringModelStore } from './engineering-model-store.js';
-import { authorizedEnrichmentConsumerController } from './enrichment/authorized-enrichment-runtime.js';
 import {
   renderEngineeringLoadPane,
   renderLoadCalcConsumer,
@@ -12,10 +11,7 @@ import { classifyLoadCalcResultPresentation } from './load-calc-result-presentat
 import { masterDataController } from './master-data-controller.js';
 import { createCurrentNonFeaWorkspaceStatusProjection } from './non-fea-analysis-plan-runtime.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
-import {
-  sealCurrentNonFeaCommonInput,
-  sealCurrentReadyNonFeaCalculationSnapshot,
-} from './non-fea-common-input-runtime.js';
+import { sealCurrentNonFeaCommonInput } from './non-fea-common-input-runtime.js';
 import { validateProjectDataProfile } from './project-data/project-data-contract.js';
 import { projectDataStore } from './project-data/project-data-store.js';
 import {
@@ -51,23 +47,11 @@ const WORKFLOW_STEP_BY_TAB = Object.freeze({
 
 /** Coordinates the real empirical load workflow without generating inputs. */
 export class LoadCalcConsumerController {
-  constructor(rootElement, consumerController, eventBus, {
-    readyCalculationSnapshotProvider = sealCurrentReadyNonFeaCalculationSnapshot,
-    empiricalAuthorizationController = authorizedEnrichmentConsumerController,
-  } = {}) {
+  constructor(rootElement, consumerController, eventBus) {
     if (!rootElement) throw new TypeError('Load Calc requires a stable root element.');
-    if (typeof readyCalculationSnapshotProvider !== 'function') {
-      throw new TypeError('Load Calc requires a READY calculation snapshot provider.');
-    }
-    if (!empiricalAuthorizationController
-        || typeof empiricalAuthorizationController.refreshEmpirical !== 'function') {
-      throw new TypeError('Load Calc requires an empirical authorization currentness controller.');
-    }
     this.rootElement = rootElement;
     this.consumerController = consumerController;
     this.eventBus = eventBus;
-    this.readyCalculationSnapshotProvider = readyCalculationSnapshotProvider;
-    this.empiricalAuthorizationController = empiricalAuthorizationController;
     this.context = consumerController?.getContext() || null;
     this.reviewModel = buildReviewModel(this.context);
     this.activeTab = 'topology';
@@ -227,8 +211,6 @@ export class LoadCalcConsumerController {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.message = message;
-      // The header status sits far from the finding row that was clicked, so the
-      // failure is also reported inline against that finding.
       this.topologySkipError = { findingId, message };
       this.render();
     }
@@ -282,20 +264,11 @@ export class LoadCalcConsumerController {
       return;
     }
 
-    try {
-      this.readyCalculationSnapshotProvider();
-      const authorization = this.empiricalAuthorizationController.refreshEmpirical();
-      if (authorization?.calculationEligible) {
-        this.message = 'Executing current authorized empirical package against the common seal…';
-        this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, { source: 'load-calc' });
-      } else {
-        this.message = 'Explicit empirical authorization still required.';
-        this.render();
-      }
-    } catch (error) {
-      this.message = error instanceof Error ? error.message : String(error);
-      this.render();
-    }
+    this.message = 'Executing the current governed gravity calculation…';
+    this.eventBus.publish(
+      ENGINEERING_MODEL_EVENTS.CURRENT_COMMON_INPUT_CALCULATE_REQUESTED,
+      { source: 'load-calc' },
+    );
   }
 
   handleClick(event) {
@@ -313,8 +286,7 @@ export class LoadCalcConsumerController {
       return;
     }
     if (event.target.closest('[data-load-calc-topology-autofix]')) {
-      const topologyCheck = this.topologyCheck;
-      if (topologyCheck.autoFix.certifiedExactGapCount === 0) {
+      if (this.topologyCheck.autoFix.certifiedExactGapCount === 0) {
         this.topologyPolicyFeedback = 'No certified source-backed endpoint gap is available to auto-fix.';
         this.message = this.topologyPolicyFeedback;
         this.render();
@@ -428,12 +400,14 @@ export class LoadCalcConsumerController {
     this.renderRevision += 1;
     const revision = this.renderRevision;
     const authorizationState = engineeringModelStore.getEmpiricalAuthorizationState();
+    const currentCommonInputExecution = engineeringModelStore.getCurrentCommonInputExecution();
     const topologyCheck = this.topologyCheck;
     const view = renderLoadCalcConsumer(this.rootElement.ownerDocument, {
       activeTab: this.activeTab,
       currentWorkflowStepId: this.currentWorkflowStepId,
       message: this.message,
       distribution: engineeringModelStore.getDistribution(),
+      currentCommonInputExecution,
       authorizedExecution: engineeringModelStore.getAuthorizedExecution(),
       authorizationState,
       supportSiteModel: engineeringModelStore.getSupportSiteModel(),
@@ -452,6 +426,7 @@ export class LoadCalcConsumerController {
       engineeringModelStore.getRoutePartitionModel(),
       engineeringModelStore.getAuthorizedExecution(),
       authorizationState,
+      currentCommonInputExecution,
     );
     else this.renderDeferredPane(this.activeTab, pane, revision);
   }
@@ -572,19 +547,21 @@ export class LoadCalcConsumerController {
     const commonState = nonFeaCommonInputStore.getSnapshot();
     const scenarioState = empiricalLoadCalcScenarioStore.getSnapshot();
     const freshProfile = projectDataStore.getProfile();
+    const routineRunReady = isRoutineRunReady(commonState);
 
-    // Gate statuses
-    const datasetOk  = authState?.reasonCode !== 'NO_ACTIVE_DATASET' && authState?.reasonCode !== null;
-    const sealOk     = !!(commonState?.commonInput && !commonState?.staleness?.stale);
-    const authOk     = !!(scenarioState?.calculationEligible || authState?.calculationEligible);
+    const datasetOk  = Boolean(this.context?.datasetId);
+    const sealOk     = Boolean(commonState?.commonInput && commonState?.staleness?.stale !== true);
+    const authOk     = Boolean(scenarioState?.calculationEligible || routineRunReady);
 
-    // Human-readable status detail (P0: no raw enum codes shown to users)
-    const sealDetail = sealOk ? 'Inputs sealed ✓' :
-      (commonState?.commonInput ? 'Seal is stale — changes were made after sealing' : 'Inputs not yet sealed — click to seal now');
-    const authDetail = authOk ? 'Calculation eligible ✓' :
-      (sealOk ? 'Sealed but not authorized — click to authorize' : 'Seal inputs first, then authorize');
+    const sealDetail = sealOk ? 'Inputs sealed ✓' : routineRunReady
+      ? 'READY validation will be sealed automatically when Run is selected'
+      : (commonState?.commonInput ? 'Seal is stale — changes were made after sealing' : 'Validate inputs to READY; Run will seal automatically');
+    const authDetail = scenarioState?.calculationEligible
+      ? 'Scenario authorization current ✓'
+      : routineRunReady
+        ? 'Routine system Run authority will be created at execution ✓'
+        : 'A fully READY current Common Input is required';
 
-    // Loads field audit — read current values from fresh profile
     const lc = freshProfile?.loadCalculation || {};
     const su = freshProfile?.sourcesAndUnits || {};
 
@@ -607,21 +584,12 @@ export class LoadCalcConsumerController {
     const pipClassSet  = fieldVal('su', 'pipingClassSource') !== null;
     const compSrcSet   = fieldVal('su', 'componentWeightSource') !== null;
 
-    // The raw-field checks above predate the #1321 effective-value/default
-    // ledger: they only see literal Project Data values, never Product/Project
-    // defaults or ledger-resolved targets. `authState.calculationEligible` is
-    // the same readiness signal the Run button already trusts
-    // (engineeringModelStore#currentEmpiricalReadiness runs the ledger-aware
-    // validateProjectDataProfile(..., 'authorizedGravityLoads'/'loads', ...)),
-    // so a raw field showing empty must not be presented as a blocker once
-    // that authorized path is eligible.
-    const ledgerAuthorized = authState?.calculationEligible === true;
+    const ledgerAuthorized = routineRunReady || authState?.calculationEligible === true;
 
     const allSafeSet       = (gravitySet && factorSet && equilSet && casesSet) || ledgerAuthorized;
     const masterFieldsSet  = (pipeSectSet && matDensSet && opFluidSet && hydFluidSet && insulSet && compWtSet) || ledgerAuthorized;
     const sourceFieldsSet  = (lineListSet && pipClassSet && compSrcSet) || ledgerAuthorized;
 
-    // Count blockers for the loads gate
     const rawLoadsBlockerCount = [gravitySet, factorSet, equilSet, casesSet, pipeSectSet, matDensSet,
       opFluidSet, hydFluidSet, insulSet, compWtSet, lineListSet, pipClassSet, compSrcSet
     ].filter((v) => !v).length;
@@ -631,10 +599,6 @@ export class LoadCalcConsumerController {
     const esc = (val) => String(val ?? '').replace(/[&<>'"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[c]);
 
-    // Renders a field's status: the raw value when present, a distinct
-    // ledger-resolved note when the authorized path filled it via governed
-    // defaults instead, or the original missing/blocked copy otherwise. This
-    // never lets default/ledger evidence masquerade as raw source evidence.
     function fieldStatus(rawOk, rawLabel, missingLabel) {
       if (rawOk) return rawLabel;
       if (ledgerAuthorized) return '<em>resolved via effective-value ledger</em>';
@@ -650,25 +614,24 @@ export class LoadCalcConsumerController {
       </li>`;
     }
 
-    const sealBtn  = !sealOk  ? `<button class="verify-gate__action" data-seal-inputs title="Seal all common inputs now">→ Seal inputs</button>` : '';
-    const authNote = !authOk && sealOk ? `<button class="verify-gate__action" data-empirical-authorize title="Authorize the configured scenario">→ Authorize</button>` : (!authOk ? `<span class="verify-gate__blocked">(seal first)</span>` : '');
+    const sealBtn = !sealOk && !routineRunReady
+      ? `<button class="verify-gate__action" data-seal-inputs title="Optional explicit audit seal">→ Seal for audit</button>`
+      : '';
 
     const loadsDetail = loadsOk
       ? (ledgerAuthorized && rawLoadsBlockerCount > 0
         ? `Ready — effective-value ledger resolved ${rawLoadsBlockerCount} field${rawLoadsBlockerCount > 1 ? 's' : ''} via governed defaults`
         : 'All 13 fields ready')
       : `${loadsBlockerCount} field${loadsBlockerCount > 1 ? 's' : ''} need values`;
-  
+
     container.innerHTML = `
       <div class="verify-run-pane">
         <div class="verify-layout">
-  
-          <!-- LEFT: Gates -->
           <div class="verify-gates-col">
             <div class="verify-section-header">
               <h2>Readiness Gates</h2>
-              <span class="verify-progress" data-ok="${loadsOk && sealOk && authOk}">
-                ${[datasetOk, loadsOk, sealOk, authOk].filter(Boolean).length} / 4 passing
+              <span class="verify-progress" data-ok="${loadsOk && authOk}">
+                ${[datasetOk, loadsOk, authOk].filter(Boolean).length} / 3 passing
               </span>
             </div>
             <ul class="verify-checklist">
@@ -678,16 +641,13 @@ export class LoadCalcConsumerController {
                   ? '<button class="verify-gate__action verify-gate__action--primary" data-goto-tab="project-data">→ Open Project Data</button>'
                   : (!loadsOk ? '<button class="verify-gate__action verify-gate__action--secondary" data-goto-tab="masters">→ Open Masters</button>' : '')
               )}
-              ${gate(sealOk, 'Common seal', sealDetail, sealBtn)}
-              ${gate(authOk, 'Authorization', authDetail, authNote)}
+              ${gate(authOk, 'Run authority', authDetail)}
+              ${sealBtn ? gate(sealOk, 'Audit seal', sealDetail, sealBtn) : ''}
             </ul>
             <p class="engineering-note">Results publish Fv / Fl(guide) / Fa(lineStop) per restraint after calculation.</p>
           </div>
-  
-          <!-- RIGHT: Quick-fix panel -->
+
           <div class="verify-quickfix-col">
-  
-            <!-- Safe defaults card -->
             <div class="verify-card ${allSafeSet ? 'verify-card--ok' : 'verify-card--warn'}">
               <div class="verify-card__header">
                 <span>${allSafeSet ? '✅' : '⚠'} Project and method basis</span>
@@ -701,8 +661,7 @@ export class LoadCalcConsumerController {
               </dl>
               ${!allSafeSet ? '<p class="engineering-note">Configure and approve the missing project-owned values in Project Data.</p>' : ''}
             </div>
-  
-            <!-- Master-dependent fields card -->
+
             <div class="verify-card verify-card--info" style="margin-top:12px">
               <div class="verify-card__header">
                 <span>${masterFieldsSet ? '✅' : '📋'} Master-dependent fields</span>
@@ -719,7 +678,6 @@ export class LoadCalcConsumerController {
               ${!masterFieldsSet ? '<button class="verify-gate__action verify-gate__action--secondary" style="width:100%;margin-top:8px" data-goto-tab="masters">→ Open Masters tab</button>' : ''}
             </div>
 
-            <!-- Source fields card -->
             <div class="verify-card verify-card--info" style="margin-top:12px">
               <div class="verify-card__header">
                 <span>${sourceFieldsSet ? '✅' : '🔗'} Source bindings</span>
@@ -731,7 +689,6 @@ export class LoadCalcConsumerController {
                 <dt>Component-weight source</dt><dd>${fieldStatus(compSrcSet, '✓ Bound', '<em>not bound</em>')}</dd>
               </dl>
             </div>
-  
           </div>
         </div>
       </div>
@@ -775,9 +732,6 @@ function createWorkflowReadiness(context, topologyCheck) {
     null,
   );
   const masterDataAudit = requiredMastersAudit(masterDataController.getMasterData());
-  // Step 5's badge must agree with the Validate Input pane. The gate projection
-  // only reports the full blocker set once the common checker has run, so the
-  // count is published as unknown until then rather than shown under-reported.
   const validationEvaluated = Boolean(commonInput.report);
   const validationBlockerCount = validationEvaluated ? safeValidationBlockerCount() : 0;
   return Object.freeze({
@@ -798,6 +752,25 @@ function createWorkflowReadiness(context, topologyCheck) {
     validationBlockerCount,
     resultsCurrent: distribution?.freshness?.status === 'CURRENT',
   });
+}
+
+function isRoutineRunReady(commonState) {
+  if (commonState?.error) return false;
+  const commonInput = commonState?.commonInput;
+  if (commonInput) {
+    return commonState?.staleness?.stale === false
+      && commonInput.packageState === 'READY'
+      && Array.isArray(commonInput.sealedMethodIds)
+      && commonInput.sealedMethodIds.length > 0
+      && Array.isArray(commonInput.blockedMethodIds)
+      && commonInput.blockedMethodIds.length === 0;
+  }
+  const report = commonState?.report;
+  return report?.packageState === 'READY'
+    && Array.isArray(report.sealedMethodIds)
+    && report.sealedMethodIds.length > 0
+    && Array.isArray(report.blockedMethodIds)
+    && report.blockedMethodIds.length === 0;
 }
 
 function pendingTopologyCheck(context) {
@@ -891,14 +864,6 @@ export function createLoadCalcActionAvailability(context, reviewModel) {
   });
 }
 
-/**
- * Reports an authority change against what actually exists.
- *
- * Announcing that the seal, authorization and previous calculations need a
- * refresh reads as breakage when none of them were ever established, which is
- * the normal state while a dataset is still being prepared. Only work that
- * exists is named as invalidated.
- */
 function authorityChangeMessage(subject) {
   const invalidated = [];
   try {
@@ -918,18 +883,18 @@ function availabilityMessage(state) {
   const reason = state?.reasonCode || state?.state || 'EMPIRICAL_PACKAGE_REQUIRED';
   const messages = {
     NO_ACTIVE_DATASET: 'Load calculation requires an active normalized dataset.',
-    EMPIRICAL_PACKAGE_REQUIRED: 'Load calculation requires an explicitly authorized empirical package.',
-    AUTHORIZATION_BINDINGS_CHANGED: 'The authorized empirical package is stale; authorize a package for the current dataset and evidence.',
-    PROJECT_DATA_CHANGED: 'Project Data changed; a new common seal and authorized empirical package are required.',
-    MASTER_DATA_CHANGED: 'Master data changed; a new common seal and authorized empirical package are required.',
-    DATASET_EDITED: 'The dataset changed; a new common seal and authorized empirical package are required.',
-    DATASET_REBUILT: 'The dataset model was rebuilt; a new common seal and authorized empirical package are required.',
-    DATASET_REPLACED: 'The active dataset changed; a new common seal and authorized empirical package are required.',
-    COMMON_INPUT_REQUIRED: 'A current common enriched piping input seal is required.',
-    COMMON_INPUT_STALE: 'The common enriched piping input seal is stale.',
-    COMMON_INPUT_METHOD_NOT_READY: 'The common input is not sealed for the requested empirical method.',
+    EMPIRICAL_PACKAGE_REQUIRED: 'The legacy explicit empirical package is not configured.',
+    AUTHORIZATION_BINDINGS_CHANGED: 'The retained legacy authorization is stale against current mechanical or authority inputs.',
+    PROJECT_DATA_CHANGED: 'Project Data changed; current Common Input and previous calculation evidence require refresh.',
+    MASTER_DATA_CHANGED: 'Master data changed; current Common Input and previous calculation evidence require refresh.',
+    DATASET_EDITED: 'The dataset changed; current Common Input and previous calculation evidence require refresh.',
+    DATASET_REBUILT: 'The dataset model was rebuilt; current Common Input and previous calculation evidence require refresh.',
+    DATASET_REPLACED: 'The active dataset changed; current Common Input and previous calculation evidence require refresh.',
+    COMMON_INPUT_REQUIRED: 'A current Common Input is required.',
+    COMMON_INPUT_STALE: 'The Common Input is stale.',
+    COMMON_INPUT_METHOD_NOT_READY: 'The Common Input is not READY for the requested empirical method.',
   };
-  return messages[reason] || `Load calculation is disabled: ${reason}.`;
+  return messages[reason] || `Legacy explicit empirical runtime state: ${reason}.`;
 }
 
 function empiricalScenarioMessage(snapshot) {

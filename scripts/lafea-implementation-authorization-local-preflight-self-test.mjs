@@ -25,12 +25,17 @@ try {
   assert.match(
     wrongCwd.stderr,
     /"classification": "NOT_RUN_ENVIRONMENT_OR_CHECKOUT_PREFLIGHT_FAILED"/u,
-    'failure before Q1-Q5 delegation must remain NOT_RUN environment/preflight',
+    'failure before delegated gate entry must remain NOT_RUN environment/preflight',
   );
   assert.match(
     wrongCwd.stderr,
-    /"q1ToQ5Executed": false/u,
-    'environment/preflight failure must explicitly state Q1-Q5 did not execute',
+    /"delegatedEngineeringGateEntered": false/u,
+    'environment/preflight failure must state delegated engineering gate was not entered',
+  );
+  assert.match(
+    wrongCwd.stderr,
+    /"q1ToQ5Disposition": "NOT_RUN"/u,
+    'environment/preflight failure must explicitly leave Q1-Q5 NOT_RUN',
   );
 
   const engineeringRepo = createSyntheticRepository(path.join(sandbox, 'engineering'), 7);
@@ -39,16 +44,21 @@ try {
     encoding: 'utf8',
   });
 
-  assert.equal(delegatedFailure.status, 7, 'delegated engineering-gate exit status must propagate');
+  assert.equal(delegatedFailure.status, 7, 'delegated gate exit status must propagate');
   assert.match(
     delegatedFailure.stderr,
-    /"classification": "ENGINEERING_GATE_FAILED_STOP_AT_FIRST_ASSERTION"/u,
-    'delegated non-zero must be classified as an engineering-gate failure',
+    /"classification": "DELEGATED_ENGINEERING_GATE_NONZERO_STOP_AT_FIRST_CHILD_FAILURE"/u,
+    'delegated non-zero must be classified without claiming which child assertion executed',
   );
   assert.match(
     delegatedFailure.stderr,
-    /"q1ToQ5Executed": true/u,
-    'delegated failure must explicitly state Q1-Q5 gate execution was entered',
+    /"delegatedEngineeringGateEntered": true/u,
+    'delegated failure must state the engineering gate was entered',
+  );
+  assert.match(
+    delegatedFailure.stderr,
+    /"q1ToQ5Disposition": "UNKNOWN_OR_PARTIAL_SEE_FIRST_CHILD_FAILURE"/u,
+    'delegated non-zero must not overstate full Q1-Q5 execution',
   );
 
   const successfulRepo = createSyntheticRepository(path.join(sandbox, 'success'), 0);
@@ -74,7 +84,8 @@ try {
     status: 'PASS',
     checks: Object.freeze({
       environmentFailureRemainsNotRun: true,
-      delegatedFailureClassifiedEngineering: true,
+      delegatedGateEntryDistinguished: true,
+      delegatedFailureDoesNotOverstateQ1ToQ5: true,
       delegatedExitStatusPropagated: true,
       successfulDelegationRemainsZero: true,
     }),

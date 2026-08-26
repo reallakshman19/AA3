@@ -3,58 +3,88 @@
 ## CURRENT RECOVERY STATE — READ FIRST
 
 ```text
-HANDOVER_READINESS: READY_FOR_RECONCILIATION
-PR_RECOVERY_STATE: SALVAGE_PARTIAL_IN_PLACE
+HANDOVER_READINESS: READY_FOR_VALIDATION
+PR_RECOVERY_STATE: SALVAGE_PARTIAL_IN_PLACE_CURRENT_MAIN
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 CRITICALITY: ENGINEERING_CRITICAL
 MERGE_AUTHORITY: OWNER_ONLY
 REPOSITORY: reallaksh19/Advanced_Analysis
 PR: #1239
 BRANCH: agent/lafea4-tech13i-promoted-refinement-roundtrip-20260817
-LIVE_MAIN_AT_GROUNDING: 29c688db4a021db900d1f8c67f56f777f73f4ddc
-LEGACY_PR_BASE: agent/lafea4-tech13h-retained-refinement-authority-20260817 @ 723ea16a5abbc63d5c87f5eedbb6e6fa20e935ec
-LEGACY_PR_HEAD: a666b743656be842f2aad860c5a7c17e345b3217
-BASE_DRIFT: 769 commits behind current main
+BASE: main @ 29c688db4a021db900d1f8c67f56f777f73f4ddc
+RECONCILED_ENGINEERING_HEAD: c19a807436ded7b309a1029e2384d2af05faa9b9
+CURRENT_STAGE: VALIDATION_BLOCKED_BY_HOSTED_RUNNER_ALLOCATION
 APPENDIX_A_STATUS: PASS 99/100, minimum 19/20
 ENGINEERING_FAILURE_PROVEN: false
-EXECUTABLE_QUALIFICATION: NOT_RUN
 ```
 
 ## Handover in 60 seconds
 
-#1239 is the original dedicated TECH-13I PR. Its old base is unusably stale, but its **10-file final diff is trustworthy**: every final blob is byte-identical to the independently recovered TECH-13I checkpoint `5d7f0c67828c2493bc7691f4696326c64eb37309` from #1246 provenance.
+PR #1239 is the original dedicated **TECH-13I** increment. Its legacy ancestry was 769 commits behind current main, but the engineering increment was fully recoverable and has now been reconciled in place onto the merged TECH-13H baseline.
 
-Current main already contains TECH-13H via merged #1435. H intentionally blocks TECH-13 product evidence from generic V2 recovery. What is missing is a dedicated replay path that can restore a promoted retained artifact only after revalidating current promotion authority and current source/midsurface/profile/parent-normal custody.
+The reconciled commit is:
 
-TECH-13I provides:
+```text
+c19a807436ded7b309a1029e2384d2af05faa9b9
+parent 1 = legacy #1239 lineage + recovery records
+parent 2 = main@29c688db4a021db900d1f8c67f56f777f73f4ddc
+```
+
+The resulting tree is **current main + TECH-13I only + three recovery records**. The PR is retargeted to `main`, has exactly 13 changed files, is mergeable, draft, has no reviews and no review threads.
+
+TECH-13I fills the custody gap intentionally left by TECH-13H:
 
 ```text
 promoted retained TECH-13H evidence
--> create replay package carrying retention authority + acceptance + promotion lineage
--> semantic-hash/tamper validation
+-> promotion-bound replay package
+-> structural + semantic-hash/tamper validation
 -> generic V2 recovery remains forbidden
--> dedicated recovery requires CURRENT code-owned promotion trust root
--> current source + midsurface + profile match
--> parent-normal gate before recovery
--> exact artifactHash / meshHash restore
--> parent-normal gate after recovery
+-> dedicated recovery requires current code-owned promotion authority
+-> current source / midsurface / mesh-profile custody
+-> parent-normal production gate before recovery
+-> exact promoted artifactHash + meshHash restore
+-> parent-normal production gate after recovery
 -> same replay-package semanticHash on re-export
 ```
 
 Production promotion trust root remains `NULL`; package contents cannot activate replay; `releaseQualified=false` remains mandatory.
 
-## Live grounding / salvage decision
+## Salvage/currentness proof
 
-`SALVAGE_PARTIAL_IN_PLACE`.
+Legacy #1239 engineering diff is exactly 10 files, 794 additions / 3 deletions. Every final #1239 blob is byte-identical to the independently recovered #1246 TECH-13I checkpoint:
 
-- #1239 is open, draft, mergeable.
-- Old base is `723ea16...`; head is `a666b743...`.
-- Relative current main, branch is 22 commits ahead / 769 behind and cannot be merged/rebased conventionally.
-- PR diff is exactly 10 TECH-13I files, 794 additions / 3 deletions.
-- No prior `agents/PR1239_workreport.md` existed.
-- Replacing the PR is unnecessary because the engineering increment is reconstructable and blob-identical to the independent #1246 I checkpoint.
+```text
+checkpoint = 5d7f0c67828c2493bc7691f4696326c64eb37309
+parent     = 5715883ccc3da576b9b80bd96cc41f6f33b1b96f
+```
 
-## Exact TECH-13I engineering ledger — 10 files
+Final I blobs:
+
+```text
+bundle verifier      d2bd98854ffd4daea4a4d922a2a774c48a70e2b5
+active G path        c793f2d7b675f6c2178af31ad98f995ed4ba587a
+I roundtrip checker  7701c2dc781abd7d437c931a089bca7dbfa7c23d
+mesh actions         becd2d13ff57586a1c7d98a964a5624cd0482a7d
+legacy I API blob    61fa38e0b6c8b7658c1ffdb94963dce3fd34d664
+replay actions       41dabba48f5e65691eab8b2f7e31ff845db071b9
+replay package       ffea58290c8ad79ac88430ae15d810f5ed104b8f
+exact-head plan      5b873eddb255204ce99122de4c81cbffcc0a3a04
+promotion policy     183f1ad356acdd3977b17afe091aa1a80d4448ea
+TECH-13 program      0c3ec83ca3147f9facbc8418b012bcb8be164d7d
+```
+
+Six of seven shared I-parent files remained byte-identical on current main. Only `src/workspace/lafea-workbench-orchestrator-api.js` had legitimate later main evolution. Historical I changed that file only by exposing two methods:
+
+```text
+exportLafea4ProductRefinementReplayPackage
+recoverLafea4ProductRefinementReplayPackage
+```
+
+Therefore that file was reconciled semantically on current main instead of replaying the stale whole-file blob. Current main API behavior is preserved; only those two I methods were added. Reconciled API blob is `b598c4b537398c4051ca4c984b4ebed82998002d`.
+
+## Exact changed-file ledger — 13 files
+
+Engineering / qualification:
 
 ```text
 scripts/lafea-tech13-product-refinement-bundle-verifier.mjs
@@ -69,100 +99,94 @@ validation/lafea4-refinement/product-refinement-promotion-v1.json
 validation/lafea4-refinement/tech13-product-local-refinement-program-v1.json
 ```
 
-Final #1239 blobs equal recovered I checkpoint blobs:
+Recovery:
 
 ```text
-bundle verifier      d2bd98854ffd4daea4a4d922a2a774c48a70e2b5
-active G path        c793f2d7b675f6c2178af31ad98f995ed4ba587a
-I roundtrip check    7701c2dc781abd7d437c931a089bca7dbfa7c23d
-mesh actions         becd2d13ff57586a1c7d98a964a5624cd0482a7d
-orchestrator API     61fa38e0b6c8b7658c1ffdb94963dce3fd34d664
-replay actions       41dabba48f5e65691eab8b2f7e31ff845db071b9
-replay package       ffea58290c8ad79ac88430ae15d810f5ed104b8f
-exact-head plan      5b873eddb255204ce99122de4c81cbffcc0a3a04
-promotion policy     183f1ad356acdd3977b17afe091aa1a80d4448ea
-TECH-13 program      0c3ec83ca3147f9facbc8418b012bcb8be164d7d
+agents/PR1239_workreport.md
+agents/status/PR1239.yaml
+agents/claims/PR1239.yaml
 ```
 
-## Current-main applicability
+No TECH-13J, workflow, solver/formulation, benchmark/oracle/tolerance, mesh-threshold or release-authority file is in the PR.
 
-Seven historical shared files were checked against the I-parent checkpoint `5715883ccc3da576b9b80bd96cc41f6f33b1b96f`.
+## Production authority trace
 
-Six remain byte-identical on current main:
+`src/workspace/lafea4-shell-product-refinement-replay.js` defines a replay sidecar carrying the retained authority, accepted candidate and promotion record. It validates exact schema/key shape, hashes the package, validates candidate/promoted authority lineage, preserves exact mesh bytes/hash and requires a distinct promoted authority artifact.
 
-```text
-bundle verifier      2f1b51b3652eceadd8a63b12788fd99a5a2de569
-active G path        e4faac7abb827fa1788321a325c91597436b0cd2
-mesh actions         615c0b65e652d7928021da411cb36a6919d1b930
-exact-head plan      cb7ed8802a4ea2e5156fb34caf933769dff3fd6b
-promotion policy     44e7da54a1a71c528f27cc865a530128accddaf0
-TECH-13 program      3e294781d36b0748d28ef668a3dab8ec9ce714bb
-```
+`requireCurrentLafea4ShellProductRefinementReplayPackage()` obtains authority only from the source-controlled current promotion trust root. A structurally valid package cannot activate itself.
 
-`src/workspace/lafea-workbench-orchestrator-api.js` has legitimate later drift:
+`src/workspace/lafea4-shell-product-refinement-replay-actions.js` performs dedicated recovery only after:
 
-```text
-I parent blob = e57e7ea1f9a08e7613b2b3fbc7075c1a84df5c15
-current main  = 6a1008b3bb19d233b2a96a6cc92a3baf8d3a7fd9
-```
+1. current promotion record matches the package;
+2. source lifecycle is CURRENT;
+3. current midsurface/source/domain/geometry hashes match;
+4. current mesh profile matches;
+5. parent-normal production gate accepts before recovery.
 
-The I change to this file is only the additive public API exposure:
+It then restores the exact promoted evidence through the lower-level evidence store, verifies artifactHash/meshHash identity, recomputes parent-normal custody and requires the same pre/post companion and gate semantic hashes. Generic orchestrator V2 recovery remains blocked for TECH-13 evidence.
+
+## Protected invariants
 
 ```text
-exportLafea4ProductRefinementReplayPackage: c.exportRetainedProductRefinementReplayPackage
-recoverLafea4ProductRefinementReplayPackage: c.recoverProductRefinementReplayPackage
-```
-
-Therefore this single file must be reconciled semantically onto current main; the historical whole-file post-blob must NOT overwrite current API drift.
-
-## Authority / invariants
-
-```text
-production promotion trust root = NULL
+production trust root = NULL
 releaseQualified = false
-generic V2 recovery remains forbidden for TECH-13 product evidence
-replay package alone cannot activate recovery
-current code-owned promotion record must match package promotion record
-current source lifecycle must be CURRENT
-current midsurface/source/domain/geometry hashes must match
-current mesh profile hash must match
-parent-normal production gate must PASS before and after dedicated recovery
-restored artifactHash must equal promoted retained artifactHash
-restored meshHash must equal promoted retained meshHash
-re-exported package semanticHash must equal imported package semanticHash
+generic V2 recovery for TECH-13 = forbidden
+package alone cannot activate replay
+current promotion record must match package
+source lifecycle must be CURRENT
+midsurface/source/domain/geometry/profile custody must match
+parent-normal gate must PASS pre/post replay
+restored artifactHash == promoted artifactHash
+restored meshHash == promoted meshHash
+re-export semanticHash == imported package semanticHash
+adjacent size ratio max = 1.5
+aspect ratio warn/block = 5 / 10
+scaled Jacobian warn/block = 0.5 / 0.2
 no CST/DKT formulation change
 no solver/recovery mathematics change
-no mesh threshold change
-no TECH-13E benchmark/oracle/tolerance change
-no TECH-13J implementation fingerprint/build injection
-no workflow change
+no TECH-13E oracle/tolerance change
+no TECH-13J implementation fingerprint
+no workflow/Vite bundle-policy change
 ```
 
 ## Validation ledger
 
-| Gate | Status | Observation | Oracle |
+| Gate | Status | Observation | Authority/oracle |
 |---|---|---|---|
-| live main / PR grounding | PASS | SOURCE_INSPECTION | GitHub mutable state |
-| exact 10-file PR ledger | PASS | SOURCE_INSPECTION | PR file list |
-| #1239 final blobs == recovered I checkpoint | PASS | SOURCE_INSPECTION | exact Git blob identities |
-| six shared parent blobs current | PASS | SOURCE_INSPECTION | exact Git blob identities |
-| orchestrator API drift isolated | PASS | SOURCE_INSPECTION | current vs I-parent blob + additive I patch |
-| dedicated replay authority trace | PASS | SOURCE_INSPECTION | replay/replay-actions modules |
-| null trust-root negative control | PASS | SOURCE_INSPECTION | focused I checker |
-| generic replay still forbidden | PASS | SOURCE_INSPECTION | focused I checker + H boundary |
-| focused TECH13I Node | NOT_RUN | NOT_OBSERVED | hosted runner unavailable |
-| active-promotion roundtrip | NOT_RUN | NOT_OBSERVED | hosted runner unavailable |
-| exact-head TECH-13 bundle | NOT_RUN | NOT_OBSERVED | hosted runner unavailable |
-| browser/build | NOT_RUN | NOT_OBSERVED | hosted runner unavailable |
+| live main / PR grounding | PASS | SOURCE_INSPECTION | live GitHub |
+| final 13-file ledger | PASS | SOURCE_INSPECTION | live PR file list |
+| mergeability | PASS | SOURCE_INSPECTION | live GitHub |
+| reviews / threads | PASS / none | SOURCE_INSPECTION | live GitHub |
+| #1239 final blobs == independent recovered I checkpoint | PASS | SOURCE_INSPECTION | exact Git blobs |
+| six shared parent files current | PASS | SOURCE_INSPECTION | exact Git blobs |
+| orchestrator API drift | PASS / reconciled | SOURCE_INSPECTION | current main + additive I seam |
+| replay authority trace | PASS | SOURCE_INSPECTION | production modules |
+| null-trust-root negative control | PASS | SOURCE_INSPECTION | focused checker |
+| generic TECH-13 V2 replay still blocked | PASS | SOURCE_INSPECTION | H + I paths |
+| TECH13I focused Node | NOT_RUN | NOT_OBSERVED | runtime unavailable |
+| active promotion round-trip | NOT_RUN | NOT_OBSERVED | runtime unavailable |
+| exact-head TECH-13 bundle | NOT_RUN | NOT_OBSERVED | runtime unavailable |
+| browser/build | NOT_RUN | REMOTE_PRE_STEP | hosted runner allocation |
 
-No unexecuted check is PASS.
+Current exact reconciliation-head runner evidence:
 
-## Coordination
+```text
+run       = 32919506290
+job       = 98030083217
+head      = c19a807436ded7b309a1029e2384d2af05faa9b9
+runner_id = 0
+steps     = []
+class     = PRE_STEP_HOSTED_RUNNER_ALLOCATION
+```
 
-- merged #1435 is the required H baseline.
-- #1246 contains stale H/I/J combined provenance; I becomes superseded if this recovery succeeds, J remains unresolved there.
-- #1249 is a stale 31-file H/I/J stacked qualification carrier; do not import it into I.
-- #1432 is LAFEA.3 and outside this authority domain.
+Therefore execution remains `NOT_RUN`; there is no engineering FAIL and no rerun is justified. Recovery-record-only head changes after this checkpoint do not justify another runner probe.
+
+## Coordination / supersession
+
+- #1435: TECH-13H prerequisite, merged at `29c688db4a021db900d1f8c67f56f777f73f4ddc`.
+- #1246: stale combined H/I/J provenance. H is superseded by merged #1435; I is superseded by current-main #1239; J remains unresolved provenance.
+- #1249: stale 31-file stacked H/I/J qualification carrier. Its I role is superseded by #1239; J/build provenance must be assessed separately.
+- #1432: LAFEA.3, separate authority domain.
 
 ## Appendix A — takeover qualification
 
@@ -177,14 +201,11 @@ MINIMUM                         19/20
 TAKEOVER_AUTHORITY              WRITE_ALLOWED
 ```
 
-A4 is 19/20 because source and negative-control design are independently inspected but the executable runtime is currently NOT_RUN.
+A4 is 19/20 because executable qualification is currently NOT_RUN; no execution was fabricated.
 
 ## EXACT_NEXT_ACTION
 
-1. Build a non-destructive two-parent reconciliation commit with parents `a666b743...` and `main@29c688db...`.
-2. Tree must equal current main plus TECH-13I only: use the exact nine safe post-I blobs and a semantically reconciled current-main orchestrator API exposing only the two I methods.
-3. Carry this workreport plus status/claim records into the same reconciled branch.
-4. Retarget PR #1239 from obsolete H branch to `main`.
-5. Reconcile changed-file ledger/reviews and observe one automatically-triggered exact-head workflow; pre-step runner failure remains NOT_RUN and must not be rerun.
-6. Keep PR draft / Owner-only unless separately authorized for merge.
-7. After durable I recovery, mark #1246/#1249 I roles superseded and proceed to TECH-13J read-only salvage.
+1. Keep #1239 draft and Owner-only; do not rerun the same zero-step hosted job.
+2. Record I supersession on #1246 and #1249.
+3. Proceed to TECH-13J read-only salvage/currentness assessment from current main; do not import combined J/build changes blindly.
+4. Revisit #1239 only on legitimate runtime recovery, material main drift, review input, or explicit owner merge authorization.

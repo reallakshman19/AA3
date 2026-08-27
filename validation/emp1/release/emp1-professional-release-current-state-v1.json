@@ -3,15 +3,15 @@
   "issue": 1389,
   "releaseProfileId": "EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1",
   "reconciliationBasis": {
-    "basisKind": "STACKED_POST_SOURCE_GOVERNANCE_CURRENT_STATE_CANDIDATE",
+    "basisKind": "CURRENT_MAIN_POST_SOURCE_GOVERNANCE_RECONCILIATION",
     "previousCurrentStateMainSha": "4c7b5c7e4d4ee1a2144d1764fd15e93813719a19",
     "stackedBasePr": 1427,
-    "stackedBaseHead": "ed599b037b861aa8f6a3089792d81157e46d887a",
-    "stackedBaseContainsMainThrough": "7b2a8119aa5faeee7cc102c894991851019c5a7b",
-    "latestLiveMainObserved": "29c688db4a021db900d1f8c67f56f777f73f4ddc",
-    "latestLiveMainTreeObserved": "60d0fa231c52a561b9d6cc50d1099abff8500880",
-    "laterMainDriftClassification": "UNRELATED_LAFEA_ONLY_NO_EMP1_AUTHORITY_OVERLAP",
-    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_LATER_WRC_SOURCE_GOVERNANCE_STACKED_ON_PR1427",
+    "stackedBaseHead": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
+    "stackedBaseContainsMainThrough": "19b762e1f9512284da961e5816a28c10432080bb",
+    "latestLiveMainObserved": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
+    "latestLiveMainTreeObserved": "dd812ea9b4a746a9913fc3e2691f78813fc0380e",
+    "laterMainDriftClassification": "PR1415_AND_PR1427_MERGED_DEPENDENCY_RECONCILED",
+    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_CURRENT_MAIN",
     "artifactMayNotClaimContainingCommitAsBasis": true
   },
   "frozenReadinessContract": {
@@ -39,8 +39,8 @@
     {"pr":1425,"issues":[1383,1385],"state":"MERGED","role":"STRESS_SEMANTICS_AGGREGATE_RECONCILIATION"},
     {"pr":1426,"issues":[1375],"state":"MERGED","role":"SHELL_THICKNESS_PHYSICAL_BASIS_BOUNDARY"},
     {"pr":1418,"issues":[1368,1370,1373],"state":"MERGED","role":"PHYSICAL_APPLICABILITY_BOUNDARIES"},
-    {"pr":1415,"issues":[1377],"state":"OPEN_DRAFT_UNMERGED","role":"RETAINED_TABLE5_MEAN_RADIUS_PARTIAL_RECONCILIATION_NOT_CURRENT_MAIN_AUTHORITY"},
-    {"pr":1427,"issues":[1389],"state":"OPEN_DRAFT_STACKED_BASE_UNMERGED","head":"ed599b037b861aa8f6a3089792d81157e46d887a","role":"AUTHORIZED_ROUTE_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION"}
+    {"pr":1415,"issues":[1377],"state":"MERGED","mergeSha":"19b762e1f9512284da961e5816a28c10432080bb","role":"RETAINED_TABLE5_MEAN_RADIUS_PARTIAL_RECONCILIATION_CURRENT_MAIN_AUTHORITY"},
+    {"pr":1427,"issues":[1389],"state":"MERGED","head":"b648e174b80b49ceed76036d590b89ad4fe08c2e","mergeSha":"b648e174b80b49ceed76036d590b89ad4fe08c2e","role":"AUTHORIZED_ROUTE_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION_CURRENT_MAIN"}
   ],
   "sequenceStatus": {
     "recommendedPrAThroughHDelivered": true,
@@ -65,14 +65,14 @@
     "p0Aggregate": {
       "path": "validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json",
       "stackedPr": 1427,
-      "stackedHead": "ed599b037b861aa8f6a3089792d81157e46d887a",
-      "gitBlobSha1": "815e7c988afd7a1f19b93aaf7d7101b06710da42"
+      "stackedHead": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
+      "gitBlobSha1": "99aa14fc918486bb55b7c88493e0daa1a837ce55"
     },
     "p0GateStatuses": [
       {"issue":1385,"currentStatus":"BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED"},
       {"issue":1383,"currentStatus":"BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED"},
       {"issue":1375,"currentStatus":"BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED"},
-      {"issue":1377,"currentStatus":"BLOCKED_PRIMARY_CYLINDRICAL_RADIUS_DEFINITION_UNRESOLVED"},
+      {"issue":1377,"currentStatus":"BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED"},
       {"issue":1379,"currentStatus":"BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED"},
       {"issue":1368,"currentStatus":"BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED"},
       {"issue":1370,"currentStatus":"BLOCKED_PRIMARY_SOURCE_ATTACHMENT_CLASS_UNRESOLVED"},
@@ -157,6 +157,6 @@
   },
   "releaseReady": false,
   "state": "BLOCKED_FAIL_CLOSED_POST_SEQUENCE",
-  "currentStateSemanticHash": "ae2358ecdc6f33c3e0b7d2055fa10208a8b7bf607954acc7d48c46396c2b896b",
+  "currentStateSemanticHash": "ccf4f174d330ac14c297b378be3cac063fe7c36d9b562825292fa7d81fd1f51c",
   "status": "POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED"
 }

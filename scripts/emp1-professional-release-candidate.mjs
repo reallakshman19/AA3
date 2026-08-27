@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { lstat, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH } from './emp1-professional-security-header-policy.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const options = parseArgs(process.argv.slice(2));
@@ -11,6 +12,10 @@ const candidateHead = git(['rev-parse', 'HEAD']);
 const candidateTree = git(['rev-parse', 'HEAD^{tree}']);
 const candidateParent = git(['rev-parse', 'HEAD^']);
 const worktreeStatus = git(['status', '--porcelain']);
+const dependencyLockSha256 = await requiredFileSha256(
+  'package-lock.json',
+  'EMP1_RELEASE_CANDIDATE_DEPENDENCY_LOCK_REQUIRED',
+);
 
 if (options.expectedHead && options.expectedHead !== candidateHead) {
   throw releaseError(`EMP1_RELEASE_CANDIDATE_HEAD_MISMATCH:${candidateHead}:${options.expectedHead}`);
@@ -86,6 +91,14 @@ const gates = [
     ['scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs']],
   ['CURRENTNESS_REPLAY_FALSIFIERS', process.execPath,
     ['scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs']],
+  ['DEPENDENCY_LOCK_CUSTODY', process.execPath,
+    ['scripts/emp1-professional-dependency-lock-check.mjs']],
+  ['DEPENDENCY_LOCK_CUSTODY_FALSIFIER', process.execPath,
+    ['scripts/emp1-professional-dependency-lock-falsifier.mjs']],
+  ['DEPENDENCY_ADVISORY', process.execPath,
+    ['scripts/emp1-professional-dependency-advisory-check.mjs']],
+  ['DEPENDENCY_ADVISORY_FALSIFIER', process.execPath,
+    ['scripts/emp1-professional-dependency-advisory-falsifier.mjs']],
   ['PRODUCTION_BUILD', npmCommand(), ['run', 'build']],
   ['BUILD_ARTIFACT_SECURITY', process.execPath,
     ['scripts/emp1-professional-build-artifact-security-check.mjs']],
@@ -133,6 +146,18 @@ if (options.release && !fail && !notRun) {
   ]));
   fail = executions.find((item) => item.status === 'FAIL');
   notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
+
+  if (!fail && !notRun) {
+    executions.push(runNode('DEPLOYMENT_SECURITY_HEADERS', [
+      'scripts/emp1-professional-deployment-security-headers-check.mjs',
+      '--receipt', options.deploymentReceipt,
+      '--expected-head', candidateHead,
+      '--expected-tree', candidateTree,
+      '--expected-artifact-sha256', buildArtifactSha256,
+    ]));
+    fail = executions.find((item) => item.status === 'FAIL');
+    notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
+  }
 }
 
 const allExecutedPass = executions.every((item) => item.status === 'PASS');
@@ -172,12 +197,28 @@ function createReceipt(input) {
       parentSha: input.candidateParent,
       cleanWorktree: input.worktreeStatus === '',
       buildArtifactSha256: input.buildArtifactSha256,
+      dependencySecurity: {
+        packageLockPath: 'package-lock.json',
+        packageLockSha256: dependencyLockSha256,
+        advisoryAuditLevel: 'HIGH',
+        liveAdvisoryGateId: 'DEPENDENCY_ADVISORY',
+      },
+      deployedSecurityHeaders: {
+        policySemanticHash: EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH,
+        liveObservationGateId: 'DEPLOYMENT_SECURITY_HEADERS',
+        browserCompatibilityEstablishedByHeaderPolicy: false,
+      },
     },
     mode: input.mode,
     executions: input.executions,
     releaseCandidateQualified: input.releaseCandidateQualified,
     authorityBoundary: {
       thisHarnessMutatesEngineeringAuthority: false,
+      dependencySecurityCanBlockRelease: true,
+      dependencySecurityCreatesEngineeringAuthority: false,
+      vulnerabilityFreeClaimedByThisHarness: false,
+      deployedSecurityHeadersCanBlockRelease: true,
+      browserCompatibilityEstablishedByHeaderPolicy: false,
       codeComplianceAuthorizedByThisHarness: false,
       deploymentAuthorityGrantedByThisHarness: false,
       broaderApplicationSecurityCertificationClaimed: false,
@@ -204,7 +245,9 @@ function run(gateId, command, args) {
   const stderr = result.stderr ?? '';
   const notRun = Boolean(result.error)
     || result.status == null
-    || result.error?.code === 'ENOENT';
+    || result.error?.code === 'ENOENT'
+    || (gateId === 'DEPENDENCY_ADVISORY' && result.status === 3)
+    || (gateId === 'DEPLOYMENT_SECURITY_HEADERS' && result.status === 3);
   return Object.freeze({
     gateId,
     command: [command, ...args].join(' '),
@@ -224,6 +267,13 @@ function git(args) {
     throw releaseError(`EMP1_RELEASE_CANDIDATE_GIT_REQUIRED:${args.join('_')}`);
   }
   return String(result.stdout ?? '').trim();
+}
+async function requiredFileSha256(path, code) {
+  try {
+    return createHash('sha256').update(await readFile(resolve(root, path))).digest('hex');
+  } catch {
+    throw releaseError(code);
+  }
 }
 async function hashDirectory(directory) {
   const rows = [];

@@ -4,10 +4,12 @@ pr_or_wip: PR1436
 branch: agent/issue-1389-release-current-state-refresh-20260826
 issue: 1389
 criticality: ENGINEERING_CRITICAL
-claim_state: ACTIVE_AUTO_COMPLETE
+claim_state: ACTIVE_AUTO_STACKED_CURRENT_STATE
 execution_mode: AUTO
-auto_state: COMPLETE
-coordination_state: SAFE_STACKED_ON_PR1427_NO_EXACT_FILE_OVERLAP
+auto_state: RUNNING
+scope_authority: LOCKED_TO_APPROVED_MISSION
+phase_progression: AUTO
+coordination_state: SAFE_STACKED_CURRENT_STATE_ON_REFRESHED_PR1427
 scope:
   authority: EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE_RECONCILIATION
   paths:
@@ -18,38 +20,38 @@ scope:
     - agents/status/PR1436.yaml
     - agents/claims/PR1436.yaml
 protected_exclusions:
-  - validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json
-  - scripts/emp1-professional-p0-source-semantics-check.mjs
-  - docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md
-  - validation/emp1/wrc537-2013/** individual source-authority records
+  - PR1427 aggregate engineering files
+  - PR1415 source files
+  - individual WRC P0 source records
   - src/core/emp1/**
-  - validation/emp1/release/emp1-professional-release-readiness-v1.json
-  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
-  - WRC/CAUx source bytes/transcription and benchmark expected values
-  - gamma5 oracle/tolerance/exact-head evidence
-  - UI/browser production code
+  - frozen release profile/readiness
+  - WRC/CAUx source and benchmark expected values
+  - oracle/tolerances
+  - UI/browser product paths
   - .github/workflows/**
 authority_boundary:
-  bounded_runtime_route_authority_mutation: false
-  p0_source_gate_mutation: false
-  retained_caux_transcription_becomes_direct_pdf_authority: false
-  code_compliance_authority_granted: false
-  release_authority_granted: false
-  deployment_authority_granted: false
+  current_state_reconciliation_creates_source_authority: false
+  current_state_reconciliation_creates_code_authority: false
+  current_state_reconciliation_creates_release_authority: false
+  current_state_reconciliation_creates_deployment_authority: false
 stacked_base_pr: 1427
-stacked_base_head: ed599b037b861aa8f6a3089792d81157e46d887a
-implementation_basis_head: d8244350dc56373108a06044a8e32e03c1eb87a7
-latest_live_main_observed: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+stacked_base_head: 8ca178f2ac9658d62838716fe7d9356a694d55df
+pre_restack_head: d080eccb196d00bc3bbd1572473fb1b2020a271d
+structural_restack_head: 82765f86142367ba7d6c19390cb11acc82a0b03a
+structural_restack_tree: 4a571172dc6e6f5b5c1f57091d598f9aa6d09032
 grounding_epoch: GE-PR1436-002
 current_truth:
-  bounded_route_authorized: true
+  aggregate_blob: 815e7c988afd7a1f19b93aaf7d7101b06710da42
   p0_blocker_count: 9
-  p0_source_semantics_ready: false
+  bounded_route_authorized: true
   global_emp1_c: false
   code_compliance: false
   release_qualified: false
   deployment_authorized: false
   professional_release_ready: false
-merge_authority: NOT_GRANTED
+neighbor_dependency:
+  pr1415_state: OPEN_DRAFT_UNMERGED
+  rule: "If PR1415 merges, refresh PR1427 before rebuilding PR1436."
+merge_authority: OWNER_ONLY_NOT_GRANTED
 handover_report: agents/PR1436_workreport.md
-exact_next_action: "Preserve draft/unmerged. Resolve/re-ground upstream PR1427 first; then retarget and exact-head re-ground PR1436 before any merge consideration."
+exact_next_action: "Continue AUTO progression to genuine historical evidence/replay successor (#1434 if live); keep draft/unmerged."

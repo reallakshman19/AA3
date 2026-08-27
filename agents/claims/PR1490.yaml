@@ -4,12 +4,14 @@ pr: 1490
 mission: Qualification-only frozen B02D-V2 T6/L4 governing-response observation and first-wrong-boundary classification
 base_main: 3a54862127c601f3e4c59159526e7345fc06cf4c
 reconciliation_commit: 519a63a5f55891f0e2b9e0b2dbc160454bbb555b
+latest_live_main: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
 predecessor_binding_pr: 1485
 authority_domain:
   - B02D_V2_EXPLICIT_OPT_IN_GOVERNING_OBSERVER
   - B02D_V2_PRE_SOLVE_LOAD_GATE
   - B02D_V2_T6_L4_GOVERNING_RESPONSE_OBSERVATION
   - RESPONSE_BOUNDARY_CLASSIFICATION_ONLY
+  - EXECUTION_INFRASTRUCTURE_EVIDENCE_ONLY
 claims:
   v1_response_route_preserved: PASS_SEPARATE_V2_OBSERVER_NO_V1_ROUTE_MUTATION
   v2_response_route_explicit_opt_in: PASS_SOURCE_INSPECTION
@@ -19,6 +21,11 @@ claims:
   current_executable_exact_head_route_available: false
   active_self_hosted_workflow_present: false
   historical_b7h_route_is_current_execution_authority: false
+  historical_b7h_executable_pass_proven: false
+  matching_registered_b7h_runner_confirmed: false
+  historical_b7h_reintroduction_authorized: false
+  current_branch_reconciled_to_latest_main: false
+  latest_main_drift_overlaps_b02d_lafea_mechanics: false
   response_solver_changed: false
   reaction_assembly_changed: false
   historical_galerkin_candidate_included: false
@@ -33,16 +40,19 @@ claims:
   trust_authority_granted: false
 validation_truth:
   predecessor_merge: PASS_GITHUB_READBACK
-  current_main_reconciliation: PASS
-  main_drift_overlap: PASS_NONE_OBSERVED
+  current_main_reconciliation: STALE_BY_ONE_NON_OVERLAPPING_COMMIT
+  latest_live_main: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+  latest_main_drift_overlap: PASS_NONE_OBSERVED
   classifier_and_load_gate_exact_blob_self_test: PASS_13_CASES
   classifier_library_exact_blob_syntax: PASS
   classifier_self_test_exact_blob_syntax: PASS
   observer_pre_solve_order: PASS_SOURCE_INSPECTION
   exact_checkout_retry: NOT_RUN_EXECUTION_ENVIRONMENT_DNS
-  hosted_lafea_runner: NOT_RUN_PRE_STEP_RUNNER_ALLOCATION
+  prior_hosted_lafea_runner: NOT_RUN_PRE_STEP_RUNNER_ALLOCATION
+  fresh_hosted_lafea_runner: NOT_RUN_PRE_STEP_RUNNER_ALLOCATION_RUN_33075364780_JOB_98528037535
   active_self_hosted_workflow_audit: COMPLETE_NO_EXECUTABLE_ROUTE
-  historical_b7h_route: PROVENANCE_ONLY_NOT_ACTIVE_CURRENT_WORKFLOW
+  historical_b7h_route: PROVENANCE_ONLY_REMOVED_NO_CONFIRMED_RUNNER
+  external_netlify_runner: NOT_AVAILABLE_WITHOUT_NEW_PROJECT_CONFIRMATION
   b01_exact_head_prerequisite: NOT_RUN
   b02d_v2_binding_exact_head: NOT_RUN
   b02d_v2_governing_response: NOT_RUN
@@ -55,6 +65,7 @@ excluded_authority:
   - FULL_B02_RESPONSE_CONVERGENCE_AUTHORITY
   - BENCHMARK_OR_TOLERANCE_CHANGE
   - RELEASE_LIFECYCLE_TRUST
-  - WORKFLOW_MUTATION
+  - WORKFLOW_MUTATION_WITHOUT_CONFIRMED_RUNNER
+  - HISTORICAL_B7H_REINTRODUCTION_WITHOUT_CONFIRMED_RUNNER
   - VALIDATION_ONLY_SUCCESSOR_WITHOUT_RECOVERED_EXECUTION
 merge_authority: OWNER_ONLY_NOT_GRANTED

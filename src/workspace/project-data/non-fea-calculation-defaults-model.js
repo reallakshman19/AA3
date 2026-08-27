@@ -197,6 +197,10 @@ function nonnegativeNumber(value, label) {
   return number;
 }
 function finiteNumber(value, label) {
+  if (typeof value === 'string' && value.trim() === '') {
+    throw new TypeError(`${label} must not be blank.`);
+  }
+  if (value === null || value === undefined) throw new TypeError(`${label} is required.`);
   const number = Number(value);
   if (!Number.isFinite(number)) throw new TypeError(`${label} must be finite.`);
   return number;

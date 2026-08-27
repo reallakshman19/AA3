@@ -25,6 +25,7 @@ export function renderLoadCalcConsumer(documentRef, state) {
   const routineReady = isRoutineRunReady(state?.commonInputState);
   const currentExecution = state?.currentCommonInputExecution || null;
   const scenarioReady = state?.empiricalScenarioState?.calculationEligible === true;
+  const routineAttemptAvailable = !scenarioReady && isRoutineRunAttemptAvailable(state);
   const projectedAuthorization = !scenarioReady && routineReady
     ? {
         ...(state?.authorizationState || {}),
@@ -40,21 +41,31 @@ export function renderLoadCalcConsumer(documentRef, state) {
     authorizationState: projectedAuthorization,
   });
 
-  if (!scenarioReady && routineReady && typeof section?.querySelector === 'function') {
+  if (!scenarioReady && routineAttemptAvailable && typeof section?.querySelector === 'function') {
     const button = section.querySelector('[data-load-calc-run]');
     if (button) {
       button.disabled = false;
       button.removeAttribute?.('disabled');
-      button.title = 'Execute the current governed gravity calculation from READY Common Input.';
+      button.title = routineReady
+        ? 'Execute the current governed gravity calculation from READY Common Input.'
+        : 'Build and validate current effective inputs, create the READY-only system seal and Run authorization, then execute. Non-READY input fails closed.';
       button.textContent = '▶ Run Load Calc — Gravity';
     }
     const facts = section.querySelectorAll?.('.empirical-load-calc__facts [data-pill-status]') || [];
     const authorityPill = facts[1];
     if (authorityPill) {
-      authorityPill.dataset.pillStatus = 'ok';
+      authorityPill.dataset.pillStatus = routineReady ? 'ok' : 'warn';
       authorityPill.textContent = currentExecution
         ? 'System run current ✓'
-        : 'Routine run ready ✓';
+        : routineReady
+          ? 'Routine run ready ✓'
+          : 'Run will validate & authorize';
+    }
+    if (!state?.message && !routineReady) {
+      const output = section.querySelector('[data-engineering-load-status]');
+      if (output) {
+        output.textContent = 'Run will resolve current effective values, validate READY, system-seal, authorize and execute automatically.';
+      }
     }
   }
   convergeFiveStepWorkflow(section, state);
@@ -134,6 +145,11 @@ export function renderEngineeringLoadPane(
   );
 }
 
+/**
+ * Fully validated routine readiness. This is intentionally stricter than
+ * isRoutineRunAttemptAvailable(): READY status may only come from the checker
+ * report or a current READY seal.
+ */
 export function isRoutineRunReady(commonState) {
   if (commonState?.error) return false;
   const commonInput = commonState?.commonInput;
@@ -148,6 +164,17 @@ export function isRoutineRunReady(commonState) {
   return report?.packageState === 'READY'
     && nonemptyArray(report.readyMethodIds)
     && emptyArray(report.blockedMethodIds);
+}
+
+/**
+ * Product one-click availability. Once a dataset and its canonical topology are
+ * structurally ready, the user may request Run without first visiting Input
+ * Check / Seal / Authorize. The runtime still builds/evaluates Common Input and
+ * requires a fully READY system seal before authorization or numerical work.
+ */
+export function isRoutineRunAttemptAvailable(state) {
+  const readiness = state?.workflowReadiness || {};
+  return readiness.datasetReady === true && readiness.topologyCheckReady === true;
 }
 
 function convergeFiveStepWorkflow(section, state) {
@@ -190,6 +217,7 @@ function convergeFiveStepWorkflow(section, state) {
     labelNode.textContent = step.label;
   });
   normalizeCalculationDefaultsStatus(workflow, state);
+  normalizeOneClickRunStatus(workflow, state);
 
   const advanced = workflow.querySelector('details.empirical-load-calc__advanced');
   const summary = advanced?.querySelector('summary.empirical-load-calc__workflow-step');
@@ -254,6 +282,20 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
   const active = state?.activeTab === 'project-data';
   button.dataset.stepState = active ? 'current' : resolved ? 'complete' : 'ready';
   status.textContent = resolved ? 'Resolved' : active ? 'Review' : 'Available';
+}
+
+function normalizeOneClickRunStatus(workflow, state) {
+  if (state?.empiricalScenarioState?.calculationEligible === true) return;
+  if (!isRoutineRunAttemptAvailable(state)) return;
+  if (state?.workflowReadiness?.resultsCurrent === true) return;
+  const button = workflow.querySelector(
+    'button.empirical-load-calc__workflow-step[data-load-calc-tab="verify"]',
+  );
+  const status = button?.querySelector('.empirical-load-calc__workflow-status');
+  if (!button || !status) return;
+  const active = state?.activeTab === 'verify';
+  button.dataset.stepState = active ? 'current' : 'ready';
+  status.textContent = isRoutineRunReady(state?.commonInputState) ? 'Ready' : 'One-click';
 }
 
 function promotedAdvancedGroupMarkup(activeTab) {

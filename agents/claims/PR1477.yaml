@@ -6,7 +6,7 @@ issue: 1476
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: MANUAL
-coordination_state: OWNER_AUTHORIZED_DEPENDENCY_ORDERED_MERGE
+coordination_state: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_THEN_NEXT_1389_SUCCESSOR
 scope:
   authority: EMP1_RELEASE_MANIFEST_SALVAGE_AND_STACK_INTEGRATION
   paths:
@@ -28,16 +28,12 @@ authority_boundary:
   manifest_records_authority: true
   manifest_creates_authority: false
   manifest_replaces_authority: false
-  structural_recovery_creates_authority: false
   engineering_authority_granted: false
   release_authority_granted: false
   deployment_authority_granted: false
-parent_head: db6f903fe92123f7ae10ed5c4db16691a8d7a18d
-pre_sync_head: bc7fee10e738d8688c6b40abbdae620dfc4c82f3
-report_basis_head: bc7fee10e738d8688c6b40abbdae620dfc4c82f3
-live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+pre_reground_head: 053c42c78a338e3ad30984488ee30bea8ca28ace
+merged_parent_sha: e6a4bbdd0a5787c119f4b1685651b87881b059c7
 merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-27T16:21:57Z
-merge_authority_scope: PR1464_THEN_PR1473_THEN_PR1477_EXACT_HEAD_INTEGRATION
-grounding_epoch: GE-PR1477-004
+grounding_epoch: GE-PR1477-005
 handover_report: agents/PR1477_workreport.md
-exact_next_action: "Dependency-order expected-head merge sequence #1464 -> #1473 -> #1477, preserving exact child deltas and NOT_RUN truth."
+exact_next_action: "Expected-head squash-merge exact six-file delta, then proceed to next scoped #1389 successor."

@@ -6,39 +6,28 @@ workstream: EMP1_DEPLOYMENT_OPERATIONS
 branch: agent/issue-1472-emp1-deployment-operations-20260826
 issue: 1472
 umbrella: 1389
-dependency_base_pr: 1464
-base_branch: agent/issue-1463-emp1-dependency-security-20260826
+base_branch: main
 execution_mode: MANUAL
-auto_state: NOT_ACTIVE_CURRENT_INSTRUCTION
 scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1472
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-parent_head: f28ac05aa2aee281e8f2dc81f94ff76fbf05eecd
-structural_propagation_head: ce4bb8776d214736d0286b69afb8edc6b15dc5d0
-structural_propagation_tree: 3af90d2a083272bab82d3d279920ccadd96dbcec
-report_basis_head: ce4bb8776d214736d0286b69afb8edc6b15dc5d0
-report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
-technical_basis: 3e40cf7f13c91d09336ea871796638053777ad57
-live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
-grounding_epoch: GE-PR1473-006
+pre_reground_head: db6f903fe92123f7ae10ed5c4db16691a8d7a18d
+merged_parent_pr: 1464
+merged_parent_sha: 3a2cb46fad78a0b468efc8d2dd5b921af436531b
+grounding_epoch: GE-PR1473-007
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: WHOLE_RELEASE_STACK_RECONCILED_PR1477_REPORT_AUTHORITATIVE
-current_stage: WHOLE_RELEASE_STACK_RECONCILED_DRAFT
-merge_authorization: NOT_GRANTED
+coordination: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_THEN_PR1477
+current_stage: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_GATE
+merge_authorization: GRANTED_EXPLICIT_OWNER_2026-08-27T16:21:57Z
 validation:
-  current_main_freshness: PASS
-  retained_blob_custody: PASS_EXACT_7_BLOBS
-  structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
-  parent_compare: PASS_EXACT_7_FILES_ZERO_BEHIND
-  reviews_threads: PASS_ZERO_ZERO
-  deployment_operations_source: PASS_PRIOR_AUDIT
-  runemp1_final_observation: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RUN_33077515549_JOB_98535513566
+  retained_technical_blobs: PASS_EXACT
+  intended_scope: PASS_EXACT_7_FILES
   provider_promotion_rollback_execution: NOT_RUN
-  focused_execution: NOT_RUN_CURRENT_EPOCH
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
   numerical_comparison: NOT_APPLICABLE
-current_blocker: "Provider promotion/rollback and focused execution remain NOT_RUN; merge authority not granted."
-exact_next_action: "Keep PR1473 draft/unmerged; do not merge or widen scope without explicit owner authority. Use PR1477 current report for downstream release-manifest custody."
+current_blocker: "Provider promotion/rollback execution remains NOT_RUN; no deployment or rollback-success authority is claimed."
+exact_next_action: "Retarget to main, verify exact seven-file delta / zero behind / zero reviews and threads, then expected-head squash-merge; normalize PR1477 onto resulting main."

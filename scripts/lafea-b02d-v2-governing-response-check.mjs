@@ -78,8 +78,9 @@ function main() {
     definition.loadCase.resultant,
   );
   const restraintNodeIds = produced.planned.generated.featureMapping.restraintNodeIds;
-  const source = canonicalSource(definition, produced.evidence.mesh, restraintNodeIds, load);
-  const canonicalInput = createCanonicalLocalContinuumModel(source);
+  const canonicalInput = createCanonicalLocalContinuumModel(
+    canonicalSource(definition, produced.evidence.mesh, restraintNodeIds, load),
+  );
   const result = calculateLocalContinuum(canonicalInput);
 
   const base = {
@@ -116,6 +117,7 @@ function main() {
       ...base,
       disposition: rejectedDisposition(code),
       governingResponseAccepted: false,
+      gateFailures: [],
       acceptedResponseEvidence: null,
     }, null, 2));
     return;
@@ -123,52 +125,39 @@ function main() {
 
   const resultCase = result.loadCaseResults.find((row) => row.loadCaseId === CASE_ID);
   assert.ok(resultCase, 'B02D-V2 LC1 accepted result missing.');
-  const acceptedResponseEvidence = acceptedEvidence(definition, result, resultCase);
+  const acceptedResponseEvidence = acceptedEvidence(definition, canonicalInput, result, resultCase);
   const gateFailures = frozenGateFailures(definition, acceptedResponseEvidence);
   console.log(JSON.stringify({
     ...base,
-    disposition: gateFailures.length ? 'ACCEPTED_RESPONSE_GATE_FAILURE_RCA_REQUIRED' : 'GOVERNING_RESPONSE_ACCEPTED',
+    disposition: gateFailures.length
+      ? 'ACCEPTED_RESPONSE_GATE_FAILURE_RCA_REQUIRED'
+      : 'GOVERNING_RESPONSE_ACCEPTED',
     governingResponseAccepted: gateFailures.length === 0,
     gateFailures,
     acceptedResponseEvidence,
   }, null, 2));
 }
 
-function acceptedEvidence(definition, result, resultCase) {
-  const nodeById = new Map(result.meshEvidence.dofOrdering.map((identity) => {
-    const nodeId = identity.slice(0, identity.lastIndexOf(':'));
-    const node = resultCase.nodalDisplacements.find((row) => row.nodeId === nodeId);
-    return [nodeId, node];
-  }).filter(([, node]) => node));
-  const canonicalNodes = new Map();
-  for (const row of resultCase.nodalDisplacements) canonicalNodes.set(row.nodeId, row);
-
-  const modelNodes = new Map();
-  for (const row of resultCase.nodalDisplacements) modelNodes.set(row.nodeId, row);
-  const coordinates = new Map();
-  for (const element of result.meshEvidence.elementEvidence) {
-    element.nodeIds.forEach((nodeId, index) => {
-      const c = element.canonicalCoordinates?.[index];
-      if (c && !coordinates.has(nodeId)) coordinates.set(nodeId, { x: c.x, y: c.y });
-    });
-  }
-  if (!coordinates.size) {
-    throw new Error('B02D_V2_ACCEPTED_RESULT_NODE_COORDINATES_UNAVAILABLE');
-  }
-
-  const forceVector = vectorFromDofs(result.meshEvidence.dofOrdering, resultCase.forceEvidence.forceVector);
-  const reactionVector = vectorFromReactions(resultCase.supportReactions);
-  const applied = resultant(forceVector, coordinates);
-  const reaction = resultant(reactionVector, coordinates);
+function acceptedEvidence(definition, canonicalInput, result, resultCase) {
+  const coordinates = new Map(canonicalInput.nodes.map((row) => [
+    row.nodeId,
+    { x: row.x, y: row.y },
+  ]));
+  const applied = resultant(
+    vectorFromDofs(result.meshEvidence.dofOrdering, resultCase.forceEvidence.forceVector),
+    coordinates,
+  );
+  const reaction = resultant(vectorFromReactions(resultCase.supportReactions), coordinates);
   const total = {
     forceX: applied.forceX + reaction.forceX,
     forceY: applied.forceY + reaction.forceY,
     momentZ: applied.momentZ + reaction.momentZ,
   };
-  const targetForce = Math.max(1, Math.hypot(definition.loadCase.resultant.x, definition.loadCase.resultant.y));
+  const targetForce = Math.max(
+    1,
+    Math.hypot(definition.loadCase.resultant.x, definition.loadCase.resultant.y),
+  );
   const targetMoment = Math.max(1, Math.abs(definition.loadCase.expectedMomentAboutCenter));
-  const free = freeResidualSummary(resultCase.freeDofResiduals);
-
   return Object.freeze({
     applied,
     reaction,
@@ -177,13 +166,15 @@ function acceptedEvidence(definition, result, resultCase) {
       applied.forceX - definition.loadCase.resultant.x,
       applied.forceY - definition.loadCase.resultant.y,
     ) / targetForce,
-    loadMomentRelativeError: Math.abs(applied.momentZ - definition.loadCase.expectedMomentAboutCenter) / targetMoment,
+    loadMomentRelativeError: Math.abs(
+      applied.momentZ - definition.loadCase.expectedMomentAboutCenter,
+    ) / targetMoment,
     totalForceRelativeResidual: Math.hypot(total.forceX, total.forceY) / targetForce,
     totalMomentRelativeResidual: Math.abs(total.momentZ) / targetMoment,
     reactionMomentRelativeError: Math.abs(
       reaction.momentZ - definition.loadCase.expectedReactionMomentAboutCenter,
     ) / targetMoment,
-    freeResiduals: free,
+    freeResiduals: freeResidualSummary(resultCase.freeDofResiduals),
     solverEvidence: resultCase.solverEvidence,
     solverEquilibrium: resultCase.equilibrium,
     totalStrainEnergy: resultCase.totalStrainEnergy,
@@ -200,11 +191,9 @@ function frozenGateFailures(definition, evidence) {
     gate('REACTION_MOMENT', evidence.reactionMomentRelativeError, A.momentEquilibriumRelativeMaximum),
   ].filter(Boolean);
 }
-
 function gate(id, actual, limit) {
   return actual <= limit ? null : Object.freeze({ id, actual, limit });
 }
-
 function rejectedDisposition(code) {
   if (code === 'REACTION_EQUILIBRIUM_FAILURE') return 'REACTION_EQUILIBRIUM_FAILURE_RCA_REQUIRED';
   if (code === 'ITERATIVE_SOLVER_DID_NOT_CONVERGE') return 'ITERATIVE_SOLVER_FAILURE_RCA_REQUIRED';
@@ -263,8 +252,14 @@ function meshAuthorityStage(definition, sourceHash, geometry) {
     stageId: STAGE_ID,
     sourceAuthority: Object.freeze({ stageId: STAGE_ID, sourceHash }),
     retainedAnalysisGeometryEvidence: geometryEvidence,
-    analysisDomainProjection: Object.freeze({ state: 'CURRENT_PASS', analysisDomainHash: domain.semanticHash }),
-    analysisGeometryProjection: Object.freeze({ state: 'CURRENT_PASS', analysisGeometryHash: geometry.semanticHash }),
+    analysisDomainProjection: Object.freeze({
+      state: 'CURRENT_PASS',
+      analysisDomainHash: domain.semanticHash,
+    }),
+    analysisGeometryProjection: Object.freeze({
+      state: 'CURRENT_PASS',
+      analysisGeometryHash: geometry.semanticHash,
+    }),
   });
 }
 
@@ -321,7 +316,11 @@ function canonicalSource(definition, mesh, restraintNodeIds, load) {
         fy: row.fy,
         sourceReference: 'B02D-V2#RADIAL_QUARTER_0_CONSISTENT_LINE_RESULTANT',
       })),
-      edgeTractions: [], pressureLoads: [], bodyForces: [], temperatureLoads: [], imposedDisplacements: [],
+      edgeTractions: [],
+      pressureLoads: [],
+      bodyForces: [],
+      temperatureLoads: [],
+      imposedDisplacements: [],
       sourceReference: 'B02D-V2#LC1_FROZEN_RESULTANT',
     }],
     resultRequests: { loadCaseIds: [CASE_ID] },
@@ -335,7 +334,9 @@ function canonicalSource(definition, mesh, restraintNodeIds, load) {
 }
 
 function consistentFeatureResultant(mesh, edges, resultantTarget) {
-  if (!Array.isArray(edges) || !edges.length) throw new TypeError('LAFEA_B02D_V2_LOAD_EDGES_REQUIRED');
+  if (!Array.isArray(edges) || !edges.length) {
+    throw new TypeError('LAFEA_B02D_V2_LOAD_EDGES_REQUIRED');
+  }
   const nodeById = new Map(mesh.nodes.map((row) => [row.nodeId, row]));
   const segments = edges.map((edge) => {
     if (![2, 3].includes(edge.length)) throw new TypeError('LAFEA_B02D_V2_LOAD_EDGE_ORDER_INVALID');
@@ -395,7 +396,9 @@ function setDof(vector, identity, value) {
   vector.set(nodeId, row);
 }
 function resultant(vector, coordinates) {
-  let forceX = 0; let forceY = 0; let momentZ = 0;
+  let forceX = 0;
+  let forceY = 0;
+  let momentZ = 0;
   for (const [nodeId, force] of vector) {
     const node = coordinates.get(nodeId);
     if (!node) throw new Error(`B02D_V2_COORDINATE_MISSING:${nodeId}`);
@@ -447,5 +450,14 @@ function annulusGeometry(definition) {
 }
 function vertex(vertexId, x, y) { return { vertexId, x, y }; }
 function arc(segmentId, startVertexId, endVertexId, radius, sweep) {
-  return { segmentId, type: 'CIRCULAR_ARC', startVertexId, endVertexId, centerX: 0, centerY: 0, radius, sweep };
+  return {
+    segmentId,
+    type: 'CIRCULAR_ARC',
+    startVertexId,
+    endVertexId,
+    centerX: 0,
+    centerY: 0,
+    radius,
+    sweep,
+  };
 }

@@ -4,6 +4,8 @@ pr: 1485
 mission: Explicit opt-in B02D V2 mesh producer binding and exact-head qualification envelope on current main
 base_main: d6101bcac7ccbdab9e42d7e0afbdd7b06d897462
 main_sync_commit: a0c3f513c93d7d00531cac7d71b70246483d6df8
+last_grounding_basis_head: c4aa884f2c7a7424f94ca1fa74f31ff3afec4509
+last_grounding_at: 2026-08-27T12:09:00+05:30
 predecessor_frozen_assets_pr: 1484
 historical_provenance_pr: 1259
 authority_domain:
@@ -40,6 +42,9 @@ claims:
   exact_head_runtime_receipt_path_is_precisely_ignored: true
   emp1_main_drift_is_exact_path_disjoint: true
   synchronized_compare_is_zero_behind_and_nine_files: true
+  continuation_compare_observed_zero_behind_and_nine_files: true
+  no_later_b01_exact_head_pass_successor_observed: true
+  current_main_b01_final_directory_has_no_exact_head_pass_receipt: true
   response_solver_changed: false
   historical_galerkin_candidate_included: false
   b01_prerequisite_evidence_available: false
@@ -51,6 +56,9 @@ claims:
 validation_truth:
   binding_blob_custody: PASS
   current_main_synchronization: PASS_0_BEHIND_9_FILES
+  continuation_live_pr_reconciliation: PASS_GITHUB_READBACK
+  b01_pass_successor_search: PASS_NO_NEW_PASS_EVIDENCE_OBSERVED
+  b01_final_retained_pass_receipt: ABSENT_ON_CURRENT_MAIN
   focused_checker_syntax: PASS_LOCAL_NODE_CHECK
   exact_head_classifier_syntax: PASS_LOCAL_NODE_CHECK
   exact_head_wrapper_syntax: PASS_LOCAL_NODE_CHECK

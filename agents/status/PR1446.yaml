@@ -1,0 +1,43 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1446
+mission: "Issue #1321 governed gravity selection to exact V2/V3 runtime-package projection"
+workstream: ISSUE1321_GOVERNED_RUNTIME_PACKAGE_PROJECTION
+branch: agent/issue-1321-governed-runtime-package-projection
+main_head_last_checked: 29c688db4a021db900d1f8c67f56f777f73f4ddc
+stack_base_pr: 1440
+stack_base_head: 0209109ddf7835f74885fb3af571167a99e90fbe
+validation_basis_head: b1f78f9bc4623f86e437fdbf99aaa1a8929cc3b6
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+agent_state: VALIDATION_BLOCKED
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+coordination: SAFE_STACKED_ON_PR1440
+current_stage: IMPLEMENTATION_SOURCE_COMPLETE_EXECUTION_VALIDATION_NOT_RUN
+appendix_a_status: FAIL_A4_NOT_RUN
+appendix_a_score: null
+validation:
+  live_main_grounding: PASS
+  upstream_pr_1440_grounding: PASS
+  exact_stack_compare: PASS_6_PATHS_6_AHEAD_0_BEHIND
+  overlap: PASS_NO_UNDECLARED_OVERLAP_FOUND
+  projection_contract_source_inspection: PASS
+  exact_selected_method_binding_source_inspection: PASS
+  blocked_selection_fail_closed_source_inspection: PASS
+  caller_method_injection_blocked_source_inspection: PASS
+  governed_authority_receipt_retained_source_inspection: PASS
+  protected_paths_unchanged: PASS_EXACT_STACKED_DIFF
+  reviews: PASS_ZERO
+  review_threads: PASS_ZERO
+  production_controller_cutover: NOT_APPLICABLE_NOT_CHANGED
+  local_clone_retry: FAIL_ENVIRONMENT_DNS_GITHUB
+  focused_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  authorized_execution_aggregate: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  imports: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  build: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  diff_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+workflow_policy: OWNER_SKIP_WORKFLOW_GATING_FOR_CONTINUATION
+merge_authority: NOT_GRANTED
+merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE
+exact_next_action: "Run focused and authorized-execution aggregate checks in a faithful checkout; if green, design a separate production controller/currentness cutover slice."

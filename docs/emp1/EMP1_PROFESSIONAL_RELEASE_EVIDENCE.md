@@ -115,13 +115,21 @@ P0 source semantics --require-ready
 CAUx benchmark --require-direct-pdf
 authorized runEmp1 bounded-route orchestration qualification
 route-authority/currentness + persisted/reloaded replay falsifiers
+dependency lock custody
+dependency lock custody falsifiers
+live npm dependency advisory audit at HIGH threshold
+dependency advisory classification falsifiers
 production build
+complete deployable-artifact security scan
+artifact-security independent falsifiers
 EMP.1 release-candidate Chromium journey
 ```
 
+Dependency security runs before the production build. The artifact-security gates run after the production build and before browser/deployment acceptance. A dependency or artifact security PASS is only bounded security evidence; neither creates engineering, release or deployment authority.
+
 The historical `emp1-public-product-check.mjs` and the general `emp1-workbench-authority.spec.js` deliberately assert the **suspended** route in part of their coverage. They remain valuable pre-promotion regression gates but are not used as post-promotion release gates. PR-H uses `emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs` and `e2e/emp1-professional-release.spec.js` instead so a correctly authorized bounded route is not rejected merely because promotion succeeded.
 
-Every invocation retains command identity, exit code, signal/error code, stdout SHA-256, stderr SHA-256 and byte counts. Environment/tool launch failure is `NOT_RUN_EXECUTION_ENVIRONMENT`; a nonzero exit from an actually launched command is FAIL.
+Every invocation retains command identity, exit code, signal/error code, stdout SHA-256, stderr SHA-256 and byte counts. Environment/tool launch failure is `NOT_RUN_EXECUTION_ENVIRONMENT`; a nonzero exit from an actually launched command is FAIL except the dependency advisory checker’s explicit exit `3`, which means the npm tool/advisory service did not establish a live result and is therefore retained as `NOT_RUN_EXECUTION_ENVIRONMENT`.
 
 ## Replay and export boundary
 
@@ -144,11 +152,107 @@ Repository consumer audit found no separate EMP.1.C numerical export/report cons
 
 The browser gate verifies the promoted bounded calculation without pretending that calculation alone grants code or final release authority.
 
+## Dependency security gate
+
+Dependency security has two deliberately separate authorities.
+
+### Deterministic lock custody
+
+Run:
+
+```text
+node scripts/emp1-professional-dependency-lock-check.mjs
+node scripts/emp1-professional-dependency-lock-falsifier.mjs
+```
+
+The custody checker requires:
+
+- readable JSON `package.json` and `package-lock.json`;
+- npm `lockfileVersion = 3`;
+- root package name/version equality;
+- exact dependency/devDependency/optionalDependency map equality between manifest and lock root;
+- a retained `node_modules/<name>` entry for every direct dependency;
+- no direct `file:`, `git+`, `http:` or other unqualified source specifier;
+- HTTPS-only resolved package sources without embedded credentials;
+- integrity metadata for each resolved package;
+- no retained lockfile link entry.
+
+The raw `package-lock.json` SHA-256 is retained in the candidate receipt. A custody PASS proves the exact dependency graph is deterministically bound; it explicitly sets `vulnerabilityStatusEstablished = false`.
+
+### Live advisory status
+
+Run:
+
+```text
+node scripts/emp1-professional-dependency-advisory-check.mjs
+node scripts/emp1-professional-dependency-advisory-falsifier.mjs
+```
+
+The live gate invokes:
+
+```text
+npm audit --package-lock-only --json --audit-level=high
+```
+
+against the exact retained lockfile. Its bounded classification is:
+
+```text
+high > 0 or critical > 0        -> FAIL
+valid audit, high=0, critical=0 -> PASS
+npm/tool/advisory unavailable   -> NOT_RUN_EXECUTION_ENVIRONMENT
+invalid/forged audit schema     -> FAIL
+```
+
+Only a real npm audit invocation can set `liveAdvisoryStatusEstablished = true`. Fixture-driven falsifiers can prove the classifier but cannot create live advisory evidence. The gate retains only severity counts plus stdout/stderr hashes and byte counts; it does not promote advisory text into engineering authority.
+
+This batch does not change dependency versions merely to make an audit green. Any real advisory finding requiring package changes is a separate remediation decision and must preserve package-lock custody.
+
+A live advisory PASS is time-dependent bounded evidence for the exact candidate and lockfile. It is not a perpetual vulnerability-free guarantee, a software bill-of-materials certification, a penetration test, or engineering/code/release authority.
+
+## Deployable artifact security gate
+
+The complete built `dist/` tree is the security boundary for artifact exposure. This includes Vite-generated bundles and every static asset copied from `public/`; inspecting JavaScript bundles alone is insufficient.
+
+Run directly with:
+
+```text
+node scripts/emp1-professional-build-artifact-security-check.mjs
+node scripts/emp1-professional-build-artifact-security-falsifier.mjs
+```
+
+The real-artifact scanner fails closed on:
+
+- either controlled WRC/CAUx source PDF by known basename;
+- either controlled WRC/CAUx source PDF by frozen raw SHA-256, including a renamed copy;
+- deployable `*.map` source maps;
+- `*.pem`, `*.key`, `*.p12` and `*.pfx` key/credential containers;
+- `.env`, `.env.*` and `.npmrc` credential-configuration files;
+- private-key PEM headers in text-like deployable content;
+- high-confidence GitHub personal-access-token signatures;
+- high-confidence AWS access-key ID signatures;
+- symlinks in the deployable artifact.
+
+Violation diagnostics retain only a deterministic violation code and deployable relative path. The scanner must not print matched secret values, private-key contents or engineering source contents.
+
+The controlled engineering source identities are retained only as custody discriminators:
+
+```text
+WRC537_2013.pdf
+sha256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+
+CAUx 2017 - WRC01f.pdf
+sha256 = c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e
+```
+
+Those hashes do not grant redistribution authority. The independent falsifier verifies the repository-controlled source bytes against those hashes, then copies each source under a different filename and requires hash-based rejection. It also checks source-map/key/config/signature rejection, no matched-secret echo, clean-artifact acceptance and exact release-harness ordering.
+
+This gate is deliberately bounded. It is not a penetration test, a dependency-vulnerability audit, a CSP qualification or a general security certification. CSP/security-header policy remains a separate release-security obligation and must not be inferred from this scanner.
+
 ## Build artifact identity
 
-After a successful production build, PR-H calculates one deterministic SHA-256 over all regular files in `dist/` using sorted relative paths and each file's SHA-256. Symlinks are prohibited in the release artifact.
+Only after a successful production build and the bounded artifact-security gates does PR-H calculate one deterministic SHA-256 over all regular files in `dist/` using sorted relative paths and each file's SHA-256. Symlinks are prohibited in the release artifact.
 
-That `buildArtifactSha256` binds the candidate receipt to the exact deployable bytes.
+That `buildArtifactSha256` binds the candidate receipt to the exact deployable bytes. A valid hash proves identity, not security by itself; the preceding security gates establish the bounded evidence.
 
 ## Deployment receipt
 
@@ -161,7 +265,7 @@ Required receipt shape:
   "schema": "emp1-professional-deployment-receipt/v1",
   "candidate": {
     "headSha": "<exact candidate SHA>",
-    "treeSha": "<exact candidate tree SHA>",
+    "treeSha": "<candidate tree SHA>",
     "buildArtifactSha256": "<dist artifact SHA-256>"
   },
   "deployment": {
@@ -200,9 +304,34 @@ The final `--release` harness runs this verifier itself. Missing deployment evid
 
 ## Security boundary
 
-PR-H security evidence is deliberately bounded. It verifies the EMP.1 release boundary already established by the product and currentness gates: strict governed source/result custody, stale numerical-result exclusion, no UI-authored engineering authority and fail-closed unsupported-domain behavior.
+PR-H security evidence is deliberately bounded. It verifies the EMP.1 release boundary already established by the product and currentness gates: strict governed source/result custody, stale numerical-result exclusion, no UI-authored engineering authority, fail-closed unsupported-domain behavior, bounded JSON intake, deterministic dependency-lock custody, bounded live dependency advisory status, and bounded deployable-artifact exposure screening.
 
-It does **not** claim a general web-application penetration test, supply-chain certification, cryptographic signature infrastructure, or broader security accreditation.
+It does **not** claim a general web-application penetration test, permanent vulnerability-free status, supply-chain certification, cryptographic signature infrastructure, CSP qualification or broader security accreditation.
+
+### Public runtime failure-content boundary
+
+Product-visible failure state must preserve the fact of failure and a bounded machine-readable diagnostic code without copying arbitrary exception text from source/parser/normalizer/worker/EMP.1 execution into the UI or serializable workbench failure state.
+
+The public boundary therefore applies these rules:
+
+- an explicit error `code` is retained only when the entire value matches the bounded engineering diagnostic-code grammar;
+- a legacy exception message may be promoted to the code field only when the entire message itself matches that same code grammar;
+- all other exception-message content is replaced by a deterministic operation-class message plus the retained/fallback diagnostic code;
+- import/edit rejection remains FAILED or RUNNING-with-diagnostic according to existing state semantics;
+- worker/solver execution failure remains FAILED and retains run identity;
+- EMP.1 run-input, qualification-sample and product-run exceptions remain REJECTED/FAILED as applicable;
+- explicit governed readiness/blocker reasons are **not** exception messages and remain visible;
+- redaction never converts a failure to PASS and never creates source, route, code-compliance, release or deployment authority.
+
+Independent source-level falsification is encoded by:
+
+```text
+node scripts/emp1-professional-runtime-error-redaction-check.mjs
+```
+
+The checker injects a proprietary sentinel into exception/worker-message channels and requires the sentinel to be absent from public diagnostic messages, EMP.1 controller exception presentation and checker output while safe diagnostic codes remain visible.
+
+This encoded redaction policy is not browser execution evidence and does not qualify CSP/security headers, penetration testing or broader application-security certification.
 
 ## Current repository state at PR-H creation
 

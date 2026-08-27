@@ -5,51 +5,41 @@ mission: "Reconcile authorized-route current state in the aggregate P0 source-se
 workstream: EMP1_WRC537_P0_AGGREGATE_RECONCILIATION
 branch: agent/issue-1389-p0-gate-current-state-20260825
 execution_mode: AUTO
-auto_state: COMPLETE
+auto_state: RUNNING
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
-main_head_last_checked: 7b2a8119aa5faeee7cc102c894991851019c5a7b
-main_tree_last_checked: b6c5744973c6ef57eb9a98af54c34761a13f3a7e
-merge_base_after_refresh: 7b2a8119aa5faeee7cc102c894991851019c5a7b
-pre_refresh_head: 43f860e140145036b083b3215e16317a16e2a28b
-current_main_refresh_commit: ae8a9545d1b960056bb4964be26edbaf19c9ca1a
-engineering_content_basis: db6264aeec96f9ea7ad493dd8033b8b1907b56ad
-report_basis_head: ae8a9545d1b960056bb4964be26edbaf19c9ca1a
-report_refresh_commit: 24300d283252d739925a26e8818c7e1635d40ce8
-report_sync: CURRENT_RECOVERY_ONLY_AFTER_NON_FORCE_MAIN_REFRESH
-grounding_epoch: GE-PR1427-005
 criticality: ENGINEERING_CRITICAL
 agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-report_path: agents/PR1427_workreport.md
-appendix_a_status: CURRENT
+live_main: 93c4f9e3af98e58190951ff94b5b50616950f623
+live_main_tree: c37873d432772b5b7552231e8acafa60c2deed01
+pre_reground_head: ed599b037b861aa8f6a3089792d81157e46d887a
+structural_reground_head: f6202b7fa78ebfe0148b28fb50ea3d6310241b42
+structural_reground_tree: 7f8f22c2f21f9a867297c24032c7e3f05b21194d
+report_basis_head: f6202b7fa78ebfe0148b28fb50ea3d6310241b42
+grounding_epoch: GE-PR1427-006
+appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_RECOVERY_ONLY_NO_NEW_EMP1_OVERLAP
-current_stage: CURRENT_MAIN_REFRESH_COMPLETE_AGGREGATE_ENGINEERING_CONTENT_UNCHANGED
-highest_risk: ROUTE_AUTHORIZATION_OR_GOVERNANCE_MERGE_FALSELY_PROPAGATED_TO_PROFESSIONAL_P0_OR_RELEASE_READINESS
+coordination: SAFE_AGGREGATE_GOVERNANCE_CURRENT_MAIN_PR1494_DISJOINT
+current_stage: CURRENT_MAIN_REGROUND_VALIDATED_CONTINUE_STACKED_RELEASE_STATE
 validation:
-  live_grounding: PASS
-  one_commit_main_drift_classification: PASS_UNRELATED_LAFEA3_ONLY
-  non_force_main_refresh: PASS
-  post_refresh_merge_base_current_main: PASS
-  post_refresh_ahead_behind: "14/0 before recovery-only commits"
+  current_main: PASS
+  concurrent_pr1494_overlap: PASS_NONE
+  exact_six_blob_custody: PASS
   changed_file_scope: PASS_EXACT_SIX_FILES
-  aggregate_engineering_content_unchanged: PASS_BYTE_PRESERVED
-  bounded_route_authority_inspection: PASS_SOURCE_INSPECTION
-  p0_blocker_count: 9
-  pr1415_unmerged_dependency_handling: PASS
+  behind_main: 0
+  reviews: 0
+  review_threads: 0
+  aggregate_blocker_count: 9
+  pr1415_unmerged_dependency: PASS_NOT_CURRENT_MAIN_AUTHORITY
   direct_primary_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
   checker_execution_normal: NOT_RUN
   checker_execution_require_ready: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
-  hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
 authority:
   bounded_wrc_route_authorized_current_main: true
-  registry_registered_current_main: true
-  bounded_engineering_use_authorized_current_main: true
-  bounded_production_use_authorized_current_main: true
   professional_p0_source_semantics_ready: false
   p0_blocker_count: 9
   aggregate_gate_grants_engineering_authority: false
@@ -57,19 +47,8 @@ authority:
   code_compliance_authority: false
   release_authority: false
   professional_release_ready: false
-individual_source_pr_state:
-  pr1415_mean_radius: OPEN_DRAFT_UNMERGED
-  pr1417_material_theory: MERGED
-  pr1418_physical_applicability: MERGED
-  pr1423_code_acceptance: MERGED
-  pr1425_stress_semantics: MERGED
-  pr1426_shell_thickness: MERGED
-merge_disposition: OWNER_ONLY_DRAFT_HANDOVER_READY
-merge_authorization: NOT_GRANTED
-dependencies:
-  - "#1389"
-  - "#54"
-  - "nine P0 source-domain issues remain independently source-gated"
-  - "If PR1415 merges before PR1427, re-ground aggregate #1377 currentStatus before any PR1427 merge"
-exact_next_action: "Preserve PR1427 draft/unmerged pending explicit Owner merge authorization. If PR1415 is merged first, re-ground PR1427 before merge."
-last_updated: "2026-08-26"
+neighbor_dependency:
+  pr1415_state: OPEN_DRAFT_UNMERGED
+  rule: "PR1415 is not current-main authority. If it merges, re-ground PR1427 and downstream PR1436 before merge."
+merge_authorization: OWNER_ONLY_NOT_GRANTED
+exact_next_action: "Continue AUTO progression to PR1436 stacked on exact PR1427 aggregate; keep unmerged and invalidate/re-ground if PR1415 merges."

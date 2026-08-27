@@ -1,0 +1,35 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1477
+mission: "Salvage exact-candidate manifest onto the current EMP.1 release stack"
+workstream: EMP1_RELEASE_MANIFEST_SALVAGE
+branch: agent/issue-1476-release-manifest-salvage-20260826
+issue: 1476
+umbrella: 1389
+source_pr: 1444
+base_branch: main
+execution_mode: MANUAL
+scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1476
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
+handover_readiness: READY
+pre_reground_head: 053c42c78a338e3ad30984488ee30bea8ca28ace
+merged_parent_pr: 1473
+merged_parent_sha: e6a4bbdd0a5787c119f4b1685651b87881b059c7
+grounding_epoch: GE-PR1477-005
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_THEN_NEXT_1389_SUCCESSOR
+current_stage: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_GATE
+merge_authorization: GRANTED_EXPLICIT_OWNER_2026-08-27T16:21:57Z
+validation:
+  retained_technical_blobs: PASS_EXACT
+  intended_scope: PASS_EXACT_6_FILES
+  release_execution: NOT_RUN
+  build_browser_deployment_execution: NOT_RUN
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+  numerical_comparison: NOT_APPLICABLE
+current_blocker: "Executable release qualification remains NOT_RUN; no release authority is claimed."
+exact_next_action: "Retarget to main, verify exact six-file delta / zero behind / zero reviews and threads, then expected-head squash-merge; proceed to next scoped #1389 successor."

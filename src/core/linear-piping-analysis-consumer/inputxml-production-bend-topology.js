@@ -13,15 +13,32 @@ export function groupBendChordBindings(bindings) {
 
 /**
  * Require the component builder to reproduce exactly the S2 chord topology:
- * same span count, same element identities, and the same endpoint coordinates.
- * This prevents a factor/profile change from silently solving a different bend
- * mesh than the mechanical model that owns the node/element bindings.
+ * same span count, same element identities, same chord lengths, and the same
+ * absolute position at the three points a code stress check actually reads a
+ * bend at. This prevents a factor/profile change from silently solving a
+ * different bend mesh than the mechanical model that owns the node/element
+ * bindings.
+ *
+ * This does not compare every element's absolute endpoint, because the kernel
+ * does not expose one. `compileFrameElement`'s sealed contract is
+ * `geometry: { length }` -- deliberately position-agnostic, since a frame
+ * element's stiffness cannot depend on where in space it sits. Comparing
+ * `frameElement.geometry.nodeI/nodeJ` reads a field that has never existed on
+ * that contract; it always reads back `undefined` and always fails, for every
+ * bend, unconditionally. What the kernel does expose is `codeStations[]`,
+ * carrying `position` for exactly the tangent-start, mid-arc and tangent-end
+ * stations -- the same three points structural topology already names via
+ * the chord chain's own endpoints and `bendRecord.midArcNodeId`. Checking
+ * length per chord plus position at those three named stations proves the
+ * same thing the full per-element check intended to, using only fields the
+ * kernel actually returns.
  */
 export function requireBendComponentMatchesTopology({
   component,
   sourceSegmentId,
   bindings,
   conditionedGeometry,
+  bendRecord,
 }) {
   const segmentById = new Map(conditionedGeometry.segments.map((row) => [String(row.id), row]));
   const nodeById = new Map(conditionedGeometry.nodes.map((row) => [String(row.id), row]));
@@ -51,21 +68,42 @@ export function requireBendComponentMatchesTopology({
         `Bend ${sourceSegmentId} chord ${row.index} identity ${row.binding.elementId} does not match ${componentElement.elementId}.`,
       );
     }
-    requirePointMatch(
+    requireChordLengthMatch(
       requireNodePoint(nodeById, row.segment.startNodeId, sourceSegmentId),
-      componentElement.frameElement.geometry.nodeI,
-      sourceSegmentId,
-      row.index,
-      'I',
-    );
-    requirePointMatch(
       requireNodePoint(nodeById, row.segment.endNodeId, sourceSegmentId),
-      componentElement.frameElement.geometry.nodeJ,
+      componentElement.frameElement?.geometry?.length,
       sourceSegmentId,
       row.index,
-      'J',
     );
   });
+
+  requireCodeStationsMatchTopology({ component, ordered, nodeById, sourceSegmentId, bendRecord });
+}
+
+function requireCodeStationsMatchTopology({ component, ordered, nodeById, sourceSegmentId, bendRecord }) {
+  const stationByKind = new Map((component.codeStations ?? []).map((row) => [row.kind, row]));
+  const first = ordered[0];
+  const last = ordered[ordered.length - 1];
+  const expectations = [
+    ['BEND_TANGENT_START', String(first.segment.startNodeId)],
+    ['BEND_TANGENT_END', String(last.segment.endNodeId)],
+  ];
+  if (bendRecord?.midArcNodeId != null) {
+    expectations.push(['BEND_MID_ARC', String(bendRecord.midArcNodeId)]);
+  }
+  for (const [kind, structuralNodeId] of expectations) {
+    const station = stationByKind.get(kind);
+    if (!station) fail(
+      'BEND_COMPONENT_TOPOLOGY_STATION_MISSING',
+      `Bend ${sourceSegmentId} component reports no ${kind} code station.`,
+    );
+    requirePointMatch(
+      requireNodePoint(nodeById, structuralNodeId, sourceSegmentId),
+      station.position,
+      sourceSegmentId,
+      kind,
+    );
+  }
 }
 
 function requireNodePoint(nodeById, nodeId, sourceSegmentId) {
@@ -77,10 +115,29 @@ function requireNodePoint(nodeById, nodeId, sourceSegmentId) {
   return [node.x, node.y, node.z];
 }
 
-function requirePointMatch(actual, expected, sourceSegmentId, index, end) {
+function requireChordLengthMatch(startPoint, endPoint, componentLength, sourceSegmentId, index) {
+  if (typeof componentLength !== 'number' || !Number.isFinite(componentLength)) fail(
+    'BEND_COMPONENT_TOPOLOGY_GEOMETRY_INVALID',
+    `Bend ${sourceSegmentId} component chord ${index} reports a non-finite length.`,
+  );
+  const structuralLength = Math.hypot(
+    endPoint[0] - startPoint[0],
+    endPoint[1] - startPoint[1],
+    endPoint[2] - startPoint[2],
+  );
+  const scale = Math.max(structuralLength, componentLength, 1);
+  const delta = Math.abs(structuralLength - componentLength);
+  if (delta / scale > POSITION_RELATIVE_TOLERANCE) fail(
+    'BEND_COMPONENT_TOPOLOGY_GEOMETRY_MISMATCH',
+    `Bend ${sourceSegmentId} chord ${index} length differs from S2 topology by relative ${delta / scale} `
+    + `(structural ${structuralLength}, component ${componentLength}).`,
+  );
+}
+
+function requirePointMatch(actual, expected, sourceSegmentId, label) {
   if (!Array.isArray(expected) || expected.length !== 3 || !expected.every(Number.isFinite)) fail(
     'BEND_COMPONENT_TOPOLOGY_GEOMETRY_INVALID',
-    `Bend ${sourceSegmentId} component chord ${index} end ${end} is non-finite.`,
+    `Bend ${sourceSegmentId} component station ${label} is non-finite.`,
   );
   const delta = Math.hypot(
     actual[0] - expected[0],
@@ -90,7 +147,7 @@ function requirePointMatch(actual, expected, sourceSegmentId, index, end) {
   const scale = Math.max(Math.hypot(...actual), Math.hypot(...expected), 1);
   if (delta / scale > POSITION_RELATIVE_TOLERANCE) fail(
     'BEND_COMPONENT_TOPOLOGY_GEOMETRY_MISMATCH',
-    `Bend ${sourceSegmentId} chord ${index} end ${end} differs from S2 topology by relative ${delta / scale}.`,
+    `Bend ${sourceSegmentId} station ${label} differs from S2 topology by relative ${delta / scale}.`,
   );
 }
 

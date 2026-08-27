@@ -1,0 +1,57 @@
+schema: engineering-pr-status/v1
+pr: 1432
+repository: reallaksh19/Advanced_Analysis
+source_task: PR1270 salvage / LAFEA.3 retained refinement
+branch: agent/lafea3-local-refinement-current-main-salvage-20260825
+base_branch: main
+base_head_last_checked: 3d79ea6889c08cf6a37229655ecbd3ec3dc89a20
+synchronization_commits:
+  - 1d3d06581610f075ea5751fbcb26b08d822ccc29
+  - 39a911ef406d37d08e99067931e1288203e83e4e
+state: OPEN_DRAFT
+criticality: ENGINEERING_CRITICAL
+recovery_state: CONTINUE
+execution_mode: OWNER_DIRECTED
+current_stage: CURRENT_MAIN_SYNCHRONIZED_CROSS_CHAIN_INVALIDATION_AUDITED_EXECUTION_NOT_RUN
+engineering_failure_proven: false
+validation:
+  current_main_grounding: PASS_GITHUB_READBACK_3D79EA68
+  prior_main_drift_exact_path_overlap: PASS_NONE_IN_SEVEN_PRODUCTION_QUALIFICATION_PATHS
+  pr1475_during_sync_overlap: PASS_ISSUE1321_ONLY
+  current_main_synchronization: PASS_TWO_PARENT_NON_DESTRUCTIVE
+  exact_ten_path_diff: PASS
+  retained_child_mesh_identity: PASS_SOURCE_INSPECTION_NO_MESH_CHANGE_FAILS_CLOSED
+  independent_actual_adjacency_gate: PASS_SOURCE_INSPECTION
+  v3_candidate_invalidation_after_local_refinement: PASS_SOURCE_INSPECTION
+  q1_retained_mesh_hash_custody: PASS_SOURCE_INSPECTION_CURRENT_MAIN
+  q1_direct_addendum_trace_parity: PASS_SOURCE_INSPECTION_CURRENT_MAIN
+  section17_exact_head_staleness_gate: PASS_SOURCE_INSPECTION_CURRENT_MAIN
+  mapped_refinement_envelope_execution: NOT_RUN
+  refinement_solve_ui_execution: NOT_RUN
+  retained_refinement_replay_execution: NOT_RUN
+  lafea_core_aggregate: NOT_RUN
+  lafea_workbench_aggregate: NOT_RUN
+  lafea_standalone_aggregate: NOT_RUN
+invariants:
+  maximum_targets: 1
+  minimum_target_ratio: 0.25
+  q8_local_refinement_authorized: false
+  adjacency_threshold_weakened: false
+  scaled_jacobian_threshold_weakened: false
+  solver_formulation_changed: false
+  recovery_authority_changed: false
+  benchmark_oracle_changed: false
+  tolerance_changed: false
+  registry_or_release_authority_changed: false
+  workflow_changed: false
+  v3_local_refinement_authority_created: false
+  refined_child_must_change_mesh_hash_or_block: true
+  local_refinement_clears_parallel_v3_candidate: true
+  stale_q1_q5_receipt_rejected_after_head_change: true
+  section17_requires_current_exact_head: true
+blocker: EXACT_EXECUTABLE_REPOSITORY_CHECKOUT_UNAVAILABLE
+exact_next_action: "When a real exact checkout is available run node scripts/lafea3-mapped-refinement-envelope-check.mjs, node scripts/lafea-refinement-solve-ui-check.mjs, node scripts/lafea-retained-mesh-refinement-check.mjs, then LAFEA core/workbench/standalone aggregates. Keep PR draft/unmerged until new explicit owner merge authority."
+merge_authority: OWNER_ONLY_NOT_GRANTED
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 19

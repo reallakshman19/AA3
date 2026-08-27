@@ -1,0 +1,49 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1460
+issue: 1321
+branch: agent/issue-1321-ready-screening-snapshot
+state: SOURCE_REVIEWED_AUTHORITY_REPAIRED_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: READY_FOR_CURRENT_MAIN_RECONCILIATION
+stack_base_pr: 1455
+historical_stack_base_head: 1ecc9b1fee8f98075b1c40065c792d7119f1564f
+source_complete_basis_head: 68ff70a3619f1f52089261fd94bc56df23a88f31
+takeover_repairs:
+  runtime_commit: ab7eefd0faca90c8213e5c030939fe0d5aceaf02
+  regression_commit: 0ee533f4b559fa7253334602dc8b000a31475b7f
+  defect: CURRENT_PARTIALLY_READY_SEAL_COULD_BYPASS_READY_ONLY_GATE
+  disposition: REPAIRED_SOURCE_REVIEWED
+validation:
+  live_grounding: PASS
+  exact_diff_reconciliation: PENDING_CURRENT_MAIN_SYNC
+  overlap: PASS_DECLARED_UPSTREAM_ONLY
+  reviews: PASS_NONE
+  review_threads: PASS_NONE
+  ready_only_authority_contract: PASS_SOURCE_INSPECTION_AFTER_REPAIR
+  partial_current_seal_reuse: REJECTED_BY_SOURCE_CONTRACT
+  focused_ready_snapshot_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    observation: LOCAL_EXECUTION
+    error: "Could not resolve host: github.com"
+  workflow_gating: NOT_APPLICABLE_OWNER_SKIPPED
+invariants:
+  ready_only: true
+  current_partial_seal_reuse_permitted: false
+  partial_auto_accept_permitted: false
+  blocked_auto_accept_permitted: false
+  user_approval_may_be_asserted: false
+  run_wiring_authorized: false
+  empirical_auto_authorization_authorized: false
+  numerical_mechanics_change_authorized: false
+  workflow_change_authorized: false
+appendix_a_qualified: false
+merge_authority: OWNER_AUTHORIZED_CURRENT_TURN_2026-08-26
+merge_disposition: AUTHORIZED_AFTER_EXACT_CURRENT_MAIN_RECONCILIATION
+exact_next_action: "Synchronize the exact six-path successor tree onto current main after #1455, reconcile the diff and exact head, then squash-merge without converting NOT_RUN validation to PASS. Keep #1461 separate and unmerged until production implementation exists."

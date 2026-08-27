@@ -4,12 +4,12 @@ pr_or_wip: PR1427
 branch: agent/issue-1389-p0-gate-current-state-20260825
 issue: 1389
 criticality: ENGINEERING_CRITICAL
-claim_state: ACTIVE_AUTO_COMPLETE
+claim_state: ACTIVE_AUTO_CURRENT_MAIN_REGROUNDED
 execution_mode: AUTO
-auto_state: COMPLETE
+auto_state: RUNNING
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
-coordination_state: SAFE_RECOVERY_ONLY_NO_NEW_EMP1_OVERLAP
+coordination_state: SAFE_AGGREGATE_GOVERNANCE_CURRENT_MAIN_PR1494_DISJOINT
 scope:
   authority: EMP1_WRC537_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION
   paths:
@@ -19,17 +19,11 @@ scope:
     - agents/PR1427_workreport.md
     - agents/status/PR1427.yaml
     - agents/claims/PR1427.yaml
-current_epoch_write_scope:
-  - agents/PR1427_workreport.md
-  - agents/status/PR1427.yaml
-  - agents/claims/PR1427.yaml
 protected_exclusions:
   - src/core/emp1/**
+  - individual P0 source-authority records
   - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
   - validation/emp1/release/emp1-professional-release-current-state-v1.json
-  - scripts/emp1-professional-release-current-state-check.mjs
-  - docs/emp1/EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE.md
-  - validation/emp1/wrc537-2013/** individual P0 source-authority records
   - validation/emp1/caux2017-wrc01f/**
   - gamma5 oracle/tolerance/exact-head evidence
   - UI/browser product paths
@@ -41,24 +35,22 @@ authority_boundary:
   professional_release_authority_granted: false
   global_emp1_c_authority_granted: false
   code_compliance_authority_granted: false
-main_head_last_checked: 7b2a8119aa5faeee7cc102c894991851019c5a7b
-main_tree_last_checked: b6c5744973c6ef57eb9a98af54c34761a13f3a7e
-merge_base_after_refresh: 7b2a8119aa5faeee7cc102c894991851019c5a7b
-pre_refresh_head: 43f860e140145036b083b3215e16317a16e2a28b
-current_main_refresh_commit: ae8a9545d1b960056bb4964be26edbaf19c9ca1a
-engineering_content_basis: db6264aeec96f9ea7ad493dd8033b8b1907b56ad
-grounding_epoch: GE-PR1427-005
-aggregate_current_main_truth:
+live_main: 93c4f9e3af98e58190951ff94b5b50616950f623
+live_main_tree: c37873d432772b5b7552231e8acafa60c2deed01
+pre_reground_head: ed599b037b861aa8f6a3089792d81157e46d887a
+structural_reground_head: f6202b7fa78ebfe0148b28fb50ea3d6310241b42
+structural_reground_tree: 7f8f22c2f21f9a867297c24032c7e3f05b21194d
+grounding_epoch: GE-PR1427-006
+aggregate_truth:
   blocker_count: 9
   bounded_route_authorized: true
-  bounded_engineering_production_use: true
+  professional_p0_source_semantics_ready: false
   global_emp1_c: false
   code_compliance: false
   professional_release_ready: false
-  engineering_content_rewrite_required_by_current_main_drift: false
 neighbor_dependency:
   pr1415_state: OPEN_DRAFT_UNMERGED
-  rule: "Unmerged PR1415 is not current-main authority. If PR1415 merges before PR1427, re-ground #1377 aggregate currentStatus before PR1427 merge."
-merge_authority: NOT_GRANTED
+  rule: "Do not pre-promote #1377. If PR1415 merges, re-ground PR1427 then PR1436."
+merge_authority: OWNER_ONLY_NOT_GRANTED
 handover_report: agents/PR1427_workreport.md
-exact_next_action: "Preserve PR1427 draft/unmerged pending explicit Owner merge authorization; re-ground first if PR1415 is merged before it."
+exact_next_action: "Continue AUTO progression to stacked PR1436 using exact PR1427 aggregate; keep draft/unmerged."

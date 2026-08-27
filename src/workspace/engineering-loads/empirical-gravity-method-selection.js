@@ -1,21 +1,31 @@
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../../core/shared-piping-model/immutable.js';
 import {
+  NON_FEA_GRAVITY_METHOD_AUTO,
+  requireReadyNonFeaGravityMethodAuthority,
+} from '../project-data/non-fea-gravity-method-authority.js';
+import {
   EMPIRICAL_COMPONENT_COG_CLASSIFICATION,
   auditEmpiricalComponentLoadAuthority,
   requireEmpiricalComponentLoadAuthorityAudit,
 } from './empirical-component-load-authority.js';
+import {
+  requireCurrentCommonInputExplicitMomentRetention,
+} from './current-common-input-explicit-moment-retention.js';
 import { getEmpiricalMethodRegistration } from './empirical-method-registry.js';
 import {
   EMPIRICAL_LOAD_COG_METHOD,
   EMPIRICAL_LOAD_METHOD,
 } from './support-load-distribution-v3.js';
 
-export const EMPIRICAL_GRAVITY_AUTO = 'AUTO';
+export const EMPIRICAL_GRAVITY_AUTO = NON_FEA_GRAVITY_METHOD_AUTO;
 export const EMPIRICAL_GRAVITY_METHOD_SELECTION_SCHEMA =
   'empirical-gravity-method-selection/v1';
+export const EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA =
+  'empirical-governed-gravity-method-selection/v1';
 
 const BEAM_CONTACT = 'EMPIRICAL_BEAM_CONTACT_V1';
+const EXPLICIT_MOMENT_UNSUPPORTED = 'EMPIRICAL_COMPONENT_EXPLICIT_MOMENT_UNSUPPORTED';
 const ALLOWED_REQUESTS = Object.freeze([
   EMPIRICAL_GRAVITY_AUTO,
   EMPIRICAL_LOAD_COG_METHOD,
@@ -29,36 +39,93 @@ export function evaluateEmpiricalGravityMethodSelection(input = {}) {
     profile: input.profile,
     routePartitionModel: input.routePartitionModel,
   });
-  return createEmpiricalGravityMethodSelection({ requestedMethod, componentAuthorityAudit });
+  return createEmpiricalGravityMethodSelection({
+    requestedMethod,
+    componentAuthorityAudit,
+    explicitMomentRetention: input.explicitMomentRetention || null,
+  });
+}
+
+/**
+ * Evaluates the existing selector from a hash-bound effective Project Data
+ * method request. A source explicit moment becomes eligible for V2 only when a
+ * separate current-system retention receipt bound to the exact component audit
+ * is supplied. Callers without that receipt preserve the historical fail-closed
+ * behavior.
+ */
+export function evaluateGovernedEmpiricalGravityMethodSelection(input = {}) {
+  const componentAuthorityAudit = auditEmpiricalComponentLoadAuthority({
+    dataset: input.dataset,
+    profile: input.profile,
+    routePartitionModel: input.routePartitionModel,
+  });
+  return createGovernedEmpiricalGravityMethodSelection({
+    gravityMethodAuthority: input.gravityMethodAuthority,
+    componentAuthorityAudit,
+    explicitMomentRetention: input.explicitMomentRetention || null,
+  });
+}
+
+export function createGovernedEmpiricalGravityMethodSelection(input = {}) {
+  const authority = requireReadyNonFeaGravityMethodAuthority(input.gravityMethodAuthority);
+  const audit = requireEmpiricalComponentLoadAuthorityAudit(input.componentAuthorityAudit);
+  if (audit.projectDataProfileSemanticHash !== authority.projectDataSemanticHash) {
+    throw codedError(
+      'Gravity-method authority and component-load audit do not bind the same effective Project Data profile.',
+      'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_PROFILE_MISMATCH',
+      {
+        authorityProjectDataSemanticHash: authority.projectDataSemanticHash,
+        auditProjectDataProfileSemanticHash: audit.projectDataProfileSemanticHash,
+      },
+    );
+  }
+  const selection = createEmpiricalGravityMethodSelection({
+    requestedMethod: authority.requestedMethod,
+    componentAuthorityAudit: audit,
+    explicitMomentRetention: input.explicitMomentRetention || null,
+  });
+  const base = {
+    schema: EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA,
+    gravityMethodAuthority: authority,
+    componentAuthorityAuditProjectDataProfileSemanticHash:
+      audit.projectDataProfileSemanticHash,
+    selection,
+  };
+  return deepFreeze({ ...base, semanticHash: semanticHash(base) });
 }
 
 export function createEmpiricalGravityMethodSelection(input = {}) {
   const requestedMethod = methodRequest(input.requestedMethod ?? EMPIRICAL_GRAVITY_AUTO);
   const audit = requireEmpiricalComponentLoadAuthorityAudit(input.componentAuthorityAudit);
-  const classification = classifyAudit(audit);
+  const retention = optionalExplicitMomentRetention(input.explicitMomentRetention, audit);
+  const classification = classifyAudit(audit, retention);
   const explicit = requestedMethod !== EMPIRICAL_GRAVITY_AUTO;
   const choice = explicit
     ? explicitChoice(requestedMethod, classification)
     : autoChoice(classification);
   const candidates = candidateRows(classification, choice.selectedMethod);
-  const fallbackLedger = fallbackRows(requestedMethod, classification, choice);
+  const fallbackLedger = fallbackRows(requestedMethod, classification, choice, retention);
   const base = {
     schema: EMPIRICAL_GRAVITY_METHOD_SELECTION_SCHEMA,
     requestedMethod,
     selectedMethod: choice.selectedMethod,
     selectionState: choice.selectionState,
     componentAuthorityAuditSemanticHash: audit.semanticHash,
+    explicitMomentRetentionSemanticHash: retention?.semanticHash || null,
     candidates,
     fallbackLedger,
     assumptions: choice.assumptions,
     exceptions: classification.exceptions,
+    retainedDemandLedger: classification.retainedDemands,
     policy: {
       highestFidelityQualifiedMethodFirst: true,
       missingCogMayFallbackToV2: true,
       knownOffRouteCogMayFallbackToV2: false,
       ambiguousCogMayFallbackToV2: false,
       invalidCogEvidenceMayFallbackToV2: false,
-      explicitMomentMayFallbackToV2: false,
+      explicitMomentMayFallbackToV2: true,
+      explicitMomentFallbackRequiresRetentionReceipt: true,
+      explicitMomentVerticalReactionDistributionAllowed: false,
       beamContactIsSeparateMechanicsFamily: true,
       selectionIsNotExecutionAuthorization: true,
     },
@@ -79,35 +146,108 @@ export function requireEmpiricalGravityMethodSelection(value) {
   return deepFreeze(structuredClone(value));
 }
 
-function classifyAudit(audit) {
+export function requireGovernedEmpiricalGravityMethodSelection(value) {
+  if (!value || value.schema !== EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA) {
+    throw new TypeError(`Expected ${EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA}.`);
+  }
+  const { semanticHash: supplied, ...base } = value;
+  if (supplied !== semanticHash(base)) {
+    throw new TypeError('Governed empirical gravity method-selection semantic hash mismatch.');
+  }
+  const authority = requireReadyNonFeaGravityMethodAuthority(value.gravityMethodAuthority);
+  const selection = requireEmpiricalGravityMethodSelection(value.selection);
+  if (selection.requestedMethod !== authority.requestedMethod) {
+    throw codedError(
+      'Governed selector request differs from gravity-method authority.',
+      'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_REQUEST_MISMATCH',
+    );
+  }
+  if (
+    value.componentAuthorityAuditProjectDataProfileSemanticHash
+    !== authority.projectDataSemanticHash
+  ) {
+    throw codedError(
+      'Governed selector audit profile differs from gravity-method authority.',
+      'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_PROFILE_MISMATCH',
+      {
+        authorityProjectDataSemanticHash: authority.projectDataSemanticHash,
+        auditProjectDataProfileSemanticHash:
+          value.componentAuthorityAuditProjectDataProfileSemanticHash,
+      },
+    );
+  }
+  return deepFreeze(structuredClone(value));
+}
+
+function optionalExplicitMomentRetention(value, audit) {
+  if (value === null || value === undefined) return null;
+  const retention = requireCurrentCommonInputExplicitMomentRetention(value);
+  if (retention.componentLoadAuthorityAuditSemanticHash !== audit.semanticHash) {
+    throw codedError(
+      'Explicit-moment retention and method selector do not bind the same component-load authority audit.',
+      'EMPIRICAL_GRAVITY_EXPLICIT_MOMENT_RETENTION_AUDIT_MISMATCH',
+      {
+        expected: audit.semanticHash,
+        actual: retention.componentLoadAuthorityAuditSemanticHash,
+      },
+    );
+  }
+  return retention;
+}
+
+function classifyAudit(audit, retention) {
   const records = audit.records || [];
+  const retainedIds = new Set(
+    retention?.status === 'RETAINED'
+      ? retention.records.map((row) => row.entityId)
+      : [],
+  );
   const missingCog = records.filter((row) => (
     row.cogClassification === EMPIRICAL_COMPONENT_COG_CLASSIFICATION.MIDPOINT_FALLBACK
   ));
   const onRouteCog = records.filter((row) => (
     row.cogClassification === EMPIRICAL_COMPONENT_COG_CLASSIFICATION.ON_ROUTE
   ));
-  const hard = records.filter(hasFallbackProhibitingEvidence);
+  const retainedExplicit = records.filter((row) => hasRetainedExplicitMoment(row, retainedIds));
+  const hard = records.filter((row) => hasFallbackProhibitingEvidence(row, retainedIds));
   const otherBlocked = records.filter((row) => (
-    row.integrationEligible !== true && !hard.includes(row)
+    row.integrationEligible !== true
+    && !hard.includes(row)
+    && unhandledBlockers(row, retainedIds).length > 0
   ));
   const exceptions = [...hard, ...otherBlocked].map((row) => deepFreeze({
     entityId: row.entityId,
     routeId: row.routeId,
     cogClassification: row.cogClassification,
-    blockerCodes: (row.blockers || []).map((item) => item.code).sort(),
+    blockerCodes: unhandledBlockers(row, retainedIds).map((item) => item.code).sort(),
     explicitMomentNm: row.explicitMoment?.magnitudeNm ?? null,
     disposition: row.integrationDisposition,
   })).sort(byEntity);
+  const retainedDemands = retainedExplicit.map((row) => deepFreeze({
+    entityId: row.entityId,
+    routeId: row.routeId,
+    demandKind: 'SOURCE_EXPLICIT_POINT_MOMENT',
+    explicitMomentNm: row.explicitMoment.magnitudeNm,
+    axis: row.explicitMoment.axis,
+    disposition: 'RETAINED_SEPARATE_SUPPORT_CIVIL_DEMAND',
+    verticalReactionDistribution: 'NOT_PERFORMED',
+  })).sort(byEntity);
+  const blockingExceptionIds = [...new Set(
+    [...hard, ...otherBlocked].map((row) => row.entityId),
+  )].sort();
   return deepFreeze({
     componentCount: records.length,
     missingCogCount: missingCog.length,
     onRouteCogCount: onRouteCog.length,
+    retainedExplicitMomentCount: retainedExplicit.length,
     hardExceptionCount: hard.length,
     otherBlockedCount: otherBlocked.length,
     missingCogIds: missingCog.map((row) => row.entityId).sort(),
+    retainedExplicitMomentIds: retainedExplicit.map((row) => row.entityId).sort(),
     hardExceptionIds: hard.map((row) => row.entityId).sort(),
+    blockingExceptionIds,
     exceptions,
+    retainedDemands,
   });
 }
 
@@ -126,15 +266,18 @@ function autoChoice(state) {
       assumptions: [],
     });
   }
+  if (state.retainedExplicitMomentCount > 0) {
+    return deepFreeze({
+      selectedMethod: EMPIRICAL_LOAD_METHOD,
+      selectionState: 'SELECTED_V2_EXPLICIT_MOMENT_RETAINED_SEPARATELY',
+      assumptions: midpointAssumptions(state.missingCogIds),
+    });
+  }
   if (state.missingCogCount > 0) {
     return deepFreeze({
       selectedMethod: EMPIRICAL_LOAD_METHOD,
       selectionState: 'SELECTED_V2_MISSING_COG_FALLBACK',
-      assumptions: state.missingCogIds.map((entityId) => deepFreeze({
-        entityId,
-        code: 'GEOMETRIC_MIDPOINT_APPLICATION',
-        reason: 'No qualified component CoG evidence is available.',
-      })),
+      assumptions: midpointAssumptions(state.missingCogIds),
     });
   }
   return deepFreeze({
@@ -149,6 +292,9 @@ function explicitChoice(requestedMethod, state) {
     if (state.hardExceptionCount > 0 || state.otherBlockedCount > 0) {
       return deepFreeze({ selectedMethod: null, selectionState: 'EXPLICIT_V3_OUTSIDE_QUALIFIED_INPUT_DOMAIN', assumptions: [] });
     }
+    if (state.retainedExplicitMomentCount > 0) {
+      return deepFreeze({ selectedMethod: null, selectionState: 'EXPLICIT_V3_SOURCE_MOMENT_REQUIRES_SEPARATE_V2_DEMAND', assumptions: [] });
+    }
     if (state.missingCogCount > 0) {
       return deepFreeze({ selectedMethod: null, selectionState: 'EXPLICIT_V3_COG_INPUT_INCOMPLETE', assumptions: [] });
     }
@@ -159,22 +305,21 @@ function explicitChoice(requestedMethod, state) {
   }
   return deepFreeze({
     selectedMethod: requestedMethod,
-    selectionState: 'EXPLICIT_V2_SELECTED',
-    assumptions: state.missingCogIds.map((entityId) => deepFreeze({
-      entityId,
-      code: 'GEOMETRIC_MIDPOINT_APPLICATION',
-      reason: 'Explicit V2 uses the qualified midpoint application rule.',
-    })),
+    selectionState: state.retainedExplicitMomentCount > 0
+      ? 'EXPLICIT_V2_SELECTED_WITH_SEPARATE_MOMENT_DEMAND'
+      : 'EXPLICIT_V2_SELECTED',
+    assumptions: midpointAssumptions(state.missingCogIds, true),
   });
 }
 
 function candidateRows(state, selectedMethod) {
+  const v3State = state.hardExceptionCount || state.otherBlockedCount
+    ? 'OUTSIDE_QUALIFIED_INPUT_DOMAIN'
+    : state.retainedExplicitMomentCount > 0
+      ? 'EXPLICIT_MOMENT_REQUIRES_SEPARATE_V2_DEMAND'
+      : state.missingCogCount ? 'INPUT_INCOMPLETE' : 'READY';
   return deepFreeze([
-    candidate(EMPIRICAL_LOAD_COG_METHOD,
-      state.hardExceptionCount || state.otherBlockedCount
-        ? 'OUTSIDE_QUALIFIED_INPUT_DOMAIN'
-        : state.missingCogCount ? 'INPUT_INCOMPLETE' : 'READY',
-      selectedMethod),
+    candidate(EMPIRICAL_LOAD_COG_METHOD, v3State, selectedMethod),
     candidate(EMPIRICAL_LOAD_METHOD,
       state.hardExceptionCount || state.otherBlockedCount
         ? 'FALLBACK_PROHIBITED_BY_KNOWN_EVIDENCE' : 'READY',
@@ -190,27 +335,51 @@ function candidateRows(state, selectedMethod) {
   ]);
 }
 
-function fallbackRows(requestedMethod, state, choice) {
+function fallbackRows(requestedMethod, state, choice, retention) {
   if (requestedMethod !== EMPIRICAL_GRAVITY_AUTO) return deepFreeze([]);
-  if (choice.selectedMethod === EMPIRICAL_LOAD_METHOD && state.missingCogCount > 0) {
-    return deepFreeze([{
-      fromMethod: EMPIRICAL_LOAD_COG_METHOD,
-      toMethod: EMPIRICAL_LOAD_METHOD,
-      reasonCode: 'COG_NOT_AVAILABLE',
-      affectedEntityIds: state.missingCogIds,
-      permittedByPolicy: true,
-    }]);
+  if (choice.selectedMethod === EMPIRICAL_LOAD_METHOD) {
+    const rows = [];
+    if (state.retainedExplicitMomentCount > 0) {
+      rows.push({
+        fromMethod: EMPIRICAL_LOAD_COG_METHOD,
+        toMethod: EMPIRICAL_LOAD_METHOD,
+        reasonCode: 'EXPLICIT_COMPONENT_MOMENT_RETAINED_SEPARATELY',
+        affectedEntityIds: state.retainedExplicitMomentIds,
+        permittedByPolicy: true,
+        retentionSemanticHash: retention?.semanticHash || null,
+      });
+    }
+    if (state.missingCogCount > 0) {
+      rows.push({
+        fromMethod: EMPIRICAL_LOAD_COG_METHOD,
+        toMethod: EMPIRICAL_LOAD_METHOD,
+        reasonCode: 'COG_NOT_AVAILABLE',
+        affectedEntityIds: state.missingCogIds,
+        permittedByPolicy: true,
+      });
+    }
+    return deepFreeze(rows);
   }
   if (choice.selectedMethod === null) {
     return deepFreeze([{
       fromMethod: EMPIRICAL_LOAD_COG_METHOD,
       toMethod: EMPIRICAL_LOAD_METHOD,
       reasonCode: 'KNOWN_ECCENTRICITY_OR_UNQUALIFIED_COMPONENT_EVIDENCE',
-      affectedEntityIds: state.hardExceptionIds,
+      affectedEntityIds: state.blockingExceptionIds,
       permittedByPolicy: false,
     }]);
   }
   return deepFreeze([]);
+}
+
+function midpointAssumptions(entityIds, explicitV2 = false) {
+  return entityIds.map((entityId) => deepFreeze({
+    entityId,
+    code: 'GEOMETRIC_MIDPOINT_APPLICATION',
+    reason: explicitV2
+      ? 'Explicit V2 uses the qualified midpoint application rule.'
+      : 'No qualified component CoG evidence is available.',
+  }));
 }
 
 function candidate(methodId, inputState, selectedMethod) {
@@ -228,8 +397,20 @@ function registration(methodId) {
   return row ? deepFreeze(structuredClone(row)) : null;
 }
 
-function hasFallbackProhibitingEvidence(row) {
-  if ((row.explicitMoment?.magnitudeNm ?? 0) > 0) return true;
+function hasRetainedExplicitMoment(row, retainedIds) {
+  return (row.explicitMoment?.magnitudeNm ?? 0) > 0 && retainedIds.has(row.entityId);
+}
+
+function unhandledBlockers(row, retainedIds) {
+  const explicitRetained = hasRetainedExplicitMoment(row, retainedIds);
+  return (row.blockers || []).filter((blocker) => !(
+    explicitRetained && blocker.code === EXPLICIT_MOMENT_UNSUPPORTED
+  ));
+}
+
+function hasFallbackProhibitingEvidence(row, retainedIds) {
+  if ((row.explicitMoment?.magnitudeNm ?? 0) > 0
+      && !hasRetainedExplicitMoment(row, retainedIds)) return true;
   return [
     EMPIRICAL_COMPONENT_COG_CLASSIFICATION.OFF_ROUTE,
     EMPIRICAL_COMPONENT_COG_CLASSIFICATION.AMBIGUOUS,
@@ -243,6 +424,13 @@ function methodRequest(value) {
     throw new RangeError(`Unsupported empirical gravity method request: ${method || 'EMPTY'}.`);
   }
   return method;
+}
+
+function codedError(message, code, details = null) {
+  const error = new Error(message);
+  error.code = code;
+  error.details = details;
+  return error;
 }
 
 function byEntity(left, right) {

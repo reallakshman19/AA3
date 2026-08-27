@@ -2,7 +2,8 @@ schema: AgentPrClaim.v1
 repository: reallaksh19/Advanced_Analysis
 pr: 1485
 mission: Explicit opt-in B02D V2 mesh producer binding and exact-head qualification envelope on current main
-base_main: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
+base_main: d6101bcac7ccbdab9e42d7e0afbdd7b06d897462
+main_sync_commit: a0c3f513c93d7d00531cac7d71b70246483d6df8
 predecessor_frozen_assets_pr: 1484
 historical_provenance_pr: 1259
 authority_domain:
@@ -10,6 +11,7 @@ authority_domain:
   - V1_BINDING_PRESERVATION
   - V2_BINDING_FAIL_CLOSED_MISUSE_CHECKS
   - B02D_V2_EXACT_HEAD_BINDING_QUALIFICATION_ORCHESTRATION
+  - CURRENT_MAIN_SYNCHRONIZATION_CUSTODY
 changed_paths:
   - .gitignore
   - src/workspace/lafea-mesh-producer-binding.js
@@ -25,6 +27,8 @@ source_custody:
   historical_prechange_binding_blob: 5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
   reviewed_v2_binding_blob: e8307066293314ad952608872db596cf1898d5c1
   frozen_asset_merge_required_ancestor: 2c9ed9d1045431a43a926696c6d5a015cbd0e926
+  synchronized_main: d6101bcac7ccbdab9e42d7e0afbdd7b06d897462
+  synchronization_commit: a0c3f513c93d7d00531cac7d71b70246483d6df8
 claims:
   producer_binding_changed: true
   v2_selected_only_by_v2_profile_identity_and_source_revision: true
@@ -34,6 +38,8 @@ claims:
   exact_head_gate_reuses_existing_b01_qualification_authority: true
   exact_head_gate_stops_after_first_failed_boundary: true
   exact_head_runtime_receipt_path_is_precisely_ignored: true
+  emp1_main_drift_is_exact_path_disjoint: true
+  synchronized_compare_is_zero_behind_and_nine_files: true
   response_solver_changed: false
   historical_galerkin_candidate_included: false
   b01_prerequisite_evidence_available: false
@@ -44,6 +50,7 @@ claims:
   trust_authority_granted: false
 validation_truth:
   binding_blob_custody: PASS
+  current_main_synchronization: PASS_0_BEHIND_9_FILES
   focused_checker_syntax: PASS_LOCAL_NODE_CHECK
   exact_head_classifier_syntax: PASS_LOCAL_NODE_CHECK
   exact_head_wrapper_syntax: PASS_LOCAL_NODE_CHECK

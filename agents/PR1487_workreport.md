@@ -4,93 +4,170 @@
 - Repository: `reallaksh19/Advanced_Analysis`
 - PR: #1487 — `Load Calc: add Basic Calculation Defaults UX`
 - Branch: `agent/issue-1321-calculation-defaults-basic-ux`
-- Reconciled base: `main@d6101bcac7ccbdab9e42d7e0afbdd7b06d897462`
+- Reconciled base / merge base: `main@d6101bcac7ccbdab9e42d7e0afbdd7b06d897462`
 - Criticality: ENGINEERING_CRITICAL
 - Execution mode: AUTO
 - Merge authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
-- State: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+- State: SOURCE_COMPLETE_AWAITING_OWNER
 
 ## Handover in 60 seconds
-Issue #1321 requires normal Load Calc workflow Step 3 to become **Calculation Defaults**, with Basic and Advanced groups and visible `Value | Unit | Scope | Effective authority | Basis | Reset` semantics. Current Load Calc routes Step 3 to `non-fea-project-data-view-v2.js`, which exposes the full Project Data matrix and raw JSON `qualificationPolicy.configuredDefaults`; backend Product/default authority and scope precedence already exist.
+Issue #1321 requires a normal **Calculation Defaults** surface with Basic and Advanced groups and visible `Value | Unit | Scope | Effective authority | Basis | Reset` semantics. Before this PR, Load Calc routed the Step-3 `project-data` tab directly to the complete Non-FEA Project Data matrix, including raw JSON configured-default policy.
 
-PR1487 is D1 only. It adds a normal Calculation Defaults wrapper while preserving the existing Project Data editor under an Advanced authority drawer.
+PR1487 is bounded **PR-D1**. It changes only the Load Calc Step-3 content route. LFEA/other Project Data consumers remain unchanged. The existing full Non-FEA Project Data editor remains available lazily inside an Advanced authority drawer.
 
 ## Production trace
 ```text
 Load Calc project-data tab
 → renderProjectDataView()
-→ [D1] renderNonFeaCalculationDefaultsView()
+→ renderNonFeaCalculationDefaultsView()
 → projectDataStore.applyProductDefaults()
-→ visible Basic defaults model
-→ projectDataStore.update(path, project value/evidence/approved)
-→ semantic hash + runtime revision move
-→ existing Common Input/runtime staleness path
+→ createBasicCalculationDefaultsModel()
+→ 10 visible PROJECT_GLOBAL screening settings
+
+Basic Apply
+→ createBasicCalculationDefaultUpdate()
+→ validate against existing Project Data/runtime bounds
+→ reject higher/independent authority
+→ projectDataStore.update(path, value, PROJECT_POLICY evidence, true)
+→ replaceProjectDataValue()
+→ project revision + semantic hash + runtime revision move
+→ existing currentness/staleness consumers observe the change
+
+Basic Reset
+→ only a Basic-owned PROJECT_POLICY path
+→ reject non-DEFAULT keyed-map custody
+→ clear complete path
+→ next Calculation Defaults render
+→ existing Product-default provider re-materializes governed built-in value
 
 Advanced authority drawer
 → unchanged renderNonFeaProjectDataViewV2()
 ```
 
-## Authority design
-Basic global settings edit their **owning Project Data path**. The edit evidence is `PROJECT_POLICY`, not source/master authority. Reset clears only that complete Project Data path; the existing Product-default provider then re-materializes the governed built-in value on the next render.
+## D1 Basic settings
+1. Length unit — currently qualified choice `mm` only.
+2. Vertical axis — currently qualified choice `Z` only.
+3. Gravity acceleration — finite and `> 0`.
+4. Load factor — finite and `> 0`.
+5. Gravity method request — `AUTO`, `CHAINAGE_TRIBUTARY_SPAN_V2`, `CHAINAGE_TRIBUTARY_SPAN_V3_COG`.
+6. Active canonical cases — non-empty subset of `EMPTY`, `OPE`, `HYD`, canonical ordering.
+7. Default corrosion allowance — finite and `>= 0`.
+8. Default elastic modulus + thermal expansion coefficient — one Project Data authority path; both finite and `> 0`.
+9. Default restraint preload — finite, signed allowed.
+10. Default friction coefficient — finite and `>= 0`.
 
-Authority is path-level. Composite fields that share one Project Data path are not split into fake per-property authority. `materialElasticProperties.DEFAULT.elasticModulusPa` and `thermalExpansionPerK` therefore edit/reset together.
+## Authority protections added during review
+Two defects were found and repaired before source completion.
 
-## D1 Basic rows
-1. canonical length unit (`mm`, currently qualified choice)
-2. source up axis (`Z`, currently qualified choice)
-3. gravity acceleration
-4. load factor
-5. gravity method (`AUTO`, V2, V3-CoG request)
-6. active canonical cases (`EMPTY`, `OPE`, `HYD`)
-7. default corrosion allowance
-8. default elastic modulus + thermal expansion coefficient (one authority path)
-9. default restraint preload
-10. default friction coefficient
+### 1. Lower-authority Basic edit may not overwrite higher authority
+A Basic Apply is permitted only when the path is:
+- empty;
+- governed `PRODUCT_DEFAULT`; or
+- a prior Basic Calculation-Defaults `PROJECT_POLICY` owned by the same field ID.
+
+Source/master/independently-authored project authority is displayed but disabled in Basic. The model and update function both enforce this, so DOM manipulation cannot bypass the rule.
+
+### 2. Basic map reset may not erase unrelated keyed values
+For map-backed defaults (`corrosionAllowancesMm`, `materialElasticProperties`, `restraintPreloadsN`, `frictionCoefficients`), Basic editing/reset is allowed only when the path contains no key other than `DEFAULT`.
+
+If class/line/other keyed values exist, Basic is disabled and the operator is directed to Advanced authority editing. This prevents Reset from deleting unrelated data and prevents Basic from taking custody of a mixed map.
+
+## Evidence semantics
+Basic edits write:
+```text
+source               = Load Calc Calculation Defaults
+authority            = PROJECT_POLICY
+basis                = User-configured project screening default for <setting>
+calculationDefaultId = <Basic field ID>
+previousAuthority    = <observed effective authority>
+approved              = true
+```
+
+This is intentionally not source/master evidence. Product-default rows keep their original default ID, basis, profile ID/version and semantic hashes.
 
 ## Advanced D1 behavior
-- show Product-default profile identity/version/hash and built-in rows;
-- show configured-default policy count/state;
-- retain the full existing Non-FEA Project Data editor in an Advanced authority drawer;
-- D2 remains responsible for the dedicated engineer-friendly scoped-default form.
+- Product-default profile identity/version/hash is visible.
+- Full built-in Product-default catalog is read-only and shows ID/path/value/unit/basis/hash.
+- Existing configured-default policy count/state is visible.
+- The complete existing Non-FEA Project Data/configured-default authority editor remains available in a nested Advanced drawer.
+- Dedicated engineer-friendly scope authoring remains **D2**; this PR does not falsely claim the scope editor is complete.
 
-## Locked invariants
-- no Product-default catalog change;
-- no configured-default scope precedence or provider change;
-- no Common Input checker, Run routing, authorization, statics, solver or tolerance change;
-- no fake source/master evidence;
-- invalid numeric/case/method input fails before Project Data write;
-- existing advanced editor remains available unchanged;
-- no file overlap with open PR #1486.
-
-## Planned net files
-1. `src/workspace/project-data/project-data-view.js`
-2. `src/workspace/project-data/non-fea-calculation-defaults-model.js`
-3. `src/workspace/project-data/non-fea-calculation-defaults-view.js`
+## Exact final changed-file ledger — 7 files
+1. `agents/PR1487_workreport.md`
+2. `agents/claims/PR1487.yaml`
+3. `agents/status/PR1487.yaml`
 4. `scripts/non-fea-calculation-defaults-basic-ux-check.mjs`
-5. `agents/PR1487_workreport.md`
-6. `agents/claims/PR1487.yaml`
-7. `agents/status/PR1487.yaml`
+5. `src/workspace/project-data/non-fea-calculation-defaults-model.js`
+6. `src/workspace/project-data/non-fea-calculation-defaults-view.js`
+7. `src/workspace/project-data/project-data-view.js`
 
-Temporary WIP marker must be absent from final net tree. Aggregate registration is intentionally deferred to avoid sharing `scripts/run-non-fea-checks.mjs` with open #1486.
+Temporary WIP claim is absent from the final net tree. `scripts/run-non-fea-checks.mjs` is intentionally untouched because open PR #1486 owns that aggregate file.
+
+## Protected paths unchanged
+- `src/workspace/project-data/non-fea-project-data-view-v2.js`
+- `src/workspace/project-data/non-fea-product-default-profile.js`
+- `src/workspace/project-data/non-fea-configured-default-provider.js`
+- `src/workspace/project-data/non-fea-field-registry.js`
+- `src/workspace/non-fea-common-input-runtime.js`
+- `src/core/non-fea-common-checker/**`
+- `src/workspace/engineering-loads/**`
+- `scripts/run-non-fea-checks.mjs`
+- `.github/workflows/**`
+
+## Source-level falsifiers
+The standalone qualification definition pins:
+- exactly 10 Product-default Basic rows from an empty effective profile;
+- all rows `PROJECT_GLOBAL`;
+- Product-default provenance and project-policy transition;
+- source-owned value cannot be edited or reset from Basic;
+- non-`DEFAULT` keyed map cannot be edited/reset from Basic;
+- complete-path E+alpha reset only for Basic-owned custody;
+- blank numeric input cannot coerce to zero;
+- unsupported `Y` axis / `m` unit fail before write;
+- zero/negative values follow the existing Project Data positive/non-negative contracts;
+- invalid method/case tokens fail before write;
+- normal Load Calc Project Data router now selects Calculation Defaults;
+- Advanced full authority editor remains reachable;
+- existing configured-default ledger remains intact;
+- D2 scope editor remains explicitly deferred.
 
 ## Validation truth
-- live main grounding: PASS_SOURCE_INSPECTION
-- concurrent-main overlap: PASS_NONE (EMP.1-only)
-- Issue #1321 D1 UX requirement trace: PASS_SOURCE_INSPECTION
-- current raw-JSON/default-ledger UX gap: PASS_SOURCE_INSPECTION
-- existing Product-default write/staleness seam: PASS_SOURCE_INSPECTION
-- configured-default scope/provider preserved: PASS_SOURCE_INSPECTION
-- focused Node check: NOT_RUN
+Source/repository validation:
+- live main grounding: PASS
+- concurrent main movement audit: PASS_NONE (intervening #1457 is EMP.1-only)
+- merge base equals live main: PASS
+- Issue #1321 D1 requirement trace: PASS
+- ProjectDataStore revision/hash/currentness trace: PASS_SOURCE_INSPECTION
+- production Project Data validity alignment: PASS_SOURCE_INSPECTION
+- higher-authority overwrite protection: PASS_SOURCE_INSPECTION
+- keyed-map destructive-reset protection: PASS_SOURCE_INSPECTION
+- Product-default catalog/provider unchanged: PASS
+- configured-default scope/provider unchanged: PASS
+- advanced authority editor preserved: PASS
+- open #1486 exact-file overlap: PASS_NONE
+- temporary WIP removed: PASS
+- exact seven-file intended scope: PASS_PENDING_FINAL_COMPARE
+
+Executable validation:
+- standalone focused Node check: NOT_RUN
 - Non-FEA aggregate: NOT_RUN
-- imports/build: NOT_RUN
+- `npm run check:imports`: NOT_RUN
+- `npm run build`: NOT_RUN
 - `git diff --check`: NOT_RUN
 
-No NOT_RUN is represented as PASS.
+Faithful local checkout attempt failed before materialization with:
+`Could not resolve host: github.com`
+
+No NOT_RUN item is represented as PASS.
 
 ## Appendix A — takeover qualification
-A1 Production trace 20/20 · A2 Failure isolation 20/20 · A3 Authority invariant 20/20 · A4 Independent validation 18/20 · A5 Minimal patch 20/20
+- A1 Production trace: 20/20
+- A2 Failure isolation: 20/20
+- A3 Authority invariant: 20/20
+- A4 Independent validation design: 18/20
+- A5 Minimal patch: 20/20
 
-**Score: 98/100; minimum 18/20. WRITE_ALLOWED.**
+**Score: 98/100; minimum 18/20.**
 
 ## EXACT_NEXT_ACTION
-Implement the pure Basic defaults model, the Calculation Defaults wrapper, route Load Calc project-data to it, add standalone falsifiers, remove WIP marker, reconcile exact scope, and leave PR1487 ready for owner review without merging.
+Owner review of #1487. Do not merge without explicit owner authority. After D1 is merged/reconciled, continue Issue #1321 PR-D2 with the engineer-friendly scoped-default editor backed by the existing `non-fea-configured-default-policy/v1` and its established scope precedence; do not create a second default mechanism.

@@ -1,0 +1,25 @@
+schema: AgentWipClaim.v1
+repository: reallaksh19/Advanced_Analysis
+issue: 1321
+branch: agent/issue-1321-effective-value-inspection
+state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: 3a54862127c601f3e4c59159526e7345fc06cf4c
+mission: "Expose the exact current Common Input effective-value winners in Calculation Defaults without creating another resolver or changing mechanics."
+claimed_paths:
+  - src/workspace/project-data/non-fea-calculation-effective-values-model.js
+  - src/workspace/project-data/non-fea-calculation-defaults-view.js
+  - scripts/non-fea-calculation-effective-values-inspection-check.mjs
+  - agents/**
+protected_paths:
+  - src/core/non-fea-enrichment/index.js
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/workspace/project-data/non-fea-configured-default-provider.js
+  - src/workspace/project-data/non-fea-effective-value-resolver.js
+  - src/workspace/engineering-loads/**
+  - .github/workflows/**
+authority_boundary: "Read-only current Common Input resolution projection and Step-3 presentation only. No resolver precedence, authority creation, Run, statics, solver or tolerance change."
+merge_authority: OWNER_ONLY_NOT_GRANTED
+exact_next_action: "Open numbered draft PR, implement a read-only projection of non-fea-field-resolution-ledger/v1, add Step-3 effective-value table and focused falsifier, then reconcile exact diff."

@@ -7,40 +7,31 @@ export const AUTHORIZED_EMPIRICAL_SOURCE_AXIS_BINDING_SCHEMA =
 
 const SOURCE_AXIS_PATH = 'sourcesAndUnits.sourceUpAxis';
 const LENGTH_UNIT_PATH = 'sourcesAndUnits.lengthUnit';
-const IMPLEMENTED_GRAVITY_AXIS = 'Z';
+const SUPPORTED_SOURCE_AXES = Object.freeze(['X', 'Y', 'Z']);
 const IMPLEMENTED_LENGTH_UNIT = 'mm';
-const IMPLEMENTED_KERNEL_BASIS = 'Z_UP';
+const LEGACY_SCALAR_KERNEL_BASIS = 'Z_UP';
+const AXIS_GENERAL_MECHANICS_SCOPE = 'SOURCE_AXIS_GENERAL_MM_SCALAR_VERTICAL_GRAVITY';
+const AXIS_INVARIANCE_BASIS = 'XYZ_PERMUTATION_INVARIANT_EUCLIDEAN_ROUTE_CHAINAGE_SCALAR_GRAVITY';
 
 /**
- * Validates the engineering-coordinate basis implemented by the current scalar
- * gravity statics before the kernel is allowed to execute.
+ * Validates the exact source-axis authority consumed by the scalar gravity path.
  *
- * Workspace geometry coordinates are retained in source engineering space;
- * the available coordinate transform is rendering-only. The gravity kernel
- * also uses millimetre chainage/section dimensions and N/N·mm output. Until an
- * engineering vector/unit transformation exists, non-Z-up or non-mm input must
- * fail closed rather than be cosmetically relabelled.
+ * V2/V3 gravity mechanics consume Euclidean support grouping, Euclidean route/
+ * CoG projection, route chainage and a scalar gravity magnitude. Those
+ * operations are invariant under permutation of source X/Y/Z axes; the physical
+ * vertical direction is therefore an authority/sign convention, not a special
+ * coordinate used by the statics formulas. Source geometry remains in mm and
+ * no arbitrary gravity-vector or unit transformation is introduced here.
  */
 export function requireAuthorizedEmpiricalSourceBasis(profile) {
   const axisEntry = projectDataEntry(profile, SOURCE_AXIS_PATH);
   const axis = stringValue(axisEntry?.value).toUpperCase();
   requireApprovedEntry(axisEntry, SOURCE_AXIS_PATH, 'EMPIRICAL_SOURCE_AXIS_AUTHORITY_INVALID');
-  if (!['X', 'Y', 'Z'].includes(axis)) {
+  if (!SUPPORTED_SOURCE_AXES.includes(axis)) {
     throw codedError(
       'Effective source up-axis must be X, Y, or Z before authorized support-load calculation.',
       'EMPIRICAL_SOURCE_AXIS_INVALID',
       { projectDataPath: SOURCE_AXIS_PATH, value: axisEntry?.value ?? null },
-    );
-  }
-  if (axis !== IMPLEMENTED_GRAVITY_AXIS) {
-    throw codedError(
-      `Authorized empirical gravity currently implements source ${IMPLEMENTED_GRAVITY_AXIS}-up scalar mechanics only; ${axis}-up requires an explicit gravity-vector/coordinate transformation before calculation.`,
-      'EMPIRICAL_SOURCE_AXIS_MECHANICS_UNSUPPORTED',
-      {
-        projectDataPath: SOURCE_AXIS_PATH,
-        requestedSourceUpAxis: axis,
-        implementedSourceUpAxis: IMPLEMENTED_GRAVITY_AXIS,
-      },
     );
   }
 
@@ -60,10 +51,11 @@ export function requireAuthorizedEmpiricalSourceBasis(profile) {
   }
 
   return freezeDeep({
-    sourceUpAxis: IMPLEMENTED_GRAVITY_AXIS,
-    sourceAxisBasis: IMPLEMENTED_KERNEL_BASIS,
+    sourceUpAxis: axis,
+    sourceAxisBasis: `${axis}_UP`,
     lengthUnit: IMPLEMENTED_LENGTH_UNIT,
-    mechanicsScope: 'SOURCE_Z_UP_MM_SCALAR_VERTICAL_GRAVITY',
+    mechanicsScope: AXIS_GENERAL_MECHANICS_SCOPE,
+    axisInvarianceBasis: AXIS_INVARIANCE_BASIS,
     sourceAxisEvidence: clonePlain(axisEntry.evidence),
     sourceAxisEntrySemanticHash: semanticHash(axisEntry),
     lengthUnitEvidence: clonePlain(unitEntry.evidence),
@@ -72,8 +64,10 @@ export function requireAuthorizedEmpiricalSourceBasis(profile) {
 }
 
 /**
- * Binds already-calculated result metadata to the same governed source basis
- * that was required before ledger-driven execution.
+ * Rebinds the legacy scalar-kernel metadata to the governed source axis only
+ * after the axis-general mechanics qualification above has been required.
+ * `Z_UP` on the raw distribution remains an internal compatibility marker from
+ * the unchanged scalar kernel; it is not treated as source-axis authority.
  */
 export function bindAuthorizedEmpiricalSourceAxis({ distribution, profile } = {}) {
   if (!distribution || typeof distribution !== 'object' || !Array.isArray(distribution.loadCases)) {
@@ -83,12 +77,12 @@ export function bindAuthorizedEmpiricalSourceAxis({ distribution, profile } = {}
     );
   }
   const basis = requireAuthorizedEmpiricalSourceBasis(profile);
-  if (distribution.sourceAxisBasis !== IMPLEMENTED_KERNEL_BASIS) {
+  if (distribution.sourceAxisBasis !== LEGACY_SCALAR_KERNEL_BASIS) {
     throw codedError(
-      'Authorized empirical gravity kernel basis is inconsistent with the implemented source-axis mechanics.',
+      'Authorized empirical gravity kernel basis is inconsistent with the qualified scalar-kernel compatibility marker.',
       'EMPIRICAL_SOURCE_AXIS_KERNEL_BASIS_MISMATCH',
       {
-        expected: IMPLEMENTED_KERNEL_BASIS,
+        expected: LEGACY_SCALAR_KERNEL_BASIS,
         actual: distribution.sourceAxisBasis ?? null,
       },
     );
@@ -98,6 +92,7 @@ export function bindAuthorizedEmpiricalSourceAxis({ distribution, profile } = {}
     schema: AUTHORIZED_EMPIRICAL_SOURCE_AXIS_BINDING_SCHEMA,
     projectDataPath: SOURCE_AXIS_PATH,
     lengthUnitProjectDataPath: LENGTH_UNIT_PATH,
+    legacyScalarKernelBasis: LEGACY_SCALAR_KERNEL_BASIS,
     ...basis,
   });
   const rebound = clonePlain(distribution);

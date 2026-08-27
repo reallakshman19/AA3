@@ -10,11 +10,11 @@ predecessor_binding_pr: 1485
 work_intent: QUALIFY_FIRST_RESPONSE_BOUNDARY_WITHOUT_SOLVER_REPAIR
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
-agent_state: SOURCE_COMPLETE_EXECUTION_BLOCKED
-pr_recovery_state: CURRENT_MAIN_RESPONSE_SUCCESSOR
-handover_readiness: READY_FOR_CONTINUATION
+agent_state: BLOCKED
+pr_recovery_state: EXECUTION_BLOCKED_ENVIRONMENT
+handover_readiness: READY_FOR_EXECUTION
 report_path: agents/PR1490_workreport.md
-current_stage: GOVERNING_RESPONSE_OBSERVER_SOURCE_COMPLETE_EXECUTION_BLOCKED
+current_stage: SOURCE_COMPLETE_EXECUTION_ENVIRONMENT_HARD_STOP
 engineering_failure_proven: false
 validation:
   predecessor_merge: { state: PASS_GITHUB_READBACK }
@@ -23,19 +23,25 @@ validation:
   classifier_load_gate_self_test: { state: PASS, cases: 13, exact_blob_identity: true }
   observer_pre_solve_load_gate_order: { state: PASS_SOURCE_INSPECTION }
   direct_checkout_retry: { state: NOT_RUN_EXECUTION_ENVIRONMENT_DNS }
+  hosted_lafea_runner: { state: NOT_RUN_PRE_STEP_RUNNER_ALLOCATION, run: 33071097476, job: 98513249297 }
+  active_self_hosted_workflow_audit: { state: COMPLETE_NO_EXECUTABLE_ROUTE, self_hosted_references_in_current_workflows: 0 }
+  historical_b7h_route: { state: PROVENANCE_ONLY_NOT_ACTIVE_CURRENT_WORKFLOW }
   b01_exact_head_prerequisite: { state: NOT_RUN }
   b02d_v2_binding_exact_head: { state: NOT_RUN }
   b02d_v2_governing_response: { state: NOT_RUN }
   historical_response_values: { state: PROVENANCE_ONLY }
+execution_blocker: EXACT_HEAD_EXECUTION_UNAVAILABLE_NO_CURRENT_SELF_HOSTED_ROUTE
 response_solver_changed: false
 reaction_assembly_changed: false
 galerkin_correction_included: false
 benchmark_or_tolerance_changed: false
+workflow_changed: false
 b02_numerical_authority_granted: false
 response_solver_repair_authorized: false
 reaction_equilibrium_repair_authorized: false
 historical_galerkin_candidate_authorized: false
+full_response_ladder_authorized: false
 release_authority_granted: false
 trust_authority_granted: false
 merge_authority: OWNER_ONLY_NOT_GRANTED
-exact_next_action: Run `node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs` from an exact clean checkout; stop at the first emitted disposition and preserve its receipt.
+exact_next_action: Obtain an executable exact clean checkout, then run `node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs`; stop at the first emitted disposition. Do not create another validation-only PR or modify solver/reaction mechanics while execution remains unavailable.

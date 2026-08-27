@@ -6,35 +6,38 @@ workstream: EMP1_DEPENDENCY_SECURITY_WITH_ABSORBED_HEADER_CHILD
 branch: agent/issue-1463-emp1-dependency-security-20260826
 issue: 1463
 umbrella: 1389
-dependency_base_pr: 1457
-execution_mode: AUTO
-auto_state: RUNNING
-phase_progression: AUTO
+base_branch: main
+execution_mode: MANUAL
+auto_state: NOT_ACTIVE_CURRENT_INSTRUCTION
 scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1463_WITH_ABSORBED_1466
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-parent_head: eba35c045b3adc09885b73fcb3738f9125de4cee
-pre_propagation_head: 169e045cacedb4930a6aca97fa92d95e3eeb5201
-structural_propagation_head: edb4a7e4f00ec33ee33745d9ed3131706365e4dd
-structural_propagation_tree: f425c0383d6d25d100f9772ddd0d234bef2078b4
-report_basis_head: edb4a7e4f00ec33ee33745d9ed3131706365e4dd
+pre_reground_head: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
+structural_reground_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
+structural_reground_tree: 2ed2cba409ab3330661f64836fb6a6d0e612475f
+report_basis_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
 absorbed_child_pr: 1470
-live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
-grounding_epoch: GE-PR1464-006
+live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+live_main_tree: b0b6f71c770971280383e1ac195257a54a5c3fdc
+grounding_epoch: GE-PR1464-007
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: LATEST_PARENT_PROPAGATED_PR1473_NEXT
-current_stage: LATEST_PARENT_PROPAGATION_VALIDATED
+coordination: CURRENT_MAIN_REGROUNDED_PR1473_PROPAGATION_NEXT
+current_stage: CURRENT_MAIN_REGROUND_VALIDATED
 merge_authorization: NOT_GRANTED
 validation:
+  main_drift_exact_path_overlap: PASS_NONE
   retained_blob_custody: PASS_EXACT_16_BLOBS
   structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
+  post_reground_compare: PASS_EXACT_16_FILES_ZERO_BEHIND
+  base_retarget_main: PASS
+  reviews_threads: PASS_ZERO_ZERO_PRE_STRUCTURAL_ACTION
   dependency_header_source: PASS_PRIOR_AUDIT
   dependency_advisory_build_browser_header_execution: NOT_RUN_CURRENT_EPOCH
-  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RETAINED
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
   numerical_comparison: NOT_APPLICABLE
-current_blocker: "Live advisory/build/browser/deployment/header evidence remains NOT_RUN; merge authority not granted."
-exact_next_action: "Keep PR1464 draft/unmerged and propagate this exact parent into PR1473, retaining PR1473's seven deployment-operations blobs."
+current_blocker: "Executable advisory/build/browser/deployment/header evidence remains NOT_RUN; merge authority not granted."
+exact_next_action: "Propagate this exact PR1464 parent into PR1473 while retaining PR1473's exact seven-file deployment-operations delta."

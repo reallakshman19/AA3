@@ -5,29 +5,26 @@ mission: "Reconcile authorized-route current state in the aggregate P0 source-se
 workstream: EMP1_WRC537_P0_AGGREGATE_RECONCILIATION
 branch: agent/issue-1389-p0-gate-current-state-20260825
 execution_mode: AUTO
-auto_state: COMPLETE
+auto_state: RUNNING
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
+pr_recovery_state: HEALTHY_DEPENDENCY_RECONCILED_READY_TO_MERGE
 handover_readiness: READY
-live_main_at_grounding: 93c4f9e3af98e58190951ff94b5b50616950f623
-structural_reground_head: f6202b7fa78ebfe0148b28fb50ea3d6310241b42
-report_basis_head: f6202b7fa78ebfe0148b28fb50ea3d6310241b42
-grounding_epoch: GE-PR1427-007
+live_main_at_grounding: 19b762e1f9512284da961e5816a28c10432080bb
+report_basis_head: 183d88552fd32f24f240730a9057b7802671de35
+grounding_epoch: GE-PR1427-008
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_AGGREGATE_GOVERNANCE_CURRENT_MAIN
-current_stage: CURRENT_MAIN_REGROUND_COMPLETE_DOWNSTREAM_PR1436_RESTACKED
+coordination: SAFE_AFTER_PR1415_MERGE_RECONCILIATION
+current_stage: PR1415_MERGE_DEPENDENCY_RECONCILED_READY_TO_MERGE
 validation:
   exact_six_file_scope: PASS
-  behind_live_main_at_grounding: 0
-  reviews: 0
-  review_threads: 0
   aggregate_blocker_count: 9
-  pr1415_unmerged_dependency: PASS_NOT_CURRENT_MAIN_AUTHORITY
+  pr1415_current_main_dependency: PASS_RECONCILED
+  issue1377_aggregate_status: BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED
   direct_primary_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
   aggregate_checker: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
@@ -39,5 +36,5 @@ authority:
   code_compliance: false
   release_qualified: false
   deployment_authorized: false
-merge_authorization: OWNER_ONLY_NOT_GRANTED
-exact_next_action: "Keep draft/unmerged. If PR1415 merges, reconcile #1377 in aggregate before any PR1427 merge and re-ground PR1436."
+merge_authorization: GRANTED_EXPLICIT_OWNER_2026-08-27
+exact_next_action: "Verify mergeability and six-file diff; merge PR1427, then re-ground PR1436 to the merged aggregate state."

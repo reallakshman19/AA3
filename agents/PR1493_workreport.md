@@ -1,4 +1,4 @@
-# PR1493 Work Report — Issue #1321 D4 Default Usage + Coverage Observability
+# PR1493 Work Report — Issue #1321 D4 + PR-E
 
 ## Recovery header
 - Repository: `reallaksh19/Advanced_Analysis`
@@ -9,122 +9,137 @@
 - Criticality: ENGINEERING_CRITICAL
 - Execution mode: AUTO
 - Merge authority: OWNER_ONLY_NOT_GRANTED
-- State: SOURCE_COMPLETE_REVIEW_PENDING_EXECUTION
+- Current state: IMPLEMENTATION_IN_PROGRESS_PR_E_STACKED
+- Scope authority: owner explicitly instructed on 2026-08-27 to proceed to the next Issue #1321 slice and stack it on this same PR.
 
-## Mission
-Close the remaining Issue #1321 PR-D observability items:
-- Default-usage summary.
-- Exception/coverage summary.
+## Handover in 60 seconds
+D4 is already source-complete on this branch: Calculation Defaults exposes canonical configured-default usage, Product-default path-fill assumptions, Common Input coverage and grouped readiness blockers without changing authority/mechanics. The owner then expanded this same PR into PR-E one-click execution.
 
-The implementation is read-only and reuses existing authority/checker evidence rather than introducing another default, resolution, coverage or readiness mechanism.
+The existing backend already performs the intended system Run chain:
 
-## Live Issue #1321 grounding
-PR-D requires:
-- Basic settings panel — already merged.
-- Advanced settings panel — already merged.
-- Scope editor — already merged.
-- Provenance/effective-value badges — merged before/with D3.
-- Reset to product default — merged in Basic Calculation Defaults.
-- Per-line/per-component effective value table — #1492 / D3 merged at `b2e8745a...`.
-- Default-usage summary — this D4 slice.
-- Exception/coverage summary — this D4 slice.
+`Run click`
+→ `CURRENT_COMMON_INPUT_CALCULATE_REQUESTED`
+→ `EngineeringModelController.calculateCurrentCommonInput()`
+→ `executeCurrentCommonInputEmpiricalRun()`
+→ `sealCurrentReadyNonFeaCalculationSnapshot()`
+→ current Common Input build/evaluate
+→ READY-only system seal
+→ `authorizeCurrentNonFeaEmpiricalRun()`
+→ method-currentness authorization receipt
+→ governed method selection
+→ current mass projection
+→ current support-load execution
+→ execution receipt/store.
 
-## Production trace used by D4
-One Step-3 current-input build is shared by D3 and D4:
+The isolated product defect is upstream UI gating: the header Run button is disabled until `isRoutineRunReady()` sees an already-created READY checker report or current READY seal, even though the click path itself would create/evaluate/seal that snapshot. This forces a manual validation visit contrary to PR-E.
 
-`renderProjectDataView()`
-→ `renderNonFeaCalculationDefaultsView()`
-→ `renderNonFeaCalculationEffectiveValuesInspector()`
-→ **one** `buildCurrentPreFeaRequestInput()`
-→ D3 reads `current.resolutionLedger`
-→ D4 calls canonical `createPreFeaPipingCheckRequest(current)`
-→ canonical `runPreFeaPipingCheck(request)`
-→ D4 projects:
-  - `request.configuredDefaultUsageLedger`
-  - `current.productDefaultProvider.usageRows / shadowedRows`
-  - `report.methodRows[].requirements[]`
-  - `report.blockers`.
+A second PR-E gap was isolated: `nonFeaCommonInputStore.configure()` correctly marks the Common Input seal stale when requested methods/load cases/qualification change, but the current support-load distribution is not independently marked stale. `EngineeringModelController` must observe configuration changes and invalidate current results.
 
-No Common Input store mutation is required merely to view Step 3. D4 does not call `evaluateCurrentNonFeaCommonInput()`, sealing, Run execution, effective-value resolution, or empirical runtime APIs.
+## Coordination / grounding
+- Live `main` at scope expansion: `b2e8745a8cdb47850b8f162cea8c16f3f4006e03`.
+- PR #1493 head before scope expansion: `629911845f1be8bb6f4ac2f173c75f0d437d8cb9`.
+- PR state: open, draft, mergeable at the last reconciliation; 0 reviews / 0 review threads then.
+- Repository `agents/MASTER_INDEX.md`: not present at checked branch path.
+- Other active Issue #1321 workstream: PR #1491, source-axis-general scalar gravity. No intended exact-file overlap with this PR-E slice.
+- Same-agent continuation; no takeover qualification required. Scope expansion is explicitly owner-authorized.
 
-## Authority / semantic boundaries
-### PROJECT_CONFIGURED_DEFAULT usage
-The existing `non-fea-configured-default-usage-ledger/v1` remains authoritative. D4 counts:
-- method-level usage receipts;
-- unique selected target-field applications;
-- affected targets;
-- selected default/field combinations.
+## Completed D4 state retained
+D4 implements:
+1. `non-fea-calculation-defaults-observability-model.js` — read-only configured-default/Product-default/checker coverage projection.
+2. Extended `non-fea-calculation-effective-values-view.js` — D3 + D4 share one current-input build.
+3. `non-fea-calculation-defaults-observability-check.mjs` — source/falsifier coverage.
+4. Registration in `run-non-fea-checks.mjs`.
+5. Numbered recovery records.
 
-It does not infer configured-default usage from the authored policy itself.
+D4 invariants remain:
+- no resolver precedence change;
+- no Product-default promotion to fabricated target winner;
+- no duplicate coverage algorithm;
+- no Common Input store mutation merely by opening Calculation Defaults;
+- no seal/Run execution from D4 view;
+- no numerical mechanics/source-axis/tolerance change.
 
-### PRODUCT_DEFAULT usage
-`non-fea-product-default-provider/v1.usageRows` represents Product defaults that fill otherwise-empty **Project Data paths**. These are displayed separately from target-level configured-default selections.
+## PR-E governing requirement from Issue #1321
+PR-E requires:
+- Run must not require manual traversal of Project Data → Masters → Preflight → Seal → Authorize.
+- Internal semantic snapshot/receipt generation remains auditable.
+- Existing explicit seal/authorization APIs remain available for advanced/audit use.
+- Previous results become stale when any calculation-affecting dependency changes.
 
-`shadowedRows` is retained as the count of Product defaults not applied because existing authority already owns the path.
+## PR-E production diagnosis
+### Existing backend already satisfies most orchestration
+`src/workspace/engineering-loads/current-common-input-empirical-run-runtime.js` already uses:
+- `sealCurrentReadyNonFeaCalculationSnapshot`;
+- `authorizeCurrentNonFeaEmpiricalRun`;
+- governed gravity-method authority/selection;
+- current Common Input mass projection;
+- current support-load execution;
+- separate current-system execution custody.
 
-D4 does not claim a Product-default path fill is a target-level resolver winner.
+It remains fail-closed: a non-READY/stale/partial snapshot cannot reach authorization or numerical execution, and a selected-method failure is not retried through legacy/lower-fidelity execution.
 
-### Coverage
-Coverage comes only from canonical checker requirements:
-- `MASS_COVERAGE`
-- `FLEXURAL_COVERAGE`
-- `SECTION_COVERAGE`
+### ISS-1493-E1 — UI pre-evaluation gate
+`load-calc-current-system-view.js::isRoutineRunReady()` is appropriate as a **validated READY** predicate, but `renderLoadCalcConsumer()` also uses it as the prerequisite for enabling the Run button. If the Common Input checker has not been evaluated yet, ordinary Run is disabled even when dataset/topology are structurally ready.
 
-D4 does not recalculate governed-entity coverage from the source model. It validates the checker detail contract (`total`, `covered`, `missing`, `ready`) for internal consistency and derives presentation percentage only from those canonical counts.
+Planned correction: introduce a distinct structural **Run-attempt availability** predicate based on guided-workflow dataset/topology readiness. The button may then invoke the existing governed runtime. UI text must say it will build/validate/seal/authorize on Run; it must not claim READY before the checker does. Backend READY-only gates stay unchanged.
 
-Repeated coverage evidence across requested methods must be identical or the observability projection fails closed. It also requires `covered = total - unique(missing)` and `ready = (missing.length === 0)`, matching the checker contract.
+### ISS-1493-E2 — configuration change result staleness
+`nonFeaCommonInputStore.configure()` invalidates its own request/report/current seal correctly, but current support-load result freshness is not guaranteed to change. Method/load-case/qualification selection changes are calculation-affecting and therefore must invalidate `engineeringSupportLoadStore` current execution/distribution.
 
-### Exceptions
-D4 groups the canonical `report.blockers` for presentation while retaining occurrence counts and method IDs. These are labelled **pre-Run readiness exceptions**. They are not represented as post-calculation unallocated-load/equilibrium exceptions.
+Planned correction: `EngineeringModelController` observes Common Input configuration identity, calls `engineeringModelStore.markEmpiricalStale('COMMON_INPUT_CONFIGURATION_CHANGED', ...)` only when configuration changes, refreshes legacy explicit package state, and publishes a normal engineering-model change event. Evaluation/sealing without configuration change must not stale a result.
 
-## Implemented source cut
-1. Added `src/workspace/project-data/non-fea-calculation-defaults-observability-model.js`.
-2. Extended `non-fea-calculation-effective-values-view.js` so D3 + D4 share one current-input build.
-3. Added `scripts/non-fea-calculation-defaults-observability-check.mjs`.
-4. Registered the D4 check in `scripts/run-non-fea-checks.mjs`.
-5. Added numbered PR recovery records.
+## Planned production cut
+1. `src/workspace/load-calc-current-system-view.js`
+   - add pure structural Run-attempt predicate;
+   - enable ordinary Run after dataset + canonical topology readiness even before a checker report exists;
+   - keep validated READY status semantically separate;
+   - align Run tile/pill/status text with deferred system validation.
+2. `src/workspace/load-calc-consumer-controller.js`
+   - Verify pane treats system build/evaluate/seal/authorize as automatic on Run;
+   - does not require manual Project Data/Masters/Seal traversal merely because raw fields are empty;
+   - unresolved/invalid current input still fails closed at Run.
+3. `src/workspace/engineering-model-controller.js`
+   - subscribe to Common Input store configuration changes;
+   - mark current engineering results stale only when requested method/load-case/qualification basis changes.
+4. `scripts/load-calc-current-common-input-run-routing-check.mjs`
+   - extend existing focused regression for pre-evaluation clickable Run and configuration-change staleness;
+   - retain checks proving legacy explicit paths remain and runtime failure never falls back.
+5. Recovery records updated continuously.
 
-No `src/core/non-fea-common-checker/**`, `src/core/non-fea-enrichment/**`, runtime resolver/provider, support-load mechanics, source-axis mechanics, solver, tolerance, workflow, or GitHub workflow file is changed.
+## Protected boundaries
+Do not change in PR-E:
+- `src/core/non-fea-common-checker/**`;
+- `src/core/non-fea-enrichment/**`;
+- `src/workspace/non-fea-common-input-runtime.js` READY-only system snapshot logic;
+- effective-value resolver/provider precedence;
+- `src/workspace/engineering-loads/**` numerical/statics/runtime receipt mechanics;
+- source-axis qualification (#1491 domain);
+- solver/tolerance behavior;
+- workflows.
 
-## Falsifier design
-The focused check is authored to prove, when executable:
-- one configured default used by two methods on one target creates two receipts but one target-field selection;
-- Product-default path fills remain path-scoped assumptions with no fabricated target ID;
-- shadowed Product-default custody remains visible;
-- MASS coverage deduplicates consistently across methods;
-- incomplete FLEXURAL coverage retains exact missing entity evidence and percentage;
-- SECTION coverage remains independently visible;
-- repeated checker blockers group for presentation while retaining method IDs/receipt count;
-- inconsistent repeated coverage fails closed;
-- `ready=true` with a non-empty missing list fails closed;
-- `covered` inconsistent with `total - missing` fails closed;
-- the D3+D4 view source contains exactly one current-input build call;
-- the view uses canonical checker functions and does not mutate the Common Input store, resolve values, seal or execute.
+Clickable Run means **attempt governed current-system execution**, not **prevalidated READY**.
 
-During source review, an initial falsifier assertion incorrectly required Product-default and configured-default counts to be numerically unequal even though both fixture counts happened to be 2. That was corrected: semantic separation is now tested by custody shape (Project Data path vs target IDs), not accidental numeric inequality.
+## Validation ledger
+Source inspection:
+- current backend auto-snapshot chain: PASS_SOURCE_INSPECTION;
+- current backend system authorization receipt chain: PASS_SOURCE_INSPECTION;
+- UI pre-evaluation gate defect: PASS_SOURCE_INSPECTION;
+- method/load-case/qualification staleness gap: PASS_SOURCE_INSPECTION;
+- D4 prior source reconciliation: PASS_SOURCE_INSPECTION.
 
-## Validation truth
-- #1492 merged-base grounding: PASS_SOURCE_INSPECTION
-- Issue #1321 PR-D remaining-item grounding: PASS_SOURCE_INSPECTION
-- canonical usage-ledger ownership trace: PASS_SOURCE_INSPECTION
-- canonical checker coverage/blocker ownership trace: PASS_SOURCE_INSPECTION
-- one-current-input-build architecture trace: PASS_SOURCE_INSPECTION
-- Product-default vs configured-default semantic boundary review: PASS_SOURCE_INSPECTION
-- focused falsifier source review / defect correction: PASS_SOURCE_INSPECTION
-- exact seven-file delta reconciliation: PASS_SOURCE_INSPECTION
-- live main drift reconciliation: PASS_SOURCE_INSPECTION (`behind_by=0` at reconciliation)
-- reviews / review threads: PASS_SOURCE_INSPECTION (0 / 0 at reconciliation)
-- faithful local checkout: BLOCKED_ENVIRONMENT (`Could not resolve host: github.com`)
-- focused D4 Node falsifier: NOT_RUN
-- `node scripts/run-non-fea-checks.mjs`: NOT_RUN
-- `npm run check:imports`: NOT_RUN
-- `node scripts/advanced-shell-contract-check.mjs`: NOT_RUN
-- `npm run build`: NOT_RUN
-- `git diff --check`: NOT_RUN
+Execution:
+- faithful local checkout: BLOCKED_ENVIRONMENT (`Could not resolve host: github.com` from prior attempts);
+- focused PR-E Node regression: NOT_RUN;
+- `node scripts/run-non-fea-checks.mjs`: NOT_RUN;
+- `npm run check:imports`: NOT_RUN;
+- `node scripts/advanced-shell-contract-check.mjs`: NOT_RUN;
+- `npm run build`: NOT_RUN;
+- `git diff --check`: NOT_RUN.
 
-No NOT_RUN item is represented as PASS.
+No NOT_RUN item may be represented as PASS.
 
-## Final net file ledger — 7 files
+## Current changed-file ledger before PR-E production writes
+Existing D4 net files:
 1. `agents/PR1493_workreport.md`
 2. `agents/claims/PR1493.yaml`
 3. `agents/status/PR1493.yaml`
@@ -133,29 +148,21 @@ No NOT_RUN item is represented as PASS.
 6. `src/workspace/project-data/non-fea-calculation-defaults-observability-model.js`
 7. `src/workspace/project-data/non-fea-calculation-effective-values-view.js`
 
-Temporary `agents/WIP-1321-default-usage-coverage-summary.yaml` has been removed.
+Expected additional PR-E files:
+8. `scripts/load-calc-current-common-input-run-routing-check.mjs`
+9. `src/workspace/load-calc-current-system-view.js`
+10. `src/workspace/load-calc-consumer-controller.js`
+11. `src/workspace/engineering-model-controller.js`
 
-## Reconciliation checkpoint
-At source-complete reconciliation before the final recovery-only record updates:
-- PR head: `ac70e40524bb93bb9526caaf8897da9623358dba`;
-- base/main: `b2e8745a8cdb47850b8f162cea8c16f3f4006e03`;
-- compare status: `ahead`;
-- behind main: `0`;
-- exact changed files: `7`;
-- mergeable: `true`;
-- draft: `true`;
-- reviews: `0`;
-- review threads: `0`.
+Exact final ledger must be reconciled from GitHub after implementation.
 
-The actual final branch head must be rechecked after these recovery-only updates; the net seven-file boundary must remain unchanged.
-
-## Appendix A — takeover questions
-1. Why is `configuredDefaultUsageLedger.rows` authoritative for actual PROJECT_CONFIGURED_DEFAULT usage while the configured-default policy itself is not?
-2. Explain the semantic difference between `productDefaultProvider.usageRows` and a target-level effective-value winner.
-3. Trace `MASS_COVERAGE` from `analyzeModelCoverage()` through `coverageRequirement()` into the D4 table without introducing a second coverage algorithm.
-4. Why does D4 group checker blockers but preserve method IDs and receipt counts?
-5. Show why D3 and D4 now perform one current-input build per Step-3 render rather than two resolver builds.
-6. Which source change would prove that merely opening Calculation Defaults can seal or execute Common Input, and why would that be a P0 regression?
+## Appendix A — next-agent technical questions
+1. Trace why `isRoutineRunReady()` is a validated-READY predicate but cannot remain the sole Run-button enablement predicate under PR-E.
+2. Show the exact backend call that creates/evaluates the current Common Input on ordinary Run and identify the point that rejects PARTIALLY_READY/BLOCKED input before authorization.
+3. Explain why enabling a Run *attempt* after topology readiness does not weaken Common Input engineering authority.
+4. Trace a Method Basis configuration change from `nonFeaCommonInputStore.configure()` to result freshness; identify the missing pre-PR-E invalidation boundary.
+5. Prove evaluation/seal operations that leave configuration unchanged must not invalidate an otherwise-current numerical result.
+6. Identify the exact evidence hashes retained by current-system Run and explain why legacy explicit seal/authorization APIs remain independently available.
 
 ## EXACT_NEXT_ACTION
-Recheck the actual final head after recovery-only updates, confirm exact seven-file diff / zero behind / reviews and threads, update the PR body to source-complete truth, and keep executable qualification NOT_RUN unless a faithful checkout becomes available.
+Implement the three PR-E production corrections and extend the existing focused current-system Run regression. Then source-review the patches, retry faithful execution once, reconcile live main/head/diff/reviews/threads, update PR body/recovery, and keep the PR draft/unmerged unless the owner explicitly authorizes merge.

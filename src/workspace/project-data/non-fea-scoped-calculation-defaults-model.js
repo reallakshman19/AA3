@@ -17,7 +17,7 @@ export const NON_FEA_SCOPED_CALCULATION_DEFAULTS_SOURCE =
   'Load Calc Calculation Defaults scoped editor';
 
 const ANCILLARY_PROVIDER_FIELDS = Object.freeze(['CLADDING_WEIGHT', 'TRACING_WEIGHT']);
-const ENRICHMENT_PROVIDER_FIELDS = new Set(listNonFeaEnrichmentFields().map((row) => row.fieldId));
+const ENRICHMENT_FIELD_BY_ID = new Map(listNonFeaEnrichmentFields().map((row) => [row.fieldId, row]));
 
 // These units match the values the existing configured-default provider writes
 // into the current enrichment properties. The provider does not convert units.
@@ -72,15 +72,23 @@ const SCOPE_BY_ID = new Map(SCOPE_DEFINITIONS.map((row) => [row.scopeKind, row])
 const FIELD_DEFINITIONS = freezeDeep(listNonFeaFieldDefinitions()
   .filter((row) => row.defaultEligible === true)
   .filter((row) => row.authorityPath.includes('PROJECT_CONFIGURED_DEFAULT'))
-  .filter((row) => ENRICHMENT_PROVIDER_FIELDS.has(row.fieldId) || ANCILLARY_PROVIDER_FIELDS.includes(row.fieldId))
+  .filter((row) => ENRICHMENT_FIELD_BY_ID.has(row.fieldId) || ANCILLARY_PROVIDER_FIELDS.includes(row.fieldId))
   .filter((row) => Boolean(PROVIDER_NATIVE_UNITS[row.fieldId]))
-  .map((row) => ({
-    fieldId: row.fieldId,
-    label: row.label,
-    inputUnit: PROVIDER_NATIVE_UNITS[row.fieldId],
-    allowedMethods: [...row.methods],
-    valueRule: POSITIVE_FIELDS.has(row.fieldId) ? 'POSITIVE' : 'NONNEGATIVE',
-  }))
+  .map((row) => {
+    const providerField = ENRICHMENT_FIELD_BY_ID.get(row.fieldId);
+    const targetKind = providerField?.targetKind || 'COMPONENT';
+    return {
+      fieldId: row.fieldId,
+      label: row.label,
+      inputUnit: PROVIDER_NATIVE_UNITS[row.fieldId],
+      allowedMethods: [...row.methods],
+      valueRule: POSITIVE_FIELDS.has(row.fieldId) ? 'POSITIVE' : 'NONNEGATIVE',
+      targetKind,
+      supportedScopeKinds: SCOPE_DEFINITIONS
+        .filter((scope) => scopeSupportedForTarget(targetKind, scope.scopeKind))
+        .map((scope) => scope.scopeKind),
+    };
+  })
   .sort((left, right) => left.label.localeCompare(right.label)));
 const FIELD_BY_ID = new Map(FIELD_DEFINITIONS.map((row) => [row.fieldId, row]));
 
@@ -99,6 +107,9 @@ export function createScopedCalculationDefaultsModel(profile) {
     ? [...policy.defaults].sort((left, right) => stringValue(left.defaultId).localeCompare(stringValue(right.defaultId)))
       .map(existingRow)
     : [];
+  const unavailableScopeKinds = SCOPE_DEFINITIONS
+    .filter((scope) => !FIELD_DEFINITIONS.some((field) => field.supportedScopeKinds.includes(scope.scopeKind)))
+    .map((scope) => ({ scopeKind: scope.scopeKind, label: scope.label }));
   const base = {
     schema: NON_FEA_SCOPED_CALCULATION_DEFAULTS_MODEL_SCHEMA,
     projectDataRevision: Number.isInteger(profile?.revision) ? profile.revision : null,
@@ -108,6 +119,7 @@ export function createScopedCalculationDefaultsModel(profile) {
     scopePrecedence: NON_FEA_CONFIGURED_DEFAULT_SCOPE_PRECEDENCE,
     authorableFields: FIELD_DEFINITIONS,
     scopeKinds: SCOPE_DEFINITIONS,
+    unavailableScopeKinds,
     rows,
   };
   return freezeDeep(base);
@@ -123,10 +135,14 @@ export function createScopedCalculationDefaultUpsert(profile, draft) {
   if (existing && !existingRow(existing).editable) {
     throw new TypeError(`Configured default ${defaultId} uses an unsupported field, scope or unit; edit it in Advanced authority.`);
   }
+  const scopeKind = stringValue(draft.scopeKind || 'GLOBAL').toUpperCase();
+  if (!field.supportedScopeKinds.includes(scopeKind)) {
+    throw new RangeError(`${scopeKind} scope is not applicable to ${field.fieldId} (${field.targetKind} target).`);
+  }
   const value = scopedValue(field, draft.value);
   const basis = requiredText(draft.basis, 'Basis');
   const allowedMethods = scopedMethods(field, draft.allowedMethods);
-  const scope = createCanonicalScopedCalculationDefaultScope(draft.scopeKind, {
+  const scope = createCanonicalScopedCalculationDefaultScope(scopeKind, {
     values: draft.scopeValues,
     nominalBoreMm: draft.nominalBoreMm,
   });
@@ -180,7 +196,8 @@ function existingRow(row) {
   const field = FIELD_BY_ID.get(stringValue(row?.fieldId)) || null;
   const scope = describeCanonicalScope(row?.scope);
   const unitMatches = field ? stringValue(row?.unit) === field.inputUnit : false;
-  const editable = Boolean(field && scope.canonical && unitMatches);
+  const scopeCompatible = Boolean(field && scope.canonical && field.supportedScopeKinds.includes(scope.scopeKind));
+  const editable = Boolean(field && scope.canonical && unitMatches && scopeCompatible);
   return freezeDeep({
     defaultId: stringValue(row?.defaultId),
     fieldId: stringValue(row?.fieldId),
@@ -194,7 +211,7 @@ function existingRow(row) {
     scopeLabel: scope.label,
     scopePriority: scope.canonical ? configuredDefaultScopePriority(scope.scope) : null,
     editable,
-    editBlockedReason: editable ? null : protectedReason(field, scope, unitMatches),
+    editBlockedReason: editable ? null : protectedReason(field, scope, unitMatches, scopeCompatible),
   });
 }
 
@@ -205,8 +222,9 @@ function describeCanonicalScope(scopeValue) {
     const expected = [...definition.keys].sort();
     if (keys.length !== expected.length || keys.some((key, index) => key !== expected[index])) continue;
     try {
+      const textKey = definition.keys.find((key) => key !== 'nominalBoreMm');
       const normalized = createCanonicalScopedCalculationDefaultScope(definition.scopeKind, {
-        values: definition.keys.find((key) => key !== 'nominalBoreMm') ? scope[definition.keys.find((key) => key !== 'nominalBoreMm')] : [],
+        values: textKey ? scope[textKey] : [],
         nominalBoreMm: scope.nominalBoreMm,
       });
       if (semanticHash(normalized) !== semanticHash(scope)) continue;
@@ -309,11 +327,22 @@ function requireField(fieldIdValue) {
   return field;
 }
 
-function protectedReason(field, scope, unitMatches) {
+function protectedReason(field, scope, unitMatches, scopeCompatible) {
   if (!field) return 'Field is not materialized by the current configured-default provider; use Advanced authority.';
   if (!scope.canonical) return 'Scope is custom/noncanonical; preserve it in Advanced authority.';
+  if (!scopeCompatible) return `${scope.scopeKind} scope cannot match the current ${field.targetKind} provider target.`;
   if (!unitMatches) return `Unit does not match the current provider-native ${field.inputUnit} contract; use Advanced authority.`;
   return 'Protected configured-default row.';
+}
+
+function scopeSupportedForTarget(targetKind, scopeKind) {
+  const shared = new Set(['GLOBAL', 'ENTITY', 'POS', 'LINE', 'BRANCH', 'SYSTEM', 'ZONE']);
+  if (shared.has(scopeKind)) return true;
+  if (targetKind === 'COMPONENT') {
+    return ['PIPING_CLASS_NB', 'COMPONENT_TYPE_NB', 'PIPING_CLASS', 'COMPONENT_TYPE', 'NOMINAL_BORE'].includes(scopeKind);
+  }
+  if (targetKind === 'SUPPORT') return scopeKind === 'SUPPORT_KIND';
+  return false;
 }
 
 function scopeDefinition(scopeKind, label, keys) { return { scopeKind, label, keys: [...keys] }; }

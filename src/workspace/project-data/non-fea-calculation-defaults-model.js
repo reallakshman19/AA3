@@ -31,18 +31,19 @@ const DEFINITIONS = Object.freeze([
   definition('ACTIVE_LOAD_CASES', 'Active load cases', 'loadCalculation.activeLoadCases', 'set', 'case-set',
     NON_FEA_CANONICAL_CALCULATION_CASES, readIdentity, writeIdentity),
   definition('CORROSION_ALLOWANCE', 'Default corrosion allowance', 'thermoMechanicalBasis.corrosionAllowancesMm', 'mm', 'nonnegative-number',
-    null, (value) => value?.DEFAULT ?? null, (current, value) => ({ ...recordOrEmpty(current), DEFAULT: value })),
+    null, (value) => value?.DEFAULT ?? null, writeDefaultMapValue, true),
   definition('ELASTIC_THERMAL', 'Default elastic / thermal properties', 'thermoMechanicalBasis.materialElasticProperties', 'material-policy', 'elastic-thermal',
     null,
     (value) => ({
       elasticModulusPa: value?.DEFAULT?.elasticModulusPa ?? null,
       thermalExpansionPerK: value?.DEFAULT?.thermalExpansionPerK ?? null,
     }),
-    (current, value) => ({ ...recordOrEmpty(current), DEFAULT: value })),
+    writeDefaultMapValue,
+    true),
   definition('RESTRAINT_PRELOAD', 'Default restraint preload', 'restraintPolicy.restraintPreloadsN', 'N', 'finite-number',
-    null, (value) => value?.DEFAULT ?? null, (current, value) => ({ ...recordOrEmpty(current), DEFAULT: value })),
+    null, (value) => value?.DEFAULT ?? null, writeDefaultMapValue, true),
   definition('FRICTION_COEFFICIENT', 'Default friction coefficient', 'restraintPolicy.frictionCoefficients', 'ratio', 'nonnegative-number',
-    null, (value) => value?.DEFAULT ?? null, (current, value) => ({ ...recordOrEmpty(current), DEFAULT: value })),
+    null, (value) => value?.DEFAULT ?? null, writeDefaultMapValue, true),
 ]);
 
 const DEFINITION_BY_ID = new Map(DEFINITIONS.map((row) => [row.fieldId, row]));
@@ -64,6 +65,10 @@ export function createBasicCalculationDefaultsModel(profile) {
     const entry = readPath(profile, definitionRow.projectDataPath);
     const productDefault = PRODUCT_DEFAULT_BY_PATH.get(definitionRow.projectDataPath) || null;
     const provenance = effectiveProvenance(entry);
+    const editable = entry?.value === null
+      || isProductDefaultEvidence(entry)
+      || isOwnedCalculationDefaultEvidence(entry, definitionRow.fieldId);
+    const mapCustodySafe = !definitionRow.defaultMap || hasOnlyDefaultKey(entry?.value);
     return freezeDeep({
       fieldId: definitionRow.fieldId,
       label: definitionRow.label,
@@ -80,7 +85,13 @@ export function createBasicCalculationDefaultsModel(profile) {
       defaultSemanticHash: provenance.defaultSemanticHash,
       productProfileId: provenance.profileId,
       productProfileVersion: provenance.profileVersion,
-      resetAvailable: entry?.value !== null && !isProductDefaultEvidence(entry),
+      editable: editable && mapCustodySafe,
+      editBlockedReason: !editable
+        ? 'A higher or independently authored authority already owns this Project Data path. Basic defaults cannot overwrite it.'
+        : !mapCustodySafe
+          ? 'This path contains keyed values beyond DEFAULT. Use Advanced authority editing to preserve their custody.'
+          : null,
+      resetAvailable: isOwnedCalculationDefaultEvidence(entry, definitionRow.fieldId) && mapCustodySafe,
       builtInDefault: productDefault ? definitionRow.read(productDefault.value) : null,
       builtInDefaultId: productDefault?.defaultId || null,
       builtInBasis: productDefault?.basis || null,
@@ -99,6 +110,11 @@ export function createBasicCalculationDefaultsModel(profile) {
 /**
  * Produces one complete path-level Project Data update. Nothing is written here;
  * callers must apply the returned plan through ProjectDataStore.update().
+ *
+ * Basic defaults are deliberately lower-authority authoring. They may replace a
+ * governed Product default or a prior Basic Calculation-Defaults project policy,
+ * but never overwrite independent source/master/project authority already
+ * occupying the path.
  */
 export function createBasicCalculationDefaultUpdate(profile, fieldId, rawValue) {
   if (!isRecord(profile)) throw new TypeError('Calculation Defaults update requires a Project Data profile.');
@@ -107,6 +123,12 @@ export function createBasicCalculationDefaultUpdate(profile, fieldId, rawValue) 
   if (!isRecord(entry) || !Object.hasOwn(entry, 'value')) {
     throw new TypeError(`Calculation Default target is not a Project Data evidence field: ${definitionRow.projectDataPath}.`);
   }
+  if (entry.value !== null
+      && !isProductDefaultEvidence(entry)
+      && !isOwnedCalculationDefaultEvidence(entry, definitionRow.fieldId)) {
+    throw new Error(`${definitionRow.label} is owned by higher or independent authority and cannot be overwritten from Basic Calculation Defaults.`);
+  }
+  assertDefaultMapCustody(definitionRow, entry.value);
   const normalized = normalizeValue(definitionRow, rawValue);
   const value = definitionRow.write(entry.value, normalized);
   return freezeDeep({
@@ -125,12 +147,18 @@ export function createBasicCalculationDefaultUpdate(profile, fieldId, rawValue) 
 }
 
 /**
- * Reset is deliberately path-level. It clears the complete project override so
- * the existing Product-default provider may re-materialize that path. This
- * avoids presenting mixed per-property authority inside one Project Data field.
+ * Reset is path-level and is permitted only for a path this Basic surface owns.
+ * It clears the project override so the Product-default provider can re-apply.
+ * Map paths containing additional keyed values are rejected rather than erased.
  */
-export function createBasicCalculationDefaultReset(fieldId) {
+export function createBasicCalculationDefaultReset(profile, fieldId) {
+  if (!isRecord(profile)) throw new TypeError('Calculation Defaults reset requires a Project Data profile.');
   const definitionRow = requireDefinition(fieldId);
+  const entry = readPath(profile, definitionRow.projectDataPath);
+  if (!isOwnedCalculationDefaultEvidence(entry, definitionRow.fieldId)) {
+    throw new Error(`${definitionRow.label} is not owned by Basic Calculation Defaults and cannot be reset here.`);
+  }
+  assertDefaultMapCustody(definitionRow, entry.value);
   return freezeDeep({
     fieldId: definitionRow.fieldId,
     projectDataPath: definitionRow.projectDataPath,
@@ -226,20 +254,39 @@ function effectiveProvenance(entry) {
   });
 }
 
+function isOwnedCalculationDefaultEvidence(entry, fieldId) {
+  return isRecord(entry)
+    && isRecord(entry.evidence)
+    && entry.evidence.authority === 'PROJECT_POLICY'
+    && entry.evidence.source === NON_FEA_CALCULATION_DEFAULT_PROJECT_SOURCE
+    && entry.evidence.calculationDefaultId === fieldId
+    && entry.approved === true;
+}
+
+function assertDefaultMapCustody(definitionRow, value) {
+  if (!definitionRow.defaultMap || value === null || value === undefined) return;
+  if (!hasOnlyDefaultKey(value)) {
+    throw new Error(`${definitionRow.label} contains keyed values beyond DEFAULT; use Advanced authority editing to preserve their custody.`);
+  }
+}
+function hasOnlyDefaultKey(value) {
+  return !isRecord(value) || Object.keys(value).every((key) => key === 'DEFAULT');
+}
 function requireDefinition(fieldId) {
   const definitionRow = getBasicCalculationDefaultDefinition(fieldId);
   if (!definitionRow) throw new RangeError(`Unknown Basic Calculation Default: ${fieldId}.`);
   return definitionRow;
 }
-function definition(fieldId, label, projectDataPath, unit, kind, options, read, write) {
+function definition(fieldId, label, projectDataPath, unit, kind, options, read, write, defaultMap = false) {
   return freezeDeep({
     fieldId, label, projectDataPath, unit, kind,
     options: options ? [...options] : null,
     read,
     write,
+    defaultMap: defaultMap === true,
   });
 }
 function readIdentity(value) { return value ?? null; }
 function writeIdentity(_current, value) { return value; }
-function recordOrEmpty(value) { return isRecord(value) ? structuredClone(value) : {}; }
+function writeDefaultMapValue(_current, value) { return { DEFAULT: value }; }
 function readPath(value, path) { return String(path).split('.').reduce((current, key) => current?.[key], value); }

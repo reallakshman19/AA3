@@ -1,0 +1,22 @@
+schema: AgentWipClaim.v1
+repository: reallaksh19/Advanced_Analysis
+issue: 1321
+branch: agent/issue-1321-calculation-defaults-basic-ux
+state: TAKEOVER_READ_ONLY
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+main_at_claim: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
+mission: "Implement PR-D1 Basic/Advanced Calculation Defaults UX on the existing Project Data/Product-default authority without changing mechanics or resolver precedence."
+planned_paths:
+  - src/workspace/project-data/project-data-view.js
+  - src/workspace/project-data/non-fea-calculation-defaults-model.js
+  - src/workspace/project-data/non-fea-calculation-defaults-view.js
+  - scripts/non-fea-calculation-defaults-basic-ux-check.mjs
+protected_invariants:
+  - "Existing non-fea-project-data-view-v2 remains the advanced authority editor."
+  - "Basic edits write only owning Project Data entries using PROJECT_POLICY evidence; they do not synthesize source/master evidence."
+  - "Reset clears only the selected project override so the existing Product-default provider can re-materialize the governed built-in value."
+  - "No configured-default scope precedence, common checker, Run routing, authorization, statics, solver, or tolerance semantics change."
+  - "PR1486 remains unmerged and this slice must not overlap its six changed files."
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
+exact_next_action: "Allocate draft PR, complete source qualification, then implement Basic Calculation Defaults wrapper and standalone falsifier."

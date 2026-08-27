@@ -6,6 +6,7 @@
 - Branch: `agent/issue-1321-calculation-defaults-scoped-ux`
 - Stacked base / merge base: PR #1487 head `49fdf224390cfa4993781e8e24776f4e8aaf55f3`
 - Production main observed: `d6101bcac7ccbdab9e42d7e0afbdd7b06d897462`
+- Stacked behind-base count: 0
 - Criticality: ENGINEERING_CRITICAL
 - Execution mode: AUTO
 - Merge authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
@@ -54,30 +55,12 @@ Current authorable set is 17 numeric component-target fields:
 Project-level defaults such as corrosion allowance or thermal expansion remain D1/path-level authority unless/until the configured-default provider has a real target-level materialization path.
 
 ## Provider-native units
-The provider does not convert units when constructing enrichment records. D2 therefore fixes the editor to the current runtime-property units, e.g.:
-- OD/wall: `mm`;
-- elastic modulus: `MPa`;
-- densities: `kg/m³`;
-- distributed mass: `kg/m`;
-- component mass: `kg`.
+The provider does not convert units when constructing enrichment records. D2 therefore fixes the editor to current runtime-property units, including OD/wall in `mm`, elastic modulus in `MPa`, densities in `kg/m³`, distributed mass in `kg/m`, and component mass in `kg`.
 
 Rows using unexpected units are displayed but protected and must be handled in Advanced authority; D2 does not silently reinterpret them.
 
 ## Canonical scope authoring
-The underlying precedence catalog contains:
-- global;
-- entity;
-- POS;
-- line;
-- branch;
-- piping-class + NB;
-- component-type + NB;
-- piping class;
-- component type;
-- support kind;
-- nominal bore;
-- system;
-- zone.
+The underlying precedence catalog contains global, entity, POS, line, branch, piping-class+NB, component-type+NB, piping class, component type, support kind, nominal bore, system and zone scopes.
 
 The form exposes only scope kinds that can match at least one currently authorable target. It generates deterministic sorted exact-ID arrays and positive finite NB arrays. Custom multi-key policies remain preserved/read-only in D2 and editable through the existing raw Advanced authority editor.
 
@@ -114,7 +97,7 @@ D2 records `SUPPORT_KIND` as unavailable and excludes it from the structured sco
 - delete preserves unrelated defaults and prior policy-hash custody;
 - raw Advanced authority editor remains reachable.
 
-## Exact intended net file ledger — 6 files
+## Exact final changed-file ledger — 6 files
 1. `agents/PR1488_workreport.md`
 2. `agents/claims/PR1488.yaml`
 3. `agents/status/PR1488.yaml`
@@ -122,7 +105,7 @@ D2 records `SUPPORT_KIND` as unavailable and excludes it from the structured sco
 5. `src/workspace/project-data/non-fea-scoped-calculation-defaults-model.js`
 6. `src/workspace/project-data/non-fea-calculation-defaults-view.js`
 
-Temporary WIP claim must be absent from the final net tree. Aggregate registration remains deferred while #1486/#1487 own overlapping aggregate/UX stack state.
+Temporary WIP claim is absent. Aggregate registration remains deferred while #1486/#1487 own overlapping aggregate/UX stack state.
 
 ## Protected production paths unchanged
 - `src/workspace/project-data/non-fea-configured-default-provider.js`
@@ -133,6 +116,15 @@ Temporary WIP claim must be absent from the final net tree. Aggregate registrati
 - `src/workspace/engineering-loads/**`
 - `scripts/run-non-fea-checks.mjs`
 - `.github/workflows/**`
+
+## Final reconciliation
+- compare base: `agent/issue-1321-calculation-defaults-basic-ux@49fdf224390cfa4993781e8e24776f4e8aaf55f3`
+- merge base: exact same SHA
+- behind base: 0
+- net files: exactly 6 listed above
+- WIP marker: absent
+- review submissions: 0
+- review threads: 0
 
 ## Validation truth
 Source/repository validation:
@@ -147,7 +139,9 @@ Source/repository validation:
 - target-kind trace: PASS_SOURCE_INSPECTION
 - support-kind capability gap: PASS_SOURCE_INSPECTION
 - D2 model/view source review: PASS
-- exact six-file intended scope: PASS_PENDING_FINAL_COMPARE
+- exact six-file intended scope: PASS
+- temporary WIP removed: PASS
+- review surface clean: PASS
 
 Executable validation:
 - standalone D2 Node check: NOT_RUN
@@ -167,4 +161,4 @@ A1 Production trace 20/20 · A2 Failure isolation 20/20 · A3 Authority invarian
 **Score: 98/100; minimum 18/20.**
 
 ## EXACT_NEXT_ACTION
-Remove the WIP marker, reconcile #1488 exactly against #1487 head, verify zero reviews/threads and stacked currentness, then leave #1488 ready for owner review. After D1/D2 merge, audit the remaining #1321 Product UX gaps separately; do not widen this PR into support-authority or workflow mechanics.
+Owner review of #1488. After #1487 merges, deterministically re-ground #1488 to the new `main` before any merge. Continue Issue #1321 gap audit separately; do not widen this PR into support-authority or workflow mechanics.

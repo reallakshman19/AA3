@@ -62,15 +62,18 @@ The JSON deliberately separates:
 
 ## Current source-record reconciliation
 
-All nine gate artifacts remain fail-closed. Three retained source records now have more precise partial-reconciliation status strings than the original PR-B snapshot:
+All nine gate artifacts remain fail-closed. Four retained source records now have more precise partial-reconciliation status strings than the original PR-B snapshot:
 
 ```text
 #1385 BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED
 #1383 BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED
 #1375 BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED
+#1377 BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED
 ```
 
-Those partial source facts do not close the corresponding professional P0 gates. The other six aggregate gate states remain blocked and unchanged.
+The #1377 refinement became current-main authority when PR #1415 merged at `19b762e1f9512284da961e5816a28c10432080bb`. It qualifies only the retained Table-5 `R_m` symbol and its gamma/beta parameter role. It does **not** qualify the physical mean/midsurface definition, OD/ID/T construction, assessment/corrosion geometry basis, or §4.5 physical radius identity.
+
+Those partial source facts do not close the corresponding professional P0 gates. `blockerCount` therefore remains exactly 9.
 
 ## Two checker modes
 

@@ -1,0 +1,37 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1490
+mission: Qualification-only V2 route support and frozen B02D-V2 T6/L4 governing response discriminator
+base_main: 1465e4fbd72c0ddff6e0332ea0a502e354537bfe
+predecessor_binding_pr: 1485
+authority_domain:
+  - B02D_V2_QUALIFICATION_ROUTE_SELECTION
+  - B02D_V2_T6_L4_GOVERNING_RESPONSE_OBSERVATION
+  - RESPONSE_BOUNDARY_CLASSIFICATION_ONLY
+claims:
+  v1_response_route_preserved: REQUIRED_PENDING_IMPLEMENTATION
+  v2_response_route_explicit_opt_in: REQUIRED_PENDING_IMPLEMENTATION
+  b01_and_binding_same_head_prerequisites_required: true
+  response_solver_changed: false
+  reaction_assembly_changed: false
+  historical_galerkin_candidate_included: false
+  benchmark_or_tolerance_changed: false
+  b02_numerical_authority_granted: false
+  reaction_equilibrium_repair_authorized: false
+  release_authority_granted: false
+  trust_authority_granted: false
+validation_truth:
+  predecessor_merge: PASS_GITHUB_READBACK
+  b01_exact_head_prerequisite: NOT_RUN
+  b02d_v2_binding_exact_head: NOT_RUN
+  b02d_v2_governing_response: NOT_RUN
+excluded_authority:
+  - CONTINUUM_SOLVER_MECHANICS
+  - SPARSE_MATRIX_MECHANICS
+  - REACTION_ASSEMBLY_OR_RECOVERY_CHANGE
+  - GALERKIN_TRANSLATION_CORRECTION
+  - FULL_B02_RESPONSE_CONVERGENCE_AUTHORITY
+  - BENCHMARK_OR_TOLERANCE_CHANGE
+  - RELEASE_LIFECYCLE_TRUST
+  - WORKFLOW_MUTATION
+merge_authority: OWNER_ONLY_NOT_GRANTED

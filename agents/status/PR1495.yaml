@@ -1,0 +1,48 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1495
+issue: 1321
+branch: agent/issue-1321-effective-gravity-load-basis
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN_REVIEW_PENDING
+base_branch: main
+base_sha: 93c4f9e3af98e58190951ff94b5b50616950f623
+changed_file_target_count: 8
+engineering_disposition: SOURCE_COMPLETE
+execution_disposition: NOT_RUN
+review_disposition: PENDING
+merge_disposition: OWNER_ONLY_NOT_GRANTED
+invariants:
+  existing_effective_value_resolver_reused: true
+  exact_product_default_provenance_required: true
+  legacy_approved_project_data_migration_visible: true
+  receipt_binds_common_input_and_seal: true
+  receipt_retains_effective_resolution_ledger: true
+  selected_candidate_and_row_hashes_revalidated: true
+  projected_profile_binds_receipt: true
+  support_distribution_kernel_changed: false
+  force_formula_changed: false
+  allocation_mechanics_changed: false
+  first_moment_accounting_changed: false
+  equilibrium_mechanics_changed: false
+  tolerance_mechanics_changed: false
+  source_axis_mechanics_changed: false
+checks:
+  current_common_input_gravity_load_basis: NOT_RUN
+  current_common_input_empirical_support_execution: NOT_RUN
+  current_common_input_empirical_run_runtime: NOT_RUN
+  aggregate_non_fea: NOT_RUN
+  imports: NOT_RUN
+  advanced_shell_contract: NOT_RUN
+  build: NOT_RUN
+  diff_check: NOT_RUN
+execution_blocker:
+  faithful_checkout_attempted: true
+  failed_before_checkout: true
+  message: "Could not resolve host: github.com"
+workflow_policy:
+  github_workflow_merge_gate: false
+  github_workflow_counts_as_execution_evidence: false
+coordination:
+  pr1491_overlap_avoided: true
+  pr1486_overlap_avoided: true
+exact_next_action: "Execute focused and aggregate validation on a faithful checkout, preserve unavailable checks as NOT_RUN, then recheck main/head/diff/reviews/threads before merge recommendation."

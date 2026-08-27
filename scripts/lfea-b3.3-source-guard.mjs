@@ -122,6 +122,7 @@ for (const field of [
   'normalizedResidualWarnLimit',
   'equilibriumRelativeLimit',
   'equilibriumAbsoluteForceFloor',
+  'equilibriumAbsoluteForceLimit',
   'equilibriumAbsoluteMomentFloor',
   'energyBalanceLimit',
   'nearZeroPivotTolerance',

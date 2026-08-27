@@ -69,6 +69,7 @@ export function inputXmlStiffnessSolverProfile(candidate) {
     iterativeRefinementRelativeTolerance: { value: 1e-12, source: PROFILE_SOURCE },
     equilibriumRelativeLimit: { value: 1e-6, source: PROFILE_SOURCE },
     equilibriumAbsoluteForceFloor: { value: 1e-3, source: PROFILE_SOURCE },
+    equilibriumAbsoluteForceLimit: { value: 1, source: 'BM4L-WEIGHT-CASE-RELATIVE-GATE-SCALE-STUDY-2026-08-27' },
     equilibriumAbsoluteMomentFloor: { value: 1e-3, source: PROFILE_SOURCE },
     energyBalanceLimit: { value: 1e-7, source: PROFILE_SOURCE },
     nearZeroPivotTolerance: { value: 1e-12, source: CONDITIONING_SOURCE },

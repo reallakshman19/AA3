@@ -126,6 +126,16 @@ export function solverProfile() {
     iterativeRefinementRelativeTolerance: { value: 1e-12, source: PROFILE_SOURCE },
     equilibriumRelativeLimit: { value: 1e-6, source: PROFILE_SOURCE },
     equilibriumAbsoluteForceFloor: { value: 1e-3, source: PROFILE_SOURCE },
+    // Absolute companion to the relative equilibrium gate. One newton, chosen
+    // physically rather than fitted: a piping analysis reports support loads to
+    // the newton at best, so a net imbalance below that cannot change any
+    // engineering decision this module supports. It exists because the relative
+    // measure divides by a sum of force magnitudes, which self-equilibrating
+    // thermal loads inflate enormously -- so a weight-only case is held to a far
+    // harsher standard than a thermal one for the same quality of solve. On
+    // BM4_L the weight case had the smallest absolute imbalance of the four
+    // (0.31 N) and was the only one the relative gate failed.
+    equilibriumAbsoluteForceLimit: { value: 1, source: 'BM4L-WEIGHT-CASE-RELATIVE-GATE-SCALE-STUDY-2026-08-27' },
     equilibriumAbsoluteMomentFloor: { value: 1e-3, source: PROFILE_SOURCE },
     energyBalanceLimit: { value: 1e-7, source: PROFILE_SOURCE },
     // A real InputXML mixing rigid equipment (valves, etc.) with normal pipe

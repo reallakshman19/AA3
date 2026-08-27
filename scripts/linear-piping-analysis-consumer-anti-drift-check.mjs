@@ -37,9 +37,14 @@ for (const file of files) {
 
 assert.match(source['consumer.js'], /compileSolverExecution/u);
 assert.match(source['consumer.js'], /compileResultRecovery/u);
-assert.match(source['consumer.js'], /interfaceLoadResults:\s*null/u);
-assert.match(source['consumer.js'], /nozzleAssessments:\s*null/u);
-assert.match(source['consumer.js'], /codeResults:\s*null/u);
+// These three moved out of consumer.js into retained-result-chain.js in a
+// refactor. The guard's intent is that this PACKAGE never fabricates interface,
+// nozzle or code results -- which file holds the initializer is not the point,
+// so it is asserted against the package rather than re-pinned to a filename
+// that will move again.
+assert.match(combined, /interfaceLoadResults:\s*null/u);
+assert.match(combined, /nozzleAssessments:\s*null/u);
+assert.match(combined, /codeResults:\s*null/u);
 
 assert.match(source['source-orchestration.js'], /compileMechanicalModel/u);
 assert.match(source['source-orchestration.js'], /compilePhysicalLoadCase/u);
@@ -109,10 +114,15 @@ const adapterImports = files
   .filter((file) => /from\s+['"][^'"]*geometry\/adapters\/inputxml-model-health-source\.js['"]/u
     .test(fs.readFileSync(file, 'utf8')))
   .map((file) => path.basename(file));
+// ACCDB is a second governed source binding, added after this guard was
+// written: accdb-source-binding.js wraps ACCDB geometry in the same
+// InputXmlModelHealthSource bundle shape and injects it through the same
+// parseSource seam. The rule being guarded is that ONLY a governed source
+// binding may reach the raw adapter, not that there is exactly one of them.
 assert.deepEqual(
   adapterImports,
-  ['inputxml-source-binding.js'],
-  'Only the governed InputXML source binding may import the raw model-health adapter.',
+  ['accdb-source-binding.js', 'inputxml-source-binding.js'],
+  'Only a governed source binding may import the raw model-health adapter.',
 );
 
 const index = source['index.js'];

@@ -135,7 +135,18 @@
     "check:lfea-solver-residual-conditioning": "node scripts/lfea-solver-residual-conditioning-check.mjs",
     "check:lfea-accdb-preparation-regression": "node scripts/lfea-accdb-preparation-regression-check.mjs",
     "check:lfea-s4-reducer-bm4l-corroboration": "node scripts/lfea-s4-reducer-bm4l-corroboration-check.mjs",
-    "check:lfea-production-caesar-parity": "node scripts/lfea-production-caesar-parity-check.mjs"
+    "check:lfea-production-caesar-parity": "node scripts/lfea-production-caesar-parity-check.mjs",
+    "check:lfea-linear-piping": "npm run check:lfea-inputxml-ingest && npm run check:accdb-to-canonical-geometry && npm run check:accdb-to-canonical-geometry-anti-drift && npm run check:lfea-b1-conditioning && npm run check:lfea-bend-retopology && npm run check:lfea-bend-tangent-custody && npm run check:lfea-production-capability-profile && npm run check:lfea-b3.2 && npm run check:lfea-b3.3 && npm run check:lfea-s3-bend-factor-authority-control && npm run check:lfea-s3-bend-production-authority && npm run check:linear-piping-analysis-consumer && npm run check:linear-piping-analysis-consumer-anti-drift && npm run check:lfea-accdb-preparation-regression && npm run check:lfea-s4-reducer-bm4l-corroboration && npm run check:lfea-production-caesar-parity && npm run check:lfea-ui-error-check",
+    "check:lfea-bend-retopology": "node scripts/lfea-bend-retopology-check.mjs",
+    "check:lfea-bend-tangent-custody": "node scripts/lfea-bend-tangent-custody-check.mjs",
+    "check:lfea-b1-conditioning": "node scripts/lfea-b1-conditioning-check.mjs",
+    "check:lfea-inputxml-ingest": "node scripts/lfea-inputxml-ingest-check.mjs",
+    "check:lfea-production-capability-profile": "node scripts/lfea-production-capability-profile-check.mjs",
+    "check:lfea-ui-error-check": "node scripts/lfea-ui-error-check-check.mjs",
+    "check:lfea-s3-bend-production-authority": "node scripts/lfea-s3-bend-production-authority-check.mjs",
+    "check:lfea-s3-bend-factor-authority-control": "node scripts/lfea-s3-bend-factor-authority-control-check.mjs",
+    "check:linear-piping-analysis-consumer-anti-drift": "node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs",
+    "check:accdb-to-canonical-geometry-anti-drift": "node scripts/accdb-to-canonical-geometry-anti-drift-check.mjs"
   },
   "dependencies": {
     "buffer": "^6.0.3",

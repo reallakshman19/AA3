@@ -32,13 +32,27 @@ test.describe('LFEA ACCDB real-model import', () => {
     await page.getByRole('navigation', { name: 'Application views' })
       .getByRole('button', { name: 'LFEA', exact: true }).click();
 
+    // Nothing is loaded yet, so no source panel is on screen -- all three mount
+    // into the same host and the shell shows whichever owns the loaded model.
+    // This used to assert the ACCDB panel was already visible, which stopped
+    // being true once the shell started hiding the sources that own nothing.
+    const sourceHost = page.locator('[data-host-group="SOURCE"]');
+    await expect(sourceHost).toHaveAttribute('data-active-source', 'NONE');
     const panel = page.locator('[data-role="lfea-pipeline-accdb-input-panel"]');
-    await expect(panel).toBeVisible();
+    await expect(panel).toBeHidden();
     await expect(panel).toHaveAttribute('data-model-health-status', 'NOT_LOADED');
+    // The engineer is offered the choice instead.
+    await expect(page.locator('[data-action="lfea-source-acquisition-import"][data-source-kind="ACCDB"]'))
+      .toBeVisible();
 
-    // With nothing loaded, Input is the only step to do.
+    // With nothing loaded, Input is the only step to do, and the steps that
+    // follow an analysis must not advertise themselves as ready.
     const guidance = page.locator('[data-role="lfea-pipeline-guidance"]');
     await expect(guidance).toContainText('Next: Input');
+    for (const stepId of ['RUN', 'OUTPUT', 'EXPORT']) {
+      await expect(page.locator(`[data-role="lfea-pipeline-step"][data-step-id="${stepId}"]`))
+        .toHaveAttribute('data-step-status', 'BLOCKED');
+    }
 
     await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
 

@@ -54,7 +54,7 @@ const first = lfeaBendFactorAuthorityForIntake({ semanticHash: 'fnv1a64:11111111
 const replacementSource = lfeaBendFactorAuthorityForIntake({ semanticHash: 'fnv1a64:2222222222222222' });
 assert.equal(first.editionProfileId, 'B31_3_2022_B31J_2017');
 assert.equal(first.smooth90FlexibilityCorrection, false);
-assert.equal(first.sourceEvidence.sourceId, 'LFEA_UI_EXPLICIT_BEND_FACTOR_SELECTION');
+assert.equal(first.sourceEvidence.sourceId, 'LFEA_UI_EXPLICIT_COMPONENT_FACTOR_SELECTION');
 assert.notEqual(first.semanticHash, replacementSource.semanticHash,
   'Replacing the source must reseal the visible selection against the replacement intake identity.');
 assert.notEqual(first.sourceEvidence.sourceRevision, replacementSource.sourceEvidence.sourceRevision);

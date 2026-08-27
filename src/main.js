@@ -318,6 +318,23 @@ function invalidateLfeaDownstreamPresentation(reason) {
   if (reason) lfeaPipelineShell.setAssembleStatus(`Analysis state invalidated: ${reason}.`, false);
 }
 
+/**
+ * Run, Output and Export follow from an analysis having been run, so they are
+ * stated here rather than left at the session's default. The session defaults
+ * every step to available, and refreshLfeaStepGuidance only ever set Input,
+ * Error check and Load case -- so with nothing loaded at all, the stepper
+ * advertised Run, Output and Export as "ready", which is three steps of
+ * outright false encouragement on an empty screen.
+ */
+function setLfeaDownstreamStepAvailability(analysisReady, blockedReason) {
+  for (const stepId of ['RUN', 'OUTPUT', 'EXPORT']) {
+    lfeaPipelineShell.setStepStatus(stepId, {
+      available: analysisReady,
+      blockedReason: analysisReady ? null : blockedReason,
+    });
+  }
+}
+
 function refreshLfeaStepGuidance() {
   if (!lfeaStepGuidanceReady) return;
   const engineering = lfeaEngineeringSession.getState();
@@ -365,6 +382,7 @@ function refreshLfeaStepGuidance() {
       detail: cleared ? 'Choose the cases to analyze, then Analyze.' : null,
       blockedReason: cleared ? null : 'The pre-flight is not authorized yet — clear Error check first.',
     });
+    setLfeaDownstreamStepAvailability(cleared, 'Clear Error check, then choose load cases and Analyze.');
     return;
   }
 
@@ -389,6 +407,7 @@ function refreshLfeaStepGuidance() {
           ? `The ACCDB pre-flight failed closed: ${accdb.preFlightError}`
           : 'The ACCDB pre-flight is not authorized yet — clear the blocking findings on Error check first.',
     });
+    setLfeaDownstreamStepAvailability(cleared, 'Clear Error check, then choose load cases and Analyze.');
     return;
   }
 
@@ -400,6 +419,7 @@ function refreshLfeaStepGuidance() {
     available: false,
     blockedReason: 'Load a model on the Input step first.',
   });
+  setLfeaDownstreamStepAvailability(false, 'Load a model on the Input step first.');
 }
 
 function runLfeaPipelineAnalysis(caseIds) {

@@ -16,14 +16,19 @@ claims:
   pre_solve_load_gate_wired_before_solver: PASS_SOURCE_INSPECTION
   failed_load_gate_marks_load_qualified_false: PASS_EXACT_BLOB_SELF_TEST
   b01_and_binding_same_head_prerequisites_required: true
+  current_executable_exact_head_route_available: false
+  active_self_hosted_workflow_present: false
+  historical_b7h_route_is_current_execution_authority: false
   response_solver_changed: false
   reaction_assembly_changed: false
   historical_galerkin_candidate_included: false
   benchmark_or_tolerance_changed: false
+  workflow_changed: false
   b02_numerical_authority_granted: false
   response_solver_repair_authorized: false
   reaction_equilibrium_repair_authorized: false
   historical_galerkin_candidate_authorized: false
+  full_response_ladder_authorized: false
   release_authority_granted: false
   trust_authority_granted: false
 validation_truth:
@@ -35,6 +40,9 @@ validation_truth:
   classifier_self_test_exact_blob_syntax: PASS
   observer_pre_solve_order: PASS_SOURCE_INSPECTION
   exact_checkout_retry: NOT_RUN_EXECUTION_ENVIRONMENT_DNS
+  hosted_lafea_runner: NOT_RUN_PRE_STEP_RUNNER_ALLOCATION
+  active_self_hosted_workflow_audit: COMPLETE_NO_EXECUTABLE_ROUTE
+  historical_b7h_route: PROVENANCE_ONLY_NOT_ACTIVE_CURRENT_WORKFLOW
   b01_exact_head_prerequisite: NOT_RUN
   b02d_v2_binding_exact_head: NOT_RUN
   b02d_v2_governing_response: NOT_RUN
@@ -48,4 +56,5 @@ excluded_authority:
   - BENCHMARK_OR_TOLERANCE_CHANGE
   - RELEASE_LIFECYCLE_TRUST
   - WORKFLOW_MUTATION
+  - VALIDATION_ONLY_SUCCESSOR_WITHOUT_RECOVERED_EXECUTION
 merge_authority: OWNER_ONLY_NOT_GRANTED

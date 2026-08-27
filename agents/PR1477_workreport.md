@@ -6,9 +6,8 @@
 HANDOVER_READINESS: READY
 PR_RECOVERY_STATE: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_RELEASE_MANIFEST_SALVAGE_ONLY
-EXECUTION_MODE: AUTO
-AUTO_STATE: RUNNING
-PHASE_PROGRESSION: AUTO
+EXECUTION_MODE: MANUAL
+AUTO_STATE: NOT_ACTIVE_CURRENT_INSTRUCTION
 SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1476
 MERGE_AUTHORITY: OWNER_ONLY_NOT_GRANTED
 CRITICALITY: ENGINEERING_CRITICAL
@@ -18,35 +17,35 @@ UMBRELLA: #1389
 SOURCE_PR: #1444 CLOSED_SUPERSEDED_SALVAGE_PARTIAL
 DEPENDENCY_BASE_PR: #1473
 BASE_BRANCH: agent/issue-1472-emp1-deployment-operations-20260826
-PARENT_HEAD: 54cc3e7af128f748e41b3595a7dff176e30ddc84
-PRE_PROPAGATION_HEAD: ca84e15767ef03a29982766dba65a62be63e7719
-STRUCTURAL_PROPAGATION_HEAD: 6daaa210084e8defef41a57673d5e372e3933412
-STRUCTURAL_PROPAGATION_TREE: e70f35bb53e3910cbc4bd9dedbcf11d7c303a873
-REPORT_BASIS_HEAD: 6daaa210084e8defef41a57673d5e372e3933412
-LIVE_MAIN_LAST_OBSERVED: 20e0abb5301363bef0659cf615bc8a37559ac869
-GROUNDING_EPOCH: GE-PR1477-002
-CURRENT_STAGE: PARENT_PROPAGATION_VALIDATED_STACK_RECONCILIATION_NEXT
-CURRENT_BLOCKER: executable exact-candidate release qualification remains source/runtime/#54 blocked; merge authority not granted
-HIGHEST_RISK: replacing inherited current release gates with obsolete #1444 candidate semantics or treating the manifest as authority creation
-EXACT_NEXT_ACTION: keep PR1477 draft/unmerged; reconcile all four live PRs, current main, reviews/checks and external execution blockers, then stop only at the first AUTO hard-stop boundary.
+PARENT_HEAD: 8084b27b8c8fcfa30fcdfb15841dbff261c52b2e
+PRE_PROPAGATION_HEAD: 25a87906418e941442df878a5e19ee25a7b0a191
+STRUCTURAL_PROPAGATION_HEAD: 2e6f4ba3c90119d1d00ede0c2754cd383eab9857
+STRUCTURAL_PROPAGATION_TREE: 9d5868d817e443c70feb31cf08c1ef3267b574b1
+REPORT_BASIS_HEAD: 2e6f4ba3c90119d1d00ede0c2754cd383eab9857
+LIVE_MAIN_LAST_OBSERVED: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+GROUNDING_EPOCH: GE-PR1477-003
+CURRENT_STAGE: WHOLE_STACK_CURRENT_MAIN_RECONCILED
+CURRENT_BLOCKER: exact-candidate executable release qualification remains source/runtime/#54 blocked; merge authority not granted
+HIGHEST_RISK: treating manifest custody or structurally clean ancestry as release qualification
+EXACT_NEXT_ACTION: keep PR1464/1473/1477 draft and unmerged; refresh final live reviews/checks/diffs and await explicit owner merge/integration authority or a new scoped successor instruction.
 ```
 
 ## Handover in 60 Seconds
 
-PR1477 is the bounded `SALVAGE_PARTIAL` successor to stale PR1444. Its manifest/checker semantics are retained, but the obsolete PR1444 full release-candidate implementation is not reused. The current release harness inherits the normalized #1457/#1464/#1473 gates and adds only release-manifest custody.
+PR1477 remains the bounded `SALVAGE_PARTIAL` successor to stale PR1444. Its manifest/checker semantics are retained, while the obsolete PR1444 full release-candidate implementation remains rejected. The release harness now inherits the current-main-regrounded PR1464 dependency/header gates and synchronized PR1473 deployment-operations gate, then adds only the six-file release-manifest salvage delta.
 
-Parent propagation completed without technical mutation:
+## Current parent propagation
 
 ```text
-old PR1477 head = ca84e15767ef03a29982766dba65a62be63e7719
-new parent      = 54cc3e7af128f748e41b3595a7dff176e30ddc84
-new child head  = 6daaa210084e8defef41a57673d5e372e3933412
-new child tree  = e70f35bb53e3910cbc4bd9dedbcf11d7c303a873
-compare         = 13 ahead / 0 behind parent
-changed files   = exactly 6
+old PR1477 head = 25a87906418e941442df878a5e19ee25a7b0a191
+new parent      = 8084b27b8c8fcfa30fcdfb15841dbff261c52b2e
+new tree        = 9d5868d817e443c70feb31cf08c1ef3267b574b1
+structural head = 2e6f4ba3c90119d1d00ede0c2754cd383eab9857
+branch update   = fast-forward / force=false
+compare         = exactly 6 files / 0 behind parent
 ```
 
-The structural commit uses old PR1477 as first parent and current PR1473 as second parent. Its tree is current PR1473 plus the exact six retained PR1477 blobs. Branch movement used `force=false`.
+The structural tree is current PR1473 plus the exact six retained PR1477 blobs. No technical content was regenerated or conflict-resolved.
 
 ## Exact six-file ledger
 
@@ -57,7 +56,7 @@ The structural commit uses old PR1477 as first parent and current PR1473 as seco
 5. `scripts/emp1-professional-release-manifest-check.mjs`
 6. `scripts/emp1-professional-release-manifest.mjs`
 
-At structural lock the technical blobs are:
+At structural lock the technical blobs remain:
 
 ```text
 release candidate = 25429d576671e199fd6d1a46b960139c42c44ad6
@@ -65,7 +64,18 @@ manifest checker  = e082a01b4e66c4663af8f0a8a795495ff9958c44
 manifest producer = 8a7dcf27f0f8740d14eccd7f9fd5b37b7bc6af2c
 ```
 
-This recovery sync changes only PR1477 workreport/status/claim records.
+## Whole-stack reconciliation
+
+Current stack after this batch:
+
+```text
+main   = b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+PR1464 = current-main re-grounded; base retargeted to main; exact 16-file delta
+PR1473 = exact seven-file child of synchronized PR1464
+PR1477 = exact six-file child of synchronized PR1473
+```
+
+No post-PR1457 main movement overlapped PR1464's 16 paths. All branch advances used `force=false`. The shared release-candidate harness was preserved at each child's exact retained blob rather than regenerated from the parent.
 
 ## Salvage invariant
 
@@ -77,13 +87,14 @@ No core WRC/EMP.1 mechanics, package mutation, provider API/configuration, HTML/
 
 ## Validation ledger
 
-- exact six retained blob identities — `PASS`; source inspection.
-- structural parent propagation — `PASS`; non-force fast-forward.
-- parent compare — `PASS`; 13 ahead / 0 behind / exactly 6 files.
-- manifest/release-harness source validation — retained `PASS_PRIOR_AUDIT`; no technical mutation in this epoch.
-- exact-candidate release execution — `NOT_RUN` in this epoch.
-- live build/browser/deployment evidence — `NOT_RUN`.
-- hosted execution — retained `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE` where applicable.
+- exact six retained blob identities — `PASS`;
+- structural parent propagation — `PASS_FAST_FORWARD_FORCE_FALSE`;
+- parent compare — `PASS_EXACT_6_FILES_ZERO_BEHIND`;
+- manifest/release-harness source validation — retained `PASS_PRIOR_AUDIT`;
+- final stack structural custody — `PASS` for 16/7/6 exact deltas;
+- exact-candidate release execution — `NOT_RUN_CURRENT_EPOCH`;
+- live build/browser/deployment evidence — `NOT_RUN`;
+- hosted runEmp1/gamma5/independent execution — `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`; jobs continue to expose `steps=null` / `logs_url=null`;
 - WRC numerical comparison — `NOT_APPLICABLE` to structural manifest recovery.
 
 No `NOT_RUN` is promoted to PASS.
@@ -96,4 +107,4 @@ A3 Authority/Invariant — 20/20.
 A4 Independent Validation — 19/20.
 A5 Minimal Patch — 20/20.
 
-**99/100; minimum 19/20 — WRITE_ALLOWED release-manifest salvage only.**
+**99/100; minimum 19/20 — WRITE_ALLOWED structural release-stack reconciliation only.**

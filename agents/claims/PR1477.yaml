@@ -5,9 +5,9 @@ branch: agent/issue-1476-release-manifest-salvage-20260826
 issue: 1476
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
-execution_mode: AUTO
-auto_state: RUNNING
-coordination_state: PARENT_PROPAGATED_WHOLE_STACK_RECONCILIATION_NEXT
+execution_mode: MANUAL
+auto_state: NOT_ACTIVE_CURRENT_INSTRUCTION
+coordination_state: WHOLE_STACK_CURRENT_MAIN_RECONCILED_FINAL_LIVE_CHECK_NEXT
 scope:
   authority: EMP1_RELEASE_MANIFEST_SALVAGE
   paths:
@@ -29,16 +29,17 @@ authority_boundary:
   manifest_records_authority: true
   manifest_creates_authority: false
   manifest_replaces_authority: false
+  structural_recovery_creates_authority: false
   engineering_authority_granted: false
   release_authority_granted: false
   deployment_authority_granted: false
-parent_head: 54cc3e7af128f748e41b3595a7dff176e30ddc84
-pre_propagation_head: ca84e15767ef03a29982766dba65a62be63e7719
-structural_propagation_head: 6daaa210084e8defef41a57673d5e372e3933412
-structural_propagation_tree: e70f35bb53e3910cbc4bd9dedbcf11d7c303a873
-report_basis_head: 6daaa210084e8defef41a57673d5e372e3933412
-live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
+parent_head: 8084b27b8c8fcfa30fcdfb15841dbff261c52b2e
+pre_propagation_head: 25a87906418e941442df878a5e19ee25a7b0a191
+structural_propagation_head: 2e6f4ba3c90119d1d00ede0c2754cd383eab9857
+structural_propagation_tree: 9d5868d817e443c70feb31cf08c1ef3267b574b1
+report_basis_head: 2e6f4ba3c90119d1d00ede0c2754cd383eab9857
+live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1477-002
+grounding_epoch: GE-PR1477-003
 handover_report: agents/PR1477_workreport.md
-exact_next_action: "Keep PR1477 draft/unmerged; reconcile current main plus PR1457/1464/1473/1477 review/check/diff state and stop only at the first AUTO hard-stop boundary."
+exact_next_action: "Refresh final live main/reviews/checks/diffs; if unchanged and clean, keep PR1464/1473/1477 draft/unmerged pending explicit owner merge/integration authority or a new scoped successor instruction."

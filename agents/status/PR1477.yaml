@@ -9,35 +9,35 @@ umbrella: 1389
 source_pr: 1444
 dependency_base_pr: 1473
 base_branch: agent/issue-1472-emp1-deployment-operations-20260826
-execution_mode: AUTO
-auto_state: RUNNING
-phase_progression: AUTO
+execution_mode: MANUAL
+auto_state: NOT_ACTIVE_CURRENT_INSTRUCTION
 scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1476
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
 pr_recovery_state: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
 handover_readiness: READY
-parent_head: 54cc3e7af128f748e41b3595a7dff176e30ddc84
-pre_propagation_head: ca84e15767ef03a29982766dba65a62be63e7719
-structural_propagation_head: 6daaa210084e8defef41a57673d5e372e3933412
-structural_propagation_tree: e70f35bb53e3910cbc4bd9dedbcf11d7c303a873
-report_basis_head: 6daaa210084e8defef41a57673d5e372e3933412
-live_main_last_observed: 20e0abb5301363bef0659cf615bc8a37559ac869
-grounding_epoch: GE-PR1477-002
+parent_head: 8084b27b8c8fcfa30fcdfb15841dbff261c52b2e
+pre_propagation_head: 25a87906418e941442df878a5e19ee25a7b0a191
+structural_propagation_head: 2e6f4ba3c90119d1d00ede0c2754cd383eab9857
+structural_propagation_tree: 9d5868d817e443c70feb31cf08c1ef3267b574b1
+report_basis_head: 2e6f4ba3c90119d1d00ede0c2754cd383eab9857
+live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+grounding_epoch: GE-PR1477-003
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: PARENT_PROPAGATED_WHOLE_STACK_RECONCILIATION_NEXT
-current_stage: PARENT_PROPAGATION_VALIDATED_STACK_RECONCILIATION_NEXT
+coordination: WHOLE_STACK_CURRENT_MAIN_RECONCILED_FINAL_LIVE_CHECK_NEXT
+current_stage: WHOLE_STACK_CURRENT_MAIN_RECONCILED
 merge_authorization: NOT_GRANTED
 validation:
   retained_blob_custody: PASS_EXACT_6_BLOBS
   structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
-  parent_compare: PASS_13_AHEAD_0_BEHIND_EXACT_6_FILES
+  parent_compare: PASS_EXACT_6_FILES_ZERO_BEHIND
+  whole_stack_structural_custody: PASS_16_7_6_EXACT_DELTAS
   manifest_release_source: PASS_PRIOR_AUDIT
   release_execution: NOT_RUN_CURRENT_EPOCH
   build_browser_deployment_execution: NOT_RUN
-  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RETAINED
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
   numerical_comparison: NOT_APPLICABLE
-current_blocker: "Executable exact-candidate release qualification remains source/runtime/#54 blocked; merge authority not granted."
-exact_next_action: "Keep PR1477 draft/unmerged; reconcile current main plus PR1457/1464/1473/1477 review/check/diff state and stop only at the first AUTO hard-stop boundary."
+current_blocker: "Exact-candidate executable release qualification remains source/runtime/#54 blocked; merge authority not granted."
+exact_next_action: "Refresh final live main/reviews/checks/diffs; if unchanged and clean, keep PR1464/1473/1477 draft/unmerged pending explicit owner merge/integration authority or a new scoped successor instruction."

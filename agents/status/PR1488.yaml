@@ -1,0 +1,35 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1488
+issue: 1321
+branch: agent/issue-1321-calculation-defaults-scoped-ux
+state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: IMPLEMENT_SCOPED_CALCULATION_DEFAULTS
+base_branch: agent/issue-1321-calculation-defaults-basic-ux
+base_sha: 49fdf224390cfa4993781e8e24776f4e8aaf55f3
+validation:
+  live_main_grounding: PASS
+  d1_base_ready: PASS
+  configured_default_schema_trace: PASS
+  scope_precedence_trace: PASS
+  provider_materializable_field_trace: PASS
+  focused_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  second_default_mechanism_forbidden: true
+  provider_precedence_unchanged: true
+  exact_scope_matching_preserved: true
+  source_master_precedence_preserved: true
+  product_default_catalog_unchanged: true
+  mechanics_change_authorized: false
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
+merge_disposition: DRAFT_IMPLEMENTATION_IN_PROGRESS
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Implement scoped authoring model/view, provider-backed standalone falsifier, remove WIP marker, reconcile stacked diff and leave ready for owner review."

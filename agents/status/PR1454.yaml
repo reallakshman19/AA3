@@ -2,54 +2,36 @@ schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1454
 mission: "Harden professional JSON intake size/type/schema boundary"
-workstream: EMP1_PROFESSIONAL_JSON_INTAKE_SECURITY
+workstream: EMP1_JSON_INTAKE_SECURITY
 branch: agent/issue-1451-emp1-json-intake-security-20260826
 issue: 1451
 umbrella: 1389
-execution_mode: AUTO
-auto_state: COMPLETE
+execution_mode: MANUAL
 scope_authority: LOCKED_TO_ISSUE_1451
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_DRAFT_POST_CHUNK_FIX_RECONCILED
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-base_main: 29c688db4a021db900d1f8c67f56f777f73f4ddc
-base_tree: 60d0fa231c52a561b9d6cc50d1099abff8500880
-technical_basis_head: 3535a34b7ef880e5e587733a243a01b78f9cf25a
-grounding_epoch: GE-PR1454-003
+pre_reground_head: 54c513e0d6b3b5d672d4a8dec8410bd643c20f45
+live_main: 6b5e048467cf67fb51da3e99517ce58d5cc5a3dc
+structural_reground_head: 7102208808020a7a82a2ea95e6cae6c896a757e8
+structural_reground_tree: 3cae8570d2b5f21f2876e1439a05fe17ff470fea
+report_basis_head: 7102208808020a7a82a2ea95e6cae6c896a757e8
+report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
+grounding_epoch: GE-PR1454-004
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_NO_OPEN_PR_EXACT_FILE_OVERLAP
-current_stage: RECOVERY_ONLY_POST_CHUNK_FIX_AUDIT_COMPLETE
-merge_authorization: NOT_GRANTED
+coordination: SAFE_INTAKE_SECURITY_CURRENT_MAIN_REGROUND
+current_stage: CURRENT_MAIN_REGROUND_VALIDATED_DRAFT
+merge_authorization: NOT_GRANTED_FOR_THIS_SUCCESSOR
 validation:
-  exact_five_path_scope: PASS_SOURCE_INSPECTION
-  five_mib_policy_bound: PASS_SOURCE_INSPECTION
-  pre_read_size_guard: PASS_SOURCE_INSPECTION
-  runtime_json_extension_guard: PASS_SOURCE_INSPECTION
-  runtime_json_mime_guard: PASS_SOURCE_INSPECTION
-  bounded_slice_and_size_consistency: PASS_SOURCE_INSPECTION
-  fatal_utf8_guard: PASS_SOURCE_INSPECTION
-  malformed_json_rejection: PASS_SOURCE_INSPECTION
-  non_object_json_rejection: PASS_SOURCE_INSPECTION
-  unsupported_workbench_envelope_rejection: PASS_SOURCE_INSPECTION
-  stage_normalizer_authority_preserved: PASS_SOURCE_INSPECTION
-  source_content_not_echoed_by_malformed_json_error: PASS_SOURCE_INSPECTION
-  no_arbitrary_code_primitive_added: PASS_SOURCE_INSPECTION
-  io_leaf_chunk_dependency_preserved: PASS_SOURCE_INSPECTION
-  canonical_schema_cross_check_encoded: PASS_SOURCE_INSPECTION
-  compatibility_search: PASS_SOURCE_INSPECTION
-  reviews: PASS_NONE
-  review_threads: PASS_NONE
-  focused_node_checker: NOT_RUN
-  hosted_visible_workbench: NOT_RUN_EXECUTION_ENVIRONMENT
-  hosted_runemp1: NOT_RUN_EXECUTION_ENVIRONMENT
+  io_seam_drift: PASS_NONE_IDENTICAL_BLOB_1848913f8a5ed0338cdcfc9cbf44b76ed5b97d53
+  retained_technical_blobs: PASS_EXACT
+  structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
+  reviews_threads_pre_reground: PASS_ZERO_ZERO
+  focused_execution: NOT_RUN
+  browser_execution: NOT_RUN_EXECUTION_ENVIRONMENT
   numerical_comparison: NOT_APPLICABLE
-hosted_evidence:
-  visible_workbench_run: 32942884492
-  visible_workbench_job: 98097381646
-  runemp1_run: 32942884478
-  runemp1_job: 98097381423
-  classification: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-exact_next_action: "Leave PR1454 draft/unmerged pending explicit Owner merge authorization; re-ground live main/head/diff/reviews immediately before any merge."
+current_blocker: "Executable validation remains NOT_RUN under #54; merge authority for PR1454 not granted."
+exact_next_action: "Keep PR1454 draft/unmerged pending explicit owner merge authority."

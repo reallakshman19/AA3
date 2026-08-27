@@ -5,11 +5,10 @@ branch: agent/issue-1451-emp1-json-intake-security-20260826
 issue: 1451
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
-execution_mode: AUTO
-auto_state: COMPLETE
-coordination_state: SAFE_NO_OPEN_PR_EXACT_FILE_OVERLAP
+execution_mode: MANUAL
+coordination_state: SAFE_INTAKE_SECURITY_CURRENT_MAIN_REGROUND
 scope:
-  authority: EMP1_PROFESSIONAL_JSON_INTAKE_SECURITY
+  authority: EMP1_JSON_INTAKE_SECURITY
   paths:
     - src/workspace/lafea-workbench-controller-io.js
     - scripts/emp1-professional-json-intake-security-check.mjs
@@ -17,27 +16,25 @@ scope:
     - agents/status/PR1454.yaml
     - agents/claims/PR1454.yaml
 protected_exclusions:
-  - src/core/emp1/**
   - src/workspace/lafea-workbench-controller.js
   - src/workspace/lafea-workbench-store.js
-  - WRC mechanics/route/registry
-  - WRC source/dataset/oracle/tolerances
+  - src/core/emp1/**
+  - WRC mechanics/source/dataset/oracle/tolerance
   - validation/emp1/release/**
-  - validation/emp1/wrc537-2013/**
   - .github/workflows/**
 authority_boundary:
-  engineering_method_mutation: false
-  runtime_route_authority_mutation: false
+  intake_security_can_reject: true
   source_authority_granted: false
-  code_compliance_authority_granted: false
+  engineering_method_authority_granted: false
   release_authority_granted: false
-  file_intake_rejection_only: true
-chunk_boundary:
-  io_module_imports_workbench_model: false
-  io_leaf_chunk_preserved: true
-  canonical_schema_cross_check_owned_by_checker: true
-merge_authority: NOT_GRANTED
-technical_basis_head: 3535a34b7ef880e5e587733a243a01b78f9cf25a
-grounding_epoch: GE-PR1454-003
+  deployment_authority_granted: false
+pre_reground_head: 54c513e0d6b3b5d672d4a8dec8410bd643c20f45
+live_main: 6b5e048467cf67fb51da3e99517ce58d5cc5a3dc
+structural_reground_head: 7102208808020a7a82a2ea95e6cae6c896a757e8
+structural_reground_tree: 3cae8570d2b5f21f2876e1439a05fe17ff470fea
+report_basis_head: 7102208808020a7a82a2ea95e6cae6c896a757e8
+report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
+merge_authority: NOT_GRANTED_FOR_THIS_SUCCESSOR
+grounding_epoch: GE-PR1454-004
 handover_report: agents/PR1454_workreport.md
-exact_next_action: "Leave PR1454 draft/unmerged pending explicit Owner merge authorization; re-ground immediately before any merge."
+exact_next_action: "Keep draft/unmerged pending explicit owner merge authorization."

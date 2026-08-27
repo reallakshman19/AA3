@@ -14,6 +14,10 @@ import {
   bindAuthorizedEmpiricalSupportCapabilityResult,
 } from './authorized-empirical-support-capability-binding.js';
 import {
+  createCurrentCommonInputGravityLoadBasis,
+  requireCurrentCommonInputGravityLoadBasis,
+} from './current-common-input-gravity-load-basis.js';
+import {
   requireCurrentCurrentCommonInputEmpiricalMassProjection,
 } from './current-common-input-empirical-mass-projection.js';
 import {
@@ -37,6 +41,9 @@ const QUALIFIED_CASE_MASS_AUTHORITY = 'CURRENT_COMMON_INPUT_EMPIRICAL_MASS_PROJE
  * No legacy publication/handoff or Project Data mass-map identity is created.
  * Mass composition is not repeated here: every mass is copied from the current
  * #1471 receipt after its currentness is rebuilt against the #1465 Run decision.
+ * Gravity acceleration and load factor are likewise rebound through the existing
+ * Non-FEA effective-value resolver before the legacy scalar kernel receives a
+ * projected execution profile. The kernel formula itself is unchanged.
  */
 export function calculateCurrentCommonInputEmpiricalSupportLoads({
   snapshot,
@@ -77,10 +84,23 @@ export function calculateCurrentCommonInputEmpiricalSupportLoads({
   }
 
   requireAuthorizedEmpiricalSourceBasis(commonInput.projectDataProfile);
+  const gravityLoadBasis = createCurrentCommonInputGravityLoadBasis({ commonInput });
+  requireCurrentCommonInputGravityLoadBasis(gravityLoadBasis, { commonInput });
   const supportCapabilityBinding = bindAuthorizedEmpiricalSupportCapabilities({
-    profile: commonInput.projectDataProfile,
+    profile: gravityLoadBasis.profile,
     supportSiteModel,
   });
+  if (supportCapabilityBinding.sourceProfileSemanticHash
+      !== gravityLoadBasis.projectedProfileSemanticHash) {
+    throw codedError(
+      'Support capability binding did not consume the exact gravity/load execution profile.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_GRAVITY_LOAD_PROFILE_MISMATCH',
+      {
+        expected: gravityLoadBasis.projectedProfileSemanticHash,
+        actual: supportCapabilityBinding.sourceProfileSemanticHash || null,
+      },
+    );
+  }
   requireAuthorizedEmpiricalSourceBasis(supportCapabilityBinding.profile);
   requireAuthorizedEmpiricalGravityConventions(supportCapabilityBinding.profile);
 
@@ -138,12 +158,14 @@ export function calculateCurrentCommonInputEmpiricalSupportLoads({
     runAuthorizationSemanticHash: runAuthorization.semanticHash,
     massProjectionSemanticHash: projection.semanticHash,
     qualifiedCaseMassBindingSemanticHash: massBinding.semanticHash,
+    gravityLoadBasisSemanticHash: gravityLoadBasis.semanticHash,
     sourceDatasetSha256: commonInput.sourceDatasetSha256,
     sourceModelSemanticHash: projection.sourceModelSemanticHash,
     supportSiteModelSemanticHash,
     routePartitionModelSemanticHash,
     distributionSemanticHash: semanticHash(distribution),
     mappingSummary: massBinding.summary,
+    gravityLoadBasis,
     policy: freezeDeep({
       legacyPublicationOrHandoffAuthorityAsserted: false,
       legacyMassMapsConsumed: false,
@@ -151,6 +173,8 @@ export function calculateCurrentCommonInputEmpiricalSupportLoads({
       zeroMassPermitted: true,
       projectDataWorkflow: 'loadCalcProjectBasis',
       forceFormula: 'massKg * gravityMPerS2 * loadFactor',
+      gravityLoadAuthority: 'CURRENT_COMMON_INPUT_EFFECTIVE_VALUE_RESOLUTION',
+      unboundProjectDataGravityLoadConsumed: false,
       allocationMechanicsChanged: false,
       equilibriumMechanicsChanged: false,
     }),
@@ -191,13 +215,24 @@ export function requireCurrentCommonInputEmpiricalSupportLoadExecution(value) {
       'CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_METHOD_MISMATCH',
     );
   }
+  const gravityLoadBasis = requireCurrentCommonInputGravityLoadBasis(value.gravityLoadBasis);
+  if (gravityLoadBasis.semanticHash !== value.gravityLoadBasisSemanticHash
+      || gravityLoadBasis.commonInputSemanticHash !== value.commonInputSemanticHash
+      || gravityLoadBasis.commonInputSealSemanticHash !== value.commonInputSealSemanticHash
+      || value.distribution?.supportCapabilityAuthority?.sourceProfileSemanticHash
+        !== gravityLoadBasis.projectedProfileSemanticHash) {
+    throw codedError(
+      'Current support execution does not retain the exact gravity/load execution-basis custody.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_GRAVITY_LOAD_BINDING_MISMATCH',
+    );
+  }
   requireFixedPolicy(value.policy);
   for (const key of [
     'commonInputSemanticHash', 'commonInputSealSemanticHash',
     'runAuthorizationSemanticHash', 'massProjectionSemanticHash',
-    'qualifiedCaseMassBindingSemanticHash', 'sourceModelSemanticHash',
-    'supportSiteModelSemanticHash', 'routePartitionModelSemanticHash',
-    'distributionSemanticHash', 'semanticHash',
+    'qualifiedCaseMassBindingSemanticHash', 'gravityLoadBasisSemanticHash',
+    'sourceModelSemanticHash', 'supportSiteModelSemanticHash',
+    'routePartitionModelSemanticHash', 'distributionSemanticHash', 'semanticHash',
   ]) requireSemanticHash(value[key], key);
   if (typeof value.sourceDatasetSha256 !== 'string'
       || !/^[a-f0-9]{64}$/iu.test(value.sourceDatasetSha256)) {
@@ -466,6 +501,8 @@ function requireFixedPolicy(value) {
     zeroMassPermitted: true,
     projectDataWorkflow: 'loadCalcProjectBasis',
     forceFormula: 'massKg * gravityMPerS2 * loadFactor',
+    gravityLoadAuthority: 'CURRENT_COMMON_INPUT_EFFECTIVE_VALUE_RESOLUTION',
+    unboundProjectDataGravityLoadConsumed: false,
     allocationMechanicsChanged: false,
     equilibriumMechanicsChanged: false,
   };

@@ -11,6 +11,9 @@ import {
   createCurrentCommonInputExplicitMomentRetention,
 } from '../src/workspace/engineering-loads/current-common-input-explicit-moment-retention.js';
 import {
+  createCurrentCommonInputGravityLoadBasis,
+} from '../src/workspace/engineering-loads/current-common-input-gravity-load-basis.js';
+import {
   executeCurrentCommonInputEmpiricalRun,
   CURRENT_COMMON_INPUT_EMPIRICAL_RUN_RUNTIME_SCHEMA,
 } from '../src/workspace/engineering-loads/current-common-input-empirical-run-runtime.js';
@@ -28,6 +31,8 @@ const V3 = 'CHAINAGE_TRIBUTARY_SPAN_V3_COG';
   assert.equal(result.selectedMethod, V3);
   assert.equal(result.resultStatus, 'CALCULATED');
   assert.equal(result.supportExecution.executedMethod, V3);
+  assert.equal(result.supportExecution.gravityLoadBasis.gravity.value, 9.80665);
+  assert.equal(result.supportExecution.gravityLoadBasis.loadFactor.value, 1);
   assert.equal(result.explicitMomentRetention.status, 'NOT_APPLICABLE');
   assert.deepEqual(fixture.calls, [
     'snapshot',
@@ -176,6 +181,9 @@ assert.match(storeSource, /#authorizedExecution = null;\s*\n\s*this\.#currentCom
 assert.doesNotMatch(staticsSource,
   /current-common-input-explicit-moment-retention|CURRENT_COMMON_INPUT_EXPLICIT_MOMENT_RETENTION/u,
   'raw support-load statics must not know about the separate moment-retention contract');
+assert.doesNotMatch(staticsSource,
+  /current-common-input-gravity-load-basis|CURRENT_COMMON_INPUT_GRAVITY_LOAD_BASIS/u,
+  'raw support-load statics must not know about the current Common Input gravity/load receipt');
 
 console.log(JSON.stringify({
   status: 'PASS',
@@ -189,6 +197,7 @@ console.log(JSON.stringify({
   governedMethodSelectedBeforeExecution: true,
   postFailureMethodRetry: false,
   currentMassProjectionRequired: true,
+  currentGravityLoadBasisRequired: true,
   currentSupportExecutionRequired: true,
   separateExecutionCustody: true,
   runControllerRouted: false,
@@ -344,10 +353,17 @@ function runtimeFixture({
 }
 
 function validSupportExecution({ selectedMethod, snapshot, decision, massProjection, dataset }) {
+  const basisInput = snapshot.commonInput.packageState === 'READY'
+    ? snapshot.commonInput
+    : { ...snapshot.commonInput, packageState: 'READY' };
+  const gravityLoadBasis = createCurrentCommonInputGravityLoadBasis({ commonInput: basisInput });
   const distribution = {
     method: selectedMethod,
     status: 'CALCULATED',
     loadCases: [],
+    supportCapabilityAuthority: {
+      sourceProfileSemanticHash: gravityLoadBasis.projectedProfileSemanticHash,
+    },
   };
   const material = {
     schema: CURRENT_COMMON_INPUT_EMPIRICAL_SUPPORT_LOAD_EXECUTION_SCHEMA,
@@ -361,12 +377,14 @@ function validSupportExecution({ selectedMethod, snapshot, decision, massProject
     runAuthorizationSemanticHash: decision.semanticHash,
     massProjectionSemanticHash: massProjection.semanticHash,
     qualifiedCaseMassBindingSemanticHash: hash('qualified-case-mass-binding'),
+    gravityLoadBasisSemanticHash: gravityLoadBasis.semanticHash,
     sourceDatasetSha256: dataset.sourceSha256,
     sourceModelSemanticHash: hash('source-model'),
     supportSiteModelSemanticHash: hash('support-site-model'),
     routePartitionModelSemanticHash: hash('route-partition-model'),
     distributionSemanticHash: semanticHash(distribution),
     mappingSummary: {},
+    gravityLoadBasis,
     policy: {
       legacyPublicationOrHandoffAuthorityAsserted: false,
       legacyMassMapsConsumed: false,
@@ -374,6 +392,8 @@ function validSupportExecution({ selectedMethod, snapshot, decision, massProject
       zeroMassPermitted: true,
       projectDataWorkflow: 'loadCalcProjectBasis',
       forceFormula: 'massKg * gravityMPerS2 * loadFactor',
+      gravityLoadAuthority: 'CURRENT_COMMON_INPUT_EFFECTIVE_VALUE_RESOLUTION',
+      unboundProjectDataGravityLoadConsumed: false,
       allocationMechanicsChanged: false,
       equilibriumMechanicsChanged: false,
     },
@@ -428,11 +448,27 @@ function componentAudit(explicitMoment) {
 function fixtureSnapshot(kind) {
   const ready = kind === 'READY' || kind === 'STALE';
   const partial = kind === 'PARTIAL';
+  const projectDataProfile = {
+    schema: 'project-data-profile/v1',
+    projectId: 'PR1495-RUNTIME-PROJECT',
+    loadCalculation: {
+      gravityMPerS2: {
+        value: 9.80665,
+        evidence: { source: 'PR1495 runtime fixture', authority: 'PROJECT_POLICY' },
+        approved: true,
+      },
+      loadFactor: {
+        value: 1,
+        evidence: { source: 'PR1495 runtime fixture', authority: 'PROJECT_POLICY' },
+        approved: true,
+      },
+    },
+  };
   const commonInputMaterial = {
     packageState: ready ? 'READY' : partial ? 'PARTIALLY_READY' : 'BLOCKED',
     sealedMethodIds: ready || partial ? ['WEIGHT_AND_GRAVITY'] : [],
     blockedMethodIds: partial ? ['SUSTAINED_REACTIONS'] : kind === 'BLOCKED' ? ['WEIGHT_AND_GRAVITY'] : [],
-    projectDataProfile: { schema: 'project-data-profile/v1' },
+    projectDataProfile,
     seal: { semanticHash: semanticHash({ seal: kind }) },
   };
   return {

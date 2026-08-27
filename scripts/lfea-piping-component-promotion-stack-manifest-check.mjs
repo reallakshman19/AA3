@@ -82,7 +82,10 @@ assert.equal(PRODUCTION_CAPABILITY_PROFILE.teeExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics, false);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureBourdon, false);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureStiffening, false);
-assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureAxialThrust, false);
+// Promoted on measured CAESAR parity, not on a flag flip: closed-end pressure
+// axial strain is implemented in the frame-element kernel and takes BM4_L's
+// weight+pressure median error from 63.29% to 7.78%.
+assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureAxialThrust, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureCodeStress, true);
 
 assert.equal(manifest.externalEvidenceGate.issue, 1402);

@@ -199,6 +199,7 @@ function buildFrameElements(structuralPreparation, primitives) {
       profile,
       distributedLoads: distributedByElement.get(binding.elementId) ?? [],
       temperature: temperatureByElement.get(binding.elementId) ?? null,
+      pressure: null,
       releases: [],
       endSprings: [],
       rigidOffsets: null,

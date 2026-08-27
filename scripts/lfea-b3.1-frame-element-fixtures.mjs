@@ -94,6 +94,7 @@ export function elementInput(overrides = {}) {
     profile: overrides.profile ?? eulerBernoulliProfile(),
     distributedLoads: overrides.distributedLoads ?? [],
     temperature: overrides.temperature ?? null,
+    pressure: null,
     releases: overrides.releases ?? [],
     endSprings: overrides.endSprings ?? [],
     rigidOffsets: overrides.rigidOffsets ?? null,

@@ -1864,6 +1864,7 @@ function compileUnloadedFrame(input) {
     profile: input.profile ?? frameProfile(),
     distributedLoads: [],
     temperature: null,
+    pressure: null,
     releases: [],
     endSprings: [],
     rigidOffsets: null,

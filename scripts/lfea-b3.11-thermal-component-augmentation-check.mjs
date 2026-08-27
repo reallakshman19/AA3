@@ -113,6 +113,7 @@ const directElement = compileFrameElement({
   profile: frameProfile,
   distributedLoads: [],
   temperature: sealedTemperature,
+  pressure: null,
   releases: [],
   endSprings: [],
   rigidOffsets: null,

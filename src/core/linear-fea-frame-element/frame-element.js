@@ -246,6 +246,7 @@ export function compileFrameElement(input) {
 
   let thermal = null;
   let initialStrainLocal = zeroVector12();
+  let thermalAxialStrain = 0;
   if (input.temperature !== null) {
     const temperature = requireElementPrimitive(input.temperature, elementId, 'frameElementInput.temperature');
     if (temperature.kind !== 'TEMPERATURE') {
@@ -273,11 +274,7 @@ export function compileFrameElement(input) {
       'axialStrain',
       INPUT_CODE,
     );
-    initialStrainLocal = thermalInitialStrainVector({
-      elasticModulus: materialState.elasticModulus,
-      area: sectionState.area,
-      axialStrain,
-    });
+    thermalAxialStrain = axialStrain;
     thermal = {
       primitiveId: temperature.primitiveId,
       primitiveSemanticHash: temperature.semanticHash,
@@ -290,6 +287,50 @@ export function compileFrameElement(input) {
       approximationProfileId: profile.thermalStrainApproximation,
       strainConvention: THERMAL_STRAIN_CONVENTION_ID,
     };
+  }
+
+  // Closed-end pressure axial strain, superposed onto the thermal one.
+  //
+  // A pressurized pipe with closed ends carries a longitudinal thrust, so it
+  // grows along its axis exactly the way a heated one does. Both are initial
+  // strains on the same axis, so they add into a single vector rather than
+  // being applied twice.
+  //
+  // Only applied when the primitive says so. The pressure primitive carries
+  // authorizedEffects from the production capability profile, and a pressure
+  // that is present for code stress only must not silently move the structure.
+  let pressureAxialStrain = 0;
+  let pressureRecord = null;
+  if (input.pressure !== null && input.pressure !== undefined) {
+    const pressureInput = requirePressureInput(input.pressure, elementId);
+    if (pressureInput.authorizedEffects.axialThrust === true) {
+      pressureAxialStrain = closedEndPressureAxialStrain({
+        pressure: pressureInput.pressure,
+        outerDiameter: section.dimensions.outerDiameter,
+        innerDiameter: section.dimensions.innerDiameter,
+        poissonRatio: materialState.poissonRatio,
+        elasticModulus: materialState.elasticModulus,
+        elementId,
+      });
+    }
+    pressureRecord = {
+      primitiveId: pressureInput.primitiveId,
+      pressure: pressureInput.pressure,
+      pressureBasis: pressureInput.pressureBasis,
+      axialThrustApplied: pressureInput.authorizedEffects.axialThrust === true,
+      axialStrain: pressureAxialStrain,
+      freeExtension: requireFinite(pressureAxialStrain * length, 'pressureFreeExtension', INPUT_CODE),
+      strainConvention: CLOSED_END_PRESSURE_STRAIN_CONVENTION_ID,
+    };
+  }
+
+  const totalInitialAxialStrain = thermalAxialStrain + pressureAxialStrain;
+  if (totalInitialAxialStrain !== 0) {
+    initialStrainLocal = thermalInitialStrainVector({
+      elasticModulus: materialState.elasticModulus,
+      area: sectionState.area,
+      axialStrain: totalInitialAxialStrain,
+    });
   }
 
   const endConditions = requireEndConditions(input.releases, input.endSprings);
@@ -408,6 +449,7 @@ export function compileFrameElement(input) {
       semanticHash: primitive.semanticHash,
     })),
     thermal,
+    pressure: pressureRecord,
     endConditions: {
       method: STATIC_CONDENSATION_RULE,
       releases: endConditions.releases,
@@ -489,4 +531,53 @@ export function requireFrameElement(record) {
     ...frameElementSemanticProjection(record),
     semanticHash: record.semanticHash,
   });
+}
+
+
+export const CLOSED_END_PRESSURE_STRAIN_CONVENTION_ID =
+  'CLOSED_END_PRESSURE_AXIAL_STRAIN_V1';
+
+/**
+ * Longitudinal strain of a closed-end pressurized cylinder.
+ *
+ *   e = (1 - 2v) * P * di^2 / (E * (do^2 - di^2))
+ *
+ * The (1 - 2v) term is what makes this a net axial strain rather than just the
+ * end-cap thrust: the hoop expansion contracts the pipe along its axis through
+ * Poisson coupling, and the two partly cancel.
+ */
+export function closedEndPressureAxialStrain(input) {
+  const { pressure, outerDiameter, innerDiameter, poissonRatio, elasticModulus, elementId } = input;
+  if (!(innerDiameter > 0) || !(outerDiameter > innerDiameter) || !(elasticModulus > 0)) {
+    fail(
+      `Element ${elementId} cannot resolve closed-end pressure axial strain from its section and material.`,
+      'FRAME_ELEMENT_PRESSURE_GEOMETRY_INVALID',
+    );
+  }
+  if (!Number.isFinite(poissonRatio)) {
+    fail(
+      `Element ${elementId} pressure axial thrust requires a finite Poisson ratio.`,
+      'FRAME_ELEMENT_PRESSURE_POISSON_INVALID',
+    );
+  }
+  return (1 - 2 * poissonRatio) * pressure * innerDiameter ** 2
+    / (elasticModulus * (outerDiameter ** 2 - innerDiameter ** 2));
+}
+
+function requirePressureInput(pressure, elementId) {
+  if (typeof pressure !== 'object' || pressure === null || Array.isArray(pressure)) {
+    fail(`Element ${elementId} pressure input must be a record.`, 'FRAME_ELEMENT_PRESSURE_INPUT_INVALID');
+  }
+  if (!Number.isFinite(pressure.pressure)) {
+    fail(`Element ${elementId} pressure input must carry a finite pressure.`, 'FRAME_ELEMENT_PRESSURE_INPUT_INVALID');
+  }
+  const effects = pressure.authorizedEffects;
+  if (typeof effects !== 'object' || effects === null) {
+    fail(
+      `Element ${elementId} pressure input must declare which effects it authorizes; `
+      + 'a pressure with no declared authority must not move the structure.',
+      'FRAME_ELEMENT_PRESSURE_AUTHORITY_MISSING',
+    );
+  }
+  return pressure;
 }

@@ -61,7 +61,8 @@ export function compileInputXmlLinearElementAuthorities(input) {
   const nodes = new Map(model.nodes.map((node) => [node.nodeId, node]));
   const distributedByElement = new Map();
   const temperatureByElement = new Map();
-  indexCasePrimitives(loadCase, distributedByElement, temperatureByElement);
+  const pressureByElement = new Map();
+  indexCasePrimitives(loadCase, distributedByElement, temperatureByElement, pressureByElement);
 
   const eligibleBendCount = sourcePreparation.normalizedGeometry.segments
     .filter(productionBendSourceEligible).length;
@@ -169,6 +170,7 @@ export function compileInputXmlLinearElementAuthorities(input) {
       frameProfile,
       distributedLoads: distributedByElement.get(element.elementId) ?? [],
       temperature: temperatureByElement.get(element.elementId) ?? null,
+      pressure: pressureByElement.get(element.elementId) ?? null,
       temperatureByElement,
       branchModifier,
     });

@@ -1,0 +1,46 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1497
+mission: "Qualify WRC cylindrical mean/mid-radius semantics without inventing assessment-geometry policy"
+workstream: EMP1_WRC537_CYLINDRICAL_RADIUS_SOURCE_AUTHORITY
+branch: agent/issue-1377-primary-mid-radius-20260827
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_ISSUE_1377_PRIMARY_RM_SEMANTICS
+phase_progression: AUTO
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_CURRENT_MAIN_GROUNDED
+handover_readiness: READY
+live_main_at_grounding: d9be6faa7a3de3511704b9f7c56f1cbca55780f5
+technical_basis_head: ec627a3eecc2b2238163aa5452bb2077e7f3d242
+grounding_epoch: GE-PR1497-001
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: SAFE_SOURCE_GOVERNANCE_ONLY
+current_stage: RECOVERY_RECORDS_AND_FINAL_MERGE_AUDIT
+validation:
+  source_inspection: PASS
+  external_primary_text_observation: PASS_TEXT_OBSERVED
+  pinned_pdf_direct_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+  external_rendering_byte_identity_to_pinned_pdf: UNPROVEN
+  mean_radius_checker: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  production_numerics_changed: false
+  collateral_authority_widened: false
+authority:
+  cylindrical_rm_symbol_qualified: true
+  cylindrical_mean_mid_radius_semantics_qualified: true
+  rm_gamma_beta_section45_identity_qualified: true
+  assessment_geometry_policy_qualified: false
+  corrosion_geometry_policy_qualified: false
+  local_nonuniform_geometry_policy_qualified: false
+  source_record_engineering_use_authorized: false
+  source_record_production_use_authorized: false
+  bounded_runtime_route_authorized: true
+  global_emp1_c: false
+  code_compliance: false
+  release_qualified: false
+merge_authorization: GRANTED_EXPLICIT_OWNER_CURRENT_CONVERSATION
+exact_next_action: "Verify exact six-file scope and zero-behind current main, check reviews/threads and protected-path isolation, then mark ready and merge if clean; afterward reconcile the #1389 aggregate/current-state layer separately."

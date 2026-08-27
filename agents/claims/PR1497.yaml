@@ -1,0 +1,59 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1497
+branch: agent/issue-1377-primary-mid-radius-20260827
+issue: 1377
+umbrella_issue: 1389
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY_AUTO_RUNNING
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_ISSUE_1377_PRIMARY_RM_SEMANTICS
+phase_progression: AUTO
+coordination_state: SAFE_SOURCE_GOVERNANCE_ONLY
+scope:
+  authority: EMP1_WRC537_CYLINDRICAL_RM_PRIMARY_SEMANTICS
+  paths:
+    - validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json
+    - scripts/emp1-wrc537-cylindrical-mean-radius-source-check.mjs
+    - docs/emp1/WRC537_2013_Cylindrical_Mean_Radius_Authority.md
+    - agents/PR1497_workreport.md
+    - agents/status/PR1497.yaml
+    - agents/claims/PR1497.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - src/core/local-attachment-screening/**
+  - src/core/local-attachment-correlation/**
+  - validation/emp1/release/**
+  - WRC/CAUx controlled source bytes
+  - oracle/tolerances/benchmark expected values
+  - .github/workflows/**
+  - UI/browser paths
+authority_boundary:
+  primary_mid_radius_semantics_qualified: true
+  same_rm_parameter_gamma_beta_section45_qualified: true
+  assessment_geometry_policy_created: false
+  corrosion_geometry_policy_created: false
+  production_authority_created: false
+  release_authority_created: false
+  code_authority_created: false
+source_custody:
+  pinned_pdf_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  pinned_pdf_git_blob_sha1: ce861233928154145a9257efbbf8dbef3f5a17d1
+  pinned_pdf_direct_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+  external_primary_text_observation: PASS_TEXT_OBSERVED
+  external_rendering_byte_identity_to_pinned_pdf: UNPROVEN
+remaining_blocker:
+  state: BLOCKED_ASSESSMENT_GEOMETRY_POLICY
+  items:
+    - nominal_vs_assessment_vs_measured_geometry
+    - corrosion_geometry_state_consistency
+    - local_diameter_and_ovality
+    - local_thinning_or_nonconcentric_wall
+    - thickened_insert_taper_transition_geometry
+live_main_at_grounding: d9be6faa7a3de3511704b9f7c56f1cbca55780f5
+technical_basis_head: ec627a3eecc2b2238163aa5452bb2077e7f3d242
+grounding_epoch: GE-PR1497-001
+merge_authority: GRANTED_EXPLICIT_OWNER_CURRENT_CONVERSATION
+handover_report: agents/PR1497_workreport.md
+exact_next_action: "Complete exact six-file/current-main/review audit, then merge if clean and start the downstream #1389 aggregate/current-state reconciliation."

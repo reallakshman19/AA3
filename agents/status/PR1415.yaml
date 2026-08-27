@@ -1,0 +1,52 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1415
+mission: "Retained WRC Table-5 cylindrical Rm symbol/role reconciliation"
+workstream: EMP1_WRC537_SOURCE_SEMANTICS
+branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
+issue: 1377
+umbrella: 1389
+execution_mode: MANUAL
+scope_authority: LOCKED_TO_ISSUE_1377_UNDER_1389
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
+handover_readiness: READY
+pre_reground_head: e97a269fb014d92ecec8bd62b9d35bbc8a7e1bd3
+live_main: 4677a92e3e1e8a743efa9c82f03db9d4a11cd59b
+live_main_tree: f9f66c82a8c9d33cd54289bdcd9cc5f318a58e1f
+structural_reground_head: 61cbb87955078159206f80f8d84dda2d1f77ba10
+structural_reground_tree: 9db9592bb75d2b831e2aa4038ddb0cc88033f31f
+grounding_epoch: GE-PR1415-005
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: PR1427_MUST_WAIT_FOR_PR1415_MERGE_DECISION
+current_stage: CURRENT_MAIN_REGROUND_VALIDATED_DRAFT
+merge_authorization: NOT_GRANTED
+source_state:
+  retained_table5_symbol_rm: QUALIFIED_RETAINED_SOURCE_TEXT
+  retained_table5_parameter_role: QUALIFIED_RETAINED_SOURCE_TEXT
+  physical_rm_definition: BLOCKED
+  od_id_t_construction: BLOCKED
+  corrosion_assessment_basis: BLOCKED
+  physical_rm_t_consistency: BLOCKED
+  section45_radius_identity: BLOCKED_BY_THIS_INCREMENT
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+authority:
+  source_record_engineering: false
+  source_record_production: false
+  bounded_runtime_engineering: true
+  bounded_runtime_production: true
+  global_emp1_c: false
+  code_compliance: false
+  release: false
+validation:
+  main_drift_exact_path_overlap: PASS_NONE_ALL_THREE_TECHNICAL_PATHS
+  retained_technical_blobs: PASS_EXACT
+  structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
+  checker_node_execution: NOT_RUN
+  hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+  numerical_comparison: NOT_APPLICABLE
+current_blocker: "Physical cylindrical R_m definition remains primary-source blocked; direct WRC page observation/checker execution remain NOT_RUN; merge authority not granted."
+exact_next_action: "Keep PR1415 draft/unmerged pending explicit owner merge authority. If merged, immediately re-ground PR1427 and reconcile its #1377 aggregate status."

@@ -1,112 +1,179 @@
-# WRC 537 cylindrical mean-radius / diameter-basis authority — EMP1-33
+# WRC 537 cylindrical radius / diameter-basis authority — EMP1-33
 
-## Decision
+## Status
 
-The current EMP.1 cylindrical WRC route has a deterministic internal geometry derivation, but the exact **primary-source cylindrical shell mean-radius definition is not yet qualified**.
+`BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED`
 
-Current software derives:
+## Current authority split
+
+This source-qualification record and the bounded runtime route answer different questions and must not be collapsed into one boolean.
+
+Current branch/live bounded state is:
+
+```text
+bounded gamma5 / zero-dp route authorized = true
+registry registered                       = true
+bounded engineering use                  = true
+bounded production use                   = true
+global EMP.1.C authority                 = false
+code compliance                          = false
+release qualified                        = false
+```
+
+This **does not** close the cylindrical physical-radius source question. The governing invariant is:
+
+`BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_CYLINDRICAL_RM_PHYSICAL_DEFINITION_SOURCE_AUTHORITY`
+
+Accordingly, `engineeringUseAuthorized=false` and `productionUseAuthorized=false` in the source-qualification record mean **authority granted by this source record itself**, not the current state of the separately governed bounded route.
+
+## Retained Table-5 source fact now reconciled
+
+The retained WRC 537 transcription at:
+
+`docs/emp1/WRC537_2013_Tables_and_Charts.md`
+
+contains **Table 5 — Computation Sheet for Local Stresses in Cylindrical Shells, pp. 41–42**. Its cylindrical geometry block states:
+
+```text
+Vessel Thickness   T
+Attachment Radius  r_o
+Vessel Radius      R_m
+```
+
+and immediately defines the cylindrical geometric parameters using the same `R_m`:
+
+```text
+gamma = R_m / T
+beta  = 0.875 * r_o / R_m
+```
+
+Accordingly, this reconciliation recognizes the retained Table-5 source-text facts that:
+
+- the cylindrical Table-5 vessel-radius symbol is `R_m`;
+- `R_m` is the vessel-radius geometry input consumed by Table 5;
+- the retained Table-5 parameterization uses that `R_m` in both `gamma` and `beta`.
+
+This corrects the older legacy extraction's cylindrical notation `R_c` for the **Table-5 symbol/role only**. The legacy extraction remains `NOT_READY_FOR_IMPLEMENTATION` and is not used to invent the missing physical definition.
+
+## What this does not prove
+
+Table 5 labels the quantity `Vessel Radius R_m`; it does **not**, in the retained evidence qualified here, define how that physical radius is constructed from OD, ID and thickness or what corrosion/assessment state governs it.
+
+Therefore the following remain unqualified:
+
+- whether `R_m` is explicitly a midsurface/mean radius in the physical-definition sense;
+- exact relation among OD, ID, `T` and `R_m`;
+- whether nominal, corroded, assessment or measured geometry is required;
+- whether the same physical `T` basis must be used to construct `R_m`;
+- internal, external or two-sided corrosion geometry treatment;
+- local station diameter versus nominal shell-course diameter;
+- ovality/out-of-roundness treatment;
+- locally thickened shell, insert plate, taper or transition treatment;
+- whether the same `R_m` identity governs every §4.5 applicability ratio.
+
+## Current production trace
+
+Current source custody derives:
 
 ```text
 outerRadius = pipeOutsideDiameter / 2
 meanRadius  = outerRadius - assessmentPipeThickness / 2
-gamma       = meanRadius / shellThickness
-beta        = 0.875 * attachmentOutsideRadius / meanRadius
 ```
 
-That chain is coherent with the retained LAFEA.1/LAFEA.2 assessment geometry. It must not be promoted into a universal WRC source rule until the primary cylindrical nomenclature and geometry relation are directly verified.
-
-## Retained source distinction
-
-`docs/01_WRC537_METHOD_DEFINITION.md` is explicitly `NOT_READY_FOR_IMPLEMENTATION`.
-
-Its retained spherical-shell extraction states:
+then passes that value to the bounded cylindrical geometry adapter, which computes:
 
 ```text
-R_m = mean radius of spherical shell
-R_m = R_i + T/2 = (R_o + R_i)/2
+gamma = meanRadius / shellThickness
+beta  = 0.875 * attachmentOutsideRadius / meanRadius
 ```
 
-but its cylindrical-shell extraction separately records:
+The same `meanRadius` is also supplied to the cylindrical §4.5 applicability evaluator and to the Table-5 calculation geometry.
 
-```text
-R_c = mean radius of cylindrical shell
-exact geometric definition = UNRESOLVED — exact definition not OCR-readable
-```
+This path is deterministic software behavior. It does not make:
 
-Therefore the confirmed spherical `R_m` mid-surface definition cannot be silently transferred to cylindrical `R_c`, and the software field name `meanRadius` cannot itself establish source nomenclature.
+`OD/2 - assessmentThickness/2`
 
-## Current software observation
+into a universal WRC physical-radius construction rule. No production geometry transformation or numerical mechanism is changed by this reconciliation.
 
-`src/core/emp1/emp1-wrc537-source-custody.js` obtains:
+## Source-custody boundary
 
-- pipe outside diameter from retained LAFEA.2 geometry evidence;
-- assessment pipe thickness from retained LAFEA.2 geometry evidence;
-- `meanRadius = OD/2 - assessmentThickness/2`;
-- then sends that value to the bounded cylindrical WRC geometry evaluator.
+Controlled WRC source identity remains:
 
-This is a **software derivation observation**. It proves reproducibility and internal consistency. It does not prove that WRC 537 defines cylindrical `R_c` from that exact pair of physical quantities for every nominal/corroded/measured assessment state.
+- document: WRC 537 (2013)
+- raw SHA-256: `698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2`
+- Git blob SHA-1: `ce861233928154145a9257efbbf8dbef3f5a17d1`
 
-## Production-critical unresolved items
+Direct binary page re-observation in this increment remains:
 
-Primary-source custody must resolve:
+`NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`
 
-1. exact cylindrical source symbol (`R_c`, `R_m`, or other notation);
-2. exact physical definition of the cylindrical radius;
-3. whether it is midsurface/mean, inside, outside, nominal, or another radius;
-4. exact relation among shell OD, ID, `T`, and the WRC radius;
-5. whether the same thickness basis used as WRC `T` must construct the radius;
-6. whether nominal OD remains fixed for an internally corroded assessment or another corrosion geometry is assumed;
-7. treatment of external/two-sided corrosion and measured geometry;
-8. treatment of local ovality/out-of-roundness;
-9. whether local station diameter or shell-course nominal diameter governs;
-10. treatment of locally thickened shell, insert plate, taper or transition;
-11. exact radius consumed by cylindrical dimensionless parameters and WRC §4.5 applicability ratios;
-12. source locators and inclusivity/definitions for every retained rule.
+The exact blob is reachable through authenticated GitHub, but the connected interface cannot expose the PDF bytes for direct page inspection. The retained Table-5 transcription is therefore used only for the bounded symbol/role reconciliation above; it is not stretched into a missing physical construction rule.
 
 ## Protected inference boundary
 
-Until primary closure, these inferences are prohibited:
+Do not infer:
 
 ```text
-current software uses OD/2 - T/2
-    => WRC universally defines cylindrical radius that way
+Table 5 uses R_m
+    => R_m is proven to equal OD/2 - T/2 for every assessment basis
 ```
+
+Do not infer:
 
 ```text
-spherical R_m is confirmed as midsurface radius
-    => cylindrical R_c has the same qualified definition
+software field is named meanRadius
+    => WRC primary source has qualified the physical midsurface/mean-radius construction
 ```
+
+Do not infer:
 
 ```text
-positive OD and T produce a valid meanRadius
-    => physical WRC geometry basis is qualified
+bounded route is authorized
+    => the unresolved physical R_m construction has become primary-source qualified
 ```
 
-The current mathematical derivation may remain unchanged as historical bounded-route custody, but it does not create new engineering authority.
-
-## Relationship to adjacent source gates
-
-EMP1-32 separately keeps the physical basis of WRC shell thickness `T` source-gated. EMP1-33 therefore cannot close by algebra alone: the radius construction and thickness basis must be physically compatible and source-traceable.
-
-EMP1-13 already qualified attachment `r0` as the **outside radius of the attachment at the shell juncture**. That `r0` authority does not qualify the host-shell cylindrical radius.
+Do not import spherical-shell radius definitions into the cylindrical route.
 
 ## Authority effect
 
-This source phase does not:
+This source-governance increment changes no:
 
-- change `meanRadius` calculation;
-- change `gamma` or `beta` equations;
-- change WRC §4.5 cylinder-length/end-distance rules;
-- change source-custody runtime code;
-- change coefficients, curves, stresses or tolerances;
-- widen pressure, SCF, off-axis, spherical, non-round, oblique, attachment-class, nearby-interaction, thickness, code or release authority.
+- production `meanRadius` calculation;
+- `gamma` or `beta` production equations;
+- WRC §4.5 applicability implementation;
+- Table-5 numerical evaluator;
+- route/registry authority;
+- oracle, tolerance or benchmark;
+- aggregate P0 release gate;
+- code/release/global authority;
+- workflow.
 
-Current disposition:
+Current authority is therefore represented as two orthogonal layers:
 
-`BLOCKED_PRIMARY_CYLINDRICAL_RADIUS_DEFINITION_UNRESOLVED`
+```text
+THIS SOURCE RECORD
+Table-5 cylindrical R_m symbol/role     = qualified retained source text
+physical R_m construction               = blocked
+engineering use granted by this record  = false
+production use granted by this record   = false
 
-## Reopen gate
+CURRENT BOUNDED RUNTIME
+bounded route authorized                = true
+registry registered                     = true
+bounded engineering/production use      = true
+global EMP.1.C                           = false
+code compliance                          = false
+release qualified                        = false
+```
 
-A production/source-custody change is admissible only after the pinned primary source can answer:
+## Closure evidence still required
 
-> What exact physical cylindrical shell radius does WRC 537 use; what is its source symbol; how is it constructed from controlled vessel dimensions and thickness basis; and what happens for nominal, corroded, measured, oval or locally modified shell geometry?
+Issue #1377 can be fully closed only when primary evidence establishes:
+
+1. the exact physical definition of cylindrical `R_m`;
+2. the exact OD/ID/`T` relationship;
+3. the compatible shell-thickness/corrosion geometry basis;
+4. the source identity of the radius used in §4.5 applicability ratios;
+5. behavior for nominal, measured, oval, corroded and locally modified geometry.
+
+Until those are proven, the #1377 physical-radius source gate remains blocked. Bounded route authorization is not accepted as substitute source evidence.

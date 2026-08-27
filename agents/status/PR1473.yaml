@@ -8,34 +8,35 @@ issue: 1472
 umbrella: 1389
 dependency_base_pr: 1464
 base_branch: agent/issue-1463-emp1-dependency-security-20260826
-execution_mode: AUTO
-auto_state: RUNNING
-phase_progression: AUTO
+execution_mode: MANUAL
+auto_state: NOT_ACTIVE_CURRENT_INSTRUCTION
 scope_authority: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1472
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
 pr_recovery_state: HEALTHY_STACKED_DRAFT_PARENT_PROPAGATED
 handover_readiness: READY
-parent_head: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
-pre_propagation_head: 54cc3e7af128f748e41b3595a7dff176e30ddc84
-structural_propagation_head: d1a9c47347d764422e249440f9fd6a2f036a49e0
-structural_propagation_tree: e15c42957a7221906af8107d651c672784ed4288
-report_basis_head: d1a9c47347d764422e249440f9fd6a2f036a49e0
+parent_head: f40921cdad4473a28227a72ccfc8418f54f87864
+pre_propagation_head: 4e3fc1b23d4ec1c69c277d1bfad72a27b9d3d592
+structural_propagation_head: 82e95f106d16378c78f39ce48f2247ab79958ed2
+structural_propagation_tree: 905c68aed24981d0e93a54aa9fae64638956117e
+report_basis_head: 82e95f106d16378c78f39ce48f2247ab79958ed2
 technical_basis: 3e40cf7f13c91d09336ea871796638053777ad57
-live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
-grounding_epoch: GE-PR1473-004
+live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+grounding_epoch: GE-PR1473-005
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: LATEST_PARENT_PROPAGATED_PR1477_NEXT
+coordination: CURRENT_PARENT_PROPAGATED_PR1477_NEXT
 current_stage: LATEST_PARENT_PROPAGATION_VALIDATED
 merge_authorization: NOT_GRANTED
 validation:
   retained_blob_custody: PASS_EXACT_7_BLOBS
   structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
+  parent_compare: PASS_EXACT_7_FILES_ZERO_BEHIND
   deployment_operations_source: PASS_PRIOR_AUDIT
   provider_promotion_rollback_execution: NOT_RUN
   focused_execution: NOT_RUN_CURRENT_EPOCH
+  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
   numerical_comparison: NOT_APPLICABLE
 current_blocker: "Provider promotion/rollback and focused execution remain NOT_RUN; merge authority not granted."
-exact_next_action: "Keep PR1473 draft/unmerged and propagate this exact parent into PR1477 while preserving its six-file manifest-salvage delta."
+exact_next_action: "Propagate this exact PR1473 parent into PR1477 while preserving PR1477's exact six-file release-manifest salvage delta."

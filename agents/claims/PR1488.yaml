@@ -1,0 +1,32 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1488
+issue: 1321
+branch: agent/issue-1321-calculation-defaults-scoped-ux
+state: SOURCE_COMPLETE_AWAITING_OWNER
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: agent/issue-1321-calculation-defaults-basic-ux
+base_sha: 49fdf224390cfa4993781e8e24776f4e8aaf55f3
+mission: "Implement PR-D2 engineer-friendly scoped Calculation Defaults authoring on the existing configured-default policy/provider."
+claimed_paths:
+  - src/workspace/project-data/non-fea-scoped-calculation-defaults-model.js
+  - src/workspace/project-data/non-fea-calculation-defaults-view.js
+  - scripts/non-fea-calculation-defaults-scoped-ux-check.mjs
+  - agents/PR1488_workreport.md
+  - agents/claims/PR1488.yaml
+  - agents/status/PR1488.yaml
+protected_paths:
+  - src/workspace/project-data/non-fea-configured-default-provider.js
+  - src/workspace/project-data/non-fea-field-registry.js
+  - src/workspace/project-data/non-fea-product-default-profile.js
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/core/non-fea-common-checker/**
+  - src/workspace/engineering-loads/**
+  - scripts/run-non-fea-checks.mjs
+  - .github/workflows/**
+authority_boundary: "Scoped policy UX/composition only. Existing configured-default schema, precedence, exact matching and conflict behavior are unchanged. Support-kind remains unavailable because no current support-target field grants PROJECT_CONFIGURED_DEFAULT."
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18

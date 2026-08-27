@@ -4,41 +4,44 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
+PR_RECOVERY_STATE: HEALTHY_CURRENT_MAIN_RECONCILED_MERGE_AUTHORIZED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_RELEASE_ARTIFACT_SECURITY_ONLY
 EXECUTION_MODE: AUTO
 AUTO_STATE: RUNNING
 PHASE_PROGRESSION: AUTO
 SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION_ISSUE_1389_ISSUE_1456
-MERGE_AUTHORITY: OWNER_ONLY_NOT_GRANTED
+MERGE_AUTHORITY: GRANTED_EXPLICIT_OWNER_2026-08-26T23:12:53Z
 CRITICALITY: ENGINEERING_CRITICAL
 PR: #1457
 ISSUE: #1456
 UMBRELLA: #1389
 BRANCH: agent/issue-1456-emp1-build-artifact-security-20260826
-LIVE_MAIN_LAST_OBSERVED: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
-CURRENT_MAIN_TREE: ef461365bc77db46b5a6d24cf4fe0ef8d32387ce
-PRE_REGROUND_HEAD: a849cfa7fb6a8ee8e3288b37dc1c1fbca0772204
-STRUCTURAL_REGROUND_HEAD: 0b4c50cefac72b7ef289119eed310de7788e8e17
-STRUCTURAL_REGROUND_TREE: 452b3b95a4a7809a5ddda50aaf12f541182ff460
-REPORT_BASIS_HEAD: 0b4c50cefac72b7ef289119eed310de7788e8e17
+LIVE_MAIN_LAST_OBSERVED: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
+CURRENT_MAIN_TREE: 767d09e9df0c5af5342b2d7339fe301342f57f0c
+PRE_REGROUND_HEAD: eba35c045b3adc09885b73fcb3738f9125de4cee
+STRUCTURAL_REGROUND_HEAD: 3d9865b6f0f364c790640bfae73ba7c0e247dbbe
+STRUCTURAL_REGROUND_TREE: b0faf7f805215246434b12a997111a52a5d393b4
+REPORT_BASIS_HEAD: 3d9865b6f0f364c790640bfae73ba7c0e247dbbe
 TECHNICAL_BASIS_HEAD: 28970fe78f0ad1a41a706d927aaeb92793e05552
-GROUNDING_EPOCH: GE-PR1457-006
-CURRENT_STAGE: LATEST_MAIN_EXACT_BLOB_REGROUND_VALIDATED
-CURRENT_BLOCKER: executable scanner/falsifier/build/browser evidence remains NOT_RUN; merge authority not granted
-HIGHEST_RISK: treating artifact-security policy/hash custody as release/security certification
-EXACT_NEXT_ACTION: keep PR1457 draft/unmerged and propagate this parent head into PR1464 without changing its 16-file bounded delta.
+GROUNDING_EPOCH: GE-PR1457-007
+CURRENT_STAGE: OWNER_MERGE_AUTHORIZED_EXACT_HEAD_GATE
+CURRENT_BLOCKER: none beyond explicitly retained NOT_RUN validation items
+HIGHEST_RISK: treating artifact-security policy/hash custody as engineering, code-compliance, or release authority
+EXACT_NEXT_ACTION: mark PR1457 ready, verify exact current head/main/reviews, squash-merge with expected-head protection, then normalize successor PR1464 onto the resulting main.
 ```
 
 ## Current grounding
 
-During whole-stack reconciliation, `main` advanced once from `20e0abb5...` to `8a72c3a3...` through unrelated LAFEA B01 qualification work. Exact drift inspection showed zero overlap with PR1457's seven paths. The branch was therefore re-grounded again by a two-parent commit using prior PR1457 as first parent and current main as second parent. The tree is current-main tree plus the exact seven retained PR1457 blobs; branch movement used `force=false`.
+`main` is pinned at `9b517664bdff102db6a4e7f1b6d2332a3311ad96`. PR1457 was structurally re-grounded non-destructively to `3d9865b6f0f364c790640bfae73ba7c0e247dbbe` using the current-main tree plus the exact seven retained PR1457 blobs. Branch movement used `force=false`; no technical blob changed during structural re-ground.
 
 ```text
-current main      = 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
-structural head   = 0b4c50cefac72b7ef289119eed310de7788e8e17
-structural tree   = 452b3b95a4a7809a5ddda50aaf12f541182ff460
+current main      = 9b517664bdff102db6a4e7f1b6d2332a3311ad96
+current main tree = 767d09e9df0c5af5342b2d7339fe301342f57f0c
+structural head   = 3d9865b6f0f364c790640bfae73ba7c0e247dbbe
+structural tree   = b0faf7f805215246434b12a997111a52a5d393b4
+compare           = 0 behind
 changed files     = exactly 7 expected
+reviews/threads   = 0 / 0
 ```
 
 ## Exact seven-file scope
@@ -51,18 +54,24 @@ changed files     = exactly 7 expected
 6. `agents/status/PR1457.yaml`
 7. `agents/claims/PR1457.yaml`
 
-Technical blobs remain unchanged from the prior qualified artifact-security implementation. No WRC mechanics/source/dataset/oracle/tolerance, package/dependency policy, CSP/header policy, HTML, provider config or workflow file changed.
+Protected unchanged: `src/core/emp1/**`, WRC mechanics/source/dataset/oracle/tolerance, controlled PDFs, dependency policy, CSP/header policy and `.github/workflows/**`.
 
 ## Validation truth
 
 - latest-main exact-path overlap: `PASS_NONE`.
 - exact-blob structural re-ground: `PASS`.
-- scanner/falsifier execution: `NOT_RUN` in this epoch.
-- build/browser execution: `NOT_RUN` in this epoch.
+- final structural compare: `PASS / exactly 7 files / 0 behind`.
+- artifact-security source validation: `PASS` from the retained technical qualification.
+- scanner/falsifier execution: `NOT_RUN_CURRENT_EPOCH`.
+- production build/browser execution: `NOT_RUN_CURRENT_EPOCH`.
 - hosted EMP.1 execution: retained `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE` where applicable.
 - WRC numerical comparison: `NOT_APPLICABLE`.
 
 No `NOT_RUN` is promoted to PASS.
+
+## Merge authority
+
+Owner instruction `merge, proceed next` received at `2026-08-26T23:12:53Z` grants one-time merge authority for the active parent PR1457. That authorization is consumed only by an expected-head merge of PR1457 after the final exact-head gate. It does not grant merge authority to PR1464 or later successors.
 
 ## Authority invariant
 

@@ -133,7 +133,8 @@
     "check:lfea-m047-local-production-harness": "node scripts/lfea-m047-bm4l-local-production-harness-check.mjs",
     "check:lfea-m047-stage2": "npm run check:lfea-caesar-configuration-authority && npm run check:lfea-m047-stage2-friction && npm run check:lfea-m047-local-production-harness",
     "check:lfea-solver-residual-conditioning": "node scripts/lfea-solver-residual-conditioning-check.mjs",
-    "check:lfea-accdb-preparation-regression": "node scripts/lfea-accdb-preparation-regression-check.mjs"
+    "check:lfea-accdb-preparation-regression": "node scripts/lfea-accdb-preparation-regression-check.mjs",
+    "check:lfea-s4-reducer-bm4l-corroboration": "node scripts/lfea-s4-reducer-bm4l-corroboration-check.mjs"
   },
   "dependencies": {
     "buffer": "^6.0.3",

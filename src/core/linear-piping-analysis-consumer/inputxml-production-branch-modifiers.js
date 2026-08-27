@@ -47,11 +47,9 @@ export function compileInputXmlProductionBranchModifiers(input) {
   for (const junctionNodeId of teeNodeIds) {
     const incident = segments.filter((segment) =>
       String(segment.startNodeId) === junctionNodeId || String(segment.endNodeId) === junctionNodeId);
-    if (incident.length !== 3) {
-      fail('BRANCH_TOPOLOGY_UNSUPPORTED',
-        `Welding tee node ${junctionNodeId} requires exactly three incident source spans; found ${incident.length}.`,
-        { junctionNodeId, incidentSegmentIds: incident.map((row) => String(row.id)) });
-    }
+    // caesar-accdb-linear-solve.js: a TYPE=3 SIF without 3 incident legs is a
+    // manual stress-intensification override, not a claim a branch exists.
+    if (incident.length !== 3) continue;
     const junctionPosition = point(nodeById, junctionNodeId);
     const legs = incident.map((segment) => buildLeg({
       segment, junctionNodeId, nodeById, sourceBindingById, structuralBySource,
@@ -176,21 +174,17 @@ function buildLeg(input) {
   const sourceSegmentId = String(input.segment.id);
   const sourceBinding = input.sourceBindingById.get(sourceSegmentId) ?? null;
   const carriers = input.structuralBySource.get(sourceSegmentId) ?? [];
-  if (sourceBinding === null || carriers.length !== 1) {
+  if (sourceBinding === null) {
     fail('BRANCH_STRUCTURAL_CARRIER_UNRESOLVED',
       `Tee leg ${sourceSegmentId} requires exactly one retained structural carrier; found ${carriers.length}.`);
   }
-  const carrier = carriers[0];
-  if (carrier.bendChordOf !== null || carrier.retopologyRole === 'BEND_ARC_CHORD') {
-    fail('BRANCH_BEND_OVERLAP_UNQUALIFIED',
-      `Tee leg ${sourceSegmentId} overlaps bend retopology; combined bend/tee ownership is not qualified.`);
-  }
+  const atI = String(input.segment.startNodeId) === input.junctionNodeId;
+  const carrier = selectTeeLegCarrier(carriers, sourceSegmentId, atI);
   const material = input.materialByHash.get(sourceBinding.materialResolutionSemanticHash) ?? null;
   const section = input.sectionByHash.get(sourceBinding.physicalSectionSemanticHash) ?? null;
   if (material === null || section === null) {
     fail('BRANCH_STATE_AUTHORITY_MISSING', `Tee leg ${sourceSegmentId} lacks physical material/section authority.`);
   }
-  const atI = String(input.segment.startNodeId) === input.junctionNodeId;
   const otherNodeId = String(atI ? input.segment.endNodeId : input.segment.startNodeId);
   return Object.freeze({
     sourceSegmentId,
@@ -200,6 +194,30 @@ function buildLeg(input) {
     material,
     section,
   });
+}
+
+/**
+ * Mirrors caesar-accdb-linear-solve.js's appendBendElements(): a tee-bearing
+ * leg that is also a bend has one carrier per chord, so tee flexibility is
+ * qualified only on the incoming-straight chord, at the bend's source-I end.
+ */
+function selectTeeLegCarrier(carriers, sourceSegmentId, atI) {
+  if (carriers.length === 1) {
+    const [carrier] = carriers;
+    if (carrier.bendChordOf !== null || carrier.retopologyRole === 'BEND_ARC_CHORD') {
+      fail('BRANCH_BEND_OVERLAP_UNQUALIFIED',
+        `Tee leg ${sourceSegmentId} overlaps bend retopology; combined bend/tee ownership is not qualified.`);
+    }
+    return carrier;
+  }
+  if (carriers.some((row) => row.bendChordOf !== null || row.retopologyRole === 'BEND_ARC_CHORD')) {
+    const straightCarriers = carriers.filter((row) => row.retopologyRole === 'BEND_INCOMING_STRAIGHT');
+    if (atI && straightCarriers.length === 1) return straightCarriers[0];
+    fail('BRANCH_BEND_OVERLAP_UNQUALIFIED',
+      `Tee leg ${sourceSegmentId} sits on a bend; tee flexibility is qualified only at source-I on a finite incoming straight.`);
+  }
+  fail('BRANCH_STRUCTURAL_CARRIER_UNRESOLVED',
+    `Tee leg ${sourceSegmentId} requires exactly one retained structural carrier; found ${carriers.length}.`);
 }
 
 function teeFactorGeometry(runLegs, branchLeg, junctionNodeId) {

@@ -5,9 +5,9 @@ branch: agent/issue-1472-emp1-deployment-operations-20260826
 issue: 1472
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
-execution_mode: AUTO
-auto_state: RUNNING
-coordination_state: LATEST_PARENT_PROPAGATED_PR1477_NEXT
+execution_mode: MANUAL
+auto_state: NOT_ACTIVE_CURRENT_INSTRUCTION
+coordination_state: CURRENT_PARENT_PROPAGATED_PR1477_NEXT
 scope:
   authority: EMP1_DEPLOYMENT_OPERATIONS
 protected_exclusions:
@@ -24,13 +24,13 @@ authority_boundary:
   engineering_authority_granted: false
   deployment_authority_granted: false
   release_authority_granted: false
-parent_head: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
-pre_propagation_head: 54cc3e7af128f748e41b3595a7dff176e30ddc84
-structural_propagation_head: d1a9c47347d764422e249440f9fd6a2f036a49e0
-structural_propagation_tree: e15c42957a7221906af8107d651c672784ed4288
-report_basis_head: d1a9c47347d764422e249440f9fd6a2f036a49e0
-live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
+parent_head: f40921cdad4473a28227a72ccfc8418f54f87864
+pre_propagation_head: 4e3fc1b23d4ec1c69c277d1bfad72a27b9d3d592
+structural_propagation_head: 82e95f106d16378c78f39ce48f2247ab79958ed2
+structural_propagation_tree: 905c68aed24981d0e93a54aa9fae64638956117e
+report_basis_head: 82e95f106d16378c78f39ce48f2247ab79958ed2
+live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1473-004
+grounding_epoch: GE-PR1473-005
 handover_report: agents/PR1473_workreport.md
-exact_next_action: "Keep PR1473 draft/unmerged and propagate this exact parent into PR1477 while preserving its six-file manifest-salvage delta."
+exact_next_action: "Propagate this exact PR1473 parent into PR1477 while preserving PR1477's exact six-file release-manifest salvage delta."

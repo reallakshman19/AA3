@@ -1,0 +1,36 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1489
+issue: 1321
+branch: agent/issue-1321-five-step-load-calc-workflow
+state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: IMPLEMENT_FIVE_STEP_WORKFLOW
+base_branch: agent/issue-1321-calculation-defaults-scoped-ux
+base_sha: 9c83cbdac5a90b19022eb7b0cde33e8d0cdf1e7d
+validation:
+  live_main_grounding: PASS
+  stacked_base_exact: PASS
+  product_wrapper_trace: PASS
+  routine_run_readiness_trace: PASS
+  advanced_diagnostics_reachability_trace: PASS
+  focused_execution_check: NOT_RUN
+  advanced_shell_contract_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  five_primary_steps_required: true
+  masters_remain_reachable: true
+  input_check_remains_reachable: true
+  common_input_semantics_unchanged: true
+  run_authority_unchanged: true
+  mechanics_change_authorized: false
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
+merge_disposition: DRAFT_IMPLEMENTATION_IN_PROGRESS
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Implement product-wrapper five-step convergence and migrate shell qualification; remove WIP marker; reconcile stacked diff."

@@ -13,6 +13,7 @@ validation:
   live_main_grounding: PASS
   d1_base_ready: PASS
   stacked_merge_base_exact: PASS
+  stacked_behind_base: 0
   configured_default_schema_trace: PASS
   scope_precedence_trace: PASS
   provider_materializable_field_trace: PASS
@@ -20,7 +21,10 @@ validation:
   target_kind_trace: PASS
   support_kind_capability_gap: PASS_IDENTIFIED_NOT_FABRICATED
   d2_source_review: PASS
-  exact_six_file_scope: PASS_PENDING_FINAL_COMPARE
+  exact_six_file_scope: PASS
+  temporary_wip_removed: PASS
+  review_submissions: 0
+  review_threads: 0
   focused_execution_check: NOT_RUN
   non_fea_aggregate: NOT_RUN
   check_imports: NOT_RUN
@@ -41,4 +45,4 @@ merge_disposition: READY_FOR_REVIEW_NOT_AUTHORIZED_TO_MERGE
 appendix_a_qualified: true
 appendix_a_score: 98
 appendix_a_minimum: 18
-exact_next_action: "Remove WIP marker, verify exact six-file stacked diff and zero reviews/threads, promote PR1488 from draft, then audit next Issue #1321 gap without merging."
+exact_next_action: "Owner review. After #1487 merges, deterministically re-ground #1488 to new main before any merge. Continue Issue #1321 gap audit without widening this PR."

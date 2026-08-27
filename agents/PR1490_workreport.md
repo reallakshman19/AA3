@@ -9,19 +9,23 @@ EXECUTION_MODE: AUTO
 MERGE_AUTHORITY: OWNER_ONLY_NOT_GRANTED
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_ISSUE: #1100 / B02D
+INFRASTRUCTURE_ISSUE: #54
+GOVERNANCE_ISSUE: #1413
 PREDECESSOR_BINDING: PR #1485 MERGED
 PR: #1490
 BRANCH: agent/lafea-b02d-v2-governing-response-20260827
-LIVE_MAIN_AT_RECONCILIATION: 3a54862127c601f3e4c59159526e7345fc06cf4c
+BASE_MAIN: 3a54862127c601f3e4c59159526e7345fc06cf4c
 RECONCILIATION_COMMIT: 519a63a5f55891f0e2b9e0b2dbc160454bbb555b
+LATEST_LIVE_MAIN: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+BRANCH_BEHIND_LIVE_MAIN: 1
+LATEST_MAIN_DRIFT_OVERLAP: NONE_B02D_LAFEA
 CURRENT_STAGE: SOURCE_COMPLETE_EXECUTION_ENVIRONMENT_HARD_STOP
 ENGINEERING_FAILURE_PROVEN: false
-EXACT_NEXT_ACTION: obtain an executable exact clean checkout, run `node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs`, and stop at the first emitted disposition. Do not create another validation-only successor or modify solver/reaction mechanics while execution remains unavailable.
 ```
 
 ## Mission
 
-Advance exactly one B02D V2 response authority boundary after merged #1485:
+Advance exactly one B02D V2 response-authority boundary after merged #1485:
 
 ```text
 same-head B01 prerequisite PASS
@@ -32,7 +36,9 @@ same-head B01 prerequisite PASS
 → stop
 ```
 
-The governing frozen case remains unchanged:
+No solver, sparse-matrix, reaction-assembly, Galerkin, benchmark/tolerance, release/trust or workflow mechanics change is authorized by this PR.
+
+## Frozen governing case
 
 ```text
 method                         T6
@@ -48,84 +54,53 @@ force-equilibrium limit        1e-4
 moment-equilibrium limit       1e-4
 ```
 
-No benchmark value or tolerance was changed.
+No frozen datum or tolerance has been changed from the qualified source.
 
 ## Implemented boundary
 
-### Separate V2 governing observer
+### V2 explicit opt-in / V1 non-interference
 
-PR #1490 deliberately does not modify the existing V1 production-response route. The V2 observer is separate and explicitly selects:
+The V2 observer is separate from the historical V1 response route and selects:
 
 ```text
 b02dProfileIdentityV2(T6, 5)
-+ B02D-FROZEN-POLAR-V2 source revision
-+ B02D_PROBE_STABLE_POLAR_V2 strategy
-+ B02D_PROBE_STABLE_POLAR_POLICY_V2
+B02D-FROZEN-POLAR-V2
+B02D_PROBE_STABLE_POLAR_V2
+B02D_PROBE_STABLE_POLAR_POLICY_V2
 ```
 
-This preserves V1 by non-interference rather than by parameterizing the historical V1 route.
+No V1 response-route file is modified.
 
 ### Pre-solve load gate
 
-Takeover audit found that the interrupted draft constructed the feature load and immediately entered `calculateLocalContinuum()`, which contradicted the intended first-wrong-boundary policy because a bad load moment could be hidden behind a later solver/reaction rejection.
-
-The repaired sequence is:
+Takeover audit corrected the interrupted draft so the first numerical boundary is tested before solver entry:
 
 ```text
 retained V2 load-edge mapping
 → consistent T2/Q3 nodal distribution
 → reconstruct Fx, Fy, Mz from actual load nodes
 → compare against frozen (+1000,+250) N and +10000 N.mm
-→ if load gate fails: LOAD_ASSEMBLY_GATE_FAILURE_RCA_REQUIRED and DO NOT CALL SOLVER
-→ only then calculateLocalContinuum()
+→ failure: LOAD_ASSEMBLY_GATE_FAILURE_RCA_REQUIRED
+            b02dV2LoadAssemblyQualified=false
+            productionQualification=NOT_RUN_PRE_SOLVE_LOAD_GATE_FAILED
+            solver NOT CALLED
+→ qualified load only: calculateLocalContinuum()
 ```
 
 The pure load gate is `evaluateB02dV2PreSolveLoadGate()` in `scripts/lib/lafea-b02d-v2-governing-response.js`.
 
-The governing observer records:
+### Rejected-result classifier
+
+If production rejects after solver entry, the observer records the first diagnostic and stops:
 
 ```text
-productionQualification = NOT_RUN_PRE_SOLVE_LOAD_GATE_FAILED
+REACTION_EQUILIBRIUM_FAILURE      → REACTION_EQUILIBRIUM_FAILURE_RCA_REQUIRED
+ITERATIVE_SOLVER_DID_NOT_CONVERGE → ITERATIVE_SOLVER_FAILURE_RCA_REQUIRED
+FREE_DOF_RESIDUAL_FAILURE         → FREE_DOF_RESIDUAL_FAILURE_RCA_REQUIRED
+other rejection                   → OTHER_GOVERNING_RESPONSE_RCA_REQUIRED
 ```
 
-when that gate fails.
-
-### Classifier truth correction
-
-The interrupted branch classified `LOAD_ASSEMBLY_GATE_FAILURE_RCA_REQUIRED` while setting `b02dV2LoadAssemblyQualified=true`. Current classification is:
-
-```text
-LOAD_ASSEMBLY_GATE_FAILURE_RCA_REQUIRED
-→ b02dV2LoadAssemblyQualified=false
-→ b02dV2GoverningResponseObserved=false
-→ fullResponseLadderMayNowRun=false
-```
-
-Every disposition retains:
-
-```text
-b02NumericalAuthorityGranted          false
-responseSolverRepairAuthorized        false
-reactionEquilibriumRepairAuthorized   false
-historicalGalerkinCandidateAuthorized false
-releaseAuthorityGranted               false
-trustAuthorityGranted                 false
-```
-
-## Rejected-result boundary
-
-Current production `calculateLocalContinuum()` may return a rejected result whose diagnostic identifies the numerical boundary while withholding failed authoritative reaction vectors. #1490 therefore records the first production diagnostic rather than modifying the solver to expose evidence it deliberately withholds.
-
-Current classifications include:
-
-```text
-REACTION_EQUILIBRIUM_FAILURE          → REACTION_EQUILIBRIUM_FAILURE_RCA_REQUIRED
-ITERATIVE_SOLVER_DID_NOT_CONVERGE     → ITERATIVE_SOLVER_FAILURE_RCA_REQUIRED
-FREE_DOF_RESIDUAL_FAILURE             → FREE_DOF_RESIDUAL_FAILURE_RCA_REQUIRED
-other rejection                       → OTHER_GOVERNING_RESPONSE_RCA_REQUIRED
-```
-
-A reaction-repair PR is not authorized by any of those classifications alone.
+None of those classifications alone authorizes a mechanics repair. Historical Galerkin information remains provenance/candidate only.
 
 ## Exact-head envelope
 
@@ -135,57 +110,39 @@ Canonical command:
 node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs
 ```
 
-The wrapper requires:
+Required sequence:
 
 ```text
-clean exact HEAD
-+ merged #1485 commit in ancestry
-→ execute same-head B02D V2 binding exact-head gate
-→ independently verify binding receipt says B01 + V2 binding PASS on this HEAD
-→ only then execute governing T6/L4 observer
-→ classify first boundary
-→ seal exact source-custody blobs
+exact clean HEAD
++ merged #1485 ancestry
+→ same-head B02D V2 binding exact-head gate
+→ independently verify B01 + V2 binding PASS on that HEAD
+→ governing T6/L4 observer
+→ first disposition
+→ retained exact source-custody evidence
 ```
 
-Runtime report:
+Runtime receipt:
 
 ```text
 reports/qualification/B02D/v2-governing-response-exact-head.json
 ```
 
-Only that exact path is added to `.gitignore`.
+Only that exact runtime receipt is ignored by Git.
 
-## Validation truth
+## Software validation already established
 
-### Source/currentness
-
-```text
-#1485 protected squash merge                  PASS_GITHUB_READBACK
-live main during reconciliation               3a54862127c601f3e4c59159526e7345fc06cf4c
-main drift after #1485                        3 commits
-main-drift overlap with B02D/LAFEA paths      NONE_OBSERVED
-branch merge-style reconciliation             PASS / 519a63a5f55891f0e2b9e0b2dbc160454bbb555b
-obsolete WIP report                           DELETED
-intended changed-file count                   8
-```
-
-The three intervening main commits are confined to Load Calc / Project Data implementation, checks and their recovery records. No LAFEA/B02D file overlaps #1490.
-
-### Software/classifier checks
-
-Exact current Git blobs were materialized independently and verified with `git hash-object` before execution:
+Exact Git blobs were independently materialized and hash-checked before execution attempts:
 
 ```text
 scripts/lib/lafea-b02d-v2-governing-response.js
-  GitHub blob = d948e72fe4b9569eb8cd8c2b626db84c17bba76f
-  local blob  = d948e72fe4b9569eb8cd8c2b626db84c17bba76f
+  d948e72fe4b9569eb8cd8c2b626db84c17bba76f
 
 scripts/lafea-b02d-v2-governing-response-self-test.mjs
-  GitHub blob = 913ec2c403e0ba96d23380d5d2db20a9342e5385
-  local blob  = 913ec2c403e0ba96d23380d5d2db20a9342e5385
+  913ec2c403e0ba96d23380d5d2db20a9342e5385
 ```
 
-Exact self-test result:
+Self-test:
 
 ```text
 schema                       lafea-b02d-v2-governing-response-self-test/v3
@@ -195,18 +152,51 @@ preSolveLoadGateCovered      true
 engineeringMechanicsExecuted false
 ```
 
-`node --check` also passed those exact two blobs. Source readback proves the pre-solve load gate branches before `calculateLocalContinuum()`.
+`node --check` passed the same exact blobs. Source inspection proves the pre-solve gate branches before `calculateLocalContinuum()`.
 
-### Real engineering execution
+These are software/classifier checks only; they are not B02D engineering execution evidence.
 
-Direct exact-checkout execution remains unavailable:
+## Current-main anti-drift reconciliation
+
+The branch was reconciled to `main@3a54862127c601f3e4c59159526e7345fc06cf4c` through two-parent commit:
 
 ```text
-fatal: unable to access 'https://github.com/reallaksh19/Advanced_Analysis.git/':
+519a63a5f55891f0e2b9e0b2dbc160454bbb555b
+```
+
+Live `main` subsequently moved one commit to:
+
+```text
+b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+Load Calc: expose current effective engineering values (#1492)
+```
+
+The drift is confined to Load Calc / Non-FEA Calculation Defaults presentation/resolution inspection, its focused check, aggregate registration and recovery files. No B02D, LAFEA continuum, mesh, benchmark, reaction, solver, workflow or numerical authority path overlaps this PR.
+
+Current relationship:
+
+```text
+PR branch vs live main = diverged
+ahead_by              = 23 before latest recovery commits
+behind_by             = 1
+mechanics overlap     = NONE_OBSERVED
+```
+
+A direct ref fast-forward is impossible without dropping PR commits and was rejected by GitHub. No force move was performed. Before any eventual engineering execution, PR #1490 must be reconciled to the then-live main through a non-destructive merge/rebase path that preserves the PR delta.
+
+## Real engineering execution state
+
+### Local exact-checkout lane
+
+Still unavailable in the current execution environment:
+
+```text
 Could not resolve host: github.com
 ```
 
-The current-head LAFEA hosted run inspected during this batch was:
+Classification: `NOT_RUN_EXECUTION_ENVIRONMENT_DNS`.
+
+### GitHub-hosted runner — prior reproduction
 
 ```text
 run       33071097476
@@ -215,47 +205,86 @@ steps     []
 runner_id 0
 ```
 
-Classification:
+Classification: `NOT_RUN_PRE_STEP_RUNNER_ALLOCATION`.
+
+### GitHub-hosted runner — fresh continuation reproduction
+
+PR-head workflow run inspected in the latest continuation:
 
 ```text
-NOT_RUN_PRE_STEP_RUNNER_ALLOCATION
+run       33075364780
+job       98528037535
+steps     []
+logs      unavailable / BlobNotFound
 ```
 
-This is infrastructure evidence only, not an engineering failure.
+No checkout, dependency installation or repository command executed. This is another `NOT_RUN_PRE_STEP_RUNNER_ALLOCATION`, not an engineering FAIL.
 
-### Execution-route audit / governance hard stop
+Do not trigger repeated validation-only runs merely to recreate this symptom without a fresh recovery signal.
 
-A final transport audit looked for any legitimate alternative exact-head execution route before declaring a hard stop.
+## Self-hosted B7H investigation
 
-Current repository workflow search for `self-hosted` returned:
+A historical branch remains:
 
 ```text
-current .github/workflows self-hosted references = 0
+ci/lafea-b7h-self-hosted-current-main
+a06a204bb5f8de96644facfd24213f4c307f0867
 ```
 
-Historical B7H records describe a bounded self-hosted LAFEA route for `C2D-LUG-PINHOLE → LAFEA.3`, but no corresponding active self-hosted workflow exists on current main. Those records are therefore `PROVENANCE_ONLY`, not current execution authority.
-
-Issue #54 remains open as the repository execution-environment blocker. Issue #1413 explicitly requires fail-closed behavior when exact-head execution is unavailable and no new engineering evidence can be produced, and prohibits another validation-only PR on an unchanged head merely to reproduce the same pre-checkout symptom.
-
-Accordingly the current boundary is:
+Its historical workflow required:
 
 ```text
-EXECUTION_BLOCKER = EXACT_HEAD_EXECUTION_UNAVAILABLE_NO_CURRENT_SELF_HOSTED_ROUTE
+runs-on: [self-hosted, linux, x64, lafea]
+```
 
+and was bounded to `C2D-LUG-PINHOLE -> LAFEA.3`.
+
+Current `main` still contains the B7H verifier script, but the B7H workflow itself is absent. Repository history under #54 establishes the controlling facts:
+
+```text
+historical executable B7H PASS        = NOT PROVEN
+matching registered runner confirmed  = false
+workflow later removed                = true
+removal classification                = obsolete/non-functional cleanup
+current B7H execution authority        = false
+re-add without confirmed runner        = NOT JUSTIFIED
+```
+
+Therefore the existence of the historical branch is provenance only. Reintroducing its workflow without first proving a matching governed runner exists would be another CI semantic mutation with no evidence it can execute and is not authorized by #1490/#1413.
+
+## External runner audit
+
+Connected Netlify contains no existing Advanced_Analysis project. Creating a new project requires explicit user confirmation and unrelated existing sites may not be repurposed. Therefore Netlify is not a current exact-head execution lane.
+
+## Current first wrong boundary
+
+```text
+ACTIONS_CAPACITY_ENTITLEMENT_OR_GOVERNED_RUNNER_REGISTRATION_REQUIRED
+```
+
+The connected GitHub surface cannot inspect or modify repository/account Actions billing, minutes/budget/payment state, hosted-runner entitlement, policy settings, or registered runner administration.
+
+Issue #54 history records prior Actions-credit exhaustion as a real failure mode, but current credit exhaustion is not proven because hosted execution recovered on later historical dates. The current evidence proves only pre-step runner allocation failure.
+
+## Current engineering disposition
+
+```text
 B01 exact-head prerequisite          NOT_RUN
 B02D V2 binding exact-head           NOT_RUN
 B02D V2 T6/L4 governing response     NOT_RUN
 current engineering failure          NOT_PROVEN
+b02 numerical authority              false
+response solver repair authority     false
 reaction repair authority            false
-historical Galerkin authority         false
-full response ladder authority        false
-release authority                     false
-trust authority                       false
+historical Galerkin authority        false
+full response ladder authority       false
+release authority                    false
+trust authority                      false
 ```
 
-No NOT_RUN is represented as PASS or engineering FAIL.
+No `NOT_RUN` is represented as PASS or engineering FAIL.
 
-## Effective eight-file scope
+## Effective changed-file scope
 
 ```text
 .gitignore
@@ -268,36 +297,51 @@ scripts/lafea-b02d-v2-governing-response-self-test.mjs
 scripts/lib/lafea-b02d-v2-governing-response.js
 ```
 
-No `src/core/local-continuum/**`, sparse matrix, reaction assembly, mesh generator, frozen definition, benchmark/tolerance, workflow, release or trust path is changed.
+No `src/core/local-continuum/**`, sparse solver, reaction assembly, mesh generator, frozen benchmark/tolerance, workflow, release or trust path is changed.
 
-## Decision table for execution recovery
+## Decision table after execution recovery
 
-| Exact-head disposition | Correct next action |
+| Exact-head disposition | Minimum legitimate next action |
 |---|---|
-| binding prerequisite not qualified | remain in B01 / #1485 binding evidence; do not enter response RCA |
-| load assembly RCA required | inspect load-edge mapping/distribution and independent Fx/Fy/Mz only; solver untouched |
-| iterative solver RCA required | isolate convergence/residual mechanics; reaction correction not authorized |
-| free-DOF residual RCA required | isolate free residual path; reaction correction not authorized |
-| reaction equilibrium RCA required | open a separate evidence-first reaction RCA; historical Galerkin remains candidate only |
-| other response RCA required | trace first production diagnostic/value; no broad solver mutation |
-| governing response accepted | only then open a separate full T3/T6/Q8 response/convergence ladder |
+| binding prerequisite not qualified | remain at B01/#1485 evidence boundary |
+| load assembly RCA required | inspect load-edge mapping/distribution and independently reconstruct Fx/Fy/Mz; solver untouched |
+| iterative solver RCA required | isolate convergence/residual mechanics only |
+| free-DOF residual RCA required | isolate free residual path only |
+| reaction equilibrium RCA required | open separate evidence-first reaction RCA; no automatic Galerkin port |
+| other response RCA required | trace first production diagnostic/value only |
+| governing response accepted | only then open separate full T3/T6/Q8 response/convergence ladder |
 
-Until an executable exact head exists, none of those engineering branches is authorized to start.
+Until an executable exact head exists, none of these engineering successors may start.
 
 ## Highest remaining risk
 
-The highest risk is **false progress**: using historical reaction data, synthetic classifier PASS, stale B7H transport documentation, or hosted jobs that never allocated a runner as if they were current B02D-V2 numerical evidence. The current recovery state explicitly blocks that promotion.
+The highest risk is false progress: promoting synthetic classifier PASS, historical B7H documentation, old response numbers or zero-step CI failures into numerical authority. The present state intentionally prevents that.
+
+## EXACT_NEXT_ACTION
+
+1. Owner/admin restores eligible GitHub Actions capacity/entitlement **or** confirms/registers a governed runner matching the required execution contract.
+2. Observe a real job with allocated runner, visible steps and downloadable logs.
+3. Reconcile PR #1490 to then-live `main` without dropping PR changes and repeat overlap audit.
+4. From an exact clean checkout execute:
+
+```bash
+node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs
+```
+
+5. Stop at the first emitted disposition and open only the corresponding minimum engineering successor.
+
+Do not re-add historical B7H without a confirmed runner, create another validation-only successor, widen tolerances, alter frozen benchmarks, or modify solver/reaction mechanics while execution remains unavailable.
 
 ## Appendix A — takeover qualification
 
-A1 — Trace the explicit V2 profile/strategy selection and prove no V1 response-route file is changed. Target 20.
+A1 — Trace the explicit V2 profile/strategy selection and prove V1 non-interference. Target 20.
 
-A2 — Prove from source order that the reconstructed load resultant and +10000 N.mm moment are checked before solver entry, and explain why load failure has `loadAssemblyQualified=false`. Target 20.
+A2 — Prove from source order that reconstructed load resultant and +10000 N.mm moment are checked before solver entry, including the truthful load-failure flags. Target 20.
 
-A3 — Trace same-head B01 → V2 binding receipt verification → governing response and identify the exact branch where later work becomes NOT_RUN. Target 20.
+A3 — Trace same-head B01 → V2 binding receipt verification → governing response and identify every `NOT_RUN` branch. Target 20.
 
-A4 — For an accepted solve, independently reconstruct applied force/moment, support reaction force/moment and total equilibrium from nodal vectors and coordinates; distinguish individual free residual maximum from summed UX/UY free residuals. Target 20.
+A4 — For an accepted solve, independently reconstruct applied force/moment, support reaction force/moment and total equilibrium from nodal vectors/coordinates; distinguish individual free residual maximum from summed UX/UY residuals. Target 20.
 
-A5 — Demonstrate why the current state is an execution-environment hard stop rather than a numerical failure or authorization to modify mechanics. Identify the exact evidence that reopens engineering work. Target 20.
+A5 — Explain why current evidence localizes the blocker to execution infrastructure, why the historical B7H workflow cannot simply be restored, and what exact evidence reopens numerical work. Target 20.
 
 Takeover threshold: total >= 92/100 and every answer >= 17/20.

@@ -22,7 +22,7 @@ const usageLedger = {
 const productProvider = {
   schema: NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA,
   profileId: 'LOAD_CALC_STANDARD_DEFAULTS_V1',
-  profileVersion: 6,
+  profileVersion: 5,
   semanticHash: 'fnv1a64:2222222222222222',
   usageRows: [
     productUsage('PD-GRAVITY', 'loadCalculation.gravityMPerS2', 9.80665, 'm/s²', 'Standard gravity.'),
@@ -92,8 +92,12 @@ assert.equal(model.productUsage.appliedCount, 2);
 assert.equal(model.productUsage.shadowedCount, 1);
 assert.equal(model.productUsage.applied[0].authority, 'PRODUCT_DEFAULT');
 assert.equal(model.productUsage.shadowed[0].existingAuthority, 'SOURCE_EXPLICIT');
-assert.notEqual(model.productUsage.appliedCount, model.configuredUsage.selectedTargetFieldCount,
-  'Product-profile fills and target configured-default selections are distinct metrics');
+assert.equal(Object.hasOwn(model.productUsage.applied[0], 'targetId'), false,
+  'Product-profile fill receipts must remain Project Data path assumptions, not fabricated target selections');
+assert.ok(model.productUsage.applied.every((row) => row.projectDataPath),
+  'Product-profile usage must retain Project Data path custody');
+assert.ok(model.configuredUsage.defaults.every((row) => row.targetIds.length > 0),
+  'Configured-default usage must retain actual selected target custody');
 
 assert.equal(model.coverage.requestedCount, 3);
 assert.equal(model.coverage.readyCount, 2);
@@ -133,6 +137,15 @@ assert.throws(() => createCalculationDefaultsObservability({
   report: dishonestReady,
 }), /ready flag disagrees with missing evidence/u,
 'coverage readiness must not contradict the checker missing list');
+
+const dishonestCount = structuredClone(report);
+honestCoverage(dishonestCount, 'FLEXURAL_COVERAGE').details.covered = 2;
+assert.throws(() => createCalculationDefaultsObservability({
+  configuredDefaultUsageLedger: usageLedger,
+  productDefaultProvider: productProvider,
+  report: dishonestCount,
+}), /covered count disagrees with total and missing evidence/u,
+'coverage covered count must remain derived from the canonical total/missing evidence');
 
 const [viewSource, aggregateSource, runtimeSource] = await Promise.all([
   read('../src/workspace/project-data/non-fea-calculation-effective-values-view.js'),

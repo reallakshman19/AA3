@@ -16,6 +16,8 @@ export const CURRENT_COMMON_INPUT_GRAVITY_LOAD_BASIS_SCHEMA =
   'current-common-input-gravity-load-basis/v1';
 
 const PRODUCT_DEFAULT_SOURCE = 'Load Calc built-in product default';
+const EFFECTIVE_LEDGER_SCHEMA = 'non-fea-effective-value-resolution-ledger/v1';
+const EFFECTIVE_ROW_SCHEMA = 'non-fea-effective-value-resolution-row/v1';
 const FIELD_DEFINITIONS = freezeDeep([
   {
     fieldId: 'GRAVITY_ACCELERATION',
@@ -109,6 +111,7 @@ export function createCurrentCommonInputGravityLoadBasis({ commonInput } = {}) {
     ...bindingMaterial,
     bindingSemanticHash,
     projectedProfileSemanticHash: semanticHash(projectedProfile),
+    resolutionLedger: resolution,
     profile: projectedProfile,
   };
   return requireCurrentCommonInputGravityLoadBasis({
@@ -145,6 +148,8 @@ export function requireCurrentCommonInputGravityLoadBasis(value, { commonInput =
   }
   requireSelectedValue(value.gravity, FIELD_DEFINITIONS[0]);
   requireSelectedValue(value.loadFactor, FIELD_DEFINITIONS[1]);
+  validateResolutionLedger(value);
+  validateBindingSemanticHash(value);
   if (!isRecord(value.profile) || semanticHash(value.profile) !== value.projectedProfileSemanticHash) {
     throw codedError(
       'Current Common Input gravity/load basis projected profile hash is stale.',
@@ -279,6 +284,82 @@ function bindBasisIntoProjectedProfile(profile, selected, bindingSemanticHash) {
     );
   }
   return freezeDeep(projected);
+}
+
+function validateResolutionLedger(value) {
+  const ledger = value.resolutionLedger;
+  if (!isRecord(ledger)
+      || ledger.schema !== EFFECTIVE_LEDGER_SCHEMA
+      || ledger.status !== 'RESOLVED'
+      || !Array.isArray(ledger.rows)
+      || ledger.rows.length !== FIELD_DEFINITIONS.length) {
+    throw codedError(
+      'Current gravity/load basis effective-value ledger is invalid.',
+      'CURRENT_COMMON_INPUT_GRAVITY_LOAD_BASIS_LEDGER_INVALID',
+    );
+  }
+  const ledgerMaterial = { ...ledger };
+  delete ledgerMaterial.semanticHash;
+  if (requiredHash(ledger.semanticHash, 'resolutionLedger.semanticHash') !== semanticHash(ledgerMaterial)
+      || ledger.semanticHash !== value.resolutionLedgerSemanticHash) {
+    throw codedError(
+      'Current gravity/load basis effective-value ledger hash is stale.',
+      'CURRENT_COMMON_INPUT_GRAVITY_LOAD_BASIS_LEDGER_HASH_MISMATCH',
+    );
+  }
+  const projectId = ledger.rows[0]?.targetId;
+  for (const definition of FIELD_DEFINITIONS) {
+    const selectedProjection = value[definition.outputKey];
+    const key = `PROJECT|${projectId}|${definition.fieldId}`;
+    const row = ledger.rows.find((item) => item.resolutionKey === key);
+    if (!isRecord(row)
+        || row.schema !== EFFECTIVE_ROW_SCHEMA
+        || row.status !== 'RESOLVED'
+        || !isRecord(row.selected)) {
+      throw codedError(
+        `Current gravity/load basis ledger row is invalid for ${definition.fieldId}.`,
+        'CURRENT_COMMON_INPUT_GRAVITY_LOAD_BASIS_LEDGER_INVALID',
+      );
+    }
+    const rowMaterial = { ...row };
+    delete rowMaterial.semanticHash;
+    const candidateMaterial = { ...row.selected };
+    delete candidateMaterial.semanticHash;
+    if (requiredHash(row.semanticHash, `${definition.fieldId}.resolutionRowSemanticHash`) !== semanticHash(rowMaterial)
+        || requiredHash(row.selected.semanticHash, `${definition.fieldId}.candidateSemanticHash`) !== semanticHash(candidateMaterial)
+        || row.semanticHash !== selectedProjection.resolutionRowSemanticHash
+        || row.selected.semanticHash !== selectedProjection.candidateSemanticHash
+        || row.selected.fieldId !== selectedProjection.fieldId
+        || row.selected.value !== selectedProjection.value
+        || row.selected.unit !== selectedProjection.unit
+        || row.selected.authority !== selectedProjection.authority
+        || row.selected.sourceId !== selectedProjection.sourceId
+        || semanticHash(row.selected.evidence) !== semanticHash(selectedProjection.evidence)) {
+      throw codedError(
+        `Current gravity/load basis selected-value ledger custody is inconsistent for ${definition.fieldId}.`,
+        'CURRENT_COMMON_INPUT_GRAVITY_LOAD_BASIS_LEDGER_BINDING_MISMATCH',
+      );
+    }
+  }
+}
+
+function validateBindingSemanticHash(value) {
+  const bindingMaterial = {
+    schema: CURRENT_COMMON_INPUT_GRAVITY_LOAD_BASIS_SCHEMA,
+    commonInputSemanticHash: value.commonInputSemanticHash,
+    commonInputSealSemanticHash: value.commonInputSealSemanticHash,
+    projectDataProfileSemanticHash: value.projectDataProfileSemanticHash,
+    resolutionLedgerSemanticHash: value.resolutionLedgerSemanticHash,
+    forceFormula: value.forceFormula,
+    gravity: value.gravity,
+    loadFactor: value.loadFactor,
+  };
+  if (value.bindingSemanticHash !== semanticHash(bindingMaterial)) {
+    throw codedError(
+      'Current gravity/load basis binding semantic hash is stale.',
+      'CURRENT_COMMON_INPUT_GRAVITY_LOAD_BASIS_BINDING_HASH_MISMATCH',
+    );
+  }
 }
 
 function validateProjectedProfileBinding(value) {

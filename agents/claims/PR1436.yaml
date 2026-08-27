@@ -4,12 +4,12 @@ pr_or_wip: PR1436
 branch: agent/issue-1389-release-current-state-refresh-20260826
 issue: 1389
 criticality: ENGINEERING_CRITICAL
-claim_state: HANDOVER_READY_AUTO_BLOCKED
+claim_state: HANDOVER_READY_AUTO_RUNNING
 execution_mode: AUTO
-auto_state: BLOCKED
+auto_state: RUNNING
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
-coordination_state: SAFE_STACKED_CURRENT_STATE_BLOCKED_BY_ISSUE1434_EXECUTION
+coordination_state: SAFE_AFTER_PR1415_PR1427_MERGE_RECONCILIATION
 scope:
   authority: EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE_RECONCILIATION
   paths:
@@ -34,26 +34,28 @@ authority_boundary:
   current_state_reconciliation_creates_code_authority: false
   current_state_reconciliation_creates_release_authority: false
   current_state_reconciliation_creates_deployment_authority: false
-stacked_base_pr: 1427
-stacked_base_head: d2e651076b410c55a5c16a61969c76590ad2a452
-pre_block_restack_head: 41e18a001cf53b6562da5b4ee90d1718cb7e5bdb
-grounding_epoch: GE-PR1436-003
+current_main: b648e174b80b49ceed76036d590b89ad4fe08c2e
+merged_source_pr1415: 19b762e1f9512284da961e5816a28c10432080bb
+merged_aggregate_pr1427: b648e174b80b49ceed76036d590b89ad4fe08c2e
+grounding_epoch: GE-PR1436-004
 current_truth:
-  aggregate_blob: 815e7c988afd7a1f19b93aaf7d7101b06710da42
+  aggregate_blob: 99aa14fc918486bb55b7c88493e0daa1a837ce55
+  current_state_semantic_hash: ccf4f174d330ac14c297b378be3cac063fe7c36d9b562825292fa7d81fd1f51c
   p0_blocker_count: 9
+  issue1377_status: BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED
   bounded_route_authorized: true
   global_emp1_c: false
   code_compliance: false
   release_qualified: false
   deployment_authorized: false
   professional_release_ready: false
-hard_stop:
+downstream_hard_stop:
   issue: 1434
   state: BLOCKED_EXECUTION_ENVIRONMENT
   evidence_01_12: NOT_GENERATED
   numerical_qualification: NOT_RUN
   stage_a_head: a59547c8554b6244b2ea94aedd4d59fa0fb15d1f
   stage_b_head: 14c648d485cf386f28c6817a068b7eb5da1f7689
-merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-27
 handover_report: agents/PR1436_workreport.md
-exact_next_action: "Restore complete governed execution environment and execute #1434 Stage A/B genuine evidence plus Stage C anti-drift; do not fabricate or weaken gates."
+exact_next_action: "Structurally re-ground on current main, retarget to main, verify exact six-file diff, merge, then continue #1389 AUTO progression."

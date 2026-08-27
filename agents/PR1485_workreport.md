@@ -16,89 +16,112 @@ HISTORICAL_PROVENANCE: PR #1259 CLOSED_SUPERSEDED
 PR: #1485
 BRANCH: agent/lafea-b02d-v2-producer-binding-20260827
 BASE_MAIN: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
-CURRENT_STAGE: OPT_IN_BINDING_IMPLEMENTED_EXECUTION_NOT_RUN
+CURRENT_STAGE: EXACT_HEAD_BINDING_ENVELOPE_IMPLEMENTED_REAL_EXECUTION_NOT_RUN
 ENGINEERING_FAILURE_PROVEN: false
-EXACT_NEXT_ACTION: node scripts/lafea-b02d-v2-producer-binding-check.mjs
+EXACT_NEXT_ACTION: node scripts/lafea-b02d-v2-binding-exact-head-check.mjs
 ```
 
 ## Mission
 
-Add only the explicit producer-selection boundary needed to make the frozen B02D V2 mesh generator reachable through the current LAFEA domain-first intent/plan/output/evidence path.
-
-The binding remains profile-controlled. V2 is not a default replacement.
+Add only the explicit producer-selection boundary needed to make the frozen B02D V2 mesh generator reachable through the current LAFEA domain-first intent/plan/output/evidence path, then seal that binding behind an exact-head qualification envelope. V2 remains profile-controlled and is not a default replacement.
 
 ## Source-custody proof
 
-Before this PR:
-
 ```text
-current main binding blob      5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
-#1259 pre-patch binding blob   5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
-#1259 reviewed V2 binding blob e8307066293314ad952608872db596cf1898d5c1
+current main pre-change binding blob  5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
+#1259 pre-patch binding blob          5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
+#1259 reviewed V2 binding blob        e8307066293314ad952608872db596cf1898d5c1
+#1484 frozen asset merge              2c9ed9d1045431a43a926696c6d5a015cbd0e926
 ```
 
 Because current main and #1259's pre-patch base are byte-identical for the binding file, this PR transplants the reviewed V2 binding blob directly rather than reconstructing a large source file.
 
 ## Production change
 
-`src/workspace/lafea-mesh-producer-binding.js` gains:
+`src/workspace/lafea-mesh-producer-binding.js` gains only the explicit V2 route:
 
 - import of `generateLafeaB02dProbeStablePolarMeshV2`;
-- `LAFEA_B02D_POLAR_V2_PROFILE_PREFIX = B02D_PROBE_STABLE_POLAR_V2_QUALIFIED`;
-- `LAFEA_B02D_POLAR_V2_PROFILE_SOURCE_REVISION = B02D-FROZEN-POLAR-V2`;
+- V2 profile prefix and `B02D-FROZEN-POLAR-V2` source revision;
 - V2 strategy dispatch before the existing V1 strategy;
-- V2 double-keyed selector: profile identity + source revision;
-- fail-closed rejection if V2 carries non-empty refinement features;
+- profile identity + source revision double-key selection;
+- fail-closed non-empty refinement-feature rejection;
 - exported `b02dProfileIdentityV2()`.
 
-Existing V1 binding remains present and unchanged in the same source blob.
+Existing V1 binding and generic producer behavior remain present.
 
-## Focused qualification check
+## Focused binding check
 
-`scripts/lafea-b02d-v2-producer-binding-check.mjs` proves or attempts to prove in one current-head route:
+`scripts/lafea-b02d-v2-producer-binding-check.mjs` covers:
 
 ```text
-V2 profile identity + V2 source revision
-→ B02D_PROBE_STABLE_POLAR_V2
-→ B02D_PROBE_STABLE_POLAR_POLICY_V2
-→ accepted analysis-mesh evidence
-→ deterministic replay
+V2 opt-in → V2 generator/policy → accepted evidence → deterministic replay
+V1 profile → existing V1 strategy/policy
+Generic profile → generic producer
 ```
 
-It also checks:
+It also rejects non-frozen h, non-qualified geometry, non-empty V2 refinement features, and identity/revision mismatches. Authored source passed local `node --check`; faithful repository execution remains `NOT_RUN`.
 
-- V1 profile still selects `B02D_PROBE_STABLE_POLAR` / policy V1;
-- V1 and V2 produce distinct mesh hashes for the same T6/h20 request;
-- generic profile selects neither frozen polar strategy;
-- V2 h=30 fails as not a frozen level;
-- rectangle geometry fails the qualified-annulus guard;
-- non-empty refinementFeatureIds fail closed;
-- V2 profile identity paired with the wrong source revision does not select V2.
+## Exact-head qualification envelope
 
-The checker passed local `node --check`. It has not executed against a faithful current repository checkout in this environment.
+Added:
 
-## Authority boundary
+```text
+scripts/lib/lafea-b02d-v2-binding-exact-head.js
+scripts/lafea-b02d-v2-binding-exact-head-self-test.mjs
+scripts/lafea-b02d-v2-binding-exact-head-check.mjs
+```
 
-Included:
-- mesh producer selection/binding only;
-- focused preservation/fail-closed check;
-- recovery records.
+Gate order is deliberately sequential:
 
-Excluded:
-- V2 definition/generator changes (already frozen by #1484);
-- V1 default/profile replacement;
-- response solve;
-- load/reaction equilibrium mechanics;
-- sparse solver changes;
-- the historical 2x2 Galerkin correction;
-- thresholds/oracles;
-- B02 numerical authority;
-- release/lifecycle/trust authority;
-- workflows.
+```text
+clean exact HEAD + #1484 ancestry
+→ existing merged B01 integrated exact-head gate
+→ verify B01 envelope for this same HEAD
+→ V2 pre-observation quality check
+→ V2 producer-binding check
+→ source-custody hash set
+→ sealed B02D V2 binding envelope
+```
 
-## B01 prerequisite
+No later command runs after an earlier failed authority boundary. The only full PASS disposition is `B02D_V2_BINDING_EXACT_HEAD_PASS`.
 
-Merged #1482 provides the exact-head B01 qualification harness, but no real exact-head PASS receipt has been produced in this agent environment. Therefore:
+Even on full PASS the envelope keeps:
+
+```text
+b02NumericalAuthorityGranted = false
+responseSolverRepairAuthorized = false
+reactionEquilibriumRepairAuthorized = false
+releaseAuthorityGranted = false
+trustAuthorityGranted = false
+```
+
+The exact runtime receipt is:
+
+```text
+reports/qualification/B02D/v2-binding-exact-head.json
+```
+
+Only that path is ignored. Unrelated B02D reports remain visible to Git custody.
+
+## Synthetic gate qualification
+
+Local source-only qualification completed:
+
+```text
+classifier syntax                     PASS_LOCAL_NODE_CHECK
+self-test syntax                      PASS_LOCAL_NODE_CHECK
+exact-head wrapper syntax             PASS_LOCAL_NODE_CHECK
+classifier synthetic policy suite     PASS_LOCAL_NODE_EXECUTION (7 cases)
+engineering mechanics executed        false
+```
+
+The suite covers B01 execution failure, B01 receipt-verification failure, pre-observation failure, binding failure, full PASS, B01 wrong-head rejection, missing B02 prerequisite rejection, and impossible sequencing rejection.
+
+This does not replace the real exact-head FEM/binding execution.
+
+## B01 prerequisite truth
+
+Merged PR #1482 contains the exact-head B01 gate, but its real integrated execution was `NOT_RUN`. Repository search found no later B01 PASS successor. Therefore current authority remains:
 
 ```text
 b02PrerequisiteEvidenceAvailable = false
@@ -106,7 +129,38 @@ B02 response qualification       = NOT_RUN
 B02 numerical authority          = false
 ```
 
-This binding can be reviewed independently, but it cannot promote B02 response authority.
+The new B02D envelope executes the existing B01 gate first; only a same-head verified `INTEGRATED_B01_EXACT_HEAD_PASS` may allow V2 quality/binding qualification to continue.
+
+## Environment blocker
+
+Direct exact-checkout retry still fails:
+
+```text
+fatal: unable to access 'https://github.com/reallaksh19/Advanced_Analysis.git/':
+Could not resolve host: github.com
+```
+
+This is `NOT_RUN_EXECUTION_ENVIRONMENT`, not engineering PASS or FAIL. GitHub Actions are not used as a substitute.
+
+## Authority boundary
+
+Included:
+- V2 mesh producer selection/binding;
+- focused V1/generic preservation and fail-closed check;
+- exact-head qualification orchestration and receipt custody;
+- synthetic classifier self-test;
+- recovery records.
+
+Excluded:
+- V2 definition/generator changes (already frozen by #1484);
+- V1 default replacement;
+- response solve/convergence;
+- load/reaction mechanics;
+- sparse solver changes;
+- historical 2x2 Galerkin correction;
+- tolerance/oracle changes;
+- B02 numerical/release/trust authority;
+- workflow mutation.
 
 ## Validation ledger
 
@@ -115,9 +169,12 @@ This binding can be reviewed independently, but it cannot promote B02 response a
 current-main binding base identity             PASS_GIT_BLOB_EQUALITY
 reviewed historical binding transplant         PASS_GIT_OBJECT_CUSTODY
 focused checker syntax                         PASS_LOCAL_NODE_CHECK
+exact-head classifier/wrapper syntax            PASS_LOCAL_NODE_CHECK
+exact-head classifier self-test                 PASS_LOCAL_NODE_EXECUTION (7)
 focused V2 binding execution                   NOT_RUN
-existing V1 polar qualification replay         NOT_RUN
+V2 pre-observation current-head execution      NOT_RUN
 B01 exact-head prerequisite                    NOT_RUN
+exact B02D V2 binding envelope                 NOT_RUN
 B02 response/convergence ladder                NOT_RUN
 ```
 
@@ -128,8 +185,12 @@ No `NOT_RUN` is represented as PASS.
 Expected final scope:
 
 ```text
+.gitignore
 src/workspace/lafea-mesh-producer-binding.js
 scripts/lafea-b02d-v2-producer-binding-check.mjs
+scripts/lib/lafea-b02d-v2-binding-exact-head.js
+scripts/lafea-b02d-v2-binding-exact-head-self-test.mjs
+scripts/lafea-b02d-v2-binding-exact-head-check.mjs
 agents/PR1485_workreport.md
 agents/status/PR1485.yaml
 agents/claims/PR1485.yaml
@@ -137,32 +198,30 @@ agents/claims/PR1485.yaml
 
 ## Decision ledger
 
-- `DEC-1485-01`: adapt #1259's reviewed binding onto current main only because the pre-patch binding blobs are identical.
-- `DEC-1485-02`: V2 remains explicit opt-in via profile identity + source revision; V1 remains preserved.
+- `DEC-1485-01`: port #1259 binding only because pre-patch binding blobs are identical.
+- `DEC-1485-02`: V2 remains explicit opt-in through profile identity + source revision; V1/default behavior is preserved.
 - `DEC-1485-03`: producer binding does not authorize response numerics.
-- `DEC-1485-04`: do not port historical reaction/Galerkin correction until current-head response evidence demonstrates the first owning numerical boundary.
-- `DEC-1485-05`: merge authority from #1484 is consumed and does not apply here.
+- `DEC-1485-04`: do not port reaction/Galerkin correction until current-head response evidence identifies the first wrong numerical boundary.
+- `DEC-1485-05`: #1484 merge authority was consumed and is not inherited.
+- `DEC-1485-06`: reuse the merged B01 exact-head gate as the B02 prerequisite instead of duplicating B01 numerical logic.
+- `DEC-1485-07`: the exact-head B02D envelope stops at first failed boundary and preserves later stages as `NOT_RUN`.
 
 ## Failure isolation
 
-If focused V2 binding execution fails:
-- inspect profile identity/source revision selection first;
-- then V2 generator interface and current intent/plan contracts;
-- do not modify the response solver.
+If the exact-head envelope fails:
+1. B01 gate/receipt failure → stay in B01; do not inspect B02 mechanics.
+2. V2 pre-observation quality failure → inspect frozen V2 mesh generation/quality only.
+3. V2 binding failure after prior gates pass → inspect profile selection, generator interface, intent/plan/evidence contracts.
+4. Do not modify response solver/reaction mechanics from any binding failure.
 
-If V1 preservation fails:
-- treat as regression blocker; do not promote V2.
-
-If binding passes:
-- next engineering stage is B01-prerequisite-gated B02 response qualification;
-- no reaction correction is pre-authorized.
+If the envelope passes, the next engineering stage is a separate B02 response/convergence qualification package; no reaction correction is pre-authorized.
 
 ## Appendix A
 
 A1 — Trace V2 profile selection through configuration → intent → strategy dispatch → output/evidence. Target 20.
 A2 — Prove V1/default behavior is preserved and identify the two-key V2 selector. Target 20.
-A3 — Explain the blob-equality proof that made the historical binding transplant safe. Target 20.
-A4 — Explain why producer binding is independent from B02 response/reaction numerical authority. Target 20.
-A5 — State the exact next action and every authority excluded from PR1485. Target 20.
+A3 — Trace exact-head gate sequencing and explain why later commands remain `NOT_RUN` after an earlier failure. Target 20.
+A4 — Explain the blob-equality and #1484 ancestry custody proofs. Target 20.
+A5 — State the exact next command and every authority still excluded after a full binding PASS. Target 20.
 
 Takeover threshold: total >= 92/100 and every answer >= 17/20.

@@ -6,6 +6,7 @@ workstream: LAFEA_B02D_V2_GOVERNING_RESPONSE
 branch: agent/lafea-b02d-v2-governing-response-20260827
 base_main: 3a54862127c601f3e4c59159526e7345fc06cf4c
 reconciliation_commit: 519a63a5f55891f0e2b9e0b2dbc160454bbb555b
+latest_live_main: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
 predecessor_binding_pr: 1485
 work_intent: QUALIFY_FIRST_RESPONSE_BOUNDARY_WITHOUT_SOLVER_REPAIR
 criticality: ENGINEERING_CRITICAL
@@ -18,19 +19,22 @@ current_stage: SOURCE_COMPLETE_EXECUTION_ENVIRONMENT_HARD_STOP
 engineering_failure_proven: false
 validation:
   predecessor_merge: { state: PASS_GITHUB_READBACK }
-  current_main_reconciliation: { state: PASS, head: 3a54862127c601f3e4c59159526e7345fc06cf4c }
-  main_drift_overlap: { state: PASS_NONE_OBSERVED }
+  current_main_reconciliation: { state: STALE_BY_ONE_NON_OVERLAPPING_COMMIT, reconciled_head: 3a54862127c601f3e4c59159526e7345fc06cf4c, live_main: b2e8745a8cdb47850b8f162cea8c16f3f4006e03, behind_by: 1 }
+  latest_main_drift_overlap: { state: PASS_NONE_OBSERVED, commit: b2e8745a8cdb47850b8f162cea8c16f3f4006e03, scope: LOAD_CALC_NON_FEA_UI_AND_RECOVERY_ONLY }
   classifier_load_gate_self_test: { state: PASS, cases: 13, exact_blob_identity: true }
   observer_pre_solve_load_gate_order: { state: PASS_SOURCE_INSPECTION }
   direct_checkout_retry: { state: NOT_RUN_EXECUTION_ENVIRONMENT_DNS }
-  hosted_lafea_runner: { state: NOT_RUN_PRE_STEP_RUNNER_ALLOCATION, run: 33071097476, job: 98513249297 }
+  prior_hosted_lafea_runner: { state: NOT_RUN_PRE_STEP_RUNNER_ALLOCATION, run: 33071097476, job: 98513249297 }
+  fresh_hosted_lafea_runner: { state: NOT_RUN_PRE_STEP_RUNNER_ALLOCATION, run: 33075364780, job: 98528037535, steps: 0, logs: UNAVAILABLE_BLOB_NOT_FOUND }
   active_self_hosted_workflow_audit: { state: COMPLETE_NO_EXECUTABLE_ROUTE, self_hosted_references_in_current_workflows: 0 }
-  historical_b7h_route: { state: PROVENANCE_ONLY_NOT_ACTIVE_CURRENT_WORKFLOW }
+  historical_b7h_branch: { state: PROVENANCE_ONLY_REMOVED_NO_CONFIRMED_RUNNER, branch: ci/lafea-b7h-self-hosted-current-main, historical_head: a06a204bb5f8de96644facfd24213f4c307f0867, required_labels: [self-hosted, linux, x64, lafea], current_workflow_present: false, executable_pass_proven: false, matching_registered_runner_confirmed: false, reintroduction_authorized: false }
+  external_netlify_runner: { state: NOT_AVAILABLE_WITHOUT_NEW_PROJECT_CONFIRMATION }
   b01_exact_head_prerequisite: { state: NOT_RUN }
   b02d_v2_binding_exact_head: { state: NOT_RUN }
   b02d_v2_governing_response: { state: NOT_RUN }
   historical_response_values: { state: PROVENANCE_ONLY }
-execution_blocker: EXACT_HEAD_EXECUTION_UNAVAILABLE_NO_CURRENT_SELF_HOSTED_ROUTE
+execution_blocker: ACTIONS_CAPACITY_ENTITLEMENT_OR_GOVERNED_RUNNER_REGISTRATION_REQUIRED
+branch_reconciliation_required_before_execution: true
 response_solver_changed: false
 reaction_assembly_changed: false
 galerkin_correction_included: false
@@ -44,4 +48,4 @@ full_response_ladder_authorized: false
 release_authority_granted: false
 trust_authority_granted: false
 merge_authority: OWNER_ONLY_NOT_GRANTED
-exact_next_action: Obtain an executable exact clean checkout, then run `node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs`; stop at the first emitted disposition. Do not create another validation-only PR or modify solver/reaction mechanics while execution remains unavailable.
+exact_next_action: Restore eligible GitHub Actions capacity/entitlement or confirm/register a governed matching self-hosted runner. After recovery, reconcile PR1490 to then-live main without dropping PR changes, then run `node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs` from an exact clean checkout and stop at the first emitted disposition. Do not re-add historical B7H without a confirmed runner, create another validation-only PR, or modify solver/reaction mechanics while execution remains unavailable.

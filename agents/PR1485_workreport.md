@@ -4,7 +4,7 @@
 
 ```text
 HANDOVER_READINESS: READY_FOR_VALIDATION
-PR_RECOVERY_STATE: CURRENT_MAIN_BINDING_SUCCESSOR
+PR_RECOVERY_STATE: CURRENT_MAIN_SYNCHRONIZED_BINDING_SUCCESSOR
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_WITHIN_V2_BINDING_SCOPE
 CRITICALITY: ENGINEERING_CRITICAL
 EXECUTION_MODE: AUTO
@@ -15,8 +15,9 @@ PREDECESSOR_FROZEN_ASSETS: PR #1484 MERGED
 HISTORICAL_PROVENANCE: PR #1259 CLOSED_SUPERSEDED
 PR: #1485
 BRANCH: agent/lafea-b02d-v2-producer-binding-20260827
-BASE_MAIN: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
-CURRENT_STAGE: EXACT_HEAD_BINDING_ENVELOPE_IMPLEMENTED_REAL_EXECUTION_NOT_RUN
+BASE_MAIN: d6101bcac7ccbdab9e42d7e0afbdd7b06d897462
+MAIN_SYNC_COMMIT: a0c3f513c93d7d00531cac7d71b70246483d6df8
+CURRENT_STAGE: CURRENT_MAIN_SYNCHRONIZED_EXACT_HEAD_BINDING_ENVELOPE_IMPLEMENTED_REAL_EXECUTION_NOT_RUN
 ENGINEERING_FAILURE_PROVEN: false
 EXACT_NEXT_ACTION: node scripts/lafea-b02d-v2-binding-exact-head-check.mjs
 ```
@@ -24,6 +25,10 @@ EXACT_NEXT_ACTION: node scripts/lafea-b02d-v2-binding-exact-head-check.mjs
 ## Mission
 
 Add only the explicit producer-selection boundary needed to make the frozen B02D V2 mesh generator reachable through the current LAFEA domain-first intent/plan/output/evidence path, then seal that binding behind an exact-head qualification envelope. V2 remains profile-controlled and is not a default replacement.
+
+## Current-main synchronization
+
+PR #1457 advanced `main` from `9b517664bdff102db6a4e7f1b6d2332a3311ad96` to `d6101bcac7ccbdab9e42d7e0afbdd7b06d897462` while this batch was active. Its seven EMP.1/artifact-security paths are exact-path disjoint from this PR and do not change B01/B02 mechanics, meshing, benchmark, tolerance, or producer-binding authority. The branch was synchronized non-destructively in merge commit `a0c3f513c93d7d00531cac7d71b70246483d6df8`, using the full current-main tree plus exactly the nine PR paths. Post-sync compare proved `behind_by=0` and exactly nine changed files. Fresh exact-head execution is still required against the synchronized head.
 
 ## Source-custody proof
 
@@ -149,6 +154,7 @@ Included:
 - focused V1/generic preservation and fail-closed check;
 - exact-head qualification orchestration and receipt custody;
 - synthetic classifier self-test;
+- current-main synchronization custody;
 - recovery records.
 
 Excluded:
@@ -168,11 +174,13 @@ Excluded:
 #1484 frozen-asset merge grounding             PASS_GITHUB_READBACK
 current-main binding base identity             PASS_GIT_BLOB_EQUALITY
 reviewed historical binding transplant         PASS_GIT_OBJECT_CUSTODY
+EMP.1 drift exact-file overlap                 PASS_DISJOINT
+current-main synchronization                   PASS_0_BEHIND_9_FILES
 focused checker syntax                         PASS_LOCAL_NODE_CHECK
-exact-head classifier/wrapper syntax            PASS_LOCAL_NODE_CHECK
-exact-head classifier self-test                 PASS_LOCAL_NODE_EXECUTION (7)
+exact-head classifier/wrapper syntax           PASS_LOCAL_NODE_CHECK
+exact-head classifier self-test                PASS_LOCAL_NODE_EXECUTION (7)
 focused V2 binding execution                   NOT_RUN
-V2 pre-observation current-head execution      NOT_RUN
+V2 pre-observation synchronized-head execution NOT_RUN
 B01 exact-head prerequisite                    NOT_RUN
 exact B02D V2 binding envelope                 NOT_RUN
 B02 response/convergence ladder                NOT_RUN
@@ -205,6 +213,7 @@ agents/claims/PR1485.yaml
 - `DEC-1485-05`: #1484 merge authority was consumed and is not inherited.
 - `DEC-1485-06`: reuse the merged B01 exact-head gate as the B02 prerequisite instead of duplicating B01 numerical logic.
 - `DEC-1485-07`: the exact-head B02D envelope stops at first failed boundary and preserves later stages as `NOT_RUN`.
+- `DEC-1485-08`: #1457 EMP.1 drift is exact-file/authority disjoint; synchronize non-destructively and require fresh exact-head execution.
 
 ## Failure isolation
 
@@ -221,7 +230,7 @@ If the envelope passes, the next engineering stage is a separate B02 response/co
 A1 — Trace V2 profile selection through configuration → intent → strategy dispatch → output/evidence. Target 20.
 A2 — Prove V1/default behavior is preserved and identify the two-key V2 selector. Target 20.
 A3 — Trace exact-head gate sequencing and explain why later commands remain `NOT_RUN` after an earlier failure. Target 20.
-A4 — Explain the blob-equality and #1484 ancestry custody proofs. Target 20.
+A4 — Explain the blob-equality, #1484 ancestry, and current-main synchronization custody proofs. Target 20.
 A5 — State the exact next command and every authority still excluded after a full binding PASS. Target 20.
 
 Takeover threshold: total >= 92/100 and every answer >= 17/20.

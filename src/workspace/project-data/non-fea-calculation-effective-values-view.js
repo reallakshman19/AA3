@@ -4,9 +4,9 @@ import {
 } from './non-fea-calculation-effective-values-model.js';
 
 /**
- * Appends a read-only inspection of the exact current Common Input field winners
- * to the existing Step-3 Advanced surface. Failure to build current authority is
- * disclosed as unavailable; it never fabricates a fallback winner.
+ * Appends a read-only inspection of the exact current Common Input resolution
+ * decisions to the existing Step-3 Advanced surface. Failure to build current
+ * authority is disclosed as unavailable; it never fabricates a fallback winner.
  */
 export function renderNonFeaCalculationEffectiveValuesInspector(container) {
   if (!container) throw new TypeError('Effective-value inspection requires a container.');
@@ -51,7 +51,7 @@ function currentInspectionState() {
 function stateMarkup(state) {
   if (state.state !== 'AVAILABLE') {
     return `<section class="scoped-defaults" data-role="calculation-effective-values" data-state="UNAVAILABLE">
-      <header><div><span class="eyebrow">CURRENT EFFECTIVE VALUES</span><h4>Per-target resolved custody</h4>
+      <header><div><span class="eyebrow">CURRENT EFFECTIVE VALUES</span><h4>Current resolver decisions</h4>
         <p>The current Common Input resolver is not available for inspection. No fallback value is inferred by this view.</p></div>
         <code>${escape(state.unavailableCode)}</code></header>
       <p class="defaults-note">${escape(state.unavailableMessage)}</p>
@@ -60,21 +60,21 @@ function stateMarkup(state) {
 
   const model = state.inspection;
   return `<section class="scoped-defaults" data-role="calculation-effective-values" data-state="AVAILABLE">
-    <header><div><span class="eyebrow">CURRENT EFFECTIVE VALUES</span><h4>Per-target resolved custody</h4>
+    <header><div><span class="eyebrow">CURRENT EFFECTIVE VALUES</span><h4>Current resolver decisions</h4>
       <p>Read-only projection of the exact current Common Input field-resolution ledger. This table does not resolve authority, approve data, seal inputs, or authorize Run.</p></div>
       <code>${escape(compact(model.sourceResolutionSemanticHash || model.semanticHash))}</code></header>
     <div class="advanced-defaults__summary">
-      <article><span>Resolved targets</span><strong>${escape(model.summary.resolvedCount)} / ${escape(model.summary.rowCount)}</strong><code>${escape(model.sourceResolutionStatus || 'STATUS NOT DECLARED')}</code></article>
+      <article><span>Resolved decision rows</span><strong>${escape(model.summary.resolvedCount)} / ${escape(model.summary.rowCount)}</strong><code>${escape(model.sourceResolutionStatus || 'STATUS NOT DECLARED')}</code></article>
       <article><span>Higher-authority winners</span><strong>${escape(model.summary.sourceExplicitCount + model.summary.sourceInheritedCount + model.summary.exactMasterCount + model.summary.acceptedOverrideCount)}</strong><code>source / inherited / exact master / accepted override</code></article>
       <article><span>Project configured-default winners</span><strong>${escape(model.summary.projectConfiguredDefaultCount)}</strong><code>selected by existing Common Input resolver</code></article>
     </div>
     <details class="advanced-authority">
-      <summary><strong>Inspect ${escape(model.summary.rowCount)} target-level resolved fields</strong><span>Actual current winner, source and basis; candidate custody remains visible.</span></summary>
+      <summary><strong>Inspect ${escape(model.summary.rowCount)} target-level resolution decisions</strong><span>Actual resolver winner, source and basis; candidate custody remains visible.</span></summary>
       <div class="defaults-table-wrap"><table data-role="calculation-effective-values-table">
         <thead><tr><th>Target</th><th>Field</th><th>Effective value</th><th>Unit</th><th>Effective authority</th><th>Source / revision</th><th>Basis</th></tr></thead>
-        <tbody>${model.rows.length ? model.rows.map(rowMarkup).join('') : '<tr><td colspan="7"><span class="panel-empty">No target-level effective fields are present in the current resolver ledger.</span></td></tr>'}</tbody>
+        <tbody>${model.rows.length ? model.rows.map(rowMarkup).join('') : '<tr><td colspan="7"><span class="panel-empty">No target-level resolution decisions are present in the current resolver ledger.</span></td></tr>'}</tbody>
       </table></div>
-      <p class="defaults-note">Product-global screening assumptions remain in the versioned Product-default catalog below. They are not relabelled here as target-level winners unless the existing current resolver actually selects such evidence.</p>
+      <p class="defaults-note">This is a decision ledger, not a duplicate of the complete source model. A field carried directly from source with no competing enrichment/default candidate may require no resolution row and is therefore not claimed here as a complete calculation-input inventory. Product-global screening assumptions remain in the versioned Product-default catalog below and are not relabelled as target-level winners.</p>
     </details>
   </section>`;
 }

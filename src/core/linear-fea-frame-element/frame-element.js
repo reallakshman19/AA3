@@ -565,9 +565,7 @@ export function closedEndPressureAxialStrain(input) {
 }
 
 function requirePressureInput(pressure, elementId) {
-  if (typeof pressure !== 'object' || pressure === null || Array.isArray(pressure)) {
-    fail(`Element ${elementId} pressure input must be a record.`, 'FRAME_ELEMENT_PRESSURE_INPUT_INVALID');
-  }
+  requireRecord(pressure, `frameElementInput.pressure for element ${elementId}`, INPUT_CODE);
   if (!Number.isFinite(pressure.pressure)) {
     fail(`Element ${elementId} pressure input must carry a finite pressure.`, 'FRAME_ELEMENT_PRESSURE_INPUT_INVALID');
   }

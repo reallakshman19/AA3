@@ -147,6 +147,10 @@ assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'ELASTIC_THER
 }), /greater than zero/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'ELASTIC_THERMAL', {
   elasticModulusPa: 200e9,
+  thermalExpansionPerK: 0,
+}), /greater than zero/u);
+assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'ELASTIC_THERMAL', {
+  elasticModulusPa: 200e9,
   thermalExpansionPerK: '',
 }), /must not be blank/u);
 
@@ -178,6 +182,7 @@ console.log(JSON.stringify({
   destructiveKeyedMapResetBlocked: true,
   pathLevelCompositeReset: true,
   blankNumericCoercionBlocked: true,
+  projectDataPositiveEngineeringLeavesPreserved: true,
   unsupportedAxisBlocked: true,
   unsupportedUnitBlocked: true,
   invalidNumbersBlocked: true,

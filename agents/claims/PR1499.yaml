@@ -1,0 +1,68 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1499
+branch: agent/issue-1370-primary-standard-round-class-20260828
+issue: 1370
+umbrella_issue: 1389
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY_AUTO_MERGE_AUDIT
+execution_mode: AUTO
+auto_state: MERGE_AUDIT
+scope_authority: LOCKED_TO_ISSUE_1370_STANDARD_CYLINDRICAL_CLASS
+phase_progression: AUTO
+coordination_state: SAFE_SOURCE_GOVERNANCE_DISJOINT_FROM_PR1491
+scope:
+  authority: EMP1_WRC537_STANDARD_CYLINDRICAL_ROUND_ATTACHMENT_CLASS
+  paths:
+    - validation/emp1/wrc537-2013/cylindrical-attachment-class-source-qualification-v1.json
+    - scripts/emp1-wrc537-cylindrical-attachment-class-source-check.mjs
+    - docs/emp1/WRC537_2013_Cylindrical_Attachment_Class_Authority.md
+    - agents/PR1499_workreport.md
+    - agents/status/PR1499.yaml
+    - agents/claims/PR1499.yaml
+protected_exclusions:
+  - src/core/**
+  - validation/emp1/release/**
+  - WRC/CAUx controlled source bytes
+  - oracle/tolerances/benchmark expected values
+  - evidence 01-12
+  - .github/workflows/**
+  - UI/browser paths
+authority_boundary:
+  standard_round_host_shell_class_qualified: true
+  arbitrary_round_objects_authorized: false
+  structural_lug_pad_surrogates_authorized: false
+  off_axis_1b1_2b1_authorized: false
+  flexible_nozzle_classifier_created: false
+  reinforcement_specific_authority_created: false
+  production_numerics_changed: false
+  route_registry_changed: false
+  code_authority_created: false
+  release_authority_created: false
+source_custody:
+  pinned_pdf_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+  pinned_pdf_git_blob_sha1: ce861233928154145a9257efbbf8dbef3f5a17d1
+  pinned_pdf_direct_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+  external_primary_text_observation: PASS_TEXT_OBSERVED
+  external_rendering_byte_identity_to_pinned_pdf: UNPROVEN
+current_truth:
+  source_status: BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED
+  qualified_class: WRC537_CYLINDRICAL_STANDARD_ROUND_HOST_SHELL_ATTACHMENT
+  source_ledger_blob: 1300f3e621d1fcaf959be45fb700dd56ffa921d5
+  source_checker_blob: 67581ea96aebbfdd0233bc711ced28e61502fc2c
+  authority_doc_blob: 2d2eda30b4397bdbcd11d66c012637266c8f9045
+reconciliation:
+  technical_base_main: 3e22134fe224bb6ea128bea9547b331cd633a8b8
+  current_main: 4d18fca2f049b3a8b7b1dc64594189d51fd9645a
+  current_main_tree: e5bb411116d06b1a5a5bc68384584b888999d512
+  intervening_pr: 1491
+  overlap_classification: SAFE_AUTHORITY_DISJOINT
+validation:
+  source_checker: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  pinned_pdf_direct_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+  external_rendering_byte_identity: UNPROVEN
+grounding_epoch: GE-PR1499-001
+merge_authority: GRANTED_EXPLICIT_OWNER_CURRENT_CONVERSATION
+handover_report: agents/PR1499_workreport.md
+exact_next_action: "Attach six-file current-main re-ground, complete exact-six-file/current-main/review audit, merge if clean, then reconcile #1389 aggregate/current-state."

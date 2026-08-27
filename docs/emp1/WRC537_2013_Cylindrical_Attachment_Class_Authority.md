@@ -2,99 +2,123 @@
 
 ## Status
 
-`BLOCKED_PRIMARY_SOURCE_ATTACHMENT_CLASS_UNRESOLVED`
+`BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED`
 
-The current bounded cylindrical route is production-authorized under the separately retained owner workflow-skip path, but that does **not** mean WRC attachment-class applicability has been source-qualified.
+## Decision
 
-## Retained Table-5 evidence
+The source question has advanced beyond Table-5 input silence.
 
-Retained WRC Table 5 pp.41–42 explicitly lists the standard cylindrical computation-sheet inputs.
+A directly readable WRC 537 (2013) primary-document text rendering now establishes that the cylindrical-shell method itself is organized by attachment geometry. Section 4.2.2 states that cylindrical shells may be treated with round or rectangular attachments; §4.2.2.1 defines the round attachment parameter using only `r0` and `Rm`. The cylindrical nomenclature defines `r0` as the outside radius of the cylindrical attachment.
 
-For attachment geometry, the sheet exposes:
+The bounded source-qualified identity established here is therefore:
 
-```text
-Attachment Radius r0
-```
+`standard cylindrical round host-shell attachment`
 
-It does not expose an explicit:
+This is deliberately narrower than “any object that looks round.”
 
-```text
-attachment wall thickness
-SOLID / HOLLOW selector
-RIGID / FLEXIBLE selector
-nozzle flexibility parameter
-```
+## Primary-document text observations
 
-This is qualified only as **explicit input-content evidence**. It proves what the retained computation sheet explicitly asks for; it does not prove why those fields are absent or that every physical attachment class is equivalent.
+Observed external rendering:
 
-Forbidden inference:
+`https://studylib.net/doc/25312294/wrc-537-`
+
+Relevant WRC locators:
 
 ```text
-field absent from Table 5
-  => field physically irrelevant to WRC applicability
+§1.3       r0 = outside radius of cylindrical attachment
+§4.2.2     cylindrical attachment geometry families = round or rectangular
+§4.2.2.1   round attachment: beta = 0.875*r0/Rm, Eq. (26)
+§4.3.4     cylindrical round attachment is illustrated by a pipe for torsional shell stress
+§4.5.3     the foregoing method evaluates shell stress, not attachment stress; a nozzle is explicitly discussed as an attachment case
+Appendix A off-axis discussion
+            1B-1 / 2B-1 maximum-stress-off-axis treatment applies only to a round flexible-nozzle connection
 ```
 
-## Current standard eight-point route
+The contrast with the spherical-shell section is material. Section 3.2.2 explicitly branches spherical attachments into rigid attachments and hollow nozzles with additional attachment parameters. Section 4.2.2 does not import those spherical class parameters into the cylindrical method; it defines cylindrical families by round/rectangular geometry and gives the round `r0/Rm` parameterization directly.
 
-The bounded path remains:
+Accordingly, for the standard cylindrical round host-shell equations and standard axes-of-symmetry/eight-point route, the source does not define a SOLID/HOLLOW selector, a RIGID/FLEXIBLE selector, or attachment wall thickness as a §4 curve-selection/parameterization input.
+
+This is stronger than the prior Table-5 observation because the conclusion now comes from the governing cylindrical method section, not from computation-sheet silence alone.
+
+## What is qualified
+
+For the bounded standard host-shell route:
 
 ```text
-shellFamily = CYLINDRICAL
-attachmentShape = ROUND
-longitudinal moment = 1B / 2B
-recovery = Au, Al, Bu, Bl, Cu, Cl, Du, Dl
+shell family                     CYLINDRICAL
+attachment geometry family       ROUND
+attachment geometry parameter    r0 outside radius at shell juncture
+standard parameter               beta = 0.875*r0/Rm
+standard longitudinal figures    1B / 2B
+standard recovery                Au Al Bu Bl Cu Cl Du Dl
+host-shell stress only            true
 ```
 
-The current adapter similarly does not request attachment wall thickness or a solid/hollow/rigid/flexible class. That software-interface fact is consistent with the Table-5 explicit input inventory, but it is not an independent applicability proof.
+Within this standard §4 route, no separate solid/hollow or rigidity/flexibility selector is source-defined for curve selection. Attachment wall thickness is likewise not a standard §4 round-attachment parameter.
 
-## Distinct off-axis class restriction
+This does **not** assert universal physical solid/hollow equivalence. It states the narrower source fact that the standard cylindrical host-shell method does not branch its round curve selection on those classifications.
 
-Retained off-axis source authority separately states that `1B-1 / 2B-1` applicability is limited to a **round flexible-nozzle connection**.
+## Pipe/nozzle evidence
 
-That is material evidence that attachment class matters to at least some WRC claims. It does not provide a general source-qualified definition or threshold for `FLEXIBLE_NOZZLE`, and it must not be imported into the standard 1B/2B eight-point route as a generic classifier.
+The cylindrical section itself describes a round attachment “such as a pipe” for torsional shell stress. Section 4.5.3 then discusses the nozzle case while warning that the procedure calculates shell stress rather than nozzle/attachment stress.
+
+Therefore a hollow pipe/nozzle is not excluded merely because it is hollow. However, this does not authorize nozzle-wall stress, reinforcement design, code acceptance, or a modified-juncture model.
+
+## Off-axis boundary remains separate
+
+The source separately says that the off-axis maximum-stress figures `1B-1 / 2B-1` apply only to a **round flexible-nozzle connection**.
+
+That restriction is preserved exactly. The current bounded route uses standard `1B / 2B` and does not authorize `1B-1 / 2B-1`.
+
+No numerical definition or qualification threshold for “flexible nozzle” has been established here. Therefore:
+
+```text
+off-axis flexible-nozzle restriction = source observed
+off-axis flexible-nozzle classifier  = not qualified
+off-axis route authority             = false
+```
 
 ## What remains blocked
 
-Direct source closure must still establish:
+This source increment does not turn shape into universal class authority. The following remain outside the qualified bounded class until separately evidenced:
 
-1. the exact attachment classes covered by the standard cylindrical Table-5 route;
-2. whether solid and hollow round attachments are equivalent for standard host-shell stress calculation;
-3. whether rigidity/flexibility affects standard curves;
-4. whether attachment wall thickness is absent by source design or merely not an explicit computation-sheet input;
-5. exact definitions/criteria for rigid attachment and flexible nozzle;
-6. reinforcement/integral/local-thickening restrictions;
-7. whether structural lugs/pads can belong to this family;
-8. source evidence the canonical model must retain to prove class.
+1. an arbitrary round object whose physical attachment function is not established;
+2. a structural lug, pad, clip or support represented by a circular surrogate;
+3. reinforcement pads, integrally reinforced nozzles or locally thickened/modified junctions where the idealized standard attachment assumptions may change;
+4. unusually large or substantially non-idealized attachments requiring the §4.5 / Appendix-A limitation review;
+5. any off-axis `1B-1 / 2B-1` claim without a source-qualified flexible-nozzle classification;
+6. attachment/nozzle wall stress;
+7. Appendix-B non-unity SCF authority;
+8. code acceptance or professional release authority.
 
-## Current route versus source-gate truth
+In short: **round geometry is necessary for this bounded class, but an arbitrary round object is not thereby authorized.**
 
-Both statements are intentionally retained:
+## Source-custody boundary
 
-```text
-bounded route production authorization = true
-attachment-class primary-source authority = false
-```
-
-Route authorization cannot be back-propagated into missing source semantics.
-
-## Prohibitions
-
-- do not widen the route to arbitrary round objects;
-- do not claim solid/hollow equivalence from Table-5 silence;
-- do not claim rigidity independence from Table-5 silence;
-- do not invent a flexibility threshold;
-- do not apply off-axis flexible-nozzle semantics to rigid/unclassified attachments;
-- do not import spherical attachment parameters;
-- do not represent lugs/pads as equivalent round attachments.
-
-## Source custody
+Controlled repository source remains:
 
 ```text
 docs/emp1/WRC537_2013.pdf
-Git blob: ce861233928154145a9257efbbf8dbef3f5a17d1
-raw SHA-256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
-retained Table 5: docs/emp1/WRC537_2013_Tables_and_Charts.md, pp.41–42
-direct PDF re-observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+Git blob SHA-1 = ce861233928154145a9257efbbf8dbef3f5a17d1
+raw SHA-256    = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
 ```
 
-No production numerical or route-registry mutation is made by this source batch.
+The connected repository interface still cannot directly render the pinned PDF pages. Therefore:
+
+```text
+external primary-document text observed           = yes
+external rendering byte-identical to pinned PDF   = UNPROVEN
+pinned repository PDF direct-page observation     = NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+```
+
+The external rendering is not byte custody for the pinned source and is not represented as such.
+
+## Authority effect
+
+No production numerical or route-registry mutation is made by this source batch. It changes no WRC coefficients, gamma/beta numerical rules, pressure authority, SCF authority, off-axis authority, code-compliance authority or release authority.
+
+Current bounded runtime authorization remains a separate owner-authorized state. Source progress here does not back-propagate into broader attachment families or professional release readiness.
+
+## Remaining closure question
+
+Issue #1370 can be fully closed for professional bounded use only when the canonical source/evidence contract can prove that the physical item belongs to the standard cylindrical round attachment family rather than merely supplying a round diameter, and when any reinforcement/modified-juncture or other nonstandard attachment condition is either source-qualified or deterministically excluded.

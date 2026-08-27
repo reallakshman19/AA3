@@ -1,6 +1,6 @@
 {
   "schema": "emp1-wrc537-cylindrical-attachment-class-source-qualification/v1",
-  "qualificationId": "EMP1_WRC537_2013_CYLINDRICAL_ATTACHMENT_CLASS_SOURCE_Q1",
+  "qualificationId": "EMP1_WRC537_2013_CYLINDRICAL_ATTACHMENT_CLASS_SOURCE_Q2",
   "issue": 1370,
   "sourceDocument": {
     "title": "WRC Bulletin 537",
@@ -9,74 +9,130 @@
     "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
     "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
   },
-  "status": "BLOCKED_PRIMARY_SOURCE_ATTACHMENT_CLASS_UNRESOLVED",
+  "status": "BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED",
   "primarySourceDirectlyReobserved": false,
   "primarySourceExecutionStatus": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
+  "primaryTextObservation": {
+    "documentRenderingUrl": "https://studylib.net/doc/25312294/wrc-537-",
+    "classification": "PRIMARY_DOCUMENT_TEXT_RENDERING_OBSERVED_EXTERNAL_BYTE_IDENTITY_TO_PINNED_PDF_UNPROVEN",
+    "externalRenderingByteIdentityToPinnedPdf": "UNPROVEN",
+    "pinnedPdfDirectPageObservation": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
+    "locators": [
+      {
+        "section": "1.3",
+        "fact": "cylindrical nomenclature defines r0 as outside radius of cylindrical attachment"
+      },
+      {
+        "section": "4.2.2",
+        "fact": "for cylindrical shells either round or rectangular attachments may be considered"
+      },
+      {
+        "section": "4.2.2.1",
+        "equation": 26,
+        "fact": "round attachment beta is parameterized by 0.875*r0/Rm"
+      },
+      {
+        "section": "4.3.4",
+        "equation": 47,
+        "fact": "round attachment is illustrated by a pipe for cylindrical-shell torsional shell stress"
+      },
+      {
+        "section": "4.5.3",
+        "fact": "the procedure calculates shell stresses, not attachment stresses, and explicitly discusses a nozzle as an attachment case"
+      },
+      {
+        "section": "Appendix A discussion of off-axis maximum stresses",
+        "fact": "Figures 1B-1 and 2B-1 maximum-stress-off-axis treatment applies only to a round flexible-nozzle connection"
+      }
+    ]
+  },
   "retainedTable5Evidence": {
     "path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
     "gitBlobSha": "810a39d845e15bae92d9c30abb8d452401e711d2",
     "table": "Table 5",
     "pages": "41-42",
-    "explicitAttachmentGeometryInputs": ["r0"],
+    "explicitAttachmentGeometryInputs": [
+      "r0"
+    ],
     "attachmentWallThicknessInputPresent": false,
     "solidHollowClassificationInputPresent": false,
     "rigidityFlexibilityInputPresent": false,
-    "classification": "QUALIFIED_TABLE5_EXPLICIT_INPUT_CONTENT_ONLY_NOT_ATTACHMENT_CLASS_EQUIVALENCE_AUTHORITY"
+    "classification": "RETAINED_TABLE5_CONTENT_CONSISTENT_WITH_PRIMARY_SECTION4_ROUND_ATTACHMENT_PARAMETERIZATION"
   },
   "currentRoute": {
     "shellFamily": "CYLINDRICAL",
     "attachmentShape": "ROUND",
-    "standardTable5EightPointFiguresForLongitudinalMoment": ["1B", "2B"],
+    "standardTable5EightPointFiguresForLongitudinalMoment": [
+      "1B",
+      "2B"
+    ],
+    "offAxisLongitudinalMomentFigures": [
+      "1B-1",
+      "2B-1"
+    ],
+    "offAxisFiguresAuthorizedByCurrentBoundedRoute": false,
     "attachmentWallThicknessRequiredByCurrentAdapter": false,
     "solidHollowClassificationRequiredByCurrentAdapter": false,
     "rigidityClassificationRequiredByCurrentAdapter": false,
     "productionRouteAuthority": true,
-    "productionRouteAuthorityClassification": "OWNER_AUTHORIZED_BOUNDED_ROUTE_DOES_NOT_CLOSE_ATTACHMENT_CLASS_SOURCE_GATE"
-  },
-  "retainedEvidence": {
-    "legacyMethodExtraction": {
-      "path": "docs/01_WRC537_METHOD_DEFINITION.md",
-      "authority": "SECONDARY_OCR_RESEARCH_NOT_IMPLEMENTATION_AUTHORITY",
-      "statement": "Legacy research states that the solid/hollow distinction is dropped for cylindrical-shell attachments, but it is explicitly NOT_READY_FOR_IMPLEMENTATION and is not primary-source authority."
-    },
-    "offAxisLongitudinalMoment": {
-      "path": "docs/emp1/WRC537_2013_Off_Axis_Longitudinal_Moment_Authority.md",
-      "authority": "RETAINED_SOURCE_INTERPRETATION_BOUNDARY_ONLY",
-      "statement": "Off-axis 1B-1/2B-1 applicability is limited to a round flexible-nozzle connection, but the source-qualified flexible-nozzle classification method remains unresolved."
-    }
+    "productionRouteAuthorityClassification": "OWNER_AUTHORIZED_BOUNDED_ROUTE_DOES_NOT_CLOSE_NONSTANDARD_ATTACHMENT_CLASS_BOUNDARIES"
   },
   "engineeringConclusions": {
-    "standardTable5ExplicitAttachmentWallThicknessInputAbsent": true,
-    "standardTable5ExplicitSolidHollowInputAbsent": true,
-    "standardTable5ExplicitRigidityFlexibilityInputAbsent": true,
-    "roundGeometryAloneProvesAttachmentClass": false,
-    "standardEightPointSolidHollowEquivalencePrimaryVerified": false,
-    "standardEightPointRigidityIndependencePrimaryVerified": false,
-    "attachmentWallThicknessIrrelevancePrimaryVerified": false,
+    "standardCylindricalAttachmentGeometryFamiliesPrimaryVerified": true,
+    "standardCylindricalFamilies": [
+      "ROUND",
+      "RECTANGULAR"
+    ],
+    "standardRoundAttachmentParameterizationPrimaryVerified": true,
+    "standardRoundAttachmentParameterization": "beta = 0.875*r0/Rm",
+    "cylindricalR0OutsideRadiusMeaningPrimaryVerified": true,
+    "roundPipeExampleWithinStandardCylindricalFamilyPrimaryVerified": true,
+    "nozzleRecognizedAsAttachmentCaseForShellStressProcedurePrimaryVerified": true,
+    "standardRouteSolidHollowSelectorDefinedBySource": false,
+    "standardRouteRigidityFlexibilitySelectorDefinedBySource": false,
+    "standardRouteAttachmentWallThicknessParameterDefinedBySource": false,
+    "standardHostShellRoundRouteClassQualified": true,
+    "standardHostShellRoundRouteRequiresSolidHollowDistinctionForCurveSelection": false,
+    "standardHostShellRoundRouteRequiresRigidityFlexibilityDistinctionForCurveSelection": false,
+    "standardHostShellRoundRouteRequiresAttachmentWallThicknessForSection4Parameterization": false,
+    "offAxisFlexibleNozzleRestrictionPrimaryVerified": true,
     "offAxisFlexibleNozzleClassificationQualified": false,
     "arbitraryRoundObjectAuthorized": false,
     "structuralLugOrPadAuthorizedByRoundSurrogate": false,
+    "reinforcementOrLocalThickeningApplicabilityQualified": false,
+    "largeOrDeviantAttachmentGeneralized": false,
     "sphericalAttachmentParametersTransferToCylindrical": false,
-    "table5InputSilenceProvesPhysicalIrrelevance": false
+    "solidHollowPhysicalEquivalenceClaimed": false
   },
-  "requiredPrimarySourceClosure": [
-    "exact standard cylindrical Table-5 attachment classes",
-    "whether solid and hollow round attachments share the same shell-stress method",
-    "whether rigidity/flexibility affects the standard eight-point curves",
-    "whether attachment wall thickness is absent by source design or merely absent from the computation sheet",
-    "definitions and qualification criteria for rigid attachment and flexible nozzle where used",
-    "relationship between standard 1B/2B and off-axis 1B-1/2B-1 attachment-class requirements",
-    "reinforcement or locally thickened attachment restrictions",
-    "canonical evidence required to prove attachment class"
+  "qualifiedBoundedClass": {
+    "identity": "WRC537_CYLINDRICAL_STANDARD_ROUND_HOST_SHELL_ATTACHMENT",
+    "shellFamily": "CYLINDRICAL",
+    "attachmentGeometryFamily": "ROUND",
+    "geometryParameter": "r0 outside radius at attachment-to-shell juncture",
+    "hostShellStressOnly": true,
+    "standardAxesOfSymmetryEightPointRouteOnly": true,
+    "offAxisMaximumStressFiguresAuthorized": false,
+    "attachmentWallStressAuthorized": false,
+    "structuralRoundSurrogateAuthorized": false,
+    "reinforcementSpecificAuthority": false,
+    "largeOrSubstantiallyDeviantAttachmentAuthority": false
+  },
+  "remainingSourceClosure": [
+    "canonical evidence proving the physical item belongs to the standard cylindrical round attachment family rather than merely having a round projected shape",
+    "reinforcement pad, integrally reinforced nozzle, local thickening and modified-juncture applicability",
+    "structural lug or pad applicability without geometric surrogacy",
+    "large attachment or substantially non-idealized geometry disposition under section 4.5 and Appendix A",
+    "a source-qualified flexible-nozzle classification method before any 1B-1/2B-1 off-axis route could be authorized"
   ],
   "prohibitions": [
-    "DO_NOT_PROMOTE_SECONDARY_SOLID_HOLLOW_EQUIVALENCE_TO_ENGINEERING_AUTHORITY",
-    "DO_NOT_ASSUME_ROUND_GEOMETRY_ALONE_PROVES_WRC_ATTACHMENT_CLASS",
+    "DO_NOT_WIDEN_STANDARD_ROUND_CLASS_TO_ARBITRARY_ROUND_OBJECTS",
+    "DO_NOT_CLAIM_SOLID_HOLLOW_PHYSICAL_EQUIVALENCE_BEYOND_STANDARD_SECTION4_CURVE_SELECTION",
     "DO_NOT_INVENT_FLEXIBILITY_OR_RIGIDITY_THRESHOLD",
-    "DO_NOT_APPLY_OFF_AXIS_FLEXIBLE_NOZZLE_AUTHORITY_TO_RIGID_OR_UNCLASSIFIED_ATTACHMENTS",
+    "DO_NOT_AUTHORIZE_1B_1_OR_2B_1_WITHOUT_FLEXIBLE_NOZZLE_CLASSIFICATION",
     "DO_NOT_IMPORT_SPHERICAL_GAMMA_RHO_ATTACHMENT_SEMANTICS",
     "DO_NOT_REPRESENT_STRUCTURAL_LUGS_OR_PADS_AS_EQUIVALENT_ROUND_ATTACHMENTS",
-    "DO_NOT_INFER_CLASS_EQUIVALENCE_FROM_TABLE5_INPUT_SILENCE"
+    "DO_NOT_INFER_REINFORCEMENT_OR_LOCAL_THICKENING_APPLICABILITY",
+    "DO_NOT_TREAT_EXTERNAL_TEXT_RENDERING_AS_BYTE_IDENTICAL_TO_PINNED_PDF"
   ],
   "authorityEffect": {
     "productionNumericsChanged": false,

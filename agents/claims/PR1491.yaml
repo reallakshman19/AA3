@@ -1,0 +1,46 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1491
+issue: 1321
+branch: agent/issue-1321-source-axis-general-gravity
+state: SOURCE_COMPLETE_MERGE_AUTHORIZED_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: 3e22134fe224bb6ea128bea9547b331cd633a8b8
+technical_reground_sha: f34bba88e46bd0020645c4507d3bdc809a57894a
+mission: "Qualify X/Y/Z source-up scalar route-chainage gravity authority while preserving scalar statics and all Z-only downstream fail-closed gates."
+claimed_paths:
+  - agents/PR1491_workreport.md
+  - agents/claims/PR1491.yaml
+  - agents/status/PR1491.yaml
+  - scripts/authorized-empirical-source-axis-binding-check.mjs
+  - scripts/non-fea-calculation-defaults-basic-ux-check.mjs
+  - scripts/non-fea-product-default-profile-check.mjs
+  - scripts/source-axis-permutation-equivalence-check.mjs
+  - src/workspace/engineering-loads/authorized-empirical-gravity-convention-binding.js
+  - src/workspace/engineering-loads/authorized-empirical-source-axis-binding.js
+  - src/workspace/project-data/non-fea-calculation-defaults-model.js
+  - src/workspace/project-data/non-fea-product-default-profile.js
+  - src/workspace/support-sites/support-site-model.js
+protected_paths:
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/routes/route-partition-model.js
+  - src/workspace/engineering-loads/support-load-static-accounting.js
+  - src/workspace/engineering-loads/empirical-component-load-authority.js
+  - src/workspace/engineering-loads/empirical-support-civil-resultant-transfer.js
+  - src/workspace/engineering-loads/empirical-support-assembly-authority.js
+  - src/workspace/engineering-loads/empirical-component-moment-demand.js
+  - src/workspace/engineering-loads/preproduction-support-contact-authority.js
+  - src/workspace/engineering-loads/preproduction-thermal-liftoff-local-screen-intake.js
+  - src/workspace/engineering-loads/preproduction-thermal-liftoff-active-set-authority.js
+  - src/workspace/engineering-loads/adapters/canonical-thermal-rom-source-bound-execution.js
+  - .github/workflows/**
+authority_boundary: "Source-axis authority/convention only for permutation-invariant scalar route-chainage gravity; direction-dependent vector/contact/thermal mechanics remain Z-qualified and fail closed."
+validation_truth:
+  current_main_overlap_audit: PASS_SOURCE_RECONCILIATION
+  technical_blob_preservation: PASS_SOURCE_RECONCILIATION
+  focused_execution: NOT_RUN
+  aggregate_execution: NOT_RUN
+  imports_shell_build_diff: NOT_RUN
+merge_authority: OWNER_GRANTED_BY_2026_08_27_USER_COMMAND

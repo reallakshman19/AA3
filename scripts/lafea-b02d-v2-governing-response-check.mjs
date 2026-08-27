@@ -24,6 +24,7 @@ import {
   lafeaMeshGenerationConfiguration,
   produceLafeaAnalysisMeshEvidence,
 } from '../src/workspace/lafea-mesh-producer-binding.js';
+import { evaluateB02dV2PreSolveLoadGate } from './lib/lafea-b02d-v2-governing-response.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFINITION_PATH = path.join(ROOT, 'validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json');
@@ -77,13 +78,18 @@ function main() {
     produced.planned.generated.featureMapping.loadEdges,
     definition.loadCase.resultant,
   );
+  const preSolveLoadGate = evaluateB02dV2PreSolveLoadGate({
+    actual: load.resultant,
+    expectedForce: definition.loadCase.resultant,
+    expectedMomentAboutCenter: definition.loadCase.expectedMomentAboutCenter,
+    acceptance: definition.acceptance,
+  });
   const restraintNodeIds = produced.planned.generated.featureMapping.restraintNodeIds;
   const canonicalInput = createCanonicalLocalContinuumModel(
     canonicalSource(definition, produced.evidence.mesh, restraintNodeIds, load),
   );
-  const result = calculateLocalContinuum(canonicalInput);
 
-  const base = {
+  const preSolveBase = {
     schema: 'lafea-b02d-v2-governing-response-observation/v1',
     status: 'OBSERVED',
     caseId: definition.caseId,
@@ -101,14 +107,34 @@ function main() {
     canonicalModelHash: canonicalInput.semanticHash,
     loadResultant: load.resultant,
     loadDistribution: load.distribution,
-    productionQualification: result.qualification.state,
-    productionDiagnostics: result.diagnostics ?? [],
-    resultSemanticHashes: result.semanticHashes ?? null,
+    preSolveLoadGate,
     b02NumericalAuthorityGranted: false,
     responseSolverRepairAuthorized: false,
     reactionEquilibriumRepairAuthorized: false,
     releaseAuthorityGranted: false,
     trustAuthorityGranted: false,
+  };
+
+  if (!preSolveLoadGate.qualified) {
+    console.log(JSON.stringify({
+      ...preSolveBase,
+      productionQualification: 'NOT_RUN_PRE_SOLVE_LOAD_GATE_FAILED',
+      productionDiagnostics: [],
+      resultSemanticHashes: null,
+      disposition: 'LOAD_ASSEMBLY_GATE_FAILURE_RCA_REQUIRED',
+      governingResponseAccepted: false,
+      gateFailures: preSolveLoadGateFailures(preSolveLoadGate),
+      acceptedResponseEvidence: null,
+    }, null, 2));
+    return;
+  }
+
+  const result = calculateLocalContinuum(canonicalInput);
+  const base = {
+    ...preSolveBase,
+    productionQualification: result.qualification.state,
+    productionDiagnostics: result.diagnostics ?? [],
+    resultSemanticHashes: result.semanticHashes ?? null,
   };
 
   if (result.qualification.state !== 'ACCEPTED') {
@@ -181,6 +207,12 @@ function acceptedEvidence(definition, canonicalInput, result, resultCase) {
   });
 }
 
+function preSolveLoadGateFailures(evidence) {
+  return [
+    gate('PRE_SOLVE_LOAD_RESULTANT', evidence.forceRelativeError, evidence.forceRelativeMaximum),
+    gate('PRE_SOLVE_LOAD_MOMENT', evidence.momentRelativeError, evidence.momentRelativeMaximum),
+  ].filter(Boolean);
+}
 function frozenGateFailures(definition, evidence) {
   const A = definition.acceptance;
   return [

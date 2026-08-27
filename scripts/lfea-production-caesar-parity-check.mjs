@@ -38,6 +38,7 @@ import { authorizeLinearPipingInputXmlPreFlight } from '../src/workspace/linear-
 import { sealInputXmlProductionBendFactorAuthority } from '../src/core/linear-piping-analysis-consumer/inputxml-production-bend-factor-authority.js';
 import { sealInputXmlProductionBranchFactorAuthority } from '../src/core/linear-piping-analysis-consumer/inputxml-production-branch-factor-authority.js';
 import { createLfeaNativeExecutionAuthority } from '../src/lfea/native-execution-authority.js';
+import { recoverInputXmlAuthorizedRawCases } from '../src/core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js';
 import { runCaesarAccdbBenchmark } from './lfea-caesar-accdb-benchmark.mjs';
 import {
   buildProductionBenchmarkActual,
@@ -121,10 +122,43 @@ const constrainedNodeIds = [...new Set(
     .map((row) => String(row.targetNodeId).replace(/^IXP\.N/u, '')),
 )];
 
+// Element end actions come from recovery, which refuses a whole batch if any
+// case in it is BLOCKED. Re-running the qualified subset on its own keeps the
+// cases that solved cleanly comparable instead of withholding element actions
+// from all of them because one case failed an equilibrium tolerance.
+const recoverableCaseIds = executed.execution.caseExecutions
+  .filter((row) => ['QUALIFIED', 'CONDITIONAL'].includes(row.executionStatus))
+  .map((row) => row.caseId);
+const blockedCaseIds = executed.execution.caseExecutions
+  .filter((row) => !recoverableCaseIds.includes(row.caseId))
+  .map((row) => row.caseId);
+
+let actionsByCase = new Map();
+if (recoverableCaseIds.length > 0) {
+  const recoverable = createLfeaNativeExecutionAuthority().run(authorized, {
+    requestedCaseIds: recoverableCaseIds,
+  });
+  const recovered = recoverInputXmlAuthorizedRawCases({
+    preparation: authorized.preparation,
+    rawExecutionBatch: recoverable.execution,
+  });
+  actionsByCase = new Map(recovered.caseRecoveries.map((row) => [
+    row.caseId,
+    new Map((row.recovery.elementActions ?? []).map((entry) => [entry.elementId, entry])),
+  ]));
+}
+
+const elementChains = buildSourceElementChains(
+  tables.INPUT_BASIC_ELEMENT_DATA.rows,
+  prepared.preparation.structuralPreparation.segmentBindings,
+);
+
 const caseResults = executed.execution.caseExecutions.map((row) => ({
   caseId: row.caseId,
   displacementsByNode: vectorsByNode(row.execution.displacement),
   reactionsByNode: zeroFill(vectorsByNode(row.execution.reactions), constrainedNodeIds),
+  elementChains,
+  actionsByElement: actionsByCase.get(row.caseId) ?? null,
 }));
 
 // Take the source hash from a reference-only run so the two sides are provably
@@ -153,18 +187,32 @@ const report = await runCaesarAccdbBenchmark({
   extractor: 'js', expectedAccdbSha256: null, outPath: null,
 });
 
+// Did the adapter actually emit element rows? Read it from what was supplied,
+// not from what the comparison contains -- the comparison also carries
+// reference rows that have no counterpart.
+const elementActionsSupplied = Object.values(actual.cases)
+  .some((entry) => entry.rows.some((row) => row.entityKind === 'ELEMENT'));
+
 assert.ok(report.qualification, 'The comparator must return a qualification for production results.');
 assert.ok(report.qualification.cases.length > 0, 'At least one case must be compared.');
 
 // Only quantities production actually emits are meaningful here. Element end
 // actions and incident-load rows exist in the reference and are not produced,
 // so counting them would report a failure rate for work that was never claimed.
-const SUPPLIED = new Set(['DISPLACEMENT', 'ROTATION', 'FORCE', 'MOMENT']);
+const SUPPLIED = new Set([
+  'DISPLACEMENT', 'ROTATION', 'FORCE', 'MOMENT',
+  'GLOBAL_END_FORCE_FROM', 'GLOBAL_END_FORCE_TO',
+  'GLOBAL_END_MOMENT_FROM', 'GLOBAL_END_MOMENT_TO',
+]);
 
 const perCase = report.qualification.cases.map((qualifiedCase) => {
+  // Only quantities actually supplied are counted. A reference row with no
+  // counterpart scores FAIL, so counting withheld element actions would report
+  // a 0% pass rate for work that was never claimed -- the same artifact that
+  // made MOMENT look like 3/90 before reactions were zero-filled.
   const compared = qualifiedCase.comparison.rows.filter((row) =>
-    row.entityKind === 'NODE'
-    && SUPPLIED.has(row.quantity)
+    SUPPLIED.has(row.quantity)
+    && (row.entityKind === 'NODE' || elementActionsSupplied)
     && ['PASS', 'FAIL'].includes(row.status));
   const failed = compared.filter((row) => row.status === 'FAIL');
   const errors = compared
@@ -207,12 +255,62 @@ const perCase = report.qualification.cases.map((qualifiedCase) => {
 console.log(JSON.stringify({
   check: 'lfea-production-caesar-parity',
   status: 'MEASURED',
-  measures: 'NODE displacement, rotation and restraint reaction only',
+  measures: 'node displacement/rotation/reaction and source-element end actions',
+  blockedCaseIds,
+  elementActionsMeasured: elementActionsSupplied,
+  elementActionsWithheldBecause: elementActionsSupplied
+    ? null
+    : `case(s) ${blockedCaseIds.join(', ')} could not be recovered, and partial element `
+      + 'coverage fails the comparator rather than degrading it',
+  sourceElementChains: elementChains.length,
   editionProfileId: EDITION_PROFILE_ID,
   caseMapping: PRODUCTION_TO_CAESAR_CASE,
   qualificationStatus: report.qualification.status,
   perCase,
 }, null, 2));
+
+/**
+ * Walk each CAESAR source element's production chain from its FROM node to its
+ * TO node.
+ *
+ * A plain element is one production element; a retopologized bend is an
+ * incoming straight plus its arc chords. Only the chain's outer ends are ever
+ * reported, so what matters is getting the order and the endpoints right.
+ * A chain that does not close on the declared TO node is dropped rather than
+ * reported partially.
+ */
+function buildSourceElementChains(sourceRows, segmentBindings) {
+  const bySource = new Map();
+  for (const binding of segmentBindings) {
+    const key = String(binding.sourceSegmentId);
+    if (!bySource.has(key)) bySource.set(key, []);
+    bySource.get(key).push(binding);
+  }
+  const chains = [];
+  for (const row of sourceRows) {
+    const sourceId = String(row.ELEMENTID);
+    const bindings = bySource.get(`ACCDB.E${sourceId}`) ?? [];
+    if (bindings.length === 0) continue;
+    const byStart = new Map(bindings.map((binding) => [String(binding.startNodeId), binding]));
+    const from = String(row.FROM_NODE);
+    const to = String(row.TO_NODE);
+    const elementIds = [];
+    let node = from;
+    for (let step = 0; step < bindings.length; step += 1) {
+      const binding = byStart.get(node);
+      if (binding === undefined) break;
+      elementIds.push(binding.elementId);
+      node = String(binding.endNodeId);
+      if (node === to) break;
+    }
+    if (node !== to || elementIds.length !== bindings.length) continue;
+    chains.push({
+      entityId: `INPUT_ELEMENT:${sourceId}|${from}->${to}|${String(row.ELEMENT_NAME ?? '').trim()}`,
+      elementIds,
+    });
+  }
+  return chains;
+}
 
 /** Expand a sparse reaction map over every constrained node and all six DOFs. */
 function zeroFill(byNode, nodeIds) {

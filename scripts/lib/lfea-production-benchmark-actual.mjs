@@ -23,14 +23,17 @@
  *   retopology (`ACCDB.E19.A1`). The reference only ever names source nodes, so
  *   synthetic nodes are dropped: they have no CAESAR counterpart to compare to.
  *
- * Element end actions are deliberately NOT emitted yet. Production solves 168
+ * Element end actions ARE emitted, by aggregation. Production solves 168
  * elements where CAESAR reports 96, because a bend becomes an incoming straight
- * plus six arc chords. Reporting a chord's end actions against a whole source
- * element's would compare two different things. Aggregating chords back to
- * source-element ends is real work with its own sign and orientation
- * conventions, and inventing it silently here would produce confident wrong
- * numbers. Node displacements, rotations and restraint reactions carry no such
- * ambiguity and are emitted in full.
+ * plus six arc chords. A chord's end actions are not the source element's, so
+ * each source element's production chain is walked from its FROM node to its TO
+ * node and only the two outer ends are reported: the first element's I end and
+ * the last element's J end. Those are the same two physical points CAESAR
+ * reports, so the comparison is like for like.
+ *
+ * A chain that does not walk cleanly from FROM to TO is skipped rather than
+ * guessed at -- a partial or ambiguous chain would report an interior chord's
+ * actions as if they were the element's, which is worse than reporting nothing.
  */
 
 /** Declared, not inferred. Left is production; right is the CAESAR case. */
@@ -43,6 +46,8 @@ export const PRODUCTION_TO_CAESAR_CASE = Object.freeze({
 
 const TRANSLATION_DOFS = Object.freeze(['UX', 'UY', 'UZ']);
 const ROTATION_DOFS = Object.freeze(['RX', 'RY', 'RZ']);
+const FORCE_COMPONENTS = Object.freeze([['FX', 'fx'], ['FY', 'fy'], ['FZ', 'fz']]);
+const MOMENT_COMPONENTS = Object.freeze([['MX', 'mx'], ['MY', 'my'], ['MZ', 'mz']]);
 
 /** A source node keeps CAESAR's own numbering; retopology nodes do not. */
 export function isSourceNodeId(nodeId) {
@@ -59,6 +64,15 @@ export function isSourceNodeId(nodeId) {
 export function buildProductionBenchmarkActual(input) {
   const cases = {};
   const skippedCaseIds = [];
+  // Element rows are all-or-nothing across the mapped cases. The comparator
+  // derives single-term differences between cases and requires complete row
+  // coverage on both sides, so supplying element actions for some mapped cases
+  // and not others fails the whole comparison rather than degrading it. A case
+  // that cannot be recovered -- one blocked on its own equilibrium check, say --
+  // therefore withholds element actions from all of them, and says so.
+  const elementActionsComplete = input.caseResults
+    .filter((row) => PRODUCTION_TO_CAESAR_CASE[row.caseId] !== undefined)
+    .every((row) => row.actionsByElement !== null && row.actionsByElement !== undefined);
   for (const caseResult of input.caseResults) {
     const caesarCaseId = PRODUCTION_TO_CAESAR_CASE[caseResult.caseId] ?? null;
     if (caesarCaseId === null) {
@@ -70,6 +84,9 @@ export function buildProductionBenchmarkActual(input) {
     appendNodeVectorRows(rows, caseResult.displacementsByNode, 'ROTATION', ROTATION_DOFS, 'rad');
     appendNodeVectorRows(rows, caseResult.reactionsByNode, 'FORCE', TRANSLATION_DOFS, 'N');
     appendNodeVectorRows(rows, caseResult.reactionsByNode, 'MOMENT', ROTATION_DOFS, 'N*m');
+    if (elementActionsComplete) {
+      appendElementEndRows(rows, caseResult.elementChains, caseResult.actionsByElement);
+    }
     cases[caesarCaseId] = { rows };
   }
   return {
@@ -81,14 +98,54 @@ export function buildProductionBenchmarkActual(input) {
       sourceModelSemanticHash: input.sourceModelSemanticHash ?? null,
       cases: {},
       limitations: [
-        'Element end actions are not emitted: production analysis elements do not '
-        + 'correspond one-to-one with CAESAR source elements after bend retopology.',
+        elementActionsComplete
+          ? 'Element end actions are aggregated: a source element is reported from the two '
+            + 'outer ends of its production chain, since a retopologized bend has no single '
+            + 'analysis element spanning it.'
+          : 'Element end actions are withheld from every case: at least one mapped case '
+            + 'could not be recovered, and partial element coverage fails the derived-case '
+            + 'machinery in the comparator rather than degrading it.',
         ...(skippedCaseIds.length === 0 ? [] : [
           `Production cases with no mapped CAESAR counterpart: ${skippedCaseIds.join(', ')}.`,
         ]),
       ],
     },
   };
+}
+
+/**
+ * One row set per source element, from the two outer ends of its production
+ * chain. `chains` is `[{ entityId, elementIds }]` in FROM-to-TO order.
+ */
+function appendElementEndRows(rows, chains, actionsByElement) {
+  if (!Array.isArray(chains) || !actionsByElement) return;
+  for (const chain of chains) {
+    const first = actionsByElement.get(chain.elementIds[0]);
+    const last = actionsByElement.get(chain.elementIds[chain.elementIds.length - 1]);
+    if (first === undefined || last === undefined) continue;
+    appendEnd(rows, chain.entityId, 'FROM', first.global?.I);
+    appendEnd(rows, chain.entityId, 'TO', last.global?.J);
+  }
+}
+
+function appendEnd(rows, entityId, endLabel, action) {
+  if (!action) return;
+  for (const [component, field] of FORCE_COMPONENTS) {
+    const value = Number(action[field]);
+    if (!Number.isFinite(value)) continue;
+    rows.push({
+      entityKind: 'ELEMENT', entityId,
+      quantity: `GLOBAL_END_FORCE_${endLabel}`, component, value, unit: 'N',
+    });
+  }
+  for (const [component, field] of MOMENT_COMPONENTS) {
+    const value = Number(action[field]);
+    if (!Number.isFinite(value)) continue;
+    rows.push({
+      entityKind: 'ELEMENT', entityId,
+      quantity: `GLOBAL_END_MOMENT_${endLabel}`, component, value, unit: 'N*m',
+    });
+  }
 }
 
 function appendNodeVectorRows(rows, byNode, quantity, dofs, unit) {

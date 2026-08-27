@@ -1,0 +1,48 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1488
+issue: 1321
+branch: agent/issue-1321-calculation-defaults-scoped-ux
+state: SOURCE_COMPLETE_AWAITING_OWNER
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: READY_FOR_OWNER_REVIEW
+base_branch: agent/issue-1321-calculation-defaults-basic-ux
+base_sha: 49fdf224390cfa4993781e8e24776f4e8aaf55f3
+validation:
+  live_main_grounding: PASS
+  d1_base_ready: PASS
+  stacked_merge_base_exact: PASS
+  stacked_behind_base: 0
+  configured_default_schema_trace: PASS
+  scope_precedence_trace: PASS
+  provider_materializable_field_trace: PASS
+  provider_native_unit_trace: PASS
+  target_kind_trace: PASS
+  support_kind_capability_gap: PASS_IDENTIFIED_NOT_FABRICATED
+  d2_source_review: PASS
+  exact_six_file_scope: PASS
+  temporary_wip_removed: PASS
+  review_submissions: 0
+  review_threads: 0
+  focused_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  second_default_mechanism_forbidden: true
+  provider_precedence_unchanged: true
+  exact_scope_matching_preserved: true
+  source_master_precedence_preserved: true
+  product_default_catalog_unchanged: true
+  custom_policy_rows_preserved: true
+  unsupported_scope_not_presented_as_available: true
+  support_kind_authority_fabrication_forbidden: true
+  mechanics_change_authorized: false
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
+merge_disposition: READY_FOR_REVIEW_NOT_AUTHORIZED_TO_MERGE
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Owner review. After #1487 merges, deterministically re-ground #1488 to new main before any merge. Continue Issue #1321 gap audit without widening this PR."

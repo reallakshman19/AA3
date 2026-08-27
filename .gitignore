@@ -56,3 +56,7 @@ artifacts/
 # Runtime-only B01 integrated exact-head envelope.
 # The historical final-qualification matrix stays in /tmp; only this sealed envelope is ignored.
 /reports/qualification/B01/integrated-exact-head.json
+
+# Runtime-only B02D V2 exact-head binding envelope.
+# Keep this path exact: unrelated B02D reports must remain visible to Git custody.
+/reports/qualification/B02D/v2-binding-exact-head.json

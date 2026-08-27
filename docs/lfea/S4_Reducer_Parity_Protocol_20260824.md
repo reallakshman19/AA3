@@ -16,24 +16,39 @@ It does **not** assume that CAESAR uses midpoint section sampling, ten-cylinder 
 
 ## Source evidence already established
 
-### SRC-S4-01 — Hexagon CAESAR II Users Guide, Reducer
+### SRC-S4-01 — CAESAR II ten-cylinder statement (attribution corrected 2026-08-27)
 
-Current public Hexagon help states that CAESAR II constructs a concentric reducer from **ten pipe cylinders**, each of successively larger or smaller diameter and wall thickness over the element length. It identifies the From-end diameter/wall from the piping element and Diameter 2 / Thickness 2 at the To node.
+The ten-cylinder wording is real, but this entry previously attributed it to the
+Hexagon **Users Guide** reducer page. A 2026-08-27 re-check could not find it
+there: the Version 14 Users Guide and Applications Guide reducer pages document
+input fields (D1/t1, D2/t2, Alpha, transition radii, L2) and their use in code
+SIF and flexibility factors, not an internal discretization.
+
+The statement is attributed to the CAESAR II **Technical Reference Manual**, and
+it is scoped to **weight**: the reducer element is assumed as ten pipe cylinders
+of successively larger or smaller diameter and thickness over the length *for
+calculating the weight*.
+
+That scope matters. It is weaker support for a ten-cylinder **stiffness** model
+than this protocol previously implied, which is why S4-Q1 now asks whether
+CAESAR discretizes stiffness at all rather than assuming it does.
 
 Source locator:
 
 ```text
 publisher: Hexagon
 product: CAESAR II
-source: Users Guide — Reducer
-version page observed: Version 12
-page/topic id: 1226707
-status: PRIMARY_VENDOR_PUBLIC_HELP
+source: Technical Reference Manual — reducer weight
+status: VENDOR_STATEMENT_VIA_SECONDARY_RESTATEMENT
+caveat: the 2026-08-27 re-check reached this wording through third-party
+        restatement (SST Systems interface manuals) and search summaries;
+        the primary Hexagon page was not directly retrievable, so this is
+        NOT a verified first-party read
 ```
 
 What this establishes:
 
-- ten cylinders;
+- ten cylinders, as a documented vendor statement about WEIGHT;
 - progressive section change;
 - From- and To-end section custody.
 
@@ -44,6 +59,25 @@ What it does **not** establish:
 - gravity/metal/fluid/insulation weight integration rule;
 - thermal-strain section ownership;
 - exact condensed stiffness parity.
+
+### SRC-S4-01b — Vendor statement contradicted by third-party observation
+
+SST Systems, who publish the CAEPIPE-to-CAESAR II interface, state that CAESAR
+II computes reducer weight as a pipe using the **From-end** OD and thickness,
+and say so explicitly as being *contrary to the statement given in the CAESAR II
+Technical Reference Manual*. They also report a resulting total-weight
+difference between the two products proportional to the number of reducers.
+
+This is the strongest single argument that S4 cannot be closed by reading more
+documentation: the vendor's own manual and an independent observation of the
+same software disagree about the weight rule. It is also independent
+corroboration of SRC-S4-03's From-end finding.
+
+```text
+publisher: SST Systems
+source: KP2CII CAEPIPE-to-CAESAR II User's Manual; checkSTRESS-to-CAESAR II Conversion
+status: THIRD_PARTY_OBSERVATION_CONTRADICTING_VENDOR_MANUAL
+```
 
 ### SRC-S4-02 — Hexagon Version 14 auxiliary reducer export contract
 
@@ -85,7 +119,7 @@ S4 may not promote until all rows below are resolved by current-version CAESAR o
 
 | ID | Authority question | Required controlled evidence | Acceptance |
 |---|---|---|---|
-| S4-Q1 | Which section does each cylinder use for stiffness? | axial + torsional response pair, run in both reducer orientations | one candidate rule uniquely matches both orientations within declared observation tolerance |
+| S4-Q1 | Does CAESAR discretize reducer stiffness at all, and if so which section does each cylinder use? | axial + torsional response pair, run in both reducer orientations | one candidate rule uniquely matches both orientations within declared observation tolerance |
 | S4-Q2 | Does bending/shear use the same section sequence? | transverse tip-load / end-moment response on a highly tapered reducer | response parity with same qualified rule; no separate hidden fitted factor |
 | S4-Q3 | How is reducer metal weight calculated? | gravity-only forward/reverse orientation pair with fluid/insulation disabled | orientation behavior identifies FROM-end, TO-end, average, or progressive-section rule |
 | S4-Q4 | How are fluid and insulation weights owned? | repeat gravity pair with metal density isolated, then fluid only, then insulation only | each contribution independently identified |
@@ -138,7 +172,48 @@ END_STATION_LINEAR_INTERPOLATION
 NODE_AVERAGE_OR_TRAPEZOIDAL_EQUIVALENT
 FROM_SECTION_ALL_TEN
 TO_SECTION_ALL_TEN
+UNIFORM_AVERAGE_SECTION_SINGLE_ELEMENT
 ```
+
+### Why the uniform-average candidate is in this list
+
+The first six candidates all assume the ten-cylinder discretization and differ
+only in which section each cylinder takes. That is a narrower hypothesis space
+than the evidence supports, and running the protocol without a non-discretized
+candidate risks the outcome "no candidate matched" on a model that in fact does
+not discretize reducer stiffness at all.
+
+CAESAR II's piping element is fundamentally a stick element of constant cross
+section. A published CAESAR II training treatment of element representation
+describes a reducer as usually handled by modelling it as a single element, or a
+short series of elements, carrying *average* parameters -- a 12x8 standard-wall
+reducer approximated by a 10-inch standard-wall pipe -- rather than as ten
+progressively varying cylinders. That is advisory guidance to the analyst rather
+than a statement of internal behaviour, and it is third-party rather than
+Hexagon, so it does not overturn the ten-cylinder wording. It is, however, a
+credible mechanism consistent with the underlying element architecture, and it
+must be falsifiable by this protocol rather than excluded from it by the shape
+of the candidate list.
+
+Note that `FROM_SECTION_ALL_TEN` and `TO_SECTION_ALL_TEN` are already
+mathematically equivalent to a uniform stick at those two sections; what was
+missing is the uniform stick at the *average* section, which is the specific
+rule the guidance above names.
+
+Source locator:
+
+```text
+publisher: third-party CAESAR II training material
+source: Computer Representation of Basic Elements in CAESAR II, section 3.1
+url: https://www.littlepeng.com/single-post/2020/06/10/31-computer-representation-of-basic-elements-in-caesar-ii
+status: THIRD_PARTY_TRAINING_NOT_VENDOR_INTERNAL_SPECIFICATION
+```
+
+This candidate also explains why BM4_L cannot settle the question. Over a short
+reducer, a ten-cylinder condensed stiffness and a uniform average-section stick
+differ by very little, so the 1.1-3.6% agreement recorded in
+`S4_Reducer_BM4L_Corroboration_20260826.md` is consistent with either. Only the
+controlled isolated-load runs separate them.
 
 If more than one credible candidate matches within source/report resolution, S4 remains blocked.
 

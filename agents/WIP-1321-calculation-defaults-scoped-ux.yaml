@@ -1,0 +1,22 @@
+schema: AgentWipClaim.v1
+repository: reallaksh19/Advanced_Analysis
+issue: 1321
+branch: agent/issue-1321-calculation-defaults-scoped-ux
+state: TAKEOVER_READ_ONLY
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: agent/issue-1321-calculation-defaults-basic-ux
+base_sha: 49fdf224390cfa4993781e8e24776f4e8aaf55f3
+mission: "Implement PR-D2 engineer-friendly scoped Calculation Defaults authoring on the existing non-fea-configured-default-policy/v1 and established scope precedence."
+planned_paths:
+  - src/workspace/project-data/non-fea-scoped-calculation-defaults-model.js
+  - src/workspace/project-data/non-fea-calculation-defaults-view.js
+  - scripts/non-fea-calculation-defaults-scoped-ux-check.mjs
+protected_invariants:
+  - "Reuse non-fea-configured-default-policy/v1; no second default mechanism."
+  - "Author only fields that the existing configured-default provider can materialize."
+  - "Generate only canonical Issue #1321 scope tiers; preserve existing provider precedence and conflict behavior."
+  - "Configured-default edits remain Project Data policy authority and do not masquerade as source/master evidence."
+  - "No common checker, Run, authorization, statics, solver, tolerance, Product-default catalog, or scope-precedence change."
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
+exact_next_action: "Allocate draft stacked PR on #1487, complete source qualification, then implement scoped authoring model/view and standalone falsifier."

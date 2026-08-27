@@ -38,58 +38,29 @@ const observation = (disposition) => ({
 });
 
 const cases = [
-  {
-    name: 'binding command fail leaves response not run',
-    input: { bindingCommand: S.FAIL, bindingVerification: S.NOT_RUN, governingCommand: S.NOT_RUN, governingObservation: null },
-    expected: 'B02D_V2_BINDING_PREREQUISITE_NOT_QUALIFIED',
-  },
-  {
-    name: 'binding receipt fail leaves response not run',
-    input: { bindingCommand: S.PASS, bindingVerification: S.FAIL, governingCommand: S.NOT_RUN, governingObservation: null },
-    expected: 'B02D_V2_BINDING_RECEIPT_VERIFICATION_FAILED',
-  },
-  {
-    name: 'observer process failure is not engineering disposition',
-    input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.FAIL, governingObservation: null },
-    expected: 'B02D_V2_GOVERNING_RESPONSE_OBSERVER_FAILED',
-  },
-  {
-    name: 'accepted governing case opens ladder only',
-    input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('GOVERNING_RESPONSE_ACCEPTED') },
-    expected: 'B02D_V2_GOVERNING_RESPONSE_ACCEPTED',
-    ladder: true,
-  },
-  {
-    name: 'reaction failure requires RCA without repair authority',
-    input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('REACTION_EQUILIBRIUM_FAILURE_RCA_REQUIRED') },
-    expected: 'B02D_V2_REACTION_EQUILIBRIUM_RCA_REQUIRED',
-    reactionRca: true,
-  },
-  {
-    name: 'iterative solver failure remains RCA',
-    input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('ITERATIVE_SOLVER_FAILURE_RCA_REQUIRED') },
-    expected: 'B02D_V2_ITERATIVE_SOLVER_RCA_REQUIRED',
-  },
-  {
-    name: 'free residual failure remains RCA',
-    input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('FREE_DOF_RESIDUAL_FAILURE_RCA_REQUIRED') },
-    expected: 'B02D_V2_FREE_DOF_RESIDUAL_RCA_REQUIRED',
-  },
+  { input: { bindingCommand: S.FAIL, bindingVerification: S.NOT_RUN, governingCommand: S.NOT_RUN, governingObservation: null }, expected: 'B02D_V2_BINDING_PREREQUISITE_NOT_QUALIFIED' },
+  { input: { bindingCommand: S.PASS, bindingVerification: S.FAIL, governingCommand: S.NOT_RUN, governingObservation: null }, expected: 'B02D_V2_BINDING_RECEIPT_VERIFICATION_FAILED' },
+  { input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.FAIL, governingObservation: null }, expected: 'B02D_V2_GOVERNING_RESPONSE_OBSERVER_FAILED' },
+  { input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('LOAD_ASSEMBLY_GATE_FAILURE_RCA_REQUIRED') }, expected: 'B02D_V2_LOAD_ASSEMBLY_RCA_REQUIRED', responseObserved: false },
+  { input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('GOVERNING_RESPONSE_ACCEPTED') }, expected: 'B02D_V2_GOVERNING_RESPONSE_ACCEPTED', ladder: true },
+  { input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('REACTION_EQUILIBRIUM_FAILURE_RCA_REQUIRED') }, expected: 'B02D_V2_REACTION_EQUILIBRIUM_RCA_REQUIRED', reactionRca: true },
+  { input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('ITERATIVE_SOLVER_FAILURE_RCA_REQUIRED') }, expected: 'B02D_V2_ITERATIVE_SOLVER_RCA_REQUIRED' },
+  { input: { bindingCommand: S.PASS, bindingVerification: S.PASS, governingCommand: S.PASS, governingObservation: observation('FREE_DOF_RESIDUAL_FAILURE_RCA_REQUIRED') }, expected: 'B02D_V2_FREE_DOF_RESIDUAL_RCA_REQUIRED' },
 ];
 
 for (const row of cases) {
   const result = classifyB02dV2GoverningResponse(row.input);
-  assert.equal(result.disposition, row.expected, row.name);
+  assert.equal(result.disposition, row.expected);
   assert.equal(result.b02NumericalAuthorityGranted, false);
   assert.equal(result.responseSolverRepairAuthorized, false);
   assert.equal(result.reactionEquilibriumRepairAuthorized, false);
   assert.equal(result.historicalGalerkinCandidateAuthorized, false);
   assert.equal(result.releaseAuthorityGranted, false);
   assert.equal(result.trustAuthorityGranted, false);
+  if (row.responseObserved === false) assert.equal(result.b02dV2GoverningResponseObserved, false);
   if (row.ladder) assert.equal(result.fullResponseLadderMayNowRun, true);
   if (row.reactionRca) assert.equal(result.reactionEquilibriumRcaRequired, true);
 }
-
 assert.throws(() => classifyB02dV2GoverningResponse({
   bindingCommand: S.FAIL,
   bindingVerification: S.PASS,
@@ -98,7 +69,7 @@ assert.throws(() => classifyB02dV2GoverningResponse({
 }));
 
 console.log(JSON.stringify({
-  schema: 'lafea-b02d-v2-governing-response-self-test/v1',
+  schema: 'lafea-b02d-v2-governing-response-self-test/v2',
   status: 'PASS',
   cases: cases.length + 2,
   engineeringMechanicsExecuted: false,

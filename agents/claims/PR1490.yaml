@@ -1,30 +1,44 @@
 schema: AgentPrClaim.v1
 repository: reallaksh19/Advanced_Analysis
 pr: 1490
-mission: Qualification-only V2 route support and frozen B02D-V2 T6/L4 governing response discriminator
-base_main: 1465e4fbd72c0ddff6e0332ea0a502e354537bfe
+mission: Qualification-only frozen B02D-V2 T6/L4 governing-response observation and first-wrong-boundary classification
+base_main: 3a54862127c601f3e4c59159526e7345fc06cf4c
+reconciliation_commit: 519a63a5f55891f0e2b9e0b2dbc160454bbb555b
 predecessor_binding_pr: 1485
 authority_domain:
-  - B02D_V2_QUALIFICATION_ROUTE_SELECTION
+  - B02D_V2_EXPLICIT_OPT_IN_GOVERNING_OBSERVER
+  - B02D_V2_PRE_SOLVE_LOAD_GATE
   - B02D_V2_T6_L4_GOVERNING_RESPONSE_OBSERVATION
   - RESPONSE_BOUNDARY_CLASSIFICATION_ONLY
 claims:
-  v1_response_route_preserved: REQUIRED_PENDING_IMPLEMENTATION
-  v2_response_route_explicit_opt_in: REQUIRED_PENDING_IMPLEMENTATION
+  v1_response_route_preserved: PASS_SEPARATE_V2_OBSERVER_NO_V1_ROUTE_MUTATION
+  v2_response_route_explicit_opt_in: PASS_SOURCE_INSPECTION
+  pre_solve_load_gate_wired_before_solver: PASS_SOURCE_INSPECTION
+  failed_load_gate_marks_load_qualified_false: PASS_EXACT_BLOB_SELF_TEST
   b01_and_binding_same_head_prerequisites_required: true
   response_solver_changed: false
   reaction_assembly_changed: false
   historical_galerkin_candidate_included: false
   benchmark_or_tolerance_changed: false
   b02_numerical_authority_granted: false
+  response_solver_repair_authorized: false
   reaction_equilibrium_repair_authorized: false
+  historical_galerkin_candidate_authorized: false
   release_authority_granted: false
   trust_authority_granted: false
 validation_truth:
   predecessor_merge: PASS_GITHUB_READBACK
+  current_main_reconciliation: PASS
+  main_drift_overlap: PASS_NONE_OBSERVED
+  classifier_and_load_gate_exact_blob_self_test: PASS_13_CASES
+  classifier_library_exact_blob_syntax: PASS
+  classifier_self_test_exact_blob_syntax: PASS
+  observer_pre_solve_order: PASS_SOURCE_INSPECTION
+  exact_checkout_retry: NOT_RUN_EXECUTION_ENVIRONMENT_DNS
   b01_exact_head_prerequisite: NOT_RUN
   b02d_v2_binding_exact_head: NOT_RUN
   b02d_v2_governing_response: NOT_RUN
+  engineering_failure_proven: false
 excluded_authority:
   - CONTINUUM_SOLVER_MECHANICS
   - SPARSE_MATRIX_MECHANICS

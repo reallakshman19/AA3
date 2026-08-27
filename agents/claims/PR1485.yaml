@@ -1,7 +1,7 @@
 schema: AgentPrClaim.v1
 repository: reallaksh19/Advanced_Analysis
 pr: 1485
-mission: Explicit opt-in B02D V2 mesh producer binding on current main
+mission: Explicit opt-in B02D V2 mesh producer binding and exact-head qualification envelope on current main
 base_main: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
 predecessor_frozen_assets_pr: 1484
 historical_provenance_pr: 1259
@@ -9,9 +9,14 @@ authority_domain:
   - B02D_V2_PROFILE_CONTROLLED_PRODUCER_SELECTION
   - V1_BINDING_PRESERVATION
   - V2_BINDING_FAIL_CLOSED_MISUSE_CHECKS
+  - B02D_V2_EXACT_HEAD_BINDING_QUALIFICATION_ORCHESTRATION
 changed_paths:
+  - .gitignore
   - src/workspace/lafea-mesh-producer-binding.js
   - scripts/lafea-b02d-v2-producer-binding-check.mjs
+  - scripts/lib/lafea-b02d-v2-binding-exact-head.js
+  - scripts/lafea-b02d-v2-binding-exact-head-self-test.mjs
+  - scripts/lafea-b02d-v2-binding-exact-head-check.mjs
   - agents/PR1485_workreport.md
   - agents/status/PR1485.yaml
   - agents/claims/PR1485.yaml
@@ -19,28 +24,42 @@ source_custody:
   current_prechange_binding_blob: 5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
   historical_prechange_binding_blob: 5fe98123d4d0c0b0adc7f97559c75700ddeea2fc
   reviewed_v2_binding_blob: e8307066293314ad952608872db596cf1898d5c1
+  frozen_asset_merge_required_ancestor: 2c9ed9d1045431a43a926696c6d5a015cbd0e926
 claims:
   producer_binding_changed: true
   v2_selected_only_by_v2_profile_identity_and_source_revision: true
   v1_strategy_preserved_in_binding: true
   generic_strategy_preserved_in_binding: true
   nonempty_v2_refinement_features_fail_closed: true
+  exact_head_gate_reuses_existing_b01_qualification_authority: true
+  exact_head_gate_stops_after_first_failed_boundary: true
+  exact_head_runtime_receipt_path_is_precisely_ignored: true
   response_solver_changed: false
   historical_galerkin_candidate_included: false
   b01_prerequisite_evidence_available: false
   b02_numerical_authority_granted: false
+  response_solver_repair_authorized: false
+  reaction_equilibrium_repair_authorized: false
   release_authority_granted: false
   trust_authority_granted: false
 validation_truth:
   binding_blob_custody: PASS
   focused_checker_syntax: PASS_LOCAL_NODE_CHECK
+  exact_head_classifier_syntax: PASS_LOCAL_NODE_CHECK
+  exact_head_wrapper_syntax: PASS_LOCAL_NODE_CHECK
+  exact_head_self_test_syntax: PASS_LOCAL_NODE_CHECK
+  exact_head_classifier_self_test: PASS_LOCAL_NODE_EXECUTION_7_CASES
   current_head_binding_execution: NOT_RUN
+  current_head_preobservation_execution: NOT_RUN
+  current_head_b01_prerequisite: NOT_RUN
+  current_head_exact_binding_envelope: NOT_RUN
 excluded_authority:
   - RESPONSE_SOLVER_MECHANICS
   - REACTION_EQUILIBRIUM_CORRECTION
   - GALERKIN_TRANSLATION_CORRECTION
   - V1_DEFAULT_REPLACEMENT
   - BENCHMARK_OR_TOLERANCE_CHANGE
+  - B02_RESPONSE_OR_CONVERGENCE_AUTHORITY
   - B02_NUMERICAL_AUTHORITY
   - RELEASE_LIFECYCLE_TRUST
   - WORKFLOW_MUTATION

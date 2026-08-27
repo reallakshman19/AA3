@@ -208,6 +208,9 @@ function normalizeCoverageRequirement(requirement, methodId) {
   const missing = textArray(details.missing);
   const ready = details.ready === true;
   if (covered > total) throw new TypeError(`${requirement.requirementId} covered count exceeds total.`);
+  if (covered !== Math.max(0, total - missing.length)) {
+    throw new TypeError(`${requirement.requirementId} covered count disagrees with total and missing evidence.`);
+  }
   if (ready !== (missing.length === 0)) {
     throw new TypeError(`${requirement.requirementId} ready flag disagrees with missing evidence.`);
   }

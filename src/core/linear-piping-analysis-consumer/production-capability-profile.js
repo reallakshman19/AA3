@@ -14,7 +14,7 @@ export const PRODUCTION_CAPABILITY_PROFILE = Object.freeze({
   bendExactMechanics: true,
   teeExactMechanics: true,
   reducerExactMechanics: false,
-  pressureStiffening: false,
+  pressureStiffening: true,
   pressureAxialThrust: true,
   pressureBourdon: false,
   pressureCodeStress: true,

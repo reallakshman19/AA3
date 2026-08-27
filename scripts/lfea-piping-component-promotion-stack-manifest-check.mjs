@@ -81,7 +81,10 @@ assert.equal(PRODUCTION_CAPABILITY_PROFILE.bendExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.teeExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics, false);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureBourdon, false);
-assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureStiffening, false);
+// Promoted on measured parity, using the element's DECLARED pressure so the
+// effective stiffness stays case-independent and the sealed custody check is
+// untouched. Improves every case in both pass rate and median error.
+assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureStiffening, true);
 // Promoted on measured CAESAR parity, not on a flag flip: closed-end pressure
 // axial strain is implemented in the frame-element kernel and takes BM4_L's
 // weight+pressure median error from 63.29% to 7.78%.

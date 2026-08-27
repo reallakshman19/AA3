@@ -24,13 +24,21 @@ const MOMENT_DIRECTION_MAPPING = Object.freeze({ inPlaneField: 'my', outOfPlaneF
  * Compile S3 bend stiffness authorities from an already-governed preparation.
  * Factor edition and B31J smooth-90 policy are explicit sealed authorities;
  * neither is inferred from CAESAR version, benchmark precedent, or current year.
- * S3 intentionally supplies pressure=0 so pressure-stiffened k remains S5.
+ * Bend pressure stiffening uses the element's DECLARED pressure, not the load
+ * case's. That is CAESAR's own model -- a bend is stiffened by the pressure the
+ * line is designed for, as a property of the model, and only a hydrotest case
+ * substitutes a different one. It matters structurally as well as physically:
+ * a stiffness that varied per case would break the single sealed
+ * effectiveStiffnessStateHash that every execution result is required to match.
+ * Taking the declared pressure keeps stiffness case-independent, so the custody
+ * check stays exactly as strong as it was.
  */
 export function compileInputXmlProductionBendComponents(input) {
   const sourcePreparation = requireRecord(input?.sourcePreparation, 'sourcePreparation');
   const structuralPreparation = requireRecord(input?.structuralPreparation, 'structuralPreparation');
   const frameElementProfile = requireRecord(input?.frameElementProfile, 'frameElementProfile');
   const factorAuthority = requireInputXmlProductionBendFactorAuthority(input?.factorAuthority);
+  const capability = requireRecord(input?.capabilityProfile, 'capabilityProfile');
   const sourceSegments = sourcePreparation.normalizedGeometry?.segments;
   if (!Array.isArray(sourceSegments)) fail(
     'BEND_FACTOR_SOURCE_GEOMETRY_MISSING', 'Source preparation has no normalized geometry.',
@@ -64,15 +72,16 @@ export function compileInputXmlProductionBendComponents(input) {
     );
 
     const componentId = bendComponentId(structuralPreparation.modelId, sourceBinding.sourceIndex);
+    const stiffeningPressure = bendStiffeningPressure(capability, sourceSegment, sourceSegmentId);
     const factorResult = calculateB31Factors(factorRequest({
       componentId, sourceSegment, bendRecord, material, physicalSection,
-      factorAuthority, sourcePreparation,
+      factorAuthority, sourcePreparation, stiffeningPressure,
     }));
-    requireQualifiedFactorResult(factorResult, factorAuthority, sourceSegmentId);
+    requireQualifiedFactorResult(factorResult, factorAuthority, sourceSegmentId, stiffeningPressure);
     const component = compilePipingComponent({
       componentId,
       componentType: 'BEND',
-      profile: productionBendComponentProfile(),
+      profile: productionBendComponentProfile(stiffeningPressure > 0),
       arc: {
         tangentStart: vector(sourceSegment.meta.bendTangentStart),
         tangentEnd: vector(sourceSegment.meta.bendTangentEnd),
@@ -120,7 +129,9 @@ function factorRequest(input) {
       outerDiameter: positive(section.dimensions?.outerDiameter, 'outerDiameter', input.sourceSegment.id),
       wallThickness: positive(section.dimensions?.wallThickness, 'wallThickness', input.sourceSegment.id),
       bendRadius: positive(input.sourceSegment.meta?.bendDeclaredRadius, 'bendRadius', input.sourceSegment.id),
-      pressure: 0,
+      // Zero unless the capability profile authorizes stiffening, so a pressure
+      // retained for code stress alone cannot quietly change the stiffness.
+      pressure: input.stiffeningPressure,
       elasticModulus: positive(input.material.materialState?.elasticModulus, 'elasticModulus', input.sourceSegment.id),
       bendAngleDegrees: input.bendRecord.arcLength / input.sourceSegment.meta.bendComputedRadius * 180 / Math.PI,
       smooth90FlexibilityCorrection: input.factorAuthority.smooth90FlexibilityCorrection,
@@ -134,7 +145,27 @@ function factorRequest(input) {
   };
 }
 
-function requireQualifiedFactorResult(result, authority, sourceSegmentId) {
+/**
+ * The pressure a bend's flexibility factor is corrected for.
+ *
+ * Zero unless the capability profile authorizes stiffening. When it does, this
+ * is the element's DECLARED pressure -- a model property, the same value for
+ * every load case -- so the effective stiffness stays case-independent and the
+ * sealed stiffness custody check is unaffected.
+ */
+function bendStiffeningPressure(capability, sourceSegment, sourceSegmentId) {
+  if (capability.pressureStiffening !== true) return 0;
+  const declared = sourceSegment?.meta?.analysis?.pressure;
+  if (declared === null || declared === undefined) return 0;
+  if (!Number.isFinite(declared) || declared < 0) fail(
+    'BEND_STIFFENING_PRESSURE_INVALID',
+    `Bend ${sourceSegmentId} declares a pressure that cannot stiffen its flexibility factor.`,
+    { declared },
+  );
+  return declared;
+}
+
+function requireQualifiedFactorResult(result, authority, sourceSegmentId, stiffeningPressure) {
   if (result.status !== 'QUALIFIED' || result.componentFactorSet === null) fail(
     'BEND_FACTOR_SET_NOT_QUALIFIED',
     `Bend ${sourceSegmentId} produced no qualified ${authority.editionProfileId} factor set.`,
@@ -145,9 +176,15 @@ function requireQualifiedFactorResult(result, authority, sourceSegmentId) {
     `Bend ${sourceSegmentId} factor basis must exclude centreline arc geometry.`,
     { geometryBasis: result.componentFactorSet.flexibilityGeometryBasis },
   );
-  if (result.componentFactorSet.pressureCorrectionApplied !== false) fail(
+  // The correction must be applied when, and only when, a stiffening pressure
+  // was supplied. Both directions are checked: a silent correction on an
+  // unauthorized bend and a silently-dropped one on an authorized bend are
+  // equally wrong.
+  const expectPressureCorrection = stiffeningPressure > 0;
+  if (result.componentFactorSet.pressureCorrectionApplied !== expectPressureCorrection) fail(
     'BEND_FACTOR_PRESSURE_STAGE_VIOLATION',
-    `Bend ${sourceSegmentId} S3 factor unexpectedly applies pressure stiffening.`,
+    `Bend ${sourceSegmentId} pressure stiffening was ${expectPressureCorrection ? 'authorized but not applied' : 'applied without authorization'}.`,
+    { expectPressureCorrection, applied: result.componentFactorSet.pressureCorrectionApplied },
   );
 }
 

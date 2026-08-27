@@ -16,6 +16,10 @@ const read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), 'u
 
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.schema, PRODUCTION_CAPABILITY_PROFILE_SCHEMA);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.profileId, 'LFEA_PRODUCTION_CAPABILITY_R1');
+// Both pressure terms are true because the mechanics are implemented and
+// measured, not because flags were flipped. Stiffening uses the element's
+// declared pressure, so effective stiffness stays case-independent and the
+// sealed stiffness custody check is unaffected.
 // axialThrust is true because closed-end pressure axial strain is implemented
 // in the frame-element kernel and measured against CAESAR, not because a flag
 // was flipped. On BM4_L it takes the weight+pressure case from a 63.29% median
@@ -24,7 +28,7 @@ assert.equal(PRODUCTION_CAPABILITY_PROFILE.profileId, 'LFEA_PRODUCTION_CAPABILIT
 // npm run check:lfea-production-caesar-parity.
 assert.deepEqual(productionAuthorizedPressureEffects(), {
   codeStress: true,
-  pressureStiffening: false,
+  pressureStiffening: true,
   axialThrust: true,
   bourdon: false,
 });
@@ -32,7 +36,7 @@ assert.deepEqual(productionAuthorizedPressureEffects(), {
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.bendExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.teeExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics, false);
-assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureStiffening, false);
+assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureStiffening, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureAxialThrust, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureBourdon, false);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureCodeStress, true);

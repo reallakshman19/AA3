@@ -82,6 +82,7 @@ export function compileInputXmlLinearElementAuthorities(input) {
       structuralPreparation: structural,
       frameElementProfile: frameProfile,
       factorAuthority: acceptedBendFactorAuthority,
+      capabilityProfile: capability,
     });
     pipingComponents = [...compiled.pipingComponents];
   }

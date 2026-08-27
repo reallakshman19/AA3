@@ -41,38 +41,42 @@ export function classifyB02dV2GoverningResponse({
     requireEqual(bindingVerify, B02D_V2_GOVERNING_STATUS.NOT_RUN, 'bindingVerification after binding command failure');
     requireEqual(governing, B02D_V2_GOVERNING_STATUS.NOT_RUN, 'governingCommand after binding command failure');
     requireEqual(observation, null, 'governingObservation after binding command failure');
-    return disposition('B02D_V2_BINDING_PREREQUISITE_NOT_QUALIFIED', false, false, false, false);
+    return disposition('B02D_V2_BINDING_PREREQUISITE_NOT_QUALIFIED', false, false, false, false, false);
   }
   if (bindingVerify !== B02D_V2_GOVERNING_STATUS.PASS) {
     requireEqual(governing, B02D_V2_GOVERNING_STATUS.NOT_RUN, 'governingCommand after binding verification failure');
     requireEqual(observation, null, 'governingObservation after binding verification failure');
-    return disposition('B02D_V2_BINDING_RECEIPT_VERIFICATION_FAILED', false, false, false, false);
+    return disposition('B02D_V2_BINDING_RECEIPT_VERIFICATION_FAILED', false, false, false, false, false);
   }
   if (governing !== B02D_V2_GOVERNING_STATUS.PASS) {
     requireEqual(observation, null, 'governingObservation after governing command failure');
-    return disposition('B02D_V2_GOVERNING_RESPONSE_OBSERVER_FAILED', true, false, false, false);
+    return disposition('B02D_V2_GOVERNING_RESPONSE_OBSERVER_FAILED', true, false, false, false, false);
   }
   if (!observation) throw new TypeError('governingObservation required after governing command PASS.');
 
+  if (observation.disposition === 'LOAD_ASSEMBLY_GATE_FAILURE_RCA_REQUIRED') {
+    return disposition('B02D_V2_LOAD_ASSEMBLY_RCA_REQUIRED', true, true, false, false, false);
+  }
   if (observation.disposition === 'GOVERNING_RESPONSE_ACCEPTED') {
-    return disposition('B02D_V2_GOVERNING_RESPONSE_ACCEPTED', true, true, true, false);
+    return disposition('B02D_V2_GOVERNING_RESPONSE_ACCEPTED', true, true, true, true, false);
   }
   if (observation.disposition === 'REACTION_EQUILIBRIUM_FAILURE_RCA_REQUIRED') {
-    return disposition('B02D_V2_REACTION_EQUILIBRIUM_RCA_REQUIRED', true, true, false, true);
+    return disposition('B02D_V2_REACTION_EQUILIBRIUM_RCA_REQUIRED', true, true, true, false, true);
   }
   if (observation.disposition === 'ITERATIVE_SOLVER_FAILURE_RCA_REQUIRED') {
-    return disposition('B02D_V2_ITERATIVE_SOLVER_RCA_REQUIRED', true, true, false, false);
+    return disposition('B02D_V2_ITERATIVE_SOLVER_RCA_REQUIRED', true, true, true, false, false);
   }
   if (observation.disposition === 'FREE_DOF_RESIDUAL_FAILURE_RCA_REQUIRED') {
-    return disposition('B02D_V2_FREE_DOF_RESIDUAL_RCA_REQUIRED', true, true, false, false);
+    return disposition('B02D_V2_FREE_DOF_RESIDUAL_RCA_REQUIRED', true, true, true, false, false);
   }
-  return disposition('B02D_V2_OTHER_GOVERNING_RESPONSE_RCA_REQUIRED', true, true, false, false);
+  return disposition('B02D_V2_OTHER_GOVERNING_RESPONSE_RCA_REQUIRED', true, true, true, false, false);
 }
 
-function disposition(code, bindingQualified, responseObserved, governingAccepted, reactionRcaRequired) {
+function disposition(code, bindingQualified, loadQualified, responseObserved, governingAccepted, reactionRcaRequired) {
   return Object.freeze({
     disposition: code,
     b02dV2BindingQualified: bindingQualified,
+    b02dV2LoadAssemblyQualified: loadQualified,
     b02dV2GoverningResponseObserved: responseObserved,
     b02dV2GoverningResponseAccepted: governingAccepted,
     fullResponseLadderMayNowRun: governingAccepted,
@@ -100,7 +104,6 @@ function requireObservation(value) {
   requireEqual(value.trustAuthorityGranted, false, 'governingObservation.trustAuthorityGranted');
   return value;
 }
-
 function requireStatus(value, path) {
   if (!Object.values(B02D_V2_GOVERNING_STATUS).includes(value)) {
     throw new TypeError(`${path} must be PASS, FAIL, or NOT_RUN.`);

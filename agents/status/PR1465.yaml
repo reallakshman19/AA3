@@ -1,0 +1,58 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1465
+issue: 1321
+branch: agent/issue-1321-run-internal-authorization
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: SOURCE_COMPLETE_CONTINUE_STACKED_SUCCESSOR
+base_branch: agent/issue-1321-run-ready-snapshot
+base_sha: 46a7b6735b746f612e28b0adfad847869b7b7ff4
+source_complete_basis: d250347cbd215ec5f988ae7934d5c9b4f93fd858
+validation:
+  live_grounding: PASS
+  issue_objective_trace: PASS
+  pr1461_stack_base_trace: PASS
+  ready_common_input_contract_trace: PASS
+  legacy_handoff_authority_trace: PASS
+  method_currentness_contract_trace: PASS
+  exact_workspace_shared_identity_trace: PASS
+  fitting_and_negligible_mass_semantic_trace: PASS
+  authorization_contract_source_review: PASS
+  runtime_bridge_source_review: PASS
+  focused_falsifier_source_review: PASS
+  aggregate_registration_source_review: PASS
+  exact_seven_file_diff_reconciliation: PASS
+  reviews: PASS_NONE
+  review_threads: PASS_NONE
+  focused_run_authorization_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    observation: PRIOR_LOCAL_EXECUTION
+    error: "Could not resolve host: github.com"
+invariants:
+  ready_common_input_is_legacy_human_authorization: false
+  system_routine_run_authorization_permitted_when_fully_ready: true
+  partial_or_blocked_system_authorization_permitted: false
+  fabricated_legacy_publication_or_handoff_permitted: false
+  caller_authority_injection_permitted: false
+  standalone_execution_eligibility_created: false
+  implementation_qualification_required_downstream: true
+  engineering_foundation_required_downstream: true
+  governed_method_selection_required_downstream: true
+  qualified_numerical_projection_required_downstream: true
+  numerical_projection_change_authorized: false
+  run_routing_change_authorized: false
+  numerical_mechanics_change_authorized: false
+  workflow_change_authorized: false
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_disposition: DRAFT_UNMERGED
+exact_next_action: "Keep #1465 draft/unmerged. Open a separate stacked successor on this exact head to build the current-Common-Input effective numerical projection and consume this authorization bridge without changing support/statics mechanics."

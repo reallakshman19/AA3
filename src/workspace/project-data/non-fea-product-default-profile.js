@@ -10,7 +10,7 @@ export const NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA = 'non-fea-product-default-
 export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
   schema: NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA,
   profileId: 'LOAD_CALC_STANDARD_DEFAULTS_V1',
-  version: 4,
+  version: 5,
   defaults: [
     productDefault('PD-LENGTH-UNIT', 'sourcesAndUnits.lengthUnit', 'mm', 'unit',
       'Canonical Load Calc product length unit when project/source unit authority is absent.'),
@@ -37,6 +37,8 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
       'Standard gravity used by the built-in Load Calc screening profile.'),
     productDefault('PD-LOAD-FACTOR', 'loadCalculation.loadFactor', 1, 'ratio',
       'Unfactored screening load default.'),
+    productDefault('PD-GRAVITY-METHOD', 'loadCalculation.gravityMethod', 'AUTO', 'method-request',
+      'Select the highest-fidelity qualified gravity method; fall back only where the governed AUTO policy permits it.'),
     productDefault('PD-EQUILIBRIUM-TOLERANCES', 'loadCalculation.equilibriumTolerances', {
       forceN: 1e-6,
       momentNmm: 1e-3,

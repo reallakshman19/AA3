@@ -1,0 +1,30 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1455
+issue: 1321
+branch: agent/issue-1321-production-governed-v2-cutover
+stack_base_pr: 1449
+stack_base_head: 3687a1b51107d525b8f7d4a9e1853209f26d12f7
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+mission: "Cut ordinary authorized empirical Run to governed AUTO-selected V2/V3 while preserving explicit authorization and existing mechanics"
+claimed_paths:
+  - src/workspace/engineering-loads/production-governed-empirical-projection.js
+  - src/workspace/engineering-model-store.js
+  - src/workspace/enrichment/authorized-enrichment-consumer-controller.js
+  - src/workspace/enrichment/authorized-enrichment-runtime.js
+  - scripts/production-governed-empirical-projection-check.mjs
+  - scripts/authorized-enrichment-governed-production-cutover-check.mjs
+  - scripts/run-authorized-enrichment-consumer-controller-checks.mjs
+  - agents/PR1455_workreport.md
+  - agents/claims/PR1455.yaml
+  - agents/status/PR1455.yaml
+protected_paths:
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+  - src/core/fea/**
+  - .github/workflows/**
+authority_boundary: "Existing explicit authorization context may be upgraded only after exact live dataset/model/master/current-raw-Project-Data checks. Only current raw Project Data -> current effective Product-default Project Data is replaceable; AUTO resolves before execution. No V1 production fallback, numerical mechanics, tolerance, solver or workflow change."
+merge_authority: OWNER_ONLY_NOT_GRANTED
+overlap: SAFE_EXCEPT_DECLARED_UPSTREAM_STACK

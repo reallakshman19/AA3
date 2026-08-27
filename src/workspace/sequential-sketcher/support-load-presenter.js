@@ -82,9 +82,15 @@ function qualifiedEmpiricalResult(entity, engineeringStore) {
     loadCaseId: 'OPE',
     verticalForceN: loadCase.verticalForceN,
     method: loads.method,
-    authority: loads.authority === 'AUTHORIZED_HANDOFF' ? 'AUTHORIZED_HANDOFF' : 'LEGACY_PROJECT_DATA',
+    authority: empiricalAuthority(loads.authority),
     limitation: EMPIRICAL_LIMITATION,
   };
+}
+
+function empiricalAuthority(value) {
+  if (value === 'CURRENT_COMMON_INPUT_SYSTEM_RUN') return 'CURRENT_COMMON_INPUT_SYSTEM_RUN';
+  if (value === 'AUTHORIZED_HANDOFF') return 'AUTHORIZED_HANDOFF';
+  return 'LEGACY_PROJECT_DATA';
 }
 
 function numericForce(result) {

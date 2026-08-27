@@ -1,0 +1,30 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1449
+issue: 1321
+branch: agent/issue-1321-governed-v2-currentness
+stack_base_pr: 1440
+stack_base_head: 8637638188d5478d01b0001ee9f8cd740bbb2180
+state: ACTIVE
+criticality: ENGINEERING_CRITICAL
+authority_boundary: "Opt-in governed V2 runtime currentness only; no EngineeringModelStore/authorized-enrichment production cutover, no fallback-policy or support/statics mechanics change."
+claimed_paths:
+  - src/workspace/engineering-loads/authorized-empirical-runtime-store-v2.js
+  - src/workspace/engineering-loads/configured-empirical-method-controller-v2.js
+  - src/workspace/engineering-loads/governed-empirical-runtime-package-v2.js
+  - scripts/governed-empirical-runtime-package-v2-check.mjs
+  - scripts/governed-empirical-runtime-currentness-v2-check.mjs
+  - scripts/run-authorized-empirical-load-execution-checks.mjs
+  - agents/PR1449_workreport.md
+  - agents/claims/PR1449.yaml
+  - agents/status/PR1449.yaml
+protected_paths:
+  - src/workspace/engineering-model-store.js
+  - src/workspace/enrichment/authorized-enrichment-consumer-controller.js
+  - src/core/model-loads/**
+  - src/core/fea/**
+  - .github/workflows/**
+merge_authority: OWNER_ONLY_NOT_GRANTED
+workflow_change_authorized: false
+production_cutover_authorized: false
+fallback_policy_change_authorized: false

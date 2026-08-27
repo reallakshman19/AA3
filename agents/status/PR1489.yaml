@@ -1,0 +1,44 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1489
+issue: 1321
+branch: agent/issue-1321-five-step-load-calc-workflow
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: READY_FOR_OWNER_REVIEW
+base_branch: agent/issue-1321-calculation-defaults-scoped-ux
+base_sha: 9c83cbdac5a90b19022eb7b0cde33e8d0cdf1e7d
+validation:
+  live_main_grounding: PASS
+  stacked_base_exact: PASS
+  product_wrapper_trace: PASS
+  routine_run_readiness_trace: PASS
+  five_step_source_review: PASS
+  advanced_diagnostics_reachability_trace: PASS
+  authority_mechanics_diff_review: PASS
+  final_changed_file_count: 5
+  branch_behind_stacked_base: 0
+  review_submissions: 0
+  review_threads: 0
+  focused_execution_check: NOT_RUN
+  compatibility_advanced_shell_execution: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  five_primary_steps_required: true
+  masters_remain_reachable: true
+  input_check_remains_reachable: true
+  defaults_not_manual_project_data_gate: true
+  common_input_semantics_unchanged: true
+  run_authority_unchanged: true
+  legacy_shell_compatibility_preserved: true
+  mechanics_change_authorized: false
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
+merge_disposition: READY_FOR_REVIEW_UNMERGED
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Owner review/merge decision for #1489; after #1487/#1488 land, deterministically re-ground this stacked successor to main before merge."

@@ -1,0 +1,44 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1494
+issue: 1321
+branch: agent/issue-1321-explicit-component-moment-retention
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN_REVIEW_PENDING
+base_branch: main
+base_sha: 4677a92e3e1e8a743efa9c82f03db9d4a11cd59b
+changed_file_target_count: 10
+engineering_disposition: SOURCE_COMPLETE
+execution_disposition: NOT_RUN
+execution_blocker: "git clone failed before checkout: Could not resolve host: github.com"
+review_disposition: PENDING
+merge_disposition: OWNER_ONLY_NOT_GRANTED
+invariants:
+  explicit_moment_retained_as_separate_demand: true
+  retained_moment_distributed_into_vertical_reactions: false
+  raw_statics_kernel_changed: false
+  auto_v2_requires_retention_receipt: true
+  explicit_v3_silent_fallback: false
+  off_route_ambiguous_invalid_cog_fail_closed: true
+  unresolved_moment_location_fail_closed: true
+  overall_result_may_be_calculated_with_exceptions: true
+  vertical_distribution_status_preserved: true
+checks:
+  current_common_input_explicit_moment_retention: NOT_RUN
+  current_common_input_empirical_run_runtime: NOT_RUN
+  empirical_gravity_method_selection: NOT_RUN
+  aggregate_non_fea: NOT_RUN
+  imports: NOT_RUN
+  advanced_shell_contract: NOT_RUN
+  build: NOT_RUN
+  diff_check: NOT_RUN
+workflow_policy:
+  github_workflow_merge_gate: false
+  github_workflow_counts_as_execution_evidence: false
+recovery:
+  original_pr_auto_closed_during_exact_main_alignment: true
+  pr_reopened: true
+  obsolete_wip_removed: true
+  transient_placeholder_removed: true
+  deterministic_full_ten_file_reconstruction: true
+  concurrent_main_advances_checked_path_disjoint: true
+exact_next_action: "Execute focused and aggregate checks on a faithful checkout, preserve NOT_RUN where unavailable, then refresh main/head diff and review state before merge recommendation."

@@ -1,0 +1,60 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1481
+issue: 1321
+branch: agent/issue-1321-run-current-runtime-routing
+state: SOURCE_COMPLETE_OWNER_AUTHORIZED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: READY_TO_SQUASH_MERGE
+base_branch: main
+base_sha: f9570d4bd86fa73cb070c95a0386fd3c79ec35ff
+validation:
+  live_main_grounding: PASS
+  intervening_main_path_overlap: NONE
+  deterministic_tree_sync: PASS
+  final_merge_base_exact_main: PASS
+  exact_eleven_file_scope: PASS
+  branch_behind_main: 0
+  review_submissions: NONE
+  review_threads: NONE
+  production_call_path_trace: PASS
+  ready_report_vs_sealed_common_input_semantic_audit: PASS
+  stale_seal_ready_report_reseal_audit: PASS
+  ordinary_one_event_routing_source_review: PASS
+  scenario_ready_path_source_review: PASS
+  legacy_explicit_event_source_review: PASS
+  no_legacy_fallback_source_review: PASS
+  distinct_authority_presentation_source_review: PASS
+  legacy_view_delegated_unchanged: PASS
+  wip_markers_removed_from_net_tree: PASS
+  migrated_final_routing_check: NOT_RUN
+  current_system_routing_presentation_check: NOT_RUN
+  legacy_authorized_view_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    error: "Could not resolve host: github.com"
+invariants:
+  scenario_ready_path_unchanged: true
+  ordinary_run_current_system_event_exactly_once: true
+  ordinary_run_legacy_authorization_refresh_forbidden: true
+  ordinary_run_manual_seal_prerequisite: false
+  ready_checker_report_can_drive_runtime_seal: true
+  stale_seal_alone_ineligible: true
+  stale_seal_plus_ready_report_can_reseal: true
+  legacy_explicit_calculate_event_retained: true
+  current_runtime_execution_exactly_once: true
+  no_legacy_retry_after_current_failure: true
+  routine_system_authority_distinct: true
+  fake_legacy_baseline_handoff_forbidden: true
+  mechanics_change_authorized: false
+merge_authority: OWNER_AUTHORIZED_2026-08-26T23:12:22Z
+merge_disposition: SQUASH_MERGE_AUTHORIZED
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Squash-merge exact current head, verify new main SHA, then complete #1439 Product-default cross-binding and merge under current owner instruction."

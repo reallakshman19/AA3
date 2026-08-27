@@ -1,0 +1,38 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1448
+mission: "Expose seven-step professional EMP.1 workflow"
+workstream: EMP1_PROFESSIONAL_WORKFLOW
+branch: agent/issue-1447-emp1-seven-step-workflow-20260826
+issue: 1447
+umbrella: 1389
+execution_mode: MANUAL
+scope_authority: LOCKED_TO_ISSUE_1447
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
+handover_readiness: READY
+pre_reground_head: 02612ecfb39d0dcdeedbe94e77c84fcaa4016a5d
+live_main: 6b5e048467cf67fb51da3e99517ce58d5cc5a3dc
+structural_reground_head: f9f56ac01b76e80285d760817f9f4df59b226dfe
+structural_reground_tree: e0402973cca2910d6e9d8675072ceba6211f6d87
+report_basis_head: f9f56ac01b76e80285d760817f9f4df59b226dfe
+report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
+grounding_epoch: GE-PR1448-004
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: SAFE_PRESENTATION_ONLY_CURRENT_MAIN_REGROUND
+current_stage: CURRENT_MAIN_REGROUND_VALIDATED_DRAFT
+merge_authorization: NOT_GRANTED_FOR_THIS_SUCCESSOR
+validation:
+  exact_path_drift_overlap: PASS_NONE
+  integration_seam_blob_identity: PASS_339e5d6e2f04ce244c0c7357b9f6fc4dc58a8454
+  retained_technical_blobs: PASS_EXACT
+  structural_compare: PASS_EXACT_7_FILES_ZERO_BEHIND
+  reviews_threads: PASS_ZERO_ZERO
+  focused_execution: NOT_RUN
+  browser_execution: NOT_RUN_EXECUTION_ENVIRONMENT
+  numerical_comparison: NOT_APPLICABLE
+current_blocker: "Executable validation remains NOT_RUN under #54; merge authority for PR1448 not granted."
+exact_next_action: "Keep PR1448 draft/unmerged pending explicit owner merge authority."

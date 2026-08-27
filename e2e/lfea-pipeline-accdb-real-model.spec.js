@@ -108,6 +108,13 @@ test.describe('LFEA ACCDB real-model import', () => {
     await page.goto('/');
     await page.getByRole('navigation', { name: 'Application views' })
       .getByRole('button', { name: 'LFEA', exact: true }).click();
+
+    // Exact bend/tee mechanics need an explicit B31/B31J edition; without one,
+    // preparation blocks on "Bend factor edition authority unresolved" and
+    // Load case never clears. The app does not infer this from the file.
+    await page.locator('[data-role="lfea-bend-factor-edition"]').selectOption('B31_3_2022_B31J_2017');
+    await page.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('YES');
+
     await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
     await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
       .toContainText('element(s)', { timeout: 90000 });
@@ -165,6 +172,19 @@ test.describe('LFEA ACCDB real-model import', () => {
     await caseBoxes.first().check();
     await page.locator('[data-action="lfea-pipeline-apply-cases"]').click();
     await expect(page.locator('[data-role="lfea-pipeline-case-selection-status"]')).toContainText('case(s)');
+
+    // Applying a case selection regenerates the pre-flight, which invalidates
+    // the acceptance above -- re-accept before Analyze if the panel asks again.
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+    const reviewerBox = page.locator('[data-role="lfea-pipeline-accdb-reviewer"]');
+    if (await reviewerBox.isVisible().catch(() => false)) {
+      await reviewerBox.fill('A. Engineer');
+      await page.locator('[data-role="lfea-pipeline-accdb-review-reason"]').fill('Reviewed and accepted.');
+      await page.locator('[data-action="accept-lfea-pipeline-accdb-limitations"]').click();
+    }
+
+    // The Analyze button lives on the Load case step's own view.
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]').click();
     await page.locator('[data-action="lfea-pipeline-analyze"]').click();
 
     // Results, from a CAESAR database, through the same Output step an

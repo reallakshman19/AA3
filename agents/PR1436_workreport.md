@@ -4,70 +4,118 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_STACKED_BLOCKED_DOWNSTREAM_EXECUTION
+PR_RECOVERY_STATE: HEALTHY_MERGED_SOURCE_STATE_RECONCILED_READY_TO_MERGE
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_RELEASE_CURRENT_STATE_ONLY
 EXECUTION_MODE: AUTO
-AUTO_STATE: BLOCKED
+AUTO_STATE: RUNNING
 SCOPE_AUTHORITY: LOCKED_TO_APPROVED_MISSION
 PHASE_PROGRESSION: AUTO
-MERGE_AUTHORITY: OWNER_ONLY_NOT_GRANTED
+MERGE_AUTHORITY: GRANTED_EXPLICIT_OWNER_2026-08-27
 PR: #1436
 ISSUE: #1389
 BRANCH: agent/issue-1389-release-current-state-refresh-20260826
 CRITICALITY: ENGINEERING_CRITICAL
-STACKED_BASE_PR: #1427
-STACKED_BASE_HEAD: d2e651076b410c55a5c16a61969c76590ad2a452
-PRE_BLOCK_RESTACK_HEAD: 41e18a001cf53b6562da5b4ee90d1718cb7e5bdb
-GROUNDING_EPOCH: GE-PR1436-003
-CURRENT_STAGE: AUTO_BLOCKED_AT_ISSUE1434_GENUINE_EVIDENCE_EXECUTION
-CURRENT_BLOCKER: Issue #1434 requires genuine execution of historical evidence 01-12 on complete clean checkouts of exact heads a59547c... and 14c648d...; current connected environment cannot provide the required complete execution/replay and retained evidence remains NOT_GENERATED/NOT_RUN
-HIGHEST_RISK: fabricating 01-12, weakening the pre-authorization suite, substituting current-main/source inspection for historical execution, or promoting provenance presence to qualification
-EXACT_NEXT_ACTION: restore a complete governed checkout/execution environment, run #1434 Stage A at a59547c8554b6244b2ea94aedd4d59fa0fb15d1f and Stage B at 14c648d485cf386f28c6817a068b7eb5da1f7689 exactly as specified, retain genuine 01-12 and independent falsifier evidence; then perform Stage C current-main anti-drift. Until then keep PR1436 draft/unmerged.
+CURRENT_MAIN: b648e174b80b49ceed76036d590b89ad4fe08c2e
+CURRENT_MAIN_TREE: dd812ea9b4a746a9913fc3e2691f78813fc0380e
+MERGED_SOURCE_PR1415: 19b762e1f9512284da961e5816a28c10432080bb
+MERGED_AGGREGATE_PR1427: b648e174b80b49ceed76036d590b89ad4fe08c2e
+AGGREGATE_BLOB: 99aa14fc918486bb55b7c88493e0daa1a837ce55
+CURRENT_STATE_SEMANTIC_HASH: ccf4f174d330ac14c297b378be3cac063fe7c36d9b562825292fa7d81fd1f51c
+REPORT_BASIS_HEAD: 9cec6bc61ca3fe352ca755788d5d45fa176b2cb2
+GROUNDING_EPOCH: GE-PR1436-004
+CURRENT_STAGE: CURRENT_MAIN_SOURCE_GOVERNANCE_RECONCILED_READY_TO_MERGE
+CURRENT_BLOCKER: professional release remains blocked by nine P0 source gates, direct CAUx PDF re-observation, evidence 01-12, #54, build, Chromium, replay and deployment evidence; these blockers are intentionally retained and do not require this current-state PR to stay unmerged
+HIGHEST_RISK: treating merge of a fail-closed current-state record as professional release qualification or as evidence 01-12
+EXACT_NEXT_ACTION: structurally re-ground this six-file delta onto current main, retarget PR1436 to main, verify exact six-file diff/mergeability, merge under explicit owner authority, then continue to the next genuine unfinished #1389 batch without weakening #1434.
 ```
 
-## Current state
+## Current state reconciliation
 
-PR1436 remains a current-state reconciliation only. Its three technical blobs are unchanged:
+Owner explicitly authorized `fix, merge PRs and proceed next in auto mode`.
+
+PR #1415 and PR #1427 are now merged. The three technical current-state files have been updated so they no longer point at the historical stacked #1427 head/blob. They now bind:
 
 ```text
-current-state JSON = 87b582cc9504cbb88ac393ee9cb863cb1a142ed1
-checker            = af6e0a334733d1e18f3a31581a23d1a41f07660c
-document           = bf24b3b0cfe706bcfca73e2a024b7a11517b0727
+PR1415 merge        = 19b762e1f9512284da961e5816a28c10432080bb
+PR1427 merge        = b648e174b80b49ceed76036d590b89ad4fe08c2e
+PR1427 aggregate    = 99aa14fc918486bb55b7c88493e0daa1a837ce55
+#1377 aggregate row = BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED
+blockerCount        = 9
 ```
 
-They consume aggregate blob `815e7c988afd7a1f19b93aaf7d7101b06710da42`, which remains unchanged on refreshed PR1427. P0 source semantics remain blocked with blockerCount=9; global EMP.1.C/code/release/deployment/professional-release authority remain false.
+The semantic hash was independently recomputed from the canonical sorted payload while excluding only `currentStateSemanticHash` and `status`, exactly as the retained checker does:
 
-## AUTO hard stop — Issue #1434
+`ccf4f174d330ac14c297b378be3cac063fe7c36d9b562825292fa7d81fd1f51c`
 
-Issue #1434 explicitly requires genuine execution/replay rather than source reconstruction:
+No hash assertion was removed or weakened.
 
-- Stage A exact pre-authorization head `a59547c8554b6244b2ea94aedd4d59fa0fb15d1f`, genuine 01-10;
-- Stage B exact authorization head `14c648d485cf386f28c6817a068b7eb5da1f7689`, genuine 11-12 using Stage-A evidence;
-- Stage C anti-drift on then-current main;
-- frozen oracle/tolerances/source/dataset hashes and independent falsifiers preserved;
-- no manual receipt fabrication, no weakening pre-authorization assertions, no current-main substitution.
+## Exact scope
 
-Current retained issue state remains `BLOCKED_EXECUTION_ENVIRONMENT`, `EVIDENCE_01_12=NOT_GENERATED`, `NUMERICAL_QUALIFICATION=NOT_RUN`, `PROFESSIONAL_RELEASE_READY=false`. The #1444/#1464+ provenance/release harness can bind evidence when it exists but cannot generate or qualify it.
+The PR remains exactly six paths:
 
-This is a protocol hard stop: continuing would require pretending unavailable execution occurred or weakening an evidence gate.
+1. `validation/emp1/release/emp1-professional-release-current-state-v1.json`
+2. `scripts/emp1-professional-release-current-state-check.mjs`
+3. `docs/emp1/EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE.md`
+4. `agents/PR1436_workreport.md`
+5. `agents/status/PR1436.yaml`
+6. `agents/claims/PR1436.yaml`
 
-## Validation truth
+Protected unchanged: PR1427 aggregate engineering files, PR1415 source files, all individual P0 source records, `src/core/emp1/**`, frozen release profile/readiness, WRC/CAUx controlled source and benchmark expected values, oracle/tolerances, evidence 01-12, UI/browser production code and `.github/workflows/**`.
 
-- PR1427 aggregate blob identity: PASS;
-- stacked six-file scope prior to block: PASS_EXACT_SIX / zero behind / zero reviews / zero threads;
-- direct CAUx PDF observation: NOT_RUN;
-- current-state checker in complete checkout: NOT_RUN;
-- #1434 evidence 01-12: NOT_GENERATED;
-- #1434 numerical qualification: NOT_RUN;
-- build/Chromium/release replay/deployment: NOT_RUN;
-- numerical WRC comparison in this PR: NOT_APPLICABLE.
+## Authority truth
 
-No NOT_RUN is promoted to PASS.
-
-## Invariant
+```text
+bounded production route authorized = true
+registry registered                  = true
+bounded engineering use              = true
+professional P0 source semantics     = false / 9 blockers
+global EMP.1.C                       = false
+code compliance                      = false / NOT_ASSESSED
+release qualified                    = false
+deployment authorized                = false
+professional release ready           = false
+```
 
 `CURRENT_STATE_RECONCILIATION_DOES_NOT_GRANT_SOURCE_CODE_RELEASE_OR_DEPLOYMENT_AUTHORITY`
 
+## Release blockers retained exactly
+
+```text
+P0_SOURCE_SEMANTICS_NOT_READY
+CAUX_DIRECT_PDF_REOBSERVATION_NOT_RUN
+PR_D_EVIDENCE_01_TO_10_NOT_GENERATED
+PR_F_EVIDENCE_11_TO_12_NOT_GENERATED
+ISSUE_54_PRE_STEP_EXECUTION_BLOCKER
+PRODUCTION_BUILD_NOT_RUN
+CHROMIUM_NOT_RUN
+RELEASE_REPLAY_NOT_RUN
+DEPLOYMENT_EVIDENCE_NOT_RUN
+```
+
+Issue #1434 remains the active genuine 01-12 execution/replay debt. This PR does not generate or qualify that evidence.
+
+## Validation ledger
+
+- merged #1427 aggregate blob identity: **PASS_SOURCE_INSPECTION**;
+- merged #1377 status/current aggregate parity: **PASS_SOURCE_INSPECTION**;
+- semantic-hash independent reproduction: **PASS_INDEPENDENT_REPRODUCTION**;
+- exact six-file scope: **PASS_SOURCE_INSPECTION**;
+- protected path isolation: **PASS_SOURCE_INSPECTION**;
+- direct CAUx PDF observation: **NOT_RUN**;
+- current-state Node checker in a complete checkout: **NOT_RUN**;
+- #1434 evidence 01-12: **NOT_GENERATED**;
+- #1434 numerical qualification: **NOT_RUN**;
+- build/Chromium/release replay/deployment: **NOT_RUN**;
+- numerical WRC comparison in this PR: **NOT_APPLICABLE**.
+
+No `NOT_RUN` is promoted to PASS.
+
 ## Appendix A
 
-A1 20/20; A2 20/20; A3 20/20; A4 19/20; A5 20/20. **99/100; minimum 19/20.**
+A1 Production Trace — 20/20
+A2 Current Failure Isolation — 20/20
+A3 Authority / Invariant — 20/20
+A4 Independent Validation — 19/20
+A5 Next-Commit / Minimal Patch — 20/20
+
+**99/100; minimum 19/20 — TAKEOVER QUALIFIED / READY FOR OWNER-AUTHORIZED MERGE.**

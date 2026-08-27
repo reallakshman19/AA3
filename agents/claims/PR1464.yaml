@@ -5,9 +5,9 @@ branch: agent/issue-1463-emp1-dependency-security-20260826
 issue: 1463
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
-execution_mode: AUTO
-auto_state: RUNNING
-coordination_state: LATEST_PARENT_PROPAGATED_PR1473_NEXT
+execution_mode: MANUAL
+auto_state: NOT_ACTIVE_CURRENT_INSTRUCTION
+coordination_state: CURRENT_MAIN_REGROUNDED_PR1473_PROPAGATION_NEXT
 scope:
   authority: ISSUE_1463_WITH_MERGED_CHILD_1466_CUSTODY
 protected_exclusions:
@@ -25,13 +25,13 @@ authority_boundary:
   engineering_authority_granted: false
   release_authority_granted: false
   merge_authority_granted: false
-parent_head: eba35c045b3adc09885b73fcb3738f9125de4cee
-pre_propagation_head: 169e045cacedb4930a6aca97fa92d95e3eeb5201
-structural_propagation_head: edb4a7e4f00ec33ee33745d9ed3131706365e4dd
-structural_propagation_tree: f425c0383d6d25d100f9772ddd0d234bef2078b4
-report_basis_head: edb4a7e4f00ec33ee33745d9ed3131706365e4dd
-live_main_last_observed: 8a72c3a34cfcf4eaeab8580da3966ee1ffe7876e
+base_branch: main
+pre_reground_head: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
+structural_reground_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
+structural_reground_tree: 2ed2cba409ab3330661f64836fb6a6d0e612475f
+report_basis_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
+live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1464-006
+grounding_epoch: GE-PR1464-007
 handover_report: agents/PR1464_workreport.md
-exact_next_action: "Keep PR1464 draft/unmerged and propagate this exact parent into PR1473, retaining PR1473's seven deployment-operations blobs."
+exact_next_action: "Propagate this exact PR1464 parent into PR1473 while retaining PR1473's exact seven-file deployment-operations delta."

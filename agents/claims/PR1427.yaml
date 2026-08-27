@@ -4,12 +4,12 @@ pr_or_wip: PR1427
 branch: agent/issue-1389-p0-gate-current-state-20260825
 issue: 1389
 criticality: ENGINEERING_CRITICAL
-claim_state: ACTIVE_AUTO_CURRENT_MAIN_REGROUNDED
+claim_state: HANDOVER_READY_AUTO_COMPLETE
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: COMPLETE
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
-coordination_state: SAFE_AGGREGATE_GOVERNANCE_CURRENT_MAIN_PR1494_DISJOINT
+coordination_state: SAFE_AGGREGATE_GOVERNANCE_CURRENT_MAIN
 scope:
   authority: EMP1_WRC537_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION
   paths:
@@ -21,36 +21,30 @@ scope:
     - agents/claims/PR1427.yaml
 protected_exclusions:
   - src/core/emp1/**
-  - individual P0 source-authority records
-  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
-  - validation/emp1/release/emp1-professional-release-current-state-v1.json
-  - validation/emp1/caux2017-wrc01f/**
-  - gamma5 oracle/tolerance/exact-head evidence
-  - UI/browser product paths
+  - individual P0 source records
+  - frozen release profile/current-state downstream files
+  - WRC/CAUx controlled sources and expected values
+  - oracle/tolerances/exact-head evidence
+  - UI/browser paths
   - .github/workflows/**
 authority_boundary:
-  bounded_runtime_route_authority_mutation: false
-  individual_source_gate_mutation: false
   blocker_count_reduction_without_source_closure: false
   professional_release_authority_granted: false
   global_emp1_c_authority_granted: false
   code_compliance_authority_granted: false
-live_main: 93c4f9e3af98e58190951ff94b5b50616950f623
-live_main_tree: c37873d432772b5b7552231e8acafa60c2deed01
-pre_reground_head: ed599b037b861aa8f6a3089792d81157e46d887a
+live_main_at_grounding: 93c4f9e3af98e58190951ff94b5b50616950f623
 structural_reground_head: f6202b7fa78ebfe0148b28fb50ea3d6310241b42
-structural_reground_tree: 7f8f22c2f21f9a867297c24032c7e3f05b21194d
-grounding_epoch: GE-PR1427-006
+grounding_epoch: GE-PR1427-007
 aggregate_truth:
   blocker_count: 9
   bounded_route_authorized: true
   professional_p0_source_semantics_ready: false
   global_emp1_c: false
   code_compliance: false
-  professional_release_ready: false
+  release_qualified: false
 neighbor_dependency:
   pr1415_state: OPEN_DRAFT_UNMERGED
-  rule: "Do not pre-promote #1377. If PR1415 merges, re-ground PR1427 then PR1436."
+  rule: "If PR1415 merges, reconcile #1377 before PR1427 merge and then re-ground PR1436."
 merge_authority: OWNER_ONLY_NOT_GRANTED
 handover_report: agents/PR1427_workreport.md
-exact_next_action: "Continue AUTO progression to stacked PR1436 using exact PR1427 aggregate; keep draft/unmerged."
+exact_next_action: "Keep draft/unmerged; reconcile #1377 only after PR1415 becomes current-main authority."

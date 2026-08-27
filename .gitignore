@@ -60,3 +60,7 @@ artifacts/
 # Runtime-only B02D V2 exact-head binding envelope.
 # Keep this path exact: unrelated B02D reports must remain visible to Git custody.
 /reports/qualification/B02D/v2-binding-exact-head.json
+
+# Runtime-only B02D V2 governing-response exact-head envelope.
+# Keep this path exact: other B02D response/RCA evidence must remain visible to Git custody.
+/reports/qualification/B02D/v2-governing-response-exact-head.json

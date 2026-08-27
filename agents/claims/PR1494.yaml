@@ -1,0 +1,51 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1494
+branch: agent/issue-1321-explicit-component-moment-retention
+issue: 1321
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+execution_mode: CONNECTOR_DELIVERY
+coordination_state: CURRENT_MAIN_REGROUNDED_REVIEW_PENDING
+base_branch: main
+base_sha: 4677a92e3e1e8a743efa9c82f03db9d4a11cd59b
+source_provenance_head: 5f67a09a2103c9ae19b470f7778f419efd495ff1
+pre_final_reground_head: fd672db824fc88bb8946f645a37a71ff6b69df17
+scope:
+  authority: ISSUE1321_PR_C_EXPLICIT_COMPONENT_MOMENT_RETENTION
+  paths:
+    - agents/PR1494_workreport.md
+    - agents/claims/PR1494.yaml
+    - agents/status/PR1494.yaml
+    - scripts/current-common-input-empirical-run-runtime-check.mjs
+    - scripts/current-common-input-explicit-moment-retention-check.mjs
+    - scripts/run-non-fea-checks.mjs
+    - src/workspace/engineering-loads/current-common-input-empirical-run-runtime.js
+    - src/workspace/engineering-loads/current-common-input-explicit-moment-retention.js
+    - src/workspace/engineering-loads/empirical-gravity-method-selection.js
+    - src/workspace/load-calc-current-system-view.js
+protected_exclusions:
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/core/non-fea-common-checker/**
+  - src/workspace/project-data/**
+  - source-axis vector mechanics outside this slice
+  - .github/workflows/**
+authority_boundary:
+  source_explicit_moment_may_be_retained_separately: true
+  auto_or_explicit_v2_requires_exact_retention_receipt: true
+  explicit_v3_silent_downgrade_allowed: false
+  vertical_reaction_distribution_of_retained_moment_allowed: false
+  off_route_ambiguous_invalid_cog_fallback_allowed: false
+  raw_vertical_reaction_statics_changed: false
+  github_workflow_is_execution_evidence: false
+validation:
+  source_diff_inspection: COMPLETE
+  faithful_checkout: FAILED_DNS_BEFORE_CHECKOUT
+  focused_node_checks: NOT_RUN
+  aggregate_non_fea_checks: NOT_RUN
+  import_checks: NOT_RUN
+  build: NOT_RUN
+  diff_check: NOT_RUN
+merge_authority: OWNER_ONLY_NOT_GRANTED
+handover_report: agents/PR1494_workreport.md
+exact_next_action: "Execute focused retention/runtime/result falsifiers and aggregate/import/build checks on a faithful checkout; preserve NOT_RUN where unavailable; then recheck live main, exact ten-file diff, reviews and threads before merge recommendation."

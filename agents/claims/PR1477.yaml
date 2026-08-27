@@ -1,0 +1,39 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1477
+branch: agent/issue-1476-release-manifest-salvage-20260826
+issue: 1476
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: MANUAL
+coordination_state: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_THEN_NEXT_1389_SUCCESSOR
+scope:
+  authority: EMP1_RELEASE_MANIFEST_SALVAGE_AND_STACK_INTEGRATION
+  paths:
+    - agents/PR1477_workreport.md
+    - agents/claims/PR1477.yaml
+    - agents/status/PR1477.yaml
+    - scripts/emp1-professional-release-candidate.mjs
+    - scripts/emp1-professional-release-manifest-check.mjs
+    - scripts/emp1-professional-release-manifest.mjs
+protected_exclusions:
+  - core WRC/EMP.1 mechanics
+  - package mutation
+  - provider configuration/API
+  - HTML/UI
+  - .github/workflows/**
+  - evidence 01-12 generation
+  - engineering/code/release/deployment authority
+authority_boundary:
+  manifest_records_authority: true
+  manifest_creates_authority: false
+  manifest_replaces_authority: false
+  engineering_authority_granted: false
+  release_authority_granted: false
+  deployment_authority_granted: false
+pre_reground_head: 053c42c78a338e3ad30984488ee30bea8ca28ace
+merged_parent_sha: e6a4bbdd0a5787c119f4b1685651b87881b059c7
+merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-27T16:21:57Z
+grounding_epoch: GE-PR1477-005
+handover_report: agents/PR1477_workreport.md
+exact_next_action: "Expected-head squash-merge exact six-file delta, then proceed to next scoped #1389 successor."

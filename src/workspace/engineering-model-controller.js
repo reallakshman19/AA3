@@ -3,6 +3,9 @@ import { engineeringModelStore } from './engineering-model-store.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 import { projectDataStore } from './project-data/project-data-store.js';
 import { authorizedEnrichmentConsumerController } from './enrichment/authorized-enrichment-runtime.js';
+import { MODEL_LOAD_EVENTS } from './model-load-events.js';
+import { SUPPORT_RESTRAINT_EVENTS } from './support-restraint-events.js';
+import { TOPOLOGY_EVENTS } from './topology-events.js';
 import {
   executeCurrentCommonInputEmpiricalRun,
 } from './engineering-loads/current-common-input-empirical-run-runtime.js';
@@ -61,11 +64,15 @@ export class EngineeringModelController {
     this.datasetVersion = null;
     this.lastRebuiltDataset = null;
     this.projectTopologyModelBasis = null;
+    this.commonInputConfigurationBasis = null;
   }
 
   init() {
     if (this.unsubscribers.length) return;
     this.projectTopologyModelBasis = projectDataTopologyModelBasis(projectDataStore.getProfile());
+    this.commonInputConfigurationBasis = commonInputConfigurationBasis(
+      nonFeaCommonInputStore.getSnapshot(),
+    );
     this.unsubscribers = [
       this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, ({ snapshot }) => this.handleSnapshot(snapshot)),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, () => this.calculate()),
@@ -75,7 +82,23 @@ export class EngineeringModelController {
       ),
       this.eventBus.subscribe('MASTER_DATA_UPDATED', () => this.handleMasterDataChanged()),
       this.eventBus.subscribe('MASTER_DATA_CLEARED', () => this.handleMasterDataChanged()),
+      this.eventBus.subscribe(TOPOLOGY_EVENTS.CHANGED, () => this.handleAuthorityContractChanged(
+        'TOPOLOGY_AUTHORITY_CHANGED',
+        'authorityContracts.topologyGraph',
+        'Governed topology authority changed after the current Common Input was sealed.',
+      )),
+      this.eventBus.subscribe(SUPPORT_RESTRAINT_EVENTS.CHANGED, () => this.handleAuthorityContractChanged(
+        'SUPPORT_RESTRAINT_AUTHORITY_CHANGED',
+        'authorityContracts.supportAttachmentModel',
+        'Support attachment/restraint authority changed after the current Common Input was sealed.',
+      )),
+      this.eventBus.subscribe(MODEL_LOAD_EVENTS.CHANGED, () => this.handleAuthorityContractChanged(
+        'MODEL_LOAD_AUTHORITY_CHANGED',
+        'authorityContracts.loadPrimitiveSet',
+        'Source load-primitive authority changed after the current Common Input was sealed.',
+      )),
       projectDataStore.subscribe((event) => this.handleProjectDataChanged(event)),
+      nonFeaCommonInputStore.subscribe((snapshot) => this.handleCommonInputSnapshot(snapshot)),
     ];
   }
 
@@ -171,6 +194,54 @@ export class EngineeringModelController {
     });
   }
 
+  /**
+   * Bound topology/support/load authority contracts are calculation-affecting.
+   * Mark both the retained Common Input seal and any current numerical result
+   * stale so ordinary Run cannot reuse authority that changed behind the seal.
+   */
+  handleAuthorityContractChanged(staleCode, path, message) {
+    const dataset = this.workspaceState.getSnapshot()?.dataset || null;
+    const distribution = engineeringModelStore.getDistribution();
+    if (distribution?.freshness?.status === 'CURRENT') {
+      engineeringModelStore.markEmpiricalStale(staleCode, dataset?.version || null);
+    }
+    nonFeaCommonInputStore.markStale(staleCode, path, message);
+    this.authorizedConsumerController.refreshEmpirical();
+    this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'authority-contract-changed',
+      authorityReason: staleCode,
+      topologyCheckAffected: false,
+    });
+  }
+
+  /**
+   * Requested methods/load cases/qualification selection are calculation-
+   * affecting even though they do not rebuild geometry. Observe the Common
+   * Input store centrally so every configuration authoring surface invalidates
+   * current numerical results; evaluation/sealing with unchanged configuration
+   * does not.
+   */
+  handleCommonInputSnapshot(snapshot) {
+    const nextBasis = commonInputConfigurationBasis(snapshot);
+    if (this.commonInputConfigurationBasis === null) {
+      this.commonInputConfigurationBasis = nextBasis;
+      return;
+    }
+    if (nextBasis === this.commonInputConfigurationBasis) return;
+    this.commonInputConfigurationBasis = nextBasis;
+
+    const dataset = this.workspaceState.getSnapshot()?.dataset || null;
+    engineeringModelStore.markEmpiricalStale(
+      'COMMON_INPUT_CONFIGURATION_CHANGED',
+      dataset?.version || null,
+    );
+    this.authorizedConsumerController.refreshEmpirical();
+    this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'common-input-configuration-changed',
+      topologyCheckAffected: false,
+    });
+  }
+
   /** Retained explicit historical authorized-runtime execution path. */
   calculate() {
     try {
@@ -216,6 +287,7 @@ export class EngineeringModelController {
     this.unsubscribers = [];
     this.lastRebuiltDataset = null;
     this.projectTopologyModelBasis = null;
+    this.commonInputConfigurationBasis = null;
     engineeringModelStore.clear();
   }
 }
@@ -229,6 +301,10 @@ export function projectDataTopologyModelBasis(profile) {
     const [groupKey, fieldKey] = path.split('.');
     return stableRuntimeValue(profile?.[groupKey]?.[fieldKey]?.value ?? null);
   }));
+}
+
+function commonInputConfigurationBasis(snapshot) {
+  return JSON.stringify(stableRuntimeValue(snapshot?.configuration || null));
 }
 
 function stableRuntimeValue(value) {

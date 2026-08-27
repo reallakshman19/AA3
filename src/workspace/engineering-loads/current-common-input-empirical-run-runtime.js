@@ -12,6 +12,13 @@ import {
   authorizeCurrentNonFeaEmpiricalRun,
 } from './non-fea-empirical-run-authorization-runtime.js';
 import {
+  auditEmpiricalComponentLoadAuthority,
+} from './empirical-component-load-authority.js';
+import {
+  createCurrentCommonInputExplicitMomentRetention,
+  requireCurrentCommonInputExplicitMomentRetention,
+} from './current-common-input-explicit-moment-retention.js';
+import {
   evaluateGovernedEmpiricalGravityMethodSelection,
 } from './empirical-gravity-method-selection.js';
 import {
@@ -19,6 +26,7 @@ import {
 } from './current-common-input-empirical-mass-projection.js';
 import {
   calculateCurrentCommonInputEmpiricalSupportLoads,
+  requireCurrentCommonInputEmpiricalSupportLoadExecution,
 } from './current-common-input-empirical-support-load-execution.js';
 import { engineeringSupportLoadStore } from './engineering-support-load-store.js';
 
@@ -40,7 +48,12 @@ const FIXED_POLICY = Object.freeze({
  * Assembles the fully current routine Common Input empirical execution chain.
  * This is a runtime coordinator, not a Run-button router. Every authority and
  * numerical seam already exists independently; this function orders them and
- * records the resulting #1475 execution only after all upstream gates pass.
+ * records the resulting execution only after all upstream gates pass.
+ *
+ * Source-explicit component moments are retained before method selection as a
+ * separate support/civil demand. That retention can permit V2 vertical-reaction
+ * execution, but the retained moment is never distributed into reactions and
+ * the raw support-load statics/equilibrium calculation is unchanged.
  *
  * Method selection occurs exactly once before mass projection/statics. A failed
  * selected method is never caught and retried through a lower-fidelity method.
@@ -50,6 +63,8 @@ export function executeCurrentCommonInputEmpiricalRun({
   snapshotProvider = sealCurrentReadyNonFeaCalculationSnapshot,
   authorizationProvider = authorizeCurrentNonFeaEmpiricalRun,
   gravityMethodAuthorityProvider = createNonFeaGravityMethodAuthority,
+  componentAuthorityAuditProvider = auditEmpiricalComponentLoadAuthority,
+  explicitMomentRetentionProvider = createCurrentCommonInputExplicitMomentRetention,
   methodSelectionProvider = evaluateGovernedEmpiricalGravityMethodSelection,
   massProjectionProvider = createCurrentCommonInputEmpiricalMassProjection,
   supportExecutionProvider = calculateCurrentCommonInputEmpiricalSupportLoads,
@@ -62,6 +77,8 @@ export function executeCurrentCommonInputEmpiricalRun({
     snapshotProvider,
     authorizationProvider,
     gravityMethodAuthorityProvider,
+    componentAuthorityAuditProvider,
+    explicitMomentRetentionProvider,
     methodSelectionProvider,
     massProjectionProvider,
     supportExecutionProvider,
@@ -92,12 +109,37 @@ export function executeCurrentCommonInputEmpiricalRun({
     'gravity-method authority',
     'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_METHOD_AUTHORITY_INVALID',
   );
+  const componentAuthorityAudit = requireSemanticReceipt(
+    componentAuthorityAuditProvider({
+      dataset: context.dataset,
+      profile: commonInput.projectDataProfile,
+      routePartitionModel: context.routePartitionModel,
+    }),
+    'component-load authority audit',
+    'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_COMPONENT_AUTHORITY_AUDIT_INVALID',
+  );
+  const explicitMomentRetention = requireCurrentCommonInputExplicitMomentRetention(
+    explicitMomentRetentionProvider({ componentAuthorityAudit }),
+  );
+  if (explicitMomentRetention.componentLoadAuthorityAuditSemanticHash
+      !== componentAuthorityAudit.semanticHash) {
+    fail(
+      'Routine Run explicit-moment retention does not bind the current component-load authority audit.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_EXPLICIT_MOMENT_RETENTION_AUDIT_MISMATCH',
+      {
+        expected: componentAuthorityAudit.semanticHash,
+        actual: explicitMomentRetention.componentLoadAuthorityAuditSemanticHash || null,
+      },
+    );
+  }
+
   const governedSelection = requireSemanticReceipt(
     methodSelectionProvider({
       gravityMethodAuthority,
       dataset: context.dataset,
       profile: commonInput.projectDataProfile,
       routePartitionModel: context.routePartitionModel,
+      explicitMomentRetention,
     }),
     'governed gravity-method selection',
     'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_METHOD_SELECTION_INVALID',
@@ -107,13 +149,24 @@ export function executeCurrentCommonInputEmpiricalRun({
     'governedSelection.selection.selectedMethod',
     'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_METHOD_NOT_SELECTED',
   );
+  if (governedSelection?.selection?.explicitMomentRetentionSemanticHash
+      !== explicitMomentRetention.semanticHash) {
+    fail(
+      'Governed method selection did not retain the exact current explicit-moment custody receipt.',
+      'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_EXPLICIT_MOMENT_SELECTION_BINDING_MISMATCH',
+      {
+        expected: explicitMomentRetention.semanticHash,
+        actual: governedSelection?.selection?.explicitMomentRetentionSemanticHash || null,
+      },
+    );
+  }
 
   const massProjection = requireSemanticReceipt(
     massProjectionProvider({ snapshot, runAuthorization: decision }),
     'current Common Input mass projection',
     'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_MASS_PROJECTION_INVALID',
   );
-  const supportExecution = requireSemanticReceipt(
+  const rawSupportExecution = requireSemanticReceipt(
     supportExecutionProvider({
       snapshot,
       runAuthorization: decision,
@@ -127,18 +180,22 @@ export function executeCurrentCommonInputEmpiricalRun({
     'current Common Input support-load execution',
     'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_SUPPORT_EXECUTION_INVALID',
   );
-  if (supportExecution.executedMethod !== selectedMethod
-      || supportExecution.distribution?.method !== selectedMethod) {
+  if (rawSupportExecution.executedMethod !== selectedMethod
+      || rawSupportExecution.distribution?.method !== selectedMethod) {
     fail(
       'Current Common Input support execution did not preserve the preselected empirical method.',
       'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_EXECUTED_METHOD_MISMATCH',
       {
         selectedMethod,
-        executedMethod: supportExecution.executedMethod || null,
-        distributionMethod: supportExecution.distribution?.method || null,
+        executedMethod: rawSupportExecution.executedMethod || null,
+        distributionMethod: rawSupportExecution.distribution?.method || null,
       },
     );
   }
+  const supportExecution = bindExplicitMomentRetentionToSupportExecution(
+    rawSupportExecution,
+    explicitMomentRetention,
+  );
 
   const recorded = executionStore.recordCurrentCommonInputExecution(supportExecution);
   if (recorded?.semanticHash !== supportExecution.semanticHash) {
@@ -162,12 +219,16 @@ export function executeCurrentCommonInputEmpiricalRun({
     runAuthorizationSemanticHash: decision.semanticHash,
     methodAuthorizationSemanticHash: methodAuthorization.semanticHash,
     gravityMethodAuthoritySemanticHash: gravityMethodAuthority.semanticHash,
+    componentAuthorityAuditSemanticHash: componentAuthorityAudit.semanticHash,
+    explicitMomentRetentionSemanticHash: explicitMomentRetention.semanticHash,
     governedSelectionSemanticHash: governedSelection.semanticHash,
     massProjectionSemanticHash: massProjection.semanticHash,
     supportExecutionSemanticHash: supportExecution.semanticHash,
     selectedMethod,
+    resultStatus: supportExecution.resultStatus,
     distributionSemanticHash: semanticHash(supportExecution.distribution),
     policy: deepFreeze({ ...FIXED_POLICY }),
+    explicitMomentRetention,
     supportExecution,
   };
   return requireCurrentCommonInputEmpiricalRunRuntime({
@@ -195,7 +256,8 @@ export function requireCurrentCommonInputEmpiricalRunRuntime(value) {
   for (const key of [
     'commonInputSemanticHash', 'commonInputSealSemanticHash',
     'runAuthorizationSemanticHash', 'methodAuthorizationSemanticHash',
-    'gravityMethodAuthoritySemanticHash', 'governedSelectionSemanticHash',
+    'gravityMethodAuthoritySemanticHash', 'componentAuthorityAuditSemanticHash',
+    'explicitMomentRetentionSemanticHash', 'governedSelectionSemanticHash',
     'massProjectionSemanticHash', 'supportExecutionSemanticHash',
     'distributionSemanticHash', 'semanticHash',
   ]) requireSemanticHash(value[key], key);
@@ -204,17 +266,46 @@ export function requireCurrentCommonInputEmpiricalRunRuntime(value) {
     'selectedMethod',
     'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_RUNTIME_INVALID',
   );
-  if (!isRecord(value.supportExecution)
-      || value.supportExecution.semanticHash !== value.supportExecutionSemanticHash
-      || value.supportExecution.executedMethod !== selectedMethod
-      || value.supportExecution.distribution?.method !== selectedMethod
-      || semanticHash(value.supportExecution.distribution) !== value.distributionSemanticHash) {
+  const retention = requireCurrentCommonInputExplicitMomentRetention(value.explicitMomentRetention);
+  const supportExecution = requireCurrentCommonInputEmpiricalSupportLoadExecution(
+    value.supportExecution,
+  );
+  if (retention.semanticHash !== value.explicitMomentRetentionSemanticHash
+      || supportExecution.explicitMomentRetentionSemanticHash !== retention.semanticHash
+      || supportExecution.explicitMomentRetention?.semanticHash !== retention.semanticHash
+      || supportExecution.resultStatus !== value.resultStatus
+      || supportExecution.semanticHash !== value.supportExecutionSemanticHash
+      || supportExecution.executedMethod !== selectedMethod
+      || supportExecution.distribution?.method !== selectedMethod
+      || semanticHash(supportExecution.distribution) !== value.distributionSemanticHash) {
     fail(
-      'Current Common Input empirical Run runtime support-execution binding is inconsistent.',
+      'Current Common Input empirical Run runtime support/moment execution binding is inconsistent.',
       'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_SUPPORT_EXECUTION_BINDING_MISMATCH',
     );
   }
   return deepFreeze(value);
+}
+
+function bindExplicitMomentRetentionToSupportExecution(value, retentionValue) {
+  const execution = requireCurrentCommonInputEmpiricalSupportLoadExecution(value);
+  const retention = requireCurrentCommonInputExplicitMomentRetention(retentionValue);
+  const baseStatus = requiredResultStatus(execution.distribution?.status);
+  const hasRetainedDemand = retention.status === 'RETAINED' && retention.records.length > 0;
+  const resultStatus = hasRetainedDemand && baseStatus === 'CALCULATED'
+    ? 'CALCULATED_WITH_EXCEPTIONS'
+    : baseStatus;
+  const material = { ...execution };
+  delete material.semanticHash;
+  const bound = {
+    ...material,
+    resultStatus,
+    explicitMomentRetentionSemanticHash: retention.semanticHash,
+    explicitMomentRetention: retention,
+  };
+  return requireCurrentCommonInputEmpiricalSupportLoadExecution({
+    ...bound,
+    semanticHash: semanticHash(bound),
+  });
 }
 
 function requireCurrentExecutionContext({ workspaceState, modelStore, masterDataProvider }) {
@@ -267,6 +358,7 @@ function requireReadySnapshot(snapshot) {
 function requireDependencies(value) {
   for (const key of [
     'snapshotProvider', 'authorizationProvider', 'gravityMethodAuthorityProvider',
+    'componentAuthorityAuditProvider', 'explicitMomentRetentionProvider',
     'methodSelectionProvider', 'massProjectionProvider', 'supportExecutionProvider',
     'masterDataProvider',
   ]) {
@@ -322,6 +414,21 @@ function requiredText(value, label, code) {
     fail(`${label} must be a non-empty trimmed string.`, code);
   }
   return value;
+}
+
+function requiredResultStatus(value) {
+  const status = requiredText(
+    value,
+    'distribution.status',
+    'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_RESULT_STATUS_INVALID',
+  );
+  if (!['CALCULATED', 'CALCULATED_WITH_EXCEPTIONS', 'FAILED', 'BLOCKED'].includes(status)) {
+    fail(
+      `Unsupported current-system result status ${status}.`,
+      'CURRENT_COMMON_INPUT_EMPIRICAL_RUN_RESULT_STATUS_INVALID',
+    );
+  }
+  return status;
 }
 
 function requireFixedPolicy(value) {

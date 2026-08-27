@@ -1,0 +1,35 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1493
+issue: 1321
+branch: agent/issue-1321-default-usage-coverage-summary
+state: SOURCE_COMPLETE_REVIEW_PENDING_EXECUTION
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+scope_authority: "Owner explicitly instructed on 2026-08-27 to proceed next and stack Issue #1321 PR-E on PR #1493."
+mission: "Complete PR-D default-usage/coverage observability and PR-E one-click ordinary Run while preserving canonical READY-only snapshot/authorization/numerical authority and stale-result correctness."
+claimed_paths:
+  - agents/PR1493_workreport.md
+  - agents/claims/PR1493.yaml
+  - agents/status/PR1493.yaml
+  - scripts/load-calc-current-common-input-run-routing-check.mjs
+  - scripts/non-fea-calculation-defaults-observability-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - src/workspace/engineering-model-controller.js
+  - src/workspace/load-calc-current-system-view.js
+  - src/workspace/project-data/non-fea-calculation-defaults-observability-model.js
+  - src/workspace/project-data/non-fea-calculation-effective-values-view.js
+protected_paths:
+  - src/core/non-fea-common-checker/**
+  - src/core/non-fea-enrichment/**
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/workspace/project-data/non-fea-configured-default-provider.js
+  - src/workspace/project-data/non-fea-effective-value-resolver.js
+  - src/workspace/engineering-loads/**
+  - .github/workflows/**
+authority_boundary: "PR-E changes Run-attempt presentation and dependency invalidation only. The existing backend still builds/evaluates current Common Input, requires fully READY system sealing, records routine authorization/method-currentness receipts, selects the governed method, and executes without fallback. No numerical or resolver authority is created in the view/controller."
+semantic_boundary: "Clickable Run means an engineer may request governed execution after dataset/topology structural readiness; it does not mean Common Input is already READY. READY remains checker/seal-owned. PRODUCT_DEFAULT and PROJECT_CONFIGURED_DEFAULT custody remain distinct as established by D4."
+staleness_boundary: "Dataset/shared-model, Project Data, master/enrichment, requested method/load-case/qualification configuration, topology authority, support/restraint authority and load-primitive authority changes invalidate retained current evidence/results through existing stale custody."
+merge_authority: OWNER_ONLY_NOT_GRANTED

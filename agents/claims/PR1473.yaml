@@ -1,0 +1,31 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1473
+branch: agent/issue-1472-emp1-deployment-operations-20260826
+issue: 1472
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: MANUAL
+coordination_state: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_THEN_PR1477
+scope:
+  authority: EMP1_DEPLOYMENT_OPERATIONS_AND_STACK_INTEGRATION
+protected_exclusions:
+  - provider configuration/APIs
+  - .github/workflows/**
+  - HTML/package files
+  - src/core/emp1/**
+  - WRC mechanics/source/dataset/oracle/tolerance
+  - route/registry/code-compliance authority
+authority_boundary:
+  deployment_operations_can_block_release: true
+  rollback_custody_is_rollback_execution: false
+  rollback_custody_is_rollback_success: false
+  engineering_authority_granted: false
+  deployment_authority_granted: false
+  release_authority_granted: false
+pre_reground_head: db6f903fe92123f7ae10ed5c4db16691a8d7a18d
+merged_parent_sha: 3a2cb46fad78a0b468efc8d2dd5b921af436531b
+merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-27T16:21:57Z
+grounding_epoch: GE-PR1473-007
+handover_report: agents/PR1473_workreport.md
+exact_next_action: "Expected-head squash-merge exact seven-file delta, then normalize PR1477 onto resulting main."

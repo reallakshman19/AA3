@@ -5,22 +5,26 @@ mission: "Reconcile P0 aggregate and professional release current state after PR
 workstream: EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE
 branch: agent/issue-1389-pr1497-current-state-reconcile-20260828
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: MERGE_AUDIT
 scope_authority: LOCKED_TO_PR1497_DOWNSTREAM_RECONCILIATION
 phase_progression: AUTO
 criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
-pr_recovery_state: HEALTHY_CURRENT_MAIN_GROUNDED
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-live_main_at_grounding: e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
-live_main_tree_at_grounding: 710758849d2a17781110dbe5a9c6aa35074c1468
-grounding_epoch: GE-PR1498-001
+original_grounding_main: e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
+live_main_at_reground: 4ec93a2985d78d4e067dd40351cb899af2caed8a
+live_main_tree_at_reground: b1f8daebacf323cf8623a810a0b2a18e41df89ab
+structural_reground_head: de80546a1fd4f7d9593886aa158cd6c7c6eb8f40
+structural_reground_tree: 572b876b035d1d7b10c1fcba9f9348e0e9702257
+grounding_epoch: GE-PR1498-002
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_CURRENT_STATE_GOVERNANCE_ONLY
-current_stage: FINAL_EXACT_DIFF_AND_MERGE_AUDIT
+coordination: SAFE_CURRENT_STATE_GOVERNANCE_DISJOINT_FROM_PR1490_LAFEA_B02D
+current_stage: FINAL_EXACT_DIFF_REVIEW_AND_MERGE_GATE
 validation:
+  intervening_main_change: PASS_DISJOINT_PR1490_LAFEA_B02D_ONLY
   p0_aggregate_blob: a1ea8989831f5c01acce81cc4e734beb45b1feb0
   current_state_json_blob: c421ce4e0656e7072fa50be700aa1aecb1be4bb6
   current_state_checker_blob: 0792274e0da8531860815f4fd89d9c12522c658d
@@ -44,4 +48,4 @@ authority:
   deployment_authorized: false
   professional_release_ready: false
 merge_authorization: GRANTED_EXPLICIT_OWNER_CURRENT_CONVERSATION
-exact_next_action: "Verify live main unchanged, exact eight-file scope, zero behind, reviews/threads and protected-path isolation; mark ready and merge if clean, then continue to the next primary-source gate under #1389."
+exact_next_action: "Verify main still 4ec93a29..., exact eight-file scope and zero behind, zero reviews/threads and protected-path isolation; mark ready and merge if clean, then continue to the next primary-source gate under #1389."

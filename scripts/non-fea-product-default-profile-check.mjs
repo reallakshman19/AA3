@@ -43,7 +43,7 @@ function checkEmptyProfileDefaults() {
   assert.equal(JSON.stringify(source), before, 'provider must not mutate stored Project Data');
   assert.equal(provider.schema, 'non-fea-product-default-provider/v1');
   assert.equal(provider.profileId, 'LOAD_CALC_STANDARD_DEFAULTS_V1');
-  assert.equal(LOAD_CALC_STANDARD_DEFAULTS_V1.version, 5);
+  assert.equal(LOAD_CALC_STANDARD_DEFAULTS_V1.version, 6);
   assert.equal(provider.profileVersion, LOAD_CALC_STANDARD_DEFAULTS_V1.version);
   assert.equal(provider.usageRows.length, LOAD_CALC_STANDARD_DEFAULTS_V1.defaults.length);
   assert.equal(provider.shadowedRows.length, 0);
@@ -70,7 +70,7 @@ function checkEmptyProfileDefaults() {
   );
   assert.equal(
     provider.effectiveProfile.loadCalculation.resultSignConvention.value,
-    'SOURCE_Z_UP_POSITIVE_SUPPORT_REACTION',
+    'SOURCE_UP_POSITIVE_SUPPORT_REACTION',
   );
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.gravityMPerS2), true);
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.gravityMethod), true);

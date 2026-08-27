@@ -12,11 +12,22 @@ export const SUPPORT_SITE_MODEL_SCHEMA = 'support-site-model/v1';
  * grouping tolerance is used only when approved in Project Data. Routine empty
  * Project Data is first composed with the visible Product-default profile; its
  * built-in grouping tolerance is zero, so it cannot merge distinct locations.
+ * Source-axis metadata is taken from the same effective profile; Euclidean site
+ * grouping itself is invariant under X/Y/Z axis permutation.
  */
 export function buildSupportSiteModel(dataset, profile) {
   assertDataset(dataset);
   const effectiveProfile = createNonFeaProductDefaultProvider({ profile }).effectiveProfile;
   const tolerance = projectDataValue(effectiveProfile, 'topology.supportSiteGroupingToleranceMm');
+  const sourceUpAxis = stringValue(projectDataValue(effectiveProfile, 'sourcesAndUnits.sourceUpAxis')).toUpperCase();
+  const sourceAxisBasis = ['X', 'Y', 'Z'].includes(sourceUpAxis) ? `${sourceUpAxis}_UP` : null;
+  const blockers = [];
+  if (!Number.isFinite(tolerance)) {
+    blockers.push({ code: 'MISSING_SUPPORT_SITE_GROUPING_TOLERANCE', projectDataPath: 'topology.supportSiteGroupingToleranceMm' });
+  }
+  if (!sourceAxisBasis) {
+    blockers.push({ code: 'INVALID_SUPPORT_SITE_SOURCE_UP_AXIS', projectDataPath: 'sourcesAndUnits.sourceUpAxis', value: sourceUpAxis || null });
+  }
   const members = dataset.entities.filter((entity) => entity.category === 'support').map(toMember);
   const assemblyGroups = groupMembers(members, tolerance);
   const assemblies = [...assemblyGroups.values()].map(toAssembly);
@@ -25,10 +36,10 @@ export function buildSupportSiteModel(dataset, profile) {
   return freezeDeep({
     schema: SUPPORT_SITE_MODEL_SCHEMA,
     datasetId: dataset.datasetId,
-    sourceAxisBasis: 'Z_UP',
+    sourceAxisBasis,
     groupingToleranceMm: Number.isFinite(tolerance) ? tolerance : null,
-    status: Number.isFinite(tolerance) ? 'READY' : 'BLOCKED',
-    blockers: Number.isFinite(tolerance) ? [] : [{ code: 'MISSING_SUPPORT_SITE_GROUPING_TOLERANCE', projectDataPath: 'topology.supportSiteGroupingToleranceMm' }],
+    status: blockers.length ? 'BLOCKED' : 'READY',
+    blockers,
     members,
     assemblies,
     sites,

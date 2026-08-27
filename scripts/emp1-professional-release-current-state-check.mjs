@@ -60,15 +60,15 @@ assert.equal(
   'POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED',
 );
 assert.deepEqual(current.reconciliationBasis, {
-  basisKind: 'STACKED_POST_SOURCE_GOVERNANCE_CURRENT_STATE_CANDIDATE',
+  basisKind: 'CURRENT_MAIN_POST_SOURCE_GOVERNANCE_RECONCILIATION',
   previousCurrentStateMainSha: '4c7b5c7e4d4ee1a2144d1764fd15e93813719a19',
   stackedBasePr: 1427,
-  stackedBaseHead: 'ed599b037b861aa8f6a3089792d81157e46d887a',
-  stackedBaseContainsMainThrough: '7b2a8119aa5faeee7cc102c894991851019c5a7b',
-  latestLiveMainObserved: '29c688db4a021db900d1f8c67f56f777f73f4ddc',
-  latestLiveMainTreeObserved: '60d0fa231c52a561b9d6cc50d1099abff8500880',
-  laterMainDriftClassification: 'UNRELATED_LAFEA_ONLY_NO_EMP1_AUTHORITY_OVERLAP',
-  basisMeaning: 'POST_PR_A_THROUGH_H_PLUS_LATER_WRC_SOURCE_GOVERNANCE_STACKED_ON_PR1427',
+  stackedBaseHead: 'b648e174b80b49ceed76036d590b89ad4fe08c2e',
+  stackedBaseContainsMainThrough: '19b762e1f9512284da961e5816a28c10432080bb',
+  latestLiveMainObserved: 'b648e174b80b49ceed76036d590b89ad4fe08c2e',
+  latestLiveMainTreeObserved: 'dd812ea9b4a746a9913fc3e2691f78813fc0380e',
+  laterMainDriftClassification: 'PR1415_AND_PR1427_MERGED_DEPENDENCY_RECONCILED',
+  basisMeaning: 'POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_CURRENT_MAIN',
   artifactMayNotClaimContainingCommitAsBasis: true,
 });
 
@@ -119,7 +119,7 @@ assert.equal(current.sourceState.cauxRetainedTranscription.inspected, true);
 assert.equal(current.sourceState.cauxRetainedTranscription.isDirectPdfObservation, false);
 assert.equal(current.authorityBoundary.retainedCauxTranscriptionMayBeCalledDirectPdfObservation, false);
 
-// Consume the stacked PR1427 aggregate exactly, rather than duplicating the old PR-B snapshot.
+// Consume the merged PR1427 aggregate exactly, rather than duplicating the old PR-B snapshot.
 assert.equal(current.sourceState.p0Aggregate.path,
   'validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json');
 assert.equal(current.sourceState.p0Aggregate.stackedPr, 1427);
@@ -154,9 +154,13 @@ assert.equal(caux.releaseProfileDisposition.mayAuthorizeProduction, false);
 
 // Post-sequence governance is reconciliation, not source closure.
 const governanceByPr = new Map(current.postSequenceSourceGovernance.map((row) => [row.pr, row]));
-assert.equal(governanceByPr.get(1415)?.state, 'OPEN_DRAFT_UNMERGED');
-assert.equal(governanceByPr.get(1427)?.state, 'OPEN_DRAFT_STACKED_BASE_UNMERGED');
+assert.equal(governanceByPr.get(1415)?.state, 'MERGED');
+assert.equal(governanceByPr.get(1415)?.mergeSha,
+  '19b762e1f9512284da961e5816a28c10432080bb');
+assert.equal(governanceByPr.get(1427)?.state, 'MERGED');
 assert.equal(governanceByPr.get(1427)?.head, current.reconciliationBasis.stackedBaseHead);
+assert.equal(governanceByPr.get(1427)?.mergeSha,
+  'b648e174b80b49ceed76036d590b89ad4fe08c2e');
 for (const pr of [1412, 1414, 1417, 1418, 1423, 1425, 1426]) {
   assert.equal(governanceByPr.get(pr)?.state, 'MERGED');
 }

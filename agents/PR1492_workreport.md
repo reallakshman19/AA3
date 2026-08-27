@@ -6,6 +6,7 @@
 - Branch: `agent/issue-1321-effective-value-inspection`
 - Base branch: `main`
 - Exact base: `3a54862127c601f3e4c59159526e7345fc06cf4c`
+- Source-complete reconciliation head observed before final recovery update: `774bf56301106c64f626bfd6e68ded3e79db0be7`
 - Criticality: ENGINEERING_CRITICAL
 - Execution mode: AUTO
 - Merge authority: OWNER_ONLY_NOT_GRANTED
@@ -72,11 +73,24 @@ Fixture proves, when executable:
 - no second resolver is called;
 - source-only inventory limitation and Product-global separation are disclosed.
 
+## Final source reconciliation
+- live `main`: `3a54862127c601f3e4c59159526e7345fc06cf4c`
+- compare at source-complete reconciliation: `ahead_by=12`, `behind_by=0`
+- exact changed-file count: `8`
+- GitHub mergeable: `true`
+- draft: `true`
+- reviews: `0`
+- review threads: `0`
+- temporary `agents/WIP-1321-effective-value-inspection.yaml`: removed
+
 ## Validation truth
 - live main grounding to `3a54862127c601f3e4c59159526e7345fc06cf4c`: PASS_SOURCE_INSPECTION
 - current Common Input resolver ownership trace: PASS_SOURCE_INSPECTION
 - source-only/no-resolution-row completeness audit: PASS_SOURCE_INSPECTION
 - independent-of-#1491 boundary: PASS_SOURCE_INSPECTION
+- exact eight-file GitHub diff reconciliation: PASS_SOURCE_INSPECTION
+- reviews/threads reconciliation: PASS_SOURCE_INSPECTION
+- faithful local checkout: BLOCKED — `Could not resolve host: github.com`
 - focused D3 Node falsifier: NOT_RUN
 - `node scripts/run-non-fea-checks.mjs`: NOT_RUN
 - `npm run check:imports`: NOT_RUN
@@ -84,9 +98,9 @@ Fixture proves, when executable:
 - `npm run build`: NOT_RUN
 - `git diff --check`: NOT_RUN
 
-No NOT_RUN item is represented as PASS.
+No NOT_RUN item is represented as PASS. Hosted or reconstructed execution is not substituted for a faithful repository checkout.
 
-## Expected final net file ledger — 8 files
+## Final net file ledger — 8 files
 1. `agents/PR1492_workreport.md`
 2. `agents/claims/PR1492.yaml`
 3. `agents/status/PR1492.yaml`
@@ -96,8 +110,6 @@ No NOT_RUN item is represented as PASS.
 7. `src/workspace/project-data/non-fea-calculation-effective-values-view.js`
 8. `src/workspace/project-data/project-data-view.js`
 
-Temporary `agents/WIP-1321-effective-value-inspection.yaml` must be removed before source-complete reconciliation.
-
 ## Appendix A — next-agent takeover questions
 1. Why is `buildCurrentPreFeaRequestInput().resolutionLedger` the authoritative D3 source rather than `authorized-empirical-effective-value-ledger.js`?
 2. Show exactly where the inspector could accidentally become a second resolver, and prove the current code does not do that.
@@ -106,4 +118,4 @@ Temporary `agents/WIP-1321-effective-value-inspection.yaml` must be removed befo
 5. What exact runtime failure path causes the inspector to render `UNAVAILABLE`, and why is that preferable to showing Product/default fallback data?
 
 ## EXACT_NEXT_ACTION
-Remove temporary WIP custody, create numbered claim/status records, reconcile the exact eight-file diff against live main, check reviews/threads and mergeability, and keep the PR draft until executable qualification or explicit owner disposition.
+Keep #1492 draft. On a faithful checkout, run the focused D3 falsifier, the Non-FEA aggregate, import check, advanced-shell contract, build and `git diff --check`; then re-ground to live main and seek explicit owner merge authorization. If execution remains unavailable, preserve `NOT_RUN` and do not claim merge qualification.

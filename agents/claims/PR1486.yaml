@@ -1,0 +1,31 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1486
+issue: 1321
+branch: agent/issue-1321-method-basis-effective-load-case-authority
+state: SOURCE_COMPLETE_MERGE_AUTHORIZED_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: af55f56967d596d60c91db67b4fdf12ecb9a26a8
+technical_reground_sha: 93a24f66f3778d2f43e8919720ff4994452fd50e
+claimed_paths:
+  - agents/PR1486_workreport.md
+  - agents/claims/PR1486.yaml
+  - agents/status/PR1486.yaml
+  - scripts/non-fea-method-basis-effective-load-case-authority-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - src/workspace/non-fea-method-basis-view.js
+protected_paths:
+  - src/workspace/project-data/non-fea-load-case-authority.js
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/core/non-fea-common-checker/**
+  - src/workspace/engineering-loads/**
+  - .github/workflows/**
+authority_boundary: "Presentation-only disclosure of existing effective load-case authority; no authority production, precedence, sealing, Run or mechanics change."
+validation_truth:
+  source_reconciliation: PASS_SOURCE_RECONCILIATION
+  focused_execution: NOT_RUN
+  aggregate_execution: NOT_RUN
+  imports_build_diff: NOT_RUN
+merge_authority: OWNER_GRANTED_BY_2026_08_27_USER_COMMAND

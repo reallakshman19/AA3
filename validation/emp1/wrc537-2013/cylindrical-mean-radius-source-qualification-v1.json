@@ -1,20 +1,41 @@
 {
   "schema": "emp1-wrc537-cylindrical-mean-radius-source-qualification/v1",
   "issue": 1377,
-  "status": "BLOCKED_PRIMARY_CYLINDRICAL_RADIUS_DEFINITION_UNRESOLVED",
+  "status": "BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED",
   "sourceCustody": {
     "pinnedDocument": "docs/emp1/WRC537_2013.pdf",
     "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
     "primaryBinaryPageReobservedThisIncrement": false,
+    "primaryBinaryObservationState": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
+    "retainedTable5": {
+      "path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
+      "table": "Table 5",
+      "pages": "41-42",
+      "geometryLabel": "Vessel Radius",
+      "renderedSymbol": "R_m",
+      "gammaRelationship": "gamma = R_m / T",
+      "betaRelationship": "beta = 0.875 * r_o / R_m",
+      "classification": "RETAINED_SOURCE_TRANSCRIPTION_EVIDENCE"
+    },
     "legacyExtraction": {
       "path": "docs/01_WRC537_METHOD_DEFINITION.md",
       "status": "NOT_READY_FOR_IMPLEMENTATION",
       "retainedCylindricalNotation": "Rc",
       "retainedCylindricalMeaning": "Mean radius of cylindrical shell",
       "exactGeometricDefinition": "UNRESOLVED_EXACT_DEFINITION_NOT_OCR_READABLE",
-      "retainedSphericalNotation": "Rm",
-      "retainedSphericalDefinition": "MEAN_MIDSURFACE_RADIUS_CONFIRMED_FOR_SPHERICAL_SHELL_ONLY"
+      "conflictDisposition": "TABLE5_RM_SYMBOL_OVERRIDES_LEGACY_RC_NOTATION_FOR_RETAINED_TABLE5_CYLINDRICAL_SYMBOL_ONLY"
     }
+  },
+  "retainedTable5Authority": {
+    "cylindricalSourceSymbolRmQualified": true,
+    "vesselRadiusGeometryInputRoleQualified": true,
+    "rmUsedInGammaQualified": true,
+    "rmUsedInBetaQualified": true,
+    "physicalMeanOrMidsurfaceMeaningQualified": false,
+    "odIdThicknessConstructionQualified": false,
+    "corrosionOrAssessmentGeometryBasisQualified": false,
+    "section45RadiusIdentityQualifiedByThisIncrement": false
   },
   "currentSoftwareObservation": {
     "sourceCustodyPath": "src/core/emp1/emp1-wrc537-source-custody.js",
@@ -27,11 +48,14 @@
       "WRC537_4_5_CYLINDER_LENGTH_RATIO",
       "WRC537_4_5_NEAREST_END_DISTANCE_RATIO"
     ],
-    "classification": "INTERNALLY_DETERMINISTIC_SOFTWARE_DERIVATION_NOT_PRIMARY_WRC_RADIUS_AUTHORITY"
+    "classification": "INTERNALLY_DETERMINISTIC_SOFTWARE_DERIVATION_NOT_PRIMARY_WRC_PHYSICAL_RADIUS_CONSTRUCTION_AUTHORITY",
+    "productionNumericsChangedByThisReconciliation": false
   },
+  "authorityScope": "THIS_SOURCE_QUALIFICATION_RECORD_ONLY_NOT_CURRENT_BOUNDED_ROUTE_AUTHORITY",
   "authority": {
-    "cylindricalSourceSymbolQualified": false,
-    "cylindricalMeanRadiusDefinitionQualified": false,
+    "cylindricalSourceSymbolQualified": true,
+    "cylindricalRadiusParameterRoleQualified": true,
+    "cylindricalMeanRadiusPhysicalDefinitionQualified": false,
     "outsideDiameterToMeanRadiusConstructionQualified": false,
     "insideDiameterToMeanRadiusConstructionQualified": false,
     "assessmentGeometryConsistencyQualified": false,
@@ -41,21 +65,34 @@
     "engineeringUseAuthorized": false,
     "productionUseAuthorized": false
   },
+  "currentBoundedRouteState": {
+    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP",
+    "routeAuthorized": true,
+    "registryRegistered": true,
+    "boundedEngineeringUseAuthorized": true,
+    "boundedProductionUseAuthorized": true,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthority": false,
+    "releaseQualified": false
+  },
+  "authorityInvariant": "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_CYLINDRICAL_RM_PHYSICAL_DEFINITION_SOURCE_AUTHORITY",
   "prohibitedInferences": [
+    "DO_NOT_TREAT_TABLE5_RM_SYMBOL_AS_PROOF_OF_MIDSURFACE_OR_MEAN_RADIUS_PHYSICAL_DEFINITION",
     "DO_NOT_TREAT_CURRENT_OD_OVER_2_MINUS_T_OVER_2_AS_UNIVERSAL_WRC_RULE",
-    "DO_NOT_RENAME_CYLINDRICAL_RC_TO_RM_AS_SOURCE_FACT_WITHOUT_PRIMARY_LOCATOR",
-    "DO_NOT_IMPORT_SPHERICAL_RM_DEFINITION_INTO_CYLINDRICAL_ROUTE",
-    "DO_NOT_SUBSTITUTE_ID_OVER_2_OR_OD_OVER_2_FOR_CYLINDRICAL_MEAN_RADIUS",
+    "DO_NOT_IMPORT_SPHERICAL_RADIUS_DEFINITION_INTO_CYLINDRICAL_ROUTE",
+    "DO_NOT_SUBSTITUTE_ID_OVER_2_OR_OD_OVER_2_FOR_TABLE5_RM",
     "DO_NOT_MIX_NOMINAL_DIAMETER_WITH_DIFFERENT_THICKNESS_BASIS_WITHOUT_QUALIFIED_POLICY",
-    "DO_NOT_CLAIM_OVALITY_OR_LOCAL_THICKNESS_GEOMETRY_IS_COVERED"
+    "DO_NOT_CLAIM_OVALITY_OR_LOCAL_THICKNESS_GEOMETRY_IS_COVERED",
+    "DO_NOT_EXTEND_THIS_TABLE5_RM_RECONCILIATION_TO_SECTION_4_5_RADIUS_AUTHORITY_WITHOUT_SEPARATE_SOURCE_PROOF",
+    "DO_NOT_TREAT_BOUNDED_ROUTE_AUTHORIZATION_AS_PRIMARY_SOURCE_PROOF_OF_RM_PHYSICAL_CONSTRUCTION"
   ],
   "requiredPrimaryClosure": [
-    "exact cylindrical shell radius symbol and definition",
-    "exact OD/ID/T relationship for cylindrical radius",
+    "exact physical definition of cylindrical Table-5 R_m",
+    "exact OD/ID/T relationship for cylindrical R_m",
     "physical geometry basis consistent with WRC shell thickness T",
-    "radius used in cylindrical dimensionless parameters and section 4.5 ratios",
+    "source proof for radius identity used in section 4.5 ratios",
     "treatment of nominal, corroded, measured, locally thickened or nonuniform geometry",
-    "exact source locators for every retained rule"
+    "exact source locators for every retained physical construction rule"
   ],
   "collateralAuthorityWidened": false,
   "productionNumericsChanged": false

@@ -46,7 +46,7 @@
       "category": "WRC_GEOMETRY_CUSTODY",
       "artifact": "validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json",
       "authorityDocument": "docs/emp1/WRC537_2013_Cylindrical_Mean_Radius_Authority.md",
-      "currentStatus": "BLOCKED_PRIMARY_CYLINDRICAL_RADIUS_DEFINITION_UNRESOLVED",
+      "currentStatus": "BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED",
       "profileAuthorityKey": "meanRadiusBasis"
     },
     {

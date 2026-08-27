@@ -1,0 +1,61 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1495
+branch: agent/issue-1321-effective-gravity-load-basis
+issue: 1321
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+execution_mode: CONNECTOR_DELIVERY
+coordination_state: EXACT_MAIN_BASE_REVIEW_PENDING
+base_branch: main
+base_sha: 93c4f9e3af98e58190951ff94b5b50616950f623
+scope:
+  authority: ISSUE1321_PR_B_EFFECTIVE_GRAVITY_LOAD_BASIS
+  paths:
+    - agents/PR1495_workreport.md
+    - agents/claims/PR1495.yaml
+    - agents/status/PR1495.yaml
+    - scripts/current-common-input-empirical-run-runtime-check.mjs
+    - scripts/current-common-input-gravity-load-basis-check.mjs
+    - scripts/run-non-fea-checks.mjs
+    - src/workspace/engineering-loads/current-common-input-empirical-support-load-execution.js
+    - src/workspace/engineering-loads/current-common-input-gravity-load-basis.js
+protected_exclusions:
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/project-data/non-fea-effective-value-resolver.js
+  - src/workspace/project-data/non-fea-product-default-profile.js
+  - src/workspace/engineering-loads/authorized-empirical-source-axis-binding.js
+  - src/workspace/support-sites/support-site-model.js
+  - active-load-case authority/presentation owned by PR1486
+  - source-axis-general scalar mechanics owned by PR1491
+  - src/core/non-fea-common-checker/**
+  - .github/workflows/**
+authority_boundary:
+  effective_value_resolver_reused: true
+  second_precedence_mechanism_created: false
+  gravity_field_id: GRAVITY_ACCELERATION
+  load_factor_field_id: LOAD_FACTOR
+  product_default_catalog_cross_checked: true
+  legacy_project_data_migration_visible: true
+  raw_statics_kernel_changed: false
+  force_formula_changed: false
+  allocation_mechanics_changed: false
+  equilibrium_mechanics_changed: false
+  source_axis_mechanics_changed: false
+validation:
+  source_diff_inspection: COMPLETE
+  faithful_checkout: BLOCKED_DNS_GITHUB_COM
+  focused_gravity_load_basis: NOT_RUN
+  focused_support_execution: NOT_RUN
+  focused_run_runtime: NOT_RUN
+  aggregate_non_fea: NOT_RUN
+  imports: NOT_RUN
+  advanced_shell_contract: NOT_RUN
+  build: NOT_RUN
+  diff_check: NOT_RUN
+workflow_policy:
+  github_workflow_merge_gate: false
+  github_workflow_counts_as_execution_evidence: false
+merge_authority: OWNER_ONLY_NOT_GRANTED
+handover_report: agents/PR1495_workreport.md
+exact_next_action: "Run focused/aggregate/import/build/diff checks on a faithful checkout; preserve NOT_RUN where unavailable; then refresh live main, exact eight-file diff, reviews and threads before any merge recommendation."

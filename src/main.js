@@ -43,6 +43,7 @@ import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
 import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety-workbench.js';
 import { EVENT_TOPICS } from './workspace/event-topics.js';
 import { SUPPORT_RESTRAINT_EVENTS } from './workspace/support-restraint-events.js';
+import { diagnoseAccdbCollinearBacktracks } from './core/linear-piping-analysis-consumer/accdb-collinear-backtrack-diagnosis.js';
 import { TOPOLOGY_EVENTS } from './workspace/topology-events.js';
 import {
   LFEA_ENGINEERING_PREPARATION_OWNERS,
@@ -144,6 +145,15 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
         === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
         ? linearPipingInputXmlSource.getSourceText()
         : null,
+      // An ACCDB import gets the same backtrack diagnosis, without an Apply
+      // button: its geometry belongs to the file, so the correction is reported
+      // for the engineer to make in CAESAR rather than applied here.
+      getAccdbDiagnosis: () => {
+        if (lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+          !== LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB) return null;
+        const rows = lfeaAccdbInputPanel.getElementRows();
+        return rows === null ? null : diagnoseAccdbCollinearBacktracks(rows);
+      },
       onRepaired: (repairedXml) => {
         if (lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
           !== LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
@@ -197,6 +207,30 @@ lfeaPipelineShell.setAssemblyHandlers({
     } catch (error) {
       lfeaAuthoritySupplement = null;
       lfeaPipelineShell.setAuthoritySupplementStatus(`Rejected: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+  async onLoadSample() {
+    // A real benchmark model rather than a hand-authored toy: BM4's own
+    // InputXML, which the repository already validates against. It still
+    // carries its three collinear backtracks, so loading it also puts the
+    // model-repair panel in front of a model that genuinely needs it.
+    const sampleUrl = `${import.meta.env.BASE_URL}fixtures/lfea-sample-inputxml-bm4.xml`;
+    try {
+      lfeaPipelineShell.setAssembleStatus('Loading sample model…', false);
+      const response = await fetch(sampleUrl);
+      if (!response.ok) throw new Error(`sample fetch returned ${response.status}`);
+      const content = await response.text();
+      linearPipingInputXmlSource.loadSource(
+        { fileName: 'InputXML_BM4.sample.xml', content },
+        { fallbackUnit: 'mm' },
+      );
+      lfeaPipelineShell.setActiveStep('INPUT');
+      lfeaPipelineShell.setAssembleStatus('Sample model loaded. Continue on Error check.', false);
+    } catch (error) {
+      lfeaPipelineShell.setAssembleStatus(
+        `Could not load the sample model: ${error instanceof Error ? error.message : String(error)}`,
+        true,
+      );
     }
   },
   onAssembleAndSendToRun() {

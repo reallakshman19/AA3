@@ -31,6 +31,7 @@ const checks = [
   ['Authorized profile product-default convergence', 'scripts/authorized-empirical-product-default-convergence-check.mjs'],
   ['Configured-default resolver convergence', 'scripts/non-fea-configured-default-resolution-check.mjs'],
   ['Configured-default Issue 1321 scope precedence', 'scripts/non-fea-configured-default-scope-priority-check.mjs'],
+  ['Calculation Defaults current effective-value inspection', 'scripts/non-fea-calculation-effective-values-inspection-check.mjs'],
   ['Common-enriched configured-default pre-readiness overlay', 'scripts/non-fea-common-enriched-configured-default-overlay-check.mjs'],
   ['Common-enriched Project/Product default precedence', 'scripts/non-fea-common-enriched-effective-default-composition-check.mjs'],
   ['Common-enriched effective-default authoring seam', 'scripts/non-fea-common-enriched-effective-default-authoring-check.mjs'],

@@ -1,0 +1,34 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1487
+issue: 1321
+branch: agent/issue-1321-calculation-defaults-basic-ux
+state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: d6101bcac7ccbdab9e42d7e0afbdd7b06d897462
+mission: "Implement PR-D1 Basic/Advanced Calculation Defaults UX on existing Project Data/Product-default authority."
+claimed_paths:
+  - src/workspace/project-data/project-data-view.js
+  - src/workspace/project-data/non-fea-calculation-defaults-model.js
+  - src/workspace/project-data/non-fea-calculation-defaults-view.js
+  - scripts/non-fea-calculation-defaults-basic-ux-check.mjs
+  - agents/PR1487_workreport.md
+  - agents/claims/PR1487.yaml
+  - agents/status/PR1487.yaml
+protected_paths:
+  - src/workspace/project-data/non-fea-project-data-view-v2.js
+  - src/workspace/project-data/non-fea-product-default-profile.js
+  - src/workspace/project-data/non-fea-configured-default-provider.js
+  - src/workspace/project-data/non-fea-field-registry.js
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/core/non-fea-common-checker/**
+  - src/workspace/engineering-loads/**
+  - scripts/run-non-fea-checks.mjs
+  - .github/workflows/**
+authority_boundary: "UX composition and path-level Project Data updates only. No Product-default catalog, scope resolution, checker, Run, authorization, mechanics, solver or tolerance change."
+merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18

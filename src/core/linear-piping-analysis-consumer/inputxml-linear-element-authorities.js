@@ -4,6 +4,7 @@ import {
 } from '../linear-fea-solver/index.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { augmentPipingComponent } from './gravity-expansion-element-augmentation.js';
+import { augmentPipingComponentBourdon } from './bourdon-expansion-augmentation.js';
 import {
   compareAscii,
   componentLedgerRow,
@@ -68,6 +69,7 @@ export function compileInputXmlLinearElementAuthorities(input) {
     .filter(productionBendSourceEligible).length;
   let acceptedBendFactorAuthority = null;
   let pipingComponents = [];
+  let bendGeometryByComponent = new Map();
   if (capability.bendExactMechanics && eligibleBendCount > 0) {
     if (bendFactorAuthority === null) {
       throw elementAuthorityError(
@@ -85,6 +87,7 @@ export function compileInputXmlLinearElementAuthorities(input) {
       capabilityProfile: capability,
     });
     pipingComponents = [...compiled.pipingComponents];
+    bendGeometryByComponent = compiled.bendGeometryByComponent;
   }
 
   if (loadCase !== null && pipingComponents.length > 0) {
@@ -94,6 +97,13 @@ export function compileInputXmlLinearElementAuthorities(input) {
     pipingComponents = [...augmentPipingComponentTemperatureAuthorities({
       compilation, loadCase, pipingComponents,
     }).pipingComponents];
+    // Bourdon last: it reads the chord's effective local stiffness, so it must
+    // see the element after gravity and thermal have been bound to it.
+    if (capability.pressureBourdon === true && bendGeometryByComponent.size > 0) {
+      pipingComponents = [...augmentPipingComponentBourdon({
+        pipingComponents, bendGeometryByComponent, pressureByElement,
+      })];
+    }
   }
 
   const eligibleTeeJunctionCount = sourceTeeJunctionCount(sourcePreparation);

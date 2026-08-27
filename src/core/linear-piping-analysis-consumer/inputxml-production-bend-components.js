@@ -53,6 +53,7 @@ export function compileInputXmlProductionBendComponents(input) {
   const sectionByHash = new Map(sourcePreparation.sectionResolutions.map((row) => [row.semanticHash, row]));
   const chordBindingsBySource = groupBendChordBindings(structuralPreparation.segmentBindings);
   const components = [];
+  const bendGeometry = new Map();
   const factorResults = [];
 
   for (const sourceSegment of sourceSegments) {
@@ -105,13 +106,55 @@ export function compileInputXmlProductionBendComponents(input) {
     });
     components.push(component);
     factorResults.push(factorResult);
+    // Retained for the Bourdon augmentation, which needs the arc the chords
+    // stand for -- its centre, radius, swept angle and the tangent it enters
+    // on. Collected here because this is where all of it is already in hand.
+    bendGeometry.set(componentId, Object.freeze({
+      points: Object.freeze(chordChainPoints(
+        chordBindingsBySource.get(sourceSegmentId) ?? [],
+        structuralPreparation.conditionedTopology.geometry,
+        sourceSegmentId,
+      )),
+      centre: Object.freeze(vector(sourceSegment.meta.bendArcCentre)),
+      bendRadius: positive(sourceSegment.meta.bendComputedRadius, 'bendComputedRadius', sourceSegmentId),
+      totalBendAngle: bendRecord.arcLength / sourceSegment.meta.bendComputedRadius,
+      incomingDirection: Object.freeze([...bendRecord.incomingDirection]),
+      innerDiameter: positive(
+        physicalSection.dimensions?.innerDiameter, 'innerDiameter', sourceSegmentId,
+      ),
+      poissonRatio: sourceSegment.meta?.analysis?.poissonRatio ?? null,
+    }));
   }
   return Object.freeze({
     pipingComponents: Object.freeze(components),
+    bendGeometryByComponent: bendGeometry,
     factorResults: Object.freeze(factorResults),
     sourceQualifiedBendCount: components.length,
     factorAuthority,
   });
+}
+
+/** Ordered chord-chain node positions: N0 = first chord's I end, then each J end. */
+function chordChainPoints(bindings, geometry, sourceSegmentId) {
+  const nodeById = new Map(geometry.nodes.map((row) => [String(row.id), row]));
+  const segmentById = new Map(geometry.segments.map((row) => [String(row.id), row]));
+  const ordered = bindings
+    .map((binding) => segmentById.get(String(binding.segmentId)) ?? null)
+    .filter((segment) => segment !== null)
+    .sort((left, right) => Number(left.meta?.bendChordIndex) - Number(right.meta?.bendChordIndex));
+  if (ordered.length === 0) fail(
+    'BOURDON_BEND_CHORD_CHAIN_MISSING',
+    `Bend ${sourceSegmentId} has no retained chords to build an arc point chain from.`,
+  );
+  const point = (nodeId) => {
+    const node = nodeById.get(String(nodeId));
+    if (!node || ![node.x, node.y, node.z].every(Number.isFinite)) fail(
+      'BOURDON_BEND_CHORD_CHAIN_MISSING',
+      `Bend ${sourceSegmentId} chord references node ${nodeId} with no finite coordinate.`,
+    );
+    return [node.x, node.y, node.z];
+  };
+  return [point(ordered[0].startNodeId), ...ordered.map((segment) => point(segment.endNodeId))];
 }
 
 function factorRequest(input) {

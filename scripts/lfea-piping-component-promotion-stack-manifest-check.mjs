@@ -80,7 +80,11 @@ assert.deepEqual(blocked.get('S5')?.blockers, [
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.bendExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.teeExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics, false);
-assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureBourdon, false);
+// Bourdon is the largest single win measured so far: BM4_L's weight+pressure
+// median error falls 7.62% -> 1.31% and its pass rate rises 26 points, while
+// the weight-only case is byte-identical. It is an initial load, so it is
+// naturally per case and touches no sealed stiffness state.
+assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureBourdon, true);
 // Promoted on measured parity, using the element's DECLARED pressure so the
 // effective stiffness stays case-independent and the sealed custody check is
 // untouched. Improves every case in both pass rate and median error.

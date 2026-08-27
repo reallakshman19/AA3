@@ -7,7 +7,7 @@ criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: MANUAL
 auto_state: NOT_ACTIVE_CURRENT_INSTRUCTION
-coordination_state: CURRENT_MAIN_REGROUNDED_PR1473_PROPAGATION_NEXT
+coordination_state: WHOLE_RELEASE_STACK_RECONCILED_CHILD_REPORTS_AUTHORITATIVE
 scope:
   authority: ISSUE_1463_WITH_MERGED_CHILD_1466_CUSTODY
 protected_exclusions:
@@ -26,12 +26,12 @@ authority_boundary:
   release_authority_granted: false
   merge_authority_granted: false
 base_branch: main
-pre_reground_head: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
+live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
 structural_reground_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
 structural_reground_tree: 2ed2cba409ab3330661f64836fb6a6d0e612475f
-report_basis_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
-live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+report_basis_head: f40921cdad4473a28227a72ccfc8418f54f87864
+report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
 merge_authority: NOT_GRANTED
-grounding_epoch: GE-PR1464-007
+grounding_epoch: GE-PR1464-008
 handover_report: agents/PR1464_workreport.md
-exact_next_action: "Propagate this exact PR1464 parent into PR1473 while retaining PR1473's exact seven-file deployment-operations delta."
+exact_next_action: "Keep PR1464 draft/unmerged; do not merge or widen scope without explicit owner authority. Use PR1473/PR1477 current reports for downstream deployment/manifest custody."

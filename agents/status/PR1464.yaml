@@ -14,30 +14,31 @@ criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
 pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-pre_reground_head: 37f3ddaa3504d65ddaa8ee2eedbdf02cd3217a85
-structural_reground_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
-structural_reground_tree: 2ed2cba409ab3330661f64836fb6a6d0e612475f
-report_basis_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
-absorbed_child_pr: 1470
 live_main_last_observed: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
 live_main_tree: b0b6f71c770971280383e1ac195257a54a5c3fdc
-grounding_epoch: GE-PR1464-007
+structural_reground_head: 331450fa7f453b99c1f0a5364d8ac731b47bd1c1
+structural_reground_tree: 2ed2cba409ab3330661f64836fb6a6d0e612475f
+report_basis_head: f40921cdad4473a28227a72ccfc8418f54f87864
+report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
+absorbed_child_pr: 1470
+grounding_epoch: GE-PR1464-008
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: CURRENT_MAIN_REGROUNDED_PR1473_PROPAGATION_NEXT
-current_stage: CURRENT_MAIN_REGROUND_VALIDATED
+coordination: WHOLE_RELEASE_STACK_RECONCILED_CHILD_REPORTS_AUTHORITATIVE
+current_stage: WHOLE_RELEASE_STACK_RECONCILED_DRAFT
 merge_authorization: NOT_GRANTED
 validation:
+  current_main_freshness: PASS
   main_drift_exact_path_overlap: PASS_NONE
   retained_blob_custody: PASS_EXACT_16_BLOBS
   structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
   post_reground_compare: PASS_EXACT_16_FILES_ZERO_BEHIND
   base_retarget_main: PASS
-  reviews_threads: PASS_ZERO_ZERO_PRE_STRUCTURAL_ACTION
+  reviews_threads: PASS_ZERO_ZERO
   dependency_header_source: PASS_PRIOR_AUDIT
+  runemp1_final_observation: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE_RUN_33077260721_JOB_98534616580
   dependency_advisory_build_browser_header_execution: NOT_RUN_CURRENT_EPOCH
-  hosted_execution: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
   numerical_comparison: NOT_APPLICABLE
 current_blocker: "Executable advisory/build/browser/deployment/header evidence remains NOT_RUN; merge authority not granted."
-exact_next_action: "Propagate this exact PR1464 parent into PR1473 while retaining PR1473's exact seven-file deployment-operations delta."
+exact_next_action: "Keep PR1464 draft/unmerged; do not merge or widen scope without explicit owner authority. Use PR1473/PR1477 current reports for downstream deployment/manifest custody."

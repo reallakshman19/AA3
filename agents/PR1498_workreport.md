@@ -4,10 +4,10 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_CURRENT_MAIN_GROUNDED
+PR_RECOVERY_STATE: HEALTHY_CURRENT_MAIN_REGROUNDED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_CURRENT_STATE_GOVERNANCE_ONLY
 EXECUTION_MODE: AUTO
-AUTO_STATE: RUNNING
+AUTO_STATE: MERGE_AUDIT
 SCOPE_AUTHORITY: LOCKED_TO_PR1497_DOWNSTREAM_RECONCILIATION
 PHASE_PROGRESSION: AUTO
 MERGE_AUTHORITY: GRANTED_EXPLICIT_OWNER_CURRENT_CONVERSATION
@@ -16,32 +16,70 @@ ISSUE: #1389
 DEPENDENCY: PR #1497 / Issue #1377
 BRANCH: agent/issue-1389-pr1497-current-state-reconcile-20260828
 CRITICALITY: ENGINEERING_CRITICAL
-LIVE_MAIN_AT_GROUNDING: e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
-LIVE_MAIN_TREE_AT_GROUNDING: 710758849d2a17781110dbe5a9c6aa35074c1468
+ORIGINAL_GROUNDING_MAIN: e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
+CURRENT_LIVE_MAIN: 4ec93a2985d78d4e067dd40351cb899af2caed8a
+CURRENT_LIVE_MAIN_TREE: b1f8daebacf323cf8623a810a0b2a18e41df89ab
+INTERVENING_MAIN_CHANGE: PR #1490 LAFEA_B02D_V2_ONLY_DISJOINT
+STRUCTURAL_REGROUND_HEAD: de80546a1fd4f7d9593886aa158cd6c7c6eb8f40
+STRUCTURAL_REGROUND_TREE: 572b876b035d1d7b10c1fcba9f9348e0e9702257
 P0_AGGREGATE_BLOB: a1ea8989831f5c01acce81cc4e734beb45b1feb0
 CURRENT_STATE_JSON_BLOB: c421ce4e0656e7072fa50be700aa1aecb1be4bb6
 CURRENT_STATE_CHECKER_BLOB: 0792274e0da8531860815f4fd89d9c12522c658d
 CURRENT_STATE_SEMANTIC_HASH: 3ff5b391cc8e81f866f8e7746b6f48a8b588c2eaecbfb474abe0b14e1873cdd8
-GROUNDING_EPOCH: GE-PR1498-001
-CURRENT_STAGE: FINAL_EXACT_DIFF_AND_MERGE_AUDIT
+GROUNDING_EPOCH: GE-PR1498-002
+CURRENT_STAGE: FINAL_EXACT_DIFF_REVIEW_AND_MERGE_GATE
 CURRENT_BLOCKER: nine professional P0 source/acceptance gates remain blocked; genuine evidence 01-12 remains absent; #54 execution environment remains blocked
 HIGHEST_RISK: treating #1497 mid-radius source progress as removal of the #1377 professional blocker or as release authority
-EXACT_NEXT_ACTION: verify live main unchanged, exactly eight changed files, zero behind, zero reviews/threads and protected-path isolation; mark ready and merge only if clean, then proceed to the next primary-source gate under #1389.
+EXACT_NEXT_ACTION: verify current main still 4ec93a29..., compare main to final head for exactly eight files and zero behind, verify zero reviews/threads and protected-path isolation; mark ready and merge only if clean, then continue to the next primary-source gate under #1389.
 ```
 
 ## Mission
 
-Reconcile the Issue #1389 aggregate and professional-release current-state artifacts after merged PR #1497 advanced the #1377 cylindrical radius source record.
+Reconcile the Issue #1389 P0 aggregate and professional-release current-state artifacts after merged PR #1497 advanced the #1377 cylindrical radius source record.
 
 Invariant:
 
 `MID_RADIUS_SOURCE_PROGRESS_REDUCES_AMBIGUITY_BUT_DOES_NOT_REDUCE_BLOCKER_COUNT_WITHOUT_ASSESSMENT_GEOMETRY_CLOSURE`
 
+## Current-main drift / reconciliation
+
+During final audit, `main` advanced from PR #1497 merge `e6c76ac...` to `4ec93a29...` through exactly one commit: merged PR #1490, LAFEA B02D V2 governing-response qualification infrastructure.
+
+Observed intervening paths were:
+
+```text
+.gitignore
+agents/PR1490_workreport.md
+agents/claims/PR1490.yaml
+agents/status/PR1490.yaml
+scripts/lafea-b02d-v2-governing-response-check.mjs
+scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs
+scripts/lafea-b02d-v2-governing-response-self-test.mjs
+scripts/lib/lafea-b02d-v2-governing-response.js
+```
+
+Classification:
+
+`SAFE_AUTHORITY_DISJOINT_LAFEA_B02D_ONLY`
+
+No EMP.1, WRC source, P0 aggregate, release/current-state, route/registry, oracle/tolerance, evidence, workflow or UI path overlapped #1498.
+
+The branch was therefore structurally re-grounded without text replay:
+
+```text
+base tree       = b1f8daebacf323cf8623a810a0b2a18e41df89ab
+new tree        = 572b876b035d1d7b10c1fcba9f9348e0e9702257
+parent 1        = 0c9acabf738c6aaab8a70fad989e42ef9d77fc51
+parent 2        = 4ec93a2985d78d4e067dd40351cb899af2caed8a
+re-ground head  = de80546a1fd4f7d9593886aa158cd6c7c6eb8f40
+force update    = false
+```
+
+All five technical/current-state blobs were preserved byte-for-byte through the re-ground. The current-state artifact retains PR #1497 as its semantic source-governance basis because the intervening LAFEA commit is engineering-authority disjoint; the recovery layer records the later structural inheritance explicitly.
+
 ## Dependency truth
 
-PR #1497 merged at:
-
-`e6c76ac02e6ed2052e9c87e0691bb728f2031f5b`
+PR #1497 merged at `e6c76ac02e6ed2052e9c87e0691bb728f2031f5b`.
 
 Its #1377 source status is:
 
@@ -53,33 +91,27 @@ Source progress:
 - same cylindrical `R_m` identity retained through gamma, round-attachment beta and §4.5 radius-based applicability;
 - assessment/corrosion/local/nonuniform geometry policy remains unqualified.
 
-This downstream PR does not reopen or reinterpret PR #1497 source custody.
-
 ## Aggregate reconciliation
 
-`validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json`
-
-now carries the exact current #1377 status above.
-
-The aggregate remains:
+The aggregate now carries that exact #1377 status and remains:
 
 ```text
 state        = BLOCKED_P0_SOURCE_SEMANTICS
 blockerCount = 9
+aggregate blob = a1ea8989831f5c01acce81cc4e734beb45b1feb0
 ```
 
-The aggregate checker was deliberately **not changed** because it already data-drives each row against the individual source artifact and fails on status drift.
+The aggregate checker is unchanged because it is already data-driven and fails if any row drifts from its individual source artifact.
 
 ## Professional current-state reconciliation
 
-The current-state JSON now records PR #1497 as merged source governance and binds to the reconciled aggregate blob:
-
 ```text
-aggregate blob = a1ea8989831f5c01acce81cc4e734beb45b1feb0
-current-state semantic hash = 3ff5b391cc8e81f866f8e7746b6f48a8b588c2eaecbfb474abe0b14e1873cdd8
+current-state JSON blob = c421ce4e0656e7072fa50be700aa1aecb1be4bb6
+checker blob            = 0792274e0da8531860815f4fd89d9c12522c658d
+semantic hash           = 3ff5b391cc8e81f866f8e7746b6f48a8b588c2eaecbfb474abe0b14e1873cdd8
 ```
 
-The current-state checker was changed only to validate the new provenance schema and PR #1497 lineage. Existing fail-closed assertions for source custody, route authority, evidence, code, release, deployment and `--require-release` behavior remain intact.
+The checker changes only provenance assertions for PR #1497/current aggregate binding. All source custody, evidence, runtime authority, code/release/deployment and `--require-release` fail-closed assertions remain intact.
 
 ## Authority state
 
@@ -95,8 +127,6 @@ release qualified                       = false
 deployment authorized                    = false
 professional release ready               = false
 ```
-
-No authority boolean is widened by this PR.
 
 ## Evidence / execution truth
 
@@ -117,47 +147,29 @@ numerical WRC comparison in this PR      = NOT_APPLICABLE
 
 No `NOT_RUN`, `NOT_GENERATED` or `UNPROVEN` state is promoted to PASS.
 
-## Changed-file ledger
-
-Technical/current-state governance:
+## Changed-file ledger — exact intended scope
 
 1. `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json`
 2. `docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md`
 3. `validation/emp1/release/emp1-professional-release-current-state-v1.json`
 4. `scripts/emp1-professional-release-current-state-check.mjs`
 5. `docs/emp1/EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE.md`
-
-Recovery:
-
 6. `agents/PR1498_workreport.md`
 7. `agents/status/PR1498.yaml`
 8. `agents/claims/PR1498.yaml`
 
-Protected exclusions:
+Protected exclusions remain `src/core/**`, frozen release profile/readiness, WRC/CAUx source bytes, oracle/tolerances/expected values, evidence 01-12, workflows and UI/browser paths.
 
-```text
-src/core/emp1/**
-src/core/local-attachment-screening/**
-src/core/local-attachment-correlation/**
-validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
-validation/emp1/release/emp1-professional-release-readiness-v1.json
-WRC/CAUx controlled source bytes
-oracle/tolerances/benchmark expected values
-evidence 01-12
-.github/workflows/**
-UI/browser paths
-```
+## Appendix A
 
-## Appendix A — takeover qualification
+A1 20/20 — exact source→aggregate→current-state trace.
 
-A1 — Production/current-state trace: 20/20. Traced merged #1497 source status into the data-driven P0 aggregate and into the professional current-state artifact/checker without touching runtime mechanics.
+A2 20/20 — source progress separated from runtime/release authority; concurrent LAFEA drift classified before integration.
 
-A2 — Source/authority reconciliation: 20/20. Preserved distinction between source semantic progress, aggregate blocker state, bounded runtime authority and professional release authority.
+A3 20/20 — #1377 remains blocked for assessment geometry; P0 count remains 9.
 
-A3 — WRC bounded invariant: 20/20. #1377 remains a blocker for assessment-geometry policy; blockerCount remains 9 and no release scope changes.
+A4 19/20 — blob/hash custody independently retained; executable Node checks remain NOT_RUN.
 
-A4 — Independent validation: 19/20. Exact source/aggregate blob custody and semantic hash are retained; executable Node checks remain NOT_RUN in this connected environment.
+A5 20/20 — five governance files plus three recovery records; non-force two-parent re-ground preserved concurrent main.
 
-A5 — Minimal patch: 20/20. Five current-state governance files plus three recovery records; no production mechanics, source bytes, oracle, tolerance, workflow or UI mutation.
-
-**TOTAL = 99/100; minimum individual = 19/20.**
+**99/100; minimum 19/20.**

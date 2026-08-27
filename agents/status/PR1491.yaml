@@ -1,0 +1,36 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1491
+issue: 1321
+branch: agent/issue-1321-source-axis-general-gravity
+state: SOURCE_COMPLETE_MERGE_AUTHORIZED_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: OWNER_AUTHORIZED_FINAL_MERGE_GATE
+base_sha: 3e22134fe224bb6ea128bea9547b331cd633a8b8
+technical_reground_sha: f34bba88e46bd0020645c4507d3bdc809a57894a
+validation:
+  live_main_grounding: PASS_SOURCE_RECONCILIATION
+  nine_technical_path_overlap_audit: PASS_SOURCE_RECONCILIATION
+  exact_twelve_file_scope: PASS_SOURCE_RECONCILIATION
+  scalar_axis_invariance_trace: PASS_SOURCE_INSPECTION
+  downstream_z_only_compatibility_audit: PASS_SOURCE_INSPECTION
+  xyz_binding_and_yz_falsifier_source: PASS_SOURCE_INSPECTION
+  faithful_checkout: BLOCKED_DNS_GITHUB
+  focused_execution: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  advanced_shell_contract: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  raw_scalar_kernel_basis_retained: Z_UP
+  mm_only_scope_preserved: true
+  statics_formula_changed: false
+  route_or_cog_formula_changed: false
+  vector_consumer_generalized: false
+  z_only_downstream_gates_preserved: true
+  product_default_version: 6
+merge_authority: OWNER_GRANTED_BY_2026_08_27_USER_COMMAND
+merge_disposition: AUTHORIZED_AFTER_FINAL_CURRENTNESS_REVIEW_GATE
+exact_next_action: "Require 0-behind current main, exact 12-file diff, clean reviews/threads and raw GitHub mergeability; then mark ready and squash merge preserving EXECUTION_NOT_RUN."

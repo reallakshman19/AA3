@@ -5,50 +5,39 @@ mission: "Reconcile authorized-route current state in the aggregate P0 source-se
 workstream: EMP1_WRC537_P0_AGGREGATE_RECONCILIATION
 branch: agent/issue-1389-p0-gate-current-state-20260825
 execution_mode: AUTO
-auto_state: RUNNING
+auto_state: COMPLETE
 scope_authority: LOCKED_TO_APPROVED_MISSION
 phase_progression: AUTO
 criticality: ENGINEERING_CRITICAL
-agent_state: ACTIVE
+agent_state: HANDOVER_READY
 pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-live_main: 93c4f9e3af98e58190951ff94b5b50616950f623
-live_main_tree: c37873d432772b5b7552231e8acafa60c2deed01
-pre_reground_head: ed599b037b861aa8f6a3089792d81157e46d887a
+live_main_at_grounding: 93c4f9e3af98e58190951ff94b5b50616950f623
 structural_reground_head: f6202b7fa78ebfe0148b28fb50ea3d6310241b42
-structural_reground_tree: 7f8f22c2f21f9a867297c24032c7e3f05b21194d
 report_basis_head: f6202b7fa78ebfe0148b28fb50ea3d6310241b42
-grounding_epoch: GE-PR1427-006
+grounding_epoch: GE-PR1427-007
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_AGGREGATE_GOVERNANCE_CURRENT_MAIN_PR1494_DISJOINT
-current_stage: CURRENT_MAIN_REGROUND_VALIDATED_CONTINUE_STACKED_RELEASE_STATE
+coordination: SAFE_AGGREGATE_GOVERNANCE_CURRENT_MAIN
+current_stage: CURRENT_MAIN_REGROUND_COMPLETE_DOWNSTREAM_PR1436_RESTACKED
 validation:
-  current_main: PASS
-  concurrent_pr1494_overlap: PASS_NONE
-  exact_six_blob_custody: PASS
-  changed_file_scope: PASS_EXACT_SIX_FILES
-  behind_main: 0
+  exact_six_file_scope: PASS
+  behind_live_main_at_grounding: 0
   reviews: 0
   review_threads: 0
   aggregate_blocker_count: 9
   pr1415_unmerged_dependency: PASS_NOT_CURRENT_MAIN_AUTHORITY
   direct_primary_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
-  checker_execution_normal: NOT_RUN
-  checker_execution_require_ready: NOT_RUN
+  aggregate_checker: NOT_RUN
   numerical_comparison: NOT_APPLICABLE
 authority:
-  bounded_wrc_route_authorized_current_main: true
+  bounded_route_authorized: true
   professional_p0_source_semantics_ready: false
   p0_blocker_count: 9
-  aggregate_gate_grants_engineering_authority: false
-  global_emp1_c_route_authority: false
-  code_compliance_authority: false
-  release_authority: false
-  professional_release_ready: false
-neighbor_dependency:
-  pr1415_state: OPEN_DRAFT_UNMERGED
-  rule: "PR1415 is not current-main authority. If it merges, re-ground PR1427 and downstream PR1436 before merge."
+  global_emp1_c: false
+  code_compliance: false
+  release_qualified: false
+  deployment_authorized: false
 merge_authorization: OWNER_ONLY_NOT_GRANTED
-exact_next_action: "Continue AUTO progression to PR1436 stacked on exact PR1427 aggregate; keep unmerged and invalidate/re-ground if PR1415 merges."
+exact_next_action: "Keep draft/unmerged. If PR1415 merges, reconcile #1377 in aggregate before any PR1427 merge and re-ground PR1436."

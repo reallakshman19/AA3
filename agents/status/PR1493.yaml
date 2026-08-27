@@ -1,0 +1,39 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1493
+issue: 1321
+branch: agent/issue-1321-default-usage-coverage-summary
+state: SOURCE_COMPLETE_REVIEW_PENDING_EXECUTION
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: D4_DEFAULT_USAGE_COVERAGE_OBSERVABILITY_SOURCE_COMPLETE
+base_branch: main
+base_sha: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+validation:
+  merged_pr1492_base_grounding: PASS_SOURCE_INSPECTION
+  issue_1321_prd_remaining_scope: PASS_SOURCE_INSPECTION
+  configured_default_usage_owner_trace: PASS_SOURCE_INSPECTION
+  product_default_semantic_boundary: PASS_SOURCE_INSPECTION
+  canonical_checker_coverage_owner_trace: PASS_SOURCE_INSPECTION
+  one_current_input_build_trace: PASS_SOURCE_INSPECTION
+  falsifier_source_review_and_defect_correction: PASS_SOURCE_INSPECTION
+  faithful_local_checkout: BLOCKED_DNS_GITHUB
+  focused_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  advanced_shell_contract: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  resolver_precedence_changed: false
+  configured_default_usage_inferred_from_policy: false
+  product_default_promoted_to_target_without_resolver_evidence: false
+  coverage_recomputed_from_source_model: false
+  checker_readiness_logic_changed: false
+  common_input_store_mutated_by_view: false
+  common_input_sealed_by_view: false
+  run_executed_by_view: false
+  numerical_mechanics_changed: false
+merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_disposition: DRAFT_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+exact_next_action: "Remove temporary WIP marker; reconcile exact seven-file diff and live main/reviews/threads; keep draft pending executable qualification or explicit owner disposition."

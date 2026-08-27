@@ -3,7 +3,7 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1488
 issue: 1321
 branch: agent/issue-1321-calculation-defaults-scoped-ux
-state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+state: SOURCE_COMPLETE_AWAITING_OWNER
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 base_branch: agent/issue-1321-calculation-defaults-basic-ux
@@ -25,7 +25,7 @@ protected_paths:
   - src/workspace/engineering-loads/**
   - scripts/run-non-fea-checks.mjs
   - .github/workflows/**
-authority_boundary: "Scoped policy UX/composition only. Existing configured-default schema, precedence, exact matching and conflict behavior are immutable in this PR."
+authority_boundary: "Scoped policy UX/composition only. Existing configured-default schema, precedence, exact matching and conflict behavior are unchanged. Support-kind remains unavailable because no current support-target field grants PROJECT_CONFIGURED_DEFAULT."
 merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
 appendix_a_qualified: true
 appendix_a_score: 98

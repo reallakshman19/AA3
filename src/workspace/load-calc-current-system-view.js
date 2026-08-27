@@ -239,6 +239,17 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
   );
   const status = button?.querySelector('.empirical-load-calc__workflow-status');
   if (!button || !status) return;
+  const readiness = state?.workflowReadiness || {};
+  if (readiness.datasetReady !== true) {
+    button.dataset.stepState = 'pending';
+    status.textContent = 'After import';
+    return;
+  }
+  if (readiness.topologyCheckReady !== true) {
+    button.dataset.stepState = 'pending';
+    status.textContent = 'After topology';
+    return;
+  }
   const resolved = isRoutineRunReady(state?.commonInputState);
   const active = state?.activeTab === 'project-data';
   button.dataset.stepState = active ? 'current' : resolved ? 'complete' : 'ready';

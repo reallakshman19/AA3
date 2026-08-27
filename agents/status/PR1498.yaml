@@ -12,19 +12,18 @@ criticality: ENGINEERING_CRITICAL
 agent_state: HANDOVER_READY
 pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-original_grounding_main: e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
-live_main_at_reground: 4ec93a2985d78d4e067dd40351cb899af2caed8a
-live_main_tree_at_reground: b1f8daebacf323cf8623a810a0b2a18e41df89ab
-structural_reground_head: de80546a1fd4f7d9593886aa158cd6c7c6eb8f40
-structural_reground_tree: 572b876b035d1d7b10c1fcba9f9348e0e9702257
-grounding_epoch: GE-PR1498-002
+source_governance_basis_main: e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
+live_main_at_reground: af55f56967d596d60c91db67b4fdf12ecb9a26a8
+live_main_tree_at_reground: a49ac0d80e3717f7d1f59e636a4c88fbc7507c85
+grounding_epoch: GE-PR1498-003
 appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_CURRENT_STATE_GOVERNANCE_DISJOINT_FROM_PR1490_LAFEA_B02D
+coordination: SAFE_CURRENT_STATE_GOVERNANCE_DISJOINT_FROM_PR1490_AND_PR1496
 current_stage: FINAL_EXACT_DIFF_REVIEW_AND_MERGE_GATE
 validation:
-  intervening_main_change: PASS_DISJOINT_PR1490_LAFEA_B02D_ONLY
+  concurrent_pr1490: PASS_AUTHORITY_DISJOINT_LAFEA_B02D
+  concurrent_pr1496: PASS_AUTHORITY_DISJOINT_LOAD_CALC_HANDCALC
   p0_aggregate_blob: a1ea8989831f5c01acce81cc4e734beb45b1feb0
   current_state_json_blob: c421ce4e0656e7072fa50be700aa1aecb1be4bb6
   current_state_checker_blob: 0792274e0da8531860815f4fd89d9c12522c658d
@@ -48,4 +47,4 @@ authority:
   deployment_authorized: false
   professional_release_ready: false
 merge_authorization: GRANTED_EXPLICIT_OWNER_CURRENT_CONVERSATION
-exact_next_action: "Verify main still 4ec93a29..., exact eight-file scope and zero behind, zero reviews/threads and protected-path isolation; mark ready and merge if clean, then continue to the next primary-source gate under #1389."
+exact_next_action: "Attach one-commit re-ground on af55f569..., verify exact eight-file scope/zero behind/zero reviews and threads, mark ready and merge if clean, then continue to the next primary-source gate under #1389."

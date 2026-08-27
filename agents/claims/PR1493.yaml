@@ -1,0 +1,30 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1493
+issue: 1321
+branch: agent/issue-1321-default-usage-coverage-summary
+state: SOURCE_COMPLETE_REVIEW_PENDING_EXECUTION
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+mission: "Expose canonical configured-default usage, Product-profile assumption usage, Common Input coverage, and readiness exceptions in Load Calc Calculation Defaults without changing authority or mechanics."
+claimed_paths:
+  - src/workspace/project-data/non-fea-calculation-defaults-observability-model.js
+  - src/workspace/project-data/non-fea-calculation-effective-values-view.js
+  - scripts/non-fea-calculation-defaults-observability-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1493_workreport.md
+  - agents/claims/PR1493.yaml
+  - agents/status/PR1493.yaml
+protected_paths:
+  - src/core/non-fea-common-checker/**
+  - src/core/non-fea-enrichment/**
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/workspace/project-data/non-fea-configured-default-provider.js
+  - src/workspace/project-data/non-fea-effective-value-resolver.js
+  - src/workspace/engineering-loads/**
+  - .github/workflows/**
+authority_boundary: "Read-only projection/presentation of existing configured-default usage receipts, Product-default provider receipts, and canonical Common Input checker requirements/blockers. No new resolution, precedence, coverage, readiness, authority, Run, statics, solver or tolerance logic."
+semantic_boundary: "PROJECT_CONFIGURED_DEFAULT usage remains target/method receipt evidence; PRODUCT_DEFAULT usage remains Project Data path-fill evidence and is not promoted to target-level winner custody."
+merge_authority: OWNER_ONLY_NOT_GRANTED

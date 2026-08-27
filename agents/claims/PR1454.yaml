@@ -6,7 +6,7 @@ issue: 1451
 criticality: ENGINEERING_CRITICAL
 claim_state: HANDOVER_READY
 execution_mode: MANUAL
-coordination_state: SAFE_INTAKE_SECURITY_CURRENT_MAIN_REGROUND
+coordination_state: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_THEN_NEXT_1389_SUCCESSOR
 scope:
   authority: EMP1_JSON_INTAKE_SECURITY
   paths:
@@ -28,13 +28,13 @@ authority_boundary:
   engineering_method_authority_granted: false
   release_authority_granted: false
   deployment_authority_granted: false
-pre_reground_head: 54c513e0d6b3b5d672d4a8dec8410bd643c20f45
-live_main: 6b5e048467cf67fb51da3e99517ce58d5cc5a3dc
-structural_reground_head: 7102208808020a7a82a2ea95e6cae6c896a757e8
-structural_reground_tree: 3cae8570d2b5f21f2876e1439a05fe17ff470fea
-report_basis_head: 7102208808020a7a82a2ea95e6cae6c896a757e8
+pre_reground_head: fbb58f9e37e51ec70ceac3aa8534f25b81ccbcfb
+live_main: cf7c961c3980f461b9a890984101a2b97ef8b51a
+structural_reground_head: 6faa00d7446b5784eff9a55d951c9a01bbd70df0
+structural_reground_tree: 7b07a44c47b048f00c48cad721a37a7f556ec523
+report_basis_head: 6faa00d7446b5784eff9a55d951c9a01bbd70df0
 report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
-merge_authority: NOT_GRANTED_FOR_THIS_SUCCESSOR
-grounding_epoch: GE-PR1454-004
+merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-27T17:17:42Z
+grounding_epoch: GE-PR1454-005
 handover_report: agents/PR1454_workreport.md
-exact_next_action: "Keep draft/unmerged pending explicit owner merge authorization."
+exact_next_action: "Verify final exact five-file delta and zero reviews/threads, then expected-head squash-merge and proceed to next scoped #1389 successor."

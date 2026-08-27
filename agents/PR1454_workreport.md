@@ -8,34 +8,35 @@ PR_RECOVERY_STATE: HEALTHY_CURRENT_MAIN_REGROUNDED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_INTAKE_SECURITY_ONLY
 EXECUTION_MODE: MANUAL
 SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1451
-MERGE_AUTHORITY: NOT_GRANTED_FOR_THIS_SUCCESSOR
+MERGE_AUTHORITY: GRANTED_EXPLICIT_OWNER_2026-08-27T17:17:42Z
 CRITICALITY: ENGINEERING_CRITICAL
 PR: #1454
 ISSUE: #1451
 UMBRELLA: #1389
 BRANCH: agent/issue-1451-emp1-json-intake-security-20260826
-PRE_REGROUND_HEAD: 54c513e0d6b3b5d672d4a8dec8410bd643c20f45
-LIVE_MAIN: 6b5e048467cf67fb51da3e99517ce58d5cc5a3dc
-STRUCTURAL_REGROUND_HEAD: 7102208808020a7a82a2ea95e6cae6c896a757e8
-STRUCTURAL_REGROUND_TREE: 3cae8570d2b5f21f2876e1439a05fe17ff470fea
-REPORT_BASIS_HEAD: 7102208808020a7a82a2ea95e6cae6c896a757e8
+PRE_REGROUND_HEAD: fbb58f9e37e51ec70ceac3aa8534f25b81ccbcfb
+LIVE_MAIN: cf7c961c3980f461b9a890984101a2b97ef8b51a
+STRUCTURAL_REGROUND_HEAD: 6faa00d7446b5784eff9a55d951c9a01bbd70df0
+STRUCTURAL_REGROUND_TREE: 7b07a44c47b048f00c48cad721a37a7f556ec523
+REPORT_BASIS_HEAD: 6faa00d7446b5784eff9a55d951c9a01bbd70df0
 REPORT_SYNC: CURRENT_METADATA_ONLY_AFTER_BASIS
-GROUNDING_EPOCH: GE-PR1454-004
-CURRENT_STAGE: CURRENT_MAIN_REGROUND_VALIDATED_DRAFT
-CURRENT_BLOCKER: focused Node/browser execution remains NOT_RUN under #54; merge authority for this successor not granted
+GROUNDING_EPOCH: GE-PR1454-005
+CURRENT_STAGE: OWNER_AUTHORIZED_EXACT_HEAD_MERGE_GATE
+CURRENT_BLOCKER: focused Node/browser execution remains NOT_RUN under #54; no executable PASS or engineering/release authority is claimed
 HIGHEST_RISK: unsafe bytes being read before rejection or reintroducing the Rollup evaluation-order cycle via I/O leaf dependencies
-EXACT_NEXT_ACTION: keep PR1454 draft/unmerged pending explicit owner merge authority; do not widen from intake-security into source/method/release authority.
+EXACT_NEXT_ACTION: verify exact five-file delta / zero behind / zero reviews and threads, then squash-merge with expected-head guard; afterward proceed to the next scoped #1389 successor.
 ```
 
 ## Current-main reconciliation
 
-Current main is `6b5e048467cf67fb51da3e99517ce58d5cc5a3dc`. The shared production I/O seam `src/workspace/lafea-workbench-controller-io.js` is byte-identical between PR1454's original base and current main at blob `1848913f8a5ed0338cdcfc9cbf44b76ed5b97d53`.
+PR1448 was owner-authorized and squash-merged at `cf7c961c3980f461b9a890984101a2b97ef8b51a`. Its seven-step presentation slice does not overlap PR1454's five intended paths. The shared production I/O seam on the prior current-main basis remained byte-identical to PR1454's original base at blob `1848913f8a5ed0338cdcfc9cbf44b76ed5b97d53`.
 
-Therefore PR1454 was re-grounded non-destructively with current-main tree plus all five exact retained PR1454 blobs; branch movement used `force=false`. No technical conflict resolution or code regeneration occurred.
+PR1454 was therefore re-grounded non-destructively using the new-main tree plus all five exact retained PR1454 blobs. The structural commit uses the prior PR1454 head as first parent and merged PR1448 main as second parent; branch movement used `force=false`. No technical conflict resolution or code regeneration occurred.
 
 ```text
-structural head = 7102208808020a7a82a2ea95e6cae6c896a757e8
-structural tree = 3cae8570d2b5f21f2876e1439a05fe17ff470fea
+current main    = cf7c961c3980f461b9a890984101a2b97ef8b51a
+structural head = 6faa00d7446b5784eff9a55d951c9a01bbd70df0
+structural tree = 7b07a44c47b048f00c48cad721a37a7f556ec523
 technical I/O   = e1be59e8559ad3590b823926d28126816e703428
 security checker= af3ebdb043f2a0471959aba5d97e24cd78178602
 ```
@@ -50,10 +51,11 @@ The I/O leaf remains free of `lafea-workbench-model.js`; the checker independent
 
 ## Validation truth
 
-- production I/O seam drift: `PASS_NONE`, old/current main blob identical;
-- exact technical blob custody: `PASS`;
+- PR1448→PR1454 exact-path overlap: `PASS_NONE`;
+- exact five-blob structural custody: `PASS`;
+- technical blob custody: `PASS_EXACT`;
 - branch movement: `PASS_FAST_FORWARD_FORCE_FALSE`;
-- reviews / review threads before re-ground: `PASS_ZERO_ZERO`;
+- prior live reviews / review threads: `PASS_ZERO_ZERO`;
 - prior source/static security audit: retained `PASS_PRIOR_AUDIT`;
 - focused Node/browser execution: `NOT_RUN` / `NOT_RUN_EXECUTION_ENVIRONMENT` under #54;
 - WRC numerical comparison: `NOT_APPLICABLE`.
@@ -64,4 +66,4 @@ No `NOT_RUN` is promoted to PASS.
 
 A1 20/20; A2 20/20; A3 20/20; A4 19/20; A5 20/20.
 
-**99/100; minimum 19/20 — PASS for intake-security current-main re-ground only.**
+**99/100; minimum 19/20 — PASS for owner-authorized intake-security integration only.**

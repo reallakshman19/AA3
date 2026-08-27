@@ -16,7 +16,7 @@ Close the remaining Issue #1321 PR-D observability items:
 - Default-usage summary.
 - Exception/coverage summary.
 
-The implementation is read-only and must reuse existing authority/checker evidence rather than introduce another default, resolution, coverage or readiness mechanism.
+The implementation is read-only and reuses existing authority/checker evidence rather than introducing another default, resolution, coverage or readiness mechanism.
 
 ## Live Issue #1321 grounding
 PR-D requires:
@@ -70,9 +70,9 @@ Coverage comes only from canonical checker requirements:
 - `FLEXURAL_COVERAGE`
 - `SECTION_COVERAGE`
 
-D4 does not recalculate governed-entity coverage. It validates the checker detail contract (`total`, `covered`, `missing`, `ready`) for internal consistency and derives presentation percentage only from those canonical counts.
+D4 does not recalculate governed-entity coverage from the source model. It validates the checker detail contract (`total`, `covered`, `missing`, `ready`) for internal consistency and derives presentation percentage only from those canonical counts.
 
-Repeated coverage evidence across requested methods must be identical or the observability projection fails closed.
+Repeated coverage evidence across requested methods must be identical or the observability projection fails closed. It also requires `covered = total - unique(missing)` and `ready = (missing.length === 0)`, matching the checker contract.
 
 ### Exceptions
 D4 groups the canonical `report.blockers` for presentation while retaining occurrence counts and method IDs. These are labelled **pre-Run readiness exceptions**. They are not represented as post-calculation unallocated-load/equilibrium exceptions.
@@ -111,6 +111,9 @@ During source review, an initial falsifier assertion incorrectly required Produc
 - one-current-input-build architecture trace: PASS_SOURCE_INSPECTION
 - Product-default vs configured-default semantic boundary review: PASS_SOURCE_INSPECTION
 - focused falsifier source review / defect correction: PASS_SOURCE_INSPECTION
+- exact seven-file delta reconciliation: PASS_SOURCE_INSPECTION
+- live main drift reconciliation: PASS_SOURCE_INSPECTION (`behind_by=0` at reconciliation)
+- reviews / review threads: PASS_SOURCE_INSPECTION (0 / 0 at reconciliation)
 - faithful local checkout: BLOCKED_ENVIRONMENT (`Could not resolve host: github.com`)
 - focused D4 Node falsifier: NOT_RUN
 - `node scripts/run-non-fea-checks.mjs`: NOT_RUN
@@ -121,7 +124,7 @@ During source review, an initial falsifier assertion incorrectly required Produc
 
 No NOT_RUN item is represented as PASS.
 
-## Expected final net file ledger — 7 files
+## Final net file ledger — 7 files
 1. `agents/PR1493_workreport.md`
 2. `agents/claims/PR1493.yaml`
 3. `agents/status/PR1493.yaml`
@@ -130,7 +133,21 @@ No NOT_RUN item is represented as PASS.
 6. `src/workspace/project-data/non-fea-calculation-defaults-observability-model.js`
 7. `src/workspace/project-data/non-fea-calculation-effective-values-view.js`
 
-Temporary `agents/WIP-1321-default-usage-coverage-summary.yaml` must be removed before final reconciliation.
+Temporary `agents/WIP-1321-default-usage-coverage-summary.yaml` has been removed.
+
+## Reconciliation checkpoint
+At source-complete reconciliation before the final recovery-only record updates:
+- PR head: `ac70e40524bb93bb9526caaf8897da9623358dba`;
+- base/main: `b2e8745a8cdb47850b8f162cea8c16f3f4006e03`;
+- compare status: `ahead`;
+- behind main: `0`;
+- exact changed files: `7`;
+- mergeable: `true`;
+- draft: `true`;
+- reviews: `0`;
+- review threads: `0`.
+
+The actual final branch head must be rechecked after these recovery-only updates; the net seven-file boundary must remain unchanged.
 
 ## Appendix A — takeover questions
 1. Why is `configuredDefaultUsageLedger.rows` authoritative for actual PROJECT_CONFIGURED_DEFAULT usage while the configured-default policy itself is not?
@@ -141,4 +158,4 @@ Temporary `agents/WIP-1321-default-usage-coverage-summary.yaml` must be removed 
 6. Which source change would prove that merely opening Calculation Defaults can seal or execute Common Input, and why would that be a P0 regression?
 
 ## EXACT_NEXT_ACTION
-Create numbered claim/status records, remove temporary WIP custody, reconcile the exact seven-file diff against live main, recheck reviews/threads/mergeability and keep executable checks honestly NOT_RUN pending a faithful environment.
+Recheck the actual final head after recovery-only updates, confirm exact seven-file diff / zero behind / reviews and threads, update the PR body to source-complete truth, and keep executable qualification NOT_RUN unless a faithful checkout becomes available.

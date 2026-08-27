@@ -4,20 +4,23 @@ pr_or_wip: PR1485
 mission: Add explicit opt-in B02D V2 producer binding and exact-head qualification envelope while preserving V1/default route
 workstream: LAFEA_B02D_V2_PRODUCER_BINDING
 branch: agent/lafea-b02d-v2-producer-binding-20260827
-base_main: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
+base_main: d6101bcac7ccbdab9e42d7e0afbdd7b06d897462
+main_sync_commit: a0c3f513c93d7d00531cac7d71b70246483d6df8
 work_intent: IMPLEMENT_AND_QUALIFY_BINDING
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 agent_state: ACTIVE
-pr_recovery_state: CURRENT_MAIN_BINDING_SUCCESSOR
+pr_recovery_state: CURRENT_MAIN_SYNCHRONIZED_BINDING_SUCCESSOR
 handover_readiness: READY_FOR_VALIDATION
 report_path: agents/PR1485_workreport.md
-current_stage: EXACT_HEAD_BINDING_ENVELOPE_IMPLEMENTED_REAL_EXECUTION_NOT_RUN
+current_stage: CURRENT_MAIN_SYNCHRONIZED_EXACT_HEAD_BINDING_ENVELOPE_IMPLEMENTED_REAL_EXECUTION_NOT_RUN
 engineering_failure_proven: false
 validation:
   frozen_asset_merge_grounding: { state: PASS_GITHUB_READBACK }
   binding_base_blob_equality: { state: PASS_GIT_BLOB_EQUALITY }
   reviewed_binding_blob_transplant: { state: PASS_GIT_OBJECT_CUSTODY }
+  emp1_drift_exact_file_overlap: { state: PASS_DISJOINT }
+  current_main_synchronization: { state: PASS_0_BEHIND_9_FILES }
   focused_checker_syntax: { state: PASS_LOCAL_NODE_CHECK }
   exact_head_classifier_syntax: { state: PASS_LOCAL_NODE_CHECK }
   exact_head_wrapper_syntax: { state: PASS_LOCAL_NODE_CHECK }

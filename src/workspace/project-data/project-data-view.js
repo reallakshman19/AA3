@@ -1,4 +1,7 @@
 import { renderNonFeaCalculationDefaultsView } from './non-fea-calculation-defaults-view.js';
+import {
+  renderNonFeaCalculationEffectiveValuesInspector,
+} from './non-fea-calculation-effective-values-view.js';
 import { renderProjectDataFullView } from './project-data-view-full.js';
 
 /**
@@ -11,7 +14,13 @@ import { renderProjectDataFullView } from './project-data-view-full.js';
 export function renderProjectDataView(container, onChanged) {
   if (!container) throw new TypeError('Project Data view requires a container.');
   const inLoadCalc = Boolean(container.closest?.('[data-role="load-calc-consumer"]'));
-  return inLoadCalc
-    ? renderNonFeaCalculationDefaultsView(container, onChanged)
-    : renderProjectDataFullView(container, onChanged);
+  if (!inLoadCalc) return renderProjectDataFullView(container, onChanged);
+
+  const refreshLoadCalc = () => {
+    if (typeof onChanged === 'function') onChanged();
+    else renderProjectDataView(container, onChanged);
+  };
+  const result = renderNonFeaCalculationDefaultsView(container, refreshLoadCalc);
+  renderNonFeaCalculationEffectiveValuesInspector(container);
+  return result;
 }

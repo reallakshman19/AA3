@@ -306,14 +306,22 @@ function promotedAdvancedGroupMarkup(activeTab) {
 }
 
 function currentSystemExecutionMarkup(execution, distribution) {
+  const retention = execution?.explicitMomentRetention || null;
+  const retainedMoments = Array.isArray(retention?.records) ? retention.records : [];
+  const overallStatus = execution?.resultStatus || distribution?.status || 'UNKNOWN';
+  const verticalStatus = distribution?.status || 'UNKNOWN';
   return `<details open data-empirical-authority="${CURRENT_SYSTEM_AUTHORITY}">
     <summary>Current Common Input system-run receipt</summary>
     <dl>
       <dt>Authority</dt><dd>${CURRENT_SYSTEM_AUTHORITY}</dd>
       <dt>Freshness</dt><dd>${escapeHtml(distribution?.freshness?.status || 'UNKNOWN')}</dd>
+      <dt>Overall result</dt><dd>${escapeHtml(overallStatus)}</dd>
+      <dt>Vertical reaction distribution</dt><dd>${escapeHtml(verticalStatus)}</dd>
       <dt>Method</dt><dd>${escapeHtml(execution.executedMethod || execution.requestedMethod || distribution?.method || 'UNKNOWN')}</dd>
       <dt>Project</dt><dd>${escapeHtml(execution.projectId || 'NOT_SET')}</dd>
       <dt>Dataset</dt><dd>${escapeHtml(execution.datasetId || 'UNKNOWN')}</dd>
+      <dt>Separate source-moment demands</dt><dd>${retainedMoments.length}</dd>
+      <dt>Moment retention</dt><dd><code>${escapeHtml(execution.explicitMomentRetentionSemanticHash || 'NOT_APPLICABLE')}</code></dd>
       <dt>Common Input</dt><dd><code>${escapeHtml(execution.commonInputSemanticHash)}</code></dd>
       <dt>Common Input seal</dt><dd><code>${escapeHtml(execution.commonInputSealSemanticHash)}</code></dd>
       <dt>Run authorization</dt><dd><code>${escapeHtml(execution.runAuthorizationSemanticHash)}</code></dd>
@@ -321,8 +329,27 @@ function currentSystemExecutionMarkup(execution, distribution) {
       <dt>Distribution</dt><dd><code>${escapeHtml(execution.distributionSemanticHash)}</code></dd>
       <dt>Receipt</dt><dd><code>${escapeHtml(execution.semanticHash)}</code></dd>
     </dl>
-    <p>System-generated routine Run evidence. No legacy published baseline, handoff, or human approval is asserted.</p>
+    ${explicitMomentDemandMarkup(retainedMoments)}
+    <p>System-generated routine Run evidence. Retained source-explicit component moments are separate support/civil demands and are not distributed into vertical reactions. No legacy published baseline, handoff, or human approval is asserted.</p>
   </details>`;
+}
+
+function explicitMomentDemandMarkup(records) {
+  if (!records.length) return '';
+  return `<section data-current-system-explicit-moment-demands>
+    <h4>Retained source-explicit component moments</h4>
+    <table>
+      <thead><tr><th>Entity</th><th>Route</th><th>Chainage</th><th>Axis</th><th>Moment</th><th>Reaction treatment</th></tr></thead>
+      <tbody>${records.map((row) => `<tr>
+        <td>${escapeHtml(row.entityId)}</td>
+        <td>${escapeHtml(row.routeId)}</td>
+        <td>${escapeHtml(row.applicationChainageMm)} mm</td>
+        <td>${escapeHtml(row.axis)}</td>
+        <td>${escapeHtml(row.magnitudeNm)} N·m</td>
+        <td>${escapeHtml(row.verticalReactionDistribution || 'NOT_PERFORMED')}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </section>`;
 }
 
 function nonemptyArray(value) {

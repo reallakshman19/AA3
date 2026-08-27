@@ -49,6 +49,7 @@ const checks = [
   ['READY Common Input system Run authorization', 'scripts/non-fea-empirical-run-authorization-check.mjs'],
   ['Current Common Input empirical mass projection', 'scripts/current-common-input-empirical-mass-projection-check.mjs'],
   ['Current Common Input empirical support-load execution', 'scripts/current-common-input-empirical-support-load-execution-check.mjs'],
+  ['Current Common Input explicit component-moment retention', 'scripts/current-common-input-explicit-moment-retention-check.mjs'],
   ['Current Common Input empirical Run runtime', 'scripts/current-common-input-empirical-run-runtime-check.mjs'],
   ['Analysis plan', 'scripts/non-fea-analysis-plan-check.mjs'],
   ['Method consumption', 'scripts/non-fea-method-consumption-check.mjs'],

@@ -17,6 +17,9 @@ validation:
   canonical_checker_coverage_owner_trace: PASS_SOURCE_INSPECTION
   one_current_input_build_trace: PASS_SOURCE_INSPECTION
   falsifier_source_review_and_defect_correction: PASS_SOURCE_INSPECTION
+  exact_seven_file_diff: PASS_SOURCE_INSPECTION
+  main_drift_reconciliation: PASS_SOURCE_INSPECTION
+  reviews_threads_reconciliation: PASS_SOURCE_INSPECTION
   faithful_local_checkout: BLOCKED_DNS_GITHUB
   focused_execution_check: NOT_RUN
   non_fea_aggregate: NOT_RUN
@@ -36,4 +39,4 @@ invariants:
   numerical_mechanics_changed: false
 merge_authority: OWNER_ONLY_NOT_GRANTED
 merge_disposition: DRAFT_SOURCE_COMPLETE_EXECUTION_NOT_RUN
-exact_next_action: "Remove temporary WIP marker; reconcile exact seven-file diff and live main/reviews/threads; keep draft pending executable qualification or explicit owner disposition."
+exact_next_action: "Recheck the actual final branch head after recovery-only updates; preserve the exact seven-file delta and zero-behind/review-thread state. Run executable qualification on a faithful checkout before any unqualified PASS claim."

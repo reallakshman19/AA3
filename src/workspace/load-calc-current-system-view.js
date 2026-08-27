@@ -189,6 +189,7 @@ function convergeFiveStepWorkflow(section, state) {
     indexNode.textContent = String(index + 1);
     labelNode.textContent = step.label;
   });
+  normalizeCalculationDefaultsStatus(workflow, state);
 
   const advanced = workflow.querySelector('details.empirical-load-calc__advanced');
   const summary = advanced?.querySelector('summary.empirical-load-calc__workflow-step');
@@ -230,6 +231,18 @@ function convergeFiveStepWorkflow(section, state) {
   if (output?.textContent === 'Check Verify & Run tab — some inputs are missing') {
     output.textContent = 'Open Run or Advanced → Input Check — some inputs are missing';
   }
+}
+
+function normalizeCalculationDefaultsStatus(workflow, state) {
+  const button = workflow.querySelector(
+    'button.empirical-load-calc__workflow-step[data-load-calc-tab="project-data"]',
+  );
+  const status = button?.querySelector('.empirical-load-calc__workflow-status');
+  if (!button || !status) return;
+  const resolved = isRoutineRunReady(state?.commonInputState);
+  const active = state?.activeTab === 'project-data';
+  button.dataset.stepState = active ? 'current' : resolved ? 'complete' : 'ready';
+  status.textContent = resolved ? 'Resolved' : active ? 'Review' : 'Available';
 }
 
 function promotedAdvancedGroupMarkup(activeTab) {

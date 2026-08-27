@@ -61,11 +61,15 @@ export class EngineeringModelController {
     this.datasetVersion = null;
     this.lastRebuiltDataset = null;
     this.projectTopologyModelBasis = null;
+    this.commonInputConfigurationBasis = null;
   }
 
   init() {
     if (this.unsubscribers.length) return;
     this.projectTopologyModelBasis = projectDataTopologyModelBasis(projectDataStore.getProfile());
+    this.commonInputConfigurationBasis = commonInputConfigurationBasis(
+      nonFeaCommonInputStore.getSnapshot(),
+    );
     this.unsubscribers = [
       this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, ({ snapshot }) => this.handleSnapshot(snapshot)),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, () => this.calculate()),
@@ -76,6 +80,7 @@ export class EngineeringModelController {
       this.eventBus.subscribe('MASTER_DATA_UPDATED', () => this.handleMasterDataChanged()),
       this.eventBus.subscribe('MASTER_DATA_CLEARED', () => this.handleMasterDataChanged()),
       projectDataStore.subscribe((event) => this.handleProjectDataChanged(event)),
+      nonFeaCommonInputStore.subscribe((snapshot) => this.handleCommonInputSnapshot(snapshot)),
     ];
   }
 
@@ -171,6 +176,34 @@ export class EngineeringModelController {
     });
   }
 
+  /**
+   * Requested methods/load cases/qualification selection are calculation-
+   * affecting even though they do not rebuild geometry. Observe the Common
+   * Input store centrally so every configuration authoring surface invalidates
+   * current numerical results; evaluation/sealing with unchanged configuration
+   * does not.
+   */
+  handleCommonInputSnapshot(snapshot) {
+    const nextBasis = commonInputConfigurationBasis(snapshot);
+    if (this.commonInputConfigurationBasis === null) {
+      this.commonInputConfigurationBasis = nextBasis;
+      return;
+    }
+    if (nextBasis === this.commonInputConfigurationBasis) return;
+    this.commonInputConfigurationBasis = nextBasis;
+
+    const dataset = this.workspaceState.getSnapshot()?.dataset || null;
+    engineeringModelStore.markEmpiricalStale(
+      'COMMON_INPUT_CONFIGURATION_CHANGED',
+      dataset?.version || null,
+    );
+    this.authorizedConsumerController.refreshEmpirical();
+    this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'common-input-configuration-changed',
+      topologyCheckAffected: false,
+    });
+  }
+
   /** Retained explicit historical authorized-runtime execution path. */
   calculate() {
     try {
@@ -216,6 +249,7 @@ export class EngineeringModelController {
     this.unsubscribers = [];
     this.lastRebuiltDataset = null;
     this.projectTopologyModelBasis = null;
+    this.commonInputConfigurationBasis = null;
     engineeringModelStore.clear();
   }
 }
@@ -229,6 +263,10 @@ export function projectDataTopologyModelBasis(profile) {
     const [groupKey, fieldKey] = path.split('.');
     return stableRuntimeValue(profile?.[groupKey]?.[fieldKey]?.value ?? null);
   }));
+}
+
+function commonInputConfigurationBasis(snapshot) {
+  return JSON.stringify(stableRuntimeValue(snapshot?.configuration || null));
 }
 
 function stableRuntimeValue(value) {

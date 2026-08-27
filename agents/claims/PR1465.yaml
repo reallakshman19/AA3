@@ -1,0 +1,33 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1465
+issue: 1321
+branch: agent/issue-1321-run-internal-authorization
+state: SOURCE_COMPLETE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: agent/issue-1321-run-ready-snapshot
+base_sha: 46a7b6735b746f612e28b0adfad847869b7b7ff4
+mission: "Create and record a distinct routine system Run authorization from fully READY current Common Input without fabricating legacy published-baseline or consumer-handoff authority"
+claimed_paths:
+  - src/workspace/engineering-loads/non-fea-empirical-run-authorization.js
+  - src/workspace/engineering-loads/non-fea-empirical-run-authorization-runtime.js
+  - scripts/non-fea-empirical-run-authorization-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1465_workreport.md
+  - agents/claims/PR1465.yaml
+  - agents/status/PR1465.yaml
+protected_paths:
+  - src/workspace/load-calc-consumer-controller.js
+  - src/workspace/enrichment/authorized-enrichment-consumer-controller.js
+  - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+  - src/workspace/engineering-loads/authorized-empirical-effective-execution-projection.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/core/non-fea-common-checker/**
+  - .github/workflows/**
+authority_boundary: "This PR creates the system routine-Run decision and binds it into existing method-currentness custody. The receipt is explicitly not standalone execution eligibility. It does not fabricate legacy APPROVE/AUTHORIZE handoffs, does not project numerical inputs, and does not execute."
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+merge_authority: OWNER_ONLY_NOT_GRANTED
+overlap: STACKED_ON_PR1461_NO_INTENTIONAL_PRODUCTION_PATH_OVERLAP

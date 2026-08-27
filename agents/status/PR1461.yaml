@@ -1,0 +1,51 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1461
+issue: 1321
+branch: agent/issue-1321-run-ready-snapshot
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: SOURCE_COMPLETE_WAITING_OWNER_MERGE_AUTHORITY
+base_branch: main
+base_sha: dd7f13e2c73e596c7ac6625fbe211779bc61ce94
+re_ground_commit: 605cfd521f057add27bf81918e2a9b88b8253ae9
+implementation_commit: 6177e9cc2b178e732a8480d34e2319158c603394
+focused_regression_commit: 567a360bd055176675b30f2176ef2c3add9c6f7d
+aggregate_registration_commit: a2c370dc4c1e9df31cf1ae2c3f8d823bad14fc2a
+validation:
+  live_grounding: PASS
+  exact_base_reground: PASS
+  overlap: PASS_SAFE
+  run_control_flow_source_trace: PASS
+  upstream_ready_only_contract_source_trace: PASS
+  authorization_currentness_source_trace: PASS
+  exact_six_file_diff_reconciliation: PASS
+  controller_patch_source_review: PASS
+  focused_regression_source_review: PASS
+  focused_run_routing_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    observation: LOCAL_EXECUTION
+    command: "git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git HEAD"
+    error: "Could not resolve host: github.com"
+invariants:
+  run_may_obtain_ready_snapshot: true
+  ready_snapshot_is_execution_authorization: false
+  empirical_auto_authorization_authorized: false
+  partial_auto_accept_permitted: false
+  blocked_auto_accept_permitted: false
+  scenario_path_change_authorized: false
+  numerical_mechanics_change_authorized: false
+  checker_or_seal_contract_change_authorized: false
+  workflow_change_authorized: false
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_disposition: DRAFT_UNMERGED
+exact_next_action: "Reconcile live PR metadata/reviews after this checkpoint. Keep #1461 draft/unmerged. Continue #1321 in a separate successor for run-specific internal authorization/evidence."

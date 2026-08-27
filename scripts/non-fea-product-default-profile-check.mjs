@@ -43,10 +43,12 @@ function checkEmptyProfileDefaults() {
   assert.equal(JSON.stringify(source), before, 'provider must not mutate stored Project Data');
   assert.equal(provider.schema, 'non-fea-product-default-provider/v1');
   assert.equal(provider.profileId, 'LOAD_CALC_STANDARD_DEFAULTS_V1');
-  assert.equal(provider.profileVersion, 4);
+  assert.equal(LOAD_CALC_STANDARD_DEFAULTS_V1.version, 5);
+  assert.equal(provider.profileVersion, LOAD_CALC_STANDARD_DEFAULTS_V1.version);
   assert.equal(provider.usageRows.length, LOAD_CALC_STANDARD_DEFAULTS_V1.defaults.length);
   assert.equal(provider.shadowedRows.length, 0);
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.value, 9.80665);
+  assert.equal(provider.effectiveProfile.loadCalculation.gravityMethod.value, 'AUTO');
   assert.deepEqual(provider.effectiveProfile.loadCalculation.activeLoadCases.value, ['EMPTY', 'OPE', 'HYD']);
   assert.equal(provider.effectiveProfile.sourcesAndUnits.sourceUpAxis.value, 'Z');
   assert.equal(provider.effectiveProfile.thermoMechanicalBasis.fluidPhaseAndFillState.value.cases.OPE.fillFraction, 1);
@@ -71,6 +73,7 @@ function checkEmptyProfileDefaults() {
     'SOURCE_Z_UP_POSITIVE_SUPPORT_REACTION',
   );
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.gravityMPerS2), true);
+  assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.gravityMethod), true);
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy), true);
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.forceOutputConvention), true);
   assert.equal(provider.effectiveProfile.loadCalculation.pipeSectionProperties.value, null,
@@ -85,6 +88,20 @@ function checkEmptyProfileDefaults() {
   assert.equal(
     provider.effectiveProfile.loadCalculation.gravityMPerS2.evidence.defaultSemanticHash,
     gravityDefinition.semanticHash,
+  );
+
+  const methodUsage = provider.usageRows.find((row) => row.defaultId === 'PD-GRAVITY-METHOD');
+  const methodDefinition = LOAD_CALC_STANDARD_DEFAULTS_V1.defaults
+    .find((row) => row.defaultId === 'PD-GRAVITY-METHOD');
+  assert.equal(methodUsage.value, 'AUTO');
+  assert.equal(methodUsage.defaultSemanticHash, methodDefinition.semanticHash);
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.gravityMethod.evidence.defaultSemanticHash,
+    methodDefinition.semanticHash,
+  );
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.gravityMethod.evidence.profileVersion,
+    LOAD_CALC_STANDARD_DEFAULTS_V1.version,
   );
 
   const { semanticHash: supplied, ...base } = provider;
@@ -122,6 +139,7 @@ function checkLegacyPhase2Upgrade() {
   );
   const legacy = clone(project);
   for (const field of [
+    'gravityMethod',
     'componentMassCompositionPolicy',
     'forceOutputConvention',
     'momentOutputConvention',
@@ -135,6 +153,7 @@ function checkLegacyPhase2Upgrade() {
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.value, 9.81,
     'existing legacy Project Data evidence must survive additive upgrade');
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.evidence.authority, 'PROJECT_POLICY');
+  assert.equal(provider.effectiveProfile.loadCalculation.gravityMethod.value, 'AUTO');
   assert.equal(
     provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy.value.defaultMode,
     'COMPONENT_EXPLICIT_POINT_MASS',
@@ -144,6 +163,7 @@ function checkLegacyPhase2Upgrade() {
     'POSITIVE_REACTION_OPPOSES_SOURCE_AXIS_GRAVITY',
   );
   for (const field of [
+    'gravityMethod',
     'componentMassCompositionPolicy',
     'forceOutputConvention',
     'momentOutputConvention',

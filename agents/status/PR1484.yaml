@@ -1,0 +1,40 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1484
+mission: Retain only frozen B02D V2 pre-observation assets on current main
+workstream: LAFEA_B02D_V2_FROZEN_ASSET_CUSTODY
+branch: agent/lafea-b02d-v2-frozen-assets-20260827
+base_main: bea5013d2ddfd4d11bf2a03400f3aad2134b220e
+work_intent: SALVAGE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+agent_state: ACTIVE
+pr_recovery_state: CURRENT_MAIN_CLEAN_REPLACEMENT
+handover_readiness: READY_FOR_MERGE_RECONCILIATION
+report_path: agents/PR1484_workreport.md
+current_stage: FROZEN_ASSETS_TRANSPLANTED_CURRENT_HEAD_EXECUTION_NOT_RUN
+engineering_failure_proven: false
+historical_provenance:
+  pr: 1259
+  head: aee2abf4753fc074ae4caa5d0c79d86bd15e6b64
+  tree: cb2b3c51be7c91305c6a1624eece917ae9920e84
+validation:
+  historical_asset_blob_grounding: { state: PASS_GITHUB_READBACK }
+  current_main_grounding: { state: PASS_GITHUB_READBACK }
+  main_1483_overlap: { state: PASS_DISJOINT }
+  main_1481_overlap: { state: PASS_DISJOINT }
+  byte_identical_transplant: { state: PASS_GIT_OBJECT_CUSTODY }
+  current_head_preobservation_quality: { state: NOT_RUN }
+  b01_exact_head_prerequisite: { state: NOT_RUN }
+  b02_response_qualification: { state: NOT_RUN }
+b02_prerequisite_evidence_available: false
+producer_binding_changed: false
+v1_default_changed: false
+response_solver_changed: false
+galerkin_correction_included: false
+b02_numerical_authority_granted: false
+release_authority_granted: false
+trust_authority_granted: false
+merge_authority: OWNER_GRANTED_CURRENT_TURN_FOR_THIS_BOUNDED_REPLACEMENT
+merge_disposition: AUTHORIZED_AFTER_FINAL_RECONCILIATION
+exact_next_action: Reconcile exact six-file scope/current main/reviews/statuses and squash-merge PR1484; then close PR1259 as superseded and open the producer-binding successor.

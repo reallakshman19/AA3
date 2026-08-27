@@ -23,6 +23,19 @@ const frozenProbe = benchmark.fixedPhysicalProbes.find(
 );
 if (!distortion || !frozenProbe) throw new TypeError('Frozen diagnostic target missing');
 
+// Execute the historical governing near-incompressible case first. A post-nullspace
+// current-main candidate that cannot clear this exact frozen production case must
+// stop here; it must not spend time on the nu=0.30 convergence trace or be used to
+// justify a solver repair without first-error RCA.
+const governingLevel = benchmark.meshLadder.levels.find((row) => row.levelId === 'L4');
+if (!governingLevel) throw new TypeError('Frozen governing L4 level missing');
+const governingRun = executeLameBbarQualificationCase(definition, probeMeshPolicy, {
+  elementType: 'T6',
+  poissonRatio: 0.4999,
+  level: governingLevel,
+  distortion,
+});
+
 const values = benchmark.meshLadder.levels.map((level) => {
   const run = executeLameBbarQualificationCase(definition, probeMeshPolicy, {
     elementType: 'T6',
@@ -44,8 +57,29 @@ const values = benchmark.meshLadder.levels.map((level) => {
 const oracle = lameOracle(definition, 0.30, frozenProbe);
 
 console.log(JSON.stringify({
-  schema: 'lafea-b01-bbar-lame-convergence-diagnostic/v1',
+  schema: 'lafea-b01-bbar-lame-convergence-diagnostic/v2',
   status: 'EVIDENCE_ONLY',
+  governingSolverVeto: {
+    elementType: 'T6',
+    poissonRatio: 0.4999,
+    levelId: governingLevel.levelId,
+    targetElementLength: governingLevel.targetElementLength,
+    distortionId: distortion.distortionId,
+    qualificationState: governingRun.result.qualification.state,
+    nodeCount: governingRun.mesh.nodes.length,
+    elementCount: governingRun.mesh.elements.length,
+    executionEvidenceHash: governingRun.result.semanticHashes.executionEvidenceHash,
+    solverEvidence: {
+      method: governingRun.loadCase.solverEvidence?.method ?? null,
+      algorithmRevision: governingRun.loadCase.solverEvidence?.algorithmRevision ?? null,
+      iterations: governingRun.loadCase.solverEvidence?.iterations ?? null,
+      iterationLimit: governingRun.loadCase.solverEvidence?.iterationLimit ?? null,
+      finalResidualInfinity: governingRun.loadCase.solverEvidence?.finalResidualInfinity ?? null,
+      convergenceTarget: governingRun.loadCase.solverEvidence?.convergenceTarget ?? null,
+      residualTolerance: governingRun.loadCase.solverEvidence?.residualTolerance ?? null,
+    },
+    equilibrium: governingRun.loadCase.equilibrium,
+  },
   studyId: `${definition.programmeId}/T6/REGULAR/NU-0.3/${frozenProbe.probeId}`,
   expectedValue: oracle.expectedValue,
   levels: values.map((row) => ({
@@ -55,6 +89,7 @@ console.log(JSON.stringify({
   allFour: sequenceEvidence(values),
   finestThree: sequenceEvidence(values.slice(-3)),
   qualificationChanged: false,
+  solverRepairAuthorized: false,
   releaseAuthorityGranted: false,
 }, null, 2));
 

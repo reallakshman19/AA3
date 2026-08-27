@@ -6,6 +6,8 @@ export const ENGINEERING_PROPERTY_SPECS = Object.freeze({
   materialDensityKgM3: numeric('kg/m3', ['MATERIAL_DENSITY_KG_M3', 'MATERIALDENSITYKGM3']),
   unitPipeWeightKgPerM: numeric('kg/m', ['UNIT_PIPE_WEIGHT_KG_PER_M', 'PIPE_WEIGHT_KG_PER_M', 'PIPEWEIGHTKGPM']),
   componentWeightKg: numeric('kg', ['COMPONENT_WEIGHT_KG', 'COMPONENTWEIGHTKG', 'BEST_WEIGHT_KG', 'WEIGHT_KG']),
+  componentFluidWeightOpeKg: numeric('kg', []),
+  componentFluidWeightHydKg: numeric('kg', []),
   insulationThicknessMm: numeric('mm', ['INSULATION_THICKNESS_MM', 'INSULATIONTHICKNESSMM']),
   insulationDensityKgM3: numeric('kg/m3', ['INSULATION_DENSITY_KG_M3', 'INSULATIONDENSITYKGM3']),
   insulationWeightKgPerM: numeric('kg/m', ['INSULATION_WEIGHT_KG_PER_M', 'INSULATIONWEIGHTKGPM']),

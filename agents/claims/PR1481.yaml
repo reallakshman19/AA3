@@ -1,0 +1,37 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1481
+issue: 1321
+branch: agent/issue-1321-run-current-runtime-routing
+state: SOURCE_COMPLETE_OWNER_AUTHORIZED
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: f9570d4bd86fa73cb070c95a0386fd3c79ec35ff
+mission: "Route ordinary Load Calc Run to the merged current Common Input runtime and present routine-system execution distinctly."
+claimed_paths:
+  - src/workspace/load-calc-consumer-controller.js
+  - src/workspace/load-calc-current-system-view.js
+  - src/workspace/engineering-model-controller.js
+  - src/workspace/engineering-model-store.js
+  - src/workspace/sequential-sketcher/support-load-presenter.js
+  - scripts/load-calc-run-ready-snapshot-check.mjs
+  - scripts/load-calc-current-common-input-run-routing-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1481_workreport.md
+  - agents/claims/PR1481.yaml
+  - agents/status/PR1481.yaml
+protected_paths:
+  - src/workspace/load-calc-consumer-view.js
+  - scripts/authorized-empirical-execution-view-check.mjs
+  - src/workspace/engineering-loads/current-common-input-empirical-run-runtime.js
+  - src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js
+  - src/workspace/engineering-loads/current-common-input-empirical-support-load-execution.js
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/core/non-fea-common-checker/**
+  - .github/workflows/**
+authority_boundary: "Routing and presentation only. Scenario path and legacy explicit calculation event remain supported; ordinary Run is current-system only. No engineering mechanics, fake baseline/handoff authority, manual-seal prerequisite, or post-failure legacy retry."
+merge_authority: OWNER_AUTHORIZED_2026-08-26T23:12:22Z
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18

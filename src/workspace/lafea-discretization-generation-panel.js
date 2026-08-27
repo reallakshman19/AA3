@@ -2,6 +2,7 @@
 import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contract/index.js';
 import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { button, node, region } from './lafea-discretization-dom.js';
+import { LAFEA_RETAINED_MESH_REFINEMENT_POLICY } from './lafea-retained-mesh-refinement.js';
 
 const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v4';
 const SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
@@ -371,6 +372,7 @@ function refinementControls(doc, model, handlers) {
   const productActive = productScoped
     && model.refinement?.productQualified === true
     && model.actions.canRefineMesh === true;
+  const legacyLafea3 = model.stageId === 'LAFEA.3' && !productActive;
   if (productScoped) {
     host.append(productRefinementFacts(doc, model.refinement, model.generation.lengthUnit));
     if (!productActive) {
@@ -409,22 +411,50 @@ function refinementControls(doc, model, handlers) {
     allowedTargetTypes[0] ?? 'ELEMENT',
   );
   if (productActive) targetType.input.disabled = true;
-  const ids = textControl(doc, 'Target IDs', 'lafea-refinement-target-ids', '', 'E000034 or E000034, E000035');
+  const targetPlaceholder = legacyLafea3
+    ? 'One retained ID, e.g. E000034'
+    : 'E000034 or E000034, E000035';
+  const ids = textControl(doc, 'Target IDs', 'lafea-refinement-target-ids', '', targetPlaceholder);
   const target = numberControl(doc, 'Local target element length', 'lafea-refinement-target-length', '', 0);
   const unit = textControl(doc, 'Length unit', 'lafea-refinement-length-unit', model.generation.lengthUnit ?? '', 'Declared geometry length unit');
   if (model.generation.lengthUnit) unit.input.readOnly = true;
+  if (legacyLafea3) {
+    host.append(disclosure(
+      doc,
+      `Current qualified LAFEA.3 envelope accepts exactly ${LAFEA_RETAINED_MESH_REFINEMENT_POLICY.maximumTargets} retained NODE/ELEMENT target and requires local/global target ratio ≥ ${LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumTargetRatio}.`,
+    ));
+    if (model.evidence.meshIdentity?.includes(':LOCAL_REFINEMENT:')) {
+      host.append(disclosure(
+        doc,
+        'This retained local-refinement child reached custody only after the v2 evidence constructor accepted its actual shared-edge size transition against the bound mesh-profile limit.',
+      ));
+    }
+  }
 
   const submit = button(doc, 'Refine retained mesh', () => {
     const targetIds = parseTargetIds(ids.input.value);
     if (!targetIds.length) return invalid(ids, 'Enter at least one retained mesh node or element ID.');
+    if (legacyLafea3
+      && targetIds.length > LAFEA_RETAINED_MESH_REFINEMENT_POLICY.maximumTargets) {
+      return invalid(
+        ids,
+        `The current qualified LAFEA.3 envelope accepts exactly ${LAFEA_RETAINED_MESH_REFINEMENT_POLICY.maximumTargets} retained target.`,
+      );
+    }
     ids.input.setCustomValidity('');
     const targetElementLength = Number(target.input.value);
     const global = Number(model.generation.targetElementLength);
     if (!(targetElementLength > 0 && targetElementLength < global)) {
       return invalid(target, `Local target length must be greater than zero and smaller than the global target ${global}.`);
     }
-    if (targetElementLength < global * 0.25) {
-      return invalid(target, `Qualified local target length is at least 25% of the global target (${global * 0.25}).`);
+    const minimumTargetRatio = legacyLafea3
+      ? LAFEA_RETAINED_MESH_REFINEMENT_POLICY.minimumTargetRatio
+      : 0.25;
+    if (targetElementLength < global * minimumTargetRatio) {
+      return invalid(
+        target,
+        `Qualified local target length is at least ${minimumTargetRatio * 100}% of the global target (${global * minimumTargetRatio}).`,
+      );
     }
     target.input.setCustomValidity('');
     const lengthUnit = unit.input.value.trim();

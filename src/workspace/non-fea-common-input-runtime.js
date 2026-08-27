@@ -30,6 +30,11 @@ import {
 import { WorkspaceState } from './workspace-state.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 
+export const NON_FEA_PRODUCT_SCREENING_SNAPSHOT_ACTOR =
+  'Load Calc product screening snapshot (system)';
+export const NON_FEA_PRODUCT_SCREENING_SNAPSHOT_STATEMENT =
+  'System-generated READY-only screening snapshot; no user approval or partial-method acceptance is asserted.';
+
 export function evaluateCurrentNonFeaCommonInput() {
   try {
     const input = buildCurrentPreFeaRequestInput();
@@ -45,6 +50,99 @@ export function sealCurrentNonFeaCommonInput(confirmation) {
   if (nonFeaCommonInputStore.getSnapshot().error) {
     throw codedError(nonFeaCommonInputStore.getSnapshot().error, 'COMMON_INPUT_EVALUATION_FAILED');
   }
+  const snapshot = nonFeaCommonInputStore.seal(confirmation);
+  assertCommonInputMethodPartition(snapshot.commonInput);
+  return snapshot;
+}
+
+/**
+ * Creates the exact system provenance used for a READY-only routine screening
+ * snapshot. This is not a human approval and cannot acknowledge partial or
+ * blocked methods.
+ */
+export function createNonFeaReadyProductScreeningConfirmation(report, capturedAt) {
+  const readyMethodIds = Array.isArray(report?.readyMethodIds) ? report.readyMethodIds : [];
+  const blockedMethodIds = Array.isArray(report?.blockedMethodIds) ? report.blockedMethodIds : [];
+  if (report?.packageState !== 'READY' || readyMethodIds.length === 0 || blockedMethodIds.length !== 0) {
+    const error = codedError(
+      'A product screening snapshot requires a fully READY Common Input checker report.',
+      'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_NOT_READY',
+    );
+    error.details = deepFreeze({
+      packageState: report?.packageState || null,
+      readyMethodIds: [...readyMethodIds],
+      blockedMethodIds: [...blockedMethodIds],
+      blockers: structuredClone(report?.blockers || []),
+    });
+    throw error;
+  }
+  if (typeof report.semanticHash !== 'string' || report.semanticHash.length === 0) {
+    throw codedError(
+      'READY screening snapshot requires the checker report semantic hash.',
+      'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_REPORT_HASH_REQUIRED',
+    );
+  }
+  const parsedCapturedAt = typeof capturedAt === 'string' ? new Date(capturedAt) : null;
+  if (typeof capturedAt !== 'string'
+      || capturedAt.trim() !== capturedAt
+      || !Number.isFinite(parsedCapturedAt?.getTime())
+      || parsedCapturedAt.toISOString() !== capturedAt) {
+    throw codedError(
+      'READY screening snapshot timestamp must be canonical ISO-8601.',
+      'COMMON_INPUT_PRODUCT_SCREENING_SNAPSHOT_TIMESTAMP_INVALID',
+    );
+  }
+  return deepFreeze({
+    confirmationId: `PRODUCT-SCREENING:${report.semanticHash}`,
+    confirmedAt: capturedAt,
+    confirmedBy: NON_FEA_PRODUCT_SCREENING_SNAPSHOT_ACTOR,
+    acceptPartial: false,
+    acknowledgedBlockedMethods: [],
+    statement: NON_FEA_PRODUCT_SCREENING_SNAPSHOT_STATEMENT,
+  });
+}
+
+/**
+ * Returns true only when an existing seal itself satisfies the READY-only
+ * screening contract. A current PARTIALLY_READY seal may be valid for the
+ * explicit human partial-acceptance workflow, but it is never reusable as a
+ * routine product screening snapshot.
+ */
+export function isCurrentReadyNonFeaCalculationSnapshot(snapshot) {
+  const commonInput = snapshot?.commonInput;
+  return Boolean(
+    commonInput
+    && snapshot?.staleness?.stale === false
+    && !snapshot?.error
+    && commonInput.packageState === 'READY'
+    && Array.isArray(commonInput.sealedMethodIds)
+    && commonInput.sealedMethodIds.length > 0
+    && Array.isArray(commonInput.blockedMethodIds)
+    && commonInput.blockedMethodIds.length === 0
+  );
+}
+
+/**
+ * Creates the current routine screening snapshot without pretending that a user
+ * approved it. Only a fully READY checker report is eligible. PARTIALLY_READY
+ * still requires the explicit human acceptance path in sealCurrentNonFeaCommonInput().
+ * An already-current fully READY sealed Common Input is reused rather than resealed.
+ */
+export function sealCurrentReadyNonFeaCalculationSnapshot({ capturedAt = new Date().toISOString() } = {}) {
+  const before = nonFeaCommonInputStore.getSnapshot();
+  if (isCurrentReadyNonFeaCalculationSnapshot(before)) {
+    assertCommonInputMethodPartition(before.commonInput);
+    return before;
+  }
+
+  const evaluated = evaluateCurrentNonFeaCommonInput();
+  if (evaluated.error) {
+    throw codedError(evaluated.error, 'COMMON_INPUT_EVALUATION_FAILED');
+  }
+  const confirmation = createNonFeaReadyProductScreeningConfirmation(
+    evaluated.report,
+    capturedAt,
+  );
   const snapshot = nonFeaCommonInputStore.seal(confirmation);
   assertCommonInputMethodPartition(snapshot.commonInput);
   return snapshot;

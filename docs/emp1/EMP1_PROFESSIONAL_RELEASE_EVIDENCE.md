@@ -116,8 +116,12 @@ CAUx benchmark --require-direct-pdf
 authorized runEmp1 bounded-route orchestration qualification
 route-authority/currentness + persisted/reloaded replay falsifiers
 production build
+complete deployable-artifact security scan
+artifact-security independent falsifiers
 EMP.1 release-candidate Chromium journey
 ```
+
+The artifact-security gates run after the production build and before browser/deployment acceptance. A scanner PASS therefore means only that the exact built artifact passed the bounded exposure policy; it does not create engineering, release or deployment authority.
 
 The historical `emp1-public-product-check.mjs` and the general `emp1-workbench-authority.spec.js` deliberately assert the **suspended** route in part of their coverage. They remain valuable pre-promotion regression gates but are not used as post-promotion release gates. PR-H uses `emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs` and `e2e/emp1-professional-release.spec.js` instead so a correctly authorized bounded route is not rejected merely because promotion succeeded.
 
@@ -144,11 +148,50 @@ Repository consumer audit found no separate EMP.1.C numerical export/report cons
 
 The browser gate verifies the promoted bounded calculation without pretending that calculation alone grants code or final release authority.
 
+## Deployable artifact security gate
+
+The complete built `dist/` tree is the security boundary for artifact exposure. This includes Vite-generated bundles and every static asset copied from `public/`; inspecting JavaScript bundles alone is insufficient.
+
+Run directly with:
+
+```text
+node scripts/emp1-professional-build-artifact-security-check.mjs
+node scripts/emp1-professional-build-artifact-security-falsifier.mjs
+```
+
+The real-artifact scanner fails closed on:
+
+- either controlled WRC/CAUx source PDF by known basename;
+- either controlled WRC/CAUx source PDF by frozen raw SHA-256, including a renamed copy;
+- deployable `*.map` source maps;
+- `*.pem`, `*.key`, `*.p12` and `*.pfx` key/credential containers;
+- `.env`, `.env.*` and `.npmrc` credential-configuration files;
+- private-key PEM headers in text-like deployable content;
+- high-confidence GitHub personal-access-token signatures;
+- high-confidence AWS access-key ID signatures;
+- symlinks in the deployable artifact.
+
+Violation diagnostics retain only a deterministic violation code and deployable relative path. The scanner must not print matched secret values, private-key contents or engineering source contents.
+
+The controlled engineering source identities are retained only as custody discriminators:
+
+```text
+WRC537_2013.pdf
+sha256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+
+CAUx 2017 - WRC01f.pdf
+sha256 = c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e
+```
+
+Those hashes do not grant redistribution authority. The independent falsifier verifies the repository-controlled source bytes against those hashes, then copies each source under a different filename and requires hash-based rejection. It also checks source-map/key/config/signature rejection, no matched-secret echo, clean-artifact acceptance and exact release-harness ordering.
+
+This gate is deliberately bounded. It is not a penetration test, a dependency-vulnerability audit, a CSP qualification or a general security certification. CSP/security-header policy and dependency-vulnerability review remain separate release-security obligations and must not be inferred from this scanner.
+
 ## Build artifact identity
 
-After a successful production build, PR-H calculates one deterministic SHA-256 over all regular files in `dist/` using sorted relative paths and each file's SHA-256. Symlinks are prohibited in the release artifact.
+Only after a successful production build and the bounded artifact-security gates does PR-H calculate one deterministic SHA-256 over all regular files in `dist/` using sorted relative paths and each file's SHA-256. Symlinks are prohibited in the release artifact.
 
-That `buildArtifactSha256` binds the candidate receipt to the exact deployable bytes.
+That `buildArtifactSha256` binds the candidate receipt to the exact deployable bytes. A valid hash proves identity, not security by itself; the preceding artifact-security gates establish the bounded exposure evidence.
 
 ## Deployment receipt
 
@@ -161,7 +204,7 @@ Required receipt shape:
   "schema": "emp1-professional-deployment-receipt/v1",
   "candidate": {
     "headSha": "<exact candidate SHA>",
-    "treeSha": "<exact candidate tree SHA>",
+    "treeSha": "<candidate tree SHA>",
     "buildArtifactSha256": "<dist artifact SHA-256>"
   },
   "deployment": {
@@ -200,9 +243,9 @@ The final `--release` harness runs this verifier itself. Missing deployment evid
 
 ## Security boundary
 
-PR-H security evidence is deliberately bounded. It verifies the EMP.1 release boundary already established by the product and currentness gates: strict governed source/result custody, stale numerical-result exclusion, no UI-authored engineering authority and fail-closed unsupported-domain behavior.
+PR-H security evidence is deliberately bounded. It verifies the EMP.1 release boundary already established by the product and currentness gates: strict governed source/result custody, stale numerical-result exclusion, no UI-authored engineering authority, fail-closed unsupported-domain behavior, bounded JSON intake, and bounded deployable-artifact exposure screening.
 
-It does **not** claim a general web-application penetration test, supply-chain certification, cryptographic signature infrastructure, or broader security accreditation.
+It does **not** claim a general web-application penetration test, supply-chain certification, cryptographic signature infrastructure, CSP qualification, dependency-vulnerability qualification, or broader security accreditation.
 
 ### Public runtime failure-content boundary
 
@@ -225,7 +268,7 @@ Independent source-level falsification is encoded by:
 node scripts/emp1-professional-runtime-error-redaction-check.mjs
 ```
 
-The checker injects a proprietary sentinel into exception/worker-message channels and requires the sentinel to be absent from public diagnostic messages, serialized execution failure, forged worker failure, EMP.1 controller exception presentation and checker output while safe diagnostic codes remain visible.
+The checker injects a proprietary sentinel into exception/worker-message channels and requires the sentinel to be absent from public diagnostic messages, EMP.1 controller exception presentation and checker output while safe diagnostic codes remain visible.
 
 This encoded redaction policy is not browser execution evidence and does not qualify CSP/security headers, dependency-vulnerability status, penetration testing or broader application-security certification.
 

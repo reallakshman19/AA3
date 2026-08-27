@@ -1,0 +1,50 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1427
+branch: agent/issue-1389-p0-gate-current-state-20260825
+issue: 1389
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY_AUTO_RUNNING
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_APPROVED_MISSION
+phase_progression: AUTO
+coordination_state: SAFE_AFTER_PR1415_MERGE_RECONCILIATION
+scope:
+  authority: EMP1_WRC537_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION
+  paths:
+    - validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json
+    - scripts/emp1-professional-p0-source-semantics-check.mjs
+    - docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md
+    - agents/PR1427_workreport.md
+    - agents/status/PR1427.yaml
+    - agents/claims/PR1427.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - individual P0 source records
+  - frozen release profile/current-state downstream files
+  - WRC/CAUx controlled sources and expected values
+  - oracle/tolerances/exact-head evidence
+  - UI/browser paths
+  - .github/workflows/**
+authority_boundary:
+  blocker_count_reduction_without_source_closure: false
+  professional_release_authority_granted: false
+  global_emp1_c_authority_granted: false
+  code_compliance_authority_granted: false
+live_main_at_grounding: 19b762e1f9512284da961e5816a28c10432080bb
+grounding_epoch: GE-PR1427-008
+aggregate_truth:
+  blocker_count: 9
+  issue1377_current_status: BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED
+  bounded_route_authorized: true
+  professional_p0_source_semantics_ready: false
+  global_emp1_c: false
+  code_compliance: false
+  release_qualified: false
+neighbor_dependency:
+  pr1415_state: MERGED_19b762e1f9512284da961e5816a28c10432080bb
+  rule: "#1377 aggregate status reconciled; after PR1427 merge re-ground downstream PR1436."
+merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-27
+handover_report: agents/PR1427_workreport.md
+exact_next_action: "Verify mergeability and exact six-file scope; merge PR1427; re-ground PR1436."

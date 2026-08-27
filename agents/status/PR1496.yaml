@@ -1,0 +1,30 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1496
+issue: 1321
+branch: agent/issue-1321-handcalc-mass-support-parity
+state: SOURCE_COMPLETE_MERGE_AUTHORIZED_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: OWNER_AUTHORIZED_FINAL_MERGE_GATE
+base_sha: 4ec93a2985d78d4e067dd40351cb899af2caed8a
+technical_reground_sha: 4ed8a74e85ccffeca15476c0a41e333ee2a2d5ac
+validation:
+  live_main_grounding: PASS_SOURCE_RECONCILIATION
+  disjoint_main_drift: PASS_SOURCE_RECONCILIATION
+  exact_five_file_scope: PASS_SOURCE_RECONCILIATION
+  hand_and_production_trace: PASS_SOURCE_INSPECTION
+  faithful_checkout: BLOCKED_DNS_GITHUB
+  focused_execution: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  production_src_changed: false
+  workflow_changed: false
+  mechanics_changed: false
+  tolerance_changed: false
+merge_authority: OWNER_GRANTED_BY_2026_08_27_USER_COMMAND
+merge_disposition: AUTHORIZED_AFTER_FINAL_CURRENTNESS_REVIEW_GATE
+exact_next_action: "Require 0-behind current main, exact five-file diff, clean reviews/threads and mergeability; then squash merge preserving EXECUTION_NOT_RUN."

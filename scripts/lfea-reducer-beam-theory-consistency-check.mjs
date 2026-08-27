@@ -1,17 +1,22 @@
 /*
- * Why the ten-cylinder reducer condensation is built, wired, authorized -- and
- * still not enabled in production.
+ * Straight pipe and the reducer condensation must share one beam theory.
  *
  * Condensing a UNIFORM reducer (from section == to section) must reproduce the
- * closed-form prismatic stiffness of that same section. It does for axial and
- * torsion, and it does NOT for bending: the condensation is Timoshenko and
- * returns 1/(1+phi) of the Euler-Bernoulli shear term and (4+phi)/(4(1+phi)) of
- * the rotation term. Production straight pipe is Euler-Bernoulli, so enabling
- * the reducer alone puts a beam-theory discontinuity at the reducer elements.
+ * closed-form stiffness of that same prismatic section. Axial and torsion carry
+ * no shear correction and must come back exact. Bending must come back at the
+ * Timoshenko values -- 1/(1+phi) on the shear term, (4+phi)/(4(1+phi)) on the
+ * rotation term -- because the condensation is Timoshenko with kappa = 0.5,
+ * CAESAR's pipe shear coefficient 2.
  *
- * This check pins that mismatch as a measured fact. It fails if either side
- * changes formulation without the other -- which is exactly the moment the
- * reducer promotion becomes safe to revisit.
+ * Production straight pipe now declares the same formulation and the same
+ * kappa. This check fails if either side moves without the other, which is the
+ * discontinuity that first showed up as reducer elements 16, 67 and 75 blowing
+ * up in the production parity harness while every other element was fine.
+ *
+ * Note what this does NOT establish: matching the formulations did not make the
+ * ten-cylinder promotion pay off. Measured on a matched Timoshenko base it
+ * still costs 1.5-2.1 points of parity, so reducerExactMechanics stays false
+ * for a reason of its own. See production-capability-profile.js.
  */
 import assert from 'node:assert';
 import {
@@ -54,17 +59,23 @@ assert.ok(rel(at(1, 1), (12 * E * inertia) / ((1 + phi) * L ** 3)) < 1e-6,
 assert.ok(rel(at(4, 4), ((4 + phi) * E * inertia) / ((1 + phi) * L)) < 1e-6,
   'condensed rotation term must equal the Timoshenko value for kappa = 0.5');
 
-// The production side of the mismatch.
-assert.equal(inputXmlStiffnessFrameElementProfile().shearDeformation, false,
-  'production straight pipe is Euler-Bernoulli; if this changes, re-measure the reducer promotion');
+// The production side must agree, in both the flag and the factor.
+const productionProfile = inputXmlStiffnessFrameElementProfile();
+assert.equal(productionProfile.shearDeformation, true,
+  'production straight pipe must stay Timoshenko so reducers are not a beam-theory discontinuity');
+assert.equal(productionProfile.shearCorrectionFactorY.value, 0.5,
+  'production kappaY must equal the condensation kappa');
+assert.equal(productionProfile.shearCorrectionFactorZ.value, 0.5,
+  'production kappaZ must equal the condensation kappa');
 
 console.log(JSON.stringify({
   check: 'lfea-reducer-beam-theory-consistency',
   status: 'MEASURED',
   condensationFormulation: 'TIMOSHENKO_KAPPA_0_5',
-  productionFormulation: 'EULER_BERNOULLI',
+  productionFormulation: 'TIMOSHENKO_KAPPA_0_5',
   phi: Number(phi.toFixed(6)),
   shearTermRatio: Number((at(1, 1) / ((12 * E * inertia) / L ** 3)).toFixed(6)),
   rotationTermRatio: Number((at(4, 4) / ((4 * E * inertia) / L)).toFixed(6)),
-  consequence: 'REDUCER_PROMOTION_BLOCKED_UNTIL_FORMULATIONS_AGREE',
+  formulationsAgree: true,
+  reducerPromotionStillOff: 'MEASURED_WORSE_ON_MATCHED_BASE',
 }, null, 2));

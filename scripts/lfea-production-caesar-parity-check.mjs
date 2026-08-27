@@ -94,6 +94,7 @@ const prepared = prepareLinearPipingAccdbPreFlight(session.intake, session.sourc
     sourceRevision: '1',
   }),
 });
+console.error('BLOCKROWS', JSON.stringify(prepared.preparation.findings.filter(r=>r.disposition==='BLOCK'), null, 1).slice(0,2000));
 const blockCodes = prepared.preparation.findings
   .filter((row) => row.disposition === 'BLOCK')
   .map((row) => row.code);

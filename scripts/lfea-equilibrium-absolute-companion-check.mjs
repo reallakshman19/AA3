@@ -91,39 +91,53 @@ for (const row of rows) {
     `${row.caseId} must carry a declared absolute equilibrium limit.`);
 }
 
-// The companion must actually be doing something: at least one case passes on
-// it that the relative measure alone would have failed.
+/*
+ * The companion was added because the weight-only case carried a real absolute
+ * imbalance (0.31 N) that the relative measure alone would have failed. Moving
+ * production straight pipe to Timoshenko removed the cause rather than the
+ * symptom: the solve's condition estimate fell from 3.56e13 to 4.76e6 and every
+ * case now balances to 1e-13 relative or better, so nothing is rescued any more.
+ *
+ * The companion stays declared -- a model that is genuinely lightly loaded can
+ * still need it -- but it is no longer load-bearing here, and this check now
+ * pins the stronger property that replaced it: equilibrium is essentially exact
+ * on every case, with no case relying on the absolute escape hatch.
+ */
+for (const row of rows) {
+  assert.ok(row.relative < 1e-9,
+    `${row.caseId} must balance on the relative measure alone (got ${row.relative}).`);
+}
 const rescued = rows.filter((row) => row.absoluteAccepted && row.relative > 1e-6);
-assert.ok(rescued.length > 0,
-  'The absolute companion must be what lets the weight-only case through; if nothing '
-  + 'relies on it the relative gate is no longer the thing being corrected.');
-assert.ok(rescued.every((row) => row.imbalanceN <= row.absoluteLimit));
+assert.equal(rescued.length, 0,
+  'No case should now need the absolute companion; if one does, conditioning has regressed and '
+  + 'the Timoshenko alignment that made the relative gate sufficient should be re-measured.');
 
-// And it must NOT be a blanket pass. Every case whose imbalance genuinely
-// exceeds the absolute limit has to stand on the relative measure alone -- a
-// real equilibrium defect on a piping system is not sub-newton.
-const notRescued = rows.filter((row) => row.imbalanceN > row.absoluteLimit);
-assert.ok(notRescued.length > 0,
-  'At least one BM4_L case must exceed the absolute limit, or this model cannot '
-  + 'demonstrate that the companion is selective.');
-for (const row of notRescued) {
+/*
+ * Selectivity can no longer be demonstrated on BM4_L: with the solve well
+ * conditioned, no case carries an imbalance anywhere near the absolute limit,
+ * so there is no case left that the companion would have to refuse. That is
+ * recorded here rather than asserted, because asserting it would require the
+ * model to stay defective.
+ */
+const exceedingAbsolute = rows.filter((row) => row.imbalanceN > row.absoluteLimit);
+for (const row of exceedingAbsolute) {
   assert.equal(row.absoluteAccepted, false,
     `${row.caseId} has a ${row.imbalanceN} N imbalance and must not be accepted on the absolute path.`);
-  assert.ok(row.relative <= 1e-6,
-    `${row.caseId} passes only because its relative imbalance is genuinely small.`);
 }
 
-// No case may be blocked on force equilibrium: that was the state this fixed.
+// No case may be blocked on force equilibrium.
 assert.deepEqual(rows.filter((row) => row.checkStatus === 'BLOCK'), [],
-  'No BM4_L case should now block on force equilibrium.');
+  'No BM4_L case should block on force equilibrium.');
 
 console.log(JSON.stringify({
   check: 'lfea-equilibrium-absolute-companion',
   status: 'PASS',
-  rescuedByAbsolute: rescued.map((row) => row.caseId),
-  standingOnRelative: notRescued.map((row) => ({
+  companionLoadBearing: false,
+  companionRetainedFor: 'GENUINELY_LIGHTLY_LOADED_MODELS',
+  selectivityDemonstrableOnThisModel: exceedingAbsolute.length > 0,
+  cases: rows.map((row) => ({
     caseId: row.caseId,
-    imbalanceN: Number(row.imbalanceN.toFixed(3)),
+    imbalanceN: Number(row.imbalanceN.toPrecision(4)),
     relative: row.relative,
   })),
 }, null, 2));

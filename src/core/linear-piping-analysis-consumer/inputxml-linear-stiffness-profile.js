@@ -1,5 +1,5 @@
 import {
-  EULER_BERNOULLI_FORMULATION,
+  TIMOSHENKO_FORMULATION,
   FRAME_ELEMENT_PROFILE_ID,
   FRAME_ELEMENT_PROFILE_SCHEMA,
   STATIC_CONDENSATION_RULE,
@@ -21,13 +21,18 @@ export const INPUTXML_STIFFNESS_PREFLIGHT_PROFILE_ID =
 const PROFILE_SOURCE = 'INPUTXML_LINEAR_STIFFNESS_PREFLIGHT_R1';
 const CONDITIONING_SOURCE = 'M027-BM2-CONDITIONING-STUDY';
 const RESIDUAL_SOURCE = 'M034-M035-BM4-CONDITIONING-STUDY';
+const SHEAR_SOURCE = 'CAESAR_PIPE_SHEAR_COEFFICIENT_2';
 
 export function inputXmlStiffnessFrameElementProfile() {
   return sealFrameElementProfile({
     schema: FRAME_ELEMENT_PROFILE_SCHEMA,
     profileId: FRAME_ELEMENT_PROFILE_ID,
-    straightPipeFormulation: EULER_BERNOULLI_FORMULATION,
-    shearDeformation: false,
+    straightPipeFormulation: TIMOSHENKO_FORMULATION,
+    shearDeformation: true,
+    // CAESAR's pipe shear coefficient 2 => kappa = 0.5, the same factor the
+    // ten-cylinder reducer condensation carries.
+    shearCorrectionFactorY: { value: 0.5, source: SHEAR_SOURCE },
+    shearCorrectionFactorZ: { value: 0.5, source: SHEAR_SOURCE },
     releaseRule: STATIC_CONDENSATION_RULE,
     thermalStrainApproximation: UNIFORM_TEMPERATURE_THERMAL_STRAIN_PROFILE,
     releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },

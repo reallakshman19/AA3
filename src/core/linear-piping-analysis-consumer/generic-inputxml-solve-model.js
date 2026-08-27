@@ -104,8 +104,10 @@ export function frameProfile() {
   return sealFrameElementProfile({
     schema: 'fea-linear-frame-element-profile/v1',
     profileId: 'LINEAR-FRAME-ELEMENT-R1',
-    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
-    shearDeformation: false,
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: { value: 0.5, source: 'CAESAR_PIPE_SHEAR_COEFFICIENT_2' },
+    shearCorrectionFactorZ: { value: 0.5, source: 'CAESAR_PIPE_SHEAR_COEFFICIENT_2' },
     releaseRule: 'STATIC_CONDENSATION_V1',
     thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
     releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },

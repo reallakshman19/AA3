@@ -15,34 +15,33 @@ PR: #1473
 ISSUE: #1472
 UMBRELLA: #1389
 BASE_PR: #1464
-PARENT_HEAD: f40921cdad4473a28227a72ccfc8418f54f87864
-PRE_PROPAGATION_HEAD: 4e3fc1b23d4ec1c69c277d1bfad72a27b9d3d592
-STRUCTURAL_PROPAGATION_HEAD: 82e95f106d16378c78f39ce48f2247ab79958ed2
-STRUCTURAL_PROPAGATION_TREE: 905c68aed24981d0e93a54aa9fae64638956117e
-REPORT_BASIS_HEAD: 82e95f106d16378c78f39ce48f2247ab79958ed2
+PARENT_HEAD: f28ac05aa2aee281e8f2dc81f94ff76fbf05eecd
+STRUCTURAL_PROPAGATION_HEAD: ce4bb8776d214736d0286b69afb8edc6b15dc5d0
+STRUCTURAL_PROPAGATION_TREE: 3af90d2a083272bab82d3d279920ccadd96dbcec
+REPORT_BASIS_HEAD: ce4bb8776d214736d0286b69afb8edc6b15dc5d0
+REPORT_SYNC: CURRENT_METADATA_ONLY_AFTER_BASIS
 TECHNICAL_BASIS: 3e40cf7f13c91d09336ea871796638053777ad57
 LIVE_MAIN_LAST_OBSERVED: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
-GROUNDING_EPOCH: GE-PR1473-005
-CURRENT_STAGE: LATEST_PARENT_PROPAGATION_VALIDATED_PR1477_NEXT
+GROUNDING_EPOCH: GE-PR1473-006
+CURRENT_STAGE: WHOLE_RELEASE_STACK_RECONCILED_DRAFT
 CURRENT_BLOCKER: provider promotion/rollback and focused execution remain NOT_RUN; merge authority not granted
-HIGHEST_RISK: losing inherited dependency/header release gates while carrying the deployment-operations release-harness delta
-EXACT_NEXT_ACTION: propagate this exact PR1473 parent into PR1477 while preserving PR1477's exact six-file release-manifest salvage delta.
+HIGHEST_RISK: treating rollback custody as observed rollback execution/success or treating stack cleanliness as release authority
+EXACT_NEXT_ACTION: keep PR1473 draft/unmerged; do not merge or widen scope without explicit owner authority. Use PR1477 current report for downstream release-manifest custody.
 ```
 
-## Current propagation
+## Final integration state
 
-The current-main re-grounded PR1464 recovery head `f40921cdad4473a28227a72ccfc8418f54f87864` was propagated into PR1473 using a two-parent non-force commit. The new tree is the exact parent tree plus the exact seven retained PR1473 blobs; no deployment-operations technical content was regenerated or conflict-resolved.
+Finalized PR1464 recovery metadata was propagated into PR1473 using a two-parent non-force commit. The resulting tree is current PR1464 plus the exact retained seven PR1473 blobs. No deployment-operations technical content was regenerated or conflict-resolved.
 
 ```text
-old PR1473 head = 4e3fc1b23d4ec1c69c277d1bfad72a27b9d3d592
-new parent      = f40921cdad4473a28227a72ccfc8418f54f87864
-new tree        = 905c68aed24981d0e93a54aa9fae64638956117e
-structural head = 82e95f106d16378c78f39ce48f2247ab79958ed2
-branch update   = fast-forward / force=false
-compare         = exactly 7 files / 0 behind parent
+parent PR1464 = f28ac05aa2aee281e8f2dc81f94ff76fbf05eecd
+structural head = ce4bb8776d214736d0286b69afb8edc6b15dc5d0
+structural tree = 3af90d2a083272bab82d3d279920ccadd96dbcec
+branch update = fast-forward / force=false
+delta = exactly 7 files / 0 behind parent
 ```
 
-Exact seven-file delta remains:
+Exact seven-file scope remains:
 
 1. `agents/PR1473_workreport.md`
 2. `agents/claims/PR1473.yaml`
@@ -52,17 +51,19 @@ Exact seven-file delta remains:
 6. `scripts/emp1-professional-deployment-operations-falsifier.mjs`
 7. `scripts/emp1-professional-release-candidate.mjs`
 
-The downstream release-candidate technical blob remains `f9f63bdcf3d7f753c877aa520e45b48916572f01` at structural lock, thereby preserving inherited parent gates plus the deployment-operations extension.
+The release-candidate technical blob remains `f9f63bdcf3d7f753c877aa520e45b48916572f01`, preserving inherited dependency/header gates plus the deployment-operations extension.
 
-## Validation truth
+## Final validation truth
 
-- exact seven retained blobs: `PASS`;
-- parent propagation: `PASS_FAST_FORWARD_FORCE_FALSE`;
+- current-main freshness: `PASS` — `b2e8745a...` remained live;
+- retained seven-blob custody: `PASS`;
+- structural propagation: `PASS_FAST_FORWARD_FORCE_FALSE`;
 - parent compare: `PASS_EXACT_7_FILES_ZERO_BEHIND`;
+- live reviews / review threads: `PASS_ZERO_ZERO`;
 - deployment-operations source audit: retained `PASS_PRIOR_AUDIT`;
+- final observed runEmp1 before metadata-only roll-forward: run `33077515549`, job `98535513566`, `steps=null`, `logs_url=null` -> `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE`;
 - real provider promotion/rollback execution: `NOT_RUN`;
 - focused checker/falsifier execution: `NOT_RUN_CURRENT_EPOCH`;
-- hosted EMP.1 execution: `NOT_RUN_EXECUTION_ENVIRONMENT / PRE_STEP_INFRASTRUCTURE_FAILURE` retained from live current-head jobs;
 - WRC numerical comparison: `NOT_APPLICABLE`.
 
 No `NOT_RUN` is promoted to PASS.
@@ -75,6 +76,6 @@ Structural propagation creates no engineering, deployment, rollback-success, rel
 
 ## Appendix A
 
-Current structural takeover remains within the previously qualified bounded mechanism and was independently rechecked against live parent/child diffs and authority boundaries.
+A1 20/20; A2 20/20; A3 20/20; A4 19/20; A5 20/20.
 
-**99/100; minimum 19/20 — PASS for stack reconciliation only.**
+**99/100; minimum 19/20 — PASS for bounded stack reconciliation only.**

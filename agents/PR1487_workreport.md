@@ -80,7 +80,7 @@ authority            = PROJECT_POLICY
 basis                = User-configured project screening default for <setting>
 calculationDefaultId = <Basic field ID>
 previousAuthority    = <observed effective authority>
-approved              = true
+approved             = true
 ```
 
 This is intentionally not source/master evidence. Product-default rows keep their original default ID, basis, profile ID/version and semantic hashes.
@@ -146,7 +146,9 @@ Source/repository validation:
 - advanced authority editor preserved: PASS
 - open #1486 exact-file overlap: PASS_NONE
 - temporary WIP removed: PASS
-- exact seven-file intended scope: PASS_PENDING_FINAL_COMPARE
+- exact seven-file intended scope: PASS — final compare observed 7 exact files, behind main 0, merge base equals `d6101bcac7ccbdab9e42d7e0afbdd7b06d897462`
+- PR review submissions: 0
+- PR review threads: 0
 
 Executable validation:
 - standalone focused Node check: NOT_RUN

@@ -1,0 +1,45 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1470
+branch: agent/issue-1466-emp1-deployed-security-headers-20260826
+issue: 1466
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: AUTO
+auto_state: COMPLETE
+coordination_state: STACKED_ON_PR1464_EXACT_OVERLAP_INTENTIONAL
+scope:
+  authority: EMP1_DEPLOYED_SECURITY_HEADERS
+  paths:
+    - scripts/emp1-professional-security-header-policy.mjs
+    - scripts/emp1-professional-deployment-security-headers-check.mjs
+    - scripts/emp1-professional-deployment-security-headers-falsifier.mjs
+    - scripts/emp1-professional-release-candidate.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_DEPLOYED_SECURITY_HEADERS.md
+    - agents/PR1470_workreport.md
+    - agents/status/PR1470.yaml
+    - agents/claims/PR1470.yaml
+protected_exclusions:
+  - index.html
+  - analyze.html
+  - provider-specific deployment configuration
+  - package.json
+  - package-lock.json
+  - src/core/emp1/**
+  - WRC source/dataset/oracle/tolerance/mechanics
+  - .github/workflows/**
+authority_boundary:
+  deployed_headers_can_block_release: true
+  static_policy_establishes_browser_compatibility: false
+  fixture_pass_establishes_live_header_observation: false
+  engineering_authority_granted: false
+  code_compliance_granted: false
+  release_authority_granted: false
+  deployment_authority_granted: false
+stack_base_head: 4b6eab2474ca0728ffc455698aa99b01f2d716a5
+technical_basis: f115af6fbe929bda1b5770c0614b2f1bfb588872
+pre_merge_audited_head: c0c1a30d5b79bd67963e0d8f2dee9b4a19d9a757
+live_main_last_observed: f15bab4af0009888f41b856f820cb3ab7a152520
+merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-26T15:24:12Z
+grounding_epoch: GE-PR1470-003
+handover_report: agents/PR1470_workreport.md

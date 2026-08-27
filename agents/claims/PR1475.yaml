@@ -1,0 +1,30 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1475
+issue: 1321
+branch: agent/issue-1321-mass-receipt-support-kernel
+state: COMPLETE_READY_FOR_MERGE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+mission: "Consume the current Common Input empirical mass receipt in the existing support-load statics kernel without reintroducing legacy mass-map authority or changing statics mechanics."
+claimed_paths:
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/engineering-loads/current-common-input-empirical-support-load-execution.js
+  - scripts/current-common-input-empirical-support-load-execution-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1475_workreport.md
+  - agents/claims/PR1475.yaml
+  - agents/status/PR1475.yaml
+protected_paths:
+  - src/workspace/load-calc-consumer-controller.js
+  - src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js
+  - src/core/non-fea-common-checker/**
+  - src/workspace/project-data/project-data-fields.js
+  - .github/workflows/**
+authority_boundary: "Kernel-consumption only. #1471 current mass projection + #1465 run authorization are required upstream. Low-level mass seam is non-authorizing. No Run routing, auto-authorization, legacy handoff fabrication, allocation/equilibrium/tolerance change. Authority object hashes are recomputed before Common Input binding."
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18

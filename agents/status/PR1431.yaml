@@ -1,0 +1,61 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1431
+mission: "Issue #1321 component-contained fluid mass"
+workstream: ISSUE1321_COMPONENT_CONTAINED_FLUID
+branch: agent/issue-1321-component-contained-fluid
+main_head_last_checked: 7b2a8119aa5faeee7cc102c894991851019c5a7b
+merge_base: 7b2a8119aa5faeee7cc102c894991851019c5a7b
+validation_basis_head: b47930898f3b6d986ccd8936c084260a4d86d0f1
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: VALIDATION_BLOCKED
+scope_authority: LOCKED_TO_APPROVED_MISSION
+phase_progression: AUTO
+agent_state: VALIDATION_BLOCKED
+pr_recovery_state: HEALTHY
+handover_readiness: READY
+report_path: agents/PR1431_workreport.md
+coordination: SAFE_CURRENT_MAIN_SYNCED_NO_PRODUCTION_OVERLAP
+current_stage: IMPLEMENTATION_COMPLETE_REQUIRED_EXECUTION_VALIDATION_NOT_RUN
+highest_risk: "Focused component-content mechanics/authority regressions and aggregate Non-FEA suite have not executed in a faithful repository checkout."
+validation:
+  live_grounding: PASS
+  predecessor_pr1430: PASS_MERGED
+  current_main_sync: PASS_AHEAD_31_BEHIND_0_AT_SYNC
+  main_drift_overlap: PASS_NO_PRODUCTION_PATH_OVERLAP
+  changed_file_ledger: PASS_15_EXPECTED_PATHS
+  component_dry_mass_boundary: PASS_SOURCE_INSPECTION
+  pipe_fluid_boundary: PASS_SOURCE_INSPECTION
+  component_content_authority_boundary: PASS_SOURCE_INSPECTION_PROJECT_OR_PRODUCT_DEFAULT_ONLY
+  direct_kernel_authority_bypass: PASS_DEFECT_PROVEN_AND_REPAIRED_SOURCE_INSPECTION
+  approved_raw_content_falsifier: DEFINED_NOT_RUN
+  mismatched_receipt_falsifier: DEFINED_NOT_RUN
+  independent_100_108_110_oracle: PASS_ANALYTICAL_ARITHMETIC
+  focused_component_content_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  focused_default_authority_check: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  aggregate_non_fea_checks: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  imports: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  build: NOT_RUN_REAL_CHECKOUT_UNAVAILABLE
+  local_clone_retry: FAIL_ENVIRONMENT_DNS_GITHUB
+  commit_combined_status: EMPTY_NO_STATUS_CONTEXTS_AT_VALIDATION_BASIS_HEAD
+  hosted_observation_run: 32917851396
+  hosted_observation_job: 98025211360
+  hosted_observation_classification: NOT_RUN_PRE_STEP_HOSTED_RUNNER_ALLOCATION
+  hosted_observation_steps: 0
+  hosted_observation_scope: UNRELATED_EMP1_WORKFLOW_NOT_PR1431_QUALIFICATION
+appendix_a_status: FAIL_A4_EXECUTION_NOT_RUN
+appendix_a_score: null
+authority:
+  owner_auto_mode_current_turn: true
+  dry_mass_reinterpretation_authorized: false
+  component_volume_derivation_authorized: false
+  source_master_manual_content_authority_authorized: false
+  universal_content_default_authorized: false
+  pipe_fluid_change_authorized: false
+  statics_change_authorized: false
+  workflow_change_authorized: false
+  merge_authority: NOT_GRANTED
+merge_disposition: OWNER_ONLY_DRAFT_DO_NOT_MERGE_REQUIRED_VALIDATION_NOT_RUN
+auto_hard_stop: REQUIRED_EXECUTION_ENVIRONMENT_UNAVAILABLE
+exact_next_action: "Run the two focused component-content checks, canonical Non-FEA aggregate, imports and build in a faithful checkout; repair only evidenced failures. Do not mark ready or merge while required execution remains NOT_RUN."

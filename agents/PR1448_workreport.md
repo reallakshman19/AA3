@@ -4,40 +4,47 @@
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY_DRAFT_IMPLEMENTATION_COMPLETE
+PR_RECOVERY_STATE: HEALTHY_CURRENT_MAIN_REGROUNDED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED_PRESENTATION_ONLY
-EXECUTION_MODE: AUTO
-AUTO_STATE: COMPLETE
+EXECUTION_MODE: MANUAL
 SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1447
-MERGE_AUTHORITY: NOT_GRANTED
+MERGE_AUTHORITY: NOT_GRANTED_FOR_THIS_SUCCESSOR
 CRITICALITY: ENGINEERING_CRITICAL
 PR: #1448
 ISSUE: #1447
 UMBRELLA: #1389
 BRANCH: agent/issue-1447-emp1-seven-step-workflow-20260826
-BASE_MAIN: 29c688db4a021db900d1f8c67f56f777f73f4ddc
-BASE_TREE: 60d0fa231c52a561b9d6cc50d1099abff8500880
-TECHNICAL_BASIS_HEAD: 9c89114acc722218cf01151a5ba3c0a43d2c0c19
-GROUNDING_EPOCH: GE-PR1448-002
-CURRENT_STAGE: IMPLEMENTATION_AND_STATIC_AUDIT_COMPLETE
-CURRENT_BLOCKER: executable Node/browser validation remains NOT_RUN under #54; no merge authority granted
-HIGHEST_RISK: primary engineer workflow leaking A/B/C implementation-controller labels or stale C evidence becoming reportable
-EXACT_NEXT_ACTION: leave PR1448 draft/unmerged pending explicit Owner merge authorization; re-ground live main/head/diff/reviews immediately before any merge.
+PRE_REGROUND_HEAD: 02612ecfb39d0dcdeedbe94e77c84fcaa4016a5d
+LIVE_MAIN: 6b5e048467cf67fb51da3e99517ce58d5cc5a3dc
+LIVE_MAIN_TREE: d9fab91bd1bff67bbd64be36a026fd9e770ef0b8
+GROUNDING_EPOCH: GE-PR1448-003
+CURRENT_STAGE: CURRENT_MAIN_REGROUND_PRESENTATION_ONLY
+CURRENT_BLOCKER: executable Node/browser validation remains NOT_RUN under #54; merge authority for this successor not granted
+HIGHEST_RISK: stale C evidence becoming reportable or professional workflow leaking A/B/C controller terminology
+EXACT_NEXT_ACTION: keep PR1448 draft/unmerged; verify exact seven-file current-main delta and current reviews/threads; owner merge authorization is required before merge.
 ```
 
-## Mission / pre-patch defect
+## Takeover / drift reconciliation
 
-Current main exposed `A Load & reference`, `B Section screening`, `C Local correlation` as the primary EMP.1 workflow. #1389 requires the professional presentation sequence:
+Current `main` after the completed #1464 -> #1473 -> #1477 release-stack integration is `6b5e048467cf67fb51da3e99517ce58d5cc5a3dc`.
 
-`Basis & Source → Geometry → Loads → Load Transfer → Section Screening → Local Correlation → Review & Evidence`.
+The 32 commits since PR1448's original base do not touch any of PR1448's seven intended paths. Most importantly, the existing integration seam `src/workspace/lafea-analytical-calc-content.js` is byte-identical on the original base and current main at blob `339e5d6e2f04ce244c0c7357b9f6fc4dc58a8454`. Therefore the retained PR1448 presentation patch applies without semantic conflict or conflict resolution.
 
-A/B/C remain the correct backing calculators/evidence layers; this PR changes presentation architecture only.
+## Exact retained technical blobs
 
-## Implemented result
+```text
+src/workspace/emp1-professional-workflow-presentation.js = f0f571faef92bd95530a61ef1246933cee2c5f7f
+src/workspace/emp1-professional-workflow-view.js = 81c40db465d7abb8cab2262d239dc97faf93a531
+src/workspace/lafea-analytical-calc-content.js = 247edf923d20db50507dbdee233e7d5547fa4e41
+scripts/emp1-professional-workflow-check.mjs = 0b572ea94e5c556b07cffa468d4a0dd1df11d238
+```
 
-The analytical product now renders a dedicated seven-step professional workflow over the existing governed `emp1-product-projection/v1` state.
+These technical blobs are preserved exactly. Only the three recovery records are refreshed for current-main grounding.
 
-Primary workflow, exact order:
+## Mission / invariant
+
+Present exactly:
+
 1. Basis & Source
 2. Geometry
 3. Loads
@@ -46,73 +53,24 @@ Primary workflow, exact order:
 6. Local Correlation
 7. Review & Evidence
 
-Primary step statuses use engineer-facing wording only. A/B/C identifiers are confined to a collapsed `Technical backing calculators and custody (A/B/C)` disclosure.
-
-`Local Correlation` remains navigable while production C is suspended/stale so the engineer can inspect source/authority evidence. This does not enable Run C; the existing run gate remains authoritative.
-
-`Review & Evidence` distinguishes a current local result from `HISTORICAL LOCAL RESULT / NOT REPORTABLE`. The presentation never exposes or upgrades stale numerical C evidence.
-
-## Exact changed-file ledger — seven
-
-Technical:
-1. `src/workspace/emp1-professional-workflow-presentation.js`
-2. `src/workspace/emp1-professional-workflow-view.js`
-3. `src/workspace/lafea-analytical-calc-content.js`
-4. `scripts/emp1-professional-workflow-check.mjs`
-
-Recovery:
-5. `agents/PR1448_workreport.md`
-6. `agents/status/PR1448.yaml`
-7. `agents/claims/PR1448.yaml`
-
-Temporary WIP records were migrated/deleted and are absent from the net diff.
-
-No `src/core/emp1/**`, WRC mechanics, route/registry, source/dataset/oracle/tolerance, P0/release evidence, release profile/current-state, browser test, or workflow YAML file changed.
-
-## Authority invariant
+A/B/C remain governed backing calculators/evidence layers. A stale retained C result remains `HISTORICAL LOCAL RESULT / NOT REPORTABLE`; presentation cannot create run, route, engineering, code-compliance or release authority.
 
 `PROFESSIONAL_WORKFLOW_PRESENTATION_MAPS_EXISTING_GOVERNED_STATE_BUT_CANNOT_CREATE_ENGINEERING_OR_RELEASE_AUTHORITY`
 
-The new presentation explicitly records:
-- presentation only = true;
-- creates engineering authority = false;
-- creates route authority = false;
-- creates code compliance = false;
-- creates release authority = false;
-- stale numerical result may become current = false.
+## Validation truth
 
-## Validation ledger
+- exact-path current-main drift overlap: `PASS_NONE`;
+- integration seam byte identity: `PASS`, blob `339e5d6e...` on old base and current main;
+- retained technical blobs: `PASS_EXACT`;
+- reviews / review threads before re-ground: `PASS_ZERO_ZERO`;
+- prior static source audit: retained `PASS_PRIOR_AUDIT`;
+- focused Node/browser execution: `NOT_RUN` / `NOT_RUN_EXECUTION_ENVIRONMENT` under #54;
+- WRC numerical comparison: `NOT_APPLICABLE` — presentation-only.
 
-| ID | Status | Observation |
-|---|---|---|
-| WF-001 | PASS_SOURCE_INSPECTION | exact seven labels and ordinals encoded in required order |
-| WF-002 | PASS_SOURCE_INSPECTION | exact backing map retained: professional steps project existing A/B/C only |
-| WF-003 | PASS_SOURCE_INSPECTION | analytical product imports/calls `renderEmp1ProfessionalWorkflow`; old A/B/C renderer is no longer the primary analytical workflow |
-| WF-004 | PASS_AFTER_FIX | primary status labels no longer prefix engineer steps with A/B/C controller identifiers |
-| WF-005 | PASS_SOURCE_INSPECTION | stale retained C projects `HISTORICAL LOCAL RESULT / NOT REPORTABLE` and cannot become current |
-| WF-006 | PASS_SOURCE_INSPECTION | Local Correlation remains navigable during suspended/stale C without granting run authority |
-| WF-007 | PASS | exact seven-file branch diff, 0 behind live main at technical audit |
-| WF-008 | PASS | reviews 0; review threads 0 |
-| WF-009 | NOT_RUN | focused Node checker encoded but not executed in a complete local checkout |
-| WF-010 | NOT_RUN_EXECUTION_ENVIRONMENT | visible-workbench run `32939221917`, job `98086556412`: `runner_id=0`, `steps=[]` |
-| WF-011 | NOT_APPLICABLE | WRC numerical comparison; production mechanics unchanged |
-
-Hosted `failure` is classified `PRE_STEP_INFRASTRUCTURE_FAILURE`, not engineering FAIL and not PASS.
-
-## Main drift / overlap
-
-Technical audit main remained `29c688db4a021db900d1f8c67f56f777f73f4ddc`; technical head `9c89114acc722218cf01151a5ba3c0a43d2c0c19` compared 15 ahead / 0 behind with exactly seven intended paths. No open EMP.1 PR claimed these workflow presentation paths.
+No `NOT_RUN` is promoted to PASS.
 
 ## Appendix A
 
-A1 Production Trace — **20/20**. `LafeaWorkbenchView` constructs governed A/B/C + C currentness; the new pure projection maps that state; the new renderer is invoked by `renderLafeaAnalyticalCalcContent`; calculation/source/result cards remain existing governed consumers.
+A1 20/20; A2 20/20; A3 20/20; A4 19/20; A5 20/20.
 
-A2 Failure Isolation — **20/20**. Defect is primary presentation architecture only; WRC/load-transfer/screening mechanics are untouched.
-
-A3 Authority / Invariant — **20/20**. Primary workflow cannot create source/run/route/code/release authority and cannot resurrect stale C numerics.
-
-A4 Independent Validation — **19/20**. Exact sequence, backing map, integration seam and stale-state falsifier are independently source-auditable; actual Node/browser execution remains NOT_RUN under #54.
-
-A5 Minimal Patch — **20/20**. Four presentation/regression files plus three recovery records; no core engineering authority mutation.
-
-**Total: 99/100; minimum 19/20 — handover-ready, merge only by explicit Owner authorization.**
+**99/100; minimum 19/20 — PASS for presentation-only current-main re-ground.**

@@ -1,0 +1,91 @@
+schema: engineering-pr-claim/v1
+pr: 1474
+repository: reallaksh19/Advanced_Analysis
+owner: reallaksh19
+branch: agent/lafea1371-registry-closure-readiness-20260826
+source_task: Issue #1371 Section 17 registry/documentation closure
+state: ACTIVE_BOUNDED_EVIDENCE_INFRASTRUCTURE_ONLY
+criticality: ENGINEERING_CRITICAL
+authority_domain:
+  - Section 17 readiness evaluation for a later LAFEA.3 registry-cleanup proposal
+  - exact-head binding between current Git HEAD and PR1462 verified Q1-Q5 implementation-authorization evidence
+  - retained full projected LAFEA registry semantic baseline hash at the qualified base HEAD
+  - retained full source hash of src/workspace/lafea-stage-registry.js at the qualified base HEAD
+  - retained normalized source-template hash permitting only the two LAFEA.3 orchestration wording literals to vary
+  - protection of current LAFEA.3 registry limitation before cleanup readiness
+  - protection of current LAFEA.4 CST+DKT and exclusion authority during LAFEA.3 closure readiness
+  - structural qualification of a future registry-only cleanup candidate descended from the qualified base
+  - proof that only LAFEA.3 limitation and limitations[1] may differ semantically and textually from the qualified registry baseline
+exact_paths:
+  - .gitignore
+  - scripts/lib/lafea1371-registry-closure-readiness.mjs
+  - scripts/lafea1371-registry-closure-readiness-check.mjs
+  - scripts/lafea1371-registry-closure-readiness-self-test.mjs
+  - scripts/lib/lafea1371-registry-cleanup-proposal-guard.mjs
+  - scripts/lafea1371-registry-cleanup-proposal-guard.mjs
+  - scripts/lafea1371-registry-cleanup-proposal-guard-self-test.mjs
+  - agents/PR1474_workreport.md
+  - agents/status/PR1474.yaml
+  - agents/claims/PR1474.yaml
+excluded_authority:
+  - src/workspace/lafea-stage-registry.js mutation in PR1474
+  - actual LAFEA.3 cleanup wording content or approval
+  - Q1-Q5 numerical PASS or engineering execution evidence
+  - local-continuum solver or formulation
+  - local-shell solver, pressure or orientation mechanics
+  - mesher algorithms or thresholds
+  - recovery or stress authority
+  - benchmark expected values, probes or tolerances
+  - source topology
+  - package command surface
+  - UI/build/workflow files
+  - Issue #1371 closure authority
+  - release authority
+current_main:
+  head: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+  synchronization_commit: 8c033330b63f291a1c81f13cb1a143ebdd65c0d4
+  intervening_commits: 3
+  intervening_scope: ISSUE1321_LOAD_CALC_COMMON_INPUT_ONLY
+  lafea_exact_file_overlap: NONE
+  lafea_authority_overlap: NONE
+readiness_semantics:
+  schema: lafea1371-registry-closure-readiness/v3
+  pass_disposition: READY_FOR_REGISTRY_CLEANUP_PR
+  pass_allows_cleanup_proposal_to_be_opened: true
+  pass_authorizes_cleanup_wording: false
+  pass_mutates_registry: false
+  pass_grants_release_authority: false
+  retained_full_registry_baseline_hash: true
+  retained_full_registry_source_hash: true
+  retained_normalized_registry_source_template_hash: true
+  readiness_receipt_path: reports/qualification/lafea1371-registry-closure-readiness.json
+cleanup_proposal_semantics:
+  schema: lafea1371-registry-cleanup-proposal-guard/v2
+  qualified_base_must_be_ancestor: true
+  only_production_path: src/workspace/lafea-stage-registry.js
+  permitted_registry_fields:
+    - LAFEA.3.limitation
+    - LAFEA.3.limitations[1]
+  protected_lafea3_integration_point_statement: true
+  all_other_projected_registry_semantics_must_match_qualified_baseline: true
+  all_other_registry_source_bytes_must_match_qualified_source_template: true
+  qualified_source_is_read_from_git_history: true
+  hidden_helper_code_change_rejected: true
+  hidden_comment_change_rejected: true
+  hidden_whitespace_change_rejected: true
+  pass_disposition: STRUCTURALLY_ADMISSIBLE_FOR_HUMAN_WORDING_REVIEW
+  pass_approves_wording: false
+  pass_grants_merge_authority: false
+  pass_grants_release_authority: false
+coordination:
+  - pr: 1432
+    classification: COORDINATION_REQUIRED_IF_MERGED_REEXECUTE_Q1_Q5_AND_READINESS
+  - pr: 1258
+    classification: COORDINATION_REQUIRED_IF_MERGED_REEXECUTE_Q1_Q5_AND_READINESS
+validation_truth:
+  policy_source_tests: PASS_LOCAL_EXECUTION
+  exact_authored_blob_binding: PASS_GITHUB_READBACK
+  real_q1_q5: NOT_RUN
+  real_section17_readiness: NOT_RUN
+  actual_cleanup_candidate: NOT_PROPOSED
+merge_authority: OWNER_ONLY_NOT_GRANTED

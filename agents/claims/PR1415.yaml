@@ -1,43 +1,45 @@
-schema: AgentClaim.v1
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1415
-claim_state: ACTIVE_AUTO_RECOVERY
 branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
-mission: "Issue #1377 retained WRC Table-5 cylindrical R_m symbol/role reconciliation with explicit current bounded-route authority separation"
-execution_mode: AUTO
-auto_state: RUNNING
-scope_authority: LOCKED_TO_APPROVED_MISSION
-phase_progression: AUTO
-write_scope:
-  - validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json
-  - scripts/emp1-wrc537-cylindrical-mean-radius-source-check.mjs
-  - docs/emp1/WRC537_2013_Cylindrical_Mean_Radius_Authority.md
-  - agents/PR1415_workreport.md
-  - agents/status/PR1415.yaml
-  - agents/claims/PR1415.yaml
-current_recovery_write_scope:
-  - agents/PR1415_workreport.md
-  - agents/status/PR1415.yaml
-  - agents/claims/PR1415.yaml
-protected_no_mutation:
+issue: 1377
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: MANUAL
+coordination_state: PR1427_MUST_WAIT_FOR_PR1415_MERGE_DECISION
+scope:
+  authority: EMP1_WRC537_RETAINED_TABLE5_RM_SYMBOL_ROLE_ONLY
+  paths:
+    - validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json
+    - scripts/emp1-wrc537-cylindrical-mean-radius-source-check.mjs
+    - docs/emp1/WRC537_2013_Cylindrical_Mean_Radius_Authority.md
+    - agents/PR1415_workreport.md
+    - agents/status/PR1415.yaml
+    - agents/claims/PR1415.yaml
+protected_exclusions:
   - src/core/emp1/**
   - validation/emp1/release/**
-  - validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json
-  - scripts/emp1-wrc537-shell-thickness-basis-source-check.mjs
-  - docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md
-  - validation/emp1/wrc537-2013/cylindrical-physical-applicability-source-reconciliation-v1.json
-  - scripts/emp1-wrc537-cylindrical-physical-applicability-source-check.mjs
-  - docs/emp1/WRC537_2013_Cylindrical_Physical_Applicability_Authority.md
+  - shell-thickness source authority paths
+  - cylindrical physical-applicability source authority paths
+  - aggregate P0 gate
   - .github/workflows/**
-authority_boundary: "Retained Table-5 `Vessel Radius R_m` symbol and gamma/beta parameter role only. Physical mean/midsurface meaning, OD/ID/T construction, corrosion/assessment geometry, physical Rm/T consistency, section-4.5 radius identity, ovality/local geometry and production transformation remain blocked/unchanged. Source-record engineering/production authority false does not describe current bounded-route authority, which is separately true; neither state may back-propagate into the other."
-authority_invariant: BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_CYLINDRICAL_RM_PHYSICAL_DEFINITION_SOURCE_AUTHORITY
-overlap_state: SAFE_RECOVERY_ONLY_NO_EXACT_PATH_OR_AUTHORITY_CONFLICT
-grounding_epoch: GE-PR1415-004
-main_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
-merge_base: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-pre_auto_head: e401fd042bec49d2aeb8c5384cf3214ac1f12284
-neighboring_merge_effects:
-  pr1426: "Shell-thickness reconciliation reinforces that physical Rm/T consistency remains unresolved; it does not qualify R_m."
-  pr1418: "Physical-applicability reconciliation preserves source blockers and existing section-4.5 Rm use without qualifying physical R_m definition."
-takeover_authority: WRITE_ALLOWED_RECOVERY_ONLY
-merge_authorization: NOT_GRANTED
-exact_next_action: "Leave PR1415 draft/unmerged and continue AUTO progression to aggregate PR1427."
+authority_boundary:
+  retained_table5_rm_symbol_qualified: true
+  retained_table5_parameter_role_qualified: true
+  physical_rm_definition_qualified: false
+  od_id_t_construction_qualified: false
+  corrosion_assessment_geometry_qualified: false
+  section45_radius_identity_qualified_by_this_increment: false
+  source_record_engineering_authority: false
+  source_record_production_authority: false
+  bounded_runtime_authority_unchanged: true
+  global_emp1_c_authority: false
+  release_authority: false
+pre_reground_head: e97a269fb014d92ecec8bd62b9d35bbc8a7e1bd3
+live_main: 4677a92e3e1e8a743efa9c82f03db9d4a11cd59b
+structural_reground_head: 61cbb87955078159206f80f8d84dda2d1f77ba10
+structural_reground_tree: 9db9592bb75d2b831e2aa4038ddb0cc88033f31f
+merge_authority: NOT_GRANTED
+grounding_epoch: GE-PR1415-005
+handover_report: agents/PR1415_workreport.md
+exact_next_action: "Keep PR1415 draft/unmerged pending explicit owner merge authority. If merged, re-ground PR1427 immediately and reconcile the #1377 aggregate entry."

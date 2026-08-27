@@ -1,95 +1,52 @@
 schema: AgentPrStatus.v1
 repository: reallaksh19/Advanced_Analysis
 pr_or_wip: PR1415
-mission: "Issue #1377 retained Table-5 cylindrical Rm reconciliation against current authorized bounded route"
+mission: "Retained WRC Table-5 cylindrical Rm symbol/role reconciliation"
 workstream: EMP1_WRC537_SOURCE_SEMANTICS
 branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
-execution_mode: AUTO
-auto_state: RUNNING
-scope_authority: LOCKED_TO_APPROVED_MISSION
-phase_progression: AUTO
-main_head_last_checked: ee76cf461c33fc7efde36f96536db1a9ba8ab069
-merge_base: 4461e7699d08b8a1acbbc89cdbea3fd998368ca6
-pre_auto_head: e401fd042bec49d2aeb8c5384cf3214ac1f12284
-engineering_content_head: 4d4608ab3fcb703e30fb8fd39b0d63fc2f45b9f5
-report_refresh_commit: 38406a979c3ff2c8a015926c43f15166e4649d94
-report_sync: CURRENT_AUTO_RECOVERY_METADATA_ONLY
-grounding_epoch: GE-PR1415-004
+issue: 1377
+umbrella: 1389
+execution_mode: MANUAL
+scope_authority: LOCKED_TO_ISSUE_1377_UNDER_1389
 criticality: ENGINEERING_CRITICAL
-agent_state: ACTIVE
-pr_recovery_state: HEALTHY_DRAFT_CURRENT_MAIN_RECONCILED
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
 handover_readiness: READY
-takeover_authority: WRITE_ALLOWED_RECOVERY_ONLY
-report_path: agents/PR1415_workreport.md
-appendix_a_status: CURRENT
+pre_reground_head: e97a269fb014d92ecec8bd62b9d35bbc8a7e1bd3
+live_main: 4677a92e3e1e8a743efa9c82f03db9d4a11cd59b
+live_main_tree: f9f66c82a8c9d33cd54289bdcd9cc5f318a58e1f
+structural_reground_head: 61cbb87955078159206f80f8d84dda2d1f77ba10
+structural_reground_tree: 9db9592bb75d2b831e2aa4038ddb0cc88033f31f
+grounding_epoch: GE-PR1415-005
+appendix_a_status: PASS
 appendix_a_score: 99
 appendix_a_min_question: 19
-coordination: SAFE_RECOVERY_ONLY_NO_EXACT_PATH_OR_AUTHORITY_CONFLICT
-current_stage: AUTO_RECOVERY_CURRENT_MAIN_RECONCILED
-highest_risk: BOUNDED_ROUTE_OR_SOFTWARE_RM_CONSTRUCTION_FALSELY_PROMOTED_TO_PRIMARY_WRC_PHYSICAL_RM_AUTHORITY
+coordination: PR1427_MUST_WAIT_FOR_PR1415_MERGE_DECISION
+current_stage: CURRENT_MAIN_REGROUND_VALIDATED_DRAFT
+merge_authorization: NOT_GRANTED
 source_state:
-  wrc_sha256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
-  wrc_git_blob: ce861233928154145a9257efbbf8dbef3f5a17d1
-  retained_table5_pages: 41-42
-  retained_table5_label: VESSEL_RADIUS
-  retained_table5_symbol: R_m
-  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
-partial_authority:
-  cylindrical_source_symbol_rm: QUALIFIED_RETAINED_SOURCE_TEXT
-  cylindrical_radius_parameter_role: QUALIFIED_RETAINED_SOURCE_TEXT
-  rm_used_in_gamma: QUALIFIED_RETAINED_SOURCE_TEXT
-  rm_used_in_beta: QUALIFIED_RETAINED_SOURCE_TEXT
-  physical_mean_midsurface_definition: BLOCKED
+  retained_table5_symbol_rm: QUALIFIED_RETAINED_SOURCE_TEXT
+  retained_table5_parameter_role: QUALIFIED_RETAINED_SOURCE_TEXT
+  physical_rm_definition: BLOCKED
   od_id_t_construction: BLOCKED
   corrosion_assessment_basis: BLOCKED
   physical_rm_t_consistency: BLOCKED
   section45_radius_identity: BLOCKED_BY_THIS_INCREMENT
-  ovality_nonuniform_geometry: BLOCKED
-  source_record_engineering_use_authorized: false
-  source_record_production_use_authorized: false
-current_bounded_route:
-  route_authorized: true
-  registry_registered: true
-  bounded_engineering_use_authorized: true
-  bounded_production_use_authorized: true
-  global_emp1_c_route_authority: false
-  code_compliance_authority: false
-  release_qualified: false
-validation:
-  live_grounding: PASS
-  changed_file_scope: PASS_EXACTLY_SIX
-  ahead_behind_at_grounding: "28 / 12"
-  main_drift_exact_path_overlap: NONE
-  merged_pr1426_semantic_effect: REINFORCES_RM_T_CONSISTENCY_BLOCKER_NO_AUTHORITY_WIDENING
-  merged_pr1418_semantic_effect: PRESERVES_PHYSICAL_APPLICABILITY_BLOCKERS_NO_RM_DEFINITION_AUTHORITY
-  retained_source_inspection: PASS
-  production_rm_trace: PASS_SOURCE_INSPECTION
-  current_route_authority_inspection: PASS_SOURCE_INSPECTION
-  source_vs_runtime_authority_separation: PASS_SOURCE_INSPECTION
-  direct_pdf_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
-  checker_node_execution: NOT_RUN
-  numerical_comparison: NOT_APPLICABLE
-  reviews: 0
-  review_threads: 0
-  hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
-hosted_ci_evidence:
-  source_oracle: "32871121889/97878111938 steps=null logs_url=null"
-  gamma5_route: "32871121891/97878112208 steps=null logs_url=null"
+  direct_pdf_reobservation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
 authority:
   source_record_engineering: false
   source_record_production: false
   bounded_runtime_engineering: true
   bounded_runtime_production: true
-  physical_rm_definition: false
-  physical_rm_t_consistency: false
   global_emp1_c: false
   code_compliance: false
   release: false
-merge_disposition: OWNER_ONLY_DRAFT_READY_FOR_DECISION
-merge_authorization: NOT_GRANTED
-dependencies:
-  - "#1377"
-  - "#1389"
-  - "#54"
-exact_next_action: "Leave PR1415 draft/unmerged; continue AUTO progression to PR1427 aggregate P0 source-semantics reconciliation."
-last_updated: "2026-08-25"
+validation:
+  main_drift_exact_path_overlap: PASS_NONE_ALL_THREE_TECHNICAL_PATHS
+  retained_technical_blobs: PASS_EXACT
+  structural_branch_update: PASS_FAST_FORWARD_FORCE_FALSE
+  checker_node_execution: NOT_RUN
+  hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE
+  numerical_comparison: NOT_APPLICABLE
+current_blocker: "Physical cylindrical R_m definition remains primary-source blocked; direct WRC page observation/checker execution remain NOT_RUN; merge authority not granted."
+exact_next_action: "Keep PR1415 draft/unmerged pending explicit owner merge authority. If merged, immediately re-ground PR1427 and reconcile its #1377 aggregate status."

@@ -3,7 +3,7 @@ repository: reallaksh19/Advanced_Analysis
 pr: 1487
 issue: 1321
 branch: agent/issue-1321-calculation-defaults-basic-ux
-state: TAKEOVER_QUALIFIED_WRITE_ALLOWED
+state: SOURCE_COMPLETE_AWAITING_OWNER
 criticality: ENGINEERING_CRITICAL
 execution_mode: AUTO
 base_branch: main
@@ -27,7 +27,7 @@ protected_paths:
   - src/workspace/engineering-loads/**
   - scripts/run-non-fea-checks.mjs
   - .github/workflows/**
-authority_boundary: "UX composition and path-level Project Data updates only. No Product-default catalog, scope resolution, checker, Run, authorization, mechanics, solver or tolerance change."
+authority_boundary: "UX composition and lower-authority path-level Project Data default updates only. Higher/independent authority and keyed-map custody are protected. No Product-default catalog, scope resolution, checker, Run, authorization, mechanics, solver or tolerance change."
 merge_authority: OWNER_ONLY_NOT_GRANTED_FOR_NEW_SUCCESSOR
 appendix_a_qualified: true
 appendix_a_score: 98

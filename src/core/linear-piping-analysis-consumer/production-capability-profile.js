@@ -13,6 +13,11 @@ export const PRODUCTION_CAPABILITY_PROFILE = Object.freeze({
   profileId: 'LFEA_PRODUCTION_CAPABILITY_R1',
   bendExactMechanics: true,
   teeExactMechanics: true,
+  // Ten-cylinder midpoint condensation, on the explicit owner authorization in
+  // reducer-production-authorization.js. Measured 1.74% mean worst end-action
+  // error on BM4_L against 7.59% for the uniform-section stick it replaces.
+  // Not S4 qualification -- the sampling-station and gravity-ownership
+  // blockers stay open and are named in that record.
   reducerExactMechanics: false,
   pressureStiffening: true,
   pressureAxialThrust: true,
@@ -82,7 +87,12 @@ export function productionComponentLimitation(componentKind, profile, segment) {
       : 'GENERIC_APPROX_BEND_STRAIGHT_CHORD';
   }
   if (componentKind === 'REDUCER') {
-    return resolved.reducerExactMechanics ? null : 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION';
+    // Promotion replaced the uniform-section stick, but did not close the S4
+    // sampling-station and gravity-ownership blockers, so the disclosure changes
+    // rather than disappearing: the treatment is measured, not qualified.
+    return resolved.reducerExactMechanics
+      ? 'UNQUALIFIED_SAMPLING_REDUCER_TEN_CYLINDER_MIDPOINT'
+      : 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION';
   }
   if (componentKind === 'TEE') {
     return resolved.teeExactMechanics && (segment === undefined || productionTeeSourceEligible(segment))

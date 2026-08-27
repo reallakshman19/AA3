@@ -35,6 +35,9 @@ assert.deepEqual(productionAuthorizedPressureEffects(), {
 
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.bendExactMechanics, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.teeExactMechanics, true);
+// False because it measures worse in production, not because it is unbuilt.
+// The mechanics are wired and authorized; the blocker is that production
+// straight pipe is Euler-Bernoulli and the condensation is Timoshenko.
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics, false);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureStiffening, true);
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureAxialThrust, true);

@@ -55,6 +55,9 @@ assert.equal(resetElastic.approved, false);
 
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'SOURCE_UP_AXIS', 'Y'), /must be one of/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'LENGTH_UNIT', 'm'), /must be one of/u);
+assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'GRAVITY_ACCELERATION', ''), /must not be blank/u);
+assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'CORROSION_ALLOWANCE', ''), /must not be blank/u);
+assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'RESTRAINT_PRELOAD', ''), /must not be blank/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'GRAVITY_ACCELERATION', 0), /greater than zero/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'LOAD_FACTOR', -1), /greater than zero/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'FRICTION_COEFFICIENT', -0.1), /non-negative/u);
@@ -65,6 +68,10 @@ assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'ELASTIC_THER
   elasticModulusPa: 0,
   thermalExpansionPerK: 12e-6,
 }), /greater than zero/u);
+assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'ELASTIC_THERMAL', {
+  elasticModulusPa: 200e9,
+  thermalExpansionPerK: '',
+}), /must not be blank/u);
 
 const [routerSource, viewSource, legacySource] = await Promise.all([
   read('../src/workspace/project-data/project-data-view.js'),
@@ -75,7 +82,7 @@ assert.match(routerSource, /renderNonFeaCalculationDefaultsView/u);
 assert.doesNotMatch(routerSource, /renderNonFeaProjectDataViewV2/u,
   'normal Load Calc router must no longer point directly at the authority-heavy editor');
 assert.match(viewSource, /data-role="non-fea-calculation-defaults"/u);
-assert.match(viewSource, /Value[\s\S]*Unit[\s\S]*Scope[\s\S]*Effective authority[\s\S]*Basis[\s\S]*Actions/u);
+assert.match(viewSource, /Value[\s\S]*Unit[\s\S]*Scope[\s\S]*Effective authority[\s\S]*Basis[\s\S]*Reset/u);
 assert.match(viewSource, /renderNonFeaProjectDataViewV2/u,
   'advanced authority editor must remain reachable from Calculation Defaults');
 assert.match(viewSource, /D2 successor/u,
@@ -90,6 +97,7 @@ console.log(JSON.stringify({
   productProfile: `${model.productDefaultProfileId}@${model.productDefaultProfileVersion}`,
   projectOverrideAuthority: gravity.evidence.authority,
   pathLevelCompositeReset: true,
+  blankNumericCoercionBlocked: true,
   unsupportedAxisBlocked: true,
   unsupportedUnitBlocked: true,
   invalidNumbersBlocked: true,

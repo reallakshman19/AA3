@@ -37,6 +37,7 @@ const checks = [
   ['Common-enriched Project/Product default precedence', 'scripts/non-fea-common-enriched-effective-default-composition-check.mjs'],
   ['Common-enriched effective-default authoring seam', 'scripts/non-fea-common-enriched-effective-default-authoring-check.mjs'],
   ['Load-case authority convergence', 'scripts/non-fea-load-case-authority-check.mjs'],
+  ['Method Basis effective load-case authority disclosure', 'scripts/non-fea-method-basis-effective-load-case-authority-check.mjs'],
   ['Mass-ledger authority convergence', 'scripts/non-fea-mass-ledger-convergence-check.mjs'],
   ['Common engineering foundation convergence', 'scripts/non-fea-engineering-foundation-check.mjs'],
   ['Common analysis topology and eligibility', 'scripts/non-fea-analysis-topology-check.mjs'],

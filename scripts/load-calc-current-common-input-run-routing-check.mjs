@@ -6,12 +6,16 @@ import {
   ENGINEERING_MODEL_EVENTS,
   EngineeringModelController,
 } from '../src/workspace/engineering-model-controller.js';
+import { engineeringModelStore } from '../src/workspace/engineering-model-store.js';
+import { MODEL_LOAD_EVENTS } from '../src/workspace/model-load-events.js';
 import {
   isRoutineRunAttemptAvailable,
   isRoutineRunReady,
   renderEngineeringLoadPane,
 } from '../src/workspace/load-calc-current-system-view.js';
 import { nonFeaCommonInputStore } from '../src/workspace/non-fea-common-input-store.js';
+import { SUPPORT_RESTRAINT_EVENTS } from '../src/workspace/support-restraint-events.js';
+import { TOPOLOGY_EVENTS } from '../src/workspace/topology-events.js';
 
 const CURRENT = 'CURRENT_COMMON_INPUT_SYSTEM_RUN';
 const READY_REPORT = Object.freeze({
@@ -198,6 +202,55 @@ for (const state of [
 }
 
 {
+  const originals = {
+    getDistribution: engineeringModelStore.getDistribution,
+    markEmpiricalStale: engineeringModelStore.markEmpiricalStale,
+    markCommonStale: nonFeaCommonInputStore.markStale,
+  };
+  const subscriptions = new Map();
+  const resultStales = [];
+  const commonStales = [];
+  let refreshes = 0;
+  engineeringModelStore.getDistribution = () => ({ freshness: { status: 'CURRENT' } });
+  engineeringModelStore.markEmpiricalStale = (code) => { resultStales.push(code); return {}; };
+  nonFeaCommonInputStore.markStale = (code, path) => { commonStales.push({ code, path }); return {}; };
+  const controller = new EngineeringModelController(
+    {
+      subscribe(topic, handler) { subscriptions.set(topic, handler); return () => subscriptions.delete(topic); },
+      publish() {},
+    },
+    { getSnapshot: () => ({ status: 'ready', dataset: { datasetId: 'AUTH-CHANGE', version: 3 } }) },
+    {
+      executeEmpirical() { return { distribution: null }; },
+      refreshEmpirical() { refreshes += 1; return {}; },
+    },
+    { currentCommonInputExecutor() { throw new Error('not used'); } },
+  );
+  try {
+    controller.init();
+    subscriptions.get(TOPOLOGY_EVENTS.CHANGED)?.({});
+    subscriptions.get(SUPPORT_RESTRAINT_EVENTS.CHANGED)?.({});
+    subscriptions.get(MODEL_LOAD_EVENTS.CHANGED)?.({});
+    assert.deepEqual(resultStales, [
+      'TOPOLOGY_AUTHORITY_CHANGED',
+      'SUPPORT_RESTRAINT_AUTHORITY_CHANGED',
+      'MODEL_LOAD_AUTHORITY_CHANGED',
+    ], 'each bound authority-contract change must stale a current numerical result');
+    assert.deepEqual(commonStales, [
+      { code: 'TOPOLOGY_AUTHORITY_CHANGED', path: 'authorityContracts.topologyGraph' },
+      { code: 'SUPPORT_RESTRAINT_AUTHORITY_CHANGED', path: 'authorityContracts.supportAttachmentModel' },
+      { code: 'MODEL_LOAD_AUTHORITY_CHANGED', path: 'authorityContracts.loadPrimitiveSet' },
+    ], 'each bound authority-contract change must stale the retained Common Input seal');
+    assert.equal(refreshes, 3, 'each authority-contract change must refresh explicit package currentness');
+  } finally {
+    controller.destroy();
+    engineeringModelStore.getDistribution = originals.getDistribution;
+    engineeringModelStore.markEmpiricalStale = originals.markEmpiricalStale;
+    nonFeaCommonInputStore.markStale = originals.markCommonStale;
+  }
+}
+
+{
   const distribution = {
     status: 'CALCULATED',
     method: 'CHAINAGE_TRIBUTARY_SPAN_V3_COG',
@@ -258,6 +311,10 @@ const modelStoreSource = await readFile(
   new URL('../src/workspace/engineering-model-store.js', import.meta.url),
   'utf8',
 );
+const supportStoreSource = await readFile(
+  new URL('../src/workspace/engineering-loads/engineering-support-load-store.js', import.meta.url),
+  'utf8',
+);
 const runRuntimeSource = await readFile(
   new URL('../src/workspace/engineering-loads/current-common-input-empirical-run-runtime.js', import.meta.url),
   'utf8',
@@ -277,9 +334,15 @@ assert.match(modelControllerSource, /executeCurrentCommonInputEmpiricalRun/u);
 assert.match(modelControllerSource, /calculateCurrentCommonInput/u);
 assert.match(modelControllerSource, /nonFeaCommonInputStore\.subscribe/u,
   'engineering model controller must observe Common Input configuration changes centrally');
+assert.match(modelControllerSource, /TOPOLOGY_EVENTS\.CHANGED/u);
+assert.match(modelControllerSource, /SUPPORT_RESTRAINT_EVENTS\.CHANGED/u);
+assert.match(modelControllerSource, /MODEL_LOAD_EVENTS\.CHANGED/u);
 assert.match(modelControllerSource, /COMMON_INPUT_CONFIGURATION_CHANGED/u);
 assert.match(modelStoreSource, /CURRENT_COMMON_INPUT_SYSTEM_RUN/u);
 assert.match(modelStoreSource, /getCurrentCommonInputExecution/u);
+assert.match(supportStoreSource,
+  /markStale\([\s\S]*?#currentCommonInputExecution = null;[\s\S]*?freshness: \{ status: 'STALE'/u,
+  'engineering result store must clear current-system receipt and publish STALE freshness on invalidation');
 assert.match(runRuntimeSource, /sealCurrentReadyNonFeaCalculationSnapshot/u,
   'ordinary backend Run must still own READY-only current snapshot creation');
 assert.match(runRuntimeSource, /authorizeCurrentNonFeaEmpiricalRun/u,
@@ -303,6 +366,7 @@ console.log(JSON.stringify({
   currentRuntimeExecutionsPerRequest: 1,
   failureFallbackToLegacy: false,
   commonInputConfigurationStalesResults: true,
+  boundAuthorityContractsStaleSealAndResults: true,
   identicalConfigurationNoRepeatInvalidation: true,
   currentSystemAuthorityDistinct: true,
   legacyExplicitEventRetained: true,

@@ -14,10 +14,8 @@ import {
   renderEmp1WorkbenchExecutionSummary,
   renderEmp1WorkbenchRunConfiguration,
 } from './emp1-workbench-run-view.js';
-import {
-  createEmp1BSourceCustodyCard,
-  renderEmp1AssessmentWorkflow,
-} from './lafea-guided-workflow-view.js';
+import { createEmp1BSourceCustodyCard } from './lafea-guided-workflow-view.js';
+import { renderEmp1ProfessionalWorkflow } from './emp1-professional-workflow-view.js';
 import { lafeaDocumentDigest } from './lafea-edit-command.js';
 import {
   EMP1_B_SOURCE_CUSTODY_STATES,
@@ -59,7 +57,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   shell.dataset.emp1Step = step.shortId;
   shell.dataset.routeFamily = 'ANALYTICAL';
 
-  shell.append(renderEmp1AssessmentWorkflow(root, projection, options.onSelectRoute));
+  shell.append(renderEmp1ProfessionalWorkflow(root, projection, options.onSelectRoute));
 
   const route = card(root, 'Active EMP.1 step');
   route.section.dataset.guidedTarget = 'analytical-route';

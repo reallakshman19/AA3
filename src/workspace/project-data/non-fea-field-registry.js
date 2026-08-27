@@ -83,6 +83,10 @@ const SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT = Object.freeze([
   'PROJECT_CONFIGURED_DEFAULT',
   'PRODUCT_DEFAULT',
 ]);
+const COMPONENT_CONTENT_DEFAULT_AUTHORITIES = Object.freeze([
+  'PROJECT_CONFIGURED_DEFAULT',
+  'PRODUCT_DEFAULT',
+]);
 
 export const NON_FEA_FIELD_REGISTRY = freezeDeep({
   schema: NON_FEA_FIELD_REGISTRY_SCHEMA,
@@ -112,6 +116,8 @@ export const NON_FEA_FIELD_REGISTRY = freezeDeep({
     field('SECOND_MOMENT_AREA', 'Second moment of area', 'm⁴', SOURCE_MASTER_OVERRIDE_DERIVATION, 'loadCalculation.pipeSectionProperties', ['SUSTAINED_MEMBER_ACTIONS', 'SUSTAINED_STRESS', ...THERMAL_METHODS]),
     field('FLEXURAL_RIGIDITY', 'Flexural rigidity', 'N·m²', SOURCE_MASTER_OVERRIDE_DERIVATION, 'loadCalculation.pipeSectionProperties', ['SUSTAINED_MEMBER_ACTIONS', 'SUSTAINED_STRESS', ...THERMAL_METHODS]),
     field('COMPONENT_WEIGHT', 'Component weight', 'kg', SOURCE_MASTER_OVERRIDE_DEFAULT, 'loadCalculation.componentWeightsKg', WEIGHT_METHODS, true),
+    field('COMPONENT_OPERATING_FLUID_WEIGHT', 'Component operating contained-fluid mass', 'kg', COMPONENT_CONTENT_DEFAULT_AUTHORITIES, 'loadCalculation.componentOperatingFluidWeightsKg', WEIGHT_METHODS, true),
+    field('COMPONENT_HYDRO_FLUID_WEIGHT', 'Component hydrotest contained-fluid mass', 'kg', COMPONENT_CONTENT_DEFAULT_AUTHORITIES, 'loadCalculation.componentHydroFluidWeightsKg', WEIGHT_METHODS, true),
     field('COMPONENT_MASS_COMPOSITION_POLICY', 'Component dry-mass composition policy', 'policy', ['ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER', 'PROJECT_POLICY', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT'], 'loadCalculation.componentMassCompositionPolicy', WEIGHT_METHODS, true),
     field('OPERATING_FLUID_DENSITY', 'Operating fluid density', 'kg/m³', SOURCE_MASTER_OVERRIDE_DEFAULT, 'loadCalculation.operatingFluidDensitiesKgPerM3', WEIGHT_METHODS, true),
     field('HYDRO_FLUID_DENSITY', 'Hydrotest fluid density', 'kg/m³', SOURCE_MASTER_OVERRIDE_DEFAULT, 'loadCalculation.hydroFluidDensitiesKgPerM3', WEIGHT_METHODS, true),
@@ -121,6 +127,8 @@ export const NON_FEA_FIELD_REGISTRY = freezeDeep({
     field('INSULATION_DENSITY', 'Insulation density', 'kg/m³', SOURCE_MASTER_OVERRIDE_DEFAULT, 'loadCalculation.insulationDensitiesKgPerM3', WEIGHT_METHODS, true),
     field('INSULATION_THICKNESS', 'Insulation thickness', 'm', SOURCE_MASTER_OVERRIDE_DEFAULT, null, WEIGHT_METHODS, true),
     field('INSULATION_WEIGHT', 'Insulation weight', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),
+    field('CLADDING_WEIGHT', 'Cladding/jacket mass per length', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),
+    field('TRACING_WEIGHT', 'Tracing/permanent ancillary mass per length', 'kg/m', SOURCE_MASTER_OVERRIDE_DERIVATION_DEFAULT, null, WEIGHT_METHODS, true),
     field('INSTALLATION_TEMPERATURE', 'Installation temperature', '°C', ['SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'PROJECT_POLICY', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT'], 'thermoMechanicalBasis.installationTemperatureC', THERMAL_METHODS, true),
     field('OPERATING_TEMPERATURE', 'Operating temperature', '°C', ['ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER', 'PROJECT_POLICY', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT'], 'thermoMechanicalBasis.operatingTemperaturesC', THERMAL_METHODS, true),
     field('CASE_PRESSURE', 'Load-case pressure', 'Pa', ['ACCEPTED_OVERRIDE', 'SOURCE_EXPLICIT', 'SOURCE_INHERITED', 'EXACT_APPROVED_MASTER', 'PROJECT_POLICY', 'PROJECT_CONFIGURED_DEFAULT', 'PRODUCT_DEFAULT'], 'thermoMechanicalBasis.casePressuresPa', PRESSURE_METHODS, true),

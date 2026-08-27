@@ -1,4 +1,5 @@
 /** Domain-first analysis-mesh evidence contract for mesh-applicable LAFEA stages. */
+import { qualifyRefinedMeshAdjacentSizeRatio } from '../core/lafea-meshing/refinement-fields.js';
 import {
   LAFEA_ANALYSIS_MESH_FEA_STAGES,
   LAFEA_ANALYSIS_MESH_SCHEMA,
@@ -37,6 +38,7 @@ export function createLafeaAnalysisMeshEvidenceV2(value) {
   const mesh = canonicalLafeaAnalysisMesh(value.mesh);
   if (mesh.schema !== LAFEA_ANALYSIS_MESH_SCHEMA) fail('LAFEA_ANALYSIS_MESH_V2_MESH_SCHEMA_INVALID');
   requireLafeaAnalysisMeshElementFamily(stageId, meshProfile, mesh.elements);
+  enforceLafea3RefinementAdjacency(stageId, mesh, meshProfile);
   const meshHash = lafeaAnalysisMeshContentHash(mesh);
   const sourceHash = sha256(value.sourceHash, 'SOURCE_HASH');
   const analysisDomainHash = sha256(value.analysisDomainHash, 'ANALYSIS_DOMAIN_HASH');
@@ -85,6 +87,17 @@ export function validateLafeaAnalysisMeshEvidenceV2(value) {
     fail('LAFEA_ANALYSIS_MESH_V2_EVIDENCE_TAMPERED');
   }
   return rebuilt;
+}
+
+function enforceLafea3RefinementAdjacency(stageId, mesh, meshProfile) {
+  if (stageId !== 'LAFEA.3' || !mesh.meshIdentity.includes(':LOCAL_REFINEMENT:')) return;
+  const result = qualifyRefinedMeshAdjacentSizeRatio(
+    mesh,
+    meshProfile.fields.adjacentSizeRatioMax,
+  );
+  if (result.qualification !== 'PASS') {
+    fail('LAFEA_ANALYSIS_MESH_V2_REFINEMENT_ADJACENT_SIZE_RATIO_BLOCK');
+  }
 }
 
 function validateAuthority(value, expected) {

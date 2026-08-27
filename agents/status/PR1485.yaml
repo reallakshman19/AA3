@@ -1,0 +1,56 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1485
+mission: Add explicit opt-in B02D V2 producer binding and exact-head qualification envelope while preserving V1/default route
+workstream: LAFEA_B02D_V2_PRODUCER_BINDING
+branch: agent/lafea-b02d-v2-producer-binding-20260827
+base_main: d6101bcac7ccbdab9e42d7e0afbdd7b06d897462
+main_sync_commit: a0c3f513c93d7d00531cac7d71b70246483d6df8
+last_grounding_basis_head: c4aa884f2c7a7424f94ca1fa74f31ff3afec4509
+last_grounding_at: 2026-08-27T12:09:00+05:30
+work_intent: IMPLEMENT_AND_QUALIFY_BINDING
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+agent_state: ACTIVE
+pr_recovery_state: CURRENT_MAIN_SYNCHRONIZED_BINDING_SUCCESSOR
+handover_readiness: READY_FOR_VALIDATION
+report_path: agents/PR1485_workreport.md
+master_index: ABSENT_404
+current_stage: CURRENT_MAIN_SYNCHRONIZED_EXACT_HEAD_BINDING_ENVELOPE_IMPLEMENTED_REAL_EXECUTION_NOT_RUN
+engineering_failure_proven: false
+validation:
+  frozen_asset_merge_grounding: { state: PASS_GITHUB_READBACK }
+  binding_base_blob_equality: { state: PASS_GIT_BLOB_EQUALITY }
+  reviewed_binding_blob_transplant: { state: PASS_GIT_OBJECT_CUSTODY }
+  emp1_drift_exact_file_overlap: { state: PASS_DISJOINT }
+  current_main_synchronization: { state: PASS_0_BEHIND_9_FILES }
+  continuation_live_pr_reconciliation: { state: PASS_GITHUB_READBACK, behind_main: 0, changed_files: 9, reviews: 0, review_threads: 0, statuses: 0 }
+  b01_pass_successor_search: { state: PASS_NO_NEW_PASS_EVIDENCE_OBSERVED }
+  b01_final_retained_pass_receipt: { state: ABSENT_ON_CURRENT_MAIN, observed_directory_entry: README.md }
+  focused_checker_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  exact_head_classifier_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  exact_head_wrapper_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  exact_head_self_test_syntax: { state: PASS_LOCAL_NODE_CHECK }
+  exact_head_classifier_self_test: { state: PASS_LOCAL_NODE_EXECUTION, cases: 7 }
+  focused_binding_execution: { state: NOT_RUN }
+  v2_preobservation_current_head_execution: { state: NOT_RUN }
+  b01_exact_head_prerequisite: { state: NOT_RUN }
+  b02d_v2_exact_head_envelope: { state: NOT_RUN }
+  b02_response_qualification: { state: NOT_RUN }
+execution_environment:
+  direct_git_checkout: BLOCKED_DNS_COULD_NOT_RESOLVE_GITHUB_COM
+  direct_git_checkout_last_retried_at: 2026-08-27T12:09:00+05:30
+  github_actions_substitute_used: false
+producer_binding_changed: true
+v2_opt_in_only: true
+v1_default_preserved_by_design: true
+response_solver_changed: false
+galerkin_correction_included: false
+b02_prerequisite_evidence_available: false
+b02_numerical_authority_granted: false
+response_solver_repair_authorized: false
+reaction_equilibrium_repair_authorized: false
+release_authority_granted: false
+trust_authority_granted: false
+merge_authority: OWNER_ONLY_NOT_GRANTED
+exact_next_action: node scripts/lafea-b02d-v2-binding-exact-head-check.mjs

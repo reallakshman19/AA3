@@ -65,11 +65,18 @@ export function resolveSourceSegmentId(segment, sourceSegmentById, spanOrigin) {
  * `${base}.BEND.E#`; this lets compilePipingComponent own those spans without
  * a translation table or duplicate stiffness authority. Non-bend conditioned
  * spans keep the historical suffix form.
+ *
+ * Chord segment IDs are dot-delimited (`${sourceSegmentId}.B${n}`), not
+ * slash-delimited: a segment ID bound as `conditionedSegmentId` on a compiled
+ * element must satisfy the kernel's canonical identity grammar
+ * (`/^[A-Za-z0-9][A-Za-z0-9._-]*$/`, linear-fea-contract/identifiers.js), which
+ * has no `/`. Matching on `.` here is not a style choice, it is the same
+ * constraint bend-retopology-geometry.js's chord IDs are already satisfying.
  */
 export function structuralElementId(modelId, sourceIndex, segmentId, sourceSegmentId) {
   const base = `${modelId}.E${sourceIndex + 1}`;
   if (segmentId === sourceSegmentId) return base;
-  const prefix = `${sourceSegmentId}/`;
+  const prefix = `${sourceSegmentId}.`;
   const suffix = segmentId.startsWith(prefix) ? segmentId.slice(prefix.length) : segmentId;
   const bendChord = /^B([1-9][0-9]*)$/u.exec(suffix);
   if (bendChord) return `${base}.BEND.E${bendChord[1]}`;

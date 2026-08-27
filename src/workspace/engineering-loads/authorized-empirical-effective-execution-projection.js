@@ -27,8 +27,17 @@ const LINE_FIELDS = Object.freeze([
   ['HYDRO_FLUID_DENSITY', 'kg/m3'],
   ['INSULATION_THICKNESS', 'mm'],
 ]);
+const OPTIONAL_ANCILLARY_LINE_FIELDS = Object.freeze([
+  ['CLADDING_WEIGHT', 'kg/m', 'claddingMassPerLengthKgPerM'],
+  ['TRACING_WEIGHT', 'kg/m', 'tracingMassPerLengthKgPerM'],
+]);
+const OPTIONAL_COMPONENT_CONTENT_FIELDS = Object.freeze([
+  ['COMPONENT_OPERATING_FLUID_WEIGHT', 'kg', 'OPE'],
+  ['COMPONENT_HYDRO_FLUID_WEIGHT', 'kg', 'HYD'],
+]);
 const FLUID_COMPOSITION_RULE = 'BULK_DENSITY=AUTHORIZED_RAW_DENSITY*GOVERNED_FILL_FRACTION';
 const COMPONENT_MASS_COMPOSITION_RULE = 'ONE_DRY_MASS_POLICY_PER_PHYSICAL_COMPONENT';
+const COMPONENT_CONTENT_COMPOSITION_RULE = 'COMPONENT_CASE_MASS=DRY_POINT_MASS+OPTIONAL_AUTHORIZED_CONTAINED_FLUID';
 const ACTIVE_COMPONENT_MASS_MODE = 'COMPONENT_EXPLICIT_POINT_MASS';
 
 /**
@@ -37,19 +46,26 @@ const ACTIVE_COMPONENT_MASS_MODE = 'COMPONENT_EXPLICIT_POINT_MASS';
  * per-component mass selectors are synthetic and execution-local, preventing
  * selector collisions from erasing target-level authority.
  *
+ * Optional permanent ancillary line mass is projected into each line section
+ * only when a resolved CLADDING_WEIGHT or TRACING_WEIGHT effective value exists.
+ * Absence therefore remains absence rather than fabricated zero evidence, while
+ * an explicit governed zero remains traceable as an exact selected value.
+ *
  * Raw OPE/HYD fluid density remains authoritative in the effective-value
  * ledger. The projected density consumed by the scalar gravity kernel is an
  * explicitly derived bulk density, rho_bulk = rho_raw * fillFraction, with a
  * separate receipt binding the raw-density row and the governed fill policy.
- * Full-fill projections retain the historical numeric density shape; genuine
- * partial fill uses a `{ selected, rawDensityKgPerM3, fillFraction, ... }`
- * record which the legacy density reader consumes through `.selected`.
+ * Full-fill projections retain the historical numeric density shape; partial
+ * and zero fill use a `{ selected, rawDensityKgPerM3, fillFraction, ... }`
+ * record which the density reader consumes through `.selected`. A zero selected
+ * value therefore never masquerades as a raw zero-density authority.
  *
  * Non-pipe dry mass is governed separately. The current kernel implements one
  * explicit point mass per physical component only. A second binding to the same
  * entity, a PIPE target, or any recognized-but-unimplemented dry-mass mode is
  * rejected before calculation so distributed and point dry mass cannot silently
- * overlap.
+ * overlap. Optional OPE/HYD component-contained fluid is kept in separate maps
+ * and receipts; it never overwrites the authorized dry component-weight map.
  *
  * Product defaults are composed again at this boundary so direct/focused
  * callers cannot accidentally bypass governed fill/source/mass defaults.
@@ -65,13 +81,15 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
   const effectiveProfile = createNonFeaProductDefaultProvider({ profile }).effectiveProfile;
 
   const sections = {}, materials = {}, operating = {}, hydro = {}, insulation = {}, weights = {};
-  const lineMappings = [], componentMappings = [], fluidCompositionRows = [], componentMassCompositionRows = [];
+  const componentOperatingFluid = {}, componentHydroFluid = {};
+  const lineMappings = [], componentMappings = [], fluidCompositionRows = [], componentMassCompositionRows = [], componentContentCompositionRows = [];
   const claimedComponentEntityIds = new Set();
   const projectedDataset = clonePlain(dataset);
   const projectedProfile = clonePlain(effectiveProfile);
 
   for (const binding of authorizedInput.lineBindings || []) {
     const values = Object.fromEntries(LINE_FIELDS.map(([fieldId, unit]) => [fieldId, requiredEffective(ledger, 'LINE', binding.targetId, fieldId, unit)]));
+    const ancillaryValues = Object.fromEntries(OPTIONAL_ANCILLARY_LINE_FIELDS.map(([fieldId, unit]) => [fieldId, optionalEffective(ledger, 'LINE', binding.targetId, fieldId, unit)]));
     const insulationThickness = values.INSULATION_THICKNESS.value;
     const insulationDensity = insulationThickness === 0 ? null : requiredEffective(ledger, 'LINE', binding.targetId, 'INSULATION_DENSITY', 'kg/m3');
     validateSection(values.PIPE_OUTER_DIAMETER.value, values.PIPE_WALL_THICKNESS.value, binding.targetId);
@@ -90,6 +108,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
       materialCode: materialSelector,
       insulationCode: insulationSelector,
       insulationThicknessMm: insulationThickness,
+      ...ancillarySectionProperties(ancillaryValues),
     };
     materials[materialSelector] = values.MATERIAL_DENSITY.value;
     operating[binding.lineKey] = operatingComposition.projectedDensity;
@@ -102,6 +121,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
       insulationSelector,
       selectedSemanticHashes: [
         ...Object.values(values).map((row) => row.semanticHash),
+        ...Object.values(ancillaryValues).filter(Boolean).map((row) => row.semanticHash),
         ...(insulationDensity ? [insulationDensity.semanticHash] : []),
         operatingFill.semanticHash,
         hydroFill.semanticHash,
@@ -123,11 +143,32 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
     if (massPolicy.mode !== ACTIVE_COMPONENT_MASS_MODE) {
       throw codedError(`Component dry-mass mode ${massPolicy.mode} is recognized but not implemented by the active gravity kernel.`, 'EMPIRICAL_COMPONENT_MASS_MODE_UNSUPPORTED', { targetId: binding.targetId, entityId: entity.entityId, requestedMode: massPolicy.mode, implementedMode: ACTIVE_COMPONENT_MASS_MODE });
     }
+    const contentValues = Object.fromEntries(OPTIONAL_COMPONENT_CONTENT_FIELDS.map(([fieldId, unit, loadCaseId]) => [loadCaseId, optionalEffective(ledger, 'COMPONENT', binding.targetId, fieldId, unit)]));
     claimedComponentEntityIds.add(entity.entityId);
     const selector = `EFFECTIVE_COMPONENT:${binding.targetId}`;
     const attributes = entity.properties?.attributes || {};
     entity.properties = { ...(entity.properties || {}), attributes: { ...attributes, CATALOG_KEY: selector } };
     weights[selector] = weight.value;
+    if (contentValues.OPE) componentOperatingFluid[selector] = contentValues.OPE.value;
+    if (contentValues.HYD) componentHydroFluid[selector] = contentValues.HYD.value;
+    for (const loadCaseId of ['OPE', 'HYD']) {
+      const selected = contentValues[loadCaseId];
+      if (!selected) continue;
+      const contentReceiptMaterial = {
+        targetId: binding.targetId,
+        entityId: entity.entityId,
+        componentType: entity.entityType,
+        effectiveSelector: selector,
+        loadCaseId,
+        rule: COMPONENT_CONTENT_COMPOSITION_RULE,
+        containedFluidMassKg: selected.value,
+        containedFluidSemanticHash: selected.semanticHash,
+      };
+      componentContentCompositionRows.push(freezeDeep({
+        ...contentReceiptMaterial,
+        semanticHash: semanticHash(contentReceiptMaterial),
+      }));
+    }
     const receiptMaterial = {
       targetId: binding.targetId,
       entityId: entity.entityId,
@@ -149,6 +190,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
       originalCatalogKey: attributes.CATALOG_KEY ?? null,
       effectiveSelector: selector,
       selectedSemanticHash: weight.semanticHash,
+      selectedContentSemanticHashes: Object.values(contentValues).filter(Boolean).map((row) => row.semanticHash).sort(),
       massCompositionPolicy: massPolicy.mode,
       massCompositionSemanticHash: receipt.semanticHash,
     }));
@@ -156,6 +198,7 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
 
   const orderedFluidRows = fluidCompositionRows.sort(byFluidComposition);
   const orderedComponentRows = componentMassCompositionRows.sort(byComponentComposition);
+  const orderedComponentContentRows = componentContentCompositionRows.sort(byComponentContentComposition);
   const mappingMaterial = {
     schema: AUTHORIZED_EMPIRICAL_EFFECTIVE_EXECUTION_PROJECTION_SCHEMA,
     authorizedInputSemanticHash: authorizedInput.semanticHash,
@@ -169,6 +212,8 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
     fluidCompositionRows: orderedFluidRows,
     componentMassCompositionRule: COMPONENT_MASS_COMPOSITION_RULE,
     componentMassCompositionRows: orderedComponentRows,
+    componentContentCompositionRule: COMPONENT_CONTENT_COMPOSITION_RULE,
+    componentContentCompositionRows: orderedComponentContentRows,
   };
   const projectionSemanticHash = semanticHash(mappingMaterial);
   const evidence = freezeDeep({
@@ -182,6 +227,8 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
   const operatingEvidence = freezeDeep({ ...evidence, massCompositionRule: FLUID_COMPOSITION_RULE, fluidCompositionBySelector: fluidEvidenceBySelector(orderedFluidRows, 'OPE') });
   const hydroEvidence = freezeDeep({ ...evidence, massCompositionRule: FLUID_COMPOSITION_RULE, fluidCompositionBySelector: fluidEvidenceBySelector(orderedFluidRows, 'HYD') });
   const componentEvidence = freezeDeep({ ...evidence, massCompositionRule: COMPONENT_MASS_COMPOSITION_RULE, componentMassCompositionBySelector: componentEvidenceBySelector(orderedComponentRows) });
+  const componentOperatingFluidEvidence = freezeDeep({ ...evidence, massCompositionRule: COMPONENT_CONTENT_COMPOSITION_RULE, componentContentBySelector: componentContentEvidenceBySelector(orderedComponentContentRows, 'OPE') });
+  const componentHydroFluidEvidence = freezeDeep({ ...evidence, massCompositionRule: COMPONENT_CONTENT_COMPOSITION_RULE, componentContentBySelector: componentContentEvidenceBySelector(orderedComponentContentRows, 'HYD') });
   const loadCalculation = projectedProfile.loadCalculation;
   loadCalculation.pipeSectionProperties = createEvidenceValue(sortedObject(sections), evidence, true);
   loadCalculation.materialDensitiesKgPerM3 = createEvidenceValue(sortedObject(materials), evidence, true);
@@ -189,6 +236,8 @@ export function createAuthorizedEmpiricalEffectiveExecutionProjection({ authoriz
   loadCalculation.hydroFluidDensitiesKgPerM3 = createEvidenceValue(sortedObject(hydro), hydroEvidence, true);
   loadCalculation.insulationDensitiesKgPerM3 = createEvidenceValue(sortedObject(insulation), evidence, true);
   loadCalculation.componentWeightsKg = createEvidenceValue(sortedObject(weights), componentEvidence, true);
+  loadCalculation.componentOperatingFluidWeightsKg = createEvidenceValue(sortedObject(componentOperatingFluid), componentOperatingFluidEvidence, true);
+  loadCalculation.componentHydroFluidWeightsKg = createEvidenceValue(sortedObject(componentHydroFluid), componentHydroFluidEvidence, true);
 
   const frozenProfile = deepFreeze(projectedProfile), frozenDataset = deepFreeze(projectedDataset);
   const material = { ...mappingMaterial, projectionSemanticHash, projectedProfileSemanticHash: semanticHash(frozenProfile), projectedDatasetSemanticHash: semanticHash(frozenDataset) };
@@ -199,7 +248,7 @@ function composeFluidDensity(binding, loadCaseId, rawDensityRow, fillPolicy) {
   const rawDensityKgPerM3 = Number(rawDensityRow.value);
   if (!(rawDensityKgPerM3 > 0)) throw codedError(`${loadCaseId} raw fluid density must be positive before fill composition.`, 'EMPIRICAL_EFFECTIVE_FLUID_DENSITY_INVALID', { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, rawDensityKgPerM3 });
   const bulkDensityKgPerM3 = rawDensityKgPerM3 * fillPolicy.fillFraction;
-  if (!(bulkDensityKgPerM3 > 0)) throw codedError(`${loadCaseId} derived bulk density must be positive on the current legacy statics path.`, 'EMPIRICAL_EFFECTIVE_FLUID_BULK_DENSITY_INVALID', { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, bulkDensityKgPerM3 });
+  if (!Number.isFinite(bulkDensityKgPerM3) || bulkDensityKgPerM3 < 0) throw codedError(`${loadCaseId} derived bulk density must be finite and non-negative.`, 'EMPIRICAL_EFFECTIVE_FLUID_BULK_DENSITY_INVALID', { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, bulkDensityKgPerM3 });
   const receiptMaterial = { targetId: binding.targetId, lineKey: binding.lineKey, loadCaseId, rule: FLUID_COMPOSITION_RULE, rawDensityKgPerM3, rawDensitySemanticHash: rawDensityRow.semanticHash, fillFraction: fillPolicy.fillFraction, phase: fillPolicy.phase, fillState: fillPolicy.state, fillPolicySelector: fillPolicy.selector, fillPolicySemanticHash: fillPolicy.semanticHash, bulkDensityKgPerM3 };
   const receipt = freezeDeep({ ...receiptMaterial, semanticHash: semanticHash(receiptMaterial) });
   const projectedDensity = fillPolicy.fillFraction === 1 ? bulkDensityKgPerM3 : { selected: bulkDensityKgPerM3, rawDensityKgPerM3, fillFraction: fillPolicy.fillFraction, phase: fillPolicy.phase, fillState: fillPolicy.state, rawDensitySemanticHash: rawDensityRow.semanticHash, fillPolicySemanticHash: fillPolicy.semanticHash, compositionSemanticHash: receipt.semanticHash };
@@ -214,9 +263,37 @@ function componentEvidenceBySelector(rows) {
   return sortedObject(Object.fromEntries(rows.map((row) => [row.effectiveSelector, { rule: row.rule, mode: row.mode, targetId: row.targetId, entityId: row.entityId, componentWeightKg: row.componentWeightKg, componentWeightSemanticHash: row.componentWeightSemanticHash, policySelector: row.policySelector, policySemanticHash: row.policySemanticHash, compositionSemanticHash: row.semanticHash }])));
 }
 
+function componentContentEvidenceBySelector(rows, loadCaseId) {
+  return sortedObject(Object.fromEntries(rows.filter((row) => row.loadCaseId === loadCaseId).map((row) => [row.effectiveSelector, {
+    rule: row.rule,
+    targetId: row.targetId,
+    entityId: row.entityId,
+    loadCaseId: row.loadCaseId,
+    containedFluidMassKg: row.containedFluidMassKg,
+    containedFluidSemanticHash: row.containedFluidSemanticHash,
+    compositionSemanticHash: row.semanticHash,
+  }])));
+}
+
+function ancillarySectionProperties(values) {
+  return Object.fromEntries(OPTIONAL_ANCILLARY_LINE_FIELDS.flatMap(([fieldId, _unit, property]) => {
+    const selected = values[fieldId];
+    return selected ? [[property, selected.value]] : [];
+  }));
+}
+
+function optionalEffective(ledger, targetKind, targetId, fieldId, unit) {
+  const selected = findAuthorizedEmpiricalEffectiveValue(ledger, targetKind, targetId, fieldId);
+  return selected ? validateEffective(selected, targetKind, targetId, fieldId, unit) : null;
+}
+
 function requiredEffective(ledger, targetKind, targetId, fieldId, unit) {
   const selected = findAuthorizedEmpiricalEffectiveValue(ledger, targetKind, targetId, fieldId);
   if (!selected) throw codedError(`Effective value ${targetKind}:${targetId}:${fieldId} is required for gravity execution.`, 'EMPIRICAL_EFFECTIVE_EXECUTION_VALUE_REQUIRED', { targetKind, targetId, fieldId });
+  return validateEffective(selected, targetKind, targetId, fieldId, unit);
+}
+
+function validateEffective(selected, targetKind, targetId, fieldId, unit) {
   if (selected.unit !== unit) throw codedError(`Effective value ${targetKind}:${targetId}:${fieldId} must use ${unit}; got ${selected.unit}.`, 'EMPIRICAL_EFFECTIVE_EXECUTION_UNIT_UNSUPPORTED', { targetKind, targetId, fieldId, expectedUnit: unit, actualUnit: selected.unit });
   if (typeof selected.value !== 'number' || !Number.isFinite(selected.value) || selected.value < 0) throw codedError(`Effective value ${targetKind}:${targetId}:${fieldId} must be a finite non-negative number.`, 'EMPIRICAL_EFFECTIVE_EXECUTION_VALUE_INVALID', { targetKind, targetId, fieldId });
   return selected;
@@ -238,4 +315,5 @@ function sortedObject(value) { return Object.fromEntries(Object.entries(value).s
 function byTarget(left, right) { return left.targetId < right.targetId ? -1 : left.targetId > right.targetId ? 1 : 0; }
 function byFluidComposition(left, right) { const a = `${left.targetId}|${left.loadCaseId}`, b = `${right.targetId}|${right.loadCaseId}`; return a < b ? -1 : a > b ? 1 : 0; }
 function byComponentComposition(left, right) { return `${left.targetId}|${left.entityId}`.localeCompare(`${right.targetId}|${right.entityId}`); }
+function byComponentContentComposition(left, right) { return `${left.targetId}|${left.entityId}|${left.loadCaseId}`.localeCompare(`${right.targetId}|${right.entityId}|${right.loadCaseId}`); }
 function codedError(message, code, details = null) { const error = new Error(message); error.code = code; error.details = details; return error; }

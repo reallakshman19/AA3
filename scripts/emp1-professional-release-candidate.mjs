@@ -4,6 +4,8 @@ import { spawnSync } from 'node:child_process';
 import { lstat, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH } from './emp1-professional-security-header-policy.mjs';
+import { createEmp1ReleaseManifest } from './emp1-professional-release-manifest.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const options = parseArgs(process.argv.slice(2));
@@ -11,6 +13,16 @@ const candidateHead = git(['rev-parse', 'HEAD']);
 const candidateTree = git(['rev-parse', 'HEAD^{tree}']);
 const candidateParent = git(['rev-parse', 'HEAD^']);
 const worktreeStatus = git(['status', '--porcelain']);
+const dependencyLockSha256 = await requiredFileSha256(
+  'package-lock.json',
+  'EMP1_RELEASE_CANDIDATE_DEPENDENCY_LOCK_REQUIRED',
+);
+const deploymentOperationsReceiptSha256 = options.deploymentOperationsReceipt
+  ? await requiredFileSha256(
+    options.deploymentOperationsReceipt,
+    'EMP1_RELEASE_CANDIDATE_DEPLOYMENT_OPERATIONS_RECEIPT_REQUIRED',
+  )
+  : null;
 
 if (options.expectedHead && options.expectedHead !== candidateHead) {
   throw releaseError(`EMP1_RELEASE_CANDIDATE_HEAD_MISMATCH:${candidateHead}:${options.expectedHead}`);
@@ -86,7 +98,19 @@ const gates = [
     ['scripts/emp1-wrc-gamma5-zero-dp-orchestration-qualification.mjs']],
   ['CURRENTNESS_REPLAY_FALSIFIERS', process.execPath,
     ['scripts/emp1-workbench-route-authority-currentness-falsifiers.mjs']],
+  ['DEPENDENCY_LOCK_CUSTODY', process.execPath,
+    ['scripts/emp1-professional-dependency-lock-check.mjs']],
+  ['DEPENDENCY_LOCK_CUSTODY_FALSIFIER', process.execPath,
+    ['scripts/emp1-professional-dependency-lock-falsifier.mjs']],
+  ['DEPENDENCY_ADVISORY', process.execPath,
+    ['scripts/emp1-professional-dependency-advisory-check.mjs']],
+  ['DEPENDENCY_ADVISORY_FALSIFIER', process.execPath,
+    ['scripts/emp1-professional-dependency-advisory-falsifier.mjs']],
   ['PRODUCTION_BUILD', npmCommand(), ['run', 'build']],
+  ['BUILD_ARTIFACT_SECURITY', process.execPath,
+    ['scripts/emp1-professional-build-artifact-security-check.mjs']],
+  ['BUILD_ARTIFACT_SECURITY_FALSIFIER', process.execPath,
+    ['scripts/emp1-professional-build-artifact-security-falsifier.mjs']],
   ['EMP1_RELEASE_CHROMIUM', process.execPath,
     ['scripts/run-playwright.mjs', 'e2e/emp1-professional-release.spec.js']],
 ];
@@ -129,11 +153,53 @@ if (options.release && !fail && !notRun) {
   ]));
   fail = executions.find((item) => item.status === 'FAIL');
   notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
+
+  if (!fail && !notRun) {
+    executions.push(runNode('DEPLOYMENT_SECURITY_HEADERS', [
+      'scripts/emp1-professional-deployment-security-headers-check.mjs',
+      '--receipt', options.deploymentReceipt,
+      '--expected-head', candidateHead,
+      '--expected-tree', candidateTree,
+      '--expected-artifact-sha256', buildArtifactSha256,
+    ]));
+    fail = executions.find((item) => item.status === 'FAIL');
+    notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
+  }
+
+  if (!fail && !notRun) {
+    if (!options.deploymentOperationsReceipt) {
+      const receipt = createReceipt({
+        candidateHead,
+        candidateTree,
+        candidateParent,
+        worktreeStatus,
+        mode: 'RELEASE',
+        executions,
+        buildArtifactSha256,
+        status: 'BLOCKED_DEPLOYMENT_OPERATIONS_EVIDENCE_REQUIRED',
+        releaseCandidateQualified: false,
+      });
+      await maybeWriteReceipt(receipt, options.writeReceipt);
+      console.log(JSON.stringify(receipt, null, 2));
+      process.exit(2);
+    }
+    executions.push(runNode('DEPLOYMENT_OPERATIONS', [
+      'scripts/emp1-professional-deployment-operations-check.mjs',
+      '--receipt', options.deploymentOperationsReceipt,
+      '--deployment-receipt', options.deploymentReceipt,
+      '--expected-head', candidateHead,
+      '--expected-tree', candidateTree,
+      '--expected-artifact-sha256', buildArtifactSha256,
+    ]));
+    fail = executions.find((item) => item.status === 'FAIL');
+    notRun = executions.find((item) => item.status === 'NOT_RUN_EXECUTION_ENVIRONMENT');
+  }
 }
 
 const allExecutedPass = executions.every((item) => item.status === 'PASS');
 const releaseCandidateQualified = options.release
   && Boolean(options.deploymentReceipt)
+  && Boolean(options.deploymentOperationsReceipt)
   && allExecutedPass;
 const status = releaseCandidateQualified
   ? 'PASS_EMP1_PROFESSIONAL_RELEASE_CANDIDATE_AND_DEPLOYMENT_EVIDENCE'
@@ -160,20 +226,56 @@ if (fail) process.exit(1);
 if (options.release && !releaseCandidateQualified) process.exit(2);
 
 function createReceipt(input) {
+  const candidate = {
+    headSha: input.candidateHead,
+    treeSha: input.candidateTree,
+    parentSha: input.candidateParent,
+    cleanWorktree: input.worktreeStatus === '',
+    buildArtifactSha256: input.buildArtifactSha256,
+    dependencySecurity: {
+      packageLockPath: 'package-lock.json',
+      packageLockSha256: dependencyLockSha256,
+      advisoryAuditLevel: 'HIGH',
+      liveAdvisoryGateId: 'DEPENDENCY_ADVISORY',
+    },
+    deployedSecurityHeaders: {
+      policySemanticHash: EMP1_PROFESSIONAL_SECURITY_HEADER_POLICY_SEMANTIC_HASH,
+      liveObservationGateId: 'DEPLOYMENT_SECURITY_HEADERS',
+      browserCompatibilityEstablishedByHeaderPolicy: false,
+    },
+    deploymentOperations: {
+      deploymentOperationsReceiptSha256,
+      gateId: 'DEPLOYMENT_OPERATIONS',
+      rollbackExecutionObservedByThisHarness: false,
+      rollbackSuccessAuthorizedByThisHarness: false,
+    },
+  };
+  const releaseManifest = createEmp1ReleaseManifest({
+    candidateHead: input.candidateHead,
+    candidateTree: input.candidateTree,
+    candidateParent: input.candidateParent,
+    executions: input.executions,
+    buildArtifactSha256: input.buildArtifactSha256,
+    releaseCandidateQualified: input.releaseCandidateQualified,
+    currentCandidateProvenance: candidate,
+  });
   const payload = {
     schema: 'emp1-professional-release-candidate-receipt/v1',
-    candidate: {
-      headSha: input.candidateHead,
-      treeSha: input.candidateTree,
-      parentSha: input.candidateParent,
-      cleanWorktree: input.worktreeStatus === '',
-      buildArtifactSha256: input.buildArtifactSha256,
-    },
+    candidate,
     mode: input.mode,
     executions: input.executions,
+    releaseManifest,
     releaseCandidateQualified: input.releaseCandidateQualified,
     authorityBoundary: {
       thisHarnessMutatesEngineeringAuthority: false,
+      dependencySecurityCanBlockRelease: true,
+      dependencySecurityCreatesEngineeringAuthority: false,
+      vulnerabilityFreeClaimedByThisHarness: false,
+      deployedSecurityHeadersCanBlockRelease: true,
+      browserCompatibilityEstablishedByHeaderPolicy: false,
+      deploymentOperationsCanBlockRelease: true,
+      rollbackExecutionObservedByThisHarness: false,
+      rollbackSuccessAuthorizedByThisHarness: false,
       codeComplianceAuthorizedByThisHarness: false,
       deploymentAuthorityGrantedByThisHarness: false,
       broaderApplicationSecurityCertificationClaimed: false,
@@ -200,7 +302,9 @@ function run(gateId, command, args) {
   const stderr = result.stderr ?? '';
   const notRun = Boolean(result.error)
     || result.status == null
-    || result.error?.code === 'ENOENT';
+    || result.error?.code === 'ENOENT'
+    || (gateId === 'DEPENDENCY_ADVISORY' && result.status === 3)
+    || (gateId === 'DEPLOYMENT_SECURITY_HEADERS' && result.status === 3);
   return Object.freeze({
     gateId,
     command: [command, ...args].join(' '),
@@ -220,6 +324,13 @@ function git(args) {
     throw releaseError(`EMP1_RELEASE_CANDIDATE_GIT_REQUIRED:${args.join('_')}`);
   }
   return String(result.stdout ?? '').trim();
+}
+async function requiredFileSha256(path, code) {
+  try {
+    return createHash('sha256').update(await readFile(resolve(root, path))).digest('hex');
+  } catch {
+    throw releaseError(code);
+  }
 }
 async function hashDirectory(directory) {
   const rows = [];
@@ -263,6 +374,7 @@ function parseArgs(args) {
     expectedHead: null,
     writeReceipt: null,
     deploymentReceipt: null,
+    deploymentOperationsReceipt: null,
   };
   for (let index = 0; index < args.length; index += 1) {
     if (args[index] === '--release') out.release = true;
@@ -270,13 +382,20 @@ function parseArgs(args) {
     else if (args[index] === '--expected-head') out.expectedHead = args[++index] ?? null;
     else if (args[index] === '--write-receipt') out.writeReceipt = args[++index] ?? null;
     else if (args[index] === '--deployment-receipt') out.deploymentReceipt = args[++index] ?? null;
+    else if (args[index] === '--deployment-operations-receipt') out.deploymentOperationsReceipt = args[++index] ?? null;
     else throw releaseError(`EMP1_RELEASE_CANDIDATE_UNKNOWN_ARGUMENT:${args[index]}`);
   }
   if (out.release && out.executeDiagnostics) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_RELEASE_AND_DIAGNOSTIC_ARE_MUTUALLY_EXCLUSIVE');
   }
+  if (out.release && !out.writeReceipt) {
+    throw releaseError('EMP1_RELEASE_CANDIDATE_RETAINED_RECEIPT_REQUIRED');
+  }
   if (out.deploymentReceipt && !out.release) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_DEPLOYMENT_RECEIPT_REQUIRES_RELEASE_MODE');
+  }
+  if (out.deploymentOperationsReceipt && !out.release) {
+    throw releaseError('EMP1_RELEASE_CANDIDATE_DEPLOYMENT_OPERATIONS_RECEIPT_REQUIRES_RELEASE_MODE');
   }
   if (out.expectedHead && !/^[0-9a-f]{40}$/u.test(out.expectedHead)) {
     throw releaseError('EMP1_RELEASE_CANDIDATE_EXPECTED_HEAD_INVALID');

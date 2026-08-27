@@ -124,14 +124,15 @@ assert.equal(validateNonFeaFluidFillPolicy({
   cases: { OPE: { fillFraction: 1.2, phase: 'MIXED' } },
 }).valid, false);
 
-expectCode(
-  () => resolveNonFeaFluidFillPolicy({
-    profile: effectivePolicy({ cases: { OPE: { fillFraction: 0, phase: 'EMPTY' } } }),
-    lineKey: 'L-1',
-    loadCaseId: 'OPE',
-  }),
-  'EMPIRICAL_FLUID_ZERO_FILL_NONEMPTY_CASE_UNSUPPORTED',
-);
+const zeroOpe = resolveNonFeaFluidFillPolicy({
+  profile: effectivePolicy({ cases: { OPE: { fillFraction: 0, phase: 'EMPTY' } } }),
+  lineKey: 'L-1',
+  loadCaseId: 'OPE',
+});
+assert.equal(zeroOpe.fillFraction, 0);
+assert.equal(zeroOpe.phase, 'EMPTY');
+assert.equal(zeroOpe.loadCaseId, 'OPE');
+assert.equal(zeroOpe.selector, 'CASE:OPE');
 expectCode(
   () => resolveNonFeaFluidFillPolicy({
     profile: effectivePolicy({ cases: { EMPTY: 'LIQUID_FULL' } }),
@@ -149,7 +150,7 @@ console.log(JSON.stringify({
   casePrecedence: otherOpe.fillFraction,
   legacyDefaultOpe: legacyOpe.fillFraction,
   legacyDefaultEmpty: legacyEmpty.fillFraction,
-  zeroOpeFailClosed: true,
+  zeroOpeGoverned: zeroOpe.fillFraction === 0,
   nonzeroEmptyFailClosed: true,
 }, null, 2));
 

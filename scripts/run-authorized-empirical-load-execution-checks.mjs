@@ -6,6 +6,8 @@ await import('./empirical-component-moment-demand-check.mjs');
 await import('./empirical-cog-load-distribution-check.mjs');
 await import('./authorized-empirical-method-execution-check.mjs');
 await import('./authorized-empirical-runtime-package-v2-check.mjs');
+await import('./governed-empirical-runtime-package-v2-check.mjs');
+await import('./governed-empirical-runtime-currentness-v2-check.mjs');
 await import('./configured-empirical-method-controller-v2-check.mjs');
 await import('./run-authorized-empirical-load-input-checks.mjs');
 await import('./authorized-empirical-load-execution-check.mjs');

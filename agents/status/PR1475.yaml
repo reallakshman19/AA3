@@ -1,0 +1,57 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1475
+issue: 1321
+branch: agent/issue-1321-mass-receipt-support-kernel
+state: SOURCE_COMPLETE_READY_FOR_OWNER_MERGE
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: FINAL_RECONCILIATION
+base_branch: main
+base_sha: f7e3241ad36c64eed8192c8f9d11400cba1d3e69
+validation:
+  live_main_grounding: PASS
+  pr1471_mass_projection_trace: PASS
+  raw_model_identity_trace: PASS
+  route_support_kernel_trace: PASS
+  project_data_loadCalcProjectBasis_trace: PASS
+  exact_entity_mapping_rule_trace: PASS
+  exact_seven_file_scope: PASS
+  focused_regression_source_review: PASS
+  stale_declared_authority_hash_falsifier_source_review: PASS
+  legacy_kernel_default_path_source_review: PASS
+  allocation_equilibrium_no_drift_source_review: PASS
+  focused_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+  local_checkout:
+    status: FAIL_ENVIRONMENT_BEFORE_MATERIALIZATION
+    observation: PRIOR_CURRENT_SESSION_ENVIRONMENT
+    error: "Could not resolve host: github.com"
+invariants:
+  legacy_entrypoints_unchanged: true
+  current_mass_projection_required: true
+  current_run_authorization_required: true
+  raw_dataset_common_input_hash_binding_required: true
+  authority_object_hash_recomputed_before_binding: true
+  support_and_route_contract_binding_required: true
+  exact_component_to_execution_entity_mapping_required: true
+  ambiguous_mapping_blocks_before_statics: true
+  missing_case_mass_fails_closed: true
+  zero_gasket_mass_remains_qualified: true
+  ancillary_or_content_recomposition_forbidden: true
+  project_data_workflow: loadCalcProjectBasis
+  force_formula_unchanged: "massKg * gravityMPerS2 * loadFactor"
+  allocation_functions_unchanged: true
+  application_point_authority_unchanged: true
+  equilibrium_functions_unchanged: true
+  numerical_tolerance_change_authorized: false
+  run_routing_change_authorized: false
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+merge_disposition: READY_AFTER_FINAL_HEAD_RECONCILIATION
+appendix_a_qualified: true
+appendix_a_score: 98
+appendix_a_minimum: 18
+exact_next_action: "Re-check live main and exact PR head/diff, mark PR ready, squash-merge with expected head SHA, then start the next Issue #1321 slice from merged main."

@@ -1,0 +1,38 @@
+schema: AgentStatus.v1
+pr: 1428
+issue: 1413
+branch: agent/issue-1413-validation-isolation-20260825
+state: AD04_REBASED_ENTRYPOINT_HARDENED_EXECUTION_PENDING
+criticality: ENGINEERING_CRITICAL
+handover_readiness: READY_FOR_CONTINUATION
+takeover_authority: WRITE_ALLOWED_VALIDATION_ISOLATION_ONLY
+merge_authority: OWNER_ONLY
+base_main: 8b3dc79ed827e74c4b708c8d77e6354374a27154
+grounding_epoch: AD-04_AFTER_PR1424
+report_basis_head: 35a424081429e4bebed27e36311d93fd52c7ee1d
+engineering_failure_proven: false
+b2_mechanics_repair_authorized: false
+b4_registry_closure_authorized: false
+validation:
+  ad04_live_main_grounding: PASS_SOURCE_INSPECTION
+  ad04_q0_q3_authority_drift: NO_DRIFT_FOUND
+  appendix_a: PASS_99_OF_100_MIN_19
+  source_isolation: PASS_SOURCE_INSPECTION
+  lafea4_contract_parity_guard: PASS_SOURCE_INSPECTION_AND_LOCAL_CONTROLLER_HARNESS
+  exact_head_preflight_controller: PASS_LOCAL_CONTROLLER_HARNESS_ONLY
+  exact_repo_q0a_continuum: NOT_RUN
+  exact_repo_q0a_shell: NOT_RUN
+  exact_repo_q0b: NOT_RUN
+  exact_repo_q0c: NOT_RUN
+  q1_q4e: NOT_RUN
+  rebased_pr_head_hosted_execution: NOT_RUN_PRE_STEP_INFRASTRUCTURE
+infrastructure:
+  latest_lafea_run: 32855515597
+  latest_lafea_job: 97826397659
+  runner_allocated: false
+  steps: 0
+  logs_available: false
+  local_github_dns: unavailable
+next_action: >-
+  Re-ground if main moves. Otherwise, when an executable exact PR checkout exists, set QUAL_HEAD to
+  the exact PR head, run scripts/lafea1413-exact-head-preflight-check.mjs, then continue Q1 through Q4E.

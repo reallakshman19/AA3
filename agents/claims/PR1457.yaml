@@ -1,0 +1,42 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1457
+branch: agent/issue-1456-emp1-build-artifact-security-20260826
+issue: 1456
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: AUTO
+auto_state: RUNNING
+coordination_state: PR1457_OWNER_MERGE_GATE_THEN_PR1464_NORMALIZATION
+scope:
+  authority: EMP1_PROFESSIONAL_BUILD_ARTIFACT_SECURITY
+  paths:
+    - scripts/emp1-professional-build-artifact-security-check.mjs
+    - scripts/emp1-professional-build-artifact-security-falsifier.mjs
+    - scripts/emp1-professional-release-candidate.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_EVIDENCE.md
+    - agents/PR1457_workreport.md
+    - agents/status/PR1457.yaml
+    - agents/claims/PR1457.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - WRC mechanics/route/registry/source/dataset/oracle/tolerances
+  - dependency-vulnerability policy
+  - CSP/security-header policy
+  - .github/workflows/**
+authority_boundary:
+  artifact_security_can_block_release: true
+  engineering_authority_granted: false
+  code_compliance_authority_granted: false
+  release_authority_granted: false
+live_main_last_observed: 9b517664bdff102db6a4e7f1b6d2332a3311ad96
+current_main_tree: 767d09e9df0c5af5342b2d7339fe301342f57f0c
+pre_reground_head: eba35c045b3adc09885b73fcb3738f9125de4cee
+structural_reground_head: 3d9865b6f0f364c790640bfae73ba7c0e247dbbe
+structural_reground_tree: b0faf7f805215246434b12a997111a52a5d393b4
+report_basis_head: 3d9865b6f0f364c790640bfae73ba7c0e247dbbe
+merge_authority: GRANTED_EXPLICIT_OWNER_2026-08-26T23:12:53Z
+merge_authority_scope: PR1457_ONLY_ONE_TIME
+grounding_epoch: GE-PR1457-007
+handover_report: agents/PR1457_workreport.md
+exact_next_action: "Mark PR1457 ready, verify exact current head/main/reviews, squash-merge with expected-head protection, then normalize successor PR1464 onto the resulting main."

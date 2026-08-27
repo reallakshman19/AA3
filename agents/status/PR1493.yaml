@@ -1,0 +1,53 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1493
+issue: 1321
+branch: agent/issue-1321-default-usage-coverage-summary
+state: SOURCE_COMPLETE_REVIEW_PENDING_EXECUTION
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: D4_PLUS_PR_E_SOURCE_COMPLETE
+base_branch: main
+base_sha: b2e8745a8cdb47850b8f162cea8c16f3f4006e03
+scope_authority: OWNER_EXPLICIT_SAME_PR_STACK_2026_08_27
+validation:
+  merged_pr1492_base_grounding: PASS_SOURCE_INSPECTION
+  d4_observability_source_completion: PASS_SOURCE_INSPECTION
+  issue_1321_pr_e_grounding: PASS_SOURCE_INSPECTION
+  ordinary_run_backend_auto_snapshot_trace: PASS_SOURCE_INSPECTION
+  ordinary_run_backend_auto_authorization_trace: PASS_SOURCE_INSPECTION
+  structural_run_attempt_vs_ready_semantics: PASS_SOURCE_INSPECTION
+  common_input_configuration_staleness_trace: PASS_SOURCE_INSPECTION
+  topology_authority_staleness_trace: PASS_SOURCE_INSPECTION
+  support_restraint_authority_staleness_trace: PASS_SOURCE_INSPECTION
+  model_load_authority_staleness_trace: PASS_SOURCE_INSPECTION
+  no_legacy_failure_fallback_trace: PASS_SOURCE_INSPECTION
+  exact_ten_file_diff_before_recovery_close: PASS_SOURCE_INSPECTION
+  main_drift_before_recovery_close: PASS_SOURCE_INSPECTION
+  reviews_threads_before_recovery_close: PASS_SOURCE_INSPECTION
+  exact_head_commit_statuses: NONE_PRESENT
+  faithful_local_checkout: BLOCKED_DNS_GITHUB
+  focused_pr_e_execution_check: NOT_RUN
+  focused_d4_execution_check: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  advanced_shell_contract: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  canonical_ready_gate_weakened: false
+  system_seal_rule_changed: false
+  run_authorization_receipt_changed: false
+  legacy_explicit_seal_api_removed: false
+  legacy_explicit_authorization_api_removed: false
+  current_system_failure_falls_back_to_legacy: false
+  resolver_precedence_changed: false
+  configured_default_usage_inferred_from_policy: false
+  product_default_promoted_to_target_without_resolver_evidence: false
+  numerical_mechanics_changed: false
+  source_axis_qualification_changed: false
+  clickable_run_preclaims_ready: false
+  unchanged_common_input_configuration_stales_result: false
+merge_authority: OWNER_ONLY_NOT_GRANTED
+merge_disposition: DRAFT_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+exact_next_action: "Reconcile the actual post-recovery final head against live main, exact ten-file ledger, reviews/threads and mergeability. Keep executable qualification NOT_RUN because faithful checkout is DNS-blocked; do not merge without explicit owner authorization."

@@ -119,6 +119,42 @@ assert.notEqual(operating80.fillPolicySemanticHash, operating60.fillPolicySemant
 assert.notEqual(projection80.semanticHash, projection60.semanticHash,
   'fill-policy change must stale the execution projection');
 
+const profileZero = effectiveProfile({
+  schema: NON_FEA_FLUID_FILL_POLICY_SCHEMA,
+  cases: {
+    OPE: { fillFraction: 0, phase: 'EMPTY' },
+    HYD: 'LIQUID_FULL',
+  },
+});
+const projectionZero = createAuthorizedEmpiricalEffectiveExecutionProjection({
+  authorizedInput: input,
+  dataset,
+  profile: profileZero,
+});
+const operatingZero = projectDataValue(
+  projectionZero.profile,
+  'loadCalculation.operatingFluidDensitiesKgPerM3',
+)['L-1'];
+const zeroReceipt = projectionZero.fluidCompositionRows.find((row) => row.loadCaseId === 'OPE');
+const zeroEvidence = projectionZero.profile.loadCalculation
+  .operatingFluidDensitiesKgPerM3.evidence;
+assert.equal(operatingZero.selected, 0);
+assert.equal(operatingZero.rawDensityKgPerM3, 800);
+assert.equal(operatingZero.fillFraction, 0);
+assert.equal(operatingZero.phase, 'EMPTY');
+assert.equal(operatingZero.rawDensitySemanticHash, operating60.rawDensitySemanticHash,
+  'zero fill must not replace the positive raw-density authority');
+assert.ok(zeroReceipt);
+assert.equal(zeroReceipt.rawDensityKgPerM3, 800);
+assert.equal(zeroReceipt.fillFraction, 0);
+assert.equal(zeroReceipt.bulkDensityKgPerM3, 0);
+assert.equal(zeroReceipt.semanticHash, operatingZero.compositionSemanticHash);
+assert.equal(zeroEvidence.fluidCompositionBySelector['L-1'].bulkDensityKgPerM3, 0);
+assert.equal(zeroEvidence.fluidCompositionBySelector['L-1'].compositionSemanticHash,
+  operatingZero.compositionSemanticHash);
+assert.notEqual(projectionZero.semanticHash, projection60.semanticHash,
+  'zero-fill policy must have a distinct execution projection identity');
+
 const legacy = effectiveProfile({ DEFAULT: 'LIQUID_FULL' });
 const legacyProjection = createAuthorizedEmpiricalEffectiveExecutionProjection({
   authorizedInput: input,
@@ -139,16 +175,15 @@ assert.equal(
   1,
 );
 
+const zeroRawLedger = makeLedger({ operatingFluidDensityKgPerM3: 0 });
 assert.throws(
   () => createAuthorizedEmpiricalEffectiveExecutionProjection({
-    authorizedInput: input,
+    authorizedInput: makeAuthorizedInput(zeroRawLedger),
     dataset,
-    profile: effectiveProfile({
-      schema: NON_FEA_FLUID_FILL_POLICY_SCHEMA,
-      cases: { OPE: { fillFraction: 0, phase: 'EMPTY' }, HYD: 'LIQUID_FULL' },
-    }),
+    profile: profileZero,
   }),
-  (error) => error?.code === 'EMPIRICAL_FLUID_ZERO_FILL_NONEMPTY_CASE_UNSUPPORTED',
+  (error) => error?.code === 'EMPIRICAL_EFFECTIVE_FLUID_DENSITY_INVALID',
+  'governed zero fill must not authorize a raw zero-density source',
 );
 
 console.log(JSON.stringify({
@@ -157,11 +192,13 @@ console.log(JSON.stringify({
   rawOperatingDensityKgPerM3: 800,
   opeFill60BulkDensityKgPerM3: operating60.selected,
   opeFill80BulkDensityKgPerM3: operating80.selected,
+  opeFillZeroBulkDensityKgPerM3: operatingZero.selected,
   fullHydroProjectionShape: 'NUMERIC_COMPATIBLE',
   rawDensityHashStableAcrossFillChange: true,
-  projectionHashChangesWithFillPolicy: projection80.semanticHash !== projection60.semanticHash,
+  projectionHashChangesWithFillPolicy: true,
   legacyFullPolicyPreserved: true,
-  zeroNonemptyFillFailsClosed: true,
+  zeroNonemptyFillGoverned: true,
+  rawZeroDensityFailsClosed: true,
 }, null, 2));
 
 function effectiveProfile(fillPolicy) {
@@ -191,12 +228,12 @@ function makeAuthorizedInput(effectiveValueLedger) {
   });
 }
 
-function makeLedger() {
+function makeLedger({ operatingFluidDensityKgPerM3 = 800 } = {}) {
   const candidates = [
     candidate('PIPE_OUTER_DIAMETER', 100, 'mm'),
     candidate('PIPE_WALL_THICKNESS', 5, 'mm'),
     candidate('MATERIAL_DENSITY', 7850, 'kg/m3'),
-    candidate('OPERATING_FLUID_DENSITY', 800, 'kg/m3'),
+    candidate('OPERATING_FLUID_DENSITY', operatingFluidDensityKgPerM3, 'kg/m3'),
     candidate('HYDRO_FLUID_DENSITY', 1000, 'kg/m3'),
     candidate('INSULATION_THICKNESS', 0, 'mm'),
   ];

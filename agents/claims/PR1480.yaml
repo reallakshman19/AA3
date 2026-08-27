@@ -1,0 +1,51 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1480
+mission: Post-nullspace B01 governing-boundary discriminator
+base_main: d24eac2a865cd748832825dc552cd7070b919f16
+required_ancestor: e74d2d3c45d918895d3a613014f08aa7c0abce79
+sync_commit: 8b27f58d11736f81e89c2aa507b50c44d7782898
+authority_domain:
+  - EXACT_HEAD_B01_POST_NULLSPACE_QUALIFICATION_DISCRIMINATION
+  - GOVERNING_LAME_CASE_FIRST_VETO
+  - FAIL_CLOSED_SEQUENTIAL_CLASSIFICATION
+  - RUNTIME_RECEIPT_CUSTODY
+changed_paths:
+  - .gitignore
+  - scripts/lafea-b01-bbar-lame-diagnostic.mjs
+  - scripts/lafea-b01-post-nullspace-boundary-check.mjs
+  - scripts/lafea-b01-post-nullspace-boundary-self-test.mjs
+  - scripts/lib/lafea-b01-post-nullspace-boundary.js
+  - agents/PR1480_workreport.md
+  - agents/status/PR1480.yaml
+  - agents/claims/PR1480.yaml
+claims:
+  production_mechanics_changed: false
+  solver_mechanics_changed: false
+  governing_case_runs_before_nu030_trace: true
+  exact_head_required: true
+  clean_checkout_required: true
+  nullspace_merge_ancestor_required: true
+  commands_stop_after_first_failure: true
+  governing_failure_requires_rca: true
+  governing_failure_authorizes_solver_repair: false
+  governing_pass_authorizes_solver_repair: false
+  integrated_b01_qualified: false
+  release_authority_granted: false
+  trust_authority_granted: false
+  current_main_sync_preserves_disjoint_issue1321_commit: true
+validation_truth:
+  policy_self_test: PASS_LOCAL_NODE_EXECUTION
+  real_engineering_execution: NOT_RUN
+excluded_authority:
+  - src/core/local-continuum/solver.js
+  - src/core/local-continuum/sparse-matrix.js
+  - src/workspace/lafea-analysis-mesh-quality.js
+  - validation/**
+  - .github/workflows/**
+  - BENCHMARK_EXPECTED_VALUES
+  - ENGINEERING_TOLERANCES
+  - B02_NUMERICS
+  - REGISTRY_RELEASE_TRUST
+merge_authority: OWNER_GRANTED_CURRENT_TURN
+merge_truth: OWNER_AUTHORIZED_INTEGRATION_WITH_NOT_RUN_PRESERVED

@@ -80,6 +80,7 @@ function exportMarkup(snapshot, current) {
     <label class="import">Re-import staged JSON<input type="file" accept="application/json,.json" data-common-import></label>
     <dl><dt>File</dt><dd>${escape(artifact?.fileName || 'NOT_CREATED')}</dd><dt>Bytes</dt><dd>${artifact?.byteLength ?? 0}</dd><dt>Export hash</dt><dd><code>${escape(artifact?.exportSemanticHash || 'NOT_CREATED')}</code></dd><dt>Artifact hash</dt><dd><code>${escape(artifact?.semanticHash || 'NOT_CREATED')}</code></dd></dl>
     <p>Re-import verifies the export hash, embedded common-input hash and current authority bindings. A non-equivalent import remains historical.</p>
+    <p>This is the sealed common input package used by calculation methods -- a different, larger artifact than Enrichment &amp; Overrides' "Export accepted overrides (sidecar)", which is only the staged override records.</p>
   </section>`;
 }
 

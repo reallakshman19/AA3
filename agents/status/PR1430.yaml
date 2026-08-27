@@ -1,0 +1,52 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1430
+mission: "Issue #1321 cladding and tracing permanent distributed mass"
+workstream: ISSUE1321_ANCILLARY_DISTRIBUTED_MASS
+branch: agent/issue-1321-ancillary-distributed-mass
+main_head_last_checked: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
+merge_base: 6d4a7cbdd75208b918540be0bbea12d04af83ae4
+engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
+recovery_basis: e7cf4936ab98f6fdfdb1cb07750756436bddd5a1
+criticality: ENGINEERING_CRITICAL
+agent_state: ACTIVE
+pr_recovery_state: HEALTHY_DRAFT_SOURCE_AUDITED
+handover_readiness: READY_WITH_EXECUTION_NOT_RUN
+report_path: agents/PR1430_workreport.md
+appendix_a_status: CURRENT
+appendix_a_score: 96
+appendix_a_min_question: 17
+coordination: SAFE_AFTER_STALE_REGISTRY_AND_MAIN_DRIFT_RECONCILIATION
+current_stage: IMPLEMENTATION_AND_STANDARD_AGGREGATE_WIRING_COMPLETE_EXECUTION_NOT_RUN
+highest_risk: "A duplicate or partially-authorized ancillary mass path could overstate/understate permanent pipe gravity; source audit shows one PIPE base-mass composition site, complete-LINE default promotion, and both focused regressions are owned by the canonical Non-FEA aggregate."
+validation:
+  live_grounding: PASS
+  main_head: 920d0ec367edbb6cd23b3fbd2616ec4322613e70
+  engineering_content_basis: 4e15df088ce6bc98112f6d1cb1da8d18ef84ea0b
+  recovery_basis: e7cf4936ab98f6fdfdb1cb07750756436bddd5a1
+  main_only_commit_count_since_merge_base: 3
+  main_drift_overlap: NONE_WRC_EMP1_SOURCE_GOVERNANCE_ONLY
+  open_overlap: PASS_STALE_PR1323_ONLY_CLOSED_UNMERGED
+  changed_file_scope: PASS_14_DECLARED_PATHS
+  production_diff_source_audit: PASS
+  aggregate_validation_wiring: PASS_SOURCE_INSPECTION_TWO_ENTRIES_ONLY
+  independent_analytical_delta: PASS_EXACTLY_3_KG_PER_1M_2_PLUS_1_CASE
+  local_checkout: NOT_RUN_EXECUTION_ENVIRONMENT_DNS
+  focused_mass_regression: NOT_RUN
+  focused_default_authority_regression: NOT_RUN
+  canonical_non_fea_aggregate: NOT_RUN
+  standard_import_build_browser_checks: NOT_RUN
+  hosted_ci: NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_RUNNER_UNAVAILABLE
+  workflow_mutation: NONE
+authority:
+  owner_proceed_next_instruction_current_turn: true
+  universal_zero_default_authorized: false
+  source_column_guess_authorized: false
+  component_point_mass_change_authorized: false
+  fluid_composition_change_authorized: false
+  statics_formula_change_authorized: false
+  equilibrium_change_authorized: false
+  workflow_change_authorized: false
+  merge_authority: NOT_GRANTED
+merge_disposition: OWNER_ONLY_DRAFT_UNMERGED
+exact_next_action: "On a functioning checkout/runner, execute node scripts/run-non-fea-checks.mjs (which now includes both PR1430 focused regressions), then check:imports, build, and relevant browser/E2E validation. Patch only an evidenced failing falsifier; otherwise record exact-head PASS evidence and request Owner merge decision."

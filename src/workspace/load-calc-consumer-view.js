@@ -46,9 +46,7 @@ function resolveRunAction(state) {
 function headerMarkup(state) {
   const freshness = state.distribution?.freshness?.status || 'NOT_CALCULATED';
   const authorization = state.authorizationState || {};
-  const empiricalScenario = state.empiricalScenarioState || {};
   const commonInput = state.commonInputState || {};
-  const activeMethod = empiricalScenario.method || 'CHAINAGE_TRIBUTARY_SPAN_V2';
   const commonSeal = commonInput.commonInput
     ? (commonInput.staleness?.stale ? 'STALE' : 'CURRENT')
     : 'NOT_SEALED';
@@ -70,7 +68,6 @@ function headerMarkup(state) {
   const sealLabel  = SEAL_LABELS[commonSeal]   || commonSeal;
   const authLabel  = AUTH_LABELS[authSt]        || authSt;
   const resultLabel = RESULT_LABELS[freshness]  || freshness;
-  const advancedOpen = !PRIMARY_TABS.has(state.activeTab);
 
   return `<header class="empirical-load-calc__header">
     <div><span class="panel-eyebrow">GUIDED WORKFLOW</span><h1>Support Load Calculation</h1></div>
@@ -80,37 +77,6 @@ function headerMarkup(state) {
       <span data-pill-status="${resultStatus}">${escapeHtml(resultLabel)}</span>
     </div>
     ${workflowMarkup(state, runAction)}
-    <details class="empirical-load-calc__advanced" ${advancedOpen ? 'open' : ''}>
-      <summary>Advanced tools <span>${escapeHtml(activeMethod)}</span></summary>
-      <nav class="empirical-load-calc__tabs" aria-label="Advanced load calculation views">
-        <button type="button" class="${state.activeTab === 'verify' || !state.activeTab ? 'is-active' : ''}" data-load-calc-tab="verify" title="Pre-run readiness checklist">★ Verify &amp; Run</button>
-        ${tabGroup('Setup', [
-          ['overview', 'Overview'],
-          ['project-data', 'Project Data'],
-          ['masters', 'Masters'],
-          ['enrichment', 'Enrichment & Overrides'],
-        ], state.activeTab)}
-        ${tabGroup('Scenario', [
-          ['restraints', 'Restraints'],
-          ['load-cases', 'Load Cases'],
-          ['methods', 'Methods'],
-        ], state.activeTab)}
-        ${tabGroup('Output', [
-          ['results', 'Results'],
-          ['loads', 'Load Evaluation'],
-          ['evidence', 'Evidence'],
-        ], state.activeTab)}
-        ${tabGroup('Diagnostics', [
-          ['preflight', 'Input Check'],
-          ['method-basis', 'Method Basis'],
-          ['seal-export', 'Seal & Export'],
-          ['json-trace', 'JSON Trace'],
-        ], state.activeTab)}
-        ${tabGroup('Model', [
-          ['3d', 'Model / 3D'],
-        ], state.activeTab)}
-      </nav>
-    </details>
     <div class="empirical-load-calc__actions">
       <button type="button" class="button button--primary" 
         ${runAction.eligible ? '' : 'disabled'}
@@ -138,7 +104,75 @@ const WORKFLOW_STEPS = Object.freeze([
 function workflowMarkup(state, runAction) {
   return `<nav class="empirical-load-calc__workflow" aria-label="Load calculation process">
     ${WORKFLOW_STEPS.map((step, index) => workflowStep(step, index, state, runAction)).join('')}
+    ${advancedToolsTileMarkup(state)}
   </nav>`;
+}
+
+/**
+ * Every view the 7 numbered steps don't cover (scenario configuration,
+ * diagnostics, export, 3D) lives behind one 8th tile instead of a permanently
+ * open strip underneath the guided row. It renders as a <details>/<summary>
+ * pair -- not a styled button -- so the disclosure semantics (and the e2e
+ * helper that opens it via `summary`) are unchanged; only its position and
+ * visual treatment move to match tiles 1-7.
+ *
+ * Five of its former entries (Verify & Run, Project Data, Masters, Load
+ * Evaluation, Input Check) pointed at tabs already reachable from the
+ * numbered row above -- same tab id, second button, no second view. They are
+ * intentionally not reproduced here; ADVANCED_TAB_GROUPS lists only tabs
+ * with no other entry point.
+ */
+// Keep in sync with the tabGroup(...) calls in advancedToolsTileMarkup()
+// below: one entry per tab rendered there, same id, same label. Used only to
+// show which advanced view is active in the tile-8 status line.
+const ADVANCED_TAB_LABELS = Object.freeze({
+  overview: 'Overview',
+  enrichment: 'Enrichment & Overrides',
+  restraints: 'Restraints',
+  'load-cases': 'Load Cases',
+  methods: 'Methods',
+  results: 'Results',
+  evidence: 'Evidence',
+  'method-basis': 'Method Basis',
+  'seal-export': 'Seal & Export',
+  'json-trace': 'JSON Trace',
+  '3d': 'Model / 3D',
+});
+const ADVANCED_TAB_COUNT = Object.keys(ADVANCED_TAB_LABELS).length;
+
+function advancedToolsTileMarkup(state) {
+  const advancedOpen = !PRIMARY_TABS.has(state.activeTab);
+  const statusLabel = advancedOpen ? (ADVANCED_TAB_LABELS[state.activeTab] || 'Open') : `${ADVANCED_TAB_COUNT} views`;
+  return `<details class="empirical-load-calc__advanced" ${advancedOpen ? 'open' : ''}>
+    <summary class="empirical-load-calc__workflow-step ${advancedOpen ? 'is-active' : ''}" data-step-state="${advancedOpen ? 'current' : 'pending'}">
+      <span class="empirical-load-calc__workflow-index">8</span>
+      <span class="empirical-load-calc__workflow-label">Advanced Tools</span>
+      <span class="empirical-load-calc__workflow-status">${escapeHtml(statusLabel)}</span>
+    </summary>
+    <nav class="empirical-load-calc__tabs" aria-label="Advanced load calculation views">
+      ${tabGroup('Setup', [
+        ['overview', 'Overview'],
+        ['enrichment', 'Enrichment & Overrides'],
+      ], state.activeTab)}
+      ${tabGroup('Scenario', [
+        ['restraints', 'Restraints'],
+        ['load-cases', 'Load Cases'],
+        ['methods', 'Methods'],
+      ], state.activeTab)}
+      ${tabGroup('Output', [
+        ['results', 'Results'],
+        ['evidence', 'Evidence'],
+      ], state.activeTab)}
+      ${tabGroup('Diagnostics', [
+        ['method-basis', 'Method Basis'],
+        ['seal-export', 'Seal & Export'],
+        ['json-trace', 'JSON Trace'],
+      ], state.activeTab)}
+      ${tabGroup('Model', [
+        ['3d', 'Model / 3D'],
+      ], state.activeTab)}
+    </nav>
+  </details>`;
 }
 
 function workflowStep(step, index, state, runAction) {
@@ -699,7 +733,7 @@ function percentage(value) {
 
 function integer(value) { return Number.isInteger(value) ? String(value) : '—'; }
 function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>\"]/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;',
+  return String(value ?? '').replace(/[&<>"]/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
   })[character]);
 }

@@ -107,8 +107,10 @@ export function createScopedCalculationDefaultsModel(profile) {
     ? [...policy.defaults].sort((left, right) => stringValue(left.defaultId).localeCompare(stringValue(right.defaultId)))
       .map(existingRow)
     : [];
+  const usableScopeKinds = SCOPE_DEFINITIONS
+    .filter((scope) => FIELD_DEFINITIONS.some((field) => field.supportedScopeKinds.includes(scope.scopeKind)));
   const unavailableScopeKinds = SCOPE_DEFINITIONS
-    .filter((scope) => !FIELD_DEFINITIONS.some((field) => field.supportedScopeKinds.includes(scope.scopeKind)))
+    .filter((scope) => !usableScopeKinds.some((available) => available.scopeKind === scope.scopeKind))
     .map((scope) => ({ scopeKind: scope.scopeKind, label: scope.label }));
   const base = {
     schema: NON_FEA_SCOPED_CALCULATION_DEFAULTS_MODEL_SCHEMA,
@@ -118,7 +120,7 @@ export function createScopedCalculationDefaultsModel(profile) {
     policySemanticHash: policy === null ? null : semanticHash(policy),
     scopePrecedence: NON_FEA_CONFIGURED_DEFAULT_SCOPE_PRECEDENCE,
     authorableFields: FIELD_DEFINITIONS,
-    scopeKinds: SCOPE_DEFINITIONS,
+    scopeKinds: usableScopeKinds,
     unavailableScopeKinds,
     rows,
   };

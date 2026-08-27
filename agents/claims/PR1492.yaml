@@ -1,0 +1,30 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1492
+issue: 1321
+branch: agent/issue-1321-effective-value-inspection
+state: SOURCE_COMPLETE_REVIEW_PENDING_EXECUTION
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+base_branch: main
+base_sha: 3a54862127c601f3e4c59159526e7345fc06cf4c
+mission: "Expose exact current Common Input resolution decisions in Load Calc Calculation Defaults without creating another resolver or changing mechanics."
+claimed_paths:
+  - src/workspace/project-data/non-fea-calculation-effective-values-model.js
+  - src/workspace/project-data/non-fea-calculation-effective-values-view.js
+  - src/workspace/project-data/project-data-view.js
+  - scripts/non-fea-calculation-effective-values-inspection-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - agents/PR1492_workreport.md
+  - agents/claims/PR1492.yaml
+  - agents/status/PR1492.yaml
+protected_paths:
+  - src/core/non-fea-enrichment/index.js
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/workspace/project-data/non-fea-configured-default-provider.js
+  - src/workspace/project-data/non-fea-effective-value-resolver.js
+  - src/workspace/engineering-loads/**
+  - .github/workflows/**
+authority_boundary: "Read-only projection/presentation of existing current Common Input resolution decisions. No new resolution, precedence, authority, evidence approval, Run, statics, solver or tolerance logic."
+source_inventory_limit: "Resolution rows are decisions only; source-only fields without competing candidates may be absent and are not claimed as a complete calculation-input inventory."
+merge_authority: OWNER_ONLY_NOT_GRANTED

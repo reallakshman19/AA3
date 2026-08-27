@@ -144,8 +144,11 @@ assert.match(inspectorSource, /buildCurrentPreFeaRequestInput/u,
 assert.match(inspectorSource, /resolutionLedger/u);
 assert.doesNotMatch(inspectorSource, /resolveNonFeaEffectiveValues|resolveNonFeaEnrichment/u,
   'inspection view must not run a second authority resolver');
-assert.doesNotMatch(inspectorSource, /sealCurrent|execute|authorize/u,
-  'inspection view must not seal, execute or authorize calculations');
+assert.doesNotMatch(inspectorSource,
+  /sealCurrentNonFea|executeCurrentCommonInput|calculateAuthorized|authorizedEmpiricalRuntime/u,
+  'inspection view must not call sealing, execution or authorized-runtime APIs');
+assert.match(inspectorSource, /decision ledger, not a duplicate of the complete source model/u,
+  'inspection must disclose that resolver rows are not a complete source-field inventory');
 assert.match(inspectorSource, /Product-global screening assumptions remain/u,
   'Product defaults must remain distinguished from target-level selected evidence');
 assert.match(runtimeSource, /resolutionLedger = resolveNonFeaEnrichment/u,
@@ -162,6 +165,7 @@ console.log(JSON.stringify({
   masterWinnerMirrored: true,
   projectDefaultWinnerMirrored: true,
   blockedCandidateCustodyRetained: true,
+  sourceOnlyInventoryOverclaimPrevented: true,
   secondResolverIntroduced: false,
 }, null, 2));
 

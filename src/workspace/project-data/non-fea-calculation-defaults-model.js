@@ -210,7 +210,7 @@ function elasticThermal(value) {
   if (!isRecord(value)) throw new TypeError('Elastic / thermal default requires both engineering values.');
   return freezeDeep({
     elasticModulusPa: positiveNumber(value.elasticModulusPa, 'Elastic modulus'),
-    thermalExpansionPerK: nonnegativeNumber(value.thermalExpansionPerK, 'Thermal expansion coefficient'),
+    thermalExpansionPerK: positiveNumber(value.thermalExpansionPerK, 'Thermal expansion coefficient'),
   });
 }
 

@@ -3,6 +3,9 @@ import { engineeringModelStore } from './engineering-model-store.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 import { projectDataStore } from './project-data/project-data-store.js';
 import { authorizedEnrichmentConsumerController } from './enrichment/authorized-enrichment-runtime.js';
+import { MODEL_LOAD_EVENTS } from './model-load-events.js';
+import { SUPPORT_RESTRAINT_EVENTS } from './support-restraint-events.js';
+import { TOPOLOGY_EVENTS } from './topology-events.js';
 import {
   executeCurrentCommonInputEmpiricalRun,
 } from './engineering-loads/current-common-input-empirical-run-runtime.js';
@@ -79,6 +82,21 @@ export class EngineeringModelController {
       ),
       this.eventBus.subscribe('MASTER_DATA_UPDATED', () => this.handleMasterDataChanged()),
       this.eventBus.subscribe('MASTER_DATA_CLEARED', () => this.handleMasterDataChanged()),
+      this.eventBus.subscribe(TOPOLOGY_EVENTS.CHANGED, () => this.handleAuthorityContractChanged(
+        'TOPOLOGY_AUTHORITY_CHANGED',
+        'authorityContracts.topologyGraph',
+        'Governed topology authority changed after the current Common Input was sealed.',
+      )),
+      this.eventBus.subscribe(SUPPORT_RESTRAINT_EVENTS.CHANGED, () => this.handleAuthorityContractChanged(
+        'SUPPORT_RESTRAINT_AUTHORITY_CHANGED',
+        'authorityContracts.supportAttachmentModel',
+        'Support attachment/restraint authority changed after the current Common Input was sealed.',
+      )),
+      this.eventBus.subscribe(MODEL_LOAD_EVENTS.CHANGED, () => this.handleAuthorityContractChanged(
+        'MODEL_LOAD_AUTHORITY_CHANGED',
+        'authorityContracts.loadPrimitiveSet',
+        'Source load-primitive authority changed after the current Common Input was sealed.',
+      )),
       projectDataStore.subscribe((event) => this.handleProjectDataChanged(event)),
       nonFeaCommonInputStore.subscribe((snapshot) => this.handleCommonInputSnapshot(snapshot)),
     ];
@@ -172,6 +190,26 @@ export class EngineeringModelController {
     this.authorizedConsumerController.refreshEmpirical();
     this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
       reason: 'master-data-changed',
+      topologyCheckAffected: false,
+    });
+  }
+
+  /**
+   * Bound topology/support/load authority contracts are calculation-affecting.
+   * Mark both the retained Common Input seal and any current numerical result
+   * stale so ordinary Run cannot reuse authority that changed behind the seal.
+   */
+  handleAuthorityContractChanged(staleCode, path, message) {
+    const dataset = this.workspaceState.getSnapshot()?.dataset || null;
+    const distribution = engineeringModelStore.getDistribution();
+    if (distribution?.freshness?.status === 'CURRENT') {
+      engineeringModelStore.markEmpiricalStale(staleCode, dataset?.version || null);
+    }
+    nonFeaCommonInputStore.markStale(staleCode, path, message);
+    this.authorizedConsumerController.refreshEmpirical();
+    this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'authority-contract-changed',
+      authorityReason: staleCode,
       topologyCheckAffected: false,
     });
   }

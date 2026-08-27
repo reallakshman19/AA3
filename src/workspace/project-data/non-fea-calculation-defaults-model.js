@@ -21,7 +21,7 @@ const DEFINITIONS = Object.freeze([
   definition('LENGTH_UNIT', 'Length unit', 'sourcesAndUnits.lengthUnit', 'unit', 'choice',
     ['mm'], readIdentity, writeIdentity),
   definition('SOURCE_UP_AXIS', 'Vertical axis', 'sourcesAndUnits.sourceUpAxis', 'axis', 'choice',
-    ['Z'], readIdentity, writeIdentity),
+    ['X', 'Y', 'Z'], readIdentity, writeIdentity),
   definition('GRAVITY_ACCELERATION', 'Gravity acceleration', 'loadCalculation.gravityMPerS2', 'm/s²', 'positive-number',
     null, readIdentity, writeIdentity),
   definition('LOAD_FACTOR', 'Load factor', 'loadCalculation.loadFactor', 'ratio', 'positive-number',

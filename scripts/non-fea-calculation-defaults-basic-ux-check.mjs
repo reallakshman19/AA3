@@ -28,6 +28,9 @@ assert.ok(model.rows.every((row) => row.scope === 'PROJECT_GLOBAL'));
 assert.ok(model.rows.every((row) => row.effectiveAuthority === 'PRODUCT_DEFAULT'));
 assert.ok(model.rows.every((row) => row.editable === true));
 assert.ok(model.rows.every((row) => row.resetAvailable === false));
+const sourceAxisRow = model.rows.find((row) => row.fieldId === 'SOURCE_UP_AXIS');
+assert.deepEqual(sourceAxisRow.options, ['X', 'Y', 'Z']);
+assert.equal(sourceAxisRow.value, 'Z', 'Product default remains Z when no higher source/project axis exists');
 
 const gravity = createBasicCalculationDefaultUpdate(effective, 'GRAVITY_ACCELERATION', 9.7);
 assert.equal(gravity.projectDataPath, 'loadCalculation.gravityMPerS2');
@@ -81,6 +84,13 @@ assert.deepEqual(cases.value, ['EMPTY', 'HYD']);
 const method = createBasicCalculationDefaultUpdate(effective, 'GRAVITY_METHOD', 'CHAINAGE_TRIBUTARY_SPAN_V3_COG');
 assert.equal(method.value, 'CHAINAGE_TRIBUTARY_SPAN_V3_COG');
 
+const yAxis = createBasicCalculationDefaultUpdate(effective, 'SOURCE_UP_AXIS', 'Y');
+assert.equal(yAxis.value, 'Y');
+assert.equal(yAxis.projectDataPath, 'sourcesAndUnits.sourceUpAxis');
+assert.equal(yAxis.evidence.authority, 'PROJECT_POLICY');
+const xAxis = createBasicCalculationDefaultUpdate(effective, 'SOURCE_UP_AXIS', 'X');
+assert.equal(xAxis.value, 'X');
+
 const elastic = createBasicCalculationDefaultUpdate(effective, 'ELASTIC_THERMAL', {
   elasticModulusPa: 195e9,
   thermalExpansionPerK: 11.5e-6,
@@ -130,7 +140,7 @@ assert.throws(
   /keyed values beyond DEFAULT/u,
 );
 
-assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'SOURCE_UP_AXIS', 'Y'), /must be one of/u);
+assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'SOURCE_UP_AXIS', 'Q'), /must be one of/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'LENGTH_UNIT', 'm'), /must be one of/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'GRAVITY_ACCELERATION', ''), /must not be blank/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'CORROSION_ALLOWANCE', ''), /must not be blank/u);
@@ -167,8 +177,10 @@ assert.match(viewSource, /Value[\s\S]*Unit[\s\S]*Scope[\s\S]*Effective authority
 assert.match(viewSource, /cannot overwrite independent higher authority/u);
 assert.match(viewSource, /renderNonFeaProjectDataViewV2/u,
   'advanced authority editor must remain reachable from Calculation Defaults');
-assert.match(viewSource, /D2 successor/u,
-  'D1 must not falsely claim the engineer-friendly scoped-default editor is complete');
+assert.match(viewSource, /data-role="calculation-defaults-scoped"/u,
+  'D2 scoped configured-default authoring must remain present');
+assert.doesNotMatch(viewSource, /Scope editor[\s\S]*D2 successor/u,
+  'the superseded D1 D2-successor placeholder must remain absent');
 assert.match(legacySource, /data-role="non-fea-configured-default-ledger"/u,
   'existing configured-default policy/ledger authority must remain intact in Advanced');
 
@@ -183,12 +195,13 @@ console.log(JSON.stringify({
   pathLevelCompositeReset: true,
   blankNumericCoercionBlocked: true,
   projectDataPositiveEngineeringLeavesPreserved: true,
-  unsupportedAxisBlocked: true,
+  supportedAxes: sourceAxisRow.options,
+  invalidAxisBlocked: true,
   unsupportedUnitBlocked: true,
   invalidNumbersBlocked: true,
   invalidCasesBlocked: true,
   advancedAuthorityEditorRetained: true,
-  scopedDefaultEditorStillD2: true,
+  scopedDefaultEditorRetained: true,
 }, null, 2));
 
 async function read(relativePath) {

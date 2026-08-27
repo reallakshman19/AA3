@@ -9,7 +9,7 @@ export const IMPLEMENTED_GRAVITY_CONVENTIONS = Object.freeze({
   forceOutputConvention: 'POSITIVE_REACTION_OPPOSES_SOURCE_AXIS_GRAVITY',
   momentOutputConvention: 'SIGNED_ROUTE_CHAINAGE_FIRST_MOMENT_NMM',
   analysisBasis: 'ROUTE_CHAINAGE_1D_STATIC_GRAVITY',
-  resultSignConvention: 'SOURCE_Z_UP_POSITIVE_SUPPORT_REACTION',
+  resultSignConvention: 'SOURCE_UP_POSITIVE_SUPPORT_REACTION',
 });
 
 const PATHS = Object.freeze({
@@ -20,11 +20,12 @@ const PATHS = Object.freeze({
 });
 const LEGACY_KERNEL_FORCE_CONVENTION = 'positive reaction opposes source-axis gravity';
 const LEGACY_KERNEL_MOMENT_REFERENCE = 'PER_ROUTE_CHAINAGE_ORIGIN_WITH_AGGREGATE_DIAGNOSTIC';
+const AXIS_GENERAL_MECHANICS_SCOPE = 'SOURCE_AXIS_GENERAL_MM_SCALAR_VERTICAL_GRAVITY';
 
 /**
- * Requires the exact convention set implemented by the current scalar gravity
- * mechanics. Alternative tokens are valid future configuration candidates but
- * are not transformed or silently relabelled today; they fail before statics.
+ * Requires the exact convention set implemented by the current source-axis
+ * scalar gravity mechanics. Reaction sign is referenced to the governed source
+ * up-axis, while first moments remain signed about route chainage origins.
  */
 export function requireAuthorizedEmpiricalGravityConventions(profile) {
   const rows = Object.entries(PATHS).map(([key, path]) => {
@@ -50,14 +51,14 @@ export function requireAuthorizedEmpiricalGravityConventions(profile) {
   });
   const material = {
     schema: AUTHORIZED_EMPIRICAL_GRAVITY_CONVENTION_BINDING_SCHEMA,
-    mechanicsScope: 'SOURCE_Z_UP_MM_SCALAR_VERTICAL_GRAVITY',
+    mechanicsScope: AXIS_GENERAL_MECHANICS_SCOPE,
     conventions: clonePlain(IMPLEMENTED_GRAVITY_CONVENTIONS),
     rows,
   };
   return freezeDeep({ ...material, semanticHash: semanticHash(material) });
 }
 
-/** Bind governed convention IDs only after the kernel output proves compatible. */
+/** Bind governed convention IDs only after the scalar kernel output proves compatible. */
 export function bindAuthorizedEmpiricalGravityConventions({ distribution, profile } = {}) {
   if (!distribution || typeof distribution !== 'object' || !Array.isArray(distribution.loadCases)) {
     throw codedError(

@@ -9,6 +9,12 @@ import { TOPOLOGY_EVENTS } from './topology-events.js';
 import {
   executeCurrentCommonInputEmpiricalRun,
 } from './engineering-loads/current-common-input-empirical-run-runtime.js';
+import {
+  commonInputConfigurationBasis,
+  projectDataTopologyModelBasis,
+} from './engineering-model-basis.js';
+
+export { projectDataTopologyModelBasis };
 
 export const ENGINEERING_MODEL_EVENTS = Object.freeze({
   CALCULATE_REQUESTED: 'engineering-support-loads:calculate-requested',
@@ -17,13 +23,6 @@ export const ENGINEERING_MODEL_EVENTS = Object.freeze({
   CHANGED: 'engineering-support-loads:changed',
   FAILED: 'engineering-support-loads:failed',
 });
-
-const PROJECT_DATA_TOPOLOGY_MODEL_PATHS = Object.freeze([
-  'topology.supportSiteGroupingToleranceMm',
-  'topology.portMatchToleranceMm',
-  'topology.autoCarrierCoincidenceToleranceMm',
-  'topology.routeJoiningRules',
-]);
 
 /** Rebuilds derived contracts and runs loads only on an explicit request. */
 export class EngineeringModelController {
@@ -290,25 +289,4 @@ export class EngineeringModelController {
     this.commonInputConfigurationBasis = null;
     engineeringModelStore.clear();
   }
-}
-
-/**
- * Runtime-only dependency projection for the derived support-site/route models.
- * It is not serialized, hashed into engineering evidence, or used as authority.
- */
-export function projectDataTopologyModelBasis(profile) {
-  return JSON.stringify(PROJECT_DATA_TOPOLOGY_MODEL_PATHS.map((path) => {
-    const [groupKey, fieldKey] = path.split('.');
-    return stableRuntimeValue(profile?.[groupKey]?.[fieldKey]?.value ?? null);
-  }));
-}
-
-function commonInputConfigurationBasis(snapshot) {
-  return JSON.stringify(stableRuntimeValue(snapshot?.configuration || null));
-}
-
-function stableRuntimeValue(value) {
-  if (Array.isArray(value)) return value.map(stableRuntimeValue);
-  if (!value || typeof value !== 'object') return value;
-  return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableRuntimeValue(value[key])]));
 }

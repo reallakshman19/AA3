@@ -73,6 +73,8 @@ export function classifyRestraint(attributes, element, segment) {
     connectingNodeActive: connectingNodeId !== null,
     connectingNodeId,
     finiteStiffnessActive: finitePositive(stiffness),
+    // The value, not only the fact of it: LINEAR_SPRING consumes the rate.
+    stiffnessValue: finitePositive(stiffness) ? Number(stiffness) : null,
     canonicalNodeRestraint: canonicalNodeRestraint(segment, nodeId),
   });
 }
@@ -82,16 +84,17 @@ export function restraintDispositions(classification) {
   if (classification.typeCode === null || classification.typeLabel === null || classification.nodeId === null) {
     return both(invalidDisposition('MODEL_RESTRAINT_SOURCE_INVALID'));
   }
-  // A connected-node restraint retargets the reaction onto another node and a
-  // declared finite stiffness changes the restraint's own compliance. Neither
-  // is representable by the FIXED-DOF constraint this consumer emits, so both
-  // stay terminal for every profile.
+  // A connected-node restraint retargets the reaction onto another node, which
+  // no single-node constraint can express, so it stays terminal.
   if (classification.connectingNodeActive) {
     return both(unsupportedDisposition('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'));
   }
-  if (classification.finiteStiffnessActive) {
-    return both(unsupportedDisposition('MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED'));
-  }
+  /*
+   * A declared finite stiffness is exact, not an approximation: the solver
+   * carries LINEAR_SPRING and assembles the declared rate onto the restrained
+   * DOF. It falls through to the type branch below -- the direction still has
+   * to be representable -- and only the emitted behavior changes.
+   */
 
   // Gap and friction are NOT terminal. Both leave the restrained DOF intact and
   // only drop a nonlinear effect, which is exactly the linear idealisation this

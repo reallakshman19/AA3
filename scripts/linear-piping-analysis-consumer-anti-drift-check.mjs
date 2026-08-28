@@ -141,7 +141,13 @@ const restraintInventory = source['inputxml-feature-inventory-restraints.js'];
 assert.match(restraintInventory, /MODEL_RESTRAINT_GAP_UNSUPPORTED/u);
 assert.match(restraintInventory, /MODEL_RESTRAINT_FRICTION_UNSUPPORTED/u);
 assert.match(restraintInventory, /MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED/u);
-assert.match(restraintInventory, /MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED/u);
+// A declared spring rate is no longer refused: it compiles to the solver's
+// LINEAR_SPRING behavior, so the classification must carry the VALUE through
+// rather than only the fact that one was declared.
+assert.doesNotMatch(restraintInventory, /MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED/u,
+  'a declared finite stiffness is representable and must not be refused');
+assert.match(restraintInventory, /stiffnessValue:/u,
+  'the classification must carry the declared spring rate, not just a boolean');
 assert.match(restraintInventory, /MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED/u);
 assert.match(
   restraintInventory,

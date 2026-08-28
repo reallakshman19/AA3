@@ -67,13 +67,29 @@ export function compileInputXmlStructuralConstraints({
       }
       occupied.set(key, item.sourceFeatureId);
       const declarationId = `${modelId}-C-${safe(item.sourceFeatureId)}-${dof}`;
-      declarations.push(Object.freeze({
-        declarationId,
-        kind: 'NODAL_RESTRAINT',
-        nodeId: `${modelId}.N${safe(targetNodeId)}`,
-        dof,
-        behavior: 'FIXED',
-      }));
+      /*
+       * A restraint that declares a spring rate is a compliant support, not a
+       * rigid one, and the compiler already has the kind for it:
+       * PARTIAL_RELEASE_SPRING carries the rate and compiles to the solver's
+       * LINEAR_SPRING behavior. NODAL_RESTRAINT deliberately does not accept a
+       * spring behavior, so the kind is what changes here, not the behavior.
+       */
+      const springRate = item.classification.stiffnessValue ?? null;
+      declarations.push(Object.freeze(springRate === null
+        ? {
+          declarationId,
+          kind: 'NODAL_RESTRAINT',
+          nodeId: `${modelId}.N${safe(targetNodeId)}`,
+          dof,
+          behavior: 'FIXED',
+        }
+        : {
+          declarationId,
+          kind: 'PARTIAL_RELEASE_SPRING',
+          nodeId: `${modelId}.N${safe(targetNodeId)}`,
+          dof,
+          stiffness: springRate,
+        }));
       declarationIds.push(declarationId);
     }
     bindings.push(Object.freeze({

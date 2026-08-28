@@ -136,7 +136,7 @@
     "check:lfea-accdb-preparation-regression": "node scripts/lfea-accdb-preparation-regression-check.mjs",
     "check:lfea-s4-reducer-bm4l-corroboration": "node scripts/lfea-s4-reducer-bm4l-corroboration-check.mjs",
     "check:lfea-production-caesar-parity": "node scripts/lfea-production-caesar-parity-check.mjs",
-    "check:lfea-linear-piping": "npm run check:lfea-inputxml-ingest && npm run check:accdb-to-canonical-geometry && npm run check:accdb-to-canonical-geometry-anti-drift && npm run check:lfea-b1-conditioning && npm run check:lfea-bend-retopology && npm run check:lfea-bend-tangent-custody && npm run check:lfea-production-capability-profile && npm run check:lfea-b3.2 && npm run check:lfea-b3.3 && npm run check:lfea-s3-bend-factor-authority-control && npm run check:lfea-s3-bend-production-authority && npm run check:linear-piping-analysis-consumer && npm run check:linear-piping-analysis-consumer-anti-drift && npm run check:lfea-accdb-preparation-regression && npm run check:lfea-s4-reducer-bm4l-corroboration && npm run check:lfea-production-caesar-parity && npm run check:lfea-ui-error-check && npm run check:lfea-collinear-backtrack-rule && npm run check:lfea-equilibrium-absolute-companion && npm run check:lfea-s4-reducer-discretization && npm run check:lfea-reducer-beam-theory && npm run check:lfea-straight-pipe-formulation",
+    "check:lfea-linear-piping": "npm run check:lfea-inputxml-ingest && npm run check:accdb-to-canonical-geometry && npm run check:accdb-to-canonical-geometry-anti-drift && npm run check:lfea-b1-conditioning && npm run check:lfea-bend-retopology && npm run check:lfea-bend-tangent-custody && npm run check:lfea-production-capability-profile && npm run check:lfea-b3.2 && npm run check:lfea-b3.3 && npm run check:lfea-s3-bend-factor-authority-control && npm run check:lfea-s3-bend-production-authority && npm run check:linear-piping-analysis-consumer && npm run check:linear-piping-analysis-consumer-anti-drift && npm run check:lfea-accdb-preparation-regression && npm run check:lfea-s4-reducer-bm4l-corroboration && npm run check:lfea-production-caesar-parity && npm run check:lfea-ui-error-check && npm run check:lfea-collinear-backtrack-rule && npm run check:lfea-equilibrium-absolute-companion && npm run check:lfea-s4-reducer-discretization && npm run check:lfea-reducer-beam-theory && npm run check:lfea-straight-pipe-formulation && npm run check:lfea-spring-restraint",
     "check:lfea-bend-retopology": "node scripts/lfea-bend-retopology-check.mjs",
     "check:lfea-bend-tangent-custody": "node scripts/lfea-bend-tangent-custody-check.mjs",
     "check:lfea-b1-conditioning": "node scripts/lfea-b1-conditioning-check.mjs",
@@ -151,7 +151,8 @@
     "check:lfea-equilibrium-absolute-companion": "node scripts/lfea-equilibrium-absolute-companion-check.mjs",
     "check:lfea-s4-reducer-discretization": "node scripts/lfea-s4-reducer-discretization-check.mjs",
     "check:lfea-reducer-beam-theory": "node scripts/lfea-reducer-beam-theory-consistency-check.mjs",
-    "check:lfea-straight-pipe-formulation": "node scripts/lfea-straight-pipe-formulation-check.mjs"
+    "check:lfea-straight-pipe-formulation": "node scripts/lfea-straight-pipe-formulation-check.mjs",
+    "check:lfea-spring-restraint": "node scripts/lfea-spring-restraint-check.mjs"
   },
   "dependencies": {
     "buffer": "^6.0.3",

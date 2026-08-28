@@ -7,6 +7,7 @@ const checks = [
   ['Project Data authority contract', 'scripts/non-fea-project-data-authority-check.mjs'],
   ['Product-default authority and hash binding', 'scripts/non-fea-product-default-profile-check.mjs'],
   ['Governed gravity-method request authority', 'scripts/non-fea-gravity-method-authority-check.mjs'],
+  ['Component CoG fallback policy', 'scripts/non-fea-component-cog-fallback-policy-check.mjs'],
   ['Conservative Product-default gravity bootstrap', 'scripts/non-fea-gravity-product-default-bootstrap-check.mjs'],
   ['Fluid fill policy and precedence', 'scripts/non-fea-fluid-fill-policy-check.mjs'],
   ['Authorized fluid mass composition', 'scripts/authorized-empirical-fluid-mass-composition-check.mjs'],

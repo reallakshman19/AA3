@@ -4,6 +4,9 @@ import {
   isProductDefaultEvidence,
 } from './non-fea-product-default-profile.js';
 import {
+  NON_FEA_COMPONENT_COG_FALLBACK_VALUES,
+} from './non-fea-component-cog-fallback-policy.js';
+import {
   NON_FEA_GRAVITY_METHOD_REQUEST_IDS,
 } from './non-fea-gravity-method-authority.js';
 
@@ -28,6 +31,8 @@ const DEFINITIONS = Object.freeze([
     null, readIdentity, writeIdentity),
   definition('GRAVITY_METHOD', 'Gravity method', 'loadCalculation.gravityMethod', 'method-request', 'choice',
     NON_FEA_GRAVITY_METHOD_REQUEST_IDS, readIdentity, writeIdentity),
+  definition('COMPONENT_COG_FALLBACK', 'Component CoG fallback', 'loadCalculation.componentCogFallback', 'policy', 'choice',
+    NON_FEA_COMPONENT_COG_FALLBACK_VALUES, readIdentity, writeIdentity),
   definition('ACTIVE_LOAD_CASES', 'Active load cases', 'loadCalculation.activeLoadCases', 'set', 'case-set',
     NON_FEA_CANONICAL_CALCULATION_CASES, readIdentity, writeIdentity),
   definition('CORROSION_ALLOWANCE', 'Default corrosion allowance', 'thermoMechanicalBasis.corrosionAllowancesMm', 'mm', 'nonnegative-number',

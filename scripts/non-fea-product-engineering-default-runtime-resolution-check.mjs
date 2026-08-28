@@ -14,6 +14,7 @@ import {
 } from '../src/workspace/project-data/non-fea-configured-default-provider.js';
 import {
   LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1,
+  LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1,
   createNonFeaProductEngineeringDefaultProvider,
   createProductEngineeringDefaultProfile,
 } from '../src/workspace/project-data/non-fea-product-engineering-default-profile.js';
@@ -31,8 +32,29 @@ assert.equal(
 assert.equal(
   LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1.defaults.length,
   0,
-  'This integration must not manufacture a shipped engineering Product-default table.',
+  'The explicit empty qualification profile must remain empty.',
 );
+assert.equal(
+  LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1.defaults.length,
+  1,
+  'The shipped engineering Product-default profile must contain only the governed elastic-modulus bridge in this slice.',
+);
+
+const shippedElasticProvider = createNonFeaProductEngineeringDefaultProvider({
+  sourceModel,
+  requestedMethods: ['THERMAL_FREE_DISPLACEMENT'],
+});
+assert.deepEqual(shippedElasticProvider.blockers, []);
+assert.equal(shippedElasticProvider.profileId, LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1.profileId);
+assert.equal(shippedElasticProvider.records.length, 2);
+shippedElasticProvider.records.forEach((record) => {
+  assert.equal(record.fieldId, 'ELASTIC_MODULUS');
+  assert.equal(record.value, 200000);
+  assert.equal(record.unit, 'MPa');
+  assert.equal(record.authority, 'PRODUCT_DEFAULT');
+  assert.match(record.evidence.basis, /PD-ELASTIC-THERMAL/u);
+  assert.match(record.evidence.basis, /1 MPa = 1e6 Pa/u);
+});
 
 const productElasticProfile = createProductEngineeringDefaultProfile({
   profileId: 'QUAL-PRODUCT-ELASTIC-2026A',
@@ -221,12 +243,14 @@ assert.equal(JSON.stringify(sourceModel), sourceJsonBefore, 'Product-default res
 console.log(JSON.stringify({
   status: 'PASS',
   benchmark: 'ISSUE1321_PRODUCT_ENGINEERING_DEFAULT_ORDINARY_RESOLUTION',
+  shippedEngineeringProductDefaultCount: LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1.defaults.length,
+  shippedElasticModulusMpa: shippedElasticProvider.records[0]?.value ?? null,
+  shippedElasticSource: 'PD-ELASTIC-THERMAL',
   productOnlyWinner: 'PRODUCT_DEFAULT',
   projectOverProductWinner: 'PROJECT_CONFIGURED_DEFAULT',
   sourceOverProductWinner: 'SOURCE_EXPLICIT',
   productCandidateRemainsAuditableWhenShadowed: true,
   supportAuthorityExpanded: false,
-  shippedEngineeringProductDefaultCount: LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1.defaults.length,
   ordinaryRuntimeUsesSingleResolver: true,
   sourceImmutable: true,
 }, null, 2));

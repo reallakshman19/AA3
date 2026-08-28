@@ -93,6 +93,7 @@ export function analyse({ modelId, geometry, entries, material, compilation, lab
     profile,
     distributedLoads: distributedByElement.get(entry.elementId) ?? [],
     temperature: temperatureByElement.get(entry.elementId) ?? null,
+    pressure: null,
     releases: [], endSprings: [], rigidOffsets: null,
   }));
   const execution = compileSolverExecution({

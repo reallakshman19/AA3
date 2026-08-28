@@ -1,3 +1,4 @@
+import { resolveSpringRate } from './restraint-spring-rate.js';
 import {
   resolveRestraintTypeMutation,
   restraintTypeCodeLabel,
@@ -40,7 +41,7 @@ const EXACT_BIDIRECTIONAL_CODES = new Set(['2', '3', '5', '8', '9']);
 // unused slots that carry non-sentinel 0.000000 direction cosines).
 const RESTRAINT_SLOT_IDENTITY_ATTRIBUTES = Object.freeze(['TYPE', 'NODE']);
 
-export function classifyRestraint(attributes, element, segment) {
+export function classifyRestraint(attributes, element, segment, stiffnessToSi) {
   const unfilledSlot = isUnfilledCaesarSlot(attributes, RESTRAINT_SLOT_IDENTITY_ATTRIBUTES);
   const declaredType = attribute(attributes, ['TYPE']);
   const rawType = unfilledSlot ? null : declaredType;
@@ -73,6 +74,7 @@ export function classifyRestraint(attributes, element, segment) {
     connectingNodeActive: connectingNodeId !== null,
     connectingNodeId,
     finiteStiffnessActive: finitePositive(stiffness),
+    ...resolveSpringRate(stiffness, stiffnessToSi),
     canonicalNodeRestraint: canonicalNodeRestraint(segment, nodeId),
   });
 }
@@ -82,16 +84,17 @@ export function restraintDispositions(classification) {
   if (classification.typeCode === null || classification.typeLabel === null || classification.nodeId === null) {
     return both(invalidDisposition('MODEL_RESTRAINT_SOURCE_INVALID'));
   }
-  // A connected-node restraint retargets the reaction onto another node and a
-  // declared finite stiffness changes the restraint's own compliance. Neither
-  // is representable by the FIXED-DOF constraint this consumer emits, so both
-  // stay terminal for every profile.
+  // A connected-node restraint retargets the reaction onto another node, which
+  // no single-node constraint can express, so it stays terminal.
   if (classification.connectingNodeActive) {
     return both(unsupportedDisposition('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'));
   }
-  if (classification.finiteStiffnessActive) {
-    return both(unsupportedDisposition('MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED'));
-  }
+  /*
+   * A declared finite stiffness is exact, not an approximation: the solver
+   * carries LINEAR_SPRING and assembles the declared rate onto the restrained
+   * DOF. It falls through to the type branch below -- the direction still has
+   * to be representable -- and only the emitted behavior changes.
+   */
 
   // Gap and friction are NOT terminal. Both leave the restrained DOF intact and
   // only drop a nonlinear effect, which is exactly the linear idealisation this
@@ -152,6 +155,8 @@ export function restraintApproximationCodes(classification) {
   const codes = [];
   if (classification.gapActive) codes.push('GENERIC_APPROX_GAP_CLOSED');
   if (classification.frictionActive) codes.push('GENERIC_APPROX_FRICTION_IGNORED');
+  // Unvalidated: benchmarks/LFEA/SPRING_DRAFT/PROVENANCE.md.
+  if (classification.finiteStiffnessActive) codes.push('DRAFT_SPRING_SUPPORT_NO_REFERENCE');
   const base = baseRestraintDispositions(classification)[APPROXIMATE];
   if (base.disposition === 'IMPLEMENTED_WITH_DECLARED_APPROXIMATION' && base.limitationCode) {
     codes.push(base.limitationCode);

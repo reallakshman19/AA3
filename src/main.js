@@ -43,6 +43,7 @@ import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
 import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety-workbench.js';
 import { EVENT_TOPICS } from './workspace/event-topics.js';
 import { SUPPORT_RESTRAINT_EVENTS } from './workspace/support-restraint-events.js';
+import { diagnoseAccdbCollinearBacktracks } from './core/linear-piping-analysis-consumer/accdb-collinear-backtrack-diagnosis.js';
 import { TOPOLOGY_EVENTS } from './workspace/topology-events.js';
 import {
   LFEA_ENGINEERING_PREPARATION_OWNERS,
@@ -144,6 +145,15 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
         === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML
         ? linearPipingInputXmlSource.getSourceText()
         : null,
+      // An ACCDB import gets the same backtrack diagnosis, without an Apply
+      // button: its geometry belongs to the file, so the correction is reported
+      // for the engineer to make in CAESAR rather than applied here.
+      getAccdbDiagnosis: () => {
+        if (lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+          !== LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB) return null;
+        const rows = lfeaAccdbInputPanel.getElementRows();
+        return rows === null ? null : diagnoseAccdbCollinearBacktracks(rows);
+      },
       onRepaired: (repairedXml) => {
         if (lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
           !== LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
@@ -197,6 +207,30 @@ lfeaPipelineShell.setAssemblyHandlers({
     } catch (error) {
       lfeaAuthoritySupplement = null;
       lfeaPipelineShell.setAuthoritySupplementStatus(`Rejected: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+  async onLoadSample() {
+    // A real benchmark model rather than a hand-authored toy: BM4's own
+    // InputXML, which the repository already validates against. It still
+    // carries its three collinear backtracks, so loading it also puts the
+    // model-repair panel in front of a model that genuinely needs it.
+    const sampleUrl = `${import.meta.env.BASE_URL}fixtures/lfea-sample-inputxml-bm4.xml`;
+    try {
+      lfeaPipelineShell.setAssembleStatus('Loading sample model…', false);
+      const response = await fetch(sampleUrl);
+      if (!response.ok) throw new Error(`sample fetch returned ${response.status}`);
+      const content = await response.text();
+      linearPipingInputXmlSource.loadSource(
+        { fileName: 'InputXML_BM4.sample.xml', content },
+        { fallbackUnit: 'mm' },
+      );
+      lfeaPipelineShell.setActiveStep('INPUT');
+      lfeaPipelineShell.setAssembleStatus('Sample model loaded. Continue on Error check.', false);
+    } catch (error) {
+      lfeaPipelineShell.setAssembleStatus(
+        `Could not load the sample model: ${error instanceof Error ? error.message : String(error)}`,
+        true,
+      );
     }
   },
   onAssembleAndSendToRun() {
@@ -318,6 +352,23 @@ function invalidateLfeaDownstreamPresentation(reason) {
   if (reason) lfeaPipelineShell.setAssembleStatus(`Analysis state invalidated: ${reason}.`, false);
 }
 
+/**
+ * Run, Output and Export follow from an analysis having been run, so they are
+ * stated here rather than left at the session's default. The session defaults
+ * every step to available, and refreshLfeaStepGuidance only ever set Input,
+ * Error check and Load case -- so with nothing loaded at all, the stepper
+ * advertised Run, Output and Export as "ready", which is three steps of
+ * outright false encouragement on an empty screen.
+ */
+function setLfeaDownstreamStepAvailability(analysisReady, blockedReason) {
+  for (const stepId of ['RUN', 'OUTPUT', 'EXPORT']) {
+    lfeaPipelineShell.setStepStatus(stepId, {
+      available: analysisReady,
+      blockedReason: analysisReady ? null : blockedReason,
+    });
+  }
+}
+
 function refreshLfeaStepGuidance() {
   if (!lfeaStepGuidanceReady) return;
   const engineering = lfeaEngineeringSession.getState();
@@ -365,6 +416,7 @@ function refreshLfeaStepGuidance() {
       detail: cleared ? 'Choose the cases to analyze, then Analyze.' : null,
       blockedReason: cleared ? null : 'The pre-flight is not authorized yet — clear Error check first.',
     });
+    setLfeaDownstreamStepAvailability(cleared, 'Clear Error check, then choose load cases and Analyze.');
     return;
   }
 
@@ -389,6 +441,7 @@ function refreshLfeaStepGuidance() {
           ? `The ACCDB pre-flight failed closed: ${accdb.preFlightError}`
           : 'The ACCDB pre-flight is not authorized yet — clear the blocking findings on Error check first.',
     });
+    setLfeaDownstreamStepAvailability(cleared, 'Clear Error check, then choose load cases and Analyze.');
     return;
   }
 
@@ -400,6 +453,7 @@ function refreshLfeaStepGuidance() {
     available: false,
     blockedReason: 'Load a model on the Input step first.',
   });
+  setLfeaDownstreamStepAvailability(false, 'Load a model on the Input step first.');
 }
 
 function runLfeaPipelineAnalysis(caseIds) {

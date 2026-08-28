@@ -11,9 +11,17 @@ const SOURCE = 'LFEA-PIPING-PROMOTION-S3-CONVERGENCE-QUALIFICATION';
  * identical element identities. The component's own 4x compliance convergence
  * report remains mandatory; a geometry for which six elements do not satisfy
  * 1% is BLOCKED rather than silently refined behind the topology's back.
- * Pressure stiffening is explicitly excluded in S3 and remains S5 work.
+ * The pressure-stiffening argument is required rather than defaulted. This
+ * package's own anti-drift guard forbids hidden default parameters, and it is
+ * right to: a profile that silently defaulted to "no pressure" would seal a
+ * component whose declared rule disagreed with the factor it was built from.
+ *
+ * The pressure-stiffening rule is not a fixed property of this profile: the
+ * component kernel refuses a factor set whose pressure basis disagrees with the
+ * profile that consumes it, in either direction, so the rule has to state what
+ * the factor authority actually did. It follows the capability profile.
  */
-export function productionBendComponentProfile() {
+export function productionBendComponentProfile(pressureStiffeningApplied) {
   return sealPipingComponentProfile({
     schema: 'fea-linear-piping-component-profile/v1',
     // Must equal the piping-component kernel's own contract identity -- this
@@ -24,7 +32,9 @@ export function productionBendComponentProfile() {
     profileId: PIPING_COMPONENT_PROFILE_ID,
     bendFormulation: 'PIPE_BEND_CORRECTED_FRAME_V1',
     bendSubdivisionPurpose: 'STRESS_RECOVERY_V1',
-    bendPressureStiffeningRule: 'BEND_PRESSURE_STIFFENING_EXCLUDED_V1',
+    bendPressureStiffeningRule: requireBoolean(pressureStiffeningApplied)
+      ? 'BEND_PRESSURE_STIFFENING_DECLARED_FACTOR_V1'
+      : 'BEND_PRESSURE_STIFFENING_EXCLUDED_V1',
     convergenceRequired: true,
     reducerRule: 'REDUCER_STEPPED_SECTION_V1',
     valveBodyRule: 'VALVE_RIGID_BODY_V1',
@@ -44,4 +54,14 @@ export function productionBendComponentProfile() {
     rigidBodyStiffnessMultiplier: { value: 1000, source: SOURCE },
     semanticHash: '',
   });
+}
+
+function requireBoolean(value) {
+  if (typeof value !== 'boolean') {
+    throw new TypeError(
+      'productionBendComponentProfile requires an explicit pressureStiffeningApplied flag; '
+      + 'it must state what the factor authority actually did.',
+    );
+  }
+  return value;
 }

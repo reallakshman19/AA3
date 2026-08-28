@@ -91,6 +91,7 @@ export function frameElementsWithUdl(compilation, profile = frameElementProfile(
     profile,
     distributedLoads: [primitive],
     temperature: null,
+    pressure: null,
     releases: [],
     endSprings: [],
     rigidOffsets: null,

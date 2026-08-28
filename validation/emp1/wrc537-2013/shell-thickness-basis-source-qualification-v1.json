@@ -1,11 +1,39 @@
 {
   "schema": "emp1-wrc537-shell-thickness-basis-source-qualification/v1",
   "qualificationId": "EMP1_WRC537_2013_SHELL_THICKNESS_BASIS_SOURCE_Q1",
-  "status": "BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED",
+  "status": "BLOCKED_PARTIAL_PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_QUALIFIED_ASSESSMENT_THICKNESS_BASIS_UNRESOLVED",
   "sourceDocument": {
     "path": "docs/emp1/WRC537_2013.pdf",
     "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
     "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2"
+  },
+  "externalPrimaryTextObservation": {
+    "status": "PASS_TEXT_OBSERVED",
+    "documentIdentity": "WRC 537 (2013)",
+    "rendering": "https://studylib.net/doc/25312294/wrc-537-",
+    "byteIdentityToPinnedPdf": "UNPROVEN",
+    "locators": [
+      {
+        "locator": "Section 1.2, Nomenclature Applicable to Spherical Shells, printed page 2",
+        "directObservation": "T is defined as the thickness of the spherical shell",
+        "boundedConclusion": "SPHERICAL_T_IDENTIFIES_HOST_SHELL_THICKNESS"
+      },
+      {
+        "locator": "Section 1.3, Nomenclature Applicable to Cylindrical Shells, printed page 2",
+        "directObservation": "T is defined as the wall thickness of the cylindrical shell",
+        "boundedConclusion": "CYLINDRICAL_T_IDENTIFIES_HOST_SHELL_WALL_THICKNESS"
+      },
+      {
+        "locator": "Section 2, General Equation, printed page 3, Equation (1)",
+        "directObservation": "the shell stress equation uses membrane force divided by T and bending moment scaled by T squared",
+        "boundedConclusion": "HOST_SHELL_T_IS_THE_STRESS_SCALING_THICKNESS_IN_THE_GENERAL_WRC_FORMULATION"
+      },
+      {
+        "locator": "Section 4.2.1, Shell Parameter, printed page 12, Equation (25)",
+        "directObservation": "the cylindrical shell parameter is the ratio of shell mid-radius to shell thickness, gamma = Rm/T",
+        "boundedConclusion": "CYLINDRICAL_GAMMA_USES_THE_HOST_SHELL_THICKNESS_T"
+      }
+    ]
   },
   "retainedSourceAuthority": {
     "path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
@@ -21,6 +49,10 @@
   "primarySourceDirectlyReobserved": false,
   "primarySourceExecutionStatus": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
   "partialAuthority": {
+    "sphericalHostShellThicknessIdentityQualified": true,
+    "cylindricalHostShellWallThicknessIdentityQualified": true,
+    "generalStressEquationUsesHostShellThicknessQualified": true,
+    "cylindricalShellParameterUsesHostShellThicknessQualified": true,
     "cylindricalThicknessSymbolQualified": true,
     "cylindricalGeometryLabelQualified": true,
     "thicknessUsedInGammaQualified": true,
@@ -54,16 +86,22 @@
     "wrcPrimaryPhysicalThicknessBasisQualified": false
   },
   "engineeringConclusions": {
+    "primaryNomenclatureIdentifiesSphericalTAsHostShellThickness": true,
+    "primaryNomenclatureIdentifiesCylindricalTAsHostShellWallThickness": true,
+    "primaryGeneralEquationUsesShellTForMembraneAndBendingScaling": true,
+    "primaryCylindricalParameterUsesShellTInGamma": true,
     "table5IdentifiesCylindricalVesselThicknessAsT": true,
     "table5UsesTInGamma": true,
     "table5UsesTInStressScaling": true,
     "positiveThicknessValueAloneProvesWrcBasis": false,
+    "shellMemberIdentityDefinesAssessmentWallState": false,
     "lafeaAssessmentPolicyEqualsWrcSourceRule": false,
     "nominalMinusCorrosionAuthorizedByWrc": false,
     "explicitAssessmentThicknessAuthorizedByWrc": false,
     "automaticCorrosionAllowanceSubtractionAuthorizedByWrc": false,
     "measuredMinimumThicknessAutomaticallyAuthorizedAsWrcT": false,
     "reinforcementPadThicknessMaySubstituteForShellT": false,
+    "nozzleOrAttachmentThicknessMaySubstituteForShellT": false,
     "nominalRadiusMayBeMixedWithDifferentNetThicknessWithoutGeometryRule": false,
     "currentRmAndTAreInternallyCoherent": true,
     "productionThicknessBasisAuthority": false
@@ -80,6 +118,8 @@
     "professionalReleaseReady": false
   },
   "authoritySeparation": {
+    "hostShellMemberIdentitySourceAuthority": true,
+    "physicalAssessmentThicknessBasisSourceAuthority": false,
     "physicalThicknessBasisSourceAuthority": false,
     "currentRouteMayExecuteWithHistoricalBoundedThicknessCustody": true,
     "currentRouteExecutionProvesPhysicalThicknessBasis": false,
@@ -87,25 +127,25 @@
     "rule": "BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY"
   },
   "requiredPrimarySourceClosure": [
-    "physical WRC basis of cylindrical shell thickness T: nominal versus actual versus minimum versus corroded/assessment",
-    "whether spherical T is semantically identical",
+    "assessment state of host-shell thickness T: nominal versus actual versus minimum versus corroded/remaining/assessment",
+    "whether spherical and cylindrical shell T use the same engineering assessment-basis rule",
     "corrosion allowance treatment",
     "mill tolerance and forming-thinning treatment",
     "measured local thinning treatment",
-    "required physical consistency between radius construction and selected T",
+    "required physical consistency between radius construction and selected assessment T",
     "local juncture thickness versus remote course thickness",
     "locally thickened shell/insert/reinforcement treatment",
     "source evidence required for the selected physical thickness"
   ],
   "prohibitions": [
+    "DO_NOT_PROMOTE_HOST_SHELL_T_IDENTITY_TO_NOMINAL_CORRODED_OR_MEASURED_ASSESSMENT_BASIS_AUTHORITY",
     "DO_NOT_PROMOTE_LAFEA_NOMINAL_MINUS_CORROSION_POLICY_TO_WRC_SOURCE_AUTHORITY",
     "DO_NOT_PROMOTE_LAFEA_EXPLICIT_ASSESSMENT_POLICY_TO_WRC_SOURCE_AUTHORITY",
     "DO_NOT_SILENTLY_SUBTRACT_CORROSION_ALLOWANCE_FOR_WRC",
     "DO_NOT_ASSUME_MEASURED_MINIMUM_THICKNESS_IS_AUTOMATICALLY_WRC_T",
     "DO_NOT_MIX_RADIUS_AND_THICKNESS_BASES_WITHOUT_QUALIFIED_GEOMETRY_CUSTODY",
-    "DO_NOT_USE_REINFORCEMENT_PAD_THICKNESS_AS_SHELL_T",
-    "DO_NOT_INFER_PHYSICAL_THICKNESS_BASIS_FROM_TABLE5_SYMBOL_T",
-    "DO_NOT_INFER_PHYSICAL_THICKNESS_BASIS_FROM_BOUNDED_ROUTE_AUTHORIZATION"
+    "DO_NOT_USE_REINFORCEMENT_PAD_OR_ATTACHMENT_WALL_THICKNESS_AS_SHELL_T",
+    "DO_NOT_INFER_ASSESSMENT_THICKNESS_BASIS_FROM_BOUNDED_ROUTE_AUTHORIZATION"
   ],
   "authorityEffect": {
     "productionThicknessConversionChanged": false,
@@ -117,6 +157,8 @@
     "pressureAuthorityChanged": false,
     "scfAuthorityChanged": false,
     "thisRecordWidensBoundedRouteAuthority": false,
+    "thisRecordGrantsHostShellMemberIdentitySourceAuthority": true,
+    "thisRecordGrantsAssessmentThicknessBasisSourceAuthority": false,
     "thisRecordGrantsThicknessBasisSourceAuthority": false,
     "globalEmp1CAuthorityChanged": false,
     "codeComplianceAuthorityChanged": false,

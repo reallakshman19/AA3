@@ -1,0 +1,79 @@
+pr: 1519
+branch: agent/issue-1321-standard-engineering-product-default
+issue: 1321
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN
+merge_authority: OWNER_ONLY_NOT_GRANTED
+initial_base_sha: 751d577290f333dbec9f18804766dde61b0f62da
+reconciled_main_sha: 8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d
+source_complete_code_sha: 09a6e9a277c57f18e164498cf59e3244a8008da2
+chain: LOAD-CALC-1321-STANDARD-ENGINEERING-PRODUCT-DEFAULT
+mission: >-
+  Reuse the already-governed PD-ELASTIC-THERMAL generic-steel elastic modulus
+  as the first shipped target-level Product engineering default without
+  inventing generic OD, wall, density, insulation or component-mass tables.
+authority_boundary:
+  upstream_product_profile: LOAD_CALC_STANDARD_DEFAULTS_V1
+  upstream_default_id: PD-ELASTIC-THERMAL
+  upstream_value_path: value.DEFAULT.elasticModulusPa
+  upstream_value_pa: 200000000000
+  target_field: ELASTIC_MODULUS
+  target_unit: MPa
+  target_value: 200000
+  conversion: 1 MPa = 1e6 Pa
+  effective_precedence_owner: src/workspace/project-data/non-fea-effective-value-resolver.js
+  execution_authority_created: false
+  release_authority_created: false
+claimed_paths:
+  - agents/agentchain.md
+  - agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0004.md
+  - agents/agentchain/LOAD-CALC-1321-STANDARD-ENGINEERING-PRODUCT-DEFAULT/EP-LC1321-SEPD-0001.md
+  - agents/PR1519_workreport.md
+  - agents/claims/PR1519.yaml
+  - agents/status/PR1519.yaml
+  - scripts/non-fea-product-engineering-default-profile-check.mjs
+  - scripts/non-fea-product-engineering-default-runtime-resolution-check.mjs
+  - src/workspace/project-data/non-fea-product-engineering-default-profile.js
+protected_paths:
+  - src/workspace/project-data/non-fea-product-default-profile.js
+  - src/workspace/project-data/non-fea-effective-value-resolver.js
+  - src/workspace/project-data/non-fea-effective-common-input-projection.js
+  - src/core/non-fea-enrichment/index.js
+  - src/core/model-loads/**
+  - src/workspace/engineering-loads/**
+  - src/core/lafea/**
+  - src/core/emp1/**
+  - validation/**
+  - .github/workflows/**
+invariants:
+  upstream_product_value_changed: false
+  new_engineering_number_invented: false
+  pa_to_mpa_conversion_exact: true
+  shipped_target_product_default_count: 1
+  generic_od_wall_density_mass_table_added: false
+  effective_precedence_changed: false
+  source_or_override_precedence_weakened: false
+  support_authority_expanded: false
+  support_load_equations_changed: false
+  mass_or_cog_mechanics_changed: false
+  solver_changed: false
+  benchmark_or_tolerance_changed: false
+  execution_authority_granted: false
+  release_authority_granted: false
+validation:
+  source_inspection: PASS_SOURCE_INSPECTION
+  independent_unit_conversion: PASS_SOURCE_INSPECTION
+  faithful_checkout: BLOCKED_DNS_GITHUB
+  product_engineering_profile_check: NOT_RUN
+  product_engineering_runtime_resolution_check: NOT_RUN
+  effective_projection_check: NOT_RUN
+  aggregate_non_fea_checks: NOT_RUN
+  check_imports: NOT_RUN
+  advanced_shell_contract: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+exact_next_action: >-
+  On a faithful exact-head checkout, run
+  node scripts/non-fea-product-engineering-default-profile-check.mjs first;
+  stop on its first real failure, otherwise continue the documented regression
+  sequence, re-ground live main/head/diff/reviews/threads, and await explicit
+  owner merge authorization.

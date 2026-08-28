@@ -1,4 +1,4 @@
-# PR #1519 Work Report — Governed elastic Product default into target resolution
+# PR #1519 Work Report — Governed elastic/thermal Product defaults into target resolution
 
 ## Current state
 
@@ -7,93 +7,159 @@ PR                         #1519
 branch                     agent/issue-1321-standard-engineering-product-default
 issue                      #1321
 initial base               751d577290f333dbec9f18804766dde61b0f62da
-reconciled main            8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d
-source-complete code head  09a6e9a277c57f18e164498cf59e3244a8008da2
+current main observed      1b8be743e7368eda79a06564acc84a413e1e985c
+engineering checkpoint     2fea2fac1b262b0477b8a023fade151be5a35c8a
+latest endpoint            EP-LC1321-SEPD-0002
 state                      SOURCE_COMPLETE_EXECUTION_NOT_RUN
 merge authority            OWNER_ONLY_NOT_GRANTED
 ```
 
-Engineering delivery policy: Common `engineering-pr-delivery-v2`, pinned basis `10d667ce715bb52e1f73035c6fa326db77d0f9dd`.
+Governing policy: Common `engineering-pr-delivery-v2` pinned at `10d667ce715bb52e1f73035c6fa326db77d0f9dd`.
 
 ## Engineering problem
 
-Issue #1321 requires routine missing engineering inputs to become governed, visible, auditable assumptions where a qualified Product/Project default exists, rather than generic blockers.
+Issue #1321 requires routine missing engineering inputs to become governed, visible, auditable assumptions when an authorized Product/Project value already exists, rather than generic blockers.
 
-The repository already had two required pieces:
+Merged groundwork already provides:
 
-1. a versioned Product default `PD-ELASTIC-THERMAL` in `LOAD_CALC_STANDARD_DEFAULTS_V1`, with `DEFAULT.elasticModulusPa = 2.0e11 Pa` and explicit generic-steel screening basis;
-2. target-level Product engineering-default plumbing merged by #1504 and effective winner projection merged by #1514.
+1. #1504 — Product engineering-default provider in ordinary Common Input;
+2. #1514 — effective resolver winner controls the Common Input enriched-model projection;
+3. `LOAD_CALC_STANDARD_DEFAULTS_V1 / PD-ELASTIC-THERMAL` — existing visible Product screening assumptions.
 
-The target-level provider nevertheless still defaulted to an empty engineering profile, so the ordinary resolver could consume Product engineering defaults but the product shipped none.
+The target-level Product engineering provider still shipped an empty table. The safe bounded correction is to reuse values already governed by `PD-ELASTIC-THERMAL`, not author new pipe/material tables.
 
-## Bounded implementation
+## Bounded Product values
 
-### Production
-
-`src/workspace/project-data/non-fea-product-engineering-default-profile.js`
-
-- retains `LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1` as an explicit qualification fixture;
-- imports the existing governed Product profile;
-- locates exactly `PD-ELASTIC-THERMAL` and fails closed if missing;
-- reads `DEFAULT.elasticModulusPa` and rejects non-finite/non-positive values;
-- converts exact units: `2.0e11 Pa / 1e6 = 200000 MPa`;
-- creates `LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1`, version 1, with exactly one target-level row:
-  `PD-ENG-ELASTIC-MODULUS-GENERIC-STEEL / ELASTIC_MODULUS / 200000 MPa`;
-- embeds upstream Product profile ID/version, upstream default ID/semantic hash and conversion basis;
-- takes allowed methods from the field registry;
-- changes ordinary provider default from EMPTY to STANDARD.
-
-No ordinary Common Input runtime change is needed: `buildCurrentPreFeaRequestInput()` already invokes the Product engineering provider without a custom profile and appends its records into the single resolver sidecar.
-
-### Focused profile check
-
-`scripts/non-fea-product-engineering-default-profile-check.mjs`
-
-- explicitly passes the EMPTY profile when validating no-default behavior;
-- validates the shipped STANDARD profile has exactly one row;
-- validates ordinary provider creates one elastic record per component on the two-component fixture;
-- validates each record is `200000 MPa`, `PRODUCT_DEFAULT`, profile/hash-bound and tied by basis to `PD-ELASTIC-THERMAL` plus the exact conversion;
-- retains explicit custom Product table tests for OD/wall/component mass only as provider mechanics fixtures, not shipped authority;
-- retains conflict/tamper/disallowed-field fail-closed checks.
-
-### Ordinary runtime-resolution check
-
-`scripts/non-fea-product-engineering-default-runtime-resolution-check.mjs`
-
-- updates the shipped-table expectation from EMPTY to exactly one governed elastic row;
-- proves ordinary provider default invocation produces `ELASTIC_MODULUS = 200000 MPa` records;
-- retains custom Product-only / Project-over-Product / Source-over-Product precedence discriminators;
-- retains support-authority exclusion;
-- retains source-model immutability;
-- retains the source inspection that ordinary Common Input uses exactly one `resolveNonFeaEnrichment()` call and returns the provider receipt.
-
-## Independent numerical check
+Upstream Product row:
 
 ```text
-E = 2.0e11 Pa
-1 MPa = 1.0e6 Pa
-E = 2.0e11 / 1.0e6 = 2.0e5 MPa = 200000 MPa
+LOAD_CALC_STANDARD_DEFAULTS_V1
+PD-ELASTIC-THERMAL
+
+DEFAULT.elasticModulusPa      = 2.0e11 Pa
+DEFAULT.thermalExpansionPerK  = 12.0e-6 1/K
 ```
 
-This is a pure exact-unit conversion of an existing Product-authorized value; it is not a newly selected material property.
+Target values:
 
-## Authority boundary
+```text
+ELASTIC_MODULUS
+2.0e11 Pa / 1e6 = 200000 MPa
 
-This PR does **not**:
+THERMAL_EXPANSION_COEFFICIENT
+12.0e-6 1/K -> 12.0e-6 1/K
+```
 
-- invent or ship generic pipe OD/wall tables;
-- invent or ship generic material-density/insulation/component-mass tables;
-- alter `PD-ELASTIC-THERMAL` itself;
-- change the Issue #1321 effective precedence;
-- change CORE target matching/candidate/conflict custody;
-- alter source or accepted enrichment records;
-- widen Product authority to support type/state semantics;
-- change support-load statics, mass composition, CoG, gravity/source-axis mechanics;
-- change solver, residual, reaction, benchmark, oracle or tolerance authority;
-- change EMP.1/WRC/LAFEA authority;
-- change workflows, release, trust or publication authority.
+No new engineering number is selected. E is an exact unit conversion. Alpha is reused without conversion.
 
-## Precedence preserved
+## Production implementation
+
+### `src/workspace/project-data/non-fea-product-engineering-default-profile.js`
+
+The explicit `LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1` remains available for qualification fixtures.
+
+Ordinary Product engineering resolution now defaults to `LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1`, version 1, containing exactly:
+
+```text
+PD-ENG-ELASTIC-MODULUS-GENERIC-STEEL
+  ELASTIC_MODULUS = 200000 MPa
+
+PD-ENG-THERMAL-EXPANSION-GENERIC-STEEL
+  THERMAL_EXPANSION_COEFFICIENT = 12e-6 1/K
+```
+
+Both rows:
+
+- derive from the same existing `PD-ELASTIC-THERMAL` Product row;
+- bind the upstream Product profile ID/version;
+- bind the upstream default identity/semantic hash in their basis;
+- take allowed methods from the target field registry;
+- fail closed if the upstream source value is absent, non-finite or non-positive;
+- remain `PRODUCT_DEFAULT` authority only.
+
+### `src/core/non-fea-enrichment/index.js`
+
+Source audit found the workspace target registry already allowed `THERMAL_EXPANSION_COEFFICIENT`, but the common enrichment contract did not define it. The minimum common seam was therefore added:
+
+```text
+THERMAL_EXPANSION_COEFFICIENT
+-> engineeringProperties.thermalExpansionPerK
+-> SOURCE_MASTER_OVERRIDE_DEFAULT authority family
+```
+
+This does not alter selector matching, conflict handling, topology custody, support authority or numerical algorithms. It only permits the already-governed target field to traverse the existing resolver/projection path.
+
+### `src/core/shared-piping-model/property-specs.js`
+
+Adds canonical source/evidence custody:
+
+```text
+thermalExpansionPerK
+unit = 1/K
+aliases =
+  THERMAL_EXPANSION_PER_K
+  THERMALEXPANSIONPERK
+  THERMAL_EXPANSION_COEFFICIENT
+```
+
+Bare `ALPHA` is intentionally not accepted because it is ambiguous.
+
+## Falsifiers
+
+### `scripts/non-fea-product-engineering-default-profile-check.mjs`
+
+Requires:
+
+- EMPTY profile remains empty;
+- STANDARD profile row count = 2;
+- two-component thermal fixture produces 4 Product records;
+- E records = `200000 MPa`;
+- alpha records = `12e-6 1/K`;
+- both bind `PD-ELASTIC-THERMAL` provenance/profile hash;
+- explicit custom Product tables still exercise provider mechanics only;
+- same-scope unequal values fail closed;
+- tampering invalidates semantic-hash custody;
+- disallowed fields remain rejected.
+
+### `scripts/non-fea-product-engineering-default-runtime-resolution-check.mjs`
+
+Requires the shipped E/alpha records to pass the actual common path:
+
+```text
+Product provider
+-> createNonFeaEnrichmentSidecar()
+-> resolveNonFeaEnrichment()
+-> selected PRODUCT_DEFAULT candidates
+-> createNonFeaEnrichedProjection()
+-> component.engineeringProperties.elasticModulusMpa
+-> component.engineeringProperties.thermalExpansionPerK
+```
+
+Expected projected evidence:
+
+```text
+elasticModulusMpa.value         200000
+elasticModulusMpa.unit          MPa
+elasticModulusMpa.sourceKind    PRODUCT_DEFAULT
+thermalExpansionPerK.value      12e-6
+thermalExpansionPerK.unit       1/K
+thermalExpansionPerK.sourceKind PRODUCT_DEFAULT
+```
+
+The same script preserves the existing discriminators:
+
+- Product-only winner = Product;
+- Project configured default outranks Product;
+- source explicit outranks Product;
+- Product cannot author support type/state;
+- source model remains immutable;
+- ordinary runtime has exactly one common resolver call.
+
+### `scripts/w10.6-flexural-property-contract-check.mjs`
+
+Alias contract now requires the exact thermal-expansion aliases/unit and explicitly verifies bare `ALPHA` is not accepted.
+
+## Authority hierarchy preserved
 
 ```text
 ACCEPTED_OVERRIDE
@@ -106,52 +172,70 @@ ACCEPTED_OVERRIDE
 > PRODUCT_DEFAULT
 ```
 
-The Product row fills a missing target only when the existing effective resolver selects it.
+Product only fills a missing target when the existing effective resolver selects it.
 
-## Concurrent main reconciliation
+## Explicit non-scope / frozen authority
 
-During branch creation, main advanced through EMP.1 PR #1518:
+This PR does **not** authorize or introduce:
 
-```text
-old main     751d577290f333dbec9f18804766dde61b0f62da
-new main     8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d
-```
+- generic pipe OD or wall tables;
+- generic material-density, fluid-density, insulation or component-mass tables;
+- corrosion-allowance promotion;
+- support preload or friction promotion;
+- source-up-axis or gravity-mechanics changes;
+- CoG or mass-composition changes;
+- support type/state Product authority;
+- load statics changes;
+- solver/reaction/residual changes;
+- benchmark/oracle/tolerance changes;
+- EMP.1/WRC/LAFEA changes;
+- workflow changes;
+- release/trust/publication authority.
 
-The #1518 drift did not touch the three #1519 code/test paths or their governing #1321 Product/effective authority. The branch was reconciled with two-parent commit:
+Corrosion allowance and support numerical defaults require separate contract/authority legs and are deliberately deferred.
 
-`09a6e9a277c57f18e164498cf59e3244a8008da2`
+## Current-main drift
 
-Second parent is exact current main `8adfdbcd...`. Before relay files were added, current-main effective delta was exactly three files and PR #1519 was mergeable.
+The branch was originally reconciled to `8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d`. Main later advanced through #1521 to:
+
+`1b8be743e7368eda79a06564acc84a413e1e985c`
+
+#1521 refactors workspace modules to satisfy the 300-line contract and adds E2E coverage. It does not touch the #1519 Product profile, target field registry, common enrichment contract, shared property specs or focused falsifiers. This is a reconciliation event, not a Product-authority requalification event.
+
+The final branch reconciliation must use exact current main as a parent and preserve all #1521 files byte-for-byte.
 
 ## Executable validation truth
 
-Faithful repository access remains unavailable locally:
+Faithful exact-head repository execution remains unavailable in this chain. Local Git access has repeatedly failed before checkout with:
 
 ```text
-git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git HEAD
-fatal: unable to access ... Could not resolve host: github.com
+Could not resolve host: github.com
 ```
 
-Therefore:
+Available GitHub Actions observations have also terminated before executable steps/logs. Do not rerun `steps=[]` jobs merely to generate activity.
+
+Therefore all branch engineering checks remain:
 
 ```text
-non-fea-product-engineering-default-profile-check             NOT_RUN
-non-fea-product-engineering-default-runtime-resolution-check  NOT_RUN
-non-fea-effective-common-input-projection-check                NOT_RUN
-run-non-fea-checks                                             NOT_RUN
-check:imports                                                  NOT_RUN
-advanced-shell-contract                                        NOT_RUN
-build                                                          NOT_RUN
-git diff --check                                               NOT_RUN
+product engineering profile check            NOT_RUN
+product engineering runtime resolution        NOT_RUN
+shared property alias contract                NOT_RUN
+effective Common Input projection             NOT_RUN
+aggregate Non-FEA checks                      NOT_RUN
+check:imports                                  NOT_RUN
+advanced-shell contract                        NOT_RUN
+build                                          NOT_RUN
+git diff --check                               NOT_RUN
 ```
 
-Do not translate source inspection, Git mergeability or semantic reasoning into executable PASS.
+Source inspection is not executable PASS.
 
-## Required execution order
+## Required exact-head execution order
 
 ```bash
 node scripts/non-fea-product-engineering-default-profile-check.mjs
 node scripts/non-fea-product-engineering-default-runtime-resolution-check.mjs
+node scripts/w10.6-flexural-property-contract-check.mjs aliases
 node scripts/non-fea-effective-common-input-projection-check.mjs
 node scripts/run-non-fea-checks.mjs
 npm run check:imports
@@ -160,113 +244,128 @@ npm run build
 git diff --check
 ```
 
-First real failure owns RCA. Do not tune authority, Product values or tolerances merely to pass.
+The first real executable failure owns RCA. Do not tune Product values, precedence or authority to obtain a PASS.
 
 ## Changed-file ledger
 
-Engineering source/test files:
+Engineering source/test paths authorized in this leg:
 
 1. `src/workspace/project-data/non-fea-product-engineering-default-profile.js`
-2. `scripts/non-fea-product-engineering-default-profile-check.mjs`
-3. `scripts/non-fea-product-engineering-default-runtime-resolution-check.mjs`
+2. `src/core/non-fea-enrichment/index.js`
+3. `src/core/shared-piping-model/property-specs.js`
+4. `scripts/non-fea-product-engineering-default-profile-check.mjs`
+5. `scripts/non-fea-product-engineering-default-runtime-resolution-check.mjs`
+6. `scripts/w10.6-flexural-property-contract-check.mjs`
 
-Relay/governance files for the final PR include:
+Relay/governance paths:
 
-4. `agents/agentchain.md`
-5. `agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0004.md`
-6. `agents/agentchain/LOAD-CALC-1321-STANDARD-ENGINEERING-PRODUCT-DEFAULT/EP-LC1321-SEPD-0001.md`
 7. `agents/PR1519_workreport.md`
-8. `agents/claims/PR1519.yaml`
-9. `agents/status/PR1519.yaml`
+8. `agents/agentchain.md`
+9. `agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0004.md`
+10. `agents/agentchain/LOAD-CALC-1321-STANDARD-ENGINEERING-PRODUCT-DEFAULT/EP-LC1321-SEPD-0001.md`
+11. `agents/agentchain/LOAD-CALC-1321-STANDARD-ENGINEERING-PRODUCT-DEFAULT/EP-LC1321-SEPD-0002.md`
+12. `agents/claims/PR1519.yaml`
+13. `agents/status/PR1519.yaml`
 
-Final exact delta must be re-read after relay updates. No other path is authorized.
+Final exact delta must be re-read after current-main reconciliation. No other path is authorized.
 
 ## Inputs
 
 - Issue #1321.
 - merged #1504 Product engineering runtime.
 - merged #1514 effective Common Input projection.
-- `LOAD_CALC_STANDARD_DEFAULTS_V1` / `PD-ELASTIC-THERMAL`.
-- `NON_FEA_FIELD_REGISTRY` / `ELASTIC_MODULUS`.
-- current main `8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d`.
+- current main `1b8be743e7368eda79a06564acc84a413e1e985c`.
+- `LOAD_CALC_STANDARD_DEFAULTS_V1 / PD-ELASTIC-THERMAL`.
+- `NON_FEA_FIELD_REGISTRY` definitions for E/alpha.
 
 ## Benchmarks / discriminators
 
-- exact conversion `2.0e11 Pa -> 200000 MPa`;
-- shipped target-level standard default count = 1;
-- two-component thermal fixture yields 2 Product elastic records;
-- Product-only winner = PRODUCT_DEFAULT;
-- Project configured default outranks Product;
-- source explicit outranks Product;
-- source model unchanged;
-- support type/state Product authority remains prohibited.
+```text
+E source                         2.0e11 Pa
+E target                         200000 MPa
+alpha source/target              12e-6 1/K
+standard target profile rows     2
+two-component Product records    4 = 2 E + 2 alpha
+Product-only winner              PRODUCT_DEFAULT
+Project > Product                required
+Source > Product                 required
+support Product expansion        false
+source mutation                  false
+```
 
 ## Common / governing documents
 
-- `Advanced_Analysis/AGENTS.md`.
-- Common `engineering-pr-delivery-v2` at `10d667ce715bb52e1f73035c6fa326db77d0f9dd`.
+- `AGENTS.md`.
+- Common `engineering-pr-delivery-v2@10d667ce715bb52e1f73035c6fa326db77d0f9dd`.
 - `agents/agentchain.md`.
+- `EP-LC1321-SEPD-0002`.
 
 ## Authoritative sources
 
-No new external source. Existing repository Product-default source:
+No new external source is introduced.
 
-- `src/workspace/project-data/non-fea-product-default-profile.js`
-- `LOAD_CALC_STANDARD_DEFAULTS_V1`
-- `PD-ELASTIC-THERMAL`
+Repository Product authority remains:
 
-The value remains a visible Product screening assumption, not source evidence.
+- `src/workspace/project-data/non-fea-product-default-profile.js`;
+- `LOAD_CALC_STANDARD_DEFAULTS_V1`;
+- `PD-ELASTIC-THERMAL`.
+
+These are visible Product screening assumptions, not source-model evidence.
 
 ## Production paths
 
 Changed:
-- `src/workspace/project-data/non-fea-product-engineering-default-profile.js`
 
-Read-only authority context:
+- `src/workspace/project-data/non-fea-product-engineering-default-profile.js`
+- `src/core/non-fea-enrichment/index.js`
+- `src/core/shared-piping-model/property-specs.js`
+
+Read-only context:
+
 - `src/workspace/project-data/non-fea-product-default-profile.js`
 - `src/workspace/project-data/non-fea-field-registry.js`
 - `src/workspace/non-fea-common-input-runtime.js`
 - `src/workspace/project-data/non-fea-effective-value-resolver.js`
 - `src/workspace/project-data/non-fea-effective-common-input-projection.js`
-- `src/core/non-fea-enrichment/index.js`
+- `src/core/shared-piping-model/adapters/workspace-dataset-to-shared.js`
 
 ## Validation / test paths
 
 - `scripts/non-fea-product-engineering-default-profile-check.mjs`
 - `scripts/non-fea-product-engineering-default-runtime-resolution-check.mjs`
+- `scripts/w10.6-flexural-property-contract-check.mjs`
 - `scripts/non-fea-effective-common-input-projection-check.mjs`
 - `scripts/run-non-fea-checks.mjs`
-- import / advanced-shell / build / diff checks listed above.
+- import/advanced-shell/build/diff checks listed above.
 
 ## Merge disposition
 
 ```text
 DRAFT
-SOURCE_COMPLETE
-EXECUTION_NOT_RUN
+SOURCE_COMPLETE_EXECUTION_NOT_RUN
 OWNER_MERGE_AUTHORITY_NOT_GRANTED
 ```
 
-Do not merge #1519 without a new explicit owner instruction. The #1514 authorization has been consumed.
+Do not merge #1519 without a new explicit owner instruction.
 
 ## Appendix A — next-agent takeover qualification
 
-Q1 — Production Trace: Trace the existing Product-default source row through the standard engineering profile, Product engineering provider, resolver sidecar, CORE candidate ledger, effective winner and Common Input projection. Name the authority owner at each seam.
+Q1 — Production Trace: Trace both `elasticModulusPa` and `thermalExpansionPerK` from `PD-ELASTIC-THERMAL` through the target Product profile, Product provider, common sidecar, resolver ledger, effective projection and final engineering-property keys. Name the authority owner at every seam.
 
-Q2 — Failure Isolation: If the target stores `2.0e11` in `elasticModulusMpa`, identify the first responsible module and exact wrong intermediate value that falsifies the intended Pa→MPa custody.
+Q2 — Failure Isolation: If E becomes `2.0e11` in `elasticModulusMpa`, or alpha is rejected by common enrichment, identify the first responsible module and the exact wrong value/contract entry that falsifies intended custody.
 
-Q3 — Authority / Invariant: Explain why Product may fill a missing elastic modulus but cannot displace accepted override/source/master/Project default evidence, and why no OD/wall/density/component-mass Product table is authorized here.
+Q3 — Authority / Invariant: Explain why Product may fill missing E/alpha but cannot displace accepted override/source/master/Project evidence, and why corrosion, OD/wall/density/mass and support preload/friction are not authorized here.
 
-Q4 — Independent Validation: Compute `2.0e11 Pa` in MPa and identify the upstream default identity plus semantic-hash custody that makes the downstream value derived rather than independently authored.
+Q4 — Independent Validation: Compute `2.0e11 Pa` in MPa, state alpha's exact value/unit, and identify the upstream Product default plus semantic-hash custody proving both target values are derived.
 
-Q5 — First Execution Falsifier: State the first command, its required assertions, and the exact protected domains that remain frozen if it fails.
+Q5 — First Execution Falsifier: State the first exact-head command, its required E/alpha assertions, the resolver/projection assertions that follow, and the protected domains that remain frozen if any check fails.
 
-Target: total >=92/100, minimum each >=17/20 before an incoming agent widens engineering scope.
+Target: total >=92/100 and minimum each >=17/20 before an incoming agent widens this engineering scope.
 
 ## Exact next action
 
-On a faithful exact-head checkout, run:
+On the first faithful exact-head checkout, run:
 
 `node scripts/non-fea-product-engineering-default-profile-check.mjs`
 
-Stop on its first real failure. If it passes, continue the required execution order, then re-ground exact current main/head/files/reviews/threads. Await explicit owner merge authorization.
+Stop on the first real failure. If it passes, continue the required execution order, then re-ground exact current main/head/files/reviews/threads. Await explicit owner merge authorization.

@@ -55,7 +55,7 @@
       "category": "WRC_APPLICABILITY",
       "artifact": "validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json",
       "authorityDocument": "docs/emp1/WRC537_2013_Elastic_Material_Authority.md",
-      "currentStatus": "BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED",
+      "currentStatus": "BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED",
       "profileAuthorityKey": "materialTheory"
     },
     {

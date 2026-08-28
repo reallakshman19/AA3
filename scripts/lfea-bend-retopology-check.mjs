@@ -118,30 +118,75 @@ const accdbGeometry = {
 };
 
 const accdb = retopologiseDeclaredBends(accdbGeometry, PROFILE);
-assert.deepEqual(accdb.retiredNodeIds, ['T']);
-assert.equal(accdb.nodeRetargeting.T.nearestNodeId, null,
-  'A circular ACCDB working point must not be assigned to one tangent by numerical ordering.');
-assert.equal(accdb.nodeRetargeting.T.reason, 'ACCDB_WORKING_POINT_BINDING_REQUIRES_EXPLICIT_AUTHORITY');
-assert.ok(!accdb.geometry.nodes.some((entry) => entry.id === 'T'), 'Unbound ACCDB working point must leave structural topology.');
-assert.ok(accdb.geometry.segments.some((entry) => entry.id === 'E1/S1'
-  && entry.startNodeId === 'A' && entry.endNodeId === 'E1/T0'));
-assert.ok(accdb.geometry.segments.some((entry) => entry.id === 'E2/S1'
-  && entry.startNodeId === 'E1/T1' && entry.endNodeId === 'B'));
+// An ACCDB working point is bound onto the arc, not discarded.
+//
+// This fixture used to assert the opposite: node T retired, retargeting
+// refused as ACCDB_WORKING_POINT_BINDING_REQUIRES_EXPLICIT_AUTHORITY. Retiring
+// it loses whatever the source attached there -- BM4_L hangs real applied
+// forces on bend working points -- and caesar-accdb-linear-solve.js does not
+// discard them either: it binds TO_NODE to the far tangent. Production now
+// matches that, so T survives, repositioned from the corner intersection onto
+// the tangent it actually sits on, and the spans stay continuous through it.
+assert.deepEqual(accdb.retiredNodeIds, [],
+  'A bindable ACCDB working point must not be retired.');
+assert.equal(accdb.nodeRetargeting.T, undefined,
+  'A bound working point needs no retargeting record.');
+
+const workingPoint = accdb.geometry.nodes.find((entry) => String(entry.id) === 'T');
+assert.ok(workingPoint, 'The ACCDB working point must survive retopology.');
+assert.equal(workingPoint.meta.bendWorkingPointOf, 'E1');
+assert.equal(workingPoint.meta.bendArcRole, 'END_WORKING_POINT');
+// Repositioned onto the bend's far tangent (1, 0.2, 0), not left at the corner
+// intersection (1, 0, 0) it was declared at.
+for (const [axis, expected] of [['x', 1], ['y', 0.2], ['z', 0]]) {
+  assert.ok(Math.abs(workingPoint[axis] - expected) <= TOL,
+    `working point ${axis} is ${workingPoint[axis]}, expected ${expected}`);
+}
+
+assert.ok(accdb.geometry.segments.some((entry) => entry.id === 'E1.S1'
+  && entry.startNodeId === 'A' && entry.endNodeId === 'E1.T0'),
+'The incoming straight must run from the source node to the near tangent.');
+assert.ok(accdb.geometry.segments.some((entry) => entry.id === 'E1.B6'
+  && entry.endNodeId === 'T'),
+'The final arc chord must land on the bound working point.');
+assert.ok(accdb.geometry.segments.some((entry) => entry.id === 'E2'
+  && entry.startNodeId === 'T' && entry.endNodeId === 'B'),
+'The following span must still start at the working point, unbroken.');
 assertArcInvariant(accdb, 'E1', { x: 0.8, y: 0.2, z: 0 }, 0.2);
 for (const segment of accdb.geometry.segments) {
   assert.ok(accdb.spanOrigin[segment.id], `Every produced span must have source custody: ${segment.id}`);
 }
 
+// A restrained or loaded working point is BOUND, not blocked.
+//
+// These two cases used to assert a BLOCK, on the reasoning that a support must
+// not silently move to "an arbitrary tangent". The tangent is not arbitrary. In
+// CAESAR a bend element runs to the far tangent weld point; the corner
+// intersection is how the geometry is entered, not where the pipe ends. The
+// benchmark solver says the same thing in code -- setAnalysisPosition is called
+// with canMove true for exactly the last point of a bend definition and false
+// for every other -- so the working point is the one node it is legitimate to
+// move onto the arc.
+//
+// Blocking instead was not the safe choice it looked like: BM4_L hangs real
+// applied forces on bend working points, so a BLOCK there refuses the model
+// outright rather than analysing it the way CAESAR does.
+//
+// The fail-closed path still exists for the case that genuinely is ambiguous --
+// a RETIRED node carrying bound entities with no qualified target still raises
+// BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS from collectRetopologyBindingBlockers.
+// A bindable working point simply never becomes one.
 const boundCorner = structuredClone(accdbGeometry);
 boundCorner.nodes.find((entry) => entry.id === 'T').restraint = 'GUIDE';
 boundCorner.nodes.find((entry) => entry.id === 'T').meta = { restraints: [{ typeLabel: '+Y' }] };
-assert.throws(
-  () => retopologiseDeclaredBends(boundCorner, PROFILE),
-  (error) => error instanceof BendRetopologyError
-    && error.code === 'BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS'
-    && error.data?.sourceNodeId === 'T',
-  'A support on a retired working point must BLOCK rather than move to an arbitrary tangent.',
-);
+const boundCornerResult = retopologiseDeclaredBends(boundCorner, PROFILE);
+assert.deepEqual(boundCornerResult.retiredNodeIds, [],
+  'A restrained working point must be bound onto the tangent, not retired.');
+const restrainedPoint = boundCornerResult.geometry.nodes.find((entry) => String(entry.id) === 'T');
+assert.equal(restrainedPoint.restraint, 'GUIDE',
+  'The restraint must travel with the node it was declared on.');
+assert.ok(Math.abs(restrainedPoint.y - 0.2) <= TOL,
+  'The restrained working point must sit on the tangent the bend actually ends at.');
 
 const forceBoundCorner = structuredClone(accdbGeometry);
 forceBoundCorner.segments[0].meta.analysis.forcesMoments = [{
@@ -149,20 +194,26 @@ forceBoundCorner.segments[0].meta.analysis.forcesMoments = [{
   nodeId: 'T',
   vectors: [{ number: 1, force: { fx: 1, fy: 0, fz: 0 }, moment: { mx: 0, my: 0, mz: 0 } }],
 }];
-assert.throws(
-  () => retopologiseDeclaredBends(forceBoundCorner, PROFILE),
-  (error) => error instanceof BendRetopologyError
-    && error.code === 'BEND_RETOPOLOGY_BOUND_NODE_AMBIGUOUS'
-    && error.data?.boundKinds?.includes('APPLIED_FORCE_MOMENT'),
-  'A nodal load on a retired working point must BLOCK.',
-);
+const forceBoundResult = retopologiseDeclaredBends(forceBoundCorner, PROFILE);
+assert.deepEqual(forceBoundResult.retiredNodeIds, [],
+  'A loaded working point must be bound rather than refused.');
+assert.ok(forceBoundResult.geometry.nodes.some((entry) => String(entry.id) === 'T'),
+  'The node carrying the applied load must survive so the load has somewhere to act.');
 
 const inputXmlGeometry = {
   schemaVersion: 'canonical-geometry-v1',
   source: 'S2_INPUTXML_SYNTHETIC',
   unit: 'm', diagnostics: [],
-  nodes: [node('P0', 0.8, 0, 0), node('P1', 1, 0.2, 0)],
+  // A tangent-to-tangent bend needs its incoming run present. The InputXML
+  // adapter already requires a unique predecessor before it will accept an arc
+  // centre, so a lone bend is a state the adapter never emits; the fixture
+  // carries the predecessor rather than asking retopology to infer a direction
+  // from nothing.
+  nodes: [node('PM1', 0, 0, 0), node('P0', 0.8, 0, 0), node('P1', 1, 0.2, 0)],
   segments: [{
+    id: 'IX-S0', startNodeId: 'PM1', endNodeId: 'P0', type: 'PIPE',
+    length: 0.8, sourceComponentUid: 'SRC-IX-S0', meta: { analysis: {} },
+  }, {
     id: 'IX-B1', startNodeId: 'P0', endNodeId: 'P1', type: 'BEND',
     length: Math.hypot(0.2, 0.2), sourceComponentUid: 'SRC-IX-B1',
     meta: {
@@ -177,9 +228,23 @@ const inputXmlGeometry = {
 };
 const inputXml = retopologiseDeclaredBends(inputXmlGeometry, PROFILE);
 assert.equal(inputXml.retiredNodeIds.length, 0);
-assert.equal(inputXml.geometry.segments.length, 6,
-  'Tangent-to-tangent InputXML bend must be replaced by six chords only; the original straight chord must not survive in parallel.');
-assert.ok(inputXml.geometry.segments.every((entry) => entry.meta?.bendChordOf === 'IX-B1'));
+// Stated as the property rather than a total, so adding the predecessor run to
+// the fixture does not silently change what is being asserted: the bend is
+// REPLACED by its chords, not shadowed by them.
+const inputXmlChords = inputXml.geometry.segments
+  .filter((entry) => entry.meta?.bendChordOf === 'IX-B1');
+assert.equal(inputXmlChords.length, 6,
+  'A tangent-to-tangent InputXML bend must produce exactly six arc chords.');
+assert.ok(!inputXml.geometry.segments.some((entry) => entry.id === 'IX-B1'),
+  'The original straight chord must not survive in parallel with its own arc.');
+assert.ok(inputXml.geometry.segments.some((entry) => entry.id === 'IX-S0'),
+  'The predecessor run is not part of the bend and must be left alone.');
+// Everything the bend produced is a chord of it -- the predecessor run is not
+// its output and is excluded rather than counted as a stray.
+assert.ok(inputXml.geometry.segments
+  .filter((entry) => entry.id !== 'IX-S0')
+  .every((entry) => entry.meta?.bendChordOf === 'IX-B1'),
+'A tangent-to-tangent bend must leave nothing behind but its own chords.');
 assert.ok(!inputXml.geometry.segments.some((entry) => entry.meta?.retopologyRole === 'BEND_INCOMING_STRAIGHT'));
 assertArcInvariant(inputXml, 'IX-B1', { x: 0.8, y: 0.2, z: 0 }, 0.2);
 

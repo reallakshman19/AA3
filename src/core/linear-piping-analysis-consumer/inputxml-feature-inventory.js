@@ -21,6 +21,13 @@ export function buildInputXmlFeatureInventory(sourceBundle) {
     || !Array.isArray(sourceBundle.geometry?.segments)) {
     throw new TypeError('InputXML feature inventory requires a retained source bundle.');
   }
+  /*
+   * Force-per-length, so a declared spring rate can be converted from the
+   * file's own units to the solver's. Null when the file declares no FORCE
+   * unit -- classifyRestraint refuses the rate in that case rather than
+   * assuming it was already SI.
+   */
+  const stiffnessToSi = sourceBundle.geometry.summary?.inputXmlStiffnessToSiFactor ?? null;
   const segmentById = new Map(
     sourceBundle.geometry.segments.map((segment) => [String(segment.id), segment]),
   );
@@ -51,7 +58,7 @@ export function buildInputXmlFeatureInventory(sourceBundle) {
     }));
 
     for (const feature of element.childFeatures ?? []) {
-      rows.push(childInventory({ element, feature, segment, componentInventoryId }));
+      rows.push(childInventory({ element, feature, segment, componentInventoryId, stiffnessToSi }));
     }
     rows.push(...fieldInventory(element, segment));
   }
@@ -60,7 +67,7 @@ export function buildInputXmlFeatureInventory(sourceBundle) {
   return Object.freeze(rows);
 }
 
-function childInventory({ element, feature, segment, componentInventoryId }) {
+function childInventory({ element, feature, segment, componentInventoryId, stiffnessToSi }) {
   const kind = String(feature.kind ?? 'UNKNOWN').toUpperCase();
   const sourceFeatureId = String(feature.sourceFeatureId);
   const common = {
@@ -102,7 +109,7 @@ function childInventory({ element, feature, segment, componentInventoryId }) {
     return inventoryRow({ ...common, classification: { kind }, dispositions: both(exactDisposition()) });
   }
   if (kind === 'RESTRAINT') {
-    const classification = classifyRestraint(feature.rawAttributes, element, segment);
+    const classification = classifyRestraint(feature.rawAttributes, element, segment, stiffnessToSi);
     return inventoryRow({
       ...common,
       active: classification.active,

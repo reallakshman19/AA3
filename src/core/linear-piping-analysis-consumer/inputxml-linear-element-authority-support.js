@@ -89,7 +89,7 @@ export function frameLedgerRow(
   });
 }
 
-export function indexCasePrimitives(loadCase, distributedByElement, temperatureByElement) {
+export function indexCasePrimitives(loadCase, distributedByElement, temperatureByElement, pressureByElement) {
   for (const primitive of loadCase?.primitives ?? []) {
     if (primitive.kind === 'DISTRIBUTED_LOAD') {
       if (!distributedByElement.has(primitive.elementId)) distributedByElement.set(primitive.elementId, []);
@@ -102,6 +102,14 @@ export function indexCasePrimitives(loadCase, distributedByElement, temperatureB
         );
       }
       temperatureByElement.set(primitive.elementId, primitive);
+    } else if (primitive.kind === 'PRESSURE' && pressureByElement !== undefined) {
+      if (pressureByElement.has(primitive.elementId)) {
+        throw elementAuthorityError(
+          'INPUTXML_EXECUTION_MULTIPLE_PRESSURE_PRIMITIVES',
+          `Element ${primitive.elementId} has more than one pressure primitive.`,
+        );
+      }
+      pressureByElement.set(primitive.elementId, primitive);
     }
   }
 }

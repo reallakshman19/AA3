@@ -596,6 +596,7 @@ function analyseCase(authorities, loadCaseId, thermal) {
       profile: authorities.frameProfile,
       distributedLoads: [],
       temperature: temperatureByElement.get(entry.elementId) ?? null,
+      pressure: null,
       releases: [],
       endSprings: [],
       rigidOffsets: null,

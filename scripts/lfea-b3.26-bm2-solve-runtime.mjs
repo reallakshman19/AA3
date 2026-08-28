@@ -139,6 +139,7 @@ function analyse(authorities, label, thermal) {
     profile: authorities.frameProfile,
     distributedLoads: distributedByElement.get(entry.elementId) ?? [],
     temperature: temperatureByElement.get(entry.elementId) ?? null,
+    pressure: null,
     releases: [],
     endSprings: [],
     rigidOffsets: null,

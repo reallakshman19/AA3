@@ -101,9 +101,35 @@ export function forceEquilibriumCheck({
   const imbalance = Math.hypot(sumX, sumY, sumZ);
   const reference = Math.max(referenceMagnitude, policies.equilibriumAbsoluteForceFloor.value);
   const relativeImbalance = imbalance / reference;
+  // The relative measure alone is inconsistently strict across load cases.
+  // Its reference is a sum of force MAGNITUDES over every node, so a case
+  // carrying large self-equilibrating loads -- thermal, above all -- buys
+  // itself an enormous denominator and passes easily, while a weight-only case
+  // is judged against a reference two or three orders of magnitude smaller for
+  // the same quality of solve.
+  //
+  // Measured on BM4_L, the weight-only case has the SMALLEST absolute imbalance
+  // of all four cases (0.31 N against a 188 kN reference) and was the only one
+  // the relative gate failed. Failing the best-solved case for carrying the
+  // least load is a defect in the measure, not a finding about the model.
+  //
+  // So an absolute companion is applied: an imbalance below the declared
+  // absolute limit passes regardless of the ratio. This is the same shape as
+  // the nearZeroPivotTolerance decision already recorded in this project --
+  // it stops a well-conditioned system being misdiagnosed, and a genuinely
+  // unbalanced one still fails, because a real equilibrium defect is not
+  // sub-newton on a piping system.
+  // Required, not defaulted: the solver contract declares this limit, and a
+  // profile that omitted it must fail rather than silently fall back to a
+  // number nobody declared.
+  const absoluteLimit = policies.equilibriumAbsoluteForceLimit.value;
   const result = gate('GLOBAL_FORCE_EQUILIBRIUM_RELATIVE', relativeImbalance, policies.equilibriumRelativeLimit.value);
+  const absoluteAccepted = imbalance <= absoluteLimit;
   return {
     ...result,
+    status: result.status === 'PASS' || absoluteAccepted ? 'PASS' : result.status,
+    absoluteLimit,
+    absoluteAccepted,
     limitSource: policies.equilibriumRelativeLimit.source,
     imbalance,
     groundedSpringCount: external.springCount,

@@ -1,3 +1,4 @@
+import { findCollinearBacktracks } from './collinear-backtrack-rule.js';
 /**
  * Detect and correct short elements whose declared direction opposes the run
  * they sit in.
@@ -68,48 +69,13 @@ function vectorOf(element) {
   });
 }
 
-function magnitude(vector) {
-  return Math.hypot(...vector);
-}
-
-function dot(left, right) {
-  return left.reduce((sum, value, axis) => sum + value * right[axis], 0);
-}
-
-/** Parallel means the cross product vanishes; both vectors are non-zero here. */
-function isParallel(left, right) {
-  const cross = [
-    left[1] * right[2] - left[2] * right[1],
-    left[2] * right[0] - left[0] * right[2],
-    left[0] * right[1] - left[1] * right[0],
-  ];
-  return magnitude(cross) <= 1e-9 * magnitude(left) * magnitude(right);
-}
-
-function nearestLong(elements, from, step) {
-  for (let i = from + step; i >= 0 && i < elements.length; i += step) {
-    const vector = vectorOf(elements[i]);
-    if (magnitude(vector) > REPAIR_LENGTH_LIMIT_MM) return vector;
-  }
-  return null;
-}
-
 /** Elements the rule fires on, with the evidence that made it fire. */
 export function findInputXmlBacktrackingElements(xml) {
   const elements = readElements(xml);
-  const repairs = [];
-  for (const element of elements) {
-    const vector = vectorOf(element);
-    const length = magnitude(vector);
-    if (length === 0 || length > REPAIR_LENGTH_LIMIT_MM) continue;
-    const before = nearestLong(elements, element.index, -1);
-    const after = nearestLong(elements, element.index, 1);
-    if (before === null || after === null) continue;
-    if (!isParallel(vector, before) || !isParallel(vector, after)) continue;
-    if (dot(vector, before) >= 0 || dot(vector, after) >= 0) continue;
-    repairs.push({ element, vector, length, before, after });
-  }
-  return repairs;
+  // The rule itself lives in collinear-backtrack-rule.js so an ACCDB import can
+  // be told the same thing about itself; only the vector source differs.
+  return findCollinearBacktracks(elements.map(vectorOf), REPAIR_LENGTH_LIMIT_MM)
+    .map((match) => ({ ...match, element: elements[match.index] }));
 }
 
 /** Rewrite only the matched numeric text, preserving its declared precision. */

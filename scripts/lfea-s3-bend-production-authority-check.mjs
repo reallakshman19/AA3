@@ -119,12 +119,12 @@ const thermalCase = preparation.physicalPreparation.physicalCases
   .find((row) => row.caseRole === 'WEIGHT_TEMPERATURE');
 assert.ok(thermalCase, 'The deterministic source must retain a W+T physical case.');
 const bendThermalLedger = preparation.physicalPreparation.loadLedger.filter((row) =>
-  String(row.segmentId).startsWith('ACCDB.E1/B') && row.sourceKind === 'UNIFORM_TEMPERATURE');
+  String(row.segmentId).startsWith('ACCDB.E1.B') && row.sourceKind === 'UNIFORM_TEMPERATURE');
 assert.equal(bendThermalLedger.length, 6,
   'Every generated bend chord must receive thermal authority through its source span.');
 assert.ok(bendThermalLedger.every((row) => row.evidence.sourceAuthoritySegmentId === 'ACCDB.E1'));
 const bendGravityLedger = preparation.physicalPreparation.loadLedger.filter((row) =>
-  String(row.segmentId).startsWith('ACCDB.E1/B') && row.sourceKind === 'PHYSICAL_LINE_WEIGHT');
+  String(row.segmentId).startsWith('ACCDB.E1.B') && row.sourceKind === 'PHYSICAL_LINE_WEIGHT');
 assert.equal(bendGravityLedger.length, 6,
   'Every generated bend chord must receive gravity authority through its source span.');
 assert.ok(bendGravityLedger.every((row) => row.evidence.sourceAuthoritySegmentId === 'ACCDB.E1'));

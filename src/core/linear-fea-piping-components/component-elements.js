@@ -63,6 +63,7 @@ export function generateComponentElement({
     profile: frameElementProfile,
     distributedLoads: [],
     temperature: null,
+    pressure: null,
     releases: [],
     endSprings: [],
     rigidOffsets: null,

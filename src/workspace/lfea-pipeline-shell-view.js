@@ -23,9 +23,13 @@ export class LfeaPipelineShellView {
     loadSample.type = 'button';
     loadSample.className = 'lfea-pipeline-shell__load-sample';
     loadSample.dataset.action = 'lfea-pipeline-load-sample';
-    loadSample.disabled = true;
-    loadSample.title = 'Sample fixtures for each input type land in a later phase of the LFEA revamp.';
+    // A real benchmark model, not a toy: it is the BM4 InputXML the repository
+    // already validates against, and it still carries its three collinear
+    // backtracks, so loading it also demonstrates the model-repair panel on a
+    // model that genuinely needs it.
+    loadSample.title = 'Load a real sample model (CAESAR II InputXML) to try the pipeline without a file of your own.';
     loadSample.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg><span>Load sample</span>';
+    loadSample.addEventListener('click', () => handlers.onLoadSample?.());
     toolbar.append(loadSample);
 
     const authorityLabel = doc.createElement('label');

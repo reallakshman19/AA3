@@ -168,6 +168,7 @@ function thermalElements(modelCompilation, primitives) {
     profile: frameElementProfile(),
     distributedLoads: [],
     temperature: primitiveByElement.get(elementId),
+    pressure: null,
     releases: [],
     endSprings: [],
     rigidOffsets: null,

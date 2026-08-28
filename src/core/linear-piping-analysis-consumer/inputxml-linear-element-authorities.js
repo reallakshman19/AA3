@@ -4,6 +4,11 @@ import {
 } from '../linear-fea-solver/index.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { augmentPipingComponent } from './gravity-expansion-element-augmentation.js';
+import { augmentFrameElementReducer, buildSegmentMetaIndex, reducerGravityRequest, reducerThermalRequest }
+  from './reducer-condensation-augmentation.js';
+import { REDUCER_PRODUCTION_AUTHORIZATION } from './reducer-production-authorization.js';
+import { requireReducerOwnerAuthorization } from '../linear-fea-reducer-condensation/index.js';
+import { augmentPipingComponentBourdon } from './bourdon-expansion-augmentation.js';
 import {
   compareAscii,
   componentLedgerRow,
@@ -61,12 +66,14 @@ export function compileInputXmlLinearElementAuthorities(input) {
   const nodes = new Map(model.nodes.map((node) => [node.nodeId, node]));
   const distributedByElement = new Map();
   const temperatureByElement = new Map();
-  indexCasePrimitives(loadCase, distributedByElement, temperatureByElement);
+  const pressureByElement = new Map();
+  indexCasePrimitives(loadCase, distributedByElement, temperatureByElement, pressureByElement);
 
   const eligibleBendCount = sourcePreparation.normalizedGeometry.segments
     .filter(productionBendSourceEligible).length;
   let acceptedBendFactorAuthority = null;
   let pipingComponents = [];
+  let bendGeometryByComponent = new Map();
   if (capability.bendExactMechanics && eligibleBendCount > 0) {
     if (bendFactorAuthority === null) {
       throw elementAuthorityError(
@@ -81,8 +88,10 @@ export function compileInputXmlLinearElementAuthorities(input) {
       structuralPreparation: structural,
       frameElementProfile: frameProfile,
       factorAuthority: acceptedBendFactorAuthority,
+      capabilityProfile: capability,
     });
     pipingComponents = [...compiled.pipingComponents];
+    bendGeometryByComponent = compiled.bendGeometryByComponent;
   }
 
   if (loadCase !== null && pipingComponents.length > 0) {
@@ -92,6 +101,13 @@ export function compileInputXmlLinearElementAuthorities(input) {
     pipingComponents = [...augmentPipingComponentTemperatureAuthorities({
       compilation, loadCase, pipingComponents,
     }).pipingComponents];
+    // Bourdon last: it reads the chord's effective local stiffness, so it must
+    // see the element after gravity and thermal have been bound to it.
+    if (capability.pressureBourdon === true && bendGeometryByComponent.size > 0) {
+      pipingComponents = [...augmentPipingComponentBourdon({
+        pipingComponents, bendGeometryByComponent, pressureByElement,
+      })];
+    }
   }
 
   const eligibleTeeJunctionCount = sourceTeeJunctionCount(sourcePreparation);
@@ -134,6 +150,7 @@ export function compileInputXmlLinearElementAuthorities(input) {
     });
   }
 
+  const segmentMetaById = buildSegmentMetaIndex(structural, sourcePreparation.normalizedGeometry.segments);
   const frameElements = [];
   const elementContributions = [];
   const elementLedger = [];
@@ -160,7 +177,7 @@ export function compileInputXmlLinearElementAuthorities(input) {
       throw elementAuthorityError('INPUTXML_EXECUTION_ELEMENT_AUTHORITY_STALE',
         `InputXML element ${element.elementId} has stale material/section/node authority bindings.`);
     }
-    const built = compileInputXmlFrameElementAuthority({
+    let built = compileInputXmlFrameElementAuthority({
       element,
       material,
       section,
@@ -169,9 +186,39 @@ export function compileInputXmlLinearElementAuthorities(input) {
       frameProfile,
       distributedLoads: distributedByElement.get(element.elementId) ?? [],
       temperature: temperatureByElement.get(element.elementId) ?? null,
+      pressure: pressureByElement.get(element.elementId) ?? null,
       temperatureByElement,
       branchModifier,
     });
+    // A reducer keeps its element and bindings; only the stiffness and load
+    // vectors it carried under the uniform-section approximation are replaced.
+    const reducerMeta = capability.reducerExactMechanics === true
+      ? (segmentMetaById.get(String(element.elementId))?.reducer ?? null)
+      : null;
+    if (reducerMeta !== null) {
+      requireReducerOwnerAuthorization(REDUCER_PRODUCTION_AUTHORIZATION);
+      built = {
+        ...built,
+        frameElement: augmentFrameElementReducer({
+          frameElement: built.frameElement,
+          reducerId: String(element.elementId),
+          reducer: reducerMeta,
+          section: section,
+          material: material.materialState,
+          gravity: reducerGravityRequest(
+            segmentMetaById.get(String(element.elementId)),
+            built.frameElement,
+            true,
+          ),
+          thermal: reducerThermalRequest(temperatureByElement.get(element.elementId) ?? null),
+          sourceEvidence: {
+            sourceId: `REDUCER:${String(element.elementId)}`,
+            sourceRevision: String(sourcePreparation.sourceBundleSemanticHash),
+            sourceSemanticHash: String(sourcePreparation.semanticHash),
+          },
+        }),
+      };
+    }
     const contribution = elementContributionFromFrameElement(built.frameElement);
     frameElements.push(built.frameElement);
     elementContributions.push(contribution);

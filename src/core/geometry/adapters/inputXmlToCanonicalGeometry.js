@@ -8,6 +8,7 @@ import {
 } from './inputxml-restraint-type-mutation.js';
 import {
   convertInputXmlLengthToMetres,
+  inputXmlStiffnessToSiFactor,
   convertInputXmlScalar,
   parseInputXmlUnitSystem,
 } from './inputxml-unit-system.js';
@@ -54,6 +55,10 @@ export function inputXmlToCanonicalGeometry(xmlText, options = {}) {
       jobName,
       inputXmlUnitsDeclared: unitSystem.declared,
       inputXmlLengthUnit: unitSystem.lengthUnit,
+      // Force/length, for spring rates. Null when the file declares no FORCE
+      // unit, which the consumer treats as "refuse", not "assume SI".
+      inputXmlStiffnessToSiFactor:
+        inputXmlStiffnessToSiFactor(unitSystem.force, unitSystem.lengthUnit),
     },
   };
   const validation = validateCanonicalGeometry(geometry, {

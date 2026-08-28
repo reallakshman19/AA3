@@ -193,6 +193,7 @@ export function compileB31JDirectionalBranchFlexibility({
       profile: frameProfile,
       distributedLoads: [],
       temperature: null,
+      pressure: null,
       releases: [],
       endSprings: modifier.rotationalSprings,
       rigidOffsets,

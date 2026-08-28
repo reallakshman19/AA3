@@ -13,10 +13,34 @@ export const PRODUCTION_CAPABILITY_PROFILE = Object.freeze({
   profileId: 'LFEA_PRODUCTION_CAPABILITY_R1',
   bendExactMechanics: true,
   teeExactMechanics: true,
+  /*
+   * Stays false, now measured on a base that agrees with it.
+   *
+   * The ten-cylinder condensation is implemented, wired and authorized (see
+   * reducer-condensation-augmentation.js and reducer-production-authorization.js).
+   * It was first suspected of failing only because production straight pipe was
+   * Euler-Bernoulli while the condensation is Timoshenko (kappa = 0.5), putting
+   * a beam-theory discontinuity at exactly the reducer elements.
+   *
+   * Production is now Timoshenko throughout, which removed that discontinuity
+   * -- and did NOT rescue the promotion. On the matched base, enabling reducers
+   * still costs parity on every BM4_L case:
+   *
+   *   L2  88.87 -> 86.94   (-1.93)
+   *   L5  83.75 -> 81.61   (-2.14)
+   *   L6  73.93 -> 72.47   (-1.46)
+   *
+   * So the treatment is independently wrong for this model, not merely
+   * inconsistent with its surroundings. The favourable benchmark reading
+   * (1.74% vs 7.59%) measured reducer-local end actions inside the benchmark
+   * harness and does not survive whole-model parity. Closing this needs the S4
+   * controlled runs the authorization record already says it does not close --
+   * particularly which station each cylinder samples.
+   */
   reducerExactMechanics: false,
-  pressureStiffening: false,
-  pressureAxialThrust: false,
-  pressureBourdon: false,
+  pressureStiffening: true,
+  pressureAxialThrust: true,
+  pressureBourdon: true,
   pressureCodeStress: true,
 });
 
@@ -82,7 +106,12 @@ export function productionComponentLimitation(componentKind, profile, segment) {
       : 'GENERIC_APPROX_BEND_STRAIGHT_CHORD';
   }
   if (componentKind === 'REDUCER') {
-    return resolved.reducerExactMechanics ? null : 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION';
+    // Promotion replaced the uniform-section stick, but did not close the S4
+    // sampling-station and gravity-ownership blockers, so the disclosure changes
+    // rather than disappearing: the treatment is measured, not qualified.
+    return resolved.reducerExactMechanics
+      ? 'UNQUALIFIED_SAMPLING_REDUCER_TEN_CYLINDER_MIDPOINT'
+      : 'GENERIC_APPROX_REDUCER_UNIFORM_SECTION';
   }
   if (componentKind === 'TEE') {
     return resolved.teeExactMechanics && (segment === undefined || productionTeeSourceEligible(segment))

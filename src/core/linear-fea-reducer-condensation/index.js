@@ -15,5 +15,6 @@ export {
   REDUCER_PRODUCTION_BLOCKER_CODES,
   REDUCER_PRODUCTION_READINESS_SCHEMA,
   assessReducerCondensationProductionReadiness,
+  requireReducerOwnerAuthorization,
   requireReducerCondensationProductionReady,
 } from './production-readiness.js';

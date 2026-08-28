@@ -6,20 +6,22 @@
 PR                         #1514
 branch                     agent/issue-1321-effective-projection-authority
 initial exact base         1377eddabc8f23e2ea6489ee8aca4cc5b26671b9
+current main               1bbfc695842a1de2eca14a51c8887f18a33e6da2
+pre-reconciliation head    50ef5a6416fda670d2bb6b5b88a89fbefd043da5
 source-complete material   c35c4a40e863470d02fcdc6839c7b076ece9ea8a
-state                      SOURCE_COMPLETE_EXECUTION_NOT_RUN
-merge authority            OWNER_ONLY_NOT_GRANTED
+state                      READY_TO_MERGE_OWNER_AUTHORIZED_EXECUTION_NOT_RUN
+merge authority            OWNER_GRANTED_PR1514_2026-08-28T16:26:03Z
 ```
 
 Issue: #1321 — zero-blocker configurable-default architecture with unified effective-value resolution.
 
 Relay chain: `LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY`.
 
-Engineering delivery policy: Common `engineering-pr-delivery-v2`, inherited pinned basis `10d667ce715bb52e1f73035c6fa326db77d0f9dd`.
+Engineering delivery policy: Common `engineering-pr-delivery-v2`, pinned basis `10d667ce715bb52e1f73035c6fa326db77d0f9dd`.
 
 ## Engineering problem
 
-The repository already had the governing Issue #1321 effective precedence in:
+The repository already has the governing #1321 effective precedence in:
 
 `src/workspace/project-data/non-fea-effective-value-resolver.js`
 
@@ -34,70 +36,50 @@ ACCEPTED_OVERRIDE
 > PRODUCT_DEFAULT
 ```
 
-However ordinary Common Input built and sealed the enriched shared model directly from the legacy CORE selected winner:
+Ordinary Common Input previously built its enriched shared model from the legacy CORE selected winner. CORE intentionally retains historical source-first ordering, so a reviewed accepted override could be present in candidate custody while the sealed model still consumed explicit source.
 
-```text
-resolveNonFeaEnrichment()
-  -> legacy CORE source-first selected row
-createNonFeaEnrichedProjection()
-  -> existing source property cannot be replaced by non-source candidate
-seal Common Input enrichedModel
-  -> empirical mass projection / Run consumes that model
-```
-
-The existing focused effective-resolver regression already documents the intentional divergence: a reviewed `ACCEPTED_OVERRIDE` can supersede `SOURCE_EXPLICIT` in the #1321 effective resolver even though legacy CORE still selects the source candidate.
-
-Therefore the defect was a **projection/consumption bypass**, not the absence of a precedence table.
+The defect is a projection/consumption bypass, not a missing precedence table.
 
 ## Implemented design
 
-### 1. Effective projection bridge
-
-New:
+### Effective projection bridge
 
 `src/workspace/project-data/non-fea-effective-common-input-projection.js`
 
-Responsibilities:
+- accepts a valid READY CORE candidate-resolution ledger bound to the source model;
+- calls existing `resolveCoreNonFeaEffectiveValues()`;
+- defines no second precedence table;
+- maps each effective winner back to one exact CORE candidate by semantic hash;
+- binds the effective resolver receipt into downstream resolution custody;
+- projects the effective-selected winner into the Common Input shared model;
+- permits a reviewed `ACCEPTED_OVERRIDE` to replace an existing source property only when the existing effective resolver selected it;
+- preserves source immutability and topology/geometry/support membership.
 
-- accepts only a valid, READY CORE candidate-resolution ledger bound to the exact source model;
-- calls existing `resolveCoreNonFeaEffectiveValues()`; it defines no authority precedence itself;
-- requires every effective winner to map back to one exact CORE candidate by semantic hash;
-- emits a downstream CORE-shaped resolution ledger whose `selected` candidate is the effective winner;
-- binds the effective resolver/row/candidate hashes into `effectiveSelection` on each row;
-- projects selected non-source winners into the shared model, including replacing an existing source property when and only when the effective resolver selected that candidate;
-- preserves source immutability and governed topology/geometry/support membership;
-- returns the effective-value ledger, downstream resolution ledger and enriched projection as one frozen authority bundle.
-
-### 2. Ordinary Common Input cutover
-
-Modified:
+### Common Input cutover
 
 `src/workspace/non-fea-common-input-runtime.js`
 
-Current path:
+Production path:
 
 ```text
-enrichmentSidecar
-  -> resolveNonFeaEnrichment()
-  -> candidateResolutionLedger
+resolveNonFeaEnrichment()
+  -> CORE candidateResolutionLedger
   -> createNonFeaEffectiveCommonInputProjection()
-       -> existing #1321 effective resolver
-       -> effectiveValueResolutionLedger
+       -> resolveCoreNonFeaEffectiveValues()
+       -> effective winner custody
        -> effective-selected resolutionLedger
        -> effective-selected enrichedProjection
-  -> configured-default usage from effective-selected resolutionLedger
-  -> Common checker / seal / downstream Run
+  -> Common checker / seal
+  -> downstream Run / empirical mass projection
 ```
 
-CORE still owns target matching, candidate formation, same-authority conflicts and legacy migration blockers.
+CORE continues to own exact target matching, candidate formation, same-authority conflicts and legacy migration blockers.
 
-### 3. Product-default identity transport correction
-
-Modified:
+### Product-default identity transport
 
 `src/workspace/project-data/non-fea-effective-value-resolver.js`
 
-Static integration audit found the CORE adapter preserved original Product-default evidence only under `coreEvidence`, while `PRODUCT_DEFAULT` candidate validation requires these fields at the candidate evidence top level:
+The CORE-to-effective adapter preserves these Product-default identities at the effective candidate evidence top level while retaining full original evidence under `coreEvidence`:
 
 ```text
 defaultId
@@ -105,29 +87,58 @@ defaultSemanticHash
 productDefaultProfileSemanticHash
 ```
 
-The adapter now copies exactly those three identities to the top-level effective candidate evidence while retaining the complete original evidence under `coreEvidence`.
-
 No precedence ranking changed.
 
-### 4. Focused falsifier
-
-New:
+## Focused falsifier
 
 `scripts/non-fea-effective-common-input-projection-check.mjs`
 
-Uses the existing real straight-pipe shared-model fixture. Intended executable assertions:
+Required discriminator:
 
-1. legacy CORE source-first winner remains `SOURCE_EXPLICIT:10 kg/m` when `ACCEPTED_OVERRIDE:99 kg/m` is present;
+1. legacy CORE selects `SOURCE_EXPLICIT:10 kg/m` when reviewed `ACCEPTED_OVERRIDE:99 kg/m` is present;
 2. effective bridge selects `ACCEPTED_OVERRIDE:99 kg/m`;
-3. enriched Common Input model contains 99 kg/m and `sourceKind=ACCEPTED_OVERRIDE`;
-4. `EXACT_APPROVED_MASTER`, `PROJECT_CONFIGURED_DEFAULT`, and `PRODUCT_DEFAULT` cannot displace explicit source;
-5. Product-default semantic identity survives CORE adaptation;
+3. projected Common Input model contains `99 kg/m` with `sourceKind=ACCEPTED_OVERRIDE`;
+4. lower `EXACT_APPROVED_MASTER`, `PROJECT_CONFIGURED_DEFAULT`, and `PRODUCT_DEFAULT` candidates do not displace explicit source;
+5. Product-default semantic identities survive CORE adaptation;
 6. source model remains immutable;
-7. topology semantic hash is unchanged;
-8. same-authority conflicts remain fail-closed;
-9. legacy precedence migration blockers remain fail-closed.
+7. topology semantic hash remains unchanged;
+8. same-authority conflicts fail closed;
+9. legacy migration precedence blockers remain fail closed.
 
-Registered in `scripts/run-non-fea-checks.mjs`.
+The check is registered in `scripts/run-non-fea-checks.mjs`.
+
+## Current-main reconciliation for owner-authorized merge
+
+Owner instruction at `2026-08-28T16:26:03Z`: `proceed next, fix and merge`.
+
+Fresh live gate before reconciliation:
+
+```text
+live main                  1bbfc695842a1de2eca14a51c8887f18a33e6da2
+PR head                    50ef5a6416fda670d2bb6b5b88a89fbefd043da5
+PR state                   open / draft / unmerged
+GitHub mergeable           false before reconciliation
+submitted reviews          0
+review threads             0
+requested reviewers        none
+```
+
+Main advanced four commits from the original base. Comparing the complete current-main drift against all 12 #1514 paths found only one overlapping path:
+
+`agents/agentchain.md`
+
+No intervening main commit modified the substantive #1514 production/test files.
+
+Reconciliation policy:
+
+- build from exact current-main tree;
+- preserve current EMP.1 and B02D rows/endpoints exactly;
+- preserve #1514 technical blobs byte-for-byte;
+- retain `EP-LC1321-COG-0007` post-#1508 execution custody;
+- retain EFF endpoints 0001/0002;
+- add immutable `EP-LC1321-EFF-0003` documenting current-main reconciliation and owner merge authority;
+- update this workreport plus `agents/claims/PR1514.yaml` and `agents/status/PR1514.yaml`;
+- do not modify any benchmark/oracle/tolerance/workflow/release/trust authority.
 
 ## Authority boundary
 
@@ -140,30 +151,20 @@ This PR does not:
 - change gravity/source-axis conventions;
 - change any solver, residual, reaction or contact algorithm;
 - touch benchmark/oracle/tolerance authority;
-- touch EMP.1/WRC/LAFEA authority;
+- touch EMP.1/WRC/LAFEA engineering authority;
 - change workflow, release, trust or publication authority;
 - authorize execution or publication by itself.
 
-## Source-inspection validation
-
-```text
-live main grounding                         PASS_SOURCE_INSPECTION
-main at source-complete audit               1377eddabc8f23e2ea6489ee8aca4cc5b26671b9
-branch behind main                           0
-technical authority design                  PASS_SOURCE_INSPECTION
-single effective precedence owner retained  PASS_SOURCE_INSPECTION
-Product-default identity transport          PASS_SOURCE_INSPECTION
-protected numerical paths untouched         PASS_SOURCE_INSPECTION
-```
-
 ## Executable validation truth
 
-Faithful repository access was retried after the technical cut:
+Faithful repository checkout remains unavailable in this agent environment. Previous direct repository access failed with:
 
 ```text
 git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git refs/heads/agent/issue-1321-effective-projection-authority
 fatal: unable to access 'https://github.com/reallaksh19/Advanced_Analysis.git/': Could not resolve host: github.com
 ```
+
+Repository Actions continue to show pre-step allocation failures on current workstreams, so no known recovery signal justifies reclassifying #1514 validation.
 
 Therefore:
 
@@ -182,7 +183,7 @@ git diff --check                                     NOT_RUN
 
 This is infrastructure `NOT_RUN`, not application PASS/FAIL.
 
-## Required execution order
+## Required execution order after merge when faithful execution exists
 
 ```bash
 node scripts/non-fea-effective-common-input-projection-check.mjs
@@ -199,115 +200,74 @@ git diff --check
 
 First real failure controls RCA. Do not widen scope or alter precedence/tolerances to make the suite pass.
 
-## Changed-file ledger at source-complete material head
+## Changed-file ledger for the reconciled merge candidate
 
-Technical + relay delta observed from exact base:
+1. `agents/PR1514_workreport.md`
+2. `agents/agentchain.md`
+3. `agents/agentchain/LOAD-CALC-1321-COMPONENT-COG-FALLBACK/EP-LC1321-COG-0007.md`
+4. `agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0001.md`
+5. `agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0002.md`
+6. `agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0003.md`
+7. `agents/claims/PR1514.yaml`
+8. `agents/status/PR1514.yaml`
+9. `scripts/non-fea-effective-common-input-projection-check.mjs`
+10. `scripts/run-non-fea-checks.mjs`
+11. `src/workspace/non-fea-common-input-runtime.js`
+12. `src/workspace/project-data/non-fea-effective-common-input-projection.js`
+13. `src/workspace/project-data/non-fea-effective-value-resolver.js`
 
-1. `agents/agentchain.md`
-2. `agents/agentchain/LOAD-CALC-1321-COMPONENT-COG-FALLBACK/EP-LC1321-COG-0007.md`
-3. `agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0001.md`
-4. `scripts/non-fea-effective-common-input-projection-check.mjs`
-5. `scripts/run-non-fea-checks.mjs`
-6. `src/workspace/non-fea-common-input-runtime.js`
-7. `src/workspace/project-data/non-fea-effective-common-input-projection.js`
-8. `src/workspace/project-data/non-fea-effective-value-resolver.js`
+## Inputs
 
-Recovery files/endpoints added after PR creation are governance-only and must be included in final PR reconciliation.
-
-## Input / benchmark / common references
-
-### Inputs
-
-- GitHub Issue #1321.
-- merged predecessor PR #1508 / main `1377eddabc8f23e2ea6489ee8aca4cc5b26671b9`.
+- Issue #1321.
+- merged predecessor PR #1508 / `1377eddabc8f23e2ea6489ee8aca4cc5b26671b9`.
+- current main `1bbfc695842a1de2eca14a51c8887f18a33e6da2`.
 - `src/core/non-fea-enrichment/index.js` — CORE candidate authority/custody.
 - `src/workspace/non-fea-common-input-runtime.js` — ordinary Common Input composition seam.
 - `src/core/non-fea-common-checker/index.js` — checker/seal consumption boundary.
 - `src/workspace/project-data/non-fea-effective-value-resolver.js` — governing #1321 effective precedence.
 - `src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js` — downstream sealed-model consumer.
 
-### Benchmark / qualification fixtures
+## Benchmarks / qualification fixtures
 
-- `scripts/w10.5-screening-fixtures.mjs` — existing straight-pipe shared-model fixture used by the new discriminator.
-- `scripts/non-fea-effective-value-resolver-check.mjs` — existing accepted-override/source precedence discriminator.
-- No benchmark expected values or engineering tolerances are changed by this PR.
+- `scripts/w10.5-screening-fixtures.mjs` — straight-pipe shared-model fixture used by the new discriminator.
+- `scripts/non-fea-effective-value-resolver-check.mjs` — accepted-override/source precedence discriminator.
+- No benchmark expected values or engineering tolerances are changed.
 
-### Common / process
+## Common / governing documents
 
-- `reallaksh19/Common` engineering-pr-delivery-v2, inherited pinned basis `10d667ce715bb52e1f73035c6fa326db77d0f9dd`.
-- `agents/agentchain.md` repository-wide v2 relay index.
+- `Advanced_Analysis/AGENTS.md` on current main.
+- Common `engineering-pr-delivery-v2` pinned at `10d667ce715bb52e1f73035c6fa326db77d0f9dd` and same-commit references.
+- `agents/agentchain.md`.
 
 ## Merge disposition
 
 ```text
-DRAFT
+READY_TO_MERGE_OWNER_AUTHORIZED
 SOURCE_COMPLETE
 EXECUTION_NOT_RUN
-OWNER_MERGE_AUTHORITY_NOT_GRANTED
 ```
 
-Do not merge until explicitly authorized by the owner and after a fresh live-main/head/diff/reviews/threads gate. If executable infrastructure remains unavailable at owner-authorized merge time, preserve `NOT_RUN` exactly; do not convert source inspection to PASS.
+Owner authorization applies to PR #1514 only and is consumed by this merge. It does not authorize any successor PR.
 
 ## Appendix A — next-agent takeover qualification
 
-Incoming agent must answer all five before mutating this PR.
-
 ### Q1 — Authority ownership
-Which module is the sole governing #1321 effective precedence owner, and why would reordering `NON_FEA_ENRICHMENT_AUTHORITIES` in CORE be the wrong repair for this PR?
+Which module is the sole governing #1321 effective precedence owner, and why would reordering CORE candidate precedence be the wrong repair?
 
-### Q2 — Exact bypass
-Trace the current post-PR path from `resolveNonFeaEnrichment()` through the effective projection bridge to the `enrichedModel` eventually consumed by current empirical mass projection. Identify which object is candidate custody versus effective winner custody.
+### Q2 — Production trace
+Trace `resolveNonFeaEnrichment()` through the effective projection bridge to the sealed `enrichedModel` consumed by current empirical mass projection. Identify candidate custody versus effective winner custody.
 
 ### Q3 — Override safety
-Why may an `ACCEPTED_OVERRIDE` replace an existing source property in the effective projection while an `EXACT_APPROVED_MASTER`, `PROJECT_CONFIGURED_DEFAULT` or `PRODUCT_DEFAULT` normally may not? Name the mechanism that enforces this without a second precedence table in the bridge.
+Why may an `ACCEPTED_OVERRIDE` replace an existing source property while `EXACT_APPROVED_MASTER`, `PROJECT_CONFIGURED_DEFAULT` and `PRODUCT_DEFAULT` normally may not? Name the existing mechanism enforcing this without a second precedence table.
 
 ### Q4 — Product-default transport
-Which three Product-default evidence identities must survive CORE→effective adaptation, and what exact validation would fail if they remained nested only inside `coreEvidence`?
+Which three Product-default evidence identities must survive CORE-to-effective adaptation, and what semantic validation do they protect?
 
 ### Q5 — First execution falsifier
-What is the first command to run on a faithful checkout, what exact source/override discriminator should it prove, and which protected domains must remain untouched if it fails?
+What is the first command to run on a faithful checkout, what exact 10-vs-99 kg/m discriminator must it prove, and which protected domains remain untouched if it fails?
 
-Target: all five answered materially and from live repository source before write authority is assumed.
+Target: all five materially answered from live repository source before future engineering mutation.
 
 ## Exact next action
 
-1. Obtain a faithful checkout of the exact current PR head.
-2. Run `node scripts/non-fea-effective-common-input-projection-check.mjs` first.
-3. Stop on its first real failure and repair only the responsible authority/projection seam.
-4. If it passes, run the listed regression/aggregate/import/build sequence.
-5. Re-ground to live `main`, exact PR head/diff, reviews and review threads.
-6. Await explicit owner merge authorization.
-
-## Final GitHub reconciliation before this governance-only record update
-
-Observed immediately before updating this living workreport:
-
-```text
-live main                  1377eddabc8f23e2ea6489ee8aca4cc5b26671b9
-observed PR head           690f5267753771af2c0c4a7a469b9c50ce597527
-compare                    ahead=13 / behind=0
-changed files              12
-mergeable                  true
-draft                      true
-submitted reviews          0
-review threads             0
-```
-
-The 12-file final-observed delta was:
-
-```text
-agents/PR1514_workreport.md
-agents/agentchain.md
-agents/agentchain/LOAD-CALC-1321-COMPONENT-COG-FALLBACK/EP-LC1321-COG-0007.md
-agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0001.md
-agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0002.md
-agents/claims/PR1514.yaml
-agents/status/PR1514.yaml
-scripts/non-fea-effective-common-input-projection-check.mjs
-scripts/run-non-fea-checks.mjs
-src/workspace/non-fea-common-input-runtime.js
-src/workspace/project-data/non-fea-effective-common-input-projection.js
-src/workspace/project-data/non-fea-effective-value-resolver.js
-```
-
-This workreport update is governance-only and necessarily advances the branch head beyond the observed reconciliation SHA. A final metadata read must therefore use the new exact head; no engineering-source scope is added by this update.
+Re-read live main and exact reconciled PR head. If `behind=0`, the effective diff is exactly the bounded 13-file ledger above, reviews/threads remain clear, and GitHub reports mergeable, mark PR #1514 ready and squash-merge the exact expected head. Preserve executable validation as `NOT_RUN`.

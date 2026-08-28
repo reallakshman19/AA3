@@ -1,9 +1,11 @@
 pr: 1514
 branch: agent/issue-1321-effective-projection-authority
 issue: 1321
-state: SOURCE_COMPLETE_EXECUTION_NOT_RUN
-merge_authority: OWNER_ONLY_NOT_GRANTED
+state: READY_TO_MERGE_OWNER_AUTHORIZED_EXECUTION_NOT_RUN
+merge_authority: OWNER_GRANTED_PR1514_2026-08-28T16:26:03Z
 initial_base_sha: 1377eddabc8f23e2ea6489ee8aca4cc5b26671b9
+current_main_sha: 1bbfc695842a1de2eca14a51c8887f18a33e6da2
+pre_reconciliation_head_sha: 50ef5a6416fda670d2bb6b5b88a89fbefd043da5
 source_complete_material_sha: c35c4a40e863470d02fcdc6839c7b076ece9ea8a
 chain: LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY
 mission: >-
@@ -19,6 +21,8 @@ claimed_paths:
   - agents/agentchain.md
   - agents/agentchain/LOAD-CALC-1321-COMPONENT-COG-FALLBACK/EP-LC1321-COG-0007.md
   - agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0001.md
+  - agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0002.md
+  - agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0003.md
   - agents/PR1514_workreport.md
   - agents/claims/PR1514.yaml
   - agents/status/PR1514.yaml
@@ -50,6 +54,14 @@ invariants:
   solver_changed: false
   benchmark_or_tolerance_changed: false
   product_default_identity_validation_preserved: true
+reconciliation:
+  live_main: 1bbfc695842a1de2eca14a51c8887f18a33e6da2
+  main_drift_commits_from_initial_base: 4
+  overlapping_pr_paths:
+    - agents/agentchain.md
+  substantive_pr_paths_overlapped_by_main: false
+  submitted_reviews: 0
+  review_threads: 0
 validation:
   source_inspection: PASS_SOURCE_INSPECTION
   faithful_checkout: BLOCKED_DNS_GITHUB
@@ -64,7 +76,7 @@ validation:
   build: NOT_RUN
   git_diff_check: NOT_RUN
 exact_next_action: >-
-  On a faithful exact-head checkout, run
-  node scripts/non-fea-effective-common-input-projection-check.mjs first; stop on the
-  first real failure, otherwise continue the documented regression sequence, then
-  re-ground live main/head/diff/reviews/threads and await explicit owner merge authorization.
+  Re-ground the exact reconciled PR head against live main; if behind=0, scope remains bounded,
+  reviews/threads remain clear, and GitHub reports mergeable, mark PR #1514 ready and
+  squash-merge the exact expected head under the explicit owner authorization. Preserve
+  executable engineering validation as NOT_RUN.

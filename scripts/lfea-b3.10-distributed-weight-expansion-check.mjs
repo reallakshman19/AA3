@@ -58,6 +58,7 @@ const frameElement = compileFrameElement({
   profile: eulerBernoulliProfile(),
   distributedLoads: [],
   temperature: null,
+  pressure: null,
   releases: [],
   endSprings: [],
   rigidOffsets: null,

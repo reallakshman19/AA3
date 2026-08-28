@@ -93,7 +93,13 @@ export class LfeaPipelineCaseSelectionPanelController {
       const caseIds = this.getSelectedCaseIds();
       if (caseIds.length === 0) throw new Error('Select at least one analysis case.');
       this.options.onApplyCaseSelection?.(caseIds);
-      this.message = `Requested ${caseIds.length} case(s). Pre-flight was regenerated for this selection.`;
+      // Say what the engineer now has to DO, not just what happened. The
+      // regenerated pre-flight voids any acceptance already given, and the only
+      // previous signal was Analyze quietly refusing with a message pointing at
+      // a step that still looked finished.
+      this.message = `Requested ${caseIds.length} case(s). The pre-flight was regenerated for this `
+        + 'selection, so any acceptance you gave on Error check no longer applies — re-accept there '
+        + 'before analyzing.';
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
     }

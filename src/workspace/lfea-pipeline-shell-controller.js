@@ -30,6 +30,7 @@ export class LfeaPipelineShellController {
       onStepSelected: (stepId) => this.session.setActiveStep(stepId),
       onAuthoritySupplementSelected: (file) => this.assemblyHandlers?.onAuthoritySupplementSelected?.(file),
       onAssembleAndSendToRun: () => this.assemblyHandlers?.onAssembleAndSendToRun?.(),
+      onLoadSample: () => this.assemblyHandlers?.onLoadSample?.(),
     });
     this.sourceAcquisition = createLfeaSourceAcquisitionController(this.view.getSourceHost());
     let previousActiveStepId = null;

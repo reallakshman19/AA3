@@ -1,3 +1,4 @@
+import { springRateToSiFactor } from '../../linear-piping-analysis-consumer/restraint-spring-rate.js';
 import { attributeValue, firstElement } from './inputxml-tag-scanner.js';
 
 const FACTOR_RELATIVE_TOLERANCE = 5e-4;
@@ -164,6 +165,20 @@ export function convertInputXmlScalar(value, declaration, quantityName) {
   if (declaration.kind === 'FAHRENHEIT') return ((value - 32) * 5) / 9 + 273.15;
   if (declaration.kind === 'KELVIN') return value;
   return value * declaration.scale;
+}
+
+/**
+ * Stiffness is force per length, and CAESAR declares it in the file's own
+ * units -- N/mm, lb/in -- while the solver works in N/m. Neither the FORCE
+ * declaration nor the LENGTH declaration alone converts it, which is how a
+ * declared spring rate reached the solver unconverted: force and length are
+ * each handled elsewhere, and the quotient belonged to neither.
+ *
+ * Returns null when the file declares no FORCE unit, so the caller can refuse
+ * rather than silently assume the rate was already SI.
+ */
+export function inputXmlStiffnessToSiFactor(forceDeclaration, lengthUnit) {
+  return springRateToSiFactor(forceDeclaration, lengthUnit);
 }
 
 export function convertInputXmlLengthToMetres(value, sourceUnit) {

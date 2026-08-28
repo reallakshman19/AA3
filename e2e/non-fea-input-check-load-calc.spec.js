@@ -23,6 +23,41 @@ const STAGED_PACKAGE = {
   ],
 };
 
+// One pipe carries direct mass evidence (UNIT_PIPE_WEIGHT_KG_PER_M, matching
+// pipe()'s own attribute), the other omits it -- a genuinely partial coverage
+// state, not the all-resolved or all-missing extremes that hide a binary
+// ready/blocked gate showing no progress at all.
+const PARTIAL_MASS_COVERAGE_PACKAGE = {
+  schema: 'inputxml-managed-stage/v1',
+  packageHash: 'PARTIAL-MASS-COVERAGE-PROGRESS',
+  unit: 'mm',
+  objects: [{
+    id: 'PIPES',
+    name: 'Pipes',
+    type: 'BRANCH',
+    children: [
+      {
+        id: 'PIPE-RESOLVED', name: 'PIPE-RESOLVED', type: 'PIPE', sourcePath: '/MODEL/PIPES/PIPE-RESOLVED',
+        sourceAttributes: {
+          LINE_ID: 'LINE-NON-FEA', SYSTEM_ID: 'SYS-NON-FEA',
+          EI_N_M2: 2000000, UNIT_PIPE_WEIGHT_KG_PER_M: 10,
+          INSULATION_THICKNESS_MM: 0, FLUID_WT_OPE_KG_M: 2, FLUID_WT_HYD_KG_M: 3,
+        },
+        nativeParams: { startPoint: [0, 0, 0], endPoint: [1000, 0, 0] },
+      },
+      {
+        id: 'PIPE-UNRESOLVED', name: 'PIPE-UNRESOLVED', type: 'PIPE', sourcePath: '/MODEL/PIPES/PIPE-UNRESOLVED',
+        sourceAttributes: {
+          LINE_ID: 'LINE-NON-FEA', SYSTEM_ID: 'SYS-NON-FEA',
+          EI_N_M2: 2000000,
+          INSULATION_THICKNESS_MM: 0, FLUID_WT_OPE_KG_M: 2, FLUID_WT_HYD_KG_M: 3,
+        },
+        nativeParams: { startPoint: [1000, 0, 0], endPoint: [2000, 0, 0] },
+      },
+    ],
+  }],
+};
+
 const CERTIFIED_GAP_PACKAGE = {
   schema: 'inputxml-managed-stage/v1',
   packageHash: 'CERTIFIED-TOPOFIX-3MM',
@@ -220,6 +255,42 @@ test('integrates preflight, Project Data, enrichment, checker and explicit seal 
   await expect(applicationNav.getByRole('button', { name: 'Input Check', exact: true })).toHaveCount(0);
   await expect(applicationNav.getByRole('button', { name: 'Method Basis', exact: true })).toHaveCount(0);
   await expect(applicationNav.getByRole('button', { name: 'Seal & Export', exact: true })).toHaveCount(0);
+});
+
+test('shows entity-level progress and a cause legend instead of a bare blocked/ready flag', async ({ page }) => {
+  await page.goto('/');
+  await uploadJson(page, 'partial-mass-coverage.json', PARTIAL_MASS_COVERAGE_PACKAGE);
+  await page.getByRole('navigation', { name: 'Application views' })
+    .getByRole('button', { name: 'Edit, Topo fix and Load Calc', exact: true }).click();
+
+  const consumer = page.locator('[data-role="load-calc-consumer"]');
+  await loadCalcTab(consumer, 'preflight').click();
+  const inputCheck = page.locator('[data-role="non-fea-input-check"]');
+  await expect(inputCheck).toBeVisible();
+
+  // The legend distinguishes shared, single-scope, and gate-rollup causes --
+  // previously all three read as one undifferentiated list.
+  const legend = inputCheck.locator('.non-fea-input-check__cause-legend');
+  await expect(legend).toContainText('SHARED CAUSE');
+  await expect(legend).toContainText('SINGLE CAUSE');
+  await expect(legend).toContainText('GATE ROLLUP');
+
+  // Mass coverage is genuinely partial here (1 of 2 pipes carry direct mass
+  // evidence). The progress line must say so, not just BLOCKED -- the same
+  // text a fully-unresolved model would show, which is the bug this covers.
+  const massProgress = inputCheck.locator('[data-coverage-code="MASS_COVERAGE_INCOMPLETE"]');
+  await expect(massProgress).toBeVisible();
+  await expect(massProgress).toHaveAttribute('data-coverage-total', '2');
+  await expect(massProgress).toHaveAttribute('data-coverage-resolved-entities', '1');
+  await expect(massProgress).toContainText('1 of 2 governed entities resolved');
+
+  // The unresolved entity is named directly under the cause in the primary
+  // list -- not only inside the separate Method Readiness table three levels
+  // deep in Advanced validation evidence.
+  const detail = inputCheck.locator('[data-coverage-entity-detail="MASS_COVERAGE_INCOMPLETE"]');
+  await detail.locator('summary').click();
+  await expect(detail).toContainText('PIPE-UNRESOLVED');
+  await expect(detail).not.toContainText('PIPE-RESOLVED');
 });
 
 test('prepares certified TopoFix for an exact source-backed 3 mm gap', async ({ page }) => {

@@ -1,10 +1,15 @@
 import { WorkspaceState } from './workspace-state.js';
 import { EventBus } from './event-bus.js';
 import { APPLICATION_EVENTS, EVENT_TOPICS } from './event-topics.js';
+import {
+  applyWorkspacePanelLayout,
+  applyWorkspaceViewportLayout,
+  beginPanelResize,
+  loadPanelPrefs,
+  resizedPanelWidths,
+  savePanelPrefs,
+} from './workspace-panel-layout.js';
 
-const STORAGE_KEY = 'workspace-layout-prefs/v2';
-const PANEL_MINIMUM_PX = 200;
-const FOCUS_PANEL_WIDTH_PX = 48;
 const TOPOLOGY_EDIT_LEFT_PANEL_DEFAULT_PX = 260;
 
 /** Owns layout, shared-view switching, and panel resizing only. */
@@ -73,52 +78,8 @@ export class WorkspaceShellController {
     this.shellElement?.querySelectorAll('[data-action="switch-viewport-tab"]').forEach((button) => button.setAttribute('aria-selected', String(button.dataset.tab === selected)));
   }
 
-  /** Single source of truth for viewport-stack visibility and pointer ownership. */
   applyViewportLayout() {
-    if (!this.shellElement) return;
-    const loadCalc = this.shellElement.dataset.workbenchView === 'load-calc';
-    const topologyEdit3DActive = this.state.topologyEdit3DActive;
-    const host = this.shellElement.querySelector('[data-role="topology-edit-render-host"]');
-    const dock = this.shellElement.querySelector('[data-role="load-calc-consumer-root"]');
-    const stage = this.shellElement.querySelector('[data-role="viewport-stage"]');
-    const viewportPanel = this.shellElement.querySelector('[data-panel="viewport"]');
-
-    if (host) {
-      host.hidden = !topologyEdit3DActive;
-      host.toggleAttribute('inert', !topologyEdit3DActive);
-    }
-    if (dock) {
-      const showLoadCalcDock = loadCalc && !topologyEdit3DActive;
-      dock.hidden = !showLoadCalcDock;
-      dock.toggleAttribute('inert', !showLoadCalcDock);
-      dock.classList.toggle('load-calc-dock--compact', topologyEdit3DActive);
-    }
-    if (stage) {
-      // Load Calc owns the central viewport while active. Model / 3D activates
-      // the dedicated topology-edit host, so retaining the shared read-only
-      // workspace stage creates overlapping scroll/pointer authority.
-      const hideSharedStage = loadCalc || topologyEdit3DActive;
-      stage.hidden = hideSharedStage;
-      stage.toggleAttribute('inert', hideSharedStage);
-      stage.style.display = hideSharedStage ? 'none' : 'flex';
-      stage.style.flex = hideSharedStage ? '0 0 0' : '1 1 100%';
-    }
-
-    // In ordinary Load Calc panes the read-only viewport toolbar/footer are not
-    // part of the active interaction surface. Keeping them in the flex stack
-    // previously allowed them (and the underlying workspace layer) to win hit
-    // testing after nested pane scrolling. Model / 3D deliberately restores
-    // the viewport chrome because that route owns the dedicated 3D host.
-    viewportPanel?.classList.toggle(
-      'viewport-panel--load-calc-owned',
-      loadCalc && !topologyEdit3DActive,
-    );
-    viewportPanel?.classList.toggle(
-      'viewport-panel--topology-edit-owned',
-      topologyEdit3DActive,
-    );
-
-    globalThis.requestAnimationFrame?.(() => globalThis.dispatchEvent?.(new Event('resize')));
+    applyWorkspaceViewportLayout(this.shellElement, this.state.topologyEdit3DActive);
   }
 
   click(event) {
@@ -250,16 +211,7 @@ export class WorkspaceShellController {
     if (!resizer) return;
     const action = resizer.dataset.action;
     if (this.state.topologyEdit3DActive && action !== 'resize-left') return;
-    const tree = this.shellElement.querySelector('.tree-panel');
-    const properties = this.shellElement.querySelector('.properties-panel');
-    this.dragContext = {
-      action,
-      topologyEdit3DActive: this.state.topologyEdit3DActive,
-      startX: event.clientX,
-      leftWidth: tree.getBoundingClientRect().width,
-      rightWidth: properties.getBoundingClientRect().width,
-      maximumWidth: this.shellElement.getBoundingClientRect().width / 2,
-    };
+    this.dragContext = beginPanelResize(this.shellElement, action, event, this.state.topologyEdit3DActive);
     event.preventDefault();
     this.rootElement.ownerDocument.addEventListener('pointermove', this.handlePointerMove, { passive: false });
     this.rootElement.ownerDocument.addEventListener('pointerup', this.handlePointerUp);
@@ -268,18 +220,7 @@ export class WorkspaceShellController {
   pointerMove(event) {
     if (!this.dragContext) return;
     event.preventDefault();
-    const delta = event.clientX - this.dragContext.startX;
-    if (this.dragContext.action === 'resize-left') {
-      const key = this.dragContext.topologyEdit3DActive
-        ? 'topologyEditLeftPanelWidth'
-        : 'leftPanelWidth';
-      this.state[key] = clamp(
-        this.dragContext.leftWidth + delta,
-        PANEL_MINIMUM_PX,
-        this.dragContext.maximumWidth,
-      );
-    }
-    if (this.dragContext.action === 'resize-right') this.state.rightPanelWidth = clamp(this.dragContext.rightWidth - delta, PANEL_MINIMUM_PX, this.dragContext.maximumWidth);
+    Object.assign(this.state, resizedPanelWidths(this.dragContext, event));
     this.applyPanelLayout();
   }
 
@@ -293,28 +234,7 @@ export class WorkspaceShellController {
   }
 
   applyPanelLayout() {
-    if (!this.shellElement) return;
-    const focus = this.state.topologyEdit3DActive;
-    const treeCollapsed = this.state.treeCollapsed;
-    const propertiesCollapsed = focus || this.state.propertiesCollapsed;
-    const expandedLeft = focus
-      ? this.state.topologyEditLeftPanelWidth
-      : this.state.leftPanelWidth;
-    const left = treeCollapsed ? FOCUS_PANEL_WIDTH_PX : expandedLeft;
-    const right = propertiesCollapsed ? FOCUS_PANEL_WIDTH_PX : this.state.rightPanelWidth;
-    const propertiesPanel = this.shellElement.querySelector('.properties-panel');
-    const rightResizer = this.shellElement.querySelector('.panel-resizer--right');
-    propertiesPanel.hidden = focus;
-    propertiesPanel.toggleAttribute('inert', focus);
-    rightResizer.hidden = focus;
-    this.shellElement.style.gridTemplateColumns = focus
-      ? `${left}px 4px minmax(360px,1fr)`
-      : `${left}px 4px minmax(360px,1fr) 4px ${right}px`;
-    this.shellElement.dataset.topologyEditFocusLayout = String(focus);
-    this.shellElement.dataset.topologyEditLeftPanelVisible = String(!treeCollapsed);
-    this.shellElement.dataset.topologyEditLeftPanelWidthPx = String(left);
-    this.shellElement.querySelector('.tree-panel').classList.toggle('workspace-panel--collapsed', treeCollapsed);
-    this.shellElement.querySelector('.properties-panel').classList.toggle('workspace-panel--collapsed', propertiesCollapsed);
+    applyWorkspacePanelLayout(this.shellElement, this.state);
   }
 
   applyState() {
@@ -329,25 +249,12 @@ export class WorkspaceShellController {
   }
 
   loadState() {
-    try {
-      const saved = JSON.parse(globalThis.localStorage?.getItem(STORAGE_KEY) || 'null');
-      if (!saved) return;
-      if (Number.isFinite(saved.leftPanelWidth)) this.state.leftPanelWidth = saved.leftPanelWidth;
-      if (Number.isFinite(saved.topologyEditLeftPanelWidth)) {
-        this.state.topologyEditLeftPanelWidth = saved.topologyEditLeftPanelWidth;
-      }
-      if (Number.isFinite(saved.rightPanelWidth)) this.state.rightPanelWidth = saved.rightPanelWidth;
-      if (['webgl', 'svg', 'split'].includes(saved.activeViewportTab)) this.state.activeViewportTab = saved.activeViewportTab;
-    } catch { globalThis.localStorage?.removeItem(STORAGE_KEY); }
+    const prefs = loadPanelPrefs();
+    if (prefs) Object.assign(this.state, prefs);
   }
 
   saveState() {
-    globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify({
-      leftPanelWidth: this.state.leftPanelWidth,
-      topologyEditLeftPanelWidth: this.state.topologyEditLeftPanelWidth,
-      rightPanelWidth: this.state.rightPanelWidth,
-      activeViewportTab: this.state.activeViewportTab,
-    }));
+    savePanelPrefs(this.state);
   }
 
   destroy() {
@@ -359,5 +266,3 @@ export class WorkspaceShellController {
     this.unsubscribers = [];
   }
 }
-
-function clamp(value, minimum, maximum) { return Math.max(minimum, Math.min(value, maximum)); }

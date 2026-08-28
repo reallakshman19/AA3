@@ -155,6 +155,8 @@ export function restraintApproximationCodes(classification) {
   const codes = [];
   if (classification.gapActive) codes.push('GENERIC_APPROX_GAP_CLOSED');
   if (classification.frictionActive) codes.push('GENERIC_APPROX_FRICTION_IGNORED');
+  // Exact mechanics, unvalidated: benchmarks/LFEA/SPRING_DRAFT/PROVENANCE.md.
+  if (classification.finiteStiffnessActive) codes.push('DRAFT_SPRING_SUPPORT_NO_REFERENCE');
   const base = baseRestraintDispositions(classification)[APPROXIMATE];
   if (base.disposition === 'IMPLEMENTED_WITH_DECLARED_APPROXIMATION' && base.limitationCode) {
     codes.push(base.limitationCode);

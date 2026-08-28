@@ -1,0 +1,82 @@
+pr: 1514
+branch: agent/issue-1321-effective-projection-authority
+issue: 1321
+state: READY_TO_MERGE_OWNER_AUTHORIZED_EXECUTION_NOT_RUN
+merge_authority: OWNER_GRANTED_PR1514_2026-08-28T16:26:03Z
+initial_base_sha: 1377eddabc8f23e2ea6489ee8aca4cc5b26671b9
+current_main_sha: 1bbfc695842a1de2eca14a51c8887f18a33e6da2
+pre_reconciliation_head_sha: 50ef5a6416fda670d2bb6b5b88a89fbefd043da5
+source_complete_material_sha: c35c4a40e863470d02fcdc6839c7b076ece9ea8a
+chain: LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY
+mission: >-
+  Bind ordinary Common Input enriched-model projection to the existing Issue #1321
+  effective-value winner without defining a second precedence path.
+authority_boundary:
+  precedence_owner: src/workspace/project-data/non-fea-effective-value-resolver.js
+  core_role: exact target matching, candidate custody, same-authority conflicts, migration blockers
+  bridge_role: map effective winner back to exact CORE candidate and project it into Common Input
+  execution_authority_created: false
+  release_authority_created: false
+claimed_paths:
+  - agents/agentchain.md
+  - agents/agentchain/LOAD-CALC-1321-COMPONENT-COG-FALLBACK/EP-LC1321-COG-0007.md
+  - agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0001.md
+  - agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0002.md
+  - agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0003.md
+  - agents/PR1514_workreport.md
+  - agents/claims/PR1514.yaml
+  - agents/status/PR1514.yaml
+  - scripts/non-fea-effective-common-input-projection-check.mjs
+  - scripts/run-non-fea-checks.mjs
+  - src/workspace/non-fea-common-input-runtime.js
+  - src/workspace/project-data/non-fea-effective-common-input-projection.js
+  - src/workspace/project-data/non-fea-effective-value-resolver.js
+protected_paths:
+  - src/core/non-fea-enrichment/index.js
+  - src/core/model-loads/**
+  - src/workspace/engineering-loads/support-load-distribution-v3.js
+  - src/workspace/engineering-loads/support-load-static-accounting.js
+  - src/workspace/engineering-loads/current-common-input-empirical-mass-projection.js
+  - src/workspace/engineering-loads/current-common-input-empirical-support-load-execution.js
+  - src/core/lafea/**
+  - src/core/emp1/**
+  - validation/**
+  - .github/workflows/**
+invariants:
+  second_precedence_table_added: false
+  core_precedence_reordered: false
+  accepted_override_can_replace_source_only_when_effective_resolver_selects_it: true
+  lower_authority_can_silently_displace_source: false
+  source_model_mutated: false
+  topology_mutated: false
+  support_load_equations_changed: false
+  mass_formulas_changed: false
+  solver_changed: false
+  benchmark_or_tolerance_changed: false
+  product_default_identity_validation_preserved: true
+reconciliation:
+  live_main: 1bbfc695842a1de2eca14a51c8887f18a33e6da2
+  main_drift_commits_from_initial_base: 4
+  overlapping_pr_paths:
+    - agents/agentchain.md
+  substantive_pr_paths_overlapped_by_main: false
+  submitted_reviews: 0
+  review_threads: 0
+validation:
+  source_inspection: PASS_SOURCE_INSPECTION
+  faithful_checkout: BLOCKED_DNS_GITHUB
+  focused_effective_projection_check: NOT_RUN
+  effective_value_resolver_check: NOT_RUN
+  product_engineering_default_runtime_check: NOT_RUN
+  common_checker_check: NOT_RUN
+  current_empirical_mass_projection_check: NOT_RUN
+  aggregate_non_fea_checks: NOT_RUN
+  check_imports: NOT_RUN
+  advanced_shell_contract: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+exact_next_action: >-
+  Re-ground the exact reconciled PR head against live main; if behind=0, scope remains bounded,
+  reviews/threads remain clear, and GitHub reports mergeable, mark PR #1514 ready and
+  squash-merge the exact expected head under the explicit owner authorization. Preserve
+  executable engineering validation as NOT_RUN.

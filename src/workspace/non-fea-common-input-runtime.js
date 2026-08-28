@@ -4,7 +4,6 @@ import {
   assertCommonInputMethodPartition,
 } from '../core/non-fea-common-checker/integrity.js';
 import {
-  createNonFeaEnrichedProjection,
   createNonFeaEnrichmentSidecar,
   resolveNonFeaEnrichment,
 } from '../core/non-fea-enrichment/index.js';
@@ -20,6 +19,9 @@ import {
   createConfiguredDefaultUsageRowsFromResolution,
   createNonFeaConfiguredDefaultProvider,
 } from './project-data/non-fea-configured-default-provider.js';
+import {
+  createNonFeaEffectiveCommonInputProjection,
+} from './project-data/non-fea-effective-common-input-projection.js';
 import {
   createNonFeaProductDefaultProvider,
 } from './project-data/non-fea-product-default-profile.js';
@@ -232,19 +234,29 @@ export function buildCurrentPreFeaRequestInput() {
       ...productEngineeringDefaultProvider.records,
     ],
   });
-  const resolutionLedger = resolveNonFeaEnrichment({
+  const candidateResolutionLedger = resolveNonFeaEnrichment({
     sourceModel: dataset.sharedModel,
     sidecar: enrichmentSidecar,
   });
-  if (resolutionLedger.status !== 'READY') {
+  if (candidateResolutionLedger.status !== 'READY') {
     const error = codedError('The common field-resolution ledger is blocked.', 'COMMON_INPUT_RESOLUTION_BLOCKED');
-    error.details = resolutionLedger.blockers;
+    error.details = candidateResolutionLedger.blockers;
     throw error;
   }
-  const enrichedProjection = createNonFeaEnrichedProjection({
+
+  // CORE owns exact target matching, candidate custody and conflict/migration
+  // blockers. The existing #1321 effective-value resolver owns the winner.
+  // This bridge projects that exact effective winner into the Common Input model
+  // instead of allowing the legacy CORE source-first winner to bypass it.
+  const effectiveProjection = createNonFeaEffectiveCommonInputProjection({
     sourceModel: dataset.sharedModel,
-    resolutionLedger,
+    candidateResolutionLedger,
   });
+  const {
+    effectiveValueResolutionLedger,
+    resolutionLedger,
+    enrichedProjection,
+  } = effectiveProjection;
 
   const configuredDefaultUsageRows = createConfiguredDefaultUsageRowsFromResolution({
     resolutionLedger,
@@ -281,6 +293,8 @@ export function buildCurrentPreFeaRequestInput() {
     productEngineeringDefaultProvider,
     productDefaultProvider,
     loadCaseAuthority,
+    candidateResolutionLedger,
+    effectiveValueResolutionLedger,
     resolutionLedger,
     enrichedProjection,
     projectDataProfile,

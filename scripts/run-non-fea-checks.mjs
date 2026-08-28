@@ -21,6 +21,7 @@ const checks = [
   ['Component content Project/Product default authority', 'scripts/non-fea-component-content-default-authority-check.mjs'],
   ['Ancillary Project/Product default authority', 'scripts/non-fea-ancillary-default-authority-check.mjs'],
   ['Effective-value authority resolver', 'scripts/non-fea-effective-value-resolver-check.mjs'],
+  ['Effective Common Input projection authority', 'scripts/non-fea-effective-common-input-projection-check.mjs'],
   ['Authorized baseline effective-value ledger', 'scripts/authorized-empirical-effective-value-ledger-check.mjs'],
   ['Ledger-only gravity execution projection', 'scripts/authorized-empirical-effective-execution-projection-check.mjs'],
   ['Effective execution selector-collision falsifier', 'scripts/authorized-empirical-effective-execution-projection-collision-check.mjs'],

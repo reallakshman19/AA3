@@ -5,7 +5,7 @@ ENDPOINT_ID: EP-0005
 QUESTION_SET_ID: QS-B02D-V2-0001
 QUALIFICATION_BASIS_HEAD: 81c2e780a03d565345457b07609fe19d8d1421e4
 CANDIDATE_ID: gpt-5.6-sol-b02d-recovery-20260828
-LIVE_PR_HEAD_OBSERVED: PENDING — successor draft PR not yet created at initial answer commit
+LIVE_PR_HEAD_OBSERVED: ea30231406910858c3e52f1558d08b5d07aa6e46 — relay/index head observed before this answer synchronization; later relay-only metadata commits do not change the material qualification basis
 LIVE_MAIN_HEAD_OBSERVED: 81c2e780a03d565345457b07609fe19d8d1421e4
 RECONCILIATION: MATCH
 QUALIFICATION_STATUS: DEFERRED_VERIFICATION

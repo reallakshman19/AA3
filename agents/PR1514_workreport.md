@@ -277,3 +277,37 @@ Target: all five answered materially and from live repository source before writ
 4. If it passes, run the listed regression/aggregate/import/build sequence.
 5. Re-ground to live `main`, exact PR head/diff, reviews and review threads.
 6. Await explicit owner merge authorization.
+
+## Final GitHub reconciliation before this governance-only record update
+
+Observed immediately before updating this living workreport:
+
+```text
+live main                  1377eddabc8f23e2ea6489ee8aca4cc5b26671b9
+observed PR head           690f5267753771af2c0c4a7a469b9c50ce597527
+compare                    ahead=13 / behind=0
+changed files              12
+mergeable                  true
+draft                      true
+submitted reviews          0
+review threads             0
+```
+
+The 12-file final-observed delta was:
+
+```text
+agents/PR1514_workreport.md
+agents/agentchain.md
+agents/agentchain/LOAD-CALC-1321-COMPONENT-COG-FALLBACK/EP-LC1321-COG-0007.md
+agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0001.md
+agents/agentchain/LOAD-CALC-1321-EFFECTIVE-PROJECTION-AUTHORITY/EP-LC1321-EFF-0002.md
+agents/claims/PR1514.yaml
+agents/status/PR1514.yaml
+scripts/non-fea-effective-common-input-projection-check.mjs
+scripts/run-non-fea-checks.mjs
+src/workspace/non-fea-common-input-runtime.js
+src/workspace/project-data/non-fea-effective-common-input-projection.js
+src/workspace/project-data/non-fea-effective-value-resolver.js
+```
+
+This workreport update is governance-only and necessarily advances the branch head beyond the observed reconciliation SHA. A final metadata read must therefore use the new exact head; no engineering-source scope is added by this update.

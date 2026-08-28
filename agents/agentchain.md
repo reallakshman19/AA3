@@ -11,9 +11,9 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 
 | Chain | Mission | Latest endpoint | Endpoint file | PR | State | Authority domain | Next action |
 |---|---|---|---|---|---|---|---|
-| EMP1-1389-P0-SOURCE-CLOSURE | Close #1389 professional P0 source gates incrementally without widening bounded runtime/release authority | EP-0010 | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0010.md | #1513 | READY_FOR_OWNER_MERGE_DECISION | EMP.1 WRC source/current-state governance | Owner merge authorization granted; re-ground exact head and merge #1513 with expected-head guard, then separate downstream #1389 aggregate/current-state reconciliation |
+| EMP1-1389-P0-SOURCE-CLOSURE | Close #1389 professional P0 source gates incrementally without widening bounded runtime/release authority | EP-0012 | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0012.md | #1517 | READY_FOR_OWNER_MERGE_DECISION | EMP.1 WRC source/current-state governance | Obtain explicit owner merge authorization for #1517; if granted, re-ground exact head/files/reviews/threads/checks and merge with expected-head guard |
 | LOAD-CALC-1321-COMPONENT-COG-FALLBACK | Govern missing component CoG fallback as a visible Project/Product policy without changing support-load statics | EP-LC1321-COG-0006 | agents/agentchain/LOAD-CALC-1321-COMPONENT-COG-FALLBACK/EP-LC1321-COG-0006.md | #1508 | ACTIVE | Load Calc component CoG fallback and empirical gravity-method selection authority | Re-ground live #1508 merge gate and squash-merge the exact head under owner authorization; preserve executable qualification as NOT_RUN |
-| LAFEA-B02D-V2-GOVERNING-RESPONSE | Recover and continue frozen B02D-V2 governing T6/L4 response authority after merged #1490 | EP-B02D-GR-0020 | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-B02D-GR-0020.md | #1515 | BLOCKED | LAFEA.3 B02D-V2 governing-response evidence; takeover qualified | Wait for a genuine execution-recovery signal, then run the B02D V2 governing-response exact-head check and stop at its first real disposition |
+| LAFEA-B02D-V2-GOVERNING-RESPONSE | Recover and continue frozen B02D-V2 governing T6/L4 response authority after merged #1490 | EP-B02D-GR-0021 | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-B02D-GR-0021.md | #1515 | BLOCKED | LAFEA.3 B02D-V2 governing-response evidence; takeover qualified | Wait for a genuine execution-recovery signal, then run the B02D V2 governing-response exact-head check and stop at its first real disposition |
 
 ## ENDPOINT LOG
 
@@ -33,6 +33,8 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 | EP-0008 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-1375-SHELL-THICKNESS | 90264bfe2a0986e20d41c17daef1e23290d6f17a | IN_PROGRESS | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0008.md |
 | EP-0009 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-1375-SHELL-THICKNESS | e6a8c0c722850328dac15ad0832cc80171abe58f | READY_FOR_OWNER_MERGE_DECISION | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0009.md |
 | EP-0010 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-1375-SHELL-THICKNESS | 2558d8d87af6aa8bb00152dcac1fd006dd3a2a6c | READY_FOR_OWNER_MERGE_DECISION | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0010.md |
+| EP-0011 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-POST-1513-CURRENT-STATE | 4cf98550a1558f5559c67285e4a4b6905bb13123 | IN_PROGRESS | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0011.md |
+| EP-0012 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-POST-1513-CURRENT-STATE | acb7789d8c01aac6e100ff462130a4a84a8bdb94 | READY_FOR_OWNER_MERGE_DECISION | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0012.md |
 | EP-LC1321-PD-0001 | LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME | LEG-A | 81c2e780a03d565345457b07609fe19d8d1421e4 | ACTIVE | agents/agentchain/LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME/EP-LC1321-PD-0001.md |
 | EP-LC1321-PD-0002 | LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME | LEG-A | ecbc03b71c14c91311722425ba1d18be88b44025 | SOURCE_COMPLETE_EXECUTION_NOT_RUN | agents/agentchain/LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME/EP-LC1321-PD-0002.md |
 | EP-LC1321-PD-0003 | LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME | LEG-A | b07d1f43aa97e0523c1ce8ebcff0177af2d5e6a1 | READY_FOR_NEXT_LEG | agents/agentchain/LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME/EP-LC1321-PD-0003.md |
@@ -60,3 +62,4 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 | EP-B02D-GR-0018 | LAFEA-B02D-V2-GOVERNING-RESPONSE | LEG-05-POST-1510-EXECUTION | faacdb891c515c7bc1a0b2672bce6ec2edc07836 | BLOCKED | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-B02D-GR-0018.md |
 | EP-B02D-GR-0019 | LAFEA-B02D-V2-GOVERNING-RESPONSE | LEG-05-POST-1510-EXECUTION | 8b666a86f380e1fcf311db7aa4e8fc99bc1fac8b | BLOCKED | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-B02D-GR-0019.md |
 | EP-B02D-GR-0020 | LAFEA-B02D-V2-GOVERNING-RESPONSE | LEG-05-POST-1510-EXECUTION | cbd2cda244561b7b003825510d5fa01fee96214a | BLOCKED | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-B02D-GR-0020.md |
+| EP-B02D-GR-0021 | LAFEA-B02D-V2-GOVERNING-RESPONSE | LEG-05-POST-1510-EXECUTION | ef0e0ad85fc8c75ce211ea3211a823633b097435 | BLOCKED | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-B02D-GR-0021.md |

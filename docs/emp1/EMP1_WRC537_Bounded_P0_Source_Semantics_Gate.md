@@ -31,7 +31,7 @@ Governing invariant:
 ```text
 #1385 BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED
 #1383 BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED
-#1375 BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED
+#1375 BLOCKED_PARTIAL_PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_QUALIFIED_ASSESSMENT_THICKNESS_BASIS_UNRESOLVED
 #1377 BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED
 #1379 BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED
 #1368 BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED
@@ -79,6 +79,16 @@ These statements do **not** qualify absolute shell-modulus `E` independence/canc
 
 Therefore #1379 remains a professional P0 blocker with bounded partial source authority. `blockerCount` remains 9.
 
+## #1375 status after PR #1513
+
+PR #1513 merged at `4cf98550a1558f5559c67285e4a4b6905bb13123` and advanced shell-thickness source custody beyond Table-5 symbol/role authority.
+
+Direct WRC text now supports the bounded source statements that spherical `T` identifies spherical host-shell thickness, cylindrical `T` identifies cylindrical host-shell wall thickness, the general membrane/bending relation uses host-shell `T`/`T^2`, and cylindrical `gamma = R_m/T` uses that host-shell thickness.
+
+These statements do **not** select the engineering assessment state of the wall. Nominal, design, minimum ordered, actual measured, corroded/remaining/assessment thickness; corrosion allowance; mill/forming tolerance and thinning; local measured thinning; juncture-versus-course wall; locally thickened/insert/reinforcement treatment; and assessment-state radius/thickness custody remain unresolved.
+
+Therefore #1375 remains a professional P0 blocker with bounded partial source authority. `blockerCount` remains 9.
+
 ## Source-custody distinction
 
 Controlled WRC source identity remains:
@@ -105,9 +115,9 @@ Aggregate:
 
 `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json`
 
-Current reconciled blob in PR #1509:
+Current reconciled blob in PR #1517:
 
-`c40d0d47daa8d29cdbbe1136fda5b55a800b75e2`
+`363facb0e2ad6ec1211676ae10d7a63c3aad3765`
 
 Data-driven checker:
 

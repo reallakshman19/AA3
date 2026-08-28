@@ -11,7 +11,7 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 
 | Chain | Mission | Latest endpoint | Endpoint file | PR | State | Authority domain | Next action |
 |---|---|---|---|---|---|---|---|
-| EMP1-1389-P0-SOURCE-CLOSURE | Reconcile #1389 professional P0/current-state after source-semantic increments without widening runtime/release authority | EP-0001 | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0001.md | WIP | IN_PROGRESS | EMP.1 WRC source/current-state governance | Apply five bounded post-#1499 current-state updates, recompute semantic hash, open draft PR without merge |
+| EMP1-1389-P0-SOURCE-CLOSURE | Reconcile #1389 professional P0/current-state after source-semantic increments without widening runtime/release authority | EP-0002 | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0002.md | #1502 | READY_FOR_OWNER_MERGE_DECISION | EMP.1 WRC source/current-state governance | Obtain explicit owner merge authorization; if granted, re-ground live merge gate before merge |
 
 ## ENDPOINT LOG
 
@@ -22,3 +22,4 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 | EP-0003 | ADV-ENG-DELIVERY-V2-PILOT | LEG-C | beccd785b1620e230b2f6556805fef7f6e72fc1d | READY_FOR_NEXT_LEG | agents/agentchain/ADV-ENG-DELIVERY-V2-PILOT/EP-0003.md |
 | EP-0004 | ADV-ENG-DELIVERY-V2-PILOT | LEG-C | 7b2e9add0894cb7e2be4794382f21d6bf82c941e | COMPLETE | agents/agentchain/ADV-ENG-DELIVERY-V2-PILOT/EP-0004.md |
 | EP-0001 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-POST-1499-STATE | 81c2e780a03d565345457b07609fe19d8d1421e4 | IN_PROGRESS | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0001.md |
+| EP-0002 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-POST-1499-STATE | b567bb8b6d97766a63a34f8d0adecd93a137328b | READY_FOR_OWNER_MERGE_DECISION | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0002.md |

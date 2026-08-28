@@ -3,14 +3,14 @@
   "issue": 1389,
   "releaseProfileId": "EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1",
   "reconciliationBasis": {
-    "basisKind": "CURRENT_MAIN_POST_PR1505_SOURCE_GOVERNANCE_RECONCILIATION",
-    "previousCurrentStateMergeSha": "9821f86cb10f65b8fd1251d28bc141b5faf9fbd9",
-    "sourceGovernancePr": 1505,
-    "sourceGovernanceMergeSha": "456083d581765105c6a0fefbca73808b1250db90",
-    "latestLiveMainObserved": "456083d581765105c6a0fefbca73808b1250db90",
-    "latestLiveMainTreeObserved": "63a89af72811a1c3b409b610fcdaf9783b7a29f1",
-    "laterMainDriftClassification": "NONE_AT_POST_PR1505_GROUNDING",
-    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1505_PLUS_V2_RELAY_GOVERNANCE",
+    "basisKind": "CURRENT_MAIN_POST_PR1513_SOURCE_GOVERNANCE_RECONCILIATION",
+    "previousCurrentStateMergeSha": "90264bfe2a0986e20d41c17daef1e23290d6f17a",
+    "sourceGovernancePr": 1513,
+    "sourceGovernanceMergeSha": "4cf98550a1558f5559c67285e4a4b6905bb13123",
+    "latestLiveMainObserved": "382fac125f775efda2bbfe014abb025185ce3a2a",
+    "latestLiveMainTreeObserved": "21a7ca64f7776c7e1e536cf093a8170188e7733f",
+    "laterMainDriftClassification": "POST_PR1513_LFEA_PRODUCTION_DRIFT_AUTHORITY_DISJOINT_FROM_EMP1_CURRENT_STATE",
+    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1513_PLUS_DISJOINT_LFEA_MAIN_DRIFT",
     "artifactMayNotClaimContainingCommitAsBasis": true
   },
   "frozenReadinessContract": {
@@ -21,318 +21,71 @@
     "historicalState": "BLOCKED_FAIL_CLOSED"
   },
   "phaseDelivery": [
-    {
-      "phase": "PR-A",
-      "pr": 1394,
-      "state": "MERGED",
-      "role": "RELEASE_DEFINITION_SOURCE_CUSTODY_BENCHMARK_FREEZE"
-    },
-    {
-      "phase": "PR-B",
-      "pr": 1398,
-      "state": "MERGED",
-      "role": "P0_SOURCE_SEMANTICS_RECONCILIATION_BLOCKED"
-    },
-    {
-      "phase": "PR-C",
-      "pr": 1400,
-      "state": "MERGED",
-      "role": "CAUX_REFERENCE_FREEZE_DIRECT_PDF_PENDING"
-    },
-    {
-      "phase": "PR-D",
-      "pr": 1401,
-      "state": "MERGED_OWNER_WORKFLOW_SKIP",
-      "mergeSha": "a59547c8554b6244b2ea94aedd4d59fa0fb15d1f",
-      "role": "EXACT_HEAD_EVIDENCE_CARRIER_NO_NUMERICAL_PASS"
-    },
-    {
-      "phase": "PR-E",
-      "pr": 1408,
-      "state": "MERGED_OWNER_OVERRIDE_BOUNDED_AUTHORIZATION",
-      "mergeSha": "14c648d485cf386f28c6817a068b7eb5da1f7689",
-      "role": "EXACT_12_BOUNDED_AUTHORIZATION_MUTATIONS"
-    },
-    {
-      "phase": "PR-F",
-      "pr": 1409,
-      "state": "MERGED_NON_AUTHORIZING_DISPOSITION",
-      "mergeSha": "4c7b5c7e4d4ee1a2144d1764fd15e93813719a19",
-      "role": "POST_PROMOTION_SOURCE_AUDIT_NO_NUMERICAL_PASS"
-    },
-    {
-      "phase": "PR-G",
-      "pr": 1403,
-      "state": "MERGED",
-      "role": "PROFESSIONAL_UI_TRACE_DISCLOSURE"
-    },
-    {
-      "phase": "PR-H",
-      "pr": 1404,
-      "state": "MERGED",
-      "role": "FAIL_CLOSED_RELEASE_EVIDENCE_HARNESS"
-    }
+    {"phase":"PR-A","pr":1394,"state":"MERGED","role":"RELEASE_DEFINITION_SOURCE_CUSTODY_BENCHMARK_FREEZE"},
+    {"phase":"PR-B","pr":1398,"state":"MERGED","role":"P0_SOURCE_SEMANTICS_RECONCILIATION_BLOCKED"},
+    {"phase":"PR-C","pr":1400,"state":"MERGED","role":"CAUX_REFERENCE_FREEZE_DIRECT_PDF_PENDING"},
+    {"phase":"PR-D","pr":1401,"state":"MERGED_OWNER_WORKFLOW_SKIP","mergeSha":"a59547c8554b6244b2ea94aedd4d59fa0fb15d1f","role":"EXACT_HEAD_EVIDENCE_CARRIER_NO_NUMERICAL_PASS"},
+    {"phase":"PR-E","pr":1408,"state":"MERGED_OWNER_OVERRIDE_BOUNDED_AUTHORIZATION","mergeSha":"14c648d485cf386f28c6817a068b7eb5da1f7689","role":"EXACT_12_BOUNDED_AUTHORIZATION_MUTATIONS"},
+    {"phase":"PR-F","pr":1409,"state":"MERGED_NON_AUTHORIZING_DISPOSITION","mergeSha":"4c7b5c7e4d4ee1a2144d1764fd15e93813719a19","role":"POST_PROMOTION_SOURCE_AUDIT_NO_NUMERICAL_PASS"},
+    {"phase":"PR-G","pr":1403,"state":"MERGED","role":"PROFESSIONAL_UI_TRACE_DISCLOSURE"},
+    {"phase":"PR-H","pr":1404,"state":"MERGED","role":"FAIL_CLOSED_RELEASE_EVIDENCE_HARNESS"}
   ],
   "postSequenceSourceGovernance": [
-    {
-      "pr": 1412,
-      "issues": [
-        1385
-      ],
-      "state": "MERGED",
-      "role": "PARTIAL_TABLE5_SIGN_AUTHORITY_RECONCILIATION"
-    },
-    {
-      "pr": 1414,
-      "issues": [
-        1383
-      ],
-      "state": "MERGED",
-      "role": "PARTIAL_TABLE5_STRESS_INTENSITY_AUTHORITY_RECONCILIATION"
-    },
-    {
-      "pr": 1417,
-      "issues": [
-        1379
-      ],
-      "state": "MERGED",
-      "role": "MATERIAL_AND_SHELL_THEORY_AUTHORITY_BOUNDARY"
-    },
-    {
-      "pr": 1423,
-      "issues": [
-        1381
-      ],
-      "state": "MERGED",
-      "role": "WRC_TO_CODE_ACCEPTANCE_AUTHORITY_BOUNDARY"
-    },
-    {
-      "pr": 1425,
-      "issues": [
-        1383,
-        1385
-      ],
-      "state": "MERGED",
-      "role": "STRESS_SEMANTICS_AGGREGATE_RECONCILIATION"
-    },
-    {
-      "pr": 1426,
-      "issues": [
-        1375
-      ],
-      "state": "MERGED",
-      "role": "SHELL_THICKNESS_PHYSICAL_BASIS_BOUNDARY"
-    },
-    {
-      "pr": 1418,
-      "issues": [
-        1368,
-        1370,
-        1373
-      ],
-      "state": "MERGED",
-      "role": "PHYSICAL_APPLICABILITY_BOUNDARIES"
-    },
-    {
-      "pr": 1415,
-      "issues": [
-        1377
-      ],
-      "state": "MERGED",
-      "mergeSha": "19b762e1f9512284da961e5816a28c10432080bb",
-      "role": "RETAINED_TABLE5_MEAN_RADIUS_PARTIAL_RECONCILIATION_CURRENT_MAIN_AUTHORITY"
-    },
-    {
-      "pr": 1427,
-      "issues": [
-        1389
-      ],
-      "state": "MERGED",
-      "head": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
-      "mergeSha": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
-      "role": "AUTHORIZED_ROUTE_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION_CURRENT_MAIN"
-    },
-    {
-      "pr": 1497,
-      "issues": [
-        1377
-      ],
-      "state": "MERGED",
-      "mergeSha": "e6c76ac02e6ed2052e9c87e0691bb728f2031f5b",
-      "role": "PRIMARY_MID_RADIUS_SEMANTICS_PARTIAL_RECONCILIATION_ASSESSMENT_GEOMETRY_BLOCKED"
-    },
-    {
-      "pr": 1499,
-      "issues": [
-        1370
-      ],
-      "state": "MERGED",
-      "mergeSha": "33ea0762841d9981123df8b910fb7a12c17f2836",
-      "role": "PRIMARY_STANDARD_CYLINDRICAL_ROUND_ATTACHMENT_CLASS_PARTIAL_RECONCILIATION_NONSTANDARD_BOUNDARIES_BLOCKED"
-    },
-    {
-      "pr": 1505,
-      "issues": [
-        1379
-      ],
-      "state": "MERGED",
-      "mergeSha": "456083d581765105c6a0fefbca73808b1250db90",
-      "role": "PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_PARTIAL_RECONCILIATION_MATERIAL_DETAILS_BLOCKED"
-    }
+    {"pr":1412,"issues":[1385],"state":"MERGED","role":"PARTIAL_TABLE5_SIGN_AUTHORITY_RECONCILIATION"},
+    {"pr":1414,"issues":[1383],"state":"MERGED","role":"PARTIAL_TABLE5_STRESS_INTENSITY_AUTHORITY_RECONCILIATION"},
+    {"pr":1417,"issues":[1379],"state":"MERGED","role":"MATERIAL_AND_SHELL_THEORY_AUTHORITY_BOUNDARY"},
+    {"pr":1423,"issues":[1381],"state":"MERGED","role":"WRC_TO_CODE_ACCEPTANCE_AUTHORITY_BOUNDARY"},
+    {"pr":1425,"issues":[1383,1385],"state":"MERGED","role":"STRESS_SEMANTICS_AGGREGATE_RECONCILIATION"},
+    {"pr":1426,"issues":[1375],"state":"MERGED","role":"SHELL_THICKNESS_PHYSICAL_BASIS_BOUNDARY"},
+    {"pr":1418,"issues":[1368,1370,1373],"state":"MERGED","role":"PHYSICAL_APPLICABILITY_BOUNDARIES"},
+    {"pr":1415,"issues":[1377],"state":"MERGED","mergeSha":"19b762e1f9512284da961e5816a28c10432080bb","role":"RETAINED_TABLE5_MEAN_RADIUS_PARTIAL_RECONCILIATION_CURRENT_MAIN_AUTHORITY"},
+    {"pr":1427,"issues":[1389],"state":"MERGED","head":"b648e174b80b49ceed76036d590b89ad4fe08c2e","mergeSha":"b648e174b80b49ceed76036d590b89ad4fe08c2e","role":"AUTHORIZED_ROUTE_P0_AGGREGATE_CURRENT_STATE_RECONCILIATION_CURRENT_MAIN"},
+    {"pr":1497,"issues":[1377],"state":"MERGED","mergeSha":"e6c76ac02e6ed2052e9c87e0691bb728f2031f5b","role":"PRIMARY_MID_RADIUS_SEMANTICS_PARTIAL_RECONCILIATION_ASSESSMENT_GEOMETRY_BLOCKED"},
+    {"pr":1499,"issues":[1370],"state":"MERGED","mergeSha":"33ea0762841d9981123df8b910fb7a12c17f2836","role":"PRIMARY_STANDARD_CYLINDRICAL_ROUND_ATTACHMENT_CLASS_PARTIAL_RECONCILIATION_NONSTANDARD_BOUNDARIES_BLOCKED"},
+    {"pr":1505,"issues":[1379],"state":"MERGED","mergeSha":"456083d581765105c6a0fefbca73808b1250db90","role":"PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_PARTIAL_RECONCILIATION_MATERIAL_DETAILS_BLOCKED"},
+    {"pr":1513,"issues":[1375],"state":"MERGED","mergeSha":"4cf98550a1558f5559c67285e4a4b6905bb13123","role":"PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_PARTIAL_RECONCILIATION_ASSESSMENT_THICKNESS_BASIS_BLOCKED"}
   ],
-  "sequenceStatus": {
-    "recommendedPrAThroughHDelivered": true,
-    "postSequenceSourceGovernanceReconciledInThisCandidate": true,
-    "definitionOfDoneComplete": false,
-    "professionalReleaseReady": false,
-    "issueMayBeClosed": false
-  },
+  "sequenceStatus": {"recommendedPrAThroughHDelivered":true,"postSequenceSourceGovernanceReconciledInThisCandidate":true,"definitionOfDoneComplete":false,"professionalReleaseReady":false,"issueMayBeClosed":false},
   "sourceState": {
-    "wrcSourceCustody": "PASS_SOURCE_CUSTODY",
-    "wrcSourceSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
-    "cauxSourceCustody": "PASS_SOURCE_CUSTODY",
-    "cauxSourceSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
-    "cauxRetainedTranscription": {
-      "path": "docs/emp1/CAUx_2017_WRC01f_pages_24-31.md",
-      "gitBlobSha1": "ce0ee91cd996feee162d4dd90ce1af4063e06775",
-      "inspected": true,
-      "isDirectPdfObservation": false
-    },
-    "p0SourceSemantics": "BLOCKED_P0_SOURCE_SEMANTICS",
-    "p0BlockerCount": 9,
-    "p0Aggregate": {
-      "path": "validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json",
-      "originPr": 1427,
-      "originMergeSha": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
-      "currentReconciliationPr": 1509,
-      "basisMainSha": "456083d581765105c6a0fefbca73808b1250db90",
-      "gitBlobSha1": "c40d0d47daa8d29cdbbe1136fda5b55a800b75e2"
-    },
-    "p0GateStatuses": [
-      {
-        "issue": 1385,
-        "currentStatus": "BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED"
-      },
-      {
-        "issue": 1383,
-        "currentStatus": "BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED"
-      },
-      {
-        "issue": 1375,
-        "currentStatus": "BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED"
-      },
-      {
-        "issue": 1377,
-        "currentStatus": "BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED"
-      },
-      {
-        "issue": 1379,
-        "currentStatus": "BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED"
-      },
-      {
-        "issue": 1368,
-        "currentStatus": "BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED"
-      },
-      {
-        "issue": 1370,
-        "currentStatus": "BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED"
-      },
-      {
-        "issue": 1373,
-        "currentStatus": "BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED"
-      },
-      {
-        "issue": 1381,
-        "currentStatus": "BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED"
-      }
+    "wrcSourceCustody":"PASS_SOURCE_CUSTODY",
+    "wrcSourceSha256":"698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
+    "cauxSourceCustody":"PASS_SOURCE_CUSTODY",
+    "cauxSourceSha256":"c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "cauxRetainedTranscription":{"path":"docs/emp1/CAUx_2017_WRC01f_pages_24-31.md","gitBlobSha1":"ce0ee91cd996feee162d4dd90ce1af4063e06775","inspected":true,"isDirectPdfObservation":false},
+    "p0SourceSemantics":"BLOCKED_P0_SOURCE_SEMANTICS",
+    "p0BlockerCount":9,
+    "p0Aggregate":{"path":"validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json","originPr":1427,"originMergeSha":"b648e174b80b49ceed76036d590b89ad4fe08c2e","currentReconciliationPr":1517,"basisMainSha":"382fac125f775efda2bbfe014abb025185ce3a2a","gitBlobSha1":"363facb0e2ad6ec1211676ae10d7a63c3aad3765"},
+    "p0GateStatuses":[
+      {"issue":1385,"currentStatus":"BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED"},
+      {"issue":1383,"currentStatus":"BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED"},
+      {"issue":1375,"currentStatus":"BLOCKED_PARTIAL_PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_QUALIFIED_ASSESSMENT_THICKNESS_BASIS_UNRESOLVED"},
+      {"issue":1377,"currentStatus":"BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED"},
+      {"issue":1379,"currentStatus":"BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED"},
+      {"issue":1368,"currentStatus":"BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED"},
+      {"issue":1370,"currentStatus":"BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED"},
+      {"issue":1373,"currentStatus":"BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED"},
+      {"issue":1381,"currentStatus":"BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED"}
     ],
-    "directPrimaryWrcPageObservationAvailable": false,
-    "cauxDirectPdfPageReobservation": "NOT_RUN_EXECUTION_ENVIRONMENT",
-    "cauxFinalQualification": "BLOCKED_FINAL_CAUX_SOURCE_QUALIFICATION_DIRECT_PDF_REOBSERVATION_NOT_RUN_REFERENCE_FREEZE_COMPLETE"
+    "directPrimaryWrcPageObservationAvailable":false,
+    "cauxDirectPdfPageReobservation":"NOT_RUN_EXECUTION_ENVIRONMENT",
+    "cauxFinalQualification":"BLOCKED_FINAL_CAUX_SOURCE_QUALIFICATION_DIRECT_PDF_REOBSERVATION_NOT_RUN_REFERENCE_FREEZE_COMPLETE"
   },
   "evidenceState": {
-    "standardPreAuthorization01To10": "NOT_GENERATED",
-    "standardPostPromotion11To12": "NOT_GENERATED",
-    "prDNumericalQualification": "NOT_RUN_NOT_CLAIMED",
-    "postPromotionNumericalQualification": "NOT_RUN_NOT_CLAIMED",
-    "successorExecutionIssue": 1434,
-    "ownerOverrideAuthorizationRecord": {
-      "path": "validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json",
-      "semanticHash": "4a7bec7c84dd03ec547ae2ee7157efc91edef70f9662901d40d616e8cb8d0566",
-      "isNumericalPassSubstitute": false
-    },
-    "ownerOverridePostPromotionDisposition": {
-      "path": "validation/emp1/wrc537-2013/gamma5-zero-dp-post-promotion-owner-override-disposition-v1.json",
-      "semanticHash": "910ee8f4f334c57451b1b6f2d6f7f4b5f64b70ea7241c242553bb261127a8d4c",
-      "isNumericalQualification": false
-    }
+    "standardPreAuthorization01To10":"NOT_GENERATED",
+    "standardPostPromotion11To12":"NOT_GENERATED",
+    "prDNumericalQualification":"NOT_RUN_NOT_CLAIMED",
+    "postPromotionNumericalQualification":"NOT_RUN_NOT_CLAIMED",
+    "successorExecutionIssue":1434,
+    "ownerOverrideAuthorizationRecord":{"path":"validation/emp1/wrc537-2013/gamma5-zero-dp-route-authorization-v1.json","semanticHash":"4a7bec7c84dd03ec547ae2ee7157efc91edef70f9662901d40d616e8cb8d0566","isNumericalPassSubstitute":false},
+    "ownerOverridePostPromotionDisposition":{"path":"validation/emp1/wrc537-2013/gamma5-zero-dp-post-promotion-owner-override-disposition-v1.json","semanticHash":"910ee8f4f334c57451b1b6f2d6f7f4b5f64b70ea7241c242553bb261127a8d4c","isNumericalQualification":false}
   },
-  "runtimeAuthority": {
-    "boundedProductionRouteAuthorized": true,
-    "registryRegistered": true,
-    "boundedEngineeringUseAuthorized": true,
-    "globalEmp1CRouteAuthority": false,
-    "codeComplianceAuthorized": false,
-    "releaseQualified": false,
-    "deploymentAuthorized": false
-  },
-  "boundedScope": {
-    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP",
-    "shellFamily": "CYLINDRICAL",
-    "attachmentShape": "ROUND",
-    "variant": "ORIGINAL",
-    "gamma": 5,
-    "betaMinimum": 0.05,
-    "betaMaximum": 0.5,
-    "differentialPressure": 0,
-    "Kn": 1,
-    "Kb": 1,
-    "hostShellStressOnly": true,
-    "evaluatedStressLocations": [
-      "Au",
-      "Al",
-      "Bu",
-      "Bl",
-      "Cu",
-      "Cl",
-      "Du",
-      "Dl"
-    ],
-    "continuousJunctureSearchPerformed": false,
-    "globalAbsoluteMaximumClaim": false
-  },
-  "executionState": {
-    "githubHostedExecution": "NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE",
-    "issue54": "OPEN_EXECUTION_DEPENDENCY",
-    "productionBuild": "NOT_RUN",
-    "chromium": "NOT_RUN",
-    "releaseReplay": "NOT_RUN",
-    "deploymentEvidence": "NOT_RUN"
-  },
-  "currentBlockers": [
-    "P0_SOURCE_SEMANTICS_NOT_READY",
-    "CAUX_DIRECT_PDF_REOBSERVATION_NOT_RUN",
-    "PR_D_EVIDENCE_01_TO_10_NOT_GENERATED",
-    "PR_F_EVIDENCE_11_TO_12_NOT_GENERATED",
-    "ISSUE_54_PRE_STEP_EXECUTION_BLOCKER",
-    "PRODUCTION_BUILD_NOT_RUN",
-    "CHROMIUM_NOT_RUN",
-    "RELEASE_REPLAY_NOT_RUN",
-    "DEPLOYMENT_EVIDENCE_NOT_RUN"
-  ],
-  "authorityBoundary": {
-    "boundedRouteAuthorizationIsProfessionalRelease": false,
-    "ownerWorkflowSkipIsNumericalQualification": false,
-    "ownerOverrideRecordsMaySubstituteForStandardEvidence": false,
-    "codeComplianceMayBeInferred": false,
-    "globalEmp1CAuthorityMayBeInferred": false,
-    "releaseMayProceedWithCurrentBlockers": false,
-    "frozenReadinessSnapshotMayBeRewrittenAsCurrent": false,
-    "postSequenceSourceGovernanceMayCloseBlockedPrimarySourceSemantics": false,
-    "retainedCauxTranscriptionMayBeCalledDirectPdfObservation": false
-  },
-  "releaseReady": false,
-  "state": "BLOCKED_FAIL_CLOSED_POST_SEQUENCE",
-  "currentStateSemanticHash": "f0405d1ab98f983d9d5b78e4e53da3d9f27ce7fe7239cd3fceadcfc3c3358a86",
-  "status": "POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED"
+  "runtimeAuthority":{"boundedProductionRouteAuthorized":true,"registryRegistered":true,"boundedEngineeringUseAuthorized":true,"globalEmp1CRouteAuthority":false,"codeComplianceAuthorized":false,"releaseQualified":false,"deploymentAuthorized":false},
+  "boundedScope":{"routeId":"EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP","shellFamily":"CYLINDRICAL","attachmentShape":"ROUND","variant":"ORIGINAL","gamma":5,"betaMinimum":0.05,"betaMaximum":0.5,"differentialPressure":0,"Kn":1,"Kb":1,"hostShellStressOnly":true,"evaluatedStressLocations":["Au","Al","Bu","Bl","Cu","Cl","Du","Dl"],"continuousJunctureSearchPerformed":false,"globalAbsoluteMaximumClaim":false},
+  "executionState":{"githubHostedExecution":"NOT_RUN_EXECUTION_ENVIRONMENT_PRE_STEP_INFRASTRUCTURE_FAILURE","issue54":"OPEN_EXECUTION_DEPENDENCY","productionBuild":"NOT_RUN","chromium":"NOT_RUN","releaseReplay":"NOT_RUN","deploymentEvidence":"NOT_RUN"},
+  "currentBlockers":["P0_SOURCE_SEMANTICS_NOT_READY","CAUX_DIRECT_PDF_REOBSERVATION_NOT_RUN","PR_D_EVIDENCE_01_TO_10_NOT_GENERATED","PR_F_EVIDENCE_11_TO_12_NOT_GENERATED","ISSUE_54_PRE_STEP_EXECUTION_BLOCKER","PRODUCTION_BUILD_NOT_RUN","CHROMIUM_NOT_RUN","RELEASE_REPLAY_NOT_RUN","DEPLOYMENT_EVIDENCE_NOT_RUN"],
+  "authorityBoundary":{"boundedRouteAuthorizationIsProfessionalRelease":false,"ownerWorkflowSkipIsNumericalQualification":false,"ownerOverrideRecordsMaySubstituteForStandardEvidence":false,"codeComplianceMayBeInferred":false,"globalEmp1CAuthorityMayBeInferred":false,"releaseMayProceedWithCurrentBlockers":false,"frozenReadinessSnapshotMayBeRewrittenAsCurrent":false,"postSequenceSourceGovernanceMayCloseBlockedPrimarySourceSemantics":false,"retainedCauxTranscriptionMayBeCalledDirectPdfObservation":false},
+  "releaseReady":false,
+  "state":"BLOCKED_FAIL_CLOSED_POST_SEQUENCE",
+  "currentStateSemanticHash":"f1348704a9202e3bcd3e03a31e0ea58e16e1a5bb66c71a9f641c47d19d43e25e",
+  "status":"POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED"
 }

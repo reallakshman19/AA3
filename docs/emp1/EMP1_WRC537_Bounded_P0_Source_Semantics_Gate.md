@@ -33,7 +33,7 @@ Governing invariant:
 #1383 BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED
 #1375 BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED
 #1377 BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED
-#1379 BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED
+#1379 BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED
 #1368 BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED
 #1370 BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED
 #1373 BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED
@@ -66,6 +66,19 @@ This does **not** authorize:
 
 Therefore #1370 remains a professional P0 blocker even though its standard cylindrical round host-shell class is now source-qualified.
 
+## #1379 status after PR #1505
+
+PR #1505 merged at `456083d581765105c6a0fefbca73808b1250db90` and advanced the material/shell-theory source boundary without adding production material inputs or constitutive mechanics.
+
+The source now directly supports two bounded theory statements:
+
+- cylindrical theoretical solutions used **flexible loading surfaces** as a simplifying assumption;
+- **large-deflection theory and other nonlinear effects** were identified as later extension work rather than already-qualified original-method authority.
+
+These statements do **not** qualify absolute shell-modulus `E` independence/cancellation, Poisson-ratio treatment, homogeneous/isotropic constitutive assumptions, host/attachment material equivalence, temperature-dependent modulus, plasticity, creep, composites, anisotropy/orthotropy, lined/clad shells or material discontinuities.
+
+Therefore #1379 remains a professional P0 blocker with bounded partial source authority. `blockerCount` remains 9.
+
 ## Source-custody distinction
 
 Controlled WRC source identity remains:
@@ -92,9 +105,9 @@ Aggregate:
 
 `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json`
 
-Current reconciled blob in PR #1502:
+Current reconciled blob in PR #1509:
 
-`5247c9b3201c9370a46ea8dc9881d71cc7598eb2`
+`c40d0d47daa8d29cdbbe1136fda5b55a800b75e2`
 
 Data-driven checker:
 

@@ -36,7 +36,7 @@ Governing invariant:
 #1379 BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED
 #1368 BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED
 #1370 BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED
-#1373 BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED
+#1373 BLOCKED_PARTIAL_PRIMARY_STRESS_ATTENUATION_AND_IDEALIZED_CASE_LIMITATION_QUALIFIED_NEIGHBOR_SPACING_AND_INTERACTION_AUTHORITY_UNRESOLVED
 #1381 BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED
 ```
 
@@ -89,6 +89,21 @@ These statements do **not** select the engineering assessment state of the wall.
 
 Therefore #1375 remains a professional P0 blocker with bounded partial source authority. `blockerCount` remains 9.
 
+## #1373 status after PR #1518
+
+PR #1518 merged at `8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d` and advanced nearby-attachment/local-discontinuity source authority without adding any interaction mechanics or production geometry evidence.
+
+Directly observed WRC text supports only two bounded statements:
+
+- PVRC testing is reported to show rapid attenuation of shell stresses away from the attachment-to-shell juncture, with the maximum usually at the juncture;
+- WRC §4.5 directs designers considering relatively large attachments or substantially non-ideal cases to Appendix A.3/original references for applicability limitations.
+
+Those statements are qualitative applicability evidence only. They do **not** define any quantitative neighbor spacing, distance normalization or inclusivity; do not prove independent nearby attachments are non-interacting; do not authorize linear superposition of overlapping single-attachment WRC fields; and do not provide an interaction correction or automatic FEA/alternative-method trigger.
+
+Existing §4.5 `l >= Rm` and nearest-end `>= 0.5*Rm` rules remain separate cylinder/end-distance rules and are not neighbor-spacing authority.
+
+Therefore #1373 remains a professional P0 blocker with bounded partial source authority. `blockerCount` remains 9.
+
 ## Source-custody distinction
 
 Controlled WRC source identity remains:
@@ -115,9 +130,9 @@ Aggregate:
 
 `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json`
 
-Current reconciled blob in PR #1517:
+Current reconciled blob in PR #1520:
 
-`363facb0e2ad6ec1211676ae10d7a63c3aad3765`
+`8ddc0821e4e50572354e8e49fd6f317749d466e6`
 
 Data-driven checker:
 

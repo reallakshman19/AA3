@@ -11,7 +11,7 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 
 | Chain | Mission | Latest endpoint | Endpoint file | PR | State | Authority domain | Next action |
 |---|---|---|---|---|---|---|---|
-| EMP1-1389-P0-SOURCE-CLOSURE | Reconcile #1389 professional P0/current-state after source-semantic increments without widening runtime/release authority | EP-0002 | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0002.md | #1502 | READY_FOR_OWNER_MERGE_DECISION | EMP.1 WRC source/current-state governance | Obtain explicit owner merge authorization; if granted, re-ground live merge gate before merge |
+| EMP1-1389-P0-SOURCE-CLOSURE | Close #1389 professional P0 source gates incrementally without widening bounded runtime/release authority | EP-0003 | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0003.md | WIP | IN_PROGRESS | EMP.1 WRC source/current-state governance | Apply bounded three-file #1379 material/shell-theory source reconciliation; do not touch aggregate/current-state in same PR |
 
 ## ENDPOINT LOG
 
@@ -23,3 +23,4 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 | EP-0004 | ADV-ENG-DELIVERY-V2-PILOT | LEG-C | 7b2e9add0894cb7e2be4794382f21d6bf82c941e | COMPLETE | agents/agentchain/ADV-ENG-DELIVERY-V2-PILOT/EP-0004.md |
 | EP-0001 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-POST-1499-STATE | 81c2e780a03d565345457b07609fe19d8d1421e4 | IN_PROGRESS | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0001.md |
 | EP-0002 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-POST-1499-STATE | b567bb8b6d97766a63a34f8d0adecd93a137328b | READY_FOR_OWNER_MERGE_DECISION | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0002.md |
+| EP-0003 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-1379-MATERIAL-THEORY | 9821f86cb10f65b8fd1251d28bc141b5faf9fbd9 | IN_PROGRESS | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0003.md |

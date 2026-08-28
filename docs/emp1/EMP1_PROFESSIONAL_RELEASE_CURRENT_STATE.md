@@ -15,7 +15,7 @@ live main tree                               = 21a7ca64f7776c7e1e536cf093a817018
 later main drift                             = LFEA production work, authority-disjoint from EMP.1 current-state files
 current reconciliation PR                    = #1517
 P0 aggregate blob                            = 363facb0e2ad6ec1211676ae10d7a63c3aad3765
-current-state JSON blob                      = 68673d7b12dc779dff542ff25c828785cf9141ec
+current-state JSON blob                      = d9c76530ee0f732016cd0d6bd7cc75ef9a8eac56
 current-state checker blob                   = 0fc82e3cd40ca37fb7cb18f58112afe91da1bea1
 current-state semantic hash                  = f1348704a9202e3bcd3e03a31e0ea58e16e1a5bb66c71a9f641c47d19d43e25e
 ```

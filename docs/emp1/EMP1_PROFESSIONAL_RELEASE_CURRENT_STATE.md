@@ -13,10 +13,10 @@ PR1499 merge                                 = 33ea0762841d9981123df8b910fb7a12c
 live main observed for this reconciliation   = 81c2e780a03d565345457b07609fe19d8d1421e4
 live main tree                               = eeddd842802098c7a713b0ddffa1e89ba070daab
 current reconciliation PR                    = #1502
-P0 aggregate blob                            = 6d7fbe79ced368ea970d160e3c6756916bbb55c6
-current-state JSON blob                      = 58b647ceac938daa39e896999c672ebd2c686116
+P0 aggregate blob                            = 5247c9b3201c9370a46ea8dc9881d71cc7598eb2
+current-state JSON blob                      = 7e3dd8a86b5ccf838d57f3b7024c0203e2097b54
 current-state checker blob                   = ba6dca7c9bdcaccabb359c729e405f492cbc5c3d
-current-state semantic hash                  = ccd276178d6219e883ec2ff0e5c1a1ea2abe55756c8db0d3b3e2f2aed1d286df
+current-state semantic hash                  = 54c8d4f33470f16e617ac7b5689c9b9f6428e68971a4a2ed6ee735c7e61a80f2
 ```
 
 The commits between PR #1499 and the live reconciliation basis are repository relay/governance adoption/closure only. They do not change EMP.1/WRC source semantics, route/registry mechanics, P0/release authority, benchmarks/oracles, or evidence 01-12.
@@ -65,7 +65,7 @@ Therefore #1370 remains a P0 blocker.
 ```text
 state        = BLOCKED_P0_SOURCE_SEMANTICS
 blockerCount = 9
-aggregate    = 6d7fbe79ced368ea970d160e3c6756916bbb55c6
+aggregate    = 5247c9b3201c9370a46ea8dc9881d71cc7598eb2
 ```
 
 Current gate statuses:

@@ -11,7 +11,7 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 
 | Chain | Mission | Latest endpoint | Endpoint file | PR | State | Authority domain | Next action |
 |---|---|---|---|---|---|---|---|
-| LAFEA-B02D-V2-GOVERNING-RESPONSE | Recover and continue frozen B02D-V2 governing T6/L4 response authority after merged #1490 | EP-0005 | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-0005.md | #1503 | QUALIFICATION_REQUIRED | LAFEA.3 B02D-V2 governing-response evidence; engineering-critical mutation READ_ONLY | Independent verifier evaluates QS-B02D-V2-0001 candidate answer and writes separate verdict artifact |
+| LAFEA-B02D-V2-GOVERNING-RESPONSE | Recover and continue frozen B02D-V2 governing T6/L4 response authority after merged #1490 | EP-0006 | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-0006.md | #1503 | BLOCKED | LAFEA.3 B02D-V2 governing-response evidence; takeover WRITE_ALLOWED; engineering RCA blocked until exact-head disposition | Obtain exact-current executable checkout/runner and run `node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs` |
 
 ## ENDPOINT LOG
 
@@ -22,3 +22,4 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 | EP-0003 | ADV-ENG-DELIVERY-V2-PILOT | LEG-C | beccd785b1620e230b2f6556805fef7f6e72fc1d | READY_FOR_NEXT_LEG | agents/agentchain/ADV-ENG-DELIVERY-V2-PILOT/EP-0003.md |
 | EP-0004 | ADV-ENG-DELIVERY-V2-PILOT | LEG-C | 7b2e9add0894cb7e2be4794382f21d6bf82c941e | COMPLETE | agents/agentchain/ADV-ENG-DELIVERY-V2-PILOT/EP-0004.md |
 | EP-0005 | LAFEA-B02D-V2-GOVERNING-RESPONSE | LEG-01-RECOVERY | ef08018e72b379c6908c494a59ddbe6afb8b332a | QUALIFICATION_REQUIRED | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-0005.md |
+| EP-0006 | LAFEA-B02D-V2-GOVERNING-RESPONSE | LEG-01-RECOVERY | 8eeacf8b01e9146e0b3a2c001b8adf1c006923ea | BLOCKED | agents/agentchain/LAFEA-B02D-V2-GOVERNING-RESPONSE/EP-0006.md |

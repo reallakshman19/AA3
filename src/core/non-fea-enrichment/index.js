@@ -197,7 +197,7 @@ export function createNonFeaEnrichmentSidecar(input) {
 }
 
 export function migrateFirstCutEnrichment(input) {
-  if (!isRecord(input)) throw new TypeError('Non-FEA enrichment migration input must be an object.');
+  if (!isRecord(input)) throw new TypeError('First Cut migration input must be an object.');
   const sourceSemanticHash = requiredText(input.sourceSemanticHash, 'Source semantic hash');
   const legacyRows = [
     ...(Array.isArray(input.masterData?.records)

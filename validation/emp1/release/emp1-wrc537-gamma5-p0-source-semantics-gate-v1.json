@@ -37,7 +37,7 @@
       "category": "WRC_GEOMETRY_CUSTODY",
       "artifact": "validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json",
       "authorityDocument": "docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md",
-      "currentStatus": "BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED",
+      "currentStatus": "BLOCKED_PARTIAL_PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_QUALIFIED_ASSESSMENT_THICKNESS_BASIS_UNRESOLVED",
       "profileAuthorityKey": "thicknessBasis"
     },
     {

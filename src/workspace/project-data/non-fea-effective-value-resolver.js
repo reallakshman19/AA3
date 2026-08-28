@@ -135,6 +135,15 @@ export function createNonFeaEffectiveValueCandidatesFromCoreResolution(
     resolutionRowValue.candidates.forEach((candidate, index) => {
       if (!isRecord(candidate)) throw new TypeError('CORE resolution candidate must be an object.');
       const coreFingerprint = semanticHash(candidate);
+      const productDefaultEvidence = candidate.authority === PRODUCT_DEFAULT_AUTHORITY
+        && isRecord(candidate.evidence)
+        ? {
+          defaultId: candidate.evidence.defaultId,
+          defaultSemanticHash: candidate.evidence.defaultSemanticHash,
+          productDefaultProfileSemanticHash:
+            candidate.evidence.productDefaultProfileSemanticHash,
+        }
+        : {};
       rows.push(createNonFeaEffectiveValueCandidate({
         candidateId: `core:${coreFingerprint}:${index}`,
         targetKind: candidate.targetKind,
@@ -147,6 +156,7 @@ export function createNonFeaEffectiveValueCandidatesFromCoreResolution(
           || stringValue(candidate.recordId)
           || (sourceModelSemanticHash ? `source-model:${sourceModelSemanticHash}` : 'CORE_RESOLUTION'),
         evidence: {
+          ...productDefaultEvidence,
           source: 'CORE Non-FEA field-resolution ledger',
           coreResolutionKey: resolutionRowValue.resolutionKey,
           coreResolutionStatus: resolutionRowValue.status,

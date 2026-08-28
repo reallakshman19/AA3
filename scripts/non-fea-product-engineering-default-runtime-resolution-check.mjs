@@ -36,24 +36,36 @@ assert.equal(
 );
 assert.equal(
   LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1.defaults.length,
-  1,
-  'The shipped engineering Product-default profile must contain only the governed elastic-modulus bridge in this slice.',
+  2,
+  'The shipped engineering Product-default profile must contain only the governed elastic/thermal bridge rows in this slice.',
 );
 
-const shippedElasticProvider = createNonFeaProductEngineeringDefaultProvider({
+const shippedElasticThermalProvider = createNonFeaProductEngineeringDefaultProvider({
   sourceModel,
   requestedMethods: ['THERMAL_FREE_DISPLACEMENT'],
 });
-assert.deepEqual(shippedElasticProvider.blockers, []);
-assert.equal(shippedElasticProvider.profileId, LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1.profileId);
-assert.equal(shippedElasticProvider.records.length, 2);
-shippedElasticProvider.records.forEach((record) => {
-  assert.equal(record.fieldId, 'ELASTIC_MODULUS');
+assert.deepEqual(shippedElasticThermalProvider.blockers, []);
+assert.equal(shippedElasticThermalProvider.profileId, LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1.profileId);
+assert.equal(shippedElasticThermalProvider.records.length, 4);
+const shippedElasticRecords = shippedElasticThermalProvider.records.filter((record) => record.fieldId === 'ELASTIC_MODULUS');
+const shippedThermalExpansionRecords = shippedElasticThermalProvider.records.filter((record) => (
+  record.fieldId === 'THERMAL_EXPANSION_COEFFICIENT'
+));
+assert.equal(shippedElasticRecords.length, 2);
+assert.equal(shippedThermalExpansionRecords.length, 2);
+shippedElasticRecords.forEach((record) => {
   assert.equal(record.value, 200000);
   assert.equal(record.unit, 'MPa');
   assert.equal(record.authority, 'PRODUCT_DEFAULT');
   assert.match(record.evidence.basis, /PD-ELASTIC-THERMAL/u);
   assert.match(record.evidence.basis, /1 MPa = 1e6 Pa/u);
+});
+shippedThermalExpansionRecords.forEach((record) => {
+  assert.equal(record.value, 12e-6);
+  assert.equal(record.unit, '1/K');
+  assert.equal(record.authority, 'PRODUCT_DEFAULT');
+  assert.match(record.evidence.basis, /PD-ELASTIC-THERMAL/u);
+  assert.match(record.evidence.basis, /without unit conversion/u);
 });
 
 const productElasticProfile = createProductEngineeringDefaultProfile({
@@ -244,8 +256,9 @@ console.log(JSON.stringify({
   status: 'PASS',
   benchmark: 'ISSUE1321_PRODUCT_ENGINEERING_DEFAULT_ORDINARY_RESOLUTION',
   shippedEngineeringProductDefaultCount: LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1.defaults.length,
-  shippedElasticModulusMpa: shippedElasticProvider.records[0]?.value ?? null,
-  shippedElasticSource: 'PD-ELASTIC-THERMAL',
+  shippedElasticModulusMpa: shippedElasticRecords[0]?.value ?? null,
+  shippedThermalExpansionPerK: shippedThermalExpansionRecords[0]?.value ?? null,
+  shippedElasticThermalSource: 'PD-ELASTIC-THERMAL',
   productOnlyWinner: 'PRODUCT_DEFAULT',
   projectOverProductWinner: 'PROJECT_CONFIGURED_DEFAULT',
   sourceOverProductWinner: 'SOURCE_EXPLICIT',

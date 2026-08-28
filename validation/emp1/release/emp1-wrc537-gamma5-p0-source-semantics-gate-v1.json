@@ -13,15 +13,87 @@
     "cauxOutputMayCloseGate": false
   },
   "gates": [
-    {"gateId":"P0_SURFACE_SIGN_SEMANTICS","issue":1385,"category":"WRC_METHOD_SEMANTICS","artifact":"validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Cylindrical_Surface_Sign_Authority.md","currentStatus":"BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED","profileAuthorityKey":"surfaceSignSemantics"},
-    {"gateId":"P0_STRESS_INTENSITY_SEMANTICS","issue":1383,"category":"WRC_METHOD_SEMANTICS","artifact":"validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Stress_Intensity_Authority.md","currentStatus":"BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED","profileAuthorityKey":"stressIntensitySemantics"},
-    {"gateId":"P0_SHELL_THICKNESS_BASIS","issue":1375,"category":"WRC_GEOMETRY_CUSTODY","artifact":"validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md","currentStatus":"BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED","profileAuthorityKey":"thicknessBasis"},
-    {"gateId":"P0_CYLINDRICAL_MEAN_RADIUS_BASIS","issue":1377,"category":"WRC_GEOMETRY_CUSTODY","artifact":"validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Cylindrical_Mean_Radius_Authority.md","currentStatus":"BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED","profileAuthorityKey":"meanRadiusBasis"},
-    {"gateId":"P0_MATERIAL_SHELL_THEORY","issue":1379,"category":"WRC_APPLICABILITY","artifact":"validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Elastic_Material_Authority.md","currentStatus":"BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED","profileAuthorityKey":"materialTheory"},
-    {"gateId":"P0_ATTACHMENT_AXIS_NORMALITY","issue":1368,"category":"WRC_APPLICABILITY","artifact":"validation/emp1/wrc537-2013/attachment-axis-intersection-source-qualification-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Attachment_Axis_Authority.md","currentStatus":"BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED","profileAuthorityKey":"attachmentAxis"},
-    {"gateId":"P0_ATTACHMENT_CLASS","issue":1370,"category":"WRC_APPLICABILITY","artifact":"validation/emp1/wrc537-2013/cylindrical-attachment-class-source-qualification-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Cylindrical_Attachment_Class_Authority.md","currentStatus":"BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED","profileAuthorityKey":"attachmentClass"},
-    {"gateId":"P0_INTERACTION_ISOLATION","issue":1373,"category":"WRC_APPLICABILITY","artifact":"validation/emp1/wrc537-2013/nearby-attachment-interaction-source-qualification-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Nearby_Attachment_Interaction_Authority.md","currentStatus":"BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED","profileAuthorityKey":"interactionIsolation"},
-    {"gateId":"P0_CODE_ACCEPTANCE_BOUNDARY","issue":1381,"category":"DOWNSTREAM_ACCEPTANCE_BOUNDARY","artifact":"validation/emp1/wrc537-2013/stress-classification-code-boundary-v1.json","authorityDocument":"docs/emp1/WRC537_2013_Stress_Classification_Code_Authority.md","currentStatus":"BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED","profileAuthorityKey":"codeAcceptanceBoundary"}
+    {
+      "gateId": "P0_SURFACE_SIGN_SEMANTICS",
+      "issue": 1385,
+      "category": "WRC_METHOD_SEMANTICS",
+      "artifact": "validation/emp1/wrc537-2013/cylindrical-surface-sign-source-qualification-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Cylindrical_Surface_Sign_Authority.md",
+      "currentStatus": "BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED",
+      "profileAuthorityKey": "surfaceSignSemantics"
+    },
+    {
+      "gateId": "P0_STRESS_INTENSITY_SEMANTICS",
+      "issue": 1383,
+      "category": "WRC_METHOD_SEMANTICS",
+      "artifact": "validation/emp1/wrc537-2013/stress-intensity-source-qualification-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Stress_Intensity_Authority.md",
+      "currentStatus": "BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED",
+      "profileAuthorityKey": "stressIntensitySemantics"
+    },
+    {
+      "gateId": "P0_SHELL_THICKNESS_BASIS",
+      "issue": 1375,
+      "category": "WRC_GEOMETRY_CUSTODY",
+      "artifact": "validation/emp1/wrc537-2013/shell-thickness-basis-source-qualification-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Shell_Thickness_Basis_Authority.md",
+      "currentStatus": "BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED",
+      "profileAuthorityKey": "thicknessBasis"
+    },
+    {
+      "gateId": "P0_CYLINDRICAL_MEAN_RADIUS_BASIS",
+      "issue": 1377,
+      "category": "WRC_GEOMETRY_CUSTODY",
+      "artifact": "validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Cylindrical_Mean_Radius_Authority.md",
+      "currentStatus": "BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED",
+      "profileAuthorityKey": "meanRadiusBasis"
+    },
+    {
+      "gateId": "P0_MATERIAL_SHELL_THEORY",
+      "issue": 1379,
+      "category": "WRC_APPLICABILITY",
+      "artifact": "validation/emp1/wrc537-2013/elastic-material-source-qualification-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Elastic_Material_Authority.md",
+      "currentStatus": "BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED",
+      "profileAuthorityKey": "materialTheory"
+    },
+    {
+      "gateId": "P0_ATTACHMENT_AXIS_NORMALITY",
+      "issue": 1368,
+      "category": "WRC_APPLICABILITY",
+      "artifact": "validation/emp1/wrc537-2013/attachment-axis-intersection-source-qualification-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Attachment_Axis_Authority.md",
+      "currentStatus": "BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED",
+      "profileAuthorityKey": "attachmentAxis"
+    },
+    {
+      "gateId": "P0_ATTACHMENT_CLASS",
+      "issue": 1370,
+      "category": "WRC_APPLICABILITY",
+      "artifact": "validation/emp1/wrc537-2013/cylindrical-attachment-class-source-qualification-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Cylindrical_Attachment_Class_Authority.md",
+      "currentStatus": "BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED",
+      "profileAuthorityKey": "attachmentClass"
+    },
+    {
+      "gateId": "P0_INTERACTION_ISOLATION",
+      "issue": 1373,
+      "category": "WRC_APPLICABILITY",
+      "artifact": "validation/emp1/wrc537-2013/nearby-attachment-interaction-source-qualification-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Nearby_Attachment_Interaction_Authority.md",
+      "currentStatus": "BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED",
+      "profileAuthorityKey": "interactionIsolation"
+    },
+    {
+      "gateId": "P0_CODE_ACCEPTANCE_BOUNDARY",
+      "issue": 1381,
+      "category": "DOWNSTREAM_ACCEPTANCE_BOUNDARY",
+      "artifact": "validation/emp1/wrc537-2013/stress-classification-code-boundary-v1.json",
+      "authorityDocument": "docs/emp1/WRC537_2013_Stress_Classification_Code_Authority.md",
+      "currentStatus": "BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED",
+      "profileAuthorityKey": "codeAcceptanceBoundary"
+    }
   ],
   "closureRule": {
     "allNineGatesMustBeSourceClosedBeforeBoundedProfessionalAuthorization": true,
@@ -33,7 +105,13 @@
     "boundedRuntimeRouteAuthorizationDoesNotCloseP0SourceSemantics": true
   },
   "authorityScope": "AUTHORITY_GRANTED_BY_THIS_AGGREGATE_GATE_ONLY_NOT_CURRENT_RUNTIME_ROUTE_STATE",
-  "authority": {"engineeringUseAuthorized":false,"productionUseAuthorized":false,"deploymentAuthorized":false,"globalEmp1CRouteAuthority":false,"codeComplianceAuthorized":false},
+  "authority": {
+    "engineeringUseAuthorized": false,
+    "productionUseAuthorized": false,
+    "deploymentAuthorized": false,
+    "globalEmp1CRouteAuthority": false,
+    "codeComplianceAuthorized": false
+  },
   "currentLiveRouteState": {
     "boundedRouteAuthorized": true,
     "registryRegistered": true,

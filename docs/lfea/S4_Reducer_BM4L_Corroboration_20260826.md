@@ -69,13 +69,39 @@ span", `0 !== 6`). Worth resolving on its own merits.
 combined service loads. Commissioning the controlled protocol runs is a
 reasonable investment rather than a shot in the dark.
 
+**Supports, added 2026-08-27 — BM4_L settles S4-Q1's first half.** This document
+originally said BM4_L could not discriminate between candidate rules. That is
+false for the question of whether CAESAR discretizes reducer stiffness at all,
+and the correction matters because it shrinks what the controlled runs must
+establish. Measured by running BM4_L through the same benchmark both ways:
+
+| Reducer treatment | Mean worst end-action error |
+|---|---:|
+| Ten-cylinder condensed (midpoint) | **1.74%** |
+| Single prismatic element, average section | 7.59% |
+| Single prismatic element, From-end section | 16.48% |
+
+Ten-cylinder is closer to CAESAR in 23 of 24 reducer/case comparisons against
+the average-section stick, and in 24 of 24 against the From-end stick. A single
+comparison differs by as much as 71 percentage points. That is not a marginal
+preference.
+
+`FROM_SECTION_ALL_TEN`, `TO_SECTION_ALL_TEN` and
+`UNIFORM_AVERAGE_SECTION_SINGLE_ELEMENT` are therefore eliminable on BM4_L
+evidence alone. Locked in by
+`scripts/lfea-s4-reducer-discretization-check.mjs`.
+
 **Does not support** — and cannot, from this model:
 
-- `REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED`. BM4_L cannot discriminate
-  *which* sampling station produced the agreement. Several candidate rules would
-  plausibly land inside tolerance on one orientation under combined loads.
-  Discrimination needs the forward/reverse pairs under isolated load families
-  that the protocol specifies.
+- `REDUCER_SECTION_SAMPLING_AUTHORITY_UNQUALIFIED`. This is the half BM4_L
+  genuinely cannot settle, and it was measured rather than assumed. Varying only
+  the sampling station inside the ten-cylinder model gives 1.47% (end station),
+  1.74% (midpoint, implemented) and 2.73% (start station) -- a 1.26 point spread
+  on a model carrying bends, tees and restraints. All three sit close to CAESAR
+  and none separates cleanly, so the forward/reverse isolated-load pairs remain
+  necessary. Note that end-station edges out the implemented midpoint rule here;
+  on a model that cannot discriminate, that is a curiosity to carry into the
+  controlled runs, not grounds to change the rule.
 - `REDUCER_GRAVITY_OWNERSHIP_AUTHORITY_UNQUALIFIED`. BM4_L has no reverse-
   orientation counterpart, so From-end, To-end, average and progressive weight
   rules are not separated. This is the blocker where historical verification

@@ -37,9 +37,14 @@ for (const file of files) {
 
 assert.match(source['consumer.js'], /compileSolverExecution/u);
 assert.match(source['consumer.js'], /compileResultRecovery/u);
-assert.match(source['consumer.js'], /interfaceLoadResults:\s*null/u);
-assert.match(source['consumer.js'], /nozzleAssessments:\s*null/u);
-assert.match(source['consumer.js'], /codeResults:\s*null/u);
+// These three moved out of consumer.js into retained-result-chain.js in a
+// refactor. The guard's intent is that this PACKAGE never fabricates interface,
+// nozzle or code results -- which file holds the initializer is not the point,
+// so it is asserted against the package rather than re-pinned to a filename
+// that will move again.
+assert.match(combined, /interfaceLoadResults:\s*null/u);
+assert.match(combined, /nozzleAssessments:\s*null/u);
+assert.match(combined, /codeResults:\s*null/u);
 
 assert.match(source['source-orchestration.js'], /compileMechanicalModel/u);
 assert.match(source['source-orchestration.js'], /compilePhysicalLoadCase/u);
@@ -109,10 +114,15 @@ const adapterImports = files
   .filter((file) => /from\s+['"][^'"]*geometry\/adapters\/inputxml-model-health-source\.js['"]/u
     .test(fs.readFileSync(file, 'utf8')))
   .map((file) => path.basename(file));
+// ACCDB is a second governed source binding, added after this guard was
+// written: accdb-source-binding.js wraps ACCDB geometry in the same
+// InputXmlModelHealthSource bundle shape and injects it through the same
+// parseSource seam. The rule being guarded is that ONLY a governed source
+// binding may reach the raw adapter, not that there is exactly one of them.
 assert.deepEqual(
   adapterImports,
-  ['inputxml-source-binding.js'],
-  'Only the governed InputXML source binding may import the raw model-health adapter.',
+  ['accdb-source-binding.js', 'inputxml-source-binding.js'],
+  'Only a governed source binding may import the raw model-health adapter.',
 );
 
 const index = source['index.js'];
@@ -131,7 +141,26 @@ const restraintInventory = source['inputxml-feature-inventory-restraints.js'];
 assert.match(restraintInventory, /MODEL_RESTRAINT_GAP_UNSUPPORTED/u);
 assert.match(restraintInventory, /MODEL_RESTRAINT_FRICTION_UNSUPPORTED/u);
 assert.match(restraintInventory, /MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED/u);
-assert.match(restraintInventory, /MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED/u);
+// A declared spring rate is no longer refused: it compiles to the solver's
+// LINEAR_SPRING behavior, so the classification must carry the VALUE through
+// rather than only the fact that one was declared.
+assert.doesNotMatch(restraintInventory, /MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED/u,
+  'a declared finite stiffness is representable and must not be refused');
+assert.match(restraintInventory, /resolveSpringRate\(stiffness, stiffnessToSi\)/u,
+  'the classification must resolve the declared rate into solver units, not just flag one');
+
+/*
+ * The conversion is the part that was wrong once and is invisible when wrong:
+ * CAESAR declares stiffness in the model's own force-per-length, and a rate
+ * used raw is off by the length factor while still solving and balancing.
+ */
+const springRate = source['restraint-spring-rate.js'];
+assert.match(springRate, /forceDeclaration\.scale \/ lengthScale/u,
+  'the spring rate must be converted by force-per-length, not passed through');
+assert.match(springRate, /stiffnessUnitsResolvable/u,
+  'unresolvable units must be reported, not silently treated as SI');
+assert.doesNotMatch(springRate, /toSiFactor\s*(?:\?\?|\|\|)\s*1/u,
+  'an unresolvable conversion must never fall back to a factor of 1');
 assert.match(restraintInventory, /MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED/u);
 assert.match(
   restraintInventory,

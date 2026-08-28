@@ -31,6 +31,7 @@ export function compileInputXmlFrameElementAuthority(input) {
     profile: input.frameProfile,
     distributedLoads: input.distributedLoads,
     temperature: input.temperature,
+    pressure: input.pressure ?? null,
     releases: [],
     endSprings: modifier?.rotationalSprings ?? [],
     rigidOffsets: branchRigidOffsets(modifier),

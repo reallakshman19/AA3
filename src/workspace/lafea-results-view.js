@@ -359,7 +359,7 @@ function presentationView(root, presentation) {
   if (presentation.limitations.length) {
     const list = create(root, 'ul', 'lafea-result-limitations');
     presentation.limitations.forEach((value) => {
-      list.append(create(root, 'li', null, formatLimitation(String(value))));
+      list.append(limitationListItem(root, String(value)));
     });
     wrapper.append(
       create(root, 'h4', 'lafea-result-limitations-title', 'Current stage limitations'),
@@ -369,7 +369,31 @@ function presentationView(root, presentation) {
   return wrapper;
 }
 
-function formatLimitation(code) {
+/**
+ * One limitation row.
+ *
+ * A DRAFT_ code is not the same claim as an ordinary limitation. The others say
+ * a quantity is NOT produced; this one says a quantity IS produced and has not
+ * been checked against a reference. That is the more dangerous of the two to
+ * read past in a list of grey bullets, so it is labelled rather than blended in.
+ */
+export function limitationListItem(root, code) {
+  const item = create(root, 'li', null, '');
+  if (isDraftLimitation(code)) {
+    item.dataset.draft = 'true';
+    const tag = create(root, 'span', 'lafea-result-limitation-draft', 'DRAFT');
+    tag.title = 'Produced by an unvalidated path — no reference model has cleared it.';
+    item.append(tag);
+  }
+  item.append(root.ownerDocument.createTextNode(formatLimitation(code)));
+  return item;
+}
+
+export function isDraftLimitation(code) {
+  return String(code).startsWith('DRAFT_');
+}
+
+export function formatLimitation(code) {
   const known = {
     NO_CODE_COMPLIANCE: 'No code-compliance assessment is produced by this stage.',
     NO_CONTACT: 'No contact, friction, gap, lift-off or one-way behavior.',
@@ -385,6 +409,9 @@ function formatLimitation(code) {
     NO_PLASTICITY: 'Material behavior is linear elastic; plasticity is excluded.',
     NO_STRESS_CONCENTRATION_FACTOR: 'No local stress-concentration factor is produced.',
     NO_TRANSVERSE_SHEAR_STRESS_RECOVERY: 'No transverse-shear stress recovery is produced.',
+    DRAFT_SPRING_SUPPORT_NO_REFERENCE: 'Spring supports are compiled from their declared rate, but no '
+      + 'CAESAR-solved model containing a spring has been run through this path. Treat these reactions '
+      + 'and displacements as draft until a reference model clears them.',
   };
   if (known[code]) return known[code];
   if (/^[A-Z0-9_]+$/u.test(code)) {

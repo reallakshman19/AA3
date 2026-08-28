@@ -361,6 +361,11 @@ export class LfeaPipelineAccdbInputPanelController {
     this.notifyStateChanged();
   }
 
+  /** The loaded element table, for diagnostics that read raw geometry. */
+  getElementRows() {
+    return this.tables?.INPUT_BASIC_ELEMENT_DATA?.rows ?? null;
+  }
+
   getSnapshot() {
     return Object.freeze({
       schema: LFEA_PIPELINE_ACCDB_INPUT_PANEL_SCHEMA,

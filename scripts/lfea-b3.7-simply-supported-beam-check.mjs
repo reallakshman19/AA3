@@ -175,6 +175,7 @@ function frameElementWithDistributedLoad(compilation, elementId, nodeI, nodeJ, p
     profile: frameElementProfile(),
     distributedLoads: [sealed],
     temperature: null,
+    pressure: null,
     releases: [],
     endSprings: [],
     rigidOffsets: null,

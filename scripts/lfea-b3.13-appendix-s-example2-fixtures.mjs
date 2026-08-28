@@ -312,6 +312,7 @@ export function buildAppendixS2Authorities({
       profile: frameProfile,
       distributedLoads: [],
       temperature: temperaturesByElement.get(span.elementId),
+      pressure: null,
       releases: [],
       endSprings: [],
       rigidOffsets: null,

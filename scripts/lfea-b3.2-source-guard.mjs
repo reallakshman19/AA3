@@ -26,7 +26,12 @@ const packageFiles = [
   'src/core/linear-fea-piping-components/index.js',
 ];
 const source = Object.fromEntries(
-  packageFiles.map((path) => [path, readFileSync(resolve(root, path), 'utf8')]),
+  // Line endings are normalized on read: the structural regexes below anchor
+  // on a closing brace at the start of a line, which never matches a CRLF
+  // checkout, so this guard failed on Windows while passing everywhere else.
+  // Normalizing here fixes every one of them at once rather than making each
+  // pattern CRLF-aware.
+  packageFiles.map((path) => [path, readFileSync(resolve(root, path), 'utf8').replace(/\r\n/gu, '\n')]),
 );
 const combined = Object.entries(source)
   .map(([path, text]) => `\n/* ${path} */\n${text}`)

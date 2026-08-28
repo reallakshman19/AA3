@@ -2,6 +2,7 @@ import { deepFreeze, isPlainRecord } from '../shared-piping-model/immutable.js';
 import {
   REDUCER_SAMPLING_RULE,
   REDUCER_SEGMENT_COUNT,
+  fail,
 } from './contract.js';
 
 export const REDUCER_PRODUCTION_READINESS_SCHEMA =
@@ -112,4 +113,45 @@ function requireCurrentCandidateAuthority(authority) {
     ].join(' '));
   }
   return authority;
+}
+
+/**
+ * The owner-authorized production path, kept deliberately separate from
+ * `requireReducerCondensationProductionReady` above.
+ *
+ * That function answers "is this S4-qualified?" and the answer is still no; it
+ * is unchanged and still throws unconditionally. This one answers a different
+ * question -- "has the owner accepted the measured error for production use?" --
+ * and the two must not be confused, which is why the S4 gate is not routed
+ * around or softened to serve this.
+ *
+ * An authorization is required to name the blockers it does NOT close, so it
+ * can never read as qualification.
+ */
+export function requireReducerOwnerAuthorization(authorization) {
+  const record = authorization ?? null;
+  if (record === null || typeof record !== 'object') {
+    fail('Exact reducer mechanics require an explicit owner authorization record.',
+      'REDUCER_OWNER_AUTHORIZATION_MISSING');
+  }
+  if (record.schema !== 'lfea-reducer-production-authorization/v1') {
+    fail('Reducer owner authorization schema is invalid.', 'REDUCER_OWNER_AUTHORIZATION_INVALID');
+  }
+  if (record.authorizedRule !== REDUCER_SAMPLING_RULE) {
+    fail(
+      `Reducer owner authorization names rule ${String(record.authorizedRule)}, but the compiled `
+      + `authority implements ${REDUCER_SAMPLING_RULE}. An authorization must match what actually runs.`,
+      'REDUCER_OWNER_AUTHORIZATION_RULE_MISMATCH',
+    );
+  }
+  const notClosed = record.blockersExplicitlyNotClosed;
+  if (!Array.isArray(notClosed)
+    || REDUCER_PRODUCTION_BLOCKER_CODES.some((code) => !notClosed.includes(code))) {
+    fail(
+      'Reducer owner authorization must name every S4 blocker it does not close, so that '
+      + 'production use on measured evidence can never be mistaken for S4 qualification.',
+      'REDUCER_OWNER_AUTHORIZATION_INCOMPLETE',
+    );
+  }
+  return record;
 }

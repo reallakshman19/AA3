@@ -37,6 +37,34 @@ import { CODE_POINT_INTERPOLATION_METHOD, LOCAL_ACTION_FIELDS, compareAscii, fai
  * that happens to hold only when nothing is attached at the far side.
  */
 
+/**
+ * The structural node a station sits on.
+ *
+ * The station's own name is honoured first, so a caller that did bind the
+ * component's identity space keeps working unchanged. Otherwise the station is
+ * located by where it sits along the component's element chain: elements
+ * e0..e(n-1) in the component's own order span nodes N0..Nn, with N0 = e0's I
+ * end and Nk = e(k-1)'s J end, and `arcFraction` says which of those the
+ * station is. Only exact chain positions resolve; a station part-way along an
+ * element has no node and is refused by the caller rather than interpolated.
+ */
+function resolveStationNodeId({ station, componentElementIds, modelElementsById }) {
+  const named = findElementNodeCandidates({ componentElementIds, modelElementsById, nodeId: station.nodeId });
+  if (named.length > 0) return station.nodeId;
+
+  const elementCount = componentElementIds.length;
+  const fraction = Number(station.arcFraction);
+  if (elementCount === 0 || !Number.isFinite(fraction)) return station.nodeId;
+  const index = fraction * elementCount;
+  if (!Number.isInteger(index) || index < 0 || index > elementCount) return station.nodeId;
+
+  const element = index === 0
+    ? modelElementsById.get(componentElementIds[0])
+    : modelElementsById.get(componentElementIds[index - 1]);
+  if (element === undefined) return station.nodeId;
+  return index === 0 ? element.nodeI : element.nodeJ;
+}
+
 function findElementNodeCandidates({ componentElementIds, modelElementsById, nodeId }) {
   const candidates = [];
   for (const elementId of componentElementIds) {
@@ -79,16 +107,25 @@ function worstEquilibriumResidual(primaryGlobal, otherGlobal, externalLoad) {
 export function recoverComponentCodePoint({
   station, componentElementIds, modelElementsById, actionByElementId, nodalLoadByNode, tolerance,
 }) {
-  const candidates = findElementNodeCandidates({ componentElementIds, modelElementsById, nodeId: station.nodeId });
+  // A component names its stations in its own identity space
+  // (`${componentId}.N${index}`) because it is compiled without knowledge of
+  // where the caller will bind it. The model binds the same chords to real
+  // geometry nodes. Matching on the station's own name therefore succeeds only
+  // when a caller happens to have used that naming, and fails for every model
+  // that binds real nodes -- which is every real model. Resolving through the
+  // element chain instead uses the correspondence that actually exists: the
+  // component's elements ARE the model's elements, in order.
+  const structuralNodeId = resolveStationNodeId({ station, componentElementIds, modelElementsById });
+  const candidates = findElementNodeCandidates({ componentElementIds, modelElementsById, nodeId: structuralNodeId });
   if (candidates.length === 0) {
     fail(
-      `Code station ${station.stationId} names node ${station.nodeId}, which is not the I or J end of any element this component compiled; off-node code-point interpolation is not implemented and the station is refused rather than approximated.`,
+      `Code station ${station.stationId} names node ${station.nodeId}, which is not the I or J end of any element this component compiled, and its position in the component's element chain does not resolve to one either; off-node code-point interpolation is not implemented and the station is refused rather than approximated.`,
       'RECOVERY_CODE_STATION_NOT_LOCATABLE',
     );
   }
   const primary = candidates[0];
   const primaryAction = actionByElementId.get(primary.elementId);
-  const externalLoad = nodalLoadByNode.get(station.nodeId) ?? { fx: 0, fy: 0, fz: 0, mx: 0, my: 0, mz: 0 };
+  const externalLoad = nodalLoadByNode.get(structuralNodeId) ?? { fx: 0, fy: 0, fz: 0, mx: 0, my: 0, mz: 0 };
 
   let consistency = null;
   for (let index = 1; index < candidates.length; index += 1) {
@@ -111,7 +148,7 @@ export function recoverComponentCodePoint({
   }
   if (consistency !== null && !consistency.withinTolerance) {
     fail(
-      `Code station ${station.stationId} at node ${station.nodeId} disagrees between ${primary.elementId}:${primary.end} and ${consistency.comparedElementId}:${consistency.comparedEnd} beyond the declared codePointConsistencyTolerance (residual ${consistency.residual} > ${tolerance}); the code point is not a reliable single value.`,
+      `Code station ${station.stationId} at node ${structuralNodeId} disagrees between ${primary.elementId}:${primary.end} and ${consistency.comparedElementId}:${consistency.comparedEnd} beyond the declared codePointConsistencyTolerance (residual ${consistency.residual} > ${tolerance}); the code point is not a reliable single value.`,
       'RECOVERY_CODE_POINT_INCONSISTENT',
     );
   }
@@ -119,7 +156,7 @@ export function recoverComponentCodePoint({
   return {
     stationId: station.stationId,
     kind: station.kind,
-    nodeId: station.nodeId,
+    nodeId: structuralNodeId,
     position: [...station.position],
     arcFraction: station.arcFraction,
     elementId: primary.elementId,

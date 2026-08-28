@@ -57,6 +57,23 @@ export class LfeaPipelineModelRepairPanelController {
 
   /** Candidates in the currently loaded source, or none. */
   detect() {
+    // An ACCDB import gets the same diagnosis and no Apply button. Its geometry
+    // is owned by the file -- accdb-field-overrides.js excludes DELTA_X/Y/Z so
+    // an override can never silently move a model -- so the engineer is told
+    // exactly which elements are wrong and makes the edit in CAESAR. Reporting
+    // it is strictly better than the previous behaviour, which was to raise the
+    // overlap finding and offer nothing.
+    const accdb = this.options.getAccdbDiagnosis?.() ?? null;
+    if (accdb !== null) {
+      this.repairable = false;
+      return accdb.findings.map((finding) => ({
+        elementNumber: finding.elementId,
+        length: finding.lengthM,
+        declared: finding.declared,
+        corrected: finding.corrected,
+      }));
+    }
+    this.repairable = true;
     const source = this.options.getSourceText();
     if (typeof source !== 'string' || source.length === 0) return [];
     try {
@@ -95,7 +112,10 @@ export class LfeaPipelineModelRepairPanelController {
       body.append(explanation(this.documentRef, this.candidates.length));
       body.append(candidateTable(this.documentRef, this.candidates));
     }
-    applyButton.hidden = this.candidates.length === 0;
+    applyButton.hidden = this.candidates.length === 0 || this.repairable === false;
+    if (this.candidates.length > 0 && this.repairable === false) {
+      body.append(sourceOwnedNotice(this.documentRef));
+    }
     status.textContent = this.error === '' ? this.message : this.error;
     status.dataset.status = this.error === '' ? 'ok' : 'error';
     return this;
@@ -105,6 +125,7 @@ export class LfeaPipelineModelRepairPanelController {
     return Object.freeze({
       schema: LFEA_PIPELINE_MODEL_REPAIR_PANEL_SCHEMA,
       candidateCount: this.candidates.length,
+      repairable: this.repairable !== false,
       elementNumbers: Object.freeze(this.candidates.map((row) => row.elementNumber)),
     });
   }
@@ -173,4 +194,14 @@ function candidateTable(doc, candidates) {
     table.append(tr);
   }
   return table;
+}
+
+/** Why an ACCDB import is shown the diagnosis but not an Apply button. */
+function sourceOwnedNotice(doc) {
+  const note = doc.createElement('p');
+  note.dataset.role = 'lfea-pipeline-model-repair-source-owned';
+  note.textContent = 'This model came from a CAESAR II database, whose geometry stays owned by '
+    + 'the file — this tool will not rewrite element coordinates behind you. Correct these '
+    + 'elements in CAESAR and re-import.';
+  return note;
 }

@@ -1,20 +1,25 @@
-# EMP.1 Professional Release — Current State After PR #1497
+# EMP.1 Professional Release — Current State After PR #1499
 
 ## Purpose
 
-This is the fail-closed Issue #1389 professional-release current-state record after PR #1497 advanced cylindrical `R_m` source semantics. It is not a release approval and does not mutate the frozen release profile/readiness snapshot, WRC/CAUx source bytes, route/registry mechanics, oracle/tolerances, numerical evidence, code assessment or deployment authority.
+This is the fail-closed Issue #1389 professional-release current-state record after PR #1499 advanced cylindrical attachment-class source semantics. It is not a release approval and does not mutate the frozen release profile/readiness snapshot, WRC/CAUx source bytes, route/registry mechanics, oracle/tolerances, numerical evidence, code assessment, or deployment authority.
 
 ## Reconciliation basis
 
 ```text
-previous current-state merge = d9be6faa7a3de3511704b9f7c56f1cbca55780f5
-source-governance PR         = #1497
-PR1497 merge/current main    = e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
-current main tree            = 710758849d2a17781110dbe5a9c6aa35074c1468
-current reconciliation PR    = #1498
-P0 aggregate blob            = a1ea8989831f5c01acce81cc4e734beb45b1feb0
-current-state semantic hash  = 3ff5b391cc8e81f866f8e7746b6f48a8b588c2eaecbfb474abe0b14e1873cdd8
+previous current-state reconciliation merge = 63c1d573b58fb17ff1f603650f89b7375b75f1e5  (#1498)
+source-governance PR                         = #1499
+PR1499 merge                                 = 33ea0762841d9981123df8b910fb7a12c17f2836
+live main observed for this reconciliation   = 81c2e780a03d565345457b07609fe19d8d1421e4
+live main tree                               = eeddd842802098c7a713b0ddffa1e89ba070daab
+current reconciliation PR                    = #1502
+P0 aggregate blob                            = 6d7fbe79ced368ea970d160e3c6756916bbb55c6
+current-state JSON blob                      = 58b647ceac938daa39e896999c672ebd2c686116
+current-state checker blob                   = ba6dca7c9bdcaccabb359c729e405f492cbc5c3d
+current-state semantic hash                  = ccd276178d6219e883ec2ff0e5c1a1ea2abe55756c8db0d3b3e2f2aed1d286df
 ```
+
+The commits between PR #1499 and the live reconciliation basis are repository relay/governance adoption/closure only. They do not change EMP.1/WRC source semantics, route/registry mechanics, P0/release authority, benchmarks/oracles, or evidence 01-12.
 
 Machine-readable state:
 
@@ -27,44 +32,40 @@ node scripts/emp1-professional-release-current-state-check.mjs
 node scripts/emp1-professional-release-current-state-check.mjs --require-release
 ```
 
-Normal mode proves internal fail-closed consistency. `--require-release` must remain non-zero while any professional release blocker exists.
+Normal mode verifies internal fail-closed consistency. `--require-release` must remain non-zero while any professional release blocker exists.
 
-## 1. Source-governance progress from PR #1497
+## 1. Source-governance progress retained from PR #1497
 
-PR #1497 merged at `e6c76ac02e6ed2052e9c87e0691bb728f2031f5b` and changed the #1377 source state from a Table-5-only radius-role reconciliation to a stronger primary-text semantic result.
-
-Current #1377 status:
+Current #1377 status remains:
 
 `BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED`
 
-The following cylindrical facts are now treated as source-qualified:
+Qualified facts include cylindrical `R_m` mean/mid-radius semantics and the same cylindrical radius identity through gamma, round-attachment beta, and retained §4.5 radius relations.
 
-- `R_m` is cylindrical shell mean/mid-radius;
-- `T` is cylindrical shell wall thickness;
-- `gamma = R_m/T`;
-- round-attachment beta uses the same `R_m`;
-- the same cylindrical `R_m` identity is used by the retained §4.5 radius-based applicability relations.
+Still blocked are assessment-geometry consistency, nominal/corroded/measured/local diameter/thickness custody, ovality, local thinning/non-concentric geometry, and modified-shell geometry.
 
-For a concentric circular wall, `R_m = D_o/2 - T/2` is an elementary mid-surface identity only when diameter and thickness describe the same physical wall state. This is not a universal WRC corrosion/assessment policy.
+## 2. New source-governance progress from PR #1499
 
-Still blocked under #1377:
+Current #1370 status is now:
 
-- nominal versus assessment versus measured geometry custody;
-- internal/external/two-sided corrosion geometry state;
-- local measured versus nominal diameter;
-- ovality/out-of-roundness;
-- local thinning or non-concentric wall geometry;
-- locally thickened shell, insert plate, taper or transition treatment;
-- fail-closed proof that retained diameter and thickness values describe one compatible physical state.
+`BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED`
 
-## 2. P0 aggregate remains blocked — 9/9 blockers
+PR #1499 source-qualified the bounded standard class:
 
-Current aggregate state:
+`WRC537_CYLINDRICAL_STANDARD_ROUND_HOST_SHELL_ATTACHMENT`
+
+The standard cylindrical round host-shell method is organized by the round attachment family and `r0`/`Rm` parameterization without a separate SOLID/HOLLOW, RIGID/FLEXIBLE, or attachment-wall-thickness curve selector.
+
+This source progress is deliberately bounded. It does not authorize arbitrary round objects, structural lug/pad/clip surrogates, reinforcement/local-thickening effects, attachment/nozzle-wall stress, non-unity Appendix-B SCF claims, or special off-axis `1B-1/2B-1` use without a source-qualified flexible-nozzle classifier.
+
+Therefore #1370 remains a P0 blocker.
+
+## 3. P0 aggregate remains blocked — 9 gates
 
 ```text
 state        = BLOCKED_P0_SOURCE_SEMANTICS
 blockerCount = 9
-aggregate    = a1ea8989831f5c01acce81cc4e734beb45b1feb0
+aggregate    = 6d7fbe79ced368ea970d160e3c6756916bbb55c6
 ```
 
 Current gate statuses:
@@ -75,28 +76,25 @@ Current gate statuses:
 4. #1377 — `BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED`
 5. #1379 — `BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED`
 6. #1368 — `BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED`
-7. #1370 — `BLOCKED_PRIMARY_SOURCE_ATTACHMENT_CLASS_UNRESOLVED`
+7. #1370 — `BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED`
 8. #1373 — `BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED`
 9. #1381 — `BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED`
 
-No gate is removed by PR #1497. The governing invariant remains:
+No gate is removed by PR #1499. The governing invariant remains:
 
 `BOUNDED_ROUTE_AUTHORIZATION_DOES_NOT_CLOSE_P0_SOURCE_SEMANTICS_OR_PROFESSIONAL_RELEASE_GATES`
 
-## 3. Controlled-source custody distinction
-
-Controlled WRC source identity remains:
+## 4. Controlled-source custody remains fail-closed
 
 ```text
-WRC 537 (2013)
-raw SHA-256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+WRC 537 (2013) raw SHA-256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+pinned WRC PDF direct-page re-observation = NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+external-rendering byte identity          = UNPROVEN
 ```
 
-PR #1497 distinguishes external primary-document text observation from byte custody of the pinned repository PDF. Pinned-PDF direct-page re-observation remains `NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`; external-rendering byte equality remains unproven.
+CAUx source custody remains `PASS_SOURCE_CUSTODY`, but CAUx direct-PDF page re-observation remains `NOT_RUN_EXECUTION_ENVIRONMENT`. The retained CAUx transcription remains controlled evidence, not direct-PDF observation.
 
-CAUx source custody remains `PASS_SOURCE_CUSTODY`, while CAUx direct-PDF page re-observation remains `NOT_RUN_EXECUTION_ENVIRONMENT`. The retained CAUx transcription is not reclassified as direct-PDF observation.
-
-## 4. Bounded runtime authority is unchanged
+## 5. Bounded runtime authority is unchanged
 
 ```text
 route = EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP
@@ -117,13 +115,13 @@ deployment authorized        = false
 professional release ready   = false
 ```
 
-The bounded production route being authorized does not convert any source-governance record into release authority.
+The bounded production route being authorized does not back-propagate into source closure or professional release authority.
 
-## 5. Frozen release artifacts remain immutable
+## 6. Frozen release artifacts remain immutable
 
-`validation/emp1/release/emp1-professional-release-readiness-v1.json` remains the frozen pre-authorization snapshot. The bounded v1 release profile remains frozen and non-authorizing in place. This reconciliation updates only current-state provenance.
+`validation/emp1/release/emp1-professional-release-readiness-v1.json` remains the frozen pre-authorization snapshot. The bounded v1 release profile remains frozen and non-authorizing in place. PR #1502 updates only current-state representation/provenance.
 
-## 6. Standard exact-head numerical evidence remains absent
+## 7. Standard exact-head numerical evidence remains absent
 
 ```text
 01–10 pre-authorization evidence        = NOT_GENERATED
@@ -133,11 +131,11 @@ PR-D numerical qualification            = NOT_RUN / NOT_CLAIMED
 post-promotion numerical qualification   = NOT_RUN / NOT_CLAIMED
 ```
 
-Issue #1434 remains the genuine historical execution/replay debt. Owner-override records are audit records, not numerical PASS substitutes.
+Issue #1434 remains the genuine historical execution/replay debt. Owner-override records remain audit records, not numerical PASS substitutes.
 
-## 7. Execution and deployment blockers remain
+## 8. Execution and deployment blockers remain
 
-Issue #54 remains an execution-environment dependency. Professional release still has `NOT_RUN` states for production build, Chromium journey, release replay/currentness and deployment evidence.
+Issue #54 remains an execution-environment dependency. Professional release still has `NOT_RUN` states for production build, Chromium journey, release replay/currentness, and deployment evidence.
 
 Current blocker set remains exactly:
 
@@ -153,8 +151,8 @@ RELEASE_REPLAY_NOT_RUN
 DEPLOYMENT_EVIDENCE_NOT_RUN
 ```
 
-## 8. Current decision
+## 9. Current decision
 
 Issue #1389 Definition of Done remains incomplete. Professional release is not ready; global EMP.1.C authority remains false; code compliance remains not assessed; release qualification remains false; deployment authority remains false.
 
-PR #1497 is meaningful source progress because it removes ambiguity about the physical cylindrical radius quantity. It does not remove the #1377 professional blocker until assessment-geometry consistency is itself qualified and retained.
+PR #1499 is meaningful source progress because it qualifies the standard cylindrical round host-shell attachment family for the bounded standard route. It does not remove the #1370 professional blocker until the remaining nonstandard/modified/off-axis class boundaries are themselves source-qualified or explicitly excluded from the professional release definition.

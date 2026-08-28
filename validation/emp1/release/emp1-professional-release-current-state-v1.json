@@ -3,14 +3,14 @@
   "issue": 1389,
   "releaseProfileId": "EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1",
   "reconciliationBasis": {
-    "basisKind": "CURRENT_MAIN_POST_PR1497_SOURCE_GOVERNANCE_RECONCILIATION",
-    "previousCurrentStateMergeSha": "d9be6faa7a3de3511704b9f7c56f1cbca55780f5",
-    "sourceGovernancePr": 1497,
-    "sourceGovernanceMergeSha": "e6c76ac02e6ed2052e9c87e0691bb728f2031f5b",
-    "latestLiveMainObserved": "e6c76ac02e6ed2052e9c87e0691bb728f2031f5b",
-    "latestLiveMainTreeObserved": "710758849d2a17781110dbe5a9c6aa35074c1468",
-    "laterMainDriftClassification": "NONE_AT_GROUNDING",
-    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1497",
+    "basisKind": "CURRENT_MAIN_POST_PR1499_SOURCE_GOVERNANCE_RECONCILIATION",
+    "previousCurrentStateMergeSha": "63c1d573b58fb17ff1f603650f89b7375b75f1e5",
+    "sourceGovernancePr": 1499,
+    "sourceGovernanceMergeSha": "33ea0762841d9981123df8b910fb7a12c17f2836",
+    "latestLiveMainObserved": "81c2e780a03d565345457b07609fe19d8d1421e4",
+    "latestLiveMainTreeObserved": "eeddd842802098c7a713b0ddffa1e89ba070daab",
+    "laterMainDriftClassification": "V2_RELAY_GOVERNANCE_ONLY_POST_PR1499",
+    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1499_PLUS_V2_RELAY_GOVERNANCE",
     "artifactMayNotClaimContainingCommitAsBasis": true
   },
   "frozenReadinessContract": {
@@ -160,6 +160,15 @@
       "state": "MERGED",
       "mergeSha": "e6c76ac02e6ed2052e9c87e0691bb728f2031f5b",
       "role": "PRIMARY_MID_RADIUS_SEMANTICS_PARTIAL_RECONCILIATION_ASSESSMENT_GEOMETRY_BLOCKED"
+    },
+    {
+      "pr": 1499,
+      "issues": [
+        1370
+      ],
+      "state": "MERGED",
+      "mergeSha": "33ea0762841d9981123df8b910fb7a12c17f2836",
+      "role": "PRIMARY_STANDARD_CYLINDRICAL_ROUND_ATTACHMENT_CLASS_PARTIAL_RECONCILIATION_NONSTANDARD_BOUNDARIES_BLOCKED"
     }
   ],
   "sequenceStatus": {
@@ -186,9 +195,9 @@
       "path": "validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json",
       "originPr": 1427,
       "originMergeSha": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
-      "currentReconciliationPr": 1498,
-      "basisMainSha": "e6c76ac02e6ed2052e9c87e0691bb728f2031f5b",
-      "gitBlobSha1": "a1ea8989831f5c01acce81cc4e734beb45b1feb0"
+      "currentReconciliationPr": 1502,
+      "basisMainSha": "81c2e780a03d565345457b07609fe19d8d1421e4",
+      "gitBlobSha1": "5247c9b3201c9370a46ea8dc9881d71cc7598eb2"
     },
     "p0GateStatuses": [
       {
@@ -217,7 +226,7 @@
       },
       {
         "issue": 1370,
-        "currentStatus": "BLOCKED_PRIMARY_SOURCE_ATTACHMENT_CLASS_UNRESOLVED"
+        "currentStatus": "BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED"
       },
       {
         "issue": 1373,
@@ -315,6 +324,6 @@
   },
   "releaseReady": false,
   "state": "BLOCKED_FAIL_CLOSED_POST_SEQUENCE",
-  "currentStateSemanticHash": "3ff5b391cc8e81f866f8e7746b6f48a8b588c2eaecbfb474abe0b14e1873cdd8",
+  "currentStateSemanticHash": "54c8d4f33470f16e617ac7b5689c9b9f6428e68971a4a2ed6ee735c7e61a80f2",
   "status": "POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED"
 }

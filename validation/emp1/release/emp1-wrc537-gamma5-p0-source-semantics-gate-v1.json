@@ -73,7 +73,7 @@
       "category": "WRC_APPLICABILITY",
       "artifact": "validation/emp1/wrc537-2013/cylindrical-attachment-class-source-qualification-v1.json",
       "authorityDocument": "docs/emp1/WRC537_2013_Cylindrical_Attachment_Class_Authority.md",
-      "currentStatus": "BLOCKED_PRIMARY_SOURCE_ATTACHMENT_CLASS_UNRESOLVED",
+      "currentStatus": "BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED",
       "profileAuthorityKey": "attachmentClass"
     },
     {

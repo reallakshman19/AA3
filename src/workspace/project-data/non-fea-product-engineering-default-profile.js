@@ -29,13 +29,15 @@ export const LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_EMPTY_V1 = createProductEngi
 
 const STANDARD_ELASTIC_THERMAL_DEFAULT = requireStandardProductDefault('PD-ELASTIC-THERMAL');
 const STANDARD_ELASTIC_MODULUS_MPA = requireStandardElasticModulusMpa(STANDARD_ELASTIC_THERMAL_DEFAULT);
+const STANDARD_THERMAL_EXPANSION_PER_K = requireStandardThermalExpansionPerK(STANDARD_ELASTIC_THERMAL_DEFAULT);
 
 /**
  * Target-level Product engineering defaults may only reuse values that already
- * have explicit Product-default authority elsewhere in the repository. This
- * first built-in row does not invent a material value: it projects the exact
- * generic-steel elastic modulus already governed by PD-ELASTIC-THERMAL and
- * converts its declared Pa value to the enrichment contract's MPa value.
+ * have explicit Product-default authority elsewhere in the repository. These
+ * built-in rows do not invent material values: they project the exact generic-
+ * steel elastic modulus and thermal-expansion coefficient already governed by
+ * PD-ELASTIC-THERMAL. Elastic modulus is converted from Pa to the enrichment
+ * contract's MPa value; thermal expansion already uses the canonical 1/K unit.
  *
  * Generic OD, wall, density, insulation and component-mass tables remain absent
  * until separately qualified product engineering tables exist.
@@ -55,6 +57,18 @@ export const LOAD_CALC_ENGINEERING_PRODUCT_DEFAULTS_STANDARD_V1 = createProductE
       'DEFAULT.elasticModulusPa converted by exact 1 MPa = 1e6 Pa.',
     ].join(' '),
     allowedMethods: getNonFeaFieldDefinition('ELASTIC_MODULUS').methods,
+  }, {
+    defaultId: 'PD-ENG-THERMAL-EXPANSION-GENERIC-STEEL',
+    fieldId: 'THERMAL_EXPANSION_COEFFICIENT',
+    value: STANDARD_THERMAL_EXPANSION_PER_K,
+    unit: '1/K',
+    basis: [
+      'Target-level projection of existing governed Product default',
+      `${LOAD_CALC_STANDARD_DEFAULTS_V1.profileId}@${LOAD_CALC_STANDARD_DEFAULTS_V1.version}`,
+      `${STANDARD_ELASTIC_THERMAL_DEFAULT.defaultId}@${STANDARD_ELASTIC_THERMAL_DEFAULT.semanticHash}`,
+      'DEFAULT.thermalExpansionPerK reused without unit conversion because the field contract is 1/K.',
+    ].join(' '),
+    allowedMethods: getNonFeaFieldDefinition('THERMAL_EXPANSION_COEFFICIENT').methods,
   }],
 });
 
@@ -276,6 +290,17 @@ function requireStandardElasticModulusMpa(row) {
     );
   }
   return elasticModulusPa / 1e6;
+}
+
+function requireStandardThermalExpansionPerK(row) {
+  const thermalExpansionPerK = Number(row?.value?.DEFAULT?.thermalExpansionPerK);
+  if (!Number.isFinite(thermalExpansionPerK) || thermalExpansionPerK <= 0) {
+    throw codedError(
+      'PD-ELASTIC-THERMAL DEFAULT.thermalExpansionPerK must be a positive finite value.',
+      'PRODUCT_ENGINEERING_DEFAULT_SOURCE_THERMAL_EXPANSION_INVALID',
+    );
+  }
+  return thermalExpansionPerK;
 }
 
 function normalizeMethods(value) {

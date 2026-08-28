@@ -24,6 +24,9 @@ import {
   createNonFeaProductDefaultProvider,
 } from './project-data/non-fea-product-default-profile.js';
 import {
+  createNonFeaProductEngineeringDefaultProvider,
+} from './project-data/non-fea-product-engineering-default-profile.js';
+import {
   assertRequestedLoadCasesAuthorized,
   createNonFeaLoadCaseAuthority,
 } from './project-data/non-fea-load-case-authority.js';
@@ -204,15 +207,29 @@ export function buildCurrentPreFeaRequestInput() {
     error.details = configuredDefaultProvider.blockers;
     throw error;
   }
+  const productEngineeringDefaultProvider = createNonFeaProductEngineeringDefaultProvider({
+    sourceModel: dataset.sharedModel,
+    requestedMethods: configuration.requestedMethods,
+  });
+  if (productEngineeringDefaultProvider.blockers.length) {
+    const error = codedError(
+      'Product engineering-default evidence is blocked.',
+      'COMMON_INPUT_PRODUCT_ENGINEERING_DEFAULTS_BLOCKED',
+    );
+    error.details = productEngineeringDefaultProvider.blockers;
+    throw error;
+  }
 
   // This sidecar is an ephemeral resolver evidence bundle. The accepted user
-  // sidecar remains separately stored; Project Data defaults are compiled into
-  // exact ENTITY records only for resolution and are never written back to it.
+  // sidecar remains separately stored; Project Data and Product engineering
+  // defaults are compiled into exact ENTITY records only for resolution and
+  // are never written back to the accepted sidecar.
   const enrichmentSidecar = createNonFeaEnrichmentSidecar({
     sourceSemanticHash: dataset.sharedModel.semanticHash,
     records: [
       ...acceptedEnrichmentSidecar.records,
       ...configuredDefaultProvider.records,
+      ...productEngineeringDefaultProvider.records,
     ],
   });
   const resolutionLedger = resolveNonFeaEnrichment({
@@ -261,6 +278,7 @@ export function buildCurrentPreFeaRequestInput() {
     enrichmentSidecar,
     acceptedEnrichmentSidecar,
     configuredDefaultProvider,
+    productEngineeringDefaultProvider,
     productDefaultProvider,
     loadCaseAuthority,
     resolutionLedger,

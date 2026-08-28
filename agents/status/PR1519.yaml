@@ -1,0 +1,44 @@
+pr: 1519
+state: SOURCE_COMPLETE_EXECUTION_NOT_RUN
+branch: agent/issue-1321-standard-engineering-product-default
+initial_base_sha: 751d577290f333dbec9f18804766dde61b0f62da
+reconciled_main_sha: 8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d
+source_complete_code_sha: 09a6e9a277c57f18e164498cf59e3244a8008da2
+merge_disposition: DRAFT_OWNER_AUTHORITY_NOT_GRANTED
+checks:
+  live_main_grounding: PASS_SOURCE_INSPECTION
+  upstream_product_default_identity: PASS_SOURCE_INSPECTION
+  pa_to_mpa_conversion: PASS_SOURCE_INSPECTION
+  standard_target_profile_scope: PASS_SOURCE_INSPECTION
+  precedence_preserved: PASS_SOURCE_INSPECTION
+  protected_numerical_paths: PASS_SOURCE_INSPECTION
+  repository_access: BLOCKED_DNS_GITHUB
+  product_engineering_profile: NOT_RUN
+  product_engineering_runtime_resolution: NOT_RUN
+  effective_projection: NOT_RUN
+  aggregate_non_fea: NOT_RUN
+  imports: NOT_RUN
+  advanced_shell: NOT_RUN
+  build: NOT_RUN
+  diff_check: NOT_RUN
+execution_blocker:
+  command: git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git HEAD
+  result: Could not resolve host: github.com
+invariants:
+  standard_target_profile_rows: 1
+  elastic_modulus_pa: 200000000000
+  elastic_modulus_mpa: 200000
+  upstream_source: PD-ELASTIC-THERMAL
+  source_mutation: false
+  generic_engineering_table_expansion: false
+  precedence_changed: false
+  support_authority_expanded: false
+  numerical_mechanics_changed: false
+  benchmark_tolerance_changed: false
+  execution_authority_granted: false
+  release_authority_granted: false
+next_action: >-
+  Execute scripts/non-fea-product-engineering-default-profile-check.mjs on the
+  exact PR head first when faithful repository access is available; then run the
+  documented runtime/effective/aggregate/import/build sequence, re-ground live
+  merge metadata, and obtain explicit owner merge authorization.

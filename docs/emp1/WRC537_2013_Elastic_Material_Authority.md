@@ -2,137 +2,127 @@
 
 ## Decision
 
-The retained WRC 537 Table 5 cylindrical computation sheet provides one bounded source fact that can be separated from the broader unresolved material/theory questions:
+Issue #1379 has advanced beyond Table-5 input silence, but it is **not closed**.
 
-> The Table-5 calculation sheet explicitly lists loads, geometry, geometric parameters and stress-concentration factors, and its displayed cylindrical stress equations do not contain an explicit shell modulus `E` or Poisson-ratio `nu` input.
+Current source disposition:
 
-This is **not** authority that WRC 537 is universally independent of material properties. It does not establish the derivation-level role of `E`, the Poisson-ratio assumption, the constitutive model, the shell-theory assumptions, or applicability to arbitrary materials.
+`BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED`
 
-Current source disposition therefore remains:
+Two additional WRC primary-source facts are now qualified for the retained cylindrical method:
 
-`BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED`
+1. the original theoretical solutions used simplifying assumptions including **flexible loading surfaces for cylindrical vessels**;
+2. WRC's historical extension plan identifies **large-deflection theory and other nonlinear effects** as later shell-theory/Bijlaard-method extension work, not as already-qualified content of the retained original basis.
 
-## Current authority split
+These facts narrow the shell-theory boundary. They do **not** prove universal material independence, absolute-`E` cancellation, a Poisson-ratio rule, homogeneous/isotropic material applicability, attachment-material equivalence, or plastic/creep/composite applicability.
 
-The bounded gamma=5 / zero-dp route is currently authorized by a separate Owner-authorized route chain. That runtime state does not close this source-semantic gate.
+## Controlled source custody
 
 ```text
-TABLE-5 MATERIAL/THEORY SOURCE RECORD
-explicit E input absent on retained Table 5        = qualified retained text
-explicit nu input absent on retained Table 5       = qualified retained text
-displayed final equations explicit-E-free          = qualified retained text
-displayed final equations explicit-nu-free         = qualified retained text
-absolute E independence                            = not qualified
-Poisson-ratio irrelevance/treatment                 = not qualified
-constitutive / shell-theory applicability           = not qualified
-engineering use granted by this source record       = false
-production use granted by this source record        = false
-
-CURRENT BOUNDED RUNTIME
-bounded gamma5 / zero-dp route authorized           = true
-registry registered                                 = true
-bounded engineering use                             = true
-bounded production use                              = true
-global EMP.1.C                                      = false
-code compliance                                     = false
-release qualified                                   = false
-professional release ready                          = false
+Document      = WRC 537 (2013)
+Pinned path   = docs/emp1/WRC537_2013.pdf
+Git blob      = ce861233928154145a9257efbbf8dbef3f5a17d1
+Raw SHA-256   = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
 ```
 
-Governing invariant:
+Pinned-PDF direct-page observation in the connected binary transport remains:
 
-`BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_ELASTIC_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY`
+`NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`
+
+A directly readable WRC 537 primary-document text rendering was inspected. Its byte identity to the pinned repository PDF is **UNPROVEN** and is not represented as source-byte custody.
+
+### Primary text locator A — cylindrical theoretical assumption
+
+WRC 537 (2013), **Foreword to WRC Bulletin 107, August 1965 Original Version**, roman page vii:
+
+- development of the theoretical solutions used simplifying assumptions;
+- the cylindrical-vessel assumption explicitly identified there is **flexible loading surfaces**;
+- the same discussion connects those assumptions to limitations in the useful diameter-ratio range and warns about larger loading surfaces.
+
+Bounded authority created by that observation:
+
+`CYLINDRICAL_THEORY_FLEXIBLE_LOADING_SURFACE_ASSUMPTION_QUALIFIED`
+
+This does not prove the attachment material, wall thickness, rigidity class, or constitutive law.
+
+### Primary text locator B — nonlinear extension boundary
+
+WRC 537 (2013), **Foreword to WRC Bulletin 107, March 1979 Update of August 1965 Original Version**, roman page vi:
+
+- long-range plans call for review of shell theory and Bijlaard's method;
+- the planned extension expressly includes **large-deflection theory and other nonlinear effects**.
+
+The bounded conclusion is not that WRC supplies a complete nonlinear exclusion catalog. It is only that those large-deflection/nonlinear extensions are not treated as already-qualified content of the retained original theory basis.
+
+## Retained Table-5 authority
+
+The previously qualified Table-5 facts remain unchanged:
+
+```text
+explicit E input absent                          = qualified
+explicit Poisson-ratio input absent              = qualified
+displayed cylindrical equations explicit-E-free = qualified
+displayed equations explicit-nu-free             = qualified
+```
+
+Retained transcription:
+
+```text
+path       = docs/emp1/WRC537_2013_Tables_and_Charts.md
+table      = Table 5 — Computation Sheet for Local Stresses in Cylindrical Shells
+PDF pages  = 41–42
+```
+
+This qualification boundary remains:
+
+`TABLE5_COMPUTATION_SHEET_EXPLICIT_INPUT_AND_DISPLAYED_EQUATION_CONTENT_ONLY`
+
+## Current authority map
+
+```text
+Table-5 explicit E/nu input non-use                        = qualified
+Table-5 displayed stress equation explicit E/nu non-use   = qualified
+cylindrical flexible-loading-surface theory assumption     = qualified
+large-deflection/nonlinear later-extension boundary        = qualified
+
+exact role of E in derivation                              = unresolved
+absolute E cancellation                                    = unresolved
+Poisson-ratio treatment                                    = unresolved
+homogeneous/isotropic linear-elastic assumption            = unresolved
+thin-shell/small-deformation rule for cylindrical method   = unresolved beyond the bounded source statements above
+host-shell / attachment material relationship              = unresolved
+temperature-dependent modulus                              = unresolved
+plasticity / creep applicability                           = unresolved
+anisotropy / orthotropy / composites                       = unresolved
+material discontinuity / lined or clad shell treatment     = unresolved
+
+engineering use granted by this source record              = false
+production use granted by this source record               = false
+```
+
+## Critical distinctions
 
 Do not infer:
 
 ```text
-bounded route is authorized
-    => E / nu / constitutive / shell-theory source semantics are qualified
+Table 5 does not ask for E
+    => absolute E is irrelevant to derivation or applicability
 ```
 
-The bounded route may execute under its separately governed authorization while Issue #1379 remains open for primary-source material/theory closure.
-
-## Retained primary-source transcription
-
-Controlled WRC identity:
+Do not infer:
 
 ```text
-Document      = WRC 537 (2013)
-Git blob      = ce861233928154145a9257efbbf8dbef3f5a17d1
-Raw SHA-256   = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
-Transcription = docs/emp1/WRC537_2013_Tables_and_Charts.md
-Table         = Table 5 — Computation Sheet for Local Stresses in Cylindrical Shells
-PDF pages     = 41–42
+cylindrical theory assumes a flexible loading surface
+    => any attachment material/stiffness/geometry is acceptable
 ```
 
-Direct current-turn rendering of the binary PDF remains:
-
-`NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`
-
-The retained Table-5 transcription explicitly presents these input groups:
+Do not infer:
 
 ```text
-Applied loads:
-P, Mc, Ml, Mt, Vc, Vl
-
-Geometry:
-T, r0, Rm
-
-Geometric parameters:
-gamma = Rm/T
-beta  = 0.875 r0/Rm
-
-Stress-concentration factors:
-Kn, Kb
+large-deflection/nonlinear effects were later extension work
+    => every nonlinear/plastic/creep/composite material class has been explicitly source-excluded
 ```
 
-The retained membrane, bending and shear expressions shown on Table 5 use loads, `Rm`, `r0`, `T`, `beta`, `Kn` and `Kb`. The combined-stress-intensity section then consumes the reconstructed stress components.
-
-No explicit `E` input and no explicit Poisson-ratio input is present on this retained Table-5 computation sheet or in those displayed final cylindrical stress expressions.
-
-## What is now source-qualified
-
-For the **retained Table-5 computation sheet only**:
-
-- an explicit shell modulus input is absent;
-- an explicit Poisson-ratio input is absent;
-- the displayed final cylindrical membrane/bending/shear stress expressions contain no explicit `E` term;
-- the displayed final expressions contain no explicit Poisson-ratio term.
-
-The qualification boundary is intentionally narrow:
-
-`TABLE5_COMPUTATION_SHEET_EXPLICIT_INPUT_AND_DISPLAYED_EQUATION_CONTENT_ONLY`
-
-## What this does not prove
-
-The following inferences remain prohibited:
-
-```text
-Table 5 has no explicit E input
-    => absolute E is irrelevant to WRC derivation/applicability
-```
-
-```text
-Table 5 has no explicit nu input
-    => Poisson ratio is irrelevant or unconstrained
-```
-
-```text
-final displayed stress equations do not show material fields
-    => arbitrary nonlinear/plastic/creep/composite/anisotropic materials are covered
-```
-
-The source may embed material/theory assumptions in derivation, fitted curves, underlying shell solutions, or applicability statements without requiring those quantities as runtime inputs on Table 5. The retained computation sheet alone cannot resolve that question.
-
-## Legacy nomenclature context
-
-`docs/01_WRC537_METHOD_DEFINITION.md` remains explicitly `NOT_READY_FOR_IMPLEMENTATION`. It retains the candidate §4.1 nomenclature statement:
-
-```text
-E = modulus of elasticity of shell material
-```
-
-That legacy extraction is useful as an unresolved extraction target, but it is not promoted here into primary-source authority for the exact role of `E`.
+The source statements narrow the theory boundary but do not answer every material question listed in Issue #1379.
 
 ## Current software observation
 
@@ -141,46 +131,51 @@ That legacy extraction is useful as an unresolved extraction target, but it is n
 ```text
 E
 nu
-Sy / allowable stress
+yield/allowable stress
 material class
 constitutive law
 temperature-dependent modulus
 ```
 
-This software non-use is consistent with the retained Table-5 explicit-input structure, but consistency is not a substitute for material/theory authority.
+That software fact remains observational only. It cannot create engineering material authority.
 
-The current production route and registry independently report bounded route authorization/engineering use as true. The professional release current-state contract independently reports global EMP.1.C, code compliance, release qualification and professional release readiness as false. Those are separate authority layers, not evidence that the material/theory source questions have been answered.
+## Current bounded runtime remains separate
 
-## Still-required primary closure
+```text
+bounded gamma5 / zero-dp route authorized = true
+registry registered                       = true
+bounded engineering use                   = true
+bounded production use                    = true
+global EMP.1.C                            = false
+code compliance                           = false
+release qualified                         = false
+professional release ready                = false
+```
 
-Before material/theory applicability is promoted, source work must still establish:
+Governing invariant:
+
+`BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_ELASTIC_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY`
+
+## Remaining primary closure
+
+Before #1379 can be closed, repository evidence must still establish:
 
 1. exact role of shell modulus `E` in the WRC derivation and cylindrical method;
-2. whether absolute `E` cancels from final coefficients and under what assumptions;
-3. whether Poisson ratio is explicit, fixed, embedded, approximated or otherwise treated;
-4. whether homogeneous isotropic linear elasticity is assumed;
-5. whether thin-shell/small-deformation theory is the method basis and how applicability is bounded;
-6. whether host-shell and attachment material/stiffness relationships affect standard cylindrical curves;
-7. temperature-dependent modulus treatment;
-8. applicability to local yielding, elastic-plastic response, creep, viscoelasticity, anisotropy, orthotropy and composites;
-9. treatment of clad/lined shells or material discontinuities near the attachment;
-10. whether yield strength/allowable stress belongs only to a separate code-acceptance layer;
-11. exact primary-source locators for every retained material/theory applicability statement.
+2. whether absolute `E` cancels from final coefficients and under which assumptions;
+3. Poisson-ratio treatment or embedded assumption;
+4. constitutive assumptions beyond the now-qualified flexible-loading-surface/nonlinear-extension boundary;
+5. host-shell versus attachment material requirements;
+6. temperature/material-class restrictions;
+7. exact primary-source locators for every retained positive material/theory rule.
 
 ## Protected authority boundary
 
-This source-governance increment changes no production mechanics. It does not:
+This source-governance increment does not:
 
-- add material fields to the WRC adapter;
-- change WRC coefficients or Table-5 stress equations;
-- change gamma/beta equations or domains;
-- add a Poisson-ratio or modulus correction;
-- add nonlinear or temperature-dependent constitutive behavior;
-- change attachment-class, thickness, radius, pressure, SCF, off-axis, spherical, non-round or interaction authority;
-- change the bounded route or registry;
-- change the aggregate P0 source-semantics gate;
-- grant code-compliance, global EMP.1.C or release authority.
+- add material fields or constitutive behavior to production;
+- change WRC coefficients, gamma/beta, pressure, SCF, stress recovery, route or registry;
+- change the P0 aggregate/current-state in this PR;
+- alter source bytes, benchmarks, oracle, tolerance, evidence 01-12, workflows or UI;
+- grant code, global EMP.1.C, release or deployment authority.
 
-## Reopen gate
-
-A production/material-custody change is admissible only after the pinned primary source establishes the exact material/theory assumptions and identifies whether any material quantity must become an explicit canonical input or whether final stress evaluation is source-qualified as independent of those quantities within a bounded elastic domain.
+A downstream #1389 aggregate/current-state reconciliation is required **after merge** if this new #1379 status becomes current-main authority.

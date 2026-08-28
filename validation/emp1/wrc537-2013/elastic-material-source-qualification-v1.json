@@ -1,13 +1,31 @@
 {
   "schema": "emp1-wrc537-elastic-material-source-qualification/v1",
   "issue": 1379,
-  "status": "BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED",
+  "status": "BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED",
   "sourceCustody": {
     "pinnedDocument": "docs/emp1/WRC537_2013.pdf",
     "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
     "rawSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
     "primaryBinaryPageReobservedThisIncrement": false,
     "primaryBinaryObservationStatus": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
+    "externalPrimaryTextObservation": {
+      "status": "PASS_TEXT_OBSERVED",
+      "documentIdentity": "WRC 537 (2013)",
+      "rendering": "https://studylib.net/doc/25312294/wrc-537-",
+      "byteIdentityToPinnedPdf": "UNPROVEN",
+      "locators": [
+        {
+          "locator": "Foreword to WRC Bulletin 107, March 1979 Update of August 1965 Original Version, roman page vi",
+          "directObservation": "long-range review of shell theory/Bijlaard method would include large-deflection theory and other nonlinear effects",
+          "boundedConclusion": "LARGE_DEFLECTION_AND_OTHER_NONLINEAR_EFFECTS_ARE_NOT_TREATED_AS_ALREADY_QUALIFIED_BY_THE_ORIGINAL_BASIS"
+        },
+        {
+          "locator": "Foreword to WRC Bulletin 107, August 1965 Original Version, roman page vii",
+          "directObservation": "theoretical solutions used simplifying assumptions including flexible loading surfaces for cylindrical vessels",
+          "boundedConclusion": "CYLINDRICAL_THEORY_FLEXIBLE_LOADING_SURFACE_ASSUMPTION_QUALIFIED"
+        }
+      ]
+    },
     "retainedPrimaryTranscription": {
       "path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
       "table": "Table 5 - Computation Sheet for Local Stresses in Cylindrical Shells",
@@ -52,10 +70,20 @@
     "provesUniversalMaterialApplicability": false,
     "provesConstitutiveOrShellTheoryApplicability": false
   },
+  "primaryTheoryConclusions": {
+    "cylindricalFlexibleLoadingSurfaceAssumptionQualified": true,
+    "largeDeflectionNonlinearEffectsAlreadyQualifiedByOriginalBasis": false,
+    "largeDeflectionNonlinearEffectsIdentifiedAsLaterExtensionWork": true,
+    "absoluteModulusIndependenceQualifiedByTheseStatements": false,
+    "poissonRatioTreatmentQualifiedByTheseStatements": false,
+    "universalConstitutiveApplicabilityQualifiedByTheseStatements": false
+  },
   "authorityScope": "THIS_SOURCE_RECORD_ONLY_NOT_LIVE_ROUTE_STATE",
   "authority": {
     "table5ExplicitMaterialInputNonUseQualified": true,
     "table5DisplayedStressEquationExplicitMaterialInputNonUseQualified": true,
+    "cylindricalFlexibleLoadingSurfaceAssumptionQualified": true,
+    "largeDeflectionNonlinearExtensionBoundaryQualified": true,
     "modulusRoleQualified": false,
     "absoluteModulusIndependenceQualified": false,
     "poissonRatioTreatmentQualified": false,
@@ -95,13 +123,15 @@
     "DO_NOT_CLAIM_NONLINEAR_PLASTIC_CREEP_OR_COMPOSITE_APPLICABILITY",
     "DO_NOT_USE_YIELD_OR_ALLOWABLE_STRESS_TO_MODIFY_WRC_CURVE_EVALUATION",
     "DO_NOT_ASSUME_HOST_AND_ATTACHMENT_MATERIAL_RELATIONSHIP",
+    "DO_NOT_TREAT_FLEXIBLE_LOADING_SURFACE_AS_PROOF_OF_ATTACHMENT_MATERIAL_EQUIVALENCE",
+    "DO_NOT_TREAT_LATER_NONLINEAR_EXTENSION_LANGUAGE_AS_A_COMPLETE_CONSTITUTIVE_EXCLUSION_CATALOG",
     "DO_NOT_INFER_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY_FROM_BOUNDED_ROUTE_AUTHORIZATION"
   ],
   "requiredPrimaryClosure": [
     "exact role of shell modulus E in WRC derivation and cylindrical method",
     "whether absolute E cancels from final stress coefficients and under which assumptions",
     "Poisson-ratio treatment or embedded assumption",
-    "constitutive and shell-theory assumptions",
+    "constitutive assumptions beyond the qualified flexible-loading-surface and nonlinear-extension boundary",
     "host-shell versus attachment material requirements",
     "temperature/material-class restrictions",
     "source locators for every retained material/theory applicability rule"

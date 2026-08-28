@@ -4,10 +4,11 @@ import { ENGINEERING_MODEL_EVENTS } from './engineering-model-controller.js';
 import { engineeringModelStore } from './engineering-model-store.js';
 import { authorizedEnrichmentConsumerController } from './enrichment/authorized-enrichment-runtime.js';
 import {
+  isRoutineRunReady,
   renderEngineeringLoadPane,
   renderLoadCalcConsumer,
   renderLoadCalcTopologyPane,
-} from './load-calc-consumer-view.js';
+} from './load-calc-current-system-view.js';
 import { classifyLoadCalcResultPresentation } from './load-calc-result-presentation.js';
 import { masterDataController } from './master-data-controller.js';
 import { createCurrentNonFeaWorkspaceStatusProjection } from './non-fea-analysis-plan-runtime.js';
@@ -282,20 +283,11 @@ export class LoadCalcConsumerController {
       return;
     }
 
-    try {
-      this.readyCalculationSnapshotProvider();
-      const authorization = this.empiricalAuthorizationController.refreshEmpirical();
-      if (authorization?.calculationEligible) {
-        this.message = 'Executing current authorized empirical package against the common seal…';
-        this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, { source: 'load-calc' });
-      } else {
-        this.message = 'Explicit empirical authorization still required.';
-        this.render();
-      }
-    } catch (error) {
-      this.message = error instanceof Error ? error.message : String(error);
-      this.render();
-    }
+    this.message = 'Executing the current governed gravity calculation…';
+    this.eventBus.publish(
+      ENGINEERING_MODEL_EVENTS.CURRENT_COMMON_INPUT_CALCULATE_REQUESTED,
+      { source: 'load-calc' },
+    );
   }
 
   handleClick(event) {
@@ -428,12 +420,14 @@ export class LoadCalcConsumerController {
     this.renderRevision += 1;
     const revision = this.renderRevision;
     const authorizationState = engineeringModelStore.getEmpiricalAuthorizationState();
+    const currentCommonInputExecution = engineeringModelStore.getCurrentCommonInputExecution();
     const topologyCheck = this.topologyCheck;
     const view = renderLoadCalcConsumer(this.rootElement.ownerDocument, {
       activeTab: this.activeTab,
       currentWorkflowStepId: this.currentWorkflowStepId,
       message: this.message,
       distribution: engineeringModelStore.getDistribution(),
+      currentCommonInputExecution,
       authorizedExecution: engineeringModelStore.getAuthorizedExecution(),
       authorizationState,
       supportSiteModel: engineeringModelStore.getSupportSiteModel(),
@@ -452,6 +446,7 @@ export class LoadCalcConsumerController {
       engineeringModelStore.getRoutePartitionModel(),
       engineeringModelStore.getAuthorizedExecution(),
       authorizationState,
+      currentCommonInputExecution,
     );
     else this.renderDeferredPane(this.activeTab, pane, revision);
   }
@@ -572,17 +567,23 @@ export class LoadCalcConsumerController {
     const commonState = nonFeaCommonInputStore.getSnapshot();
     const scenarioState = empiricalLoadCalcScenarioStore.getSnapshot();
     const freshProfile = projectDataStore.getProfile();
+    const routineRunReady = isRoutineRunReady(commonState);
 
     // Gate statuses
-    const datasetOk  = authState?.reasonCode !== 'NO_ACTIVE_DATASET' && authState?.reasonCode !== null;
+    const datasetOk  = Boolean(this.context?.datasetId);
     const sealOk     = !!(commonState?.commonInput && !commonState?.staleness?.stale);
-    const authOk     = !!(scenarioState?.calculationEligible || authState?.calculationEligible);
+    const effectiveSealOk = sealOk || routineRunReady;
+    const authOk     = !!(scenarioState?.calculationEligible || routineRunReady);
 
     // Human-readable status detail (P0: no raw enum codes shown to users)
-    const sealDetail = sealOk ? 'Inputs sealed ✓' :
-      (commonState?.commonInput ? 'Seal is stale — changes were made after sealing' : 'Inputs not yet sealed — click to seal now');
-    const authDetail = authOk ? 'Calculation eligible ✓' :
-      (sealOk ? 'Sealed but not authorized — click to authorize' : 'Seal inputs first, then authorize');
+    const sealDetail = sealOk ? 'Inputs sealed ✓' : routineRunReady
+      ? 'READY validation will be sealed automatically when Run is selected'
+      : (commonState?.commonInput ? 'Seal is stale — changes were made after sealing' : 'Validate inputs to READY; Run will seal automatically');
+    const authDetail = scenarioState?.calculationEligible
+      ? 'Scenario authorization current ✓'
+      : routineRunReady
+        ? 'Routine system Run authority will be created at execution ✓'
+        : 'A fully READY current Common Input is required';
 
     // Loads field audit — read current values from fresh profile
     const lc = freshProfile?.loadCalculation || {};
@@ -609,13 +610,10 @@ export class LoadCalcConsumerController {
 
     // The raw-field checks above predate the #1321 effective-value/default
     // ledger: they only see literal Project Data values, never Product/Project
-    // defaults or ledger-resolved targets. `authState.calculationEligible` is
-    // the same readiness signal the Run button already trusts
-    // (engineeringModelStore#currentEmpiricalReadiness runs the ledger-aware
-    // validateProjectDataProfile(..., 'authorizedGravityLoads'/'loads', ...)),
-    // so a raw field showing empty must not be presented as a blocker once
-    // that authorized path is eligible.
-    const ledgerAuthorized = authState?.calculationEligible === true;
+    // defaults or ledger-resolved targets. A READY Common Input or an eligible
+    // explicit legacy package proves those fields were resolved by the governed
+    // authority path, so raw emptiness must not be reintroduced as a UI blocker.
+    const ledgerAuthorized = routineRunReady || authState?.calculationEligible === true;
 
     const allSafeSet       = (gravitySet && factorSet && equilSet && casesSet) || ledgerAuthorized;
     const masterFieldsSet  = (pipeSectSet && matDensSet && opFluidSet && hydFluidSet && insulSet && compWtSet) || ledgerAuthorized;
@@ -650,8 +648,9 @@ export class LoadCalcConsumerController {
       </li>`;
     }
 
-    const sealBtn  = !sealOk  ? `<button class="verify-gate__action" data-seal-inputs title="Seal all common inputs now">→ Seal inputs</button>` : '';
-    const authNote = !authOk && sealOk ? `<button class="verify-gate__action" data-empirical-authorize title="Authorize the configured scenario">→ Authorize</button>` : (!authOk ? `<span class="verify-gate__blocked">(seal first)</span>` : '');
+    const sealBtn = !sealOk && !routineRunReady
+      ? `<button class="verify-gate__action" data-seal-inputs title="Optional explicit audit seal">→ Seal for audit</button>`
+      : '';
 
     const loadsDetail = loadsOk
       ? (ledgerAuthorized && rawLoadsBlockerCount > 0
@@ -667,8 +666,8 @@ export class LoadCalcConsumerController {
           <div class="verify-gates-col">
             <div class="verify-section-header">
               <h2>Readiness Gates</h2>
-              <span class="verify-progress" data-ok="${loadsOk && sealOk && authOk}">
-                ${[datasetOk, loadsOk, sealOk, authOk].filter(Boolean).length} / 4 passing
+              <span class="verify-progress" data-ok="${loadsOk && effectiveSealOk && authOk}">
+                ${[datasetOk, loadsOk, effectiveSealOk, authOk].filter(Boolean).length} / 4 passing
               </span>
             </div>
             <ul class="verify-checklist">
@@ -678,8 +677,8 @@ export class LoadCalcConsumerController {
                   ? '<button class="verify-gate__action verify-gate__action--primary" data-goto-tab="project-data">→ Open Project Data</button>'
                   : (!loadsOk ? '<button class="verify-gate__action verify-gate__action--secondary" data-goto-tab="masters">→ Open Masters</button>' : '')
               )}
-              ${gate(sealOk, 'Common seal', sealDetail, sealBtn)}
-              ${gate(authOk, 'Authorization', authDetail, authNote)}
+              ${gate(effectiveSealOk, 'Common seal', sealDetail, sealBtn)}
+              ${gate(authOk, 'Run authority', authDetail)}
             </ul>
             <p class="engineering-note">Results publish Fv / Fl(guide) / Fa(lineStop) per restraint after calculation.</p>
           </div>

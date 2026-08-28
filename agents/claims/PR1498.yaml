@@ -1,0 +1,75 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1498
+branch: agent/issue-1389-pr1497-current-state-reconcile-20260828
+issue: 1389
+dependency_pr: 1497
+dependency_issue: 1377
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY_AUTO_MERGE_AUDIT
+execution_mode: AUTO
+auto_state: MERGE_AUDIT
+scope_authority: LOCKED_TO_PR1497_DOWNSTREAM_RECONCILIATION
+phase_progression: AUTO
+coordination_state: SAFE_CURRENT_STATE_GOVERNANCE_DISJOINT_FROM_PR1490_AND_PR1496
+scope:
+  authority: EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE_AFTER_PR1497
+  paths:
+    - validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json
+    - docs/emp1/EMP1_WRC537_Bounded_P0_Source_Semantics_Gate.md
+    - validation/emp1/release/emp1-professional-release-current-state-v1.json
+    - scripts/emp1-professional-release-current-state-check.mjs
+    - docs/emp1/EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE.md
+    - agents/PR1498_workreport.md
+    - agents/status/PR1498.yaml
+    - agents/claims/PR1498.yaml
+protected_exclusions:
+  - src/core/**
+  - validation/emp1/release/emp1-wrc537-gamma5-bounded-release-profile-v1.json
+  - validation/emp1/release/emp1-professional-release-readiness-v1.json
+  - WRC/CAUx controlled source bytes
+  - oracle/tolerances/benchmark expected values
+  - evidence 01-12
+  - .github/workflows/**
+  - UI/browser paths
+authority_boundary:
+  p0_blocker_count_reduced: false
+  professional_source_readiness_created: false
+  production_authority_created: false
+  release_authority_created: false
+  code_authority_created: false
+  deployment_authority_created: false
+current_truth:
+  pr1497_merge_sha: e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
+  issue1377_status: BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED
+  p0_aggregate_blob: a1ea8989831f5c01acce81cc4e734beb45b1feb0
+  p0_blocker_count: 9
+  current_state_json_blob: c421ce4e0656e7072fa50be700aa1aecb1be4bb6
+  current_state_checker_blob: 0792274e0da8531860815f4fd89d9c12522c658d
+  current_state_semantic_hash: 3ff5b391cc8e81f866f8e7746b6f48a8b588c2eaecbfb474abe0b14e1873cdd8
+  bounded_route_authorized: true
+  global_emp1_c: false
+  code_compliance: false
+  release_qualified: false
+  deployment_authorized: false
+  professional_release_ready: false
+reconciliation:
+  source_governance_basis_main: e6c76ac02e6ed2052e9c87e0691bb728f2031f5b
+  current_main: af55f56967d596d60c91db67b4fdf12ecb9a26a8
+  current_main_tree: a49ac0d80e3717f7d1f59e636a4c88fbc7507c85
+  intervening_prs:
+    - 1490
+    - 1496
+  overlap_classification: SAFE_AUTHORITY_DISJOINT
+validation:
+  p0_aggregate_checker: NOT_RUN
+  current_state_checker: NOT_RUN
+  evidence_01_12: NOT_GENERATED
+  numerical_qualification: NOT_RUN_NOT_CLAIMED
+  numerical_comparison: NOT_APPLICABLE
+  pinned_pdf_direct_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+  external_rendering_byte_identity: UNPROVEN
+grounding_epoch: GE-PR1498-003
+merge_authority: GRANTED_EXPLICIT_OWNER_CURRENT_CONVERSATION
+handover_report: agents/PR1498_workreport.md
+exact_next_action: "Attach one-commit re-ground on af55f569..., complete exact-eight-file/current-main/review audit, merge if clean, then continue AUTO source-semantic closure under #1389."

@@ -1,0 +1,45 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1415
+branch: agent/issue-1377-retained-table5-mean-radius-reconciliation-20260825
+issue: 1377
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: MANUAL
+coordination_state: PR1427_MUST_WAIT_FOR_PR1415_MERGE_DECISION
+scope:
+  authority: EMP1_WRC537_RETAINED_TABLE5_RM_SYMBOL_ROLE_ONLY
+  paths:
+    - validation/emp1/wrc537-2013/cylindrical-mean-radius-source-qualification-v1.json
+    - scripts/emp1-wrc537-cylindrical-mean-radius-source-check.mjs
+    - docs/emp1/WRC537_2013_Cylindrical_Mean_Radius_Authority.md
+    - agents/PR1415_workreport.md
+    - agents/status/PR1415.yaml
+    - agents/claims/PR1415.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - validation/emp1/release/**
+  - shell-thickness source authority paths
+  - cylindrical physical-applicability source authority paths
+  - aggregate P0 gate
+  - .github/workflows/**
+authority_boundary:
+  retained_table5_rm_symbol_qualified: true
+  retained_table5_parameter_role_qualified: true
+  physical_rm_definition_qualified: false
+  od_id_t_construction_qualified: false
+  corrosion_assessment_geometry_qualified: false
+  section45_radius_identity_qualified_by_this_increment: false
+  source_record_engineering_authority: false
+  source_record_production_authority: false
+  bounded_runtime_authority_unchanged: true
+  global_emp1_c_authority: false
+  release_authority: false
+pre_reground_head: e97a269fb014d92ecec8bd62b9d35bbc8a7e1bd3
+live_main: 4677a92e3e1e8a743efa9c82f03db9d4a11cd59b
+structural_reground_head: 61cbb87955078159206f80f8d84dda2d1f77ba10
+structural_reground_tree: 9db9592bb75d2b831e2aa4038ddb0cc88033f31f
+merge_authority: NOT_GRANTED
+grounding_epoch: GE-PR1415-005
+handover_report: agents/PR1415_workreport.md
+exact_next_action: "Keep PR1415 draft/unmerged pending explicit owner merge authority. If merged, re-ground PR1427 immediately and reconcile the #1377 aggregate entry."

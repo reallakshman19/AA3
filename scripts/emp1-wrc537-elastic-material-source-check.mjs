@@ -16,12 +16,28 @@ const professional = JSON.parse(fs.readFileSync(professionalPath, 'utf8'));
 
 assert.equal(
   ledger.status,
-  'BLOCKED_PRIMARY_ELASTIC_MATERIAL_AND_SHELL_THEORY_AUTHORITY_UNRESOLVED',
+  'BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED',
 );
 assert.equal(ledger.sourceCustody.primaryBinaryPageReobservedThisIncrement, false);
 assert.equal(
   ledger.sourceCustody.primaryBinaryObservationStatus,
   'NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT',
+);
+
+const primary = ledger.sourceCustody.externalPrimaryTextObservation;
+assert.equal(primary.status, 'PASS_TEXT_OBSERVED');
+assert.equal(primary.documentIdentity, 'WRC 537 (2013)');
+assert.equal(primary.byteIdentityToPinnedPdf, 'UNPROVEN');
+assert.equal(primary.locators.length, 2);
+assert.ok(
+  primary.locators.some((row) => row.boundedConclusion ===
+    'CYLINDRICAL_THEORY_FLEXIBLE_LOADING_SURFACE_ASSUMPTION_QUALIFIED'),
+  'PRIMARY_FLEXIBLE_LOADING_SURFACE_LOCATOR_REQUIRED',
+);
+assert.ok(
+  primary.locators.some((row) => row.boundedConclusion ===
+    'LARGE_DEFLECTION_AND_OTHER_NONLINEAR_EFFECTS_ARE_NOT_TREATED_AS_ALREADY_QUALIFIED_BY_THE_ORIGINAL_BASIS'),
+  'PRIMARY_NONLINEAR_EXTENSION_BOUNDARY_LOCATOR_REQUIRED',
 );
 
 const table5 = ledger.sourceCustody.retainedPrimaryTranscription;
@@ -70,9 +86,18 @@ for (const key of [
   'provesConstitutiveOrShellTheoryApplicability',
 ]) assert.equal(ledger.retainedTable5Conclusions[key], false, `TABLE5_INFERENCE_MUST_REMAIN_FALSE:${key}`);
 
+assert.equal(ledger.primaryTheoryConclusions.cylindricalFlexibleLoadingSurfaceAssumptionQualified, true);
+assert.equal(ledger.primaryTheoryConclusions.largeDeflectionNonlinearEffectsAlreadyQualifiedByOriginalBasis, false);
+assert.equal(ledger.primaryTheoryConclusions.largeDeflectionNonlinearEffectsIdentifiedAsLaterExtensionWork, true);
+assert.equal(ledger.primaryTheoryConclusions.absoluteModulusIndependenceQualifiedByTheseStatements, false);
+assert.equal(ledger.primaryTheoryConclusions.poissonRatioTreatmentQualifiedByTheseStatements, false);
+assert.equal(ledger.primaryTheoryConclusions.universalConstitutiveApplicabilityQualifiedByTheseStatements, false);
+
 assert.equal(ledger.authorityScope, 'THIS_SOURCE_RECORD_ONLY_NOT_LIVE_ROUTE_STATE');
 assert.equal(ledger.authority.table5ExplicitMaterialInputNonUseQualified, true);
 assert.equal(ledger.authority.table5DisplayedStressEquationExplicitMaterialInputNonUseQualified, true);
+assert.equal(ledger.authority.cylindricalFlexibleLoadingSurfaceAssumptionQualified, true);
+assert.equal(ledger.authority.largeDeflectionNonlinearExtensionBoundaryQualified, true);
 for (const key of [
   'modulusRoleQualified',
   'absoluteModulusIndependenceQualified',
@@ -134,6 +159,9 @@ for (const code of [
   'DO_NOT_TREAT_TABLE5_EXPLICIT_NU_NON_USE_AS_PROOF_OF_POISSON_RATIO_IRRELEVANCE',
   'DO_NOT_TREAT_ABSENT_MATERIAL_INPUT_AS_UNIVERSAL_MATERIAL_INDEPENDENCE',
   'DO_NOT_INVENT_POISSON_RATIO_OR_MODULUS_CORRECTION',
+  'DO_NOT_CLAIM_NONLINEAR_PLASTIC_CREEP_OR_COMPOSITE_APPLICABILITY',
+  'DO_NOT_TREAT_FLEXIBLE_LOADING_SURFACE_AS_PROOF_OF_ATTACHMENT_MATERIAL_EQUIVALENCE',
+  'DO_NOT_TREAT_LATER_NONLINEAR_EXTENSION_LANGUAGE_AS_A_COMPLETE_CONSTITUTIVE_EXCLUSION_CATALOG',
   'DO_NOT_INFER_MATERIAL_OR_SHELL_THEORY_SOURCE_AUTHORITY_FROM_BOUNDED_ROUTE_AUTHORIZATION',
 ]) assert.ok(ledger.prohibitedInferences.includes(code), `MISSING_PROHIBITION:${code}`);
 
@@ -155,4 +183,4 @@ for (const key of [
 assert.equal(ledger.collateralAuthorityWidened, false);
 assert.equal(ledger.productionNumericsChanged, false);
 
-console.log('PASS_CURRENT_AUTHORIZED_ROUTE_TABLE5_MATERIAL_INPUT_NON_USE_MATERIAL_THEORY_STILL_BLOCKED');
+console.log('PASS_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_STILL_BLOCKED');

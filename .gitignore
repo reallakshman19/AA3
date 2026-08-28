@@ -35,7 +35,7 @@ slice-r-final.patch
 
 # Locally fetched pinned ACCDB source material for M047 Stage 2 local
 # measurement runs - third-party binary, not project source. Re-fetched
-# reproducibly per scripts/lfea-m047-stage2-source-custody-manifest.mjs.
+# reproducibly per scripts/lafea-m047-stage2-source-custody-manifest.mjs.
 artifacts/
 
 # Temporary test directories
@@ -44,3 +44,23 @@ artifacts/
 # Runtime-only exact-head LAFEA implementation-authorization receipt.
 # Keep the path specific: other reports remain visible to Git custody.
 /reports/qualification/lafea-implementation-authorization-gate.json
+
+# Runtime-only Issue #1371 Section 17 registry-closure readiness receipt.
+# The future cleanup proposal guard consumes this exact ignored receipt.
+/reports/qualification/lafea1371-registry-closure-readiness.json
+
+# Runtime-only B01 post-nullspace boundary discriminator receipt.
+# Keep the path exact so unrelated B01 reports remain visible to Git custody.
+/reports/qualification/B01/post-nullspace-boundary.json
+
+# Runtime-only B01 integrated exact-head envelope.
+# The historical final-qualification matrix stays in /tmp; only this sealed envelope is ignored.
+/reports/qualification/B01/integrated-exact-head.json
+
+# Runtime-only B02D V2 exact-head binding envelope.
+# Keep this path exact: unrelated B02D reports must remain visible to Git custody.
+/reports/qualification/B02D/v2-binding-exact-head.json
+
+# Runtime-only B02D V2 governing-response exact-head envelope.
+# Keep this path exact: other B02D response/RCA evidence must remain visible to Git custody.
+/reports/qualification/B02D/v2-governing-response-exact-head.json

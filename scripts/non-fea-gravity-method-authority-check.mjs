@@ -33,11 +33,13 @@ assert.ok(rawAuthority.blockers.some((row) => row.code === 'GRAVITY_METHOD_NOT_A
 
 const productProvider = createNonFeaProductDefaultProvider({ profile: rawEmpty });
 const productEntry = productProvider.effectiveProfile.loadCalculation.gravityMethod;
+const productCogFallbackPolicy = productProvider.effectiveProfile.loadCalculation.componentCogFallback.value;
 assert.equal(productEntry.value, NON_FEA_GRAVITY_METHOD_AUTO);
 assert.equal(productEntry.evidence.authority, 'PRODUCT_DEFAULT');
 assert.equal(productEntry.evidence.defaultId, 'PD-GRAVITY-METHOD');
 assert.equal(productEntry.evidence.profileVersion, LOAD_CALC_STANDARD_DEFAULTS_V1.version);
 assert.ok(productProvider.usageRows.some((row) => row.defaultId === 'PD-GRAVITY-METHOD'));
+assert.ok(productProvider.usageRows.some((row) => row.defaultId === 'PD-COMPONENT-COG-FALLBACK'));
 
 const productAuthority = createNonFeaGravityMethodAuthority(productProvider.effectiveProfile);
 assert.equal(productAuthority.state, 'READY');
@@ -108,6 +110,7 @@ assert.ok(malformedProductAuthority.blockers.some(
 
 const governedV3 = createGovernedEmpiricalGravityMethodSelection({
   gravityMethodAuthority: productAuthority,
+  componentCogFallbackPolicy: productCogFallbackPolicy,
   componentAuthorityAudit: audit([
     record('ELBOW-1', EMPIRICAL_COMPONENT_COG_CLASSIFICATION.ON_ROUTE),
     record('VALVE-1', EMPIRICAL_COMPONENT_COG_CLASSIFICATION.ON_ROUTE),
@@ -117,6 +120,7 @@ assert.equal(governedV3.selection.requestedMethod, NON_FEA_GRAVITY_METHOD_AUTO);
 assert.equal(governedV3.selection.selectedMethod, NON_FEA_GRAVITY_METHOD_V3_COG);
 assert.equal(governedV3.selection.selectionState, 'SELECTED_V3_COG');
 assert.equal(governedV3.gravityMethodAuthority.semanticHash, productAuthority.semanticHash);
+assert.equal(governedV3.componentCogFallbackPolicy, productCogFallbackPolicy);
 assert.equal(
   governedV3.componentAuthorityAuditProjectDataProfileSemanticHash,
   productAuthority.projectDataSemanticHash,
@@ -136,6 +140,7 @@ assert.throws(
 
 const governedV2Fallback = createGovernedEmpiricalGravityMethodSelection({
   gravityMethodAuthority: productAuthority,
+  componentCogFallbackPolicy: productCogFallbackPolicy,
   componentAuthorityAudit: audit([
     record('ELBOW-1', EMPIRICAL_COMPONENT_COG_CLASSIFICATION.ON_ROUTE),
     record('VALVE-1', EMPIRICAL_COMPONENT_COG_CLASSIFICATION.MIDPOINT_FALLBACK),
@@ -144,9 +149,12 @@ const governedV2Fallback = createGovernedEmpiricalGravityMethodSelection({
 assert.equal(governedV2Fallback.selection.selectedMethod, NON_FEA_GRAVITY_METHOD_V2);
 assert.equal(governedV2Fallback.selection.selectionState, 'SELECTED_V2_MISSING_COG_FALLBACK');
 assert.equal(governedV2Fallback.selection.fallbackLedger[0].permittedByPolicy, true);
+assert.equal(governedV2Fallback.selection.fallbackLedger[0].componentCogFallbackPolicy,
+  productCogFallbackPolicy);
 
 const governedBlockedFallback = createGovernedEmpiricalGravityMethodSelection({
   gravityMethodAuthority: productAuthority,
+  componentCogFallbackPolicy: productCogFallbackPolicy,
   componentAuthorityAudit: audit([
     record('VALVE-1', EMPIRICAL_COMPONENT_COG_CLASSIFICATION.OFF_ROUTE, {
       candidateChainageMm: null,
@@ -160,6 +168,7 @@ assert.equal(governedBlockedFallback.selection.fallbackLedger[0].permittedByPoli
 
 const explicitV2Selection = createGovernedEmpiricalGravityMethodSelection({
   gravityMethodAuthority: explicitV2Authority,
+  componentCogFallbackPolicy: explicitV2Provider.effectiveProfile.loadCalculation.componentCogFallback.value,
   componentAuthorityAudit: audit([
     record('VALVE-1', EMPIRICAL_COMPONENT_COG_CLASSIFICATION.MIDPOINT_FALLBACK),
   ], explicitV2Authority.projectDataSemanticHash),
@@ -170,6 +179,7 @@ assert.equal(explicitV2Selection.selection.selectionState, 'EXPLICIT_V2_SELECTED
 
 const explicitV3Selection = createGovernedEmpiricalGravityMethodSelection({
   gravityMethodAuthority: explicitV3Authority,
+  componentCogFallbackPolicy: explicitV3Provider.effectiveProfile.loadCalculation.componentCogFallback.value,
   componentAuthorityAudit: audit([
     record('VALVE-1', EMPIRICAL_COMPONENT_COG_CLASSIFICATION.ON_ROUTE),
   ], explicitV3Authority.projectDataSemanticHash),
@@ -181,6 +191,7 @@ assert.equal(explicitV3Selection.selection.selectionState, 'EXPLICIT_V3_SELECTED
 assert.throws(
   () => createGovernedEmpiricalGravityMethodSelection({
     gravityMethodAuthority: productAuthority,
+    componentCogFallbackPolicy: productCogFallbackPolicy,
     componentAuthorityAudit: audit([], 'fnv1a64:aaaaaaaaaaaaaaaa'),
   }),
   (error) => error?.code === 'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_PROFILE_MISMATCH',
@@ -189,6 +200,7 @@ assert.throws(
 assert.throws(
   () => createGovernedEmpiricalGravityMethodSelection({
     gravityMethodAuthority: invalidAuthority,
+    componentCogFallbackPolicy: productCogFallbackPolicy,
     componentAuthorityAudit: audit([], invalidAuthority.projectDataSemanticHash),
   }),
   (error) => error?.code === 'GRAVITY_METHOD_AUTHORITY_NOT_READY',
@@ -200,6 +212,7 @@ console.log(JSON.stringify({
   rawEmptyBlocked: true,
   productDefaultRequest: productAuthority.requestedMethod,
   productDefaultId: productAuthority.provenance.defaultId,
+  productCogFallbackPolicy,
   projectV2ShadowsProductAuto: true,
   projectV3ShadowsProductAuto: true,
   invalidExplicitDoesNotFallBack: true,

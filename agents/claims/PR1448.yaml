@@ -1,0 +1,43 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1448
+branch: agent/issue-1447-emp1-seven-step-workflow-20260826
+issue: 1447
+criticality: ENGINEERING_CRITICAL
+claim_state: HANDOVER_READY
+execution_mode: MANUAL
+coordination_state: SAFE_PRESENTATION_ONLY_CURRENT_MAIN_REGROUND
+scope:
+  authority: EMP1_PROFESSIONAL_WORKFLOW_PRESENTATION
+  paths:
+    - src/workspace/emp1-professional-workflow-presentation.js
+    - src/workspace/emp1-professional-workflow-view.js
+    - src/workspace/lafea-analytical-calc-content.js
+    - scripts/emp1-professional-workflow-check.mjs
+    - agents/PR1448_workreport.md
+    - agents/status/PR1448.yaml
+    - agents/claims/PR1448.yaml
+protected_exclusions:
+  - src/core/emp1/**
+  - WRC source/dataset/oracle/tolerances
+  - P0 source-semantic records
+  - validation/emp1/release/**
+  - validation/emp1/wrc537-2013/**
+  - .github/workflows/**
+authority_boundary:
+  engineering_method_mutation: false
+  runtime_route_authority_mutation: false
+  source_authority_granted: false
+  code_compliance_authority_granted: false
+  release_authority_granted: false
+  stale_numerical_result_promoted: false
+pre_reground_head: 02612ecfb39d0dcdeedbe94e77c84fcaa4016a5d
+live_main: 6b5e048467cf67fb51da3e99517ce58d5cc5a3dc
+structural_reground_head: f9f56ac01b76e80285d760817f9f4df59b226dfe
+structural_reground_tree: e0402973cca2910d6e9d8675072ceba6211f6d87
+report_basis_head: f9f56ac01b76e80285d760817f9f4df59b226dfe
+report_sync: CURRENT_METADATA_ONLY_AFTER_BASIS
+merge_authority: NOT_GRANTED_FOR_THIS_SUCCESSOR
+grounding_epoch: GE-PR1448-004
+handover_report: agents/PR1448_workreport.md
+exact_next_action: "Keep draft/unmerged pending explicit owner merge authorization."

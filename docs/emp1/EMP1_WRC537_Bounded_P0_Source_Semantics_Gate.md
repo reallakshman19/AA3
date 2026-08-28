@@ -2,46 +2,133 @@
 
 Status: `BLOCKED_P0_SOURCE_SEMANTICS`
 
-This record is the Issue #1389 PR-B reconciliation layer for the bounded WRC 537 (2013) professional release. It does not replace the individual source-qualification artifacts and does not grant engineering, production, deployment, global EMP.1.C or code-compliance authority.
+This is the Issue #1389 aggregate reconciliation layer for the bounded WRC 537 (2013) professional release. It indexes the current individual source/acceptance gates; it does not itself create route, engineering, production, deployment, global EMP.1.C, code-compliance, or release authority.
 
 ## Current result
 
-The controlled WRC source custody is reconciled, but nine release-critical authority gates remain source-blocked:
+Two statements remain simultaneously true:
 
-1. cylindrical recovery surface and sign semantics — #1385;
-2. stress-intensity reconstruction semantics — #1383;
-3. shell-thickness basis — #1375;
-4. cylindrical mean-radius basis — #1377;
-5. elastic material / shell-theory applicability — #1379;
-6. physical attachment-axis normality — #1368;
-7. cylindrical attachment class — #1370;
-8. nearby-attachment / discontinuity isolation — #1373;
-9. WRC-versus-code-acceptance boundary — #1381.
+```text
+bounded gamma=5 / zero-dp route authorized = true
+professional P0 source-semantics readiness  = false
+```
 
-The machine-readable authority map is:
+The aggregate still contains exactly nine blocked gates:
+
+```text
+state        = BLOCKED_P0_SOURCE_SEMANTICS
+blockerCount = 9
+```
+
+No partial source reconciliation removes a gate until that gate's own professional source/acceptance closure is complete.
+
+Governing invariant:
+
+`BOUNDED_ROUTE_AUTHORIZATION_DOES_NOT_CLOSE_P0_SOURCE_SEMANTICS_OR_PROFESSIONAL_RELEASE_GATES`
+
+## Current source-record statuses
+
+```text
+#1385 BLOCKED_PARTIAL_TABLE5_SIGN_AUTHORITY_PHYSICAL_SURFACE_SEMANTICS_UNQUALIFIED
+#1383 BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED
+#1375 BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED
+#1377 BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED
+#1379 BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED
+#1368 BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED
+#1370 BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED
+#1373 BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED
+#1381 BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED
+```
+
+## #1377 status after PR #1497
+
+PR #1497 merged at `e6c76ac02e6ed2052e9c87e0691bb728f2031f5b` and qualified the physical meaning of cylindrical `R_m` as shell mean/mid-radius, together with the same-radius identity through gamma, round-attachment beta, and the retained §4.5 radius relations.
+
+The remaining #1377 blocker is assessment-geometry consistency: nominal/corroded/measured/local diameter and thickness custody, ovality, local thinning/non-concentric wall state, and modified-shell geometry remain unqualified. The gate therefore remains `BLOCKED_*`.
+
+## #1370 status after PR #1499
+
+PR #1499 merged at `33ea0762841d9981123df8b910fb7a12c17f2836` and advanced the attachment-class source record beyond Table-5 input silence.
+
+Direct WRC cylindrical-method text now supports the bounded class:
+
+`WRC537_CYLINDRICAL_STANDARD_ROUND_HOST_SHELL_ATTACHMENT`
+
+For the standard axes-of-symmetry/eight-point host-shell method, the source identifies cylindrical attachment families as round or rectangular, defines `r0` as the outside radius of the cylindrical attachment, and parameterizes the standard round family with `beta = 0.875*r0/Rm`. Standard §4 round curve selection does not introduce SOLID/HOLLOW, RIGID/FLEXIBLE, or attachment-wall-thickness selectors.
+
+This does **not** authorize:
+
+- arbitrary round objects or structural lug/pad/clip surrogates;
+- reinforcement pads, integrally reinforced/local-thickened or otherwise modified junctions without separate source qualification;
+- attachment/nozzle-wall stress;
+- non-unity Appendix-B SCF claims;
+- special off-axis `1B-1/2B-1` maximum-stress use without a source-qualified flexible-nozzle classifier.
+
+Therefore #1370 remains a professional P0 blocker even though its standard cylindrical round host-shell class is now source-qualified.
+
+## #1379 status after PR #1505
+
+PR #1505 merged at `456083d581765105c6a0fefbca73808b1250db90` and advanced the material/shell-theory source boundary without adding production material inputs or constitutive mechanics.
+
+The source now directly supports two bounded theory statements:
+
+- cylindrical theoretical solutions used **flexible loading surfaces** as a simplifying assumption;
+- **large-deflection theory and other nonlinear effects** were identified as later extension work rather than already-qualified original-method authority.
+
+These statements do **not** qualify absolute shell-modulus `E` independence/cancellation, Poisson-ratio treatment, homogeneous/isotropic constitutive assumptions, host/attachment material equivalence, temperature-dependent modulus, plasticity, creep, composites, anisotropy/orthotropy, lined/clad shells or material discontinuities.
+
+Therefore #1379 remains a professional P0 blocker with bounded partial source authority. `blockerCount` remains 9.
+
+## Source-custody distinction
+
+Controlled WRC source identity remains:
+
+```text
+path       = docs/emp1/WRC537_2013.pdf
+Git blob   = ce861233928154145a9257efbbf8dbef3f5a17d1
+raw SHA256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+```
+
+Current source-governance increments distinguish textual observation from byte custody:
+
+```text
+external primary-document text observation      = PASS_TEXT_OBSERVED
+external-rendering byte identity to pinned PDF   = UNPROVEN
+pinned PDF direct-page re-observation            = NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+```
+
+The aggregate does not convert external text observation into byte-for-byte custody of the pinned PDF.
+
+## Machine-readable state and checker
+
+Aggregate:
 
 `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json`
 
-and the reconciler is:
+Current reconciled blob in PR #1509:
+
+`c40d0d47daa8d29cdbbe1136fda5b55a800b75e2`
+
+Data-driven checker:
 
 `scripts/emp1-professional-p0-source-semantics-check.mjs`
 
-## Two checker modes
+The checker is intentionally unchanged. Each aggregate row must match the corresponding source artifact, every row must remain `BLOCKED_*` until its own closure, and the controlled WRC source hash must remain consistent.
 
-Normal inspection mode verifies that the source artifacts, WRC SHA-256, issue bindings, frozen release profile and current fail-closed route/registry all agree. A successful inspection means **the blocker representation is internally consistent**, not that the WRC method is professionally release-qualified.
+Normal-mode PASS would mean the fail-closed representation is internally consistent; it would not mean professional source readiness. `--require-ready` must remain non-zero while any of the nine gates remains blocked.
 
-`--require-ready` is the authorization-facing mode. While any of the nine source gates remains blocked it must terminate non-zero. It may not be bypassed by a matching production result, CAUx result, secondary/OCR interpretation, or a widened tolerance.
+## Runtime/release authority remains separate
 
-## Source boundary
+```text
+bounded route authorized          = true
+bounded engineering use           = true
+bounded production use            = true
+registry registered               = true
+global EMP.1.C authority          = false
+code compliance                   = NOT ASSESSED / false
+release qualified                 = false
+professional source readiness     = false
+professional release ready        = false
+```
 
-The exact controlled source identity remains:
-
-`WRC537_2013 raw PDF SHA-256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2`
-
-Current connected repository access exposes the PDF object identity but does not provide directly inspectable primary PDF page content. Therefore this PR does not convert any secondary/OCR statement into primary-source authority.
-
-## Frozen release-profile boundary
-
-PR-A froze `EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1`. PR-B does not mutate that profile. Any future semantic profile change requires a new version/qualification under Issue #1389 anti-drift rule AD-11.
-
-The bounded route remains unauthorized until source closure, CAUx disposition, exact-head qualification, separate authorization, post-promotion qualification, executable CI/build/browser evidence and deployment provenance are all complete.
+The frozen v1 release profile and frozen professional-readiness snapshot remain immutable. Genuine evidence 01-12 remains absent, CAUx direct-PDF re-observation remains NOT_RUN, and Issue #54 remains an execution-environment dependency.

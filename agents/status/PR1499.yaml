@@ -1,0 +1,45 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1499
+mission: "Qualify standard cylindrical round attachment class semantics"
+workstream: EMP1_WRC537_CYLINDRICAL_ATTACHMENT_CLASS_SOURCE
+branch: agent/issue-1370-primary-standard-round-class-20260828
+execution_mode: AUTO
+auto_state: MERGE_AUDIT
+scope_authority: LOCKED_TO_ISSUE_1370_STANDARD_CYLINDRICAL_CLASS
+phase_progression: AUTO
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_CURRENT_MAIN_REGROUNDED
+handover_readiness: READY
+technical_base_main: 3e22134fe224bb6ea128bea9547b331cd633a8b8
+live_main_at_reground: 4d18fca2f049b3a8b7b1dc64594189d51fd9645a
+live_main_tree_at_reground: e5bb411116d06b1a5a5bc68384584b888999d512
+grounding_epoch: GE-PR1499-001
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: SAFE_SOURCE_GOVERNANCE_DISJOINT_FROM_PR1491
+current_stage: FINAL_EXACT_DIFF_REVIEW_AND_MERGE_GATE
+validation:
+  primary_text_observation: PASS_TEXT_OBSERVED
+  pinned_pdf_direct_page_observation: NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+  external_rendering_byte_identity_to_pinned_pdf: UNPROVEN
+  source_ledger_blob: 1300f3e621d1fcaf959be45fb700dd56ffa921d5
+  source_checker_blob: 67581ea96aebbfdd0233bc711ced28e61502fc2c
+  authority_doc_blob: 2d2eda30b4397bdbcd11d66c012637266c8f9045
+  source_checker_execution: NOT_RUN
+  numerical_comparison: NOT_APPLICABLE
+  production_numerics_changed: false
+  route_registry_changed: false
+  off_axis_authority_changed: false
+authority:
+  standard_cylindrical_round_host_shell_class_qualified: true
+  arbitrary_round_object_authorized: false
+  off_axis_flexible_nozzle_classifier_qualified: false
+  structural_round_surrogate_authorized: false
+  reinforcement_specific_authority: false
+  code_compliance: false
+  release_authority: false
+merge_authorization: GRANTED_EXPLICIT_OWNER_CURRENT_CONVERSATION
+exact_next_action: "Attach six-file current-main re-ground; verify current main, exact six-file scope/zero behind/zero reviews and threads; merge if clean, then reconcile #1389 aggregate/current-state separately."

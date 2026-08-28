@@ -2,6 +2,9 @@ import { freezeDeep } from '../dataset-utils.js';
 import { calculateAuthorizedEmpiricalLoadExecution } from './authorized-empirical-load-execution.js';
 import { calculateAuthorizedEmpiricalLoadExecutionV2 } from './authorized-empirical-load-execution-v2.js';
 import {
+  requireCurrentCommonInputEmpiricalSupportLoadExecution,
+} from './current-common-input-empirical-support-load-execution.js';
+import {
   evaluateEmpiricalGravityMethodSelection,
 } from './empirical-gravity-method-selection.js';
 import {
@@ -14,11 +17,13 @@ import {
 export class EngineeringSupportLoadStore {
   #distribution = null;
   #authorizedExecution = null;
+  #currentCommonInputExecution = null;
   #methodSelection = null;
 
   /** @deprecated Ordinary production callers shall use calculateAuthorized(). */
   calculate(input) {
     this.#authorizedExecution = null;
+    this.#currentCommonInputExecution = null;
     this.#methodSelection = null;
     this.#distribution = calculateSupportLoadDistribution(input);
     return this.#distribution;
@@ -31,6 +36,7 @@ export class EngineeringSupportLoadStore {
    */
   calculateAuto(input) {
     this.#authorizedExecution = null;
+    this.#currentCommonInputExecution = null;
     const selection = evaluateEmpiricalGravityMethodSelection({
       requestedMethod: 'AUTO',
       dataset: input?.dataset,
@@ -67,15 +73,30 @@ export class EngineeringSupportLoadStore {
 
   #recordAuthorizedExecution(execution) {
     this.#authorizedExecution = execution;
+    this.#currentCommonInputExecution = null;
     this.#distribution = execution.distribution;
     return execution;
   }
 
+  /** Records current Common Input execution separately from legacy handoff custody. */
+  recordCurrentCommonInputExecution(execution) {
+    const current = requireCurrentCommonInputEmpiricalSupportLoadExecution(execution);
+    this.#authorizedExecution = null;
+    this.#currentCommonInputExecution = current;
+    this.#methodSelection = null;
+    this.#distribution = current.distribution;
+    return current;
+  }
+
   markStale(reason, datasetVersion) {
-    if (!this.#distribution) return null;
+    if (!this.#distribution) {
+      this.#currentCommonInputExecution = null;
+      return null;
+    }
     // The active store clears its current receipt; separate runtime stores retain
     // immutable historical receipt evidence and stale authorization state.
     this.#authorizedExecution = null;
+    this.#currentCommonInputExecution = null;
     this.#distribution = freezeDeep({
       ...this.#distribution,
       freshness: { status: 'STALE', reason, datasetVersion },
@@ -85,10 +106,12 @@ export class EngineeringSupportLoadStore {
 
   getDistribution() { return this.#distribution; }
   getAuthorizedExecution() { return this.#authorizedExecution; }
+  getCurrentCommonInputExecution() { return this.#currentCommonInputExecution; }
   getMethodSelection() { return this.#methodSelection; }
   clear() {
     this.#distribution = null;
     this.#authorizedExecution = null;
+    this.#currentCommonInputExecution = null;
     this.#methodSelection = null;
   }
 }

@@ -21,13 +21,25 @@ requireTrue(
   'SCHEMA_MISMATCH',
 );
 requireTrue(
-  ledger.status === 'BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED',
-  'STATUS_MUST_RETAIN_PHYSICAL_BASIS_BLOCK',
+  ledger.status === 'BLOCKED_PARTIAL_PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_QUALIFIED_ASSESSMENT_THICKNESS_BASIS_UNRESOLVED',
+  'STATUS_MUST_RETAIN_ASSESSMENT_BASIS_BLOCK',
 );
-requireTrue(ledger.primarySourceDirectlyReobserved === false, 'PRIMARY_REOBSERVATION_MUST_BE_FALSE');
+requireTrue(ledger.primarySourceDirectlyReobserved === false, 'PINNED_PRIMARY_REOBSERVATION_MUST_BE_FALSE');
 requireTrue(
   ledger.primarySourceExecutionStatus === 'NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT',
   'PRIMARY_SOURCE_EXECUTION_STATUS_MISMATCH',
+);
+requireTrue(ledger.externalPrimaryTextObservation?.status === 'PASS_TEXT_OBSERVED', 'EXTERNAL_PRIMARY_TEXT_OBSERVATION_REQUIRED');
+requireTrue(ledger.externalPrimaryTextObservation?.byteIdentityToPinnedPdf === 'UNPROVEN', 'EXTERNAL_PRIMARY_BYTE_IDENTITY_MUST_REMAIN_UNPROVEN');
+requireTrue(ledger.externalPrimaryTextObservation?.locators?.length === 4, 'PRIMARY_LOCATOR_COUNT_MISMATCH');
+for (const conclusion of [
+  'SPHERICAL_T_IDENTIFIES_HOST_SHELL_THICKNESS',
+  'CYLINDRICAL_T_IDENTIFIES_HOST_SHELL_WALL_THICKNESS',
+  'HOST_SHELL_T_IS_THE_STRESS_SCALING_THICKNESS_IN_THE_GENERAL_WRC_FORMULATION',
+  'CYLINDRICAL_GAMMA_USES_THE_HOST_SHELL_THICKNESS_T',
+]) requireTrue(
+  ledger.externalPrimaryTextObservation.locators.some((row) => row.boundedConclusion === conclusion),
+  `PRIMARY_BOUNDED_CONCLUSION_REQUIRED:${conclusion}`,
 );
 
 const table5Start = retainedSource.indexOf('### Table 5');
@@ -49,15 +61,19 @@ requireTrue(ledger.retainedSourceAuthority?.cylindricalThicknessSymbol === 'T', 
 requireTrue(ledger.retainedSourceAuthority?.gammaRelationship === 'gamma = R_m/T', 'TABLE5_GAMMA_ROLE_MISMATCH');
 requireTrue(
   ledger.retainedSourceAuthority?.physicalThicknessBasisDefinitionPresentInRetainedTable5 === false,
-  'TABLE5_MUST_NOT_CLAIM_PHYSICAL_BASIS',
+  'TABLE5_MUST_NOT_CLAIM_ASSESSMENT_BASIS',
 );
 
 for (const key of [
+  'sphericalHostShellThicknessIdentityQualified',
+  'cylindricalHostShellWallThicknessIdentityQualified',
+  'generalStressEquationUsesHostShellThicknessQualified',
+  'cylindricalShellParameterUsesHostShellThicknessQualified',
   'cylindricalThicknessSymbolQualified',
   'cylindricalGeometryLabelQualified',
   'thicknessUsedInGammaQualified',
   'thicknessUsedInTable5StressScalingQualified',
-]) requireTrue(ledger.partialAuthority?.[key] === true, `RETAINED_TABLE5_AUTHORITY_REQUIRED:${key}`);
+]) requireTrue(ledger.partialAuthority?.[key] === true, `PRIMARY_OR_RETAINED_AUTHORITY_REQUIRED:${key}`);
 
 for (const key of [
   'nominalThicknessBasisQualified',
@@ -70,7 +86,7 @@ for (const key of [
   'junctureVersusRemoteCourseThicknessQualified',
   'locallyThickenedInsertOrPadTreatmentQualified',
   'radiusThicknessPhysicalConsistencyRuleQualified',
-]) requireTrue(ledger.partialAuthority?.[key] === false, `PHYSICAL_BASIS_MUST_REMAIN_BLOCKED:${key}`);
+]) requireTrue(ledger.partialAuthority?.[key] === false, `ASSESSMENT_BASIS_MUST_REMAIN_BLOCKED:${key}`);
 
 requireTrue(
   JSON.stringify(ledger.currentSoftwareCustody?.foundationThicknessPolicies) ===
@@ -88,24 +104,33 @@ requireTrue(
 requireTrue(ledger.currentSoftwareCustody?.internallyDeterministic === true, 'CURRENT_CHAIN_MUST_BE_DETERMINISTIC');
 requireTrue(
   ledger.currentSoftwareCustody?.wrcPrimaryPhysicalThicknessBasisQualified === false,
-  'PHYSICAL_THICKNESS_BASIS_MUST_REMAIN_UNQUALIFIED',
+  'ASSESSMENT_THICKNESS_BASIS_MUST_REMAIN_UNQUALIFIED',
 );
 
 for (const key of [
   'positiveThicknessValueAloneProvesWrcBasis',
+  'shellMemberIdentityDefinesAssessmentWallState',
   'lafeaAssessmentPolicyEqualsWrcSourceRule',
   'nominalMinusCorrosionAuthorizedByWrc',
   'explicitAssessmentThicknessAuthorizedByWrc',
   'automaticCorrosionAllowanceSubtractionAuthorizedByWrc',
   'measuredMinimumThicknessAutomaticallyAuthorizedAsWrcT',
   'reinforcementPadThicknessMaySubstituteForShellT',
+  'nozzleOrAttachmentThicknessMaySubstituteForShellT',
   'nominalRadiusMayBeMixedWithDifferentNetThicknessWithoutGeometryRule',
   'productionThicknessBasisAuthority',
 ]) requireTrue(ledger.engineeringConclusions?.[key] === false, `ENGINEERING_CONCLUSION_MUST_REMAIN_FALSE:${key}`);
-requireTrue(ledger.engineeringConclusions?.table5IdentifiesCylindricalVesselThicknessAsT === true, 'TABLE5_T_IDENTITY_MUST_BE_RETAINED');
-requireTrue(ledger.engineeringConclusions?.table5UsesTInGamma === true, 'TABLE5_T_GAMMA_ROLE_MUST_BE_RETAINED');
-requireTrue(ledger.engineeringConclusions?.table5UsesTInStressScaling === true, 'TABLE5_T_STRESS_ROLE_MUST_BE_RETAINED');
-requireTrue(ledger.engineeringConclusions?.currentRmAndTAreInternallyCoherent === true, 'CURRENT_RM_T_COHERENCE_MUST_BE_RETAINED');
+
+for (const key of [
+  'primaryNomenclatureIdentifiesSphericalTAsHostShellThickness',
+  'primaryNomenclatureIdentifiesCylindricalTAsHostShellWallThickness',
+  'primaryGeneralEquationUsesShellTForMembraneAndBendingScaling',
+  'primaryCylindricalParameterUsesShellTInGamma',
+  'table5IdentifiesCylindricalVesselThicknessAsT',
+  'table5UsesTInGamma',
+  'table5UsesTInStressScaling',
+  'currentRmAndTAreInternallyCoherent',
+]) requireTrue(ledger.engineeringConclusions?.[key] === true, `POSITIVE_SOURCE_OR_CUSTODY_FACT_REQUIRED:${key}`);
 
 // Current runtime authority and this source record's authority are intentionally orthogonal.
 requireTrue(
@@ -138,7 +163,9 @@ for (const key of [
   'professionalReleaseReady',
 ]) requireTrue(ledger.currentLiveRouteState?.[key] === false, `CURRENT_ROUTE_WIDER_AUTHORITY_MUST_BE_FALSE:${key}`);
 
-requireTrue(ledger.authoritySeparation?.physicalThicknessBasisSourceAuthority === false, 'THICKNESS_SOURCE_AUTHORITY_MUST_REMAIN_FALSE');
+requireTrue(ledger.authoritySeparation?.hostShellMemberIdentitySourceAuthority === true, 'HOST_SHELL_MEMBER_IDENTITY_AUTHORITY_REQUIRED');
+requireTrue(ledger.authoritySeparation?.physicalAssessmentThicknessBasisSourceAuthority === false, 'ASSESSMENT_BASIS_SOURCE_AUTHORITY_MUST_REMAIN_FALSE');
+requireTrue(ledger.authoritySeparation?.physicalThicknessBasisSourceAuthority === false, 'THICKNESS_BASIS_SOURCE_AUTHORITY_MUST_REMAIN_FALSE');
 requireTrue(ledger.authoritySeparation?.currentRouteMayExecuteWithHistoricalBoundedThicknessCustody === true, 'HISTORICAL_BOUNDED_CUSTODY_ROUTE_STATE_MISMATCH');
 requireTrue(ledger.authoritySeparation?.currentRouteExecutionProvesPhysicalThicknessBasis === false, 'ROUTE_EXECUTION_MUST_NOT_PROVE_THICKNESS_BASIS');
 requireTrue(ledger.authoritySeparation?.routeAuthorizationMayBackPropagateIntoThicknessSourceAuthority === false, 'ROUTE_AUTHORITY_BACK_PROPAGATION_PROHIBITED');
@@ -165,19 +192,23 @@ for (const key of [
   'pressureAuthorityChanged',
   'scfAuthorityChanged',
   'thisRecordWidensBoundedRouteAuthority',
+  'thisRecordGrantsAssessmentThicknessBasisSourceAuthority',
   'thisRecordGrantsThicknessBasisSourceAuthority',
   'globalEmp1CAuthorityChanged',
   'codeComplianceAuthorityChanged',
   'releaseAuthorityChanged',
 ]) requireTrue(ledger.authorityEffect?.[key] === false, `AUTHORITY_EFFECT_MUST_REMAIN_FALSE:${key}`);
+requireTrue(
+  ledger.authorityEffect?.thisRecordGrantsHostShellMemberIdentitySourceAuthority === true,
+  'HOST_SHELL_MEMBER_IDENTITY_AUTHORITY_EFFECT_REQUIRED',
+);
 
 for (const phrase of [
-  'Table 5 identifies the cylindrical geometry quantity as `Vessel Thickness T`',
-  'does not define which physical thickness basis must be selected',
+  'Direct WRC 537 primary text now qualifies the **physical member represented by `T`**',
+  'host-shell T identity != assessment thickness-basis authority',
   'Do not promote `NOMINAL_MINUS_CORROSION` to a WRC source rule',
   'BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY',
-  'bounded route is authorized',
-  'physical thickness-basis source authority remains false',
+  'assessment thickness-basis source authority = false',
 ]) requireTrue(authority.includes(phrase), `AUTHORITY_NOTE_MISSING:${phrase}`);
 
 if (failures.length) {
@@ -186,11 +217,12 @@ if (failures.length) {
 }
 
 console.log(JSON.stringify({
-  status: 'PASS_CURRENT_AUTHORIZED_ROUTE_THICKNESS_SOURCE_BOUNDARY_STATIC_CHECK',
+  status: 'PASS_CURRENT_AUTHORIZED_ROUTE_HOST_SHELL_T_SOURCE_BOUNDARY_STATIC_CHECK',
   qualificationId: ledger.qualificationId,
   disposition: ledger.status,
+  hostShellMemberIdentitySourceAuthority: ledger.authoritySeparation.hostShellMemberIdentitySourceAuthority,
+  assessmentThicknessBasisSourceAuthority: ledger.authoritySeparation.physicalAssessmentThicknessBasisSourceAuthority,
   boundedRouteAuthorized: ledger.currentLiveRouteState.boundedRouteAuthorized,
-  productionThicknessBasisAuthority: ledger.engineeringConclusions.productionThicknessBasisAuthority,
   globalEmp1CAuthority: ledger.currentLiveRouteState.globalEmp1CAuthority,
   codeComplianceAuthority: ledger.currentLiveRouteState.codeComplianceAuthority,
   releaseQualified: ledger.currentLiveRouteState.releaseQualified,

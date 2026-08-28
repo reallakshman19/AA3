@@ -1,0 +1,31 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1486
+issue: 1321
+branch: agent/issue-1321-method-basis-effective-load-case-authority
+state: SOURCE_COMPLETE_MERGE_AUTHORIZED_EXECUTION_NOT_RUN
+criticality: ENGINEERING_CRITICAL
+execution_mode: AUTO
+auto_state: OWNER_AUTHORIZED_FINAL_MERGE_GATE
+base_sha: af55f56967d596d60c91db67b4fdf12ecb9a26a8
+technical_reground_sha: 93a24f66f3778d2f43e8919720ff4994452fd50e
+validation:
+  live_main_grounding: PASS_SOURCE_RECONCILIATION
+  exact_six_file_scope: PASS_SOURCE_RECONCILIATION
+  authority_disclosure_trace: PASS_SOURCE_INSPECTION
+  runner_forward_merge: PASS_SOURCE_RECONCILIATION
+  faithful_checkout: BLOCKED_DNS_GITHUB
+  focused_execution: NOT_RUN
+  non_fea_aggregate: NOT_RUN
+  check_imports: NOT_RUN
+  build: NOT_RUN
+  git_diff_check: NOT_RUN
+invariants:
+  authority_producer_changed: false
+  precedence_changed: false
+  run_mechanics_changed: false
+  numerical_mechanics_changed: false
+  workflow_changed: false
+merge_authority: OWNER_GRANTED_BY_2026_08_27_USER_COMMAND
+merge_disposition: AUTHORIZED_AFTER_FINAL_CURRENTNESS_REVIEW_GATE
+exact_next_action: "Require 0-behind current main, exact six-file diff, clean reviews/threads and mergeability; then squash merge preserving EXECUTION_NOT_RUN."

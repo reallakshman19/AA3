@@ -7,6 +7,9 @@ import {
   replaceProjectDataValue,
 } from '../src/workspace/project-data/project-data-contract.js';
 import {
+  NON_FEA_COMPONENT_COG_FALLBACK,
+} from '../src/workspace/project-data/non-fea-component-cog-fallback-policy.js';
+import {
   LOAD_CALC_STANDARD_DEFAULTS_V1,
   createNonFeaProductDefaultProvider,
   isProductDefaultEvidence,
@@ -43,12 +46,16 @@ function checkEmptyProfileDefaults() {
   assert.equal(JSON.stringify(source), before, 'provider must not mutate stored Project Data');
   assert.equal(provider.schema, 'non-fea-product-default-provider/v1');
   assert.equal(provider.profileId, 'LOAD_CALC_STANDARD_DEFAULTS_V1');
-  assert.equal(LOAD_CALC_STANDARD_DEFAULTS_V1.version, 5);
+  assert.equal(LOAD_CALC_STANDARD_DEFAULTS_V1.version, 7);
   assert.equal(provider.profileVersion, LOAD_CALC_STANDARD_DEFAULTS_V1.version);
   assert.equal(provider.usageRows.length, LOAD_CALC_STANDARD_DEFAULTS_V1.defaults.length);
   assert.equal(provider.shadowedRows.length, 0);
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.value, 9.80665);
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMethod.value, 'AUTO');
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.componentCogFallback.value,
+    NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT,
+  );
   assert.deepEqual(provider.effectiveProfile.loadCalculation.activeLoadCases.value, ['EMPTY', 'OPE', 'HYD']);
   assert.equal(provider.effectiveProfile.sourcesAndUnits.sourceUpAxis.value, 'Z');
   assert.equal(provider.effectiveProfile.thermoMechanicalBasis.fluidPhaseAndFillState.value.cases.OPE.fillFraction, 1);
@@ -70,10 +77,11 @@ function checkEmptyProfileDefaults() {
   );
   assert.equal(
     provider.effectiveProfile.loadCalculation.resultSignConvention.value,
-    'SOURCE_Z_UP_POSITIVE_SUPPORT_REACTION',
+    'SOURCE_UP_POSITIVE_SUPPORT_REACTION',
   );
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.gravityMPerS2), true);
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.gravityMethod), true);
+  assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.componentCogFallback), true);
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy), true);
   assert.equal(isProductDefaultEvidence(provider.effectiveProfile.loadCalculation.forceOutputConvention), true);
   assert.equal(provider.effectiveProfile.loadCalculation.pipeSectionProperties.value, null,
@@ -104,6 +112,20 @@ function checkEmptyProfileDefaults() {
     LOAD_CALC_STANDARD_DEFAULTS_V1.version,
   );
 
+  const cogUsage = provider.usageRows.find((row) => row.defaultId === 'PD-COMPONENT-COG-FALLBACK');
+  const cogDefinition = LOAD_CALC_STANDARD_DEFAULTS_V1.defaults
+    .find((row) => row.defaultId === 'PD-COMPONENT-COG-FALLBACK');
+  assert.equal(cogUsage.value, NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT);
+  assert.equal(cogUsage.defaultSemanticHash, cogDefinition.semanticHash);
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.componentCogFallback.evidence.defaultSemanticHash,
+    cogDefinition.semanticHash,
+  );
+  assert.equal(
+    provider.effectiveProfile.loadCalculation.componentCogFallback.evidence.profileVersion,
+    LOAD_CALC_STANDARD_DEFAULTS_V1.version,
+  );
+
   const { semanticHash: supplied, ...base } = provider;
   assert.equal(supplied, semanticHash(base), 'provider semantic hash must bind effective values and usage evidence');
 }
@@ -127,6 +149,24 @@ function checkHigherAuthorityWins() {
   assert.equal(shadow?.status, 'SHADOWED_BY_HIGHER_AUTHORITY');
   assert.equal(shadow?.existingAuthority, 'PROJECT_POLICY');
   assert.equal(typeof shadow?.defaultSemanticHash, 'string');
+
+  const projectCog = replaceProjectDataValue(
+    empty,
+    'loadCalculation.componentCogFallback',
+    NON_FEA_COMPONENT_COG_FALLBACK.DISABLED,
+    { source: 'Project CoG fallback basis', authority: 'PROJECT_POLICY' },
+    true,
+  );
+  const cogProvider = createNonFeaProductDefaultProvider({ profile: projectCog });
+  assert.equal(cogProvider.effectiveProfile.loadCalculation.componentCogFallback.value,
+    NON_FEA_COMPONENT_COG_FALLBACK.DISABLED);
+  assert.equal(cogProvider.effectiveProfile.loadCalculation.componentCogFallback.evidence.authority,
+    'PROJECT_POLICY');
+  assert.equal(cogProvider.usageRows.some((row) => row.defaultId === 'PD-COMPONENT-COG-FALLBACK'), false);
+  assert.equal(
+    cogProvider.shadowedRows.find((row) => row.defaultId === 'PD-COMPONENT-COG-FALLBACK')?.existingAuthority,
+    'PROJECT_POLICY',
+  );
 }
 
 function checkLegacyPhase2Upgrade() {
@@ -140,6 +180,7 @@ function checkLegacyPhase2Upgrade() {
   const legacy = clone(project);
   for (const field of [
     'gravityMethod',
+    'componentCogFallback',
     'componentMassCompositionPolicy',
     'forceOutputConvention',
     'momentOutputConvention',
@@ -155,6 +196,10 @@ function checkLegacyPhase2Upgrade() {
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMPerS2.evidence.authority, 'PROJECT_POLICY');
   assert.equal(provider.effectiveProfile.loadCalculation.gravityMethod.value, 'AUTO');
   assert.equal(
+    provider.effectiveProfile.loadCalculation.componentCogFallback.value,
+    NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT,
+  );
+  assert.equal(
     provider.effectiveProfile.loadCalculation.componentMassCompositionPolicy.value.defaultMode,
     'COMPONENT_EXPLICIT_POINT_MASS',
   );
@@ -164,6 +209,7 @@ function checkLegacyPhase2Upgrade() {
   );
   for (const field of [
     'gravityMethod',
+    'componentCogFallback',
     'componentMassCompositionPolicy',
     'forceOutputConvention',
     'momentOutputConvention',

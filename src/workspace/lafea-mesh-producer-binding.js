@@ -17,6 +17,9 @@ import {
   generateLafeaB02dProbeStablePolarMesh,
 } from '../core/lafea-meshing/b02d-probe-stable-polar-mesh.js';
 import {
+  generateLafeaB02dProbeStablePolarMeshV2,
+} from '../core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js';
+import {
   createLafeaMeshProducerCapability,
   createLafeaMeshProducerQualification,
 } from './lafea-mesh-producer-contract.js';
@@ -70,6 +73,8 @@ export { LAFEA_MESH_PRODUCER_REF, LAFEA_MESH_PRODUCER_GOVERNANCE_REF };
 export const LAFEA_MESH_PRODUCER_BINDING_SCHEMA = 'lafea-mesh-producer-binding/v1';
 export const LAFEA_B02D_POLAR_PROFILE_PREFIX = 'B02D_PROBE_STABLE_POLAR_QUALIFIED';
 export const LAFEA_B02D_POLAR_PROFILE_SOURCE_REVISION = 'B02D-FROZEN-POLAR-V1';
+export const LAFEA_B02D_POLAR_V2_PROFILE_PREFIX = 'B02D_PROBE_STABLE_POLAR_V2_QUALIFIED';
+export const LAFEA_B02D_POLAR_V2_PROFILE_SOURCE_REVISION = 'B02D-FROZEN-POLAR-V2';
 
 const MAXIMUM_NODES = LAFEA_MESH_PRODUCER_MAXIMUM_NODES;
 const MAXIMUM_ELEMENTS = LAFEA_MESH_PRODUCER_MAXIMUM_ELEMENTS;
@@ -166,7 +171,13 @@ export function planLafeaAnalysisMesh(stage, configuration) {
   }
 
   let generated;
-  if (usesB02dPolarStrategy(configuration, intent)) {
+  if (usesB02dPolarStrategyV2(configuration, intent)) {
+    requireB02dPolarGeometry(geometryEvidence.geometry);
+    generated = generateLafeaB02dProbeStablePolarMeshV2({
+      targetElementLength: intent.targetElementLength,
+      elementFamily: intent.elementFamily,
+    });
+  } else if (usesB02dPolarStrategy(configuration, intent)) {
     requireB02dPolarGeometry(geometryEvidence.geometry);
     generated = generateLafeaB02dProbeStablePolarMesh({
       targetElementLength: intent.targetElementLength,
@@ -290,9 +301,25 @@ function usesB02dPolarStrategy(configuration, intent) {
   return true;
 }
 
+function usesB02dPolarStrategyV2(configuration, intent) {
+  const profile = configuration.meshProfile;
+  const selected = profile?.profileIdentity === b02dProfileIdentityV2(intent.elementFamily, intent.targetElementLength)
+    && profile?.sourceRevision === LAFEA_B02D_POLAR_V2_PROFILE_SOURCE_REVISION;
+  if (!selected) return false;
+  if (intent.refinementFeatureIds.length !== 0) {
+    fail('LAFEA_B02D_POLAR_V2_REFINEMENT_FEATURES_MUST_REMAIN_EMPTY');
+  }
+  return true;
+}
+
 export function b02dProfileIdentity(elementFamily, h) {
   const encoded = Number.isInteger(h) ? String(h) : String(h).replace('.', '_');
   return `${LAFEA_B02D_POLAR_PROFILE_PREFIX}_${elementFamily}_H${encoded}`;
+}
+
+export function b02dProfileIdentityV2(elementFamily, h) {
+  const encoded = Number.isInteger(h) ? String(h) : String(h).replace('.', '_');
+  return `${LAFEA_B02D_POLAR_V2_PROFILE_PREFIX}_${elementFamily}_H${encoded}`;
 }
 
 function requireB02dPolarGeometry(geometry) {

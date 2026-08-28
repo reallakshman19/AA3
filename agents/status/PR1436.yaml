@@ -1,0 +1,55 @@
+schema: AgentPrStatus.v1
+repository: reallaksh19/Advanced_Analysis
+pr_or_wip: PR1436
+mission: "Refresh professional release current state after source-governance reconciliation"
+workstream: EMP1_PROFESSIONAL_RELEASE_CURRENT_STATE
+branch: agent/issue-1389-release-current-state-refresh-20260826
+execution_mode: AUTO
+auto_state: RUNNING
+scope_authority: LOCKED_TO_APPROVED_MISSION
+phase_progression: AUTO
+criticality: ENGINEERING_CRITICAL
+agent_state: HANDOVER_READY
+pr_recovery_state: HEALTHY_MERGED_SOURCE_STATE_RECONCILED_READY_TO_MERGE
+handover_readiness: READY
+current_main: b648e174b80b49ceed76036d590b89ad4fe08c2e
+current_main_tree: dd812ea9b4a746a9913fc3e2691f78813fc0380e
+merged_source_pr1415: 19b762e1f9512284da961e5816a28c10432080bb
+merged_aggregate_pr1427: b648e174b80b49ceed76036d590b89ad4fe08c2e
+aggregate_blob: 99aa14fc918486bb55b7c88493e0daa1a837ce55
+current_state_semantic_hash: ccf4f174d330ac14c297b378be3cac063fe7c36d9b562825292fa7d81fd1f51c
+grounding_epoch: GE-PR1436-004
+appendix_a_status: PASS
+appendix_a_score: 99
+appendix_a_min_question: 19
+coordination: SAFE_AFTER_PR1415_PR1427_MERGE_RECONCILIATION
+current_stage: CURRENT_MAIN_SOURCE_GOVERNANCE_RECONCILED_READY_TO_MERGE
+validation:
+  aggregate_blob_identity: PASS_99aa14fc918486bb55b7c88493e0daa1a837ce55
+  issue1377_status_parity: PASS_BLOCKED_PARTIAL_TABLE5_RM_SYMBOL_AND_PARAMETER_ROLE_PHYSICAL_RADIUS_DEFINITION_UNQUALIFIED
+  semantic_hash_independent_reproduction: PASS_ccf4f174d330ac14c297b378be3cac063fe7c36d9b562825292fa7d81fd1f51c
+  exact_six_file_scope: PASS
+  evidence_01_12: NOT_GENERATED
+  historical_numerical_qualification: NOT_RUN
+  direct_caux_pdf_observation: NOT_RUN
+  current_state_checker: NOT_RUN
+  build: NOT_RUN
+  chromium: NOT_RUN
+  release_replay: NOT_RUN
+  deployment: NOT_RUN
+authority:
+  bounded_production_route_authorized: true
+  professional_p0_source_semantics_ready: false
+  p0_blocker_count: 9
+  global_emp1_c: false
+  code_compliance: false
+  release_qualified: false
+  deployment_authorized: false
+  professional_release_ready: false
+downstream_hard_stop:
+  issue: 1434
+  state: BLOCKED_EXECUTION_ENVIRONMENT
+  required_stage_a_head: a59547c8554b6244b2ea94aedd4d59fa0fb15d1f
+  required_stage_b_head: 14c648d485cf386f28c6817a068b7eb5da1f7689
+merge_authorization: GRANTED_EXPLICIT_OWNER_2026-08-27
+exact_next_action: "Structurally re-ground six-file delta onto current main, retarget PR1436 to main, verify diff/mergeability, merge, then continue to next unfinished #1389 batch without weakening #1434."

@@ -18,34 +18,33 @@ const distribution = {
   }],
 };
 
-const zProfile = profile('Z', 'mm', {
-  source: 'SOURCE_METADATA',
-  authority: 'SOURCE_EXPLICIT',
-  sourceHash: 'sha256:axis-z-mm',
-});
-const basis = requireAuthorizedEmpiricalSourceBasis(zProfile);
-assert.equal(basis.sourceUpAxis, 'Z');
-assert.equal(basis.lengthUnit, 'mm');
-assert.equal(basis.mechanicsScope, 'SOURCE_Z_UP_MM_SCALAR_VERTICAL_GRAVITY');
-
-const bound = bindAuthorizedEmpiricalSourceAxis({ distribution, profile: zProfile });
-assert.equal(bound.sourceAxisBasis, 'Z_UP');
-assert.equal(bound.loadCases[0].supportResults[0].sourceAxisBasis, 'Z_UP');
-assert.equal(bound.sourceAxisAuthority.sourceUpAxis, 'Z');
-assert.equal(bound.sourceAxisAuthority.lengthUnit, 'mm');
-assert.equal(bound.sourceAxisAuthority.mechanicsScope, 'SOURCE_Z_UP_MM_SCALAR_VERTICAL_GRAVITY');
-assert.equal(bound.sourceAxisAuthority.sourceAxisEvidence.authority, 'SOURCE_EXPLICIT');
-assert.equal(distribution.sourceAxisBasis, 'Z_UP', 'source distribution was mutated');
-
-for (const axis of ['X', 'Y']) {
-  expectCode(
-    () => requireAuthorizedEmpiricalSourceBasis(profile(axis, 'mm', {
-      source: 'SOURCE_METADATA',
-      authority: 'SOURCE_EXPLICIT',
-    })),
-    'EMPIRICAL_SOURCE_AXIS_MECHANICS_UNSUPPORTED',
+for (const axis of ['X', 'Y', 'Z']) {
+  const sourceProfile = profile(axis, 'mm', {
+    source: 'SOURCE_METADATA',
+    authority: 'SOURCE_EXPLICIT',
+    sourceHash: `sha256:axis-${axis.toLowerCase()}-mm`,
+  });
+  const basis = requireAuthorizedEmpiricalSourceBasis(sourceProfile);
+  assert.equal(basis.sourceUpAxis, axis);
+  assert.equal(basis.sourceAxisBasis, `${axis}_UP`);
+  assert.equal(basis.lengthUnit, 'mm');
+  assert.equal(basis.mechanicsScope, 'SOURCE_AXIS_GENERAL_MM_SCALAR_VERTICAL_GRAVITY');
+  assert.equal(
+    basis.axisInvarianceBasis,
+    'XYZ_PERMUTATION_INVARIANT_EUCLIDEAN_ROUTE_CHAINAGE_SCALAR_GRAVITY',
   );
+
+  const bound = bindAuthorizedEmpiricalSourceAxis({ distribution, profile: sourceProfile });
+  assert.equal(bound.sourceAxisBasis, `${axis}_UP`);
+  assert.equal(bound.loadCases[0].supportResults[0].sourceAxisBasis, `${axis}_UP`);
+  assert.equal(bound.sourceAxisAuthority.sourceUpAxis, axis);
+  assert.equal(bound.sourceAxisAuthority.lengthUnit, 'mm');
+  assert.equal(bound.sourceAxisAuthority.mechanicsScope, 'SOURCE_AXIS_GENERAL_MM_SCALAR_VERTICAL_GRAVITY');
+  assert.equal(bound.sourceAxisAuthority.legacyScalarKernelBasis, 'Z_UP');
+  assert.equal(bound.sourceAxisAuthority.sourceAxisEvidence.authority, 'SOURCE_EXPLICIT');
 }
+
+assert.equal(distribution.sourceAxisBasis, 'Z_UP', 'source distribution was mutated');
 expectCode(
   () => requireAuthorizedEmpiricalSourceBasis(profile('Z', 'm', {
     source: 'SOURCE_METADATA',
@@ -64,21 +63,21 @@ expectCode(
 expectCode(
   () => bindAuthorizedEmpiricalSourceAxis({
     distribution: { ...structuredClone(distribution), sourceAxisBasis: 'Y_UP' },
-    profile: zProfile,
+    profile: profile('Y', 'mm', { source: 'SOURCE_METADATA', authority: 'SOURCE_EXPLICIT' }),
   }),
   'EMPIRICAL_SOURCE_AXIS_KERNEL_BASIS_MISMATCH',
 );
 
 console.log(JSON.stringify({
   status: 'PASS',
-  implementedMechanics: 'SOURCE_Z_UP_MM_SCALAR_VERTICAL_GRAVITY',
-  sourceZUpMmBound: true,
-  xUpRejectedAsUnimplementedMechanics: true,
-  yUpRejectedAsUnimplementedMechanics: true,
+  implementedMechanics: 'SOURCE_AXIS_GENERAL_MM_SCALAR_VERTICAL_GRAVITY',
+  xUpBound: true,
+  yUpBound: true,
+  zUpBound: true,
   metreSourceRejectedAsUnimplementedConversion: true,
   invalidAxisRejected: true,
   missingAuthorityRejected: true,
-  mismatchedKernelBasisRejected: true,
+  mismatchedLegacyKernelBasisRejected: true,
   legacyKernelPayloadNotMutated: true,
 }, null, 2));
 

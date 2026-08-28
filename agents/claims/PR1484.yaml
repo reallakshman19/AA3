@@ -1,0 +1,49 @@
+schema: AgentPrClaim.v1
+repository: reallaksh19/Advanced_Analysis
+pr: 1484
+mission: Current-main custody of frozen B02D V2 pre-observation assets only
+base_main: bea5013d2ddfd4d11bf2a03400f3aad2134b220e
+historical_provenance:
+  pr: 1259
+  head: aee2abf4753fc074ae4caa5d0c79d86bd15e6b64
+  tree: cb2b3c51be7c91305c6a1624eece917ae9920e84
+authority_domain:
+  - B02D_V2_FROZEN_DEFINITION_CUSTODY
+  - B02D_V2_DETERMINISTIC_MESH_GENERATOR_CUSTODY
+  - B02D_V2_PREOBSERVATION_QUALITY_CHECK_CUSTODY
+changed_paths:
+  - src/core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js
+  - scripts/lafea-b02d-v2-preobservation-quality-check.mjs
+  - validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json
+  - agents/PR1484_workreport.md
+  - agents/status/PR1484.yaml
+  - agents/claims/PR1484.yaml
+asset_blobs:
+  generator: 3f69405b41145b1fda103d426d2ac25bda1f22ae
+  preobservation_checker: ba5e793cb92bd5b3f3fe1a269bb537973598998f
+  definition: 2a4bbfa79dafdbfe17484b46d5ae76ede42ad298
+claims:
+  byte_identical_historical_asset_transplant: true
+  producer_binding_changed: false
+  v1_default_route_changed: false
+  response_solver_changed: false
+  historical_galerkin_candidate_included: false
+  current_head_preobservation_quality_pass_claimed: false
+  b01_prerequisite_evidence_available: false
+  b02_numerical_authority_granted: false
+  release_authority_granted: false
+  trust_authority_granted: false
+validation_truth:
+  git_object_custody: PASS
+  current_head_engineering_execution: NOT_RUN
+excluded_authority:
+  - src/workspace/lafea-mesh-producer-binding.js
+  - RESPONSE_SOLVER_MECHANICS
+  - SPARSE_REACTION_CORRECTION
+  - GALERKIN_TRANSLATION_CORRECTION
+  - V1_DEFAULT_REPLACEMENT
+  - BENCHMARK_OR_TOLERANCE_CHANGE
+  - B02_NUMERICAL_AUTHORITY
+  - RELEASE_LIFECYCLE_TRUST
+  - WORKFLOW_MUTATION
+merge_authority: OWNER_GRANTED_CURRENT_TURN_FOR_THIS_BOUNDED_REPLACEMENT

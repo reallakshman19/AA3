@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION,
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,
 } from '../src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js';
 import {
@@ -48,7 +49,7 @@ for (const row of gate.gates) {
   assert.ok(row.gateId && row.artifact && row.authorityDocument && row.profileAuthorityKey);
   const artifact = await readJson(row.artifact);
   assert.equal(artifact.status, row.currentStatus, `${row.gateId}: retained source status drift`);
-  assert.match(artifact.status, /^BLOCKED_/u, `${row.gateId}: PR-B expects fail-closed source state`);
+  assert.match(artifact.status, /^BLOCKED_/u, `${row.gateId}: P0 professional source state must remain fail-closed`);
   assertSourceHash(row, artifact, WRC_SHA256);
 
   const profileAuthority = profile.requiredAuthorities[row.profileAuthorityKey];
@@ -72,6 +73,11 @@ assert.equal(gate.closureRule.engineeringAssumptionsMustBeExplicitlyDistinguishe
 assert.equal(gate.closureRule.codeComplianceRemainsNotAssessedAfterBoundaryClosure, true);
 assert.equal(gate.closureRule.productionRouteMutationAllowedByThisArtifact, false);
 assert.equal(gate.closureRule.releaseAuthorityGrantedByThisArtifact, false);
+assert.equal(gate.closureRule.boundedRuntimeRouteAuthorizationDoesNotCloseP0SourceSemantics, true);
+assert.equal(
+  gate.authorityScope,
+  'AUTHORITY_GRANTED_BY_THIS_AGGREGATE_GATE_ONLY_NOT_CURRENT_RUNTIME_ROUTE_STATE',
+);
 assert.deepEqual(gate.authority, {
   engineeringUseAuthorized: false,
   productionUseAuthorized: false,
@@ -80,30 +86,61 @@ assert.deepEqual(gate.authority, {
   codeComplianceAuthorized: false,
 });
 
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, false);
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, true);
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.engineeringUseAuthorized, true);
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.productionUseAuthorized, true);
 const registry = EMP1_C_BOUNDED_PRODUCTION_ROUTES.find(
   (row) => row.routeId === EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
 );
 assert.ok(registry, 'bounded gamma5 route registry row required');
-assert.equal(registry.registered, false);
-assert.equal(registry.engineeringUseAuthorized, false);
+assert.equal(registry.registered, true);
+assert.equal(registry.engineeringUseAuthorized, true);
 assert.equal(registry.globalEmp1CRouteAuthority, false);
 assert.equal(registry.releaseQualified, false);
 
+assert.deepEqual(gate.currentLiveRouteState, {
+  boundedRouteAuthorized: true,
+  registryRegistered: true,
+  boundedEngineeringUseAuthorized: true,
+  boundedProductionUseAuthorized: true,
+  globalEmp1CRouteAuthority: false,
+  releaseQualified: false,
+  codeComplianceAuthorized: false,
+  professionalP0SourceSemanticsReady: false,
+  professionalReleaseReady: false,
+  invariant: 'BOUNDED_ROUTE_AUTHORIZATION_DOES_NOT_CLOSE_P0_SOURCE_SEMANTICS_OR_PROFESSIONAL_RELEASE_GATES',
+});
+assert.equal(gate.currentLiveRouteState.boundedRouteAuthorized, EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED);
+assert.equal(
+  gate.currentLiveRouteState.boundedEngineeringUseAuthorized,
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.engineeringUseAuthorized,
+);
+assert.equal(
+  gate.currentLiveRouteState.boundedProductionUseAuthorized,
+  EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.productionUseAuthorized,
+);
+assert.equal(gate.currentLiveRouteState.registryRegistered, registry.registered);
+assert.equal(gate.currentLiveRouteState.globalEmp1CRouteAuthority, registry.globalEmp1CRouteAuthority);
+assert.equal(gate.currentLiveRouteState.releaseQualified, registry.releaseQualified);
+assert.equal(gate.currentLiveRouteState.codeComplianceAuthorized, profile.codeCompliance.authorized);
+
 const result = {
   schema: 'emp1-professional-p0-source-semantics-check/v1',
-  status: 'PASS_P0_GATE_RECONCILED_SOURCE_SEMANTICS_BLOCKED',
+  status: 'PASS_P0_GATE_CURRENT_AUTHORIZED_ROUTE_SOURCE_SEMANTICS_STILL_BLOCKED',
   releaseProfileId: gate.releaseProfileId,
   blockerCount: observed.length,
   blockers: observed,
-  authority: {
+  gateAuthorityGranted: gate.authority,
+  currentRuntimeAuthority: {
     routeAuthorized: EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED,
     registryRegistered: registry.registered,
     engineeringUseAuthorized: registry.engineeringUseAuthorized,
+    productionUseAuthorized: EMP1_WRC537_GAMMA5_ZERO_DP_METHOD_QUALIFICATION.productionUseAuthorized,
     globalEmp1CRouteAuthority: registry.globalEmp1CRouteAuthority,
     releaseQualified: registry.releaseQualified,
     codeComplianceAuthorized: profile.codeCompliance.authorized,
   },
+  professionalP0SourceSemanticsReady: false,
   requireReady,
 };
 

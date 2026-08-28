@@ -1,6 +1,7 @@
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { clonePlain, freezeDeep, isRecord, stringValue } from '../dataset-utils.js';
 import { upgradeProjectDataProfile } from './project-data-contract.js';
+import { NON_FEA_COMPONENT_COG_FALLBACK } from './non-fea-component-cog-fallback-policy.js';
 import { NON_FEA_COMPONENT_MASS_POLICY_SCHEMA } from './non-fea-component-mass-policy.js';
 import { NON_FEA_FLUID_FILL_POLICY_SCHEMA } from './non-fea-fluid-fill-policy.js';
 
@@ -10,7 +11,7 @@ export const NON_FEA_PRODUCT_DEFAULT_PROVIDER_SCHEMA = 'non-fea-product-default-
 export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
   schema: NON_FEA_PRODUCT_DEFAULT_PROFILE_SCHEMA,
   profileId: 'LOAD_CALC_STANDARD_DEFAULTS_V1',
-  version: 5,
+  version: 7,
   defaults: [
     productDefault('PD-LENGTH-UNIT', 'sourcesAndUnits.lengthUnit', 'mm', 'unit',
       'Canonical Load Calc product length unit when project/source unit authority is absent.'),
@@ -39,6 +40,9 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
       'Unfactored screening load default.'),
     productDefault('PD-GRAVITY-METHOD', 'loadCalculation.gravityMethod', 'AUTO', 'method-request',
       'Select the highest-fidelity qualified gravity method; fall back only where the governed AUTO policy permits it.'),
+    productDefault('PD-COMPONENT-COG-FALLBACK', 'loadCalculation.componentCogFallback',
+      NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT, 'policy',
+      'When exact component CoG authority is absent under AUTO gravity selection, use the governed geometric midpoint/V2 fallback. Supplied or invalid CoG evidence is never overwritten by this assumption.'),
     productDefault('PD-EQUILIBRIUM-TOLERANCES', 'loadCalculation.equilibriumTolerances', {
       forceN: 1e-6,
       momentNmm: 1e-3,
@@ -61,8 +65,8 @@ export const LOAD_CALC_STANDARD_DEFAULTS_V1 = freezeDeep({
       'ROUTE_CHAINAGE_1D_STATIC_GRAVITY', 'analysis-basis',
       'Current empirical gravity mechanics use one-dimensional route-chainage statics.'),
     productDefault('PD-RESULT-SIGN-CONVENTION', 'loadCalculation.resultSignConvention',
-      'SOURCE_Z_UP_POSITIVE_SUPPORT_REACTION', 'convention',
-      'Current result sign basis for the implemented source-Z-up scalar gravity method.'),
+      'SOURCE_UP_POSITIVE_SUPPORT_REACTION', 'convention',
+      'Current scalar-gravity result sign basis: positive support reaction opposes gravity along the governed source up-axis.'),
     productDefault('PD-FLUID-FILL-POLICY', 'thermoMechanicalBasis.fluidPhaseAndFillState', {
       schema: NON_FEA_FLUID_FILL_POLICY_SCHEMA,
       cases: {

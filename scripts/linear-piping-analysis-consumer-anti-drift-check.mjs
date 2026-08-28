@@ -146,8 +146,21 @@ assert.match(restraintInventory, /MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED/u)
 // rather than only the fact that one was declared.
 assert.doesNotMatch(restraintInventory, /MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED/u,
   'a declared finite stiffness is representable and must not be refused');
-assert.match(restraintInventory, /stiffnessValue:/u,
-  'the classification must carry the declared spring rate, not just a boolean');
+assert.match(restraintInventory, /resolveSpringRate\(stiffness, stiffnessToSi\)/u,
+  'the classification must resolve the declared rate into solver units, not just flag one');
+
+/*
+ * The conversion is the part that was wrong once and is invisible when wrong:
+ * CAESAR declares stiffness in the model's own force-per-length, and a rate
+ * used raw is off by the length factor while still solving and balancing.
+ */
+const springRate = source['restraint-spring-rate.js'];
+assert.match(springRate, /forceDeclaration\.scale \/ lengthScale/u,
+  'the spring rate must be converted by force-per-length, not passed through');
+assert.match(springRate, /stiffnessUnitsResolvable/u,
+  'unresolvable units must be reported, not silently treated as SI');
+assert.doesNotMatch(springRate, /toSiFactor\s*(?:\?\?|\|\|)\s*1/u,
+  'an unresolvable conversion must never fall back to a factor of 1');
 assert.match(restraintInventory, /MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED/u);
 assert.match(
   restraintInventory,

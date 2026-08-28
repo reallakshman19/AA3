@@ -1,3 +1,4 @@
+import { resolveSpringRate } from './restraint-spring-rate.js';
 import {
   resolveRestraintTypeMutation,
   restraintTypeCodeLabel,
@@ -40,7 +41,7 @@ const EXACT_BIDIRECTIONAL_CODES = new Set(['2', '3', '5', '8', '9']);
 // unused slots that carry non-sentinel 0.000000 direction cosines).
 const RESTRAINT_SLOT_IDENTITY_ATTRIBUTES = Object.freeze(['TYPE', 'NODE']);
 
-export function classifyRestraint(attributes, element, segment) {
+export function classifyRestraint(attributes, element, segment, stiffnessToSi) {
   const unfilledSlot = isUnfilledCaesarSlot(attributes, RESTRAINT_SLOT_IDENTITY_ATTRIBUTES);
   const declaredType = attribute(attributes, ['TYPE']);
   const rawType = unfilledSlot ? null : declaredType;
@@ -73,8 +74,7 @@ export function classifyRestraint(attributes, element, segment) {
     connectingNodeActive: connectingNodeId !== null,
     connectingNodeId,
     finiteStiffnessActive: finitePositive(stiffness),
-    // The value, not only the fact of it: LINEAR_SPRING consumes the rate.
-    stiffnessValue: finitePositive(stiffness) ? Number(stiffness) : null,
+    ...resolveSpringRate(stiffness, stiffnessToSi),
     canonicalNodeRestraint: canonicalNodeRestraint(segment, nodeId),
   });
 }
@@ -155,7 +155,7 @@ export function restraintApproximationCodes(classification) {
   const codes = [];
   if (classification.gapActive) codes.push('GENERIC_APPROX_GAP_CLOSED');
   if (classification.frictionActive) codes.push('GENERIC_APPROX_FRICTION_IGNORED');
-  // Exact mechanics, unvalidated: benchmarks/LFEA/SPRING_DRAFT/PROVENANCE.md.
+  // Unvalidated: benchmarks/LFEA/SPRING_DRAFT/PROVENANCE.md.
   if (classification.finiteStiffnessActive) codes.push('DRAFT_SPRING_SUPPORT_NO_REFERENCE');
   const base = baseRestraintDispositions(classification)[APPROXIMATE];
   if (base.disposition === 'IMPLEMENTED_WITH_DECLARED_APPROXIMATION' && base.limitationCode) {

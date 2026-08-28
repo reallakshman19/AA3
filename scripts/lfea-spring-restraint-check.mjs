@@ -73,7 +73,11 @@ function solve(xml, label) {
   return { context, result, model: context.sourceAnalysisContext.compilation.model };
 }
 
-const SPRING_RATE = 1000; // N/mm as declared
+// Declared in the model's own units (N/mm here). The solver works in N/m, so
+// the compiled rate must be this times the file's force-per-length factor --
+// asserting raw equality would pass only while that conversion was missing.
+const SPRING_RATE = 1000;
+const DECLARED_TO_SI = 1000;
 const springNode = `<RESTRAINT NODE="30" TYPE="2" XCOSINE="0" YCOSINE="1" ZCOSINE="0" STIFF="${SPRING_RATE}"/>`;
 const rigidNode = `<RESTRAINT NODE="30" TYPE="2" XCOSINE="0" YCOSINE="1" ZCOSINE="0"/>`;
 
@@ -88,6 +92,8 @@ assert.equal(rigid.model.constraints.filter((c) => c.behavior === 'LINEAR_SPRING
   'a restraint with no declared rate must stay FIXED');
 
 const compiledRate = springConstraints[0].stiffness;
+assert.equal(compiledRate, SPRING_RATE * DECLARED_TO_SI,
+  'the declared rate must be converted from the file units into solver units, not passed through raw');
 const springDof = springConstraints[0].dof;
 const springNodeId = springConstraints[0].nodeId;
 
@@ -124,6 +130,7 @@ console.log(JSON.stringify({
   check: 'lfea-spring-restraint',
   status: 'PASS',
   declaredRate: SPRING_RATE,
+  declaredToSiFactor: DECLARED_TO_SI,
   compiledRate,
   springNodeId,
   springDof,

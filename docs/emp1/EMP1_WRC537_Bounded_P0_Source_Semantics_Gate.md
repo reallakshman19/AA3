@@ -94,7 +94,7 @@ Aggregate:
 
 Current reconciled blob in PR #1502:
 
-`6d7fbe79ced368ea970d160e3c6756916bbb55c6`
+`5247c9b3201c9370a46ea8dc9881d71cc7598eb2`
 
 Data-driven checker:
 

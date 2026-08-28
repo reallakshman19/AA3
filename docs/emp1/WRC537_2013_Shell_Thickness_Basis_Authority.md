@@ -2,206 +2,166 @@
 
 ## Decision
 
-Retained WRC 537 Table 5 pp.41–42 provides a bounded source fact:
-
-```text
-Vessel Thickness  T
-```
-
-Table 5 also uses that same `T` in the cylindrical geometry parameter:
-
-```text
-gamma = R_m / T
-```
-
-and in cylindrical membrane/bending stress scale factors containing `T` and `T^2` denominators.
-
-Those facts qualify the **Table-5 symbol and mathematical role of `T`**. They do **not** define which physical vessel thickness value must be selected for a professional assessment.
+Direct WRC 537 primary text now qualifies the **physical member represented by `T`**, but not the engineering assessment state of that wall.
 
 Current disposition:
 
-`BLOCKED_WRC_SHELL_THICKNESS_PHYSICAL_BASIS_UNRESOLVED_TABLE5_ROLE_RECONCILED`
+`BLOCKED_PARTIAL_PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_QUALIFIED_ASSESSMENT_THICKNESS_BASIS_UNRESOLVED`
 
-## Current authorized-route reconciliation
+Directly supported:
 
-The bounded gamma=5 / zero-differential-pressure WRC route is authorized on current production main. That is a separate runtime decision and must not be read as primary-source qualification of the physical thickness basis.
+- §1.2 identifies spherical `T` as the thickness of the spherical shell;
+- §1.3 identifies cylindrical `T` as the wall thickness of the cylindrical shell;
+- §2 uses shell `T` in the general membrane/bending stress relation;
+- §4.2.1 defines the cylindrical shell parameter with the host-shell thickness, `gamma = R_m/T`;
+- retained Table 5 independently labels cylindrical `T` as `Vessel Thickness` and uses it in gamma and stress scaling.
 
-Current truth is deliberately split:
+Not directly supported by those statements:
+
+- nominal, design, minimum ordered, actual measured, corroded/remaining, or other assessment-wall selection;
+- corrosion allowance subtraction;
+- mill tolerance or forming thinning treatment;
+- automatic use of local measured minimum wall;
+- local juncture versus remote shell-course thickness;
+- locally thickened shell, insert plate or reinforcement-pad treatment;
+- an engineering rule for choosing a new `R_m` when the assessment wall state differs from the nominal geometry package.
+
+The source therefore identifies **which member `T` belongs to**, not **which engineering wall state must be selected**.
+
+## Primary-source observations
+
+Controlled source identity remains:
 
 ```text
-bounded route is authorized                         = true
-bounded engineering use is authorized               = true
-bounded production use is authorized                = true
-physical thickness-basis source authority remains false
-production thickness-basis authority                = false
-global EMP.1.C authority                            = false
-code compliance authority                           = false
-release qualification                               = false
-professional release ready                          = false
+path       = docs/emp1/WRC537_2013.pdf
+Git blob   = ce861233928154145a9257efbbf8dbef3f5a17d1
+raw SHA256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
 ```
 
-Governing invariant:
+Readable primary-document text was inspected at these locators:
 
-`BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY`
+1. §1.2, *Nomenclature Applicable to Spherical Shells*, printed page 2 — `T` belongs to the spherical shell thickness.
+2. §1.3, *Nomenclature Applicable to Cylindrical Shells*, printed page 2 — `T` belongs to the cylindrical shell wall thickness.
+3. §2, *General Equation*, printed page 3, Eq. (1) — membrane and bending stress terms use shell `T` and `T^2`.
+4. §4.2.1, *Shell Parameter*, printed page 12, Eq. (25) — cylindrical gamma is the shell mid-radius divided by shell thickness.
 
-The route may continue to consume its already-established historical bounded thickness custody. Its ability to calculate does not prove that `NOMINAL_MINUS_CORROSION`, `EXPLICIT_ASSESSMENT`, measured minimum wall, nominal wall, or any other physical basis is the WRC-required basis.
-
-## Source custody
-
-Controlled source:
-
-- WRC 537 (2013)
-- raw SHA-256 `698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2`
-- Git blob `ce861233928154145a9257efbbf8dbef3f5a17d1`
-
-Retained primary-source transcription:
-
-- `docs/emp1/WRC537_2013_Tables_and_Charts.md`
-- Table 5 — Computation Sheet for Local Stresses in Cylindrical Shells
-- PDF pages 41–42
-
-Direct current-turn PDF page re-observation remains:
+The readable rendering is textual observation only. Its byte identity to the pinned repository PDF is `UNPROVEN`, and direct-page observation of the pinned PDF remains:
 
 `NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`
 
-## What retained Table 5 qualifies
+## Retained Table-5 authority
 
-Table 5 identifies the cylindrical geometry quantity as `Vessel Thickness T`.
+`docs/emp1/WRC537_2013_Tables_and_Charts.md`, Table 5, retained PDF pages 41–42, remains useful corroborating primary transcription:
 
-The retained Table-5 computation sheet also establishes that:
+```text
+Vessel Thickness  T
+gamma = R_m / T
+```
 
-- `T` participates in `gamma = R_m/T`;
-- cylindrical local-stress scale factors use `T` and `T^2`;
-- `T` is therefore a source-defined input to the Table-5 cylindrical calculations, not merely a software field name.
+The cylindrical stress computation also contains `T` and `T^2` scaling. Table 5 does not supply the missing nominal/corroded/measured assessment-basis rule.
 
-This reconciliation does not alter any coefficient, curve, sign, stress or numerical implementation.
+## Assessment-basis boundary remains blocked
 
-## What Table 5 does not establish
+A source-qualified host-shell member identity does not answer which physical state of that member must be used for a professional assessment.
 
-The retained computation sheet does not define which physical thickness basis must be selected from an engineering source package. It does not, by itself, prove whether WRC `T` must be:
+The following remain explicitly unqualified:
 
-- nominal wall thickness;
-- actual measured wall thickness;
-- minimum ordered thickness;
-- corrosion-adjusted/net thickness;
-- local minimum remaining thickness;
-- design thickness;
-- another assessment thickness.
+```text
+nominal thickness basis              = false
+actual measured thickness basis      = false
+minimum thickness basis              = false
+corroded/remaining assessment basis  = false
+corrosion allowance treatment        = false
+mill/forming tolerance treatment     = false
+local measured thinning treatment    = false
+juncture-vs-course thickness rule    = false
+local thickening/insert/pad rule     = false
+radius/thickness assessment rule     = false
+```
 
-It also does not establish from this retained table alone:
+Therefore:
 
-- whether corrosion allowance must be subtracted;
-- whether mill tolerance or forming thinning must be removed;
-- whether the local attachment-juncture thickness or remote shell-course thickness governs;
-- whether insert plate, reinforcement pad or local thickening changes effective `T`;
-- whether the same physical thickness basis must be used to construct `R_m`;
-- how a thickness discontinuity affects WRC applicability.
+`host-shell T identity != assessment thickness-basis authority`
 
-Therefore symbol/role authority is **not physical thickness-basis authority**.
+## Attachment/nozzle thickness is separate
+
+WRC nomenclature separately uses lowercase `t` for the thickness of a hollow cylindrical attachment in the spherical-shell family. The new `T` authority must not be used to substitute nozzle/attachment wall or reinforcement-pad thickness for host-shell `T`.
 
 ## Current software custody
 
-The local-attachment foundation model has two explicit upstream thickness policies:
+The local-attachment foundation model retains two explicit upstream policies:
 
 ```text
 NOMINAL_MINUS_CORROSION
 EXPLICIT_ASSESSMENT
 ```
 
-For `NOMINAL_MINUS_CORROSION`:
-
-```text
-assessmentPipeThickness = nominalPipeThickness - corrosionAllowance
-```
-
-For `EXPLICIT_ASSESSMENT`, a positive caller-supplied assessment thickness is retained.
-
-LAFEA.2 then consumes:
-
-```text
-foundationModel.thicknessBasis.assessmentPipeThickness
-```
-
-EMP.1 WRC source custody presently receives that same value as:
+Current software passes its inherited assessment thickness into WRC custody and constructs:
 
 ```text
 shellThickness = LAFEA2_ASSESSMENT_PIPE_THICKNESS
-meanRadius = PIPE_OD_OVER_2_MINUS_ASSESSMENT_THICKNESS_OVER_2
+R_m = pipeOutsideDiameter/2 - assessmentPipeThickness/2
 gamma = R_m/T
 ```
 
-This is an internally consistent and deterministic software chain. Table-5 source authority proves that the cylindrical computation sheet consumes a vessel thickness `T`; it still does **not** prove that either upstream assessment policy is the WRC-required physical basis.
-
-## Protected inference boundary
+That chain is deterministic and internally coherent. It remains a **software/engineering custody policy**, not a newly proven WRC rule selecting the assessment wall state.
 
 Do not promote `NOMINAL_MINUS_CORROSION` to a WRC source rule.
 
 Do not promote `EXPLICIT_ASSESSMENT` to a WRC source rule.
 
-Do not infer:
+## Current authorized-route reconciliation
+
+The bounded gamma=5 / zero-differential-pressure route remains independently authorized:
 
 ```text
-Table 5 says Vessel Thickness T
-    => T means nominal-minus-corrosion thickness
+bounded route authorized                    = true
+bounded engineering use                     = true
+bounded production use                      = true
+host-shell member identity source authority = true
+assessment thickness-basis source authority = false
+global EMP.1.C authority                    = false
+code compliance authority                   = false
+release qualification                       = false
+professional release ready                  = false
 ```
 
-or:
+Governing invariant:
 
-```text
-Table 5 uses T in gamma and stress scales
-    => any positive caller-supplied assessment thickness is WRC-authorized
-```
+`BOUNDED_WRC_ROUTE_AUTHORIZATION_DOES_NOT_BACK_PROPAGATE_TO_SHELL_THICKNESS_PHYSICAL_BASIS_SOURCE_AUTHORITY`
 
-or:
-
-```text
-current software uses the same assessment thickness in R_m and T
-    => the physical WRC radius/thickness basis is source-qualified
-```
-
-or:
-
-```text
-bounded WRC route is authorized
-    => its inherited assessment thickness is now primary-source-qualified WRC T
-```
+The route's ability to calculate does not prove that its inherited assessment thickness is the WRC-required nominal/corroded/measured basis.
 
 ## Radius/thickness relationship
 
-Current software derives:
+Issue #1377 separately qualifies `R_m` as cylindrical mean/mid-radius while retaining assessment-geometry state as unresolved. This #1375 increment now establishes that cylindrical `T` is the host-shell wall thickness used with that `R_m` in gamma.
 
-```text
-R_m = OD/2 - T/2
-```
-
-using the same inherited assessment thickness that is passed as `T`. That preserves internal consistency but does not establish the primary-source physical construction rule for either quantity.
-
-Issue #1377 separately reconciles retained Table-5 `R_m` symbol/parameter authority while keeping its OD/ID/T physical construction blocked. The two issues therefore remain mutually fail-closed at the physical geometry-basis boundary.
+It still does not source-authorize mixing a radius based on one physical wall state with a thickness from another, nor does it define the required transformation when corrosion, thinning or local geometry changes the assessment state.
 
 ## Required primary-source closure
 
-Professional thickness-basis authority still requires exact source evidence for:
+Professional thickness-basis authority still requires exact evidence for:
 
-1. physical meaning of cylindrical shell thickness `T`;
-2. nominal / actual / minimum / corroded / assessment basis;
+1. nominal / actual / minimum / corroded / remaining / assessment basis of host-shell `T`;
+2. whether spherical and cylindrical `T` use the same engineering assessment-basis rule;
 3. corrosion-allowance treatment;
 4. mill-tolerance and forming-thinning treatment;
 5. measured local-thinning treatment;
 6. local juncture thickness versus remote course thickness;
-7. consistency between selected physical `T` and radius construction;
+7. consistency between selected assessment `T` and radius construction;
 8. locally thickened shell, insert plate and reinforcement-pad treatment;
 9. source evidence required for the selected physical thickness.
 
-## Authority effect of this reconciliation
+## Authority effect
 
 This source-governance increment does not:
 
-- change production thickness conversion or defaulting;
-- change `R_m`, `gamma`, `beta` or Table-5 numerical mechanics;
-- change source-custody runtime code;
-- change route or registry authority;
-- change the aggregate P0 source gate;
-- widen pressure, SCF, off-axis, spherical, attachment-class, interaction, code or release authority;
-- grant physical thickness-basis source authority.
+- change production thickness conversion/defaulting;
+- change `R_m`, gamma, beta, coefficients or stress numerics;
+- change route/registry mechanics;
+- change the P0 aggregate/current professional state in this source PR;
+- change controlled source bytes;
+- change benchmark/oracle/tolerance or evidence 01–12;
+- widen pressure, SCF, off-axis, attachment-class, interaction, code or release authority.
 
-The important distinction is that **this record grants no new engineering authority**, while the bounded route is independently already authorized. The current production thickness basis remains historical bounded-route custody, not newly qualified WRC physical-thickness authority.
+It grants only the bounded source statement that WRC `T` is the host-shell thickness/wall thickness used by the cited formulation. The professional assessment basis remains blocked.

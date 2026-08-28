@@ -60,14 +60,14 @@ assert.equal(
   'POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED',
 );
 assert.deepEqual(current.reconciliationBasis, {
-  basisKind: 'CURRENT_MAIN_POST_PR1513_SOURCE_GOVERNANCE_RECONCILIATION',
-  previousCurrentStateMergeSha: '90264bfe2a0986e20d41c17daef1e23290d6f17a',
-  sourceGovernancePr: 1513,
-  sourceGovernanceMergeSha: '4cf98550a1558f5559c67285e4a4b6905bb13123',
-  latestLiveMainObserved: '382fac125f775efda2bbfe014abb025185ce3a2a',
-  latestLiveMainTreeObserved: '21a7ca64f7776c7e1e536cf093a8170188e7733f',
-  laterMainDriftClassification: 'POST_PR1513_LFEA_PRODUCTION_DRIFT_AUTHORITY_DISJOINT_FROM_EMP1_CURRENT_STATE',
-  basisMeaning: 'POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1513_PLUS_DISJOINT_LFEA_MAIN_DRIFT',
+  basisKind: 'CURRENT_MAIN_POST_PR1518_SOURCE_GOVERNANCE_RECONCILIATION',
+  previousCurrentStateMergeSha: '1bbfc695842a1de2eca14a51c8887f18a33e6da2',
+  sourceGovernancePr: 1518,
+  sourceGovernanceMergeSha: '8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d',
+  latestLiveMainObserved: '8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d',
+  latestLiveMainTreeObserved: 'bf296336b53cbea5757c5e86cc5ad765a7db69b0',
+  laterMainDriftClassification: 'NONE_OBSERVED_AT_RECONCILIATION_START',
+  basisMeaning: 'POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1518',
   artifactMayNotClaimContainingCommitAsBasis: true,
 });
 
@@ -124,11 +124,11 @@ assert.equal(current.sourceState.p0Aggregate.path,
 assert.equal(current.sourceState.p0Aggregate.originPr, 1427);
 assert.equal(current.sourceState.p0Aggregate.originMergeSha,
   'b648e174b80b49ceed76036d590b89ad4fe08c2e');
-assert.equal(current.sourceState.p0Aggregate.currentReconciliationPr, 1517);
+assert.equal(current.sourceState.p0Aggregate.currentReconciliationPr, 1520);
 assert.equal(current.sourceState.p0Aggregate.basisMainSha,
   current.reconciliationBasis.latestLiveMainObserved);
 assert.equal(current.sourceState.p0Aggregate.gitBlobSha1,
-  '363facb0e2ad6ec1211676ae10d7a63c3aad3765');
+  '8ddc0821e4e50572354e8e49fd6f317749d466e6');
 assert.equal(gitBlobSha(p0Buffer), current.sourceState.p0Aggregate.gitBlobSha1);
 assert.equal(p0.state, 'BLOCKED_P0_SOURCE_SEMANTICS');
 assert.equal(p0.blockerCount, 9);
@@ -137,6 +137,10 @@ assert.ok(p0.gates.every((gate) => String(gate.currentStatus).startsWith('BLOCKE
 assert.equal(
   p0.gates.find((gate) => gate.issue === 1375)?.currentStatus,
   'BLOCKED_PARTIAL_PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_QUALIFIED_ASSESSMENT_THICKNESS_BASIS_UNRESOLVED',
+);
+assert.equal(
+  p0.gates.find((gate) => gate.issue === 1373)?.currentStatus,
+  'BLOCKED_PARTIAL_PRIMARY_STRESS_ATTENUATION_AND_IDEALIZED_CASE_LIMITATION_QUALIFIED_NEIGHBOR_SPACING_AND_INTERACTION_AUTHORITY_UNRESOLVED',
 );
 assert.deepEqual(
   current.sourceState.p0GateStatuses,
@@ -179,6 +183,9 @@ assert.equal(governanceByPr.get(1505)?.mergeSha,
   '456083d581765105c6a0fefbca73808b1250db90');
 assert.equal(governanceByPr.get(1513)?.state, 'MERGED');
 assert.equal(governanceByPr.get(1513)?.mergeSha,
+  '4cf98550a1558f5559c67285e4a4b6905bb13123');
+assert.equal(governanceByPr.get(1518)?.state, 'MERGED');
+assert.equal(governanceByPr.get(1518)?.mergeSha,
   current.reconciliationBasis.sourceGovernanceMergeSha);
 for (const pr of [1412, 1414, 1417, 1418, 1423, 1425, 1426]) {
   assert.equal(governanceByPr.get(pr)?.state, 'MERGED');

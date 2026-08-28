@@ -3,14 +3,14 @@
   "issue": 1389,
   "releaseProfileId": "EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1",
   "reconciliationBasis": {
-    "basisKind": "CURRENT_MAIN_POST_PR1513_SOURCE_GOVERNANCE_RECONCILIATION",
-    "previousCurrentStateMergeSha": "90264bfe2a0986e20d41c17daef1e23290d6f17a",
-    "sourceGovernancePr": 1513,
-    "sourceGovernanceMergeSha": "4cf98550a1558f5559c67285e4a4b6905bb13123",
-    "latestLiveMainObserved": "382fac125f775efda2bbfe014abb025185ce3a2a",
-    "latestLiveMainTreeObserved": "21a7ca64f7776c7e1e536cf093a8170188e7733f",
-    "laterMainDriftClassification": "POST_PR1513_LFEA_PRODUCTION_DRIFT_AUTHORITY_DISJOINT_FROM_EMP1_CURRENT_STATE",
-    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1513_PLUS_DISJOINT_LFEA_MAIN_DRIFT",
+    "basisKind": "CURRENT_MAIN_POST_PR1518_SOURCE_GOVERNANCE_RECONCILIATION",
+    "previousCurrentStateMergeSha": "1bbfc695842a1de2eca14a51c8887f18a33e6da2",
+    "sourceGovernancePr": 1518,
+    "sourceGovernanceMergeSha": "8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d",
+    "latestLiveMainObserved": "8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d",
+    "latestLiveMainTreeObserved": "bf296336b53cbea5757c5e86cc5ad765a7db69b0",
+    "laterMainDriftClassification": "NONE_OBSERVED_AT_RECONCILIATION_START",
+    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1518",
     "artifactMayNotClaimContainingCommitAsBasis": true
   },
   "frozenReadinessContract": {
@@ -187,6 +187,15 @@
       "state": "MERGED",
       "mergeSha": "4cf98550a1558f5559c67285e4a4b6905bb13123",
       "role": "PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_PARTIAL_RECONCILIATION_ASSESSMENT_THICKNESS_BASIS_BLOCKED"
+    },
+    {
+      "pr": 1518,
+      "issues": [
+        1373
+      ],
+      "state": "MERGED",
+      "mergeSha": "8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d",
+      "role": "PRIMARY_STRESS_ATTENUATION_AND_IDEALIZED_CASE_LIMITATION_PARTIAL_RECONCILIATION_NEIGHBOR_SPACING_AND_INTERACTION_AUTHORITY_BLOCKED"
     }
   ],
   "sequenceStatus": {
@@ -213,9 +222,9 @@
       "path": "validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json",
       "originPr": 1427,
       "originMergeSha": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
-      "currentReconciliationPr": 1517,
-      "basisMainSha": "382fac125f775efda2bbfe014abb025185ce3a2a",
-      "gitBlobSha1": "363facb0e2ad6ec1211676ae10d7a63c3aad3765"
+      "currentReconciliationPr": 1520,
+      "basisMainSha": "8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d",
+      "gitBlobSha1": "8ddc0821e4e50572354e8e49fd6f317749d466e6"
     },
     "p0GateStatuses": [
       {
@@ -248,7 +257,7 @@
       },
       {
         "issue": 1373,
-        "currentStatus": "BLOCKED_NEARBY_ATTACHMENT_INTERACTION_AUTHORITY_UNRESOLVED"
+        "currentStatus": "BLOCKED_PARTIAL_PRIMARY_STRESS_ATTENUATION_AND_IDEALIZED_CASE_LIMITATION_QUALIFIED_NEIGHBOR_SPACING_AND_INTERACTION_AUTHORITY_UNRESOLVED"
       },
       {
         "issue": 1381,
@@ -342,6 +351,6 @@
   },
   "releaseReady": false,
   "state": "BLOCKED_FAIL_CLOSED_POST_SEQUENCE",
-  "currentStateSemanticHash": "f1348704a9202e3bcd3e03a31e0ea58e16e1a5bb66c71a9f641c47d19d43e25e",
+  "currentStateSemanticHash": "8af6e4ff778df1c26bd0cb8f90051f1f341dab272ab8196a277946890443e0d8",
   "status": "POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED"
 }

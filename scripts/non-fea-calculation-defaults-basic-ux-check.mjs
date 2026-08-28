@@ -7,6 +7,9 @@ import {
   replaceProjectDataValue,
 } from '../src/workspace/project-data/project-data-contract.js';
 import {
+  NON_FEA_COMPONENT_COG_FALLBACK,
+} from '../src/workspace/project-data/non-fea-component-cog-fallback-policy.js';
+import {
   createNonFeaProductDefaultProvider,
   LOAD_CALC_STANDARD_DEFAULTS_V1,
 } from '../src/workspace/project-data/non-fea-product-default-profile.js';
@@ -21,7 +24,7 @@ const raw = createEmptyProjectDataProfile();
 const effective = createNonFeaProductDefaultProvider({ profile: raw }).effectiveProfile;
 const model = createBasicCalculationDefaultsModel(effective);
 
-assert.equal(model.rows.length, 10);
+assert.equal(model.rows.length, 11);
 assert.equal(model.productDefaultProfileId, LOAD_CALC_STANDARD_DEFAULTS_V1.profileId);
 assert.equal(model.productDefaultProfileVersion, LOAD_CALC_STANDARD_DEFAULTS_V1.version);
 assert.ok(model.rows.every((row) => row.scope === 'PROJECT_GLOBAL'));
@@ -31,6 +34,14 @@ assert.ok(model.rows.every((row) => row.resetAvailable === false));
 const sourceAxisRow = model.rows.find((row) => row.fieldId === 'SOURCE_UP_AXIS');
 assert.deepEqual(sourceAxisRow.options, ['X', 'Y', 'Z']);
 assert.equal(sourceAxisRow.value, 'Z', 'Product default remains Z when no higher source/project axis exists');
+const cogFallbackRow = model.rows.find((row) => row.fieldId === 'COMPONENT_COG_FALLBACK');
+assert.deepEqual(cogFallbackRow.options, [
+  NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT,
+  NON_FEA_COMPONENT_COG_FALLBACK.DISABLED,
+]);
+assert.equal(cogFallbackRow.value, NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT);
+assert.equal(cogFallbackRow.builtInDefaultId, 'PD-COMPONENT-COG-FALLBACK');
+assert.equal(cogFallbackRow.effectiveAuthority, 'PRODUCT_DEFAULT');
 
 const gravity = createBasicCalculationDefaultUpdate(effective, 'GRAVITY_ACCELERATION', 9.7);
 assert.equal(gravity.projectDataPath, 'loadCalculation.gravityMPerS2');
@@ -83,6 +94,15 @@ const cases = createBasicCalculationDefaultUpdate(effective, 'ACTIVE_LOAD_CASES'
 assert.deepEqual(cases.value, ['EMPTY', 'HYD']);
 const method = createBasicCalculationDefaultUpdate(effective, 'GRAVITY_METHOD', 'CHAINAGE_TRIBUTARY_SPAN_V3_COG');
 assert.equal(method.value, 'CHAINAGE_TRIBUTARY_SPAN_V3_COG');
+const cogDisabled = createBasicCalculationDefaultUpdate(
+  effective,
+  'COMPONENT_COG_FALLBACK',
+  NON_FEA_COMPONENT_COG_FALLBACK.DISABLED,
+);
+assert.equal(cogDisabled.projectDataPath, 'loadCalculation.componentCogFallback');
+assert.equal(cogDisabled.value, NON_FEA_COMPONENT_COG_FALLBACK.DISABLED);
+assert.equal(cogDisabled.evidence.authority, 'PROJECT_POLICY');
+assert.equal(cogDisabled.evidence.previousAuthority, 'PRODUCT_DEFAULT');
 
 const yAxis = createBasicCalculationDefaultUpdate(effective, 'SOURCE_UP_AXIS', 'Y');
 assert.equal(yAxis.value, 'Y');
@@ -151,6 +171,7 @@ assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'FRICTION_COE
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'ACTIVE_LOAD_CASES', []), /At least one/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'ACTIVE_LOAD_CASES', ['STARTUP']), /Unknown canonical/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'GRAVITY_METHOD', 'MAGIC'), /must be one of/u);
+assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'COMPONENT_COG_FALLBACK', 'MAGIC'), /must be one of/u);
 assert.throws(() => createBasicCalculationDefaultUpdate(effective, 'ELASTIC_THERMAL', {
   elasticModulusPa: 0,
   thermalExpansionPerK: 12e-6,
@@ -190,6 +211,9 @@ console.log(JSON.stringify({
   basicRows: model.rows.length,
   productProfile: `${model.productDefaultProfileId}@${model.productDefaultProfileVersion}`,
   projectOverrideAuthority: gravity.evidence.authority,
+  componentCogFallback: cogFallbackRow.value,
+  componentCogFallbackOptions: cogFallbackRow.options,
+  componentCogProjectOverride: cogDisabled.value,
   higherAuthorityOverwriteBlocked: true,
   destructiveKeyedMapResetBlocked: true,
   pathLevelCompositeReset: true,
@@ -200,6 +224,7 @@ console.log(JSON.stringify({
   unsupportedUnitBlocked: true,
   invalidNumbersBlocked: true,
   invalidCasesBlocked: true,
+  invalidCogFallbackBlocked: true,
   advancedAuthorityEditorRetained: true,
   scopedDefaultEditorRetained: true,
 }, null, 2));

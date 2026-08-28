@@ -1,9 +1,15 @@
 import { semanticHash } from '../../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../../core/shared-piping-model/immutable.js';
 import {
+  NON_FEA_COMPONENT_COG_FALLBACK,
+  optionalNonFeaComponentCogFallbackPolicy,
+  requireNonFeaComponentCogFallbackPolicy,
+} from '../project-data/non-fea-component-cog-fallback-policy.js';
+import {
   NON_FEA_GRAVITY_METHOD_AUTO,
   requireReadyNonFeaGravityMethodAuthority,
 } from '../project-data/non-fea-gravity-method-authority.js';
+import { projectDataValue } from '../project-data/project-data-contract.js';
 import {
   EMPIRICAL_COMPONENT_COG_CLASSIFICATION,
   auditEmpiricalComponentLoadAuthority,
@@ -34,6 +40,7 @@ const ALLOWED_REQUESTS = Object.freeze([
 
 export function evaluateEmpiricalGravityMethodSelection(input = {}) {
   const requestedMethod = methodRequest(input.requestedMethod ?? EMPIRICAL_GRAVITY_AUTO);
+  const componentCogFallbackPolicy = requireProfileComponentCogFallback(input.profile);
   const componentAuthorityAudit = auditEmpiricalComponentLoadAuthority({
     dataset: input.dataset,
     profile: input.profile,
@@ -41,6 +48,7 @@ export function evaluateEmpiricalGravityMethodSelection(input = {}) {
   });
   return createEmpiricalGravityMethodSelection({
     requestedMethod,
+    componentCogFallbackPolicy,
     componentAuthorityAudit,
     explicitMomentRetention: input.explicitMomentRetention || null,
   });
@@ -54,6 +62,7 @@ export function evaluateEmpiricalGravityMethodSelection(input = {}) {
  * behavior.
  */
 export function evaluateGovernedEmpiricalGravityMethodSelection(input = {}) {
+  const componentCogFallbackPolicy = requireProfileComponentCogFallback(input.profile);
   const componentAuthorityAudit = auditEmpiricalComponentLoadAuthority({
     dataset: input.dataset,
     profile: input.profile,
@@ -61,6 +70,7 @@ export function evaluateGovernedEmpiricalGravityMethodSelection(input = {}) {
   });
   return createGovernedEmpiricalGravityMethodSelection({
     gravityMethodAuthority: input.gravityMethodAuthority,
+    componentCogFallbackPolicy,
     componentAuthorityAudit,
     explicitMomentRetention: input.explicitMomentRetention || null,
   });
@@ -69,6 +79,9 @@ export function evaluateGovernedEmpiricalGravityMethodSelection(input = {}) {
 export function createGovernedEmpiricalGravityMethodSelection(input = {}) {
   const authority = requireReadyNonFeaGravityMethodAuthority(input.gravityMethodAuthority);
   const audit = requireEmpiricalComponentLoadAuthorityAudit(input.componentAuthorityAudit);
+  const componentCogFallbackPolicy = optionalNonFeaComponentCogFallbackPolicy(
+    input.componentCogFallbackPolicy,
+  );
   if (audit.projectDataProfileSemanticHash !== authority.projectDataSemanticHash) {
     throw codedError(
       'Gravity-method authority and component-load audit do not bind the same effective Project Data profile.',
@@ -81,12 +94,14 @@ export function createGovernedEmpiricalGravityMethodSelection(input = {}) {
   }
   const selection = createEmpiricalGravityMethodSelection({
     requestedMethod: authority.requestedMethod,
+    componentCogFallbackPolicy,
     componentAuthorityAudit: audit,
     explicitMomentRetention: input.explicitMomentRetention || null,
   });
   const base = {
     schema: EMPIRICAL_GOVERNED_GRAVITY_METHOD_SELECTION_SCHEMA,
     gravityMethodAuthority: authority,
+    componentCogFallbackPolicy,
     componentAuthorityAuditProjectDataProfileSemanticHash:
       audit.projectDataProfileSemanticHash,
     selection,
@@ -96,9 +111,12 @@ export function createGovernedEmpiricalGravityMethodSelection(input = {}) {
 
 export function createEmpiricalGravityMethodSelection(input = {}) {
   const requestedMethod = methodRequest(input.requestedMethod ?? EMPIRICAL_GRAVITY_AUTO);
+  const componentCogFallbackPolicy = optionalNonFeaComponentCogFallbackPolicy(
+    input.componentCogFallbackPolicy,
+  );
   const audit = requireEmpiricalComponentLoadAuthorityAudit(input.componentAuthorityAudit);
   const retention = optionalExplicitMomentRetention(input.explicitMomentRetention, audit);
-  const classification = classifyAudit(audit, retention);
+  const classification = classifyAudit(audit, retention, componentCogFallbackPolicy);
   const explicit = requestedMethod !== EMPIRICAL_GRAVITY_AUTO;
   const choice = explicit
     ? explicitChoice(requestedMethod, classification)
@@ -110,6 +128,7 @@ export function createEmpiricalGravityMethodSelection(input = {}) {
     requestedMethod,
     selectedMethod: choice.selectedMethod,
     selectionState: choice.selectionState,
+    componentCogFallbackPolicy,
     componentAuthorityAuditSemanticHash: audit.semanticHash,
     explicitMomentRetentionSemanticHash: retention?.semanticHash || null,
     candidates,
@@ -119,7 +138,9 @@ export function createEmpiricalGravityMethodSelection(input = {}) {
     retainedDemandLedger: classification.retainedDemands,
     policy: {
       highestFidelityQualifiedMethodFirst: true,
-      missingCogMayFallbackToV2: true,
+      componentCogFallback: componentCogFallbackPolicy,
+      missingCogMayFallbackToV2:
+        componentCogFallbackPolicy === NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT,
       knownOffRouteCogMayFallbackToV2: false,
       ambiguousCogMayFallbackToV2: false,
       invalidCogEvidenceMayFallbackToV2: false,
@@ -143,6 +164,7 @@ export function requireEmpiricalGravityMethodSelection(value) {
   }
   methodRequest(value.requestedMethod);
   if (value.selectedMethod !== null) methodRequest(value.selectedMethod);
+  optionalNonFeaComponentCogFallbackPolicy(value.componentCogFallbackPolicy);
   return deepFreeze(structuredClone(value));
 }
 
@@ -156,10 +178,17 @@ export function requireGovernedEmpiricalGravityMethodSelection(value) {
   }
   const authority = requireReadyNonFeaGravityMethodAuthority(value.gravityMethodAuthority);
   const selection = requireEmpiricalGravityMethodSelection(value.selection);
+  optionalNonFeaComponentCogFallbackPolicy(value.componentCogFallbackPolicy);
   if (selection.requestedMethod !== authority.requestedMethod) {
     throw codedError(
       'Governed selector request differs from gravity-method authority.',
       'EMPIRICAL_GRAVITY_METHOD_AUTHORITY_REQUEST_MISMATCH',
+    );
+  }
+  if (selection.componentCogFallbackPolicy !== value.componentCogFallbackPolicy) {
+    throw codedError(
+      'Governed selector CoG fallback policy differs from the governed package binding.',
+      'EMPIRICAL_GRAVITY_COMPONENT_COG_FALLBACK_POLICY_MISMATCH',
     );
   }
   if (
@@ -179,6 +208,12 @@ export function requireGovernedEmpiricalGravityMethodSelection(value) {
   return deepFreeze(structuredClone(value));
 }
 
+function requireProfileComponentCogFallback(profile) {
+  return requireNonFeaComponentCogFallbackPolicy(
+    projectDataValue(profile, 'loadCalculation.componentCogFallback'),
+  );
+}
+
 function optionalExplicitMomentRetention(value, audit) {
   if (value === null || value === undefined) return null;
   const retention = requireCurrentCommonInputExplicitMomentRetention(value);
@@ -195,7 +230,7 @@ function optionalExplicitMomentRetention(value, audit) {
   return retention;
 }
 
-function classifyAudit(audit, retention) {
+function classifyAudit(audit, retention, componentCogFallbackPolicy) {
   const records = audit.records || [];
   const retainedIds = new Set(
     retention?.status === 'RETAINED'
@@ -236,6 +271,7 @@ function classifyAudit(audit, retention) {
     [...hard, ...otherBlocked].map((row) => row.entityId),
   )].sort();
   return deepFreeze({
+    componentCogFallbackPolicy,
     componentCount: records.length,
     missingCogCount: missingCog.length,
     onRouteCogCount: onRouteCog.length,
@@ -263,6 +299,18 @@ function autoChoice(state) {
     return deepFreeze({
       selectedMethod: EMPIRICAL_LOAD_METHOD,
       selectionState: 'SELECTED_V2_NO_COG_FIDELITY_GAIN',
+      assumptions: [],
+    });
+  }
+  if (
+    state.missingCogCount > 0
+    && state.componentCogFallbackPolicy !== NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT
+  ) {
+    return deepFreeze({
+      selectedMethod: null,
+      selectionState: state.componentCogFallbackPolicy === NON_FEA_COMPONENT_COG_FALLBACK.DISABLED
+        ? 'COG_FALLBACK_DISABLED_BY_POLICY'
+        : 'COG_FALLBACK_POLICY_REQUIRED',
       assumptions: [],
     });
   }
@@ -318,12 +366,17 @@ function candidateRows(state, selectedMethod) {
     : state.retainedExplicitMomentCount > 0
       ? 'EXPLICIT_MOMENT_REQUIRES_SEPARATE_V2_DEMAND'
       : state.missingCogCount ? 'INPUT_INCOMPLETE' : 'READY';
+  const v2State = state.hardExceptionCount || state.otherBlockedCount
+    ? 'FALLBACK_PROHIBITED_BY_KNOWN_EVIDENCE'
+    : state.missingCogCount > 0
+      && state.componentCogFallbackPolicy !== NON_FEA_COMPONENT_COG_FALLBACK.GEOMETRIC_MIDPOINT
+      ? (state.componentCogFallbackPolicy === NON_FEA_COMPONENT_COG_FALLBACK.DISABLED
+        ? 'FALLBACK_DISABLED_BY_POLICY'
+        : 'FALLBACK_POLICY_REQUIRED')
+      : 'READY';
   return deepFreeze([
     candidate(EMPIRICAL_LOAD_COG_METHOD, v3State, selectedMethod),
-    candidate(EMPIRICAL_LOAD_METHOD,
-      state.hardExceptionCount || state.otherBlockedCount
-        ? 'FALLBACK_PROHIBITED_BY_KNOWN_EVIDENCE' : 'READY',
-      selectedMethod),
+    candidate(EMPIRICAL_LOAD_METHOD, v2State, selectedMethod),
     deepFreeze({
       methodId: BEAM_CONTACT,
       registration: registration(BEAM_CONTACT),
@@ -356,11 +409,28 @@ function fallbackRows(requestedMethod, state, choice, retention) {
         reasonCode: 'COG_NOT_AVAILABLE',
         affectedEntityIds: state.missingCogIds,
         permittedByPolicy: true,
+        componentCogFallbackPolicy: state.componentCogFallbackPolicy,
       });
     }
     return deepFreeze(rows);
   }
   if (choice.selectedMethod === null) {
+    if (
+      state.hardExceptionCount === 0
+      && state.otherBlockedCount === 0
+      && state.missingCogCount > 0
+    ) {
+      return deepFreeze([{
+        fromMethod: EMPIRICAL_LOAD_COG_METHOD,
+        toMethod: EMPIRICAL_LOAD_METHOD,
+        reasonCode: state.componentCogFallbackPolicy === NON_FEA_COMPONENT_COG_FALLBACK.DISABLED
+          ? 'COG_FALLBACK_DISABLED_BY_POLICY'
+          : 'COG_FALLBACK_POLICY_REQUIRED',
+        affectedEntityIds: state.missingCogIds,
+        permittedByPolicy: false,
+        componentCogFallbackPolicy: state.componentCogFallbackPolicy,
+      }]);
+    }
     return deepFreeze([{
       fromMethod: EMPIRICAL_LOAD_COG_METHOD,
       toMethod: EMPIRICAL_LOAD_METHOD,
@@ -378,7 +448,7 @@ function midpointAssumptions(entityIds, explicitV2 = false) {
     code: 'GEOMETRIC_MIDPOINT_APPLICATION',
     reason: explicitV2
       ? 'Explicit V2 uses the qualified midpoint application rule.'
-      : 'No qualified component CoG evidence is available.',
+      : 'No qualified component CoG evidence is available and the governed fallback policy permits the geometric midpoint.',
   }));
 }
 

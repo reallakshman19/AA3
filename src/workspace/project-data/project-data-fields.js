@@ -33,6 +33,7 @@ export const PROJECT_DATA_GROUPS = Object.freeze([
     field('gravityMPerS2', 'Gravity', 'number', 'm/s²'),
     field('loadFactor', 'Load factor', 'number', 'ratio'),
     phase2Field('gravityMethod', 'Gravity distribution method', 'text', 'Method selection'),
+    phase2Field('componentCogFallback', 'Component CoG fallback', 'text', 'Application-point policy'),
     field('materialDensitiesKgPerM3', 'Material densities', 'json', 'kg/m³'),
     field('pipeSectionProperties', 'Pipe section properties', 'json', 'Geometry and loads'),
     field('operatingFluidDensitiesKgPerM3', 'Operating fluid densities', 'json', 'kg/m³'),
@@ -147,6 +148,7 @@ export const PROJECT_DATA_REQUIREMENTS = Object.freeze({
     'thermoMechanicalBasis.fluidPhaseAndFillState',
   ]),
   nonFeaPolicy: Object.freeze([
+    'loadCalculation.componentCogFallback',
     'loadCalculation.componentMassCompositionPolicy',
     'loadCalculation.forceOutputConvention',
     'loadCalculation.momentOutputConvention',

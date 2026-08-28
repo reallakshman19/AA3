@@ -12,6 +12,7 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 | Chain | Mission | Latest endpoint | Endpoint file | PR | State | Authority domain | Next action |
 |---|---|---|---|---|---|---|---|
 | EMP1-1389-P0-SOURCE-CLOSURE | Reconcile #1389 professional P0/current-state after source-semantic increments without widening runtime/release authority | EP-0002 | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0002.md | #1502 | READY_FOR_OWNER_MERGE_DECISION | EMP.1 WRC source/current-state governance | Obtain explicit owner merge authorization; if granted, re-ground live merge gate before merge |
+| LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME | Connect target-level Product engineering defaults to ordinary Common Input resolution without inventing values | EP-LC1321-PD-0002 | agents/agentchain/LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME/EP-LC1321-PD-0002.md | #1504 | SOURCE_COMPLETE_EXECUTION_NOT_RUN | Load Calc field-resolution/default authority plumbing | Re-ground live main and concurrent v2 relay rows; run focused/aggregate/import/build checks only if a faithful checkout becomes available; keep higher-authority hierarchy reconciliation separate. |
 
 ## ENDPOINT LOG
 
@@ -23,3 +24,5 @@ MERGE_AUTHORITY: OWNER_ONLY_UNLESS_EXPLICITLY_GRANTED
 | EP-0004 | ADV-ENG-DELIVERY-V2-PILOT | LEG-C | 7b2e9add0894cb7e2be4794382f21d6bf82c941e | COMPLETE | agents/agentchain/ADV-ENG-DELIVERY-V2-PILOT/EP-0004.md |
 | EP-0001 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-POST-1499-STATE | 81c2e780a03d565345457b07609fe19d8d1421e4 | IN_PROGRESS | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0001.md |
 | EP-0002 | EMP1-1389-P0-SOURCE-CLOSURE | LEG-POST-1499-STATE | b567bb8b6d97766a63a34f8d0adecd93a137328b | READY_FOR_OWNER_MERGE_DECISION | agents/agentchain/EMP1-1389-P0-SOURCE-CLOSURE/EP-0002.md |
+| EP-LC1321-PD-0001 | LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME | LEG-A | 81c2e780a03d565345457b07609fe19d8d1421e4 | ACTIVE | agents/agentchain/LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME/EP-LC1321-PD-0001.md |
+| EP-LC1321-PD-0002 | LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME | LEG-A | ecbc03b71c14c91311722425ba1d18be88b44025 | SOURCE_COMPLETE_EXECUTION_NOT_RUN | agents/agentchain/LOAD-CALC-1321-PRODUCT-DEFAULT-RUNTIME/EP-LC1321-PD-0002.md |

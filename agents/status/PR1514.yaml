@@ -1,0 +1,49 @@
+pr: 1514
+state: READY_TO_MERGE_OWNER_AUTHORIZED_EXECUTION_NOT_RUN
+branch: agent/issue-1321-effective-projection-authority
+initial_base_sha: 1377eddabc8f23e2ea6489ee8aca4cc5b26671b9
+current_main_sha: 1bbfc695842a1de2eca14a51c8887f18a33e6da2
+pre_reconciliation_head_sha: 50ef5a6416fda670d2bb6b5b88a89fbefd043da5
+source_complete_material_sha: c35c4a40e863470d02fcdc6839c7b076ece9ea8a
+merge_disposition: READY_TO_MERGE_OWNER_AUTHORIZED_AFTER_LIVE_GATE
+merge_authority: OWNER_GRANTED_PR1514_2026-08-28T16:26:03Z
+checks:
+  live_main_grounding: PASS_SOURCE_INSPECTION
+  current_main_overlap_audit: PASS_ONLY_AGENTCHAIN_OVERLAP
+  submitted_reviews: 0
+  review_threads: 0
+  effective_precedence_owner: PASS_SOURCE_INSPECTION
+  common_input_projection_cutover: PASS_SOURCE_INSPECTION
+  product_default_identity_transport: PASS_SOURCE_INSPECTION
+  protected_numerical_paths: PASS_SOURCE_INSPECTION
+  repository_access: BLOCKED_DNS_GITHUB
+  focused_effective_projection: NOT_RUN
+  effective_resolver_regression: NOT_RUN
+  product_engineering_default_runtime: NOT_RUN
+  common_checker_and_seal: NOT_RUN
+  empirical_mass_projection: NOT_RUN
+  aggregate_non_fea: NOT_RUN
+  imports: NOT_RUN
+  advanced_shell: NOT_RUN
+  build: NOT_RUN
+  diff_check: NOT_RUN
+execution_blocker:
+  command: git ls-remote https://github.com/reallaksh19/Advanced_Analysis.git refs/heads/agent/issue-1321-effective-projection-authority
+  result: Could not resolve host: github.com
+invariants:
+  precedence_changed: false
+  precedence_duplicated: false
+  core_resolution_candidate_custody_preserved: true
+  effective_winner_controls_common_input_projection: true
+  accepted_override_projection_authorized_only_by_effective_resolver: true
+  lower_authority_source_displacement: false
+  source_mutation: false
+  topology_mutation: false
+  numerical_mechanics_changed: false
+  benchmark_tolerance_changed: false
+  execution_authority_granted: false
+  release_authority_granted: false
+next_action: >-
+  Re-read live main and exact reconciled head; if behind=0, changed-file scope remains bounded,
+  reviews/threads remain clear, and GitHub reports mergeable, mark PR #1514 ready and squash-merge
+  the exact expected head. Preserve executable validation as NOT_RUN.

@@ -68,6 +68,39 @@ shippedThermalExpansionRecords.forEach((record) => {
   assert.match(record.evidence.basis, /without unit conversion/u);
 });
 
+const shippedElasticThermalLedger = resolveNonFeaEnrichment({
+  sourceModel,
+  sidecar: createNonFeaEnrichmentSidecar({
+    sourceSemanticHash: sourceModel.semanticHash,
+    records: shippedElasticThermalProvider.records,
+  }),
+});
+assert.equal(shippedElasticThermalLedger.status, 'READY');
+for (const component of sourceModel.components) {
+  const elastic = selectedCandidate(shippedElasticThermalLedger, component.componentKey, 'ELASTIC_MODULUS');
+  const alpha = selectedCandidate(
+    shippedElasticThermalLedger,
+    component.componentKey,
+    'THERMAL_EXPANSION_COEFFICIENT',
+  );
+  assert.equal(elastic.authority, 'PRODUCT_DEFAULT');
+  assert.equal(elastic.value, 200000);
+  assert.equal(alpha.authority, 'PRODUCT_DEFAULT');
+  assert.equal(alpha.value, 12e-6);
+}
+const shippedElasticThermalProjection = createNonFeaEnrichedProjection({
+  sourceModel,
+  resolutionLedger: shippedElasticThermalLedger,
+});
+for (const component of shippedElasticThermalProjection.enrichedModel.components) {
+  assert.equal(component.engineeringProperties.elasticModulusMpa.value, 200000);
+  assert.equal(component.engineeringProperties.elasticModulusMpa.unit, 'MPa');
+  assert.equal(component.engineeringProperties.elasticModulusMpa.sourceKind, 'PRODUCT_DEFAULT');
+  assert.equal(component.engineeringProperties.thermalExpansionPerK.value, 12e-6);
+  assert.equal(component.engineeringProperties.thermalExpansionPerK.unit, '1/K');
+  assert.equal(component.engineeringProperties.thermalExpansionPerK.sourceKind, 'PRODUCT_DEFAULT');
+}
+
 const productElasticProfile = createProductEngineeringDefaultProfile({
   profileId: 'QUAL-PRODUCT-ELASTIC-2026A',
   version: 1,
@@ -259,6 +292,7 @@ console.log(JSON.stringify({
   shippedElasticModulusMpa: shippedElasticRecords[0]?.value ?? null,
   shippedThermalExpansionPerK: shippedThermalExpansionRecords[0]?.value ?? null,
   shippedElasticThermalSource: 'PD-ELASTIC-THERMAL',
+  shippedElasticThermalProjected: true,
   productOnlyWinner: 'PRODUCT_DEFAULT',
   projectOverProductWinner: 'PROJECT_CONFIGURED_DEFAULT',
   sourceOverProductWinner: 'SOURCE_EXPLICIT',

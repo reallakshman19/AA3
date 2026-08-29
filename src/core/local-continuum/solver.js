@@ -1,3 +1,4 @@
+import { solveDeterministicJacobiPcg } from '../lafea-linear-solve/index.js';
 import { FORMULA_IDS } from './constants.js';
 import { numericalError, singularError } from './errors.js';
 import { resolveImposedDisplacementIndices } from './imposed-displacement-loads.js';
@@ -11,7 +12,6 @@ import {
 } from './sparse-matrix.js';
 
 const DENSE_CHOLESKY_REFINEMENT_STEPS = 3;
-const SPARSE_PCG_RELIABLE_RESIDUAL_INTERVAL = 100;
 
 export function solvePartitioned(model, mesh, load) {
   const constraints = constraintData(model, mesh.dofOrdering, load);
@@ -304,169 +304,114 @@ function conjugateGradientSolve(matrix, rightHandSide, profile) {
     'choleskyPivot',
     diagonalScale,
   );
-  const minimumDiagonal = Math.min(...matrix.diagonal);
-  const maximumDiagonal = Math.max(...matrix.diagonal);
-  if (minimumDiagonal < -diagonalTolerance) {
-    throw singularError(
-      'INDEFINITE_FREE_STIFFNESS',
-      'solver',
-      `Negative sparse stiffness diagonal ${minimumDiagonal}.`,
-    );
-  }
-  if (minimumDiagonal <= diagonalTolerance) {
-    throw singularError(
-      'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
-      'solver',
-      `Sparse stiffness diagonal ${minimumDiagonal} does not exceed ${diagonalTolerance}.`,
-    );
-  }
   const residualScale = Math.max(1, maxAbs(rightHandSide));
   const residualTolerance = tolerance(
     profile,
     'freeDofResidual',
     residualScale,
   );
-  const convergenceTarget = residualTolerance / 10;
-  const iterationLimit = Math.min(
-    50000,
-    Math.max(1000, matrix.size * 16),
-  );
-  const solution = Array(matrix.size).fill(0);
-  let residual = [...rightHandSide];
-  const initialResidualInfinity = maxAbs(residual);
-  let finalResidualInfinity = initialResidualInfinity;
-  let iterations = 0;
-  let reliableResidualReplacements = 0;
-  if (finalResidualInfinity > convergenceTarget) {
-    let preconditioned = applyJacobi(matrix.diagonal, residual);
-    let direction = [...preconditioned];
-    let rho = dotVector(residual, preconditioned);
-    if (!(rho > 0)) {
-      throw singularError(
-        'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
-        'solver',
-        'Sparse PCG initial preconditioned residual is not positive.',
-      );
-    }
-    while (iterations < iterationLimit) {
-      const action = sparseMatrixVectorRaw(matrix, direction);
-      const curvature = dotVector(direction, action);
-      if (!(curvature > 0) || !Number.isFinite(curvature)) {
-        throw singularError(
-          'INDEFINITE_FREE_STIFFNESS',
-          'solver',
-          'Sparse PCG encountered non-positive curvature.',
-        );
-      }
-      const alpha = rho / curvature;
-      for (let index = 0; index < solution.length; index += 1) {
-        solution[index] += alpha * direction[index];
-        residual[index] -= alpha * action[index];
-      }
-      iterations += 1;
-      const recursiveResidualInfinity = maxAbs(residual);
-      finalResidualInfinity = recursiveResidualInfinity;
-      const reliableResidualDue = iterations % SPARSE_PCG_RELIABLE_RESIDUAL_INTERVAL === 0;
-      if (recursiveResidualInfinity <= convergenceTarget || reliableResidualDue) {
-        const reliableResidual = exactResidual(matrix, rightHandSide, solution);
-        const reliableResidualInfinity = maxAbs(reliableResidual);
-        finalResidualInfinity = reliableResidualInfinity;
-        if (reliableResidualInfinity <= convergenceTarget) {
-          residual = reliableResidual;
-          break;
-        }
-        if (reliableResidualDue) {
-          residual = reliableResidual;
-          reliableResidualReplacements += 1;
-        }
-        if (recursiveResidualInfinity <= convergenceTarget) {
-          residual = reliableResidual;
-          preconditioned = applyJacobi(matrix.diagonal, residual);
-          direction = [...preconditioned];
-          rho = dotVector(residual, preconditioned);
-          reliableResidualReplacements += reliableResidualDue ? 0 : 1;
-          if (!(rho > 0) || !Number.isFinite(rho)) {
-            throw singularError(
-              'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
-              'solver',
-              'Sparse PCG reliable-update residual product is not positive.',
-            );
-          }
-          continue;
-        }
-      }
-      preconditioned = applyJacobi(matrix.diagonal, residual);
-      const nextRho = dotVector(residual, preconditioned);
-      if (!(nextRho > 0) || !Number.isFinite(nextRho)) {
-        throw singularError(
-          'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
-          'solver',
-          'Sparse PCG residual product is not positive.',
-        );
-      }
-      const beta = nextRho / rho;
-      rho = nextRho;
-      for (let index = 0; index < direction.length; index += 1) {
-        direction[index] = preconditioned[index] + beta * direction[index];
-      }
-    }
-  }
-  residual = exactResidual(matrix, rightHandSide, solution);
-  finalResidualInfinity = maxAbs(residual);
-  if (finalResidualInfinity > convergenceTarget) {
-    throw numericalError(
-      'ITERATIVE_SOLVER_DID_NOT_CONVERGE',
-      'solver',
-      `Sparse PCG residual ${finalResidualInfinity} exceeds internal target ${convergenceTarget} (acceptance gate ${residualTolerance}) after ${iterations} iterations.`,
-    );
+  let solved;
+  try {
+    solved = solveDeterministicJacobiPcg({
+      size: matrix.size,
+      diagonal: matrix.diagonal,
+      rightHandSide,
+      multiply: (vector) => sparseMatrixVectorRaw(matrix, vector),
+      diagonalTolerance,
+      residualTolerance,
+    });
+  } catch (error) {
+    mapSharedPcgError(error, matrix, diagonalTolerance, residualTolerance);
   }
   return {
-    solution: solution.map((value) =>
+    solution: solved.solution.map((value) =>
       canonicalNumber(value, 'solved sparse displacement')),
-    evidence: {
-      method: 'DETERMINISTIC_JACOBI_PCG',
-      algorithmRevision: 'DETERMINISTIC_JACOBI_PCG_RELIABLE_RESIDUAL_V2',
-      pivotScale: null,
-      pivotTolerance: null,
-      pivots: [],
-      minimumPivot: null,
-      maximumPivot: null,
-      pivotRatio: null,
-      preconditioner: 'JACOBI',
-      iterationLimit,
-      iterations,
-      reliableResidualInterval: SPARSE_PCG_RELIABLE_RESIDUAL_INTERVAL,
-      reliableResidualReplacements,
-      residualScale: canonicalNumber(residualScale),
-      initialResidualInfinity: canonicalNumber(initialResidualInfinity),
-      finalResidualInfinity: canonicalNumber(finalResidualInfinity),
-      convergenceTarget: canonicalNumber(convergenceTarget),
-      residualTolerance: canonicalNumber(residualTolerance),
-      diagonalScale: canonicalNumber(diagonalScale),
-      diagonalTolerance: canonicalNumber(diagonalTolerance),
-      minimumDiagonal: canonicalNumber(minimumDiagonal),
-      maximumDiagonal: canonicalNumber(maximumDiagonal),
-      diagonalRatio: canonicalNumber(minimumDiagonal / maximumDiagonal),
-      accepted: true,
-    },
+    evidence: continuumPcgEvidence(solved.evidence),
   };
 }
 
-function applyJacobi(diagonal, residual) {
-  return residual.map((value, index) => value / diagonal[index]);
-}
-
-function exactResidual(matrix, rightHandSide, solution) {
-  const action = sparseMatrixVectorRaw(matrix, solution);
-  return rightHandSide.map((value, index) => value - action[index]);
-}
-
-function dotVector(left, right) {
-  let value = 0;
-  for (let index = 0; index < left.length; index += 1) {
-    value += left[index] * right[index];
+function mapSharedPcgError(error, matrix, diagonalTolerance, residualTolerance) {
+  const minimumDiagonal = Math.min(...matrix.diagonal);
+  if (error?.code === 'PCG_INDEFINITE_DIAGONAL') {
+    throw singularError(
+      'INDEFINITE_FREE_STIFFNESS',
+      'solver',
+      `Negative sparse stiffness diagonal ${minimumDiagonal}.`,
+    );
   }
-  return value;
+  if (error?.code === 'PCG_SINGULAR_DIAGONAL') {
+    throw singularError(
+      'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
+      'solver',
+      `Sparse stiffness diagonal ${minimumDiagonal} does not exceed ${diagonalTolerance}.`,
+    );
+  }
+  if (error?.code === 'PCG_NON_POSITIVE_CURVATURE') {
+    throw singularError(
+      'INDEFINITE_FREE_STIFFNESS',
+      'solver',
+      'Sparse PCG encountered non-positive curvature.',
+    );
+  }
+  if (error?.code === 'PCG_NON_POSITIVE_INITIAL_PRODUCT') {
+    throw singularError(
+      'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
+      'solver',
+      'Sparse PCG initial preconditioned residual is not positive.',
+    );
+  }
+  if (error?.code === 'PCG_NON_POSITIVE_RELIABLE_PRODUCT') {
+    throw singularError(
+      'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
+      'solver',
+      'Sparse PCG reliable-update residual product is not positive.',
+    );
+  }
+  if (error?.code === 'PCG_NON_POSITIVE_RESIDUAL_PRODUCT') {
+    throw singularError(
+      'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM',
+      'solver',
+      'Sparse PCG residual product is not positive.',
+    );
+  }
+  if (error?.code === 'PCG_DID_NOT_CONVERGE') {
+    const evidence = error.evidence ?? {};
+    throw numericalError(
+      'ITERATIVE_SOLVER_DID_NOT_CONVERGE',
+      'solver',
+      `Sparse PCG residual ${evidence.finalResidualInfinity} exceeds internal target ${evidence.convergenceTarget} (acceptance gate ${residualTolerance}) after ${evidence.iterations} iterations.`,
+    );
+  }
+  throw error;
+}
+
+function continuumPcgEvidence(evidence) {
+  return {
+    method: 'DETERMINISTIC_JACOBI_PCG',
+    algorithmRevision: evidence.algorithmRevision,
+    pivotScale: null,
+    pivotTolerance: null,
+    pivots: [],
+    minimumPivot: null,
+    maximumPivot: null,
+    pivotRatio: null,
+    preconditioner: 'JACOBI',
+    iterationLimit: evidence.iterationLimit,
+    iterations: evidence.iterations,
+    reliableResidualInterval: evidence.reliableResidualInterval,
+    reliableResidualReplacements: evidence.reliableResidualReplacements,
+    residualScale: canonicalNumber(evidence.residualScale),
+    initialResidualInfinity: canonicalNumber(evidence.initialResidualInfinity),
+    finalResidualInfinity: canonicalNumber(evidence.finalResidualInfinity),
+    convergenceTarget: canonicalNumber(evidence.convergenceTarget),
+    residualTolerance: canonicalNumber(evidence.residualTolerance),
+    diagonalScale: canonicalNumber(evidence.diagonalScale),
+    diagonalTolerance: canonicalNumber(evidence.diagonalTolerance),
+    minimumDiagonal: canonicalNumber(evidence.minimumDiagonal),
+    maximumDiagonal: canonicalNumber(evidence.maximumDiagonal),
+    diagonalRatio: canonicalNumber(evidence.diagonalRatio),
+    accepted: true,
+  };
 }
 
 function pivotEvidence(scale, limit, pivots, minimum, maximum) {

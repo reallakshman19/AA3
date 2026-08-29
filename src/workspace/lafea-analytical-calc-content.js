@@ -26,6 +26,15 @@ import {
   isEmp1BackingStage,
 } from './emp1-product-projection.js';
 import {
+  PRESSURE_THRUST_BASIS_OPTIONS,
+  pressureThrustCaseView,
+  unresolvedEmp1BPressureThrustCases,
+} from './lafea-pressure-thrust-custody-view-model.js';
+import {
+  applyLafeaScreeningPressureThrustBasisCommand,
+  createLafeaScreeningPressureThrustBasisCommand,
+} from './lafea-screening-pressure-thrust-edit.js';
+import {
   applyLafeaScreeningTermFactorCommand,
   createLafeaScreeningTermFactorCommand,
 } from './lafea-screening-term-edit.js';
@@ -176,6 +185,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   }
 
   applyEmp1BCurrentnessRunGate(root, step, projection);
+  applyEmp1BPressureThrustRunGate(root, step, stage.document);
   return Object.freeze({ element: shell, viewport: null, viewportElement: null,
     viewportReused: false, workflow: null, discretization: null });
 }
@@ -207,6 +217,7 @@ function screeningLoadCustody(root, state, documentValue, projection, onApplyJso
   custody.body.append(
     resultantsTable(root, loadCases, forceUnit, momentUnit),
     screeningTermsTable(root, documentValue, screeningCases, onApplyJson),
+    pressureThrustCustodyTable(root, documentValue, onApplyJson),
   );
   return custody.section;
 }
@@ -351,6 +362,111 @@ function screeningTermsTable(root, documentValue, screeningCases, onApplyJson) {
   return wrapper;
 }
 
+function pressureThrustCustodyTable(root, documentValue, onApplyJson) {
+  const wrapper = element(root, 'div', 'lafea-screening-custody__pressure-thrust');
+  wrapper.append(
+    element(root, 'h4', null, 'Axial pressure-thrust custody'),
+    element(root, 'p', 'lafea-workbench__section-intro',
+      'For closed-end pressure, declare whether the supplied Fx already contains pressure end-cap thrust. This cannot be inferred safely from the combined result.'),
+  );
+  const cases = pressureThrustCaseView(documentValue);
+  if (!cases.length) {
+    wrapper.append(element(root, 'p', 'lafea-workbench-svg__empty',
+      'No screening cases are available for pressure-thrust custody.'));
+    return wrapper;
+  }
+
+  const unresolved = cases.filter((row) => row.unresolved);
+  if (unresolved.length) {
+    const blocker = element(root, 'p', 'lafea-workbench__authority',
+      `Run blocked: declare whether Fx includes closed-end pressure thrust for ${unresolved.map((row) => row.screeningCaseId).join(', ')}.`);
+    blocker.dataset.role = 'emp1-pressure-thrust-blocker';
+    wrapper.append(blocker);
+  }
+
+  const table = element(root, 'table', 'lafea-result-table');
+  const head = element(root, 'tr');
+  ['Screening case', 'Pressure definition', 'Pressure factor', 'Axial thrust in Fx', 'Engineering treatment', 'Action']
+    .forEach((label) => {
+      const cell = element(root, 'th', null, label);
+      cell.scope = 'col';
+      head.append(cell);
+    });
+  table.append(head);
+
+  cases.forEach((caseView) => {
+    const row = element(root, 'tr');
+    row.dataset.screeningCaseId = caseView.screeningCaseId;
+    row.dataset.pressureThrustUnresolved = caseView.unresolved ? 'true' : 'false';
+    const identity = element(root, 'th', null, caseView.screeningCaseId);
+    identity.scope = 'row';
+
+    const basisCell = element(root, 'td');
+    const select = element(root, 'select');
+    select.dataset.role = 'lafea-pressure-thrust-basis';
+    select.dataset.screeningCaseId = caseView.screeningCaseId;
+    select.setAttribute('aria-label', `Axial pressure-thrust basis ${caseView.screeningCaseId}`);
+    const placeholder = element(root, 'option', null, 'Select pressure-thrust basis');
+    placeholder.value = '';
+    select.append(placeholder);
+    PRESSURE_THRUST_BASIS_OPTIONS.forEach((option) => {
+      const item = element(root, 'option', null, option.label);
+      item.value = option.value;
+      select.append(item);
+    });
+    if (PRESSURE_THRUST_BASIS_OPTIONS.some((option) => option.value === caseView.basis)) {
+      select.value = caseView.basis;
+    } else {
+      select.value = '';
+    }
+    basisCell.append(select);
+
+    const actionCell = element(root, 'td');
+    const apply = actionButton(root, 'Apply basis', () => {
+      select.setCustomValidity('');
+      if (!select.value) {
+        select.setCustomValidity('Select whether Fx includes or excludes closed-end pressure thrust.');
+        select.reportValidity();
+        return;
+      }
+      const command = createLafeaScreeningPressureThrustBasisCommand({
+        commandId: pressureThrustCommandId(documentValue, caseView.screeningCaseId),
+        expectedDocumentDigest: lafeaDocumentDigest(documentValue),
+        screeningCaseId: caseView.screeningCaseId,
+        basis: select.value,
+        origin: {
+          surface: 'LAFEA2_PRESSURE_THRUST_FORM',
+          sessionId: 'LAFEA_WORKBENCH_SESSION',
+          sequence: 0,
+        },
+      });
+      const editResult = applyLafeaScreeningPressureThrustBasisCommand(documentValue, command);
+      if (!['APPLIED', 'NO_CHANGE'].includes(editResult.status)) {
+        const diagnostic = editResult.diagnostics?.[0];
+        select.setCustomValidity(diagnostic?.message ?? 'Pressure-thrust basis edit was rejected.');
+        select.reportValidity();
+        return;
+      }
+      if (editResult.status === 'APPLIED') onApplyJson(JSON.stringify(editResult.document));
+    });
+    apply.dataset.role = 'lafea-apply-pressure-thrust-basis';
+    apply.dataset.screeningCaseId = caseView.screeningCaseId;
+    actionCell.append(apply);
+
+    row.append(
+      identity,
+      element(root, 'td', null, caseView.pressureDefinitionId),
+      element(root, 'td', null, engineeringNumber(caseView.pressureFactor)),
+      basisCell,
+      element(root, 'td', null, caseView.meaning),
+      actionCell,
+    );
+    table.append(row);
+  });
+  wrapper.append(table);
+  return wrapper;
+}
+
 function applyEmp1BCurrentnessRunGate(root, step, projection) {
   if (step.shortId !== 'B'
     || projection.custody.bSourceEvidenceState === EMP1_B_SOURCE_CUSTODY_STATES.CURRENT) return;
@@ -362,9 +478,27 @@ function applyEmp1BCurrentnessRunGate(root, step, projection) {
   run.title = projection.custody.userAction;
 }
 
+function applyEmp1BPressureThrustRunGate(root, step, documentValue) {
+  if (step.shortId !== 'B') return;
+  const unresolved = unresolvedEmp1BPressureThrustCases(documentValue);
+  if (!unresolved.length) return;
+  const workbench = root.closest?.('[data-role="lafea-workbench"]') ?? root;
+  const run = workbench.querySelector?.('[data-role="lafea-run"]');
+  if (!run) return;
+  const message = `Declare whether Fx includes closed-end pressure thrust for ${unresolved.join(', ')} before running nominal section screening.`;
+  run.disabled = true;
+  run.dataset.emp1PressureThrustGate = 'BLOCKED';
+  run.title = run.title ? `${run.title} ${message}` : message;
+}
+
 function screeningTermCommandId(documentValue, screeningCaseId, loadCaseId) {
   const revision = lafeaDocumentDigest(documentValue).replace(/[^a-zA-Z0-9]/gu, '').slice(-12);
   return `LAFEA2-TERM-${screeningCaseId}-${loadCaseId}-${revision}`;
+}
+
+function pressureThrustCommandId(documentValue, screeningCaseId) {
+  const revision = lafeaDocumentDigest(documentValue).replace(/[^a-zA-Z0-9]/gu, '').slice(-12);
+  return `LAFEA2-THRUST-${screeningCaseId}-${revision}`;
 }
 
 function engineeringNumber(value) {

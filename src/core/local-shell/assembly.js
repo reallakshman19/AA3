@@ -55,7 +55,7 @@ export function assembleSparseGlobalSystem(model, elements) {
   const scale = sparseMatrixScale(stiffness);
   const residual = Math.max(
     0,
-    ...elements.map((element) => element.qualification.globalStiffnessSymmetry.residual),
+    ...elements.map((element) => element.qualification.globalStiffnessSymmetry.actual),
   );
   return {
     ...context,

@@ -14,6 +14,7 @@ const requiredChecks = [
   'lafea.2-contract-check.mjs',
   'lafea.12-pressure-thrust-custody-check.mjs',
   'lafea.12-independent-oracle-check.mjs',
+  'lafea.12-independent-oracle-extended-check.mjs',
   'lafea.12-analytical-result-authority-check.mjs',
 ];
 const requiredBenchmarkIds = [
@@ -54,8 +55,20 @@ for (const row of oracle.benchmarks) {
   assert.ok(Array.isArray(row.sourceIds) && row.sourceIds.length > 0,
     `${row.benchmarkId} must retain at least one independent source ID.`);
 }
+const rlt = oracle.benchmarks.find((row) => row.benchmarkId === 'LAFEA1-RLT-01');
+const lame = oracle.benchmarks.find((row) => row.benchmarkId === 'LAFEA1-LAME-01');
+const end = oracle.benchmarks.find((row) => row.benchmarkId === 'LAFEA1-END-01');
+const combined = oracle.benchmarks.find((row) => row.benchmarkId === 'LAFEA2-COMB-01');
+const envelope = oracle.benchmarks.find((row) => row.benchmarkId === 'LAFEA2-ENV-01');
+assert.deepEqual(Object.keys(rlt.expected.covarianceVariants).sort(), ['loadScaled', 'rotated', 'translated']);
+assert.equal(typeof lame.expected.radialMid, 'number');
+assert.equal(end.expected.explicitAxialResultant, end.input.explicitAxialResultant);
+assert.deepEqual(Object.keys(combined.expected.independentSubcases).sort(), ['pureAxial', 'pureBendingY', 'pureBendingZ', 'pureTorsion']);
+assert.ok(combined.expected.radialLocationsAtBendingMaximum.mid);
+assert.ok(combined.expected.radialLocationsAtBendingMaximum.inner);
+assert.ok(envelope.expected.loadScaling && envelope.expected.completeReversal && envelope.expected.superposition);
 
-console.log('LAFEA.1/.2 analytical qualification registration and seven-family oracle coverage checks passed.');
+console.log('LAFEA.1/.2 analytical qualification registration and expanded seven-family oracle coverage checks passed.');
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');

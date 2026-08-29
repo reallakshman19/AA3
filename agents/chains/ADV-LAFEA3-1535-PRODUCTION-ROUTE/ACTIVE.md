@@ -1,8 +1,8 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA3-1535-PRODUCTION-ROUTE
 MISSION: Close issue #1535 by building a governed ordinary LAFEA.3 geometry-to-mesh-to-convergence-to-UI route around the existing continuum kernel, then independently qualify before release promotion.
-ACTIVE_ENDPOINT: EP-0001
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/endpoints/EP-0001.md
+ACTIVE_ENDPOINT: EP-0002
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/endpoints/EP-0002.md
 MATERIAL_HISTORY_ROOT_BASE: b6a0075fe004a634b8e2877bd8a95b6901c1d763
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/endpoints/EP-0001.md
 PR: #1544
@@ -17,9 +17,9 @@ AUTO_STATE: BLOCKED
 MERGE_AUTHORITY: OWNER_ONLY
 AUTHORITY_DOMAIN: LAFEA.3 application compilation, deterministic meshing/convergence orchestration, capability truth, and engineering presentation; local-continuum numerical mechanics/oracles/release authority protected
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
-CUSTODY_EPOCH: 1
+CUSTODY_EPOCH: 2
 COORDINATION_STATE: SAFE
-DEPENDENCIES: canonical relay validators must execute before material Leg 1
+DEPENDENCIES: repository-wide material-leg history validation still requires a real Git checkout; no material Leg-1 mutation is permitted until that gate is executable and passes
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 9573ec2bba234cc7cd6abcf73c4c3f3e2bc0892c
 COMMON_PROTOCOL_STATUS: CURRENT

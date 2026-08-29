@@ -1,25 +1,25 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA12-ANALYTICAL-QUALIFICATION
 MISSION: Qualify and harden the LAFEA.1/LAFEA.2 analytical baseline for issue #1533 without expanding FEA/WRC/code authority.
-ACTIVE_ENDPOINT: EP-0012
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0012.md
+ACTIVE_ENDPOINT: EP-0013
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0013.md
 MATERIAL_HISTORY_ROOT_BASE: 95214bc296238753f262668ba0706f3011a7898e
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0012.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0013.md
 PR: #1548 MERGED
 BRANCH: codex/lafea12-postmerge-qualification-1533
-HEAD: 87bc4bfcafdaa1bca6f8f47ea762147017a747c1
+HEAD: d5c55e3ce9384e4c708d2d8746ddd17231630b47
 STATE: ACTIVE
-ENGINEERING_STATE: IN_PROGRESS
+ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_RUN
-WRITE_AUTHORITY: WRITE_ALLOWED
-AUTO_STATE: RUNNING
+WRITE_AUTHORITY: READ_ONLY
+AUTO_STATE: BLOCKED
 MERGE_AUTHORITY: OWNER_ONLY
-AUTHORITY_DOMAIN: post-merge LAFEA.1/.2 analytical qualification execution and evidence only; production mechanics, oracle authority/tolerances, workflows, registered-manifest status, WRC/code authority and release state remain protected
+AUTHORITY_DOMAIN: post-merge LAFEA.1/.2 analytical qualification execution/evidence only; production mechanics, oracle authority/tolerances, workflows, registered-manifest status, WRC/code authority and release state remain protected
 ACTIVE_CUSTODIAN: chatgpt-gpt-5.6-sol
 CUSTODY_EPOCH: 1
 COORDINATION_STATE: NOT_APPLICABLE
-DEPENDENCIES: PR #1548 merged at 95214bc296238753f262668ba0706f3011a7898e; latest exact-head analytical job 99135407668 reported steps: [] before retry; numerical oracle qualification remains NOT_RUN
+DEPENDENCIES: PR #1548 merged at 95214bc296238753f262668ba0706f3011a7898e; rerun job 99135660019 completed with steps: []; log fetch returned BlobNotFound; numerical oracle qualification remains NOT_RUN_INFRA
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 9573ec2bba234cc7cd6abcf73c4c3f3e2bc0892c
 COMMON_PROTOCOL_STATUS: CURRENT

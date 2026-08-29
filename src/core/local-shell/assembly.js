@@ -53,10 +53,7 @@ export function assembleSparseGlobalSystem(model, elements) {
   }));
   const stiffness = assembleSparseSymmetric(context.dofOrdering.length, contributions);
   const scale = sparseMatrixScale(stiffness);
-  const residual = Math.max(
-    0,
-    ...elements.map((element) => element.qualification.globalStiffnessSymmetry.actual),
-  );
+  const residual = assembledSymmetryResidual(elements, elementAssembly);
   return {
     ...context,
     stiffness,
@@ -100,6 +97,32 @@ function assembleDenseElement(global, local, indices) {
       global[indices[row]][indices[column]] += local[row][column];
     }
   }
+}
+
+function assembledSymmetryResidual(elements, elementAssembly) {
+  const differences = new Map();
+  elements.forEach((element, elementIndex) => {
+    const indices = elementAssembly[elementIndex].globalDofIndices;
+    for (let localRow = 0; localRow < indices.length; localRow += 1) {
+      for (let localColumn = localRow + 1; localColumn < indices.length; localColumn += 1) {
+        const first = indices[localRow];
+        const second = indices[localColumn];
+        const high = Math.max(first, second);
+        const low = Math.min(first, second);
+        const rowMap = differences.get(high) ?? new Map();
+        const lowerMinusUpper = first > second
+          ? element.globalStiffness[localRow][localColumn] - element.globalStiffness[localColumn][localRow]
+          : element.globalStiffness[localColumn][localRow] - element.globalStiffness[localRow][localColumn];
+        rowMap.set(low, (rowMap.get(low) ?? 0) + lowerMinusUpper);
+        differences.set(high, rowMap);
+      }
+    }
+  });
+  let residual = 0;
+  for (const row of differences.values()) {
+    for (const value of row.values()) residual = Math.max(residual, Math.abs(value));
+  }
+  return residual;
 }
 
 function sparseMatrixScale(matrix) {

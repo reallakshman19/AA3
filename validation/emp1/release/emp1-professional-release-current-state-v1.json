@@ -3,14 +3,14 @@
   "issue": 1389,
   "releaseProfileId": "EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1",
   "reconciliationBasis": {
-    "basisKind": "CURRENT_MAIN_POST_PR1518_SOURCE_GOVERNANCE_RECONCILIATION",
-    "previousCurrentStateMergeSha": "1bbfc695842a1de2eca14a51c8887f18a33e6da2",
-    "sourceGovernancePr": 1518,
-    "sourceGovernanceMergeSha": "8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d",
-    "latestLiveMainObserved": "8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d",
-    "latestLiveMainTreeObserved": "bf296336b53cbea5757c5e86cc5ad765a7db69b0",
+    "basisKind": "CURRENT_MAIN_POST_PR1525_SOURCE_GOVERNANCE_RECONCILIATION",
+    "previousCurrentStateMergeSha": "b97f0ddbd42ccb62c677e6322746e3459c0435db",
+    "sourceGovernancePr": 1525,
+    "sourceGovernanceMergeSha": "629f2655572024a63d3b1b9c714a94a2b2fe6536",
+    "latestLiveMainObserved": "629f2655572024a63d3b1b9c714a94a2b2fe6536",
+    "latestLiveMainTreeObserved": "5168b153d282bfbf1d66a673312879ded7706a0c",
     "laterMainDriftClassification": "NONE_OBSERVED_AT_RECONCILIATION_START",
-    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1518",
+    "basisMeaning": "POST_PR_A_THROUGH_H_PLUS_MERGED_WRC_SOURCE_GOVERNANCE_THROUGH_PR1525",
     "artifactMayNotClaimContainingCommitAsBasis": true
   },
   "frozenReadinessContract": {
@@ -196,6 +196,15 @@
       "state": "MERGED",
       "mergeSha": "8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d",
       "role": "PRIMARY_STRESS_ATTENUATION_AND_IDEALIZED_CASE_LIMITATION_PARTIAL_RECONCILIATION_NEIGHBOR_SPACING_AND_INTERACTION_AUTHORITY_BLOCKED"
+    },
+    {
+      "pr": 1525,
+      "issues": [
+        1368
+      ],
+      "state": "MERGED",
+      "mergeSha": "629f2655572024a63d3b1b9c714a94a2b2fe6536",
+      "role": "PRIMARY_SHELL_NORMAL_REFERENCE_AXIS_PARTIAL_RECONCILIATION_PHYSICAL_ATTACHMENT_AXIS_AND_OBLIQUE_APPLICABILITY_BLOCKED"
     }
   ],
   "sequenceStatus": {
@@ -222,9 +231,9 @@
       "path": "validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json",
       "originPr": 1427,
       "originMergeSha": "b648e174b80b49ceed76036d590b89ad4fe08c2e",
-      "currentReconciliationPr": 1520,
-      "basisMainSha": "8adfdbcd6a731af29bfc62b1ceade4aa30c65e0d",
-      "gitBlobSha1": "8ddc0821e4e50572354e8e49fd6f317749d466e6"
+      "currentReconciliationPr": 1526,
+      "basisMainSha": "629f2655572024a63d3b1b9c714a94a2b2fe6536",
+      "gitBlobSha1": "acd3ebec87d9f2420ad06f39dd823a8a205223a7"
     },
     "p0GateStatuses": [
       {
@@ -249,7 +258,7 @@
       },
       {
         "issue": 1368,
-        "currentStatus": "BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED"
+        "currentStatus": "BLOCKED_PARTIAL_PRIMARY_SHELL_NORMAL_REFERENCE_AXIS_QUALIFIED_PHYSICAL_ATTACHMENT_AXIS_COINCIDENCE_AND_OBLIQUE_APPLICABILITY_UNRESOLVED"
       },
       {
         "issue": 1370,
@@ -351,6 +360,6 @@
   },
   "releaseReady": false,
   "state": "BLOCKED_FAIL_CLOSED_POST_SEQUENCE",
-  "currentStateSemanticHash": "8af6e4ff778df1c26bd0cb8f90051f1f341dab272ab8196a277946890443e0d8",
+  "currentStateSemanticHash": "f9a205509b0da61014655bdb7271c5f4d5716a36a40ab3ea11e0a6cbab286d81",
   "status": "POST_SOURCE_GOVERNANCE_CURRENT_STATE_RECONCILED_RELEASE_REMAINS_BLOCKED_FAIL_CLOSED"
 }

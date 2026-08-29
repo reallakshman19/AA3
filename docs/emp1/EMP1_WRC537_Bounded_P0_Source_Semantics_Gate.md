@@ -34,7 +34,7 @@ Governing invariant:
 #1375 BLOCKED_PARTIAL_PRIMARY_HOST_SHELL_T_IDENTITY_AND_EQUATION_ROLE_QUALIFIED_ASSESSMENT_THICKNESS_BASIS_UNRESOLVED
 #1377 BLOCKED_PARTIAL_PRIMARY_4_2_1_MID_RADIUS_QUALIFIED_ASSESSMENT_GEOMETRY_BASIS_UNQUALIFIED
 #1379 BLOCKED_PARTIAL_PRIMARY_CYLINDRICAL_FLEXIBLE_LOADING_SURFACE_AND_NONLINEAR_EXTENSION_BOUNDARY_QUALIFIED_MATERIAL_DETAILS_UNRESOLVED
-#1368 BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED
+#1368 BLOCKED_PARTIAL_PRIMARY_SHELL_NORMAL_REFERENCE_AXIS_QUALIFIED_PHYSICAL_ATTACHMENT_AXIS_COINCIDENCE_AND_OBLIQUE_APPLICABILITY_UNRESOLVED
 #1370 BLOCKED_PARTIAL_PRIMARY_STANDARD_CYLINDRICAL_ROUND_CLASS_QUALIFIED_NONSTANDARD_CLASS_BOUNDARIES_UNQUALIFIED
 #1373 BLOCKED_PARTIAL_PRIMARY_STRESS_ATTENUATION_AND_IDEALIZED_CASE_LIMITATION_QUALIFIED_NEIGHBOR_SPACING_AND_INTERACTION_AUTHORITY_UNRESOLVED
 #1381 BLOCKED_CODE_CLASSIFICATION_AND_ACCEPTANCE_AUTHORITY_UNQUALIFIED
@@ -104,6 +104,16 @@ Existing §4.5 `l >= Rm` and nearest-end `>= 0.5*Rm` rules remain separate cylin
 
 Therefore #1373 remains a professional P0 blocker with bounded partial source authority. `blockerCount` remains 9.
 
+## #1368 status after PR #1525
+
+Recovery PR #1525 merged at `629f2655572024a63d3b1b9c714a94a2b2fe6536` and advanced attachment-axis source authority without changing production frame mechanics.
+
+Directly observed WRC General Nomenclature supports the bounded statement that directional reference is established with respect to an **axis normal to the shell through the center of the attachment**; cylindrical directions are then longitudinal/circumferential with respect to the cylinder axis.
+
+This qualifies the WRC reference axis only. It does **not** prove that an arbitrary supplied physical nozzle/attachment centerline is coincident with that shell-normal axis; does not create an engineering angular allowance from the implementation's `1e-10` numerical tolerance; and does not authorize eccentric, skewed or oblique WRC geometry, projection or surrogate construction.
+
+Therefore #1368 remains a professional P0 blocker with bounded partial source authority. `blockerCount` remains 9.
+
 ## Source-custody distinction
 
 Controlled WRC source identity remains:
@@ -130,9 +140,9 @@ Aggregate:
 
 `validation/emp1/release/emp1-wrc537-gamma5-p0-source-semantics-gate-v1.json`
 
-Current reconciled blob in PR #1520:
+Current reconciled blob in PR #1526:
 
-`8ddc0821e4e50572354e8e49fd6f317749d466e6`
+`acd3ebec87d9f2420ad06f39dd823a8a205223a7`
 
 Data-driven checker:
 

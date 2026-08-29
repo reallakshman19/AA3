@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   calculateLocalShell,
   createCanonicalLocalShellModel,
+  DOFS,
   FORMULA_IDS,
   QUALIFICATION_STATES,
 } from '../src/core/local-shell/index.js';
@@ -75,10 +76,11 @@ const duplicateConstraint = triangleSource((source) => source.constraints.push({
 assert.throws(() => createCanonicalLocalShellModel(duplicateConstraint), /Duplicate prescribed DOF/);
 
 verifyDenseSparseParity();
+verifySparseAssemblySymmetryEvidence();
 verifyAutomaticSparseProductionRoute();
 verifySparseSingularRejection();
 
-console.log('LAFEA.4 exact partitioning, dense/sparse Cholesky parity, automatic sparse production routing, loads, reactions and singular rejection passed.');
+console.log('LAFEA.4 exact partitioning, dense/sparse Cholesky parity, assembled symmetry evidence, automatic sparse production routing, loads, reactions and singular rejection passed.');
 
 function verifyDenseSparseParity() {
   const model = createCanonicalLocalShellModel(triangleSource());
@@ -96,6 +98,26 @@ function verifyDenseSparseParity() {
   const denseRecovered = recoverLoadCase(model, denseAssembly, elements, denseLoads, denseSolution);
   const sparseRecovered = recoverLoadCase(model, sparseAssembly, elements, sparseLoads, sparseSolution);
   compareRecovered(sparseRecovered, denseRecovered);
+}
+
+function verifySparseAssemblySymmetryEvidence() {
+  const model = createCanonicalLocalShellModel(triangleSource());
+  const ordering = model.nodes.flatMap((node) => DOFS.map((dof) => `${node.nodeId}:${dof}`));
+  const delta = 1e-8;
+  const matrix = Array.from({ length: ordering.length }, (_, rowIndex) =>
+    Array.from({ length: ordering.length }, (_, columnIndex) => rowIndex === columnIndex ? 1 : 0));
+  matrix[0][1] = 0.25 + delta;
+  matrix[1][0] = 0.25;
+  const elements = ['ASYM-1', 'ASYM-2'].map((elementId) => ({
+    elementId,
+    globalDofOrdering: ordering,
+    globalStiffness: matrix.map((rowValues) => [...rowValues]),
+  }));
+  const dense = assembleDenseGlobalSystem(model, elements);
+  const sparse = assembleSparseGlobalSystem(model, elements);
+  assert.ok(dense.symmetry.actual > delta);
+  close(sparse.symmetry.actual, dense.symmetry.actual, 1e-12);
+  assert.equal(sparse.symmetry.accepted, dense.symmetry.accepted);
 }
 
 function verifyAutomaticSparseProductionRoute() {

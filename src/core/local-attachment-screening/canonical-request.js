@@ -1,8 +1,9 @@
 import { deepFreeze } from '../shared-primitives/immutable.js';
 import { semanticHash } from '../shared-primitives/canonical-json.js';
+import { END_CONDITIONS } from '../local-stress/index.js';
 import {
-  ENVELOPE_QUANTITIES, PROFILE_SCHEMA, QUALIFICATION_PROFILE, RADIUS_BASES,
-  REQUEST_SCHEMA, SECTION_BASIS,
+  AXIAL_PRESSURE_THRUST_BASES, ENVELOPE_QUANTITIES, PROFILE_SCHEMA,
+  QUALIFICATION_PROFILE, RADIUS_BASES, REQUEST_SCHEMA, SECTION_BASIS,
 } from './constants.js';
 import { requestError, unsupportedError } from './errors.js';
 import { normalizedAngle, strictNumber } from './numeric.js';
@@ -36,18 +37,52 @@ function canonicalCases(values,result) {
   if(!Array.isArray(values)||values.length===0)throw requestError('SCREENING_CASES_REQUIRED','screeningCases','At least one screening case is required.');
   const rows=values.map((row,index)=>canonicalCase(row,index)); uniqueIdentities(rows,'screeningCaseId','screeningCases');
   const loads=new Set(result.transformedLoadCases.map((row)=>row.identity));
-  const pressures=new Set(result.pressureStressResults.map((row)=>row.pressureDefinitionIdentity));
+  const pressures=new Map(result.pressureStressResults.map((row)=>[row.pressureDefinitionIdentity,row]));
   rows.forEach((row)=>validateCaseReferences(row,loads,pressures)); return rows.sort((a,b)=>codeSort(a.screeningCaseId,b.screeningCaseId));
 }
 function canonicalCase(row,index) {
-  const path=`screeningCases[${index}]`; exactRecord(row,['screeningCaseId','mechanicalTerms','pressureDefinitionId','pressureFactor','sourceReference'],path);
+  const path=`screeningCases[${index}]`; exactScreeningCaseRecord(row,path);
   if(!Array.isArray(row.mechanicalTerms))throw requestError('MECHANICAL_TERMS_REQUIRED',`${path}.mechanicalTerms`,'mechanicalTerms must be an array.');
   const terms=row.mechanicalTerms.map((term,termIndex)=>canonicalTerm(term,`${path}.mechanicalTerms[${termIndex}]`));
   uniqueIdentities(terms,'loadCaseId',`${path}.mechanicalTerms`); terms.sort((a,b)=>codeSort(a.loadCaseId,b.loadCaseId));
-  return {screeningCaseId:nonEmptyString(row.screeningCaseId,`${path}.screeningCaseId`),mechanicalTerms:terms,pressureDefinitionId:nonEmptyString(row.pressureDefinitionId,`${path}.pressureDefinitionId`),pressureFactor:strictNumber(row.pressureFactor,`${path}.pressureFactor`),sourceReference:nonEmptyString(row.sourceReference,`${path}.sourceReference`)};
+  return {
+    screeningCaseId:nonEmptyString(row.screeningCaseId,`${path}.screeningCaseId`),mechanicalTerms:terms,
+    pressureDefinitionId:nonEmptyString(row.pressureDefinitionId,`${path}.pressureDefinitionId`),
+    pressureFactor:strictNumber(row.pressureFactor,`${path}.pressureFactor`),
+    axialPressureThrustBasis:canonicalPressureThrustBasis(row.axialPressureThrustBasis,`${path}.axialPressureThrustBasis`),
+    sourceReference:nonEmptyString(row.sourceReference,`${path}.sourceReference`),
+  };
+}
+function exactScreeningCaseRecord(row,path) {
+  const legacy=['screeningCaseId','mechanicalTerms','pressureDefinitionId','pressureFactor','sourceReference'];
+  const current=[...legacy,'axialPressureThrustBasis'];
+  const actual=Object.keys(row??{}).sort();
+  const legacyMatch=JSON.stringify(actual)===JSON.stringify([...legacy].sort());
+  const currentMatch=JSON.stringify(actual)===JSON.stringify([...current].sort());
+  if(!legacyMatch&&!currentMatch)throw requestError('EXACT_KEYS_REQUIRED',path,`${path} keys must be ${current.sort().join(', ')}; legacy records without axialPressureThrustBasis are admitted only as UNKNOWN and remain fail-closed where closed-end pressure thrust is active.`);
+}
+function canonicalPressureThrustBasis(value,path) {
+  const basis=value===undefined?AXIAL_PRESSURE_THRUST_BASES.UNKNOWN:nonEmptyString(value,path);
+  if(!Object.values(AXIAL_PRESSURE_THRUST_BASES).includes(basis))throw unsupportedError('AXIAL_PRESSURE_THRUST_BASIS_UNSUPPORTED',path,`Unsupported axial pressure-thrust basis ${basis}.`);
+  return basis;
 }
 function canonicalTerm(row,path){exactRecord(row,['loadCaseId','factor'],path);return {loadCaseId:nonEmptyString(row.loadCaseId,`${path}.loadCaseId`),factor:strictNumber(row.factor,`${path}.factor`) };}
-function validateCaseReferences(row,loads,pressures){row.mechanicalTerms.forEach((term)=>{if(!loads.has(term.loadCaseId))throw requestError('LOAD_CASE_REFERENCE_MISSING',`screeningCases.${row.screeningCaseId}`,`Missing load case ${term.loadCaseId}.`);});if(!pressures.has(row.pressureDefinitionId))throw requestError('PRESSURE_REFERENCE_MISSING',`screeningCases.${row.screeningCaseId}`,`Missing pressure definition ${row.pressureDefinitionId}.`);}
+function validateCaseReferences(row,loads,pressures){
+  row.mechanicalTerms.forEach((term)=>{if(!loads.has(term.loadCaseId))throw requestError('LOAD_CASE_REFERENCE_MISSING',`screeningCases.${row.screeningCaseId}`,`Missing load case ${term.loadCaseId}.`);});
+  const pressure=pressures.get(row.pressureDefinitionId);
+  if(!pressure)throw requestError('PRESSURE_REFERENCE_MISSING',`screeningCases.${row.screeningCaseId}`,`Missing pressure definition ${row.pressureDefinitionId}.`);
+  const activeClosedEndPressure=pressure.endCondition===END_CONDITIONS.CLOSED_END
+    && row.pressureFactor!==0
+    && typeof pressure.axialPressureStress==='number'
+    && pressure.axialPressureStress!==0;
+  if(activeClosedEndPressure&&row.axialPressureThrustBasis===AXIAL_PRESSURE_THRUST_BASES.UNKNOWN) {
+    throw unsupportedError(
+      'AXIAL_PRESSURE_THRUST_BASIS_REQUIRED',
+      `screeningCases.${row.screeningCaseId}.axialPressureThrustBasis`,
+      'Closed-end pressure screening requires an explicit declaration of whether the incoming mechanical axial resultant includes pressure thrust.',
+    );
+  }
+}
 function canonicalLocations(values,model) {
   if(!Array.isArray(values)||values.length===0)throw requestError('EVALUATION_LOCATIONS_REQUIRED','evaluationLocations','At least one evaluation location is required.');
   const ro=model.pipeGeometry.outsideDiameter.value/2,ri=ro-model.thicknessBasis.assessmentPipeThickness.value;

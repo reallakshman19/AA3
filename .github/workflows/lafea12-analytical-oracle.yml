@@ -43,6 +43,7 @@ jobs:
       - name: Check bounded analytical qualification syntax
         run: |
           node --check scripts/lafea.12-independent-oracle-check.mjs
+          node --check scripts/lafea.12-independent-oracle-extended-check.mjs
           node --check scripts/lafea.12-analytical-qualification-check.mjs
           node --check scripts/lafea.12-analytical-qualification-registration-check.mjs
 

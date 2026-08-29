@@ -1,25 +1,25 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA12-ANALYTICAL-QUALIFICATION
 MISSION: Qualify and harden the LAFEA.1/LAFEA.2 analytical baseline for issue #1533 without expanding FEA/WRC/code authority.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0002.md
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0003.md
 MATERIAL_HISTORY_ROOT_BASE: 80dcfe8311b7cee367873fe2794ab059a242921b
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0002.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0003.md
 PR: #1540
 BRANCH: codex/lafea12-analytical-qualification-1533
-HEAD: 88758bd5821ba638e9da78dddb81446b725c9f2a
+HEAD: 699d0c85494d181ccf2b7490a6259e5515f12802
 STATE: ACTIVE
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: WRITE_ALLOWED
-AUTO_STATE: RUNNING
-MERGE_AUTHORITY: OWNER_ONLY
+WRITE_AUTHORITY: READ_ONLY
+AUTO_STATE: PAUSED
+MERGE_AUTHORITY: AUTHORIZED
 AUTHORITY_DOMAIN: LAFEA.1/.2 analytical source qualification, pressure-thrust semantic custody, result publication/presenter authority, and bounded EMP.1 analytical UI disclosure
 ACTIVE_CUSTODIAN: chatgpt-gpt-5.6-sol
 CUSTODY_EPOCH: 1
 COORDINATION_STATE: NOT_APPLICABLE
-DEPENDENCIES: independent external oracle dossier required before any numerical-mechanics promotion
+DEPENDENCIES: independent external oracle dossier, executable regression, request-schema compatibility decision, and EMP.1 thrust-custody UI/evidence remain required
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 9573ec2bba234cc7cd6abcf73c4c3f3e2bc0892c
 COMMON_PROTOCOL_STATUS: CURRENT

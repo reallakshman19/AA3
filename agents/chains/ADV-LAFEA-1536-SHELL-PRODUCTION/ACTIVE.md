@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
 MISSION: Close LAFEA.4 production scalability first, then qualify MITC adoption without crossing formulation or release authority prematurely.
-ACTIVE_ENDPOINT: EP-0005
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0005.md
+ACTIVE_ENDPOINT: EP-0006
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0006.md
 MATERIAL_HISTORY_ROOT_BASE: 80dcfe8311b7cee367873fe2794ab059a242921b
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0004.md
-PR: #1541
-BRANCH: codex/lafea-1536-shell-scalability
-HEAD: 9d510356382b1cfd8f85fa926d69eb65aef4109a
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0006.md
+PR: #1542
+BRANCH: codex/lafea-1536-mitc-adoption
+HEAD: 67e08b95cee4d302734d445ded36eac9827ccc2e
 STATE: ACTIVE
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
@@ -15,11 +15,11 @@ QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: WRITE_ALLOWED
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
-AUTHORITY_DOMAIN: LAFEA.4 scalable linear solve and shared deterministic Jacobi-PCG numerical ownership
+AUTHORITY_DOMAIN: LAFEA.4 experimental MITC adoption contract, element evidence, load/recovery/solver parity; no registered production-route authority
 ACTIVE_CUSTODIAN: reallaksh19
-CUSTODY_EPOCH: 5
+CUSTODY_EPOCH: 6
 COORDINATION_STATE: SAFE
-DEPENDENCIES: NONE
+DEPENDENCIES: PR #1541 / codex/lafea-1536-shell-scalability — parent solver scalability implementation; executable validation NOT_RUN
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 9573ec2bba234cc7cd6abcf73c4c3f3e2bc0892c
 COMMON_PROTOCOL_STATUS: CURRENT

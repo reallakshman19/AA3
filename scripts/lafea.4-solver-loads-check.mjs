@@ -65,6 +65,7 @@ const fully = solve(prescribedPatchSource({ epsilonX: 0, epsilonY: 0, gammaXY: 0
 assert.equal(fully.loadCaseResults[0].solverEvidence.method, 'FULLY_CONSTRAINED_NO_FREE_SOLVE');
 assert.deepEqual(fully.loadCaseResults[0].solverEvidence.pivots, []);
 assert.equal(fully.formulaTrace.includes(FORMULA_IDS.CHOLESKY), false);
+assert.equal(fully.formulaTrace.includes(FORMULA_IDS.PCG), false);
 
 const singularSource = triangleSource((source) => { source.constraints = []; });
 const singular = calculateLocalShell(createCanonicalLocalShellModel(singularSource));
@@ -80,7 +81,7 @@ verifySparseAssemblySymmetryEvidence();
 verifyAutomaticSparseProductionRoute();
 verifySparseSingularRejection();
 
-console.log('LAFEA.4 exact partitioning, dense/sparse Cholesky parity, assembled symmetry evidence, automatic sparse production routing, loads, reactions and singular rejection passed.');
+console.log('LAFEA.4 exact partitioning, dense/PCG parity, assembled symmetry evidence, automatic scalable sparse routing, loads, reactions and singular rejection passed.');
 
 function verifyDenseSparseParity() {
   const model = createCanonicalLocalShellModel(triangleSource());
@@ -92,7 +93,9 @@ function verifyDenseSparseParity() {
   assert.deepEqual(sparseLoads.forceVector, denseLoads.forceVector);
   const denseSolution = solveLoadCase(model, denseAssembly, denseLoads);
   const sparseSolution = solveLoadCase(model, sparseAssembly, sparseLoads);
-  assert.equal(sparseSolution.solverEvidence.method, 'DETERMINISTIC_SPARSE_CHOLESKY');
+  assert.equal(sparseSolution.solverEvidence.method, 'DETERMINISTIC_JACOBI_PCG');
+  assert.equal(sparseSolution.solverEvidence.accepted, true);
+  assert.ok(sparseSolution.solverEvidence.finalResidualInfinity <= sparseSolution.solverEvidence.convergenceTarget);
   compareVectors(sparseSolution.displacement, denseSolution.displacement);
   compareVectors(sparseSolution.reaction, denseSolution.reaction);
   const denseRecovered = recoverLoadCase(model, denseAssembly, elements, denseLoads, denseSolution);
@@ -128,12 +131,18 @@ function verifyAutomaticSparseProductionRoute() {
   assert.equal(result.meshEvidence.globalStiffness.storage, SPARSE_SHELL_STIFFNESS_STORAGE);
   assert.equal(result.meshEvidence.globalStiffness.size, source.nodes.length * 5);
   assert.ok(result.meshEvidence.globalStiffness.nonzeroCount < result.meshEvidence.globalStiffness.size ** 2);
-  assert.equal(loadCase.solverEvidence.method, 'DETERMINISTIC_SPARSE_CHOLESKY');
+  assert.equal(loadCase.solverEvidence.method, 'DETERMINISTIC_JACOBI_PCG');
+  assert.equal(loadCase.solverEvidence.algorithmRevision, 'DETERMINISTIC_JACOBI_PCG_RELIABLE_RESIDUAL_V2');
+  assert.equal(loadCase.solverEvidence.preconditioner, 'JACOBI');
+  assert.equal(loadCase.solverEvidence.accepted, true);
   assert.equal(loadCase.freeDofIdentities.length, 1);
+  assert.ok(loadCase.solverEvidence.finalResidualInfinity <= loadCase.solverEvidence.convergenceTarget);
   assert.ok(loadCase.freeDofResidualQualification.accepted);
   assert.ok(loadCase.forceEquilibrium.qualification.accepted);
   assert.ok(loadCase.momentEquilibrium.qualification.accepted);
   assert.ok(loadCase.energyQualification.accepted);
+  assert.ok(result.formulaTrace.includes(FORMULA_IDS.PCG));
+  assert.equal(result.formulaTrace.includes(FORMULA_IDS.CHOLESKY), false);
 }
 
 function verifySparseSingularRejection() {

@@ -7,6 +7,7 @@ export const LAFEA12_ANALYTICAL_QUALIFICATION_CHECKS = Object.freeze([
   'lafea.2-contract-check.mjs',
   'lafea.12-pressure-thrust-custody-check.mjs',
   'lafea.12-independent-oracle-check.mjs',
+  'lafea.12-independent-oracle-extended-check.mjs',
   'lafea.12-analytical-result-authority-check.mjs',
 ]);
 

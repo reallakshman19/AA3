@@ -1,14 +1,22 @@
 {
   "schema": "emp1-wrc537-attachment-axis-intersection-source-qualification/v1",
   "issue": 1368,
-  "status": "BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED",
+  "status": "BLOCKED_PARTIAL_PRIMARY_SHELL_NORMAL_REFERENCE_AXIS_QUALIFIED_PHYSICAL_ATTACHMENT_AXIS_COINCIDENCE_AND_OBLIQUE_APPLICABILITY_UNRESOLVED",
   "engineeringAuthority": false,
   "obliqueAttachmentAuthority": false,
   "primarySource": {
     "document": "docs/emp1/WRC537_2013.pdf",
     "gitBlobSha": "ce861233928154145a9257efbbf8dbef3f5a17d1",
     "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
-    "primaryPageInspection": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT"
+    "primaryPageInspection": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
+    "externalReadableRenderingObserved": true,
+    "externalRenderingByteIdentityToPinnedPdf": "UNPROVEN",
+    "observedLocator": "WRC537_2013_NOMENCLATURE_GENERAL_NOMENCLATURE",
+    "shellNormalReferenceAxisObserved": true,
+    "shellNormalReferenceAxisMeaning": "AXIS_NORMAL_TO_SHELL_THROUGH_CENTER_OF_ATTACHMENT",
+    "cylindricalDirectionReferenceObserved": true,
+    "cylindricalDirectionReferenceMeaning": "LONGITUDINAL_AND_CIRCUMFERENTIAL_DIRECTIONS_WITH_RESPECT_TO_CYLINDER_AXIS",
+    "classification": "PRIMARY_TEXT_OBSERVATION_EXTERNAL_RENDERING_ONLY_PINNED_PDF_BYTE_IDENTITY_UNPROVEN"
   },
   "retainedSourceEvidence": {
     "path": "docs/emp1/WRC537_2013_Tables_and_Charts.md",
@@ -40,6 +48,13 @@
     "nonOrthogonalDiagnostic": "EMP1_WRC537_FRAME_NON_ORTHOGONAL",
     "classification": "MATHEMATICAL_VECTOR_GUARD_ONLY_NOT_PRIMARY_APPLICABILITY_PROOF"
   },
+  "currentQualifiedAxisAuthority": {
+    "path": "src/core/emp1/emp1-wrc537-cylindrical-axis-authority.js",
+    "sourceToTargetVectorRole": "SOFTWARE_DERIVED_PLUS_P_BASIS",
+    "requiresLongitudinalOrthogonality": true,
+    "requiresRetainedRadialCollinearity": true,
+    "classification": "SOURCE_BOUND_SOFTWARE_GEOMETRY_CUSTODY_NOT_PROOF_OF_PHYSICAL_ATTACHMENT_AXIS_COINCIDENCE"
+  },
   "currentBoundedRouteObservation": {
     "path": "src/core/emp1/emp1-wrc537-gamma5-zero-dp-route.js",
     "routeAuthorized": true,
@@ -48,8 +63,11 @@
   },
   "authorityDistinction": {
     "table5ExplicitAngleInputAbsence": "QUALIFIED_RETAINED_SOURCE_TEXT",
+    "wrcShellNormalReferenceAxis": "QUALIFIED_PRIMARY_TEXT_OBSERVATION_EXTERNAL_RENDERING",
+    "wrcShellNormalReferenceAxisThroughAttachmentCenter": true,
     "vectorOrthogonality": "IMPLEMENTED_FAIL_CLOSED_GUARD",
-    "physicalShellNormalProof": "UNRESOLVED",
+    "physicalAttachmentAxisCoincidenceWithWrcShellNormal": "UNRESOLVED",
+    "attachmentStationPhysicalNormalCustody": "UNRESOLVED",
     "obliqueWrcApplicability": "NOT_AUTHORIZED",
     "numericalToleranceMeaning": "FLOATING_POINT_EQUIVALENCE_ONLY_NOT_ENGINEERING_ANGLE_ALLOWANCE"
   },
@@ -58,13 +76,15 @@
     "NO_EQUIVALENT_PERPENDICULAR_SURROGATE",
     "NO_ENGINEERING_ANGLE_ALLOWANCE_FROM_1E_10_TOLERANCE",
     "NO_PHYSICAL_NORMALITY_CLAIM_FROM_CENTERLINE_ORTHOGONALITY_ALONE",
+    "NO_ATTACHMENT_AXIS_COINCIDENCE_INFERENCE_FROM_REFERENCE_AXIS_WORDING",
+    "NO_OBLIQUE_APPLICABILITY_FROM_REFERENCE_AXIS_WORDING",
     "NO_OBLIQUE_PRODUCTION_ROUTE",
     "NO_APPLICABILITY_INFERENCE_FROM_TABLE5_ANGLE_FIELD_ABSENCE"
   ],
   "requiredPrimaryClosures": [
-    "EXACT_NORMAL_RADIAL_PERPENDICULAR_SOURCE_WORDING",
-    "CYLINDRICAL_LOCAL_NORMAL_CONSTRUCTION",
-    "SPHERICAL_LOCAL_NORMAL_CONSTRUCTION",
+    "PHYSICAL_ATTACHMENT_AXIS_TO_WRC_SHELL_NORMAL_COINCIDENCE",
+    "CYLINDRICAL_LOCAL_NORMAL_CONSTRUCTION_AT_ATTACHMENT_STATION",
+    "SPHERICAL_LOCAL_NORMAL_CONSTRUCTION_AT_ATTACHMENT_STATION",
     "ATTACHMENT_STATION_GEOMETRY_CUSTODY",
     "ANGULAR_DOMAIN_OR_EXACT_90_DEGREE_RULE",
     "ECCENTRICITY_OFFSET_RULE",
@@ -74,9 +94,11 @@
   "authorization": {
     "retainCurrentNonOrthogonalRejection": true,
     "widenOrthogonalityTolerance": false,
+    "shellNormalReferenceAxisSourceQualified": true,
+    "physicalAttachmentAxisCoincidenceSourceGateClosed": false,
     "obliqueGeometryImplementationAllowed": false,
     "physicalNormalitySourceGateClosed": false,
-    "requiredNextGate": "DIRECT_PRIMARY_INTERSECTION_RULE_EXTRACTION_AND_PHYSICAL_NORMALITY_MODEL_REVIEW"
+    "requiredNextGate": "PHYSICAL_ATTACHMENT_AXIS_COINCIDENCE_AND_OBLIQUE_APPLICABILITY_SOURCE_CLOSURE"
   },
   "productionNumericsChanged": false,
   "collateralAuthorityWidened": false

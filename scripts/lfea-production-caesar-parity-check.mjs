@@ -94,6 +94,13 @@ const prepared = prepareLinearPipingAccdbPreFlight(session.intake, session.sourc
     sourceRevision: '1',
   }),
 });
+const declaredBendCount = prepared.preparation.structuralPreparation
+  .summary.bendRetopology.bendCount;
+assert.equal(
+  prepared.preparation.stiffnessPreflight.eligibleBendCount,
+  declaredBendCount,
+  'Every governed retopologized bend must retain exact bend ownership through stiffness preflight.',
+);
 console.error('BLOCKROWS', JSON.stringify(prepared.preparation.findings.filter(r=>r.disposition==='BLOCK'), null, 1).slice(0,2000));
 const blockCodes = prepared.preparation.findings
   .filter((row) => row.disposition === 'BLOCK')

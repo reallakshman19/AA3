@@ -2,9 +2,11 @@ import { FORMULA_IDS } from './constants.js';
 import { constitutiveEvidence } from './constitutive.js';
 import { canonicalFacet, canonicalQuadFacet, frameResidual, localCoordinates } from './geometry.js';
 import {
+  addMatrices,
   matrixScale,
   matrixVector,
   multiply,
+  scaleMatrix,
   symmetryResidual,
   transpose,
 } from './matrix.js';
@@ -28,6 +30,9 @@ import {
   SHEAR_CORRECTION_FACTOR as MITC4_SHEAR_CORRECTION_FACTOR,
   mitc4StiffnessMatrix,
 } from './mitc4-element.js';
+
+const MITC_BETA_TRANSFORMATION_FORMULA_ID =
+  'LAFEA4.MITC_BETA_FROM_PHYSICAL_TANGENT_ROTATION/v1';
 
 export function buildExperimentalMitcElementEvidence(model) {
   const canonical = validateExperimentalMitcAdoptionModel(model);
@@ -61,7 +66,7 @@ function buildElement(model, element, nodeMap, materialMap) {
     element.thickness,
     shearModulus,
   );
-  const transformation = fiveDofTransformation(
+  const transformation = mitcFiveDofTransformation(
     orderedNodes,
     geometry.frame,
     model.qualificationProfile,
@@ -85,6 +90,65 @@ function buildElement(model, element, nodeMap, materialMap) {
   });
 }
 
+/**
+ * `fiveDofTransformation()` maps the two retained nodal rotational DOFs to
+ * physical element-tangent rotation components [omega_x, omega_y]. MITC's
+ * Reissner-Mindlin variables are director slopes, not those physical rotation
+ * components:
+ *
+ *   u = u0 + z*betaX, v = v0 + z*betaY
+ *   betaX = omega_y, betaY = -omega_x
+ *
+ * For a rigid rotation this gives w_,x=-omega_y and w_,y=omega_x, hence
+ * gamma_xz=betaX+w_,x=0 and gamma_yz=betaY+w_,y=0. Reusing the physical
+ * rotation rows without this 90-degree signed map would create spurious
+ * transverse shear energy under rigid-body rotation.
+ */
+function mitcFiveDofTransformation(nodes, frame, profile) {
+  const physical = fiveDofTransformation(nodes, frame, profile);
+  const matrix = physical.matrix.map((row) => [...row]);
+  for (let node = 0; node < nodes.length; node += 1) {
+    const betaX = 5 * node + 3;
+    const betaY = 5 * node + 4;
+    matrix[betaX] = [...physical.matrix[betaY]];
+    matrix[betaY] = physical.matrix[betaX].map((value) => -value);
+  }
+  const rotationMapping = betaRows(physical.rotationMapping);
+  const desiredRigid = betaRows(physical.desiredRigid);
+  const reproductionResidual = maxAbs(addMatrices(
+    multiply(rotationMapping, physical.tangentSampling),
+    scaleMatrix(desiredRigid, -1),
+  ));
+  const rigidReproduction = qualification(
+    reproductionResidual,
+    1,
+    profile.rigidRotation,
+  );
+  return {
+    matrix,
+    rotationMapping,
+    physicalRotationMapping: physical.rotationMapping,
+    tangentSampling: physical.tangentSampling,
+    desiredRigid,
+    physicalDesiredRigid: physical.desiredRigid,
+    eigenvalues: physical.eigenvalues,
+    rank: physical.rank,
+    rankTolerance: physical.rankTolerance,
+    rigidReproduction,
+    physicalRigidReproduction: physical.rigidReproduction,
+  };
+}
+
+function betaRows(physicalRows) {
+  const result = [];
+  for (let node = 0; node < physicalRows.length / 2; node += 1) {
+    const omegaX = physicalRows[2 * node];
+    const omegaY = physicalRows[2 * node + 1];
+    result.push([...omegaY], omegaX.map((value) => -value));
+  }
+  return result;
+}
+
 function elementPayload(context) {
   const {
     model, element, geometry, orderedNodes, material, constitutive,
@@ -95,7 +159,9 @@ function elementPayload(context) {
     orderedNodes,
     formulation.stiffness,
     globalStiffness,
+    transformation,
   );
+  rejectFailedQualification(element.elementId, qualificationEvidence);
   return Object.freeze({
     elementId: element.elementId,
     formulation: element.formulation,
@@ -148,7 +214,7 @@ function shearCorrectionFactor(formulation) {
     : MITC3_SHEAR_CORRECTION_FACTOR;
 }
 
-function qualifyElement(model, nodes, localStiffness, globalStiffness) {
+function qualifyElement(model, nodes, localStiffness, globalStiffness, transformation) {
   const localScale = matrixScale(localStiffness);
   const globalScale = matrixScale(globalStiffness);
   return {
@@ -162,12 +228,22 @@ function qualifyElement(model, nodes, localStiffness, globalStiffness) {
       globalScale,
       model.qualificationProfile.elementStiffnessSymmetry,
     ),
+    betaRigidRotation: transformation.rigidReproduction,
     rigidBodyEnergy: qualification(
       rigidBodyEnergyResidual(nodes, globalStiffness, globalScale),
       1,
       model.mitcQualification.rigidBodyEnergy,
     ),
   };
+}
+
+function rejectFailedQualification(elementId, evidence) {
+  if (Object.values(evidence).some((item) => item?.accepted !== true)) {
+    const error = new TypeError(`Experimental MITC element ${elementId} failed adoption qualification`);
+    error.code = 'MITC_ADOPTION_ELEMENT_QUALIFICATION_FAILED';
+    error.evidence = evidence;
+    throw error;
+  }
 }
 
 function rigidBodyEnergyResidual(nodes, stiffness, stiffnessScale) {
@@ -227,7 +303,11 @@ function formulaIds(formulation) {
   const formulationIds = formulation === MITC4_FORMULATION
     ? Object.values(MITC4_FORMULA_IDS)
     : Object.values(MITC3_FORMULA_IDS);
-  return [...formulationIds, FORMULA_IDS.BASIS_TRANSFORMATION].sort();
+  return [
+    ...formulationIds,
+    FORMULA_IDS.BASIS_TRANSFORMATION,
+    MITC_BETA_TRANSFORMATION_FORMULA_ID,
+  ].sort();
 }
 
 function freezeMatrix(matrix) {
@@ -238,12 +318,15 @@ function freezeTransformation(value) {
   return Object.freeze({
     matrix: freezeMatrix(value.matrix),
     rotationMapping: freezeMatrix(value.rotationMapping),
+    physicalRotationMapping: freezeMatrix(value.physicalRotationMapping),
     tangentSampling: freezeMatrix(value.tangentSampling),
     desiredRigid: freezeMatrix(value.desiredRigid),
+    physicalDesiredRigid: freezeMatrix(value.physicalDesiredRigid),
     eigenvalues: Object.freeze([...value.eigenvalues]),
     rank: value.rank,
     rankTolerance: value.rankTolerance,
     rigidReproduction: value.rigidReproduction,
+    physicalRigidReproduction: value.physicalRigidReproduction,
   });
 }
 

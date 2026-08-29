@@ -6,8 +6,10 @@ on:
       - codex/lafea-1536-shell-scalability
     paths:
       - 'src/core/local-shell/**'
+      - 'src/core/local-continuum/**'
       - 'src/core/lafea-linear-solve/**'
       - 'scripts/lafea.4-*.mjs'
+      - 'scripts/lafea.11-pcg-shared-check.mjs'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/lafea4-shell-pr-validation.yml'
@@ -15,8 +17,10 @@ on:
   pull_request:
     paths:
       - 'src/core/local-shell/**'
+      - 'src/core/local-continuum/**'
       - 'src/core/lafea-linear-solve/**'
       - 'scripts/lafea.4-*.mjs'
+      - 'scripts/lafea.11-pcg-shared-check.mjs'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/lafea4-shell-pr-validation.yml'
@@ -49,6 +53,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Shared PCG analytical oracle
+        run: node scripts/lafea.11-pcg-shared-check.mjs
 
       - name: Focused shell solver/load gate
         run: node scripts/lafea.4-solver-loads-check.mjs

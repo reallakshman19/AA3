@@ -1,0 +1,119 @@
+name: LAFEA B01 T6 B-bar translation-nullspace projection temporary
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lafea-b01-combined-numerics-temp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  block-sgs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact PR head
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Install runner-only T6 B-bar translational-nullspace projection
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/core/local-continuum/t6-element.js')
+          s = p.read_text()
+          old = "const stiffness = bbar?.stiffness ?? standard.stiffness;"
+          new = "const stiffness = bbar ? projectTranslationNullspace(bbar.stiffness) : standard.stiffness;"
+          if s.count(old) != 1:
+              raise RuntimeError('expected T6 B-bar stiffness selection')
+          s = s.replace(old, new, 1)
+          marker = "function matrixTimesVector(matrix, vector) {\n"
+          helper = r'''function projectTranslationNullspace(stiffness) {
+  const size = stiffness.length;
+  const nodeCount = size / 2;
+  if (!Number.isInteger(nodeCount) || nodeCount < 2) {
+    throw new TypeError('T6 stiffness translation projection requires paired UX/UY DOFs.');
+  }
+  const projector = zeros(size, size);
+  for (let row = 0; row < size; row += 1) {
+    for (let column = 0; column < size; column += 1) {
+      projector[row][column] = (row === column ? 1 : 0)
+        - (row % 2 === column % 2 ? 1 / nodeCount : 0);
+    }
+  }
+  const projected = compensatedMatrixProduct(
+    projector,
+    compensatedMatrixProduct(stiffness, projector),
+  );
+  return projected.map((row, i) => row.map((value, j) => canonicalNumber(
+    0.5 * (value + projected[j][i]),
+    'T6 B-bar translation-projected stiffness',
+  )));
+}
+
+function compensatedMatrixProduct(left, right) {
+  const output = zeros(left.length, right[0].length);
+  for (let row = 0; row < left.length; row += 1) {
+    for (let column = 0; column < right[0].length; column += 1) {
+      let sum = 0;
+      let compensation = 0;
+      for (let index = 0; index < right.length; index += 1) {
+        const term = left[row][index] * right[index][column];
+        const next = sum + term;
+        compensation += Math.abs(sum) >= Math.abs(term)
+          ? (sum - next) + term
+          : (term - next) + sum;
+        sum = next;
+      }
+      output[row][column] = sum + compensation;
+    }
+  }
+  return output;
+}
+
+'''
+          if s.count(marker) != 1:
+              raise RuntimeError('expected matrixTimesVector marker')
+          p.write_text(s.replace(marker, helper + marker, 1))
+
+          p = Path('src/core/local-continuum/solver.js')
+          s = p.read_text()
+          old = """    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      'Reaction equilibrium did not qualify.',\n    );\n"""
+          new = """    const freeTotals = { UX: 0, UY: 0 };\n    free.forEach((index) => {\n      freeTotals[dofAxis(dofs[index])] += residual[index];\n    });\n    const stiffnessNullspaceDefect = {\n      UX: totals.UX + freeTotals.UX,\n      UY: totals.UY + freeTotals.UY,\n    };\n    throw numericalError(\n      'REACTION_EQUILIBRIUM_FAILURE',\n      'solver',\n      `Reaction equilibrium did not qualify: externalUX=${totals.UX}, externalUY=${totals.UY}, freeResidualUX=${freeTotals.UX}, freeResidualUY=${freeTotals.UY}, stiffnessNullspaceUX=${stiffnessNullspaceDefect.UX}, stiffnessNullspaceUY=${stiffnessNullspaceDefect.UY}, limit=${equilibriumLimit}, scale=${scale}, freeMaximum=${freeMaximum}, freeLimit=${freeLimit}.`,\n    );\n"""
+          if s.count(old) != 1:
+              raise RuntimeError('expected reaction failure block')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          node --check src/core/local-continuum/t6-element.js
+          node --check src/core/local-continuum/solver.js
+      - name: Execute exact current-source L4 governing case
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { executeLameBbarQualificationCase } from './scripts/lib/lafea-plane-strain-bbar-lame-fixture.mjs';
+          const definition = JSON.parse(fs.readFileSync('validation/lafea-incompressible/plane-strain-bbar-v1.json', 'utf8'));
+          const meshPolicy = JSON.parse(fs.readFileSync('validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json', 'utf8'));
+          const level = definition.benchmarks.THICK_CYLINDER.meshLadder.levels.find((row) => row.levelId === 'L4');
+          const distortion = definition.distortionMatrix.find((row) => row.distortionId === 'REGULAR');
+          const run = executeLameBbarQualificationCase(definition, meshPolicy, {
+            elementType: 'T6', poissonRatio: 0.4999, level, distortion,
+          });
+          console.log(JSON.stringify({
+            case: 'T6/0.4999/L4/REGULAR',
+            state: run.result.qualification.state,
+            solverEvidence: run.loadCase.solverEvidence,
+            equilibrium: run.loadCase.equilibrium,
+          }, null, 2));
+          NODE

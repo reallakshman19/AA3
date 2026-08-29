@@ -46,30 +46,34 @@ assert.ok(custodySection.rows.some((row) =>
 
 assertAuthorityRejects('cross-stage result', () => presentLafeaResult('LAFEA.2', foundation, units), 'result.schema');
 assertAuthorityRejects('composition cross-stage result', () => screeningComposition.presentResult(foundation, units), 'result.schema');
-assertAuthorityRejects('wrong engineering level', () => {
-  const forged = clone(screening);
-  forged.qualification.engineeringLevel = 'LOCAL_ATTACHMENT_STRESS';
-  presentLafeaResult('LAFEA.2', forged, units);
-}, 'result.qualification.engineeringLevel');
-assertAuthorityRejects('composition wrong engineering level', () => {
-  const forged = clone(screening);
-  forged.qualification.engineeringLevel = 'LOCAL_ATTACHMENT_STRESS';
-  screeningComposition.presentResult(forged, units);
-}, 'result.qualification.engineeringLevel');
+for (const forbiddenLevel of ['LOCAL_ATTACHMENT_STRESS', 'WELD_STRESS', 'CODE_STRESS']) {
+  assertAuthorityRejects(`forbidden engineering level ${forbiddenLevel}`, () => {
+    const forged = clone(screening);
+    forged.qualification.engineeringLevel = forbiddenLevel;
+    presentLafeaResult('LAFEA.2', forged, units);
+  }, 'result.qualification.engineeringLevel');
+  assertAuthorityRejects(`composition forbidden engineering level ${forbiddenLevel}`, () => {
+    const forged = clone(screening);
+    forged.qualification.engineeringLevel = forbiddenLevel;
+    screeningComposition.presentResult(forged, units);
+  }, 'result.qualification.engineeringLevel');
+}
 assertAuthorityRejects('accepted-state bypass', () => {
   const forged = clone(screening);
   forged.qualification.state = 'REJECTED_REQUEST';
   presentLafeaResult('LAFEA.2', forged, units);
 }, 'result.qualification.state');
-assertAuthorityRejects('missing mandatory limitation', () => {
-  const forged = clone(screening);
-  forged.limitations = forged.limitations.filter((value) => value !== 'NO_LOCAL_ATTACHMENT_STRESS');
-  presentLafeaResult('LAFEA.2', forged, units);
-}, 'result.limitations');
+for (const mandatoryLimitation of ['NO_LOCAL_ATTACHMENT_STRESS', 'NO_WELD_STRESS', 'NO_CODE_COMPLIANCE']) {
+  assertAuthorityRejects(`missing mandatory limitation ${mandatoryLimitation}`, () => {
+    const forged = clone(screening);
+    forged.limitations = forged.limitations.filter((value) => value !== mandatoryLimitation);
+    presentLafeaResult('LAFEA.2', forged, units);
+  }, 'result.limitations');
+}
 assertAuthorityRejects('missing result evidence', () => presentLafeaResult('LAFEA.1', null, units), 'result');
 assertAuthorityRejects('composition missing result evidence', () => foundationComposition.presentResult(null, units), 'result');
 
-console.log('LAFEA.1/.2 analytical result authority, composition seam, and presenter custody checks passed.');
+console.log('LAFEA.1/.2 analytical result authority, local/weld/code fail-closed, composition seam, and presenter custody checks passed.');
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));

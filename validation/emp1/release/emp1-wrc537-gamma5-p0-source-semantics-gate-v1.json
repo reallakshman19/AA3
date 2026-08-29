@@ -64,7 +64,7 @@
       "category": "WRC_APPLICABILITY",
       "artifact": "validation/emp1/wrc537-2013/attachment-axis-intersection-source-qualification-v1.json",
       "authorityDocument": "docs/emp1/WRC537_2013_Attachment_Axis_Authority.md",
-      "currentStatus": "BLOCKED_PRIMARY_INTERSECTION_RULE_NOT_DIRECTLY_VERIFIED",
+      "currentStatus": "BLOCKED_PARTIAL_PRIMARY_SHELL_NORMAL_REFERENCE_AXIS_QUALIFIED_PHYSICAL_ATTACHMENT_AXIS_COINCIDENCE_AND_OBLIQUE_APPLICABILITY_UNRESOLVED",
       "profileAuthorityKey": "attachmentAxis"
     },
     {

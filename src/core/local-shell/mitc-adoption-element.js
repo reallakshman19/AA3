@@ -19,11 +19,13 @@ import {
 import {
   MITC3_FORMULA_IDS,
   MITC3_FORMULATION,
+  SHEAR_CORRECTION_FACTOR as MITC3_SHEAR_CORRECTION_FACTOR,
   mitc3StiffnessMatrix,
 } from './mitc3-element.js';
 import {
   MITC4_FORMULA_IDS,
   MITC4_FORMULATION,
+  SHEAR_CORRECTION_FACTOR as MITC4_SHEAR_CORRECTION_FACTOR,
   mitc4StiffnessMatrix,
 } from './mitc4-element.js';
 
@@ -40,7 +42,6 @@ export function buildExperimentalMitcElementEvidence(model) {
 }
 
 function buildElement(model, element, nodeMap, materialMap) {
-  const nodes = element.nodeIds.map((nodeId) => nodeMap.get(nodeId));
   const material = materialMap.get(element.materialId);
   const geometryProfile = {
     ...model.qualificationProfile,
@@ -60,11 +61,35 @@ function buildElement(model, element, nodeMap, materialMap) {
     element.thickness,
     shearModulus,
   );
-  const transformation = fiveDofTransformation(orderedNodes, geometry.frame, model.qualificationProfile);
+  const transformation = fiveDofTransformation(
+    orderedNodes,
+    geometry.frame,
+    model.qualificationProfile,
+  );
   const globalStiffness = multiply(
     transpose(transformation.matrix),
     multiply(formulation.stiffness, transformation.matrix),
   );
+  return elementPayload({
+    model,
+    element,
+    geometry,
+    orderedNodes,
+    material,
+    constitutive,
+    coordinates,
+    shearModulus,
+    formulation,
+    transformation,
+    globalStiffness,
+  });
+}
+
+function elementPayload(context) {
+  const {
+    model, element, geometry, orderedNodes, material, constitutive,
+    coordinates, shearModulus, formulation, transformation, globalStiffness,
+  } = context;
   const qualificationEvidence = qualifyElement(
     model,
     orderedNodes,
@@ -90,7 +115,7 @@ function buildElement(model, element, nodeMap, materialMap) {
     directorAlignment: Object.freeze(geometry.alignments),
     membraneMaterialMatrix: freezeMatrix(constitutive.membraneMaterial),
     shearModulus,
-    shearCorrectionFactor: 5 / 6,
+    shearCorrectionFactor: shearCorrectionFactor(element.formulation),
     integrationEvidence: formulation.gaussEvidence,
     localStiffness: freezeMatrix(formulation.stiffness),
     nodalBasisTransformation: freezeTransformation(transformation),
@@ -115,6 +140,12 @@ function formulationStiffness(formulation, coordinates, membraneMaterial, thickn
     return mitc3StiffnessMatrix(coordinates, membraneMaterial, thickness, shearModulus);
   }
   throw new TypeError(`Unsupported MITC adoption formulation: ${formulation}`);
+}
+
+function shearCorrectionFactor(formulation) {
+  return formulation === MITC4_FORMULATION
+    ? MITC4_SHEAR_CORRECTION_FACTOR
+    : MITC3_SHEAR_CORRECTION_FACTOR;
 }
 
 function qualifyElement(model, nodes, localStiffness, globalStiffness) {
@@ -166,7 +197,10 @@ function rigidBodyEnergyResidual(nodes, stiffness, stiffnessScale) {
   let residual = 0;
   for (const mode of modes) {
     const action = matrixVector(stiffness, mode);
-    const energyTwice = Math.abs(mode.reduce((sum, value, index) => sum + value * action[index], 0));
+    const energyTwice = Math.abs(mode.reduce(
+      (sum, value, index) => sum + value * action[index],
+      0,
+    ));
     const normSquared = mode.reduce((sum, value) => sum + value * value, 0);
     residual = Math.max(
       residual,

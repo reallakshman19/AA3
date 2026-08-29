@@ -19,6 +19,7 @@ function buildCase(row,loadMap,pressureMap,profile) {
   return {
     screeningCaseId:row.screeningCaseId, mechanicalTerms:row.mechanicalTerms,
     pressureDefinitionId:row.pressureDefinitionId, pressureFactor:row.pressureFactor,
+    axialPressureThrustBasis:row.axialPressureThrustBasis,
     sourceReference:row.sourceReference, termEvidence, explicitAxialMechanicalResultant:explicit,
     combinedForceLocal:totalForce, combinedMomentLocal:summed.moment,
     transverseResultantsRetained:{forceY:totalForce[1],forceZ:totalForce[2]},

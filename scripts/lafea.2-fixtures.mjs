@@ -4,8 +4,9 @@ import {
 } from '../src/core/local-stress/index.js';
 import { canonicalFixture } from './lafea.1-fixtures.mjs';
 import {
-  ENVELOPE_QUANTITIES, QUALIFICATION_PROFILE, REQUEST_SCHEMA, RADIUS_BASES,
-  SECTION_BASIS, SOURCE_SCHEMA, createLocalAttachmentScreeningRequest,
+  AXIAL_PRESSURE_THRUST_BASES, ENVELOPE_QUANTITIES, QUALIFICATION_PROFILE,
+  REQUEST_SCHEMA, RADIUS_BASES, SECTION_BASIS, SOURCE_SCHEMA,
+  createLocalAttachmentScreeningRequest,
 } from '../src/core/local-attachment-screening/index.js';
 
 export function foundationSourceFixture(mutator=()=>{}) {
@@ -42,7 +43,20 @@ function pressureRequest(identity,ref,includeAxialPressureStress) {
   return {identity:`PR-${identity}`,pressureDefinitionIdentity:identity,requestedRadii:[490,495,500].map((value,index)=>({value,sourceRef:ref(`requests.${identity}.radius.${index}`)})),includeAxialPressureStress,includeThinWallComparison:false};
 }
 function defaultCases() {
-  return [{screeningCaseId:'CASE-A',mechanicalTerms:[{loadCaseId:'LC-A',factor:1}],pressureDefinitionId:'P-CLOSED',pressureFactor:1,sourceReference:'CASE#A'},{screeningCaseId:'CASE-B',mechanicalTerms:[{loadCaseId:'LC-B',factor:2},{loadCaseId:'LC-A',factor:-0.5}],pressureDefinitionId:'P-OPEN',pressureFactor:0.5,sourceReference:'CASE#B'}];
+  return [
+    {
+      screeningCaseId:'CASE-A',mechanicalTerms:[{loadCaseId:'LC-A',factor:1}],
+      pressureDefinitionId:'P-CLOSED',pressureFactor:1,
+      axialPressureThrustBasis:AXIAL_PRESSURE_THRUST_BASES.EXCLUDES_PRESSURE_THRUST,
+      sourceReference:'CASE#A',
+    },
+    {
+      screeningCaseId:'CASE-B',mechanicalTerms:[{loadCaseId:'LC-B',factor:2},{loadCaseId:'LC-A',factor:-0.5}],
+      pressureDefinitionId:'P-OPEN',pressureFactor:0.5,
+      axialPressureThrustBasis:AXIAL_PRESSURE_THRUST_BASES.UNKNOWN,
+      sourceReference:'CASE#B',
+    },
+  ];
 }
 function defaultLocations() {
   return [location('L0',RADIUS_BASES.OUTER_SURFACE,0),location('L90',RADIUS_BASES.OUTER_SURFACE,Math.PI/2),location('L180',RADIUS_BASES.OUTER_SURFACE,Math.PI),location('L270',RADIUS_BASES.OUTER_SURFACE,3*Math.PI/2),location('LMID',RADIUS_BASES.MID_SURFACE,Math.PI/4)];

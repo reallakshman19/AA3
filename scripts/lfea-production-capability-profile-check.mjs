@@ -7,6 +7,7 @@ import {
   PRODUCTION_CAPABILITY_PROFILE_SCHEMA,
   PRODUCTION_REPRESENTABLE_COMPONENT_KINDS,
   productionAuthorizedPressureEffects,
+  productionBendSourceEligible,
   productionComponentIsRepresentable,
   productionComponentLimitation,
 } from '../src/core/linear-piping-analysis-consumer/production-capability-profile.js';
@@ -75,6 +76,28 @@ const qualifiedBend = {
 assert.equal(
   productionComponentLimitation('BEND', PRODUCTION_CAPABILITY_PROFILE, qualifiedBend),
   null,
+);
+const qualifiedArcBearingTee = {
+  ...qualifiedBend,
+  type: 'TEE',
+};
+assert.equal(
+  productionBendSourceEligible(qualifiedArcBearingTee),
+  true,
+  'A TEE source with complete governed arc evidence must retain exact bend ownership.',
+);
+assert.equal(
+  productionComponentLimitation('BEND', PRODUCTION_CAPABILITY_PROFILE, qualifiedArcBearingTee),
+  null,
+  'Arc-bearing TEE bend ownership must consume the existing exact bend capability.',
+);
+assert.equal(
+  productionBendSourceEligible({
+    ...qualifiedArcBearingTee,
+    meta: { ...qualifiedArcBearingTee.meta, bendArcCentre: null },
+  }),
+  false,
+  'Arc-bearing component kinds without complete governed geometry must remain fail-closed.',
 );
 
 const type3Tee = {

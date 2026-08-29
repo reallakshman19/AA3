@@ -68,6 +68,7 @@ export function prepareInputXmlLinearSolve(sourceBundle, analysisProfileId, opti
     inventory: modelHealth.inventory,
     modelId,
     analysisProfileId,
+    thermalIntervalAuthority: options.thermalIntervalAuthority ?? null,
   });
   const caseAvailability = buildCaseAvailability(authorities.loadBindings);
   const limitations = uniqueAscii([

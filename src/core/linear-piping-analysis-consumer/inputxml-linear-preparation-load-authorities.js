@@ -1,8 +1,5 @@
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
-import {
-  INPUTXML_GRAVITY_ACCELERATION,
-  INPUTXML_INSTALLATION_TEMPERATURE,
-} from './inputxml-linear-preparation-profile.js';
+import { INPUTXML_GRAVITY_ACCELERATION } from './inputxml-linear-preparation-profile.js';
 import {
   authoritySourceEvidence,
   finiteAuthorityValue,
@@ -19,6 +16,7 @@ export function loadBindingFor({
   physicalSection,
   rigidAuthority,
   thermalAuthority,
+  installationTemperature,
   modelId,
   sourceBundleSemanticHash,
 }) {
@@ -32,7 +30,8 @@ export function loadBindingFor({
     }),
     pressure: pressureAuthority(segment, element, analysis, modelId, sourceBundleSemanticHash),
     thermal: thermalLoadAuthority(
-      segment, element, analysis, thermalAuthority, modelId, sourceBundleSemanticHash,
+      segment, element, analysis, thermalAuthority, installationTemperature,
+      modelId, sourceBundleSemanticHash,
     ),
   });
 }
@@ -131,18 +130,19 @@ function thermalLoadAuthority(
   element,
   analysis,
   thermalAuthority,
+  installationTemperature,
   modelId,
   sourceBundleSemanticHash,
 ) {
   const operatingTemperature = finiteAuthorityValue(analysis.operatingTemperature);
   const active = operatingTemperature !== null;
   const resolved = active && thermalAuthority.status === 'RESOLVED';
-  const deltaTemperature = active ? operatingTemperature - INPUTXML_INSTALLATION_TEMPERATURE.value : null;
+  const deltaTemperature = active ? operatingTemperature - installationTemperature : null;
   const thermalStrain = resolved ? thermalAuthority.coefficientPerKelvin * deltaTemperature : null;
   const payload = {
     kind: 'UNIFORM_TEMPERATURE_INPUT_CUSTODY', active,
     status: !active ? 'NOT_ACTIVE' : resolved ? 'RESOLVED' : 'UNRESOLVED',
-    installationTemperature: INPUTXML_INSTALLATION_TEMPERATURE.value,
+    installationTemperature,
     operatingTemperature, deltaTemperature,
     coefficientPerKelvin: resolved ? thermalAuthority.coefficientPerKelvin : null,
     thermalStrain,

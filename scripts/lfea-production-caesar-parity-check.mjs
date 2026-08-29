@@ -44,10 +44,20 @@ import {
   buildProductionBenchmarkActual,
   PRODUCTION_TO_CAESAR_CASE,
 } from './lib/lfea-production-benchmark-actual.mjs';
+import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
+import { computeInputXmlModelHealthSourceSemanticHash } from '../src/core/geometry/model-health/index.js';
+import {
+  INPUTXML_THERMAL_INTERVAL_AUTHORITY_SCHEMA,
+  sealInputXmlThermalIntervalAuthority,
+} from '../src/core/linear-piping-analysis-consumer/inputxml-thermal-authority.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ACCDB = path.join(ROOT, 'benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB');
 const PROFILE = path.join(ROOT, 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json');
+const THERMAL_INTERVAL_AUTHORITY = path.join(
+  ROOT,
+  'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-t1-interval-authority.json',
+);
 const PRODUCTION_CASE_IDS = ['IXP-W', 'IXP-WP', 'IXP-WPT', 'IXP-WT'];
 const MODEL_TABLES = [
   'INPUT_BASIC_ELEMENT_DATA', 'INPUT_BENDS', 'INPUT_CONTROL', 'INPUT_FORCMNT',
@@ -79,6 +89,7 @@ const session = createLinearPipingAccdbSession(tables, {
   fileName: 'BM4_L.ACCDB',
   requestedCaseIds: PRODUCTION_CASE_IDS,
 });
+const thermalIntervalAuthority = bm4lThermalIntervalAuthority(session.sourceBundle);
 const prepared = prepareLinearPipingAccdbPreFlight(session.intake, session.sourceBundle, {
   bendFactorAuthority: sealInputXmlProductionBendFactorAuthority({
     authorityId: 'LFEA-PARITY-BEND',
@@ -93,6 +104,9 @@ const prepared = prepareLinearPipingAccdbPreFlight(session.intake, session.sourc
     sourceId: 'LFEA_PARITY_HARNESS',
     sourceRevision: '1',
   }),
+  preparationOptions: {
+    authorityOptions: { thermalIntervalAuthority },
+  },
 });
 const declaredBendCount = prepared.preparation.structuralPreparation
   .summary.bendRetopology.bendCount;
@@ -101,11 +115,11 @@ assert.equal(
   declaredBendCount,
   'Every governed retopologized bend must retain exact bend ownership through stiffness preflight.',
 );
-console.error('BLOCKROWS', JSON.stringify(prepared.preparation.findings.filter(r=>r.disposition==='BLOCK'), null, 1).slice(0,2000));
 const blockCodes = prepared.preparation.findings
   .filter((row) => row.disposition === 'BLOCK')
   .map((row) => row.code);
 assert.deepEqual(blockCodes, [], `Production preparation must reach the solver: ${JSON.stringify(blockCodes)}`);
+assertThermalIntervalConsumption(prepared.preparation, thermalIntervalAuthority);
 
 const authorized = authorizeLinearPipingInputXmlPreFlight(prepared, {
   approverIdentity: 'lfea-production-caesar-parity-check',
@@ -213,15 +227,22 @@ const SUPPLIED = new Set([
   'GLOBAL_END_MOMENT_FROM', 'GLOBAL_END_MOMENT_TO',
 ]);
 
+const comparedByCase = new Map(report.qualification.cases.map((qualifiedCase) => [
+  qualifiedCase.caseId,
+  qualifiedCase.comparison.rows.filter((row) =>
+    SUPPLIED.has(row.quantity)
+    && (row.entityKind === 'NODE' || elementActionsSupplied)
+    && ['PASS', 'FAIL'].includes(row.status)),
+]));
+const allCompared = [...comparedByCase.values()].flat();
+const substantialReferenceFloorByQuantity = referenceFloorByQuantity(allCompared);
+
 const perCase = report.qualification.cases.map((qualifiedCase) => {
   // Only quantities actually supplied are counted. A reference row with no
   // counterpart scores FAIL, so counting withheld element actions would report
   // a 0% pass rate for work that was never claimed -- the same artifact that
   // made MOMENT look like 3/90 before reactions were zero-filled.
-  const compared = qualifiedCase.comparison.rows.filter((row) =>
-    SUPPLIED.has(row.quantity)
-    && (row.entityKind === 'NODE' || elementActionsSupplied)
-    && ['PASS', 'FAIL'].includes(row.status));
+  const compared = comparedByCase.get(qualifiedCase.caseId);
   const failed = compared.filter((row) => row.status === 'FAIL');
   const errors = compared
     .map((row) => (row.rawRelativeError === null ? null : Math.abs(row.rawRelativeError) * 100))
@@ -246,6 +267,11 @@ const perCase = report.qualification.cases.map((qualifiedCase) => {
       : Number((100 * (compared.length - failed.length) / compared.length).toFixed(2)),
     medianPercentError: errors.length === 0 ? null : Number(errors[Math.floor(errors.length / 2)].toFixed(4)),
     worstPercentError: errors.length === 0 ? null : Number(errors[errors.length - 1].toFixed(4)),
+    overFivePercent: overFiveMeasure(compared),
+    substantialReferenceOverFivePercent: substantialOverFiveMeasure(
+      compared,
+      substantialReferenceFloorByQuantity,
+    ),
     worstRows: failed
       .sort((left, right) => Math.abs(right.rawRelativeError ?? 0) - Math.abs(left.rawRelativeError ?? 0))
       .slice(0, 5)
@@ -273,9 +299,129 @@ console.log(JSON.stringify({
   sourceElementChains: elementChains.length,
   editionProfileId: EDITION_PROFILE_ID,
   caseMapping: PRODUCTION_TO_CAESAR_CASE,
+  thermalIntervalAuthority: {
+    authorityId: thermalIntervalAuthority.authorityId,
+    semanticHash: thermalIntervalAuthority.semanticHash,
+    sourceSemanticHash: thermalIntervalAuthority.sourceEvidence.sourceSemanticHash,
+    installationTemperature: thermalIntervalAuthority.installationTemperature,
+    operatingTemperature: thermalIntervalAuthority.operatingTemperature,
+    coefficientPerKelvin: thermalIntervalAuthority.coefficientPerKelvin,
+    thermalStrain: thermalIntervalAuthority.thermalStrain,
+  },
+  solverEvidence: executed.execution.caseExecutions.map((row) => ({
+    caseId: row.caseId,
+    executionStatus: row.executionStatus,
+    conditionEstimate: row.execution.factorization.conditionEstimate,
+    normalizedResidual: row.execution.diagnostics.residual.value,
+    residualStatus: row.execution.diagnostics.residual.status,
+  })),
   qualificationStatus: report.qualification.status,
+  overFivePercent: overFiveMeasure(allCompared),
+  substantialReferenceOverFivePercent: {
+    definition: 'absolute raw relative error >5%; reference magnitude >=10% of the quantity non-zero-reference median; denominator is every supplied compared component',
+    ...substantialOverFiveMeasure(allCompared, substantialReferenceFloorByQuantity),
+  },
   perCase,
 }, null, 2));
+
+function bm4lThermalIntervalAuthority(sourceBundle) {
+  const record = JSON.parse(fs.readFileSync(THERMAL_INTERVAL_AUTHORITY, 'utf8'));
+  assert.equal(record.schema, 'm047-bm4l-t1-interval-authority/v1');
+  assert.equal(record.benchmarkId, 'BM4_L');
+  const materials = uniqueFinite(sourceBundle.geometry.segments
+    .map((segment) => segment.meta?.materialNumber));
+  const operatingTemperatures = uniqueFinite(sourceBundle.geometry.segments
+    .map((segment) => segment.meta?.analysis?.operatingTemperature));
+  assert.equal(materials.length, 1, 'The scoped interval requires one governed material.');
+  assert.deepEqual(
+    operatingTemperatures,
+    [record.interval.operatingTemperatureC + 273.15],
+    'The scoped interval operating temperature must match the source model.',
+  );
+  return sealInputXmlThermalIntervalAuthority({
+    schema: INPUTXML_THERMAL_INTERVAL_AUTHORITY_SCHEMA,
+    authorityId: `${record.schema}:${record.benchmarkId}`,
+    modelId: 'IXP',
+    sourceBundleSemanticHash: computeInputXmlModelHealthSourceSemanticHash(sourceBundle),
+    materialNumber: materials[0],
+    installationTemperature: record.interval.installationTemperatureC + 273.15,
+    operatingTemperature: record.interval.operatingTemperatureC + 273.15,
+    coefficientPerKelvin: record.interval.meanAlphaPerK,
+    sourceEvidence: {
+      sourceId: path.relative(ROOT, THERMAL_INTERVAL_AUTHORITY).replaceAll('\\', '/'),
+      sourceRevision: record.reconstruction.evidenceSourceCommit,
+      sourceSemanticHash: semanticHash(record),
+    },
+    semanticHash: '',
+  });
+}
+
+function assertThermalIntervalConsumption(preparation, authority) {
+  const sourcePreparation = preparation.sourcePreparation;
+  assert.ok(sourcePreparation.loadBindings.length > 0, 'Thermal load bindings must exist.');
+  for (const material of sourcePreparation.materialResolutions) {
+    assert.equal(material.materialState.thermalExpansionCoefficient, authority.coefficientPerKelvin);
+  }
+  for (const binding of sourcePreparation.loadBindings) {
+    assert.equal(binding.thermal.status, 'RESOLVED');
+    assert.equal(binding.thermal.installationTemperature, authority.installationTemperature);
+    assert.equal(binding.thermal.operatingTemperature, authority.operatingTemperature);
+    assert.equal(binding.thermal.coefficientPerKelvin, authority.coefficientPerKelvin);
+    assert.equal(binding.thermal.thermalStrain, authority.thermalStrain);
+    assert.equal(binding.thermal.thermalAuthoritySemanticHash, authority.semanticHash);
+  }
+  assert.ok(sourcePreparation.rigidAuthorities.length > 0, 'Rigid thermal consumers must exist.');
+  for (const rigid of sourcePreparation.rigidAuthorities) {
+    assert.equal(rigid.thermal.installationTemperature, authority.installationTemperature);
+    assert.equal(rigid.thermal.operatingTemperature, authority.operatingTemperature);
+    assert.equal(rigid.thermal.expansionCoefficient, authority.coefficientPerKelvin);
+    assert.equal(rigid.thermal.axialStrain, authority.thermalStrain);
+  }
+  const thermalLedger = preparation.physicalPreparation.loadLedger
+    .filter((row) => row.sourceKind === 'UNIFORM_TEMPERATURE');
+  const thermalPrimitiveIds = thermalLedger.flatMap((row) => row.primitiveIds);
+  const analysisElementCount = preparation.structuralPreparation.segmentBindings.length;
+  assert.equal(thermalLedger.length, analysisElementCount);
+  assert.equal(new Set(thermalPrimitiveIds).size, analysisElementCount);
+}
+
+function referenceFloorByQuantity(rows) {
+  return new Map([...SUPPLIED].map((quantity) => {
+    const magnitudes = rows
+      .filter((row) => row.quantity === quantity)
+      .map((row) => Math.abs(row.referenceValue))
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .sort((left, right) => left - right);
+    const median = magnitudes.length === 0 ? Infinity : magnitudes[Math.floor(magnitudes.length / 2)];
+    return [quantity, 0.1 * median];
+  }));
+}
+
+function overFiveMeasure(rows) {
+  const aboveFive = rows.filter((row) =>
+    Number.isFinite(row.rawRelativeError) && Math.abs(row.rawRelativeError) > 0.05).length;
+  return rateMeasure(aboveFive, rows.length);
+}
+
+function substantialOverFiveMeasure(rows, floorByQuantity) {
+  const aboveFive = rows.filter((row) =>
+    Number.isFinite(row.rawRelativeError)
+    && Math.abs(row.rawRelativeError) > 0.05
+    && Math.abs(row.referenceValue) >= floorByQuantity.get(row.quantity)).length;
+  return rateMeasure(aboveFive, rows.length);
+}
+
+function rateMeasure(numerator, denominator) {
+  return {
+    numerator,
+    denominator,
+    ratePercent: denominator === 0 ? null : Number((100 * numerator / denominator).toFixed(4)),
+  };
+}
+
+function uniqueFinite(values) {
+  return [...new Set(values.filter((value) => Number.isFinite(value)))].sort((left, right) => left - right);
+}
 
 /**
  * Walk each CAESAR source element's production chain from its FROM node to its

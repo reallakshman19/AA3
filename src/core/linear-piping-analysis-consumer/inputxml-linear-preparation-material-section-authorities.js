@@ -18,7 +18,6 @@ import {
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import {
   INPUTXML_GRAVITY_ACCELERATION,
-  INPUTXML_INSTALLATION_TEMPERATURE,
   InputXmlLinearSolvePreparationError,
 } from './inputxml-linear-preparation-profile.js';
 import {
@@ -156,11 +155,12 @@ export function rigidFor({
   physicalSection,
   materialResolution,
   thermalAuthority,
+  installationTemperature,
   sourceBundleSemanticHash,
   modelId,
 }) {
   const operatingTemperature = finiteAuthorityValue(analysis.operatingTemperature)
-    ?? INPUTXML_INSTALLATION_TEMPERATURE.value;
+    ?? installationTemperature;
   const request = sealRigidElementRequest({
     schema: RIGID_ELEMENT_REQUEST_SCHEMA,
     rigidElementId: `${modelId}-RIGID-${segment.id}`,
@@ -175,7 +175,7 @@ export function rigidFor({
     refractoryWeight: 0,
     claddingWeight: 0,
     gravityAcceleration: INPUTXML_GRAVITY_ACCELERATION.value,
-    installationTemperature: INPUTXML_INSTALLATION_TEMPERATURE.value,
+    installationTemperature,
     operatingTemperature,
     material: {
       elasticModulus: materialResolution.materialState.elasticModulus,

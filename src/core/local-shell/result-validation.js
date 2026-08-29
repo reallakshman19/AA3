@@ -1,3 +1,4 @@
+import { DETERMINISTIC_JACOBI_PCG_REVISION } from '../lafea-linear-solve/index.js';
 import { ENGINEERING_LEVEL, FORMULATION, QUALIFICATION_STATES, RESULT_SCHEMA } from './constants.js';
 import { ShellModelError } from './errors.js';
 import { canonicalStringify, deepFreeze, strictClone } from './json.js';
@@ -93,7 +94,7 @@ function validateCase(row, label) {
 function validateSolverEvidence(row, label) {
   if (row.method === 'DETERMINISTIC_JACOBI_PCG') {
     exactKeys(row, PCG_SOLVER_EVIDENCE, label);
-    if (row.algorithmRevision !== 'DETERMINISTIC_JACOBI_PCG_RELIABLE_RESIDUAL_V2') throw new ShellModelError(`${label}.algorithmRevision is invalid`);
+    if (row.algorithmRevision !== DETERMINISTIC_JACOBI_PCG_REVISION) throw new ShellModelError(`${label}.algorithmRevision is invalid`);
     if (row.preconditioner !== 'JACOBI' || row.accepted !== true) throw new ShellModelError(`${label} PCG qualification is invalid`);
     return;
   }

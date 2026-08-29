@@ -1,5 +1,22 @@
 # LAFEA.3 deterministic 2D continuum solver foundation
 
+> **Status: HISTORICAL FOUNDATION RECORD — NOT CURRENT CAPABILITY AUTHORITY**
+>
+> `CURRENT_CAPABILITY_AUTHORITY: src/core/local-continuum/constants.js`
+>
+> `CURRENT_CAPABILITY_GUARD: scripts/lafea.3-default-element-guard-check.mjs`
+>
+> This document preserves the original Issue #151 CST-only foundation and its
+> then-current limitations. It is intentionally not rewritten into the modern
+> T3/T6/Q8 design. Current LAFEA.3 element capability is governed by live source
+> and executable guards; as of the current #1535 basis the live engineering
+> level is `LINEAR_2D_CONTINUUM_T3_T6_Q8`. Statements below such as
+> `LINEAR_2D_CONTINUUM_CST_ONLY`, three-node-only behavior, element-constant CST
+> recovery, `NO AUTOMATIC MESH GENERATION`, and `NO UI OR APPLICATION
+> INTEGRATION` describe the historical foundation state and must not be used as
+> current production-capability claims. Issue #1535 separately governs the
+> remaining ordinary geometry→mesh→convergence→UI route and hole-support gaps.
+
 ## Authority and scope
 
 This module implements Issue #151 as a framework-independent, small-model,

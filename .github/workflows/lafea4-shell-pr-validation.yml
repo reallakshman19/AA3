@@ -1,0 +1,72 @@
+name: LAFEA.4 shell scalability exact-head validation
+
+on:
+  push:
+    branches:
+      - codex/lafea-1536-shell-scalability
+    paths:
+      - 'src/core/local-shell/**'
+      - 'src/core/lafea-linear-solve/**'
+      - 'scripts/lafea.4-*.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/lafea4-shell-pr-validation.yml'
+      - 'agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/**'
+  pull_request:
+    paths:
+      - 'src/core/local-shell/**'
+      - 'src/core/lafea-linear-solve/**'
+      - 'scripts/lafea.4-*.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/lafea4-shell-pr-validation.yml'
+      - 'agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/**'
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_HEAD: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact head and clean tree
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Focused shell solver/load gate
+        run: node scripts/lafea.4-solver-loads-check.mjs
+
+      - name: LAFEA sparse solver aggregate
+        run: npm run check:lafea-solver
+
+      - name: LAFEA core aggregate
+        run: npm run check:lafea-core
+
+      - name: Import integrity
+        run: npm run check:imports
+
+      - name: Build
+        run: npm run build
+
+      - name: Diff whitespace gate
+        shell: bash
+        run: |
+          git fetch origin main --depth=1
+          git diff --check origin/main...HEAD

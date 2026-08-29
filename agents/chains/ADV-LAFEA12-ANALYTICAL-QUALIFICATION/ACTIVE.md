@@ -1,25 +1,25 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA12-ANALYTICAL-QUALIFICATION
 MISSION: Qualify and harden the LAFEA.1/LAFEA.2 analytical baseline for issue #1533 without expanding FEA/WRC/code authority.
-ACTIVE_ENDPOINT: EP-0015
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0015.md
+ACTIVE_ENDPOINT: EP-0016
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0016.md
 MATERIAL_HISTORY_ROOT_BASE: 95214bc296238753f262668ba0706f3011a7898e
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0015.md
-PR: PENDING_EVIDENCE_PR
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0016.md
+PR: #1549
 BRANCH: codex/lafea12-postmerge-qualification-1533
-HEAD: df532c73bce511d8e901c60eba16f7f39a8ebfb5
+HEAD: 6b2a7855dbe7aa5d907f97f109b2b275b4317366
 STATE: ACTIVE
 ENGINEERING_STATE: READY
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: PENDING
 WRITE_AUTHORITY: WRITE_ALLOWED
-AUTO_STATE: RUNNING
+AUTO_STATE: PAUSED
 MERGE_AUTHORITY: OWNER_ONLY
-AUTHORITY_DOMAIN: qualification evidence packaging and issue #1533 obligation mapping only; production mechanics, oracle values/tolerances, workflows, registered-manifest status, WRC/code authority and release state remain protected
+AUTHORITY_DOMAIN: qualification evidence packaging and issue #1533 completion mapping only; production mechanics, oracle values/tolerances, workflows, registered-manifest status, WRC/code authority and release state remain protected
 ACTIVE_CUSTODIAN: chatgpt-gpt-5.6-sol
 CUSTODY_EPOCH: 1
 COORDINATION_STATE: NOT_APPLICABLE
-DEPENDENCIES: Owner instructed no GitHub Actions; analytical mechanics/source agreement is PASS_HAND_SOURCE in NON_ACTIONS_QUALIFICATION.md; production Node runtime is explicitly NOT_RUN_RUNTIME; mechanics disposition NO-PATCH
+DEPENDENCIES: PR #1549 is mergeable/non-draft; Owner instructed no GitHub Actions; analytical mechanics/source agreement is PASS_HAND_SOURCE; production Node runtime explicitly NOT_RUN_RUNTIME; mechanics disposition NO-PATCH
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 9573ec2bba234cc7cd6abcf73c4c3f3e2bc0892c
 COMMON_PROTOCOL_STATUS: CURRENT

@@ -1,9 +1,11 @@
 /** Single presentation boundary resolved by the governed composition root. */
+import { assertLafeaAnalyticalResultAuthority } from '../lafea-analytical-result-authority.js';
 import { requireLafeaStageComposition } from '../lafea-stage-composition-root.js';
 
 export function presentLafeaResult(stageId, result, units) {
   const composition = requireLafeaStageComposition(stageId);
   if (!composition.presentResult) throw unsupportedStagePresenterError(composition);
+  assertLafeaAnalyticalResultAuthority(stageId, result);
   return composition.presentResult(result, units);
 }
 

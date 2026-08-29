@@ -1,15 +1,15 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA12-ANALYTICAL-QUALIFICATION
 MISSION: Qualify and harden the LAFEA.1/LAFEA.2 analytical baseline for issue #1533 without expanding FEA/WRC/code authority.
-ACTIVE_ENDPOINT: EP-0005
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0005.md
+ACTIVE_ENDPOINT: EP-0006
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0006.md
 MATERIAL_HISTORY_ROOT_BASE: b6a0075fe004a634b8e2877bd8a95b6901c1d763
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0005.md
-PR: PENDING
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA12-ANALYTICAL-QUALIFICATION/endpoints/EP-0006.md
+PR: #1545
 BRANCH: codex/lafea12-thrust-ui-1533
-HEAD: ff9a7d339c6622963559699dbb0551d79eadb3c4
+HEAD: 800f4f1bc5b4c28ef89f640a8f45a7231669033a
 STATE: ACTIVE
-ENGINEERING_STATE: READY
+ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: WRITE_ALLOWED
@@ -19,7 +19,7 @@ AUTHORITY_DOMAIN: LAFEA.1/.2 analytical source qualification, pressure-thrust se
 ACTIVE_CUSTODIAN: chatgpt-gpt-5.6-sol
 CUSTODY_EPOCH: 1
 COORDINATION_STATE: NOT_APPLICABLE
-DEPENDENCIES: independent external oracle dossier remains required; this leg is bounded to thrust-custody compatibility/UI/evidence
+DEPENDENCIES: independent external oracle dossier remains required; next bounded leg is retained-result thrust disclosure plus analytical publication/export bypass audit
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 9573ec2bba234cc7cd6abcf73c4c3f3e2bc0892c
 COMMON_PROTOCOL_STATUS: CURRENT

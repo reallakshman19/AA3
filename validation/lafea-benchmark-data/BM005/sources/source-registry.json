@@ -1,0 +1,81 @@
+{
+  "schema": "lafea3-bm005-source-registry/v1",
+  "benchmarkId": "BM-005-LAME-CONT-CYL-01",
+  "sources": [
+    {
+      "role": "independentOracle",
+      "sourceId": "RICHARDS-2012-THICK-CYLINDER-LAME",
+      "author": "K. L. Richards",
+      "title": "Design Engineer's Handbook",
+      "edition": "1st",
+      "publisher": "CRC Press",
+      "year": 2012,
+      "chapter": "6 — Thick Cylinders",
+      "section": "6.3",
+      "pages": [157, 158],
+      "equationIdentifiers": ["6.3", "6.4"],
+      "qualifiedClaim": "Elastic thick-cylinder radial and circumferential stresses have the Lame constant-plus-or-minus-constant-over-r-squared form, with constants fixed by radial-pressure boundary conditions.",
+      "repositorySignMapping": "Source constant/sign convention is mapped to repository tension-positive stress as sigma_r=A-B/r^2 and sigma_theta=A+B/r^2; internal pressure gives sigma_r(Ri)=-Pi and sigma_r(Ro)=0.",
+      "exactFixtureMatch": false,
+      "adaptation": "Repository uses Ri=50 mm, Ro=100 mm, Pi=10 MPa, Po=0 and derives its exact numerical oracle from the cited equations and boundary conditions."
+    },
+    {
+      "role": "independentFeFamilyCrossReference",
+      "sourceId": "MACNEAL-HARDER-1985-FIG10",
+      "authors": ["R. H. MacNeal", "R. L. Harder"],
+      "title": "A proposed standard set of problems to test finite element accuracy",
+      "publication": "Finite Elements in Analysis and Design",
+      "volume": 1,
+      "number": 1,
+      "year": 1985,
+      "pages": [3, 20],
+      "doi": "10.1016/0168-874X(85)90003-4",
+      "locator": "Fig. 10, p. 10",
+      "qualifiedClaim": "Published finite-element benchmark family includes a thick-walled cylinder.",
+      "exactFixtureMatch": false,
+      "adaptation": "Different radii/material/formulation; retained only as an independent FE-family cross-reference, not the BM-005 numerical oracle."
+    },
+    {
+      "role": "repositorySourceQualification",
+      "path": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md",
+      "blobSha": "d1f6e15e7336780cdf5fde0578808acb946a3355",
+      "claimId": "LAFEA3-SRC-LAME-01"
+    },
+    {
+      "role": "existingInternalBenchmark",
+      "path": "scripts/lafea.3-benchmark-cont-cyl-01-check.mjs",
+      "blobSha": "4bf1bfee9b60dd8746254f53fdb35de329f2fd04",
+      "benchmarkId": "CONT-CYL-01"
+    },
+    {
+      "role": "auditHashPrecedent",
+      "path": "docs/LAFEA_Bucket_B1_Release_Readiness_Record_V2.md",
+      "blobSha": "d3a7450c25a95d6c7c2964edf7d9b8c3df0dd21c",
+      "qualifiedClaim": "semanticHash excludes candidate-head/test evidence; evidenceHash binds semanticHash, candidateHeadSha, qualificationEvidence and diagnostics."
+    }
+  ],
+  "oracleDerivation": {
+    "repositoryConvention": "TENSION_POSITIVE",
+    "inputs": {
+      "innerRadiusMm": 50,
+      "outerRadiusMm": 100,
+      "internalPressureMPa": 10,
+      "externalPressureMPa": 0,
+      "elasticModulusMPa": 200000,
+      "poissonRatio": 0.3,
+      "formulation": "PLANE_STRESS"
+    },
+    "derivedConstants": {
+      "A_MPa": 3.3333333333333335,
+      "B_MPa_mm2": 33333.333333333336
+    },
+    "planeStressDisplacementDerivation": "Combine the cited Lame sigma_r/sigma_theta field with isotropic plane-stress Hooke law epsilon_r=(sigma_r-nu*sigma_theta)/E and epsilon_r=du/dr, yielding u(r)=((1-nu)A*r+(1+nu)B/r)/E with the regular compatible axisymmetric displacement field.",
+    "productionResultUsed": false
+  },
+  "custodyPolicy": {
+    "productionOutputMayModifyOracle": false,
+    "sourceLocatorRequiredForExpectedValue": true,
+    "sourceOrOracleMutationIsSeparateEngineeringAuthorityChange": true,
+    "releaseAuthorityGranted": false
+  }
+}

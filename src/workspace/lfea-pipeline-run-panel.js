@@ -1,19 +1,9 @@
 export const LFEA_PIPELINE_RUN_PANEL_SCHEMA = 'lfea-pipeline-run-panel/v1';
 
-/**
- * Presentation-only execution surface for the Run step.
- *
- * The panel never selects or derives cases. It reads the case IDs already
- * sealed into the current pre-flight and forwards exactly those IDs to the
- * existing analysis callback.
- */
+/** Presentation-only execution surface for the Run step. */
 export function mountLfeaPipelineRunPanel(hostElement, options = {}) {
-  if (!hostElement || typeof hostElement.append !== 'function') {
-    throw new TypeError('Run panel requires a host element.');
-  }
-  if (typeof options.getPreFlight !== 'function') {
-    throw new TypeError('Run panel requires options.getPreFlight.');
-  }
+  if (!hostElement || typeof hostElement.append !== 'function') throw new TypeError('Run panel requires a host element.');
+  if (typeof options.getPreFlight !== 'function') throw new TypeError('Run panel requires options.getPreFlight.');
   const documentRef = options.documentRef ?? hostElement.ownerDocument ?? document;
   return new LfeaPipelineRunPanelController(hostElement, documentRef, options).init();
 }
@@ -45,12 +35,8 @@ export class LfeaPipelineRunPanelController {
     const preFlight = this.options.getPreFlight();
     const caseIds = this.requestedCaseIds();
     if (!preFlight) return { ready: false, reason: 'Load a model and clear Error check first.', caseIds };
-    if (!preFlight.solveAuthorized || preFlight.authorization === null) {
-      return { ready: false, reason: 'The current pre-flight is not authorized. Return to Error check.', caseIds };
-    }
-    if (caseIds.length === 0) {
-      return { ready: false, reason: 'No cases are sealed into the current pre-flight. Apply a selection on Load case.', caseIds };
-    }
+    if (!preFlight.solveAuthorized || preFlight.authorization === null) return { ready: false, reason: 'The current pre-flight is not authorized. Return to Error check.', caseIds };
+    if (caseIds.length === 0) return { ready: false, reason: 'No cases are sealed into the current pre-flight. Apply a selection on Load case.', caseIds };
     return { ready: true, reason: `${caseIds.length} authorized case(s) are ready to analyze.`, caseIds };
   }
 
@@ -63,7 +49,8 @@ export class LfeaPipelineRunPanelController {
       return;
     }
     try {
-      this.options.onAnalyze?.(availability.caseIds);
+      const state = this.options.onAnalyze?.(availability.caseIds);
+      this.dispatch('lfea-pipeline-analysis-completed', { caseIds: availability.caseIds, resultStatus: state?.status ?? 'CURRENT' });
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
       this.refresh();
@@ -88,22 +75,22 @@ export class LfeaPipelineRunPanelController {
     this.elements.status.textContent = this.error || availability.reason;
     this.elements.status.dataset.status = this.error ? 'error' : availability.ready ? 'ready' : 'blocked';
     this.elements.analyzeButton.disabled = !availability.ready;
+    this.dispatch('lfea-pipeline-run-readiness-changed', { ready: availability.ready, reason: availability.reason, caseIds: availability.caseIds });
     return this;
+  }
+
+  dispatch(type, detail) {
+    const EventCtor = this.documentRef.defaultView?.CustomEvent ?? globalThis.CustomEvent;
+    if (typeof EventCtor !== 'function') return;
+    this.elements?.section.dispatchEvent(new EventCtor(type, { bubbles: true, detail }));
   }
 
   getSnapshot() {
     const availability = this.runAvailability();
-    return Object.freeze({
-      schema: LFEA_PIPELINE_RUN_PANEL_SCHEMA,
-      ready: availability.ready,
-      requestedCaseIds: Object.freeze(availability.caseIds),
-    });
+    return Object.freeze({ schema: LFEA_PIPELINE_RUN_PANEL_SCHEMA, ready: availability.ready, requestedCaseIds: Object.freeze(availability.caseIds) });
   }
 
-  destroy() {
-    this.elements?.section.remove();
-    this.elements = null;
-  }
+  destroy() { this.elements?.section.remove(); this.elements = null; }
 }
 
 function createRunSection(doc) {

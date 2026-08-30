@@ -16,6 +16,7 @@ import {
 } from '../src/core/local-shell/mitc-adoption-model.js';
 import { MITC3_FORMULATION } from '../src/core/local-shell/mitc3-element.js';
 import { MITC4_FORMULATION } from '../src/core/local-shell/mitc4-element.js';
+import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
 import { presentLocalShell } from '../src/workspace/lafea-result-presenters/local-shell.js';
 import { flatNode, qualificationProfile } from './lafea.4-fixtures.mjs';
 
@@ -95,6 +96,43 @@ assert.ok(presented.sections[0].rows.some((row) =>
   row.sourcePath === 'result.productionQualification.state'
     && row.value === MITC_PRODUCTION_QUALIFICATION_STATE));
 console.log('✅ MITC4 v2 enters calculateLocalShell(), solves, retains pressure/recovery evidence and reaches the formulation-aware presenter.');
+
+// The registered workbench stage must traverse the same v2 production route,
+// not merely expose the kernel and presenter as direct imports. This closes the
+// composition-custody gap for Issue #1536 without changing release authority.
+const stage = requireLafeaStageComposition('LAFEA.4');
+assert.equal(stage.executionSupported, true);
+assert.equal(stage.releaseStateBinding, 'RELEASE_NOT_QUALIFIED');
+for (const benchmarkId of [
+  'SHELL-PATCH-01',
+  'SHELL-BEND-01',
+  'LAFEA4-CYL-01',
+  'LAFEA4-PRESS-01',
+  'LAFEA4-COMB-01',
+]) {
+  assert.ok(
+    stage.benchmarkManifestIds.includes(benchmarkId),
+    `LAFEA.4 composition must register benchmark ${benchmarkId}`,
+  );
+}
+const stageDocument = stage.normalizeDocument(quad);
+assert.equal(stageDocument.schema, MITC_PRODUCTION_MODEL_SCHEMA);
+assert.equal(stageDocument.semanticHash, undefined);
+const stageCanonical = stage.canonicalize(stageDocument);
+assert.equal(stageCanonical.schema, MITC_PRODUCTION_MODEL_SCHEMA);
+const stageResult = stage.calculate(stageCanonical);
+assert.equal(stage.acceptResult(stageResult), true);
+assert.equal(stageResult.schema, 'local-shell-result/v2');
+assert.equal(stageResult.routeStatus, MITC_PRODUCTION_ROUTE_STATUS);
+assert.equal(stageResult.productionQualification.qualifiedForRelease, false);
+assert.equal(stageResult.productionQualification.evidenceState, 'NOT_RUN');
+const stagePresentation = stage.presentResult(
+  stageResult,
+  stage.resolveUnits(stageDocument),
+);
+assert.ok(stagePresentation.sections.some((section) => section.title.includes('MITC4/MITC3')));
+assert.ok(stagePresentation.sections.some((section) => section.title.includes('transverse-shear')));
+console.log('✅ Registered LAFEA.4 composition normalizes, canonicalizes, calculates, accepts and presents the v2 MITC route while release remains not qualified.');
 
 const triNodes = [
   flatNode('T1', 0, 0),

@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
 MISSION: Promote the qualified MITC mechanics stack into an explicit LAFEA.4 production contract and application path while preserving legacy CST/DKT semantics and holding release qualification until executable evidence exists.
-ACTIVE_ENDPOINT: EP-0029
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0029.md
+ACTIVE_ENDPOINT: EP-0030
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0030.md
 MATERIAL_HISTORY_ROOT_BASE: e409a233c46bbec193292565b58b40dffab4b853
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0025.md
 PR: #1575
 BRANCH: codex/lafea-1536-handover-ready
-HEAD: 869ccc51d063f8bad90efba59a4aadfcb088ce6b
+HEAD: 02e45e08b57009b1ee2ce4f869a21d8e57094f91
 STATE: BLOCKED
 ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
@@ -26,12 +26,14 @@ AGENT_INSTANCE_ID: chatgpt:ddc9d66e-417d-4a98-a48f-8fb83328fe3d
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 29
+CUSTODY_EPOCH: 30
 COORDINATION_STATE: SAFE
-DEPENDENCIES: LAFEA.4 qualification basis b4ca03357f584ed993cf3739b11f89c255e54b84; live main fad372eaf55487b10a2cbcad5ff8438b71e031ff is 66 commits ahead; no local-shell/LAFEA4 presenter/stage-component/stage-registry/benchmark/workflow/release-authority drift; shared UI LAFEA4 convergence isolation PASS; exact-head retry job 99245027463 still zero-step; governed BM-001..BM-009, aggregate/build/import, handover validation and release qualification remain NOT_RUN
+DEPENDENCIES: LAFEA.4 qualification basis b4ca03357f584ed993cf3739b11f89c255e54b84; live main fad372eaf55487b10a2cbcad5ff8438b71e031ff is 66 commits ahead; no local-shell/LAFEA4 presenter/stage-component/stage-registry/benchmark/workflow/release-authority drift; independent drift confirmation absent; fresh official job 99284017165 still zero-step; governed BM-001..BM-009, aggregate/build/import, handover validation and release qualification remain NOT_RUN
 COMMON_PROTOCOL: engineering-pr-delivery-v2
-COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
+COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
 COMMON_PROTOCOL_STATUS: CURRENT
+COMMON_PROTOCOL_SEMANTIC_DRIFT: NONE
+COMMON_PROTOCOL_SKILL_BLOB: aa832f5f9f204c3834ffcee40102b482f121ce76
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 QUALIFICATION_PROTOCOL_VERSION: 3
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
@@ -69,10 +71,10 @@ ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/issue-basis/IB-0
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0029
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0030
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5466335389
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5466334636
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5468191550
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5469769463
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MATERIAL_LEG_ID: LEG-002
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/material-legs/LEG-002.md
@@ -83,8 +85,7 @@ SOURCE_DERIVED_V2_ISOLATION: PASS
 SOURCE_DERIVED_STAGE_ISOLATION: PASS
 SOURCE_DERIVED_LAFEA4_SHARED_UI_DRIFT_ISOLATION: PASS
 GOVERNED_BM_009: NOT_RUN
-FINAL_OFFICIAL_RUN: 33306288324
-FINAL_OFFICIAL_JOB: 99245027463
-FINAL_OFFICIAL_ATTEMPT: 2
-FINAL_OFFICIAL_STEPS: ZERO
+FRESH_OFFICIAL_RUN: 33307162192
+FRESH_OFFICIAL_JOB: 99284017165
+FRESH_OFFICIAL_STEPS: ZERO
 EXACT_NEXT_ACTION: Obtain independent confirmation that the 66-commit live-main drift remains within QS-ADV-LAFEA4-1536-0013 coverage and/or restore executable official repository checkout/runner; once current-state authority is clear, execute BM-001..BM-009 plus aggregate/build/import and patch only the first demonstrated wrong owner.

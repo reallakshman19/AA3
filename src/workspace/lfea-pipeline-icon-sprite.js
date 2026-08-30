@@ -1,7 +1,6 @@
 /**
  * Deterministic presentation-only SVG symbol inventory for the LFEA
- * pipeline shell. All shell/step chrome uses this one visual language so
- * actions do not drift into unrelated inline SVG generations over time.
+ * pipeline shell and its owned result controls.
  */
 const VIEW_BOX = '0 0 16 16';
 
@@ -21,6 +20,8 @@ export const LFEA_PIPELINE_ICON_SYMBOLS = Object.freeze([
   symbol('icon-code-checks', '<path d="M3 3h10v10H3z"/><path d="M5.2 6.2l1 1 1.7-1.9M9.2 6.3h2M5.2 10.1l1 1 1.7-1.9M9.2 10.2h2"/>'),
   symbol('icon-verification', '<path d="M8 1.5l5.5 2v4c0 4-2.3 6.6-5.5 7.5-3.2-.9-5.5-3.5-5.5-7.5v-4z"/><path d="M5.3 8l2 2 3.4-4"/>'),
   symbol('icon-status-complete', '<circle cx="8" cy="8" r="6"/><path d="M5 8.1l2 2 4-4.3"/>'),
+  symbol('icon-sort-asc', '<path d="M4.5 10.5L8 7l3.5 3.5"/>'),
+  symbol('icon-sort-desc', '<path d="M4.5 5.5L8 9l3.5-3.5"/>'),
 ]);
 
 export function lfeaPipelineIconSpriteMarkup() {

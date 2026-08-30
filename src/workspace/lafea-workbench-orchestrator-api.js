@@ -1,5 +1,8 @@
 /** Public method-surface assembly for the canonical orchestrator; owns no state or listeners. */
 import { executeLafeaContinuumCompiledForParity } from './lafea-continuum-compiled-execution.js';
+import {
+  createLafeaContinuumGeometryIntake,
+} from './lafea-continuum-geometry-intake.js';
 import { evaluateLafeaContinuumPhysicalProbe } from './lafea-continuum-physical-probe.js';
 import {
   compareLafeaContinuumPhysicalProbeEvidence,
@@ -26,6 +29,49 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
   const governedV2 = (stageId = activeStageId()) => {
     const stage = c.readStageState(stageId);
     return stage.domainFirstProfileActive === true || stage.shellMidsurfaceProfileActive === true;
+  };
+  const registerContinuumGeometryIntake = (declaration, stageId = activeStageId()) => {
+    if (stageId !== 'LAFEA.3') throw apiError('LAFEA_CONTINUUM_GEOMETRY_INTAKE_STAGE_NOT_AUTHORIZED');
+    const sourceDocument = exportedStageDocument(c, stageId);
+
+    // Build and validate the complete custody-free package before changing any
+    // domain/geometry state. This composer cannot generate mesh or solver data.
+    const intake = createLafeaContinuumGeometryIntake(sourceDocument, declaration);
+    const before = c.readStageState(stageId);
+    const beforeSourceHash = currentStageSourceHash(before);
+    if (beforeSourceHash && beforeSourceHash !== intake.sourceHash) {
+      throw apiError('LAFEA_CONTINUUM_GEOMETRY_INTAKE_SOURCE_PARENT_STALE');
+    }
+
+    const activation = c.activateDomainFirstProfile(stageId);
+    const activated = c.readStageState(stageId);
+    if (currentStageSourceHash(activated) !== intake.sourceHash) {
+      throw apiError('LAFEA_CONTINUUM_GEOMETRY_INTAKE_ACTIVATED_SOURCE_MISMATCH');
+    }
+
+    const domainRegistration = c.registerAnalysisDomain(intake.analysisDomain);
+    const geometryRegistration = c.registerAnalysisGeometryEvidence(intake.geometryEvidence);
+    const stage = c.deriveStage(stageId);
+    if (stage.analysisDomainProjection?.state !== 'CURRENT_PASS'
+      || stage.analysisDomainProjection?.analysisDomainHash !== intake.analysisDomainHash
+      || stage.analysisGeometryProjection?.state !== 'CURRENT_PASS'
+      || stage.analysisGeometryProjection?.analysisGeometryHash !== intake.analysisGeometryHash) {
+      throw apiError('LAFEA_CONTINUUM_GEOMETRY_INTAKE_COMMIT_DIVERGED');
+    }
+    return freeze({
+      schema: 'lafea-continuum-geometry-intake-registration/v1',
+      stageId,
+      status: 'CURRENT',
+      changed: Boolean(
+        activation.changed || domainRegistration.changed || geometryRegistration.changed
+      ),
+      intake,
+      analysisDomainProjection: stage.analysisDomainProjection,
+      analysisGeometryProjection: stage.analysisGeometryProjection,
+      meshGenerated: false,
+      solverExecuted: false,
+      releaseQualified: false,
+    });
   };
   const api = {
     selectStage: (stageId) => c.delegate('selectStage', [stageId]),
@@ -132,6 +178,7 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     buildPreparationProjection: (stageId = activeStageId()) =>
       c.deriveStage(stageId).preparationProjection,
     activateDomainFirstProfile: c.activateDomainFirstProfile,
+    registerContinuumGeometryIntake,
     registerAnalysisDomain: c.registerAnalysisDomain,
     selectRetainedAnalysisDomain: (stageId = activeStageId()) =>
       c.geometry.selectDomain(stageId),
@@ -196,6 +243,21 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
       ? (...args) => exposePublicResult(value(...args))
       : value,
   ])));
+}
+
+function exportedStageDocument(c, stageId) {
+  const exported = c.retained.exportDocument();
+  if (exported?.schema !== 'lafea-workbench-document/v1'
+    || exported.stageId !== stageId
+    || !exported.document || typeof exported.document !== 'object'
+    || Array.isArray(exported.document)) {
+    throw apiError('LAFEA_CONTINUUM_GEOMETRY_INTAKE_SOURCE_DOCUMENT_INVALID');
+  }
+  return exported.document;
+}
+
+function currentStageSourceHash(stage) {
+  return stage?.sourceAuthority?.sourceHash ?? stage?.lifecycle?.source?.sourceHash ?? null;
 }
 
 function exposePublicResult(value) {

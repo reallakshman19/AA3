@@ -1,4 +1,5 @@
 /** Public lifecycle workbench store backed by one canonical orchestrator. */
+import { createLafeaContinuumConvergenceWorkbench } from './lafea-continuum-convergence-workbench.js';
 import { createLafeaWorkbenchOrchestratorStore } from './lafea-workbench-orchestrator-store.js';
 
 export {
@@ -57,5 +58,9 @@ export {
   buildLafeaWorkbenchOrchestrationProjection,
 } from './lafea-workbench-orchestration-projection.js';
 export * from './lafea-domain-geometry-public.js';
+export * from './lafea-continuum-convergence-study.js';
+export * from './lafea-continuum-convergence-publication.js';
 
-export function createLafeaWorkbenchStore(options) { return createLafeaWorkbenchOrchestratorStore(options); }
+export function createLafeaWorkbenchStore(options) {
+  return createLafeaContinuumConvergenceWorkbench(createLafeaWorkbenchOrchestratorStore(options));
+}

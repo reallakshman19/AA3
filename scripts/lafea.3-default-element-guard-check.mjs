@@ -1,9 +1,33 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   calculateLocalContinuum, createCanonicalLocalContinuumModel, MODEL_SCHEMA,
   QUALIFICATION_PROFILE, QUALIFICATION_STATES,
 } from '../src/core/local-continuum/index.js';
+import { ENGINEERING_LEVEL, ELEMENT_TYPES } from '../src/core/local-continuum/constants.js';
 import { triangleSource } from './lafea.3-fixtures.mjs';
+
+// Capability truth is test-owned here: if the advertised engineering level or
+// exact supported element-type set drifts, this guard fails before any runtime
+// path is exercised. Numerical ownership remains in the continuum kernel.
+assert.equal(ENGINEERING_LEVEL, 'LINEAR_2D_CONTINUUM_T3_T6_Q8');
+assert.deepEqual(
+  Object.values(ELEMENT_TYPES).sort(),
+  ['Q8', 'T3', 'T6'],
+  'advertised LAFEA.3 element-type set must stay bound to the exercised runtime set',
+);
+
+// The original CST-only foundation document is retained as provenance, but it
+// must never again masquerade as current capability authority.
+const foundationDocument = readFileSync(
+  new URL('../docs/local-continuum/LAFEA3_DETERMINISTIC_2D_CONTINUUM.md', import.meta.url),
+  'utf8',
+);
+assert.match(foundationDocument, /HISTORICAL FOUNDATION RECORD — NOT CURRENT CAPABILITY AUTHORITY/);
+assert.match(
+  foundationDocument,
+  /CURRENT_CAPABILITY_AUTHORITY: src\/core\/local-continuum\/constants\.js/,
+);
 
 // --- T6 end-to-end: a single T6 element flows through the kernel's public
 // API and produces layered (per-Gauss-point) results, never a single
@@ -58,7 +82,7 @@ assert.equal('gaussPointResults' in t3Result.loadCaseResults[0].elementResults[0
 // A T6/Q8-only model never needs allowT3Fallback:true (no T3 present).
 assert.equal(t6Model.elementTypePolicy.allowT3Fallback, false);
 
-console.log('LAFEA.3 default-element guard (T6/Q8 end-to-end, T3 explicit-fallback-only) passed.');
+console.log('LAFEA.3 capability/default-element guard (advertised T3/T6/Q8 bound to runtime, T3 explicit-fallback-only) passed.');
 
 function t6Source() {
   return {

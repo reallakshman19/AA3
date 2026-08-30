@@ -59,6 +59,8 @@ assert.ok(hangerBinding, 'the HANGER source must retain one structural binding')
 assert.equal(hangerBinding.springRateTotal, 1750000);
 assert.equal(hangerBinding.coldLoadTotal, 4500);
 assert.deepEqual(hangerBinding.limitationCodes, [DRAFT_CODE]);
+assert.ok(structural.limitations.includes(DRAFT_CODE),
+  'support DRAFT status must survive into structural preflight limitations');
 const hangerConstraint = structural.compilation.model.constraints
   .find((row) => row.constraintId === hangerBinding.declarationIds[0]);
 assert.ok(hangerConstraint, 'the HANGER rate must reach the sealed mechanical model');
@@ -67,6 +69,8 @@ assert.equal(hangerConstraint.dof, 'UY');
 assert.equal(hangerConstraint.stiffness, 1750000);
 
 const physical = authorized.preparation.physicalPreparation;
+assert.ok(physical.limitations.includes(DRAFT_CODE),
+  'support DRAFT status must survive into physical preflight limitations');
 const hangerLedger = physical.loadLedger.find((row) => row.sourceKind === 'HANGER_COLD_LOAD');
 assert.ok(hangerLedger, 'the HANGER cold load must have a physical-load ledger row');
 assert.equal(hangerLedger.evidence.coldLoadTotal, 4500);
@@ -140,6 +144,7 @@ console.log(JSON.stringify({
   verticalReactionSharePercent: Number((100 * share).toFixed(2)),
   preloadCase: 'IXP-WH',
   legacyWUnchanged: true,
+  draftDisclosureRetainedInPreflight: true,
   draftDisclosureRetainedInResults: true,
   alternateVerticalFailsClosed: true,
   deliberateBreakMode: '--deliberate-break',

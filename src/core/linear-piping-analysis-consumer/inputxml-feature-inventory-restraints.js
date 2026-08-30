@@ -21,24 +21,8 @@ import {
 export const NUMERIC_TOLERANCE = 1e-12;
 const DIRECTION_TOLERANCE = 1e-9;
 const RESTRAINT_DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
-// Every mirrored direction of a one-way support is the same linearization:
-// +Y (14) and -Y (17) differ only in which sign of travel is free, and the
-// linearized form restrains the DOF in both. Restricting this to +Y/+Z made
-// a -Y support BLOCK while its mirror image was accepted.
 const GENERIC_LINEARIZED_UNILATERAL_CODES = new Set(['13', '14', '15', '16', '17', '18']);
-// Bidirectional single-DOF restraints that inputxml-linear-structural-constraints.js
-// already compiles exactly today as kind:'NODAL_RESTRAINT', behavior:'FIXED'.
-// X/Y/Z are plain translations; LIM (8) and GUI (9) are double-acting stops
-// along their declared axis, structurally identical to a plain translation
-// restraint once any declared gap is handled separately below.
 const EXACT_BIDIRECTIONAL_CODES = new Set(['2', '3', '5', '8', '9']);
-// A RESTRAINT record is an unused fixed-width-array slot only when both its
-// identity attributes (which restraint, and on which node) carry the
-// sentinel. A row declaring one but not the other is genuinely malformed and
-// still falls through to MODEL_RESTRAINT_SOURCE_INVALID below, so this does
-// not weaken the fail-closed contract. See caesar-unset-sentinel.js for why
-// this can't be a blanket "every field is sentinel" test (BM4 alone has 56
-// unused slots that carry non-sentinel 0.000000 direction cosines).
 const RESTRAINT_SLOT_IDENTITY_ATTRIBUTES = Object.freeze(['TYPE', 'NODE']);
 
 export function classifyRestraint(attributes, element, segment, stiffnessToSi) {
@@ -79,12 +63,6 @@ export function classifyRestraint(attributes, element, segment, stiffnessToSi) {
   });
 }
 
-/**
- * Exact finite bidirectional skew springs are the one skew subset the current
- * linear kernel can represent without an MPC: the source direction is carried
- * unchanged into a rank-1 `k(n⊗n)` stiffness contribution. Rigid skew supports
- * and skew unilateral supports remain separate kinematic/nonlinear problems.
- */
 export function restraintDirectionalSpringDirection(classification) {
   if (!classification?.finiteStiffnessActive || classification.stiffnessValue === null) return null;
   if (!EXACT_BIDIRECTIONAL_CODES.has(classification.typeCode)) return null;
@@ -97,27 +75,10 @@ export function restraintDispositions(classification) {
   if (classification.typeCode === null || classification.typeLabel === null || classification.nodeId === null) {
     return both(invalidDisposition('MODEL_RESTRAINT_SOURCE_INVALID'));
   }
-  // A connected-node restraint retargets the reaction onto another node, which
-  // no single-node constraint can express, so it stays terminal.
   if (classification.connectingNodeActive) {
     return both(unsupportedDisposition('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'));
   }
-  /*
-   * A declared finite stiffness is exact, not an approximation: the solver
-   * carries LINEAR_SPRING and assembles the declared rate onto the restrained
-   * DOF. It falls through to the type branch below -- the direction still has
-   * to be representable -- and only the emitted behavior changes.
-   */
 
-  // Gap and friction are NOT terminal. Both leave the restrained DOF intact and
-  // only drop a nonlinear effect, which is exactly the linear idealisation this
-  // repository's own ACCDB linear path already performs -- restraintConstraints()
-  // in caesar-accdb-linear-solve.js builds the restraint without ever reading
-  // FRIC_COEF or GAP. STRICT still refuses them; the disclosed-approximation
-  // profile restrains the DOF and declares what was dropped. Evaluating them
-  // ahead of the type branch (as this function previously did) also meant a
-  // supported one-way support carrying friction never reached its own
-  // linearization at all.
   const dropped = [];
   if (classification.gapActive) {
     dropped.push({ strict: 'MODEL_RESTRAINT_GAP_UNSUPPORTED', approximate: 'GENERIC_APPROX_GAP_CLOSED' });
@@ -125,37 +86,21 @@ export function restraintDispositions(classification) {
   if (classification.frictionActive) {
     dropped.push({ strict: 'MODEL_RESTRAINT_FRICTION_UNSUPPORTED', approximate: 'GENERIC_APPROX_FRICTION_IGNORED' });
   }
-
   const base = baseRestraintDispositions(classification);
   if (dropped.length === 0) return base;
-
   const approximate = base[APPROXIMATE];
   const compilable = approximate.disposition === 'IMPLEMENTED_EXACTLY'
     || approximate.disposition === 'IMPLEMENTED_WITH_DECLARED_APPROXIMATION';
   return {
     [STRICT]: nonlinearDisposition(dropped[0].strict),
-    // Dropping a nonlinear effect cannot rescue a restraint whose underlying
-    // type this consumer still cannot compile -- that stays blocked.
     [APPROXIMATE]: compilable ? approximationDisposition(dropped[0].approximate) : approximate,
   };
 }
 
-// CAESAR's one-way restraint codes name the direction the support acts IN:
-// 13/14/15 are +X/+Y/+Z, 16/17/18 are -X/-Y/-Z. A "+Y" support can only push
-// the pipe up, so the reaction it applies to the structure is positive on that
-// axis and never negative. Linearizing it as a bidirectional FIXED DOF removes
-// that restriction, which is exactly the approximation
-// GENERIC_APPROX_UNILATERAL_LINEARIZED discloses -- and the sign recorded here
-// is what lets a later review notice when the solved reaction actually
-// violates it.
 const UNILATERAL_RESISTED_SIGN = Object.freeze({
   13: 1, 14: 1, 15: 1, 16: -1, 17: -1, 18: -1,
 });
 
-/**
- * For a one-way restraint, the DOF it acts on and the sign of the reaction it
- * is physically able to apply. Null for anything bidirectional.
- */
 export function restraintUnilateralAction(classification) {
   const sign = UNILATERAL_RESISTED_SIGN[classification.typeCode] ?? null;
   if (sign === null) return null;
@@ -163,12 +108,10 @@ export function restraintUnilateralAction(classification) {
   return Object.freeze({ dof: classification.targetDofs[0], resistedSign: sign });
 }
 
-/** Every distinct approximation this restraint relies on, for disclosure. */
 export function restraintApproximationCodes(classification) {
   const codes = [];
   if (classification.gapActive) codes.push('GENERIC_APPROX_GAP_CLOSED');
   if (classification.frictionActive) codes.push('GENERIC_APPROX_FRICTION_IGNORED');
-  // Unvalidated: benchmarks/LFEA/SPRING_DRAFT/PROVENANCE.md.
   if (classification.finiteStiffnessActive) codes.push('DRAFT_SPRING_SUPPORT_NO_REFERENCE');
   const base = baseRestraintDispositions(classification)[APPROXIMATE];
   if (base.disposition === 'IMPLEMENTED_WITH_DECLARED_APPROXIMATION' && base.limitationCode) {
@@ -183,9 +126,6 @@ function baseRestraintDispositions(classification) {
   if (EXACT_BIDIRECTIONAL_CODES.has(classification.typeCode)) {
     if (!singleAxis) return both(invalidDisposition('MODEL_RESTRAINT_DIRECTION_INVALID'));
     if (!axisAlignedDirection(classification.direction)) {
-      // A finite skew spring is not a kinematic constraint: carrying its unit
-      // direction and rate into `k(n⊗n)` is exact linear stiffness. A rigid
-      // skew support still needs a constraint equation/MPC and remains refused.
       if (restraintDirectionalSpringDirection(classification) !== null) return both(exactDisposition());
       return both(unsupportedDisposition('MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED'));
     }
@@ -280,16 +220,6 @@ function caesarOptionalNumber(attributes, names) {
   return isCaesarUnsetSentinel(value) ? null : value;
 }
 
-/**
- * Node-id attribute, or null when absent or carrying the CAESAR unset
- * sentinel. CNODE/CONNECTING_NODE/NODE2 in particular are declared on every
- * restraint record and read -1.0101 to mean "no connecting node" — before
- * this, that sentinel was returned as the literal node id "-1.0101", which
- * made every restraint with no gap/friction declared but a filled (sentinel)
- * CNODE resolve to connectingNodeActive=true and block on
- * MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED. On BM4, 14 of 46 real
- * restraints have no connecting node at all and were misrouted this way.
- */
 export function normalizedNodeAttribute(attributes, names) {
   const value = attribute(attributes, names);
   if (value === null) return null;

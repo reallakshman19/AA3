@@ -1,0 +1,74 @@
+name: LAFEA.3 BM-005 auditable qualification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/lafea.3-bm005-ordinary-route-check.mjs'
+      - 'scripts/lafea.3-bm005-report-contract.mjs'
+      - 'validation/lafea-benchmark-data/BM005/**'
+      - 'agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/**'
+      - '.github/workflows/lafea3-bm005-qualification.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  bm005-auditable-qualification:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      BM005_REPORT_DIR: /tmp/lafea3-bm005-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact head and clean tree
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          git diff --check
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check BM-005 qualification syntax
+        run: |
+          node --check scripts/lafea.3-bm005-report-contract.mjs
+          node --check scripts/lafea.3-bm005-ordinary-route-check.mjs
+
+      - name: Execute BM-005 ordinary route
+        id: bm005
+        continue-on-error: true
+        shell: bash
+        run: |
+          rm -rf "$BM005_REPORT_DIR"
+          mkdir -p "$BM005_REPORT_DIR"
+          set +e
+          node scripts/lafea.3-bm005-ordinary-route-check.mjs > "$BM005_REPORT_DIR/bm005.stdout.json" 2> "$BM005_REPORT_DIR/bm005.stderr.txt"
+          status=$?
+          set -e
+          printf '%s\n' "$status" > "$BM005_REPORT_DIR/bm005.exit-code.txt"
+          exit "$status"
+
+      - name: Upload BM-005 receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea3-bm005-${{ env.EXPECTED_HEAD }}
+          path: ${{ env.BM005_REPORT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Propagate BM-005 result
+        if: always()
+        shell: bash
+        run: |
+          test -f "$BM005_REPORT_DIR/bm005.exit-code.txt"
+          status=$(cat "$BM005_REPORT_DIR/bm005.exit-code.txt")
+          if [ "$status" -ne 0 ]; then exit "$status"; fi
+          echo 'BM-005 harness completed with PASS exit status; artifact is candidate evidence only.'

@@ -18,6 +18,8 @@ import {
   validateLinearPipingAnalysisResult,
 } from './contracts.js';
 
+const SPRING_SUPPORT_DRAFT_CODE = 'DRAFT_SPRING_SUPPORT_NO_REFERENCE';
+
 export function composeLinearPipingAnalysisResult({ request, execution, recovery }) {
   const accepted = validateLinearPipingAnalysisRequest(request);
   // `execution` is the solver's full in-process return value, which carries
@@ -63,6 +65,7 @@ export function collectLinearPipingLimitations(request) {
     request.compilation.semanticHash,
     request.compilation.limitations,
   );
+  appendSpringSupportDraftLimitation(bindings, request.compilation);
   appendLimitations(
     bindings,
     'PHYSICAL_LOAD_CASE',
@@ -93,6 +96,30 @@ export function collectLinearPipingLimitations(request) {
       ? identity
       : compareAscii(semanticHash(left.limitation), semanticHash(right.limitation));
   });
+}
+
+function appendSpringSupportDraftLimitation(target, compilation) {
+  const springIds = compilation.model.constraints
+    .filter((constraint) => constraint.behavior === 'LINEAR_SPRING')
+    .map((constraint) => constraint.constraintId)
+    .sort(compareAscii);
+  if (springIds.length === 0) return;
+  target.push(deepFreeze({
+    sourceKind: 'MODEL_COMPILATION',
+    sourceId: compilation.model.modelIdentity,
+    sourceSemanticHash: compilation.semanticHash,
+    limitation: {
+      code: SPRING_SUPPORT_DRAFT_CODE,
+      severity: 'WARNING',
+      scope: 'MODEL',
+      stiffnessRelevant: true,
+      details: {
+        disclosure: 'One or more linear spring supports are numerically active but have not been cleared against a CAESAR-solved spring-support reference model.',
+        referenceStatus: 'SELF_AUTHORED_EVIDENCE_ONLY',
+        springConstraintIds: springIds,
+      },
+    },
+  }));
 }
 
 function appendLimitations(target, sourceKind, sourceId, sourceSemanticHash, limitations) {

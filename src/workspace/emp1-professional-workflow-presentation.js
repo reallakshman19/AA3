@@ -16,6 +16,40 @@ const B_SOURCE_STALE_STATES = new Set([
   'STALE_A_EVIDENCE',
 ]);
 
+const AUTHORITY_REASON_CODES = new Set([
+  'EMP1_WORKBENCH_C_ROUTE_AUTHORITY_SNAPSHOT_REQUIRED',
+  'EMP1_WORKBENCH_C_CURRENT_ROUTE_AUTHORITY_REQUIRED',
+  'EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED',
+  'EMP1_WORKBENCH_C_CURRENT_ROUTE_NOT_AUTHORIZED',
+]);
+
+const REASON_COPY = Object.freeze({
+  EMP1_WORKBENCH_LOADTRANSFERDOCUMENT_CHANGED:
+    'Load/reference source changed after the retained EMP.1 transaction.',
+  EMP1_WORKBENCH_SECTIONSCREENINGDOCUMENT_CHANGED:
+    'Section-screening source changed after the retained EMP.1 transaction.',
+  EMP1_WORKBENCH_ATTACHMENTGEOMETRY_CHANGED:
+    'Attachment geometry or its engineering source binding changed after the retained transaction.',
+  EMP1_WORKBENCH_APPLICABILITYGEOMETRY_CHANGED:
+    'WRC applicability geometry changed after the retained transaction.',
+  EMP1_WORKBENCH_LOCALROUTE_CHANGED:
+    'Local-correlation route, load-case or pressure-result selection changed after the retained transaction.',
+  EMP1_WORKBENCH_C_ROUTE_AUTHORITY_SNAPSHOT_REQUIRED:
+    'The retained transaction does not carry the route-authority snapshot required for current use.',
+  EMP1_WORKBENCH_C_CURRENT_ROUTE_AUTHORITY_REQUIRED:
+    'Current bounded WRC route authority is unavailable.',
+  EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED:
+    'Bounded WRC route authority changed after the retained transaction.',
+  EMP1_WORKBENCH_C_CURRENT_ROUTE_NOT_AUTHORIZED:
+    'The current bounded WRC route is not production-authorized.',
+  EMP1_WORKBENCH_A_DOCUMENT_REQUIRED:
+    'EMP.1.A load/reference source is required before the local-correlation transaction can run.',
+  EMP1_WORKBENCH_B_DOCUMENT_REQUIRED:
+    'EMP.1.B section-screening source is required before the local-correlation transaction can run.',
+  EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_REQUIRED:
+    'WRC applicability geometry must be source-bound before Local Correlation can run.',
+});
+
 export function buildEmp1ProfessionalWorkflowPresentation(projection) {
   if (projection?.schema !== 'emp1-product-projection/v1') {
     throw new TypeError('EMP1_PROFESSIONAL_WORKFLOW_PROJECTION_INVALID');
@@ -25,6 +59,7 @@ export function buildEmp1ProfessionalWorkflowPresentation(projection) {
   const b = requireBacking(byShortId.B, 'B');
   const c = requireBacking(byShortId.C, 'C');
   const authoritySummary = buildAuthoritySummary(projection, a, b, c);
+  const currentnessNotice = buildCurrentnessNotice(c);
 
   const statusByStep = Object.freeze({
     BASIS_SOURCE: authoritySummary.sourceCurrentness,
@@ -40,6 +75,7 @@ export function buildEmp1ProfessionalWorkflowPresentation(projection) {
     schema: EMP1_PROFESSIONAL_WORKFLOW_SCHEMA,
     productId: projection.product?.productId ?? 'EMP.1',
     authoritySummary,
+    currentnessNotice,
     steps: Object.freeze(EMP1_PROFESSIONAL_WORKFLOW_STEPS.map((definition) => Object.freeze({
       ...definition,
       statusLabel: statusByStep[definition.stepId],
@@ -77,6 +113,41 @@ function buildAuthoritySummary(projection, a, b, c) {
   });
 }
 
+function buildCurrentnessNotice(c) {
+  const reasonCodes = Object.freeze(uniqueReasonCodes(c.blockers));
+  const stale = c.retainedResultAvailable === true && c.resultAvailable !== true;
+  if (!stale && c.runAuthorized === true) return null;
+
+  const authorityReason = reasonCodes.some((code) => AUTHORITY_REASON_CODES.has(code));
+  const reasons = Object.freeze(reasonCodes.length
+    ? reasonCodes.map(reasonCopy)
+    : [stale
+      ? 'The retained local result is stale, but this projection does not carry a specific currentness reason.'
+      : 'Local Correlation is blocked, but this projection does not carry a specific blocker reason.']);
+
+  if (stale) {
+    return Object.freeze({
+      state: 'STALE',
+      title: 'Retained Local Correlation result requires rerun',
+      reasonCodes,
+      reasons,
+      action: authorityReason
+        ? 'Re-run Local Correlation under the current qualified route authority before using the retained result.'
+        : 'Re-run the governed EMP.1 transaction from the affected upstream step before using the retained Local Correlation result.',
+    });
+  }
+
+  return Object.freeze({
+    state: 'BLOCKED',
+    title: 'Local Correlation cannot run under the current source/authority state',
+    reasonCodes,
+    reasons,
+    action: authorityReason
+      ? 'Resolve the listed bounded WRC route-authority blocker before running Local Correlation.'
+      : 'Complete the listed source or geometry binding before running Local Correlation.',
+  });
+}
+
 function sourceCurrentness(a, b) {
   if (a.documentLoaded === false && b.documentLoaded === false) return 'SOURCE INPUT REQUIRED';
   if (a.documentLoaded === false || b.documentLoaded === false) return 'SOURCE INCOMPLETE';
@@ -106,6 +177,15 @@ function localResultCurrentness(c) {
 function geometryStatus(c, sourceStatus) {
   if (c.state === 'SOURCE_INCOMPLETE') return 'SOURCE INCOMPLETE';
   return sourceStatus;
+}
+
+function reasonCopy(code) {
+  return REASON_COPY[code] ?? String(code).replaceAll('_', ' ');
+}
+
+function uniqueReasonCodes(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((code) => typeof code === 'string' && code.trim()).map((code) => code.trim()))];
 }
 
 function backingDisclosure(step) {

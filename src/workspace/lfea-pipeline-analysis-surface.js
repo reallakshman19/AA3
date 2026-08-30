@@ -21,10 +21,15 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   }
 
   const analysisController = createLfeaPipelineAnalysisController({});
+  let runPanel = null;
   const caseSelectionPanel = mountLfeaPipelineCaseSelectionPanel(options.loadCaseHost, {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
-    onApplyCaseSelection: options.onApplyCaseSelection,
+    onApplyCaseSelection(caseIds) {
+      const result = options.onApplyCaseSelection?.(caseIds);
+      runPanel?.refresh();
+      return result;
+    },
   });
   const layoutPanel = mountLfeaPipelineLayoutPanel(options.loadCaseHost, {
     documentRef: options.documentRef,
@@ -34,7 +39,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     documentRef: options.documentRef,
     getNodeIds: options.getNodeIds,
   });
-  const runPanel = mountLfeaPipelineRunPanel(runHost, {
+  runPanel = mountLfeaPipelineRunPanel(runHost, {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
     onAnalyze: options.onAnalyze,
@@ -66,6 +71,16 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     getPreFlight: options.getPreFlight,
   });
 
+  const onSourceRefresh = () => runPanel.refresh();
+  const onTaskActivated = (event) => {
+    const stepId = event?.detail?.stepId;
+    if (stepId === 'RUN') runPanel.refresh();
+    if (stepId === 'OUTPUT') resultsAuthorityPanel.refresh();
+    if (stepId === 'EXPORT') exportPanel.refresh();
+  };
+  options.sourceHost.addEventListener?.('lfea-source-presentation-refresh', onSourceRefresh);
+  shell?.addEventListener?.('lfea-pipeline-task-activated', onTaskActivated);
+
   return Object.freeze({
     analysisController,
     modelRepairPanel,
@@ -89,12 +104,15 @@ export function mountLfeaPipelineAnalysisSurface(options) {
       modelRepairPanel.refresh();
       modelReviewPanel.refresh();
       errorCheckPanel.refresh();
+      runPanel.refresh();
     },
     refreshResultsStep() {
       resultsAuthorityPanel.refresh();
       exportPanel.refresh();
     },
     destroy() {
+      options.sourceHost.removeEventListener?.('lfea-source-presentation-refresh', onSourceRefresh);
+      shell?.removeEventListener?.('lfea-pipeline-task-activated', onTaskActivated);
       caseSelectionPanel.destroy();
       layoutPanel.destroy();
       runPanel.destroy();

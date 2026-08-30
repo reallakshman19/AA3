@@ -7,9 +7,10 @@ import {
 } from './lfea-source-acquisition.js';
 
 /**
- * Composes the unified LFEA pipeline stepper shell around whichever
- * existing source/results panels are mounted into it. Owns only
- * navigation chrome — it has no knowledge of how to run any analysis.
+ * Composes the unified LFEA pipeline shell and owns presentation-only task
+ * sequencing. Engineering controllers remain authoritative for pre-flight,
+ * analysis and results; this class only prevents later UI tasks from appearing
+ * reachable before their retained evidence exists.
  */
 export class LfeaPipelineShellController {
   constructor(rootElement) {
@@ -18,20 +19,29 @@ export class LfeaPipelineShellController {
     this.view = new LfeaPipelineShellView(rootElement);
     this.sourceAcquisition = null;
     this.unsubscribe = null;
-    // Bound lazily via setAssemblyHandlers(), after main.js constructs the
-    // source/results controllers this shell wraps — those don't exist yet
-    // at init() time, since they mount *into* the hosts init() creates.
     this.assemblyHandlers = null;
+    this.flow = {
+      runReady: false,
+      runBlockedReason: 'Clear Error check and apply at least one load case first.',
+      analysisComplete: false,
+      exportComplete: false,
+    };
+    this.handleRunReadiness = (event) => this.onRunReadiness(event);
+    this.handleAnalysisCompleted = () => this.onAnalysisCompleted();
+    this.handleExportCompleted = () => this.onExportCompleted();
   }
 
   init() {
     if (this.unsubscribe) return this;
     this.view.init({
-      onStepSelected: (stepId) => this.session.setActiveStep(stepId),
+      onStepSelected: (stepId) => this.setActiveStep(stepId),
       onAuthoritySupplementSelected: (file) => this.assemblyHandlers?.onAuthoritySupplementSelected?.(file),
       onAssembleAndSendToRun: () => this.assemblyHandlers?.onAssembleAndSendToRun?.(),
       onLoadSample: () => this.assemblyHandlers?.onLoadSample?.(),
     });
+    this.rootElement.addEventListener('lfea-pipeline-run-readiness-changed', this.handleRunReadiness);
+    this.rootElement.addEventListener('lfea-pipeline-analysis-completed', this.handleAnalysisCompleted);
+    this.rootElement.addEventListener('lfea-pipeline-export-completed', this.handleExportCompleted);
     this.sourceAcquisition = createLfeaSourceAcquisitionController(this.view.getSourceHost());
     let previousActiveStepId = null;
     this.unsubscribe = this.session.subscribe((state) => {
@@ -45,23 +55,13 @@ export class LfeaPipelineShellController {
     return this;
   }
 
-  setAssemblyHandlers(handlers) {
-    this.assemblyHandlers = handlers;
-  }
+  setAssemblyHandlers(handlers) { this.assemblyHandlers = handlers; }
 
   setActiveSourceKind(kind) {
-    // main.js still calls this legacy method with the preparation owner.
-    // UI03 resolves the read-only engineering session when available so a
-    // StagedJSON source is presented as StagedJSON rather than relabelled as
-    // its derived InputXML preparation provider. During bootstrap the passed
-    // kind remains the safe fallback.
     const engineeringState = globalThis.AnalysisWorkspace?.getLfeaEngineeringSessionState?.() ?? null;
     const model = buildLfeaSourceAcquisitionModel(engineeringState, kind);
     this.view.setActiveSourceKind(model.sourceKind);
     this.sourceAcquisition?.render(model);
-    // UI04 read-only consumers refresh from the same already-current pre-flight
-    // after every source/preparation projection. This is a presentation event;
-    // it carries no engineering values and creates no second state authority.
     const sourceHost = this.view.getSourceHost();
     const EventCtor = sourceHost?.ownerDocument?.defaultView?.Event ?? globalThis.Event;
     if (sourceHost && typeof sourceHost.dispatchEvent === 'function' && typeof EventCtor === 'function') {
@@ -69,45 +69,89 @@ export class LfeaPipelineShellController {
     }
   }
 
-  setAuthoritySupplementStatus(text) {
-    this.view.setAuthoritySupplementStatus(text);
-  }
-
-  setAssembleStatus(text, isError) {
-    this.view.setAssembleStatus(text, isError);
-  }
-
-  getSourceHost() {
-    return this.view.getSourceHost();
-  }
-
-  getResultsHost() {
-    return this.view.getResultsHost();
-  }
-
-  getLoadCaseHost() {
-    return this.view.getLoadCaseHost();
-  }
-
-  getVerificationDrawerHost() {
-    return this.view.getVerificationDrawerHost();
-  }
+  setAuthoritySupplementStatus(text) { this.view.setAuthoritySupplementStatus(text); }
+  setAssembleStatus(text, isError) { this.view.setAssembleStatus(text, isError); }
+  getSourceHost() { return this.view.getSourceHost(); }
+  getResultsHost() { return this.view.getResultsHost(); }
+  getLoadCaseHost() { return this.view.getLoadCaseHost(); }
+  getVerificationDrawerHost() { return this.view.getVerificationDrawerHost(); }
 
   setStepStatus(stepId, status) {
+    if (stepId === 'RUN' && status.complete === false) this.resetDownstreamFlow();
+    if (stepId === 'RUN') {
+      const upstreamAvailable = status.available ?? this.session.getState().stepAvailability.RUN.available;
+      return this.session.setStepStatus('RUN', {
+        ...status,
+        available: Boolean(upstreamAvailable && this.flow.runReady),
+        blockedReason: upstreamAvailable && !this.flow.runReady ? this.flow.runBlockedReason : status.blockedReason,
+      });
+    }
+    if (stepId === 'OUTPUT' && !this.flow.analysisComplete) {
+      return this.session.setStepStatus('OUTPUT', {
+        ...status,
+        available: false,
+        complete: false,
+        blockedReason: 'Run the current authorized case selection first.',
+      });
+    }
+    if (stepId === 'EXPORT' && !this.flow.analysisComplete) {
+      return this.session.setStepStatus('EXPORT', {
+        ...status,
+        available: false,
+        complete: false,
+        blockedReason: 'Run and review an analysis result before exporting.',
+      });
+    }
     return this.session.setStepStatus(stepId, status);
   }
 
   setActiveStep(stepId) {
+    if (stepId === 'OUTPUT' && this.flow.analysisComplete) {
+      this.session.setStepStatus('OUTPUT', { available: true, complete: true });
+    }
+    if (stepId === 'EXPORT' && this.flow.exportComplete) {
+      this.session.setStepStatus('EXPORT', { available: true, complete: true });
+    }
     return this.session.setActiveStep(stepId);
   }
 
-  getState() {
-    return this.session.getState();
+  onRunReadiness(event) {
+    const ready = Boolean(event?.detail?.ready);
+    this.flow.runReady = ready;
+    this.flow.runBlockedReason = event?.detail?.reason ?? this.flow.runBlockedReason;
+    this.session.setStepStatus('RUN', {
+      available: ready,
+      blockedReason: ready ? null : this.flow.runBlockedReason,
+    });
   }
+
+  onAnalysisCompleted() {
+    this.flow.analysisComplete = true;
+    this.flow.exportComplete = false;
+    this.session.setStepStatus('RUN', { available: true, complete: true });
+    this.session.setStepStatus('OUTPUT', { available: true, complete: true, blockedReason: null });
+    this.session.setStepStatus('EXPORT', { available: true, complete: false, blockedReason: null });
+  }
+
+  onExportCompleted() {
+    if (!this.flow.analysisComplete) return;
+    this.flow.exportComplete = true;
+    this.session.setStepStatus('EXPORT', { available: true, complete: true, blockedReason: null });
+  }
+
+  resetDownstreamFlow() {
+    this.flow.analysisComplete = false;
+    this.flow.exportComplete = false;
+  }
+
+  getState() { return this.session.getState(); }
 
   destroy() {
     this.unsubscribe?.();
     this.unsubscribe = null;
+    this.rootElement.removeEventListener('lfea-pipeline-run-readiness-changed', this.handleRunReadiness);
+    this.rootElement.removeEventListener('lfea-pipeline-analysis-completed', this.handleAnalysisCompleted);
+    this.rootElement.removeEventListener('lfea-pipeline-export-completed', this.handleExportCompleted);
     this.sourceAcquisition?.destroy();
     this.sourceAcquisition = null;
     this.session.destroy();

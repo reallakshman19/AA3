@@ -1,26 +1,27 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-EMP1-WRC-UI-WALKTHROUGH
 MISSION: Execute and qualify the engineer-facing EMP.1/WRC professional workflow for issue #1559 without changing WRC numerical/source/release authority
-ACTIVE_ENDPOINT: EP-0006
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0006.md
+ACTIVE_ENDPOINT: EP-0007
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0007.md
 MATERIAL_HISTORY_ROOT_BASE: 94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0006.md
 PR: 1565 DRAFT
 BRANCH: codex/emp1-wrc-ui-1559
-HEAD: c8bf9e7e93f7e11628850041e497b7b4058fbc8e
-MATERIAL_HEAD: 2c464a1e8d586fbe1a14a5f7fa3fa4f97a5cc7b2
-STATE: ACTIVE
-ENGINEERING_STATE: TEST_COVERAGE_ONLY
+HEAD: 34ac439c8fcef9c3f173c7d648312b5aa4a67e70
+UI_MATERIAL_HEAD: 2c464a1e8d586fbe1a14a5f7fa3fa4f97a5cc7b2
+BROWSER_SPEC_MATERIAL_HEAD: 4be2bd276bab06e7fc460ca72f6e64ae339a8e43
+STATE: CODING_COMPLETE_EXECUTION_GATE_OPEN
+ENGINEERING_STATE: PRESENTATION_AND_TEST_PATCH_COMPLETE
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: WRITE_ALLOWED
-AUTO_STATE: RUNNING
+AUTO_STATE: PAUSED_AT_BROWSER_GATE
 MERGE_AUTHORITY: OWNER_ONLY
-AUTHORITY_DOMAIN: EMP.1 WRC professional workflow UI/test coverage; WRC source, mechanics, route authorization, code compliance and release authority protected
+AUTHORITY_DOMAIN: EMP.1 WRC professional workflow presentation/currentness and UI regression; WRC source, mechanics, route authorization, code compliance and release authority protected
 ACTIVE_CUSTODIAN: gpt-5.6-sol
 CUSTODY_EPOCH: 1
 COORDINATION_STATE: SAFE
-DEPENDENCIES: existing production analytical workbench fixture and visible WRC DOM contracts only
+DEPENDENCIES: faithful exact-head Node/Playwright execution plus human-observed WRC walkthrough for #1559 acceptance
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 10d667ce715bb52e1f73035c6fa326db77d0f9dd
 COMMON_PROTOCOL_STATUS: OWNER_PINNED

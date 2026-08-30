@@ -1,0 +1,261 @@
+{
+  "schema": "lafea12-independent-oracle-benchmarks/v1",
+  "issue": 1533,
+  "authority": "CLASSICAL_ANALYTICAL_ORACLE_ONLY",
+  "expectedValueRule": "Expected values are independently derived from ORACLE_SOURCE_LEDGER.md equations and benchmark inputs; production result values must never populate this file.",
+  "defaultTolerance": {
+    "absolute": 1e-9,
+    "relative": 1e-10
+  },
+  "benchmarks": [
+    {
+      "benchmarkId": "LAFEA1-RLT-01",
+      "sourceIds": ["SRC-STATICS-BAKER-HAYNES-2020", "SRC-MIT-ROYLANCE-TORSION-2000"],
+      "units": {"length": "mm", "force": "N", "moment": "N.mm", "angle": "deg"},
+      "input": {
+        "rotationAboutGlobalZDeg": 40,
+        "forceLocal": [250, -400, 1200],
+        "momentLocal": [15000, -8000, 3000],
+        "sourcePointGlobal": [0, 0, 0],
+        "targetPointGlobal": [120, 0, -60]
+      },
+      "expected": {
+        "forceGlobal": [448.6261546543602, -145.72087482595643, 1200],
+        "momentSourceGlobal": [16632.967524276984, 3513.4586003462646, 3000],
+        "leverSourceMinusTarget": [-120, 0, 60],
+        "leverCrossForce": [8743.252489557386, 170917.5692792616, 17486.504979114772],
+        "momentTargetGlobal": [25376.22001383437, 174431.02787960786, 20486.504979114772],
+        "reverseReactionForceLocal": [-250, 400, -1200],
+        "reverseReactionMomentLocal": [-15000, 8000, -3000],
+        "signFalsifier": {
+          "sourcePoint": [0, 0, 0],
+          "targetPoint": [1, 0, 0],
+          "force": [0, 1, 0],
+          "sourceMoment": [0, 0, 0],
+          "correctTargetMoment": [0, 0, -1],
+          "wrongSignTargetMoment": [0, 0, 1]
+        },
+        "covarianceVariants": {
+          "translated": {
+            "globalShift": [300, -200, 50],
+            "sourcePointGlobal": [300, -200, 50],
+            "targetPointGlobal": [420, -200, -10],
+            "expectedForceGlobal": [448.6261546543602, -145.72087482595643, 1200],
+            "expectedMomentTargetGlobal": [25376.22001383437, 174431.02787960786, 20486.504979114772]
+          },
+          "rotated": {
+            "additionalGlobalRotationDeg": 35,
+            "rotationAboutGlobalZDeg": 75,
+            "sourcePointGlobal": [0, 0, 0],
+            "targetPointGlobal": [98.29824531467902, 68.82917236212552, -60],
+            "expectedForceGlobal": [451.07509179125753, 137.95383853125867, 1200],
+            "expectedMomentSourceGlobal": [11609.692286850359, 12418.335033515858, 3000],
+            "expectedLeverSourceMinusTarget": [-98.29824531467902, -68.82917236212552, 60],
+            "expectedMomentTargetGlobal": [-79262.54485957579, 157440.73491860612, 20486.504979114772]
+          },
+          "loadScaled": {
+            "factor": 2,
+            "expectedForceGlobal": [897.2523093087204, -291.44174965191286, 2400],
+            "expectedMomentSourceGlobal": [33265.93504855397, 7026.917200692529, 6000],
+            "expectedLeverSourceMinusTarget": [-120, 0, 60],
+            "expectedMomentTargetGlobal": [50752.44002766874, 348862.0557592157, 40973.009958229544]
+          }
+        }
+      }
+    },
+    {
+      "benchmarkId": "LAFEA1-LAME-01",
+      "sourceIds": ["SRC-HU-PUTTAGUNTA-ATEAS-2012"],
+      "units": {"length": "mm", "pressure": "MPa", "stress": "MPa"},
+      "input": {"innerRadius": 45, "midRadius": 55, "outerRadius": 65, "internalPressure": 18, "externalPressure": 0},
+      "expected": {
+        "lameA": 16.568181818181817,
+        "lameB": 70000.56818181818,
+        "radialInner": -17.999999999999996,
+        "radialMid": -6.572501878287003,
+        "radialOuter": 0,
+        "hoopInner": 51.136363636363626,
+        "hoopMid": 39.70886551465064,
+        "hoopOuter": 33.13636363636363
+      }
+    },
+    {
+      "benchmarkId": "LAFEA1-END-01",
+      "sourceIds": ["SRC-MIT-ROYLANCE-PV-2001", "SRC-HU-PUTTAGUNTA-ATEAS-2012"],
+      "units": {"length": "mm", "pressure": "MPa", "stress": "MPa", "force": "N"},
+      "input": {"innerRadius": 45, "outerRadius": 65, "internalPressure": 18, "externalPressure": 0, "explicitAxialResultant": 50000},
+      "expected": {
+        "wallArea": 6911.503837897545,
+        "pressureEndForce": 114511.05222466216,
+        "closedEndAxialPressureStress": 16.568181818181817,
+        "openEndAxialPressureStress": 0,
+        "explicitEndAxialPressureStress": null,
+        "explicitAxialResultant": 50000,
+        "identity": "closedEndAxialPressureStress = pressureEndForce / wallArea = lameA; open end has zero pressure axial stress; explicit axial resultant remains separate from pressure stress"
+      }
+    },
+    {
+      "benchmarkId": "LAFEA2-SEC-01",
+      "sourceIds": ["SRC-STATICS-BAKER-HAYNES-2020", "SRC-MIT-ROYLANCE-TORSION-2000"],
+      "units": {"length": "mm", "area": "mm2", "secondMoment": "mm4", "sectionModulus": "mm3"},
+      "input": {"outsideDiameter": 168.3, "thickness": 7.11},
+      "expected": {
+        "outerRadius": 84.15,
+        "innerRadius": 77.04,
+        "area": 3600.456504006505,
+        "Iy": 11716231.197872972,
+        "Iz": 11716231.197872972,
+        "J": 23432462.395745944,
+        "elasticSectionModulusYOuter": 139230.31726527595,
+        "elasticSectionModulusZOuter": 139230.31726527595
+      }
+    },
+    {
+      "benchmarkId": "LAFEA2-COMB-01",
+      "sourceIds": ["SRC-MIT-ROYLANCE-BEAM-2000", "SRC-MIT-ROYLANCE-TORSION-2000", "SRC-MIT-ROYLANCE-YIELD-2001", "SRC-HU-PUTTAGUNTA-ATEAS-2012"],
+      "units": {"length": "mm", "force": "N", "moment": "N.mm", "pressure": "MPa", "stress": "MPa", "angle": "deg"},
+      "input": {
+        "outsideDiameter": 168.3,
+        "thickness": 7.11,
+        "Fx": -30000,
+        "My": 4200000,
+        "Mz": 1800000,
+        "Mx": 900000,
+        "internalPressure": 6,
+        "externalPressure": 0,
+        "endCondition": "CLOSED_END",
+        "pressureThrustBasis": "EXCLUDES_PRESSURE_THRUST"
+      },
+      "expected": {
+        "bendingMomentResultant": 4569463.863518345,
+        "bendingMaximumAngleDeg": -23.19859051364819,
+        "bendingOppositeAngleDeg": 156.80140948635182,
+        "bendingStressAmplitudeOuter": 32.819460253129584,
+        "mechanicalAxialStress": -8.33227674507849,
+        "lameA": 31.072493268027927,
+        "lameB": 220031.2384606579,
+        "pressureAxialOuter": 31.072493268027927,
+        "pressureHoopOuter": 62.14498653605585,
+        "pressureRadialOuter": 0,
+        "torsionalShearOuter": 3.232054690664919,
+        "atBendingMaximum": {
+          "sigmaX": 55.559676776079016,
+          "sigmaTheta": 62.14498653605585,
+          "sigmaR": 0,
+          "tauXTheta": 3.232054690664919,
+          "principalMaximum": 63.46619702928333,
+          "principalIntermediate": 54.23846628285154,
+          "principalMinimum": 0,
+          "vonMises": 59.39242546320397
+        },
+        "atBendingOpposite": {
+          "sigmaX": -10.079243730180139,
+          "sigmaTheta": 62.14498653605585,
+          "sigmaR": 0,
+          "tauXTheta": 3.232054690664919,
+          "principalMaximum": 62.28933340505576,
+          "principalIntermediate": 0,
+          "principalMinimum": -10.223590599180042,
+          "vonMises": 67.98016993370167
+        },
+        "radialLocationsAtBendingMaximum": {
+          "mid": {
+            "radius": 80.595,
+            "sigmaX": 54.173186209235574,
+            "sigmaTheta": 64.94662280552461,
+            "sigmaR": -2.8016362694687515,
+            "tauXTheta": 3.0955133427705186,
+            "principalMaximum": 65.77270877589164,
+            "principalIntermediate": 53.34710023886855,
+            "principalMinimum": -2.8016362694687515,
+            "vonMises": 63.283161889234705
+          },
+          "inner": {
+            "radius": 77.04,
+            "sigmaX": 52.78669564239213,
+            "sigmaTheta": 68.14498653605585,
+            "sigmaR": -6,
+            "tauXTheta": 2.9589719948761184,
+            "principalMaximum": 68.69534836852448,
+            "principalIntermediate": 52.23633380992351,
+            "principalMinimum": -6,
+            "vonMises": 67.97707261921592
+          }
+        },
+        "independentSubcases": {
+          "pureAxial": {
+            "Fx": 10000,
+            "sigmaX": 2.77742558169283,
+            "vonMises": 2.77742558169283
+          },
+          "pureBendingY": {
+            "My": 1000000,
+            "outerTheta0SigmaX": 7.182343757033153,
+            "outerTheta180SigmaX": -7.182343757033153
+          },
+          "pureBendingZ": {
+            "Mz": 1000000,
+            "outerTheta90SigmaX": -7.182343757033153,
+            "outerTheta270SigmaX": 7.182343757033153
+          },
+          "pureTorsion": {
+            "Mx": 1000000,
+            "outerTau": 3.5911718785165765,
+            "outerVonMises": 6.220092152303278,
+            "midTau": 3.4394592697450204,
+            "midVonMises": 5.957318205762123,
+            "innerTau": 3.2877466609734647,
+            "innerVonMises": 5.694544259220969
+          }
+        }
+      }
+    },
+    {
+      "benchmarkId": "LAFEA2-ENV-01",
+      "sourceIds": ["SRC-MIT-ROYLANCE-BEAM-2000", "SRC-MIT-ROYLANCE-TORSION-2000", "SRC-MIT-ROYLANCE-YIELD-2001"],
+      "derivation": "Let x(theta)=C+K cos(theta-thetaM). For fixed sigmaTheta,sigmaR,tau, d(VM^2)/dtheta=(2x-(sigmaTheta+sigmaR))*(-K sin(theta-thetaM)). Linear-elastic stress superposition gives scale covariance; complete sign reversal negates the stress tensor while preserving von Mises.",
+      "expected": {
+        "governingAngleDeg": 156.80140948635182,
+        "governingVonMises": 67.98016993370167,
+        "nonGoverningBendingExtremumAngleDeg": -23.19859051364819,
+        "nonGoverningBendingExtremumVonMises": 59.39242546320397,
+        "interiorCriticalAnglesDeg": [52.0940491830099, 261.5087697896937],
+        "interiorCriticalVonMises": 54.109500517425495,
+        "interiorClassification": "LOCAL_MINIMA",
+        "closedEndCancellationIdentity": "(sigmaTheta+sigmaR)/2 = sigmaXPressure = lameA; endpoint selection therefore reduces to the sign of mechanical Fx/A for this benchmark",
+        "loadScaling": {"factor": 2, "governingVonMises": 135.96033986740335, "governingAngleDeg": 156.80140948635182},
+        "completeReversal": {"factor": -1, "governingVonMises": 67.98016993370167, "governingAngleDeg": 156.80140948635182, "tensorRelation": "REVERSED_TENSOR_EQUALS_NEGATIVE_BASE_TENSOR"},
+        "superposition": {"splitFactors": [0.4, 0.6], "governingVonMises": 67.98016993370167, "governingAngleDeg": 156.80140948635182, "tensorRelation": "SPLIT_MECHANICAL_TERMS_RECOMBINE_TO_BASE_TENSOR"}
+      }
+    },
+    {
+      "benchmarkId": "LAFEA1-LAFEA2-HANDOFF-NEG",
+      "sourceIds": ["SRC-MIT-ROYLANCE-PV-2001"],
+      "input": {"closedEndPressureActive": true},
+      "expected": {
+        "unknownBasis": "REJECT",
+        "excludesPressureThrust": "ADD_CLOSED_END_AXIAL_PRESSURE_ONCE",
+        "includesPressureThrust": "SUPPRESS_DUPLICATE_AXIAL_PRESSURE_TERM",
+        "outputOnlyDetectability": "NON_IDENTIFIABLE",
+        "reason": "Two upstream histories can have the same numeric Fx while differing in whether pressure end thrust is already included; a combined-output equilibrium identity reconstructs the implemented sum and cannot prove provenance."
+      }
+    }
+  ],
+  "supplementalChecks": [
+    {
+      "checkId": "LAFEA2-THIN-WALL-I-ERROR-01",
+      "sourceIds": ["SRC-STATICS-BAKER-HAYNES-2020"],
+      "input": {"outsideDiameter": 114.3, "thickness": 6.02},
+      "expected": {
+        "outerRadius": 57.15,
+        "innerRadius": 51.13,
+        "meanRadius": 54.14,
+        "tOverMeanRadius": 0.11119320280753602,
+        "exactI": 3010519.4980650246,
+        "thinWallI": 3001242.7106058514,
+        "relativeUnderpredictionReferencedToExact": 0.0030814573581522337,
+        "identity": "Iexact = pi*rm^3*t*(1+(t/rm)^2/4)"
+      }
+    }
+  ]
+}

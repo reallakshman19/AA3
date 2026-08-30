@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "baselineId": "QB-ISSUE-1536-A",
+  "source": "github:reallaksh19/Advanced_Analysis#1536/Appendix-A",
+  "sourceAuthority": "OWNER",
+  "activeQuestionSetId": "QS-ADV-LAFEA4-1536-0013",
+  "questions": [
+    {
+      "baselineQuestion": "Q1",
+      "coveredBy": ["Q1"],
+      "requiredLiterals": ["L_ij", "wi", "wj", "(θn,i+θn,j)/2"],
+      "requiredConcepts": ["Discrete Kirchhoff", "zero transverse shear strain", "mid-edge normal rotation", "non-uniform curvature"],
+      "requiredObligations": ["derive", "show", "explain"]
+    },
+    {
+      "baselineQuestion": "Q2",
+      "coveredBy": ["Q2"],
+      "requiredLiterals": ["0.996", "t/L=0.1", "t/L=1e-5", "t/L≈0.2"],
+      "requiredConcepts": ["shear-locking", "no shear stiffness term", "transverse shear deformation", "deflection"],
+      "requiredObligations": ["explain", "state", "reason"]
+    },
+    {
+      "baselineQuestion": "Q3",
+      "coveredBy": ["Q3"],
+      "requiredLiterals": ["εx=0.0004", "εy=-0.0001", "γxy=0.00015", "κx=0.008 /mm", "κy=-0.003 /mm", "κxy=0.001 /mm", "t=8mm", "E=200000 MPa", "ν=0.3", "z=+4mm", "z=-4mm"],
+      "requiredConcepts": ["plane-stress D matrix", "ε(z) = ε_membrane + z·κ", "von Mises", "governing surface"],
+      "requiredObligations": ["derive", "compute", "state", "describe"]
+    },
+    {
+      "baselineQuestion": "Q4",
+      "coveredBy": ["Q4"],
+      "requiredLiterals": ["curved (cylindrical) shell patch", "uniform internal pressure", "undeformed facet normal"],
+      "requiredConcepts": ["consistent", "equivalent nodal force vector", "linear CST/DKT kernel", "large displacement"],
+      "requiredObligations": ["derive", "state", "explain"]
+    }
+  ]
+}

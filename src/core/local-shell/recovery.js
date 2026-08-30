@@ -1,6 +1,7 @@
 import { FORMULA_IDS, SURFACES } from './constants.js';
 import { matrixVector, quadratic } from './matrix.js';
 import { cleanNumber, qualification } from './numeric.js';
+import { globalStiffnessAction } from './assembly.js';
 
 export function recoverLoadCase(model, assembly, elements, loadEvidence, solution) {
   const elementResults = elements.map((element) => recoverElement(element, assembly, solution.displacement, loadEvidence));
@@ -112,7 +113,11 @@ function energyEvidence(model, assembly, elements, loads, solution) {
   const membrane = cleanNumber(elements.reduce((total, item) => total + item.membraneStrainEnergy, 0));
   const bending = cleanNumber(elements.reduce((total, item) => total + item.bendingStrainEnergy, 0));
   const total = cleanNumber(membrane + bending);
-  const global = cleanNumber(0.5 * quadratic(solution.displacement, assembly.stiffness));
+  const stiffnessAction = globalStiffnessAction(assembly, solution.displacement);
+  const global = cleanNumber(0.5 * solution.displacement.reduce(
+    (sum, value, index) => sum + value * stiffnessAction[index],
+    0,
+  ));
   const forcePlusReaction = loads.forceVector.map((value, index) => value + solution.reaction[index]);
   const work = cleanNumber(0.5 * solution.displacement.reduce((sum, value, index) => sum + value * forcePlusReaction[index], 0));
   const residual = Math.max(Math.abs(total - global), Math.abs(global - work));

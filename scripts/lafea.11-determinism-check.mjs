@@ -6,7 +6,8 @@
  * Covers `src/core/lafea-linear-solve/`: assembling and solving the same
  * system twice (in-process and across two independent Node process
  * invocations) produces byte-identical results — no `Math.random()`
- * anywhere in the sparse assembly, factorization, or evidence pipeline.
+ * anywhere in the sparse assembly, factorization, iterative solve, or
+ * evidence pipeline.
  */
 
 import assert from 'node:assert/strict';
@@ -16,10 +17,12 @@ import path from 'node:path';
 
 import {
   assembleSparseSymmetric,
+  solveDeterministicJacobiPcg,
   sparseCholeskyFactorize,
   sparseCholeskySolve,
   sparseLdltFactorize,
   sparseLdltSolve,
+  sparseMultiply,
 } from '../src/core/lafea-linear-solve/index.js';
 
 console.log('\n--- LAFEA §11 solver determinism check ---');
@@ -41,7 +44,24 @@ function checkInProcessRepeatability() {
   const ldltA = sparseLdltSolve(sparseLdltFactorize(fixtureMatrix(), 1e-10), b);
   const ldltB = sparseLdltSolve(sparseLdltFactorize(fixtureMatrix(), 1e-10), b);
   assert.deepEqual(ldltA, ldltB);
-  console.log('✅ Repeated in-process assembly and solve is byte-identical for both Cholesky and LDLT.');
+
+  const pcgA = pcgSolve(fixtureMatrix(), b);
+  const pcgB = pcgSolve(fixtureMatrix(), b);
+  assert.deepEqual(pcgA, pcgB);
+  assert.equal(pcgA.evidence.method, 'DETERMINISTIC_JACOBI_PCG');
+  console.log('✅ Repeated in-process assembly and solve is byte-identical for Cholesky, LDLT and Jacobi-PCG.');
+}
+
+function pcgSolve(matrix, rightHandSide) {
+  const diagonal = matrix.rows.map((row, index) => row.get(index) ?? 0);
+  return solveDeterministicJacobiPcg({
+    size: matrix.size,
+    diagonal,
+    rightHandSide,
+    multiply: (vector) => sparseMultiply(matrix, vector),
+    diagonalTolerance: 1e-10,
+    residualTolerance: 1e-9,
+  });
 }
 
 function checkCrossProcessRepeatability() {

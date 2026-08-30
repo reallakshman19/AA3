@@ -40,7 +40,7 @@ function calculateAccepted(model) {
     dofOrdering: assembly.dofOrdering,
     nodeBasisQualification,
     elements,
-    globalStiffness: assembly.stiffness,
+    globalStiffness: assembly.retainedStiffness,
     globalStiffnessSymmetry: assembly.symmetry,
     elementAssembly: assembly.elementAssembly,
     formulaIds: [FORMULA_IDS.NODE_BASIS, FORMULA_IDS.GLOBAL_ASSEMBLY],

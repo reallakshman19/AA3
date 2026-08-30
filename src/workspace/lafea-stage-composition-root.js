@@ -1,4 +1,5 @@
 /** Single runtime composition root for every registered LAFEA stage. */
+import { assertLafeaAnalyticalResultAuthority } from './lafea-analytical-result-authority.js';
 import { requireLafeaLifecycleProfileForStage } from './lafea-lifecycle-profiles.js';
 import { requireLafeaStageRegistryEntry } from './lafea-stage-registry.js';
 import { requireLafeaTechnicalComponent } from './lafea-stage-components.js';
@@ -42,7 +43,7 @@ export function requireLafeaStageComposition(stageId) {
       ? (result) => component('ACCEPTANCE', binding.componentIds.acceptance)(result)
       : null,
     presentResult: executionSupported
-      ? (result, units) => component('PRESENTER', binding.componentIds.presenter)(result, units)
+      ? (result, units) => presentStageResult(stageId, binding.componentIds.presenter, result, units)
       : null,
     resolveUnits: executionSupported
       ? (documentValue) => normalizeUnits(
@@ -58,6 +59,11 @@ export function requireLafeaStageComposition(stageId) {
 
 export function lafeaStageCompositionIdentity(stageId) {
   return requireLafeaStageComposition(stageId).compositionRootId;
+}
+
+function presentStageResult(stageId, presenterId, result, units) {
+  assertLafeaAnalyticalResultAuthority(stageId, result);
+  return component('PRESENTER', presenterId)(result, units);
 }
 
 function component(kind, componentId) {

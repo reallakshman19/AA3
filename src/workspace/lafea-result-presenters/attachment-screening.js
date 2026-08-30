@@ -46,6 +46,7 @@ export function presentAttachmentScreening(result, units) {
       `result.envelopes[${index}].value`,
     );
   });
+  const custodyRows = pressureThrustCustodyRows(result);
 
   const governingIndex = (result.envelopes ?? [])
     .findIndex((row) => row.quantity === 'vonMisesMaximum');
@@ -60,10 +61,48 @@ export function presentAttachmentScreening(result, units) {
     }
     : null;
 
-  return presenterResult(result, [
+  const sections = [
     {
       title: 'Nominal pipe-section stress envelopes and tensor invariants',
       rows,
     },
-  ], governing);
+  ];
+  if (custodyRows.length) {
+    sections.push({
+      title: 'Retained axial pressure-thrust custody evidence',
+      rows: custodyRows,
+    });
+  }
+  return presenterResult(result, sections, governing);
+}
+
+function pressureThrustCustodyRows(result) {
+  const rows = [];
+  const seen = new Set();
+  (result.pointStressStates ?? []).forEach((state, index) => {
+    const screeningCaseId = String(state?.screeningCaseId ?? 'UNRESOLVED_SCREENING_CASE');
+    if (seen.has(screeningCaseId)) return;
+    const pressure = state?.pressureStress;
+    if (!pressure || typeof pressure !== 'object') return;
+    if (typeof pressure.axialPressureThrustBasis !== 'string'
+      || typeof pressure.axialPressureTreatment !== 'string') return;
+    seen.add(screeningCaseId);
+    rows.push(
+      presenterRow(
+        `Axial pressure-thrust basis · case ${screeningCaseId}`,
+        pressure.axialPressureThrustBasis,
+        'classification',
+        formulaId(pressure),
+        `result.pointStressStates[${index}].pressureStress.axialPressureThrustBasis`,
+      ),
+      presenterRow(
+        `Applied axial pressure treatment · case ${screeningCaseId}`,
+        pressure.axialPressureTreatment,
+        'classification',
+        formulaId(pressure),
+        `result.pointStressStates[${index}].pressureStress.axialPressureTreatment`,
+      ),
+    );
+  });
+  return rows;
 }

@@ -18,6 +18,10 @@
 import assert from 'node:assert/strict';
 import { inputXmlStiffnessToSiFactor } from '../src/core/geometry/adapters/inputxml-unit-system.js';
 import { classifyRestraint } from '../src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js';
+import { compileInputXmlStructuralConstraints } from '../src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js';
+import {
+  DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE as APPROXIMATE,
+} from '../src/core/linear-piping-analysis-consumer/inputxml-model-health-profile.js';
 
 // force scale 1 (newtons), length mm -> N/mm becomes N/m
 assert.equal(inputXmlStiffnessToSiFactor({ scale: 1 }, 'mm'), 1000);
@@ -60,11 +64,53 @@ assert.equal(unresolved.stiffnessUnitsResolvable, false);
 assert.equal(unresolved.finiteStiffnessActive, true,
   'the restraint still declares a spring; only the usable value is withheld');
 
+// ------------------------------------------------ structural declaration guard
+function inventoryRow(classification) {
+  return Object.freeze({
+    active: true,
+    sourceKind: 'RESTRAINT',
+    inventoryId: 'IXF:RESTRAINT:UNITS-CHECK',
+    sourceFeatureId: 'PIPINGELEMENT[0]/RESTRAINT[0]',
+    sourceRecordSemanticHash: 'units-check-source',
+    classification,
+    // Deliberately forge an upstream "implemented" disposition. The structural
+    // declaration owner must still fail closed if unit custody was lost; this
+    // prevents a later classifier regression from restoring null -> FIXED.
+    dispositionByProfile: Object.freeze({
+      [APPROXIMATE]: Object.freeze({ disposition: 'IMPLEMENTED_EXACTLY', limitationCode: null }),
+    }),
+  });
+}
+
+const compiled = compileInputXmlStructuralConstraints({
+  inventory: [inventoryRow(converted)],
+  modelId: 'UNITS',
+  analysisProfileId: APPROXIMATE,
+  conditionedNodeIds: ['30'],
+});
+assert.equal(compiled.declarations.length, 1);
+assert.equal(compiled.declarations[0].kind, 'PARTIAL_RELEASE_SPRING');
+assert.equal(compiled.declarations[0].stiffness, 400000);
+
+assert.throws(
+  () => compileInputXmlStructuralConstraints({
+    inventory: [inventoryRow(unresolved)],
+    modelId: 'UNITS',
+    analysisProfileId: APPROXIMATE,
+    conditionedNodeIds: ['30'],
+  }),
+  (error) => error?.code === 'INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED'
+    && error?.data?.stiffnessDeclared === 400,
+  'a finite spring with unresolved units must BLOCK before null can become FIXED',
+);
+
 console.log(JSON.stringify({
   check: 'lfea-spring-rate-units',
   status: 'PASS',
   factors: { 'N/mm': 1000, 'N/cm': 100, 'N/m': 1, 'lbf/in': Number(lbfPerInch.toFixed(4)) },
   declaredRetained: converted.stiffnessDeclared,
   compiledRate: converted.stiffnessValue,
+  resolvedDeclarationKind: compiled.declarations[0].kind,
   unresolvableUnitsWithholdValue: true,
+  unresolvableUnitsStructuralBlock: 'INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED',
 }, null, 2));

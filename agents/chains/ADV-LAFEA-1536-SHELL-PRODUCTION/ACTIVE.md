@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
 MISSION: Promote the qualified MITC mechanics stack into an explicit LAFEA.4 production contract and application path while preserving legacy CST/DKT semantics and holding release qualification until executable evidence exists.
-ACTIVE_ENDPOINT: EP-0023
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0023.md
+ACTIVE_ENDPOINT: EP-0024
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0024.md
 MATERIAL_HISTORY_ROOT_BASE: e409a233c46bbec193292565b58b40dffab4b853
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0018.md
 PR: #1566
 BRANCH: codex/lafea-1536-postmerge-qualification
-HEAD: 94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d
+HEAD: 0676f6b145dad164869d2979f69b4a4491e8d803
 STATE: BLOCKED
 ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
@@ -17,15 +17,15 @@ AUTO_STATE: BLOCKED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 MERGEABILITY: MERGEABLE
-AUTHORITY_DOMAIN: LAFEA.4 v2 MITC production integration is merged at main 94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d; legacy v1, mechanics equations, benchmark values, tolerances, workflow, roadmap and release authority remain protected
+AUTHORITY_DOMAIN: LAFEA.4 v2 MITC production integration is merged at ancestor main 94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d; current main 0676f6b145dad164869d2979f69b4a4491e8d803 has only disjoint LAFEA.3 drift; legacy v1, mechanics equations, benchmark values, tolerances, workflow, roadmap and release authority remain protected
 ACTIVE_CUSTODIAN: reallaksh19
 AGENT_INSTANCE_ID: chatgpt:ddc9d66e-417d-4a98-a48f-8fb83328fe3d
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 23
+CUSTODY_EPOCH: 24
 COORDINATION_STATE: SAFE
-DEPENDENCIES: post-merge exact-head run 33290163771 job 99200298777 and fresh retry job 99205440113 both ended before step 1 with steps=null; executable engineering, benchmark, build/import and release qualification remain NOT_RUN; no further mechanics/application mutation is justified until a repository command executes or an independent oracle identifies a wrong owner
+DEPENDENCIES: GitHub-hosted exact-head workflow runs on ubuntu-latest but post-merge run 33290163771 jobs 99200298777 and 99205440113 fail before checkout; zero step summaries exist and job-log retrieval returns BlobNotFound, isolating the gate to GitHub-hosted Actions/account provisioning upstream of repository execution; engineering, benchmark, build/import and release qualification remain NOT_RUN
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COMMON_PROTOCOL_STATUS: CURRENT
@@ -55,16 +55,16 @@ HANDOVER_RESPONSE_REQUIRED: ALWAYS
 RESPONSE_DELTA_MODE: DELTA_ONLY
 ROADMAPS: docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31
 ROADMAP_REVIEW_STATUS: COMPLETE
-POST_BASIS_DRIFT: NONE
+POST_BASIS_DRIFT: DISJOINT_LAFEA3_ONLY
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0023
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0024
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5466335389
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5466334636
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5466653458
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5466818164
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MATERIAL_LEG_ID: LEG-001
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/material-legs/LEG-001.md

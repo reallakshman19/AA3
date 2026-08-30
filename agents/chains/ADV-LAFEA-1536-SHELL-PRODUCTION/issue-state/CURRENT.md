@@ -1,9 +1,9 @@
 # Issue Current State — #1536
 
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0022
+CURRENT_ENDPOINT: EP-0023
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
-UPDATED_AT: 2026-08-30T03:23:00Z
+UPDATED_AT: 2026-08-30T04:14:44Z
 
 ### Original task / acceptance ledger
 TASK-001 | Decide and record the LAFEA.4 production strategy: retain CST/DKT as thin-only or adopt MITC. | COMPLETE | Issue #1536 + PR #1557 comment 5466211854
@@ -17,9 +17,9 @@ TASK-006 | Promote MITC4/MITC3 into explicit versioned production contract/dispa
 INPUT-001 | Legacy local-shell-model/v1 + CST_DKT_TRI3_THIN_SHELL_V1 production route | AVAILABLE | preserved on LEG-001 and merged main
 INPUT-002 | MITC4/MITC3 mechanics/adoption adapters | AVAILABLE | reused unchanged by production wrappers
 INPUT-003 | Shared deterministic dense/sparse/PCG shell solve | AVAILABLE | reused unchanged by production wrappers
-INPUT-004 | Owner production-adoption/merge authority | AVAILABLE | PR #1557 comment 5466211854 + current-turn merge authorization
+INPUT-004 | Owner production-adoption/merge authority | AVAILABLE | PR #1557 comment 5466211854 + owner-authorized recovery merge #1563
 INPUT-005 | Common engineering-pr-delivery-v2 current protocol | AVAILABLE | reallaksh19/Common@4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
-INPUT-006 | Executable private-repository checkout / runner | UNRESOLVED | material-head run 33289538149 job 99198613322 steps=null; merged-main commit has no PR-triggered run
+INPUT-006 | Executable private-repository checkout / runner | UNRESOLVED | post-merge run 33290163771 jobs 99200298777 and retry 99205440113 both steps=null; direct git checkout previously unavailable
 
 ### Benchmark / oracle ledger
 BM-001 | MITC element/basis adoption gate | NOT_RUN | scripts/lafea.4-mitc-adoption-element-check.mjs
@@ -41,4 +41,4 @@ Manifest: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/qualification-baselines/
 Status: SATISFIED
 
 ### Current PR / validation state
-Production-adoption source is merged to `main` as `94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d` through exact-head recovery PR #1563. Original Draft PR #1557 is superseded/merged by that exact head. Material leg `LEG-001` remains receipted: base `e28627d561530b9d9e3b54c223333a41fb0ba3cd`, source head `bac9829cea5bcb7ff10c79801cea7bbc6834d06d`. The prior exact material-head LAFEA.4 run `33289538149`, job `99198613322`, ended before checkout with `steps=null`; all engineering/benchmark/release states remain NOT_RUN. EP-0022 and Issue checkpoint `5466444422` are carried by Draft relay PR #1566 to retrigger exact-head qualification without mechanics, workflow, roadmap, tolerance or oracle mutation. Merge authority for #1566 remains OWNER_ONLY and is not authorized.
+Production-adoption source is merged to `main` as `94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d` through exact-head recovery PR #1563. Original Draft PR #1557 is superseded by that exact-head merge. Material leg `LEG-001` remains receipted: base `e28627d561530b9d9e3b54c223333a41fb0ba3cd`, source head `bac9829cea5bcb7ff10c79801cea7bbc6834d06d`. Draft relay PR #1566 is relay-only and mergeable. Its post-merge exact-head LAFEA.4 run `33290163771` produced job `99200298777`; a fresh retry produced job `99205440113`. Both completed before checkout with `steps=null`, so zero repository commands executed. Engineering, benchmark, aggregate/build/import and release qualification remain `NOT_RUN`. EP-0023 / Issue checkpoint `5466653458` records this fresh retry. No further mechanics or application source mutation is justified absent executable failure or an independent analytical contradiction. Merge authority for #1566 remains OWNER_ONLY and is not authorized by this `PROCEED_NEXT` turn.

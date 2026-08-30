@@ -14,6 +14,7 @@ import './lfea-blocked-execution-custody-check.mjs';
 import './lfea-mixed-fixed-skew-reaction-check.mjs';
 import './lfea-results-reaction-aggregation-check.mjs';
 import './lfea-unilateral-mixed-reaction-review-check.mjs';
+import './lfea-support-refusal-fixture-check.mjs';
 import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
 import {
   prepareLinearPipingInputXmlPreFlight,
@@ -105,8 +106,8 @@ const limitations = authorized.preparation.structuralPreparation.constraintBindi
 assert.ok(limitations.includes('DRAFT_SPRING_SUPPORT_NO_REFERENCE'),
   'a compiled spring must disclose that it has no reference behind it');
 
-// Negative controls: each deliberately deferred/unqualified boundary remains a
-// separate retained InputXML model rather than a classifier-only assertion.
+// Combined legacy negative control remains useful as a cross-feature regression.
+// Dedicated per-feature refusal fixtures are guarded separately above.
 const unsupported = preFlightOf('UnsupportedSupports.xml');
 const blocked = findingCodes(unsupported, 'BLOCK');
 assert.ok(blocked.includes('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'),
@@ -127,6 +128,7 @@ console.log(JSON.stringify({
   springIdentities,
   springLoadShare: Number((100 * springShare).toFixed(1)),
   disclosesDraft: true,
+  dedicatedRefusalFixturesGuarded: true,
   stillRefused: [
     ...blocked.filter((code) => /CONNECTING_NODE|HANGER/u.test(code)),
     ...skewBlocked.filter((code) => /SKEW_DIRECTION/u.test(code)),

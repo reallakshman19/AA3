@@ -20,12 +20,23 @@ import {
 } from '../src/core/linear-fea-contract/index.js';
 import { buildDofMap, dofIndexOf } from '../src/core/linear-fea-solver/dof-map.js';
 import { assembleGlobalSystem } from '../src/core/linear-fea-solver/assembly.js';
+import {
+  forceEquilibriumCheck,
+  momentEquilibriumCheck,
+} from '../src/core/linear-fea-solver/qualification.js';
 
 const TOL = 1e-12;
 const K = 2000;
 const N = Object.freeze([0.6, 0.8, 0]);
 const element = Object.freeze({ fromNodeId: '20', toNodeId: '30' });
 const segment = Object.freeze({ startNodeId: '20', endNodeId: '30' });
+const deliberateBreak = process.argv.includes('--deliberate-break');
+const EQUILIBRIUM_POLICIES = Object.freeze({
+  equilibriumAbsoluteForceFloor: Object.freeze({ value: 1, source: 'SELF_AUTHORED_CNODE_CHECK' }),
+  equilibriumAbsoluteForceLimit: Object.freeze({ value: 1e-9, source: 'SELF_AUTHORED_CNODE_CHECK' }),
+  equilibriumAbsoluteMomentFloor: Object.freeze({ value: 1, source: 'SELF_AUTHORED_CNODE_CHECK' }),
+  equilibriumRelativeLimit: Object.freeze({ value: 1e-12, source: 'SELF_AUTHORED_CNODE_CHECK' }),
+});
 
 function sourceAttributes(stiffness = String(K)) {
   return {
@@ -88,9 +99,12 @@ assert.equal(accepted.connectedNodeId, 'CNODE.N40');
 assert.deepEqual(accepted.direction, N);
 
 function node(nodeId, conditionedNodeId, sourceId) {
+  const connected = nodeId.endsWith('40');
   return {
     nodeId,
-    position: { x: 0, y: nodeId.endsWith('40') ? 1 : 0, z: 0 },
+    // The self-authored connector is collinear with n. This prevents the
+    // spring-only equilibrium fixture from injecting an artificial free couple.
+    position: connected ? { x: N[0], y: N[1], z: N[2] } : { x: 0, y: 0, z: 0 },
     sourceAncestry: {
       conditionedNodeId,
       sourceNodeIds: [sourceId],
@@ -168,6 +182,59 @@ const shiftedQ = N.reduce((sum, value, i) => sum + value * (shiftedI[i] - shifte
 close(shiftedQ, q, 'common rigid-body translation invariance');
 close(0.5 * K * q * q, 0.121, 'spring strain energy');
 
+// ---------------------------------------------------- qualification equilibrium
+const Ufull = new Array(assembled.n).fill(0);
+ui.forEach((value, index) => { Ufull[primary[index]] = value; });
+uj.forEach((value, index) => { Ufull[connected[index]] = value; });
+const Ffull = new Array(assembled.n).fill(0);
+for (let row = 0; row < assembled.n; row += 1) {
+  for (let col = 0; col < assembled.n; col += 1) {
+    Ffull[row] += assembled.K[row * assembled.n + col] * Ufull[col];
+  }
+}
+for (let index = 0; index < 3; index += 1) {
+  close(Ffull[primary[index]], fi[index], `qualified Fi[${index}]`);
+  close(Ffull[connected[index]], fj[index], `qualified Fj[${index}]`);
+}
+// Deliberate break reproduces a prohibited fallback: drop connected-node
+// custody and treat the relative spring as a ground spring. Qualification must
+// then see a nonzero external support resultant and fail force equilibrium.
+const qualificationModel = deliberateBreak
+  ? {
+      ...model,
+      constraints: [{
+        constraintId: 'BROKEN-CNODE-AS-GROUND', nodeId: constraint.nodeId, dof: null,
+        behavior: 'LINEAR_SPRING', basis: 'GLOBAL', stiffness: K, direction: N,
+      }],
+    }
+  : model;
+const forceEquilibrium = forceEquilibriumCheck({
+  model: qualificationModel,
+  dofMap: map,
+  K: assembled.K,
+  n: assembled.n,
+  Ufull,
+  Ffull,
+  policies: EQUILIBRIUM_POLICIES,
+});
+assert.equal(forceEquilibrium.status, 'PASS',
+  'an exact connected spring is internal stiffness and must preserve global force equilibrium');
+assert.equal(forceEquilibrium.groundedSpringCount, 0,
+  'CNODE spring must not be re-counted as a ground support');
+close(forceEquilibrium.groundedSpringForceMagnitude, 0, 'CNODE grounded support magnitude');
+const momentEquilibrium = momentEquilibriumCheck({
+  model: qualificationModel,
+  dofMap: map,
+  K: assembled.K,
+  n: assembled.n,
+  Ufull,
+  Ffull,
+  policies: EQUILIBRIUM_POLICIES,
+});
+assert.equal(momentEquilibrium.status, 'PASS',
+  'collinear equal/opposite CNODE actions must preserve global moment equilibrium');
+assert.equal(momentEquilibrium.groundedSpringCount, 0);
+
 assert.throws(
   () => compileInputXmlStructuralConstraints({
     inventory,
@@ -193,6 +260,10 @@ console.log(JSON.stringify({
   connectedForce: fj,
   equalOpposite: true,
   commonTranslationInvariant: true,
+  qualificationForceEquilibrium: forceEquilibrium.status,
+  qualificationMomentEquilibrium: momentEquilibrium.status,
+  qualificationGroundedSpringCount: forceEquilibrium.groundedSpringCount,
   rigidCnodeRefusal: 'MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED',
   disclosure: 'DRAFT_SPRING_SUPPORT_NO_REFERENCE',
+  deliberateBreakMode: '--deliberate-break drops connected-node custody and must fail force equilibrium',
 }, null, 2));

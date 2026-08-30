@@ -4,19 +4,14 @@ import { mountLfeaPipelineLayoutPanel } from './lfea-pipeline-layout-panel.js';
 import { mountLfeaPipelineResultsPanel } from './lfea-pipeline-results-panel.js';
 import { mountLfeaPipelineRunPanel } from './lfea-pipeline-run-panel.js';
 import { mountLfeaPipelineExportPanel } from './lfea-pipeline-export-panel.js';
+import { mountLfeaPipelineResultsTaskVisibility } from './lfea-pipeline-results-task-visibility.js';
 import { mountLfeaPipelineLoadCaseAuthoringPanel } from './lfea-pipeline-load-case-authoring-panel.js';
 import { mountLfeaPipelineModelRepairPanel } from './lfea-pipeline-model-repair-panel.js';
 import { mountLfeaModelReviewPanel } from './lfea-model-review/lfea-model-review-panel.js';
 import { mountLfeaCommonErrorCheckPanel } from './lfea-diagnostics/lfea-error-check-panel.js';
 import { mountLfeaResultsAuthorityPanel } from './lfea-results-authority/lfea-results-authority-panel.js';
 
-/**
- * Shared presentation surface for the LFEA pipeline.
- *
- * Existing engineering controllers remain authoritative. The dedicated Run,
- * Output and Export views only separate task custody around the same retained
- * pre-flight, analysis state and CSV generation.
- */
+/** Shared presentation surface for the LFEA pipeline. */
 export function mountLfeaPipelineAnalysisSurface(options) {
   const analysisController = createLfeaPipelineAnalysisController({});
   const caseSelectionPanel = mountLfeaPipelineCaseSelectionPanel(options.loadCaseHost, {
@@ -50,6 +45,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, {
     documentRef: options.documentRef,
   });
+  const taskVisibility = mountLfeaPipelineResultsTaskVisibility(options.resultsHost);
   const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, {
     documentRef: options.documentRef,
     getSourceText: options.getSourceText,
@@ -75,6 +71,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     resultsPanel,
     exportPanel,
     resultsAuthorityPanel,
+    taskVisibility,
     loadCaseAuthoringPanel,
     refreshLoadCaseStep() {
       caseSelectionPanel.refresh();
@@ -82,9 +79,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
       loadCaseAuthoringPanel.refresh();
       runPanel.refresh();
     },
-    refreshRunStep() {
-      runPanel.refresh();
-    },
+    refreshRunStep() { runPanel.refresh(); },
     refreshSourceStep() {
       modelRepairPanel.refresh();
       modelReviewPanel.refresh();
@@ -93,8 +88,10 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     refreshResultsStep() {
       resultsAuthorityPanel.refresh();
       exportPanel.refresh();
+      taskVisibility.refresh();
     },
     destroy() {
+      taskVisibility.destroy();
       caseSelectionPanel.destroy();
       layoutPanel.destroy();
       runPanel.destroy();

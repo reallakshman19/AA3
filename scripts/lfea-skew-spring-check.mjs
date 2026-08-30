@@ -20,12 +20,23 @@ import {
 } from '../src/core/linear-fea-contract/index.js';
 import { buildDofMap } from '../src/core/linear-fea-solver/dof-map.js';
 import { assembleGlobalSystem } from '../src/core/linear-fea-solver/assembly.js';
+import {
+  forceEquilibriumCheck,
+  momentEquilibriumCheck,
+} from '../src/core/linear-fea-solver/qualification.js';
 
 const TOL = 1e-12;
 const K = 1000;
 const N = Object.freeze([0.6, 0.8, 0]);
 const element = Object.freeze({ fromNodeId: '20', toNodeId: '30' });
 const segment = Object.freeze({ startNodeId: '20', endNodeId: '30' });
+const deliberateBreak = process.argv.includes('--deliberate-break');
+const EQUILIBRIUM_POLICIES = Object.freeze({
+  equilibriumAbsoluteForceFloor: Object.freeze({ value: 1, source: 'SELF_AUTHORED_SKEW_CHECK' }),
+  equilibriumAbsoluteForceLimit: Object.freeze({ value: 1e-9, source: 'SELF_AUTHORED_SKEW_CHECK' }),
+  equilibriumAbsoluteMomentFloor: Object.freeze({ value: 1, source: 'SELF_AUTHORED_SKEW_CHECK' }),
+  equilibriumRelativeLimit: Object.freeze({ value: 1e-12, source: 'SELF_AUTHORED_SKEW_CHECK' }),
+});
 
 function sourceAttributes(stiffness = '1000') {
   return {
@@ -163,6 +174,48 @@ close(force[0], K * q * N[0], 'constitutive fx');
 close(force[1], K * q * N[1], 'constitutive fy');
 close(0.5 * u.reduce((sum, value, row) => sum + value * force[row], 0), 0.5 * K * q * q, 'strain energy');
 
+// ---------------------------------------------------- qualification equilibrium
+const Ufull = new Array(assembled.n).fill(0);
+u.forEach((value, index) => { Ufull[index] = value; });
+const Ffull = new Array(assembled.n).fill(0);
+force.forEach((value, index) => { Ffull[index] = value; });
+// Deliberate break reproduces the forbidden shortcut: collapse the skew spring
+// onto UY. The correct external load is still generated from k(n x n), so the
+// qualification force-equilibrium gate must turn red.
+const qualificationModel = deliberateBreak
+  ? {
+      ...model,
+      constraints: [{
+        constraintId: 'BROKEN-SCALARIZED-SKEW', nodeId: 'SKEW.N30', dof: 'UY',
+        behavior: 'LINEAR_SPRING', basis: 'GLOBAL', stiffness: K,
+      }],
+    }
+  : model;
+const forceEquilibrium = forceEquilibriumCheck({
+  model: qualificationModel,
+  dofMap,
+  K: assembled.K,
+  n: assembled.n,
+  Ufull,
+  Ffull,
+  policies: EQUILIBRIUM_POLICIES,
+});
+assert.equal(forceEquilibrium.status, 'PASS',
+  'exact grounded skew support action must close global force equilibrium');
+assert.equal(forceEquilibrium.groundedSpringCount, 1);
+close(forceEquilibrium.groundedSpringForceMagnitude, 10, 'grounded skew support magnitude');
+const momentEquilibrium = momentEquilibriumCheck({
+  model: qualificationModel,
+  dofMap,
+  K: assembled.K,
+  n: assembled.n,
+  Ufull,
+  Ffull,
+  policies: EQUILIBRIUM_POLICIES,
+});
+assert.equal(momentEquilibrium.status, 'PASS',
+  'grounded skew support at the reference node must close global moment equilibrium');
+
 // ------------------------------------------- exact axis-aligned reduction proof
 for (const [dof, direction] of [
   ['UX', [1, 0, 0]], ['UY', [0, 1, 0]], ['UZ', [0, 0, 1]],
@@ -194,7 +247,11 @@ console.log(JSON.stringify({
   force,
   scalarExtension: q,
   strainEnergy: 0.5 * K * q * q,
+  qualificationForceEquilibrium: forceEquilibrium.status,
+  qualificationMomentEquilibrium: momentEquilibrium.status,
+  qualificationGroundedSpringCount: forceEquilibrium.groundedSpringCount,
   axisAlignedReductionExact: true,
   rigidSkewRefusal: 'MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED',
   disclosure: 'DRAFT_SPRING_SUPPORT_NO_REFERENCE',
+  deliberateBreakMode: '--deliberate-break scalarizes skew support and must fail force equilibrium',
 }, null, 2));

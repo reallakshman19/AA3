@@ -1,0 +1,198 @@
+import assert from 'node:assert/strict';
+import {
+  classifyRestraint,
+  restraintApproximationCodes,
+  restraintDispositions,
+} from '../src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js';
+import { compileInputXmlStructuralConstraints } from '../src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js';
+import {
+  DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE as APPROXIMATE,
+  STRICT_INPUTXML_LINEAR_STATIC_PROFILE as STRICT,
+} from '../src/core/linear-piping-analysis-consumer/inputxml-model-health-profile.js';
+import { requireConstraintDeclarations } from '../src/core/linear-fea-model-compiler/model-compiler-intake.js';
+import {
+  LINEAR_FEA_CONVENTIONS,
+  LINEAR_FEA_FORMULATION_REGISTRY_VERSION,
+  LINEAR_FEA_MODEL_SCHEMA,
+  LINEAR_FEA_UNITS,
+  LINEAR_FEA_VALIDATION_PROFILE,
+  sealLinearFeaModel,
+} from '../src/core/linear-fea-contract/index.js';
+import { buildDofMap, dofIndexOf } from '../src/core/linear-fea-solver/dof-map.js';
+import { assembleGlobalSystem } from '../src/core/linear-fea-solver/assembly.js';
+
+const TOL = 1e-12;
+const K = 2000;
+const N = Object.freeze([0.6, 0.8, 0]);
+const element = Object.freeze({ fromNodeId: '20', toNodeId: '30' });
+const segment = Object.freeze({ startNodeId: '20', endNodeId: '30' });
+
+function sourceAttributes(stiffness = String(K)) {
+  return {
+    TYPE: '2.000000', NODE: '30.000000', CNODE: '40.000000', STIFFNESS: stiffness,
+    XCOSINE: '0.600000', YCOSINE: '0.800000', ZCOSINE: '0.000000',
+    GAP: '-1.010100', FRIC_COEF: '-1.010100',
+  };
+}
+
+function close(actual, expected, label) {
+  assert.ok(Math.abs(actual - expected) <= TOL * Math.max(1, Math.abs(expected)),
+    `${label}: expected ${expected}, got ${actual}`);
+}
+
+const cnode = classifyRestraint(sourceAttributes(), element, segment, 1);
+const dispositions = restraintDispositions(cnode);
+assert.equal(cnode.connectingNodeId, '40');
+assert.equal(dispositions[STRICT].disposition, 'IMPLEMENTED_EXACTLY');
+assert.equal(dispositions[APPROXIMATE].disposition, 'IMPLEMENTED_EXACTLY');
+assert.ok(restraintApproximationCodes(cnode).includes('DRAFT_SPRING_SUPPORT_NO_REFERENCE'));
+
+const rigid = classifyRestraint(sourceAttributes('-1.010100'), element, segment, 1);
+for (const profile of [STRICT, APPROXIMATE]) {
+  const refusal = restraintDispositions(rigid)[profile];
+  assert.equal(refusal.disposition, 'UNSUPPORTED_BY_GENERIC_SOLVER');
+  assert.equal(refusal.limitationCode, 'MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED');
+}
+
+const inventory = [Object.freeze({
+  active: true,
+  sourceKind: 'RESTRAINT',
+  inventoryId: 'IXF.RESTRAINT.CNODE',
+  sourceFeatureId: 'PIPINGELEMENT-0-RESTRAINT-0',
+  sourceRecordSemanticHash: 'cnode-source',
+  classification: cnode,
+  dispositionByProfile: dispositions,
+})];
+const structural = compileInputXmlStructuralConstraints({
+  inventory,
+  modelId: 'CNODE',
+  analysisProfileId: STRICT,
+  conditionedNodeIds: ['30', '40'],
+});
+assert.equal(structural.declarations.length, 1);
+assert.deepEqual(structural.declarations[0], {
+  declarationId: 'CNODE-C-PIPINGELEMENT-0-RESTRAINT-0-CNODE',
+  kind: 'PARTIAL_RELEASE_SPRING',
+  nodeId: 'CNODE.N30',
+  connectedNodeId: 'CNODE.N40',
+  dof: null,
+  direction: N,
+  stiffness: K,
+});
+assert.equal(structural.bindings[0].connectedSourceNodeId, '40');
+assert.equal(structural.bindings[0].connectedTargetNodeId, '40');
+
+const accepted = requireConstraintDeclarations(structural.declarations)[0];
+assert.equal(accepted.behavior, 'LINEAR_SPRING');
+assert.equal(accepted.connectedNodeId, 'CNODE.N40');
+assert.deepEqual(accepted.direction, N);
+
+function node(nodeId, conditionedNodeId, sourceId) {
+  return {
+    nodeId,
+    position: { x: 0, y: nodeId.endsWith('40') ? 1 : 0, z: 0 },
+    sourceAncestry: {
+      conditionedNodeId,
+      sourceNodeIds: [sourceId],
+      sourceComponentIds: ['PIPINGELEMENT-0'],
+      creationBasis: 'SOURCE-ENDPOINT',
+    },
+  };
+}
+const constraint = {
+  constraintId: accepted.declarationId,
+  nodeId: accepted.nodeId,
+  connectedNodeId: accepted.connectedNodeId,
+  dof: null,
+  behavior: accepted.behavior,
+  basis: 'GLOBAL',
+  stiffness: accepted.stiffness,
+  direction: accepted.direction,
+};
+const model = sealLinearFeaModel({
+  schema: LINEAR_FEA_MODEL_SCHEMA,
+  modelIdentity: 'CNODE.MODEL',
+  modelRevision: 1,
+  units: LINEAR_FEA_UNITS,
+  conventions: LINEAR_FEA_CONVENTIONS,
+  ancestry: {
+    sourceSemanticHash: 'fnv1a64:0000000000000011',
+    conditionedGeometrySemanticHash: 'fnv1a64:0000000000000012',
+    compilerProfileSemanticHash: 'fnv1a64:0000000000000013',
+  },
+  formulationRegistryVersion: LINEAR_FEA_FORMULATION_REGISTRY_VERSION,
+  validationProfile: { ...LINEAR_FEA_VALIDATION_PROFILE, semanticHash: '' },
+  nodes: [node('CNODE.N30', 'CN-30', '30'), node('CNODE.N40', 'CN-40', '40')],
+  materialStates: [], sectionStates: [], elements: [], constraints: [constraint],
+  limitations: [], diagnostics: [], stiffnessStateHash: '', semanticHash: '', evidenceHash: '',
+});
+assert.equal(model.constraints[0].connectedNodeId, 'CNODE.N40');
+
+const map = buildDofMap(model);
+const assembled = assembleGlobalSystem({ model, dofMap: map, elementContributions: [] });
+const primary = ['UX', 'UY', 'UZ'].map((dof) => dofIndexOf(map, 'CNODE.N30', dof));
+const connected = ['UX', 'UY', 'UZ'].map((dof) => dofIndexOf(map, 'CNODE.N40', dof));
+const at = (row, col) => assembled.K[row * assembled.n + col];
+const B = [
+  [720, 960, 0],
+  [960, 1280, 0],
+  [0, 0, 0],
+];
+for (let row = 0; row < 3; row += 1) {
+  for (let col = 0; col < 3; col += 1) {
+    close(at(primary[row], primary[col]), B[row][col], `Kii[${row},${col}]`);
+    close(at(primary[row], connected[col]), -B[row][col], `Kij[${row},${col}]`);
+    close(at(connected[row], primary[col]), -B[row][col], `Kji[${row},${col}]`);
+    close(at(connected[row], connected[col]), B[row][col], `Kjj[${row},${col}]`);
+  }
+}
+assert.equal(assembled.symmetryResidual, 0);
+
+const ui = [0.01, -0.02, 0];
+const uj = [-0.005, 0.005, 0];
+const relative = ui.map((value, index) => value - uj[index]);
+const q = N.reduce((sum, value, index) => sum + value * relative[index], 0);
+close(q, -0.011, 'relative directional displacement');
+const fi = N.map((value) => K * q * value);
+const fj = fi.map((value) => -value);
+close(fi[0], -13.2, 'Fi.x');
+close(fi[1], -17.6, 'Fi.y');
+close(fj[0], 13.2, 'Fj.x');
+close(fj[1], 17.6, 'Fj.y');
+for (let i = 0; i < 3; i += 1) close(fi[i] + fj[i], 0, `equal/opposite[${i}]`);
+
+const translation = [4.2, -7.1, 2.5];
+const shiftedI = ui.map((value, i) => value + translation[i]);
+const shiftedJ = uj.map((value, i) => value + translation[i]);
+const shiftedQ = N.reduce((sum, value, i) => sum + value * (shiftedI[i] - shiftedJ[i]), 0);
+close(shiftedQ, q, 'common rigid-body translation invariance');
+close(0.5 * K * q * q, 0.121, 'spring strain energy');
+
+assert.throws(
+  () => compileInputXmlStructuralConstraints({
+    inventory,
+    modelId: 'CNODE',
+    analysisProfileId: STRICT,
+    nodeRetargeting: { 30: { nearestNodeId: '35' }, 40: { nearestNodeId: '35' } },
+    conditionedNodeIds: ['35'],
+  }),
+  (error) => error?.code === 'INPUTXML_STRUCTURAL_CONNECTING_NODE_COLLAPSED',
+  'primary and connecting nodes may not silently collapse onto one retained node',
+);
+
+console.log(JSON.stringify({
+  check: 'lfea-cnode-spring',
+  status: 'PASS',
+  stiffness: K,
+  direction: N,
+  block: B,
+  ui,
+  uj,
+  q,
+  primaryForce: fi,
+  connectedForce: fj,
+  equalOpposite: true,
+  commonTranslationInvariant: true,
+  rigidCnodeRefusal: 'MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED',
+  disclosure: 'DRAFT_SPRING_SUPPORT_NO_REFERENCE',
+}, null, 2));

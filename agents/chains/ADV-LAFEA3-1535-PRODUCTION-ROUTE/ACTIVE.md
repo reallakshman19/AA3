@@ -11,6 +11,7 @@ PR_STATUS: OPEN_DRAFT
 BRANCH: engineering/lafea3-1569-bm005-main-push
 BASE_BRANCH: main
 BASE_HEAD: 22cd57a4eff48a505bab4a081debf2ff11748cdb
+PR_HEAD_AT_FINAL_RECHECK_BASIS: 213d9432fde9926a91d9e1c56e8b4f883e18db2c
 MATERIAL_TRIGGER_HEAD: 9dbe947ca40a217041b14e12ca7cae2ba1e18187
 STATE: BLOCKED
 ENGINEERING_STATE: BLOCKED
@@ -18,7 +19,7 @@ CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: READ_ONLY
 AUTO_STATE: PAUSED
-MERGEABILITY: PENDING_FINAL_RECHECK
+MERGEABILITY: MERGEABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
@@ -63,4 +64,4 @@ HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: PASS_STATIC_PUSH_TRIGGER / PR_EXECUTION_NOT_RUN_PRECHECKOUT
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: TRUE
-EXACT_NEXT_ACTION: Owner merge decision on Draft #1590. If authorized, recheck current main/mergeability and merge exact PR head; then inspect the exact-main push workflow run. Pre-step failure remains BM-005 NOT_RUN_EXECUTION_BLOCKED; harness FAIL requires first-boundary isolation and fresh pre-work; PASS requires persisting exact report then BM-006 browser replay.
+EXACT_NEXT_ACTION: Owner merge decision on Draft #1590. If authorized, recheck current main/mergeability and merge exact current PR head; then inspect the exact-main push workflow run. Pre-step failure remains BM-005 NOT_RUN_EXECUTION_BLOCKED; harness FAIL requires first-boundary isolation and fresh pre-work; PASS requires persisting exact report then BM-006 browser replay.

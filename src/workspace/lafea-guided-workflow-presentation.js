@@ -76,6 +76,10 @@ export function buildLafeaWorkflowAreaPresentation(workflow) {
 
 function areaStatus(areaId, workflow, steps) {
   if (areaId === 'MESH' && workflow.meshApplicable === false) return 'NOT_APPLICABLE';
+  if (areaId === 'CONVERGENCE'
+    && steps.every((step) => step.reasons.includes('WORKFLOW_STEP_NOT_APPLICABLE'))) {
+    return 'NOT_APPLICABLE';
+  }
   if ((areaId === 'SOLVE' || areaId === 'CONVERGENCE' || areaId === 'RESULTS')
     && workflow.executionSupported === false) {
     return 'NOT_APPLICABLE';

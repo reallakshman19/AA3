@@ -5,7 +5,7 @@ ACTIVE_ENDPOINT: EP-0022
 ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0022.md
 MATERIAL_HISTORY_ROOT_BASE: e409a233c46bbec193292565b58b40dffab4b853
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0018.md
-PR: PENDING
+PR: #1566
 BRANCH: codex/lafea-1536-postmerge-qualification
 HEAD: 94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d
 STATE: BLOCKED
@@ -25,7 +25,7 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
 CUSTODY_EPOCH: 22
 COORDINATION_STATE: SAFE
-DEPENDENCIES: exact material-head LAFEA.4 run 33289538149 job 99198613322 ended before step 1 with steps=null; merged-main commit has no PR-triggered workflow run; executable engineering and release qualification remain NOT_RUN; relay PR is intended only to retrigger exact-head qualification
+DEPENDENCIES: exact material-head LAFEA.4 run 33289538149 job 99198613322 ended before step 1 with steps=null; merged-main commit has no PR-triggered workflow run; Draft relay PR #1566 retriggers exact-head qualification; executable engineering and release qualification remain NOT_RUN until a repository command actually executes
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COMMON_PROTOCOL_STATUS: CURRENT

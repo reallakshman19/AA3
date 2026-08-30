@@ -34,13 +34,58 @@ export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute) 
     item.append(button);
     list.append(item);
   }
-  workflow.body.append(list);
+  workflow.body.append(list, authoritySummary(root, presentation.authoritySummary));
+
+  const notice = currentnessNotice(root, presentation.currentnessNotice);
+  if (notice) workflow.body.append(notice);
 
   const boundary = element(root, 'p', 'lafea-workbench__authority',
     'Workflow status is presentation-only. Run authorization, source authority, route authority, code compliance and release authority remain owned by the existing governed EMP.1 contracts. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
   boundary.dataset.role = 'emp1-professional-workflow-authority-boundary';
   workflow.body.append(boundary, technicalBackingDisclosure(root, presentation, onSelectRoute));
   return workflow.section;
+}
+
+function authoritySummary(root, summary) {
+  const section = element(root, 'div', 'lafea-workbench__custody');
+  section.dataset.role = 'emp1-professional-authority-summary';
+  section.append(element(root, 'strong', null, 'Currentness and authority'));
+  for (const value of [
+    summary.sourceCurrentness,
+    summary.transferCurrentness,
+    summary.screeningCurrentness,
+    summary.localMethod,
+    summary.localResult,
+    summary.releaseProfile,
+    summary.codeCompliance,
+  ]) {
+    section.append(element(root, 'span', null, human(value)));
+  }
+  return section;
+}
+
+function currentnessNotice(root, notice) {
+  if (!notice) return null;
+  const section = element(root, 'div', 'lafea-workbench__authority');
+  section.dataset.role = 'emp1-professional-currentness-notice';
+  section.dataset.state = notice.state;
+  section.setAttribute('role', 'status');
+  section.setAttribute('aria-live', 'polite');
+  section.append(element(root, 'strong', null, notice.title));
+
+  const reasons = element(root, 'ul');
+  notice.reasons.forEach((reason, index) => {
+    const item = element(root, 'li', null, reason);
+    const reasonCode = notice.reasonCodes[index];
+    if (reasonCode) item.dataset.reasonCode = reasonCode;
+    reasons.append(item);
+  });
+  section.append(reasons);
+
+  const action = element(root, 'p', null, notice.action);
+  action.dataset.role = 'emp1-professional-required-action';
+  section.append(action);
+  return section;
 }
 
 function technicalBackingDisclosure(root, presentation, onSelectRoute) {
@@ -70,6 +115,7 @@ function technicalBackingDisclosure(root, presentation, onSelectRoute) {
 function navigateProfessionalStep(root, step, onSelectRoute) {
   if (step.preferredBackingStageId) {
     onSelectRoute?.(step.preferredBackingStageId);
+    scheduleTargetScroll(root, step.targetRole);
     return;
   }
   if (scrollToRole(root, step.targetRole)) return;
@@ -79,8 +125,23 @@ function navigateProfessionalStep(root, step, onSelectRoute) {
   }
 }
 
+function scheduleTargetScroll(root, role) {
+  const view = root?.ownerDocument?.defaultView;
+  const schedule = typeof view?.requestAnimationFrame === 'function'
+    ? (callback) => view.requestAnimationFrame(callback)
+    : (callback) => setTimeout(callback, 0);
+  let attempts = 0;
+  const attempt = () => {
+    attempts += 1;
+    if (scrollToRole(root, role) || attempts >= 3) return;
+    schedule(attempt);
+  };
+  schedule(attempt);
+}
+
 function scrollToRole(root, role) {
-  const target = root.querySelector?.(`[data-role="${role}"]`);
+  const target = root.querySelector?.(`[data-role="${role}"]`)
+    ?? root.querySelector?.(`[data-guided-target="${role}"]`);
   target?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   return Boolean(target);
 }

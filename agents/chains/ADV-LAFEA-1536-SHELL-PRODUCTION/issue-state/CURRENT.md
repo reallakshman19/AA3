@@ -1,9 +1,9 @@
 # Issue Current State — #1536
 
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0029
+CURRENT_ENDPOINT: EP-0030
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
-UPDATED_AT: 2026-08-30T10:38:00Z
+UPDATED_AT: 2026-08-30T16:07:00Z
 
 ### Original task / acceptance ledger
 TASK-001 | Decide and record the LAFEA.4 production strategy: retain CST/DKT as thin-only or adopt MITC. | COMPLETE | Issue #1536 + PR #1557 comment 5466211854
@@ -18,14 +18,15 @@ INPUT-001 | Legacy local-shell-model/v1 + CST_DKT_TRI3_THIN_SHELL_V1 production 
 INPUT-002 | MITC4/MITC3 mechanics/adoption adapters | AVAILABLE | reused unchanged by production wrappers
 INPUT-003 | Shared deterministic dense/sparse/PCG shell solve | AVAILABLE | reused unchanged by production wrappers
 INPUT-004 | Owner production-adoption/merge authority | AVAILABLE | PR #1557 comment 5466211854 + owner-authorized merges #1563/#1574
-INPUT-005 | Common engineering-pr-delivery-v2 current protocol | AVAILABLE | reallaksh19/Common@4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
-INPUT-006 | Executable official private-repository checkout / runner | UNRESOLVED | GitHub-hosted ubuntu-latest exact-head retry attempt 2 still fails before checkout; direct git DNS unavailable
+INPUT-005 | Common engineering-pr-delivery-v2 current protocol | AVAILABLE | reallaksh19/Common@293a3db7993a6945c01adc592a7ff14a339c504a; engineering skill blob unchanged at aa832f5f9f204c3834ffcee40102b482f121ce76
+INPUT-006 | Executable official private-repository checkout / runner | UNRESOLVED | fresh exact-head job 99284017165 still fails before checkout with steps=null; direct git DNS unavailable
 INPUT-007 | LAFEA.4 merged production basis | AVAILABLE | b4ca03357f584ed993cf3739b11f89c255e54b84 includes exact LEG-002 follow-up through #1574
 INPUT-008 | Live main | AVAILABLE_RECONCILED | fad372eaf55487b10a2cbcad5ff8438b71e031ff; 66 commits ahead of LAFEA.4 basis
 INPUT-009 | Composition benchmark registration | MERGED_SOURCE | LAFEA.4 composition exposes legacy SHELL-PATCH-01/SHELL-BEND-01 plus LAFEA4-CYL-01/PRESS-01/COMB-01
 INPUT-010 | Stage-route qualification coverage | MERGED_SOURCE | BM-009 traverses requireLafeaStageComposition('LAFEA.4') normalize → canonicalize → calculate → accept → resolveUnits → present
 INPUT-011 | Source-derived production/stage isolation harness | AVAILABLE_NON_GOVERNING | re-executed PASS; does not replace governed scripts
 INPUT-012 | Shared-workbench drift | MATERIAL_WITHIN_QUALIFIED_BOUNDARY | no local-shell/LAFEA4 presenter/stage-component/stage-registry/benchmark/workflow/release-authority drift; LAFEA.3 convergence UI additions are explicitly non-gating for LAFEA.4
+INPUT-013 | Independent drift-coverage reviewer | UNRESOLVED | no independent reviewer comment or PR review exists on Issue #1536 / PR #1575
 
 ### Benchmark / oracle ledger
 BM-001 | MITC element/basis adoption gate | NOT_RUN | independent element/basis falsifiers PASS; governed script not executed
@@ -47,18 +48,18 @@ Manifest: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/qualification-baselines/
 Status: SATISFIED
 
 ### Current PR / validation state
-LEG-002 remains merged without source divergence through recovery PR #1574. LAFEA.4 qualification basis is `b4ca03357f584ed993cf3739b11f89c255e54b84`; live `main` is `fad372eaf55487b10a2cbcad5ff8438b71e031ff`, 66 commits ahead. Draft relay PR #1575 carries custody only; active endpoint EP-0029 references Issue checkpoint `5468191550`.
+LEG-002 remains merged without source divergence through recovery PR #1574. LAFEA.4 qualification basis is `b4ca03357f584ed993cf3739b11f89c255e54b84`; live `main` remains `fad372eaf55487b10a2cbcad5ff8438b71e031ff`, 66 commits ahead. Draft relay PR #1575 carries custody only; active endpoint EP-0030 references Issue checkpoint `5469769463`.
 
-The 66-commit compare contains no `src/core/local-shell/**`, LAFEA.4 local-shell presenter, stage-components, stage-registry, LAFEA.4 benchmark/oracle, tolerance, workflow or release-authority mutation. Material drift is primarily LAFEA.3 plus shared workbench/UI. Common therefore classifies this as `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`, not `NONE`. Qualification coverage requires independent confirmation before write authority may clear.
+Live Common is now `293a3db7993a6945c01adc592a7ff14a339c504a`. The intervening Common commit adds Grade 9 IOQM content only; `engineering-pr-delivery-v2/SKILL.md` retains blob `aa832f5f9f204c3834ffcee40102b482f121ce76`, so engineering protocol semantics are unchanged and the chain is re-grounded to the current Common SHA.
 
-The shared UI drift was specifically checked for LAFEA.4. Current guided workflow makes Convergence `COMPLETE` with `WORKFLOW_STEP_NOT_APPLICABLE` for non-LAFEA.3 stages; area presentation maps that to `NOT_APPLICABLE`; the post-solve workbench therefore continues directly to ordinary Results readiness. Focused LAFEA.4 shared-UI isolation PASS.
+The 66-commit Advanced_Analysis compare still contains no `src/core/local-shell/**`, LAFEA.4 local-shell presenter, stage-components, stage-registry, LAFEA.4 benchmark/oracle, tolerance, workflow or release-authority mutation. Shared LAFEA.3/workbench changes remain non-gating for LAFEA.4 under focused isolation. Correct drift state remains `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`.
 
-The existing source-derived LAFEA.4 v2 production/stage isolation was re-executed and remains PASS: MITC4 pressure `[0,0,10000] N`, origin moment `[250000,-500000,0] Nmm`, `R=-F`, `FULLY_CONSTRAINED_NO_FREE_SOLVE`, separate transverse-shear evidence, release hold false/NOT_RUN, explicit MITC3 `[11,-7,5,13,-17]`, topology fail-closed behavior, all five shell benchmark IDs and `RELEASE_NOT_QUALIFIED`. This remains non-governing.
+Common requires independent confirmation for that drift class. No independent reviewer submission exists on Issue #1536 or PR #1575, so `QUALIFICATION_COVERAGE=INDEPENDENT_CONFIRMATION_REQUIRED`, `CURRENT_STATE_AUTHORITY=BLOCKED`, `WRITE_AUTHORITY_DECISION=READ_ONLY`.
 
-Official validation was retried. Run `33306288324` attempt 2 created job `99245027463`, which again failed before runner assignment with zero steps; no job log blob exists. Prior job metadata shows `runner_id=0` and empty runner name. The workflow itself is standard `ubuntu-latest` with checkout as first step. Direct Git transport still fails DNS. This is infrastructure/provisioning evidence, not engineering PASS/FAIL.
+Official validation was retried again after a multi-hour gap. Run `33307162192` created fresh job `99284017165`, which again failed before runner assignment with `steps=null`; zero repository commands executed. Existing source-derived MITC production/stage/shared-UI corroboration remains PASS but non-governing.
 
 Governed BM-001..BM-009, production-adoption aggregate, `check:lafea-core`, `check:lafea-solver`, `check:imports`, build, handover validation and release qualification remain `NOT_RUN`.
 
-Readiness: `CHAIN_HANDOVER_READY=TRUE`, `TAKEOVER_QUALIFICATION_READY=TRUE`, `ISSUE_HANDOVER_SYNC_STATUS=IN_SYNC`, `HANDOVER_VALIDATION_STATUS=NOT_RUN`, `HANDOVER_READY=FALSE`. Drift state: `POST_BASIS_DRIFT=MATERIAL_WITHIN_QUALIFIED_BOUNDARY`, `QUALIFICATION_COVERAGE=INDEPENDENT_CONFIRMATION_REQUIRED`, `CURRENT_STATE_AUTHORITY=BLOCKED`, `WRITE_AUTHORITY_DECISION=READ_ONLY`.
+Readiness remains `CHAIN_HANDOVER_READY=TRUE`, `TAKEOVER_QUALIFICATION_READY=TRUE`, `ISSUE_HANDOVER_SYNC_STATUS=IN_SYNC`, `HANDOVER_VALIDATION_STATUS=NOT_RUN`, `HANDOVER_READY=FALSE`.
 
 Exact next action: obtain independent confirmation that live-main material drift remains within current Q-set coverage and/or restore an executable official repository runner/checkout. Once current-state authority is clear, run BM-001..BM-009 plus aggregate/build/import and patch only the first demonstrated wrong owner; do not change mechanics or release authority from source-derived isolation or infrastructure evidence.

@@ -1,9 +1,9 @@
 # Issue Current State — #1536
 
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0026
+CURRENT_ENDPOINT: EP-0027
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
-UPDATED_AT: 2026-08-30T09:49:30Z
+UPDATED_AT: 2026-08-30T09:52:00Z
 
 ### Original task / acceptance ledger
 TASK-001 | Decide and record the LAFEA.4 production strategy: retain CST/DKT as thin-only or adopt MITC. | COMPLETE | Issue #1536 + PR #1557 comment 5466211854
@@ -23,6 +23,7 @@ INPUT-006 | Executable private-repository checkout / runner | UNRESOLVED | GitHu
 INPUT-007 | Current merged main | AVAILABLE | b4ca03357f584ed993cf3739b11f89c255e54b84 includes exact LEG-002 follow-up through #1574
 INPUT-008 | Composition benchmark registration | MERGED_SOURCE | LAFEA.4 composition exposes legacy SHELL-PATCH-01/SHELL-BEND-01 plus LAFEA4-CYL-01/PRESS-01/COMB-01
 INPUT-009 | Stage-route qualification coverage | MERGED_SOURCE | BM-009 traverses requireLafeaStageComposition('LAFEA.4') normalize → canonicalize → calculate → accept → resolveUnits → present
+INPUT-010 | Post-merge takeover checkpoint | AVAILABLE | EP-0027 + Draft relay PR #1575
 
 ### Benchmark / oracle ledger
 BM-001 | MITC element/basis adoption gate | NOT_RUN | independent element/basis falsifiers PASS; governed script not executed
@@ -44,8 +45,12 @@ Manifest: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/qualification-baselines/
 Status: SATISFIED
 
 ### Current PR / validation state
-LEG-002 was owner-authorized for merge in the current turn. Draft→Ready mutation still fails on GitHub GraphQL `Repository.fullDatabaseId`, so exact frozen #1573 head `d97546b1ed54124df9d57714de7f71ab1fe671a6` was merged without source divergence through non-draft recovery PR #1574 as main commit `b4ca03357f584ed993cf3739b11f89c255e54b84`.
+LEG-002 was owner-authorized and merged without source divergence through non-draft recovery PR #1574 because Draft→Ready remains connector-broken. Current main is `b4ca03357f584ed993cf3739b11f89c255e54b84`; original Draft #1573 is superseded/closed and its exact head is a parent of the merge.
 
-The last exact-head LAFEA.4 material workflow run `33302981955`, job `99234422634`, failed before checkout with `steps=null`; zero repository commands executed. Therefore governed BM-001..BM-009, aggregate/build/import and release qualification remain NOT_RUN. Independent corroboration remains non-governing only.
+Owner then requested `proceed next, hand over ready`. Draft relay PR #1575 carries custody only. EP-0027 is the current immutable checkpoint and references Issue endpoint comment `5467981794`. PR #1575 is mergeable, has zero reviews and zero unresolved review threads, and main has no required status-check contexts configured.
 
-Owner command for the current bounded progression is `proceed next, hand over ready`. A relay-only post-merge checkpoint is being frozen. No engineering source mutation is authorized or required. Chain handover and takeover qualification can be made ready, but overall HANDOVER_READY must remain FALSE unless executable handover validation produces PASS evidence.
+Readiness truth: `CHAIN_HANDOVER_READY=TRUE`, `TAKEOVER_QUALIFICATION_READY=TRUE`, `ISSUE_HANDOVER_SYNC_STATUS=IN_SYNC`, but `HANDOVER_VALIDATION_STATUS=NOT_RUN` and therefore `HANDOVER_READY=FALSE`. Common requires executable PASS evidence before the final readiness bit can be true.
+
+The last material exact-head LAFEA.4 run `33302981955`, job `99234422634`, failed before checkout with `steps=null`; zero repository commands executed. Governed BM-001..BM-009, aggregate/build/import and release qualification remain NOT_RUN. Independent corroboration remains non-governing only.
+
+Exact next action: replacement performs takeover qualification against current Q-set `QS-ADV-LAFEA4-1536-0013`, then restores an executable repository runner/checkout and runs BM-001..BM-009 plus aggregate/build/import. Patch only the first demonstrated wrong owner; do not change mechanics or release authority from infrastructure evidence.

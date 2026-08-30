@@ -106,6 +106,44 @@ export class LfeaPipelineCaseSelectionPanelController {
     return Array.isArray(ids) ? [...ids] : [];
   }
 
+  /**
+   * Read-only Run custody. A native intake starts at W; when H-bearing cases
+   * exist that untouched seed may not bypass the Load-case choice. Explicitly
+   * selected comparison cases are allowed once the same set is actually sealed
+   * into pre-flight.
+   */
+  getRunCaseCustody() {
+    const available = this.availableCases();
+    const hangerIds = available
+      .filter((row) => row.category === 'STANDARD_HANGER')
+      .map((row) => row.caseId);
+    const selectedCaseIds = this.getSelectedCaseIds();
+    const appliedCaseIds = this.getAppliedCaseIds();
+    if (hangerIds.length === 0) {
+      return Object.freeze({ ready: true, reason: null, selectedCaseIds, appliedCaseIds, hangerCaseIds: [] });
+    }
+    if (this.selectionExplicit) {
+      const ready = sameCaseIds(selectedCaseIds, appliedCaseIds);
+      return Object.freeze({
+        ready,
+        reason: ready ? null : 'Load-case selection changed. Apply selection before Run.',
+        selectedCaseIds,
+        appliedCaseIds,
+        hangerCaseIds: hangerIds,
+      });
+    }
+    const ready = appliedCaseIds.some((caseId) => hangerIds.includes(caseId));
+    return Object.freeze({
+      ready,
+      reason: ready
+        ? null
+        : 'Hanger-preload cases are available but are not sealed into this pre-flight. Apply the Load-case selection before Run.',
+      selectedCaseIds,
+      appliedCaseIds,
+      hangerCaseIds: hangerIds,
+    });
+  }
+
   applySelection() {
     this.error = '';
     try {
@@ -193,6 +231,12 @@ function compareCases(left, right) {
   const byCategory = CATEGORY_ORDER[left.category] - CATEGORY_ORDER[right.category];
   if (byCategory !== 0) return byCategory;
   return left.caseId < right.caseId ? -1 : left.caseId > right.caseId ? 1 : 0;
+}
+
+function sameCaseIds(left, right) {
+  if (left.length !== right.length) return false;
+  const expected = [...right].sort();
+  return [...left].sort().every((caseId, index) => caseId === expected[index]);
 }
 
 function createCaseSelectionSection(doc) {

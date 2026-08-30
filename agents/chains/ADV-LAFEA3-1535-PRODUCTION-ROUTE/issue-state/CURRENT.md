@@ -2,14 +2,13 @@
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0027
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0029
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1535
 SUBORDINATE_VV_WORK_ITEM: github:reallaksh19/Advanced_Analysis#1569
 ENGINEERING_MERGE_HEAD: 0f8b9443d9e578c5509f880713438ddc0b8c0fa4
-PRIMARY_RECOVERY_MERGE: #1576 -> e48b004d69350b8c156594732b2ad4716a08b72b
-BM005_RECOVERY_MERGE: #1577 -> 0f8b9443d9e578c5509f880713438ddc0b8c0fa4
-SUPERSEDED_DRAFTS: #1568; #1572
-PR_STATUS: MATERIAL_MERGED / NO_ACTIVE_MATERIAL_PR
+CURRENT_MAIN_AT_LEG_START: fad372eaf55487b10a2cbcad5ff8438b71e031ff
+ACTIVE_PR: #1581 DRAFT
+ACTIVE_BRANCH: engineering/lafea3-1569-bm005-runner
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -17,22 +16,14 @@ MERGE_AUTHORIZED: FALSE
 
 | ID | Status | Evidence / disposition |
 |---|---|---|
-| TASK-001 | PARTIAL | Ordinary geometry/domain intake plus governed mesh/preflight/compiler/convergence plumbing are now on main; exact-head BM-005 execution is still not demonstrated. |
-| TASK-002 | PARTIAL | Curved geometry route and mapped Q8 producer are merged; faithful current-main execution remains unresolved. |
-| TASK-003 | PARTIAL | T3/T6/Q8 capability guard and anti-drift evidence exist; integrated exact-head execution remains pending. |
+| TASK-001 | PARTIAL | Ordinary geometry/domain intake plus governed mesh/preflight/compiler/convergence plumbing are on main; exact-head BM-005 execution still has not started. |
+| TASK-002 | PARTIAL | Curved geometry route and mapped Q8 producer are merged; faithful execution remains blocked before checkout. |
+| TASK-003 | PARTIAL | T3/T6/Q8 capability and focused checks exist; integrated exact-head execution remains pending. |
 | TASK-004 | PASS | Historical continuum documentation remains subordinate to live source authority. |
-| TASK-005 | PASS_STATIC_SOURCE | Richards Lamé source custody and explicit MacNeal-Harder non-equivalence are merged. |
+| TASK-005 | PASS_STATIC_SOURCE | Richards Lamé source custody and independent oracle record are merged. |
 | TASK-006 | PARTIAL | Visible Run -> Convergence -> Results composition is merged; real engineer/browser replay remains NOT_RUN. |
 | TASK-007 | PASS_STATIC_SOURCE | Frozen BM-005 package/report contract is merged: Q8 quarter-annulus, four-level ladder, fixed physical probe, convergence-policy binding, negative control and audit hashes. |
-
-## Merge reconciliation
-
-Owner authorized merge. Draft→Ready tooling failed, so exact-head recovery PRs were used without altering engineering material:
-
-- #1568 head `b2406f3ca4ad4015a1dad19f6246fe1ed69d1ebb` -> recovery #1576 -> main merge `e48b004d69350b8c156594732b2ad4716a08b72b`.
-- #1572 head `5e67443324d00cadb055c82045e10bcc0caa3cbe` -> recovery #1577 -> main merge `0f8b9443d9e578c5509f880713438ddc0b8c0fa4`.
-
-Superseded Draft PRs #1568 and #1572 are closed to remove duplicate authority; their history remains provenance.
+| TASK-008 | PASS_WORKFLOW_WIRING / EXECUTION_NOT_RUN | Owner-authorized dedicated BM-005 read-only workflow exists in Draft #1581 and triggers on the intended PR head, but hosted jobs terminate with `steps=null` before checkout. |
 
 ## Frozen BM-005 package
 
@@ -55,7 +46,23 @@ u_expected=0.003819703196347032 mm
 
 Primary oracle: K. L. Richards, *Design Engineer's Handbook*, 1st ed., CRC Press, 2012, Ch.6 p.157 Eqs.6.3–6.4 and §6.3 p.158. Production output cannot alter the frozen oracle, probe, mesh ladder, convergence-policy constants or acceptance after observations.
 
-The report contract records actual candidate HEAD and clean-tree state, source/oracle hashes, model/mesh/solver/recovery/probe lineage, mesh quality/counts, observed orders, Richardson/GCI, oracle comparison, solver/equilibrium diagnostics, negative control, limitations/warnings, authority disposition, semanticHash and evidenceHash. Completed non-qualifying studies emit a machine-readable FAIL report before non-zero exit where the route reaches report construction.
+## LEG-009 hosted runner
+
+Owner authorized workflow-YAML scope by saying `proceed next` after EP-0027 explicitly named that authority gate.
+
+Draft PR #1581 adds `.github/workflows/lafea3-bm005-qualification.yml` with `contents: read` only. It checks out the exact event head, asserts exact HEAD/clean tree/diff, uses Node 22, syntax-checks the BM-005 scripts, executes the existing harness, captures stdout/stderr/exit code under `/tmp`, uploads receipts always, and propagates the harness exit.
+
+First dedicated probe:
+
+```text
+PR head: cafc767334b91f71294de1efe2b4f3ed483941a0
+workflow run: 33321472589
+attempt-1 job: 99284076931 -> completed/failure, steps=null
+artifacts: []
+rerun job: 99284139696 -> completed/failure, steps=null
+```
+
+This proves workflow trigger/wiring only. It does not prove checkout, syntax, BM-005, or any numerical boundary. The correct classification is `NOT_RUN_EXECUTION_BLOCKED`, not BM-005 FAIL.
 
 ## Benchmark / qualification truth
 
@@ -65,30 +72,23 @@ The report contract records actual candidate HEAD and clean-tree state, source/o
 | BM-002 | PASS_FOCUSED | Prior Kirsch benchmark with independent analytical oracle custody. |
 | BM-003 | NOT_RUN | Integrated Lamé software execution not retained as current exact-head evidence. |
 | BM-004 | PASS_FOCUSED | Prior solver/Jacobian/imposed-displacement/fail-closed focused controls. |
-| BM-005 | NOT_RUN_EXECUTION_BLOCKED | Frozen ordinary-route Lamé harness/report package is merged; no faithful clean current-main execution yet. |
+| BM-005 | NOT_RUN_EXECUTION_BLOCKED | Dedicated workflow is wired but hosted executor terminates before checkout; no harness stdout/report exists. |
 | BM-006 | NOT_RUN | Same-case real engineer/browser walkthrough remains unexecuted. |
 
-EXECUTION_BLOCKER: current agent environment cannot obtain a faithful checkout; direct `git clone --no-checkout` failed `Could not resolve host: github.com`; no browser executor is available.
 VISIBLE_USER_REPLAY_STATUS: STATIC_COMPOSITION_MERGED / BROWSER_NOT_RUN
 CORE_FEA_COMPLETION_STATUS: NOT_PROVEN
 RELEASE_QUALIFIED: FALSE
 
 ## Protected unchanged authority
 
-No changes are authorized merely because execution is blocked: element formulations, stiffness/load assembly, solver, recovery, mesher mathematics/quality thresholds, pressure semantics, physical-probe mathematics, convergence mathematics/policy, frozen benchmark oracle/tolerances, Owner roadmap, workflow YAML, LAFEA.4/.5 numerical semantics, code assessment and release authority remain protected.
+No changes to element formulations, stiffness/load assembly, solver, recovery, mesher mathematics/quality thresholds, pressure semantics, physical-probe mathematics, convergence mathematics/policy, frozen benchmark oracle/tolerances, Owner roadmap, LAFEA.4/.5 numerical semantics, code assessment or release authority. Workflow authority is limited to the single bounded runner in #1581.
 
 ## Exact next action
 
-On a faithful clean checkout of current `main`, run:
+Do not add another workflow and do not patch engineering code. Obtain a functioning hosted runner or faithful clean local checkout and execute the already-retained BM-005 harness. The evidence classifications are:
 
-```bash
-node scripts/lafea.3-bm005-ordinary-route-check.mjs
-```
+- failure before checkout/step 1 -> `BM-005 NOT_RUN_EXECUTION_BLOCKED`;
+- harness machine-readable `status=FAIL` or pre-report rejection -> true BM-005 failure boundary; isolate it and create fresh pre-work before patching;
+- harness `status=PASS` -> persist exact report as `agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/validation/BM005-<candidateHeadSha>.json`, then perform BM-006 in a real browser.
 
-Preserve stdout JSON exactly. The report itself must bind the actual candidate HEAD from `git rev-parse HEAD` and clean-tree state.
-
-- `status=PASS`: persist exact output as `agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/validation/BM005-<candidateHeadSha>.json`, then perform BM-006 in a real browser using the same frozen case.
-- `status=FAIL`: inspect the retained reasons/diagnostics and isolate the first wrong engineering/software boundary.
-- pre-report rejection: identify the failing route/schema/preflight boundary.
-
-Any patch after FAIL/pre-report rejection requires a fresh pre-work endpoint and Q1–Q5 pack. Do not weaken oracle, mesh ladder, tolerances or convergence policy to obtain PASS.
+Do not weaken oracle, mesh ladder, tolerances or convergence policy to obtain PASS.

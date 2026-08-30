@@ -7,7 +7,7 @@ MATERIAL_HISTORY_ROOT_BASE: 80dcfe8311b7cee367873fe2794ab059a242921b
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0011.md
 PR: #1557
 BRANCH: codex/lafea-1536-validation-coverage-relay
-HEAD: 93156a744e674ae965b7aa96ed4f1864a78283a8
+HEAD: aa085eb05b5e2342bb2223f5127aa08a89759ff7
 STATE: BLOCKED
 ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
@@ -22,7 +22,7 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
 CUSTODY_EPOCH: 15
 COORDINATION_STATE: SAFE
-DEPENDENCIES: current Common relay validators NOT_RUN; executable LAFEA.4 qualification unavailable; retry job 99189915737 had steps=null; local checkout unavailable because execution container could not resolve github.com; package check:lafea-core does not yet execute the six adoption/production-route checks
+DEPENDENCIES: current Common relay validators NOT_RUN; executable LAFEA.4 qualification unavailable; current-head PR #1557 LAFEA.4 run 33286922294 job 99191606402 failed with steps=null before checkout; earlier retry job 99189915737 also had steps=null; local checkout unavailable because execution container could not resolve github.com; package check:lafea-core does not yet execute the six adoption/production-route checks
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 2e5fca39ad72f9bd1828ac54c245b9200c916b74
 COMMON_PROTOCOL_STATUS: CURRENT

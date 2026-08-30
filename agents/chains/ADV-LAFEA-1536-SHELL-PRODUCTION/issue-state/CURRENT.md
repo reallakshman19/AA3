@@ -1,7 +1,7 @@
 # Issue Current State — #1536
 
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0018
+CURRENT_ENDPOINT: EP-0019
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 UPDATED_AT: 2026-08-30T02:46:22Z
 
@@ -11,7 +11,7 @@ TASK-002 | Build MITC geometry/basis, load, recovery, solver-equivalence and CST
 TASK-003 | Keep unqualified MITC evidence explicit experimental/nonproduction/non-contributing until production adoption. | COMPLETE_FOR_EXISTING_ROUTE | existing adoption contract flags
 TASK-004 | Add sparse/scalable shell solve path. | SOURCE_COMPLETE_VALIDATION_NOT_RUN | merged shell PCG/sparse source
 TASK-005 | Add LAFEA4-CYL-01, LAFEA4-PRESS-01 and LAFEA4-COMB-01 direct-route benchmarks. | SOURCE_COMPLETE_VALIDATION_NOT_RUN | benchmark script exists; execution NOT_RUN
-TASK-006 | Promote MITC4/MITC3 into explicit versioned production contract/dispatch/registry/presenter while preserving v1. | IN_PROGRESS_PREWORK | PR #1557 Owner-authorized production slice
+TASK-006 | Promote MITC4/MITC3 into explicit versioned production contract/dispatch/registry/presenter while preserving v1. | IN_PROGRESS | EP-0018 prework + EP-0019 Issue synchronization; PR #1557 Owner-authorized production slice
 
 ### Input ledger
 INPUT-001 | Legacy local-shell-model/v1 + CST_DKT_TRI3_THIN_SHELL_V1 production route | AVAILABLE | current main 4266249515db1a3cf1f1881292248f477d5214f8
@@ -40,4 +40,4 @@ Manifest: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/qualification-baselines/
 Status: SATISFIED
 
 ### Current PR / validation state
-PR #1557 is Draft. Merge authority remains OWNER_ONLY and merge is not authorized this turn. Common basis is 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02. Handover validation remains NOT_RUN, but the corrected current Common admission validator no longer confuses HANDOVER_READY with material-leg admission. Issue-control-plane synchronization is being established at EP-0018 before material source changes.
+PR #1557 is Draft; merge authority OWNER_ONLY and merge is not authorized. Issue control plane is IN_SYNC at EP-0019: Chain Root `5466335389`, mutable Active Handover `5466334636`, EP-0018 checkpoint `5466336240`, EP-0019 checkpoint `5466340145`. Common basis is `4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02`. Handover/engineering execution remains NOT_RUN because the runner still ends before checkout, but current Common permits this prework-qualified material progression without falsifying `HANDOVER_READY`.

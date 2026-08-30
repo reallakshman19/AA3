@@ -8,10 +8,16 @@ export function mountLfeaPipelineResultsTaskVisibility(hostElement, options = {}
 
   const sync = () => {
     const activeStep = hostElement.dataset.activeStep ?? 'RUN';
-    setHidden(hostElement, '[data-role="lfea-pipeline-run-panel"]', activeStep !== 'RUN');
-    setHidden(hostElement, '[data-role="lfea-pipeline-results-panel"]', activeStep !== 'OUTPUT');
-    setHidden(hostElement, '[data-role="lfea-results-authority-panel"]', activeStep !== 'OUTPUT');
-    setHidden(hostElement, '[data-role="lfea-pipeline-export-panel"]', activeStep !== 'EXPORT');
+    const runPanel = hostElement.querySelector('[data-role="lfea-pipeline-run-panel"]');
+    const outputPanel = hostElement.querySelector('[data-role="lfea-pipeline-results-panel"]');
+    const authorityPanel = hostElement.querySelector('[data-role="lfea-results-authority-panel"]');
+    const exportPanel = hostElement.querySelector('[data-role="lfea-pipeline-export-panel"]');
+    runPanel?.classList.add('lfea-pipeline-results');
+    exportPanel?.classList.add('lfea-pipeline-results');
+    if (runPanel) runPanel.hidden = activeStep !== 'RUN';
+    if (outputPanel) outputPanel.hidden = activeStep !== 'OUTPUT';
+    if (authorityPanel) authorityPanel.hidden = activeStep !== 'OUTPUT';
+    if (exportPanel) exportPanel.hidden = activeStep !== 'EXPORT';
     const legacyExport = hostElement.querySelector('.lfea-pipeline-results__export');
     if (legacyExport) legacyExport.hidden = true;
     if (activeStep !== previousActiveStep) {
@@ -21,15 +27,8 @@ export function mountLfeaPipelineResultsTaskVisibility(hostElement, options = {}
   };
 
   const observer = typeof Observer === 'function' ? new Observer(() => sync()) : null;
-  // Only the host's step stamp controls task visibility. Observing subtree
-  // mutations would feed panel refreshes back into this observer.
   observer?.observe(hostElement, { attributes: true, attributeFilter: ['data-active-step'] });
   sync();
 
   return Object.freeze({ schema: LFEA_PIPELINE_RESULTS_TASK_VISIBILITY_SCHEMA, refresh: sync, destroy() { observer?.disconnect(); } });
-}
-
-function setHidden(host, selector, hidden) {
-  const node = host.querySelector(selector);
-  if (node) node.hidden = hidden;
 }

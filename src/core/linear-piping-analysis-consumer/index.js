@@ -149,7 +149,11 @@ export {
 
 export {
   INPUTXML_THERMAL_EXPANSION_AUTHORITY_SCHEMA,
+  INPUTXML_THERMAL_INTERVAL_AUTHORITY_SCHEMA,
+  requireInputXmlThermalIntervalAuthority,
   resolveInputXmlThermalExpansionAuthority,
+  resolveInputXmlThermalInputAuthority,
+  sealInputXmlThermalIntervalAuthority,
 } from './inputxml-thermal-authority.js';
 
 export { compileInputXmlLinearStructure } from './inputxml-linear-structural-preparation.js';

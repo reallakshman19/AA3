@@ -1,8 +1,5 @@
-import { resolveInputXmlThermalExpansionAuthority } from './inputxml-thermal-authority.js';
-import {
-  INPUTXML_INSTALLATION_TEMPERATURE,
-  InputXmlLinearSolvePreparationError,
-} from './inputxml-linear-preparation-profile.js';
+import { resolveInputXmlThermalInputAuthority } from './inputxml-thermal-authority.js';
+import { InputXmlLinearSolvePreparationError } from './inputxml-linear-preparation-profile.js';
 import { finiteAuthorityValue } from './inputxml-linear-preparation-authority-support.js';
 import {
   materialFor,
@@ -19,6 +16,7 @@ export function prepareInputXmlElementAuthorities({
   inventory,
   modelId,
   analysisProfileId,
+  thermalIntervalAuthority,
 }) {
   const elementBySegment = new Map(
     sourceBundle.elementRecords
@@ -59,9 +57,17 @@ export function prepareInputXmlElementAuthorities({
       );
     }
     const analysis = segment.meta?.analysis ?? {};
-    const thermalAuthority = resolveInputXmlThermalExpansionAuthority(segment.meta?.materialNumber);
-    const evaluationTemperature = finiteAuthorityValue(analysis.operatingTemperature)
-      ?? INPUTXML_INSTALLATION_TEMPERATURE.value;
+    const operatingTemperature = finiteAuthorityValue(analysis.operatingTemperature);
+    const thermalInput = resolveInputXmlThermalInputAuthority({
+      intervalAuthority: thermalIntervalAuthority,
+      modelId,
+      sourceBundleSemanticHash,
+      materialNumber: segment.meta?.materialNumber,
+      operatingTemperature,
+    });
+    const thermalAuthority = thermalInput.thermalAuthority;
+    const installationTemperature = thermalInput.installationTemperature;
+    const evaluationTemperature = operatingTemperature ?? installationTemperature;
     const materialResolution = materialFor({
       segment,
       element,
@@ -91,6 +97,7 @@ export function prepareInputXmlElementAuthorities({
       physicalSection,
       materialResolution,
       thermalAuthority,
+      installationTemperature,
       sourceBundleSemanticHash,
       modelId,
     });
@@ -130,6 +137,7 @@ export function prepareInputXmlElementAuthorities({
       physicalSection,
       rigidAuthority,
       thermalAuthority,
+      installationTemperature,
       modelId,
       sourceBundleSemanticHash,
     }));

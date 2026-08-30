@@ -1,0 +1,28 @@
+CHAIN_STATE_VERSION: 3
+CHAIN_ID: ADV-EMP1-WRC-UI-WALKTHROUGH
+MISSION: Execute and qualify the engineer-facing EMP.1/WRC professional workflow for issue #1559 without changing WRC numerical/source/release authority
+ACTIVE_ENDPOINT: EP-0001
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0001.md
+MATERIAL_HISTORY_ROOT_BASE: 6604421fbf6e83fccca0e8f66a70c8cc9dafb9fb
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0001.md
+PR: PENDING
+BRANCH: codex/emp1-wrc-ui-1559
+HEAD: 2a4df994a6bb32a915b30ddde42c38a47acbdda6
+STATE: ACTIVE
+ENGINEERING_STATE: PRESENTATION_ONLY
+CUSTODY_STATE: HELD
+QUALIFICATION_STATE: NOT_REQUIRED
+WRITE_AUTHORITY: WRITE_ALLOWED
+AUTO_STATE: RUNNING
+MERGE_AUTHORITY: OWNER_ONLY
+AUTHORITY_DOMAIN: EMP.1 WRC professional workflow presentation/currentness; WRC source, mechanics, route authorization, code compliance and release authority protected
+ACTIVE_CUSTODIAN: gpt-5.6-sol
+CUSTODY_EPOCH: 1
+COORDINATION_STATE: SAFE
+DEPENDENCIES: Issue #1389 WRC product contract and current EMP.1 projection/currentness contracts
+COMMON_PROTOCOL: engineering-pr-delivery-v2
+COMMON_PROTOCOL_BASIS: 10d667ce715bb52e1f73035c6fa326db77d0f9dd
+COMMON_PROTOCOL_STATUS: OWNER_PINNED
+ROADMAPS: Issue #1389 §14; issue #1559 owner clarification
+ROADMAP_REVIEW_STATUS: REVIEWED
+HANDOVER_READY: TRUE

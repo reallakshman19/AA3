@@ -114,7 +114,7 @@ function normalizeRetainedGeometryDiagnostics(geometry) {
       ...row,
       severity: 'info',
       code: 'INPUTXML_HANGER_RECORD_RETAINED',
-      message: 'HANGER source data are retained for downstream model-health representability classification; geometry ingestion does not itself decide support supportability.',
+      message: 'HANGER source data are retained for downstream model-health representability classification; geometry ingestion does not itself decide support representability.',
     };
   });
 }

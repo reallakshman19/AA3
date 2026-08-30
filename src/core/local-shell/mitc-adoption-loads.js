@@ -118,6 +118,7 @@ function consistentPressureContribution(model, element, load, nodeMap) {
     elementId: element.elementId,
     formulation: element.formulation,
     topology: element.topology,
+    nodeIds: [...element.nodeIds],
     pressure: load.pressure,
     sense: load.sense,
     signedNormal,
@@ -229,18 +230,11 @@ function integratedResult(nodalAreaWeights, signedNormal, pressure, quadrature) 
 
 function addContribution(vector, contribution, dofIndex) {
   contribution.nodalForces.forEach((force, nodeIndex) => {
-    const nodeId = contributionNodeId(contribution, nodeIndex);
+    const nodeId = contribution.nodeIds[nodeIndex];
     ['UX', 'UY', 'UZ'].forEach((dof, axis) => {
       vector[dofIndex.get(`${nodeId}:${dof}`)] += force[axis];
     });
   });
-}
-
-function contributionNodeId(contribution, nodeIndex) {
-  // nodeIds are retained through the element evidence in the same order as
-  // nodalAreaWeights/nodalForces. Keeping them in the contribution prevents
-  // any later consumer from inferring topology from vector position.
-  return contribution.nodeIds[nodeIndex];
 }
 
 function requirePositiveJacobian(determinant, elementId, pointId) {

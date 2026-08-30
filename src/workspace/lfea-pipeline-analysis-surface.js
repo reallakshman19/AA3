@@ -5,6 +5,7 @@ import { mountLfeaPipelineResultsPanel } from './lfea-pipeline-results-panel.js'
 import { mountLfeaPipelineRunPanel } from './lfea-pipeline-run-panel.js';
 import { mountLfeaPipelineExportPanel } from './lfea-pipeline-export-panel.js';
 import { mountLfeaPipelineResultsTaskVisibility } from './lfea-pipeline-results-task-visibility.js';
+import { mountLfeaPipelineResultsSortPresentation } from './lfea-pipeline-results-sort-presentation.js';
 import { mountLfeaPipelineLoadCaseAuthoringPanel } from './lfea-pipeline-load-case-authoring-panel.js';
 import { mountLfeaPipelineModelRepairPanel } from './lfea-pipeline-model-repair-panel.js';
 import { mountLfeaModelReviewPanel } from './lfea-model-review/lfea-model-review-panel.js';
@@ -30,10 +31,11 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     onExportCompleted: options.onExportCompleted,
   });
   const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, { documentRef: options.documentRef });
+  const sortPresentation = mountLfeaPipelineResultsSortPresentation(options.resultsHost);
   const taskVisibility = mountLfeaPipelineResultsTaskVisibility(options.resultsHost, {
     onTaskChanged(stepId) {
       if (stepId === 'RUN') runPanel.refresh();
-      if (stepId === 'OUTPUT') resultsAuthorityPanel.refresh();
+      if (stepId === 'OUTPUT') { resultsAuthorityPanel.refresh(); sortPresentation.refresh(); }
       if (stepId === 'EXPORT') exportPanel.refresh();
     },
   });
@@ -44,7 +46,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   return Object.freeze({
     analysisController, modelRepairPanel, modelReviewPanel, errorCheckPanel,
     caseSelectionPanel, layoutPanel, runPanel, resultsPanel, exportPanel,
-    resultsAuthorityPanel, taskVisibility, loadCaseAuthoringPanel,
+    resultsAuthorityPanel, taskVisibility, sortPresentation, loadCaseAuthoringPanel,
     refreshLoadCaseStep() {
       caseSelectionPanel.refresh();
       layoutPanel.refresh();
@@ -53,9 +55,10 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     },
     refreshRunStep() { runPanel.refresh(); },
     refreshSourceStep() { modelRepairPanel.refresh(); modelReviewPanel.refresh(); errorCheckPanel.refresh(); },
-    refreshResultsStep() { resultsAuthorityPanel.refresh(); exportPanel.refresh(); taskVisibility.refresh(); },
+    refreshResultsStep() { resultsAuthorityPanel.refresh(); exportPanel.refresh(); sortPresentation.refresh(); taskVisibility.refresh(); },
     destroy() {
       taskVisibility.destroy();
+      sortPresentation.destroy();
       caseSelectionPanel.destroy();
       layoutPanel.destroy();
       runPanel.destroy();

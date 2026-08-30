@@ -24,12 +24,10 @@ test.describe('LFEA pipeline continuity', () => {
     ];
     for (let index = 0; index < expected.length; index += 1) {
       const [stepId, label] = expected[index];
-      const step = steps.filter({ has: page.locator(`[data-step-id="${stepId}"]`) });
-      const byId = page.locator(`[data-role="lfea-pipeline-step"][data-step-id="${stepId}"]`);
-      await expect(byId).toContainText(label);
-      await expect(byId.locator('.lfea-pipeline-icon')).toHaveCount(1);
-      await expect(byId.locator('[data-role="lfea-pipeline-step-index"]')).toHaveText(String(index + 1));
-      expect(await step.count()).toBeLessThanOrEqual(1);
+      const step = page.locator(`[data-role="lfea-pipeline-step"][data-step-id="${stepId}"]`);
+      await expect(step).toContainText(label);
+      await expect(step.locator('.lfea-pipeline-icon')).toHaveCount(1);
+      await expect(step.locator('[data-role="lfea-pipeline-step-index"]')).toHaveText(String(index + 1));
     }
 
     const context = page.locator('[data-role="lfea-pipeline-active-step-context"]');
@@ -45,6 +43,14 @@ test.describe('LFEA pipeline continuity', () => {
       await expect(page.locator(`[data-action="${action}"] .lfea-pipeline-icon`)).toHaveCount(1);
     }
     await expect(page.locator('.lfea-pipeline-shell__authority .lfea-pipeline-icon')).toHaveCount(1);
+    await expect(page.locator('[data-role="lfea-pipeline-optional-tools-label"]')).toHaveText('Optional tools');
+
+    // Source-specific configuration stays subordinate to source choice rather
+    // than competing as a fourth primary action.
+    const stagedOptions = page.locator('[data-role="lfea-source-acquisition-staged-options"]');
+    await expect(stagedOptions).toHaveCount(1);
+    await expect(stagedOptions).not.toHaveAttribute('open', '');
+    await expect(stagedOptions.locator('summary')).toHaveText('StagedJSON options');
 
     // Without a model, later tasks are visibly blocked rather than looking
     // like unrelated tabs that happen to be empty.
@@ -53,6 +59,7 @@ test.describe('LFEA pipeline continuity', () => {
         .toHaveAttribute('data-step-status', 'BLOCKED');
     }
     await expect(page.locator('[data-role="lfea-pipeline-guidance"]')).toContainText('Next: Input');
+    await expect(page.locator('[data-role="lfea-common-error-check-panel"] h3')).toHaveText('Error check');
 
     expect(pageErrors).toEqual([]);
   });
@@ -72,8 +79,6 @@ test.describe('LFEA pipeline continuity', () => {
     await expect(exportPanel).toHaveCount(1);
     await expect(exportPanel.locator('[data-action="lfea-pipeline-results-csv"]')).toHaveCount(1);
 
-    // The only legacy CSV action remaining inside the results controller is
-    // presentation-hidden; Export is the visible task owner.
     const inlineExport = page.locator('[data-role="lfea-pipeline-results-panel"] .lfea-pipeline-results__export');
     if (await inlineExport.count()) await expect(inlineExport).toBeHidden();
   });

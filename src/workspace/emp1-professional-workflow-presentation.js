@@ -116,7 +116,7 @@ export function buildEmp1ProfessionalWorkflowPresentation(projection) {
 
 function buildAuthoritySummary(projection, a, b, c) {
   return Object.freeze({
-    sourceCurrentness: sourceCurrentness(a, b),
+    sourceCurrentness: sourceCurrentness(a, b, c),
     transferCurrentness: transferCurrentness(a),
     screeningCurrentness: screeningCurrentness(b),
     localMethod: c.runAuthorized === true ? 'LOCAL METHOD QUALIFIED' : 'LOCAL METHOD BLOCKED',
@@ -180,9 +180,10 @@ function staleAction({ authorityReason, runAuthorized }) {
   return 'Re-run the governed EMP.1 transaction from the affected upstream step before using the retained Local Correlation result.';
 }
 
-function sourceCurrentness(a, b) {
+function sourceCurrentness(a, b, c) {
   if (a.documentLoaded === false && b.documentLoaded === false) return 'SOURCE INPUT REQUIRED';
   if (a.documentLoaded === false || b.documentLoaded === false) return 'SOURCE INCOMPLETE';
+  if (c.state === 'SOURCE_INCOMPLETE') return 'SOURCE INCOMPLETE';
   if (B_SOURCE_STALE_STATES.has(b.state)) return 'SOURCE STALE';
   return 'SOURCE CURRENT';
 }

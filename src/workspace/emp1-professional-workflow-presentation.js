@@ -21,6 +21,11 @@ const AUTHORITY_REASON_CODES = new Set([
   'EMP1_WORKBENCH_C_CURRENT_ROUTE_AUTHORITY_REQUIRED',
   'EMP1_WORKBENCH_ROUTE_AUTHORITY_CHANGED',
   'EMP1_WORKBENCH_C_CURRENT_ROUTE_NOT_AUTHORIZED',
+  'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED',
+  'EMP1_C_BOUNDED_ROUTE_REGISTRY_ENTRY_REQUIRED',
+  'EMP1_C_BOUNDED_ROUTE_NOT_REGISTERED',
+  'EMP1_C_BOUNDED_ROUTE_ENGINEERING_USE_NOT_AUTHORIZED',
+  'EMP1_C_BOUNDED_ROUTE_EXECUTOR_NOT_AUTHORIZED',
 ]);
 
 const REASON_COPY = Object.freeze({
@@ -42,6 +47,16 @@ const REASON_COPY = Object.freeze({
     'Bounded WRC route authority changed after the retained transaction.',
   EMP1_WORKBENCH_C_CURRENT_ROUTE_NOT_AUTHORIZED:
     'The current bounded WRC route is not production-authorized.',
+  EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED:
+    'The bounded WRC 537 gamma=5 zero-differential-pressure route is suspended.',
+  EMP1_C_BOUNDED_ROUTE_REGISTRY_ENTRY_REQUIRED:
+    'The bounded WRC route registry entry is unavailable.',
+  EMP1_C_BOUNDED_ROUTE_NOT_REGISTERED:
+    'The bounded WRC route is not registered for production use.',
+  EMP1_C_BOUNDED_ROUTE_ENGINEERING_USE_NOT_AUTHORIZED:
+    'Engineering use is not authorized for the bounded WRC route.',
+  EMP1_C_BOUNDED_ROUTE_EXECUTOR_NOT_AUTHORIZED:
+    'The bounded WRC route executor is not authorized.',
   EMP1_WORKBENCH_A_DOCUMENT_REQUIRED:
     'EMP.1.A load/reference source is required before the local-correlation transaction can run.',
   EMP1_WORKBENCH_B_DOCUMENT_REQUIRED:
@@ -118,7 +133,7 @@ function buildCurrentnessNotice(c) {
   const stale = c.retainedResultAvailable === true && c.resultAvailable !== true;
   if (!stale && c.runAuthorized === true) return null;
 
-  const authorityReason = reasonCodes.some((code) => AUTHORITY_REASON_CODES.has(code));
+  const authorityReason = reasonCodes.some(isAuthorityReason);
   const reasons = Object.freeze(reasonCodes.length
     ? reasonCodes.map(reasonCopy)
     : [stale
@@ -144,6 +159,12 @@ function buildCurrentnessNotice(c) {
       ? 'Resolve the listed bounded WRC route-authority blocker before running Local Correlation.'
       : 'Complete the listed source or geometry binding before running Local Correlation.',
   });
+}
+
+function isAuthorityReason(code) {
+  return AUTHORITY_REASON_CODES.has(code)
+    || /^WRC_GAMMA5_ROUTE_/u.test(code)
+    || /^EMP1_C_BOUNDED_ROUTE_/u.test(code);
 }
 
 function staleAction({ authorityReason, runAuthorized }) {

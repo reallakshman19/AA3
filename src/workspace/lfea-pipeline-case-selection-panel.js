@@ -126,23 +126,23 @@ export class LfeaPipelineCaseSelectionPanelController {
   synchronizeSourceSelectionState() {
     const current = this.sourceSemanticIdentity();
     if (current === null) {
-      if (this.sourceSemanticHash !== null) {
-        this.selected.clear();
-        this.selectionExplicit = false;
-        this.sourceSemanticHash = null;
-      }
+      if (this.sourceSemanticHash !== null) this.resetSelectionForSource(null);
       return null;
     }
     if (this.sourceSemanticHash === null) {
       this.sourceSemanticHash = current;
       return current;
     }
-    if (this.sourceSemanticHash !== current) {
-      this.selected.clear();
-      this.selectionExplicit = false;
-      this.sourceSemanticHash = current;
-    }
+    if (this.sourceSemanticHash !== current) this.resetSelectionForSource(current);
     return current;
+  }
+
+  resetSelectionForSource(sourceSemanticHash) {
+    this.selected.clear();
+    this.selectionExplicit = false;
+    this.sourceSemanticHash = sourceSemanticHash;
+    this.message = EMPTY_MESSAGE;
+    this.error = '';
   }
 
   /**

@@ -12,6 +12,10 @@ import {
   defaultProfileFields,
   qualifiedMeshQualityPolicyForStage,
 } from '../src/core/lafea-profile-contract/index.js';
+import {
+  createLafeaContinuumConvergenceStudyDefinition,
+  deriveLafeaContinuumConvergenceMeshProfile,
+} from '../src/workspace/lafea-continuum-convergence-study.js';
 import { LAFEA_CONTINUUM_GEOMETRY_INTAKE_SCHEMA } from '../src/workspace/lafea-continuum-geometry-intake.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
 import { issueLafeaSourceAuthority } from '../src/workspace/lafea-source-authority.js';
@@ -96,7 +100,15 @@ try {
   assert.equal(finalStage.lifecycleReadiness.releaseState, 'RELEASE_NOT_QUALIFIED');
   assert.equal(finalStage.lifecycle.artifacts.CONVERGENCE.status, 'CURRENT');
   assert.equal(finalStage.lifecycle.artifacts.CONVERGENCE.qualification, 'PASS');
+  assert.equal(finalStage.execution.runtimeSolverDiagnostics?.terminationState, 'CONVERGED');
 
+  const meshMetadata = replayMeshMetadata(
+    benchmarkDefinition,
+    normalizedSource,
+    authority.sourceHash,
+    profile,
+    convergence,
+  );
   const negativeControl = runNegativeControl(
     benchmarkDefinition,
     normalizedSource,
@@ -114,6 +126,7 @@ try {
     probeEvidenceHash: row.probeEvidenceHash,
     value: row.authoritativeValue,
     units: row.authoritativeUnits,
+    meshMetadata: meshMetadata.get(row.levelId),
   }));
   assert.equal(
     new Set(rows.map((row) => row.meshHash)).size,
@@ -135,6 +148,7 @@ try {
     },
     observations: rows,
     convergence: convergence.study.convergenceEvidence,
+    solverDiagnostics: finalStage.execution.runtimeSolverDiagnostics,
     negativeControl,
     resultPublicationQualified: finalStage.lifecycleReadiness.resultReady,
     qualificationEvidence: {
@@ -143,6 +157,7 @@ try {
       exactHead: repository.head,
       oneMeshExecutionStatus: oneMeshStage.execution.status,
       finalResultState: finalStage.lifecycleReadiness.resultState,
+      meshReplayCount: meshMetadata.size,
     },
     diagnostics: [],
   });
@@ -150,6 +165,7 @@ try {
   assert.equal(report.authority.resultPublicationQualified, true);
   assert.equal(report.authority.releaseQualified, false);
   assert.equal(report.oracleComparison.status, 'PASS');
+  assert.equal(report.solverDiagnostics.accepted, true);
   assert.equal(report.negativeControl.status, 'PASS_EXPECTED_REJECTION');
 
   console.log(JSON.stringify({
@@ -169,6 +185,52 @@ function convergenceRequest(definition) {
     probe,
     levels: definition.mesh.levels.map((row) => ({ ...row })),
   };
+}
+
+function replayMeshMetadata(definition, normalizedSource, sourceHash, baseProfile, convergence) {
+  const request = convergenceRequest(definition);
+  const studyDefinition = createLafeaContinuumConvergenceStudyDefinition(request);
+  const expectedByLevel = new Map(convergence.study.levels.map((row) => [row.levelId, row]));
+  const metadata = new Map();
+  for (const level of definition.mesh.levels) {
+    const levelProfile = deriveLafeaContinuumConvergenceMeshProfile(
+      baseProfile,
+      studyDefinition,
+      level,
+    );
+    const replay = createLafeaWorkbenchStore({
+      initialStage: STAGE_ID,
+      initialDocument: normalizedSource,
+      initialSourceHash: sourceHash,
+    });
+    try {
+      replay.registerContinuumGeometryIntake(declaration(definition));
+      replay.bindAnalysisMeshProfile(levelProfile, STAGE_ID);
+      const generated = replay.generateAnalysisMesh({}, STAGE_ID);
+      const expected = expectedByLevel.get(level.levelId);
+      assert.ok(expected, `missing convergence receipt for ${level.levelId}`);
+      assert.equal(levelProfile.semanticHash, expected.meshProfileHash);
+      assert.equal(generated.evidence.meshHash, expected.meshHash,
+        `deterministic mesh replay mismatch at ${level.levelId}`);
+      assert.equal(generated.summary.elementFamily, definition.mesh.elementFamily);
+      assert.equal(generated.summary.strategy, definition.mesh.requiredStrategy);
+      metadata.set(level.levelId, {
+        elementFamily: generated.summary.elementFamily,
+        strategy: generated.summary.strategy,
+        nodeCount: generated.evidence.mesh.nodes.length,
+        elementCount: generated.evidence.mesh.elements.length,
+        quality: {
+          status: generated.evidence.quality.worstStatus,
+          warningElementCount: generated.evidence.quality.warningElementIds?.length ?? 0,
+          blockingElementCount: generated.evidence.quality.blockingElementIds?.length ?? 0,
+          gateResults: structuredClone(generated.evidence.quality.gateResults ?? []),
+        },
+      });
+    } finally {
+      replay.destroy();
+    }
+  }
+  return metadata;
 }
 
 function runNegativeControl(definition, normalizedSource, sourceHash) {
@@ -345,6 +407,7 @@ function requireFrozenDefinition(definition, sourceRegistry) {
   assert.equal(definition.freezePolicy.productionOutputMayModifyOracle, false);
   assert.equal(definition.acceptance.rawMeshMaximumStressMayQualifyConvergence, false);
   assert.equal(definition.acceptance.releaseQualified, false);
+  assert.equal(Array.isArray(definition.limitations) && definition.limitations.length > 0, true);
   assert.equal(sourceRegistry.benchmarkId, definition.benchmarkId);
   assert.equal(sourceRegistry.oracleDerivation.productionResultUsed, false);
   assert.equal(sourceRegistry.custodyPolicy.productionOutputMayModifyOracle, false);

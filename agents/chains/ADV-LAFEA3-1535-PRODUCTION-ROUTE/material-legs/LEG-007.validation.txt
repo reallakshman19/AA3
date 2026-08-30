@@ -1,0 +1,24 @@
+LEG-007 focused exact-blob validation receipt
+
+Executed locally against byte-identical Git blobs written through the authenticated GitHub connector:
+
+1. src/workspace/lafea-guided-workflow-presentation.js
+   Git blob: 831cd76423182095959cd340c4733efedda59072
+   node --check: PASS
+   focused runtime: PASS — Convergence area => NOT_APPLICABLE when canonical step reason is WORKFLOW_STEP_NOT_APPLICABLE.
+
+2. src/workspace/lafea-ui-icons.js
+   Git blob: 78d951919ba9e8ad09a405e5ea2c5daac94dae41
+   node --check: PASS
+   focused runtime: PASS — SOLVE maps to calculation-style solve icon; former play-triangle path absent.
+
+3. src/workspace/lafea-workbench-reason-labels.js
+   Git blob: 35bf2a94b144680a38dc8df8b16fa8be22e88cf5
+   node --check: PASS
+   focused runtime: PASS — LAFEA3_CONVERGENCE_NOT_CURRENT_AND_QUALIFIED resolves to an engineer-readable Results-blocked message.
+
+Composite focused runtime output:
+{"status":"PASS","convergenceArea":"NOT_APPLICABLE","solveIcon":"solve","reasonLabel":"PASS"}
+
+NOT_RUN: full repository flow guard, build/import/workbench suites, BM-005, BM-006 browser replay.
+Infrastructure: visible-workbench run 33293877088 / job 99210106620 ended before step 1 with steps=null. Direct Git transport remained DNS-blocked.

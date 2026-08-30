@@ -1,28 +1,33 @@
 export const LFEA_PIPELINE_CONTINUITY_PRESENTATION_SCHEMA = 'lfea-pipeline-continuity-presentation/v1';
 
-/**
- * Presentation-only hierarchy/copy adapter for the pipeline shell.
- * It changes no data-role/action callback and no source/pre-flight record.
- */
+/** Presentation-only hierarchy/copy adapter for the pipeline shell. */
 export function mountLfeaPipelineContinuityPresentation(shellElement) {
-  if (!shellElement || typeof shellElement.querySelector !== 'function') {
-    throw new TypeError('Pipeline continuity presentation requires the shell element.');
-  }
+  if (!shellElement || typeof shellElement.querySelector !== 'function') throw new TypeError('Pipeline continuity presentation requires the shell element.');
   const doc = shellElement.ownerDocument;
   const sourceHost = shellElement.querySelector('[data-host-group="SOURCE"]');
-  const onSourceRefresh = () => syncSourceContinuity(sourceHost, doc);
+  const Observer = doc.defaultView?.MutationObserver ?? globalThis.MutationObserver;
+  let syncing = false;
+
+  const syncSource = () => {
+    if (syncing) return;
+    syncing = true;
+    try { syncSourceContinuity(sourceHost, doc); } finally { syncing = false; }
+  };
+  const onSourceRefresh = () => syncSource();
+  const sourceObserver = sourceHost && typeof Observer === 'function' ? new Observer(() => syncSource()) : null;
 
   syncToolbarHierarchy(shellElement, doc);
-  syncSourceContinuity(sourceHost, doc);
+  syncSource();
   sourceHost?.addEventListener?.('lfea-source-presentation-refresh', onSourceRefresh);
+  sourceObserver?.observe(sourceHost, { childList: true, subtree: true });
 
   return Object.freeze({
     schema: LFEA_PIPELINE_CONTINUITY_PRESENTATION_SCHEMA,
-    refresh() {
-      syncToolbarHierarchy(shellElement, doc);
-      syncSourceContinuity(sourceHost, doc);
+    refresh() { syncToolbarHierarchy(shellElement, doc); syncSource(); },
+    destroy() {
+      sourceObserver?.disconnect();
+      sourceHost?.removeEventListener?.('lfea-source-presentation-refresh', onSourceRefresh);
     },
-    destroy() { sourceHost?.removeEventListener?.('lfea-source-presentation-refresh', onSourceRefresh); },
   });
 }
 
@@ -31,7 +36,6 @@ function syncToolbarHierarchy(shell, doc) {
   const authority = toolbar?.querySelector('.lfea-pipeline-shell__authority');
   const codeChecks = toolbar?.querySelector('[data-action="lfea-pipeline-assemble-and-run"]');
   if (!toolbar || !authority || !codeChecks) return;
-
   if (!toolbar.querySelector('[data-role="lfea-pipeline-optional-tools-label"]')) {
     const label = doc.createElement('span');
     label.className = 'lfea-pipeline-shell__toolbar-status';
@@ -64,13 +68,12 @@ function syncSourceContinuity(sourceHost, doc) {
 
   const errorCheck = sourceHost.querySelector('[data-role="lfea-common-error-check-panel"]');
   const heading = errorCheck?.querySelector('.lfea-common-error-check__header h3');
-  if (heading) heading.textContent = 'Error check';
+  if (heading && heading.textContent !== 'Error check') heading.textContent = 'Error check';
   const summary = errorCheck?.querySelector('[data-role="lfea-common-error-check-summary"]');
   if (summary?.textContent === 'Load and prepare a model to review governed engineering findings.') {
     summary.textContent = 'Return to Input and load a source model to start Error check.';
   }
   const empty = errorCheck?.querySelector('[data-role="lfea-common-error-check-empty"]');
-  if (empty) {
-    empty.textContent = 'No governed pre-flight is available yet. Return to Input to load or repair the source model; source intake errors remain visible there.';
-  }
+  const emptyCopy = 'No governed pre-flight is available yet. Return to Input to load or repair the source model; source intake errors remain visible there.';
+  if (empty && empty.textContent !== emptyCopy) empty.textContent = emptyCopy;
 }

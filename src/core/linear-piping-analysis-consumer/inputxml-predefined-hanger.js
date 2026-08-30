@@ -4,6 +4,8 @@ import {
   resolveSpringRate,
 } from './restraint-spring-rate.js';
 import {
+  DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE as APPROXIMATE,
+  STRICT_INPUTXML_LINEAR_STATIC_PROFILE as STRICT,
   exactDisposition,
   invalidDisposition,
   unsupportedDisposition,
@@ -112,8 +114,5 @@ function finitePositive(value) {
 }
 
 function both(disposition) {
-  return Object.freeze({
-    STRICT_INPUTXML_LINEAR_STATIC_V1: disposition,
-    DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1: disposition,
-  });
+  return Object.freeze({ [STRICT]: disposition, [APPROXIMATE]: disposition });
 }

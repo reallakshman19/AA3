@@ -1,0 +1,105 @@
+{
+  "schema": "lafea3-bm005-report-artifact-contract/v1",
+  "benchmarkId": "BM-005-LAME-CONT-CYL-01",
+  "reportSchema": "lafea3-bm005-audit-report/v1",
+  "hashProfile": "LAFEA_CANONICAL_JSON_SHA256_V1",
+  "producer": "scripts/lafea.3-bm005-ordinary-route-check.mjs",
+  "persistence": {
+    "directory": "agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/validation",
+    "filenameTemplate": "BM005-<candidateHeadSha>.json",
+    "rule": "Persist only the exact harness output from an executed clean-tree candidate. The evidence commit may be a later relay-only commit, but candidateHeadSha/evidenceHash continue to identify the tested head. Do not fabricate a PASS artifact from source inspection."
+  },
+  "requiredTopLevelFields": [
+    "schema",
+    "benchmarkId",
+    "stageId",
+    "route",
+    "candidateHeadSha",
+    "cleanTree",
+    "hashProfile",
+    "benchmarkDefinition",
+    "benchmarkDefinitionHash",
+    "oracleSourceRegistry",
+    "oracleSourceRegistryHash",
+    "lineage",
+    "observations",
+    "convergence",
+    "oracleComparison",
+    "solverDiagnostics",
+    "negativeControl",
+    "warnings",
+    "limitations",
+    "authority",
+    "qualificationEvidence",
+    "diagnostics",
+    "semanticHash",
+    "evidenceHash"
+  ],
+  "requiredObservationFields": [
+    "levelId",
+    "h",
+    "meshProfileHash",
+    "meshHash",
+    "solverModelHash",
+    "executionHash",
+    "recoveryHash",
+    "probeEvidenceHash",
+    "value",
+    "units",
+    "meshMetadata"
+  ],
+  "requiredConvergenceFields": [
+    "classification",
+    "observedOrders",
+    "observedOrder",
+    "richardsonExtrapolatedValue",
+    "gciFineAbsolute",
+    "gciFinePercent",
+    "pointwiseAcceptanceEligible",
+    "asymptoticRangeAccepted"
+  ],
+  "requiredOracleComparisonFields": [
+    "expectedValue",
+    "actualFineValue",
+    "units",
+    "absoluteError",
+    "relativeError",
+    "gciFineAbsolute",
+    "gciFinePercent",
+    "richardsonExtrapolatedValue",
+    "oracleCoveredByGci",
+    "status"
+  ],
+  "requiredAuthorityFields": [
+    "benchmarkQualified",
+    "resultPublicationQualified",
+    "releaseQualified",
+    "coreFeaCompletionProven",
+    "reasons"
+  ],
+  "semanticHashInput": [
+    "benchmark identity and route",
+    "benchmarkDefinitionHash",
+    "oracleSourceRegistryHash",
+    "lineage",
+    "mesh/probe observations",
+    "convergence result",
+    "oracle comparison",
+    "solver diagnostics",
+    "negative-control result",
+    "warnings/limitations",
+    "authority disposition"
+  ],
+  "evidenceHashInput": [
+    "semanticHash",
+    "candidateHeadSha",
+    "qualificationEvidence",
+    "diagnostics"
+  ],
+  "authorityRules": {
+    "benchmarkPassMayGrantRelease": false,
+    "resultPublicationMayGrantRelease": false,
+    "releaseQualifiedMustRemainFalseForIssue1569": true,
+    "sourceInspectionMayCreateExecutedPassArtifact": false
+  }
+}

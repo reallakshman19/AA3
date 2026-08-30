@@ -46,6 +46,31 @@ export function compileInputXmlStructuralConstraints({
         { inventoryId: item.inventoryId, sourceNodeId, targetDof },
       );
     }
+
+    /*
+     * A finite declared spring rate and an absent converted spring rate are not
+     * the same state as "no spring was declared". The latter is a legitimate
+     * rigid restraint; the former means force/length unit custody failed.
+     *
+     * resolveSpringRate() deliberately withholds stiffnessValue when the source
+     * units cannot be resolved. Before this guard, the null below fell into the
+     * NODAL_RESTRAINT/FIXED branch and silently made the requested compliant
+     * support rigid. Keep this defense at the declaration owner boundary even
+     * if an upstream inventory disposition is accidentally permissive.
+     */
+    if (item.classification.finiteStiffnessActive
+      && item.classification.stiffnessValue === null) {
+      fail(
+        'INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED',
+        `Restraint ${item.inventoryId} declares a finite spring rate that cannot be converted to solver units.`,
+        {
+          inventoryId: item.inventoryId,
+          stiffnessDeclared: item.classification.stiffnessDeclared ?? null,
+          stiffnessUnitsResolvable: item.classification.stiffnessUnitsResolvable ?? false,
+        },
+      );
+    }
+
     const targetNodeId = structuralTargetNode(sourceNodeId, retargeting, item.inventoryId);
     if (available !== null && !available.has(targetNodeId)) {
       fail(

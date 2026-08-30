@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
 MISSION: Close LAFEA.4 production scalability first, then qualify MITC adoption without crossing formulation or release authority prematurely.
-ACTIVE_ENDPOINT: EP-0013
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0013.md
+ACTIVE_ENDPOINT: EP-0014
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0014.md
 MATERIAL_HISTORY_ROOT_BASE: 80dcfe8311b7cee367873fe2794ab059a242921b
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0011.md
-PR: #1542
-BRANCH: codex/lafea-1536-mitc-adoption
-HEAD: 6521f02b686793bf4224aa9caf04040e49ca574d
+PR: NONE
+BRANCH: main
+HEAD: 358c1126c373d56304d539ad1e3cf7020e1a8b29
 STATE: BLOCKED
 ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
@@ -15,14 +15,14 @@ QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: BLOCKED
 AUTO_STATE: BLOCKED
 MERGE_AUTHORITY: OWNER_ONLY
-AUTHORITY_DOMAIN: LAFEA.4 experimental MITC adoption and production-route benchmark qualification; no registered production-route authority change
+AUTHORITY_DOMAIN: LAFEA.4 merged sparse-shell and experimental MITC adoption evidence; no registered production-route authority change
 ACTIVE_CUSTODIAN: reallaksh19
 AGENT_INSTANCE_ID: chatgpt:ddc9d66e-417d-4a98-a48f-8fb83328fe3d
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 13
+CUSTODY_EPOCH: 14
 COORDINATION_STATE: SAFE
-DEPENDENCIES: current Common relay validators NOT_RUN; executable LAFEA.4 qualification unavailable; retry job 99187780310 had steps=null; parent PR #1541 qualification remains NOT_RUN
+DEPENDENCIES: current Common relay validators NOT_RUN; executable LAFEA.4 qualification unavailable; retry job 99187780310 had steps=null; local checkout unavailable because execution container could not resolve github.com
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 2e5fca39ad72f9bd1828ac54c245b9200c916b74
 COMMON_PROTOCOL_STATUS: CURRENT

@@ -1,7 +1,10 @@
 import { assembleSparseSymmetric } from '../shared-linear-solve/sparse-matrix.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { ELEMENT_DOF_ORDER } from '../linear-fea-contract/conventions.js';
-import { INACTIVE_ANALYSIS_DOF_BEHAVIOR } from '../linear-fea-contract/model-schema.js';
+import {
+  INACTIVE_ANALYSIS_DOF_BEHAVIOR,
+  TRANSLATIONAL_DOFS,
+} from '../linear-fea-contract/model-schema.js';
 import { dofIndexOf } from './dof-map.js';
 import { requireElementContribution } from './element-contributions.js';
 import {
@@ -78,14 +81,38 @@ function buildElementTriplets(model, dofMap, elementContributions) {
   return { triplets, elementLoad, elementIds };
 }
 
+function buildDirectionalSpringTriplets(constraint, dofMap, stiffness) {
+  const indices = TRANSLATIONAL_DOFS.map((dof) => dofIndexOf(dofMap, constraint.nodeId, dof));
+  const triplets = [];
+  for (let row = 0; row < 3; row += 1) {
+    for (let column = 0; column < 3; column += 1) {
+      const value = stiffness * constraint.direction[row] * constraint.direction[column];
+      if (value === 0) continue;
+      triplets.push({
+        row: indices[row],
+        col: indices[column],
+        value,
+        tag: `SPRING:${constraint.constraintId}`,
+      });
+    }
+  }
+  return triplets;
+}
+
 function buildSpringTriplets(model, dofMap) {
   const springs = model.constraints
     .filter((constraint) => constraint.behavior === 'LINEAR_SPRING')
     .sort((left, right) => compareAscii(left.constraintId, right.constraintId));
-  const triplets = springs.map((constraint) => {
-    const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);
+  const triplets = springs.flatMap((constraint) => {
     const stiffness = requirePositive(constraint.stiffness, `constraints[${constraint.constraintId}].stiffness`, CODE);
-    return { row: index, col: index, value: stiffness, tag: `SPRING:${constraint.constraintId}` };
+    if (Array.isArray(constraint.direction)) {
+      // A finite spring along unit n contributes the exact rank-1 translational
+      // block k(n⊗n). The sealed model owns direction validation; assembly uses
+      // that released direction exactly and never projects it to a dominant DOF.
+      return buildDirectionalSpringTriplets(constraint, dofMap, stiffness);
+    }
+    const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);
+    return [{ row: index, col: index, value: stiffness, tag: `SPRING:${constraint.constraintId}` }];
   });
   return { triplets, springs };
 }

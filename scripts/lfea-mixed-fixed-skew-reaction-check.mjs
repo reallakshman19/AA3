@@ -5,6 +5,7 @@ import {
   authorizeLinearPipingInputXmlPreFlight,
   prepareLinearPipingInputXmlPreFlight,
 } from '../src/workspace/linear-piping-inputxml-prefea.js';
+import { nodeResultRows } from '../src/workspace/lfea-pipeline-results-view-model.js';
 import { buildInputXmlRunRequestCase } from '../src/core/linear-piping-analysis-consumer/inputxml-run-request-cases.js';
 import { compileLinearPipingInputXmlAnalysisContext } from '../src/core/linear-piping-analysis-consumer/index.js';
 import { nodalResult } from '../src/core/linear-piping-analysis-consumer/generic-inputxml-solve-case.js';
@@ -103,6 +104,12 @@ const mixedUxSum = uxAtMixedNode.reduce((sum, row) => sum + row.value, 0);
 const projectedNodal = nodalResult({ execution }, directional.nodeId);
 close(projectedNodal.reaction.UX, mixedUxSum,
   'generic nodal reaction projection must sum all mixed-node UX support contributions');
+const visibleNodeId = String(directional.nodeId).replace(/^.*\.N/u, '');
+const visibleReactionRow = nodeResultRows(execution.reactions, () => 1)
+  .find((row) => row.nodeId === visibleNodeId);
+assert.ok(visibleReactionRow, `visible results view must contain node ${visibleNodeId}`);
+close(visibleReactionRow.values.UX, mixedUxSum,
+  'visible support-load row must sum all mixed-node UX support contributions');
 
 const allUx = execution.reactions.filter((row) => row.dof === 'UX');
 const globalUxSupport = allUx.reduce((sum, row) => sum + row.value, 0);
@@ -129,7 +136,8 @@ console.log(JSON.stringify({
   publicMixedUxRows: uxAtMixedNode.map((row) => row.value),
   publicMixedUxSum: mixedUxSum,
   projectedNodalUxReaction: projectedNodal.reaction.UX,
+  visibleSupportLoadUxReaction: visibleReactionRow.values.UX,
   publicRepresentation: representation,
-  interpretation: 'NODE_PROJECTION_AGGREGATES_ALL_SUPPORT_CONTRIBUTIONS',
+  interpretation: 'NODE_AND_VISIBLE_PROJECTIONS_AGGREGATE_ALL_SUPPORT_CONTRIBUTIONS',
   authority: 'Self-authored exercise only; does not clear DRAFT or establish CAESAR parity.',
 }, null, 2));

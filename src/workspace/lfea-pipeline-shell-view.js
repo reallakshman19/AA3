@@ -1,7 +1,7 @@
 import { LFEA_PIPELINE_STEPS, lfeaPipelineHostGroupFor, requireLfeaPipelineStep } from './lfea-pipeline-step-registry.js';
 import { installLfeaPipelineIconSprite, lfeaPipelineIcon } from './lfea-pipeline-icon-manifest.js';
 
-/** Renders the unified LFEA pipeline stepper chrome around existing panel hosts. */
+/** Renders the unified LFEA pipeline chrome and native task hosts. */
 export class LfeaPipelineShellView {
   constructor(rootElement) {
     this.rootElement = rootElement;
@@ -14,7 +14,6 @@ export class LfeaPipelineShellView {
     const shell = doc.createElement('section');
     shell.className = 'lfea-pipeline-shell';
     shell.dataset.role = 'lfea-pipeline-shell';
-
     installLfeaPipelineIconSprite(shell);
 
     const toolbar = doc.createElement('div');
@@ -29,28 +28,39 @@ export class LfeaPipelineShellView {
     loadSample.addEventListener('click', () => handlers.onLoadSample?.());
     toolbar.append(loadSample);
 
+    const optionalToolsLabel = doc.createElement('span');
+    optionalToolsLabel.className = 'lfea-pipeline-shell__toolbar-status';
+    optionalToolsLabel.dataset.role = 'lfea-pipeline-optional-tools-label';
+    optionalToolsLabel.textContent = 'Optional tools';
+    optionalToolsLabel.title = 'These controls are outside the normal Input → Error check → Load case → Run → Output → Export path.';
+    toolbar.append(optionalToolsLabel);
+
     const authorityLabel = doc.createElement('label');
     authorityLabel.className = 'lfea-pipeline-shell__toolbar-action lfea-pipeline-shell__authority';
-    authorityLabel.title = 'Load the governed JSON supplement used only by optional interface/B31 code checks.';
+    authorityLabel.title = 'Optional governed authority supplement for interface/B31 code checks. Normal LFEA analysis does not require it.';
     const authorityInput = doc.createElement('input');
     authorityInput.type = 'file';
     authorityInput.accept = '.json,application/json';
     authorityInput.dataset.role = 'lfea-pipeline-authority-supplement-file';
     authorityInput.hidden = true;
     authorityInput.addEventListener('change', () => handlers.onAuthoritySupplementSelected(authorityInput.files?.[0] ?? null));
-    const authorityActionText = toolbarText(doc, 'Authority supplement');
     const authorityText = doc.createElement('span');
     authorityText.className = 'lfea-pipeline-shell__toolbar-status';
     authorityText.dataset.role = 'lfea-pipeline-authority-supplement-status';
     authorityText.textContent = 'Not loaded';
-    authorityLabel.append(lfeaPipelineIcon(doc, 'icon-authority-supplement'), authorityInput, authorityActionText, authorityText);
+    authorityLabel.append(
+      lfeaPipelineIcon(doc, 'icon-authority-supplement'),
+      authorityInput,
+      toolbarText(doc, 'Authority supplement'),
+      authorityText,
+    );
     toolbar.append(authorityLabel);
 
     const assembleButton = doc.createElement('button');
     assembleButton.type = 'button';
     assembleButton.className = 'lfea-pipeline-shell__toolbar-action lfea-pipeline-shell__assemble';
     assembleButton.dataset.action = 'lfea-pipeline-assemble-and-run';
-    assembleButton.title = 'Optional interface/B31 code checks. Normal LFEA analysis uses Analyze on Load case.';
+    assembleButton.title = 'Optional interface/B31 code checks. Normal LFEA analysis uses the Run step.';
     assembleButton.append(lfeaPipelineIcon(doc, 'icon-code-checks'), toolbarText(doc, 'Code checks'));
     assembleButton.addEventListener('click', () => handlers.onAssembleAndSendToRun());
     toolbar.append(assembleButton);
@@ -152,17 +162,13 @@ export class LfeaPipelineShellView {
 
     const content = doc.createElement('div');
     content.className = 'lfea-pipeline-shell__content';
-    const sourceHost = doc.createElement('div');
-    sourceHost.className = 'lfea-pipeline-shell__host';
-    sourceHost.dataset.hostGroup = 'SOURCE';
+    const sourceHost = taskHost(doc, 'SOURCE');
     sourceHost.dataset.activeSource = 'NONE';
-    const loadCaseHost = doc.createElement('div');
-    loadCaseHost.className = 'lfea-pipeline-shell__host';
-    loadCaseHost.dataset.hostGroup = 'LOAD_CASE';
-    const resultsHost = doc.createElement('div');
-    resultsHost.className = 'lfea-pipeline-shell__host';
-    resultsHost.dataset.hostGroup = 'RESULTS';
-    content.append(sourceHost, loadCaseHost, resultsHost);
+    const loadCaseHost = taskHost(doc, 'LOAD_CASE');
+    const runHost = taskHost(doc, 'RUN');
+    const outputHost = taskHost(doc, 'OUTPUT');
+    const exportHost = taskHost(doc, 'EXPORT');
+    content.append(sourceHost, loadCaseHost, runHost, outputHost, exportHost);
 
     const verificationDrawerHost = doc.createElement('div');
     verificationDrawerHost.className = 'lfea-pipeline-shell__verification-drawer';
@@ -172,7 +178,8 @@ export class LfeaPipelineShellView {
     shell.append(toolbar, nav, activeContext, guidance, content, verificationDrawerHost);
     this.rootElement.append(shell);
     this.elements = {
-      shell, toolbar, loadSample, nav, guidance, stepButtons, stepConnectors, content, sourceHost, loadCaseHost, resultsHost,
+      shell, toolbar, loadSample, nav, guidance, stepButtons, stepConnectors, content,
+      sourceHost, loadCaseHost, runHost, outputHost, exportHost,
       authorityInput, authorityText, assembleButton, assembleStatus,
       verificationDrawerToggle, verificationDrawerHost,
       activeContext, activeContextIcon, activeContextEyebrow, activeContextTitle, activeContextDescription, activeContextState,
@@ -187,24 +194,17 @@ export class LfeaPipelineShellView {
     this.elements.verificationDrawerToggle.classList.toggle('lfea-pipeline-shell__verification-toggle--open', !host.hidden);
   }
 
-  setActiveSourceKind(kind) {
-    this.elements.sourceHost.dataset.activeSource = kind;
-  }
-
-  setAuthoritySupplementStatus(text) {
-    this.elements.authorityText.textContent = normalizeAuthorityStatus(text);
-  }
-
+  setActiveSourceKind(kind) { this.elements.sourceHost.dataset.activeSource = kind; }
+  setAuthoritySupplementStatus(text) { this.elements.authorityText.textContent = normalizeAuthorityStatus(text); }
   setAssembleStatus(text, isError) {
     this.elements.assembleStatus.textContent = text;
     this.elements.assembleStatus.dataset.status = isError ? 'error' : 'ok';
   }
 
   render(state) {
-    const { stepButtons } = this.elements;
     const guidance = state.guidance;
     LFEA_PIPELINE_STEPS.forEach((step, index) => {
-      const stepButton = stepButtons.get(step.stepId);
+      const stepButton = this.elements.stepButtons.get(step.stepId);
       const status = state.stepAvailability[step.stepId];
       const isActive = state.activeStepId === step.stepId;
       const stepStatus = guidance.stepStatusById[step.stepId];
@@ -251,28 +251,40 @@ export class LfeaPipelineShellView {
     this.elements.activeContextTitle.textContent = activeStep.label;
     this.elements.activeContextDescription.textContent = activeStep.description;
     this.elements.activeContextState.textContent = readableStatus(activeStatus);
-
-    this.elements.guidance.textContent =
-      `${guidance.completedCount} of ${guidance.stepCount} steps complete · ${guidance.nextActionText}`;
+    this.elements.guidance.textContent = `${guidance.completedCount} of ${guidance.stepCount} steps complete · ${guidance.nextActionText}`;
     this.elements.guidance.dataset.nextStepId = guidance.nextStepId ?? '';
+
     const activeHostGroup = lfeaPipelineHostGroupFor(state.activeStepId);
-    this.elements.sourceHost.hidden = activeHostGroup !== 'SOURCE';
-    this.elements.loadCaseHost.hidden = activeHostGroup !== 'LOAD_CASE';
-    this.elements.resultsHost.hidden = activeHostGroup !== 'RESULTS';
-    for (const host of [this.elements.sourceHost, this.elements.loadCaseHost, this.elements.resultsHost]) {
+    for (const host of this.taskHosts()) {
+      host.hidden = host.dataset.hostGroup !== activeHostGroup;
       host.dataset.activeStep = state.activeStepId;
     }
   }
 
+  taskHosts() {
+    return [this.elements.sourceHost, this.elements.loadCaseHost, this.elements.runHost, this.elements.outputHost, this.elements.exportHost];
+  }
+
   getSourceHost() { return this.elements.sourceHost; }
   getLoadCaseHost() { return this.elements.loadCaseHost; }
-  getResultsHost() { return this.elements.resultsHost; }
+  getRunHost() { return this.elements.runHost; }
+  getOutputHost() { return this.elements.outputHost; }
+  // Compatibility: existing consumers use ResultsHost for result/application surfaces.
+  getResultsHost() { return this.elements.outputHost; }
+  getExportHost() { return this.elements.exportHost; }
   getVerificationDrawerHost() { return this.elements.verificationDrawerHost; }
 
   destroy() {
     this.elements?.shell.remove();
     this.elements = null;
   }
+}
+
+function taskHost(doc, group) {
+  const host = doc.createElement('div');
+  host.className = 'lfea-pipeline-shell__host';
+  host.dataset.hostGroup = group;
+  return host;
 }
 
 function toolbarText(doc, text) {

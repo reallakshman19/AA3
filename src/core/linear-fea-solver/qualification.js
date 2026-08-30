@@ -1,5 +1,6 @@
 import { sparseMultiply } from '../shared-linear-solve/sparse-matrix.js';
 import { DOF_ORDER } from '../linear-fea-contract/conventions.js';
+import { TRANSLATIONAL_DOFS } from '../linear-fea-contract/model-schema.js';
 import { dot, matVec, norm2 } from './linear-algebra.js';
 import { dofIndexOf } from './dof-map.js';
 import { QUALIFICATION_STATUSES } from './solver-contract.js';
@@ -33,21 +34,48 @@ function multiply({ K, sparseK, n, vector }) {
   return matVec(K, n, vector);
 }
 
+function addGroundedDirectionalSpringAction(support, constraint, dofMap, Ufull) {
+  const indices = TRANSLATIONAL_DOFS.map((dof) => dofIndexOf(dofMap, constraint.nodeId, dof));
+  const displacement = indices.map((index) => Ufull[index]);
+  const extension = constraint.direction.reduce(
+    (sum, component, index) => sum + component * displacement[index],
+    0,
+  );
+  const force = constraint.direction.map((component) => -constraint.stiffness * extension * component);
+  force.forEach((value, index) => { support[indices[index]] += value; });
+  return Math.hypot(...force);
+}
+
 function externalWithSupportActions({ model, dofMap, KU, Ffull, Ufull }) {
   const support = new Array(Ffull.length).fill(0);
   const residual = KU.map((value, index) => value - Ffull[index]);
   let springCount = 0;
   let springForceMagnitude = 0;
   for (const constraint of model.constraints) {
-    const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);
     if (constraint.behavior === 'LINEAR_SPRING') {
+      if (Array.isArray(constraint.direction)) {
+        // A connected directional spring is an internal two-node stiffness.
+        // Its equal/opposite actions already live inside K and must not be
+        // counted again as an external ground support for global equilibrium.
+        if (constraint.connectedNodeId) continue;
+        springForceMagnitude += addGroundedDirectionalSpringAction(
+          support,
+          constraint,
+          dofMap,
+          Ufull,
+        );
+        springCount += 1;
+        continue;
+      }
+      const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);
       const springAction = -constraint.stiffness * Ufull[index];
       support[index] += springAction;
       springForceMagnitude += Math.abs(springAction);
       springCount += 1;
-    } else {
-      support[index] += residual[index];
+      continue;
     }
+    const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);
+    support[index] += residual[index];
   }
   return {
     vector: Ffull.map((value, index) => value + support[index]),

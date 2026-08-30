@@ -23,6 +23,8 @@ import {
   uniqueAscii,
 } from './inputxml-linear-physical-case-builders.js';
 import { collectAppliedForceSets } from './inputxml-linear-applied-force-sets.js';
+import { appendInputXmlHangerCases } from './inputxml-linear-hanger-cases.js';
+import { collectHangerPreloads } from './inputxml-linear-hanger-preloads.js';
 
 export function compileInputXmlLinearPhysicalCases(
   sourcePreparation,
@@ -39,18 +41,11 @@ export function compileInputXmlLinearPhysicalCases(
   const loadCaseProfile = inputXmlLinearPhysicalLoadCaseProfile();
   const modelReference = modelReferenceFromCompilation(structural.compilation);
   const sourceLoadBySegment = new Map(prepared.loadBindings.map((row) => [row.segmentId, row]));
-  const primitives = { gravity: [], pressure: [], thermal: [] };
+  const primitives = { gravity: [], pressure: [], thermal: [], hanger: [] };
   const ledger = [];
 
   for (const segmentBinding of [...structural.segmentBindings]
     .sort((left, right) => compareAscii(left.segmentId, right.segmentId))) {
-    // Retopology creates analysis spans (bend chords and trimmed straights),
-    // but their load authority remains the retained CAESAR source span. Using
-    // segmentBinding.segmentId here would require a fictitious per-chord source
-    // load record and causes every resolved bend to fail preparation. The
-    // structural binding already carries exact sourceSegmentId custody; reuse
-    // that authority and target its physical line/thermal/pressure data at the
-    // generated analysis element.
     const sourceAuthoritySegmentId = String(
       segmentBinding.sourceSegmentId ?? segmentBinding.segmentId,
     );
@@ -153,11 +148,7 @@ export function compileInputXmlLinearPhysicalCases(
     }
   }
 
-  // CAESAR carries applied nodal forces in numbered vector sets; a model
-  // commonly declares several as ALTERNATIVE occasional directions (BM4 has
-  // seven), so they are never summed into one case. Each non-empty set becomes
-  // its own physical case, which is faithful to the source without having to
-  // interpret the model's own <CASE> combination records.
+  primitives.hanger.push(...collectHangerPreloads(structural, gravityDirection, ledger));
   const forceSets = collectAppliedForceSets(structural, ledger);
   const cases = buildCases(structural, loadCaseProfile, modelReference, primitives, forceSets);
   cases.sort((left, right) => compareAscii(left.caseId, right.caseId));
@@ -200,6 +191,7 @@ export function compileInputXmlLinearPhysicalCases(
       compiledPrimitiveCount: new Set(cases.flatMap((row) => row.primitiveIds)).size,
       pressurePrimitiveCount: primitives.pressure.length,
       thermalPrimitiveCount: primitives.thermal.length,
+      hangerPreloadPrimitiveCount: primitives.hanger.length,
       thermalCoverageComplete: thermalComplete,
       sustainedCaseAvailable: true,
       operatingCaseAvailable: thermalComplete,
@@ -242,6 +234,9 @@ function buildCases(structural, loadCaseProfile, modelReference, primitives, for
       description: 'InputXML self-weight, pressure, and uniform-temperature physical case.',
     }));
   }
+  appendInputXmlHangerCases({
+    cases, structural, loadCaseProfile, modelReference, primitives, thermalComplete,
+  });
   for (const set of forceSets ?? []) {
     cases.push(caseRecord({
       structural, loadCaseProfile, modelReference,

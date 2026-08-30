@@ -3,13 +3,13 @@
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1551
 CHAIN_ID: ADV-LFEA-SUPPORT-REPRESENTABILITY
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0016
-STATE_AS_OF: 2026-08-30T09:43:46Z
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0017
+STATE_AS_OF: 2026-08-30T10:14:00Z
 PR: #1553 DRAFT
 BRANCH: codex/lfea-support-representability-1551
-ENGINEERING_MATERIAL_BASIS_HEAD: 487bee955cd2a9cb35ac67542f4be8de949cd003
+ENGINEERING_MATERIAL_BASIS_HEAD: 91933251699971df49a1b00bca9cad0b820bc599
 PRE_MIGRATION_PR_HEAD: 5516a504e212937e0249fa444453a6869fdcfcd4
-LIVE_MAIN_AT_REGROUND: 541e5ad6078e811c55e1c426f1e8ca7a34356a61
+LIVE_MAIN_AT_REGROUND: fad372eaf55487b10a2cbcad5ff8438b71e031ff
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COORDINATION_STATE: SAFE_AUTHORITY_DISJOINT
 MERGE_AUTHORITY: EXPLICIT_APPROVED_MERGE_ONLY
@@ -26,6 +26,8 @@ TASK-006 | frozen BM4_L non-regression | BLOCKED | target remains 96.76 / 93.00 
 TASK-007 | spring-rate units converted/fail closed | PASS_SOURCE | unresolved finite rate cannot silently become FIXED or use factor 1; N/mm→N/m conversion guarded in source/checks; exact-head execution still NOT_RUN_RUNTIME
 TASK-008 | DRAFT disclosure in UI/results | PASS_SOURCE | `DRAFT_SPRING_SUPPORT_NO_REFERENCE` retained through preparation/result/UI custody; external reference required to clear
 TASK-009 | protected scope | PASS_SOURCE | no reducer/parity/tolerance/Timoshenko/pressure/code/roadmap/workflow mechanics expansion used to compensate for blockers
+TASK-010 | blocked-execution result custody | PASS_SOURCE | normal orchestration and B-3.4 already refused BLOCKED execution; EP-0017 adds explicit retained-composition and public-result relationship refusals plus `lfea-blocked-execution-custody-check.mjs`; exact-head execution remains NOT_RUN_RUNTIME
+TASK-011 | mixed fixed + directional ground-spring reaction custody | OPEN | source audit shows current skew fixture does not exercise this valid mixed-support shape; execution can carry distinct fixed and spring support contributions on the same node/DOF, so exact public reaction-row semantics must be exercised before promotion rather than guessed
 
 ## Input ledger
 
@@ -37,6 +39,7 @@ INPUT-005 | Independent CAESAR skew reference | UNRESOLVED | REF-SKEW-01 operato
 INPUT-006 | Independent CAESAR CNODE reference | UNRESOLVED | REF-CNODE-01 operator package defined; raw run absent
 INPUT-007 | Independent CAESAR HANGER reference | UNRESOLVED | REF-HGR-01 operator package defined; raw run absent
 INPUT-008 | Exact-head executable environment | UNRESOLVED | current hosted-runner jobs create no executable steps; local checkout transport blocked
+INPUT-009 | Mixed fixed + directional spring exercise | UNRESOLVED | no retained fixture currently combines a directional ground spring with a translational FIXED restraint at the same node; targeted exercise required before changing reaction representation
 
 ## Benchmark / oracle ledger
 
@@ -44,26 +47,29 @@ BM-001 | BM4_L frozen non-regression | NOT_RUN | no executable BM4 evidence on c
 BM-002 | Self-authored constitutive/equilibrium exercise invariants | PASS_SOURCE | hand/source trace is internally closed; cannot clear feature DRAFT
 BM-003 | Exact-head deliberate-break red observations | NOT_RUN | hosted execution unavailable
 BM-004 | External CAESAR skew/CNODE/HANGER qualification | NOT_RUN | no raw independently retained feature package yet
+BM-005 | Blocked-execution custody guard | NOT_RUN | guard check authored and wired into spring aggregate; hosted execution unavailable
+BM-006 | Mixed fixed + directional spring reaction-row exercise | NOT_RUN | fixture/check not yet authored; source audit only
 
 ## Roadmap ledger
 
 RM-001 | docs/OWNER_ROADMAP.md@3d6cd5cf00f0bdd4e4fcff644f20f85a89c7ea60 | OWNER_ROADMAP | PRIMARY | ALIGNED | current roadmap remains LFEA Linear Static FEA Closure; mutation prohibited
-RM-002 | Common engineering-pr-delivery-v2@4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02 | PROCESS_POLICY | PRIMARY | ALIGNED | GitHub-Issue control plane now active for this chain; mutation prohibited
+RM-002 | Common engineering-pr-delivery-v2@4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02 | PROCESS_POLICY | PRIMARY | ALIGNED | GitHub-Issue control plane active for this chain; mutation prohibited
 
 ## Owner qualification baseline
 
-Current corrected question set: `QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0016`.
-Qualification scope is unchanged from legacy QS-0015 and the issue's original five engineering challenges; `proceed next` does not require re-asking unchanged questions.
+Current corrected question set: `QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0017`.
+Qualification basis advances to engineering material head `91933251699971df49a1b00bca9cad0b820bc599` because EP-0017 adds fail-closed public-result custody hardening and its guard check. The original five engineering challenges remain controlling; QS-0017 adds the new custody trace without relaxing any prior question.
 
 ## Current blocker
 
-Two independent gates remain:
+Three gates remain:
 
 1. exact-head executable qualification: focused checks + all deliberate-break modes + support/full aggregates + imports/lint/diff + BM4_L;
-2. independent retained CAESAR support references: REF-SKEW-01, REF-CNODE-01, REF-HGR-01.
+2. independent retained CAESAR support references: REF-SKEW-01, REF-CNODE-01, REF-HGR-01;
+3. targeted mixed fixed + directional ground-spring reaction exercise to determine whether public reaction rows need aggregation or explicit source decomposition.
 
-Until one produces new evidence, do not change support numerics/UI semantics and do not clear DRAFT.
+Do not change reaction semantics from source reasoning alone; exercise the mixed case first. Do not clear DRAFT without external support references.
 
 ## Exact next action
 
-Acquire either an exact-head execution environment or the controlled external CAESAR evidence package, consume the evidence fail-closed, update this ledger item-by-item, and preserve PR #1553 as DRAFT unless the Owner states exactly `APPROVED MERGE`.
+Author the bounded mixed fixed + directional ground-spring exercise/check without changing solver reaction semantics, then execute it when an exact-head runtime becomes available. In parallel, consume any controlled external CAESAR evidence fail-closed. Preserve PR #1553 as DRAFT unless the Owner states exactly `APPROVED MERGE`.

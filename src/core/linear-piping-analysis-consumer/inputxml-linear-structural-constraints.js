@@ -1,4 +1,9 @@
 import { InputXmlLinearStructuralPreparationError } from './inputxml-linear-structural-profile.js';
+import { compileInputXmlHangerConstraints } from './inputxml-hanger-structural-constraints.js';
+import {
+  requireStructuralConstraintNode,
+  resolveStructuralConstraintNode,
+} from './inputxml-structural-constraint-target.js';
 import {
   restraintApproximationCodes,
   restraintConnectingSpringDirection,
@@ -20,8 +25,11 @@ export function compileInputXmlStructuralConstraints({
   nodeRetargeting,
   conditionedNodeIds,
 }) {
-  const declarations = [];
-  const bindings = [];
+  const hangerResult = compileInputXmlHangerConstraints({
+    inventory, modelId, analysisProfileId, nodeRetargeting, conditionedNodeIds,
+  });
+  const declarations = [...hangerResult.declarations];
+  const bindings = [...hangerResult.bindings];
   const occupied = new Map();
   const retargeting = nodeRetargeting ?? {};
   const available = conditionedNodeIds === undefined || conditionedNodeIds === null
@@ -49,7 +57,6 @@ export function compileInputXmlStructuralConstraints({
         { inventoryId: item.inventoryId, sourceNodeId, targetDof },
       );
     }
-
     if (item.classification.finiteStiffnessActive
       && item.classification.stiffnessValue === null) {
       fail(
@@ -63,18 +70,18 @@ export function compileInputXmlStructuralConstraints({
       );
     }
 
-    const targetNodeId = structuralTargetNode(sourceNodeId, retargeting, item.inventoryId);
-    requireAvailableNode(available, targetNodeId, item.inventoryId, sourceNodeId);
+    const targetNodeId = resolveStructuralConstraintNode(sourceNodeId, retargeting, item.inventoryId);
+    requireStructuralConstraintNode(available, targetNodeId, item.inventoryId, sourceNodeId);
 
     const connectingDirection = restraintConnectingSpringDirection(item.classification);
     if (connectingDirection !== null) {
       const connectedSourceNodeId = String(item.classification.connectingNodeId);
-      const connectedTargetNodeId = structuralTargetNode(
+      const connectedTargetNodeId = resolveStructuralConstraintNode(
         connectedSourceNodeId,
         retargeting,
         item.inventoryId,
       );
-      requireAvailableNode(available, connectedTargetNodeId, item.inventoryId, connectedSourceNodeId);
+      requireStructuralConstraintNode(available, connectedTargetNodeId, item.inventoryId, connectedSourceNodeId);
       if (connectedTargetNodeId === targetNodeId) {
         fail(
           'INPUTXML_STRUCTURAL_CONNECTING_NODE_COLLAPSED',
@@ -195,34 +202,6 @@ export function compileInputXmlStructuralConstraints({
   });
 }
 
-function requireAvailableNode(available, targetNodeId, inventoryId, sourceNodeId) {
-  if (available === null || available.has(targetNodeId)) return;
-  fail(
-    'INPUTXML_STRUCTURAL_RESTRAINT_TARGET_MISSING_AFTER_RETOPOLOGY',
-    `Restraint ${inventoryId} targets node ${targetNodeId}, which is absent after structural retopology.`,
-    { inventoryId, sourceNodeId: String(sourceNodeId), targetNodeId },
-  );
-}
-
-function structuralTargetNode(sourceNodeId, retargeting, inventoryId) {
-  const source = String(sourceNodeId);
-  const record = retargeting[source] ?? null;
-  if (record === null) return source;
-  if (record.nearestNodeId === null || record.nearestNodeId === undefined) {
-    fail(
-      'INPUTXML_STRUCTURAL_RESTRAINT_RETOPOLOGY_AMBIGUOUS',
-      `Restraint ${inventoryId} is bound to retired bend corner node ${source}, which has no unique retained structural target.`,
-      {
-        inventoryId,
-        sourceNodeId: source,
-        bendSegmentId: record.bendSegmentId ?? null,
-        candidates: record.candidates ?? [],
-      },
-    );
-  }
-  return String(record.nearestNodeId);
-}
-
 function fail(code, message, data) {
   throw new InputXmlLinearStructuralPreparationError(message, code, data);
 }
@@ -232,7 +211,6 @@ function safe(value) {
 }
 
 function compareAscii(left, right) {
-  const a = String(left);
-  const b = String(right);
+  const a = String(left); const b = String(right);
   return a < b ? -1 : a > b ? 1 : 0;
 }

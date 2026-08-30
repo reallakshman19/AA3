@@ -15,6 +15,7 @@ import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js'
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaSolveReadiness } from './lafea-solve-readiness-panel.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
+import { renderLafeaContinuumConvergencePanel } from './lafea-continuum-convergence-panel.js';
 import {
   renderLafeaEngineeringEvidenceDrawer,
   revealLafeaGuidedTarget,
@@ -172,7 +173,12 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
 
   const convergenceCard = card(root, 'Convergence');
   convergenceCard.section.dataset.guidedTarget = 'convergence';
-  convergenceCard.body.append(renderContinuumConvergenceStatus(root, stage));
+  convergenceCard.body.append(
+    renderContinuumConvergenceStatus(root, stage),
+    renderLafeaContinuumConvergencePanel(root, stage, {
+      onRunConvergence: options.handlers.onRunContinuumConvergence,
+    }),
+  );
 
   const evidenceCard = card(root, 'Analysis results');
   evidenceCard.section.dataset.guidedTarget = 'results';
@@ -391,7 +397,7 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
     );
     const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review convergence');
     review.type = 'button';
-    review.title = 'Review the convergence custody that gates LAFEA.3 Results publication.';
+    review.title = 'Review or run the convergence study that gates LAFEA.3 Results publication.';
     review.onclick = () => navigateTo(shell, 'convergence');
     banner.append(review);
     return banner;
@@ -459,7 +465,7 @@ function renderContinuumConvergenceStatus(root, stage) {
       root,
       'p',
       'lafea-workbench__section-intro',
-      'Results remain fail-closed until the convergence-aware workbench retains CURRENT_PASS evidence. This status panel does not invent a probe, mesh ladder or acceptance tolerance.',
+      'Results remain fail-closed until the convergence-aware workbench retains CURRENT_PASS evidence. The study form below fixes the 2:1 ladder policy and does not expose acceptance tolerances.',
     ),
   );
   return panel;

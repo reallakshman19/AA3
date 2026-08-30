@@ -26,6 +26,11 @@ const AREA_DEFINITIONS = Object.freeze([
     stepIds: Object.freeze(['NUMERICAL_PREFLIGHT', 'AUTHORIZATION', 'RUN']),
   }),
   Object.freeze({
+    areaId: 'CONVERGENCE',
+    label: 'Convergence',
+    stepIds: Object.freeze(['CONVERGENCE']),
+  }),
+  Object.freeze({
     areaId: 'RESULTS',
     label: 'Results',
     stepIds: Object.freeze(['RESULTS_EVIDENCE']),
@@ -71,7 +76,7 @@ export function buildLafeaWorkflowAreaPresentation(workflow) {
 
 function areaStatus(areaId, workflow, steps) {
   if (areaId === 'MESH' && workflow.meshApplicable === false) return 'NOT_APPLICABLE';
-  if ((areaId === 'SOLVE' || areaId === 'RESULTS')
+  if ((areaId === 'SOLVE' || areaId === 'CONVERGENCE' || areaId === 'RESULTS')
     && workflow.executionSupported === false) {
     return 'NOT_APPLICABLE';
   }

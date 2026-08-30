@@ -1,36 +1,42 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { triangleSource } from './lafea.3-fixtures.mjs';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import {
+  MODEL_SCHEMA,
+  QUALIFICATION_PROFILE,
+} from '../src/core/local-continuum/index.js';
+import {
+  PROFILE_KINDS,
+  canonicalProfile,
+  defaultProfileFields,
+  qualifiedMeshQualityPolicyForStage,
+} from '../src/core/lafea-profile-contract/index.js';
+import { LAFEA_CONTINUUM_GEOMETRY_INTAKE_SCHEMA } from '../src/workspace/lafea-continuum-geometry-intake.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
 import { issueLafeaSourceAuthority } from '../src/workspace/lafea-source-authority.js';
-import { LAFEA_CONTINUUM_GEOMETRY_INTAKE_SCHEMA } from '../src/workspace/lafea-continuum-geometry-intake.js';
-import { createLafeaMockMeshProfile } from '../src/workspace/lafea-simulated-source-provider.js';
 import { createLafeaWorkbenchStore } from '../src/workspace/lafea-workbench.js';
+import { createBm005AuditReport } from './lafea.3-bm005-report-contract.mjs';
 
 const STAGE_ID = 'LAFEA.3';
-const source = triangleSource();
+const CHECK_ID = 'lafea.3-bm005-ordinary-route';
+const benchmarkDefinition = readJson(
+  '../validation/lafea-benchmark-data/BM005/benchmark.json',
+);
+const oracleSourceRegistry = readJson(
+  '../validation/lafea-benchmark-data/BM005/sources/source-registry.json',
+);
+requireFrozenDefinition(benchmarkDefinition, oracleSourceRegistry);
+
+const source = sourceDocument(benchmarkDefinition);
 const composition = requireLafeaStageComposition(STAGE_ID);
 const normalizedSource = composition.normalizeDocument(source);
-const authority = issueLafeaSourceAuthority(STAGE_ID, normalizedSource, 'LAFEA3_BM005_ORDINARY_ROUTE');
-const profile = createLafeaMockMeshProfile(STAGE_ID);
-
-const declaration = {
-  schema: LAFEA_CONTINUUM_GEOMETRY_INTAKE_SCHEMA,
-  geometry: pentagonGeometry(),
-  applicationRef: 'LAFEA3-1535/BM005-ORDINARY-ROUTE',
-  regionId: 'REGION-1',
-  materialRef: 'MAT',
-  attachments: [
-    attachment('BC-P1', 'RESTRAINT', 'VERTEX', 'P1', ['L1'], { ux: true, uy: true }),
-    attachment('BC-P2-UY', 'RESTRAINT', 'VERTEX', 'P2', ['L1'], { uy: true }),
-    attachment('LOAD-L1-P4', 'CONCENTRATED_LOAD', 'VERTEX', 'P4', ['L1'], {
-      fx: 1000, fy: -500, unit: 'N',
-    }),
-  ],
-  producerRef: 'LAFEA3-1535/BM005-QUALIFICATION',
-  temperatureUnit: 'C',
-};
-
+const authority = issueLafeaSourceAuthority(
+  STAGE_ID,
+  normalizedSource,
+  'LAFEA3_BM005_LAME_ORDINARY_ROUTE',
+);
+const profile = frozenMeshProfile(benchmarkDefinition);
 const store = createLafeaWorkbenchStore({
   initialStage: STAGE_ID,
   initialDocument: normalizedSource,
@@ -38,7 +44,9 @@ const store = createLafeaWorkbenchStore({
 });
 
 try {
-  const registration = store.registerContinuumGeometryIntake(declaration);
+  const registration = store.registerContinuumGeometryIntake(
+    declaration(benchmarkDefinition),
+  );
   assert.equal(registration.status, 'CURRENT');
   assert.equal(registration.analysisDomainProjection.state, 'CURRENT_PASS');
   assert.equal(registration.analysisGeometryProjection.state, 'CURRENT_PASS');
@@ -46,12 +54,18 @@ try {
   store.bindAnalysisMeshProfile(profile, STAGE_ID);
   const generated = store.generateAnalysisMesh({}, STAGE_ID);
   assert.equal(generated.evidence.qualification, 'PASS');
-  assert.equal(generated.evidence.mesh.elements.every((row) => row.elementType === 'T6'), true);
+  assert.equal(generated.summary.elementFamily, benchmarkDefinition.mesh.elementFamily);
+  assert.equal(generated.summary.strategy, benchmarkDefinition.mesh.requiredStrategy);
+  assert.equal(
+    generated.evidence.mesh.elements.every(
+      (row) => row.elementType === benchmarkDefinition.mesh.elementFamily,
+    ),
+    true,
+  );
 
   const preflight = store.prepareContinuumForRun();
   assert.equal(preflight.projection.state, 'CURRENT_PASS');
   assert.equal(preflight.projection.usableForAuthorization, true);
-
   store.run();
   const oneMeshStage = store.getState().stages[STAGE_ID];
   assert.equal(oneMeshStage.execution.status, 'QUALIFIED');
@@ -59,50 +73,40 @@ try {
   assert.equal(oneMeshStage.lifecycle.artifacts.RECOVERY.qualification, 'PASS');
   assert.equal(oneMeshStage.lifecycleReadiness.resultReady, false,
     'one qualified mesh must not publish LAFEA.3 Results');
-  assert.equal(oneMeshStage.lifecycleReadiness.resultState, 'RESULT_NOT_READY');
   assert.ok(oneMeshStage.lifecycleReadiness.blockingReasons
     .includes('LAFEA3_CONVERGENCE_NOT_CURRENT_AND_QUALIFIED'));
 
-  const convergence = store.runContinuumConvergenceStudy({
-    schema: 'lafea-continuum-convergence-study-request/v1',
-    studyId: 'LAFEA3-1535-BM005-DISPLACEMENT',
-    probe: {
-      schema: 'lafea-continuum-physical-probe/v1',
-      probeId: 'BM005-PROBE-CENTER',
-      physicalCoordinate: { x: 50, y: 50 },
-      coordinateFrame: 'GLOBAL_XY',
-      loadCaseId: 'L1',
-      quantityId: 'DISPLACEMENT_MAGNITUDE',
-      representation: 'PHYSICAL_POINT_DIRECT',
-      recoveryMethod: 'ELEMENT_SHAPE_INTERPOLATION',
-      units: 'mm',
-      singularityClassification: 'NOT_APPLICABLE',
-    },
-    levels: [
-      { levelId: 'COARSE', h: 30 },
-      { levelId: 'MEDIUM', h: 15 },
-      { levelId: 'FINE', h: 7.5 },
-    ],
-  });
-
-  assert.equal(convergence.status, 'CURRENT_PASS',
-    'actual ordinary-route probe convergence must be publishable');
+  const convergence = store.runContinuumConvergenceStudy(
+    convergenceRequest(benchmarkDefinition),
+  );
+  assert.equal(convergence.status, 'CURRENT_PASS');
   assert.equal(convergence.projection.state, 'CURRENT_PASS');
-  assert.equal(convergence.projection.usableForResultPublication, true);
   assert.equal(convergence.resultReady, true);
   assert.equal(convergence.releaseQualified, false);
+  assert.equal(
+    convergence.study.classification,
+    benchmarkDefinition.acceptance.requireConvergenceClassification,
+    'BM-005 requires demonstrated asymptotic-range behavior, not monotonicity alone',
+  );
+  assert.ok(convergence.study.convergenceEvidence.observedOrders.length >= 2,
+    'four frozen mesh levels must provide overlapping observed-order evidence');
 
   const finalStage = store.getState().stages[STAGE_ID];
-  assert.equal(finalStage.lifecycleReadiness.resultReady, true);
   assert.equal(finalStage.lifecycleReadiness.resultState, 'RESULT_READY');
   assert.equal(finalStage.lifecycleReadiness.releaseState, 'RELEASE_NOT_QUALIFIED');
-  assert.equal(finalStage.continuumConvergenceProjection.state, 'CURRENT_PASS');
   assert.equal(finalStage.lifecycle.artifacts.CONVERGENCE.status, 'CURRENT');
   assert.equal(finalStage.lifecycle.artifacts.CONVERGENCE.qualification, 'PASS');
 
+  const negativeControl = runNegativeControl(
+    benchmarkDefinition,
+    normalizedSource,
+    authority.sourceHash,
+  );
+  const repository = repositoryState();
   const rows = convergence.study.levels.map((row) => ({
     levelId: row.levelId,
     h: row.h,
+    meshProfileHash: row.meshProfileHash,
     meshHash: row.meshHash,
     solverModelHash: row.solverModelHash,
     executionHash: row.executionHash,
@@ -111,68 +115,240 @@ try {
     value: row.authoritativeValue,
     units: row.authoritativeUnits,
   }));
-  assert.equal(new Set(rows.map((row) => row.meshHash)).size, 3);
-  assert.equal(new Set(rows.map((row) => row.executionHash)).size, 3);
+  assert.equal(
+    new Set(rows.map((row) => row.meshHash)).size,
+    benchmarkDefinition.mesh.requiredDistinctMeshCount,
+  );
+  assert.equal(new Set(rows.map((row) => row.executionHash)).size, rows.length);
+
+  const report = createBm005AuditReport({
+    benchmarkDefinition,
+    oracleSourceRegistry,
+    candidateHeadSha: repository.head,
+    cleanTree: repository.cleanTree,
+    lineage: {
+      sourceHash: convergence.study.sourceHash,
+      analysisDomainHash: convergence.study.analysisDomainHash,
+      analysisGeometryHash: convergence.study.analysisGeometryHash,
+      baseMeshProfileHash: convergence.study.baseMeshProfileHash,
+      convergenceDefinitionHash: convergence.study.definitionHash,
+    },
+    observations: rows,
+    convergence: convergence.study.convergenceEvidence,
+    negativeControl,
+    resultPublicationQualified: finalStage.lifecycleReadiness.resultReady,
+    qualificationEvidence: {
+      command: 'node scripts/lafea.3-bm005-ordinary-route-check.mjs',
+      observation: 'LOCAL_EXECUTION',
+      exactHead: repository.head,
+      oneMeshExecutionStatus: oneMeshStage.execution.status,
+      finalResultState: finalStage.lifecycleReadiness.resultState,
+    },
+    diagnostics: [],
+  });
+  assert.equal(report.authority.benchmarkQualified, true);
+  assert.equal(report.authority.resultPublicationQualified, true);
+  assert.equal(report.authority.releaseQualified, false);
+  assert.equal(report.oracleComparison.status, 'PASS');
+  assert.equal(report.negativeControl.status, 'PASS_EXPECTED_REJECTION');
 
   console.log(JSON.stringify({
-    check: 'lafea.3-bm005-ordinary-route',
+    check: CHECK_ID,
     status: 'PASS',
-    stageId: STAGE_ID,
-    sourceHash: authority.sourceHash,
-    analysisGeometryHash: registration.intake.analysisGeometryHash,
-    analysisDomainHash: registration.intake.analysisDomainHash,
-    oneMesh: {
-      executionStatus: oneMeshStage.execution.status,
-      recoveryStatus: oneMeshStage.lifecycle.artifacts.RECOVERY.status,
-      resultState: oneMeshStage.lifecycleReadiness.resultState,
-      convergenceBlocker: 'LAFEA3_CONVERGENCE_NOT_CURRENT_AND_QUALIFIED',
-    },
-    convergence: {
-      studyId: convergence.study.studyId,
-      classification: convergence.study.classification,
-      observedOrder: convergence.study.convergenceEvidence.observedOrder,
-      richardsonExtrapolatedValue: convergence.study.convergenceEvidence.richardsonExtrapolatedValue,
-      gciFinePercent: convergence.study.convergenceEvidence.gciFinePercent,
-      levels: rows,
-      resultState: finalStage.lifecycleReadiness.resultState,
-      releaseState: finalStage.lifecycleReadiness.releaseState,
-    },
+    report,
   }, null, 2));
 } finally {
   store.destroy();
 }
 
-function pentagonGeometry() {
-  const vertices = [
-    vertex('P1', 0, 0),
-    vertex('P2', 100, 0),
-    vertex('P3', 140, 60),
-    vertex('P4', 70, 120),
-    vertex('P5', 0, 60),
-  ];
-  const segments = [
-    line('S1', 'P1', 'P2'),
-    line('S2', 'P2', 'P3'),
-    line('S3', 'P3', 'P4'),
-    line('S4', 'P4', 'P5'),
-    line('S5', 'P5', 'P1'),
-  ];
+function convergenceRequest(definition) {
+  const { polarCoordinate: _polar, ...probe } = definition.probe;
   return {
-    schema: 'lafea-analysis-geometry/v1',
-    stageId: STAGE_ID,
-    geometryId: 'BM005-PENTAGON',
-    coordinateSystemId: 'GLOBAL_XY',
-    lengthUnit: 'mm',
-    orientationPolicy: 'OUTER_CCW_HOLES_CW_V1',
-    vertices,
-    segments,
-    loops: [{ loopId: 'OUTER', role: 'OUTER', segmentIds: segments.map((row) => row.segmentId) }],
+    schema: 'lafea-continuum-convergence-study-request/v1',
+    studyId: `${definition.benchmarkId}/DISPLACEMENT-CONVERGENCE`,
+    probe,
+    levels: definition.mesh.levels.map((row) => ({ ...row })),
   };
 }
-function vertex(vertexId, x, y) { return { vertexId, x, y }; }
-function line(segmentId, startVertexId, endVertexId) {
-  return { segmentId, type: 'LINE', startVertexId, endVertexId };
+
+function runNegativeControl(definition, normalizedSource, sourceHash) {
+  const negative = definition.negativeControl;
+  const removed = new Set(negative.mutation.removeAttachmentIds);
+  const attachments = definition.model.attachments.filter(
+    (row) => !removed.has(row.attachmentId),
+  );
+  assert.equal(
+    attachments.length,
+    definition.model.attachments.length - removed.size,
+    'negative control must remove exactly the frozen restraint attachment set',
+  );
+  const store = createLafeaWorkbenchStore({
+    initialStage: STAGE_ID,
+    initialDocument: normalizedSource,
+    initialSourceHash: sourceHash,
+  });
+  try {
+    store.registerContinuumGeometryIntake(declaration(definition, attachments));
+    store.bindAnalysisMeshProfile(frozenMeshProfile(definition), STAGE_ID);
+    const generated = store.generateAnalysisMesh({}, STAGE_ID);
+    assert.equal(generated.evidence.qualification, 'PASS');
+    let actualBoundary = 'preflight';
+    let actualErrorCode = null;
+    try {
+      const preflight = store.prepareContinuumForRun();
+      if (preflight?.projection?.state !== 'CURRENT_PASS') {
+        actualErrorCode = diagnosticCode(store.getState());
+      } else {
+        actualBoundary = 'solver';
+        store.run();
+        actualErrorCode = diagnosticCode(store.getState());
+      }
+    } catch (error) {
+      actualErrorCode = error?.code ?? error?.message ?? 'UNKNOWN_ERROR';
+    }
+    assert.ok(actualErrorCode, 'negative control must fail closed with a retained diagnostic');
+    assert.ok(
+      negative.expectedErrorCodes.includes(actualErrorCode),
+      `negative control rejected with unexpected code ${actualErrorCode}`,
+    );
+    return {
+      negativeCaseId: negative.negativeCaseId,
+      actualBoundary,
+      actualErrorCode,
+    };
+  } finally {
+    store.destroy();
+  }
 }
-function attachment(attachmentId, kind, targetType, targetId, physicalCaseIds, payload) {
-  return { attachmentId, kind, targetType, targetId, physicalCaseIds, payload };
+
+function diagnosticCode(state) {
+  return state?.diagnostics?.[0]?.code
+    ?? state?.stages?.[STAGE_ID]?.execution?.diagnostics?.[0]?.code
+    ?? null;
+}
+
+function declaration(definition, attachments = definition.model.attachments) {
+  return {
+    schema: LAFEA_CONTINUUM_GEOMETRY_INTAKE_SCHEMA,
+    geometry: structuredClone(definition.model.geometry),
+    applicationRef: `${definition.benchmarkId}/ORDINARY-ROUTE`,
+    regionId: 'REGION-1',
+    materialRef: definition.model.material.materialId,
+    attachments: structuredClone(attachments),
+    producerRef: `${definition.benchmarkId}/QUALIFICATION`,
+    temperatureUnit: 'C',
+  };
+}
+
+function frozenMeshProfile(definition) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
+  const policy = qualifiedMeshQualityPolicyForStage(STAGE_ID);
+  if (!policy?.fields) throw new TypeError('BM005_MESH_QUALITY_POLICY_REQUIRED');
+  const fields = policy.fields;
+  return canonicalProfile(PROFILE_KINDS.MESH, {
+    schema: 'lafea-mesh-profile/v1',
+    profileIdentity: definition.mesh.profileIdentity,
+    sourceRevision: definition.mesh.sourceRevision,
+    semanticHash: undefined,
+    fields: {
+      ...defaults,
+      continuumElement: definition.mesh.elementFamily,
+      globalTargetSize: definition.mesh.levels[0].h,
+      adjacentSizeRatioMax: fields.adjacentSizeRatioMax,
+      aspectRatioWarn: fields.aspectRatioWarn,
+      aspectRatioBlock: fields.aspectRatioBlock,
+      scaledJacobianWarn: fields.scaledJacobianWarn,
+      scaledJacobianBlock: fields.scaledJacobianBlock,
+      adaptiveLevels: fields.adaptiveLevelsMinimum,
+    },
+  });
+}
+
+function sourceDocument(definition) {
+  const material = definition.model.material;
+  const t = definition.model.thickness;
+  return {
+    schema: MODEL_SCHEMA,
+    modelIdentity: definition.benchmarkId,
+    modelVersion: '1',
+    sourceAncestry: {
+      sourceModelIdentity: definition.sourceBenchmarkRef,
+      sourceVersion: 'BM005-FROZEN/V1',
+      adapterIdentity: 'LAFEA3_BM005_ORDINARY_ROUTE',
+      adapterVersion: '1',
+    },
+    units: { ...definition.model.units },
+    formulation: definition.model.formulation,
+    materials: [{
+      ...material,
+      sourceReference: `${definition.sourceClaimId}/MATERIAL`,
+    }],
+    nodes: [
+      sourceNode('A', 0, 0), sourceNode('B', 2, 0), sourceNode('C', 2, 2), sourceNode('D', 0, 2),
+      sourceNode('E', 1, 0), sourceNode('F', 2, 1), sourceNode('G', 1, 2), sourceNode('H', 0, 1),
+    ],
+    elements: [{
+      elementId: 'SOURCE-Q8-SEED',
+      elementType: 'Q8',
+      nodeIds: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+      materialId: material.materialId,
+      thickness: t,
+      sourceReference: `${definition.sourceClaimId}/SOURCE-Q8-SEED`,
+    }],
+    elementTypePolicy: {
+      allowT3Fallback: false,
+      sourceReference: `${definition.sourceClaimId}/Q8_ONLY`,
+    },
+    constraints: [],
+    loadCases: [{
+      loadCaseId: definition.model.physicalCaseId,
+      nodalForces: [], edgeTractions: [], pressureLoads: [], bodyForces: [],
+      temperatureLoads: [], imposedDisplacements: [],
+      sourceReference: `${definition.sourceClaimId}/CASE/${definition.model.physicalCaseId}`,
+    }],
+    resultRequests: { loadCaseIds: [definition.model.physicalCaseId] },
+    qualificationProfile: structuredClone(QUALIFICATION_PROFILE),
+    limitations: ['BM005_SOURCE_SEED_GEOMETRY_REPLACED_BY_GOVERNED_ANALYSIS_GEOMETRY'],
+  };
+}
+
+function sourceNode(nodeId, x, y) {
+  return { nodeId, x, y, sourceReference: `BM005_SOURCE_NODE#${nodeId}` };
+}
+
+function repositoryState() {
+  const head = git(['rev-parse', 'HEAD']);
+  const porcelain = git(['status', '--porcelain', '--untracked-files=no']);
+  assert.match(head, /^[0-9a-f]{40}$/u);
+  assert.equal(porcelain, '', 'BM-005 release evidence requires a clean tracked worktree');
+  return { head, cleanTree: porcelain === '' };
+}
+
+function git(args) {
+  return execFileSync('git', args, {
+    cwd: new URL('..', import.meta.url),
+    encoding: 'utf8',
+  }).trim();
+}
+
+function readJson(relativePath) {
+  return JSON.parse(readFileSync(new URL(relativePath, import.meta.url), 'utf8'));
+}
+
+function requireFrozenDefinition(definition, sourceRegistry) {
+  assert.equal(definition.schema, 'lafea3-bm005-benchmark-definition/v1');
+  assert.equal(definition.benchmarkId, 'BM-005-LAME-CONT-CYL-01');
+  assert.equal(definition.stageId, STAGE_ID);
+  assert.equal(definition.mesh.elementFamily, 'Q8');
+  assert.equal(definition.mesh.levels.length >= 4, true);
+  assert.equal(definition.freezePolicy.definitionFrozenBeforeObservations, true);
+  assert.equal(definition.freezePolicy.productionOutputMayModifyOracle, false);
+  assert.equal(definition.acceptance.rawMeshMaximumStressMayQualifyConvergence, false);
+  assert.equal(definition.acceptance.releaseQualified, false);
+  assert.equal(sourceRegistry.benchmarkId, definition.benchmarkId);
+  assert.equal(sourceRegistry.oracleDerivation.productionResultUsed, false);
+  assert.equal(sourceRegistry.custodyPolicy.productionOutputMayModifyOracle, false);
+  assert.ok(sourceRegistry.sources.some((row) => row.role === 'independentOracle'
+    && row.publisher && row.edition && row.year && row.section
+    && row.pages?.length && row.equationIdentifiers?.length));
 }

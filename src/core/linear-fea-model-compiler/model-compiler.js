@@ -375,6 +375,10 @@ function sectionStateRecord(resolution) {
  * it acts on; two declarations acting on one node DOF block compilation. Only
  * then is representability decided, so a conflict is reported as a conflict
  * rather than being masked by the feature gap.
+ *
+ * Directional finite springs are stiffness contributions, not DOF elimination
+ * declarations. They may coexist with other linear stiffness or constraints at
+ * the same node, so they deliberately do not claim one synthetic node/DOF slot.
  */
 function buildConstraints(declarations, nodes, elements) {
   const nodeIds = new Set(nodes.map((node) => node.nodeId));
@@ -405,6 +409,7 @@ function buildConstraints(declarations, nodes, elements) {
   });
 
   for (const declaration of resolved) {
+    if (Array.isArray(declaration.direction)) continue;
     const slot = `${declaration.resolvedNodeId}:${declaration.dof}`;
     const existing = occupied.get(slot);
     if (existing !== undefined) {
@@ -430,14 +435,18 @@ function buildConstraints(declarations, nodes, elements) {
     );
   }
 
-  return resolved.map((declaration) => ({
-    constraintId: declaration.declarationId,
-    nodeId: declaration.resolvedNodeId,
-    dof: declaration.dof,
-    behavior: declaration.behavior,
-    basis: 'GLOBAL',
-    stiffness: declaration.stiffness,
-  }));
+  return resolved.map((declaration) => {
+    const constraint = {
+      constraintId: declaration.declarationId,
+      nodeId: declaration.resolvedNodeId,
+      dof: declaration.dof,
+      behavior: declaration.behavior,
+      basis: 'GLOBAL',
+      stiffness: declaration.stiffness,
+    };
+    if (Array.isArray(declaration.direction)) constraint.direction = [...declaration.direction];
+    return constraint;
+  });
 }
 
 export function compilationSemanticProjection(record) {

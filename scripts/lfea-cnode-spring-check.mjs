@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   classifyRestraint,
   restraintApproximationCodes,
@@ -24,6 +25,13 @@ import {
   forceEquilibriumCheck,
   momentEquilibriumCheck,
 } from '../src/core/linear-fea-solver/qualification.js';
+import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
+import {
+  authorizeLinearPipingInputXmlPreFlight,
+  prepareLinearPipingInputXmlPreFlight,
+} from '../src/workspace/linear-piping-inputxml-prefea.js';
+import { buildInputXmlRunRequestCase } from '../src/core/linear-piping-analysis-consumer/inputxml-run-request-cases.js';
+import { compileLinearPipingInputXmlAnalysisContext } from '../src/core/linear-piping-analysis-consumer/index.js';
 
 const TOL = 1e-12;
 const K = 2000;
@@ -247,6 +255,64 @@ assert.throws(
   'primary and connecting nodes may not silently collapse onto one retained node',
 );
 
+// ------------------------------------------------------ full production exercise
+const exerciseXml = readFileSync('benchmarks/LFEA/SPRING_DRAFT/CnodeSpringSupports.xml', 'utf8');
+const intake = createLinearPipingInputXmlIntake(
+  { fileName: 'CnodeSpringSupports.xml', content: exerciseXml },
+  { fallbackUnit: 'mm', requestedProfileId: STRICT, requestedCaseIds: ['IXP-W'] },
+);
+const initial = prepareLinearPipingInputXmlPreFlight(intake);
+assert.notEqual(initial.status, 'BLOCK',
+  `CNODE spring exercise must prepare: ${JSON.stringify(initial.preparation.findings)}`);
+const authorized = initial.solveAuthorized ? initial : authorizeLinearPipingInputXmlPreFlight(initial, {
+  approverIdentity: 'LFEA-CNODE-DRAFT-CHECK',
+  reason: 'Self-authored CNODE spring exercise; does not clear DRAFT status.',
+});
+const productionConstraint = authorized.preparation.structuralPreparation.compilation.model.constraints
+  .find((row) => row.behavior === 'LINEAR_SPRING' && row.connectedNodeId);
+assert.ok(productionConstraint, 'production preparation must compile the finite CNODE spring');
+assert.deepEqual(productionConstraint.direction, N);
+assert.equal(productionConstraint.stiffness, 100000000,
+  '100000 N/mm must compile as 1e8 N/m');
+const request = buildInputXmlRunRequestCase({
+  intake: authorized.intake,
+  preparation: authorized.preparation,
+  caseId: 'IXP-W',
+  analysisIdentity: 'CNODE-SPRING-DRAFT-W',
+  analysisRevision: 1,
+});
+const result = compileLinearPipingInputXmlAnalysisContext(request, { factorizationCache: null })
+  .sourceAnalysisContext.analysisResult;
+assert.equal(result.status, 'QUALIFIED', 'CNODE spring exercise must qualify through the production solver');
+assert.ok(result.limitations.some((row) => row.limitation?.code === 'DRAFT_SPRING_SUPPORT_NO_REFERENCE'),
+  'CNODE solve must retain DRAFT disclosure');
+assert.equal(result.execution.diagnostics.forceEquilibrium.groundedSpringCount, 0,
+  'production qualification must retain CNODE as internal stiffness');
+assert.equal(result.execution.diagnostics.momentEquilibrium.groundedSpringCount, 0);
+const execution = result.execution;
+const displacementAt = (nodeId, dof) => {
+  const row = execution.displacement.find((entry) => entry.nodeId === nodeId && entry.dof === dof);
+  assert.ok(row, `missing ${nodeId}:${dof} displacement`);
+  return row.value;
+};
+const solvedI = ['UX', 'UY', 'UZ'].map((dof) => displacementAt(productionConstraint.nodeId, dof));
+const solvedJ = ['UX', 'UY', 'UZ'].map((dof) => displacementAt(productionConstraint.connectedNodeId, dof));
+const solvedQ = N.reduce(
+  (sum, component, index) => sum + component * (solvedI[index] - solvedJ[index]),
+  0,
+);
+const internalForceMagnitude = Math.abs(productionConstraint.stiffness * solvedQ);
+assert.ok(Math.abs(solvedQ) > 0 && internalForceMagnitude > 0,
+  'CNODE spring must develop nonzero relative extension and internal force');
+assert.equal(execution.reactions.some((row) => (
+  row.nodeId === productionConstraint.nodeId || row.nodeId === productionConstraint.connectedNodeId
+)), false, 'CNODE internal spring must not publish either node as a grounded support reaction');
+const totalVerticalGroundReaction = execution.reactions
+  .filter((row) => row.dof === 'UY').reduce((sum, row) => sum + Math.abs(row.value), 0);
+const internalVerticalShare = Math.abs(internalForceMagnitude * N[1]) / totalVerticalGroundReaction;
+assert.ok(internalVerticalShare > 0.1,
+  `CNODE spring internal vertical force must exceed 10% of ground vertical reaction, got ${(100 * internalVerticalShare).toFixed(2)}%`);
+
 console.log(JSON.stringify({
   check: 'lfea-cnode-spring',
   status: 'PASS',
@@ -263,6 +329,11 @@ console.log(JSON.stringify({
   qualificationForceEquilibrium: forceEquilibrium.status,
   qualificationMomentEquilibrium: momentEquilibrium.status,
   qualificationGroundedSpringCount: forceEquilibrium.groundedSpringCount,
+  productionSolveStatus: result.status,
+  productionCompiledStiffnessNPerM: productionConstraint.stiffness,
+  productionRelativeExtensionM: solvedQ,
+  productionInternalForceN: internalForceMagnitude,
+  productionInternalVerticalSharePercent: Number((100 * internalVerticalShare).toFixed(2)),
   rigidCnodeRefusal: 'MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED',
   disclosure: 'DRAFT_SPRING_SUPPORT_NO_REFERENCE',
   deliberateBreakMode: '--deliberate-break drops connected-node custody and must fail force equilibrium',

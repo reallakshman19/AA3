@@ -142,6 +142,12 @@ async function attachManifest(page, testInfo, originalDiameter, checkpointEviden
       ariaSnapshotSupportsAccessibleNameReview: true,
       hoverOnlyTooltipRequiresLiveObservation: true,
     },
+    humanObservationPolicy: {
+      finalPassRequiresLiveOrRecordedQualifiedHumanObservation: true,
+      artifactOnlyReviewCanEstablishFinalPass: false,
+      staticArtifactsSupportPerStageReview: true,
+      dynamicTransitionsRequireLiveOrRecordedObservation: true,
+    },
     upstreamMutation: {
       control: 'Pipe outside diameter LAFEA.1',
       originalValue: originalDiameter,

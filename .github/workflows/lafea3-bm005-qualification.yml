@@ -7,7 +7,6 @@ on:
       - 'scripts/lafea.3-bm005-ordinary-route-check.mjs'
       - 'scripts/lafea.3-bm005-report-contract.mjs'
       - 'validation/lafea-benchmark-data/BM005/**'
-      - 'agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/**'
       - '.github/workflows/lafea3-bm005-qualification.yml'
 
 permissions:

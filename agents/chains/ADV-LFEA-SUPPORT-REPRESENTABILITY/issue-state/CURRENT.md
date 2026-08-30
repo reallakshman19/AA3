@@ -3,7 +3,7 @@
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1551
 CHAIN_ID: ADV-LFEA-SUPPORT-REPRESENTABILITY
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0023
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0024
 STATE_AS_OF: 2026-08-30T17:14:16Z
 PR: #1553 DRAFT
 BRANCH: codex/lfea-support-representability-1551
@@ -20,16 +20,16 @@ TASK-001 | HANGER terminal refusal closure | PARTIAL | predefined positive-rate/
 TASK-002 | CNODE terminal refusal closure | PARTIAL | finite bidirectional CNODE spring lands exact DRAFT; rigid CNODE deliberately refused pending MPC
 TASK-003 | skew-direction terminal refusal closure | PARTIAL | finite bidirectional skew spring lands exact `k(n⊗n)` DRAFT; rigid skew deliberately refused pending MPC
 TASK-004 | exercise + refusal models per feature | PASS_SOURCE | positive skew/CNODE/HANGER plus dedicated rigid-skew, rigid-CNODE and incomplete-HANGER refusal fixtures retained independently; combined legacy refusal retained as extra regression
-TASK-005 | feature checks + observed deliberate-break red | PARTIAL | exact Git-blob local PASS/red now observed for reaction aggregation, mixed unilateral review and HANGER case/run custody; dedicated refusal and finite skew/CNODE/HANGER mechanics breaks remain unobserved
+TASK-005 | feature checks + observed deliberate-break red | PARTIAL | exact Git-blob local PASS/red observed for reaction aggregation, mixed unilateral review, HANGER case/run custody and blocked-execution custody; dedicated refusal and finite skew/CNODE/HANGER mechanics breaks remain unobserved
 TASK-006 | frozen BM4_L non-regression | BLOCKED | frozen target 96.76 / 93.00 / 95.82 / 7.99%; exact-head BM4 remains NOT_RUN_RUNTIME
 TASK-007 | spring-rate units converted/fail closed | PASS_SOURCE | unresolved finite rate cannot silently become FIXED/factor-1; exact-head runtime still not executed for this gate
 TASK-008 | DRAFT disclosure in UI/results | PASS_SOURCE | `DRAFT_SPRING_SUPPORT_NO_REFERENCE` retained through preparation/result/UI; independent CAESAR reference required to clear
 TASK-009 | protected scope | PASS_SOURCE | reducer/parity/tolerance/Timoshenko/pressure/code/workflow/roadmap boundaries preserved
-TASK-010 | blocked-execution result custody | PASS_SOURCE | normal orchestration/recovery refuse BLOCKED; explicit retained-composition + public-relationship refusals and guard check added; runtime not yet exact-head executed
-TASK-011 | mixed fixed + directional ground-spring reaction presentation | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | raw support rows remain unchanged; visible nodal/Output/summary/CSV aggregation gate exit 0 and deliberate-break red observed from exact blobs
-TASK-012 | mixed one-way + directional-spring lift-off review | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | exact spring-action isolation, missing-displacement fail-closed and ordinary compatibility gate exit 0; deliberate-break red observed from exact blobs
+TASK-010 | blocked-execution result custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | orchestration, recovery, retained composition and public relationship guards verified from exact blobs; normal PASS and retained-composition deliberate-break red observed
+TASK-011 | mixed fixed + directional ground-spring reaction presentation | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | raw same-node/same-DOF support contributions may coexist; visible nodal/Output/summary/sort/CSV aggregation gate PASS and break red observed
+TASK-012 | mixed one-way + directional-spring lift-off review | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | exact spring-action isolation, missing-displacement fail-closed and ordinary compatibility PASS; deliberate-break red observed
 TASK-013 | per-feature terminal refusal custody | PASS_SOURCE | all three dedicated negative fixtures independently gated under STRICT and APPROXIMATE with unrelated terminal-refusal contamination rejected
-TASK-014 | HANGER Load-case → Run custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | H-bearing default/applied-set/source-reset/Run custody gate exit 0; four individual deliberate-break modes and aggregate break observed red from exact blobs
+TASK-014 | HANGER Load-case → Run custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | H-bearing default/applied-set/source-reset/Run custody PASS; four individual deliberate-break modes and aggregate break observed red
 
 ## Input ledger
 
@@ -40,22 +40,23 @@ INPUT-004 | Current production source on PR #1553 | AVAILABLE | finite skew/CNOD
 INPUT-005 | Independent CAESAR skew reference | UNRESOLVED | REF-SKEW-01 package defined; raw run absent
 INPUT-006 | Independent CAESAR CNODE reference | UNRESOLVED | REF-CNODE-01 package defined; raw run absent
 INPUT-007 | Independent CAESAR HANGER reference | UNRESOLVED | REF-HGR-01 package defined; raw run absent
-INPUT-008 | Exact-head execution path | PARTIAL_AVAILABLE | hosted Actions still creates no executable steps; bounded local execution is admitted only when complete gate dependency files hash-verify to exact repository blobs
+INPUT-008 | Exact-head execution path | PARTIAL_AVAILABLE | hosted Actions still creates no executable steps; bounded local execution admitted only when complete gate dependency files hash-verify to exact repository blobs
 INPUT-009 | Mixed fixed + directional spring exercise | AVAILABLE_SELF_AUTHORED | node 40 rigid UX + skew spring fixture/check authored; production solve execution absent
-INPUT-010 | Visible reaction aggregation guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | blobs `3f576e77...` + `388db160...`; normal PASS and deliberate-break red observed on basis `f8ae425e...`
-INPUT-011 | Mixed unilateral reaction review guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | blobs `d9e4bec6...` + `bdc48be0...`; normal PASS and deliberate-break red observed on basis `f8ae425e...`
+INPUT-010 | Visible reaction aggregation guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | blobs `3f576e77...` + `388db160...`; normal PASS and deliberate-break red observed
+INPUT-011 | Mixed unilateral reaction review guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | blobs `d9e4bec6...` + `bdc48be0...`; normal PASS and deliberate-break red observed
 INPUT-012 | Dedicated rigid CNODE refusal model | AVAILABLE_SELF_AUTHORED | `UnsupportedCnodeSupport.xml`
 INPUT-013 | Dedicated incomplete HANGER refusal model | AVAILABLE_SELF_AUTHORED | `UnsupportedHanger.xml`
 INPUT-014 | Dedicated rigid skew refusal model | AVAILABLE_SELF_AUTHORED | `UnsupportedSkewSupport.xml`
 INPUT-015 | HANGER case-selection/Run custody guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | blobs `eda0d2d3...`, `8d9f295b...`, `5fd5d14c...`; normal PASS, four individual breaks + aggregate break observed red
+INPUT-016 | Blocked-execution custody guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | check + four exact source blobs; normal PASS and retained-composition break red observed
 
 ## Benchmark / oracle ledger
 
 BM-001 | BM4_L frozen non-regression | NOT_RUN | no executable current-basis BM4 evidence
 BM-002 | Self-authored constitutive/equilibrium support invariants | PASS_SOURCE | cannot clear feature DRAFT
-BM-003 | Exact-head deliberate-break red observations | PARTIAL | reaction aggregation, mixed unilateral review and HANGER case/run breaks observed red from exact blobs; feature mechanics/refusal breaks still NOT_RUN
+BM-003 | Exact-head deliberate-break red observations | PARTIAL | reaction aggregation, mixed unilateral, HANGER case/run and blocked-execution breaks observed red; feature mechanics/refusal breaks still NOT_RUN
 BM-004 | External CAESAR skew/CNODE/HANGER qualification | NOT_RUN | raw independent feature packages absent
-BM-005 | Blocked-execution custody guard | NOT_RUN | authored/wired; exact dependency closure not yet executed
+BM-005 | Blocked-execution custody guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | normal exit 0; retained-composition deliberate break exit 1 on intended assertion
 BM-006 | Mixed fixed + directional spring reaction-row exercise | NOT_RUN | authored/wired; production solve dependency closure not yet executed
 BM-007 | Visible reaction aggregation view-model guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | normal exit 0/PASS and deliberate-break exit 1, actual 95 vs expected 85
 BM-008 | Mixed unilateral + directional-spring review guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | normal exit 0/PASS and deliberate-break exit 1; exact spring UX action -4.8 N, isolated one-way reactions +10/-10 N
@@ -66,33 +67,20 @@ BM-010 | HANGER case-selection/Run custody guard | PASS_EXACT_HEAD_GIT_BLOB_LOCA
 
 Execution basis: `f8ae425e710adb9e250d0be1247036d63f7943dc`. Local Node runtime: v22.16.0.
 
-Admitted file identities:
+Previously admitted exact blobs remain as recorded in EP-0023.
 
-- reaction aggregation check `3f576e77c2b0aaababf363a30154b1496ce74d2b`;
-- reaction view-model `388db160f051e0f353ea8d04422ae29937f077c1`;
-- unilateral review check `d9e4bec69d3b55cf05a4cacf17693f64989b0047`;
-- unilateral review production module `bdc48be0b7ed58b9e6f8f4353127610ca47b24bb`;
-- hanger case check `eda0d2d3cf68e12e8018a37dfe113a90c8abd989`;
-- hanger case-selection panel `8d9f295bfd825566c1bf219ed9ff8e294538fc95`;
-- hanger Run panel `5fd5d14c515385f7ffc79cba5f7c4ae97cda2b7f`.
+Blocked-execution exact closure:
 
-Every listed local file reproduced the repository Git blob SHA with `git hash-object` before execution. Earlier partial/manual reconstructions whose hashes differed were excluded and rerun only after exact identity was achieved.
+- check `6030fda570ea8a392216eb7d68f5abf61682ee34`;
+- orchestration `consumer.js` `f8b804ea98ad45ae248dadc7bcaf37e1512a3a27`;
+- retained composition `897ffe715f0db50521c575af9f4788413d090a01`;
+- public contracts `d2475438bf522cd982519a84ff3edcbf8f2d8fe1`;
+- recovery `8a209ddccb6a991336e7754bc2e95117ddfa6e9a`.
 
-Observed normals:
+Each local file reproduced the repository Git blob SHA before execution.
 
-- reaction aggregation: exit 0, node-40 UX total 85;
-- mixed unilateral review: exit 0, projected spring UX -4.8 N, isolated +10 N consistent and -10 N exceeded;
-- HANGER case/run custody: exit 0, governed H-bearing family and selected/applied/source custody all pass.
-
-Observed reds:
-
-- reaction aggregation aggregate break: exit 1, actual 95 expected 85;
-- unilateral aggregate break: exit 1, actual CONSISTENT against broken expected LINEARIZATION_EXCEEDED;
-- HANGER default break: exit 1;
-- HANGER Run-gate break: exit 1;
-- HANGER source-reset break: exit 1;
-- HANGER default-set/subset break: exit 1;
-- HANGER aggregate break: exit 1.
+Observed blocked-custody normal: exit 0 with `PASS lfea blocked execution custody guards`.
+Observed blocked-custody break: exit 1 at `retained B-3.3/B-3.4 composition must explicitly refuse a blocked execution`.
 
 ## Roadmap ledger
 
@@ -101,18 +89,18 @@ RM-002 | Common engineering-pr-delivery-v2@4b3a7a9c7ca2fac4a9182ef0028135d17eafa
 
 ## Owner qualification baseline
 
-Current question set: `QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0023`.
+Current question set: `QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0024`.
 Qualification basis: `f8ae425e710adb9e250d0be1247036d63f7943dc`.
-The original five engineering challenges remain controlling; QS-0023 adds cryptographically exact local execution custody for bounded gates without relaxing unresolved feature/BM4/reference gates.
+The original five engineering challenges remain controlling; QS-0024 adds exact blocked-execution custody runtime evidence without relaxing unresolved feature/BM4/reference gates.
 
 ## Current blockers
 
-1. Exact-head execution remains incomplete: dedicated refusal gate + break, mixed fixed+skew production check + break, blocked-execution guard, finite skew/CNODE/HANGER mechanics checks, remaining deliberate breaks, support/full aggregates, imports/lint/diff and BM4_L are still NOT_RUN.
+1. Exact-head execution remains incomplete: dedicated refusal gate + break, mixed fixed+skew production check + break, finite skew/CNODE/HANGER mechanics checks, remaining deliberate breaks, support/full aggregates, imports/lint/diff and BM4_L are still NOT_RUN.
 2. Independent CAESAR support references REF-SKEW-01 / REF-CNODE-01 / REF-HGR-01 remain absent.
 3. Rigid skew/CNODE still require exact MPC/constraint-equation authority; alternate hanger vertical axis remains source-authority gated.
 
 ## Exact next action
 
-Continue local exact-head execution only where the complete static dependency closure can be materialized from GitHub blobs and every file hash-verifies to its repository blob SHA. Prioritize the dedicated refusal fixture gate, blocked-execution custody guard and feature mechanics checks. Do not admit hand-transcribed/partial closures.
+Continue local exact-head execution only where the complete static dependency closure can be materialized from GitHub blobs and every file hash-verifies. Highest value: dedicated refusal fixture gate and feature mechanics checks. Do not admit hand-transcribed/partial closures.
 
 Keep PR #1553 DRAFT; do not merge without exact Owner phrase `APPROVED MERGE`.

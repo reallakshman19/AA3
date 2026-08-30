@@ -47,6 +47,7 @@ export class LfeaPipelineShellController {
       this.view.render(state);
       if (state.activeStepId !== previousActiveStepId) {
         previousActiveStepId = state.activeStepId;
+        this.dispatchTaskActivated(state.activeStepId);
         this.assemblyHandlers?.onStepActivated?.(state.activeStepId);
       }
     });
@@ -139,6 +140,14 @@ export class LfeaPipelineShellController {
     if (!this.flow.analysisComplete) return;
     this.flow.exportComplete = true;
     this.session.setStepStatus('EXPORT', { available: true, complete: true, blockedReason: null });
+  }
+
+  dispatchTaskActivated(stepId) {
+    const EventCtor = this.rootElement?.ownerDocument?.defaultView?.CustomEvent ?? globalThis.CustomEvent;
+    if (typeof EventCtor !== 'function') return;
+    this.rootElement.dispatchEvent(new EventCtor('lfea-pipeline-task-activated', {
+      detail: Object.freeze({ stepId }),
+    }));
   }
 
   resetDownstreamFlow() {

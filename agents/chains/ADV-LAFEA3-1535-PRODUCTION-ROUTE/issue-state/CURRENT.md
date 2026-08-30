@@ -8,6 +8,7 @@ SUBORDINATE_VV_WORK_ITEM: github:reallaksh19/Advanced_Analysis#1569
 CURRENT_MAIN: 26f732ba8142828dc6c6160e4355993a60aa186a
 ACTIVE_BRANCH: relay/lafea3-postmerge-ep0034
 ACTIVE_PR: NONE_MATERIAL_MERGED
+RELAY_PR: #1596 DRAFT
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
 ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0034_COMMENT
 MERGE_AUTHORITY: OWNER_ONLY
@@ -27,7 +28,7 @@ MERGE_AUTHORIZED: FALSE
 | TASK-008 | PASS_WORKFLOW_WIRING / EXECUTION_NOT_RUN | Dedicated read-only BM-005 workflow is merged. Hosted execution remains pre-checkout blocked. |
 | TASK-009 | PASS_STATIC_SOURCE | Workflow trigger hygiene excludes relay markdown; only BM-005 scripts, frozen BM005 data and workflow edits trigger qualification. |
 | TASK-010 | PASS_STATIC_SOURCE / EXACT_MAIN_TRIGGER_PROVEN | Owner-authorized #1590 material merged exactly via recovery #1593. Exact main `26f732ba...` triggered BM-005 run `33325078376`; attempt-1 job `99293663739` and retry job `99293821163` both failed with no steps. Exact-main scheduling is proven; executable qualification remains NOT_RUN. |
-| TASK-011 | PASS_CONTROL_PLANE | Fresh post-merge Q1-Q5 takeover pack created as `QS-ADV-LAFEA3-1535-0034-EXACT-MAIN-BM005`. |
+| TASK-011 | PASS_CONTROL_PLANE | Fresh post-merge Q1-Q5 takeover pack created as `QS-ADV-LAFEA3-1535-0034-EXACT-MAIN-BM005`; relay-only Draft #1596 carries EP-0034/ACTIVE/CURRENT/Q-pack synchronization. |
 
 ## Input ledger
 

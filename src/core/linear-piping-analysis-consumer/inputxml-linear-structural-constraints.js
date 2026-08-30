@@ -1,6 +1,7 @@
 import { InputXmlLinearStructuralPreparationError } from './inputxml-linear-structural-profile.js';
 import {
   restraintApproximationCodes,
+  restraintConnectingSpringDirection,
   restraintDirectionalSpringDirection,
   restraintUnilateralAction,
 } from './inputxml-feature-inventory-restraints.js';
@@ -49,17 +50,6 @@ export function compileInputXmlStructuralConstraints({
       );
     }
 
-    /*
-     * A finite declared spring rate and an absent converted spring rate are not
-     * the same state as "no spring was declared". The latter is a legitimate
-     * rigid restraint; the former means force/length unit custody failed.
-     *
-     * resolveSpringRate() deliberately withholds stiffnessValue when the source
-     * units cannot be resolved. Before this guard, the null below fell into the
-     * NODAL_RESTRAINT/FIXED branch and silently made the requested compliant
-     * support rigid. Keep this defense at the declaration owner boundary even
-     * if an upstream inventory disposition is accidentally permissive.
-     */
     if (item.classification.finiteStiffnessActive
       && item.classification.stiffnessValue === null) {
       fail(
@@ -74,12 +64,52 @@ export function compileInputXmlStructuralConstraints({
     }
 
     const targetNodeId = structuralTargetNode(sourceNodeId, retargeting, item.inventoryId);
-    if (available !== null && !available.has(targetNodeId)) {
-      fail(
-        'INPUTXML_STRUCTURAL_RESTRAINT_TARGET_MISSING_AFTER_RETOPOLOGY',
-        `Restraint ${item.inventoryId} targets node ${targetNodeId}, which is absent after structural retopology.`,
-        { inventoryId: item.inventoryId, sourceNodeId: String(sourceNodeId), targetNodeId },
+    requireAvailableNode(available, targetNodeId, item.inventoryId, sourceNodeId);
+
+    const connectingDirection = restraintConnectingSpringDirection(item.classification);
+    if (connectingDirection !== null) {
+      const connectedSourceNodeId = String(item.classification.connectingNodeId);
+      const connectedTargetNodeId = structuralTargetNode(
+        connectedSourceNodeId,
+        retargeting,
+        item.inventoryId,
       );
+      requireAvailableNode(available, connectedTargetNodeId, item.inventoryId, connectedSourceNodeId);
+      if (connectedTargetNodeId === targetNodeId) {
+        fail(
+          'INPUTXML_STRUCTURAL_CONNECTING_NODE_COLLAPSED',
+          `Restraint ${item.inventoryId} primary and connecting nodes collapse to ${targetNodeId} after retopology.`,
+          { inventoryId: item.inventoryId, sourceNodeId, connectedSourceNodeId, targetNodeId },
+        );
+      }
+      const declarationId = `${modelId}-C-${safe(item.sourceFeatureId)}-CNODE`;
+      declarations.push(Object.freeze({
+        declarationId,
+        kind: 'PARTIAL_RELEASE_SPRING',
+        nodeId: `${modelId}.N${safe(targetNodeId)}`,
+        connectedNodeId: `${modelId}.N${safe(connectedTargetNodeId)}`,
+        dof: null,
+        direction: Object.freeze([...connectingDirection]),
+        stiffness: item.classification.stiffnessValue,
+      }));
+      bindings.push(Object.freeze({
+        sourceFeatureId: item.sourceFeatureId,
+        inventoryId: item.inventoryId,
+        sourceRecordSemanticHash: item.sourceRecordSemanticHash,
+        sourceNodeId: String(sourceNodeId),
+        targetNodeId,
+        connectedSourceNodeId,
+        connectedTargetNodeId,
+        retargetedByBendRetopology: targetNodeId !== String(sourceNodeId)
+          || connectedTargetNodeId !== connectedSourceNodeId,
+        targetDofs: TRANSLATIONAL_DOFS,
+        implementation: disposition.disposition,
+        limitationCode: disposition.limitationCode,
+        limitationCodes: restraintApproximationCodes(item.classification),
+        unilateralAction: restraintUnilateralAction(item.classification),
+        declarationIds: Object.freeze([declarationId]),
+      }));
+      continue;
     }
 
     const directionalSpringDirection = restraintDirectionalSpringDirection(item.classification);
@@ -123,13 +153,6 @@ export function compileInputXmlStructuralConstraints({
       }
       occupied.set(key, item.sourceFeatureId);
       const declarationId = `${modelId}-C-${safe(item.sourceFeatureId)}-${dof}`;
-      /*
-       * A restraint that declares a spring rate is a compliant support, not a
-       * rigid one, and the compiler already has the kind for it:
-       * PARTIAL_RELEASE_SPRING carries the rate and compiles to the solver's
-       * LINEAR_SPRING behavior. NODAL_RESTRAINT deliberately does not accept a
-       * spring behavior, so the kind is what changes here, not the behavior.
-       */
       const springRate = item.classification.stiffnessValue ?? null;
       declarations.push(Object.freeze(springRate === null
         ? {
@@ -170,6 +193,15 @@ export function compileInputXmlStructuralConstraints({
     declarations: Object.freeze(declarations),
     bindings: Object.freeze(bindings),
   });
+}
+
+function requireAvailableNode(available, targetNodeId, inventoryId, sourceNodeId) {
+  if (available === null || available.has(targetNodeId)) return;
+  fail(
+    'INPUTXML_STRUCTURAL_RESTRAINT_TARGET_MISSING_AFTER_RETOPOLOGY',
+    `Restraint ${inventoryId} targets node ${targetNodeId}, which is absent after structural retopology.`,
+    { inventoryId, sourceNodeId: String(sourceNodeId), targetNodeId },
+  );
 }
 
 function structuralTargetNode(sourceNodeId, retargeting, inventoryId) {

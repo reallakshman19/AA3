@@ -2,6 +2,13 @@ name: LAFEA.3 BM-005 auditable qualification
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/lafea.3-bm005-ordinary-route-check.mjs'
+      - 'scripts/lafea.3-bm005-report-contract.mjs'
+      - 'validation/lafea-benchmark-data/BM005/**'
+      - '.github/workflows/lafea3-bm005-qualification.yml'
   pull_request:
     paths:
       - 'scripts/lafea.3-bm005-ordinary-route-check.mjs'

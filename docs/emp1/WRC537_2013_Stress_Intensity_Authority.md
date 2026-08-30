@@ -2,9 +2,45 @@
 
 ## Status
 
-`BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED`
+`BLOCKED_PARTIAL_PRIMARY_STRESS_INTENSITY_DEFINITION_AND_MAXIMUM_SHEAR_THEORY_QUALIFIED_PLANE_STRESS_AND_PRINCIPAL_RECONSTRUCTION_UNQUALIFIED`
 
-The current cylindrical Table-5 implementation computes a mathematically standard plane-stress Tresca quantity from recovered shell stresses. This reconciliation does **not** change that implementation. It recognizes a narrower source fact that is already retained in the repository: WRC Table 5 pp.41–42 contains a **Combined Stress Intensity** post-processing section after algebraic formation of the component stresses.
+The current cylindrical Table-5 implementation remains unchanged. This source-governance increment strengthens only the WRC meaning of stress intensity and the theory used to form equivalent stress intensities; it does **not** convert the product's particular plane-stress reconstruction into newly qualified primary-source authority.
+
+## Primary-text increment
+
+Controlled repository source identity remains:
+
+```text
+Document: WRC 537, 2013
+raw PDF SHA-256: 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
+Git blob SHA-1:  ce861233928154145a9257efbbf8dbef3f5a17d1
+```
+
+The connected environment still cannot render the pinned repository PDF directly. Therefore:
+
+```text
+pinned PDF direct-page observation = NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT
+```
+
+A readable external rendering of the WRC primary text was observed. Its byte identity to the pinned repository PDF is **UNPROVEN**, so the observation is recorded as primary-text evidence with separate byte custody rather than as a direct observation of the pinned bytes.
+
+Observed locators and bounded claims:
+
+1. **General Nomenclature §1.1, p.1** — `S` is defined as "stress intensity = twice maximum shear stress".
+2. **Cylindrical-shell §4.1 / Table-5 setup, pp.11–12** — the procedure states that **Maximum Shear Theory** is used to determine equivalent stress intensities.
+3. **Cylindrical torsional pure-shear discussion, §4.3.4** — when only shear is present, equivalent stress intensity is twice the calculated shear stress.
+
+These observations source-qualify the bounded proposition:
+
+```text
+WRC stress intensity S
+  = twice maximum shear stress
+and
+WRC equivalent stress intensity in the cylindrical procedure
+  uses Maximum Shear Theory
+```
+
+They do not, by themselves, source-qualify the implementation-specific assumption `sigma3 = 0` or the exact product principal-stress algorithm.
 
 ## Retained Table-5 combined-stress-intensity post-processing
 
@@ -21,13 +57,9 @@ Table: Table 5 — Computation Sheet for Local Stresses in Cylindrical Shells
 Pages: 41–42
 ```
 
-Within that retained Table-5 text, the calculation sequence includes algebraic summation of the normal/shear stress contributions followed by a `COMBINED STRESS INTENSITY` section. The combined formulas operate on the resulting circumferential normal stress, longitudinal normal stress and shear stress (`sigma_phi`, `sigma_x`, `tau`) and retain separate cases for:
+The retained Table-5 text forms the combined stress intensity only after algebraic formation of the circumferential normal stress, longitudinal normal stress and shear stress (`sigma_phi`, `sigma_x`, `tau`). It retains separate cases for like-sign normal stresses, unlike-sign normal stresses and zero shear.
 
-- normal stresses with like signs;
-- normal stresses with unlike signs;
-- zero shear.
-
-This supports the bounded source-order statement:
+The bounded source sequence is therefore:
 
 ```text
 load-family stress contributions
@@ -35,22 +67,23 @@ load-family stress contributions
   -> Combined Stress Intensity S from sigma_phi, sigma_x and tau
 ```
 
-It also supports the conclusion that Table 5 presents `S` as post-processing from the formed stress components rather than as an independent directly tabulated input quantity.
+Table 5 presents `S` as post-processing from the formed stress components rather than an independent directly tabulated input quantity.
 
-## What this does not prove
+## What remains unqualified
 
-The retained Table-5 formula text does **not**, by itself, establish every source statement embodied in the current `planeStressTresca()` implementation. The following remain primary-source gated:
+The new primary-text observations do **not** establish every semantic detail embodied in `planeStressTresca()`.
 
-- an explicit WRC statement that the stress state is plane stress;
-- an explicit WRC statement that the third principal stress is zero;
-- exact WRC principal-stress equations;
-- the exact primary-source definition `S = twice maximum shear stress / maximum principal-stress difference` unless separately provenance-qualified;
-- whether von Mises is prohibited, permitted or discussed as an alternative;
+The following remain primary-source gated:
+
+- an explicit WRC statement that the general cylindrical Table-5 combined-stress state is plane stress;
+- an explicit WRC instruction to use `sigma3 = 0` for that reconstruction;
+- verbatim WRC principal-stress equations matching the product implementation;
 - exact physical inside/outside surface timing and common physical point identity;
-- whether the maximum over Au/Al/Bu/Bl/Cu/Cl/Du/Dl is a WRC-defined envelope or only product post-processing;
+- whether von Mises is prohibited, permitted or offered as an alternative;
+- whether the product maximum over Au/Al/Bu/Bl/Cu/Cl/Du/Dl is a WRC-defined envelope;
 - any code-acceptance implication.
 
-Mathematical equivalence must not be promoted into an unobserved source statement.
+General Maximum Shear Theory authority must not be promoted into an unobserved product-specific `sigma3 = 0` statement.
 
 ## Current implementation remains unchanged
 
@@ -60,49 +93,34 @@ At each retained shell-juncture recovery point, production currently has:
 - longitudinal normal stress `sigma_x`;
 - shell shear stress `tau`.
 
-It then evaluates `planeStressTresca()` using two in-plane principal stresses, `sigma3 = 0`, and the maximum principal-stress difference. This implementation is not modified by this source-governance PR.
+It then evaluates `planeStressTresca()` using two in-plane principal stresses, `sigma3 = 0`, and the maximum principal-stress difference. This source leg does not modify that mathematics.
 
 The current product envelope remains explicitly limited to the maximum over the eight evaluated Table-5 points and is **not** a global absolute shell maximum.
 
-## Direct-PDF state
-
-Controlled WRC identity remains:
-
-```text
-raw PDF SHA-256 = 698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2
-Git blob SHA-1  = ce861233928154145a9257efbbf8dbef3f5a17d1
-```
-
-Authenticated GitHub access reaches the exact binary blob, but the connected interface still cannot expose the PDF bytes for page rendering/inspection. Therefore:
-
-`currentTurnDirectPdfObservationState = NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT`
-
-This is not a source PASS and not an engineering-code FAIL.
-
 ## Authority separation
 
-Keep four questions separate:
+Keep four authority planes separate:
 
-1. mathematical correctness of current plane-stress Tresca code;
-2. retained Table-5 authority for combined-stress-intensity post-processing/order;
-3. explicit primary-source authority for plane-stress/principal-stress semantics;
-4. downstream code acceptance.
+1. mathematical reproducibility of current plane-stress Tresca code;
+2. primary WRC authority that `S` means twice maximum shear and that Maximum Shear Theory is used for equivalent stress intensity;
+3. explicit WRC authority for the exact plane-stress/principal-stress implementation details;
+4. downstream code acceptance and professional release.
 
-Frozen rule:
+Frozen rule for this bounded increment:
 
-`TABLE5_POST_PROCESSING_AUTHORITY_DOES_NOT_ESTABLISH_EXPLICIT_PLANE_STRESS_OR_CODE_ACCEPTANCE`
+`PRIMARY_MAXIMUM_SHEAR_DEFINITION_DOES_NOT_ESTABLISH_EXPLICIT_PLANE_STRESS_OR_CODE_ACCEPTANCE`
 
 ## Interaction with #1385
 
-PR #1412 reconciled the retained Table-5 sign/reversal subset but intentionally left physical `u/l`, A/B/C/D and common-point semantics blocked. That unresolved physical-location boundary also prevents this PR from claiming complete physical-surface timing for stress-intensity reconstruction.
+The retained Table-5 sign/reversal subset does not yet close physical `u/l`, A/B/C/D and common-point semantics. That unresolved physical-location boundary also prevents this source leg from claiming complete physical-surface timing for stress-intensity reconstruction.
 
 ## Prohibited shortcuts
 
-Until full source closure, do not:
+Until the remaining source gates close, do not:
 
 - replace Tresca with von Mises;
-- edit `planeStressTresca()` merely because the retained Table-5 expression is mathematically equivalent;
-- infer `sigma3 = 0` as an explicit WRC source statement without source proof;
+- edit `planeStressTresca()` merely because WRC's maximum-shear definition is now source-qualified;
+- infer `sigma3 = 0` as an explicit WRC Table-5 source rule without direct proof;
 - take absolute values/envelopes before algebraic component formation unless source-authorized;
 - relabel the eight-point envelope as the global shell maximum;
 - treat stress intensity as code compliance.

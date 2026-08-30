@@ -1,13 +1,42 @@
 {
   "schema": "emp1-wrc537-stress-intensity-source-qualification/v1",
   "issue": 1383,
-  "status": "BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED",
+  "status": "BLOCKED_PARTIAL_PRIMARY_STRESS_INTENSITY_DEFINITION_AND_MAXIMUM_SHEAR_THEORY_QUALIFIED_PLANE_STRESS_AND_PRINCIPAL_RECONSTRUCTION_UNQUALIFIED",
   "sourceDocument": {
     "identity": "WRC Bulletin 537, 2013 retained source package",
     "rawPdfSha256": "698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2",
     "gitBlobSha1": "ce861233928154145a9257efbbf8dbef3f5a17d1",
     "primaryPageReobservationAvailableInConnectedEnvironment": false,
-    "currentTurnDirectPdfObservationState": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT"
+    "currentTurnDirectPdfObservationState": "NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT",
+    "externalReadablePrimaryTextObserved": true,
+    "externalReadablePrimaryTextByteIdentityToPinnedPdf": "UNPROVEN"
+  },
+  "primaryTextObservations": {
+    "classification": "OBSERVED_READABLE_PRIMARY_TEXT_EXTERNAL_BYTE_IDENTITY_TO_PINNED_PDF_UNPROVEN",
+    "locators": [
+      {
+        "section": "1.1 General Nomenclature",
+        "page": 1,
+        "claim": "S is defined as stress intensity equal to twice maximum shear stress"
+      },
+      {
+        "section": "4.1 Sign Convention / cylindrical Table-5 setup",
+        "pages": "11-12",
+        "claim": "Maximum Shear Theory is used to determine equivalent stress intensities"
+      },
+      {
+        "section": "4.3.4 Stresses Resulting From Torsional Moment, MT",
+        "claim": "for the pure-shear case, equivalent stress intensity is twice the calculated shear stress"
+      }
+    ],
+    "doesNotEstablish": [
+      "explicit general plane-stress assumption for Table-5 combined-stress reconstruction",
+      "explicit sigma3 equals zero rule for Table-5 combined-stress reconstruction",
+      "verbatim principal-stress reconstruction equations matching product implementation",
+      "von Mises alternative policy",
+      "eight-point global-maximum authority",
+      "code acceptance or release authority"
+    ]
   },
   "retainedTable5Authority": {
     "classification": "RETAINED_WRC_TABLE5_COMBINED_STRESS_INTENSITY_SOURCE_TEXT",
@@ -38,10 +67,12 @@
     "combinedSigmaPhiSigmaXTauInputsQualified": true,
     "algebraicComponentSummationBeforeSQualified": true,
     "likeUnlikeAndZeroShearCaseStructureQualified": true,
-    "table5SIsDerivedAfterComponentStressFormationQualified": true
+    "table5SIsDerivedAfterComponentStressFormationQualified": true,
+    "explicitStressIntensityEqualsTwiceMaximumShearDefinitionQualified": true,
+    "maximumShearTheoryUsedForEquivalentStressIntensityQualified": true,
+    "pureShearStressIntensityEqualsTwiceShearQualified": true
   },
   "unqualifiedPrimarySourceClaims": {
-    "explicitStressIntensityEqualsTwiceMaximumShearDefinitionQualified": false,
     "explicitPlaneStressAssumptionQualified": false,
     "explicitThirdPrincipalStressZeroQualified": false,
     "principalStressEquationsQualified": false,
@@ -53,14 +84,13 @@
   },
   "authoritySeparation": {
     "A_MATHEMATICAL_TRESCA_CORRECTNESS": "INTERNALLY_REPRODUCIBLE",
-    "B_TABLE5_COMBINED_STRESS_INTENSITY_TEXT_ORDER": "QUALIFIED_FROM_RETAINED_SOURCE_TEXT",
+    "B_PRIMARY_STRESS_INTENSITY_DEFINITION_AND_TABLE5_ORDER": "QUALIFIED_BOUNDED_PRIMARY_TEXT_PLUS_RETAINED_TABLE5_TEXT",
     "C_EXPLICIT_PLANE_STRESS_AND_PRINCIPAL_STRESS_SOURCE_AUTHORITY": "UNQUALIFIED",
     "D_CODE_ACCEPTANCE_AUTHORITY": "UNQUALIFIED",
-    "rule": "TABLE5_POST_PROCESSING_AUTHORITY_DOES_NOT_ESTABLISH_EXPLICIT_PLANE_STRESS_OR_CODE_ACCEPTANCE"
+    "rule": "PRIMARY_MAXIMUM_SHEAR_DEFINITION_DOES_NOT_ESTABLISH_EXPLICIT_PLANE_STRESS_OR_CODE_ACCEPTANCE"
   },
   "unresolvedPrimarySourceQuestions": [
-    "exact WRC definition of S as twice maximum shear stress / maximum principal-stress difference",
-    "explicit plane-stress assumption and sigma3 treatment",
+    "explicit plane-stress assumption and sigma3 treatment for the general cylindrical Table-5 combined-stress reconstruction",
     "exact principal-stress reconstruction equations",
     "inside/outside physical surface timing and common physical point identity",
     "whether von Mises is provided or permitted as an alternative",
@@ -70,7 +100,7 @@
   "prohibitedChangesBeforeClosure": [
     "replace Tresca with von Mises",
     "modify planeStressTresca to infer explicit source plane-stress semantics",
-    "promote mathematical equivalence into an unobserved primary-source statement",
+    "promote the general maximum-shear definition into an unobserved sigma3 equals zero statement",
     "claim eight-point envelope is global absolute maximum",
     "infer code compliance from stress intensity"
   ],

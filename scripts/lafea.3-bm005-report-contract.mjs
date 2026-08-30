@@ -12,6 +12,7 @@ export function createBm005AuditReport(input) {
   const convergence = convergenceEvidence(input?.convergence, definition, observations);
   const negativeControl = negativeEvidence(input?.negativeControl, definition);
   const lineage = lineageEvidence(input?.lineage);
+  const solverDiagnostics = solverEvidence(input?.solverDiagnostics, definition);
   const expected = definition.oracle.fixedProbeExpected.displacementMagnitudeMm;
   const finest = observations.at(-1);
   const absoluteError = Math.abs(finest.value - expected);
@@ -39,9 +40,11 @@ export function createBm005AuditReport(input) {
   const benchmarkQualified = cleanTree
     && observations.length >= definition.acceptance.minimumLevels
     && new Set(observations.map((row) => row.meshHash)).size === observations.length
+    && observations.every((row) => row.meshMetadata.quality.blockingElementCount === 0)
     && asymptoticRangeAccepted
     && pointwiseAcceptanceEligible
     && oracleCoveredByGci
+    && solverDiagnostics.accepted === true
     && negativeControl.status === 'PASS_EXPECTED_REJECTION';
   const resultPublicationQualified = input?.resultPublicationQualified === true;
   const authority = freeze({
@@ -56,11 +59,17 @@ export function createBm005AuditReport(input) {
       asymptoticRangeAccepted,
       pointwiseAcceptanceEligible,
       oracleCoveredByGci,
+      solverDiagnostics,
       negativeControl,
     })),
   });
   const benchmarkDefinitionHash = canonicalLafeaSha256(definition);
   const oracleSourceRegistryHash = canonicalLafeaSha256(sourceRegistry);
+  const warnings = freeze(observations.flatMap((row) => (
+    row.meshMetadata.quality.warningElementCount > 0
+      ? [`${row.levelId}:MESH_QUALITY_WARNINGS=${row.meshMetadata.quality.warningElementCount}`]
+      : []
+  )));
   const semantic = freeze({
     schema: BM005_REPORT_SCHEMA,
     benchmarkId: definition.benchmarkId,
@@ -81,7 +90,10 @@ export function createBm005AuditReport(input) {
       asymptoticRangeAccepted,
     }),
     oracleComparison,
+    solverDiagnostics,
     negativeControl,
+    warnings,
+    limitations: freeze([...definition.limitations]),
     authority,
   });
   const semanticHash = canonicalLafeaSha256({
@@ -113,7 +125,10 @@ export function createBm005AuditReport(input) {
     observations,
     convergence: semantic.convergence,
     oracleComparison,
+    solverDiagnostics,
     negativeControl,
+    warnings,
+    limitations: semantic.limitations,
     authority,
     qualificationEvidence,
     diagnostics,
@@ -129,7 +144,8 @@ function benchmarkDefinition(value) {
     || value.route !== 'T3_T6_Q8_LINEAR_CONTINUUM'
     || value.freezePolicy?.definitionFrozenBeforeObservations !== true
     || value.freezePolicy?.productionOutputMayModifyOracle !== false
-    || value.acceptance?.releaseQualified !== false) {
+    || value.acceptance?.releaseQualified !== false
+    || !Array.isArray(value.limitations) || !value.limitations.length) {
     fail('BM005_REPORT_BENCHMARK_DEFINITION_INVALID');
   }
   if (!Array.isArray(value.mesh?.levels)
@@ -175,8 +191,37 @@ function observationRows(value, definition) {
       probeEvidenceHash: hash(row.probeEvidenceHash, 'BM005_REPORT_PROBE_HASH_INVALID'),
       value: finite(row.value, 'BM005_REPORT_VALUE_INVALID'),
       units: text(row.units, 'BM005_REPORT_UNITS_INVALID'),
+      meshMetadata: meshMetadata(row.meshMetadata, definition),
     });
   }));
+}
+
+function meshMetadata(value, definition) {
+  if (!value || value.elementFamily !== definition.mesh.elementFamily
+    || value.strategy !== definition.mesh.requiredStrategy
+    || !Number.isInteger(value.nodeCount) || value.nodeCount <= 0
+    || !Number.isInteger(value.elementCount) || value.elementCount <= 0
+    || !value.quality || typeof value.quality !== 'object') {
+    fail('BM005_REPORT_MESH_METADATA_INVALID');
+  }
+  const quality = value.quality;
+  if (typeof quality.status !== 'string'
+    || !Number.isInteger(quality.warningElementCount) || quality.warningElementCount < 0
+    || !Number.isInteger(quality.blockingElementCount) || quality.blockingElementCount < 0) {
+    fail('BM005_REPORT_MESH_QUALITY_INVALID');
+  }
+  return freeze({
+    elementFamily: value.elementFamily,
+    strategy: value.strategy,
+    nodeCount: value.nodeCount,
+    elementCount: value.elementCount,
+    quality: freeze({
+      status: quality.status,
+      warningElementCount: quality.warningElementCount,
+      blockingElementCount: quality.blockingElementCount,
+      gateResults: freeze(structuredClone(quality.gateResults ?? [])),
+    }),
+  });
 }
 
 function convergenceEvidence(value, definition, observations) {
@@ -197,6 +242,31 @@ function convergenceEvidence(value, definition, observations) {
     fail('BM005_REPORT_MOVING_MAXIMUM_POLICY_INVALID');
   }
   return value;
+}
+
+function solverEvidence(value, definition) {
+  const row = value?.loadCases?.find((item) => item.loadCaseId === definition.model.physicalCaseId);
+  if (!value || value.schema !== 'lafea-runtime-solver-diagnostics/v1'
+    || value.stageId !== definition.stageId
+    || value.terminationState !== 'CONVERGED'
+    || value.releaseQualified !== false
+    || !row || row.accepted !== true
+    || !row.equilibrium || row.equilibrium.accepted !== true) {
+    fail('BM005_REPORT_SOLVER_DIAGNOSTICS_INVALID');
+  }
+  return freeze({
+    schema: value.schema,
+    stageId: value.stageId,
+    executionHash: value.executionHash,
+    solverModelHash: value.solverModelHash,
+    storageRoute: value.storageRoute,
+    methods: freeze([...value.methods]),
+    terminationState: value.terminationState,
+    loadCase: freeze(structuredClone(row)),
+    accepted: true,
+    releaseQualified: false,
+    semanticHash: value.semanticHash,
+  });
 }
 
 function negativeEvidence(value, definition) {
@@ -239,9 +309,13 @@ function qualificationReasons(options) {
   if (new Set(options.observations.map((row) => row.meshHash)).size !== options.observations.length) {
     reasons.push('MESH_LEVELS_NOT_DISTINCT');
   }
+  if (options.observations.some((row) => row.meshMetadata.quality.blockingElementCount > 0)) {
+    reasons.push('MESH_QUALITY_BLOCKER_PRESENT');
+  }
   if (!options.asymptoticRangeAccepted) reasons.push('ASYMPTOTIC_RANGE_NOT_DEMONSTRATED');
   if (!options.pointwiseAcceptanceEligible) reasons.push('POINTWISE_PROBE_NOT_ACCEPTANCE_ELIGIBLE');
   if (!options.oracleCoveredByGci) reasons.push('ANALYTICAL_ORACLE_OUTSIDE_FINE_GCI');
+  if (options.solverDiagnostics.accepted !== true) reasons.push('SOLVER_DIAGNOSTICS_NOT_ACCEPTED');
   if (options.negativeControl.status !== 'PASS_EXPECTED_REJECTION') {
     reasons.push('NEGATIVE_CONTROL_NOT_QUALIFIED');
   }

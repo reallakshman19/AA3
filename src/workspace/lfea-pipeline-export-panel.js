@@ -1,19 +1,9 @@
 export const LFEA_PIPELINE_EXPORT_PANEL_SCHEMA = 'lfea-pipeline-export-panel/v1';
 
-/**
- * Presentation-only Export step.
- *
- * CSV content remains owned by the existing results panel: this surface asks
- * that controller for the currently reviewed case/view and its exact `csvFor`
- * output. It never re-computes result values.
- */
+/** Presentation-only Export step. CSV values remain owned by the results panel. */
 export function mountLfeaPipelineExportPanel(hostElement, options = {}) {
-  if (!hostElement || typeof hostElement.append !== 'function') {
-    throw new TypeError('Export panel requires a host element.');
-  }
-  if (typeof options.getResultsPanel !== 'function') {
-    throw new TypeError('Export panel requires options.getResultsPanel.');
-  }
+  if (!hostElement || typeof hostElement.append !== 'function') throw new TypeError('Export panel requires a host element.');
+  if (typeof options.getResultsPanel !== 'function') throw new TypeError('Export panel requires options.getResultsPanel.');
   const documentRef = options.documentRef ?? hostElement.ownerDocument ?? document;
   return new LfeaPipelineExportPanelController(hostElement, documentRef, options).init();
 }
@@ -42,7 +32,6 @@ export class LfeaPipelineExportPanelController {
     const snapshot = panel?.getSnapshot?.() ?? null;
     const active = panel?.activeCase?.() ?? null;
     if (!snapshot || !active) return null;
-    const csvText = panel.csvFor(active);
     const view = snapshot.activeView;
     return Object.freeze({
       caseId: active.caseId,
@@ -50,7 +39,7 @@ export class LfeaPipelineExportPanelController {
       view,
       viewLabel: viewLabel(view),
       fileName: `${active.caseId}-${String(view).toLowerCase()}.csv`,
-      csvText,
+      csvText: panel.csvFor(active),
       filter: panel.nodeFilter ?? '',
       sortColumn: panel.sortColumn ?? 'nodeId',
       sortDirection: panel.sortDirection ?? 'ASC',
@@ -70,6 +59,7 @@ export class LfeaPipelineExportPanelController {
       if (completed === false) throw new Error('The browser could not create the CSV download.');
       this.message = `Exported ${payload.fileName}.`;
       this.options.onExportCompleted?.(payload);
+      this.dispatch('lfea-pipeline-export-completed', payload);
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
     }
@@ -98,21 +88,18 @@ export class LfeaPipelineExportPanelController {
     return this;
   }
 
-  getSnapshot() {
-    const payload = this.exportPackage();
-    return Object.freeze({
-      schema: LFEA_PIPELINE_EXPORT_PANEL_SCHEMA,
-      ready: payload !== null,
-      caseId: payload?.caseId ?? null,
-      view: payload?.view ?? null,
-      fileName: payload?.fileName ?? null,
-    });
+  dispatch(type, detail) {
+    const EventCtor = this.documentRef.defaultView?.CustomEvent ?? globalThis.CustomEvent;
+    if (typeof EventCtor !== 'function') return;
+    this.elements?.section.dispatchEvent(new EventCtor(type, { bubbles: true, detail }));
   }
 
-  destroy() {
-    this.elements?.section.remove();
-    this.elements = null;
+  getSnapshot() {
+    const payload = this.exportPackage();
+    return Object.freeze({ schema: LFEA_PIPELINE_EXPORT_PANEL_SCHEMA, ready: payload !== null, caseId: payload?.caseId ?? null, view: payload?.view ?? null, fileName: payload?.fileName ?? null });
   }
+
+  destroy() { this.elements?.section.remove(); this.elements = null; }
 }
 
 function createExportSection(doc) {
@@ -139,26 +126,11 @@ function createExportSection(doc) {
 
 function summaryRow(doc, label, value) {
   const wrapper = doc.createDocumentFragment();
-  const dt = doc.createElement('dt');
-  dt.textContent = label;
-  const dd = doc.createElement('dd');
-  dd.textContent = value;
+  const dt = doc.createElement('dt'); dt.textContent = label;
+  const dd = doc.createElement('dd'); dd.textContent = value;
   wrapper.append(dt, dd);
   return wrapper;
 }
-
-function emptyParagraph(doc, text) {
-  const p = doc.createElement('p');
-  p.className = 'panel-empty';
-  p.textContent = text;
-  return p;
-}
-
-function caseLabel(caseId) {
-  const token = String(caseId).slice(String(caseId).indexOf('-') + 1);
-  return token.replace(/^WPT$/u, 'W+P1+T1').replace(/^WP$/u, 'W+P1').replace(/^WT$/u, 'W+T1');
-}
-
-function viewLabel(view) {
-  return ({ DISPLACEMENTS: 'Displacements', REACTIONS: 'Support loads', ELEMENT_FORCES: 'Element forces' })[view] ?? String(view);
-}
+function emptyParagraph(doc, text) { const p = doc.createElement('p'); p.className = 'panel-empty'; p.textContent = text; return p; }
+function caseLabel(caseId) { const token = String(caseId).slice(String(caseId).indexOf('-') + 1); return token.replace(/^WPT$/u, 'W+P1+T1').replace(/^WP$/u, 'W+P1').replace(/^WT$/u, 'W+T1'); }
+function viewLabel(view) { return ({ DISPLACEMENTS: 'Displacements', REACTIONS: 'Support loads', ELEMENT_FORCES: 'Element forces' })[view] ?? String(view); }

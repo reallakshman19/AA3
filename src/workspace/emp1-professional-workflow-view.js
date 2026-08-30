@@ -36,6 +36,9 @@ export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute) 
   }
   workflow.body.append(list, authoritySummary(root, presentation.authoritySummary));
 
+  const notice = currentnessNotice(root, presentation.currentnessNotice);
+  if (notice) workflow.body.append(notice);
+
   const boundary = element(root, 'p', 'lafea-workbench__authority',
     'Workflow status is presentation-only. Run authorization, source authority, route authority, code compliance and release authority remain owned by the existing governed EMP.1 contracts. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
   boundary.dataset.role = 'emp1-professional-workflow-authority-boundary';
@@ -58,6 +61,30 @@ function authoritySummary(root, summary) {
   ]) {
     section.append(element(root, 'span', null, human(value)));
   }
+  return section;
+}
+
+function currentnessNotice(root, notice) {
+  if (!notice) return null;
+  const section = element(root, 'div', 'lafea-workbench__authority');
+  section.dataset.role = 'emp1-professional-currentness-notice';
+  section.dataset.state = notice.state;
+  section.setAttribute('role', 'status');
+  section.setAttribute('aria-live', 'polite');
+  section.append(element(root, 'strong', null, notice.title));
+
+  const reasons = element(root, 'ul');
+  notice.reasons.forEach((reason, index) => {
+    const item = element(root, 'li', null, reason);
+    const reasonCode = notice.reasonCodes[index];
+    if (reasonCode) item.dataset.reasonCode = reasonCode;
+    reasons.append(item);
+  });
+  section.append(reasons);
+
+  const action = element(root, 'p', null, notice.action);
+  action.dataset.role = 'emp1-professional-required-action';
+  section.append(action);
   return section;
 }
 

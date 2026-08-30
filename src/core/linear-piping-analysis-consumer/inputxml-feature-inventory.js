@@ -7,6 +7,10 @@ import {
 import {
   NUMERIC_TOLERANCE, classifyRestraint, restraintDispositions, numericAttribute, normalizedNodeAttribute,
 } from './inputxml-feature-inventory-restraints.js';
+import {
+  classifyPredefinedHanger,
+  predefinedHangerDispositions,
+} from './inputxml-predefined-hanger.js';
 import { isSifSlotUnfilled, isForcesMomentsSlotUnfilled } from './inputxml-feature-inventory-slots.js';
 import {
   productionAuthorizedPressureEffects,
@@ -21,13 +25,10 @@ export function buildInputXmlFeatureInventory(sourceBundle) {
     || !Array.isArray(sourceBundle.geometry?.segments)) {
     throw new TypeError('InputXML feature inventory requires a retained source bundle.');
   }
-  /*
-   * Force-per-length, so a declared spring rate can be converted from the
-   * file's own units to the solver's. Null when the file declares no FORCE
-   * unit -- classifyRestraint refuses the rate in that case rather than
-   * assuming it was already SI.
-   */
   const stiffnessToSi = sourceBundle.geometry.summary?.inputXmlStiffnessToSiFactor ?? null;
+  const lengthUnit = sourceBundle.geometry.summary?.inputXmlLengthUnit
+    ?? sourceBundle.geometry.unit
+    ?? null;
   const segmentById = new Map(
     sourceBundle.geometry.segments.map((segment) => [String(segment.id), segment]),
   );
@@ -58,7 +59,9 @@ export function buildInputXmlFeatureInventory(sourceBundle) {
     }));
 
     for (const feature of element.childFeatures ?? []) {
-      rows.push(childInventory({ element, feature, segment, componentInventoryId, stiffnessToSi }));
+      rows.push(childInventory({
+        element, feature, segment, componentInventoryId, stiffnessToSi, lengthUnit,
+      }));
     }
     rows.push(...fieldInventory(element, segment));
   }
@@ -67,7 +70,7 @@ export function buildInputXmlFeatureInventory(sourceBundle) {
   return Object.freeze(rows);
 }
 
-function childInventory({ element, feature, segment, componentInventoryId, stiffnessToSi }) {
+function childInventory({ element, feature, segment, componentInventoryId, stiffnessToSi, lengthUnit }) {
   const kind = String(feature.kind ?? 'UNKNOWN').toUpperCase();
   const sourceFeatureId = String(feature.sourceFeatureId);
   const common = {
@@ -102,7 +105,13 @@ function childInventory({ element, feature, segment, componentInventoryId, stiff
     return inventoryRow({ ...common, classification: { kind }, dispositions: both(codeOnlyDisposition('CODE_STRESS_INPUT_ONLY')) });
   }
   if (kind === 'HANGER') {
-    return inventoryRow({ ...common, classification: { kind }, dispositions: both(unsupportedDisposition('MODEL_HANGER_UNSUPPORTED')) });
+    const classification = classifyPredefinedHanger(feature.rawAttributes, stiffnessToSi, lengthUnit);
+    return inventoryRow({
+      ...common,
+      active: classification.nodeId !== null,
+      classification,
+      dispositions: predefinedHangerDispositions(classification),
+    });
   }
   if (kind === 'FORCES_MOMENTS') {
     if (isForcesMomentsSlotUnfilled(feature.rawAttributes)) return unfilledSlotRow(common, kind);

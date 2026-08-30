@@ -215,13 +215,18 @@ function createElements(doc) {
     return button;
   });
 
-  const stagedOptions = doc.createElement('label');
+  const stagedOptions = doc.createElement('details');
   stagedOptions.className = 'lfea-source-acquisition__staged-option';
-  stagedOptions.textContent = 'For next StagedJSON import: infer missing OD from nominal bore ';
+  stagedOptions.dataset.role = 'lfea-source-acquisition-staged-options';
+  const stagedSummary = doc.createElement('summary');
+  stagedSummary.textContent = 'StagedJSON options';
+  const stagedChoice = doc.createElement('label');
+  stagedChoice.className = 'lfea-source-acquisition__staged-option-choice';
   const stagedInferOd = doc.createElement('input');
   stagedInferOd.type = 'checkbox';
   stagedInferOd.dataset.role = 'lfea-source-acquisition-staged-infer-od';
-  stagedOptions.append(stagedInferOd);
+  stagedChoice.append(stagedInferOd, doc.createTextNode(' Infer missing OD from nominal bore'));
+  stagedOptions.append(stagedSummary, stagedChoice);
   actions.append(stagedOptions);
 
   const clearButton = doc.createElement('button');

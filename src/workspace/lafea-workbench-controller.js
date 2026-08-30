@@ -1,5 +1,5 @@
 /** Controller for the independent guided LAFEA workbench. */
-import { createLafeaWorkbenchOrchestratorStore } from './lafea-workbench-orchestrator-store.js';
+import { createLafeaWorkbenchStore } from './lafea-lifecycle-workbench-store.js';
 import {
   createLafeaAccessoryPanelManager,
   lafeaAccessoryPanelConfigurationRequiresHost,
@@ -45,7 +45,7 @@ export class LafeaWorkbenchController {
     } = configuration;
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
-    this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
+    this.store = createLafeaWorkbenchStore(storeOptions);
     this.emp1RunInput = emp1RunInput == null ? null : normalizeEmp1WorkbenchRunInput(emp1RunInput);
     this.emp1Execution = null;
     this.emp1RunFailure = null;
@@ -98,6 +98,7 @@ export class LafeaWorkbenchController {
       onRunEmp1: () => this.runEmp1Product(),
       onEmp1RunInput: (value) => this.setEmp1RunInput(value),
       onPrepareContinuum: () => this.attemptContinuumPreflight(),
+      onRunContinuumConvergence: (request) => this.runContinuumConvergenceStudy(request),
       onExport: () => this.downloadDocument(),
       onUndo: () => this.undo(),
       onRedo: () => this.redo(),
@@ -314,6 +315,7 @@ export class LafeaWorkbenchController {
   attemptContinuumPreflight(s = this.getState().activeStageId) {
     return this.store.prepareContinuumForRun(s, { failureMode: 'DIAGNOSTIC_UI' });
   }
+  runContinuumConvergenceStudy(request) { return this.store.runContinuumConvergenceStudy(request); }
   selectRetainedAnalysisMeshEvidenceV2(s = this.getState().activeStageId) { return this.store.selectRetainedAnalysisMeshEvidenceV2(s); }
 
   buildAnalysisMeshCustodyProjection(stageId = this.getState().activeStageId) {

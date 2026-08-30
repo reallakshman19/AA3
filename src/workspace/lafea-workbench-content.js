@@ -15,6 +15,7 @@ import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js'
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaSolveReadiness } from './lafea-solve-readiness-panel.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
+import { renderLafeaContinuumConvergencePanel } from './lafea-continuum-convergence-panel.js';
 import {
   renderLafeaEngineeringEvidenceDrawer,
   revealLafeaGuidedTarget,
@@ -170,6 +171,15 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     Array.isArray(state.diagnostics) ? state.diagnostics : [],
   ));
 
+  const convergenceCard = card(root, 'Convergence');
+  convergenceCard.section.dataset.guidedTarget = 'convergence';
+  convergenceCard.body.append(
+    renderContinuumConvergenceStatus(root, stage),
+    renderLafeaContinuumConvergencePanel(root, stage, {
+      onRunConvergence: options.handlers.onRunContinuumConvergence,
+    }),
+  );
+
   const evidenceCard = card(root, 'Analysis results');
   evidenceCard.section.dataset.guidedTarget = 'results';
   evidenceCard.body.append(renderLafeaEvidence(
@@ -204,6 +214,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   context.append(
     sourceCard.section,
     profileCard.section,
+    convergenceCard.section,
     evidenceCard.section,
     renderLafeaEngineeringEvidenceDrawer(
       root,
@@ -367,14 +378,97 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
     return banner;
   }
 
+  const convergenceStep = workflow.steps.find((step) => step.stepId === 'CONVERGENCE');
+  if (convergenceStep?.status !== 'COMPLETE') {
+    banner.dataset.intent = 'convergence';
+    const blocked = convergenceStep?.status === 'BLOCKED';
+    banner.append(
+      element(root, 'strong', null, blocked
+        ? 'Step 4: Convergence evidence needs review'
+        : 'Step 4: Convergence evidence required'),
+      element(
+        root,
+        'span',
+        null,
+        convergenceStep?.reasons?.length
+          ? lafeaWorkbenchReasonLabels(convergenceStep.reasons).join(' • ')
+          : 'A qualified solve is retained, but Results remain gated until convergence is current and qualified.',
+      ),
+    );
+    const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review convergence');
+    review.type = 'button';
+    review.title = 'Review or run the convergence study that gates LAFEA.3 Results publication.';
+    review.onclick = () => navigateTo(shell, 'convergence');
+    banner.append(review);
+    return banner;
+  }
+
+  if (stage.lifecycleReadiness?.resultReady !== true) {
+    banner.dataset.intent = 'results-blocked';
+    banner.append(
+      element(root, 'strong', null, 'Results publication is still blocked'),
+      element(root, 'span', null, lafeaWorkbenchReasonLabels(
+        stage.lifecycleReadiness?.blockingReasons ?? ['RESULT_EVIDENCE_NOT_CURRENT'],
+      ).join(' • ')),
+    );
+    const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review evidence');
+    review.type = 'button';
+    review.onclick = () => navigateTo(shell, 'results');
+    banner.append(review);
+    return banner;
+  }
+
   banner.dataset.intent = 'results';
-  banner.append(element(root, 'strong', null, 'Analysis result retained'));
-  const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review retained results');
+  banner.append(element(root, 'strong', null, 'Results are ready for review'));
+  const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review qualified results');
   review.type = 'button';
-  review.title = 'Review retained solver/recovery evidence. Display contours are not substituted for numerical authority.';
+  review.title = 'Review retained solver, recovery and convergence evidence. Display contours are not substituted for numerical authority.';
   review.onclick = () => navigateTo(shell, 'results');
   banner.append(review);
   return banner;
+}
+
+function renderContinuumConvergenceStatus(root, stage) {
+  const panel = element(root, 'div', 'lafea-workbench__convergence-status');
+  panel.dataset.role = 'lafea-convergence-status';
+  if (stage.stageId !== 'LAFEA.3' || stage.domainFirstProfileActive !== true) {
+    panel.dataset.state = 'NOT_APPLICABLE';
+    panel.append(element(root, 'p', null, 'Convergence publication gating is not applicable to this stage.'));
+    return panel;
+  }
+  if (stage.execution?.status !== 'QUALIFIED') {
+    panel.dataset.state = 'EXECUTION_REQUIRED';
+    panel.append(element(root, 'p', null, 'Run a qualified analysis before evaluating convergence.'));
+    return panel;
+  }
+  const projection = stage.continuumConvergenceProjection;
+  const state = projection?.state ?? 'ABSENT';
+  panel.dataset.state = state;
+  if (state === 'CURRENT_PASS') {
+    panel.append(
+      element(root, 'strong', null, 'Current convergence evidence qualifies Results publication'),
+      element(root, 'p', null, projection.classification
+        ? `Classification: ${projection.classification}`
+        : 'The retained convergence study is current and publishable.'),
+    );
+    return panel;
+  }
+  const reasons = projection?.reasons?.length
+    ? lafeaWorkbenchReasonLabels(projection.reasons)
+    : ['A governed three-level physical-point convergence study is required.'];
+  panel.append(
+    element(root, 'strong', null, state === 'ABSENT'
+      ? 'Convergence study not yet retained'
+      : 'Convergence evidence is not publishable'),
+    element(root, 'p', null, reasons.join(' • ')),
+    element(
+      root,
+      'p',
+      'lafea-workbench__section-intro',
+      'Results remain fail-closed until the convergence-aware workbench retains CURRENT_PASS evidence. The study form below fixes the 2:1 ladder policy and does not expose acceptance tolerances.',
+    ),
+  );
+  return panel;
 }
 
 export function unsupportedStagePresentationRequired(workflow, discretization) {

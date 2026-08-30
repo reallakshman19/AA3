@@ -21,6 +21,7 @@ const STEP_DEFINITIONS = Object.freeze([
   ['NUMERICAL_PREFLIGHT', 'Numerical preflight'],
   ['AUTHORIZATION', 'Authorization'],
   ['RUN', 'Run'],
+  ['CONVERGENCE', 'Convergence'],
   ['RESULTS_EVIDENCE', 'Results and evidence'],
 ]);
 
@@ -102,15 +103,35 @@ function stepStatus(stepId, stage, orchestration, adapter, executionSupported) {
     const execution = section(orchestration, 'EXECUTION');
     if (!executionSupported) return status('BLOCKED', ['UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED']);
     if (!documentReady) return status('NOT_STARTED', ['SOURCE_DOCUMENT_REQUIRED']);
+    if (stage.execution?.status === 'QUALIFIED') return status('COMPLETE');
     if (authorization.state !== 'READY') return status('BLOCKED', authorization.reasons);
-    if (execution.state === 'COMPLETE') return status('COMPLETE', execution.reasons);
     if (execution.state === 'BLOCKED') return status('BLOCKED', execution.reasons);
     return status('READY', execution.reasons);
+  }
+  if (stepId === 'CONVERGENCE') {
+    return convergenceStepStatus(stage, executionSupported);
   }
   if (stepId === 'RESULTS_EVIDENCE') {
     return fromSection(section(orchestration, 'RESULTS'));
   }
   return status('NOT_STARTED');
+}
+
+function convergenceStepStatus(stage, executionSupported) {
+  if (stage.stageId !== 'LAFEA.3' || stage.domainFirstProfileActive !== true) {
+    return status('COMPLETE', ['WORKFLOW_STEP_NOT_APPLICABLE']);
+  }
+  if (!executionSupported) return status('BLOCKED', ['UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED']);
+  if (stage.execution?.status !== 'QUALIFIED') return status('NOT_STARTED', ['EXECUTION_REQUIRED']);
+  const convergence = stage.continuumConvergenceProjection;
+  if (!convergence || convergence.state === 'ABSENT') {
+    return status('READY', convergence?.reasons ?? ['CONVERGENCE_STUDY_REQUIRED']);
+  }
+  if (convergence.state === 'CURRENT_PASS') return status('COMPLETE', convergence.reasons);
+  if (['CURRENT_BLOCK', 'FAILED', 'STALE'].includes(convergence.state)) {
+    return status('BLOCKED', convergence.reasons);
+  }
+  return status('BLOCKED', ['CONVERGENCE_STATE_INVALID']);
 }
 
 function analysisProfileStatus(stage, documentReady) {
@@ -190,6 +211,7 @@ function focusTarget(stepId) {
     NUMERICAL_PREFLIGHT: 'numerical-verification',
     AUTHORIZATION: 'lineage',
     RUN: 'run',
+    CONVERGENCE: 'convergence',
     RESULTS_EVIDENCE: 'results',
   }[stepId];
 }

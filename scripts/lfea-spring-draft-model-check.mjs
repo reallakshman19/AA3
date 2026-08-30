@@ -100,13 +100,18 @@ const limitations = authorized.preparation.structuralPreparation.constraintBindi
 assert.ok(limitations.includes('DRAFT_SPRING_SUPPORT_NO_REFERENCE'),
   'a compiled spring must disclose that it has no reference behind it');
 
-// Negative controls: rigid CNODE and incomplete predefined hanger must still refuse.
+// Negative controls: each deliberately deferred/unqualified boundary remains a
+// separate retained InputXML model rather than a classifier-only assertion.
 const unsupported = preFlightOf('UnsupportedSupports.xml');
 const blocked = findingCodes(unsupported, 'BLOCK');
 assert.ok(blocked.includes('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'),
   `a rigid CNODE restraint must still be refused by name, got ${JSON.stringify(blocked)}`);
 assert.ok(blocked.includes('MODEL_HANGER_PREDEFINED_DATA_INCOMPLETE'),
   `an incomplete predefined hanger must still be refused by name, got ${JSON.stringify(blocked)}`);
+const unsupportedSkew = preFlightOf('UnsupportedSkewSupport.xml');
+const skewBlocked = findingCodes(unsupportedSkew, 'BLOCK');
+assert.ok(skewBlocked.includes('MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED'),
+  `a rigid skew restraint must still be refused by name, got ${JSON.stringify(skewBlocked)}`);
 
 console.log(JSON.stringify({
   check: 'lfea-spring-draft-model',
@@ -117,6 +122,9 @@ console.log(JSON.stringify({
   springIdentities,
   springLoadShare: Number((100 * springShare).toFixed(1)),
   disclosesDraft: true,
-  stillRefused: blocked.filter((code) => /CONNECTING_NODE|HANGER/u.test(code)),
+  stillRefused: [
+    ...blocked.filter((code) => /CONNECTING_NODE|HANGER/u.test(code)),
+    ...skewBlocked.filter((code) => /SKEW_DIRECTION/u.test(code)),
+  ],
   clearedBy: 'A CAESAR-solved model containing the support feature. Not by more self-authored coverage.',
 }, null, 2));

@@ -115,6 +115,7 @@ async function checkpoint(page, testInfo, evidence, ordinal, name) {
   await testInfo.attach(`${ordinal}-${name}-viewport`, { body: viewportBody, contentType: 'image/png' });
   const fullPageBody = await page.screenshot({ ...screenshotOptions, fullPage: true });
   await testInfo.attach(`${ordinal}-${name}-full-page`, { body: fullPageBody, contentType: 'image/png' });
+  await page.evaluate(({ scrollX, scrollY }) => window.scrollTo(scrollX, scrollY), viewportState);
   evidence.push({ ordinal: Number(ordinal), name, ...viewportState });
 }
 

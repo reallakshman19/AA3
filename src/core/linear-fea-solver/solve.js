@@ -260,6 +260,37 @@ function canonicalEntries(vector, dofMap, nodeIds) {
   return entries;
 }
 
+function groundedSpringReactions(model, dofMap, Ufull) {
+  const entries = [];
+  const translationalDofs = DOF_ORDER.slice(0, 3);
+  for (const constraint of model.constraints) {
+    if (constraint.behavior !== 'LINEAR_SPRING' || constraint.connectedNodeId) continue;
+    if (!Array.isArray(constraint.direction)) {
+      entries.push({
+        nodeId: constraint.nodeId,
+        dof: constraint.dof,
+        value: -constraint.stiffness * Ufull[dofIndexOf(dofMap, constraint.nodeId, constraint.dof)],
+      });
+      continue;
+    }
+    const displacement = translationalDofs.map(
+      (dof) => Ufull[dofIndexOf(dofMap, constraint.nodeId, dof)],
+    );
+    const extension = constraint.direction.reduce(
+      (sum, component, index) => sum + component * displacement[index],
+      0,
+    );
+    translationalDofs.forEach((dof, index) => {
+      entries.push({
+        nodeId: constraint.nodeId,
+        dof,
+        value: -constraint.stiffness * extension * constraint.direction[index],
+      });
+    });
+  }
+  return entries;
+}
+
 export function compileSolverExecution({ compilation, elementContributions, loadCase, solverProfile, cache }) {
   const acceptedCompilation = requireMechanicalModelCompilation(compilation);
   const acceptedLoadCase = requirePhysicalLoadCase(loadCase);
@@ -386,13 +417,7 @@ export function compileSolverExecution({ compilation, elementContributions, load
   const constrainedReactionEntries = assembly.constrained
     .filter((entry) => entry.behavior !== INACTIVE_ANALYSIS_DOF_BEHAVIOR)
     .map((entry) => ({ nodeId: entry.nodeId, dof: entry.dof, value: fullResidualVector[entry.globalIndex] }));
-  const groundedSpringReactionEntries = model.constraints
-    .filter((constraint) => constraint.behavior === 'LINEAR_SPRING')
-    .map((constraint) => ({
-      nodeId: constraint.nodeId,
-      dof: constraint.dof,
-      value: -constraint.stiffness * Ufull[dofIndexOf(dofMap, constraint.nodeId, constraint.dof)],
-    }));
+  const groundedSpringReactionEntries = groundedSpringReactions(model, dofMap, Ufull);
   const reactionEntries = [...constrainedReactionEntries, ...groundedSpringReactionEntries]
     .sort((left, right) => compareAscii(`${left.nodeId}:${left.dof}`, `${right.nodeId}:${right.dof}`));
   const displacementEntries = canonicalEntries(Ufull, dofMap, dofMap.nodeOrder);

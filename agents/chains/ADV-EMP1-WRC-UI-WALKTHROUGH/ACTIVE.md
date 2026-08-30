@@ -1,8 +1,8 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-EMP1-WRC-UI-WALKTHROUGH
 MISSION: Execute and qualify the engineer-facing EMP.1/WRC professional workflow for issue #1559 without changing WRC numerical/source/release authority
-ACTIVE_ENDPOINT: EP-0023
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0023.md
+ACTIVE_ENDPOINT: EP-0024
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0024.md
 MATERIAL_HISTORY_ROOT_BASE: 0676f6b145dad164869d2979f69b4a4491e8d803
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0019.md
 SOURCE_PR: 1571 MERGED
@@ -13,20 +13,23 @@ RECONCILED_MAIN: fad372eaf55487b10a2cbcad5ff8438b71e031ff
 WRC_MERGE_COMMIT: e5d7a33b3620356ba22dab50e278b381e85a0b70
 LATEST_MATERIAL_HEAD: 72b76061e333bba992a214f57df62ef0d652dd1c
 LATEST_SOURCE_HEAD: e6184598dbd7542a614cd933b8fe1257c831dddf
-STATE: HANDOVER_READY_BROWSER_HUMAN_ACCEPTANCE_OPEN
+STATE: HANDOVER_READY_SOURCE_MATERIALIZATION_BLOCKED_BROWSER_AVAILABLE
 ENGINEERING_STATE: IMPLEMENTATION_AND_EVIDENCE_SUPPORT_MERGED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_COMPLETE
 TAKEOVER_AUTHORITY: READ_ONLY
 WRITE_AUTHORITY: PRE_MUTATION_ENDPOINT_REQUIRED_BEFORE_ANY_NEW_PRODUCT_CHANGE
-AUTO_STATE: PAUSED_AT_BROWSER_HUMAN_REVIEW_GATE
+AUTO_STATE: PAUSED_AT_SOURCE_MATERIALIZATION_BROWSER_HUMAN_GATE
 MERGE_AUTHORITY: OWNER_ONLY
 AUTHORITY_DOMAIN: EMP.1 WRC professional workflow evidence capture and human-review support; production UI, WRC source, mechanics, route authorization, code compliance and release authority protected
 ACTIVE_CUSTODIAN: gpt-5.6-sol
 CUSTODY_EPOCH: 1
 COORDINATION_STATE: SAFE_DISJOINT_MAIN_DRIFT
-DEPENDENCIES: faithful Playwright Chromium execution plus human-observed/recorded review of 12 viewport and 12 full-page evidence attachments for issue #1559 acceptance
-EXACT_NEXT_ACTION: re-fetch live main and PR #1579, then run node scripts/run-playwright.mjs e2e/emp1-professional-walkthrough-evidence.spec.js --workers=1 if no overlapping WRC drift exists
+DEPENDENCIES: faithful repository checkout plus project-local dependencies, then Chromium execution and human-observed/recorded review of 12 viewport and 12 full-page evidence attachments for issue #1559 acceptance
+ENVIRONMENT_BROWSER_CAPABILITY: AVAILABLE_SYSTEM_CHROMIUM
+ENVIRONMENT_PYTHON_PLAYWRIGHT_CAPABILITY: AVAILABLE
+SOURCE_MATERIALIZATION_STATE: BLOCKED_EXECUTION_ENVIRONMENT
+EXACT_NEXT_ACTION: in an environment with a faithful repository checkout and project-local dependencies, re-fetch live main/PR #1579/#1559/reviews/changed paths and then run node scripts/run-playwright.mjs e2e/emp1-professional-walkthrough-evidence.spec.js --workers=1 if no overlapping WRC drift exists
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 10d667ce715bb52e1f73035c6fa326db77d0f9dd
 COMMON_PROTOCOL_STATUS: OWNER_PINNED

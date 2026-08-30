@@ -108,7 +108,6 @@ function childInventory({ element, feature, segment, componentInventoryId, stiff
     const classification = classifyPredefinedHanger(feature.rawAttributes, stiffnessToSi, lengthUnit);
     return inventoryRow({
       ...common,
-      active: classification.nodeId !== null,
       classification,
       dispositions: predefinedHangerDispositions(classification),
     });

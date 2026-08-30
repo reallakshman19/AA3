@@ -18,6 +18,7 @@ const resultsPanel = read('src/workspace/lfea-pipeline-results-panel.js');
 const exportPanel = read('src/workspace/lfea-pipeline-export-panel.js');
 const sourceAcquisition = read('src/workspace/lfea-source-acquisition.js');
 const analysisController = read('src/workspace/lfea-pipeline-analysis-controller.js');
+const main = read('src/main.js');
 const accdbE2e = read('e2e/lfea-pipeline-accdb-real-model.spec.js');
 const continuityE2e = read('e2e/lfea-pipeline-continuity.spec.js');
 
@@ -62,9 +63,16 @@ assert(session.includes("step.stepId === activeStepId\n      ? 'CURRENT'"), 'act
 
 assert(!casePanel.includes("dataset.action = 'lfea-pipeline-analyze'"), 'Load case still owns Analyze');
 assert(casePanel.includes('getAppliedCaseIds()'), 'Load case does not expose current sealed case custody');
+assert(casePanel.includes('then Apply selection.'), 'Load case does not instruct the engineer to Apply selection');
 assert(runPanel.includes("dataset.action = 'lfea-pipeline-analyze'"), 'Run does not own Analyze');
 assert(runPanel.includes("preparation?.requestedCaseIds"), 'Run is not reading cases from retained pre-flight');
 assert(runPanel.includes("'lfea-pipeline-analysis-completed'"), 'Run does not publish successful analysis custody');
+assert(main.includes("Apply selection, then continue to Run."), 'InputXML Load case guidance does not point from Apply selection to Run');
+assert(main.includes("case(s), then Apply selection and continue to Run."), 'ACCDB Load case guidance does not point from Apply selection to Run');
+assert(main.includes("use Load case to Apply selection, then Analyze on Run instead"), 'optional code-check guidance does not preserve Run as Analyze owner');
+assert(!main.includes("Choose the cases to analyze, then Analyze."), 'stale InputXML Load case Analyze guidance remains');
+assert(!main.includes('case(s), then Analyze.'), 'stale ACCDB Load case Analyze guidance remains');
+assert(!main.includes('use Analyze on the Load case step instead'), 'stale optional-code-check Load case Analyze guidance remains');
 assert(shellController.includes("stepId === 'OUTPUT' && !this.flow.analysisComplete"), 'Output is not fail-closed before analysis');
 assert(shellController.includes("stepId === 'EXPORT' && !this.flow.analysisComplete"), 'Export is not fail-closed before analysis');
 assert(shellController.includes("'lfea-pipeline-export-completed'"), 'Export completion is not retained in UI flow custody');

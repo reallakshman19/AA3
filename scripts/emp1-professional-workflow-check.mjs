@@ -137,8 +137,10 @@ assert.match(viewSource, /Historical\/stale C numerical evidence is never promot
 const presentationSource = await read('src/workspace/emp1-professional-workflow-presentation.js');
 assert.equal(presentationSource.includes('../core/emp1/'), false);
 assert.equal(presentationSource.includes('runEmp1'), false);
-assert.equal(presentationSource.includes('gamma'), false,
-  'workflow presentation must not calculate or infer WRC numerical parameters');
+assert.equal(presentationSource.includes('semanticHash('), false,
+  'workflow presentation must not create source/result/authority hashes');
+assert.equal(presentationSource.includes('stressIntensity'), false,
+  'workflow presentation must not calculate or reconstruct WRC stress intensity');
 assert.match(presentationSource, /\^WRC_GAMMA5_ROUTE_/u,
   'live bounded-route suspension family must be classified as route authority');
 

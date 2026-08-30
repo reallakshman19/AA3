@@ -79,6 +79,19 @@ export function classifyRestraint(attributes, element, segment, stiffnessToSi) {
   });
 }
 
+/**
+ * Exact finite bidirectional skew springs are the one skew subset the current
+ * linear kernel can represent without an MPC: the source direction is carried
+ * unchanged into a rank-1 `k(n⊗n)` stiffness contribution. Rigid skew supports
+ * and skew unilateral supports remain separate kinematic/nonlinear problems.
+ */
+export function restraintDirectionalSpringDirection(classification) {
+  if (!classification?.finiteStiffnessActive || classification.stiffnessValue === null) return null;
+  if (!EXACT_BIDIRECTIONAL_CODES.has(classification.typeCode)) return null;
+  if (!classification.direction?.valid || axisAlignedDirection(classification.direction)) return null;
+  return Object.freeze([...classification.direction.unit]);
+}
+
 export function restraintDispositions(classification) {
   if (!classification.active) return both(inactiveDisposition());
   if (classification.typeCode === null || classification.typeLabel === null || classification.nodeId === null) {
@@ -169,10 +182,11 @@ function baseRestraintDispositions(classification) {
   const singleAxis = classification.direction.valid && classification.targetDofs.length === 1;
   if (EXACT_BIDIRECTIONAL_CODES.has(classification.typeCode)) {
     if (!singleAxis) return both(invalidDisposition('MODEL_RESTRAINT_DIRECTION_INVALID'));
-    // A skewed axis would need the restraint resolved onto a declared local
-    // basis; collapsing it onto a dominant global axis would silently move the
-    // reaction, so it stays refused rather than approximated.
     if (!axisAlignedDirection(classification.direction)) {
+      // A finite skew spring is not a kinematic constraint: carrying its unit
+      // direction and rate into `k(n⊗n)` is exact linear stiffness. A rigid
+      // skew support still needs a constraint equation/MPC and remains refused.
+      if (restraintDirectionalSpringDirection(classification) !== null) return both(exactDisposition());
       return both(unsupportedDisposition('MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED'));
     }
     return both(exactDisposition());

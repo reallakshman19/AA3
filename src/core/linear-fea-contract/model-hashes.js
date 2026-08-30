@@ -25,9 +25,8 @@ function stiffnessConstraintProjection(constraint) {
       basis: constraint.basis,
       stiffness: constraint.stiffness,
     };
-    // Preserve the historical axis-spring projection exactly. Direction is
-    // stiffness authority only when this is the new directional spring form.
     if (Array.isArray(constraint.direction)) projection.direction = [...constraint.direction];
+    if (typeof constraint.connectedNodeId === 'string') projection.connectedNodeId = constraint.connectedNodeId;
     return projection;
   }
   return {

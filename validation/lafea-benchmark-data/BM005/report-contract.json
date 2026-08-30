@@ -1,0 +1,109 @@
+{
+  "schema": "lafea3-bm005-report-artifact-contract/v1",
+  "benchmarkId": "BM-005-LAME-CONT-CYL-01",
+  "reportSchema": "lafea3-bm005-audit-report/v1",
+  "hashProfile": "LAFEA_CANONICAL_JSON_SHA256_V1",
+  "producer": "scripts/lafea.3-bm005-ordinary-route-check.mjs",
+  "persistence": {
+    "directory": "agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/validation",
+    "filenameTemplate": "BM005-<candidateHeadSha>.json",
+    "rule": "Persist only exact executed harness output. A PASS artifact requires the tested candidate to report cleanTree=true. A completed-but-unqualified run may emit a machine-readable FAIL report for diagnosis, but it must not be promoted as release evidence. The evidence commit may be a later relay-only commit; candidateHeadSha/evidenceHash continue to identify the tested head. Do not fabricate a PASS artifact from source inspection."
+  },
+  "requiredTopLevelFields": [
+    "schema",
+    "status",
+    "benchmarkId",
+    "stageId",
+    "route",
+    "candidateHeadSha",
+    "cleanTree",
+    "hashProfile",
+    "benchmarkDefinition",
+    "benchmarkDefinitionHash",
+    "oracleSourceRegistry",
+    "oracleSourceRegistryHash",
+    "lineage",
+    "observations",
+    "convergence",
+    "oracleComparison",
+    "solverDiagnostics",
+    "negativeControl",
+    "warnings",
+    "limitations",
+    "authority",
+    "qualificationEvidence",
+    "diagnostics",
+    "semanticHash",
+    "evidenceHash"
+  ],
+  "requiredObservationFields": [
+    "levelId",
+    "h",
+    "meshProfileHash",
+    "meshHash",
+    "solverModelHash",
+    "executionHash",
+    "recoveryHash",
+    "probeEvidenceHash",
+    "value",
+    "units",
+    "meshMetadata"
+  ],
+  "requiredConvergenceFields": [
+    "classification",
+    "observedOrders",
+    "observedOrder",
+    "richardsonExtrapolatedValue",
+    "gciFineAbsolute",
+    "gciFinePercent",
+    "pointwiseAcceptanceEligible",
+    "asymptoticRangeAccepted"
+  ],
+  "requiredOracleComparisonFields": [
+    "expectedValue",
+    "actualFineValue",
+    "units",
+    "absoluteError",
+    "relativeError",
+    "gciFineAbsolute",
+    "gciFinePercent",
+    "richardsonExtrapolatedValue",
+    "oracleCoveredByGci",
+    "status"
+  ],
+  "requiredAuthorityFields": [
+    "benchmarkQualified",
+    "resultPublicationQualified",
+    "releaseQualified",
+    "coreFeaCompletionProven",
+    "reasons"
+  ],
+  "semanticHashInput": [
+    "report PASS/FAIL status",
+    "benchmark identity and route",
+    "benchmarkDefinitionHash",
+    "oracleSourceRegistryHash",
+    "lineage",
+    "mesh/probe observations",
+    "convergence result",
+    "oracle comparison",
+    "solver diagnostics",
+    "negative-control result",
+    "warnings/limitations",
+    "authority disposition"
+  ],
+  "evidenceHashInput": [
+    "semanticHash",
+    "candidateHeadSha",
+    "qualificationEvidence",
+    "diagnostics"
+  ],
+  "failureOutputRule": "After the ordinary route completes enough evidence to construct the report, any benchmark/convergence/oracle/negative-control/clean-tree qualification failure must print the complete report with status=FAIL and set a non-zero process exit code. Schema/route corruption that prevents trustworthy report construction may still fail before report emission.",
+  "authorityRules": {
+    "reportPassRequiresBenchmarkAndResultPublication": true,
+    "benchmarkPassMayGrantRelease": false,
+    "resultPublicationMayGrantRelease": false,
+    "releaseQualifiedMustRemainFalseForIssue1569": true,
+    "sourceInspectionMayCreateExecutedPassArtifact": false
+  }
+}

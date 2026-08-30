@@ -1,0 +1,139 @@
+{
+  "schema": "lafea3-bm005-benchmark-definition/v1",
+  "benchmarkId": "BM-005-LAME-CONT-CYL-01",
+  "stageId": "LAFEA.3",
+  "route": "T3_T6_Q8_LINEAR_CONTINUUM",
+  "sourceBenchmarkRef": "CONT-CYL-01",
+  "sourceClaimId": "LAFEA3-SRC-LAME-01",
+  "sourceRegistryPath": "validation/lafea-benchmark-data/BM005/sources/source-registry.json",
+  "model": {
+    "formulation": "PLANE_STRESS",
+    "units": {"length":"mm","force":"N","stress":"MPa","modulus":"MPa"},
+    "material": {"materialId":"MAT","elasticModulus":200000,"poissonRatio":0.3},
+    "thickness": 10,
+    "geometry": {
+      "schema": "lafea-analysis-geometry/v1",
+      "stageId": "LAFEA.3",
+      "geometryId": "BM005-LAME-QUARTER-ANNULUS",
+      "coordinateSystemId": "GLOBAL_XY",
+      "lengthUnit": "mm",
+      "orientationPolicy": "OUTER_CCW_HOLES_CW_V1",
+      "vertices": [
+        {"vertexId":"P1_INNER_X","x":50,"y":0},
+        {"vertexId":"P2_OUTER_X","x":100,"y":0},
+        {"vertexId":"P3_OUTER_Y","x":0,"y":100},
+        {"vertexId":"P4_INNER_Y","x":0,"y":50}
+      ],
+      "segments": [
+        {"segmentId":"RADIAL_X","type":"LINE","startVertexId":"P1_INNER_X","endVertexId":"P2_OUTER_X"},
+        {"segmentId":"OUTER_ARC","type":"CIRCULAR_ARC","startVertexId":"P2_OUTER_X","endVertexId":"P3_OUTER_Y","centerX":0,"centerY":0,"radius":100,"sweep":"CCW"},
+        {"segmentId":"RADIAL_Y","type":"LINE","startVertexId":"P3_OUTER_Y","endVertexId":"P4_INNER_Y"},
+        {"segmentId":"INNER_ARC","type":"CIRCULAR_ARC","startVertexId":"P4_INNER_Y","endVertexId":"P1_INNER_X","centerX":0,"centerY":0,"radius":50,"sweep":"CW"}
+      ],
+      "loops": [{"loopId":"OUTER","role":"OUTER","segmentIds":["RADIAL_X","OUTER_ARC","RADIAL_Y","INNER_ARC"]}]
+    },
+    "physicalCaseId": "INTERNAL_PRESSURE",
+    "attachments": [
+      {"attachmentId":"BC-X-SYMMETRY-UY","kind":"RESTRAINT","targetType":"SEGMENT","targetId":"RADIAL_X","physicalCaseIds":["INTERNAL_PRESSURE"],"payload":{"uy":true}},
+      {"attachmentId":"BC-Y-SYMMETRY-UX","kind":"RESTRAINT","targetType":"SEGMENT","targetId":"RADIAL_Y","physicalCaseIds":["INTERNAL_PRESSURE"],"payload":{"ux":true}},
+      {"attachmentId":"LOAD-INNER-PRESSURE","kind":"PRESSURE","targetType":"SEGMENT","targetId":"INNER_ARC","physicalCaseIds":["INTERNAL_PRESSURE"],"payload":{"pressure":10,"unit":"MPa"}}
+    ]
+  },
+  "mesh": {
+    "elementFamily": "Q8",
+    "profileIdentity": "LAFEA3_BM005_LAME_Q8_V1",
+    "sourceRevision": "BM005-LAME-Q8-FROZEN/V1",
+    "refinementRatio": 2,
+    "levels": [
+      {"levelId":"COARSE","h":40},
+      {"levelId":"MEDIUM","h":20},
+      {"levelId":"FINE","h":10},
+      {"levelId":"EXTRA_FINE","h":5}
+    ],
+    "requiredStrategy": "MAPPED_TRANSFINITE",
+    "requiredDistinctMeshCount": 4
+  },
+  "convergencePolicy": {
+    "policyId": "LAFEA3_NON_SINGULAR_POINTWISE_CONVERGENCE_PUBLICATION_V1",
+    "revision": "1",
+    "refinementRatio": 2,
+    "gciSafetyFactor": 1.25,
+    "nearZeroAbsolute": 1e-12,
+    "orderStabilityRelativeTolerance": 0.2,
+    "requiredClassification": "ASYMPTOTIC",
+    "authorityBasis": "EXISTING_LAFEA_G4_CONVERGENCE_CONTRACT"
+  },
+  "probe": {
+    "schema": "lafea-continuum-physical-probe/v1",
+    "probeId": "BM005-LAME-R73-THETA37-DISPLACEMENT",
+    "polarCoordinate": {"radius":73,"thetaDegrees":37},
+    "physicalCoordinate": {"x":58.30039223345238,"y":43.932496690099526},
+    "coordinateFrame": "GLOBAL_XY",
+    "loadCaseId": "INTERNAL_PRESSURE",
+    "quantityId": "DISPLACEMENT_MAGNITUDE",
+    "representation": "PHYSICAL_POINT_DIRECT",
+    "recoveryMethod": "ELEMENT_SHAPE_INTERPOLATION",
+    "units": "mm",
+    "singularityClassification": "NOT_APPLICABLE"
+  },
+  "oracle": {
+    "kind": "ANALYTICAL_LAME_THICK_CYLINDER_PLANE_STRESS",
+    "innerRadius": 50,
+    "outerRadius": 100,
+    "internalPressure": 10,
+    "externalPressure": 0,
+    "A_MPa": 3.3333333333333335,
+    "B_MPa_mm2": 33333.333333333336,
+    "formulae": {
+      "sigmaRadial": "A-B/r^2",
+      "sigmaHoop": "A+B/r^2",
+      "radialDisplacementPlaneStress": "((1-nu)*A*r+(1+nu)*B/r)/E"
+    },
+    "fixedProbeExpected": {
+      "radius": 73,
+      "sigmaRadialMPa": -2.921748920998312,
+      "sigmaHoopMPa": 9.58841558766498,
+      "displacementMagnitudeMm": 0.003819703196347032
+    },
+    "boundaryExpected": {
+      "sigmaRadialInnerMPa": -10,
+      "sigmaHoopInnerMPa": 16.666666666666668,
+      "sigmaRadialOuterMPa": 0,
+      "sigmaHoopOuterMPa": 6.666666666666667
+    }
+  },
+  "acceptance": {
+    "minimumLevels": 4,
+    "requireConstantRefinementRatio": true,
+    "requireDistinctMeshes": true,
+    "requireConvergenceClassification": "ASYMPTOTIC",
+    "requirePointwiseAcceptanceEligible": true,
+    "requireFineOracleErrorCoveredByGci": true,
+    "requireNegativeControlPass": true,
+    "rawMeshMaximumStressMayQualifyConvergence": false,
+    "releaseQualified": false
+  },
+  "negativeControl": {
+    "negativeCaseId": "BM-005-LAME-MISSING-Y-SYMMETRY",
+    "mutation": {"removeAttachmentIds":["BC-Y-SYMMETRY-UX"]},
+    "expectedFirstEngineeringBoundary": "solver",
+    "expectedErrorCodes": ["UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM"],
+    "allowEarlierGovernedPreflightRejection": true,
+    "releaseQualified": false
+  },
+  "limitations": [
+    "LINEAR_ELASTIC_SMALL_DISPLACEMENT_ONLY",
+    "PLANE_STRESS_QUARTER_SYMMETRY_IDEALIZATION",
+    "PRESSURE_ONLY_AXISYMMETRIC_GOLDEN_CASE",
+    "MAPPED_Q8_APPLICATION_BENCHMARK_ONLY",
+    "NO_CODE_COMPLIANCE",
+    "SINGLE_BENCHMARK_PASS_DOES_NOT_GRANT_PRODUCTION_OR_RELEASE_AUTHORITY"
+  ],
+  "freezePolicy": {
+    "definitionFrozenBeforeObservations": true,
+    "productionOutputMayModifyOracle": false,
+    "productionOutputMayModifyMeshLadder": false,
+    "productionOutputMayModifyProbe": false,
+    "productionOutputMayModifyAcceptance": false
+  }
+}

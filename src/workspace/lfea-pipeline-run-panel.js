@@ -37,6 +37,14 @@ export class LfeaPipelineRunPanelController {
     if (!preFlight) return { ready: false, reason: 'Load a model and clear Error check first.', caseIds };
     if (!preFlight.solveAuthorized || preFlight.authorization === null) return { ready: false, reason: 'The current pre-flight is not authorized. Return to Error check.', caseIds };
     if (caseIds.length === 0) return { ready: false, reason: 'No cases are sealed into the current pre-flight. Apply a selection on Load case.', caseIds };
+    const caseCustody = this.options.getCaseSelectionCustody?.() ?? null;
+    if (caseCustody?.ready === false) {
+      return {
+        ready: false,
+        reason: caseCustody.reason ?? 'The Load-case selection is not sealed into the current pre-flight.',
+        caseIds,
+      };
+    }
     return { ready: true, reason: `${caseIds.length} authorized case(s) are ready to analyze.`, caseIds };
   }
 

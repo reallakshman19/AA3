@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
-MISSION: Close LAFEA.4 production scalability first, then qualify MITC adoption without crossing formulation or release authority prematurely.
-ACTIVE_ENDPOINT: EP-0015
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0015.md
-MATERIAL_HISTORY_ROOT_BASE: 80dcfe8311b7cee367873fe2794ab059a242921b
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0011.md
+MISSION: Promote the qualified MITC mechanics stack into an explicit LAFEA.4 production contract and application path while preserving legacy CST/DKT semantics and holding release qualification until executable evidence exists.
+ACTIVE_ENDPOINT: EP-0016
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0016.md
+MATERIAL_HISTORY_ROOT_BASE: e409a233c46bbec193292565b58b40dffab4b853
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0016.md
 PR: #1557
 BRANCH: codex/lafea-1536-validation-coverage-relay
-HEAD: aa085eb05b5e2342bb2223f5127aa08a89759ff7
+HEAD: 5c5860e60eb3f9d6c52f0057ddbb758fd554616a
 STATE: BLOCKED
 ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
@@ -15,17 +15,18 @@ QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: BLOCKED
 AUTO_STATE: BLOCKED
 MERGE_AUTHORITY: OWNER_ONLY
-AUTHORITY_DOMAIN: LAFEA.4 merged sparse-shell and experimental MITC adoption evidence plus relay-only validation coverage diagnosis; no registered production-route authority change
+AUTHORITY_DOMAIN: LAFEA.4 production-adoption scope is Owner-authorized but material admission is blocked until evidence-derived handover readiness; legacy v1 and release authority unchanged
 ACTIVE_CUSTODIAN: reallaksh19
 AGENT_INSTANCE_ID: chatgpt:ddc9d66e-417d-4a98-a48f-8fb83328fe3d
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 15
+CUSTODY_EPOCH: 16
 COORDINATION_STATE: SAFE
-DEPENDENCIES: current Common relay validators NOT_RUN; executable LAFEA.4 qualification unavailable; current-head PR #1557 LAFEA.4 run 33286922294 job 99191606402 failed with steps=null before checkout; earlier retry job 99189915737 also had steps=null; local checkout unavailable because execution container could not resolve github.com; package check:lafea-core does not yet execute the six adoption/production-route checks
+DEPENDENCIES: current Common validate_leg_adoption requires HANDOVER_READY TRUE for ACTIVE and governing prework endpoint; handover validation is NOT_RUN because LAFEA.4 Actions jobs terminate before step 1 and local checkout cannot resolve github.com; Owner production scope is recorded at PR #1557 comment 5466211854; no production material commit follows EP-0016
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 2e5fca39ad72f9bd1828ac54c245b9200c916b74
 COMMON_PROTOCOL_STATUS: CURRENT
+QUALIFICATION_PROTOCOL_VERSION: 3
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: github:reallaksh19/Advanced_Analysis#1536/Appendix-A
 OWNER_QUALIFICATION_BASELINE_MANIFEST: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/qualification-baselines/QB-ISSUE-1536-A.json
@@ -33,6 +34,8 @@ OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 QUALIFICATION_PROFILE: FEA
 QUALIFICATION_PROFILE_VERSION: 2
 QUESTION_SET_ID: QS-ADV-LAFEA4-1536-0013
+QUESTION_SET_STATUS: CURRENT
+QUESTION_SET_ADMISSION_REQUIREMENT: REQUIRED_ON_TAKEOVER
 HANDOVER_PROTOCOL_VERSION: 2
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN

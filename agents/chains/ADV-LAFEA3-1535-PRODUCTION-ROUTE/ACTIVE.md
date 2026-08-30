@@ -1,29 +1,28 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA3-1535-PRODUCTION-ROUTE
-MISSION: Close issue #1535 by proving a current-integrated-head source-qualified LAFEA.3 golden benchmark through numerical and ordinary production routes, then use that same benchmark to repair and qualify the engineer-facing geometry/mesh/run/convergence/results workflow before any CORE_FEA_COMPLETE or release claim.
-ACTIVE_ENDPOINT: EP-0019
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/endpoints/EP-0019.md
+MISSION: Close issue #1535 by proving a current production-head source-qualified LAFEA.3 golden benchmark through the ordinary application route, then repair and qualify the engineer-facing geometry/mesh/run/convergence/results workflow before any CORE_FEA_COMPLETE or release claim.
+ACTIVE_ENDPOINT: EP-0020
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/endpoints/EP-0020.md
 MATERIAL_HISTORY_ROOT_BASE: b6a0075fe004a634b8e2877bd8a95b6901c1d763
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/endpoints/EP-0019.md
-PR: #1544
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/endpoints/EP-0020.md
+PR: #1564
 PR_STATUS: OPEN_DRAFT
-BRANCH: engineering/lafea3-1535-production-route
-HEAD: 1475c89aa679cc83bc1e22c89564b360680ca81a
-TECHNICAL_CANDIDATE_HEAD: abb1c562bced2cdfc59b48225809cd7837979534
-MAIN_HEAD_OBSERVED: 4266249515db1a3cf1f1881292248f477d5214f8
+BRANCH: engineering/lafea3-1535-bm005-qualification
+HEAD: 39818bdee2fa7a92cedfaf2cd13e414921684d4c
+PRODUCTION_MAIN_HEAD: 6604421fbf6e83fccca0e8f66a70c8cc9dafb9fb
 STATE: IN_PROGRESS
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: WRITE_ALLOWED
-AUTO_STATE: PAUSED
+AUTO_STATE: RUNNING
 MERGEABILITY: MERGEABLE
 REVIEW_COUNT: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS_STATUS: NONE_REPORTED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-AUTHORITY_DOMAIN: Issue #1535 exact-head ordinary-route qualification next; UI only after engineering admission and after reconciliation with current-main LFEA pipeline UI; numerical/source/oracle/roadmap/workflow/release/merge authority protected.
+AUTHORITY_DOMAIN: BM-005 ordinary LAFEA.3 application-route qualification on merged production composition; UI only after BM-005 admission; formulation/solver/mesher/probe/convergence/oracle/roadmap/workflow/release/merge authority protected absent a genuine falsifier.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
 AGENT_INSTANCE_ID: chatgpt:301820ea-767a-42a8-8cd7-1ee7aed243a1
 WORK_ITEM_SOURCE: GITHUB_ISSUE
@@ -31,9 +30,9 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1535
 WORK_ITEM_MODE: EXCLUSIVE
 WORK_ITEM_PARTITION: NONE
 WORK_ITEM_PARTITION_AUTHORITY: NONE
-CUSTODY_EPOCH: 19
+CUSTODY_EPOCH: 20
 COORDINATION_STATE: SAFE
-DEPENDENCIES: BM-005 full ordinary workbench transaction remains NOT_RUN; BM-006 browser replay remains NOT_RUN; direct Git transport remains unavailable and hosted jobs remain FAIL_PRE_STEP / ENGINEERING_NOT_RUN; exact authenticated Git-blob retrieval + SHA verification + isolated Node execution remains available for bounded qualification.
+DEPENDENCIES: BM-005 active; BM-006 browser replay NOT_RUN; faithful full checkout/browser executor unavailable; exact authenticated Git-blob retrieval + SHA verification + isolated Node execution available for bounded route qualification.
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COMMON_PROTOCOL_STATUS: CURRENT
@@ -44,10 +43,10 @@ ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/issue-basis/IB-
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0019
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0020
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5466325152
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5466324455
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5466326314
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5466440783
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
@@ -63,21 +62,21 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 
 ROADMAPS: docs/OWNER_ROADMAP.md@3d6cd5cf00f0bdd4e4fcff644f20f85a89c7ea60; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31
 ROADMAP_REVIEW_STATUS: COMPLETE
-ROADMAP_ALIGNMENT: OWNER_ROADMAP_NO_DRIFT; LAFEA_PROGRAMME_REFERENCE_REQUIRES_LIVE_SOURCE_REVERIFY_WHERE_STALE
+ROADMAP_ALIGNMENT: OWNER_ROADMAP_NO_DRIFT; LIVE_SOURCE_PRECEDENCE_FOR_STALE_LAFEA_PROGRAMME_ROWS
 ROADMAP_MUTATION_AUTHORITY: NONE
 
 ORIGINAL_TASK_STATUS: TASK-001 PARTIAL; TASK-002 PARTIAL; TASK-003 PARTIAL; TASK-004 PASS; TASK-005 PASS; TASK-006 OPEN
 INPUT_STATUS: INPUT-001..004 AVAILABLE; INPUT-005 faithful full-checkout/browser executor UNRESOLVED
-BENCHMARK_STATUS: BM-001 PASS_FOCUSED; BM-002 PASS_FOCUSED; BM-003 NOT_RUN; BM-004 PASS_FOCUSED; BM-005 NOT_RUN; BM-006 NOT_RUN
-GOLDEN_BENCHMARK_STATUS: CURRENT_NUMERICAL_FOCUSED_PASS / ORDINARY_APPLICATION_TRANSACTION_NOT_RUN
+BENCHMARK_STATUS: BM-001 PASS_FOCUSED; BM-002 PASS_FOCUSED; BM-003 NOT_RUN; BM-004 PASS_FOCUSED; BM-005 IN_PROGRESS; BM-006 NOT_RUN
+GOLDEN_BENCHMARK_STATUS: CURRENT_NUMERICAL_FOCUSED_PASS / ORDINARY_APPLICATION_TRANSACTION_IN_PROGRESS
 VISIBLE_USER_REPLAY_STATUS: STATIC_TRACE_FAIL / BROWSER_NOT_RUN
 CORE_FEA_COMPLETION_STATUS: NOT_PROVEN
-MAIN_NUMERICAL_DRIFT_STATUS: CURRENT_MAIN_426624_UI_ADJACENT_ONLY_OBSERVED; NUMERICAL_GATE_UNCHANGED; RECONCILE_BEFORE_UI_LEG
+RELEASE_QUALIFIED: FALSE
 
 HANDOVER_PROTOCOL_VERSION: 2
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: PARTIAL_PASS
-HANDOVER_VALIDATION_EVIDENCE: exact-blob current numerical execution retained; Issue control-plane repository/comment sync IN_SYNC; hosted full-repository and browser execution remain NOT_RUN
+HANDOVER_VALIDATION_EVIDENCE: merged source is on production main; exact current numerical execution retained; Issue control-plane sync IN_SYNC; BM-005 and browser remain incomplete
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
@@ -85,4 +84,4 @@ REPORTING_CONTRACT: ACTIVE_HANDOVER_FIRST
 HANDOVER_RESPONSE_REQUIRED: ALWAYS
 RESPONSE_DELTA_MODE: DELTA_ONLY
 
-EXACT_NEXT_ACTION: On the next Owner progression command, execute BM-005 on the exact candidate composition: ordinary source/geometry/domain -> generated mesh including hole/curved controls -> preflight/compiler -> solve/recovery -> physical probe -> convergence -> Results publication. If PASS, then reconcile current main and open the bounded UI composition leg; if FAIL, isolate the first wrong engineering boundary without opportunistic changes to protected numerics/oracles.
+EXACT_NEXT_ACTION: Execute BM-005 on production main `6604421f...`: ordinary source/geometry/domain -> generated mesh including hole/curved controls -> preflight/compiler -> solve/recovery -> physical probe -> convergence -> Results publication, with one-mesh/oscillatory/divergent/singular negative controls. Retain exact module/blob identities and do not promote BM-006.

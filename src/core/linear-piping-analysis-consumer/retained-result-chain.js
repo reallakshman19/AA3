@@ -14,6 +14,7 @@ import {
   NOT_EVALUATED,
   computeResultChainEvidenceHash,
   computeResultChainSemanticHash,
+  failLinearPipingAnalysis,
   validateLinearPipingAnalysisRequest,
   validateLinearPipingAnalysisResult,
 } from './contracts.js';
@@ -30,6 +31,13 @@ export function composeLinearPipingAnalysisResult({ request, execution, recovery
   const publicExecution = requireSolverExecution(
     Object.fromEntries(EXECUTION_RECORD_KEYS.map((key) => [key, execution[key]])),
   );
+  if (publicExecution.status === 'BLOCKED') {
+    failLinearPipingAnalysis(
+      'The retained B-3.3 execution is blocked and cannot enter a public linear piping result chain.',
+      'PIPING_ANALYSIS_EXECUTION_BLOCKED',
+      { executionHash: publicExecution.executionHash },
+    );
+  }
   const acceptedRecovery = requireResultRecovery(recovery);
   const status = publicExecution.status === 'CONDITIONAL'
     || accepted.pipingComponents.some((entry) => entry.acceptanceState === 'CONDITIONAL')

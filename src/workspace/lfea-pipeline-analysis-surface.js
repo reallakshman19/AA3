@@ -2,6 +2,8 @@ import { createLfeaPipelineAnalysisController } from './lfea-pipeline-analysis-c
 import { mountLfeaPipelineCaseSelectionPanel } from './lfea-pipeline-case-selection-panel.js';
 import { mountLfeaPipelineLayoutPanel } from './lfea-pipeline-layout-panel.js';
 import { mountLfeaPipelineResultsPanel } from './lfea-pipeline-results-panel.js';
+import { mountLfeaPipelineRunPanel } from './lfea-pipeline-run-panel.js';
+import { mountLfeaPipelineExportPanel } from './lfea-pipeline-export-panel.js';
 import { mountLfeaPipelineLoadCaseAuthoringPanel } from './lfea-pipeline-load-case-authoring-panel.js';
 import { mountLfeaPipelineModelRepairPanel } from './lfea-pipeline-model-repair-panel.js';
 import { mountLfeaModelReviewPanel } from './lfea-model-review/lfea-model-review-panel.js';
@@ -9,12 +11,11 @@ import { mountLfeaCommonErrorCheckPanel } from './lfea-diagnostics/lfea-error-ch
 import { mountLfeaResultsAuthorityPanel } from './lfea-results-authority/lfea-results-authority-panel.js';
 
 /**
- * Everything the Load-case, Input review and Output steps need, behind one entry point.
+ * Shared presentation surface for the LFEA pipeline.
  *
- * main.js loads this with a dynamic import so Rollup gives it its own chunk
- * rather than folding it into the application entry. Model Review, Error Check
- * and the result-authority panel are read-only projections of already-retained
- * records; none adds a second parse/compile/solve/application path.
+ * Existing engineering controllers remain authoritative. The dedicated Run,
+ * Output and Export views only separate task custody around the same retained
+ * pre-flight, analysis state and CSV generation.
  */
 export function mountLfeaPipelineAnalysisSurface(options) {
   const analysisController = createLfeaPipelineAnalysisController({});
@@ -22,10 +23,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
     onApplyCaseSelection: options.onApplyCaseSelection,
-    onAnalyze: options.onAnalyze,
   });
-  // Retained as a collapsed compatibility view for existing checks/API users.
-  // UI04's first-class engineering review lives on Input below.
   const layoutPanel = mountLfeaPipelineLayoutPanel(options.loadCaseHost, {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
@@ -37,6 +35,17 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   const resultsPanel = mountLfeaPipelineResultsPanel(options.resultsHost, {
     documentRef: options.documentRef,
     onExportCsv: options.onExportCsv,
+  });
+  const runPanel = mountLfeaPipelineRunPanel(options.resultsHost, {
+    documentRef: options.documentRef,
+    getPreFlight: options.getPreFlight,
+    onAnalyze: options.onAnalyze,
+  });
+  const exportPanel = mountLfeaPipelineExportPanel(options.resultsHost, {
+    documentRef: options.documentRef,
+    getResultsPanel: () => resultsPanel,
+    onExportCsv: options.onExportCsv,
+    onExportCompleted: options.onExportCompleted,
   });
   const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, {
     documentRef: options.documentRef,
@@ -62,13 +71,19 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     errorCheckPanel,
     caseSelectionPanel,
     layoutPanel,
+    runPanel,
     resultsPanel,
+    exportPanel,
     resultsAuthorityPanel,
     loadCaseAuthoringPanel,
     refreshLoadCaseStep() {
       caseSelectionPanel.refresh();
       layoutPanel.refresh();
       loadCaseAuthoringPanel.refresh();
+      runPanel.refresh();
+    },
+    refreshRunStep() {
+      runPanel.refresh();
     },
     refreshSourceStep() {
       modelRepairPanel.refresh();
@@ -77,11 +92,14 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     },
     refreshResultsStep() {
       resultsAuthorityPanel.refresh();
+      exportPanel.refresh();
     },
     destroy() {
       caseSelectionPanel.destroy();
       layoutPanel.destroy();
+      runPanel.destroy();
       resultsPanel.destroy();
+      exportPanel.destroy();
       resultsAuthorityPanel.destroy();
       loadCaseAuthoringPanel.destroy();
       modelRepairPanel.destroy();

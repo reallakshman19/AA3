@@ -9,6 +9,7 @@ import './lfea-skew-spring-check.mjs';
 import './lfea-cnode-spring-check.mjs';
 import './lfea-cnode-mechanism-check.mjs';
 import './lfea-hanger-predefined-check.mjs';
+import './lfea-hanger-case-selection-check.mjs';
 import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
 import {
   prepareLinearPipingInputXmlPreFlight,

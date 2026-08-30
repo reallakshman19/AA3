@@ -2,8 +2,6 @@ import { expect, test } from '@playwright/test';
 
 const HOST_URL = '/e2e/fixtures/lafea-guided-workbench.html';
 const CONTROLLER_URL = '/src/workspace/lafea-workbench-controller.js';
-const LIVE_ROUTE_SUSPENSION =
-  'WRC_GAMMA5_ROUTE_REQUALIFICATION_REQUIRED_AFTER_SOURCE_AUTHORITY_CLOSURE';
 const STEP_LABELS = [
   'Basis & Source',
   'Geometry',
@@ -53,7 +51,7 @@ test('WRC professional workflow exposes seven engineer tasks and starts fail-clo
   await expect(technical).toHaveJSProperty('open', false);
 });
 
-test('live WRC suspension is explained as route authority, not missing geometry', async ({ page }) => {
+test('current bounded WRC qualification sample produces current local evidence without implying release', async ({ page }) => {
   await mountEmp1Workbench(page);
   const workbench = page.locator('[data-role="lafea-workbench"]');
   await workbench.locator('[data-role="emp1-load-complete-qualification-sample"]').click();
@@ -63,21 +61,26 @@ test('live WRC suspension is explained as route authority, not missing geometry'
   await expect(summary).toContainText('SOURCE CURRENT');
   await expect(summary).toContainText('TRANSFER CURRENT');
   await expect(summary).toContainText('SCREENING CURRENT');
-  await expect(summary).toContainText('LOCAL METHOD BLOCKED');
-  await expect(summary).toContainText('LOCAL RESULT NOT CALCULATED');
+  await expect(summary).toContainText('LOCAL METHOD QUALIFIED');
+  await expect(summary).toContainText('LOCAL RESULT CURRENT');
   await expect(summary).toContainText('RELEASE PROFILE NOT QUALIFIED');
   await expect(summary).toContainText('CODE COMPLIANCE NOT ASSESSED');
 
-  const notice = workflow.locator('[data-role="emp1-professional-currentness-notice"]');
-  await expect(notice).toHaveAttribute('data-state', 'BLOCKED');
-  await expect(notice.locator(`[data-reason-code="${LIVE_ROUTE_SUSPENSION}"]`)).toHaveCount(1);
-  await expect(notice.locator('[data-role="emp1-professional-required-action"]'))
-    .toContainText('bounded WRC route-authority blocker');
-  await expect(notice.locator('[data-role="emp1-professional-required-action"]'))
-    .not.toContainText('source or geometry binding');
+  await expect(workflow.locator('[data-role="emp1-professional-currentness-notice"]')).toHaveCount(0);
 
-  await expect(workbench.locator('[data-role="emp1-c-result-evidence"]')).toHaveCount(0);
-  await expect(workbench.locator('[data-role="emp1-run-c"]')).toBeDisabled();
+  const cEvidence = workbench.locator('[data-role="emp1-c-result-evidence"]');
+  await expect(cEvidence).toBeVisible();
+  const governing = workbench.locator('[data-role="emp1-c-eight-point-governing"]');
+  await expect(governing).toBeVisible();
+  await expect(governing).toContainText('Professional WRC result scope');
+  await expect(governing).toContainText('Continuous/global shell maximum');
+  await expect(governing).toContainText('NOT CLAIMED');
+  await expect(governing).toContainText('Code compliance');
+  await expect(governing).toContainText('NOT ESTABLISHED BY THIS WRC RESULT');
+
+  const cRun = workbench.locator('[data-role="emp1-run-c"]');
+  await expect(cRun).toBeEnabled();
+  await expect(cRun).toContainText('Re-run C');
 });
 
 test('seven-step route navigation lands on the intended WRC task surface', async ({ page }) => {

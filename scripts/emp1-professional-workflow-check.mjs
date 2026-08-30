@@ -55,17 +55,28 @@ assert.equal(current.productId, 'EMP.1');
 assert.deepEqual(current.steps.map((step) => step.label), labels);
 assert.deepEqual(current.steps.map((step) => step.ordinal), [1, 2, 3, 4, 5, 6, 7]);
 assert.deepEqual(current.steps.map((step) => [...step.backingStepIds]), backing);
+assert.deepEqual(current.authoritySummary, {
+  sourceCurrentness: 'SOURCE CURRENT',
+  transferCurrentness: 'TRANSFER CURRENT',
+  screeningCurrentness: 'SCREENING CURRENT',
+  localMethod: 'LOCAL METHOD QUALIFIED',
+  localResult: 'LOCAL RESULT CURRENT',
+  releaseProfile: 'RELEASE PROFILE NOT QUALIFIED',
+  codeCompliance: 'CODE COMPLIANCE NOT ASSESSED',
+});
 assert.deepEqual(current.steps.map((step) => step.statusLabel), [
-  'SOURCE EVIDENCE RETAINED',
-  'CALCULATED CURRENT',
-  'CALCULATED',
-  'CALCULATED',
-  'CALCULATED',
-  'CALCULATED CURRENT',
-  'CURRENT LOCAL RESULT',
+  'SOURCE CURRENT',
+  'SOURCE CURRENT',
+  'SOURCE CURRENT',
+  'TRANSFER CURRENT',
+  'SCREENING CURRENT',
+  'LOCAL METHOD QUALIFIED · LOCAL RESULT CURRENT',
+  'LOCAL RESULT CURRENT · RELEASE PROFILE NOT QUALIFIED',
 ]);
 assert.ok(current.steps.every((step) => !/^(?:A|B|C)\b/u.test(step.statusLabel)),
   'primary professional statuses must not expose A/B/C controller labels');
+assert.equal(current.steps.some((step) => /\bCALCULATED\b|\bREADY\b|ROUTE SUSPENDED/u.test(step.statusLabel)), false,
+  'primary professional statuses must use engineering currentness/authority vocabulary, not backing runtime states');
 assert.ok(current.steps.every((step) => step.canOpen === true));
 assert.ok(current.steps.every((step) => step.createsEngineeringAuthority === false));
 assert.ok(current.steps.every((step) => step.exposesNumericalResult === false));
@@ -88,8 +99,10 @@ const stale = buildEmp1ProfessionalWorkflowPresentation(projection({
 }));
 assert.equal(stale.steps[5].canOpen, true,
   'Local Correlation must remain navigable while retained C evidence is stale');
-assert.equal(stale.steps[5].statusLabel, 'STALE AUTHORITY');
-assert.equal(stale.steps[6].statusLabel, 'HISTORICAL LOCAL RESULT / NOT REPORTABLE');
+assert.equal(stale.authoritySummary.localMethod, 'LOCAL METHOD QUALIFIED');
+assert.equal(stale.authoritySummary.localResult, 'LOCAL RESULT STALE');
+assert.equal(stale.steps[5].statusLabel, 'LOCAL METHOD QUALIFIED · LOCAL RESULT STALE');
+assert.equal(stale.steps[6].statusLabel, 'LOCAL RESULT STALE · RELEASE PROFILE NOT QUALIFIED');
 assert.equal(stale.authorityBoundary.staleNumericalResultMayBecomeCurrent, false);
 
 const noC = buildEmp1ProfessionalWorkflowPresentation(projection({
@@ -97,23 +110,43 @@ const noC = buildEmp1ProfessionalWorkflowPresentation(projection({
   cBadge: 'ROUTE SUSPENDED',
   cResultAvailable: false,
   cRetainedResultAvailable: false,
+  cRunAuthorized: false,
 }));
 assert.equal(noC.steps[5].canOpen, true,
   'Local Correlation setup/evidence must remain inspectable while production execution is suspended');
-assert.equal(noC.steps[5].statusLabel, 'ROUTE SUSPENDED');
-assert.equal(noC.steps[6].statusLabel, 'SECTION SCREENING EVIDENCE ONLY');
+assert.equal(noC.authoritySummary.localMethod, 'LOCAL METHOD BLOCKED');
+assert.equal(noC.authoritySummary.localResult, 'LOCAL RESULT NOT CALCULATED');
+assert.equal(noC.steps[5].statusLabel, 'LOCAL METHOD BLOCKED · LOCAL RESULT NOT CALCULATED');
+assert.equal(noC.authoritySummary.codeCompliance, 'CODE COMPLIANCE NOT ASSESSED');
+
+const staleB = buildEmp1ProfessionalWorkflowPresentation(projection({
+  cState: 'SOURCE_INCOMPLETE',
+  cBadge: 'SOURCE INCOMPLETE',
+  cResultAvailable: false,
+  cRetainedResultAvailable: false,
+  cRunAuthorized: false,
+  bState: 'STALE_A_EVIDENCE',
+  bResultAvailable: false,
+  bRetainedResultAvailable: true,
+}));
+assert.equal(staleB.authoritySummary.sourceCurrentness, 'SOURCE STALE');
+assert.equal(staleB.authoritySummary.screeningCurrentness, 'SCREENING STALE');
+assert.equal(staleB.steps[4].statusLabel, 'SCREENING STALE');
 
 const sourceMissing = buildEmp1ProfessionalWorkflowPresentation(projection({
   cState: 'SOURCE_INCOMPLETE',
   cBadge: 'SOURCE INCOMPLETE',
   cResultAvailable: false,
   cRetainedResultAvailable: false,
+  cRunAuthorized: false,
   aDocumentLoaded: false,
   bDocumentLoaded: false,
   aResultAvailable: false,
   bResultAvailable: false,
 }));
 assert.equal(sourceMissing.steps[0].statusLabel, 'SOURCE INPUT REQUIRED');
+assert.equal(sourceMissing.authoritySummary.transferCurrentness, 'TRANSFER INPUT REQUIRED');
+assert.equal(sourceMissing.authoritySummary.screeningCurrentness, 'SCREENING INPUT REQUIRED');
 
 const analyticalSource = await read('src/workspace/lafea-analytical-calc-content.js');
 assert.match(analyticalSource,
@@ -126,24 +159,40 @@ assert.equal(analyticalSource.includes('renderEmp1AssessmentWorkflow(root, proje
 const viewSource = await read('src/workspace/emp1-professional-workflow-view.js');
 assert.match(viewSource, /dataset\.role = 'emp1-professional-workflow-steps'/u);
 assert.match(viewSource, /dataset\.role = 'emp1-professional-step'/u);
+assert.match(viewSource, /dataset\.role = 'emp1-professional-authority-summary'/u,
+  'seven-step workflow must expose the WRC currentness/authority summary');
+assert.match(viewSource,
+  /onSelectRoute\?\.\(step\.preferredBackingStageId, step\.targetRole\)/u,
+  'route-backed workflow navigation must carry the intended target through the backing-stage switch');
+assert.match(viewSource, /data-guided-target/u,
+  'workflow target navigation must recognize guided source/results targets as well as data-role targets');
 assert.match(viewSource, /dataset\.role = 'emp1-technical-backing-steps'/u);
 assert.match(viewSource, /Historical\/stale C numerical evidence is never promoted/u);
+
+const workbenchViewSource = await read('src/workspace/lafea-workbench-view.js');
+assert.match(workbenchViewSource, /pendingAnalyticalTargetRole/u,
+  'workbench must retain a route-backed workflow target until the selected A/B view is rendered');
+assert.match(workbenchViewSource, /consumePendingAnalyticalTarget/u,
+  'workbench must consume the retained workflow target after analytical content replacement');
 
 const presentationSource = await read('src/workspace/emp1-professional-workflow-presentation.js');
 assert.equal(presentationSource.includes('../core/emp1/'), false,
   'professional workflow presentation must not create a parallel core authority dependency');
 assert.equal(presentationSource.includes('runEmp1'), false,
   'professional workflow presentation must not invoke the calculation');
+assert.equal(presentationSource.includes('gamma'), false,
+  'workflow presentation must not calculate or infer WRC numerical parameters');
 
 console.log(JSON.stringify({
-  schema: 'emp1-professional-workflow-check/v1',
-  status: 'PASS_SEVEN_STEP_PROFESSIONAL_WORKFLOW_PRESENTATION',
+  schema: 'emp1-professional-workflow-check/v2',
+  status: 'PASS_WRC_PROFESSIONAL_WORKFLOW_PRESENTATION',
   labels,
   backing,
+  currentAuthoritySummary: current.authoritySummary,
+  staleLocalResult: stale.authoritySummary.localResult,
+  suspendedLocalMethod: noC.authoritySummary.localMethod,
+  routeTargetCustodyGuarded: true,
   primaryStatusesExposeBackingControllerLabels: false,
-  currentReviewState: current.steps[6].statusLabel,
-  staleReviewState: stale.steps[6].statusLabel,
-  suspendedLocalCorrelationNavigable: noC.steps[5].canOpen,
   engineeringAuthorityCreatedByPresentation: false,
   routeAuthorityCreatedByPresentation: false,
   codeComplianceCreatedByPresentation: false,
@@ -156,29 +205,39 @@ function projection({
   cBadge,
   cResultAvailable,
   cRetainedResultAvailable,
+  cRunAuthorized = true,
   aDocumentLoaded = true,
   bDocumentLoaded = true,
   aResultAvailable = true,
   bResultAvailable = true,
+  bRetainedResultAvailable = false,
+  aState = null,
+  bState = null,
+  releaseQualified = false,
 }) {
   return {
     schema: 'emp1-product-projection/v1',
     product: { productId: 'EMP.1' },
+    qualificationBoundary: {
+      passIsCodeCompliance: false,
+      releaseQualified,
+    },
     steps: [
       {
         shortId: 'A', stepId: 'EMP.1.A', label: 'Load & reference', backingStageId: 'LAFEA.1',
-        state: aResultAvailable ? 'CALCULATED' : aDocumentLoaded ? 'SOURCE_LOADED' : 'INPUT_REQUIRED',
+        state: aState ?? (aResultAvailable ? 'CALCULATED' : aDocumentLoaded ? 'SOURCE_LOADED' : 'INPUT_REQUIRED'),
         documentLoaded: aDocumentLoaded, resultAvailable: aResultAvailable, runAuthorized: true,
       },
       {
         shortId: 'B', stepId: 'EMP.1.B', label: 'Section screening', backingStageId: 'LAFEA.2',
-        state: bResultAvailable ? 'CALCULATED' : bDocumentLoaded ? 'SOURCE_LOADED' : 'INPUT_REQUIRED',
-        documentLoaded: bDocumentLoaded, resultAvailable: bResultAvailable, runAuthorized: true,
+        state: bState ?? (bResultAvailable ? 'CALCULATED' : bDocumentLoaded ? 'SOURCE_LOADED' : 'INPUT_REQUIRED'),
+        documentLoaded: bDocumentLoaded, resultAvailable: bResultAvailable,
+        retainedResultAvailable: bRetainedResultAvailable, runAuthorized: true,
       },
       {
         shortId: 'C', stepId: 'EMP.1.C', label: 'Local correlation', backingStageId: null,
         state: cState, currentnessBadge: cBadge, resultAvailable: cResultAvailable,
-        retainedResultAvailable: cRetainedResultAvailable, runAuthorized: cState !== 'ROUTE_SUSPENDED',
+        retainedResultAvailable: cRetainedResultAvailable, runAuthorized: cRunAuthorized,
       },
     ],
   };

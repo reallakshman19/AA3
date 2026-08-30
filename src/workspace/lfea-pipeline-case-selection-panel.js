@@ -181,12 +181,12 @@ export class LfeaPipelineCaseSelectionPanelController {
         hangerCaseIds: hangerIds,
       });
     }
-    const ready = appliedCaseIds.some((caseId) => hangerIds.includes(caseId));
+    const ready = sameCaseIds(selectedCaseIds, appliedCaseIds);
     return Object.freeze({
       ready,
       reason: ready
         ? null
-        : 'Hanger-preload cases are available but are not sealed into this pre-flight. Apply the Load-case selection before Run.',
+        : 'Hanger-preload cases are available but the displayed default selection is not sealed into this pre-flight. Apply the Load-case selection before Run.',
       selectedCaseIds,
       appliedCaseIds,
       hangerCaseIds: hangerIds,

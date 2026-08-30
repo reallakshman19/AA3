@@ -1,24 +1,13 @@
 /*
- * The two draft models, and what each is allowed to prove.
- *
- * benchmarks/LFEA/BM4/PROVENANCE.md exists because phases 1-7 were verified
- * against a fixture written by the same process being verified, which passed
- * BECAUSE it was trivial. These two models are written by that same process, so
- * they are deliberately NOT treated as references. What they can honestly do is
- * exercise a path production parity cannot reach at all -- BM4_L declares no
- * spring rates -- and pin where the supported region currently ends.
- *
- *   SpringSupports.xml       must SOLVE, and must disclose DRAFT
- *   UnsupportedSupports.xml  must be REFUSED, by name
- *
- * The second is the more useful of the two. A feature that quietly half-works on
- * input it cannot represent is worse than one that refuses, and the refusal is
- * the thing most likely to erode silently as the surrounding code changes.
+ * Self-authored support models exercise production paths but are not reference
+ * answers. Positive models must solve and satisfy position-independent
+ * constitutive invariants; negative controls must continue refusing by name.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import './lfea-skew-spring-check.mjs';
 import './lfea-cnode-spring-check.mjs';
+import './lfea-hanger-predefined-check.mjs';
 import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
 import {
   prepareLinearPipingInputXmlPreFlight,
@@ -41,8 +30,7 @@ function preFlightOf(fileName) {
 const findingCodes = (preFlight, disposition) => preFlight.preparation.findings
   .filter((row) => row.disposition === disposition).map((row) => row.code);
 
-// ---------------------------------------------------------------- Model A
-// A model whose supports are compliant must reach the solver and stay there.
+// Positive ordinary spring model.
 const springs = preFlightOf('SpringSupports.xml');
 assert.deepEqual(findingCodes(springs, 'BLOCK'), [],
   `SpringSupports.xml must reach the solver: ${JSON.stringify(findingCodes(springs, 'BLOCK'))}`);
@@ -111,15 +99,13 @@ const limitations = authorized.preparation.structuralPreparation.constraintBindi
 assert.ok(limitations.includes('DRAFT_SPRING_SUPPORT_NO_REFERENCE'),
   'a compiled spring must disclose that it has no reference behind it');
 
-// ---------------------------------------------------------------- Model B
+// Negative controls: rigid CNODE and incomplete predefined hanger must still refuse.
 const unsupported = preFlightOf('UnsupportedSupports.xml');
 const blocked = findingCodes(unsupported, 'BLOCK');
 assert.ok(blocked.includes('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'),
-  `a rigid/unrepresented CNODE restraint must still be refused by name, got ${JSON.stringify(blocked)}`);
-
-const allCodes = unsupported.preparation.findings.map((row) => row.code);
-assert.ok(allCodes.some((code) => /HANGER/u.test(code)),
-  `a HANGER record must still be reported rather than dropped, got ${JSON.stringify(allCodes)}`);
+  `a rigid CNODE restraint must still be refused by name, got ${JSON.stringify(blocked)}`);
+assert.ok(blocked.includes('MODEL_HANGER_PREDEFINED_DATA_INCOMPLETE'),
+  `an incomplete predefined hanger must still be refused by name, got ${JSON.stringify(blocked)}`);
 
 console.log(JSON.stringify({
   check: 'lfea-spring-draft-model',
@@ -131,5 +117,5 @@ console.log(JSON.stringify({
   springLoadShare: Number((100 * springShare).toFixed(1)),
   disclosesDraft: true,
   stillRefused: blocked.filter((code) => /CONNECTING_NODE|HANGER/u.test(code)),
-  clearedBy: 'A CAESAR-solved model containing spring supports. Not by more self-authored coverage.',
+  clearedBy: 'A CAESAR-solved model containing the support feature. Not by more self-authored coverage.',
 }, null, 2));

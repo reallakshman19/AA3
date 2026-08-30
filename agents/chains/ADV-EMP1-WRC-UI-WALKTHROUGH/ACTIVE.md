@@ -1,38 +1,42 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-EMP1-WRC-UI-WALKTHROUGH
 MISSION: Execute and qualify the engineer-facing EMP.1/WRC professional workflow for issue #1559 without changing WRC numerical/source/release authority
-ACTIVE_ENDPOINT: EP-0028
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0028.md
+ACTIVE_ENDPOINT: EP-0030
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0030.md
 MATERIAL_HISTORY_ROOT_BASE: 0676f6b145dad164869d2979f69b4a4491e8d803
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0027.md
-SOURCE_PR: 1571 MERGED
-RECOVERY_PR: 1578 MERGED
-PR: 1579 DRAFT
-BRANCH: codex/emp1-wrc-ui-1559-handover
-RECONCILED_MAIN: fad372eaf55487b10a2cbcad5ff8438b71e031ff
-WRC_MERGE_COMMIT: e5d7a33b3620356ba22dab50e278b381e85a0b70
+SOURCE_PR: 1579 MERGED
+RECOVERY_PR: 1587 MERGED
+SOURCE_HEAD: de8c12f1075e2eb0bf8a6b7cd96fb6cd3a30a281
+RECOVERY_HEAD: 4e404ae369a61e192d232ff8d4d7307eb35aed6e
+WRC_MERGE_COMMIT: 27f4e1a4165e14c42b4c9e2b4dad78fa5325fb18
+PR: 1594 DRAFT
+BRANCH: codex/emp1-wrc-ui-1559-postmerge-handover
+RECONCILED_MAIN: 062efc412f4fea1277fcd6e90e099494779f56a7
 LATEST_MATERIAL_HEAD: 304c31833ffa4437f54740c3249ed367ac67d4e2
-LATEST_SOURCE_HEAD: e6184598dbd7542a614cd933b8fe1257c831dddf
-STATE: ACCEPTANCE_EVIDENCE_SOURCE_COMPLETE_EXECUTION_BLOCKED
-ENGINEERING_STATE: IMPLEMENTATION_AND_ACCEPTANCE_HARNESS_SOURCE_COMPLETE
+LATEST_SOURCE_HEAD: de8c12f1075e2eb0bf8a6b7cd96fb6cd3a30a281
+STATE: EXECUTION_ENVIRONMENT_BLOCKED_HANDOVER_READY
+ENGINEERING_STATE: IMPLEMENTATION_AND_ACCEPTANCE_HARNESS_MERGED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_COMPLETE
 TAKEOVER_AUTHORITY: READ_ONLY
-WRITE_AUTHORITY: PRE_MUTATION_ENDPOINT_REQUIRED_BEFORE_ANY_FURTHER_MATERIAL_CHANGE
-AUTO_STATE: PAUSED_AT_SOURCE_MATERIALIZATION_BROWSER_HUMAN_GATE
+WRITE_AUTHORITY: PRE_MUTATION_ENDPOINT_REQUIRED_BEFORE_ANY MATERIAL SOURCE CHANGE
+AUTO_STATE: PAUSED_AT_BROWSER_HUMAN_ACCEPTANCE_GATE
 MERGE_AUTHORITY: OWNER_ONLY
-AUTHORITY_DOMAIN: EMP.1 WRC professional workflow evidence capture and human-review support; production UI, WRC source, mechanics, route authorization, code compliance and release authority protected
+MERGE_AUTHORIZED: FALSE
+AUTHORITY_DOMAIN: EMP.1 WRC professional workflow browser/human acceptance evidence only; production UI, WRC source/mechanics, route authorization, code compliance and release authority protected
 ACTIVE_CUSTODIAN: gpt-5.6-sol
-CUSTODY_EPOCH: 1
-COORDINATION_STATE: SAFE_CURRENT_MAIN_RECONCILED
+CUSTODY_EPOCH: 3
+COORDINATION_STATE: SAFE_POST_MERGE_HANDOVER
 DEPENDENCIES: faithful repository checkout plus project-local dependencies, Chromium execution, 12 viewport + 12 full-page + 12 ARIA + manifest v3, then qualified human live observation or review of a recording
 ENVIRONMENT_BROWSER_CAPABILITY: AVAILABLE_SYSTEM_CHROMIUM
 ENVIRONMENT_PYTHON_PLAYWRIGHT_CAPABILITY: AVAILABLE
 SOURCE_MATERIALIZATION_STATE: BLOCKED_EXECUTION_ENVIRONMENT
+LATEST_EXECUTION_PROBE: git ls-remote failed before checkout: Could not resolve host github.com; no mounted Advanced_Analysis .git checkout found under bounded runtime paths
 EVIDENCE_POLICY: 12_VIEWPORT_12_FULL_PAGE_12_ARIA_MANIFEST_V3
 FINAL_ACCEPTANCE_POLICY: QUALIFIED_LIVE_OR_RECORDED_HUMAN_OBSERVATION_REQUIRED
 ARTIFACT_ONLY_FINAL_PASS: FALSE
-EXACT_NEXT_ACTION: in an environment with a faithful repository checkout and project-local dependencies, re-fetch live main/PR #1579/#1559/reviews/changed paths and run node scripts/run-playwright.mjs e2e/emp1-professional-walkthrough-evidence.spec.js --workers=1, then perform qualified live or recorded human review
+EXACT_NEXT_ACTION: from a faithful checkout of current main, run node scripts/run-playwright.mjs e2e/emp1-professional-walkthrough-evidence.spec.js --workers=1; inspect 12/12/12 + manifest v3; then qualified live/recorded pressure-vessel/local-stress review; if a defect is found create a new PRE_MUTATION endpoint before patching
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 10d667ce715bb52e1f73035c6fa326db77d0f9dd
 COMMON_PROTOCOL_STATUS: OWNER_PINNED

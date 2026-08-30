@@ -74,6 +74,10 @@ assert(main.includes("use Load case to Apply selection, then Analyze on Run inst
 assert(!main.includes("Choose the cases to analyze, then Analyze."), 'stale InputXML Load case Analyze guidance remains');
 assert(!main.includes('case(s), then Analyze.'), 'stale ACCDB Load case Analyze guidance remains');
 assert(!main.includes('use Analyze on the Load case step instead'), 'stale optional-code-check Load case Analyze guidance remains');
+assert(!main.includes('Analysis state invalidated:'), 'stale-state UI leaks internal invalidation event tokens');
+assert(main.includes('Previous analysis results and export state were cleared.'), 'stale-state UI does not explain what was invalidated');
+assert(main.includes('Review Error check, then continue to Run when the current case selection is authorized.'), 'pre-flight invalidation does not give the engineer a correct next action');
+assert(main.includes('Review Error check, Apply selection on Load case, then Analyze again on Run.'), 'source replacement invalidation does not give the engineer the full recovery path');
 assert(shellController.includes("stepId === 'OUTPUT' && !this.flow.analysisComplete"), 'Output is not fail-closed before analysis');
 assert(shellController.includes("stepId === 'EXPORT' && !this.flow.analysisComplete"), 'Export is not fail-closed before analysis');
 assert(shellController.includes("'lfea-pipeline-export-completed'"), 'Export completion is not retained in UI flow custody');

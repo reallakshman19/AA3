@@ -101,7 +101,11 @@ export function createLfeaPipelineAnalysisController(options) {
 }
 
 function caseView(row, structuralPreparation) {
-  const review = reviewInputXmlLinearUnilateralRestraints(structuralPreparation, row.execution.reactions);
+  const review = reviewInputXmlLinearUnilateralRestraints(
+    structuralPreparation,
+    row.execution.reactions,
+    row.execution.displacement,
+  );
   return Object.freeze({
     caseId: row.caseId,
     caseRole: row.caseRole,

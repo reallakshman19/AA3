@@ -183,8 +183,8 @@ function staleAction({ authorityReason, runAuthorized }) {
 function sourceCurrentness(a, b, c) {
   if (a.documentLoaded === false && b.documentLoaded === false) return 'SOURCE INPUT REQUIRED';
   if (a.documentLoaded === false || b.documentLoaded === false) return 'SOURCE INCOMPLETE';
-  if (c.state === 'SOURCE_INCOMPLETE') return 'SOURCE INCOMPLETE';
   if (B_SOURCE_STALE_STATES.has(b.state)) return 'SOURCE STALE';
+  if (c.state === 'SOURCE_INCOMPLETE') return 'SOURCE INCOMPLETE';
   return 'SOURCE CURRENT';
 }
 

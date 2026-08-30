@@ -18,13 +18,17 @@ export function computeValidationProfileSemanticHash(profile) {
 
 function stiffnessConstraintProjection(constraint) {
   if (constraint.behavior === 'LINEAR_SPRING') {
-    return {
+    const projection = {
       nodeId: constraint.nodeId,
       dof: constraint.dof,
       behavior: constraint.behavior,
       basis: constraint.basis,
       stiffness: constraint.stiffness,
     };
+    // Preserve the historical axis-spring projection exactly. Direction is
+    // stiffness authority only when this is the new directional spring form.
+    if (Array.isArray(constraint.direction)) projection.direction = [...constraint.direction];
+    return projection;
   }
   return {
     nodeId: constraint.nodeId,

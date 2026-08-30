@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import './lfea-skew-spring-check.mjs';
 import './lfea-cnode-spring-check.mjs';
+import './lfea-cnode-mechanism-check.mjs';
 import './lfea-hanger-predefined-check.mjs';
 import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
 import {

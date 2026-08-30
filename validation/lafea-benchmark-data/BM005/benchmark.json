@@ -8,17 +8,8 @@
   "sourceRegistryPath": "validation/lafea-benchmark-data/BM005/sources/source-registry.json",
   "model": {
     "formulation": "PLANE_STRESS",
-    "units": {
-      "length": "mm",
-      "force": "N",
-      "stress": "MPa",
-      "modulus": "MPa"
-    },
-    "material": {
-      "materialId": "MAT",
-      "elasticModulus": 200000,
-      "poissonRatio": 0.3
-    },
+    "units": {"length":"mm","force":"N","stress":"MPa","modulus":"MPa"},
+    "material": {"materialId":"MAT","elasticModulus":200000,"poissonRatio":0.3},
     "thickness": 10,
     "geometry": {
       "schema": "lafea-analysis-geometry/v1",
@@ -39,9 +30,7 @@
         {"segmentId":"RADIAL_Y","type":"LINE","startVertexId":"P3_OUTER_Y","endVertexId":"P4_INNER_Y"},
         {"segmentId":"INNER_ARC","type":"CIRCULAR_ARC","startVertexId":"P4_INNER_Y","endVertexId":"P1_INNER_X","centerX":0,"centerY":0,"radius":50,"sweep":"CW"}
       ],
-      "loops": [
-        {"loopId":"OUTER","role":"OUTER","segmentIds":["RADIAL_X","OUTER_ARC","RADIAL_Y","INNER_ARC"]}
-      ]
+      "loops": [{"loopId":"OUTER","role":"OUTER","segmentIds":["RADIAL_X","OUTER_ARC","RADIAL_Y","INNER_ARC"]}]
     },
     "physicalCaseId": "INTERNAL_PRESSURE",
     "attachments": [
@@ -122,6 +111,14 @@
     "allowEarlierGovernedPreflightRejection": true,
     "releaseQualified": false
   },
+  "limitations": [
+    "LINEAR_ELASTIC_SMALL_DISPLACEMENT_ONLY",
+    "PLANE_STRESS_QUARTER_SYMMETRY_IDEALIZATION",
+    "PRESSURE_ONLY_AXISYMMETRIC_GOLDEN_CASE",
+    "MAPPED_Q8_APPLICATION_BENCHMARK_ONLY",
+    "NO_CODE_COMPLIANCE",
+    "SINGLE_BENCHMARK_PASS_DOES_NOT_GRANT_PRODUCTION_OR_RELEASE_AUTHORITY"
+  ],
   "freezePolicy": {
     "definitionFrozenBeforeObservations": true,
     "productionOutputMayModifyOracle": false,

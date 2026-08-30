@@ -1,0 +1,49 @@
+{
+  "schema": "engineering-focused-exact-blob-validation/v1",
+  "chainId": "ADV-LAFEA3-1535-PRODUCTION-ROUTE",
+  "endpointId": "EP-0023",
+  "scope": "VISIBLE_CONVERGENCE_PRESENTATION_ONLY",
+  "results": [
+    {
+      "path": "src/workspace/lafea-guided-workflow-presentation.js",
+      "blob": "831cd76423182095959cd340c4733efedda59072",
+      "syntax": "PASS",
+      "focusedRuntime": "PASS",
+      "claim": "WORKFLOW_STEP_NOT_APPLICABLE projects Convergence area as NOT_APPLICABLE"
+    },
+    {
+      "path": "src/workspace/lafea-ui-icons.js",
+      "blob": "78d951919ba9e8ad09a405e5ea2c5daac94dae41",
+      "syntax": "PASS",
+      "focusedRuntime": "PASS",
+      "claim": "SOLVE maps to calculation-style solve icon and legacy play-triangle path is absent"
+    },
+    {
+      "path": "src/workspace/lafea-workbench-reason-labels.js",
+      "blob": "35bf2a94b144680a38dc8df8b16fa8be22e88cf5",
+      "syntax": "PASS",
+      "focusedRuntime": "PASS",
+      "claim": "LAFEA3 convergence result-publication blocker resolves to engineer-readable text"
+    }
+  ],
+  "compositeOutput": {
+    "status": "PASS",
+    "convergenceArea": "NOT_APPLICABLE",
+    "solveIcon": "solve",
+    "reasonLabel": "PASS"
+  },
+  "notRun": [
+    "scripts/lafea.3-visible-convergence-flow-check.mjs in faithful checkout",
+    "BM-005 ordinary application route",
+    "BM-006 browser replay",
+    "build/import/workbench suites"
+  ],
+  "infrastructure": {
+    "visibleWorkbenchRun": 33293877088,
+    "visibleWorkbenchJob": 99210106620,
+    "jobSteps": null,
+    "directGit": "DNS_FAILURE"
+  },
+  "coreFeaCompletion": "NOT_PROVEN",
+  "releaseQualified": false
+}

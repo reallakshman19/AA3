@@ -300,6 +300,12 @@ export function requireLocalAxisMap(entries, axisProfile) {
   return { profile, map };
 }
 
+function requireDirectionVector(value, field) {
+  requireArray(value, field, DECLARATION_CODE);
+  if (value.length !== 3) fail(`${field} must have exactly three components.`, DECLARATION_CODE);
+  return value.map((component, index) => requireFinite(component, `${field}[${index}]`, DECLARATION_CODE));
+}
+
 /**
  * Accept release, partial-release-spring, restraint and rigid declarations
  * without deciding anything about them yet. Section 5.3 requires conflicting
@@ -316,6 +322,32 @@ export function requireConstraintDeclarations(declarations) {
       fail(`${field}.kind is unsupported.`, DECLARATION_CODE);
     }
     const declarationId = requireIdentity(declaration.declarationId, `${field}.declarationId`, DECLARATION_CODE);
+
+    if (declaration.kind === 'PARTIAL_RELEASE_SPRING' && Object.hasOwn(declaration, 'direction')) {
+      requireExactKeys(
+        declaration,
+        ['declarationId', 'kind', 'nodeId', 'dof', 'direction', 'stiffness'],
+        field,
+        DECLARATION_CODE,
+      );
+      if (declaration.dof !== null) {
+        fail(`${field}.dof must be null for a directional spring.`, DECLARATION_CODE);
+      }
+      const stiffness = requireFinite(declaration.stiffness, `${field}.stiffness`, DECLARATION_CODE);
+      if (!(stiffness > 0)) {
+        fail(`${field}.stiffness must be a positive finite spring rate.`, 'MODEL_COMPILER_PARTIAL_RELEASE_INVALID');
+      }
+      return {
+        declarationId,
+        kind: declaration.kind,
+        nodeId: requireIdentity(declaration.nodeId, `${field}.nodeId`, DECLARATION_CODE),
+        dof: null,
+        direction: requireDirectionVector(declaration.direction, `${field}.direction`),
+        behavior: 'LINEAR_SPRING',
+        stiffness,
+      };
+    }
+
     const dof = declaration.dof;
     if (!CONSTRAINT_DOFS.includes(dof)) fail(`${field}.dof is unsupported.`, DECLARATION_CODE);
 

@@ -37,9 +37,13 @@ export function createBm005AuditReport(input) {
     oracleCoveredByGci,
     status: oracleCoveredByGci ? 'PASS' : 'FAIL',
   });
+  const meshesDistinct = new Set(observations.map((row) => row.meshHash)).size === observations.length;
+  const executionsDistinct = new Set(observations.map((row) => row.executionHash)).size
+    === observations.length;
   const benchmarkQualified = cleanTree
     && observations.length >= definition.acceptance.minimumLevels
-    && new Set(observations.map((row) => row.meshHash)).size === observations.length
+    && meshesDistinct
+    && executionsDistinct
     && observations.every((row) => row.meshMetadata.quality.blockingElementCount === 0)
     && asymptoticRangeAccepted
     && pointwiseAcceptanceEligible
@@ -47,6 +51,7 @@ export function createBm005AuditReport(input) {
     && solverDiagnostics.accepted === true
     && negativeControl.status === 'PASS_EXPECTED_REJECTION';
   const resultPublicationQualified = input?.resultPublicationQualified === true;
+  const status = benchmarkQualified && resultPublicationQualified ? 'PASS' : 'FAIL';
   const authority = freeze({
     benchmarkQualified,
     resultPublicationQualified,
@@ -56,11 +61,14 @@ export function createBm005AuditReport(input) {
       cleanTree,
       observations,
       definition,
+      meshesDistinct,
+      executionsDistinct,
       asymptoticRangeAccepted,
       pointwiseAcceptanceEligible,
       oracleCoveredByGci,
       solverDiagnostics,
       negativeControl,
+      resultPublicationQualified,
     })),
   });
   const benchmarkDefinitionHash = canonicalLafeaSha256(definition);
@@ -72,6 +80,7 @@ export function createBm005AuditReport(input) {
   )));
   const semantic = freeze({
     schema: BM005_REPORT_SCHEMA,
+    status,
     benchmarkId: definition.benchmarkId,
     stageId: definition.stageId,
     route: definition.route,
@@ -111,6 +120,7 @@ export function createBm005AuditReport(input) {
   });
   return freeze({
     schema: BM005_REPORT_SCHEMA,
+    status,
     benchmarkId: definition.benchmarkId,
     stageId: definition.stageId,
     route: definition.route,
@@ -145,12 +155,16 @@ function benchmarkDefinition(value) {
     || value.freezePolicy?.definitionFrozenBeforeObservations !== true
     || value.freezePolicy?.productionOutputMayModifyOracle !== false
     || value.acceptance?.releaseQualified !== false
+    || !value.convergencePolicy || typeof value.convergencePolicy !== 'object'
+    || value.convergencePolicy.requiredClassification
+      !== value.acceptance.requireConvergenceClassification
     || !Array.isArray(value.limitations) || !value.limitations.length) {
     fail('BM005_REPORT_BENCHMARK_DEFINITION_INVALID');
   }
   if (!Array.isArray(value.mesh?.levels)
     || value.mesh.levels.length < value.acceptance.minimumLevels
-    || value.mesh.elementFamily !== 'Q8') {
+    || value.mesh.elementFamily !== 'Q8'
+    || value.convergencePolicy.refinementRatio !== value.mesh.refinementRatio) {
     fail('BM005_REPORT_MESH_LADDER_INVALID');
   }
   return freeze(structuredClone(value));
@@ -271,13 +285,16 @@ function solverEvidence(value, definition) {
 
 function negativeEvidence(value, definition) {
   if (!value || value.negativeCaseId !== definition.negativeControl.negativeCaseId
-    || !definition.negativeControl.expectedErrorCodes.includes(value.actualErrorCode)
-    || !['solver', 'preflight'].includes(value.actualBoundary)) {
+    || !['solver', 'preflight'].includes(value.actualBoundary)
+    || typeof value.actualErrorCode !== 'string' || !value.actualErrorCode.trim()) {
     fail('BM005_REPORT_NEGATIVE_CONTROL_INVALID');
   }
-  const earlier = value.actualBoundary === 'preflight';
-  const pass = value.actualBoundary === definition.negativeControl.expectedFirstEngineeringBoundary
-    || (earlier && definition.negativeControl.allowEarlierGovernedPreflightRejection === true);
+  const expectedCode = definition.negativeControl.expectedErrorCodes.includes(value.actualErrorCode);
+  const expectedBoundary = value.actualBoundary
+    === definition.negativeControl.expectedFirstEngineeringBoundary;
+  const earlierGoverned = value.actualBoundary === 'preflight'
+    && definition.negativeControl.allowEarlierGovernedPreflightRejection === true;
+  const pass = expectedCode && (expectedBoundary || earlierGoverned);
   return freeze({
     negativeCaseId: value.negativeCaseId,
     expectedFirstEngineeringBoundary: definition.negativeControl.expectedFirstEngineeringBoundary,
@@ -306,9 +323,8 @@ function qualificationReasons(options) {
   if (options.observations.length < options.definition.acceptance.minimumLevels) {
     reasons.push('INSUFFICIENT_MESH_LEVELS');
   }
-  if (new Set(options.observations.map((row) => row.meshHash)).size !== options.observations.length) {
-    reasons.push('MESH_LEVELS_NOT_DISTINCT');
-  }
+  if (!options.meshesDistinct) reasons.push('MESH_LEVELS_NOT_DISTINCT');
+  if (!options.executionsDistinct) reasons.push('EXECUTION_LEVELS_NOT_DISTINCT');
   if (options.observations.some((row) => row.meshMetadata.quality.blockingElementCount > 0)) {
     reasons.push('MESH_QUALITY_BLOCKER_PRESENT');
   }
@@ -319,7 +335,8 @@ function qualificationReasons(options) {
   if (options.negativeControl.status !== 'PASS_EXPECTED_REJECTION') {
     reasons.push('NEGATIVE_CONTROL_NOT_QUALIFIED');
   }
-  return reasons.length ? reasons : ['BM005_BENCHMARK_QUALIFIED'];
+  if (!options.resultPublicationQualified) reasons.push('RESULT_PUBLICATION_NOT_QUALIFIED');
+  return reasons.length ? reasons : ['BM005_BENCHMARK_AND_RESULT_PUBLICATION_QUALIFIED'];
 }
 
 function normalizeDiagnostics(value) {

@@ -55,6 +55,12 @@ const intake = createLinearPipingInputXmlIntake(
 const initial = prepareLinearPipingInputXmlPreFlight(intake);
 assert.notEqual(initial.status, 'BLOCK',
   `predefined hanger model must prepare: ${JSON.stringify(initial.preparation.findings)}`);
+const retainedDiagnosticCodes = initial.diagnostics.sourceBundle.geometry.diagnostics
+  .map((row) => row.code);
+assert.ok(retainedDiagnosticCodes.includes('INPUTXML_HANGER_RECORD_RETAINED'),
+  'preflight must describe HANGER as retained for representability classification');
+assert.equal(retainedDiagnosticCodes.includes('INPUTXML_HANGER_PRESENT_NOT_COMPILED'), false,
+  'preflight must not retain the obsolete blanket HANGER-not-compiled warning');
 const authorized = initial.solveAuthorized ? initial : authorizeLinearPipingInputXmlPreFlight(initial, {
   approverIdentity: 'LFEA-HANGER-DRAFT-CHECK',
   reason: 'Self-authored invariant exercise; does not clear DRAFT status.',
@@ -153,6 +159,7 @@ console.log(JSON.stringify({
   legacyWUnchanged: true,
   malformedNodeFailsClosed: true,
   invalidMultiplicityFailsClosed: true,
+  retainedHangerDiagnosticIsNeutral: true,
   draftDisclosureRetainedInPreflight: true,
   draftDisclosureRetainedInResults: true,
   alternateVerticalFailsClosed: true,

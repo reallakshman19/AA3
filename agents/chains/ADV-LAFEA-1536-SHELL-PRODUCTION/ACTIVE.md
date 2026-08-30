@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
 MISSION: Promote the qualified MITC mechanics stack into an explicit LAFEA.4 production contract and application path while preserving legacy CST/DKT semantics and holding release qualification until executable evidence exists.
-ACTIVE_ENDPOINT: EP-0027
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0027.md
+ACTIVE_ENDPOINT: EP-0028
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0028.md
 MATERIAL_HISTORY_ROOT_BASE: e409a233c46bbec193292565b58b40dffab4b853
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0025.md
 PR: #1575
 BRANCH: codex/lafea-1536-handover-ready
-HEAD: 90f3f2d8eab91b43d665e643fe52faf40972696b
+HEAD: 2ab755add0fa7466013e21bd163e6e2b074836e1
 STATE: BLOCKED
 ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
@@ -20,19 +20,19 @@ MERGEABILITY: MERGEABLE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_CONFIGURED_ON_MAIN
-AUTHORITY_DOMAIN: LAFEA.4 production source is merged through LEG-002; post-merge relay freezes takeover custody only; legacy v1, MITC/DKT mechanics, benchmark expected values/tolerances, workflow, roadmap and release authority remain protected
+AUTHORITY_DOMAIN: LAFEA.4 production source is merged through LEG-002; current relay records source-derived production/stage isolation only; legacy v1, MITC/DKT mechanics, benchmark expected values/tolerances, workflow, roadmap and release authority remain protected
 ACTIVE_CUSTODIAN: reallaksh19
 AGENT_INSTANCE_ID: chatgpt:ddc9d66e-417d-4a98-a48f-8fb83328fe3d
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 27
+CUSTODY_EPOCH: 28
 COORDINATION_STATE: SAFE
-DEPENDENCIES: merged main b4ca03357f584ed993cf3739b11f89c255e54b84 contains LEG-002; last material exact-head run 33302981955 job 99234422634 failed before checkout with steps=null; governed BM-001..BM-009, aggregate/build/import, handover validation and release qualification remain NOT_RUN
+DEPENDENCIES: merged main b4ca03357f584ed993cf3739b11f89c255e54b84 contains LEG-002; current-main source-derived v2 production and stage isolation PASS is non-governing; official final-head run 33305134598 job 99240207281 still exposes zero steps; governed BM-001..BM-009, aggregate/build/import, handover validation and release qualification remain NOT_RUN
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COMMON_PROTOCOL_STATUS: CURRENT
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_HANDOVER_READY
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 QUALIFICATION_PROTOCOL_VERSION: 3
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: github:reallaksh19/Advanced_Analysis#1536/Appendix-A
@@ -44,7 +44,7 @@ QUALIFICATION_SCOPE_ID: QSCOPE-ADV-LAFEA4-1536-MITC-PRODUCTION
 QUESTION_SET_ID: QS-ADV-LAFEA4-1536-0013
 QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REUSED
-QUESTION_DISPLAY: SHOW
+QUESTION_DISPLAY: HIDE
 QUESTION_SET_ADMISSION_REQUIREMENT: REQUIRED_ON_TAKEOVER
 HANDOVER_PROTOCOL_VERSION: 2
 HANDOVER_CONTENT_READY: TRUE
@@ -64,13 +64,16 @@ ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/issue-basis/IB-0
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0027
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0028
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5466335389
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5466334636
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5467981794
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5468101495
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MATERIAL_LEG_ID: LEG-002
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/material-legs/LEG-002.md
 MERGED_MATERIAL_PR: #1574
 MERGED_MAIN: b4ca03357f584ed993cf3739b11f89c255e54b84
-EXACT_NEXT_ACTION: Replacement performs takeover qualification against QS-ADV-LAFEA4-1536-0013, then restores executable repository checkout/runner and executes BM-001..BM-009 plus aggregate/build/import; patch only the first demonstrated wrong owner.
+SOURCE_DERIVED_V2_ISOLATION: PASS
+SOURCE_DERIVED_STAGE_ISOLATION: PASS
+GOVERNED_BM_009: NOT_RUN
+EXACT_NEXT_ACTION: Restore an executable official repository checkout/runner and execute BM-001..BM-009 plus aggregate/build/import; patch only the first demonstrated wrong owner and do not promote release qualification from source-derived isolation.

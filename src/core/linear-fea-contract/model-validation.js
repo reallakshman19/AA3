@@ -323,10 +323,11 @@ function validateConstraints(constraints, nodeIds, profile) {
   constraints.forEach((constraint, index) => {
     const field = `constraints[${index}]`;
     const directional = Object.hasOwn(constraint, 'direction');
+    const connected = Object.hasOwn(constraint, 'connectedNodeId');
     requireAllowedKeys(
       constraint,
       RECORD_KEYS.constraint,
-      [...RECORD_KEYS.constraint, 'direction'],
+      [...RECORD_KEYS.constraint, 'direction', 'connectedNodeId'],
       field,
     );
     requireIdentity(constraint.constraintId, `${field}.constraintId`);
@@ -334,6 +335,16 @@ function validateConstraints(constraints, nodeIds, profile) {
     if (!nodeIds.has(constraint.nodeId)) fail(`${field} references a missing node.`, 'MISSING_CONSTRAINT_NODE_REFERENCE');
     if (directional) validateDirectionalSpring(constraint, field, profile);
     else if (!CONSTRAINT_DOFS.includes(constraint.dof)) fail(`${field}.dof is unsupported.`, 'UNSUPPORTED_DOF');
+    if (connected) {
+      if (!directional) fail(`${field}.connectedNodeId requires a directional spring.`, 'INVALID_CONSTRAINT_DIRECTION');
+      requireIdentity(constraint.connectedNodeId, `${field}.connectedNodeId`);
+      if (!nodeIds.has(constraint.connectedNodeId)) {
+        fail(`${field} references a missing connected node.`, 'MISSING_CONSTRAINT_NODE_REFERENCE');
+      }
+      if (constraint.connectedNodeId === constraint.nodeId) {
+        fail(`${field} cannot connect a spring node to itself.`, 'DUPLICATE_NODE_DOF_CONSTRAINT');
+      }
+    }
     if (!SUPPORTED_CONSTRAINT_BEHAVIORS.includes(constraint.behavior)) {
       fail(`${field}.behavior is unsupported.`, 'UNSUPPORTED_CONSTRAINT_BEHAVIOR');
     }

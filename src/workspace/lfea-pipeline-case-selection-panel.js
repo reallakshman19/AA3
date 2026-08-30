@@ -13,6 +13,18 @@ export const LFEA_PIPELINE_CASE_SELECTION_PANEL_SCHEMA = 'lfea-pipeline-case-sel
 const EMPTY_MESSAGE = 'Load a model and run Error check to see its analysis cases.';
 
 const CASE_PRESENTATION = Object.freeze({
+  WEIGHT_HANGER_PRELOAD: {
+    label: 'W+H', description: 'Weight + hanger preload', category: 'STANDARD_HANGER',
+  },
+  WEIGHT_PRESSURE_HANGER_PRELOAD: {
+    label: 'W+P1+H', description: 'Weight + pressure + hanger preload', category: 'STANDARD_HANGER',
+  },
+  WEIGHT_TEMPERATURE_HANGER_PRELOAD: {
+    label: 'W+T1+H', description: 'Weight + thermal + hanger preload', category: 'STANDARD_HANGER',
+  },
+  WEIGHT_PRESSURE_TEMPERATURE_HANGER_PRELOAD: {
+    label: 'W+P1+T1+H', description: 'Weight + pressure + thermal + hanger preload', category: 'STANDARD_HANGER',
+  },
   WEIGHT_BASE: { label: 'W', description: 'Weight', category: 'STANDARD' },
   WEIGHT_PRESSURE: { label: 'W+P1', description: 'Weight + pressure', category: 'STANDARD' },
   WEIGHT_TEMPERATURE: { label: 'W+T1', description: 'Weight + thermal', category: 'STANDARD' },
@@ -20,6 +32,15 @@ const CASE_PRESENTATION = Object.freeze({
   APPLIED_FORCE_SET: { label: null, description: 'Declared applied force set', category: 'FORCE_SET' },
   AUTHORED_APPLIED_MECHANICAL: { label: null, description: 'Authored nodal load', category: 'AUTHORED' },
 });
+
+export function defaultLfeaPipelineCaseIds(availableCases) {
+  const preferredCategory = availableCases.some((row) => row.category === 'STANDARD_HANGER')
+    ? 'STANDARD_HANGER'
+    : 'STANDARD';
+  return availableCases
+    .filter((row) => row.category === preferredCategory)
+    .map((row) => row.caseId);
+}
 
 export function mountLfeaPipelineCaseSelectionPanel(hostElement, options = {}) {
   if (!hostElement || typeof hostElement.append !== 'function') {
@@ -40,6 +61,7 @@ export class LfeaPipelineCaseSelectionPanelController {
     this.elements = null;
     this.initialized = false;
     this.selected = new Set();
+    this.selectionExplicit = false;
     this.message = EMPTY_MESSAGE;
     this.error = '';
   }
@@ -71,12 +93,11 @@ export class LfeaPipelineCaseSelectionPanelController {
       .sort((left, right) => compareCases(left, right));
   }
 
-  /** Selected case IDs, defaulting to the standard cases when nothing is set. */
+  /** Selected case IDs, defaulting to the governed standard family until the user edits it. */
   getSelectedCaseIds() {
     const available = this.availableCases();
-    const live = available.filter((row) => this.selected.has(row.caseId)).map((row) => row.caseId);
-    if (live.length > 0) return live;
-    return available.filter((row) => row.category === 'STANDARD').map((row) => row.caseId);
+    if (!this.selectionExplicit) return defaultLfeaPipelineCaseIds(available);
+    return available.filter((row) => this.selected.has(row.caseId)).map((row) => row.caseId);
   }
 
   /** Case IDs sealed into the currently retained pre-flight. */
@@ -120,6 +141,10 @@ export class LfeaPipelineCaseSelectionPanelController {
           selected.has(row.caseId),
           applied.has(row.caseId),
           (caseId, checked) => {
+            if (!this.selectionExplicit) {
+              this.selected = new Set(defaultLfeaPipelineCaseIds(available));
+              this.selectionExplicit = true;
+            }
             if (checked) this.selected.add(caseId); else this.selected.delete(caseId);
           },
         ));
@@ -153,8 +178,11 @@ export class LfeaPipelineCaseSelectionPanelController {
   }
 }
 
-const CATEGORY_ORDER = Object.freeze({ STANDARD: 0, FORCE_SET: 1, AUTHORED: 2, OTHER: 3 });
+const CATEGORY_ORDER = Object.freeze({
+  STANDARD_HANGER: 0, STANDARD: 1, FORCE_SET: 2, AUTHORED: 3, OTHER: 4,
+});
 const CATEGORY_LABELS = Object.freeze({
+  STANDARD_HANGER: 'Hanger-preload analysis cases',
   STANDARD: 'Analysis cases',
   FORCE_SET: 'Declared force sets — alternative directions, never summed together',
   AUTHORED: 'Authored nodal loads',

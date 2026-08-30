@@ -11,7 +11,7 @@ MATERIAL_HISTORY_ROOT_BASE: 7d350c269217f3133e778c09a61b69d2b3909a64
 ENGINEERING_MATERIAL_BASIS_HEAD: f8ae425e710adb9e250d0be1247036d63f7943dc
 PR: #1553 DRAFT
 BRANCH: codex/lfea-support-representability-1551
-HEAD_AT_ENDPOINT_PUBLICATION: PENDING_SYNC
+HEAD_AT_ENDPOINT_PUBLICATION: 18b3c82fd5f2c05daabde27abda2858caec43093
 LIVE_MAIN_AT_REGROUND: fad372eaf55487b10a2cbcad5ff8438b71e031ff
 STATE: ACTIVE
 ENGINEERING_STATE: IN_PROGRESS
@@ -25,7 +25,7 @@ AUTHORITY_DOMAIN: LFEA InputXML support representability, directional/two-node l
 ACTIVE_CUSTODIAN: chatgpt-gpt-5.6-sol
 CUSTODY_EPOCH: 22
 COORDINATION_STATE: SAFE_AUTHORITY_DISJOINT
-DEPENDENCIES: external CAESAR-solved skew/CNODE/HANGER references required to clear feature DRAFT; hosted jobs still create no executable steps; exact-head Git-blob local execution has observed PASS/red only for the reaction-aggregation gate; all remaining focused/support/full/BM4 executions stay unresolved; rigid skew/CNODE remain MPC-gated; alternate hanger vertical axis remains source-authority gated
+DEPENDENCIES: external CAESAR-solved skew/CNODE/HANGER references required to clear feature DRAFT; hosted jobs still create no executable steps; exact-head Git-blob local execution has observed PASS/red only for reaction aggregation; remaining focused/support/full/BM4 executions stay unresolved; rigid skew/CNODE remain MPC-gated; alternate hanger vertical axis remains source-authority gated
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COMMON_PROTOCOL_STATUS: CURRENT
@@ -41,6 +41,6 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0022
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5467986178
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5467984874
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_ENDPOINT_PUBLICATION
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5470055879
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_READY: TRUE

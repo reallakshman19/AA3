@@ -17,9 +17,12 @@ import {
   validateCanonicalLocalContinuumModel,
 } from '../core/local-continuum/index.js';
 import {
+  MITC_PRODUCTION_MODEL_SCHEMA,
   calculateLocalShell,
   createCanonicalLocalShellModel,
+  createCanonicalMitcProductionModel,
   validateCanonicalLocalShellModel,
+  validateCanonicalMitcProductionModel,
 } from '../core/local-shell/index.js';
 import {
   calculateLocalTrunnionFootprint,
@@ -136,16 +139,21 @@ function normalizeContinuum(input) {
 
 function normalizeShell(input) {
   const { cleanInput, meshConfig } = prepareInput(input);
+  const productionMitc = cleanInput.schema === MITC_PRODUCTION_MODEL_SCHEMA;
   const source = typeof cleanInput.semanticHash === 'string'
-    ? withoutHash(validateCanonicalLocalShellModel(cleanInput))
+    ? withoutHash(productionMitc
+      ? validateCanonicalMitcProductionModel(cleanInput)
+      : validateCanonicalLocalShellModel(cleanInput))
     : withoutHash(cleanInput);
 
-  // LAFEA.4 owns an editable source mesh whose exact node ordering and element
-  // connectivity are part of source/geometry custody. Canonical shell creation
-  // is still required here as a validation boundary, but its deterministic
-  // winding normalization belongs to the solver-model representation and must
-  // not silently replace the retained editable source document.
-  createCanonicalLocalShellModel(source);
+  // LAFEA.4 owns editable source topology. Canonical creation is still the
+  // solver boundary, but deterministic winding/order normalization must not
+  // silently replace the retained source document.
+  if (source.schema === MITC_PRODUCTION_MODEL_SCHEMA) {
+    createCanonicalMitcProductionModel(source);
+  } else {
+    createCanonicalLocalShellModel(source);
+  }
   return freezeClone({ ...source, ...(meshConfig ? { meshConfig } : {}) });
 }
 
@@ -178,7 +186,10 @@ function canonicalContinuum(source) {
 }
 
 function canonicalShell(source) {
-  return createCanonicalLocalShellModel(stripWorkbenchFields(source));
+  const clean = stripWorkbenchFields(source);
+  return clean?.schema === MITC_PRODUCTION_MODEL_SCHEMA
+    ? createCanonicalMitcProductionModel(clean)
+    : createCanonicalLocalShellModel(clean);
 }
 
 function canonicalTrunnion(source) {

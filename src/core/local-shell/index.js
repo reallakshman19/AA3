@@ -12,3 +12,5 @@ export * from './surface-stress.js';
 export * from './result-hashes.js';
 export * from './transformation.js';
 export * from './result-validation.js';
+export * from './mitc-production-model.js';
+export * from './mitc-production.js';

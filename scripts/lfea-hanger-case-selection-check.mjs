@@ -3,8 +3,11 @@ import {
   LfeaPipelineCaseSelectionPanelController,
   defaultLfeaPipelineCaseIds,
 } from '../src/workspace/lfea-pipeline-case-selection-panel.js';
+import { LfeaPipelineRunPanelController } from '../src/workspace/lfea-pipeline-run-panel.js';
 
-const deliberateBreak = process.argv.includes('--deliberate-break');
+const breakAll = process.argv.includes('--deliberate-break');
+const breakDefault = breakAll || process.argv.includes('--deliberate-break-default');
+const breakRunGate = breakAll || process.argv.includes('--deliberate-break-run');
 
 const LEGACY = Object.freeze([
   Object.freeze({ caseId: 'IXP-W', caseRole: 'WEIGHT_BASE' }),
@@ -21,24 +24,35 @@ const HANGER = Object.freeze([
 const LEGACY_IDS = LEGACY.map((row) => row.caseId).sort();
 const HANGER_IDS = HANGER.map((row) => row.caseId).sort();
 
-function controllerFor(physicalCases) {
+function harness(physicalCases, requestedCaseIds = ['IXP-W']) {
   const preFlight = {
+    solveAuthorized: true,
+    authorization: {},
     preparation: {
       physicalPreparation: { physicalCases },
-      requestedCaseIds: [],
+      requestedCaseIds: [...requestedCaseIds],
     },
   };
-  return new LfeaPipelineCaseSelectionPanelController(null, null, {
+  const caseSelection = new LfeaPipelineCaseSelectionPanelController(null, null, {
     getPreFlight: () => preFlight,
   });
+  const run = new LfeaPipelineRunPanelController(null, null, {
+    getPreFlight: () => preFlight,
+    getCaseSelectionCustody: () => breakRunGate
+      ? { ready: true, reason: null }
+      : caseSelection.getRunCaseCustody(),
+  });
+  return { preFlight, caseSelection, run };
 }
 
-const legacyController = controllerFor(LEGACY);
-assert.deepEqual([...legacyController.getSelectedCaseIds()].sort(), LEGACY_IDS,
-  'a model without H-bearing cases must preserve the four legacy defaults');
+const legacy = harness(LEGACY);
+assert.deepEqual([...legacy.caseSelection.getSelectedCaseIds()].sort(), LEGACY_IDS,
+  'a model without H-bearing cases must preserve the four legacy selection defaults');
+assert.equal(legacy.run.runAvailability().ready, true,
+  'a no-H model already authorized for W must preserve legacy Run readiness');
 
-const hangerController = controllerFor([...LEGACY, ...HANGER]);
-const available = hangerController.availableCases();
+const hanger = harness([...LEGACY, ...HANGER]);
+const available = hanger.caseSelection.availableCases();
 assert.deepEqual(available.map((row) => row.caseId).sort(), [...LEGACY_IDS, ...HANGER_IDS].sort(),
   'base and H-bearing cases must both remain visible/selectable');
 const hangerRows = available.filter((row) => row.category === 'STANDARD_HANGER');
@@ -47,20 +61,44 @@ assert.deepEqual(hangerRows.map((row) => row.caseId).sort(), HANGER_IDS,
 assert.deepEqual(hangerRows.map((row) => row.label).sort(), ['W+H', 'W+P1+H', 'W+P1+T1+H', 'W+T1+H'].sort(),
   'H-bearing labels must remain explicit about H custody');
 
-const defaultPolicy = deliberateBreak
+const defaultPolicy = breakDefault
   ? (rows) => rows.filter((row) => row.category === 'STANDARD').map((row) => row.caseId)
   : defaultLfeaPipelineCaseIds;
 assert.deepEqual([...defaultPolicy(available)].sort(), HANGER_IDS,
   'when H-bearing standard cases exist, the default must include H and exclude the non-H comparison family');
-assert.deepEqual([...hangerController.getSelectedCaseIds()].sort(), HANGER_IDS,
+assert.deepEqual([...hanger.caseSelection.getSelectedCaseIds()].sort(), HANGER_IDS,
   'the production controller must use the H-bearing default family');
 
-hangerController.selectionExplicit = true;
-hangerController.selected = new Set(['IXP-W']);
-assert.deepEqual(hangerController.getSelectedCaseIds(), ['IXP-W'],
+const initialCustody = hanger.caseSelection.getRunCaseCustody();
+assert.equal(initialCustody.ready, false,
+  'initial native W custody must not bypass an available untouched H-aware Load-case default');
+assert.equal(hanger.run.runAvailability().ready, false,
+  'Run must stay blocked until the H-aware Load-case choice is sealed into pre-flight');
+
+hanger.preFlight.preparation.requestedCaseIds = [...HANGER_IDS];
+assert.equal(hanger.caseSelection.getRunCaseCustody().ready, true,
+  'an applied H-bearing case family must satisfy Load-case custody');
+assert.equal(hanger.run.runAvailability().ready, true,
+  'Run must become ready after the H-bearing case family is sealed and authorized');
+
+hanger.caseSelection.selectionExplicit = true;
+hanger.caseSelection.selected = new Set(['IXP-W']);
+hanger.preFlight.preparation.requestedCaseIds = ['IXP-W'];
+assert.deepEqual(hanger.caseSelection.getSelectedCaseIds(), ['IXP-W'],
   'an explicit user selection must override the H-aware default without rewriting case mechanics');
-hangerController.selected.clear();
-assert.deepEqual(hangerController.getSelectedCaseIds(), [],
+assert.equal(hanger.caseSelection.getRunCaseCustody().ready, true,
+  'an explicitly selected and applied non-H comparison case remains an allowed engineering choice');
+assert.equal(hanger.run.runAvailability().ready, true,
+  'Run must permit an explicit non-H comparison case once the same set is sealed into pre-flight');
+
+hanger.caseSelection.selected = new Set(['IXP-WP']);
+assert.equal(hanger.caseSelection.getRunCaseCustody().ready, false,
+  'changed explicit selection must block until Apply selection regenerates pre-flight');
+assert.equal(hanger.run.runAvailability().ready, false,
+  'Run must not execute the stale applied W after the user changes selection to WP');
+
+hanger.caseSelection.selected.clear();
+assert.deepEqual(hanger.caseSelection.getSelectedCaseIds(), [],
   'an explicitly empty user selection must stay empty so Apply can fail closed instead of restoring defaults');
 
 console.log(JSON.stringify({
@@ -68,8 +106,15 @@ console.log(JSON.stringify({
   status: 'PASS',
   legacyDefault: LEGACY_IDS,
   hangerDefault: HANGER_IDS,
+  initialNativeWBlockedForHanger: true,
+  appliedHangerFamilyReady: true,
+  explicitNonHComparisonAllowed: true,
+  changedUnappliedSelectionBlocked: true,
   baseCasesRemainSelectable: true,
   explicitSelectionAuthoritative: true,
   explicitEmptyFailsClosed: true,
-  deliberateBreakMode: '--deliberate-break restores legacy-only default and must fail',
+  deliberateBreakModes: [
+    '--deliberate-break-default restores legacy-only default and must fail',
+    '--deliberate-break-run bypasses Run custody and must fail',
+  ],
 }, null, 2));

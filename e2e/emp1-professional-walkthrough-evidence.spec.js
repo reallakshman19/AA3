@@ -116,13 +116,18 @@ async function checkpoint(page, testInfo, evidence, ordinal, name) {
   const fullPageBody = await page.screenshot({ ...screenshotOptions, fullPage: true });
   await testInfo.attach(`${ordinal}-${name}-full-page`, { body: fullPageBody, contentType: 'image/png' });
   await page.evaluate(({ scrollX, scrollY }) => window.scrollTo(scrollX, scrollY), viewportState);
+  const ariaSnapshot = await page.locator('[data-role="lafea-workbench"]').ariaSnapshot();
+  await testInfo.attach(`${ordinal}-${name}-aria`, {
+    body: Buffer.from(`${ariaSnapshot}\n`, 'utf8'),
+    contentType: 'text/plain',
+  });
   evidence.push({ ordinal: Number(ordinal), name, ...viewportState });
 }
 
 async function attachManifest(page, testInfo, originalDiameter, checkpointEvidence) {
   const browserVersion = page.context().browser()?.version() ?? 'UNRESOLVED';
   const manifest = {
-    schema: 'emp1-wrc-ui-walkthrough-evidence/v2',
+    schema: 'emp1-wrc-ui-walkthrough-evidence/v3',
     project: testInfo.project.name,
     browserVersion,
     checkpoints: 12,
@@ -130,8 +135,18 @@ async function attachManifest(page, testInfo, originalDiameter, checkpointEviden
     attachmentPolicy: {
       viewportScreenshots: 12,
       fullPageContextScreenshots: 12,
+      ariaSnapshots: 12,
+      ariaSnapshotScope: 'lafea-workbench',
       viewportScreenshotProvesLanding: true,
       fullPageScreenshotIsContextOnly: true,
+      ariaSnapshotSupportsAccessibleNameReview: true,
+      hoverOnlyTooltipRequiresLiveObservation: true,
+    },
+    humanObservationPolicy: {
+      finalPassRequiresLiveOrRecordedQualifiedHumanObservation: true,
+      artifactOnlyReviewCanEstablishFinalPass: false,
+      staticArtifactsSupportPerStageReview: true,
+      dynamicTransitionsRequireLiveOrRecordedObservation: true,
     },
     upstreamMutation: {
       control: 'Pipe outside diameter LAFEA.1',

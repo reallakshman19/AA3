@@ -12,6 +12,7 @@ import './lfea-hanger-predefined-check.mjs';
 import './lfea-hanger-case-selection-check.mjs';
 import './lfea-blocked-execution-custody-check.mjs';
 import './lfea-mixed-fixed-skew-reaction-check.mjs';
+import './lfea-results-reaction-aggregation-check.mjs';
 import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
 import {
   prepareLinearPipingInputXmlPreFlight,

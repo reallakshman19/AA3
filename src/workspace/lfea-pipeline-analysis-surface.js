@@ -19,60 +19,32 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     getPreFlight: options.getPreFlight,
     onApplyCaseSelection: options.onApplyCaseSelection,
   });
-  const layoutPanel = mountLfeaPipelineLayoutPanel(options.loadCaseHost, {
-    documentRef: options.documentRef,
-    getPreFlight: options.getPreFlight,
-  });
-  const loadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(options.loadCaseHost, {
-    documentRef: options.documentRef,
-    getNodeIds: options.getNodeIds,
-  });
-  const resultsPanel = mountLfeaPipelineResultsPanel(options.resultsHost, {
-    documentRef: options.documentRef,
-    onExportCsv: options.onExportCsv,
-  });
-  const runPanel = mountLfeaPipelineRunPanel(options.resultsHost, {
-    documentRef: options.documentRef,
-    getPreFlight: options.getPreFlight,
-    onAnalyze: options.onAnalyze,
-  });
+  const layoutPanel = mountLfeaPipelineLayoutPanel(options.loadCaseHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
+  const loadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(options.loadCaseHost, { documentRef: options.documentRef, getNodeIds: options.getNodeIds });
+  const resultsPanel = mountLfeaPipelineResultsPanel(options.resultsHost, { documentRef: options.documentRef, onExportCsv: options.onExportCsv });
+  const runPanel = mountLfeaPipelineRunPanel(options.resultsHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight, onAnalyze: options.onAnalyze });
   const exportPanel = mountLfeaPipelineExportPanel(options.resultsHost, {
     documentRef: options.documentRef,
     getResultsPanel: () => resultsPanel,
     onExportCsv: options.onExportCsv,
     onExportCompleted: options.onExportCompleted,
   });
-  const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, {
-    documentRef: options.documentRef,
+  const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, { documentRef: options.documentRef });
+  const taskVisibility = mountLfeaPipelineResultsTaskVisibility(options.resultsHost, {
+    onTaskChanged(stepId) {
+      if (stepId === 'RUN') runPanel.refresh();
+      if (stepId === 'OUTPUT') resultsAuthorityPanel.refresh();
+      if (stepId === 'EXPORT') exportPanel.refresh();
+    },
   });
-  const taskVisibility = mountLfeaPipelineResultsTaskVisibility(options.resultsHost);
-  const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, {
-    documentRef: options.documentRef,
-    getSourceText: options.getSourceText,
-    onRepaired: options.onRepaired,
-  });
-  const modelReviewPanel = mountLfeaModelReviewPanel(options.sourceHost, {
-    documentRef: options.documentRef,
-    getPreFlight: options.getPreFlight,
-  });
-  const errorCheckPanel = mountLfeaCommonErrorCheckPanel(options.sourceHost, {
-    documentRef: options.documentRef,
-    getPreFlight: options.getPreFlight,
-  });
+  const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, { documentRef: options.documentRef, getSourceText: options.getSourceText, onRepaired: options.onRepaired });
+  const modelReviewPanel = mountLfeaModelReviewPanel(options.sourceHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
+  const errorCheckPanel = mountLfeaCommonErrorCheckPanel(options.sourceHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
 
   return Object.freeze({
-    analysisController,
-    modelRepairPanel,
-    modelReviewPanel,
-    errorCheckPanel,
-    caseSelectionPanel,
-    layoutPanel,
-    runPanel,
-    resultsPanel,
-    exportPanel,
-    resultsAuthorityPanel,
-    taskVisibility,
-    loadCaseAuthoringPanel,
+    analysisController, modelRepairPanel, modelReviewPanel, errorCheckPanel,
+    caseSelectionPanel, layoutPanel, runPanel, resultsPanel, exportPanel,
+    resultsAuthorityPanel, taskVisibility, loadCaseAuthoringPanel,
     refreshLoadCaseStep() {
       caseSelectionPanel.refresh();
       layoutPanel.refresh();
@@ -80,16 +52,8 @@ export function mountLfeaPipelineAnalysisSurface(options) {
       runPanel.refresh();
     },
     refreshRunStep() { runPanel.refresh(); },
-    refreshSourceStep() {
-      modelRepairPanel.refresh();
-      modelReviewPanel.refresh();
-      errorCheckPanel.refresh();
-    },
-    refreshResultsStep() {
-      resultsAuthorityPanel.refresh();
-      exportPanel.refresh();
-      taskVisibility.refresh();
-    },
+    refreshSourceStep() { modelRepairPanel.refresh(); modelReviewPanel.refresh(); errorCheckPanel.refresh(); },
+    refreshResultsStep() { resultsAuthorityPanel.refresh(); exportPanel.refresh(); taskVisibility.refresh(); },
     destroy() {
       taskVisibility.destroy();
       caseSelectionPanel.destroy();

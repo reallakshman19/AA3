@@ -1,10 +1,12 @@
 import { InputXmlLinearStructuralPreparationError } from './inputxml-linear-structural-profile.js';
 import {
   restraintApproximationCodes,
+  restraintDirectionalSpringDirection,
   restraintUnilateralAction,
 } from './inputxml-feature-inventory-restraints.js';
 
 const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
+const TRANSLATIONAL_DOFS = Object.freeze(['UX', 'UY', 'UZ']);
 const ALLOWED_DISPOSITIONS = new Set([
   'IMPLEMENTED_EXACTLY',
   'IMPLEMENTED_WITH_DECLARED_APPROXIMATION',
@@ -79,6 +81,35 @@ export function compileInputXmlStructuralConstraints({
         { inventoryId: item.inventoryId, sourceNodeId: String(sourceNodeId), targetNodeId },
       );
     }
+
+    const directionalSpringDirection = restraintDirectionalSpringDirection(item.classification);
+    if (directionalSpringDirection !== null) {
+      const declarationId = `${modelId}-C-${safe(item.sourceFeatureId)}-DIR`;
+      declarations.push(Object.freeze({
+        declarationId,
+        kind: 'PARTIAL_RELEASE_SPRING',
+        nodeId: `${modelId}.N${safe(targetNodeId)}`,
+        dof: null,
+        direction: Object.freeze([...directionalSpringDirection]),
+        stiffness: item.classification.stiffnessValue,
+      }));
+      bindings.push(Object.freeze({
+        sourceFeatureId: item.sourceFeatureId,
+        inventoryId: item.inventoryId,
+        sourceRecordSemanticHash: item.sourceRecordSemanticHash,
+        sourceNodeId: String(sourceNodeId),
+        targetNodeId,
+        retargetedByBendRetopology: targetNodeId !== String(sourceNodeId),
+        targetDofs: TRANSLATIONAL_DOFS,
+        implementation: disposition.disposition,
+        limitationCode: disposition.limitationCode,
+        limitationCodes: restraintApproximationCodes(item.classification),
+        unilateralAction: restraintUnilateralAction(item.classification),
+        declarationIds: Object.freeze([declarationId]),
+      }));
+      continue;
+    }
+
     const dofs = targetDof === 'ALL' ? DOFS : [targetDof];
     const declarationIds = [];
     for (const dof of dofs) {

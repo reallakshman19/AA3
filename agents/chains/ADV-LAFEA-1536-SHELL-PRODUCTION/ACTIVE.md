@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
 MISSION: Close LAFEA.4 production scalability first, then qualify MITC adoption without crossing formulation or release authority prematurely.
-ACTIVE_ENDPOINT: EP-0007
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0007.md
+ACTIVE_ENDPOINT: EP-0008
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0008.md
 MATERIAL_HISTORY_ROOT_BASE: 80dcfe8311b7cee367873fe2794ab059a242921b
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0007.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0008.md
 PR: #1542
 BRANCH: codex/lafea-1536-mitc-adoption
-HEAD: 9e6ec5979a84ce9e69cffff66dd38c51ee411a29
+HEAD: 9683c970dc56050081f52b982ac42a79049bd77c
 STATE: ACTIVE
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
@@ -17,7 +17,7 @@ AUTO_STATE: RUNNING
 MERGE_AUTHORITY: OWNER_ONLY
 AUTHORITY_DOMAIN: LAFEA.4 experimental MITC adoption contract, element evidence, load/recovery/solver parity; no registered production-route authority
 ACTIVE_CUSTODIAN: reallaksh19
-CUSTODY_EPOCH: 7
+CUSTODY_EPOCH: 8
 COORDINATION_STATE: SAFE
 DEPENDENCIES: PR #1541 / codex/lafea-1536-shell-scalability — parent solver scalability implementation; executable validation NOT_RUN
 COMMON_PROTOCOL: engineering-pr-delivery-v2

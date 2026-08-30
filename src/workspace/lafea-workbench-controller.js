@@ -1,5 +1,5 @@
 /** Controller for the independent guided LAFEA workbench. */
-import { createLafeaWorkbenchOrchestratorStore } from './lafea-workbench-orchestrator-store.js';
+import { createLafeaWorkbenchStore } from './lafea-lifecycle-workbench-store.js';
 import {
   createLafeaAccessoryPanelManager,
   lafeaAccessoryPanelConfigurationRequiresHost,
@@ -45,7 +45,7 @@ export class LafeaWorkbenchController {
     } = configuration;
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
-    this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
+    this.store = createLafeaWorkbenchStore(storeOptions);
     this.emp1RunInput = emp1RunInput == null ? null : normalizeEmp1WorkbenchRunInput(emp1RunInput);
     this.emp1Execution = null;
     this.emp1RunFailure = null;

@@ -62,6 +62,7 @@ export class LfeaPipelineCaseSelectionPanelController {
     this.initialized = false;
     this.selected = new Set();
     this.selectionExplicit = false;
+    this.sourceSemanticHash = null;
     this.message = EMPTY_MESSAGE;
     this.error = '';
   }
@@ -95,6 +96,7 @@ export class LfeaPipelineCaseSelectionPanelController {
 
   /** Selected case IDs, defaulting to the governed standard family until the user edits it. */
   getSelectedCaseIds() {
+    this.synchronizeSourceSelectionState();
     const available = this.availableCases();
     if (!this.selectionExplicit) return defaultLfeaPipelineCaseIds(available);
     return available.filter((row) => this.selected.has(row.caseId)).map((row) => row.caseId);
@@ -106,6 +108,43 @@ export class LfeaPipelineCaseSelectionPanelController {
     return Array.isArray(ids) ? [...ids] : [];
   }
 
+  /** Stable source identity used only to invalidate presentation state on model replacement. */
+  sourceSemanticIdentity() {
+    const preFlight = this.options.getPreFlight?.() ?? null;
+    const identity = preFlight?.sourceSummary?.sourceSemanticHash
+      ?? preFlight?.intake?.inputXmlSource?.semanticHash
+      ?? null;
+    return typeof identity === 'string' && identity.trim() !== '' ? identity : null;
+  }
+
+  /**
+   * Explicit checkbox choices belong to one sealed source model. Regenerating
+   * pre-flight for different requested cases on that same source must preserve
+   * the choice; replacing the source must not inherit it merely because case
+   * IDs such as IXP-W happen to be reused.
+   */
+  synchronizeSourceSelectionState() {
+    const current = this.sourceSemanticIdentity();
+    if (current === null) {
+      if (this.sourceSemanticHash !== null) {
+        this.selected.clear();
+        this.selectionExplicit = false;
+        this.sourceSemanticHash = null;
+      }
+      return null;
+    }
+    if (this.sourceSemanticHash === null) {
+      this.sourceSemanticHash = current;
+      return current;
+    }
+    if (this.sourceSemanticHash !== current) {
+      this.selected.clear();
+      this.selectionExplicit = false;
+      this.sourceSemanticHash = current;
+    }
+    return current;
+  }
+
   /**
    * Read-only Run custody. A native intake starts at W; when H-bearing cases
    * exist that untouched seed may not bypass the Load-case choice. Explicitly
@@ -113,6 +152,7 @@ export class LfeaPipelineCaseSelectionPanelController {
    * into pre-flight.
    */
   getRunCaseCustody() {
+    const sourceSemanticHash = this.synchronizeSourceSelectionState();
     const available = this.availableCases();
     const hangerIds = available
       .filter((row) => row.category === 'STANDARD_HANGER')
@@ -121,6 +161,15 @@ export class LfeaPipelineCaseSelectionPanelController {
     const appliedCaseIds = this.getAppliedCaseIds();
     if (hangerIds.length === 0) {
       return Object.freeze({ ready: true, reason: null, selectedCaseIds, appliedCaseIds, hangerCaseIds: [] });
+    }
+    if (sourceSemanticHash === null) {
+      return Object.freeze({
+        ready: false,
+        reason: 'Hanger-preload cases are available but source identity is unavailable. Re-run Error check before Run.',
+        selectedCaseIds,
+        appliedCaseIds,
+        hangerCaseIds: hangerIds,
+      });
     }
     if (this.selectionExplicit) {
       const ready = sameCaseIds(selectedCaseIds, appliedCaseIds);

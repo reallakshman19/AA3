@@ -30,15 +30,17 @@ const bStaleAndCIncomplete = buildEmp1ProfessionalWorkflowPresentation(projectio
   cRunAuthorized: false,
   cBlockers: ['EMP1_WORKBENCH_APPLICABILITY_GEOMETRY_REQUIRED'],
 }));
-assert.equal(bStaleAndCIncomplete.authoritySummary.sourceCurrentness, 'SOURCE INCOMPLETE');
+assert.equal(bStaleAndCIncomplete.authoritySummary.sourceCurrentness, 'SOURCE STALE');
 assert.equal(bStaleAndCIncomplete.authoritySummary.screeningCurrentness, 'SCREENING STALE');
+assert.equal(bStaleAndCIncomplete.steps[1].statusLabel, 'SOURCE INCOMPLETE');
 
 console.log(JSON.stringify({
   schema: 'emp1-professional-source-basis-check/v1',
   status: 'PASS_WRC_SOURCE_BASIS_CURRENTNESS',
   cSourceIncompletePropagatesToBasis: true,
   routeSuspensionDoesNotMasqueradeAsSourceIncomplete: true,
-  bStaleRemainsVisibleInScreening: true,
+  staleBPrecedencePreserved: true,
+  cGeometryIncompleteStillVisible: true,
   createsEngineeringAuthority: false,
 }, null, 2));
 

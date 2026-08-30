@@ -349,13 +349,7 @@ function invalidateLfeaDownstreamPresentation(reason) {
   for (const stepId of ['LOAD_CASE', 'RUN', 'OUTPUT', 'EXPORT']) {
     lfeaPipelineShell.setStepStatus(stepId, { complete: false });
   }
-  if (!reason) return;
-  const message = ({
-    SOURCE_REPLACED: 'Source changed. Previous analysis results and export state were cleared. Review Error check, Apply selection on Load case, then Analyze again on Run.',
-    SOURCE_CLEARED: 'Source cleared. Previous analysis results and export state were cleared. Load a model to continue.',
-    PREFLIGHT_CHANGED: 'Pre-flight changed. Previous analysis results and export state were cleared. Review Error check, then continue to Run when the current case selection is authorized.',
-  })[reason] ?? 'Upstream input changed. Previous analysis results and export state were cleared. Review Error check and Load case before running again.';
-  lfeaPipelineShell.setAssembleStatus(message, false);
+  if (reason) lfeaPipelineShell.setAssembleStatus(`Analysis state invalidated: ${reason}.`, false);
 }
 
 /**
@@ -419,10 +413,10 @@ function refreshLfeaStepGuidance() {
     });
     lfeaPipelineShell.setStepStatus('LOAD_CASE', {
       available: cleared,
-      detail: cleared ? 'Choose the cases to analyze, then Apply selection, then continue to Run.' : null,
+      detail: cleared ? 'Choose the cases to analyze, then Analyze.' : null,
       blockedReason: cleared ? null : 'The pre-flight is not authorized yet — clear Error check first.',
     });
-    setLfeaDownstreamStepAvailability(cleared, 'Clear Error check, choose load cases, Apply selection, then Analyze on Run.');
+    setLfeaDownstreamStepAvailability(cleared, 'Clear Error check, then choose load cases and Analyze.');
     return;
   }
 
@@ -440,14 +434,14 @@ function refreshLfeaStepGuidance() {
     });
     lfeaPipelineShell.setStepStatus('LOAD_CASE', {
       available: cleared,
-      detail: cleared ? `Choose from ${accdb.availableCaseIds.length} case(s), then Apply selection and continue to Run.` : null,
+      detail: cleared ? `Choose from ${accdb.availableCaseIds.length} case(s), then Analyze.` : null,
       blockedReason: cleared
         ? null
         : failed
           ? `The ACCDB pre-flight failed closed: ${accdb.preFlightError}`
           : 'The ACCDB pre-flight is not authorized yet — clear the blocking findings on Error check first.',
     });
-    setLfeaDownstreamStepAvailability(cleared, 'Clear Error check, choose load cases, Apply selection, then Analyze on Run.');
+    setLfeaDownstreamStepAvailability(cleared, 'Clear Error check, then choose load cases and Analyze.');
     return;
   }
 
@@ -518,7 +512,7 @@ function assembleLfeaInputXmlRunRequest() {
       'Nozzle interface mechanics and B31 code checks need an authority supplement '
       + '(interface authority, nozzle allowables, B31 edition data) — licensed project data '
       + 'no InputXML file carries. For displacements, support loads and element forces, '
-      + 'use Load case to Apply selection, then Analyze on Run instead; it needs none of this.',
+      + 'use Analyze on the Load case step instead; it needs none of this.',
     );
   }
   const snapshot = linearPipingInputXmlSource.getSnapshot();

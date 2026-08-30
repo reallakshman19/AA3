@@ -162,18 +162,14 @@ assert.match(viewSource, /dataset\.role = 'emp1-professional-step'/u);
 assert.match(viewSource, /dataset\.role = 'emp1-professional-authority-summary'/u,
   'seven-step workflow must expose the WRC currentness/authority summary');
 assert.match(viewSource,
-  /onSelectRoute\?\.\(step\.preferredBackingStageId, step\.targetRole\)/u,
-  'route-backed workflow navigation must carry the intended target through the backing-stage switch');
+  /onSelectRoute\?\.\(step\.preferredBackingStageId\);[\s\S]*scheduleTargetScroll\(root, step\.targetRole\)/u,
+  'route-backed workflow navigation must schedule the intended target after the backing-stage switch');
+assert.match(viewSource, /requestAnimationFrame/u,
+  'route-backed workflow target recovery must wait for rerender instead of assuming the old DOM is still current');
 assert.match(viewSource, /data-guided-target/u,
   'workflow target navigation must recognize guided source/results targets as well as data-role targets');
 assert.match(viewSource, /dataset\.role = 'emp1-technical-backing-steps'/u);
 assert.match(viewSource, /Historical\/stale C numerical evidence is never promoted/u);
-
-const workbenchViewSource = await read('src/workspace/lafea-workbench-view.js');
-assert.match(workbenchViewSource, /pendingAnalyticalTargetRole/u,
-  'workbench must retain a route-backed workflow target until the selected A/B view is rendered');
-assert.match(workbenchViewSource, /consumePendingAnalyticalTarget/u,
-  'workbench must consume the retained workflow target after analytical content replacement');
 
 const presentationSource = await read('src/workspace/emp1-professional-workflow-presentation.js');
 assert.equal(presentationSource.includes('../core/emp1/'), false,

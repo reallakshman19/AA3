@@ -2,15 +2,9 @@ import { lfeaPipelineIcon } from './lfea-pipeline-icon-manifest.js';
 
 export const LFEA_PIPELINE_RESULTS_SORT_PRESENTATION_SCHEMA = 'lfea-pipeline-results-sort-presentation/v1';
 
-/**
- * Read-only presentation adapter for result-table sort buttons.
- * `lfea-pipeline-results-panel.js` remains the sort authority; this adapter
- * only separates label text, accessible sort state and the visual indicator.
- */
+/** Read-only presentation adapter for result sort state and legacy export chrome. */
 export function mountLfeaPipelineResultsSortPresentation(resultsHost) {
-  if (!resultsHost || typeof resultsHost.querySelector !== 'function') {
-    throw new TypeError('Results sort presentation requires a results host.');
-  }
+  if (!resultsHost || typeof resultsHost.querySelector !== 'function') throw new TypeError('Results sort presentation requires a results host.');
   const doc = resultsHost.ownerDocument;
   const Observer = doc.defaultView?.MutationObserver ?? globalThis.MutationObserver;
   let syncing = false;
@@ -19,6 +13,8 @@ export function mountLfeaPipelineResultsSortPresentation(resultsHost) {
     if (syncing) return;
     syncing = true;
     try {
+      const legacyExport = resultsHost.querySelector('.lfea-pipeline-results__export');
+      if (legacyExport) legacyExport.hidden = true;
       for (const table of resultsHost.querySelectorAll('[data-role="lfea-pipeline-results-table"]')) {
         const sortColumn = table.dataset.sortColumn ?? '';
         const sortDirection = table.dataset.sortDirection ?? 'ASC';

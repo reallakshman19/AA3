@@ -40,6 +40,13 @@ assert.equal(predefinedHangerDispositions(unresolved)[PROFILE].limitationCode,
 const incomplete = classifyPredefinedHanger({ ...baseAttributes, COLD_LOAD: '-1.010100' }, 1000, 'mm');
 assert.equal(predefinedHangerDispositions(incomplete)[PROFILE].limitationCode,
   'MODEL_HANGER_PREDEFINED_DATA_INCOMPLETE');
+const invalidCount = classifyPredefinedHanger({ ...baseAttributes, NUM_HANGERS: '0.000000' }, 1000, 'mm');
+assert.equal(predefinedHangerDispositions(invalidCount)[PROFILE].limitationCode,
+  'MODEL_HANGER_COUNT_INVALID');
+const missingNode = classifyPredefinedHanger({ ...baseAttributes, NODE: '-1.010100' }, 1000, 'mm');
+assert.equal(missingNode.nodeId, null);
+assert.equal(predefinedHangerDispositions(missingNode)[PROFILE].limitationCode,
+  'MODEL_HANGER_NODE_INVALID');
 
 const intake = createLinearPipingInputXmlIntake(
   { fileName: 'PredefinedHanger.xml', content: XML },
@@ -144,6 +151,8 @@ console.log(JSON.stringify({
   verticalReactionSharePercent: Number((100 * share).toFixed(2)),
   preloadCase: 'IXP-WH',
   legacyWUnchanged: true,
+  malformedNodeFailsClosed: true,
+  invalidMultiplicityFailsClosed: true,
   draftDisclosureRetainedInPreflight: true,
   draftDisclosureRetainedInResults: true,
   alternateVerticalFailsClosed: true,

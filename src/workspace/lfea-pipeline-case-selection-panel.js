@@ -189,9 +189,12 @@ export class LfeaPipelineCaseSelectionPanelController {
       }
     }
     if (this.error === '' && available.length > 0 && this.message === EMPTY_MESSAGE) {
-      this.message = applied.size > 0
-        ? `${applied.size} case(s) are in the current pre-flight. Change the selection here or continue to Run.`
-        : `${available.length} case(s) available. Choose which to analyze, then Apply selection.`;
+      const runCustody = this.getRunCaseCustody();
+      this.message = !runCustody.ready
+        ? runCustody.reason
+        : applied.size > 0
+          ? `${applied.size} case(s) are in the current pre-flight. Change the selection here or continue to Run.`
+          : `${available.length} case(s) available. Choose which to analyze, then Apply selection.`;
     }
     if (available.length === 0) this.message = EMPTY_MESSAGE;
     this.elements.status.textContent = this.error === '' ? this.message : this.error;

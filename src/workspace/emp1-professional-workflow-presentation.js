@@ -10,6 +10,12 @@ export const EMP1_PROFESSIONAL_WORKFLOW_STEPS = Object.freeze([
   Object.freeze({ stepId: 'REVIEW_EVIDENCE', ordinal: 7, label: 'Review & Evidence', backingStepIds: Object.freeze(['A', 'B', 'C']), preferredBackingStageId: null, targetRole: 'emp1-product-execution-summary' }),
 ]);
 
+const B_SOURCE_STALE_STATES = new Set([
+  'AWAITING_CURRENT_A',
+  'A_EVIDENCE_REQUIRED',
+  'STALE_A_EVIDENCE',
+]);
+
 export function buildEmp1ProfessionalWorkflowPresentation(projection) {
   if (projection?.schema !== 'emp1-product-projection/v1') {
     throw new TypeError('EMP1_PROFESSIONAL_WORKFLOW_PROJECTION_INVALID');
@@ -18,21 +24,22 @@ export function buildEmp1ProfessionalWorkflowPresentation(projection) {
   const a = requireBacking(byShortId.A, 'A');
   const b = requireBacking(byShortId.B, 'B');
   const c = requireBacking(byShortId.C, 'C');
-  const cLabel = c.currentnessBadge ?? c.state ?? 'UNRESOLVED';
+  const authoritySummary = buildAuthoritySummary(projection, a, b, c);
 
   const statusByStep = Object.freeze({
-    BASIS_SOURCE: sourceBasisStatus(a, b),
-    GEOMETRY: cLabel,
-    LOADS: a.state,
-    LOAD_TRANSFER: a.state,
-    SECTION_SCREENING: b.state,
-    LOCAL_CORRELATION: cLabel,
-    REVIEW_EVIDENCE: reviewEvidenceStatus(a, b, c),
+    BASIS_SOURCE: authoritySummary.sourceCurrentness,
+    GEOMETRY: geometryStatus(c, authoritySummary.sourceCurrentness),
+    LOADS: authoritySummary.sourceCurrentness,
+    LOAD_TRANSFER: authoritySummary.transferCurrentness,
+    SECTION_SCREENING: authoritySummary.screeningCurrentness,
+    LOCAL_CORRELATION: `${authoritySummary.localMethod} · ${authoritySummary.localResult}`,
+    REVIEW_EVIDENCE: `${authoritySummary.localResult} · ${authoritySummary.releaseProfile}`,
   });
 
   return Object.freeze({
     schema: EMP1_PROFESSIONAL_WORKFLOW_SCHEMA,
     productId: projection.product?.productId ?? 'EMP.1',
+    authoritySummary,
     steps: Object.freeze(EMP1_PROFESSIONAL_WORKFLOW_STEPS.map((definition) => Object.freeze({
       ...definition,
       statusLabel: statusByStep[definition.stepId],
@@ -56,19 +63,49 @@ export function buildEmp1ProfessionalWorkflowPresentation(projection) {
   });
 }
 
-function sourceBasisStatus(a, b) {
-  if (a.documentLoaded === false && b.documentLoaded === false) return 'SOURCE INPUT REQUIRED';
-  if (a.documentLoaded === false || b.documentLoaded === false) return 'SOURCE BASIS PARTIAL';
-  if (a.resultAvailable === true && b.resultAvailable === true) return 'SOURCE EVIDENCE RETAINED';
-  return 'SOURCE LOADED';
+function buildAuthoritySummary(projection, a, b, c) {
+  return Object.freeze({
+    sourceCurrentness: sourceCurrentness(a, b),
+    transferCurrentness: transferCurrentness(a),
+    screeningCurrentness: screeningCurrentness(b),
+    localMethod: c.runAuthorized === true ? 'LOCAL METHOD QUALIFIED' : 'LOCAL METHOD BLOCKED',
+    localResult: localResultCurrentness(c),
+    releaseProfile: projection.qualificationBoundary?.releaseQualified === true
+      ? 'RELEASE PROFILE QUALIFIED'
+      : 'RELEASE PROFILE NOT QUALIFIED',
+    codeCompliance: 'CODE COMPLIANCE NOT ASSESSED',
+  });
 }
 
-function reviewEvidenceStatus(a, b, c) {
-  if (c.resultAvailable === true) return 'CURRENT LOCAL RESULT';
-  if (c.retainedResultAvailable === true) return 'HISTORICAL LOCAL RESULT / NOT REPORTABLE';
-  if (b.resultAvailable === true) return 'SECTION SCREENING EVIDENCE ONLY';
-  if (a.resultAvailable === true) return 'LOAD TRANSFER EVIDENCE ONLY';
-  return 'NO RETAINED RESULT';
+function sourceCurrentness(a, b) {
+  if (a.documentLoaded === false && b.documentLoaded === false) return 'SOURCE INPUT REQUIRED';
+  if (a.documentLoaded === false || b.documentLoaded === false) return 'SOURCE INCOMPLETE';
+  if (B_SOURCE_STALE_STATES.has(b.state)) return 'SOURCE STALE';
+  return 'SOURCE CURRENT';
+}
+
+function transferCurrentness(a) {
+  if (a.resultAvailable === true) return 'TRANSFER CURRENT';
+  if (a.documentLoaded === false) return 'TRANSFER INPUT REQUIRED';
+  return 'TRANSFER NOT CALCULATED';
+}
+
+function screeningCurrentness(b) {
+  if (b.resultAvailable === true) return 'SCREENING CURRENT';
+  if (b.retainedResultAvailable === true || B_SOURCE_STALE_STATES.has(b.state)) return 'SCREENING STALE';
+  if (b.documentLoaded === false) return 'SCREENING INPUT REQUIRED';
+  return 'SCREENING NOT CALCULATED';
+}
+
+function localResultCurrentness(c) {
+  if (c.resultAvailable === true) return 'LOCAL RESULT CURRENT';
+  if (c.retainedResultAvailable === true) return 'LOCAL RESULT STALE';
+  return 'LOCAL RESULT NOT CALCULATED';
+}
+
+function geometryStatus(c, sourceStatus) {
+  if (c.state === 'SOURCE_INCOMPLETE') return 'SOURCE INCOMPLETE';
+  return sourceStatus;
 }
 
 function backingDisclosure(step) {

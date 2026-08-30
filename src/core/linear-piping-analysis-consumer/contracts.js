@@ -243,6 +243,13 @@ function requireResultRelationships(value, execution, recovery) {
       failLinearPipingAnalysis(`result parent ${field} is inconsistent.`, 'PIPING_ANALYSIS_RESULT_CHAIN_BROKEN');
     }
   });
+  if (execution.status === 'BLOCKED') {
+    failLinearPipingAnalysis(
+      'A blocked solver execution cannot be published in a linear piping analysis result.',
+      'PIPING_ANALYSIS_EXECUTION_BLOCKED',
+      { executionHash: execution.executionHash },
+    );
+  }
   if (recovery.executionHash !== execution.executionHash
     || recovery.executionStatus !== execution.status
     || (execution.status === 'CONDITIONAL' && value.status !== 'CONDITIONAL')) {

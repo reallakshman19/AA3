@@ -131,9 +131,7 @@ function buildCurrentnessNotice(c) {
       title: 'Retained Local Correlation result requires rerun',
       reasonCodes,
       reasons,
-      action: authorityReason
-        ? 'Re-run Local Correlation under the current qualified route authority before using the retained result.'
-        : 'Re-run the governed EMP.1 transaction from the affected upstream step before using the retained Local Correlation result.',
+      action: staleAction({ authorityReason, runAuthorized: c.runAuthorized === true }),
     });
   }
 
@@ -146,6 +144,19 @@ function buildCurrentnessNotice(c) {
       ? 'Resolve the listed bounded WRC route-authority blocker before running Local Correlation.'
       : 'Complete the listed source or geometry binding before running Local Correlation.',
   });
+}
+
+function staleAction({ authorityReason, runAuthorized }) {
+  if (!runAuthorized && authorityReason) {
+    return 'Restore or qualify the current bounded WRC route authority, then rerun Local Correlation before using the retained result.';
+  }
+  if (!runAuthorized) {
+    return 'Complete the current source or geometry binding, then rerun the governed EMP.1 transaction before using the retained Local Correlation result.';
+  }
+  if (authorityReason) {
+    return 'Re-run Local Correlation under the current qualified route authority before using the retained result.';
+  }
+  return 'Re-run the governed EMP.1 transaction from the affected upstream step before using the retained Local Correlation result.';
 }
 
 function sourceCurrentness(a, b) {

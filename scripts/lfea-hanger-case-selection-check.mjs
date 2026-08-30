@@ -9,6 +9,7 @@ const breakAll = process.argv.includes('--deliberate-break');
 const breakDefault = breakAll || process.argv.includes('--deliberate-break-default');
 const breakRunGate = breakAll || process.argv.includes('--deliberate-break-run');
 const breakSourceReset = breakAll || process.argv.includes('--deliberate-break-source-reset');
+const EMPTY_MESSAGE = 'Load a model and run Error check to see its analysis cases.';
 
 const LEGACY = Object.freeze([
   Object.freeze({ caseId: 'IXP-W', caseRole: 'WEIGHT_BASE' }),
@@ -111,6 +112,8 @@ switching.caseSelection.selectionExplicit = true;
 switching.caseSelection.selected = new Set(['IXP-W']);
 assert.equal(switching.caseSelection.getRunCaseCustody().ready, true,
   'source A may explicitly select and apply a non-H comparison case');
+switching.caseSelection.message = 'STALE SOURCE-A SUCCESS';
+switching.caseSelection.error = 'STALE SOURCE-A ERROR';
 
 switching.preFlight.sourceSummary.sourceSemanticHash = 'SOURCE-B';
 switching.preFlight.preparation.requestedCaseIds = ['IXP-W'];
@@ -122,6 +125,10 @@ assert.equal(switching.caseSelection.selectionExplicit, false,
   'source replacement must clear explicit checkbox custody');
 assert.deepEqual([...switching.caseSelection.getSelectedCaseIds()].sort(), HANGER_IDS,
   'source B must return to its governed H-aware default after stale state is cleared');
+assert.equal(switching.caseSelection.message, EMPTY_MESSAGE,
+  'source replacement must clear stale prior-model success/status prose');
+assert.equal(switching.caseSelection.error, '',
+  'source replacement must clear stale prior-model error prose');
 assert.equal(switching.run.runAvailability().ready, false,
   'Run must block source B native W until a Load-case decision is made for source B');
 
@@ -151,6 +158,7 @@ console.log(JSON.stringify({
   explicitNonHComparisonAllowed: true,
   changedUnappliedSelectionBlocked: true,
   sourceReplacementClearsExplicitCustody: true,
+  sourceReplacementClearsStaleStatus: true,
   sameSourceRegenerationPreservesCustody: true,
   missingSourceIdentityFailsClosed: true,
   baseCasesRemainSelectable: true,

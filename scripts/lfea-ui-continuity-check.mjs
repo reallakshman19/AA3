@@ -69,6 +69,7 @@ assert(runPanel.includes("preparation?.requestedCaseIds"), 'Run is not reading c
 assert(runPanel.includes("'lfea-pipeline-analysis-completed'"), 'Run does not publish successful analysis custody');
 assert(main.includes("Apply selection, then continue to Run."), 'InputXML Load case guidance does not point from Apply selection to Run');
 assert(main.includes("case(s), then Apply selection and continue to Run."), 'ACCDB Load case guidance does not point from Apply selection to Run');
+assert(main.includes("Clear Error check, choose load cases, Apply selection, then Analyze on Run."), 'blocked downstream guidance skips Apply selection or Run custody');
 assert(main.includes("use Load case to Apply selection, then Analyze on Run instead"), 'optional code-check guidance does not preserve Run as Analyze owner');
 assert(!main.includes("Choose the cases to analyze, then Analyze."), 'stale InputXML Load case Analyze guidance remains');
 assert(!main.includes('case(s), then Analyze.'), 'stale ACCDB Load case Analyze guidance remains');

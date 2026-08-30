@@ -128,5 +128,12 @@ function createRunSection(doc) {
 
 function caseLabel(caseId) {
   const token = String(caseId).slice(String(caseId).indexOf('-') + 1);
-  return token.replace(/^WPT$/u, 'W+P1+T1').replace(/^WP$/u, 'W+P1').replace(/^WT$/u, 'W+T1');
+  return token
+    .replace(/^WPTH$/u, 'W+P1+T1+H')
+    .replace(/^WPH$/u, 'W+P1+H')
+    .replace(/^WTH$/u, 'W+T1+H')
+    .replace(/^WH$/u, 'W+H')
+    .replace(/^WPT$/u, 'W+P1+T1')
+    .replace(/^WP$/u, 'W+P1')
+    .replace(/^WT$/u, 'W+T1');
 }

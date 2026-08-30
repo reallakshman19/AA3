@@ -14,6 +14,7 @@ import { compileLinearPipingInputXmlAnalysisContext } from '../src/core/linear-p
 
 const XML = readFileSync('benchmarks/LFEA/SPRING_DRAFT/PredefinedHanger.xml', 'utf8');
 const PROFILE = 'STRICT_INPUTXML_LINEAR_STATIC_V1';
+const DRAFT_CODE = 'DRAFT_SPRING_SUPPORT_NO_REFERENCE';
 const deliberateBreak = process.argv.includes('--deliberate-break');
 
 const baseAttributes = {
@@ -57,7 +58,7 @@ const hangerBinding = structural.constraintBindings.find((row) => row.sourceKind
 assert.ok(hangerBinding, 'the HANGER source must retain one structural binding');
 assert.equal(hangerBinding.springRateTotal, 1750000);
 assert.equal(hangerBinding.coldLoadTotal, 4500);
-assert.deepEqual(hangerBinding.limitationCodes, ['DRAFT_SPRING_SUPPORT_NO_REFERENCE']);
+assert.deepEqual(hangerBinding.limitationCodes, [DRAFT_CODE]);
 const hangerConstraint = structural.compilation.model.constraints
   .find((row) => row.constraintId === hangerBinding.declarationIds[0]);
 assert.ok(hangerConstraint, 'the HANGER rate must reach the sealed mechanical model');
@@ -87,10 +88,19 @@ function run(caseId, identity) {
     analysisRevision: 1,
   });
   return compileLinearPipingInputXmlAnalysisContext(request, { factorizationCache: null })
-    .sourceAnalysisContext.analysisResult.execution;
+    .sourceAnalysisContext.analysisResult;
 }
-const w = run('IXP-W', 'HANGER-DRAFT-W');
-const wh = run('IXP-WH', 'HANGER-DRAFT-WH');
+const wResult = run('IXP-W', 'HANGER-DRAFT-W');
+const whResult = run('IXP-WH', 'HANGER-DRAFT-WH');
+for (const result of [wResult, whResult]) {
+  const draftRows = result.limitations.filter((row) => row.limitation?.code === DRAFT_CODE);
+  assert.equal(draftRows.length, 1, 'one model-sourced spring DRAFT disclosure must survive into results');
+  assert.equal(draftRows[0].sourceKind, 'MODEL_COMPILATION');
+  assert.equal(draftRows[0].limitation.stiffnessRelevant, true);
+  assert.equal(draftRows[0].limitation.details.referenceStatus, 'SELF_AUTHORED_EVIDENCE_ONLY');
+}
+const w = wResult.execution;
+const wh = whResult.execution;
 const nodeId = hangerConstraint.nodeId;
 const valueAt = (rows, dof) => {
   const row = rows.find((entry) => entry.nodeId === nodeId && entry.dof === dof);
@@ -130,6 +140,7 @@ console.log(JSON.stringify({
   verticalReactionSharePercent: Number((100 * share).toFixed(2)),
   preloadCase: 'IXP-WH',
   legacyWUnchanged: true,
+  draftDisclosureRetainedInResults: true,
   alternateVerticalFailsClosed: true,
   deliberateBreakMode: '--deliberate-break',
   draftClearedBy: 'CAESAR-solved hanger reference only; this self-authored model does not clear DRAFT.',

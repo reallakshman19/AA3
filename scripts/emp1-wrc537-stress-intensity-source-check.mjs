@@ -8,7 +8,7 @@ const retained = fs.readFileSync(path.join(root, 'docs/emp1/WRC537_2013_Tables_a
 const table5 = fs.readFileSync(path.join(root, 'src/core/emp1/emp1-wrc537-cylindrical-table5.js'), 'utf8');
 
 assertEqual(ledger.status,
-  'BLOCKED_PARTIAL_TABLE5_STRESS_INTENSITY_FORMULA_AUTHORITY_PLANE_STRESS_SEMANTICS_UNQUALIFIED');
+  'BLOCKED_PARTIAL_PRIMARY_STRESS_INTENSITY_DEFINITION_AND_MAXIMUM_SHEAR_THEORY_QUALIFIED_EXPLICIT_PLANE_STRESS_RECONSTRUCTION_UNQUALIFIED');
 assertEqual(ledger.sourceDocument.rawPdfSha256,
   '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2');
 assertEqual(ledger.sourceDocument.gitBlobSha1,
@@ -16,6 +16,12 @@ assertEqual(ledger.sourceDocument.gitBlobSha1,
 assertEqual(ledger.sourceDocument.primaryPageReobservationAvailableInConnectedEnvironment, false);
 assertEqual(ledger.sourceDocument.currentTurnDirectPdfObservationState,
   'NOT_RUN_EXECUTION_ENVIRONMENT_BINARY_TRANSPORT');
+assertEqual(ledger.sourceDocument.externalPrimaryTextObservation.classification,
+  'PRIMARY_TEXT_OBSERVED_EXTERNAL_RENDERING_BYTE_IDENTITY_TO_PINNED_PDF_UNPROVEN');
+assertEqual(ledger.sourceDocument.externalPrimaryTextObservation.byteIdentityToPinnedPdf, 'UNPROVEN');
+assertEqual(ledger.sourceDocument.externalPrimaryTextObservation.url,
+  'https://studylib.net/doc/27776645/wrc-537');
+assertEqual(ledger.sourceDocument.externalPrimaryTextObservation.locators.length, 2);
 
 assertEqual(ledger.retainedTable5Authority.retainedPath,
   'docs/emp1/WRC537_2013_Tables_and_Charts.md');
@@ -45,11 +51,19 @@ for (const key of [
   'algebraicComponentSummationBeforeSQualified',
   'likeUnlikeAndZeroShearCaseStructureQualified',
   'table5SIsDerivedAfterComponentStressFormationQualified',
-]) assertEqual(ledger.qualifiedSourceClaims[key], true);
+  'explicitStressIntensityEqualsTwiceMaximumShearDefinitionQualified',
+  'maximumShearTheoryEquivalentStressIntensityQualified',
+]) assertEqual(ledger.qualifiedSourceClaims[key], true, `QUALIFIED_SOURCE_CLAIM:${key}`);
 
 for (const [key, value] of Object.entries(ledger.unqualifiedPrimarySourceClaims)) {
   assertEqual(value, false, `UNQUALIFIED_SOURCE_CLAIM:${key}`);
 }
+
+assertEqual(ledger.authoritySeparation.B_PRIMARY_STRESS_INTENSITY_DEFINITION_AND_MAXIMUM_SHEAR_THEORY,
+  'QUALIFIED_FROM_OBSERVED_PRIMARY_TEXT_WITH_EXTERNAL_RENDERING_BYTE_IDENTITY_UNPROVEN');
+assertEqual(ledger.authoritySeparation.D_EXPLICIT_PLANE_STRESS_AND_PRINCIPAL_STRESS_SOURCE_AUTHORITY,
+  'UNQUALIFIED');
+assertEqual(ledger.authoritySeparation.E_CODE_ACCEPTANCE_AUTHORITY, 'UNQUALIFIED');
 
 assertEqual(ledger.currentImplementation.function, 'planeStressTresca');
 assertEqual(ledger.currentImplementation.implementationChangedByThisQualification, false);
@@ -71,14 +85,18 @@ for (const key of [
 
 assertEqual(ledger.productionChangesAuthorizedByThisRecord, false);
 assertEqual(ledger.workflowChangesAuthorizedByThisRecord, false);
-requireText(doc, 'Table-5 combined-stress-intensity post-processing');
-requireText(doc, 'explicit plane-stress');
-requireText(doc, 'code compliance');
+requireText(doc, 'stress intensity = twice maximum shear stress');
+requireText(doc, 'Maximum Shear Theory');
+requireText(doc, 'BYTE_IDENTITY_TO_PINNED_PDF_UNPROVEN');
+requireText(doc, 'explicit WRC instruction that the third principal stress is `sigma3 = 0`');
+requireText(doc, 'codeComplianceAuthority                           = false');
 
 console.log(JSON.stringify({
-  status: 'PASS_RETAINED_TABLE5_STRESS_INTENSITY_TEXT_ORDER_PHYSICAL_PLANE_STRESS_SEMANTICS_BLOCKED',
+  status: 'PASS_BOUNDED_PRIMARY_STRESS_INTENSITY_DEFINITION_MAXIMUM_SHEAR_THEORY_PLANE_STRESS_RECONSTRUCTION_BLOCKED',
   numericalEquationChanged: false,
-  retainedTable5PostProcessingAuthority: true,
+  primaryStressIntensityDefinitionQualified: true,
+  maximumShearTheoryQualified: true,
+  externalRenderingByteIdentityToPinnedPdf: 'UNPROVEN',
   explicitPlaneStressSourceAuthority: false,
   codeComplianceAuthority: false,
   releaseAuthority: false,

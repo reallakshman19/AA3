@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
 MISSION: Promote the qualified MITC mechanics stack into an explicit LAFEA.4 production contract and application path while preserving legacy CST/DKT semantics and holding release qualification until executable evidence exists.
-ACTIVE_ENDPOINT: EP-0016
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0016.md
+ACTIVE_ENDPOINT: EP-0017
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0017.md
 MATERIAL_HISTORY_ROOT_BASE: e409a233c46bbec193292565b58b40dffab4b853
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0016.md
 PR: #1557
 BRANCH: codex/lafea-1536-validation-coverage-relay
-HEAD: 5c5860e60eb3f9d6c52f0057ddbb758fd554616a
+HEAD: f6051395776ec14cedee231d88b7f3ed3fafcb67
 STATE: BLOCKED
 ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
@@ -20,9 +20,9 @@ ACTIVE_CUSTODIAN: reallaksh19
 AGENT_INSTANCE_ID: chatgpt:ddc9d66e-417d-4a98-a48f-8fb83328fe3d
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 16
+CUSTODY_EPOCH: 17
 COORDINATION_STATE: SAFE
-DEPENDENCIES: current Common validate_leg_adoption requires HANDOVER_READY TRUE for ACTIVE and governing prework endpoint; handover validation is NOT_RUN because LAFEA.4 Actions jobs terminate before step 1 and local checkout cannot resolve github.com; Owner production scope is recorded at PR #1557 comment 5466211854; no production material commit follows EP-0016
+DEPENDENCIES: current main 4266249515db1a3cf1f1881292248f477d5214f8 is path-disjoint #1560 LFEA pipeline UI continuity; current Common validate_leg_adoption requires HANDOVER_READY TRUE for ACTIVE and governing prework endpoint; handover validation is NOT_RUN because Actions terminate before step 1 and local checkout cannot resolve github.com; Owner production scope recorded at PR #1557 comment 5466211854; no production material commit retained
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 2e5fca39ad72f9bd1828ac54c245b9200c916b74
 COMMON_PROTOCOL_STATUS: CURRENT
@@ -46,3 +46,4 @@ HANDOVER_RESPONSE_REQUIRED: ALWAYS
 RESPONSE_DELTA_MODE: DELTA_ONLY
 ROADMAPS: docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31
 ROADMAP_REVIEW_STATUS: COMPLETE
+POST_BASIS_DRIFT: NONE

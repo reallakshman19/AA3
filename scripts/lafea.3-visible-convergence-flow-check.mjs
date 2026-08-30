@@ -6,8 +6,11 @@ const files = Object.fromEntries(await Promise.all([
   ['controller', 'src/workspace/lafea-workbench-controller.js'],
   ['store', 'src/workspace/lafea-lifecycle-workbench-store.js'],
   ['workflow', 'src/workspace/lafea-guided-workflow.js'],
+  ['presentation', 'src/workspace/lafea-guided-workflow-presentation.js'],
   ['content', 'src/workspace/lafea-workbench-content.js'],
   ['panel', 'src/workspace/lafea-continuum-convergence-panel.js'],
+  ['icons', 'src/workspace/lafea-ui-icons.js'],
+  ['reasonLabels', 'src/workspace/lafea-workbench-reason-labels.js'],
 ].map(async ([key, path]) => [key, await readFile(path, 'utf8')])));
 
 assert.match(files.controller,
@@ -34,6 +37,9 @@ assert.match(files.workflow,
 assert.match(files.workflow,
   /convergence\.state === 'CURRENT_PASS'/u,
   'Convergence step must become complete only from CURRENT_PASS custody');
+assert.match(files.presentation,
+  /areaId === 'CONVERGENCE'[\s\S]*WORKFLOW_STEP_NOT_APPLICABLE/u,
+  'non-LAFEA.3 stages must present convergence as not applicable rather than falsely complete');
 
 assert.match(files.content, /dataset\.guidedTarget = 'convergence'/u,
   'visible workbench must expose a convergence navigation target');
@@ -55,6 +61,19 @@ assert.match(files.panel, /DISPLACEMENT_MAGNITUDE/u,
 assert.doesNotMatch(files.panel, /STRESS_SIGMA|VON_MISES|PRINCIPAL_/u,
   'initial visible study slice must not silently assign stress singularity classification');
 
+assert.doesNotMatch(files.icons,
+  /solve:\s*'M7\.5 4\.5v15l11-7\.5-11-7\.5z'/u,
+  'Solve area must not use the ambiguous play-triangle glyph');
+assert.match(files.icons,
+  /solve:\s*'M5 3\.5h14v17H5z/u,
+  'Solve area must use the calculation-style glyph');
+assert.match(files.reasonLabels,
+  /LAFEA3_CONVERGENCE_NOT_CURRENT_AND_QUALIFIED:/u,
+  'engineers must see a readable Results/convergence blocker');
+assert.match(files.reasonLabels,
+  /CONVERGENCE_STUDY_NOT_RUN:/u,
+  'engineers must see a readable missing-convergence action');
+
 console.log(JSON.stringify({
   check: 'lafea.3-visible-convergence-flow',
   status: 'PASS',
@@ -62,10 +81,13 @@ console.log(JSON.stringify({
     'VISIBLE_CONTROLLER_USES_CONVERGENCE_AWARE_STORE',
     'RUN_CONVERGENCE_RESULTS_ORDER_EXPLICIT',
     'QUALIFIED_SOLVE_NOT_RELABELED_AS_EXECUTION_FAILURE',
+    'CONVERGENCE_NOT_APPLICABLE_OUTSIDE_LAFEA3',
     'CONVERGENCE_ACTION_SURFACED',
     'RESULTS_REMAIN_LIFECYCLE_GATED',
     'PROBE_AND_COARSE_MESH_REQUIRE_EXPLICIT_ENGINEER_INPUT',
     'CONVERGENCE_TOLERANCES_NOT_EXPOSED',
     'DISPLACEMENT_ONLY_INITIAL_PROBE_SLICE',
+    'SOLVE_ICON_NOT_AMBIGUOUS_PLAY_TRIANGLE',
+    'CONVERGENCE_BLOCKERS_HAVE_ENGINEER_LABELS',
   ],
 }));

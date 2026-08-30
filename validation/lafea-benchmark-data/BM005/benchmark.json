@@ -53,6 +53,16 @@
     "requiredStrategy": "MAPPED_TRANSFINITE",
     "requiredDistinctMeshCount": 4
   },
+  "convergencePolicy": {
+    "policyId": "LAFEA3_NON_SINGULAR_POINTWISE_CONVERGENCE_PUBLICATION_V1",
+    "revision": "1",
+    "refinementRatio": 2,
+    "gciSafetyFactor": 1.25,
+    "nearZeroAbsolute": 1e-12,
+    "orderStabilityRelativeTolerance": 0.2,
+    "requiredClassification": "ASYMPTOTIC",
+    "authorityBasis": "EXISTING_LAFEA_G4_CONVERGENCE_CONTRACT"
+  },
   "probe": {
     "schema": "lafea-continuum-physical-probe/v1",
     "probeId": "BM005-LAME-R73-THETA37-DISPLACEMENT",

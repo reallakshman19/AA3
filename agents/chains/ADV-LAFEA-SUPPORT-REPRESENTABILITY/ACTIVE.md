@@ -1,13 +1,13 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-SUPPORT-REPRESENTABILITY
 MISSION: Close issue #1551 terminal support representability boundaries without reducer/parity scope drift.
-ACTIVE_ENDPOINT: EP-0003
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-SUPPORT-REPRESENTABILITY/endpoints/EP-0003.md
+ACTIVE_ENDPOINT: EP-0004
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-SUPPORT-REPRESENTABILITY/endpoints/EP-0004.md
 MATERIAL_HISTORY_ROOT_BASE: 7d350c269217f3133e778c09a61b69d2b3909a64
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-SUPPORT-REPRESENTABILITY/endpoints/EP-0003.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-SUPPORT-REPRESENTABILITY/endpoints/EP-0004.md
 PR: #1553
 BRANCH: codex/lfea-support-representability-1551
-HEAD: 011ee98f726d8fb5ef6635d94120048729d72267
+HEAD: a31ce8ffb4e704e9962f9aff1a7d4de26a5450ea
 STATE: ACTIVE
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
@@ -17,14 +17,14 @@ AUTO_STATE: RUNNING
 MERGE_AUTHORITY: OWNER_ONLY
 AUTHORITY_DOMAIN: LFEA InputXML support representability, directional/two-node linear spring assembly, hanger rate/preload binding, support draft disclosure and issue #1551 validation only
 ACTIVE_CUSTODIAN: chatgpt-gpt-5.6-sol
-CUSTODY_EPOCH: 3
+CUSTODY_EPOCH: 4
 COORDINATION_STATE: SAFE
-DEPENDENCIES: HANGER rate/preload mechanics must wait for source sign/multiplicity/type authority; rigid skew and rigid CNODE remain MPC-gated unless exact constraint-equation machinery is separately justified
+DEPENDENCIES: predefined HANGER subset is Y-vertical only unless explicit alternate vertical-axis authority is retained; rigid skew and rigid CNODE remain MPC-gated
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 9573ec2bba234cc7cd6abcf73c4c3f3e2bc0892c
 COMMON_PROTOCOL_STATUS: CURRENT
 ROADMAPS: docs/OWNER_ROADMAP.md@3d6cd5cf00f0bdd4e4fcff644f20f85a89c7ea60
 ROADMAP_REVIEW_STATUS: COMPLETE
-QUESTION_SET_ID: QS-ADV-LAFEA-SUPPORT-REPRESENTABILITY-0003
-QUALIFICATION_BASIS_HEAD: e879fc5076c8c0f1ba140bf32d063903967b5017
+QUESTION_SET_ID: QS-ADV-LAFEA-SUPPORT-REPRESENTABILITY-0004
+QUALIFICATION_BASIS_HEAD: f47fbb6053417edbc5898f4a0becdef316f45205
 HANDOVER_READY: TRUE

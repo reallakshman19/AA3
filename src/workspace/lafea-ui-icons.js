@@ -3,7 +3,7 @@
 const ICON_PATHS = Object.freeze({
   model: 'M4 5.5h16v13H4z M8 5.5v13 M4 10h4',
   mesh: 'M12 3.5 21 19H3L12 3.5z M7.5 19 12 11l4.5 8 M7.5 11h9',
-  solve: 'M7.5 4.5v15l11-7.5-11-7.5z',
+  solve: 'M5 3.5h14v17H5z M8 7h8 M8 11h2 M14 11h2 M8 15h2 M14 15h2',
   convergence: 'M4 7h8 M4 12h12 M4 17h16 M16 5l4 2-4 2 M20 10l-4 2 4 2 M16 15l4 2-4 2',
   results: 'M4 20V11 M10 20V7 M16 20V4 M22 20H2',
   evidence: 'M6 3.5h9l4 4V20.5H6z M15 3.5v4h4 M9 12h7 M9 16h5',

@@ -1,9 +1,9 @@
 # Issue Current State — #1536
 
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0030
+CURRENT_ENDPOINT: EP-0031
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
-UPDATED_AT: 2026-08-30T16:50:00Z
+UPDATED_AT: 2026-08-30T16:51:00Z
 
 ### Original task / acceptance ledger
 TASK-001 | Decide and record the LAFEA.4 production strategy: retain CST/DKT as thin-only or adopt MITC. | COMPLETE | Issue #1536 + PR #1557 comment 5466211854
@@ -21,7 +21,7 @@ INPUT-004 | Owner production-adoption/merge authority | AVAILABLE | PR #1557 com
 INPUT-005 | Common engineering-pr-delivery-v2 current protocol | AVAILABLE | reallaksh19/Common@293a3db7993a6945c01adc592a7ff14a339c504a; engineering skill blob unchanged at aa832f5f9f204c3834ffcee40102b482f121ce76
 INPUT-006 | Executable official private-repository checkout / runner | UNRESOLVED | latest exact-head jobs fail before checkout with steps=null; direct git DNS unavailable
 INPUT-007 | LAFEA.4 merged production basis | AVAILABLE | b4ca03357f584ed993cf3739b11f89c255e54b84 includes exact LEG-002 follow-up through #1574
-INPUT-008 | Live main | AVAILABLE_RECONCILED | 22cd57a4eff48a505bab4a081debf2ff11748cdb; owner-authorized custody recovery #1585 is merged and subsequent 16-commit drift is LAFEA.3-only
+INPUT-008 | Live main | AVAILABLE_RECONCILED | 22cd57a4eff48a505bab4a081debf2ff11748cdb; #1585 merged exact #1575 custody, then #1586 added LAFEA.3-only drift
 INPUT-009 | Composition benchmark registration | MERGED_SOURCE | LAFEA.4 composition exposes legacy SHELL-PATCH-01/SHELL-BEND-01 plus LAFEA4-CYL-01/PRESS-01/COMB-01
 INPUT-010 | Stage-route qualification coverage | MERGED_SOURCE | BM-009 traverses requireLafeaStageComposition('LAFEA.4') normalize → canonicalize → calculate → accept → resolveUnits → present
 INPUT-011 | Source-derived production/stage isolation harness | AVAILABLE_NON_GOVERNING | re-executed PASS; does not replace governed scripts
@@ -48,11 +48,11 @@ Manifest: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/qualification-baselines/
 Status: SATISFIED
 
 ### Current PR / validation state
-Owner-authorized recovery PR #1585 merged exact Draft PR #1575 head `6d182d8c7d5689b91ac41950b56f89a61d1653e5` without source divergence as merge commit `2ad92f05121a15f13bc39318c700cb56b1e0f9d8`. PR #1575 is closed/superseded. Live main then advanced to `22cd57a4eff48a505bab4a081debf2ff11748cdb` via LAFEA.3 recovery #1586. Compare `2ad92f0...22cd57a` contains only `.github/workflows/lafea3-bm005-qualification.yml` and `agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/**`; no LAFEA.4 or shared shell/workbench source changed.
+Owner-authorized recovery PR #1585 merged exact Draft PR #1575 head `6d182d8c7d5689b91ac41950b56f89a61d1653e5` without source divergence as `2ad92f05121a15f13bc39318c700cb56b1e0f9d8`; #1575 is closed/superseded. Live main then advanced to `22cd57a4eff48a505bab4a081debf2ff11748cdb` through LAFEA.3 recovery #1586. Compare `2ad92f0...22cd57a` changes only `.github/workflows/lafea3-bm005-qualification.yml` and `agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/**`; no LAFEA.4 or shared shell/workbench source changed.
 
-Live Common remains `293a3db7993a6945c01adc592a7ff14a339c504a`; `engineering-pr-delivery-v2/SKILL.md` remains blob `aa832f5f9f204c3834ffcee40102b482f121ce76`.
+Draft relay PR #1588 now carries EP-0031 custody only. Issue checkpoint is `5469996048`. Live Common remains `293a3db7993a6945c01adc592a7ff14a339c504a`; `engineering-pr-delivery-v2/SKILL.md` remains blob `aa832f5f9f204c3834ffcee40102b482f121ce76`.
 
-The governing drift classification remains `MATERIAL_WITHIN_QUALIFIED_BOUNDARY` from the prior shared-workbench drift. Common still requires independent confirmation. Issue comment `5469871896` requests that confirmation; no independent reviewer response exists, so `QUALIFICATION_COVERAGE=INDEPENDENT_CONFIRMATION_REQUIRED`, `CURRENT_STATE_AUTHORITY=BLOCKED`, `WRITE_AUTHORITY_DECISION=READ_ONLY`.
+The governing drift classification remains `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`. Common still requires independent confirmation. Issue comment `5469871896` requests that confirmation; no independent reviewer response exists, so `QUALIFICATION_COVERAGE=INDEPENDENT_CONFIRMATION_REQUIRED`, `CURRENT_STATE_AUTHORITY=BLOCKED`, `WRITE_AUTHORITY_DECISION=READ_ONLY`.
 
 Official validation remains unavailable. Latest LAFEA.4 jobs fail before runner assignment with `steps=null`; no successful official LAFEA.4 command execution has occurred. Existing source-derived MITC production/stage/shared-UI corroboration remains PASS but non-governing.
 

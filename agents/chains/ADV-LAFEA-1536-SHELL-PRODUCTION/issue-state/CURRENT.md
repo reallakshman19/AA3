@@ -1,9 +1,9 @@
 # Issue Current State — #1536
 
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0031
+CURRENT_ENDPOINT: EP-0032
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
-UPDATED_AT: 2026-08-30T16:51:00Z
+UPDATED_AT: 2026-08-30T16:54:00Z
 
 ### Original task / acceptance ledger
 TASK-001 | Decide and record the LAFEA.4 production strategy: retain CST/DKT as thin-only or adopt MITC. | COMPLETE | Issue #1536 + PR #1557 comment 5466211854
@@ -50,7 +50,7 @@ Status: SATISFIED
 ### Current PR / validation state
 Owner-authorized recovery PR #1585 merged exact Draft PR #1575 head `6d182d8c7d5689b91ac41950b56f89a61d1653e5` without source divergence as `2ad92f05121a15f13bc39318c700cb56b1e0f9d8`; #1575 is closed/superseded. Live main then advanced to `22cd57a4eff48a505bab4a081debf2ff11748cdb` through LAFEA.3 recovery #1586. Compare `2ad92f0...22cd57a` changes only `.github/workflows/lafea3-bm005-qualification.yml` and `agents/chains/ADV-LAFEA3-1535-PRODUCTION-ROUTE/**`; no LAFEA.4 or shared shell/workbench source changed.
 
-Draft relay PR #1588 now carries EP-0031 custody only. Issue checkpoint is `5469996048`. Live Common remains `293a3db7993a6945c01adc592a7ff14a339c504a`; `engineering-pr-delivery-v2/SKILL.md` remains blob `aa832f5f9f204c3834ffcee40102b482f121ce76`.
+EP-0031 records the initial post-merge relay. Temporary PR #1588 auto-closed when its branch was rebased to equal live main before EP-0031 completed. EP-0032 preserves that history and binds the completed relay branch to active Draft PR #1589. Issue checkpoint is `5470008935`. Live Common remains `293a3db7993a6945c01adc592a7ff14a339c504a`; `engineering-pr-delivery-v2/SKILL.md` remains blob `aa832f5f9f204c3834ffcee40102b482f121ce76`.
 
 The governing drift classification remains `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`. Common still requires independent confirmation. Issue comment `5469871896` requests that confirmation; no independent reviewer response exists, so `QUALIFICATION_COVERAGE=INDEPENDENT_CONFIRMATION_REQUIRED`, `CURRENT_STATE_AUTHORITY=BLOCKED`, `WRITE_AUTHORITY_DECISION=READ_ONLY`.
 

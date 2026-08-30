@@ -1,26 +1,26 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-EMP1-WRC-UI-WALKTHROUGH
 MISSION: Execute and qualify the engineer-facing EMP.1/WRC professional workflow for issue #1559 without changing WRC numerical/source/release authority
-ACTIVE_ENDPOINT: EP-0004
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0004.md
+ACTIVE_ENDPOINT: EP-0005
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0005.md
 MATERIAL_HISTORY_ROOT_BASE: 94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0004.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0005.md
 PR: 1565 DRAFT
 BRANCH: codex/emp1-wrc-ui-1559
-HEAD: 163402c9b66700bb9e34fb202dc5b458591bca6b
-PREVIOUS_MATERIAL_HEAD: 0209d7a8a375c5974d34cb2c774d277df9348b0e
+HEAD: 0afd88bac1c37b48d7f953a8cc3ee814d5c49636
+MATERIAL_HEAD: 2c464a1e8d586fbe1a14a5f7fa3fa4f97a5cc7b2
 STATE: ACTIVE
-ENGINEERING_STATE: PRESENTATION_ONLY
+ENGINEERING_STATE: TEST_COVERAGE_ONLY
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: WRITE_ALLOWED
 AUTO_STATE: RUNNING
 MERGE_AUTHORITY: OWNER_ONLY
-AUTHORITY_DOMAIN: EMP.1 WRC professional workflow presentation/currentness; WRC source, mechanics, route authorization, code compliance and release authority protected
+AUTHORITY_DOMAIN: EMP.1 WRC professional workflow UI/test coverage; WRC source, mechanics, route authorization, code compliance and release authority protected
 ACTIVE_CUSTODIAN: gpt-5.6-sol
 CUSTODY_EPOCH: 1
 COORDINATION_STATE: SAFE
-DEPENDENCIES: existing EMP.1 currentness reasons and C blocker-code projection only
+DEPENDENCIES: existing EMP.1 authority Playwright fixture and live rendered WRC workflow only
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 10d667ce715bb52e1f73035c6fa326db77d0f9dd
 COMMON_PROTOCOL_STATUS: OWNER_PINNED

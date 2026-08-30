@@ -98,6 +98,7 @@ export class LafeaWorkbenchController {
       onRunEmp1: () => this.runEmp1Product(),
       onEmp1RunInput: (value) => this.setEmp1RunInput(value),
       onPrepareContinuum: () => this.attemptContinuumPreflight(),
+      onRunContinuumConvergence: (request) => this.runContinuumConvergenceStudy(request),
       onExport: () => this.downloadDocument(),
       onUndo: () => this.undo(),
       onRedo: () => this.redo(),
@@ -314,6 +315,7 @@ export class LafeaWorkbenchController {
   attemptContinuumPreflight(s = this.getState().activeStageId) {
     return this.store.prepareContinuumForRun(s, { failureMode: 'DIAGNOSTIC_UI' });
   }
+  runContinuumConvergenceStudy(request) { return this.store.runContinuumConvergenceStudy(request); }
   selectRetainedAnalysisMeshEvidenceV2(s = this.getState().activeStageId) { return this.store.selectRetainedAnalysisMeshEvidenceV2(s); }
 
   buildAnalysisMeshCustodyProjection(stageId = this.getState().activeStageId) {

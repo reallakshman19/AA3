@@ -1,6 +1,8 @@
 {
   "schema": "lafea3-bm005-source-registry/v1",
   "benchmarkId": "BM-005-LAME-CONT-CYL-01",
+  "baselineCommit": "b2406f3ca4ad4015a1dad19f6246fe1ed69d1ebb",
+  "baselineTree": "9a14c2582dd20bfcd829b311b15d3c22ada04342",
   "sources": [
     {
       "role": "independentOracle",

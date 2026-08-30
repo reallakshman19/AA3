@@ -22,17 +22,6 @@ const LOCAL_DOF_REFERENCES = ELEMENT_DOF_ORDER.map((token) => {
   return { end, dof };
 });
 
-/**
- * Section 8 Assembly: deterministic symmetric sparse triplets, duplicate
- * contributions summed in canonical order.
- *
- * Every element contribution and every declared spring becomes one or more
- * `(row, col, value)` triplets. Triplets are sorted by `(row, col, tag)`
- * before anything is summed, so the accumulated value at a shared DOF never
- * depends on `Map`/object iteration order or on the order elements were
- * passed in — only on the row/column identity and, as a last tie-break, the
- * contributing element or constraint identity.
- */
 function buildElementTriplets(model, dofMap, elementContributions) {
   const elementsById = new Map(model.elements.map((element) => [element.elementId, element]));
   const contributionsById = new Map();
@@ -81,20 +70,30 @@ function buildElementTriplets(model, dofMap, elementContributions) {
   return { triplets, elementLoad, elementIds };
 }
 
-function buildDirectionalSpringTriplets(constraint, dofMap, stiffness) {
-  const indices = TRANSLATIONAL_DOFS.map((dof) => dofIndexOf(dofMap, constraint.nodeId, dof));
-  const triplets = [];
+function pushDirectionalBlock(triplets, constraint, rowIndices, colIndices, stiffness, sign) {
   for (let row = 0; row < 3; row += 1) {
     for (let column = 0; column < 3; column += 1) {
-      const value = stiffness * constraint.direction[row] * constraint.direction[column];
+      const value = sign * stiffness * constraint.direction[row] * constraint.direction[column];
       if (value === 0) continue;
       triplets.push({
-        row: indices[row],
-        col: indices[column],
+        row: rowIndices[row],
+        col: colIndices[column],
         value,
         tag: `SPRING:${constraint.constraintId}`,
       });
     }
+  }
+}
+
+function buildDirectionalSpringTriplets(constraint, dofMap, stiffness) {
+  const primary = TRANSLATIONAL_DOFS.map((dof) => dofIndexOf(dofMap, constraint.nodeId, dof));
+  const triplets = [];
+  pushDirectionalBlock(triplets, constraint, primary, primary, stiffness, 1);
+  if (typeof constraint.connectedNodeId === 'string') {
+    const connected = TRANSLATIONAL_DOFS.map((dof) => dofIndexOf(dofMap, constraint.connectedNodeId, dof));
+    pushDirectionalBlock(triplets, constraint, primary, connected, stiffness, -1);
+    pushDirectionalBlock(triplets, constraint, connected, primary, stiffness, -1);
+    pushDirectionalBlock(triplets, constraint, connected, connected, stiffness, 1);
   }
   return triplets;
 }
@@ -106,9 +105,6 @@ function buildSpringTriplets(model, dofMap) {
   const triplets = springs.flatMap((constraint) => {
     const stiffness = requirePositive(constraint.stiffness, `constraints[${constraint.constraintId}].stiffness`, CODE);
     if (Array.isArray(constraint.direction)) {
-      // A finite spring along unit n contributes the exact rank-1 translational
-      // block k(n⊗n). The sealed model owns direction validation; assembly uses
-      // that released direction exactly and never projects it to a dominant DOF.
       return buildDirectionalSpringTriplets(constraint, dofMap, stiffness);
     }
     const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);

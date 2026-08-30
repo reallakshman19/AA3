@@ -8,7 +8,7 @@ Automation support: `e2e/emp1-professional-walkthrough-evidence.spec.js`
 
 ## Acceptance principle
 
-A passing Playwright run is **not** UI acceptance. The Playwright evidence journey exists to make the same deterministic WRC workflow reproducible and to attach 12 passing-run screenshots plus a machine-readable manifest. A qualified human reviewer must inspect those artifacts or observe the run live and record PASS / FAIL / PARTIAL below.
+A passing Playwright run is **not** UI acceptance. The Playwright evidence journey exists to make the same deterministic WRC workflow reproducible and to attach, for each of 12 checkpoints, one viewport PNG plus one full-page context PNG and a machine-readable manifest. A qualified human reviewer must inspect those artifacts or observe the run live and record PASS / FAIL / PARTIAL below.
 
 No automated result may create WRC numerical authority, code-compliance authority, global EMP.1.C authority, or release/deployment authority.
 
@@ -50,7 +50,12 @@ For icons specifically, PASS requires either a self-evident labeled control or a
 
 ## Twelve evidence checkpoints
 
-The evidence spec attaches one full-page PNG for each checkpoint. Review every attachment; do not infer PASS from the test result alone.
+The evidence spec attaches two PNGs per checkpoint:
+
+- `*-viewport` — authoritative evidence for the actual user-visible landing and scroll position;
+- `*-full-page` — supporting context for hierarchy, duplicate controls, terminology and surrounding evidence.
+
+The manifest records `scrollX`, `scrollY`, viewport width and viewport height for each checkpoint. Review both attachments; do not infer PASS from the test result alone. A full-page screenshot by itself is insufficient to pass the scroll-position criterion.
 
 | # | Checkpoint | Required engineering observation | Human result | Evidence / notes |
 |---:|---|---|---|---|
@@ -71,7 +76,8 @@ The evidence spec attaches one full-page PNG for each checkpoint. Review every a
 
 For every transition also record:
 
-- scroll position is intentional and the target card is visible;
+- viewport screenshot shows the intended target card in the actual landing position;
+- manifest scroll coordinates are consistent with the observed landing;
 - the active engineer task is still obvious after backing-stage changes;
 - there is no unexpected duplicate Run / Apply / Continue action;
 - disabled controls have a visible reason where engineering progress is blocked;
@@ -87,7 +93,7 @@ From a faithful repository checkout with the project-local Chromium installed:
 node scripts/run-playwright.mjs e2e/emp1-professional-walkthrough-evidence.spec.js --workers=1
 ```
 
-The HTML report should contain 12 named PNG attachments and `walkthrough-manifest.json`-equivalent attachment content. If execution cannot start because Chromium, dependencies, or the dev server are unavailable, record **NOT_RUN**; do not convert the authored test into a PASS claim.
+The HTML report should contain 12 named viewport PNG attachments, 12 corresponding full-page context PNG attachments, and `walkthrough-manifest` JSON attachment content. If execution cannot start because Chromium, dependencies, or the dev server are unavailable, record **NOT_RUN**; do not convert the authored test into a PASS claim.
 
 ## Review disposition
 
@@ -102,7 +108,7 @@ For every concrete defect, record:
 - checkpoint number;
 - observed behavior;
 - expected behavior;
-- screenshot/recording locator;
+- viewport screenshot locator and supporting full-page locator;
 - first suspected presentation/controller boundary;
 - whether engineering authority is affected or presentation-only.
 

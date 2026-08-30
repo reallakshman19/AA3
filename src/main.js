@@ -349,7 +349,13 @@ function invalidateLfeaDownstreamPresentation(reason) {
   for (const stepId of ['LOAD_CASE', 'RUN', 'OUTPUT', 'EXPORT']) {
     lfeaPipelineShell.setStepStatus(stepId, { complete: false });
   }
-  if (reason) lfeaPipelineShell.setAssembleStatus(`Analysis state invalidated: ${reason}.`, false);
+  if (!reason) return;
+  const message = ({
+    SOURCE_REPLACED: 'Source changed. Previous analysis results and export state were cleared. Review Error check, Apply selection on Load case, then Analyze again on Run.',
+    SOURCE_CLEARED: 'Source cleared. Previous analysis results and export state were cleared. Load a model to continue.',
+    PREFLIGHT_CHANGED: 'Pre-flight changed. Previous analysis results and export state were cleared. Review Error check, then continue to Run when the current case selection is authorized.',
+  })[reason] ?? 'Upstream input changed. Previous analysis results and export state were cleared. Review Error check and Load case before running again.';
+  lfeaPipelineShell.setAssembleStatus(message, false);
 }
 
 /**

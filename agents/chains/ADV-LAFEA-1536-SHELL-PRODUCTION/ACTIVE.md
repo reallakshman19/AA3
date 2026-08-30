@@ -1,8 +1,8 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-LAFEA-1536-SHELL-PRODUCTION
 MISSION: Promote the qualified MITC mechanics stack into an explicit LAFEA.4 production contract and application path while preserving legacy CST/DKT semantics and holding release qualification until executable evidence exists.
-ACTIVE_ENDPOINT: EP-0022
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0022.md
+ACTIVE_ENDPOINT: EP-0023
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0023.md
 MATERIAL_HISTORY_ROOT_BASE: e409a233c46bbec193292565b58b40dffab4b853
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/endpoints/EP-0018.md
 PR: #1566
@@ -16,16 +16,16 @@ WRITE_AUTHORITY: BLOCKED
 AUTO_STATE: BLOCKED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-MERGEABILITY: UNKNOWN
+MERGEABILITY: MERGEABLE
 AUTHORITY_DOMAIN: LAFEA.4 v2 MITC production integration is merged at main 94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d; legacy v1, mechanics equations, benchmark values, tolerances, workflow, roadmap and release authority remain protected
 ACTIVE_CUSTODIAN: reallaksh19
 AGENT_INSTANCE_ID: chatgpt:ddc9d66e-417d-4a98-a48f-8fb83328fe3d
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 22
+CUSTODY_EPOCH: 23
 COORDINATION_STATE: SAFE
-DEPENDENCIES: exact material-head LAFEA.4 run 33289538149 job 99198613322 ended before step 1 with steps=null; merged-main commit has no PR-triggered workflow run; Draft relay PR #1566 retriggers exact-head qualification; executable engineering and release qualification remain NOT_RUN until a repository command actually executes
+DEPENDENCIES: post-merge exact-head run 33290163771 job 99200298777 and fresh retry job 99205440113 both ended before step 1 with steps=null; executable engineering, benchmark, build/import and release qualification remain NOT_RUN; no further mechanics/application mutation is justified until a repository command executes or an independent oracle identifies a wrong owner
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COMMON_PROTOCOL_STATUS: CURRENT
@@ -61,10 +61,10 @@ ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/issue-basis/IB-0
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0022
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0023
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5466335389
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5466334636
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5466444422
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5466653458
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MATERIAL_LEG_ID: LEG-001
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/material-legs/LEG-001.md

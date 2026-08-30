@@ -7,6 +7,7 @@ import {
 } from '../src/workspace/linear-piping-inputxml-prefea.js';
 import { buildInputXmlRunRequestCase } from '../src/core/linear-piping-analysis-consumer/inputxml-run-request-cases.js';
 import { compileLinearPipingInputXmlAnalysisContext } from '../src/core/linear-piping-analysis-consumer/index.js';
+import { nodalResult } from '../src/core/linear-piping-analysis-consumer/generic-inputxml-solve-case.js';
 
 const STRICT = 'STRICT_INPUTXML_LINEAR_STATIC_V1';
 const FIXTURE = 'benchmarks/LFEA/SPRING_DRAFT/MixedFixedSkewSpring.xml';
@@ -98,6 +99,11 @@ if (uxAtMixedNode.length === 2) {
   'decomposed public rows must retain the exact skew-spring UX contribution');
 }
 
+const mixedUxSum = uxAtMixedNode.reduce((sum, row) => sum + row.value, 0);
+const projectedNodal = nodalResult({ execution }, directional.nodeId);
+close(projectedNodal.reaction.UX, mixedUxSum,
+  'generic nodal reaction projection must sum all mixed-node UX support contributions');
+
 const allUx = execution.reactions.filter((row) => row.dof === 'UX');
 const globalUxSupport = allUx.reduce((sum, row) => sum + row.value, 0);
 const globalUxScale = allUx.reduce((sum, row) => sum + Math.abs(row.value), 0);
@@ -106,12 +112,6 @@ assert.ok(Math.abs(globalUxSupport) <= 1e-8 * Math.max(1, globalUxScale),
 assert.equal(execution.diagnostics.forceEquilibrium.status, 'PASS');
 assert.equal(execution.diagnostics.forceEquilibrium.groundedSpringCount, 1);
 
-const genericNodalSource = readFileSync(
-  'src/core/linear-piping-analysis-consumer/generic-inputxml-solve-case.js',
-  'utf8',
-);
-const genericConsumerUsesFirstMatch = /array\.find\(\(row\) => row\.nodeId === nodeId && row\.dof === dof\)/u
-  .test(genericNodalSource);
 const representation = uxAtMixedNode.length === 2
   ? 'DECOMPOSED_DUPLICATE_NODE_DOF_ROWS'
   : 'SINGLE_NODE_DOF_ROW';
@@ -127,10 +127,9 @@ console.log(JSON.stringify({
   projectedDisplacement: q,
   expectedSpringUxReaction: springReaction[0],
   publicMixedUxRows: uxAtMixedNode.map((row) => row.value),
+  publicMixedUxSum: mixedUxSum,
+  projectedNodalUxReaction: projectedNodal.reaction.UX,
   publicRepresentation: representation,
-  genericConsumerUsesFirstMatch,
-  interpretation: uxAtMixedNode.length === 2 && genericConsumerUsesFirstMatch
-    ? 'ORDER_SENSITIVE_GENERIC_CONSUMER_RISK_OBSERVED'
-    : 'NO_DUPLICATE_FIRST_MATCH_COMBINATION_OBSERVED',
+  interpretation: 'NODE_PROJECTION_AGGREGATES_ALL_SUPPORT_CONTRIBUTIONS',
   authority: 'Self-authored exercise only; does not clear DRAFT or establish CAESAR parity.',
 }, null, 2));

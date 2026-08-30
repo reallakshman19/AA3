@@ -64,9 +64,16 @@ export function classifyRestraint(attributes, element, segment, stiffnessToSi) {
 }
 
 export function restraintDirectionalSpringDirection(classification) {
-  if (!classification?.finiteStiffnessActive || classification.stiffnessValue === null) return null;
+  if (!classification?.finiteStiffnessActive || classification.connectingNodeActive) return null;
   if (!EXACT_BIDIRECTIONAL_CODES.has(classification.typeCode)) return null;
   if (!classification.direction?.valid || axisAlignedDirection(classification.direction)) return null;
+  return Object.freeze([...classification.direction.unit]);
+}
+
+export function restraintConnectingSpringDirection(classification) {
+  if (!classification?.connectingNodeActive || !classification.finiteStiffnessActive) return null;
+  if (!EXACT_BIDIRECTIONAL_CODES.has(classification.typeCode) || !classification.direction?.valid) return null;
+  if (String(classification.connectingNodeId) === String(classification.nodeId)) return null;
   return Object.freeze([...classification.direction.unit]);
 }
 
@@ -76,7 +83,12 @@ export function restraintDispositions(classification) {
     return both(invalidDisposition('MODEL_RESTRAINT_SOURCE_INVALID'));
   }
   if (classification.connectingNodeActive) {
-    return both(unsupportedDisposition('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'));
+    if (String(classification.connectingNodeId) === String(classification.nodeId)) {
+      return both(invalidDisposition('MODEL_RESTRAINT_CONNECTING_NODE_INVALID'));
+    }
+    if (restraintConnectingSpringDirection(classification) === null) {
+      return both(unsupportedDisposition('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'));
+    }
   }
 
   const dropped = [];
@@ -125,6 +137,7 @@ function baseRestraintDispositions(classification) {
   const singleAxis = classification.direction.valid && classification.targetDofs.length === 1;
   if (EXACT_BIDIRECTIONAL_CODES.has(classification.typeCode)) {
     if (!singleAxis) return both(invalidDisposition('MODEL_RESTRAINT_DIRECTION_INVALID'));
+    if (classification.connectingNodeActive) return both(exactDisposition());
     if (!axisAlignedDirection(classification.direction)) {
       if (restraintDirectionalSpringDirection(classification) !== null) return both(exactDisposition());
       return both(unsupportedDisposition('MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED'));

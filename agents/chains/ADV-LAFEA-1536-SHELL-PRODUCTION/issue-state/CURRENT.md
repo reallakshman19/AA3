@@ -1,25 +1,25 @@
 # Issue Current State — #1536
 
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0021
+CURRENT_ENDPOINT: EP-0022
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
-UPDATED_AT: 2026-08-30T02:46:22Z
+UPDATED_AT: 2026-08-30T03:21:00Z
 
 ### Original task / acceptance ledger
 TASK-001 | Decide and record the LAFEA.4 production strategy: retain CST/DKT as thin-only or adopt MITC. | COMPLETE | Issue #1536 + PR #1557 comment 5466211854
 TASK-002 | Build MITC geometry/basis, load, recovery, solver-equivalence and CST/DKT regression adoption evidence before registry/UI promotion. | SOURCE_COMPLETE_VALIDATION_NOT_RUN | merged adoption package; executable validation unavailable
 TASK-003 | Keep unqualified MITC evidence explicit experimental/nonproduction/non-contributing until production adoption. | COMPLETE | legacy experimental custody preserved; v2 production route has separate release qualification false/NOT_RUN
 TASK-004 | Add sparse/scalable shell solve path. | SOURCE_COMPLETE_VALIDATION_NOT_RUN | merged shell PCG/sparse source
-TASK-005 | Add LAFEA4-CYL-01, LAFEA4-PRESS-01 and LAFEA4-COMB-01 direct-route benchmarks. | SOURCE_COMPLETE_VALIDATION_NOT_RUN | production-route benchmark script is now reached by the governed adoption aggregate; execution NOT_RUN
-TASK-006 | Promote MITC4/MITC3 into explicit versioned production contract/dispatch/registry/presenter while preserving v1. | SOURCE_COMPLETE_VALIDATION_NOT_RUN | LEG-001 material head bac9829cea5bcb7ff10c79801cea7bbc6834d06d; exact ten-file source compare
+TASK-005 | Add LAFEA4-CYL-01, LAFEA4-PRESS-01 and LAFEA4-COMB-01 direct-route benchmarks. | SOURCE_COMPLETE_VALIDATION_NOT_RUN | production-route benchmark script is reached by the governed adoption aggregate; execution NOT_RUN
+TASK-006 | Promote MITC4/MITC3 into explicit versioned production contract/dispatch/registry/presenter while preserving v1. | MERGED_SOURCE_COMPLETE_VALIDATION_NOT_RUN | LEG-001 material head bac9829cea5bcb7ff10c79801cea7bbc6834d06d; merged main 94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d via recovery PR #1563
 
 ### Input ledger
-INPUT-001 | Legacy local-shell-model/v1 + CST_DKT_TRI3_THIN_SHELL_V1 production route | AVAILABLE | preserved on LEG-001
+INPUT-001 | Legacy local-shell-model/v1 + CST_DKT_TRI3_THIN_SHELL_V1 production route | AVAILABLE | preserved on LEG-001 and merged main
 INPUT-002 | MITC4/MITC3 mechanics/adoption adapters | AVAILABLE | reused unchanged by production wrappers
 INPUT-003 | Shared deterministic dense/sparse/PCG shell solve | AVAILABLE | reused unchanged by production wrappers
-INPUT-004 | Owner production-adoption authority | AVAILABLE | PR #1557 comment 5466211854
+INPUT-004 | Owner production-adoption/merge authority | AVAILABLE | PR #1557 comment 5466211854 + current-turn merge authorization
 INPUT-005 | Common engineering-pr-delivery-v2 current protocol | AVAILABLE | reallaksh19/Common@4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
-INPUT-006 | Executable private-repository checkout / runner | UNRESOLVED | material-head run 33289538149 job 99198613322 steps=null; direct git DNS unavailable
+INPUT-006 | Executable private-repository checkout / runner | UNRESOLVED | material-head run 33289538149 job 99198613322 steps=null; merged-main commit has no PR-triggered run
 
 ### Benchmark / oracle ledger
 BM-001 | MITC element/basis adoption gate | NOT_RUN | scripts/lafea.4-mitc-adoption-element-check.mjs
@@ -41,4 +41,4 @@ Manifest: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/qualification-baselines/
 Status: SATISFIED
 
 ### Current PR / validation state
-PR #1557 remains Draft. Material leg `LEG-001` is receipted: base `e28627d561530b9d9e3b54c223333a41fb0ba3cd`, source head `bac9829cea5bcb7ff10c79801cea7bbc6834d06d`. The exact base→head compare is ten intended production-adoption files and no protected workflow/roadmap/tolerance/oracle file. Exact-head LAFEA.4 run `33289538149`, job `99198613322`, ended before checkout with `steps=null`; all engineering/benchmark/release states remain NOT_RUN. Issue control plane is synchronized through EP-0020 comment `5466395618`; EP-0021 freezes the baton. Merge authority remains OWNER_ONLY and merge is not authorized.
+Production-adoption source is merged to `main` as `94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d` through exact-head recovery PR #1563. Original Draft PR #1557 is superseded/merged by that exact head. Material leg `LEG-001` remains receipted: base `e28627d561530b9d9e3b54c223333a41fb0ba3cd`, source head `bac9829cea5bcb7ff10c79801cea7bbc6834d06d`. The prior exact material-head LAFEA.4 run `33289538149`, job `99198613322`, ended before checkout with `steps=null`; all engineering/benchmark/release states remain NOT_RUN. EP-0022 establishes the post-merge relay and Issue checkpoint `5466444422`; a relay-only PR will retrigger exact-head qualification without mechanics, workflow, roadmap, tolerance or oracle mutation.

@@ -102,6 +102,11 @@ assert.throws(() => createCanonicalLocalShellModel(nonfinite), /non-finite/);
 
 console.log('LAFEA.4 closed contracts, containment, JSON safety, hashes and caller isolation passed.');
 
+// `check:lafea-core` already invokes this contract gate. Keep production-adoption
+// qualification attached to that governed aggregate without mutating the
+// protected workflow file or weakening any legacy v1 contract assertions.
+await import('./lafea.4-production-adoption-aggregate-check.mjs');
+
 function reject(mutator) {
   const source = triangleSource();
   mutator(source);

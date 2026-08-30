@@ -29,10 +29,7 @@
   font-size: 11px;
 }
 
-.lfea-source-acquisition [data-role="lfea-source-acquisition-summary"] {
-  margin-top: 8px;
-}
-
+.lfea-source-acquisition [data-role="lfea-source-acquisition-summary"] { margin-top: 8px; }
 .lfea-source-acquisition [data-role="lfea-source-acquisition-summary"] > p {
   margin: 6px 0;
   color: var(--workspace-muted);
@@ -40,22 +37,10 @@
   line-height: 1.45;
 }
 
-.lfea-source-acquisition table {
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
+.lfea-source-acquisition table { border-collapse: collapse; font-size: 12px; }
 .lfea-source-acquisition th,
-.lfea-source-acquisition td {
-  padding: 3px 12px 3px 0;
-  text-align: left;
-  vertical-align: top;
-}
-
-.lfea-source-acquisition th {
-  color: var(--workspace-muted);
-  font-weight: 500;
-}
+.lfea-source-acquisition td { padding: 3px 12px 3px 0; text-align: left; vertical-align: top; }
+.lfea-source-acquisition th { color: var(--workspace-muted); font-weight: 500; }
 
 .lfea-source-acquisition__actions {
   display: flex;
@@ -79,19 +64,27 @@
   font-size: 11px;
 }
 
+.lfea-source-acquisition__staged-option > summary {
+  padding: 4px 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lfea-source-acquisition__staged-option-choice {
+  display: block;
+  padding: 5px 8px 3px 18px;
+  color: var(--workspace-muted);
+  white-space: nowrap;
+}
+
 .lfea-source-acquisition__status {
   display: block;
   margin-top: 7px;
   color: var(--workspace-muted);
   font-size: 11px;
 }
+.lfea-source-acquisition__status[data-status="error"] { color: #f87171; }
 
-.lfea-source-acquisition__status[data-status="error"] {
-  color: #f87171;
-}
-
-/* UI03: the chooser is the only source-acquisition surface. Source-specific
-   panels remain the technical details of the one active representation. */
 [data-host-group="SOURCE"][data-active-source="NONE"]
   [data-role="linear-piping-inputxml-source-workflow"],
 [data-host-group="SOURCE"][data-active-source="NONE"]
@@ -99,26 +92,17 @@
 [data-host-group="SOURCE"][data-active-source="NONE"]
   [data-role="lfea-pipeline-accdb-input-panel"],
 [data-host-group="SOURCE"][data-active-source="NONE"]
-  [data-role="lfea-pipeline-model-repair-panel"] {
-  display: none;
-}
+  [data-role="lfea-pipeline-model-repair-panel"] { display: none; }
 
-/* Existing shell CSS already handles INPUTXML and ACCDB. StagedJSON remains
-   the source representation on Input; only its derived InputXML preparation
-   review is shown on Error Check. */
 [data-host-group="SOURCE"][data-active-source="STAGED_JSON"][data-active-step="INPUT"]
   [data-role="linear-piping-inputxml-source-workflow"],
 [data-host-group="SOURCE"][data-active-source="STAGED_JSON"]
   [data-role="lfea-pipeline-accdb-input-panel"],
 [data-host-group="SOURCE"][data-active-source="STAGED_JSON"]
-  [data-role="lfea-pipeline-model-repair-panel"] {
-  display: none;
-}
+  [data-role="lfea-pipeline-model-repair-panel"] { display: none; }
 
 [data-host-group="SOURCE"][data-active-source="STAGED_JSON"][data-active-step="ERROR_CHECK"]
-  [data-role="lfea-pipeline-stagedjson-input-panel"] {
-  display: none;
-}
+  [data-role="lfea-pipeline-stagedjson-input-panel"] { display: none; }
 
 /* Import/clear is centralized above. Keep profile, unit-authority and
    limitation-acceptance controls in the provider panel; hide only duplicate
@@ -128,25 +112,17 @@
 [data-host-group="SOURCE"] [data-action="import-lfea-pipeline-stagedjson-source"],
 [data-host-group="SOURCE"] [data-action="clear-lfea-pipeline-stagedjson-source"],
 [data-host-group="SOURCE"] [data-action="import-lfea-pipeline-accdb-source"],
-[data-host-group="SOURCE"] [data-action="clear-lfea-pipeline-accdb-source"] {
-  display: none;
-}
+[data-host-group="SOURCE"] [data-action="clear-lfea-pipeline-accdb-source"] { display: none; }
 
-[data-host-group="SOURCE"] label:has(> [data-role="lfea-pipeline-stagedjson-infer-od"]) {
-  display: none;
-}
+[data-host-group="SOURCE"] label:has(> [data-role="lfea-pipeline-stagedjson-infer-od"]) { display: none; }
 
 /* Source acquisition/replacement belongs to Input. Error Check retains the
    active source/provenance summary, but not source-switching controls. */
 [data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
-  [data-role="lfea-source-acquisition-actions"] {
-  display: none;
-}
+  [data-role="lfea-source-acquisition-actions"] { display: none; }
 
 /* On Error Check, the InputXML provider contributes its governed review, not
    a second source-summary table that could be mistaken for the original
    StagedJSON source. */
 [data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
-  [data-role="linear-piping-inputxml-source-summary"] > table {
-  display: none;
-}
+  [data-role="linear-piping-inputxml-source-summary"] > table { display: none; }

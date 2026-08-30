@@ -2,6 +2,7 @@ export * from './errors.js';
 export * from './sparse-matrix.js';
 export * from './sparse-cholesky.js';
 export * from './sparse-ldlt.js';
+export * from './pcg.js';
 export * from './bc-elimination.js';
 export * from './diagonal-scaling.js';
 export * from './mechanism-diagnosis.js';

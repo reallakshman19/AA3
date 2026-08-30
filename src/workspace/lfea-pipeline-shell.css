@@ -18,73 +18,74 @@
   background: var(--workspace-panel-strong);
 }
 
-.lfea-pipeline-shell__load-sample {
+.lfea-pipeline-shell__toolbar-action {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: 7px;
+  min-height: 30px;
+  padding: 5px 9px;
   border: 1px solid var(--workspace-border);
   border-radius: 6px;
   background: var(--workspace-panel);
   color: var(--workspace-text);
   font-size: 12px;
+  line-height: 1;
   cursor: pointer;
 }
 
-.lfea-pipeline-shell__load-sample svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.lfea-pipeline-shell__toolbar-action:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--workspace-accent) 65%, var(--workspace-border));
 }
 
-.lfea-pipeline-shell__load-sample:disabled {
+.lfea-pipeline-shell__toolbar-action:focus-visible,
+.lfea-pipeline-shell__step:focus-visible {
+  outline: 2px solid var(--workspace-accent);
+  outline-offset: 2px;
+}
+
+.lfea-pipeline-shell__toolbar-action .lfea-pipeline-icon {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  fill: none;
+}
+
+.lfea-pipeline-shell__load-sample:disabled,
+.lfea-pipeline-shell__toolbar-action:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
 .lfea-pipeline-shell__authority {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border: 1px solid var(--workspace-border);
-  border-radius: 6px;
-  background: var(--workspace-panel);
   color: var(--workspace-muted);
-  font-size: 11px;
-  cursor: pointer;
+}
+
+.lfea-pipeline-shell__toolbar-label {
+  color: inherit;
+  white-space: nowrap;
+}
+
+.lfea-pipeline-shell__toolbar-status {
+  max-width: 180px;
+  padding-left: 7px;
+  overflow: hidden;
+  border-left: 1px solid var(--workspace-border);
+  color: var(--workspace-muted);
+  font-size: 10px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lfea-pipeline-shell__assemble {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border: 1px solid var(--workspace-accent);
-  border-radius: 6px;
-  background: var(--workspace-panel);
-  color: var(--workspace-text);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.lfea-pipeline-shell__assemble svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  border-color: color-mix(in srgb, var(--workspace-accent) 65%, var(--workspace-border));
 }
 
 [data-role="lfea-pipeline-assemble-status"] {
-  font-size: 11px;
+  min-width: 0;
   color: var(--workspace-muted);
+  font-size: 11px;
 }
 
 [data-role="lfea-pipeline-assemble-status"][data-status="error"] {
@@ -92,32 +93,14 @@
 }
 
 .lfea-pipeline-shell__verification-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
   margin-left: auto;
-  border: 1px solid var(--workspace-border);
-  border-radius: 6px;
-  background: var(--workspace-panel);
   color: var(--workspace-muted);
-  font-size: 12px;
-  cursor: pointer;
 }
 
 .lfea-pipeline-shell__verification-toggle--open {
   border-color: var(--workspace-accent);
   color: var(--workspace-text);
-}
-
-.lfea-pipeline-shell__verification-toggle .lfea-pipeline-icon {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  background: color-mix(in srgb, var(--workspace-accent) 10%, var(--workspace-panel));
 }
 
 .lfea-pipeline-shell__verification-drawer {
@@ -139,83 +122,266 @@
   color: var(--workspace-muted);
 }
 
+/* One connected workflow rail. Each step keeps a stable icon and ordinal;
+   completion is an overlay state rather than replacing the step identity. */
 .lfea-pipeline-shell__stepper {
   flex: 0 0 auto;
   display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
+  align-items: stretch;
+  gap: 0;
+  padding: 10px 12px 9px;
   overflow-x: auto;
   border-bottom: 1px solid var(--workspace-border);
   background: var(--workspace-panel);
 }
 
 .lfea-pipeline-shell__step {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: auto auto;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid var(--workspace-border);
-  border-radius: 999px;
+  gap: 8px;
+  min-width: 114px;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: 7px;
   background: transparent;
   color: var(--workspace-muted);
-  font-size: 12px;
+  text-align: left;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .lfea-pipeline-shell__step:disabled {
-  opacity: 0.5;
+  opacity: 0.46;
   cursor: not-allowed;
 }
 
-.lfea-pipeline-shell__step-index {
+.lfea-pipeline-shell__step-visual {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 7px;
+  background: var(--workspace-panel-strong);
+}
+
+.lfea-pipeline-shell__step-visual > .lfea-pipeline-icon {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.lfea-pipeline-shell__step-index {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  background: var(--workspace-panel);
+  color: var(--workspace-muted);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lfea-pipeline-shell__step-complete-icon {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: inline-flex;
   width: 16px;
   height: 16px;
+  color: #6ee7b7;
+  background: var(--workspace-panel);
   border-radius: 50%;
-  border: 1px solid currentColor;
+}
+
+.lfea-pipeline-shell__step-complete-icon[hidden] {
+  display: none;
+}
+
+.lfea-pipeline-shell__step-complete-icon .lfea-pipeline-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.lfea-pipeline-shell__step-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lfea-pipeline-shell__step-label {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lfea-pipeline-shell__step-status {
+  color: var(--workspace-muted);
   font-size: 10px;
+  font-weight: 500;
 }
 
 .lfea-pipeline-shell__step--active {
+  border-color: color-mix(in srgb, var(--workspace-accent) 70%, var(--workspace-border));
+  background: color-mix(in srgb, var(--workspace-accent) 10%, transparent);
+  color: var(--workspace-text);
+}
+
+.lfea-pipeline-shell__step--active .lfea-pipeline-shell__step-visual {
   border-color: var(--workspace-accent);
   color: var(--workspace-text);
 }
 
 .lfea-pipeline-shell__step--active .lfea-pipeline-shell__step-index {
-  background: var(--workspace-accent);
   border-color: var(--workspace-accent);
-  color: var(--workspace-panel-strong);
+  color: var(--workspace-text);
 }
 
-/* The tick replaces the step number in the view (render()); a ::after glyph
-   here would print a second one next to it. */
 .lfea-pipeline-shell__step--complete {
   color: var(--workspace-text);
 }
 
-.lfea-pipeline-shell__step--complete .lfea-pipeline-shell__step-index {
-  border-color: currentColor;
+.lfea-pipeline-shell__step--complete .lfea-pipeline-shell__step-visual {
+  border-color: color-mix(in srgb, #6ee7b7 45%, var(--workspace-border));
 }
 
-/* The one step the engineer is meant to act on next. */
-.lfea-pipeline-shell__step--next:not(:disabled) {
+.lfea-pipeline-shell__step--next:not(:disabled):not(.lfea-pipeline-shell__step--active) {
+  color: var(--workspace-text);
+}
+
+.lfea-pipeline-shell__connector {
+  align-self: center;
+  flex: 1 1 34px;
+  min-width: 18px;
+  max-width: 54px;
+  height: 2px;
+  margin: 0 2px;
+  border-radius: 999px;
+  background: var(--workspace-border);
+}
+
+.lfea-pipeline-shell__connector[data-connector-status="COMPLETE"] {
+  background: color-mix(in srgb, #6ee7b7 70%, var(--workspace-border));
+}
+
+.lfea-pipeline-shell__connector[data-connector-status="ACTIVE"] {
+  background: var(--workspace-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--workspace-accent) 18%, transparent);
+}
+
+.lfea-pipeline-shell__connector[data-connector-status="BLOCKED"] {
+  background: repeating-linear-gradient(90deg, var(--workspace-border) 0 4px, transparent 4px 7px);
+}
+
+.lfea-pipeline-shell__context {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--workspace-border);
+  background: var(--workspace-panel-strong);
+}
+
+.lfea-pipeline-shell__context-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid color-mix(in srgb, var(--workspace-accent) 55%, var(--workspace-border));
+  border-radius: 8px;
+  color: var(--workspace-text);
+  background: color-mix(in srgb, var(--workspace-accent) 9%, var(--workspace-panel));
+}
+
+.lfea-pipeline-shell__context-icon .lfea-pipeline-icon {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.lfea-pipeline-shell__context-copy {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  column-gap: 8px;
+  min-width: 0;
+}
+
+.lfea-pipeline-shell__context-eyebrow {
+  grid-column: 1;
+  color: var(--workspace-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.lfea-pipeline-shell__context-copy strong {
+  grid-column: 2;
+  color: var(--workspace-text);
+  font-size: 13px;
+}
+
+.lfea-pipeline-shell__context-description {
+  grid-column: 1 / -1;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--workspace-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lfea-pipeline-shell__context-state {
+  padding: 3px 7px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  color: var(--workspace-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.lfea-pipeline-shell__context[data-step-status="CURRENT"] .lfea-pipeline-shell__context-state {
   border-color: var(--workspace-accent);
   color: var(--workspace-text);
-  box-shadow: 0 0 0 1px var(--workspace-accent) inset;
+}
+
+.lfea-pipeline-shell__context[data-step-status="COMPLETE"] .lfea-pipeline-shell__context-state {
+  border-color: color-mix(in srgb, #6ee7b7 55%, var(--workspace-border));
+  color: #a7f3d0;
+}
+
+.lfea-pipeline-shell__context[data-step-status="BLOCKED"] .lfea-pipeline-shell__context-state {
+  border-color: color-mix(in srgb, #f87171 55%, var(--workspace-border));
+  color: #fca5a5;
 }
 
 .lfea-pipeline-shell__guidance {
   flex: 0 0 auto;
   margin: 0;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-bottom: 1px solid var(--workspace-border);
   background: var(--workspace-panel);
   color: var(--workspace-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .lfea-pipeline-shell__content {
@@ -226,6 +392,24 @@
 
 .lfea-pipeline-shell__host[hidden] {
   display: none;
+}
+
+@media (max-width: 1080px) {
+  .lfea-pipeline-shell__toolbar {
+    flex-wrap: wrap;
+  }
+
+  .lfea-pipeline-shell__verification-toggle {
+    margin-left: 0;
+  }
+
+  .lfea-pipeline-shell__step {
+    min-width: 100px;
+  }
+
+  .lfea-pipeline-shell__step-status {
+    display: none;
+  }
 }
 
 .application-navigation-shell {

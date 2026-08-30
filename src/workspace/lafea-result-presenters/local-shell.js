@@ -1,9 +1,10 @@
 /**
- * LAFEA.4 five-DOF triangular CST+DKT shell presentation boundary.
+ * LAFEA.4 five-DOF shell presentation boundary.
  *
  * Engineering stress authority is retained integration-point surface evidence.
- * No nodal stress projection, averaging, smoothing or contour interpolation is
- * promoted by this presenter.
+ * MITC transverse-shear quantities are presented separately from the existing
+ * same-point in-plane von Mises invariant. No nodal stress projection,
+ * averaging, smoothing or contour interpolation is promoted here.
  */
 import {
   formulaId,
@@ -12,13 +13,21 @@ import {
   requiredUnit,
 } from './common.js';
 
+const MITC_RESULT_SCHEMA = 'local-shell-result/v2';
+
 export function presentLocalShell(result, units) {
   const stress = shellStressUnit(units);
   const length = requiredUnit(units, 'length');
   const force = requiredUnit(units, 'force');
   const moment = requiredUnit(units, 'moment');
+  const shearResultantUnit = `${force}/${length}`;
+  const mitc = result?.schema === MITC_RESULT_SCHEMA;
+  const formulationLabel = mitc
+    ? 'MITC4/MITC3 Reissner–Mindlin'
+    : 'CST+DKT thin-shell';
   const summaryRows = [];
   const stressRows = [];
+  const shearRows = [];
   const displacementRows = [];
   let maximumStress = null;
   let maximumSigmaX = null;
@@ -27,24 +36,41 @@ export function presentLocalShell(result, units) {
   let maximumMomentReaction = null;
   let maximumAppliedForce = null;
   let maximumAppliedMoment = null;
+  let maximumShearStress = null;
+  let maximumShearResultant = null;
+
+  if (mitc && typeof result.productionQualification?.state === 'string') {
+    summaryRows.push(presenterRow(
+      'Production route release qualification',
+      result.productionQualification.state,
+      'status',
+      null,
+      'result.productionQualification.state',
+    ));
+  }
 
   for (const [caseIndex, loadCase] of (result.loadCaseResults ?? []).entries()) {
     const caseLabel = loadCase.loadCaseId || `Case ${caseIndex + 1}`;
     const casePath = `result.loadCaseResults[${caseIndex}]`;
 
     for (const [elementIndex, element] of (loadCase.elementResults ?? []).entries()) {
+      const elementLabel = mitc && element.formulation
+        ? `${element.elementId} · ${element.formulation}`
+        : `${element.elementId}`;
       for (const [pointIndex, point] of (element.integrationPoints ?? []).entries()) {
+        const pointLabel = point.integrationPointId || `IP ${pointIndex + 1}`;
         for (const [surfaceIndex, surface] of (point.surfaces ?? []).entries()) {
           const surfacePath = `${casePath}.elementResults[${elementIndex}]`
             + `.integrationPoints[${pointIndex}].surfaces[${surfaceIndex}]`;
-          const location = `${caseLabel} · Element ${element.elementId}`
-            + ` · ${point.integrationPointId} · ${surface.surface}`;
+          const location = `${caseLabel} · Element ${elementLabel}`
+            + ` · ${pointLabel} · ${surface.surface}`;
           const vonMisesPath = `${surfacePath}.vonMises`;
+          const retainedFormula = formulaId(surface) ?? formulaId(element) ?? formulaId(loadCase);
           maximumStress = larger(maximumStress, {
             value: surface.vonMises,
             label: location,
             sourcePath: vonMisesPath,
-            formula: formulaId(surface),
+            formula: retainedFormula,
           });
           const sigmaX = surface.combinedStress?.sigmaX;
           if (Number.isFinite(sigmaX)) {
@@ -52,16 +78,32 @@ export function presentLocalShell(result, units) {
               value: Math.abs(sigmaX),
               label: location,
               sourcePath: `${surfacePath}.combinedStress.sigmaX`,
-              formula: formulaId(surface),
+              formula: retainedFormula,
             });
           }
           stressRows.push(presenterRow(
             `${location} · von Mises equivalent stress`,
             surface.vonMises,
             stress,
-            formulaId(surface),
+            retainedFormula,
             vonMisesPath,
           ));
+        }
+
+        if (mitc) {
+          appendMitcShearRows({
+            rows: shearRows,
+            point,
+            element,
+            caseLabel,
+            elementLabel,
+            pointLabel,
+            pointPath: `${casePath}.elementResults[${elementIndex}].integrationPoints[${pointIndex}]`,
+            stressUnit: stress,
+            resultantUnit: shearResultantUnit,
+            onStress: (candidate) => { maximumShearStress = larger(maximumShearStress, candidate); },
+            onResultant: (candidate) => { maximumShearResultant = larger(maximumShearResultant, candidate); },
+          });
         }
       }
     }
@@ -132,7 +174,11 @@ export function presentLocalShell(result, units) {
 
   appendSummaryMaximum(summaryRows, 'Max translational displacement magnitude', maximumDisplacement, length);
   appendSummaryMaximum(summaryRows, 'Max authoritative surface/IP von Mises', maximumStress, stress);
-  appendSummaryMaximum(summaryRows, 'Max |combined surface σx|', maximumSigmaX, stress);
+  appendSummaryMaximum(summaryRows, 'Max |combined surface sigmaX|', maximumSigmaX, stress);
+  if (mitc) {
+    appendSummaryMaximum(summaryRows, 'Max effective transverse-shear stress magnitude', maximumShearStress, stress);
+    appendSummaryMaximum(summaryRows, 'Max transverse-shear resultant magnitude', maximumShearResultant, shearResultantUnit);
+  }
   appendSummaryMaximum(summaryRows, 'Max translational reaction component', maximumForceReaction, force);
   appendSummaryMaximum(summaryRows, 'Max tangent reaction moment component', maximumMomentReaction, moment);
   appendSummaryMaximum(summaryRows, 'Max applied force resultant magnitude', maximumAppliedForce, force);
@@ -140,7 +186,9 @@ export function presentLocalShell(result, units) {
 
   const governing = maximumStress
     ? {
-      label: 'Governing retained shell surface/IP von Mises equivalent stress',
+      label: mitc
+        ? 'Governing retained MITC in-plane surface/IP von Mises equivalent stress'
+        : 'Governing retained shell surface/IP von Mises equivalent stress',
       value: maximumStress.value,
       unit: stress,
       locationId: maximumStress.label,
@@ -148,20 +196,79 @@ export function presentLocalShell(result, units) {
     }
     : null;
 
-  return presenterResult(result, [
+  const sections = [
     {
-      title: 'Engineering summary — retained shell evidence only',
+      title: `Engineering summary — ${formulationLabel} retained evidence`,
       rows: summaryRows,
     },
     {
-      title: 'CST+DKT integration-point surface stress evidence',
+      title: `${formulationLabel} integration-point surface stress evidence`,
       rows: stressRows,
     },
-    {
-      title: 'CST+DKT nodal displacement evidence',
-      rows: displacementRows,
-    },
-  ], governing);
+  ];
+  if (mitc) {
+    sections.push({
+      title: 'MITC retained transverse-shear evidence — separate from in-plane von Mises',
+      rows: shearRows,
+    });
+  }
+  sections.push({
+    title: `${formulationLabel} nodal displacement evidence`,
+    rows: displacementRows,
+  });
+
+  return presenterResult(result, sections, governing);
+}
+
+function appendMitcShearRows(context) {
+  const {
+    rows, point, element, caseLabel, elementLabel, pointLabel, pointPath,
+    stressUnit, resultantUnit, onStress, onResultant,
+  } = context;
+  const shearStress = point.transverseShearStressAverage;
+  if (Number.isFinite(shearStress?.tauXZEffectiveAverage)
+    && Number.isFinite(shearStress?.tauYZEffectiveAverage)) {
+    const magnitude = Math.hypot(
+      shearStress.tauXZEffectiveAverage,
+      shearStress.tauYZEffectiveAverage,
+    );
+    const label = `${caseLabel} · Element ${elementLabel} · ${pointLabel}`;
+    const path = `${pointPath}.transverseShearStressAverage`;
+    const candidate = {
+      value: magnitude,
+      label,
+      sourcePath: path,
+      formula: formulaId(element),
+    };
+    onStress(candidate);
+    rows.push(presenterRow(
+      `${label} · effective average transverse-shear stress magnitude`,
+      magnitude,
+      stressUnit,
+      formulaId(element),
+      path,
+    ));
+  }
+  const resultant = point.transverseShearResultant;
+  if (Number.isFinite(resultant?.qX) && Number.isFinite(resultant?.qY)) {
+    const magnitude = Math.hypot(resultant.qX, resultant.qY);
+    const label = `${caseLabel} · Element ${elementLabel} · ${pointLabel}`;
+    const path = `${pointPath}.transverseShearResultant`;
+    const candidate = {
+      value: magnitude,
+      label,
+      sourcePath: path,
+      formula: formulaId(element),
+    };
+    onResultant(candidate);
+    rows.push(presenterRow(
+      `${label} · transverse-shear resultant magnitude`,
+      magnitude,
+      resultantUnit,
+      formulaId(element),
+      path,
+    ));
+  }
 }
 
 function appendSummaryMaximum(rows, label, candidate, unit) {

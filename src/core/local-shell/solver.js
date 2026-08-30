@@ -1,20 +1,39 @@
+import {
+  partitionSparseSystem,
+  solveDeterministicJacobiPcg,
+  sparseMultiply,
+} from '../lafea-linear-solve/index.js';
 import { FORMULA_IDS } from './constants.js';
-import { ShellSingularSystemError } from './errors.js';
+import { ShellNumericalError, ShellSingularSystemError } from './errors.js';
 import { generalizedTotals } from './loads.js';
-import { matrixVector, zeros } from './matrix.js';
+import { zeros } from './matrix.js';
 import { cleanNumber, maxAbs, qualification, tolerance } from './numeric.js';
+import {
+  globalStiffnessAction,
+  SPARSE_SHELL_STIFFNESS_STORAGE,
+} from './assembly.js';
 import { add } from './vector.js';
+
+const STRUCTURAL_PCG_FAILURES = new Set([
+  'PCG_INDEFINITE_DIAGONAL',
+  'PCG_SINGULAR_DIAGONAL',
+  'PCG_NON_POSITIVE_INITIAL_PRODUCT',
+  'PCG_NON_POSITIVE_CURVATURE',
+  'PCG_NON_POSITIVE_RELIABLE_PRODUCT',
+  'PCG_NON_POSITIVE_RESIDUAL_PRODUCT',
+]);
 
 export function solveLoadCase(model, assembly, loadEvidence) {
   const partition = buildPartition(model, assembly);
-  const rightHandSide = effectiveRightHandSide(assembly.stiffness, loadEvidence.forceVector, partition);
   const solved = partition.freeIndices.length === 0
     ? fullyConstrainedEvidence()
-    : choleskySolve(partitionedMatrix(assembly.stiffness, partition.freeIndices), rightHandSide, model.qualificationProfile.choleskyPivot);
+    : solvePartitionedSystem(model, assembly, loadEvidence.forceVector, partition);
   const displacement = reconstructDisplacement(partition, solved.solution, assembly.dofOrdering.length);
-  const reaction = matrixVector(assembly.stiffness, displacement).map((value, index) => cleanNumber(value - loadEvidence.forceVector[index]));
+  const reaction = globalStiffnessAction(assembly, displacement)
+    .map((value, index) => cleanNumber(value - loadEvidence.forceVector[index]));
   const residualEvidence = freeResidualEvidence(reaction, partition, loadEvidence.forceVector, model.qualificationProfile.freeDofResidual);
   const equilibrium = equilibriumEvidence(model, reaction, partition, loadEvidence, model.qualificationProfile);
+  const solverFormula = formulaIdForSolver(solved.evidence.method);
   return {
     displacement,
     reaction,
@@ -26,7 +45,7 @@ export function solveLoadCase(model, assembly, loadEvidence) {
     freeDofResidualQualification: residualEvidence.qualification,
     forceEquilibrium: equilibrium.force,
     momentEquilibrium: equilibrium.moment,
-    formulaIds: [FORMULA_IDS.PARTITION, ...(solved.executed ? [FORMULA_IDS.CHOLESKY] : []), FORMULA_IDS.REACTION],
+    formulaIds: [FORMULA_IDS.PARTITION, ...(solverFormula ? [solverFormula] : []), FORMULA_IDS.REACTION],
   };
 }
 
@@ -35,13 +54,28 @@ function buildPartition(model, assembly) {
   const freeIndices = [];
   const constrainedIndices = [];
   const constrainedValues = [];
+  const prescribedMap = new Map();
   assembly.dofOrdering.forEach((identity, index) => {
     if (prescribed.has(identity)) {
+      const value = prescribed.get(identity);
       constrainedIndices.push(index);
-      constrainedValues.push(prescribed.get(identity));
+      constrainedValues.push(value);
+      prescribedMap.set(index, value);
     } else freeIndices.push(index);
   });
-  return { freeIndices, constrainedIndices, constrainedValues };
+  return { freeIndices, constrainedIndices, constrainedValues, prescribedMap };
+}
+
+function solvePartitionedSystem(model, assembly, force, partition) {
+  if (assembly.stiffnessStorage === SPARSE_SHELL_STIFFNESS_STORAGE) {
+    return sparseSolve(assembly.stiffness, force, partition, model.qualificationProfile);
+  }
+  const rightHandSide = effectiveRightHandSide(assembly.stiffness, force, partition);
+  return denseCholeskySolve(
+    partitionedMatrix(assembly.stiffness, partition.freeIndices),
+    rightHandSide,
+    model.qualificationProfile.choleskyPivot,
+  );
 }
 
 function effectiveRightHandSide(stiffness, force, partition) {
@@ -58,7 +92,79 @@ function partitionedMatrix(stiffness, indices) {
   return indices.map((row) => indices.map((column) => stiffness[row][column]));
 }
 
-function choleskySolve(matrix, rhs, rule) {
+function sparseSolve(stiffness, force, partition, profile) {
+  const reduced = partitionSparseSystem(stiffness, force, partition.prescribedMap);
+  if (!sameIndices(reduced.freeIndices, partition.freeIndices)) {
+    throw new ShellSingularSystemError('Sparse partition changed free-DOF ordering unexpectedly.');
+  }
+  const diagonal = reduced.freeMatrix.rows.map((row, index) => row.get(index) ?? 0);
+  const diagonalScale = Math.max(1, ...diagonal.map((value) => Math.abs(value)));
+  const diagonalTolerance = tolerance(profile.choleskyPivot, diagonalScale);
+  const residualScale = Math.max(1, maxAbs(reduced.rightHandSide));
+  const residualTolerance = tolerance(profile.freeDofResidual, residualScale);
+  let solved;
+  try {
+    solved = solveDeterministicJacobiPcg({
+      size: reduced.freeMatrix.size,
+      diagonal,
+      rightHandSide: [...reduced.rightHandSide],
+      multiply: (vector) => sparseMultiply(reduced.freeMatrix, vector),
+      diagonalTolerance,
+      residualTolerance,
+    });
+  } catch (error) {
+    mapPcgFailure(error);
+  }
+  return {
+    solution: solved.solution.map((value) => cleanNumber(value)),
+    evidence: pcgEvidence(solved.evidence),
+    executed: true,
+  };
+}
+
+function mapPcgFailure(error) {
+  if (STRUCTURAL_PCG_FAILURES.has(error?.code)) {
+    throw new ShellSingularSystemError(
+      'Free sparse stiffness system is singular, indefinite or under-constrained',
+      error.evidence,
+    );
+  }
+  if (error?.code === 'PCG_DID_NOT_CONVERGE') {
+    throw new ShellNumericalError('Sparse PCG did not converge within its qualified residual target', error.evidence);
+  }
+  throw error;
+}
+
+function pcgEvidence(evidence) {
+  return {
+    method: evidence.method,
+    algorithmRevision: evidence.algorithmRevision,
+    pivotScale: null,
+    pivotTolerance: null,
+    pivots: [],
+    minimumPivot: null,
+    maximumPivot: null,
+    pivotRatio: null,
+    preconditioner: evidence.preconditioner,
+    iterationLimit: evidence.iterationLimit,
+    iterations: evidence.iterations,
+    reliableResidualInterval: evidence.reliableResidualInterval,
+    reliableResidualReplacements: evidence.reliableResidualReplacements,
+    residualScale: cleanNumber(evidence.residualScale),
+    initialResidualInfinity: cleanNumber(evidence.initialResidualInfinity),
+    finalResidualInfinity: cleanNumber(evidence.finalResidualInfinity),
+    convergenceTarget: cleanNumber(evidence.convergenceTarget),
+    residualTolerance: cleanNumber(evidence.residualTolerance),
+    diagonalScale: cleanNumber(evidence.diagonalScale),
+    diagonalTolerance: cleanNumber(evidence.diagonalTolerance),
+    minimumDiagonal: cleanNumber(evidence.minimumDiagonal),
+    maximumDiagonal: cleanNumber(evidence.maximumDiagonal),
+    diagonalRatio: cleanNumber(evidence.diagonalRatio),
+    accepted: evidence.accepted === true,
+  };
+}
+
+function denseCholeskySolve(matrix, rhs, rule) {
   const size = matrix.length;
   const lower = zeros(size, size);
   const pivots = [];
@@ -76,7 +182,11 @@ function choleskySolve(matrix, rhs, rule) {
     }
   }
   const solution = backwardSubstitution(lower, forwardSubstitution(lower, rhs));
-  return { solution, evidence: pivotEvidence(pivots, scale, pivotTolerance), executed: true };
+  return {
+    solution,
+    evidence: pivotEvidence(pivots, scale, pivotTolerance, 'DETERMINISTIC_DENSE_CHOLESKY'),
+    executed: true,
+  };
 }
 
 function forwardSubstitution(lower, rhs) {
@@ -126,16 +236,16 @@ function equilibriumEvidence(model, reaction, partition, loads, profile) {
   };
 }
 
-function pivotEvidence(pivots, scale, pivotTolerance) {
+function pivotEvidence(pivots, scale, pivotTolerance, method) {
   const minimumPivot = Math.min(...pivots);
   const maximumPivot = Math.max(...pivots);
   return {
-    method: 'DETERMINISTIC_DENSE_CHOLESKY',
-    pivots,
+    method,
+    pivots: pivots.map((value) => cleanNumber(value)),
     pivotScale: scale,
     pivotTolerance,
-    minimumPivot,
-    maximumPivot,
+    minimumPivot: cleanNumber(minimumPivot),
+    maximumPivot: cleanNumber(maximumPivot),
     pivotRatio: cleanNumber(minimumPivot / maximumPivot),
   };
 }
@@ -154,4 +264,14 @@ function fullyConstrainedEvidence() {
     },
     executed: false,
   };
+}
+
+function formulaIdForSolver(method) {
+  if (method === 'DETERMINISTIC_DENSE_CHOLESKY') return FORMULA_IDS.CHOLESKY;
+  if (method === 'DETERMINISTIC_JACOBI_PCG') return FORMULA_IDS.PCG;
+  return null;
+}
+
+function sameIndices(left, right) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }

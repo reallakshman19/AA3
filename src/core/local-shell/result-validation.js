@@ -1,3 +1,4 @@
+import { DETERMINISTIC_JACOBI_PCG_REVISION } from '../lafea-linear-solve/index.js';
 import { ENGINEERING_LEVEL, FORMULATION, QUALIFICATION_STATES, RESULT_SCHEMA } from './constants.js';
 import { ShellModelError } from './errors.js';
 import { canonicalStringify, deepFreeze, strictClone } from './json.js';
@@ -9,6 +10,15 @@ const ACCEPTED = [...BASE, 'meshEvidence', 'loadCaseResults'];
 const ELEMENT = ['elementId','nodeIds','materialId','thickness','area','geometryScale','localCoordinates','localFrame','frameResidual','directorAlignment','areaQualification','membraneBMatrix','membraneMaterialMatrix','membraneConstitutiveMatrix','bendingConstitutiveMatrix','dktFormulation','dktRotationInterpolation','dktIntegrationPoints','membraneStiffness','bendingStiffness','combinedLocalStiffness','nodalBasisTransformation','globalStiffness','localDofOrdering','globalDofOrdering','qualification','sourceReferences','formulaIds'];
 const CASE = ['loadCaseId','nodalDisplacements','reactions','freeDofIdentities','constrainedDofIdentities','solverEvidence','freeDofResiduals','freeDofResidualQualification','forceEquilibrium','momentEquilibrium','appliedLoadEvidence','elementResults','membraneStrainEnergy','bendingStrainEnergy','totalStrainEnergy','globalStrainEnergy','externalWorkIncludingPrescribedReactions','energyQualification','qualification','formulaIds'];
 const ELEMENT_RESULT = ['elementId','localGeneralizedDisplacement','membraneStrain','membraneStress','integrationPoints','membraneStrainEnergy','bendingStrainEnergy','totalStrainEnergy','sourceReferences','formulaIds'];
+const DIRECT_SOLVER_EVIDENCE = ['method','pivots','pivotScale','pivotTolerance','minimumPivot','maximumPivot','pivotRatio'];
+const PCG_SOLVER_EVIDENCE = [
+  ...DIRECT_SOLVER_EVIDENCE,
+  'algorithmRevision','preconditioner','iterationLimit','iterations',
+  'reliableResidualInterval','reliableResidualReplacements','residualScale',
+  'initialResidualInfinity','finalResidualInfinity','convergenceTarget',
+  'residualTolerance','diagonalScale','diagonalTolerance','minimumDiagonal',
+  'maximumDiagonal','diagonalRatio','accepted',
+];
 
 export function validateLocalShellResult(result) {
   const value = strictClone(result);
@@ -71,7 +81,7 @@ function validateCase(row, label) {
   exactKeys(row, CASE, label);
   row.nodalDisplacements.forEach((item, i) => exactKeys(item, ['nodeId','ux','uy','uz','r1','r2'], `${label}.nodalDisplacements[${i}]`));
   row.reactions.forEach((item, i) => exactKeys(item, ['constraintId','nodeId','dof','kind','value'], `${label}.reactions[${i}]`));
-  exactKeys(row.solverEvidence, ['method','pivots','pivotScale','pivotTolerance','minimumPivot','maximumPivot','pivotRatio'], `${label}.solverEvidence`);
+  validateSolverEvidence(row.solverEvidence, `${label}.solverEvidence`);
   tolerance(row.freeDofResidualQualification, `${label}.freeDofResidualQualification`);
   equilibrium(row.forceEquilibrium, `${label}.forceEquilibrium`);
   equilibrium(row.momentEquilibrium, `${label}.momentEquilibrium`);
@@ -79,6 +89,17 @@ function validateCase(row, label) {
   row.elementResults.forEach((item, i) => validateElementResult(item, `${label}.elementResults[${i}]`));
   tolerance(row.energyQualification, `${label}.energyQualification`);
   exactKeys(row.qualification, ['accepted','checks'], `${label}.qualification`);
+}
+
+function validateSolverEvidence(row, label) {
+  if (row.method === 'DETERMINISTIC_JACOBI_PCG') {
+    exactKeys(row, PCG_SOLVER_EVIDENCE, label);
+    if (row.algorithmRevision !== DETERMINISTIC_JACOBI_PCG_REVISION) throw new ShellModelError(`${label}.algorithmRevision is invalid`);
+    if (row.preconditioner !== 'JACOBI' || row.accepted !== true) throw new ShellModelError(`${label} PCG qualification is invalid`);
+    return;
+  }
+  if (!['DETERMINISTIC_DENSE_CHOLESKY','FULLY_CONSTRAINED_NO_FREE_SOLVE'].includes(row.method)) throw new ShellModelError(`${label}.method is invalid`);
+  exactKeys(row, DIRECT_SOLVER_EVIDENCE, label);
 }
 
 function validateLoads(row, label) {

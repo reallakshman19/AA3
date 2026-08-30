@@ -18,8 +18,13 @@ import { assembleLoadCase } from './loads.js';
 import { recoverLoadCase } from './recovery.js';
 import { reconstructShellResultHashes } from './result-hashes.js';
 import { solveLoadCase } from './solver.js';
+import { MITC_PRODUCTION_MODEL_SCHEMA } from './mitc-production-model.js';
+import { calculateMitcProductionShell } from './mitc-production.js';
 
 export function calculateLocalShell(model) {
+  if (model?.schema === MITC_PRODUCTION_MODEL_SCHEMA) {
+    return calculateMitcProductionShell(model);
+  }
   let canonical;
   try {
     canonical = validateCanonicalLocalShellModel(model);
@@ -40,7 +45,7 @@ function calculateAccepted(model) {
     dofOrdering: assembly.dofOrdering,
     nodeBasisQualification,
     elements,
-    globalStiffness: assembly.stiffness,
+    globalStiffness: assembly.retainedStiffness,
     globalStiffnessSymmetry: assembly.symmetry,
     elementAssembly: assembly.elementAssembly,
     formulaIds: [FORMULA_IDS.NODE_BASIS, FORMULA_IDS.GLOBAL_ASSEMBLY],

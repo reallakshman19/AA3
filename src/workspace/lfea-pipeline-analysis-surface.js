@@ -2,86 +2,68 @@ import { createLfeaPipelineAnalysisController } from './lfea-pipeline-analysis-c
 import { mountLfeaPipelineCaseSelectionPanel } from './lfea-pipeline-case-selection-panel.js';
 import { mountLfeaPipelineLayoutPanel } from './lfea-pipeline-layout-panel.js';
 import { mountLfeaPipelineResultsPanel } from './lfea-pipeline-results-panel.js';
+import { mountLfeaPipelineRunPanel } from './lfea-pipeline-run-panel.js';
+import { mountLfeaPipelineExportPanel } from './lfea-pipeline-export-panel.js';
+import { mountLfeaPipelineResultsTaskVisibility } from './lfea-pipeline-results-task-visibility.js';
+import { mountLfeaPipelineResultsSortPresentation } from './lfea-pipeline-results-sort-presentation.js';
 import { mountLfeaPipelineLoadCaseAuthoringPanel } from './lfea-pipeline-load-case-authoring-panel.js';
 import { mountLfeaPipelineModelRepairPanel } from './lfea-pipeline-model-repair-panel.js';
 import { mountLfeaModelReviewPanel } from './lfea-model-review/lfea-model-review-panel.js';
 import { mountLfeaCommonErrorCheckPanel } from './lfea-diagnostics/lfea-error-check-panel.js';
 import { mountLfeaResultsAuthorityPanel } from './lfea-results-authority/lfea-results-authority-panel.js';
 
-/**
- * Everything the Load-case, Input review and Output steps need, behind one entry point.
- *
- * main.js loads this with a dynamic import so Rollup gives it its own chunk
- * rather than folding it into the application entry. Model Review, Error Check
- * and the result-authority panel are read-only projections of already-retained
- * records; none adds a second parse/compile/solve/application path.
- */
+/** Shared presentation surface for the LFEA pipeline. */
 export function mountLfeaPipelineAnalysisSurface(options) {
   const analysisController = createLfeaPipelineAnalysisController({});
   const caseSelectionPanel = mountLfeaPipelineCaseSelectionPanel(options.loadCaseHost, {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
     onApplyCaseSelection: options.onApplyCaseSelection,
-    onAnalyze: options.onAnalyze,
   });
-  // Retained as a collapsed compatibility view for existing checks/API users.
-  // UI04's first-class engineering review lives on Input below.
-  const layoutPanel = mountLfeaPipelineLayoutPanel(options.loadCaseHost, {
+  const layoutPanel = mountLfeaPipelineLayoutPanel(options.loadCaseHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
+  const loadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(options.loadCaseHost, { documentRef: options.documentRef, getNodeIds: options.getNodeIds });
+  const resultsPanel = mountLfeaPipelineResultsPanel(options.resultsHost, { documentRef: options.documentRef, onExportCsv: options.onExportCsv });
+  const runPanel = mountLfeaPipelineRunPanel(options.resultsHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight, onAnalyze: options.onAnalyze });
+  const exportPanel = mountLfeaPipelineExportPanel(options.resultsHost, {
     documentRef: options.documentRef,
-    getPreFlight: options.getPreFlight,
-  });
-  const loadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(options.loadCaseHost, {
-    documentRef: options.documentRef,
-    getNodeIds: options.getNodeIds,
-  });
-  const resultsPanel = mountLfeaPipelineResultsPanel(options.resultsHost, {
-    documentRef: options.documentRef,
+    getResultsPanel: () => resultsPanel,
     onExportCsv: options.onExportCsv,
+    onExportCompleted: options.onExportCompleted,
   });
-  const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, {
-    documentRef: options.documentRef,
+  const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, { documentRef: options.documentRef });
+  const sortPresentation = mountLfeaPipelineResultsSortPresentation(options.resultsHost);
+  const taskVisibility = mountLfeaPipelineResultsTaskVisibility(options.resultsHost, {
+    onTaskChanged(stepId) {
+      if (stepId === 'RUN') runPanel.refresh();
+      if (stepId === 'OUTPUT') { resultsAuthorityPanel.refresh(); sortPresentation.refresh(); }
+      if (stepId === 'EXPORT') exportPanel.refresh();
+    },
   });
-  const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, {
-    documentRef: options.documentRef,
-    getSourceText: options.getSourceText,
-    onRepaired: options.onRepaired,
-  });
-  const modelReviewPanel = mountLfeaModelReviewPanel(options.sourceHost, {
-    documentRef: options.documentRef,
-    getPreFlight: options.getPreFlight,
-  });
-  const errorCheckPanel = mountLfeaCommonErrorCheckPanel(options.sourceHost, {
-    documentRef: options.documentRef,
-    getPreFlight: options.getPreFlight,
-  });
+  const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, { documentRef: options.documentRef, getSourceText: options.getSourceText, onRepaired: options.onRepaired });
+  const modelReviewPanel = mountLfeaModelReviewPanel(options.sourceHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
+  const errorCheckPanel = mountLfeaCommonErrorCheckPanel(options.sourceHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
 
   return Object.freeze({
-    analysisController,
-    modelRepairPanel,
-    modelReviewPanel,
-    errorCheckPanel,
-    caseSelectionPanel,
-    layoutPanel,
-    resultsPanel,
-    resultsAuthorityPanel,
-    loadCaseAuthoringPanel,
+    analysisController, modelRepairPanel, modelReviewPanel, errorCheckPanel,
+    caseSelectionPanel, layoutPanel, runPanel, resultsPanel, exportPanel,
+    resultsAuthorityPanel, taskVisibility, sortPresentation, loadCaseAuthoringPanel,
     refreshLoadCaseStep() {
       caseSelectionPanel.refresh();
       layoutPanel.refresh();
       loadCaseAuthoringPanel.refresh();
+      runPanel.refresh();
     },
-    refreshSourceStep() {
-      modelRepairPanel.refresh();
-      modelReviewPanel.refresh();
-      errorCheckPanel.refresh();
-    },
-    refreshResultsStep() {
-      resultsAuthorityPanel.refresh();
-    },
+    refreshRunStep() { runPanel.refresh(); },
+    refreshSourceStep() { modelRepairPanel.refresh(); modelReviewPanel.refresh(); errorCheckPanel.refresh(); },
+    refreshResultsStep() { resultsAuthorityPanel.refresh(); exportPanel.refresh(); sortPresentation.refresh(); taskVisibility.refresh(); },
     destroy() {
+      taskVisibility.destroy();
+      sortPresentation.destroy();
       caseSelectionPanel.destroy();
       layoutPanel.destroy();
+      runPanel.destroy();
       resultsPanel.destroy();
+      exportPanel.destroy();
       resultsAuthorityPanel.destroy();
       loadCaseAuthoringPanel.destroy();
       modelRepairPanel.destroy();

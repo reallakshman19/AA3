@@ -1,26 +1,8 @@
-/**
- * Shared session state for the unified LFEA pipeline shell.
- *
- * Owns only navigation/UI state (active step, per-step availability
- * projected from existing controllers). It does not re-implement or
- * duplicate any sealed/hashed authority chain — each wrapped controller
- * keeps owning its own state; this store only mirrors a read-only
- * projection of it for the stepper chrome to render.
- *
- * It also derives, from that same projection, which step the engineer is
- * actually meant to do next. The six steps carry a real order, but nothing
- * in the chrome said which of them were finished, which was waiting, or why
- * a disabled one was disabled -- a disabled Load-case step looked identical
- * whether the model had not been checked yet or whether this source type
- * cannot reach it at all. The derivation is one place so the stepper, the
- * next-action line, and any panel asking "can I proceed" cannot disagree.
- */
+/** Shared UI-only session state for the unified LFEA pipeline shell. */
 export const LFEA_PIPELINE_SESSION_SCHEMA = 'lfea-pipeline-session/v1';
 
 export function createLfeaPipelineSession(steps) {
-  if (!Array.isArray(steps) || steps.length === 0) {
-    throw new TypeError('LFEA pipeline session requires a non-empty step list.');
-  }
+  if (!Array.isArray(steps) || steps.length === 0) throw new TypeError('LFEA pipeline session requires a non-empty step list.');
   const listeners = new Set();
   let state = withGuidance(steps, {
     schema: LFEA_PIPELINE_SESSION_SCHEMA,
@@ -37,33 +19,23 @@ export function createLfeaPipelineSession(steps) {
   }
 
   function setActiveStep(stepId) {
-    if (!steps.some((step) => step.stepId === stepId)) {
-      throw new TypeError(`Unknown LFEA pipeline step: ${String(stepId)}.`);
-    }
+    if (!steps.some((step) => step.stepId === stepId)) throw new TypeError(`Unknown LFEA pipeline step: ${String(stepId)}.`);
     if (stepId === state.activeStepId) return state;
     return publish({ ...state, activeStepId: stepId });
   }
 
   function setStepStatus(stepId, status) {
-    if (!steps.some((step) => step.stepId === stepId)) {
-      throw new TypeError(`Unknown LFEA pipeline step: ${String(stepId)}.`);
-    }
+    if (!steps.some((step) => step.stepId === stepId)) throw new TypeError(`Unknown LFEA pipeline step: ${String(stepId)}.`);
     const current = state.stepAvailability[stepId];
     const next = {
       available: status.available ?? current.available,
       complete: status.complete ?? current.complete,
       detail: status.detail ?? null,
-      // Why a step cannot be reached, in the engineer's terms. A step that is
-      // unavailable without one renders as a bare disabled button, which is
-      // the state this field exists to stop.
       blockedReason: status.blockedReason ?? null,
     };
     if (next.available === current.available && next.complete === current.complete
       && next.detail === current.detail && next.blockedReason === current.blockedReason) return state;
-    return publish({
-      ...state,
-      stepAvailability: { ...state.stepAvailability, [stepId]: next },
-    });
+    return publish({ ...state, stepAvailability: { ...state.stepAvailability, [stepId]: next } });
   }
 
   function subscribe(listener) {
@@ -72,38 +44,25 @@ export function createLfeaPipelineSession(steps) {
     return () => listeners.delete(listener);
   }
 
-  return Object.freeze({
-    getState: () => state,
-    setActiveStep,
-    setStepStatus,
-    subscribe,
-    destroy: () => listeners.clear(),
-  });
+  return Object.freeze({ getState: () => state, setActiveStep, setStepStatus, subscribe, destroy: () => listeners.clear() });
 }
 
 /**
- * Label each step and name the one to do next.
+ * Label each stage and name the next unfinished reachable task.
  *
- * COMPLETE  — the step's own controller reported it done.
- * CURRENT   — the step being viewed.
- * READY     — reachable, not yet done.
- * BLOCKED   — not reachable; blockedReason says what would unblock it.
- *
- * "Next" is the first step that is reachable and not yet complete, which is
- * the one honest answer available from a projection this thin: it never
- * claims a later step is reachable just because an earlier one finished.
- * When every reachable step is complete there is no next step, and when the
- * next one is blocked the guidance says so rather than pointing at a button
- * that will not respond.
+ * CURRENT wins over COMPLETE for the status label because the completion
+ * overlay is rendered independently. This lets an engineer remain visibly in
+ * Output after a run while the rail still records that Output evidence exists
+ * and Export is the next task.
  */
 export function deriveLfeaPipelineStepGuidance(steps, stepAvailability, activeStepId) {
   const statuses = {};
   for (const step of steps) {
     const row = stepAvailability[step.stepId];
-    statuses[step.stepId] = row.complete
-      ? 'COMPLETE'
-      : step.stepId === activeStepId
-        ? 'CURRENT'
+    statuses[step.stepId] = step.stepId === activeStepId
+      ? 'CURRENT'
+      : row.complete
+        ? 'COMPLETE'
         : row.available ? 'READY' : 'BLOCKED';
   }
   const nextStep = steps.find((step) => {
@@ -134,8 +93,5 @@ export function deriveLfeaPipelineStepGuidance(steps, stepAvailability, activeSt
 }
 
 function withGuidance(steps, value) {
-  return Object.freeze({
-    ...value,
-    guidance: deriveLfeaPipelineStepGuidance(steps, value.stepAvailability, value.activeStepId),
-  });
+  return Object.freeze({ ...value, guidance: deriveLfeaPipelineStepGuidance(steps, value.stepAvailability, value.activeStepId) });
 }

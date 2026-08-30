@@ -3,7 +3,7 @@
 ISSUE_BASIS_ID: IB-0001
 CURRENT_ENDPOINT: EP-0022
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
-UPDATED_AT: 2026-08-30T03:21:00Z
+UPDATED_AT: 2026-08-30T03:23:00Z
 
 ### Original task / acceptance ledger
 TASK-001 | Decide and record the LAFEA.4 production strategy: retain CST/DKT as thin-only or adopt MITC. | COMPLETE | Issue #1536 + PR #1557 comment 5466211854
@@ -41,4 +41,4 @@ Manifest: agents/chains/ADV-LAFEA-1536-SHELL-PRODUCTION/qualification-baselines/
 Status: SATISFIED
 
 ### Current PR / validation state
-Production-adoption source is merged to `main` as `94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d` through exact-head recovery PR #1563. Original Draft PR #1557 is superseded/merged by that exact head. Material leg `LEG-001` remains receipted: base `e28627d561530b9d9e3b54c223333a41fb0ba3cd`, source head `bac9829cea5bcb7ff10c79801cea7bbc6834d06d`. The prior exact material-head LAFEA.4 run `33289538149`, job `99198613322`, ended before checkout with `steps=null`; all engineering/benchmark/release states remain NOT_RUN. EP-0022 establishes the post-merge relay and Issue checkpoint `5466444422`; a relay-only PR will retrigger exact-head qualification without mechanics, workflow, roadmap, tolerance or oracle mutation.
+Production-adoption source is merged to `main` as `94b766d0deb8afb25451d9cf0d5c7d61d63d2b4d` through exact-head recovery PR #1563. Original Draft PR #1557 is superseded/merged by that exact head. Material leg `LEG-001` remains receipted: base `e28627d561530b9d9e3b54c223333a41fb0ba3cd`, source head `bac9829cea5bcb7ff10c79801cea7bbc6834d06d`. The prior exact material-head LAFEA.4 run `33289538149`, job `99198613322`, ended before checkout with `steps=null`; all engineering/benchmark/release states remain NOT_RUN. EP-0022 and Issue checkpoint `5466444422` are carried by Draft relay PR #1566 to retrigger exact-head qualification without mechanics, workflow, roadmap, tolerance or oracle mutation. Merge authority for #1566 remains OWNER_ONLY and is not authorized.

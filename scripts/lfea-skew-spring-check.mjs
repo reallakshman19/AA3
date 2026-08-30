@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   classifyRestraint,
   restraintApproximationCodes,
@@ -24,6 +25,13 @@ import {
   forceEquilibriumCheck,
   momentEquilibriumCheck,
 } from '../src/core/linear-fea-solver/qualification.js';
+import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
+import {
+  authorizeLinearPipingInputXmlPreFlight,
+  prepareLinearPipingInputXmlPreFlight,
+} from '../src/workspace/linear-piping-inputxml-prefea.js';
+import { buildInputXmlRunRequestCase } from '../src/core/linear-piping-analysis-consumer/inputxml-run-request-cases.js';
+import { compileLinearPipingInputXmlAnalysisContext } from '../src/core/linear-piping-analysis-consumer/index.js';
 
 const TOL = 1e-12;
 const K = 1000;
@@ -237,6 +245,56 @@ for (const [dof, direction] of [
   assert.deepEqual(directionalK, axisK, `${dof} directional reduction must exactly equal the legacy axis spring`);
 }
 
+// ------------------------------------------------------ full production exercise
+const exerciseXml = readFileSync('benchmarks/LFEA/SPRING_DRAFT/SkewSpringSupports.xml', 'utf8');
+const intake = createLinearPipingInputXmlIntake(
+  { fileName: 'SkewSpringSupports.xml', content: exerciseXml },
+  { fallbackUnit: 'mm', requestedProfileId: STRICT, requestedCaseIds: ['IXP-W'] },
+);
+const initial = prepareLinearPipingInputXmlPreFlight(intake);
+assert.notEqual(initial.status, 'BLOCK',
+  `skew spring exercise must prepare: ${JSON.stringify(initial.preparation.findings)}`);
+const authorized = initial.solveAuthorized ? initial : authorizeLinearPipingInputXmlPreFlight(initial, {
+  approverIdentity: 'LFEA-SKEW-DRAFT-CHECK',
+  reason: 'Self-authored skew spring exercise; does not clear DRAFT status.',
+});
+const productionConstraint = authorized.preparation.structuralPreparation.compilation.model.constraints
+  .find((row) => row.behavior === 'LINEAR_SPRING' && Array.isArray(row.direction));
+assert.ok(productionConstraint, 'production preparation must compile the skew spring');
+assert.deepEqual(productionConstraint.direction, N);
+assert.equal(productionConstraint.stiffness, 1000000, '1000 N/mm must compile as 1e6 N/m');
+const request = buildInputXmlRunRequestCase({
+  intake: authorized.intake,
+  preparation: authorized.preparation,
+  caseId: 'IXP-W',
+  analysisIdentity: 'SKEW-SPRING-DRAFT-W',
+  analysisRevision: 1,
+});
+const result = compileLinearPipingInputXmlAnalysisContext(request, { factorizationCache: null })
+  .sourceAnalysisContext.analysisResult;
+assert.equal(result.status, 'QUALIFIED', 'skew spring exercise must qualify through the production solver');
+assert.ok(result.limitations.some((row) => row.limitation?.code === 'DRAFT_SPRING_SUPPORT_NO_REFERENCE'),
+  'skew spring solve must retain DRAFT disclosure');
+const execution = result.execution;
+const valueAt = (rows, dof) => {
+  const row = rows.find((entry) => entry.nodeId === productionConstraint.nodeId && entry.dof === dof);
+  assert.ok(row, `missing recovered ${productionConstraint.nodeId}:${dof}`);
+  return row.value;
+};
+const solvedDisplacement = ['UX', 'UY', 'UZ'].map((dof) => valueAt(execution.displacement, dof));
+const solvedReaction = ['UX', 'UY', 'UZ'].map((dof) => valueAt(execution.reactions, dof));
+const solvedQ = N.reduce((sum, component, index) => sum + component * solvedDisplacement[index], 0);
+const expectedReaction = N.map((component) => -productionConstraint.stiffness * solvedQ * component);
+for (let index = 0; index < 3; index += 1) {
+  close(solvedReaction[index], expectedReaction[index], `production skew reaction[${index}]`);
+}
+close(N[0] * solvedReaction[1] - N[1] * solvedReaction[0], 0, 'production reaction parallel to n');
+const totalVerticalReaction = execution.reactions
+  .filter((row) => row.dof === 'UY').reduce((sum, row) => sum + Math.abs(row.value), 0);
+const verticalShare = Math.abs(solvedReaction[1]) / totalVerticalReaction;
+assert.ok(verticalShare > 0.1,
+  `skew spring must carry >10% of vertical reaction, got ${(100 * verticalShare).toFixed(2)}%`);
+
 console.log(JSON.stringify({
   check: 'lfea-skew-spring',
   status: 'PASS',
@@ -250,6 +308,10 @@ console.log(JSON.stringify({
   qualificationForceEquilibrium: forceEquilibrium.status,
   qualificationMomentEquilibrium: momentEquilibrium.status,
   qualificationGroundedSpringCount: forceEquilibrium.groundedSpringCount,
+  productionSolveStatus: result.status,
+  productionCompiledStiffnessNPerM: productionConstraint.stiffness,
+  productionReaction: solvedReaction,
+  productionVerticalReactionSharePercent: Number((100 * verticalShare).toFixed(2)),
   axisAlignedReductionExact: true,
   rigidSkewRefusal: 'MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED',
   disclosure: 'DRAFT_SPRING_SUPPORT_NO_REFERENCE',

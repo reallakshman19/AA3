@@ -2,20 +2,13 @@ export const LFEA_PIPELINE_CASE_SELECTION_PANEL_SCHEMA = 'lfea-pipeline-case-sel
 
 /**
  * The Load-case step's primary control: pick which of the model's own
- * analysis cases to run.
+ * analysis cases belong to the current pre-flight.
  *
- * A piping engineer expects to choose W, W+P1, W+T1, W+P1+T1 -- the standard
- * weight/pressure/thermal combinations -- not to type force components. Those
- * cases are already synthesized by compileInputXmlLinearPhysicalCases from the
- * model's own declared data, so this panel selects among them rather than
- * inventing anything. Applying a selection re-runs governed preparation via
- * setRequestedCaseIds, because the requested case set is sealed into
- * preparation identity and cannot be changed after the fact.
- *
- * Cases the model itself declares as applied force vectors (F1..Fn, from
- * CAESAR FORCESMOMENTS records) are listed separately: CAESAR numbers them
- * into sets that are commonly ALTERNATIVE occasional directions, so they are
- * never summed together and are not offered as a default.
+ * Execution deliberately does not live here. Applying a selection regenerates
+ * governed preparation because the requested case set is sealed into its
+ * identity. The Run step consumes that already-retained requested case set and
+ * invokes the existing analysis callback without changing any engineering
+ * inputs.
  */
 const EMPTY_MESSAGE = 'Load a model and run Error check to see its analysis cases.';
 
@@ -56,7 +49,6 @@ export class LfeaPipelineCaseSelectionPanelController {
     this.elements = createCaseSelectionSection(this.documentRef);
     this.hostElement.append(this.elements.section);
     this.elements.applyButton.addEventListener('click', () => this.applySelection());
-    this.elements.analyzeButton.addEventListener('click', () => this.requestAnalysis());
     this.initialized = true;
     this.refresh();
     return this;
@@ -87,38 +79,30 @@ export class LfeaPipelineCaseSelectionPanelController {
     return available.filter((row) => row.category === 'STANDARD').map((row) => row.caseId);
   }
 
+  /** Case IDs sealed into the currently retained pre-flight. */
+  getAppliedCaseIds() {
+    const ids = this.options.getPreFlight()?.preparation?.requestedCaseIds;
+    return Array.isArray(ids) ? [...ids] : [];
+  }
+
   applySelection() {
     this.error = '';
     try {
       const caseIds = this.getSelectedCaseIds();
       if (caseIds.length === 0) throw new Error('Select at least one analysis case.');
       this.options.onApplyCaseSelection?.(caseIds);
-      // Say what the engineer now has to DO, not just what happened. The
-      // regenerated pre-flight voids any acceptance already given, and the only
-      // previous signal was Analyze quietly refusing with a message pointing at
-      // a step that still looked finished.
-      this.message = `Requested ${caseIds.length} case(s). The pre-flight was regenerated for this `
-        + 'selection, so any acceptance you gave on Error check no longer applies — re-accept there '
-        + 'before analyzing.';
+      this.message = `Requested ${caseIds.length} case(s). The pre-flight was regenerated for this selection. `
+        + 'If Error check requires acceptance again, clear it there; execution then continues on Run.';
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
     }
     this.refresh();
   }
 
-  requestAnalysis() {
-    this.error = '';
-    try {
-      this.options.onAnalyze?.(this.getSelectedCaseIds());
-    } catch (error) {
-      this.error = error instanceof Error ? error.message : String(error);
-      this.refresh();
-    }
-  }
-
   refresh() {
     const available = this.availableCases();
     const selected = new Set(this.getSelectedCaseIds());
+    const applied = new Set(this.getAppliedCaseIds());
     const { list } = this.elements;
     list.replaceChildren();
     if (available.length === 0) {
@@ -130,22 +114,26 @@ export class LfeaPipelineCaseSelectionPanelController {
           list.append(categoryHeading(this.documentRef, row.category));
           lastCategory = row.category;
         }
-        list.append(caseRow(this.documentRef, row, selected.has(row.caseId), (caseId, checked) => {
-          if (checked) this.selected.add(caseId); else this.selected.delete(caseId);
-        }));
+        list.append(caseRow(
+          this.documentRef,
+          row,
+          selected.has(row.caseId),
+          applied.has(row.caseId),
+          (caseId, checked) => {
+            if (checked) this.selected.add(caseId); else this.selected.delete(caseId);
+          },
+        ));
       }
     }
-    // Keep the standing message honest: it was written for the empty state and
-    // would otherwise still say "load a model" with the model's cases listed
-    // right above it.
     if (this.error === '' && available.length > 0 && this.message === EMPTY_MESSAGE) {
-      this.message = `${available.length} case(s) available. Choose which to analyze, then Apply selection.`;
+      this.message = applied.size > 0
+        ? `${applied.size} case(s) are in the current pre-flight. Change the selection here or continue to Run.`
+        : `${available.length} case(s) available. Choose which to analyze, then Apply selection.`;
     }
     if (available.length === 0) this.message = EMPTY_MESSAGE;
     this.elements.status.textContent = this.error === '' ? this.message : this.error;
     this.elements.status.dataset.status = this.error === '' ? 'ok' : 'error';
     this.elements.applyButton.disabled = available.length === 0;
-    this.elements.analyzeButton.disabled = available.length === 0;
     return this;
   }
 
@@ -154,6 +142,7 @@ export class LfeaPipelineCaseSelectionPanelController {
       schema: LFEA_PIPELINE_CASE_SELECTION_PANEL_SCHEMA,
       availableCaseIds: Object.freeze(this.availableCases().map((row) => row.caseId)),
       selectedCaseIds: Object.freeze(this.getSelectedCaseIds()),
+      appliedCaseIds: Object.freeze(this.getAppliedCaseIds()),
     });
   }
 
@@ -184,6 +173,9 @@ function createCaseSelectionSection(doc) {
   section.dataset.role = 'lfea-pipeline-case-selection-panel';
   const title = doc.createElement('h2');
   title.textContent = 'Load cases';
+  const intro = doc.createElement('p');
+  intro.className = 'lfea-pipeline-case-selection__intro';
+  intro.textContent = 'Choose and seal the physical cases for this pre-flight. Run executes them in the next step.';
   const list = doc.createElement('div');
   list.className = 'lfea-pipeline-case-selection__list';
   list.dataset.role = 'lfea-pipeline-case-list';
@@ -193,15 +185,11 @@ function createCaseSelectionSection(doc) {
   applyButton.type = 'button';
   applyButton.dataset.action = 'lfea-pipeline-apply-cases';
   applyButton.textContent = 'Apply selection';
-  const analyzeButton = doc.createElement('button');
-  analyzeButton.type = 'button';
-  analyzeButton.dataset.action = 'lfea-pipeline-analyze';
-  analyzeButton.textContent = 'Analyze';
-  toolbar.append(applyButton, analyzeButton);
+  toolbar.append(applyButton);
   const status = doc.createElement('output');
   status.dataset.role = 'lfea-pipeline-case-selection-status';
-  section.append(title, list, toolbar, status);
-  return { section, list, toolbar, applyButton, analyzeButton, status };
+  section.append(title, intro, list, toolbar, status);
+  return { section, list, toolbar, applyButton, status };
 }
 
 function categoryHeading(doc, category) {
@@ -211,10 +199,11 @@ function categoryHeading(doc, category) {
   return heading;
 }
 
-function caseRow(doc, row, checked, onToggle) {
+function caseRow(doc, row, checked, applied, onToggle) {
   const label = doc.createElement('label');
   label.className = 'lfea-pipeline-case-selection__row';
   label.dataset.caseId = row.caseId;
+  label.dataset.applied = String(applied);
   const input = doc.createElement('input');
   input.type = 'checkbox';
   input.checked = checked;
@@ -224,7 +213,10 @@ function caseRow(doc, row, checked, onToggle) {
   name.textContent = row.label;
   const description = doc.createElement('span');
   description.textContent = row.description;
-  label.append(input, name, description);
+  const custody = doc.createElement('small');
+  custody.className = 'lfea-pipeline-case-selection__custody';
+  custody.textContent = applied ? 'In current pre-flight' : '';
+  label.append(input, name, description, custody);
   return label;
 }
 

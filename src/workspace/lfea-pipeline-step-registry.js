@@ -1,19 +1,36 @@
 /**
  * Routing table for the unified LFEA pipeline shell.
  *
- * Today the piping track is still two independently-governed engines
- * (InputXML source/pre-flight vs. results workbench check/run/output/
- * export) — see the LFEA revamp plan for why. Steps route honestly onto
- * whichever existing engine currently owns that concern, rather than
- * pretending a single engine already spans all six steps.
+ * Step identity is deliberately presentation-only: the registry tells the
+ * shell which existing host owns a concern and how to describe that concern
+ * consistently. It does not authorize source intake, pre-flight, solve,
+ * recovery, publication or export.
  */
 export const LFEA_PIPELINE_STEPS = Object.freeze([
-  Object.freeze({ stepId: 'INPUT', label: 'Input', hostGroup: 'SOURCE' }),
-  Object.freeze({ stepId: 'ERROR_CHECK', label: 'Error check', hostGroup: 'SOURCE' }),
-  Object.freeze({ stepId: 'LOAD_CASE', label: 'Load case', hostGroup: 'LOAD_CASE' }),
-  Object.freeze({ stepId: 'RUN', label: 'Run', hostGroup: 'RESULTS' }),
-  Object.freeze({ stepId: 'OUTPUT', label: 'Output', hostGroup: 'RESULTS' }),
-  Object.freeze({ stepId: 'EXPORT', label: 'Export', hostGroup: 'RESULTS' }),
+  Object.freeze({
+    stepId: 'INPUT', label: 'Input', hostGroup: 'SOURCE', iconId: 'icon-step-input',
+    description: 'Load the engineering model and confirm which source owns the session.',
+  }),
+  Object.freeze({
+    stepId: 'ERROR_CHECK', label: 'Error check', hostGroup: 'SOURCE', iconId: 'icon-step-error-check',
+    description: 'Review pre-flight findings, limitations and authorization before analysis.',
+  }),
+  Object.freeze({
+    stepId: 'LOAD_CASE', label: 'Load case', hostGroup: 'LOAD_CASE', iconId: 'icon-step-load-case',
+    description: 'Choose the physical cases to analyze and keep the current pre-flight in view.',
+  }),
+  Object.freeze({
+    stepId: 'RUN', label: 'Run', hostGroup: 'RESULTS', iconId: 'icon-step-run',
+    description: 'Execute the authorized analysis and surface its qualification state.',
+  }),
+  Object.freeze({
+    stepId: 'OUTPUT', label: 'Output', hostGroup: 'RESULTS', iconId: 'icon-step-output',
+    description: 'Review displacements, support loads, element forces and governing values.',
+  }),
+  Object.freeze({
+    stepId: 'EXPORT', label: 'Export', hostGroup: 'RESULTS', iconId: 'icon-step-export',
+    description: 'Export the currently reviewed result view without changing engineering values.',
+  }),
 ]);
 
 const HOST_GROUPS = Object.freeze(['SOURCE', 'LOAD_CASE', 'RESULTS']);

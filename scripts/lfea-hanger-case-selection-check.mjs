@@ -9,6 +9,7 @@ const breakAll = process.argv.includes('--deliberate-break');
 const breakDefault = breakAll || process.argv.includes('--deliberate-break-default');
 const breakRunGate = breakAll || process.argv.includes('--deliberate-break-run');
 const breakSourceReset = breakAll || process.argv.includes('--deliberate-break-source-reset');
+const breakDefaultSet = breakAll || process.argv.includes('--deliberate-break-default-set');
 const EMPTY_MESSAGE = 'Load a model and run Error check to see its analysis cases.';
 
 const LEGACY = Object.freeze([
@@ -78,11 +79,22 @@ assert.equal(initialCustody.ready, false,
 assert.equal(hanger.run.runAvailability().ready, false,
   'Run must stay blocked until the H-aware Load-case choice is sealed into pre-flight');
 
+const partialDefault = harness([...LEGACY, ...HANGER], ['IXP-WH'], 'HANGER-PARTIAL');
+const partialDefaultCustody = breakDefaultSet
+  ? { ready: partialDefault.preFlight.preparation.requestedCaseIds.some((id) => HANGER_IDS.includes(id)) }
+  : partialDefault.caseSelection.getRunCaseCustody();
+assert.equal(partialDefaultCustody.ready, false,
+  'one applied H case must not satisfy an untouched UI default that displays the full four-case H family');
+
+const supersetDefault = harness([...LEGACY, ...HANGER], [...HANGER_IDS, 'IXP-W'], 'HANGER-SUPERSET');
+assert.equal(supersetDefault.caseSelection.getRunCaseCustody().ready, false,
+  'an applied H-family superset must block when the displayed untouched default does not include the extra case');
+
 hanger.preFlight.preparation.requestedCaseIds = [...HANGER_IDS];
 assert.equal(hanger.caseSelection.getRunCaseCustody().ready, true,
   'an applied H-bearing case family must satisfy Load-case custody');
 assert.equal(hanger.run.runAvailability().ready, true,
-  'Run must become ready after the H-bearing case family is sealed and authorized');
+  'Run must become ready after the complete H-bearing default family is sealed and authorized');
 
 hanger.caseSelection.selectionExplicit = true;
 hanger.caseSelection.selected = new Set(['IXP-W']);
@@ -154,6 +166,8 @@ console.log(JSON.stringify({
   legacyDefault: LEGACY_IDS,
   hangerDefault: HANGER_IDS,
   initialNativeWBlockedForHanger: true,
+  partialDefaultAppliedSetBlocked: true,
+  supersetDefaultAppliedSetBlocked: true,
   appliedHangerFamilyReady: true,
   explicitNonHComparisonAllowed: true,
   changedUnappliedSelectionBlocked: true,
@@ -168,5 +182,6 @@ console.log(JSON.stringify({
     '--deliberate-break-default restores legacy-only default and must fail',
     '--deliberate-break-run bypasses Run custody and must fail',
     '--deliberate-break-source-reset carries stale explicit state into a new source and must fail',
+    '--deliberate-break-default-set accepts any H-bearing subset and must fail',
   ],
 }, null, 2));

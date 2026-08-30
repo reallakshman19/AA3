@@ -128,6 +128,9 @@ export const LAFEA_STAGE_COMPOSITION_BINDINGS = deepFreeze([
   }, 'FEA_MESH_RECOVERY_V1', [
     'SHELL-PATCH-01',
     'SHELL-BEND-01',
+    'LAFEA4-CYL-01',
+    'LAFEA4-PRESS-01',
+    'LAFEA4-COMB-01',
   ]),
   binding('LAFEA.5', 'LAFEA.COMPOSITION.TRUNNION_FOOTPRINT/V1', {
     normalizer: IDS.normalizer.trunnion,

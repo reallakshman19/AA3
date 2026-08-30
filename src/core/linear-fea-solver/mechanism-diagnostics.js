@@ -7,11 +7,9 @@ import { compareAscii } from './solver-contract.js';
  *
  * Two independent detectors feed the same failure report:
  *  - a topological one, here, that finds a whole rigid body with no physical
- *    restraint touching any of its nodes (the gross case section 15.5 asks
- *    for: "a genuine mechanism ... must be caught and reported by node/DOF");
- *  - a numerical one, in `factorization.js`, that reads the LDLT pivots for a
- *    partial mechanism the topology check cannot see (for example a
- *    connected but under-restrained rotational DOF).
+ *    restraint touching any of its nodes;
+ *  - a numerical one, in `factorization.js`, that reads the pivots for a
+ *    partial mechanism the topology check cannot see.
  */
 
 class UnionFind {
@@ -39,18 +37,20 @@ class UnionFind {
 }
 
 /**
- * Group model nodes into connected components under element adjacency only
- * (rigid links/kinematic relations are out of this package's scope; see the
- * B-3.3 scope boundary). Components are identified by their lexicographically
- * least member nodeId so the result is deterministic and reproducible.
- *
- * @param {object} model Sealed `fea-linear-model/v1`.
- * @returns {Array<{componentId:string, nodeIds:Array<string>}>}
+ * Group model nodes into connected components under mechanical adjacency.
+ * Frame elements and exact connected-node springs both transmit internal
+ * action between nodes. A grounded spring does not create another model node
+ * and therefore does not add an adjacency edge.
  */
 export function connectedComponents(model) {
   const nodeIds = model.nodes.map((node) => node.nodeId);
   const unionFind = new UnionFind(nodeIds);
   for (const element of model.elements) unionFind.union(element.nodeI, element.nodeJ);
+  for (const constraint of model.constraints) {
+    if (constraint.behavior === 'LINEAR_SPRING' && typeof constraint.connectedNodeId === 'string') {
+      unionFind.union(constraint.nodeId, constraint.connectedNodeId);
+    }
+  }
   const groups = new Map();
   for (const nodeId of nodeIds) {
     const root = unionFind.find(nodeId);
@@ -65,18 +65,21 @@ export function connectedComponents(model) {
     .sort((left, right) => compareAscii(left.componentId, right.componentId));
 }
 
+function isGroundRestraint(constraint) {
+  if (constraint.behavior === INACTIVE_ANALYSIS_DOF_BEHAVIOR) return false;
+  if (constraint.behavior === 'LINEAR_SPRING' && constraint.connectedNodeId) return false;
+  return true;
+}
+
 /**
- * Connected components with zero physical constraints (FIXED,
- * PRESCRIBED_SLOT or LINEAR_SPRING) touching any member node: an
- * unconditional rigid-body mechanism, independent of any numerical pivot.
- * Analysis-only inactive DOFs do not count as physical restraints.
- *
- * @param {object} model Sealed `fea-linear-model/v1`.
- * @returns {Array<{componentId:string, nodeIds:Array<string>}>}
+ * Connected components with zero physical ground restraints touching any
+ * member node. Connected-node springs are internal stiffness and therefore do
+ * not make a free assembly grounded merely because one spring endpoint lies in
+ * the component.
  */
 export function detectFloatingComponents(model) {
   const restrainedNodeIds = new Set(model.constraints
-    .filter((constraint) => constraint.behavior !== INACTIVE_ANALYSIS_DOF_BEHAVIOR)
+    .filter(isGroundRestraint)
     .map((constraint) => constraint.nodeId));
   return connectedComponents(model).filter(
     (component) => !component.nodeIds.some((nodeId) => restrainedNodeIds.has(nodeId)),

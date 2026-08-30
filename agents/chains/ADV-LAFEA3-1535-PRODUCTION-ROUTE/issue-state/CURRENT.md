@@ -2,7 +2,7 @@
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0029
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0031
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1535
 SUBORDINATE_VV_WORK_ITEM: github:reallaksh19/Advanced_Analysis#1569
 ENGINEERING_MERGE_HEAD: 0f8b9443d9e578c5509f880713438ddc0b8c0fa4
@@ -23,7 +23,8 @@ MERGE_AUTHORIZED: FALSE
 | TASK-005 | PASS_STATIC_SOURCE | Richards Lamé source custody and independent oracle record are merged. |
 | TASK-006 | PARTIAL | Visible Run -> Convergence -> Results composition is merged; real engineer/browser replay remains NOT_RUN. |
 | TASK-007 | PASS_STATIC_SOURCE | Frozen BM-005 package/report contract is merged: Q8 quarter-annulus, four-level ladder, fixed physical probe, convergence-policy binding, negative control and audit hashes. |
-| TASK-008 | PASS_WORKFLOW_WIRING / EXECUTION_NOT_RUN | Owner-authorized dedicated BM-005 read-only workflow exists in Draft #1581 and triggers on the intended PR head, but hosted jobs terminate with `steps=null` before checkout. |
+| TASK-008 | PASS_WORKFLOW_WIRING / EXECUTION_NOT_RUN | Dedicated read-only BM-005 workflow in Draft #1581 triggers correctly but hosted jobs terminate before checkout with `steps=null`. |
+| TASK-009 | PASS_STATIC_SOURCE | Workflow trigger hygiene fixed: relay-only chain files no longer schedule BM-005; executable BM-005 scripts, frozen BM005 data and workflow edits remain triggering inputs. |
 
 ## Frozen BM-005 package
 
@@ -46,23 +47,38 @@ u_expected=0.003819703196347032 mm
 
 Primary oracle: K. L. Richards, *Design Engineer's Handbook*, 1st ed., CRC Press, 2012, Ch.6 p.157 Eqs.6.3–6.4 and §6.3 p.158. Production output cannot alter the frozen oracle, probe, mesh ladder, convergence-policy constants or acceptance after observations.
 
-## LEG-009 hosted runner
+## Dedicated hosted runner — Draft #1581
 
 Owner authorized workflow-YAML scope by saying `proceed next` after EP-0027 explicitly named that authority gate.
 
-Draft PR #1581 adds `.github/workflows/lafea3-bm005-qualification.yml` with `contents: read` only. It checks out the exact event head, asserts exact HEAD/clean tree/diff, uses Node 22, syntax-checks the BM-005 scripts, executes the existing harness, captures stdout/stderr/exit code under `/tmp`, uploads receipts always, and propagates the harness exit.
+`.github/workflows/lafea3-bm005-qualification.yml` has `contents: read` only. It checks out the exact event head, asserts exact HEAD/clean tree/diff, uses Node 22, syntax-checks the BM-005 scripts, executes the existing harness, captures stdout/stderr/exit code under `/tmp`, uploads receipts always, and propagates the harness exit.
 
-First dedicated probe:
+Trigger set is now limited to:
 
 ```text
-PR head: cafc767334b91f71294de1efe2b4f3ed483941a0
-workflow run: 33321472589
+scripts/lafea.3-bm005-ordinary-route-check.mjs
+scripts/lafea.3-bm005-report-contract.mjs
+validation/lafea-benchmark-data/BM005/**
+.github/workflows/lafea3-bm005-qualification.yml
+```
+
+Relay markdown is intentionally excluded so endpoint/ACTIVE synchronization does not recursively rerun BM-005 or move the candidate head.
+
+Execution evidence:
+
+```text
+initial PR head: cafc767334b91f71294de1efe2b4f3ed483941a0
+run: 33321472589
 attempt-1 job: 99284076931 -> completed/failure, steps=null
 artifacts: []
 rerun job: 99284139696 -> completed/failure, steps=null
+
+final workflow-change head: e6b8db9c16da2f9d715a1029582e1ea5da8579d8
+run: 33321687917
+job: 99284653530 -> completed/failure, steps=null
 ```
 
-This proves workflow trigger/wiring only. It does not prove checkout, syntax, BM-005, or any numerical boundary. The correct classification is `NOT_RUN_EXECUTION_BLOCKED`, not BM-005 FAIL.
+This proves scheduler/trigger recognition only. No checkout, syntax check, BM-005 harness, report or numerical boundary has executed. The correct classification remains `BM-005 NOT_RUN_EXECUTION_BLOCKED`, not FAIL.
 
 ## Benchmark / qualification truth
 
@@ -81,11 +97,11 @@ RELEASE_QUALIFIED: FALSE
 
 ## Protected unchanged authority
 
-No changes to element formulations, stiffness/load assembly, solver, recovery, mesher mathematics/quality thresholds, pressure semantics, physical-probe mathematics, convergence mathematics/policy, frozen benchmark oracle/tolerances, Owner roadmap, LAFEA.4/.5 numerical semantics, code assessment or release authority. Workflow authority is limited to the single bounded runner in #1581.
+No changes to element formulations, stiffness/load assembly, solver, recovery, mesher mathematics/quality thresholds, pressure semantics, physical-probe mathematics, convergence mathematics/policy, frozen benchmark oracle/tolerances, report semantics, Owner roadmap, LAFEA.4/.5 numerical semantics, code assessment or release authority. Workflow authority is limited to the single bounded runner in #1581.
 
 ## Exact next action
 
-Do not add another workflow and do not patch engineering code. Obtain a functioning hosted runner or faithful clean local checkout and execute the already-retained BM-005 harness. The evidence classifications are:
+Do not add another workflow and do not patch engineering code. Obtain a functioning hosted runner or faithful clean local checkout and execute the already-retained BM-005 harness.
 
 - failure before checkout/step 1 -> `BM-005 NOT_RUN_EXECUTION_BLOCKED`;
 - harness machine-readable `status=FAIL` or pre-report rejection -> true BM-005 failure boundary; isolate it and create fresh pre-work before patching;

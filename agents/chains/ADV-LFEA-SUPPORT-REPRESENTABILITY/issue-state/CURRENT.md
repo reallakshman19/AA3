@@ -3,144 +3,149 @@
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1551
 CHAIN_ID: ADV-LFEA-SUPPORT-REPRESENTABILITY
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0027
-STATE_AS_OF: 2026-08-31T04:21:32Z
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0028
+STATE_AS_OF: 2026-08-31T04:40:23Z
 PR: #1553 DRAFT
 BRANCH: codex/lfea-support-representability-1551
 ENGINEERING_MATERIAL_BASIS_HEAD: f8ae425e710adb9e250d0be1247036d63f7943dc
 CNODE_TOPOLOGY_TEST_HEAD: a2bb2fbcb44545c6cccba78be4cea5e4d8b3f903
 SPRING_RATE_RESOLVER_TEST_HEAD: ef275dfea07000b2dd3acaba4c462443c231cade
 REFUSAL_CLASSIFIER_TEST_HEAD: 5506b8d90710a310120732fb17b85a2c2b13490f
-ENDPOINT_FILE_COMMIT: ff3bc0f31a996d51244fbbd54317f56430b96b4d
-LIVE_MAIN_AT_REGROUND: 75c670424ef46888f0a1c02188a9ea8d42b5209f
+CNODE_SPRING_ASSEMBLY_TEST_HEAD: e3f6fed9bc20fba4e7c7a0f02f828e81c955d8e6
+ENDPOINT_FILE_COMMIT: PENDING_EP0028_PUBLICATION
+LIVE_MAIN_AT_REGROUND: 2bade51fc8207db4cc7934de3b8cb6771e41e9e8
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COMMON_LIVE_MAIN_AT_REGROUND: 293a3db7993a6945c01adc592a7ff14a339c504a
 COMMON_PROTOCOL_STATUS: CURRENT
 COORDINATION_STATE: SAFE_FOR_BOUNDED_EXACT_SUBGATES_FULL_INPUTXML_REGROUND_REQUIRED
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5473726604
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0028_PUBLICATION
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 MERGE_AUTHORITY: EXPLICIT_APPROVED_MERGE_ONLY
 MERGE_TRIGGER: APPROVED MERGE
 
 ## Original task / acceptance ledger
 
 TASK-001 | HANGER terminal refusal closure | PARTIAL | predefined positive-rate/positive-cold-load/integer-count Y-vertical subset lands DRAFT; malformed/unresolved variants fail closed; exact incomplete-HANGER classifier refusal PASS/red; external CAESAR reference absent
-TASK-002 | CNODE terminal refusal closure | PARTIAL | finite bidirectional CNODE spring lands exact DRAFT; rigid CNODE deliberately refused pending MPC; exact topology and rigid-CNODE classifier subgates PASS/red but full production mechanics unexecuted
-TASK-003 | skew-direction terminal refusal closure | PARTIAL | finite bidirectional skew spring lands exact `k(n⊗n)` DRAFT; rigid skew deliberately refused pending MPC; exact rigid-skew classifier refusal PASS/red but finite production mechanics unexecuted
+TASK-002 | CNODE terminal refusal closure | PARTIAL | finite bidirectional CNODE spring lands DRAFT; topology and constitutive/triplet assembly exact PASS/red; rigid CNODE deliberately refused pending MPC; InputXML structural declaration/compiler/full production solve/load-share remain unexecuted
+TASK-003 | skew-direction terminal refusal closure | PARTIAL | finite bidirectional skew spring lands exact `k(n⊗n)` DRAFT; rigid skew classifier refusal exact PASS/red; finite skew assembly/full production mechanics unexecuted
 TASK-004 | exercise + refusal models per feature | PASS_SOURCE | positive skew/CNODE/HANGER plus dedicated rigid-skew, rigid-CNODE and incomplete-HANGER refusal fixtures retained independently; combined legacy refusal retained as extra regression
-TASK-005 | feature checks + observed deliberate-break red | PARTIAL | exact Git-blob local PASS/red observed for reaction aggregation, mixed unilateral review, HANGER case/run custody, blocked-execution custody, CNODE topology, spring-rate resolver and three terminal-refusal classifiers; finite skew/CNODE/HANGER production-mechanics breaks remain unobserved
+TASK-005 | feature checks + observed deliberate-break red | PARTIAL | exact Git-blob PASS/red now observed for reaction aggregation, mixed unilateral review, HANGER case/run custody, blocked-execution custody, CNODE topology, spring-rate resolver, three terminal-refusal classifiers and finite-CNODE assembly; finite skew/HANGER full mechanics and full CNODE InputXML solve remain unobserved
 TASK-006 | frozen BM4_L non-regression | BLOCKED | frozen target 96.76 / 93.00 / 95.82 / 7.99%; exact-head BM4 remains NOT_RUN_RUNTIME
 TASK-007 | spring-rate units converted/fail closed | PARTIAL | resolver boundary exact PASS with N/mm=1000 plus raw-rate and unresolved-factor-1 reds; broader structural `INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED` gate remains NOT_RUN
 TASK-008 | DRAFT disclosure in UI/results | PASS_SOURCE | `DRAFT_SPRING_SUPPORT_NO_REFERENCE` retained through preparation/result/UI; independent CAESAR reference required to clear
 TASK-009 | protected scope | PASS_SOURCE | reducer/parity/tolerance/Timoshenko/pressure/code/workflow/roadmap boundaries preserved
-TASK-010 | blocked-execution result custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | orchestration, recovery, retained composition and public relationship guards verified from exact blobs; normal PASS and retained-composition deliberate-break red observed
-TASK-011 | mixed fixed + directional ground-spring reaction presentation | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | raw same-node/same-DOF support contributions may coexist; visible nodal/Output/summary/sort/CSV aggregation gate PASS and break red observed
-TASK-012 | mixed one-way + directional-spring lift-off review | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | exact spring-action isolation, missing-displacement fail-closed and ordinary compatibility PASS; deliberate-break red observed
-TASK-013 | per-feature terminal refusal custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | all three retained negative fixtures resolve to their dedicated terminal refusal under STRICT and APPROXIMATE classifier profiles; CNODE/skew/HANGER individual falsifiers plus aggregate break observed red; broader native-preflight refusal gate still NOT_RUN
-TASK-014 | HANGER Load-case → Run custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | H-bearing default/applied-set/source-reset/Run custody PASS; four individual deliberate-break modes and aggregate break observed red
-TASK-015 | CNODE topology/mechanism custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | connected-node spring joins endpoints into one mechanical component but remains internal/not-ground; exact normal PASS and deliberate-break red observed
-TASK-016 | spring-rate resolver custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | exact force-per-length quotient, N/mm 1000x conversion and unresolved-value withholding; two distinct deliberate-break reds observed
-TASK-017 | terminal-refusal classifier custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | ten-file exact closure; rigid CNODE, rigid skew and incomplete HANGER named refusals PASS under STRICT/APPROXIMATE; four break runs red
+TASK-010 | blocked-execution result custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | orchestration, recovery, retained composition and public relationship guards verified; normal PASS and retained-composition red observed
+TASK-011 | mixed fixed + directional ground-spring reaction presentation | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | visible nodal/Output/summary/sort/CSV aggregation gate PASS/red
+TASK-012 | mixed one-way + directional-spring lift-off review | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | exact spring-action isolation and missing-displacement fail-closed PASS/red
+TASK-013 | per-feature terminal refusal custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | dedicated rigid CNODE, rigid skew and incomplete HANGER classifier refusals exact PASS/red under STRICT and APPROXIMATE; native preflight gate still NOT_RUN
+TASK-014 | HANGER Load-case → Run custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | H-bearing default/applied-set/source-reset/Run custody PASS; four individual breaks + aggregate break red
+TASK-015 | CNODE topology/mechanism custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | connected-node spring joins endpoints mechanically but remains internal/not-ground; normal PASS and lost-connected-node red
+TASK-016 | spring-rate resolver custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | exact force-per-length quotient, N/mm 1000x conversion and unresolved-value withholding; two reds
+TASK-017 | terminal-refusal classifier custody | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | ten-file closure; rigid CNODE, rigid skew and incomplete HANGER named refusals PASS; four break runs red
+TASK-018 | finite CNODE spring constitutive/triplet assembly | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | fifteen-file closure; exact `B=k(n⊗n)` and `[+B -B; -B +B]`, symmetry, equal/opposite endpoint forces, strain energy and common-translation invariance PASS; lost-connected-node break red at `Kij[0,0]`
 
 ## Input ledger
 
-INPUT-001 | Live issue #1551 | AVAILABLE | source explicitly identifies LFEA and original qualification challenge
-INPUT-002 | SPRING_DRAFT provenance/fixtures | AVAILABLE | self-authored exercise authority only; provenance refreshed at EP-0021
+INPUT-001 | Live issue #1551 | AVAILABLE
+INPUT-002 | SPRING_DRAFT provenance/fixtures | AVAILABLE_SELF_AUTHORED | exercise authority only; cannot clear feature DRAFT
 INPUT-003 | BM4 provenance + BM4_L.ACCDB | AVAILABLE | real CAESAR non-regression reference, not target-support positive evidence
-INPUT-004 | Current production source on PR #1553 | AVAILABLE | finite skew/CNODE/predefined HANGER and custody patches landed
-INPUT-005 | Independent CAESAR skew reference | UNRESOLVED | REF-SKEW-01 package defined; raw run absent
-INPUT-006 | Independent CAESAR CNODE reference | UNRESOLVED | REF-CNODE-01 package defined; raw run absent
-INPUT-007 | Independent CAESAR HANGER reference | UNRESOLVED | REF-HGR-01 package defined; raw run absent
-INPUT-008 | Exact-head execution path | PARTIAL_AVAILABLE | hosted Actions still creates no executable steps; bounded local execution admitted only when complete gate dependency files hash-verify to exact repository blobs
-INPUT-009 | Mixed fixed + directional spring exercise | AVAILABLE_SELF_AUTHORED | node 40 rigid UX + skew spring fixture/check authored; production solve execution absent
-INPUT-010 | Visible reaction aggregation guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | normal PASS and deliberate-break red observed
-INPUT-011 | Mixed unilateral reaction review guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | normal PASS and deliberate-break red observed
-INPUT-012 | Dedicated rigid CNODE refusal model | EXECUTED_CLASSIFIER_EXACT_HEAD | `UnsupportedCnodeSupport.xml`; rigid refusal PASS and finite-stiffness break red
-INPUT-013 | Dedicated incomplete HANGER refusal model | EXECUTED_CLASSIFIER_EXACT_HEAD | `UnsupportedHanger.xml`; incomplete-data refusal PASS and cold-load break red
-INPUT-014 | Dedicated rigid skew refusal model | EXECUTED_CLASSIFIER_EXACT_HEAD | `UnsupportedSkewSupport.xml`; skew refusal PASS and axis-alignment break red
-INPUT-015 | HANGER case-selection/Run custody guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | normal PASS, four individual breaks + aggregate break observed red
-INPUT-016 | Blocked-execution custody guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | check + four exact source blobs; normal PASS and retained-composition break red observed
-INPUT-017 | CNODE topology/mechanism guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | fourteen-file closure hash-verified; normal PASS and lost-connected-node red observed
-INPUT-018 | Spring-rate resolver guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | two exact blobs; normal PASS, raw-rate red and unresolved-factor-1 red observed
-INPUT-019 | Broad spring-rate structural-unit guard | AVAILABLE_SOURCE_NOT_RUN | deliberate breaks authored but structural compiler closure not exact-executed
-INPUT-020 | Dedicated refusal classifier guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | ten exact blobs; normal PASS plus CNODE/skew/HANGER individual and aggregate reds
+INPUT-004 | Current production source on PR #1553 | AVAILABLE | finite skew/CNODE/predefined HANGER patches plus isolated spring assembly owner landed
+INPUT-005 | Independent CAESAR skew reference | UNRESOLVED | REF-SKEW-01 absent
+INPUT-006 | Independent CAESAR CNODE reference | UNRESOLVED | REF-CNODE-01 absent
+INPUT-007 | Independent CAESAR HANGER reference | UNRESOLVED | REF-HGR-01 absent
+INPUT-008 | Exact-head execution path | PARTIAL_AVAILABLE | hosted Actions still creates no executable steps; bounded local execution admitted only after complete closure Git-blob verification
+INPUT-009 | Mixed fixed + directional spring exercise | AVAILABLE_SELF_AUTHORED | production solve execution absent
+INPUT-010 | Visible reaction aggregation guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL
+INPUT-011 | Mixed unilateral reaction review guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL
+INPUT-012 | Dedicated rigid CNODE refusal model | EXECUTED_CLASSIFIER_EXACT_HEAD
+INPUT-013 | Dedicated incomplete HANGER refusal model | EXECUTED_CLASSIFIER_EXACT_HEAD
+INPUT-014 | Dedicated rigid skew refusal model | EXECUTED_CLASSIFIER_EXACT_HEAD
+INPUT-015 | HANGER case-selection/Run custody guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL
+INPUT-016 | Blocked-execution custody guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL
+INPUT-017 | CNODE topology/mechanism guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL
+INPUT-018 | Spring-rate resolver guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL
+INPUT-019 | Broad spring-rate structural-unit guard | AVAILABLE_SOURCE_NOT_RUN
+INPUT-020 | Dedicated refusal classifier guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL
+INPUT-021 | Finite CNODE spring assembly guard | EXECUTED_EXACT_HEAD_GIT_BLOB_LOCAL | fifteen exact blobs; normal PASS and lost-connected-node red
 
 ## Benchmark / oracle ledger
 
-BM-001 | BM4_L frozen non-regression | NOT_RUN | no executable current-basis BM4 evidence
+BM-001 | BM4_L frozen non-regression | NOT_RUN | target 96.76 / 93.00 / 95.82 / 7.99%
 BM-002 | Self-authored constitutive/equilibrium support invariants | PASS_SOURCE | cannot clear feature DRAFT
-BM-003 | Exact-head deliberate-break red observations | PARTIAL | reaction aggregation, mixed unilateral, HANGER case/run, blocked-execution, CNODE topology, spring-rate resolver and all three refusal classifiers observed red; finite feature production-mechanics breaks still NOT_RUN
-BM-004 | External CAESAR skew/CNODE/HANGER qualification | NOT_RUN | raw independent feature packages absent
-BM-005 | Blocked-execution custody guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | normal exit 0; retained-composition deliberate break exit 1
-BM-006 | Mixed fixed + directional spring reaction-row exercise | NOT_RUN | authored/wired; production solve dependency closure not yet executed
-BM-007 | Visible reaction aggregation view-model guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | normal PASS and deliberate-break red observed
-BM-008 | Mixed unilateral + directional-spring review guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | normal PASS and deliberate-break red observed
-BM-009 | Dedicated three-feature native-preflight refusal fixture gate | NOT_RUN | full InputXML dependency closure not yet materialized; classifier-level custody is now exact PASS/red
-BM-010 | HANGER case-selection/Run custody guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | normal PASS; four individual breaks + aggregate break red
-BM-011 | CNODE topology/mechanism guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | normal PASS; deliberate break removes connected-node custody and turns adjacency assertion red
-BM-012 | Spring-rate resolver unit guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | N/m=1, N/cm=100, N/mm=1000, lbf/in=175.12683524647636; 400 N/mm→400000 N/m; unresolved→null; two breaks red
-BM-013 | Broad spring-rate structural fail-closed guard | NOT_RUN | structural compiler dependency closure not yet materialized
-BM-014 | Dedicated terminal-refusal classifier guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | ten-file closure; normal PASS; CNODE/skew/HANGER individual breaks and aggregate break exit 1
+BM-003 | Exact-head deliberate-break observations | PARTIAL | CNODE assembly red now observed in addition to prior bounded reds; full feature production mechanics remain incomplete
+BM-004 | External CAESAR skew/CNODE/HANGER qualification | NOT_RUN_EXTERNAL
+BM-005 | Blocked-execution custody guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
+BM-006 | Mixed fixed + directional spring production exercise | NOT_RUN
+BM-007 | Visible reaction aggregation view-model guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
+BM-008 | Mixed unilateral + directional-spring review guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
+BM-009 | Dedicated three-feature native-preflight refusal fixture gate | NOT_RUN
+BM-010 | HANGER case-selection/Run custody guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
+BM-011 | CNODE topology/mechanism guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
+BM-012 | Spring-rate resolver unit guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
+BM-013 | Broad spring-rate structural fail-closed guard | NOT_RUN
+BM-014 | Dedicated terminal-refusal classifier guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
+BM-015 | Finite CNODE spring assembly guard | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | `k=2000`, `n=[0.6,0.8,0]`, exact two-node block and invariants; connected-node-loss falsifier exit 1
 
-## Exact-head execution provenance
+## Exact-head execution provenance — EP-0028
 
 Local runtime: Node v22.16.0.
+Test/material head: `e3f6fed9bc20fba4e7c7a0f02f828e81c955d8e6`.
 
-Previously admitted exact evidence remains recorded in EP-0023 through EP-0026.
+Complete static runtime closure: fifteen files, all reproduced their repository Git blob SHA before execution:
 
-### Dedicated terminal-refusal classifier closure
+- `scripts/lfea-cnode-spring-assembly-check.mjs` `4f321a11f3f995dc13620302f073135b47c4209c`;
+- `src/core/linear-fea-solver/spring-assembly.js` `cc1ffcd5e2766f17e047e32d6a0b2581c115c2c8`;
+- `src/core/linear-fea-solver/dof-map.js` `9c36638457ad01cb09ee76cc81da0e92f06d1015`;
+- `src/core/linear-fea-solver/solver-contract.js` `40f4ca1b902b64f31b1a1d69bd8bfd58d18fe24a`;
+- `src/core/linear-fea-contract/model-schema.js` `5c0cb63c412b3b29da39c575cffe19b9614eabc3`;
+- `src/core/linear-fea-contract/conventions.js` `981f68b25f0a0f6131cdbc1f87b6297bf9f0f03f`;
+- `src/core/linear-fea-contract/identifiers.js` `aafb6c786094fd97649af0465a876f407fc9fde9`;
+- shared contract errors `c0d1bfd1f148f578f7a2f5bba8cdaa954fce0234`;
+- declared-value guard `6d7b3886031fcb5e6379da113d4bf51db4a8cfc5`;
+- shared numeric guard `7271d9e770091c387978ecd8e5a795b4fbd3e3a9`;
+- shared validation guard `fa0de7c8a43af1be734884294990350ca433bb42`;
+- shared-piping canonical-json `481496832cb98b51c986b1f58d72309af7f787f6`;
+- shared-piping immutable `c97f3d11b1e19b24f0d63e80e71814d71934411d`;
+- shared-primitives canonical-json `e6e16472439d5d20938115cf253d7057b1a2d5c7`;
+- shared-primitives immutable `cb1d36440380be760769de01f143ac95b95a71c9`.
 
-Test head: `5506b8d90710a310120732fb17b85a2c2b13490f`.
+Normal command: `node --experimental-default-type=module scripts/lfea-cnode-spring-assembly-check.mjs` → exit 0/PASS.
 
-All ten local files reproduced repository Git blob SHAs before execution:
+Observed: `B=[[720,960,0],[960,1280,0],[0,0,0]]`; exact `[+B -B; -B +B]`; 16 nonzero spring triplets; `q=-0.011000000000000005`; `Fi=[-13.200000000000006,-17.60000000000001,0]`; `Fj=-Fi`; strain energy `0.12100000000000002`; common-translation force/energy invariance; pure common translation gives zero force/energy.
 
-- check `0c581a1b6881c9fc0440fc4ec9f21b2f54b75be8`;
-- restraint classifier `3f4dbd9fb2cd3d149144093b499f3edec088fbb1`;
-- predefined HANGER classifier `e65355b5b663ad2acea422ce400890327b41db38`;
-- model-health profile `17da684daabd128c5fc4b838c9b63f8b8848c44e`;
-- spring-rate resolver `50094a2bd8b2fd54374b06e33f82484e27cc774b`;
-- restraint-type mutation `8a237cbdca7b2281825faa5d870d3aa1964a9ea6`;
-- CAESAR unset sentinel `ca86dc57408ddb727c53d14d45cfe477ae437a15`;
-- CNODE fixture `3054e5208a5662e85c7fa1278eaccd79911a2f33`;
-- skew fixture `2b2c13c95b792c37b693ddd6c338862f573585b3`;
-- HANGER fixture `59e077d2e807c630cb62dc0f49e0efb4a844859b`.
+Break command removes `connectedNodeId` in memory and retains the two-node assertions → exit 1 at `Kij[0,0]: expected -720, got 0`.
 
-Observed normal: exit 0/PASS under STRICT and APPROXIMATE. Named codes: `MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED`, `MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED`, `MODEL_HANGER_PREDEFINED_DATA_INCOMPLETE`.
-
-Observed falsifiers: CNODE finite-stiffness break exit 1; skew axis-alignment break exit 1; HANGER cold-load completion break exit 1; aggregate break exit 1. Each individual red reports actual limitation `null` versus the retained named refusal.
-
-`21733574... -> 5506b8d9...` changes only `scripts/lfea-support-refusal-classifier-check.mjs`; no production numerical authority changed.
+Refactor audit: `f55cad0d... -> e3f6fed9...` changes only three files: add 48-line `spring-assembly.js`, add 126-line check, and modify `assembly.js` +2/-50. The moved spring arithmetic/branching is unchanged and `assembly.js` still invokes `buildSpringTriplets` before triplet summation.
 
 ## Drift / authority ledger
 
-DRIFT-001 | Common `4b3a7a9c... -> 293a3db7...` | STATUS_ONLY / AUTHORITY_DISJOINT | exactly one Grade-9 IOQM commit; engineering-pr-delivery-v2 unchanged
-DRIFT-002 | Advanced_Analysis live main `75c67042...` | UNCHANGED_DURING_LEG | broad pre-existing LAFEA/InputXML drift remains outside bounded exact micro-gates
-DRIFT-003 | EP-0025 head `614d274e... -> ef275dfe...` | TEST_ONLY | spring-rate resolver test files only
-DRIFT-004 | EP-0026 head `21733574... -> 5506b8d9...` | TEST_ONLY | dedicated refusal-classifier script only; production classifiers/fixtures unchanged
+DRIFT-001 | Common `4b3a7a9c... -> 293a3db7...` | STATUS_ONLY / AUTHORITY_DISJOINT | Grade-9 IOQM only; engineering-pr-delivery-v2 unchanged
+DRIFT-002 | Advanced_Analysis `75c67042... -> 2bade51f...` | AUTHORITY_DISJOINT_FOR_CNODE_ASSEMBLY_GATE | 52 commits; compare delta contains only WRC/LAFEA chain/qualification custody files, none of the EP-0028 runtime closure, assembly owner, InputXML support owner or target benchmark files
+DRIFT-003 | `f55cad0d... -> e3f6fed9...` | BOUNDED_SUPPORT_ASSEMBLY_REFACTOR_PLUS_TEST | exactly three files; no solver backend/recovery/tolerance/oracle/reference/workflow change
 
 ## Roadmap ledger
 
 RM-001 | docs/OWNER_ROADMAP.md@3d6cd5cf00f0bdd4e4fcff644f20f85a89c7ea60 | OWNER_ROADMAP | PRIMARY | ALIGNED | read-only
-RM-002 | Common engineering-pr-delivery-v2@4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02 | PROCESS_POLICY | PRIMARY | ALIGNED | live Common unchanged during this leg
+RM-002 | Common engineering-pr-delivery-v2@4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02 | PROCESS_POLICY | PRIMARY | ALIGNED
 
 ## Owner qualification baseline
 
-Current question set: `QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0027`.
-Qualification scope: `QSCOPE-1551-TERMINAL-REFUSAL-CLASSIFIERS`.
-Qualification basis: `5506b8d90710a310120732fb17b85a2c2b13490f`.
-The original five issue challenges remain controlling. QS-0027 promotes only dedicated classifier refusal custody and keeps native preflight, solver mechanics, BM4 and external reference gates unresolved.
+Current question set: `QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0028`.
+Qualification scope: `QSCOPE-1551-FINITE-CNODE-SPRING-ASSEMBLY`.
+Qualification basis: `e3f6fed9bc20fba4e7c7a0f02f828e81c955d8e6`.
+The original five issue challenges remain controlling. QS-0028 promotes only finite CNODE constitutive/triplet assembly and retains the remainder as NOT_RUN.
 
 ## Current blockers
 
-1. Native InputXML dedicated refusal gate remains NOT_RUN even though its underlying three terminal classifiers are now exact PASS/red.
-2. Mixed fixed+skew production check + break, finite skew/CNODE/HANGER production-mechanics checks, support/full aggregates, imports/lint/diff and BM4_L remain NOT_RUN.
-3. Broad structural unit gate `INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED` remains NOT_RUN.
-4. Independent CAESAR support references REF-SKEW-01 / REF-CNODE-01 / REF-HGR-01 remain absent.
-5. Rigid skew/CNODE still require exact MPC/constraint-equation authority; alternate hanger vertical axis remains source-authority gated.
-6. Live-main LAFEA/InputXML drift remains material outside isolated exact micro-gates; broader InputXML promotion must reconcile complete dependency sets.
+1. Finite CNODE InputXML classification→structural declaration/model-compiler path and full production solve/load-share remain NOT_RUN despite topology and assembly-kernel PASS/red.
+2. Native InputXML dedicated refusal preflight gate remains NOT_RUN.
+3. Finite skew production mechanics, predefined HANGER production mechanics, mixed fixed+skew production exercise, support/full aggregates, imports/lint/diff and BM4_L remain NOT_RUN.
+4. Broad structural unit gate `INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED` remains NOT_RUN.
+5. Independent CAESAR references REF-SKEW-01 / REF-CNODE-01 / REF-HGR-01 remain absent.
+6. Rigid skew/CNODE still require exact MPC/constraint-equation authority; penalty stiffness remains forbidden; alternate hanger vertical axis remains source-authority gated.
 
 ## Exact next action
 
-Attempt the next smallest complete feature-mechanics closure, prioritizing finite CNODE or finite skew constitutive/assembly custody. If the graph expands through full package indices, return to the native-preflight refusal closure only after complete dependency reconciliation. Do not admit partial closures.
+Attempt the smallest remaining path from a finite CNODE classification into its structural declaration/compiler intake, now that spring assembly is independently qualified. If that closure remains too broad, use the same isolated production spring owner to execute the finite skew assembly gate. Do not promote full InputXML solve or external-reference qualification without complete evidence.
 
 Keep PR #1553 DRAFT; do not merge without exact Owner phrase `APPROVED MERGE`.

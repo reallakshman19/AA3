@@ -1,8 +1,8 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-EMP1-WRC-UI-WALKTHROUGH
 MISSION: Execute and qualify the engineer-facing EMP.1/WRC professional workflow for issue #1559 without changing WRC numerical/source/release authority
-ACTIVE_ENDPOINT: EP-0037
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0037.md
+ACTIVE_ENDPOINT: EP-0038
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0038.md
 MATERIAL_HISTORY_ROOT_BASE: 0676f6b145dad164869d2979f69b4a4491e8d803
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-WRC-UI-WALKTHROUGH/endpoints/EP-0027.md
 SOURCE_PR: 1604 MERGED
@@ -12,11 +12,11 @@ RECOVERY_HEAD: a288275c9cb043be08dfc3757deb073067013221
 WRC_MERGE_COMMIT: 2bade51fc8207db4cc7934de3b8cb6771e41e9e8
 PR: 1610 DRAFT
 BRANCH: codex/emp1-wrc-ui-1559-postmerge-execution
-QUALIFIED_MAIN: 2bade51fc8207db4cc7934de3b8cb6771e41e9e8
-RECONCILED_MAIN: 2bade51fc8207db4cc7934de3b8cb6771e41e9e8
+QUALIFIED_MAIN: 70dd23a4fb36533f00d818586d1b753fa4f12276
+RECONCILED_MAIN: 70dd23a4fb36533f00d818586d1b753fa4f12276
 LATEST_MATERIAL_HEAD: 304c31833ffa4437f54740c3249ed367ac67d4e2
 LATEST_SOURCE_HEAD: c4b2e56e51804de424297d4aede2f05ea6a5e4aa
-STATE: POST_MERGE_EXECUTION_Q1_Q5_PASS_MULTI_TRANSPORT_MATERIALIZATION_BLOCKED_HANDOVER_READY
+STATE: CURRENT_MAIN_RECONCILED_EXECUTION_Q1_Q5_PASS_MULTI_TRANSPORT_MATERIALIZATION_BLOCKED_HANDOVER_READY
 ENGINEERING_STATE: IMPLEMENTATION_ACCEPTANCE_HARNESS_QUALIFICATION_AND_RELAY_MERGED_EXACT_BROWSER_EXECUTION_OPEN
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: ACCEPTANCE_EXECUTION_Q1_Q5_PASS_LIVE_REPOSITORY
@@ -27,8 +27,8 @@ MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 AUTHORITY_DOMAIN: EMP.1 WRC professional workflow browser/human acceptance evidence only; production UI, WRC source/mechanics, route authorization, code compliance and release authority protected
 ACTIVE_CUSTODIAN: gpt-5.6-sol
-CUSTODY_EPOCH: 9
-COORDINATION_STATE: SAFE_POST_MERGE_EXECUTION_CUSTODY
+CUSTODY_EPOCH: 10
+COORDINATION_STATE: SAFE_DISJOINT_LAFEA3_MAIN_DRIFT_RECONCILED
 ISSUE_1559_GITHUB_STATE: CLOSED_COMPLETED
 ISSUE_1559_TECHNICAL_ACCEPTANCE: NOT_PROVEN
 DEPENDENCIES: faithful repository checkout plus project-local Node dependencies with the repository-supported Playwright runner, Chromium execution, 12 viewport + 12 full-page + 12 ARIA + manifest v3, then qualified human live observation or review of a recording
@@ -37,7 +37,7 @@ ENVIRONMENT_PYTHON_PLAYWRIGHT_CAPABILITY: PASS_EXECUTION_SMOKE
 PROJECT_NODE_PLAYWRIGHT_RUNTIME: NOT_AVAILABLE
 SOURCE_MATERIALIZATION_STATE: BLOCKED_DNS_GIT_AND_CODELOAD
 NPM_DEPENDENCY_RECOVERY_STATE: BLOCKED_DNS_EAI_AGAIN
-LATEST_EXECUTION_PROBE: exact-main source/runtime retry; git github.com DNS blocked; direct codeload.github.com archive DNS blocked; @playwright/test/playwright/vite absent; npm registry EAI_AGAIN; system Chromium remains independently proven usable
+LATEST_EXECUTION_PROBE: git github.com DNS blocked; direct codeload.github.com archive DNS blocked; @playwright/test/playwright/vite absent; npm registry EAI_AGAIN; system Chromium remains independently proven usable
 EXECUTION_TRACE_QUALIFIED: scripts/run-playwright.mjs -> node_modules/playwright/cli.js -> playwright.config.js/@playwright/test -> npm run dev/Vite -> e2e fixture -> LafeaWorkbenchController -> runEmp1Product -> executeEmp1WorkbenchProduct -> core runEmp1 -> 12-checkpoint evidence spec
 EVIDENCE_POLICY: 12_VIEWPORT_12_FULL_PAGE_12_ARIA_MANIFEST_V3
 FINAL_ACCEPTANCE_POLICY: QUALIFIED_LIVE_OR_RECORDED_HUMAN_OBSERVATION_REQUIRED

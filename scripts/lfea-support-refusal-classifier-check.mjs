@@ -13,7 +13,10 @@ import {
   STRICT_INPUTXML_LINEAR_STATIC_PROFILE as STRICT,
 } from '../src/core/linear-piping-analysis-consumer/inputxml-model-health-profile.js';
 
-const deliberateBreak = process.argv.includes('--deliberate-break');
+const breakAll = process.argv.includes('--deliberate-break');
+const breakCnode = breakAll || process.argv.includes('--deliberate-break-cnode');
+const breakSkew = breakAll || process.argv.includes('--deliberate-break-skew');
+const breakHanger = breakAll || process.argv.includes('--deliberate-break-hanger');
 const DIR = 'benchmarks/LFEA/SPRING_DRAFT';
 const profiles = [STRICT, APPROXIMATE];
 
@@ -40,19 +43,10 @@ function assertRefusal(dispositions, expectedCode, label) {
   }
 }
 
-function assertRepresentable(dispositions, label) {
-  for (const profile of profiles) {
-    assert.equal(dispositions[profile].disposition, 'IMPLEMENTED_EXACTLY',
-      `${label} deliberate break must become exactly representable under ${profile}`);
-    assert.equal(dispositions[profile].limitationCode, null,
-      `${label} deliberate break must clear the terminal refusal under ${profile}`);
-  }
-}
-
 const cnodeAttributes = attributesOf(
   'UnsupportedCnodeSupport.xml', 'RESTRAINT', 'RIGID_CNODE_CONTROL',
 );
-if (deliberateBreak) cnodeAttributes.STIFFNESS = '1000.000000';
+if (breakCnode) cnodeAttributes.STIFFNESS = '1000.000000';
 const cnode = classifyRestraint(
   cnodeAttributes,
   { fromNodeId: '20', toNodeId: '30' },
@@ -60,13 +54,12 @@ const cnode = classifyRestraint(
   1000,
 );
 const cnodeDispositions = restraintDispositions(cnode);
-if (deliberateBreak) assertRepresentable(cnodeDispositions, 'rigid CNODE');
-else assertRefusal(cnodeDispositions, 'MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED', 'rigid CNODE');
+assertRefusal(cnodeDispositions, 'MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED', 'rigid CNODE');
 
 const skewAttributes = attributesOf(
   'UnsupportedSkewSupport.xml', 'RESTRAINT', 'RIGID_SKEW_CONTROL',
 );
-if (deliberateBreak) {
+if (breakSkew) {
   skewAttributes.XCOSINE = '1.000000';
   skewAttributes.YCOSINE = '0.000000';
   skewAttributes.ZCOSINE = '0.000000';
@@ -78,17 +71,15 @@ const skew = classifyRestraint(
   1000,
 );
 const skewDispositions = restraintDispositions(skew);
-if (deliberateBreak) assertRepresentable(skewDispositions, 'rigid skew');
-else assertRefusal(skewDispositions, 'MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED', 'rigid skew');
+assertRefusal(skewDispositions, 'MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED', 'rigid skew');
 
 const hangerAttributes = attributesOf(
   'UnsupportedHanger.xml', 'HANGER', 'INCOMPLETE_HANGER_CONTROL',
 );
-if (deliberateBreak) hangerAttributes.COLD_LOAD = '4500.000000';
+if (breakHanger) hangerAttributes.COLD_LOAD = '4500.000000';
 const hanger = classifyPredefinedHanger(hangerAttributes, 1000, 'mm');
 const hangerDispositions = predefinedHangerDispositions(hanger);
-if (deliberateBreak) assertRepresentable(hangerDispositions, 'incomplete HANGER');
-else assertRefusal(hangerDispositions, 'MODEL_HANGER_PREDEFINED_DATA_INCOMPLETE', 'incomplete HANGER');
+assertRefusal(hangerDispositions, 'MODEL_HANGER_PREDEFINED_DATA_INCOMPLETE', 'incomplete HANGER');
 
 console.log(JSON.stringify({
   check: 'lfea-support-refusal-classifier',
@@ -116,6 +107,10 @@ console.log(JSON.stringify({
       numberOfHangers: hanger.numberOfHangers,
     },
   },
-  deliberateBreakMode:
-    '--deliberate-break makes CNODE finite, skew axis-aligned, and HANGER complete; the refusal assertions must therefore turn red if the original terminal custody is exercised',
+  deliberateBreakModes: {
+    cnode: '--deliberate-break-cnode adds finite stiffness to the rigid CNODE fixture and must turn the retained refusal assertion red',
+    skew: '--deliberate-break-skew axis-aligns the rigid skew fixture and must turn the retained refusal assertion red',
+    hanger: '--deliberate-break-hanger supplies the missing cold load and must turn the retained refusal assertion red',
+    aggregate: '--deliberate-break applies all three mutations and must turn the gate red',
+  },
 }, null, 2));

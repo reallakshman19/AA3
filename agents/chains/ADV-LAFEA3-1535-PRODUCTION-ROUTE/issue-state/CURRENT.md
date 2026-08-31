@@ -2,7 +2,7 @@
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0036
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0037
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1535
 SUBORDINATE_VV_WORK_ITEM: github:reallaksh19/Advanced_Analysis#1569
 CURRENT_MAIN: e00ce199e26070e855bd87b1354f229e06feea32
@@ -11,8 +11,8 @@ ACTIVE_BRANCH: relay/lafea3-postmerge-ep0034
 ACTIVE_PR: NONE_MATERIAL_MERGED
 RELAY_PR: #1596 DRAFT
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5472414763
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0037_COMMENT
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0037_COMMENT
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -30,9 +30,11 @@ MERGE_AUTHORIZED: FALSE
 | TASK-008 | PASS_WORKFLOW_WIRING / EXECUTION_NOT_RUN | Dedicated read-only BM-005 workflow is merged. Hosted execution remains pre-checkout blocked. |
 | TASK-009 | PASS_STATIC_SOURCE | Workflow trigger hygiene excludes relay markdown; only BM-005 scripts, frozen BM005 data and workflow edits trigger qualification. |
 | TASK-010 | PASS_STATIC_SOURCE / EXACT_MAIN_TRIGGER_PROVEN | Owner-authorized #1590 material merged exactly via recovery #1593. Exact main `26f732ba...` triggered BM-005 run `33325078376`; attempt-1 job `99293663739` and retry job `99293821163` both failed with no steps. Exact-main scheduling is proven; executable qualification remained NOT_RUN. |
-| TASK-011 | PASS_CONTROL_PLANE | Fresh post-merge Q1-Q5 takeover pack created as `QS-ADV-LAFEA3-1535-0034-EXACT-MAIN-BM005`; relay-only Draft #1596 carries custody synchronization. |
-| TASK-012 | PASS_DIAGNOSTIC / EXTERNAL_GATE | Local faithful checkout cannot start because `github.com` DNS is unavailable in the execution runtime. Independent GitHub Pages `ubuntu-latest` build on the same exact main also failed with runner_id=0 and zero steps, proving the common hosted-runner provisioning boundary is not BM-005-specific. Exact account/repository cause remains unresolved because billing/Actions-policy state is not exposed by the connector. |
-| TASK-013 | PASS_DIAGNOSTIC / CURRENT_HEAD_DRIFT | Main advanced through unrelated WRC custody to `e00ce199...`. The prior BM-005 run is now historical exact-head infrastructure evidence only. A newer independent LAFEA.4 run `33326169723`, job `99296562205`, still requests `ubuntu-latest` and fails with runner_id=0 and zero steps, proving the hosted-runner provisioning gate had not recovered. |
+| TASK-011 | PASS_CONTROL_PLANE | Post-merge Q1-Q5 takeover pack `QS-ADV-LAFEA3-1535-0034-EXACT-MAIN-BM005` was created and carried by relay-only Draft #1596. |
+| TASK-012 | PASS_DIAGNOSTIC / EXTERNAL_GATE | Local faithful checkout cannot start because `github.com` DNS is unavailable in the execution runtime. Independent GitHub Pages `ubuntu-latest` build on the same historical exact main also failed with runner_id=0 and zero steps, proving the common hosted-runner provisioning boundary is not BM-005-specific. Exact account/repository cause remains unresolved because billing/Actions-policy state is not exposed by the connector. |
+| TASK-013 | PASS_DIAGNOSTIC / CURRENT_HEAD_DRIFT | Main advanced through unrelated WRC custody to `e00ce199...`. The prior BM-005 run is historical exact-head infrastructure evidence only. An independent LAFEA.4 run `33326169723`, job `99296562205`, still requested `ubuntu-latest` and failed with runner_id=0 and zero steps. |
+| TASK-014 | PASS_CONTROL_PLANE / IMPLEMENTATION_DEPTH | Owner explicitly requested new technical, implementation-challenging Q1-Q5. Fresh pack `QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG` is bound to current main `e00ce199...` and live implementation functions covering composition/currentness, Q8 mapped meshing and physical-probe ownership, convergence algorithm/policy layering, report hash/tamper custody, and first-wrong-boundary debugging. Admission remains NOT_EVALUATED for independent takeover. |
+| TASK-015 | PASS_DIAGNOSTIC / EXTERNAL_GATE_PERSISTS | Latest unrelated control run `33346274630`, job `99350910969`, at 2026-08-31T01:00:59Z again requested `ubuntu-latest` and completed failure with runner_id=0, runner_group_id=0, empty runner name and zero steps. Runner provisioning had still not recovered. |
 
 ## Input ledger
 
@@ -45,6 +47,7 @@ MERGE_AUTHORIZED: FALSE
 | INPUT-005 | BLOCKED_EXTERNAL | GitHub-hosted standard runner provisioning fails before step 1 across BM-005 and unrelated workflows; local runtime also cannot resolve github.com for a faithful checkout. |
 | INPUT-006 | UNRESOLVED_OWNER_ACCOUNT_STATE | GitHub Actions usage/budget/payment and repository Actions-policy details require Owner/account-side inspection; current connector cannot establish them. |
 | INPUT-007 | CURRENT_HEAD_AVAILABLE_UNEXECUTED | Current main is `e00ce199e26070e855bd87b1354f229e06feea32`; no BM-005 execution is retained for this SHA. |
+| INPUT-008 | IMPLEMENTATION_PACK_AVAILABLE | Current-source implementation grounding and Q1-Q5 takeover pack are retained on Draft #1596 for independent qualification. |
 
 ## Benchmark / oracle ledger
 
@@ -71,7 +74,7 @@ artifacts:             []
 logs:                  BlobNotFound
 ```
 
-Independent controls:
+Independent runner controls:
 
 ```text
 Pages control run:     33325078359
@@ -80,9 +83,18 @@ label:                 ubuntu-latest
 runner_id:             0
 steps:                 []
 
-newer LAFEA.4 run:     33326169723
-newer LAFEA.4 job:     99296562205
+LAFEA.4 control run:   33326169723
+LAFEA.4 control job:   99296562205
 created:               2026-08-30T17:46:04Z
+label:                 ubuntu-latest
+runner_id:             0
+runner_group_id:       0
+runner_name:           ""
+steps:                 []
+
+latest EMP.1 control:  33346274630
+latest EMP.1 job:      99350910969
+created:               2026-08-31T01:00:59Z
 label:                 ubuntu-latest
 runner_id:             0
 runner_group_id:       0
@@ -104,24 +116,45 @@ BM005_CURRENT_HEAD_EXECUTION: NOT_RUN
 
 `BM-005-LAME-CONT-CYL-01`: Ri=50 mm, Ro=100 mm, Pi=10 MPa, Po=0, E=200000 MPa, nu=0.3, plane stress, Q8 mapped quarter-annulus, h=40/20/10/5 mm, r=2, fixed physical probe r=73 mm/theta=37 deg, expected displacement 0.003819703196347032 mm. Primary oracle: K. L. Richards, *Design Engineer's Handbook*, 1st ed., 2012, Ch.6 p.157 Eqs.6.3–6.4 and §6.3 p.158.
 
+## Implementation grounding retained for takeover
+
+Current implementation anchors inspected at `e00ce199e26070e855bd87b1354f229e06feea32` include:
+
+- `scripts/lafea.3-bm005-ordinary-route-check.mjs`
+- `scripts/lafea.3-bm005-report-contract.mjs`
+- `src/workspace/lafea-continuum-geometry-intake.js`
+- `src/workspace/lafea-lifecycle-workbench-store.js`
+- `src/workspace/lafea-continuum-convergence-workbench.js`
+- `src/workspace/lafea-continuum-convergence-study.js`
+- `src/workspace/lafea-continuum-probe-convergence.js`
+- `src/workspace/lafea-continuum-convergence-publication.js`
+- `src/workspace/lafea-continuum-physical-probe.js`
+- `src/workspace/lafea-mesh-producer-binding.js`
+- `src/workspace/lafea-mesh-producer-engine.js`
+- frozen BM005 benchmark and source registry.
+
+The refreshed pack tests exact function ownership and mutation/failure behavior rather than architecture labels alone.
+
 ## Roadmap / authority
 
-`docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31` remains governing and aligned. Immutable IB-0001's separate LFEA piping roadmap row remains historical/not applicable to this LAFEA.3 V&V leg.
+`docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31` remains governing and aligned. It requires exact-head qualification and separates runtime/kernel/application/release authority. Immutable IB-0001's separate LFEA piping roadmap row remains historical/not applicable to this LAFEA.3 V&V leg.
 
-No changes are authorized to workflow YAML, element formulation, stiffness/load assembly, solver/recovery, mesher mathematics/quality thresholds, pressure semantics, physical-probe mathematics, convergence mathematics/policy, frozen benchmark oracle/mesh/probe/tolerances, report semantics, UI/browser semantics, roadmap content, code assessment or release authority while the first wrong boundary is external runner provisioning.
+No changes are authorized to workflow YAML, element formulation, stiffness/load assembly, solver/recovery, mesher mathematics/quality thresholds, pressure semantics, physical-probe mathematics, frozen benchmark oracle/mesh/probe/tolerances/acceptance, convergence mathematics/policy, report semantics, UI/browser semantics, roadmap content, code assessment or release authority while the first wrong boundary is external runner provisioning.
 
 No repository/tab label rename from `LAFEA.3` to `LAFEA3` occurred; module naming remains unchanged.
 
 ## Qualification
 
-QUALIFICATION_SCOPE_ID: QSCOPE-ADV-LAFEA3-1535-EXACT-MAIN-BM005
-QUESTION_SET_ID: QS-ADV-LAFEA3-1535-0034-EXACT-MAIN-BM005
-QUESTION_SET_FILE: agents/qualifications/ADV-LAFEA3-1535-PRODUCTION-ROUTE/QS-ADV-LAFEA3-1535-0034-EXACT-MAIN-BM005-questions.md
-QUESTION_SET_STATUS: CURRENT_SCOPE_BASIS_HEAD_HISTORICAL
-QUESTION_PACK_ACTION: REUSED
-QUESTION_DISPLAY: HIDE
+QUALIFICATION_SCOPE_ID: QSCOPE-ADV-LAFEA3-1535-BM005-IMPLEMENTATION-DEBUG
+QUESTION_SET_ID: QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG
+QUESTION_SET_FILE: agents/qualifications/ADV-LAFEA3-1535-PRODUCTION-ROUTE/QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG-questions.md
+QUESTION_SET_STATUS: CURRENT
+QUESTION_SET_ADMISSION_STATUS: NOT_EVALUATED
+QUESTION_PACK_ACTION: REFRESHED_BY_OWNER_REQUEST
+QUESTION_DISPLAY: SHOW
+TECHNICAL_DEPTH_TARGET: IMPLEMENTATION_TAKEOVER
 
-The existing Q1-Q5 scope remains valid: exact-main production trace/NOT_RUN classification; four-level Richardson/GCI/asymptotic proof; independent Lamé oracle/pressure sign/negative control; report/hash/exact-head authority; first-wrong-boundary/minimal-patch/BM-006 gate. The older question basis head is retained as historical evidence; current main must still be executed exactly before qualification claims.
+The fresh Q1-Q5 require: exact production/store/lifecycle trace; mapped-transfinite Q8 plus physical-point inversion/ownership; current convergence algorithm and policy layering with hand arithmetic; semantic/evidence hash mutation matrix; and five first-wrong-boundary implementation-debug scenarios. Score target remains >=92/100 overall and >=17/20 per question.
 
 VISIBLE_USER_REPLAY_STATUS: STATIC_COMPOSITION_MERGED / BROWSER_NOT_RUN
 CORE_FEA_COMPLETION_STATUS: NOT_PROVEN
@@ -129,4 +162,4 @@ RELEASE_QUALIFIED: FALSE
 
 ## Exact next action
 
-Owner/account-side inspection remains the next required external gate: verify GitHub Actions usage/budget/payment availability and repository Actions policy/hosted-runner availability. When an ordinary `ubuntu-latest` job can acquire a runner, execute BM-005 on the then-current exact main using `workflow_dispatch` from GitHub UI/API or a faithful clean local checkout, then run `node scripts/lafea.3-bm005-ordinary-route-check.mjs`. Preserve exact stdout/stderr/exit, clean-tree state and candidate HEAD. PASS -> persist exact report then BM-006 real-browser replay. FAIL/pre-report rejection -> isolate first wrong engineering boundary and create fresh pre-work before any engineering patch. Do not add or weaken workflows merely to work around runner provisioning.
+Owner/account-side inspection/restoration remains the next required external gate: verify GitHub Actions usage/budget/payment availability and repository Actions policy/hosted-runner availability, or provide a faithful clean executable checkout. When an ordinary `ubuntu-latest` job can acquire a runner, re-resolve the then-current main SHA and execute `node scripts/lafea.3-bm005-ordinary-route-check.mjs`. Preserve exact stdout/stderr/exit, clean-tree state and candidate HEAD. PASS -> persist exact report then BM-006 real-browser replay. FAIL/pre-report rejection -> isolate the first wrong implementation boundary using `QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG` before any engineering patch. Do not add or weaken workflows or engineering acceptance merely to work around runner provisioning.

@@ -23,8 +23,13 @@ import {
   DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE as APPROXIMATE,
 } from '../src/core/linear-piping-analysis-consumer/inputxml-model-health-profile.js';
 
+const breakRate = process.argv.includes('--deliberate-break')
+  || process.argv.includes('--deliberate-break-rate');
+const breakUnresolved = process.argv.includes('--deliberate-break-unresolved');
+
 // force scale 1 (newtons), length mm -> N/mm becomes N/m
-assert.equal(inputXmlStiffnessToSiFactor({ scale: 1 }, 'mm'), 1000);
+const nPerMmFactor = inputXmlStiffnessToSiFactor({ scale: 1 }, 'mm');
+assert.equal(nPerMmFactor, 1000);
 assert.equal(inputXmlStiffnessToSiFactor({ scale: 1 }, 'm'), 1);
 assert.equal(inputXmlStiffnessToSiFactor({ scale: 1 }, 'cm'), 100);
 // pounds-force per inch is the other common pairing
@@ -43,7 +48,9 @@ const attributes = { TYPE: '2.000000', NODE: '30.000000', STIFFNESS: '400.000000
   GAP: '-1.010100', FRIC_COEF: '-1.010100', CNODE: '-1.010100' };
 const element = { toNodeId: '30', fromNodeId: '20' };
 
-const converted = classifyRestraint(attributes, element, null, 1000);
+// Deliberate rate break reproduces the legacy defect at the consumer boundary:
+// the declared N/mm number is passed with factor 1 as if it were already N/m.
+const converted = classifyRestraint(attributes, element, null, breakRate ? 1 : nPerMmFactor);
 assert.equal(converted.stiffnessDeclared, 400, 'the declared number must be retained as declared');
 assert.equal(converted.stiffnessValue, 400000, 'the compiled rate must be in solver units');
 assert.equal(converted.stiffnessUnitsResolvable, true);
@@ -55,7 +62,8 @@ assert.equal(converted.stiffnessUnitsResolvable, true);
  * is invisible in results: the model still solves, on a support up to three
  * orders of magnitude too soft.
  */
-const unresolved = classifyRestraint(attributes, element, null, null);
+// Deliberate unresolved break reproduces the forbidden null -> factor-1 fallback.
+const unresolved = classifyRestraint(attributes, element, null, breakUnresolved ? 1 : null);
 assert.equal(unresolved.stiffnessDeclared, 400,
   'the declared rate is still evidence even when it cannot be converted');
 assert.equal(unresolved.stiffnessValue, null,
@@ -113,4 +121,8 @@ console.log(JSON.stringify({
   resolvedDeclarationKind: compiled.declarations[0].kind,
   unresolvableUnitsWithholdValue: true,
   unresolvableUnitsStructuralBlock: 'INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED',
+  deliberateBreakModes: {
+    rate: '--deliberate-break / --deliberate-break-rate passes N/mm as factor 1 and must turn the 400000 N/m assertion red',
+    unresolved: '--deliberate-break-unresolved substitutes factor 1 for unresolved units and must turn the withheld-value assertion red',
+  },
 }, null, 2));

@@ -4,35 +4,38 @@ import process from 'node:process';
 
 const root = process.cwd();
 const read = (relative) => fs.readFileSync(path.join(root, relative), 'utf8');
+const exists = (relative) => fs.existsSync(path.join(root, relative));
 const registry = read('src/workspace/lfea-pipeline-step-registry.js');
 const sprite = read('src/workspace/lfea-pipeline-icon-sprite.js');
 const view = read('src/workspace/lfea-pipeline-shell-view.js');
 const css = read('src/workspace/lfea-pipeline-shell.css');
 const session = read('src/workspace/lfea-pipeline-session.js');
 const shellController = read('src/workspace/lfea-pipeline-shell-controller.js');
+const analysisSurface = read('src/workspace/lfea-pipeline-analysis-surface.js');
 const casePanel = read('src/workspace/lfea-pipeline-case-selection-panel.js');
 const runPanel = read('src/workspace/lfea-pipeline-run-panel.js');
+const resultsPanel = read('src/workspace/lfea-pipeline-results-panel.js');
 const exportPanel = read('src/workspace/lfea-pipeline-export-panel.js');
-const visibility = read('src/workspace/lfea-pipeline-results-task-visibility.js');
-const sortPresentation = read('src/workspace/lfea-pipeline-results-sort-presentation.js');
+const sourceAcquisition = read('src/workspace/lfea-source-acquisition.js');
 const analysisController = read('src/workspace/lfea-pipeline-analysis-controller.js');
 const accdbE2e = read('e2e/lfea-pipeline-accdb-real-model.spec.js');
 const continuityE2e = read('e2e/lfea-pipeline-continuity.spec.js');
 
 const STEPS = [
-  ['INPUT', 'icon-step-input'],
-  ['ERROR_CHECK', 'icon-step-error-check'],
-  ['LOAD_CASE', 'icon-step-load-case'],
-  ['RUN', 'icon-step-run'],
-  ['OUTPUT', 'icon-step-output'],
-  ['EXPORT', 'icon-step-export'],
+  ['INPUT', 'SOURCE', 'icon-step-input'],
+  ['ERROR_CHECK', 'SOURCE', 'icon-step-error-check'],
+  ['LOAD_CASE', 'LOAD_CASE', 'icon-step-load-case'],
+  ['RUN', 'RUN', 'icon-step-run'],
+  ['OUTPUT', 'OUTPUT', 'icon-step-output'],
+  ['EXPORT', 'EXPORT', 'icon-step-export'],
 ];
 
 const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
-for (const [stepId, iconId] of STEPS) {
+for (const [stepId, hostGroup, iconId] of STEPS) {
   assert(registry.includes(`stepId: '${stepId}'`), `registry missing ${stepId}`);
+  assert(registry.includes(`hostGroup: '${hostGroup}'`), `registry missing native ${stepId} host ${hostGroup}`);
   assert(registry.includes(`iconId: '${iconId}'`), `registry missing ${stepId} icon ${iconId}`);
   assert(sprite.includes(`symbol('${iconId}'`), `sprite missing ${iconId}`);
 }
@@ -46,48 +49,52 @@ for (const iconId of [
 assert(!view.includes("innerHTML = '<svg"), 'shell view still embeds a hard-coded toolbar SVG');
 assert(view.includes("dataset.role = 'lfea-pipeline-step-connector'"), 'step connector DOM contract missing');
 assert(view.includes("dataset.role = 'lfea-pipeline-active-step-context'"), 'active-step context DOM contract missing');
-assert(view.includes("host.dataset.activeStep = state.activeStepId"), 'all hosts do not retain active step identity');
+assert(view.includes("taskHost(doc, 'RUN')"), 'Run native host missing');
+assert(view.includes("taskHost(doc, 'OUTPUT')"), 'Output native host missing');
+assert(view.includes("taskHost(doc, 'EXPORT')"), 'Export native host missing');
+assert(view.includes("host.hidden = host.dataset.hostGroup !== activeHostGroup"), 'native host visibility is not shell-owned');
 assert(view.includes("completeIcon.hidden = !status.complete"), 'completion state does not preserve step identity');
 assert(view.includes("indexCell.textContent = String(index + 1)"), 'step ordinal is not stable across completion');
-assert(view.includes("aria-label', `${step.label} — ${stepStatus.toLowerCase()}"), 'step accessibility status label missing');
+assert(view.includes("data-role = 'lfea-pipeline-optional-tools-label'") || view.includes("dataset.role = 'lfea-pipeline-optional-tools-label'"), 'optional tools hierarchy is not shell-owned');
 assert(css.includes('.lfea-pipeline-shell__connector[data-connector-status="COMPLETE"]'), 'complete connector styling missing');
 assert(css.includes('.lfea-pipeline-shell__connector[data-connector-status="BLOCKED"]'), 'blocked connector styling missing');
-assert(css.includes('.lfea-pipeline-shell__context[data-step-status="CURRENT"]'), 'active context state styling missing');
-assert(view.includes('index < LFEA_PIPELINE_STEPS.length - 1'), 'connector count is not tied to registry sequence');
+assert(session.includes("step.stepId === activeStepId\n      ? 'CURRENT'"), 'active completed steps do not remain visibly current');
 
-assert(!casePanel.includes("dataset.action = 'lfea-pipeline-analyze'"), 'Load case still owns the Analyze action');
+assert(!casePanel.includes("dataset.action = 'lfea-pipeline-analyze'"), 'Load case still owns Analyze');
 assert(casePanel.includes('getAppliedCaseIds()'), 'Load case does not expose current sealed case custody');
-assert(runPanel.includes("dataset.action = 'lfea-pipeline-analyze'"), 'Run does not own the Analyze action');
-assert(runPanel.includes("preparation?.requestedCaseIds"), 'Run is not reading cases from the retained pre-flight');
+assert(runPanel.includes("dataset.action = 'lfea-pipeline-analyze'"), 'Run does not own Analyze');
+assert(runPanel.includes("preparation?.requestedCaseIds"), 'Run is not reading cases from retained pre-flight');
 assert(runPanel.includes("'lfea-pipeline-analysis-completed'"), 'Run does not publish successful analysis custody');
 assert(shellController.includes("stepId === 'OUTPUT' && !this.flow.analysisComplete"), 'Output is not fail-closed before analysis');
 assert(shellController.includes("stepId === 'EXPORT' && !this.flow.analysisComplete"), 'Export is not fail-closed before analysis');
 assert(shellController.includes("'lfea-pipeline-export-completed'"), 'Export completion is not retained in UI flow custody');
-assert(exportPanel.includes('panel.csvFor(active)'), 'Export is recomputing or bypassing the existing CSV producer');
-assert(visibility.includes("activeStep !== 'RUN'"), 'RESULTS host does not distinguish Run');
-assert(visibility.includes("activeStep !== 'OUTPUT'"), 'RESULTS host does not distinguish Output');
-assert(visibility.includes("activeStep !== 'EXPORT'"), 'RESULTS host does not distinguish Export');
-assert(visibility.includes('legacyExport.hidden = true'), 'legacy inline export affordance can still duplicate Export');
-assert(session.includes("step.stepId === activeStepId\n      ? 'CURRENT'"), 'active completed steps do not remain visibly current');
+assert(analysisSurface.includes('mountLfeaPipelineRunPanel(runHost'), 'Run panel is not mounted on the native Run host');
+assert(analysisSurface.includes('mountLfeaPipelineResultsPanel(outputHost'), 'Results panel is not mounted on the native Output host');
+assert(analysisSurface.includes('mountLfeaPipelineExportPanel(exportHost'), 'Export panel is not mounted on the native Export host');
+assert(exportPanel.includes('panel.csvFor(active)'), 'Export bypasses the existing CSV producer');
+assert(!resultsPanel.includes('lfea-pipeline-results__export'), 'Output still exposes a duplicate inline export action');
 
-// Raw sort triangles remain emitted by the legacy table controller for API
-// compatibility, but the visible presentation must replace them with the same
-// sprite system used by the workflow chrome and expose aria-sort explicitly.
-assert(sortPresentation.includes("replace(/\\s*[▲▼]\\s*$/u"), 'sort adapter does not strip legacy raw sort glyphs');
-assert(sortPresentation.includes("'icon-sort-asc'"), 'ascending sort icon not used');
-assert(sortPresentation.includes("'icon-sort-desc'"), 'descending sort icon not used');
-assert(sortPresentation.includes("setAttribute('aria-sort'"), 'sort state is not exposed with aria-sort');
+assert(resultsPanel.includes("'icon-sort-asc'"), 'ascending sort icon is not natively rendered');
+assert(resultsPanel.includes("'icon-sort-desc'"), 'descending sort icon is not natively rendered');
+assert(resultsPanel.includes("setAttribute('aria-sort'"), 'sort state is not exposed with aria-sort');
+assert(!resultsPanel.includes('▲') && !resultsPanel.includes('▼'), 'legacy raw sort triangles remain in Output');
+assert(sourceAcquisition.includes("dataset.role = 'lfea-source-acquisition-staged-options'"), 'StagedJSON options disclosure is not source-owned');
 
-// Test continuity must move with the product flow rather than forcing the UI
-// to preserve a stale Analyze-on-Load-case affordance.
+for (const adapter of [
+  'src/workspace/lfea-pipeline-continuity-presentation.js',
+  'src/workspace/lfea-pipeline-results-sort-presentation.js',
+  'src/workspace/lfea-pipeline-results-task-visibility.js',
+]) {
+  assert(!exists(adapter), `obsolete UI adapter still exists: ${adapter}`);
+}
+
 assert(accdbE2e.includes("data-step-id=\"RUN\""), 'ACCDB E2E does not enter Run');
 assert(accdbE2e.includes("runPanel.locator('[data-action=\"lfea-pipeline-analyze\"]')"), 'ACCDB E2E does not Analyze from Run');
 assert(accdbE2e.includes("data-step-id=\"EXPORT\""), 'ACCDB E2E does not enter Export');
-assert(continuityE2e.includes("toHaveCount(5)"), 'fixture-free E2E does not assert five connectors');
-assert(continuityE2e.includes("lfea-pipeline-active-step-context"), 'fixture-free E2E does not assert persistent step context');
+assert(continuityE2e.includes('toHaveCount(5)'), 'fixture-free E2E does not assert five connectors');
+assert(continuityE2e.includes('lfea-pipeline-active-step-context'), 'fixture-free E2E does not assert persistent step context');
 
-// Solver authority remains unchanged: the UI still hands the exact sealed
-// pre-flight and requested case IDs to the existing native execution path.
+// Solver authority remains unchanged.
 assert(analysisController.includes('executionAuthority.run(authorized, { requestedCaseIds })'), 'analysis execution authority call changed or disappeared');
 assert(analysisController.includes("status: 'CURRENT'"), 'retained analysis-state contract changed or disappeared');
 
@@ -96,5 +103,5 @@ if (failures.length > 0) {
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exitCode = 1;
 } else {
-  console.log(`LFEA UI continuity check: PASS (${STEPS.length} stable steps, ${STEPS.length - 1} connectors, distinct task custody, shared sort icons)`);
+  console.log(`LFEA UI continuity check: PASS (${STEPS.length} steps, ${STEPS.length - 1} connectors, 3 adapters removed, native Run/Output/Export ownership)`);
 }

@@ -35,8 +35,12 @@ export class LfeaPipelineRunPanelController {
     const preFlight = this.options.getPreFlight();
     const caseIds = this.requestedCaseIds();
     if (!preFlight) return { ready: false, reason: 'Load a model and clear Error check first.', caseIds };
-    if (!preFlight.solveAuthorized || preFlight.authorization === null) return { ready: false, reason: 'The current pre-flight is not authorized. Return to Error check.', caseIds };
-    if (caseIds.length === 0) return { ready: false, reason: 'No cases are sealed into the current pre-flight. Apply a selection on Load case.', caseIds };
+    if (!preFlight.solveAuthorized || preFlight.authorization === null) {
+      return { ready: false, reason: 'The current pre-flight is not authorized. Return to Error check.', caseIds };
+    }
+    if (caseIds.length === 0) {
+      return { ready: false, reason: 'No cases are sealed into the current pre-flight. Apply a selection on Load case.', caseIds };
+    }
     return { ready: true, reason: `${caseIds.length} authorized case(s) are ready to analyze.`, caseIds };
   }
 
@@ -50,7 +54,10 @@ export class LfeaPipelineRunPanelController {
     }
     try {
       const state = this.options.onAnalyze?.(availability.caseIds);
-      this.dispatch('lfea-pipeline-analysis-completed', { caseIds: availability.caseIds, resultStatus: state?.status ?? 'CURRENT' });
+      this.dispatch('lfea-pipeline-analysis-completed', {
+        caseIds: availability.caseIds,
+        resultStatus: state?.status ?? 'CURRENT',
+      });
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
       this.refresh();
@@ -75,7 +82,11 @@ export class LfeaPipelineRunPanelController {
     this.elements.status.textContent = this.error || availability.reason;
     this.elements.status.dataset.status = this.error ? 'error' : availability.ready ? 'ready' : 'blocked';
     this.elements.analyzeButton.disabled = !availability.ready;
-    this.dispatch('lfea-pipeline-run-readiness-changed', { ready: availability.ready, reason: availability.reason, caseIds: availability.caseIds });
+    this.dispatch('lfea-pipeline-run-readiness-changed', {
+      ready: availability.ready,
+      reason: availability.reason,
+      caseIds: availability.caseIds,
+    });
     return this;
   }
 
@@ -87,7 +98,11 @@ export class LfeaPipelineRunPanelController {
 
   getSnapshot() {
     const availability = this.runAvailability();
-    return Object.freeze({ schema: LFEA_PIPELINE_RUN_PANEL_SCHEMA, ready: availability.ready, requestedCaseIds: Object.freeze(availability.caseIds) });
+    return Object.freeze({
+      schema: LFEA_PIPELINE_RUN_PANEL_SCHEMA,
+      ready: availability.ready,
+      requestedCaseIds: Object.freeze(availability.caseIds),
+    });
   }
 
   destroy() { this.elements?.section.remove(); this.elements = null; }
@@ -95,7 +110,7 @@ export class LfeaPipelineRunPanelController {
 
 function createRunSection(doc) {
   const section = doc.createElement('section');
-  section.className = 'lfea-pipeline-run';
+  section.className = 'lfea-pipeline-run lfea-pipeline-results';
   section.dataset.role = 'lfea-pipeline-run-panel';
   const heading = doc.createElement('h2');
   heading.textContent = 'Run analysis';

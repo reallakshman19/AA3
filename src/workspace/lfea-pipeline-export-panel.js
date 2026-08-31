@@ -96,7 +96,13 @@ export class LfeaPipelineExportPanelController {
 
   getSnapshot() {
     const payload = this.exportPackage();
-    return Object.freeze({ schema: LFEA_PIPELINE_EXPORT_PANEL_SCHEMA, ready: payload !== null, caseId: payload?.caseId ?? null, view: payload?.view ?? null, fileName: payload?.fileName ?? null });
+    return Object.freeze({
+      schema: LFEA_PIPELINE_EXPORT_PANEL_SCHEMA,
+      ready: payload !== null,
+      caseId: payload?.caseId ?? null,
+      view: payload?.view ?? null,
+      fileName: payload?.fileName ?? null,
+    });
   }
 
   destroy() { this.elements?.section.remove(); this.elements = null; }
@@ -104,7 +110,7 @@ export class LfeaPipelineExportPanelController {
 
 function createExportSection(doc) {
   const section = doc.createElement('section');
-  section.className = 'lfea-pipeline-export-panel';
+  section.className = 'lfea-pipeline-export-panel lfea-pipeline-results';
   section.dataset.role = 'lfea-pipeline-export-panel';
   const heading = doc.createElement('h2');
   heading.textContent = 'Export results';
@@ -126,11 +132,26 @@ function createExportSection(doc) {
 
 function summaryRow(doc, label, value) {
   const wrapper = doc.createDocumentFragment();
-  const dt = doc.createElement('dt'); dt.textContent = label;
-  const dd = doc.createElement('dd'); dd.textContent = value;
+  const dt = doc.createElement('dt');
+  dt.textContent = label;
+  const dd = doc.createElement('dd');
+  dd.textContent = value;
   wrapper.append(dt, dd);
   return wrapper;
 }
-function emptyParagraph(doc, text) { const p = doc.createElement('p'); p.className = 'panel-empty'; p.textContent = text; return p; }
-function caseLabel(caseId) { const token = String(caseId).slice(String(caseId).indexOf('-') + 1); return token.replace(/^WPT$/u, 'W+P1+T1').replace(/^WP$/u, 'W+P1').replace(/^WT$/u, 'W+T1'); }
-function viewLabel(view) { return ({ DISPLACEMENTS: 'Displacements', REACTIONS: 'Support loads', ELEMENT_FORCES: 'Element forces' })[view] ?? String(view); }
+
+function emptyParagraph(doc, text) {
+  const p = doc.createElement('p');
+  p.className = 'panel-empty';
+  p.textContent = text;
+  return p;
+}
+
+function caseLabel(caseId) {
+  const token = String(caseId).slice(String(caseId).indexOf('-') + 1);
+  return token.replace(/^WPT$/u, 'W+P1+T1').replace(/^WP$/u, 'W+P1').replace(/^WT$/u, 'W+T1');
+}
+
+function viewLabel(view) {
+  return ({ DISPLACEMENTS: 'Displacements', REACTIONS: 'Support loads', ELEMENT_FORCES: 'Element forces' })[view] ?? String(view);
+}

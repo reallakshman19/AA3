@@ -1,0 +1,23 @@
+{
+  "schema": "owner-qualification-baseline/v1",
+  "chainId": "ADV-LFEA-UI-CONTINUITY",
+  "workItemKey": "github:reallaksh19/Advanced_Analysis:ui:lfea-continuity",
+  "ownerSource": "Owner chat instructions 2026-08-30: 'Audit the UI, lot of stale icons, no continuity'; 'proceed coding in AUTO MODE'; 'proceed with fix. stop micro coding'",
+  "requirements": [
+    {
+      "id": "OWNER-UI-01",
+      "requirement": "Remove stale/inconsistent LFEA iconography as a system, not isolated glyph swaps.",
+      "coveredBy": ["Q1", "Q3", "Q5"]
+    },
+    {
+      "id": "OWNER-UI-02",
+      "requirement": "Restore continuous Input -> Error check -> Load case -> Run -> Output -> Export workflow custody.",
+      "coveredBy": ["Q1", "Q2", "Q4"]
+    },
+    {
+      "id": "OWNER-UI-03",
+      "requirement": "Stop micro-coding; consolidate temporary presentation shims into owning components and remove duplicate legacy affordances.",
+      "coveredBy": ["Q2", "Q3", "Q5"]
+    }
+  ]
+}

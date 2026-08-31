@@ -3,17 +3,18 @@ CHAIN_ID: ADV-LFEA-SUPPORT-REPRESENTABILITY
 MISSION: Close issue #1551 LFEA terminal support representability boundaries without reducer/parity scope drift.
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1551
-ACTIVE_ENDPOINT: EP-0026
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LFEA-SUPPORT-REPRESENTABILITY/endpoints/EP-0026.md
+ACTIVE_ENDPOINT: EP-0027
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LFEA-SUPPORT-REPRESENTABILITY/endpoints/EP-0027.md
 MIGRATED_FROM_CHAIN_ID: ADV-LAFEA-SUPPORT-REPRESENTABILITY
 MIGRATED_FROM_ENDPOINT_FILE: agents/chains/ADV-LAFEA-SUPPORT-REPRESENTABILITY/endpoints/EP-0015.md
 MATERIAL_HISTORY_ROOT_BASE: 7d350c269217f3133e778c09a61b69d2b3909a64
 ENGINEERING_MATERIAL_BASIS_HEAD: f8ae425e710adb9e250d0be1247036d63f7943dc
 CNODE_TOPOLOGY_TEST_HEAD: a2bb2fbcb44545c6cccba78be4cea5e4d8b3f903
 SPRING_RATE_RESOLVER_TEST_HEAD: ef275dfea07000b2dd3acaba4c462443c231cade
+REFUSAL_CLASSIFIER_TEST_HEAD: 5506b8d90710a310120732fb17b85a2c2b13490f
 PR: #1553 DRAFT
 BRANCH: codex/lfea-support-representability-1551
-HEAD_AT_ENDPOINT_PUBLICATION: 923b3fed4b15249b5de48654f1b802b781b0a8bd
+HEAD_AT_ENDPOINT_PUBLICATION: PENDING_EP_0027
 LIVE_MAIN_AT_REGROUND: 75c670424ef46888f0a1c02188a9ea8d42b5209f
 STATE: ACTIVE
 ENGINEERING_STATE: IN_PROGRESS
@@ -23,36 +24,36 @@ WRITE_AUTHORITY: WRITE_ALLOWED
 AUTO_STATE: PARTIAL_EXACT_HEAD_EXECUTION_EXTERNAL_REFERENCE_GATED
 MERGE_AUTHORITY: EXPLICIT_APPROVED_MERGE_ONLY
 MERGE_TRIGGER: APPROVED MERGE
-AUTHORITY_DOMAIN: LFEA InputXML support representability, directional/two-node linear spring assembly/qualification/recovery, predefined hanger rate/preload binding, spring-rate unit conversion/withholding, case/run custody, support draft disclosure, positive/dedicated-negative exercise custody, blocked-execution custody, mixed-support reaction presentation, one-way support review, CNODE mechanical-topology custody, exact-head Git-blob execution evidence, external support-reference intake and issue #1551 qualification only
+AUTHORITY_DOMAIN: LFEA InputXML support representability, directional/two-node linear spring assembly/qualification/recovery, predefined hanger rate/preload binding, spring-rate unit conversion/withholding, terminal-refusal classifier custody, case/run custody, support draft disclosure, positive/dedicated-negative exercise custody, blocked-execution custody, mixed-support reaction presentation, one-way support review, CNODE mechanical-topology custody, exact-head Git-blob execution evidence, external support-reference intake and issue #1551 qualification only
 ACTIVE_CUSTODIAN: chatgpt-gpt-5.6-sol
 AGENT_INSTANCE_ID: chatgpt:7a26369e-efea-4bc5-b582-f36fa511a93c
-CUSTODY_EPOCH: 26
+CUSTODY_EPOCH: 27
 COORDINATION_STATE: SAFE_FOR_BOUNDED_EXACT_SUBGATES_FULL_INPUTXML_REGROUND_REQUIRED
-DEPENDENCIES: external CAESAR-solved skew/CNODE/HANGER references required to clear feature DRAFT; hosted jobs still create no executable steps; exact Git-blob PASS/red observed for reaction aggregation, mixed unilateral review, HANGER case/run custody, blocked-execution custody, CNODE topology and spring-rate resolver; broader structural unit gate, dedicated refusal, full feature production mechanics, aggregates and BM4 unresolved; rigid skew/CNODE remain MPC-gated; alternate hanger vertical axis source-authority gated; live-main LAFEA/InputXML drift requires complete-closure reconciliation before broader promotion
+DEPENDENCIES: external CAESAR-solved skew/CNODE/HANGER references required to clear feature DRAFT; hosted jobs still create no executable steps; exact Git-blob PASS/red observed for reaction aggregation, mixed unilateral review, HANGER case/run custody, blocked-execution custody, CNODE topology, spring-rate resolver and the three dedicated refusal classifiers; native preflight refusal, broader structural unit gate, full feature production mechanics, aggregates and BM4 unresolved; rigid skew/CNODE remain MPC-gated; alternate hanger vertical axis source-authority gated; live-main LAFEA/InputXML drift requires complete-closure reconciliation before broader promotion
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02
 COMMON_LIVE_MAIN_AT_REGROUND: 293a3db7993a6945c01adc592a7ff14a339c504a
 COMMON_PROTOCOL_STATUS: CURRENT
 ROADMAPS: docs/OWNER_ROADMAP.md@3d6cd5cf00f0bdd4e4fcff644f20f85a89c7ea60
 ROADMAP_REVIEW_STATUS: COMPLETE
-QUALIFICATION_SCOPE_ID: QSCOPE-1551-SPRING-RATE-UNIT-RESOLVER
-QUESTION_SET_ID: QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0026
+QUALIFICATION_SCOPE_ID: QSCOPE-1551-TERMINAL-REFUSAL-CLASSIFIERS
+QUESTION_SET_ID: QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0027
 QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REFRESHED
-QUESTION_DISPLAY: HIDE
-QUALIFICATION_BASIS_HEAD: ef275dfea07000b2dd3acaba4c462443c231cade
+QUESTION_DISPLAY: SHOW
+QUALIFICATION_BASIS_HEAD: 5506b8d90710a310120732fb17b85a2c2b13490f
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-LFEA-SUPPORT-REPRESENTABILITY/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LFEA-SUPPORT-REPRESENTABILITY/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0026
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0027
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5467986178
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5467984874
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5472929839
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP_0027
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: PASS
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
-HANDOVER_READY: TRUE
+HANDOVER_READY: FALSE

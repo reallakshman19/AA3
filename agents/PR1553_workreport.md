@@ -7,10 +7,10 @@ PR                         #1553
 branch                     codex/lfea-support-representability-1551
 state                      OPEN / DRAFT / UNMERGED
 chain                      ADV-LFEA-SUPPORT-REPRESENTABILITY
-current endpoint           EP-0028 (EP-0029 publication in progress)
+current endpoint           EP-0030 (publication in progress)
 current qualification      QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0029
-qualification scope        QSCOPE-1551-FINITE-SKEW-SPRING-ASSEMBLY
-latest technical head      695aed9899d86eb32e929bf1f2d3cd3d74ea008f
+qualification scope        QSCOPE-1551-FULL-PRODUCTION-PATH-REVIEW
+latest technical head      24ec07259ca6c54dd44708a7ad029a42b663596e
 live main re-ground        70dd23a4fb36533f00d818586d1b753fa4f12276
 Common live main           293a3db7993a6945c01adc592a7ff14a339c504a
 merge authority            EXACT OWNER PHRASE `APPROVED MERGE` ONLY
@@ -35,7 +35,7 @@ Exact assembly gate at `695aed9899d86eb32e929bf1f2d3cd3d74ea008f`:
 - orthogonal displacement `[0.008,-0.006,0]` gives zero force/energy;
 - dominant-axis UX-snap falsifier exits 1 at `B[0,0]: expected 720, got 2000`.
 
-This is constitutive/triplet assembly evidence only. Full InputXML structural declaration/compiler/solve remains NOT_RUN.
+The full `[SIMULATED]` InputXML path now compiles and qualifies through the production solver. It reports 36.94% vertical reaction share with force and moment equilibrium PASS. This still does not establish CAESAR parity.
 
 ### Finite CNODE spring
 
@@ -47,11 +47,11 @@ Exact evidence:
 - triplet assembly PASS/red: exact `[+B -B; -B +B]`, symmetry, equal/opposite endpoint action, energy and common-translation invariance;
 - lost-connected-node falsifier red at `Kij[0,0]: expected -720, got 0`.
 
-Full InputXML declaration/compiler/production solve and load-share remain NOT_RUN.
+The corrected two-cantilever `[SIMULATED]` fixture now compiles and qualifies through production. The internal connector carries 19.27% of ground vertical reaction; `r_j-r_i=[0.006,0.008,0] m=0.01n`, so equal/opposite actions remain collinear and create no artificial couple.
 
 ### Predefined HANGER
 
-Bounded Y-vertical subset retains positive spring rate, positive cold load and positive integer hanger count. H-bearing Load-case -> Run custody is exact PASS/red. Full production mechanics/solve remains NOT_RUN. Alternate vertical-axis authority and hanger sizing/design are out of scope/fail closed.
+Bounded Y-vertical subset retains positive spring rate, positive cold load and positive integer hanger count. H-bearing Load-case -> Run custody is exact PASS/red. The `[SIMULATED]` production solve now passes with 37.30% vertical reaction share. Alternate vertical-axis authority and hanger sizing/design are out of scope/fail closed.
 
 ### Rigid and malformed controls
 
@@ -78,8 +78,9 @@ Rigid skew/CNODE require exact MPC/constraint equations. Penalty stiffness is pr
 7. dedicated rigid-CNODE/rigid-skew/incomplete-HANGER classifier refusals + individual/aggregate breaks;
 8. finite CNODE spring constitutive/triplet assembly + lost-connected-node break;
 9. finite skew spring constitutive/triplet assembly + dominant-axis-snap break.
+10. full production-path `[SIMULATED]` skew, CNODE, HANGER, ordinary-spring and refusal exercises, plus eleven observed deliberate-break reds.
 
-All local exact gates use Node v22.16.0. Evidence is admitted only after every file in the complete static runtime closure reproduces its repository Git blob SHA.
+The earlier isolated exact gates use Node v22.16.0 with verified Git-blob closures. The full-worktree review uses Node v26.3.0 with the project-locked dependency set and is explicitly classified as self-authored `[SIMULATED]` evidence.
 
 ## External-reference / DRAFT boundary
 
@@ -102,25 +103,23 @@ L6                  95.82%
 >5% tail             7.99%
 ```
 
-BM4_L contains none of the target support features, so it is non-regression evidence only. Current exact-head BM4 execution remains NOT_RUN.
+BM4_L contains none of the target support features, so it is non-regression evidence only. The dedicated gate was attempted but stops before solve on inherited `BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED`; the exact PR base fails identically. The frozen target and oracle remain unchanged.
 
 ## Runtime truth / NOT_RUN ledger
 
 Hosted GitHub Actions have repeatedly failed before engineering steps execute (`runner_id:0` / empty runner / no steps); dependent BM4 jobs are skipped. That is infrastructure NOT_RUN, not application PASS/FAIL.
 
-Still NOT_RUN:
+Current validation truth:
 
 ```text
-finite skew InputXML declaration/compiler/full solve        NOT_RUN
-finite CNODE InputXML declaration/compiler/full solve       NOT_RUN
-predefined HANGER production mechanics/full solve           NOT_RUN
-native dedicated support-refusal preflight + break           NOT_RUN
-broad INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED gate        NOT_RUN
-mixed fixed + skew production exercise                       NOT_RUN
-spring/full aggregate suites                                 NOT_RUN
-repository imports/lint/diff                                 NOT_RUN
-BM4_L before/after                                           NOT_RUN
-external CAESAR skew/CNODE/HANGER qualification              NOT_RUN_EXTERNAL
+full check:lfea-linear-piping                               PASS
+focused support aggregates and refusal/unit guards           PASS [SIMULATED]
+eleven deliberate-break discriminators                       RED as intended
+repository imports / shell contract / git diff --check        PASS
+dedicated BM4_L preflight/comparison                          FAIL_BEFORE_SOLVE_BASE_REPRODUCED
+npm run build                                                 FAIL_BASE_REPRODUCED (1,801,999-byte main chunk)
+non-FEA aggregate                                             FAIL_BASE_REPRODUCED (exact-float assertion)
+external CAESAR skew/CNODE/HANGER qualification               NOT_RUN_EXTERNAL
 ```
 
 ## Authority boundary
@@ -143,36 +142,23 @@ PR may report non-mergeable while behind/diverged from live main. Do not reconci
 
 ## Changed-file ledger — latest bounded leg
 
-EP-0029 leg additions:
-
-1. `scripts/lfea-skew-spring-assembly-check.mjs`
-2. `agents/chains/ADV-LFEA-SUPPORT-REPRESENTABILITY/material-legs/LEG-005.md`
-3. `agents/qualifications/ADV-LFEA-SUPPORT-REPRESENTABILITY/QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0029-questions.md`
-4. `agents/PR1553_workreport.md`
-
-EP-0028 introduced the behavior-preserving spring assembly ownership extraction:
-
-5. `src/core/linear-fea-solver/spring-assembly.js`
-6. `src/core/linear-fea-solver/assembly.js`
-7. `scripts/lfea-cnode-spring-assembly-check.mjs`
-
-Chain CURRENT/ACTIVE, endpoint and external issue/PR projections are updated at each endpoint publication.
+EP-0030 corrects the nine `SPRING_DRAFT` fixture modulus declarations, replaces the shunted CNODE exercise with two independently anchored cantilevers, adds modulus/geometry regression guards, and removes one prohibited API default expression. `PROVENANCE.md`, LEG-006, CURRENT/ACTIVE, this report and EP-0030 record the engineering basis and validation truth.
 
 ## Current risks / debt
 
-RISK-001: full finite-support production paths remain unexecuted beyond bounded topology/unit/case/assembly micro-gates.
+RISK-001: self-authored full-path evidence is not independent CAESAR validation; all new support features remain DRAFT.
 
 RISK-002: independent CAESAR feature references are absent; all new support features remain DRAFT.
 
-RISK-003: live-main drift requires a complete overlap/reconciliation audit before any merge-ready claim.
+RISK-003: dedicated BM4_L remains blocked by upstream branch-factor edition authority, and live-main drift requires explicit overlap review before any merge-ready claim.
 
-DEBT-001: the upstream CNODE/skew InputXML structural declaration/compiler-intake path still has eager package fan-out that makes exact isolated execution expensive.
+DEBT-001: build and one non-FEA gate are red at the exact PR base; they are recorded but not repaired in this support-scope leg.
 
-DEBT-002: native preflight refusal propagation and broad structural spring-rate fail-closed gates remain runtime-unproven.
+DEBT-002: dedicated BM4_L cannot execute until the owning branch-factor authority is supplied.
 
 ## Next action
 
-After EP-0029 publication, prioritize a complete upstream finite-support declaration/compiler gate if its dependency closure can be proven. If not, target the predefined HANGER mechanics boundary or native dedicated-refusal preflight as the next complete gate. Never promote a partial import graph.
+Obtain and qualify REF-SKEW-01, REF-CNODE-01 and REF-HGR-01, or obtain explicit upstream authority to resolve the BM4 branch-factor edition block. Keep PR #1553 DRAFT; do not merge without the exact Owner phrase `APPROVED MERGE`.
 
 ## Appendix A — takeover qualification
 

@@ -2,19 +2,23 @@
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0038
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0040
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1535
 SUBORDINATE_VV_WORK_ITEM: github:reallaksh19/Advanced_Analysis#1569
-CURRENT_MAIN: 75c670424ef46888f0a1c02188a9ea8d42b5209f
+CURRENT_MAIN: 2bade51fc8207db4cc7934de3b8cb6771e41e9e8
 LAST_BM005_CANDIDATE_HEAD: 26f732ba8142828dc6c6160e4355993a60aa186a
-ACTIVE_BRANCH: relay/lafea3-postmerge-ep0034
+ACTIVE_BRANCH: relay/lafea3-postmerge-ep0039
 ACTIVE_PR: NONE_MATERIAL_MERGED
-RELAY_PR: #1596 DRAFT
+RELAY_PR: #1608 DRAFT
+MERGED_RELAY_SOURCE_PR: #1596
+MERGED_RECOVERY_PR: #1605
+MERGED_RELAY_MAIN: 977754654156fddedab29c4be104c2bc184f3ac9
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5473698432
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5474168008
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+MERGE_AUTHORIZED: TRUE_FOR_#1608
+OWNER_PROGRESSION_COMMAND: FIX_MERGE_PROCEED_NEXT
 
 ## Original task / acceptance ledger
 
@@ -35,7 +39,10 @@ MERGE_AUTHORIZED: FALSE
 | TASK-013 | PASS_DIAGNOSTIC / CURRENT_HEAD_DRIFT | Main advanced through unrelated WRC custody to `e00ce199...`; historical BM-005 receipt remained non-current. |
 | TASK-014 | PASS_CONTROL_PLANE / IMPLEMENTATION_DEPTH | Owner-requested implementation-challenging pack `QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG` was frozen against `e00ce199...`, covering live production trace, Q8 meshing/probe ownership, convergence, hashes and first-wrong-boundary debugging. |
 | TASK-015 | PASS_DIAGNOSTIC / EXTERNAL_GATE_PERSISTS | EMP.1 control run `33346274630`, job `99350910969`, still failed before step 1 with runner_id=0. |
-| TASK-016 | PASS_RECONCILIATION / NONOVERLAPPING_DRIFT | Current main advanced to `75c670424ef46888f0a1c02188a9ea8d42b5209f`. Compare from Q-pack basis `e00ce199...` is 18 commits with changes only in WRC and LAFEA.4 chain/custody files; no LAFEA.3/BM-005 implementation or authority drift. Newer control run `33350678242`, job `99363293967`, still has `ubuntu-latest`, runner_id=0 and zero steps. |
+| TASK-016 | PASS_RECONCILIATION / NONOVERLAPPING_DRIFT | Main advanced to `75c670424ef46888f0a1c02188a9ea8d42b5209f`. Compare from Q-pack basis `e00ce199...` was 18 commits with changes only in WRC and LAFEA.4 chain/custody files; no LAFEA.3/BM-005 implementation or authority drift. Newer control run `33350678242`, job `99363293967`, still had `ubuntu-latest`, runner_id=0 and zero steps. |
+| TASK-017 | PASS_OWNER_MERGE / EXTERNAL_GATE_PERSISTS | Owner authorized `merge if mergeable, proceed next`. Draft #1596 exact head `a36d4d98187bfb38130ae45bf4fe94d6fbb8326d` was merged without content changes through non-Draft recovery #1605 as main `977754654156fddedab29c4be104c2bc184f3ac9`. Pages run `33358070689`, build job `99383918118`, then failed before step 1 with `ubuntu-latest`, runner_id=0, empty runner identity and zero steps. BM-005 was correctly not triggered because only custody/Q-pack paths changed. |
+| TASK-018 | PASS_RECONCILIATION / POST_MERGE_NONOVERLAPPING_DRIFT | Main advanced from `97775465...` to `8abc2e379d2ccc56a14d3397c97772ec0290f7d6` through LAFEA.4 #1536 custody/Q-pack recovery. Compare is 10 commits and only LAFEA.4 chain/Q-pack files; no LAFEA.3 production, BM-005, workflow, mesher, probe, convergence, oracle, roadmap or release-authority drift. |
+| TASK-019 | PASS_FIX / LIVE_MAIN_REBIND | Owner commanded `fix, merge, proceed next`. EP-0039 was preserved immutable; successor EP-0040 rebinds current state to `2bade51fc8207db4cc7934de3b8cb6771e41e9e8`. Drift `8abc2e37... -> 2bade51f...` is 10 commits affecting only WRC #1559 `ADV-EMP1-WRC-UI-WALKTHROUGH` custody files, with no LAFEA.3/BM-005 implementation or authority overlap. #1608 is explicitly authorized for merge after this correction. |
 
 ## Input ledger
 
@@ -47,8 +54,9 @@ MERGE_AUTHORIZED: FALSE
 | INPUT-004 | AVAILABLE | Governed mesh profile and deterministic LAFEA meshing infrastructure are merged. |
 | INPUT-005 | BLOCKED_EXTERNAL | GitHub-hosted standard runner provisioning fails before step 1 across BM-005 and unrelated workflows; local runtime also lacks a faithful checkout path. |
 | INPUT-006 | UNRESOLVED_OWNER_ACCOUNT_STATE | GitHub Actions usage/budget/payment and repository Actions-policy details require Owner/account-side inspection; current connector cannot establish them. |
-| INPUT-007 | CURRENT_HEAD_AVAILABLE_UNEXECUTED | Current main is `75c670424ef46888f0a1c02188a9ea8d42b5209f`; no BM-005 execution is retained for this SHA. |
-| INPUT-008 | IMPLEMENTATION_PACK_AVAILABLE | Q-set `QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG` remains technically applicable after non-overlapping drift; pinned basis is historical and admission remains NOT_EVALUATED. |
+| INPUT-007 | CURRENT_HEAD_AVAILABLE_UNEXECUTED | Current main is `2bade51fc8207db4cc7934de3b8cb6771e41e9e8`; no BM-005 execution is retained for this SHA. |
+| INPUT-008 | IMPLEMENTATION_PACK_AVAILABLE | Q-set `QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG` remains technically applicable after custody-only/non-overlapping drift; pinned basis is historical and admission remains NOT_EVALUATED. |
+| INPUT-009 | WORKFLOW_DISPATCH_NOT_EXPOSED | Connected GitHub tool surface exposes no workflow-dispatch mutation, so this agent cannot manually schedule BM-005 without changing protected workflow content. |
 
 ## Benchmark / oracle ledger
 
@@ -58,7 +66,7 @@ MERGE_AUTHORIZED: FALSE
 | BM-002 | PASS_FOCUSED | Kirsch numerical benchmark with independent analytical oracle custody retained. |
 | BM-003 | NOT_RUN | Integrated Lamé software execution is not retained as current exact-head evidence. |
 | BM-004 | PASS_FOCUSED | Solver/Jacobian/imposed-displacement/fail-closed controls retained. |
-| BM-005 | NOT_RUN_EXECUTION_BLOCKED_CURRENT_HEAD_UNEXECUTED | Historical exact-head push at `26f732ba...` never reached checkout; current main `75c67042...` has no BM-005 execution. |
+| BM-005 | NOT_RUN_EXECUTION_BLOCKED_CURRENT_HEAD_UNEXECUTED | Historical exact-head push at `26f732ba...` never reached checkout; current main `2bade51f...` has no BM-005 execution. |
 | BM-006 | NOT_RUN | Same-case real engineer/browser walkthrough remains unexecuted. |
 
 ## Execution evidence
@@ -80,17 +88,25 @@ Independent runner controls include:
 Pages job 99293663765:       ubuntu-latest / runner_id=0 / steps=[]
 LAFEA.4 job 99296562205:     ubuntu-latest / runner_id=0 / steps=[]
 EMP.1 job 99350910969:       ubuntu-latest / runner_id=0 / steps=[]
-newest EMP.1 job 99363293967: ubuntu-latest / runner_id=0 / runner_group_id=0 / runner_name="" / steps=[]
-run:                         33350678242
-created:                     2026-08-31T02:26:28Z
+EMP.1 job 99363293967:       ubuntu-latest / runner_id=0 / steps=[]
+
+immediate-post-#1605 Pages run: 33358070689
+head:                           977754654156fddedab29c4be104c2bc184f3ac9
+build job:                      99383918118
+label:                          ubuntu-latest
+runner_id:                      0
+runner_group_id:                0
+runner_name:                    ""
+steps:                          []
+conclusion:                     failure
 ```
 
-These cross-workflow controls continue to falsify a BM-005-workflow-specific first failure. The common failing boundary remains hosted-runner provisioning before any workflow step. Exact private account/repository cause remains unresolved because that state is not exposed through the connected interface.
+These cross-workflow controls continue to falsify a BM-005-workflow-specific first failure. The Pages result immediately after the #1596/#1605 merge confirms hosted-runner allocation still failed before step 1. Subsequent drift through `2bade51f...` is LAFEA.4/WRC custody-only and does not provide a new executable BM-005 receipt.
 
 RUNNER_PROVISIONING_CLASSIFICATION: REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE
 RUNNER_PROVISIONING_ROOT_CAUSE: UNRESOLVED_ACCOUNT_ACTIONS_POLICY_OR_BILLING_OR_OTHER_PROVISIONING_STATE
 BM005_WORKFLOW_SPECIFIC_FAULT: NOT_SUPPORTED_BY_CURRENT_EVIDENCE
-BM005_CURRENT_REQUIRED_HEAD: 75c670424ef46888f0a1c02188a9ea8d42b5209f
+BM005_CURRENT_REQUIRED_HEAD: 2bade51fc8207db4cc7934de3b8cb6771e41e9e8
 BM005_CURRENT_HEAD_EXECUTION: NOT_RUN
 
 ## Frozen BM-005 package
@@ -99,7 +115,7 @@ BM005_CURRENT_HEAD_EXECUTION: NOT_RUN
 
 ## Implementation grounding retained for takeover
 
-The Q-pack remains anchored to `scripts/lafea.3-bm005-ordinary-route-check.mjs`, `scripts/lafea.3-bm005-report-contract.mjs`, continuum geometry intake/workbench/convergence/probe/publication code, mesh producer binding/engine, and frozen BM005 benchmark/source registry. Current main drift after `e00ce199...` does not touch those files.
+The Q-pack remains anchored to `scripts/lafea.3-bm005-ordinary-route-check.mjs`, `scripts/lafea.3-bm005-report-contract.mjs`, continuum geometry intake/workbench/convergence/probe/publication code, mesh producer binding/engine, and frozen BM005 benchmark/source registry. All post-basis changes through current main are custody-only or otherwise non-overlapping with those implementation anchors.
 
 ## Roadmap / authority
 
@@ -118,7 +134,7 @@ QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TECHNICAL_DEPTH_TARGET: IMPLEMENTATION_TAKEOVER
 
-An independent admission authority must reconcile the non-overlapping drift from basis `e00ce199...` to current main before setting admission VALID. The candidate may not self-admit.
+An independent admission authority must reconcile the non-overlapping drift from basis `e00ce199...` through current main before setting admission VALID. The candidate may not self-admit.
 
 VISIBLE_USER_REPLAY_STATUS: STATIC_COMPOSITION_MERGED / BROWSER_NOT_RUN
 CORE_FEA_COMPLETION_STATUS: NOT_PROVEN
@@ -126,4 +142,4 @@ RELEASE_QUALIFIED: FALSE
 
 ## Exact next action
 
-Restore ordinary GitHub-hosted `ubuntu-latest` runner availability or provide a faithful clean executable checkout. Then re-resolve the then-current main SHA and execute `node scripts/lafea.3-bm005-ordinary-route-check.mjs`. Preserve exact stdout/stderr/exit, clean-tree state and candidate HEAD. PASS -> persist exact report then BM-006 real-browser replay. FAIL/pre-report rejection -> isolate the first wrong implementation boundary using `QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG` before any engineering patch. Do not add or weaken workflows or engineering acceptance merely to work around runner provisioning.
+Merge corrected Draft #1608 under explicit Owner authorization using its exact head; if Draft blocks direct merge, use exact-head non-Draft recovery with no content change. After merge, re-resolve live `main` and inspect the newest ordinary `ubuntu-latest` job. If a runner reaches step 1, execute `node scripts/lafea.3-bm005-ordinary-route-check.mjs` on that exact head and retain stdout/stderr/exit, clean-tree state and report artifact. PASS -> persist exact report then BM-006 real-browser replay. FAIL/pre-report rejection -> isolate the first wrong implementation boundary using `QS-ADV-LAFEA3-1535-0037-IMPLEMENTATION-DEBUG` before any engineering patch. Do not add or weaken workflows or engineering acceptance merely to work around runner provisioning.

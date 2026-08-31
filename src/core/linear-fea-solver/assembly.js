@@ -1,10 +1,7 @@
 import { assembleSparseSymmetric } from '../shared-linear-solve/sparse-matrix.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { ELEMENT_DOF_ORDER } from '../linear-fea-contract/conventions.js';
-import {
-  INACTIVE_ANALYSIS_DOF_BEHAVIOR,
-  TRANSLATIONAL_DOFS,
-} from '../linear-fea-contract/model-schema.js';
+import { INACTIVE_ANALYSIS_DOF_BEHAVIOR } from '../linear-fea-contract/model-schema.js';
 import { dofIndexOf } from './dof-map.js';
 import { requireElementContribution } from './element-contributions.js';
 import {
@@ -12,10 +9,8 @@ import {
   SPARSE_DIRECT_BACKEND_ID,
   compareAscii,
   fail,
-  requirePositive,
 } from './solver-contract.js';
-
-const CODE = 'SOLVER_ASSEMBLY_INVALID';
+import { buildSpringTriplets } from './spring-assembly.js';
 
 const LOCAL_DOF_REFERENCES = ELEMENT_DOF_ORDER.map((token) => {
   const [end, dof] = token.split(':');
@@ -68,49 +63,6 @@ function buildElementTriplets(model, dofMap, elementContributions) {
     }
   }
   return { triplets, elementLoad, elementIds };
-}
-
-function pushDirectionalBlock(triplets, constraint, rowIndices, colIndices, stiffness, sign) {
-  for (let row = 0; row < 3; row += 1) {
-    for (let column = 0; column < 3; column += 1) {
-      const value = sign * stiffness * constraint.direction[row] * constraint.direction[column];
-      if (value === 0) continue;
-      triplets.push({
-        row: rowIndices[row],
-        col: colIndices[column],
-        value,
-        tag: `SPRING:${constraint.constraintId}`,
-      });
-    }
-  }
-}
-
-function buildDirectionalSpringTriplets(constraint, dofMap, stiffness) {
-  const primary = TRANSLATIONAL_DOFS.map((dof) => dofIndexOf(dofMap, constraint.nodeId, dof));
-  const triplets = [];
-  pushDirectionalBlock(triplets, constraint, primary, primary, stiffness, 1);
-  if (typeof constraint.connectedNodeId === 'string') {
-    const connected = TRANSLATIONAL_DOFS.map((dof) => dofIndexOf(dofMap, constraint.connectedNodeId, dof));
-    pushDirectionalBlock(triplets, constraint, primary, connected, stiffness, -1);
-    pushDirectionalBlock(triplets, constraint, connected, primary, stiffness, -1);
-    pushDirectionalBlock(triplets, constraint, connected, connected, stiffness, 1);
-  }
-  return triplets;
-}
-
-function buildSpringTriplets(model, dofMap) {
-  const springs = model.constraints
-    .filter((constraint) => constraint.behavior === 'LINEAR_SPRING')
-    .sort((left, right) => compareAscii(left.constraintId, right.constraintId));
-  const triplets = springs.flatMap((constraint) => {
-    const stiffness = requirePositive(constraint.stiffness, `constraints[${constraint.constraintId}].stiffness`, CODE);
-    if (Array.isArray(constraint.direction)) {
-      return buildDirectionalSpringTriplets(constraint, dofMap, stiffness);
-    }
-    const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);
-    return [{ row: index, col: index, value: stiffness, tag: `SPRING:${constraint.constraintId}` }];
-  });
-  return { triplets, springs };
 }
 
 function sortAndSumTriplets(triplets) {

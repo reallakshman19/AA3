@@ -24,18 +24,41 @@ import { buildInputXmlRunRequestCase } from '../src/core/linear-piping-analysis-
 import { compileLinearPipingInputXmlAnalysisContext } from '../src/core/linear-piping-analysis-consumer/index.js';
 
 const DIR = 'benchmarks/LFEA/SPRING_DRAFT';
+const EXPECTED_ELASTIC_MODULUS_PA = 203_395_008_000;
+const EXECUTABLE_FIXTURE_NAMES = Object.freeze([
+  'CnodeSpringSupports.xml', 'MixedFixedSkewSpring.xml', 'PredefinedHanger.xml',
+  'SkewSpringSupports.xml', 'SpringSupports.xml',
+]);
 const read = (name) => readFileSync(`${DIR}/${name}`, 'utf8');
 
 function preFlightOf(fileName) {
   const intake = createLinearPipingInputXmlIntake(
     { fileName, content: read(fileName) },
-    { fallbackUnit: 'mm', requestedProfileId: 'STRICT_INPUTXML_LINEAR_STATIC_V1' },
+    {
+      fallbackUnit: 'mm',
+      componentOrigins: fileName === 'CnodeSpringSupports.xml'
+        ? { 50: { x: 6006, y: -3992, z: 0 } }
+        : {},
+      requestedProfileId: 'STRICT_INPUTXML_LINEAR_STATIC_V1',
+    },
   );
   return prepareLinearPipingInputXmlPreFlight(intake);
 }
 
+function assertFixtureModulus(fileName) {
+  const preFlight = preFlightOf(fileName);
+  assert.ok(preFlight.preparation.structuralPreparation,
+    `${fileName} must retain structural preparation for the fixture modulus guard`);
+  const material = preFlight.preparation.structuralPreparation.compilation.model.materialStates[0];
+  assert.equal(material?.elasticModulus, EXPECTED_ELASTIC_MODULUS_PA,
+    `${fileName} must compile the declared 203395008 KPa modulus as 203.395008 GPa`);
+}
+
 const findingCodes = (preFlight, disposition) => preFlight.preparation.findings
   .filter((row) => row.disposition === disposition).map((row) => row.code);
+
+// Guard every executable fixture against a self-consistent but 1000x-stiff material model.
+for (const fileName of EXECUTABLE_FIXTURE_NAMES) assertFixtureModulus(fileName);
 
 // Positive ordinary spring model.
 const springs = preFlightOf('SpringSupports.xml');

@@ -1,3 +1,9 @@
+/*
+ * Verify finite CNODE spring assembly and production execution. Inputs are a
+ * self-authored two-cantilever InputXML plus an explicit second-component
+ * origin; outputs are constitutive, equilibrium, topology, and solve guards.
+ * Invalid or unsupported declarations fail by assertion without a fallback.
+ */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
@@ -258,8 +264,16 @@ assert.throws(
 // ------------------------------------------------------ full production exercise
 const exerciseXml = readFileSync('benchmarks/LFEA/SPRING_DRAFT/CnodeSpringSupports.xml', 'utf8');
 const intake = createLinearPipingInputXmlIntake(
-  { fileName: 'CnodeSpringSupports.xml', content: exerciseXml },
-  { fallbackUnit: 'mm', requestedProfileId: STRICT, requestedCaseIds: ['IXP-W'] },
+  {
+    fileName: 'CnodeSpringSupports.xml',
+    content: exerciseXml,
+  },
+  {
+    fallbackUnit: 'mm',
+    componentOrigins: { 50: { x: 6006, y: -3992, z: 0 } },
+    requestedProfileId: STRICT,
+    requestedCaseIds: ['IXP-W'],
+  },
 );
 const initial = prepareLinearPipingInputXmlPreFlight(intake);
 assert.notEqual(initial.status, 'BLOCK',
@@ -274,6 +288,15 @@ assert.ok(productionConstraint, 'production preparation must compile the finite 
 assert.deepEqual(productionConstraint.direction, N);
 assert.equal(productionConstraint.stiffness, 100000000,
   '100000 N/mm must compile as 1e8 N/m');
+const productionModel = authorized.preparation.structuralPreparation.compilation.model;
+const productionNodeI = productionModel.nodes.find((row) => row.nodeId === productionConstraint.nodeId);
+const productionNodeJ = productionModel.nodes.find((row) => row.nodeId === productionConstraint.connectedNodeId);
+assert.ok(productionNodeI && productionNodeJ, 'production CNODE endpoints must both be retained');
+const productionConnectorOffset = ['x', 'y', 'z']
+  .map((axis) => productionNodeJ.position[axis] - productionNodeI.position[axis]);
+for (let index = 0; index < 3; index += 1) {
+  close(productionConnectorOffset[index], 0.01 * N[index], `production CNODE offset[${index}]`);
+}
 const request = buildInputXmlRunRequestCase({
   intake: authorized.intake,
   preparation: authorized.preparation,
@@ -331,6 +354,7 @@ console.log(JSON.stringify({
   qualificationGroundedSpringCount: forceEquilibrium.groundedSpringCount,
   productionSolveStatus: result.status,
   productionCompiledStiffnessNPerM: productionConstraint.stiffness,
+  productionConnectorOffsetM: productionConnectorOffset,
   productionRelativeExtensionM: solvedQ,
   productionInternalForceN: internalForceMagnitude,
   productionInternalVerticalSharePercent: Number((100 * internalVerticalShare).toFixed(2)),

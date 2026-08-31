@@ -27,7 +27,7 @@ independent CAESAR-solved feature model is retained.
 |---|---|---|
 | `SpringSupports.xml` | positive, self-authored | ordinary finite axis springs compile and solve; constitutive `|R/u| = k`; material support load share; DRAFT disclosure |
 | `SkewSpringSupports.xml` | positive, self-authored | finite bidirectional skew spring compiles exactly as `k(n⊗n)` and solves with DRAFT disclosure |
-| `CnodeSpringSupports.xml` | positive, self-authored | finite bidirectional CNODE spring compiles as an internal two-node relative spring, not ground support; DRAFT disclosure |
+| `CnodeSpringSupports.xml` | positive, self-authored | two separately anchored cantilevers are joined by a finite bidirectional CNODE spring; its 10 mm endpoint offset is collinear with the spring axis so equal/opposite actions create no artificial couple; DRAFT disclosure |
 | `PredefinedHanger.xml` | positive, self-authored | predefined Y-vertical HANGER rate enters `K`, cold load enters explicit `+H` load cases, and DRAFT disclosure survives to results |
 | `MixedFixedSkewSpring.xml` | positive, self-authored | a valid rigid + directional-spring mixed node exercises raw reaction decomposition and presentation custody |
 | `UnsupportedSkewSupport.xml` | negative, self-authored | rigid skew remains refused by `MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED` because exact MPC authority is absent |
@@ -114,6 +114,11 @@ break is considered verified until it has actually executed red on the exact
 repository head.
 
 ## Units are part of the authority boundary
+
+All fixture material records declare `EMOD` in `KPa`; the retained raw value
+`203395008` must compile to `203395008000 Pa` (203.395008 GPa). Treating the
+same value as MPa creates a nonphysical 203.395 TPa beam that can shadow a
+finite support while still allowing solver equilibrium checks to pass.
 
 Spring rate is force per length. It is not legal to pass the declared numeric
 value through unchanged or to fall back to factor 1 when source units cannot be

@@ -35,7 +35,7 @@ const DIRECTION_COMPONENT_TOLERANCE = 1e-12;
 export function reviewInputXmlLinearUnilateralRestraints(
   structuralPreparation,
   reactions,
-  displacements = null,
+  displacements,
 ) {
   const bindings = (structuralPreparation?.constraintBindings ?? [])
     .filter((binding) => binding.unilateralAction !== null && binding.unilateralAction !== undefined);

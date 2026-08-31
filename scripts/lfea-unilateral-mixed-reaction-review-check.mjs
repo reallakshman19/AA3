@@ -16,7 +16,7 @@ const displacements = Object.freeze([
 const q = N[1] * 0.01;
 const springUx = -K * q * N[0];
 
-function preparation(withSpring = true) {
+function preparation(withSpring) {
   return {
     modelId: MODEL_ID,
     constraintBindings: [{
@@ -49,7 +49,7 @@ function mixedRows(unilateralReaction) {
 }
 
 const consistent = reviewInputXmlLinearUnilateralRestraints(
-  preparation(),
+  preparation(true),
   mixedRows(10),
   displacements,
 );
@@ -58,7 +58,7 @@ assert.equal(consistent.status, deliberateBreak ? 'LINEARIZATION_EXCEEDED' : 'CO
 assert.deepEqual(consistent.violations, []);
 
 const exceeded = reviewInputXmlLinearUnilateralRestraints(
-  preparation(),
+  preparation(true),
   mixedRows(-10),
   displacements,
 );
@@ -70,7 +70,7 @@ assert.equal(exceeded.violations[0].reaction, -10,
   'review must recover the one-way support action, not the total or spring contribution');
 
 assert.throws(
-  () => reviewInputXmlLinearUnilateralRestraints(preparation(), mixedRows(10)),
+  () => reviewInputXmlLinearUnilateralRestraints(preparation(true), mixedRows(10)),
   (error) => error?.code === 'INPUTXML_UNILATERAL_REVIEW_DISPLACEMENT_REQUIRED',
   'mixed one-way + directional support review must fail closed without displacement evidence',
 );

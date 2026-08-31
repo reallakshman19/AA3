@@ -1,9 +1,9 @@
 # Issue Current State — #1536
 
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0037
+CURRENT_ENDPOINT: EP-0038
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1536
-UPDATED_AT: 2026-08-31T04:25:00Z
+UPDATED_AT: 2026-08-31T04:47:00Z
 
 ### Original task / acceptance ledger
 TASK-001 | Decide and record the LAFEA.4 production strategy: retain CST/DKT as thin-only or adopt MITC. | COMPLETE | Issue #1536 + PR #1557 comment 5466211854
@@ -12,23 +12,24 @@ TASK-003 | Keep unqualified MITC evidence explicit experimental/nonproduction/no
 TASK-004 | Add sparse/scalable shell solve path. | SOURCE_COMPLETE_VALIDATION_NOT_RUN | merged shell PCG/sparse source; governed execution unavailable
 TASK-005 | Add LAFEA4-CYL-01, LAFEA4-PRESS-01 and LAFEA4-COMB-01 direct-route benchmarks. | MERGED_SOURCE_COMPLETE_VALIDATION_NOT_RUN | benchmark script exists, aggregate reaches it, LEG-002 registers all three IDs in LAFEA.4 composition benchmark custody; governed execution NOT_RUN
 TASK-006 | Promote MITC4/MITC3 into explicit versioned production contract/dispatch/registry/composition/presenter while preserving v1. | MERGED_SOURCE_COMPLETE_VALIDATION_NOT_RUN | v2 production source merged via #1563; LEG-002 stage-composition qualification follow-up merged via recovery PR #1574 as LAFEA.4 basis b4ca03357f584ed993cf3739b11f89c255e54b84
-TASK-007 | Refresh takeover qualification with technical implementation-challenging Q1-Q5 after Owner-requested merge/progression. | COMPLETE_CONTROL_PLANE | QS-ADV-LAFEA4-1536-0014-IMPLEMENTATION-TAKEOVER created on successor Draft #1603; no engineering/release authority changed
+TASK-007 | Refresh takeover qualification with technical implementation-challenging Q1-Q5 after Owner-requested merge/progression. | COMPLETE_CONTROL_PLANE | QS-ADV-LAFEA4-1536-0014-IMPLEMENTATION-TAKEOVER created on #1603; no engineering/release authority changed
 TASK-008 | Refresh independent post-basis coverage request onto the exact current main/Q-set without self-confirming coverage. | COMPLETE_CONTROL_PLANE | Issue comment 5473697847; EP-0037
+TASK-009 | Merge EP-0037 qualification/custody and establish successor post-merge baton. | COMPLETE_CONTROL_PLANE | exact #1603 head merged via recovery PR #1606 as main 8abc2e379d2ccc56a14d3397c97772ec0290f7d6; successor Draft #1609; EP-0038
 
 ### Input ledger
 INPUT-001 | Legacy local-shell-model/v1 + CST_DKT_TRI3_THIN_SHELL_V1 production route | AVAILABLE | preserved in LAFEA.4 merged basis and unchanged on live main
 INPUT-002 | MITC4/MITC3 mechanics/adoption adapters | AVAILABLE | reused unchanged by production wrappers
 INPUT-003 | Shared deterministic dense/sparse/PCG shell solve | AVAILABLE | reused unchanged by production wrappers
-INPUT-004 | Owner production-adoption/merge authority | AVAILABLE | PR #1557 comment 5466211854 + owner-authorized merges #1563/#1574/#1585/#1591/#1601
+INPUT-004 | Owner production-adoption/merge authority | AVAILABLE | PR #1557 comment 5466211854 + owner-authorized merges #1563/#1574/#1585/#1591/#1601/#1606
 INPUT-005 | Common engineering-pr-delivery-v2 current protocol | AVAILABLE | reallaksh19/Common@293a3db7993a6945c01adc592a7ff14a339c504a; engineering skill blob unchanged at aa832f5f9f204c3834ffcee40102b482f121ce76
-INPUT-006 | Executable official private-repository checkout / runner | UNRESOLVED | exact-head LAFEA.4 run 33350279178 job 99362148647 has steps=null before checkout; no newer run exists on current #1603 head
+INPUT-006 | Executable official private-repository checkout / runner | UNRESOLVED | latest LAFEA.4 exact-head run 33357162944 job 99381413267 has steps=null before checkout; no repository command executed
 INPUT-007 | LAFEA.4 merged production basis | AVAILABLE | b4ca03357f584ed993cf3739b11f89c255e54b84 includes exact LEG-002 follow-up through #1574
-INPUT-008 | Live main | AVAILABLE_RECONCILED | 75c670424ef46888f0a1c02188a9ea8d42b5209f; exact #1598 custody merged through recovery #1601
+INPUT-008 | Live main | AVAILABLE_RECONCILED | 8abc2e379d2ccc56a14d3397c97772ec0290f7d6; exact #1603 custody/qualification merged through recovery #1606 after disjoint LAFEA.3 custody/qualification main advance
 INPUT-009 | Composition benchmark registration | MERGED_SOURCE | LAFEA.4 composition exposes legacy SHELL-PATCH-01/SHELL-BEND-01 plus LAFEA4-CYL-01/PRESS-01/COMB-01
 INPUT-010 | Stage-route qualification coverage | MERGED_SOURCE | BM-009 traverses requireLafeaStageComposition('LAFEA.4') normalize -> canonicalize -> calculate -> accept -> resolveUnits -> present
 INPUT-011 | Source-derived production/stage isolation harness | AVAILABLE_NON_GOVERNING | re-executed PASS; does not replace governed scripts
-INPUT-012 | Shared-workbench drift | MATERIAL_WITHIN_QUALIFIED_BOUNDARY | basis-to-main compare is 171 commits ahead / 0 behind; changed code is shared LAFEA.3/workbench plus unrelated piping/WRC and contains no LAFEA.4 local-shell/stage/presenter/oracle/tolerance/release-owner change
-INPUT-013 | Independent drift-coverage reviewer | UNRESOLVED_CURRENT_REQUEST | current-basis request at Issue comment 5473697847; no independent disposition yet; older request 5469871896 is historical provenance
+INPUT-012 | Shared-workbench drift | MATERIAL_WITHIN_QUALIFIED_BOUNDARY | basis-to-main compare is 213 commits ahead / 0 behind; no LAFEA.4 local-shell/stage/presenter/oracle/tolerance/release-owner change identified; later 32-commit LAFEA.3 advance is custody/qualification only
+INPUT-013 | Independent drift-coverage reviewer | UNRESOLVED_CURRENT_REQUEST | current-basis request at Issue comment 5473697847; no independent disposition yet; post-request live-main advance is custody/qualification only and does not self-clear coverage
 INPUT-014 | Fresh implementation takeover qualification | AVAILABLE_CURRENT | agents/qualifications/ADV-LAFEA-1536-SHELL-PRODUCTION/QS-ADV-LAFEA4-1536-0014-IMPLEMENTATION-TAKEOVER-questions.md; CURRENT; normal proceed-next turn reuses/hides it
 
 ### Benchmark / oracle ledger
@@ -61,16 +62,18 @@ QUESTION_BASIS_HEAD: 75c670424ef46888f0a1c02188a9ea8d42b5209f
 Score target: >=92/100 overall and >=17/20 on each question when takeover qualification is required.
 
 ### Current PR / validation state
-Owner-authorized EP-0035 custody was merged byte-for-byte through recovery PR #1601 as main `75c670424ef46888f0a1c02188a9ea8d42b5209f`. Successor Draft #1603 carries only #1536 qualification/custody state and remains open/Draft/mergeable with Owner-only merge authority; the current `proceed next` does not authorize merge.
+Owner authorized `merge if mergeable, proceed next`. Draft #1603 was mergeable but the connector Draft->Ready GraphQL projection again failed on nonexistent `Repository.fullDatabaseId`. Exact-head recovery branch `recovery/lafea4-1603-exact-merge` preserved #1603 head `88524662ad0f3823262a3a00ae5d43938a058ab9` byte-for-byte. Non-Draft recovery PR #1606 became mergeable and merged with expected-head protection as main `8abc2e379d2ccc56a14d3397c97772ec0290f7d6`. GitHub normalized #1603 as merged/closed through that merge commit.
 
-Normal progression re-grounded current main and Common. Main remains `75c670424...`; Common remains `293a3db7993...`. The qualification basis `b4ca03357...` is 171 commits behind current main, 0 commits ahead. Review of the compare shows no `src/core/local-shell/**`, LAFEA.4 stage registry/components, local-shell presenter, LAFEA.4 benchmark/oracle/tolerance, or release-authority owner change. The source classification therefore remains `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`; this is the candidate's classification only and cannot self-clear Common's independent-coverage requirement.
+A concurrent LAFEA.3 custody merge advanced main from `75c670424...` to `977754654...` immediately before #1606. Compare of that delta is 32 commits ahead / 0 behind and contains only `ADV-LAFEA3-1535-PRODUCTION-ROUTE/**` custody/qualification files. It does not change LAFEA.4 local-shell mechanics, shared production solve, stage/presenter, benchmark values/tolerances, workflow or release authority.
 
-The previous independent request `5469871896` named an earlier live main and Q-set. EP-0037 created current-basis request `5473697847` for live main `75c670424...` and current `QS-ADV-LAFEA4-1536-0014-IMPLEMENTATION-TAKEOVER` within the same qualification scope. No independent disposition is recorded yet, so `QUALIFICATION_COVERAGE=INDEPENDENT_CONFIRMATION_REQUIRED`, `CURRENT_STATE_AUTHORITY=BLOCKED`, `WRITE_AUTHORITY_DECISION=READ_ONLY`.
+The qualification-basis compare to current main is now 213 commits ahead / 0 behind. Candidate classification remains `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`; Common still requires independent confirmation. Current request `5473697847` remains unanswered. The post-request advance to live main consists of LAFEA.3 custody/qualification plus this #1536 custody/qualification merge, so it does not introduce a new numerical owner and does not self-clear the independent-coverage gate. Therefore `QUALIFICATION_COVERAGE=INDEPENDENT_CONFIRMATION_REQUIRED`, `RECONCILIATION_REVIEWER_ID=NONE`, `CURRENT_STATE_AUTHORITY=BLOCKED`, and `WRITE_AUTHORITY_DECISION=READ_ONLY`.
 
-Official validation remains unavailable. The current #1603 exact-head LAFEA.4 workflow run is `33350279178`, job `99362148647`, with `steps=null` before checkout. No newer current-head run exists. Because there is no runner-recovery signal, no identical zero-step retry was issued. This remains infrastructure `NOT_RUN`, not numerical FAIL.
+Successor Draft PR #1609 is based directly on live main `8abc2e379...` and carries EP-0038 custody only. It has no protected engineering/workflow source change. Merge authority for #1609 is `OWNER_ONLY`; the current merge authorization was consumed by #1603/#1606.
+
+Official validation remains unavailable. Latest LAFEA.4 exact-head workflow run `33357162944`, job `99381413267`, terminated before checkout with `steps=null`. No repository command executed. This remains infrastructure `NOT_RUN`, not numerical FAIL. No manual retry is justified without a runner-recovery signal.
 
 Governed BM-001..BM-009, production-adoption aggregate, `check:lafea-core`, `check:lafea-solver`, `check:imports`, build, handover validation and release qualification remain `NOT_RUN`. `RELEASE_QUALIFIED=FALSE`.
 
 Readiness remains `CHAIN_HANDOVER_READY=TRUE`, `TAKEOVER_QUALIFICATION_READY=TRUE`, `HANDOVER_VALIDATION_STATUS=NOT_RUN`, `HANDOVER_READY=FALSE`.
 
-Exact next action: obtain an independent confirm/reject disposition on Issue comment `5473697847` and/or evidence that a governed runner reaches executable step 1. Clear only the corresponding gate. Once current-state authority and executable validation are available, run BM-001..BM-009 plus aggregate/core/solver/import/build/handover gates; patch only the first demonstrated wrong owner and do not weaken benchmark oracles, values, tolerances, negative controls, mandatory limitations or release authority to manufacture PASS.
+Exact next action: obtain an independent confirm/reject disposition on Issue comment `5473697847` for current qualification coverage, using the custody-only post-request delta to live main `8abc2e379d2ccc56a14d3397c97772ec0290f7d6`, and/or evidence that a governed runner reaches executable step 1. Clear only the corresponding gate. Once current-state authority and executable validation are available, run BM-001..BM-009 plus aggregate/core/solver/import/build/handover gates; patch only the first demonstrated wrong owner and do not weaken benchmark oracles, values, tolerances, negative controls, mandatory limitations or release authority to manufacture PASS.

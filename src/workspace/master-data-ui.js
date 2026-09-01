@@ -139,6 +139,98 @@ export async function autoGenerateMasterEnrichment() {
   return { accepted: result.proposals.length, skipped: null };
 }
 
+/**
+ * Writes master source references into Project Data sourcesAndUnits fields
+ * whenever a master has a committed sourceHash that differs from what Project
+ * Data currently records. Clears MISSING_VALUE and STALE_SOURCE_HASH for
+ * lineListSource, pipingClassSource, and componentWeightSource without any
+ * user action.
+ *
+ * Only updates a field when the master has a non-empty sourceHash AND the
+ * current Project Data entry either lacks one or records a different hash.
+ * Each written entry carries source evidence so the audit trail is preserved.
+ * The value shape mirrors the 1885S profile: { path, sha256 } so that the
+ * CROSS_DATASET_HASH_MISMATCH check (value.sha256 === evidence.sourceHash)
+ * passes.
+ *
+ * @returns {Promise<{ bound: string[] }>}
+ */
+export async function autoBindMasterSources() {
+  const masters = masterDataController.getMasterData();
+  if (!masters) return { bound: [] };
+
+  const MASTER_SOURCE_MAP = [
+    { masterKey: 'lineList',    path: 'sourcesAndUnits.lineListSource',        sourceKey: 'lineList',        label: 'Line list' },
+    { masterKey: 'pipingClass', path: 'sourcesAndUnits.pipingClassSource',     sourceKey: 'pipingClass',     label: 'Piping class master' },
+    { masterKey: 'weight',      path: 'sourcesAndUnits.componentWeightSource', sourceKey: 'componentWeight', label: 'Component weight master' },
+  ];
+
+  const [{ projectDataStore: pds }, { projectDataEntry }] = await Promise.all([
+    import('./project-data/project-data-store.js'),
+    import('./project-data/project-data-contract.js'),
+  ]);
+
+  const bound = [];
+  for (const { masterKey, path, sourceKey, label } of MASTER_SOURCE_MAP) {
+    const master = masters[masterKey];
+    const sourceHash = typeof master?.sourceHash === 'string' ? master.sourceHash.trim() : '';
+    const fileName = master?.fileName || label;
+    if (!sourceHash) continue;
+
+    // Skip if Project Data already records the current hash
+    const entry = projectDataEntry(pds.getProfile(), path);
+    const existingHash = typeof entry?.evidence?.sourceHash === 'string' ? entry.evidence.sourceHash.trim() : '';
+    if (existingHash === sourceHash) continue;
+
+    // value shape must satisfy: value.sha256 === evidence.sourceHash (CROSS_DATASET_HASH_MISMATCH guard)
+    pds.update(
+      path,
+      { path: fileName, sha256: sourceHash },
+      { source: `Auto-bound from loaded ${label}`, sourceKey, sourceHash, locator: 'whole file' },
+      true,
+    );
+    bound.push(path);
+  }
+  return { bound };
+}
+
+/**
+ * Creates a default locked QUALIFIED profile set in Project Data covering
+ * WEIGHT_AND_GRAVITY and SUSTAINED_REACTIONS. Called from the "Create
+ * qualification profile" button in the Input Check view — requires one
+ * explicit user click; never called automatically.
+ *
+ * @param {{ profileId?: string, approvedBy?: string }} [opts]
+ * @returns {Promise<void>}
+ */
+export async function createDefaultQualificationProfile(opts = {}) {
+  const { projectDataStore: pds } = await import('./project-data/project-data-store.js');
+  const profileId = opts.profileId || 'default-gravity-loads';
+  const approvedBy = opts.approvedBy || 'OWNER';
+  const approvedAt = new Date().toISOString().slice(0, 10);
+
+  const profileSet = {
+    schema: 'non-fea-qualification-profile-set/v1',
+    profiles: [
+      {
+        profileId,
+        version: 1,
+        qualification: 'QUALIFIED',
+        locked: true,
+        methods: ['WEIGHT_AND_GRAVITY', 'SUSTAINED_REACTIONS'],
+        basis: { approvedBy, approvedAt },
+      },
+    ],
+  };
+
+  pds.update(
+    'qualificationPolicy.qualificationProfiles',
+    profileSet,
+    { source: 'Default gravity-loads qualification profile', sourceKey: 'projectData' },
+    true,
+  );
+}
+
 function copyMapping(mapping) {
   return { ...(mapping || {}) };
 }

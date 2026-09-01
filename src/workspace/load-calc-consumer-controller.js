@@ -115,24 +115,28 @@ export class LoadCalcConsumerController {
       // any master that already has normalizedRows or a user-committed fieldMap.
       this.eventBus.subscribe('MASTER_DATA_UPDATED', ({ action } = {}) => {
         if (!action?.startsWith('bundled_seed')) return;
-        import('./master-data-ui.js').then(({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment }) => {
+        import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources }) => {
           const committed = autoNormalizeBundledMasters();
           if (committed.length > 0) this.render();
-          return autoGenerateMasterEnrichment();
-        }).then((enrichResult) => {
-          if (enrichResult?.accepted > 0) this.render();
+          const [enrichResult, bindResult] = await Promise.all([
+            autoGenerateMasterEnrichment(),
+            autoBindMasterSources(),
+          ]);
+          if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
         }).catch(() => {});
       }),
     ];
     this.render();
     void this.refreshTopologyCheck();
-    // Eagerly normalize + auto-generate for masters already seeded before subscription
-    import('./master-data-ui.js').then(({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment }) => {
+    // Eagerly normalize + auto-generate + auto-bind for already-seeded masters
+    import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources }) => {
       const committed = autoNormalizeBundledMasters();
       if (committed.length > 0) this.render();
-      return autoGenerateMasterEnrichment();
-    }).then((enrichResult) => {
-      if (enrichResult?.accepted > 0) this.render();
+      const [enrichResult, bindResult] = await Promise.all([
+        autoGenerateMasterEnrichment(),
+        autoBindMasterSources(),
+      ]);
+      if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
     }).catch(() => {});
   }
 
@@ -149,12 +153,13 @@ export class LoadCalcConsumerController {
     this.render();
     if (datasetChanged) {
       void this.refreshTopologyCheck();
-      // Auto-generate enrichment proposals when a new dataset arrives
-      // (masters may already be ready from a previous session)
-      import('./master-data-ui.js').then(({ autoGenerateMasterEnrichment }) =>
-        autoGenerateMasterEnrichment(),
-      ).then((enrichResult) => {
-        if (enrichResult?.accepted > 0) this.render();
+      // Auto-generate enrichment + bind source hashes when a new dataset arrives
+      import('./master-data-ui.js').then(async ({ autoGenerateMasterEnrichment, autoBindMasterSources }) => {
+        const [enrichResult, bindResult] = await Promise.all([
+          autoGenerateMasterEnrichment(),
+          autoBindMasterSources(),
+        ]);
+        if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
       }).catch(() => {});
     }
   }
@@ -376,6 +381,16 @@ export class LoadCalcConsumerController {
       this.pending3dInvestigationEntityId = null;
       this.selectTab(tab);
       this.render();
+      return;
+    }
+    const quickFixAction = event.target.closest('[data-quick-fix-action]')?.dataset.quickFixAction;
+    if (quickFixAction === 'create-qualification-profile') {
+      import('./master-data-ui.js').then(({ createDefaultQualificationProfile }) =>
+        createDefaultQualificationProfile(),
+      ).then(() => this.render()).catch((err) => {
+        this.message = `Failed to create qualification profile: ${err.message}`;
+        this.render();
+      });
       return;
     }
     const restraintId = event.target.closest('[data-empirical-restraint-select]')?.dataset.empiricalRestraintSelect;

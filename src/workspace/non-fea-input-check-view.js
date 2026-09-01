@@ -252,7 +252,13 @@ function quickFixStrip(blockers, coverageProgressByCode) {
       const n = progress?.unresolvedEntityCount ?? '?';
       items.push({ icon: '📐', text: `${n} pipe${n === 1 ? '' : 's'} missing OD / wall thickness`, tab: 'enrichment', label: 'Open Enrichment & Overrides' });
     } else if (code === 'QUALIFICATION_PROFILE_REQUIRED') {
-      items.push({ icon: '🔐', text: 'No locked QUALIFIED profile bound to requested methods', tab: 'method-basis', label: 'Review Method Basis' });
+      items.push({
+        icon: '🔐',
+        text: 'No locked QUALIFIED profile — create a default one for WEIGHT_AND_GRAVITY + SUSTAINED_REACTIONS',
+        tab: null,
+        label: null,
+        action: 'create-qualification-profile',
+      });
     } else if (code === 'MASTER_NOT_READY') {
       items.push({ icon: '📂', text: 'A required master has no normalized rows — re-apply its column mapping', tab: 'masters', label: 'Open Import Masters' });
     } else if (ROOT_CAUSE_ACTIONS[code]) {
@@ -268,7 +274,9 @@ function quickFixStrip(blockers, coverageProgressByCode) {
     ${items.map((item) => `<div class="non-fea-quick-fix__item">
       <span class="non-fea-quick-fix__icon" aria-hidden="true">${item.icon}</span>
       <span class="non-fea-quick-fix__text">${escapeHtml(item.text)}</span>
-      <button type="button" class="button non-fea-quick-fix__btn" data-load-calc-tab="${escapeHtml(item.tab)}">${escapeHtml(item.label)} →</button>
+      ${item.action
+        ? `<button type="button" class="button non-fea-quick-fix__btn" data-quick-fix-action="${escapeHtml(item.action)}">Create profile →</button>`
+        : `<button type="button" class="button non-fea-quick-fix__btn" data-load-calc-tab="${escapeHtml(item.tab)}">${escapeHtml(item.label)} →</button>`}
     </div>`).join('')}
   </div>`;
 }

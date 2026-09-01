@@ -1,6 +1,6 @@
 # Active Handover — ADV-EMP1-ENGINEERING-RECORD-PACKAGE
 
-CHAIN_STATE_VERSION: 2
+CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-ENGINEERING-RECORD-PACKAGE
 MISSION: Create an immutable/exportable EMP.1 engineering record package over current governed execution and current engineering review evidence without creating release, code-compliance, numerical, method, applicability, or cryptographic-seal authority.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-PACKAGE/endpoints/EP-0002.md
-CUSTODY_EPOCH: 2
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-PACKAGE/endpoints/EP-0003.md
+CUSTODY_EPOCH: 3
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-engineering-record-package-v1
@@ -22,9 +22,9 @@ STACK_BASE_PR: 1622
 STACK_BASE_BRANCH: agent/emp1-engineering-review-ui-v1
 STACK_BASE_HEAD: ec5daa2a1d500a153f03d1093bdbe43a2349668c
 MAIN: 93d208dc1298570f20ce170edbd4f881039d22f0
-PR: PENDING
-PR_STATUS: NOT_OPENED
-MERGEABILITY: UNKNOWN
+PR: 1623
+PR_STATUS: OPEN_DRAFT
+MERGEABILITY: GITHUB_RECALCULATING_AT_CREATION
 REVIEWS: 0
 UNRESOLVED_THREADS: 0
 REQUIRED_CHECKS: EMP1_ENGINEERING_RECORD_PACKAGE_CHECK_NOT_RUN
@@ -39,6 +39,8 @@ COORDINATION_STATE: STACKED_DEPENDENCY_ON_PR_1622
 DEPENDENCIES: Draft PR #1620 review-record owner; Draft PR #1621 readiness composition; Draft PR #1622 review workspace/session owner; existing EMP.1 workbench execution and route-authority custody.
 
 MATERIAL_HEAD: e5ced5fc74676c681e6d15d2d5ff324f07a37c96
+PR_CREATION_HEAD: 2347b0d8342d6018812876d35087a059986c97d4
+PR_CHECKPOINT_HEAD: bd00aa608d16cf80b57e0e3afbb118a660c595a0
 MATERIAL_LEG: agents/chains/ADV-EMP1-ENGINEERING-RECORD-PACKAGE/material-legs/LEG-001.md
 
 SOURCE_AUTHORITY_MUTATION: FORBIDDEN
@@ -62,4 +64,4 @@ PACKAGE_RELEASE_QUALIFICATION: FALSE
 PACKAGE_CODE_COMPLIANCE_AUTHORITY: FALSE
 
 BLOCKER: EMP1_ENGINEERING_RECORD_PACKAGE_CHECK_NOT_EXECUTED; STACK DEPENDS ON DRAFT PR #1622.
-EXACT_NEXT_ACTION: Open a stacked Draft PR on #1622 with validation truth NOT_RUN. Do not merge.
+EXACT_NEXT_ACTION: Keep PR #1623 Draft/unmerged. If validation resumes, run the focused package checker first, then inherited stack regressions and repository hygiene checks.

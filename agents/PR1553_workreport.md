@@ -10,7 +10,7 @@ chain                      ADV-LFEA-SUPPORT-REPRESENTABILITY
 current endpoint           EP-0030 (publication in progress)
 current qualification      QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0029
 qualification scope        QSCOPE-1551-FULL-PRODUCTION-PATH-REVIEW
-latest technical head      24ec07259ca6c54dd44708a7ad029a42b663596e
+latest technical head      24ec07250718c770ec2caed7df3c9798f379b51e
 live main re-ground        70dd23a4fb36533f00d818586d1b753fa4f12276
 Common live main           293a3db7993a6945c01adc592a7ff14a339c504a
 merge authority            EXACT OWNER PHRASE `APPROVED MERGE` ONLY
@@ -103,7 +103,7 @@ L6                  95.82%
 >5% tail             7.99%
 ```
 
-BM4_L contains none of the target support features, so it is non-regression evidence only. The dedicated gate was attempted but stops before solve on inherited `BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED`; the exact PR base fails identically. The frozen target and oracle remain unchanged.
+BM4_L contains none of the target support features, so it is non-regression evidence only. The dedicated gate was attempted but stops before solve on inherited `BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED`; the exact PR base fails identically. The aggregate parity stage measures `96.76 / 92.37 / 95.82` on both the PR head and exact PR base, so the issue-frozen L5 `93.00%` value is not confirmed. The frozen oracle is unchanged.
 
 ## Runtime truth / NOT_RUN ledger
 
@@ -113,6 +113,7 @@ Current validation truth:
 
 ```text
 full check:lfea-linear-piping                               PASS
+aggregate parity stage (PR head and exact PR base)           MEASURED 96.76 / 92.37 / 95.82
 focused support aggregates and refusal/unit guards           PASS [SIMULATED]
 eleven deliberate-break discriminators                       RED as intended
 repository imports / shell contract / git diff --check        PASS

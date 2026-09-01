@@ -242,6 +242,7 @@ function convergeFiveStepWorkflow(section, state) {
     indexNode.textContent = String(index + 1);
     labelNode.textContent = step.label;
   });
+  normalizeTopologyStatus(workflow, state);
   normalizeCalculationDefaultsStatus(workflow, state);
   normalizeEnrichmentStatus(workflow, state);
   normalizeOneClickRunStatus(workflow, state);
@@ -281,6 +282,44 @@ function convergeFiveStepWorkflow(section, state) {
   }
 }
 
+function normalizeTopologyStatus(workflow, state) {
+  const button = workflow.querySelector(
+    'button.empirical-load-calc__workflow-step[data-load-calc-tab="topology"]',
+  );
+  const status = button?.querySelector('.empirical-load-calc__workflow-status');
+  if (!button || !status) return;
+  const readiness = state?.workflowReadiness || {};
+  if (readiness.datasetReady !== true) {
+    button.dataset.stepState = 'pending';
+    status.textContent = 'After import';
+    return;
+  }
+  const blockers = readiness.topologyBlockerCount ?? 0;
+  const openReview = readiness.topologyOpenReviewCount ?? 0;
+  const skipped = readiness.topologySkippedCount ?? 0;
+  // Blockers = hard failures (structural topology not valid)
+  if (blockers > 0) {
+    button.dataset.stepState = 'ready';
+    status.textContent = `${blockers} blocker${blockers === 1 ? '' : 's'}`;
+    return;
+  }
+  // Open (unreviewed, unskipped) semantic reviews — user must act
+  if (openReview > 0) {
+    button.dataset.stepState = 'ready';
+    status.textContent = `${openReview} to review`;
+    return;
+  }
+  // Only skipped findings — not blocking, just acknowledged
+  if (skipped > 0) {
+    button.dataset.stepState = 'complete';
+    status.textContent = `${skipped} skipped`;
+    return;
+  }
+  // All clear
+  button.dataset.stepState = 'complete';
+  status.textContent = 'Done';
+}
+
 function normalizeCalculationDefaultsStatus(workflow, state) {
   const button = workflow.querySelector(
     'button.empirical-load-calc__workflow-step[data-load-calc-tab="project-data"]',
@@ -298,21 +337,15 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
     status.textContent = 'After topology';
     return;
   }
-  const active = state?.activeTab === 'project-data';
-  if (active) {
-    button.dataset.stepState = 'current';
-    status.textContent = 'Review';
-    return;
-  }
-  // projectDataReady and projectDataActionCount come from validateProjectDataProfile
-  // in createWorkflowReadiness — the authoritative count for this step.
+  // Always show the count — even when this tab is active — so the user
+  // can see how many issues remain without having to click away.
   if (readiness.projectDataReady) {
-    button.dataset.stepState = 'complete';
+    button.dataset.stepState = state?.activeTab === 'project-data' ? 'current' : 'complete';
     status.textContent = 'Done';
     return;
   }
   const n = readiness.projectDataActionCount ?? 0;
-  button.dataset.stepState = 'ready';
+  button.dataset.stepState = state?.activeTab === 'project-data' ? 'current' : 'ready';
   status.textContent = n > 0 ? `${n} issue${n === 1 ? '' : 's'}` : 'Issues';
 }
 
@@ -333,21 +366,13 @@ function normalizeEnrichmentStatus(workflow, state) {
     status.textContent = 'After masters';
     return;
   }
-  const active = state?.activeTab === 'enrichment';
-  if (active) {
-    button.dataset.stepState = 'current';
-    status.textContent = 'Review';
-    return;
-  }
 
   // Read from the raw checker report — same object the Input Check view uses.
-  // report.blockers[] has {code} and report.methodRows[].requirements[].details.missing
-  // has the per-method missing token lists from which we derive entity count.
   const report = state?.commonInputState?.report;
   const hasMassBlocker = report?.blockers?.some?.((b) => b.code === 'MASS_COVERAGE_INCOMPLETE');
 
   if (!hasMassBlocker) {
-    button.dataset.stepState = 'complete';
+    button.dataset.stepState = state?.activeTab === 'enrichment' ? 'current' : 'complete';
     status.textContent = 'Done';
     return;
   }
@@ -358,7 +383,6 @@ function normalizeEnrichmentStatus(workflow, state) {
     for (const req of (method.requirements ?? [])) {
       if (req.code !== 'MASS_COVERAGE_INCOMPLETE') continue;
       for (const token of (req.details?.missing ?? [])) {
-        // tokens are "entityId:FIELD" — extract entityId
         const entityId = typeof token === 'string' ? token.split(':')[0] : token?.entityId;
         if (entityId) entityIds.add(entityId);
       }

@@ -831,6 +831,8 @@ function createWorkflowReadiness(context, topologyCheck) {
   return Object.freeze({
     datasetReady: Boolean(context?.datasetId),
     topologyBlockerCount,
+    topologyOpenReviewCount: topologyCheck?.reviewIssueCount || 0,
+    topologySkippedCount: topologyCheck?.skippedIssueCount || 0,
     topologyReviewIssueCount: (topologyCheck?.reviewIssueCount || 0)
       + (topologyCheck?.skippedIssueCount || 0),
     topologyCheckReady: topologyReady

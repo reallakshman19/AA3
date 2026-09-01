@@ -18,6 +18,54 @@ function normalizeMasterRows(masterKey, rawRows, mapping) {
   throw new RangeError(`Unsupported master type: ${masterKey}`);
 }
 
+/**
+ * Auto-maps and normalizes any bundled master that has raw rows but has not
+ * yet been committed (normalizedRows is empty and fieldMap is empty).
+ *
+ * Bundled masters arrive via async fetch / sync seed and go through the same
+ * column-auto-map + normalize path as a user file upload, but they bypass the
+ * UI APPLY button.  Without this call the enrichment tab always sees zero
+ * normalizedRows and the Master Data tab shows a persistent APPLY badge even
+ * though no user action is required.
+ *
+ * Safe to call multiple times: it only acts when normalizedRows.length === 0
+ * and fieldMap is empty, so user-committed mappings and IDB-restored rows are
+ * never overwritten.
+ *
+ * @returns {string[]} master keys that were committed this call.
+ */
+export function autoNormalizeBundledMasters() {
+  const masters = masterDataController.getMasterData();
+  const committed = [];
+  for (const masterKey of Object.keys(MASTER_FIELDS)) {
+    const master = masters?.[masterKey];
+    if (!master) continue;
+    const rawRows = Array.isArray(master.rawRows) ? master.rawRows : [];
+    if (rawRows.length === 0) continue;                     // nothing to normalize
+    if ((master.normalizedRows?.length ?? 0) > 0) continue; // already normalized
+    if (Object.keys(master.fieldMap ?? {}).length > 0) continue; // user mapping exists
+
+    const mapping = autoMapMasterColumns(rawRows, masterKey);
+    if (!mapping || !Object.values(mapping).some(Boolean)) continue;
+
+    let normalizedRows;
+    try {
+      normalizedRows = normalizeMasterRows(masterKey, rawRows, mapping);
+    } catch {
+      continue; // mapping didn't validate — leave for the user to fix via APPLY
+    }
+    if (!normalizedRows.length) continue;
+
+    masterDataController.commitMasterMapping(masterKey, {
+      fieldMap: mapping,
+      normalizedRows,
+      diagnostics: [{ code: 'AUTO_NORMALIZED', message: `Auto-mapped and normalized ${normalizedRows.length} bundled rows.` }],
+    });
+    committed.push(masterKey);
+  }
+  return committed;
+}
+
 function copyMapping(mapping) {
   return { ...(mapping || {}) };
 }

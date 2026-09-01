@@ -109,9 +109,26 @@ export class LoadCalcConsumerController {
         );
       }),
       this.eventBus.subscribe(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.FAILED, ({ message }) => this.handleFailure(message)),
+      // Auto-commit normalization for bundled masters whenever the controller
+      // seeds raw rows without a committed fieldMap (async piping-class fetch,
+      // sync weight/materialMap seed).  The function is idempotent — it skips
+      // any master that already has normalizedRows or a user-committed fieldMap.
+      this.eventBus.subscribe('MASTER_DATA_UPDATED', ({ action } = {}) => {
+        if (!action?.startsWith('bundled_seed')) return;
+        import('./master-data-ui.js').then(({ autoNormalizeBundledMasters }) => {
+          const committed = autoNormalizeBundledMasters();
+          if (committed.length > 0) this.render();
+        }).catch(() => {});
+      }),
     ];
     this.render();
     void this.refreshTopologyCheck();
+    // Eagerly normalize any masters that were already seeded synchronously
+    // before the event subscription was active (weight, materialMap).
+    import('./master-data-ui.js').then(({ autoNormalizeBundledMasters }) => {
+      const committed = autoNormalizeBundledMasters();
+      if (committed.length > 0) this.render();
+    }).catch(() => {});
   }
 
   handleContext(context) {
@@ -730,7 +747,10 @@ export class LoadCalcConsumerController {
                 <dt>Component-weight source</dt><dd>${fieldStatus(compSrcSet, '✓ Bound', '<em>not bound</em>')}</dd>
               </dl>
             </div>
-  
+
+            <!-- Checker status badge — links to the full Input Check view (Step 6) -->
+            ${checkerStatusBadge(commonState)}
+
           </div>
         </div>
       </div>
@@ -967,6 +987,39 @@ function downloadJson(documentRef, fileName, value) {
   anchor.download = fileName;
   anchor.click();
   windowRef.URL.revokeObjectURL(url);
+}
+
+/**
+ * Compact checker status badge rendered inside the Verify pane.
+ * Shows BLOCKED / READY state + first blocker cause + a link to the full
+ * Input Check view (Step 6) where all root-cause detail lives.
+ *
+ * Presentation only: no authority, seal, store, or engineering logic is touched.
+ */
+function checkerStatusBadge(commonState) {
+  const report = commonState?.report;
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+  const ready = !report || report.packageState === 'READY';
+  if (ready) return '';
+
+  // Collect unique cause codes from method rows (de-duped across methods)
+  const causeCodes = [...new Set(
+    (report.methodRows || []).flatMap((row) => (row.blockers || []).map((b) => b.code)).filter(Boolean),
+  )].slice(0, 3);
+
+  const blockerCount = (report.methodRows || []).reduce((sum, row) => sum + (row.blockers || []).length, 0);
+
+  return `<div class="verify-card verify-card--warn" style="margin-top:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <div>
+      <strong style="color:#fca5a5">❌ BLOCKED — ${blockerCount} checker issue${blockerCount === 1 ? '' : 's'}</strong>
+      ${causeCodes.length ? `<div style="margin-top:4px;font-size:11px;color:#94a3b8">${causeCodes.map(esc).join(' · ')}</div>` : ''}
+    </div>
+    <button type="button" class="verify-gate__action verify-gate__action--secondary" data-load-calc-tab="verify" style="white-space:nowrap">
+      Open Input Check →
+    </button>
+  </div>`;
 }
 
 function buildReviewModel(context) {

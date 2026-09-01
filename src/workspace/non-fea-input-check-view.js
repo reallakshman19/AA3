@@ -82,6 +82,7 @@ function createViewState(consumerContext, prepared) {
     }))),
     blockers: status.blockers,
     coverageProgressByCode: buildCoverageProgressByCode(status.commonInput.methodRows),
+    entityMeta: buildEntityMeta(status.commonInput.methodRows, dataset?.sharedModel?.components),
     methodRows: Object.freeze(buildMethodRows(status.commonInput.methodRows, commonSnapshot)),
     masterRows: Object.freeze(masterRows),
     sourceRows: Object.freeze(sourceEvidenceRows({ dataset, masters, supportSites, routes, consumerContext })),
@@ -95,6 +96,38 @@ function createViewState(consumerContext, prepared) {
     routes,
     consumerContext,
   });
+}
+
+/**
+ * Maps missing-entity IDs (from coverage blocker tokens) to their
+ * human-readable context from the shared model components list.
+ * Degrades gracefully: if a component is not found, the entity ID alone
+ * is used (existing behaviour preserved).
+ */
+function buildEntityMeta(methodRows, components) {
+  const entityIds = new Set();
+  (methodRows || []).forEach((method) => {
+    (method.coverageRequirements || []).forEach((coverage) => {
+      (coverage.missing || []).forEach((token) => {
+        const { entityId } = coverageMissingParts(coverage.requirementId, coverage.code, token);
+        if (entityId) entityIds.add(entityId);
+      });
+    });
+  });
+  const comps = Array.isArray(components) ? components : [];
+  const meta = {};
+  entityIds.forEach((entityId) => {
+    const comp = comps.find((c) =>
+      (c.sourceEntityId != null && String(c.sourceEntityId) === entityId)
+      || (c.componentKey != null && String(c.componentKey) === entityId));
+    if (!comp) return;
+    meta[entityId] = Object.freeze({
+      type: String(comp.type || '').toUpperCase() || 'COMPONENT',
+      label: comp.label || comp.tag || null,
+      branchId: comp.identity?.branchId || null,
+    });
+  });
+  return Object.freeze(meta);
 }
 
 function viewMarkup(state) {
@@ -123,7 +156,7 @@ function viewMarkup(state) {
       ${metric('Blockers', state.blockers.length, state.blockers.length ? 'blocked' : 'ready')}
     </section>
 
-    ${state.blockers.length ? blockerSummaryMarkup(state.blockers, state.coverageProgressByCode) : '<p class="non-fea-ready-copy">All required checks currently pass. Continue to Run Calc.</p>'}
+    ${state.blockers.length ? `${quickFixStrip(state.blockers, state.coverageProgressByCode)}${blockerSummaryMarkup(state.blockers, state.coverageProgressByCode, state.entityMeta)}` : '<p class="non-fea-ready-copy">All required checks currently pass. Continue to Run Calc.</p>'}
 
     <details class="non-fea-input-check__advanced">
       <summary>Advanced validation evidence</summary>
@@ -166,6 +199,79 @@ const ROOT_CAUSE_ACTIONS = Object.freeze({
   MASS_COVERAGE_INCOMPLETE: Object.freeze({ tab: 'enrichment', label: 'Open Enrichment & Overrides' }),
   MASTER_NOT_READY: Object.freeze({ tab: 'masters', label: 'Open Import Masters' }),
 });
+
+/** Project-data cause codes that all route to the same fix action. */
+const PROJECT_DATA_CAUSE_CODES = new Set([
+  'MISSING_VALUE', 'STALE_SOURCE_HASH', 'GRAVITY_BASIS_REQUIRED',
+  'ACTIVE_LOAD_CASES_REQUIRED', 'CONFIGURED_DEFAULT_LEDGER_STALE',
+]);
+
+/**
+ * Prominent 1–3 item action strip rendered above the blocker list.
+ * Groups related causes into one entry so the user sees "what to click"
+ * immediately without reading through the full audit trail.
+ */
+function quickFixStrip(blockers, coverageProgressByCode) {
+  const active = activeCalculationMethods();
+  const relevant = active
+    ? blockers.filter((row) => !row.scope || !METHOD_SCOPES.has(row.scope) || active.has(row.scope))
+    : blockers;
+  const uniqueCodes = [...new Set(
+    relevant.map((r) => r.code || '').filter((c) => c && !GATE_STATE_CODES.has(c)),
+  )];
+  if (uniqueCodes.length === 0) return '';
+
+  const items = [];
+  let projectDataAdded = false;
+
+  for (const code of uniqueCodes) {
+    if (PROJECT_DATA_CAUSE_CODES.has(code)) {
+      if (!projectDataAdded) {
+        const pdCodes = uniqueCodes.filter((c) => PROJECT_DATA_CAUSE_CODES.has(c));
+        items.push({
+          icon: '📋',
+          text: `Project Data has unresolved issues: ${pdCodes.join(', ')}`,
+          tab: 'project-data',
+          label: 'Complete Project Data',
+        });
+        projectDataAdded = true;
+      }
+      continue;
+    }
+    if (code === 'MASS_COVERAGE_INCOMPLETE') {
+      const progress = coverageProgressByCode?.[code];
+      const n = progress?.unresolvedEntityCount ?? '?';
+      items.push({
+        icon: '⚖️',
+        text: `${n} component${n === 1 ? '' : 's'} still need mass evidence (weights, densities, OD/WT)`,
+        tab: 'enrichment',
+        label: 'Open Enrichment & Overrides',
+      });
+    } else if (code === 'SECTION_COVERAGE_INCOMPLETE') {
+      const progress = coverageProgressByCode?.[code];
+      const n = progress?.unresolvedEntityCount ?? '?';
+      items.push({ icon: '📐', text: `${n} pipe${n === 1 ? '' : 's'} missing OD / wall thickness`, tab: 'enrichment', label: 'Open Enrichment & Overrides' });
+    } else if (code === 'QUALIFICATION_PROFILE_REQUIRED') {
+      items.push({ icon: '🔐', text: 'No locked QUALIFIED profile bound to requested methods', tab: 'method-basis', label: 'Review Method Basis' });
+    } else if (code === 'MASTER_NOT_READY') {
+      items.push({ icon: '📂', text: 'A required master has no normalized rows — re-apply its column mapping', tab: 'masters', label: 'Open Import Masters' });
+    } else if (ROOT_CAUSE_ACTIONS[code]) {
+      const action = ROOT_CAUSE_ACTIONS[code];
+      items.push({ icon: '⚠️', text: `${code.replace(/_/g, ' ')} — resolve to unblock`, tab: action.tab, label: action.label });
+    }
+    if (items.length >= 3) break;
+  }
+
+  if (items.length === 0) return '';
+  return `<div class="non-fea-quick-fix" role="region" aria-label="Next steps">
+    <strong class="non-fea-quick-fix__title">What to do next</strong>
+    ${items.map((item) => `<div class="non-fea-quick-fix__item">
+      <span class="non-fea-quick-fix__icon" aria-hidden="true">${item.icon}</span>
+      <span class="non-fea-quick-fix__text">${escapeHtml(item.text)}</span>
+      <button type="button" class="button non-fea-quick-fix__btn" data-load-calc-tab="${escapeHtml(item.tab)}">${escapeHtml(item.label)} →</button>
+    </div>`).join('')}
+  </div>`;
+}
 
 /**
  * Gate rows carry their state as the issue code, so a blocked gate reports
@@ -256,13 +362,14 @@ function sameCoverageEvidence(left, right) {
     && left.missingTokens.every((token, index) => token === right.missingTokens[index]);
 }
 
-function coverageProgressMarkup(progress) {
+function coverageProgressMarkup(progress, entityMeta) {
   if (!progress) return '';
   if (!progress.consistent) {
     return `<p class="non-fea-input-check__coverage-conflict" data-coverage-consistency="conflict">Coverage evidence differs between method scopes. The calculation remains blocked; use Advanced validation evidence to reconcile the status projection before relying on a progress count.</p>`;
   }
   const entityLabel = progress.unresolvedEntityCount === 1 ? 'entity' : 'entities';
   const obligationLabel = progress.missingObligationCount === 1 ? 'obligation' : 'obligations';
+  const pct = progress.total > 0 ? Math.round((progress.resolvedEntityCount / progress.total) * 100) : 0;
   return `<div class="non-fea-input-check__coverage-progress"
       data-coverage-code="${escapeHtml(progress.code)}"
       data-coverage-total="${progress.total}"
@@ -271,11 +378,22 @@ function coverageProgressMarkup(progress) {
       data-coverage-missing-obligations="${progress.missingObligationCount}"
       data-coverage-checker-covered="${progress.checkerCovered}">
       <strong>${progress.resolvedEntityCount} of ${progress.total} governed entities resolved</strong>
+      <div class="non-fea-progress-bar" role="progressbar" aria-valuenow="${progress.resolvedEntityCount}" aria-valuemin="0" aria-valuemax="${progress.total}" style="--pct:${pct}%"></div>
       <span>${progress.unresolvedEntityCount} unresolved ${entityLabel} · ${progress.missingObligationCount} missing evidence ${obligationLabel}. Calculation remains BLOCKED until every required item is resolved.</span>
     </div>
     <details class="non-fea-input-check__coverage-detail" data-coverage-entity-detail="${escapeHtml(progress.code)}">
       <summary>Show ${progress.unresolvedEntityCount} unresolved ${entityLabel}</summary>
-      <ul>${progress.unresolvedEntities.map((row) => `<li><code>${escapeHtml(row.entityId)}</code><span>${row.reasons.map(escapeHtml).join(', ')}</span></li>`).join('')}</ul>
+      <ul>${progress.unresolvedEntities.map((row) => {
+    const meta = entityMeta?.[row.entityId];
+    const sub = meta
+      ? [meta.type, meta.label, meta.branchId ? `branch ${meta.branchId}` : null].filter(Boolean).join(' · ')
+      : null;
+    return `<li class="non-fea-entity-row${meta ? ' non-fea-entity-row--enriched' : ''}">
+        <code>${escapeHtml(row.entityId)}</code>
+        ${sub ? `<span class="non-fea-entity-row__meta">${escapeHtml(sub)}</span>` : ''}
+        <span>${row.reasons.map(escapeHtml).join(', ')}</span>
+      </li>`;
+  }).join('')}</ul>
     </details>`;
 }
 
@@ -286,11 +404,14 @@ function rootCauseActionMarkup(code) {
 }
 
 function causeLegendMarkup() {
-  return `<div class="non-fea-input-check__cause-legend" aria-label="Blocker grouping legend">
-    <span data-cause-kind="shared"><strong>SHARED CAUSE</strong> affects 2+ method/data scopes</span>
-    <span data-cause-kind="single"><strong>SINGLE CAUSE</strong> belongs to one scope</span>
-    <span data-cause-kind="rollup"><strong>GATE ROLLUP</strong> clears automatically when its causes clear</span>
-  </div>`;
+  return `<details class="non-fea-input-check__cause-legend-wrap">
+    <summary>Legend: cause types</summary>
+    <div class="non-fea-input-check__cause-legend" aria-label="Blocker grouping legend">
+      <span data-cause-kind="shared"><strong>SHARED CAUSE</strong> affects 2+ method/data scopes</span>
+      <span data-cause-kind="single"><strong>SINGLE CAUSE</strong> belongs to one scope</span>
+      <span data-cause-kind="rollup"><strong>GATE ROLLUP</strong> clears automatically when its causes clear</span>
+    </div>
+  </details>`;
 }
 
 /**
@@ -298,7 +419,7 @@ function causeLegendMarkup() {
  * surfaces through. Shared and single-scope causes are both actionable; gate
  * state rows are excluded because they are derived rollups rendered separately.
  */
-function rootCauseMarkup(rows, active, coverageProgressByCode) {
+function rootCauseMarkup(rows, active, coverageProgressByCode, entityMeta) {
   const relevant = active
     ? rows.filter((row) => !row.scope || !METHOD_SCOPES.has(row.scope) || active.has(row.scope))
     : rows;
@@ -321,7 +442,7 @@ function rootCauseMarkup(rows, active, coverageProgressByCode) {
   const singleCount = causes.length - sharedCount;
   const coverage = causes.filter((entry) => COVERAGE_CODES.has(entry.code));
   const coverageNote = coverage.length > 1
-    ? `<p class="non-fea-input-check__root-note">The ${coverage.length} coverage causes below are related evidence gaps. Expand a coverage cause for the exact unresolved entities and reason codes; resolving one master match may advance several causes together.</p>`
+    ? `<p class="non-fea-input-check__root-note">The ${coverage.length} coverage causes below are related evidence gaps. Expand a coverage cause for the exact unresolved entities; resolving one master match may advance several causes together.</p>`
     : '';
   return `<div class="non-fea-input-check__root-causes">
     <strong>${causes.length} actionable cause${causes.length === 1 ? '' : 's'} · ${sharedCount} shared · ${singleCount} single-scope</strong>
@@ -329,11 +450,12 @@ function rootCauseMarkup(rows, active, coverageProgressByCode) {
     ${coverageNote}
     <ul>${causes.map((entry) => {
     const kind = entry.scopes.size > 1 ? 'shared' : 'single';
-    const scopeText = entry.scopes.size === 1 ? '1 scope' : `${entry.scopes.size} scopes`;
+    const scopeList = [...entry.scopes].join(', ');
+    const scopeText = entry.scopes.size === 0 ? 'global' : entry.scopes.size === 1 ? `1 scope (${scopeList})` : `${entry.scopes.size} scopes (${scopeList})`;
     return `<li data-root-cause-code="${escapeHtml(entry.code)}" data-cause-kind="${kind}">
       <span class="non-fea-input-check__cause-kind">${kind === 'shared' ? 'SHARED CAUSE' : 'SINGLE CAUSE'}</span>
-      <code>${escapeHtml(entry.code)}</code> — ${scopeText}, ${entry.count} issue(s).
-      ${coverageProgressMarkup(coverageProgressByCode?.[entry.code])}
+      <code>${escapeHtml(entry.code)}</code> — ${scopeText}.
+      ${coverageProgressMarkup(coverageProgressByCode?.[entry.code], entityMeta)}
       <p>${ROOT_CAUSE_GUIDANCE[entry.code] || 'Resolve this cause to clear every affected scope listed against it.'}</p>
       ${rootCauseActionMarkup(entry.code)}
     </li>`;
@@ -354,7 +476,7 @@ function activeCalculationMethods() {
   }
 }
 
-function blockerSummaryMarkup(rows, coverageProgressByCode) {
+function blockerSummaryMarkup(rows, coverageProgressByCode, entityMeta) {
   const groups = [];
   const byScope = new Map();
   rows.forEach((row) => {
@@ -387,11 +509,12 @@ function blockerSummaryMarkup(rows, coverageProgressByCode) {
   </details>`;
   return `<section class="non-fea-input-check__blocker-summary"><h3>What needs attention</h3>
     <p class="non-fea-input-check__blocker-reconcile">${requiredTotal} of ${total} issue(s) block this calculation, across ${required.length} area(s).</p>
-    ${rootCauseMarkup(rows, active, coverageProgressByCode)}
-    <h4 class="non-fea-input-check__area-heading">Affected areas and gate rollups</h4>
-    <ul>${required.map(item).join('')}</ul>
-    ${otherSection}
-    <p>Open Advanced validation evidence for the complete audit trail.</p>
+    ${rootCauseMarkup(rows, active, coverageProgressByCode, entityMeta)}
+    <details class="non-fea-input-check__area-breakdown">
+      <summary>Per-area breakdown (${required.length} area${required.length === 1 ? '' : 's'})</summary>
+      <ul>${required.map(item).join('')}</ul>
+      ${otherSection}
+    </details>
   </section>`;
 }
 
@@ -408,7 +531,17 @@ function nextActionMarkup(state) {
     H_SEAL_EXPORT: ['data-load-calc-tab="seal-export"', 'Seal Validated Input'],
   };
   const [attribute, label] = actions[blockedGate?.gateId] || ['data-load-calc-tab="verify"', 'Continue to Run Calc'];
-  return `<div class="non-fea-input-check__actions"><button type="button" class="button button--primary" ${attribute}>${escapeHtml(label)}</button></div>`;
+  // Build a compact cause hint for the gate in focus
+  const gateCauseCodes = state.blockers.length
+    ? [...new Set(state.blockers
+      .filter((r) => !r.scope || GATE_LABELS[blockedGate?.gateId] || !METHOD_SCOPES.has(r.scope))
+      .map((r) => r.code || '').filter((c) => c && !GATE_STATE_CODES.has(c)))]
+      .slice(0, 3).join(', ')
+    : '';
+  return `<div class="non-fea-input-check__actions">
+    <button type="button" class="button button--primary" ${attribute}>${escapeHtml(label)}</button>
+    ${gateCauseCodes ? `<span class="non-fea-input-check__action-hint">${escapeHtml(gateCauseCodes)}</span>` : ''}
+  </div>`;
 }
 
 function workflowMarkup(gates) {
@@ -694,5 +827,30 @@ function styles() {
     .non-fea-entity-blockers td{padding:0;border:none}.non-fea-entity-blockers details{margin:2px 0 8px;border:1px solid #3f2730;border-radius:6px;background:#0b1424}.non-fea-entity-blockers summary{padding:8px 10px;cursor:pointer;color:#fca5a5;font-size:12px;font-weight:700}.non-fea-entity-group{padding:0 10px 10px}.non-fea-entity-group strong{color:#f87171;font-size:11px}.non-fea-entity-group ul{list-style:none;margin:5px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:3px 8px;max-height:220px;overflow:auto}.non-fea-entity-group li{color:#94a3b8;font-size:11px}.non-fea-entity-group code{color:#cbd5e1}
     .non-fea-blockers{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:7px}.non-fea-blockers li{display:grid;grid-template-columns:max-content 1fr;gap:9px;padding:8px;border:1px solid #3f2730;border-radius:5px}.non-fea-blockers p{margin:3px 0 0;color:#94a3b8}.non-fea-ready-copy{color:#4ade80}.non-fea-side-panel header button{padding:5px 8px}.non-fea-facts{display:grid;grid-template-columns:110px 1fr;gap:7px;margin:12px 0}.non-fea-facts dt{color:#94a3b8}.non-fea-facts dd{margin:0;overflow-wrap:anywhere}.non-fea-master-list{list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:7px}.non-fea-master-list li{display:flex;justify-content:space-between;gap:10px;padding:8px;border:1px solid #26354a;border-radius:5px}.non-fea-master-list small{display:block;color:#64748b;margin-top:3px}.non-fea-seal{border-color:#164e63}.panel-empty{color:#94a3b8}
     @media(max-width:1100px){.non-fea-input-check__summary{grid-template-columns:repeat(3,1fr)}.non-fea-input-check__layout{grid-template-columns:1fr}.non-fea-gates{grid-template-columns:1fr}}@media(max-width:780px){.non-fea-audits{grid-template-columns:1fr}.non-fea-input-check__cause-legend{grid-template-columns:1fr}}@media(max-width:680px){.non-fea-input-check__header{flex-direction:column}.non-fea-input-check__actions{justify-content:flex-start}.non-fea-input-check__summary{grid-template-columns:repeat(2,1fr)}}
+    /* Quick-fix action strip */
+    .non-fea-quick-fix{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid #b45309;border-radius:7px;background:#1a1005}
+    .non-fea-quick-fix__title{display:block;margin-bottom:4px;color:#fbbf24;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    .non-fea-quick-fix__item{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .non-fea-quick-fix__icon{font-size:16px;flex-shrink:0}
+    .non-fea-quick-fix__text{flex:1;color:#fde68a;font-size:12px;line-height:1.35}
+    .non-fea-quick-fix__btn{padding:5px 10px;font-size:11px;white-space:nowrap;border-color:#b45309!important;color:#fcd34d!important}
+    .non-fea-quick-fix__btn:hover{border-color:#f59e0b!important;color:#fef08a!important}
+    /* Progress bar */
+    .non-fea-progress-bar{height:5px;border-radius:3px;background:linear-gradient(to right,#16a34a var(--pct,0%),#292524 var(--pct,0%));margin:4px 0}
+    /* Enriched entity rows */
+    .non-fea-entity-row{display:flex;flex-direction:column;gap:2px;padding:5px;border:1px solid #2d281b;border-radius:4px;background:#0b0b09}
+    .non-fea-entity-row code{overflow-wrap:anywhere}
+    .non-fea-entity-row span{color:#94a3b8;font-size:10px;overflow-wrap:anywhere}
+    .non-fea-entity-row--enriched{border-color:#3f3510}
+    .non-fea-entity-row__meta{color:#a16207!important;font-style:italic}
+    /* Area breakdown collapsible */
+    .non-fea-input-check__area-breakdown{margin-top:8px;border:1px solid #334155;border-radius:5px;background:#0c1220}
+    .non-fea-input-check__area-breakdown>summary{padding:7px 10px;cursor:pointer;color:#94a3b8;font-size:11px;font-weight:700}
+    .non-fea-input-check__area-breakdown>ul{padding:0 10px 10px;list-style:none;margin:0;display:flex;flex-direction:column;gap:6px}
+    /* Cause legend collapsible */
+    .non-fea-input-check__cause-legend-wrap{margin:0 0 8px;border:1px solid #334155;border-radius:4px;background:#10151d}
+    .non-fea-input-check__cause-legend-wrap>summary{padding:5px 8px;cursor:pointer;color:#64748b;font-size:10px}
+    /* Action hint beside CTA */
+    .non-fea-input-check__action-hint{color:#94a3b8;font-size:11px;font-family:monospace;align-self:center}
   </style>`;
 }

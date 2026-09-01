@@ -57,6 +57,14 @@ export function buildLoadCalcMasterEnrichmentProposals({ dataset, masters, proje
   const pipingClassIndex = buildPipingClassIndex(pipingClassRows, {});
   const densities = projectDataValue(projectProfile, 'loadCalculation.materialDensitiesKgPerM3') || {};
 
+  // topology.pipingClassMappings maps a line's piping class code (e.g. "S8810101")
+  // to the master class identifier used in the piping class master (e.g. "91261").
+  // These mappings are approved project data; using masterClass here does not
+  // create new authority — it wires existing approved authority into proposal
+  // generation. When no mapping exists the original class is tried unchanged.
+  const classMappings = projectDataValue(projectProfile, 'topology.pipingClassMappings') || {};
+
+
   const proposals = [];
   const blockers = [];
   const reviewRequired = [];
@@ -84,6 +92,15 @@ export function buildLoadCalcMasterEnrichmentProposals({ dataset, masters, proje
         `Line List row ${lineRow.lineKey} declares no piping class.`));
       return;
     }
+
+    // If the project data has an approved class mapping for this line class,
+    // use its masterClass as the lookup key.  The overrides.pipingClass map
+    // scores at overrideScore (1100) and bypasses fuzzy matching, ensuring
+    // the resolver picks up the correct master rows immediately.
+    const classMapping = classMappings[requestedClass];
+    const masterClass = classMapping?.masterClass || null;
+    const overrides = masterClass ? { pipingClass: { [requestedClass]: masterClass } } : {};
+
     const match = findBestPipingClassRow({
       pipingClass: requestedClass,
       boreMm,
@@ -91,12 +108,14 @@ export function buildLoadCalcMasterEnrichmentProposals({ dataset, masters, proje
       rating: '',
       schedule: '',
       pipingClassIndex,
+      overrides,
     });
     if (!match.row) {
       blockers.push(issue('LOAD_CALC_MASTER_CLASS_ROW_UNMATCHED', targetId,
-        `Piping class ${requestedClass} at DN${boreMm} did not resolve to a master row.`));
+        `Piping class ${requestedClass}${masterClass ? ` (mapped to ${masterClass})` : ''} at DN${boreMm} did not resolve to a master row.`));
       return;
     }
+
     const wallThicknessMm = finite(match.row.wallThickness ?? match.row['Wall thickness']);
     const outerDiameterMm = finite(DN_TO_OD_MM[boreMm]);
     const densityKgM3 = finite(densities[String(lineRow.material || '')] ?? densities.DEFAULT);

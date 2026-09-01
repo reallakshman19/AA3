@@ -7,7 +7,7 @@ PR                         #1553
 branch                     codex/lfea-support-representability-1551
 state                      OPEN / DRAFT / UNMERGED
 chain                      ADV-LFEA-SUPPORT-REPRESENTABILITY
-current endpoint           EP-0032 (executable hosted BM4 boundary)
+current endpoint           EP-0033 (hosted BM4 S1/S2 closure)
 current qualification      QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0029
 qualification scope        QSCOPE-1551-FULL-PRODUCTION-PATH-REVIEW
 qualification status       STALE / refresh suppressed / takeover not ready
@@ -108,7 +108,7 @@ BM4_L contains none of the target support features, so it is non-regression evid
 
 ## Runtime truth / NOT_RUN ledger
 
-Hosted GitHub Actions now execute real steps. Run `33460007820` passed deterministic S1-S3, then its authenticated BM4_L job failed at the first production-retopology assertion: 10 source bends versus 12 retopologised bends. The relevant source/test paths are unchanged from the exact PR base, so this is inherited baseline debt, not a #1551 support regression. Six other hosted promotion jobs also execute and fail outside this support scope.
+Hosted run `33461428033` passes both deterministic S1-S3 and the authenticated real BM4_L S1/S2 job. Source custody correctly reports 10 literal `BEND` segments; production retopology correctly reports 12 governed arc-bearing sources and 72 chords because Owner-merged PR #1532 requires E33/E36 TEE arcs to retain bend ownership. Other hosted promotion jobs remain outside this support scope.
 
 Current validation truth:
 
@@ -116,7 +116,7 @@ Current validation truth:
 full check:lfea-linear-piping                               PASS
 aggregate parity stage (PR head and exact PR base)           MEASURED 96.76 / 92.37 / 95.82
 hosted deterministic S1-S3                                  PASS_EXECUTED
-hosted real BM4_L source/retopology                          FAIL_EXECUTED_BASELINE_PATH_UNCHANGED (10 / 12)
+hosted real BM4_L source/retopology                          PASS_EXECUTED (10 literal BEND / 12 arc-bearing / 72 chords)
 focused support aggregates and refusal/unit guards           PASS [SIMULATED]
 eleven deliberate-break discriminators                       RED as intended
 repository imports / shell contract / git diff --check        PASS
@@ -154,7 +154,7 @@ RISK-001: self-authored full-path evidence is not independent CAESAR validation;
 
 RISK-002: independent CAESAR feature references are absent; all new support features remain DRAFT.
 
-RISK-003: hosted BM4_L reaches real data and fails at 10 source bends versus 12 retopologised bends on paths unchanged from the exact PR base; the local dedicated gate remains blocked further downstream by branch-factor edition authority.
+RISK-003: hosted BM4_L S1/S2 is now real-data PASS; the local dedicated comparison remains blocked further downstream by branch-factor edition authority.
 
 DEBT-001: build and one non-FEA gate are red at the exact PR base; they are recorded but not repaired in this support-scope leg.
 

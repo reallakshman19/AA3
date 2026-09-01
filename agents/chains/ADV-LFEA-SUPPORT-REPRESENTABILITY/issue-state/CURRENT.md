@@ -3,9 +3,9 @@
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1551
 CHAIN_ID: ADV-LFEA-SUPPORT-REPRESENTABILITY
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0032
-CURRENT_ENDPOINT: EP-0032
-STATE_AS_OF: 2026-09-01T01:49:42Z
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0033
+CURRENT_ENDPOINT: EP-0033
+STATE_AS_OF: 2026-09-01T02:09:47Z
 PR: #1553 DRAFT
 BRANCH: codex/lfea-support-representability-1551
 ENGINEERING_MATERIAL_BASIS_HEAD: 24ec07250718c770ec2caed7df3c9798f379b51e
@@ -14,14 +14,15 @@ SPRING_RATE_RESOLVER_TEST_HEAD: ef275dfea07000b2dd3acaba4c462443c231cade
 REFUSAL_CLASSIFIER_TEST_HEAD: 5506b8d90710a310120732fb17b85a2c2b13490f
 CNODE_SPRING_ASSEMBLY_TEST_HEAD: e3f6fed9bc20fba4e7c7a0f02f828e81c955d8e6
 SKEW_SPRING_ASSEMBLY_TEST_HEAD: 695aed9899d86eb32e929bf1f2d3cd3d74ea008f
-ENDPOINT_FILE_COMMIT: PENDING_EP0032_PUBLICATION
+BM4_RETOPOLOGY_TEST_HEAD: abebf9b2641ecad0967b58a95162ee91d380c29b
+ENDPOINT_FILE_COMMIT: PENDING_EP0033_PUBLICATION
 LIVE_MAIN_AT_REGROUND: 70dd23a4fb36533f00d818586d1b753fa4f12276
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
 COMMON_LIVE_MAIN_AT_REGROUND: 293a3db7993a6945c01adc592a7ff14a339c504a
 COMMON_PROTOCOL_STATUS: CURRENT
-COORDINATION_STATE: BLOCKED_INHERITED_BM4_RETOPOLOGY_AND_EXTERNAL_REFERENCES
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5487512132
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+COORDINATION_STATE: BLOCKED_INHERITED_BRANCH_FACTOR_EDITION_AND_EXTERNAL_REFERENCES
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0033_PUBLICATION
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 MERGE_AUTHORITY: EXPLICIT_APPROVED_MERGE_ONLY
 MERGE_TRIGGER: APPROVED MERGE
 
@@ -32,7 +33,7 @@ TASK-002 | CNODE terminal refusal closure | PARTIAL | finite bidirectional CNODE
 TASK-003 | skew-direction terminal refusal closure | PARTIAL | finite skew spring executes through production `[SIMULATED]` with 36.94% vertical reaction share and force/moment equilibrium PASS; rigid skew remains exact-MPC gated; external reference unresolved
 TASK-004 | exercise + refusal models per feature | PASS_SOURCE | positive and dedicated-negative fixtures retained; self-authored fixtures cannot clear feature DRAFT
 TASK-005 | feature checks + observed deliberate-break red | PASS_LOCAL_SELF_AUTHORED | full local support aggregate PASS and eleven retained deliberate-break modes exit 1; self-authored evidence cannot clear DRAFT
-TASK-006 | frozen BM4_L non-regression | BLOCKED_UPSTREAM_AUTHORITY | executable hosted source custody passes 10 bends, then production retopology finds 12 on exact-base-unchanged paths; local dedicated gate remains blocked downstream on branch-factor edition authority; aggregate parity is 96.76 / 92.37 / 95.82 at head/base, so issue-frozen L5 93.00 remains unconfirmed
+TASK-006 | frozen BM4_L non-regression | BLOCKED_UPSTREAM_AUTHORITY | hosted S1/S2 now passes: 10 literal BEND sources, 12 governed arc-bearing retopology sources and 72 chords; local dedicated gate remains blocked downstream on branch-factor edition authority; aggregate parity is 96.76 / 92.37 / 95.82 at head/base, so issue-frozen L5 93.00 remains unconfirmed
 TASK-007 | spring-rate units converted/fail closed | PASS_LOCAL | N/mm=1000 and unresolved-rate withholding execute PASS; both deliberate breaks turn red
 TASK-008 | DRAFT disclosure in UI/results | PASS_SOURCE | `DRAFT_SPRING_SUPPORT_NO_REFERENCE` retained; independent CAESAR references required to clear
 TASK-009 | protected scope | PASS_SOURCE | reducer/parity/tolerance/Timoshenko/pressure/code/workflow/roadmap boundaries preserved
@@ -76,7 +77,7 @@ INPUT-024 | full local checkout | EXECUTED | Node v26.3.0 with project-locked de
 
 ### Benchmark / oracle ledger
 
-BM-001 | BM4_L frozen non-regression | BLOCKED_TARGET_NOT_CONFIRMED | hosted source custody passes 10 bends then retopology finds 12; local dedicated gate later blocks on branch-factor edition authority; aggregate parity is 96.76 / 92.37 / 95.82 at both PR head and exact PR base versus issue-frozen 96.76 / 93.00 / 95.82 / 7.99%; oracle unchanged
+BM-001 | BM4_L frozen non-regression | BLOCKED_TARGET_NOT_CONFIRMED | hosted S1/S2 passes with 10 literal BEND sources and 12 arc-bearing retopology sources; local dedicated gate remains blocked on branch-factor edition authority; aggregate parity is 96.76 / 92.37 / 95.82 at both PR head and exact PR base versus issue-frozen 96.76 / 93.00 / 95.82 / 7.99%; oracle unchanged
 BM-002 | self-authored support invariants | PASS_LOCAL_SIMULATED | full production paths execute; cannot clear feature DRAFT
 BM-003 | deliberate-break observations | PASS_LOCAL | eleven retained falsifiers exit 1
 BM-004 | external CAESAR support qualification | NOT_RUN_EXTERNAL
@@ -92,7 +93,7 @@ BM-013 | broad structural spring-rate refusal | PASS_LOCAL
 BM-014 | terminal-refusal classifiers | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
 BM-015 | finite CNODE assembly | PASS_EXACT_HEAD_GIT_BLOB_LOCAL
 BM-016 | finite skew assembly | PASS_EXACT_HEAD_GIT_BLOB_LOCAL | `k=2000`, `n=[0.6,0.8,0]`, `B=[[720,960,0],[960,1280,0],[0,0,0]]`, orthogonal-null response; UX-snap break red
-BM-017 | hosted BM4_L S1/S2 source-retopology | FAIL_EXECUTED_HOSTED_BASELINE_PATH_UNCHANGED | run 33460007820 / job 99708058933; authenticated ACCDB/ACE; source 10 bends PASS, retopology 12 bends FAIL; local replay NOT_RUN_PROVIDER
+BM-017 | hosted BM4_L S1/S2 source-retopology | PASS_EXECUTED_HOSTED_REAL_DATA | run 33461428033 / job 99712228177; authenticated ACCDB/ACE; 5,136,384-byte source SHA-256 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8; source 10 literal BEND segments PASS; retopology 12 arc-bearing sources / 72 chords PASS; local replay NOT_RUN_PROVIDER
 
 ## Exact-head execution provenance — EP-0029
 
@@ -128,6 +129,7 @@ DRIFT-003 | Advanced_Analysis `2bade51f... -> 70dd23a4...` | AUTHORITY_DISJOINT_
 DRIFT-004 | EP-0028 technical head -> skew test head | TEST_ONLY | new skew check; production spring owner and all dependency blobs unchanged
 DRIFT-005 | exact PR base -> EP-0030 material head | SUPPORT_FIX_ONLY | no solver formulation, tolerance, oracle, workflow, release or external-reference authority changed
 DRIFT-006 | exact PR base -> EP-0032 head for BM4 S1/S2 closure | NO_RELEVANT_PATH_DRIFT | source/retopology checks, ACCDB adapter, bend-retopology, geometry-conditioning and piping-component paths unchanged
+DRIFT-007 | EP-0032 -> EP-0033 | TEST_EXPECTATION_CORRECTION_WITH_OWNER_AUTHORITY | PR #1532 and chain ADV-LAFEA-BM4L-ROTATION-PARITY require 12 governed arc-bearing sources, including E33/E36 TEE; production mechanics and CAESAR oracle unchanged
 
 ### Roadmap ledger
 
@@ -145,11 +147,10 @@ Question refresh was suppressed by the Owner. The retained finite-skew set is st
 
 1. REF-SKEW-01 / REF-CNODE-01 / REF-HGR-01 remain absent; `DRAFT_SPRING_SUPPORT_NO_REFERENCE` stays mandatory.
 2. Rigid skew/CNODE require exact MPC/constraint-equation authority; penalty stiffness is prohibited.
-3. Hosted BM4_L source custody passes 10 bends, but production retopology produces 12 on paths unchanged from the exact PR base; owning bend-retopology authority is required.
-4. The local dedicated BM4_L gate remains blocked further downstream on inherited `BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED`.
-5. Six other hosted promotion jobs execute and fail outside #1551; build and one non-FEA exact-float gate also fail identically at the exact PR base.
-6. Live `main` has unrelated history; no merge/reconciliation action is authorized without exact Owner phrase `APPROVED MERGE`.
+3. The local dedicated BM4_L gate remains blocked downstream on inherited `BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED`.
+4. Other hosted promotion jobs execute and fail outside #1551; build and one non-FEA exact-float gate also fail identically at the exact PR base.
+5. Live `main` has unrelated history; no merge/reconciliation action is authorized without exact Owner phrase `APPROVED MERGE`.
 
 ## Exact next action
 
-Obtain owning bend-retopology authority to reconcile the BM4_L 10-source/12-retopologised boundary. Independently obtain and qualify REF-SKEW-01, REF-CNODE-01, and REF-HGR-01. Keep PR #1553 DRAFT and do not merge without exact Owner phrase `APPROVED MERGE`.
+Obtain owning branch-factor edition authority for the dedicated BM4_L gate. Independently obtain and qualify REF-SKEW-01, REF-CNODE-01, and REF-HGR-01. Keep PR #1553 DRAFT and do not merge without exact Owner phrase `APPROVED MERGE`.

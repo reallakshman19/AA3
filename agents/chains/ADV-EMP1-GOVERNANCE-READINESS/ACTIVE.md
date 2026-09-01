@@ -1,6 +1,6 @@
 # Active Handover — ADV-EMP1-GOVERNANCE-READINESS
 
-CHAIN_STATE_VERSION: 3
+CHAIN_STATE_VERSION: 4
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
 COMMON_PROTOCOL_STATUS: CURRENT
@@ -11,35 +11,35 @@ WORK_ITEM_MODE: EXCLUSIVE
 AGENT_INSTANCE_ID: chatgpt-gpt56sol:9d86c92d-0d91-4e97-8ae7-6f21d8cb42ac
 
 REPO: reallaksh19/Advanced_Analysis
-TASK: Implement the first bounded EMP.1 engineering-governance slice from the Owner-approved revised plan: a deterministic readiness projection plus focused checker.
+TASK: Implement the bounded EMP.1 engineering-governance readiness projection and surface it in the engineer-facing professional workflow without moving qualification logic into the UI.
 CHAIN: ADV-EMP1-GOVERNANCE-READINESS
-ENDPOINT: EP-0003
+ENDPOINT: EP-0004
 
 PR: 1614
 PR_STATUS: OPEN_DRAFT
 BRANCH: agent/emp1-governance-readiness-v1
-MATERIAL_HEAD: 5374d9d311c156b26f8769e95ce6dcd508762c24
-PRE_CI_PR_HEAD: 802925ba6c381f70f246785cf91d7169152d75e4
+MATERIAL_HEAD: 52de0672aaeb244471538b851ff263ef21ee0841
+CUSTODY_ENDPOINT_HEAD: 4132b5d60b518bbd1735a712d8ed86f1400555b9
 MAIN: 70dd23a4fb36533f00d818586d1b753fa4f12276
 MERGEABILITY: TRUE_AT_LAST_READ
 REVIEWS: 0
 UNRESOLVED_THREADS: 0_AT_LAST_READ
-REQUIRED_CHECKS: EXISTING_WRC_WORKFLOWS_EXECUTED_FAIL_BEFORE_NEW_CHECKER; FOCUSED_READINESS_CHECK_NOT_RUN
+REQUIRED_CHECKS: EXISTING_WRC_WORKFLOWS_EXECUTED_FAIL_BEFORE_NEW_CHECKERS; READINESS_PROJECTION_CHECK_NOT_RUN; READINESS_DASHBOARD_CHECK_NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
 ENGINEERING_STATE: MATERIAL_COMPLETE_VALIDATION_INCOMPLETE
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: WRITE_ALLOWED_WITHIN_BOUNDED_GOVERNANCE_SLICE
+WRITE_AUTHORITY: WRITE_ALLOWED_WITHIN_BOUNDED_GOVERNANCE_AND_READ_ONLY_UI_SLICE
 AUTO_STATE: NOT_APPLICABLE
 
 OWNER_ROADMAP_STATE: ALIGNED_WITH_CURRENT_OWNER_DIRECT_PLAN
-OWNER_ROADMAP_MUTATION_AUTHORITY: READINESS_PROJECTION_ONLY
+OWNER_ROADMAP_MUTATION_AUTHORITY: READINESS_PROJECTION_AND_READ_ONLY_PRESENTATION_ONLY
 PROJECT_ROADMAP_STATE: NOT_APPLICABLE
 ISSUE_BASIS: NOT_APPLICABLE
 
-ORIGINAL_TASK_STATUS: FIRST_CODING_SLICE_IMPLEMENTED
+ORIGINAL_TASK_STATUS: CORE_READINESS_AND_DASHBOARD_SLICES_IMPLEMENTED
 INPUT_STATUS: Existing EMP.1 product projection/currentness/route state only; no new engineering source data.
 BENCHMARK_ORACLE_STATUS: EXISTING_WRC_ORACLE_GATE_EXECUTED_FAIL_OUTSIDE_THIS_SLICE; NO ORACLE MUTATION AUTHORIZED.
 SOURCE_AUTHORITY_MUTATION: FORBIDDEN
@@ -48,8 +48,9 @@ WRC_APPLICABILITY_AUTHORITY_MUTATION: FORBIDDEN
 ROUTE_REGISTRY_MUTATION: FORBIDDEN
 RELEASE_AUTHORITY_MUTATION: FORBIDDEN
 WORKFLOW_FILE_MUTATION: FORBIDDEN
+UI_QUALIFICATION_LOGIC_MUTATION: FORBIDDEN
 
-QUALIFICATION_SCOPE_ID: NOT_APPLICABLE_OWNER_DIRECT_COMPOSITION_ONLY
+QUALIFICATION_SCOPE_ID: NOT_APPLICABLE_OWNER_DIRECT_COMPOSITION_AND_PRESENTATION_ONLY
 QUESTION_SET_ID: NONE
 QUESTION_SET_STATUS: NOT_APPLICABLE
 QUESTION_PACK_ACTION: NOT_APPLICABLE
@@ -58,7 +59,7 @@ CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: FALSE
 HANDOVER_READY: TRUE
 
-OVERLAP: SAFE — open WRC PR #1610 changes chain-custody files only; no readiness-module/checker path overlap observed.
-LEG_DIAGNOSIS: Existing EMP.1 owns calculation, currentness, bounded route authority and professional workflow presentation. The new slice composes those states without re-evaluating WRC engineering authority. Hosted CI now executes real steps, but existing WRC workflows fail at historical post-promotion suspension/oracle boundaries before the new readiness checker runs.
-BLOCKER: FOCUSED_READINESS_CHECK_NOT_EXECUTED; EXISTING_WRC_CI_HAS_SEPARATE_PRE_EXISTING_GATE_FAILURES
-EXACT_NEXT_ACTION: From a faithful checkout of this branch run `node scripts/emp1-readiness-projection-check.mjs`; if PASS, run applicable repository checks without changing WRC source/route/oracle/workflow authority. Keep PR #1614 Draft and do not merge without explicit Owner authorization.
+OVERLAP: SAFE_AT_LAST_READ — readiness/dashboard material is confined to the new readiness projection/checkers plus the existing professional workflow view. No WRC numerical/source/route/oracle files were modified.
+LEG_DIAGNOSIS: Existing EMP.1 owns numerical calculation, currentness, bounded route authority and professional workflow. The core readiness projection composes those states; the professional workflow view now invokes that projection once and renders seven governance dimensions plus blocker codes without re-evaluating engineering authority. Hosted CI still fails at pre-existing WRC oracle/historical-authority gates before either new readiness checker executes.
+BLOCKER: READINESS_PROJECTION_CHECK_NOT_EXECUTED; READINESS_DASHBOARD_CHECK_NOT_EXECUTED; EXISTING_WRC_CI_HAS_SEPARATE_PRE_EXISTING_GATE_FAILURES
+EXACT_NEXT_ACTION: From a faithful checkout run `node scripts/emp1-readiness-projection-check.mjs`, `node scripts/emp1-readiness-dashboard-check.mjs`, and `node scripts/emp1-professional-workflow-check.mjs`; then run applicable non-authority-mutating import/build checks. Keep PR #1614 Draft and do not merge without explicit Owner authorization.

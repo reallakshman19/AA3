@@ -74,9 +74,13 @@ export function projectEmp1CalculationTrace({
       boundedLocalRoutePrepared: authority?.boundedLocalRoutePrepared === true,
       boundedLocalRouteExecuted: authority?.boundedLocalRouteExecuted === true,
       executionRouteAuthorityHash: nullableHash(
-        authority?.routeAuthorityHash ?? authority?.routeAuthoritySnapshot?.semanticHash,
+        cState?.executionAuthorityHash
+          ?? authority?.routeAuthorityHash
+          ?? authority?.routeAuthoritySnapshot?.semanticHash,
       ),
-      currentRouteAuthorityHash: nullableHash(cState?.currentAuthorityHash),
+      currentRouteAuthorityHash: nullableHash(
+        cState?.currentAuthorityHash ?? cState?.currentAuthoritySnapshot?.semanticHash,
+      ),
       executionAuthorityCurrent: booleanOrNull(currentness?.cAuthorityCurrent),
       currentCResultReportable: cState?.currentResultAvailable === true,
       globalEmp1CRouteAuthority: authority?.globalEmp1CRouteAuthority === true,

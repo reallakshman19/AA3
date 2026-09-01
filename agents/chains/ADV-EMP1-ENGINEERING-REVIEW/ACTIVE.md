@@ -1,0 +1,60 @@
+# Active Handover — ADV-EMP1-ENGINEERING-REVIEW
+
+CHAIN_STATE_VERSION: 1
+HANDOVER_PROTOCOL_VERSION: 2
+COMMON_PROTOCOL: engineering-pr-delivery-v2
+COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
+COMMON_PROTOCOL_STATUS: CURRENT
+
+CHAIN_ID: ADV-EMP1-ENGINEERING-REVIEW
+MISSION: Add an immutable EMP.1 engineering-review attestation bound to exact retained evidence identities, with deterministic stale detection and no release/code/numerical authority creation.
+ACTIVE_ENDPOINT: EP-0001
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-REVIEW/endpoints/EP-0001.md
+CUSTODY_EPOCH: 1
+
+WORK_ITEM_SOURCE: OWNER_DIRECT
+WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-engineering-review-v1
+WORK_ITEM_MODE: EXCLUSIVE
+
+REPO: reallaksh19/Advanced_Analysis
+BRANCH: agent/emp1-engineering-review-v1
+MAIN: 93d208dc1298570f20ce170edbd4f881039d22f0
+PR: PENDING
+PR_STATUS: NOT_OPENED
+MERGEABILITY: UNKNOWN
+REVIEWS: 0
+UNRESOLVED_THREADS: 0
+REQUIRED_CHECKS: EMP1_ENGINEERING_REVIEW_RECORD_CHECK_NOT_RUN
+MERGE_AUTHORITY: OWNER_ONLY
+MERGE_AUTHORIZED: FALSE
+
+ENGINEERING_STATE: PREWORK
+CUSTODY_STATE: HELD
+WRITE_AUTHORITY: WRITE_ALLOWED_BOUNDED_REVIEW_RECORD_ONLY
+AUTHORITY_DOMAIN: Review-attestation identity and stale/current classification over existing retained EMP.1 evidence only.
+COORDINATION_STATE: SAFE
+DEPENDENCIES: Existing runEmp1 result/assessment parents, workbench route-authority snapshot/hash, canonical semantic hash primitive. Readiness/dashboard governance is now present on current main. Draft PRs #1616/#1617/#1618 remain separate.
+
+ROADMAPS: github:reallaksh19/Advanced_Analysis#1389; github:reallaksh19/Advanced_Analysis#1261
+ROADMAP_REVIEW_STATUS: COMPLETE
+ROADMAP_ALIGNMENT: ALIGNED_WITH_OWNER_EMP1_GOVERNANCE_PLAN
+ROADMAP_MUTATION_AUTHORITY: NONE
+
+SOURCE_AUTHORITY_MUTATION: FORBIDDEN
+WRC_NUMERICAL_MUTATION: FORBIDDEN
+WRC_APPLICABILITY_AUTHORITY_MUTATION: FORBIDDEN
+ROUTE_REGISTRY_MUTATION: FORBIDDEN
+ROUTE_EXECUTOR_AUTHORITY_MUTATION: FORBIDDEN
+BENCHMARK_ORACLE_MUTATION: FORBIDDEN
+CODE_COMPLIANCE_AUTHORITY_MUTATION: FORBIDDEN
+RELEASE_AUTHORITY_MUTATION: FORBIDDEN
+WORKFLOW_FILE_MUTATION: FORBIDDEN
+
+REVIEW_RECORD_SEMANTIC_HASH_CREATION: AUTHORIZED_ONLY_FOR_NEW_REVIEW_ATTESTATION_IDENTITY
+ASSESSMENT_REVIEW_LOCAL_SEMANTIC_IDENTITY: AUTHORIZED_WITHOUT_MUTATING_ASSESSMENT
+EXISTING_ENGINEERING_HASH_MUTATION: FORBIDDEN
+CRYPTOGRAPHIC_SEAL_CLAIM: FORBIDDEN
+
+OVERLAP: SAFE — new core review-record/checker files only; no active Draft PR path overlap.
+BLOCKER: NONE_FOR_BOUNDED_MATERIAL_CODING; executable validation remains NOT_RUN until actually executed.
+EXACT_NEXT_ACTION: Implement immutable review evidence binding + accepted/rejected/stale projection, add focused checker, audit diff, record custody, open Draft PR. Do not modify WRC/source/applicability/oracle/release/workflow authority.

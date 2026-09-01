@@ -7,7 +7,7 @@ PR                         #1553
 branch                     codex/lfea-support-representability-1551
 state                      OPEN / DRAFT / UNMERGED
 chain                      ADV-LFEA-SUPPORT-REPRESENTABILITY
-current endpoint           EP-0033 (hosted BM4 S1/S2 closure)
+current endpoint           EP-0034 (BM4 branch-authority blocker correction)
 current qualification      QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0029
 qualification scope        QSCOPE-1551-FULL-PRODUCTION-PATH-REVIEW
 qualification status       STALE / refresh suppressed / takeover not ready
@@ -104,7 +104,7 @@ L6                  95.82%
 >5% tail             7.99%
 ```
 
-BM4_L contains none of the target support features, so it is non-regression evidence only. The dedicated gate was attempted but stops before solve on inherited `BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED`; the exact PR base fails identically. The aggregate parity stage measures `96.76 / 92.37 / 95.82` on both the PR head and exact PR base, so the issue-frozen L5 `93.00%` value is not confirmed. The frozen oracle is unchanged.
+BM4_L contains none of the target support features, so it is non-regression evidence only. The repository production parity gate already supplies sealed `B31_3_2022_B31J_2017` bend and branch authorities. Fresh execution at PR head `bb883257...` and exact PR base `94b766d0...` reaches solve with `BLOCKROWS []` and measures identical `96.76 / 92.37 / 95.82`; `qualificationStatus` remains `FAIL`. Owner-merged PR #1532 separately records the current substantial tail as `589/5349 = 11.0114%`. The issue-frozen L5 `93.00%` and tail `7.99%` therefore remain a protected authority conflict; no oracle is changed here.
 
 ## Runtime truth / NOT_RUN ledger
 
@@ -120,7 +120,7 @@ hosted real BM4_L source/retopology                          PASS_EXECUTED (10 l
 focused support aggregates and refusal/unit guards           PASS [SIMULATED]
 eleven deliberate-break discriminators                       RED as intended
 repository imports / shell contract / git diff --check        PASS
-dedicated BM4_L preflight/comparison                          FAIL_BEFORE_SOLVE_BASE_REPRODUCED
+production BM4_L preflight/comparison                         EXECUTED_MEASURED_BASE_IDENTICAL; comparator FAIL
 npm run build                                                 FAIL_BASE_REPRODUCED (1,801,999-byte main chunk)
 non-FEA aggregate                                             FAIL_BASE_REPRODUCED (exact-float assertion)
 external CAESAR skew/CNODE/HANGER qualification               NOT_RUN_EXTERNAL
@@ -146,7 +146,7 @@ PR may report non-mergeable while behind/diverged from live main. Do not reconci
 
 ## Changed-file ledger — latest bounded leg
 
-EP-0030 corrects the nine `SPRING_DRAFT` fixture modulus declarations, replaces the shunted CNODE exercise with two independently anchored cantilevers, adds modulus/geometry regression guards, and removes one prohibited API default expression. `PROVENANCE.md`, LEG-006, CURRENT/ACTIVE, this report and EP-0030 record the engineering basis and validation truth.
+EP-0034 corrects governance only: the branch-factor block was an incomplete invocation, while the repository gate has explicit sealed authority and executes identically at head/base. Production, factor, comparator, tolerance and oracle files are unchanged.
 
 ## Current risks / debt
 
@@ -154,15 +154,15 @@ RISK-001: self-authored full-path evidence is not independent CAESAR validation;
 
 RISK-002: independent CAESAR feature references are absent; all new support features remain DRAFT.
 
-RISK-003: hosted BM4_L S1/S2 is now real-data PASS; the local dedicated comparison remains blocked further downstream by branch-factor edition authority.
+RISK-003: hosted BM4_L S1/S2 is real-data PASS and local production parity executes, but the issue-frozen L5/tail values conflict with the Owner-merged #1532 evidence.
 
 DEBT-001: build and one non-FEA gate are red at the exact PR base; they are recorded but not repaired in this support-scope leg.
 
-DEBT-002: dedicated BM4_L cannot execute until the owning branch-factor authority is supplied.
+DEBT-002: owning authority must disposition the issue-frozen `93.00 / 7.99%` values against merged #1532's `92.37 / 11.0114%`; this support chain cannot rewrite either oracle.
 
 ## Next action
 
-Obtain and qualify REF-SKEW-01, REF-CNODE-01 and REF-HGR-01, or obtain explicit upstream authority to resolve the BM4 branch-factor edition block. Keep PR #1553 DRAFT; do not merge without the exact Owner phrase `APPROVED MERGE`.
+Obtain and qualify REF-SKEW-01, REF-CNODE-01 and REF-HGR-01, and obtain owning-authority disposition for the conflicting frozen BM4 L5/tail values. Keep PR #1553 DRAFT; do not merge without the exact Owner phrase `APPROVED MERGE`.
 
 ## Appendix A — takeover qualification
 

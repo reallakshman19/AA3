@@ -304,38 +304,16 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
     status.textContent = 'Review';
     return;
   }
-
-  // Count project-data blocking codes from the checker report's blocker list
-  const PD_BLOCKER_CODES = new Set([
-    'MISSING_VALUE', 'STALE_SOURCE_HASH', 'GRAVITY_BASIS_REQUIRED',
-    'ACTIVE_LOAD_CASES_REQUIRED', 'NOT_APPROVED', 'MISSING_EVIDENCE',
-  ]);
-  const report = state?.commonInputState?.report;
-  const pdCodes = [...new Set(
-    (report?.blockers ?? [])
-      .map((b) => b.code)
-      .filter((c) => PD_BLOCKER_CODES.has(c)),
-  )];
-
-  if (pdCodes.length === 0) {
+  // projectDataReady and projectDataActionCount come from validateProjectDataProfile
+  // in createWorkflowReadiness — the authoritative count for this step.
+  if (readiness.projectDataReady) {
     button.dataset.stepState = 'complete';
     status.textContent = 'Done';
     return;
   }
-
-  const hasMissing = pdCodes.includes('MISSING_VALUE');
-  const hasStale = pdCodes.includes('STALE_SOURCE_HASH');
-
+  const n = readiness.projectDataActionCount ?? 0;
   button.dataset.stepState = 'ready';
-  if (hasMissing && hasStale) {
-    status.textContent = `${pdCodes.length} issues`;
-  } else if (hasMissing) {
-    status.textContent = 'Fields missing';
-  } else if (hasStale) {
-    status.textContent = 'Source stale';
-  } else {
-    status.textContent = `${pdCodes.length} issue${pdCodes.length === 1 ? '' : 's'}`;
-  }
+  status.textContent = n > 0 ? `${n} issue${n === 1 ? '' : 's'}` : 'Issues';
 }
 
 function normalizeEnrichmentStatus(workflow, state) {
@@ -362,31 +340,32 @@ function normalizeEnrichmentStatus(workflow, state) {
     return;
   }
 
+  // Read from the raw checker report — same object the Input Check view uses.
+  // report.blockers[] has {code} and report.methodRows[].requirements[].details.missing
+  // has the per-method missing token lists from which we derive entity count.
   const report = state?.commonInputState?.report;
-  const massBlocker = report?.blockers?.find?.((b) => b.code === 'MASS_COVERAGE_INCOMPLETE');
-  if (!massBlocker) {
+  const hasMassBlocker = report?.blockers?.some?.((b) => b.code === 'MASS_COVERAGE_INCOMPLETE');
+
+  if (!hasMassBlocker) {
     button.dataset.stepState = 'complete';
     status.textContent = 'Done';
     return;
   }
 
-  // Compute unresolved entity count from coverageRequirements.missing
-  // (the blocker object itself does not carry a count; it's derived from methodRows)
-  let unresolved = null;
-  const methodRows = report?.methodRows ?? [];
+  // Collect distinct entity IDs from requirements.details.missing across all methods
   const entityIds = new Set();
-  for (const method of methodRows) {
-    for (const coverage of (method.coverageRequirements ?? [])) {
-      if (coverage.code !== 'MASS_COVERAGE_INCOMPLETE') continue;
-      for (const token of (coverage.missing ?? [])) {
-        // tokens are "entityId:FIELD" — extract the entityId part
+  for (const method of (report?.methodRows ?? [])) {
+    for (const req of (method.requirements ?? [])) {
+      if (req.code !== 'MASS_COVERAGE_INCOMPLETE') continue;
+      for (const token of (req.details?.missing ?? [])) {
+        // tokens are "entityId:FIELD" — extract entityId
         const entityId = typeof token === 'string' ? token.split(':')[0] : token?.entityId;
         if (entityId) entityIds.add(entityId);
       }
     }
   }
-  if (entityIds.size > 0) unresolved = entityIds.size;
 
+  const unresolved = entityIds.size > 0 ? entityIds.size : null;
   button.dataset.stepState = 'ready';
   status.textContent = unresolved != null ? `${unresolved} unresolved` : 'Unresolved';
 }

@@ -16,10 +16,10 @@ const source = accdbTablesToCanonicalGeometry(tables, { source: 'BM4_L.ACCDB:S2_
 const result = retopologiseDeclaredBends(source, INPUTXML_LINEAR_COMPONENT_CONDITIONING_PROFILE);
 const chords = result.geometry.segments.filter((segment) => segment.meta?.bendChordOf);
 
-assert.equal(result.summary.bendCount, 10, `BM4_L must retopologise 10 bends; found ${result.summary.bendCount}.`);
-assert.equal(chords.length, 60, `BM4_L must contain 10 x 6 = 60 bend chord spans; found ${chords.length}.`);
-assert.equal(result.summary.chordCount, 60);
-assert.equal(result.bendRecords.length, 10);
+assert.equal(result.summary.bendCount, 12, `BM4_L must retopologise 12 arc-bearing sources; found ${result.summary.bendCount}.`);
+assert.equal(chords.length, 72, `BM4_L must contain 12 x 6 = 72 bend chord spans; found ${chords.length}.`);
+assert.equal(result.summary.chordCount, 72);
+assert.equal(result.bendRecords.length, 12);
 
 const nodes = new Map(result.geometry.nodes.map((node) => [String(node.id), node]));
 for (const bend of result.bendRecords) {

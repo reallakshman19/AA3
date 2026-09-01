@@ -298,10 +298,44 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
     status.textContent = 'After topology';
     return;
   }
-  const resolved = isRoutineRunReady(state?.commonInputState);
   const active = state?.activeTab === 'project-data';
-  button.dataset.stepState = active ? 'current' : resolved ? 'complete' : 'ready';
-  status.textContent = resolved ? 'Resolved' : active ? 'Review' : 'Available';
+  if (active) {
+    button.dataset.stepState = 'current';
+    status.textContent = 'Review';
+    return;
+  }
+
+  // Count project-data blocking codes from the checker report's blocker list
+  const PD_BLOCKER_CODES = new Set([
+    'MISSING_VALUE', 'STALE_SOURCE_HASH', 'GRAVITY_BASIS_REQUIRED',
+    'ACTIVE_LOAD_CASES_REQUIRED', 'NOT_APPROVED', 'MISSING_EVIDENCE',
+  ]);
+  const report = state?.commonInputState?.report;
+  const pdCodes = [...new Set(
+    (report?.blockers ?? [])
+      .map((b) => b.code)
+      .filter((c) => PD_BLOCKER_CODES.has(c)),
+  )];
+
+  if (pdCodes.length === 0) {
+    button.dataset.stepState = 'complete';
+    status.textContent = 'Done';
+    return;
+  }
+
+  const hasMissing = pdCodes.includes('MISSING_VALUE');
+  const hasStale = pdCodes.includes('STALE_SOURCE_HASH');
+
+  button.dataset.stepState = 'ready';
+  if (hasMissing && hasStale) {
+    status.textContent = `${pdCodes.length} issues`;
+  } else if (hasMissing) {
+    status.textContent = 'Fields missing';
+  } else if (hasStale) {
+    status.textContent = 'Source stale';
+  } else {
+    status.textContent = `${pdCodes.length} issue${pdCodes.length === 1 ? '' : 's'}`;
+  }
 }
 
 function normalizeEnrichmentStatus(workflow, state) {
@@ -321,11 +355,40 @@ function normalizeEnrichmentStatus(workflow, state) {
     status.textContent = 'After masters';
     return;
   }
-  const report = state?.commonInputState?.report;
-  const massClear = !report?.blockers?.some((b) => b.code === 'MASS_COVERAGE_INCOMPLETE');
   const active = state?.activeTab === 'enrichment';
-  button.dataset.stepState = active ? 'current' : massClear ? 'complete' : 'ready';
-  status.textContent = massClear ? 'Done' : active ? 'Review' : 'Available';
+  if (active) {
+    button.dataset.stepState = 'current';
+    status.textContent = 'Review';
+    return;
+  }
+
+  const report = state?.commonInputState?.report;
+  const massBlocker = report?.blockers?.find?.((b) => b.code === 'MASS_COVERAGE_INCOMPLETE');
+  if (!massBlocker) {
+    button.dataset.stepState = 'complete';
+    status.textContent = 'Done';
+    return;
+  }
+
+  // Compute unresolved entity count from coverageRequirements.missing
+  // (the blocker object itself does not carry a count; it's derived from methodRows)
+  let unresolved = null;
+  const methodRows = report?.methodRows ?? [];
+  const entityIds = new Set();
+  for (const method of methodRows) {
+    for (const coverage of (method.coverageRequirements ?? [])) {
+      if (coverage.code !== 'MASS_COVERAGE_INCOMPLETE') continue;
+      for (const token of (coverage.missing ?? [])) {
+        // tokens are "entityId:FIELD" — extract the entityId part
+        const entityId = typeof token === 'string' ? token.split(':')[0] : token?.entityId;
+        if (entityId) entityIds.add(entityId);
+      }
+    }
+  }
+  if (entityIds.size > 0) unresolved = entityIds.size;
+
+  button.dataset.stepState = 'ready';
+  status.textContent = unresolved != null ? `${unresolved} unresolved` : 'Unresolved';
 }
 
 function normalizeOneClickRunStatus(workflow, state) {

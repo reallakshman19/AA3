@@ -285,12 +285,6 @@ function buildElements({ topology, nodeBindings, elementBindings, materials, sec
   return { elements, bindings, diagnostics, limitations };
 }
 
-/**
- * Confirm the supplied axis triad belongs to this span. The axes are used
- * exactly as B-2.4 released them — nothing here reorients, renormalises or
- * flips a vector, because a repaired axis silently changes signed local
- * bending and shear.
- */
 function requireAxisAgreesWithSpan(axisResult, delta, length, profile, spanId) {
   const unit = [delta[0] / length, delta[1] / length, delta[2] / length];
   const axisX = axisResult.axes.x;
@@ -321,11 +315,6 @@ function axisFallbackLimitation(policyId) {
   };
 }
 
-/**
- * Merge propagated limitations by code. Two authorities that disclose the same
- * code with different content are a contradiction, not something to reconcile
- * here, so the compilation is blocked instead of one disclosure being dropped.
- */
 function mergeLimitationRecords(limitations) {
   const merged = new Map();
   for (const limitation of limitations) {
@@ -370,12 +359,6 @@ function sectionStateRecord(resolution) {
   };
 }
 
-/**
- * Apply section 5.3. Every declaration is first resolved to the global node DOF
- * it acts on; two declarations acting on one node DOF block compilation. Only
- * then is representability decided, so a conflict is reported as a conflict
- * rather than being masked by the feature gap.
- */
 function buildConstraints(declarations, nodes, elements) {
   const nodeIds = new Set(nodes.map((node) => node.nodeId));
   const elementsById = new Map(elements.map((element) => [element.elementId, element]));
@@ -401,10 +384,31 @@ function buildConstraints(declarations, nodes, elements) {
         );
       }
     }
-    return { ...declaration, resolvedNodeId: nodeId };
+    let connectedNodeId = null;
+    if (Object.hasOwn(declaration, 'connectedNodeId')) {
+      connectedNodeId = declaration.connectedNodeId;
+      if (!nodeIds.has(connectedNodeId)) {
+        fail(
+          `Constraint declaration ${declaration.declarationId} references connected node ${connectedNodeId}, which is not in the compiled model.`,
+          'MODEL_COMPILER_CONSTRAINT_NODE_UNKNOWN',
+        );
+      }
+      if (connectedNodeId === nodeId) {
+        fail(
+          `Constraint declaration ${declaration.declarationId} connects node ${nodeId} to itself.`,
+          'MODEL_COMPILER_CONSTRAINT_CONFLICT',
+        );
+      }
+    }
+    return {
+      ...declaration,
+      resolvedNodeId: nodeId,
+      ...(connectedNodeId === null ? {} : { resolvedConnectedNodeId: connectedNodeId }),
+    };
   });
 
   for (const declaration of resolved) {
+    if (Array.isArray(declaration.direction)) continue;
     const slot = `${declaration.resolvedNodeId}:${declaration.dof}`;
     const existing = occupied.get(slot);
     if (existing !== undefined) {
@@ -430,14 +434,19 @@ function buildConstraints(declarations, nodes, elements) {
     );
   }
 
-  return resolved.map((declaration) => ({
-    constraintId: declaration.declarationId,
-    nodeId: declaration.resolvedNodeId,
-    dof: declaration.dof,
-    behavior: declaration.behavior,
-    basis: 'GLOBAL',
-    stiffness: declaration.stiffness,
-  }));
+  return resolved.map((declaration) => {
+    const constraint = {
+      constraintId: declaration.declarationId,
+      nodeId: declaration.resolvedNodeId,
+      dof: declaration.dof,
+      behavior: declaration.behavior,
+      basis: 'GLOBAL',
+      stiffness: declaration.stiffness,
+    };
+    if (Array.isArray(declaration.direction)) constraint.direction = [...declaration.direction];
+    if (declaration.resolvedConnectedNodeId) constraint.connectedNodeId = declaration.resolvedConnectedNodeId;
+    return constraint;
+  });
 }
 
 export function compilationSemanticProjection(record) {

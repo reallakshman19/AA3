@@ -13,6 +13,18 @@ export const LFEA_PIPELINE_CASE_SELECTION_PANEL_SCHEMA = 'lfea-pipeline-case-sel
 const EMPTY_MESSAGE = 'Load a model and run Error check to see its analysis cases.';
 
 const CASE_PRESENTATION = Object.freeze({
+  WEIGHT_HANGER_PRELOAD: {
+    label: 'W+H', description: 'Weight + hanger preload', category: 'STANDARD_HANGER',
+  },
+  WEIGHT_PRESSURE_HANGER_PRELOAD: {
+    label: 'W+P1+H', description: 'Weight + pressure + hanger preload', category: 'STANDARD_HANGER',
+  },
+  WEIGHT_TEMPERATURE_HANGER_PRELOAD: {
+    label: 'W+T1+H', description: 'Weight + thermal + hanger preload', category: 'STANDARD_HANGER',
+  },
+  WEIGHT_PRESSURE_TEMPERATURE_HANGER_PRELOAD: {
+    label: 'W+P1+T1+H', description: 'Weight + pressure + thermal + hanger preload', category: 'STANDARD_HANGER',
+  },
   WEIGHT_BASE: { label: 'W', description: 'Weight', category: 'STANDARD' },
   WEIGHT_PRESSURE: { label: 'W+P1', description: 'Weight + pressure', category: 'STANDARD' },
   WEIGHT_TEMPERATURE: { label: 'W+T1', description: 'Weight + thermal', category: 'STANDARD' },
@@ -20,6 +32,15 @@ const CASE_PRESENTATION = Object.freeze({
   APPLIED_FORCE_SET: { label: null, description: 'Declared applied force set', category: 'FORCE_SET' },
   AUTHORED_APPLIED_MECHANICAL: { label: null, description: 'Authored nodal load', category: 'AUTHORED' },
 });
+
+export function defaultLfeaPipelineCaseIds(availableCases) {
+  const preferredCategory = availableCases.some((row) => row.category === 'STANDARD_HANGER')
+    ? 'STANDARD_HANGER'
+    : 'STANDARD';
+  return availableCases
+    .filter((row) => row.category === preferredCategory)
+    .map((row) => row.caseId);
+}
 
 export function mountLfeaPipelineCaseSelectionPanel(hostElement, options = {}) {
   if (!hostElement || typeof hostElement.append !== 'function') {
@@ -40,6 +61,8 @@ export class LfeaPipelineCaseSelectionPanelController {
     this.elements = null;
     this.initialized = false;
     this.selected = new Set();
+    this.selectionExplicit = false;
+    this.sourceSemanticHash = null;
     this.message = EMPTY_MESSAGE;
     this.error = '';
   }
@@ -71,18 +94,103 @@ export class LfeaPipelineCaseSelectionPanelController {
       .sort((left, right) => compareCases(left, right));
   }
 
-  /** Selected case IDs, defaulting to the standard cases when nothing is set. */
+  /** Selected case IDs, defaulting to the governed standard family until the user edits it. */
   getSelectedCaseIds() {
+    this.synchronizeSourceSelectionState();
     const available = this.availableCases();
-    const live = available.filter((row) => this.selected.has(row.caseId)).map((row) => row.caseId);
-    if (live.length > 0) return live;
-    return available.filter((row) => row.category === 'STANDARD').map((row) => row.caseId);
+    if (!this.selectionExplicit) return defaultLfeaPipelineCaseIds(available);
+    return available.filter((row) => this.selected.has(row.caseId)).map((row) => row.caseId);
   }
 
   /** Case IDs sealed into the currently retained pre-flight. */
   getAppliedCaseIds() {
     const ids = this.options.getPreFlight()?.preparation?.requestedCaseIds;
     return Array.isArray(ids) ? [...ids] : [];
+  }
+
+  /** Stable source identity used only to invalidate presentation state on model replacement. */
+  sourceSemanticIdentity() {
+    const preFlight = this.options.getPreFlight?.() ?? null;
+    const identity = preFlight?.sourceSummary?.sourceSemanticHash
+      ?? preFlight?.intake?.inputXmlSource?.semanticHash
+      ?? null;
+    return typeof identity === 'string' && identity.trim() !== '' ? identity : null;
+  }
+
+  /**
+   * Explicit checkbox choices belong to one sealed source model. Regenerating
+   * pre-flight for different requested cases on that same source must preserve
+   * the choice; replacing the source must not inherit it merely because case
+   * IDs such as IXP-W happen to be reused.
+   */
+  synchronizeSourceSelectionState() {
+    const current = this.sourceSemanticIdentity();
+    if (current === null) {
+      if (this.sourceSemanticHash !== null) this.resetSelectionForSource(null);
+      return null;
+    }
+    if (this.sourceSemanticHash === null) {
+      this.sourceSemanticHash = current;
+      return current;
+    }
+    if (this.sourceSemanticHash !== current) this.resetSelectionForSource(current);
+    return current;
+  }
+
+  resetSelectionForSource(sourceSemanticHash) {
+    this.selected.clear();
+    this.selectionExplicit = false;
+    this.sourceSemanticHash = sourceSemanticHash;
+    this.message = EMPTY_MESSAGE;
+    this.error = '';
+  }
+
+  /**
+   * Read-only Run custody. A native intake starts at W; when H-bearing cases
+   * exist that untouched seed may not bypass the Load-case choice. Explicitly
+   * selected comparison cases are allowed once the same set is actually sealed
+   * into pre-flight.
+   */
+  getRunCaseCustody() {
+    const sourceSemanticHash = this.synchronizeSourceSelectionState();
+    const available = this.availableCases();
+    const hangerIds = available
+      .filter((row) => row.category === 'STANDARD_HANGER')
+      .map((row) => row.caseId);
+    const selectedCaseIds = this.getSelectedCaseIds();
+    const appliedCaseIds = this.getAppliedCaseIds();
+    if (hangerIds.length === 0) {
+      return Object.freeze({ ready: true, reason: null, selectedCaseIds, appliedCaseIds, hangerCaseIds: [] });
+    }
+    if (sourceSemanticHash === null) {
+      return Object.freeze({
+        ready: false,
+        reason: 'Hanger-preload cases are available but source identity is unavailable. Re-run Error check before Run.',
+        selectedCaseIds,
+        appliedCaseIds,
+        hangerCaseIds: hangerIds,
+      });
+    }
+    if (this.selectionExplicit) {
+      const ready = sameCaseIds(selectedCaseIds, appliedCaseIds);
+      return Object.freeze({
+        ready,
+        reason: ready ? null : 'Load-case selection changed. Apply selection before Run.',
+        selectedCaseIds,
+        appliedCaseIds,
+        hangerCaseIds: hangerIds,
+      });
+    }
+    const ready = sameCaseIds(selectedCaseIds, appliedCaseIds);
+    return Object.freeze({
+      ready,
+      reason: ready
+        ? null
+        : 'Hanger-preload cases are available but the displayed default selection is not sealed into this pre-flight. Apply the Load-case selection before Run.',
+      selectedCaseIds,
+      appliedCaseIds,
+      hangerCaseIds: hangerIds,
+    });
   }
 
   applySelection() {
@@ -120,15 +228,22 @@ export class LfeaPipelineCaseSelectionPanelController {
           selected.has(row.caseId),
           applied.has(row.caseId),
           (caseId, checked) => {
+            if (!this.selectionExplicit) {
+              this.selected = new Set(defaultLfeaPipelineCaseIds(available));
+              this.selectionExplicit = true;
+            }
             if (checked) this.selected.add(caseId); else this.selected.delete(caseId);
           },
         ));
       }
     }
     if (this.error === '' && available.length > 0 && this.message === EMPTY_MESSAGE) {
-      this.message = applied.size > 0
-        ? `${applied.size} case(s) are in the current pre-flight. Change the selection here or continue to Run.`
-        : `${available.length} case(s) available. Choose which to analyze, then Apply selection.`;
+      const runCustody = this.getRunCaseCustody();
+      this.message = !runCustody.ready
+        ? runCustody.reason
+        : applied.size > 0
+          ? `${applied.size} case(s) are in the current pre-flight. Change the selection here or continue to Run.`
+          : `${available.length} case(s) available. Choose which to analyze, then Apply selection.`;
     }
     if (available.length === 0) this.message = EMPTY_MESSAGE;
     this.elements.status.textContent = this.error === '' ? this.message : this.error;
@@ -153,8 +268,11 @@ export class LfeaPipelineCaseSelectionPanelController {
   }
 }
 
-const CATEGORY_ORDER = Object.freeze({ STANDARD: 0, FORCE_SET: 1, AUTHORED: 2, OTHER: 3 });
+const CATEGORY_ORDER = Object.freeze({
+  STANDARD_HANGER: 0, STANDARD: 1, FORCE_SET: 2, AUTHORED: 3, OTHER: 4,
+});
 const CATEGORY_LABELS = Object.freeze({
+  STANDARD_HANGER: 'Hanger-preload analysis cases',
   STANDARD: 'Analysis cases',
   FORCE_SET: 'Declared force sets — alternative directions, never summed together',
   AUTHORED: 'Authored nodal loads',
@@ -165,6 +283,12 @@ function compareCases(left, right) {
   const byCategory = CATEGORY_ORDER[left.category] - CATEGORY_ORDER[right.category];
   if (byCategory !== 0) return byCategory;
   return left.caseId < right.caseId ? -1 : left.caseId > right.caseId ? 1 : 0;
+}
+
+function sameCaseIds(left, right) {
+  if (left.length !== right.length) return false;
+  const expected = [...right].sort();
+  return [...left].sort().every((caseId, index) => caseId === expected[index]);
 }
 
 function createCaseSelectionSection(doc) {

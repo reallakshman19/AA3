@@ -109,12 +109,6 @@ export function requireConditionedTopology(conditioned) {
   return { nodes, spans, conditionedTopologyHash: hash };
 }
 
-/**
- * Classify why a conditioned node exists, using only the evidence B-1 already
- * attached to it. Nothing is guessed: an unrecognised tag combination is a
- * source endpoint by construction of canonical geometry, and the raw tags stay
- * available as ancestry.
- */
 function creationBasisOf(node) {
   const meta = node.meta && typeof node.meta === 'object' ? node.meta : {};
   if (typeof meta.attachmentPointId === 'string' && meta.attachmentPointId.length > 0) {
@@ -131,9 +125,7 @@ function requireUniqueKeyed(entries, field, keyOf, duplicateCode) {
   const index = new Map();
   entries.forEach((entry, position) => {
     const key = keyOf(entry, position);
-    if (index.has(key)) {
-      fail(`${field} declares ${key} more than once.`, duplicateCode);
-    }
+    if (index.has(key)) fail(`${field} declares ${key} more than once.`, duplicateCode);
     index.set(key, entry);
   });
   return index;
@@ -184,11 +176,7 @@ export function requireElementBindings(bindings, topology) {
     );
     return {
       elementId: requireIdentity(binding.elementId, `${field}.elementId`, BINDING_CODE),
-      conditionedSegmentId: requireIdentity(
-        binding.conditionedSegmentId,
-        `${field}.conditionedSegmentId`,
-        BINDING_CODE,
-      ),
+      conditionedSegmentId: requireIdentity(binding.conditionedSegmentId, `${field}.conditionedSegmentId`, BINDING_CODE),
       topologySegmentId,
       materialStateId: requireIdentity(binding.materialStateId, `${field}.materialStateId`, BINDING_CODE),
       sectionStateId: requireIdentity(binding.sectionStateId, `${field}.sectionStateId`, BINDING_CODE),
@@ -198,11 +186,7 @@ export function requireElementBindings(bindings, topology) {
         `${field}.localAxisEvidenceIdentity`,
         BINDING_CODE,
       ),
-      sourceComponentId: requireSourceIdentity(
-        binding.sourceComponentId,
-        `${field}.sourceComponentId`,
-        BINDING_CODE,
-      ),
+      sourceComponentId: requireSourceIdentity(binding.sourceComponentId, `${field}.sourceComponentId`, BINDING_CODE),
     };
   });
   requireUniqueKeyed(accepted, 'elementBindings', (entry) => entry.elementId, 'MODEL_COMPILER_ELEMENT_BINDING_AMBIGUOUS');
@@ -239,10 +223,7 @@ export function requireMaterialStateMap(results) {
     const accepted = requireMaterialResolutionResult(result);
     const id = accepted.materialState.materialStateId;
     if (map.has(id)) {
-      fail(
-        `materialResolutions declares material state ${id} more than once.`,
-        'MODEL_COMPILER_MATERIAL_BINDING_AMBIGUOUS',
-      );
+      fail(`materialResolutions declares material state ${id} more than once.`, 'MODEL_COMPILER_MATERIAL_BINDING_AMBIGUOUS');
     }
     map.set(id, accepted);
   });
@@ -256,10 +237,7 @@ export function requireSectionStateMap(results) {
     const accepted = requirePipeSectionResolution(result);
     const id = accepted.sectionState.sectionStateId;
     if (map.has(id)) {
-      fail(
-        `sectionResolutions declares section state ${id} more than once.`,
-        'MODEL_COMPILER_SECTION_BINDING_AMBIGUOUS',
-      );
+      fail(`sectionResolutions declares section state ${id} more than once.`, 'MODEL_COMPILER_SECTION_BINDING_AMBIGUOUS');
     }
     map.set(id, accepted);
   });
@@ -273,40 +251,29 @@ export function requireLocalAxisMap(entries, axisProfile) {
   entries.forEach((entry, index) => {
     const field = `localAxisResults[${index}]`;
     requireExactKeys(entry, ['evidenceIdentity', 'result'], field, 'MODEL_COMPILER_AXIS_RESULT_INVALID');
-    const evidenceIdentity = requireIdentity(
-      entry.evidenceIdentity,
-      `${field}.evidenceIdentity`,
-      'MODEL_COMPILER_AXIS_RESULT_INVALID',
-    );
+    const evidenceIdentity = requireIdentity(entry.evidenceIdentity, `${field}.evidenceIdentity`, 'MODEL_COMPILER_AXIS_RESULT_INVALID');
     const result = requireRecord(entry.result, `${field}.result`, 'MODEL_COMPILER_AXIS_RESULT_INVALID');
     if (result.schema !== FRAME_LOCAL_AXIS_RESULT_SCHEMA) {
       fail(`${field}.result.schema is unsupported.`, 'MODEL_COMPILER_AXIS_RESULT_INVALID');
     }
     if (result.profileSemanticHash !== profile.semanticHash) {
-      fail(
-        `${field}.result was produced under a different local-axis profile.`,
-        'MODEL_COMPILER_AXIS_PROFILE_MISMATCH',
-      );
+      fail(`${field}.result was produced under a different local-axis profile.`, 'MODEL_COMPILER_AXIS_PROFILE_MISMATCH');
     }
     requireHash(result.semanticHash, `${field}.result.semanticHash`, 'MODEL_COMPILER_AXIS_RESULT_INVALID');
     if (map.has(evidenceIdentity)) {
-      fail(
-        `localAxisResults declares ${evidenceIdentity} more than once.`,
-        'MODEL_COMPILER_AXIS_BINDING_AMBIGUOUS',
-      );
+      fail(`localAxisResults declares ${evidenceIdentity} more than once.`, 'MODEL_COMPILER_AXIS_BINDING_AMBIGUOUS');
     }
     map.set(evidenceIdentity, result);
   });
   return { profile, map };
 }
 
-/**
- * Accept release, partial-release-spring, restraint and rigid declarations
- * without deciding anything about them yet. Section 5.3 requires conflicting
- * definitions to block compilation, so every declaration is carried through to
- * the conflict pass exactly as written, including the kinds this contract
- * version cannot represent.
- */
+function requireDirectionVector(value, field) {
+  requireArray(value, field, DECLARATION_CODE);
+  if (value.length !== 3) fail(`${field} must have exactly three components.`, DECLARATION_CODE);
+  return value.map((component, index) => requireFinite(component, `${field}[${index}]`, DECLARATION_CODE));
+}
+
 export function requireConstraintDeclarations(declarations) {
   requireArray(declarations, 'constraintDeclarations', DECLARATION_CODE);
   const accepted = declarations.map((declaration, index) => {
@@ -316,6 +283,41 @@ export function requireConstraintDeclarations(declarations) {
       fail(`${field}.kind is unsupported.`, DECLARATION_CODE);
     }
     const declarationId = requireIdentity(declaration.declarationId, `${field}.declarationId`, DECLARATION_CODE);
+
+    if (declaration.kind === 'PARTIAL_RELEASE_SPRING' && Object.hasOwn(declaration, 'direction')) {
+      const connected = Object.hasOwn(declaration, 'connectedNodeId');
+      requireExactKeys(
+        declaration,
+        connected
+          ? ['declarationId', 'kind', 'nodeId', 'connectedNodeId', 'dof', 'direction', 'stiffness']
+          : ['declarationId', 'kind', 'nodeId', 'dof', 'direction', 'stiffness'],
+        field,
+        DECLARATION_CODE,
+      );
+      if (declaration.dof !== null) fail(`${field}.dof must be null for a directional spring.`, DECLARATION_CODE);
+      const stiffness = requireFinite(declaration.stiffness, `${field}.stiffness`, DECLARATION_CODE);
+      if (!(stiffness > 0)) {
+        fail(`${field}.stiffness must be a positive finite spring rate.`, 'MODEL_COMPILER_PARTIAL_RELEASE_INVALID');
+      }
+      const nodeId = requireIdentity(declaration.nodeId, `${field}.nodeId`, DECLARATION_CODE);
+      const connectedNodeId = connected
+        ? requireIdentity(declaration.connectedNodeId, `${field}.connectedNodeId`, DECLARATION_CODE)
+        : null;
+      if (connectedNodeId === nodeId) {
+        fail(`${field}.connectedNodeId must differ from nodeId.`, 'MODEL_COMPILER_PARTIAL_RELEASE_INVALID');
+      }
+      return {
+        declarationId,
+        kind: declaration.kind,
+        nodeId,
+        ...(connected ? { connectedNodeId } : {}),
+        dof: null,
+        direction: requireDirectionVector(declaration.direction, `${field}.direction`),
+        behavior: 'LINEAR_SPRING',
+        stiffness,
+      };
+    }
+
     const dof = declaration.dof;
     if (!CONSTRAINT_DOFS.includes(dof)) fail(`${field}.dof is unsupported.`, DECLARATION_CODE);
 
@@ -373,11 +375,7 @@ export function requireConstraintDeclarations(declarations) {
       kind: declaration.kind,
       nodeId: requireIdentity(declaration.nodeId, `${field}.nodeId`, DECLARATION_CODE),
       dof,
-      attachedElementId: requireIdentity(
-        declaration.attachedElementId,
-        `${field}.attachedElementId`,
-        DECLARATION_CODE,
-      ),
+      attachedElementId: requireIdentity(declaration.attachedElementId, `${field}.attachedElementId`, DECLARATION_CODE),
     };
   });
   requireUniqueKeyed(

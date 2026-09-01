@@ -109,10 +109,14 @@ export function analyse({ modelId, geometry, entries, material, compilation, lab
 }
 
 export function nodalResult(analysisResult, nodeId) {
-  const value = (array, dof) => array.find((row) => row.nodeId === nodeId && row.dof === dof)?.value ?? 0;
+  const displacementValue = (dof) => analysisResult.execution.displacement
+    .find((row) => row.nodeId === nodeId && row.dof === dof)?.value ?? 0;
+  const reactionValue = (dof) => analysisResult.execution.reactions
+    .filter((row) => row.nodeId === nodeId && row.dof === dof)
+    .reduce((sum, row) => sum + row.value, 0);
   const dofs = ['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ'];
   return Object.freeze({
-    displacement: Object.fromEntries(dofs.map((dof) => [dof, value(analysisResult.execution.displacement, dof)])),
-    reaction: Object.fromEntries(dofs.map((dof) => [dof, value(analysisResult.execution.reactions, dof)])),
+    displacement: Object.fromEntries(dofs.map((dof) => [dof, displacementValue(dof)])),
+    reaction: Object.fromEntries(dofs.map((dof) => [dof, reactionValue(dof)])),
   });
 }

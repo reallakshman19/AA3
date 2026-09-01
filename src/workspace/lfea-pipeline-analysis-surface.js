@@ -23,7 +23,12 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   const layoutPanel = mountLfeaPipelineLayoutPanel(options.loadCaseHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
   const loadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(options.loadCaseHost, { documentRef: options.documentRef, getNodeIds: options.getNodeIds });
   const resultsPanel = mountLfeaPipelineResultsPanel(options.resultsHost, { documentRef: options.documentRef, onExportCsv: options.onExportCsv });
-  const runPanel = mountLfeaPipelineRunPanel(options.resultsHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight, onAnalyze: options.onAnalyze });
+  const runPanel = mountLfeaPipelineRunPanel(options.resultsHost, {
+    documentRef: options.documentRef,
+    getPreFlight: options.getPreFlight,
+    getCaseSelectionCustody: () => caseSelectionPanel.getRunCaseCustody(),
+    onAnalyze: options.onAnalyze,
+  });
   const exportPanel = mountLfeaPipelineExportPanel(options.resultsHost, {
     documentRef: options.documentRef,
     getResultsPanel: () => resultsPanel,

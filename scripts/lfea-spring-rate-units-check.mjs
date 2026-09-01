@@ -18,9 +18,18 @@
 import assert from 'node:assert/strict';
 import { inputXmlStiffnessToSiFactor } from '../src/core/geometry/adapters/inputxml-unit-system.js';
 import { classifyRestraint } from '../src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js';
+import { compileInputXmlStructuralConstraints } from '../src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js';
+import {
+  DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE as APPROXIMATE,
+} from '../src/core/linear-piping-analysis-consumer/inputxml-model-health-profile.js';
+
+const breakRate = process.argv.includes('--deliberate-break')
+  || process.argv.includes('--deliberate-break-rate');
+const breakUnresolved = process.argv.includes('--deliberate-break-unresolved');
 
 // force scale 1 (newtons), length mm -> N/mm becomes N/m
-assert.equal(inputXmlStiffnessToSiFactor({ scale: 1 }, 'mm'), 1000);
+const nPerMmFactor = inputXmlStiffnessToSiFactor({ scale: 1 }, 'mm');
+assert.equal(nPerMmFactor, 1000);
 assert.equal(inputXmlStiffnessToSiFactor({ scale: 1 }, 'm'), 1);
 assert.equal(inputXmlStiffnessToSiFactor({ scale: 1 }, 'cm'), 100);
 // pounds-force per inch is the other common pairing
@@ -39,7 +48,9 @@ const attributes = { TYPE: '2.000000', NODE: '30.000000', STIFFNESS: '400.000000
   GAP: '-1.010100', FRIC_COEF: '-1.010100', CNODE: '-1.010100' };
 const element = { toNodeId: '30', fromNodeId: '20' };
 
-const converted = classifyRestraint(attributes, element, null, 1000);
+// Deliberate rate break reproduces the legacy defect at the consumer boundary:
+// the declared N/mm number is passed with factor 1 as if it were already N/m.
+const converted = classifyRestraint(attributes, element, null, breakRate ? 1 : nPerMmFactor);
 assert.equal(converted.stiffnessDeclared, 400, 'the declared number must be retained as declared');
 assert.equal(converted.stiffnessValue, 400000, 'the compiled rate must be in solver units');
 assert.equal(converted.stiffnessUnitsResolvable, true);
@@ -51,7 +62,8 @@ assert.equal(converted.stiffnessUnitsResolvable, true);
  * is invisible in results: the model still solves, on a support up to three
  * orders of magnitude too soft.
  */
-const unresolved = classifyRestraint(attributes, element, null, null);
+// Deliberate unresolved break reproduces the forbidden null -> factor-1 fallback.
+const unresolved = classifyRestraint(attributes, element, null, breakUnresolved ? 1 : null);
 assert.equal(unresolved.stiffnessDeclared, 400,
   'the declared rate is still evidence even when it cannot be converted');
 assert.equal(unresolved.stiffnessValue, null,
@@ -60,11 +72,57 @@ assert.equal(unresolved.stiffnessUnitsResolvable, false);
 assert.equal(unresolved.finiteStiffnessActive, true,
   'the restraint still declares a spring; only the usable value is withheld');
 
+// ------------------------------------------------ structural declaration guard
+function inventoryRow(classification) {
+  return Object.freeze({
+    active: true,
+    sourceKind: 'RESTRAINT',
+    inventoryId: 'IXF:RESTRAINT:UNITS-CHECK',
+    sourceFeatureId: 'PIPINGELEMENT[0]/RESTRAINT[0]',
+    sourceRecordSemanticHash: 'units-check-source',
+    classification,
+    // Deliberately forge an upstream "implemented" disposition. The structural
+    // declaration owner must still fail closed if unit custody was lost; this
+    // prevents a later classifier regression from restoring null -> FIXED.
+    dispositionByProfile: Object.freeze({
+      [APPROXIMATE]: Object.freeze({ disposition: 'IMPLEMENTED_EXACTLY', limitationCode: null }),
+    }),
+  });
+}
+
+const compiled = compileInputXmlStructuralConstraints({
+  inventory: [inventoryRow(converted)],
+  modelId: 'UNITS',
+  analysisProfileId: APPROXIMATE,
+  conditionedNodeIds: ['30'],
+});
+assert.equal(compiled.declarations.length, 1);
+assert.equal(compiled.declarations[0].kind, 'PARTIAL_RELEASE_SPRING');
+assert.equal(compiled.declarations[0].stiffness, 400000);
+
+assert.throws(
+  () => compileInputXmlStructuralConstraints({
+    inventory: [inventoryRow(unresolved)],
+    modelId: 'UNITS',
+    analysisProfileId: APPROXIMATE,
+    conditionedNodeIds: ['30'],
+  }),
+  (error) => error?.code === 'INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED'
+    && error?.data?.stiffnessDeclared === 400,
+  'a finite spring with unresolved units must BLOCK before null can become FIXED',
+);
+
 console.log(JSON.stringify({
   check: 'lfea-spring-rate-units',
   status: 'PASS',
   factors: { 'N/mm': 1000, 'N/cm': 100, 'N/m': 1, 'lbf/in': Number(lbfPerInch.toFixed(4)) },
   declaredRetained: converted.stiffnessDeclared,
   compiledRate: converted.stiffnessValue,
+  resolvedDeclarationKind: compiled.declarations[0].kind,
   unresolvableUnitsWithholdValue: true,
+  unresolvableUnitsStructuralBlock: 'INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED',
+  deliberateBreakModes: {
+    rate: '--deliberate-break / --deliberate-break-rate passes N/mm as factor 1 and must turn the 400000 N/m assertion red',
+    unresolved: '--deliberate-break-unresolved substitutes factor 1 for unresolved units and must turn the withheld-value assertion red',
+  },
 }, null, 2));

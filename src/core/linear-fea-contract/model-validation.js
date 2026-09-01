@@ -304,16 +304,47 @@ function validateElements(elements, nodeIds, materialIds, sectionIds, nodesById,
   requireUniqueIdentities(elements, 'elements', 'elementId');
 }
 
-function validateConstraints(constraints, nodeIds) {
+function validateDirectionalSpring(constraint, field, profile) {
+  if (constraint.behavior !== 'LINEAR_SPRING') {
+    fail(`${field}.direction is allowed only for LINEAR_SPRING.`, 'INVALID_CONSTRAINT_DIRECTION');
+  }
+  if (constraint.dof !== null) {
+    fail(`${field}.dof must be null for a directional spring.`, 'INVALID_CONSTRAINT_DIRECTION');
+  }
+  validateVector(constraint.direction, `${field}.direction`);
+  if (Math.abs(norm(constraint.direction) - 1) > profile.unitVectorTolerance) {
+    fail(`${field}.direction is not unit length.`, 'NONUNIT_CONSTRAINT_DIRECTION');
+  }
+}
+
+function validateConstraints(constraints, nodeIds, profile) {
   requireArray(constraints, 'constraints');
   const occupied = new Set();
   constraints.forEach((constraint, index) => {
     const field = `constraints[${index}]`;
-    requireExactKeys(constraint, RECORD_KEYS.constraint, field);
+    const directional = Object.hasOwn(constraint, 'direction');
+    const connected = Object.hasOwn(constraint, 'connectedNodeId');
+    requireAllowedKeys(
+      constraint,
+      RECORD_KEYS.constraint,
+      [...RECORD_KEYS.constraint, 'direction', 'connectedNodeId'],
+      field,
+    );
     requireIdentity(constraint.constraintId, `${field}.constraintId`);
     requireIdentity(constraint.nodeId, `${field}.nodeId`);
     if (!nodeIds.has(constraint.nodeId)) fail(`${field} references a missing node.`, 'MISSING_CONSTRAINT_NODE_REFERENCE');
-    if (!CONSTRAINT_DOFS.includes(constraint.dof)) fail(`${field}.dof is unsupported.`, 'UNSUPPORTED_DOF');
+    if (directional) validateDirectionalSpring(constraint, field, profile);
+    else if (!CONSTRAINT_DOFS.includes(constraint.dof)) fail(`${field}.dof is unsupported.`, 'UNSUPPORTED_DOF');
+    if (connected) {
+      if (!directional) fail(`${field}.connectedNodeId requires a directional spring.`, 'INVALID_CONSTRAINT_DIRECTION');
+      requireIdentity(constraint.connectedNodeId, `${field}.connectedNodeId`);
+      if (!nodeIds.has(constraint.connectedNodeId)) {
+        fail(`${field} references a missing connected node.`, 'MISSING_CONSTRAINT_NODE_REFERENCE');
+      }
+      if (constraint.connectedNodeId === constraint.nodeId) {
+        fail(`${field} cannot connect a spring node to itself.`, 'DUPLICATE_NODE_DOF_CONSTRAINT');
+      }
+    }
     if (!SUPPORTED_CONSTRAINT_BEHAVIORS.includes(constraint.behavior)) {
       fail(`${field}.behavior is unsupported.`, 'UNSUPPORTED_CONSTRAINT_BEHAVIOR');
     }
@@ -323,9 +354,11 @@ function validateConstraints(constraints, nodeIds) {
     } else if (constraint.stiffness !== null) {
       fail(`${field}.stiffness must be null.`, 'INVALID_CONSTRAINT_STIFFNESS');
     }
-    const slot = `${constraint.nodeId}:${constraint.dof}`;
-    if (occupied.has(slot)) fail(`${field} duplicates an active node/DOF constraint.`, 'DUPLICATE_NODE_DOF_CONSTRAINT');
-    occupied.add(slot);
+    if (!directional) {
+      const slot = `${constraint.nodeId}:${constraint.dof}`;
+      if (occupied.has(slot)) fail(`${field} duplicates an active node/DOF constraint.`, 'DUPLICATE_NODE_DOF_CONSTRAINT');
+      occupied.add(slot);
+    }
   });
   requireUniqueIdentities(constraints, 'constraints', 'constraintId');
 }
@@ -397,7 +430,7 @@ function validateStructure(candidate, allowBlankHashes) {
   const sectionIds = validateSectionStates(candidate.sectionStates);
   const nodesById = new Map(candidate.nodes.map((node) => [node.nodeId, node]));
   validateElements(candidate.elements, nodeIds, materialIds, sectionIds, nodesById, candidate);
-  validateConstraints(candidate.constraints, nodeIds);
+  validateConstraints(candidate.constraints, nodeIds, candidate.validationProfile);
   validateLimitations(candidate.limitations);
   validateDiagnostics(candidate.diagnostics);
   requireHash(candidate.stiffnessStateHash, 'model.stiffnessStateHash', allowBlankHashes);

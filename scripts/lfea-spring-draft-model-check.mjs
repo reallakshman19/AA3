@@ -1,22 +1,20 @@
 /*
- * The two draft models, and what each is allowed to prove.
- *
- * benchmarks/LFEA/BM4/PROVENANCE.md exists because phases 1-7 were verified
- * against a fixture written by the same process being verified, which passed
- * BECAUSE it was trivial. These two models are written by that same process, so
- * they are deliberately NOT treated as references. What they can honestly do is
- * exercise a path production parity cannot reach at all -- BM4_L declares no
- * spring rates -- and pin where the supported region currently ends.
- *
- *   SpringSupports.xml       must SOLVE, and must disclose DRAFT
- *   UnsupportedSupports.xml  must be REFUSED, by name
- *
- * The second is the more useful of the two. A feature that quietly half-works on
- * input it cannot represent is worse than one that refuses, and the refusal is
- * the thing most likely to erode silently as the surrounding code changes.
+ * Self-authored support models exercise production paths but are not reference
+ * answers. Positive models must solve and satisfy position-independent
+ * constitutive invariants; negative controls must continue refusing by name.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import './lfea-skew-spring-check.mjs';
+import './lfea-cnode-spring-check.mjs';
+import './lfea-cnode-mechanism-check.mjs';
+import './lfea-hanger-predefined-check.mjs';
+import './lfea-hanger-case-selection-check.mjs';
+import './lfea-blocked-execution-custody-check.mjs';
+import './lfea-mixed-fixed-skew-reaction-check.mjs';
+import './lfea-results-reaction-aggregation-check.mjs';
+import './lfea-unilateral-mixed-reaction-review-check.mjs';
+import './lfea-support-refusal-fixture-check.mjs';
 import { createLinearPipingInputXmlIntake } from '../src/workspace/linear-piping-inputxml-intake.js';
 import {
   prepareLinearPipingInputXmlPreFlight,
@@ -26,21 +24,43 @@ import { buildInputXmlRunRequestCase } from '../src/core/linear-piping-analysis-
 import { compileLinearPipingInputXmlAnalysisContext } from '../src/core/linear-piping-analysis-consumer/index.js';
 
 const DIR = 'benchmarks/LFEA/SPRING_DRAFT';
+const EXPECTED_ELASTIC_MODULUS_PA = 203_395_008_000;
+const EXECUTABLE_FIXTURE_NAMES = Object.freeze([
+  'CnodeSpringSupports.xml', 'MixedFixedSkewSpring.xml', 'PredefinedHanger.xml',
+  'SkewSpringSupports.xml', 'SpringSupports.xml',
+]);
 const read = (name) => readFileSync(`${DIR}/${name}`, 'utf8');
 
 function preFlightOf(fileName) {
   const intake = createLinearPipingInputXmlIntake(
     { fileName, content: read(fileName) },
-    { fallbackUnit: 'mm', requestedProfileId: 'STRICT_INPUTXML_LINEAR_STATIC_V1' },
+    {
+      fallbackUnit: 'mm',
+      componentOrigins: fileName === 'CnodeSpringSupports.xml'
+        ? { 50: { x: 6006, y: -3992, z: 0 } }
+        : {},
+      requestedProfileId: 'STRICT_INPUTXML_LINEAR_STATIC_V1',
+    },
   );
   return prepareLinearPipingInputXmlPreFlight(intake);
+}
+
+function assertFixtureModulus(fileName) {
+  const preFlight = preFlightOf(fileName);
+  assert.ok(preFlight.preparation.structuralPreparation,
+    `${fileName} must retain structural preparation for the fixture modulus guard`);
+  const material = preFlight.preparation.structuralPreparation.compilation.model.materialStates[0];
+  assert.equal(material?.elasticModulus, EXPECTED_ELASTIC_MODULUS_PA,
+    `${fileName} must compile the declared 203395008 KPa modulus as 203.395008 GPa`);
 }
 
 const findingCodes = (preFlight, disposition) => preFlight.preparation.findings
   .filter((row) => row.disposition === disposition).map((row) => row.code);
 
-// ---------------------------------------------------------------- Model A
-// A model whose supports are compliant must reach the solver and stay there.
+// Guard every executable fixture against a self-consistent but 1000x-stiff material model.
+for (const fileName of EXECUTABLE_FIXTURE_NAMES) assertFixtureModulus(fileName);
+
+// Positive ordinary spring model.
 const springs = preFlightOf('SpringSupports.xml');
 assert.deepEqual(findingCodes(springs, 'BLOCK'), [],
   `SpringSupports.xml must reach the solver: ${JSON.stringify(findingCodes(springs, 'BLOCK'))}`);
@@ -60,8 +80,6 @@ const context = compileLinearPipingInputXmlAnalysisContext(request, { factorizat
 assert.equal(context.sourceAnalysisContext.analysisResult.status, 'QUALIFIED',
   'a model supported on springs must still qualify');
 
-// Both declared rates must survive as distinct springs -- one rate quietly
-// standing in for the other would satisfy a laxer check than this.
 const model = context.sourceAnalysisContext.compilation.model;
 const springRates = model.constraints
   .filter((row) => row.behavior === 'LINEAR_SPRING')
@@ -72,12 +90,6 @@ assert.ok(springRates[0] < springRates[1], 'the two rates must stay distinct');
 assert.equal(model.constraints.filter((row) => row.behavior === 'FIXED' && row.dof === 'UY').length >= 1, true,
   'the undeclared support must stay rigid');
 
-/*
- * The invariant is reaction = rate x displacement at each spring, which holds
- * wherever the spring sits. "Softer deflects more" is NOT the invariant and was
- * wrong here: node 70 is the free end of the run, so it deflects more than the
- * mid-run support despite carrying the stiffer rate. Position dominates.
- */
 const execution = context.sourceAnalysisContext.analysisResult.execution;
 const at = (rows, nodeId, dof) => {
   const row = rows.find((entry) => entry.nodeId === nodeId && entry.dof === dof);
@@ -105,12 +117,6 @@ const springIdentities = model.constraints
   });
 assert.equal(springIdentities.length, 2, 'both springs must satisfy the identity');
 
-/*
- * A spring that carries almost nothing satisfies the identity trivially. The
- * rates here are chosen so the springs take a real share of the model's weight,
- * because a support in the shadow of the anchor would let the whole path rot
- * without any of the assertions above noticing.
- */
 const totalVertical = execution.reactions
   .filter((row) => row.dof === 'UY').reduce((sum, row) => sum + Math.abs(row.value), 0);
 const springShare = springIdentities.reduce((sum, row) => sum + Math.abs(row.reaction), 0) / totalVertical;
@@ -118,22 +124,23 @@ assert.ok(springShare > 0.1,
   `the springs must carry a real share of the load, not sit in the anchor's shadow `
   + `(carrying ${(100 * springShare).toFixed(1)}%)`);
 
-// ---------------------------------------------------------------- disclosure
 const limitations = authorized.preparation.structuralPreparation.constraintBindings
   .flatMap((row) => row.limitationCodes ?? []);
 assert.ok(limitations.includes('DRAFT_SPRING_SUPPORT_NO_REFERENCE'),
   'a compiled spring must disclose that it has no reference behind it');
 
-// ---------------------------------------------------------------- Model B
-// The boundary. Both of these must still be refused, by name.
+// Combined legacy negative control remains useful as a cross-feature regression.
+// Dedicated per-feature refusal fixtures are guarded separately above.
 const unsupported = preFlightOf('UnsupportedSupports.xml');
 const blocked = findingCodes(unsupported, 'BLOCK');
 assert.ok(blocked.includes('MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED'),
-  `a CNODE restraint must still be refused by name, got ${JSON.stringify(blocked)}`);
-
-const allCodes = unsupported.preparation.findings.map((row) => row.code);
-assert.ok(allCodes.some((code) => /HANGER/u.test(code)),
-  `a HANGER record must still be reported rather than dropped, got ${JSON.stringify(allCodes)}`);
+  `a rigid CNODE restraint must still be refused by name, got ${JSON.stringify(blocked)}`);
+assert.ok(blocked.includes('MODEL_HANGER_PREDEFINED_DATA_INCOMPLETE'),
+  `an incomplete predefined hanger must still be refused by name, got ${JSON.stringify(blocked)}`);
+const unsupportedSkew = preFlightOf('UnsupportedSkewSupport.xml');
+const skewBlocked = findingCodes(unsupportedSkew, 'BLOCK');
+assert.ok(skewBlocked.includes('MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED'),
+  `a rigid skew restraint must still be refused by name, got ${JSON.stringify(skewBlocked)}`);
 
 console.log(JSON.stringify({
   check: 'lfea-spring-draft-model',
@@ -144,6 +151,10 @@ console.log(JSON.stringify({
   springIdentities,
   springLoadShare: Number((100 * springShare).toFixed(1)),
   disclosesDraft: true,
-  stillRefused: blocked.filter((code) => /CONNECTING_NODE|HANGER/u.test(code)),
-  clearedBy: 'A CAESAR-solved model containing spring supports. Not by more self-authored coverage.',
+  dedicatedRefusalFixturesGuarded: true,
+  stillRefused: [
+    ...blocked.filter((code) => /CONNECTING_NODE|HANGER/u.test(code)),
+    ...skewBlocked.filter((code) => /SKEW_DIRECTION/u.test(code)),
+  ],
+  clearedBy: 'A CAESAR-solved model containing the support feature. Not by more self-authored coverage.',
 }, null, 2));

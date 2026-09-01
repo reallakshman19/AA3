@@ -14,27 +14,22 @@
  */
 const LENGTH_SCALES = Object.freeze({ m: 1, mm: 1e-3, cm: 1e-2, in: 0.0254, ft: 0.3048 });
 
-/**
- * Force-per-length to N/m, or null when the file's units cannot resolve it.
- *
- * classifyRestraint() takes this factor as a required argument rather than
- * defaulting it, so a caller that forgets it fails loudly.
- */
+export function declaredLengthToSiFactor(lengthUnit) {
+  return LENGTH_SCALES[lengthUnit] ?? null;
+}
+
+/** Force-per-length to N/m, or null when the file's units cannot resolve it. */
 export function springRateToSiFactor(forceDeclaration, lengthUnit) {
   if (!forceDeclaration || !Number.isFinite(forceDeclaration.scale)) return null;
-  const lengthScale = LENGTH_SCALES[lengthUnit];
+  const lengthScale = declaredLengthToSiFactor(lengthUnit);
   if (!lengthScale) return null;
   return forceDeclaration.scale / lengthScale;
 }
 
 /**
- * The declared rate, the converted rate, and whether the conversion was
- * possible -- kept as three separate facts on purpose.
- *
- * A model whose units cannot be resolved must NOT fall back to treating the
- * declared number as already-SI. The declared value is still retained as
- * evidence; only the usable one is withheld, so the restraint refuses rather
- * than silently standing in for a support up to three orders of magnitude off.
+ * Keep the declared rate, converted rate and conversion state distinct. An
+ * unresolved file unit never means "already SI"; only the usable value is
+ * withheld so a caller can refuse rather than silently changing the support.
  */
 export function resolveSpringRate(declared, toSiFactor) {
   const positive = Number.isFinite(declared) && declared > 0;

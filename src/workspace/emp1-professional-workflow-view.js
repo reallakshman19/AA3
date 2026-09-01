@@ -1,11 +1,23 @@
+import { projectEmp1Readiness } from '../core/emp1/emp1-readiness-projection.js';
 import { card, element } from './lafea-workbench-dom.js';
 import { buildEmp1ProfessionalWorkflowPresentation } from './emp1-professional-workflow-presentation.js';
+
+const READINESS_DIMENSIONS = Object.freeze([
+  Object.freeze({ key: 'source', label: 'Source & input' }),
+  Object.freeze({ key: 'method', label: 'Bounded method' }),
+  Object.freeze({ key: 'applicability', label: 'Applicability' }),
+  Object.freeze({ key: 'calculation', label: 'Calculation' }),
+  Object.freeze({ key: 'review', label: 'Engineering review' }),
+  Object.freeze({ key: 'codeCompliance', label: 'Code compliance' }),
+  Object.freeze({ key: 'release', label: 'Release qualification' }),
+]);
 
 /**
  * Engineer-facing EMP.1 workflow. This is a read-only presentation over the
  * governed A/B/C product projection; it does not create calculation state.
  */
 export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute) {
+  const readiness = projectEmp1Readiness(projection);
   const presentation = buildEmp1ProfessionalWorkflowPresentation(projection);
   const workflow = card(root, 'Assessment workflow');
   workflow.section.dataset.role = 'emp1-workflow';
@@ -16,6 +28,7 @@ export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute) 
     element(root, 'strong', 'lafea-result-highlights__status', `${presentation.productId} · professional workflow`),
     element(root, 'p', 'lafea-workbench__section-intro',
       'Work through the engineering assessment from source basis to retained evidence. These seven steps are presentation tasks over the governed EMP.1.A / EMP.1.B / EMP.1.C calculation and evidence layers; they are not separate calculators.'),
+    readinessDashboard(root, readiness),
   );
 
   const list = element(root, 'ol', 'lafea-workbench__stages');
@@ -44,6 +57,59 @@ export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute) 
   boundary.dataset.role = 'emp1-professional-workflow-authority-boundary';
   workflow.body.append(boundary, technicalBackingDisclosure(root, presentation, onSelectRoute));
   return workflow.section;
+}
+
+function readinessDashboard(root, readiness) {
+  if (readiness?.schema !== 'emp1-readiness/v1') {
+    throw new TypeError('EMP1_READINESS_DASHBOARD_PROJECTION_INVALID');
+  }
+
+  const section = element(root, 'section', 'lafea-workbench__custody');
+  section.dataset.role = 'emp1-readiness-dashboard';
+  section.dataset.readinessSchema = readiness.schema;
+  section.dataset.overall = readiness.overall;
+  section.append(element(root, 'strong', null, 'Engineering readiness'));
+
+  const overall = element(root, 'p', 'lafea-result-highlights__status', `Overall · ${human(readiness.overall)}`);
+  overall.dataset.role = 'emp1-readiness-overall';
+  overall.dataset.state = readiness.overall;
+  section.append(overall);
+
+  const dimensions = element(root, 'dl', 'lafea-workbench__custody');
+  dimensions.dataset.role = 'emp1-readiness-dimensions';
+  for (const definition of READINESS_DIMENSIONS) {
+    const state = readiness[definition.key]?.state ?? 'UNRESOLVED';
+    const row = element(root, 'div');
+    row.dataset.role = 'emp1-readiness-dimension';
+    row.dataset.readinessDimension = definition.key;
+    row.dataset.readinessState = state;
+    row.append(
+      element(root, 'dt', null, definition.label),
+      element(root, 'dd', null, human(state)),
+    );
+    dimensions.append(row);
+  }
+  section.append(dimensions);
+
+  if (readiness.blockers.length) {
+    const details = element(root, 'details', 'lafea-workbench__custody-details');
+    details.dataset.role = 'emp1-readiness-blockers';
+    details.append(element(root, 'summary', null, `Blocking evidence (${readiness.blockers.length})`));
+    const list = element(root, 'ul');
+    for (const code of readiness.blockers) {
+      const item = element(root, 'li', null, human(code));
+      item.dataset.blockerCode = code;
+      list.append(item);
+    }
+    details.append(list);
+    section.append(details);
+  }
+
+  const boundary = element(root, 'p', 'lafea-workbench__authority',
+    'Readiness is a read-only projection of existing governed EMP.1 evidence. This dashboard does not establish method authority, applicability authority, engineering review, code compliance, or release qualification.');
+  boundary.dataset.role = 'emp1-readiness-authority-boundary';
+  section.append(boundary);
+  return section;
 }
 
 function authoritySummary(root, summary) {

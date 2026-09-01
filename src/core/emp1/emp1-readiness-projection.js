@@ -34,12 +34,7 @@ const SUPPORTED_C_STATES = new Set([
   C_STALE_INPUT,
 ]);
 const REVIEW_STATE_SCHEMA = 'emp1-engineering-review-state/v1';
-const REVIEW_STATES = new Set([
-  'NOT_REVIEWED',
-  'REVIEW_ACCEPTED',
-  'REVIEW_REJECTED',
-  'REVIEW_STALE',
-]);
+const REVIEW_STATES = new Set(['NOT_REVIEWED', 'REVIEW_ACCEPTED', 'REVIEW_REJECTED', 'REVIEW_STALE']);
 
 /**
  * Compose existing EMP.1 product/currentness evidence into one governance view.
@@ -58,7 +53,7 @@ export function projectEmp1Readiness(productProjection, options = {}) {
   const method = projectMethod(projection, c);
   const applicability = projectApplicability(c);
   const calculation = projectCalculation(a, b, c);
-  const review = projectReview(options.reviewState);
+  const review = projectReview(options?.reviewState);
   const codeCompliance = Object.freeze({ state: 'NOT_ASSESSED', authorityEstablished: false });
   const release = projectRelease(projection);
   const blockers = unique([
@@ -189,24 +184,18 @@ function calculationState(state, a, b, c, blockers) {
 }
 
 function projectReview(value) {
-  if (value == null) {
-    return Object.freeze({
-      state: 'NOT_REVIEWED', reviewed: false, current: false, disposition: null,
-      reviewId: null, reviewSemanticHash: null, changedBindings: Object.freeze([]),
-      authorityEstablished: false, authorityEstablishedByProjection: false,
-    });
-  }
+  if (value == null) return Object.freeze({
+    state: 'NOT_REVIEWED', reviewed: false, current: false, disposition: null,
+    reviewId: null, reviewSemanticHash: null, changedBindings: Object.freeze([]),
+    authorityEstablished: false, authorityEstablishedByProjection: false,
+  });
   const review = requireReviewState(value);
   return Object.freeze({
-    state: review.state,
-    reviewed: review.reviewed,
-    current: review.current,
-    disposition: review.disposition,
-    reviewId: review.reviewId ?? null,
+    state: review.state, reviewed: review.reviewed, current: review.current,
+    disposition: review.disposition, reviewId: review.reviewId ?? null,
     reviewSemanticHash: review.reviewSemanticHash ?? null,
     changedBindings: unique(array(review.changedBindings)),
-    authorityEstablished: false,
-    authorityEstablishedByProjection: false,
+    authorityEstablished: false, authorityEstablishedByProjection: false,
   });
 }
 
@@ -243,10 +232,10 @@ function requireReviewState(value) {
   }
   const valid = value.state === 'NOT_REVIEWED'
     ? value.reviewed === false && value.current === false && value.disposition == null
-    : value.state === 'REVIEW_ACCEPTED'
-      ? value.reviewed === true && value.current === true && value.disposition === 'ACCEPTED'
-      : value.state === 'REVIEW_REJECTED'
-        ? value.reviewed === true && value.current === true && value.disposition === 'REJECTED'
+    : value.state === 'REVIEW_ACCEPTED' ? value.reviewed === true && value.current === true
+      && value.disposition === 'ACCEPTED'
+      : value.state === 'REVIEW_REJECTED' ? value.reviewed === true && value.current === true
+        && value.disposition === 'REJECTED'
         : value.reviewed === true && value.current === false
           && ['ACCEPTED', 'REJECTED'].includes(value.disposition)
           && Array.isArray(value.changedBindings) && value.changedBindings.length > 0;

@@ -1,6 +1,6 @@
 # Active Handover — ADV-EMP1-ENGINEERING-REVIEW
 
-CHAIN_STATE_VERSION: 2
+CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-ENGINEERING-REVIEW
 MISSION: Add an immutable EMP.1 engineering-review attestation bound to exact retained evidence identities, with deterministic stale detection and no release/code/numerical authority creation.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-REVIEW/endpoints/EP-0002.md
-CUSTODY_EPOCH: 2
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-REVIEW/endpoints/EP-0003.md
+CUSTODY_EPOCH: 3
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-engineering-review-v1
@@ -19,9 +19,9 @@ WORK_ITEM_MODE: EXCLUSIVE
 REPO: reallaksh19/Advanced_Analysis
 BRANCH: agent/emp1-engineering-review-v1
 MAIN: 93d208dc1298570f20ce170edbd4f881039d22f0
-PR: PENDING
-PR_STATUS: DRAFT_PENDING_CREATION
-MERGEABILITY: UNKNOWN
+PR: 1620
+PR_STATUS: OPEN_DRAFT
+MERGEABILITY: RECALCULATING_AT_CREATION
 REVIEWS: 0
 UNRESOLVED_THREADS: 0
 REQUIRED_CHECKS: EMP1_ENGINEERING_REVIEW_RECORD_CHECK_NOT_RUN
@@ -63,4 +63,4 @@ REVIEW_STATES: NOT_REVIEWED; REVIEW_ACCEPTED; REVIEW_REJECTED; REVIEW_STALE
 BOUND_IDENTITIES: sourceHash; loadTransferResultHash; sectionScreeningResultHash; localCorrelationResultHash; assessmentSemanticHash; routeAuthorityHash
 OVERLAP: SAFE — new core review-record/checker files only; no active Draft PR path overlap.
 BLOCKER: FOCUSED_CHECK_NOT_RUN; no readiness-for-review or merge claim permitted from source inspection alone.
-EXACT_NEXT_ACTION: Open/maintain Draft PR with explicit pending activities and NOT_RUN validation. Later integrate review state into readiness/UI in a separate coherent slice. Do not merge without explicit Owner authorization.
+EXACT_NEXT_ACTION: Maintain Draft PR #1620 with explicit pending activities and NOT_RUN validation. Later integrate review state into readiness/UI in a separate coherent slice. Do not merge without explicit Owner authorization.

@@ -195,7 +195,7 @@ function projectionError(code) {
 }
 
 function deepFreeze(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  if (!value || typeof value !== 'object') return value;
   Object.values(value).forEach(deepFreeze);
-  return Object.freeze(value);
+  return Object.isFrozen(value) ? value : Object.freeze(value);
 }

@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-METHOD-AUTHORITY-PROJECTION
 MISSION: Project existing EMP.1 bounded method authority into a deterministic read-only governance contract without creating a second authority system.
-ACTIVE_ENDPOINT: EP-0001
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-METHOD-AUTHORITY-PROJECTION/endpoints/EP-0001.md
-CUSTODY_EPOCH: 1
+ACTIVE_ENDPOINT: EP-0002
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-METHOD-AUTHORITY-PROJECTION/endpoints/EP-0002.md
+CUSTODY_EPOCH: 2
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-method-authority-projection-v1
@@ -20,18 +20,19 @@ OWNER_PROGRESSION_COMMAND: NOT_APPLICABLE_NEW_OWNER_DIRECT_WORK_ITEM
 
 REPO: reallaksh19/Advanced_Analysis
 BRANCH: agent/emp1-method-authority-projection-v1
-HEAD: a0bc185948bba7059f34826400193acc78887e6a
+HEAD: 4b9fa3ae54783fd6b93c17dddd107f13bc931f8f
+MATERIAL_HEAD: 9d7f9138b88235163cef02f5213513bbd6ae8b0c
 MAIN: 694088625c8cfdbd357b5c43fc1dbdb12f4f6800
-PR: PENDING
-PR_STATUS: NOT_OPENED
-MERGEABILITY: UNKNOWN
+PR: 1616
+PR_STATUS: OPEN_DRAFT
+MERGEABILITY: UNKNOWN_RECALCULATING_AFTER_PUSH
 REVIEWS: 0
 UNRESOLVED_THREADS: 0
 REQUIRED_CHECKS: EMP1_METHOD_AUTHORITY_PROJECTION_CHECK_NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: IN_PROGRESS
+ENGINEERING_STATE: COMPLETE
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: WRITE_ALLOWED
@@ -46,9 +47,12 @@ ROADMAP_ALIGNMENT: ALIGNED_WITH_OWNER_EMP1_GOVERNANCE_PLAN
 ROADMAP_MUTATION_AUTHORITY: NONE
 
 MATERIAL_HISTORY_ROOT_BASE: 694088625c8cfdbd357b5c43fc1dbdb12f4f6800
-ORIGINAL_TASK_STATUS: METHOD_AUTHORITY_PROJECTION_PREWORK_COMPLETE
+LATEST_MATERIAL_LEG: LEG-001
+ORIGINAL_TASK_STATUS: METHOD_AUTHORITY_PROJECTION_IMPLEMENTED
 INPUT_STATUS: Existing `emp1-workbench-route-authority-snapshot/v1` only.
 BENCHMARK_ORACLE_STATUS: NOT_APPLICABLE_TO_PROJECTION; existing WRC oracle authority remains protected and unchanged.
+VALIDATION_STATUS: NOT_RUN
+VALIDATION_EVIDENCE: NONE — focused checker encoded but not executed.
 
 SOURCE_AUTHORITY_MUTATION: FORBIDDEN
 WRC_NUMERICAL_MUTATION: FORBIDDEN
@@ -65,11 +69,11 @@ QUESTION_SET_ID: NONE
 QUESTION_SET_STATUS: NOT_APPLICABLE
 QUESTION_PACK_ACTION: NOT_APPLICABLE
 QUESTION_DISPLAY: HIDE
-CHAIN_HANDOVER_READY: FALSE
+CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: FALSE
 HANDOVER_READY: FALSE
 
-OVERLAP: SAFE — new projection/checker paths only; no overlap with PR #1614 material paths.
-LEG_DIAGNOSIS: The live workbench already owns bounded route-authority composition and exposes an immutable semantic snapshot. This chain will only project that existing snapshot into engineer-governance fields and will not import or re-evaluate WRC route/registry authority.
-BLOCKER: NONE_FOR_BOUNDED_MATERIAL_CODING; focused execution will remain NOT_RUN until actually executed.
-EXACT_NEXT_ACTION: Add the core method-authority projection and focused checker only, then record material custody and open a Draft PR. Do not modify WRC/source/applicability/oracle/release/workflow authority.
+OVERLAP: SAFE — material is confined to the new method-authority projection/checker; no existing WRC authority-owner file changed.
+LEG_DIAGNOSIS: The projection consumes the existing immutable workbench route-authority snapshot and reports its method identity, bounded scope, limitations, blockers and semantic provenance. It does not import registry/route/hash owners, recompute authorization, or evaluate a specific assessment's applicability.
+BLOCKER: FOCUSED_CHECK_NOT_EXECUTED. This blocks validation PASS but not truthful completion of the bounded material implementation.
+EXACT_NEXT_ACTION: From a faithful checkout run `node scripts/emp1-method-authority-projection-check.mjs`. If PASS, record execution evidence, then plan the separate assessment-applicability summary slice. Keep PR #1616 Draft; do not merge without explicit Owner authorization.

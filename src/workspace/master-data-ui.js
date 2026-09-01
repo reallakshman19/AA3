@@ -66,6 +66,79 @@ export function autoNormalizeBundledMasters() {
   return committed;
 }
 
+/**
+ * Automatically generates AND accepts master-derived enrichment proposals
+ * whenever all conditions are met — eliminating the manual two-click flow
+ * ("Generate proposals from approved masters" then "Accept all unblocked").
+ *
+ * Conditions that must all be true before running:
+ *  1. An active dataset with a shared piping model exists.
+ *  2. At least one required master (pipingClass or weight) has normalized rows.
+ *  3. The enrichment store has NO accepted records already bound to the current
+ *     source (prevents stomping on a sidecar the user already curated).
+ *  4. No staged proposals are waiting for review (don't interrupt a manual session).
+ *
+ * EXACT_APPROVED_MASTER records are deterministic and carry the same evidentiary
+ * weight whether accepted manually or automatically.
+ *
+ * @returns {Promise<{ accepted: number, skipped: string|null }>}
+ */
+export async function autoGenerateMasterEnrichment() {
+  const [
+    { WorkspaceState },
+    { masterDataController: mdc },
+    { projectDataStore: pds },
+    { nonFeaEnrichmentStore: store },
+    { buildLoadCalcMasterEnrichmentProposals },
+  ] = await Promise.all([
+    import('./workspace-state.js'),
+    import('./master-data-controller.js'),
+    import('./project-data/project-data-store.js'),
+    import('./enrichment/non-fea-enrichment-store.js'),
+    import('./load-calc-master-candidates.js'),
+  ]);
+
+  const dataset = WorkspaceState.getSnapshot()?.dataset;
+  if (!dataset?.sharedModel?.semanticHash) return { accepted: 0, skipped: 'NO_DATASET' };
+
+  const masters = mdc.getMasterData();
+  const hasMasters = (masters?.pipingClass?.normalizedRows?.length ?? 0) > 0
+    || (masters?.weight?.normalizedRows?.length ?? 0) > 0;
+  if (!hasMasters) return { accepted: 0, skipped: 'MASTERS_NOT_READY' };
+
+  // Load the current source into the store (idempotent)
+  store.loadSource(dataset.sharedModel.semanticHash);
+  const snapshot = store.getSnapshot();
+
+  // Don't overwrite a sidecar the user already curated for this source
+  if (
+    snapshot.acceptedRecords.length > 0
+    && snapshot.boundSourceSemanticHash === dataset.sharedModel.semanticHash
+    && !snapshot.stale
+  ) return { accepted: 0, skipped: 'SIDECAR_CURRENT' };
+
+  // Don't interrupt an active user review session
+  if (snapshot.proposals.length > 0) return { accepted: 0, skipped: 'PROPOSALS_PENDING_REVIEW' };
+
+  let result;
+  try {
+    result = buildLoadCalcMasterEnrichmentProposals({ dataset, masters, projectProfile: pds.getProfile() });
+  } catch {
+    return { accepted: 0, skipped: 'BUILD_ERROR' };
+  }
+  if (!result?.proposals?.length) return { accepted: 0, skipped: 'NO_PROPOSALS' };
+
+  // Stage then immediately accept — EXACT_APPROVED_MASTER records need no human review
+  result.proposals.forEach((proposal) => store.stageProposal(proposal));
+  try {
+    store.acceptAllProposals();
+  } catch {
+    return { accepted: 0, skipped: 'ACCEPT_ERROR' };
+  }
+
+  return { accepted: result.proposals.length, skipped: null };
+}
+
 function copyMapping(mapping) {
   return { ...(mapping || {}) };
 }

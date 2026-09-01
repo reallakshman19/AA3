@@ -115,19 +115,24 @@ export class LoadCalcConsumerController {
       // any master that already has normalizedRows or a user-committed fieldMap.
       this.eventBus.subscribe('MASTER_DATA_UPDATED', ({ action } = {}) => {
         if (!action?.startsWith('bundled_seed')) return;
-        import('./master-data-ui.js').then(({ autoNormalizeBundledMasters }) => {
+        import('./master-data-ui.js').then(({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment }) => {
           const committed = autoNormalizeBundledMasters();
           if (committed.length > 0) this.render();
+          return autoGenerateMasterEnrichment();
+        }).then((enrichResult) => {
+          if (enrichResult?.accepted > 0) this.render();
         }).catch(() => {});
       }),
     ];
     this.render();
     void this.refreshTopologyCheck();
-    // Eagerly normalize any masters that were already seeded synchronously
-    // before the event subscription was active (weight, materialMap).
-    import('./master-data-ui.js').then(({ autoNormalizeBundledMasters }) => {
+    // Eagerly normalize + auto-generate for masters already seeded before subscription
+    import('./master-data-ui.js').then(({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment }) => {
       const committed = autoNormalizeBundledMasters();
       if (committed.length > 0) this.render();
+      return autoGenerateMasterEnrichment();
+    }).then((enrichResult) => {
+      if (enrichResult?.accepted > 0) this.render();
     }).catch(() => {});
   }
 
@@ -142,7 +147,16 @@ export class LoadCalcConsumerController {
       this.topologyPolicyFeedback = '';
     }
     this.render();
-    if (datasetChanged) void this.refreshTopologyCheck();
+    if (datasetChanged) {
+      void this.refreshTopologyCheck();
+      // Auto-generate enrichment proposals when a new dataset arrives
+      // (masters may already be ready from a previous session)
+      import('./master-data-ui.js').then(({ autoGenerateMasterEnrichment }) =>
+        autoGenerateMasterEnrichment(),
+      ).then((enrichResult) => {
+        if (enrichResult?.accepted > 0) this.render();
+      }).catch(() => {});
+    }
   }
 
   handleEngineeringChange(reason, distribution, topologyCheckAffected) {

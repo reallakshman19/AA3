@@ -13,11 +13,20 @@ const READINESS_DIMENSIONS = Object.freeze([
 ]);
 
 /**
- * Engineer-facing EMP.1 workflow. This is a read-only presentation over the
- * governed A/B/C product projection; it does not create calculation state.
+ * Engineer-facing EMP.1 workflow. Calculation/method authority remains owned by
+ * existing governed contracts. Optional review state is consumed from the
+ * workspace review controller; this DOM layer never authors engineering hashes.
  */
-export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute) {
-  const readiness = projectEmp1Readiness(projection);
+export function renderEmp1ProfessionalWorkflow(
+  root,
+  projection,
+  onSelectRoute,
+  reviewOptions = {},
+) {
+  const reviewWorkspace = reviewOptions.reviewWorkspace ?? null;
+  const readiness = projectEmp1Readiness(projection, {
+    reviewState: reviewWorkspace?.readinessReviewState ?? null,
+  });
   const presentation = buildEmp1ProfessionalWorkflowPresentation(projection);
   const workflow = card(root, 'Assessment workflow');
   workflow.section.dataset.role = 'emp1-workflow';
@@ -52,8 +61,16 @@ export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute) 
   const notice = currentnessNotice(root, presentation.currentnessNotice);
   if (notice) workflow.body.append(notice);
 
+  if (reviewWorkspace) {
+    workflow.body.append(engineeringReviewPanel(
+      root,
+      reviewWorkspace,
+      reviewOptions.onReview,
+    ));
+  }
+
   const boundary = element(root, 'p', 'lafea-workbench__authority',
-    'Workflow status is presentation-only. Run authorization, source authority, route authority, code compliance and release authority remain owned by the existing governed EMP.1 contracts. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
+    'Workflow status is presentation-only for calculation and release authority. An explicit engineering-review action may retain a hash-bound human attestation through the review controller, but it does not create source, method, applicability, numerical, code-compliance, release, or professional-seal authority. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
   boundary.dataset.role = 'emp1-professional-workflow-authority-boundary';
   workflow.body.append(boundary, technicalBackingDisclosure(root, presentation, onSelectRoute));
   return workflow.section;
@@ -106,10 +123,136 @@ function readinessDashboard(root, readiness) {
   }
 
   const boundary = element(root, 'p', 'lafea-workbench__authority',
-    'Readiness is a read-only projection of existing governed EMP.1 evidence. This dashboard does not establish method authority, applicability authority, engineering review, code compliance, or release qualification.');
+    'Readiness is a read-only projection of existing governed EMP.1 evidence and any supplied governed review state. This dashboard does not itself establish method authority, applicability authority, engineering review, code compliance, or release qualification.');
   boundary.dataset.role = 'emp1-readiness-authority-boundary';
   section.append(boundary);
   return section;
+}
+
+function engineeringReviewPanel(root, workspace, onReview) {
+  if (workspace?.schema !== 'emp1-engineering-review-workspace/v1') {
+    throw new TypeError('EMP1_ENGINEERING_REVIEW_WORKSPACE_INVALID');
+  }
+  const section = element(root, 'section', 'lafea-workbench__custody');
+  section.dataset.role = 'emp1-engineering-review-panel';
+  section.dataset.reviewState = workspace.reviewState?.state ?? 'NOT_REVIEWED';
+  section.dataset.canCreateReview = String(workspace.canCreateReview === true);
+  section.append(
+    element(root, 'strong', null, 'Review & Evidence — engineering attestation'),
+    element(root, 'p', 'lafea-result-highlights__status',
+      `Review state · ${human(workspace.reviewState?.state ?? 'NOT_REVIEWED')}`),
+  );
+
+  if (workspace.retainedReview) {
+    const retained = element(root, 'dl', 'lafea-workbench__custody');
+    retained.dataset.role = 'emp1-engineering-review-retained';
+    appendDefinition(root, retained, 'Review ID', workspace.retainedReview.reviewId);
+    appendDefinition(root, retained, 'Disposition', workspace.retainedReview.disposition);
+    appendDefinition(root, retained, 'Reviewer', workspace.retainedReview.reviewer?.identity);
+    appendDefinition(root, retained, 'Reviewed at', workspace.retainedReview.reviewedAt);
+    appendDefinition(root, retained, 'Basis', workspace.retainedReview.basisCode);
+    section.append(retained);
+  }
+
+  if (workspace.reviewState?.changedBindings?.length) {
+    const changed = element(root, 'p', 'lafea-workbench__authority',
+      `Review stale: changed evidence binding(s) · ${workspace.reviewState.changedBindings.map(human).join(', ')}`);
+    changed.dataset.role = 'emp1-engineering-review-stale-bindings';
+    section.append(changed);
+  }
+
+  if (workspace.creationBlockers.length) {
+    const details = element(root, 'details', 'lafea-workbench__custody-details');
+    details.dataset.role = 'emp1-engineering-review-blockers';
+    details.append(element(root, 'summary', null,
+      `Review action unavailable (${workspace.creationBlockers.length})`));
+    const blockers = element(root, 'ul');
+    workspace.creationBlockers.forEach((code) => {
+      const item = element(root, 'li', null, human(code));
+      item.dataset.blockerCode = code;
+      blockers.append(item);
+    });
+    details.append(blockers);
+    section.append(details);
+  }
+
+  const form = element(root, 'div', 'lafea-workbench__custody');
+  form.dataset.role = 'emp1-engineering-review-form';
+  const identity = reviewInput(root, 'emp1-engineering-reviewer-identity', 'Reviewer identity');
+  const role = reviewInput(root, 'emp1-engineering-reviewer-role', 'Reviewer role (optional)');
+  const comment = element(root, 'textarea');
+  comment.dataset.role = 'emp1-engineering-review-comment';
+  comment.setAttribute('aria-label', 'Engineering review comment');
+  comment.placeholder = 'Review basis, limitations, or required correction (optional)';
+  form.append(identity.wrapper, role.wrapper, comment);
+
+  const result = element(root, 'output', 'lafea-workbench__authority');
+  result.dataset.role = 'emp1-engineering-review-action-result';
+  result.setAttribute('aria-live', 'polite');
+
+  const actions = element(root, 'div', 'lafea-workbench__stages');
+  const accept = reviewButton(root, 'Accept engineering review', 'ACCEPTED');
+  const reject = reviewButton(root, 'Reject engineering review', 'REJECTED');
+  const enabled = workspace.canCreateReview === true && typeof onReview === 'function';
+  accept.disabled = !enabled;
+  reject.disabled = !enabled;
+
+  const submit = (disposition) => {
+    identity.input.setCustomValidity('');
+    if (!identity.input.value.trim()) {
+      identity.input.setCustomValidity('Reviewer identity is required.');
+      identity.input.reportValidity();
+      return;
+    }
+    const response = onReview?.({
+      disposition,
+      reviewerIdentity: identity.input.value,
+      reviewerRole: role.input.value,
+      comment: comment.value,
+    });
+    if (response?.status !== 'RECORDED') {
+      result.value = response?.message ?? response?.code ?? 'Engineering review was rejected.';
+      result.textContent = result.value;
+    }
+  };
+  accept.addEventListener('click', () => submit('ACCEPTED'));
+  reject.addEventListener('click', () => submit('REJECTED'));
+  actions.append(accept, reject);
+
+  const boundary = element(root, 'p', 'lafea-workbench__authority',
+    'This action records a human engineering-review attestation for the exact current governed EMP.1 execution. It is retained only for this workspace session in this slice. Acceptance is not code compliance, release qualification, a cryptographic signature, or a professional digital seal.');
+  boundary.dataset.role = 'emp1-engineering-review-authority-boundary';
+  section.append(form, actions, result, boundary);
+  return section;
+}
+
+function reviewInput(root, role, label) {
+  const wrapper = element(root, 'label');
+  wrapper.append(element(root, 'span', null, label));
+  const input = element(root, 'input');
+  input.type = 'text';
+  input.autocomplete = 'off';
+  input.dataset.role = role;
+  input.setAttribute('aria-label', label);
+  wrapper.append(input);
+  return { wrapper, input };
+}
+
+function reviewButton(root, text, disposition) {
+  const button = element(root, 'button', null, text);
+  button.type = 'button';
+  button.dataset.role = 'emp1-engineering-review-action';
+  button.dataset.disposition = disposition;
+  return button;
+}
+
+function appendDefinition(root, list, label, value) {
+  const row = element(root, 'div');
+  row.append(
+    element(root, 'dt', null, label),
+    element(root, 'dd', null, value == null ? '—' : human(value)),
+  );
+  list.append(row);
 }
 
 function authoritySummary(root, summary) {
@@ -184,6 +327,8 @@ function navigateProfessionalStep(root, step, onSelectRoute) {
     scheduleTargetScroll(root, step.targetRole);
     return;
   }
+  if (step.stepId === 'REVIEW_EVIDENCE'
+    && scrollToRole(root, 'emp1-engineering-review-panel')) return;
   if (scrollToRole(root, step.targetRole)) return;
   if (step.stepId === 'REVIEW_EVIDENCE') {
     if (scrollToRole(root, 'emp1-c-result-evidence')) return;

@@ -8,6 +8,9 @@ export const EMP1_READINESS_OVERALL = Object.freeze({
   CALCULATION_REQUIRED: 'CALCULATION_REQUIRED',
   CALCULATION_STALE: 'CALCULATION_STALE',
   READY_FOR_ENGINEERING_REVIEW: 'READY_FOR_ENGINEERING_REVIEW',
+  REVIEW_ACCEPTED: 'REVIEW_ACCEPTED',
+  REVIEW_REJECTED: 'REVIEW_REJECTED',
+  REVIEW_STALE: 'REVIEW_STALE',
 });
 
 const B_SOURCE_STALE_STATES = new Set([
@@ -30,13 +33,21 @@ const SUPPORTED_C_STATES = new Set([
   C_STALE_AUTHORITY,
   C_STALE_INPUT,
 ]);
+const REVIEW_STATE_SCHEMA = 'emp1-engineering-review-state/v1';
+const REVIEW_STATES = new Set([
+  'NOT_REVIEWED',
+  'REVIEW_ACCEPTED',
+  'REVIEW_REJECTED',
+  'REVIEW_STALE',
+]);
 
 /**
  * Compose existing EMP.1 product/currentness evidence into one governance view.
- * This projection does not calculate WRC applicability, method authority,
- * code compliance, review approval, or release authority.
+ * An optional existing review-state projection may be included; this module does
+ * not create/re-evaluate the review record, WRC applicability, method authority,
+ * code compliance, or release authority.
  */
-export function projectEmp1Readiness(productProjection) {
+export function projectEmp1Readiness(productProjection, options = {}) {
   const projection = requireProjection(productProjection);
   const steps = stepsByShortId(projection.steps);
   const a = requireStep(steps.A, 'A');
@@ -47,7 +58,7 @@ export function projectEmp1Readiness(productProjection) {
   const method = projectMethod(projection, c);
   const applicability = projectApplicability(c);
   const calculation = projectCalculation(a, b, c);
-  const review = Object.freeze({ state: 'NOT_REVIEWED', authorityEstablished: false });
+  const review = projectReview(options.reviewState);
   const codeCompliance = Object.freeze({ state: 'NOT_ASSESSED', authorityEstablished: false });
   const release = projectRelease(projection);
   const blockers = unique([
@@ -66,7 +77,7 @@ export function projectEmp1Readiness(productProjection) {
     review,
     codeCompliance,
     release,
-    overall: resolveOverall({ source, method, calculation }),
+    overall: resolveOverall({ source, method, calculation, review }),
     blockers,
     authorityBoundary: {
       projectionOnly: true,
@@ -177,6 +188,28 @@ function calculationState(state, a, b, c, blockers) {
   });
 }
 
+function projectReview(value) {
+  if (value == null) {
+    return Object.freeze({
+      state: 'NOT_REVIEWED', reviewed: false, current: false, disposition: null,
+      reviewId: null, reviewSemanticHash: null, changedBindings: Object.freeze([]),
+      authorityEstablished: false, authorityEstablishedByProjection: false,
+    });
+  }
+  const review = requireReviewState(value);
+  return Object.freeze({
+    state: review.state,
+    reviewed: review.reviewed,
+    current: review.current,
+    disposition: review.disposition,
+    reviewId: review.reviewId ?? null,
+    reviewSemanticHash: review.reviewSemanticHash ?? null,
+    changedBindings: unique(array(review.changedBindings)),
+    authorityEstablished: false,
+    authorityEstablishedByProjection: false,
+  });
+}
+
 function projectRelease(projection) {
   const qualified = projection.qualificationBoundary?.releaseQualified === true;
   return Object.freeze({
@@ -186,18 +219,39 @@ function projectRelease(projection) {
   });
 }
 
-function resolveOverall({ source, method, calculation }) {
+function resolveOverall({ source, method, calculation, review }) {
   if (source.state === 'INPUT_REQUIRED') return EMP1_READINESS_OVERALL.INPUT_REQUIRED;
   if (source.state === 'STALE') return EMP1_READINESS_OVERALL.SOURCE_STALE;
   if (method.state === 'BLOCKED') return EMP1_READINESS_OVERALL.METHOD_BLOCKED;
   if (calculation.state === 'STALE') return EMP1_READINESS_OVERALL.CALCULATION_STALE;
   if (calculation.state === 'CURRENT') {
+    if (review.state === 'REVIEW_ACCEPTED') return EMP1_READINESS_OVERALL.REVIEW_ACCEPTED;
+    if (review.state === 'REVIEW_REJECTED') return EMP1_READINESS_OVERALL.REVIEW_REJECTED;
+    if (review.state === 'REVIEW_STALE') return EMP1_READINESS_OVERALL.REVIEW_STALE;
     return EMP1_READINESS_OVERALL.READY_FOR_ENGINEERING_REVIEW;
   }
   if (calculation.state === 'READY_TO_CALCULATE') {
     return EMP1_READINESS_OVERALL.READY_TO_CALCULATE;
   }
   return EMP1_READINESS_OVERALL.CALCULATION_REQUIRED;
+}
+
+function requireReviewState(value) {
+  if (!record(value) || value.schema !== REVIEW_STATE_SCHEMA || value.productId !== 'EMP.1'
+    || !REVIEW_STATES.has(value.state)) {
+    throw readinessError('EMP1_READINESS_REVIEW_STATE_INVALID');
+  }
+  const valid = value.state === 'NOT_REVIEWED'
+    ? value.reviewed === false && value.current === false && value.disposition == null
+    : value.state === 'REVIEW_ACCEPTED'
+      ? value.reviewed === true && value.current === true && value.disposition === 'ACCEPTED'
+      : value.state === 'REVIEW_REJECTED'
+        ? value.reviewed === true && value.current === true && value.disposition === 'REJECTED'
+        : value.reviewed === true && value.current === false
+          && ['ACCEPTED', 'REJECTED'].includes(value.disposition)
+          && Array.isArray(value.changedBindings) && value.changedBindings.length > 0;
+  if (!valid) throw readinessError('EMP1_READINESS_REVIEW_STATE_INCONSISTENT');
+  return value;
 }
 
 function stepSnapshot(step) {

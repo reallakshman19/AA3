@@ -12,11 +12,7 @@ export const EMP1_ENGINEERING_RECORD_PACKAGE_AVAILABILITY_SCHEMA =
 
 const CURRENT_REVIEW_STATES = new Set(['REVIEW_ACCEPTED', 'REVIEW_REJECTED']);
 
-/**
- * Project whether the exact current workspace evidence can be packaged.
- * Availability consumes existing execution/review currentness; it does not
- * calculate engineering results or authenticate WRC applicability itself.
- */
+/** Project whether the exact current workspace evidence can be packaged. */
 export function projectEmp1EngineeringRecordPackageAvailability({
   reviewRecord = null,
   execution = null,
@@ -96,6 +92,10 @@ export function emp1EngineeringRecordPackageFilename(value) {
   const packageValue = requireEmp1EngineeringRecordPackage(value);
   const suffix = packageValue.packageId.split(':').at(-1);
   return `emp1-engineering-record-${suffix}.json`;
+}
+
+export function serializeEmp1EngineeringRecordPackage(value) {
+  return `${JSON.stringify(requireEmp1EngineeringRecordPackage(value), null, 2)}\n`;
 }
 
 function workspaceError(code) { const error = new TypeError(code); error.code = code; return error; }

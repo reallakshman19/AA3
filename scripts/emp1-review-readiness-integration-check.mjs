@@ -36,8 +36,8 @@ const rejectedState = projectEmp1EngineeringReviewState({
 });
 const notReviewedState = projectEmp1EngineeringReviewState({ reviewRecord: null });
 const staleEvidence = structuredClone(baseEvidence);
-staleEvidence.result.localCorrelation.resultHash = 'C-2';
-staleEvidence.result.assessment.parents.localCorrelationResultHash = 'C-2';
+staleEvidence.routeAuthorityHash = 'ROUTE-2';
+staleEvidence.routeAuthoritySnapshot = { semanticHash: 'ROUTE-2' };
 const staleState = projectEmp1EngineeringReviewState({
   reviewRecord: acceptedRecord,
   evidence: staleEvidence,
@@ -77,7 +77,7 @@ const staleReview = projectEmp1Readiness(currentProjection, { reviewState: stale
 assert.equal(staleReview.review.state, 'REVIEW_STALE');
 assert.equal(staleReview.review.current, false);
 assert.equal(staleReview.review.disposition, 'ACCEPTED');
-assert.deepEqual(staleReview.review.changedBindings, ['localCorrelationResultHash']);
+assert.deepEqual(staleReview.review.changedBindings, ['routeAuthorityHash']);
 assert.equal(staleReview.overall, EMP1_READINESS_OVERALL.REVIEW_STALE);
 
 const sourceStale = projectEmp1Readiness(projection({ cState: 'STALE_INPUT' }), {

@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-CALCULATION-TRACE
 MISSION: Project retained EMP.1 A → B → C calculation/evidence ancestry into a deterministic read-only engineer trace without re-solving or creating authority.
-ACTIVE_ENDPOINT: EP-0001
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-CALCULATION-TRACE/endpoints/EP-0001.md
-CUSTODY_EPOCH: 1
+ACTIVE_ENDPOINT: EP-0002
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-CALCULATION-TRACE/endpoints/EP-0002.md
+CUSTODY_EPOCH: 2
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-calculation-trace-v1
@@ -18,10 +18,11 @@ WORK_ITEM_MODE: EXCLUSIVE
 
 REPO: reallaksh19/Advanced_Analysis
 BRANCH: agent/emp1-calculation-trace-v1
-HEAD: a04e192335892bf688016c4e1a0f6304154817cf
+HEAD: 760c3d79934a464047d8b45a2280cc5e93ee17c6
+MATERIAL_HEAD: 0cddcf804e73f949d62e447c8822902dc8def131
 MAIN: 694088625c8cfdbd357b5c43fc1dbdb12f4f6800
 PR: PENDING
-PR_STATUS: NOT_OPENED
+PR_STATUS: DRAFT_PENDING_CREATION
 MERGEABILITY: UNKNOWN
 REVIEWS: 0
 UNRESOLVED_THREADS: 0
@@ -29,11 +30,11 @@ REQUIRED_CHECKS: EMP1_CALCULATION_TRACE_PROJECTION_CHECK_NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: IN_PROGRESS
+ENGINEERING_STATE: MATERIAL_COMPLETE_VALIDATION_NOT_RUN
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: WRITE_ALLOWED
-AUTHORITY_DOMAIN: Read-only retained calculation/evidence ancestry projection and presentation only.
+WRITE_AUTHORITY: WRITE_ALLOWED_CUSTODY_AND_REVIEW_FIXES_ONLY
+AUTHORITY_DOMAIN: Read-only retained calculation/evidence ancestry projection only.
 COORDINATION_STATE: SAFE
 DEPENDENCIES: Existing `runEmp1()` result, `emp1-assessment/v1` parents, workbench execution authority/currentness projections. Draft PRs #1614/#1616/#1617 are separate.
 
@@ -43,7 +44,7 @@ ROADMAP_ALIGNMENT: ALIGNED_WITH_OWNER_EMP1_GOVERNANCE_PLAN
 ROADMAP_MUTATION_AUTHORITY: NONE
 
 MATERIAL_HISTORY_ROOT_BASE: 694088625c8cfdbd357b5c43fc1dbdb12f4f6800
-ORIGINAL_TASK_STATUS: CALCULATION_TRACE_PREWORK_COMPLETE
+ORIGINAL_TASK_STATUS: CALCULATION_TRACE_PROJECTION_IMPLEMENTED
 INPUT_STATUS: Existing retained source/result/assessment/authority/currentness evidence only.
 BENCHMARK_ORACLE_STATUS: NOT_APPLICABLE_TO_PROJECTION; existing WRC oracle authority unchanged.
 
@@ -57,6 +58,7 @@ CODE_COMPLIANCE_AUTHORITY_MUTATION: FORBIDDEN
 RELEASE_AUTHORITY_MUTATION: FORBIDDEN
 WORKFLOW_FILE_MUTATION: FORBIDDEN
 
-OVERLAP: SAFE — compact ancestry/consistency projection only; merged PR #1403 retains detailed engineering evidence presentation ownership.
-BLOCKER: NONE_FOR_BOUNDED_MATERIAL_CODING; focused execution remains NOT_RUN until actually executed.
-EXACT_NEXT_ACTION: Add the pure calculation-trace projection, wire it once into transaction evidence, add focused checker, then record custody and open a Draft PR.
+STAGED_PREREQUISITE: TRUE — Owner selected Calculation Trace Projection and directed proceed; UI rendering deferred to avoid overlap with active Draft PR #1617.
+OVERLAP: SAFE — new projection/checker plus one-line core export only; no active authority-owner file is modified.
+BLOCKER: FOCUSED_CHECK_NOT_RUN; no merge/readiness claim permitted from source inspection alone.
+EXACT_NEXT_ACTION: Open/maintain Draft PR with explicit pending activities and NOT_RUN validation; re-ground latest main before readiness-for-review or merge.

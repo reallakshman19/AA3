@@ -1,6 +1,6 @@
 # Active Handover — ADV-EMP1-ENGINEERING-REVIEW-UI
 
-CHAIN_STATE_VERSION: 2
+CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-ENGINEERING-REVIEW-UI
 MISSION: Wire explicit engineer review actions into the professional Review & Evidence workflow while preserving existing review/currentness/readiness authority boundaries.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-REVIEW-UI/endpoints/EP-0002.md
-CUSTODY_EPOCH: 2
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-REVIEW-UI/endpoints/EP-0003.md
+CUSTODY_EPOCH: 3
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-engineering-review-ui-v1
@@ -23,11 +23,13 @@ STACK_BASE_BRANCH: agent/emp1-review-readiness-integration-v1
 STACK_BASE_HEAD: 3a4dc4c8863972409c87dbef499a680efee19861
 MAIN: 93d208dc1298570f20ce170edbd4f881039d22f0
 MATERIAL_HEAD: d046de0575c157c8a40d5d948ca58337fa9c0c3f
-PR: PENDING
-PR_STATUS: DRAFT_PENDING_CREATION
-MERGEABILITY: UNKNOWN
-REVIEWS: 0
-UNRESOLVED_THREADS: 0
+PR: 1622
+PR_STATUS: OPEN_DRAFT
+PR_BASE: agent/emp1-review-readiness-integration-v1
+PR_HEAD_AT_CREATION: 2149f4e8c41aa40be040c9f745ba75289b8f3ce8
+MERGEABILITY: RECALCULATING_AT_CREATION
+REVIEWS: 0_AT_CREATION
+UNRESOLVED_THREADS: 0_AT_CREATION
 REQUIRED_CHECKS: EMP1_ENGINEERING_REVIEW_UI_CHECK_NOT_RUN; EMP1_ENGINEERING_REVIEW_RECORD_CHECK_NOT_RUN_ON_STACK; EMP1_REVIEW_READINESS_INTEGRATION_CHECK_NOT_RUN_ON_STACK; EMP1_READINESS_PROJECTION_CHECK_NOT_RUN_ON_STACK; EMP1_READINESS_DASHBOARD_CHECK_NOT_RUN_ON_STACK; EMP1_PROFESSIONAL_WORKFLOW_CHECK_NOT_RUN_ON_STACK
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
@@ -57,4 +59,4 @@ DURABLE_REVIEW_EXPORT_PACKAGE: DEFERRED
 READINESS_REVIEW_INPUT: CONTROLLER_PROJECTED_GOVERNED_REVIEW_STATE_ONLY
 OVERLAP: SAFE_RELATIVE_TO_STACK_BASE — effective material is workspace review adapter/view/controller/host/workflow plus focused/regression checks; no WRC owner mutation.
 BLOCKER: PR_1620_AND_PR_1621_STACK_DEPENDENCIES_UNRESOLVED; EXECUTABLE_VALIDATION_NOT_RUN; no merge/readiness claim permitted.
-EXACT_NEXT_ACTION: Open/maintain stacked Draft PR against `agent/emp1-review-readiness-integration-v1`. Execute focused/regression checks only on a faithful checkout when validation is resumed. Keep session-only review retention explicit and do not merge without Owner authorization.
+EXACT_NEXT_ACTION: Maintain PR #1622 Draft. Re-ground dependencies/main before readiness-for-review. If validation resumes, execute the focused review UI checker and stack regressions exactly as listed in EP-0003/PR body. Keep session-only retention explicit and do not merge without Owner authorization.

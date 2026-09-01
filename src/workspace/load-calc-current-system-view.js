@@ -5,21 +5,22 @@ import {
 } from './load-calc-consumer-view.js';
 
 const CURRENT_SYSTEM_AUTHORITY = 'CURRENT_COMMON_INPUT_SYSTEM_RUN';
-const PRODUCT_PRIMARY_TABS = new Set(['topology', 'project-data', 'verify', 'loads']);
+const PRODUCT_PRIMARY_TABS = new Set(['topology', 'project-data', 'masters', 'enrichment', 'preflight', 'verify', 'loads']);
 const LEGACY_ADVANCED_VIEW_COUNT = 11;
 
 export const LOAD_CALC_PRIMARY_WORKFLOW_V1 = Object.freeze([
-  Object.freeze({ id: 'import', label: 'Import', selector: '[data-load-calc-import]', tab: null }),
-  Object.freeze({ id: 'topology', label: 'Check Topology', selector: '[data-load-calc-tab="topology"]', tab: 'topology' }),
-  Object.freeze({ id: 'defaults', label: 'Calculation Defaults', selector: '[data-load-calc-tab="project-data"]', tab: 'project-data' }),
-  Object.freeze({ id: 'run', label: 'Run', selector: '[data-load-calc-tab="verify"]', tab: 'verify' }),
-  Object.freeze({ id: 'results', label: 'Results', selector: '[data-load-calc-tab="loads"]', tab: 'loads' }),
+  Object.freeze({ id: 'import',     label: 'Import',                 selector: '[data-load-calc-import]',              tab: null }),
+  Object.freeze({ id: 'topology',   label: 'Check Topology',         selector: '[data-load-calc-tab="topology"]',      tab: 'topology' }),
+  Object.freeze({ id: 'defaults',   label: 'Calculation Defaults',   selector: '[data-load-calc-tab="project-data"]',  tab: 'project-data' }),
+  Object.freeze({ id: 'masters',    label: 'Master Data',            selector: '[data-load-calc-tab="masters"]',       tab: 'masters' }),
+  Object.freeze({ id: 'enrichment', label: 'Enrichment & Overrides', selector: '[data-load-calc-tab="enrichment"]',    tab: 'enrichment' }),
+  Object.freeze({ id: 'preflight',  label: 'Input Check',            selector: '[data-load-calc-tab="preflight"]',     tab: 'preflight' }),
+  Object.freeze({ id: 'run',        label: 'Run',                    selector: '[data-load-calc-tab="verify"]',        tab: 'verify' }),
+  Object.freeze({ id: 'results',    label: 'Results',                selector: '[data-load-calc-tab="loads"]',         tab: 'loads' }),
 ]);
 
-export const LOAD_CALC_PROMOTED_ADVANCED_TABS_V1 = Object.freeze([
-  Object.freeze({ tab: 'masters', label: 'Master Data' }),
-  Object.freeze({ tab: 'preflight', label: 'Input Check' }),
-]);
+/** Tabs moved into the primary workflow bar; ADV no longer promotes them. */
+export const LOAD_CALC_PROMOTED_ADVANCED_TABS_V1 = Object.freeze([]);
 
 export function renderLoadCalcConsumer(documentRef, state) {
   const routineReady = isRoutineRunReady(state?.commonInputState);
@@ -184,6 +185,8 @@ function convergeFiveStepWorkflow(section, state) {
     throw codedError('Load Calc product workflow root is missing.', 'LOAD_CALC_FIVE_STEP_WORKFLOW_ROOT_MISSING');
   }
 
+  // Masters and preflight are now in the primary bar, so no buttons are removed.
+  // LOAD_CALC_PROMOTED_ADVANCED_TABS_V1 is empty; this loop is intentionally a no-op.
   for (const row of LOAD_CALC_PROMOTED_ADVANCED_TABS_V1) {
     const legacyButton = workflow.querySelector(
       `button.empirical-load-calc__workflow-step[data-load-calc-tab="${row.tab}"]`,
@@ -195,6 +198,29 @@ function convergeFiveStepWorkflow(section, state) {
       );
     }
     legacyButton.remove();
+  }
+
+  // Inject the Enrichment & Overrides step before preflight — it has no legacy
+  // button in the 7-step render so we create one and insert it in order.
+  const preflightButton = workflow.querySelector(
+    'button.empirical-load-calc__workflow-step[data-load-calc-tab="preflight"]',
+  );
+  if (!preflightButton) {
+    throw codedError(
+      'Load Calc legacy preflight workflow entry is missing.',
+      'LOAD_CALC_EIGHT_STEP_PREFLIGHT_MISSING',
+    );
+  }
+  if (!workflow.querySelector('button.empirical-load-calc__workflow-step[data-load-calc-tab="enrichment"]')) {
+    preflightButton.insertAdjacentHTML(
+      'beforebegin',
+      '<button type="button" class="empirical-load-calc__workflow-step" ' +
+      'data-load-calc-tab="enrichment" data-step-state="pending" aria-current="false">' +
+      '<span class="empirical-load-calc__workflow-index">?</span>' +
+      '<span class="empirical-load-calc__workflow-label">Enrichment &amp; Overrides</span>' +
+      '<span class="empirical-load-calc__workflow-status">Available</span>' +
+      '</button>',
+    );
   }
 
   LOAD_CALC_PRIMARY_WORKFLOW_V1.forEach((step, index) => {
@@ -217,6 +243,7 @@ function convergeFiveStepWorkflow(section, state) {
     labelNode.textContent = step.label;
   });
   normalizeCalculationDefaultsStatus(workflow, state);
+  normalizeEnrichmentStatus(workflow, state);
   normalizeOneClickRunStatus(workflow, state);
 
   const advanced = workflow.querySelector('details.empirical-load-calc__advanced');
@@ -228,12 +255,10 @@ function convergeFiveStepWorkflow(section, state) {
       'LOAD_CALC_FIVE_STEP_ADVANCED_MARKUP_INVALID',
     );
   }
-  advancedNav.insertAdjacentHTML('afterbegin', promotedAdvancedGroupMarkup(state?.activeTab));
+  // Engineering-inputs group (masters, preflight) now lives in the primary bar —
+  // do not re-insert it into ADV. The Setup group (overview, enrichment) remains.
 
-  const promotedActive = LOAD_CALC_PROMOTED_ADVANCED_TABS_V1
-    .some((row) => row.tab === state?.activeTab);
-  const advancedActive = promotedActive
-    || (Boolean(state?.activeTab) && !PRODUCT_PRIMARY_TABS.has(state.activeTab));
+  const advancedActive = Boolean(state?.activeTab) && !PRODUCT_PRIMARY_TABS.has(state.activeTab);
   advanced.open = advancedActive;
   summary.classList.toggle('is-active', advancedActive);
   summary.dataset.stepState = advancedActive ? 'current' : 'pending';
@@ -242,22 +267,17 @@ function convergeFiveStepWorkflow(section, state) {
   const advancedStatus = summary.querySelector('.empirical-load-calc__workflow-status');
   if (advancedIndex) advancedIndex.textContent = 'ADV';
   if (advancedLabel) advancedLabel.textContent = 'Advanced tools';
-  if (advancedStatus) {
-    const promoted = LOAD_CALC_PROMOTED_ADVANCED_TABS_V1
-      .find((row) => row.tab === state?.activeTab);
-    if (promoted) advancedStatus.textContent = promoted.label;
-    else if (!advancedActive) {
-      advancedStatus.textContent = `${LEGACY_ADVANCED_VIEW_COUNT + LOAD_CALC_PROMOTED_ADVANCED_TABS_V1.length} views`;
-    }
+  if (advancedStatus && !advancedActive) {
+    advancedStatus.textContent = `${LEGACY_ADVANCED_VIEW_COUNT} views`;
   }
 
   const runButton = section.querySelector('[data-load-calc-run]');
   const output = section.querySelector('[data-engineering-load-status]');
   if (runButton?.title === 'Check Verify & Run tab — some inputs are missing') {
-    runButton.title = 'Open Run or Advanced → Input Check — some inputs are missing';
+    runButton.title = 'Open Input Check (step 6) or Run tab — some inputs are missing';
   }
   if (output?.textContent === 'Check Verify & Run tab — some inputs are missing') {
-    output.textContent = 'Open Run or Advanced → Input Check — some inputs are missing';
+    output.textContent = 'Open Input Check (step 6) or Run tab — some inputs are missing';
   }
 }
 
@@ -284,6 +304,30 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
   status.textContent = resolved ? 'Resolved' : active ? 'Review' : 'Available';
 }
 
+function normalizeEnrichmentStatus(workflow, state) {
+  const button = workflow.querySelector(
+    'button.empirical-load-calc__workflow-step[data-load-calc-tab="enrichment"]',
+  );
+  const status = button?.querySelector('.empirical-load-calc__workflow-status');
+  if (!button || !status) return;
+  const readiness = state?.workflowReadiness || {};
+  if (readiness.datasetReady !== true) {
+    button.dataset.stepState = 'pending';
+    status.textContent = 'After import';
+    return;
+  }
+  if (readiness.masterDataReady !== true) {
+    button.dataset.stepState = 'pending';
+    status.textContent = 'After masters';
+    return;
+  }
+  const report = state?.commonInputState?.report;
+  const massClear = !report?.blockers?.some((b) => b.code === 'MASS_COVERAGE_INCOMPLETE');
+  const active = state?.activeTab === 'enrichment';
+  button.dataset.stepState = active ? 'current' : massClear ? 'complete' : 'ready';
+  status.textContent = massClear ? 'Done' : active ? 'Review' : 'Available';
+}
+
 function normalizeOneClickRunStatus(workflow, state) {
   if (state?.empiricalScenarioState?.calculationEligible === true) return;
   if (!isRoutineRunAttemptAvailable(state)) return;
@@ -298,12 +342,6 @@ function normalizeOneClickRunStatus(workflow, state) {
   status.textContent = isRoutineRunReady(state?.commonInputState) ? 'Ready' : 'One-click';
 }
 
-function promotedAdvancedGroupMarkup(activeTab) {
-  return `<span class="empirical-load-calc__tab-group" role="group" aria-label="Engineering inputs">
-    <span class="panel-eyebrow">Engineering inputs</span>
-    ${LOAD_CALC_PROMOTED_ADVANCED_TABS_V1.map((row) => `<button type="button" data-load-calc-tab="${row.tab}" aria-selected="${row.tab === activeTab}" class="${row.tab === activeTab ? 'is-active' : ''}">${row.label}</button>`).join('')}
-  </span>`;
-}
 
 function currentSystemExecutionMarkup(execution, distribution) {
   const retention = execution?.explicitMomentRetention || null;

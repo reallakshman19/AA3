@@ -13,34 +13,30 @@ const CURRENT_REVIEW_STATES = new Set([
   EMP1_ENGINEERING_REVIEW_STATES.ACCEPTED,
   EMP1_ENGINEERING_REVIEW_STATES.REJECTED,
 ]);
+const BINDING_KEYS = Object.freeze([
+  'sourceHash',
+  'loadTransferResultHash',
+  'sectionScreeningResultHash',
+  'localCorrelationResultHash',
+  'assessmentSemanticHash',
+  'routeAuthorityHash',
+]);
 
-/**
- * Build one immutable audit package over exact retained EMP.1 identities.
- *
- * The package computes only its own custody identity. It consumes the existing
- * engineering/result/review hashes and never re-solves, re-hashes, or upgrades
- * the engineering calculation itself.
- */
+/** Immutable audit package over already-retained EMP.1 identities. */
 export function createEmp1EngineeringRecordPackage(input = {}) {
   const evidence = record(input.evidence, 'EMP1_ENGINEERING_RECORD_EVIDENCE_REQUIRED');
   const review = requireEmp1EngineeringReviewRecord(input.reviewRecord);
-  const reviewState = projectEmp1EngineeringReviewState({
-    reviewRecord: review,
-    evidence,
-  });
+  const reviewState = projectEmp1EngineeringReviewState({ reviewRecord: review, evidence });
   if (reviewState.current !== true || !CURRENT_REVIEW_STATES.has(reviewState.state)) {
     throw packageError('EMP1_ENGINEERING_RECORD_CURRENT_REVIEW_REQUIRED');
   }
-
   const routeAuthority = routeAuthorityCustody(evidence);
-  const result = record(evidence.result, 'EMP1_ENGINEERING_RECORD_RESULT_REQUIRED');
-  const assessment = record(result.assessment, 'EMP1_ENGINEERING_RECORD_ASSESSMENT_REQUIRED');
   const normalized = {
     schema: EMP1_ENGINEERING_RECORD_PACKAGE_SCHEMA,
     productId: 'EMP.1',
     packagedAt: text(input.packagedAt, 'EMP1_ENGINEERING_RECORD_PACKAGED_AT_REQUIRED'),
     recordState: reviewState.state,
-    evidence: evidenceCustody(reviewState, assessment),
+    evidence: evidenceCustody(reviewState),
     routeAuthority,
     review,
     limitations: limitationsFromSnapshot(routeAuthority.snapshot),
@@ -54,7 +50,7 @@ export function createEmp1EngineeringRecordPackage(input = {}) {
   });
 }
 
-/** Validate an exported package without creating any new engineering authority. */
+/** Validate an exported package without creating engineering authority. */
 export function requireEmp1EngineeringRecordPackage(value) {
   const source = record(value, 'EMP1_ENGINEERING_RECORD_PACKAGE_REQUIRED');
   if (source.schema !== EMP1_ENGINEERING_RECORD_PACKAGE_SCHEMA || source.productId !== 'EMP.1') {
@@ -66,8 +62,7 @@ export function requireEmp1EngineeringRecordPackage(value) {
 
   const review = requireEmp1EngineeringReviewRecord(source.review);
   const evidence = normalizeEvidenceCustody(source.evidence);
-  if (evidence.reviewSemanticHash !== review.semanticHash
-    || evidence.reviewId !== review.reviewId) {
+  if (evidence.reviewSemanticHash !== review.semanticHash || evidence.reviewId !== review.reviewId) {
     throw packageError('EMP1_ENGINEERING_RECORD_REVIEW_IDENTITY_MISMATCH');
   }
   assertBindingMatchesReview(evidence, review.evidenceBinding);
@@ -77,11 +72,9 @@ export function requireEmp1EngineeringRecordPackage(value) {
     throw packageError('EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_BINDING_MISMATCH');
   }
   const limitations = normalizeLimitations(source.limitations);
-  const expectedLimitations = limitationsFromSnapshot(routeAuthority.snapshot);
-  if (JSON.stringify(limitations) !== JSON.stringify(expectedLimitations)) {
+  if (JSON.stringify(limitations) !== JSON.stringify(limitationsFromSnapshot(routeAuthority.snapshot))) {
     throw packageError('EMP1_ENGINEERING_RECORD_LIMITATIONS_MISMATCH');
   }
-
   const expectedReviewState = review.disposition === 'ACCEPTED'
     ? EMP1_ENGINEERING_REVIEW_STATES.ACCEPTED
     : EMP1_ENGINEERING_REVIEW_STATES.REJECTED;
@@ -122,7 +115,7 @@ export function packageSemanticProjection(value) {
   };
 }
 
-function evidenceCustody(reviewState, assessment) {
+function evidenceCustody(reviewState) {
   const binding = reviewState.currentEvidenceBinding;
   return deepFreeze({
     schema: EMP1_ENGINEERING_RECORD_EVIDENCE_SCHEMA,
@@ -134,8 +127,6 @@ function evidenceCustody(reviewState, assessment) {
     routeAuthorityHash: binding.routeAuthorityHash,
     reviewId: reviewState.reviewId,
     reviewSemanticHash: reviewState.reviewSemanticHash,
-    assessmentDecision: optionalText(assessment.decision),
-    assessmentPassIsCodeCompliance: assessment.interpretation?.passIsCodeCompliance === true,
   });
 }
 
@@ -146,55 +137,29 @@ function normalizeEvidenceCustody(value) {
   }
   return deepFreeze({
     schema: row.schema,
-    sourceHash: text(row.sourceHash, 'EMP1_ENGINEERING_RECORD_SOURCE_HASH_REQUIRED'),
-    loadTransferResultHash: text(row.loadTransferResultHash,
-      'EMP1_ENGINEERING_RECORD_LOAD_TRANSFER_HASH_REQUIRED'),
-    sectionScreeningResultHash: text(row.sectionScreeningResultHash,
-      'EMP1_ENGINEERING_RECORD_SECTION_SCREENING_HASH_REQUIRED'),
-    localCorrelationResultHash: text(row.localCorrelationResultHash,
-      'EMP1_ENGINEERING_RECORD_LOCAL_CORRELATION_HASH_REQUIRED'),
-    assessmentSemanticHash: text(row.assessmentSemanticHash,
-      'EMP1_ENGINEERING_RECORD_ASSESSMENT_HASH_REQUIRED'),
-    routeAuthorityHash: text(row.routeAuthorityHash,
-      'EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_HASH_REQUIRED'),
+    sourceHash: requiredHash(row.sourceHash, 'SOURCE'),
+    loadTransferResultHash: requiredHash(row.loadTransferResultHash, 'LOAD_TRANSFER'),
+    sectionScreeningResultHash: requiredHash(row.sectionScreeningResultHash, 'SECTION_SCREENING'),
+    localCorrelationResultHash: requiredHash(row.localCorrelationResultHash, 'LOCAL_CORRELATION'),
+    assessmentSemanticHash: requiredHash(row.assessmentSemanticHash, 'ASSESSMENT'),
+    routeAuthorityHash: requiredHash(row.routeAuthorityHash, 'ROUTE_AUTHORITY'),
     reviewId: text(row.reviewId, 'EMP1_ENGINEERING_RECORD_REVIEW_ID_REQUIRED'),
-    reviewSemanticHash: text(row.reviewSemanticHash,
-      'EMP1_ENGINEERING_RECORD_REVIEW_HASH_REQUIRED'),
-    assessmentDecision: optionalText(row.assessmentDecision),
-    assessmentPassIsCodeCompliance: row.assessmentPassIsCodeCompliance === true,
+    reviewSemanticHash: requiredHash(row.reviewSemanticHash, 'REVIEW'),
   });
 }
 
 function routeAuthorityCustody(evidence) {
-  const routeAuthorityHash = text(
-    evidence.routeAuthorityHash,
-    'EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_HASH_REQUIRED',
-  );
-  const snapshot = record(
-    evidence.routeAuthoritySnapshot,
-    'EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_SNAPSHOT_REQUIRED',
-  );
-  if (text(snapshot.semanticHash,
-    'EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_SNAPSHOT_HASH_REQUIRED') !== routeAuthorityHash) {
-    throw packageError('EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_HASH_MISMATCH');
-  }
-  return deepFreeze({
-    semanticHash: routeAuthorityHash,
-    snapshot: structuredClone(snapshot),
+  return normalizeRouteAuthorityCustody({
+    semanticHash: evidence.routeAuthorityHash,
+    snapshot: evidence.routeAuthoritySnapshot,
   });
 }
 
 function normalizeRouteAuthorityCustody(value) {
   const row = record(value, 'EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_REQUIRED');
-  const semanticHashValue = text(
-    row.semanticHash,
-    'EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_HASH_REQUIRED',
-  );
-  const snapshot = record(
-    row.snapshot,
-    'EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_SNAPSHOT_REQUIRED',
-  );
-  if (snapshot.semanticHash !== semanticHashValue) {
+  const semanticHashValue = requiredHash(row.semanticHash, 'ROUTE_AUTHORITY');
+  const snapshot = record(row.snapshot, 'EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_SNAPSHOT_REQUIRED');
+  if (requiredHash(snapshot.semanticHash, 'ROUTE_AUTHORITY_SNAPSHOT') !== semanticHashValue) {
     throw packageError('EMP1_ENGINEERING_RECORD_ROUTE_AUTHORITY_HASH_MISMATCH');
   }
   return deepFreeze({ semanticHash: semanticHashValue, snapshot: structuredClone(snapshot) });
@@ -229,14 +194,7 @@ function normalizeLimitations(value) {
 }
 
 function assertBindingMatchesReview(evidence, binding) {
-  for (const key of [
-    'sourceHash',
-    'loadTransferResultHash',
-    'sectionScreeningResultHash',
-    'localCorrelationResultHash',
-    'assessmentSemanticHash',
-    'routeAuthorityHash',
-  ]) {
+  for (const key of BINDING_KEYS) {
     if (evidence[key] !== binding[key]) {
       throw packageError(`EMP1_ENGINEERING_RECORD_REVIEW_BINDING_MISMATCH:${key}`);
     }
@@ -270,9 +228,10 @@ function normalizeAuthorityBoundary(value) {
   return expected;
 }
 
-function cloneRecordOrNull(value) {
-  return recordOrNull(value) ? structuredClone(value) : null;
+function requiredHash(value, label) {
+  return text(value, `EMP1_ENGINEERING_RECORD_${label}_HASH_REQUIRED`);
 }
+function cloneRecordOrNull(value) { return recordOrNull(value) ? structuredClone(value) : null; }
 function recordOrNull(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
 }
@@ -280,11 +239,6 @@ function stringArray(value) {
   return Object.freeze(Array.isArray(value) ? value.map((entry) => String(entry)) : []);
 }
 function hashSuffix(value) { return value.startsWith('fnv1a64:') ? value.slice(8) : value; }
-function optionalText(value) {
-  if (value == null) return null;
-  const normalized = String(value).trim();
-  return normalized || null;
-}
 function text(value, code) {
   if (typeof value !== 'string' || !value.trim()) throw packageError(code);
   return value.trim();

@@ -7,9 +7,10 @@ PR                         #1553
 branch                     codex/lfea-support-representability-1551
 state                      OPEN / DRAFT / UNMERGED
 chain                      ADV-LFEA-SUPPORT-REPRESENTABILITY
-current endpoint           EP-0030 (publication in progress)
+current endpoint           EP-0031 (control-plane correction)
 current qualification      QS-ADV-LFEA-SUPPORT-REPRESENTABILITY-0029
 qualification scope        QSCOPE-1551-FULL-PRODUCTION-PATH-REVIEW
+qualification status       STALE / refresh suppressed / takeover not ready
 latest technical head      24ec07250718c770ec2caed7df3c9798f379b51e
 live main re-ground        70dd23a4fb36533f00d818586d1b753fa4f12276
 Common live main           293a3db7993a6945c01adc592a7ff14a339c504a
@@ -18,7 +19,7 @@ merge authority            EXACT OWNER PHRASE `APPROVED MERGE` ONLY
 
 Issue #1551 closes three terminal support-representability boundaries without reducer/parity scope drift: finite skew directional spring, finite CNODE relative spring, and a bounded predefined HANGER subset; rigid skew/CNODE remain MPC-gated.
 
-Engineering policy: Common `engineering-pr-delivery-v2`, pinned basis `4b3a7a9c7ca2fac4a9182ef0028135d17eafaf02`.
+Engineering policy: Common `engineering-pr-delivery-v2`, live basis `293a3db7993a6945c01adc592a7ff14a339c504a`.
 
 ## Engineering implementation state
 

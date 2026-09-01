@@ -78,7 +78,7 @@ function projectSource(result) {
   return Object.freeze({
     qualification: text(result.sourceQualification),
     authoritySemanticHash: nullableText(result.sourceAuthoritySemanticHash),
-    qualifiedAuthorityRetained: Boolean(result.sourceAuthoritySemanticHash),
+    authorityHashRetained: Boolean(result.sourceAuthoritySemanticHash),
   });
 }
 

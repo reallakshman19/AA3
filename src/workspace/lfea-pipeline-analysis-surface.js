@@ -46,7 +46,12 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   });
   const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, { documentRef: options.documentRef, getSourceText: options.getSourceText, onRepaired: options.onRepaired });
   const modelReviewPanel = mountLfeaModelReviewPanel(options.sourceHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
-  const errorCheckPanel = mountLfeaCommonErrorCheckPanel(options.sourceHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
+  const errorCheckPanel = mountLfeaCommonErrorCheckPanel(options.sourceHost, {
+    documentRef: options.documentRef,
+    getPreFlight: options.getPreFlight,
+    onAuthorizePreFlight: options.onAuthorizePreFlight,
+    onContinue: options.onContinueFromErrorCheck,
+  });
 
   return Object.freeze({
     analysisController, modelRepairPanel, modelReviewPanel, errorCheckPanel,

@@ -9,6 +9,14 @@ export function lafeaWorkbenchStyles() {
 .lafea-workbench__header{display:flex;justify-content:space-between;gap:18px;align-items:start}.lafea-workbench__header h1{margin:4px 0}.lafea-workbench__header p{margin:0;color:var(--workspace-muted,#94a3b8)}.lafea-workbench__title-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.lafea-workbench__stage-badge{display:inline-block;background:#1e3a8a;border:1px solid #38bdf8;color:#f8fafc;padding:4px 10px;border-radius:6px;font-size:13px;font-weight:700;box-shadow:0 0 10px rgba(56,189,248,0.25)}
 .lafea-workbench__status{padding:7px 10px;border:1px solid #334155;border-radius:999px;font-weight:800}.lafea-workbench__status[data-status="QUALIFIED"]{color:#86efac;border-color:#15803d}.lafea-workbench__status[data-status="FAILED"]{color:#fca5a5;border-color:#b91c1c}
 .lafea-workbench__stages,.lafea-workbench__toolbar,.lafea-workbench__record-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lafea-doc-identity{display:block;color:#9fb2c8;font-size:11px;margin-top:2px}
+.lafea-doc-path{display:block;color:#647d96;font-size:10px;margin-top:1px;opacity:.72;max-width:34ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lafea-doc-grid th[scope="row"] strong{font-size:13px}
+.lafea-workbench__toolbar-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 10px 4px 0;border-right:1px solid #24374d}
+.lafea-workbench__toolbar-group:last-child{border-right:0;padding-right:0}
+.lafea-workbench__toolbar-group-label{color:#7f93ab;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;margin-right:2px}
+.lafea-workbench__toolbar-group [data-toolbar-primary="true"]{border-color:#38bdf8;background:#123047;color:#f0f9ff;font-weight:800;box-shadow:0 0 0 1px #38bdf8 inset}
+@media(max-width:900px){.lafea-workbench__toolbar-group{border-right:0;padding-right:0}}
 .lafea-workbench button,.lafea-workbench select,.lafea-workbench input{border:1px solid #334155;border-radius:5px;padding:8px;background:#0b1628;color:inherit}.lafea-workbench button[aria-current="step"]{border-color:#f59e0b;color:#fde68a}.lafea-workbench button:disabled{opacity:.45}
 .lafea-workbench [data-role="lafea-run"]{background:#0f766e;border-color:#2dd4bf;color:#ecfeff;font-weight:800;padding-inline:16px}.lafea-workbench [data-role="lafea-run"]:disabled{background:#0b1628;border-color:#334155;color:#94a3b8}
 .lafea-workbench__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.lafea-workbench__card{min-width:0;padding:14px;border:1px solid var(--workspace-border,#334155);border-radius:8px;background:var(--workspace-panel,#101b2e)}.lafea-workbench__card h2{margin:0 0 10px;font-size:15px}.lafea-workbench__section-intro{margin:0 0 12px;color:#a9b8cc;line-height:1.5}

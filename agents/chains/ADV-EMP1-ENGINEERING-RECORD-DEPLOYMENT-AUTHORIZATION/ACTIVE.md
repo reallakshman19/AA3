@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-ENGINEERING-RECORD-DEPLOYMENT-AUTHORIZATION
 MISSION: Bind a validated EMP.1 Engineering Record release-qualification record to existing deployment authority without executing deployment or allowing caller-authored deployment authority.
-ACTIVE_ENDPOINT: EP-0001
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-DEPLOYMENT-AUTHORIZATION/endpoints/EP-0001.md
-CUSTODY_EPOCH: 1
+ACTIVE_ENDPOINT: EP-0002
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-DEPLOYMENT-AUTHORIZATION/endpoints/EP-0002.md
+CUSTODY_EPOCH: 2
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-engineering-record-deployment-authorization-v1
@@ -25,7 +25,7 @@ STACK_BASE_BRANCH: agent/emp1-engineering-record-release-qualification-v1
 STACK_BASE_HEAD: 8cefe3e8e5cee8286ae271ef776f3a83113848da
 MAIN_OBSERVED: 259fb0d556d50d623d41c7c19e75510427455d9d
 MAIN_DRIFT_FROM_STACK_BASIS: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
-MAIN_DRIFT_DETAIL: main merged Draft-origin PR #1616 read-only method-authority projection; no release/deployment authority owner changed.
+MAIN_DRIFT_DETAIL: main merged PR #1616 read-only method-authority projection; it does not create or modify release/deployment authority and does not overlap this slice.
 PR: PENDING
 PR_STATUS: NOT_OPENED
 MERGEABILITY: UNKNOWN
@@ -34,11 +34,14 @@ UNRESOLVED_THREADS: 0
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: IN_PROGRESS
+ENGINEERING_STATE: COMPLETE
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: WRITE_ALLOWED
 AUTO_STATE: NOT_APPLICABLE
+
+MATERIAL_LEG: agents/chains/ADV-EMP1-ENGINEERING-RECORD-DEPLOYMENT-AUTHORIZATION/material-legs/LEG-001.md
+MATERIAL_HEAD: 8b0b98b34284f881dae450b9cb13289f32879913
 
 QUALIFICATION_SCOPE_ID: QSCOPE-emp1-engineering-record-deployment-authorization-v1-protected-deployment-binding
 QUESTION_SET_ID: QSET-0001
@@ -46,8 +49,10 @@ QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REFRESHED
 QUESTION_DISPLAY: SHOW
 QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-ENGINEERING-RECORD-DEPLOYMENT-AUTHORIZATION/QSET-0001.md
-CHAIN_HANDOVER_READY: FALSE
+CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
+HANDOVER_CONTENT_READY: TRUE
+HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_READY: FALSE
 
 AUTHORIZED_RELEASE_STATE_PATH: validation/emp1/release/emp1-professional-release-current-state-v1.json
@@ -55,6 +60,7 @@ AUTHORIZED_RELEASE_STATE_GIT_BLOB_SHA1: 8d108c6f7850e2a240fc15fdd51318ce1a70a29f
 AUTHORIZED_RELEASE_STATE_SEMANTIC_HASH: f9a205509b0da61014655bdb7271c5f4d5716a36a40ab3ea11e0a6cbab286d81
 CURRENT_RELEASE_QUALIFIED: FALSE
 CURRENT_DEPLOYMENT_AUTHORIZED: FALSE
+CURRENT_BINDING_STATE: DEPLOYMENT_BLOCKED_RELEASE_NOT_QUALIFIED
 
 DEPLOYMENT_EXECUTION: FORBIDDEN
 DEPLOYMENT_AUTHORITY_MUTATION: FORBIDDEN_IN_THIS_SLICE
@@ -69,5 +75,5 @@ CRYPTOGRAPHIC_SIGNING_OR_SEAL: FORBIDDEN
 
 VALIDATION_STATUS: NOT_RUN
 REQUIRED_CHECKS: EMP1_ENGINEERING_RECORD_DEPLOYMENT_AUTHORIZATION_CHECK_NOT_RUN
-BLOCKER: Current exact authorized release state is neither release-qualified nor deployment-authorized; this slice may only bind/report that state.
-EXACT_NEXT_ACTION: Implement a deterministic deployment-authorization binding over the validated release-qualification record, plus focused tamper/fail-closed checker. Open Draft PR; do not deploy or merge.
+BLOCKER: Current exact authorized release state is neither release-qualified nor deployment-authorized; executable validation is also NOT_RUN.
+EXACT_NEXT_ACTION: Open stacked Draft PR on #1627. If validation resumes, run `node scripts/emp1-engineering-record-deployment-authorization-check.mjs`, then inherited release/package regressions and hygiene. Do not deploy or merge.

@@ -17,6 +17,9 @@ export function lafeaWorkbenchStyles() {
 .lafea-workbench__table{max-height:230px;overflow:auto}.lafea-workbench table{width:100%;border-collapse:collapse;font-size:12px}.lafea-workbench th,.lafea-workbench td{padding:6px;border:1px solid #334155;text-align:left;vertical-align:top}.lafea-workbench tr[data-selected="true"],.lafea-workbench tr.lafea-row-selected{outline:2px solid #fbbf24;outline-offset:-2px;background:rgba(245,158,11,0.22)!important}
 .lafea-workbench__pagination,.lafea-result-legend ol{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.lafea-result-legend li{display:flex;gap:6px;align-items:center}.lafea-result-legend li span{width:22px;height:12px;border:1px solid #cbd5e1}.lafea-workbench__result-plot svg{display:block;width:100%;min-height:260px}
 .lafea-workbench pre{max-height:430px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.lafea-workbench__authority{padding:10px 12px;border-left:4px solid #2dd4bf;background:#102334;font-weight:700}
+.lafea-workbench__failure{padding:10px 12px;border-left:4px solid #f87171;background:#2a1114;color:#fecaca;font-weight:700;border-radius:0 6px 6px 0}
+.lafea-workbench__failure strong{display:block;color:#fca5a5;font-size:13px;letter-spacing:.02em;margin-bottom:3px}
+.lafea-workbench__failure p{margin:4px 0 0;font-weight:600;color:#f3d3d3}
 @media(max-width:1000px){.lafea-workbench__grid{grid-template-columns:1fr}}@media(max-width:640px){.lafea-workbench__header{display:grid}}
 .lafea-workbench__benchmark{grid-column:1/-1}
 .lafea-doc-table-view{display:flex;flex-direction:column;gap:12px;max-height:520px;overflow:auto;border:1px solid #1e293b;padding:12px;border-radius:6px;background:#070e1a}

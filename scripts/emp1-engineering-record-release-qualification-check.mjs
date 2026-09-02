@@ -132,7 +132,7 @@ assert.throws(() => requireEmp1EngineeringRecordReleaseQualification(tamperedRel
 const tamperedIdentity = structuredClone(qualification);
 tamperedIdentity.releaseAuthorityIdentity.currentStateSemanticHash = '0'.repeat(64);
 assert.throws(() => requireEmp1EngineeringRecordReleaseQualification(tamperedIdentity),
-  /EMP1_RELEASE_QUALIFICATION_AUTHORIZED_STATE_DRIFT:RECORD_SEMANTIC_HASH/u);
+  /EMP1_RELEASE_QUALIFICATION_AUTHORIZED_STATE_DRIFT:RECORD_RELEASE_AUTHORITY_currentStateSemanticHash/u);
 const tamperedPackage = structuredClone(qualification);
 tamperedPackage.packageIdentity.packageId = 'emp1-engineering-record:tampered';
 assert.throws(() => requireEmp1EngineeringRecordReleaseQualification(tamperedPackage),
@@ -140,6 +140,8 @@ assert.throws(() => requireEmp1EngineeringRecordReleaseQualification(tamperedPac
 
 const source = await readFile(resolve(root,
   'src/core/emp1/emp1-engineering-record-release-qualification.js'), 'utf8');
+const authoritySource = await readFile(resolve(root,
+  'src/core/emp1/emp1-professional-release-state-authority.js'), 'utf8');
 assert.equal(source.includes('runEmp1('), false);
 assert.equal(source.includes('stressIntensity'), false);
 assert.equal(source.includes('emp1-c-bounded-route-registry'), false);
@@ -150,6 +152,10 @@ assert.match(source, /callerMaySetReleaseQualified: false/u);
 assert.match(source, /callerMaySubstituteReleaseStateAuthority: false/u);
 assert.match(source, /requiresAcceptedEngineeringReview: true/u);
 assert.match(source, /deploymentRequiresSeparateAuthority: true/u);
+assert.match(authoritySource, new RegExp(EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT.gitBlobSha1, 'u'));
+assert.match(authoritySource, new RegExp(EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT.semanticHash, 'u'));
+assert.equal(authoritySource.includes('releaseQualified: true'), false);
+assert.equal(authoritySource.includes('deploymentAuthorized: true'), false);
 
 console.log(JSON.stringify({
   schema: 'emp1-engineering-record-release-qualification-check/v1',

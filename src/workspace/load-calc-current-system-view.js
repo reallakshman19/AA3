@@ -337,16 +337,38 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
     status.textContent = 'After topology';
     return;
   }
-  // Always show the count — even when this tab is active — so the user
-  // can see how many issues remain without having to click away.
-  if (readiness.projectDataReady) {
-    button.dataset.stepState = state?.activeTab === 'project-data' ? 'current' : 'complete';
+  // Use projectDataBlockerCodes (live projection, real hashes) so STALE_SOURCE_HASH
+  // is correctly detected. Falls back to the null-hash count before checker has run.
+  const pdCodes = readiness.projectDataBlockerCodes ?? [];
+  const hasCodes = pdCodes.length > 0;
+  // Pre-checker: fall back to projectDataActionCount (null-hash validation)
+  const preCheckerIssues = !readiness.validationEvaluated && (readiness.projectDataActionCount ?? 0);
+  const allClear = !hasCodes && !preCheckerIssues;
+
+  const active = state?.activeTab === 'project-data';
+  if (allClear) {
+    button.dataset.stepState = active ? 'current' : 'complete';
     status.textContent = 'Done';
     return;
   }
-  const n = readiness.projectDataActionCount ?? 0;
-  button.dataset.stepState = state?.activeTab === 'project-data' ? 'current' : 'ready';
-  status.textContent = n > 0 ? `${n} issue${n === 1 ? '' : 's'}` : 'Issues';
+
+  button.dataset.stepState = active ? 'current' : 'ready';
+  if (hasCodes) {
+    const hasMissing = pdCodes.includes('MISSING_VALUE');
+    const hasStale = pdCodes.includes('STALE_SOURCE_HASH');
+    if (hasMissing && hasStale) {
+      status.textContent = `${pdCodes.length} issues`;
+    } else if (hasStale) {
+      status.textContent = 'Source stale';
+    } else if (hasMissing) {
+      status.textContent = 'Fields missing';
+    } else {
+      status.textContent = `${pdCodes.length} issue${pdCodes.length === 1 ? '' : 's'}`;
+    }
+  } else {
+    const n = preCheckerIssues || 0;
+    status.textContent = n > 0 ? `${n} issue${n === 1 ? '' : 's'}` : 'Issues';
+  }
 }
 
 function normalizeEnrichmentStatus(workflow, state) {
@@ -367,31 +389,18 @@ function normalizeEnrichmentStatus(workflow, state) {
     return;
   }
 
-  // Read from the raw checker report — same object the Input Check view uses.
-  const report = state?.commonInputState?.report;
-  const hasMassBlocker = report?.blockers?.some?.((b) => b.code === 'MASS_COVERAGE_INCOMPLETE');
+  // enrichmentUnresolvedCount is null when clear; a number when MASS_COVERAGE is blocked.
+  const unresolved = readiness.enrichmentUnresolvedCount ?? null;
+  const active = state?.activeTab === 'enrichment';
 
-  if (!hasMassBlocker) {
-    button.dataset.stepState = state?.activeTab === 'enrichment' ? 'current' : 'complete';
+  if (unresolved === null) {
+    button.dataset.stepState = active ? 'current' : 'complete';
     status.textContent = 'Done';
     return;
   }
 
-  // Collect distinct entity IDs from requirements.details.missing across all methods
-  const entityIds = new Set();
-  for (const method of (report?.methodRows ?? [])) {
-    for (const req of (method.requirements ?? [])) {
-      if (req.code !== 'MASS_COVERAGE_INCOMPLETE') continue;
-      for (const token of (req.details?.missing ?? [])) {
-        const entityId = typeof token === 'string' ? token.split(':')[0] : token?.entityId;
-        if (entityId) entityIds.add(entityId);
-      }
-    }
-  }
-
-  const unresolved = entityIds.size > 0 ? entityIds.size : null;
-  button.dataset.stepState = 'ready';
-  status.textContent = unresolved != null ? `${unresolved} unresolved` : 'Unresolved';
+  button.dataset.stepState = active ? 'current' : 'ready';
+  status.textContent = `${unresolved} unresolved`;
 }
 
 function normalizeOneClickRunStatus(workflow, state) {

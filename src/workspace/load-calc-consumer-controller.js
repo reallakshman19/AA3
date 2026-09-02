@@ -840,8 +840,12 @@ function createWorkflowReadiness(context, topologyCheck) {
       && topologyCheck?.state !== 'NOT_AVAILABLE',
     projectDataReady: projectDataCheck.valid,
     projectDataActionCount: projectDataCheck.errors.length,
+    // PD codes from the live projection (real hashes — catches STALE_SOURCE_HASH)
+    projectDataBlockerCodes: validationEvaluated ? safeProjectionPdBlockerCodes() : [],
     masterDataReady: masterDataAudit.ready,
     masterDataActionCount: masterDataAudit.missingCount,
+    // Distinct unresolved entity count for MASS_COVERAGE — null if not yet evaluated
+    enrichmentUnresolvedCount: validationEvaluated ? safeEnrichmentUnresolvedCount() : null,
     validationReady: commonInput.report?.packageState === 'READY',
     validationState: commonInput.report?.packageState || 'NOT_EVALUATED',
     validationEvaluated,
@@ -912,6 +916,53 @@ function safeValidationBlockerCount() {
     return createCurrentNonFeaWorkspaceStatusProjection()?.blockers?.length || 0;
   } catch {
     return 0;
+  }
+}
+
+/**
+ * Project-data blocker codes from the live status projection (uses real
+ * authority hashes — catches STALE_SOURCE_HASH that validateProjectDataProfile
+ * with null hashes misses). Returns [] on any error so badge degrades gracefully.
+ */
+const PD_BLOCKER_CODES = new Set([
+  'MISSING_VALUE', 'STALE_SOURCE_HASH', 'GRAVITY_BASIS_REQUIRED',
+  'ACTIVE_LOAD_CASES_REQUIRED', 'CONFIGURED_DEFAULT_LEDGER_STALE',
+  'NOT_APPROVED', 'MISSING_EVIDENCE',
+]);
+function safeProjectionPdBlockerCodes() {
+  try {
+    const projection = createCurrentNonFeaWorkspaceStatusProjection();
+    return [...new Set(
+      (projection?.blockers ?? [])
+        .map((b) => b.code)
+        .filter((c) => PD_BLOCKER_CODES.has(c)),
+    )];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Count distinct unresolved entity IDs for MASS_COVERAGE from the live projection.
+ * Each missing token is "entityId:FIELD" — distinct entityIds gives the entity count.
+ * Returns null when coverage is clear or the projection is unavailable.
+ */
+function safeEnrichmentUnresolvedCount() {
+  try {
+    const projection = createCurrentNonFeaWorkspaceStatusProjection();
+    const entityIds = new Set();
+    for (const method of (projection?.methodRows ?? [])) {
+      for (const req of (method.coverageRequirements ?? [])) {
+        if (req.code !== 'MASS_COVERAGE_INCOMPLETE') continue;
+        for (const token of (req.missing ?? [])) {
+          const entityId = typeof token === 'string' ? token.split(':')[0] : token?.entityId;
+          if (entityId) entityIds.add(entityId);
+        }
+      }
+    }
+    return entityIds.size > 0 ? entityIds.size : null;
+  } catch {
+    return null;
   }
 }
 

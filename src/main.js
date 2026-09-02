@@ -137,6 +137,8 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
       loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
       resultsHost: lfeaPipelineShell.getResultsHost(),
       getPreFlight: () => activeLfeaPreFlight(),
+      onAuthorizePreFlight: (approval) => authorizeActiveLfeaPreFlight(approval),
+      onContinueFromErrorCheck: () => lfeaPipelineShell.setActiveStep('LOAD_CASE'),
       onApplyCaseSelection: (caseIds) => applyLfeaCaseSelection(caseIds),
       onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
       onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
@@ -265,6 +267,18 @@ lfeaPipelineShell.setAssemblyHandlers({
 
 function activeLfeaPreFlight() {
   return lfeaSessionPreFlight(lfeaEngineeringSession.getState());
+}
+
+/** Delegate visible Error Check consent to the active source authority owner. */
+function authorizeActiveLfeaPreFlight(approval) {
+  const owner = lfeaSessionPreparationOwner(lfeaEngineeringSession.getState());
+  if (owner === LFEA_ENGINEERING_PREPARATION_OWNERS.INPUTXML) {
+    return linearPipingInputXmlSource.authorizePreFlight(approval);
+  }
+  if (owner === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB) {
+    return lfeaAccdbInputPanel.authorizePreFlight(approval);
+  }
+  throw new Error('Load and prepare a model before authorizing Error Check limitations.');
 }
 
 function applyLfeaCaseSelection(caseIds) {

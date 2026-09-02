@@ -67,8 +67,6 @@ function syncSourceContinuity(sourceHost, doc) {
   }
 
   const errorCheck = sourceHost.querySelector('[data-role="lfea-common-error-check-panel"]');
-  const heading = errorCheck?.querySelector('.lfea-common-error-check__header h3');
-  if (heading && heading.textContent !== 'Error check') heading.textContent = 'Error check';
   const summary = errorCheck?.querySelector('[data-role="lfea-common-error-check-summary"]');
   if (summary?.textContent === 'Load and prepare a model to review governed engineering findings.') {
     summary.textContent = 'Return to Input and load a source model to start Error check.';

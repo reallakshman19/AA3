@@ -242,6 +242,7 @@ function convergeFiveStepWorkflow(section, state) {
     indexNode.textContent = String(index + 1);
     labelNode.textContent = step.label;
   });
+  normalizeTopologyStatus(workflow, state);
   normalizeCalculationDefaultsStatus(workflow, state);
   normalizeEnrichmentStatus(workflow, state);
   normalizeOneClickRunStatus(workflow, state);
@@ -281,6 +282,44 @@ function convergeFiveStepWorkflow(section, state) {
   }
 }
 
+function normalizeTopologyStatus(workflow, state) {
+  const button = workflow.querySelector(
+    'button.empirical-load-calc__workflow-step[data-load-calc-tab="topology"]',
+  );
+  const status = button?.querySelector('.empirical-load-calc__workflow-status');
+  if (!button || !status) return;
+  const readiness = state?.workflowReadiness || {};
+  if (readiness.datasetReady !== true) {
+    button.dataset.stepState = 'pending';
+    status.textContent = 'After import';
+    return;
+  }
+  const blockers = readiness.topologyBlockerCount ?? 0;
+  const openReview = readiness.topologyOpenReviewCount ?? 0;
+  const skipped = readiness.topologySkippedCount ?? 0;
+  // Blockers = hard failures (structural topology not valid)
+  if (blockers > 0) {
+    button.dataset.stepState = 'ready';
+    status.textContent = `${blockers} blocker${blockers === 1 ? '' : 's'}`;
+    return;
+  }
+  // Open (unreviewed, unskipped) semantic reviews — user must act
+  if (openReview > 0) {
+    button.dataset.stepState = 'ready';
+    status.textContent = `${openReview} to review`;
+    return;
+  }
+  // Only skipped findings — not blocking, just acknowledged
+  if (skipped > 0) {
+    button.dataset.stepState = 'complete';
+    status.textContent = `${skipped} skipped`;
+    return;
+  }
+  // All clear
+  button.dataset.stepState = 'complete';
+  status.textContent = 'Done';
+}
+
 function normalizeCalculationDefaultsStatus(workflow, state) {
   const button = workflow.querySelector(
     'button.empirical-load-calc__workflow-step[data-load-calc-tab="project-data"]',
@@ -298,10 +337,70 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
     status.textContent = 'After topology';
     return;
   }
-  const resolved = isRoutineRunReady(state?.commonInputState);
+  // Use projectDataBlockerCodes (live projection, real hashes) so STALE_SOURCE_HASH
+  // is correctly detected. Falls back to the null-hash count before checker has run.
+  const pdCodes = readiness.projectDataBlockerCodes ?? [];
+  const hasCodes = pdCodes.length > 0;
+  // Pre-checker: fall back to projectDataActionCount (null-hash validation)
+  const preCheckerIssues = !readiness.validationEvaluated && (readiness.projectDataActionCount ?? 0);
+  const allClear = !hasCodes && !preCheckerIssues;
+
   const active = state?.activeTab === 'project-data';
-  button.dataset.stepState = active ? 'current' : resolved ? 'complete' : 'ready';
-  status.textContent = resolved ? 'Resolved' : active ? 'Review' : 'Available';
+  if (allClear) {
+    button.dataset.stepState = active ? 'current' : 'complete';
+    status.textContent = 'Done';
+    return;
+  }
+
+  button.dataset.stepState = active ? 'current' : 'ready';
+  if (hasCodes) {
+    const hasMissing = pdCodes.includes('MISSING_VALUE');
+    const hasStale = pdCodes.includes('STALE_SOURCE_HASH');
+    if (hasMissing && hasStale) {
+      status.textContent = `${pdCodes.length} issues`;
+    } else if (hasStale) {
+      status.textContent = 'Source stale';
+    } else if (hasMissing) {
+      status.textContent = 'Fields missing';
+    } else {
+      status.textContent = `${pdCodes.length} issue${pdCodes.length === 1 ? '' : 's'}`;
+    }
+  } else {
+    const n = preCheckerIssues || 0;
+    status.textContent = n > 0 ? `${n} issue${n === 1 ? '' : 's'}` : 'Issues';
+  }
+}
+
+function normalizeEnrichmentStatus(workflow, state) {
+  const button = workflow.querySelector(
+    'button.empirical-load-calc__workflow-step[data-load-calc-tab="enrichment"]',
+  );
+  const status = button?.querySelector('.empirical-load-calc__workflow-status');
+  if (!button || !status) return;
+  const readiness = state?.workflowReadiness || {};
+  if (readiness.datasetReady !== true) {
+    button.dataset.stepState = 'pending';
+    status.textContent = 'After import';
+    return;
+  }
+  if (readiness.masterDataReady !== true) {
+    button.dataset.stepState = 'pending';
+    status.textContent = 'After masters';
+    return;
+  }
+
+  // enrichmentUnresolvedCount is null when clear; a number when MASS_COVERAGE is blocked.
+  const unresolved = readiness.enrichmentUnresolvedCount ?? null;
+  const active = state?.activeTab === 'enrichment';
+
+  if (unresolved === null) {
+    button.dataset.stepState = active ? 'current' : 'complete';
+    status.textContent = 'Done';
+    return;
+  }
+
+  button.dataset.stepState = active ? 'current' : 'ready';
+  status.textContent = `${unresolved} unresolved`;
 }
 
 function normalizeEnrichmentStatus(workflow, state) {

@@ -239,3 +239,166 @@ If tackled in order of engineer-facing value per unit of change:
 None of the above requires touching the EMP.1.A/B/C calculation kernels, the governed-authority state
 machine, or the source/custody model — every recommendation here is a presentation-layer change over
 data the tab already computes correctly.
+
+---
+
+## 6. Reviewed layout proposal
+
+A conceptual desktop layout was proposed for the WRC/C surface of this tab. Reviewed against the
+kernels below, most of it holds up and is adopted; three items are corrected because they claim
+authority the code explicitly refuses to assert.
+
+### 6.1 Adopted as proposed
+
+| Proposed element | Why it holds up |
+|---|---|
+| Status strip + four readiness tiles | Condenses the 7-dimension dashboard into a glanceable header; fixes §4.8 orientation. |
+| Two-column inputs \| authority split | Directly replaces the ~9,400px single column. |
+| Grouped fieldsets, side-by-side pairs | Fixes §4.3 (30 rows for 10 points) and §4.4 (path sub-label dominance). |
+| `DERIVED BASIS` as read-only | Matches the code: `Rm, T, WRC axes, γ, β, Kn/Kb` and nearest-end distance are explicitly *not* editable calculation authority (`emp1-workbench-run-view.js:33`). |
+| `VALIDATE INPUTS` → `RUN` gating | Proper primary-action hierarchy; fixes §4.6's ten undifferentiated buttons. |
+| `Au/Al/Bu/Bl/Cu/Cl/Du/Dl` points table | Exactly the kernel's own `LOCATIONS` (`src/core/emp1/emp1-wrc537-cylindrical-table5.js:1`). |
+| Circumferential / Longitudinal / Shear / Stress intensity columns | Exactly the kernel's returned `stresses: { circumferential, longitudinal, shear, stressIntensity }` (line 95). |
+| Plain-language statuses ("Awaiting validation", "Not calculated") | This *is* the §4.2 fix, demonstrated. |
+| Provenance + authority-boundary panels | Preserves the custody/hash traceability flagged as a keep in §2. |
+
+### 6.2 Adapted — restored what the layout dropped
+
+1. **Per-field source provenance.** The proposed fields are bare input boxes. Today every value carries
+   `SOURCE-PIPE-MODEL@7#geometry.outsideDiameter` + `RETAINED_SOURCE`. That is the tab's strongest
+   feature (§2) and the thing an engineer signing the calculation needs. Restored as a compact `src A@7`
+   chip per field, expanding to the full path on demand, with a `source: [ chip ▾ ]` mode toggle — this
+   is the §4.4 fix (demote, don't delete).
+2. **Source intake and `[SIMULATED]` quarantine.** The proposal has no import or demo-data controls.
+   Restored as a dedicated source row, with demonstration actions visually quarantined below a rule.
+3. **Export / Undo / Redo / Verify.** Absent from the proposal; the live benchmark suite in particular
+   is a genuine strength (§2). Restored as a secondary cluster in the same row.
+4. **The A → B → C step rail.** The proposal is a C-only screen, but C is gated on A's *result* and B's
+   *document* — that is precisely the §4.1 failure (`EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED`). A
+   C-only screen shows a disabled Run button with no explanation and no path to fix it. The rail makes
+   the prerequisite chain visible and navigable, and lets the blocked-run message point at the step
+   that is actually blocking.
+5. **Bounded-route domain limits, live.** "Attachment → shell junction" under-represents the route.
+   The real route is `WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP`: γ = 5 exactly,
+   0.05 ≤ β ≤ 0.5, Δp = 0, Kn/Kb = 1/1, interpolation and cross-variant fallback both PROHIBITED.
+   Running outside that domain is the single most dangerous misuse of this tab, so the limits belong
+   on-screen beside the inputs that can violate them, with live in/out-of-domain marks.
+
+### 6.3 Corrected — three claims the code refuses to make
+
+1. **`Allowable` and `Utilization` — removed.** `grep -rni "allowable|utilization|codeCheck"` over
+   `src/core/emp1` and `src/core/local-stress` returns **zero hits**. This tab has no allowable
+   authority and no code-check authority; code compliance is separately tracked as `NOT ASSESSED`. A
+   utilization ratio reads as a pass/fail code check — exactly the false confidence the whole
+   governed-authority architecture exists to prevent. The panel now states plainly that no allowable,
+   utilization or code check is produced here.
+2. **`GOVERNING RESULT` → `EIGHT-POINT ENVELOPE`.** The kernel's own scope object says
+   `absoluteShellMaximumAssured: false`, `arbitraryLoadingGlobalMaximumAuthority: false`,
+   `continuousJunctureSearchPerformed: false`, `intermediatePointSearchPerformed: false`, with
+   `limitationCode: 'WRC_TABLE5_EIGHT_POINTS_NOT_GLOBAL_ABSOLUTE_MAXIMUM'` (lines 23-32). The code
+   calls the value `eightPointEnvelope` and deliberately avoids the word "governing". Calling the worst
+   of eight tabulated points "governing" asserts the controlling design stress — which the kernel
+   states it cannot assure. The limitation is now carried on the panel.
+3. **"Evaluate attachment stresses" → shell stresses.** `EMP1_WRC537_CYL_TABLE5_STRESS_SCOPE` is
+   `shellStressesCalculated: true`, `attachmentStressesCalculated: false`,
+   `nozzleStressesCalculated: false`, domain `HOST_CYLINDRICAL_SHELL_AT_ATTACHMENT_SHELL_JUNCTURE`
+   (lines 15-22). The step computes stresses *in the host shell at the juncture* — not in the
+   attachment. The heading is corrected accordingly.
+
+### 6.4 Adapted layout
+
+Sample values are internally consistent with the bounded route: shell OD 1100, T 100 → Rm 500,
+γ = Rm/T = 5 ✓; attachment OD 170 → r₀ = 85, β = r₀/Rm = 0.17 ✓ (within 0.05–0.50).
+
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│ EMP.1 · LOCAL ATTACHMENT ANALYTICAL ASSESSMENT           ● A,B BOUND   ○ C NOT RUN         │
+│ Shell stresses at the attachment–shell juncture (WRC 537 §4.5.3). No FE mesh is created.   │
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────┬──────────────────────┬─────────────────────┬────────────────────────┐
+│ METHOD AUTHORITY     │ SOURCE BINDING       │ APPLICABILITY       │ CURRENT RESULT         │
+│ WRC 537 · 2013       │ ✓ A bound · rev @7   │ ⚠ Not confirmed     │ Not calculated         │
+│ Bounded route only   │ ✓ B bound · rev @7   │ β, Δp not checked   │ Review/Code/Release    │
+│ Interp. prohibited   │ ⚠ C incomplete       │ until validation    │ all pending            │
+└──────────────────────┴──────────────────────┴─────────────────────┴────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│ A · LOAD & REFERENCE ───●─── B · SECTION SCREENING ───○─── C · WRC LOCAL CORRELATION       │
+│ ✓ source bound            ✓ source bound              ⚠ blocked · A has no current result  │
+│ Open A →                  Open B →                    ← fix here first                     │
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│ SOURCE  [ Import C source JSON ]  [ Export ]  [ Undo ] [ Redo ]     [ Verify · run suite ] │
+│ - - demonstration data only - -  [ ⚠ SIMULATED · demo source ]  [ ⚠ SIMULATED · sample ]   │
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────┐  ┌──────────────────────────────────────┐
+│ SOURCE-BOUND INPUTS        source: [ chip ▾ ]    │  │ BOUNDED ROUTE · IN-DOMAIN CHECK      │
+├──────────────────────────────────────────────────┤  ├──────────────────────────────────────┤
+│ Load reference                                   │  │ WRC537 · 2013 · CYLINDRICAL / ROUND  │
+│   Load case         [ LC-A         ▾]   src A@7  │  │ Curve ORIGINAL · Table 5 · Δp = 0    │
+│   Pressure result   [ P-CLOSED     ▾]   src A@7  │  │                                      │
+│   Δp                  0 MPa   ✓ zero required    │  │   γ     5.000  ✓ tabulated γ=5 only  │
+│                                                  │  │   β     0.170  ✓ within 0.05–0.50    │
+│ Attachment geometry                              │  │   Δp    0 MPa  ✓ zero Δp required    │
+│   Geometry identity [ LUG-BASE-NE  ▾]   src A@7  │  │   Kn/Kb 1 / 1  ✓ unity required      │
+│   Outside diameter  [    170.0 ] mm     src A@7  │  │                                      │
+│     ╭─ source ───────────────────────────────╮   │  │ Interpolation ......... PROHIBITED   │
+│     │ SOURCE-PIPE-MODEL@7#geometry.outsideDia │  │  │ Cross-variant fallback  PROHIBITED   │
+│     │ RETAINED_SOURCE · bound at A · rev @7   │  │  │                                      │
+│     ╰─────────────────────────────────────────╯  │  │ Outside this route → blocked (8) ▾   │
+│                                                  │  └──────────────────────────────────────┘
+│ Cylinder geometry                                │
+│   Cylinder diameter [   1100.0 ] mm     src A@7  │  ┌──────────────────────────────────────┐
+│   Shell thickness   [    100.0 ] mm     src A@7  │  │ ACTIONS                              │
+│   Cylinder length   [   3000.0 ] mm     src A@7  │  ├──────────────────────────────────────┤
+│   WRC station  x    [   1500.0 ] mm     src A@7  │  │ ┌──────────────────────────────────┐ │
+├──────────────────────────────────────────────────┤  │ │ VALIDATE INPUTS                  │ │
+│ DERIVED — not editable calculation authority     │  │ └──────────────────────────────────┘ │
+│   r₀  outside radius at juncture ...    85.00 mm │  │ ┌──────────────────────────────────┐ │
+│   Rm  mean shell radius ............   500.00 mm │  │ │ RUN C · WRC EVALUATION        →  │ │
+│   β   = r₀ / Rm ....................     0.170   │  │ └──────────────────────────────────┘ │
+│   γ   = Rm / T .....................     5.000   │  │ ⚠ Blocked — A has no current result. │
+│   Nearest-end = min(x, L−x) ........  1500.00 mm │  │   Run step A, then return here.      │
+└──────────────────────────────────────────────────┘  └──────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│ EIGHT-POINT ENVELOPE (WRC Table 5)                                     STATUS: NOT RUN     │
+│                                                                                            │
+│ Max stress intensity   —        at point   —      Invariant: Tresca (plane stress)         │
+│                                                                                            │
+│ ⚠ Not a global maximum. Eight tabulated juncture points only — no continuous juncture      │
+│   or intermediate-point search is performed (WRC 537 §4.3.6). Shell stresses only;         │
+│   attachment and nozzle stresses are not calculated. No allowable, utilization or code     │
+│   check is produced by this step.                                                          │
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│ WRC EVALUATION POINTS — shell stress at juncture, σ in MPa                                 │
+├───────────┬──────────────────┬─────────────────┬──────────────┬──────────────────┬─────────┤
+│ Location  │ Circumferential  │ Longitudinal    │ Shear        │ Stress intensity │ Status  │
+├───────────┼──────────────────┼─────────────────┼──────────────┼──────────────────┼─────────┤
+│ Au        │ —                │ —               │ —            │ —                │ NOT RUN │
+│ Al        │ —                │ —               │ —            │ —                │ NOT RUN │
+│ Bu        │ —                │ —               │ —            │ —                │ NOT RUN │
+│ Bl        │ —                │ —               │ —            │ —                │ NOT RUN │
+│ Cu        │ —                │ —               │ —            │ —                │ NOT RUN │
+│ Cl        │ —                │ —               │ —            │ —                │ NOT RUN │
+│ Du        │ —                │ —               │ —            │ —                │ NOT RUN │
+│ Dl        │ —                │ —               │ —            │ —                │ NOT RUN │
+└───────────┴──────────────────┴─────────────────┴──────────────┴──────────────────┴─────────┘
+
+┌──────────────────────────────────────────────────┐  ┌──────────────────────────────────────┐
+│ CALCULATION PROVENANCE                           │  │ AUTHORITY BOUNDARY                   │
+├──────────────────────────────────────────────────┤  ├──────────────────────────────────────┤
+│ Transaction ID ................... —             │  │ Result publication   NOT AUTHORIZED  │
+│ Input semantic hash .............. —             │  │ Engineering review   REQUIRED        │
+│ Axis source SHA-256 .............. —             │  │ Code compliance      NOT ASSESSED    │
+│ Route / method revision .......... —             │  │ Release state        DRAFT           │
+│ Completed at ..................... —             │  │ Evidence completeness  PENDING       │
+└──────────────────────────────────────────────────┘  └──────────────────────────────────────┘
+```
+
+Global application navigation is intentionally excluded; this layout begins and ends inside the tab.

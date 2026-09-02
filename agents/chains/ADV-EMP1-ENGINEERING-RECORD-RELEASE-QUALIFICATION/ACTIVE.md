@@ -1,6 +1,6 @@
 # Active Handover — ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION
 
-CHAIN_STATE_VERSION: 3
+CHAIN_STATE_VERSION: 4
 HANDOVER_PROTOCOL_VERSION: 2
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION
 MISSION: Bind a validated EMP.1 Engineering Record package to an explicitly authorized professional release-current-state artifact without allowing caller-authored release qualification, deployment authority, code compliance, WRC/source authority, or cryptographic signing.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION/endpoints/EP-0002.md
-CUSTODY_EPOCH: 3
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION/endpoints/EP-0003.md
+CUSTODY_EPOCH: 4
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-engineering-record-release-qualification-v1
@@ -23,9 +23,11 @@ STACK_BASE_PR: 1626
 STACK_BASE_BRANCH: agent/emp1-engineering-record-release-handoff-v1
 STACK_BASE_HEAD: e2ed96d471c999907999ab1b90cf3fd6233732f9
 MAIN_OBSERVED: 93d208dc1298570f20ce170edbd4f881039d22f0
-PR: PENDING
-PR_STATUS: NOT_OPENED
-MERGEABILITY: UNKNOWN
+PR: 1627
+PR_STATUS: OPEN_DRAFT
+PR_CREATION_HEAD: 35ea9d1faff4981c314b8efad5c8fa9f1fa45514
+PR_CHECKPOINT_HEAD: 850f7f1f7671f9465aee05f4fccd14763ae7cf0c
+MERGEABILITY: GITHUB_RECALCULATING_AT_CREATION
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -35,7 +37,7 @@ WRITE_AUTHORITY: WRITE_ALLOWED_RELEASE_QUALIFICATION_BINDING_ONLY
 AUTHORITY_DOMAIN: Engineering-record-to-release-state qualification binding; frozen release-state artifact identity; qualification-record identity.
 MATERIAL_HEAD: 448015474b1307f1bc4d39f7322cc25302388da6
 MATERIAL_LEG: agents/chains/ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION/material-legs/LEG-001.md
-STACK_DIFF_AT_LAST_AUDIT: 11_COMMITS_AHEAD_0_BEHIND; 7_ADDED_PATHS_ONLY
+STACK_DIFF_AT_LAST_AUDIT: DIRECT_DESCENDANT_OF_PR_1626; NEW_PATHS_ONLY
 
 AUTHORIZED_RELEASE_STATE_PATH: validation/emp1/release/emp1-professional-release-current-state-v1.json
 AUTHORIZED_RELEASE_STATE_GIT_BLOB_SHA1: 8d108c6f7850e2a240fc15fdd51318ce1a70a29f
@@ -62,5 +64,5 @@ CALLER_MAY_SUBSTITUTE_RELEASE_STATE: FALSE
 CURRENT_EXPECTED_QUALIFICATION: RELEASE_BLOCKED_EXISTING_AUTHORITY
 REQUIRED_CHECKS: EMP1_ENGINEERING_RECORD_RELEASE_QUALIFICATION_CHECK_NOT_RUN
 
-BLOCKER: Current authorized release-state artifact is fail-closed and not release-qualified; executable validation is NOT_RUN; stack depends on Draft PR #1626.
-EXACT_NEXT_ACTION: Open stacked Draft PR with validation truth NOT_RUN. Do not merge, deploy, or perform cryptographic signing.
+BLOCKER: Current authorized release-state artifact is fail-closed and not release-qualified; focused and inherited executable validation remain NOT_RUN; stack depends on Draft PR #1626.
+EXACT_NEXT_ACTION: Keep PR #1627 Draft/unmerged. If validation resumes, run the focused release-qualification checker first. Deployment/signing remain separate protected tasks.

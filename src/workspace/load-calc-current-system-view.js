@@ -337,39 +337,25 @@ function normalizeCalculationDefaultsStatus(workflow, state) {
     status.textContent = 'After topology';
     return;
   }
-  // Use projectDataBlockerCodes (live projection, real hashes) so STALE_SOURCE_HASH
-  // is correctly detected. Falls back to the null-hash count before checker has run.
-  const pdCodes = readiness.projectDataBlockerCodes ?? [];
-  const hasCodes = pdCodes.length > 0;
-  // Pre-checker: fall back to projectDataActionCount (null-hash validation)
-  const preCheckerIssues = !readiness.validationEvaluated && (readiness.projectDataActionCount ?? 0);
-  const allClear = !hasCodes && !preCheckerIssues;
-
+  // projectDataActionCount is now from safePdBlockerCount() (real hashes).
+  // The legacy renderer already uses this for the active-tab label.
+  // We only need to override the stepState/label for the non-active case
+  // where the legacy renderer falls back to 'Done' / 'Next'.
+  const n = readiness.projectDataActionCount ?? 0;
   const active = state?.activeTab === 'project-data';
-  if (allClear) {
+  if (n === 0) {
     button.dataset.stepState = active ? 'current' : 'complete';
     status.textContent = 'Done';
     return;
   }
-
-  button.dataset.stepState = active ? 'current' : 'ready';
-  if (hasCodes) {
-    const hasMissing = pdCodes.includes('MISSING_VALUE');
-    const hasStale = pdCodes.includes('STALE_SOURCE_HASH');
-    if (hasMissing && hasStale) {
-      status.textContent = `${pdCodes.length} issues`;
-    } else if (hasStale) {
-      status.textContent = 'Source stale';
-    } else if (hasMissing) {
-      status.textContent = 'Fields missing';
-    } else {
-      status.textContent = `${pdCodes.length} issue${pdCodes.length === 1 ? '' : 's'}`;
-    }
-  } else {
-    const n = preCheckerIssues || 0;
-    status.textContent = n > 0 ? `${n} issue${n === 1 ? '' : 's'}` : 'Issues';
+  // Already on active tab — legacy renderer handles the label via workflowStepState.
+  // For non-active: override to show count instead of 'Required' / 'Next'.
+  if (!active) {
+    button.dataset.stepState = 'ready';
+    status.textContent = `${n} issue${n === 1 ? '' : 's'}`;
   }
 }
+
 
 function normalizeEnrichmentStatus(workflow, state) {
   const button = workflow.querySelector(

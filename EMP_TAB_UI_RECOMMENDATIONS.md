@@ -1,5 +1,35 @@
 # EMP (Empirical) Tab — UI Analysis and Recommendations
 
+> **Implementation status (2026-09-02).** Sections 4 and 6 are implemented on
+> `claude/emp-tab-ui-recommendations-7n8cug`. What landed, and where it differs from
+> what section 4 originally proposed:
+>
+> | Finding | Status |
+> |---|---|
+> | §4.1 silent run failure | Done — reported under the toolbar at 354px in its own red treatment, not the teal used for disclaimers, with the raw code kept for traceability |
+> | §4.2 raw enum constants | Done — `emp1-plain-language-labels.js`, the EMP.1 counterpart of `lafea-workbench-reason-labels.js`; composed step labels mapped half by half |
+> | §4.3 30-row point table | Done — one row per identity with X/Y/Z columns; the EMP page fell from ~9,400px to 7,839px |
+> | §4.4 JSON path weight | Done — demoted to a muted truncated line, full value on hover; kept in the DOM as custody information |
+> | §4.5 layout consistency | Not done — lowest urgency, deliberately deferred |
+> | §4.6 toolbar | Done — grouped Source / Run / Evidence with a state-tracking primary action; FE stages keep the flat toolbar |
+> | §4.7 collapsed disclosure | Done — opens once any step has data |
+> | §4.8 no fixed orientation | Not done — the page shortened enough that this became less pressing |
+> | §6.4 WRC surface | Partly done — the shell-parameter domain and curve-selection panel landed. The wider two-column relayout did not, and would now be a larger change than the value it adds |
+>
+> **One correction to section 6.3.** The "governing result" concern applied to the
+> *proposed* layout, not to the code. The existing result scope panel already says
+> "Governing among eight evaluated WRC points", "Continuous/global shell maximum:
+> NOT CLAIMED", "Nozzle / attachment-wall stress: NOT CALCULATED" and "Code
+> compliance: NOT ESTABLISHED BY THIS WRC RESULT". It was right already and was left
+> alone. The `Allowable`/`Utilization` removal in 6.3 still stands.
+>
+> **Calculation work this depended on.** Non-tabulated gamma is now evaluable
+> (`emp1-wrc537-cylindrical-gamma-interpolation.js` and the interpolated domain and
+> adapter), validated against the CAUx 2017 benchmark to within 2.0% at all eight
+> points. The qualified gamma=5 route is untouched. Interpolated results are stamped
+> non-source-qualified; whether they get an engineering-use route registration
+> remains an owner decision.
+
 **Scope:** the `Empirical` top-level tab (`data-application-nav="EMPIRICAL"`, nav icon "E"), i.e. the
 EMP.1 "Local Attachment Analytical Assessment" workbench.
 

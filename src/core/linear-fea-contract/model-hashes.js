@@ -18,13 +18,16 @@ export function computeValidationProfileSemanticHash(profile) {
 
 function stiffnessConstraintProjection(constraint) {
   if (constraint.behavior === 'LINEAR_SPRING') {
-    return {
+    const projection = {
       nodeId: constraint.nodeId,
       dof: constraint.dof,
       behavior: constraint.behavior,
       basis: constraint.basis,
       stiffness: constraint.stiffness,
     };
+    if (Array.isArray(constraint.direction)) projection.direction = [...constraint.direction];
+    if (typeof constraint.connectedNodeId === 'string') projection.connectedNodeId = constraint.connectedNodeId;
+    return projection;
   }
   return {
     nodeId: constraint.nodeId,

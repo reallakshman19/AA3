@@ -180,6 +180,7 @@ export function compileInputXmlLinearStructure(
     ...capability.limitationCodes,
     ...segmentBindings.map((row) => row.limitationCode),
     ...constraints.bindings.map((row) => row.limitationCode),
+    ...constraints.bindings.flatMap((row) => row.limitationCodes ?? []),
     ...compilation.limitations.map((row) => row.code),
   ]);
 

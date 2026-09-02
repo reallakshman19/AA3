@@ -47,6 +47,7 @@ export function parseInputXmlModelHealthSource(xmlText, options = {}) {
     fail('parseInputXmlModelHealthSource requires InputXML text.', 'INPUTXML_SOURCE_TEXT_INVALID');
   }
   const geometry = inputXmlToCanonicalGeometry(xmlText, options);
+  normalizeRetainedGeometryDiagnostics(geometry);
   const unitDiagnostics = [];
   const unitSystem = parseInputXmlUnitSystem(xmlText, options.unit, unitDiagnostics);
   requireUnitAgreement(unitSystem, geometry);
@@ -103,6 +104,18 @@ export function parseInputXmlModelHealthSource(xmlText, options = {}) {
     canonicalSegmentCount: geometry.segments.length,
     geometry,
     diagnostics: Object.freeze((geometry.diagnostics ?? []).map((row) => freezeDeep(structuredClone(row)))),
+  });
+}
+
+function normalizeRetainedGeometryDiagnostics(geometry) {
+  geometry.diagnostics = (geometry.diagnostics ?? []).map((row) => {
+    if (row?.code !== 'INPUTXML_HANGER_PRESENT_NOT_COMPILED') return row;
+    return {
+      ...row,
+      severity: 'info',
+      code: 'INPUTXML_HANGER_RECORD_RETAINED',
+      message: 'HANGER source data are retained for downstream model-health representability classification; geometry ingestion does not itself decide support representability.',
+    };
   });
 }
 

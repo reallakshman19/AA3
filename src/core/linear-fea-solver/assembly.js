@@ -9,27 +9,14 @@ import {
   SPARSE_DIRECT_BACKEND_ID,
   compareAscii,
   fail,
-  requirePositive,
 } from './solver-contract.js';
-
-const CODE = 'SOLVER_ASSEMBLY_INVALID';
+import { buildSpringTriplets } from './spring-assembly.js';
 
 const LOCAL_DOF_REFERENCES = ELEMENT_DOF_ORDER.map((token) => {
   const [end, dof] = token.split(':');
   return { end, dof };
 });
 
-/**
- * Section 8 Assembly: deterministic symmetric sparse triplets, duplicate
- * contributions summed in canonical order.
- *
- * Every element contribution and every declared spring becomes one or more
- * `(row, col, value)` triplets. Triplets are sorted by `(row, col, tag)`
- * before anything is summed, so the accumulated value at a shared DOF never
- * depends on `Map`/object iteration order or on the order elements were
- * passed in — only on the row/column identity and, as a last tie-break, the
- * contributing element or constraint identity.
- */
 function buildElementTriplets(model, dofMap, elementContributions) {
   const elementsById = new Map(model.elements.map((element) => [element.elementId, element]));
   const contributionsById = new Map();
@@ -76,18 +63,6 @@ function buildElementTriplets(model, dofMap, elementContributions) {
     }
   }
   return { triplets, elementLoad, elementIds };
-}
-
-function buildSpringTriplets(model, dofMap) {
-  const springs = model.constraints
-    .filter((constraint) => constraint.behavior === 'LINEAR_SPRING')
-    .sort((left, right) => compareAscii(left.constraintId, right.constraintId));
-  const triplets = springs.map((constraint) => {
-    const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);
-    const stiffness = requirePositive(constraint.stiffness, `constraints[${constraint.constraintId}].stiffness`, CODE);
-    return { row: index, col: index, value: stiffness, tag: `SPRING:${constraint.constraintId}` };
-  });
-  return { triplets, springs };
 }
 
 function sortAndSumTriplets(triplets) {

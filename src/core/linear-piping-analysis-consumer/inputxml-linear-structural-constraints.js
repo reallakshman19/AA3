@@ -1,10 +1,18 @@
 import { InputXmlLinearStructuralPreparationError } from './inputxml-linear-structural-profile.js';
+import { compileInputXmlHangerConstraints } from './inputxml-hanger-structural-constraints.js';
+import {
+  requireStructuralConstraintNode,
+  resolveStructuralConstraintNode,
+} from './inputxml-structural-constraint-target.js';
 import {
   restraintApproximationCodes,
+  restraintConnectingSpringDirection,
+  restraintDirectionalSpringDirection,
   restraintUnilateralAction,
 } from './inputxml-feature-inventory-restraints.js';
 
 const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
+const TRANSLATIONAL_DOFS = Object.freeze(['UX', 'UY', 'UZ']);
 const ALLOWED_DISPOSITIONS = new Set([
   'IMPLEMENTED_EXACTLY',
   'IMPLEMENTED_WITH_DECLARED_APPROXIMATION',
@@ -17,8 +25,11 @@ export function compileInputXmlStructuralConstraints({
   nodeRetargeting,
   conditionedNodeIds,
 }) {
-  const declarations = [];
-  const bindings = [];
+  const hangerResult = compileInputXmlHangerConstraints({
+    inventory, modelId, analysisProfileId, nodeRetargeting, conditionedNodeIds,
+  });
+  const declarations = [...hangerResult.declarations];
+  const bindings = [...hangerResult.bindings];
   const occupied = new Map();
   const retargeting = nodeRetargeting ?? {};
   const available = conditionedNodeIds === undefined || conditionedNodeIds === null
@@ -46,14 +57,96 @@ export function compileInputXmlStructuralConstraints({
         { inventoryId: item.inventoryId, sourceNodeId, targetDof },
       );
     }
-    const targetNodeId = structuralTargetNode(sourceNodeId, retargeting, item.inventoryId);
-    if (available !== null && !available.has(targetNodeId)) {
+    if (item.classification.finiteStiffnessActive
+      && item.classification.stiffnessValue === null) {
       fail(
-        'INPUTXML_STRUCTURAL_RESTRAINT_TARGET_MISSING_AFTER_RETOPOLOGY',
-        `Restraint ${item.inventoryId} targets node ${targetNodeId}, which is absent after structural retopology.`,
-        { inventoryId: item.inventoryId, sourceNodeId: String(sourceNodeId), targetNodeId },
+        'INPUTXML_STRUCTURAL_SPRING_RATE_UNRESOLVED',
+        `Restraint ${item.inventoryId} declares a finite spring rate that cannot be converted to solver units.`,
+        {
+          inventoryId: item.inventoryId,
+          stiffnessDeclared: item.classification.stiffnessDeclared ?? null,
+          stiffnessUnitsResolvable: item.classification.stiffnessUnitsResolvable ?? false,
+        },
       );
     }
+
+    const targetNodeId = resolveStructuralConstraintNode(sourceNodeId, retargeting, item.inventoryId);
+    requireStructuralConstraintNode(available, targetNodeId, item.inventoryId, sourceNodeId);
+
+    const connectingDirection = restraintConnectingSpringDirection(item.classification);
+    if (connectingDirection !== null) {
+      const connectedSourceNodeId = String(item.classification.connectingNodeId);
+      const connectedTargetNodeId = resolveStructuralConstraintNode(
+        connectedSourceNodeId,
+        retargeting,
+        item.inventoryId,
+      );
+      requireStructuralConstraintNode(available, connectedTargetNodeId, item.inventoryId, connectedSourceNodeId);
+      if (connectedTargetNodeId === targetNodeId) {
+        fail(
+          'INPUTXML_STRUCTURAL_CONNECTING_NODE_COLLAPSED',
+          `Restraint ${item.inventoryId} primary and connecting nodes collapse to ${targetNodeId} after retopology.`,
+          { inventoryId: item.inventoryId, sourceNodeId, connectedSourceNodeId, targetNodeId },
+        );
+      }
+      const declarationId = `${modelId}-C-${safe(item.sourceFeatureId)}-CNODE`;
+      declarations.push(Object.freeze({
+        declarationId,
+        kind: 'PARTIAL_RELEASE_SPRING',
+        nodeId: `${modelId}.N${safe(targetNodeId)}`,
+        connectedNodeId: `${modelId}.N${safe(connectedTargetNodeId)}`,
+        dof: null,
+        direction: Object.freeze([...connectingDirection]),
+        stiffness: item.classification.stiffnessValue,
+      }));
+      bindings.push(Object.freeze({
+        sourceFeatureId: item.sourceFeatureId,
+        inventoryId: item.inventoryId,
+        sourceRecordSemanticHash: item.sourceRecordSemanticHash,
+        sourceNodeId: String(sourceNodeId),
+        targetNodeId,
+        connectedSourceNodeId,
+        connectedTargetNodeId,
+        retargetedByBendRetopology: targetNodeId !== String(sourceNodeId)
+          || connectedTargetNodeId !== connectedSourceNodeId,
+        targetDofs: TRANSLATIONAL_DOFS,
+        implementation: disposition.disposition,
+        limitationCode: disposition.limitationCode,
+        limitationCodes: restraintApproximationCodes(item.classification),
+        unilateralAction: restraintUnilateralAction(item.classification),
+        declarationIds: Object.freeze([declarationId]),
+      }));
+      continue;
+    }
+
+    const directionalSpringDirection = restraintDirectionalSpringDirection(item.classification);
+    if (directionalSpringDirection !== null) {
+      const declarationId = `${modelId}-C-${safe(item.sourceFeatureId)}-DIR`;
+      declarations.push(Object.freeze({
+        declarationId,
+        kind: 'PARTIAL_RELEASE_SPRING',
+        nodeId: `${modelId}.N${safe(targetNodeId)}`,
+        dof: null,
+        direction: Object.freeze([...directionalSpringDirection]),
+        stiffness: item.classification.stiffnessValue,
+      }));
+      bindings.push(Object.freeze({
+        sourceFeatureId: item.sourceFeatureId,
+        inventoryId: item.inventoryId,
+        sourceRecordSemanticHash: item.sourceRecordSemanticHash,
+        sourceNodeId: String(sourceNodeId),
+        targetNodeId,
+        retargetedByBendRetopology: targetNodeId !== String(sourceNodeId),
+        targetDofs: TRANSLATIONAL_DOFS,
+        implementation: disposition.disposition,
+        limitationCode: disposition.limitationCode,
+        limitationCodes: restraintApproximationCodes(item.classification),
+        unilateralAction: restraintUnilateralAction(item.classification),
+        declarationIds: Object.freeze([declarationId]),
+      }));
+      continue;
+    }
+
     const dofs = targetDof === 'ALL' ? DOFS : [targetDof];
     const declarationIds = [];
     for (const dof of dofs) {
@@ -67,13 +160,6 @@ export function compileInputXmlStructuralConstraints({
       }
       occupied.set(key, item.sourceFeatureId);
       const declarationId = `${modelId}-C-${safe(item.sourceFeatureId)}-${dof}`;
-      /*
-       * A restraint that declares a spring rate is a compliant support, not a
-       * rigid one, and the compiler already has the kind for it:
-       * PARTIAL_RELEASE_SPRING carries the rate and compiles to the solver's
-       * LINEAR_SPRING behavior. NODAL_RESTRAINT deliberately does not accept a
-       * spring behavior, so the kind is what changes here, not the behavior.
-       */
       const springRate = item.classification.stiffnessValue ?? null;
       declarations.push(Object.freeze(springRate === null
         ? {
@@ -116,25 +202,6 @@ export function compileInputXmlStructuralConstraints({
   });
 }
 
-function structuralTargetNode(sourceNodeId, retargeting, inventoryId) {
-  const source = String(sourceNodeId);
-  const record = retargeting[source] ?? null;
-  if (record === null) return source;
-  if (record.nearestNodeId === null || record.nearestNodeId === undefined) {
-    fail(
-      'INPUTXML_STRUCTURAL_RESTRAINT_RETOPOLOGY_AMBIGUOUS',
-      `Restraint ${inventoryId} is bound to retired bend corner node ${source}, which has no unique retained structural target.`,
-      {
-        inventoryId,
-        sourceNodeId: source,
-        bendSegmentId: record.bendSegmentId ?? null,
-        candidates: record.candidates ?? [],
-      },
-    );
-  }
-  return String(record.nearestNodeId);
-}
-
 function fail(code, message, data) {
   throw new InputXmlLinearStructuralPreparationError(message, code, data);
 }
@@ -144,7 +211,6 @@ function safe(value) {
 }
 
 function compareAscii(left, right) {
-  const a = String(left);
-  const b = String(right);
+  const a = String(left); const b = String(right);
   return a < b ? -1 : a > b ? 1 : 0;
 }

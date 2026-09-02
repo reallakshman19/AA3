@@ -23,7 +23,9 @@ export function nodeResultRows(rows, scaleFor) {
   for (const row of rows ?? []) {
     const node = String(row.nodeId).replace(/^.*\.N/u, '');
     if (!byNode.has(node)) byNode.set(node, {});
-    byNode.get(node)[row.dof] = row.value * scaleFor(row.dof);
+    const values = byNode.get(node);
+    const scaled = row.value * scaleFor(row.dof);
+    values[row.dof] = (values[row.dof] ?? 0) + scaled;
   }
   return [...byNode.entries()]
     .sort((left, right) => compareNodeIds(left[0], right[0]))

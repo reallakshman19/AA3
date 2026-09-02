@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-ENGINEERING-RECORD-DEPLOYMENT-AUTHORIZATION
 MISSION: Bind a validated EMP.1 Engineering Record release-qualification record to existing deployment authority without executing deployment or allowing caller-authored deployment authority.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-DEPLOYMENT-AUTHORIZATION/endpoints/EP-0002.md
-CUSTODY_EPOCH: 2
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-DEPLOYMENT-AUTHORIZATION/endpoints/EP-0003.md
+CUSTODY_EPOCH: 3
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-engineering-record-deployment-authorization-v1
@@ -26,9 +26,12 @@ STACK_BASE_HEAD: 8cefe3e8e5cee8286ae271ef776f3a83113848da
 MAIN_OBSERVED: 259fb0d556d50d623d41c7c19e75510427455d9d
 MAIN_DRIFT_FROM_STACK_BASIS: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
 MAIN_DRIFT_DETAIL: main merged PR #1616 read-only method-authority projection; it does not create or modify release/deployment authority and does not overlap this slice.
-PR: PENDING
-PR_STATUS: NOT_OPENED
-MERGEABILITY: UNKNOWN
+PR: 1628
+PR_STATUS: OPEN_DRAFT
+PR_BASE: agent/emp1-engineering-record-release-qualification-v1
+PR_CREATION_HEAD: ada13e44455d5c270746c9b8558f46304bf6a39a
+PR_CHECKPOINT_HEAD: f2c3df92bea2ed9ddf06126630fa9832d65d4625
+MERGEABILITY: GITHUB_RECALCULATING_AT_CREATION
 REVIEWS: 0
 UNRESOLVED_THREADS: 0
 MERGE_AUTHORITY: OWNER_ONLY
@@ -75,5 +78,5 @@ CRYPTOGRAPHIC_SIGNING_OR_SEAL: FORBIDDEN
 
 VALIDATION_STATUS: NOT_RUN
 REQUIRED_CHECKS: EMP1_ENGINEERING_RECORD_DEPLOYMENT_AUTHORIZATION_CHECK_NOT_RUN
-BLOCKER: Current exact authorized release state is neither release-qualified nor deployment-authorized; executable validation is also NOT_RUN.
-EXACT_NEXT_ACTION: Open stacked Draft PR on #1627. If validation resumes, run `node scripts/emp1-engineering-record-deployment-authorization-check.mjs`, then inherited release/package regressions and hygiene. Do not deploy or merge.
+BLOCKER: Current exact authorized release state is neither release-qualified nor deployment-authorized; executable validation is also NOT_RUN. Stack also requires later reconciliation with current main after dependency disposition.
+EXACT_NEXT_ACTION: Keep PR #1628 Draft/unmerged. If validation resumes, run `node scripts/emp1-engineering-record-deployment-authorization-check.mjs`, then inherited release/package regressions and hygiene. Actual deployment remains a separate explicitly authorized operation.

@@ -303,7 +303,13 @@ export function buildEmp1Wrc537InterpolatedTable5Ordinates({
   beta,
   coordinate = EMP1_WRC537_GAMMA_INTERPOLATION_POLICY.defaultCoordinate,
   betaDomain,
-  longitudinalMomentFigures = { circumferential: '1B-1', longitudinal: '2B-1' },
+  // WRC 537 section 4.4 distinguishes the -1 curves as off-axis maxima limited to a
+  // round flexible nozzle. The retained eight A/B/C/D shell-juncture locations are
+  // axis-of-symmetry values, so the qualified selection is 1B/2B — see
+  // EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY, whose offAxisMaximum
+  // block carries 1B-1/2B-1 with authorizedByThisRoute false. Callers evaluating a
+  // different retained figure map (a frozen oracle, say) must pass it explicitly.
+  longitudinalMomentFigures = { circumferential: '1B', longitudinal: '2B' },
 } = {}) {
   const circFigure = longitudinalMomentFigures?.circumferential;
   const longFigure = longitudinalMomentFigures?.longitudinal;

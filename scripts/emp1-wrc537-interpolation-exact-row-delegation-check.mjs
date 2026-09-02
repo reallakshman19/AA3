@@ -54,6 +54,13 @@ const CASES = [
     },
     frozenOrdinates: gamma5.semanticPayload.curveOrdinates,
     governing: null,
+    // Each oracle declares its own retained figure map. Pass it explicitly rather
+    // than relying on the module default, which is the qualified axis-of-symmetry
+    // 1B/2B selection; these oracles were frozen on the off-axis 1B-1/2B-1 pair.
+    longitudinalMomentFigures: {
+      circumferential: gamma5.semanticPayload.figureMap.circ.Mlbend,
+      longitudinal: gamma5.semanticPayload.figureMap.long.Mlbend,
+    },
   },
   {
     label: 'gamma=15 independent handcalc baseline',
@@ -71,6 +78,10 @@ const CASES = [
       long: gamma15.expected.curveOrdinates.longitudinal,
     },
     governing: gamma15.expected.governing,
+    longitudinalMomentFigures: {
+      circumferential: gamma15.figureMap.circumferential.Mlbend,
+      longitudinal: gamma15.figureMap.longitudinal.Mlbend,
+    },
   },
 ];
 
@@ -82,6 +93,7 @@ for (const testCase of CASES) {
     variant: testCase.variant,
     gamma,
     beta,
+    longitudinalMomentFigures: testCase.longitudinalMomentFigures,
   });
 
   // It must delegate, not interpolate, and must keep source-qualified standing.

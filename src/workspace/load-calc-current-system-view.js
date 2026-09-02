@@ -403,30 +403,6 @@ function normalizeEnrichmentStatus(workflow, state) {
   status.textContent = `${unresolved} unresolved`;
 }
 
-function normalizeEnrichmentStatus(workflow, state) {
-  const button = workflow.querySelector(
-    'button.empirical-load-calc__workflow-step[data-load-calc-tab="enrichment"]',
-  );
-  const status = button?.querySelector('.empirical-load-calc__workflow-status');
-  if (!button || !status) return;
-  const readiness = state?.workflowReadiness || {};
-  if (readiness.datasetReady !== true) {
-    button.dataset.stepState = 'pending';
-    status.textContent = 'After import';
-    return;
-  }
-  if (readiness.masterDataReady !== true) {
-    button.dataset.stepState = 'pending';
-    status.textContent = 'After masters';
-    return;
-  }
-  const report = state?.commonInputState?.report;
-  const massClear = !report?.blockers?.some((b) => b.code === 'MASS_COVERAGE_INCOMPLETE');
-  const active = state?.activeTab === 'enrichment';
-  button.dataset.stepState = active ? 'current' : massClear ? 'complete' : 'ready';
-  status.textContent = massClear ? 'Done' : active ? 'Review' : 'Available';
-}
-
 function normalizeOneClickRunStatus(workflow, state) {
   if (state?.empiricalScenarioState?.calculationEligible === true) return;
   if (!isRoutineRunAttemptAvailable(state)) return;

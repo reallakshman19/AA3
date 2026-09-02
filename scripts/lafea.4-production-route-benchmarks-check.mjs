@@ -130,12 +130,16 @@ const CASES = Object.freeze({
   const D = planeStressMatrix(E, nu);
 
   for (const element of loadCase.elementResults) {
-    vectorRecordClose(element.membraneStrain, epsilon, ['epsilonX', 'epsilonY', 'gammaXY'], 1e-8);
+    const frame = result.meshEvidence.elements
+      .find((row) => row.elementId === element.elementId).localFrame;
+    const localEpsilon = rotateStrain(epsilon, frame);
+    const localCurvature = rotateStrain(curvature, frame);
+    vectorRecordClose(element.membraneStrain, localEpsilon, ['epsilonX', 'epsilonY', 'gammaXY'], 1e-8);
     for (const point of element.integrationPoints) {
-      vectorRecordClose(point.curvature, curvature, ['kappaX', 'kappaY', 'kappaXY'], 1e-8);
+      vectorRecordClose(point.curvature, localCurvature, ['kappaX', 'kappaY', 'kappaXY'], 1e-8);
       for (const surface of point.surfaces) {
         const z = surface.surface === 'TOP' ? t / 2 : surface.surface === 'BOTTOM' ? -t / 2 : 0;
-        const combinedStrain = epsilon.map((value, index) => value + z * curvature[index]);
+        const combinedStrain = localEpsilon.map((value, index) => value + z * localCurvature[index]);
         const expectedStress = matVec(D, combinedStrain);
         vectorRecordClose(
           surface.combinedStress,
@@ -262,6 +266,21 @@ function localDirection(global, frame) {
   a /= length;
   b /= length;
   return [a, b];
+}
+
+// Rotates a global engineering (X, Y, XY) triple — strain or curvature,
+// both using the doubled engineering-shear/twist convention — into an
+// element's local frame. membraneStrain and curvature are element-local
+// quantities (see meshEvidence.localFrame), so a single global closed-form
+// oracle must be rotated per element before comparison, not compared as-is.
+function rotateStrain([x, y, xy], frame) {
+  const c = frame.ex[0];
+  const s = frame.ex[1];
+  return [
+    c ** 2 * x + s ** 2 * y + c * s * xy,
+    s ** 2 * x + c ** 2 * y - c * s * xy,
+    2 * c * s * (y - x) + (c ** 2 - s ** 2) * xy,
+  ];
 }
 
 function projectStrain(strain, a, b) {

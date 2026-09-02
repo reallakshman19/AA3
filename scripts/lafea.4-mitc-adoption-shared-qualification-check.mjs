@@ -102,9 +102,12 @@ for (const row of [
   assert.equal(legacy.qualification.state, QUALIFICATION_STATES.ACCEPTED);
 
   for (const element of legacy.loadCaseResults[0].elementResults) {
-    close(element.membraneStress.sigmaX, expected[0], 1e-8);
-    close(element.membraneStress.sigmaY, expected[1], 1e-8);
-    close(element.membraneStress.tauXY, expected[2], 1e-8);
+    const frame = legacy.meshEvidence.elements
+      .find((row) => row.elementId === element.elementId).localFrame;
+    const localExpected = rotateStress(expected, frame);
+    close(element.membraneStress.sigmaX, localExpected[0], 1e-8);
+    close(element.membraneStress.sigmaY, localExpected[1], 1e-8);
+    close(element.membraneStress.tauXY, localExpected[2], 1e-8);
   }
 
   const mitcModel = adoptionPatchModel({ thickness: 2, poissonRatio: nu });
@@ -118,16 +121,22 @@ for (const row of [
     ),
   }));
   const mitc = recoverExperimentalMitcLoadCase(mitcModel, mitcSolved);
+  const mitcFrame = mitcSolved.meshEvidence.elements
+    .find((row) => row.elementId === mitc.elementResults[0].elementId).localFrame;
+  const mitcLocalExpected = rotateStress(expected, mitcFrame);
   for (const point of mitc.elementResults[0].integrationPoints) {
     for (const surface of point.surfaces) {
-      close(surface.combinedStress.sigmaX, expected[0], 1e-8);
-      close(surface.combinedStress.sigmaY, expected[1], 1e-8);
-      close(surface.combinedStress.tauXY, expected[2], 1e-8);
+      close(surface.combinedStress.sigmaX, mitcLocalExpected[0], 1e-8);
+      close(surface.combinedStress.sigmaY, mitcLocalExpected[1], 1e-8);
+      close(surface.combinedStress.tauXY, mitcLocalExpected[2], 1e-8);
     }
     close(point.transverseShearResultant.qX, 0, 1e-8);
     close(point.transverseShearResultant.qY, 0, 1e-8);
   }
-  console.log('✅ CST/DKT and MITC recover the same independent affine plane-stress membrane tensor with zero MITC transverse shear.');
+  console.log(
+    '✅ CST/DKT and MITC recover the same independent affine plane-stress membrane tensor, '
+      + 'each rotated into its own local element frame, with zero MITC transverse shear.',
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -454,4 +463,18 @@ function vectorClose(actual, expected, tolerance) {
 function close(actual, expected, tolerance = 1e-9) {
   const scale = Math.max(1, Math.abs(expected));
   assert.ok(Math.abs(actual - expected) <= tolerance * scale, `${actual} != ${expected}`);
+}
+
+// Rotates a global (sigmaX, sigmaY, tauXY) tensor into an element's local
+// frame. membraneStress/combinedStress are element-local quantities (see
+// each element's meshEvidence.localFrame), so a single global closed-form
+// oracle must be rotated per element before comparison, not compared as-is.
+function rotateStress([sigmaX, sigmaY, tauXY], frame) {
+  const c = frame.ex[0];
+  const s = frame.ex[1];
+  return [
+    c ** 2 * sigmaX + s ** 2 * sigmaY + 2 * c * s * tauXY,
+    s ** 2 * sigmaX + c ** 2 * sigmaY - 2 * c * s * tauXY,
+    c * s * (sigmaY - sigmaX) + (c ** 2 - s ** 2) * tauXY,
+  ];
 }

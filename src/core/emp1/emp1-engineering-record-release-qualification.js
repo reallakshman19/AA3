@@ -30,9 +30,9 @@ export const EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT = deepFreeze({
 });
 
 /**
- * Create an authority-bearing binding between one exact Engineering Record and
- * the one professional-release current-state artifact explicitly admitted by
- * this protected contract.
+ * Create an authority-bearing binding between one exact accepted Engineering
+ * Record and the one professional-release current-state artifact explicitly
+ * admitted by this protected contract.
  *
  * This record may reflect releaseQualified=true only after a future protected
  * change explicitly replaces EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT with an
@@ -50,12 +50,14 @@ export function createEmp1EngineeringRecordReleaseQualification({
     packageValue: engineeringRecord,
     releaseState,
   });
+  const reviewAccepted = engineeringRecord.recordState === 'REVIEW_ACCEPTED';
   const releaseQualified = handoff.handoffCompatible === true
+    && reviewAccepted
     && authorizedRelease.releaseQualified === true;
   const normalized = {
     schema: EMP1_ENGINEERING_RECORD_RELEASE_QUALIFICATION_SCHEMA,
     productId: 'EMP.1',
-    state: qualificationState(handoff, authorizedRelease),
+    state: qualificationState(handoff, authorizedRelease, engineeringRecord.recordState),
     releaseQualified,
     packageIdentity: {
       packageId: engineeringRecord.packageId,
@@ -77,7 +79,7 @@ export function createEmp1EngineeringRecordReleaseQualification({
       alignment: handoff.alignment,
     },
     existingReleaseAuthority: existingReleaseAuthority(authorizedRelease),
-    blockers: qualificationBlockers(handoff, authorizedRelease),
+    blockers: qualificationBlockers(handoff, authorizedRelease, engineeringRecord.recordState),
     authorityBoundary: authorityBoundary(),
   };
   const qualificationSemanticHash = semanticHash(qualificationSemanticProjection(normalized));
@@ -98,11 +100,18 @@ export function requireEmp1EngineeringRecordReleaseQualification(value) {
   const releaseAuthorityIdentity = normalizeReleaseAuthorityIdentity(source.releaseAuthorityIdentity);
   const handoff = normalizeHandoff(source.handoff);
   const existingAuthority = normalizeExistingReleaseAuthority(source.existingReleaseAuthority);
-  const expectedReleaseQualified = handoff.compatible === true && existingAuthority.releaseQualified === true;
+  const reviewAccepted = packageIdentity.recordState === 'REVIEW_ACCEPTED';
+  const expectedReleaseQualified = handoff.compatible === true
+    && reviewAccepted
+    && existingAuthority.releaseQualified === true;
   if (source.releaseQualified !== expectedReleaseQualified) {
     throw qualificationError('EMP1_RELEASE_QUALIFICATION_RELEASE_FLAG_INVALID');
   }
-  const expectedState = qualificationStateFromSummary(handoff, existingAuthority);
+  const expectedState = qualificationStateFromSummary(
+    handoff,
+    existingAuthority,
+    packageIdentity.recordState,
+  );
   if (source.state !== expectedState) {
     throw qualificationError('EMP1_RELEASE_QUALIFICATION_STATE_INVALID');
   }
@@ -118,7 +127,11 @@ export function requireEmp1EngineeringRecordReleaseQualification(value) {
     blockers: stringArray(source.blockers),
     authorityBoundary: normalizeAuthorityBoundary(source.authorityBoundary),
   };
-  const expectedBlockers = qualificationBlockersFromSummary(handoff, existingAuthority);
+  const expectedBlockers = qualificationBlockersFromSummary(
+    handoff,
+    existingAuthority,
+    packageIdentity.recordState,
+  );
   if (JSON.stringify(normalized.blockers) !== JSON.stringify(expectedBlockers)) {
     throw qualificationError('EMP1_RELEASE_QUALIFICATION_BLOCKERS_INVALID');
   }
@@ -195,23 +208,27 @@ function requireAuthorizedReleaseState(value, artifact) {
   });
 }
 
-function qualificationState(handoff, release) {
-  return qualificationStateFromSummary({ compatible: handoff.handoffCompatible }, release);
+function qualificationState(handoff, release, recordState) {
+  return qualificationStateFromSummary({ compatible: handoff.handoffCompatible }, release, recordState);
 }
-function qualificationStateFromSummary(handoff, release) {
+function qualificationStateFromSummary(handoff, release, recordState) {
   if (handoff.compatible !== true) return 'RELEASE_INCOMPATIBLE_WITH_AUTHORIZED_PROFILE';
+  if (recordState !== 'REVIEW_ACCEPTED') return 'RELEASE_BLOCKED_ENGINEERING_REVIEW_NOT_ACCEPTED';
   if (release.professionalReleaseReady !== true) return 'RELEASE_BLOCKED_EXISTING_AUTHORITY';
   if (release.releaseQualified !== true) return 'RELEASE_QUALIFICATION_PENDING_EXISTING_AUTHORITY';
   return 'RELEASE_QUALIFIED_EXISTING_AUTHORITY';
 }
-function qualificationBlockers(handoff, release) {
+function qualificationBlockers(handoff, release, recordState) {
   return qualificationBlockersFromSummary({
     compatible: handoff.handoffCompatible,
     blockers: handoff.handoffBlockers,
-  }, release);
+  }, release, recordState);
 }
-function qualificationBlockersFromSummary(handoff, release) {
+function qualificationBlockersFromSummary(handoff, release, recordState) {
   const blockers = [...(handoff.blockers ?? [])];
+  if (recordState !== 'REVIEW_ACCEPTED') {
+    blockers.push('EMP1_RELEASE_QUALIFICATION_ACCEPTED_ENGINEERING_REVIEW_REQUIRED');
+  }
   if (release.professionalReleaseReady !== true) {
     blockers.push('EMP1_RELEASE_QUALIFICATION_EXISTING_PROFESSIONAL_RELEASE_NOT_READY');
   }
@@ -283,6 +300,7 @@ function authorityBoundary() {
     underlyingReleaseAuthorityCreatedByThisRecord: false,
     callerMaySetReleaseQualified: false,
     callerMaySubstituteReleaseStateAuthority: false,
+    requiresAcceptedEngineeringReview: true,
     createsEngineeringCalculationAuthority: false,
     createsSourceAuthority: false,
     createsMethodAuthority: false,

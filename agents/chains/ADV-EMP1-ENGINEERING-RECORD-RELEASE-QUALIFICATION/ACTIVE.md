@@ -1,6 +1,6 @@
 # Active Handover — ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION
 
-CHAIN_STATE_VERSION: 2
+CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
@@ -10,7 +10,7 @@ CHAIN_ID: ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION
 MISSION: Bind a validated EMP.1 Engineering Record package to an explicitly authorized professional release-current-state artifact without allowing caller-authored release qualification, deployment authority, code compliance, WRC/source authority, or cryptographic signing.
 ACTIVE_ENDPOINT: EP-0002
 ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION/endpoints/EP-0002.md
-CUSTODY_EPOCH: 2
+CUSTODY_EPOCH: 3
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-engineering-record-release-qualification-v1
@@ -33,8 +33,9 @@ ENGINEERING_STATE: MATERIAL_COMPLETE_VALIDATION_INCOMPLETE
 CUSTODY_STATE: HELD
 WRITE_AUTHORITY: WRITE_ALLOWED_RELEASE_QUALIFICATION_BINDING_ONLY
 AUTHORITY_DOMAIN: Engineering-record-to-release-state qualification binding; frozen release-state artifact identity; qualification-record identity.
-MATERIAL_HEAD: 1df10bd0476be3307dd1f297fcf873efcfac46cc
+MATERIAL_HEAD: 448015474b1307f1bc4d39f7322cc25302388da6
 MATERIAL_LEG: agents/chains/ADV-EMP1-ENGINEERING-RECORD-RELEASE-QUALIFICATION/material-legs/LEG-001.md
+STACK_DIFF_AT_LAST_AUDIT: 11_COMMITS_AHEAD_0_BEHIND; 7_ADDED_PATHS_ONLY
 
 AUTHORIZED_RELEASE_STATE_PATH: validation/emp1/release/emp1-professional-release-current-state-v1.json
 AUTHORIZED_RELEASE_STATE_GIT_BLOB_SHA1: 8d108c6f7850e2a240fc15fdd51318ce1a70a29f

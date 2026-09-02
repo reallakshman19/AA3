@@ -53,12 +53,27 @@ export const EMP1_WRC537_GAMMA_INTERPOLATION_POLICY = deepFreeze({
     + 'Blending them can move the denominator root between bracket rows and produce a pole '
     + 'inside the interpolated band. Evaluating each bracket row at the requested beta first, '
     + 'then blending the resulting ordinate, cannot introduce a pole that neither row has.',
-  defaultCoordinate: 'LOG_GAMMA',
+  defaultCoordinate: 'LINEAR_GAMMA',
   defaultCoordinateReason:
-    'Source gamma rows are spaced geometrically (5, 7.5, 10, 15, 25, 35, 50, 75, 100, 150, 200, 300) '
-    + 'and shell attenuation scales with sqrt(Rm/T), so log(gamma) is far closer to uniform than gamma. '
-    + 'Linear blending across a wide row gap such as 50->100 is materially biased.',
+    'Chosen for error direction, not error size. A leave-one-out measurement over the three interior '
+    + 'grid rows and beta 0.05..0.50 (57 eight-point-envelope cases, scripts/emp1-wrc537-gamma-'
+    + 'interpolation-accuracy-check.mjs) found LOG_GAMMA more accurate on average (median 5.5%, p95 '
+    + '11.0%) but unconservative in 18 of 57 cases, understating the envelope by up to 11.0%. '
+    + 'LINEAR_GAMMA was roughly half as accurate (median 9.8%, p95 26.2%) yet overestimated in every '
+    + 'one of the 57 cases. A screening tool that must not overstate safety is better served by the '
+    + 'coordinate that errs high, so LINEAR_GAMMA is the default and LOG_GAMMA remains selectable '
+    + 'for best-estimate work. The a priori argument for log spacing was reasonable but is beaten by '
+    + 'the measurement.',
   supportedCoordinates: Object.freeze(['LOG_GAMMA', 'LINEAR_GAMMA', 'RECIPROCAL_GAMMA']),
+  coordinateAccuracyBasis: ({
+    method: 'LEAVE_ONE_OUT_OVER_INTERIOR_GRID_ROWS',
+    cases: 57,
+    note: 'Leave-one-out removes a row, so each bracket spans two grid gaps and overstates the error '
+      + 'of real use. Genuine non-tabulated targets inside one gap (gamma 25 and 35 within 15->50) '
+      + 'moved only 2.2% and 3.9% when the bracket was widened to 15->100.',
+    LOG_GAMMA: { medianAbsolutePercent: 5.5, p95AbsolutePercent: 11.0, unconservativeCases: 18, worstUnconservativePercent: -11.0 },
+    LINEAR_GAMMA: { medianAbsolutePercent: 9.8, p95AbsolutePercent: 26.2, unconservativeCases: 0, worstUnconservativePercent: 0 },
+  }),
   bracketing: 'NEAREST_ENCLOSING_COMMON_TABULATED_ROWS',
   bracketingReason:
     'A Table-5 route consumes every required figure, so the usable gamma grid is the intersection '

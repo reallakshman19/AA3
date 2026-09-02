@@ -47,18 +47,19 @@ assert.equal(plan.wrcMethodFidelityClaim, false);
 assert.equal(plan.bracket.lowerGamma, 15);
 assert.equal(plan.bracket.upperGamma, 50);
 assert.equal(plan.betaOuterLimitSourceResolved, false);
-// log-coordinate weight
-const expectedW = (Math.log(42.72) - Math.log(15)) / (Math.log(50) - Math.log(15));
-assert.ok(Math.abs(plan.bracket.upperWeight - expectedW) < 1e-12);
+// default is LINEAR_GAMMA, chosen for conservatism — see the accuracy check
+assert.equal(EMP1_WRC537_GAMMA_INTERPOLATION_POLICY.defaultCoordinate, 'LINEAR_GAMMA');
+assert.ok(Math.abs(plan.bracket.upperWeight - (42.72 - 15) / (50 - 15)) < 1e-12);
 assert.ok(Math.abs(plan.bracket.lowerWeight + plan.bracket.upperWeight - 1) < 1e-12);
 
 // --- coordinate choice actually changes the weight ------------------------------
-const linear = planEmp1Wrc537GammaInterpolation({ variant: V, gamma: 42.72, coordinate: 'LINEAR_GAMMA' });
-// gamma=42.72 in the 15->50 bracket: log weight 0.869, linear weight 0.792.
+const logPlan = planEmp1Wrc537GammaInterpolation({ variant: V, gamma: 42.72, coordinate: 'LOG_GAMMA' });
+// gamma=42.72 in the 15->50 bracket: linear weight 0.792, log weight 0.869.
 // The ~7.7 point spread is why the coordinate choice is a recorded policy decision
 // rather than an implementation detail.
-assert.ok(Math.abs(linear.bracket.upperWeight - (42.72 - 15) / (50 - 15)) < 1e-12);
-assert.ok(Math.abs(linear.bracket.upperWeight - plan.bracket.upperWeight) > 0.05,
+const expectedLogW = (Math.log(42.72) - Math.log(15)) / (Math.log(50) - Math.log(15));
+assert.ok(Math.abs(logPlan.bracket.upperWeight - expectedLogW) < 1e-12);
+assert.ok(Math.abs(logPlan.bracket.upperWeight - plan.bracket.upperWeight) > 0.05,
   'log and linear coordinates must differ materially across a 15->50 gap');
 assert.throws(() => planEmp1Wrc537GammaInterpolation({ variant: V, gamma: 42.72, coordinate: 'SQRT_GAMMA' }),
   /COORDINATE_UNSUPPORTED/);

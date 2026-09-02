@@ -402,3 +402,69 @@ Sample values are internally consistent with the bounded route: shell OD 1100, T
 ```
 
 Global application navigation is intentionally excluded; this layout begins and ends inside the tab.
+
+---
+
+## 7. Appraisal of the PV Elite C101 report as UI reference and benchmark
+
+Source: `Nozzle_Flange_MAWP_ResultsC101.pdf` — PV Elite 28 output, Southern Oil Refinery 2,
+SOR2-MEC-CAL-C101 Rev A, fractionation column C101. 20 pages: nozzle flange MAWP derating per
+ASME UG-44(b), plus a full WRC 297 local-stress run for nozzle "A".
+
+### 7.1 Not usable as a numerical validation benchmark for EMP.1.C
+
+Four independent disqualifiers, each fatal on its own:
+
+| # | Report | EMP.1.C bounded route | Verdict |
+|---|---|---|---|
+| 1 | Method is **WRC 297** (flexible hollow nozzle, λ/`T/t` curve access) | `WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP`, rigid attachment | different method |
+| 2 | γ = Rm/T = **42.7** (pad edge) / **43.2** (nozzle edge) | γ = 5 exactly; `docs/04_WRC537_NUMERICAL_TABLES.csv` tabulates only **5, 15, 50**; interpolation PROHIBITED | `NON_TABULATED_GAMMA` |
+| 3 | Δp = **523.70 kPa**, and ~28 MPa of the reported `Circ. Pm` is pressure membrane | Δp = 0 required; WRC 537 `pressureStress: NOT_SUPPORTED (explicitly excluded)`, EXCL_002 | `NONZERO_DIFFERENTIAL_PRESSURE` |
+| 4 | Headline output is *"Nozzle Stress Summation at Vessel-Nozzle Junction"* | `nozzleStress: NOT_SUPPORTED`; EXCL_001 "Stresses in nozzle not calculated" → `METHOD_NOT_APPLICABLE` | out of scope |
+
+Note β = **0.42** (nozzle edge) and **0.50** (pad edge) both sit legitimately inside the route's
+0.05–0.50 window. The case therefore *passes* a naive β-only applicability check and is rejected only
+on γ, Δp and method — which makes it unusually valuable as a gate test (§7.2a).
+
+### 7.2 Genuinely usable in three other ways
+
+a. **Guard / negative benchmark (high value).** A real, third-party, signed case the applicability gate
+   *must* reject, with predictable codes (`NON_TABULATED_GAMMA`, `NONZERO_DIFFERENTIAL_PRESSURE`,
+   nozzle-stress scope). Because β passes, it exercises the gate against a genuinely seductive input
+   rather than an obviously-invalid synthetic one.
+b. **Load-convention conformance fixture.** The report states its loads are in *"WRC 107/537
+   Convention"* and gives all six components — `P −25926.99 N`, `Vc 22115.01 N`, `Vl 69592.96 N`,
+   `Mc −45209.96 N·m`, `Ml 78037.98 N·m`, `Mt 101000.95 N·m` — which is verbatim the field set of
+   `normalizeLoads` in `emp1-wrc537-cylindrical-table5.js:110`, with real signed values (P inward
+   negative, Mc negative). Good for testing intake and sign handling independently of the stress maths.
+c. **UI / report reference (strongest yes).** See §7.3.
+
+### 7.3 UI lessons worth adopting
+
+1. **Transpose the results table.** PV Elite puts the eight points as *columns* and stress types as
+   *rows*. That is better than the row-per-point form in §6.4: the engineering read is "compare this
+   stress category across the eight points", and eight columns fit one screen width without scroll.
+2. **Report identity on every page** — project, document number, equipment, software + version,
+   licensee, filename, step, timestamp. This is what makes an output signable, and it is what the
+   `CALCULATION PROVENANCE` panel should carry.
+3. **State the basis in prose beside the number** — e.g. *"Because only sustained loads were specified,
+   the Pm+Pl+Q allowable was 3 × Smh."* One line, next to the value it justifies.
+4. **Distinguish not-evaluated from zero.** The flange table uses `...` for nozzles not evaluated, never
+   a blank or a `0.0`. The `—` convention in §6.4 does the same job; keep it rigorous.
+5. **Governing-case rollup.** The flange table closes with `Min Rating | 420.4 | 1960.0` across all 37
+   nozzles — a single controlling value after a long per-item table.
+
+**One thing not to copy directly.** PV Elite's stress block ends with
+`Max. S.I. | S.I. Allowable | Result → Passed`. It can legitimately show that because it holds material
+allowable authority (Smh) and code-compliance authority. This app holds neither — hence the §6.3
+removal of `Allowable`/`Utilization`. Adopt the *shape* of that comparison block, but leave it visibly
+unpopulated ("Code compliance — NOT ASSESSED") until allowable-stress authority actually exists in the
+data model. The difference is authority, not layout taste.
+
+### 7.4 What a valid numerical benchmark would need
+
+A WRC 537 (not 297) case: rigid/solid attachment on a cylindrical shell, γ ∈ {5, 15, 50} **exactly**,
+Δp = 0, Kn = Kb = 1, radial attachment, single isolated attachment, with the eight-point stress
+intensities published. PV Elite can produce this — it supports the WRC 107/537 method; this particular
+nozzle simply ran under 297. Re-running one nozzle with 107/537 selected, a rigid attachment, a
+tabulated γ, and pressure excluded would yield a directly comparable case from the same tool.

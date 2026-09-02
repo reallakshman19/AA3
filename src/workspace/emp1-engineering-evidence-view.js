@@ -4,6 +4,7 @@ import {
   governingEightPointStressIntensity,
 } from './emp1-professional-result-presentation.js';
 import { card, element } from './lafea-workbench-dom.js';
+import { renderEmp1GammaDomain } from './emp1-gamma-domain-view.js';
 
 const FORCE_NAMES = Object.freeze(['Fx', 'Fy', 'Fz']);
 const MOMENT_NAMES = Object.freeze(['Mx', 'My', 'Mz']);
@@ -61,6 +62,14 @@ export function renderEmp1BoundedCorrelationEvidence(root, projection) {
     (route.remainingBlocked ?? []).forEach((code) => list.append(element(root, 'li', null, human(code))));
     blocked.append(list);
     result.body.append(blocked);
+
+    // The blocked list says a gamma other than the route's is refused, but never
+    // which shell parameters the dataset can actually evaluate or what happens
+    // between them. That question belongs next to the route it constrains.
+    result.body.append(renderEmp1GammaDomain(root, {
+      routeGamma: route.scope?.gamma ?? null,
+      requestedGamma: route.scope?.gamma ?? null,
+    }));
   }
   return result.section;
 }

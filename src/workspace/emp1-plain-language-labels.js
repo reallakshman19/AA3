@@ -87,6 +87,27 @@ const STATE_LABELS = Object.freeze({
     'The bounded local-correlation route is not authorized for engineering use.',
   EMP1_C_BOUNDED_ROUTE_EXECUTOR_NOT_AUTHORIZED:
     'The bounded local-correlation route has no authorized executor.',
+  // conditions the bounded route still refuses, listed on the C evidence card
+  NONZERO_DIFFERENTIAL_PRESSURE:
+    'Differential pressure must be zero on this route.',
+  NONUNITY_STRESS_CONCENTRATION:
+    'Stress concentration factors other than Kn = Kb = 1 are not qualified.',
+  WRC_APPENDIX_B_GENERAL_SCF_NOT_SOURCE_QUALIFIED:
+    'The general Appendix B stress-concentration treatment is not source qualified.',
+  OFF_AXIS_LONGITUDINAL_MOMENT_MAXIMUM:
+    'Off-axis longitudinal-moment maxima need the 1B-1/2B-1 curves and a separate applicability case.',
+  GAMMA_OTHER_THAN_5: 'Only the tabulated γ = 5 row is qualified on this route.',
+  BETA_OUTSIDE_0P05_TO_0P5: 'β outside 0.05 to 0.50 is outside the qualified band.',
+  NON_TABULATED_GAMMA: 'A γ between source rows is not qualified on this route.',
+  GAMMA_OUTSIDE_TABULATED_RANGE:
+    'A γ outside the tabulated range cannot be bracketed and is refused.',
+  BETA_OUTER_LIMIT_NOT_SOURCE_RESOLVED:
+    'Above γ = 5 the β outer limit is not printed in the source and must be declared.',
+  NON_TABULATED_GAMMA_INTERPOLATION_RULE_NOT_SOURCE_QUALIFIED:
+    'WRC 537 states no γ interpolation rule, so this route carries no engineering-use authority.',
+  GAMMA_INTERPOLATED_BETWEEN_SOURCE_ROWS_BY_OWNER_DIRECTED_POLICY:
+    'γ is interpolated between source rows by owner-directed policy, not by a WRC source rule.',
+  GLOBAL_EMP1_C_ROUTE: 'The unbounded, full-domain EMP.1.C route remains blocked.',
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED:
     'The WRC 537 gamma=5 zero-pressure route is suspended pending requalification.',
 });

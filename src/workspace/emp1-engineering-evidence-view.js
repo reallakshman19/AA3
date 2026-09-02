@@ -5,6 +5,7 @@ import {
 } from './emp1-professional-result-presentation.js';
 import { card, element } from './lafea-workbench-dom.js';
 import { renderEmp1GammaDomain } from './emp1-gamma-domain-view.js';
+import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
 
 const FORCE_NAMES = Object.freeze(['Fx', 'Fy', 'Fz']);
 const MOMENT_NAMES = Object.freeze(['Mx', 'My', 'Mz']);
@@ -35,6 +36,9 @@ export function renderEmp1BoundedCorrelationEvidence(root, projection) {
     const status = element(root, 'strong', 'lafea-result-highlights__status',
       route.engineeringUseAuthorized ? 'BOUNDED ROUTE QUALIFIED' : 'ROUTE NOT AUTHORIZED');
     status.dataset.role = 'emp1-c-bounded-route-status';
+    // A route that is not authorized must not read in the same affirmative green
+    // as one that is.
+    status.dataset.authorized = String(route.engineeringUseAuthorized === true);
     status.dataset.routeId = String(route.routeId ?? 'UNRESOLVED');
     result.body.append(status);
     result.body.append(keyValueTable(root, [
@@ -63,14 +67,18 @@ export function renderEmp1BoundedCorrelationEvidence(root, projection) {
     blocked.append(list);
     result.body.append(blocked);
 
-    // The blocked list says a gamma other than the route's is refused, but never
-    // which shell parameters the dataset can actually evaluate or what happens
-    // between them. That question belongs next to the route it constrains.
-    result.body.append(renderEmp1GammaDomain(root, {
-      routeGamma: route.scope?.gamma ?? null,
-      requestedGamma: route.scope?.gamma ?? null,
-    }));
   }
+
+  // The blocked list says a gamma other than the route's is refused, but never
+  // which shell parameters the dataset can actually evaluate or what happens
+  // between them. The grid and the selection policy are properties of the retained
+  // dataset rather than of any one route, so this is stated once, after the routes
+  // it qualifies, using the gamma of the route that is authorized for use.
+  const authorized = routes.find((route) => route.engineeringUseAuthorized) ?? routes[0];
+  result.body.append(renderEmp1GammaDomain(root, {
+    routeGamma: authorized?.scope?.gamma ?? null,
+    requestedGamma: authorized?.scope?.gamma ?? null,
+  }));
   return result.section;
 }
 
@@ -349,5 +357,5 @@ function engineeringNumber(value) {
   return Number(value.toPrecision(10)).toString();
 }
 function human(value) {
-  return String(value ?? 'UNRESOLVED').replaceAll('_', ' ');
+  return emp1PlainLanguageLabel(value);
 }

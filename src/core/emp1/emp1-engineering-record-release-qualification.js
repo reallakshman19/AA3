@@ -1,43 +1,22 @@
 import { semanticHash } from '../shared-primitives/canonical-json.js';
 import { requireEmp1EngineeringRecordPackage } from './emp1-engineering-record-package.js';
 import { projectEmp1EngineeringRecordReleaseHandoff } from './emp1-engineering-record-release-handoff.js';
+import {
+  EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT,
+  requireAuthorizedEmp1ProfessionalReleaseState,
+} from './emp1-professional-release-state-authority.js';
+
+export { EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT } from
+  './emp1-professional-release-state-authority.js';
 
 export const EMP1_ENGINEERING_RECORD_RELEASE_QUALIFICATION_SCHEMA =
   'emp1-engineering-record-release-qualification/v1';
 
-export const EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT = deepFreeze({
-  path: 'validation/emp1/release/emp1-professional-release-current-state-v1.json',
-  gitBlobSha1: '8d108c6f7850e2a240fc15fdd51318ce1a70a29f',
-  semanticHash: 'f9a205509b0da61014655bdb7271c5f4d5716a36a40ab3ea11e0a6cbab286d81',
-  schema: 'emp1-professional-release-current-state/v1',
-  issue: 1389,
-  releaseProfileId: 'EMP1_WRC537_2013_CYLINDRICAL_GAMMA5_ZERO_DP_V1',
-  releaseReady: false,
-  state: 'BLOCKED_FAIL_CLOSED_POST_SEQUENCE',
-  professionalReleaseReady: false,
-  definitionOfDoneComplete: false,
-  boundedProductionRouteAuthorized: true,
-  boundedEngineeringUseAuthorized: true,
-  globalEmp1CRouteAuthority: false,
-  codeComplianceAuthorized: false,
-  releaseQualified: false,
-  deploymentAuthorized: false,
-  routeId: 'EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP',
-  sourceSha256: '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2',
-  shellFamily: 'CYLINDRICAL',
-  attachmentShape: 'ROUND',
-  gamma: 5,
-});
-
 /**
- * Create an authority-bearing binding between one exact accepted Engineering
- * Record and the one professional-release current-state artifact explicitly
- * admitted by this protected contract.
- *
- * This record may reflect releaseQualified=true only after a future protected
- * change explicitly replaces EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT with an
- * authorized artifact whose own release authority is true. Caller-supplied
- * booleans can never upgrade release authority.
+ * Bind one exact accepted Engineering Record to the explicitly authorized
+ * professional release-current-state artifact. This record may reflect
+ * releaseQualified=true only after the protected release-state authority owner
+ * is updated to admit an artifact whose own release authority is true.
  */
 export function createEmp1EngineeringRecordReleaseQualification({
   packageValue,
@@ -45,7 +24,10 @@ export function createEmp1EngineeringRecordReleaseQualification({
   releaseStateArtifact,
 } = {}) {
   const engineeringRecord = requireEmp1EngineeringRecordPackage(packageValue);
-  const authorizedRelease = requireAuthorizedReleaseState(releaseState, releaseStateArtifact);
+  const authorizedRelease = requireAuthorizedEmp1ProfessionalReleaseState(
+    releaseState,
+    releaseStateArtifact,
+  );
   const handoff = projectEmp1EngineeringRecordReleaseHandoff({
     packageValue: engineeringRecord,
     releaseState,
@@ -65,20 +47,9 @@ export function createEmp1EngineeringRecordReleaseQualification({
       recordState: engineeringRecord.recordState,
       routeAuthorityHash: engineeringRecord.evidence.routeAuthorityHash,
     },
-    releaseAuthorityIdentity: {
-      path: EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT.path,
-      gitBlobSha1: EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT.gitBlobSha1,
-      currentStateSemanticHash: EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT.semanticHash,
-      releaseProfileId: EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT.releaseProfileId,
-    },
-    handoff: {
-      schema: handoff.schema,
-      state: handoff.state,
-      compatible: handoff.handoffCompatible,
-      blockers: handoff.handoffBlockers,
-      alignment: handoff.alignment,
-    },
-    existingReleaseAuthority: existingReleaseAuthority(authorizedRelease),
+    releaseAuthorityIdentity: releaseAuthorityIdentity(),
+    handoff: handoffSummary(handoff),
+    existingReleaseAuthority: deepFreeze({ ...authorizedRelease }),
     blockers: qualificationBlockers(handoff, authorizedRelease, engineeringRecord.recordState),
     authorityBoundary: authorityBoundary(),
   };
@@ -97,7 +68,7 @@ export function requireEmp1EngineeringRecordReleaseQualification(value) {
     throw qualificationError('EMP1_RELEASE_QUALIFICATION_RECORD_SCHEMA_INVALID');
   }
   const packageIdentity = normalizePackageIdentity(source.packageIdentity);
-  const releaseAuthorityIdentity = normalizeReleaseAuthorityIdentity(source.releaseAuthorityIdentity);
+  const releaseAuthority = normalizeReleaseAuthorityIdentity(source.releaseAuthorityIdentity);
   const handoff = normalizeHandoff(source.handoff);
   const existingAuthority = normalizeExistingReleaseAuthority(source.existingReleaseAuthority);
   const reviewAccepted = packageIdentity.recordState === 'REVIEW_ACCEPTED';
@@ -121,7 +92,7 @@ export function requireEmp1EngineeringRecordReleaseQualification(value) {
     state: source.state,
     releaseQualified: source.releaseQualified,
     packageIdentity,
-    releaseAuthorityIdentity,
+    releaseAuthorityIdentity: releaseAuthority,
     handoff,
     existingReleaseAuthority: existingAuthority,
     blockers: stringArray(source.blockers),
@@ -158,56 +129,6 @@ export function qualificationSemanticProjection(value) {
   };
 }
 
-function requireAuthorizedReleaseState(value, artifact) {
-  const release = record(value, 'EMP1_RELEASE_QUALIFICATION_RELEASE_STATE_REQUIRED');
-  const custody = record(artifact, 'EMP1_RELEASE_QUALIFICATION_RELEASE_ARTIFACT_REQUIRED');
-  const expected = EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT;
-  exact('ARTIFACT_PATH', custody.path, expected.path);
-  exact('ARTIFACT_GIT_BLOB', custody.gitBlobSha1, expected.gitBlobSha1);
-  exact('SCHEMA', release.schema, expected.schema);
-  exact('ISSUE', release.issue, expected.issue);
-  exact('PROFILE', release.releaseProfileId, expected.releaseProfileId);
-  exact('SEMANTIC_HASH', release.currentStateSemanticHash, expected.semanticHash);
-  exact('RELEASE_READY', release.releaseReady, expected.releaseReady);
-  exact('STATE', release.state, expected.state);
-  const sequence = record(release.sequenceStatus, 'EMP1_RELEASE_QUALIFICATION_SEQUENCE_REQUIRED');
-  exact('PROFESSIONAL_RELEASE_READY', sequence.professionalReleaseReady,
-    expected.professionalReleaseReady);
-  exact('DEFINITION_OF_DONE', sequence.definitionOfDoneComplete,
-    expected.definitionOfDoneComplete);
-  const runtime = record(release.runtimeAuthority, 'EMP1_RELEASE_QUALIFICATION_RUNTIME_REQUIRED');
-  exact('BOUNDED_PRODUCTION', runtime.boundedProductionRouteAuthorized,
-    expected.boundedProductionRouteAuthorized);
-  exact('BOUNDED_ENGINEERING', runtime.boundedEngineeringUseAuthorized,
-    expected.boundedEngineeringUseAuthorized);
-  exact('GLOBAL_C', runtime.globalEmp1CRouteAuthority, expected.globalEmp1CRouteAuthority);
-  exact('CODE_COMPLIANCE', runtime.codeComplianceAuthorized, expected.codeComplianceAuthorized);
-  exact('RELEASE_QUALIFIED', runtime.releaseQualified, expected.releaseQualified);
-  exact('DEPLOYMENT_AUTHORIZED', runtime.deploymentAuthorized, expected.deploymentAuthorized);
-  const scope = record(release.boundedScope, 'EMP1_RELEASE_QUALIFICATION_SCOPE_REQUIRED');
-  exact('ROUTE_ID', scope.routeId, expected.routeId);
-  exact('SHELL_FAMILY', scope.shellFamily, expected.shellFamily);
-  exact('ATTACHMENT_SHAPE', scope.attachmentShape, expected.attachmentShape);
-  exact('GAMMA', scope.gamma, expected.gamma);
-  exact('WRC_SOURCE', release.sourceState?.wrcSourceSha256, expected.sourceSha256);
-  if (runtime.deploymentAuthorized === true && runtime.releaseQualified !== true) {
-    throw qualificationError('EMP1_RELEASE_QUALIFICATION_DEPLOYMENT_WITHOUT_RELEASE_INVALID');
-  }
-  if (runtime.releaseQualified === true && sequence.professionalReleaseReady !== true) {
-    throw qualificationError('EMP1_RELEASE_QUALIFICATION_RELEASE_WITHOUT_READINESS_INVALID');
-  }
-  return deepFreeze({
-    professionalReleaseReady: sequence.professionalReleaseReady === true,
-    definitionOfDoneComplete: sequence.definitionOfDoneComplete === true,
-    boundedProductionRouteAuthorized: runtime.boundedProductionRouteAuthorized === true,
-    boundedEngineeringUseAuthorized: runtime.boundedEngineeringUseAuthorized === true,
-    globalEmp1CRouteAuthority: runtime.globalEmp1CRouteAuthority === true,
-    codeComplianceAuthorized: runtime.codeComplianceAuthorized === true,
-    releaseQualified: runtime.releaseQualified === true,
-    deploymentAuthorized: runtime.deploymentAuthorized === true,
-  });
-}
-
 function qualificationState(handoff, release, recordState) {
   return qualificationStateFromSummary({ compatible: handoff.handoffCompatible }, release, recordState);
 }
@@ -237,10 +158,25 @@ function qualificationBlockersFromSummary(handoff, release, recordState) {
   }
   return deepFreeze([...new Set(blockers.map(String))]);
 }
-function existingReleaseAuthority(value) {
-  return deepFreeze({ ...value });
-}
 
+function releaseAuthorityIdentity() {
+  const value = EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT;
+  return deepFreeze({
+    path: value.path,
+    gitBlobSha1: value.gitBlobSha1,
+    currentStateSemanticHash: value.semanticHash,
+    releaseProfileId: value.releaseProfileId,
+  });
+}
+function handoffSummary(handoff) {
+  return deepFreeze({
+    schema: handoff.schema,
+    state: handoff.state,
+    compatible: handoff.handoffCompatible,
+    blockers: handoff.handoffBlockers,
+    alignment: handoff.alignment,
+  });
+}
 function normalizePackageIdentity(value) {
   const row = record(value, 'EMP1_RELEASE_QUALIFICATION_PACKAGE_IDENTITY_REQUIRED');
   return deepFreeze({
@@ -253,17 +189,11 @@ function normalizePackageIdentity(value) {
 }
 function normalizeReleaseAuthorityIdentity(value) {
   const row = record(value, 'EMP1_RELEASE_QUALIFICATION_AUTHORITY_IDENTITY_REQUIRED');
-  const expected = EMP1_AUTHORIZED_RELEASE_STATE_ARTIFACT;
-  exact('RECORD_ARTIFACT_PATH', row.path, expected.path);
-  exact('RECORD_ARTIFACT_GIT_BLOB', row.gitBlobSha1, expected.gitBlobSha1);
-  exact('RECORD_SEMANTIC_HASH', row.currentStateSemanticHash, expected.semanticHash);
-  exact('RECORD_RELEASE_PROFILE', row.releaseProfileId, expected.releaseProfileId);
-  return deepFreeze({
-    path: expected.path,
-    gitBlobSha1: expected.gitBlobSha1,
-    currentStateSemanticHash: expected.semanticHash,
-    releaseProfileId: expected.releaseProfileId,
-  });
+  const expected = releaseAuthorityIdentity();
+  for (const [key, expectedValue] of Object.entries(expected)) {
+    exact(`RECORD_RELEASE_AUTHORITY_${key}`, row[key], expectedValue);
+  }
+  return expected;
 }
 function normalizeHandoff(value) {
   const row = record(value, 'EMP1_RELEASE_QUALIFICATION_HANDOFF_REQUIRED');
@@ -323,9 +253,7 @@ function normalizeAuthorityBoundary(value) {
 function exact(label, actual, expected) {
   if (actual !== expected) throw qualificationError(`EMP1_RELEASE_QUALIFICATION_AUTHORIZED_STATE_DRIFT:${label}`);
 }
-function stringArray(value) {
-  return Object.freeze(Array.isArray(value) ? value.map(String) : []);
-}
+function stringArray(value) { return Object.freeze(Array.isArray(value) ? value.map(String) : []); }
 function hashSuffix(value) { return value.startsWith('fnv1a64:') ? value.slice(8) : value; }
 function text(value, code) {
   if (typeof value !== 'string' || !value.trim()) throw qualificationError(code);

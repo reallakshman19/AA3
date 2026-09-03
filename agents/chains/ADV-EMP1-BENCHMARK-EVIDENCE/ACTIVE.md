@@ -12,10 +12,10 @@ WORK_ITEM_MODE: EXCLUSIVE
 AGENT_INSTANCE_ID: chatgpt:64b76bac-457d-49cb-a36f-fb5498ca0479
 
 REPO: reallaksh19/Advanced_Analysis
-TASK: EMP.1 benchmark evidence, CAUx comparison custody, and PV Elite programme; EMP-only.
+TASK: EMP.1 benchmark evidence, CAUx comparison/source qualification, and PV Elite programme; EMP-only.
 CHAIN: ADV-EMP1-BENCHMARK-EVIDENCE
-ENDPOINT: EP-0010
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/endpoints/EP-0010.md
+ENDPOINT: EP-0012
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/endpoints/EP-0012.md
 
 PREDECESSOR_PR: 1638
 PREDECESSOR_MERGE: fe57071e69b056c65ad866548056b8a097416081
@@ -26,22 +26,22 @@ MAIN: fe57071e69b056c65ad866548056b8a097416081
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: CAUX_ACTUAL_EXECUTION_PASS_RECORD_FREEZE_IN_PROGRESS
+ENGINEERING_STATE: CAUX_DIRECT_PDF_SOURCE_QUALIFICATION_IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_FOR_ORIGINATING_CUSTODIAN
-WRITE_AUTHORITY: MATERIAL_LEG_005_ACTIVE
+WRITE_AUTHORITY: MATERIAL_LEG_006_ACTIVE
 AUTO_STATE: NOT_APPLICABLE
 
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0010
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0012
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520647007
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0010_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0010_TO_EP0012_SYNC
 
-ORIGINAL_TASK_STATUS: CORE_PROJECTION_MERGED; COMPARISON_CUSTODY_MERGED; PVELITE_PROGRAMME_COMPLETE; CAUX_ACTUAL_COMPARISON_PASS; CAUX_RESULT_RECORD_FREEZE_IN_PROGRESS; CAUX_UI_BLOCKED; PVELITE_SOURCE_BLOCKED
-INPUT_STATUS: CAUX_AVAILABLE; PV_ELITE_SOURCE_MISSING
-BENCHMARK_ORACLE_STATUS: CAUX_FROZEN_UNCHANGED; ACTUAL_CAUX_CHECK_EXECUTED; PV_ELITE_REFERENCE_NOT_AVAILABLE
+ORIGINAL_TASK_STATUS: CORE_PROJECTION_MERGED; COMPARISON_CUSTODY_MERGED; PVELITE_PROGRAMME_COMPLETE; CAUX_ACTUAL_COMPARISON_RETAINED; CAUX_DIRECT_SOURCE_QUALIFICATION_IN_PROGRESS; CAUX_UI_BLOCKED; PVELITE_SOURCE_BLOCKED
+INPUT_STATUS: CAUX_EXACT_PDF_AVAILABLE_AND_IDENTITY_MATCHED; PV_ELITE_SOURCE_MISSING
+BENCHMARK_ORACLE_STATUS: CAUX_FROZEN_UNCHANGED; ACTUAL_CAUX_COMPARISON_RETAINED; DIRECT_PDF_REOBSERVED_PREWORK; PV_ELITE_REFERENCE_NOT_AVAILABLE
 
 QUALIFICATION_SCOPE_ID: QSCOPE-1633-EMP-BENCHMARK-EVIDENCE
 QUESTION_SET_ID: QS-ADV-EMP1-BENCHMARK-EVIDENCE-0001
@@ -54,20 +54,23 @@ HANDOVER_CONTENT_READY: FALSE
 HANDOVER_VALIDATION_STATUS: IN_PROGRESS
 HANDOVER_READY: FALSE
 
-CURRENT_MATERIAL_LEG: LEG-005
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/endpoints/EP-0010.md
+CURRENT_MATERIAL_LEG: LEG-006
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/endpoints/EP-0012.md
 
-ACTUAL_EXECUTION:
-- executedAt: 2026-09-03T08:42:38Z
-- repositoryCommit: fe57071e69b056c65ad866548056b8a097416081
-- script: scripts/emp1-wrc537-caux-interpolated-comparison-check.mjs
-- exact dependency closure Git-blob verification: PASS
-- exitCode: 0
-- marker: EMP1_WRC537_CAUX_INTERPOLATED_COMPARISON_CHECK_PASS
-- eight of eight locations within frozen 3 percent tolerance
-- worst displayed difference: 2.0 percent at Cu
-- evaluated eight-point envelope location: Du in both
+LEG_005_RESULT:
+- structured actual comparison record retained exactly;
+- Git blob SHA-1: f49a7a039871fade4addb8d742b0c78470ac40d3;
+- 8/8 within frozen 3 percent tolerance;
+- comparison record remains historically truthful that direct PDF observation was pending at its execution time.
 
-AUTHORITY_BOUNDARY: comparison evidence only; interpolated route engineeringUseAuthorized remains false; no source/tolerance/oracle/route/code/release authority mutation.
-OVERLAP: #1618 still owns core index; #1622/#1624 still own UI/review seams; LEG-005 will touch neither.
-EXACT_NEXT_ACTION: generate exact structured CAUx comparison evidence/custody from actual calculation output, retain immutable JSON, validate it, then close LEG-005. Do not merge PR #1640 without a separate explicit Owner merge authorization.
+DIRECT_PDF_PREWORK:
+- exact supplied PDF bytes: 7260396;
+- exact SHA-256: c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e;
+- required pages 24–31 rendered and directly inspected;
+- retained benchmark facts agree;
+- pre-existing gamma/Rm source-internal discrepancy preserved;
+- no authority mutation.
+
+AUTHORITY_BOUNDARY: source qualification only; interpolated route engineeringUseAuthorized remains false; no WRC method/engineering/production/code/release authority mutation.
+OVERLAP: #1618 still owns core index; #1622/#1624 still own UI/review seams; LEG-006 will touch none.
+EXACT_NEXT_ACTION: retain an immutable direct-PDF observation record and V2 source qualification referencing unchanged benchmark/handcalc; validate; close LEG-006. Do not merge PR #1640 without a separate explicit Owner merge authorization.

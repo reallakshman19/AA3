@@ -1,7 +1,7 @@
 ISSUE_CURRENT_STATE_VERSION: 1
 CHAIN_ID: ADV-PROD-1634-RECOVERY
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0006
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
 UPDATED_AT: 2026-09-03
 
 # Current state — Issue #1634 production recovery
@@ -14,7 +14,7 @@ UPDATED_AT: 2026-09-03
 | TASK-002 | Use Common exact basis `293a3db7993a6945c01adc592a7ff14a339c504a`. | SATISFIED | Common protocol remains current for the chain. |
 | TASK-003 | Restore production bundle browser boot. | PATCHED_NOT_VALIDATED | LEG-001 chunk-graph correction is on main; no exact-head production build/served-browser execution exists. |
 | TASK-004 | Restore build/chunk budget without weakening ceiling. | IMPLEMENTED_NOT_ACCEPTED | LEG-002 moves the heavy EMP.1 transaction behind the existing async API while preserving the authority owner. Net Rollup byte reduction remains unmeasured; hard ceiling remains 1.125 MiB. |
-| TASK-005 | Restore exact-head LAFEA.4 CI execution. | BLOCKED_INFRASTRUCTURE | Current unconditional EMP.1 pull-request workflow and prior PR heads also show zero runs; workflow mutation/dispatch is unavailable or unauthorized. |
+| TASK-005 | Restore exact-head LAFEA.4 CI execution. | BLOCKED_INFRASTRUCTURE | Current unconditional pull-request workflow produced zero runs/check-runs after opened, reopened and synchronize events; workflow mutation remains prohibited. |
 | TASK-006 | Real-app LAFEA/UI flow recovery. | OPEN | Browser viewport/state matrix remains defined in PLAN-0001; execution waits for a bootable exact-head production artifact. |
 | TASK-007 | Correct UI layout for engineering use. | PARTIAL | Separate Draft #1635 covers one inspector layout correction; full matrix remains open. |
 | TASK-008 | Keep UI/presentation non-authoritative. | OPEN | Result-custody presentation checks remain required. |
@@ -29,10 +29,11 @@ UPDATED_AT: 2026-09-03
 |---|---|
 | live main | `1aab8842759e63fe94f80438630647c166866034` |
 | prior recovery PR | #1637 MERGED at `6e6c4062fffbd173aa9c4d2a2b34c2586df47f4e` |
-| current recovery PR | #1639 OPEN_DRAFT / mergeable after reconciliation / merge unauthorized |
+| current recovery PR | #1639 OPEN_DRAFT / merge unauthorized |
 | LEG-002 material head | `f85f6b9262fe8ae878eb30c49355af750d50f43b` |
 | reconciliation commit | `e13497f3115c350e7ba2760474c2bc7aceabd453` |
-| latest endpoint | EP-0006 |
+| execution-retrigger custody commit | `107e82681bd907f0b1b5ea0abf126ff0664643fc` |
+| latest endpoint | EP-0007 |
 | release | HOLD / false |
 
 ## LEG-001 validation ledger
@@ -51,17 +52,21 @@ UPDATED_AT: 2026-09-03
 |---|---|---|
 | planned material scope | PASS | two workspace files + one structural checker; no core numerical/workflow/chunk-ceiling mutation. |
 | route-authority owner retained | PASS_SOURCE_INSPECTION | `currentEmp1WorkbenchRouteAuthority()` remains in `emp1-workbench-product-run.js`. |
-| route-authority source frozen | PASS_SOURCE_INSPECTION | pre-LEG authority-function SHA-256 `74f6ebdacfff23d14dd12262b23535f49dc901538c4cbfa013cc458666c3d197`; executable guard NOT_RUN. |
+| route-authority source frozen | PASS_REOBSERVED_SOURCE | exact function source SHA-256 recomputed in-session as `74f6ebdacfff23d14dd12262b23535f49dc901538c4cbfa013cc458666c3d197`; repository checker itself remains NOT_RUN. |
 | heavy transaction lazy split | PASS_SOURCE_INSPECTION | `executeEmp1WorkbenchProduct()` dynamically loads `emp1-workbench-product-execution.js`; lazy implementation receives the existing authority resolver and has no import back to the owner. |
 | EMP.1 product qualification | NOT_RUN | no exact-head Actions/runtime execution. |
 | import checker | NOT_RUN | no faithful full checkout/runtime. |
 | production Rollup build / chunk bytes | NOT_RUN | actual byte saving unknown. |
 | served production browser boot | NOT_RUN | no current `dist/`. |
-| exact-head Actions | NOT_RUN | zero runs observed on reconciled #1639 head and immediately preceding merged #1636 head. |
+| exact-head Actions | BLOCKED_INFRASTRUCTURE | zero runs/check-runs after original PR opening, close/reopen, and custody-only synchronize push. |
 
 ## CI diagnosis
 
-`.github/workflows/emp1-gamma5-main-route.yml` triggers on every `pull_request` without a path filter and directly runs `scripts/emp1-workbench-product-run-qualification.mjs`. Yet #1639 and preceding merged #1636 both have zero workflow runs. This makes changed-file filtering an invalid explanation for the absent evidence. The connected interface exposes no workflow dispatch and cannot read the repository Actions-permission setting through its allowed endpoint surface. Protected workflow YAML will not be changed solely to manufacture execution.
+`.github/workflows/emp1-gamma5-main-route.yml` declares both unconditional `pull_request:` and `workflow_dispatch:` triggers and directly runs `scripts/emp1-workbench-product-run-qualification.mjs`. Draft #1639 was closed/reopened without code mutation and then received custody-only commit `107e8268...`, producing both `reopened` and `synchronize` pull-request events. GitHub still returned zero workflow runs and zero check-runs for both the prior and synchronize heads. Changed-file filtering and missing PR-event generation are therefore not credible explanations. The connected interface exposes no workflow-dispatch action, and the local execution container cannot resolve github.com for a faithful checkout. Protected workflow YAML will not be changed solely to manufacture execution.
+
+## Read-only P1 profiling result
+
+The default application state is `WORKSPACE`, but bootstrap statically imports and constructs LAFEA, LFEA and Empirical workbench controllers, and `ApplicationShellController.init()` initializes all three while hidden. Existing browser LAFEA qualification activates the LAFEA tab before consuming workbench state, which supports first-activation laziness as a candidate. However, the bootstrap public API also exposes direct synchronous workbench methods/state, so a naive deferred proxy would change API semantics or introduce races. No material lifecycle change is authorized while LEG-002 lacks executable evidence.
 
 ## Benchmark / oracle ledger
 
@@ -82,8 +87,8 @@ UPDATED_AT: 2026-09-03
 
 ## Current blocker / diagnosis
 
-LEG-002 is a bounded packaging correction, not an accepted production fix. The current synchronous route-authority owner still imports the authorized WRC route module, which itself has qualified WRC dependencies, so source movement alone cannot establish how many bytes left the entry chunk. A faithful Rollup build and served-browser smoke remain the controlling evidence.
+LEG-002 is a bounded packaging correction, not an accepted production fix. A faithful Rollup build and served-browser smoke remain controlling evidence, while repository Actions currently creates neither workflow runs nor check-runs for #1639 pull-request events.
 
 ## Exact next action
 
-Keep #1639 Draft and unmerged. Continue **read-only** P1 import-graph profiling to identify optional eager application/workbench dependencies that can be deferred without touching numerical, source, applicability, route, oracle, tolerance, workflow or release authority. Do not begin another material leg until its write-ahead gate is explicitly opened. Obtain faithful exact-head structural/EMP.1/import/build/chunk/browser execution before accepting LEG-002. All UI/layout/manual/published benchmark obligations remain open and release remains HOLD.
+Keep #1639 Draft and unmerged. Material work remains paused. Continue only read-only P1 import-graph/lifecycle profiling and infrastructure diagnosis until faithful exact-head structural/EMP.1/import/build/chunk/browser execution exists. Do not raise the bundle ceiling, mutate protected workflows, or change numerical/source/route/release authority. UI/layout/manual/published benchmark obligations remain open and release remains HOLD.

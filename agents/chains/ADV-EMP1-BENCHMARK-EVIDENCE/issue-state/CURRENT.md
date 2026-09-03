@@ -3,10 +3,10 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 UPDATED_AT: 2026-09-03
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0004_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0004_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520067991
 PR: 1636
 BRANCH: agent/emp1-benchmark-evidence-v1
 MATERIAL_HEAD: 24f5605b068cc30f92853511b08782319a7dea6f
@@ -63,6 +63,7 @@ MAIN: ad72465b4359fc660dd68e7cb04a1e091c2fe3b9
 - reviews: 0.
 - unresolved threads: 0.
 - mergeability: true.
+- issue endpoint comment: `5520067991`.
 - full repository validation remains NOT_RUN and is not promoted by merge authorization.
 
 ## Current authority / blocker
@@ -81,4 +82,4 @@ HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_READY: FALSE
 
 CURRENT_BLOCKER: none for PR #1636 merge after exact-head re-audit; downstream Stage 2 requires faithful CAUx execution, Stage 3 requires exact PV Elite source, and Stage 4 remains blocked by Draft PRs #1622/#1624/#1618.
-EXACT_NEXT_ACTION: sync EP-0004 to issue #1633, transition #1636 from Draft if required, expected-head merge exact current head, re-ground main, then proceed next without merging other active PRs.
+EXACT_NEXT_ACTION: transition #1636 from Draft if required, re-audit exact current relay head, expected-head merge, re-ground main, then proceed next without merging other active PRs.

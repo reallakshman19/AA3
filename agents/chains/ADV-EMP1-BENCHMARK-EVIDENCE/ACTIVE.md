@@ -37,8 +37,8 @@ ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0009
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0009_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0009_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520647007
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ORIGINAL_TASK_STATUS: CORE_PROJECTION_MERGED; COMPARISON_CUSTODY_MERGED; PVELITE_PROGRAMME_COMPLETE; CAUX_RESULT_FREEZE_BLOCKED; CAUX_UI_BLOCKED; PVELITE_SOURCE_BLOCKED
 INPUT_STATUS: CAUX_AVAILABLE; PV_ELITE_SOURCE_MISSING
@@ -63,4 +63,4 @@ MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/en
 OVERLAP: LEG-004_SAFE — #1618 owns index; #1622/#1624 own UI/review seams; LEG-004 touches neither.
 BLOCKER: exact PV Elite source/report/input/version remains missing; CAUx custody still requires admissible faithful execution; UI/index remain concurrency-blocked.
 LEG_DIAGNOSIS: The first PV Elite comparison programme is now frozen without any source/result/tolerance fabrication. Primary case is exact gamma=5, Original, cylindrical, zero differential pressure, Kn=Kb=1, Au/Al/Bu/Bl/Cu/Cl/Du/Dl, no interpolation.
-EXACT_NEXT_ACTION: synchronize EP-0009 to issue #1633, update Draft PR #1640, then stop material mutation. On the next Owner progression command, re-ground main and active EMP overlap PRs before selecting another EMP-only leg.
+EXACT_NEXT_ACTION: keep PR #1640 Draft and read-only. On the next Owner progression command, re-ground main and active EMP overlap PRs before selecting another EMP-only leg.

@@ -19,8 +19,8 @@ ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/endpoints/EP-000
 
 PREDECESSOR_PR: 1638
 PREDECESSOR_MERGE: fe57071e69b056c65ad866548056b8a097416081
-PR: PENDING_SUCCESSOR_PR
-PR_STATUS: PREWORK_BRANCH_OPEN
+PR: 1640
+PR_STATUS: OPEN_DRAFT
 BRANCH: agent/emp1-pvelite-benchmark-programme-v1
 MAIN: fe57071e69b056c65ad866548056b8a097416081
 MERGE_AUTHORITY: OWNER_ONLY
@@ -36,8 +36,8 @@ ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0008_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0008_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520595065
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ORIGINAL_TASK_STATUS: CORE_PROJECTION_MERGED; COMPARISON_CUSTODY_MERGED; PVELITE_PROGRAMME_NEXT; CAUX_RESULT_FREEZE_BLOCKED; CAUX_UI_BLOCKED; PVELITE_SOURCE_BLOCKED
 INPUT_STATUS: CAUX_AVAILABLE; PV_ELITE_SOURCE_MISSING
@@ -60,4 +60,4 @@ MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/en
 OVERLAP: #1618 owns `src/core/emp1/index.js`; #1622/#1624 own EMP Review & Evidence UI seams; no planned exact-file overlap.
 BLOCKER: PV Elite numerical/source freeze remains blocked by missing exact source; UI/index integration remains concurrency-blocked; programme-contract metadata leg is safe.
 LEG_DIAGNOSIS: The next useful safe step is to freeze the PV Elite comparison programme requirements without inventing source values or tolerances.
-EXACT_NEXT_ACTION: open Draft successor PR, sync issue #1633, then implement only `src/core/emp1/emp1-pvelite-benchmark-programme.js` and `scripts/emp1-pvelite-benchmark-programme-check.mjs`.
+EXACT_NEXT_ACTION: implement only `src/core/emp1/emp1-pvelite-benchmark-programme.js` and `scripts/emp1-pvelite-benchmark-programme-check.mjs`, then record LEG-004 and a new endpoint.

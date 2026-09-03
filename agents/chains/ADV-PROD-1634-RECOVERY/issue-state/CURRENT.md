@@ -1,7 +1,7 @@
 ISSUE_CURRENT_STATE_VERSION: 1
 CHAIN_ID: ADV-PROD-1634-RECOVERY
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 UPDATED_AT: 2026-09-03
 
 # Current state — Issue #1634 production recovery
@@ -10,18 +10,18 @@ UPDATED_AT: 2026-09-03
 
 | ID | Requirement | Status | Current evidence / disposition |
 |---|---|---|---|
-| TASK-001 | Start fixing production-readiness gaps. | IN_PROGRESS | Recovery chain/plan created; no material patch accepted yet. |
+| TASK-001 | Start fixing production-readiness gaps. | IN_PROGRESS | Recovery chain/plan + draft #1637 created; LEG-001 material patch implemented but not executed. |
 | TASK-002 | Use Common exact basis `293a3db7993a6945c01adc592a7ff14a339c504a`. | SATISFIED | Common skill + mandatory references re-grounded before material work. |
-| TASK-003 | Restore production bundle browser boot. | BLOCKED | Untouched-main reproduction: TDZ `Cannot access 'Yn' before initialization` in `core-linear-piping-*`. LEG-001 planned. |
-| TASK-004 | Restore build/chunk budget without weakening ceiling. | BLOCKED | Main ~1.8 MiB vs 1.125 MiB hard ceiling. LEG-002 planned after boot. |
+| TASK-003 | Restore production bundle browser boot. | PATCHED_NOT_VALIDATED | LEG-001 routes the existing import-free spring-rate authority leaf with generic core to remove the demonstrated generated chunk back-edge; production build/browser execution remains NOT_RUN. |
+| TASK-004 | Restore build/chunk budget without weakening ceiling. | BLOCKED | Main ~1.8 MiB vs 1.125 MiB hard ceiling. LEG-002 may start only after boot disposition. |
 | TASK-005 | Restore exact-head LAFEA.4 CI execution. | BLOCKED | PR #1632 exact head has no associated executing workflow; workflow mutation not authorized. LEG-003. |
 | TASK-006 | Real-app LAFEA/UI flow recovery. | OPEN | Browser matrix defined in PLAN-0001; execution pending post-boot. |
 | TASK-007 | Correct UI layout for engineering use. | PARTIAL | Draft PR #1635 covers property-inspector label wrapping only; full layout matrix pending. |
 | TASK-008 | Keep UI/presentation non-authoritative. | OPEN | Presentation custody tests specified in LEG-005. |
 | TASK-009 | Independent manual calculations. | OPEN | BM-001..BM-005 defined; execution/frozen expected artifacts pending. |
 | TASK-010 | Published shell benchmark programme. | OPEN | Source candidates and BM-006..BM-009 defined; source custody/reference freezing pending. |
-| TASK-011 | Preserve source/oracle/tolerance/solver/recovery authority. | ACTIVE_INVARIANT | Protected in Q-set and plan; active #1551 spring-rate authority detected. |
-| TASK-012 | Hold MITC release qualification until exact-head evidence. | HOLD | `RELEASE_QUALIFIED` must remain false/held. |
+| TASK-011 | Preserve source/oracle/tolerance/solver/recovery authority. | ACTIVE_INVARIANT | LEG-001 changes no qualified spring-rate arithmetic or FEA mechanics; active #1551 authority remains protected. |
+| TASK-012 | Hold MITC release qualification until exact-head evidence. | HOLD | `RELEASE_QUALIFIED` remains false/held. |
 
 ## Input ledger
 
@@ -32,11 +32,11 @@ UPDATED_AT: 2026-09-03
 | INPUT-003 | PR #1635 head `b4d199e29fe0a3ace61a71f487876e8218bf6072` | AVAILABLE | narrow property-inspector layout fix; draft |
 | INPUT-004 | TDZ production smoke reproduction | AVAILABLE | `ADV-LFEA-ERROR-CHECK-AUTHORIZATION-UI/EP-0002.md` |
 | INPUT-005 | chunk-size reproduction | AVAILABLE | same endpoint: untouched main 1,801,999 B vs 1,179,648 B |
-| INPUT-006 | current chunk rules | AVAILABLE | `vite.config.js` |
-| INPUT-007 | spring-rate conversion owner | PROTECTED_AVAILABLE | Issue #1551 chain; do not rewrite/move arithmetic without authority/coordination |
+| INPUT-006 | LEG-001 material head `62b5bd88d0d2b8997254215210124cfd32317043` | AVAILABLE_NOT_EXECUTED | `vite.config.js` + ownership check only |
+| INPUT-007 | spring-rate conversion owner | PROTECTED_AVAILABLE | Issue #1551 chain; source formula/withholding untouched by LEG-001 |
 | INPUT-008 | LAFEA source/result checks | AVAILABLE | `src/core/local-shell/**`, `scripts/lafea.4-*.mjs` |
 | INPUT-009 | published benchmark references | PARTIAL | candidate literature identified; exact page/figure/value custody must be frozen before PASS |
-| INPUT-010 | executable exact-head CI runner | UNRESOLVED | no current run attached to PR #1632 head |
+| INPUT-010 | executable exact-head CI/runtime | UNRESOLVED | material head has no workflow runs or commit statuses |
 
 ## Benchmark / oracle ledger
 
@@ -73,8 +73,8 @@ OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
 ## Current blocker / diagnosis
 
-P0 first wrong boundary remains the production module/chunk dependency graph. An active Issue #1551 chain owns spring-rate conversion/withholding, so LEG-001 may change dependency/chunk ownership but must not rewrite that engineering formula. Complete graph inspection + built-browser smoke is required before declaring the TDZ repaired.
+LEG-001 has implemented the smallest source-authority-preserving chunk-graph correction: only `restraint-spring-rate.js` generated ownership moves to `core-application`; the engineering file itself is unchanged. This is not accepted until a faithful production build and served-`dist/` browser smoke prove zero startup exceptions and focused spring-rate/import checks remain unchanged.
 
 ## Exact next action
 
-Complete and synchronize EP-0001 prework custody, then execute LEG-001 only: map the full forced-chunk dependency SCC, make the smallest authority-preserving graph correction, add a negative anti-cycle regression, and prove `dist/` boots with zero startup exceptions while focused engineering semantics remain unchanged.
+Do not make another material change. Execute LEG-001 ownership/spring-rate/import/build/browser checks. PASS → accept LEG-001 and begin measured LEG-002 size profiling. FAIL → revert/re-isolate the generated SCC. All UI/layout/manual/published benchmark obligations remain open and release remains HOLD.

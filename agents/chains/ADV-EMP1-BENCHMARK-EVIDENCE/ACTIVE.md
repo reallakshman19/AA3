@@ -25,7 +25,7 @@ BRANCH: agent/emp1-benchmark-comparison-custody-v1
 MATERIAL_HEAD: eb750e0eb8cf21c99e3dfd38bb1583687054da7c
 MAIN: 1aab8842759e63fe94f80438630647c166866034
 MERGEABILITY: MERGEABLE_AT_PRE_RELAY_AUDIT
-REVIEWS: 0
+REVIEWS: 1_NON_APPROVING_BOOKKEEPING_COMMENT
 UNRESOLVED_THREADS: 0
 REQUIRED_CHECKS: CURRENT_HEAD_FOCUSED_AND_FULL_REPOSITORY_VALIDATION_NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
@@ -42,8 +42,8 @@ ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0007_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0007_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520530234
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ORIGINAL_TASK_STATUS: CORE_PROJECTION_MERGED; COMPARISON_CUSTODY_CONTRACT_HARDENED; OWNER_AUTHORIZED_PR1638_MERGE; CAUX_RESULT_FREEZE_BLOCKED; CAUX_UI_BLOCKED; PVELITE_SOURCE_BLOCKED
 INPUT_STATUS: CAUX_AVAILABLE; PV_ELITE_SOURCE_MISSING
@@ -68,4 +68,4 @@ MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/en
 OVERLAP: LEG-003_SAFE — only the existing two EMP custody files were materially amended; #1622/#1624 remain separate UI owners and #1618 remains the index owner.
 BLOCKER: none for Owner-authorized PR #1638 merge itself after exact-head re-audit; CAUx execution, PV Elite source, and UI/index dependencies remain downstream blockers.
 LEG_DIAGNOSIS: The custody contract now fails closed on projection-only/freeze/route-state/comparison-qualification/quantity-identity contradictions without changing numerical or authority owners.
-EXACT_NEXT_ACTION: synchronize EP-0007 to issue #1633, update PR body, transition #1638 from Draft if required, re-audit exact relay head, and expected-head merge. Then re-ground main and active EMP overlap PRs before proceeding next.
+EXACT_NEXT_ACTION: update PR body, transition #1638 from Draft if required, re-audit exact relay head, and expected-head merge. Then re-ground main and active EMP overlap PRs before proceeding next.

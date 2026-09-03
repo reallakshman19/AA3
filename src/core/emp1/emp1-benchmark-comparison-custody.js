@@ -85,14 +85,21 @@ function requireEvidence(value) {
   if (!RETAINABLE_COMPARISON_STATES.has(comparison.state)) {
     throw custodyError('EMP1_BENCHMARK_CUSTODY_COMPARISON_STATE_NOT_RETAINABLE');
   }
+  if (comparison.state === 'COMPARISON_QUALIFIED'
+    && route.comparisonQualificationAvailable !== true) {
+    throw custodyError('EMP1_BENCHMARK_CUSTODY_COMPARISON_QUALIFICATION_ROUTE_MISMATCH');
+  }
   const quantities = array(comparison.quantities);
   if (quantities.length === 0) {
     throw custodyError('EMP1_BENCHMARK_CUSTODY_QUANTITIES_REQUIRED');
   }
-  quantities.forEach((quantity) => {
+  const quantityIds = quantities.map((quantity) => {
     const row = requireRecord(quantity, 'EMP1_BENCHMARK_CUSTODY_QUANTITY_INVALID');
-    requiredString(row.quantityId, 'EMP1_BENCHMARK_CUSTODY_QUANTITY_ID_REQUIRED');
+    return requiredString(row.quantityId, 'EMP1_BENCHMARK_CUSTODY_QUANTITY_ID_REQUIRED');
   });
+  if (new Set(quantityIds).size !== quantityIds.length) {
+    throw custodyError('EMP1_BENCHMARK_CUSTODY_QUANTITY_IDS_NOT_UNIQUE');
+  }
   requireRecord(comparison.summary, 'EMP1_BENCHMARK_CUSTODY_SUMMARY_REQUIRED');
   requiredString(
     evidence.sourceEvidence?.semanticHash,
@@ -109,7 +116,8 @@ function requireComparator(value) {
 
 function requireFreezeEvidence(value) {
   const freeze = requireRecord(value, 'EMP1_BENCHMARK_CUSTODY_FREEZE_EVIDENCE_REQUIRED');
-  if (freeze.expectedValuesFrozenBeforeEmpObservation !== true
+  if (freeze.state !== 'REFERENCE_FROZEN'
+    || freeze.expectedValuesFrozenBeforeEmpObservation !== true
     || freeze.productionOutputUsedToChooseExpectedValues !== false
     || freeze.productionOutputUsedToChooseDefinition !== false
     || freeze.toleranceDerivedFromProduction !== false
@@ -127,6 +135,12 @@ function requireRouteRelationship(value) {
     }
   }
   requiredString(route.routeId, 'EMP1_BENCHMARK_CUSTODY_ROUTE_ID_REQUIRED');
+  const expectedState = route.engineeringUseAuthorized
+    ? 'ENGINEERING_USE_AUTHORIZED'
+    : 'OUTSIDE_AUTHORIZED_ENGINEERING_ROUTE';
+  if (route.state !== expectedState) {
+    throw custodyError('EMP1_BENCHMARK_CUSTODY_ROUTE_STATE_MISMATCH');
+  }
   return route;
 }
 
@@ -157,6 +171,9 @@ function requireExecution(value, evidence) {
 
   const expectedIds = evidence.comparison.quantities.map((quantity) => quantity.quantityId);
   const observedIds = array(execution.observedQuantityIds).map(String);
+  if (new Set(observedIds).size !== observedIds.length) {
+    throw custodyError('EMP1_BENCHMARK_CUSTODY_EXECUTION_QUANTITY_IDS_NOT_UNIQUE');
+  }
   if (observedIds.length !== expectedIds.length
     || observedIds.some((quantityId, index) => quantityId !== expectedIds[index])) {
     throw custodyError('EMP1_BENCHMARK_CUSTODY_EXECUTION_QUANTITY_SET_MISMATCH');
@@ -219,6 +236,9 @@ function requireEvidenceBoundary(value) {
     value,
     'EMP1_BENCHMARK_CUSTODY_EVIDENCE_AUTHORITY_BOUNDARY_REQUIRED',
   );
+  if (boundary.projectionOnly !== true) {
+    throw custodyError('EMP1_BENCHMARK_CUSTODY_EVIDENCE_PROJECTION_ONLY_REQUIRED');
+  }
   for (const field of FALSE_EVIDENCE_BOUNDARY_FIELDS) {
     if (boundary[field] !== false) {
       throw custodyError(`EMP1_BENCHMARK_CUSTODY_EVIDENCE_BOUNDARY_MUST_BE_FALSE:${field}`);

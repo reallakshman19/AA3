@@ -23,6 +23,8 @@ PR: 1640
 PR_STATUS: OPEN_DRAFT
 BRANCH: agent/emp1-pvelite-benchmark-programme-v1
 MAIN: fe57071e69b056c65ad866548056b8a097416081
+PR_HEAD_OBSERVED_AFTER_CLOSE: 26cf5338c031c332fb283e2983a296630d0331b2
+MERGEABILITY: MERGEABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -69,6 +71,7 @@ CAUX_GAMMA_RADIUS_RECONCILIATION:
 
 INTERPOLATION_AUTHORITY:
 - primary WRC interpolation intent acknowledged, exact cross-gamma numerical rule not established;
+- official CAESAR II help confirms it has an interpolation/extension setting but does not publish the between-curve numerical coordinate/rule needed for WRC method fidelity;
 - secondary log-gamma/linear-beta implementation evidence is not controlled WRC method authority;
 - route EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.INTERPOLATED_GAMMA.ZERO_DP remains registered/comparison-qualified but engineeringUseAuthorized=false;
 - suspension remains NON_TABULATED_GAMMA_INTERPOLATION_RULE_NOT_SOURCE_QUALIFIED;

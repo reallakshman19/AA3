@@ -1,7 +1,7 @@
 ISSUE_CURRENT_STATE_VERSION: 1
 CHAIN_ID: ADV-PROD-1634-RECOVERY
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0006
 UPDATED_AT: 2026-09-03
 
 # Current state — Issue #1634 production recovery
@@ -10,85 +10,80 @@ UPDATED_AT: 2026-09-03
 
 | ID | Requirement | Status | Current evidence / disposition |
 |---|---|---|---|
-| TASK-001 | Start fixing production-readiness gaps. | IN_PROGRESS | Recovery chain/plan + draft #1637 created; LEG-001 material patch implemented, focused semantics checked, production acceptance still pending. |
-| TASK-002 | Use Common exact basis `293a3db7993a6945c01adc592a7ff14a339c504a`. | SATISFIED | Common skill + mandatory references re-grounded before material work. |
-| TASK-003 | Restore production bundle browser boot. | PATCHED_NOT_VALIDATED | LEG-001 routes the existing import-free spring-rate authority leaf with generic core to remove the demonstrated generated chunk back-edge; production build/browser execution remains NOT_RUN. |
-| TASK-004 | Restore build/chunk budget without weakening ceiling. | BLOCKED | Main ~1.8 MiB vs 1.125 MiB hard ceiling. LEG-002 may start only after boot disposition. |
-| TASK-005 | Restore exact-head LAFEA.4 CI execution. | BLOCKED | PR #1632 exact head has no associated executing workflow; workflow mutation not authorized. LEG-003. |
-| TASK-006 | Real-app LAFEA/UI flow recovery. | OPEN | Browser matrix defined in PLAN-0001; execution pending post-boot. |
-| TASK-007 | Correct UI layout for engineering use. | PARTIAL | Draft PR #1635 covers property-inspector label wrapping only; full layout matrix pending. |
-| TASK-008 | Keep UI/presentation non-authoritative. | OPEN | Presentation custody tests specified in LEG-005. |
-| TASK-009 | Independent manual calculations. | OPEN | BM-001..BM-005 defined; execution/frozen expected artifacts pending. |
-| TASK-010 | Published shell benchmark programme. | OPEN | Source candidates and BM-006..BM-009 defined; source custody/reference freezing pending. |
-| TASK-011 | Preserve source/oracle/tolerance/solver/recovery authority. | ACTIVE_INVARIANT | LEG-001 changes no qualified spring-rate arithmetic or FEA mechanics; focused resolver normal + two negative controls executed successfully. |
-| TASK-012 | Hold MITC release qualification until exact-head evidence. | HOLD | `RELEASE_QUALIFIED` remains false/held. |
+| TASK-001 | Start fixing production-readiness gaps. | IN_PROGRESS | Recovery PR #1637 merged by explicit Owner authorization; follow-on Draft #1639 carries LEG-002 and is unmerged. |
+| TASK-002 | Use Common exact basis `293a3db7993a6945c01adc592a7ff14a339c504a`. | SATISFIED | Common protocol remains current for the chain. |
+| TASK-003 | Restore production bundle browser boot. | PATCHED_NOT_VALIDATED | LEG-001 chunk-graph correction is on main; no exact-head production build/served-browser execution exists. |
+| TASK-004 | Restore build/chunk budget without weakening ceiling. | IMPLEMENTED_NOT_ACCEPTED | LEG-002 moves the heavy EMP.1 transaction behind the existing async API while preserving the authority owner. Net Rollup byte reduction remains unmeasured; hard ceiling remains 1.125 MiB. |
+| TASK-005 | Restore exact-head LAFEA.4 CI execution. | BLOCKED_INFRASTRUCTURE | Current unconditional EMP.1 pull-request workflow and prior PR heads also show zero runs; workflow mutation/dispatch is unavailable or unauthorized. |
+| TASK-006 | Real-app LAFEA/UI flow recovery. | OPEN | Browser viewport/state matrix remains defined in PLAN-0001; execution waits for a bootable exact-head production artifact. |
+| TASK-007 | Correct UI layout for engineering use. | PARTIAL | Separate Draft #1635 covers one inspector layout correction; full matrix remains open. |
+| TASK-008 | Keep UI/presentation non-authoritative. | OPEN | Result-custody presentation checks remain required. |
+| TASK-009 | Independent manual calculations. | READY_NOT_RUN | BM-001..BM-005 payloads are defined; candidate execution/evidence retention remains pending. |
+| TASK-010 | Published shell benchmark programme. | READY_FOR_SOURCE_FREEZE | Literature candidates are identified; exact benchmark definitions/QoI/value provenance must be frozen before execution. |
+| TASK-011 | Preserve source/oracle/tolerance/solver/recovery authority. | ACTIVE_INVARIANT | LEG-001 leaves Issue #1551 spring-rate authority unchanged; LEG-002 leaves EMP.1 core numerical/registry/applicability/route authority and LAFEA mechanics unchanged. |
+| TASK-012 | Hold MITC release qualification until exact-head evidence. | HOLD | `RELEASE_QUALIFIED=false`. |
 
-## Input ledger
+## Current repository / PR ledger
 
-| ID | Input | Status | Evidence / note |
-|---|---|---|---|
-| INPUT-001 | current main `ad72465b4359fc660dd68e7cb04a1e091c2fe3b9` | AVAILABLE | branch recovery basis |
-| INPUT-002 | PR #1632 head `5b755e645f41c5860cb380759e748b38110ad42b` | AVAILABLE | local/global oracle correction; draft |
-| INPUT-003 | PR #1635 head `b4d199e29fe0a3ace61a71f487876e8218bf6072` | AVAILABLE | narrow property-inspector layout fix; draft |
-| INPUT-004 | TDZ production smoke reproduction | AVAILABLE | `ADV-LFEA-ERROR-CHECK-AUTHORIZATION-UI/EP-0002.md` |
-| INPUT-005 | chunk-size reproduction | AVAILABLE | same endpoint: untouched main 1,801,999 B vs 1,179,648 B |
-| INPUT-006 | LEG-001 material head `62b5bd88d0d2b8997254215210124cfd32317043` | AVAILABLE_NOT_FULLY_EXECUTED | `vite.config.js` + ownership check only |
-| INPUT-007 | spring-rate conversion owner | PROTECTED_AVAILABLE_PASS_FOCUSED | Issue #1551 source formula/withholding untouched; exact two-file resolver executed PASS; two deliberate-break controls exited nonzero |
-| INPUT-008 | LAFEA source/result checks | AVAILABLE | `src/core/local-shell/**`, `scripts/lafea.4-*.mjs` |
-| INPUT-009 | published benchmark references | PARTIAL | candidate literature identified; exact page/figure/value custody must be frozen before PASS |
-| INPUT-010 | executable exact-head CI/runtime | UNRESOLVED | GitHub API `actions/runs?head_sha=65653aa...` returned `total_count=0` |
-
-## Benchmark / oracle ledger
-
-| ID | Status | Current evidence / next action |
-|---|---|---|
-| BM-001 Rotated affine membrane | READY | independent equations defined; freeze expected worksheet then execute |
-| BM-002 Rigid motion | READY | exact invariant; execute on candidate |
-| BM-003 Pure bending surfaces | READY | hand payload defined in Q4; freeze expected worksheet |
-| BM-004 Pressure/resultant FBD | READY | free-body equations defined; execute |
-| BM-005 Cantilever strip | READY | Euler-Bernoulli payload defined; verify shell idealization before comparison |
-| BM-006 Scordelis-Lo | NOT_RUN | freeze exact source definition/reference provenance first |
-| BM-007 Pinched cylinder | NOT_RUN | freeze source definition/QoI first |
-| BM-008 Twisted beam | NOT_RUN | regular/distorted mesh ladder pending |
-| BM-009 MITC thin-limit/distortion | NOT_RUN | thickness/distortion ladder pending |
-| BM-010 Orientation/normal/permutation | READY | execute after production candidate established |
-| BM-011 Solver/equilibrium/energy | NOT_RUN | execute focused + aggregate gates |
-| BM-012 UI evidence fidelity | NOT_RUN | execute browser/view-model comparison after boot |
+| Item | State |
+|---|---|
+| live main | `1aab8842759e63fe94f80438630647c166866034` |
+| prior recovery PR | #1637 MERGED at `6e6c4062fffbd173aa9c4d2a2b34c2586df47f4e` |
+| current recovery PR | #1639 OPEN_DRAFT / mergeable after reconciliation / merge unauthorized |
+| LEG-002 material head | `f85f6b9262fe8ae878eb30c49355af750d50f43b` |
+| reconciliation commit | `e13497f3115c350e7ba2760474c2bc7aceabd453` |
+| latest endpoint | EP-0006 |
+| release | HOLD / false |
 
 ## LEG-001 validation ledger
 
 | Check | Status | Evidence |
 |---|---|---|
-| Spring-rate resolver normal path | PASS | exact head source/check reconstructed and executed: `400 N/mm -> 400000 N/m`; unresolved units withheld |
-| Spring-rate wrong-rate negative | PASS | `--deliberate-break-rate` exits nonzero |
-| Spring-rate unresolved fallback negative | PASS | `--deliberate-break-unresolved` exits nonzero |
-| Ownership guard source contract | PASS_SOURCE_INSPECTION | exact head checker asserts leaf -> `core-application`, geometry still imports same authority, authority leaf must remain import-free |
-| Ownership guard executable | NOT_RUN | faithful full dependency runtime unavailable |
-| `check:imports` | NOT_RUN | full repository/dependencies unavailable |
-| production build | NOT_RUN | no runner/full dependency materialization |
-| built-dist Chromium smoke | NOT_RUN | no candidate `dist/` artifact exists |
-| exact-head GitHub Actions | NOT_RUN | zero runs for validated head `65653aa151be1d4c5bcad9ca478b001dfa81e2c5` |
+| Spring-rate resolver normal path | PASS | `400 N/mm -> 400000 N/m`; unresolved units withheld. |
+| Wrong-rate negative | PASS | deliberate bad conversion exits nonzero. |
+| Unresolved fallback negative | PASS | forbidden fallback exits nonzero. |
+| Ownership source contract | PASS_SOURCE_INSPECTION | qualified spring-rate authority remains same import-free leaf; generated ownership is routed with generic core. |
+| production build / served-browser | NOT_RUN | faithful exact-head runtime absent. |
 
-## Roadmap ledger
+## LEG-002 validation ledger
 
-| ID | Binding | Class | Status | Mutation authority |
-|---|---|---|---|---|
-| RM-001 | `docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31` | governing project roadmap | ALIGNED | NONE this leg |
-| RM-002 | `docs/LAFEAagent.md@c4328e6a949c9004332a405aec335ec6ede62053` | technical qualification standard | ALIGNED | NONE |
-| RM-003 | Common `engineering-pr-delivery-v2@293a3db7993a6945c01adc592a7ff14a339c504a` | protocol | CURRENT | Owner-selected basis |
-| RM-004 | repository `AGENTS.md` | project overlay | ALIGNED | NONE |
+| Check | Status | Evidence |
+|---|---|---|
+| planned material scope | PASS | two workspace files + one structural checker; no core numerical/workflow/chunk-ceiling mutation. |
+| route-authority owner retained | PASS_SOURCE_INSPECTION | `currentEmp1WorkbenchRouteAuthority()` remains in `emp1-workbench-product-run.js`. |
+| route-authority source frozen | PASS_SOURCE_INSPECTION | pre-LEG authority-function SHA-256 `74f6ebdacfff23d14dd12262b23535f49dc901538c4cbfa013cc458666c3d197`; executable guard NOT_RUN. |
+| heavy transaction lazy split | PASS_SOURCE_INSPECTION | `executeEmp1WorkbenchProduct()` dynamically loads `emp1-workbench-product-execution.js`; lazy implementation receives the existing authority resolver and has no import back to the owner. |
+| EMP.1 product qualification | NOT_RUN | no exact-head Actions/runtime execution. |
+| import checker | NOT_RUN | no faithful full checkout/runtime. |
+| production Rollup build / chunk bytes | NOT_RUN | actual byte saving unknown. |
+| served production browser boot | NOT_RUN | no current `dist/`. |
+| exact-head Actions | NOT_RUN | zero runs observed on reconciled #1639 head and immediately preceding merged #1636 head. |
 
-## Owner qualification baseline
+## CI diagnosis
 
-OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
-OWNER_QUALIFICATION_BASELINE_SOURCE: owner-chat:2026-09-03T02:09:47Z
-OWNER_QUALIFICATION_BASELINE_MANIFEST: agents/chains/ADV-PROD-1634-RECOVERY/qualification-baselines/QB-ISSUE-1634-A.json
-OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
+`.github/workflows/emp1-gamma5-main-route.yml` triggers on every `pull_request` without a path filter and directly runs `scripts/emp1-workbench-product-run-qualification.mjs`. Yet #1639 and preceding merged #1636 both have zero workflow runs. This makes changed-file filtering an invalid explanation for the absent evidence. The connected interface exposes no workflow dispatch and cannot read the repository Actions-permission setting through its allowed endpoint surface. Protected workflow YAML will not be changed solely to manufacture execution.
+
+## Benchmark / oracle ledger
+
+| ID | Status | Current evidence / next action |
+|---|---|---|
+| BM-001 Rotated affine membrane | READY | independent local-frame stress/engineering-strain oracle defined; direct global-vs-local comparison is a negative control. |
+| BM-002 Rigid motion | READY | zero strain/stress/energy invariant. |
+| BM-003 Pure bending surfaces | READY | top/bottom analytical stress/strain values defined. |
+| BM-004 Pressure/resultant FBD | READY | force and moment closure equations defined; no thickness/end-cap invention. |
+| BM-005 Cantilever strip | READY | Euler-Bernoulli response payload defined subject to matching idealization. |
+| BM-006 Scordelis-Lo | NOT_RUN | exact shell-theory/source/QoI/value provenance must be frozen; do not blindly use 0.3024 ft. |
+| BM-007 Pinched cylinder | NOT_RUN | source/QoI/mesh ladder freeze pending. |
+| BM-008 Twisted beam | NOT_RUN | regular/distorted mesh ladder pending. |
+| BM-009 MITC thin-limit/distortion | NOT_RUN | thickness/distortion ladder pending. |
+| BM-010 Orientation/normal/permutation | READY | execute after candidate production route exists. |
+| BM-011 Solver/equilibrium/energy | NOT_RUN | focused + aggregate gates pending. |
+| BM-012 UI evidence fidelity | NOT_RUN | browser/view-model comparison after production boot. |
 
 ## Current blocker / diagnosis
 
-LEG-001 has implemented the smallest source-authority-preserving chunk-graph correction, and the protected spring-rate micro-gate now has executable positive/negative evidence. The production claim remains unaccepted because the full Vite/Rollup dependency graph has not been built and the generated `dist/` has not been booted in a real browser. The exact validated PR head has no Actions run.
+LEG-002 is a bounded packaging correction, not an accepted production fix. The current synchronous route-authority owner still imports the authorized WRC route module, which itself has qualified WRC dependencies, so source movement alone cannot establish how many bytes left the entry chunk. A faithful Rollup build and served-browser smoke remain the controlling evidence.
 
 ## Exact next action
 
-Do not make another material change. Obtain faithful exact-head execution of `bundle-chunk-ownership-check`, `check:imports`, production `npm run build`, and served-`dist/` Chromium smoke. PASS → accept LEG-001 and prepare measured LEG-002 size profiling. FAIL → freeze/re-isolate the generated SCC. All UI/layout/manual/published benchmark obligations remain open and release remains HOLD.
+Keep #1639 Draft and unmerged. Continue **read-only** P1 import-graph profiling to identify optional eager application/workbench dependencies that can be deferred without touching numerical, source, applicability, route, oracle, tolerance, workflow or release authority. Do not begin another material leg until its write-ahead gate is explicitly opened. Obtain faithful exact-head structural/EMP.1/import/build/chunk/browser execution before accepting LEG-002. All UI/layout/manual/published benchmark obligations remain open and release remains HOLD.

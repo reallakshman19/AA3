@@ -24,6 +24,7 @@ const evidence = () => ({
     sourceHash: 'c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e',
   },
   freezeEvidence: {
+    state: 'REFERENCE_FROZEN',
     expectedValuesFrozenBeforeEmpObservation: true,
     productionOutputUsedToChooseExpectedValues: false,
     productionOutputUsedToChooseDefinition: false,
@@ -190,6 +191,22 @@ assert.throws(
   { code: 'EMP1_BENCHMARK_CUSTODY_EXECUTION_QUANTITY_SET_MISMATCH' },
 );
 
+const duplicateEvidenceQuantity = input();
+duplicateEvidenceQuantity.evidence.comparison.quantities[1].quantityId =
+  duplicateEvidenceQuantity.evidence.comparison.quantities[0].quantityId;
+assert.throws(
+  () => createEmp1BenchmarkComparisonCustody(duplicateEvidenceQuantity),
+  { code: 'EMP1_BENCHMARK_CUSTODY_QUANTITY_IDS_NOT_UNIQUE' },
+);
+
+const duplicateExecutionQuantity = input();
+duplicateExecutionQuantity.execution.observedQuantityIds[1] =
+  duplicateExecutionQuantity.execution.observedQuantityIds[0];
+assert.throws(
+  () => createEmp1BenchmarkComparisonCustody(duplicateExecutionQuantity),
+  { code: 'EMP1_BENCHMARK_CUSTODY_EXECUTION_QUANTITY_IDS_NOT_UNIQUE' },
+);
+
 const routeMismatch = input();
 routeMismatch.routeAuthority.snapshot.routeId = 'OTHER_ROUTE';
 assert.throws(
@@ -204,11 +221,40 @@ assert.throws(
   { code: 'EMP1_BENCHMARK_CUSTODY_ROUTE_AUTHORITY_MISMATCH:engineeringUseAuthorized' },
 );
 
+const routeStateDrift = input();
+routeStateDrift.evidence.routeRelationship.state = 'ENGINEERING_USE_AUTHORIZED';
+assert.throws(
+  () => createEmp1BenchmarkComparisonCustody(routeStateDrift),
+  { code: 'EMP1_BENCHMARK_CUSTODY_ROUTE_STATE_MISMATCH' },
+);
+
+const qualifiedRouteMismatch = input();
+qualifiedRouteMismatch.evidence.routeRelationship.comparisonQualificationAvailable = false;
+qualifiedRouteMismatch.routeAuthority.snapshot.comparisonQualificationAvailable = false;
+assert.throws(
+  () => createEmp1BenchmarkComparisonCustody(qualifiedRouteMismatch),
+  { code: 'EMP1_BENCHMARK_CUSTODY_COMPARISON_QUALIFICATION_ROUTE_MISMATCH' },
+);
+
 const authorityLeak = input();
 authorityLeak.evidence.authority.codeComplianceAuthorized = true;
 assert.throws(
   () => createEmp1BenchmarkComparisonCustody(authorityLeak),
   { code: 'EMP1_BENCHMARK_CUSTODY_EVIDENCE_AUTHORITY_MUST_BE_FALSE:codeComplianceAuthorized' },
+);
+
+const notProjectionOnly = input();
+notProjectionOnly.evidence.authorityBoundary.projectionOnly = false;
+assert.throws(
+  () => createEmp1BenchmarkComparisonCustody(notProjectionOnly),
+  { code: 'EMP1_BENCHMARK_CUSTODY_EVIDENCE_PROJECTION_ONLY_REQUIRED' },
+);
+
+const unfrozenReference = input();
+unfrozenReference.evidence.freezeEvidence.state = 'NOT_AVAILABLE';
+assert.throws(
+  () => createEmp1BenchmarkComparisonCustody(unfrozenReference),
+  { code: 'EMP1_BENCHMARK_CUSTODY_FREEZE_EVIDENCE_INVALID' },
 );
 
 const unfrozenTolerance = input();

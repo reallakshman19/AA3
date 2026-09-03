@@ -3,6 +3,14 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
 UPDATED_AT: 2026-09-03
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5519252661
+PR: 1636
+BRANCH: agent/emp1-benchmark-evidence-v1
+PREWORK_HEAD: 1edf91a4e29cb660d3effbf4b0228fb971d936e3
+MAIN: ad72465b4359fc660dd68e7cb04a1e091c2fe3b9
 
 ## Original task / acceptance ledger
 
@@ -53,6 +61,10 @@ WRITE_AUTHORITY: READ_ONLY_UNTIL_EXACT_OWNER_PROGRESSION_COMMAND
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
+CHAIN_HANDOVER_READY: TRUE
+TAKEOVER_QUALIFICATION_READY: TRUE
+HANDOVER_VALIDATION_STATUS: NOT_RUN
+HANDOVER_READY: FALSE_VALIDATION_NOT_RUN
 
 CURRENT_BLOCKER: Pinned Common protocol recognizes only `proceed next`, `proceed next, no Qs`, or `proceed next, hand over ready` for material progression. Current Owner instruction authorizes task/scope but did not use one of those progression commands.
 EXACT_NEXT_ACTION: After an exact Owner progression command, implement Leg 1 only: `src/core/emp1/emp1-benchmark-evidence-projection.js` plus `scripts/emp1-benchmark-evidence-projection-check.mjs`; preserve all protected authority and expected-value files.

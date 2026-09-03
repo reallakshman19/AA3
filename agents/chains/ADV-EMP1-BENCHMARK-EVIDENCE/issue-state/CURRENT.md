@@ -3,10 +3,10 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0009
 UPDATED_AT: 2026-09-03
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0009_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0009_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520647007
 PREDECESSOR_PR: 1638
 PREDECESSOR_MERGE: fe57071e69b056c65ad866548056b8a097416081
 PR: 1640
@@ -109,4 +109,4 @@ HANDOVER_VALIDATION_STATUS: PARTIAL
 HANDOVER_READY: FALSE
 
 CURRENT_BLOCKER: exact PV Elite source/report/input/version remains missing; CAUx result custody requires admissible faithful execution; UI/index integration remains concurrency-blocked.
-EXACT_NEXT_ACTION: synchronize EP-0009 to issue #1633, update Draft PR #1640, then stop material mutation. On next Owner progression command, re-ground current main and active EMP overlap PRs before selecting another EMP-only leg.
+EXACT_NEXT_ACTION: keep PR #1640 Draft. On next Owner progression command, re-ground current main and active EMP overlap PRs before selecting another EMP-only leg.

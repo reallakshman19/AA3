@@ -45,8 +45,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0004_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0004_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520067991
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: issue #1261 + issue #1389 as Owner-directed issue execution plans; `docs/OWNER_ROADMAP.md` reviewed and not applicable to this EMP benchmark slice
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -77,4 +77,4 @@ MATERIAL_LEG_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/material-legs/LEG-0
 OVERLAP: PR1636_MERGE_SAFE — exact diff remains EMP benchmark projection/checker plus chain custody; #1622/#1624/#1618 remain separate and are not merge-authorized.
 BLOCKER: none for Owner-authorized PR #1636 merge itself; downstream Stage 2/3/4 blockers remain unchanged.
 LEG_DIAGNOSIS: Owner explicitly authorized merge despite retained NOT_RUN full-checkout items. Scope/review/thread/mergeability audit is clean; validation truth remains explicit.
-EXACT_NEXT_ACTION: synchronize EP-0004 to issue #1633, mark PR #1636 ready if required, expected-head merge exact current head, then re-ground main and proceed to the next EMP-only decision/leg.
+EXACT_NEXT_ACTION: mark PR #1636 ready if required, re-audit exact relay head, expected-head merge, then re-ground main and proceed to the next EMP-only decision/leg.

@@ -14,32 +14,33 @@ AGENT_INSTANCE_ID: chatgpt:64b76bac-457d-49cb-a36f-fb5498ca0479
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 dedicated benchmark evidence, comparison custody, and PV Elite comparison programme, EMP-only.
 CHAIN: ADV-EMP1-BENCHMARK-EVIDENCE
-ENDPOINT: EP-0008
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/endpoints/EP-0008.md
+ENDPOINT: EP-0009
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/endpoints/EP-0009.md
 
 PREDECESSOR_PR: 1638
 PREDECESSOR_MERGE: fe57071e69b056c65ad866548056b8a097416081
 PR: 1640
 PR_STATUS: OPEN_DRAFT
 BRANCH: agent/emp1-pvelite-benchmark-programme-v1
+MATERIAL_HEAD: 2f6185df106d82c8baca1a7d966cc8da37b4743f
 MAIN: fe57071e69b056c65ad866548056b8a097416081
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: PVELITE_PROGRAMME_PREWORK_READY
+ENGINEERING_STATE: PVELITE_PROGRAMME_COMPLETE_SOURCE_NUMERICS_BLOCKED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_FOR_ORIGINATING_CUSTODIAN
-WRITE_AUTHORITY: MATERIAL_WRITE_AUTHORIZED_BY_OWNER_PROGRESSION
+WRITE_AUTHORITY: READ_ONLY_PENDING_NEXT_OWNER_PROGRESSION_COMMAND
 AUTO_STATE: NOT_APPLICABLE
 
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0009
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520595065
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0009_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0009_SYNC
 
-ORIGINAL_TASK_STATUS: CORE_PROJECTION_MERGED; COMPARISON_CUSTODY_MERGED; PVELITE_PROGRAMME_NEXT; CAUX_RESULT_FREEZE_BLOCKED; CAUX_UI_BLOCKED; PVELITE_SOURCE_BLOCKED
+ORIGINAL_TASK_STATUS: CORE_PROJECTION_MERGED; COMPARISON_CUSTODY_MERGED; PVELITE_PROGRAMME_COMPLETE; CAUX_RESULT_FREEZE_BLOCKED; CAUX_UI_BLOCKED; PVELITE_SOURCE_BLOCKED
 INPUT_STATUS: CAUX_AVAILABLE; PV_ELITE_SOURCE_MISSING
 BENCHMARK_ORACLE_STATUS: CAUX_FROZEN; NO_NEW_NUMERIC_COMPARISON_RECORD; PV_ELITE_REFERENCE_NOT_AVAILABLE
 
@@ -51,13 +52,15 @@ QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: NOT_RUN_NEW_LEG
+HANDOVER_VALIDATION_STATUS: PARTIAL
+HANDOVER_VALIDATION_EVIDENCE: exact authored LEG-004 pair isolated syntax/checker PASS; faithful full-repo execution/import/build NOT_RUN
 HANDOVER_READY: FALSE
 
-CURRENT_MATERIAL_LEG: PENDING_LEG_004
+CURRENT_MATERIAL_LEG: LEG-004
+MATERIAL_LEG_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/material-legs/LEG-004.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-EVIDENCE/endpoints/EP-0008.md
 
-OVERLAP: #1618 owns `src/core/emp1/index.js`; #1622/#1624 own EMP Review & Evidence UI seams; no planned exact-file overlap.
-BLOCKER: PV Elite numerical/source freeze remains blocked by missing exact source; UI/index integration remains concurrency-blocked; programme-contract metadata leg is safe.
-LEG_DIAGNOSIS: The next useful safe step is to freeze the PV Elite comparison programme requirements without inventing source values or tolerances.
-EXACT_NEXT_ACTION: implement only `src/core/emp1/emp1-pvelite-benchmark-programme.js` and `scripts/emp1-pvelite-benchmark-programme-check.mjs`, then record LEG-004 and a new endpoint.
+OVERLAP: LEG-004_SAFE — #1618 owns index; #1622/#1624 own UI/review seams; LEG-004 touches neither.
+BLOCKER: exact PV Elite source/report/input/version remains missing; CAUx custody still requires admissible faithful execution; UI/index remain concurrency-blocked.
+LEG_DIAGNOSIS: The first PV Elite comparison programme is now frozen without any source/result/tolerance fabrication. Primary case is exact gamma=5, Original, cylindrical, zero differential pressure, Kn=Kb=1, Au/Al/Bu/Bl/Cu/Cl/Du/Dl, no interpolation.
+EXACT_NEXT_ACTION: synchronize EP-0009 to issue #1633, update Draft PR #1640, then stop material mutation. On the next Owner progression command, re-ground main and active EMP overlap PRs before selecting another EMP-only leg.

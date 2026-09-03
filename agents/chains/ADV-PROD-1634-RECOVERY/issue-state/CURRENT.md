@@ -1,7 +1,7 @@
 ISSUE_CURRENT_STATE_VERSION: 1
 CHAIN_ID: ADV-PROD-1634-RECOVERY
 ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
 UPDATED_AT: 2026-09-03
 
 # Current state — Issue #1634 production recovery
@@ -10,7 +10,7 @@ UPDATED_AT: 2026-09-03
 
 | ID | Requirement | Status | Current evidence / disposition |
 |---|---|---|---|
-| TASK-001 | Start fixing production-readiness gaps. | IN_PROGRESS | Recovery chain/plan + draft #1637 created; LEG-001 material patch implemented but not executed. |
+| TASK-001 | Start fixing production-readiness gaps. | IN_PROGRESS | Recovery chain/plan + draft #1637 created; LEG-001 material patch implemented, focused semantics checked, production acceptance still pending. |
 | TASK-002 | Use Common exact basis `293a3db7993a6945c01adc592a7ff14a339c504a`. | SATISFIED | Common skill + mandatory references re-grounded before material work. |
 | TASK-003 | Restore production bundle browser boot. | PATCHED_NOT_VALIDATED | LEG-001 routes the existing import-free spring-rate authority leaf with generic core to remove the demonstrated generated chunk back-edge; production build/browser execution remains NOT_RUN. |
 | TASK-004 | Restore build/chunk budget without weakening ceiling. | BLOCKED | Main ~1.8 MiB vs 1.125 MiB hard ceiling. LEG-002 may start only after boot disposition. |
@@ -20,7 +20,7 @@ UPDATED_AT: 2026-09-03
 | TASK-008 | Keep UI/presentation non-authoritative. | OPEN | Presentation custody tests specified in LEG-005. |
 | TASK-009 | Independent manual calculations. | OPEN | BM-001..BM-005 defined; execution/frozen expected artifacts pending. |
 | TASK-010 | Published shell benchmark programme. | OPEN | Source candidates and BM-006..BM-009 defined; source custody/reference freezing pending. |
-| TASK-011 | Preserve source/oracle/tolerance/solver/recovery authority. | ACTIVE_INVARIANT | LEG-001 changes no qualified spring-rate arithmetic or FEA mechanics; active #1551 authority remains protected. |
+| TASK-011 | Preserve source/oracle/tolerance/solver/recovery authority. | ACTIVE_INVARIANT | LEG-001 changes no qualified spring-rate arithmetic or FEA mechanics; focused resolver normal + two negative controls executed successfully. |
 | TASK-012 | Hold MITC release qualification until exact-head evidence. | HOLD | `RELEASE_QUALIFIED` remains false/held. |
 
 ## Input ledger
@@ -32,11 +32,11 @@ UPDATED_AT: 2026-09-03
 | INPUT-003 | PR #1635 head `b4d199e29fe0a3ace61a71f487876e8218bf6072` | AVAILABLE | narrow property-inspector layout fix; draft |
 | INPUT-004 | TDZ production smoke reproduction | AVAILABLE | `ADV-LFEA-ERROR-CHECK-AUTHORIZATION-UI/EP-0002.md` |
 | INPUT-005 | chunk-size reproduction | AVAILABLE | same endpoint: untouched main 1,801,999 B vs 1,179,648 B |
-| INPUT-006 | LEG-001 material head `62b5bd88d0d2b8997254215210124cfd32317043` | AVAILABLE_NOT_EXECUTED | `vite.config.js` + ownership check only |
-| INPUT-007 | spring-rate conversion owner | PROTECTED_AVAILABLE | Issue #1551 chain; source formula/withholding untouched by LEG-001 |
+| INPUT-006 | LEG-001 material head `62b5bd88d0d2b8997254215210124cfd32317043` | AVAILABLE_NOT_FULLY_EXECUTED | `vite.config.js` + ownership check only |
+| INPUT-007 | spring-rate conversion owner | PROTECTED_AVAILABLE_PASS_FOCUSED | Issue #1551 source formula/withholding untouched; exact two-file resolver executed PASS; two deliberate-break controls exited nonzero |
 | INPUT-008 | LAFEA source/result checks | AVAILABLE | `src/core/local-shell/**`, `scripts/lafea.4-*.mjs` |
 | INPUT-009 | published benchmark references | PARTIAL | candidate literature identified; exact page/figure/value custody must be frozen before PASS |
-| INPUT-010 | executable exact-head CI/runtime | UNRESOLVED | material head has no workflow runs or commit statuses |
+| INPUT-010 | executable exact-head CI/runtime | UNRESOLVED | GitHub API `actions/runs?head_sha=65653aa...` returned `total_count=0` |
 
 ## Benchmark / oracle ledger
 
@@ -54,6 +54,20 @@ UPDATED_AT: 2026-09-03
 | BM-010 Orientation/normal/permutation | READY | execute after production candidate established |
 | BM-011 Solver/equilibrium/energy | NOT_RUN | execute focused + aggregate gates |
 | BM-012 UI evidence fidelity | NOT_RUN | execute browser/view-model comparison after boot |
+
+## LEG-001 validation ledger
+
+| Check | Status | Evidence |
+|---|---|---|
+| Spring-rate resolver normal path | PASS | exact head source/check reconstructed and executed: `400 N/mm -> 400000 N/m`; unresolved units withheld |
+| Spring-rate wrong-rate negative | PASS | `--deliberate-break-rate` exits nonzero |
+| Spring-rate unresolved fallback negative | PASS | `--deliberate-break-unresolved` exits nonzero |
+| Ownership guard source contract | PASS_SOURCE_INSPECTION | exact head checker asserts leaf -> `core-application`, geometry still imports same authority, authority leaf must remain import-free |
+| Ownership guard executable | NOT_RUN | faithful full dependency runtime unavailable |
+| `check:imports` | NOT_RUN | full repository/dependencies unavailable |
+| production build | NOT_RUN | no runner/full dependency materialization |
+| built-dist Chromium smoke | NOT_RUN | no candidate `dist/` artifact exists |
+| exact-head GitHub Actions | NOT_RUN | zero runs for validated head `65653aa151be1d4c5bcad9ca478b001dfa81e2c5` |
 
 ## Roadmap ledger
 
@@ -73,8 +87,8 @@ OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
 ## Current blocker / diagnosis
 
-LEG-001 has implemented the smallest source-authority-preserving chunk-graph correction: only `restraint-spring-rate.js` generated ownership moves to `core-application`; the engineering file itself is unchanged. This is not accepted until a faithful production build and served-`dist/` browser smoke prove zero startup exceptions and focused spring-rate/import checks remain unchanged.
+LEG-001 has implemented the smallest source-authority-preserving chunk-graph correction, and the protected spring-rate micro-gate now has executable positive/negative evidence. The production claim remains unaccepted because the full Vite/Rollup dependency graph has not been built and the generated `dist/` has not been booted in a real browser. The exact validated PR head has no Actions run.
 
 ## Exact next action
 
-Do not make another material change. Execute LEG-001 ownership/spring-rate/import/build/browser checks. PASS → accept LEG-001 and begin measured LEG-002 size profiling. FAIL → revert/re-isolate the generated SCC. All UI/layout/manual/published benchmark obligations remain open and release remains HOLD.
+Do not make another material change. Obtain faithful exact-head execution of `bundle-chunk-ownership-check`, `check:imports`, production `npm run build`, and served-`dist/` Chromium smoke. PASS → accept LEG-001 and prepare measured LEG-002 size profiling. FAIL → freeze/re-isolate the generated SCC. All UI/layout/manual/published benchmark obligations remain open and release remains HOLD.

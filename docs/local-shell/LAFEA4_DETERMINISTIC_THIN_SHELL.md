@@ -126,9 +126,9 @@ Membrane, bending, and combined strain and stress remain separate. Principal str
 Independent scale-aware rules govern basis quality, area, director alignment, constitutive and stiffness symmetry, rigid motion, transformation rank, Cholesky pivots, free residuals, force and moment equilibrium, energy, membrane patches, and bending patches.
 
 ```bash
-npm run check:lafea.4
+npm run check:lafea-core
 ```
 
-The dedicated command covers contracts, containment, immutability, hashes, geometry, bases, CST fields, DKT curvature, transformation, assembly, solver, nodal forces and moments, pressure, recovery, energy, repeated-byte identity, permutation invariance, negative-zero elimination, source hygiene, cylindrical rigid motion, angular-refinement convergence, open-strip bending symmetry, and exact represented-area pressure-resultant reconstruction.
+That aggregate covers contracts, containment, immutability, hashes, geometry, bases, CST fields, DKT curvature, transformation, assembly, solver, nodal forces and moments, pressure, recovery, energy, repeated-byte identity, permutation invariance, negative-zero elimination, source hygiene, cylindrical rigid motion, angular-refinement convergence, open-strip bending symmetry, and exact represented-area pressure-resultant reconstruction across LAFEA.1 through LAFEA.5. It is paired in CI (`.github/workflows/lafea4-shell-pr-validation.yml`) with `npm run check:lafea-solver`, `npm run check:imports`, and `npm run build`; run all four locally before treating a LAFEA.4 change as release-qualified.
 
 Cylindrical equilibrium checks are exact for represented faceted area. Cylinder membrane stress is reported only as deterministic angular-refinement convergence evidence; no coarse-mesh exact cylinder-stress claim is made.

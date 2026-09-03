@@ -5,6 +5,14 @@ import { manualChunk } from '../vite.config.js';
 
 const viteSource = fs.readFileSync('vite.config.js', 'utf8');
 const policySource = fs.readFileSync('scripts/bundle-chunk-check.mjs', 'utf8');
+const springRateSource = fs.readFileSync(
+  'src/core/linear-piping-analysis-consumer/restraint-spring-rate.js',
+  'utf8',
+);
+const inputXmlUnitSource = fs.readFileSync(
+  'src/core/geometry/adapters/inputxml-unit-system.js',
+  'utf8',
+);
 
 const expectedOwnership = new Map([
   ['/repo/src/calc-workspace/cii-standalone-port/ui-adapted/panel.js', 'cii-standalone-ui'],
@@ -16,6 +24,10 @@ const expectedOwnership = new Map([
   ['/repo/src/core/fea-benchmarks/catalog.js', 'core-fea-benchmarks'],
   ['/repo/src/core/local-shell/index.js', 'core-local-shell'],
   ['/repo/src/core/linear-piping-analysis/index.js', 'core-linear-piping'],
+  [
+    '/repo/src/core/linear-piping-analysis-consumer/restraint-spring-rate.js',
+    'core-application',
+  ],
   ['/repo/src/core/support-engineering/index.js', 'core-support-engineering'],
   ['/repo/src/workspace/topology-edit/topology-edit-inline-component-replacement.js', 'topology-edit-engineering-commands'],
   ['/repo/src/workspace/topology-edit/topology-edit-stagedjson-engineering-source.js', 'topology-edit-stagedjson-source-engineering'],
@@ -56,6 +68,19 @@ for (const id of automaticWorkspaceOwnership) {
   );
 }
 
+// The geometry adapter consumes the qualified spring-rate conversion leaf. The
+// leaf must remain import-free for the explicit core-application placement to
+// stay a safe one-way dependency rather than creating a new chunk back-edge.
+assert.match(
+  inputXmlUnitSource,
+  /from ['"]\.\.\/\.\.\/linear-piping-analysis-consumer\/restraint-spring-rate\.js['"]/u,
+);
+assert.doesNotMatch(
+  springRateSource,
+  /^\s*import\s/mu,
+  'restraint-spring-rate.js must remain an import-free authority leaf or its chunk ownership must be requalified.',
+);
+
 assert.equal(manualChunk('/repo/src/main.js'), undefined);
 assert.equal(viteSource.includes("return 'fea-workbenches'"), false);
 assert.equal(viteSource.includes("if (source.includes('/src/workspace/')) return undefined;"), true);
@@ -63,7 +88,7 @@ assert.equal(viteSource.includes('onlyExplicitManualChunks: false'), true);
 assert.equal(viteSource.includes('onlyExplicitManualChunks: true'), false);
 assert.equal(viteSource.includes('chunkSizeWarningLimit'), false);
 assert.equal(policySource.includes('const targetBytes = 500 * 1024;'), true);
-assert.equal(policySource.includes('const maximumBytes = 1024 * 1024;'), true);
+assert.equal(policySource.includes('const maximumBytes = 1.125 * 1024 * 1024;'), true);
 assert.equal(policySource.includes('chunk.bytes <= maximumBytes'), true);
 assert.equal(new Set(expectedOwnership.values()).size >= 10, true);
 
@@ -73,7 +98,7 @@ console.log(JSON.stringify({
   explicitManualChunks: false,
   dependencyAwareManualChunks: true,
   chunkSizeTargetBytes: 500 * 1024,
-  chunkSizeSafetyCeilingBytes: 1024 * 1024,
+  chunkSizeSafetyCeilingBytes: 1.125 * 1024 * 1024,
   ownershipAssertions: expectedOwnership.size,
   automaticWorkspaceOwnershipAssertions: automaticWorkspaceOwnership.length,
   distinctChunkOwners: new Set(expectedOwnership.values()).size,

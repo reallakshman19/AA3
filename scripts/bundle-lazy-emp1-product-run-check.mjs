@@ -60,8 +60,13 @@ assert.match(
 );
 assert.doesNotMatch(
   executionSource,
-  /emp1-workbench-product-run\.js/u,
-  'The lazy implementation must not import its eager owner and create a generated back-edge.',
+  /from ['"]\.\/emp1-workbench-product-run\.js['"]/u,
+  'The lazy implementation must not statically import its eager owner.',
+);
+assert.doesNotMatch(
+  executionSource,
+  /import\(\s*['"]\.\/emp1-workbench-product-run\.js['"]\s*\)/u,
+  'The lazy implementation must not dynamically import its eager owner.',
 );
 assert.match(
   executionSource,

@@ -3,13 +3,13 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
 UPDATED_AT: 2026-09-03
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0008_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519249637
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519251225
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0008_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5520595065
 PREDECESSOR_PR: 1638
 PREDECESSOR_MERGE: fe57071e69b056c65ad866548056b8a097416081
-PR: PENDING_SUCCESSOR_PR
+PR: 1640
 BRANCH: agent/emp1-pvelite-benchmark-programme-v1
 MAIN: fe57071e69b056c65ad866548056b8a097416081
 
@@ -81,4 +81,4 @@ HANDOVER_VALIDATION_STATUS: NOT_RUN_NEW_LEG
 HANDOVER_READY: FALSE
 
 CURRENT_BLOCKER: PV Elite source/numeric comparison remains blocked by missing exact retained source; UI/index integration remains concurrency-blocked. The source-free programme contract itself is not blocked.
-EXACT_NEXT_ACTION: open Draft successor PR, sync EP-0008 to issue #1633, then implement only the two planned EMP programme files.
+EXACT_NEXT_ACTION: implement only the two planned EMP programme files, then record LEG-004 and the next endpoint; keep PR #1640 Draft without Owner merge authorization.

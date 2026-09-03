@@ -13,6 +13,7 @@ PR: 1640
 BRANCH: agent/emp1-pvelite-benchmark-programme-v1
 MAIN: fe57071e69b056c65ad866548056b8a097416081
 MATERIAL_HEAD: 1d2ad2fbbc5af9d07941bb57555d35b8e1493db3
+POST_CLOSE_METADATA_HEAD: ce5ca6ceac010f2968ff943646601c8c3db38e3c
 
 ## Acceptance ledger
 
@@ -64,7 +65,7 @@ Qualification V3:
 Authority review V2 semantic hash `193efc2a78ec52eac81009f7a47c721b9c9891ca4d8ce1b9f0ad711218d0fd13`.
 
 - primary WRC evidence acknowledges interpolation/extrapolation intent but does not establish the exact numerical cross-gamma operation;
-- required interpolation quantity, coordinate, bracket/per-figure behavior, beta-domain rule, blank-row/variant behavior and outer-gamma policy remain source-unqualified;
+- official CAESAR II documentation confirms WRC-107 interpolation/extension behavior and the WRC107/537 equivalence context, but does not publish the between-curve numerical coordinate/rule needed to establish WRC method fidelity;
 - secondary implementation evidence states logarithmic gamma / linear beta interpolation but lacks controlled identity/custody adequate for WRC method fidelity;
 - CAUx agreement may not choose an interpolation coordinate or create source authority;
 - route `EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.INTERPOLATED_GAMMA.ZERO_DP` remains `engineeringUseAuthorized=false` and comparison-qualified only;

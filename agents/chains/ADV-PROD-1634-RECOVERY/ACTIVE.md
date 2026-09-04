@@ -10,7 +10,7 @@ MATERIAL_LEG_RECEIPT: agents/chains/ADV-PROD-1634-RECOVERY/material-legs/LEG-002
 MATERIAL_HEAD: f85f6b9262fe8ae878eb30c49355af750d50f43b
 PR: #1639 DRAFT
 BRANCH: fix/1634-bundle-size-recovery
-HEAD: 864fae34b94ce25c03dd861fbf57a44cbba164eb
+HEAD: 51b14dff44bfc636844ed3af99a1c5e33cab7a74
 OBSERVED_PR_HEAD: a738845b86b6ebc61dc9f18183f3cfa4834feb15
 OBSERVED_PR_MERGE_REF: 3d8e212d17d31d1648b254abb471c8f7ff9b6ce0
 VALIDATED_PR_HEAD: NONE_FOR_LEG_002
@@ -38,7 +38,7 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1634
 WORK_ITEM_MODE: EXCLUSIVE
 CUSTODY_EPOCH: 13
 COORDINATION_STATE: COORDINATION_REQUIRED
-DEPENDENCIES: PR #1632 LAFEA.4 oracle-frame correction; PR #1635 inspector layout correction; Issue #1536 LAFEA.4 production chain/release hold and adoption-validation coverage; Issue #1551 spring-rate authority; open PR #1616/read-only EMP.1 method-authority projection; merged PR #1636 benchmark-evidence projection; merged PR #1638 benchmark-comparison custody admission; merged PR #1640 EMP.1 benchmark programme/reconciled CAUx evidence; merged PR #1620 EMP.1 hash-bound engineering-review attestation; merged PR #1621 EMP.1 review-readiness composition; protected EMP.1 qualification owner for post-authority semantic refreeze and gamma5 suspension-state consistency; exact LEG-002 build/chunk/browser execution coverage
+DEPENDENCIES: PR #1632 LAFEA.4 oracle-frame correction; PR #1635 inspector layout correction; Issue #1536 LAFEA.4 production chain/release hold and adoption-validation coverage; Issue #1551 spring-rate authority; Issue #1261 EMP.1/WRC source-oracle-route qualification owner; open PR #1616/read-only EMP.1 method-authority projection; merged PR #1636 benchmark-evidence projection; merged PR #1638 benchmark-comparison custody admission; merged PR #1640 EMP.1 benchmark programme/reconciled CAUx evidence; merged PR #1620 EMP.1 hash-bound engineering-review attestation; merged PR #1621 EMP.1 review-readiness composition; exact LEG-002 build/chunk/browser execution coverage
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 293a3db7993a6945c01adc592a7ff14a339c504a
 COMMON_PROTOCOL_STATUS: CURRENT
@@ -71,8 +71,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0013
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5519369861
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5519367351
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP_0013_COMMENT_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5543861882
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: NONE — full handover validator not executable in current environment
@@ -81,5 +81,5 @@ HANDOVER_READY: TRUE
 RELEASE_QUALIFIED: FALSE
 RECOVERY_PLAN: agents/chains/ADV-PROD-1634-RECOVERY/recovery-plan/PLAN-0001.md
 CURRENT_BLOCKER: GitHub Actions run creation has recovered for observed PR head a738845b86b6ebc61dc9f18183f3cfa4834feb15, but all three exact-head PR workflows are red in protected upstream EMP.1 qualification. Two expose POST_AUTHORITY_ORACLE_SEMANTIC_HASH_DRIFT in unchanged upstream oracle/refreeze custody; runEmp1 also exposes a stale suspension assertion that expects route authorization false while current main exports true. Current workflows do not execute the LEG-002 structural guard, exact production Rollup/chunk measurement, or served-browser smoke, so LEG-002 remains IMPLEMENTED_NOT_ACCEPTED.
-LEG_DIAGNOSIS: Run creation/hosted checkout is no longer the blocker. The controlling blocker is exact LEG-002 execution coverage plus upstream EMP.1 qualification-basis red. The stale false-vs-true suspension assertion is directly present on current main, and the semantic-refreeze inputs are outside #1639 material scope. Do not repair/refreeze those protected authorities in this production-bundle PR. EP-0008 benchmark-runtime laziness remains PREQUALIFIED_NOT_OPENED.
-EXACT_NEXT_ACTION: Keep #1639 Draft and unmerged. Route upstream EMP.1 semantic-refreeze and suspension-state inconsistencies to their protected qualification owner. After that basis is reconciled, run exact #1639 merge-ref structural guard -> governed EMP.1 product checks -> imports -> production build with retained exact chunk bytes against unchanged 1.125 MiB ceiling -> served-dist Chromium smoke. Only measured LEG-002 disposition may open another material leg. Never raise the ceiling, duplicate authority, mutate protected workflows/Actions settings, chain-1536 validation policy, or change numerical/source/oracle/benchmark-custody/engineering-review/readiness/route/release authority.
+LEG_DIAGNOSIS: Run creation/hosted checkout is no longer the blocker. The controlling blocker is exact LEG-002 execution coverage plus upstream EMP.1 qualification-basis red. The stale false-vs-true suspension assertion is directly present on current main, and the semantic-refreeze inputs are outside #1639 material scope. The blocker has been routed to Issue #1261. Do not repair/refreeze those protected authorities in this production-bundle PR. EP-0008 benchmark-runtime laziness remains PREQUALIFIED_NOT_OPENED.
+EXACT_NEXT_ACTION: Keep #1639 Draft and unmerged. Issue #1261 must reconcile upstream EMP.1 semantic-refreeze and suspension-state consistency under its protected authority. After that basis is reconciled, run exact #1639 merge-ref structural guard -> governed EMP.1 product checks -> imports -> production build with retained exact chunk bytes against unchanged 1.125 MiB ceiling -> served-dist Chromium smoke. Only measured LEG-002 disposition may open another material leg. Never raise the ceiling, duplicate authority, mutate protected workflows/Actions settings, chain-1536 validation policy, or change numerical/source/oracle/benchmark-custody/engineering-review/readiness/route/release authority.

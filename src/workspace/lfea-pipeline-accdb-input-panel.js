@@ -229,20 +229,39 @@ export class LfeaPipelineAccdbInputPanelController {
    * step runs from an authorized one.
    */
   acceptLimitations() {
-    if (!this.preFlight) return;
-    this.error = '';
     try {
-      this.preFlight = authorizeLinearPipingInputXmlPreFlight(this.preFlight, {
+      return this.authorizePreFlight({
         approverIdentity: this.reviewerIdentity,
         reason: this.reviewReason,
       });
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  /**
+   * Seal an explicit review through the existing governed pre-flight gateway.
+   * The common Error Check panel calls this method with reviewer custody; this
+   * controller still owns the complete retained limitation/finding payload.
+   */
+  authorizePreFlight(approval) {
+    if (!this.preFlight) {
+      throw new TypeError('A current ACCDB pre-flight is required before limitation acceptance.');
+    }
+    let authorizationError = null;
+    this.error = '';
+    try {
+      this.preFlight = authorizeLinearPipingInputXmlPreFlight(this.preFlight, approval);
       this.message = `Limitations accepted by ${this.preFlight.approverIdentity}; the analysis can proceed.`;
     } catch (error) {
+      authorizationError = error;
       this.error = errorMessage(error);
       this.message = 'The limitations were not accepted; nothing changed.';
     }
     this.render();
     this.notifyStateChanged();
+    if (authorizationError) throw authorizationError;
+    return this.preFlight;
   }
 
   /**

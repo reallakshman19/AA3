@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "baselineId": "QB-ISSUE-1261-A",
+  "source": "github:reallaksh19/Advanced_Analysis#1261/Appendix-A",
+  "sourceAuthority": "OWNER",
+  "activeQuestionSetId": "QS-ADV-EMP1-BENCHMARK-EVIDENCE-0001",
+  "questions": [
+    {
+      "baselineQuestion": "Q1",
+      "coveredBy": ["Q1"],
+      "requiredLiterals": ["Fx", "EMP.1.A", "EMP.1.B", "EMP.1.C"],
+      "requiredConcepts": ["production trace", "hash", "currentness", "source authority"],
+      "requiredObligations": ["trace", "identify", "falsify"]
+    },
+    {
+      "baselineQuestion": "Q2",
+      "coveredBy": ["Q2", "Q5"],
+      "requiredLiterals": ["LAFEA.1", "LAFEA.2", "LAFEA.3+"],
+      "requiredConcepts": ["navigation", "state", "regression", "minimal patch"],
+      "requiredObligations": ["demonstrate", "predict", "falsify"]
+    },
+    {
+      "baselineQuestion": "Q3",
+      "coveredBy": ["Q3", "Q4"],
+      "requiredLiterals": ["WRC537_2013.pdf", "CAUx 2017 - WRC01f.pdf", "24–31"],
+      "requiredConcepts": ["authority graph", "method source", "benchmark source", "independent derived", "production result"],
+      "requiredObligations": ["distinguish", "block", "retain"]
+    },
+    {
+      "baselineQuestion": "Q4",
+      "coveredBy": ["Q4"],
+      "requiredLiterals": ["511", "506", "668", "529", "975", "883", "1754", "1428"],
+      "requiredConcepts": ["independent validation", "expected-value freeze", "tolerance", "negative test"],
+      "requiredObligations": ["reproduce", "compare", "prove"]
+    },
+    {
+      "baselineQuestion": "Q5",
+      "coveredBy": ["Q5"],
+      "requiredLiterals": ["src/core/emp1", "scripts"],
+      "requiredConcepts": ["smallest coherent patch", "protected files", "validation", "no-patch condition"],
+      "requiredObligations": ["propose", "name", "abandon"]
+    }
+  ]
+}

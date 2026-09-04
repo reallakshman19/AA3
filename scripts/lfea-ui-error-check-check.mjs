@@ -91,22 +91,36 @@ const acquisitionCss = fs.readFileSync(
   new URL('../src/workspace/lfea-source-acquisition.css', import.meta.url),
   'utf8',
 );
+const mainSource = fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+const accdbPanelSource = fs.readFileSync(
+  new URL('../src/workspace/lfea-pipeline-accdb-input-panel.js', import.meta.url),
+  'utf8',
+);
 
 assert.match(presentationSource, /buildLfeaDiagnosticPresentation\(preFlight, options\)/u);
 assert.doesNotMatch(presentationSource, /capabilityEffects|message\.includes|severity\s*===/u);
 assert.doesNotMatch(
   panelSource,
-  /authorizeLinearPiping|setSource\(|clearSource\(|conditionGeometry|compileLinear|runLinear|preFlight\.solveAuthorized\s*=|presentation\.solveAuthorized\s*=/u,
+  /authorizeLinearPiping|limitationsAccepted|setSource\(|clearSource\(|conditionGeometry|compileLinear|runLinear|preFlight\.solveAuthorized\s*=|presentation\.solveAuthorized\s*=/u,
 );
 assert.match(panelSource, /selectLfeaErrorCheckSections\(this\.presentation, this\.activeCategory\)/u);
+assert.match(panelSource, /dataset\.action = 'lfea-error-check-acknowledge-limitation'/u);
+assert.match(panelSource, /dataset\.action = 'authorize-lfea-error-check-limitations'/u);
+assert.match(panelSource, /this\.options\.onAuthorizePreFlight\(\{/u);
 assert.match(surfaceSource, /mountLfeaCommonErrorCheckPanel/u);
+assert.match(surfaceSource, /onAuthorizePreFlight: options\.onAuthorizePreFlight/u);
 assert.match(surfaceSource, /errorCheckPanel\.refresh\(\)/u);
 assert.match(surfaceSource, /errorCheckPanel\.destroy\(\)/u);
+assert.match(mainSource, /function authorizeActiveLfeaPreFlight\(approval\)/u);
+assert.match(mainSource, /linearPipingInputXmlSource\.authorizePreFlight\(approval\)/u);
+assert.match(mainSource, /lfeaAccdbInputPanel\.authorizePreFlight\(approval\)/u);
+assert.match(accdbPanelSource, /authorizeLinearPipingInputXmlPreFlight\(this\.preFlight, approval\)/u);
 assert.match(acquisitionCss, /@import '\.\/lfea-diagnostics\/lfea-error-check\.css';/u);
 assert.match(cssSource, /linear-piping-inputxml-governed-diagnostics/u);
 assert.match(cssSource, /lfea-pipeline-accdb-capabilities/u);
-assert.doesNotMatch(cssSource, /\[data-role="lfea-pipeline-accdb-acceptance"\]\s*\{\s*display:\s*none/u);
-assert.doesNotMatch(cssSource, /\[data-action="authorize-linear-piping-inputxml-prefea"\][^{]*\{\s*display:\s*none/u);
+assert.match(cssSource, /\[data-role="lfea-pipeline-accdb-acceptance"\][^{]*\{\s*display:\s*none/u);
+assert.match(cssSource, /\[data-action="authorize-linear-piping-inputxml-prefea"\]/u);
+assert.match(cssSource, /\.lfea-common-error-check__authorization\s*\{/u);
 
 console.log(JSON.stringify({
   check: 'lfea-ui-error-check',

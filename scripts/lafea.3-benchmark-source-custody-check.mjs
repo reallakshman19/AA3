@@ -12,7 +12,8 @@ const required = [
 ];
 for (const [claimId, benchmark] of required) {
   assert.ok(matrix.includes(`\`${claimId}\``), `source matrix must retain ${claimId}`);
-  assert.ok(matrix.includes(`\`${benchmark}\``), `source matrix must bind ${claimId} to ${benchmark}`);
+  assert.ok(matrix.includes(`\`scripts/${benchmark}\``),
+    `source matrix must bind ${claimId} to scripts/${benchmark}`);
   await readFile(new URL(`./${benchmark}`, import.meta.url), 'utf8');
 }
 

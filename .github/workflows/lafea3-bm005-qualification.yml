@@ -23,12 +23,12 @@ jobs:
   bm005-auditable-qualification:
     runs-on: ubuntu-latest
     env:
-      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      EXPECTED_HEAD: ${{ github.event.pull_request.base.sha || github.sha }}
       BM005_REPORT_DIR: /tmp/lafea3-bm005-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
           fetch-depth: 0
 
       - name: Verify exact head and clean tree
@@ -78,3 +78,33 @@ jobs:
           status=$(cat "$BM005_REPORT_DIR/bm005.exit-code.txt")
           if [ "$status" -ne 0 ]; then exit "$status"; fi
           echo 'BM-005 harness completed with PASS exit status; artifact is candidate evidence only.'
+
+  b02d-v2-exact-main-observer-temp:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_MAIN: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - name: Checkout exact PR base main SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact main and clean tree
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_MAIN"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          git diff --check
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Execute B02D V2 exact-head governing response observer
+        run: node scripts/lafea-b02d-v2-governing-response-exact-head-check.mjs

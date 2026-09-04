@@ -89,13 +89,17 @@ function renderScalarTable({
   wrapper.dataset.inputGroup = groupId;
   const table = documentRef.createElement('table');
   table.className = 'lafea-doc-grid lafea-doc-grid--governed';
+  // A group whose descriptors are complete X/Y/Z triples is presented one row per
+  // identity with an input per axis, instead of three full-width rows per point.
+  // Ten reference points read as ten rows rather than thirty, and a transcription
+  // error is visible across the axes of one point, which is how the value is
+  // actually checked. Only batch groups regroup: per-row groups keep their own
+  // Apply button and are left exactly as they were.
+  const vectorTriples = batchScalarEdits ? collectVectorTriples(descriptors) : new Map();
   const header = documentRef.createElement('tr');
-  const headings = [
-    'Engineering identity',
-    'Input',
-    'Unit',
-    'Source/status',
-  ];
+  const headings = vectorTriples.size
+    ? ['Engineering identity', 'X', 'Y', 'Z', 'Unit', 'Source/status']
+    : ['Engineering identity', 'Input', 'Unit', 'Source/status'];
   if (!batchScalarEdits) headings.push('Action');
   headings.forEach((label) => {
     const cell = documentRef.createElement('th');
@@ -105,7 +109,24 @@ function renderScalarTable({
   });
   table.append(header);
 
+  const emitted = new Set();
   descriptors.forEach((descriptor) => {
+    const triple = vectorTriples.get(descriptor.descriptorId);
+    if (triple) {
+      if (emitted.has(triple.groupKey)) return;
+      emitted.add(triple.groupKey);
+      lafeaDescriptorInstances(documentValue, triple.axes.X)
+        .forEach((instance) => {
+          table.append(renderVectorRow({
+            documentRef,
+            stageId,
+            documentValue,
+            triple,
+            instance,
+          }));
+        });
+      return;
+    }
     lafeaDescriptorInstances(documentValue, descriptor)
       .forEach((instance) => {
         table.append(renderScalarRow({
@@ -198,32 +219,45 @@ function renderIdentityRegister(documentRef, documentValue, descriptor) {
   return wrapper;
 }
 
-function renderScalarRow({
-  documentRef,
-  stageId,
-  documentValue,
-  descriptor,
-  instance,
-  onSetScalar,
-  batchScalarEdits,
-}) {
-  const row = documentRef.createElement('tr');
-  row.dataset.descriptorId = descriptor.descriptorId;
-  if (instance.entityId) row.dataset.rowId = instance.entityId;
+const VECTOR_AXES = Object.freeze(['X', 'Y', 'Z']);
 
-  const identityCell = documentRef.createElement('th');
-  identityCell.scope = 'row';
-  const label = documentRef.createElement('strong');
-  label.textContent = descriptor.presentation.label;
-  const identity = documentRef.createElement('code');
-  identity.textContent = instance.entityId ?? stageId;
-  identity.style.display = 'block';
-  const path = documentRef.createElement('code');
-  path.textContent = lafeaDescriptorPath(descriptor, instance.entityId);
-  path.style.display = 'block';
-  identityCell.append(label, identity, path);
+/**
+ * Identify descriptors that are the X/Y/Z components of one vector quantity.
+ *
+ * `vectorDescriptors` in lafea-stage-input-descriptors.js generates these as a
+ * shared id prefix with a `.x`/`.y`/`.z` suffix and a label suffixed by the axis.
+ * Both are required to agree here, and only complete triples group, so anything
+ * that does not match falls through to the existing per-descriptor rendering
+ * rather than being reshaped on a guess.
+ *
+ * Returns a Map from descriptorId to its triple, for every descriptor in a
+ * complete triple.
+ */
+export function collectVectorTriples(descriptors) {
+  const candidates = new Map();
+  descriptors.forEach((descriptor) => {
+    const match = /^(?<group>.+)\.(?<axis>[xyz])$/u.exec(descriptor.descriptorId);
+    if (!match) return;
+    const axis = match.groups.axis.toUpperCase();
+    const label = descriptor.presentation?.label ?? '';
+    if (!label.endsWith(` ${axis}`)) return;
+    const groupKey = match.groups.group;
+    const entry = candidates.get(groupKey)
+      ?? { groupKey, axes: {}, label: label.slice(0, -2) };
+    entry.axes[axis] = descriptor;
+    candidates.set(groupKey, entry);
+  });
 
-  const inputCell = documentRef.createElement('td');
+  const triples = new Map();
+  candidates.forEach((entry) => {
+    if (!VECTOR_AXES.every((axis) => entry.axes[axis])) return;
+    VECTOR_AXES.forEach((axis) => triples.set(entry.axes[axis].descriptorId, entry));
+  });
+  return triples;
+}
+
+/** The governed numeric input for one descriptor instance, shared by both row shapes. */
+function buildGovernedInput({ documentRef, stageId, descriptor, instance }) {
   const inputId = lafeaInputIdentity(descriptor, instance.entityId);
   const input = documentRef.createElement('input');
   input.id = inputId;
@@ -249,35 +283,115 @@ function renderScalarRow({
   } else {
     state.style.display = 'none';
   }
-
   input.addEventListener('input', () => {
     validateNumericInput(input, descriptor.valueContract);
     input.dataset.dirty = String(input.value.trim() !== input.dataset.initialValue.trim());
   });
+  return { input, state };
+}
 
+/**
+ * The identity cell. The exact document path stays in the DOM because it is real
+ * custody information a reviewer needs, but it is demoted: the engineering label
+ * leads, and the path is small, muted and available in full on hover rather than
+ * competing with the label on every row.
+ */
+function buildIdentityCell({ documentRef, stageId, descriptor, instance, labelText }) {
+  const cell = documentRef.createElement('th');
+  cell.scope = 'row';
+  const label = documentRef.createElement('strong');
+  label.textContent = labelText ?? descriptor.presentation.label;
+  const identity = documentRef.createElement('code');
+  identity.textContent = instance.entityId ?? stageId;
+  identity.className = 'lafea-doc-identity';
+  const path = documentRef.createElement('code');
+  path.textContent = lafeaDescriptorPath(descriptor, instance.entityId);
+  path.className = 'lafea-doc-path';
+  path.title = path.textContent;
+  cell.append(label, identity, path);
+  return cell;
+}
+
+/** One row carrying the X, Y and Z inputs of a single vector identity. */
+function renderVectorRow({ documentRef, stageId, documentValue, triple, instance }) {
+  const row = documentRef.createElement('tr');
+  row.dataset.vectorGroup = triple.groupKey;
+  if (instance.entityId) row.dataset.rowId = instance.entityId;
+
+  row.append(buildIdentityCell({
+    documentRef,
+    stageId,
+    descriptor: triple.axes.X,
+    instance,
+    labelText: triple.label,
+  }));
+
+  VECTOR_AXES.forEach((axis) => {
+    const descriptor = triple.axes[axis];
+    const axisInstance = lafeaDescriptorInstances(documentValue, descriptor)
+      .find((candidate) => candidate.entityId === instance.entityId) ?? instance;
+    const cell = documentRef.createElement('td');
+    cell.dataset.vectorAxis = axis;
+    const { input, state } = buildGovernedInput({
+      documentRef, stageId, descriptor, instance: axisInstance,
+    });
+    cell.append(input, state);
+    row.append(cell);
+  });
+
+  const unitCell = documentRef.createElement('td');
+  const unit = resolveLafeaDescriptorUnit(documentValue, triple.axes.X);
+  unitCell.textContent = unit ?? triple.axes.X.unitContract.dimension ?? '\u2014';
+  row.append(unitCell);
+
+  row.append(buildSourceCell({
+    documentRef, documentValue, descriptor: triple.axes.X, instance,
+  }));
+  return row;
+}
+
+/** Source pointer and retained-source status for one descriptor instance. */
+function buildSourceCell({ documentRef, documentValue, descriptor, instance }) {
+  const cell = documentRef.createElement('td');
+  let sourceRef = null;
+  try {
+    sourceRef = resolveLafeaDescriptorSourceRef(documentValue, descriptor, instance.entityId);
+  } catch {
+    sourceRef = null;
+  }
+  const source = documentRef.createElement('code');
+  source.textContent = sourceRef ?? '\u2014';
+  const sourceStatus = documentRef.createElement('small');
+  sourceStatus.textContent = descriptor.authority.sourceStatus;
+  sourceStatus.style.display = 'block';
+  cell.append(source, sourceStatus);
+  return cell;
+}
+
+function renderScalarRow({
+  documentRef,
+  stageId,
+  documentValue,
+  descriptor,
+  instance,
+  onSetScalar,
+  batchScalarEdits,
+}) {
+  const row = documentRef.createElement('tr');
+  row.dataset.descriptorId = descriptor.descriptorId;
+  if (instance.entityId) row.dataset.rowId = instance.entityId;
+
+  const identityCell = buildIdentityCell({ documentRef, stageId, descriptor, instance });
+
+  const inputCell = documentRef.createElement('td');
+  const { input, state } = buildGovernedInput({ documentRef, stageId, descriptor, instance });
   inputCell.append(input, state);
 
   const unitCell = documentRef.createElement('td');
   const unit = resolveLafeaDescriptorUnit(documentValue, descriptor);
   unitCell.textContent = unit ?? descriptor.unitContract.dimension ?? '—';
 
-  const sourceCell = documentRef.createElement('td');
-  let sourceRef = null;
-  try {
-    sourceRef = resolveLafeaDescriptorSourceRef(
-      documentValue,
-      descriptor,
-      instance.entityId,
-    );
-  } catch {
-    sourceRef = null;
-  }
-  const source = documentRef.createElement('code');
-  source.textContent = sourceRef ?? '—';
-  const sourceStatus = documentRef.createElement('small');
-  sourceStatus.textContent = descriptor.authority.sourceStatus;
-  sourceStatus.style.display = 'block';
-  sourceCell.append(source, sourceStatus);
+  const sourceCell = buildSourceCell({ documentRef, documentValue, descriptor, instance });
 
   row.append(identityCell, inputCell, unitCell, sourceCell);
   if (!batchScalarEdits) {

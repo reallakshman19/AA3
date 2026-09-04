@@ -7,6 +7,10 @@
 }
 
 .lfea-common-error-check__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 12px;
   padding: 12px 14px 8px;
 }
 
@@ -22,6 +26,26 @@
   color: var(--workspace-muted);
   font-size: 11px;
 }
+
+.lfea-common-error-check__header p { grid-column: 1; }
+
+.lfea-common-error-check__status {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 4px 9px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  color: var(--workspace-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lfea-common-error-check__status[data-status="AUTHORIZED"],
+.lfea-common-error-check__status[data-status="READY"] { border-color: #22c55e; color: #4ade80; }
+.lfea-common-error-check__status[data-status="NEEDS_ACCEPTANCE"] { border-color: #fbbf24; color: #fbbf24; }
+.lfea-common-error-check__status[data-status="BLOCKED"] { border-color: #f87171; color: #f87171; }
 
 .lfea-common-error-check__filters {
   display: flex;
@@ -47,6 +71,14 @@
 
 .lfea-common-error-check__body {
   padding: 0 14px 10px;
+  min-width: 0;
+}
+
+.lfea-common-error-check__content {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.9fr);
+  align-items: start;
+  gap: 12px;
 }
 
 .lfea-common-error-check__category {
@@ -84,6 +116,8 @@
   gap: 8px;
 }
 
+.lfea-common-error-check__finding summary::marker { color: var(--workspace-muted); }
+
 .lfea-common-error-check__finding p {
   margin: 5px 0 0;
   color: var(--workspace-muted);
@@ -104,6 +138,23 @@
 
 .lfea-common-error-check__finding-text { color: var(--workspace-text); }
 
+.lfea-common-error-check__disposition {
+  flex: none;
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  color: var(--workspace-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.lfea-common-error-check__disposition[data-disposition="CONDITIONAL"] { color: #fbbf24; }
+.lfea-common-error-check__disposition[data-disposition="BLOCK"] { color: #f87171; }
+.lfea-common-error-check__disposition[data-disposition="PASS"],
+.lfea-common-error-check__disposition[data-disposition="ADVISORY"] { color: #60a5fa; }
+
 /* The suggested action is the point of the row, so it reads as body text
    rather than as another muted metadata line. */
 .lfea-common-error-check__action {
@@ -111,6 +162,43 @@
   border-left: 2px solid var(--workspace-accent);
   padding-left: 8px;
 }
+
+.lfea-common-error-check__group-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--workspace-border);
+}
+
+.lfea-common-error-check__group-action p { margin: 0; }
+
+.lfea-common-error-check__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--workspace-accent);
+  border-radius: 6px;
+  background: var(--workspace-panel-strong);
+  color: var(--workspace-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lfea-common-error-check__button .lfea-pipeline-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.lfea-common-error-check__button:disabled { cursor: not-allowed; opacity: 0.55; }
+.lfea-common-error-check__button[data-acknowledged="true"],
+.lfea-common-error-check__button[data-reviewed="true"] { border-color: #22c55e; color: #4ade80; }
 
 /* Triage banner: what stops the run / what needs sign-off / what is noted. */
 .lfea-common-error-check__triage {
@@ -156,6 +244,83 @@
 .lfea-common-error-check__triage-card[data-triage-id="INFORMATIONAL"] { border-left-color: #60a5fa; }
 .lfea-common-error-check__triage-card[data-cleared="true"] { border-left-color: #22c55e; opacity: 0.72; }
 .lfea-common-error-check__triage-card[data-cleared="true"] strong { color: #22c55e; }
+
+.lfea-common-error-check__authorization {
+  position: sticky;
+  top: 12px;
+  margin-right: 14px;
+  padding: 12px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 7px;
+  background: var(--workspace-panel-strong);
+  font-size: 11px;
+}
+
+.lfea-common-error-check__authorization h4 { margin: 0 0 10px; font-size: 12px; }
+.lfea-common-error-check__authorization > p { margin: 6px 0; color: var(--workspace-muted); line-height: 1.45; }
+
+.lfea-common-error-check__authorization-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--workspace-text);
+}
+
+.lfea-common-error-check__authorization-state .lfea-pipeline-icon { width: 18px; height: 18px; }
+.lfea-common-error-check__authorization-state[data-state="AUTHORIZED"],
+.lfea-common-error-check__authorization-state[data-state="PASS"] { color: #4ade80; }
+.lfea-common-error-check__authorization-state[data-state="CONDITIONAL_PENDING"] { color: #fbbf24; }
+.lfea-common-error-check__authorization-state[data-state="BLOCKED"] { color: #f87171; }
+
+.lfea-common-error-check__progress { margin: 12px 0; }
+.lfea-common-error-check__progress label { display: block; margin-bottom: 5px; color: #60a5fa; }
+.lfea-common-error-check__progress progress { width: 100%; accent-color: #60a5fa; }
+
+.lfea-common-error-check__field {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  margin-top: 9px;
+  color: var(--workspace-muted);
+}
+
+.lfea-common-error-check__field span { padding-top: 7px; }
+.lfea-common-error-check__field input,
+.lfea-common-error-check__field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 5px;
+  background: var(--workspace-panel);
+  color: var(--workspace-text);
+  font: inherit;
+  resize: vertical;
+}
+
+.lfea-common-error-check__primary-action {
+  width: 100%;
+  margin-top: 12px;
+  border-color: #fbbf24;
+  background: #fbbf24;
+  color: #111827;
+}
+
+.lfea-common-error-check__authorization-error { color: #f87171 !important; }
+.lfea-common-error-check__invalidation { margin-top: 12px !important; padding-top: 10px; border-top: 1px solid var(--workspace-border); color: #fbbf24 !important; }
+
+.lfea-common-error-check__authorization-evidence {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 5px 12px;
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--workspace-border);
+}
+
+.lfea-common-error-check__authorization-evidence dt { color: var(--workspace-muted); }
+.lfea-common-error-check__authorization-evidence dd { margin: 0; color: var(--workspace-text); overflow-wrap: anywhere; }
 
 .lfea-common-error-check__evidence {
   margin: 0 14px 14px;
@@ -209,4 +374,20 @@
 [data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
   [data-role="lfea-pipeline-accdb-finding-section"] {
   display: none;
+}
+
+/* The common review surface is the sole visible authorization owner. The
+   provider controls remain mounted for compatibility, but no duplicate action
+   competes with the per-limitation review and delegated authorization tray. */
+[data-host-group="SOURCE"] label:has(> [data-role="linear-piping-inputxml-reviewer"]),
+[data-host-group="SOURCE"] label:has(> [data-role="linear-piping-inputxml-review-reason"]),
+[data-host-group="SOURCE"] [data-action="authorize-linear-piping-inputxml-prefea"],
+[data-host-group="SOURCE"][data-active-step="ERROR_CHECK"]
+  [data-role="lfea-pipeline-accdb-acceptance"] {
+  display: none;
+}
+
+@media (max-width: 1050px) {
+  .lfea-common-error-check__content { grid-template-columns: 1fr; }
+  .lfea-common-error-check__authorization { position: static; margin: 0 14px 12px; }
 }

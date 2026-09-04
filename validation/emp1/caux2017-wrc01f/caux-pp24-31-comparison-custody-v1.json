@@ -1,0 +1,279 @@
+{
+  "schema": "emp1-benchmark-comparison-custody/v1",
+  "custodyId": "CAUX_2017_WRC01F_PP24_31_SUS_ACTUAL_EXECUTION_V1",
+  "state": "RETAINED_ACTUAL_EXECUTION_COMPARISON",
+  "benchmark": {
+    "benchmarkId": "CAUX_2017_WRC01F_PP24_31_REFERENCE_V1",
+    "comparator": {
+      "id": "CAUX",
+      "name": "CAUx",
+      "version": "2017"
+    },
+    "caseId": "WRC01f-pp24-31-SUS",
+    "authorityRole": "INDEPENDENT_BENCHMARK_REFERENCE_NOT_WRC_METHOD_AUTHORITY",
+    "sourceEvidence": {
+      "semanticHash": "741bfbc21496c2f126dbbeec18b2f88d4424e90a94b1d2cc7444776a16dfb7fe",
+      "sourceDocument": "CAUx 2017 - WRC01f.pdf",
+      "sourceHash": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+      "custodyState": "VERIFIED",
+      "directObservationState": "NOT_RUN_EXECUTION_ENVIRONMENT",
+      "qualificationState": "BLOCKED_FINAL_CAUX_SOURCE_QUALIFICATION_DIRECT_PDF_REOBSERVATION_NOT_RUN_REFERENCE_FREEZE_COMPLETE",
+      "qualificationId": "CAUX_2017_WRC01F_PP24_31_PR_C_Q1"
+    },
+    "freezeEvidence": {
+      "state": "REFERENCE_FROZEN",
+      "expectedValuesFrozenBeforeEmpObservation": true,
+      "productionOutputUsedToChooseExpectedValues": false,
+      "productionOutputUsedToChooseDefinition": false,
+      "toleranceDerivedFromProduction": false,
+      "toleranceFrozenBeforeEmpObservation": true
+    }
+  },
+  "methodRelationship": {
+    "comparatorMethod": "WRC107_MARCH_1979_B1_B2_CONTEXT",
+    "emp1Method": "WRC537_2013_TABLE5_INTERPOLATED_GAMMA",
+    "comparisonOnly": true
+  },
+  "routeRelationship": {
+    "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.INTERPOLATED_GAMMA.ZERO_DP",
+    "registered": true,
+    "engineeringUseAuthorized": false,
+    "comparisonQualificationAvailable": true,
+    "state": "OUTSIDE_AUTHORIZED_ENGINEERING_ROUTE"
+  },
+  "routeAuthority": {
+    "snapshotHash": "1101ea6510237f29f84711e215a619b2185fc62fff3c72ec01b70761907c2657",
+    "capturedAt": "2026-09-03T08:50:30Z",
+    "snapshot": {
+      "schema": "emp1-c-bounded-route-registry/v1:minimal-comparison-snapshot",
+      "routeId": "EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.INTERPOLATED_GAMMA.ZERO_DP",
+      "registered": true,
+      "engineeringUseAuthorized": false,
+      "comparisonQualificationAvailable": true
+    }
+  },
+  "execution": {
+    "kind": "ACTUAL_EMP_COMPARISON_EXECUTION",
+    "executed": true,
+    "provenanceClass": "DIRECT_EXECUTION_OBSERVATION",
+    "projectionInputSource": "ACTUAL_EXECUTION_RESULT",
+    "repositoryCommit": "5efbafda683c37aebf196e0592a2f8ec91fe02e9",
+    "scriptPath": "scripts/emp1-wrc537-caux-comparison-custody-generate.mjs",
+    "executedAt": "2026-09-03T08:50:30Z",
+    "executor": "OPENAI_CAAS_NODE_V22_16_0_EXACT_DEPENDENCY_CLOSURE",
+    "observedQuantityIds": [
+      "P29_SUS_STRESS_INTENSITY:Au",
+      "P29_SUS_STRESS_INTENSITY:Al",
+      "P29_SUS_STRESS_INTENSITY:Bu",
+      "P29_SUS_STRESS_INTENSITY:Bl",
+      "P29_SUS_STRESS_INTENSITY:Cu",
+      "P29_SUS_STRESS_INTENSITY:Cl",
+      "P29_SUS_STRESS_INTENSITY:Du",
+      "P29_SUS_STRESS_INTENSITY:Dl"
+    ],
+    "inferredWithoutExecution": false,
+    "approximateValues": false,
+    "derivedFromConsoleSummary": false,
+    "manuallyReconstructed": false
+  },
+  "comparison": {
+    "state": "COMPARISON_QUALIFIED",
+    "quantities": [
+      {
+        "quantityId": "P29_SUS_STRESS_INTENSITY:Au",
+        "location": "Au",
+        "description": "Sustained host-shell stress intensity",
+        "referenceValue": 511,
+        "referenceUnit": "kPa",
+        "emp1Value": 511.04512083504795,
+        "emp1Unit": "kPa",
+        "absoluteDifference": 0.04512083504795328,
+        "relativeDifferencePercent": 0.00882990901134115,
+        "tolerance": {
+          "kind": "RELATIVE_PERCENT",
+          "value": 3,
+          "unit": "%"
+        },
+        "toleranceBasis": "EXISTING_CAUX_COMPARISON_POLICY_FROZEN_BEFORE_THIS_EXECUTION",
+        "withinTolerance": true,
+        "status": "WITHIN_TOLERANCE",
+        "sourceLocator": "CAUx 2017 - WRC01f.pdf#page=29&point=Au"
+      },
+      {
+        "quantityId": "P29_SUS_STRESS_INTENSITY:Al",
+        "location": "Al",
+        "description": "Sustained host-shell stress intensity",
+        "referenceValue": 506,
+        "referenceUnit": "kPa",
+        "emp1Value": 506.3197483223051,
+        "emp1Unit": "kPa",
+        "absoluteDifference": 0.3197483223050881,
+        "relativeDifferencePercent": 0.06319136804448382,
+        "tolerance": {
+          "kind": "RELATIVE_PERCENT",
+          "value": 3,
+          "unit": "%"
+        },
+        "toleranceBasis": "EXISTING_CAUX_COMPARISON_POLICY_FROZEN_BEFORE_THIS_EXECUTION",
+        "withinTolerance": true,
+        "status": "WITHIN_TOLERANCE",
+        "sourceLocator": "CAUx 2017 - WRC01f.pdf#page=29&point=Al"
+      },
+      {
+        "quantityId": "P29_SUS_STRESS_INTENSITY:Bu",
+        "location": "Bu",
+        "description": "Sustained host-shell stress intensity",
+        "referenceValue": 668,
+        "referenceUnit": "kPa",
+        "emp1Value": 675.5335173047132,
+        "emp1Unit": "kPa",
+        "absoluteDifference": 7.5335173047132,
+        "relativeDifferencePercent": 1.1277720516037724,
+        "tolerance": {
+          "kind": "RELATIVE_PERCENT",
+          "value": 3,
+          "unit": "%"
+        },
+        "toleranceBasis": "EXISTING_CAUX_COMPARISON_POLICY_FROZEN_BEFORE_THIS_EXECUTION",
+        "withinTolerance": true,
+        "status": "WITHIN_TOLERANCE",
+        "sourceLocator": "CAUx 2017 - WRC01f.pdf#page=29&point=Bu"
+      },
+      {
+        "quantityId": "P29_SUS_STRESS_INTENSITY:Bl",
+        "location": "Bl",
+        "description": "Sustained host-shell stress intensity",
+        "referenceValue": 529,
+        "referenceUnit": "kPa",
+        "emp1Value": 529.2785112819294,
+        "emp1Unit": "kPa",
+        "absoluteDifference": 0.2785112819293545,
+        "relativeDifferencePercent": 0.05264863552539782,
+        "tolerance": {
+          "kind": "RELATIVE_PERCENT",
+          "value": 3,
+          "unit": "%"
+        },
+        "toleranceBasis": "EXISTING_CAUX_COMPARISON_POLICY_FROZEN_BEFORE_THIS_EXECUTION",
+        "withinTolerance": true,
+        "status": "WITHIN_TOLERANCE",
+        "sourceLocator": "CAUx 2017 - WRC01f.pdf#page=29&point=Bl"
+      },
+      {
+        "quantityId": "P29_SUS_STRESS_INTENSITY:Cu",
+        "location": "Cu",
+        "description": "Sustained host-shell stress intensity",
+        "referenceValue": 975,
+        "referenceUnit": "kPa",
+        "emp1Value": 994.8469658700849,
+        "emp1Unit": "kPa",
+        "absoluteDifference": 19.846965870084887,
+        "relativeDifferencePercent": 2.0355862430856293,
+        "tolerance": {
+          "kind": "RELATIVE_PERCENT",
+          "value": 3,
+          "unit": "%"
+        },
+        "toleranceBasis": "EXISTING_CAUX_COMPARISON_POLICY_FROZEN_BEFORE_THIS_EXECUTION",
+        "withinTolerance": true,
+        "status": "WITHIN_TOLERANCE",
+        "sourceLocator": "CAUx 2017 - WRC01f.pdf#page=29&point=Cu"
+      },
+      {
+        "quantityId": "P29_SUS_STRESS_INTENSITY:Cl",
+        "location": "Cl",
+        "description": "Sustained host-shell stress intensity",
+        "referenceValue": 883,
+        "referenceUnit": "kPa",
+        "emp1Value": 899.0945711667997,
+        "emp1Unit": "kPa",
+        "absoluteDifference": 16.09457116679971,
+        "relativeDifferencePercent": 1.822714741426921,
+        "tolerance": {
+          "kind": "RELATIVE_PERCENT",
+          "value": 3,
+          "unit": "%"
+        },
+        "toleranceBasis": "EXISTING_CAUX_COMPARISON_POLICY_FROZEN_BEFORE_THIS_EXECUTION",
+        "withinTolerance": true,
+        "status": "WITHIN_TOLERANCE",
+        "sourceLocator": "CAUx 2017 - WRC01f.pdf#page=29&point=Cl"
+      },
+      {
+        "quantityId": "P29_SUS_STRESS_INTENSITY:Du",
+        "location": "Du",
+        "description": "Sustained host-shell stress intensity",
+        "referenceValue": 1754,
+        "referenceUnit": "kPa",
+        "emp1Value": 1780.786740343134,
+        "emp1Unit": "kPa",
+        "absoluteDifference": 26.786740343133943,
+        "relativeDifferencePercent": 1.5271801791980584,
+        "tolerance": {
+          "kind": "RELATIVE_PERCENT",
+          "value": 3,
+          "unit": "%"
+        },
+        "toleranceBasis": "EXISTING_CAUX_COMPARISON_POLICY_FROZEN_BEFORE_THIS_EXECUTION",
+        "withinTolerance": true,
+        "status": "WITHIN_TOLERANCE",
+        "sourceLocator": "CAUx 2017 - WRC01f.pdf#page=29&point=Du"
+      },
+      {
+        "quantityId": "P29_SUS_STRESS_INTENSITY:Dl",
+        "location": "Dl",
+        "description": "Sustained host-shell stress intensity",
+        "referenceValue": 1428,
+        "referenceUnit": "kPa",
+        "emp1Value": 1446.2871070947317,
+        "emp1Unit": "kPa",
+        "absoluteDifference": 18.28710709473171,
+        "relativeDifferencePercent": 1.2806097405274306,
+        "tolerance": {
+          "kind": "RELATIVE_PERCENT",
+          "value": 3,
+          "unit": "%"
+        },
+        "toleranceBasis": "EXISTING_CAUX_COMPARISON_POLICY_FROZEN_BEFORE_THIS_EXECUTION",
+        "withinTolerance": true,
+        "status": "WITHIN_TOLERANCE",
+        "sourceLocator": "CAUx 2017 - WRC01f.pdf#page=29&point=Dl"
+      }
+    ],
+    "summary": {
+      "comparedQuantities": 8,
+      "withinToleranceCount": 8,
+      "worstAbsoluteDifference": 26.786740343133943,
+      "worstAbsoluteDifferenceQuantityId": "P29_SUS_STRESS_INTENSITY:Du",
+      "worstRelativeDifferencePercent": 2.0355862430856293,
+      "worstRelativeDifferenceQuantityId": "P29_SUS_STRESS_INTENSITY:Cu",
+      "governingReferenceLocation": "Du",
+      "governingEmp1Location": "Du",
+      "governingLocationAgreement": true
+    }
+  },
+  "limitations": [
+    "INDEPENDENT_REFERENCE_NOT_WRC_METHOD_AUTHORITY",
+    "DIRECT_PDF_REOBSERVATION_PENDING",
+    "INTERPOLATED_GAMMA_COMPARISON_ONLY_ENGINEERING_USE_NOT_AUTHORIZED",
+    "WRC_TABLE5_EIGHT_POINTS_NOT_GLOBAL_ABSOLUTE_MAXIMUM"
+  ],
+  "authority": {
+    "wrcMethodAuthority": false,
+    "engineeringUseAuthorized": false,
+    "productionUseAuthorized": false,
+    "codeComplianceAuthorized": false,
+    "releaseAuthorityGranted": false
+  },
+  "authorityBoundary": {
+    "custodyOnly": true,
+    "executesWrcMethod": false,
+    "selectsTolerance": false,
+    "mutatesExpectedValues": false,
+    "createsWrcMethodAuthority": false,
+    "createsEngineeringUseAuthority": false,
+    "createsProductionAuthority": false,
+    "createsCodeComplianceAuthority": false,
+    "createsReleaseAuthority": false
+  }
+}

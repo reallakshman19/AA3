@@ -115,28 +115,30 @@ export class LoadCalcConsumerController {
       // any master that already has normalizedRows or a user-committed fieldMap.
       this.eventBus.subscribe('MASTER_DATA_UPDATED', ({ action } = {}) => {
         if (!action?.startsWith('bundled_seed')) return;
-        import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources }) => {
+        import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
           const committed = autoNormalizeBundledMasters();
           if (committed.length > 0) this.render();
-          const [enrichResult, bindResult] = await Promise.all([
+          const [enrichResult, bindResult, qualResult] = await Promise.all([
             autoGenerateMasterEnrichment(),
             autoBindMasterSources(),
+            autoEnsureDefaultQualificationProfile(),
           ]);
-          if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
+          if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
         }).catch(() => {});
       }),
     ];
     this.render();
     void this.refreshTopologyCheck();
     // Eagerly normalize + auto-generate + auto-bind for already-seeded masters
-    import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources }) => {
+    import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
       const committed = autoNormalizeBundledMasters();
       if (committed.length > 0) this.render();
-      const [enrichResult, bindResult] = await Promise.all([
+      const [enrichResult, bindResult, qualResult] = await Promise.all([
         autoGenerateMasterEnrichment(),
         autoBindMasterSources(),
+        autoEnsureDefaultQualificationProfile(),
       ]);
-      if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
+      if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
     }).catch(() => {});
   }
 
@@ -154,12 +156,13 @@ export class LoadCalcConsumerController {
     if (datasetChanged) {
       void this.refreshTopologyCheck();
       // Auto-generate enrichment + bind source hashes when a new dataset arrives
-      import('./master-data-ui.js').then(async ({ autoGenerateMasterEnrichment, autoBindMasterSources }) => {
-        const [enrichResult, bindResult] = await Promise.all([
+      import('./master-data-ui.js').then(async ({ autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
+        const [enrichResult, bindResult, qualResult] = await Promise.all([
           autoGenerateMasterEnrichment(),
           autoBindMasterSources(),
+          autoEnsureDefaultQualificationProfile(),
         ]);
-        if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
+        if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
       }).catch(() => {});
     }
   }

@@ -120,7 +120,13 @@ assert.equal(sourceMissing.currentnessNotice.state, 'BLOCKED');
 assert.equal(sourceMissing.currentnessNotice.reasons.length, 2);
 
 const analyticalSource = await read('src/workspace/lafea-analytical-calc-content.js');
-assert.match(analyticalSource, /shell\.append\(renderEmp1ProfessionalWorkflow\(root, projection, options\.onSelectRoute\)\);/u);
+// The workflow card is rendered from the analytical content and is handed the
+// route selector plus the last run failure, so a failed transaction surfaces at
+// the top of the first card rather than only deep in the step C card.
+assert.match(
+  analyticalSource,
+  /shell\.append\(renderEmp1ProfessionalWorkflow\(\s*root,\s*projection,\s*options\.onSelectRoute,\s*options\.emp1RunFailure,?\s*\)\s*\);/u,
+);
 assert.equal(analyticalSource.includes('renderEmp1AssessmentWorkflow(root, projection'), false);
 
 const viewSource = await read('src/workspace/emp1-professional-workflow-view.js');

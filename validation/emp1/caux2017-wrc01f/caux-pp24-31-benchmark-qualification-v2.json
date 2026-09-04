@@ -1,0 +1,105 @@
+{
+  "schema": "emp1-caux-pp24-31-benchmark-qualification/v2",
+  "qualificationId": "CAUX_2017_WRC01F_PP24_31_Q2_DIRECT_PDF",
+  "issue": 1633,
+  "supersedesStatusOfQualificationId": "CAUX_2017_WRC01F_PP24_31_PR_C_Q1",
+  "benchmark": {
+    "path": "validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-v1.json",
+    "semanticHash": "741bfbc21496c2f126dbbeec18b2f88d4424e90a94b1d2cc7444776a16dfb7fe"
+  },
+  "independentHandCalculation": {
+    "path": "validation/emp1/caux2017-wrc01f/caux-pp24-31-independent-handcalc-v1.json",
+    "semanticHash": "e7e4e7d21188e4b6c1f53c2d7b89a73036a52ccccc61a65fd69c24f6a13ae227",
+    "status": "PASS_INDEPENDENT_ARITHMETIC_REFERENCE_ONLY"
+  },
+  "directPdfObservation": {
+    "path": "validation/emp1/caux2017-wrc01f/caux-pp24-31-direct-pdf-observation-v1.json",
+    "semanticHash": "b699860fbceede1cf53419ad82b56c446a4c8dfea772fe1a1b935e1230dde4e0",
+    "status": "PASS",
+    "rawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "requiredPages": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ]
+  },
+  "source": {
+    "rawPdfSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "sourceIdentityVerified": true,
+    "sourceCustodyQualified": true,
+    "retainedTranscriptionPath": "docs/emp1/CAUx_2017_WRC01f_pages_24-31.md",
+    "retainedTranscriptionGitBlobSha1": "ce0ee91cd996feee162d4dd90ce1af4063e06775",
+    "retainedTranscriptionInspected": true,
+    "directPdfPageReobservation": "PASS"
+  },
+  "freeze": {
+    "sourceValuesRemainFrozen": true,
+    "expectedValuesFrozenBeforeProductionObservation": true,
+    "productionOutputObservedForExpectedValueSelection": false,
+    "productionOutputUsedToChooseDefinition": false,
+    "productionExpectedValueRegenerationProhibited": true,
+    "toleranceWideningAfterMismatchProhibited": true
+  },
+  "independentChecks": {
+    "benchmarkSpecificGlobalToLocalMapping": {
+      "status": "PASS_EXACT_FOR_SUS_EXP_OCC",
+      "scope": "THIS_CAUX_BENCHMARK_ONLY",
+      "mayEstablishUniversalWrcSignAuthority": false
+    },
+    "explicitSourceFormulaSubstitutions": {
+      "status": "PASS_ARITHMETIC_REPRODUCTION_AT_RETAINED_DISPLAY_PRECISION",
+      "engineeringToleranceApplied": false
+    },
+    "page29AuStressIntensity": {
+      "status": "PASS_EXPLICIT_SOURCE_SAMPLE_AND_DIRECT_PDF_REOBSERVED",
+      "calculated_kPa": 510.9569453486272,
+      "sourceDisplayed_kPa": 511
+    },
+    "gammaRadiusBasis": {
+      "status": "UNRESOLVED_SOURCE_INTERNAL_BASIS_OR_TRANSCRIPTION_DISCREPANCY_PRESERVED_AFTER_DIRECT_PDF_REOBSERVATION",
+      "reportedRm_mm": 911.0,
+      "reportedCorrodedT_mm": 19.0,
+      "reportedGamma": 48.03,
+      "reportedRmOverT": 47.94736842105263,
+      "diagnosticCorrodedMeanRadiusGamma": 48.026315789473685,
+      "mayCloseWrcRadiusAuthority": false
+    }
+  },
+  "releaseProfileDisposition": {
+    "state": "OUTSIDE_BOUNDED_GAMMA5_ZERO_DP_RELEASE_PROFILE_REFERENCE_ONLY",
+    "reasons": [
+      "CAUX_REPORTED_GAMMA_48P03_NOT_GAMMA_5",
+      "CAUX_REPORTED_INTERNAL_PRESSURE_1P970_N_PER_MM2_NOT_ZERO_DP_RELEASE_CASE",
+      "CAUX_REPORTS_WRC107_MARCH_1979_B1_B2_REFERENCE_CONTEXT_NOT_EXACT_GAMMA5_ROUTE_IDENTITY"
+    ],
+    "gamma5ProductionComparisonRequired": false,
+    "mayAuthorizeProduction": false
+  },
+  "status": "PASS_FINAL_CAUX_SOURCE_QUALIFICATION_DIRECT_PDF_REOBSERVED_REFERENCE_FREEZE_PRESERVED",
+  "completed": {
+    "sourceIdentityFreeze": true,
+    "retainedPageTranscriptionFreeze": true,
+    "directPdfPageReobservation": true,
+    "expectedValueFreezeBeforeProduction": true,
+    "independentArithmetic": true,
+    "outsideReleaseProfileDisposition": true
+  },
+  "remaining": {
+    "directPdfPageReobservation": false,
+    "needProductionComparisonForGamma5Release": false,
+    "needWrcMethodAuthorityFromCaux": false
+  },
+  "authority": {
+    "wrcMethodAuthority": false,
+    "engineeringUseAuthorized": false,
+    "productionUseAuthorized": false,
+    "codeComplianceAuthorized": false,
+    "releaseAuthorityGranted": false
+  },
+  "semanticHash": "75c0423f429f86991dc67e4f7c2c45ae6841ace2d1baa0a43df6ab7e8bb71648"
+}

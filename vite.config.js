@@ -141,6 +141,15 @@ export function manualChunk(id) {
   if (source.includes('/src/core/local-attachment-screening/')) return 'core-attachment-screening';
   if (source.includes('/src/core/local-trunnion-footprint/')) return 'core-local-trunnion-footprint';
   if (source.includes('/src/core/linear-fea-')) return 'core-linear-fea';
+  // `geometry/adapters/inputxml-unit-system.js` consumes this pure qualified
+  // conversion leaf while the linear-piping consumer graph independently
+  // consumes geometry. Forcing the leaf into `core-linear-piping` therefore
+  // creates a core-application <-> core-linear-piping generated ESM back-edge.
+  // Keep the engineering owner/source unchanged (Issue #1551 authority) and
+  // route only this import-free leaf alongside the generic core dependency.
+  if (source.endsWith('/src/core/linear-piping-analysis-consumer/restraint-spring-rate.js')) {
+    return 'core-application';
+  }
   if (source.includes('/src/core/linear-piping-')) return 'core-linear-piping';
   if (source.includes('/src/core/support-')) return 'core-application';
   if (source.includes('/src/core/vertical-beam-solver/')

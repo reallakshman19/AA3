@@ -1,19 +1,23 @@
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 
 /**
  * Import a real CAESAR II .ACCDB through the actual UI and assert the verdict.
  *
- * No .accdb binary is committed to this repo, so the file is supplied by
- * path: set LFEA_ACCDB_FIXTURE (and optionally LFEA_ACCDB_ELEMENTS /
- * LFEA_ACCDB_NODES for the expected counts) to run it. Without that the spec
- * skips rather than fabricating a database binary or silently passing.
+ * BM4_L is a committed real CAESAR II source. An external fixture can still
+ * be selected through LFEA_ACCDB_FIXTURE for another project model.
  */
-const fixturePath = process.env.LFEA_ACCDB_FIXTURE ?? '';
-const expectedElements = process.env.LFEA_ACCDB_ELEMENTS ?? '';
-const expectedNodes = process.env.LFEA_ACCDB_NODES ?? '';
+const committedFixturePath = fileURLToPath(
+  new URL('../benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB', import.meta.url),
+);
+const fixturePath = process.env.LFEA_ACCDB_FIXTURE ?? committedFixturePath;
+const expectedElements = process.env.LFEA_ACCDB_ELEMENTS ?? '96';
+const expectedNodes = process.env.LFEA_ACCDB_NODES ?? '97';
 
 test.describe('LFEA ACCDB real-model import', () => {
+  test.describe.configure({ mode: 'serial', timeout: 300000 });
+
   test.skip(
     fixturePath === '' || !fs.existsSync(fixturePath),
     'Set LFEA_ACCDB_FIXTURE to a real CAESAR II .ACCDB to run this spec.',
@@ -23,7 +27,7 @@ test.describe('LFEA ACCDB real-model import', () => {
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
 
-    await page.goto('/');
+    await page.goto('/', { timeout: 120000 });
     await page.getByRole('navigation', { name: 'Application views' })
       .getByRole('button', { name: 'LFEA', exact: true }).click();
 
@@ -83,7 +87,8 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(await propertyRows.count()).toBeGreaterThan(1);
     expect(await panel.locator('[data-role="accdb-override-input"]').count()).toBeGreaterThan(0);
 
-    await expect(guidance).toContainText('complete.');
+    await expect(guidance).toContainText('1 of 6 steps complete');
+    await expect(guidance).toContainText('Next: Error check');
     const loadCaseStep = page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]');
     await expect(loadCaseStep).toHaveAttribute('data-step-status', 'BLOCKED');
     await expect(loadCaseStep).toHaveAttribute('title', /pre-flight/iu);
@@ -95,10 +100,12 @@ test.describe('LFEA ACCDB real-model import', () => {
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
 
-    await page.goto('/');
+    await page.goto('/', { timeout: 120000 });
     await page.getByRole('navigation', { name: 'Application views' })
       .getByRole('button', { name: 'LFEA', exact: true }).click();
 
+    await page.locator('[data-action="lfea-source-acquisition-import"][data-source-kind="ACCDB"]')
+      .click();
     await page.locator('[data-role="lfea-bend-factor-edition"]').selectOption('B31_3_2022_B31J_2017');
     await page.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('YES');
 
@@ -130,9 +137,8 @@ test.describe('LFEA ACCDB real-model import', () => {
     await expect(preFlightStatus).toBeVisible();
     await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]'))
       .toHaveAttribute('data-step-status', 'BLOCKED');
-    await page.locator('[data-role="lfea-pipeline-accdb-reviewer"]').fill('A. Engineer');
-    await page.locator('[data-role="lfea-pipeline-accdb-review-reason"]').fill('Reviewed and accepted.');
-    await page.locator('[data-action="accept-lfea-pipeline-accdb-limitations"]').click();
+    const errorCheck = page.locator('[data-role="lfea-common-error-check-panel"]');
+    await acknowledgeAndAuthorize(errorCheck);
 
     await expect(page.locator('[data-role="lfea-pipeline-guidance"]'))
       .toContainText('Next: Load case', { timeout: 60000 });
@@ -149,11 +155,10 @@ test.describe('LFEA ACCDB real-model import', () => {
     // Applying a case selection regenerates the pre-flight and may invalidate
     // the earlier acceptance. Re-authorize if that control is shown again.
     await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
-    const reviewerBox = page.locator('[data-role="lfea-pipeline-accdb-reviewer"]');
-    if (await reviewerBox.isVisible().catch(() => false)) {
-      await reviewerBox.fill('A. Engineer');
-      await page.locator('[data-role="lfea-pipeline-accdb-review-reason"]').fill('Reviewed and accepted.');
-      await page.locator('[data-action="accept-lfea-pipeline-accdb-limitations"]').click();
+    if (await errorCheck.locator('[data-action="lfea-error-check-acknowledge-limitation"]').count() > 0) {
+      await expect(errorCheck.locator('[data-role="lfea-error-check-authorization-state"]'))
+        .toHaveAttribute('data-state', 'CONDITIONAL_PENDING');
+      await acknowledgeAndAuthorize(errorCheck);
     }
 
     // Run is now a real task: the same sealed case IDs are summarized here and
@@ -191,3 +196,18 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(pageErrors).toEqual([]);
   });
 });
+
+async function acknowledgeAndAuthorize(errorCheck) {
+  const acknowledgements = errorCheck.locator('[data-action="lfea-error-check-acknowledge-limitation"]');
+  const count = await acknowledgements.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    await acknowledgements.nth(index).click();
+  }
+  await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('A. Engineer');
+  await errorCheck.locator('[data-role="lfea-error-check-reason"]').fill('Reviewed and accepted.');
+  const authorize = errorCheck.locator('[data-action="authorize-lfea-error-check-limitations"]');
+  await expect(authorize).toBeEnabled();
+  await authorize.click();
+  await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'true', { timeout: 60000 });
+}

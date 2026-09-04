@@ -189,7 +189,7 @@ const ROOT_CAUSE_GUIDANCE = Object.freeze({
   QUALIFICATION_PROFILE_REQUIRED: 'No locked QUALIFIED profile is bound to these methods. This is qualification evidence from your validation programme, so there is no built-in default: load an approved profile set into Project Data under qualificationPolicy.qualificationProfiles, approve it, then select the profile and version. Every other blocker can be cleared and these methods will still not seal until that is supplied.',
   SECTION_COVERAGE_INCOMPLETE: 'Some pipes have no outer diameter and wall thickness. Both come from the Piping Class master, so check that its rows actually match the piping class and bore used by those lines — a loaded master still leaves gaps where nothing matched.',
   FLEXURAL_COVERAGE_INCOMPLETE: 'Some pipes have neither direct flexural rigidity nor both elastic modulus and second moment of area. Resolve FLEXURAL_RIGIDITY directly, or provide both ELASTIC_MODULUS and SECOND_MOMENT_AREA for the common checker to derive EI. Pipe outer diameter and wall thickness alone do not satisfy flexural coverage.',
-  MASS_COVERAGE_INCOMPLETE: 'Some entities have no mass evidence. Open Enrichment &amp; Overrides, press "Generate proposals from approved masters" for pipe section and fluid density, and "Review fitting weights…" for valves and other catalogue fittings, then accept the staged proposals. Nothing is written until you accept them there.',
+  MASS_COVERAGE_INCOMPLETE: 'Some entities still need mass evidence. Pipe section and fluid density proposals are generated automatically from approved masters — if entities remain unresolved they are valves or catalogue fittings not covered by the piping class master. Open Enrichment \u0026amp; Overrides and use \"Review fitting weights\u2026\" to assign weights for those components, then accept the staged proposals.',
   MASTER_NOT_READY: 'A required master has no current normalized rows or source hash. Re-apply its column mapping in Import Masters.',
 });
 
@@ -243,16 +243,22 @@ function quickFixStrip(blockers, coverageProgressByCode) {
       const n = progress?.unresolvedEntityCount ?? '?';
       items.push({
         icon: '⚖️',
-        text: `${n} component${n === 1 ? '' : 's'} still need mass evidence (weights, densities, OD/WT)`,
+        text: `${n} component${n === 1 ? '' : 's'} still need mass evidence — assign fitting weights for valves and catalogue items`,
         tab: 'enrichment',
-        label: 'Open Enrichment & Overrides',
+        label: 'Review Fitting Weights',
       });
     } else if (code === 'SECTION_COVERAGE_INCOMPLETE') {
       const progress = coverageProgressByCode?.[code];
       const n = progress?.unresolvedEntityCount ?? '?';
       items.push({ icon: '📐', text: `${n} pipe${n === 1 ? '' : 's'} missing OD / wall thickness`, tab: 'enrichment', label: 'Open Enrichment & Overrides' });
     } else if (code === 'QUALIFICATION_PROFILE_REQUIRED') {
-      items.push({ icon: '🔐', text: 'No locked QUALIFIED profile bound to requested methods', tab: 'method-basis', label: 'Review Method Basis' });
+      items.push({
+        icon: '🔐',
+        text: 'No locked QUALIFIED profile — create a default one for WEIGHT_AND_GRAVITY + SUSTAINED_REACTIONS',
+        tab: null,
+        label: null,
+        action: 'create-qualification-profile',
+      });
     } else if (code === 'MASTER_NOT_READY') {
       items.push({ icon: '📂', text: 'A required master has no normalized rows — re-apply its column mapping', tab: 'masters', label: 'Open Import Masters' });
     } else if (ROOT_CAUSE_ACTIONS[code]) {
@@ -268,7 +274,9 @@ function quickFixStrip(blockers, coverageProgressByCode) {
     ${items.map((item) => `<div class="non-fea-quick-fix__item">
       <span class="non-fea-quick-fix__icon" aria-hidden="true">${item.icon}</span>
       <span class="non-fea-quick-fix__text">${escapeHtml(item.text)}</span>
-      <button type="button" class="button non-fea-quick-fix__btn" data-load-calc-tab="${escapeHtml(item.tab)}">${escapeHtml(item.label)} →</button>
+      ${item.action
+        ? `<button type="button" class="button non-fea-quick-fix__btn" data-quick-fix-action="${escapeHtml(item.action)}">Create profile →</button>`
+        : `<button type="button" class="button non-fea-quick-fix__btn" data-load-calc-tab="${escapeHtml(item.tab)}">${escapeHtml(item.label)} →</button>`}
     </div>`).join('')}
   </div>`;
 }

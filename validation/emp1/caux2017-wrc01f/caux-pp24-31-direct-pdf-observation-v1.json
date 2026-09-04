@@ -1,0 +1,64 @@
+{
+  "schema": "emp1-caux-pp24-31-direct-pdf-observation/v1",
+  "observationId": "CAUX_2017_WRC01F_PP24_31_DIRECT_PDF_OBS_V1",
+  "issue": 1633,
+  "source": {
+    "document": "CAUx 2017 - WRC01f.pdf",
+    "repository": "reallaksh19/XML_Compare_Utilities",
+    "pinnedCommit": "dc1371afcd44c12de86b2dad6eddf00f1f0b3c55",
+    "path": "docs/emp.1/CAUx 2017 - WRC01f.pdf",
+    "gitBlobSha1": "76573b41462943b2987e28b23ebbbf7e51ac0a02",
+    "expectedByteCount": 7260396,
+    "observedByteCount": 7260396,
+    "expectedSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "observedSha256": "c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e",
+    "identityMatch": true
+  },
+  "execution": {
+    "observedAt": "2026-09-03T18:54:25Z",
+    "observer": "OPENAI_CAAS_DIRECT_PDF_RENDER_REOBSERVATION",
+    "acquisition": "USER_SUPPLIED_EXACT_PDF_BYTES_VERIFIED_AGAINST_PINNED_SOURCE_IDENTITY",
+    "pageCount": 41,
+    "encrypted": false,
+    "requiredPages": [24,25,26,27,28,29,30,31],
+    "renderDpi": 200,
+    "primaryRenderer": "pdfium",
+    "secondaryRenderer": "pdftoppm",
+    "directPdfPageReobservation": "PASS"
+  },
+  "pageObservations": [
+    {"page":24,"status":"PASS","facts":["STRESS_CLASSIFICATION_CONTEXT_PRESENT","WRC107_CURVE_EXCEEDANCE_WARNING_PRESENT","EXCLAMATION_MARK_CURVE_EXCEEDANCE_NOTE_PRESENT"]},
+    {"page":25,"status":"PASS","facts":["CYLINDRICAL_VESSEL","ROUND_ATTACHMENT","DV_1844_MM","TV_22_MM","CAS_3_MM","DN_323P850_MM","TN_14P270_MM","DESIGN_PRESSURE_1P970_N_PER_MM2","PRESSURE_THRUST_NO","VESSEL_AXIS_0_1_0","NOZZLE_AXIS_1_0_0","SUS_EXP_OCC_GLOBAL_LOADS_REOBSERVED"]},
+    {"page":26,"status":"PASS_WITH_SOURCE_INTERNAL_DISCREPANCY_PRESERVED","facts":["WRC107_MARCH_1979_B1_B2","SUS_LOCAL_LOADS_MINUS161_MINUS53_MINUS2109_121_33_MINUS775","REPORTED_GAMMA_48P03","ANNOTATED_RM_911_MM","ANNOTATED_CORRODED_T_19_MM","ANNOTATED_911_OVER_19_APPROX_47P94","BETA_0P155"]},
+    {"page":27,"status":"PASS","facts":["DIMENSIONLESS_PARAMETERS_GAMMA_48P03_BETA_0P155","RETAINED_CURVE_COEFFICIENT_ROWS_REOBSERVED","CIRCUMFERENTIAL_ARITHMETIC_EXAMPLES_REOBSERVED"]},
+    {"page":28,"status":"PASS","facts":["LONGITUDINAL_ARITHMETIC_EXAMPLES_REOBSERVED","SHEAR_VC_5P480_KPA","SHEAR_VL_218P10_KPA","SHEAR_MT_247P36_KPA"]},
+    {"page":29,"status":"PASS","facts":["SUS_STRESS_INTENSITY_AU_AL_BU_BL_CU_CL_DU_DL_511_506_668_529_975_883_1754_1428_KPA","EXPLICIT_AU_STRESS_INTENSITY_APPROX_510P95_KPA","EXPANSION_AND_OCCASIONAL_TABLES_PRESENT"]},
+    {"page":30,"status":"PASS_SOURCE_CONTEXT_ONLY","facts":["SOURCE_STRESS_CLASSIFICATION_AND_ALLOWABLE_CHECKS_PRESENT","NO_EMP_CODE_AUTHORITY_IMPORTED"]},
+    {"page":31,"status":"PASS_SOURCE_CONTEXT_ONLY","facts":["WRC107_EXAMPLE_GEOMETRY_AND_LOAD_SKETCH_PRESENT","WRC297_TRANSITION_PRESENT"]}
+  ],
+  "retainedTranscription": {
+    "path": "docs/emp1/CAUx_2017_WRC01f_pages_24-31.md",
+    "gitBlobSha1": "ce0ee91cd996feee162d4dd90ce1af4063e06775",
+    "agreement": "PASS_CONTROLLED_FACTS_REOBSERVED",
+    "sourceInternalGammaRadiusDiscrepancyPreserved": true,
+    "transcriptionMismatchFound": false
+  },
+  "freeze": {
+    "expectedValuesChanged": false,
+    "toleranceChanged": false,
+    "productionOutputUsedToAlterReference": false
+  },
+  "limitations": [
+    "DIRECT_REOBSERVATION_QUALIFIES_CAUX_REFERENCE_SOURCE_ONLY",
+    "SOURCE_INTERNAL_GAMMA_RADIUS_BASIS_DISCREPANCY_REMAINS_UNRESOLVED_FOR_WRC_METHOD_AUTHORITY",
+    "CAUX_REFERENCE_NOT_WRC_METHOD_AUTHORITY"
+  ],
+  "authority": {
+    "wrcMethodAuthority": false,
+    "engineeringUseAuthorized": false,
+    "productionUseAuthorized": false,
+    "codeComplianceAuthorized": false,
+    "releaseAuthorityGranted": false
+  },
+  "semanticHash": "b699860fbceede1cf53419ad82b56c446a4c8dfea772fe1a1b935e1230dde4e0"
+}

@@ -468,17 +468,56 @@ export class LafeaWorkbenchView {
     const redo = actionButton(this.rootElement, 'Redo', this.handlers.onRedo);
     redo.disabled = !stage.future.length;
 
-    const controls = [];
-    if (!this.rootElement?.hasAttribute?.('data-lafea-app-root')) controls.push(mock);
-    if (completeSample) controls.push(completeSample);
-    controls.push(fileLabel, file);
-    if (productRun) controls.push(productRun);
-    if (cRun) controls.push(cRun);
-    controls.push(run);
-    if (this.benchmarkHost) controls.push(benchmark);
-    controls.push(exportButton, undo, redo);
-    toolbar.append(...controls);
+    const showMock = !this.rootElement?.hasAttribute?.('data-lafea-app-root');
+    const sourceControls = [
+      ...(showMock ? [mock] : []),
+      ...(completeSample ? [completeSample] : []),
+      fileLabel,
+      file,
+    ];
+    const runControls = [
+      ...(productRun ? [productRun] : []),
+      ...(cRun ? [cRun] : []),
+      run,
+    ];
+    const evidenceControls = [
+      ...(this.benchmarkHost ? [benchmark] : []),
+      exportButton,
+      undo,
+      redo,
+    ];
+
+    if (!analyticalMode) {
+      // FE stage presentation keeps the existing flat toolbar untouched.
+      toolbar.append(...sourceControls, ...runControls, ...evidenceControls);
+      return toolbar;
+    }
+
+    // Analytical presentation groups by intent, because these controls are not
+    // equally relevant at once: several are sequential and two are mutually
+    // exclusive ways of loading a source. The next actionable control is marked
+    // primary so the toolbar states where the engineer is in the sequence.
+    const primary = runControls.find((control) => control.disabled === false)
+      ?? (stage?.document ? null : fileLabel);
+    if (primary) primary.dataset.toolbarPrimary = 'true';
+
+    toolbar.append(
+      this.toolbarGroup('source', 'Source', sourceControls),
+      this.toolbarGroup('run', 'Run', runControls),
+      this.toolbarGroup('evidence', 'Evidence', evidenceControls),
+    );
     return toolbar;
+  }
+
+  /** One labelled, separated cluster of toolbar controls. */
+  toolbarGroup(groupId, label, controls) {
+    const group = element(this.rootElement, 'div', 'lafea-workbench__toolbar-group');
+    group.dataset.toolbarGroup = groupId;
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-label', label);
+    group.append(element(this.rootElement, 'span', 'lafea-workbench__toolbar-group-label', label));
+    group.append(...controls);
+    return group;
   }
 
   nextSceneRevision(stageId, documentValue, lifecycle, lifecycleBinding) {

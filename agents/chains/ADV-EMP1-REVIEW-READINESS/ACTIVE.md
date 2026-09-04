@@ -8,9 +8,9 @@ COMMON_PROTOCOL_STATUS: CURRENT
 
 CHAIN_ID: ADV-EMP1-REVIEW-READINESS
 MISSION: Compose an existing EMP.1 engineering-review state into the deterministic readiness projection without re-evaluating review evidence or creating release/code/numerical authority.
-ACTIVE_ENDPOINT: EP-0003
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-REVIEW-READINESS/endpoints/EP-0003.md
-CUSTODY_EPOCH: 3
+ACTIVE_ENDPOINT: EP-0004
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-REVIEW-READINESS/endpoints/EP-0004.md
+CUSTODY_EPOCH: 4
 
 WORK_ITEM_SOURCE: OWNER_DIRECT
 WORK_ITEM_KEY: owner-direct:advanced-analysis:emp1-review-readiness-integration-v1
@@ -19,26 +19,27 @@ WORK_ITEM_MODE: EXCLUSIVE
 REPO: reallaksh19/Advanced_Analysis
 BRANCH: agent/emp1-review-readiness-integration-v1
 STACK_BASE_PR: 1620
-STACK_BASE_BRANCH: agent/emp1-engineering-review-v1
-STACK_BASE_HEAD: a9a43258cb499fcf838341f183fd1d76c4894ced
-MAIN: 93d208dc1298570f20ce170edbd4f881039d22f0
-MATERIAL_HEAD: e51d8c7f2c43f36a000df5d00b9bc10aa51581d8
+STACK_BASE_DISPOSITION: MERGED_ed01bc8b43ee219a0c69c0d2114ccac351096148
+HISTORICAL_STACK_BASE_HEAD: a9a43258cb499fcf838341f183fd1d76c4894ced
+MAIN: ed01bc8b43ee219a0c69c0d2114ccac351096148
 PR: 1621
-PR_STATUS: OPEN_DRAFT
-PR_BASE: agent/emp1-engineering-review-v1
-MERGEABILITY: RECALCULATING_AT_CREATION
-REVIEWS: 0_AT_CREATION
-UNRESOLVED_THREADS: 0_AT_CREATION
-REQUIRED_CHECKS: EMP1_REVIEW_READINESS_INTEGRATION_CHECK_NOT_RUN; EXISTING_READINESS_PROJECTION_CHECK_NOT_RUN_ON_STACK; EXISTING_READINESS_DASHBOARD_CHECK_NOT_RUN_ON_STACK
+PR_STATUS: OPEN_DRAFT_REGROUND_IN_PROGRESS
+PR_BASE: main
+MERGEABILITY: RECOMPUTING_DURING_REGROUND
+REVIEWS: AUDIT_PENDING
+UNRESOLVED_THREADS: AUDIT_PENDING
+REQUIRED_CHECKS: EMP1_REVIEW_READINESS_INTEGRATION_CHECK_NOT_RUN; EXISTING_READINESS_PROJECTION_CHECK_NOT_RUN_ON_CURRENT_STACK; EXISTING_READINESS_DASHBOARD_CHECK_NOT_RUN_ON_CURRENT_STACK
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: MATERIAL_COMPLETE_VALIDATION_NOT_RUN
+ENGINEERING_STATE: MATERIAL_COMPLETE_CURRENT_MAIN_REGROUND_IN_PROGRESS
 CUSTODY_STATE: HELD
-WRITE_AUTHORITY: WRITE_ALLOWED_CUSTODY_AND_REVIEW_FIXES_ONLY
+QUALIFICATION_STATE: NOT_REQUIRED_FOR_ORIGINATING_CUSTODIAN
+WRITE_AUTHORITY: CUSTODY_AND_REGROUND_ONLY
+AUTO_STATE: NOT_APPLICABLE
 AUTHORITY_DOMAIN: Read-only composition of `emp1-engineering-review-state/v1` into `emp1-readiness/v1`.
-COORDINATION_STATE: STACKED_DEPENDENCY_ON_PR_1620
-DEPENDENCIES: Draft PR #1620 review-state contract; current main readiness/dashboard contract. Draft PRs #1616/#1617/#1618 remain separate.
+COORDINATION_STATE: STACK_BASE_MERGED_RETARGETED_TO_MAIN
+DEPENDENCIES: PR #1620 review-state contract is now on main; current main readiness/dashboard contract remains the composition base. Draft PRs #1616/#1617/#1618 remain separate.
 
 SOURCE_AUTHORITY_MUTATION: FORBIDDEN
 WRC_NUMERICAL_MUTATION: FORBIDDEN
@@ -56,6 +57,7 @@ DEFAULT_COMPATIBILITY: No supplied review state remains NOT_REVIEWED / READY_FOR
 MATERIAL_SCOPE:
 - src/core/emp1/emp1-readiness-projection.js
 - scripts/emp1-review-readiness-integration-check.mjs
-OVERLAP: SAFE_RELATIVE_TO_STACK_BASE — no review-record producer or WRC authority owner mutation.
-BLOCKER: PR_1620_DEPENDENCY_UNRESOLVED; FOCUSED_AND_REGRESSION_CHECKS_NOT_RUN; no merge/readiness claim permitted.
-EXACT_NEXT_ACTION: Maintain PR #1621 Draft. After PR #1620 disposition, re-ground and retarget/rebase only if the effective diff remains bounded. Later add `Review & Evidence` controller/UI wiring as a separate coherent slice that supplies review state derived against the same current execution.
+OVERLAP: CURRENT_MAIN_READINESS_CONTENT_REVIEWED; intended child delta remains bounded review-state composition.
+VALIDATION_TRUTH: focused and inherited checks remain NOT_RUN on current-main re-ground; source/content comparison is not executable PASS.
+BLOCKER: CURRENT_MAIN_ANCESTRY_REGROUND_AND_EXACT_DIFF_AUDIT_PENDING.
+EXACT_NEXT_ACTION: merge current main non-destructively into this branch, verify behind=0 and bounded effective diff, audit reviews/threads/checks, then stop Draft/unmerged. No #1621 merge without separate Owner authorization.

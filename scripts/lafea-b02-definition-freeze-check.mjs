@@ -39,6 +39,47 @@ for (const [id, relative] of Object.entries(manifest.definitionFiles)) {
   assert.equal(blobSha, manifest.originalFrozenDefinitionGitBlobs[id], `${id} frozen definition bytes changed`);
   definitionBlobCustody[id] = blobSha;
 }
+// Amended frozen definitions: registered after the original freeze, so they are
+// held under their own byte custody rather than backdated into it. Registration
+// pins the bytes; it does not adopt the amendment into the production sequence.
+const amendedBlobCustody = {};
+for (const [id, relative] of Object.entries(manifest.amendedDefinitionFiles ?? {})) {
+  const bytes = fs.readFileSync(path.join(ROOT, relative));
+  const blobSha = gitBlobSha1(bytes);
+  assert.equal(blobSha, manifest.amendedFrozenDefinitionGitBlobs?.[id],
+    `${id} amended frozen definition bytes changed`);
+  const amendment = manifest.amendments?.[id];
+  assert.ok(amendment, `${id} amended definition must record an amendment entry`);
+  assert.equal(amendment.frozenAfterOriginalFreeze, true);
+  assert.equal(amendment.productionOutputUsedToChooseDefinition, false);
+  assert.equal(amendment.hardQualityThresholdsChanged, false);
+  assert.equal(amendment.methodApplicabilityUnchanged, true);
+
+  const definition = JSON.parse(bytes.toString('utf8'));
+  assert.ok(
+    ['lafea-b02-frozen-benchmark-definition/v1',
+      'lafea-b02-frozen-benchmark-definition/v2'].includes(definition.schema),
+    `${id} unexpected frozen definition schema ${definition.schema}`,
+  );
+  assert.equal(definition.caseId, id);
+  assert.equal(definition.stageId, 'LAFEA.3');
+  assert.equal(definition.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
+  assert.equal(definition.productionOutputUsedToChooseDefinition, false);
+  assert.equal(definition.authority.benchmarkQualified, false);
+  assert.equal(definition.authority.releaseAuthorityGranted, false);
+  assert.equal(definition.authority.temperatureAuthorityGranted, false);
+
+  // An amendment may not silently redefine which methods the benchmark requires.
+  const superseded = definitions[amendment.supersedes];
+  assert.ok(superseded, `${id} must supersede a registered frozen definition`);
+  assert.deepEqual(
+    definition.globalResponseLadder.methods,
+    superseded.globalResponseLadder.methods,
+    `${id} may not change method applicability of ${amendment.supersedes}`,
+  );
+  amendedBlobCustody[id] = blobSha;
+}
+
 const integratedG4CustodyMode = verifyIntegratedG4Custody();
 
 const matrixById = new Map(matrix.matrix.map((row) => [row.benchmarkId, row]));
@@ -120,6 +161,9 @@ console.log(JSON.stringify({
   integratedG4ExactHead: manifest.integration.integratedG4ExactHead,
   integratedG4CustodyMode,
   definitionBlobCustody,
+  amendedBlobCustody,
+  amendmentsAdoptedIntoProductionSequence: Object.values(manifest.amendments ?? {})
+    .some((row) => row.adoptedIntoProductionSequence === true),
   definitionHashes,
   definitionsByteIdenticalToOriginalFreeze: true,
   methodsMatchGate0Matrix: true,

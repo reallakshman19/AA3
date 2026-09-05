@@ -1,5 +1,6 @@
 import { projectEmp1Readiness } from '../core/emp1/emp1-readiness-projection.js';
 import { card, element } from './lafea-workbench-dom.js';
+import { renderEmp1EngineeringReviewPanel } from './emp1-engineering-review-view.js';
 import { buildEmp1ProfessionalWorkflowPresentation } from './emp1-professional-workflow-presentation.js';
 import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
 
@@ -14,11 +15,21 @@ const READINESS_DIMENSIONS = Object.freeze([
 ]);
 
 /**
- * Engineer-facing EMP.1 workflow. This is a read-only presentation over the
- * governed A/B/C product projection; it does not create calculation state.
+ * Engineer-facing EMP.1 workflow. Calculation/method authority remains owned by
+ * existing governed contracts. Optional review state is consumed from the
+ * workspace review controller; this DOM layer never authors engineering hashes.
  */
-export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute, runFailure = null) {
-  const readiness = projectEmp1Readiness(projection);
+export function renderEmp1ProfessionalWorkflow(
+  root,
+  projection,
+  onSelectRoute,
+  options = {},
+) {
+  const runFailure = options.runFailure ?? null;
+  const reviewWorkspace = options.reviewWorkspace ?? null;
+  const readiness = projectEmp1Readiness(projection, {
+    reviewState: reviewWorkspace?.readinessReviewState ?? null,
+  });
   const presentation = buildEmp1ProfessionalWorkflowPresentation(projection);
   const workflow = card(root, 'Assessment workflow');
   workflow.section.dataset.role = 'emp1-workflow';
@@ -55,9 +66,16 @@ export function renderEmp1ProfessionalWorkflow(root, projection, onSelectRoute, 
 
   const notice = currentnessNotice(root, presentation.currentnessNotice);
   if (notice) workflow.body.append(notice);
+  if (reviewWorkspace) {
+    workflow.body.append(renderEmp1EngineeringReviewPanel(
+      root,
+      reviewWorkspace,
+      options.onReview,
+    ));
+  }
 
   const boundary = element(root, 'p', 'lafea-workbench__authority',
-    'Workflow status is presentation-only. Run authorization, source authority, route authority, code compliance and release authority remain owned by the existing governed EMP.1 contracts. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
+    'Workflow status is presentation-only for calculation and release authority. An explicit engineering-review action may retain a hash-bound human attestation through the review controller, but it does not create source, method, applicability, numerical, code-compliance, release, or professional-seal authority. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
   boundary.dataset.role = 'emp1-professional-workflow-authority-boundary';
   workflow.body.append(boundary, technicalBackingDisclosure(root, presentation, onSelectRoute));
   return workflow.section;
@@ -134,7 +152,7 @@ function readinessDashboard(root, readiness) {
   }
 
   const boundary = element(root, 'p', 'lafea-workbench__authority',
-    'Readiness is a read-only projection of existing governed EMP.1 evidence. This dashboard does not establish method authority, applicability authority, engineering review, code compliance, or release qualification.');
+    'Readiness is a read-only projection of existing governed EMP.1 evidence and any supplied governed review state. This dashboard does not itself establish method authority, applicability authority, engineering review, code compliance, or release qualification.');
   boundary.dataset.role = 'emp1-readiness-authority-boundary';
   section.append(boundary);
   return section;
@@ -170,9 +188,6 @@ function currentnessNotice(root, notice) {
   const reasons = element(root, 'ul');
   notice.reasons.forEach((reason, index) => {
     const reasonCode = notice.reasonCodes[index];
-    // The presentation layer carries curated copy for the blockers it knows and
-    // otherwise just strips underscores, which leaves a raw code on screen. When
-    // the text is that bare fallback, prefer the shared label registry.
     const isRawFallback = Boolean(reasonCode)
       && reason === String(reasonCode).replaceAll('_', ' ');
     const item = element(root, 'li', null, isRawFallback ? human(reasonCode) : reason);
@@ -190,9 +205,6 @@ function currentnessNotice(root, notice) {
 function technicalBackingDisclosure(root, presentation, onSelectRoute) {
   const details = element(root, 'details', 'lafea-workbench__custody-details');
   details.dataset.role = 'emp1-technical-backing-steps';
-  // This disclosure holds the editable A/B/C inputs. Keeping it shut once data
-  // exists hides the only place the engineer can type, so it stays closed only
-  // in the genuinely empty state.
   details.open = presentation.backingCalculators.some(
     (backing) => backing.state && backing.state !== 'SOURCE_INCOMPLETE',
   );
@@ -223,6 +235,8 @@ function navigateProfessionalStep(root, step, onSelectRoute) {
     scheduleTargetScroll(root, step.targetRole);
     return;
   }
+  if (step.stepId === 'REVIEW_EVIDENCE'
+    && scrollToRole(root, 'emp1-engineering-review-panel')) return;
   if (scrollToRole(root, step.targetRole)) return;
   if (step.stepId === 'REVIEW_EVIDENCE') {
     if (scrollToRole(root, 'emp1-c-result-evidence')) return;

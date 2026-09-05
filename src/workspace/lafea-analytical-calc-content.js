@@ -66,12 +66,12 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   shell.dataset.emp1Step = step.shortId;
   shell.dataset.routeFamily = 'ANALYTICAL';
 
-  shell.append(renderEmp1ProfessionalWorkflow(
-    root,
-    projection,
-    options.onSelectRoute,
-    options.emp1RunFailure,
-  ));
+  const engineeringReview = options.handlers.getEmp1EngineeringReviewWorkspace?.() ?? null;
+  shell.append(renderEmp1ProfessionalWorkflow(root, projection, options.onSelectRoute, {
+    runFailure: options.emp1RunFailure,
+    reviewWorkspace: engineeringReview,
+    onReview: options.handlers.onEmp1EngineeringReview,
+  }));
 
   const route = card(root, 'Active EMP.1 step');
   route.section.dataset.guidedTarget = 'analytical-route';

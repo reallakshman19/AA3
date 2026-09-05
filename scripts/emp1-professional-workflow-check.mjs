@@ -120,25 +120,46 @@ assert.equal(sourceMissing.currentnessNotice.state, 'BLOCKED');
 assert.equal(sourceMissing.currentnessNotice.reasons.length, 2);
 
 const analyticalSource = await read('src/workspace/lafea-analytical-calc-content.js');
-// The workflow card is rendered from the analytical content and is handed the
-// route selector plus the last run failure, so a failed transaction surfaces at
-// the top of the first card rather than only deep in the step C card.
-assert.match(
-  analyticalSource,
-  /shell\.append\(renderEmp1ProfessionalWorkflow\(\s*root,\s*projection,\s*options\.onSelectRoute,\s*options\.emp1RunFailure,?\s*\)\s*\);/u,
-);
+assert.match(analyticalSource, /getEmp1EngineeringReviewWorkspace\?\.\(\) \?\? null/u);
+assert.match(analyticalSource, /renderEmp1ProfessionalWorkflow\(root, projection, options\.onSelectRoute, \{/u);
+assert.match(analyticalSource, /runFailure: options\.emp1RunFailure/u);
+assert.match(analyticalSource, /reviewWorkspace: engineeringReview/u);
+assert.match(analyticalSource, /onReview: options\.handlers\.onEmp1EngineeringReview/u);
 assert.equal(analyticalSource.includes('renderEmp1AssessmentWorkflow(root, projection'), false);
 
 const viewSource = await read('src/workspace/emp1-professional-workflow-view.js');
+assert.match(viewSource, /emp1PlainLanguageLabel/u);
+assert.match(viewSource, /runFailureBanner/u);
+assert.match(viewSource, /dataset\.role = 'emp1-workflow-run-failure'/u);
+assert.match(viewSource, /dataset\.role = 'emp1-workflow-run-failure-code'/u);
+assert.match(viewSource, /const runFailure = options\.runFailure \?\? null/u);
 assert.match(viewSource, /dataset\.role = 'emp1-professional-workflow-steps'/u);
 assert.match(viewSource, /dataset\.role = 'emp1-professional-authority-summary'/u);
 assert.match(viewSource, /dataset\.role = 'emp1-professional-currentness-notice'/u);
 assert.match(viewSource, /item\.dataset\.reasonCode = reasonCode/u);
 assert.match(viewSource, /dataset\.role = 'emp1-professional-required-action'/u);
+assert.match(viewSource, /renderEmp1EngineeringReviewPanel/u);
+assert.match(viewSource, /reviewState: reviewWorkspace\?\.readinessReviewState \?\? null/u);
+assert.match(viewSource, /scrollToRole\(root, 'emp1-engineering-review-panel'\)/u);
+assert.match(viewSource, /details\.open = presentation\.backingCalculators\.some/u);
 assert.match(viewSource, /scheduleTargetScroll/u);
 assert.match(viewSource, /requestAnimationFrame/u);
 assert.match(viewSource, /data-guided-target/u);
 assert.match(viewSource, /Historical\/stale C numerical evidence is never promoted/u);
+
+const reviewViewSource = await read('src/workspace/emp1-engineering-review-view.js');
+for (const role of [
+  'emp1-engineering-review-panel', 'emp1-engineering-review-form',
+  'emp1-engineering-reviewer-identity', 'emp1-engineering-reviewer-role',
+  'emp1-engineering-review-comment', 'emp1-engineering-review-action',
+  'emp1-engineering-review-authority-boundary',
+]) assert.ok(reviewViewSource.includes(role), `missing review role ${role}`);
+assert.equal(reviewViewSource.includes('semanticHash('), false);
+assert.equal(reviewViewSource.includes('runEmp1('), false);
+assert.equal(reviewViewSource.includes('stressIntensity'), false);
+assert.equal(reviewViewSource.includes('sourceHash:'), false);
+assert.equal(reviewViewSource.includes('routeAuthorityHash:'), false);
+assert.equal(reviewViewSource.includes('resultHash:'), false);
 
 const presentationSource = await read('src/workspace/emp1-professional-workflow-presentation.js');
 assert.equal(presentationSource.includes('../core/emp1/'), false);
@@ -151,17 +172,18 @@ assert.match(presentationSource, /\^WRC_GAMMA5_ROUTE_/u,
   'live bounded-route suspension family must be classified as route authority');
 
 console.log(JSON.stringify({
-  schema: 'emp1-professional-workflow-check/v3',
-  status: 'PASS_WRC_PROFESSIONAL_WORKFLOW_CURRENTNESS_EXPLANATION',
+  schema: 'emp1-professional-workflow-check/v5',
+  status: 'PASS_WRC_PROFESSIONAL_WORKFLOW_RUN_FAILURE_AND_GOVERNED_REVIEW_COMPOSITION',
   labels, backing, currentAuthoritySummary: current.authoritySummary,
   staleInputReasonCodes: staleInput.currentnessNotice.reasonCodes,
   staleAuthorityReasonCodes: staleAuthority.currentnessNotice.reasonCodes,
   liveRouteSuspensionClassifiedAsAuthority: true,
   routeTargetCustodyGuarded: true, staleReasonEvidencePreserved: true,
-  unknownReasonFailsVisible: true, engineeringAuthorityCreatedByPresentation: false,
+  unknownReasonFailsVisible: true, runFailurePresentationPreserved: true,
+  plainLanguageLabelsPreserved: true, engineeringAuthorityCreatedByPresentation: false,
   routeAuthorityCreatedByPresentation: false, codeComplianceCreatedByPresentation: false,
-  releaseAuthorityCreatedByPresentation: false,
-  numericalComparison: 'NOT_APPLICABLE_PRESENTATION_ONLY',
+  releaseAuthorityCreatedByPresentation: false, uiAuthoredEngineeringHashes: false,
+  numericalComparison: 'NOT_APPLICABLE_PRESENTATION_AND_REVIEW_ACTION_WIRING_ONLY',
 }, null, 2));
 
 function projection({

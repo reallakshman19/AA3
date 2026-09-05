@@ -21,10 +21,16 @@ import {
   lafeaWorkbenchThreeNamespace,
 } from './lafea-workbench-render-evidence.js';
 import {
+  classifyEmp1WorkbenchExecutionCurrentness,
   normalizeEmp1WorkbenchRunInput,
+  projectEmp1WorkbenchCState,
   projectEmp1WorkbenchRunReadiness,
 } from './emp1-workbench-run-state.js';
 import { currentEmp1WorkbenchRouteAuthority } from './emp1-workbench-product-run.js';
+import {
+  createEmp1WorkspaceEngineeringReview,
+  projectEmp1EngineeringReviewWorkspace,
+} from './emp1-engineering-review-workspace.js';
 import { publicLafeaFailure } from './lafea-public-failure.js';
 import { issueLafeaSourceAuthority } from './lafea-source-authority.js';
 import { LafeaWorkbenchView } from './lafea-workbench-view.js';
@@ -35,7 +41,7 @@ const DESTROYED_CONTROLLERS = new WeakSet();
 export class LafeaWorkbenchController {
   constructor(rootElement, options) {
     const configuration = isLafeaRecord(options) ? options : {};
-    const { accessoryPanels, THREE, emp1RunInput, ...storeOptions } = configuration;
+    const { accessoryPanels, THREE, emp1RunInput, emp1ReviewClock, ...storeOptions } = configuration;
     const {
       benchmarkPanelFactory,
       mockDocumentFactory,
@@ -50,6 +56,10 @@ export class LafeaWorkbenchController {
     this.emp1Execution = null;
     this.emp1RunFailure = null;
     this.emp1RunSerial = 0;
+    this.emp1EngineeringReviewRecord = null;
+    this.emp1ReviewClock = typeof emp1ReviewClock === 'function'
+      ? emp1ReviewClock
+      : () => new Date().toISOString();
     this.mockDocumentFactory = typeof mockDocumentFactory === 'function' ? mockDocumentFactory : null;
     const companionMockDomainAndGeometryFactory = this.mockDocumentFactory?.domainAndGeometryFactory;
     this.mockDomainAndGeometryFactory = typeof mockDomainAndGeometryFactory === 'function'
@@ -97,6 +107,8 @@ export class LafeaWorkbenchController {
       onRun: () => this.run(),
       onRunEmp1: () => this.runEmp1Product(),
       onEmp1RunInput: (value) => this.setEmp1RunInput(value),
+      getEmp1EngineeringReviewWorkspace: () => this.getEmp1EngineeringReviewWorkspace(),
+      onEmp1EngineeringReview: (request) => this.submitEmp1EngineeringReview(request),
       onPrepareContinuum: () => this.attemptContinuumPreflight(),
       onRunContinuumConvergence: (request) => this.runContinuumConvergenceStudy(request),
       onExport: () => this.downloadDocument(),
@@ -411,6 +423,75 @@ export class LafeaWorkbenchController {
 
   getEmp1RunInput() { return this.emp1RunInput; }
   getEmp1Execution() { return this.emp1Execution; }
+  getEmp1EngineeringReviewRecord() { return this.emp1EngineeringReviewRecord; }
+
+  getEmp1EngineeringReviewWorkspace() {
+    const context = this.emp1EngineeringReviewContext();
+    return projectEmp1EngineeringReviewWorkspace({
+      reviewRecord: this.emp1EngineeringReviewRecord,
+      ...context,
+    });
+  }
+
+  submitEmp1EngineeringReview(request = {}) {
+    try {
+      const context = this.emp1EngineeringReviewContext();
+      const record = createEmp1WorkspaceEngineeringReview({
+        disposition: request.disposition,
+        reviewerIdentity: request.reviewerIdentity,
+        reviewerRole: request.reviewerRole,
+        comment: request.comment,
+        reviewedAt: String(this.emp1ReviewClock()),
+        ...context,
+      });
+      this.emp1EngineeringReviewRecord = record;
+      const workspace = projectEmp1EngineeringReviewWorkspace({
+        reviewRecord: record,
+        ...context,
+      });
+      if (this.unsubscribe) this.view.render(this.getState());
+      return Object.freeze({ status: 'RECORDED', reviewRecord: record, workspace });
+    } catch (error) {
+      const failure = publicLafeaFailure(
+        error,
+        'EMP1_ENGINEERING_REVIEW_REJECTED',
+        'EMP.1 engineering review could not be recorded.',
+      );
+      return Object.freeze({
+        status: 'REJECTED',
+        ...failure,
+        blockers: Object.freeze([...(error?.blockers ?? [])]),
+      });
+    }
+  }
+
+  emp1EngineeringReviewContext() {
+    const state = this.getState();
+    const routeAuthority = currentEmp1WorkbenchRouteAuthority();
+    const readiness = projectEmp1WorkbenchRunReadiness({
+      aDocument: state.stages?.['LAFEA.1']?.document,
+      bDocument: state.stages?.['LAFEA.2']?.document,
+      runInput: this.emp1RunInput,
+    });
+    const executionCurrentness = classifyEmp1WorkbenchExecutionCurrentness({
+      execution: this.emp1Execution,
+      aDocument: state.stages?.['LAFEA.1']?.document,
+      bDocument: state.stages?.['LAFEA.2']?.document,
+      runInput: this.emp1RunInput,
+      currentRouteAuthority: routeAuthority,
+    });
+    const cState = projectEmp1WorkbenchCState({
+      readiness,
+      execution: this.emp1Execution,
+      currentness: executionCurrentness,
+      routeAuthority,
+    });
+    return Object.freeze({
+      execution: this.emp1Execution,
+      executionCurrentness,
+      cState,
+    });
+  }
 
   async runEmp1Product() {
     const state = this.getState();
@@ -481,6 +562,8 @@ export class LafeaWorkbenchController {
     this.emp1RunInput = null;
     this.emp1Execution = null;
     this.emp1RunFailure = null;
+    this.emp1EngineeringReviewRecord = null;
+    this.emp1ReviewClock = null;
     const accessoryPanelManager = ACCESSORY_PANEL_MANAGERS.get(this);
     accessoryPanelManager?.destroy();
     ACCESSORY_PANEL_MANAGERS.delete(this);

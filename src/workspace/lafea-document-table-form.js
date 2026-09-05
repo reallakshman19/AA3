@@ -8,6 +8,7 @@ import {
   resolveLafeaDescriptorSourceRef,
   resolveLafeaDescriptorUnit,
 } from './lafea-stage-input-descriptors.js';
+import { collectDeclaredGovernedMatrices } from './lafea-governed-matrix-presentation.js';
 import {
   displayLafeaNumeric,
   firstLafeaEditDiagnostic,
@@ -89,16 +90,24 @@ function renderScalarTable({
   wrapper.dataset.inputGroup = groupId;
   const table = documentRef.createElement('table');
   table.className = 'lafea-doc-grid lafea-doc-grid--governed';
-  // A group whose descriptors are complete X/Y/Z triples is presented one row per
-  // identity with an input per axis, instead of three full-width rows per point.
-  // Ten reference points read as ten rows rather than thirty, and a transcription
-  // error is visible across the axes of one point, which is how the value is
-  // actually checked. Only batch groups regroup: per-row groups keep their own
-  // Apply button and are left exactly as they were.
-  const vectorTriples = batchScalarEdits ? collectVectorTriples(descriptors) : new Map();
+
+  // Batch groups may present existing governed descriptors as one identity row with
+  // N value columns, but only when every descriptor in the group belongs to a
+  // complete compatible family. Pressure uses an explicit declaration; existing
+  // X/Y/Z vectors retain their conservative complete-triple detection and are
+  // adapted into the same row renderer. Any partial/mixed family falls back to the
+  // scalar table rather than reshaping on a guess.
+  const matrixPresentation = batchScalarEdits
+    ? collectRenderableMatrixPresentation(descriptors)
+    : null;
   const header = documentRef.createElement('tr');
-  const headings = vectorTriples.size
-    ? ['Engineering identity', 'X', 'Y', 'Z', 'Unit', 'Source/status']
+  const headings = matrixPresentation
+    ? [
+      'Engineering identity',
+      ...matrixPresentation.columnLabels,
+      'Unit',
+      'Source/status',
+    ]
     : ['Engineering identity', 'Input', 'Unit', 'Source/status'];
   if (!batchScalarEdits) headings.push('Action');
   headings.forEach((label) => {
@@ -109,37 +118,40 @@ function renderScalarTable({
   });
   table.append(header);
 
-  const emitted = new Set();
-  descriptors.forEach((descriptor) => {
-    const triple = vectorTriples.get(descriptor.descriptorId);
-    if (triple) {
-      if (emitted.has(triple.groupKey)) return;
-      emitted.add(triple.groupKey);
-      lafeaDescriptorInstances(documentValue, triple.axes.X)
+  if (matrixPresentation) {
+    const emitted = new Set();
+    descriptors.forEach((descriptor) => {
+      const matrix = matrixPresentation.byDescriptor.get(descriptor.descriptorId);
+      if (!matrix || emitted.has(matrix.familyId)) return;
+      emitted.add(matrix.familyId);
+      lafeaDescriptorInstances(documentValue, matrix.columns[0].descriptor)
         .forEach((instance) => {
-          table.append(renderVectorRow({
+          table.append(renderMatrixRow({
             documentRef,
             stageId,
             documentValue,
-            triple,
+            matrix,
             instance,
           }));
         });
-      return;
-    }
-    lafeaDescriptorInstances(documentValue, descriptor)
-      .forEach((instance) => {
-        table.append(renderScalarRow({
-          documentRef,
-          stageId,
-          documentValue,
-          descriptor,
-          instance,
-          onSetScalar,
-          batchScalarEdits,
-        }));
-      });
-  });
+    });
+  } else {
+    descriptors.forEach((descriptor) => {
+      lafeaDescriptorInstances(documentValue, descriptor)
+        .forEach((instance) => {
+          table.append(renderScalarRow({
+            documentRef,
+            stageId,
+            documentValue,
+            descriptor,
+            instance,
+            onSetScalar,
+            batchScalarEdits,
+          }));
+        });
+    });
+  }
+
   wrapper.append(table);
   if (batchScalarEdits) {
     wrapper.append(renderGroupAction({
@@ -256,6 +268,66 @@ export function collectVectorTriples(descriptors) {
   return triples;
 }
 
+/**
+ * Build one conservative matrix presentation for a complete batch group.
+ *
+ * Declared matrices are already compatibility-checked by their presentation
+ * registry. Complete X/Y/Z triples are converted to the same renderer shape.
+ * A group is matrix-rendered only when every descriptor is covered and all
+ * families have the same ordered columns; mixed/incomplete groups fall back.
+ */
+export function collectRenderableMatrixPresentation(descriptors) {
+  const byDescriptor = new Map(collectDeclaredGovernedMatrices(descriptors));
+  const vectorMatrices = new Map();
+  const vectorTriples = collectVectorTriples(descriptors);
+  vectorTriples.forEach((triple, descriptorId) => {
+    if (byDescriptor.has(descriptorId)) return;
+    let matrix = vectorMatrices.get(triple.groupKey);
+    if (!matrix) {
+      const basis = triple.axes.X;
+      matrix = Object.freeze({
+        familyId: triple.groupKey,
+        rowLabel: triple.label,
+        legacyVector: true,
+        target: Object.freeze({
+          collectionPath: basis.target.collectionPath,
+          identityKey: basis.target.identityKey,
+        }),
+        columns: Object.freeze(VECTOR_AXES.map((axis) => Object.freeze({
+          columnId: axis,
+          label: axis,
+          descriptor: triple.axes[axis],
+        }))),
+      });
+      vectorMatrices.set(triple.groupKey, matrix);
+    }
+    byDescriptor.set(descriptorId, matrix);
+  });
+
+  if (!descriptors.length || byDescriptor.size !== descriptors.length) return null;
+  if (!descriptors.every((descriptor) => byDescriptor.has(descriptor.descriptorId))) return null;
+
+  const matrices = [...new Map(
+    descriptors.map((descriptor) => {
+      const matrix = byDescriptor.get(descriptor.descriptorId);
+      return [matrix.familyId, matrix];
+    }),
+  ).values()];
+  if (!matrices.length) return null;
+
+  const signature = matrixColumnSignature(matrices[0]);
+  if (!matrices.every((matrix) => matrixColumnSignature(matrix) === signature)) return null;
+
+  return Object.freeze({
+    byDescriptor,
+    columnLabels: Object.freeze(matrices[0].columns.map((column) => column.label)),
+  });
+}
+
+function matrixColumnSignature(matrix) {
+  return JSON.stringify(matrix.columns.map((column) => [column.columnId, column.label]));
+}
+
 /** The governed numeric input for one descriptor instance, shared by both row shapes. */
 function buildGovernedInput({ documentRef, stageId, descriptor, instance }) {
   const inputId = lafeaInputIdentity(descriptor, instance.entityId);
@@ -296,7 +368,14 @@ function buildGovernedInput({ documentRef, stageId, descriptor, instance }) {
  * leads, and the path is small, muted and available in full on hover rather than
  * competing with the label on every row.
  */
-function buildIdentityCell({ documentRef, stageId, descriptor, instance, labelText }) {
+function buildIdentityCell({
+  documentRef,
+  stageId,
+  descriptor,
+  instance,
+  labelText,
+  pathText = null,
+}) {
   const cell = documentRef.createElement('th');
   cell.scope = 'row';
   const label = documentRef.createElement('strong');
@@ -305,67 +384,123 @@ function buildIdentityCell({ documentRef, stageId, descriptor, instance, labelTe
   identity.textContent = instance.entityId ?? stageId;
   identity.className = 'lafea-doc-identity';
   const path = documentRef.createElement('code');
-  path.textContent = lafeaDescriptorPath(descriptor, instance.entityId);
+  path.textContent = pathText ?? lafeaDescriptorPath(descriptor, instance.entityId);
   path.className = 'lafea-doc-path';
   path.title = path.textContent;
   cell.append(label, identity, path);
   return cell;
 }
 
-/** One row carrying the X, Y and Z inputs of a single vector identity. */
-function renderVectorRow({ documentRef, stageId, documentValue, triple, instance }) {
+/** One row carrying all declared governed columns for a single engineering identity. */
+function renderMatrixRow({ documentRef, stageId, documentValue, matrix, instance }) {
   const row = documentRef.createElement('tr');
-  row.dataset.vectorGroup = triple.groupKey;
+  row.dataset.matrixGroup = matrix.familyId;
+  if (matrix.legacyVector) row.dataset.vectorGroup = matrix.familyId;
   if (instance.entityId) row.dataset.rowId = instance.entityId;
 
   row.append(buildIdentityCell({
     documentRef,
     stageId,
-    descriptor: triple.axes.X,
+    descriptor: matrix.columns[0].descriptor,
     instance,
-    labelText: triple.label,
+    labelText: matrix.rowLabel,
+    pathText: matrixIdentityPath(matrix, instance.entityId),
   }));
 
-  VECTOR_AXES.forEach((axis) => {
-    const descriptor = triple.axes[axis];
-    const axisInstance = lafeaDescriptorInstances(documentValue, descriptor)
+  matrix.columns.forEach((column) => {
+    const descriptor = column.descriptor;
+    const columnInstance = lafeaDescriptorInstances(documentValue, descriptor)
       .find((candidate) => candidate.entityId === instance.entityId) ?? instance;
     const cell = documentRef.createElement('td');
-    cell.dataset.vectorAxis = axis;
+    cell.dataset.matrixColumn = column.columnId;
+    if (matrix.legacyVector) cell.dataset.vectorAxis = column.columnId;
+    const sourceRef = descriptorSourceRef(
+      documentValue,
+      descriptor,
+      columnInstance.entityId,
+    );
+    cell.dataset.sourceRef = sourceRef ?? '';
     const { input, state } = buildGovernedInput({
-      documentRef, stageId, descriptor, instance: axisInstance,
+      documentRef, stageId, descriptor, instance: columnInstance,
     });
     cell.append(input, state);
     row.append(cell);
   });
 
   const unitCell = documentRef.createElement('td');
-  const unit = resolveLafeaDescriptorUnit(documentValue, triple.axes.X);
-  unitCell.textContent = unit ?? triple.axes.X.unitContract.dimension ?? '\u2014';
+  const unit = resolveLafeaDescriptorUnit(documentValue, matrix.columns[0].descriptor);
+  unitCell.textContent = unit ?? matrix.columns[0].descriptor.unitContract.dimension ?? '—';
   row.append(unitCell);
 
-  row.append(buildSourceCell({
-    documentRef, documentValue, descriptor: triple.axes.X, instance,
+  row.append(buildMatrixSourceCell({
+    documentRef,
+    documentValue,
+    matrix,
+    entityId: instance.entityId,
   }));
   return row;
+}
+
+function matrixIdentityPath(matrix, entityId) {
+  return `${matrix.target.collectionPath}[${matrix.target.identityKey}=${entityId}]`;
+}
+
+/** Source pointers remain independently visible for every matrix value column. */
+function buildMatrixSourceCell({ documentRef, documentValue, matrix, entityId }) {
+  const cell = documentRef.createElement('td');
+  const entries = matrix.columns.map((column) => ({
+    label: column.label,
+    sourceRef: descriptorSourceRef(documentValue, column.descriptor, entityId),
+    sourceStatus: column.descriptor.authority.sourceStatus,
+  }));
+  const oneSharedSource = entries.every((entry) => (
+    entry.sourceRef === entries[0].sourceRef
+    && entry.sourceStatus === entries[0].sourceStatus
+  ));
+
+  if (oneSharedSource) {
+    appendSourceEntry(documentRef, cell, null, entries[0]);
+    return cell;
+  }
+  entries.forEach((entry) => appendSourceEntry(documentRef, cell, entry.label, entry));
+  return cell;
+}
+
+function appendSourceEntry(documentRef, cell, label, entry) {
+  const wrapper = documentRef.createElement('div');
+  if (label) {
+    const heading = documentRef.createElement('strong');
+    heading.textContent = `${label}: `;
+    wrapper.append(heading);
+  }
+  const source = documentRef.createElement('code');
+  source.textContent = entry.sourceRef ?? '—';
+  const sourceStatus = documentRef.createElement('small');
+  sourceStatus.textContent = entry.sourceStatus;
+  sourceStatus.style.display = 'block';
+  wrapper.append(source, sourceStatus);
+  cell.append(wrapper);
 }
 
 /** Source pointer and retained-source status for one descriptor instance. */
 function buildSourceCell({ documentRef, documentValue, descriptor, instance }) {
   const cell = documentRef.createElement('td');
-  let sourceRef = null;
-  try {
-    sourceRef = resolveLafeaDescriptorSourceRef(documentValue, descriptor, instance.entityId);
-  } catch {
-    sourceRef = null;
-  }
+  const sourceRef = descriptorSourceRef(documentValue, descriptor, instance.entityId);
   const source = documentRef.createElement('code');
-  source.textContent = sourceRef ?? '\u2014';
+  source.textContent = sourceRef ?? '—';
   const sourceStatus = documentRef.createElement('small');
   sourceStatus.textContent = descriptor.authority.sourceStatus;
   sourceStatus.style.display = 'block';
   cell.append(source, sourceStatus);
   return cell;
+}
+
+function descriptorSourceRef(documentValue, descriptor, entityId) {
+  try {
+    return resolveLafeaDescriptorSourceRef(documentValue, descriptor, entityId);
+  } catch {
+    return null;
+  }
 }
 
 function renderScalarRow({

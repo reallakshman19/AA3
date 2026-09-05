@@ -53,12 +53,14 @@ test('records the 12-checkpoint WRC professional walkthrough for human review', 
   await expect(workbench.locator('[data-role="lafea-analytical-calc"]'))
     .toHaveAttribute('data-backing-stage-id', 'LAFEA.1');
   await expect(workbench.locator('.lafea-doc-table-section[data-input-group="REFERENCE_POINTS"]')).toBeVisible();
+  await openEvidenceView(workbench, 'results');
   await expect(workbench.locator('[data-guided-target="results"]')).toBeInViewport();
   await checkpoint(page, testInfo, checkpointEvidence, '06', 'load-transfer-results');
 
   await professionalStep(workflow, 5, 'Section Screening').click();
   await expect(workbench.locator('[data-role="lafea-analytical-calc"]'))
     .toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
+  await openEvidenceConsole(workbench);
   await expect(workbench.locator('[data-role="lafea-screening-load-custody"]')).toBeInViewport();
   await expect(workbench.locator('[data-role="emp1-analytical-full-width-detail"]'))
     .toHaveAttribute('data-emp1-evidence-view', 'screeningCustody');
@@ -69,6 +71,7 @@ test('records the 12-checkpoint WRC professional walkthrough for human review', 
   await expect(cConfiguration).toBeInViewport();
   await checkpoint(page, testInfo, checkpointEvidence, '08', 'local-correlation-configuration');
 
+  await openEvidenceConsole(workbench);
   const cEvidence = workbench.locator('[data-role="emp1-c-result-evidence"]');
   const governing = workbench.locator('[data-role="emp1-c-eight-point-governing"]');
   await expect(cEvidence).toBeVisible();
@@ -83,7 +86,7 @@ test('records the 12-checkpoint WRC professional walkthrough for human review', 
   await expect(workflow.locator('[data-role="emp1-workflow-details"]')).not.toHaveAttribute('open', '');
   await checkpoint(page, testInfo, checkpointEvidence, '10', 'review-and-evidence');
 
-  // Upstream mutation belongs to the Geometry task under the recovered shell.
+  // Upstream mutation belongs to the Geometry task under the recovered console.
   await professionalStep(workflow, 2, 'Geometry').click();
   const outsideDiameter = workbench.getByRole('textbox', { name: 'Pipe outside diameter LAFEA.1' });
   await expect(outsideDiameter).toBeVisible();
@@ -109,6 +112,23 @@ test('records the 12-checkpoint WRC professional walkthrough for human review', 
 
   await attachManifest(page, testInfo, originalDiameter, checkpointEvidence);
 });
+
+async function openEvidenceConsole(workbench) {
+  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  const toggle = analytical.locator('[data-role="emp1-evidence-console-toggle"]');
+  if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+}
+
+async function openEvidenceView(workbench, surfaceId) {
+  await openEvidenceConsole(workbench);
+  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  const tab = analytical.locator(
+    `[data-role="emp1-evidence-tab"][data-emp1-evidence-view="${surfaceId}"]`,
+  );
+  await tab.click();
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+}
 
 function professionalStep(workflow, ordinal, label) {
   return workflow.getByRole('button', { name: new RegExp(`^${ordinal} ${escapeRegExp(label)}`, 'u') });
@@ -139,12 +159,13 @@ async function checkpoint(page, testInfo, evidence, ordinal, name) {
 async function attachManifest(page, testInfo, originalDiameter, checkpointEvidence) {
   const browserVersion = page.context().browser()?.version() ?? 'UNRESOLVED';
   const manifest = {
-    schema: 'emp1-wrc-ui-walkthrough-evidence/v4',
+    schema: 'emp1-wrc-ui-walkthrough-evidence/v5',
     project: testInfo.project.name,
     browserVersion,
     checkpoints: 12,
     checkpointEvidence,
     taskShellRecoveryIssue: 1664,
+    splitConsoleSchema: 'emp1-split-console/v1',
     attachmentPolicy: {
       viewportScreenshots: 12,
       fullPageContextScreenshots: 12,
@@ -161,6 +182,7 @@ async function attachManifest(page, testInfo, originalDiameter, checkpointEviden
       staticArtifactsSupportPerStageReview: true,
       dynamicTransitionsRequireLiveOrRecordedObservation: true,
       fullPageWaterfallFalsifierRequired: true,
+      narrowStackingForbidden: true,
     },
     upstreamMutation: {
       task: 'Geometry',

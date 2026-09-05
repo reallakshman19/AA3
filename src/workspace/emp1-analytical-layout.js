@@ -35,8 +35,9 @@ const REGION_DEFINITIONS = Object.freeze({
 });
 
 /**
- * The order here is the pre-layout append order at the LEG-003 basis. Region
- * grouping is explicit; nothing is classified by runtime append position.
+ * The order here is the pre-layout append order at the LEG-003 basis plus the
+ * formal benchmark-evidence surface separated from the workflow in LEG-004.
+ * Region grouping is explicit; nothing is classified by runtime append position.
  */
 export const EMP1_ANALYTICAL_SURFACE_ORDER = Object.freeze([
   'workflow',
@@ -52,6 +53,7 @@ export const EMP1_ANALYTICAL_SURFACE_ORDER = Object.freeze([
   'settings',
   'results',
   'lineage',
+  'benchmarkEvidence',
   'benchmark',
 ]);
 
@@ -69,6 +71,7 @@ export const EMP1_ANALYTICAL_SURFACE_PLACEMENT = Object.freeze({
   settings: EMP1_ANALYTICAL_LAYOUT_REGIONS.PRIMARY_WORK,
   results: EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL,
   lineage: EMP1_ANALYTICAL_LAYOUT_REGIONS.ENGINEERING_BASIS,
+  benchmarkEvidence: EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL,
   benchmark: EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL,
 });
 

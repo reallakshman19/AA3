@@ -4,6 +4,7 @@
 // observation; the production sequence then runs A->B->C->D->E in order.
 // No workflow definition or frozen acceptance data is modified here.
 import './lafea-b02-gate0-contract-check.mjs';
+import './lafea-b02-currentness-check.mjs';
 import './lafea-b02-g4-physical-probe-diagnostic.mjs';
 import './lafea-b02-g4-probe-fail-closed-diagnostic.mjs';
 import './lafea-b02-g4-convergence-diagnostic.mjs';

@@ -239,9 +239,9 @@ const filletQ8 = generateLafeaAnalysisMesh(filletAdapter, {
 assert.equal(filletQ8.strategy, 'QUAD_SUBDIVISION');
 assert.equal(filletQ8.strategyReason, 'UNIFORM_Q8_BY_CENTROID_SUBDIVISION');
 assert.ok(filletQ8.mesh.elements.every((element) => element.elementType === 'Q8'),
-  'centroid subdivision must be all-Q8, never relabelled T6');
+  'centroid subdivision must be all-quad by construction');
 assert.equal(filletQ8.elementCount % 3, 0,
-  'each source triangle must become exactly three quads');
+  'each triangle contributes exactly three quads');
 assert.equal(
   JSON.stringify(generateLafeaAnalysisMesh(filletAdapter, {
     targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',

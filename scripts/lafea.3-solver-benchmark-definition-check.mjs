@@ -11,6 +11,7 @@ const manifest = read('bucket-manifest.json');
 const sources = read('sources/source-registry.json');
 const cases = read('oracle/cases.json');
 const expected = read('oracle/expected-values.json');
+const loadExpected = read('oracle/load-path-expected-values.json');
 const ladders = read('convergence/mesh-ladders.json');
 const probes = read('convergence/fixed-probes.json');
 const negatives = read('governance/negative-cases.json');
@@ -24,6 +25,9 @@ assert.equal(manifest.authority.releaseAuthorityGranted, false);
 assert.equal(manifest.scopeBoundary.productionMeshQualification, false);
 assert.equal(expected.authority.productionOutputUsed, false);
 assert.equal(expected.authority.productionOutputMayModifyExpectedValues, false);
+assert.equal(loadExpected.authority.productionOutputUsed, false);
+assert.equal(loadExpected.authority.productionOutputMayModifyExpectedValues, false);
+assert.equal(loadExpected.authority.productionOutputMayModifyAcceptance, false);
 assert.equal(semantics.invariants.movingMeshMaximumMayNotQualifyRichardsonGci, true);
 assert.equal(semantics.invariants.releaseAuthorityGranted, false);
 
@@ -40,14 +44,30 @@ for (const stage of manifest.stages) {
   }
 }
 
-assert.deepEqual(
-  cases.cases.map((row) => row.caseId).sort(),
-  expected.cases.map((row) => row.caseId).sort(),
-);
+const allExpectedCaseIds = [
+  ...expected.cases.map((row) => row.caseId),
+  ...loadExpected.cases.map((row) => row.caseId),
+].sort();
+assert.deepEqual(cases.cases.map((row) => row.caseId).sort(), allExpectedCaseIds);
 for (const row of expected.cases) {
   requireCitation(row.caseId, row.citation);
   assert.equal(typeof row.acceptance.policyOrigin, 'string');
 }
+assert.equal(typeof loadExpected.acceptance.policyOrigin, 'string');
+assert.ok(loadExpected.acceptance.absoluteTolerance > 0);
+assert.ok(loadExpected.acceptance.relativeTolerance > 0);
+for (const row of loadExpected.cases) {
+  assert.ok(row.derivation && Object.keys(row.derivation).length > 0, `${row.caseId} derivation missing`);
+  assert.equal(typeof row.loadType, 'string');
+}
+assert.deepEqual(
+  loadExpected.cases.map((row) => row.loadType).sort(),
+  ['BODY_FORCE', 'EDGE_TRACTION', 'IMPOSED_DISPLACEMENT', 'PRESSURE', 'TEMPERATURE_STRAIN'],
+);
+const s2 = manifest.stages.find((row) => row.benchmarkStage === 'S2');
+assert.equal(s2.definitionState, 'READY');
+assert.equal(s2.methods.length, 1);
+assert.equal(s2.methods[0].expectedEvidenceSchema, 'lafea3-bm-s-s2-load-path-evidence/v1');
 
 for (const probe of probes.probes) {
   assert.equal('nodeId' in probe, false, `${probe.probeId} may not use node identity`);
@@ -90,8 +110,9 @@ assert.equal(oracleCheck.status, 0, oracleCheck.stderr || oracleCheck.stdout);
 const oraclePayload = JSON.parse(oracleCheck.stdout);
 assert.equal(oraclePayload.productionOutputUsed, false);
 assert.equal(oraclePayload.expectedValuesCheck, 'PASS');
+assert.equal(Object.keys(oraclePayload['S2-load-paths']).length, 5);
 
-console.log('LAFEA.3 BM-S B02 definition, source custody, cited oracle and exact-negative contract passed.');
+console.log('LAFEA.3 BM-S B02 definition, source custody, cited S1 oracle, exact S2 load paths and S4 negative contract passed.');
 
 function read(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(B02, relativePath), 'utf8'));

@@ -16,30 +16,31 @@ AUTHORITY_DOMAIN: LAFEA3_SOLVER_BENCHMARK_EVIDENCE
 CUSTODY_EPOCH: 3
 COORDINATION_STATE: SAFE_DISJOINT_WITH_RELATED_ISSUES_READ_ONLY
 DEPENDENCIES: github:reallaksh19/Advanced_Analysis#1569 rigor; #1535 production-route boundary; #1652 BM-MESH companion; #1646 related B02 evidence
+OWNER_INSTRUCTION: merge, proceed next
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 QUALIFICATION_SCOPE_ID: QSCOPE-1653-BM-S-SOLVER-BENCHMARK
 QUESTION_SET_ID: QS-1653-BM-S-0003
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED_FOR_S3_SOLVER_NUMERICS
-QUESTION_DISPLAY: SHOW
+QUESTION_PACK_ACTION: REUSED
+QUESTION_DISPLAY: HIDE
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
 OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: WRITE_ALLOWED
+WRITE_AUTHORITY: READ_ONLY_MERGE_AUTHORIZED
 AUTO_STATE: PAUSED
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+MERGE_AUTHORITY: AUTHORIZED
+MERGE_AUTHORIZED: TRUE
+MERGE_AUTHORIZATION_SCOPE: PR_1657_EXACT_CURRENT_CUSTODY_HEAD_AFTER_AUTH_SYNC
 MERGEABILITY: MERGEABLE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NOT_RUN
 PR: #1657
-PR_STATUS: OPEN_DRAFT
+PR_STATUS: OPEN_DRAFT_PENDING_READY_FOR_REVIEW_TRANSITION
 BRANCH: chatgpt/issue-1653-bm-s-staged-benchmark
-HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: 3a996c82acdbc599fdc7877a5363f7e191966758
 MAIN_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 POST_BASIS_DRIFT: NONE
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
@@ -65,24 +66,22 @@ ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550117563
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_MERGE_AUTH_PROJECTION
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: source/diff and independent analytical reproduction PASS; B02 definition/S2/staged execution NOT_RUN; zero workflow runs for material head
+HANDOVER_VALIDATION_EVIDENCE: source/diff and independent analytical reproduction PASS; B02 definition/S2/staged execution NOT_RUN; zero workflow/status checks
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 # Active handover — BM-S #1653
 
-LEG-002 is durably receipted at material head `fd53c332da954142c00c381e07a2d79170cceaa5`. S2 is now READY with retained exact-BVP evidence definitions for edge traction, pressure, body force, temperature strain and imposed displacement. The manufactured body-force case checks an exact quadratic Q8 displacement/stress field rather than only consistent-load resultants.
+Owner has explicitly authorized merge of PR #1657 and requested one subsequent bounded progression. This authorization is governance-only: executable checks remain NOT_RUN and no engineering PASS is inferred from mergeability or Owner authorization.
 
-No production `src/**` file, production solver tolerance, workflow, Owner roadmap, production mesh authority or release authority changed. S0-S2 are READY; S3-S5 remain PLANNED. B02 remains inactive in `futureQueue`.
+LEG-002 remains durably receipted at material head `fd53c332da954142c00c381e07a2d79170cceaa5`. S0-S2 are READY; S3-S5 remain PLANNED; B02 remains inactive in `futureQueue`. No production `src/**`, solver tolerance, workflow, roadmap, production mesh authority or release authority changed.
 
-Executable validation remains `NOT_RUN`: source/diff audit and independent analytical reconstruction passed, but GitHub Actions returned zero runs for the S2 material head and no faithful runtime execution has occurred.
-
-EP-0002 is synchronized to Issue endpoint comment `5550117563` and is the write-ahead pre-work endpoint for LEG-003. The technical qualification pack was refreshed to `QS-1653-BM-S-0003` for S3 solver numerics.
+Current merge gate evidence: main remains `b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`; PR is mergeable; reviews 0; unresolved threads 0; required checks NOT_RUN/none exposed.
 
 ## Exact next action
 
-Implement only S3 retained solver-numerics evidence under EP-0002: free-DOF residual versus current tolerance, reactions/resultant, external-work/strain-energy identity, conditioning/pivots or PCG metrics, scaling reversibility and superposition. Do not begin S4/S5, activate B02, alter production tolerances, or merge without separate authority.
+Synchronize this merge authorization to the Issue and PR, mark PR #1657 ready-for-review only because GitHub requires it, merge the exact current custody head, then re-ground the chain on merged main and begin only S3 LEG-003 under the existing EP-0002 pre-work boundary.

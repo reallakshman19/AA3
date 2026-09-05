@@ -16,6 +16,7 @@ import {
 } from './emp1-workbench-run-view.js';
 import { createEmp1BSourceCustodyCard } from './lafea-guided-workflow-view.js';
 import { projectEmp1BenchmarkEvidenceWorkspace } from './emp1-benchmark-evidence-workspace.js';
+import { renderEmp1BenchmarkEvidencePanel } from './emp1-benchmark-view.js';
 import { renderEmp1ProfessionalWorkflow } from './emp1-professional-workflow-view.js';
 import { composeEmp1AnalyticalLayout } from './emp1-analytical-layout.js';
 import { lafeaDocumentDigest } from './lafea-edit-command.js';
@@ -74,8 +75,8 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     runFailure: options.emp1RunFailure,
     reviewWorkspace: engineeringReview,
     onReview: options.handlers.onEmp1EngineeringReview,
-    benchmarkEvidence,
   });
+  const benchmarkEvidencePanel = renderEmp1BenchmarkEvidencePanel(root, benchmarkEvidence);
 
   const route = card(root, 'Active EMP.1 step');
   route.section.dataset.guidedTarget = 'analytical-route';
@@ -200,6 +201,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     settings: settings.section,
     results: results.section,
     lineage: lineage.section,
+    benchmarkEvidence: benchmarkEvidencePanel,
     benchmark,
   });
 

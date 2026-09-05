@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "baselineId": "QB-ISSUE-1634-A",
+  "source": "owner-chat:2026-09-03T02:09:47Z",
+  "sourceAuthority": "OWNER",
+  "activeQuestionSetId": "QS-ADV-PROD-1634-RECOVERY-0001",
+  "questions": [
+    {
+      "baselineQuestion": "OWNER-UI-LAYOUT",
+      "coveredBy": ["Q1", "Q3", "Q5"],
+      "requiredLiterals": ["UI", "layout"],
+      "requiredConcepts": ["presentation authority", "responsive layout", "browser"],
+      "requiredObligations": ["trace", "verify", "preserve"]
+    },
+    {
+      "baselineQuestion": "OWNER-MANUAL-CALC",
+      "coveredBy": ["Q2", "Q4"],
+      "requiredLiterals": ["epsilon(z)=epsilon0+z*kappa", "delta=PL^3/(3EI)"],
+      "requiredConcepts": ["hand calculation", "equilibrium", "local frame"],
+      "requiredObligations": ["derive", "compute", "falsify"]
+    },
+    {
+      "baselineQuestion": "OWNER-PUBLISHED-CALC",
+      "coveredBy": ["Q4", "Q5"],
+      "requiredLiterals": ["Scordelis-Lo", "pinched cylinder", "twisted beam"],
+      "requiredConcepts": ["published benchmark", "source custody", "mesh convergence"],
+      "requiredObligations": ["reproduce", "cite", "compare"]
+    },
+    {
+      "baselineQuestion": "OWNER-COMMON-PROTOCOL",
+      "coveredBy": ["Q3", "Q5"],
+      "requiredLiterals": ["293a3db7993a6945c01adc592a7ff14a339c504a"],
+      "requiredConcepts": ["engineering-pr-delivery-v2", "source/oracle authority", "release authority"],
+      "requiredObligations": ["preserve", "isolate", "stop"]
+    }
+  ]
+}

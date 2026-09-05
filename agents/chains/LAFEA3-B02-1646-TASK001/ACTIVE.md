@@ -62,9 +62,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548782622
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5548857129
-ISSUE_HANDOVER_SYNC_STATUS: STALE
-ISSUE_HANDOVER_SYNC_BLOCKER: EP-0002 repository custody is materialized; immutable endpoint comment and mutable Active comment are pending synchronization.
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549016882
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: zero hosted PR workflow runs for exact material head; focused/currentness and aggregate regressions not executed in a faithful repository runtime
@@ -76,7 +75,7 @@ HANDOVER_READY: FALSE
 
 ## Current result
 
-LEG-001 is implemented at material head `90fa7398c08bb0b542b2d39971fb75357a7a6242`. PR #1650 is draft and GitHub reports it mergeable. There are no submitted reviews or unresolved review threads.
+LEG-001 is implemented at material head `90fa7398c08bb0b542b2d39971fb75357a7a6242`. PR #1650 is draft and GitHub reports it mergeable. There are no submitted reviews or unresolved review threads. Repository and Issue control-plane custody are synchronized at EP-0002 / issue comment `5549016882`.
 
 The implementation derives `CURRENT_RESULT` from exact current source/model/mesh/solver/execution/recovery lineage. `currentAuthority` represents currentness only and is deliberately orthogonal to `NOT_EVALUATED | FAIL | PASS`; the physical probe performs acceptance as a separate downstream gate. Historical PASS receipts remain retained but cannot grant current authority after governing drift, and explicit rejection remains distinct from stale retained evidence.
 
@@ -90,4 +89,4 @@ Executable validation is `NOT_RUN`. GitHub reports zero PR workflow runs for exa
 
 ## Exact next action
 
-Synchronize EP-0002 into the Issue control plane, then obtain faithful exact-head execution of `scripts/lafea-b02-currentness-check.mjs`, the B01/B02 Gate-0 aggregate diagnostic, and applicable lifecycle/run-transaction/probe regressions. Do not begin another material leg or authorize merge while executable validation remains `NOT_RUN`.
+Obtain faithful exact-head execution of `scripts/lafea-b02-currentness-check.mjs`, the B01/B02 Gate-0 aggregate diagnostic, and applicable lifecycle/run-transaction/probe regressions. Do not begin another material leg or authorize merge while executable validation remains `NOT_RUN`.

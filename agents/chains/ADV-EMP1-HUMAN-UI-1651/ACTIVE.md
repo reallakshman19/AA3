@@ -14,37 +14,38 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0001
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0001.md
+ENDPOINT: EP-0002
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0002.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0001.md
 
 PR: 1655
-PR_STATUS: OPEN_DRAFT_PREWORK_ONLY
+PR_STATUS: OPEN_DRAFT_LEG001_SOURCE_COMPLETE_EXECUTION_NOT_RUN
 BRANCH: agent/emp1-human-ui-1651-prework
 PR_BASE: main
-PR_HEAD_OBSERVED: 6d0c9d87606936a2a2d476e48b2f00a7e89fffc4
+PR_HEAD_OBSERVED: 9a97741c6a7c059369650e67c159b65482223ec7
 PREWORK_COMMIT: 0f95a1b7b6003ea6e68c5346ca3bcb110dee8778
 MAIN_HEAD_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MERGEABILITY: MERGEABLE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-PULL_REQUEST_WORKFLOW_RUNS_CURRENT_HEAD: 0
-LATEST_MATERIAL_HEAD: NONE
-LAST_COMPLETED_MATERIAL_LEG: NONE
+PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
+LATEST_MATERIAL_HEAD: 6346ca4d05820f629cf9b54bf94408faf098da29
+LAST_COMPLETED_MATERIAL_LEG: LEG-001
 CURRENT_MATERIAL_LEG: NONE
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-001.md
 
-ENGINEERING_STATE: READY_PREWORK_COMMAND_BLOCKED
+ENGINEERING_STATE: LEG_001_SOURCE_COMPLETE_EXECUTION_NOT_RUN
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY
+WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 AUTHORITY_DOMAIN: EMP.1 presentation/layout/browser regression only; WRC/benchmark/source/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 1
+CUSTODY_EPOCH: 2
 COORDINATION_STATE: SAFE_AFTER_PREDECESSOR_MERGE
 DEPENDENCIES: #1633 planning context; #1645 / PR #1648 merged into current main.
 
@@ -53,14 +54,14 @@ ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549976572
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0002_SYNC
 
-OWNER_TEXT_OBSERVED: `start coding, use https://github.com/reallaksh19/Common/tree/main/skills/engineering-pr-delivery-v2`
-OWNER_PROGRESSION_COMMAND: NOT_INVOKED
+OWNER_TEXT_OBSERVED: `proceed next`
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -69,24 +70,24 @@ ROADMAP_MUTATION_AUTHORITY: NONE
 
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
 QUALIFICATION_PROFILE_VERSION: 2
-QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-HUMAN-PRESENTATION
-QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0001
-QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0001-questions.md
+QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-PRESSURE-MATRIX
+QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0002
+QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0002-questions.md
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: NOT_APPLICABLE_INITIAL_PREWORK
-QUESTION_DISPLAY: HIDE
+QUESTION_PACK_ACTION: REFRESHED
+QUESTION_DISPLAY: SHOW
 PREWORK_QUALIFICATION_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS
-HANDOVER_VALIDATION_EVIDENCE: pre-work commit predates material work; Draft PR exists; Issue CHAIN_ROOT/ACTIVE/ENDPOINT comments synchronized to repository current state.
+HANDOVER_VALIDATION_STATUS: NOT_RUN
+HANDOVER_VALIDATION_EVIDENCE: LEG-001 source/diff inspection and material receipt; no faithful executable checkout/runner available in this session.
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
-HANDOVER_READY: TRUE
+HANDOVER_READY: FALSE
 
-VALIDATION: protocol/issue/main/roadmap/predecessor/source-owner/custody inspection PASS; mergeability/review/check state inspected; executable material checks NOT_RUN because LEG-001 has not started. Zero workflow runs is not engineering PASS.
-AUTHORITY_BOUNDARY: presentation work may translate and arrange existing governed facts but may not create or modify WRC method, source, route, benchmark, code, release or deployment authority.
-CURRENT_BLOCKER: exact Owner progression command not invoked under the requested Common skill.
-LEG_DIAGNOSIS: repository is ready for a surgical first leg; the current regression mechanism is unmapped fallback + hand-maintained rendered-code list, not a WRC calculation defect.
-EXACT_NEXT_ACTION: Owner invokes `proceed next`; execute LEG-001 strict human-presentation mapping + live-DOM raw-token regression gate only; then validate and record a material receipt. Do not merge.
+VALIDATION: source/diff/artifact inspection PASS; executable label/benchmark/browser/import/build/diff checks NOT_RUN. Zero GitHub statuses/workflow runs on material head is not engineering PASS.
+AUTHORITY_BOUNDARY: LEG-001 translated/contained presentation only; it did not create or modify WRC method, source, route, benchmark, pressure mechanics, code, release or deployment authority.
+CURRENT_BLOCKER: no custody blocker; executable LEG-001 validation unavailable in this session. New material coding requires another exact Owner progression command.
+LEG_DIAGNOSIS: raw-code regression source is patched and regression-gated in source; next inconsistency is Pressure rendering 10 scalar rows instead of one identity row × Internal/External.
+EXACT_NEXT_ACTION: after Issue sync, Owner invokes `proceed next`; execute LEG-002 governed matrix generalization + Pressure 5×2 only, preserving 10 governed cells and per-cell custody. Do not merge.

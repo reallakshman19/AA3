@@ -13,14 +13,12 @@ BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR: 1660
 PR_STATUS: OPEN_DRAFT_LEG005_IN_PROGRESS
 PR_BASE: main
-PR_HEAD_OBSERVED: 8577b78cf3f2e4881b450b395f55da5a0212a7c4
+PR_HEAD_OBSERVED: 8c61a8a7e32b885c5ce80a111e61b10a2e1e3965
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
 MERGEABILITY: MERGEABLE_AT_LEG005_ADMISSION
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-STATUS_CONTEXTS_PREVIOUS_MATERIAL_HEAD: 0
-PULL_REQUEST_WORKFLOW_RUNS_PREVIOUS_MATERIAL_HEAD: 0
 
 PREVIOUS_PR: 1658
 PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
@@ -86,14 +84,8 @@ MERGE_AUTHORIZED: FALSE
 
 ## Validation truth
 
-PASS — pre-material qualification:
-- Common remains `d709bcd61ab8ab4c9545b17923f56d505ac42c20`;
-- main remains `b39f7673737bd1f7f4a6d7dd9d1538f795874281`;
-- Draft #1660 remains open/mergeable and unmerged;
-- EP-0005/Issue control plane was IN_SYNC before this progression;
-- refreshed closure Q-set is durable and current.
-
+PASS — pre-material qualification: live Common/main/PR/Issue re-ground; EP-0005 was IN_SYNC before command; refreshed Q-set is durable/current.
 NOT_RUN — LEG-005 executable validation until a faithful repository checkout executes the focused Node/Playwright/import/build/diff ladder.
 
-CURRENT_BLOCKER: issue Active comment needs refresh before material mutation.
+CURRENT_BLOCKER: mutable Issue Active comment refresh pending.
 EXACT_NEXT_ACTION: synchronize the mutable issue Active handover to this LEG-005 admitted state, then implement only the focused raw-token coverage repair, benchmark keyboard/table-semantic closure, static issue-1651 acceptance manifest and existing Stage-17 carrier wiring; freeze material head; record LEG-005 receipt and EP-0006; sync Issue comments; stop. Do not merge PR #1660 without a new explicit Owner merge command.

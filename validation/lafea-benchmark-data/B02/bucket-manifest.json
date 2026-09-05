@@ -64,7 +64,36 @@
         }
       ]
     },
-    {"benchmarkStage":"S3","title":"Solver numerics","definitionState":"PLANNED","gateMode":"QUALIFICATION","methods":[]},
+    {
+      "benchmarkStage":"S3",
+      "title":"Solver numerics",
+      "definitionState":"READY",
+      "gateMode":"QUALIFICATION",
+      "methods":[
+        {
+          "methodId":"SOLVER-NUMERICS-INVARIANTS",
+          "authorityClass":"INDEPENDENT_STATIC_ENERGY_AND_METAMORPHIC_INVARIANTS",
+          "command":["node","scripts/lafea.3-bm-s-s3-solver-numerics-check.mjs"],
+          "sourceRefs":[
+            "scripts/lafea.3-bm-s-s3-solver-numerics-check.mjs",
+            "scripts/lib/lafea.3-bm-s-s3-helpers.mjs",
+            "scripts/lafea.3-fixtures.mjs",
+            "src/core/local-continuum/constants.js",
+            "src/core/local-continuum/solver.js",
+            "src/core/local-continuum/recovery.js",
+            "src/core/local-continuum/result-hashes.js",
+            "src/core/lafea-linear-solve/sparse-matrix.js",
+            "src/core/lafea-linear-solve/sparse-cholesky.js",
+            "src/core/lafea-linear-solve/diagonal-scaling.js",
+            "validation/lafea-benchmark-data/B02/oracle/solver-numerics-expected-values.json",
+            "validation/lafea-benchmark-data/B02/oracle/independent-oracle.py"
+          ],
+          "reportEnv":{"name":"LAFEA_BM_S_S3_REPORT_PATH","filename":"S3-solver-numerics-evidence.json"},
+          "expectedEvidenceSchema":"lafea3-bm-s-s3-solver-numerics-evidence/v1",
+          "oracleAuthority":"INDEPENDENT_STATIC_EQUILIBRIUM_CLAPEYRON_LINEARITY_SUPERPOSITION_AND_SCALING_INVARIANTS"
+        }
+      ]
+    },
     {"benchmarkStage":"S4","title":"Fail-closed negatives","definitionState":"PLANNED","gateMode":"QUALIFICATION","methods":[]},
     {"benchmarkStage":"S5","title":"Determinism and informational cost","definitionState":"PLANNED","gateMode":"QUALIFICATION_PLUS_INFORMATIONAL_PERFORMANCE","methods":[]}
   ],
@@ -77,6 +106,7 @@
     "oracle/cases.json",
     "oracle/expected-values.json",
     "oracle/load-path-expected-values.json",
+    "oracle/solver-numerics-expected-values.json",
     "oracle/independent-oracle.py",
     "convergence/mesh-ladders.json",
     "convergence/fixed-probes.json",

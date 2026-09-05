@@ -1,10 +1,10 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0005
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1646
 CHAIN_ID: LAFEA3-B02-1646-TASK001
 UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549111569
 
@@ -12,7 +12,7 @@ ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549111569
 
 ## Original task / acceptance ledger
 
-TASK-001 | Gate-0 currentness derivation | IMPLEMENTED_NOT_VALIDATED | LEG-001 / EP-0004; exact-head executable validation NOT_RUN
+TASK-001 | Gate-0 currentness derivation | IMPLEMENTED_NOT_VALIDATED_OWNER_MERGE_AUTHORIZED | LEG-001 / EP-0005; executable validation remains NOT_RUN; Owner explicitly instructed merge
 TASK-002 | Kirsch general-mesher quality | OPEN | untouched; distinct Appendix B/B2 qualification scope not entered
 TASK-003 | B02E convergence implementation | OPEN | untouched
 TASK-004 | B02 evidence UI | OPEN | untouched
@@ -25,13 +25,13 @@ INPUT-001 | gate0-contracts.json | AVAILABLE
 INPUT-002 | edit-invalidation-matrix.json | AVAILABLE
 INPUT-003 | B02E-convergence.json | AVAILABLE
 INPUT-004 | B02D-lug-pinhole-v2.json | AVAILABLE_AMENDMENT_NOT_ADOPTED
-INPUT-005 | hosted CI execution | UNRESOLVED (#1634); branch Actions collection reports total_count=0; observed PR head combined status is pending with zero statuses; no connector dispatch action exists for a never-instantiated run
+INPUT-005 | hosted CI execution | UNRESOLVED (#1634); branch Actions total_count=0; observed head pending with zero individual statuses; new-run dispatch unavailable
 INPUT-006 | Kirsch general-mesher policy source | UNRESOLVED
 
 ## Benchmark / oracle ledger
 
-BM-B02A | NOT_RUN | TASK-001 code implemented; executable evidence pending
-BM-B02B | NOT_RUN | TASK-001 code implemented; executable evidence pending
+BM-B02A | NOT_RUN | TASK-001 merged disposition authorized despite unavailable executable evidence
+BM-B02B | NOT_RUN | TASK-001 merged disposition authorized despite unavailable executable evidence
 BM-B02C | FAIL | minSJ 0.0938 at T3/L1
 BM-B02D | FAIL | V1 T3/T6 mesh quality
 BM-B02D-V2 | PASS_BENCHMARK_EVIDENCE_ONLY | not programme-adopted; no release authority
@@ -61,7 +61,7 @@ QUESTION_DISPLAY: HIDE
 QUALIFICATION_STATE: PASS
 QUALIFICATION_DECISION: agents/qualifications/LAFEA3-B02-1646-TASK001/OWNER-QUALIFICATION-DECISION-0001.md
 POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
-QUALIFICATION_COVERAGE: OWNER_CONFIRMED_BY_PROCEED_NEXT
+QUALIFICATION_COVERAGE: OWNER_CONFIRMED
 WRITE_AUTHORITY: WRITE_ALLOWED
 TAKEOVER_QUALIFICATION_READY: TRUE
 
@@ -71,16 +71,16 @@ MATERIAL_LEG_ID: LEG-001
 MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-B02-1646-TASK001/material-legs/LEG-001.md
 MATERIAL_HEAD: 90fa7398c08bb0b542b2d39971fb75357a7a6242
 MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_VALIDATED
-OBSERVED_PR_HEAD_BEFORE_EP0004: 4ce32efa4579ed556b6c37fe4b8c0e793c4769a1
 PR: #1650
-PR_STATE: DRAFT
+PR_STATE: DRAFT_PENDING_OWNER_AUTHORIZED_MERGE
 BRANCH: chatgpt/issue-1646-task-001-currentness
 LIVE_MAIN: eabb93cd44c59ce182d73284cb707653917e07c8
 MERGEABILITY: MERGEABLE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+MERGE_AUTHORITY: AUTHORIZED
+MERGE_AUTHORIZED: TRUE
+MERGE_AUTHORITY_SOURCE: OWNER_TEXT_MERGE_PROCEED_NEXT
 
 ## Validation
 
@@ -90,28 +90,25 @@ BRANCH_ACTIONS_RUN_COUNT: 0
 OBSERVED_HEAD_COMBINED_STATUS: pending
 OBSERVED_HEAD_STATUS_COUNT: 0
 DISPATCH_CAPABILITY: UNAVAILABLE_FOR_NEW_RUN
-EXACT_HEAD_HOSTED_CI_EVIDENCE: `.github/workflows/lafea-b01-final.yml` matches `src/workspace/lafea-workbench-*.js` on ordinary pull_request; branch Actions collection has total_count=0; observed PR head combined status has no statuses; #1634 remains open
 FOCUSED_CURRENTNESS_CHECK: NOT_RUN
 B01_B02_GATE0_AGGREGATE: NOT_RUN
 LIFECYCLE_RUN_TRANSACTION_PROBE_REGRESSIONS: NOT_RUN
 SOURCE_PROTECTED_DOMAIN_REVIEW: PASS_SOURCE_INSPECTION_ONLY
 
-The hosted validation path is unavailable in the present execution environment. Trigger inspection, branch run enumeration, commit-status inspection, source review and mergeability are diagnostics only and are not executable engineering PASS.
+Owner merge authorization is explicit and does not change validation truth. NOT_RUN remains NOT_RUN.
 
 ## Current implementation boundary
 
-LEG-001 adds a pure, evidence-derived `WORKBENCH_LIFECYCLE_CURRENTNESS` projection and production wiring. `CURRENT_RESULT` requires exact current immutable parents; `currentAuthority` represents currentness only and stays orthogonal to `NOT_EVALUATED | FAIL | PASS`, while acceptance remains a separate physical-probe gate. Historical PASS evidence remains retained and cannot grant current authority after governing edits. Explicit rejected transactions remain distinct from stale retained history.
-
-Protected unchanged domains: solver formulation and assembly, acceptance tolerances, mesh policy, B02D-V2 adoption, B02E convergence/oracle authority, workflows, roadmap intent, release/temperature authority, presentation authority.
+LEG-001 adds a pure evidence-derived `WORKBENCH_LIFECYCLE_CURRENTNESS` projection and production wiring. Currentness is exact-lineage-derived and remains orthogonal to qualification. Protected solver/mesh/oracle/workflow/release domains remain unchanged.
 
 ## Progression command
 
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
-OWNER_TEXT_OBSERVED: proceed next
+OWNER_TEXT_OBSERVED: merge,proceed next
 
 ## Readiness
 
-ENGINEERING_STATE: BLOCKED
+ENGINEERING_STATE: COMPLETE
 CUSTODY_STATE: HELD
 AUTO_STATE: PAUSED
 CHAIN_HANDOVER_READY: TRUE
@@ -120,4 +117,4 @@ HANDOVER_READY: FALSE
 
 ## Exact next action
 
-Obtain a faithful executable repository runtime or restore/start GitHub Actions for the TASK-001 content. Consume the resulting logs/receipts. Do not create LEG-002, advance to TASK-002, mark validation PASS, or authorize merge while executable validation remains unavailable.
+Synchronize EP-0005 to the Issue, mark PR #1650 ready if draft blocks merge, merge exactly the successor head, verify main, then initialize TASK-002 as a new Appendix B/B2 qualification scope with refreshed Q1-Q5. Do not carry TASK-001 qualification into TASK-002 material coding.

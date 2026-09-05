@@ -1,0 +1,37 @@
+{
+  "schema": "lafea-b02-mesh-ladders/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "meshAuthority": "BENCHMARK_ONLY_SOLVER_ISOLATION",
+  "productionMeshQualificationGranted": false,
+  "ladders": [
+    {
+      "caseId": "CONT-CYL-01",
+      "elementFamily": "Q8",
+      "generator": "scripts/lafea.3-benchmark-mesh-adapter.mjs:mappedAnnulusSectorQ8",
+      "levels": [
+        {"levelId":"L1","radialElements":2,"circumferentialElements":4},
+        {"levelId":"L2","radialElements":4,"circumferentialElements":8},
+        {"levelId":"L3","radialElements":8,"circumferentialElements":16}
+      ],
+      "refinementRatio": 2,
+      "primaryConvergenceQuantity": "FIXED_PHYSICAL_PROBE",
+      "diagnosticQuantity": "MAX_NORMALIZED_GAUSS_POINT_FIELD_ERROR"
+    },
+    {
+      "caseId": "CONT-HOLE-01",
+      "elementFamily": "Q8",
+      "generator": "scripts/lafea.3-benchmark-mesh-adapter.mjs:mappedAnnulusSectorQ8",
+      "radialGradingPercent": 40,
+      "levels": [
+        {"levelId":"L1","radialElements":3,"circumferentialElements":6},
+        {"levelId":"L2","radialElements":6,"circumferentialElements":12},
+        {"levelId":"L3","radialElements":10,"circumferentialElements":20}
+      ],
+      "refinementRatioForRichardson": null,
+      "primaryConvergenceQuantity": "FIXED_PHYSICAL_PROBE",
+      "diagnosticQuantities": ["HOLE_NEAR_EDGE_GAUSS_POINT_PEAK_FACTOR","MAX_NORMALIZED_GAUSS_POINT_FIELD_ERROR"],
+      "note": "The legacy 3/6/10 radial sequence is retained for regression continuity but is not claimed to have a constant refinement ratio. A later S1 convergence-evidence leg must use a constant-ratio fixed-probe ladder before Richardson/GCI authority is granted."
+    }
+  ],
+  "qualificationRule": "MOVING_PEAKS_AND_MESH_WIDE_MAXIMA_MAY_BE_RETAINED_AS_DIAGNOSTICS_BUT_NOT_USED_AS_RICHARDSON_GCI_QUANTITIES"
+}

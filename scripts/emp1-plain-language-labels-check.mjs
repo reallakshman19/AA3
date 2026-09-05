@@ -26,6 +26,10 @@ const RENDERED_ON_SCREEN = [
   'EMP1_WORKBENCH_A_DOCUMENT_REQUIRED', 'EMP1_WORKBENCH_B_DOCUMENT_REQUIRED',
   'EMP1_WORKBENCH_RUN_INPUT_REQUIRED', 'EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED',
   'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED',
+  // axis and sign-convention authority values on the C evidence card, found by a
+  // live-DOM sweep after the card's own underscore stripper was routed through this
+  // registry — that routing only helps codes the registry actually maps.
+  'SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED', 'SOURCE_REFERENCE_TOWARD_ATTACHMENT_TARGET',
 ];
 for (const code of RENDERED_ON_SCREEN) {
   assert.ok(emp1HasPlainLanguageLabel(code), `${code} must have a plain-language label`);

@@ -4,9 +4,9 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0014
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0014.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0013.md
+ACTIVE_ENDPOINT: EP-0015
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0015.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0015.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 LAST_COMPLETED_MATERIAL_LEG: LEG-006
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-006.md
@@ -17,18 +17,20 @@ PREDECESSOR_PR: 1662
 PREDECESSOR_PR_STATUS: MERGED
 PREDECESSOR_PR_MERGE_COMMIT: 80f335b750a13a06741a787106949bada1ad7f37
 PR: 1663
-PR_STATUS: OPEN_DRAFT
+PR_STATUS: OPEN_DRAFT_TASK_003_PREWORK_ONLY
 BRANCH: engineering/bm-mesh-1652-m2-data
 BASE_BRANCH: main
 ISSUE_BASIS_MAIN: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MAIN_HEAD: 80f335b750a13a06741a787106949bada1ad7f37
-POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_M2_BENCHMARK_DATA_BOUNDARY
+POST_BASIS_DRIFT: NO_NEW_DRIFT_SINCE_EP0014
 MERGEABILITY: MERGEABLE_AT_LAST_CHECK
 REVIEWS: 0_AT_LAST_CHECK
 UNRESOLVED_REVIEW_THREADS: 0_AT_LAST_CHECK
 REQUIRED_CHECKS: NONE_OBSERVED_AT_LAST_CHECK
+ACTIONS_RUNS: 0_AT_LAST_CHECK
+STATUS_CONTEXTS: 0_AT_LAST_CHECK
 
-ENGINEERING_STATE: TASK_002_M2_FIXTURE_ORACLE_FROZEN
+ENGINEERING_STATE: TASK_003_PREWORK_READY
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
 WRITE_AUTHORITY: READ_ONLY
@@ -36,15 +38,15 @@ AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-AUTHORITY_DOMAIN: BM-MESH issue #1652 M2 benchmark geometry/oracle artifacts only. Production mesher/geometry kernels, source-authority verification, solver formulation/compiler authority, mesh-quality thresholds, B02 benchmark/response authority, convergence tolerances, TECH-13 product-refinement authority, workflows, roadmaps, program registration, release/trust/temperature authority remain protected.
+AUTHORITY_DOMAIN: BM-MESH issue #1652 TASK-003 mesh-ladder and geometry-fixed physical-probe prework only. Production mesher/geometry kernels, source-authority verification, solver formulation/compiler authority, mesh-quality thresholds, convergence default limits, B02 benchmark/response authority, TECH-13 product-refinement authority, workflows, roadmaps, program registration, M4 physics, release/trust/temperature authority remain protected.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
 AGENT_INSTANCE_ID: chatgpt:b4bb2925-1e01-4ba2-8693-1018b121c5ba
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 9
+CUSTODY_EPOCH: 10
 COORDINATION_STATE: SAFE_EXCLUSIVE_NO_COLLISION
-DEPENDENCIES: issue-linked docs PR #1654 is proposal/support only; issue #1535 production-route authority remains separate; TECH-13 refinement authority remains separate; M4 physics fixture authority unresolved
+DEPENDENCIES: PR #1663 remains unmerged; issue-linked docs PR #1654 is proposal/support only; issue #1535 production-route authority remains separate; B02 definition/probe authority remains separate; TECH-13 refinement authority remains separate; M4 physics fixture authority unresolved
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
@@ -60,22 +62,22 @@ ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT_WITH_TASK_001_AND_M2_PREWORK_MERGED
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0014
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0015
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549970395
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549969638
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550965987
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0015_COMMENT_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: REPO_FILES_SYNCED_COMMENT_SYNC_PENDING
 
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 QUALIFICATION_PROFILE: FEA
 QUALIFICATION_PROFILE_VERSION: 2
-QUALIFICATION_SCOPE_ID: QSCOPE-ADV-BM-MESH-1652-M2-GEOMETRY-ORACLE
-QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0005
-QUESTION_SET_FILE: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0005-questions.md
+QUALIFICATION_SCOPE_ID: QSCOPE-ADV-BM-MESH-1652-MESH-LADDERS-PHYSICAL-PROBES
+QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0006
+QUESTION_SET_FILE: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0006-questions.md
 QUESTION_SET_STATUS: CURRENT
 QUESTION_SET_ADMISSION_STATUS: NOT_EVALUATED_ORIGINATING_CUSTODIAN
-QUESTION_PACK_ACTION: REUSED
-QUESTION_DISPLAY: HIDE
+QUESTION_PACK_ACTION: REFRESHED
+QUESTION_DISPLAY: SHOW
 PREWORK_QUALIFICATION_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
@@ -83,16 +85,16 @@ OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: issue #1652 + governing roadmaps; no separate Owner Q-set baseline
 OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
-TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 OPEN_READY_FOR_OWNER_PROGRESSION; TASK-004..TASK-006 OPEN_STAGED; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: TASK-001 owner-run PASS merged; M2 five fixtures + independent oracle + source blob custody frozen in LEG-006; M4 physics fixture authority unresolved
+TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 PREWORK_READY_WAIT_OWNER_PROGRESSION; TASK-004..TASK-006 OPEN_STAGED; TASK-007 SATISFIED_CURRENTLY
+INPUT_STATUS: TASK-001 owner-run PASS merged; M2 five fixtures + independent oracle + source blob custody frozen in LEG-006; TASK-003 ladder/probe boundary re-grounded; M4 physics fixture authority unresolved
 BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-003 PASS_OWNER_EXACT_HEAD_MERGED; BM-004 FROZEN_NOT_RUN; BM-002/BM-005/BM-006 NOT_RUN
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_M2_MATERIAL_DIFF_ORACLE_SOURCE_CUSTODY / M2_RUNNER_NOT_RUN
+HANDOVER_VALIDATION_STATUS: PASS_TASK_003_PREWORK_GROUNDING / LEG_007_NOT_RUN
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-CURRENT_BLOCKER: none for TASK-002 artifact freeze; TASK-003 awaits a new Owner progression command and boundary re-grounding.
-LEG_DIAGNOSIS: LEG-006 freezes only benchmark data. The expected values are independently derived from explicit fixture dimensions and never from a produced mesh; current producer/policy source blobs are pinned. BM-004 remains NOT_RUN because the staged runner has not yet been implemented.
-EXACT_NEXT_ACTION: wait for the next Owner progression command. Re-ground TASK-003 mesh-ladder / physical-probe authority before material work. Do not merge PR #1663 without a new explicit Owner merge instruction.
+CURRENT_BLOCKER: none for TASK-003 prework; LEG-007 material implementation intentionally waits for the next Owner progression command.
+LEG_DIAGNOSIS: TASK-003 may freeze systematic production-producer request ladders and immutable physical coordinates tied to M2 geometry, but must defer load case, response quantity, recovery, material/support/load fixtures and convergence outcomes until M4 authority exists. At least three levels are required; raw singular peak stress remains outside convergence authority.
+EXACT_NEXT_ACTION: on the next `proceed next`, implement one bounded LEG-007 limited to `validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json`, `convergence/fixed-probes.json`, and `sources/source-registry.json` only if additional convergence/probe source blobs must be pinned. Do not merge PR #1663 without a new explicit Owner merge instruction.

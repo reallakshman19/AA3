@@ -243,7 +243,11 @@ const oracleCheck = spawnSync(
   [path.join(B02, 'oracle/independent-oracle.py'), '--check'],
   { cwd: ROOT, encoding: 'utf8' },
 );
-assert.equal(oracleCheck.status, 0, oracleCheck.stderr || oracleCheck.stdout);
+assert.equal(
+  oracleCheck.status,
+  0,
+  oracleCheck.stderr || oracleCheck.stdout || 'independent oracle check failed without diagnostic output',
+);
 const oraclePayload = JSON.parse(oracleCheck.stdout);
 assert.equal(oraclePayload.productionOutputUsed, false);
 assert.equal(oraclePayload.expectedValuesCheck, 'PASS');

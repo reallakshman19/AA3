@@ -1,0 +1,40 @@
+{
+  "schema": "lafea-b02-fixed-probes/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "identityPolicy": "PHYSICAL_COORDINATES_NEVER_NODE_IDS",
+  "probes": [
+    {
+      "probeId": "B02-LAME-R73-THETA37",
+      "caseId": "CONT-CYL-01",
+      "coordinateFrame": "GLOBAL_XY",
+      "polarCoordinate": {"radiusMm":73,"thetaDegrees":37},
+      "physicalCoordinateMm": {"x":58.30039223345238,"y":43.932496690099526},
+      "quantities": ["SIGMA_RADIAL","SIGMA_HOOP","DISPLACEMENT_MAGNITUDE"],
+      "expectedValueRef": "oracle/expected-values.json#CONT-CYL-01.derived.fixedProbe",
+      "acceptanceRole": "RICHARDSON_GCI_FIXED_QUANTITY",
+      "singularityClassification": "NOT_APPLICABLE"
+    },
+    {
+      "probeId": "B02-KIRSCH-R20-THETA45",
+      "caseId": "CONT-HOLE-01",
+      "coordinateFrame": "GLOBAL_XY",
+      "polarCoordinate": {"radiusMm":20,"thetaDegrees":45},
+      "physicalCoordinateMm": {"x":14.142135623730951,"y":14.14213562373095},
+      "quantities": ["SIGMA_RADIAL","SIGMA_HOOP","SIGMA_RADIAL_HOOP_SHEAR"],
+      "expectedValueRef": "oracle/expected-values.json#CONT-HOLE-01.derived.fixedProbe",
+      "acceptanceRole": "RICHARDSON_GCI_FIXED_QUANTITY",
+      "singularityClassification": "NOT_APPLICABLE"
+    },
+    {
+      "probeId": "B02-KIRSCH-HOLE-EDGE-THETA90",
+      "caseId": "CONT-HOLE-01",
+      "coordinateFrame": "GLOBAL_XY",
+      "polarCoordinate": {"radiusMm":10,"thetaDegrees":90},
+      "physicalCoordinateMm": {"x":0,"y":10},
+      "quantities": ["SIGMA_HOOP","STRESS_CONCENTRATION_FACTOR"],
+      "expectedValueRef": "oracle/expected-values.json#CONT-HOLE-01.derived.holeEdge",
+      "acceptanceRole": "CLASSICAL_BOUNDARY_RESULT_CHECK_NOT_MOVING_MAXIMUM",
+      "singularityClassification": "NOT_SINGULAR_SMOOTH_CIRCULAR_BOUNDARY"
+    }
+  ]
+}

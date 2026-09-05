@@ -1,0 +1,59 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
+  "runId": "B02-PROGRAM-PR1667-final",
+  "generatedAt": "2026-09-05T12:40:14.752Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "d61c6ba39f5a1d9c314e9ea2c3b899f0a1de4aca",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "B02",
+  "stageId": "LAFEA.3",
+  "benchmarkClass": "STAGED_SOLVER_BENCHMARK",
+  "comparisonPolicy": "STAGE_SPECIFIC_INDEPENDENT_ORACLE_AND_INVARIANTS",
+  "methodResults": [
+    {
+      "methodId": "BM-S-S0-S5",
+      "authorityClass": "STAGED_SOLVER_BENCHMARK_PROGRAM",
+      "command": [
+        "node",
+        "scripts/lafea.3-solver-benchmark-run.mjs",
+        "--stage",
+        "S0..S5"
+      ],
+      "sourceRefHashes": {
+        "scripts/lafea.3-solver-benchmark-run.mjs": "sha256:2237bec6c155670132b48d7d19128695ac092ffef489f76ba2f4f3ce2482a887",
+        "validation/lafea-benchmark-data/B02/bucket-manifest.json": "sha256:bd6b571844785376137be2fba358b50b222c7914369b97e08c11b3c995770a04"
+      },
+      "oracleAuthority": "B02_STAGED_S0_S5_INDEPENDENT_ORACLE_AND_INVARIANT_LADDER",
+      "expectedEvidenceSchema": "lafea3-bm-s-program-run/v1",
+      "exitCode": 0,
+      "signal": null,
+      "elapsedMs": 4527.609,
+      "stdout": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-PROGRAM-PR1667-final/BM-S-S0-S5.stdout.log",
+        "sha256": "sha256:bf123f5d3ca2f1bb068dfeaffa89abb34f517993dfc04809c6d41ef47f0dc76c"
+      },
+      "stderr": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-PROGRAM-PR1667-final/BM-S-S0-S5.stderr.log",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedEvidence": null,
+      "status": "PASS"
+    }
+  ],
+  "caseStatus": "PASS",
+  "nextBenchmarkAuthorized": true,
+  "baselineDisposition": "ELIGIBLE_EXECUTION_BASELINE",
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "recordHash": "sha256:304ea2d51d784f1d01e2752e4b4dd6b712f3398896470690afbed1518e1d8520"
+}

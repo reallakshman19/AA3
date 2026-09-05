@@ -3,14 +3,14 @@
 CHAIN_ID: ADV-BM-MESH-1652
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0017
+CURRENT_ENDPOINT: EP-0018
 
 ## Original task / acceptance ledger
 
 TASK-001 | Governance gate assertion repair and full meshing-chain execution. | CLOSED_PASS_MERGED | Owner exact-head execution PASS; merged via PR #1656 at `2829fe58113237741ea3a1172cdf008e7c7e994a`
 TASK-002 | Freeze M2 geometry and cited closed-form oracle. | CLOSED_FROZEN_ARTIFACTS | LEG-006 material head `ecc7a7608dc204fa79384503c5e81d245020407f`
-TASK-003 | Define mesh ladders and physical probes. | CLOSED_FROZEN_DEFINITIONS_WITH_SOURCE_CUSTODY_REPAIR_REQUIRED | LEG-007 material head `a52ce12ebb3ff1683e7db6352a586364e3dbd520`; S-012/S-013 registry hashes invalid
-TASK-004 | Implement M0–M4 staged runner. | PREWORK_BLOCKED_SOURCE_CUSTODY_REPAIR | EP-0017 re-grounded runner authority; no runner material admitted
+TASK-003 | Define mesh ladders and physical probes. | CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED | LEG-007 definitions; LEG-008 repairs S-012/S-013 custody pins
+TASK-004 | Implement M0–M4 staged runner. | PREWORK_READY_WAIT_OWNER_PROGRESSION | EP-0018 re-grounded runner authority after custody repair; no runner material admitted
 TASK-005 | Define exact-code negative cases. | OPEN_STAGED | staged
 TASK-006 | Register BM-MESH in benchmark program. | OPEN_STAGED | staged
 TASK-007 | Keep release and temperature authority false. | SATISFIED_CURRENTLY | no authority mutation
@@ -18,14 +18,14 @@ TASK-007 | Keep release and temperature authority false. | SATISFIED_CURRENTLY |
 ## Input ledger
 
 INPUT-001 | Issue Basis main `b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`. | AVAILABLE | immutable basis
-INPUT-002 | Live main `80f335b750a13a06741a787106949bada1ad7f37`. | AVAILABLE | unchanged through EP-0017
+INPUT-002 | Live main `2126f2c45e9a77debedf5ad0cabfafc426fca095`. | AVAILABLE_DISJOINT_DRIFT | merged BM-S/B02 work; no BM-MESH material or S-012/S-013 source overlap observed
 INPUT-003..009 | TASK-001 governance/source/quality/producer-binding evidence. | AVAILABLE_PASS | merged
 INPUT-010 | M4 frozen physics fixture authority. | UNRESOLVED | issue does not fully specify material/load/support/thickness fixture
 INPUT-011 | Issue #1652 M2 case classes. | AVAILABLE_OWNER_AUTHORITY | frozen in LEG-006
 INPUT-012 | Issue-linked staging design. | AVAILABLE_DESIGN_SUPPORT_ONLY | proposal/support only
 INPUT-013 | M2 fixture/oracle/source artifacts. | AVAILABLE_FROZEN | LEG-006
-INPUT-014 | TASK-003 ladder/probe authority. | AVAILABLE_FROZEN_WITH_SOURCE_CUSTODY_DEFECT | LEG-007 definitions frozen; M4 physics fields deferred
-INPUT-015 | LEG-007 source-custody verification. | FAIL_TWO_PINS | S-011 matches; S-012/S-013 recorded SHAs do not resolve; live blobs are `c06ebf7006b76b38de8c416f659152396d34976e` and `f1991fc17f0e799933917601b78c7a89af196df1`
+INPUT-014 | TASK-003 ladder/probe authority. | AVAILABLE_FROZEN | LEG-007 definitions; M4 physics fields deferred
+INPUT-015 | LEG-007 source-custody verification. | REPAIRED_PASS_STATIC | LEG-008 pins S-012=`c06ebf7006b76b38de8c416f659152396d34976e`, S-013=`f1991fc17f0e799933917601b78c7a89af196df1`
 INPUT-016 | TASK-004 audited staged-runner precedent. | AVAILABLE_SUPPORT_ONLY | `scripts/lafea.3-solver-benchmark-run.mjs`, `scripts/lib/lafea-benchmark-audit.mjs`, audit schema
 INPUT-017 | LAFEA.4 M3 h/t thickness authority. | UNRESOLVED | issue requires 0.5t–2t check but BM-MESH definitions do not govern shell thickness
 
@@ -46,24 +46,20 @@ LEG-003 | `8283a9b6e6ee9b8a38f198b7e1dbd9acc6e525b5` | exact source authority + 
 LEG-004 | `2e565089e54a7d1f97e5552349ae1a6980c4c1fc` | stop invoking disabled LAFEA.4 product-refinement action
 LEG-005 | `8c86e25a26df1987d0228bf629b6298104fc3b25` | focused B02D-V2 producer-binding checker
 LEG-006 | `ecc7a7608dc204fa79384503c5e81d245020407f` | M2 geometry/oracle/source freeze
-LEG-007 | `a52ce12ebb3ff1683e7db6352a586364e3dbd520` | four systematic production-profile ladders + seven physical probe identities + source custody; S-012/S-013 custody repair required
-LEG-008 | NOT_STARTED | next bounded material leg is two-hash source-registry repair only
+LEG-007 | `a52ce12ebb3ff1683e7db6352a586364e3dbd520` | four systematic production-profile ladders + seven physical probe identities + source custody
+LEG-008 | `1273c409ffd39279cf73c3a280ff019cb275e120` | repair exactly two source-registry blob pins; one file +2/-2
 
 ## Roadmap ledger
 
 RM-001 | docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31 | OWNER_ROADMAP | PRIMARY | ALIGNED | no mutation
 RM-002 | docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a | PROJECT_ROADMAP | SECONDARY | ALIGNED | no mutation
 
-## Qualification
+## Qualification / owner display policy
 
-OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
-OWNER_QUALIFICATION_BASELINE_SOURCE: issue #1652 + governing roadmaps; no separate Owner Q-set baseline
-OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
-ACTIVE_QUESTION_SET: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0007-questions.md
-QUALIFICATION_SCOPE_ID: QSCOPE-ADV-BM-MESH-1652-STAGED-RUNNER-SOURCE-CUSTODY-GATE
-QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED_FAILURE_BOUNDARY
-QUESTION_DISPLAY: SHOW
+OWNER_DIRECTIVE: DO_NOT_CREATE_QUESTIONS_UNLESS_EXPLICITLY_ASKED
+EXISTING_QUESTION_SET: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0007-questions.md
+QUESTION_SET_ACTION: RETAINED_NOT_REFRESHED
+QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
 ## PR state
@@ -72,23 +68,23 @@ PREDECESSOR_PR: #1662 MERGED at `80f335b750a13a06741a787106949bada1ad7f37`
 PR: #1663
 PR_STATUS: OPEN_DRAFT_UNMERGED
 BRANCH: engineering/bm-mesh-1652-m2-data
-LAST_MATERIAL_HEAD: a52ce12ebb3ff1683e7db6352a586364e3dbd520
-TASK_004_PREWORK_ENDPOINT: EP-0017
+LAST_MATERIAL_HEAD: 1273c409ffd39279cf73c3a280ff019cb275e120
+TASK_004_REGROUNDED_ENDPOINT: EP-0018
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
 ## Current diagnosis
 
-The Owner's `proceed next` re-grounded TASK-004 but did not authorize runner material or merge. Live Common/main/PR/roadmaps are unchanged and no competing engineering PR for issue #1652 was observed.
+The Owner's `proceed next` authorized and completed the bounded LEG-008 source-custody repair. The net material diff from EP-0017 head `a028962667f5a09f245bf38c82ebe61f4dae167d` to material head `1273c409ffd39279cf73c3a280ff019cb275e120` is exactly one file, +2/-2, changing only S-012/S-013 blob SHAs.
 
-TASK-004 runner mechanics have an admissible precedent: exact-head + clean-tree audited execution, per-stage `lafea-benchmark-audit-record/v1` retention and false release/temperature authority. The audit schema permits `BLOCKED`, so missing benchmark authority must remain visible rather than coerced to PASS.
+Live main advanced from `80f335b...` to `2126f2c...` via BM-S/B02 work. Compare shows no overlap with `validation/lafea-benchmark-data/MESH/**`, `src/core/lafea-meshing/mesh-convergence-framework.js`, or `src/workspace/lafea-continuum-physical-probe.js`; the drift is classified disjoint for this leg.
 
-Before runner material, LEG-007 source custody must be repaired. `S-012` and `S-013` in `validation/lafea-benchmark-data/MESH/sources/source-registry.json` contain non-resolving/non-current SHAs. This is a frozen-evidence integrity defect.
+TASK-004 runner mechanics remain grounded in the existing audited staged-runner precedent: exact-head and clean-tree checks, per-stage `lafea-benchmark-audit-record/v1`, contiguous predecessor gating, and false release/temperature authority.
 
-M3 also cannot claim complete LAFEA.4 acceptance until a governed shell thickness exists for the issue-required h/t metric. M4 remains blocked on material/load/support/load-case/quantity/recovery fixture authority. No convenience/example values may be promoted.
+The current MESH tree still lacks the required `bucket-manifest.json`, `governance/negative-cases.json`, staged runner, and program registration. TASK-004 may implement the staged runner contract/manifest and executable M0-M2/M3 non-thickness wiring on the next progression. Full M3 LAFEA.4 acceptance must remain BLOCKED until governed shell thickness exists; M4 must remain BLOCKED until governed physics exists. BLOCKED is not PASS and must stop advancement.
 
-No TASK-004 material has been written and no M0-M4 benchmark PASS is claimed.
+No TASK-004 runner material has been written and no new M0-M4 benchmark PASS is claimed.
 
 ## Exact next action
 
-Await the next Owner material-authorization command. Implement one bounded LEG-008 changing only `S-012.blobSha` to `c06ebf7006b76b38de8c416f659152396d34976e` and `S-013.blobSha` to `f1991fc17f0e799933917601b78c7a89af196df1` in `validation/lafea-benchmark-data/MESH/sources/source-registry.json`; verify live blobs and net diff. Then re-ground TASK-004 again before runner material. Do not merge PR #1663 without explicit Owner merge authorization.
+Await the next Owner progression command. On `proceed next`, begin one bounded TASK-004 material leg for the staged runner contract/manifest and executable M0-M2/M3-non-thickness wiring while preserving explicit BLOCKED outcomes for unresolved M3 shell-thickness and M4 physics. Do not merge PR #1663 without explicit Owner merge authorization. Do not create or refresh qualification questions unless the Owner explicitly asks.

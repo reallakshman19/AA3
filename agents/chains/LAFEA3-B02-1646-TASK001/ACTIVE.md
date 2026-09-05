@@ -63,9 +63,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548782622
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549060476
-ISSUE_HANDOVER_SYNC_STATUS: STALE
-ISSUE_HANDOVER_SYNC_BLOCKER: EP-0004 repository custody is materialized; immutable endpoint comment and mutable Active comment are pending synchronization.
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549111569
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: branch Actions total_count=0; observed PR head combined status pending with zero statuses; matching pull_request workflow already confirmed; no new-run dispatch action available; issue #1634 remains open
@@ -77,7 +76,7 @@ HANDOVER_READY: FALSE
 
 ## Current result
 
-LEG-001 remains implemented at material head `90fa7398c08bb0b542b2d39971fb75357a7a6242`. PR #1650 remains draft and mergeable with no reviews or unresolved review threads. No material code changed in EP-0004 and no LEG-002 was opened.
+LEG-001 remains implemented at material head `90fa7398c08bb0b542b2d39971fb75357a7a6242`. PR #1650 remains draft and mergeable with no reviews or unresolved review threads. Repository and Issue custody are synchronized at EP-0004 / issue comment `5549111569`. No material code changed in EP-0004 and no LEG-002 was opened.
 
 EP-0004 confirms the hosted execution path itself is unavailable: the branch-level Actions collection reports zero runs, the observed PR head has pending combined status with zero individual statuses, the matching B01 final workflow was already proven to cover TASK-001 paths, and the connected GitHub capability can rerun only existing runs/jobs rather than dispatch a never-created run. Issue #1634 remains open.
 
@@ -93,4 +92,4 @@ Executable validation remains `NOT_RUN`. Branch-run enumeration, commit-status i
 
 ## Exact next action
 
-Synchronize EP-0004 to the Issue control plane, then obtain a faithful executable repository runtime or restore/start GitHub Actions for TASK-001. Consume the resulting exact-content logs and receipts. Do not create LEG-002, advance to TASK-002, mark PASS, or authorize merge while executable validation is unavailable.
+Obtain a faithful executable repository runtime or restore/start GitHub Actions for TASK-001. Consume the resulting exact-content logs and receipts. Do not create LEG-002, advance to TASK-002, mark PASS, or authorize merge while executable validation is unavailable.

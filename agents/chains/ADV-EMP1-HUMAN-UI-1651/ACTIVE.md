@@ -21,8 +21,9 @@ BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
 MAIN_HEAD_OBSERVED: 80f335b750a13a06741a787106949bada1ad7f37
 MAIN_DRIFT_CLASSIFICATION: NON_MATERIAL_TO_LEG007_SCOPE
-MERGEABILITY: MERGEABLE_AT_PRE_MATERIAL_OBSERVATION
-REVIEWS: 0
+MERGEABILITY: MERGEABLE_AT_POST_LEG007_OBSERVATION
+REVIEWS: 1
+REVIEW_STATES: COMMENTED
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
 STATUS_CONTEXTS_MATERIAL_HEAD: 0
@@ -49,8 +50,8 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRE
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0010
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0010_COMMENT
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_ISSUE_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551195407
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 OWNER_TEXT_OBSERVED: `proceed next`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_007
 OWNER_MERGE_COMMAND: NONE_FOR_PR_1660
@@ -75,7 +76,7 @@ VALIDATION_PASS_OBSERVED: emp1-plain-language-labels-check; emp1-governed-vector
 VALIDATION_NOT_RUN_LEG007: emp1-manual-browser-audit-check; updated emp1-issue1651-acceptance-check; desktop manual audit JSON; narrow manual audit JSON; trusted Enter/Space disclosure observation.
 VALIDATION_BUILD_GATE: inherited repository failure remains: #1660 1,936,884 > 1,179,648 and current main 1,932,886 > 1,179,648; zero PR contribution is not claimed. LEG-007 changes no application bundle source.
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains blocked because project-local Chromium is absent; no automated product assertions executed.
-MANUAL_VALIDATION: deterministic protocol now retained at agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0010.md; execution pending.
+MANUAL_VALIDATION: deterministic protocol retained at agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0010.md; execution pending.
 AUTHORITY_BOUNDARY: LEG-007 changed exactly four test/evidence files and no production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML.
 CURRENT_BLOCKER: external browser observation only: run the LEG-007 static guards and return desktop/narrow audit JSON plus trusted keyboard observation.
 EXACT_NEXT_ACTION: local verifier checks out `bcb01260e85144f629817916f8c2ce601573bed4`, runs the two static guards, starts Vite, follows `validation/MANUAL-EP-0010.md`, and returns desktop JSON, narrow JSON and trusted keyboard observation. Do not merge PR #1660 without a separate explicit Owner merge command.

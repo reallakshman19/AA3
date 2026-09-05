@@ -67,11 +67,16 @@ WRITE_AUTHORITY: WRITE_ALLOWED
 AUTO_STATE: PAUSED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
+PR: #1657
+PR_STATUS: OPEN_DRAFT
+PR_MERGEABILITY_AT_CREATION: NOT_MERGEABLE
 MATERIAL_LEG_ID: LEG-001
 MATERIAL_HEAD: f2b6c9f9ddc4748c6fa647604631504795916c0f
 MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_EXECUTED
 VALIDATION_STATUS: NOT_RUN_EXECUTION
 SOURCE_DIFF_AUDIT: PASS
 INDEPENDENT_ANALYTICAL_REPRODUCTION: PASS
-CURRENT_BLOCKER: faithful checkout failed before execution because DNS could not resolve github.com; no executable PASS may be claimed
-EXACT_NEXT_ACTION: open Draft PR for exact-head review/CI attachment, then proceed only with bounded S2 work under EP-0001; do not activate or merge B02.
+MATERIAL_HEAD_WORKFLOW_RUNS: 0
+PR_INITIAL_HEAD_WORKFLOW_RUNS: 0
+CURRENT_BLOCKER: faithful checkout failed before execution because DNS could not resolve github.com; GitHub Actions also returned zero runs for the material head and initial PR head; no executable PASS may be claimed
+EXACT_NEXT_ACTION: proceed only with bounded S2 work under EP-0001 when continuing; do not activate or merge B02.

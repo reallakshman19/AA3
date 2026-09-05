@@ -155,18 +155,18 @@ function renderWrcProfessionalScope(root, governing) {
   scope.dataset.role = 'emp1-c-eight-point-governing';
   const governingValue = governing.state === 'AVAILABLE'
     ? `${governing.location} · stress intensity ${engineeringNumber(governing.stressIntensity)}`
-    : `Unresolved · ${human(governing.reason)}`;
+    : `UNRESOLVED · ${human(governing.reason)}`;
   scope.append(
     element(root, 'strong', null, 'Professional WRC result scope'),
     keyValueTable(root, [
       ['Governing among eight evaluated WRC points', governingValue],
       ['Evaluated locations', governing.evaluatedLocations.join(', ')],
       ['Envelope basis', human(governing.basis)],
-      ['Continuous/global shell maximum', 'Not claimed'],
-      ['Stress result domain', 'Host cylindrical shell at the attachment–shell juncture'],
-      ['Nozzle / attachment-wall stress', 'Not calculated'],
-      ['Continuous juncture search', 'Not performed'],
-      ['Code compliance', 'Not established by this WRC result'],
+      ['Continuous/global shell maximum', 'NOT CLAIMED'],
+      ['Stress result domain', 'HOST CYLINDRICAL SHELL AT ATTACHMENT–SHELL JUNCTURE'],
+      ['Nozzle / attachment-wall stress', 'NOT CALCULATED'],
+      ['Continuous juncture search', 'NOT PERFORMED'],
+      ['Code compliance', 'NOT ESTABLISHED BY THIS WRC RESULT'],
     ]),
     element(root, 'p', null,
       'The governing value above is the maximum retained stress intensity among Au, Al, Bu, Bl, Cu, Cl, Du and Dl only. It is not a continuous or global shell maximum. Engineering judgment remains required outside these evaluated locations.'),
@@ -193,7 +193,7 @@ function renderStageA(root, stage) {
     ['eX — pipe/vessel axis', vectorText(frame.axesGlobal?.eX)],
     ['eY — circumferential axis', vectorText(frame.axesGlobal?.eY)],
     ['eZ — radial line, polarity not WRC authority', vectorText(frame.axesGlobal?.eZ)],
-    ['Handedness', human(frame.handedness)],
+    ['Handedness', frame.handedness],
     ['Orthogonality residual', frame.orthogonalityResidual],
   ]));
   result.body.append(sectionHeading(root, 'Transferred load cases'));

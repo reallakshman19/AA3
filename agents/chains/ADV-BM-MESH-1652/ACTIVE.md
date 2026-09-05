@@ -4,8 +4,8 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0011
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0011.md
+ACTIVE_ENDPOINT: EP-0012
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0012.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0010.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 LAST_COMPLETED_MATERIAL_LEG: LEG-005
@@ -25,7 +25,7 @@ REVIEWS: 0_AT_LAST_CHECK
 UNRESOLVED_REVIEW_THREADS: 0_AT_LAST_CHECK
 REQUIRED_CHECKS: NONE_OBSERVED_AT_LAST_CHECK
 
-ENGINEERING_STATE: TASK_001_FIFTH_REPAIR_EXECUTION_PENDING
+ENGINEERING_STATE: TASK_001_ACCEPTED_M2_READY_WAIT_OWNER_PROGRESSION
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
 WRITE_AUTHORITY: READ_ONLY
@@ -57,11 +57,11 @@ ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT_WITH_DISJOINT_POST_BASIS_MAIN_DRIFT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0011
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0012
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549970395
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549969638
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550705046
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0012_COMMENT_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: REPO_FILES_SYNCED_COMMENT_SYNC_PENDING
 
 QUALIFICATION_PROFILE: FEA
 QUALIFICATION_PROFILE_VERSION: 2
@@ -70,7 +70,7 @@ QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0004
 QUESTION_SET_FILE: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0004-questions.md
 QUESTION_SET_STATUS: CURRENT
 QUESTION_SET_ADMISSION_STATUS: NOT_EVALUATED_ORIGINATING_CUSTODIAN
-QUESTION_PACK_ACTION: REFRESHED_FAILURE_BOUNDARY
+QUESTION_PACK_ACTION: REUSED_ACCEPTANCE
 QUESTION_DISPLAY: HIDE
 PREWORK_QUALIFICATION_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
@@ -79,16 +79,16 @@ OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
 OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
 
-TASK_STATUS: TASK-001 IMPLEMENTED_EXECUTION_PENDING; TASK-002..TASK-006 OPEN_STAGED_BEHIND_TASK_001; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: Owner runner available; focused curved-shell qualifiers PASS; aggregate meshing determinism PASS; historical B02D-V1 T3/L1 quality BLOCK isolated inside producer-binding and LEG-005 replaces only that dependency with focused B02D-V2 binding qualifier; post-LEG-005 execution pending; M4 physics fixture authority unresolved
-BENCHMARK_STATUS: BM-001 PATCHED_NOT_RUN_FINAL_HEAD; BM-003 PASS_OWNER_PRE_LEG_005/FINAL_HEAD_NOT_RUN; BM-002/BM-004..BM-006 NOT_RUN
+TASK_STATUS: TASK-001 CLOSED_PASS; TASK-002 OPEN_READY_FOR_OWNER_PROGRESSION; TASK-003..TASK-006 OPEN_STAGED; TASK-007 SATISFIED_CURRENTLY
+INPUT_STATUS: Owner exact-head runner evidence PASS on `1ae18e0fa3def489487a131641de7379afbe5af0`; focused B02D-V2 binding PASS; full producer-binding PASS; aggregate `check:lafea-meshing` PASS through determinism and producer-binding; M4 physics fixture authority unresolved
+BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD; BM-003 PASS_OWNER_EXACT_HEAD; BM-002/BM-004..BM-006 NOT_RUN
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_OWNER_EXECUTION_FAILURE_ISOLATION_AND_NET_DIFF_INSPECTION / POST_LEG_005_EXECUTABLE_VALIDATION_NOT_RUN
+HANDOVER_VALIDATION_STATUS: PASS_TASK_001_OWNER_EXACT_HEAD_EXECUTION
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-CURRENT_BLOCKER: post-LEG-005 executable validation on the current PR branch.
-LEG_DIAGNOSIS: the declared meshing chain now clears all earlier qualifier boundaries and passes determinism. Producer-binding was blocked only by importing historical B02D-V1, whose T3 coarse quality BLOCK is explicitly documented by frozen B02D-V2. LEG-005 leaves historical B02D fail-closed and changes only the generic producer-binding check to invoke the focused current B02D-V2 binding qualifier.
-EXACT_NEXT_ACTION: run `node scripts/lafea-b02d-v2-producer-binding-check.mjs`, `node scripts/lafea-mesh-producer-binding-check.mjs`, then `npm run check:lafea-meshing`. PASS of all three closes TASK-001/BM-001; any failure must be isolated before M2/oracle material work.
+CURRENT_BLOCKER: none for TASK-001; TASK-002 awaits an owner progression command and fresh benchmark/oracle prework qualification.
+LEG_DIAGNOSIS: all five bounded repairs are now validated on the Owner runner. The declared meshing governance chain completes through final determinism and producer-binding without changing production thresholds or protected B02/solver/refinement authority.
+EXACT_NEXT_ACTION: wait for an owner progression command before opening M2 geometry/oracle prework. Do not merge without explicit owner merge authorization.

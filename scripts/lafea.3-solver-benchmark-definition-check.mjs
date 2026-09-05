@@ -19,6 +19,7 @@ const negatives = read('governance/negative-cases.json');
 const semantics = read('governance/fem-semantics.json');
 
 assert.equal(manifest.schema, 'lafea-b02-solver-benchmark-manifest/v1');
+assert.equal(manifest.state, 'STAGED_DEFINITION_COMPLETE_NOT_PROGRAM_READY');
 assert.deepEqual(manifest.stageOrder, ['S0', 'S1', 'S2', 'S3', 'S4', 'S5']);
 assert.equal(manifest.authority.productionOutputMayGenerateExpectedValues, false);
 assert.equal(manifest.authority.performanceIsInformational, true);
@@ -41,6 +42,27 @@ assert.equal(semantics.invariants.matchingCodeAtWrongBoundaryMayNotQualifyNegati
 assert.equal(semantics.failClosedNegatives.q8InversionMustPreserveCounterClockwiseCorners, true);
 assert.equal(semantics.failClosedNegatives.q8InversionMustReachElementFormulation, true);
 assert.equal(semantics.failClosedNegatives.productionValidationRulesMayNotBeRelaxedByBenchmark, true);
+assert.equal(semantics.determinism.crossProcessIsolationRequired, true);
+assert.equal(semantics.determinism.compareSemanticHashesNotWholeAuditRecordBytes, true);
+assert.deepEqual(
+  semantics.determinism.requiredComparableHashFields,
+  [
+    'canonicalModelSemanticHash',
+    'loadCaseInputSemanticHash',
+    'resultPayloadSemanticHash',
+    'executionEvidenceHash',
+    'qualificationEvidenceHash',
+  ],
+);
+assert.equal(semantics.determinism.benchmarkLayerMayNotSortObservedProductionEvidenceToManufactureEquality, true);
+assert.equal(semantics.determinism.stableHashesAreRepeatabilityEvidenceNotIndependentPhysicsOracle, true);
+assert.equal(semantics.performance.informationalOnly, true);
+assert.equal(semantics.performance.wallTimeThresholdMs, null);
+assert.equal(semantics.performance.peakResidentSetThresholdKiB, null);
+assert.equal(semantics.performance.dofScalingThreshold, null);
+assert.equal(semantics.performance.processPeakMemoryMetric, 'process.resourceUsage().maxRSS');
+assert.equal(semantics.performance.processPeakMemoryUnit, 'KiB');
+assert.equal(semantics.performance.performanceMayNotGrantReleaseQualification, true);
 
 for (const stage of manifest.stages) {
   assert.ok(manifest.stageOrder.includes(stage.benchmarkStage));
@@ -54,6 +76,7 @@ for (const stage of manifest.stages) {
     }
   }
 }
+assert.ok(manifest.stages.every((row) => row.definitionState === 'READY'), 'S0-S5 definitions must all be READY');
 
 const allExpectedCaseIds = [
   ...expected.cases.map((row) => row.caseId),
@@ -128,6 +151,17 @@ assert.equal(
   s4.methods[0].oracleAuthority,
   'FROZEN_STRUCTURED_FIRST_FAILURE_BOUNDARY_STATE_AND_CODE_CONTRACT',
 );
+const s5 = manifest.stages.find((row) => row.benchmarkStage === 'S5');
+assert.equal(s5.definitionState, 'READY');
+assert.equal(s5.gateMode, 'QUALIFICATION_PLUS_INFORMATIONAL_PERFORMANCE');
+assert.equal(s5.methods.length, 1);
+assert.equal(s5.methods[0].methodId, 'CROSS-PROCESS-DETERMINISM-AND-COST');
+assert.equal(s5.methods[0].authorityClass, 'SEMANTIC_HASH_REPEATABILITY_PLUS_INFORMATIONAL_COST');
+assert.equal(s5.methods[0].expectedEvidenceSchema, 'lafea3-bm-s-s5-determinism-cost-evidence/v1');
+assert.equal(
+  s5.methods[0].oracleAuthority,
+  'CROSS_PROCESS_PRODUCTION_SEMANTIC_HASH_EQUALITY_WITH_INDEPENDENT_TOPOLOGY_DOF_COUNTS_AND_INFORMATIONAL_PROCESS_COST',
+);
 
 for (const probe of probes.probes) {
   assert.equal('nodeId' in probe, false, `${probe.probeId} may not use node identity`);
@@ -139,6 +173,13 @@ assert.ok(ladders.ladders.every((row) => row.primaryConvergenceQuantity === 'FIX
 assert.equal(
   ladders.qualificationRule,
   'MOVING_PEAKS_AND_MESH_WIDE_MAXIMA_MAY_BE_RETAINED_AS_DIAGNOSTICS_BUT_NOT_USED_AS_RICHARDSON_GCI_QUANTITIES',
+);
+const cylinderLadder = ladders.ladders.find((row) => row.caseId === 'CONT-CYL-01');
+assert.ok(cylinderLadder, 'CONT-CYL-01 ladder required for S5 cost evidence');
+assert.deepEqual(
+  cylinderLadder.levels.map((row) => q8StructuredDofCount(row.radialElements, row.circumferentialElements)),
+  [74, 242, 866],
+  'independent Q8 ladder DOF counts drifted',
 );
 
 assert.equal(negatives.schema, 'lafea-b02-negative-cases/v1');
@@ -195,6 +236,7 @@ for (const source of sources.sources) {
   assert.equal(git('hash-object', source.path).trim(), source.blobSha, `source custody drift: ${source.path}`);
 }
 assert.ok(sources.sources.some((row) => row.path === 'src/core/local-continuum/errors.js'));
+assert.ok(sources.sources.some((row) => row.path === 'src/core/shared-primitives/canonical-json.js'));
 
 const oracleCheck = spawnSync(
   'python3',
@@ -208,7 +250,7 @@ assert.equal(oraclePayload.expectedValuesCheck, 'PASS');
 assert.equal(Object.keys(oraclePayload['S2-load-paths']).length, 5);
 assert.equal(Object.keys(oraclePayload['S3-solver-numerics']).length, 4);
 
-console.log('LAFEA.3 BM-S B02 definition, source custody, S1-S3 oracle contracts and S4 retained fail-closed definition passed.');
+console.log('LAFEA.3 BM-S B02 definition, source custody, S1-S4 contracts and S5 deterministic/informational-cost definition passed.');
 
 function read(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(B02, relativePath), 'utf8'));
@@ -223,6 +265,10 @@ function requireCitation(caseId, citation) {
     Array.isArray(citation.equationIdentifiers) && citation.equationIdentifiers.length > 0,
     `${caseId} equation identifiers missing`,
   );
+}
+
+function q8StructuredDofCount(nr, nt) {
+  return 2 * (3 * nr * nt + 2 * nr + 2 * nt + 1);
 }
 
 function git(...args) {

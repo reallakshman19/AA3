@@ -4,7 +4,10 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1653
 CHAIN_ID: LAFEA3-BM-S-1653
 UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549976846
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
 
@@ -66,4 +69,4 @@ MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 VALIDATION_STATUS: NOT_RUN
 CURRENT_BLOCKER: No faithful executable checkout/runner is available through this connected GitHub surface; do not convert source inspection into PASS.
-EXACT_NEXT_ACTION: Commit the pre-work endpoint/Active state, synchronize the Issue control plane, then implement the B02 frozen data package plus staged audit runner and S1 retained-evidence conversion as the first material leg.
+EXACT_NEXT_ACTION: Implement LEG-001 B02 frozen data package plus staged audit runner and S1 retained-evidence conversion; preserve validation as NOT_RUN until actual execution.

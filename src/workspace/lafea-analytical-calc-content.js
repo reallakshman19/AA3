@@ -15,6 +15,7 @@ import {
   renderEmp1WorkbenchRunConfiguration,
 } from './emp1-workbench-run-view.js';
 import { createEmp1BSourceCustodyCard } from './lafea-guided-workflow-view.js';
+import { projectEmp1BenchmarkEvidenceWorkspace } from './emp1-benchmark-evidence-workspace.js';
 import { renderEmp1ProfessionalWorkflow } from './emp1-professional-workflow-view.js';
 import { lafeaDocumentDigest } from './lafea-edit-command.js';
 import {
@@ -67,10 +68,12 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   shell.dataset.routeFamily = 'ANALYTICAL';
 
   const engineeringReview = options.handlers.getEmp1EngineeringReviewWorkspace?.() ?? null;
+  const benchmarkEvidence = projectEmp1BenchmarkEvidenceWorkspace();
   shell.append(renderEmp1ProfessionalWorkflow(root, projection, options.onSelectRoute, {
     runFailure: options.emp1RunFailure,
     reviewWorkspace: engineeringReview,
     onReview: options.handlers.onEmp1EngineeringReview,
+    benchmarkEvidence,
   }));
 
   const route = card(root, 'Active EMP.1 step');

@@ -1,0 +1,43 @@
+{
+  "schema": "lafea-mesh-source-registry/v1",
+  "benchmarkId": "BM-MESH",
+  "stage": "M2",
+  "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
+  "baselineTree": "5059890f372e7d885c7e3743bf806826444a6c8e",
+  "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
+  "sources": [
+    {"sourceId":"S-001","role":"producerRegistry","path":"src/workspace/lafea-mesh-producer-registry.js","blobSha":"b5fccf89dfb99fd09c4faeb6ef1d7db9e08101a6"},
+    {"sourceId":"S-002","role":"lafea3ProducerBinding","path":"src/workspace/lafea-mesh-producer-binding.js","blobSha":"e8307066293314ad952608872db596cf1898d5c1"},
+    {"sourceId":"S-003","role":"coreProducerEngineAndCurvatureDiscretization","path":"src/workspace/lafea-mesh-producer-engine.js","blobSha":"36fe0e7cb8b95aab8ebc2532578a68a1eb75f558"},
+    {"sourceId":"S-004","role":"lafea4ShellProducer","path":"src/workspace/lafea-shell-mesh-producer.js","blobSha":"6bb02be40673ce79bb3488905c4ee465ad6625df"},
+    {"sourceId":"S-005","role":"geometryTopologyAdapter","path":"src/workspace/lafea-mesh-geometry-topology-adapter.js","blobSha":"0dea937de150ca5a54cc7750c907fd3fafd7761c"},
+    {"sourceId":"S-006","role":"canonicalAnalysisMeshContract","path":"src/workspace/lafea-analysis-mesh-contract.js","blobSha":"c5b9b246321456d3514de4b9294de831b4a82c0e"},
+    {"sourceId":"S-007","role":"meshQualityGateFunctions","path":"src/core/lafea-meshing/quality-gates.js","blobSha":"da21c333a5bc22e59c4b52c2c1ff135ee7460ebb"},
+    {"sourceId":"S-008","role":"boundarySegmentPolicyQualification","path":"scripts/lafea.10-quality-gate-check.mjs","blobSha":"97fa853ba347a65e2ad451ff9bc16488f9d4b146"},
+    {"sourceId":"S-009","role":"stageAnalysisAdapter","path":"src/workspace/lafea-stage-analysis-adapter.js","blobSha":"899afb248fc9864bdbea44f34a4a675d3574e5fa"},
+    {"sourceId":"S-010","role":"artifactLayoutPrecedent","path":"validation/lafea-benchmark-data/B01/sources/source-registry.json","blobSha":"21d86d5884e42adb462c402ca94b1289c27884f3"}
+  ],
+  "trace": {
+    "LAFEA.3": {
+      "stageAdapter": "S-009",
+      "producerBinding": "S-002",
+      "topologyAdapter": "S-005",
+      "producerEngine": "S-003",
+      "canonicalMeshContract": "S-006"
+    },
+    "LAFEA.4": {
+      "producer": "S-004",
+      "topologyAdapter": "S-005",
+      "producerEngine": "S-003",
+      "canonicalMeshContract": "S-006"
+    }
+  },
+  "authority": {
+    "issue1652ExecutionAuthority": true,
+    "supportingDesignProposalMayInformLayoutButIsNotExecutionAuthority": true,
+    "productionOutputUsedToDefineExpectedValues": false,
+    "benchmarkOnlyMeshGeneratorUsed": false,
+    "productionSourceMutationAuthorized": false
+  },
+  "invalidationPolicy": "REFREEZE_IF_ANY_REFERENCED_BLOB_SHA_OR_OWNER_M2_REQUIREMENT_CHANGES"
+}

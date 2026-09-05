@@ -58,7 +58,7 @@ export function projectLafeaWorkbenchCurrentness(stage) {
     solverConfigHash,
   });
   const exactCurrentChain = reasons.length === 0;
-  const rejected = isRejected(execution, transactionReceipt, stage);
+  const rejected = isRejected(execution, transactionReceipt);
   const hasResultHistory = hasRetainedResultHistory(
     executionRecord,
     recovery,
@@ -239,11 +239,9 @@ function hasRetainedResultHistory(executionRecord, recovery, execution, receipt)
     || receipt?.status === 'COMPLETED';
 }
 
-function isRejected(execution, receipt, stage) {
-  if (execution?.status === 'FAILED') return true;
-  if (receipt?.status === 'SUPERSEDED' && receipt?.reasonCode) return true;
-  return stage?.status === 'FAILED'
-    && Boolean(stage?.diagnostics?.some((row) => row?.severity === 'ERROR'));
+function isRejected(execution, receipt) {
+  return execution?.status === 'FAILED'
+    || (receipt?.status === 'SUPERSEDED' && Boolean(receipt?.reasonCode));
 }
 
 function running(activeTransaction, execution) {

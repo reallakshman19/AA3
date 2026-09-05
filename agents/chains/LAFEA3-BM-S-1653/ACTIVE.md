@@ -5,21 +5,21 @@ COMMON_PROTOCOL_STATUS: CURRENT
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: LAFEA3-BM-S-1653
 MISSION: Implement issue #1653 BM-S staged LAFEA.3 solver benchmark S0-S5 and activate program case B02 with retained auditable evidence.
-ACTIVE_ENDPOINT: EP-0000
-ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0000.md
+ACTIVE_ENDPOINT: EP-0001
+ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0001.md
 AGENT_INSTANCE_ID: chatgpt:8f0e3f7a-1f0c-4d5c-9b53-9ea8a24bb8d1
 ACTIVE_CUSTODIAN: ChatGPT
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1653
 WORK_ITEM_MODE: EXCLUSIVE
 AUTHORITY_DOMAIN: LAFEA3_SOLVER_BENCHMARK_EVIDENCE
-CUSTODY_EPOCH: 1
+CUSTODY_EPOCH: 2
 COORDINATION_STATE: SAFE_DISJOINT_WITH_RELATED_ISSUES_READ_ONLY
 DEPENDENCIES: github:reallaksh19/Advanced_Analysis#1569 rigor; #1535 production-route boundary; #1652 BM-MESH companion; #1646 related B02 evidence
 QUALIFICATION_SCOPE_ID: QSCOPE-1653-BM-S-SOLVER-BENCHMARK
-QUESTION_SET_ID: QS-1653-BM-S-0001
+QUESTION_SET_ID: QS-1653-BM-S-0002
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED_INITIAL_ASSIGNMENT
+QUESTION_PACK_ACTION: REFRESHED_FOR_NEXT_UNRESOLVED_LEG
 QUESTION_DISPLAY: HIDE
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
@@ -39,12 +39,16 @@ PR: NONE
 PR_STATUS: NOT_OPENED
 BRANCH: chatgpt/issue-1653-bm-s-staged-benchmark
 MAIN_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: 116b56b0c5e87d80a05463811719747e22088ade
+HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: 7becfa36c7cda55d64a44bc77493a30cb66a8dde
 POST_BASIS_DRIFT: NONE
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MATERIAL_LEG_ID: LEG-001
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0000.md
-MATERIAL_LEG_STATUS: PREWORK_READY_MATERIAL_NOT_STARTED
+MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-001.md
+MATERIAL_HEAD: f2b6c9f9ddc4748c6fa647604631504795916c0f
+MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_EXECUTED
+NEXT_MATERIAL_LEG_ID: LEG-002
+NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0001.md
 ROADMAPS: docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; github:reallaksh19/Advanced_Analysis#1569
 ROADMAP_REVIEW_STATUS: COMPLETE
 ROADMAP_ALIGNMENT: ALIGNED
@@ -55,24 +59,26 @@ ISSUE_BASIS_FILE: agents/chains/LAFEA3-BM-S-1653/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/LAFEA3-BM-S-1653/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0000
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549976846
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0001_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_ENDPOINT_COMMENT
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: NONE
+HANDOVER_VALIDATION_EVIDENCE: faithful checkout blocked by DNS before execution
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 # Active handover — BM-S #1653
 
-Pre-work custody and GitHub Issue projection are synchronized before any benchmark/material mutation. The implementation branch is based directly on `main@b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`; PR #1654 is design-reference-only and is neither merged nor stacked. Related #1646 TASK-001 is a separate completed authority domain; the user's current TASK-002 work has no PR and is not modified here.
+LEG-001 is durably receipted at material head `f2b6c9f9ddc4748c6fa647604631504795916c0f`. It establishes B02 benchmark/oracle/source custody, S0/S1 staged audit orchestration, exact S4 declarations and retained S1 Lamé/Kirsch evidence without changing any production `src/**` numerical authority.
 
-LEG-001 is restricted to benchmark/evidence infrastructure: B02 frozen data package, staged audit runner, and S1 cited-oracle/retained-evidence conversion. Protected production solver/formulation/assembly/recovery/tolerances, production mesh authority, Owner roadmaps, workflows, and release/temperature authority remain unchanged.
+Executable validation remains `NOT_RUN`; a faithful checkout attempt failed before execution on DNS (`Could not resolve host: github.com`). Source-diff inspection and independent analytical reconstruction are PASS only in their stated scopes.
+
+EP-0001 is the write-ahead pre-work endpoint for the next bounded material leg. S2-S5 remain PLANNED and B02 remains inactive in the program future queue. PR #1654 remains a Draft design reference only and is not a dependency or merge candidate for this chain.
 
 ## Exact next action
 
-Begin LEG-001. Executable checks remain NOT_RUN until actually executed in a faithful runtime.
+Synchronize EP-0001 to the issue, open a Draft PR for exact-head review/CI attachment, then await or execute the next bounded S2 material leg under EP-0001. Do not activate B02 or merge without Owner authority.

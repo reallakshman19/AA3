@@ -69,6 +69,7 @@ export function renderEmp1ProfessionalWorkflow(
     if (step.stepId === options.activeTaskStep) button.setAttribute('aria-current', 'step');
     button.addEventListener('click', () => {
       setActiveWorkflowStep(stepButtons, button);
+      notifyTaskShell(root, step.stepId);
       options.onSelectTask?.(step.stepId);
       navigateProfessionalStep(root, step, onSelectRoute);
     });
@@ -261,12 +262,11 @@ function navigateProfessionalStep(root, step, onSelectRoute) {
     scheduleTargetScroll(root, step.targetRole);
     return;
   }
-  if (step.stepId === 'REVIEW_EVIDENCE'
-    && scrollToRole(root, 'emp1-engineering-review-panel')) return;
   if (scrollToRole(root, step.targetRole)) return;
   if (step.stepId === 'REVIEW_EVIDENCE') {
     if (scrollToRole(root, 'emp1-benchmark-evidence-panel')) return;
     if (scrollToRole(root, 'emp1-c-result-evidence')) return;
+    if (scrollToRole(root, 'emp1-engineering-review-panel')) return;
     root.querySelector?.('[data-guided-target="lineage"]')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
 }
@@ -294,6 +294,15 @@ function scrollToRole(root, role) {
     target.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
   return Boolean(target);
+}
+
+function notifyTaskShell(root, stepId) {
+  const shell = root.querySelector?.('[data-role="lafea-analytical-calc"]');
+  const CustomEventType = root.ownerDocument?.defaultView?.CustomEvent ?? globalThis.CustomEvent;
+  if (!shell || typeof shell.dispatchEvent !== 'function' || typeof CustomEventType !== 'function') return;
+  shell.dispatchEvent(new CustomEventType('emp1-task-shell-select', {
+    detail: { stepId },
+  }));
 }
 
 function setActiveWorkflowStep(buttons, activeButton) {

@@ -1,0 +1,712 @@
+{
+  "schema": "lafea3-bm-s-s3-solver-numerics-evidence/v1",
+  "benchmarkStage": "S3",
+  "authority": {
+    "class": "INDEPENDENT_LINEAR_ELASTICITY_EQUILIBRIUM_ENERGY_AND_METAMORPHIC_INVARIANTS",
+    "productionOutputUsedToDefineExpectedValues": false,
+    "productionOutputMayModifyAcceptance": false,
+    "conditioningMetricsAreDiagnosticOnly": true
+  },
+  "acceptance": {
+    "policyOrigin": "RESIDUAL_REACTION_ENERGY_USE_CURRENT_PRODUCTION_TOLERANCES; LINEAR_RELATIONS_MOVE_PRE_EXISTING_LAFEA3_SOLVER_CHECK_CLOSE_WITHOUT_RELAXATION; SCALING_LIMITS_MOVE_PRE_EXISTING_LAFEA11_SCALING_REVERSIBILITY_CHECK_WITHOUT_RELAXATION",
+    "linearRelationRelativeTolerance": 1e-8,
+    "linearRelationScaleFloor": 1,
+    "scalingReversibilityRelativeTolerance": 1e-10,
+    "scaledDiagonalAbsoluteTolerance": 1e-9,
+    "freeDofResidualToleranceOwner": "loadCase.equilibrium.freeDofTolerance",
+    "reactionEquilibriumToleranceOwner": "loadCase.equilibrium.reactionEquilibriumTolerance",
+    "energyReconstructionToleranceOwner": "loadCase.energyQualification.tolerance",
+    "conditioningPassThreshold": null
+  },
+  "caseResults": [
+    {
+      "caseId": "SOLVER-EQUILIBRIUM-ENERGY-01",
+      "kind": "INDEPENDENT_STATIC_AND_CLAPEYRON_IDENTITIES",
+      "status": "PASS",
+      "observation": {
+        "appliedResultantN": {
+          "x": 5000,
+          "y": 0
+        },
+        "reactionResultantN": {
+          "x": -5000.000000000001,
+          "y": -2.5309893210613955e-14
+        },
+        "reactionPlusAppliedN": {
+          "x": -9.094947017729282e-13,
+          "y": -2.5309893210613955e-14
+        },
+        "maximumFreeResidual": 5.684341886080802e-14,
+        "freeDofTolerance": 2.600000000000001e-7,
+        "reactionEquilibriumTolerance": 2.600000000000001e-7,
+        "externalWorkNmm": 25,
+        "totalStrainEnergyNmm": 12.5,
+        "externalWorkOverTwoStrainEnergy": 1,
+        "energyReconstructionResidual": 0,
+        "energyReconstructionTolerance": 1.125e-8,
+        "conditioning": {
+          "method": "DETERMINISTIC_CHOLESKY",
+          "pivotCount": 5,
+          "pivotScale": 2390109.8901098906,
+          "pivotTolerance": 0.0000023901108901098904,
+          "minimumPivot": 214649.06853646867,
+          "maximumPivot": 2390109.8901098906,
+          "pivotRatio": 0.0898071964911202,
+          "iterativeRefinement": {
+            "method": "DETERMINISTIC_CHOLESKY_ITERATIVE_REFINEMENT",
+            "maximumSteps": 3,
+            "stepsPerformed": 2,
+            "initialResidualInfinity": 6.011060478519668e-13,
+            "finalResidualInfinity": 5.684341886080802e-14,
+            "residualHistory": [
+              6.011060478519668e-13,
+              5.115907697472721e-13,
+              5.684341886080802e-14
+            ],
+            "accepted": true
+          }
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:e2cc037bb2d97b6d",
+          "loadCaseInputSemanticHash": "fnv1a64:3212ba143c37f1fd",
+          "resultPayloadSemanticHash": "fnv1a64:4ba3f712f0ce20fc",
+          "executionEvidenceHash": "fnv1a64:99cf87a68298d01d",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        }
+      },
+      "checks": [
+        {
+          "label": "appliedResultant.x",
+          "actual": 5000,
+          "expected": 5000,
+          "absoluteError": 0,
+          "limit": 0.00005,
+          "accepted": true
+        },
+        {
+          "label": "appliedResultant.y",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "reactionResultant.x",
+          "actual": -5000.000000000001,
+          "expected": -5000,
+          "absoluteError": 9.094947017729282e-13,
+          "limit": 0.00005,
+          "accepted": true
+        },
+        {
+          "label": "reactionResultant.y",
+          "actual": -2.5309893210613955e-14,
+          "expected": 0,
+          "absoluteError": 2.5309893210613955e-14,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "freeDofResidual",
+          "actual": 5.684341886080802e-14,
+          "expected": 0,
+          "absoluteError": 5.684341886080802e-14,
+          "limit": 2.600000000000001e-7,
+          "accepted": true
+        },
+        {
+          "label": "reactionEquilibrium.x",
+          "actual": 9.094947017729282e-13,
+          "expected": 0,
+          "absoluteError": 9.094947017729282e-13,
+          "limit": 2.600000000000001e-7,
+          "accepted": true
+        },
+        {
+          "label": "reactionEquilibrium.y",
+          "actual": 2.5309893210613955e-14,
+          "expected": 0,
+          "absoluteError": 2.5309893210613955e-14,
+          "limit": 2.600000000000001e-7,
+          "accepted": true
+        },
+        {
+          "label": "energyReconstruction",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1.125e-8,
+          "accepted": true
+        },
+        {
+          "label": "strainEnergy",
+          "actual": 12.5,
+          "expected": 12.5,
+          "absoluteError": 0,
+          "limit": 1.25e-7,
+          "accepted": true
+        },
+        {
+          "label": "externalWork",
+          "actual": 25,
+          "expected": 25,
+          "absoluteError": 0,
+          "limit": 2.5e-7,
+          "accepted": true
+        },
+        {
+          "label": "clapeyron",
+          "actual": 25,
+          "expected": 25,
+          "absoluteError": 0,
+          "limit": 2.5e-7,
+          "accepted": true
+        },
+        {
+          "label": "B.ux",
+          "actual": 0.005,
+          "expected": 0.005,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "C.ux",
+          "actual": 0.005,
+          "expected": 0.005,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "conditioning.minimumPivot",
+          "actual": 214649.06853646867,
+          "expected": ">0.0000023901108901098904",
+          "absoluteError": null,
+          "limit": null,
+          "accepted": true
+        }
+      ],
+      "maximumAbsoluteError": 9.094947017729282e-13,
+      "failedCheckCount": 0
+    },
+    {
+      "caseId": "SOLVER-LINEAR-SCALING-01",
+      "kind": "LINEAR_LOAD_SCALING",
+      "status": "PASS",
+      "observation": {
+        "responseFactor": -0.5,
+        "strainEnergyFactor": 0.25,
+        "baseStrainEnergyNmm": 0.49999999999999983,
+        "scaledStrainEnergyNmm": 0.12499999999999996,
+        "baseConditioning": {
+          "method": "DETERMINISTIC_CHOLESKY",
+          "pivotCount": 3,
+          "pivotScale": 1098901.098901099,
+          "pivotTolerance": 0.000001098902098901099,
+          "minimumPivot": 384615.3846153847,
+          "maximumPivot": 1098901.098901099,
+          "pivotRatio": 0.35000000000000003,
+          "iterativeRefinement": {
+            "method": "DETERMINISTIC_CHOLESKY_ITERATIVE_REFINEMENT",
+            "maximumSteps": 3,
+            "stepsPerformed": 0,
+            "initialResidualInfinity": 1.1368683772161603e-13,
+            "finalResidualInfinity": 1.1368683772161603e-13,
+            "residualHistory": [
+              1.1368683772161603e-13
+            ],
+            "accepted": true
+          }
+        },
+        "scaledConditioning": {
+          "method": "DETERMINISTIC_CHOLESKY",
+          "pivotCount": 3,
+          "pivotScale": 1098901.098901099,
+          "pivotTolerance": 0.000001098902098901099,
+          "minimumPivot": 384615.3846153847,
+          "maximumPivot": 1098901.098901099,
+          "pivotRatio": 0.35000000000000003,
+          "iterativeRefinement": {
+            "method": "DETERMINISTIC_CHOLESKY_ITERATIVE_REFINEMENT",
+            "maximumSteps": 3,
+            "stepsPerformed": 0,
+            "initialResidualInfinity": 5.684341886080802e-14,
+            "finalResidualInfinity": 5.684341886080802e-14,
+            "residualHistory": [
+              5.684341886080802e-14
+            ],
+            "accepted": true
+          }
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:7477e687dac965ef",
+          "loadCaseInputSemanticHash": "fnv1a64:8d19ceadfb35fe96",
+          "resultPayloadSemanticHash": "fnv1a64:31190d1db8b66026",
+          "executionEvidenceHash": "fnv1a64:29004aaebf74bbfc",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        }
+      },
+      "checks": [
+        {
+          "label": "force[0]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "force[1]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "force[2]",
+          "actual": -500,
+          "expected": -500,
+          "absoluteError": 0,
+          "limit": 0.000005,
+          "accepted": true
+        },
+        {
+          "label": "force[3]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "force[4]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "force[5]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "A.ux",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "A.uy",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "B.ux",
+          "actual": -0.0004999999999999999,
+          "expected": -0.0004999999999999999,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "B.uy",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "C.ux",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "C.uy",
+          "actual": 0.00015,
+          "expected": 0.00015,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "E1.sigmaX",
+          "actual": -0.9999999999999997,
+          "expected": -0.9999999999999997,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "E1.sigmaY",
+          "actual": 5.551115123125783e-17,
+          "expected": 5.551115123125783e-17,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "E1.sigmaZ",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "E1.tauXY",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "reaction.A:UX",
+          "actual": 499.99999999999994,
+          "expected": 499.99999999999994,
+          "absoluteError": 0,
+          "limit": 0.0000049999999999999996,
+          "accepted": true
+        },
+        {
+          "label": "reaction.A:UY",
+          "actual": -2.842170943040401e-14,
+          "expected": -2.842170943040401e-14,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "reaction.B:UY",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "strainEnergy",
+          "actual": 0.12499999999999996,
+          "expected": 0.12499999999999996,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        }
+      ],
+      "maximumAbsoluteError": 0,
+      "failedCheckCount": 0
+    },
+    {
+      "caseId": "SOLVER-SUPERPOSITION-01",
+      "kind": "INDEPENDENT_LOAD_SUPERPOSITION",
+      "status": "PASS",
+      "observation": {
+        "loadA": {
+          "nodeId": "B",
+          "fxN": 1000,
+          "fyN": 0
+        },
+        "loadB": {
+          "nodeId": "C",
+          "fxN": 0,
+          "fyN": -750
+        },
+        "maximumFreeResiduals": {
+          "A": 1.1368683772161603e-13,
+          "B": 0,
+          "A_PLUS_B": 3.410605131648481e-13
+        },
+        "conditioning": {
+          "A": {
+            "method": "DETERMINISTIC_CHOLESKY",
+            "pivotCount": 3,
+            "pivotScale": 1098901.098901099,
+            "pivotTolerance": 0.000001098902098901099,
+            "minimumPivot": 384615.3846153847,
+            "maximumPivot": 1098901.098901099,
+            "pivotRatio": 0.35000000000000003,
+            "iterativeRefinement": {
+              "method": "DETERMINISTIC_CHOLESKY_ITERATIVE_REFINEMENT",
+              "maximumSteps": 3,
+              "stepsPerformed": 0,
+              "initialResidualInfinity": 1.1368683772161603e-13,
+              "finalResidualInfinity": 1.1368683772161603e-13,
+              "residualHistory": [
+                1.1368683772161603e-13
+              ],
+              "accepted": true
+            }
+          },
+          "B": {
+            "method": "DETERMINISTIC_CHOLESKY",
+            "pivotCount": 3,
+            "pivotScale": 1098901.098901099,
+            "pivotTolerance": 0.000001098902098901099,
+            "minimumPivot": 384615.3846153847,
+            "maximumPivot": 1098901.098901099,
+            "pivotRatio": 0.35000000000000003,
+            "iterativeRefinement": {
+              "method": "DETERMINISTIC_CHOLESKY_ITERATIVE_REFINEMENT",
+              "maximumSteps": 3,
+              "stepsPerformed": 0,
+              "initialResidualInfinity": 0,
+              "finalResidualInfinity": 0,
+              "residualHistory": [
+                0
+              ],
+              "accepted": true
+            }
+          },
+          "A_PLUS_B": {
+            "method": "DETERMINISTIC_CHOLESKY",
+            "pivotCount": 3,
+            "pivotScale": 1098901.098901099,
+            "pivotTolerance": 0.000001098902098901099,
+            "minimumPivot": 384615.3846153847,
+            "maximumPivot": 1098901.098901099,
+            "pivotRatio": 0.35000000000000003,
+            "iterativeRefinement": {
+              "method": "DETERMINISTIC_CHOLESKY_ITERATIVE_REFINEMENT",
+              "maximumSteps": 3,
+              "stepsPerformed": 0,
+              "initialResidualInfinity": 3.410605131648481e-13,
+              "finalResidualInfinity": 3.410605131648481e-13,
+              "residualHistory": [
+                3.410605131648481e-13
+              ],
+              "accepted": true
+            }
+          }
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:a0669d746e6a2280",
+          "loadCaseInputSemanticHash": "fnv1a64:61cb411a4d5d96f6",
+          "resultPayloadSemanticHash": "fnv1a64:931a2a2a98256330",
+          "executionEvidenceHash": "fnv1a64:0390f64045a9abff",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        }
+      },
+      "checks": [
+        {
+          "label": "force[0]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "force[1]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "force[2]",
+          "actual": 1000,
+          "expected": 1000,
+          "absoluteError": 0,
+          "limit": 0.00001,
+          "accepted": true
+        },
+        {
+          "label": "force[3]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "force[4]",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "force[5]",
+          "actual": -750,
+          "expected": -750,
+          "absoluteError": 0,
+          "limit": 0.0000075,
+          "accepted": true
+        },
+        {
+          "label": "A.ux",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "A.uy",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "B.ux",
+          "actual": 0.001225,
+          "expected": 0.0012249999999999997,
+          "absoluteError": 2.168404344971009e-19,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "B.uy",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "C.ux",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "C.uy",
+          "actual": -0.0010499999999999997,
+          "expected": -0.0010499999999999997,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "E1.sigmaX",
+          "actual": 2,
+          "expected": 1.9999999999999993,
+          "absoluteError": 6.661338147750939e-16,
+          "limit": 1.9999999999999994e-8,
+          "accepted": true
+        },
+        {
+          "label": "E1.sigmaY",
+          "actual": -1.4999999999999993,
+          "expected": -1.5,
+          "absoluteError": 6.661338147750939e-16,
+          "limit": 1.5000000000000002e-8,
+          "accepted": true
+        },
+        {
+          "label": "E1.sigmaZ",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "E1.tauXY",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        },
+        {
+          "label": "reaction.A:UX",
+          "actual": -1000.0000000000003,
+          "expected": -999.9999999999999,
+          "absoluteError": 4.547473508864641e-13,
+          "limit": 0.000009999999999999999,
+          "accepted": true
+        },
+        {
+          "label": "reaction.A:UY",
+          "actual": 750,
+          "expected": 750,
+          "absoluteError": 0,
+          "limit": 0.0000075,
+          "accepted": true
+        },
+        {
+          "label": "reaction.B:UY",
+          "actual": 0,
+          "expected": 0,
+          "absoluteError": 0,
+          "limit": 1e-8,
+          "accepted": true
+        }
+      ],
+      "maximumAbsoluteError": 4.547473508864641e-13,
+      "failedCheckCount": 0
+    },
+    {
+      "caseId": "SOLVER-DIAGONAL-SCALING-01",
+      "kind": "METAMORPHIC_SCALING_REVERSIBILITY",
+      "status": "PASS",
+      "observation": {
+        "unscaledSolution": [
+          0.0009371309471614526,
+          -9.335389109197486,
+          153.34748312821657,
+          0.32039818791478847
+        ],
+        "recoveredSolution": [
+          0.0009371309471614527,
+          -9.335389109197484,
+          153.3474831282165,
+          0.32039818791478847
+        ],
+        "scaleFactors": [
+          0.003162277660168379,
+          0.35355339059327373,
+          4.47213595499958,
+          0.2886751345948129
+        ],
+        "maximumRelativeSolutionDifference": 3.7068374192539057e-16,
+        "maximumScaledDiagonalAbsoluteError": 2.220446049250313e-16
+      },
+      "checks": [
+        {
+          "label": "solutionReversibility",
+          "actual": 3.7068374192539057e-16,
+          "expected": 0,
+          "absoluteError": 3.7068374192539057e-16,
+          "limit": 1e-10,
+          "accepted": true
+        },
+        {
+          "label": "unitDiagonal",
+          "actual": 2.220446049250313e-16,
+          "expected": 0,
+          "absoluteError": 2.220446049250313e-16,
+          "limit": 1e-9,
+          "accepted": true
+        }
+      ],
+      "maximumAbsoluteError": 3.7068374192539057e-16,
+      "failedCheckCount": 0
+    }
+  ],
+  "stageStatus": "PASS"
+}

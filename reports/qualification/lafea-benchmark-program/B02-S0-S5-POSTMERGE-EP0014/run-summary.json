@@ -1,0 +1,60 @@
+{
+  "schema": "lafea3-bm-s-program-run/v1",
+  "runId": "B02-S0-S5-POSTMERGE-EP0014",
+  "caseId": "B02",
+  "exactHeadSha": "5b1eba060a51cf03ac22f1908f9a07d9098bea46",
+  "selectedStages": [
+    "S0",
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5"
+  ],
+  "nextBenchmarkAuthorized": true,
+  "releaseAuthorityGranted": false,
+  "stageSummaries": [
+    {
+      "benchmarkStage": "S0",
+      "status": "PASS",
+      "stageAuthorized": true,
+      "recordHash": "sha256:283b0921953d0704c3d341d94cde20f3c3fb106645ad3b341786ca9e60160418",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S0\\audit-record.json"
+    },
+    {
+      "benchmarkStage": "S1",
+      "status": "PASS",
+      "stageAuthorized": true,
+      "recordHash": "sha256:1cad92e32b55b1e3b4363406eacdf0aead78c8f81ffc7b82678cf1794cb77da2",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S1\\audit-record.json"
+    },
+    {
+      "benchmarkStage": "S2",
+      "status": "PASS",
+      "stageAuthorized": true,
+      "recordHash": "sha256:c82f3572e08800e5f031f7bb43ba7823891588c4db7f505423cb0302a28ab706",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S2\\audit-record.json"
+    },
+    {
+      "benchmarkStage": "S3",
+      "status": "PASS",
+      "stageAuthorized": true,
+      "recordHash": "sha256:6a85a145f13fbcc5bacfed3707a81aa043281847e2417f9649af9e60cb5bd399",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S3\\audit-record.json"
+    },
+    {
+      "benchmarkStage": "S4",
+      "status": "PASS",
+      "stageAuthorized": true,
+      "recordHash": "sha256:7ebba029b12dd722ed8fd2b3145b744258752a9211b6c9d30393f2477701292d",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S4\\audit-record.json"
+    },
+    {
+      "benchmarkStage": "S5",
+      "status": "PASS",
+      "stageAuthorized": true,
+      "recordHash": "sha256:a94aee5b7da7b143c29fc8d0b3e18bea5214a83fcae8ef49ac8794ebab7708e4",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S5\\audit-record.json"
+    }
+  ]
+}

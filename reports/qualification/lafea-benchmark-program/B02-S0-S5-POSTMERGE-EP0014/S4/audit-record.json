@@ -1,0 +1,79 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
+  "runId": "B02-S0-S5-POSTMERGE-EP0014-S4",
+  "generatedAt": "2026-09-05T12:23:56.505Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "5b1eba060a51cf03ac22f1908f9a07d9098bea46",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "B02",
+  "stageId": "LAFEA.3",
+  "benchmarkStage": "S4",
+  "benchmarkClass": "STAGED_SOLVER_BENCHMARK",
+  "comparisonPolicy": "STAGE_SPECIFIC_INDEPENDENT_ORACLE_AND_INVARIANTS",
+  "methodResults": [
+    {
+      "methodId": "FAIL-CLOSED-NEGATIVES",
+      "authorityClass": "STRUCTURED_REJECTION_CONTRACT",
+      "command": [
+        "node",
+        "scripts/lafea.3-bm-s-s4-fail-closed-check.mjs"
+      ],
+      "sourceRefHashes": {
+        "scripts/lafea.3-bm-s-s4-fail-closed-check.mjs": "sha256:ac735769f68fb7fdd850d583ede06fe4c3a56014c7d7f394d54061d5f37104e6",
+        "scripts/lafea.3-fixtures.mjs": "sha256:9f50762ebfa83560df41c351e868ef9a9bd25669547bbd46b409cd00918d9b4e",
+        "src/core/local-continuum/canonical-model.js": "sha256:3b312d05d1f66103f2b1399c709b86e6aef533c2e1e0452c46e0d8b84b987179",
+        "src/core/local-continuum/source-mesh.js": "sha256:8ab3dabe38e96430075b5db5534af94591aa52aad82811c95ebb136b8f9f5571",
+        "src/core/local-continuum/source-loads.js": "sha256:d724305b208a17766c15dbab8721d8b3df1daf9412fa1f03ba967f27db10890d",
+        "src/core/local-continuum/errors.js": "sha256:0f22740c7766d1c9c262e3b12d9e7c438429b987035ce6a3d4fb502e4e98e43d",
+        "src/core/local-continuum/q8-element.js": "sha256:d1d7b10bce9a0abb439b98dcaa389c6469ae279921b9a436459e3acfac0a5bd1",
+        "src/core/local-continuum/assembly.js": "sha256:6b469957d58e4f1070a0bab483da5fc22b1930999d21b3be9cddf0e34b4a0ec3",
+        "src/core/local-continuum/loads.js": "sha256:c6dfe0a13019d4eb8e5c6da2fcacb0edb5fb938ecd62d906b3c66c93a630f26f",
+        "src/core/local-continuum/solver.js": "sha256:5187e1f59ca897ae7f5efdffadcf27f54744b4064eb35bc3e15f12fbdd3b864d",
+        "validation/lafea-benchmark-data/B02/governance/negative-cases.json": "sha256:caf330e258bbee3df08345b3a0f8d718228fd184ed5b15e5a2b0217ce4621532",
+        "validation/lafea-benchmark-data/B02/governance/fem-semantics.json": "sha256:c7d6fa2bf5285065a806e4cb9c76d420f86a76a5928c3f5382c3fe221dbec5c8"
+      },
+      "oracleAuthority": "FROZEN_STRUCTURED_FIRST_FAILURE_BOUNDARY_STATE_AND_CODE_CONTRACT",
+      "expectedEvidenceSchema": "lafea3-bm-s-s4-fail-closed-evidence/v1",
+      "exitCode": 0,
+      "signal": null,
+      "elapsedMs": 118.602,
+      "stdout": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S4/FAIL-CLOSED-NEGATIVES.stdout.log",
+        "sha256": "sha256:f57e5fa72c9da569ac45b533fe07331f27f723dd67dd077856ca06a6daf1bc96"
+      },
+      "stderr": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S4/FAIL-CLOSED-NEGATIVES.stderr.log",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedEvidence": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S4/S4-fail-closed-evidence.json",
+        "sha256": "sha256:aea827328d93362ff2a8b61c1eea1c2e596c1f70379c2c75e903379653984c4d"
+      },
+      "status": "PASS"
+    }
+  ],
+  "caseStatus": "PASS",
+  "nextBenchmarkAuthorized": true,
+  "baselineDisposition": "ELIGIBLE_EXECUTION_BASELINE",
+  "stageGate": {
+    "predecessorSelected": true,
+    "predecessorGateSatisfied": true,
+    "executionPass": true,
+    "stageAuthorized": true
+  },
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionMeshQualificationGranted": false,
+    "performanceIsInformational": true
+  },
+  "recordHash": "sha256:7ebba029b12dd722ed8fd2b3145b744258752a9211b6c9d30393f2477701292d"
+}

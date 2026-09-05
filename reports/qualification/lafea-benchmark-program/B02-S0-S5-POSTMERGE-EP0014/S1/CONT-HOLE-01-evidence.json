@@ -1,0 +1,116 @@
+{
+  "schema": "lafea3-bm-s-s1-case-evidence/v1",
+  "benchmarkId": "BM-S",
+  "benchmarkStage": "S1",
+  "caseId": "CONT-HOLE-01",
+  "oracleRef": "validation/lafea-benchmark-data/B02/oracle/expected-values.json#CONT-HOLE-01",
+  "oracleCitation": {
+    "publisher": "Wiley",
+    "author": "R. E. Goodman",
+    "title": "Introduction to Rock Mechanics",
+    "edition": "2nd",
+    "year": 1989,
+    "chapter": "Chapter 7 — Openings in Competent Rock",
+    "section": "7.2",
+    "pages": [
+      228,
+      229
+    ],
+    "equationIdentifiers": [
+      "7.1a",
+      "7.1b",
+      "7.1c"
+    ],
+    "originalSource": "G. Kirsch, Zeitschrift des Vereines deutscher Ingenieure, Vol. 42, 1898, pp. 797-807",
+    "repositoryQualification": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md#LAFEA3-SRC-KIRSCH-01"
+  },
+  "productionOutputGeneratedExpectedValues": false,
+  "expectedStressConcentrationFactor": 3,
+  "fixedProbeRichardsonGciAuthority": true,
+  "movingPeakOrFieldMaximumRichardsonGciAuthority": false,
+  "observations": [
+    {
+      "levelId": "L1",
+      "radialElements": 3,
+      "circumferentialElements": 6,
+      "qualificationState": "ACCEPTED",
+      "nearHoleGaussPeakFactor": 2.875534603154676,
+      "maxNormalizedFieldError": 0.13760984267127355,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:1465425a80813640",
+        "loadCaseInputSemanticHash": "fnv1a64:b49a5fda234d1ebe",
+        "resultPayloadSemanticHash": "fnv1a64:83ab725b7051a643",
+        "executionEvidenceHash": "fnv1a64:3ea47a34ed4488cb",
+        "qualificationEvidenceHash": "fnv1a64:45ea5e6d18dccb7c"
+      }
+    },
+    {
+      "levelId": "L2",
+      "radialElements": 6,
+      "circumferentialElements": 12,
+      "qualificationState": "ACCEPTED",
+      "nearHoleGaussPeakFactor": 2.9115955912525697,
+      "maxNormalizedFieldError": 0.062184614814346305,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:3eb9a689df877989",
+        "loadCaseInputSemanticHash": "fnv1a64:5dcecf5e78e57d0c",
+        "resultPayloadSemanticHash": "fnv1a64:4983251d3d9efef0",
+        "executionEvidenceHash": "fnv1a64:9b882dfc7af55e53",
+        "qualificationEvidenceHash": "fnv1a64:45ea5e6d18dccb7c"
+      }
+    },
+    {
+      "levelId": "L3",
+      "radialElements": 10,
+      "circumferentialElements": 20,
+      "qualificationState": "ACCEPTED",
+      "nearHoleGaussPeakFactor": 2.932686472865756,
+      "maxNormalizedFieldError": 0.03605927049825368,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:760a0c518418b97a",
+        "loadCaseInputSemanticHash": "fnv1a64:35c56915e49eaa1a",
+        "resultPayloadSemanticHash": "fnv1a64:23206856654f4c98",
+        "executionEvidenceHash": "fnv1a64:4d3ee5612f6d9f8a",
+        "qualificationEvidenceHash": "fnv1a64:45ea5e6d18dccb7c"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "checkId": "ALL_LEVELS_ACCEPTED",
+      "accepted": true
+    },
+    {
+      "checkId": "HOLE_FACTOR_IMPROVES",
+      "accepted": true,
+      "actual": 0.022437842378081403,
+      "reference": 0.041488465615107994
+    },
+    {
+      "checkId": "FINE_HOLE_FACTOR_WITHIN_LIMIT",
+      "accepted": true,
+      "actual": 0.022437842378081403,
+      "limit": 0.05
+    },
+    {
+      "checkId": "LEVEL_2_FIELD_IMPROVES",
+      "accepted": true,
+      "actual": 0.062184614814346305,
+      "reference": 0.13760984267127355
+    },
+    {
+      "checkId": "LEVEL_3_FIELD_IMPROVES",
+      "accepted": true,
+      "actual": 0.03605927049825368,
+      "reference": 0.062184614814346305
+    },
+    {
+      "checkId": "FINE_FIELD_ERROR_WITHIN_LIMIT",
+      "accepted": true,
+      "actual": 0.03605927049825368,
+      "limit": 0.05
+    }
+  ],
+  "status": "PASS",
+  "releaseQualified": false
+}

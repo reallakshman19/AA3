@@ -1,0 +1,78 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
+  "runId": "B02-S0-S5-POSTMERGE-EP0014-S5",
+  "generatedAt": "2026-09-05T12:23:56.505Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "5b1eba060a51cf03ac22f1908f9a07d9098bea46",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "B02",
+  "stageId": "LAFEA.3",
+  "benchmarkStage": "S5",
+  "benchmarkClass": "STAGED_SOLVER_BENCHMARK",
+  "comparisonPolicy": "STAGE_SPECIFIC_INDEPENDENT_ORACLE_AND_INVARIANTS",
+  "methodResults": [
+    {
+      "methodId": "CROSS-PROCESS-DETERMINISM-AND-COST",
+      "authorityClass": "SEMANTIC_HASH_REPEATABILITY_PLUS_INFORMATIONAL_COST",
+      "command": [
+        "node",
+        "scripts/lafea.3-bm-s-s5-determinism-cost-check.mjs"
+      ],
+      "sourceRefHashes": {
+        "scripts/lafea.3-bm-s-s5-determinism-cost-check.mjs": "sha256:f396848d9cb4e7d51da3d5b44f97ee1738ab2aaa5a2fa15ed9e8dccd017de571",
+        "scripts/lafea.3-fixtures.mjs": "sha256:9f50762ebfa83560df41c351e868ef9a9bd25669547bbd46b409cd00918d9b4e",
+        "scripts/lafea.3-benchmark-mesh-adapter.mjs": "sha256:e4674ea2e9c33ac04e7708c9fafe0460d1f01e72ce188c49293abea7a75eb7d0",
+        "scripts/lib/lafea.3-bm-s-evidence.mjs": "sha256:20d8001a049a5c412a00a83ec0746b3bcc6cd98e21fa9deba3c16245ada22810",
+        "src/core/local-continuum/canonical-model.js": "sha256:3b312d05d1f66103f2b1399c709b86e6aef533c2e1e0452c46e0d8b84b987179",
+        "src/core/local-continuum/calculate.js": "sha256:153401fbcc2f8b9131b2e03261d622b6afc7451638d3a1ec34636eef538f50aa",
+        "src/core/local-continuum/result-hashes.js": "sha256:b256d322aa8b5279f59065eff793096270acae8b3507831e88d60c3d990c615d",
+        "src/core/shared-primitives/canonical-json.js": "sha256:552a67e5583ebcb164d28dfef810a39359d027df0fcb4c5fd61daf3c908691bb",
+        "validation/lafea-benchmark-data/B02/oracle/expected-values.json": "sha256:40084c326dcfbe72238a00121cdc4d82e303857f44bec1936c83a055b1cb6948",
+        "validation/lafea-benchmark-data/B02/convergence/mesh-ladders.json": "sha256:babe844bca3c367761f72d23a66aecd3763ee296b10e922a0aab8107bd217c70",
+        "validation/lafea-benchmark-data/B02/governance/fem-semantics.json": "sha256:c7d6fa2bf5285065a806e4cb9c76d420f86a76a5928c3f5382c3fe221dbec5c8"
+      },
+      "oracleAuthority": "CROSS_PROCESS_PRODUCTION_SEMANTIC_HASH_EQUALITY_WITH_INDEPENDENT_TOPOLOGY_DOF_COUNTS_AND_INFORMATIONAL_PROCESS_COST",
+      "expectedEvidenceSchema": "lafea3-bm-s-s5-determinism-cost-evidence/v1",
+      "exitCode": 0,
+      "signal": null,
+      "elapsedMs": 1734.03,
+      "stdout": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S5/CROSS-PROCESS-DETERMINISM-AND-COST.stdout.log",
+        "sha256": "sha256:c883f5bc12df60b51de77614ed820ddef97bfca133e00a84fe5a198b063341e8"
+      },
+      "stderr": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S5/CROSS-PROCESS-DETERMINISM-AND-COST.stderr.log",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedEvidence": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S5/S5-determinism-cost-evidence.json",
+        "sha256": "sha256:bc5172fc8eef1fe03f9f33bb9d260b3909c4e318b5861645f89aac104895fe23"
+      },
+      "status": "PASS"
+    }
+  ],
+  "caseStatus": "PASS",
+  "nextBenchmarkAuthorized": true,
+  "baselineDisposition": "ELIGIBLE_EXECUTION_BASELINE",
+  "stageGate": {
+    "predecessorSelected": true,
+    "predecessorGateSatisfied": true,
+    "executionPass": true,
+    "stageAuthorized": true
+  },
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionMeshQualificationGranted": false,
+    "performanceIsInformational": true
+  },
+  "recordHash": "sha256:a94aee5b7da7b143c29fc8d0b3e18bea5214a83fcae8ef49ac8794ebab7708e4"
+}

@@ -1,0 +1,321 @@
+{
+  "schema": "lafea3-bm-s-s5-determinism-cost-evidence/v1",
+  "benchmarkId": "BM-S",
+  "benchmarkStage": "S5",
+  "authority": {
+    "deterministicIdentity": "PROCESS_INDEPENDENT_PRODUCTION_SEMANTIC_HASHES",
+    "comparedHashFields": [
+      "canonicalModelSemanticHash",
+      "loadCaseInputSemanticHash",
+      "resultPayloadSemanticHash",
+      "executionEvidenceHash",
+      "qualificationEvidenceHash"
+    ],
+    "wholeAuditRecordByteIdentityRequired": false,
+    "volatileMetricsEnterDeterministicIdentity": false,
+    "performanceIsInformational": true,
+    "performanceThresholds": null,
+    "releaseQualified": false
+  },
+  "determinism": {
+    "caseId": "PATCH-CROSS-PROCESS-01",
+    "processIsolation": "SEPARATE_NODE_PROCESS_PER_OBSERVATION",
+    "runs": [
+      {
+        "processOrdinal": 1,
+        "childExitStatus": 0,
+        "processWallTimeMs": 128.5619,
+        "caseId": "PATCH-CROSS-PROCESS-01",
+        "inputVariant": "BASE",
+        "pid": 16864,
+        "qualificationState": "ACCEPTED",
+        "expectedDofCount": 8,
+        "dofCount": 8,
+        "topology": {
+          "nodeCount": 4,
+          "dofPerNode": 2,
+          "sourcePermutationApplied": false
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:42bc13f1957e1d8a",
+          "loadCaseInputSemanticHash": "fnv1a64:ec170711e31d35f6",
+          "resultPayloadSemanticHash": "fnv1a64:48104e8ed3b796fa",
+          "executionEvidenceHash": "fnv1a64:947e6fb4df5e71ac",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        "workloadWallTimeMs": 14.8954,
+        "peakResidentSetKiB": 52304,
+        "peakResidentSetMetric": "process.resourceUsage().maxRSS",
+        "peakResidentSetUnit": "KiB",
+        "stderr": null,
+        "parseError": null
+      },
+      {
+        "processOrdinal": 2,
+        "childExitStatus": 0,
+        "processWallTimeMs": 124.2237,
+        "caseId": "PATCH-CROSS-PROCESS-01",
+        "inputVariant": "BASE",
+        "pid": 25136,
+        "qualificationState": "ACCEPTED",
+        "expectedDofCount": 8,
+        "dofCount": 8,
+        "topology": {
+          "nodeCount": 4,
+          "dofPerNode": 2,
+          "sourcePermutationApplied": false
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:42bc13f1957e1d8a",
+          "loadCaseInputSemanticHash": "fnv1a64:ec170711e31d35f6",
+          "resultPayloadSemanticHash": "fnv1a64:48104e8ed3b796fa",
+          "executionEvidenceHash": "fnv1a64:947e6fb4df5e71ac",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        "workloadWallTimeMs": 14.343,
+        "peakResidentSetKiB": 52144,
+        "peakResidentSetMetric": "process.resourceUsage().maxRSS",
+        "peakResidentSetUnit": "KiB",
+        "stderr": null,
+        "parseError": null
+      },
+      {
+        "processOrdinal": 3,
+        "childExitStatus": 0,
+        "processWallTimeMs": 118.8738,
+        "caseId": "PATCH-CROSS-PROCESS-01",
+        "inputVariant": "PERMUTED",
+        "pid": 31180,
+        "qualificationState": "ACCEPTED",
+        "expectedDofCount": 8,
+        "dofCount": 8,
+        "topology": {
+          "nodeCount": 4,
+          "dofPerNode": 2,
+          "sourcePermutationApplied": true
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:42bc13f1957e1d8a",
+          "loadCaseInputSemanticHash": "fnv1a64:ec170711e31d35f6",
+          "resultPayloadSemanticHash": "fnv1a64:48104e8ed3b796fa",
+          "executionEvidenceHash": "fnv1a64:947e6fb4df5e71ac",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        "workloadWallTimeMs": 14.0505,
+        "peakResidentSetKiB": 52388,
+        "peakResidentSetMetric": "process.resourceUsage().maxRSS",
+        "peakResidentSetUnit": "KiB",
+        "stderr": null,
+        "parseError": null
+      }
+    ],
+    "hashComparisons": [
+      {
+        "field": "canonicalModelSemanticHash",
+        "values": [
+          "fnv1a64:42bc13f1957e1d8a",
+          "fnv1a64:42bc13f1957e1d8a",
+          "fnv1a64:42bc13f1957e1d8a"
+        ],
+        "equal": true
+      },
+      {
+        "field": "loadCaseInputSemanticHash",
+        "values": [
+          "fnv1a64:ec170711e31d35f6",
+          "fnv1a64:ec170711e31d35f6",
+          "fnv1a64:ec170711e31d35f6"
+        ],
+        "equal": true
+      },
+      {
+        "field": "resultPayloadSemanticHash",
+        "values": [
+          "fnv1a64:48104e8ed3b796fa",
+          "fnv1a64:48104e8ed3b796fa",
+          "fnv1a64:48104e8ed3b796fa"
+        ],
+        "equal": true
+      },
+      {
+        "field": "executionEvidenceHash",
+        "values": [
+          "fnv1a64:947e6fb4df5e71ac",
+          "fnv1a64:947e6fb4df5e71ac",
+          "fnv1a64:947e6fb4df5e71ac"
+        ],
+        "equal": true
+      },
+      {
+        "field": "qualificationEvidenceHash",
+        "values": [
+          "fnv1a64:442d721a45e68229",
+          "fnv1a64:442d721a45e68229",
+          "fnv1a64:442d721a45e68229"
+        ],
+        "equal": true
+      }
+    ],
+    "checks": {
+      "childProcessesCompleted": true,
+      "accepted": true,
+      "expectedDofCount": true,
+      "hashShape": true,
+      "semanticHashesEqual": true
+    },
+    "status": "PASS"
+  },
+  "informationalCost": {
+    "caseId": "CONT-CYL-01-Q8-LADDER-COST",
+    "meshAuthority": "BENCHMARK_ONLY_SOLVER_ISOLATION",
+    "dofFormula": "2*(3*nr*nt + 2*nr + 2*nt + 1)",
+    "expectedDofCounts": [
+      {
+        "levelId": "L1",
+        "dofCount": 74
+      },
+      {
+        "levelId": "L2",
+        "dofCount": 242
+      },
+      {
+        "levelId": "L3",
+        "dofCount": 866
+      }
+    ],
+    "runs": [
+      {
+        "processOrdinal": 1,
+        "childExitStatus": 0,
+        "processWallTimeMs": 150.5382,
+        "caseId": "CONT-CYL-01-L1",
+        "inputVariant": "L1",
+        "pid": 29876,
+        "qualificationState": "ACCEPTED",
+        "expectedDofCount": 74,
+        "dofCount": 74,
+        "topology": {
+          "levelId": "L1",
+          "radialElements": 2,
+          "circumferentialElements": 4,
+          "nodeCount": 37,
+          "elementCount": 8
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:702cd4bc00146167",
+          "loadCaseInputSemanticHash": "fnv1a64:081b340e130d6608",
+          "resultPayloadSemanticHash": "fnv1a64:b37636ecab5be841",
+          "executionEvidenceHash": "fnv1a64:bc676271a1407c81",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        "workloadWallTimeMs": 44.7577,
+        "peakResidentSetKiB": 56412,
+        "peakResidentSetMetric": "process.resourceUsage().maxRSS",
+        "peakResidentSetUnit": "KiB",
+        "stderr": null,
+        "parseError": null
+      },
+      {
+        "processOrdinal": 2,
+        "childExitStatus": 0,
+        "processWallTimeMs": 322.6634,
+        "caseId": "CONT-CYL-01-L2",
+        "inputVariant": "L2",
+        "pid": 30204,
+        "qualificationState": "ACCEPTED",
+        "expectedDofCount": 242,
+        "dofCount": 242,
+        "topology": {
+          "levelId": "L2",
+          "radialElements": 4,
+          "circumferentialElements": 8,
+          "nodeCount": 121,
+          "elementCount": 32
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:4d95f43060bf9cf6",
+          "loadCaseInputSemanticHash": "fnv1a64:deeffdfd46683ed7",
+          "resultPayloadSemanticHash": "fnv1a64:37cefd8097d55b15",
+          "executionEvidenceHash": "fnv1a64:82b10faffac7cf4d",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        "workloadWallTimeMs": 95.1055,
+        "peakResidentSetKiB": 74524,
+        "peakResidentSetMetric": "process.resourceUsage().maxRSS",
+        "peakResidentSetUnit": "KiB",
+        "stderr": null,
+        "parseError": null
+      },
+      {
+        "processOrdinal": 3,
+        "childExitStatus": 0,
+        "processWallTimeMs": 764.2824,
+        "caseId": "CONT-CYL-01-L3",
+        "inputVariant": "L3",
+        "pid": 23216,
+        "qualificationState": "ACCEPTED",
+        "expectedDofCount": 866,
+        "dofCount": 866,
+        "topology": {
+          "levelId": "L3",
+          "radialElements": 8,
+          "circumferentialElements": 16,
+          "nodeCount": 433,
+          "elementCount": 128
+        },
+        "semanticHashes": {
+          "canonicalModelSemanticHash": "fnv1a64:d3deb3dd5f853804",
+          "loadCaseInputSemanticHash": "fnv1a64:e89f53f056de95ac",
+          "resultPayloadSemanticHash": "fnv1a64:f8b40a16cdcb79d9",
+          "executionEvidenceHash": "fnv1a64:4d865846fb1ed11d",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        "workloadWallTimeMs": 634.0553,
+        "peakResidentSetKiB": 194488,
+        "peakResidentSetMetric": "process.resourceUsage().maxRSS",
+        "peakResidentSetUnit": "KiB",
+        "stderr": null,
+        "parseError": null
+      }
+    ],
+    "checks": [
+      {
+        "levelId": "L1",
+        "accepted": true,
+        "expectedDofCount": 74,
+        "actualDofCount": 74,
+        "dofCountMatchesTopology": true,
+        "wallTimeObserved": true,
+        "processPeakMemoryObserved": true
+      },
+      {
+        "levelId": "L2",
+        "accepted": true,
+        "expectedDofCount": 242,
+        "actualDofCount": 242,
+        "dofCountMatchesTopology": true,
+        "wallTimeObserved": true,
+        "processPeakMemoryObserved": true
+      },
+      {
+        "levelId": "L3",
+        "accepted": true,
+        "expectedDofCount": 866,
+        "actualDofCount": 866,
+        "dofCountMatchesTopology": true,
+        "wallTimeObserved": true,
+        "processPeakMemoryObserved": true
+      }
+    ],
+    "derivedDofRatios": [
+      3.27027027027027,
+      3.5785123966942147
+    ],
+    "wallTimeThresholdMs": null,
+    "peakResidentSetThresholdKiB": null,
+    "dofScalingThreshold": null,
+    "qualificationEffectOfPerformanceMetrics": "NONE_INFORMATIONAL_ONLY"
+  },
+  "stageStatus": "PASS",
+  "releaseQualified": false
+}

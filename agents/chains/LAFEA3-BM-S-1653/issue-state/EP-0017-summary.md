@@ -1,0 +1,1 @@
+EP-0017 authorizes Owner merge of PR #1667 plus one bounded post-merge qualification/closure progression. Activated B02 route PASS is durably retained; main drift through 4436dc3c3590d1afd40ba20f74380f442fb32935 is EMP.1 UI/task-shell work file-disjoint from BM-S protected owners. Release and temperature authority remain false.

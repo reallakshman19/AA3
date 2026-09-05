@@ -63,6 +63,14 @@ assert.equal(staleMaterial.identity.recoveryHash, H.recovery);
 assert.equal(staleMaterial.identity.solverConfigHash, current.latestRunTransactionReceipt.solverConfigHash);
 assert.ok(staleMaterial.blockingReasons.includes('CURRENTNESS_CANONICAL_MODEL_NOT_CURRENT'));
 
+const unrelatedFailure = structuredClone(materialEdit);
+unrelatedFailure.status = 'FAILED';
+unrelatedFailure.diagnostics = [{ severity: 'ERROR', code: 'NON_EXECUTION_UI_FAILURE' }];
+const stillStale = projectLafeaWorkbenchCurrentness(unrelatedFailure);
+assert.equal(stillStale.computationalState, 'STALE_RESULT');
+assert.equal(stillStale.qualificationState, 'PASS');
+assert.equal(stillStale.currentAuthority, false);
+
 const solverEdit = structuredClone(current);
 solverEdit.retainedContinuumPreflightEvidence.compilerRevision = 'REV-2';
 const staleSolver = projectLafeaWorkbenchCurrentness(solverEdit);
@@ -91,15 +99,30 @@ assert.equal(projectedRunning.computationalState, 'RUNNING');
 assert.equal(projectedRunning.currentAuthority, false);
 
 const rejected = structuredClone(current);
-rejected.status = 'FAILED';
-rejected.diagnostics = [{ severity: 'ERROR', code: 'SYNTHETIC_REJECTION' }];
 rejected.execution = null;
+rejected.latestRunTransactionReceipt = rejectedReceipt(
+  current.latestRunTransactionReceipt,
+  'SYNTHETIC_EXECUTION_REJECTION',
+);
 rejected.lifecycle.artifacts.EXECUTION.qualification = 'FAIL';
 rejected.lifecycle.artifacts.RECOVERY.qualification = 'FAIL';
 const projectedRejected = projectLafeaWorkbenchCurrentness(rejected);
 assert.equal(projectedRejected.computationalState, 'REJECTED');
 assert.equal(projectedRejected.qualificationState, 'FAIL');
 assert.equal(projectedRejected.currentAuthority, false);
+assert.equal(projectedRejected.transactionIdentity.latestReceiptStatus, 'SUPERSEDED');
+
+const rejectedAfterHistoricalPass = structuredClone(current);
+rejectedAfterHistoricalPass.execution = null;
+rejectedAfterHistoricalPass.latestRunTransactionReceipt = rejectedReceipt(
+  current.latestRunTransactionReceipt,
+  'SECOND_RUN_REJECTED',
+);
+const historicalPassRejected = projectLafeaWorkbenchCurrentness(rejectedAfterHistoricalPass);
+assert.equal(historicalPassRejected.computationalState, 'REJECTED');
+assert.equal(historicalPassRejected.qualificationState, 'PASS');
+assert.equal(historicalPassRejected.currentAuthority, false);
+assert.equal(historicalPassRejected.historicalQualificationRetained, true);
 
 const displayOnly = structuredClone(current);
 displayOnly.display = { zoom: 3, contourPalette: 'OTHER' };
@@ -120,10 +143,17 @@ assert.notEqual(
 const executionState = createLafeaWorkbenchDomainFirstExecutionState(['LAFEA.3']);
 executionState.retain('LAFEA.3', current.execution);
 executionState.clear('LAFEA.3');
-const retainedFields = executionState.fields('LAFEA.3');
+let retainedFields = executionState.fields('LAFEA.3');
 assert.equal(retainedFields.execution, undefined);
 assert.equal(retainedFields.latestRunTransactionReceipt.status, 'COMPLETED');
 assert.equal(retainedFields.latestRunTransactionReceipt.executionHash, H.execution);
+executionState.retainRunTransactionReceipt(
+  'LAFEA.3',
+  rejectedReceipt(current.latestRunTransactionReceipt, 'SYNTHETIC_RUN_REJECTION'),
+);
+retainedFields = executionState.fields('LAFEA.3');
+assert.equal(retainedFields.latestRunTransactionReceipt.status, 'SUPERSEDED');
+assert.equal(retainedFields.latestRunTransactionReceipt.reasonCode, 'SYNTHETIC_RUN_REJECTION');
 
 const orchestratorSource = fs.readFileSync(
   path.join(ROOT, 'src/workspace/lafea-workbench-orchestrator-store.js'),
@@ -132,6 +162,11 @@ const orchestratorSource = fs.readFileSync(
 assert.match(orchestratorSource, /projectLafeaWorkbenchCurrentness/u);
 assert.match(orchestratorSource, /domainFirstExecution\.fields\(stageId\)/u);
 assert.match(orchestratorSource, /currentness:\s*projectLafeaWorkbenchCurrentness/u);
+const runActionsSource = fs.readFileSync(
+  path.join(ROOT, 'src/workspace/lafea-workbench-domain-first-run-actions.js'),
+  'utf8',
+);
+assert.match(runActionsSource, /retainRunTransactionReceipt/u);
 const probeSource = fs.readFileSync(
   path.join(ROOT, 'src/workspace/lafea-continuum-physical-probe.js'),
   'utf8',
@@ -159,6 +194,7 @@ function currentStage() {
   };
   const solverConfigHash = deriveLafeaSolverConfigHash(preflight);
   const receipt = {
+    schema: 'lafea-run-transaction-receipt/v1',
     status: 'COMPLETED',
     semanticHash: H.transactionReceipt,
     solverConfigHash,
@@ -248,6 +284,15 @@ function currentStage() {
   };
 }
 
+function rejectedReceipt(receipt, reasonCode) {
+  return {
+    ...structuredClone(receipt),
+    status: 'SUPERSEDED',
+    executionHash: null,
+    reasonCode,
+    semanticHash: H.rejectedReceipt,
+  };
+}
 function record(artifactHash, parentHashes) {
   return {
     status: 'CURRENT',
@@ -284,5 +329,6 @@ const H = Object.freeze({
   recoveryProfile: sha('e'),
   preflight: sha('f'),
   transactionReceipt: sha('0'),
+  rejectedReceipt: sha('1'),
   transaction2: sha('a'),
 });

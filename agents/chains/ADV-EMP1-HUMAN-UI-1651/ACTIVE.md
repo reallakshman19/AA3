@@ -14,8 +14,8 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0003
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0003.md
+ENDPOINT: EP-0004
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0004.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0003.md
 
@@ -23,31 +23,33 @@ PREVIOUS_PR: 1658
 PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
 PREVIOUS_PR_MERGE_COMMIT: b39f7673737bd1f7f4a6d7dd9d1538f795874281
 PR: 1660
-PR_STATUS: OPEN_DRAFT_LEG003_IN_PROGRESS
+PR_STATUS: OPEN_DRAFT_LEG003_SOURCE_COMPLETE_EXECUTION_NOT_RUN
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
-PR_HEAD_OBSERVED: 29738ad1d377f51eded3a69b2b2d20de9ad43a52
+PR_HEAD_OBSERVED: 111ef2926d3bdc3f1d537a35a4602608a6c694c0
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
-MERGEABILITY: UNKNOWN_INITIAL
+MERGEABILITY: MERGEABLE_AT_MATERIAL_FREEZE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-LATEST_MATERIAL_HEAD: 8b6e126a5f5a14f99547937cb61c970c91e5b3cd
-LAST_COMPLETED_MATERIAL_LEG: LEG-002
-CURRENT_MATERIAL_LEG: LEG-003
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-002.md
+STATUS_CONTEXTS_MATERIAL_HEAD: 0
+PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
+LATEST_MATERIAL_HEAD: 702d625b81cb098a1021a561cf64c44f5c21532e
+LAST_COMPLETED_MATERIAL_LEG: LEG-003
+CURRENT_MATERIAL_LEG: NONE
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-003.md
 
-ENGINEERING_STATE: LEG_003_IN_PROGRESS
+ENGINEERING_STATE: LEG_003_SOURCE_COMPLETE_EXECUTION_NOT_RUN
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: WRITE_ALLOWED_FOR_ONE_BOUNDED_LEG
+WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-AUTHORITY_DOMAIN: EMP.1 analytical presentation/layout only; pressure mechanics and WRC/benchmark/source/route/code/release authority protected.
+AUTHORITY_DOMAIN: EMP.1 analytical presentation/layout and bounded benchmark-evidence presentation only; engineering mechanics/source/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 5
-COORDINATION_STATE: SAFE_POST_PREDECESSOR_MERGE
+CUSTODY_EPOCH: 6
+COORDINATION_STATE: SAFE_POST_LEG003_FREEZE
 POST_BASIS_DRIFT: NONE
 DEPENDENCIES: #1633 planning context; #1645 / PR #1648 merged; LEG-001 / #1655 merged; LEG-002 / #1658 merged.
 
@@ -56,14 +58,14 @@ ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550269583
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550382576
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 OWNER_TEXT_OBSERVED: `merge, proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_003
 OWNER_MERGE_COMMAND: EXECUTED_FOR_PR_1658_ONLY
 
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
@@ -76,21 +78,23 @@ QUALIFICATION_PROFILE_VERSION: 2
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-ANTI-WATERFALL-LAYOUT
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0003
 QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0003-questions.md
-QUESTION_SET_STATUS: CURRENT
+QUESTION_SET_STATUS: CURRENT_FOR_COMPLETED_LEG_003
 QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 PREWORK_QUALIFICATION_READY: TRUE
-TAKEOVER_QUALIFICATION_READY: TRUE
+
+NEXT_QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-BENCHMARK-HIERARCHY
+NEXT_QUESTION_SET_STATUS: REFRESH_REQUIRED_BEFORE_MATERIAL
+TAKEOVER_QUALIFICATION_READY: FALSE
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: predecessor merge and Common/project/main re-ground PASS; LEG-003 executable validation not yet run.
+HANDOVER_VALIDATION_EVIDENCE: LEG-003 source/diff/custody inspection; repository-integrated Node/Playwright/build/import validation unavailable in this session.
 CHAIN_HANDOVER_READY: TRUE
-TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-VALIDATION: PR #1658 merge confirmed; Common remains d709bcd...; current main is b39f7673...; Draft PR #1660 opened from exact main; LEG-003 execution NOT_RUN.
-AUTHORITY_BOUNDARY: LEG-003 may only reorganize existing analytical DOM surfaces into stable presentation regions and add responsive presentation rules/tests. It may not alter projections, handlers, pressure/WRC mechanics, benchmark state, route authority, code/release or workflows.
-CURRENT_BLOCKER: none.
-LEG_DIAGNOSIS: append-only analytical composition remains the issue acceptance gap; evidence/authority surfaces must stop extending the primary data-entry lane one-for-one.
-EXACT_NEXT_ACTION: implement LEG-003 declarative Primary work / Engineering basis / Full-width detail placement, preserve every existing engineering surface exactly once, add focused manifest/geometry/navigation/mobile checks, record LEG-003 receipt and successor endpoint, sync issue comments, then stop. Do not merge PR #1660 without a new Owner merge command.
+VALIDATION: source/diff/custody inspection PASS; executable static/browser/build/import validation NOT_RUN. Zero status contexts/workflow runs on material head is not PASS.
+AUTHORITY_BOUNDARY: LEG-003 changes parent presentation composition only. It does not change governed edits, pressure/WRC mechanics, benchmark numerical custody, route authority, code/release/deployment authority, FEA/LAFEA.3+ mechanics or workflow YAML.
+CURRENT_BLOCKER: next technical scope is not qualification-ready; PR #1660 also remains unmerged by policy.
+LEG_DIAGNOSIS: TASK-003 source implementation is complete; next unresolved issue work is staged benchmark/evidence hierarchy hardening without elevating CAUx/PV Elite evidence into method or release authority.
+EXACT_NEXT_ACTION: Owner invokes `proceed next`; refresh/show Q1–Q5 for `QSCOPE-1651-EMP-BENCHMARK-HIERARCHY`, then only if that qualification passes execute one bounded LEG-004. Do not merge PR #1660 without a new explicit Owner merge command.

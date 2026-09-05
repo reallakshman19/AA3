@@ -117,6 +117,7 @@ const workspaceSource = await read('src/workspace/emp1-benchmark-evidence-worksp
 const viewSource = await read('src/workspace/emp1-benchmark-view.js');
 const workflowSource = await read('src/workspace/emp1-professional-workflow-view.js');
 const analyticalSource = await read('src/workspace/lafea-analytical-calc-content.js');
+const layoutSource = await read('src/workspace/emp1-analytical-layout.js');
 
 for (const forbidden of [
   'calculateLocalAttachment',
@@ -140,23 +141,35 @@ assert.ok(viewSource.includes(
 ));
 assert.ok(viewSource.includes("dataset.role = 'emp1-benchmark-evidence-panel'"));
 assert.ok(viewSource.includes("dataset.role = 'emp1-benchmark-comparison-table'"));
+assert.ok(viewSource.includes("dataset.role = 'emp1-benchmark-caux-overview'"));
+assert.ok(viewSource.includes("dataset.role = 'emp1-benchmark-caux-audit-details'"));
 assert.ok(viewSource.includes('PV Elite · Reference not available'));
 assert.ok(viewSource.includes('CAUx 2017 · Comparison qualified · Engineering use not authorized'));
 assert.ok(viewSource.includes('emp1PlainLanguageLabelRequired'));
 assert.ok(viewSource.includes("details.dataset.emp1RawTechnical = 'true'"));
 assert.equal(viewSource.includes('PV Elite · REFERENCE NOT AVAILABLE'), false);
 assert.equal(viewSource.includes('CAUx 2017 · COMPARISON QUALIFIED · ENGINEERING USE NOT AUTHORIZED'), false);
+assert.equal(viewSource.includes('audit.open = true'), false,
+  'deep CAUx audit detail must not be forced open in the normal hierarchy');
 
-assert.ok(workflowSource.includes('renderEmp1BenchmarkEvidencePanel'));
-assert.ok(workflowSource.includes('const benchmarkEvidence = options.benchmarkEvidence ?? null'));
-assert.ok(workflowSource.includes('renderEmp1BenchmarkEvidencePanel(root, benchmarkEvidence)'));
-assert.ok(workflowSource.includes("scrollToRole(root, 'emp1-benchmark-evidence-panel')"));
+assert.equal(workflowSource.includes('renderEmp1BenchmarkEvidencePanel'), false,
+  'professional workflow must not own the full benchmark panel after LEG-004');
+assert.equal(workflowSource.includes('const benchmarkEvidence = options.benchmarkEvidence ?? null'), false);
+assert.ok(workflowSource.includes("scrollToRole(root, 'emp1-benchmark-evidence-panel')"),
+  'Review & Evidence fallback navigation must still be able to reach benchmark evidence');
 assert.ok(analyticalSource.includes('projectEmp1BenchmarkEvidenceWorkspace'));
 assert.ok(analyticalSource.includes('const benchmarkEvidence = projectEmp1BenchmarkEvidenceWorkspace()'));
-assert.ok(analyticalSource.includes('benchmarkEvidence,'));
+assert.ok(analyticalSource.includes("import { renderEmp1BenchmarkEvidencePanel } from './emp1-benchmark-view.js';"));
+assert.ok(analyticalSource.includes(
+  'const benchmarkEvidencePanel = renderEmp1BenchmarkEvidencePanel(root, benchmarkEvidence);',
+));
+assert.ok(analyticalSource.includes('benchmarkEvidence: benchmarkEvidencePanel'));
 assert.ok(analyticalSource.includes('runFailure: options.emp1RunFailure'));
 assert.ok(analyticalSource.includes('reviewWorkspace: engineeringReview'));
 assert.ok(analyticalSource.includes('onReview: options.handlers.onEmp1EngineeringReview'));
+assert.ok(layoutSource.includes(
+  'benchmarkEvidence: EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL',
+));
 
 const reviewWorkspaceSource = await read('src/workspace/emp1-engineering-review-workspace.js');
 const reviewViewSource = await read('src/workspace/emp1-engineering-review-view.js');
@@ -166,8 +179,8 @@ assert.equal(reviewViewSource.includes('emp1-benchmark'), false,
   'benchmark UI must remain a sibling of engineering review');
 
 console.log(JSON.stringify({
-  schema: 'emp1-benchmark-evidence-ui-check/v1',
-  status: 'PASS_RETAINED_CAUX_AND_PENDING_PV_ELITE_PRESENTATION_CONTRACT',
+  schema: 'emp1-benchmark-evidence-ui-check/v2',
+  status: 'PASS_RETAINED_CAUX_PENDING_PV_ELITE_AND_STAGED_PRESENTATION_CONTRACT',
   caux: {
     compared: summary.comparedQuantities,
     withinTolerance: summary.withinToleranceCount,
@@ -185,6 +198,11 @@ console.log(JSON.stringify({
     state: pvElite.evidence.comparison.state,
     quantityCount: pvElite.evidence.comparison.quantities.length,
     toleranceValue: pvElite.referenceProgramme.toleranceValue,
+  },
+  hierarchy: {
+    workflowOwnsBenchmarkPanel: false,
+    benchmarkEvidenceRegion: 'FULL_WIDTH_DETAIL',
+    cauxDeepAuditProgressiveDisclosure: true,
   },
   uiAuthoredEngineeringHashes: false,
   uiExecutesWrc: false,

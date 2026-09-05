@@ -13,6 +13,12 @@ test('Empirical LAFEA.1 applies a load group atomically with one undo', async ({
   const mock = workbench.locator('[data-role="lafea-mock"]');
   if (await mock.isVisible()) await mock.click();
 
+  const loadsTask = workbench.locator(
+    '[data-role="emp1-professional-step"][data-emp1-professional-step="LOADS"]',
+  );
+  await loadsTask.click();
+  await expect(loadsTask).toHaveAttribute('aria-current', 'step');
+
   await expect(workbench.locator('[data-role="lafea-apply-descriptor"]')).toHaveCount(0);
   const loadGroup = workbench.locator('.lafea-doc-group-editor[data-input-group="LOAD_CASES"]');
   await expect(loadGroup).toBeVisible();
@@ -112,6 +118,12 @@ test('Empirical LAFEA.1 Pressure renders five identities by Internal/External an
   const workbench = root.locator('[data-role="lafea-workbench"]');
   const mock = workbench.locator('[data-role="lafea-mock"]');
   if (await mock.isVisible()) await mock.click();
+
+  const loadsTask = workbench.locator(
+    '[data-role="emp1-professional-step"][data-emp1-professional-step="LOADS"]',
+  );
+  await loadsTask.click();
+  await expect(loadsTask).toHaveAttribute('aria-current', 'step');
 
   // The shipped LAFEA.1 demo intentionally contains four definitions. Add the
   // retained asymmetric qualification identity through the normal document-import

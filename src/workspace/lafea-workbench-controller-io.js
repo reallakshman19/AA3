@@ -2,6 +2,7 @@ import { LAFEA_WORKBENCH_STYLES } from './lafea-workbench-styles.js';
 import { LAFEA_GUIDED_WORKBENCH_STYLES } from './lafea-guided-workbench-styles.js';
 import { LAFEA_UI_MODERNIZATION_STYLES } from './lafea-ui-modernization-styles.js';
 import { FEA_BENCHMARK_STYLES } from './fea-benchmark-styles.js';
+import { EMP1_ANALYTICAL_LAYOUT_STYLES } from './emp1-analytical-layout-styles.js';
 
 export const LAFEA_JSON_INTAKE_MAX_BYTES = 5 * 1024 * 1024;
 export const LAFEA_JSON_INTAKE_ALLOWED_MIME_TYPES = Object.freeze([
@@ -21,7 +22,7 @@ export function installLafeaWorkbenchStyles(documentRef) {
   if (!documentRef || documentRef.querySelector('[data-lafea-workbench-styles]')) return;
   const style = documentRef.createElement('style');
   style.dataset.lafeaWorkbenchStyles = 'true';
-  style.textContent = `${LAFEA_WORKBENCH_STYLES}\n${LAFEA_GUIDED_WORKBENCH_STYLES}\n${LAFEA_UI_MODERNIZATION_STYLES}\n${FEA_BENCHMARK_STYLES}`;
+  style.textContent = `${LAFEA_WORKBENCH_STYLES}\n${LAFEA_GUIDED_WORKBENCH_STYLES}\n${LAFEA_UI_MODERNIZATION_STYLES}\n${FEA_BENCHMARK_STYLES}\n${EMP1_ANALYTICAL_LAYOUT_STYLES}`;
   documentRef.head?.append(style);
 }
 

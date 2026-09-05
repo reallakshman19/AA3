@@ -1,7 +1,6 @@
 import { projectEmp1Readiness } from '../core/emp1/emp1-readiness-projection.js';
 import { card, element } from './lafea-workbench-dom.js';
 import { renderEmp1EngineeringReviewPanel } from './emp1-engineering-review-view.js';
-import { renderEmp1BenchmarkEvidencePanel } from './emp1-benchmark-view.js';
 import { buildEmp1ProfessionalWorkflowPresentation } from './emp1-professional-workflow-presentation.js';
 import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
 
@@ -17,8 +16,9 @@ const READINESS_DIMENSIONS = Object.freeze([
 
 /**
  * Engineer-facing EMP.1 workflow. Calculation/method authority remains owned by
- * existing governed contracts. Optional review state is consumed from the
- * workspace review controller; this DOM layer never authors engineering hashes.
+ * existing governed contracts. The normal task-shell view keeps navigation and
+ * a compact current-state summary visible while readiness/review/custody detail
+ * remains accessible on demand instead of permanently extending page depth.
  */
 export function renderEmp1ProfessionalWorkflow(
   root,
@@ -28,7 +28,6 @@ export function renderEmp1ProfessionalWorkflow(
 ) {
   const runFailure = options.runFailure ?? null;
   const reviewWorkspace = options.reviewWorkspace ?? null;
-  const benchmarkEvidence = options.benchmarkEvidence ?? null;
   const readiness = projectEmp1Readiness(projection, {
     reviewState: reviewWorkspace?.readinessReviewState ?? null,
   });
@@ -37,19 +36,26 @@ export function renderEmp1ProfessionalWorkflow(
   workflow.section.dataset.role = 'emp1-workflow';
   workflow.section.dataset.productId = presentation.productId;
   workflow.section.dataset.workflowSchema = presentation.schema;
+  workflow.section.dataset.emp1TaskShellWorkflow = 'compact';
 
   const failure = runFailureBanner(root, runFailure);
   if (failure) workflow.body.append(failure);
 
-  workflow.body.append(
-    element(root, 'strong', 'lafea-result-highlights__status', `${presentation.productId} · professional workflow`),
-    element(root, 'p', 'lafea-workbench__section-intro',
-      'Work through the engineering assessment from source basis to retained evidence. These seven steps are presentation tasks over the governed EMP.1.A / EMP.1.B / EMP.1.C calculation and evidence layers; they are not separate calculators.'),
-    readinessDashboard(root, readiness),
+  const headline = element(root, 'strong', 'lafea-result-highlights__status',
+    `${presentation.productId} · professional workflow`);
+  const compactStatus = element(root, 'div');
+  compactStatus.dataset.role = 'emp1-workflow-compact-status';
+  compactStatus.append(
+    element(root, 'span', null, `Overall · ${human(readiness.overall)}`),
+    element(root, 'span', null, `Method · ${human(presentation.authoritySummary.localMethod)}`),
+    element(root, 'span', null, `Result · ${human(presentation.authoritySummary.localResult)}`),
+    element(root, 'span', null, `Release · ${human(presentation.authoritySummary.releaseProfile)}`),
   );
+  workflow.body.append(headline, compactStatus);
 
   const list = element(root, 'ol', 'lafea-workbench__stages');
   list.dataset.role = 'emp1-professional-workflow-steps';
+  const stepButtons = [];
   for (const step of presentation.steps) {
     const item = element(root, 'li');
     item.dataset.emp1ProfessionalStep = step.stepId;
@@ -60,37 +66,53 @@ export function renderEmp1ProfessionalWorkflow(
     button.dataset.backingSteps = step.backingStepIds.join(',');
     button.dataset.targetRole = step.targetRole;
     button.disabled = step.canOpen !== true;
-    button.addEventListener('click', () => navigateProfessionalStep(root, step, onSelectRoute));
+    if (step.stepId === options.activeTaskStep) button.setAttribute('aria-current', 'step');
+    button.addEventListener('click', () => {
+      setActiveWorkflowStep(stepButtons, button);
+      notifyTaskShell(root, step.stepId);
+      options.onSelectTask?.(step.stepId);
+      navigateProfessionalStep(root, step, onSelectRoute);
+    });
+    stepButtons.push(button);
     item.append(button);
     list.append(item);
   }
-  workflow.body.append(list, authoritySummary(root, presentation.authoritySummary));
+  workflow.body.append(list);
+
+  const details = element(root, 'details', 'lafea-workbench__custody-details');
+  details.dataset.role = 'emp1-workflow-details';
+  details.append(element(root, 'summary', null, 'Readiness, review and technical custody'));
+  const detailBody = element(root, 'div');
+  detailBody.append(
+    element(root, 'p', 'lafea-workbench__section-intro',
+      'Work through the engineering assessment from source basis to retained evidence. These seven steps are presentation tasks over the governed EMP.1.A / EMP.1.B / EMP.1.C calculation and evidence layers; they are not separate calculators.'),
+    readinessDashboard(root, readiness),
+    authoritySummary(root, presentation.authoritySummary),
+  );
 
   const notice = currentnessNotice(root, presentation.currentnessNotice);
-  if (notice) workflow.body.append(notice);
+  if (notice) detailBody.append(notice);
   if (reviewWorkspace) {
-    workflow.body.append(renderEmp1EngineeringReviewPanel(
+    detailBody.append(renderEmp1EngineeringReviewPanel(
       root,
       reviewWorkspace,
       options.onReview,
     ));
   }
-  if (benchmarkEvidence) {
-    workflow.body.append(renderEmp1BenchmarkEvidencePanel(root, benchmarkEvidence));
-  }
 
   const boundary = element(root, 'p', 'lafea-workbench__authority',
     'Workflow status is presentation-only for calculation and release authority. An explicit engineering-review action may retain a hash-bound human attestation through the review controller, while external benchmark evidence may increase confidence; neither creates source, method, applicability, numerical, code-compliance, production, release, or professional-seal authority. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
   boundary.dataset.role = 'emp1-professional-workflow-authority-boundary';
-  workflow.body.append(boundary, technicalBackingDisclosure(root, presentation, onSelectRoute));
+  detailBody.append(boundary, technicalBackingDisclosure(root, presentation, onSelectRoute));
+  details.append(detailBody);
+  workflow.body.append(details);
   return workflow.section;
 }
 
 /**
- * A failed transaction is reported here, at the top of the first card under the
- * toolbar, as well as in the card that owns the failed state. Previously the only
- * trace sat roughly 5,000px down the page in the teal style used for routine
- * read-only notices, so a failed run looked identical to a disclaimer.
+ * A failed transaction is reported at the top of the workflow card. It remains
+ * outside the collapsed detail so a run failure can never be hidden by the
+ * task-shell compaction.
  */
 function runFailureBanner(root, runFailure) {
   if (!runFailure) return null;
@@ -143,17 +165,17 @@ function readinessDashboard(root, readiness) {
   section.append(dimensions);
 
   if (readiness.blockers.length) {
-    const details = element(root, 'details', 'lafea-workbench__custody-details');
-    details.dataset.role = 'emp1-readiness-blockers';
-    details.append(element(root, 'summary', null, `Blocking evidence (${readiness.blockers.length})`));
-    const list = element(root, 'ul');
+    const blockerDetails = element(root, 'details', 'lafea-workbench__custody-details');
+    blockerDetails.dataset.role = 'emp1-readiness-blockers';
+    blockerDetails.append(element(root, 'summary', null, `Blocking evidence (${readiness.blockers.length})`));
+    const blockers = element(root, 'ul');
     for (const code of readiness.blockers) {
       const item = element(root, 'li', null, human(code));
       item.dataset.blockerCode = code;
-      list.append(item);
+      blockers.append(item);
     }
-    details.append(list);
-    section.append(details);
+    blockerDetails.append(blockers);
+    section.append(blockerDetails);
   }
 
   const boundary = element(root, 'p', 'lafea-workbench__authority',
@@ -240,12 +262,11 @@ function navigateProfessionalStep(root, step, onSelectRoute) {
     scheduleTargetScroll(root, step.targetRole);
     return;
   }
-  if (step.stepId === 'REVIEW_EVIDENCE'
-    && scrollToRole(root, 'emp1-engineering-review-panel')) return;
   if (scrollToRole(root, step.targetRole)) return;
   if (step.stepId === 'REVIEW_EVIDENCE') {
     if (scrollToRole(root, 'emp1-benchmark-evidence-panel')) return;
     if (scrollToRole(root, 'emp1-c-result-evidence')) return;
+    if (scrollToRole(root, 'emp1-engineering-review-panel')) return;
     root.querySelector?.('[data-guided-target="lineage"]')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
 }
@@ -267,8 +288,28 @@ function scheduleTargetScroll(root, role) {
 function scrollToRole(root, role) {
   const target = root.querySelector?.(`[data-role="${role}"]`)
     ?? root.querySelector?.(`[data-guided-target="${role}"]`);
-  target?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  if (target) {
+    const parentDetails = target.closest?.('details');
+    if (parentDetails) parentDetails.open = true;
+    target.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  }
   return Boolean(target);
+}
+
+function notifyTaskShell(root, stepId) {
+  const shell = root.querySelector?.('[data-role="lafea-analytical-calc"]');
+  const CustomEventType = root.ownerDocument?.defaultView?.CustomEvent ?? globalThis.CustomEvent;
+  if (!shell || typeof shell.dispatchEvent !== 'function' || typeof CustomEventType !== 'function') return;
+  shell.dispatchEvent(new CustomEventType('emp1-task-shell-select', {
+    detail: { stepId },
+  }));
+}
+
+function setActiveWorkflowStep(buttons, activeButton) {
+  for (const button of buttons) {
+    if (button === activeButton) button.setAttribute('aria-current', 'step');
+    else button.removeAttribute?.('aria-current');
+  }
 }
 
 function human(value) {

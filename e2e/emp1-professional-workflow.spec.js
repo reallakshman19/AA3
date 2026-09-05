@@ -32,6 +32,7 @@ test('WRC professional workflow exposes seven engineer tasks and starts fail-clo
     await expect(steps.nth(index)).toBeEnabled();
   }
 
+  await expect(workflow.locator('[data-role="emp1-workflow-details"]')).not.toHaveAttribute('open', '');
   const summary = workflow.locator('[data-role="emp1-professional-authority-summary"]');
   await expect(summary).toContainText('SOURCE INPUT REQUIRED');
   await expect(summary).toContainText('TRANSFER INPUT REQUIRED');
@@ -68,6 +69,10 @@ test('current bounded WRC qualification sample produces current local evidence w
 
   await expect(workflow.locator('[data-role="emp1-professional-currentness-notice"]')).toHaveCount(0);
 
+  // Local result evidence is no longer part of the default document waterfall.
+  // Enter the Local Correlation task, which foregrounds the same retained result
+  // and run configuration without creating calculation or route authority.
+  await workflow.getByRole('button', { name: /^6 Local Correlation/u }).click();
   const cEvidence = workbench.locator('[data-role="emp1-c-result-evidence"]');
   await expect(cEvidence).toBeVisible();
   const governing = workbench.locator('[data-role="emp1-c-eight-point-governing"]');
@@ -96,10 +101,13 @@ test('seven-step route navigation lands on the intended WRC task surface', async
 
   await workflow.getByRole('button', { name: /^5 Section Screening/u }).click();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
-  await expect(workbench.locator('[data-guided-target="results"]')).toBeInViewport();
+  await expect(workbench.locator('[data-role="lafea-screening-load-custody"]')).toBeInViewport();
+  await expect(workbench.locator('[data-role="emp1-analytical-full-width-detail"]'))
+    .toHaveAttribute('data-emp1-evidence-view', 'screeningCustody');
 
   await workflow.getByRole('button', { name: /^6 Local Correlation/u }).click();
   await expect(workbench.locator('[data-role="emp1-c-run-configuration"]')).toBeInViewport();
+  await expect(workbench.locator('[data-role="emp1-c-result-evidence"]')).toBeVisible();
 
   await workflow.getByRole('button', { name: /^7 Review & Evidence/u }).click();
   await expect(workbench.locator('[data-role="emp1-product-execution-summary"]')).toBeInViewport();

@@ -106,6 +106,8 @@ export function renderDocumentTableEditor(
         documentValue,
         callbacks.onApplyJson,
       );
+      callbacks.onPresentationRefresh?.();
+      notifyPresentationRefresh();
       return;
     }
     delete content.dataset.lafeaRawJson;
@@ -120,6 +122,17 @@ export function renderDocumentTableEditor(
       batchScalarEdits: GROUPED_ANALYTICAL_STAGES.has(stageId)
         && typeof callbacks.onSetScalarBatch === 'function',
     });
+    callbacks.onPresentationRefresh?.();
+    notifyPresentationRefresh();
+  }
+
+  function notifyPresentationRefresh() {
+    const CustomEventType = documentRef.defaultView?.CustomEvent ?? globalThis.CustomEvent;
+    if (typeof CustomEventType !== 'function' || typeof container.dispatchEvent !== 'function') return;
+    container.dispatchEvent(new CustomEventType('lafea-document-table-presentation-refresh', {
+      bubbles: true,
+      detail: { stageId, mode },
+    }));
   }
 
   refresh();

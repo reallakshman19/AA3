@@ -1,0 +1,1 @@
+EP-0009: LEG-006 checker rerun PASS; #1660 and current main both fail the retained bundle ceiling, so the build gate is inherited. Browser automation remains environment-blocked; manual localhost evidence is still pending.

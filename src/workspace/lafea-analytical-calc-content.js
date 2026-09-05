@@ -16,7 +16,9 @@ import {
 } from './emp1-workbench-run-view.js';
 import { createEmp1BSourceCustodyCard } from './lafea-guided-workflow-view.js';
 import { projectEmp1BenchmarkEvidenceWorkspace } from './emp1-benchmark-evidence-workspace.js';
+import { renderEmp1BenchmarkEvidencePanel } from './emp1-benchmark-view.js';
 import { renderEmp1ProfessionalWorkflow } from './emp1-professional-workflow-view.js';
+import { composeEmp1AnalyticalLayout } from './emp1-analytical-layout.js';
 import { lafeaDocumentDigest } from './lafea-edit-command.js';
 import {
   EMP1_B_SOURCE_CUSTODY_STATES,
@@ -69,12 +71,12 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
 
   const engineeringReview = options.handlers.getEmp1EngineeringReviewWorkspace?.() ?? null;
   const benchmarkEvidence = projectEmp1BenchmarkEvidenceWorkspace();
-  shell.append(renderEmp1ProfessionalWorkflow(root, projection, options.onSelectRoute, {
+  const workflow = renderEmp1ProfessionalWorkflow(root, projection, options.onSelectRoute, {
     runFailure: options.emp1RunFailure,
     reviewWorkspace: engineeringReview,
     onReview: options.handlers.onEmp1EngineeringReview,
-    benchmarkEvidence,
-  }));
+  });
+  const benchmarkEvidencePanel = renderEmp1BenchmarkEvidencePanel(root, benchmarkEvidence);
 
   const route = card(root, 'Active EMP.1 step');
   route.section.dataset.guidedTarget = 'analytical-route';
@@ -177,20 +179,31 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   const lineage = card(root, `${step.stepId} evidence and lineage`);
   lineage.section.dataset.guidedTarget = 'lineage';
   lineage.body.append(renderLafeaLifecyclePanel(lineage.body, stageId, stage));
-  shell.append(route.section, source.section);
-  if (engineeringEvidence) shell.append(engineeringEvidence);
-  if (screeningCustody) shell.append(screeningCustody);
-  if (correlationAvailability) shell.append(correlationAvailability);
-  shell.append(boundedCorrelation, runConfiguration);
-  if (transactionSummary) shell.append(transactionSummary);
-  if (correlationResult) shell.append(correlationResult);
-  shell.append(settings.section, results.section, lineage.section);
 
+  let benchmark = null;
   if (options.benchmarkHost) {
-    const benchmark = card(root, `${step.stepId} verification output`);
-    benchmark.body.append(options.benchmarkHost);
-    shell.append(benchmark.section);
+    const benchmarkCard = card(root, `${step.stepId} verification output`);
+    benchmarkCard.body.append(options.benchmarkHost);
+    benchmark = benchmarkCard.section;
   }
+
+  composeEmp1AnalyticalLayout(shell, {
+    workflow,
+    route: route.section,
+    source: source.section,
+    engineeringEvidence,
+    screeningCustody,
+    correlationAvailability,
+    boundedCorrelation,
+    runConfiguration,
+    transactionSummary,
+    correlationResult,
+    settings: settings.section,
+    results: results.section,
+    lineage: lineage.section,
+    benchmarkEvidence: benchmarkEvidencePanel,
+    benchmark,
+  });
 
   applyEmp1BCurrentnessRunGate(root, step, projection);
   applyEmp1BPressureThrustRunGate(root, step, stage.document);

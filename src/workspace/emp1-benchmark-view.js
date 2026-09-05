@@ -46,7 +46,37 @@ function renderCauxEvidence(root, entry) {
   );
   section.append(status);
 
-  section.append(keyValueTable(root, [
+  const summary = evidence.comparison.summary;
+  const overview = element(root, 'div', 'lafea-workbench__custody');
+  overview.dataset.role = 'emp1-benchmark-caux-overview';
+  overview.append(
+    element(root, 'strong', null, 'CAUx comparison at a glance'),
+    keyValueTable(root, [
+      ['Source re-verification', humanState(entry.currentSourceQualification.directPdfPageReobservation)],
+      ['Comparison coverage', `${summary.withinToleranceCount} / ${summary.comparedQuantities} within frozen tolerance`],
+      ['Worst relative difference',
+        `${engineeringNumber(summary.worstRelativeDifferencePercent)} % · ${locationFromQuantityId(summary.worstRelativeDifferenceQuantityId)}`],
+      ['Governing point',
+        `${summary.governingReferenceLocation} reference / ${summary.governingEmp1Location} EMP.1 · Agreement: ${yesNo(summary.governingLocationAgreement)}`],
+      ['Engineering use authorized', yesNo(evidence.routeRelationship.engineeringUseAuthorized)],
+    ]),
+  );
+  section.append(overview);
+
+  const authority = element(root, 'p', 'lafea-workbench__authority', REQUIRED_AUTHORITY_STATEMENT);
+  authority.dataset.role = 'emp1-benchmark-table-authority-statement';
+  section.append(authority);
+
+  const audit = element(root, 'details', 'lafea-workbench__custody-details');
+  audit.dataset.role = 'emp1-benchmark-caux-audit-details';
+  audit.append(element(
+    root,
+    'summary',
+    null,
+    `Retained CAUx comparison and custody details (${evidence.comparison.quantities.length} points)`,
+  ));
+
+  audit.append(keyValueTable(root, [
     ['Comparator', `${evidence.comparator.name} · ${evidence.comparator.version ?? 'version unresolved'}`],
     ['Case', evidence.caseId],
     ['Authority role', humanState(evidence.authorityRole)],
@@ -58,7 +88,7 @@ function renderCauxEvidence(root, entry) {
     ['Comparison-time source observation (historical)',
       humanState(entry.currentSourceQualification.historicalComparisonObservationState)],
   ]));
-  section.append(technicalDetails(root, 'CAUx technical identifiers', [
+  audit.append(technicalDetails(root, 'CAUx technical identifiers', [
     ['Source PDF SHA-256', entry.currentSourceQualification.rawPdfSha256],
     ['Qualification ID', entry.currentSourceQualification.qualificationId],
     ['Retained execution repository commit', entry.executionCustody.repositoryCommit],
@@ -79,12 +109,9 @@ function renderCauxEvidence(root, entry) {
       ['Route ID', route.routeId],
     ]),
   );
-  section.append(routeBox);
-
-  const authority = element(root, 'p', 'lafea-workbench__authority', REQUIRED_AUTHORITY_STATEMENT);
-  authority.dataset.role = 'emp1-benchmark-table-authority-statement';
-  section.append(authority, comparisonTable(root, evidence.comparison.quantities));
-  section.append(comparisonSummary(root, evidence.comparison.summary));
+  audit.append(routeBox, comparisonTable(root, evidence.comparison.quantities));
+  audit.append(comparisonSummary(root, evidence.comparison.summary));
+  section.append(audit);
   return section;
 }
 

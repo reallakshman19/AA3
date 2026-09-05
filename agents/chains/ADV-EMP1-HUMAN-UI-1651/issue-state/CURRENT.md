@@ -1,139 +1,121 @@
 # Current Issue State — ADV-EMP1-HUMAN-UI-1651
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0012
 UPDATED_AT: 2026-09-05
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550269583
-
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551850304
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
-BRANCH: agent/emp1-human-ui-1651-leg002-pressure-matrix
-PR: 1658
-PR_STATUS: OPEN_DRAFT_LEG002_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+PARENT_ISSUE: 1651
+RECOVERY_CHILD_ISSUE: 1664
+RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual giant waterfall with task-shell UI
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551851245
+BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
+PR: 1660
+PR_STATUS: OPEN_DRAFT_OWNER_MERGE_AUTHORIZED_VALIDATION_RISK_RETAINED
 PR_BASE: main
-PR_HEAD_OBSERVED: 600b07c4adfa405f19fe271f7b549ca69d507de9
-MAIN_HEAD_OBSERVED: 0569ed29be02d4fb642bdfd370ae91004cde073a
-MERGEABILITY: MERGEABLE
-REVIEWS: 0
+MAIN_HEAD_OBSERVED: 2126f2c45e9a77debedf5ad0cabfafc426fca095
+MAIN_DRIFT_CLASSIFICATION: NON_MATERIAL_TO_TASK_SHELL_RECOVERY
+MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
+REVIEWS: 1
+REVIEW_STATES: COMMENTED
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-STATUS_CONTEXTS_MATERIAL_HEAD: 0
-PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
-
-PREVIOUS_PR: 1655
-PREVIOUS_PR_STATUS: MERGED
-PREVIOUS_PR_MERGE_COMMIT: 840d439cb39eb1c334cc0d7593eb2c45085599c6
-POST_BASIS_DRIFT: MATERIAL_WITHIN_OTHER_DISJOINT_ENGINEERING_BOUNDARY
-POST_BASIS_DRIFT_DETAIL: main advanced after #1655 through LAFEA.3 benchmark/validation work only; LEG-002 was re-grounded on `0569ed29...` before material coding.
-
-PREWORK_ENDPOINT: EP-0001
-PREWORK_COMMIT: 0f95a1b7b6003ea6e68c5346ca3bcb110dee8778
-ACTIVE_ENDPOINT: EP-0003
-LAST_COMPLETED_MATERIAL_LEG: LEG-002
-MATERIAL_HEAD: 8b6e126a5f5a14f99547937cb61c970c91e5b3cd
-MATERIAL_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-002.md
+STATUS_CONTEXTS_AT_MATERIAL_HEAD: 0
+PR_WORKFLOW_RUNS_AT_MATERIAL_HEAD: 0
+PREVIOUS_PR: 1658
+PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
+PREVIOUS_PR_MERGE_COMMIT: b39f7673737bd1f7f4a6d7dd9d1538f795874281
+PREWORK_ENDPOINT: EP-0011
+ACTIVE_ENDPOINT: EP-0012
+LAST_COMPLETED_MATERIAL_LEG: LEG-008
+MATERIAL_HEAD: c20fe080d91aad58d1dbb12e98d0a5c7546403e7
+MATERIAL_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-008.md
 CURRENT_MATERIAL_LEG: NONE
-NEXT_MATERIAL_LEG: LEG-003 / ANTI_WATERFALL_LAYOUT / COMMAND_BLOCKED
 
 ## Original task / acceptance ledger
+- TASK-001 | Live-DOM raw-machine-token regression gate. | SOURCE COMPLETE; LEG-008 updates scanning to visit every selectable evidence view so progressive disclosure cannot weaken coverage. Automated browser execution remains BLOCKED_ENVIRONMENT / NOT_RUN.
+- TASK-002 | Shared identity × value-column renderer; Pressure 5 × 2. | SOURCE COMPLETE; LEG-008 preserves the same governed 5 × 2/source-ref/undo-redo browser contract and enters the Loads task before exercising it. Browser/manual execution pending.
+- TASK-003 | Replace append-only waterfall with two-column/equivalent architecture. | **RECOVERY SOURCE COMPLETE / MANUAL ACCEPTANCE PENDING.** LEG-008 introduces compact workflow navigation, one active task, bounded basis rail and one-selected-view evidence workspace. The prior full-page FAIL is not promoted to PASS until the recovered UI is re-observed.
+- TASK-004 | CAUx staged integration/hardening. | SOURCE COMPLETE and moved behind selectable Evidence Workspace presentation without changing retained authority/numerics. CAUx/PV Elite browser execution pending.
+- TASK-005 | Preserve numerical/source/tolerance/route/code/release authority. | PRESERVED THROUGH LEG-008 source/diff inspection.
 
-- TASK-001 | Live-DOM raw-machine-token regression gate. | MERGED_SOURCE via #1655 / integrated execution NOT_RUN in this session
-- TASK-002 | Shared identity × value-column renderer; Pressure 5 × 2. | SOURCE_COMPLETE LEG-002 / integrated execution NOT_RUN
-- TASK-003 | Two-column/equivalent anti-waterfall layout architecture. | OPEN / NEXT
-- TASK-004 | CAUx staged integration/hardening based on current formal benchmark surface. | PARTIAL — state/identifier presentation hardened; layout hierarchy remains OPEN
-- TASK-005 | Preserve numerical/source/tolerance/route/code/release authority. | REQUIRED / preserved by current material diff boundary
+## LEG-008 recovery architecture
 
-## LEG-002 result
+```text
+COMPACT WORKFLOW NAV
+        |
+ACTIVE TASK | BASIS / AUTHORITY RAIL
+        |
+RESULTS & EVIDENCE — one selected heavy view
+```
 
-- Added `src/workspace/lafea-governed-matrix-presentation.js` as a presentation-only declared matrix registry.
-- Pressure exact columns are existing governed descriptors `LAFEA.1.pressure.internal` and `LAFEA.1.pressure.external`.
-- Matrix admission requires a complete family with agreeing stage, group/control, collection path, identity key, value/unit contracts, invalidation and authority.
-- Incomplete/incompatible families fall back to scalar rendering.
-- Generic renderer preserves one existing governed `(descriptorId, entityId)` instance per visible value cell and preserves distinct per-cell source refs.
-- Existing complete X/Y/Z Reference-point and Load force/moment grouping remains equivalent; prior vector descriptor-specific custody path remains visible.
-- Batch Apply/Undo/Redo ownership remains in existing edit/store commands; presentation does not become mutation authority.
-- No StageInputDescriptor engineering target/schema mutation was required.
-
-## Pressure oracle
-
-Five-identity independent qualification document:
-
-- P-CLOSED = 2 / 0 MPa
-- P-OPEN = 2 / 0 MPa
-- P-EXPLICIT = 2 / 0 MPa
-- P-UNSPECIFIED = 2 / 0 MPa
-- P-EXTERNAL = 0 / 1 MPa
-
-Cardinality: 5 identities × 2 columns = 10 existing governed scalar instances.
-Independent transpose oracle: P-EXTERNAL `Pi-Po = -1 MPa`; a column swap would produce +1 MPa.
-
-The shipped LAFEA.1 demonstration fixture remains unchanged at its existing four definitions. The browser qualification adds P-EXTERNAL only through the normal public empirical-document import boundary to exercise exact 5×2 acceptance.
-
-## Benchmark / authority ledger
-
-- CAUx qualification V3 and frozen comparison values/tolerance/history: UNCHANGED.
-- Retained CAUx comparison remains 8/8 within frozen 3%, worst relative difference 2.0355862430856293% at Cu, governing Du/Du agreement.
-- CAUx remains independent comparison evidence and does not create WRC method, engineering-use, code or release authority.
-- PV Elite remains `REFERENCE_NOT_AVAILABLE`; no source/version/reference values/tolerance were invented.
-- Pressure mechanics, WRC equations/tables/sign/axis/applicability, route authorization, code/release/deployment state and `.github/workflows/**`: UNCHANGED.
-
-## Roadmap ledger
-
-- RM-001 | `EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e` | PROJECT_ROADMAP | ROADMAP_STATUS_STALE_BUT_SCOPE_ALIGNED; current Owner issue #1651 re-prioritizes §6.4 without roadmap mutation authority.
-- RM-002 | #1633 benchmark plan | ALIGNED.
-- RM-003 | #1645 / PR #1648 | merged benchmark UI input.
-
-## Qualification / authority
-
-COMMON_PROTOCOL: engineering-pr-delivery-v2
-COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
-COMMON_PROTOCOL_STATUS: CURRENT
-OWNER_TEXT_OBSERVED: `merge, proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_002
-OWNER_MERGE_COMMAND: EXECUTED_FOR_PR_1655_ONLY
-
-QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
-QUALIFICATION_PROFILE_VERSION: 2
-QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-ANTI-WATERFALL-LAYOUT
-QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0003
-QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0003-questions.md
-QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED
-QUESTION_DISPLAY: SHOW
-QUALIFICATION_STATE: NOT_REQUIRED
-PREWORK_QUALIFICATION_READY: TRUE
-TAKEOVER_QUALIFICATION_READY: TRUE
-
-ENGINEERING_STATE: LEG_002_SOURCE_COMPLETE_EXECUTION_NOT_RUN
-CUSTODY_STATE: HELD
-WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
-AUTO_STATE: NOT_APPLICABLE
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+- seven professional workflow controls retained;
+- workflow readiness/review/technical custody detail is closed/on-demand by default;
+- presentation task selection does not enter engineering/controller calculation state;
+- task-specific governed editor groups prevent the source card becoming a smaller nested waterfall;
+- Loads -> Pressure + Load Cases;
+- Geometry -> Pipe Geometry + Thickness;
+- Load Transfer -> Reference Points;
+- Section Screening -> existing Screening Custody foregrounded;
+- hidden evidence remains in DOM custody but must contribute zero rendered geometry;
+- exactly one heavy evidence view participates in layout;
+- basis/evidence are height-bounded; desktop task+basis split and narrow stacking remain guarded;
+- loaded-page recovery falsifier targets `<6` viewport-heights versus prior `9668/958 = 10.091858037578289`.
 
 ## Validation truth
 
-PASS — source/diff/custody inspection:
-- live Common/project/main re-ground completed;
-- disjoint post-#1655 main drift classified and reconciled before material coding;
-- changed material paths limited to presentation helper/renderer and focused static/browser tests;
-- no protected pressure/WRC/benchmark/route/workflow owner changed;
-- PR #1658 mergeability/review/thread state inspected at material freeze;
-- Issue endpoint/Active comments synchronized to EP-0003.
+PASS by repository source/diff/custody inspection only:
+- LEG-008 fixed material head `c20fe080d91aad58d1dbb12e98d0a5c7546403e7`;
+- exactly 15 material files from admitted material base, all presentation/test/evidence/manual-protocol boundary;
+- no `.github/workflows/**` or protected WRC/Pressure calculation/benchmark authority files in LEG-008 material delta;
+- Common engineering-delivery skill content unchanged across unrelated Common main drift;
+- Advanced_Analysis main drift to `2126f2c45e9a77debedf5ad0cabfafc426fca095` is non-overlapping with task-shell recovery files;
+- PR observed mergeable, one COMMENTED review, zero unresolved review threads.
 
-PASS — syntax-only:
-- local Node `--check` on drafted changed JavaScript. This is syntax evidence only.
+NOT_RUN/BLOCKED at frozen LEG-008 head:
+- focused static task-shell scripts: NOT_RUN in connected GitHub-only environment;
+- focused Playwright task-shell/raw-token/Pressure/benchmark specs: BLOCKED_ENVIRONMENT / NOT_RUN because project-local Chromium is absent;
+- desktop/narrow structured manual audit + full-page human-factor acceptance: NOT_RUN;
+- trusted CAUx Enter/Space observation: NOT_RUN;
+- `npm run check:imports`, build, `git diff --check`: NOT_RUN here;
+- status contexts 0 and PR workflow runs 0; zero is not PASS.
 
-NOT_RUN — repository-integrated execution:
-- focused static qualification in faithful checkout;
-- `npm run check:emp1-ui`;
-- Playwright grouped-edit test;
-- Stage-17 browser carrier;
-- production build/import suite.
+Prior build differential remains inherited repository debt and is not promoted to PASS.
 
-Reason: no faithful mounted project checkout/project-local dependencies/browser runtime in this session. Zero GitHub status contexts/workflow runs is not engineering PASS.
+## Benchmark / authority ledger
+- CAUx retained comparison remains 8/8 within frozen 3%; Cu worst relative 2.0355862430856293%; Du worst absolute 26.786740343133943 kPa; governing Du/Du agreement; `engineeringUseAuthorized=false`.
+- PV Elite remains `REFERENCE_NOT_AVAILABLE` / `SOURCE_NOT_RETAINED`, zero rows, no expected values/version/tolerance invented.
+- WRC mechanics, Pressure mechanics/descriptors/source refs, benchmark JSON/core, route registry, code/release/deployment, FEA/LAFEA.3+, roadmap text and `.github/workflows/**`: UNCHANGED by LEG-008.
 
-CURRENT_BLOCKER: new material progression requires a new exact Owner progression command; executable LEG-002 qualification remains external/NOT_RUN.
-EXACT_NEXT_ACTION: Owner sends `proceed next`; execute LEG-003 anti-waterfall analytical layout only under `QSCOPE-1651-EMP-ANTI-WATERFALL-LAYOUT`. Do not merge PR #1658 without a new Owner merge command.
+## Qualification / authority
+COMMON_PROTOCOL: engineering-pr-delivery-v2
+COMMON_PROTOCOL_BASIS: 3e21f0054ab8d80b7fe045e7c105a81643fcbbf7
+COMMON_PROTOCOL_STATUS: CURRENT
+OWNER_TEXT_OBSERVED: `merge, proceed`
+OWNER_PROGRESSION_COMMAND: NONE_VALID_IN_CURRENT_MESSAGE
+OWNER_MERGE_COMMAND: MERGE_PR_1660
+QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
+QUALIFICATION_PROFILE_VERSION: 2
+QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
+QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
+QUESTION_SET_STATUS: CURRENT
+QUESTION_PACK_ACTION: REFRESHED_FOR_LEG008
+QUESTION_DISPLAY: HIDE
+QUALIFICATION_STATE: NOT_REQUIRED
+TAKEOVER_QUALIFICATION_READY: TRUE
+ENGINEERING_STATE: TASK_003_RECOVERY_SOURCE_COMPLETE_MANUAL_VALIDATION_PENDING
+CUSTODY_STATE: HELD
+WRITE_AUTHORITY: READ_ONLY_AWAITING_OWNER_MERGE_EXECUTION
+AUTO_STATE: NOT_APPLICABLE
+MERGE_AUTHORITY: OWNER_ONLY
+MERGE_AUTHORIZED: TRUE
+HANDOVER_CONTENT_READY: TRUE
+HANDOVER_VALIDATION_STATUS: MANUAL_BROWSER_NOT_RUN_AUTOMATION_BLOCKED
+CHAIN_HANDOVER_READY: TRUE
+HANDOVER_READY: FALSE
+
+CURRENT_BLOCKER: recovered task-shell human-factor/browser acceptance is NOT_RUN. Owner explicitly authorized merge despite that retained validation risk.
+EXACT_NEXT_ACTION: refresh final PR/branch head, mark Draft #1660 ready only as needed for merge, merge at the exact freshly observed relay head, and stop. Plain `proceed` is not an exact successor progression command; a new material progression requires exact `proceed next`.

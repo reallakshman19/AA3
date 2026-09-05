@@ -3,97 +3,84 @@
 CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 COMMON_PROTOCOL: engineering-pr-delivery-v2
-COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
+COMMON_PROTOCOL_BASIS: 3e21f0054ab8d80b7fe045e7c105a81643fcbbf7
 COMMON_PROTOCOL_STATUS: CURRENT
-
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 WORK_ITEM_MODE: EXCLUSIVE
 AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
-
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0003
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0003.md
-MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0001.md
-
-PREVIOUS_PR: 1655
-PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
-PREVIOUS_PR_MERGE_COMMIT: 840d439cb39eb1c334cc0d7593eb2c45085599c6
-PR: 1658
-PR_STATUS: OPEN_DRAFT_LEG002_SOURCE_COMPLETE_EXECUTION_NOT_RUN
-BRANCH: agent/emp1-human-ui-1651-leg002-pressure-matrix
+ENDPOINT: EP-0012
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0012.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0011.md
+PR: 1660
+PR_STATUS: OPEN_DRAFT_OWNER_MERGE_AUTHORIZED_VALIDATION_RISK_RETAINED
+BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
-PR_HEAD_OBSERVED: 600b07c4adfa405f19fe271f7b549ca69d507de9
-MAIN_HEAD_OBSERVED: 0569ed29be02d4fb642bdfd370ae91004cde073a
-MERGEABILITY: MERGEABLE
-REVIEWS: 0
+MAIN_HEAD_OBSERVED: 2126f2c45e9a77debedf5ad0cabfafc426fca095
+MAIN_DRIFT_CLASSIFICATION: NON_MATERIAL_TO_TASK_SHELL_RECOVERY
+MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
+REVIEWS: 1
+REVIEW_STATES: COMMENTED
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-STATUS_CONTEXTS_MATERIAL_HEAD: 0
-PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
-LATEST_MATERIAL_HEAD: 8b6e126a5f5a14f99547937cb61c970c91e5b3cd
-LAST_COMPLETED_MATERIAL_LEG: LEG-002
+STATUS_CONTEXTS_AT_MATERIAL_HEAD: 0
+PR_WORKFLOW_RUNS_AT_MATERIAL_HEAD: 0
+LATEST_MATERIAL_HEAD: c20fe080d91aad58d1dbb12e98d0a5c7546403e7
+LAST_COMPLETED_MATERIAL_LEG: LEG-008
 CURRENT_MATERIAL_LEG: NONE
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-002.md
-
-ENGINEERING_STATE: LEG_002_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-008.md
+ENGINEERING_STATE: TASK_003_RECOVERY_SOURCE_COMPLETE_MANUAL_VALIDATION_PENDING
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
+WRITE_AUTHORITY: READ_ONLY_AWAITING_OWNER_MERGE_EXECUTION
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
-AUTHORITY_DOMAIN: EMP.1 presentation/layout only; pressure mechanics and WRC/benchmark/source/route/code/release authority protected.
+MERGE_AUTHORIZED: TRUE
+AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 4
-COORDINATION_STATE: SAFE_POST_LEG002_FREEZE
-POST_BASIS_DRIFT: MATERIAL_WITHIN_OTHER_DISJOINT_ENGINEERING_BOUNDARY
-POST_BASIS_DRIFT_DETAIL: main advanced after #1655 by LAFEA.3 benchmark/validation work only; LEG-002 was re-grounded to `0569ed29...` before material coding.
-DEPENDENCIES: #1633 planning context; #1645 / PR #1648 merged; LEG-001 / PR #1655 merged.
-
+CUSTODY_EPOCH: 16
+COORDINATION_STATE: LEG008_FROZEN_OWNER_MERGE_AUTHORIZED
+POST_BASIS_DRIFT: COMMON_AND_MAIN_DRIFT_RECONCILED_NON_MATERIAL
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
-ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0012
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550269583
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551850304
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
-
-OWNER_TEXT_OBSERVED: `merge, proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_002
-OWNER_MERGE_COMMAND: EXECUTED_FOR_PR_1655_ONLY
-
+PARENT_ISSUE: 1651
+RECOVERY_CHILD_ISSUE: 1664
+RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual giant waterfall with task-shell UI
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551851245
+OWNER_TEXT_OBSERVED: `merge, proceed`
+OWNER_PROGRESSION_COMMAND: NONE_VALID_IN_CURRENT_MESSAGE
+OWNER_MERGE_COMMAND: MERGE_PR_1660
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
 ROADMAP_ALIGNMENT: ROADMAP_STATUS_STALE_BUT_SCOPE_ALIGNED
 ROADMAP_MUTATION_AUTHORITY: NONE
-
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
 QUALIFICATION_PROFILE_VERSION: 2
-QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-ANTI-WATERFALL-LAYOUT
-QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0003
-QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0003-questions.md
+QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
+QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
+QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0006-questions.md
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED
-QUESTION_DISPLAY: SHOW
-PREWORK_QUALIFICATION_READY: TRUE
+QUESTION_PACK_ACTION: REFRESHED_FOR_LEG008
+QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
-
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: LEG-002 source/diff/custody and syntax-only evidence; repository-integrated Node/Playwright/build/import validation unavailable in this session.
+HANDOVER_VALIDATION_STATUS: MANUAL_BROWSER_NOT_RUN_AUTOMATION_BLOCKED
 CHAIN_HANDOVER_READY: TRUE
-TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
-
-VALIDATION: source/diff/custody inspection PASS; syntax-only local Node check PASS; repository-integrated static/browser/build/import execution NOT_RUN. Zero status contexts/workflow runs on material head is not PASS.
-AUTHORITY_BOUNDARY: LEG-002 only reorganizes existing governed descriptor instances into a fail-conservative identity × value-column presentation; it does not alter pressure mechanics, WRC method/source/route authority, benchmark custody, code/release or deployment authority.
-CURRENT_BLOCKER: new material coding requires another exact Owner progression command; executable LEG-002 qualification remains NOT_RUN externally.
-LEG_DIAGNOSIS: Pressure matrix source implementation is complete; next issue acceptance gap is the single-column analytical waterfall.
-EXACT_NEXT_ACTION: Owner invokes `proceed next`; execute LEG-003 anti-waterfall input/engineering-basis layout only under `QSCOPE-1651-EMP-ANTI-WATERFALL-LAYOUT`, preserving every engineering surface exactly once from the same projection. Do not merge PR #1658 without a new Owner merge command.
+VALIDATION_PASS_OBSERVED: source/diff/custody inspection only for LEG-008; prior focused passes remain scoped to their exact earlier heads/contracts.
+VALIDATION_LIVE_UX: PRIOR_FAIL_SUPERSEDED_BY_RECOVERY_SOURCE_NOT_YET_REOBSERVED
+VALIDATION_NOT_RUN_LEG008: emp1-analytical-layout-check; emp1-issue1651-acceptance-check; emp1-manual-browser-audit-check; focused task-shell/raw-token/Pressure/benchmark browser specs; desktop/narrow manual audit; trusted keyboard observation; check:imports; build; git diff --check at frozen head.
+VALIDATION_BUILD_GATE: inherited repository failure previously established; no new LEG-008 build execution observed.
+VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains blocked because project-local Chromium is absent; zero workflow runs/status contexts are not PASS.
+AUTHORITY_BOUNDARY: LEG-008 is presentation/information-architecture + acceptance evidence only. No WRC/Pressure numerical mechanics, retained benchmark values/tolerance/source authority, route/code-release authority, roadmap, or workflow-YAML change.
+CURRENT_BLOCKER: human-factor/browser acceptance for the recovered task shell is NOT_RUN. Owner nevertheless explicitly authorized merge and that risk truth must survive merge.
+EXACT_NEXT_ACTION: refresh final PR/branch head, mark Draft PR #1660 ready only as necessary to execute the explicit Owner merge command, merge at the exact observed relay head, then stop. Plain `proceed` does not authorize a successor material progression; a successor requires exact `proceed next`.

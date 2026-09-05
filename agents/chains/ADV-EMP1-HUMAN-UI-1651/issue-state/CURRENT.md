@@ -13,7 +13,7 @@ BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR: 1660
 PR_STATUS: OPEN_DRAFT_LEG004_IN_PROGRESS
 PR_BASE: main
-PR_HEAD_OBSERVED: db48420338f9a3a05d84dbaeff36f8e6b26e50ea
+PR_HEAD_OBSERVED: 2562a89144c4f074a75a4fd03794967aef258f3c
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
 MERGEABILITY: MERGEABLE_PRE_LEG004
 REVIEWS: 0
@@ -103,5 +103,5 @@ PASS — pre-material reconciliation:
 
 NOT_RUN — LEG-004 executable/browser/build validation; material patch not yet frozen.
 
-CURRENT_BLOCKER: none.
-EXACT_NEXT_ACTION: execute one bounded LEG-004 benchmark/evidence hierarchy patch under QSCOPE-1651-EMP-BENCHMARK-HIERARCHY, freeze receipt/successor endpoint, synchronize issue comments and stop. Do not merge PR #1660 without a new explicit Owner merge command.
+CURRENT_BLOCKER: issue Active projection needs synchronization before material mutation.
+EXACT_NEXT_ACTION: synchronize issue Active to the refreshed benchmark-hierarchy qualification, then execute one bounded LEG-004 benchmark/evidence hierarchy patch, freeze receipt/successor endpoint, synchronize issue comments and stop. Do not merge PR #1660 without a new explicit Owner merge command.

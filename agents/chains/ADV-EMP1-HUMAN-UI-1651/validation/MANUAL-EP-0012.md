@@ -56,10 +56,12 @@ Use the seven workflow buttons and confirm the active body changes rather than a
 2 Geometry            -> Pipe geometry + Thickness, plus governed correlation geometry/configuration
 3 Loads               -> Pressure + Load cases only
 4 Load Transfer       -> Reference points only; result available through evidence workspace
-5 Section Screening   -> Screening cases + Evaluation locations only
+5 Section Screening   -> Screening cases + Evaluation locations; Screening custody is the selected evidence view
 6 Local Correlation   -> governed Local Correlation run configuration; source editor hidden
 7 Review & Evidence   -> execution/evidence workspace selected; workflow detail remains closed unless explicitly opened
 ```
+
+Also verify legacy A/B backing-stage navigation remains compatible: entering EMP.1.B directly must reconcile the presentation shell to **Section Screening** and foreground the existing Screening Custody surface rather than hiding its governed edit controls.
 
 At each step, confirm inactive input groups and inactive heavy evidence panels do not remain stacked underneath.
 

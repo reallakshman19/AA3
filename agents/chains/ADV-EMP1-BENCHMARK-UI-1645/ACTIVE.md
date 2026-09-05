@@ -14,32 +14,36 @@ AGENT_INSTANCE_ID: chatgpt:1e0df8cb-8a9c-4c20-9d1f-8d29a3f88f81
 REPO: reallaksh19/Advanced_Analysis
 TASK: Surface already-frozen CAUx benchmark evidence in EMP.1 Review & Evidence; show PV Elite as unavailable; create no new engineering authority.
 CHAIN: ADV-EMP1-BENCHMARK-UI-1645
-ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0002.md
+ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0003.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0002.md
 
 PR: 1648
-PR_STATUS: OPEN_DRAFT_STACKED_ON_1622
+PR_STATUS: OPEN_DRAFT_MERGEABLE_STACKED_ON_1622
 BRANCH: agent/emp1-benchmark-ui-1645-prework
 STACK_BASE_PR: 1622
 STACK_BASE_BRANCH: agent/emp1-engineering-review-ui-v1
 STACK_BASE_HEAD: bed2d28d9cc85fcbecf6dbc9ed8f4afde00f80be
-MERGEABILITY: PENDING_BRANCH_ALIGNMENT
+MATERIAL_HEAD: 31cd0188edf6915167c84fc8950e5d6ad2ca6d3e
+MERGEABILITY: MERGEABLE
+REVIEWS: 0
+UNRESOLVED_THREADS: 0
+REQUIRED_CHECKS: EMP1_BENCHMARK_EVIDENCE_UI_CHECK_AUTHORED_NOT_RUN; EXISTING_FOCUSED_CHECKS_NOT_RUN; BROWSER_NOT_RUN; IMPORTS_BUILD_DIFF_NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: READY_FOR_BOUNDED_MATERIAL_LEG
+ENGINEERING_STATE: BENCHMARK_EVIDENCE_UI_LEG_COMPLETE
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: PASS_OWNER_ADMITTED
-WRITE_AUTHORITY: WRITE_ALLOWED_LEG_001_ONLY
-AUTO_STATE: NOT_APPLICABLE
+WRITE_AUTHORITY: READ_ONLY_PENDING_NEXT_OWNER_PROGRESSION
+AUTO_STATE: PAUSED
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/issue-state/CURRENT.md
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548798517
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548799269
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5548877405
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5548932787
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 OWNER_INSTRUCTION: fix and proceed
@@ -57,19 +61,26 @@ OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
 OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
 
-ORIGINAL_TASK_STATUS: READY_FOR_MATERIAL
+ORIGINAL_TASK_STATUS: IMPLEMENTED_SOURCE_VALIDATION_PENDING
 INPUT_STATUS: CAUX_RETAINED_COMPARISON_AVAILABLE; CAUX_QUALIFICATION_V3_PASS; PV_ELITE_REFERENCE_NOT_AVAILABLE
-BENCHMARK_ORACLE_STATUS: CAUX_8_OF_8_WITHIN_FROZEN_3_PERCENT; WORST_RELATIVE_CU_2P0355862430856293_PERCENT; GOVERNING_DU_AGREES; INTERPOLATED_ROUTE_COMPARISON_ONLY_ENGINEERING_USE_UNAUTHORIZED
+BENCHMARK_ORACLE_STATUS: CAUX_8_OF_8_WITHIN_FROZEN_3_PERCENT; WORST_RELATIVE_CU_2P0355862430856293_PERCENT; WORST_ABSOLUTE_DU_26P786740343133943_KPA; GOVERNING_DU_AGREES; INTERPOLATED_ROUTE_COMPARISON_ONLY_ENGINEERING_USE_UNAUTHORIZED
 ROADMAP_STATUS: EMP_TAB_UI_RECOMMENDATIONS_ALIGNED
 POST_BASIS_DRIFT: DEPENDENCY_RECONCILED_WITHIN_QUALIFIED_BOUNDARY
 
 OVERLAP:
 - #1622 OPEN/DRAFT/MERGEABLE is the selected stack base and owns governed review integration.
-- #1624 OPEN/DRAFT owns engineering-review workspace/view; #1645 must not touch those files.
+- #1624 OPEN/DRAFT owns engineering-review workspace/view; #1645 does not touch those files.
 - #1640 predecessor benchmark evidence is MERGED.
 
-CURRENT_MATERIAL_LEG: LEG-001
-LAST_COMPLETED_MATERIAL_LEG: NONE
+CURRENT_MATERIAL_LEG: NONE
+LAST_COMPLETED_MATERIAL_LEG: LEG-001
+
+MATERIAL_FILES:
+- src/workspace/emp1-benchmark-evidence-workspace.js
+- src/workspace/emp1-benchmark-view.js
+- scripts/emp1-benchmark-evidence-ui-check.mjs
+- src/workspace/emp1-professional-workflow-view.js
+- src/workspace/lafea-analytical-calc-content.js
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
@@ -77,8 +88,8 @@ CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-VALIDATION: prework/dependency synchronization PASS; all #1645 material executable checks NOT_RUN.
+VALIDATION: source/diff scope audit PASS; GitHub mergeability MERGEABLE; focused executable checker authored but NOT_RUN; existing focused/browser/imports/build/diff checks NOT_RUN.
 
-AUTHORITY_BOUNDARY: presentation/composition only; no WRC calculation/source/method/applicability, route authorization, benchmark expected-value/tolerance, code/release/deployment, cryptographic-signature or professional-seal authority.
-CURRENT_BLOCKER: NONE_FOR_LEG_001_PRESENTATION_SCOPE.
-EXACT_NEXT_ACTION: align this branch to the #1622 stack base while preserving #1645 custody, then implement one bounded benchmark workspace+renderer+consumer/check leg. Do not modify engineering-review workspace/view. Do not merge.
+AUTHORITY_BOUNDARY: presentation/composition only; external benchmark evidence cannot create WRC method/engineering-use, source/applicability, route, code/release/deployment, cryptographic-signature or professional-seal authority; UI-authored engineering hashes are forbidden.
+CURRENT_BLOCKER: EXECUTABLE_VALIDATION_AND_BROWSER_EVIDENCE_NOT_RUN.
+EXACT_NEXT_ACTION: on the next Owner progression command, re-ground #1622/#1648, execute the focused validation ladder in an available execution environment, and add EMP-only browser evidence if clean. Keep PR #1648 Draft/unmerged.

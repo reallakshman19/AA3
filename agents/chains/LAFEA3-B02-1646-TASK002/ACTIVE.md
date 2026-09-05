@@ -12,10 +12,12 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1646
 WORK_ITEM_MODE: EXCLUSIVE
 TASK: TASK-002
 AUTHORITY_DOMAIN: MESH_GENERATION
-ACTIVE_ENDPOINT: EP-0001
-ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-B02-1646-TASK002/endpoints/EP-0001.md
+ACTIVE_ENDPOINT: EP-0002
+ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-B02-1646-TASK002/endpoints/EP-0002.md
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
-OWNER_TEXT_OBSERVED: proceed next
+OWNER_TEXT_OBSERVED: proceed in next batches in auto mode
+EXECUTION_MODE: AUTO
+PHASE_PROGRESSION: AUTO
 QUALIFICATION_SCOPE_ID: QSCOPE-1646-TASK002-MESH_GENERATION
 QUESTION_SET_ID: QS-1646-TASK002-0001
 QUESTION_SET_STATUS: CURRENT
@@ -32,7 +34,8 @@ QUALIFICATION_STATE: PENDING
 WRITE_AUTHORITY: READ_ONLY
 ENGINEERING_STATE: READY
 CUSTODY_STATE: HELD
-AUTO_STATE: PAUSED
+AUTO_STATE: BLOCKED
+AUTO_BLOCKER: QUALIFICATION_PASS_REQUIRED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 BRANCH: chatgpt/issue-1646-task-002-kirsch-mesh
@@ -50,21 +53,22 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/LAFEA3-B02-1646-TASK002/issue-state/CURR
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549219882
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549220801
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549392810
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
+HANDOVER_VALIDATION_STATUS: NOT_RUN
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-# Active handover — TASK-002 candidate qualification
+# Active handover — TASK-002 AUTO qualification stop
 
-TASK-001 is merged; its validation remains `NOT_RUN`. TASK-002 has no production patch and no PR.
+TASK-001 remains merged with validation `NOT_RUN`. TASK-002 has no production patch and no PR.
 
-The current candidate trace establishes a concrete first wrong boundary: the frozen B02C definition carries `curvatureToleranceDegrees` values `11.25`, `5.625`, `2.8125`, but `scripts/lib/lafea-b02-kirsch-production-route.mjs` calls `store.generateAnalysisMesh()` without that override. The qualified configuration boundary therefore uses its `15` degree fallback at all three levels before building the governed intent.
+Owner AUTO execution authorization is recorded, but AUTO cannot cross the current qualification boundary. `CANDIDATE-QUALIFICATION-0001.md` remains pending independent verification; Common forbids candidate self-verification and forbids `WRITE_ALLOWED` while qualification is PENDING. AUTO is therefore `BLOCKED`, not RUNNING.
 
-The candidate safe patch, if independently qualified, is route-level request propagation plus the minimum regression seam required to prove the frozen request reaches configuration/intent and to replay B02C without weakening the `0.20` scaled-Jacobian gate.
+The current first wrong boundary remains B02C request propagation: the frozen levels carry curvature tolerances `11.25`, `5.625`, `2.8125`, while the Kirsch route calls `store.generateAnalysisMesh()` without the override and the qualified configuration falls back to `15` degrees.
 
-Protected unchanged: frozen B02C definition/oracle, mesh-quality thresholds, solver/acceptance authority, workflows, B02D-V2 adoption, roadmaps, release/temperature/deployment authority.
+Protected unchanged: frozen B02C definition/oracle, `0.20` mesh-quality gate, solver/acceptance authority, workflows, B02D-V2 adoption, roadmaps and release/temperature/deployment authority.
 
 ## Exact next action
 
-Independent/Owner verification of `CANDIDATE-QUALIFICATION-0001.md`. Keep WRITE_AUTHORITY=READ_ONLY and do not open a TASK-002 material leg until qualification PASS is explicitly granted.
+Obtain an independent/Owner qualification PASS for TASK-002. Then reconcile against live main, clear WRITE authority only if current-state authority remains safe, set AUTO RUNNING, and execute the route-propagation leg automatically. Until then, no TASK-002 material leg may open.

@@ -15,6 +15,9 @@ const paths = Object.freeze({
   benchmarkStatic: 'scripts/emp1-benchmark-evidence-ui-check.mjs',
   benchmark: 'e2e/emp1-benchmark-evidence.spec.js',
   carrier: 'scripts/lafea-stage17-browser-run.mjs',
+  manualAudit: 'scripts/emp1-manual-browser-audit.js',
+  manualAuditStatic: 'scripts/emp1-manual-browser-audit-check.mjs',
+  manualGuide: 'agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0010.md',
 });
 
 const source = Object.fromEntries(await Promise.all(Object.entries(paths).map(async ([key, path]) => [
@@ -98,9 +101,34 @@ for (const path of [
   paths.benchmark,
 ]) assert.ok(source.carrier.includes(path), `Stage-17 carrier missing ${path}`);
 
-// This closure checker is test/evidence only. It intentionally reads contracts
-// and browser specs; it does not import calculation core or retained benchmark JSON.
+// LEG-007 adds a deterministic human-observed fallback while Playwright remains
+// environment-blocked. It mirrors the same acceptance families but explicitly
+// refuses to create automated browser PASS from static or manual-helper source.
+for (const required of [
+  'runEmp1ManualBrowserAudit',
+  'seedQualificationPressureIfNeeded',
+  'presentation.rawTokenLeaks.none',
+  'pressure.rows.5',
+  'pressure.governedCells.10',
+  'layout.desktop.sideBySide',
+  'layout.narrow.stacked',
+  'layout.noHorizontalOverflow',
+  'emp1-benchmark-evidence-panel',
+  'Engineering use not authorized',
+  'benchmark.caux.rows.8',
+  'benchmark.pvElite.rows.0',
+  'browserAcceptanceComplete: false',
+  'automatedPlaywrightPassCreated: false',
+]) assert.ok(source.manualAudit.includes(required), `manual audit acceptance mirror missing: ${required}`);
+assert.ok(source.manualAuditStatic.includes('PASS_STATIC_MANUAL_BROWSER_AUDIT_CONTRACT'));
+assert.ok(source.manualGuide.includes('PASS_CURRENT_VIEWPORT_DOM_OBSERVATION'));
+assert.ok(source.manualGuide.includes('must not promote the blocked Playwright suite to PASS'));
+
+// This closure checker is test/evidence only. It intentionally reads contracts,
+// browser specs and the manual evidence helper; it does not import calculation
+// core or retained benchmark JSON and does not modify workflow authority.
 assert.equal(source.carrier.includes('.github/workflows/'), false);
+assert.equal(source.manualAudit.includes('../src/core/'), false);
 
 console.log(JSON.stringify({
   schema: 'emp1-issue1651-acceptance-check/v1',
@@ -115,6 +143,11 @@ console.log(JSON.stringify({
     keyboardDisclosure: true,
     tableSemantics: true,
     engineeringUseAuthorized: false,
+  },
+  manualEvidencePath: {
+    helper: paths.manualAudit,
+    guide: paths.manualGuide,
+    requiresHumanExecution: true,
   },
   executableBrowserPassCreatedByThisStaticCheck: false,
 }, null, 2));

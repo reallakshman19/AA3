@@ -50,11 +50,12 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRE
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0012
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0012_COMMENT
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0012_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551850304
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual giant waterfall with task-shell UI
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551851245
 OWNER_TEXT_OBSERVED: `merge, proceed`
 OWNER_PROGRESSION_COMMAND: NONE_VALID_IN_CURRENT_MESSAGE
 OWNER_MERGE_COMMAND: MERGE_PR_1660
@@ -82,4 +83,4 @@ VALIDATION_BUILD_GATE: inherited repository failure previously established; no n
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains blocked because project-local Chromium is absent; zero workflow runs/status contexts are not PASS.
 AUTHORITY_BOUNDARY: LEG-008 is presentation/information-architecture + acceptance evidence only. No WRC/Pressure numerical mechanics, retained benchmark values/tolerance/source authority, route/code-release authority, roadmap, or workflow-YAML change.
 CURRENT_BLOCKER: human-factor/browser acceptance for the recovered task shell is NOT_RUN. Owner nevertheless explicitly authorized merge and that risk truth must survive merge.
-EXACT_NEXT_ACTION: synchronize EP-0012 to parent #1651 and recovery #1664, mark Draft PR #1660 ready only as necessary to execute the explicit Owner merge command, merge at the exact observed relay head, then stop. Plain `proceed` does not authorize a successor material progression; a successor requires exact `proceed next`.
+EXACT_NEXT_ACTION: refresh final PR/branch head, mark Draft PR #1660 ready only as necessary to execute the explicit Owner merge command, merge at the exact observed relay head, then stop. Plain `proceed` does not authorize a successor material progression; a successor requires exact `proceed next`.

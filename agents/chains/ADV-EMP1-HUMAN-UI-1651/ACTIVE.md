@@ -22,13 +22,13 @@ MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoin
 PREVIOUS_PR: 1658
 PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
 PREVIOUS_PR_MERGE_COMMIT: b39f7673737bd1f7f4a6d7dd9d1538f795874281
-PR: PENDING
-PR_STATUS: PREWORK_LEG003
+PR: 1660
+PR_STATUS: OPEN_DRAFT_LEG003_IN_PROGRESS
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
-PR_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
+PR_HEAD_OBSERVED: 29738ad1d377f51eded3a69b2b2d20de9ad43a52
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
-MERGEABILITY: UNKNOWN
+MERGEABILITY: UNKNOWN_INITIAL
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
@@ -89,8 +89,8 @@ CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-VALIDATION: PR #1658 merge confirmed; Common remains d709bcd...; current main is b39f7673...; LEG-003 execution NOT_RUN.
+VALIDATION: PR #1658 merge confirmed; Common remains d709bcd...; current main is b39f7673...; Draft PR #1660 opened from exact main; LEG-003 execution NOT_RUN.
 AUTHORITY_BOUNDARY: LEG-003 may only reorganize existing analytical DOM surfaces into stable presentation regions and add responsive presentation rules/tests. It may not alter projections, handlers, pressure/WRC mechanics, benchmark state, route authority, code/release or workflows.
 CURRENT_BLOCKER: none.
-LEG_DIAGNOSIS: the remaining issue gap is append-only analytical composition; evidence/authority panels lengthen the same vertical lane as primary engineer inputs.
-EXACT_NEXT_ACTION: implement LEG-003 declarative Primary work / Engineering basis / Full-width detail placement, preserve every existing engineering surface exactly once, add focused manifest/geometry/navigation/mobile checks, record LEG-003 receipt and successor endpoint, sync issue comments, then stop. Do not merge the LEG-003 PR without a new Owner merge command.
+LEG_DIAGNOSIS: append-only analytical composition remains the issue acceptance gap; evidence/authority surfaces must stop extending the primary data-entry lane one-for-one.
+EXACT_NEXT_ACTION: implement LEG-003 declarative Primary work / Engineering basis / Full-width detail placement, preserve every existing engineering surface exactly once, add focused manifest/geometry/navigation/mobile checks, record LEG-003 receipt and successor endpoint, sync issue comments, then stop. Do not merge PR #1660 without a new Owner merge command.

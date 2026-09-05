@@ -10,28 +10,26 @@ const destroyWorkbench = async (page) => page.evaluate(() => {
 
 test.afterEach(async ({ page }) => destroyWorkbench(page));
 
-test('EMP.1 analytical layout preserves one surface instance, task navigation and responsive hierarchy', async ({ page }, testInfo) => {
+test('EMP.1 task shell keeps one active task and one heavy evidence view without residual waterfall growth', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1600, height: 1058 });
   await mountEmp1Workbench(page);
 
   const workbench = page.locator('[data-role="lafea-workbench"]');
   await workbench.locator('[data-role="emp1-load-complete-qualification-sample"]').click();
-  const workflow = workbench.locator('[data-role="emp1-workflow"]');
-  await expect(workflow.locator('[data-role="emp1-professional-authority-summary"]'))
-    .toContainText('LOCAL RESULT CURRENT');
 
-  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  let analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  let workflow = workbench.locator('[data-role="emp1-workflow"]');
+  await expect(analytical).toHaveAttribute('data-emp1-task-shell', 'true');
+  await expect(workflow.locator('[data-role="emp1-workflow-compact-status"]')).toBeVisible();
+  await expect(workflow.locator('[data-role="emp1-professional-step"]')).toHaveCount(7);
+  await expect(workflow.locator('[data-role="emp1-workflow-details"]')).not.toHaveAttribute('open', '');
+
   await assertUniqueLayoutSurfaceManifest(analytical);
   await assertEngineerFacingCardinality(analytical);
-
-  const primary = analytical.locator('[data-role="emp1-analytical-primary-work"]');
-  const basis = analytical.locator('[data-role="emp1-analytical-engineering-basis"]');
-  const detail = analytical.locator('[data-role="emp1-analytical-full-width-detail"]');
-  const lanes = analytical.locator('[data-role="emp1-analytical-layout-lanes"]');
-  await expect(primary).toHaveCount(1);
-  await expect(basis).toHaveCount(1);
-  await expect(detail).toHaveCount(1);
-  await expect(lanes).toHaveCount(1);
+  await assertSingleVisibleEvidence(analytical, 'results');
+  await expect(analytical.locator('[data-role="emp1-professional-step"][aria-current="step"]'))
+    .toHaveAttribute('data-emp1-professional-step', 'BASIS_SOURCE');
+  await expect(analytical.locator('.lafea-doc-table-section[data-input-group]:visible')).toHaveCount(0);
 
   const desktopGeometry = await regionGeometry(analytical);
   expect(desktopGeometry.primary.width).toBeGreaterThan(0);
@@ -39,27 +37,78 @@ test('EMP.1 analytical layout preserves one surface instance, task navigation an
   expect(desktopGeometry.primary.right).toBeLessThanOrEqual(desktopGeometry.basis.left + 1);
   expect(Math.abs(desktopGeometry.primary.top - desktopGeometry.basis.top)).toBeLessThanOrEqual(1);
   expect(desktopGeometry.detail.width).toBeGreaterThanOrEqual(desktopGeometry.lanes.width - 1);
+  expect(desktopGeometry.basis.height).toBeLessThanOrEqual(desktopGeometry.viewportHeight + 1);
+  expect(desktopGeometry.detail.height).toBeLessThanOrEqual(Math.min(desktopGeometry.viewportHeight * 0.72, 760) + 2);
   expect(desktopGeometry.analyticalScrollWidth).toBeLessThanOrEqual(desktopGeometry.analyticalClientWidth + 1);
+  expect(desktopGeometry.pageScrollHeight / desktopGeometry.clientHeight).toBeLessThan(6);
+
+  await professionalStep(workflow, 2, 'Geometry').click();
+  await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'GEOMETRY');
+  await assertVisibleInputGroups(analytical, ['PIPE_GEOMETRY', 'THICKNESS']);
+  await expect(analytical.locator('[data-role="emp1-c-run-configuration"]')).toBeVisible();
+
+  await professionalStep(workflow, 3, 'Loads').click();
+  await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'LOADS');
+  await assertVisibleInputGroups(analytical, ['PRESSURE', 'LOAD_CASES']);
+  await expect(analytical.locator('[data-guided-target="source"]')).toBeVisible();
+  await expect(analytical.locator('[data-role="emp1-c-run-configuration"]')).toBeHidden();
 
   await professionalStep(workflow, 4, 'Load Transfer').click();
-  await expect(workbench.locator('[data-role="lafea-analytical-calc"]'))
-    .toHaveAttribute('data-backing-stage-id', 'LAFEA.1');
-  await expect(workbench.locator('[data-guided-target="results"]')).toBeInViewport();
-  await expect(workbench.locator('[data-guided-target="results"]')).toHaveCount(1);
+  analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  workflow = workbench.locator('[data-role="emp1-workflow"]');
+  await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.1');
+  await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'LOAD_TRANSFER');
+  await assertVisibleInputGroups(analytical, ['REFERENCE_POINTS']);
+  await assertSingleVisibleEvidence(analytical, 'results');
 
-  const refreshedWorkflow = workbench.locator('[data-role="emp1-workflow"]');
-  await professionalStep(refreshedWorkflow, 6, 'Local Correlation').click();
-  await expect(workbench.locator('[data-role="emp1-c-run-configuration"]')).toBeInViewport();
-  await expect(workbench.locator('[data-role="emp1-c-run-configuration"]')).toHaveCount(1);
+  await professionalStep(workflow, 5, 'Section Screening').click();
+  analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  workflow = workbench.locator('[data-role="emp1-workflow"]');
+  await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
+  await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'SECTION_SCREENING');
+  await assertVisibleInputGroups(analytical, ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
 
-  await professionalStep(workbench.locator('[data-role="emp1-workflow"]'), 7, 'Review & Evidence').click();
-  const executionSummary = workbench.locator('[data-role="emp1-product-execution-summary"]');
+  await professionalStep(workflow, 6, 'Local Correlation').click();
+  await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'LOCAL_CORRELATION');
+  await expect(analytical.locator('[data-role="emp1-c-run-configuration"]')).toBeVisible();
+  await expect(analytical.locator('[data-guided-target="source"]')).toBeHidden();
+  await assertSingleVisibleEvidence(analytical, 'correlationResult');
+
+  await professionalStep(workflow, 7, 'Review & Evidence').click();
+  await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'REVIEW_EVIDENCE');
+  await assertSingleVisibleEvidence(analytical, 'transactionSummary');
+  const executionSummary = analytical.locator('[data-role="emp1-product-execution-summary"]');
   await expect(executionSummary).toHaveCount(1);
   await expect(executionSummary).toBeInViewport();
+  await expect(workflow.locator('[data-role="emp1-workflow-details"]')).not.toHaveAttribute('open', '');
 
-  const sameStageDesktopManifest = await liveManifest(
-    workbench.locator('[data-role="lafea-analytical-calc"]'),
-  );
+  const benchmarkTab = analytical.locator('[data-role="emp1-evidence-tab"][data-emp1-evidence-view="benchmarkEvidence"]');
+  await benchmarkTab.click();
+  await assertSingleVisibleEvidence(analytical, 'benchmarkEvidence');
+  await expect(analytical.locator('[data-role="emp1-benchmark-evidence-panel"]')).toBeVisible();
+  await expect(analytical.locator('[data-role="emp1-benchmark-evidence-panel"]')).toHaveCount(1);
+
+  const beforeHiddenSentinel = await pageDepth(analytical);
+  const hiddenSentinelDelta = await analytical.evaluate((root) => {
+    const region = root.querySelector('[data-role="emp1-analytical-full-width-detail"]');
+    const before = document.documentElement.scrollHeight;
+    const sentinel = document.createElement('div');
+    sentinel.hidden = true;
+    sentinel.style.height = '5000px';
+    sentinel.dataset.role = 'emp1-unselected-evidence-height-falsifier';
+    region.append(sentinel);
+    const after = document.documentElement.scrollHeight;
+    sentinel.remove();
+    return { before, after, delta: after - before };
+  });
+  expect(Math.abs(hiddenSentinelDelta.delta)).toBeLessThanOrEqual(1);
+
+  await analytical.locator('[data-role="emp1-evidence-tab"][data-emp1-evidence-view="results"]').click();
+  await assertSingleVisibleEvidence(analytical, 'results');
+  await expect(analytical.locator('[data-role="emp1-benchmark-evidence-panel"]')).toBeHidden();
+  await expect(analytical.locator('[data-role="emp1-benchmark-evidence-panel"]')).toHaveCount(1);
+
+  const sameStageDesktopManifest = await liveManifest(analytical);
 
   await page.setViewportSize({ width: 720, height: 900 });
   const narrowAnalytical = workbench.locator('[data-role="lafea-analytical-calc"]');
@@ -68,16 +117,25 @@ test('EMP.1 analytical layout preserves one surface instance, task navigation an
   expect(Math.abs(narrowGeometry.primary.left - narrowGeometry.basis.left)).toBeLessThanOrEqual(1);
   expect(Math.abs(narrowGeometry.primary.width - narrowGeometry.basis.width)).toBeLessThanOrEqual(1);
   expect(narrowGeometry.basis.top).toBeGreaterThanOrEqual(narrowGeometry.primary.bottom - 1);
+  expect(narrowGeometry.basis.height).toBeLessThanOrEqual(Math.min(narrowGeometry.viewportHeight * 0.54, 560) + 2);
+  expect(narrowGeometry.detail.height).toBeLessThanOrEqual(Math.min(narrowGeometry.viewportHeight * 0.68, 620) + 2);
   expect(narrowGeometry.analyticalScrollWidth).toBeLessThanOrEqual(narrowGeometry.analyticalClientWidth + 1);
+  expect(narrowGeometry.pageScrollHeight / narrowGeometry.clientHeight).toBeLessThan(6);
 
   await assertUniqueLayoutSurfaceManifest(narrowAnalytical);
   await assertEngineerFacingCardinality(narrowAnalytical);
+  await assertSingleVisibleEvidence(narrowAnalytical, 'results');
   const narrowManifest = await liveManifest(narrowAnalytical);
   expect(narrowManifest.roles).toEqual(sameStageDesktopManifest.roles);
   expect(narrowManifest.guidedTargets).toEqual(sameStageDesktopManifest.guidedTargets);
 
-  await testInfo.attach('emp1-analytical-layout-geometry', {
-    body: Buffer.from(`${JSON.stringify({ desktopGeometry, narrowGeometry }, null, 2)}\n`, 'utf8'),
+  await testInfo.attach('emp1-task-shell-layout-geometry', {
+    body: Buffer.from(`${JSON.stringify({
+      desktopGeometry,
+      narrowGeometry,
+      beforeHiddenSentinel,
+      hiddenSentinelDelta,
+    }, null, 2)}\n`, 'utf8'),
     contentType: 'application/json',
   });
 });
@@ -100,9 +158,11 @@ async function assertUniqueLayoutSurfaceManifest(analytical) {
   expect(ids).toContain('correlationResult');
   expect(ids).toContain('results');
   expect(ids).toContain('lineage');
-  expect(manifest.filter((entry) => entry.regionId === 'PRIMARY_WORK').length).toBe(4);
-  expect(manifest.filter((entry) => entry.regionId === 'ENGINEERING_BASIS').length).toBeGreaterThanOrEqual(4);
-  expect(manifest.filter((entry) => entry.regionId === 'FULL_WIDTH_DETAIL').length).toBeGreaterThanOrEqual(2);
+  expect(ids).toContain('benchmarkEvidence');
+  expect(manifest.find((entry) => entry.surfaceId === 'workflow')?.regionId).toBe('COMPACT_WORKFLOW_NAV');
+  expect(manifest.find((entry) => entry.surfaceId === 'source')?.regionId).toBe('ACTIVE_TASK');
+  expect(manifest.find((entry) => entry.surfaceId === 'settings')?.regionId).toBe('BASIS_RAIL');
+  expect(manifest.find((entry) => entry.surfaceId === 'benchmarkEvidence')?.regionId).toBe('EVIDENCE_WORKSPACE');
 }
 
 async function assertEngineerFacingCardinality(analytical) {
@@ -114,11 +174,28 @@ async function assertEngineerFacingCardinality(analytical) {
     '[data-role="emp1-c-result-evidence"]',
     '[data-guided-target="results"]',
     '[data-guided-target="lineage"]',
+    '[data-role="emp1-benchmark-evidence-panel"]',
   ]) {
     await expect(analytical.locator(selector)).toHaveCount(1);
   }
   const governedInputs = analytical.locator('[data-role="lafea-governed-input"]');
   expect(await governedInputs.count()).toBeGreaterThan(0);
+}
+
+async function assertVisibleInputGroups(analytical, expectedGroups) {
+  const groups = await analytical.locator('.lafea-doc-table-section[data-input-group]').evaluateAll((nodes) => nodes
+    .filter((node) => !node.hidden && getComputedStyle(node).display !== 'none')
+    .map((node) => node.dataset.inputGroup));
+  expect(groups).toEqual(expectedGroups);
+}
+
+async function assertSingleVisibleEvidence(analytical, expectedSurfaceId) {
+  const evidence = await analytical.locator('[data-emp1-layout-region="EVIDENCE_WORKSPACE"][data-emp1-evidence-view]').evaluateAll((nodes) => nodes
+    .filter((node) => !node.hidden && getComputedStyle(node).display !== 'none')
+    .map((node) => node.dataset.emp1LayoutSurface));
+  expect(evidence).toEqual([expectedSurfaceId]);
+  await expect(analytical.locator('[data-role="emp1-analytical-full-width-detail"]'))
+    .toHaveAttribute('data-emp1-evidence-view', expectedSurfaceId);
 }
 
 async function liveManifest(analytical) {
@@ -130,7 +207,9 @@ async function liveManifest(analytical) {
         runConfiguration: count('[data-role="emp1-c-run-configuration"]'),
         executionSummary: count('[data-role="emp1-product-execution-summary"]'),
         correlationResult: count('[data-role="emp1-c-result-evidence"]'),
+        benchmarkEvidence: count('[data-role="emp1-benchmark-evidence-panel"]'),
         governedInputs: count('[data-role="lafea-governed-input"]'),
+        evidenceTabs: count('[data-role="emp1-evidence-tab"]'),
       },
       guidedTargets: {
         route: count('[data-guided-target="analytical-route"]'),
@@ -169,6 +248,14 @@ async function regionGeometry(analytical) {
       clientHeight: document.documentElement.clientHeight,
     };
   });
+}
+
+async function pageDepth(analytical) {
+  return analytical.evaluate(() => ({
+    scrollHeight: document.documentElement.scrollHeight,
+    clientHeight: document.documentElement.clientHeight,
+    viewportRatio: document.documentElement.scrollHeight / document.documentElement.clientHeight,
+  }));
 }
 
 function professionalStep(workflow, ordinal, label) {

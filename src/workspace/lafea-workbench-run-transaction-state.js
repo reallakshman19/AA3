@@ -6,11 +6,12 @@ export const LAFEA_RUN_TRANSACTION_RECEIPT_SCHEMA = 'lafea-run-transaction-recei
 const KEYS = ['sourceHash', 'analysisDomainHash', 'analysisGeometryHash', 'meshHash', 'meshProfileHash', 'solverModelHash'];
 
 export function deriveLafeaSolverConfigHash(preflight) {
-  if (!preflight || typeof preflight !== 'object') {
+  if (!preflight || typeof preflight !== 'object' || !preflight.sourceHash) {
     fail('LAFEA_RUN_TRANSACTION_PREFLIGHT_INVALID');
   }
   return canonicalLafeaSha256({
     schema: 'lafea-solver-configuration-binding/v1',
+    sourceHash: preflight.sourceHash,
     compilerId: preflight.compilerId,
     compilerRevision: preflight.compilerRevision,
     solverModelHash: preflight.solverModelHash,

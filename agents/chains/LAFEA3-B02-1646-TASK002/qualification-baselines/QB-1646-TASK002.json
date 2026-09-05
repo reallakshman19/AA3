@@ -1,0 +1,20 @@
+{
+  "schema": "owner-qualification-baseline/v2",
+  "chainId": "LAFEA3-B02-1646-TASK002",
+  "task": "TASK-002",
+  "authorityDomain": "MESH_GENERATION",
+  "sources": [
+    "github:reallaksh19/Advanced_Analysis#1646/Appendix-A",
+    "github:reallaksh19/Advanced_Analysis#1646/comment-5548720232/Appendix-B/B2"
+  ],
+  "requiredLiterals": [
+    "1.26e-9","2.43e-8","3.53e-8","70,954","tol/10","tol/100","200,000",
+    "0.9997","9.7°–9.9°","52 → 252","5.6:1","SJ ≈ 1",
+    "definitionsCopiedByteIdenticallyFromOriginalFreeze: true","adoptedIntoProductionSequence: false","scope: MESH_POLICY_ONLY",
+    "CURRENT_RESULT requires exact source, mesh, solver and execution parent identities","PRE_ASYMPTOTIC",
+    "h = 22.5","43 elements","6 blocking","minSJ = 0.0938","minAngle = 5.38°","0.20","minSJ 0.2049","2.4%",
+    "22.5/11.25","11.25/5.625","5.625/2.8125","11.25°","finiteDomainErrorMustBeReportedSeparately"
+  ],
+  "liveBasis": "4fe1f11199629056c1cb4836fe820b353dd3bf58",
+  "status": "SATISFIED_BY_REFRESHED_PACK_PENDING_OWNER_QUALIFICATION"
+}

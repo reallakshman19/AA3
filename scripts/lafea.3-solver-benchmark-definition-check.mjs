@@ -238,11 +238,7 @@ for (const source of sources.sources) {
 assert.ok(sources.sources.some((row) => row.path === 'src/core/local-continuum/errors.js'));
 assert.ok(sources.sources.some((row) => row.path === 'src/core/shared-primitives/canonical-json.js'));
 
-const oracleCheck = spawnSync(
-  'python3',
-  [path.join(B02, 'oracle/independent-oracle.py'), '--check'],
-  { cwd: ROOT, encoding: 'utf8' },
-);
+const oracleCheck = runIndependentOracle();
 assert.equal(
   oracleCheck.status,
   0,
@@ -273,6 +269,27 @@ function requireCitation(caseId, citation) {
 
 function q8StructuredDofCount(nr, nt) {
   return 2 * (3 * nr * nt + 2 * nr + 2 * nt + 1);
+}
+
+function runIndependentOracle() {
+  const oracleArgs = [path.join(B02, 'oracle/independent-oracle.py'), '--check'];
+  const candidates = process.platform === 'win32'
+    ? [
+        { command: 'py', args: ['-3', ...oracleArgs] },
+        { command: 'python', args: oracleArgs },
+        { command: 'python3', args: oracleArgs },
+      ]
+    : [
+        { command: 'python3', args: oracleArgs },
+        { command: 'python', args: oracleArgs },
+      ];
+  const launchFailures = [];
+  for (const candidate of candidates) {
+    const result = spawnSync(candidate.command, candidate.args, { cwd: ROOT, encoding: 'utf8' });
+    if (!result.error) return result;
+    launchFailures.push(`${candidate.command}: ${result.error.message}`);
+  }
+  throw new Error(`No supported Python 3 launcher could start the independent oracle. ${launchFailures.join(' | ')}`);
 }
 
 function git(...args) {

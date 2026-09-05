@@ -442,6 +442,9 @@ function renderMatrixRow({ documentRef, stageId, documentValue, matrix, instance
 }
 
 function matrixIdentityPath(matrix, entityId) {
+  if (matrix.legacyVector) {
+    return lafeaDescriptorPath(matrix.columns[0].descriptor, entityId);
+  }
   return `${matrix.target.collectionPath}[${matrix.target.identityKey}=${entityId}]`;
 }
 

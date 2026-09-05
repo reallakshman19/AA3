@@ -30,6 +30,26 @@
     "B02D":"d0dc5369728c147b54259ec968151bed5528c952",
     "B02E":"a0c04f6c577f059e1d786c7ceda149f536dd6225"
   },
+  "amendedDefinitionFiles":{
+    "B02D-V2":"validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json"
+  },
+  "amendedFrozenDefinitionGitBlobs":{
+    "B02D-V2":"2a4bbfa79dafdbfe17484b46d5ae76ede42ad298"
+  },
+  "amendments":{
+    "B02D-V2":{
+      "supersedes":"B02D",
+      "scope":"MESH_POLICY_ONLY",
+      "frozenAtExactHead":"6186c89c2a2cc5c296bee9404562040f32fc471a",
+      "frozenAfterOriginalFreeze":true,
+      "frozenBeforeAnyB02dV2ProductionObservation":true,
+      "productionOutputUsedToChooseDefinition":false,
+      "methodApplicabilityUnchanged":true,
+      "hardQualityThresholdsChanged":false,
+      "adoptedIntoProductionSequence":false,
+      "note":"Registers B02D-V2 under byte custody only. B02D remains the definition bound by the B02 production sequence; adopting V2 into that sequence is a separate governed decision."
+    }
+  },
   "methodApplicabilitySource":"validation/lafea-b02-contracts/method-benchmark-applicability.json",
   "executionOrder":["B02A","B02B","B02C","B02D","B02E"],
   "executionState":{

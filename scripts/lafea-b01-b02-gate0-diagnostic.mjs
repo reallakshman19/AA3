@@ -19,3 +19,5 @@ import './lafea-b02-production-sequence-check.mjs';
 await import('./lafea3-simulated-source-authority-check.mjs');
 await import('./lafea3-sample-generate-retain-check.mjs');
 await import('./lafea3-visible-continuum-preflight-check.mjs');
+
+// TASK-001 currentness is intentionally carried by this existing hosted route.

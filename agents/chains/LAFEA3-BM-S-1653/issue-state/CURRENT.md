@@ -1,26 +1,26 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1653
 CHAIN_ID: LAFEA3-BM-S-1653
 UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550031904
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0002_COMMENT
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
 
 ## Original task / acceptance ledger
 
 TASK-001 | Retain first audited B01 program record | NOT_RUN | faithful runtime unavailable; source runner inspected only
-TASK-002 | Create B02 benchmark-data package | IMPLEMENTED_NOT_EXECUTED | LEG-001 material head `f2b6c9f9...`
-TASK-003 | Externalize cited Lamé/Kirsch oracle values and tolerances | IMPLEMENTED_NOT_EXECUTED | cited source data + independent oracle committed; no tolerance relaxation
-TASK-004 | Retain machine-readable S0-S5 evidence | PARTIAL | S1 report schema/output + S0/S1 stage records implemented; S2-S5 remain PLANNED
-TASK-005 | Freeze exact S4 rejection codes | DEFINITION_COMPLETE_EXECUTOR_OPEN | `governance/negative-cases.json` exact state/code contract committed
-TASK-006 | Implement staged BM-S runner | PARTIAL | generic gated runner implemented; S0/S1 READY, S2-S5 PLANNED
-TASK-007 | Activate B02 READY / remove from futureQueue | OPEN | intentionally blocked until all stages READY
-TASK-008 | Preserve release authority false | PRESERVED | manifest/runner/evidence all retain false
+TASK-002 | Create B02 benchmark-data package | IMPLEMENTED_NOT_EXECUTED | LEG-001
+TASK-003 | Externalize cited Lamé/Kirsch oracle values and tolerances | IMPLEMENTED_NOT_EXECUTED | cited source data + independent oracle; no tolerance relaxation
+TASK-004 | Retain machine-readable S0-S5 evidence | PARTIAL | S1 + S2 retained schemas/executors implemented; S3-S5 remain open
+TASK-005 | Freeze exact S4 rejection codes | DEFINITION_COMPLETE_EXECUTOR_OPEN | exact state/code contract committed
+TASK-006 | Implement staged BM-S runner | PARTIAL | generic gated runner implemented; S0-S2 READY, S3-S5 PLANNED
+TASK-007 | Activate B02 READY / remove from futureQueue | OPEN | intentionally blocked until all S0-S5 definitions/evidence contracts are READY
+TASK-008 | Preserve release authority false | PRESERVED | manifest/runner/evidence retain false
 
 ## Input ledger
 
@@ -37,9 +37,9 @@ INPUT-008 | issue #1652 companion BM-MESH | AVAILABLE_READ_ONLY | upstream scope
 
 BM-001 | S0 B01 element/patch | READY_EXECUTOR_NOT_RUN
 BM-002 | S1 Lamé | IMPLEMENTED_NOT_RUN | cited oracle + retained evidence output
-BM-003 | S1 Kirsch | IMPLEMENTED_NOT_RUN | cited oracle + retained evidence output; moving peak explicitly diagnostic
-BM-004 | S2 five load paths | PLANNED | live pressure/body-force/thermal source already contains analytical invariants; retention/field gap remains
-BM-005 | S3 solver numerics | PLANNED
+BM-003 | S1 Kirsch | IMPLEMENTED_NOT_RUN | cited oracle + retained evidence output
+BM-004 | S2 five load paths | IMPLEMENTED_NOT_RUN | edge traction, pressure, body force, temperature strain, imposed displacement exact BVPs retained; body-force field is manufactured quadratic Q8
+BM-005 | S3 solver numerics | PLANNED_NEXT
 BM-006 | S4 fail-closed | DEFINITION_READY_EXECUTOR_PLANNED
 BM-007 | S5 determinism | PLANNED
 BM-008 | S5 performance | PLANNED_INFORMATIONAL_ONLY
@@ -69,14 +69,18 @@ MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 PR: #1657
 PR_STATUS: OPEN_DRAFT
-PR_MERGEABILITY_AT_CREATION: NOT_MERGEABLE
-MATERIAL_LEG_ID: LEG-001
-MATERIAL_HEAD: f2b6c9f9ddc4748c6fa647604631504795916c0f
+PR_MERGEABILITY: MERGEABLE
+MATERIAL_LEG_ID: LEG-002
+MATERIAL_HEAD: fd53c332da954142c00c381e07a2d79170cceaa5
 MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_EXECUTED
 VALIDATION_STATUS: NOT_RUN_EXECUTION
 SOURCE_DIFF_AUDIT: PASS
 INDEPENDENT_ANALYTICAL_REPRODUCTION: PASS
 MATERIAL_HEAD_WORKFLOW_RUNS: 0
-PR_INITIAL_HEAD_WORKFLOW_RUNS: 0
-CURRENT_BLOCKER: faithful checkout failed before execution because DNS could not resolve github.com; GitHub Actions also returned zero runs for the material head and initial PR head; no executable PASS may be claimed
-EXACT_NEXT_ACTION: proceed only with bounded S2 work under EP-0001 when continuing; do not activate or merge B02.
+CURRENT_BLOCKER: faithful executable validation remains unavailable; GitHub Actions returned zero runs for the S2 material head, so definition/S2/staged execution remain NOT_RUN
+QUALIFICATION_SCOPE_ID: QSCOPE-1653-BM-S-SOLVER-BENCHMARK
+QUESTION_SET_ID: QS-1653-BM-S-0003
+QUESTION_SET_STATUS: CURRENT
+QUESTION_PACK_ACTION: REFRESHED_FOR_S3_SOLVER_NUMERICS
+TAKEOVER_QUALIFICATION_READY: TRUE
+EXACT_NEXT_ACTION: implement only S3 retained solver-numerics evidence under EP-0002; do not begin S4/S5, activate B02, alter production tolerances, or merge without separate authority.

@@ -35,6 +35,12 @@ assert.equal(solverExpected.authority.productionOutputMayModifyAcceptance, false
 assert.equal(solverExpected.authority.conditioningMetricsAreDiagnosticOnly, true);
 assert.equal(semantics.invariants.movingMeshMaximumMayNotQualifyRichardsonGci, true);
 assert.equal(semantics.invariants.releaseAuthorityGranted, false);
+assert.equal(semantics.invariants.failClosedQualificationUsesFirstFailureBoundaryStateAndCode, true);
+assert.equal(semantics.invariants.messageRegexMayNotQualifyNegativeCase, true);
+assert.equal(semantics.invariants.matchingCodeAtWrongBoundaryMayNotQualifyNegativeCase, true);
+assert.equal(semantics.failClosedNegatives.q8InversionMustPreserveCounterClockwiseCorners, true);
+assert.equal(semantics.failClosedNegatives.q8InversionMustReachElementFormulation, true);
+assert.equal(semantics.failClosedNegatives.productionValidationRulesMayNotBeRelaxedByBenchmark, true);
 
 for (const stage of manifest.stages) {
   assert.ok(manifest.stageOrder.includes(stage.benchmarkStage));
@@ -112,6 +118,16 @@ assert.equal(
   s3.methods[0].oracleAuthority,
   'INDEPENDENT_STATIC_EQUILIBRIUM_CLAPEYRON_LINEARITY_SUPERPOSITION_AND_SCALING_INVARIANTS',
 );
+const s4 = manifest.stages.find((row) => row.benchmarkStage === 'S4');
+assert.equal(s4.definitionState, 'READY');
+assert.equal(s4.methods.length, 1);
+assert.equal(s4.methods[0].methodId, 'FAIL-CLOSED-NEGATIVES');
+assert.equal(s4.methods[0].authorityClass, 'STRUCTURED_REJECTION_CONTRACT');
+assert.equal(s4.methods[0].expectedEvidenceSchema, 'lafea3-bm-s-s4-fail-closed-evidence/v1');
+assert.equal(
+  s4.methods[0].oracleAuthority,
+  'FROZEN_STRUCTURED_FIRST_FAILURE_BOUNDARY_STATE_AND_CODE_CONTRACT',
+);
 
 for (const probe of probes.probes) {
   assert.equal('nodeId' in probe, false, `${probe.probeId} may not use node identity`);
@@ -123,6 +139,40 @@ assert.ok(ladders.ladders.every((row) => row.primaryConvergenceQuantity === 'FIX
 assert.equal(
   ladders.qualificationRule,
   'MOVING_PEAKS_AND_MESH_WIDE_MAXIMA_MAY_BE_RETAINED_AS_DIAGNOSTICS_BUT_NOT_USED_AS_RICHARDSON_GCI_QUANTITIES',
+);
+
+assert.equal(negatives.schema, 'lafea-b02-negative-cases/v1');
+assert.equal(negatives.assertionPolicy, 'EXACT_STRUCTURED_STATE_AND_CODE_NOT_MESSAGE_REGEX');
+assert.equal(negatives.releaseQualified, false);
+assert.equal(negatives.cases.length, 9);
+assert.equal(new Set(negatives.cases.map((row) => row.negativeCaseId)).size, 9);
+const expectedNegativeContract = new Map([
+  ['S4-UNDER-CONSTRAINED', ['solver', 'SINGULAR_SYSTEM', 'UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM']],
+  ['S4-ZERO-AREA', ['canonical-model', 'REJECTED_MODEL', 'DEGENERATE_ELEMENT']],
+  ['S4-NEAR-ZERO-AREA', ['canonical-model', 'REJECTED_MODEL', 'DEGENERATE_ELEMENT']],
+  ['S4-Q8-INVERTED-MAPPING', ['element-formulation', 'NUMERICAL_FAILURE', 'Q8_NONPOSITIVE_JACOBIAN']],
+  ['S4-DUPLICATE-CONSTRAINT', ['canonical-model', 'REJECTED_MODEL', 'DUPLICATE_CONSTRAINT']],
+  ['S4-CONFLICTING-CONSTRAINT', ['canonical-model', 'REJECTED_MODEL', 'CONFLICTING_CONSTRAINT']],
+  ['S4-INTERNAL-EDGE-TRACTION', ['load-case-preflight', 'REJECTED_LOAD_CASE', 'TRACTION_EDGE_NOT_BOUNDARY']],
+  ['S4-DISCONNECTED-NODE', ['canonical-model', 'REJECTED_MODEL', 'DISCONNECTED_UNREFERENCED_NODE']],
+  ['S4-DUPLICATE-ELEMENT-NODE-SET', ['canonical-model', 'REJECTED_MODEL', 'DUPLICATE_ELEMENT_NODE_SET']],
+]);
+for (const row of negatives.cases) {
+  assert.ok(expectedNegativeContract.has(row.negativeCaseId), `unexpected S4 case ${row.negativeCaseId}`);
+  assert.deepEqual(
+    [row.expectedBoundary, row.expectedQualificationState, row.expectedErrorCode],
+    expectedNegativeContract.get(row.negativeCaseId),
+    `${row.negativeCaseId} frozen rejection tuple drift`,
+  );
+}
+assert.deepEqual(
+  [...expectedNegativeContract.keys()].sort(),
+  negatives.cases.map((row) => row.negativeCaseId).sort(),
+);
+const q8Negative = negatives.cases.find((row) => row.negativeCaseId === 'S4-Q8-INVERTED-MAPPING');
+assert.equal(
+  q8Negative.mutation,
+  'KEEP_COUNTER_CLOCKWISE_Q8_CORNERS_BUT_MOVE_MIDSIDE_GEOMETRY_TO_FORCE_NONPOSITIVE_INTEGRATION_POINT_JACOBIAN',
 );
 
 const requiredNegativeCodes = new Set([
@@ -144,6 +194,7 @@ for (const source of sources.sources) {
   assert.ok(fs.existsSync(filePath), `source registry path missing: ${source.path}`);
   assert.equal(git('hash-object', source.path).trim(), source.blobSha, `source custody drift: ${source.path}`);
 }
+assert.ok(sources.sources.some((row) => row.path === 'src/core/local-continuum/errors.js'));
 
 const oracleCheck = spawnSync(
   'python3',
@@ -157,7 +208,7 @@ assert.equal(oraclePayload.expectedValuesCheck, 'PASS');
 assert.equal(Object.keys(oraclePayload['S2-load-paths']).length, 5);
 assert.equal(Object.keys(oraclePayload['S3-solver-numerics']).length, 4);
 
-console.log('LAFEA.3 BM-S B02 definition, source custody, cited S1 oracle, exact S2 load paths, S3 solver numerics and S4 negative contract passed.');
+console.log('LAFEA.3 BM-S B02 definition, source custody, S1-S3 oracle contracts and S4 retained fail-closed definition passed.');
 
 function read(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(B02, relativePath), 'utf8'));

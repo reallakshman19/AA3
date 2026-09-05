@@ -1,0 +1,79 @@
+{
+  "schema": "lafea-mesh-ladders/v1",
+  "benchmarkId": "BM-MESH",
+  "definitionTask": "TASK-003",
+  "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
+  "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
+  "purpose": "Freeze systematic production-producer mesh-profile selections before BM-MESH solver observation.",
+  "authority": {
+    "solverObservationUsedToChooseLevels": false,
+    "productionOutputUsedToChooseLevels": false,
+    "exactNodeOrElementCountsAuthoritative": false,
+    "benchmarkAuthoredMeshesAllowed": false,
+    "benchmarkTemplateExemption": null,
+    "directProducerRequestOverridesAllowed": false,
+    "productionProfileThresholdsModified": false
+  },
+  "refinement": {
+    "profileField": "globalTargetSize",
+    "units": "mm",
+    "orderedCoarseToFine": true,
+    "adjacentHRefinementRatio": 2,
+    "rule": "h_next = h_current / 2",
+    "levels": [
+      {"levelId": "L0", "globalTargetSize": 1},
+      {"levelId": "L1", "globalTargetSize": 0.5},
+      {"levelId": "L2", "globalTargetSize": 0.25}
+    ]
+  },
+  "ladders": [
+    {
+      "ladderId": "L3-T3",
+      "stageId": "LAFEA.3",
+      "elementFamily": "T3",
+      "geometryCaseId": "M2-L-SHAPE-01",
+      "profileFamilyField": "continuumElement",
+      "profileFamilyValue": "T3",
+      "levelIds": ["L0", "L1", "L2"]
+    },
+    {
+      "ladderId": "L3-T6",
+      "stageId": "LAFEA.3",
+      "elementFamily": "T6",
+      "geometryCaseId": "M2-L-SHAPE-01",
+      "profileFamilyField": "continuumElement",
+      "profileFamilyValue": "T6",
+      "levelIds": ["L0", "L1", "L2"]
+    },
+    {
+      "ladderId": "L3-Q8",
+      "stageId": "LAFEA.3",
+      "elementFamily": "Q8",
+      "geometryCaseId": "M2-UNIT-SQUARE-01",
+      "profileFamilyField": "continuumElement",
+      "profileFamilyValue": "Q8",
+      "levelIds": ["L0", "L1", "L2"]
+    },
+    {
+      "ladderId": "L4-CST-DKT",
+      "stageId": "LAFEA.4",
+      "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+      "geometryCaseId": "M2-TWO-PATCH-SHELL-01",
+      "profileFamilyField": "shellElement",
+      "profileFamilyValue": "CST_DKT_TRI3_THIN_SHELL_V1",
+      "levelIds": ["L0", "L1", "L2"]
+    }
+  ],
+  "profileSelectionContract": {
+    "completeProfileSource": "governed mesh-profile defaults plus the declared family and globalTargetSize selection",
+    "forbiddenDirectRequestFields": ["targetElementLength", "continuumElement", "shellElement", "smoothing", "qualityGate"],
+    "note": "The later runner must construct a complete governed canonical mesh profile and pass that profile through the registered production binding; this file is not a direct producer request."
+  },
+  "runnerObligations": [
+    "Route every level through the registered production producer for its stage and family.",
+    "Retain actual canonical mesh hash, counts, DOF and quality evidence from execution rather than predeclaring exact counts.",
+    "Verify that adjacent levels produce a genuine systematic refinement; a duplicate produced mesh does not satisfy refinement merely because the target value changed.",
+    "Do not post-author, re-sort or otherwise mutate a producer mesh to improve benchmark results."
+  ],
+  "sourceRefs": ["S-001", "S-002", "S-003", "S-004", "S-006", "S-011", "S-012"]
+}

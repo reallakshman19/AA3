@@ -14,33 +14,27 @@ AGENT_INSTANCE_ID: chatgpt:1e0df8cb-8a9c-4c20-9d1f-8d29a3f88f81
 REPO: reallaksh19/Advanced_Analysis
 TASK: Surface already-frozen CAUx benchmark evidence in EMP.1 Review & Evidence; show PV Elite as unavailable; create no new engineering authority.
 CHAIN: ADV-EMP1-BENCHMARK-UI-1645
-ENDPOINT: EP-0005
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0005.md
+ENDPOINT: EP-0006
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0006.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0002.md
 
 PR: 1648
-PR_STATUS: OPEN_DRAFT_MERGEABLE_STACKED_ON_1622
+PR_STATUS: OPEN_DRAFT_STACKED_ON_1622
 BRANCH: agent/emp1-benchmark-ui-1645-prework
 STACK_BASE_PR: 1622
 STACK_BASE_BRANCH: agent/emp1-engineering-review-ui-v1
 STACK_BASE_HEAD: bed2d28d9cc85fcbecf6dbc9ed8f4afde00f80be
 MATERIAL_HEAD: 31cd0188edf6915167c84fc8950e5d6ad2ca6d3e
-MERGEABILITY: MERGEABLE
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+LAST_COMPLETED_MATERIAL_LEG: LEG-001
+CURRENT_MATERIAL_LEG: NONE
 
-ENGINEERING_STATE: SOURCE_IMPLEMENTED_EXECUTION_TRIGGER_ATTEMPT
+ENGINEERING_STATE: SOURCE_IMPLEMENTED_EXTERNAL_EXECUTOR_BLOCKED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: PASS_OWNER_ADMITTED
-WRITE_AUTHORITY: PR_EVENT_RESET_ONLY
+WRITE_AUTHORITY: READ_ONLY_EXTERNAL_EXECUTOR_BLOCKED
 AUTO_STATE: PAUSED
-
-ISSUE_BASIS_ID: IB-0001
-ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/issue-state/CURRENT.md
-ISSUE_CHAIN_ROOT_COMMENT_ID: 5548798517
-ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548799269
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549008504
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+MERGE_AUTHORITY: OWNER_ONLY
+MERGE_AUTHORIZED: FALSE
 
 OWNER_INSTRUCTION: proceed next
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
@@ -53,11 +47,26 @@ QUESTION_DISPLAY: HIDE
 PREWORK_QUALIFICATION_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
-CURRENT_MATERIAL_LEG: NONE
-LAST_COMPLETED_MATERIAL_LEG: LEG-001
+EXECUTION_GATE: REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE
+EXECUTION_GATE_ROOT_CAUSE: UNRESOLVED_ACCOUNT_ACTIONS_POLICY_OR_BILLING_OR_OTHER_PROVISIONING_STATE
+WORKFLOW_SPECIFIC_FAULT: NOT_SUPPORTED_BY_CURRENT_EVIDENCE
+WORKFLOW_DISPATCH_CONNECTOR: NOT_EXPOSED
+LOCAL_REPOSITORY_COMMAND_RUNNER: NOT_EXPOSED
 
-VALIDATION: source/diff scope audit PASS; repository Actions operational on other EMP.1 PRs; #1648 has no workflow runs from synchronize commits. Reversible close/reopen event reset authorized.
+CONTROL_EVIDENCE:
+- stacked Draft #1624 has historical EMP.1 pull-request Actions runs;
+- current workflow exists on #1622 stack base;
+- #1648 synchronize commits and forced close/reopen event produced zero runs;
+- recent main-target merged #1647 head also produced zero pull-request runs;
+- repository precedent #1535 classifies current runner provisioning as an external repository/account gate.
 
-AUTHORITY_BOUNDARY: PR state event only; no source/workflow/base/review/merge authority changes.
-CURRENT_BLOCKER: ACTIONS_RUN_NOT_STARTED_FOR_1648.
-EXACT_NEXT_ACTION: close and reopen Draft PR #1648, then inspect workflow runs. Keep Draft and do not merge.
+HANDOVER_CONTENT_READY: TRUE
+HANDOVER_VALIDATION_STATUS: EXECUTION_NOT_RUN_PRECHECKOUT
+CHAIN_HANDOVER_READY: TRUE
+TAKEOVER_QUALIFICATION_READY: TRUE
+HANDOVER_READY: TRUE
+
+VALIDATION: static/source/diff/trigger investigation PASS; all required executable focused/browser/import/build/diff checks remain NOT_RUN.
+AUTHORITY_BOUNDARY: no engineering, test, benchmark, WRC, route, tolerance, workflow, release or deployment mutation is authorized to work around runner provisioning.
+CURRENT_BLOCKER: REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE.
+EXACT_NEXT_ACTION: restore ordinary GitHub-hosted runner availability or provide a faithful clean executable checkout for the current #1648 stack. Re-ground exact SHAs, run the focused validation ladder, then add EMP-only browser evidence if clean. Do not merge without separate explicit Owner authorization.

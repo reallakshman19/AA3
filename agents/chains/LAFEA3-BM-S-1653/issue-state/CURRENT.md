@@ -82,8 +82,8 @@ AUTO_STATE: PAUSED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 BRANCH: chatgpt/issue-1653-bm-s-b02-activation
-PR: PENDING_DRAFT_OPEN
-PR_STATUS: PENDING_DRAFT_OPEN
+PR: #1667
+PR_STATUS: OPEN_DRAFT
 LAST_MATERIAL_LEG_ID: LEG-009
 LAST_MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-009.md
 LAST_MATERIAL_HEAD: ead410ef46d8d2b2bfd4ecf8e0256a3dc47dc3ec
@@ -96,5 +96,5 @@ QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
-CURRENT_BLOCKER: activated generic B02 program route has not run on final synchronized branch head
-EXACT_NEXT_ACTION: open Draft PR, freeze exact branch head after custody sync, then Owner runs the generic program runner with --case B02 and --expected-head at that exact SHA. Retain PASS/FAIL exactly; do not merge without separate Owner merge authority.
+CURRENT_BLOCKER: activated generic B02 program route has not run on final synchronized Draft PR head
+EXACT_NEXT_ACTION: Owner runs the generic program runner with --case B02 and --expected-head at the exact synchronized PR head. Retain PASS/FAIL exactly; do not merge without separate Owner merge authority.

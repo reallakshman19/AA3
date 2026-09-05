@@ -14,7 +14,7 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1653
 WORK_ITEM_MODE: EXCLUSIVE
 AUTHORITY_DOMAIN: LAFEA3_SOLVER_BENCHMARK_EVIDENCE
 CUSTODY_EPOCH: 17
-COORDINATION_STATE: LEG009_B02_ACTIVATED_AWAIT_FINAL_HEAD_EXECUTION
+COORDINATION_STATE: LEG009_B02_ACTIVATED_DRAFT_PR_AWAIT_FINAL_HEAD_EXECUTION
 DEPENDENCIES: github:reallaksh19/Advanced_Analysis#1569 rigor; #1535 production-route boundary; #1652 BM-MESH companion; #1646 related B02 evidence
 OWNER_INSTRUCTION: proceed next
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
@@ -32,8 +32,8 @@ AUTO_STATE: PAUSED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 BRANCH: chatgpt/issue-1653-bm-s-b02-activation
-PR: PENDING_DRAFT_OPEN
-PR_STATUS: PENDING_DRAFT_OPEN
+PR: #1667
+PR_STATUS: OPEN_DRAFT
 PREVIOUS_PR: #1661
 PREVIOUS_PR_STATUS: MERGED
 PREVIOUS_PR_MERGE_COMMIT: 2126f2c45e9a77debedf5ad0cabfafc426fca095
@@ -90,4 +90,4 @@ HANDOVER_READY: FALSE_PENDING_ACTIVATED_ROUTE_EXECUTION
 
 LEG-009 activates program case B02 in `validation/lafea-benchmark-program/program.json`. B02 is now the active READY case and delegates as one generic program method to the governed S0-S5 staged runner. B01 remains retained, B02 alone left `futureQueue`, and B03-B06 remain ordered. Release, temperature and performance authority are unchanged.
 
-The activation changed HEAD, so the activated generic program route remains `NOT_RUN`. Exact next action is Owner execution of `run-lafea-benchmark-program.mjs --case B02` on the final synchronized Draft PR head. Merge remains Owner-only / not authorized.
+Draft PR #1667 is open. The activation changed HEAD, so the activated generic program route remains `NOT_RUN`. Exact next action is Owner execution of `run-lafea-benchmark-program.mjs --case B02` on the final synchronized PR head. Merge remains Owner-only / not authorized.

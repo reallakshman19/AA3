@@ -99,6 +99,15 @@ const expectedOrder = [
   'benchmarkEvidence',
   'benchmark',
 ];
+const workflowStepIds = [
+  'BASIS_SOURCE', 'GEOMETRY', 'LOADS', 'LOAD_TRANSFER', 'SECTION_SCREENING',
+  'LOCAL_CORRELATION', 'REVIEW_EVIDENCE',
+];
+const inputGroupIds = [
+  'PIPE_GEOMETRY', 'THICKNESS', 'PRESSURE', 'LOAD_CASES', 'REFERENCE_POINTS',
+  'SCREENING_CASES', 'EVALUATION_LOCATIONS',
+];
+
 assert.equal(EMP1_ANALYTICAL_LAYOUT_SCHEMA, 'emp1-analytical-layout/v2');
 assert.deepEqual(EMP1_ANALYTICAL_SURFACE_ORDER, expectedOrder,
   'task-shell recovery must retain every analytical surface and formal benchmark evidence');
@@ -141,31 +150,7 @@ assert.deepEqual(EMP1_TASK_SHELL_INPUT_GROUPS.SECTION_SCREENING, ['SCREENING_CAS
 assert.deepEqual(EMP1_TASK_SHELL_EVIDENCE_ORDER,
   ['results', 'transactionSummary', 'correlationResult', 'screeningCustody', 'lineage', 'benchmarkEvidence', 'benchmark']);
 
-const documentRef = new FakeDocument();
-const shell = documentRef.createElement('div');
-shell.dataset.emp1Step = 'A';
-const surfaces = Object.fromEntries(expectedOrder.map((surfaceId) => [
-  surfaceId,
-  documentRef.createElement('section'),
-]));
-
-const workflowSteps = ['BASIS_SOURCE', 'GEOMETRY', 'LOADS', 'LOAD_TRANSFER', 'SECTION_SCREENING', 'LOCAL_CORRELATION', 'REVIEW_EVIDENCE']
-  .map((stepId) => {
-    const button = documentRef.createElement('button');
-    button.dataset.role = 'emp1-professional-step';
-    button.dataset.emp1ProfessionalStep = stepId;
-    surfaces.workflow.append(button);
-    return button;
-  });
-
-const inputGroups = ['PIPE_GEOMETRY', 'THICKNESS', 'PRESSURE', 'LOAD_CASES', 'REFERENCE_POINTS', 'SCREENING_CASES', 'EVALUATION_LOCATIONS'];
-for (const groupId of inputGroups) {
-  const group = documentRef.createElement('section');
-  group.className = 'lafea-doc-table-section';
-  group.dataset.inputGroup = groupId;
-  surfaces.source.append(group);
-}
-
+const { documentRef, shell, surfaces, workflowSteps } = fixture('A');
 const layout = composeEmp1AnalyticalLayout(shell, surfaces, { selectionHost: documentRef });
 assert.equal(layout.schema, 'emp1-analytical-layout/v2');
 assert.equal(layout.presentSurfaceCount, expectedOrder.length);
@@ -208,6 +193,8 @@ assert.deepEqual(visibleInputGroups(surfaces.source), ['REFERENCE_POINTS']);
 
 layout.selectTask('SECTION_SCREENING');
 assert.deepEqual(visibleInputGroups(surfaces.source), ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
+assert.equal(visibleEvidence(surfaces)[0], 'screeningCustody',
+  'Section Screening must foreground existing editable screening custody rather than hiding it');
 
 layout.selectTask('LOCAL_CORRELATION');
 assert.equal(surfaces.source.hidden, true);
@@ -225,6 +212,26 @@ assert.equal(surfaces.results.parentNode?.dataset.emp1LayoutRegion, 'EVIDENCE_WO
   'hidden evidence remains in DOM custody');
 assert.equal(layout.selectEvidence('not-a-view'), false);
 assert.throws(() => layout.selectTask('UNSUPPORTED'), /EMP1_TASK_SHELL_STEP_UNSUPPORTED/u);
+
+// Legacy backing-stage A/B navigation does not emit a professional task event.
+// Reconcile only presentation state so existing A/B interactions remain visible.
+const legacySelectionHost = new FakeDocument();
+const aLegacy = fixture('A', legacySelectionHost);
+const aLegacyLayout = composeEmp1AnalyticalLayout(aLegacy.shell, aLegacy.surfaces,
+  { selectionHost: legacySelectionHost });
+aLegacyLayout.selectTask('LOADS');
+const bLegacy = fixture('B', legacySelectionHost);
+composeEmp1AnalyticalLayout(bLegacy.shell, bLegacy.surfaces,
+  { selectionHost: legacySelectionHost });
+assert.equal(bLegacy.shell.dataset.emp1ProfessionalTask, 'SECTION_SCREENING');
+assert.deepEqual(visibleInputGroups(bLegacy.surfaces.source), ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
+assert.deepEqual(visibleEvidence(bLegacy.surfaces), ['screeningCustody'],
+  'legacy entry to backing B must expose existing screening custody/edit surface');
+const aReturn = fixture('A', legacySelectionHost);
+composeEmp1AnalyticalLayout(aReturn.shell, aReturn.surfaces,
+  { selectionHost: legacySelectionHost });
+assert.equal(aReturn.shell.dataset.emp1ProfessionalTask, 'BASIS_SOURCE');
+assert.deepEqual(visibleEvidence(aReturn.surfaces), ['results']);
 
 const optionalAbsent = Object.fromEntries(expectedOrder.map((surfaceId) => [
   surfaceId,
@@ -270,9 +277,34 @@ console.log(JSON.stringify({
   status: 'EMP1_TASK_SHELL_LAYOUT_CHECK_PASS',
   professionalTasks: Object.keys(EMP1_TASK_SHELL_TASK_SURFACES).length,
   visibleHeavyEvidenceMaximum: 1,
+  backingStageReconciliation: true,
+  sectionScreeningDefaultEvidence: 'screeningCustody',
   inputTaskGroups: EMP1_TASK_SHELL_INPUT_GROUPS,
   presentationOnly: true,
 }, null, 2));
+
+function fixture(backingStep, ownerDocument = new FakeDocument()) {
+  const shell = ownerDocument.createElement('div');
+  shell.dataset.emp1Step = backingStep;
+  const surfaces = Object.fromEntries(expectedOrder.map((surfaceId) => [
+    surfaceId,
+    ownerDocument.createElement('section'),
+  ]));
+  const workflowSteps = workflowStepIds.map((stepId) => {
+    const button = ownerDocument.createElement('button');
+    button.dataset.role = 'emp1-professional-step';
+    button.dataset.emp1ProfessionalStep = stepId;
+    surfaces.workflow.append(button);
+    return button;
+  });
+  for (const groupId of inputGroupIds) {
+    const group = ownerDocument.createElement('section');
+    group.className = 'lafea-doc-table-section';
+    group.dataset.inputGroup = groupId;
+    surfaces.source.append(group);
+  }
+  return { documentRef: ownerDocument, shell, surfaces, workflowSteps };
+}
 
 function visibleEvidence(surfaceMap) {
   return EMP1_TASK_SHELL_EVIDENCE_ORDER.filter((surfaceId) => surfaceMap[surfaceId] && !surfaceMap[surfaceId].hidden);

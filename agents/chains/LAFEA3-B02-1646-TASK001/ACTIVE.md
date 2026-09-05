@@ -60,8 +60,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0005
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548782622
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549111569
-ISSUE_HANDOVER_SYNC_STATUS: STALE
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549199991
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: hosted branch Actions total_count=0; observed head pending with zero statuses; no new-run dispatch capability; issue #1634 open
@@ -71,12 +71,12 @@ HANDOVER_READY: FALSE
 
 # Active handover — TASK-001 Owner-authorized merge
 
-LEG-001 remains the only material leg. Executable validation is still `NOT_RUN`; the Owner's explicit `merge,proceed next` instruction grants merge authority without changing validation truth.
+LEG-001 remains the only material leg. Executable validation is still `NOT_RUN`; the Owner's explicit `merge,proceed next` instruction grants merge authority without changing validation truth. EP-0005 is synchronized to Issue comment `5549199991`.
 
-PR #1650 is to be synchronized at EP-0005, marked ready if GitHub requires it, and merged exactly at the successor custody head. TASK-002 remains outside this qualification scope and cannot receive material coding until its Appendix B/B2 qualification pack is refreshed and admitted.
+PR #1650 is to be marked ready if GitHub requires it and merged exactly at the synchronized successor custody head. TASK-002 remains outside this qualification scope and cannot receive material coding until its Appendix B/B2 qualification pack is refreshed and admitted.
 
 Protected solver formulation/assembly, acceptance tolerances, mesh/source/oracle authority, workflows, roadmaps and release/deployment authority remain unchanged.
 
 ## Exact next action
 
-Synchronize EP-0005 to the Issue, merge PR #1650 under explicit Owner authority, verify main, then establish TASK-002 qualification with refreshed Q1-Q5. Preserve TASK-001 validation as NOT_RUN in all terminal custody.
+Merge PR #1650 under explicit Owner authority, verify main, then establish TASK-002 qualification with refreshed Q1-Q5. Preserve TASK-001 validation as NOT_RUN in all terminal custody.

@@ -39,7 +39,7 @@ PR: NONE
 PR_STATUS: NOT_OPENED
 BRANCH: chatgpt/issue-1653-bm-s-staged-benchmark
 MAIN_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-HEAD: 84d50c8544ef79c78b7fbe71e7b5355835c845f5
+HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: 116b56b0c5e87d80a05463811719747e22088ade
 POST_BASIS_DRIFT: NONE
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MATERIAL_LEG_ID: LEG-001
@@ -56,10 +56,10 @@ ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/LAFEA3-BM-S-1653/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0000
-ISSUE_CHAIN_ROOT_COMMENT_ID: PENDING
-ISSUE_ACTIVE_HANDOVER_COMMENT_ID: PENDING
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549976846
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: NONE
@@ -69,10 +69,10 @@ HANDOVER_READY: FALSE
 
 # Active handover — BM-S #1653
 
-Pre-work custody is established before any benchmark/material mutation. The implementation branch is based directly on `main@b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`; PR #1654 is design-reference-only and is neither merged nor stacked. Related #1646 TASK-001 is a separate completed authority domain; the user's current TASK-002 work has no PR and is not modified here.
+Pre-work custody and GitHub Issue projection are synchronized before any benchmark/material mutation. The implementation branch is based directly on `main@b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`; PR #1654 is design-reference-only and is neither merged nor stacked. Related #1646 TASK-001 is a separate completed authority domain; the user's current TASK-002 work has no PR and is not modified here.
 
 LEG-001 is restricted to benchmark/evidence infrastructure: B02 frozen data package, staged audit runner, and S1 cited-oracle/retained-evidence conversion. Protected production solver/formulation/assembly/recovery/tolerances, production mesh authority, Owner roadmaps, workflows, and release/temperature authority remain unchanged.
 
 ## Exact next action
 
-Synchronize the GitHub Issue Chain Root / Active Handover / EP-0000 checkpoint, then begin LEG-001. Executable checks remain NOT_RUN until actually executed in a faithful runtime.
+Begin LEG-001. Executable checks remain NOT_RUN until actually executed in a faithful runtime.

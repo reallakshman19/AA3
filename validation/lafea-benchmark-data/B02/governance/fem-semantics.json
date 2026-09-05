@@ -39,6 +39,21 @@
   },
   "determinism": {
     "compareSemanticHashesNotWholeAuditRecordBytes": true,
-    "requiredResultHashFields": ["canonicalModelSemanticHash","resultPayloadSemanticHash","executionEvidenceHash","qualificationEvidenceHash"]
+    "crossProcessIsolationRequired": true,
+    "requiredResultHashFields": ["canonicalModelSemanticHash","resultPayloadSemanticHash","executionEvidenceHash","qualificationEvidenceHash"],
+    "requiredComparableHashFields": ["canonicalModelSemanticHash","loadCaseInputSemanticHash","resultPayloadSemanticHash","executionEvidenceHash","qualificationEvidenceHash"],
+    "volatileExecutionMetricsExcludedFromDeterministicIdentity": ["runId","generatedAt","pid","workloadWallTimeMs","processWallTimeMs","peakResidentSetKiB"],
+    "benchmarkLayerMayNotSortObservedProductionEvidenceToManufactureEquality": true,
+    "stableHashesAreRepeatabilityEvidenceNotIndependentPhysicsOracle": true
+  },
+  "performance": {
+    "informationalOnly": true,
+    "wallTimeThresholdMs": null,
+    "peakResidentSetThresholdKiB": null,
+    "dofScalingThreshold": null,
+    "processPeakMemoryMetric": "process.resourceUsage().maxRSS",
+    "processPeakMemoryUnit": "KiB",
+    "dofCountIsStructuralConsistencyEvidence": true,
+    "performanceMayNotGrantReleaseQualification": true
   }
 }

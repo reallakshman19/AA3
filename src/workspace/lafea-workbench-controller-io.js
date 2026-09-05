@@ -205,10 +205,6 @@ function intakeError(ErrorType, code, message) {
   return error;
 }
 
-function isLafeaRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
 function revokeObjectUrlAfterDownload(url) {
   let revoked = false;
   const revoke = () => {

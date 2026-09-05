@@ -21,25 +21,26 @@ OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 QUALIFICATION_SCOPE_ID: QSCOPE-1653-BM-S-SOLVER-BENCHMARK
 QUESTION_SET_ID: QS-1653-BM-S-0004
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED_FOR_S4_FAIL_CLOSED_NEGATIVES
-QUESTION_DISPLAY: SHOW
+QUESTION_PACK_ACTION: REUSED
+QUESTION_DISPLAY: HIDE
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
 OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: WRITE_ALLOWED
+WRITE_AUTHORITY: READ_ONLY_MERGE_AUTHORIZED
 AUTO_STATE: PAUSED
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
-MERGEABILITY: NOT_MERGEABLE_AT_PR_CREATION
+MERGE_AUTHORITY: AUTHORIZED
+MERGE_AUTHORIZED: TRUE
+MERGE_AUTHORIZATION_SCOPE: PR_1659_EXACT_CURRENT_CUSTODY_HEAD_AFTER_AUTH_SYNC
+MERGEABILITY: MERGEABLE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NOT_RUN
 BRANCH: chatgpt/issue-1653-bm-s-s3-solver-numerics
 PR: #1659
-PR_STATUS: OPEN_DRAFT
+PR_STATUS: OPEN_DRAFT_PENDING_READY_FOR_REVIEW_TRANSITION
 PREVIOUS_PR: #1657
 PREVIOUS_PR_STATUS: MERGED
 PREVIOUS_PR_MERGE_COMMIT: 0569ed29be02d4fb642bdfd370ae91004cde073a
@@ -71,19 +72,19 @@ ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550238919
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: S3 source/diff and independent analytical reproduction PASS; executable definition/S3/staged/B01 checks NOT_RUN; zero workflow/status checks on material head
+HANDOVER_VALIDATION_EVIDENCE: S3 source/diff and independent analytical reproduction PASS; executable definition/S3/staged/B01 checks NOT_RUN; zero workflow/status checks on exact head
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 # Active handover — BM-S #1653
 
-PR #1657 is merged. LEG-003 is receipted at material head `2520dd3340dbbda8f021e7576c2d1a2a586a8b52`, and Draft PR #1659 carries S3 retained solver-numerics evidence. S0-S3 are READY on the branch; S4-S5 remain PLANNED; B02 remains inactive in `futureQueue`.
+Owner has explicitly authorized merge of PR #1659 and one subsequent bounded S4 progression. GitHub reports #1659 mergeable; reviews and unresolved threads are zero; workflow runs and status checks are zero. Executable validation remains NOT_RUN and is not converted to PASS by merge authority.
 
-S3 did not change production solver/formulation/assembly/recovery/tolerances. Its oracle independently owns equilibrium/energy/linearity/superposition/scaling identities; method-specific conditioning evidence is retained but explicitly diagnostic-only. Executable validation remains NOT_RUN.
+LEG-003 remains receipted at material head `2520dd3340dbbda8f021e7576c2d1a2a586a8b52`. S0-S3 are READY on the PR branch; S4-S5 remain PLANNED; B02 remains inactive in `futureQueue`. No production solver/formulation/assembly/recovery/tolerance, workflow, roadmap, production mesh authority or release authority changed.
 
-EP-0004 and qualification set `QS-1653-BM-S-0004` are the next write-ahead boundary for S4 fail-closed evidence. The Q8 negative must preserve CCW corner topology and reach a midside-induced nonpositive Jacobian; message-regex or wrong-boundary rejection is not sufficient.
+EP-0004 and qualification set `QS-1653-BM-S-0004` remain the S4 write-ahead boundary.
 
 ## Exact next action
 
-Await another Owner progression command. Then implement only one retained S4 executor driven by `governance/negative-cases.json`, recording exact expected/actual boundary, state, code and path for all cases. Do not merge PR #1659, begin S5, activate B02, or change production validation/tolerances without separate authority.
+Mark PR #1659 ready-for-review only because GitHub requires it, merge the exact synchronized custody head, re-ground on the resulting merged main, then implement only LEG-004 S4 fail-closed retained evidence driven by `governance/negative-cases.json`. Do not begin S5 or activate B02 in that leg.

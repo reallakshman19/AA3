@@ -108,7 +108,7 @@ for (const stageId of selectedStages) {
   const record = finalizeAuditRecord({
     schema: 'lafea-benchmark-audit-record/v1',
     programId: 'BM-MESH',
-    materialLeg: 'LEG-009',
+    materialLeg: 'LEG-010',
     runId,
     generatedAt: new Date().toISOString(),
     repository: 'reallaksh19/Advanced_Analysis',
@@ -161,7 +161,7 @@ const overallStatus = stageRecords.some((row) => row.caseStatus === 'FAIL')
 const summary = {
   schema: 'lafea-mesh-benchmark-program-run/v1',
   benchmarkId: 'BM-MESH',
-  materialLeg: 'LEG-009',
+  materialLeg: 'LEG-010',
   runId,
   generatedAt: new Date().toISOString(),
   exactHeadSha,
@@ -194,15 +194,7 @@ function runStage(stageId, predecessorGateSatisfied) {
   if (stageId === 'M0') return runM0();
   if (stageId === 'M1') return runM1();
   if (stageId === 'M2') return runM2();
-  if (stageId === 'M3') {
-    return {
-      schema: 'lafea-mesh-benchmark-stage-evidence/v1',
-      status: 'BLOCKED',
-      blocker: 'M3_SHELL_THICKNESS_AUTHORITY_NOT_FROZEN',
-      note: 'No h/t qualification or stage-level quality-distribution acceptance is synthesized.',
-      observations: [],
-    };
-  }
+  if (stageId === 'M3') return runM3();
   return {
     schema: 'lafea-mesh-benchmark-stage-evidence/v1',
     status: 'BLOCKED',
@@ -346,6 +338,157 @@ function runM2() {
     status: executableFailed ? 'FAIL' : 'BLOCKED',
     observations,
     blocker: executableFailed ? null : 'LAFEA4_MULTIPATCH_SHARED_NODE_IDENTITY_OUTSIDE_CURRENT_PRODUCTION_SCOPE',
+  };
+}
+
+function runM3() {
+  const continuumLadders = ['L3-T3', 'L3-T6', 'L3-Q8'].map(runM3ContinuumLadder);
+  const shellLadder = requireLadder('L4-CST-DKT');
+  const executableFailed = continuumLadders.some((row) => row.status === 'FAIL');
+  const shellObservation = {
+    checkId: 'M3-L4-CST-DKT',
+    status: 'BLOCKED',
+    ladderId: shellLadder.ladderId,
+    geometryCaseId: shellLadder.geometryCaseId,
+    elementFamily: shellLadder.elementFamily,
+    levelIds: [...shellLadder.levelIds],
+    nonThicknessDistributionDisposition: 'NOT_EXECUTED_FROZEN_MULTIPATCH_GEOMETRY_OUTSIDE_QUALIFIED_PRODUCTION_SCOPE',
+    warpageDisposition: 'NOT_EVALUATED_TRI3_MULTIPATCH_PRODUCTION_SCOPE_BLOCKED',
+    sizeToThicknessDisposition: 'BLOCKED_GOVERNED_SHELL_THICKNESS_NOT_FROZEN',
+    benchmarkSideNodeMergeUsed: false,
+  };
+  return {
+    schema: 'lafea-mesh-benchmark-stage-evidence/v1',
+    status: executableFailed ? 'FAIL' : 'BLOCKED',
+    blocker: executableFailed ? null : 'M3_LAFEA4_GOVERNED_ACCEPTANCE_BLOCKED',
+    blockers: [
+      {
+        blockerId: 'M3-LAFEA4-MULTIPATCH-PRODUCTION-SCOPE',
+        reason: 'The frozen L4 ladder uses M2-TWO-PATCH-SHELL-01, while the qualified production shell producer is single-patch and benchmark-side seam merging is forbidden.',
+      },
+      {
+        blockerId: 'M3-SHELL-THICKNESS-AUTHORITY',
+        reason: 'The required 0.5t-2t size-to-thickness qualification cannot run until governed shell thickness is frozen.',
+      },
+    ],
+    observations: [...continuumLadders, shellObservation],
+  };
+}
+
+function runM3ContinuumLadder(ladderId) {
+  const ladder = requireLadder(ladderId);
+  assert.equal(ladder.stageId, 'LAFEA.3');
+  const levels = ladder.levelIds.map((levelId) => {
+    const level = refinementLevel(levelId);
+    const produced = continuumObservation(
+      ladder.geometryCaseId,
+      ladder.elementFamily,
+      level.globalTargetSize,
+      'NORMAL',
+    );
+    return {
+      levelId,
+      globalTargetSize: level.globalTargetSize,
+      meshHash: produced.meshHash,
+      nodeCount: produced.nodeCount,
+      elementCount: produced.elementCount,
+      estimatedDofs: produced.estimatedDofs,
+      resourceDisposition: produced.resourceDisposition,
+      qualityWorstStatus: produced.qualityWorstStatus,
+      qualityDistributions: m3QualityDistributions(produced.quality),
+    };
+  });
+  const refinementChecks = levels.slice(1).map((fine, index) => {
+    const coarse = levels[index];
+    const targetRatio = coarse.globalTargetSize / fine.globalTargetSize;
+    const meshChanged = coarse.meshHash !== fine.meshHash;
+    const countsIncreased = fine.nodeCount > coarse.nodeCount && fine.elementCount > coarse.elementCount;
+    const targetRatioMatches = Math.abs(targetRatio - ladders.refinement.adjacentHRefinementRatio)
+      <= roundoffTolerance(ladders.refinement.adjacentHRefinementRatio);
+    return {
+      fromLevelId: coarse.levelId,
+      toLevelId: fine.levelId,
+      targetRatio,
+      expectedTargetRatio: ladders.refinement.adjacentHRefinementRatio,
+      meshChanged,
+      nodeCountIncreased: fine.nodeCount > coarse.nodeCount,
+      elementCountIncreased: fine.elementCount > coarse.elementCount,
+      status: meshChanged && countsIncreased && targetRatioMatches ? 'PASS' : 'FAIL',
+    };
+  });
+  const trendChecks = [
+    m3WorstCaseTrend(levels, 'ASPECT_RATIO', true),
+    m3WorstCaseTrend(levels, 'MINIMUM_ANGLE_DEGREES', false),
+    m3WorstCaseTrend(levels, 'SCALED_JACOBIAN', false),
+  ];
+  const noBlock = levels.every((row) => row.qualityWorstStatus !== 'BLOCK');
+  const passed = noBlock
+    && refinementChecks.every((row) => row.status === 'PASS')
+    && trendChecks.every((row) => row.status === 'PASS' || row.status === 'NOT_APPLICABLE');
+  return {
+    checkId: `M3-${ladderId}`,
+    status: passed ? 'PASS' : 'FAIL',
+    ladderId,
+    geometryCaseId: ladder.geometryCaseId,
+    elementFamily: ladder.elementFamily,
+    noProductionQualityBlock: noBlock,
+    levels,
+    refinementChecks,
+    worstCaseTrendChecks: trendChecks,
+  };
+}
+
+function m3QualityDistributions(quality) {
+  return {
+    ASPECT_RATIO: m3MetricDistribution(quality, 'ASPECT_RATIO', true),
+    MINIMUM_ANGLE_DEGREES: m3MetricDistribution(quality, 'MINIMUM_ANGLE_DEGREES', false),
+    SCALED_JACOBIAN: m3MetricDistribution(quality, 'SCALED_JACOBIAN', false),
+  };
+}
+
+function m3MetricDistribution(quality, metricName, worseIsHigher) {
+  const values = quality.elementResults.flatMap((row) => (
+    row.metrics.filter((metric) => metric.metric === metricName).map((metric) => Number(metric.value))
+  )).filter(Number.isFinite).sort((left, right) => left - right);
+  if (!values.length) return null;
+  const middle = Math.floor(values.length / 2);
+  const median = values.length % 2 === 1
+    ? values[middle]
+    : (values[middle - 1] + values[middle]) / 2;
+  return {
+    sampleCount: values.length,
+    minimum: values[0],
+    median,
+    maximum: values.at(-1),
+    worst: worseIsHigher ? values.at(-1) : values[0],
+    worseDirection: worseIsHigher ? 'HIGHER' : 'LOWER',
+  };
+}
+
+function m3WorstCaseTrend(levels, metricName, worseIsHigher) {
+  const values = levels.map((row) => row.qualityDistributions[metricName]?.worst ?? null);
+  if (values.some((value) => value === null)) {
+    return { metric: metricName, status: 'NOT_APPLICABLE', worstValues: values };
+  }
+  const pairChecks = values.slice(1).map((fine, index) => {
+    const coarse = values[index];
+    const tolerance = roundoffTolerance(Math.max(Math.abs(coarse), Math.abs(fine), 1));
+    const holdsOrImproves = worseIsHigher ? fine <= coarse + tolerance : fine >= coarse - tolerance;
+    return {
+      fromLevelId: levels[index].levelId,
+      toLevelId: levels[index + 1].levelId,
+      coarseWorst: coarse,
+      fineWorst: fine,
+      tolerance,
+      holdsOrImproves,
+    };
+  });
+  return {
+    metric: metricName,
+    status: pairChecks.every((row) => row.holdsOrImproves) ? 'PASS' : 'FAIL',
+    worseDirection: worseIsHigher ? 'HIGHER' : 'LOWER',
+    worstValues: values,
+    pairChecks,
   };
 }
 
@@ -784,7 +927,7 @@ function stageComparisonPolicy(stageId) {
     M0: 'PRODUCTION_CONTRACT_CONFORMANCE',
     M1: 'BYTE_STABLE_CANONICAL_MESH_HASH_ACROSS_REPLAY_PROCESS_AND_INPUT_ORDER',
     M2: 'FROZEN_CLOSED_FORM_AND_EXPLICIT_POLICY_COMPARISONS_ONLY',
-    M3: 'BLOCK_IF_GOVERNED_THICKNESS_OR_STAGE_ACCEPTANCE_IS_ABSENT',
+    M3: 'RETAIN_NON_THICKNESS_QUALITY_DISTRIBUTIONS_AND_BLOCK_IF_LAFEA4_SCOPE_OR_THICKNESS_AUTHORITY_IS_ABSENT',
     M4: 'BLOCK_IF_PHYSICS_RESPONSE_SOLVER_OR_CONVERGENCE_AUTHORITY_IS_ABSENT',
   }[stageId];
 }

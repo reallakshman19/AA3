@@ -3,8 +3,8 @@
   "bucketId": "MESH",
   "issue": "github:reallaksh19/Advanced_Analysis#1652",
   "benchmarkId": "BM-MESH",
-  "materialLeg": "LEG-009",
-  "state": "STAGED_RUNNER_FAIL_CLOSED",
+  "materialLeg": "LEG-010",
+  "state": "STAGED_RUNNER_FAIL_CLOSED_M3_NON_THICKNESS_WIRED",
   "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
   "authority": {
     "benchmarkExecutionAuthorized": true,
@@ -21,6 +21,7 @@
     "allowed": [
       "Execute the registered production mesh producer for M0/M1 and the executable LAFEA.3 portion of M2.",
       "Retain canonical lafea-analysis-mesh/v1 hashes, counts, DOF and mesh-quality observations.",
+      "Execute frozen LAFEA.3 L0/L1/L2 production ladders for M3 non-thickness quality distributions and verify genuine refinement plus non-worsening worst metrics.",
       "Retain per-stage audit records and gate later stages on a contiguous PASS prefix.",
       "Emit explicit BLOCKED records where production scope or owner authority is absent."
     ],
@@ -28,7 +29,7 @@
       "Benchmark-authored meshes or benchmark-only mesh adapters defining ladder meshes.",
       "Benchmark-side node merging to manufacture a conforming multi-patch shell seam.",
       "Production source, threshold, solver/compiler, workflow, registration or roadmap changes.",
-      "Fabricated material, loads, restraints, loadCaseId, response quantities, recovery methods or response acceptance values.",
+      "Fabricated shell thickness, material, loads, restraints, loadCaseId, response quantities, recovery methods or response acceptance values.",
       "Release or temperature authority."
     ]
   },
@@ -126,17 +127,49 @@
     {
       "benchmarkStage": "M3",
       "title": "Quality-gate distributions over systematic refinement",
-      "definitionState": "BLOCKED_AUTHORITY",
+      "definitionState": "PARTIAL_READY_NON_THICKNESS_WITH_BLOCKED_LAFEA4",
       "gateMode": "FAIL_CLOSED",
-      "methods": [],
+      "methods": [
+        {
+          "methodId": "M3-LAFEA3-NON-THICKNESS-QUALITY-DISTRIBUTIONS",
+          "authorityClass": "PRODUCTION_QUALITY_OBSERVATION_FROZEN_LADDER",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "sourceRefs": [
+            "S-002",
+            "S-003",
+            "S-006",
+            "S-007",
+            "S-011",
+            "S-014"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "FROZEN_LADDER_PLUS_EXISTING_PRODUCTION_QUALITY_POLICY_NO_THRESHOLD_MUTATION"
+        }
+      ],
+      "retainedDistributionMetrics": [
+        "ASPECT_RATIO",
+        "MINIMUM_ANGLE_DEGREES",
+        "SCALED_JACOBIAN"
+      ],
+      "refinementAcceptance": {
+        "requireDistinctMeshHash": true,
+        "requireIncreasingNodeCount": true,
+        "requireIncreasingElementCount": true,
+        "adjacentTargetHRatio": 2,
+        "worstCaseTrend": "IMPROVES_OR_HOLDS"
+      },
       "declaredBlockers": [
+        {
+          "blockerId": "M3-LAFEA4-MULTIPATCH-PRODUCTION-SCOPE",
+          "reason": "The frozen L4-CST-DKT ladder is tied to M2-TWO-PATCH-SHELL-01, while the qualified production shell producer is single-patch; benchmark-side seam merging is forbidden."
+        },
         {
           "blockerId": "M3-SHELL-THICKNESS-AUTHORITY",
           "reason": "Shell h/t qualification requires governed shell thickness not frozen by BM-MESH."
         },
         {
           "blockerId": "M3-PREDECESSOR-GATE",
-          "reason": "M3 cannot advance unless M2 is PASS."
+          "reason": "M3 cannot advance unless M2 is PASS; the current frozen two-patch LAFEA.4 M2 case remains outside the qualified production scope."
         }
       ]
     },

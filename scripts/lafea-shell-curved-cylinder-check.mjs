@@ -33,6 +33,7 @@ import {
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-mesh-producer.js';
+import { LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED } from '../src/workspace/lafea-domain-first-mesh-custody.js';
 import { createLafeaWorkbenchOrchestratorStore } from '../src/workspace/lafea-workbench-orchestrator-store.js';
 import { buildLafeaDiscretizationViewModel } from '../src/workspace/lafea-discretization-view-model.js';
 
@@ -292,9 +293,12 @@ function checkWorkbench(stageId, parent, profile) {
   assert.equal(generated.evidence.qualification, 'PASS');
   let stage = workbench.getState().stages[stageId];
   assert.equal(stage.analysisMeshCustodyProjection.state, 'CURRENT_PASS');
-  assert.equal(stage.analysisMeshCustodyProjection.usableForRun, true);
+  assert.equal(stage.analysisMeshCustodyProjection.usableForRun, false);
+  assert.deepEqual(stage.analysisMeshCustodyProjection.runBlockingReasons, [
+    LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED,
+  ]);
   const vm = buildLafeaDiscretizationViewModel(stage);
-  assert.equal(vm.actions.canRun, true);
+  assert.equal(vm.actions.canRun, false);
   assert.equal(vm.actions.manualRefinementEnabled, false);
   const retainedHash = workbench.selectRetainedAnalysisMeshEvidenceV2(stageId).artifactHash;
   assert.equal(workbench.refineAnalysisMesh({

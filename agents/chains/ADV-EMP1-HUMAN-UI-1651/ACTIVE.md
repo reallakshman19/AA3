@@ -12,16 +12,16 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0008
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0008.md
+ENDPOINT: EP-0009
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0009.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0007.md
 PR: 1660
-PR_STATUS: OPEN_DRAFT_LEG006_REPAIR_SOURCE_COMPLETE_REVALIDATION_PENDING
+PR_STATUS: OPEN_DRAFT_LEG006_REVALIDATED_INHERITED_BUILD_BLOCKER
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
 MAIN_HEAD_OBSERVED: 80f335b750a13a06741a787106949bada1ad7f37
 MAIN_DRIFT_CLASSIFICATION: NON_MATERIAL_TO_LEG006_SCOPE
-MERGEABILITY: MERGEABLE_AT_POST_REPAIR_OBSERVATION
+MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
@@ -29,28 +29,27 @@ LATEST_MATERIAL_HEAD: 3a8b4e7241ed341deb4f54175ad14f893a7af241
 LAST_COMPLETED_MATERIAL_LEG: LEG-006
 CURRENT_MATERIAL_LEG: NONE
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-006.md
-ENGINEERING_STATE: LEG_006_REPAIR_SOURCE_COMPLETE_EXTERNAL_REVALIDATION_PENDING
+ENGINEERING_STATE: LEG_006_REPAIR_VALIDATED_BROWSER_EVIDENCE_BLOCKED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_REVALIDATION
+WRITE_AUTHORITY: READ_ONLY_AWAITING_MANUAL_OR_BROWSER_EVIDENCE
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 AUTHORITY_DOMAIN: EMP.1 test/evidence closure only; production mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 12
-COORDINATION_STATE: SAFE_POST_LEG006_REPAIR
+CUSTODY_EPOCH: 13
+COORDINATION_STATE: SAFE_POST_LEG006_REVALIDATION
 POST_BASIS_DRIFT: NON_MATERIAL_TO_SCOPE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0009
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550963782
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
-OWNER_TEXT_OBSERVED: `fix, proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_006_REPAIR
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0009_COMMENT
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_ISSUE_SYNC
+OWNER_PROGRESSION_COMMAND: NONE_NEW_AFTER_LEG006
 OWNER_MERGE_COMMAND: NONE_FOR_PR_1660
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -66,14 +65,13 @@ QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PARTIAL_PENDING
+HANDOVER_VALIDATION_STATUS: STATIC_AND_BUILD_ATTRIBUTION_COMPLETE_BROWSER_BLOCKED
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
-VALIDATION_PASS_OBSERVED: emp1-plain-language-labels-check; emp1-governed-vector-table-check; emp1-professional-workflow-check; emp1-benchmark-evidence-ui-check; emp1-issue1651-acceptance-check; npm run check:imports; git diff --check.
-VALIDATION_REPAIR_PENDING: `node scripts/emp1-analytical-layout-check.mjs` must be rerun at 3a8b4e72 after declaration-order repair.
-VALIDATION_BUILD_GATE: Vite build phase completed but bundle ceiling failed at prior material target; current-main differential build required before attribution.
-VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains blocked because project-local Chromium is absent; no product assertions executed.
+VALIDATION_PASS_OBSERVED: emp1-plain-language-labels-check; emp1-governed-vector-table-check; emp1-professional-workflow-check; emp1-benchmark-evidence-ui-check; emp1-issue1651-acceptance-check; emp1-analytical-layout-check at 3a8b4e72; npm run check:imports; git diff --check.
+VALIDATION_BUILD_GATE: #1660 Vite build completed then bundle ceiling failed at 1,936,884 > 1,179,648; current main independently fails same gate at 1,932,886 > 1,179,648. Gate failure classified INHERITED; PR comparator is 3,998 bytes larger, so zero contribution is not claimed.
+VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains blocked because project-local Chromium is absent; no automated product assertions executed.
 MANUAL_VALIDATION: allowed as separate human-observed UI evidence; pending unless returned.
-AUTHORITY_BOUNDARY: LEG-006 changes one test checker only; no production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML.
-CURRENT_BLOCKER: external revalidation of repaired checker plus current-main differential build attribution.
-EXACT_NEXT_ACTION: local verifier checks out `3a8b4e7241ed341deb4f54175ad14f893a7af241`, reruns the layout checker, then builds current main `80f335b750a13a06741a787106949bada1ad7f37` as bundle comparator and returns both outputs. Do not merge PR #1660 without a separate explicit Owner merge command.
+AUTHORITY_BOUNDARY: no material change after LEG-006 material head; revalidation/control-plane only.
+CURRENT_BLOCKER: browser acceptance evidence only. Inherited repository bundle-budget failure remains outside #1651 pass/fail causation.
+EXACT_NEXT_ACTION: Owner/local verifier performs the manual localhost EMP.1 walkthrough using validation/MANUAL-EP-0007.md and returns observations, or installs project-local Chromium and reruns focused Playwright. Do not merge PR #1660 without a separate explicit Owner merge command.

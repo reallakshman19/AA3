@@ -348,8 +348,16 @@ function effectiveProjectDataOrigin(productDefaultProvider) {
 }
 
 function selectQualificationProfile(projectDataProfile, configuration) {
-  if (!configuration.qualificationProfileId || !configuration.qualificationProfileVersion) return null;
   const entry = projectDataProfile?.qualificationPolicy?.qualificationProfiles;
+  if (!configuration.qualificationProfileId || !configuration.qualificationProfileVersion) {
+    if (entry?.approved === true && entry?.value?.schema === 'non-fea-qualification-profile-set/v1' && Array.isArray(entry?.value?.profiles)) {
+      const defaultProfile = entry.value.profiles.find((row) => (
+        row.qualification === 'QUALIFIED' && row.locked === true
+      ));
+      if (defaultProfile) return defaultProfile;
+    }
+    return null;
+  }
   if (!entry || entry.approved !== true || !entry.evidence?.source) {
     throw codedError('Qualification profile authority is not approved and source-evidenced.', 'COMMON_INPUT_QUALIFICATION_AUTHORITY_REQUIRED');
   }

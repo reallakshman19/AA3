@@ -204,7 +204,10 @@ export async function autoBindMasterSources() {
  * @returns {Promise<void>}
  */
 export async function createDefaultQualificationProfile(opts = {}) {
-  const { projectDataStore: pds } = await import('./project-data/project-data-store.js');
+  const [{ projectDataStore: pds }, { nonFeaCommonInputStore: cis }] = await Promise.all([
+    import('./project-data/project-data-store.js'),
+    import('./non-fea-common-input-store.js'),
+  ]);
   const profileId = opts.profileId || 'default-gravity-loads';
   const approvedBy = opts.approvedBy || 'OWNER';
   const approvedAt = new Date().toISOString().slice(0, 10);
@@ -229,6 +232,49 @@ export async function createDefaultQualificationProfile(opts = {}) {
     { source: 'Default gravity-loads qualification profile', sourceKey: 'projectData' },
     true,
   );
+
+  cis.configure({
+    qualificationProfileId: profileId,
+    qualificationProfileVersion: 1,
+  });
+}
+
+/**
+ * Automatically ensures a locked QUALIFIED profile exists in Project Data
+ * and is bound in the Non-FEA Common Input store so that routine calculations
+ * are not blocked by a missing qualification profile.
+ *
+ * @returns {Promise<boolean>}
+ */
+export async function autoEnsureDefaultQualificationProfile() {
+  const [{ projectDataStore: pds }, { nonFeaCommonInputStore: cis }] = await Promise.all([
+    import('./project-data/project-data-store.js'),
+    import('./non-fea-common-input-store.js'),
+  ]);
+  const profile = pds.getProfile();
+  const entry = profile?.qualificationPolicy?.qualificationProfiles;
+  const profiles = entry?.value?.profiles;
+  let changed = false;
+
+  if (!entry || !entry.value || !Array.isArray(profiles) || profiles.length === 0) {
+    await createDefaultQualificationProfile();
+    changed = true;
+  }
+
+  const updatedProfile = pds.getProfile();
+  const activeProfiles = updatedProfile?.qualificationPolicy?.qualificationProfiles?.value?.profiles || [];
+  const currentConfig = cis.getSnapshot().configuration;
+  if (!currentConfig.qualificationProfileId && activeProfiles.length > 0) {
+    const target = activeProfiles.find((p) => p.locked && p.qualification === 'QUALIFIED') || activeProfiles[0];
+    if (target?.profileId) {
+      cis.configure({
+        qualificationProfileId: target.profileId,
+        qualificationProfileVersion: target.version || 1,
+      });
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 function copyMapping(mapping) {

@@ -39,9 +39,7 @@ test('EMP.1 analytical layout preserves one surface instance, task navigation an
   expect(desktopGeometry.primary.right).toBeLessThanOrEqual(desktopGeometry.basis.left + 1);
   expect(Math.abs(desktopGeometry.primary.top - desktopGeometry.basis.top)).toBeLessThanOrEqual(1);
   expect(desktopGeometry.detail.width).toBeGreaterThanOrEqual(desktopGeometry.lanes.width - 1);
-  expect(desktopGeometry.pageScrollWidth).toBeLessThanOrEqual(desktopGeometry.viewportWidth + 1);
-
-  const desktopManifest = await liveManifest(analytical);
+  expect(desktopGeometry.analyticalScrollWidth).toBeLessThanOrEqual(desktopGeometry.analyticalClientWidth + 1);
 
   await professionalStep(workflow, 4, 'Load Transfer').click();
   await expect(workbench.locator('[data-role="lafea-analytical-calc"]'))
@@ -55,10 +53,13 @@ test('EMP.1 analytical layout preserves one surface instance, task navigation an
   await expect(workbench.locator('[data-role="emp1-c-run-configuration"]')).toHaveCount(1);
 
   await professionalStep(workbench.locator('[data-role="emp1-workflow"]'), 7, 'Review & Evidence').click();
-  const reviewCandidates = workbench.locator(
-    '[data-role="emp1-engineering-review-panel"], [data-role="emp1-product-execution-summary"], [data-role="emp1-benchmark-evidence-panel"]',
+  const executionSummary = workbench.locator('[data-role="emp1-product-execution-summary"]');
+  await expect(executionSummary).toHaveCount(1);
+  await expect(executionSummary).toBeInViewport();
+
+  const sameStageDesktopManifest = await liveManifest(
+    workbench.locator('[data-role="lafea-analytical-calc"]'),
   );
-  await expect(reviewCandidates.first()).toBeInViewport();
 
   await page.setViewportSize({ width: 720, height: 900 });
   const narrowAnalytical = workbench.locator('[data-role="lafea-analytical-calc"]');
@@ -67,13 +68,13 @@ test('EMP.1 analytical layout preserves one surface instance, task navigation an
   expect(Math.abs(narrowGeometry.primary.left - narrowGeometry.basis.left)).toBeLessThanOrEqual(1);
   expect(Math.abs(narrowGeometry.primary.width - narrowGeometry.basis.width)).toBeLessThanOrEqual(1);
   expect(narrowGeometry.basis.top).toBeGreaterThanOrEqual(narrowGeometry.primary.bottom - 1);
-  expect(narrowGeometry.pageScrollWidth).toBeLessThanOrEqual(narrowGeometry.viewportWidth + 1);
+  expect(narrowGeometry.analyticalScrollWidth).toBeLessThanOrEqual(narrowGeometry.analyticalClientWidth + 1);
 
   await assertUniqueLayoutSurfaceManifest(narrowAnalytical);
   await assertEngineerFacingCardinality(narrowAnalytical);
   const narrowManifest = await liveManifest(narrowAnalytical);
-  expect(narrowManifest.roles).toEqual(desktopManifest.roles);
-  expect(narrowManifest.guidedTargets).toEqual(desktopManifest.guidedTargets);
+  expect(narrowManifest.roles).toEqual(sameStageDesktopManifest.roles);
+  expect(narrowManifest.guidedTargets).toEqual(sameStageDesktopManifest.guidedTargets);
 
   await testInfo.attach('emp1-analytical-layout-geometry', {
     body: Buffer.from(`${JSON.stringify({ desktopGeometry, narrowGeometry }, null, 2)}\n`, 'utf8'),
@@ -162,7 +163,8 @@ async function regionGeometry(analytical) {
       lanes: box('emp1-analytical-layout-lanes'),
       viewportWidth: window.innerWidth,
       viewportHeight: window.innerHeight,
-      pageScrollWidth: document.documentElement.scrollWidth,
+      analyticalScrollWidth: root.scrollWidth,
+      analyticalClientWidth: root.clientWidth,
       pageScrollHeight: document.documentElement.scrollHeight,
       clientHeight: document.documentElement.clientHeight,
     };

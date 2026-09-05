@@ -56,8 +56,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548782622
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0001_COMMENT
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0001_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5548857129
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: NONE
@@ -69,7 +69,7 @@ HANDOVER_READY: FALSE
 
 ## Authority decision
 
-Owner instruction `qualified, proceed next` is recorded in `OWNER-QUALIFICATION-DECISION-0001.md`. A canonical five-question takeover pack preserving Appendix A + B1 is recorded in `QUESTION-SET-0001.md` and repeated in EP-0001. Qualification is PASS for this TASK-001 boundary only; merge/release/roadmap/source-oracle authority is unchanged.
+Owner instruction `qualified, proceed next` is recorded in `OWNER-QUALIFICATION-DECISION-0001.md`. A canonical five-question takeover pack preserving Appendix A + B1 is recorded in `QUESTION-SET-0001.md` and EP-0001. Qualification is PASS for this TASK-001 boundary only; merge/release/roadmap/source-oracle authority is unchanged.
 
 ## Drift reconciliation
 

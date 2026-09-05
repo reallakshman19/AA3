@@ -3,14 +3,15 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0012
 UPDATED_AT: 2026-09-05
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0012_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0012_COMMENT
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551850304
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual giant waterfall with task-shell UI
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551851245
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR: 1660
 PR_STATUS: OPEN_DRAFT_OWNER_MERGE_AUTHORIZED_VALIDATION_RISK_RETAINED
@@ -117,4 +118,4 @@ CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
 CURRENT_BLOCKER: recovered task-shell human-factor/browser acceptance is NOT_RUN. Owner explicitly authorized merge despite that retained validation risk.
-EXACT_NEXT_ACTION: synchronize EP-0012 to parent #1651 and child #1664, refresh PR metadata, mark Draft #1660 ready only as needed for merge, merge at the exact freshly observed relay head, and stop. Plain `proceed` is not an exact successor progression command; a new material progression requires exact `proceed next`.
+EXACT_NEXT_ACTION: refresh final PR/branch head, mark Draft #1660 ready only as needed for merge, merge at the exact freshly observed relay head, and stop. Plain `proceed` is not an exact successor progression command; a new material progression requires exact `proceed next`.

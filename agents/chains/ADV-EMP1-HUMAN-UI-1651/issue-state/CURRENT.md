@@ -3,7 +3,7 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0005
 UPDATED_AT: 2026-09-05
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550705454
@@ -13,7 +13,7 @@ BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR: 1660
 PR_STATUS: OPEN_DRAFT_LEG005_IN_PROGRESS
 PR_BASE: main
-PR_HEAD_OBSERVED: b3b0378a55aaf5a036880c343ad3720e4a060981
+PR_HEAD_OBSERVED: f38e82140012ca79974860856c2a3280b67c7a58
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
 MERGEABILITY: MERGEABLE_AT_LEG005_ADMISSION
 REVIEWS: 0
@@ -95,5 +95,5 @@ PASS — pre-material qualification:
 
 NOT_RUN — LEG-005 executable validation until a faithful repository checkout executes the focused Node/Playwright/import/build/diff ladder.
 
-CURRENT_BLOCKER: none.
-EXACT_NEXT_ACTION: implement only the focused raw-token coverage repair, benchmark keyboard/table-semantic closure, static issue-1651 acceptance manifest and existing Stage-17 carrier wiring; freeze material head; record LEG-005 receipt and EP-0006; sync Issue comments; stop. Do not merge PR #1660 without a new explicit Owner merge command.
+CURRENT_BLOCKER: issue Active comment needs refresh before material mutation.
+EXACT_NEXT_ACTION: synchronize the mutable issue Active handover to this LEG-005 admitted state, then implement only the focused raw-token coverage repair, benchmark keyboard/table-semantic closure, static issue-1651 acceptance manifest and existing Stage-17 carrier wiring; freeze material head; record LEG-005 receipt and EP-0006; sync Issue comments; stop. Do not merge PR #1660 without a new explicit Owner merge command.

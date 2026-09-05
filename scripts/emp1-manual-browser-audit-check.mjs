@@ -15,7 +15,8 @@ const [audit, guide] = await Promise.all([
 for (const required of [
   'runEmp1ManualBrowserAudit',
   'seedQualificationPressureIfNeeded',
-  'AnalysisWorkspace.importEmpiricalDocument',
+  'globalThis.AnalysisWorkspace',
+  "workspace.importEmpiricalDocument(documentValue, 'LAFEA.1')",
   'P-EXTERNAL',
   'SOURCE-PIPE-MODEL@7#pressure.P-EXTERNAL.internal',
   'SOURCE-PIPE-MODEL@7#pressure.P-EXTERNAL.external',

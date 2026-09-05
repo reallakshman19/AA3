@@ -59,6 +59,7 @@ runPlaywright([
 ]);
 runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
+runPlaywright(['e2e/emp1-human-presentation-tokens.spec.js']);
 
 // Test-only UI08 execution carrier: this uses the same real Vite production
 // application and Chromium runtime as the authorized visible-workbench lane.
@@ -81,6 +82,7 @@ runPlaywright([
   'e2e/lafea-visible-workbench.spec.js',
   'e2e/lafea-emp1-a-to-b-refresh.spec.js',
   'e2e/lafea-empirical-grouped-edit.spec.js',
+  'e2e/emp1-human-presentation-tokens.spec.js',
   'e2e/lafea3-sample-mesh.spec.js',
   'e2e/lafea-shell-sample-mesh.spec.js',
   'e2e/lafea-b02-g3-custody.spec.js',

@@ -12,46 +12,44 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0006
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0006.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0005.md
+ENDPOINT: EP-0007
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0007.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0006.md
 PR: 1660
-PR_STATUS: OPEN_DRAFT_LEG005_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+PR_STATUS: OPEN_DRAFT_EXTERNAL_VALIDATION_BLOCKED
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
-MERGEABILITY: MERGEABLE_AT_MATERIAL_FREEZE
+MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-STATUS_CONTEXTS_MATERIAL_HEAD: 0
-PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
 LATEST_MATERIAL_HEAD: 9910d2f95a1a8946ea625702de6f3a50b163c6e3
 LAST_COMPLETED_MATERIAL_LEG: LEG-005
 CURRENT_MATERIAL_LEG: NONE
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-005.md
-ENGINEERING_STATE: LEG_005_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+ENGINEERING_STATE: LEG_005_SOURCE_COMPLETE_EXECUTION_PARTIAL_BLOCKED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
+WRITE_AUTHORITY: READ_ONLY_AWAITING_OWNER_REPAIR_PROGRESSION
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 AUTHORITY_DOMAIN: EMP.1 test/evidence closure only; production mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 10
-COORDINATION_STATE: SAFE_POST_LEG005_FREEZE
+CUSTODY_EPOCH: 11
+COORDINATION_STATE: EXTERNAL_VALIDATION_OBSERVED_REPAIR_REQUIRED
 POST_BASIS_DRIFT: NONE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0006
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550796417
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
-OWNER_TEXT_OBSERVED: `proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_005
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_ENDPOINT_COMMENT
+OWNER_TEXT_OBSERVED: manual localhost verification preferred over Playwright launch for this checkpoint
+OWNER_PROGRESSION_COMMAND: NONE_NEW
 OWNER_MERGE_COMMAND: NONE_FOR_PR_1660
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -63,15 +61,18 @@ QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-EQUIVALENCE-CLOSURE
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0005
 QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0005-questions.md
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED
-QUESTION_DISPLAY: SHOW
+QUESTION_PACK_ACTION: REUSED
+QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: NOT_RUN
+HANDOVER_VALIDATION_STATUS: PARTIAL_BLOCKED
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
-VALIDATION: source/diff/custody inspection PASS; executable Node/Playwright/import/build/diff validation NOT_RUN. Zero GitHub statuses/runs are not PASS.
-AUTHORITY_BOUNDARY: LEG-005 changed exactly four test/evidence files and no production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML.
-CURRENT_BLOCKER: faithful external executable validation is required.
-LEG_DIAGNOSIS: source implementation for issue #1651 is complete through LEG-005; remaining closure is execution evidence only.
-EXACT_NEXT_ACTION: local verifier checks out material head `9910d2f95a1a8946ea625702de6f3a50b163c6e3`, runs the supplied validation block and returns output/exit status. Do not merge PR #1660 without a new explicit Owner merge command.
+VALIDATION_PASS_OBSERVED: emp1-plain-language-labels-check; emp1-governed-vector-table-check; emp1-professional-workflow-check; emp1-benchmark-evidence-ui-check; emp1-issue1651-acceptance-check.
+VALIDATION_FAIL_TEST_HARNESS: `scripts/emp1-analytical-layout-check.mjs` -> `ReferenceError: Cannot access 'FakeDocument' before initialization` before assertions.
+VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright 5/5 blocked in browser launch because project-local Chromium 1217 executable is absent; no product assertions executed.
+VALIDATION_NOT_RUN: `npm run check:imports`; `npm run build`; `git diff --check`.
+MANUAL_VALIDATION: allowed as human-observed UI evidence for this checkpoint; does not convert automated Playwright execution to PASS. Checklist: agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0007.md
+AUTHORITY_BOUNDARY: no new material production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML changes after LEG-005 material head.
+CURRENT_BLOCKER: test-harness repair requires a new exact Owner progression; manual localhost walkthrough still pending.
+EXACT_NEXT_ACTION: Owner may run `npm run dev` at the frozen material head and manually inspect the supplied checklist. Send observations. A new exact `proceed next` is required before repairing the layout checker. Do not merge PR #1660 without a separate explicit Owner merge command.

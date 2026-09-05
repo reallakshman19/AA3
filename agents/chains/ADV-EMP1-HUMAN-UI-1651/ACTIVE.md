@@ -26,7 +26,7 @@ PR: 1660
 PR_STATUS: OPEN_DRAFT_LEG005_IN_PROGRESS
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
-PR_HEAD_OBSERVED: 7d97a71ff275fff166de7e25115fd5dd16c88034
+PR_HEAD_OBSERVED: c896bd8632b33db5f957862541b871c5611f7ee6
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
 MERGEABILITY: MERGEABLE_AT_LEG005_ADMISSION
 REVIEWS: 0
@@ -62,7 +62,7 @@ ISSUE_CURRENT_STATE_ENDPOINT: EP-0005
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550705454
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 
 OWNER_TEXT_OBSERVED: `proceed next`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
@@ -92,6 +92,6 @@ HANDOVER_READY: FALSE
 
 VALIDATION: protocol/main/PR/source re-ground PASS; LEG-005 execution NOT_RUN.
 AUTHORITY_BOUNDARY: LEG-005 may change focused tests and existing test carrier only. No production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML mutation is authorized.
-CURRENT_BLOCKER: none.
+CURRENT_BLOCKER: mutable Issue Active handover requires refresh before material mutation.
 LEG_DIAGNOSIS: after LEG-004 moved Benchmark Evidence out of the workflow, the live raw-token scan no longer covers that panel; benchmark disclosure keyboard/table semantics also lack explicit closure evidence.
-EXACT_NEXT_ACTION: patch focused acceptance tests only, add one static issue-1651 acceptance manifest, retain existing Stage-17 carrier, freeze LEG-005 material head, record receipt/EP-0006, sync Issue comments, then stop. Do not merge PR #1660 without a new explicit Owner merge command.
+EXACT_NEXT_ACTION: synchronize the mutable Issue Active handover, then patch focused acceptance tests only, add one static issue-1651 acceptance manifest, retain existing Stage-17 carrier, freeze LEG-005 material head, record receipt/EP-0006, sync Issue comments, then stop. Do not merge PR #1660 without a new explicit Owner merge command.

@@ -62,12 +62,11 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548782622
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549016882
-ISSUE_HANDOVER_SYNC_STATUS: STALE
-ISSUE_HANDOVER_SYNC_BLOCKER: EP-0003 immutable endpoint comment and Active comment update pending.
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549060476
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: l a f e a-b01-final.yml pull_request path filter explicitly matches src/workspace/lafea-workbench-*.js; zero hosted PR workflow runs observed for both material head 90fa7398c08bb0b542b2d39971fb75357a7a6242 and custody head a656531c8b472d993af0b1b31c3baca68caefd93; issue #1634 remains open
+HANDOVER_VALIDATION_EVIDENCE: `.github/workflows/lafea-b01-final.yml` pull_request path filter explicitly matches `src/workspace/lafea-workbench-*.js`; zero hosted PR workflow runs observed for both material head `90fa7398c08bb0b542b2d39971fb75357a7a6242` and custody head `a656531c8b472d993af0b1b31c3baca68caefd93`; issue #1634 remains open
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
@@ -76,7 +75,7 @@ HANDOVER_READY: FALSE
 
 ## Current result
 
-LEG-001 remains implemented at material head `90fa7398c08bb0b542b2d39971fb75357a7a6242`. PR #1650 remains draft and mergeable, with no submitted reviews or unresolved review threads.
+LEG-001 remains implemented at material head `90fa7398c08bb0b542b2d39971fb75357a7a6242`. PR #1650 remains draft and mergeable, with no submitted reviews or unresolved review threads. Repository and Issue custody are synchronized at EP-0003 / issue comment `5549060476`.
 
 EP-0003 adds no material code. It records a stronger validation-blocker diagnosis: `.github/workflows/lafea-b01-final.yml` is an ordinary pull-request workflow whose path filter explicitly includes `src/workspace/lafea-workbench-*.js`, matching TASK-001 production files. There is no draft suppression in that workflow, yet GitHub reports zero PR workflow runs for both the material and custody heads. Issue #1634 remains open with exact-head CI recorded as NOT_RUN.
 

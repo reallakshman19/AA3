@@ -1,18 +1,19 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1646
 CHAIN_ID: LAFEA3-B02-1646-TASK001
 UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549016882
+ISSUE_SYNC_BLOCKER: EP-0003 immutable endpoint comment and Active comment update pending.
 
 # Current issue state
 
 ## Original task / acceptance ledger
 
-TASK-001 | Gate-0 currentness derivation | IMPLEMENTED_NOT_VALIDATED | LEG-001 / EP-0002; exact-head executable validation NOT_RUN
+TASK-001 | Gate-0 currentness derivation | IMPLEMENTED_NOT_VALIDATED | LEG-001 / EP-0003; exact-head executable validation NOT_RUN
 TASK-002 | Kirsch general-mesher quality | OPEN | untouched
 TASK-003 | B02E convergence implementation | OPEN | untouched
 TASK-004 | B02 evidence UI | OPEN | untouched
@@ -25,7 +26,7 @@ INPUT-001 | gate0-contracts.json | AVAILABLE
 INPUT-002 | edit-invalidation-matrix.json | AVAILABLE
 INPUT-003 | B02E-convergence.json | AVAILABLE
 INPUT-004 | B02D-lug-pinhole-v2.json | AVAILABLE_AMENDMENT_NOT_ADOPTED
-INPUT-005 | hosted CI execution | UNRESOLVED (#1634); exact TASK-001 material head has zero PR workflow runs
+INPUT-005 | hosted CI execution | UNRESOLVED (#1634); `lafea-b01-final.yml` pull_request filter explicitly matches `src/workspace/lafea-workbench-*.js`, but zero PR workflow runs exist for TASK-001 material/custody heads
 INPUT-006 | Kirsch general-mesher policy source | UNRESOLVED
 
 ## Benchmark / oracle ledger
@@ -85,13 +86,13 @@ MERGE_AUTHORIZED: FALSE
 
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 EXACT_HEAD_HOSTED_CI: NOT_RUN
-EXACT_HEAD_HOSTED_CI_EVIDENCE: zero PR workflow runs observed for material head 90fa7398c08bb0b542b2d39971fb75357a7a6242
+EXACT_HEAD_HOSTED_CI_EVIDENCE: workflow trigger diagnosis confirms `.github/workflows/lafea-b01-final.yml` matches `src/workspace/lafea-workbench-*.js` on ordinary pull_request; zero PR workflow runs observed for material head `90fa7398c08bb0b542b2d39971fb75357a7a6242` and custody head `a656531c8b472d993af0b1b31c3baca68caefd93`; #1634 remains open
 FOCUSED_CURRENTNESS_CHECK: NOT_RUN
 B01_B02_GATE0_AGGREGATE: NOT_RUN
 LIFECYCLE_RUN_TRANSACTION_PROBE_REGRESSIONS: NOT_RUN
 SOURCE_PROTECTED_DOMAIN_REVIEW: PASS_SOURCE_INSPECTION_ONLY
 
-Source inspection and GitHub mergeability are not executable engineering PASS.
+The missing hosted run is infrastructure/execution evidence, not a draft-status interpretation. Source inspection, trigger matching and GitHub mergeability are not executable engineering PASS.
 
 ## Current implementation boundary
 
@@ -115,4 +116,4 @@ HANDOVER_READY: FALSE
 
 ## Exact next action
 
-Obtain faithful exact-head execution of the focused currentness check, B01/B02 Gate-0 diagnostic and applicable lifecycle/run-transaction/probe regressions. Do not begin another material leg or authorize merge while executable validation remains NOT_RUN.
+Obtain faithful execution of the focused currentness check, B01/B02 Gate-0 diagnostic and applicable lifecycle/run-transaction/probe regressions on the TASK-001 material content. Do not create another material leg or authorize merge while executable validation remains NOT_RUN.

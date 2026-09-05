@@ -21,10 +21,11 @@ const expectedOrder = [
   'settings',
   'results',
   'lineage',
+  'benchmarkEvidence',
   'benchmark',
 ];
 assert.deepEqual(EMP1_ANALYTICAL_SURFACE_ORDER, expectedOrder,
-  'LEG-003 baseline must retain the complete pre-layout analytical surface manifest');
+  'LEG-004 baseline must retain every analytical surface and the formal benchmark evidence surface');
 assert.deepEqual(Object.keys(EMP1_ANALYTICAL_SURFACE_PLACEMENT).sort(), [...expectedOrder].sort(),
   'every baseline surface must have exactly one declared placement');
 
@@ -35,7 +36,7 @@ for (const entry of emp1AnalyticalLayoutPlacementManifest()) {
 assert.equal(regionCounts.WORKFLOW.length, 1);
 assert.equal(regionCounts.PRIMARY_WORK.length, 4);
 assert.equal(regionCounts.ENGINEERING_BASIS.length, 5);
-assert.equal(regionCounts.FULL_WIDTH_DETAIL.length, 4);
+assert.equal(regionCounts.FULL_WIDTH_DETAIL.length, 5);
 assert.deepEqual(
   regionCounts.PRIMARY_WORK.map((entry) => entry.surfaceId),
   ['route', 'source', 'runConfiguration', 'settings'],
@@ -46,7 +47,7 @@ assert.deepEqual(
 );
 assert.deepEqual(
   regionCounts.FULL_WIDTH_DETAIL.map((entry) => entry.surfaceId),
-  ['screeningCustody', 'correlationResult', 'results', 'benchmark'],
+  ['screeningCustody', 'correlationResult', 'results', 'benchmarkEvidence', 'benchmark'],
 );
 
 const documentRef = new FakeDocument();
@@ -75,7 +76,7 @@ const optionalAbsent = Object.fromEntries(expectedOrder.map((surfaceId) => [
     ? null
     : documentRef.createElement('section'),
 ]));
-assert.equal(composeEmp1AnalyticalLayout(documentRef.createElement('div'), optionalAbsent).presentSurfaceCount, 12,
+assert.equal(composeEmp1AnalyticalLayout(documentRef.createElement('div'), optionalAbsent).presentSurfaceCount, 13,
   'conditional surfaces may be absent without inventing replacement content');
 
 const duplicate = Object.fromEntries(expectedOrder.map((surfaceId) => [
@@ -89,12 +90,23 @@ assert.throws(
   'duplicate engineering surfaces must fail instead of rendering in two regions',
 );
 
+const duplicateBenchmark = Object.fromEntries(expectedOrder.map((surfaceId) => [
+  surfaceId,
+  documentRef.createElement('section'),
+]));
+duplicateBenchmark.benchmark = duplicateBenchmark.benchmarkEvidence;
+assert.throws(
+  () => composeEmp1AnalyticalLayout(documentRef.createElement('div'), duplicateBenchmark),
+  /EMP1_ANALYTICAL_LAYOUT_SURFACE_DUPLICATE/u,
+  'formal benchmark evidence must not be duplicated through the optional benchmark host slot',
+);
+
 const missing = { ...surfaces };
-delete missing.lineage;
+delete missing.benchmarkEvidence;
 assert.throws(
   () => composeEmp1AnalyticalLayout(documentRef.createElement('div'), missing),
   /EMP1_ANALYTICAL_LAYOUT_SURFACE_KEYS_MISMATCH/u,
-  'omitting a declared surface key must fail the layout contract',
+  'omitting the formal benchmark surface key must fail the layout contract',
 );
 
 assert.equal(EMP1_ANALYTICAL_LAYOUT_REGIONS.PRIMARY_WORK, 'PRIMARY_WORK');

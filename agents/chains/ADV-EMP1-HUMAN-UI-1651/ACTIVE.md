@@ -20,6 +20,7 @@ BRANCH: agent/emp1-1651-split-console-leg009
 PR_BASE: main
 PR_BASE_SHA: f8d051c989c8a0627db7560f996baf72987775d4
 PR_HEAD_OBSERVED_PRE_ENDPOINT_FINALIZE: a9da5260fdd28f83a2ed0907cc03e0e33d46fb08
+BRANCH_RELAY_HEAD_PRE_ACTIVE_SYNC_FINALIZE: 49abaaadf41b2bd2b68117da04c47fa6e60109a1
 MAIN_HEAD_OBSERVED: f8d051c989c8a0627db7560f996baf72987775d4
 MERGEABILITY: MERGEABLE
 REVIEWS: 0
@@ -52,12 +53,12 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRE
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0014
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0014_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5554023213
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual giant waterfall with task-shell UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0014_SYNC
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5554024321
 OWNER_TEXT_OBSERVED: `proceed next`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 OWNER_MERGE_COMMAND: NONE
@@ -85,4 +86,4 @@ VALIDATION_NOT_RUN_LEG009: focused static scripts; focused Playwright; desktop/n
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT / NOT_RUN until compatible project-local browser executes; zero status contexts/workflows are not PASS.
 AUTHORITY_BOUNDARY: LEG-009 changes only presentation/information architecture and acceptance evidence. No WRC/Pressure mechanics, retained benchmark values/tolerance/source authority, route/code-release authority, roadmap, or workflow-YAML change.
 CURRENT_BLOCKER: external localhost/browser acceptance remains NOT_RUN; PR #1675 merge is Owner-only and not authorized.
-EXACT_NEXT_ACTION: synchronize EP-0014 into issue #1651/#1664 comments, then wait for desktop+narrow localhost audit JSON plus trusted keyboard observation (and screenshots if available), or for an explicit Owner merge command. No further source-changing recovery leg is justified without new failure evidence.
+EXACT_NEXT_ACTION: wait for desktop+narrow localhost audit JSON plus trusted keyboard observation (and screenshots if available), or for an explicit Owner merge command targeting PR #1675. No further source-changing recovery leg is justified without new failure evidence.

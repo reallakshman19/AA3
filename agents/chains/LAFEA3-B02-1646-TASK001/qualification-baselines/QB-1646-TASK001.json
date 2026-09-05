@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "baselineId": "QB-1646-TASK001",
+  "source": "github:reallaksh19/Advanced_Analysis#1646/Appendix-A+Appendix-B/B1",
+  "sourceAuthority": "OWNER",
+  "activeQuestionSetId": "PENDING_INDEPENDENT_CANONICAL_Q1_Q5",
+  "status": "BLOCKED_UNTIL_CANONICAL_PACK_ADMITTED",
+  "questions": [
+    {
+      "baselineQuestion": "A-Q1",
+      "coveredBy": [],
+      "requiredLiterals": ["1.26e-9", "2.43e-8", "3.53e-8", "70,954", "tol/10", "tol/100", "200,000-node"],
+      "requiredConcepts": ["infinity norm", "summed force balance", "worst-case O(N)", "random-walk O(sqrt(N))", "acceptance tolerance governance", "DOF exhaustion"],
+      "requiredObligations": ["explain", "derive", "state", "give"]
+    },
+    {
+      "baselineQuestion": "A-Q2",
+      "coveredBy": [],
+      "requiredLiterals": ["minSJ 0.9997", "9.7°–9.9°", "52 → 252", "5.6:1", "SJ ≈ 1"],
+      "requiredConcepts": ["annular cell", "isosceles trapezoid", "congruent diagonals", "scale-invariance", "scaled Jacobian"],
+      "requiredObligations": ["predict", "prove", "state", "explain"]
+    },
+    {
+      "baselineQuestion": "A-Q3",
+      "coveredBy": [],
+      "requiredLiterals": ["B02D-V2", "definitionFreezeExactHead", "definitionsCopiedByteIdenticallyFromOriginalFreeze: true", "adoptedIntoProductionSequence: false", "scope: MESH_POLICY_ONLY"],
+      "requiredConcepts": ["originalFrozenDefinitionGitBlobs", "byte custody", "programme authority", "late freeze provenance", "enforceable amendment scope"],
+      "requiredObligations": ["state", "explain", "name"]
+    },
+    {
+      "baselineQuestion": "A-Q4",
+      "coveredBy": [],
+      "requiredLiterals": ["CURRENT_RESULT requires exact source, mesh, solver and execution parent identities", "currentAuthority === true", "historical PASS receipts never grant current authority after a governing edit"],
+      "requiredConcepts": ["stale parent", "seven-hash chain", "derived currentness", "executionHash recomputation"],
+      "requiredObligations": ["construct", "state", "describe", "identify"]
+    },
+    {
+      "baselineQuestion": "A-Q5",
+      "coveredBy": [],
+      "requiredLiterals": ["PASS", "FAIL", "NOT_RUN", "NOT_APPLICABLE", "PRE_ASYMPTOTIC"],
+      "requiredConcepts": ["visual authority", "GCI classification", "read-only evidence projection", "display-only state"],
+      "requiredObligations": ["explain", "state", "give", "describe"]
+    },
+    {
+      "baselineQuestion": "B1.1",
+      "coveredBy": [],
+      "requiredLiterals": ["sourceRevisionHash → canonicalModelHash → meshRevisionHash → solverConfigHash → executionHash → recoveryHash → convergenceEvidenceHash", "MATERIAL", "meshObjectMayBeReused: true", "GEOMETRY", "meshObjectMayBeReused: false"],
+      "requiredConcepts": ["declared parents", "new mesh receipt", "rebind", "audit parentage"],
+      "requiredObligations": ["list", "justify", "explain", "contrast"]
+    },
+    {
+      "baselineQuestion": "B1.2",
+      "coveredBy": [],
+      "requiredLiterals": ["LAFEA_G4_PROBE_CURRENT_EXECUTION_REQUIRED", "LAFEA_G4_PROBE_ACCEPTED_EXECUTION_REQUIRED", "LAFEA_G4_PROBE_MESH_CUSTODY_MISMATCH", "analysisMeshCustodyProjection.meshHash !== execution.meshHash", "QUALIFIED", "ACCEPTED", "STALE_RESULT", "REJECTED"],
+      "requiredConcepts": ["execution parent identity", "mesh custody", "accepted versus current", "rejected versus stale"],
+      "requiredObligations": ["give", "name", "explain", "state"]
+    },
+    {
+      "baselineQuestion": "B1.3",
+      "coveredBy": [],
+      "requiredLiterals": ["qualificationState is orthogonal to computationalState", "NOT_EVALUATED", "FAIL", "PASS", "CURRENT_RESULT", "STALE_RESULT", "historical PASS receipts remain retained after a governing edit", "historical PASS receipts never grant current authority"],
+      "requiredConcepts": ["orthogonality", "six state combinations", "historical receipt retention", "audit reconstruction"],
+      "requiredObligations": ["populate", "state", "explain"]
+    }
+  ]
+}

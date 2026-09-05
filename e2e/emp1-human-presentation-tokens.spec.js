@@ -37,7 +37,15 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
 
   await expect(root.locator('[data-role="emp1-workflow"]')).toBeVisible();
   await expect(root.locator('[data-role="emp1-c-bounded-evidence"]')).toBeVisible();
-  await expect(root.locator('[data-role="emp1-evidence-tab"]')).toHaveCount(await root.locator('[data-role="emp1-evidence-tab"]').count());
+
+  // Progressive disclosure must not reduce the original raw-token coverage.
+  // Open the compacted workflow detail explicitly so readiness/review/backing
+  // custody text is scanned, then enumerate every selectable evidence view.
+  const workflowDetails = root.locator('[data-role="emp1-workflow-details"]');
+  await expect(workflowDetails).toHaveCount(1);
+  await expect(workflowDetails).not.toHaveAttribute('open', '');
+  await workflowDetails.locator('summary').click();
+  await expect(workflowDetails).toHaveAttribute('open', '');
 
   const benchmarkTab = root.locator(
     '[data-role="emp1-evidence-tab"][data-emp1-evidence-view="benchmarkEvidence"]',

@@ -1,7 +1,6 @@
 import { projectEmp1Readiness } from '../core/emp1/emp1-readiness-projection.js';
 import { card, element } from './lafea-workbench-dom.js';
 import { renderEmp1EngineeringReviewPanel } from './emp1-engineering-review-view.js';
-import { renderEmp1BenchmarkEvidencePanel } from './emp1-benchmark-view.js';
 import { buildEmp1ProfessionalWorkflowPresentation } from './emp1-professional-workflow-presentation.js';
 import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
 
@@ -28,7 +27,6 @@ export function renderEmp1ProfessionalWorkflow(
 ) {
   const runFailure = options.runFailure ?? null;
   const reviewWorkspace = options.reviewWorkspace ?? null;
-  const benchmarkEvidence = options.benchmarkEvidence ?? null;
   const readiness = projectEmp1Readiness(projection, {
     reviewState: reviewWorkspace?.readinessReviewState ?? null,
   });
@@ -74,9 +72,6 @@ export function renderEmp1ProfessionalWorkflow(
       reviewWorkspace,
       options.onReview,
     ));
-  }
-  if (benchmarkEvidence) {
-    workflow.body.append(renderEmp1BenchmarkEvidencePanel(root, benchmarkEvidence));
   }
 
   const boundary = element(root, 'p', 'lafea-workbench__authority',

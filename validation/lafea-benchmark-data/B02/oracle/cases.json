@@ -1,0 +1,47 @@
+{
+  "schema": "lafea-b02-cases/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "authority": {
+    "class": "FROZEN_BENCHMARK_BOUNDARY_VALUE_PROBLEMS",
+    "productionOutputUsed": false
+  },
+  "cases": [
+    {
+      "caseId": "CONT-CYL-01",
+      "benchmarkStage": "S1",
+      "title": "Quarter thick cylinder under internal pressure",
+      "formulation": "PLANE_STRESS",
+      "units": {"length":"mm","force":"N","stress":"MPa","modulus":"MPa"},
+      "geometry": {"innerRadius":50,"outerRadius":100,"sectorDegrees":90,"thickness":10},
+      "material": {"elasticModulus":200000,"poissonRatio":0.3},
+      "loading": {"internalPressure":10,"externalPressure":0},
+      "boundaryConditions": [
+        {"region":"theta=0 radial cut","constraint":"UY=0"},
+        {"region":"theta=90 radial cut","constraint":"UX=0"}
+      ],
+      "meshSource": "BENCHMARK_ONLY_MAPPED_Q8_ADAPTER",
+      "sourceClaimId": "LAFEA3-SRC-LAME-01"
+    },
+    {
+      "caseId": "CONT-HOLE-01",
+      "benchmarkStage": "S1",
+      "title": "Quarter circular hole under remote uniaxial tension",
+      "formulation": "PLANE_STRESS",
+      "units": {"length":"mm","force":"N","stress":"MPa","modulus":"MPa"},
+      "geometry": {"holeRadius":10,"outerTruncationRadius":100,"sectorDegrees":90,"thickness":5},
+      "material": {"elasticModulus":200000,"poissonRatio":0.3},
+      "loading": {
+        "remoteUniaxialStress": 50,
+        "outerBoundary": "EXACT_KIRSCH_TRACTION_AT_R_EQUALS_100",
+        "holeBoundary": "TRACTION_FREE"
+      },
+      "boundaryConditions": [
+        {"region":"theta=0 radial cut","constraint":"UY=0"},
+        {"region":"theta=90 radial cut","constraint":"UX=0"}
+      ],
+      "meshSource": "BENCHMARK_ONLY_GRADED_MAPPED_Q8_ADAPTER",
+      "sourceClaimId": "LAFEA3-SRC-KIRSCH-01"
+    }
+  ],
+  "scopeNote": "These BVPs isolate the solver/element layer from the production mesher. They do not qualify production mesh generation."
+}

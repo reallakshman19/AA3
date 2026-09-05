@@ -19,6 +19,18 @@ import {
 } from '../src/core/lafea-linear-solve/index.js';
 import { triangleSource, patchSource } from './lafea.3-fixtures.mjs';
 import { semanticHashes, writeBmSCaseEvidence } from './lib/lafea.3-bm-s-evidence.mjs';
+import {
+  caseBy,
+  conditioningEvidence,
+  conditioningObservation,
+  createS3Checks,
+  displacementVectorFor,
+  dot,
+  finalizeChecks,
+  nodalCase,
+  reactionTotals,
+  vectorTotals,
+} from './lib/lafea.3-bm-s-s3-helpers.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ORACLE_PATH = path.join(
@@ -32,6 +44,19 @@ assert.equal(oracle.authority.productionOutputMayModifyExpectedValues, false);
 assert.equal(oracle.authority.productionOutputMayModifyAcceptance, false);
 assert.equal(oracle.authority.conditioningMetricsAreDiagnosticOnly, true);
 const expectedById = new Map(oracle.cases.map((row) => [row.caseId, row]));
+const checksApi = createS3Checks(oracle.acceptance);
+const {
+  compare,
+  gate,
+  compareVectors,
+  compareSumVectors,
+  compareDisplacements,
+  compareSumDisplacements,
+  compareElementStress,
+  compareSumElementStress,
+  compareReactions,
+  compareSumReactions,
+} = checksApi;
 
 const caseResults = [
   capture('SOLVER-EQUILIBRIUM-ENERGY-01', runEquilibriumEnergy),
@@ -108,11 +133,11 @@ function runEquilibriumEnergy(expected) {
   compare(checks, 'strainEnergy', row.totalStrainEnergy, expected.derived.strainEnergyNmm);
   compare(checks, 'externalWork', externalWork, expected.derived.externalWorkNmm);
   compare(checks, 'clapeyron', externalWork, 2 * row.totalStrainEnergy);
+  row.nodalDisplacements
+    .filter((item) => ['B', 'C'].includes(item.nodeId))
+    .forEach((item) => compare(checks, `${item.nodeId}.ux`, item.ux, expected.derived.rightEdgeUxMm));
 
-  const right = row.nodalDisplacements.filter((item) => ['B', 'C'].includes(item.nodeId));
-  right.forEach((item) => compare(checks, `${item.nodeId}.ux`, item.ux, expected.derived.rightEdgeUxMm));
-  const conditioning = conditioningEvidence(row, checks);
-  return finalize(checks, {
+  return finalizeChecks(checks, {
     appliedResultantN: applied,
     reactionResultantN: reactions,
     reactionPlusAppliedN: reactionPlusApplied,
@@ -124,7 +149,7 @@ function runEquilibriumEnergy(expected) {
     externalWorkOverTwoStrainEnergy: externalWork / (2 * row.totalStrainEnergy),
     energyReconstructionResidual: row.energyQualification.residual,
     energyReconstructionTolerance: row.energyQualification.tolerance,
-    conditioning,
+    conditioning: conditioningEvidence(row, checks, checksApi),
     semanticHashes: semanticHashes(result),
   });
 }
@@ -140,7 +165,7 @@ function runLinearScaling(expected) {
   compareElementStress(checks, scaled, base, factor);
   compareReactions(checks, scaled, base, factor);
   compare(checks, 'strainEnergy', scaled.totalStrainEnergy, expected.derived.strainEnergyFactor * base.totalStrainEnergy);
-  return finalize(checks, {
+  return finalizeChecks(checks, {
     responseFactor: factor,
     strainEnergyFactor: expected.derived.strainEnergyFactor,
     baseStrainEnergyNmm: base.totalStrainEnergy,
@@ -173,11 +198,15 @@ function runSuperposition(expected) {
   compareSumDisplacements(checks, combined, caseA, caseB);
   compareSumElementStress(checks, combined, caseA, caseB);
   compareSumReactions(checks, combined, caseA, caseB);
-  return finalize(checks, {
+  return finalizeChecks(checks, {
     loadA: a,
     loadB: b,
-    maximumFreeResiduals: Object.fromEntries([caseA, caseB, combined].map((row) => [row.loadCaseId, row.equilibrium.freeDofMaximumResidual])),
-    conditioning: Object.fromEntries([caseA, caseB, combined].map((row) => [row.loadCaseId, conditioningObservation(row)])),
+    maximumFreeResiduals: Object.fromEntries(
+      [caseA, caseB, combined].map((row) => [row.loadCaseId, row.equilibrium.freeDofMaximumResidual]),
+    ),
+    conditioning: Object.fromEntries(
+      [caseA, caseB, combined].map((row) => [row.loadCaseId, conditioningObservation(row)]),
+    ),
     semanticHashes: semanticHashes(result),
   });
 }
@@ -195,16 +224,16 @@ function runDiagonalScaling(expected) {
     scaledRightHandSide,
   );
   const recovered = undoDiagonalScaling(scaled, factors);
-  const relativeDifferences = unscaled.map((value, index) => (
+  const maximumRelativeDifference = Math.max(...unscaled.map((value, index) => (
     Math.abs(value - recovered[index]) / Math.max(1, Math.abs(value))
-  ));
-  const maximumRelativeDifference = Math.max(...relativeDifferences);
-  const diagonalErrors = indices.map((index) => Math.abs(scaledMatrix.rows[index].get(index) - 1));
-  const maximumDiagonalError = Math.max(...diagonalErrors);
+  )));
+  const maximumDiagonalError = Math.max(...indices.map((index) => (
+    Math.abs(scaledMatrix.rows[index].get(index) - 1)
+  )));
   const checks = [];
   gate(checks, 'solutionReversibility', maximumRelativeDifference, expected.derived.maximumRelativeSolutionDifferenceLimit);
   gate(checks, 'unitDiagonal', maximumDiagonalError, expected.derived.maximumScaledDiagonalAbsoluteErrorLimit);
-  return finalize(checks, {
+  return finalizeChecks(checks, {
     unscaledSolution: unscaled,
     recoveredSolution: recovered,
     scaleFactors: factors,
@@ -217,182 +246,4 @@ function solve(model) {
   const result = calculateLocalContinuum(createCanonicalLocalContinuumModel(model));
   assert.equal(result.qualification.state, QUALIFICATION_STATES.ACCEPTED);
   return result;
-}
-
-function conditioningEvidence(row, checks) {
-  const value = conditioningObservation(row);
-  if (value.method === 'DETERMINISTIC_CHOLESKY') {
-    assert.ok(value.pivotCount > 0, 'Cholesky evidence requires retained pivots');
-    gateLower(checks, 'conditioning.minimumPivot', value.minimumPivot, value.pivotTolerance);
-  } else if (value.method === 'DETERMINISTIC_JACOBI_PCG') {
-    gateLower(checks, 'conditioning.minimumDiagonal', value.minimumDiagonal, value.diagonalTolerance);
-    gate(checks, 'conditioning.finalResidual', value.finalResidualInfinity, value.convergenceTarget);
-  } else {
-    assert.fail(`unexpected solver method for S3 conditioning evidence: ${value.method}`);
-  }
-  return value;
-}
-
-function conditioningObservation(row) {
-  const value = row.solverEvidence;
-  if (value.method === 'DETERMINISTIC_CHOLESKY') {
-    return {
-      method: value.method,
-      pivotCount: value.pivots.length,
-      pivotScale: value.pivotScale,
-      pivotTolerance: value.pivotTolerance,
-      minimumPivot: value.minimumPivot,
-      maximumPivot: value.maximumPivot,
-      pivotRatio: value.pivotRatio,
-      iterativeRefinement: value.iterativeRefinement ?? null,
-    };
-  }
-  return {
-    method: value.method,
-    minimumDiagonal: value.minimumDiagonal ?? null,
-    maximumDiagonal: value.maximumDiagonal ?? null,
-    diagonalRatio: value.diagonalRatio ?? null,
-    diagonalTolerance: value.diagonalTolerance ?? null,
-    initialResidualInfinity: value.initialResidualInfinity ?? null,
-    finalResidualInfinity: value.finalResidualInfinity ?? null,
-    convergenceTarget: value.convergenceTarget ?? null,
-    iterations: value.iterations ?? null,
-  };
-}
-
-function finalize(checks, observation) {
-  const failed = checks.filter((row) => !row.accepted);
-  return {
-    status: failed.length === 0 ? 'PASS' : 'FAIL',
-    observation,
-    checks,
-    maximumAbsoluteError: Math.max(0, ...checks.map((row) => row.absoluteError ?? 0)),
-    failedCheckCount: failed.length,
-  };
-}
-
-function compare(checks, label, actual, expected) {
-  const absoluteError = Math.abs(actual - expected);
-  const limit = oracle.acceptance.linearRelationRelativeTolerance
-    * Math.max(oracle.acceptance.linearRelationScaleFloor, Math.abs(expected));
-  checks.push({ label, actual, expected, absoluteError, limit, accepted: absoluteError <= limit });
-}
-
-function gate(checks, label, actualMagnitude, limit) {
-  checks.push({ label, actual: actualMagnitude, expected: 0, absoluteError: actualMagnitude, limit, accepted: actualMagnitude <= limit });
-}
-
-function gateLower(checks, label, actual, lowerExclusive) {
-  checks.push({ label, actual, expected: `>${lowerExclusive}`, absoluteError: null, limit: null, accepted: actual > lowerExclusive });
-}
-
-function compareVectors(checks, label, actual, base, factor) {
-  actual.forEach((value, index) => compare(checks, `${label}[${index}]`, value, factor * base[index]));
-}
-
-function compareSumVectors(checks, label, actual, left, right) {
-  actual.forEach((value, index) => compare(checks, `${label}[${index}]`, value, left[index] + right[index]));
-}
-
-function compareDisplacements(checks, actual, base, factor) {
-  const baseByNode = new Map(base.nodalDisplacements.map((row) => [row.nodeId, row]));
-  actual.nodalDisplacements.forEach((row) => {
-    const expected = baseByNode.get(row.nodeId);
-    compare(checks, `${row.nodeId}.ux`, row.ux, factor * expected.ux);
-    compare(checks, `${row.nodeId}.uy`, row.uy, factor * expected.uy);
-  });
-}
-
-function compareSumDisplacements(checks, actual, left, right) {
-  const leftByNode = new Map(left.nodalDisplacements.map((row) => [row.nodeId, row]));
-  const rightByNode = new Map(right.nodalDisplacements.map((row) => [row.nodeId, row]));
-  actual.nodalDisplacements.forEach((row) => {
-    compare(checks, `${row.nodeId}.ux`, row.ux, leftByNode.get(row.nodeId).ux + rightByNode.get(row.nodeId).ux);
-    compare(checks, `${row.nodeId}.uy`, row.uy, leftByNode.get(row.nodeId).uy + rightByNode.get(row.nodeId).uy);
-  });
-}
-
-function compareElementStress(checks, actual, base, factor) {
-  const baseById = new Map(base.elementResults.map((row) => [row.elementId, row]));
-  actual.elementResults.forEach((row) => compareStress(checks, row.elementId, row.stress, baseById.get(row.elementId).stress, factor));
-}
-
-function compareSumElementStress(checks, actual, left, right) {
-  const leftById = new Map(left.elementResults.map((row) => [row.elementId, row]));
-  const rightById = new Map(right.elementResults.map((row) => [row.elementId, row]));
-  actual.elementResults.forEach((row) => {
-    const a = leftById.get(row.elementId).stress;
-    const b = rightById.get(row.elementId).stress;
-    for (const key of ['sigmaX', 'sigmaY', 'sigmaZ', 'tauXY']) {
-      compare(checks, `${row.elementId}.${key}`, row.stress[key], a[key] + b[key]);
-    }
-  });
-}
-
-function compareStress(checks, elementId, actual, base, factor) {
-  for (const key of ['sigmaX', 'sigmaY', 'sigmaZ', 'tauXY']) {
-    compare(checks, `${elementId}.${key}`, actual[key], factor * base[key]);
-  }
-}
-
-function compareReactions(checks, actual, base, factor) {
-  const baseByDof = new Map(base.supportReactions.map((row) => [row.dofIdentity, row.value]));
-  actual.supportReactions.forEach((row) => compare(checks, `reaction.${row.dofIdentity}`, row.value, factor * baseByDof.get(row.dofIdentity)));
-}
-
-function compareSumReactions(checks, actual, left, right) {
-  const leftByDof = new Map(left.supportReactions.map((row) => [row.dofIdentity, row.value]));
-  const rightByDof = new Map(right.supportReactions.map((row) => [row.dofIdentity, row.value]));
-  actual.supportReactions.forEach((row) => compare(
-    checks,
-    `reaction.${row.dofIdentity}`,
-    row.value,
-    leftByDof.get(row.dofIdentity) + rightByDof.get(row.dofIdentity),
-  ));
-}
-
-function displacementVectorFor(row, dofOrdering) {
-  const byNode = new Map(row.nodalDisplacements.map((item) => [item.nodeId, item]));
-  return dofOrdering.map((identity) => {
-    const separator = identity.lastIndexOf(':');
-    const nodeId = identity.slice(0, separator);
-    const dof = identity.slice(separator + 1);
-    const displacement = byNode.get(nodeId);
-    return dof === 'UX' ? displacement.ux : displacement.uy;
-  });
-}
-
-function vectorTotals(dofOrdering, values) {
-  return values.reduce((out, value, index) => {
-    if (dofOrdering[index].endsWith(':UX')) out.x += value;
-    else out.y += value;
-    return out;
-  }, { x: 0, y: 0 });
-}
-
-function reactionTotals(reactions) {
-  return reactions.reduce((out, row) => {
-    if (row.dofIdentity.endsWith(':UX')) out.x += row.value;
-    else out.y += row.value;
-    return out;
-  }, { x: 0, y: 0 });
-}
-
-function nodalCase(loadCaseId, loads) {
-  return {
-    loadCaseId,
-    nodalForces: loads.map((row) => ({ ...row, sourceReference: `FORCE#${row.loadId}` })),
-    edgeTractions: [], pressureLoads: [], bodyForces: [], temperatureLoads: [], imposedDisplacements: [],
-    sourceReference: `CASE#${loadCaseId}`,
-  };
-}
-
-function caseBy(result, loadCaseId) {
-  const row = result.loadCaseResults.find((item) => item.loadCaseId === loadCaseId);
-  assert.ok(row, `missing load case ${loadCaseId}`);
-  return row;
-}
-
-function dot(left, right) {
-  return left.reduce((sum, value, index) => sum + value * right[index], 0);
 }

@@ -31,15 +31,15 @@ WRITE_AUTHORITY: WRITE_ALLOWED
 AUTO_STATE: PAUSED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-MERGEABILITY: UNKNOWN
+MERGEABILITY: NOT_MERGEABLE_AT_PR_CREATION
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NOT_RUN
-PR: NONE
-PR_STATUS: NOT_OPENED
+PR: #1657
+PR_STATUS: OPEN_DRAFT
+PR_INITIAL_HEAD: 00c65d79294e9bc3598a3ff69a56e96346f58fa2
 BRANCH: chatgpt/issue-1653-bm-s-staged-benchmark
 MAIN_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: fc7ff3e7881e2769b04465c130c92dc2f06375a2
 POST_BASIS_DRIFT: NONE
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MATERIAL_LEG_ID: LEG-001
@@ -47,6 +47,8 @@ MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-
 MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-001.md
 MATERIAL_HEAD: f2b6c9f9ddc4748c6fa647604631504795916c0f
 MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_EXECUTED
+MATERIAL_HEAD_WORKFLOW_RUNS: 0
+PR_INITIAL_HEAD_WORKFLOW_RUNS: 0
 NEXT_MATERIAL_LEG_ID: LEG-002
 NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0001.md
 ROADMAPS: docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; github:reallaksh19/Advanced_Analysis#1569
@@ -66,7 +68,7 @@ ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550031904
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: faithful checkout blocked by DNS before execution
+HANDOVER_VALIDATION_EVIDENCE: faithful checkout blocked by DNS before execution; GitHub Actions returned zero workflow runs for material head and PR initial head
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
@@ -75,10 +77,10 @@ HANDOVER_READY: FALSE
 
 LEG-001 is durably receipted at material head `f2b6c9f9ddc4748c6fa647604631504795916c0f`. It establishes B02 benchmark/oracle/source custody, S0/S1 staged audit orchestration, exact S4 declarations and retained S1 Lamé/Kirsch evidence without changing any production `src/**` numerical authority.
 
-Executable validation remains `NOT_RUN`; a faithful checkout attempt failed before execution on DNS (`Could not resolve host: github.com`). Source-diff inspection and independent analytical reconstruction are PASS only in their stated scopes.
+Draft PR #1657 is open directly against main. It was reported Draft + not mergeable at creation; merge authority remains separately false. GitHub Actions returned zero workflow runs for both the material head and PR initial head, so executable validation remains `NOT_RUN`.
 
 EP-0001 is the write-ahead pre-work endpoint for the next bounded material leg. S2-S5 remain PLANNED and B02 remains inactive in the program future queue. PR #1654 remains a Draft design reference only and is not a dependency or merge candidate for this chain.
 
 ## Exact next action
 
-Open a Draft PR for exact-head review/CI attachment, then proceed only with bounded S2 work under EP-0001. Do not activate B02 or merge without Owner authority.
+Proceed only with bounded S2 work under EP-0001 when continuing this work item. Do not activate B02 or merge without Owner authority.

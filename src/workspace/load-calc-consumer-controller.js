@@ -115,28 +115,30 @@ export class LoadCalcConsumerController {
       // any master that already has normalizedRows or a user-committed fieldMap.
       this.eventBus.subscribe('MASTER_DATA_UPDATED', ({ action } = {}) => {
         if (!action?.startsWith('bundled_seed')) return;
-        import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources }) => {
+        import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
           const committed = autoNormalizeBundledMasters();
           if (committed.length > 0) this.render();
-          const [enrichResult, bindResult] = await Promise.all([
+          const [enrichResult, bindResult, qualResult] = await Promise.all([
             autoGenerateMasterEnrichment(),
             autoBindMasterSources(),
+            autoEnsureDefaultQualificationProfile(),
           ]);
-          if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
+          if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
         }).catch(() => {});
       }),
     ];
     this.render();
     void this.refreshTopologyCheck();
     // Eagerly normalize + auto-generate + auto-bind for already-seeded masters
-    import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources }) => {
+    import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
       const committed = autoNormalizeBundledMasters();
       if (committed.length > 0) this.render();
-      const [enrichResult, bindResult] = await Promise.all([
+      const [enrichResult, bindResult, qualResult] = await Promise.all([
         autoGenerateMasterEnrichment(),
         autoBindMasterSources(),
+        autoEnsureDefaultQualificationProfile(),
       ]);
-      if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
+      if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
     }).catch(() => {});
   }
 
@@ -154,12 +156,13 @@ export class LoadCalcConsumerController {
     if (datasetChanged) {
       void this.refreshTopologyCheck();
       // Auto-generate enrichment + bind source hashes when a new dataset arrives
-      import('./master-data-ui.js').then(async ({ autoGenerateMasterEnrichment, autoBindMasterSources }) => {
-        const [enrichResult, bindResult] = await Promise.all([
+      import('./master-data-ui.js').then(async ({ autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
+        const [enrichResult, bindResult, qualResult] = await Promise.all([
           autoGenerateMasterEnrichment(),
           autoBindMasterSources(),
+          autoEnsureDefaultQualificationProfile(),
         ]);
-        if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0) this.render();
+        if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
       }).catch(() => {});
     }
   }
@@ -817,17 +820,24 @@ function createWorkflowReadiness(context, topologyCheck) {
   const topologyBlockerCount = (supportSites?.blockers?.length || 0)
     + (routes?.blockers?.length || 0)
     + (topologyCheck?.blockingIssueCount || 0);
+  // null-hash check: used only as pre-checker fallback when projection not yet available
   const projectDataCheck = validateProjectDataProfile(
     projectDataStore.getProfile(),
     'loadCalcProjectBasis',
     null,
   );
   const masterDataAudit = requiredMastersAudit(masterDataController.getMasterData());
-  // Step 5's badge must agree with the Validate Input pane. The gate projection
-  // only reports the full blocker set once the common checker has run, so the
-  // count is published as unknown until then rather than shown under-reported.
   const validationEvaluated = Boolean(commonInput.report);
   const validationBlockerCount = validationEvaluated ? safeValidationBlockerCount() : 0;
+
+  // Use live projection (real hashes) so STALE_SOURCE_HASH is correctly detected.
+  // projectDataActionCount feeds workflowStepState (legacy renderer) directly on the
+  // active tab — it MUST be accurate here; a DOM post-patch is wiped on next re-render.
+  const pdBlockerCodes = validationEvaluated ? safeProjectionPdBlockerCodes() : [];
+  const pdBlockerCount = validationEvaluated
+    ? safePdBlockerCount()                    // raw (non-deduped) PD blocker count
+    : projectDataCheck.errors.length;         // pre-checker fallback
+
   return Object.freeze({
     datasetReady: Boolean(context?.datasetId),
     topologyBlockerCount,
@@ -838,13 +848,11 @@ function createWorkflowReadiness(context, topologyCheck) {
     topologyCheckReady: topologyReady
       && topologyBlockerCount === 0
       && topologyCheck?.state !== 'NOT_AVAILABLE',
-    projectDataReady: projectDataCheck.valid,
-    projectDataActionCount: projectDataCheck.errors.length,
-    // PD codes from the live projection (real hashes — catches STALE_SOURCE_HASH)
-    projectDataBlockerCodes: validationEvaluated ? safeProjectionPdBlockerCodes() : [],
+    projectDataReady: pdBlockerCodes.length === 0 && projectDataCheck.valid,
+    projectDataActionCount: pdBlockerCount,
+    projectDataBlockerCodes: pdBlockerCodes,
     masterDataReady: masterDataAudit.ready,
     masterDataActionCount: masterDataAudit.missingCount,
-    // Distinct unresolved entity count for MASS_COVERAGE — null if not yet evaluated
     enrichmentUnresolvedCount: validationEvaluated ? safeEnrichmentUnresolvedCount() : null,
     validationReady: commonInput.report?.packageState === 'READY',
     validationState: commonInput.report?.packageState || 'NOT_EVALUATED',
@@ -939,6 +947,17 @@ function safeProjectionPdBlockerCodes() {
     )];
   } catch {
     return [];
+  }
+}
+
+/** Raw (non-deduplicated) count of PD blocker entries from the live projection.
+ *  Used as projectDataActionCount so the legacy renderer shows the correct number. */
+function safePdBlockerCount() {
+  try {
+    const projection = createCurrentNonFeaWorkspaceStatusProjection();
+    return (projection?.blockers ?? []).filter((b) => PD_BLOCKER_CODES.has(b.code)).length;
+  } catch {
+    return 0;
   }
 }
 

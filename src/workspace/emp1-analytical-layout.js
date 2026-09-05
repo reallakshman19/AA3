@@ -74,14 +74,33 @@ export const EMP1_ANALYTICAL_SURFACE_PLACEMENT = Object.freeze({
   benchmark: EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL,
 });
 
+/**
+ * Exactly the already-rendered primary surfaces allowed to contribute height for
+ * one professional task. Heavy results/evidence are selected separately below.
+ */
 export const EMP1_TASK_SHELL_TASK_SURFACES = Object.freeze({
   BASIS_SOURCE: Object.freeze(['route', 'source']),
-  GEOMETRY: Object.freeze(['runConfiguration']),
-  LOADS: Object.freeze(['route', 'source']),
-  LOAD_TRANSFER: Object.freeze(['route']),
-  SECTION_SCREENING: Object.freeze(['route', 'source']),
+  GEOMETRY: Object.freeze(['source', 'runConfiguration']),
+  LOADS: Object.freeze(['source']),
+  LOAD_TRANSFER: Object.freeze(['source']),
+  SECTION_SCREENING: Object.freeze(['source']),
   LOCAL_CORRELATION: Object.freeze(['runConfiguration']),
   REVIEW_EVIDENCE: Object.freeze(['route']),
+});
+
+/**
+ * Governed document-editor groups that belong to each task. The source editor
+ * keeps every descriptor/node in DOM custody; unrelated groups are presentation-
+ * hidden so one task does not recreate the old all-input waterfall.
+ */
+export const EMP1_TASK_SHELL_INPUT_GROUPS = Object.freeze({
+  BASIS_SOURCE: Object.freeze([]),
+  GEOMETRY: Object.freeze(['PIPE_GEOMETRY', 'THICKNESS']),
+  LOADS: Object.freeze(['PRESSURE', 'LOAD_CASES']),
+  LOAD_TRANSFER: Object.freeze(['REFERENCE_POINTS']),
+  SECTION_SCREENING: Object.freeze(['SCREENING_CASES', 'EVALUATION_LOCATIONS']),
+  LOCAL_CORRELATION: Object.freeze([]),
+  REVIEW_EVIDENCE: Object.freeze([]),
 });
 
 export const EMP1_TASK_SHELL_EVIDENCE_ORDER = Object.freeze([
@@ -232,6 +251,9 @@ export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
       selectEmp1TaskShellTask(selectionHost, shell, stepId);
     }
   });
+  shell.addEventListener?.('lafea-document-table-presentation-refresh', () => {
+    applyTaskShellState(runtime);
+  });
   applyTaskShellState(runtime);
 
   return Object.freeze({
@@ -311,7 +333,41 @@ function applyTaskShellState(runtime) {
     surface.hidden = !visible;
     surface.dataset.emp1TaskActive = String(visible);
   });
+  applyWorkflowStepSelection(runtime);
+  applyTaskInputGroupSelection(runtime);
   applyEvidenceSelection(runtime);
+}
+
+function applyWorkflowStepSelection(runtime) {
+  const buttons = typeof runtime.shell.querySelectorAll === 'function'
+    ? runtime.shell.querySelectorAll('[data-role="emp1-professional-step"]')
+    : [];
+  for (const button of buttons) {
+    if (button.dataset.emp1ProfessionalStep === runtime.state.activeTaskStep) {
+      button.setAttribute?.('aria-current', 'step');
+    } else {
+      button.removeAttribute?.('aria-current');
+    }
+  }
+}
+
+function applyTaskInputGroupSelection(runtime) {
+  const allowed = new Set(EMP1_TASK_SHELL_INPUT_GROUPS[runtime.state.activeTaskStep] ?? []);
+  const groups = typeof runtime.shell.querySelectorAll === 'function'
+    ? runtime.shell.querySelectorAll('.lafea-doc-table-section[data-input-group]')
+    : [];
+  let visibleCount = 0;
+  for (const group of groups) {
+    const visible = allowed.has(group.dataset.inputGroup);
+    group.hidden = !visible;
+    group.dataset.emp1TaskInputActive = String(visible);
+    if (visible) visibleCount += 1;
+  }
+  const source = runtime.taskEntries.find(([surfaceId]) => surfaceId === 'source')?.[1] ?? null;
+  if (source) {
+    source.dataset.emp1TaskInputGroupCount = String(visibleCount);
+    source.dataset.emp1TaskInputStep = runtime.state.activeTaskStep;
+  }
 }
 
 function applyEvidenceSelection(runtime) {

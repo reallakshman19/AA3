@@ -26,7 +26,7 @@ PR: 1660
 PR_STATUS: OPEN_DRAFT_LEG004_IN_PROGRESS
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
-PR_HEAD_OBSERVED: 1b8f2d4beffe59468bc8b2ee0ed5cae507735854
+PR_HEAD_OBSERVED: 421090542d1432bde8dced1476ce2d603fb6e3e7
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
 MERGEABILITY: MERGEABLE_PRE_LEG004
 REVIEWS: 0
@@ -90,6 +90,6 @@ HANDOVER_READY: FALSE
 
 VALIDATION: pre-material reconciliation PASS; executable benchmark hierarchy/browser/build validation NOT_RUN.
 AUTHORITY_BOUNDARY: LEG-004 may move/render the existing benchmark panel once in the LEG-003 full-width detail region and add progressive disclosure over retained evidence. It may not alter benchmark projection/core math, CAUx/PV Elite source or values, route authority, WRC mechanics, code/release state or workflows.
-CURRENT_BLOCKER: none.
+CURRENT_BLOCKER: issue Active projection needs synchronization before material mutation.
 LEG_DIAGNOSIS: formal benchmark evidence already exists, but its full CAUx audit table remains embedded inside the top workflow card. The remaining defect is presentation hierarchy, not benchmark computation.
-EXACT_NEXT_ACTION: render one benchmark panel as a full-width analytical evidence surface, keep status/authority/PV-Elite unavailability visible, disclose deep CAUx custody/comparison detail progressively, add focused checks, record LEG-004 receipt/endpoint, sync issue comments and stop. Do not merge PR #1660 without explicit Owner authorization.
+EXACT_NEXT_ACTION: synchronize issue Active to the refreshed benchmark-hierarchy qualification, then render one benchmark panel as a full-width analytical evidence surface, keep status/authority/PV-Elite unavailability visible, disclose deep CAUx custody/comparison detail progressively, add focused checks, record LEG-004 receipt/endpoint, sync issue comments and stop. Do not merge PR #1660 without explicit Owner authorization.

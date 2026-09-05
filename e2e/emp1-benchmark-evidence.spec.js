@@ -49,16 +49,27 @@ test('EMP.1 benchmark evidence stays authority-safe while deep CAUx audit detail
   await expect(authority).toContainText('Does not establish code compliance');
 
   const audit = caux.locator('[data-role="emp1-benchmark-caux-audit-details"]');
+  const auditSummary = audit.locator('summary');
+  const comparisonRows = caux.locator('[data-role="emp1-benchmark-comparison-row"]');
   await expect(audit).toHaveCount(1);
   await expect(audit).not.toHaveAttribute('open', '');
-  await expect(caux.locator('[data-role="emp1-benchmark-comparison-row"]')).toHaveCount(8);
+  await expect(auditSummary).toBeVisible();
+  await expect(comparisonRows).toHaveCount(8);
   await expect(caux.locator('[data-role="emp1-benchmark-comparison-table"]')).not.toBeVisible();
 
-  await audit.locator('summary').click();
+  await auditSummary.focus();
+  await expect(auditSummary).toBeFocused();
+  await page.keyboard.press('Enter');
   await expect(audit).toHaveAttribute('open', '');
+
   const table = caux.locator('[data-role="emp1-benchmark-comparison-table"]');
   await expect(table).toBeVisible();
-  await expect(caux.locator('[data-role="emp1-benchmark-comparison-row"]')).toHaveCount(8);
+  await expect(table.locator('caption')).toHaveText(
+    'CAUx 2017 retained sustained host-shell stress-intensity comparison',
+  );
+  await expect(table.getByRole('columnheader')).toHaveCount(7);
+  await expect(table.getByRole('rowheader')).toHaveCount(8);
+  await expect(comparisonRows).toHaveCount(8);
 
   const cu = caux.locator('[data-role="emp1-benchmark-comparison-row"][data-location="Cu"]');
   await expect(cu).toContainText('975 kPa');
@@ -70,6 +81,13 @@ test('EMP.1 benchmark evidence stays authority-safe while deep CAUx audit detail
   await expect(du).toContainText('1754 kPa');
   await expect(du).toContainText(/1780\.7867\s*kPa/u);
   await expect(du).toContainText(/26\.78674\s*kPa/u);
+
+  await auditSummary.focus();
+  await page.keyboard.press('Space');
+  await expect(audit).not.toHaveAttribute('open', '');
+  await expect(comparisonRows).toHaveCount(8);
+  await expect(authority).toBeVisible();
+  await expect(cauxStatus).toContainText('Engineering use not authorized');
 
   const pvElite = panel.locator('[data-role="emp1-benchmark-comparator"][data-comparator-id="PV_ELITE"]');
   const unavailable = pvElite.locator('[data-role="emp1-benchmark-reference-unavailable"]');

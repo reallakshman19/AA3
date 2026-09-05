@@ -1,0 +1,170 @@
+{
+  "schema": "lafea-mesh-benchmark-manifest/v1",
+  "bucketId": "MESH",
+  "issue": "github:reallaksh19/Advanced_Analysis#1652",
+  "benchmarkId": "BM-MESH",
+  "materialLeg": "LEG-009",
+  "state": "STAGED_RUNNER_FAIL_CLOSED",
+  "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
+  "authority": {
+    "benchmarkExecutionAuthorized": true,
+    "productionSourceMutationAuthorized": false,
+    "thresholdMutationAuthorized": false,
+    "solverOrCompilerExecutionAuthorized": false,
+    "benchmarkRegistrationAuthorized": false,
+    "workflowMutationAuthorized": false,
+    "roadmapMutationAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "scopeBoundary": {
+    "allowed": [
+      "Execute the registered production mesh producer for M0/M1 and the executable LAFEA.3 portion of M2.",
+      "Retain canonical lafea-analysis-mesh/v1 hashes, counts, DOF and mesh-quality observations.",
+      "Retain per-stage audit records and gate later stages on a contiguous PASS prefix.",
+      "Emit explicit BLOCKED records where production scope or owner authority is absent."
+    ],
+    "forbidden": [
+      "Benchmark-authored meshes or benchmark-only mesh adapters defining ladder meshes.",
+      "Benchmark-side node merging to manufacture a conforming multi-patch shell seam.",
+      "Production source, threshold, solver/compiler, workflow, registration or roadmap changes.",
+      "Fabricated material, loads, restraints, loadCaseId, response quantities, recovery methods or response acceptance values.",
+      "Release or temperature authority."
+    ]
+  },
+  "stageOrder": [
+    "M0",
+    "M1",
+    "M2",
+    "M3",
+    "M4"
+  ],
+  "advancementPolicy": "AUTHORIZE_ONLY_CONTIGUOUS_PASS_PREFIX",
+  "stages": [
+    {
+      "benchmarkStage": "M0",
+      "title": "Production producer conformance",
+      "definitionState": "READY",
+      "gateMode": "REQUIRE_PASS",
+      "methods": [
+        {
+          "methodId": "M0-PRODUCTION-PRODUCER-CONFORMANCE",
+          "authorityClass": "PRODUCTION_PRODUCER_OBSERVATION",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "sourceRefs": [
+            "S-001",
+            "S-002",
+            "S-003",
+            "S-004",
+            "S-005",
+            "S-006",
+            "S-011",
+            "S-014"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "PRODUCTION_CONTRACT_AND_FROZEN_LADDER_REQUESTS"
+        }
+      ]
+    },
+    {
+      "benchmarkStage": "M1",
+      "title": "Determinism",
+      "definitionState": "READY",
+      "gateMode": "REQUIRE_PASS",
+      "methods": [
+        {
+          "methodId": "M1-IN_PROCESS-CROSS_PROCESS-SHUFFLED_INPUT",
+          "authorityClass": "PRODUCTION_PRODUCER_DETERMINISM",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "sourceRefs": [
+            "S-001",
+            "S-002",
+            "S-003",
+            "S-004",
+            "S-005",
+            "S-006",
+            "S-011",
+            "S-014"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "BYTE_STABLE_CANONICAL_MESH_HASH"
+        }
+      ]
+    },
+    {
+      "benchmarkStage": "M2",
+      "title": "Independent geometry fidelity",
+      "definitionState": "READY_WITH_DECLARED_PRODUCTION_SCOPE_BLOCKER",
+      "gateMode": "FAIL_CLOSED",
+      "methods": [
+        {
+          "methodId": "M2-INDEPENDENT-GEOMETRY-FIDELITY",
+          "authorityClass": "INDEPENDENT_CLOSED_FORM_AND_FROZEN_POLICY",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "sourceRefs": [
+            "S-002",
+            "S-003",
+            "S-004",
+            "S-005",
+            "S-006",
+            "S-008",
+            "S-011",
+            "S-014"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "validation/lafea-benchmark-data/MESH/oracle/expected-values.json"
+        }
+      ],
+      "declaredBlockers": [
+        {
+          "blockerId": "M2-LAFEA4-MULTIPATCH-SEAM",
+          "caseId": "M2-TWO-PATCH-SHELL-01",
+          "reason": "The qualified LAFEA.4 production midsurface/producer scope is single-patch and declares NO_MULTI_PATCH_SEAMS; benchmark-side node merging is forbidden."
+        }
+      ]
+    },
+    {
+      "benchmarkStage": "M3",
+      "title": "Quality-gate distributions over systematic refinement",
+      "definitionState": "BLOCKED_AUTHORITY",
+      "gateMode": "FAIL_CLOSED",
+      "methods": [],
+      "declaredBlockers": [
+        {
+          "blockerId": "M3-SHELL-THICKNESS-AUTHORITY",
+          "reason": "Shell h/t qualification requires governed shell thickness not frozen by BM-MESH."
+        },
+        {
+          "blockerId": "M3-PREDECESSOR-GATE",
+          "reason": "M3 cannot advance unless M2 is PASS."
+        }
+      ]
+    },
+    {
+      "benchmarkStage": "M4",
+      "title": "Solver handoff and governed convergence",
+      "definitionState": "BLOCKED_AUTHORITY",
+      "gateMode": "FAIL_CLOSED",
+      "methods": [],
+      "sourceRefs": [
+        "S-012",
+        "S-013",
+        "S-015"
+      ],
+      "declaredBlockers": [
+        {
+          "blockerId": "M4-PHYSICS-AND-RESPONSE-AUTHORITY",
+          "reason": "Material, loads, restraints, loadCaseId, requested response quantity, recovery method and response acceptance are not frozen by BM-MESH."
+        },
+        {
+          "blockerId": "M4-SOLVER-CONVERGENCE-AUTHORITY",
+          "reason": "Solver/compiler execution and convergence limits remain protected."
+        },
+        {
+          "blockerId": "M4-PREDECESSOR-GATE",
+          "reason": "M4 cannot advance unless M3 is PASS."
+        }
+      ]
+    }
+  ]
+}

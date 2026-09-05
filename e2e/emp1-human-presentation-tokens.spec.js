@@ -38,15 +38,12 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
   await expect(root.locator('[data-role="emp1-workflow"]')).toBeVisible();
   await expect(root.locator('[data-role="emp1-console-mode-tabs"]')).toHaveCount(1);
 
-  // Compact workflow detail remains part of the token audit even though it is
-  // collapsed by default.
   const workflowDetails = root.locator('[data-role="emp1-workflow-details"]');
   await expect(workflowDetails).toHaveCount(1);
   await expect(workflowDetails).not.toHaveAttribute('open', '');
   await workflowDetails.locator('summary').click();
   await expect(workflowDetails).toHaveAttribute('open', '');
 
-  // Local Correlation makes the Authority inspector the task-default view.
   await root.getByRole('button', { name: /^6 Local Correlation/u }).click();
   const bounded = root.locator('[data-role="emp1-c-bounded-evidence"]');
   await expect(bounded).toBeVisible();
@@ -55,8 +52,6 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
 
   const scans = [];
 
-  // Every inspector domain must be scanned because split-console selection now
-  // intentionally removes unselected authority/custody surfaces from layout.
   const inspectorTabs = root.locator('[data-role="emp1-inspector-tab"]');
   const inspectorCount = await inspectorTabs.count();
   expect(inspectorCount).toBeGreaterThanOrEqual(3);
@@ -68,14 +63,14 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
     scans.push({ view: `inspector:${inspectorView}`, leaks: await scanVisibleLeaks(page) });
   }
 
-  // Restore Authority and audit both retained route capabilities separately.
   const authorityTab = root.locator(
     '[data-role="emp1-inspector-tab"][data-emp1-inspector-view="boundedCorrelation"]',
   );
   await authorityTab.click();
   const routeTabs = bounded.locator('[data-role="emp1-c-route-capability-tab"]');
   await expect(routeTabs).toHaveCount(2);
-  for (let index = 0; index < await routeTabs.count(); index += 1) {
+  const routeCount = await routeTabs.count();
+  for (let index = 0; index < routeCount; index += 1) {
     const tab = routeTabs.nth(index);
     const routeId = await tab.getAttribute('data-route-id');
     await tab.click();
@@ -84,9 +79,6 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
     scans.push({ view: `route:${routeId}`, leaks: await scanVisibleLeaks(page) });
   }
 
-  // Evidence is collapsed by default; open the bounded console and enumerate
-  // every retained selectable evidence view so progressive disclosure cannot
-  // weaken the original raw-token regression boundary.
   const evidenceToggle = root.locator('[data-role="emp1-evidence-console-toggle"]');
   await evidenceToggle.click();
   await expect(evidenceToggle).toHaveAttribute('aria-expanded', 'true');
@@ -119,16 +111,19 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
   })));
   expect(leaks, JSON.stringify(leaks, null, 2)).toEqual([]);
 
-  // Technical IDs remain available only inside the explicit raw boundary.
+  // Technical identifiers remain reachable behind an explicit human-readable
+  // route disclosure, and the raw machine IDs remain confined to the raw boundary.
   await authorityTab.click();
-  const authorizedRouteTab = bounded.locator('[data-role="emp1-c-route-capability-tab"][aria-selected="true"]');
-  if (!await authorizedRouteTab.isVisible()) {
-    await bounded.locator('[data-role="emp1-c-route-capability-tab"]').first().click();
-  }
-  const technical = bounded.locator('[data-emp1-raw-technical="true"]:visible').first();
+  await bounded.locator('[data-role="emp1-c-route-capability-tab"]').first().click();
+  const routeDetail = bounded.locator('[data-role="emp1-c-route-detail"]:visible');
+  await expect(routeDetail).toBeVisible();
+  await routeDetail.locator('summary').first().click();
+  await expect(routeDetail).toHaveAttribute('open', '');
+  const technical = routeDetail.locator('[data-emp1-raw-technical="true"]').first();
   await expect(technical).toBeVisible();
   await technical.locator('summary').click();
-  await expect(technical).toContainText('EMP1.C.WRC537.CYLINDRICAL.ORIGINAL');
+  await expect(technical).toContainText('EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP');
+  await expect(technical).toContainText('WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP');
 });
 
 async function scanVisibleLeaks(page) {
@@ -153,13 +148,13 @@ async function scanVisibleLeaks(page) {
         let node = walker.nextNode();
         while (node) {
           const parent = node.parentElement;
-          const text = node.textContent?.trim() ?? '';
-          if (parent && text && isVisible(parent) && !parent.closest(rawBoundarySelector)) {
-            const underscore = [...text.matchAll(machineUnderscore)].map((match) => match[0]);
-            const dotted = [...text.matchAll(machineDotted)].map((match) => match[0]);
-            const simple = text.split(/\s+/u).filter((token) => simpleMachineCodes.has(token));
+          const value = node.textContent?.trim() ?? '';
+          if (parent && value && isVisible(parent) && !parent.closest(rawBoundarySelector)) {
+            const underscore = [...value.matchAll(machineUnderscore)].map((match) => match[0]);
+            const dotted = [...value.matchAll(machineDotted)].map((match) => match[0]);
+            const simple = value.split(/\s+/u).filter((token) => simpleMachineCodes.has(token));
             if (underscore.length || dotted.length || simple.length) {
-              found.push({ role, text, underscore, dotted, simple });
+              found.push({ role, text: value, underscore, dotted, simple });
             }
           }
           node = walker.nextNode();

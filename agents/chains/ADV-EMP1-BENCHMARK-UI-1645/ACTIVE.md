@@ -14,16 +14,17 @@ AGENT_INSTANCE_ID: chatgpt:1e0df8cb-8a9c-4c20-9d1f-8d29a3f88f81
 REPO: reallaksh19/Advanced_Analysis
 TASK: Surface already-frozen CAUx benchmark evidence in EMP.1 Review & Evidence; show PV Elite as unavailable; create no new engineering authority.
 CHAIN: ADV-EMP1-BENCHMARK-UI-1645
-ENDPOINT: EP-0006
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0006.md
+ENDPOINT: EP-0007
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0007.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0002.md
 
 PR: 1648
-PR_STATUS: OPEN_DRAFT_STACKED_ON_1622
+PR_STATUS: OPEN_DRAFT_RETARGETED_TO_MAIN_MERGE_AUTHORIZED
 BRANCH: agent/emp1-benchmark-ui-1645-prework
-STACK_BASE_PR: 1622
-STACK_BASE_BRANCH: agent/emp1-engineering-review-ui-v1
-STACK_BASE_HEAD: bed2d28d9cc85fcbecf6dbc9ed8f4afde00f80be
+PR_BASE: main
+MAIN_HEAD_OBSERVED: 85cdce1f126c848e2ba0a4488ad5da703f5a8229
+DEPENDENCY_PR_1622: MERGED
+DEPENDENCY_MERGE_COMMIT: 85cdce1f126c848e2ba0a4488ad5da703f5a8229
 MATERIAL_HEAD: 31cd0188edf6915167c84fc8950e5d6ad2ca6d3e
 LAST_COMPLETED_MATERIAL_LEG: LEG-001
 CURRENT_MATERIAL_LEG: NONE
@@ -31,19 +32,20 @@ CURRENT_MATERIAL_LEG: NONE
 ENGINEERING_STATE: SOURCE_IMPLEMENTED_EXTERNAL_EXECUTOR_BLOCKED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: PASS_OWNER_ADMITTED
-WRITE_AUTHORITY: READ_ONLY_EXTERNAL_EXECUTOR_BLOCKED
+WRITE_AUTHORITY: READ_ONLY_MERGE_AUTHORIZED
 AUTO_STATE: PAUSED
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+MERGE_AUTHORITY: AUTHORIZED
+MERGE_AUTHORIZED: TRUE
+MERGE_AUTHORIZATION_SCOPE: PR_1648_CURRENT_CUSTODY_HEAD_AFTER_SYNC
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/issue-state/CURRENT.md
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548798517
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548799269
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549073451
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549201337
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
-OWNER_INSTRUCTION: proceed next
+OWNER_INSTRUCTION: merge,proceed next
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
 QUALIFICATION_PROFILE_VERSION: 2
 QUALIFICATION_SCOPE_ID: QSCOPE-1645-EMP-BENCHMARK-PRESENTATION
@@ -61,11 +63,10 @@ WORKFLOW_DISPATCH_CONNECTOR: NOT_EXPOSED
 LOCAL_REPOSITORY_COMMAND_RUNNER: NOT_EXPOSED
 
 CONTROL_EVIDENCE:
-- stacked Draft #1624 has historical EMP.1 pull-request Actions runs;
-- current workflow exists on #1622 stack base;
-- #1648 synchronize commits and forced close/reopen event produced zero runs;
-- recent main-target merged #1647 head also produced zero pull-request runs;
-- repository precedent #1535 classifies current runner provisioning as an external repository/account gate.
+- dependency #1622 merged to main and #1648 was retargeted to main;
+- #1648 effective diff remains issue #1645 only;
+- #1648 reviews 0 and unresolved threads 0;
+- executable validation remains unavailable under the retained external executor gate.
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: EXECUTION_NOT_RUN_PRECHECKOUT
@@ -73,7 +74,7 @@ CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-VALIDATION: static/source/diff/trigger investigation PASS; all required executable focused/browser/import/build/diff checks remain NOT_RUN.
-AUTHORITY_BOUNDARY: no engineering, test, benchmark, WRC, route, tolerance, workflow, release or deployment mutation is authorized to work around runner provisioning.
-CURRENT_BLOCKER: REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE.
-EXACT_NEXT_ACTION: restore ordinary GitHub-hosted runner availability or provide a faithful clean executable checkout for the current #1648 stack. Re-ground exact SHAs, run the focused validation ladder, then add EMP-only browser evidence if clean. Do not merge without separate explicit Owner authorization.
+VALIDATION: static/source/diff/stack/merge-gate investigation PASS; all required executable focused/browser/import/build/diff checks remain NOT_RUN.
+AUTHORITY_BOUNDARY: Owner merge authorization does not create engineering, benchmark, WRC, route, tolerance, workflow, release or deployment authority and does not convert NOT_RUN to PASS.
+CURRENT_BLOCKER: REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE_FOR_EXECUTABLE_VALIDATION_ONLY.
+EXACT_NEXT_ACTION: mark PR #1648 ready-for-review only if GitHub requires it, merge the exact current custody head to main under the Owner authorization, then re-ground post-merge custody without claiming executable validation PASS.

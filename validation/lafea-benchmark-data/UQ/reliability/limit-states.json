@@ -1,0 +1,56 @@
+{
+  "schema": "lafea-uq-limit-states/v1",
+  "issue": 1673,
+  "stage": "U0",
+  "definitionState": "IDENTITIES_FROZEN_TARGETS_NOT_AUTHORIZED",
+  "governingReliabilityStandard": null,
+  "consequenceClass": null,
+  "numericReliabilityTarget": null,
+  "codeAllowable": null,
+  "limitStates": [
+    {
+      "limitStateId": "LS-L3-SERVICEABILITY-DISPLACEMENT",
+      "responseQoiId": "UQ-L3-SELECTED-DISPLACEMENT",
+      "form": "g = displacementLimit - abs(selectedDisplacement)",
+      "failureCondition": "g <= 0",
+      "decisionContext": "serviceability displacement at a frozen physical-coordinate probe",
+      "status": "CANDIDATE_REQUIRES_GOVERNING_LIMIT_AND_RELIABILITY_TARGET",
+      "reliabilityBearingAuthorized": false,
+      "displacementLimit": null,
+      "pfTarget": null,
+      "betaTarget": null
+    },
+    {
+      "limitStateId": "LS-L3-EQUIVALENT-STRESS-STRENGTH",
+      "responseQoiId": "UQ-L3-RETAINED-VON-MISES",
+      "form": "g = resistanceAllowable - retainedVonMises",
+      "failureCondition": "g <= 0",
+      "decisionContext": "strength screening at a frozen retained stress observation location",
+      "status": "CANDIDATE_REQUIRES_CODE_OR_RESISTANCE_AUTHORITY_AND_RELIABILITY_TARGET",
+      "reliabilityBearingAuthorized": false,
+      "resistanceAllowable": null,
+      "pfTarget": null,
+      "betaTarget": null
+    }
+  ],
+  "nonReliabilityChecks": [
+    {
+      "checkId": "CHECK-L3-REACTION-EQUILIBRIUM",
+      "qoiId": "UQ-L3-SUPPORT-REACTION",
+      "classification": "DETERMINISTIC_VERIFICATION",
+      "mayGeneratePfOrBeta": false
+    },
+    {
+      "checkId": "CHECK-L3-STRAIN-ENERGY",
+      "qoiId": "UQ-L3-STRAIN-ENERGY",
+      "classification": "DETERMINISTIC_VERIFICATION_AND_NUMERICAL_UNCERTAINTY_DIAGNOSTIC",
+      "mayGeneratePfOrBeta": false
+    }
+  ],
+  "authorityRules": [
+    "No numeric reliability target may be selected from observed benchmark or production FEA output.",
+    "No code allowable or resistance model may be invented by this U0 definition.",
+    "A candidate limit state remains non-authoritative until its governing code/design basis, consequence class where applicable, resistance/allowable definition and Pf/beta target are frozen before observation.",
+    "Release qualification remains a separate explicit authority act after the applicable U0-U7 gates."
+  ]
+}

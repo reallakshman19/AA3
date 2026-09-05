@@ -4,28 +4,31 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0012
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0012.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0010.md
+ACTIVE_ENDPOINT: EP-0013
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0013.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0013.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 LAST_COMPLETED_MATERIAL_LEG: LEG-005
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-005.md
 MATERIAL_LEG_HEAD: 8c86e25a26df1987d0228bf629b6298104fc3b25
 CURRENT_MATERIAL_LEG: NONE
 
-PR: 1656
-PR_STATUS: OPEN_DRAFT
-BRANCH: engineering/bm-mesh-1652
+PREDECESSOR_PR: 1656
+PREDECESSOR_PR_STATUS: MERGED
+PREDECESSOR_PR_MERGE_COMMIT: 2829fe58113237741ea3a1172cdf008e7c7e994a
+PR: 1662
+PR_STATUS: OPEN_DRAFT_PREWORK_ONLY
+BRANCH: engineering/bm-mesh-1652-m2
 BASE_BRANCH: main
 ISSUE_BASIS_MAIN: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-MAIN_HEAD: b39f7673737bd1f7f4a6d7dd9d1538f795874281
-POST_BASIS_DRIFT: DISJOINT_NO_MATERIAL_OVERLAP_OBSERVED
-MERGEABILITY: MERGEABLE_AT_LAST_CHECK
+MAIN_HEAD: 2829fe58113237741ea3a1172cdf008e7c7e994a
+POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_BOUNDARY_THROUGH_TASK_001_MERGE
+MERGEABILITY: UNKNOWN_RECALCULATING_AT_PR_CREATION
 REVIEWS: 0_AT_LAST_CHECK
 UNRESOLVED_REVIEW_THREADS: 0_AT_LAST_CHECK
 REQUIRED_CHECKS: NONE_OBSERVED_AT_LAST_CHECK
 
-ENGINEERING_STATE: TASK_001_ACCEPTED_M2_READY_WAIT_OWNER_PROGRESSION
+ENGINEERING_STATE: TASK_002_M2_PREWORK_READY
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
 WRITE_AUTHORITY: READ_ONLY
@@ -33,15 +36,15 @@ AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-AUTHORITY_DOMAIN: BM-MESH issue #1652 implementation and qualification evidence only; source-authority verification, solver formulation/compiler authority, mesh-quality thresholds, B02 benchmark/response authority, benchmark/oracle authority, convergence tolerances, TECH-13 product-refinement authority, release/trust/temperature authority and workflows remain protected.
+AUTHORITY_DOMAIN: BM-MESH issue #1652 M2 benchmark geometry/oracle prework only. Production mesher/geometry kernels, source-authority verification, solver formulation/compiler authority, mesh-quality thresholds, B02 benchmark/response authority, convergence tolerances, TECH-13 product-refinement authority, workflows, roadmaps, release/trust/temperature authority remain protected.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
 AGENT_INSTANCE_ID: chatgpt:b4bb2925-1e01-4ba2-8693-1018b121c5ba
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 7
+CUSTODY_EPOCH: 8
 COORDINATION_STATE: SAFE_EXCLUSIVE_NO_COLLISION
-DEPENDENCIES: docs-only PR #1654 supports design only; issue #1535 production-route authority remains separate; TECH-13 LAFEA.4 product-refinement authority remains separate; historical B02D benchmark authority remains separate
+DEPENDENCIES: issue-linked docs PR #1654 is proposal/support only; issue #1535 production-route authority remains separate; TECH-13 refinement authority remains separate; M4 physics fixture authority unresolved
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
@@ -54,41 +57,42 @@ ROADMAP_MUTATION_AUTHORITY: NONE
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
-ISSUE_BASIS_STATUS: CURRENT_WITH_DISJOINT_POST_BASIS_MAIN_DRIFT
+ISSUE_BASIS_STATUS: CURRENT_WITH_TASK_001_MERGED
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0012
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0013
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549970395
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549969638
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550761859
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0013_COMMENT_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: REPO_FILES_SYNCED_COMMENT_SYNC_PENDING
 
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 QUALIFICATION_PROFILE: FEA
 QUALIFICATION_PROFILE_VERSION: 2
-QUALIFICATION_SCOPE_ID: QSCOPE-ADV-BM-MESH-1652-PRODUCER-MESH-QUALIFICATION
-QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0004
-QUESTION_SET_FILE: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0004-questions.md
+QUALIFICATION_SCOPE_ID: QSCOPE-ADV-BM-MESH-1652-M2-GEOMETRY-ORACLE
+QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0005
+QUESTION_SET_FILE: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0005-questions.md
 QUESTION_SET_STATUS: CURRENT
 QUESTION_SET_ADMISSION_STATUS: NOT_EVALUATED_ORIGINATING_CUSTODIAN
-QUESTION_PACK_ACTION: REUSED_ACCEPTANCE
-QUESTION_DISPLAY: HIDE
+QUESTION_PACK_ACTION: REFRESHED
+QUESTION_DISPLAY: SHOW
 PREWORK_QUALIFICATION_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
-OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
-OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
+OWNER_QUALIFICATION_BASELINE_SOURCE: issue #1652 + governing roadmaps; no separate Owner Q-set baseline
+OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
-TASK_STATUS: TASK-001 CLOSED_PASS; TASK-002 OPEN_READY_FOR_OWNER_PROGRESSION; TASK-003..TASK-006 OPEN_STAGED; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: Owner exact-head runner evidence PASS on `1ae18e0fa3def489487a131641de7379afbe5af0`; focused B02D-V2 binding PASS; full producer-binding PASS; aggregate `check:lafea-meshing` PASS through determinism and producer-binding; M4 physics fixture authority unresolved
-BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD; BM-003 PASS_OWNER_EXACT_HEAD; BM-002/BM-004..BM-006 NOT_RUN
+TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 PREWORK_READY_WAIT_OWNER_PROGRESSION; TASK-003..TASK-006 OPEN_STAGED; TASK-007 SATISFIED_CURRENTLY
+INPUT_STATUS: Owner exact-head TASK-001 PASS merged via PR #1656; M2 five case classes owner-authorized by issue #1652; exact non-unit fixture dimensions still to be frozen; M4 physics fixture authority unresolved
+BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-003 PASS_OWNER_EXACT_HEAD_MERGED; BM-004 PREWORK_READY_NOT_RUN; BM-002/BM-005/BM-006 NOT_RUN
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_TASK_001_OWNER_EXACT_HEAD_EXECUTION
+HANDOVER_VALIDATION_STATUS: PASS_MERGE_RECONCILIATION_AND_M2_PREWORK_GROUNDING
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-CURRENT_BLOCKER: none for TASK-001; TASK-002 awaits an owner progression command and fresh benchmark/oracle prework qualification.
-LEG_DIAGNOSIS: all five bounded repairs are now validated on the Owner runner. The declared meshing governance chain completes through final determinism and producer-binding without changing production thresholds or protected B02/solver/refinement authority.
-EXACT_NEXT_ACTION: wait for an owner progression command before opening M2 geometry/oracle prework. Do not merge without explicit owner merge authorization.
+CURRENT_BLOCKER: none for M2 prework; material implementation intentionally waits for the next Owner progression command.
+LEG_DIAGNOSIS: TASK-001 is merged. M2 introduces benchmark/oracle authority, so the producer-mesh question set was refreshed. Issue #1652 defines the five M2 case classes and required independent measurements; non-unit fixture dimensions must be explicitly frozen and cited rather than inferred from produced meshes.
+EXACT_NEXT_ACTION: on the next `proceed next`, implement one bounded M2 material leg limited to `validation/lafea-benchmark-data/MESH/geometry/cases.json`, `oracle/expected-values.json`, and `sources/source-registry.json` as needed; record a material receipt and do not cross into runner/ladders/negative-cases/program-registration or protected production authority.

@@ -1,6 +1,7 @@
 import { projectEmp1Readiness } from '../core/emp1/emp1-readiness-projection.js';
 import { card, element } from './lafea-workbench-dom.js';
 import { renderEmp1EngineeringReviewPanel } from './emp1-engineering-review-view.js';
+import { renderEmp1BenchmarkEvidencePanel } from './emp1-benchmark-view.js';
 import { buildEmp1ProfessionalWorkflowPresentation } from './emp1-professional-workflow-presentation.js';
 import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
 
@@ -27,6 +28,7 @@ export function renderEmp1ProfessionalWorkflow(
 ) {
   const runFailure = options.runFailure ?? null;
   const reviewWorkspace = options.reviewWorkspace ?? null;
+  const benchmarkEvidence = options.benchmarkEvidence ?? null;
   const readiness = projectEmp1Readiness(projection, {
     reviewState: reviewWorkspace?.readinessReviewState ?? null,
   });
@@ -73,9 +75,12 @@ export function renderEmp1ProfessionalWorkflow(
       options.onReview,
     ));
   }
+  if (benchmarkEvidence) {
+    workflow.body.append(renderEmp1BenchmarkEvidencePanel(root, benchmarkEvidence));
+  }
 
   const boundary = element(root, 'p', 'lafea-workbench__authority',
-    'Workflow status is presentation-only for calculation and release authority. An explicit engineering-review action may retain a hash-bound human attestation through the review controller, but it does not create source, method, applicability, numerical, code-compliance, release, or professional-seal authority. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
+    'Workflow status is presentation-only for calculation and release authority. An explicit engineering-review action may retain a hash-bound human attestation through the review controller, while external benchmark evidence may increase confidence; neither creates source, method, applicability, numerical, code-compliance, production, release, or professional-seal authority. Historical/stale C numerical evidence is never promoted to a current result by this workflow.');
   boundary.dataset.role = 'emp1-professional-workflow-authority-boundary';
   workflow.body.append(boundary, technicalBackingDisclosure(root, presentation, onSelectRoute));
   return workflow.section;
@@ -239,6 +244,7 @@ function navigateProfessionalStep(root, step, onSelectRoute) {
     && scrollToRole(root, 'emp1-engineering-review-panel')) return;
   if (scrollToRole(root, step.targetRole)) return;
   if (step.stepId === 'REVIEW_EVIDENCE') {
+    if (scrollToRole(root, 'emp1-benchmark-evidence-panel')) return;
     if (scrollToRole(root, 'emp1-c-result-evidence')) return;
     root.querySelector?.('[data-guided-target="lineage"]')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }

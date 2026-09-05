@@ -19,35 +19,40 @@ ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0002.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0001.md
 
-PR: 1655
-PR_STATUS: OPEN_DRAFT_LEG001_SOURCE_COMPLETE_EXECUTION_NOT_RUN
-BRANCH: agent/emp1-human-ui-1651-prework
+PREVIOUS_PR: 1655
+PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
+PREVIOUS_PR_MERGE_COMMIT: 840d439cb39eb1c334cc0d7593eb2c45085599c6
+PR: 1658
+PR_STATUS: OPEN_DRAFT_LEG002_IN_PROGRESS
+BRANCH: agent/emp1-human-ui-1651-leg002-pressure-matrix
 PR_BASE: main
-PR_HEAD_OBSERVED: 09d541dd733f908fdcd2dddbedb174747e1ad54b
+PR_HEAD_OBSERVED: 0569ed29be02d4fb642bdfd370ae91004cde073a
 PREWORK_COMMIT: 0f95a1b7b6003ea6e68c5346ca3bcb110dee8778
-MAIN_HEAD_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-MERGEABILITY: MERGEABLE
+MAIN_HEAD_OBSERVED: 0569ed29be02d4fb642bdfd370ae91004cde073a
+MERGEABILITY: UNKNOWN_AFTER_HEAD_REGROUND
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
+PULL_REQUEST_WORKFLOW_RUNS_CURRENT_HEAD: 0
 LATEST_MATERIAL_HEAD: 6346ca4d05820f629cf9b54bf94408faf098da29
 LAST_COMPLETED_MATERIAL_LEG: LEG-001
-CURRENT_MATERIAL_LEG: NONE
+CURRENT_MATERIAL_LEG: LEG-002
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-001.md
 
-ENGINEERING_STATE: LEG_001_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+ENGINEERING_STATE: LEG_002_IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
+WRITE_AUTHORITY: WRITE_ALLOWED_FOR_ONE_BOUNDED_LEG
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-AUTHORITY_DOMAIN: EMP.1 presentation/layout/browser regression only; WRC/benchmark/source/route/code/release authority protected.
+AUTHORITY_DOMAIN: EMP.1 governed input presentation/layout only; pressure mechanics and WRC/benchmark/source/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 2
-COORDINATION_STATE: SAFE_AFTER_PREDECESSOR_MERGE
-DEPENDENCIES: #1633 planning context; #1645 / PR #1648 merged into current main.
+CUSTODY_EPOCH: 3
+COORDINATION_STATE: SAFE_POST_BASIS_DRIFT_RECONCILED
+POST_BASIS_DRIFT: MATERIAL_WITHIN_OTHER_DISJOINT_ENGINEERING_BOUNDARY
+POST_BASIS_DRIFT_DETAIL: main advanced 840d439c... -> 0569ed29... by LAFEA.3 benchmark/validation work only; no LEG-002 target or authority path overlap.
+DEPENDENCIES: #1633 planning context; #1645 / PR #1648 merged; LEG-001 / PR #1655 merged.
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
@@ -58,10 +63,11 @@ ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550120393
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE_DURING_ACTIVE_LEG
 
-OWNER_TEXT_OBSERVED: `proceed next`
+OWNER_TEXT_OBSERVED: `merge, proceed next`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_MERGE_COMMAND: EXECUTED_FOR_PR_1655_ONLY
 
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -74,20 +80,20 @@ QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-PRESSURE-MATRIX
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0002
 QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0002-questions.md
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED
-QUESTION_DISPLAY: SHOW
+QUESTION_PACK_ACTION: REUSED
+QUESTION_DISPLAY: HIDE
 PREWORK_QUALIFICATION_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: LEG-001 source/diff inspection and material receipt; no faithful executable checkout/runner available in this session.
+HANDOVER_VALIDATION_EVIDENCE: post-merge Common/project/main re-ground PASS; intervening LAFEA.3 benchmark drift classified authority-disjoint; LEG-002 executable validation not yet run.
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-VALIDATION: source/diff/artifact inspection PASS; executable label/benchmark/browser/import/build/diff checks NOT_RUN. Zero GitHub statuses/workflow runs on material head is not engineering PASS.
-AUTHORITY_BOUNDARY: LEG-001 translated/contained presentation only; it did not create or modify WRC method, source, route, benchmark, pressure mechanics, code, release or deployment authority.
-CURRENT_BLOCKER: no custody blocker; executable LEG-001 validation unavailable in this session. New material coding requires another exact Owner progression command.
-LEG_DIAGNOSIS: raw-code regression source is patched and regression-gated in source; next inconsistency is Pressure rendering 10 scalar rows instead of one identity row × Internal/External.
-EXACT_NEXT_ACTION: Owner invokes `proceed next`; execute LEG-002 governed matrix generalization + Pressure 5×2 only, preserving 10 governed cells and per-cell custody. Do not merge.
+VALIDATION: PR #1655 merge confirmed; Common remains d709bcd...; current main is 0569ed29...; 840d439c... -> 0569ed29... touches LAFEA.3 benchmark/validation custody only. LEG-002 execution checks NOT_RUN.
+AUTHORITY_BOUNDARY: LEG-002 may only reorganize existing governed descriptor instances into a declared identity × column matrix; it may not alter pressure definitions, pressure/thrust mechanics, WRC methods, benchmark custody, route authority, code or release state.
+CURRENT_BLOCKER: none.
+LEG_DIAGNOSIS: Pressure still renders as ten scalar rows while Reference points and Load cases use identity-row grouped columns; the safe seam is a conservative presentation-only matrix contract keyed to existing descriptor IDs and exact engineering identity.
+EXACT_NEXT_ACTION: implement LEG-002 shared governed matrix presentation and Pressure 5×2, preserve 10 governed scalar inputs and per-cell descriptor/entity/source custody, run available source/diff checks, freeze LEG-002 receipt and successor endpoint, synchronize Issue comments. Do not merge PR #1658 without a new Owner merge command.

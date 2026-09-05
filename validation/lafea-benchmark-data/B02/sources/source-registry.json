@@ -28,6 +28,7 @@
     {"role":"thermalStrainAssembly","path":"src/core/local-continuum/temperature-strain-loads.js","blobSha":"8ce0abbd74970d71b0d21f9a66bf8a18b0ffed76"},
     {"role":"imposedDisplacementResolution","path":"src/core/local-continuum/imposed-displacement-loads.js","blobSha":"9e1b49d47ed35a83e66bfed6dbbbcb0d9563b4c5"},
     {"role":"resultHashes","path":"src/core/local-continuum/result-hashes.js","blobSha":"03dad85758d8b29a854711160e4921e44e9421dd"},
+    {"role":"canonicalSemanticHashOwner","path":"src/core/shared-primitives/canonical-json.js","blobSha":"e6e16472439d5d20938115cf253d7057b1a2d5c7"},
     {"role":"sharedLinearSolveExports","path":"src/core/lafea-linear-solve/index.js","blobSha":"b887aa89a89d0c2d4f33ea94852727195e149ec9"},
     {"role":"sharedSparseAssembly","path":"src/core/lafea-linear-solve/sparse-matrix.js","blobSha":"34775d5123bab2c96843390652c7f7487177dfbc"},
     {"role":"sharedSparseCholesky","path":"src/core/lafea-linear-solve/sparse-cholesky.js","blobSha":"cf7f61f59a1f108ff6c55b3364cefbf5b20b7f8c"},

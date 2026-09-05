@@ -41,7 +41,29 @@
         {"methodId":"CONT-HOLE-01","authorityClass":"ANALYTICAL_CLOSED_FORM","command":["node","scripts/lafea.3-benchmark-cont-hole-01-check.mjs"],"sourceRefs":["scripts/lafea.3-benchmark-cont-hole-01-check.mjs","scripts/lafea.3-benchmark-mesh-adapter.mjs","validation/lafea-benchmark-data/B02/oracle/expected-values.json","validation/lafea-benchmark-data/B02/convergence/mesh-ladders.json","validation/lafea-benchmark-data/B02/convergence/fixed-probes.json"],"reportEnv":{"name":"LAFEA_BM_S_CONT_HOLE_REPORT_PATH","filename":"CONT-HOLE-01-evidence.json"},"expectedEvidenceSchema":"lafea3-bm-s-s1-case-evidence/v1","oracleAuthority":"KIRSCH_CIRCULAR_HOLE_CITED_CLOSED_FORM"}
       ]
     },
-    {"benchmarkStage":"S2","title":"Load-path completeness","definitionState":"PLANNED","gateMode":"QUALIFICATION","methods":[]},
+    {
+      "benchmarkStage":"S2",
+      "title":"Load-path completeness",
+      "definitionState":"READY",
+      "gateMode":"QUALIFICATION",
+      "methods":[
+        {
+          "methodId":"LOAD-PATHS-EXACT-BVP",
+          "authorityClass":"INDEPENDENT_EXACT_BVP",
+          "command":["node","scripts/lafea.3-bm-s-s2-load-paths-check.mjs"],
+          "sourceRefs":[
+            "scripts/lafea.3-bm-s-s2-load-paths-check.mjs",
+            "scripts/lafea.3-fixtures.mjs",
+            "validation/lafea-benchmark-data/B02/oracle/cases.json",
+            "validation/lafea-benchmark-data/B02/oracle/load-path-expected-values.json",
+            "validation/lafea-benchmark-data/B02/oracle/independent-oracle.py"
+          ],
+          "reportEnv":{"name":"LAFEA_BM_S_S2_REPORT_PATH","filename":"S2-load-path-evidence.json"},
+          "expectedEvidenceSchema":"lafea3-bm-s-s2-load-path-evidence/v1",
+          "oracleAuthority":"INDEPENDENT_EXACT_AFFINE_THERMOELASTIC_AND_MANUFACTURED_BOUNDARY_VALUE_PROBLEMS"
+        }
+      ]
+    },
     {"benchmarkStage":"S3","title":"Solver numerics","definitionState":"PLANNED","gateMode":"QUALIFICATION","methods":[]},
     {"benchmarkStage":"S4","title":"Fail-closed negatives","definitionState":"PLANNED","gateMode":"QUALIFICATION","methods":[]},
     {"benchmarkStage":"S5","title":"Determinism and informational cost","definitionState":"PLANNED","gateMode":"QUALIFICATION_PLUS_INFORMATIONAL_PERFORMANCE","methods":[]}
@@ -54,6 +76,7 @@
     "sources/source-registry.json",
     "oracle/cases.json",
     "oracle/expected-values.json",
+    "oracle/load-path-expected-values.json",
     "oracle/independent-oracle.py",
     "convergence/mesh-ladders.json",
     "convergence/fixed-probes.json",

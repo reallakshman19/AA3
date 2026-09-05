@@ -85,8 +85,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0017
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551848643
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0017_COMMENT
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551934278
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: PASS_READY_FOR_AUTHORIZED_MERGE
 HANDOVER_VALIDATION_EVIDENCE: B01 and S0-S5 post-merge PASS retained; B02 activated; generic B02 outer program PASS on d61c6ba and exact audit retained at c3948bc; release authority false
@@ -103,4 +103,4 @@ Owner explicitly authorizes merging PR #1667 plus one subsequent bounded progres
 
 ## Exact next action
 
-Synchronize EP-0017 to Issue control plane, observe the resulting exact PR custody head, mark Draft ready only for merge mechanics, and merge #1667 with expected-head protection. Then re-ground on the actual merged main. The one reserved post-merge progression is limited to exact-main qualification/closure state; no release authority is granted.
+Observe the resulting exact PR custody head, mark Draft ready only for merge mechanics, and merge #1667 with expected-head protection. Then re-ground on the actual merged main. The one reserved post-merge progression is limited to exact-main qualification/closure state; no release authority is granted.

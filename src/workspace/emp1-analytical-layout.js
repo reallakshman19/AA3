@@ -1,12 +1,13 @@
 /**
- * Presentation-only task-shell composition contract for the EMP.1 analytical workbench.
+ * Presentation-only split-console composition contract for the EMP.1 analytical workbench.
  *
- * The registry classifies already-rendered child surfaces into stable task-shell
+ * The registry classifies already-rendered child surfaces into stable presentation
  * regions. It never derives engineering state, calls a calculator, clones a child
  * surface, or decides whether an engineering surface is authoritative.
  */
 
 export const EMP1_ANALYTICAL_LAYOUT_SCHEMA = 'emp1-analytical-layout/v2';
+export const EMP1_SPLIT_CONSOLE_SCHEMA = 'emp1-split-console/v1';
 
 export const EMP1_ANALYTICAL_LAYOUT_REGIONS = Object.freeze({
   WORKFLOW: 'COMPACT_WORKFLOW_NAV',
@@ -15,6 +16,8 @@ export const EMP1_ANALYTICAL_LAYOUT_REGIONS = Object.freeze({
   FULL_WIDTH_DETAIL: 'EVIDENCE_WORKSPACE',
 });
 
+export const EMP1_SPLIT_CONSOLE_MODES = Object.freeze(['WORK', 'BASIS', 'EVIDENCE']);
+
 const REGION_DEFINITIONS = Object.freeze({
   COMPACT_WORKFLOW_NAV: Object.freeze({
     role: 'emp1-analytical-workflow-region',
@@ -22,22 +25,19 @@ const REGION_DEFINITIONS = Object.freeze({
   }),
   ACTIVE_TASK: Object.freeze({
     role: 'emp1-analytical-primary-work',
-    label: 'Active engineering task',
+    label: 'Active engineering workspace',
   }),
   BASIS_RAIL: Object.freeze({
     role: 'emp1-analytical-engineering-basis',
-    label: 'Engineering basis and authority',
+    label: 'Engineering inspector',
   }),
   EVIDENCE_WORKSPACE: Object.freeze({
     role: 'emp1-analytical-full-width-detail',
-    label: 'Results and evidence workspace',
+    label: 'Evidence console',
   }),
 });
 
-/**
- * The order remains the retained EMP.1 surface custody order. Region placement
- * is explicit; nothing is classified by append position.
- */
+/** Retained EMP.1 surface custody order. */
 export const EMP1_ANALYTICAL_SURFACE_ORDER = Object.freeze([
   'workflow',
   'route',
@@ -74,10 +74,7 @@ export const EMP1_ANALYTICAL_SURFACE_PLACEMENT = Object.freeze({
   benchmark: EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL,
 });
 
-/**
- * Exactly the already-rendered primary surfaces allowed to contribute height for
- * one professional task. Heavy results/evidence are selected separately below.
- */
+/** Already-rendered primary surfaces allowed to contribute height for one task. */
 export const EMP1_TASK_SHELL_TASK_SURFACES = Object.freeze({
   BASIS_SOURCE: Object.freeze(['route', 'source']),
   GEOMETRY: Object.freeze(['source', 'runConfiguration']),
@@ -88,11 +85,7 @@ export const EMP1_TASK_SHELL_TASK_SURFACES = Object.freeze({
   REVIEW_EVIDENCE: Object.freeze(['route']),
 });
 
-/**
- * Governed document-editor groups that belong to each task. The source editor
- * keeps every descriptor/node in DOM custody; unrelated groups are presentation-
- * hidden so one task does not recreate the old all-input waterfall.
- */
+/** Governed editor groups retained in DOM custody but filtered by active task. */
 export const EMP1_TASK_SHELL_INPUT_GROUPS = Object.freeze({
   BASIS_SOURCE: Object.freeze([]),
   GEOMETRY: Object.freeze(['PIPE_GEOMETRY', 'THICKNESS']),
@@ -102,6 +95,13 @@ export const EMP1_TASK_SHELL_INPUT_GROUPS = Object.freeze({
   LOCAL_CORRELATION: Object.freeze([]),
   REVIEW_EVIDENCE: Object.freeze([]),
 });
+
+export const EMP1_TASK_SHELL_INSPECTOR_ORDER = Object.freeze([
+  'engineeringEvidence',
+  'boundedCorrelation',
+  'correlationAvailability',
+  'settings',
+]);
 
 export const EMP1_TASK_SHELL_EVIDENCE_ORDER = Object.freeze([
   'results',
@@ -113,6 +113,13 @@ export const EMP1_TASK_SHELL_EVIDENCE_ORDER = Object.freeze([
   'benchmark',
 ]);
 
+const INSPECTOR_LABELS = Object.freeze({
+  engineeringEvidence: 'Custody',
+  boundedCorrelation: 'Authority',
+  correlationAvailability: 'Availability',
+  settings: 'Settings',
+});
+
 const EVIDENCE_LABELS = Object.freeze({
   results: 'Current result',
   transactionSummary: 'Execution summary',
@@ -121,6 +128,16 @@ const EVIDENCE_LABELS = Object.freeze({
   lineage: 'Lineage',
   benchmarkEvidence: 'Benchmark evidence',
   benchmark: 'Verification',
+});
+
+const TASK_DEFAULT_INSPECTOR = Object.freeze({
+  BASIS_SOURCE: 'engineeringEvidence',
+  GEOMETRY: 'settings',
+  LOADS: 'engineeringEvidence',
+  LOAD_TRANSFER: 'engineeringEvidence',
+  SECTION_SCREENING: 'engineeringEvidence',
+  LOCAL_CORRELATION: 'boundedCorrelation',
+  REVIEW_EVIDENCE: 'boundedCorrelation',
 });
 
 const TASK_DEFAULT_EVIDENCE = Object.freeze({
@@ -136,30 +153,20 @@ const TASK_DEFAULT_EVIDENCE = Object.freeze({
 const TASK_SHELL_SELECTION = new WeakMap();
 const TASK_SHELL_RUNTIME = new WeakMap();
 
-/**
- * Resolve or create presentation-only task-shell state for a persistent host.
- * The host is normally the document/workbench owner, so task/evidence selection
- * survives backing-stage rerenders without entering engineering/controller state.
- */
 export function emp1TaskShellSelection(selectionHost, initialTaskStep = 'BASIS_SOURCE') {
-  if (!selectionHost || typeof selectionHost !== 'object') {
-    throw new TypeError('EMP1_TASK_SHELL_SELECTION_HOST_REQUIRED');
-  }
-  assertTaskStep(initialTaskStep);
-  let state = TASK_SHELL_SELECTION.get(selectionHost);
-  if (!state) {
-    state = { activeTaskStep: initialTaskStep, evidenceView: TASK_DEFAULT_EVIDENCE[initialTaskStep] };
-    TASK_SHELL_SELECTION.set(selectionHost, state);
-  }
+  const state = mutableSelection(selectionHost, initialTaskStep);
   return Object.freeze({ ...state });
 }
 
-/** Presentation-only selection update; no engineering/controller state is mutated. */
+/** Presentation-only task update; no engineering/controller state is mutated. */
 export function selectEmp1TaskShellTask(selectionHost, shell, stepId) {
   assertTaskStep(stepId);
   const state = mutableSelection(selectionHost, stepId);
   state.activeTaskStep = stepId;
+  state.inspectorView = TASK_DEFAULT_INSPECTOR[stepId];
   state.evidenceView = TASK_DEFAULT_EVIDENCE[stepId] ?? state.evidenceView;
+  state.consoleMode = stepId === 'REVIEW_EVIDENCE' ? 'EVIDENCE' : 'WORK';
+  state.evidenceOpen = stepId === 'REVIEW_EVIDENCE';
   const runtime = TASK_SHELL_RUNTIME.get(shell);
   if (runtime) applyTaskShellState(runtime);
   return Object.freeze({ ...state });
@@ -167,8 +174,7 @@ export function selectEmp1TaskShellTask(selectionHost, shell, stepId) {
 
 /**
  * Move each supplied, already-rendered surface exactly once into its declared
- * presentation region. Optional null surfaces remain absent. Heavy evidence is
- * retained in DOM custody but only one selected view participates in layout.
+ * presentation region. Inspector/evidence selections only toggle presentation.
  */
 export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
   if (!shell?.ownerDocument) throw new TypeError('EMP1_ANALYTICAL_LAYOUT_SHELL_REQUIRED');
@@ -196,17 +202,23 @@ export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
     ?? (shell.dataset.emp1Step === 'B' ? 'SECTION_SCREENING' : 'BASIS_SOURCE');
   const state = mutableSelection(selectionHost, initialTaskStep);
   reconcileSelectionWithBackingStage(state, shell.dataset.emp1Step);
+
   const regions = Object.fromEntries(Object.entries(REGION_DEFINITIONS).map(
     ([regionId, definition]) => [regionId, createRegion(shell.ownerDocument, regionId, definition)],
   ));
-
   const taskEntries = [];
+  const inspectorEntries = [];
   const evidenceEntries = [];
+
   present.forEach(([surfaceId, surface]) => {
     const regionId = EMP1_ANALYTICAL_SURFACE_PLACEMENT[surfaceId];
     surface.dataset.emp1LayoutSurface = surfaceId;
     surface.dataset.emp1LayoutRegion = regionId;
     if (regionId === EMP1_ANALYTICAL_LAYOUT_REGIONS.PRIMARY_WORK) taskEntries.push([surfaceId, surface]);
+    if (regionId === EMP1_ANALYTICAL_LAYOUT_REGIONS.ENGINEERING_BASIS) {
+      inspectorEntries.push([surfaceId, surface]);
+      return;
+    }
     if (regionId === EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL) {
       evidenceEntries.push([surfaceId, surface]);
       return;
@@ -214,24 +226,38 @@ export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
     regions[regionId].append(surface);
   });
 
+  const inspectorRegion = regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.ENGINEERING_BASIS];
+  const orderedInspector = EMP1_TASK_SHELL_INSPECTOR_ORDER
+    .map((surfaceId) => inspectorEntries.find(([candidate]) => candidate === surfaceId))
+    .filter(Boolean);
+  const inspectorTabs = createInspectorTabs(shell.ownerDocument, selectionHost, shell, orderedInspector);
+  inspectorRegion.append(inspectorTabs.tablist, ...orderedInspector.map(([, surface]) => surface));
+
   const evidenceRegion = regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL];
   const orderedEvidence = EMP1_TASK_SHELL_EVIDENCE_ORDER
     .map((surfaceId) => evidenceEntries.find(([candidate]) => candidate === surfaceId))
     .filter(Boolean);
-  const tabs = createEvidenceTabs(shell.ownerDocument, selectionHost, shell, orderedEvidence);
-  evidenceRegion.append(tabs.tablist, ...orderedEvidence.map(([, surface]) => surface));
+  const evidenceConsole = createEvidenceConsole(shell.ownerDocument, selectionHost, shell, orderedEvidence);
+  evidenceRegion.append(
+    evidenceConsole.toggle,
+    evidenceConsole.tablist,
+    ...orderedEvidence.map(([, surface]) => surface),
+  );
 
   const lanes = shell.ownerDocument.createElement('div');
   lanes.className = 'emp1-analytical-layout__lanes';
   lanes.dataset.role = 'emp1-analytical-layout-lanes';
   lanes.append(
     regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.PRIMARY_WORK],
-    regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.ENGINEERING_BASIS],
+    inspectorRegion,
   );
 
+  const modeTabs = createConsoleModeTabs(shell.ownerDocument, selectionHost, shell);
   shell.dataset.emp1TaskShell = 'true';
+  shell.dataset.emp1SplitConsole = EMP1_SPLIT_CONSOLE_SCHEMA;
   shell.append(
     regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.WORKFLOW],
+    modeTabs.tablist,
     lanes,
     evidenceRegion,
   );
@@ -242,10 +268,15 @@ export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
     state,
     regions,
     taskEntries,
+    inspectorEntries: orderedInspector,
+    inspectorTabs: inspectorTabs.buttons,
     evidenceEntries: orderedEvidence,
-    tabs: tabs.buttons,
+    evidenceTabs: evidenceConsole.buttons,
+    evidenceToggle: evidenceConsole.toggle,
+    modeTabs: modeTabs.buttons,
   };
   TASK_SHELL_RUNTIME.set(shell, runtime);
+
   shell.addEventListener?.('emp1-task-shell-select', (event) => {
     const stepId = event?.detail?.stepId;
     if (Object.prototype.hasOwnProperty.call(EMP1_TASK_SHELL_TASK_SURFACES, stepId)) {
@@ -259,12 +290,18 @@ export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
 
   return Object.freeze({
     schema: EMP1_ANALYTICAL_LAYOUT_SCHEMA,
+    splitConsoleSchema: EMP1_SPLIT_CONSOLE_SCHEMA,
     presentSurfaceCount: present.length,
     regions: Object.freeze({ ...regions }),
     lanes,
-    evidenceTabs: tabs.tablist,
+    inspectorTabs: inspectorTabs.tablist,
+    evidenceTabs: evidenceConsole.tablist,
+    modeTabs: modeTabs.tablist,
     selectTask: (stepId) => selectEmp1TaskShellTask(selectionHost, shell, stepId),
+    selectInspector: (surfaceId) => selectInspectorView(selectionHost, shell, surfaceId),
     selectEvidence: (surfaceId) => selectEvidenceView(selectionHost, shell, surfaceId),
+    selectMode: (mode) => selectConsoleMode(selectionHost, shell, mode),
+    setEvidenceOpen: (open) => setEvidenceOpen(selectionHost, shell, open),
   });
 }
 
@@ -275,42 +312,114 @@ export function emp1AnalyticalLayoutPlacementManifest() {
   })));
 }
 
-function createEvidenceTabs(documentRef, selectionHost, shell, entries) {
+function createInspectorTabs(documentRef, selectionHost, shell, entries) {
+  const tablist = documentRef.createElement('div');
+  tablist.className = 'emp1-split-console__inspector-tabs';
+  tablist.dataset.role = 'emp1-inspector-tabs';
+  tablist.setAttribute('role', 'tablist');
+  tablist.setAttribute('aria-label', 'EMP.1 engineering inspector');
+  const buttons = [];
+  entries.forEach(([surfaceId, surface], index) => {
+    const button = tabButton(documentRef, INSPECTOR_LABELS[surfaceId] ?? surfaceId, index);
+    button.dataset.role = 'emp1-inspector-tab';
+    button.dataset.emp1InspectorView = surfaceId;
+    button.addEventListener('click', () => selectInspectorView(selectionHost, shell, surfaceId));
+    wireArrowTabs(button, buttons, index);
+    buttons.push(button);
+    tablist.append(button);
+    surface.dataset.emp1InspectorView = surfaceId;
+    surface.setAttribute('role', 'tabpanel');
+    surface.setAttribute('aria-label', INSPECTOR_LABELS[surfaceId] ?? surfaceId);
+  });
+  return { tablist, buttons };
+}
+
+function createEvidenceConsole(documentRef, selectionHost, shell, entries) {
+  const toggle = documentRef.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'emp1-split-console__evidence-toggle';
+  toggle.dataset.role = 'emp1-evidence-console-toggle';
+  toggle.textContent = 'Evidence console';
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.addEventListener('click', () => {
+    const runtime = TASK_SHELL_RUNTIME.get(shell);
+    const open = runtime ? runtime.state.evidenceOpen !== true : false;
+    setEvidenceOpen(selectionHost, shell, open);
+  });
+
   const tablist = documentRef.createElement('div');
   tablist.className = 'emp1-task-shell__evidence-tabs';
   tablist.dataset.role = 'emp1-evidence-tabs';
   tablist.setAttribute('role', 'tablist');
   tablist.setAttribute('aria-label', 'EMP.1 results and evidence');
   const buttons = [];
-
   entries.forEach(([surfaceId, surface], index) => {
-    const label = EVIDENCE_LABELS[surfaceId] ?? surfaceId;
-    const button = documentRef.createElement('button');
-    button.type = 'button';
-    button.textContent = label;
+    const button = tabButton(documentRef, EVIDENCE_LABELS[surfaceId] ?? surfaceId, index);
     button.dataset.role = 'emp1-evidence-tab';
     button.dataset.emp1EvidenceView = surfaceId;
-    button.setAttribute('role', 'tab');
-    button.setAttribute('aria-selected', 'false');
-    button.tabIndex = index === 0 ? 0 : -1;
-    button.addEventListener('click', () => selectEvidenceView(selectionHost, shell, surfaceId));
-    button.addEventListener('keydown', (event) => {
-      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
-      event.preventDefault();
-      const direction = event.key === 'ArrowRight' ? 1 : -1;
-      const next = (index + direction + buttons.length) % buttons.length;
-      buttons[next]?.focus?.();
-      buttons[next]?.click?.();
+    button.addEventListener('click', () => {
+      selectEvidenceView(selectionHost, shell, surfaceId);
+      setEvidenceOpen(selectionHost, shell, true);
     });
+    wireArrowTabs(button, buttons, index);
     buttons.push(button);
     tablist.append(button);
-
     surface.dataset.emp1EvidenceView = surfaceId;
     surface.setAttribute('role', 'tabpanel');
-    surface.setAttribute('aria-label', label);
+    surface.setAttribute('aria-label', EVIDENCE_LABELS[surfaceId] ?? surfaceId);
   });
+  return { toggle, tablist, buttons };
+}
 
+function createConsoleModeTabs(documentRef, selectionHost, shell) {
+  const tablist = documentRef.createElement('div');
+  tablist.className = 'emp1-split-console__mode-tabs';
+  tablist.dataset.role = 'emp1-console-mode-tabs';
+  tablist.setAttribute('role', 'tablist');
+  tablist.setAttribute('aria-label', 'EMP.1 console view');
+  const labels = { WORK: 'Work', BASIS: 'Basis', EVIDENCE: 'Evidence' };
+  const buttons = [];
+  EMP1_SPLIT_CONSOLE_MODES.forEach((mode, index) => {
+    const button = tabButton(documentRef, labels[mode], index);
+    button.dataset.role = 'emp1-console-mode-tab';
+    button.dataset.emp1ConsoleMode = mode;
+    button.addEventListener('click', () => selectConsoleMode(selectionHost, shell, mode));
+    wireArrowTabs(button, buttons, index);
+    buttons.push(button);
+    tablist.append(button);
+  });
   return { tablist, buttons };
+}
+
+function tabButton(documentRef, label, index) {
+  const button = documentRef.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.setAttribute('role', 'tab');
+  button.setAttribute('aria-selected', 'false');
+  button.tabIndex = index === 0 ? 0 : -1;
+  return button;
+}
+
+function wireArrowTabs(button, buttons, index) {
+  button.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    event.preventDefault();
+    const direction = event.key === 'ArrowRight' ? 1 : -1;
+    const next = (index + direction + buttons.length) % buttons.length;
+    buttons[next]?.focus?.();
+    buttons[next]?.click?.();
+  });
+}
+
+function selectInspectorView(selectionHost, shell, surfaceId) {
+  const runtime = TASK_SHELL_RUNTIME.get(shell);
+  if (!runtime) return false;
+  if (!runtime.inspectorEntries.some(([candidate]) => candidate === surfaceId)) return false;
+  const state = mutableSelection(selectionHost, runtime.state.activeTaskStep);
+  state.inspectorView = surfaceId;
+  applyInspectorSelection(runtime);
+  return true;
 }
 
 function selectEvidenceView(selectionHost, shell, surfaceId) {
@@ -323,12 +432,32 @@ function selectEvidenceView(selectionHost, shell, surfaceId) {
   return true;
 }
 
+function selectConsoleMode(selectionHost, shell, mode) {
+  assertConsoleMode(mode);
+  const runtime = TASK_SHELL_RUNTIME.get(shell);
+  if (!runtime) return false;
+  const state = mutableSelection(selectionHost, runtime.state.activeTaskStep);
+  state.consoleMode = mode;
+  if (mode === 'EVIDENCE') state.evidenceOpen = true;
+  applyConsoleMode(runtime);
+  applyEvidenceOpen(runtime);
+  return true;
+}
+
+function setEvidenceOpen(selectionHost, shell, open) {
+  const runtime = TASK_SHELL_RUNTIME.get(shell);
+  if (!runtime) return false;
+  const state = mutableSelection(selectionHost, runtime.state.activeTaskStep);
+  state.evidenceOpen = open === true;
+  applyEvidenceOpen(runtime);
+  return true;
+}
+
 function applyTaskShellState(runtime) {
   const state = runtime.state;
   const visibleTaskSurfaces = new Set(EMP1_TASK_SHELL_TASK_SURFACES[state.activeTaskStep] ?? []);
   runtime.regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.PRIMARY_WORK].dataset.emp1ActiveTask = state.activeTaskStep;
   runtime.shell.dataset.emp1ProfessionalTask = state.activeTaskStep;
-
   runtime.taskEntries.forEach(([surfaceId, surface]) => {
     const visible = visibleTaskSurfaces.has(surfaceId);
     surface.hidden = !visible;
@@ -336,7 +465,10 @@ function applyTaskShellState(runtime) {
   });
   applyWorkflowStepSelection(runtime);
   applyTaskInputGroupSelection(runtime);
+  applyInspectorSelection(runtime);
   applyEvidenceSelection(runtime);
+  applyEvidenceOpen(runtime);
+  applyConsoleMode(runtime);
 }
 
 function applyWorkflowStepSelection(runtime) {
@@ -371,6 +503,28 @@ function applyTaskInputGroupSelection(runtime) {
   }
 }
 
+function applyInspectorSelection(runtime) {
+  const available = runtime.inspectorEntries.map(([surfaceId]) => surfaceId);
+  if (!available.length) return;
+  const preferred = TASK_DEFAULT_INSPECTOR[runtime.state.activeTaskStep];
+  const selected = available.includes(runtime.state.inspectorView)
+    ? runtime.state.inspectorView
+    : available.includes(preferred) ? preferred : available[0];
+  runtime.state.inspectorView = selected;
+  const region = runtime.regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.ENGINEERING_BASIS];
+  region.dataset.emp1InspectorView = selected;
+  runtime.inspectorEntries.forEach(([surfaceId, surface]) => {
+    const visible = surfaceId === selected;
+    surface.hidden = !visible;
+    surface.dataset.emp1InspectorActive = String(visible);
+  });
+  runtime.inspectorTabs.forEach((button) => {
+    const selectedButton = button.dataset.emp1InspectorView === selected;
+    button.setAttribute('aria-selected', String(selectedButton));
+    button.tabIndex = selectedButton ? 0 : -1;
+  });
+}
+
 function applyEvidenceSelection(runtime) {
   const available = runtime.evidenceEntries.map(([surfaceId]) => surfaceId);
   if (!available.length) return;
@@ -380,16 +534,35 @@ function applyEvidenceSelection(runtime) {
   runtime.state.evidenceView = selected;
   const region = runtime.regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL];
   region.dataset.emp1EvidenceView = selected;
-
   runtime.evidenceEntries.forEach(([surfaceId, surface]) => {
     const visible = surfaceId === selected;
     surface.hidden = !visible;
     surface.dataset.emp1EvidenceActive = String(visible);
   });
-  runtime.tabs.forEach((button) => {
+  runtime.evidenceTabs.forEach((button) => {
     const selectedButton = button.dataset.emp1EvidenceView === selected;
     button.setAttribute('aria-selected', String(selectedButton));
     button.tabIndex = selectedButton ? 0 : -1;
+  });
+}
+
+function applyEvidenceOpen(runtime) {
+  const open = runtime.state.evidenceOpen === true;
+  const region = runtime.regions[EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL];
+  region.dataset.emp1EvidenceOpen = String(open);
+  runtime.evidenceToggle.setAttribute('aria-expanded', String(open));
+  runtime.evidenceToggle.textContent = open ? 'Evidence console · collapse' : 'Evidence console';
+}
+
+function applyConsoleMode(runtime) {
+  const mode = EMP1_SPLIT_CONSOLE_MODES.includes(runtime.state.consoleMode)
+    ? runtime.state.consoleMode : 'WORK';
+  runtime.state.consoleMode = mode;
+  runtime.shell.dataset.emp1ConsoleMode = mode;
+  runtime.modeTabs.forEach((button) => {
+    const selected = button.dataset.emp1ConsoleMode === mode;
+    button.setAttribute('aria-selected', String(selected));
+    button.tabIndex = selected ? 0 : -1;
   });
 }
 
@@ -397,12 +570,18 @@ function reconcileSelectionWithBackingStage(state, backingStep) {
   if (backingStep === 'B'
     && ['BASIS_SOURCE', 'LOADS', 'LOAD_TRANSFER'].includes(state.activeTaskStep)) {
     state.activeTaskStep = 'SECTION_SCREENING';
+    state.inspectorView = TASK_DEFAULT_INSPECTOR.SECTION_SCREENING;
     state.evidenceView = TASK_DEFAULT_EVIDENCE.SECTION_SCREENING;
+    state.consoleMode = 'WORK';
+    state.evidenceOpen = false;
     return;
   }
   if (backingStep === 'A' && state.activeTaskStep === 'SECTION_SCREENING') {
     state.activeTaskStep = 'BASIS_SOURCE';
+    state.inspectorView = TASK_DEFAULT_INSPECTOR.BASIS_SOURCE;
     state.evidenceView = TASK_DEFAULT_EVIDENCE.BASIS_SOURCE;
+    state.consoleMode = 'WORK';
+    state.evidenceOpen = false;
   }
 }
 
@@ -413,7 +592,13 @@ function mutableSelection(selectionHost, initialTaskStep) {
   assertTaskStep(initialTaskStep);
   let state = TASK_SHELL_SELECTION.get(selectionHost);
   if (!state) {
-    state = { activeTaskStep: initialTaskStep, evidenceView: TASK_DEFAULT_EVIDENCE[initialTaskStep] };
+    state = {
+      activeTaskStep: initialTaskStep,
+      inspectorView: TASK_DEFAULT_INSPECTOR[initialTaskStep],
+      evidenceView: TASK_DEFAULT_EVIDENCE[initialTaskStep],
+      consoleMode: 'WORK',
+      evidenceOpen: false,
+    };
     TASK_SHELL_SELECTION.set(selectionHost, state);
   }
   return state;
@@ -422,6 +607,12 @@ function mutableSelection(selectionHost, initialTaskStep) {
 function assertTaskStep(stepId) {
   if (!Object.prototype.hasOwnProperty.call(EMP1_TASK_SHELL_TASK_SURFACES, stepId)) {
     throw new TypeError(`EMP1_TASK_SHELL_STEP_UNSUPPORTED:${stepId}`);
+  }
+}
+
+function assertConsoleMode(mode) {
+  if (!EMP1_SPLIT_CONSOLE_MODES.includes(mode)) {
+    throw new TypeError(`EMP1_SPLIT_CONSOLE_MODE_UNSUPPORTED:${mode}`);
   }
 }
 

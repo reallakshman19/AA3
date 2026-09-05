@@ -5,6 +5,20 @@ export const LAFEA_RUN_TRANSACTION_SCHEMA = 'lafea-run-transaction/v1';
 export const LAFEA_RUN_TRANSACTION_RECEIPT_SCHEMA = 'lafea-run-transaction-receipt/v1';
 const KEYS = ['sourceHash', 'analysisDomainHash', 'analysisGeometryHash', 'meshHash', 'meshProfileHash', 'solverModelHash'];
 
+export function deriveLafeaSolverConfigHash(preflight) {
+  if (!preflight || typeof preflight !== 'object' || !preflight.sourceHash) {
+    fail('LAFEA_RUN_TRANSACTION_PREFLIGHT_INVALID');
+  }
+  return canonicalLafeaSha256({
+    schema: 'lafea-solver-configuration-binding/v1',
+    sourceHash: preflight.sourceHash,
+    compilerId: preflight.compilerId,
+    compilerRevision: preflight.compilerRevision,
+    solverModelHash: preflight.solverModelHash,
+    requestedCaseIds: preflight.requestedCaseIds,
+  });
+}
+
 export function createLafeaWorkbenchRunTransactionState(stageIds) {
   const states = new Map(stageIds.map((stageId) => [stageId, { start: 0, done: 0, active: null, receipt: null }]));
   const get = (stageId) => { const state = states.get(stageId); if (!state) fail('LAFEA_RUN_TRANSACTION_STAGE_NOT_FOUND'); return state; };
@@ -13,7 +27,7 @@ export function createLafeaWorkbenchRunTransactionState(stageIds) {
     if (state.active) state.receipt = finish(state, state.active, 'SUPERSEDED', null, null, 'LAFEA_RUN_TRANSACTION_REPLACED_BY_NEWER_START');
     state.start += 1;
     const parents = Object.freeze(Object.fromEntries(KEYS.map((key) => [key, preflight[key]])));
-    const solverConfigHash = canonicalLafeaSha256({ schema: 'lafea-solver-configuration-binding/v1', compilerId: preflight.compilerId, compilerRevision: preflight.compilerRevision, solverModelHash: preflight.solverModelHash, requestedCaseIds: preflight.requestedCaseIds });
+    const solverConfigHash = deriveLafeaSolverConfigHash(preflight);
     const basis = { schema: LAFEA_RUN_TRANSACTION_SCHEMA, stageId, startSequence: state.start, status: 'RUNNING', parents, solverConfigHash, preflightHash: preflight.semanticHash, executionRoute: 'DOMAIN_FIRST_COMPILED_SOLVER_MODEL', releaseQualified: false };
     const transactionHash = canonicalLafeaSha256({ schema: 'lafea-run-transaction-hash-input/v1', transaction: basis });
     state.active = Object.freeze({ ...basis, transactionHash, transactionId: `LAFEA-TX-${String(state.start).padStart(6, '0')}-${transactionHash.slice(7, 19).toUpperCase()}` });

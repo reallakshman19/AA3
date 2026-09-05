@@ -17,6 +17,7 @@ import {
 import { buildLafeaDomainPreparationProjection } from './lafea-domain-first-requests.js';
 import { createLafeaWorkbenchOrchestratorApi } from './lafea-workbench-orchestrator-api.js';
 import { createLafeaWorkbenchContinuumPreflightState } from './lafea-workbench-continuum-preflight-state.js';
+import { projectLafeaWorkbenchCurrentness } from './lafea-workbench-currentness.js';
 import { createLafeaWorkbenchDomainFirstExecutionState } from './lafea-workbench-domain-first-execution-state.js';
 import { createLafeaWorkbenchDomainFirstRunActions } from './lafea-workbench-domain-first-run-actions.js';
 import { createLafeaWorkbenchMeshState } from './lafea-workbench-mesh-state.js';
@@ -91,7 +92,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const meshGenerationFields = meshGeneration.fields(stageId);
     let executionFields = {};
     if (geometryFields.domainFirstProfileActive) {
-      executionFields = { execution: domainFirstExecution.select(stageId) };
+      executionFields = domainFirstExecution.fields(stageId);
     } else if (meshGenerationFields.shellMidsurfaceProfileActive === true) {
       // Governed shell custody must never inherit a legacy document execution.
       executionFields = { execution: shellExecution.select(stageId) };
@@ -133,12 +134,18 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const withPreparation = freeze({ ...withMesh, preparationProjection });
     const lifecycleReadiness = projectLafeaWorkbenchReadiness(stageId, withPreparation);
     const withReadiness = freeze({ ...withPreparation, lifecycleReadiness });
+    const withCurrentness = stageId === 'LAFEA.3'
+      ? freeze({
+        ...withReadiness,
+        currentness: projectLafeaWorkbenchCurrentness(withReadiness),
+      })
+      : withReadiness;
     return freeze({
-      ...withReadiness,
+      ...withCurrentness,
       numericalVerificationProjection: projectLafeaWorkbenchVerificationBinding(
-        withReadiness, withReadiness.retainedNumericalVerificationEvidence,
+        withCurrentness, withCurrentness.retainedNumericalVerificationEvidence,
       ),
-      t6GeometryQualificationProjection: t6Geometry.project(withReadiness),
+      t6GeometryQualificationProjection: t6Geometry.project(withCurrentness),
     });
   }
 

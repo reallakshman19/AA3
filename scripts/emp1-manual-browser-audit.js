@@ -1,15 +1,15 @@
 /*
- * Browser-native manual audit helper for issue #1651.
+ * Browser-native manual audit helper for issue #1651 / recovery #1664.
  *
  * Intended usage from the Vite localhost DevTools console:
- *   await import('/scripts/emp1-manual-browser-audit.js?manual-audit=1');
+ *   await import('/scripts/emp1-manual-browser-audit.js?manual-audit=2');
  *   await runEmp1ManualBrowserAudit({ seedQualificationPressure: true });
  *
- * This helper observes rendered DOM only. It does not create automated browser
- * PASS, engineering authority, route authority, code compliance, or release
- * authority. The optional Pressure seed mirrors the existing Playwright
- * qualification setup by importing one retained P-EXTERNAL row through the
- * normal empirical-document import boundary.
+ * This helper observes rendered DOM and changes presentation selection only. It
+ * does not create automated browser PASS, engineering authority, route authority,
+ * code compliance, or release authority. The optional Pressure seed mirrors the
+ * existing Playwright qualification setup by importing one retained P-EXTERNAL
+ * row through the normal empirical-document import boundary.
  */
 
 const ENGINEER_FACING_ROLES = Object.freeze([
@@ -41,7 +41,8 @@ const text = (node) => node?.textContent?.replace(/\s+/gu, ' ').trim() ?? '';
 const visible = (element) => {
   if (!(element instanceof Element)) return false;
   const style = getComputedStyle(element);
-  return style.display !== 'none'
+  return !element.hidden
+    && style.display !== 'none'
     && style.visibility !== 'hidden'
     && element.getClientRects().length > 0;
 };
@@ -132,9 +133,25 @@ async function seedQualificationPressureIfNeeded() {
   return { seeded: true, reason: 'P-EXTERNAL added through importEmpiricalDocument' };
 }
 
+async function selectRecoveryAuditViews(workbench, checks) {
+  let analytical = one(workbench, '[data-role="lafea-analytical-calc"]');
+  const loads = one(analytical, '[data-role="emp1-professional-step"][data-emp1-professional-step="LOADS"]');
+  addCheck(checks, 'taskShell.loads.navigationPresent', Boolean(loads), 'Loads workflow step exists');
+  loads?.click();
+  await settle();
+
+  analytical = one(workbench, '[data-role="lafea-analytical-calc"]');
+  const benchmarkTab = one(analytical,
+    '[data-role="emp1-evidence-tab"][data-emp1-evidence-view="benchmarkEvidence"]');
+  addCheck(checks, 'taskShell.benchmark.tabPresent', Boolean(benchmarkTab), 'Benchmark evidence tab exists');
+  benchmarkTab?.click();
+  await settle();
+  return one(workbench, '[data-role="lafea-analytical-calc"]');
+}
+
 function auditPressure(workbench, checks) {
   const group = one(workbench, '.lafea-doc-group-editor[data-input-group="PRESSURE"]');
-  addCheck(checks, 'pressure.group.visible', visible(group), 'Pressure group is rendered');
+  addCheck(checks, 'pressure.group.visibleOnLoadsTask', visible(group), 'Pressure group is visible on Loads task');
   if (!group) return null;
 
   const rows = qsa(group, 'tr[data-matrix-group="LAFEA.1.pressure"]');
@@ -179,18 +196,52 @@ function auditLayout(analytical, checks) {
   const basis = one(analytical, '[data-role="emp1-analytical-engineering-basis"]');
   const detail = one(analytical, '[data-role="emp1-analytical-full-width-detail"]');
   const lanes = one(analytical, '[data-role="emp1-analytical-layout-lanes"]');
+  const workflow = one(analytical, '[data-role="emp1-workflow"]');
+  const workflowDetails = one(analytical, '[data-role="emp1-workflow-details"]');
 
-  for (const [id, node] of Object.entries({ primary, basis, detail, lanes })) {
+  for (const [id, node] of Object.entries({ primary, basis, detail, lanes, workflow })) {
     addCheck(checks, `layout.${id}.single`, Boolean(node), `${id} region exists`);
   }
-  if (!primary || !basis || !detail || !lanes) return null;
+  if (!primary || !basis || !detail || !lanes || !workflow) return null;
 
   const surfaceManifest = qsa(analytical, '[data-emp1-layout-surface]').map((node) => ({
     surfaceId: node.dataset.emp1LayoutSurface,
     regionId: node.dataset.emp1LayoutRegion,
+    visible: visible(node),
+    height: geometry(node).height,
   }));
   const surfaceIds = surfaceManifest.map((entry) => entry.surfaceId);
   addCheck(checks, 'layout.surfaceIds.unique', new Set(surfaceIds).size === surfaceIds.length, surfaceManifest);
+  addCheck(checks, 'layout.taskShell.enabled', analytical.dataset.emp1TaskShell === 'true', analytical.dataset.emp1TaskShell);
+  addCheck(checks, 'layout.taskShell.loadsActive', analytical.dataset.emp1ProfessionalTask === 'LOADS', analytical.dataset.emp1ProfessionalTask);
+
+  const steps = qsa(workflow, '[data-role="emp1-professional-step"]');
+  const currentSteps = steps.filter((button) => button.getAttribute('aria-current') === 'step');
+  addCheck(checks, 'layout.workflow.steps.7', steps.length === 7, { count: steps.length });
+  addCheck(checks, 'layout.workflow.currentStep.1', currentSteps.length === 1, currentSteps.map(text));
+  addCheck(checks, 'layout.workflow.details.closed', workflowDetails?.open === false,
+    { open: workflowDetails?.open ?? null });
+
+  const visibleInputGroups = qsa(analytical, '.lafea-doc-table-section[data-input-group]')
+    .filter(visible)
+    .map((node) => node.dataset.inputGroup);
+  addCheck(checks, 'layout.loads.inputGroups.exact',
+    JSON.stringify(visibleInputGroups) === JSON.stringify(['PRESSURE', 'LOAD_CASES']),
+    visibleInputGroups);
+
+  const evidence = qsa(detail, '[data-emp1-evidence-view]');
+  const visibleEvidence = evidence.filter(visible);
+  addCheck(checks, 'layout.evidence.visibleAtMostOne', visibleEvidence.length === 1,
+    visibleEvidence.map((node) => node.dataset.emp1LayoutSurface));
+  addCheck(checks, 'layout.evidence.benchmarkSelected',
+    visibleEvidence[0]?.dataset.emp1LayoutSurface === 'benchmarkEvidence'
+      && detail.dataset.emp1EvidenceView === 'benchmarkEvidence',
+    { selected: detail.dataset.emp1EvidenceView ?? null });
+  const hiddenEvidenceHasHeight = evidence
+    .filter((node) => !visible(node))
+    .some((node) => geometry(node).height > 1 || node.getClientRects().length > 0);
+  addCheck(checks, 'layout.evidence.hiddenHeight.zero', !hiddenEvidenceHasHeight,
+    surfaceManifest.filter((entry) => entry.regionId === 'EVIDENCE_WORKSPACE'));
 
   const primaryBox = geometry(primary);
   const basisBox = geometry(basis);
@@ -206,24 +257,54 @@ function auditLayout(analytical, checks) {
       { primary: primaryBox.width, basis: basisBox.width });
     addCheck(checks, 'layout.narrow.stacked', basisBox.top >= primaryBox.bottom - 1,
       { primaryBottom: primaryBox.bottom, basisTop: basisBox.top });
+    addCheck(checks, 'layout.narrow.basisBounded', basisBox.height <= Math.min(window.innerHeight * 0.54, 560) + 2,
+      { basisHeight: basisBox.height, viewportHeight: window.innerHeight });
+    addCheck(checks, 'layout.narrow.evidenceBounded', detailBox.height <= Math.min(window.innerHeight * 0.68, 620) + 2,
+      { detailHeight: detailBox.height, viewportHeight: window.innerHeight });
   } else {
     addCheck(checks, 'layout.desktop.sideBySide', primaryBox.right <= basisBox.left + 1,
       { primaryRight: primaryBox.right, basisLeft: basisBox.left });
     addCheck(checks, 'layout.desktop.sameTop', Math.abs(primaryBox.top - basisBox.top) <= 1,
       { primaryTop: primaryBox.top, basisTop: basisBox.top });
+    addCheck(checks, 'layout.desktop.basisBounded', basisBox.height <= window.innerHeight + 1,
+      { basisHeight: basisBox.height, viewportHeight: window.innerHeight });
+    addCheck(checks, 'layout.desktop.evidenceBounded', detailBox.height <= Math.min(window.innerHeight * 0.72, 760) + 2,
+      { detailHeight: detailBox.height, viewportHeight: window.innerHeight });
   }
   addCheck(checks, 'layout.noHorizontalOverflow', overflowFree,
     { scrollWidth: analytical.scrollWidth, clientWidth: analytical.clientWidth });
   addCheck(checks, 'layout.detail.fullWidth', detailBox.width >= lanesBox.width - 1,
     { detailWidth: detailBox.width, lanesWidth: lanesBox.width });
 
+  const pageDepth = {
+    scrollHeight: document.documentElement.scrollHeight,
+    clientHeight: document.documentElement.clientHeight,
+    viewportRatio: document.documentElement.scrollHeight / document.documentElement.clientHeight,
+  };
+  addCheck(checks, 'layout.pageDepth.materiallyReduced', pageDepth.viewportRatio < 6, pageDepth);
+
+  const before = document.documentElement.scrollHeight;
+  const sentinel = document.createElement('div');
+  sentinel.hidden = true;
+  sentinel.style.height = '5000px';
+  detail.append(sentinel);
+  const after = document.documentElement.scrollHeight;
+  sentinel.remove();
+  addCheck(checks, 'layout.unselectedEvidence.heightDelta', Math.abs(after - before) <= 1,
+    { before, after, delta: after - before });
+
   return {
     viewport: { width: window.innerWidth, height: window.innerHeight, mode: narrow ? 'NARROW' : 'DESKTOP' },
+    activeTask: analytical.dataset.emp1ProfessionalTask,
+    selectedEvidence: detail.dataset.emp1EvidenceView,
+    visibleInputGroups,
+    visibleEvidence: visibleEvidence.map((node) => node.dataset.emp1LayoutSurface),
     primary: primaryBox,
     basis: basisBox,
     detail: detailBox,
     lanes: lanesBox,
     overflowFree,
+    pageDepth,
     surfaceManifest,
   };
 }
@@ -233,9 +314,9 @@ function auditBenchmark(analytical, checks) {
   const panel = one(analytical, '[data-role="emp1-benchmark-evidence-panel"]');
   addCheck(checks, 'benchmark.panel.single', qsa(analytical, '[data-role="emp1-benchmark-evidence-panel"]').length === 1,
     { count: qsa(analytical, '[data-role="emp1-benchmark-evidence-panel"]').length });
-  addCheck(checks, 'benchmark.panel.fullWidthDetail',
+  addCheck(checks, 'benchmark.panel.evidenceWorkspace',
     panel?.dataset.emp1LayoutSurface === 'benchmarkEvidence'
-      && panel?.dataset.emp1LayoutRegion === 'FULL_WIDTH_DETAIL',
+      && panel?.dataset.emp1LayoutRegion === 'EVIDENCE_WORKSPACE',
     { surface: panel?.dataset.emp1LayoutSurface ?? null, region: panel?.dataset.emp1LayoutRegion ?? null });
   addCheck(checks, 'benchmark.notInsideWorkflow',
     workflow ? workflow.querySelectorAll('[data-role="emp1-benchmark-evidence-panel"]').length === 0 : false,
@@ -304,10 +385,12 @@ async function runEmp1ManualBrowserAudit(options = {}) {
 
   const root = document.querySelector('[data-role="empirical-lafea-consumer-root"]');
   const workbench = root && one(root, '[data-role="lafea-workbench"]');
-  const analytical = workbench && one(workbench, '[data-role="lafea-analytical-calc"]');
   addCheck(checks, 'app.empirical.root', Boolean(root), 'empirical consumer root exists');
   addCheck(checks, 'app.workbench', Boolean(workbench), 'LAFEA workbench exists');
+
+  let analytical = workbench && one(workbench, '[data-role="lafea-analytical-calc"]');
   addCheck(checks, 'app.analytical', Boolean(analytical), 'EMP.1 analytical surface exists');
+  if (workbench && analytical) analytical = await selectRecoveryAuditViews(workbench, checks);
 
   const rawTokenLeaks = root ? scanRawTokenLeaks(root) : [];
   addCheck(checks, 'presentation.rawTokenLeaks.none', rawTokenLeaks.length === 0, rawTokenLeaks);
@@ -318,8 +401,9 @@ async function runEmp1ManualBrowserAudit(options = {}) {
   const failures = checks.filter((entry) => !entry.pass);
 
   const result = {
-    schema: 'emp1-manual-browser-audit/v1',
+    schema: 'emp1-manual-browser-audit/v2',
     issue: 1651,
+    recoveryIssue: 1664,
     status: failures.length === 0 ? 'PASS_CURRENT_VIEWPORT_DOM_OBSERVATION' : 'FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION',
     browserAcceptanceComplete: false,
     automatedPlaywrightPassCreated: false,
@@ -329,9 +413,11 @@ async function runEmp1ManualBrowserAudit(options = {}) {
     observations: { rawTokenLeaks, pressure, layout, benchmark },
     manualFollowupRequired: [
       'Run once at desktop width (>1050 px) and once at narrow width (<=1050 px).',
+      'Confirm the full page no longer resembles the prior giant waterfall; the emitted pageDepth.viewportRatio must stay below 6.',
+      'Click Geometry, Loads, Load Transfer, Section Screening and Local Correlation and confirm only task-relevant input groups/actions replace the active-task body.',
       'Use keyboard focus on the CAUx disclosure summary: Enter must open; Space must close.',
       'Confirm the engineering-use unauthorized / non-authority wording remains visible after closing disclosure.',
-      'Return both JSON results and the keyboard observation to the chain custodian.',
+      'Return both JSON results, keyboard observation, and any full-page screenshot to the chain custodian.',
     ],
   };
 
@@ -340,4 +426,4 @@ async function runEmp1ManualBrowserAudit(options = {}) {
 }
 
 globalThis.runEmp1ManualBrowserAudit = runEmp1ManualBrowserAudit;
-console.info('EMP1 manual browser audit loaded. Run: await runEmp1ManualBrowserAudit({ seedQualificationPressure: true })');
+console.info('EMP1 task-shell manual browser audit loaded. Run: await runEmp1ManualBrowserAudit({ seedQualificationPressure: true })');

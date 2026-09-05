@@ -15,6 +15,9 @@
     "performanceMetricsAreInformational": true,
     "conditioningMetricsAreDiagnosticOnly": true,
     "conditioningMetricsMayNotCreatePhysicalApplicabilityLimit": true,
+    "failClosedQualificationUsesFirstFailureBoundaryStateAndCode": true,
+    "messageRegexMayNotQualifyNegativeCase": true,
+    "matchingCodeAtWrongBoundaryMayNotQualifyNegativeCase": true,
     "releaseAuthorityGranted": false
   },
   "solverNumerics": {
@@ -28,8 +31,29 @@
       "DETERMINISTIC_JACOBI_PCG": ["minimumDiagonal","maximumDiagonal","diagonalRatio","iterations","finalResidualInfinity","convergenceTarget"]
     }
   },
+  "failClosedNegatives": {
+    "requiredObservationFields": ["actualBoundary","actualQualificationState","actualErrorCode","actualPath"],
+    "q8InversionMustPreserveCounterClockwiseCorners": true,
+    "q8InversionMustReachElementFormulation": true,
+    "productionValidationRulesMayNotBeRelaxedByBenchmark": true
+  },
   "determinism": {
     "compareSemanticHashesNotWholeAuditRecordBytes": true,
-    "requiredResultHashFields": ["canonicalModelSemanticHash","resultPayloadSemanticHash","executionEvidenceHash","qualificationEvidenceHash"]
+    "crossProcessIsolationRequired": true,
+    "requiredResultHashFields": ["canonicalModelSemanticHash","resultPayloadSemanticHash","executionEvidenceHash","qualificationEvidenceHash"],
+    "requiredComparableHashFields": ["canonicalModelSemanticHash","loadCaseInputSemanticHash","resultPayloadSemanticHash","executionEvidenceHash","qualificationEvidenceHash"],
+    "volatileExecutionMetricsExcludedFromDeterministicIdentity": ["runId","generatedAt","pid","workloadWallTimeMs","processWallTimeMs","peakResidentSetKiB"],
+    "benchmarkLayerMayNotSortObservedProductionEvidenceToManufactureEquality": true,
+    "stableHashesAreRepeatabilityEvidenceNotIndependentPhysicsOracle": true
+  },
+  "performance": {
+    "informationalOnly": true,
+    "wallTimeThresholdMs": null,
+    "peakResidentSetThresholdKiB": null,
+    "dofScalingThreshold": null,
+    "processPeakMemoryMetric": "process.resourceUsage().maxRSS",
+    "processPeakMemoryUnit": "KiB",
+    "dofCountIsStructuralConsistencyEvidence": true,
+    "performanceMayNotGrantReleaseQualification": true
   }
 }

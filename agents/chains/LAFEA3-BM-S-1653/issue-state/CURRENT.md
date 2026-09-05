@@ -1,77 +1,75 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0013
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1653
 CHAIN_ID: LAFEA3-BM-S-1653
 UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550238919
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551714311
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
 
 ## Original task / acceptance ledger
 
-TASK-001 | Retain first audited B01 program record | NOT_RUN | faithful runtime unavailable; source runner inspected only
-TASK-002 | Create B02 benchmark-data package | IMPLEMENTED_NOT_EXECUTED | LEG-001 merged by PR #1657
-TASK-003 | Externalize cited Lamé/Kirsch oracle values and tolerances | IMPLEMENTED_NOT_EXECUTED | LEG-001 merged by PR #1657; no tolerance relaxation
-TASK-004 | Retain machine-readable S0-S5 evidence | PARTIAL | S1/S2 merged, S3 implemented in PR #1659; S4-S5 open
-TASK-005 | Freeze exact S4 rejection codes | DEFINITION_COMPLETE_EXECUTOR_NEXT | exact state/code contract merged; executor is next leg
-TASK-006 | Implement staged BM-S runner | PARTIAL | generic gated runner merged; S0-S3 READY on current branch, S4-S5 PLANNED
-TASK-007 | Activate B02 READY / remove from futureQueue | OPEN | intentionally blocked until all S0-S5 definitions/evidence contracts are READY
-TASK-008 | Preserve release authority false | PRESERVED | manifest/runner/evidence retain false
+TASK-001 | Retain first audited B01 program record | PASS_EXACT_HEAD | exact tested head `a0ca16db7af2d275274026c88fc2a616aa17a2d0`, nextBenchmarkAuthorized=true
+TASK-002 | Create B02 benchmark-data package | IMPLEMENTED | LEG-001 merged by PR #1657
+TASK-003 | Externalize cited Lamé/Kirsch oracle values and tolerances | IMPLEMENTED | no tolerance relaxation
+TASK-004 | Retain machine-readable S0-S5 evidence | PASS_EXACT_HEAD | S0-S5 all PASS on `a0ca16db...`
+TASK-005 | Freeze exact S4 rejection codes | PASS_EXACT_HEAD | exact first-failure boundary/state/code contract retained
+TASK-006 | Implement staged BM-S runner | PASS_EXACT_HEAD | nextBenchmarkAuthorized=true
+TASK-007 | Activate B02 READY / remove from futureQueue | PENDING_POST_MERGE_EXACT_HEAD_REEXECUTION | program.json unchanged before merge
+TASK-008 | Preserve release authority false | PRESERVED | releaseAuthorityGranted=false throughout
 
-## Input ledger
+## Final pre-merge owner executable evidence — exact tested head a0ca16db7af2d275274026c88fc2a616aa17a2d0
 
-INPUT-001 | benchmark program contract | AVAILABLE | `validation/lafea-benchmark-program/program.json`
-INPUT-002 | audit runner/library | AVAILABLE_REUSED | no parallel audit framework introduced
-INPUT-003 | B01 layout precedent | AVAILABLE_REUSED
-INPUT-004 | qualified benchmark source matrix | AVAILABLE_BOUND_IN_B02
-INPUT-005 | BM005 rigor/fixed-probe precedent | AVAILABLE_CONSUMED_NOT_REDEFINED
-INPUT-006 | PR #1654 design proposal | AVAILABLE_READ_ONLY | Draft design reference only; not stacked/merged into this chain
-INPUT-007 | issue #1646 related B02 evidence | AVAILABLE_READ_ONLY | separate work item/authority
-INPUT-008 | issue #1652 companion BM-MESH | AVAILABLE_READ_ONLY | upstream scope boundary
+DEFINITION_SOURCE_CUSTODY_CHECK: PASS
+B01_AUDITED_PROGRAM: PASS
+B01_NEXT_BENCHMARK_AUTHORIZED: TRUE
+B01_RECORD_HASH: sha256:f87e3f0ac0e8b238ffdfc648f335c8af6979316bf40a940a43e46cd4a4753b83
+B02_S0_TO_S5_STAGED: PASS
+B02_NEXT_BENCHMARK_AUTHORIZED: TRUE
+S0_RECORD_HASH: sha256:6d1f75a1aa174b3530a150381ada25d7bb28dc4b22b340ca63999482b477858e
+S1_RECORD_HASH: sha256:6b367489b69f76b72c3ec4e9debf86c10388d8fb87c0e21e62a229b6aa046c6a
+S2_RECORD_HASH: sha256:49d7674fce22774d1339c6d699ac3415596c282257a11c3cb1ba24e8f95f159d
+S3_RECORD_HASH: sha256:66ad06eb312696d48fc8b16049eb3f52cf1739df5efbbd340cadb4dff822ae62
+S4_RECORD_HASH: sha256:e92477f7472c6cb9bef55fb3369291427b6c3120a0d0ce20d9a889278d4e2f1b
+S5_RECORD_HASH: sha256:bbfec8a6c56a44eebbd51d0c76a4776f85fc55600ee690c2786a7ec54ca707a3
+RELEASE_AUTHORITY_GRANTED: FALSE
+B02_ACTIVATION_ENGINEERING_EVIDENCE_GATE: SATISFIED_ON_PRE_AUTH_TESTED_HEAD
 
-## Benchmark / oracle ledger
+## Program gate ledger
 
-BM-001 | S0 B01 element/patch | READY_EXECUTOR_NOT_RUN
-BM-002 | S1 Lamé | IMPLEMENTED_NOT_RUN | cited oracle + retained evidence output merged
-BM-003 | S1 Kirsch | IMPLEMENTED_NOT_RUN | cited oracle + retained evidence output merged
-BM-004 | S2 five load paths | IMPLEMENTED_NOT_RUN | exact BVP retained executor merged
-BM-005 | S3 solver numerics | IMPLEMENTED_NOT_RUN | LEG-003 / PR #1659; equilibrium-energy, scaling, superposition, conditioning, scaling reversibility
-BM-006 | S4 fail-closed | DEFINITION_READY_EXECUTOR_NEXT
-BM-007 | S5 determinism | PLANNED
-BM-008 | S5 performance | PLANNED_INFORMATIONAL_ONLY
+PROGRAM_ACTIVE_CASE: B01
+PROGRAM_ADVANCE_ONLY_AFTER_CURRENT_CASE_PASS: TRUE
+B02_QUEUE_STATE: FUTURE_QUEUE
+B02_QUEUE_ACTIVATION: AFTER_B01_PASS
+B02_MANIFEST_STATE: STAGED_DEFINITION_COMPLETE_NOT_PROGRAM_READY
+PROGRAM_RELEASE_AUTHORITY: FALSE
+PROGRAM_JSON_CHANGED: FALSE
+POST_MERGE_EXACT_HEAD_DEFINITION_CHECK: NOT_RUN
+POST_MERGE_EXACT_HEAD_B01_AUDIT: NOT_RUN
+POST_MERGE_EXACT_HEAD_S0_TO_S5_AUDIT: NOT_RUN
 
-## Roadmap ledger
+## Merge / drift reconciliation
 
-RM-001 | `docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31` | OWNER_ROADMAP | ALIGNED
-RM-002 | `docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a` | PROJECT_ROADMAP | ALIGNED
-RM-003 | #1569 | GOVERNING_REQUIREMENTS | ALIGNED_CONSUMED
-RM-004 | #1535 | SCOPE_BOUNDARY | ALIGNED_UNCHANGED
-RM-005 | #1652 | COMPANION_SCOPE | ALIGNED_UNCHANGED
-
-## Post-merge reconciliation
-
-PREVIOUS_PR: #1657
-PREVIOUS_PR_STATUS: MERGED
-PREVIOUS_PR_MERGE_COMMIT: 0569ed29be02d4fb642bdfd370ae91004cde073a
-MAIN_OBSERVED: 0569ed29be02d4fb642bdfd370ae91004cde073a
-CONCURRENT_MAIN_PARENT: 840d439cb39eb1c334cc0d7593eb2c45085599c6
-POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
-POST_BASIS_DRIFT_DETAIL: PR #1655 changed EMP.1 presentation/UI and separate chain artifacts only; no LAFEA.3 solver/benchmark protected-path overlap
-
-## Owner qualification baseline
-
-OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
-OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
-OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
+MAIN_OBSERVED: 80f335b750a13a06741a787106949bada1ad7f37
+POST_BASIS_DRIFT: MATERIAL_WITHIN_ADJACENT_BM_MESH_BOUNDARY_FILE_DISJOINT_FROM_BM_S_PROTECTED_OWNERS
+POST_BASIS_DRIFT_DETAIL: current main advance is BM-MESH chain/qualification metadata relative to reconciled basis; no BM-S benchmark data, local-continuum solver/result-hash owner, benchmark adapter or program file overlap
+PR: #1661
+PR_STATUS: OPEN_DRAFT_PENDING_READY_FOR_REVIEW_TRANSITION
+PR_MERGEABILITY: MERGEABLE
+REVIEWS: 0
+UNRESOLVED_REVIEW_THREADS: 0
+WORKFLOW_RUNS: 0
+STATUS_CHECKS: 0
 
 ## Current engineering state
 
 OWNER_INSTRUCTION: merge, proceed next
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_PROGRESSION_STATUS: RESERVED_FOR_ONE_POST_MERGE_BOUNDED_PROGRESSION
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
@@ -79,30 +77,20 @@ WRITE_AUTHORITY: READ_ONLY_MERGE_AUTHORIZED
 AUTO_STATE: PAUSED
 MERGE_AUTHORITY: AUTHORIZED
 MERGE_AUTHORIZED: TRUE
-MERGE_AUTHORIZATION_SCOPE: PR_1659_EXACT_CURRENT_CUSTODY_HEAD_AFTER_AUTH_SYNC
-BRANCH: chatgpt/issue-1653-bm-s-s3-solver-numerics
-PR: #1659
-PR_STATUS: OPEN_DRAFT_PENDING_READY_FOR_REVIEW_TRANSITION
-PR_MERGEABILITY: MERGEABLE
-REVIEWS: 0
-UNRESOLVED_REVIEW_THREADS: 0
-REQUIRED_CHECKS: NOT_RUN
-LAST_MATERIAL_LEG_ID: LEG-003
-LAST_MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-003.md
-LAST_MATERIAL_HEAD: 2520dd3340dbbda8f021e7576c2d1a2a586a8b52
-LAST_MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_EXECUTED
-LAST_MATERIAL_HEAD_WORKFLOW_RUNS: 0
-LAST_MATERIAL_HEAD_STATUS_CHECKS: 0
-NEXT_MATERIAL_LEG_ID: LEG-004
-NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0004.md
-VALIDATION_STATUS: NOT_RUN_EXECUTION
-SOURCE_DIFF_AUDIT: PASS
-INDEPENDENT_ANALYTICAL_REPRODUCTION: PASS
-CURRENT_BLOCKER: executable validation remains unavailable; Owner merge authorization does not convert NOT_RUN to PASS
+MERGE_AUTHORIZATION_SCOPE: PR_1661_EXACT_SYNCHRONIZED_CUSTODY_HEAD_AFTER_AUTH_SYNC
+BRANCH: chatgpt/issue-1653-bm-s-s4-fail-closed
+PRE_AUTH_TESTED_HEAD: a0ca16db7af2d275274026c88fc2a616aa17a2d0
+LAST_MATERIAL_LEG_ID: LEG-007
+LAST_MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-007.md
+LAST_MATERIAL_HEAD: 8619e9604cf459efb7619a0098f09351ac486544
+LAST_MATERIAL_LEG_STATUS: IMPLEMENTED_EXECUTED_PASS_ON_PRE_AUTH_TESTED_HEAD
+NEXT_MATERIAL_LEG_ID: LEG-008
+NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0013.md
 QUALIFICATION_SCOPE_ID: QSCOPE-1653-BM-S-SOLVER-BENCHMARK
-QUESTION_SET_ID: QS-1653-BM-S-0004
+QUESTION_SET_ID: QS-1653-BM-S-0006
 QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
-EXACT_NEXT_ACTION: mark PR #1659 ready-for-review only as required by GitHub, merge the exact synchronized custody head, re-ground on merged main, then implement only retained S4 exact-boundary/state/code evidence under EP-0004. Do not begin S5 or activate B02 in that leg.
+CURRENT_BLOCKER: none for authorized merge; post-merge activation requires exact-clean-head retained executable PASS
+EXACT_NEXT_ACTION: observe exact post-auth PR head, mark ready solely for merge mechanics, merge #1661 with expected-head protection, then re-ground on merged main. Use the one reserved bounded progression for post-merge execution/activation qualification. If faithful execution is unavailable or any required check is NOT_RUN/FAIL, keep B02 in futureQueue and leave program.json unchanged. Release authority remains false.

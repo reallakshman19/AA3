@@ -5,7 +5,7 @@
   "stageId": "LAFEA.3",
   "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
   "benchmarkId": "BM-S",
-  "state": "STAGED_DEFINITION_IN_PROGRESS_NOT_PROGRAM_READY",
+  "state": "STAGED_DEFINITION_COMPLETE_NOT_PROGRAM_READY",
   "authority": {
     "registered": "T3_T6_Q8_LINEAR_CONTINUUM",
     "releaseAuthorityGranted": false,
@@ -94,8 +94,65 @@
         }
       ]
     },
-    {"benchmarkStage":"S4","title":"Fail-closed negatives","definitionState":"PLANNED","gateMode":"QUALIFICATION","methods":[]},
-    {"benchmarkStage":"S5","title":"Determinism and informational cost","definitionState":"PLANNED","gateMode":"QUALIFICATION_PLUS_INFORMATIONAL_PERFORMANCE","methods":[]}
+    {
+      "benchmarkStage":"S4",
+      "title":"Fail-closed negatives",
+      "definitionState":"READY",
+      "gateMode":"QUALIFICATION",
+      "methods":[
+        {
+          "methodId":"FAIL-CLOSED-NEGATIVES",
+          "authorityClass":"STRUCTURED_REJECTION_CONTRACT",
+          "command":["node","scripts/lafea.3-bm-s-s4-fail-closed-check.mjs"],
+          "sourceRefs":[
+            "scripts/lafea.3-bm-s-s4-fail-closed-check.mjs",
+            "scripts/lafea.3-fixtures.mjs",
+            "src/core/local-continuum/canonical-model.js",
+            "src/core/local-continuum/source-mesh.js",
+            "src/core/local-continuum/source-loads.js",
+            "src/core/local-continuum/errors.js",
+            "src/core/local-continuum/q8-element.js",
+            "src/core/local-continuum/assembly.js",
+            "src/core/local-continuum/loads.js",
+            "src/core/local-continuum/solver.js",
+            "validation/lafea-benchmark-data/B02/governance/negative-cases.json",
+            "validation/lafea-benchmark-data/B02/governance/fem-semantics.json"
+          ],
+          "reportEnv":{"name":"LAFEA_BM_S_S4_REPORT_PATH","filename":"S4-fail-closed-evidence.json"},
+          "expectedEvidenceSchema":"lafea3-bm-s-s4-fail-closed-evidence/v1",
+          "oracleAuthority":"FROZEN_STRUCTURED_FIRST_FAILURE_BOUNDARY_STATE_AND_CODE_CONTRACT"
+        }
+      ]
+    },
+    {
+      "benchmarkStage":"S5",
+      "title":"Determinism and informational cost",
+      "definitionState":"READY",
+      "gateMode":"QUALIFICATION_PLUS_INFORMATIONAL_PERFORMANCE",
+      "methods":[
+        {
+          "methodId":"CROSS-PROCESS-DETERMINISM-AND-COST",
+          "authorityClass":"SEMANTIC_HASH_REPEATABILITY_PLUS_INFORMATIONAL_COST",
+          "command":["node","scripts/lafea.3-bm-s-s5-determinism-cost-check.mjs"],
+          "sourceRefs":[
+            "scripts/lafea.3-bm-s-s5-determinism-cost-check.mjs",
+            "scripts/lafea.3-fixtures.mjs",
+            "scripts/lafea.3-benchmark-mesh-adapter.mjs",
+            "scripts/lib/lafea.3-bm-s-evidence.mjs",
+            "src/core/local-continuum/canonical-model.js",
+            "src/core/local-continuum/calculate.js",
+            "src/core/local-continuum/result-hashes.js",
+            "src/core/shared-primitives/canonical-json.js",
+            "validation/lafea-benchmark-data/B02/oracle/expected-values.json",
+            "validation/lafea-benchmark-data/B02/convergence/mesh-ladders.json",
+            "validation/lafea-benchmark-data/B02/governance/fem-semantics.json"
+          ],
+          "reportEnv":{"name":"LAFEA_BM_S_S5_REPORT_PATH","filename":"S5-determinism-cost-evidence.json"},
+          "expectedEvidenceSchema":"lafea3-bm-s-s5-determinism-cost-evidence/v1",
+          "oracleAuthority":"CROSS_PROCESS_PRODUCTION_SEMANTIC_HASH_EQUALITY_WITH_INDEPENDENT_TOPOLOGY_DOF_COUNTS_AND_INFORMATIONAL_PROCESS_COST"
+        }
+      ]
+    }
   ],
   "stageOrder": ["S0","S1","S2","S3","S4","S5"],
   "advancementPolicy": "EXECUTE_SELECTED_STAGES_RETAIN_ALL_RESULTS_BUT_AUTHORIZE_ONLY_CONTIGUOUS_PASS_PREFIX",

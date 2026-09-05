@@ -3,37 +3,41 @@
 CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
-MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark; first leg restores the bound producer governance gate without changing engineering authority.
-ACTIVE_ENDPOINT: EP-0001
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0001.md
+MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
+ACTIVE_ENDPOINT: EP-0002
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0002.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0001.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-MATERIAL_LEG_ID: LEG-001
-MATERIAL_LEG_RECEIPT: NONE_IN_PROGRESS
+LAST_COMPLETED_MATERIAL_LEG: LEG-001
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-001.md
+MATERIAL_LEG_HEAD: 3da01c2948230dc349b79ca030fb488fffdf2f61
+CURRENT_MATERIAL_LEG: NONE
 
-PR: NONE
-PR_STATUS: NOT_OPENED
+PR: 1656
+PR_STATUS: OPEN_DRAFT
 BRANCH: engineering/bm-mesh-1652
 BASE_BRANCH: main
 MAIN_HEAD: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-HEAD_AT_ACCEPTED_PREWORK: 08c2f99614bef85be7f62de6c68338f35bef1b5c
+MERGEABILITY: MERGEABLE
+REVIEWS: 0
+UNRESOLVED_REVIEW_THREADS: 0
+REQUIRED_CHECKS: NONE_OBSERVED
 
-ENGINEERING_STATE: READY_FOR_TASK_001_MATERIAL
+ENGINEERING_STATE: TASK_001_IMPLEMENTED_EXECUTION_PENDING
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
-WRITE_AUTHORITY: WRITE_ALLOWED
+WRITE_AUTHORITY: READ_ONLY
 AUTO_STATE: NOT_APPLICABLE
-MERGEABILITY: NOT_APPLICABLE_NO_PR
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-AUTHORITY_DOMAIN: BM-MESH issue #1652 implementation and qualification evidence only; solver formulation, mesh-quality thresholds, oracle authority, convergence tolerances, release/temperature authority and workflows remain protected.
+AUTHORITY_DOMAIN: BM-MESH issue #1652 implementation and qualification evidence only; solver formulation, mesh-quality thresholds, benchmark/oracle authority, convergence tolerances, release/temperature authority and workflows remain protected.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
 AGENT_INSTANCE_ID: chatgpt:b4bb2925-1e01-4ba2-8693-1018b121c5ba
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 1
+CUSTODY_EPOCH: 2
 COORDINATION_STATE: SAFE_EXCLUSIVE_NO_COLLISION
 DEPENDENCIES: docs-only PR #1654 supports design only; issue #1535 production-route authority remains separate
 
@@ -51,10 +55,10 @@ ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549970395
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549969638
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549971101
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549982903
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 QUALIFICATION_PROFILE: FEA
@@ -64,7 +68,7 @@ QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0001
 QUESTION_SET_FILE: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0001-questions.md
 QUESTION_SET_STATUS: CURRENT
 QUESTION_SET_ADMISSION_STATUS: NOT_EVALUATED_ORIGINATING_CUSTODIAN
-QUESTION_PACK_ACTION: INITIAL_CREATED_FOR_CRASH_READINESS
+QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 PREWORK_QUALIFICATION_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
@@ -73,16 +77,16 @@ OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
 OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
 
-TASK_STATUS: TASK-001 IN_PROGRESS; TASK-002..TASK-006 OPEN; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: production/display ownership resolved for TASK-001; executable command runner and M4 physics fixture authority remain unresolved
-BENCHMARK_STATUS: BM-001 FAIL_AT_BASIS / RERUN_NOT_YET_AVAILABLE; BM-002..BM-006 NOT_RUN
+TASK_STATUS: TASK-001 IMPLEMENTED_EXECUTION_PENDING; TASK-002..TASK-006 OPEN; TASK-007 SATISFIED_CURRENTLY
+INPUT_STATUS: stale assertion boundary resolved; executable command runner and M4 physics fixture authority remain unresolved
+BENCHMARK_STATUS: BM-001 PATCHED_NOT_RUN; BM-002..BM-006 NOT_RUN
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_SOURCE_INSPECTION_ONLY / EXECUTABLE_VALIDATION_NOT_RUN
+HANDOVER_VALIDATION_STATUS: PASS_SOURCE_AND_DIFF_INSPECTION / EXECUTABLE_VALIDATION_NOT_RUN
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-CURRENT_BLOCKER: NONE_WITHIN_TASK_001_PATCH_BOUNDARY; executable validation remains unavailable until an execution surface runs it.
-LEG_DIAGNOSIS: stale test literal only; production threshold display intentionally emits `block 1`.
-EXACT_NEXT_ACTION: change only `scripts/lafea.10-mesh-quality-panel-check.mjs` expected threshold literal from `blockingThreshold=1` to `block 1`; then seek executable evidence for the focused script and full `npm run check:lafea-meshing`. Do not alter production mesher/quality/solver/oracle/convergence/roadmap/workflow/release authority.
+CURRENT_BLOCKER: executable evidence for TASK-001 acceptance is unavailable from the current connected surface; no PR-triggered workflow/status was observed.
+LEG_DIAGNOSIS: assertion-only repair complete; engineering policy unchanged.
+EXACT_NEXT_ACTION: execute `node scripts/lafea.10-mesh-quality-panel-check.mjs` and `npm run check:lafea-meshing` on the current PR head. PASS through steps 10–12 closes TASK-001; any new failure must be isolated before more material mutation. After TASK-001 validation, the next bounded implementation boundary is M2 geometry/oracle fixture freezing, followed by ladders/probes and M0–M4 runner work.

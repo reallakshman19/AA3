@@ -113,7 +113,11 @@ export function createLafeaWorkbenchDomainFirstRunActions(context) {
     return c.publish();
   }
 
-  return Object.freeze({ run });
+  function fields(stageId) {
+    return transactions.fields(stageId);
+  }
+
+  return Object.freeze({ run, fields });
 }
 
 function verifyPublication(current, predicted, records, c) {

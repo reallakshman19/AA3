@@ -1,0 +1,166 @@
+{
+  "schema": "lafea-bucket-01-t3-patch-evidence/v1",
+  "producerRevision": "B01-T3-PATCH.1",
+  "benchmarkId": "C2D-PATCH-T3-01",
+  "oracleId": "B01-T3-AFFINE-PATCH-CLOSED-FORM-01",
+  "oracleHash": "sha256:5ced77b55b1f9ac411b96a17484547d0ab974184a95a6a2e2da58fe26a7f5fc2",
+  "elementType": "T3",
+  "replayCount": 3,
+  "formulationEvidence": [
+    {
+      "formulation": "PLANE_STRESS",
+      "canonicalModelSemanticHash": "fnv1a64:0053dc3005631a79",
+      "executionEvidenceHash": "fnv1a64:d2375d113d4a1ab7",
+      "qualificationEvidenceHash": "fnv1a64:442d721a45e68229",
+      "replayExecutionEvidenceHashes": [
+        "fnv1a64:d2375d113d4a1ab7",
+        "fnv1a64:d2375d113d4a1ab7",
+        "fnv1a64:d2375d113d4a1ab7"
+      ],
+      "traction": {
+        "loadCaseId": "TRACTION",
+        "loadCaseInputSemanticHash": "fnv1a64:9b8688ba41bb47d8",
+        "appliedResultant": {
+          "force": {
+            "x": 5000,
+            "y": 0
+          },
+          "momentZ": -125000
+        },
+        "reactionResultant": {
+          "force": {
+            "x": -5000.000000000001,
+            "y": -2.5309893210613955e-14
+          },
+          "momentZ": 125000.00000000004
+        },
+        "totalStrainEnergy": 12.5,
+        "displacementMaximumNormalizedError": 2.1684043449710089e-16,
+        "strainMaximumNormalizedError": 2.541098841762901e-16,
+        "stressMaximumNormalizedError": 9.773457083703465e-17,
+        "equilibriumMaximumNormalizedError": 3.4924596548080445e-16,
+        "energyNormalizedError": 0,
+        "maximumNormalizedError": 3.4924596548080445e-16
+      },
+      "nodal": {
+        "loadCaseId": "NODAL",
+        "loadCaseInputSemanticHash": "fnv1a64:0dd71e3566f5e073",
+        "appliedResultant": {
+          "force": {
+            "x": 5000,
+            "y": 0
+          },
+          "momentZ": -125000
+        },
+        "reactionResultant": {
+          "force": {
+            "x": -5000.000000000001,
+            "y": -2.5309893210613955e-14
+          },
+          "momentZ": 125000.00000000004
+        },
+        "totalStrainEnergy": 12.5,
+        "displacementMaximumNormalizedError": 2.1684043449710089e-16,
+        "strainMaximumNormalizedError": 2.541098841762901e-16,
+        "stressMaximumNormalizedError": 9.773457083703465e-17,
+        "equilibriumMaximumNormalizedError": 3.4924596548080445e-16,
+        "energyNormalizedError": 0,
+        "maximumNormalizedError": 3.4924596548080445e-16
+      },
+      "tractionNodalParity": {
+        "displacementMaximumNormalizedDifference": 0,
+        "stressMaximumNormalizedDifference": 0,
+        "energyNormalizedDifference": 0,
+        "maximumNormalizedDifference": 0
+      },
+      "maximumNormalizedError": 3.4924596548080445e-16,
+      "status": "PASS"
+    },
+    {
+      "formulation": "PLANE_STRAIN",
+      "canonicalModelSemanticHash": "fnv1a64:9026d7abddf26580",
+      "executionEvidenceHash": "fnv1a64:9a501e35344e15c2",
+      "qualificationEvidenceHash": "fnv1a64:442d721a45e68229",
+      "replayExecutionEvidenceHashes": [
+        "fnv1a64:9a501e35344e15c2",
+        "fnv1a64:9a501e35344e15c2",
+        "fnv1a64:9a501e35344e15c2"
+      ],
+      "traction": {
+        "loadCaseId": "TRACTION",
+        "loadCaseInputSemanticHash": "fnv1a64:9b8688ba41bb47d8",
+        "appliedResultant": {
+          "force": {
+            "x": 5000,
+            "y": 0
+          },
+          "momentZ": -125000
+        },
+        "reactionResultant": {
+          "force": {
+            "x": -5000,
+            "y": -7.54248020136969e-14
+          },
+          "momentZ": 125000.00000000003
+        },
+        "totalStrainEnergy": 11.374999999999998,
+        "displacementMaximumNormalizedError": 1.9062895340404472e-16,
+        "strainMaximumNormalizedError": 8.563410016197321e-16,
+        "stressMaximumNormalizedError": 3.552713678800501e-16,
+        "equilibriumMaximumNormalizedError": 2.328306436538696e-16,
+        "energyNormalizedError": 1.5616323862859346e-16,
+        "maximumNormalizedError": 8.563410016197321e-16
+      },
+      "nodal": {
+        "loadCaseId": "NODAL",
+        "loadCaseInputSemanticHash": "fnv1a64:0dd71e3566f5e073",
+        "appliedResultant": {
+          "force": {
+            "x": 5000,
+            "y": 0
+          },
+          "momentZ": -125000
+        },
+        "reactionResultant": {
+          "force": {
+            "x": -5000,
+            "y": -7.54248020136969e-14
+          },
+          "momentZ": 125000.00000000003
+        },
+        "totalStrainEnergy": 11.374999999999998,
+        "displacementMaximumNormalizedError": 1.9062895340404472e-16,
+        "strainMaximumNormalizedError": 8.563410016197321e-16,
+        "stressMaximumNormalizedError": 3.552713678800501e-16,
+        "equilibriumMaximumNormalizedError": 2.328306436538696e-16,
+        "energyNormalizedError": 1.5616323862859346e-16,
+        "maximumNormalizedError": 8.563410016197321e-16
+      },
+      "tractionNodalParity": {
+        "displacementMaximumNormalizedDifference": 0,
+        "stressMaximumNormalizedDifference": 0,
+        "energyNormalizedDifference": 0,
+        "maximumNormalizedDifference": 0
+      },
+      "maximumNormalizedError": 8.563410016197321e-16,
+      "status": "PASS"
+    }
+  ],
+  "tolerance": 1e-8,
+  "authority": {
+    "expectedValuesFromClosedFormOracle": true,
+    "productionOutputUsedToGenerateExpectedValues": false,
+    "tractionAndNodalLoadingBothExercised": true,
+    "elementStressAuthority": "T3_CONSTANT_ELEMENT_STRESS",
+    "smoothedOrProjectedStressUsed": false
+  },
+  "qualificationStates": {
+    "implemented": true,
+    "governedT3PatchReceiptProduced": true,
+    "solverVerified": false,
+    "stressVerified": false,
+    "bucketQualified": false
+  },
+  "status": "PASS",
+  "evidenceHash": "sha256:c79b0c85ff75c750e001909ba34890d1b02b1d0e2538c9e292157c338973d004"
+}

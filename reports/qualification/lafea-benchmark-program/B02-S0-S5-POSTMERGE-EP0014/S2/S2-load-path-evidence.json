@@ -1,0 +1,953 @@
+{
+  "schema": "lafea3-bm-s-s2-load-path-evidence/v1",
+  "benchmarkStage": "S2",
+  "authority": {
+    "class": "INDEPENDENT_EXACT_BOUNDARY_VALUE_PROBLEMS",
+    "productionOutputUsedToDefineExpectedValues": false,
+    "productionOutputMayModifyAcceptance": false
+  },
+  "acceptance": {
+    "policyOrigin": "PRE_EXECUTION_EXACT_POLYNOMIAL_AND_AFFINE_FIELD_NUMERICAL_EQUALITY",
+    "absoluteTolerance": 1e-9,
+    "relativeTolerance": 1e-7,
+    "comparison": "abs(actual-expected) <= absoluteTolerance + relativeTolerance*max(1,abs(expected))"
+  },
+  "caseResults": [
+    {
+      "caseId": "LOAD-EDGE-TRACTION-01",
+      "loadType": "EDGE_TRACTION",
+      "status": "PASS",
+      "levels": [
+        {
+          "levelId": "EXACT-BVP",
+          "observation": {
+            "field": "AFFINE_UNIAXIAL_PLANE_STRESS",
+            "rightEdgeUxMm": 0.005,
+            "topEdgeUyMm": -0.00075
+          },
+          "checks": [
+            {
+              "label": "A.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "A.uy",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.ux",
+              "actual": 0.005,
+              "expected": 0.005,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.uy",
+              "actual": -1.050731667609614e-18,
+              "expected": 0,
+              "absoluteError": 1.050731667609614e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.ux",
+              "actual": 0.005,
+              "expected": 0.005,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.uy",
+              "actual": -0.0007500000000000011,
+              "expected": -0.00075,
+              "absoluteError": 1.0842021724855044e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "D.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "D.uy",
+              "actual": -0.0007499999999999998,
+              "expected": -0.00075,
+              "absoluteError": 2.168404344971009e-19,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E1.sigmaX",
+              "actual": 10,
+              "expected": 10,
+              "absoluteError": 0,
+              "limit": 0.000001001,
+              "accepted": true
+            },
+            {
+              "label": "E1.sigmaY",
+              "actual": 8.881784197001252e-16,
+              "expected": 0,
+              "absoluteError": 8.881784197001252e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E1.tauXY",
+              "actual": -8.082551289304723e-16,
+              "expected": 0,
+              "absoluteError": 8.082551289304723e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E2.sigmaX",
+              "actual": 10,
+              "expected": 10,
+              "absoluteError": 0,
+              "limit": 0.000001001,
+              "accepted": true
+            },
+            {
+              "label": "E2.sigmaY",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E2.tauXY",
+              "actual": -9.773457083703465e-16,
+              "expected": 0,
+              "absoluteError": 9.773457083703465e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            }
+          ]
+        }
+      ],
+      "maximumAbsoluteError": 9.773457083703465e-16,
+      "failedCheckCount": 0,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:e2cc037bb2d97b6d",
+        "loadCaseInputSemanticHash": "fnv1a64:3212ba143c37f1fd",
+        "resultPayloadSemanticHash": "fnv1a64:4ba3f712f0ce20fc",
+        "executionEvidenceHash": "fnv1a64:99cf87a68298d01d",
+        "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+      }
+    },
+    {
+      "caseId": "LOAD-PRESSURE-01",
+      "loadType": "PRESSURE",
+      "status": "PASS",
+      "levels": [
+        {
+          "levelId": "EXACT-BVP",
+          "observation": {
+            "field": "AFFINE_UNIAXIAL_PLANE_STRESS",
+            "rightEdgeUxMm": -0.005,
+            "topEdgeUyMm": 0.00075
+          },
+          "checks": [
+            {
+              "label": "A.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "A.uy",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.ux",
+              "actual": -0.005,
+              "expected": -0.005,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.uy",
+              "actual": 1.050731667609614e-18,
+              "expected": 0,
+              "absoluteError": 1.050731667609614e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.ux",
+              "actual": -0.005,
+              "expected": -0.005,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.uy",
+              "actual": 0.0007500000000000011,
+              "expected": 0.00075,
+              "absoluteError": 1.0842021724855044e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "D.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "D.uy",
+              "actual": 0.0007499999999999998,
+              "expected": 0.00075,
+              "absoluteError": 2.168404344971009e-19,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E1.sigmaX",
+              "actual": -10,
+              "expected": -10,
+              "absoluteError": 0,
+              "limit": 0.000001001,
+              "accepted": true
+            },
+            {
+              "label": "E1.sigmaY",
+              "actual": -8.881784197001252e-16,
+              "expected": 0,
+              "absoluteError": 8.881784197001252e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E1.tauXY",
+              "actual": 8.082551289304723e-16,
+              "expected": 0,
+              "absoluteError": 8.082551289304723e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E2.sigmaX",
+              "actual": -10,
+              "expected": -10,
+              "absoluteError": 0,
+              "limit": 0.000001001,
+              "accepted": true
+            },
+            {
+              "label": "E2.sigmaY",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E2.tauXY",
+              "actual": 9.773457083703465e-16,
+              "expected": 0,
+              "absoluteError": 9.773457083703465e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            }
+          ]
+        }
+      ],
+      "maximumAbsoluteError": 9.773457083703465e-16,
+      "failedCheckCount": 0,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:136b26be01cbaff1",
+        "loadCaseInputSemanticHash": "fnv1a64:8c0a489bcebcbc5b",
+        "resultPayloadSemanticHash": "fnv1a64:0d7c7fd13873ca34",
+        "executionEvidenceHash": "fnv1a64:b1b8a2f43467cedd",
+        "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+      }
+    },
+    {
+      "caseId": "LOAD-BODY-FORCE-01",
+      "loadType": "BODY_FORCE",
+      "status": "PASS",
+      "levels": [
+        {
+          "levelId": "EXACT-BVP",
+          "observation": {
+            "field": "MANUFACTURED_QUADRATIC_Q8_BODY_FORCE",
+            "physicalProbeMm": {
+              "x": 50,
+              "y": 25
+            },
+            "domainMm": {
+              "width": 100,
+              "height": 50
+            }
+          },
+          "checks": [
+            {
+              "label": "A.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "A.uy",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.ux",
+              "actual": 0.010000000000000026,
+              "expected": 0.01,
+              "absoluteError": 2.6020852139652106e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.uy",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.ux",
+              "actual": 0.010750000000000015,
+              "expected": 0.01075,
+              "absoluteError": 1.5612511283791264e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.uy",
+              "actual": -0.0030000000000000057,
+              "expected": -0.0029999999999999996,
+              "absoluteError": 6.071532165918825e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "D.ux",
+              "actual": 0.0007500000000000279,
+              "expected": 0.00075,
+              "absoluteError": 2.7863995832877464e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "D.uy",
+              "actual": -1.7975986543329543e-18,
+              "expected": 0,
+              "absoluteError": 1.7975986543329543e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E.ux",
+              "actual": 0.0025000000000000165,
+              "expected": 0.0025,
+              "absoluteError": 1.6479873021779667e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E.uy",
+              "actual": -1.1968561961484002e-17,
+              "expected": 0,
+              "absoluteError": 1.1968561961484002e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "F.ux",
+              "actual": 0.010187500000000018,
+              "expected": 0.0101875,
+              "absoluteError": 1.734723475976807e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "F.uy",
+              "actual": -0.0015000000000000035,
+              "expected": -0.0014999999999999998,
+              "absoluteError": 3.686287386450715e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "G.ux",
+              "actual": 0.0032500000000000185,
+              "expected": 0.00325,
+              "absoluteError": 1.8648277366750676e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "G.uy",
+              "actual": -0.0015000000000000104,
+              "expected": -0.0014999999999999998,
+              "absoluteError": 1.0625181290357943e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "H.ux",
+              "actual": 0.00018750000000001608,
+              "expected": 0.0001875,
+              "absoluteError": 1.6073297207097603e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "H.uy",
+              "actual": -1.816492680666851e-18,
+              "expected": 0,
+              "absoluteError": 1.816492680666851e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP1.sigmaX",
+              "actual": 4.508066615170389,
+              "expected": 4.508066615170332,
+              "absoluteError": 5.684341886080802e-14,
+              "limit": 4.518066615170332e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP1.sigmaY",
+              "actual": 5.329070518200751e-15,
+              "expected": 0,
+              "absoluteError": 5.329070518200751e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP1.tauXY",
+              "actual": 1.355058794959696e-14,
+              "expected": 0,
+              "absoluteError": 1.355058794959696e-14,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP2.sigmaX",
+              "actual": 4.508066615170341,
+              "expected": 4.508066615170332,
+              "absoluteError": 8.881784197001252e-15,
+              "limit": 4.518066615170332e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP2.sigmaY",
+              "actual": 2.220446049250313e-15,
+              "expected": 0,
+              "absoluteError": 2.220446049250313e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP2.tauXY",
+              "actual": 8.795024063254134e-15,
+              "expected": 0,
+              "absoluteError": 8.795024063254134e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP3.sigmaX",
+              "actual": 4.508066615170297,
+              "expected": 4.508066615170332,
+              "absoluteError": 3.4638958368304884e-14,
+              "limit": 4.518066615170332e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP3.sigmaY",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP3.tauXY",
+              "actual": 3.77876604485625e-15,
+              "expected": 0,
+              "absoluteError": 3.77876604485625e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP4.sigmaX",
+              "actual": 20.000000000000043,
+              "expected": 20,
+              "absoluteError": 4.263256414560601e-14,
+              "limit": 0.000002001,
+              "accepted": true
+            },
+            {
+              "label": "GP4.sigmaY",
+              "actual": 8.881784197001252e-15,
+              "expected": 0,
+              "absoluteError": 8.881784197001252e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP4.tauXY",
+              "actual": 2.4580552614733216e-15,
+              "expected": 0,
+              "absoluteError": 2.4580552614733216e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP5.sigmaX",
+              "actual": 20.000000000000007,
+              "expected": 20,
+              "absoluteError": 7.105427357601002e-15,
+              "limit": 0.000002001,
+              "accepted": true
+            },
+            {
+              "label": "GP5.sigmaY",
+              "actual": 7.993605777301127e-15,
+              "expected": 0,
+              "absoluteError": 7.993605777301127e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP5.tauXY",
+              "actual": 1.6579275842835162e-15,
+              "expected": 0,
+              "absoluteError": 1.6579275842835162e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP6.sigmaX",
+              "actual": 19.99999999999998,
+              "expected": 20,
+              "absoluteError": 2.1316282072803006e-14,
+              "limit": 0.000002001,
+              "accepted": true
+            },
+            {
+              "label": "GP6.sigmaY",
+              "actual": 9.769962616701378e-15,
+              "expected": 0,
+              "absoluteError": 9.769962616701378e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP6.tauXY",
+              "actual": 9.228876778287658e-16,
+              "expected": 0,
+              "absoluteError": 9.228876778287658e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP7.sigmaX",
+              "actual": 35.491933384829686,
+              "expected": 35.491933384829665,
+              "absoluteError": 2.1316282072803006e-14,
+              "limit": 0.0000035501933384829664,
+              "accepted": true
+            },
+            {
+              "label": "GP7.sigmaY",
+              "actual": -1.5987211554602254e-14,
+              "expected": 0,
+              "absoluteError": 1.5987211554602254e-14,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP7.tauXY",
+              "actual": 4.429376875233317e-15,
+              "expected": 0,
+              "absoluteError": 4.429376875233317e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP8.sigmaX",
+              "actual": 35.491933384829665,
+              "expected": 35.491933384829665,
+              "absoluteError": 0,
+              "limit": 0.0000035501933384829664,
+              "accepted": true
+            },
+            {
+              "label": "GP8.sigmaY",
+              "actual": -1.2434497875801753e-14,
+              "expected": 0,
+              "absoluteError": 1.2434497875801753e-14,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP8.tauXY",
+              "actual": 5.304212087665721e-15,
+              "expected": 0,
+              "absoluteError": 5.304212087665721e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP9.sigmaX",
+              "actual": 35.491933384829665,
+              "expected": 35.491933384829665,
+              "absoluteError": 0,
+              "limit": 0.0000035501933384829664,
+              "accepted": true
+            },
+            {
+              "label": "GP9.sigmaY",
+              "actual": -5.329070518200751e-15,
+              "expected": 0,
+              "absoluteError": 5.329070518200751e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "GP9.tauXY",
+              "actual": 9.159883100804715e-15,
+              "expected": 0,
+              "absoluteError": 9.159883100804715e-15,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "fixedProbe.ux",
+              "actual": 0.0026875,
+              "expected": 0.0026875,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "fixedProbe.uy",
+              "actual": -0.0007499999999999999,
+              "expected": -0.00075,
+              "absoluteError": 1.0842021724855044e-19,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "bodyForceX",
+              "actual": -0.39999999999999997,
+              "expected": -0.4,
+              "absoluteError": 5.551115123125783e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "rightEdgeTractionX",
+              "actual": 40,
+              "expected": 40,
+              "absoluteError": 0,
+              "limit": 0.0000040009999999999995,
+              "accepted": true
+            }
+          ]
+        }
+      ],
+      "maximumAbsoluteError": 5.684341886080802e-14,
+      "failedCheckCount": 0,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:7326212ee4afd56a",
+        "loadCaseInputSemanticHash": "fnv1a64:77f84833d88bde59",
+        "resultPayloadSemanticHash": "fnv1a64:7dad71b455c7a3fd",
+        "executionEvidenceHash": "fnv1a64:ccb205b7f3307a0e",
+        "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+      }
+    },
+    {
+      "caseId": "LOAD-TEMPERATURE-01",
+      "loadType": "TEMPERATURE_STRAIN",
+      "status": "PASS",
+      "levels": [
+        {
+          "levelId": "EXACT-BVP",
+          "observation": {
+            "field": "FREE_UNIFORM_THERMAL_EXPANSION",
+            "thermalStrain": 0.001
+          },
+          "checks": [
+            {
+              "label": "A.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "A.uy",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.ux",
+              "actual": 0.09999999999999999,
+              "expected": 0.1,
+              "absoluteError": 1.3877787807814457e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.uy",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.uy",
+              "actual": 0.09999999999999999,
+              "expected": 0.1,
+              "absoluteError": 1.3877787807814457e-17,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "sigmaX",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "sigmaY",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "sigmaZ",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "tauXY",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "strainEnergy",
+              "actual": 1.8189894035458565e-12,
+              "expected": 0,
+              "absoluteError": 1.8189894035458565e-12,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            }
+          ]
+        }
+      ],
+      "maximumAbsoluteError": 1.8189894035458565e-12,
+      "failedCheckCount": 0,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:4600c608dfd5acdf",
+        "loadCaseInputSemanticHash": "fnv1a64:2d406f842a157f98",
+        "resultPayloadSemanticHash": "fnv1a64:deeb91be36a4d8d1",
+        "executionEvidenceHash": "fnv1a64:75a93e47c8faf410",
+        "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+      }
+    },
+    {
+      "caseId": "LOAD-IMPOSED-DISPLACEMENT-01",
+      "loadType": "IMPOSED_DISPLACEMENT",
+      "status": "PASS",
+      "levels": [
+        {
+          "levelId": "EXACT-BVP",
+          "observation": {
+            "field": "AFFINE_UNIAXIAL_PLANE_STRESS",
+            "rightEdgeUxMm": 0.005,
+            "topEdgeUyMm": -0.00075
+          },
+          "checks": [
+            {
+              "label": "A.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "A.uy",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.ux",
+              "actual": 0.005,
+              "expected": 0.005,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "B.uy",
+              "actual": -1.0053778920666909e-18,
+              "expected": 0,
+              "absoluteError": 1.0053778920666909e-18,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.ux",
+              "actual": 0.005,
+              "expected": 0.005,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "C.uy",
+              "actual": -0.000750000000000001,
+              "expected": -0.00075,
+              "absoluteError": 9.75781955236954e-19,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "D.ux",
+              "actual": 0,
+              "expected": 0,
+              "absoluteError": 0,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "D.uy",
+              "actual": -0.0007499999999999998,
+              "expected": -0.00075,
+              "absoluteError": 2.168404344971009e-19,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E1.sigmaX",
+              "actual": 10,
+              "expected": 10,
+              "absoluteError": 0,
+              "limit": 0.000001001,
+              "accepted": true
+            },
+            {
+              "label": "E1.sigmaY",
+              "actual": 8.881784197001252e-16,
+              "expected": 0,
+              "absoluteError": 8.881784197001252e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E1.tauXY",
+              "actual": -7.733676092820699e-16,
+              "expected": 0,
+              "absoluteError": 7.733676092820699e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E2.sigmaX",
+              "actual": 10,
+              "expected": 10,
+              "absoluteError": 0,
+              "limit": 0.000001001,
+              "accepted": true
+            },
+            {
+              "label": "E2.sigmaY",
+              "actual": 4.440892098500626e-16,
+              "expected": 0,
+              "absoluteError": 4.440892098500626e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            },
+            {
+              "label": "E2.tauXY",
+              "actual": -9.121893278123235e-16,
+              "expected": 0,
+              "absoluteError": 9.121893278123235e-16,
+              "limit": 1.0099999999999999e-7,
+              "accepted": true
+            }
+          ]
+        }
+      ],
+      "maximumAbsoluteError": 9.121893278123235e-16,
+      "failedCheckCount": 0,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:2238b2220b1b5de2",
+        "loadCaseInputSemanticHash": "fnv1a64:c632c644b49d9198",
+        "resultPayloadSemanticHash": "fnv1a64:81bf570cb0cd48b6",
+        "executionEvidenceHash": "fnv1a64:be456028a2dde521",
+        "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+      }
+    }
+  ],
+  "stageStatus": "PASS"
+}

@@ -1,0 +1,293 @@
+{
+  "schema": "lafea3-bm-s-s4-fail-closed-evidence/v1",
+  "benchmarkStage": "S4",
+  "assertionPolicy": "EXACT_STRUCTURED_STATE_AND_CODE_NOT_MESSAGE_REGEX",
+  "authority": {
+    "expectedContractSource": "validation/lafea-benchmark-data/B02/governance/negative-cases.json",
+    "messageRegexMayQualify": false,
+    "matchingCodeAtWrongBoundaryMayQualify": false,
+    "productionValidationRulesModified": false,
+    "releaseQualified": false
+  },
+  "caseResults": [
+    {
+      "negativeCaseId": "S4-UNDER-CONSTRAINED",
+      "mutation": "REMOVE_ALL_RIGID_BODY_RESTRAINTS_FROM_TRIANGLE_FIXTURE",
+      "expected": {
+        "boundary": "solver",
+        "qualificationState": "SINGULAR_SYSTEM",
+        "errorCode": "UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM"
+      },
+      "observed": {
+        "actualBoundary": "solver",
+        "actualQualificationState": "SINGULAR_SYSTEM",
+        "actualErrorCode": "UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM",
+        "actualPath": "solver",
+        "message": "Cholesky pivot 2.3283064365386963e-10 does not exceed 0.0000014835174835164837."
+      },
+      "fixtureProof": {
+        "constraintCount": 0,
+        "otherwiseUnmodifiedTriangleFixture": true
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    },
+    {
+      "negativeCaseId": "S4-ZERO-AREA",
+      "mutation": "MAKE_T3_CORNERS_COLLINEAR",
+      "expected": {
+        "boundary": "canonical-model",
+        "qualificationState": "REJECTED_MODEL",
+        "errorCode": "DEGENERATE_ELEMENT"
+      },
+      "observed": {
+        "actualBoundary": "canonical-model",
+        "actualQualificationState": "REJECTED_MODEL",
+        "actualErrorCode": "DEGENERATE_ELEMENT",
+        "actualPath": "elements.E1",
+        "message": "Element area 0 does not exceed 4.0001e-8."
+      },
+      "fixtureProof": {
+        "signedAreaMm2": 0,
+        "distinctNodeCoordinates": true
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    },
+    {
+      "negativeCaseId": "S4-NEAR-ZERO-AREA",
+      "mutation": "MAKE_T3_AREA_BELOW_MINIMUM_ELEMENT_AREA_TOLERANCE",
+      "expected": {
+        "boundary": "canonical-model",
+        "qualificationState": "REJECTED_MODEL",
+        "errorCode": "DEGENERATE_ELEMENT"
+      },
+      "observed": {
+        "actualBoundary": "canonical-model",
+        "actualQualificationState": "REJECTED_MODEL",
+        "actualErrorCode": "DEGENERATE_ELEMENT",
+        "actualPath": "elements.E1",
+        "message": "Element area 5e-11 does not exceed 1.0001e-8."
+      },
+      "fixtureProof": {
+        "geometricAreaMm2": 5e-11,
+        "productionMinimumElementAreaRule": {
+          "absolute": 1e-12,
+          "relative": 1e-12
+        },
+        "coordinatePerturbationMm": 1e-12
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    },
+    {
+      "negativeCaseId": "S4-Q8-INVERTED-MAPPING",
+      "mutation": "KEEP_COUNTER_CLOCKWISE_Q8_CORNERS_BUT_MOVE_MIDSIDE_GEOMETRY_TO_FORCE_NONPOSITIVE_INTEGRATION_POINT_JACOBIAN",
+      "expected": {
+        "boundary": "element-formulation",
+        "qualificationState": "NUMERICAL_FAILURE",
+        "errorCode": "Q8_NONPOSITIVE_JACOBIAN"
+      },
+      "observed": {
+        "actualBoundary": "element-formulation",
+        "actualQualificationState": "NUMERICAL_FAILURE",
+        "actualErrorCode": "Q8_NONPOSITIVE_JACOBIAN",
+        "actualPath": "element formulation",
+        "message": "Q8 Jacobian determinant -625 is not positive at (0,-0.7745966692414834)."
+      },
+      "fixtureProof": {
+        "cornerOrder": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "cornerSignedAreaMm2": 10000,
+        "cornersRemainCounterClockwise": true,
+        "movedMidsideNodeId": "E",
+        "movedMidsideCoordinateMm": {
+          "x": 50,
+          "y": 125
+        },
+        "nominalMidsideCoordinateMm": {
+          "x": 50,
+          "y": 0
+        },
+        "independentlyDerivedMinimumGaussDetJMm2": -625,
+        "cornerWindingReversed": false
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    },
+    {
+      "negativeCaseId": "S4-DUPLICATE-CONSTRAINT",
+      "mutation": "ADD_IDENTICAL_CONSTRAINT_VALUE_TO_ALREADY_CONSTRAINED_DOF",
+      "expected": {
+        "boundary": "canonical-model",
+        "qualificationState": "REJECTED_MODEL",
+        "errorCode": "DUPLICATE_CONSTRAINT"
+      },
+      "observed": {
+        "actualBoundary": "canonical-model",
+        "actualQualificationState": "REJECTED_MODEL",
+        "actualErrorCode": "DUPLICATE_CONSTRAINT",
+        "actualPath": "constraints",
+        "message": "Multiple constraints target A:UX."
+      },
+      "fixtureProof": {
+        "targetDof": "A:UX",
+        "sameValue": true
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    },
+    {
+      "negativeCaseId": "S4-CONFLICTING-CONSTRAINT",
+      "mutation": "ADD_DIFFERENT_CONSTRAINT_VALUE_TO_ALREADY_CONSTRAINED_DOF",
+      "expected": {
+        "boundary": "canonical-model",
+        "qualificationState": "REJECTED_MODEL",
+        "errorCode": "CONFLICTING_CONSTRAINT"
+      },
+      "observed": {
+        "actualBoundary": "canonical-model",
+        "actualQualificationState": "REJECTED_MODEL",
+        "actualErrorCode": "CONFLICTING_CONSTRAINT",
+        "actualPath": "constraints",
+        "message": "Multiple constraints target A:UX."
+      },
+      "fixtureProof": {
+        "targetDof": "A:UX",
+        "sameValue": false
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    },
+    {
+      "negativeCaseId": "S4-INTERNAL-EDGE-TRACTION",
+      "mutation": "APPLY_EDGE_TRACTION_TO_SHARED_INTERNAL_EDGE",
+      "expected": {
+        "boundary": "load-case-preflight",
+        "qualificationState": "REJECTED_LOAD_CASE",
+        "errorCode": "TRACTION_EDGE_NOT_BOUNDARY"
+      },
+      "observed": {
+        "actualBoundary": "load-case-preflight",
+        "actualQualificationState": "REJECTED_LOAD_CASE",
+        "actualErrorCode": "TRACTION_EDGE_NOT_BOUNDARY",
+        "actualPath": "loadCases.TRACTION.T-INTERNAL",
+        "message": "Edge load must be a true boundary edge."
+      },
+      "fixtureProof": {
+        "edgeNodeIds": [
+          "B",
+          "D"
+        ],
+        "ownerElementIds": [
+          "E1",
+          "E2"
+        ]
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    },
+    {
+      "negativeCaseId": "S4-DISCONNECTED-NODE",
+      "mutation": "ADD_NODE_NOT_REFERENCED_BY_ANY_ELEMENT",
+      "expected": {
+        "boundary": "canonical-model",
+        "qualificationState": "REJECTED_MODEL",
+        "errorCode": "DISCONNECTED_UNREFERENCED_NODE"
+      },
+      "observed": {
+        "actualBoundary": "canonical-model",
+        "actualQualificationState": "REJECTED_MODEL",
+        "actualErrorCode": "DISCONNECTED_UNREFERENCED_NODE",
+        "actualPath": "nodes.X",
+        "message": "Node X is not referenced by any element."
+      },
+      "fixtureProof": {
+        "addedNodeId": "X",
+        "referencedByElements": false
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    },
+    {
+      "negativeCaseId": "S4-DUPLICATE-ELEMENT-NODE-SET",
+      "mutation": "ADD_SECOND_ELEMENT_WITH_SAME_PHYSICAL_NODE_SET",
+      "expected": {
+        "boundary": "canonical-model",
+        "qualificationState": "REJECTED_MODEL",
+        "errorCode": "DUPLICATE_ELEMENT_NODE_SET"
+      },
+      "observed": {
+        "actualBoundary": "canonical-model",
+        "actualQualificationState": "REJECTED_MODEL",
+        "actualErrorCode": "DUPLICATE_ELEMENT_NODE_SET",
+        "actualPath": "elements",
+        "message": "Duplicate element node set A\u0000B\u0000C."
+      },
+      "fixtureProof": {
+        "firstNodeSet": [
+          "A",
+          "B",
+          "C"
+        ],
+        "duplicatePermutation": [
+          "C",
+          "A",
+          "B"
+        ]
+      },
+      "checks": {
+        "boundary": true,
+        "qualificationState": true,
+        "errorCode": true,
+        "structuredPath": true
+      },
+      "status": "PASS"
+    }
+  ],
+  "stageStatus": "PASS"
+}

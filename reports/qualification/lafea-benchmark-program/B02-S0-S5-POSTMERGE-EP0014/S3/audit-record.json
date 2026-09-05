@@ -1,0 +1,79 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
+  "runId": "B02-S0-S5-POSTMERGE-EP0014-S3",
+  "generatedAt": "2026-09-05T12:23:56.505Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "5b1eba060a51cf03ac22f1908f9a07d9098bea46",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "B02",
+  "stageId": "LAFEA.3",
+  "benchmarkStage": "S3",
+  "benchmarkClass": "STAGED_SOLVER_BENCHMARK",
+  "comparisonPolicy": "STAGE_SPECIFIC_INDEPENDENT_ORACLE_AND_INVARIANTS",
+  "methodResults": [
+    {
+      "methodId": "SOLVER-NUMERICS-INVARIANTS",
+      "authorityClass": "INDEPENDENT_STATIC_ENERGY_AND_METAMORPHIC_INVARIANTS",
+      "command": [
+        "node",
+        "scripts/lafea.3-bm-s-s3-solver-numerics-check.mjs"
+      ],
+      "sourceRefHashes": {
+        "scripts/lafea.3-bm-s-s3-solver-numerics-check.mjs": "sha256:beb7d33f19de18b9fe4f8d3936e2611cb7e0130a4721b3e032e7dbe63d40566c",
+        "scripts/lib/lafea.3-bm-s-s3-helpers.mjs": "sha256:b382c95cd1b5de8993800ea4167aea830c5fe8045163b8e330408e95d7b8ddf5",
+        "scripts/lafea.3-fixtures.mjs": "sha256:9f50762ebfa83560df41c351e868ef9a9bd25669547bbd46b409cd00918d9b4e",
+        "src/core/local-continuum/constants.js": "sha256:e4795fd70cc7704fa9d02a8aefdc67da8793eb1203604da145c365ab462e0a57",
+        "src/core/local-continuum/solver.js": "sha256:5187e1f59ca897ae7f5efdffadcf27f54744b4064eb35bc3e15f12fbdd3b864d",
+        "src/core/local-continuum/recovery.js": "sha256:7cdea3307372ebe875d8a1503a3af9c153a780fb814019ebfcf735f19880fd7a",
+        "src/core/local-continuum/result-hashes.js": "sha256:b256d322aa8b5279f59065eff793096270acae8b3507831e88d60c3d990c615d",
+        "src/core/lafea-linear-solve/sparse-matrix.js": "sha256:359606e5645ab51314de1af3cf13aca05194fa301a9ce070db6903d8e2e84445",
+        "src/core/lafea-linear-solve/sparse-cholesky.js": "sha256:5b99efeb0cc0f98684f2f75326411566f1acb21e177981efb51edfa8286d8fe6",
+        "src/core/lafea-linear-solve/diagonal-scaling.js": "sha256:05c81e823b5e6f8b0e84708f219ded94961b54a0fb8fc49d81efbad1cbb96482",
+        "validation/lafea-benchmark-data/B02/oracle/solver-numerics-expected-values.json": "sha256:561b78493d957306277c8beb3396ae559d30dbf8809038c8fdcab97add6df9dd",
+        "validation/lafea-benchmark-data/B02/oracle/independent-oracle.py": "sha256:abf844ebb32fd5b9d12a90981a1bb800463358cf58ce138ff02b65eb9175617a"
+      },
+      "oracleAuthority": "INDEPENDENT_STATIC_EQUILIBRIUM_CLAPEYRON_LINEARITY_SUPERPOSITION_AND_SCALING_INVARIANTS",
+      "expectedEvidenceSchema": "lafea3-bm-s-s3-solver-numerics-evidence/v1",
+      "exitCode": 0,
+      "signal": null,
+      "elapsedMs": 116.484,
+      "stdout": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S3/SOLVER-NUMERICS-INVARIANTS.stdout.log",
+        "sha256": "sha256:166c6c6723509daa6b74832b0c64422ee294bb23f35c451530ad4b072dd469f5"
+      },
+      "stderr": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S3/SOLVER-NUMERICS-INVARIANTS.stderr.log",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedEvidence": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S3/S3-solver-numerics-evidence.json",
+        "sha256": "sha256:d722dfaa68c6402e93deab72b7f59447bd2851896b5454bc3dedff3c9fe8e722"
+      },
+      "status": "PASS"
+    }
+  ],
+  "caseStatus": "PASS",
+  "nextBenchmarkAuthorized": true,
+  "baselineDisposition": "ELIGIBLE_EXECUTION_BASELINE",
+  "stageGate": {
+    "predecessorSelected": true,
+    "predecessorGateSatisfied": true,
+    "executionPass": true,
+    "stageAuthorized": true
+  },
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionMeshQualificationGranted": false,
+    "performanceIsInformational": true
+  },
+  "recordHash": "sha256:6a85a145f13fbcc5bacfed3707a81aa043281847e2417f9649af9e60cb5bd399"
+}

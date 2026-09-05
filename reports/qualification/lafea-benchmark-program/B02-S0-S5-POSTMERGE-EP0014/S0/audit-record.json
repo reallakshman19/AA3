@@ -1,0 +1,118 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
+  "runId": "B02-S0-S5-POSTMERGE-EP0014-S0",
+  "generatedAt": "2026-09-05T12:23:56.505Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "5b1eba060a51cf03ac22f1908f9a07d9098bea46",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "B02",
+  "stageId": "LAFEA.3",
+  "benchmarkStage": "S0",
+  "benchmarkClass": "STAGED_SOLVER_BENCHMARK",
+  "comparisonPolicy": "STAGE_SPECIFIC_INDEPENDENT_ORACLE_AND_INVARIANTS",
+  "methodResults": [
+    {
+      "methodId": "T3-PATCH",
+      "authorityClass": "REGISTERED_PRODUCTION_ROUTE_FALLBACK",
+      "command": [
+        "node",
+        "scripts/lafea-bucket-01-t3-patch-check.mjs"
+      ],
+      "sourceRefHashes": {
+        "scripts/lafea-bucket-01-t3-patch-check.mjs": "sha256:981f44f9e52257b2ed69f5e22df7411b80213c2ba50d7a4fbb5b282f2057fa2b",
+        "validation/bucket-01/04-t3-patch-oracle.json": "sha256:5f6379b2d44307dc77dc01ed8dc861f812261bbdd26b7a9b2a87bb4c34d9f79b"
+      },
+      "oracleAuthority": "FROZEN_CLOSED_FORM_AFFINE_UNIAXIAL_STRESS",
+      "expectedEvidenceSchema": null,
+      "exitCode": 0,
+      "signal": null,
+      "elapsedMs": 188.438,
+      "stdout": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S0/T3-PATCH.stdout.log",
+        "sha256": "sha256:17b6e3869b1b0a2eb4702932138806b87554e87add61b3c8947bfa1a7480232b"
+      },
+      "stderr": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S0/T3-PATCH.stderr.log",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedEvidence": null,
+      "status": "PASS"
+    },
+    {
+      "methodId": "T6-PATCH",
+      "authorityClass": "REGISTERED_PRODUCTION_ROUTE",
+      "command": [
+        "node",
+        "scripts/lafea.3-t6-patch-check.mjs"
+      ],
+      "sourceRefHashes": {
+        "scripts/lafea.3-t6-patch-check.mjs": "sha256:bdb37214c27b82d25df1838a280b5662f0bed76354055deb5adc4b4b9f134f5f"
+      },
+      "oracleAuthority": "ELEMENT_PATCH_INVARIANTS_AND_QUALIFICATION_PROFILE",
+      "expectedEvidenceSchema": null,
+      "exitCode": 0,
+      "signal": null,
+      "elapsedMs": 67.285,
+      "stdout": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S0/T6-PATCH.stdout.log",
+        "sha256": "sha256:cd48e75c9a98071f76b06ce2011719077c8b25d7e6cefb87578fabb7d77c5fa3"
+      },
+      "stderr": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S0/T6-PATCH.stderr.log",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedEvidence": null,
+      "status": "PASS"
+    },
+    {
+      "methodId": "Q8-PATCH",
+      "authorityClass": "REGISTERED_PRODUCTION_ROUTE",
+      "command": [
+        "node",
+        "scripts/lafea.3-q8-patch-check.mjs"
+      ],
+      "sourceRefHashes": {
+        "scripts/lafea.3-q8-patch-check.mjs": "sha256:e26e3048e58d197227903161eaab9131c93e0ee5f71d7cd8d82802fbb7cac82d"
+      },
+      "oracleAuthority": "ELEMENT_PATCH_INVARIANTS_AND_QUALIFICATION_PROFILE",
+      "expectedEvidenceSchema": null,
+      "exitCode": 0,
+      "signal": null,
+      "elapsedMs": 80.688,
+      "stdout": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S0/Q8-PATCH.stdout.log",
+        "sha256": "sha256:a5b5426073879b946e280f7a92208cb90495197d1dbf7290d1cf66b4ac77d2fa"
+      },
+      "stderr": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S0/Q8-PATCH.stderr.log",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedEvidence": null,
+      "status": "PASS"
+    }
+  ],
+  "caseStatus": "PASS",
+  "nextBenchmarkAuthorized": true,
+  "baselineDisposition": "ELIGIBLE_EXECUTION_BASELINE",
+  "stageGate": {
+    "predecessorSelected": true,
+    "predecessorGateSatisfied": true,
+    "executionPass": true,
+    "stageAuthorized": true
+  },
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionMeshQualificationGranted": false,
+    "performanceIsInformational": true
+  },
+  "recordHash": "sha256:283b0921953d0704c3d341d94cde20f3c3fb106645ad3b341786ca9e60160418"
+}

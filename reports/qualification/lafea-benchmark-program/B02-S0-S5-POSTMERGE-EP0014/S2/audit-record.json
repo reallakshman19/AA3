@@ -1,0 +1,72 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
+  "runId": "B02-S0-S5-POSTMERGE-EP0014-S2",
+  "generatedAt": "2026-09-05T12:23:56.505Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "5b1eba060a51cf03ac22f1908f9a07d9098bea46",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "B02",
+  "stageId": "LAFEA.3",
+  "benchmarkStage": "S2",
+  "benchmarkClass": "STAGED_SOLVER_BENCHMARK",
+  "comparisonPolicy": "STAGE_SPECIFIC_INDEPENDENT_ORACLE_AND_INVARIANTS",
+  "methodResults": [
+    {
+      "methodId": "LOAD-PATHS-EXACT-BVP",
+      "authorityClass": "INDEPENDENT_EXACT_BVP",
+      "command": [
+        "node",
+        "scripts/lafea.3-bm-s-s2-load-paths-check.mjs"
+      ],
+      "sourceRefHashes": {
+        "scripts/lafea.3-bm-s-s2-load-paths-check.mjs": "sha256:0ffc68b029ddd2937bdcc4db3efbfde203e10ec156222dfc7452bc172381272a",
+        "scripts/lafea.3-fixtures.mjs": "sha256:9f50762ebfa83560df41c351e868ef9a9bd25669547bbd46b409cd00918d9b4e",
+        "validation/lafea-benchmark-data/B02/oracle/cases.json": "sha256:a870efcbe56d9dfa70d44c275828eb18ec7ce168f3ba5ee4904315b602434a97",
+        "validation/lafea-benchmark-data/B02/oracle/load-path-expected-values.json": "sha256:6d9cbd02b3320fe896b78752c7d6f75a50507984b7bd92bf4d55da2cf57c7f20",
+        "validation/lafea-benchmark-data/B02/oracle/independent-oracle.py": "sha256:abf844ebb32fd5b9d12a90981a1bb800463358cf58ce138ff02b65eb9175617a"
+      },
+      "oracleAuthority": "INDEPENDENT_EXACT_AFFINE_THERMOELASTIC_AND_MANUFACTURED_BOUNDARY_VALUE_PROBLEMS",
+      "expectedEvidenceSchema": "lafea3-bm-s-s2-load-path-evidence/v1",
+      "exitCode": 0,
+      "signal": null,
+      "elapsedMs": 268.498,
+      "stdout": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S2/LOAD-PATHS-EXACT-BVP.stdout.log",
+        "sha256": "sha256:f79c2aba56e82c310226defe4ba8f17d4234b19dbea01255c38acad6421c602f"
+      },
+      "stderr": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S2/LOAD-PATHS-EXACT-BVP.stderr.log",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedEvidence": {
+        "path": "C:\\Users\\reall\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\B02-S0-S5-POSTMERGE-EP0014\\S2/S2-load-path-evidence.json",
+        "sha256": "sha256:ad66f1f43df2908731cc983809980818dabbf448068b5da9e93b192876e24c30"
+      },
+      "status": "PASS"
+    }
+  ],
+  "caseStatus": "PASS",
+  "nextBenchmarkAuthorized": true,
+  "baselineDisposition": "ELIGIBLE_EXECUTION_BASELINE",
+  "stageGate": {
+    "predecessorSelected": true,
+    "predecessorGateSatisfied": true,
+    "executionPass": true,
+    "stageAuthorized": true
+  },
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionMeshQualificationGranted": false,
+    "performanceIsInformational": true
+  },
+  "recordHash": "sha256:c82f3572e08800e5f031f7bb43ba7823891588c4db7f505423cb0302a28ab706"
+}

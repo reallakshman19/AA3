@@ -1,0 +1,98 @@
+{
+  "schema": "lafea3-bm-s-s1-case-evidence/v1",
+  "benchmarkId": "BM-S",
+  "benchmarkStage": "S1",
+  "caseId": "CONT-CYL-01",
+  "oracleRef": "validation/lafea-benchmark-data/B02/oracle/expected-values.json#CONT-CYL-01",
+  "oracleCitation": {
+    "publisher": "CRC Press",
+    "author": "K. L. Richards",
+    "title": "Design Engineer's Handbook",
+    "edition": "1st",
+    "year": 2012,
+    "chapter": "Chapter 6 — Thick Cylinders",
+    "section": "6.3 internally pressurized cylinder boundary conditions",
+    "pages": [
+      157,
+      158
+    ],
+    "equationIdentifiers": [
+      "6.3",
+      "6.4"
+    ],
+    "repositoryQualification": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md#LAFEA3-SRC-LAME-01"
+  },
+  "productionOutputGeneratedExpectedValues": false,
+  "fixedProbeRichardsonGciAuthority": true,
+  "movingFieldMaximumRichardsonGciAuthority": false,
+  "observations": [
+    {
+      "levelId": "L1",
+      "radialElements": 2,
+      "circumferentialElements": 4,
+      "qualificationState": "ACCEPTED",
+      "maxNormalizedFieldError": 0.052028424876803744,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:782d6da6096195e9",
+        "loadCaseInputSemanticHash": "fnv1a64:081b340e130d6608",
+        "resultPayloadSemanticHash": "fnv1a64:22b2fe0542117d95",
+        "executionEvidenceHash": "fnv1a64:4f116ab2e078a886",
+        "qualificationEvidenceHash": "fnv1a64:45ea5e6d18dccb7c"
+      }
+    },
+    {
+      "levelId": "L2",
+      "radialElements": 4,
+      "circumferentialElements": 8,
+      "qualificationState": "ACCEPTED",
+      "maxNormalizedFieldError": 0.018707078809322653,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:98a9c51953295b6d",
+        "loadCaseInputSemanticHash": "fnv1a64:deeffdfd46683ed7",
+        "resultPayloadSemanticHash": "fnv1a64:d57aba41cd9547d0",
+        "executionEvidenceHash": "fnv1a64:e4a52adc1ca0dc15",
+        "qualificationEvidenceHash": "fnv1a64:45ea5e6d18dccb7c"
+      }
+    },
+    {
+      "levelId": "L3",
+      "radialElements": 8,
+      "circumferentialElements": 16,
+      "qualificationState": "ACCEPTED",
+      "maxNormalizedFieldError": 0.00584982478875844,
+      "semanticHashes": {
+        "canonicalModelSemanticHash": "fnv1a64:2ecaa34638090841",
+        "loadCaseInputSemanticHash": "fnv1a64:e89f53f056de95ac",
+        "resultPayloadSemanticHash": "fnv1a64:6270fa98750dd6e5",
+        "executionEvidenceHash": "fnv1a64:55d0c9e68b200055",
+        "qualificationEvidenceHash": "fnv1a64:45ea5e6d18dccb7c"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "checkId": "ALL_LEVELS_ACCEPTED",
+      "accepted": true
+    },
+    {
+      "checkId": "LEVEL_2_IMPROVES",
+      "accepted": true,
+      "actual": 0.018707078809322653,
+      "reference": 0.052028424876803744
+    },
+    {
+      "checkId": "LEVEL_3_IMPROVES",
+      "accepted": true,
+      "actual": 0.00584982478875844,
+      "reference": 0.018707078809322653
+    },
+    {
+      "checkId": "FINE_FIELD_ERROR_WITHIN_LIMIT",
+      "accepted": true,
+      "actual": 0.00584982478875844,
+      "limit": 0.01
+    }
+  ],
+  "status": "PASS",
+  "releaseQualified": false
+}

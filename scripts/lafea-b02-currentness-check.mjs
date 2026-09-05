@@ -37,6 +37,14 @@ assert.equal(projected.identity.meshRevisionHash, H.mesh);
 assert.equal(projected.identity.executionHash, H.execution);
 assert.equal(projected.identity.recoveryHash, H.recovery);
 
+for (const qualification of ['NOT_EVALUATED', 'FAIL', 'PASS']) {
+  const row = projectLafeaWorkbenchCurrentness(withQualification(current, qualification));
+  assert.equal(row.computationalState, 'CURRENT_RESULT');
+  assert.equal(row.qualificationState, qualification);
+  assert.equal(row.currentAuthority, true,
+    `CURRENT_RESULT must remain current when qualification is ${qualification}`);
+}
+
 const materialEdit = structuredClone(current);
 materialEdit.sourceAuthority.sourceHash = H.source2;
 materialEdit.lifecycle.source.sourceHash = H.source2;
@@ -62,6 +70,14 @@ assert.equal(staleMaterial.identity.executionHash, H.execution);
 assert.equal(staleMaterial.identity.recoveryHash, H.recovery);
 assert.equal(staleMaterial.identity.solverConfigHash, current.latestRunTransactionReceipt.solverConfigHash);
 assert.ok(staleMaterial.blockingReasons.includes('CURRENTNESS_CANONICAL_MODEL_NOT_CURRENT'));
+
+for (const qualification of ['NOT_EVALUATED', 'FAIL', 'PASS']) {
+  const row = projectLafeaWorkbenchCurrentness(withQualification(materialEdit, qualification));
+  assert.equal(row.computationalState, 'STALE_RESULT');
+  assert.equal(row.qualificationState, qualification);
+  assert.equal(row.currentAuthority, false,
+    `STALE_RESULT must not gain current authority when qualification is ${qualification}`);
+}
 
 const unrelatedFailure = structuredClone(materialEdit);
 unrelatedFailure.status = 'FAILED';
@@ -175,6 +191,14 @@ assert.match(probeSource, /currentAuthority\s*!==\s*true/u);
 assert.match(probeSource, /computationalState\s*!==\s*'CURRENT_RESULT'/u);
 
 console.log('LAFEA B02 Gate-0 currentness parent derivation passed.');
+
+function withQualification(stage, qualification) {
+  const value = structuredClone(stage);
+  for (const kind of ['EXECUTION', 'RECOVERY']) {
+    value.lifecycle.artifacts[kind].qualification = qualification;
+  }
+  return value;
+}
 
 function currentStage() {
   const preflight = {

@@ -22,7 +22,7 @@ const SIMPLE_MACHINE_CODES = [
   'ABSENT',
 ];
 
-test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async ({ page }) => {
+test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across selectable evidence views', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1058 });
   await page.goto('/');
   await page.locator('[data-application-nav="EMPIRICAL"]').click();
@@ -36,9 +36,15 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async 
   if (await mock.isVisible()) await mock.click();
 
   await expect(root.locator('[data-role="emp1-workflow"]')).toBeVisible();
-  await expect(root.locator('[data-role="emp1-benchmark-evidence-panel"]')).toBeVisible();
   await expect(root.locator('[data-role="emp1-c-bounded-evidence"]')).toBeVisible();
+  await expect(root.locator('[data-role="emp1-evidence-tab"]')).toHaveCount(await root.locator('[data-role="emp1-evidence-tab"]').count());
 
+  const benchmarkTab = root.locator(
+    '[data-role="emp1-evidence-tab"][data-emp1-evidence-view="benchmarkEvidence"]',
+  );
+  await expect(benchmarkTab).toHaveCount(1);
+  await benchmarkTab.click();
+  await expect(root.locator('[data-role="emp1-benchmark-evidence-panel"]')).toBeVisible();
   await expect(root.locator('[data-role="emp1-benchmark-reference-unavailable"]'))
     .toContainText('PV Elite · Reference not available');
   await expect(root).toContainText('Source report has not been retained');
@@ -48,7 +54,37 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async 
   await expect(root.locator('[data-role="emp1-c-bounded-evidence"]')).toContainText('WRC 537 (2013)');
   await expect(root.locator('[data-role="emp1-c-bounded-evidence"]')).toContainText('Not permitted');
 
-  const leaks = await page.evaluate(({ roles, rawBoundarySelector, simpleCodes }) => {
+  const evidenceTabs = root.locator('[data-role="emp1-evidence-tab"]');
+  const evidenceCount = await evidenceTabs.count();
+  expect(evidenceCount).toBeGreaterThanOrEqual(5);
+  const scans = [];
+
+  for (let index = 0; index < evidenceCount; index += 1) {
+    const tab = evidenceTabs.nth(index);
+    const evidenceView = await tab.getAttribute('data-emp1-evidence-view');
+    await tab.click();
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    const leaks = await scanVisibleLeaks(page);
+    scans.push({ evidenceView, leaks });
+  }
+
+  const leaks = scans.flatMap((scan) => scan.leaks.map((leak) => ({
+    evidenceView: scan.evidenceView,
+    ...leak,
+  })));
+  expect(leaks, JSON.stringify(leaks, null, 2)).toEqual([]);
+
+  const technical = root.locator(
+    '[data-role="emp1-c-bounded-evidence"] [data-emp1-raw-technical="true"]',
+  ).first();
+  await expect(technical).toBeVisible();
+  await technical.locator('summary').click();
+  await expect(technical).toContainText('EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP');
+  await expect(technical).toContainText('WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP');
+});
+
+async function scanVisibleLeaks(page) {
+  return page.evaluate(({ roles, rawBoundarySelector, simpleCodes }) => {
     const machineUnderscore = /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b/gu;
     const machineDotted = /\b[A-Z][A-Z0-9]*(?:\.[A-Z0-9]+){2,}\b/gu;
     const simpleMachineCodes = new Set(simpleCodes);
@@ -56,7 +92,8 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async 
 
     const isVisible = (element) => {
       const style = getComputedStyle(element);
-      return style.display !== 'none'
+      return !element.hidden
+        && style.display !== 'none'
         && style.visibility !== 'hidden'
         && element.getClientRects().length > 0;
     };
@@ -87,14 +124,4 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async 
     rawBoundarySelector: RAW_BOUNDARY_SELECTOR,
     simpleCodes: SIMPLE_MACHINE_CODES,
   });
-
-  expect(leaks, JSON.stringify(leaks, null, 2)).toEqual([]);
-
-  const technical = root.locator(
-    '[data-role="emp1-c-bounded-evidence"] [data-emp1-raw-technical="true"]',
-  ).first();
-  await expect(technical).toBeVisible();
-  await technical.locator('summary').click();
-  await expect(technical).toContainText('EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP');
-  await expect(technical).toContainText('WRC537_2013_CYLINDRICAL_ORIGINAL_GAMMA5_TABLE5_ZERO_DP');
-});
+}

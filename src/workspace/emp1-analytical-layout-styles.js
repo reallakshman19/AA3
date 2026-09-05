@@ -5,10 +5,11 @@ export const EMP1_ANALYTICAL_LAYOUT_STYLES = `
 .emp1-analytical-layout__region>[data-emp1-layout-surface]{min-width:0}
 .emp1-analytical-layout__region[data-emp1-layout-region="ACTIVE_TASK"]{grid-column:1}
 .emp1-analytical-layout__region[data-emp1-layout-region="BASIS_RAIL"]{grid-column:2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;overscroll-behavior:contain;padding-right:2px}
-.emp1-analytical-layout__region[data-emp1-layout-region="EVIDENCE_WORKSPACE"]{width:100%;min-width:0}
+.emp1-analytical-layout__region[data-emp1-layout-region="EVIDENCE_WORKSPACE"]{width:100%;min-width:0;max-height:min(72vh,760px);overflow:auto;overscroll-behavior:contain}
 .emp1-analytical-layout__region[data-emp1-layout-region="EVIDENCE_WORKSPACE"]>.lafea-workbench__card,
 .emp1-analytical-layout__region[data-emp1-layout-region="EVIDENCE_WORKSPACE"]>[data-emp1-layout-surface]{max-width:100%;overflow-x:auto}
-.lafea-analytical-calc [data-emp1-layout-surface][hidden]{display:none!important}
+.lafea-analytical-calc [data-emp1-layout-surface][hidden],
+.lafea-analytical-calc .lafea-doc-table-section[hidden]{display:none!important}
 .emp1-task-shell__evidence-tabs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:2px 0}
 .emp1-task-shell__evidence-tabs [data-role="emp1-evidence-tab"]{min-height:34px;padding:6px 10px;border-radius:6px;white-space:nowrap}
 .emp1-task-shell__evidence-tabs [data-role="emp1-evidence-tab"][aria-selected="true"]{font-weight:700;box-shadow:inset 0 -2px currentColor}
@@ -20,11 +21,13 @@ export const EMP1_ANALYTICAL_LAYOUT_STYLES = `
 [data-role="emp1-workflow-compact-status"]{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:6px 0}
 [data-role="emp1-workflow-details"]{margin-top:6px}
 [data-role="emp1-workflow-details"]>summary{cursor:pointer;font-weight:600}
+[data-role="emp1-workflow-details"][open]{max-height:min(62vh,660px);overflow:auto;overscroll-behavior:contain}
 @media(max-width:1050px){
   .emp1-analytical-layout__lanes{grid-template-columns:minmax(0,1fr)}
   .emp1-analytical-layout__region[data-emp1-layout-region="ACTIVE_TASK"],
   .emp1-analytical-layout__region[data-emp1-layout-region="BASIS_RAIL"]{grid-column:1}
-  .emp1-analytical-layout__region[data-emp1-layout-region="BASIS_RAIL"]{position:static;max-height:none;overflow:visible;padding-right:0}
+  .emp1-analytical-layout__region[data-emp1-layout-region="BASIS_RAIL"]{position:static;max-height:min(54vh,560px);overflow:auto;padding-right:0}
+  .emp1-analytical-layout__region[data-emp1-layout-region="EVIDENCE_WORKSPACE"]{max-height:min(68vh,620px)}
   [data-role="emp1-professional-workflow-steps"]>li{flex-basis:112px}
 }
 `;

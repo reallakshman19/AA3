@@ -26,8 +26,6 @@ export function renderEmp1BoundedCorrelationEvidence(root, projection) {
   result.section.dataset.guidedTarget = 'emp1-c-bounded-evidence';
   const c = projection?.steps?.find((step) => step.shortId === 'C');
   const routes = Array.isArray(c?.boundedProductionRoutes) ? c.boundedProductionRoutes : [];
-  result.body.append(element(root, 'p', 'lafea-workbench__section-intro',
-    'C is a governed local shell-correlation step. The bounded route below is real engineering authority only inside its exact runtime domain; global/full-domain EMP.1.C and code-compliance release remain separate and blocked.'));
 
   if (!routes.length) {
     result.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
@@ -35,22 +33,94 @@ export function renderEmp1BoundedCorrelationEvidence(root, projection) {
     return result.section;
   }
 
-  for (const route of routes) {
-    const status = element(root, 'strong', 'lafea-result-highlights__status',
-      route.engineeringUseAuthorized
-        ? 'Bounded route · Engineering use authorized'
-        : 'Bounded route · Engineering use not authorized');
-    status.dataset.role = 'emp1-c-bounded-route-status';
-    status.dataset.authorized = String(route.engineeringUseAuthorized === true);
-    status.dataset.routeId = String(route.routeId ?? 'UNRESOLVED');
-    result.body.append(status);
-    result.body.append(keyValueTable(root, [
-      ['Method', `WRC 537 (${route.method?.edition ?? 'edition unresolved'})`],
-      ['Shell / attachment', `${engineeringTerm(route.scope?.shellFamily)} / ${engineeringTerm(route.scope?.attachmentShape)}`],
-      ['Curve variant', engineeringTerm(route.scope?.variant)],
-      ['γ', route.scope?.gamma],
-      ['β domain', `${engineeringNumber(route.scope?.betaMinimum)} ≤ β ≤ ${engineeringNumber(route.scope?.betaMaximum)}`],
-      ['Differential pressure', route.scope?.differentialPressure],
+  const summary = element(root, 'p', 'lafea-workbench__section-intro',
+    `${routes.length} governed bounded capabilities are registered. Inspect one capability at a time; global EMP.1.C and code-compliance release remain separately governed.`);
+  summary.dataset.role = 'emp1-c-route-capability-summary';
+  result.body.append(summary);
+
+  const tabs = element(root, 'div', null);
+  tabs.dataset.role = 'emp1-c-route-capability-tabs';
+  tabs.setAttribute('role', 'tablist');
+  tabs.setAttribute('aria-label', 'EMP.1.C registered bounded capabilities');
+  const buttons = [];
+  const panels = [];
+  const defaultIndex = Math.max(0, routes.findIndex((route) => route.engineeringUseAuthorized === true));
+
+  routes.forEach((route, index) => {
+    const button = element(root, 'button', null, routeCapabilityLabel(route));
+    button.type = 'button';
+    button.dataset.role = 'emp1-c-route-capability-tab';
+    button.dataset.routeId = String(route.routeId ?? 'UNRESOLVED');
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', 'false');
+    button.tabIndex = index === defaultIndex ? 0 : -1;
+    buttons.push(button);
+    tabs.append(button);
+
+    const panel = renderRouteCapabilityPanel(root, route);
+    panel.hidden = true;
+    panels.push(panel);
+
+    button.addEventListener('click', () => activateRouteCapability(buttons, panels, index));
+    button.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      event.preventDefault();
+      const direction = event.key === 'ArrowRight' ? 1 : -1;
+      const next = (index + direction + buttons.length) % buttons.length;
+      buttons[next]?.focus?.();
+      buttons[next]?.click?.();
+    });
+  });
+
+  result.body.append(tabs, ...panels);
+  activateRouteCapability(buttons, panels, defaultIndex);
+
+  const authorized = routes.find((route) => route.engineeringUseAuthorized) ?? routes[0];
+  const gammaDetails = element(root, 'details', 'lafea-workbench__custody-details');
+  gammaDetails.dataset.role = 'emp1-c-gamma-domain-detail';
+  gammaDetails.append(
+    element(root, 'summary', null, 'Shell parameter domain and curve-selection policy'),
+    renderEmp1GammaDomain(root, {
+      routeGamma: authorized?.scope?.gamma ?? null,
+      requestedGamma: authorized?.scope?.gamma ?? null,
+    }),
+  );
+  result.body.append(gammaDetails);
+  return result.section;
+}
+
+function renderRouteCapabilityPanel(root, route) {
+  const panel = element(root, 'div', null);
+  panel.dataset.role = 'emp1-c-route-capability-panel';
+  panel.dataset.routeId = String(route.routeId ?? 'UNRESOLVED');
+  panel.dataset.authorized = String(route.engineeringUseAuthorized === true);
+  panel.setAttribute('role', 'tabpanel');
+
+  const status = element(root, 'strong', 'lafea-result-highlights__status',
+    route.engineeringUseAuthorized
+      ? 'Engineering use authorized · bounded capability'
+      : 'Engineering use not authorized · comparison capability only');
+  status.dataset.role = 'emp1-c-bounded-route-status';
+  status.dataset.authorized = String(route.engineeringUseAuthorized === true);
+  status.dataset.routeId = String(route.routeId ?? 'UNRESOLVED');
+
+  panel.append(status, keyValueTable(root, [
+    ['Method', `WRC 537 (${route.method?.edition ?? 'edition unresolved'})`],
+    ['Shell / attachment', `${engineeringTerm(route.scope?.shellFamily)} / ${engineeringTerm(route.scope?.attachmentShape)}`],
+    ['Curve variant', engineeringTerm(route.scope?.variant)],
+    ['γ', gammaCapabilityText(route)],
+    ['β domain', betaDomainText(route)],
+    ['Differential pressure', route.scope?.differentialPressure],
+    ['Kn / Kb', `${engineeringNumber(route.scope?.Kn)} / ${engineeringNumber(route.scope?.Kb)}`],
+    ['Interpolation', interpolationCapabilityText(route)],
+    ['Release qualified', yesNo(route.releaseQualified)],
+  ]));
+
+  const authority = element(root, 'details', 'lafea-workbench__custody-details');
+  authority.dataset.role = 'emp1-c-route-detail';
+  authority.append(
+    element(root, 'summary', null, 'Route authority details'),
+    keyValueTable(root, [
       ['WRC load-axis authority', human(route.scope?.cylindricalLoadAxisAuthority)],
       ['WRC +P rule', human(route.scope?.wrcPositivePRule)],
       ['Runtime source-polarity evidence', requiredHuman(
@@ -59,31 +129,71 @@ export function renderEmp1BoundedCorrelationEvidence(root, projection) {
       ['Raw foundation eZ is WRC polarity authority', yesNo(
         route.scope?.rawFoundationRadialHintIsPolarityAuthority,
       )],
-      ['Kn / Kb', `${engineeringNumber(route.scope?.Kn)} / ${engineeringNumber(route.scope?.Kb)}`],
-      ['Interpolation', requiredHuman(
-        route.scope?.interpolationAllowed === false ? 'PROHIBITED' : 'UNRESOLVED',
-      )],
       ['Cross-variant fallback', requiredHuman(
         route.scope?.crossVariantFallbackAllowed === false ? 'PROHIBITED' : 'UNRESOLVED',
       )],
-      ['Release qualified', yesNo(route.releaseQualified)],
-    ]));
-    result.body.append(technicalRouteDetails(root, route));
+      ['Global EMP.1.C authority', yesNo(route.globalEmp1CRouteAuthority)],
+    ]),
+    technicalRouteDetails(root, route),
+  );
 
-    const blocked = element(root, 'div', 'lafea-workbench__authority');
-    blocked.append(element(root, 'strong', null, 'Still blocked outside this bounded route'));
-    const list = element(root, 'ul');
-    (route.remainingBlocked ?? []).forEach((code) => list.append(element(root, 'li', null, human(code))));
-    blocked.append(list);
-    result.body.append(blocked);
+  const blocked = element(root, 'details', 'lafea-workbench__authority');
+  blocked.dataset.role = 'emp1-c-route-limitations';
+  const blockedValues = route.remainingBlocked ?? [];
+  blocked.append(element(root, 'summary', null,
+    `Route limitations (${blockedValues.length})`));
+  const list = element(root, 'ul');
+  blockedValues.forEach((code) => list.append(element(root, 'li', null, human(code))));
+  blocked.append(list);
+  panel.append(authority, blocked);
+  return panel;
+}
+
+function activateRouteCapability(buttons, panels, index) {
+  buttons.forEach((button, candidate) => {
+    const selected = candidate === index;
+    button.setAttribute('aria-selected', String(selected));
+    button.tabIndex = selected ? 0 : -1;
+  });
+  panels.forEach((panel, candidate) => {
+    const selected = candidate === index;
+    panel.hidden = !selected;
+    panel.dataset.emp1RouteCapabilityActive = String(selected);
+  });
+}
+
+function routeCapabilityLabel(route) {
+  if (Number.isFinite(route.scope?.gamma)) {
+    return `γ ${engineeringNumber(route.scope.gamma)} exact · ${route.engineeringUseAuthorized ? 'Authorized' : 'Not authorized'}`;
   }
+  return route.engineeringUseAuthorized
+    ? 'Variable γ · Authorized'
+    : 'Interpolated γ · Comparison only';
+}
 
-  const authorized = routes.find((route) => route.engineeringUseAuthorized) ?? routes[0];
-  result.body.append(renderEmp1GammaDomain(root, {
-    routeGamma: authorized?.scope?.gamma ?? null,
-    requestedGamma: authorized?.scope?.gamma ?? null,
-  }));
-  return result.section;
+function gammaCapabilityText(route) {
+  if (Number.isFinite(route.scope?.gamma)) return `${engineeringNumber(route.scope.gamma)} · exact tabulated row`;
+  const rows = Array.isArray(route.scope?.tabulatedGammaRows) ? route.scope.tabulatedGammaRows : [];
+  return rows.length ? `Between tabulated rows: ${rows.join(', ')}` : 'Unresolved';
+}
+
+function betaDomainText(route) {
+  const minimum = route.scope?.betaMinimum;
+  const maximum = route.scope?.betaMaximum;
+  if (Number.isFinite(minimum) && Number.isFinite(maximum)) {
+    return `${engineeringNumber(minimum)} ≤ β ≤ ${engineeringNumber(maximum)}`;
+  }
+  return human(route.scope?.betaDomainBasis ?? 'UNRESOLVED');
+}
+
+function interpolationCapabilityText(route) {
+  if (route.scope?.interpolationAllowed === false) return 'Not permitted';
+  if (route.scope?.interpolationAllowed === true) {
+    return route.engineeringUseAuthorized
+      ? 'Permitted by governing route authority'
+      : 'Comparison-qualified policy; engineering use not authorized';
+  }
+  return 'Unresolved';
 }
 
 export function renderEmp1CorrelationResultEvidence(root, localCorrelation) {
@@ -179,27 +289,50 @@ function renderStageA(root, stage) {
   result.section.dataset.role = 'emp1-a-engineering-custody';
   const execution = retainedResult(stage);
   if (!execution) {
-    result.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
-      'Run EMP.1.A to retain transformed resultants, target-reference and coordinate-frame evidence.'));
+    const status = element(root, 'strong', 'lafea-result-highlights__status', 'EMP.1.A custody · Not retained');
+    status.dataset.role = 'emp1-a-custody-status';
+    result.body.append(
+      status,
+      element(root, 'p', 'lafea-workbench__section-intro',
+        'Run EMP.1.A to retain transformed resultants, target reference and coordinate frame.'),
+    );
     return result.section;
   }
+
   const frame = execution.coordinateSystemEvidence ?? {};
-  result.body.append(element(root, 'p', 'lafea-workbench__section-intro',
-    'These vectors are retained calculation evidence. EMP.1.C uses retained vessel-axis and load-reference geometry to derive WRC polarity; foundation eZ is only a radial line and cannot by itself define WRC +P. This view cannot override either authority.'));
-  result.body.append(sectionHeading(root, 'Retained coordinate basis'));
-  result.body.append(keyValueTable(root, [
+  const loadCases = execution.transformedLoadCases ?? [];
+  const pressureRows = execution.pressureStressResults ?? [];
+  const status = element(root, 'strong', 'lafea-result-highlights__status', 'EMP.1.A custody · Retained');
+  status.dataset.role = 'emp1-a-custody-status';
+  result.body.append(status, keyValueTable(root, [
     ['Coordinate system', frame.identity],
-    ['Origin global', vectorText(frame.originGlobal)],
-    ['eX — pipe/vessel axis', vectorText(frame.axesGlobal?.eX)],
-    ['eY — circumferential axis', vectorText(frame.axesGlobal?.eY)],
-    ['eZ — radial line, polarity not WRC authority', vectorText(frame.axesGlobal?.eZ)],
-    ['Handedness', frame.handedness],
-    ['Orthogonality residual', frame.orthogonalityResidual],
+    ['Transformed load cases', loadCases.length],
+    ['Pressure results', pressureRows.length],
+    ['WRC polarity authority from raw foundation eZ', 'No'],
   ]));
-  result.body.append(sectionHeading(root, 'Transferred load cases'));
-  result.body.append(loadCaseTable(root, execution.transformedLoadCases ?? []));
-  result.body.append(sectionHeading(root, 'Pressure disposition'));
-  result.body.append(pressureTable(root, execution.pressureStressResults ?? []));
+
+  const details = element(root, 'details', 'lafea-workbench__custody-details');
+  details.dataset.role = 'emp1-a-custody-detail';
+  details.append(
+    element(root, 'summary', null, 'Retained load / reference / axis detail'),
+    element(root, 'p', 'lafea-workbench__section-intro',
+      'These vectors are retained calculation evidence. EMP.1.C derives WRC polarity from source-qualified vessel-axis and load-reference geometry; foundation eZ is only a radial line.'),
+    sectionHeading(root, 'Retained coordinate basis'),
+    keyValueTable(root, [
+      ['Coordinate system', frame.identity],
+      ['Origin global', vectorText(frame.originGlobal)],
+      ['eX — pipe/vessel axis', vectorText(frame.axesGlobal?.eX)],
+      ['eY — circumferential axis', vectorText(frame.axesGlobal?.eY)],
+      ['eZ — radial line, polarity not WRC authority', vectorText(frame.axesGlobal?.eZ)],
+      ['Handedness', frame.handedness],
+      ['Orthogonality residual', frame.orthogonalityResidual],
+    ]),
+    sectionHeading(root, 'Transferred load cases'),
+    loadCaseTable(root, loadCases),
+    sectionHeading(root, 'Pressure disposition'),
+    pressureTable(root, pressureRows),
+  );
+  result.body.append(details);
   return result.section;
 }
 
@@ -216,8 +349,6 @@ function renderStageB(root, stage, projection) {
   status.dataset.role = 'emp1-b-engineering-currentness';
   status.dataset.state = currentness;
   result.body.append(status);
-  result.body.append(element(root, 'p', 'lafea-workbench__section-intro',
-    'B retains its own screening cases and evaluation locations, but OD/thickness and A resultants remain traceable to the exact retained A model/result.'));
 
   if (!model) {
     result.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
@@ -227,31 +358,44 @@ function renderStageB(root, stage, projection) {
   const ro = section?.outerRadius ?? model.pipeGeometry?.outsideDiameter?.value / 2;
   const t = section?.assessmentPipeThickness ?? model.thicknessBasis?.assessmentPipeThickness?.value;
   const rm = Number.isFinite(ro) && Number.isFinite(t) ? ro - t / 2 : null;
-  result.body.append(sectionHeading(root, 'Section geometry lineage'));
   result.body.append(keyValueTable(root, [
     ['Pipe OD', model.pipeGeometry?.outsideDiameter?.value],
     ['Assessment thickness T', t],
-    ['Outer radius', ro],
-    ['Inner radius', section?.innerRadius],
-    ['Mean radius Rm = Ro − T/2', rm],
-    ['OD source', section?.sourceReferences?.outsideDiameter ?? model.pipeGeometry?.outsideDiameter?.sourceRef],
-    ['Thickness source', section?.sourceReferences?.assessmentPipeThickness ?? model.thicknessBasis?.assessmentPipeThickness?.sourceRef],
+    ['Mean radius Rm', rm],
+    ['Retained screening result', execution ? 'Available' : 'Not retained'],
   ]));
-  result.body.append(sectionHeading(root, 'Retained ancestry'));
-  result.body.append(keyValueTable(root, [
-    ['Foundation model hash', model.semanticHash],
-    ['Foundation result hash', source?.foundationResult?.semanticHashes?.resultPayloadSemanticHash],
-    ['Screening request hash', stage?.document?.semanticHash],
-    ['Screening result hash', execution?.semanticHashes?.screeningResultPayloadSemanticHash],
-  ]));
+
+  const details = element(root, 'details', 'lafea-workbench__custody-details');
+  details.dataset.role = 'emp1-b-custody-detail';
+  details.append(
+    element(root, 'summary', null, 'Geometry lineage and retained ancestry'),
+    sectionHeading(root, 'Section geometry lineage'),
+    keyValueTable(root, [
+      ['Pipe OD', model.pipeGeometry?.outsideDiameter?.value],
+      ['Assessment thickness T', t],
+      ['Outer radius', ro],
+      ['Inner radius', section?.innerRadius],
+      ['Mean radius Rm = Ro − T/2', rm],
+      ['OD source', section?.sourceReferences?.outsideDiameter ?? model.pipeGeometry?.outsideDiameter?.sourceRef],
+      ['Thickness source', section?.sourceReferences?.assessmentPipeThickness ?? model.thicknessBasis?.assessmentPipeThickness?.sourceRef],
+    ]),
+    sectionHeading(root, 'Retained ancestry'),
+    keyValueTable(root, [
+      ['Foundation model hash', model.semanticHash],
+      ['Foundation result hash', source?.foundationResult?.semanticHashes?.resultPayloadSemanticHash],
+      ['Screening request hash', stage?.document?.semanticHash],
+      ['Screening result hash', execution?.semanticHashes?.screeningResultPayloadSemanticHash],
+    ]),
+  );
   if (execution?.limitations?.length) {
-    const limits = element(root, 'div', 'lafea-workbench__authority');
-    limits.append(element(root, 'strong', null, 'Screening limitations retained'));
+    const limits = element(root, 'details', 'lafea-workbench__authority');
+    limits.append(element(root, 'summary', null, `Screening limitations (${execution.limitations.length})`));
     const list = element(root, 'ul');
     execution.limitations.forEach((value) => list.append(element(root, 'li', null, human(value))));
     limits.append(list);
-    result.body.append(limits);
+    details.append(limits);
   }
+  result.body.append(details);
   return result.section;
 }
 

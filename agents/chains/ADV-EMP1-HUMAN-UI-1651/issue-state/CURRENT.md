@@ -3,17 +3,17 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 UPDATED_AT: 2026-09-05
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0002_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549976572
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550120393
 
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 BRANCH: agent/emp1-human-ui-1651-prework
 PR: 1655
 PR_STATUS: OPEN_DRAFT_LEG001_SOURCE_COMPLETE_EXECUTION_NOT_RUN
 PR_BASE: main
-PR_HEAD_OBSERVED: 94a20ac1e7a6fe38ce84f93d7d77a1343776e096
+PR_HEAD_OBSERVED: 7eaac721e82339e6b4a024f979812b01df7a2367
 MAIN_HEAD_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MERGEABILITY: MERGEABLE
 REVIEWS: 0
@@ -116,4 +116,4 @@ NOT_RUN — executable validation:
 Execution reason: no faithful Advanced_Analysis checkout/project-local Node+Playwright runner is available through this session. GitHub reported zero statuses and zero pull-request workflow runs on material head `6346ca4d...`. This remains NOT_RUN, not PASS.
 
 CURRENT_BLOCKER: none for chain custody; LEG-002 material coding requires a new exact Owner progression command. Executable LEG-001 validation remains externally unavailable in this session.
-EXACT_NEXT_ACTION: after EP-0002 Issue synchronization, Owner sends `proceed next` to execute LEG-002: generalize the governed table renderer and render Pressure as 5 identities × Internal/External while preserving 10 governed scalar cells and per-cell custody. Do not merge.
+EXACT_NEXT_ACTION: Owner sends `proceed next` to execute LEG-002: generalize the governed table renderer and render Pressure as 5 identities × Internal/External while preserving 10 governed scalar cells and per-cell custody. Do not merge.

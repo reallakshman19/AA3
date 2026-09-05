@@ -401,10 +401,17 @@ function checkWorkbench(stageId, profile) {
   assert.equal(vm.actions.canRun, false);
   assert.equal(vm.actions.manualRefinementEnabled, false);
   const retainedHash = workbench.selectRetainedAnalysisMeshEvidenceV2(stageId).artifactHash;
-  assert.equal(workbench.refineAnalysisMesh({
-    targetType: 'ELEMENT', targetIds: ['E000001'], targetElementLength: 8, lengthUnit: 'mm',
-  }, stageId), null);
-  assert.equal(workbench.getState().diagnostics?.[0]?.code, 'LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED');
+  if (stageId === 'LAFEA.4') {
+    assert.equal(vm.refinement?.applicable, true);
+    assert.equal(vm.refinement?.scopeEligible, true);
+    assert.equal(vm.refinement?.productQualified, false);
+    assert.equal(vm.refinement?.canRefine, false);
+  } else {
+    assert.equal(workbench.refineAnalysisMesh({
+      targetType: 'ELEMENT', targetIds: ['E000001'], targetElementLength: 8, lengthUnit: 'mm',
+    }, stageId), null);
+    assert.equal(workbench.getState().diagnostics?.[0]?.code, 'LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED');
+  }
   assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId).artifactHash, retainedHash);
   workbench.initializeLifecycle(NEXT_SOURCE_HASH, `CURVED-HOLE-${stageId}-SOURCE-CHANGE`);
   stage = workbench.getState().stages[stageId];

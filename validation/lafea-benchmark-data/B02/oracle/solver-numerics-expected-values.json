@@ -1,0 +1,119 @@
+{
+  "schema": "lafea-b02-s3-solver-numerics-expected-values/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "authority": {
+    "class": "INDEPENDENT_LINEAR_ELASTICITY_EQUILIBRIUM_ENERGY_AND_METAMORPHIC_INVARIANTS",
+    "productionImports": [],
+    "productionOutputUsed": false,
+    "productionOutputMayModifyExpectedValues": false,
+    "productionOutputMayModifyAcceptance": false,
+    "conditioningMetricsAreDiagnosticOnly": true
+  },
+  "acceptance": {
+    "policyOrigin": "RESIDUAL_REACTION_ENERGY_USE_CURRENT_PRODUCTION_TOLERANCES; LINEAR_RELATIONS_MOVE_PRE_EXISTING_LAFEA3_SOLVER_CHECK_CLOSE_WITHOUT_RELAXATION; SCALING_LIMITS_MOVE_PRE_EXISTING_LAFEA11_SCALING_REVERSIBILITY_CHECK_WITHOUT_RELAXATION",
+    "linearRelationRelativeTolerance": 1e-8,
+    "linearRelationScaleFloor": 1,
+    "scalingReversibilityRelativeTolerance": 1e-10,
+    "scaledDiagonalAbsoluteTolerance": 1e-9,
+    "freeDofResidualToleranceOwner": "loadCase.equilibrium.freeDofTolerance",
+    "reactionEquilibriumToleranceOwner": "loadCase.equilibrium.reactionEquilibriumTolerance",
+    "energyReconstructionToleranceOwner": "loadCase.energyQualification.tolerance",
+    "conditioningPassThreshold": null
+  },
+  "cases": [
+    {
+      "caseId": "SOLVER-EQUILIBRIUM-ENERGY-01",
+      "kind": "INDEPENDENT_STATIC_AND_CLAPEYRON_IDENTITIES",
+      "inputs": {
+        "widthMm": 100,
+        "heightMm": 50,
+        "thicknessMm": 10,
+        "elasticModulusMPa": 200000,
+        "poissonRatio": 0.3,
+        "tractionXMPa": 10,
+        "formulation": "PLANE_STRESS"
+      },
+      "derivation": {
+        "appliedResultantX": "tractionX*height*thickness",
+        "reactionResultantX": "-appliedResultantX",
+        "epsilonX": "tractionX/E",
+        "epsilonY": "-nu*tractionX/E",
+        "rightEdgeUx": "epsilonX*width",
+        "topEdgeUy": "epsilonY*height",
+        "volume": "width*height*thickness",
+        "strainEnergy": "0.5*tractionX*epsilonX*volume",
+        "externalWork": "appliedResultantX*rightEdgeUx",
+        "clapeyron": "externalWork=2*strainEnergy for zero prescribed-displacement work"
+      },
+      "derived": {
+        "appliedResultantN": {"x": 5000, "y": 0},
+        "reactionResultantN": {"x": -5000, "y": 0},
+        "epsilonX": 0.00005,
+        "epsilonY": -0.000015,
+        "rightEdgeUxMm": 0.005,
+        "topEdgeUyMm": -0.00075,
+        "volumeMm3": 50000,
+        "strainEnergyNmm": 12.5,
+        "externalWorkNmm": 25,
+        "externalWorkOverTwoStrainEnergy": 1
+      }
+    },
+    {
+      "caseId": "SOLVER-LINEAR-SCALING-01",
+      "kind": "LINEAR_LOAD_SCALING",
+      "inputs": {
+        "load1FxN": 1000,
+        "load2FxN": -500
+      },
+      "derivation": {
+        "responseFactor": "load2Fx/load1Fx",
+        "strainEnergyFactor": "responseFactor^2"
+      },
+      "derived": {
+        "responseFactor": -0.5,
+        "strainEnergyFactor": 0.25
+      }
+    },
+    {
+      "caseId": "SOLVER-SUPERPOSITION-01",
+      "kind": "INDEPENDENT_LOAD_SUPERPOSITION",
+      "inputs": {
+        "loadA": {"nodeId": "B", "fxN": 1000, "fyN": 0},
+        "loadB": {"nodeId": "C", "fxN": 0, "fyN": -750},
+        "combined": "A_PLUS_B"
+      },
+      "derivation": {
+        "displacement": "u(A+B)=u(A)+u(B)",
+        "stress": "sigma(A+B)=sigma(A)+sigma(B)",
+        "reaction": "R(A+B)=R(A)+R(B)"
+      },
+      "derived": {
+        "displacementCombination": [1, 1],
+        "stressCombination": [1, 1],
+        "reactionCombination": [1, 1]
+      }
+    },
+    {
+      "caseId": "SOLVER-DIAGONAL-SCALING-01",
+      "kind": "METAMORPHIC_SCALING_REVERSIBILITY",
+      "inputs": {
+        "matrix": [
+          [100000, 10, 0, 2],
+          [10, 8, 0.5, 0],
+          [0, 0.5, 0.05, 0.001],
+          [2, 0, 0.001, 12]
+        ],
+        "rightHandSide": [1, 2, 3, 4],
+        "factorizationTolerance": 1e-16
+      },
+      "derivation": {
+        "invariant": "undoDiagonalScaling(solve(DAD,Db),D)=solve(A,b)",
+        "scaledDiagonal": "diag(DAD)=1"
+      },
+      "derived": {
+        "maximumRelativeSolutionDifferenceLimit": 1e-10,
+        "maximumScaledDiagonalAbsoluteErrorLimit": 1e-9
+      }
+    }
+  ]
+}

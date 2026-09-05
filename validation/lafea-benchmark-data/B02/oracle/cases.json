@@ -87,7 +87,38 @@
       "elementFamily": "T3",
       "loadType": "IMPOSED_DISPLACEMENT",
       "oracle": "EXACT_AFFINE_LINEAR_ELASTIC_FIELD"
+    },
+    {
+      "caseId": "SOLVER-EQUILIBRIUM-ENERGY-01",
+      "benchmarkStage": "S3",
+      "title": "Patch equilibrium, reactions and Clapeyron energy identity",
+      "formulation": "PLANE_STRESS",
+      "elementFamily": "T3",
+      "oracle": "INDEPENDENT_STATIC_EQUILIBRIUM_AND_LINEAR_ELASTIC_ENERGY"
+    },
+    {
+      "caseId": "SOLVER-LINEAR-SCALING-01",
+      "benchmarkStage": "S3",
+      "title": "Signed load scaling and quadratic strain-energy scaling",
+      "formulation": "PLANE_STRESS",
+      "elementFamily": "T3",
+      "oracle": "LINEAR_ELASTIC_RESPONSE_SCALING"
+    },
+    {
+      "caseId": "SOLVER-SUPERPOSITION-01",
+      "benchmarkStage": "S3",
+      "title": "Two independent nodal load patterns and their combined response",
+      "formulation": "PLANE_STRESS",
+      "elementFamily": "T3",
+      "oracle": "LINEAR_ELASTIC_SUPERPOSITION"
+    },
+    {
+      "caseId": "SOLVER-DIAGONAL-SCALING-01",
+      "benchmarkStage": "S3",
+      "title": "Diagonal scaling solve/unscale reversibility",
+      "solverLayer": "SHARED_LINEAR_SOLVE",
+      "oracle": "METAMORPHIC_PHYSICAL_SOLUTION_INVARIANCE"
     }
   ],
-  "scopeNote": "S1 BVPs isolate solver/element behavior from production meshing. S2 exact BVPs isolate each load construction path while retaining independent kinematic/equilibrium/constitutive ownership of expected fields. No case qualifies production mesh generation."
+  "scopeNote": "S1 BVPs isolate solver/element behavior from production meshing. S2 exact BVPs isolate each load construction path. S3 adds independent equilibrium/energy identities and linear/metamorphic solver invariants without creating conditioning or performance authority. No case qualifies production mesh generation or release use."
 }

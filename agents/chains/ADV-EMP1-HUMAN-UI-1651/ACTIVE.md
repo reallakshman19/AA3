@@ -20,7 +20,8 @@ PR_STATUS: MERGED
 PR_HEAD_AT_MERGE: d6a84eaae29d2c0d198f09981a51f9b885f3d200
 PR_MERGE_COMMIT: 4436dc3c3590d1afd40ba20f74380f442fb32935
 POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-postmerge-reconciliation
-POST_MERGE_RECONCILIATION_PR: PENDING_CREATION
+POST_MERGE_RECONCILIATION_PR: 1668
+POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY
 MAIN_HEAD_OBSERVED_PRE_RECONCILIATION: 4436dc3c3590d1afd40ba20f74380f442fb32935
 MERGEABILITY: NOT_APPLICABLE_POST_MERGE
 REVIEWS: 1
@@ -41,24 +42,24 @@ WRITE_AUTHORITY_REASON: external human/browser acceptance remains NOT_RUN; no so
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-MERGE_AUTHORIZATION_DISPOSITION: PR_1660_AUTHORIZATION_CONSUMED
+MERGE_AUTHORIZATION_DISPOSITION: PR_1660_AUTHORIZATION_CONSUMED; PR_1668_NOT_AUTHORIZED
 AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
 CUSTODY_EPOCH: 17
-COORDINATION_STATE: POST_MERGE_RECONCILIATION_IN_PROGRESS
-POST_BASIS_DRIFT: PR_1660_MERGE_RECONCILED; MAIN_PROTECTION_REQUIRES_CONTROL_PLANE_PR
+COORDINATION_STATE: POST_MERGE_RECONCILIATION_PR_OPEN
+POST_BASIS_DRIFT: PR_1660_MERGE_RECONCILED; MAIN_PROTECTION_REQUIRES_PR_1668
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0013
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551850304
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551942376
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual giant waterfall with task-shell UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551851245
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551943368
 OWNER_TEXT_OBSERVED: `please proceed!`
 OWNER_PROGRESSION_COMMAND: NONE
 OWNER_MERGE_COMMAND: MERGE_PR_1660_ALREADY_CONSUMED
@@ -85,5 +86,5 @@ VALIDATION_LIVE_UX: RECOVERY_MERGED_NOT_YET_REOBSERVED
 VALIDATION_NOT_RUN_LEG008: focused static task-shell checks at frozen head; desktop/narrow audit; full-page human-factor observation; trusted keyboard observation; check:imports; build; git diff --check.
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remained blocked because project-local Chromium was unavailable; zero workflow runs/status contexts are not PASS.
 AUTHORITY_BOUNDARY: no post-merge product/source mutation. No WRC/Pressure mechanics, retained benchmark values/tolerance/source authority, route/code-release authority, roadmap, or workflow-YAML change.
-CURRENT_BLOCKER: no product/source blocker. Main branch protection requires post-merge custody reconciliation to land through a separate PR; human-factor acceptance remains external and NOT_RUN.
-EXACT_NEXT_ACTION: synchronize EP-0013 to #1651/#1664, open the control-plane-only reconciliation PR, and await explicit Owner merge authorization for that new PR. Manual localhost acceptance may proceed independently and returned evidence can be recorded without a progression command.
+CURRENT_BLOCKER: no product/source blocker. Default-branch custody remains stale until control-plane-only PR #1668 is merged; recovered human-factor acceptance also remains external and NOT_RUN.
+EXACT_NEXT_ACTION: Owner may merge PR #1668 when desired. Manual localhost acceptance may proceed independently; returned evidence can be recorded without a progression command. A new source-changing recovery leg requires a new governing progression command.

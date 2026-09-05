@@ -28,10 +28,10 @@ assert.deepEqual(EMP1_ANALYTICAL_SURFACE_ORDER, expectedOrder,
 assert.deepEqual(Object.keys(EMP1_ANALYTICAL_SURFACE_PLACEMENT).sort(), [...expectedOrder].sort(),
   'every baseline surface must have exactly one declared placement');
 
-const regionCounts = Object.groupBy(
-  emp1AnalyticalLayoutPlacementManifest(),
-  (entry) => entry.regionId,
-);
+const regionCounts = {};
+for (const entry of emp1AnalyticalLayoutPlacementManifest()) {
+  (regionCounts[entry.regionId] ??= []).push(entry);
+}
 assert.equal(regionCounts.WORKFLOW.length, 1);
 assert.equal(regionCounts.PRIMARY_WORK.length, 4);
 assert.equal(regionCounts.ENGINEERING_BASIS.length, 5);

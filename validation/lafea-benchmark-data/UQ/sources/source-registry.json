@@ -1,0 +1,52 @@
+{
+  "schema": "lafea-uq-source-registry/v1",
+  "issue": 1673,
+  "stage": "U1",
+  "definitionState": "SOURCE_AUTHORITY_GAP_CONFIRMED",
+  "numericStochasticSourceCount": 0,
+  "statisticalExecutionAuthorized": false,
+  "sources": [
+    {
+      "sourceId": "SRC-UQ-METHOD-ASME-VVUQ-10-2",
+      "sourceClass": "METHODOLOGY_ONLY",
+      "authorityRef": "Issue #1673 governing reference: ASME VVUQ 10.2",
+      "purpose": "uncertainty-quantification and validation methodology",
+      "numericStochasticParameterAuthority": false
+    },
+    {
+      "sourceId": "SRC-UQ-METHOD-NASA-STD-7009B",
+      "sourceClass": "METHODOLOGY_ONLY",
+      "authorityRef": "Issue #1673 governing reference: NASA-STD-7009B",
+      "purpose": "model credibility, acceptance-criteria and uncertainty-governance methodology",
+      "numericStochasticParameterAuthority": false
+    },
+    {
+      "sourceId": "SRC-UQ-METHOD-NIST-TN-1297",
+      "sourceClass": "METHODOLOGY_ONLY",
+      "authorityRef": "Issue #1673 governing reference: NIST TN 1297 section 6",
+      "purpose": "measurement-uncertainty reporting methodology",
+      "numericStochasticParameterAuthority": false
+    },
+    {
+      "sourceId": "SRC-UQ-DETERMINISTIC-B02A",
+      "sourceClass": "DETERMINISTIC_BENCHMARK_NOMINAL_ONLY",
+      "repositoryRef": "validation/lafea-b02-definitions/B02A-nonuniform-bending.json",
+      "purpose": "deterministic benchmark definition and production-route trace",
+      "numericStochasticParameterAuthority": false
+    },
+    {
+      "sourceId": "SRC-UQ-LAFEA3-PRODUCTION-CONTRACT",
+      "sourceClass": "DETERMINISTIC_PRODUCTION_CONTRACT_ONLY",
+      "repositoryRef": "scripts/lib/lafea-b02-production-route.mjs",
+      "purpose": "identify current material, geometry, load and provenance semantics",
+      "numericStochasticParameterAuthority": false
+    }
+  ],
+  "authorityRules": [
+    "A deterministic nominal value is not a stochastic population model.",
+    "A sourceReference or source hash proves provenance identity, not probability distribution or scatter.",
+    "Methodology standards may govern how uncertainty is treated without supplying numerical stochastic parameters for a specific material, geometry, load or boundary condition.",
+    "No production FEA output may create or calibrate its own expected stochastic source model without separately retained independent evidence.",
+    "If no source with numericStochasticParameterAuthority=true exists for an input, that input remains blocked for production uncertainty propagation."
+  ]
+}

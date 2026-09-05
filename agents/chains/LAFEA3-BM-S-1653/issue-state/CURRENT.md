@@ -1,79 +1,92 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0010
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1653
 CHAIN_ID: LAFEA3-BM-S-1653
 UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550668269
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550934140
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
 
 ## Original task / acceptance ledger
 
-TASK-001 | Retain first audited B01 program record | NOT_RUN | faithful runtime unavailable
-TASK-002 | Create B02 benchmark-data package | IMPLEMENTED_NOT_EXECUTED | LEG-001 merged by PR #1657
-TASK-003 | Externalize cited Lamé/Kirsch oracle values and tolerances | IMPLEMENTED_NOT_EXECUTED | LEG-001 merged by PR #1657; no tolerance relaxation
-TASK-004 | Retain machine-readable S0-S5 evidence | DEFINITION_COMPLETE_NOT_EXECUTED | S1-S3 merged; S4-S5 in Draft PR #1661
-TASK-005 | Freeze exact S4 rejection codes | IMPLEMENTED_NOT_EXECUTED | nine exact first-failure boundary/state/code cases
-TASK-006 | Implement staged BM-S runner | DEFINITION_COMPLETE_NOT_EXECUTED | generic gated runner merged; S0-S5 definition READY
-TASK-007 | Activate B02 READY / remove from futureQueue | BLOCKED_BY_EXECUTION | B01 audited PASS required; current B01 record NOT_RUN
-TASK-008 | Preserve release authority false | PRESERVED | manifest/runner/program evidence retain false
+TASK-001 | Retain first audited B01 program record | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN | owner exact-head `47b08857...` PASS; final synchronized head changed by checker/custody repair
+TASK-002 | Create B02 benchmark-data package | IMPLEMENTED | LEG-001 merged by PR #1657
+TASK-003 | Externalize cited Lamé/Kirsch oracle values and tolerances | IMPLEMENTED | no tolerance relaxation
+TASK-004 | Retain machine-readable S0-S5 evidence | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN | S0-S5 all PASS on `47b08857...`; S4-S5 definitions in Draft PR #1661
+TASK-005 | Freeze exact S4 rejection codes | PASS_ON_OWNER_HEAD | nine exact first-failure boundary/state/code cases all PASS
+TASK-006 | Implement staged BM-S runner | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN | S0-S5 staged runner PASS, nextBenchmarkAuthorized=true
+TASK-007 | Activate B02 READY / remove from futureQueue | BLOCKED_PENDING_FINAL_HEAD_PASS_AND_OWNER_AUTHORITY | program.json unchanged
+TASK-008 | Preserve release authority false | PRESERVED | releaseQualified false throughout
+
+## Owner executable evidence — exact head 47b08857d6335c43a5624f4c4368cad909e25a66
+
+NODE_VERSION: v26.3.0
+TRACKED_TREE_CLEAN: TRUE
+S4_DIRECT_EXECUTOR: PASS
+S5_DIRECT_EXECUTOR: PASS
+B01_AUDITED_PROGRAM: PASS
+B01_NEXT_BENCHMARK_AUTHORIZED: TRUE
+B01_RECORD_HASH: sha256:56e718138622fe9ed9ca4d71b5abe37d8beb28ccae6dac46deb0278c33e6abc9
+B02_S0_TO_S5_STAGED: PASS
+B02_NEXT_BENCHMARK_AUTHORIZED: TRUE
+S0_RECORD_HASH: sha256:6cf51e852ddffbb72c53867f9229066f19bf4e2faeafc45ffac17ed15c9cc02a
+S1_RECORD_HASH: sha256:14a166a7345e8c0071052be2af47b36167eed3de9ba0b8a19e767ff9958d897d
+S2_RECORD_HASH: sha256:53780627c8ee24a1e95ea4068feed8435823b1708a7f9c78e18f0134ad9e7ef2
+S3_RECORD_HASH: sha256:80d456fdfcd42ab13786a1364acf741abdaeb1884bb15cc2d7f048de1972de3f
+S4_RECORD_HASH: sha256:bd5f64708d2f1b1b92cb66993ac5d4222f37d6432904f00b222cad645e911b7b
+S5_RECORD_HASH: sha256:06e392b13cb3b34239801a3f680044c549ac5a9629500d5c8c6988bb9e5ecf58
+RELEASE_AUTHORITY_GRANTED: FALSE
+
+## Definition-checker compatibility repair
+
+PRE_REPAIR_DEFINITION_CHECK: FAIL_INFRA_CHECKER_COMPATIBILITY
+FAILURE: Node v26 rejected explicit undefined third assertion argument after successful independent Python oracle subprocess
+FIRST_WRONG_BOUNDARY: `scripts/lafea.3-solver-benchmark-definition-check.mjs` assertion diagnostic plumbing
+LEG_006_MATERIAL_HEAD: 5acd8462d168a46bac7dd2e1ac9a87bc95a5dbab
+SAFE_PATCH: guaranteed fallback diagnostic string only
+PRODUCTION_SRC_CHANGED: FALSE
+ORACLE_VALUES_CHANGED: FALSE
+TOLERANCES_CHANGED: FALSE
+STAGE_CRITERIA_CHANGED: FALSE
+PROGRAM_JSON_CHANGED: FALSE
 
 ## Benchmark / oracle ledger
 
-BM-001 | S0 B01 element/patch | READY_EXECUTOR_NOT_RUN
-BM-002 | S1 Lamé | IMPLEMENTED_NOT_RUN
-BM-003 | S1 Kirsch | IMPLEMENTED_NOT_RUN
-BM-004 | S2 five load paths | IMPLEMENTED_NOT_RUN
-BM-005 | S3 solver numerics | IMPLEMENTED_NOT_RUN | merged PR #1659
-BM-006 | S4 fail-closed | IMPLEMENTED_NOT_RUN | LEG-004 / PR #1661
-BM-007 | S5 determinism | IMPLEMENTED_NOT_RUN | LEG-005 / PR #1661; exact cross-process semantic-hash contract
-BM-008 | S5 performance | IMPLEMENTED_INFORMATIONAL_NOT_RUN | wall time/process time/maxRSS only; no thresholds
+BM-001 | S0/B01 element-patch | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN
+BM-002 | S1 Lamé | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN
+BM-003 | S1 Kirsch | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN
+BM-004 | S2 five load paths | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN
+BM-005 | S3 solver numerics | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN
+BM-006 | S4 fail-closed | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN
+BM-007 | S5 determinism | PASS_ON_OWNER_HEAD_REQUIRES_FINAL_HEAD_RERUN
+BM-008 | S5 performance | OBSERVED_INFORMATIONAL_ONLY | Q8 DOFs 74/242/866; no thresholds
 
 ## Program gate ledger
 
 PROGRAM_ACTIVE_CASE: B01
 PROGRAM_ADVANCE_ONLY_AFTER_CURRENT_CASE_PASS: TRUE
-B01_DEFINITION_STATE: READY
-B01_AUDITED_PROGRAM_RECORD: NOT_RUN
 B02_QUEUE_STATE: FUTURE_QUEUE
 B02_QUEUE_ACTIVATION: AFTER_B01_PASS
 B02_MANIFEST_STATE: STAGED_DEFINITION_COMPLETE_NOT_PROGRAM_READY
 PROGRAM_RELEASE_AUTHORITY: FALSE
-
-## S5 engineering evidence
-
-S5_MATERIAL_HEAD: 3b12eae1b8f5b5d73831ebc12b9f30d510a8231a
-S5_MATERIAL_HEAD_WORKFLOW_RUNS: 0
-S5_MATERIAL_HEAD_STATUS_CHECKS: 0
-S5_PRODUCTION_SOURCE_CHANGED: FALSE
-S5_COMPARE_HASH_FIELDS: canonicalModelSemanticHash, loadCaseInputSemanticHash, resultPayloadSemanticHash, executionEvidenceHash, qualificationEvidenceHash
-S5_CHILD_PROCESS_COUNT_FOR_PATCH_DETERMINISM: 3
-S5_PERFORMANCE_INFORMATIONAL_ONLY: TRUE
-S5_WALL_TIME_THRESHOLD_MS: null
-S5_PEAK_RSS_THRESHOLD_KIB: null
-S5_DOF_SCALING_THRESHOLD: null
-S5_Q8_EXPECTED_NODE_COUNTS: 37,121,433
-S5_Q8_EXPECTED_DOF_COUNTS: 74,242,866
+FINAL_HEAD_DEFINITION_CHECK: NOT_RUN
+FINAL_HEAD_B01_AUDIT: NOT_RUN
+FINAL_HEAD_S0_TO_S5_AUDIT: NOT_RUN
 
 ## Merge / drift reconciliation
 
-PREVIOUS_PR: #1659
-PREVIOUS_PR_STATUS: MERGED
-PREVIOUS_PR_MERGE_COMMIT: 2df1ad2fe3ae3998c6c03903f653ad5c3e82308a
-MAIN_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
-CONCURRENT_MAIN_ADVANCE: PR #1658
-POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
-POST_BASIS_DRIFT_DETAIL: PR #1658 changed EMP.1 Pressure presentation/form controls and separate chain artifacts only; no LAFEA.3 protected-path overlap
+PREVIOUS_MAIN_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
+MAIN_OBSERVED: 2829fe58113237741ea3a1172cdf008e7c7e994a
+CONCURRENT_MAIN_ADVANCE: PR #1656 BM-MESH
+POST_BASIS_DRIFT: MATERIAL_WITHIN_ADJACENT_BM_MESH_BOUNDARY_FILE_DISJOINT_FROM_BM_S_PROTECTED_OWNERS
+POST_BASIS_DRIFT_DETAIL: PR #1656 changed BM-MESH chain artifacts and meshing/shell check scripts; no BM-S benchmark data, local-continuum solver/result-hash owner, or BM-S benchmark adapter path changed
 
 ## Current engineering state
 
-OWNER_INSTRUCTION: proceed next
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
-OWNER_PROGRESSION_STATUS: CONSUMED_BY_LEG_005
 ENGINEERING_STATE: IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
@@ -84,24 +97,20 @@ MERGE_AUTHORIZED: FALSE
 BRANCH: chatgpt/issue-1653-bm-s-s4-fail-closed
 PR: #1661
 PR_STATUS: OPEN_DRAFT
-PR_MERGEABILITY: MERGEABLE_BEFORE_FINAL_RELAY_SYNC
-REVIEWS: 0
-UNRESOLVED_REVIEW_THREADS: 0
-REQUIRED_CHECKS: NOT_RUN
-LAST_MATERIAL_LEG_ID: LEG-005
-LAST_MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-005.md
-LAST_MATERIAL_HEAD: 3b12eae1b8f5b5d73831ebc12b9f30d510a8231a
-LAST_MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_EXECUTED
-NEXT_MATERIAL_LEG_ID: LEG-006
-NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0008.md
-VALIDATION_STATUS: NOT_RUN_EXECUTION
-SOURCE_DIFF_AUDIT: PASS
-INDEPENDENT_TOPOLOGY_DOF_DERIVATION: PASS
-CURRENT_BLOCKER: faithful executable validation remains unavailable; B01 audited PASS is required before B02 activation
+PR_MERGEABILITY: REQUIRES_RECONCILIATION_AFTER_MAIN_ADVANCE
+REVIEWS: 0_AT_LAST_OBSERVATION
+UNRESOLVED_REVIEW_THREADS: 0_AT_LAST_OBSERVATION
+LAST_MATERIAL_LEG_ID: LEG-006
+LAST_MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-006.md
+LAST_MATERIAL_HEAD: 5acd8462d168a46bac7dd2e1ac9a87bc95a5dbab
+LAST_MATERIAL_LEG_STATUS: IMPLEMENTED_PENDING_OWNER_RERUN
+NEXT_MATERIAL_LEG_ID: LEG-007
+NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0010.md
 QUALIFICATION_SCOPE_ID: QSCOPE-1653-BM-S-SOLVER-BENCHMARK
 QUESTION_SET_ID: QS-1653-BM-S-0006
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED_FOR_POST_MERGE_EXECUTION_AND_B02_ACTIVATION
-QUESTION_DISPLAY: SHOW
+QUESTION_PACK_ACTION: REUSED
+QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
-EXACT_NEXT_ACTION: await explicit Owner merge authority for PR #1661; after exact-head merge and post-merge re-ground, attempt retained B01 plus S0..S5 execution when a faithful runner is available. Keep B02 in futureQueue while B01 or required staged evidence remains NOT_RUN/FAIL. A separately authorized LEG-006 may activate B02 only after executable prerequisites are retained PASS; release qualification remains separate.
+CURRENT_BLOCKER: final synchronized-head definition/B01/S0-S5 rerun plus explicit Owner merge/activation authority
+EXACT_NEXT_ACTION: owner reruns definition checker, B01 audited program, and S0-S5 staged runner on the final synchronized PR head. If all PASS with nextBenchmarkAuthorized=true, activation evidence gate is satisfied. Keep B02 inactive until explicit Owner activation authority; do not merge #1661 without explicit Owner merge authority.

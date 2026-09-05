@@ -39,7 +39,7 @@ PR: NONE
 PR_STATUS: NOT_OPENED
 BRANCH: chatgpt/issue-1653-bm-s-staged-benchmark
 MAIN_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: 7becfa36c7cda55d64a44bc77493a30cb66a8dde
+HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: fc7ff3e7881e2769b04465c130c92dc2f06375a2
 POST_BASIS_DRIFT: NONE
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MATERIAL_LEG_ID: LEG-001
@@ -62,8 +62,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0001_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_ENDPOINT_COMMENT
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550031904
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: faithful checkout blocked by DNS before execution
@@ -81,4 +81,4 @@ EP-0001 is the write-ahead pre-work endpoint for the next bounded material leg. 
 
 ## Exact next action
 
-Synchronize EP-0001 to the issue, open a Draft PR for exact-head review/CI attachment, then await or execute the next bounded S2 material leg under EP-0001. Do not activate B02 or merge without Owner authority.
+Open a Draft PR for exact-head review/CI attachment, then proceed only with bounded S2 work under EP-0001. Do not activate B02 or merge without Owner authority.

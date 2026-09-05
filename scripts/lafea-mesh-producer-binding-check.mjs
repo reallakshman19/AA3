@@ -6,7 +6,7 @@
  * midsurface producer scopes.
  */
 import assert from 'node:assert/strict';
-import './lafea-b02d-probe-stable-polar-mesh-check.mjs';
+import './lafea-b02d-v2-producer-binding-check.mjs';
 
 import { createLafeaAnalysisGeometry } from '../src/workspace/lafea-analysis-geometry-contract.js';
 import { createLafeaContinuumAnalysisDomain } from '../src/workspace/lafea-continuum-analysis-domain.js';
@@ -239,9 +239,9 @@ const filletQ8 = generateLafeaAnalysisMesh(filletAdapter, {
 assert.equal(filletQ8.strategy, 'QUAD_SUBDIVISION');
 assert.equal(filletQ8.strategyReason, 'UNIFORM_Q8_BY_CENTROID_SUBDIVISION');
 assert.ok(filletQ8.mesh.elements.every((element) => element.elementType === 'Q8'),
-  'centroid subdivision must be all-quad by construction');
+  'centroid subdivision must be all-Q8, never relabelled T6');
 assert.equal(filletQ8.elementCount % 3, 0,
-  'each triangle contributes exactly three quads');
+  'each source triangle must become exactly three quads');
 assert.equal(
   JSON.stringify(generateLafeaAnalysisMesh(filletAdapter, {
     targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',

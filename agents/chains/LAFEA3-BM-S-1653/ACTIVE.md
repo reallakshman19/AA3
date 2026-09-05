@@ -5,24 +5,24 @@ COMMON_PROTOCOL_STATUS: CURRENT
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: LAFEA3-BM-S-1653
 MISSION: Implement issue #1653 BM-S staged LAFEA.3 solver benchmark S0-S5 and activate program case B02 with retained auditable evidence.
-ACTIVE_ENDPOINT: EP-0003
-ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0003.md
+ACTIVE_ENDPOINT: EP-0004
+ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0004.md
 AGENT_INSTANCE_ID: chatgpt:8f0e3f7a-1f0c-4d5c-9b53-9ea8a24bb8d1
 ACTIVE_CUSTODIAN: ChatGPT
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1653
 WORK_ITEM_MODE: EXCLUSIVE
 AUTHORITY_DOMAIN: LAFEA3_SOLVER_BENCHMARK_EVIDENCE
-CUSTODY_EPOCH: 4
+CUSTODY_EPOCH: 5
 COORDINATION_STATE: SAFE_DISJOINT_AFTER_POST_MERGE_RECONCILIATION
 DEPENDENCIES: github:reallaksh19/Advanced_Analysis#1569 rigor; #1535 production-route boundary; #1652 BM-MESH companion; #1646 related B02 evidence
 OWNER_INSTRUCTION: merge, proceed next
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 QUALIFICATION_SCOPE_ID: QSCOPE-1653-BM-S-SOLVER-BENCHMARK
-QUESTION_SET_ID: QS-1653-BM-S-0003
+QUESTION_SET_ID: QS-1653-BM-S-0004
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REUSED
-QUESTION_DISPLAY: HIDE
+QUESTION_PACK_ACTION: REFRESHED_FOR_S4_FAIL_CLOSED_NEGATIVES
+QUESTION_DISPLAY: SHOW
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
 OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
@@ -33,25 +33,27 @@ WRITE_AUTHORITY: WRITE_ALLOWED
 AUTO_STATE: PAUSED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-MERGEABILITY: NOT_APPLICABLE_NO_NEW_PR
+MERGEABILITY: NOT_MERGEABLE_AT_PR_CREATION
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NOT_RUN
 BRANCH: chatgpt/issue-1653-bm-s-s3-solver-numerics
-PR: NONE
-PR_STATUS: NOT_OPENED
+PR: #1659
+PR_STATUS: OPEN_DRAFT
 PREVIOUS_PR: #1657
 PREVIOUS_PR_STATUS: MERGED
 PREVIOUS_PR_MERGE_COMMIT: 0569ed29be02d4fb642bdfd370ae91004cde073a
 MAIN_OBSERVED: 0569ed29be02d4fb642bdfd370ae91004cde073a
-POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
-POST_BASIS_DRIFT_DETAIL: concurrent PR #1655 changed EMP.1 presentation/UI and separate chain custody only; no LAFEA.3 solver/benchmark protected-path overlap
+POST_BASIS_DRIFT: NONE_SINCE_EP0003
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-LAST_MATERIAL_LEG_ID: LEG-002
-LAST_MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-002.md
-LAST_MATERIAL_HEAD: fd53c332da954142c00c381e07a2d79170cceaa5
-NEXT_MATERIAL_LEG_ID: LEG-003
-NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0003.md
+LAST_MATERIAL_LEG_ID: LEG-003
+LAST_MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-003.md
+LAST_MATERIAL_HEAD: 2520dd3340dbbda8f021e7576c2d1a2a586a8b52
+LAST_MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_EXECUTED
+LAST_MATERIAL_HEAD_WORKFLOW_RUNS: 0
+LAST_MATERIAL_HEAD_STATUS_CHECKS: 0
+NEXT_MATERIAL_LEG_ID: LEG-004
+NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0004.md
 ROADMAPS: docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; github:reallaksh19/Advanced_Analysis#1569
 ROADMAP_REVIEW_STATUS: COMPLETE
 ROADMAP_ALIGNMENT: ALIGNED
@@ -62,24 +64,26 @@ ISSUE_BASIS_FILE: agents/chains/LAFEA3-BM-S-1653/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/LAFEA3-BM-S-1653/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550167206
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550238919
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: merged S0-S2 source/diff and independent analytical reproduction PASS; executable B01/B02/S3 checks remain NOT_RUN
+HANDOVER_VALIDATION_EVIDENCE: S3 source/diff and independent analytical reproduction PASS; executable definition/S3/staged/B01 checks NOT_RUN; zero workflow/status checks on material head
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 # Active handover — BM-S #1653
 
-PR #1657 is merged at `0569ed29be02d4fb642bdfd370ae91004cde073a`. A concurrent EMP.1 UI merge was reconciled as safe disjoint material drift. The chain is now on a fresh S3 branch from the actual merged main with write authority restored.
+PR #1657 is merged. LEG-003 is receipted at material head `2520dd3340dbbda8f021e7576c2d1a2a586a8b52`, and Draft PR #1659 carries S3 retained solver-numerics evidence. S0-S3 are READY on the branch; S4-S5 remain PLANNED; B02 remains inactive in `futureQueue`.
 
-S0-S2 are READY; S3-S5 remain PLANNED; B02 remains inactive in `futureQueue`. Executable validation remains NOT_RUN. No production solver/formulation/assembly/recovery/tolerance, workflow, roadmap, production mesh authority or release authority is authorized for change in this leg.
+S3 did not change production solver/formulation/assembly/recovery/tolerances. Its oracle independently owns equilibrium/energy/linearity/superposition/scaling identities; method-specific conditioning evidence is retained but explicitly diagnostic-only. Executable validation remains NOT_RUN.
+
+EP-0004 and qualification set `QS-1653-BM-S-0004` are the next write-ahead boundary for S4 fail-closed evidence. The Q8 negative must preserve CCW corner topology and reach a midside-induced nonpositive Jacobian; message-regex or wrong-boundary rejection is not sufficient.
 
 ## Exact next action
 
-Implement only S3 retained solver-numerics evidence under EP-0003: free-DOF residual versus existing tolerance, reaction/applied resultants, external-work = 2x strain-energy for the zero-prescribed-displacement patch, method-specific Cholesky/PCG conditioning evidence, scaling/reversal, and independent-load superposition. Retain semantic hashes and failure observations; stop rather than weaken tolerance/oracle authority if execution later contradicts the independent identities.
+Await another Owner progression command. Then implement only one retained S4 executor driven by `governance/negative-cases.json`, recording exact expected/actual boundary, state, code and path for all cases. Do not merge PR #1659, begin S5, activate B02, or change production validation/tolerances without separate authority.

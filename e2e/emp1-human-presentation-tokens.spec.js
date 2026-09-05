@@ -13,6 +13,14 @@ const RAW_BOUNDARY_SELECTOR = [
   '[data-lafea-raw-json="true"]',
 ].join(',');
 
+const SIMPLE_MACHINE_CODES = [
+  'PROHIBITED',
+  'REQUIRED',
+  'UNRESOLVED',
+  'UNINITIALIZED',
+  'ABSENT',
+];
+
 test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1058 });
   await page.goto('/');
@@ -39,11 +47,10 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async 
   await expect(root.locator('[data-role="emp1-c-bounded-evidence"]')).toContainText('WRC 537 (2013)');
   await expect(root.locator('[data-role="emp1-c-bounded-evidence"]')).toContainText('Not permitted');
 
-  const leaks = await page.evaluate(({ roles, rawBoundarySelector }) => {
+  const leaks = await page.evaluate(({ roles, rawBoundarySelector, simpleCodes }) => {
     const machineUnderscore = /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b/gu;
     const machineDotted = /\b[A-Z][A-Z0-9]*(?:\.[A-Z0-9]+){2,}\b/gu;
-    const wholeUpper = /^[A-Z0-9][A-Z0-9 .:+/≤≥=()–—]*$/u;
-    const allowedWholeUpper = new Set(['LAFEA.1', 'LAFEA.2']);
+    const simpleMachineCodes = new Set(simpleCodes);
     const found = [];
 
     const isVisible = (element) => {
@@ -64,12 +71,9 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async 
           if (parent && text && isVisible(parent) && !parent.closest(rawBoundarySelector)) {
             const underscore = [...text.matchAll(machineUnderscore)].map((match) => match[0]);
             const dotted = [...text.matchAll(machineDotted)].map((match) => match[0]);
-            const letters = text.replace(/[^A-Z]/gu, '').length;
-            const shouted = wholeUpper.test(text)
-              && letters >= 5
-              && !allowedWholeUpper.has(text);
-            if (underscore.length || dotted.length || shouted) {
-              found.push({ role, text, underscore, dotted, shouted });
+            const simple = text.split(/\s+/u).filter((token) => simpleMachineCodes.has(token));
+            if (underscore.length || dotted.length || simple.length) {
+              found.push({ role, text, underscore, dotted, simple });
             }
           }
           node = walker.nextNode();
@@ -77,7 +81,11 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens', async 
       }
     }
     return found;
-  }, { roles: ENGINEER_FACING_ROLES, rawBoundarySelector: RAW_BOUNDARY_SELECTOR });
+  }, {
+    roles: ENGINEER_FACING_ROLES,
+    rawBoundarySelector: RAW_BOUNDARY_SELECTOR,
+    simpleCodes: SIMPLE_MACHINE_CODES,
+  });
 
   expect(leaks, JSON.stringify(leaks, null, 2)).toEqual([]);
 

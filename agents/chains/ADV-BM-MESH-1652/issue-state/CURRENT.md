@@ -3,35 +3,40 @@
 CHAIN_ID: ADV-BM-MESH-1652
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0003
+CURRENT_ENDPOINT: EP-0005
 
 ## Original task / acceptance ledger
 
-TASK-001 | Governance gate assertion repair and full meshing-chain execution. | IMPLEMENTED_EXECUTION_PENDING | assertion-only patch committed at material head `3da01c2948230dc349b79ca030fb488fffdf2f61`; executable validation rechecked at EP-0003 and remains NOT_RUN
-TASK-002 | Freeze M2 geometry and cited closed-form oracle. | OPEN | blocked by staged TASK-001 acceptance gate
-TASK-003 | Define mesh ladders and physical probes. | OPEN | blocked by staged TASK-001 acceptance gate
-TASK-004 | Implement M0–M4 staged runner. | OPEN | blocked by staged TASK-001 acceptance gate
-TASK-005 | Define exact-code negative cases. | OPEN | blocked by staged TASK-001 acceptance gate
-TASK-006 | Register BM-MESH in benchmark program. | OPEN | blocked by staged TASK-001 acceptance gate
+TASK-001 | Governance gate assertion repair and full meshing-chain execution. | IMPLEMENTED_EXECUTION_PENDING | original quality-panel repair passed Owner execution; aggregate exposed a second stale qualifier boundary in determinism; LEG-002 repaired three curved-shell qualifier expectations; post-patch aggregate not yet run
+TASK-002 | Freeze M2 geometry and cited closed-form oracle. | OPEN | staged behind TASK-001 acceptance gate
+TASK-003 | Define mesh ladders and physical probes. | OPEN | staged behind TASK-001 acceptance gate
+TASK-004 | Implement M0–M4 staged runner. | OPEN | staged behind TASK-001 acceptance gate
+TASK-005 | Define exact-code negative cases. | OPEN | staged behind TASK-001 acceptance gate
+TASK-006 | Register BM-MESH in benchmark program. | OPEN | staged behind TASK-001 acceptance gate
 TASK-007 | Keep release and temperature authority false. | SATISFIED_CURRENTLY | no authority mutation
 
 ## Input ledger
 
-INPUT-001 | Main basis `b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`. | AVAILABLE | live main remains unchanged at EP-0003
-INPUT-002 | Production threshold projection is owned by `src/workspace/lafea-discretization-dom.js`; `blockingThreshold: 1` renders as `block 1`. | AVAILABLE | source inspection
-INPUT-003 | Mesh-quality panel check now expects current production projection `block 1`. | AVAILABLE | material head `3da01c2948230dc349b79ca030fb488fffdf2f61`
-INPUT-004 | Bound producer governance ref remains `npm run check:lafea-meshing`; producer ceilings/families unchanged. | AVAILABLE | producer registry
-INPUT-005 | Executable repository command runner from the connected GitHub interface. | UNRESOLVED | 0 Actions runs and 0 commit-status contexts on observed PR head; only re-run actions for existing jobs are exposed
+INPUT-001 | Main basis `b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`. | AVAILABLE | live main unchanged at EP-0005 prework grounding
+INPUT-002 | Production threshold projection maps `blockingThreshold: 1` to `block 1`. | AVAILABLE | focused check passed on Owner runner
+INPUT-003 | Production shell mesh custody denies Run until non-executing solver compiler binds retained mesh to solver model. | AVAILABLE | `src/workspace/lafea-domain-first-mesh-custody.js`
+INPUT-004 | Exact pre-binding shell Run denial code is `SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL`. | AVAILABLE | production constant `LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED`
+INPUT-005 | Owner executable runner evidence. | AVAILABLE_PARTIAL | focused check PASS; aggregate reached determinism and isolated curved-cylinder stale assertion; post-LEG-002 rerun pending
 INPUT-006 | M4 frozen physics fixture authority. | UNRESOLVED | issue does not fully specify material/load/support fixture
 
 ## Benchmark / oracle ledger
 
-BM-001 | `npm run check:lafea-meshing`. | PATCHED_NOT_RUN | EP-0003 recheck confirms no executable run/status exists; no PASS claimed
+BM-001 | `npm run check:lafea-meshing`. | PATCHED_NOT_RUN | pre-LEG-002 run progressed through smoothing then failed in determinism at stale curved-shell Run-authority assertion; LEG-002 patched same root cause across all imported curved qualifiers; rerun pending
 BM-002 | M0 producer conformance. | NOT_RUN | staged after TASK-001
-BM-003 | M1 determinism. | NOT_RUN | staged after TASK-001
+BM-003 | M1 determinism. | PARTIAL_FAILED_PREPATCH / PATCHED_NOT_RUN | determinism entered; imported curved-cylinder qualifier failed before canonical determinism body; qualifier repair pending rerun
 BM-004 | M2 independent geometry oracle. | NOT_RUN | staged after TASK-001
 BM-005 | M3 quality distribution ladder. | NOT_RUN | staged after TASK-001
 BM-006 | M4 producer-mesh solver convergence. | NOT_RUN | staged after TASK-001
+
+## Material history
+
+LEG-001 | `3da01c2948230dc349b79ca030fb488fffdf2f61` | mesh-quality panel stale display assertion -> `block 1`
+LEG-002 | `a4b3ef17a234f3cce3a20e0da5a0843a0f52b3e0` | curved-cylinder, curved-hole, periodic-cylinder qualifiers preserve shell pre-binding Run denial and exact blocking reason
 
 ## Roadmap ledger
 
@@ -52,19 +57,22 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 
 PR: #1656
 PR_STATUS: OPEN_DRAFT
-MERGEABILITY: MERGEABLE
-REVIEWS: 0
-UNRESOLVED_REVIEW_THREADS: 0
-REQUIRED_CHECKS: NONE_OBSERVED
-WORKFLOW_RUNS_ON_OBSERVED_HEAD: 0
-COMMIT_STATUS_CONTEXTS_ON_OBSERVED_HEAD: 0
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
 ## Current diagnosis
 
-TASK-001's identified code defect remains repaired at the smallest safe boundary. Engineering acceptance is still blocked solely on missing executable evidence: issue #1652 requires the full declared governance command to pass and scripts 10–12 to execute. The connected GitHub surface has no existing workflow run/job to re-run and exposes no arbitrary repository command runner. The staged benchmark contract therefore forbids advancing M2–M4 as if TASK-001 had passed.
+The original quality-panel defect is confirmed fixed by Owner execution. The full meshing gate then exposed the next wrong boundary inside the determinism surface: three curved-shell qualifier scripts expected generated shell mesh evidence to be immediately runnable. Production intentionally separates mesh qualification from solver Run authority; Run remains denied until compiler binding proves mesh-to-solver-model identity. LEG-002 repairs only those stale qualifier expectations and asserts the exact production denial reason. No production engineering authority changed.
 
 ## Exact next action
 
-Obtain an executable checkout/runner for PR #1656 and execute `node scripts/lafea.10-mesh-quality-panel-check.mjs` followed by `npm run check:lafea-meshing`. Require execution through `lafea.10-mesh-smoothing-check`, `lafea.10-determinism-check`, and `lafea-mesh-producer-binding-check`. PASS closes TASK-001; any new failure becomes the next failure-isolation boundary before additional material mutation.
+Run on current PR branch:
+
+```bash
+node scripts/lafea-shell-curved-cylinder-check.mjs
+node scripts/lafea-shell-curved-hole-check.mjs
+node scripts/lafea-shell-periodic-cylinder-check.mjs
+npm run check:lafea-meshing
+```
+
+PASS through `lafea.10-determinism-check.mjs` and `lafea-mesh-producer-binding-check.mjs` closes TASK-001. Any new failure becomes the next failure-isolation boundary before M2 material work.

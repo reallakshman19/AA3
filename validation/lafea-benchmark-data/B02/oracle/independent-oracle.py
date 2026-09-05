@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Independent Lamé/Kirsch and S2 load-path oracle for BM-S B02.
+"""Independent S1-S3 oracle for BM-S B02.
 
 This module intentionally imports no production code. It reconstructs frozen
-closed-form/manufactured values and verifies the committed oracle records
+closed-form/manufactured/static values and verifies committed oracle records
 without executing LAFEA.
 """
 
@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 EXPECTED = ROOT / "validation/lafea-benchmark-data/B02/oracle/expected-values.json"
 LOAD_EXPECTED = ROOT / "validation/lafea-benchmark-data/B02/oracle/load-path-expected-values.json"
+SOLVER_EXPECTED = ROOT / "validation/lafea-benchmark-data/B02/oracle/solver-numerics-expected-values.json"
 
 
 def lame_values() -> dict[str, object]:
@@ -154,12 +155,59 @@ def load_path_values() -> dict[str, dict[str, object]]:
     }
 
 
+def solver_numerics_values() -> dict[str, dict[str, object]]:
+    width, height, thickness = 100.0, 50.0, 10.0
+    e, nu, traction = 200000.0, 0.3, 10.0
+    applied_x = traction * height * thickness
+    eps_x = traction / e
+    eps_y = -nu * traction / e
+    right_ux = eps_x * width
+    top_uy = eps_y * height
+    volume = width * height * thickness
+    strain_energy = 0.5 * traction * eps_x * volume
+    external_work = applied_x * right_ux
+    response_factor = -500.0 / 1000.0
+    return {
+        "SOLVER-EQUILIBRIUM-ENERGY-01": {
+            "appliedResultantN": {"x": applied_x, "y": 0.0},
+            "reactionResultantN": {"x": -applied_x, "y": 0.0},
+            "epsilonX": eps_x,
+            "epsilonY": eps_y,
+            "rightEdgeUxMm": right_ux,
+            "topEdgeUyMm": top_uy,
+            "volumeMm3": volume,
+            "strainEnergyNmm": strain_energy,
+            "externalWorkNmm": external_work,
+            "externalWorkOverTwoStrainEnergy": external_work / (2 * strain_energy),
+        },
+        "SOLVER-LINEAR-SCALING-01": {
+            "responseFactor": response_factor,
+            "strainEnergyFactor": response_factor**2,
+        },
+        "SOLVER-SUPERPOSITION-01": {
+            "displacementCombination": [1, 1],
+            "stressCombination": [1, 1],
+            "reactionCombination": [1, 1],
+        },
+        "SOLVER-DIAGONAL-SCALING-01": {
+            "maximumRelativeSolutionDifferenceLimit": 1.0e-10,
+            "maximumScaledDiagonalAbsoluteErrorLimit": 1.0e-9,
+        },
+    }
+
+
 def assert_close(actual: object, expected: object, path: str) -> None:
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
             raise AssertionError(f"{path}: expected mapping")
         for key, value in expected.items():
             assert_close(actual[key], value, f"{path}.{key}")
+        return
+    if isinstance(expected, list):
+        if not isinstance(actual, list) or len(actual) != len(expected):
+            raise AssertionError(f"{path}: expected list of length {len(expected)}")
+        for index, value in enumerate(expected):
+            assert_close(actual[index], value, f"{path}[{index}]")
         return
     if isinstance(expected, (int, float)):
         actual_value = float(actual)
@@ -182,6 +230,11 @@ def check_expected_values() -> None:
     for case_id, values in load_path_values().items():
         assert_close(values, load_cases[case_id]["derived"], f"{case_id}.derived")
 
+    solver_record = json.loads(SOLVER_EXPECTED.read_text(encoding="utf-8"))
+    solver_cases = {row["caseId"]: row for row in solver_record["cases"]}
+    for case_id, values in solver_numerics_values().items():
+        assert_close(values, solver_cases[case_id]["derived"], f"{case_id}.derived")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -194,6 +247,7 @@ def main() -> None:
         "CONT-CYL-01": lame_values(),
         "CONT-HOLE-01": kirsch_values(),
         "S2-load-paths": load_path_values(),
+        "S3-solver-numerics": solver_numerics_values(),
     }
     if args.check:
         check_expected_values()

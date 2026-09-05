@@ -6,7 +6,7 @@
  * midsurface producer scopes.
  */
 import assert from 'node:assert/strict';
-import './lafea-b02d-probe-stable-polar-mesh-check.mjs';
+import './lafea-b02d-v2-producer-binding-check.mjs';
 
 import { createLafeaAnalysisGeometry } from '../src/workspace/lafea-analysis-geometry-contract.js';
 import { createLafeaContinuumAnalysisDomain } from '../src/workspace/lafea-continuum-analysis-domain.js';

@@ -87,7 +87,7 @@ const shellTopologyRow = shellPanel.rows.find((row) => row.metric === 'SHELL_ORI
 assert.equal(shellTopologyRow?.label, 'Shell orientation / topology');
 assert.equal(shellTopologyRow?.value, 1);
 assert.equal(shellTopologyRow?.status, 'OK');
-assert.equal(shellTopologyRow?.threshold, 'blockingThreshold=1');
+assert.equal(shellTopologyRow?.threshold, 'block 1');
 
 // --- Fail-closed input validation: an unknown metric is rejected rather
 // than rendered as if it had been understood and gated. ---

@@ -66,7 +66,7 @@ ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550117563
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_MERGE_AUTH_PROJECTION
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: source/diff and independent analytical reproduction PASS; B02 definition/S2/staged execution NOT_RUN; zero workflow/status checks
@@ -80,8 +80,8 @@ Owner has explicitly authorized merge of PR #1657 and requested one subsequent b
 
 LEG-002 remains durably receipted at material head `fd53c332da954142c00c381e07a2d79170cceaa5`. S0-S2 are READY; S3-S5 remain PLANNED; B02 remains inactive in `futureQueue`. No production `src/**`, solver tolerance, workflow, roadmap, production mesh authority or release authority changed.
 
-Current merge gate evidence: main remains `b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`; PR is mergeable; reviews 0; unresolved threads 0; required checks NOT_RUN/none exposed.
+Current merge gate evidence: main remains `b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`; PR is mergeable; reviews 0; unresolved threads 0; required checks NOT_RUN/none exposed. Issue control plane is synchronized.
 
 ## Exact next action
 
-Synchronize this merge authorization to the Issue and PR, mark PR #1657 ready-for-review only because GitHub requires it, merge the exact current custody head, then re-ground the chain on merged main and begin only S3 LEG-003 under the existing EP-0002 pre-work boundary.
+Mark PR #1657 ready-for-review only because GitHub requires it, merge the exact synchronized custody head, then re-ground the chain on merged main and begin only S3 LEG-003 under the existing EP-0002 pre-work boundary.

@@ -12,57 +12,55 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0013
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0013.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0011.md
-PR: 1660
-PR_STATUS: MERGED
-PR_HEAD_AT_MERGE: d6a84eaae29d2c0d198f09981a51f9b885f3d200
-PR_MERGE_COMMIT: 4436dc3c3590d1afd40ba20f74380f442fb32935
-POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-postmerge-reconciliation
-POST_MERGE_RECONCILIATION_PR: 1668
-POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY
-MAIN_HEAD_OBSERVED_PRE_RECONCILIATION: 4436dc3c3590d1afd40ba20f74380f442fb32935
-MERGEABILITY: NOT_APPLICABLE_POST_MERGE
-REVIEWS: 1
-REVIEW_STATES: COMMENTED
+ENDPOINT: EP-0014
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0014.md
+PR: 1675
+PR_STATUS: OPEN_DRAFT
+BRANCH: agent/emp1-1651-split-console-leg009
+PR_BASE: main
+PR_BASE_SHA: f8d051c989c8a0627db7560f996baf72987775d4
+PR_HEAD_OBSERVED_PRE_ENDPOINT_FINALIZE: a9da5260fdd28f83a2ed0907cc03e0e33d46fb08
+MAIN_HEAD_OBSERVED: f8d051c989c8a0627db7560f996baf72987775d4
+MERGEABILITY: MERGEABLE
+REVIEWS: 0
+REVIEW_STATES: NONE
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
 STATUS_CONTEXTS_AT_MATERIAL_HEAD: 0
 PR_WORKFLOW_RUNS_AT_MATERIAL_HEAD: 0
-LATEST_MATERIAL_HEAD: c20fe080d91aad58d1dbb12e98d0a5c7546403e7
-LAST_COMPLETED_MATERIAL_LEG: LEG-008
+LATEST_MATERIAL_HEAD: c7b39f1317c4f84b7ddb6884d503c707a9e6c50a
+LAST_COMPLETED_MATERIAL_LEG: LEG-009
 CURRENT_MATERIAL_LEG: NONE
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-008.md
-ENGINEERING_STATE: TASK_003_RECOVERY_MERGED_MANUAL_VALIDATION_PENDING
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-009.md
+ENGINEERING_STATE: LEG_009_SPLIT_CONSOLE_SOURCE_COMPLETE_EXTERNAL_VALIDATION_PENDING
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY
-WRITE_AUTHORITY_REASON: external human/browser acceptance remains NOT_RUN; no source-changing leg currently required
+WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
+WRITE_AUTHORITY_REASON: source progression is complete; remaining acceptance requires external localhost/browser observation
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-MERGE_AUTHORIZATION_DISPOSITION: PR_1660_AUTHORIZATION_CONSUMED; PR_1668_NOT_AUTHORIZED
+MERGE_AUTHORIZATION_DISPOSITION: NO_AUTHORIZATION_FOR_PR_1675
 AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 17
-COORDINATION_STATE: POST_MERGE_RECONCILIATION_PR_OPEN
-POST_BASIS_DRIFT: PR_1660_MERGE_RECONCILED; MAIN_PROTECTION_REQUIRES_PR_1668
+CUSTODY_EPOCH: 18
+COORDINATION_STATE: LEG009_FROZEN_DRAFT_PR_OPEN_EXTERNAL_VALIDATION_PENDING
+POST_BASIS_DRIFT: NONE; LEG-009 based exactly on current main f8d051c989c8a0627db7560f996baf72987775d4
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0013
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0014
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551942376
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0014_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual giant waterfall with task-shell UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551943368
-OWNER_TEXT_OBSERVED: `please proceed!`
-OWNER_PROGRESSION_COMMAND: NONE
-OWNER_MERGE_COMMAND: MERGE_PR_1660_ALREADY_CONSUMED
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0014_SYNC
+OWNER_TEXT_OBSERVED: `proceed next`
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_MERGE_COMMAND: NONE
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
 ROADMAP_ALIGNMENT: ROADMAP_STATUS_STALE_BUT_SCOPE_ALIGNED
@@ -78,13 +76,13 @@ QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: source/diff/custody inspection retained; recovered localhost desktop/narrow/full-page acceptance NOT_RUN; Playwright BLOCKED_ENVIRONMENT
+HANDOVER_VALIDATION_EVIDENCE: LEG-009 source/diff custody complete; focused browser/manual execution remains external and NOT_RUN
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
-VALIDATION_PASS_OBSERVED: prior exact-head passes/source-diff evidence only; PR merge is not validation evidence.
-VALIDATION_LIVE_UX: RECOVERY_MERGED_NOT_YET_REOBSERVED
-VALIDATION_NOT_RUN_LEG008: focused static task-shell checks at frozen head; desktop/narrow audit; full-page human-factor observation; trusted keyboard observation; check:imports; build; git diff --check.
-VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remained blocked because project-local Chromium was unavailable; zero workflow runs/status contexts are not PASS.
-AUTHORITY_BOUNDARY: no post-merge product/source mutation. No WRC/Pressure mechanics, retained benchmark values/tolerance/source authority, route/code-release authority, roadmap, or workflow-YAML change.
-CURRENT_BLOCKER: no product/source blocker. Default-branch custody remains stale until control-plane-only PR #1668 is merged; recovered human-factor acceptance also remains external and NOT_RUN.
-EXACT_NEXT_ACTION: Owner may merge PR #1668 when desired. Manual localhost acceptance may proceed independently; returned evidence can be recorded without a progression command. A new source-changing recovery leg requires a new governing progression command.
+VALIDATION_PASS_OBSERVED: no new executable PASS at LEG-009 material head; prior exact-head PASS evidence remains scoped to those earlier heads/contracts.
+VALIDATION_LIVE_UX: SPLIT_CONSOLE_SOURCE_COMPLETE_NOT_YET_OBSERVED
+VALIDATION_NOT_RUN_LEG009: focused static scripts; focused Playwright; desktop/narrow manual JSON; full-page human-factor observation; trusted CAUx keyboard; check:imports; build; git diff --check.
+VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT / NOT_RUN until compatible project-local browser executes; zero status contexts/workflows are not PASS.
+AUTHORITY_BOUNDARY: LEG-009 changes only presentation/information architecture and acceptance evidence. No WRC/Pressure mechanics, retained benchmark values/tolerance/source authority, route/code-release authority, roadmap, or workflow-YAML change.
+CURRENT_BLOCKER: external localhost/browser acceptance remains NOT_RUN; PR #1675 merge is Owner-only and not authorized.
+EXACT_NEXT_ACTION: synchronize EP-0014 into issue #1651/#1664 comments, then wait for desktop+narrow localhost audit JSON plus trusted keyboard observation (and screenshots if available), or for an explicit Owner merge command. No further source-changing recovery leg is justified without new failure evidence.

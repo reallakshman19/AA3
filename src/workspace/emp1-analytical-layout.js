@@ -119,8 +119,8 @@ const TASK_SHELL_RUNTIME = new WeakMap();
 
 /**
  * Resolve or create presentation-only task-shell state for a persistent host.
- * The host is normally the LAFEA consumer root, so task/evidence selection can
- * survive a backing-stage rerender without entering engineering/controller state.
+ * The host is normally the document/workbench owner, so task/evidence selection
+ * survives backing-stage rerenders without entering engineering/controller state.
  */
 export function emp1TaskShellSelection(selectionHost, initialTaskStep = 'BASIS_SOURCE') {
   if (!selectionHost || typeof selectionHost !== 'object') {
@@ -172,8 +172,9 @@ export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
     unique.add(surface);
   });
 
-  const selectionHost = options.selectionHost ?? shell;
-  const initialTaskStep = options.initialTaskStep ?? 'BASIS_SOURCE';
+  const selectionHost = options.selectionHost ?? shell.ownerDocument;
+  const initialTaskStep = options.initialTaskStep
+    ?? (shell.dataset.emp1Step === 'B' ? 'SECTION_SCREENING' : 'BASIS_SOURCE');
   const state = mutableSelection(selectionHost, initialTaskStep);
   const regions = Object.fromEntries(Object.entries(REGION_DEFINITIONS).map(
     ([regionId, definition]) => [regionId, createRegion(shell.ownerDocument, regionId, definition)],
@@ -225,6 +226,12 @@ export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
     tabs: tabs.buttons,
   };
   TASK_SHELL_RUNTIME.set(shell, runtime);
+  shell.addEventListener?.('emp1-task-shell-select', (event) => {
+    const stepId = event?.detail?.stepId;
+    if (Object.prototype.hasOwnProperty.call(EMP1_TASK_SHELL_TASK_SURFACES, stepId)) {
+      selectEmp1TaskShellTask(selectionHost, shell, stepId);
+    }
+  });
   applyTaskShellState(runtime);
 
   return Object.freeze({
@@ -304,11 +311,6 @@ function applyTaskShellState(runtime) {
     surface.hidden = !visible;
     surface.dataset.emp1TaskActive = String(visible);
   });
-
-  const desiredEvidence = TASK_DEFAULT_EVIDENCE[state.activeTaskStep];
-  if (desiredEvidence && runtime.evidenceEntries.some(([surfaceId]) => surfaceId === desiredEvidence)) {
-    state.evidenceView = desiredEvidence;
-  }
   applyEvidenceSelection(runtime);
 }
 

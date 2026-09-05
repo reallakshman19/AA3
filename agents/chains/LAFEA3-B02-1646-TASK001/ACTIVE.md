@@ -5,8 +5,8 @@ COMMON_PROTOCOL_STATUS: CURRENT
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: LAFEA3-B02-1646-TASK001
 MISSION: Implement Gate-0 currentness as a derivation over governed parent identities for issue #1646 TASK-001.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-B02-1646-TASK001/endpoints/EP-0002.md
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-B02-1646-TASK001/endpoints/EP-0003.md
 AGENT_INSTANCE_ID: chatgpt:bb7305ea-6150-422c-a0c0-3e7aa7a86b37
 ACTIVE_CUSTODIAN: ChatGPT
 WORK_ITEM_SOURCE: GITHUB_ISSUE
@@ -59,14 +59,15 @@ ISSUE_BASIS_FILE: agents/chains/LAFEA3-B02-1646-TASK001/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/LAFEA3-B02-1646-TASK001/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548782622
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549016882
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
+ISSUE_HANDOVER_SYNC_BLOCKER: EP-0003 immutable endpoint comment and Active comment update pending.
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: zero hosted PR workflow runs for exact material head; focused/currentness and aggregate regressions not executed in a faithful repository runtime
+HANDOVER_VALIDATION_EVIDENCE: l a f e a-b01-final.yml pull_request path filter explicitly matches src/workspace/lafea-workbench-*.js; zero hosted PR workflow runs observed for both material head 90fa7398c08bb0b542b2d39971fb75357a7a6242 and custody head a656531c8b472d993af0b1b31c3baca68caefd93; issue #1634 remains open
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
@@ -75,18 +76,20 @@ HANDOVER_READY: FALSE
 
 ## Current result
 
-LEG-001 is implemented at material head `90fa7398c08bb0b542b2d39971fb75357a7a6242`. PR #1650 is draft and GitHub reports it mergeable. There are no submitted reviews or unresolved review threads. Repository and Issue control-plane custody are synchronized at EP-0002 / issue comment `5549016882`.
+LEG-001 remains implemented at material head `90fa7398c08bb0b542b2d39971fb75357a7a6242`. PR #1650 remains draft and mergeable, with no submitted reviews or unresolved review threads.
 
-The implementation derives `CURRENT_RESULT` from exact current source/model/mesh/solver/execution/recovery lineage. `currentAuthority` represents currentness only and is deliberately orthogonal to `NOT_EVALUATED | FAIL | PASS`; the physical probe performs acceptance as a separate downstream gate. Historical PASS receipts remain retained but cannot grant current authority after governing drift, and explicit rejection remains distinct from stale retained evidence.
+EP-0003 adds no material code. It records a stronger validation-blocker diagnosis: `.github/workflows/lafea-b01-final.yml` is an ordinary pull-request workflow whose path filter explicitly includes `src/workspace/lafea-workbench-*.js`, matching TASK-001 production files. There is no draft suppression in that workflow, yet GitHub reports zero PR workflow runs for both the material and custody heads. Issue #1634 remains open with exact-head CI recorded as NOT_RUN.
+
+The implementation boundary remains unchanged: currentness is derived from exact source/model/mesh/solver/execution/recovery lineage; qualification is orthogonal; historical PASS is retained without granting current authority; explicit rejection remains distinct from stale evidence.
 
 ## Authority boundaries
 
-Protected unchanged: solver formulation/assembly, acceptance tolerances, mesh policy, B02 frozen definitions/oracles, B02D-V2 adoption, B02E policy, workflows, roadmaps, presentation authority, release/temperature/deployment authority. Merge remains Owner-only and is not authorized.
+Protected unchanged: solver formulation/assembly, acceptance tolerances, mesh policy, B02 frozen definitions/oracles, B02D-V2 adoption, B02E policy, workflows, roadmaps, presentation authority, release/temperature/deployment authority. Merge remains Owner-only and unauthorized.
 
 ## Validation truth
 
-Executable validation is `NOT_RUN`. GitHub reports zero PR workflow runs for exact material head and no faithful local repository runtime was available in this chat path. Static source/protected-domain review and mergeability are not engineering PASS.
+Executable validation remains `NOT_RUN`. The missing run is confirmed as hosted execution/infrastructure absence rather than a draft-status interpretation. Static inspection, trigger matching and mergeability are not engineering PASS.
 
 ## Exact next action
 
-Obtain faithful exact-head execution of `scripts/lafea-b02-currentness-check.mjs`, the B01/B02 Gate-0 aggregate diagnostic, and applicable lifecycle/run-transaction/probe regressions. Do not begin another material leg or authorize merge while executable validation remains `NOT_RUN`.
+Obtain faithful execution of `scripts/lafea-b02-currentness-check.mjs`, the B01/B02 Gate-0 aggregate diagnostic, and applicable lifecycle/run-transaction/probe regressions on the TASK-001 material content. Do not create LEG-002 or authorize merge while executable validation is unavailable.

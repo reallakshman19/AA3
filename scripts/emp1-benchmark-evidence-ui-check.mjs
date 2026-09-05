@@ -136,7 +136,7 @@ for (const forbidden of ['calculateLocalAttachment', 'runEmp1(', 'semanticHash('
     `benchmark DOM renderer must not contain ${forbidden}`);
 }
 assert.ok(viewSource.includes(
-  'Independent comparison evidence — not WRC method authority. Does not establish code compliance, production authorization, or release qualification.',
+  'Independent reference evidence — not WRC method authority. Does not establish code compliance, production authorization, or release qualification.',
 ));
 assert.ok(viewSource.includes("dataset.role = 'emp1-benchmark-evidence-panel'"));
 assert.ok(viewSource.includes("dataset.role = 'emp1-benchmark-comparison-table'"));

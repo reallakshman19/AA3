@@ -1,19 +1,20 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1646
 CHAIN_ID: LAFEA3-B02-1646-TASK001
 UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548781658
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549060476
+ISSUE_SYNC_BLOCKER: EP-0004 repository custody is materialized; immutable endpoint comment and mutable Active comment are pending synchronization.
 
 # Current issue state
 
 ## Original task / acceptance ledger
 
-TASK-001 | Gate-0 currentness derivation | IMPLEMENTED_NOT_VALIDATED | LEG-001 / EP-0003; exact-head executable validation NOT_RUN
-TASK-002 | Kirsch general-mesher quality | OPEN | untouched
+TASK-001 | Gate-0 currentness derivation | IMPLEMENTED_NOT_VALIDATED | LEG-001 / EP-0004; exact-head executable validation NOT_RUN
+TASK-002 | Kirsch general-mesher quality | OPEN | untouched; distinct Appendix B/B2 qualification scope not entered
 TASK-003 | B02E convergence implementation | OPEN | untouched
 TASK-004 | B02 evidence UI | OPEN | untouched
 TASK-005 | B02D-V2 adoption decision | OPEN_OWNER_DECISION | untouched
@@ -25,7 +26,7 @@ INPUT-001 | gate0-contracts.json | AVAILABLE
 INPUT-002 | edit-invalidation-matrix.json | AVAILABLE
 INPUT-003 | B02E-convergence.json | AVAILABLE
 INPUT-004 | B02D-lug-pinhole-v2.json | AVAILABLE_AMENDMENT_NOT_ADOPTED
-INPUT-005 | hosted CI execution | UNRESOLVED (#1634); `.github/workflows/lafea-b01-final.yml` pull_request filter explicitly matches `src/workspace/lafea-workbench-*.js`, but zero PR workflow runs exist for TASK-001 material/custody heads
+INPUT-005 | hosted CI execution | UNRESOLVED (#1634); branch Actions collection reports total_count=0; observed PR head combined status is pending with zero statuses; no connector dispatch action exists for a never-instantiated run
 INPUT-006 | Kirsch general-mesher policy source | UNRESOLVED
 
 ## Benchmark / oracle ledger
@@ -71,6 +72,7 @@ MATERIAL_LEG_ID: LEG-001
 MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-B02-1646-TASK001/material-legs/LEG-001.md
 MATERIAL_HEAD: 90fa7398c08bb0b542b2d39971fb75357a7a6242
 MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_VALIDATED
+OBSERVED_PR_HEAD_BEFORE_EP0004: 4ce32efa4579ed556b6c37fe4b8c0e793c4769a1
 PR: #1650
 PR_STATE: DRAFT
 BRANCH: chatgpt/issue-1646-task-001-currentness
@@ -85,13 +87,17 @@ MERGE_AUTHORIZED: FALSE
 
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 EXACT_HEAD_HOSTED_CI: NOT_RUN
-EXACT_HEAD_HOSTED_CI_EVIDENCE: workflow trigger diagnosis confirms `.github/workflows/lafea-b01-final.yml` matches `src/workspace/lafea-workbench-*.js` on ordinary pull_request; zero PR workflow runs observed for material head `90fa7398c08bb0b542b2d39971fb75357a7a6242` and custody head `a656531c8b472d993af0b1b31c3baca68caefd93`; #1634 remains open
+BRANCH_ACTIONS_RUN_COUNT: 0
+OBSERVED_HEAD_COMBINED_STATUS: pending
+OBSERVED_HEAD_STATUS_COUNT: 0
+DISPATCH_CAPABILITY: UNAVAILABLE_FOR_NEW_RUN
+EXACT_HEAD_HOSTED_CI_EVIDENCE: `.github/workflows/lafea-b01-final.yml` matches `src/workspace/lafea-workbench-*.js` on ordinary pull_request; branch Actions collection has total_count=0; observed PR head combined status has no statuses; #1634 remains open
 FOCUSED_CURRENTNESS_CHECK: NOT_RUN
 B01_B02_GATE0_AGGREGATE: NOT_RUN
 LIFECYCLE_RUN_TRANSACTION_PROBE_REGRESSIONS: NOT_RUN
 SOURCE_PROTECTED_DOMAIN_REVIEW: PASS_SOURCE_INSPECTION_ONLY
 
-The missing hosted run is infrastructure/execution evidence, not a draft-status interpretation. Source inspection, trigger matching and GitHub mergeability are not executable engineering PASS.
+The hosted validation path is unavailable in the present execution environment. Trigger inspection, branch run enumeration, commit-status inspection, source review and mergeability are diagnostics only and are not executable engineering PASS.
 
 ## Current implementation boundary
 
@@ -115,4 +121,4 @@ HANDOVER_READY: FALSE
 
 ## Exact next action
 
-Obtain faithful execution of the focused currentness check, B01/B02 Gate-0 diagnostic and applicable lifecycle/run-transaction/probe regressions on the TASK-001 material content. Do not create another material leg or authorize merge while executable validation remains NOT_RUN.
+Synchronize EP-0004 to the Issue control plane, then obtain a faithful executable repository runtime or restore/start GitHub Actions for the TASK-001 content. Consume the resulting logs/receipts. Do not create LEG-002, advance to TASK-002, mark validation PASS, or authorize merge while executable validation remains unavailable.

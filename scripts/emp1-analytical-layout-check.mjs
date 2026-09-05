@@ -7,6 +7,40 @@ import {
   emp1AnalyticalLayoutPlacementManifest,
 } from '../src/workspace/emp1-analytical-layout.js';
 
+class FakeDocument {
+  createElement(tagName) {
+    return new FakeNode(this, tagName);
+  }
+}
+
+class FakeNode {
+  constructor(ownerDocument, tagName) {
+    this.ownerDocument = ownerDocument;
+    this.tagName = String(tagName).toUpperCase();
+    this.nodeType = 1;
+    this.dataset = {};
+    this.className = '';
+    this.attributes = {};
+    this.children = [];
+    this.parentNode = null;
+  }
+
+  append(...nodes) {
+    nodes.forEach((node) => {
+      if (node.parentNode) {
+        const index = node.parentNode.children.indexOf(node);
+        if (index >= 0) node.parentNode.children.splice(index, 1);
+      }
+      node.parentNode = this;
+      this.children.push(node);
+    });
+  }
+
+  setAttribute(name, value) {
+    this.attributes[name] = String(value);
+  }
+}
+
 const expectedOrder = [
   'workflow',
   'route',
@@ -113,37 +147,3 @@ assert.equal(EMP1_ANALYTICAL_LAYOUT_REGIONS.PRIMARY_WORK, 'PRIMARY_WORK');
 assert.equal(EMP1_ANALYTICAL_LAYOUT_REGIONS.ENGINEERING_BASIS, 'ENGINEERING_BASIS');
 assert.equal(EMP1_ANALYTICAL_LAYOUT_REGIONS.FULL_WIDTH_DETAIL, 'FULL_WIDTH_DETAIL');
 console.log('EMP1_ANALYTICAL_LAYOUT_CHECK_PASS');
-
-class FakeDocument {
-  createElement(tagName) {
-    return new FakeNode(this, tagName);
-  }
-}
-
-class FakeNode {
-  constructor(ownerDocument, tagName) {
-    this.ownerDocument = ownerDocument;
-    this.tagName = String(tagName).toUpperCase();
-    this.nodeType = 1;
-    this.dataset = {};
-    this.className = '';
-    this.attributes = {};
-    this.children = [];
-    this.parentNode = null;
-  }
-
-  append(...nodes) {
-    nodes.forEach((node) => {
-      if (node.parentNode) {
-        const index = node.parentNode.children.indexOf(node);
-        if (index >= 0) node.parentNode.children.splice(index, 1);
-      }
-      node.parentNode = this;
-      this.children.push(node);
-    });
-  }
-
-  setAttribute(name, value) {
-    this.attributes[name] = String(value);
-  }
-}

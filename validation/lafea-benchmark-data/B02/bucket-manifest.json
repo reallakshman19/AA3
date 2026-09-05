@@ -1,0 +1,86 @@
+{
+  "schema": "lafea-b02-solver-benchmark-manifest/v1",
+  "bucketId": "B02",
+  "issue": 1653,
+  "stageId": "LAFEA.3",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "benchmarkId": "BM-S",
+  "state": "STAGED_DEFINITION_IN_PROGRESS_NOT_PROGRAM_READY",
+  "authority": {
+    "registered": "T3_T6_Q8_LINEAR_CONTINUUM",
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionOutputMayGenerateExpectedValues": false,
+    "performanceIsInformational": true
+  },
+  "scopeBoundary": {
+    "solverAndElementNumerics": true,
+    "productionMeshQualification": false,
+    "ordinaryGeometryToMeshRoute": false,
+    "releaseDecision": false
+  },
+  "stages": [
+    {
+      "benchmarkStage": "S0",
+      "title": "Element and patch baseline",
+      "definitionState": "READY",
+      "gateMode": "QUALIFICATION",
+      "methods": [
+        {"methodId":"T3-PATCH","authorityClass":"REGISTERED_PRODUCTION_ROUTE_FALLBACK","command":["node","scripts/lafea-bucket-01-t3-patch-check.mjs"],"sourceRefs":["scripts/lafea-bucket-01-t3-patch-check.mjs","validation/bucket-01/04-t3-patch-oracle.json"],"expectedEvidenceSchema":null,"oracleAuthority":"FROZEN_CLOSED_FORM_AFFINE_UNIAXIAL_STRESS"},
+        {"methodId":"T6-PATCH","authorityClass":"REGISTERED_PRODUCTION_ROUTE","command":["node","scripts/lafea.3-t6-patch-check.mjs"],"sourceRefs":["scripts/lafea.3-t6-patch-check.mjs"],"expectedEvidenceSchema":null,"oracleAuthority":"ELEMENT_PATCH_INVARIANTS_AND_QUALIFICATION_PROFILE"},
+        {"methodId":"Q8-PATCH","authorityClass":"REGISTERED_PRODUCTION_ROUTE","command":["node","scripts/lafea.3-q8-patch-check.mjs"],"sourceRefs":["scripts/lafea.3-q8-patch-check.mjs"],"expectedEvidenceSchema":null,"oracleAuthority":"ELEMENT_PATCH_INVARIANTS_AND_QUALIFICATION_PROFILE"}
+      ]
+    },
+    {
+      "benchmarkStage": "S1",
+      "title": "Closed-form continuum fields",
+      "definitionState": "READY",
+      "gateMode": "QUALIFICATION",
+      "methods": [
+        {"methodId":"CONT-CYL-01","authorityClass":"ANALYTICAL_CLOSED_FORM","command":["node","scripts/lafea.3-benchmark-cont-cyl-01-check.mjs"],"sourceRefs":["scripts/lafea.3-benchmark-cont-cyl-01-check.mjs","scripts/lafea.3-benchmark-mesh-adapter.mjs","validation/lafea-benchmark-data/B02/oracle/expected-values.json","validation/lafea-benchmark-data/B02/convergence/mesh-ladders.json","validation/lafea-benchmark-data/B02/convergence/fixed-probes.json"],"reportEnv":{"name":"LAFEA_BM_S_CONT_CYL_REPORT_PATH","filename":"CONT-CYL-01-evidence.json"},"expectedEvidenceSchema":"lafea3-bm-s-s1-case-evidence/v1","oracleAuthority":"LAME_THICK_CYLINDER_CITED_CLOSED_FORM"},
+        {"methodId":"CONT-HOLE-01","authorityClass":"ANALYTICAL_CLOSED_FORM","command":["node","scripts/lafea.3-benchmark-cont-hole-01-check.mjs"],"sourceRefs":["scripts/lafea.3-benchmark-cont-hole-01-check.mjs","scripts/lafea.3-benchmark-mesh-adapter.mjs","validation/lafea-benchmark-data/B02/oracle/expected-values.json","validation/lafea-benchmark-data/B02/convergence/mesh-ladders.json","validation/lafea-benchmark-data/B02/convergence/fixed-probes.json"],"reportEnv":{"name":"LAFEA_BM_S_CONT_HOLE_REPORT_PATH","filename":"CONT-HOLE-01-evidence.json"},"expectedEvidenceSchema":"lafea3-bm-s-s1-case-evidence/v1","oracleAuthority":"KIRSCH_CIRCULAR_HOLE_CITED_CLOSED_FORM"}
+      ]
+    },
+    {
+      "benchmarkStage":"S2",
+      "title":"Load-path completeness",
+      "definitionState":"READY",
+      "gateMode":"QUALIFICATION",
+      "methods":[
+        {
+          "methodId":"LOAD-PATHS-EXACT-BVP",
+          "authorityClass":"INDEPENDENT_EXACT_BVP",
+          "command":["node","scripts/lafea.3-bm-s-s2-load-paths-check.mjs"],
+          "sourceRefs":[
+            "scripts/lafea.3-bm-s-s2-load-paths-check.mjs",
+            "scripts/lafea.3-fixtures.mjs",
+            "validation/lafea-benchmark-data/B02/oracle/cases.json",
+            "validation/lafea-benchmark-data/B02/oracle/load-path-expected-values.json",
+            "validation/lafea-benchmark-data/B02/oracle/independent-oracle.py"
+          ],
+          "reportEnv":{"name":"LAFEA_BM_S_S2_REPORT_PATH","filename":"S2-load-path-evidence.json"},
+          "expectedEvidenceSchema":"lafea3-bm-s-s2-load-path-evidence/v1",
+          "oracleAuthority":"INDEPENDENT_EXACT_AFFINE_THERMOELASTIC_AND_MANUFACTURED_BOUNDARY_VALUE_PROBLEMS"
+        }
+      ]
+    },
+    {"benchmarkStage":"S3","title":"Solver numerics","definitionState":"PLANNED","gateMode":"QUALIFICATION","methods":[]},
+    {"benchmarkStage":"S4","title":"Fail-closed negatives","definitionState":"PLANNED","gateMode":"QUALIFICATION","methods":[]},
+    {"benchmarkStage":"S5","title":"Determinism and informational cost","definitionState":"PLANNED","gateMode":"QUALIFICATION_PLUS_INFORMATIONAL_PERFORMANCE","methods":[]}
+  ],
+  "stageOrder": ["S0","S1","S2","S3","S4","S5"],
+  "advancementPolicy": "EXECUTE_SELECTED_STAGES_RETAIN_ALL_RESULTS_BUT_AUTHORIZE_ONLY_CONTIGUOUS_PASS_PREFIX",
+  "programActivationGate": "B02_MUST_NOT_BECOME_READY_UNTIL_S0_S5_DEFINITIONS_AND_EVIDENCE_CONTRACTS_ARE_READY",
+  "frozenArtifacts": [
+    "bucket-manifest.json",
+    "sources/source-registry.json",
+    "oracle/cases.json",
+    "oracle/expected-values.json",
+    "oracle/load-path-expected-values.json",
+    "oracle/independent-oracle.py",
+    "convergence/mesh-ladders.json",
+    "convergence/fixed-probes.json",
+    "governance/negative-cases.json",
+    "governance/fem-semantics.json"
+  ]
+}

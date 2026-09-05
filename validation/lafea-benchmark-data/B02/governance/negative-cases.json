@@ -1,0 +1,71 @@
+{
+  "schema": "lafea-b02-negative-cases/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "assertionPolicy": "EXACT_STRUCTURED_STATE_AND_CODE_NOT_MESSAGE_REGEX",
+  "cases": [
+    {
+      "negativeCaseId": "S4-UNDER-CONSTRAINED",
+      "mutation": "REMOVE_ALL_RIGID_BODY_RESTRAINTS_FROM_TRIANGLE_FIXTURE",
+      "expectedBoundary": "solver",
+      "expectedQualificationState": "SINGULAR_SYSTEM",
+      "expectedErrorCode": "UNDER_CONSTRAINED_OR_SINGULAR_SYSTEM"
+    },
+    {
+      "negativeCaseId": "S4-ZERO-AREA",
+      "mutation": "MAKE_T3_CORNERS_COLLINEAR",
+      "expectedBoundary": "canonical-model",
+      "expectedQualificationState": "REJECTED_MODEL",
+      "expectedErrorCode": "DEGENERATE_ELEMENT"
+    },
+    {
+      "negativeCaseId": "S4-NEAR-ZERO-AREA",
+      "mutation": "MAKE_T3_AREA_BELOW_MINIMUM_ELEMENT_AREA_TOLERANCE",
+      "expectedBoundary": "canonical-model",
+      "expectedQualificationState": "REJECTED_MODEL",
+      "expectedErrorCode": "DEGENERATE_ELEMENT"
+    },
+    {
+      "negativeCaseId": "S4-Q8-INVERTED-MAPPING",
+      "mutation": "KEEP_COUNTER_CLOCKWISE_Q8_CORNERS_BUT_MOVE_MIDSIDE_GEOMETRY_TO_FORCE_NONPOSITIVE_INTEGRATION_POINT_JACOBIAN",
+      "expectedBoundary": "element-formulation",
+      "expectedQualificationState": "NUMERICAL_FAILURE",
+      "expectedErrorCode": "Q8_NONPOSITIVE_JACOBIAN"
+    },
+    {
+      "negativeCaseId": "S4-DUPLICATE-CONSTRAINT",
+      "mutation": "ADD_IDENTICAL_CONSTRAINT_VALUE_TO_ALREADY_CONSTRAINED_DOF",
+      "expectedBoundary": "canonical-model",
+      "expectedQualificationState": "REJECTED_MODEL",
+      "expectedErrorCode": "DUPLICATE_CONSTRAINT"
+    },
+    {
+      "negativeCaseId": "S4-CONFLICTING-CONSTRAINT",
+      "mutation": "ADD_DIFFERENT_CONSTRAINT_VALUE_TO_ALREADY_CONSTRAINED_DOF",
+      "expectedBoundary": "canonical-model",
+      "expectedQualificationState": "REJECTED_MODEL",
+      "expectedErrorCode": "CONFLICTING_CONSTRAINT"
+    },
+    {
+      "negativeCaseId": "S4-INTERNAL-EDGE-TRACTION",
+      "mutation": "APPLY_EDGE_TRACTION_TO_SHARED_INTERNAL_EDGE",
+      "expectedBoundary": "load-case-preflight",
+      "expectedQualificationState": "REJECTED_LOAD_CASE",
+      "expectedErrorCode": "TRACTION_EDGE_NOT_BOUNDARY"
+    },
+    {
+      "negativeCaseId": "S4-DISCONNECTED-NODE",
+      "mutation": "ADD_NODE_NOT_REFERENCED_BY_ANY_ELEMENT",
+      "expectedBoundary": "canonical-model",
+      "expectedQualificationState": "REJECTED_MODEL",
+      "expectedErrorCode": "DISCONNECTED_UNREFERENCED_NODE"
+    },
+    {
+      "negativeCaseId": "S4-DUPLICATE-ELEMENT-NODE-SET",
+      "mutation": "ADD_SECOND_ELEMENT_WITH_SAME_PHYSICAL_NODE_SET",
+      "expectedBoundary": "canonical-model",
+      "expectedQualificationState": "REJECTED_MODEL",
+      "expectedErrorCode": "DUPLICATE_ELEMENT_NODE_SET"
+    }
+  ],
+  "releaseQualified": false
+}

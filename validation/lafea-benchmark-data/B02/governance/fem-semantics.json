@@ -1,0 +1,32 @@
+{
+  "schema": "lafea-b02-fem-semantics/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "stageId": "LAFEA.3",
+  "route": "T3_T6_Q8_LINEAR_CONTINUUM",
+  "invariants": {
+    "linearElasticSmallDisplacement": true,
+    "planeStressAndPlaneStrainOnlyAsSupportedByProductionContract": true,
+    "integrationPointStressIsNumericalRecoveryAuthority": true,
+    "nodalProjectionMayNotReplaceIntegrationPointAuthority": true,
+    "fixedPhysicalProbeIdentityMayNotUseNodeIds": true,
+    "movingMeshMaximumMayNotQualifyRichardsonGci": true,
+    "productionOutputMayNotGenerateOracle": true,
+    "benchmarkMeshAdapterDoesNotQualifyProductionMesher": true,
+    "performanceMetricsAreInformational": true,
+    "releaseAuthorityGranted": false
+  },
+  "solverNumerics": {
+    "freeDofResidualMustRespectProductionFreeDofTolerance": true,
+    "reactionEquilibriumMustRespectProductionReactionTolerance": true,
+    "zeroPrescribedDisplacementEnergyIdentity": "F^T*u = 2*U",
+    "linearityIdentities": ["u(cF)=c*u(F)","sigma(cF)=c*sigma(F)","U(cF)=c^2*U(F)","u(F1+F2)=u(F1)+u(F2)"],
+    "conditioningEvidenceByMethod": {
+      "DETERMINISTIC_CHOLESKY": ["minimumPivot","maximumPivot","pivotRatio"],
+      "DETERMINISTIC_JACOBI_PCG": ["minimumDiagonal","maximumDiagonal","diagonalRatio","iterations","finalResidualInfinity","convergenceTarget"]
+    }
+  },
+  "determinism": {
+    "compareSemanticHashesNotWholeAuditRecordBytes": true,
+    "requiredResultHashFields": ["canonicalModelSemanticHash","resultPayloadSemanticHash","executionEvidenceHash","qualificationEvidenceHash"]
+  }
+}

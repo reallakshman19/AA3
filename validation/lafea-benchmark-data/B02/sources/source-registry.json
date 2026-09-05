@@ -1,0 +1,47 @@
+{
+  "schema": "lafea-b02-source-registry/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "custodyPolicy": {
+    "pathsAreRepositoryRelative": true,
+    "blobShaRequired": true,
+    "productionOutputMayModifyOracle": false,
+    "benchmarkExecutorsAreHashBoundByAuditRecord": true
+  },
+  "sources": [
+    {"role":"canonicalModel","path":"src/core/local-continuum/canonical-model.js","blobSha":"52cfde89c22d9bcae9f9eaa09245e1d8ede1d460"},
+    {"role":"calculationEntry","path":"src/core/local-continuum/calculate.js","blobSha":"b46d20aed3124554907631744c4d973a8477f342"},
+    {"role":"assembly","path":"src/core/local-continuum/assembly.js","blobSha":"d452ee54206621bc48c2b4756ff0b3dfb5fc6d4d"},
+    {"role":"elementDispatchAndT3","path":"src/core/local-continuum/element.js","blobSha":"c6bb6078db2fd269e41f547bad4d94ffb698900f"},
+    {"role":"T6Formulation","path":"src/core/local-continuum/t6-element.js","blobSha":"41bce022eee66bd41be6e39504266021912dc4c8"},
+    {"role":"Q8Formulation","path":"src/core/local-continuum/q8-element.js","blobSha":"7405dd8484bff9eebb70f247ed1bf6dbd2bb9c49"},
+    {"role":"constitutive","path":"src/core/local-continuum/constitutive.js","blobSha":"be7a913397e067e810b97030acb47e06daf9b1ca"},
+    {"role":"solver","path":"src/core/local-continuum/solver.js","blobSha":"83479563e5fd6f39ab61b5930d8d608df1f5b9ef"},
+    {"role":"recovery","path":"src/core/local-continuum/recovery.js","blobSha":"e21f635bc494387f435e81c95493fa5a7acc197b"},
+    {"role":"sourceMeshValidation","path":"src/core/local-continuum/source-mesh.js","blobSha":"64ba46d3f3aa4e03481248e34f0ddab40c7863c1"},
+    {"role":"sourceLoadValidation","path":"src/core/local-continuum/source-loads.js","blobSha":"fd4d61633614092d0b26c747ff09923db1450964"},
+    {"role":"loadAssemblyCoordinator","path":"src/core/local-continuum/loads.js","blobSha":"7f3178ba0a508f4f8f271886594391b8bb687aab"},
+    {"role":"edgeTractionAssembly","path":"src/core/local-continuum/edge-traction-loads.js","blobSha":"889cd7ff79392247ae24c92f97d76fd4f8db8f5f"},
+    {"role":"pressureAssembly","path":"src/core/local-continuum/pressure-loads.js","blobSha":"8c0ea676cc6420f12ca325c9e0d79f2fc72e7410"},
+    {"role":"bodyForceAssembly","path":"src/core/local-continuum/body-force-loads.js","blobSha":"c7394b19c7623145834d641c7cb7a26516d4a010"},
+    {"role":"thermalStrainAssembly","path":"src/core/local-continuum/temperature-strain-loads.js","blobSha":"8ce0abbd74970d71b0d21f9a66bf8a18b0ffed76"},
+    {"role":"imposedDisplacementResolution","path":"src/core/local-continuum/imposed-displacement-loads.js","blobSha":"9e1b49d47ed35a83e66bfed6dbbbcb0d9563b4c5"},
+    {"role":"resultHashes","path":"src/core/local-continuum/result-hashes.js","blobSha":"03dad85758d8b29a854711160e4921e44e9421dd"}
+  ],
+  "externalOracleCustody": [
+    {
+      "claimId": "LAFEA3-SRC-PATCH-01",
+      "registryPath": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md",
+      "authority": "QUALIFIED_METHOD_SOURCE_FOR_AFFINE_FIELD_EXPECTATIONS"
+    },
+    {
+      "claimId": "LAFEA3-SRC-LAME-01",
+      "registryPath": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md",
+      "authority": "QUALIFIED_CLASSICAL_ORACLE"
+    },
+    {
+      "claimId": "LAFEA3-SRC-KIRSCH-01",
+      "registryPath": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md",
+      "authority": "QUALIFIED_EQUATION_SOURCE"
+    }
+  ]
+}

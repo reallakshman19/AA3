@@ -1,0 +1,88 @@
+{
+  "schema": "lafea-b02-s2-load-path-expected-values/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "authority": {
+    "class": "INDEPENDENT_EXACT_BOUNDARY_VALUE_PROBLEMS",
+    "productionImports": [],
+    "productionOutputUsed": false,
+    "productionOutputMayModifyExpectedValues": false,
+    "productionOutputMayModifyAcceptance": false,
+    "methodProvenance": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md#LAFEA3-SRC-PATCH-01"
+  },
+  "acceptance": {
+    "policyOrigin": "PRE_EXECUTION_EXACT_POLYNOMIAL_AND_AFFINE_FIELD_NUMERICAL_EQUALITY",
+    "absoluteTolerance": 1e-9,
+    "relativeTolerance": 1e-7,
+    "comparison": "abs(actual-expected) <= absoluteTolerance + relativeTolerance*max(1,abs(expected))"
+  },
+  "cases": [
+    {
+      "caseId": "LOAD-EDGE-TRACTION-01",
+      "loadType": "EDGE_TRACTION",
+      "formulation": "PLANE_STRESS",
+      "inputs": {"widthMm":100,"heightMm":50,"thicknessMm":10,"elasticModulusMPa":200000,"poissonRatio":0.3,"tractionXMPa":10},
+      "derivation": {
+        "field": "sigma_x=T, sigma_y=tau_xy=0; u=T*x/E; v=-nu*T*y/E",
+        "equilibrium": "constant stress with right-edge traction T and traction-free top/bottom",
+        "finiteElementExactness": "affine displacement field represented exactly by conforming T3 patch"
+      },
+      "derived": {"sigmaXMPa":10,"sigmaYMPa":0,"tauXYMPa":0,"rightEdgeUxMm":0.005,"topEdgeUyMm":-0.00075}
+    },
+    {
+      "caseId": "LOAD-PRESSURE-01",
+      "loadType": "PRESSURE",
+      "formulation": "PLANE_STRESS",
+      "inputs": {"widthMm":100,"heightMm":50,"thicknessMm":10,"elasticModulusMPa":200000,"poissonRatio":0.3,"pressureMPa":10},
+      "derivation": {
+        "sign": "positive pressure acts inward on the +x outward normal, therefore sigma_x=-p",
+        "field": "sigma_x=-p, sigma_y=tau_xy=0; u=-p*x/E; v=nu*p*y/E",
+        "finiteElementExactness": "affine displacement field represented exactly by conforming T3 patch"
+      },
+      "derived": {"sigmaXMPa":-10,"sigmaYMPa":0,"tauXYMPa":0,"rightEdgeUxMm":-0.005,"topEdgeUyMm":0.00075}
+    },
+    {
+      "caseId": "LOAD-BODY-FORCE-01",
+      "loadType": "BODY_FORCE",
+      "formulation": "PLANE_STRESS",
+      "inputs": {"widthMm":100,"heightMm":50,"thicknessMm":2,"elasticModulusMPa":200000,"poissonRatio":0.3,"quadraticCoefficientPerMm":1e-6},
+      "derivation": {
+        "displacement": "u=a*(x^2+nu*y^2); v=-2*nu*a*x*y",
+        "strain": "epsilon_x=2*a*x; epsilon_y=-2*nu*a*x; gamma_xy=0",
+        "stress": "sigma_x=2*E*a*x; sigma_y=tau_xy=0",
+        "equilibrium": "b_x=-d(sigma_x)/dx=-2*E*a; b_y=0",
+        "boundaryTraction": "right edge t_x=2*E*a*W; all other edge tractions zero",
+        "finiteElementExactness": "quadratic displacement field lies in the rectangular Q8 serendipity interpolation space"
+      },
+      "derived": {
+        "bodyForceX": -0.4,
+        "rightEdgeTractionXMPa": 40,
+        "fixedProbe": {"xMm":50,"yMm":25,"uxMm":0.0026875,"uyMm":-0.00075,"sigmaXMPa":20,"sigmaYMPa":0,"tauXYMPa":0},
+        "rightTop": {"uxMm":0.01075,"uyMm":-0.003,"sigmaXMPa":40}
+      }
+    },
+    {
+      "caseId": "LOAD-TEMPERATURE-01",
+      "loadType": "TEMPERATURE_STRAIN",
+      "formulation": "PLANE_STRESS",
+      "inputs": {"triangleLegXmm":100,"triangleLegYmm":100,"thicknessMm":10,"elasticModulusMPa":200000,"poissonRatio":0.3,"thermalStrain":0.001},
+      "derivation": {
+        "field": "free uniform isotropic thermal strain gives u=e_th*x, v=e_th*y",
+        "elasticResponse": "elastic strain, stress and stored elastic strain energy are exactly zero",
+        "finiteElementExactness": "affine free-expansion field represented exactly by T3"
+      },
+      "derived": {"nodeB_UxMm":0.1,"nodeC_UyMm":0.1,"sigmaXMPa":0,"sigmaYMPa":0,"sigmaZMPa":0,"tauXYMPa":0,"strainEnergyNmm":0}
+    },
+    {
+      "caseId": "LOAD-IMPOSED-DISPLACEMENT-01",
+      "loadType": "IMPOSED_DISPLACEMENT",
+      "formulation": "PLANE_STRESS",
+      "inputs": {"widthMm":100,"heightMm":50,"thicknessMm":10,"elasticModulusMPa":200000,"poissonRatio":0.3,"rightEdgeUxMm":0.005},
+      "derivation": {
+        "field": "u=delta*x/W; v=-nu*delta*y/W",
+        "stress": "sigma_x=E*delta/W, sigma_y=tau_xy=0",
+        "finiteElementExactness": "affine displacement field represented exactly by conforming T3 patch"
+      },
+      "derived": {"sigmaXMPa":10,"sigmaYMPa":0,"tauXYMPa":0,"rightEdgeUxMm":0.005,"topEdgeUyMm":-0.00075}
+    }
+  ]
+}

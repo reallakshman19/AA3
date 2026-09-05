@@ -1,0 +1,93 @@
+{
+  "schema": "lafea-b02-cases/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "authority": {
+    "class": "FROZEN_BENCHMARK_BOUNDARY_VALUE_PROBLEMS",
+    "productionOutputUsed": false
+  },
+  "cases": [
+    {
+      "caseId": "CONT-CYL-01",
+      "benchmarkStage": "S1",
+      "title": "Quarter thick cylinder under internal pressure",
+      "formulation": "PLANE_STRESS",
+      "units": {"length":"mm","force":"N","stress":"MPa","modulus":"MPa"},
+      "geometry": {"innerRadius":50,"outerRadius":100,"sectorDegrees":90,"thickness":10},
+      "material": {"elasticModulus":200000,"poissonRatio":0.3},
+      "loading": {"internalPressure":10,"externalPressure":0},
+      "boundaryConditions": [
+        {"region":"theta=0 radial cut","constraint":"UY=0"},
+        {"region":"theta=90 radial cut","constraint":"UX=0"}
+      ],
+      "meshSource": "BENCHMARK_ONLY_MAPPED_Q8_ADAPTER",
+      "sourceClaimId": "LAFEA3-SRC-LAME-01"
+    },
+    {
+      "caseId": "CONT-HOLE-01",
+      "benchmarkStage": "S1",
+      "title": "Quarter circular hole under remote uniaxial tension",
+      "formulation": "PLANE_STRESS",
+      "units": {"length":"mm","force":"N","stress":"MPa","modulus":"MPa"},
+      "geometry": {"holeRadius":10,"outerTruncationRadius":100,"sectorDegrees":90,"thickness":5},
+      "material": {"elasticModulus":200000,"poissonRatio":0.3},
+      "loading": {
+        "remoteUniaxialStress": 50,
+        "outerBoundary": "EXACT_KIRSCH_TRACTION_AT_R_EQUALS_100",
+        "holeBoundary": "TRACTION_FREE"
+      },
+      "boundaryConditions": [
+        {"region":"theta=0 radial cut","constraint":"UY=0"},
+        {"region":"theta=90 radial cut","constraint":"UX=0"}
+      ],
+      "meshSource": "BENCHMARK_ONLY_GRADED_MAPPED_Q8_ADAPTER",
+      "sourceClaimId": "LAFEA3-SRC-KIRSCH-01"
+    },
+    {
+      "caseId": "LOAD-EDGE-TRACTION-01",
+      "benchmarkStage": "S2",
+      "title": "Affine uniaxial plane-stress field driven by edge traction",
+      "formulation": "PLANE_STRESS",
+      "elementFamily": "T3",
+      "loadType": "EDGE_TRACTION",
+      "oracle": "EXACT_AFFINE_LINEAR_ELASTIC_FIELD",
+      "sourceClaimId": "LAFEA3-SRC-PATCH-01"
+    },
+    {
+      "caseId": "LOAD-PRESSURE-01",
+      "benchmarkStage": "S2",
+      "title": "Affine uniaxial compression driven by positive boundary pressure",
+      "formulation": "PLANE_STRESS",
+      "elementFamily": "T3",
+      "loadType": "PRESSURE",
+      "oracle": "EXACT_AFFINE_LINEAR_ELASTIC_FIELD_WITH_PRESSURE_SIGN"
+    },
+    {
+      "caseId": "LOAD-BODY-FORCE-01",
+      "benchmarkStage": "S2",
+      "title": "Manufactured quadratic Q8 field with constant body force and balancing edge traction",
+      "formulation": "PLANE_STRESS",
+      "elementFamily": "Q8",
+      "loadType": "BODY_FORCE",
+      "oracle": "EXACT_MANUFACTURED_SOLUTION_FROM_EQUILIBRIUM_AND_CONSTITUTIVE_RELATIONS"
+    },
+    {
+      "caseId": "LOAD-TEMPERATURE-01",
+      "benchmarkStage": "S2",
+      "title": "Free isotropic thermal expansion with zero elastic stress and energy",
+      "formulation": "PLANE_STRESS",
+      "elementFamily": "T3",
+      "loadType": "TEMPERATURE_STRAIN",
+      "oracle": "EXACT_FREE_THERMOELASTIC_EXPANSION_FIELD"
+    },
+    {
+      "caseId": "LOAD-IMPOSED-DISPLACEMENT-01",
+      "benchmarkStage": "S2",
+      "title": "Affine uniaxial plane-stress field driven by prescribed right-edge displacement",
+      "formulation": "PLANE_STRESS",
+      "elementFamily": "T3",
+      "loadType": "IMPOSED_DISPLACEMENT",
+      "oracle": "EXACT_AFFINE_LINEAR_ELASTIC_FIELD"
+    }
+  ],
+  "scopeNote": "S1 BVPs isolate solver/element behavior from production meshing. S2 exact BVPs isolate each load construction path while retaining independent kinematic/equilibrium/constitutive ownership of expected fields. No case qualifies production mesh generation."
+}

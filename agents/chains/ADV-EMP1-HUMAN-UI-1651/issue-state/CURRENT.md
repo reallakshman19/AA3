@@ -3,18 +3,19 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
 UPDATED_AT: 2026-09-05
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN_AT_ENDPOINT_COMMIT
-ISSUE_CHAIN_ROOT_COMMENT_ID: PENDING
-ISSUE_ACTIVE_HANDOVER_COMMENT_ID: PENDING
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549976572
 
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 BRANCH: agent/emp1-human-ui-1651-prework
-PR: NONE
-PR_STATUS: NOT_OPENED
+PR: 1655
+PR_STATUS: OPEN_DRAFT_PREWORK_ONLY
 PR_BASE: main
 MAIN_HEAD_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 PREWORK_ENDPOINT: EP-0001
+PREWORK_COMMIT: 0f95a1b7b6003ea6e68c5346ca3bcb110dee8778
 COMPLETED_MATERIAL_LEG: NONE
 MATERIAL_HEAD: NONE
 
@@ -82,13 +83,15 @@ MERGE_AUTHORIZED: FALSE
 
 ## Validation truth
 
-PASS (read/source/artifact inspection):
+PASS (read/source/artifact/custody inspection):
 - live Common skill/references re-grounded at d709bcd61ab8ab4c9545b17923f56d505ac42c20;
 - project AGENTS.md re-grounded;
 - issue #1651 and current main re-grounded;
 - exact-work-item search/direct chain inventory found no #1651 canonical chain;
 - PR #1648 confirmed merged into current main;
-- current label-registry, table-renderer and benchmark presentation owners inspected.
+- current label-registry, table-renderer and benchmark presentation owners inspected;
+- pre-work endpoint committed strictly before any material mutation;
+- CHAIN_ROOT / ACTIVE / ENDPOINT issue comments published and reconciled.
 
 NOT_RUN:
 - no #1651 material source/test mutation exists yet;

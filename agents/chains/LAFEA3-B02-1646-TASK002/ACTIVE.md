@@ -12,19 +12,22 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1646
 WORK_ITEM_MODE: EXCLUSIVE
 TASK: TASK-002
 AUTHORITY_DOMAIN: MESH_GENERATION
-ACTIVE_ENDPOINT: EP-0000
-ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-B02-1646-TASK002/endpoints/EP-0000.md
+ACTIVE_ENDPOINT: EP-0001
+ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-B02-1646-TASK002/endpoints/EP-0001.md
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
-OWNER_TEXT_OBSERVED: merge,proceed next
+OWNER_TEXT_OBSERVED: proceed next
 QUALIFICATION_SCOPE_ID: QSCOPE-1646-TASK002-MESH_GENERATION
 QUESTION_SET_ID: QS-1646-TASK002-0001
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED
-QUESTION_DISPLAY: SHOW
+QUESTION_PACK_ACTION: REUSED
+QUESTION_DISPLAY: HIDE
+QUESTION_SET_ADMISSION_STATUS: OWNER_ADOPTED
 OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: github:reallaksh19/Advanced_Analysis#1646/Appendix-A + comment-5548720232/Appendix-B/B2
 OWNER_QUALIFICATION_BASELINE_MANIFEST: agents/chains/LAFEA3-B02-1646-TASK002/qualification-baselines/QB-1646-TASK002.json
 OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
+CANDIDATE_QUALIFICATION: agents/qualifications/LAFEA3-B02-1646-TASK002/CANDIDATE-QUALIFICATION-0001.md
+CANDIDATE_VERDICT: PENDING_INDEPENDENT_VERIFICATION
 QUALIFICATION_STATE: PENDING
 WRITE_AUTHORITY: READ_ONLY
 ENGINEERING_STATE: READY
@@ -34,6 +37,9 @@ MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 BRANCH: chatgpt/issue-1646-task-002-kirsch-mesh
 BASE_MAIN: 4fe1f11199629056c1cb4836fe820b353dd3bf58
+LIVE_MAIN: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
+POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
+POST_BASIS_DRIFT_EVIDENCE: EMP.1 benchmark UI merge only; no B02C definition, Kirsch production route, general mesh producer, mesh quality policy, solver, or TASK-002 custody path changed
 PR: NONE
 ROADMAPS: docs/IntegratedLAFEAroadmap.md; github:reallaksh19/Advanced_Analysis#1112; github:reallaksh19/Advanced_Analysis#1569; github:reallaksh19/Advanced_Analysis#1535 dependency
 ROADMAP_DRIFT: NO_DRIFT
@@ -44,19 +50,21 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/LAFEA3-B02-1646-TASK002/issue-state/CURR
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549219882
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549220801
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549220311
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-# Active handover — TASK-002 qualification
+# Active handover — TASK-002 candidate qualification
 
-TASK-001 is merged at `4fe1f11199629056c1cb4836fe820b353dd3bf58`; its validation remains `NOT_RUN`.
+TASK-001 is merged; its validation remains `NOT_RUN`. TASK-002 has no production patch and no PR.
 
-TASK-002 is at qualification only. The frozen B02C failure remains T3/L1 `h=22.5`, 43 elements, 6 blocking, `minSJ=0.0938`, `minAngle=5.38°` against `0.20`. The live trace must establish whether frozen `curvatureToleranceDegrees` values `11.25`, `5.625`, `2.8125` reach the producer or fall back to `15` before any patch.
+The current candidate trace establishes a concrete first wrong boundary: the frozen B02C definition carries `curvatureToleranceDegrees` values `11.25`, `5.625`, `2.8125`, but `scripts/lib/lafea-b02-kirsch-production-route.mjs` calls `store.generateAnalysisMesh()` without that override. The qualified configuration boundary therefore uses its `15` degree fallback at all three levels before building the governed intent.
+
+The candidate safe patch, if independently qualified, is route-level request propagation plus the minimum regression seam required to prove the frozen request reaches configuration/intent and to replay B02C without weakening the `0.20` scaled-Jacobian gate.
 
 Protected unchanged: frozen B02C definition/oracle, mesh-quality thresholds, solver/acceptance authority, workflows, B02D-V2 adoption, roadmaps, release/temperature/deployment authority.
 
 ## Exact next action
 
-Owner qualification/adoption of `QS-1646-TASK002-0001`. No TASK-002 material coding before qualification PASS.
+Independent/Owner verification of `CANDIDATE-QUALIFICATION-0001.md`. Keep WRITE_AUTHORITY=READ_ONLY and do not open a TASK-002 material leg until qualification PASS is explicitly granted.

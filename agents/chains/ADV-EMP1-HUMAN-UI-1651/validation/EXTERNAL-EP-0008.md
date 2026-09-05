@@ -2,6 +2,7 @@
 
 VALIDATION_TARGET_BEFORE_REPAIR: 9910d2f95a1a8946ea625702de6f3a50b163c6e3
 REPAIR_TARGET: 3a8b4e7241ed341deb4f54175ad14f893a7af241
+MAIN_COMPARATOR: 80f335b750a13a06741a787106949bada1ad7f37
 OBSERVED_BY: Owner/local verifier
 DATE: 2026-09-05
 
@@ -14,27 +15,34 @@ DATE: 2026-09-05
 - `node scripts/emp1-issue1651-acceptance-check.mjs`
 - `npm run check:imports`
 - `git diff --check`
+- `node scripts/emp1-analytical-layout-check.mjs` at repair target `3a8b4e72...` -> `EMP1_ANALYTICAL_LAYOUT_CHECK_PASS`
 
-## Repaired test-harness failure
+## Analytical-layout repair disposition
 
-At `9910d2f9...`, `node scripts/emp1-analytical-layout-check.mjs` failed before assertions with `ReferenceError: Cannot access 'FakeDocument' before initialization`.
+At `9910d2f9...`, the layout checker failed before assertions with `ReferenceError: Cannot access 'FakeDocument' before initialization`.
 
-LEG-006 repair `3a8b4e72...` moves `FakeDocument` / `FakeNode` declarations before first use. The repair changes no assertions and no production source. Re-execution at the repair target is PENDING_EXTERNAL_REVALIDATION; it is not yet PASS.
+LEG-006 repair `3a8b4e72...` moved the existing `FakeDocument` / `FakeNode` declarations before first use without changing assertions or production source. External re-execution now PASSes, so the deterministic test-harness defect is CLOSED.
 
-## Build gate
+## Build gate differential
 
-`npm run build` completed Vite transformation/rendering and then failed in `scripts/bundle-chunk-check.mjs` because `main-CPVXjxUz.js` was 1,936,884 bytes while the retained hard ceiling is 1,179,648 bytes.
+#1660 material-target build:
+- Vite completed production bundling;
+- post-build `bundle-chunk-check.mjs` failed because `main-CPVXjxUz.js` was `1,936,884` bytes against the retained hard ceiling `1,179,648` bytes.
 
-Classification at this endpoint: `FAIL_BUILD_BUNDLE_BUDGET_CAUSALITY_UNRESOLVED`.
+Current-main comparator `80f335b7...`:
+- advanced shell contract check passed;
+- Vite completed production bundling (`2057 modules transformed`, `built in 31.52s`);
+- post-build `bundle-chunk-check.mjs` failed because `main-DTcLi5Ur.js` was `1,932,886` bytes against the same `1,179,648`-byte ceiling.
 
-Do not weaken the bundle limit. Current `main` advanced from PR base `b39f7673...` to `80f335b7...`, but that drift contains only BM-MESH chain artifacts and meshing-check scripts; no Vite config, bundle checker, package script, or application `src/**` file changed. A build at current `main` is therefore the required differential comparator:
-- if current `main` reproduces the same bundle-budget failure, classify the gate as inherited/outside #1651;
-- if current `main` passes, #1660 must remain blocked for bundle-causality investigation.
+Classification:
+- `FAIL_BUILD_BUNDLE_BUDGET_INHERITED`: current `main` independently fails the same retained hard ceiling, so #1660 did not create the pass-to-fail gate transition;
+- the observed #1660 target chunk is `3,998` bytes larger than the current-main comparator; therefore this evidence does not establish zero bundle contribution by #1660;
+- the inherited bundle-budget failure remains a repository-level build blocker and must not be weakened or bypassed under issue #1651.
 
 ## Browser evidence
 
-Focused Playwright remains `BLOCKED_ENVIRONMENT`: project-local Chromium 1217 is absent and no product assertion executed. Owner elected manual localhost inspection as human-observed UI evidence for this checkpoint. Manual inspection remains PENDING unless separately returned.
+Focused Playwright remains `BLOCKED_ENVIRONMENT`: project-local Chromium 1217 is absent and no automated browser product assertion executed. Manual localhost inspection is permitted as separate human-observed UI evidence for this checkpoint and remains PENDING unless separately returned.
 
 ## Authority
 
-No engineering calculation, WRC/Pressure mechanics, benchmark retained source/value/tolerance, route authorization, code/release state, roadmap or workflow-YAML authority is changed by this validation/repair record.
+No engineering calculation, WRC/Pressure mechanics, benchmark retained source/value/tolerance, route authorization, code/release state, roadmap or workflow-YAML authority is changed by this validation record.

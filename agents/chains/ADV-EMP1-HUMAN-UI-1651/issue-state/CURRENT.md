@@ -3,10 +3,10 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0006
 UPDATED_AT: 2026-09-05
-ISSUE_HANDOVER_SYNC_STATUS: STALE
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550705454
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550796417
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR: 1660
@@ -79,7 +79,7 @@ CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
 ## Validation truth
-PASS — source/diff/custody inspection: Common/main re-ground; material compare is exactly four test/evidence files; main unchanged; Draft #1660 mergeable; reviews 0; unresolved threads 0.
+PASS — source/diff/custody inspection: Common/main re-ground; material compare is exactly four test/evidence files; main unchanged; Draft #1660 mergeable; reviews 0; unresolved threads 0; Issue endpoint comment `5550796417` and mutable Active comment are synchronized to EP-0006.
 NOT_RUN — focused Node, Playwright, imports/build/diff execution. Material-head GitHub status contexts = 0 and PR workflow runs = 0; zero is not PASS.
 
 CURRENT_BLOCKER: faithful local executable validation is required.

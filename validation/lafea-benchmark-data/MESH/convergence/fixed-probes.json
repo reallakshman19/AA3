@@ -1,0 +1,91 @@
+{
+  "schema": "lafea-mesh-fixed-probes/v1",
+  "benchmarkId": "BM-MESH",
+  "definitionTask": "TASK-003",
+  "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
+  "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
+  "authority": "GEOMETRY_IDENTITY_ONLY_M4_PHYSICS_DEFERRED",
+  "coordinateFrame": "GLOBAL_XY",
+  "lengthUnit": "mm",
+  "identityRules": {
+    "samePhysicalCoordinateEveryLevel": true,
+    "nodeIdIdentityAllowed": false,
+    "elementIdIdentityAllowed": false,
+    "runtimeOwnerResolvedPerMesh": true,
+    "movingMaximumAllowed": false,
+    "rawSingularPeakStressAllowed": false
+  },
+  "probes": [
+    {
+      "probeId": "L3-L-P1",
+      "stageId": "LAFEA.3",
+      "geometryCaseId": "M2-L-SHAPE-01",
+      "physicalCoordinate": {"x": 0.37, "y": 0.41},
+      "geometricOwnership": {"kind": "INTERIOR", "casePart": "MATERIAL_DOMAIN"},
+      "meshOwnerResolution": "RUNTIME_PER_LEVEL"
+    },
+    {
+      "probeId": "L3-L-P2",
+      "stageId": "LAFEA.3",
+      "geometryCaseId": "M2-L-SHAPE-01",
+      "physicalCoordinate": {"x": 2.41, "y": 0.37},
+      "geometricOwnership": {"kind": "INTERIOR", "casePart": "MATERIAL_DOMAIN"},
+      "meshOwnerResolution": "RUNTIME_PER_LEVEL"
+    },
+    {
+      "probeId": "L3-L-P3",
+      "stageId": "LAFEA.3",
+      "geometryCaseId": "M2-L-SHAPE-01",
+      "physicalCoordinate": {"x": 0.43, "y": 2.37},
+      "geometricOwnership": {"kind": "INTERIOR", "casePart": "MATERIAL_DOMAIN"},
+      "meshOwnerResolution": "RUNTIME_PER_LEVEL"
+    },
+    {
+      "probeId": "L3-Q8-P1",
+      "stageId": "LAFEA.3",
+      "geometryCaseId": "M2-UNIT-SQUARE-01",
+      "physicalCoordinate": {"x": 0.37, "y": 0.41},
+      "geometricOwnership": {"kind": "INTERIOR", "casePart": "MATERIAL_DOMAIN"},
+      "meshOwnerResolution": "RUNTIME_PER_LEVEL"
+    },
+    {
+      "probeId": "L3-Q8-P2",
+      "stageId": "LAFEA.3",
+      "geometryCaseId": "M2-UNIT-SQUARE-01",
+      "physicalCoordinate": {"x": 0.73, "y": 0.61},
+      "geometricOwnership": {"kind": "INTERIOR", "casePart": "MATERIAL_DOMAIN"},
+      "meshOwnerResolution": "RUNTIME_PER_LEVEL"
+    },
+    {
+      "probeId": "L4-PA-P1",
+      "stageId": "LAFEA.4",
+      "geometryCaseId": "M2-TWO-PATCH-SHELL-01",
+      "physicalCoordinate": {"x": 0.37, "y": 0.41, "z": 0},
+      "geometricOwnership": {"kind": "PATCH_INTERIOR", "patchId": "P-A"},
+      "meshOwnerResolution": "RUNTIME_PER_LEVEL"
+    },
+    {
+      "probeId": "L4-PB-P1",
+      "stageId": "LAFEA.4",
+      "geometryCaseId": "M2-TWO-PATCH-SHELL-01",
+      "physicalCoordinate": {"x": 1.63, "y": 0.59, "z": 0},
+      "geometricOwnership": {"kind": "PATCH_INTERIOR", "patchId": "P-B"},
+      "meshOwnerResolution": "RUNTIME_PER_LEVEL"
+    }
+  ],
+  "deferredM4Fields": [
+    "materialModel",
+    "shellThickness",
+    "loadCaseId",
+    "supportCondition",
+    "quantityId",
+    "representation",
+    "recoveryMethod",
+    "units",
+    "singularityClassification",
+    "expectedValue",
+    "acceptanceLimit"
+  ],
+  "runtimeContractNote": "Do not instantiate lafea-continuum-physical-probe/v1 or a shell recovery identity until governed M4 physics supplies the required physics-bound fields. These rows freeze only physical location and geometry ownership.",
+  "sourceRefs": ["S-012", "S-013"]
+}

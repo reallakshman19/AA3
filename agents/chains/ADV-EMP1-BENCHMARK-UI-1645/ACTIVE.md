@@ -26,8 +26,6 @@ STACK_BASE_BRANCH: agent/emp1-engineering-review-ui-v1
 STACK_BASE_HEAD: bed2d28d9cc85fcbecf6dbc9ed8f4afde00f80be
 MATERIAL_HEAD: 31cd0188edf6915167c84fc8950e5d6ad2ca6d3e
 MERGEABILITY: MERGEABLE
-REVIEWS: 0
-UNRESOLVED_THREADS: 0
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -58,7 +56,7 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 CURRENT_MATERIAL_LEG: NONE
 LAST_COMPLETED_MATERIAL_LEG: LEG-001
 
-VALIDATION: source/diff scope audit PASS; repository Actions operational on other EMP.1 PRs; #1648 has no workflow runs from synchronize commits. A reversible close/reopen event reset is authorized for this bounded progression.
+VALIDATION: source/diff scope audit PASS; repository Actions operational on other EMP.1 PRs; #1648 has no workflow runs from synchronize commits. Reversible close/reopen event reset authorized.
 
 AUTHORITY_BOUNDARY: PR state event only; no source/workflow/base/review/merge authority changes.
 CURRENT_BLOCKER: ACTIONS_RUN_NOT_STARTED_FOR_1648.

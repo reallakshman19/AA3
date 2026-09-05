@@ -12,44 +12,47 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0009
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0009.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0007.md
+ENDPOINT: EP-0010
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0010.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0009.md
 PR: 1660
-PR_STATUS: OPEN_DRAFT_LEG006_REVALIDATED_INHERITED_BUILD_BLOCKER
+PR_STATUS: OPEN_DRAFT_LEG007_MANUAL_AUDIT_SOURCE_COMPLETE_EXECUTION_PENDING
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
 MAIN_HEAD_OBSERVED: 80f335b750a13a06741a787106949bada1ad7f37
-MAIN_DRIFT_CLASSIFICATION: NON_MATERIAL_TO_LEG006_SCOPE
-MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
+MAIN_DRIFT_CLASSIFICATION: NON_MATERIAL_TO_LEG007_SCOPE
+MERGEABILITY: MERGEABLE_AT_PRE_MATERIAL_OBSERVATION
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-LATEST_MATERIAL_HEAD: 3a8b4e7241ed341deb4f54175ad14f893a7af241
-LAST_COMPLETED_MATERIAL_LEG: LEG-006
+STATUS_CONTEXTS_MATERIAL_HEAD: 0
+PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
+LATEST_MATERIAL_HEAD: bcb01260e85144f629817916f8c2ce601573bed4
+LAST_COMPLETED_MATERIAL_LEG: LEG-007
 CURRENT_MATERIAL_LEG: NONE
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-006.md
-ENGINEERING_STATE: LEG_006_REPAIR_VALIDATED_BROWSER_EVIDENCE_BLOCKED
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-007.md
+ENGINEERING_STATE: LEG_007_MANUAL_AUDIT_SOURCE_COMPLETE_EXTERNAL_EXECUTION_PENDING
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_MANUAL_OR_BROWSER_EVIDENCE
+WRITE_AUTHORITY: READ_ONLY_AWAITING_MANUAL_BROWSER_EVIDENCE
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 AUTHORITY_DOMAIN: EMP.1 test/evidence closure only; production mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 13
-COORDINATION_STATE: SAFE_POST_LEG006_REVALIDATION
+CUSTODY_EPOCH: 14
+COORDINATION_STATE: SAFE_POST_LEG007_FREEZE
 POST_BASIS_DRIFT: NON_MATERIAL_TO_SCOPE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0009
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0010
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551146174
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
-OWNER_PROGRESSION_COMMAND: NONE_NEW_AFTER_LEG006
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0010_COMMENT
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_ISSUE_SYNC
+OWNER_TEXT_OBSERVED: `proceed next`
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_007
 OWNER_MERGE_COMMAND: NONE_FOR_PR_1660
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -65,13 +68,14 @@ QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: STATIC_AND_BUILD_ATTRIBUTION_COMPLETE_BROWSER_BLOCKED
+HANDOVER_VALIDATION_STATUS: MANUAL_AUDIT_SOURCE_COMPLETE_EXECUTION_PENDING
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
-VALIDATION_PASS_OBSERVED: emp1-plain-language-labels-check; emp1-governed-vector-table-check; emp1-professional-workflow-check; emp1-benchmark-evidence-ui-check; emp1-issue1651-acceptance-check; emp1-analytical-layout-check at 3a8b4e72; npm run check:imports; git diff --check.
-VALIDATION_BUILD_GATE: #1660 Vite build completed then bundle ceiling failed at 1,936,884 > 1,179,648; current main independently fails same gate at 1,932,886 > 1,179,648. Gate failure classified INHERITED; PR comparator is 3,998 bytes larger, so zero contribution is not claimed.
+VALIDATION_PASS_OBSERVED: emp1-plain-language-labels-check; emp1-governed-vector-table-check; emp1-professional-workflow-check; emp1-benchmark-evidence-ui-check; pre-LEG007 emp1-issue1651-acceptance-check; emp1-analytical-layout-check at 3a8b4e72; npm run check:imports; git diff --check.
+VALIDATION_NOT_RUN_LEG007: emp1-manual-browser-audit-check; updated emp1-issue1651-acceptance-check; desktop manual audit JSON; narrow manual audit JSON; trusted Enter/Space disclosure observation.
+VALIDATION_BUILD_GATE: inherited repository failure remains: #1660 1,936,884 > 1,179,648 and current main 1,932,886 > 1,179,648; zero PR contribution is not claimed. LEG-007 changes no application bundle source.
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains blocked because project-local Chromium is absent; no automated product assertions executed.
-MANUAL_VALIDATION: allowed as separate human-observed UI evidence; pending unless returned.
-AUTHORITY_BOUNDARY: no material change after LEG-006 material head; revalidation/control-plane only.
-CURRENT_BLOCKER: browser acceptance evidence only. Inherited repository bundle-budget failure remains outside #1651 pass/fail causation.
-EXACT_NEXT_ACTION: Owner/local verifier performs the manual localhost EMP.1 walkthrough using validation/MANUAL-EP-0007.md and returns observations, or installs project-local Chromium and reruns focused Playwright. Do not merge PR #1660 without a separate explicit Owner merge command.
+MANUAL_VALIDATION: deterministic protocol now retained at agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0010.md; execution pending.
+AUTHORITY_BOUNDARY: LEG-007 changed exactly four test/evidence files and no production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML.
+CURRENT_BLOCKER: external browser observation only: run the LEG-007 static guards and return desktop/narrow audit JSON plus trusted keyboard observation.
+EXACT_NEXT_ACTION: local verifier checks out `bcb01260e85144f629817916f8c2ce601573bed4`, runs the two static guards, starts Vite, follows `validation/MANUAL-EP-0010.md`, and returns desktop JSON, narrow JSON and trusted keyboard observation. Do not merge PR #1660 without a separate explicit Owner merge command.

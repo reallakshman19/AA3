@@ -6,8 +6,8 @@ UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551848643
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0017_COMMENT
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551934278
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
 
@@ -104,4 +104,4 @@ QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 CURRENT_BLOCKER: none for Owner-authorized merge; exact merged-main execution remains separate post-merge truth
-EXACT_NEXT_ACTION: synchronize EP-0017 to the Issue control plane, observe exact PR custody head, mark Draft ready for merge mechanics, merge #1667 with expected-head protection, then use the one reserved bounded progression to establish post-merge qualification/closure state. Release authority remains false.
+EXACT_NEXT_ACTION: observe exact PR custody head, mark Draft ready for merge mechanics, merge #1667 with expected-head protection, then use the one reserved bounded progression to establish post-merge qualification/closure state. Release authority remains false.

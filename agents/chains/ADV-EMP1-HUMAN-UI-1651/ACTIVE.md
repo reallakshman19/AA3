@@ -12,44 +12,45 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0007
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0007.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0006.md
+ENDPOINT: EP-0008
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0008.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0007.md
 PR: 1660
-PR_STATUS: OPEN_DRAFT_EXTERNAL_VALIDATION_BLOCKED
+PR_STATUS: OPEN_DRAFT_LEG006_REPAIR_SOURCE_COMPLETE_REVALIDATION_PENDING
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
-MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
-MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
+MAIN_HEAD_OBSERVED: 80f335b750a13a06741a787106949bada1ad7f37
+MAIN_DRIFT_CLASSIFICATION: NON_MATERIAL_TO_LEG006_SCOPE
+MERGEABILITY: MERGEABLE_AT_POST_REPAIR_OBSERVATION
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
-LATEST_MATERIAL_HEAD: 9910d2f95a1a8946ea625702de6f3a50b163c6e3
-LAST_COMPLETED_MATERIAL_LEG: LEG-005
+LATEST_MATERIAL_HEAD: 3a8b4e7241ed341deb4f54175ad14f893a7af241
+LAST_COMPLETED_MATERIAL_LEG: LEG-006
 CURRENT_MATERIAL_LEG: NONE
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-005.md
-ENGINEERING_STATE: LEG_005_SOURCE_COMPLETE_EXECUTION_PARTIAL_BLOCKED
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-006.md
+ENGINEERING_STATE: LEG_006_REPAIR_SOURCE_COMPLETE_EXTERNAL_REVALIDATION_PENDING
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_OWNER_REPAIR_PROGRESSION
+WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_REVALIDATION
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 AUTHORITY_DOMAIN: EMP.1 test/evidence closure only; production mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 11
-COORDINATION_STATE: EXTERNAL_VALIDATION_OBSERVED_REPAIR_REQUIRED
-POST_BASIS_DRIFT: NONE
+CUSTODY_EPOCH: 12
+COORDINATION_STATE: SAFE_POST_LEG006_REPAIR
+POST_BASIS_DRIFT: NON_MATERIAL_TO_SCOPE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550870881
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
-OWNER_TEXT_OBSERVED: manual localhost verification preferred over Playwright launch for this checkpoint
-OWNER_PROGRESSION_COMMAND: NONE_NEW
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_ENDPOINT_COMMENT
+OWNER_TEXT_OBSERVED: `fix, proceed next`
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_006_REPAIR
 OWNER_MERGE_COMMAND: NONE_FOR_PR_1660
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -65,14 +66,14 @@ QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PARTIAL_BLOCKED
+HANDOVER_VALIDATION_STATUS: PARTIAL_PENDING
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
-VALIDATION_PASS_OBSERVED: emp1-plain-language-labels-check; emp1-governed-vector-table-check; emp1-professional-workflow-check; emp1-benchmark-evidence-ui-check; emp1-issue1651-acceptance-check.
-VALIDATION_FAIL_TEST_HARNESS: `scripts/emp1-analytical-layout-check.mjs` -> `ReferenceError: Cannot access 'FakeDocument' before initialization` before assertions.
-VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright 5/5 blocked in browser launch because project-local Chromium 1217 executable is absent; no product assertions executed.
-VALIDATION_NOT_RUN: `npm run check:imports`; `npm run build`; `git diff --check`.
-MANUAL_VALIDATION: allowed as human-observed UI evidence for this checkpoint; does not convert automated Playwright execution to PASS. Checklist: agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0007.md
-AUTHORITY_BOUNDARY: no new material production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML changes after LEG-005 material head.
-CURRENT_BLOCKER: test-harness repair requires a new exact Owner progression; manual localhost walkthrough still pending.
-EXACT_NEXT_ACTION: Owner may run `npm run dev` at the frozen material head and manually inspect the supplied checklist. Send observations. A new exact `proceed next` is required before repairing the layout checker. Do not merge PR #1660 without a separate explicit Owner merge command.
+VALIDATION_PASS_OBSERVED: emp1-plain-language-labels-check; emp1-governed-vector-table-check; emp1-professional-workflow-check; emp1-benchmark-evidence-ui-check; emp1-issue1651-acceptance-check; npm run check:imports; git diff --check.
+VALIDATION_REPAIR_PENDING: `node scripts/emp1-analytical-layout-check.mjs` must be rerun at 3a8b4e72 after declaration-order repair.
+VALIDATION_BUILD_GATE: Vite build phase completed but bundle ceiling failed at prior material target; current-main differential build required before attribution.
+VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains blocked because project-local Chromium is absent; no product assertions executed.
+MANUAL_VALIDATION: allowed as separate human-observed UI evidence; pending unless returned.
+AUTHORITY_BOUNDARY: LEG-006 changes one test checker only; no production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML.
+CURRENT_BLOCKER: external revalidation of repaired checker plus current-main differential build attribution.
+EXACT_NEXT_ACTION: local verifier checks out `3a8b4e7241ed341deb4f54175ad14f893a7af241`, reruns the layout checker, then builds current main `80f335b750a13a06741a787106949bada1ad7f37` as bundle comparator and returns both outputs. Do not merge PR #1660 without a separate explicit Owner merge command.

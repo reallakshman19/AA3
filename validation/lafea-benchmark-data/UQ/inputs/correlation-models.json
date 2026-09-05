@@ -1,0 +1,55 @@
+{
+  "schema": "lafea-uq-correlation-models/v1",
+  "issue": 1673,
+  "stage": "U1",
+  "definitionState": "DEPENDENCIES_FROZEN_NUMERIC_CORRELATIONS_BLOCKED_SOURCE_AUTHORITY",
+  "defaultCorrelationPolicy": "UNSPECIFIED_IS_UNKNOWN_NOT_ZERO",
+  "statisticalExecutionAuthorized": false,
+  "dependencyRules": [
+    {
+      "dependencyId": "DEP-L3-SHEAR-MODULUS",
+      "derivedQuantity": "shearModulus",
+      "primitiveInputIds": ["UQ-IN-L3-ELASTIC-MODULUS", "UQ-IN-L3-POISSON-RATIO"],
+      "relation": "G = E / (2 * (1 + nu))",
+      "maySampleDerivedQuantityIndependently": false,
+      "exceptionAuthority": "SEPARATELY_RETAINED_MODEL_DISCREPANCY_SOURCE_REQUIRED"
+    },
+    {
+      "dependencyId": "DEP-L3-EDGE-RESULTANT",
+      "derivedQuantity": "edgeLoadResultant",
+      "primitiveInputIds": ["UQ-IN-L3-TRACTION-PRESSURE", "UQ-IN-L3-THICKNESS", "UQ-IN-L3-GEOMETRY-XY"],
+      "relation": "resultant = traction_or_pressure * loaded_edge_length * thickness with governed direction/sign convention",
+      "maySampleDerivedQuantityIndependently": false,
+      "exceptionAuthority": "SEPARATELY_MEASURED_RESULTANT_WITH_JOINT_COVARIANCE_SOURCE_REQUIRED"
+    }
+  ],
+  "correlationCandidates": [
+    {
+      "pairId": "CORR-L3-E-NU",
+      "inputIds": ["UQ-IN-L3-ELASTIC-MODULUS", "UQ-IN-L3-POISSON-RATIO"],
+      "correlationCoefficient": null,
+      "stochasticSourceId": null,
+      "authorityState": "BLOCKED_SOURCE_AUTHORITY"
+    },
+    {
+      "pairId": "CORR-L3-GEOMETRY-THICKNESS",
+      "inputIds": ["UQ-IN-L3-GEOMETRY-XY", "UQ-IN-L3-THICKNESS"],
+      "correlationCoefficient": null,
+      "stochasticSourceId": null,
+      "authorityState": "BLOCKED_SOURCE_AUTHORITY"
+    },
+    {
+      "pairId": "CORR-L3-LOAD-THICKNESS",
+      "inputIds": ["UQ-IN-L3-TRACTION-PRESSURE", "UQ-IN-L3-THICKNESS"],
+      "correlationCoefficient": null,
+      "stochasticSourceId": null,
+      "authorityState": "BLOCKED_SOURCE_AUTHORITY"
+    }
+  ],
+  "rules": [
+    "A null correlation coefficient means unknown/not-authorized and must never be coerced to zero.",
+    "Derived quantities must be recomputed from sampled primitives unless a separately qualified discrepancy/source model authorizes otherwise.",
+    "A future covariance/correlation matrix must be source-backed, symmetric, dimensionally aligned to the retained input ordering, and positive semidefinite within a separately frozen numerical tolerance.",
+    "Invalid or non-positive-semidefinite covariance authority must fail closed rather than be repaired silently."
+  ]
+}

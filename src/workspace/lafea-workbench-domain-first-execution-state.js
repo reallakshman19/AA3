@@ -16,15 +16,21 @@ export function createLafeaWorkbenchDomainFirstExecutionState(stageIds) {
       || (value.status === 'RUNNING' && value.runTransaction?.status !== 'RUNNING')) {
       fail('LAFEA_DOMAIN_FIRST_EXECUTION_STATE_INVALID');
     }
-    retainCompletedReceipt(state, state.execution?.runTransactionReceipt);
-    retainCompletedReceipt(state, value.runTransactionReceipt);
+    retainRunTransactionReceiptValue(state, state.execution?.runTransactionReceipt);
+    retainRunTransactionReceiptValue(state, value.runTransactionReceipt);
     state.execution = freeze(structuredClone(value));
     return state.execution;
   }
 
+  function retainRunTransactionReceipt(stageId, receipt) {
+    const state = requireStage(stageId);
+    retainRunTransactionReceiptValue(state, receipt, true);
+    return state.latestRunTransactionReceipt;
+  }
+
   function clear(stageId) {
     const state = requireStage(stageId);
-    retainCompletedReceipt(state, state.execution?.runTransactionReceipt);
+    retainRunTransactionReceiptValue(state, state.execution?.runTransactionReceipt);
     const changed = state.execution !== null;
     state.execution = null;
     return changed;
@@ -48,13 +54,25 @@ export function createLafeaWorkbenchDomainFirstExecutionState(stageIds) {
     return state;
   }
 
-  return Object.freeze({ retain, clear, select, fields });
+  return Object.freeze({
+    retain,
+    retainRunTransactionReceipt,
+    clear,
+    select,
+    fields,
+  });
 }
 
-function retainCompletedReceipt(state, receipt) {
-  if (receipt?.status === 'COMPLETED' && receipt?.semanticHash) {
-    state.latestRunTransactionReceipt = freeze(structuredClone(receipt));
+function retainRunTransactionReceiptValue(state, receipt, required = false) {
+  const valid = receipt
+    && receipt.schema === 'lafea-run-transaction-receipt/v1'
+    && ['COMPLETED', 'SUPERSEDED'].includes(receipt.status)
+    && typeof receipt.semanticHash === 'string';
+  if (!valid) {
+    if (required) fail('LAFEA_DOMAIN_FIRST_RUN_TRANSACTION_RECEIPT_INVALID');
+    return;
   }
+  state.latestRunTransactionReceipt = freeze(structuredClone(receipt));
 }
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
 function freeze(value) {

@@ -28,6 +28,10 @@ test('complete EMP.1 qualification sample reaches prepared C and remains fail-cl
   await expect(sample).toBeVisible();
   await sample.click();
 
+  // The transaction summary is retained evidence under the split-console IA.
+  // Enter Review & Evidence before asserting the same fail-closed authority data.
+  const workflow = workbench.locator('[data-role="emp1-workflow"]');
+  await workflow.getByRole('button', { name: /^7 Review & Evidence/u }).click();
   const summary = workbench.locator('[data-role="emp1-product-execution-summary"]');
   await expect(summary).toBeVisible();
   await expect(summary).toContainText('A 1 · B 1 · prepare C 1 · production C 0');

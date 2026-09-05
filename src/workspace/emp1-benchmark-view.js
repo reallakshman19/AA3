@@ -1,7 +1,7 @@
 import { card, element } from './lafea-workbench-dom.js';
 
 const REQUIRED_AUTHORITY_STATEMENT =
-  'Independent comparison evidence — not WRC method authority. Does not establish code compliance, production authorization, or release qualification.';
+  'Independent reference evidence — not WRC method authority. Does not establish code compliance, production authorization, or release qualification.';
 
 export function renderEmp1BenchmarkEvidencePanel(root, workspace) {
   if (workspace?.schema !== 'emp1-benchmark-evidence-workspace/v1') {

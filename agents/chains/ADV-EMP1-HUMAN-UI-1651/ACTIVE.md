@@ -14,54 +14,60 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0002.md
+ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0003.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0001.md
 
-PR: 1655
-PR_STATUS: OPEN_DRAFT_LEG001_SOURCE_COMPLETE_EXECUTION_NOT_RUN
-BRANCH: agent/emp1-human-ui-1651-prework
+PREVIOUS_PR: 1655
+PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
+PREVIOUS_PR_MERGE_COMMIT: 840d439cb39eb1c334cc0d7593eb2c45085599c6
+PR: 1658
+PR_STATUS: OPEN_DRAFT_LEG002_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+BRANCH: agent/emp1-human-ui-1651-leg002-pressure-matrix
 PR_BASE: main
-PR_HEAD_OBSERVED: 09d541dd733f908fdcd2dddbedb174747e1ad54b
-PREWORK_COMMIT: 0f95a1b7b6003ea6e68c5346ca3bcb110dee8778
-MAIN_HEAD_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
+PR_HEAD_OBSERVED: 600b07c4adfa405f19fe271f7b549ca69d507de9
+MAIN_HEAD_OBSERVED: 0569ed29be02d4fb642bdfd370ae91004cde073a
 MERGEABILITY: MERGEABLE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
+STATUS_CONTEXTS_MATERIAL_HEAD: 0
 PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
-LATEST_MATERIAL_HEAD: 6346ca4d05820f629cf9b54bf94408faf098da29
-LAST_COMPLETED_MATERIAL_LEG: LEG-001
+LATEST_MATERIAL_HEAD: 8b6e126a5f5a14f99547937cb61c970c91e5b3cd
+LAST_COMPLETED_MATERIAL_LEG: LEG-002
 CURRENT_MATERIAL_LEG: NONE
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-001.md
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-002.md
 
-ENGINEERING_STATE: LEG_001_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+ENGINEERING_STATE: LEG_002_SOURCE_COMPLETE_EXECUTION_NOT_RUN
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-AUTHORITY_DOMAIN: EMP.1 presentation/layout/browser regression only; WRC/benchmark/source/route/code/release authority protected.
+AUTHORITY_DOMAIN: EMP.1 presentation/layout only; pressure mechanics and WRC/benchmark/source/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 2
-COORDINATION_STATE: SAFE_AFTER_PREDECESSOR_MERGE
-DEPENDENCIES: #1633 planning context; #1645 / PR #1648 merged into current main.
+CUSTODY_EPOCH: 4
+COORDINATION_STATE: SAFE_POST_LEG002_FREEZE
+POST_BASIS_DRIFT: MATERIAL_WITHIN_OTHER_DISJOINT_ENGINEERING_BOUNDARY
+POST_BASIS_DRIFT_DETAIL: main advanced after #1655 by LAFEA.3 benchmark/validation work only; LEG-002 was re-grounded to `0569ed29...` before material coding.
+DEPENDENCIES: #1633 planning context; #1645 / PR #1648 merged; LEG-001 / PR #1655 merged.
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550120393
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550269583
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
-OWNER_TEXT_OBSERVED: `proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_TEXT_OBSERVED: `merge, proceed next`
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_002
+OWNER_MERGE_COMMAND: EXECUTED_FOR_PR_1655_ONLY
 
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -70,9 +76,9 @@ ROADMAP_MUTATION_AUTHORITY: NONE
 
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
 QUALIFICATION_PROFILE_VERSION: 2
-QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-PRESSURE-MATRIX
-QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0002
-QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0002-questions.md
+QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-ANTI-WATERFALL-LAYOUT
+QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0003
+QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0003-questions.md
 QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REFRESHED
 QUESTION_DISPLAY: SHOW
@@ -81,13 +87,13 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: LEG-001 source/diff inspection and material receipt; no faithful executable checkout/runner available in this session.
+HANDOVER_VALIDATION_EVIDENCE: LEG-002 source/diff/custody and syntax-only evidence; repository-integrated Node/Playwright/build/import validation unavailable in this session.
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-VALIDATION: source/diff/artifact inspection PASS; executable label/benchmark/browser/import/build/diff checks NOT_RUN. Zero GitHub statuses/workflow runs on material head is not engineering PASS.
-AUTHORITY_BOUNDARY: LEG-001 translated/contained presentation only; it did not create or modify WRC method, source, route, benchmark, pressure mechanics, code, release or deployment authority.
-CURRENT_BLOCKER: no custody blocker; executable LEG-001 validation unavailable in this session. New material coding requires another exact Owner progression command.
-LEG_DIAGNOSIS: raw-code regression source is patched and regression-gated in source; next inconsistency is Pressure rendering 10 scalar rows instead of one identity row × Internal/External.
-EXACT_NEXT_ACTION: Owner invokes `proceed next`; execute LEG-002 governed matrix generalization + Pressure 5×2 only, preserving 10 governed cells and per-cell custody. Do not merge.
+VALIDATION: source/diff/custody inspection PASS; syntax-only local Node check PASS; repository-integrated static/browser/build/import execution NOT_RUN. Zero status contexts/workflow runs on material head is not PASS.
+AUTHORITY_BOUNDARY: LEG-002 only reorganizes existing governed descriptor instances into a fail-conservative identity × value-column presentation; it does not alter pressure mechanics, WRC method/source/route authority, benchmark custody, code/release or deployment authority.
+CURRENT_BLOCKER: new material coding requires another exact Owner progression command; executable LEG-002 qualification remains NOT_RUN externally.
+LEG_DIAGNOSIS: Pressure matrix source implementation is complete; next issue acceptance gap is the single-column analytical waterfall.
+EXACT_NEXT_ACTION: Owner invokes `proceed next`; execute LEG-003 anti-waterfall input/engineering-basis layout only under `QSCOPE-1651-EMP-ANTI-WATERFALL-LAYOUT`, preserving every engineering surface exactly once from the same projection. Do not merge PR #1658 without a new Owner merge command.

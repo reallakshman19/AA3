@@ -6,8 +6,8 @@ UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0001_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_ENDPOINT_COMMENT
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550031904
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
 
@@ -74,4 +74,4 @@ VALIDATION_STATUS: NOT_RUN_EXECUTION
 SOURCE_DIFF_AUDIT: PASS
 INDEPENDENT_ANALYTICAL_REPRODUCTION: PASS
 CURRENT_BLOCKER: faithful checkout failed before execution because DNS could not resolve github.com; no executable PASS may be claimed
-EXACT_NEXT_ACTION: sync EP-0001 to Issue, open Draft PR for exact-head review/CI attachment, then proceed only with bounded S2 work under EP-0001; do not activate or merge B02.
+EXACT_NEXT_ACTION: open Draft PR for exact-head review/CI attachment, then proceed only with bounded S2 work under EP-0001; do not activate or merge B02.

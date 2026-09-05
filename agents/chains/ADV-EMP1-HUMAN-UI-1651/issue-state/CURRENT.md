@@ -13,7 +13,13 @@ BRANCH: agent/emp1-human-ui-1651-prework
 PR: 1655
 PR_STATUS: OPEN_DRAFT_PREWORK_ONLY
 PR_BASE: main
+PR_HEAD_OBSERVED: 6d0c9d87606936a2a2d476e48b2f00a7e89fffc4
 MAIN_HEAD_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
+MERGEABILITY: MERGEABLE
+REVIEWS: 0
+UNRESOLVED_REVIEW_THREADS: 0
+REQUIRED_CHECKS: NONE_OBSERVED
+PULL_REQUEST_WORKFLOW_RUNS_CURRENT_HEAD: 0
 PREWORK_ENDPOINT: EP-0001
 PREWORK_COMMIT: 0f95a1b7b6003ea6e68c5346ca3bcb110dee8778
 COMPLETED_MATERIAL_LEG: NONE
@@ -91,11 +97,13 @@ PASS (read/source/artifact/custody inspection):
 - PR #1648 confirmed merged into current main;
 - current label-registry, table-renderer and benchmark presentation owners inspected;
 - pre-work endpoint committed strictly before any material mutation;
-- CHAIN_ROOT / ACTIVE / ENDPOINT issue comments published and reconciled.
+- CHAIN_ROOT / ACTIVE / ENDPOINT issue comments published and reconciled;
+- PR #1655 mergeability/review/thread/check state inspected.
 
 NOT_RUN:
 - no #1651 material source/test mutation exists yet;
-- focused Node/browser/build/import checks are not yet applicable to a material diff.
+- focused Node/browser/build/import checks are not yet applicable to a material diff;
+- no workflow run exists on the current relay-only PR head; this is not engineering PASS.
 
 CURRENT_BLOCKER: material progression requires one exact Owner progression command under the requested engineering-pr-delivery-v2 skill.
 EXACT_NEXT_ACTION: Owner sends `proceed next`; then execute bounded LEG-001: strict EMP presentation mapping + live-DOM raw-token regression gate only. Do not merge.

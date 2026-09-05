@@ -12,6 +12,7 @@ const sources = read('sources/source-registry.json');
 const cases = read('oracle/cases.json');
 const expected = read('oracle/expected-values.json');
 const loadExpected = read('oracle/load-path-expected-values.json');
+const solverExpected = read('oracle/solver-numerics-expected-values.json');
 const ladders = read('convergence/mesh-ladders.json');
 const probes = read('convergence/fixed-probes.json');
 const negatives = read('governance/negative-cases.json');
@@ -28,6 +29,10 @@ assert.equal(expected.authority.productionOutputMayModifyExpectedValues, false);
 assert.equal(loadExpected.authority.productionOutputUsed, false);
 assert.equal(loadExpected.authority.productionOutputMayModifyExpectedValues, false);
 assert.equal(loadExpected.authority.productionOutputMayModifyAcceptance, false);
+assert.equal(solverExpected.authority.productionOutputUsed, false);
+assert.equal(solverExpected.authority.productionOutputMayModifyExpectedValues, false);
+assert.equal(solverExpected.authority.productionOutputMayModifyAcceptance, false);
+assert.equal(solverExpected.authority.conditioningMetricsAreDiagnosticOnly, true);
 assert.equal(semantics.invariants.movingMeshMaximumMayNotQualifyRichardsonGci, true);
 assert.equal(semantics.invariants.releaseAuthorityGranted, false);
 
@@ -47,12 +52,14 @@ for (const stage of manifest.stages) {
 const allExpectedCaseIds = [
   ...expected.cases.map((row) => row.caseId),
   ...loadExpected.cases.map((row) => row.caseId),
+  ...solverExpected.cases.map((row) => row.caseId),
 ].sort();
 assert.deepEqual(cases.cases.map((row) => row.caseId).sort(), allExpectedCaseIds);
 for (const row of expected.cases) {
   requireCitation(row.caseId, row.citation);
   assert.equal(typeof row.acceptance.policyOrigin, 'string');
 }
+
 assert.equal(typeof loadExpected.acceptance.policyOrigin, 'string');
 assert.ok(loadExpected.acceptance.absoluteTolerance > 0);
 assert.ok(loadExpected.acceptance.relativeTolerance > 0);
@@ -64,10 +71,47 @@ assert.deepEqual(
   loadExpected.cases.map((row) => row.loadType).sort(),
   ['BODY_FORCE', 'EDGE_TRACTION', 'IMPOSED_DISPLACEMENT', 'PRESSURE', 'TEMPERATURE_STRAIN'],
 );
+
+assert.equal(typeof solverExpected.acceptance.policyOrigin, 'string');
+assert.equal(solverExpected.acceptance.linearRelationRelativeTolerance, 1e-8);
+assert.equal(solverExpected.acceptance.scalingReversibilityRelativeTolerance, 1e-10);
+assert.equal(solverExpected.acceptance.scaledDiagonalAbsoluteTolerance, 1e-9);
+assert.equal(solverExpected.acceptance.conditioningPassThreshold, null);
+assert.deepEqual(
+  solverExpected.cases.map((row) => row.caseId).sort(),
+  [
+    'SOLVER-DIAGONAL-SCALING-01',
+    'SOLVER-EQUILIBRIUM-ENERGY-01',
+    'SOLVER-LINEAR-SCALING-01',
+    'SOLVER-SUPERPOSITION-01',
+  ],
+);
+for (const row of solverExpected.cases) {
+  assert.ok(row.derivation && Object.keys(row.derivation).length > 0, `${row.caseId} derivation missing`);
+  assert.equal(typeof row.kind, 'string');
+}
+const equilibriumCase = solverExpected.cases.find((row) => row.caseId === 'SOLVER-EQUILIBRIUM-ENERGY-01');
+assert.equal(equilibriumCase.derived.appliedResultantN.x, 5000);
+assert.equal(equilibriumCase.derived.reactionResultantN.x, -5000);
+assert.equal(equilibriumCase.derived.strainEnergyNmm, 12.5);
+assert.equal(equilibriumCase.derived.externalWorkNmm, 25);
+assert.equal(equilibriumCase.derived.externalWorkOverTwoStrainEnergy, 1);
+const linearCase = solverExpected.cases.find((row) => row.caseId === 'SOLVER-LINEAR-SCALING-01');
+assert.equal(linearCase.derived.responseFactor, -0.5);
+assert.equal(linearCase.derived.strainEnergyFactor, 0.25);
+
 const s2 = manifest.stages.find((row) => row.benchmarkStage === 'S2');
 assert.equal(s2.definitionState, 'READY');
 assert.equal(s2.methods.length, 1);
 assert.equal(s2.methods[0].expectedEvidenceSchema, 'lafea3-bm-s-s2-load-path-evidence/v1');
+const s3 = manifest.stages.find((row) => row.benchmarkStage === 'S3');
+assert.equal(s3.definitionState, 'READY');
+assert.equal(s3.methods.length, 1);
+assert.equal(s3.methods[0].expectedEvidenceSchema, 'lafea3-bm-s-s3-solver-numerics-evidence/v1');
+assert.equal(
+  s3.methods[0].oracleAuthority,
+  'INDEPENDENT_STATIC_EQUILIBRIUM_CLAPEYRON_LINEARITY_SUPERPOSITION_AND_SCALING_INVARIANTS',
+);
 
 for (const probe of probes.probes) {
   assert.equal('nodeId' in probe, false, `${probe.probeId} may not use node identity`);
@@ -111,8 +155,9 @@ const oraclePayload = JSON.parse(oracleCheck.stdout);
 assert.equal(oraclePayload.productionOutputUsed, false);
 assert.equal(oraclePayload.expectedValuesCheck, 'PASS');
 assert.equal(Object.keys(oraclePayload['S2-load-paths']).length, 5);
+assert.equal(Object.keys(oraclePayload['S3-solver-numerics']).length, 4);
 
-console.log('LAFEA.3 BM-S B02 definition, source custody, cited S1 oracle, exact S2 load paths and S4 negative contract passed.');
+console.log('LAFEA.3 BM-S B02 definition, source custody, cited S1 oracle, exact S2 load paths, S3 solver numerics and S4 negative contract passed.');
 
 function read(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(B02, relativePath), 'utf8'));

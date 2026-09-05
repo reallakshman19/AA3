@@ -3,7 +3,7 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 UPDATED_AT: 2026-09-05
-ISSUE_HANDOVER_SYNC_STATUS: STALE_DURING_ACTIVE_LEG
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550382576
@@ -13,7 +13,7 @@ BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR: 1660
 PR_STATUS: OPEN_DRAFT_LEG004_IN_PROGRESS
 PR_BASE: main
-PR_HEAD_OBSERVED: 2562a89144c4f074a75a4fd03794967aef258f3c
+PR_HEAD_OBSERVED: 17685e468c7aef64cba78e43fc91b63299d3549b
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
 MERGEABILITY: MERGEABLE_PRE_LEG004
 REVIEWS: 0
@@ -97,11 +97,11 @@ PASS — pre-material reconciliation:
 - project overlay unchanged;
 - `main` remains `b39f7673737bd1f7f4a6d7dd9d1538f795874281`;
 - Draft PR #1660 is open and mergeable;
-- EP-0004 was synchronized before this progression;
+- EP-0004 and Issue Active are synchronized;
 - live benchmark workspace/view/core/CAUx/PV-Elite custody and predecessor #1645 plan were reread;
 - Q-set refreshed for the changed technical boundary.
 
 NOT_RUN — LEG-004 executable/browser/build validation; material patch not yet frozen.
 
-CURRENT_BLOCKER: issue Active projection needs synchronization before material mutation.
-EXACT_NEXT_ACTION: synchronize issue Active to the refreshed benchmark-hierarchy qualification, then execute one bounded LEG-004 benchmark/evidence hierarchy patch, freeze receipt/successor endpoint, synchronize issue comments and stop. Do not merge PR #1660 without a new explicit Owner merge command.
+CURRENT_BLOCKER: none.
+EXACT_NEXT_ACTION: execute one bounded LEG-004 benchmark/evidence hierarchy patch, freeze receipt/successor endpoint, synchronize issue comments and stop. Do not merge PR #1660 without a new explicit Owner merge command.

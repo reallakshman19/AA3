@@ -3,44 +3,59 @@ export const LAFEA_DOMAIN_FIRST_EXECUTION_STATE_SCHEMA =
   'lafea-domain-first-workbench-execution/v1';
 
 export function createLafeaWorkbenchDomainFirstExecutionState(stageIds) {
-  const retained = Object.fromEntries(stageIds.map((stageId) => [stageId, null]));
+  const states = Object.fromEntries(stageIds.map((stageId) => [stageId, {
+    execution: null,
+    latestRunTransactionReceipt: null,
+  }]));
 
   function retain(stageId, value) {
-    requireStage(stageId);
+    const state = requireStage(stageId);
     if (!value || value.stageId !== stageId
       || !['RUNNING', 'QUALIFIED', 'FAILED'].includes(value.status)
       || value.schema !== LAFEA_DOMAIN_FIRST_EXECUTION_STATE_SCHEMA
       || (value.status === 'RUNNING' && value.runTransaction?.status !== 'RUNNING')) {
       fail('LAFEA_DOMAIN_FIRST_EXECUTION_STATE_INVALID');
     }
-    retained[stageId] = freeze(structuredClone(value));
-    return retained[stageId];
+    retainCompletedReceipt(state, state.execution?.runTransactionReceipt);
+    retainCompletedReceipt(state, value.runTransactionReceipt);
+    state.execution = freeze(structuredClone(value));
+    return state.execution;
   }
 
   function clear(stageId) {
-    requireStage(stageId);
-    const changed = retained[stageId] !== null;
-    retained[stageId] = null;
+    const state = requireStage(stageId);
+    retainCompletedReceipt(state, state.execution?.runTransactionReceipt);
+    const changed = state.execution !== null;
+    state.execution = null;
     return changed;
   }
 
   function select(stageId) {
-    requireStage(stageId);
-    return retained[stageId];
+    return requireStage(stageId).execution;
   }
 
   function fields(stageId) {
-    const execution = select(stageId);
-    return execution ? freeze({ execution }) : freeze({});
+    const state = requireStage(stageId);
+    return freeze({
+      ...(state.execution ? { execution: state.execution } : {}),
+      latestRunTransactionReceipt: state.latestRunTransactionReceipt,
+    });
   }
 
   function requireStage(stageId) {
-    if (!Object.hasOwn(retained, stageId)) fail('LAFEA_DOMAIN_FIRST_EXECUTION_STAGE_INVALID');
+    const state = states[stageId];
+    if (!state) fail('LAFEA_DOMAIN_FIRST_EXECUTION_STAGE_INVALID');
+    return state;
   }
 
   return Object.freeze({ retain, clear, select, fields });
 }
 
+function retainCompletedReceipt(state, receipt) {
+  if (receipt?.status === 'COMPLETED' && receipt?.semanticHash) {
+    state.latestRunTransactionReceipt = freeze(structuredClone(receipt));
+  }
+}
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
 function freeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;

@@ -23,8 +23,14 @@ PR: 1655
 PR_STATUS: OPEN_DRAFT_PREWORK_ONLY
 BRANCH: agent/emp1-human-ui-1651-prework
 PR_BASE: main
+PR_HEAD_OBSERVED: 6d0c9d87606936a2a2d476e48b2f00a7e89fffc4
 PREWORK_COMMIT: 0f95a1b7b6003ea6e68c5346ca3bcb110dee8778
 MAIN_HEAD_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
+MERGEABILITY: MERGEABLE
+REVIEWS: 0
+UNRESOLVED_REVIEW_THREADS: 0
+REQUIRED_CHECKS: NONE_OBSERVED
+PULL_REQUEST_WORKFLOW_RUNS_CURRENT_HEAD: 0
 LATEST_MATERIAL_HEAD: NONE
 LAST_COMPLETED_MATERIAL_LEG: NONE
 CURRENT_MATERIAL_LEG: NONE
@@ -79,7 +85,7 @@ CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-VALIDATION: protocol/issue/main/roadmap/predecessor/source-owner/custody inspection PASS; executable material checks NOT_RUN because LEG-001 has not started.
+VALIDATION: protocol/issue/main/roadmap/predecessor/source-owner/custody inspection PASS; mergeability/review/check state inspected; executable material checks NOT_RUN because LEG-001 has not started. Zero workflow runs is not engineering PASS.
 AUTHORITY_BOUNDARY: presentation work may translate and arrange existing governed facts but may not create or modify WRC method, source, route, benchmark, code, release or deployment authority.
 CURRENT_BLOCKER: exact Owner progression command not invoked under the requested Common skill.
 LEG_DIAGNOSIS: repository is ready for a surgical first leg; the current regression mechanism is unmapped fallback + hand-maintained rendered-code list, not a WRC calculation defect.

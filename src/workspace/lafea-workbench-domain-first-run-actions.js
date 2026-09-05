@@ -102,10 +102,13 @@ export function createLafeaWorkbenchDomainFirstRunActions(context) {
       c.clearOrchestratorDiagnostic();
     } catch (error) {
       if (transaction) {
-        transactions.invalidate(
+        const receipt = transactions.invalidate(
           stageId,
           typeof error?.code === 'string' ? error.code : 'LAFEA_RUN_TRANSACTION_REJECTED',
         );
+        if (receipt) {
+          c.domainFirstExecution.retainRunTransactionReceipt(stageId, receipt);
+        }
       }
       c.domainFirstExecution.clear(stageId);
       c.failOrchestrator(error, 'LAFEA_CONTINUUM_AUTHORITATIVE_RUN_REJECTED');

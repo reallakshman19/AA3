@@ -15,6 +15,9 @@
     "performanceMetricsAreInformational": true,
     "conditioningMetricsAreDiagnosticOnly": true,
     "conditioningMetricsMayNotCreatePhysicalApplicabilityLimit": true,
+    "failClosedQualificationUsesFirstFailureBoundaryStateAndCode": true,
+    "messageRegexMayNotQualifyNegativeCase": true,
+    "matchingCodeAtWrongBoundaryMayNotQualifyNegativeCase": true,
     "releaseAuthorityGranted": false
   },
   "solverNumerics": {
@@ -27,6 +30,12 @@
       "DETERMINISTIC_CHOLESKY": ["minimumPivot","maximumPivot","pivotRatio"],
       "DETERMINISTIC_JACOBI_PCG": ["minimumDiagonal","maximumDiagonal","diagonalRatio","iterations","finalResidualInfinity","convergenceTarget"]
     }
+  },
+  "failClosedNegatives": {
+    "requiredObservationFields": ["actualBoundary","actualQualificationState","actualErrorCode","actualPath"],
+    "q8InversionMustPreserveCounterClockwiseCorners": true,
+    "q8InversionMustReachElementFormulation": true,
+    "productionValidationRulesMayNotBeRelaxedByBenchmark": true
   },
   "determinism": {
     "compareSemanticHashesNotWholeAuditRecordBytes": true,

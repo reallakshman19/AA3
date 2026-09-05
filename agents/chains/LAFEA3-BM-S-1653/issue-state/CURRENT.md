@@ -7,7 +7,7 @@ COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550117563
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_MERGE_AUTH_PROJECTION
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
 
@@ -90,4 +90,4 @@ QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
-EXACT_NEXT_ACTION: synchronize merge authorization to Issue/PR, mark PR #1657 ready-for-review only as required by GitHub, merge the exact current custody head, then re-ground on merged main and begin bounded S3 LEG-003 without changing production solver/tolerances.
+EXACT_NEXT_ACTION: mark PR #1657 ready-for-review only as required by GitHub, merge the exact synchronized custody head, then re-ground on merged main and begin bounded S3 LEG-003 without changing production solver/tolerances.

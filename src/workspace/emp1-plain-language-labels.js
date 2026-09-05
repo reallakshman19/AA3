@@ -110,6 +110,12 @@ const STATE_LABELS = Object.freeze({
   GLOBAL_EMP1_C_ROUTE: 'The unbounded, full-domain EMP.1.C route remains blocked.',
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED:
     'The WRC 537 gamma=5 zero-pressure route is suspended pending requalification.',
+
+  // axis and sign-convention authority, shown on the C evidence card
+  SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED:
+    'The load-axis sign is not fixed by this route; it must be resolved at runtime from source-qualified evidence.',
+  SOURCE_REFERENCE_TOWARD_ATTACHMENT_TARGET:
+    'P is positive when directed from the source point toward the attachment target.',
 });
 
 /** Summary values the presentation layer already emits space-separated. */

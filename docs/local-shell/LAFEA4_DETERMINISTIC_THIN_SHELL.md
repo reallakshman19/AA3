@@ -121,14 +121,22 @@ TOP:        z = +t/2
 
 Membrane, bending, and combined strain and stress remain separate. Principal stresses, maximum in-plane shear, and plane-stress three-dimensional von Mises are reconstructed from the same element, load case, integration point, and surface. The kernel emits no nodal, averaged, smoothed, extrapolated, or contour-authority stress and no transverse-normal or transverse-shear stress claim.
 
+## Result frame convention
+
+Element membrane strain, curvature, membrane stress, and recovered combined stress are reported in that element's retained local `ex`/`ey` frame from `meshEvidence.elements[*].localFrame`; they are not global-X/global-Y tensor components. This applies independently to every facet, so two elements representing one uniform global field can legitimately report different component triples when their local frames are rotated relative to one another.
+
+A global analytical oracle must therefore be transformed into each element frame before component-wise comparison. Engineering strain and curvature triples use the engineering-shear/twist convention `[epsilonX, epsilonY, gammaXY]` / `[kappaX, kappaY, kappaXY]`; stress triples use `[sigmaX, sigmaY, tauXY]`. Directional global quantities such as hoop or axial stress/strain must likewise be projected through the retained local frame before comparison. Frame-invariant scalars such as in-plane principal values and von Mises may be compared without rotating the scalar itself.
+
+Qualification scripts must treat `meshEvidence.elements[*].localFrame` as the frame authority. A component-wise comparison between an element-local result and an unrotated global closed-form tensor is an invalid oracle except for the special case where the element frame is aligned with the global frame.
+
 ## Qualification and certification
 
 Independent scale-aware rules govern basis quality, area, director alignment, constitutive and stiffness symmetry, rigid motion, transformation rank, Cholesky pivots, free residuals, force and moment equilibrium, energy, membrane patches, and bending patches.
 
 ```bash
-npm run check:lafea.4
+npm run check:lafea-core
 ```
 
-The dedicated command covers contracts, containment, immutability, hashes, geometry, bases, CST fields, DKT curvature, transformation, assembly, solver, nodal forces and moments, pressure, recovery, energy, repeated-byte identity, permutation invariance, negative-zero elimination, source hygiene, cylindrical rigid motion, angular-refinement convergence, open-strip bending symmetry, and exact represented-area pressure-resultant reconstruction.
+That aggregate covers contracts, containment, immutability, hashes, geometry, bases, CST fields, DKT curvature, transformation, assembly, solver, nodal forces and moments, pressure, recovery, energy, repeated-byte identity, permutation invariance, negative-zero elimination, source hygiene, cylindrical rigid motion, angular-refinement convergence, open-strip bending symmetry, and exact represented-area pressure-resultant reconstruction across LAFEA.1 through LAFEA.5. It is paired in CI (`.github/workflows/lafea4-shell-pr-validation.yml`) with `npm run check:lafea-solver`, `npm run check:imports`, and `npm run build`; run all four locally before treating a LAFEA.4 change as release-qualified.
 
 Cylindrical equilibrium checks are exact for represented faceted area. Cylinder membrane stress is reported only as deterministic angular-refinement convergence evidence; no coarse-mesh exact cylinder-stress claim is made.

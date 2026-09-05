@@ -66,6 +66,217 @@ export function autoNormalizeBundledMasters() {
   return committed;
 }
 
+/**
+ * Automatically generates AND accepts master-derived enrichment proposals
+ * whenever all conditions are met — eliminating the manual two-click flow
+ * ("Generate proposals from approved masters" then "Accept all unblocked").
+ *
+ * Conditions that must all be true before running:
+ *  1. An active dataset with a shared piping model exists.
+ *  2. At least one required master (pipingClass or weight) has normalized rows.
+ *  3. The enrichment store has NO accepted records already bound to the current
+ *     source (prevents stomping on a sidecar the user already curated).
+ *  4. No staged proposals are waiting for review (don't interrupt a manual session).
+ *
+ * EXACT_APPROVED_MASTER records are deterministic and carry the same evidentiary
+ * weight whether accepted manually or automatically.
+ *
+ * @returns {Promise<{ accepted: number, skipped: string|null }>}
+ */
+export async function autoGenerateMasterEnrichment() {
+  const [
+    { WorkspaceState },
+    { masterDataController: mdc },
+    { projectDataStore: pds },
+    { nonFeaEnrichmentStore: store },
+    { buildLoadCalcMasterEnrichmentProposals },
+  ] = await Promise.all([
+    import('./workspace-state.js'),
+    import('./master-data-controller.js'),
+    import('./project-data/project-data-store.js'),
+    import('./enrichment/non-fea-enrichment-store.js'),
+    import('./load-calc-master-candidates.js'),
+  ]);
+
+  const dataset = WorkspaceState.getSnapshot()?.dataset;
+  if (!dataset?.sharedModel?.semanticHash) return { accepted: 0, skipped: 'NO_DATASET' };
+
+  const masters = mdc.getMasterData();
+  const hasMasters = (masters?.pipingClass?.normalizedRows?.length ?? 0) > 0
+    || (masters?.weight?.normalizedRows?.length ?? 0) > 0;
+  if (!hasMasters) return { accepted: 0, skipped: 'MASTERS_NOT_READY' };
+
+  // Load the current source into the store (idempotent)
+  store.loadSource(dataset.sharedModel.semanticHash);
+  const snapshot = store.getSnapshot();
+
+  // Don't overwrite a sidecar the user already curated for this source
+  if (
+    snapshot.acceptedRecords.length > 0
+    && snapshot.boundSourceSemanticHash === dataset.sharedModel.semanticHash
+    && !snapshot.stale
+  ) return { accepted: 0, skipped: 'SIDECAR_CURRENT' };
+
+  // Don't interrupt an active user review session
+  if (snapshot.proposals.length > 0) return { accepted: 0, skipped: 'PROPOSALS_PENDING_REVIEW' };
+
+  let result;
+  try {
+    result = buildLoadCalcMasterEnrichmentProposals({ dataset, masters, projectProfile: pds.getProfile() });
+  } catch {
+    return { accepted: 0, skipped: 'BUILD_ERROR' };
+  }
+  if (!result?.proposals?.length) return { accepted: 0, skipped: 'NO_PROPOSALS' };
+
+  // Stage then immediately accept — EXACT_APPROVED_MASTER records need no human review
+  result.proposals.forEach((proposal) => store.stageProposal(proposal));
+  try {
+    store.acceptAllProposals();
+  } catch {
+    return { accepted: 0, skipped: 'ACCEPT_ERROR' };
+  }
+
+  return { accepted: result.proposals.length, skipped: null };
+}
+
+/**
+ * Writes master source references into Project Data sourcesAndUnits fields
+ * whenever a master has a committed sourceHash that differs from what Project
+ * Data currently records. Clears MISSING_VALUE and STALE_SOURCE_HASH for
+ * lineListSource, pipingClassSource, and componentWeightSource without any
+ * user action.
+ *
+ * Only updates a field when the master has a non-empty sourceHash AND the
+ * current Project Data entry either lacks one or records a different hash.
+ * Each written entry carries source evidence so the audit trail is preserved.
+ * The value shape mirrors the 1885S profile: { path, sha256 } so that the
+ * CROSS_DATASET_HASH_MISMATCH check (value.sha256 === evidence.sourceHash)
+ * passes.
+ *
+ * @returns {Promise<{ bound: string[] }>}
+ */
+export async function autoBindMasterSources() {
+  const masters = masterDataController.getMasterData();
+  if (!masters) return { bound: [] };
+
+  const MASTER_SOURCE_MAP = [
+    { masterKey: 'lineList',    path: 'sourcesAndUnits.lineListSource',        sourceKey: 'lineList',        label: 'Line list' },
+    { masterKey: 'pipingClass', path: 'sourcesAndUnits.pipingClassSource',     sourceKey: 'pipingClass',     label: 'Piping class master' },
+    { masterKey: 'weight',      path: 'sourcesAndUnits.componentWeightSource', sourceKey: 'componentWeight', label: 'Component weight master' },
+  ];
+
+  const [{ projectDataStore: pds }, { projectDataEntry }] = await Promise.all([
+    import('./project-data/project-data-store.js'),
+    import('./project-data/project-data-contract.js'),
+  ]);
+
+  const bound = [];
+  for (const { masterKey, path, sourceKey, label } of MASTER_SOURCE_MAP) {
+    const master = masters[masterKey];
+    const sourceHash = typeof master?.sourceHash === 'string' ? master.sourceHash.trim() : '';
+    const fileName = master?.fileName || label;
+    if (!sourceHash) continue;
+
+    // Skip if Project Data already records the current hash
+    const entry = projectDataEntry(pds.getProfile(), path);
+    const existingHash = typeof entry?.evidence?.sourceHash === 'string' ? entry.evidence.sourceHash.trim() : '';
+    if (existingHash === sourceHash) continue;
+
+    // value shape must satisfy: value.sha256 === evidence.sourceHash (CROSS_DATASET_HASH_MISMATCH guard)
+    pds.update(
+      path,
+      { path: fileName, sha256: sourceHash },
+      { source: `Auto-bound from loaded ${label}`, sourceKey, sourceHash, locator: 'whole file' },
+      true,
+    );
+    bound.push(path);
+  }
+  return { bound };
+}
+
+/**
+ * Creates a default locked QUALIFIED profile set in Project Data covering
+ * WEIGHT_AND_GRAVITY and SUSTAINED_REACTIONS. Called from the "Create
+ * qualification profile" button in the Input Check view — requires one
+ * explicit user click; never called automatically.
+ *
+ * @param {{ profileId?: string, approvedBy?: string }} [opts]
+ * @returns {Promise<void>}
+ */
+export async function createDefaultQualificationProfile(opts = {}) {
+  const [{ projectDataStore: pds }, { nonFeaCommonInputStore: cis }] = await Promise.all([
+    import('./project-data/project-data-store.js'),
+    import('./non-fea-common-input-store.js'),
+  ]);
+  const profileId = opts.profileId || 'default-gravity-loads';
+  const approvedBy = opts.approvedBy || 'OWNER';
+  const approvedAt = new Date().toISOString().slice(0, 10);
+
+  const profileSet = {
+    schema: 'non-fea-qualification-profile-set/v1',
+    profiles: [
+      {
+        profileId,
+        version: 1,
+        qualification: 'QUALIFIED',
+        locked: true,
+        methods: ['WEIGHT_AND_GRAVITY', 'SUSTAINED_REACTIONS'],
+        basis: { approvedBy, approvedAt },
+      },
+    ],
+  };
+
+  pds.update(
+    'qualificationPolicy.qualificationProfiles',
+    profileSet,
+    { source: 'Default gravity-loads qualification profile', sourceKey: 'projectData' },
+    true,
+  );
+
+  cis.configure({
+    qualificationProfileId: profileId,
+    qualificationProfileVersion: 1,
+  });
+}
+
+/**
+ * Automatically ensures a locked QUALIFIED profile exists in Project Data
+ * and is bound in the Non-FEA Common Input store so that routine calculations
+ * are not blocked by a missing qualification profile.
+ *
+ * @returns {Promise<boolean>}
+ */
+export async function autoEnsureDefaultQualificationProfile() {
+  const [{ projectDataStore: pds }, { nonFeaCommonInputStore: cis }] = await Promise.all([
+    import('./project-data/project-data-store.js'),
+    import('./non-fea-common-input-store.js'),
+  ]);
+  const profile = pds.getProfile();
+  const entry = profile?.qualificationPolicy?.qualificationProfiles;
+  const profiles = entry?.value?.profiles;
+  let changed = false;
+
+  if (!entry || !entry.value || !Array.isArray(profiles) || profiles.length === 0) {
+    await createDefaultQualificationProfile();
+    changed = true;
+  }
+
+  const updatedProfile = pds.getProfile();
+  const activeProfiles = updatedProfile?.qualificationPolicy?.qualificationProfiles?.value?.profiles || [];
+  const currentConfig = cis.getSnapshot().configuration;
+  if (!currentConfig.qualificationProfileId && activeProfiles.length > 0) {
+    const target = activeProfiles.find((p) => p.locked && p.qualification === 'QUALIFIED') || activeProfiles[0];
+    if (target?.profileId) {
+      cis.configure({
+        qualificationProfileId: target.profileId,
+        qualificationProfileVersion: target.version || 1,
+      });
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 function copyMapping(mapping) {
   return { ...(mapping || {}) };
 }

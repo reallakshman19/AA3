@@ -17,6 +17,7 @@ import { evaluateLafeaContinuumPhysicalProbe } from '../../src/workspace/lafea-c
 import { canonicalLafeaSha256 } from '../../src/workspace/lafea-canonical-sha256.js';
 import {
   b02dProfileIdentity,
+  b02dProfileIdentityV2,
   lafeaMeshGenerationConfiguration,
   produceLafeaAnalysisMeshEvidence,
 } from '../../src/workspace/lafea-mesh-producer-binding.js';
@@ -26,8 +27,19 @@ const STAGE_ID = 'LAFEA.3';
 const CASE_ID = 'LC1';
 const PHYSICAL_PROBE_SCHEMA = 'lafea-continuum-physical-probe/v1';
 
-export function executeB02dProductionLevel(definition, method, level) {
-  requireDefinition(definition, method, level);
+/**
+ * Execute one frozen B02D production level.
+ *
+ * `variant` selects the registered probe-stable polar mesh policy: 'V1'
+ * (default, preserving every existing caller) or 'V2'. Only the mesh profile
+ * identity, its source revision and the expected generator strategy differ -
+ * geometry, loads, canonical source, solve and recovery are shared, so both
+ * variants are qualified through exactly the same production route.
+ */
+export function executeB02dProductionLevel(definition, method, level, options = {}) {
+  const variant = options.variant ?? 'V1';
+  assert.ok(variant === 'V1' || variant === 'V2', `unsupported B02D mesh policy variant ${variant}`);
+  requireDefinition(definition, method, level, variant);
   const sourceHash = canonicalLafeaSha256({
     schema: 'lafea-b02d-production-source-binding/v1',
     definition,
@@ -36,14 +48,17 @@ export function executeB02dProductionLevel(definition, method, level) {
   });
   const geometry = annulusGeometry(definition);
   const meshStage = meshAuthorityStage(definition, sourceHash, geometry);
-  const meshProfile = b02dMeshProfile(method, level.h);
+  const meshProfile = b02dMeshProfile(method, level.h, variant);
   const configuration = lafeaMeshGenerationConfiguration(meshProfile, {
     curvatureToleranceDegrees: level.curvatureToleranceDegrees,
   });
   const produced = produceLafeaAnalysisMeshEvidence(meshStage, configuration);
   assert.equal(produced.evidence.qualification, 'PASS');
   assert.equal(produced.evidence.releaseQualified, false);
-  assert.equal(produced.planned.generated.strategy, 'B02D_PROBE_STABLE_POLAR');
+  assert.equal(
+    produced.planned.generated.strategy,
+    variant === 'V2' ? 'B02D_PROBE_STABLE_POLAR_V2' : 'B02D_PROBE_STABLE_POLAR',
+  );
   assert.equal(produced.evidence.mesh.elements.every((row) => row.elementType === method), true);
 
   const load = consistentFeatureResultant(
@@ -162,12 +177,14 @@ function meshAuthorityStage(definition, sourceHash, geometry) {
   });
 }
 
-function b02dMeshProfile(method, h) {
+function b02dMeshProfile(method, h, variant = 'V1') {
   const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
-    profileIdentity: b02dProfileIdentity(method, h),
-    sourceRevision: 'B02D-FROZEN-POLAR-V1',
+    profileIdentity: variant === 'V2'
+      ? b02dProfileIdentityV2(method, h)
+      : b02dProfileIdentity(method, h),
+    sourceRevision: variant === 'V2' ? 'B02D-FROZEN-POLAR-V2' : 'B02D-FROZEN-POLAR-V1',
     semanticHash: undefined,
     fields: {
       ...defaults,
@@ -388,8 +405,8 @@ function annulusGeometry(definition) {
   });
 }
 
-function requireDefinition(definition, method, level) {
-  assert.equal(definition.caseId, 'B02D');
+function requireDefinition(definition, method, level, variant = 'V1') {
+  assert.equal(definition.caseId, variant === 'V2' ? 'B02D-V2' : 'B02D');
   assert.equal(definition.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
   assert.equal(definition.productionOutputUsedToChooseDefinition, false);
   assert.ok(['T3', 'T6', 'Q8'].includes(method));

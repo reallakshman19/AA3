@@ -2,6 +2,7 @@ import { projectEmp1Readiness } from '../core/emp1/emp1-readiness-projection.js'
 import { card, element } from './lafea-workbench-dom.js';
 import { renderEmp1EngineeringReviewPanel } from './emp1-engineering-review-view.js';
 import { buildEmp1ProfessionalWorkflowPresentation } from './emp1-professional-workflow-presentation.js';
+import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
 
 const READINESS_DIMENSIONS = Object.freeze([
   Object.freeze({ key: 'source', label: 'Source & input' }),
@@ -22,9 +23,10 @@ export function renderEmp1ProfessionalWorkflow(
   root,
   projection,
   onSelectRoute,
-  reviewOptions = {},
+  options = {},
 ) {
-  const reviewWorkspace = reviewOptions.reviewWorkspace ?? null;
+  const runFailure = options.runFailure ?? null;
+  const reviewWorkspace = options.reviewWorkspace ?? null;
   const readiness = projectEmp1Readiness(projection, {
     reviewState: reviewWorkspace?.readinessReviewState ?? null,
   });
@@ -33,6 +35,9 @@ export function renderEmp1ProfessionalWorkflow(
   workflow.section.dataset.role = 'emp1-workflow';
   workflow.section.dataset.productId = presentation.productId;
   workflow.section.dataset.workflowSchema = presentation.schema;
+
+  const failure = runFailureBanner(root, runFailure);
+  if (failure) workflow.body.append(failure);
 
   workflow.body.append(
     element(root, 'strong', 'lafea-result-highlights__status', `${presentation.productId} · professional workflow`),
@@ -65,7 +70,7 @@ export function renderEmp1ProfessionalWorkflow(
     workflow.body.append(renderEmp1EngineeringReviewPanel(
       root,
       reviewWorkspace,
-      reviewOptions.onReview,
+      options.onReview,
     ));
   }
 
@@ -74,6 +79,30 @@ export function renderEmp1ProfessionalWorkflow(
   boundary.dataset.role = 'emp1-professional-workflow-authority-boundary';
   workflow.body.append(boundary, technicalBackingDisclosure(root, presentation, onSelectRoute));
   return workflow.section;
+}
+
+/**
+ * A failed transaction is reported here, at the top of the first card under the
+ * toolbar, as well as in the card that owns the failed state. Previously the only
+ * trace sat roughly 5,000px down the page in the teal style used for routine
+ * read-only notices, so a failed run looked identical to a disclaimer.
+ */
+function runFailureBanner(root, runFailure) {
+  if (!runFailure) return null;
+  const section = element(root, 'div', 'lafea-workbench__failure');
+  section.dataset.role = 'emp1-workflow-run-failure';
+  section.setAttribute('role', 'alert');
+  const code = runFailure.code ?? runFailure.message ?? 'UNRESOLVED';
+  section.append(
+    element(root, 'strong', null, 'The last EMP.1 transaction did not complete'),
+    element(root, 'p', null, emp1PlainLanguageLabel(code)),
+  );
+  if (emp1PlainLanguageLabel(code) !== code) {
+    const technical = element(root, 'p', null, code);
+    technical.dataset.role = 'emp1-workflow-run-failure-code';
+    section.append(technical);
+  }
+  return section;
 }
 
 function readinessDashboard(root, readiness) {
@@ -158,8 +187,10 @@ function currentnessNotice(root, notice) {
 
   const reasons = element(root, 'ul');
   notice.reasons.forEach((reason, index) => {
-    const item = element(root, 'li', null, reason);
     const reasonCode = notice.reasonCodes[index];
+    const isRawFallback = Boolean(reasonCode)
+      && reason === String(reasonCode).replaceAll('_', ' ');
+    const item = element(root, 'li', null, isRawFallback ? human(reasonCode) : reason);
     if (reasonCode) item.dataset.reasonCode = reasonCode;
     reasons.append(item);
   });
@@ -174,6 +205,9 @@ function currentnessNotice(root, notice) {
 function technicalBackingDisclosure(root, presentation, onSelectRoute) {
   const details = element(root, 'details', 'lafea-workbench__custody-details');
   details.dataset.role = 'emp1-technical-backing-steps';
+  details.open = presentation.backingCalculators.some(
+    (backing) => backing.state && backing.state !== 'SOURCE_INCOMPLETE',
+  );
   details.append(element(root, 'summary', null, 'Technical backing calculators and custody (A/B/C)'));
   const nav = element(root, 'nav', 'lafea-workbench__stages');
   nav.setAttribute('aria-label', 'EMP.1 technical backing calculators');
@@ -232,5 +266,5 @@ function scrollToRole(root, role) {
 }
 
 function human(value) {
-  return String(value ?? 'UNRESOLVED').replaceAll('_', ' ');
+  return emp1PlainLanguageLabel(value);
 }

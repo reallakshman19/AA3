@@ -57,11 +57,7 @@ test('UI08 exact production LFEA InputXML six-step workflow and profile currentn
   const errorCheck = sourceHost.locator('[data-role="lfea-common-error-check-panel"]');
   await expect(errorCheck).toBeVisible();
   await expect(errorCheck).toHaveAttribute('data-pre-flight-status', 'WARN');
-  await expect(inputXmlPanel.locator('[data-role="linear-piping-inputxml-reviewer"]')).toBeVisible();
-  await inputXmlPanel.locator('[data-role="linear-piping-inputxml-reviewer"]').fill('ui08-production-browser');
-  await inputXmlPanel.locator('[data-role="linear-piping-inputxml-review-reason"]')
-    .fill('Exact-head browser qualification of disclosed InputXML limitations.');
-  await inputXmlPanel.locator('[data-action="authorize-linear-piping-inputxml-prefea"]').click();
+  await acknowledgeAndAuthorize(errorCheck);
   await expect(inputXmlPanel).toHaveAttribute('data-pre-flight-authorized', 'true');
   await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'true');
   await expect(step(page, 'ERROR_CHECK')).toHaveClass(/lfea-pipeline-shell__step--complete/u);
@@ -79,14 +75,15 @@ test('UI08 exact production LFEA InputXML six-step workflow and profile currentn
   await step(page, 'ERROR_CHECK').click();
   await expect(inputXmlPanel).toHaveAttribute('data-pre-flight-status', 'WARN');
   await expect(inputXmlPanel).toHaveAttribute('data-pre-flight-authorized', 'false');
-  await inputXmlPanel.locator('[data-role="linear-piping-inputxml-reviewer"]').fill('ui08-production-browser');
-  await inputXmlPanel.locator('[data-role="linear-piping-inputxml-review-reason"]')
-    .fill('Exact-head browser qualification of disclosed InputXML limitations.');
-  await inputXmlPanel.locator('[data-action="authorize-linear-piping-inputxml-prefea"]').click();
+  await expect(errorCheck).toHaveAttribute('data-authorization-state', 'CONDITIONAL_PENDING');
+  await acknowledgeAndAuthorize(errorCheck);
   await expect(inputXmlPanel).toHaveAttribute('data-pre-flight-authorized', 'true');
 
-  await step(page, 'LOAD_CASE').click();
-  await casePanel.locator('[data-action="lfea-pipeline-analyze"]').click();
+  const runStep = step(page, 'RUN');
+  await expect(runStep).toBeEnabled();
+  await runStep.click();
+  await page.locator('[data-role="lfea-pipeline-run-panel"] [data-action="lfea-pipeline-analyze"]')
+    .click();
 
   const resultsHost = page.locator('.lfea-pipeline-shell__host[data-host-group="RESULTS"]');
   await expect(resultsHost).toBeVisible({ timeout: 15000 });
@@ -99,14 +96,14 @@ test('UI08 exact production LFEA InputXML six-step workflow and profile currentn
 
   await step(page, 'RUN').click();
   await expect(resultsHost).toHaveAttribute('data-active-step', 'RUN');
-  await expect(resultsHost.locator('[data-role="lfea-results-authority-execution-view"]')).toBeVisible();
+  await expect(resultsHost.locator('[data-role="lfea-pipeline-run-panel"]')).toBeVisible();
   await step(page, 'OUTPUT').click();
   await expect(resultsHost).toHaveAttribute('data-active-step', 'OUTPUT');
   await expect(resultPanel.locator('[data-role="lfea-pipeline-results-summary"]')).toBeVisible();
 
   await step(page, 'EXPORT').click();
   await expect(resultsHost).toHaveAttribute('data-active-step', 'EXPORT');
-  const csv = resultPanel.locator('[data-action="lfea-pipeline-results-csv"]');
+  const csv = resultsHost.locator('[data-role="lfea-pipeline-export-panel"] [data-action="lfea-pipeline-results-csv"]');
   await expect(csv).toBeVisible();
   const downloadPromise = page.waitForEvent('download');
   await csv.click();
@@ -125,8 +122,23 @@ test('UI08 exact production LFEA InputXML six-step workflow and profile currentn
   await profile.selectOption(otherProfile);
   await expect(inputXmlPanel).toHaveAttribute('data-pre-flight-authorized', 'false');
 
-  await step(page, 'OUTPUT').click();
+  await expect(step(page, 'OUTPUT')).toHaveAttribute('data-step-status', 'BLOCKED');
   await expect(resultPanel).toContainText('No analysis has been run yet.');
   await expect(resultPanel.locator('[data-role="lfea-pipeline-results-summary"]')).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });
+
+async function acknowledgeAndAuthorize(errorCheck) {
+  const acknowledgements = errorCheck.locator('[data-action="lfea-error-check-acknowledge-limitation"]');
+  const count = await acknowledgements.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    await acknowledgements.nth(index).click();
+  }
+  await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('ui08-production-browser');
+  await errorCheck.locator('[data-role="lfea-error-check-reason"]')
+    .fill('Exact-head browser qualification of disclosed InputXML limitations.');
+  const authorize = errorCheck.locator('[data-action="authorize-lfea-error-check-limitations"]');
+  await expect(authorize).toBeEnabled();
+  await authorize.click();
+}

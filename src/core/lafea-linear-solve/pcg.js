@@ -4,6 +4,27 @@ export const DETERMINISTIC_JACOBI_PCG_REVISION = 'DETERMINISTIC_JACOBI_PCG_RELIA
 export const PCG_RELIABLE_RESIDUAL_INTERVAL = 100;
 
 /**
+ * Factor by which the iterative solve is driven tighter than the caller's
+ * acceptance tolerance.
+ *
+ * The caller's `residualTolerance` bounds a per-DOF (infinity-norm) residual,
+ * but callers additionally qualify *summed* quantities derived from the same
+ * residual vector - notably reaction/applied-force equilibrium totals. A sum
+ * accumulates error with the degree-of-freedom count while the acceptance
+ * tolerance does not scale with problem size, so the summed check is the
+ * binding one on large models and needs the solve to land well inside the
+ * per-DOF bound rather than merely within it.
+ *
+ * At 10 the margin is exhausted by roughly 7e4 free DOF: the infinity-norm
+ * residual sits at ~5% of its limit while the summed force balance reaches
+ * ~145% of its own. At 100 the same model lands well inside both.
+ *
+ * This tightens the solve only. It changes no acceptance tolerance, result
+ * convention or algorithm, so it can only reduce solution error.
+ */
+export const PCG_CONVERGENCE_SAFETY_FACTOR = 100;
+
+/**
  * Storage-independent deterministic Jacobi-preconditioned conjugate gradient.
  *
  * The caller owns matrix storage, partitioning, engineering tolerances and
@@ -19,7 +40,7 @@ export function solveDeterministicJacobiPcg(options) {
   rejectInvalidDiagonal(minimumDiagonal, input.diagonalTolerance);
 
   const residualScale = Math.max(1, maxAbs(input.rightHandSide));
-  const convergenceTarget = input.residualTolerance / 10;
+  const convergenceTarget = input.residualTolerance / PCG_CONVERGENCE_SAFETY_FACTOR;
   const iterationLimit = Math.min(50000, Math.max(1000, input.size * 16));
   const solution = Array(input.size).fill(0);
   let residual = [...input.rightHandSide];

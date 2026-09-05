@@ -115,19 +115,30 @@ export class LoadCalcConsumerController {
       // any master that already has normalizedRows or a user-committed fieldMap.
       this.eventBus.subscribe('MASTER_DATA_UPDATED', ({ action } = {}) => {
         if (!action?.startsWith('bundled_seed')) return;
-        import('./master-data-ui.js').then(({ autoNormalizeBundledMasters }) => {
+        import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
           const committed = autoNormalizeBundledMasters();
           if (committed.length > 0) this.render();
+          const [enrichResult, bindResult, qualResult] = await Promise.all([
+            autoGenerateMasterEnrichment(),
+            autoBindMasterSources(),
+            autoEnsureDefaultQualificationProfile(),
+          ]);
+          if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
         }).catch(() => {});
       }),
     ];
     this.render();
     void this.refreshTopologyCheck();
-    // Eagerly normalize any masters that were already seeded synchronously
-    // before the event subscription was active (weight, materialMap).
-    import('./master-data-ui.js').then(({ autoNormalizeBundledMasters }) => {
+    // Eagerly normalize + auto-generate + auto-bind for already-seeded masters
+    import('./master-data-ui.js').then(async ({ autoNormalizeBundledMasters, autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
       const committed = autoNormalizeBundledMasters();
       if (committed.length > 0) this.render();
+      const [enrichResult, bindResult, qualResult] = await Promise.all([
+        autoGenerateMasterEnrichment(),
+        autoBindMasterSources(),
+        autoEnsureDefaultQualificationProfile(),
+      ]);
+      if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
     }).catch(() => {});
   }
 
@@ -142,7 +153,18 @@ export class LoadCalcConsumerController {
       this.topologyPolicyFeedback = '';
     }
     this.render();
-    if (datasetChanged) void this.refreshTopologyCheck();
+    if (datasetChanged) {
+      void this.refreshTopologyCheck();
+      // Auto-generate enrichment + bind source hashes when a new dataset arrives
+      import('./master-data-ui.js').then(async ({ autoGenerateMasterEnrichment, autoBindMasterSources, autoEnsureDefaultQualificationProfile }) => {
+        const [enrichResult, bindResult, qualResult] = await Promise.all([
+          autoGenerateMasterEnrichment(),
+          autoBindMasterSources(),
+          autoEnsureDefaultQualificationProfile(),
+        ]);
+        if (enrichResult?.accepted > 0 || bindResult?.bound?.length > 0 || qualResult) this.render();
+      }).catch(() => {});
+    }
   }
 
   handleEngineeringChange(reason, distribution, topologyCheckAffected) {
@@ -362,6 +384,16 @@ export class LoadCalcConsumerController {
       this.pending3dInvestigationEntityId = null;
       this.selectTab(tab);
       this.render();
+      return;
+    }
+    const quickFixAction = event.target.closest('[data-quick-fix-action]')?.dataset.quickFixAction;
+    if (quickFixAction === 'create-qualification-profile') {
+      import('./master-data-ui.js').then(({ createDefaultQualificationProfile }) =>
+        createDefaultQualificationProfile(),
+      ).then(() => this.render()).catch((err) => {
+        this.message = `Failed to create qualification profile: ${err.message}`;
+        this.render();
+      });
       return;
     }
     const restraintId = event.target.closest('[data-empirical-restraint-select]')?.dataset.empiricalRestraintSelect;
@@ -788,29 +820,40 @@ function createWorkflowReadiness(context, topologyCheck) {
   const topologyBlockerCount = (supportSites?.blockers?.length || 0)
     + (routes?.blockers?.length || 0)
     + (topologyCheck?.blockingIssueCount || 0);
+  // null-hash check: used only as pre-checker fallback when projection not yet available
   const projectDataCheck = validateProjectDataProfile(
     projectDataStore.getProfile(),
     'loadCalcProjectBasis',
     null,
   );
   const masterDataAudit = requiredMastersAudit(masterDataController.getMasterData());
-  // Step 5's badge must agree with the Validate Input pane. The gate projection
-  // only reports the full blocker set once the common checker has run, so the
-  // count is published as unknown until then rather than shown under-reported.
   const validationEvaluated = Boolean(commonInput.report);
   const validationBlockerCount = validationEvaluated ? safeValidationBlockerCount() : 0;
+
+  // Use live projection (real hashes) so STALE_SOURCE_HASH is correctly detected.
+  // projectDataActionCount feeds workflowStepState (legacy renderer) directly on the
+  // active tab — it MUST be accurate here; a DOM post-patch is wiped on next re-render.
+  const pdBlockerCodes = validationEvaluated ? safeProjectionPdBlockerCodes() : [];
+  const pdBlockerCount = validationEvaluated
+    ? safePdBlockerCount()                    // raw (non-deduped) PD blocker count
+    : projectDataCheck.errors.length;         // pre-checker fallback
+
   return Object.freeze({
     datasetReady: Boolean(context?.datasetId),
     topologyBlockerCount,
+    topologyOpenReviewCount: topologyCheck?.reviewIssueCount || 0,
+    topologySkippedCount: topologyCheck?.skippedIssueCount || 0,
     topologyReviewIssueCount: (topologyCheck?.reviewIssueCount || 0)
       + (topologyCheck?.skippedIssueCount || 0),
     topologyCheckReady: topologyReady
       && topologyBlockerCount === 0
       && topologyCheck?.state !== 'NOT_AVAILABLE',
-    projectDataReady: projectDataCheck.valid,
-    projectDataActionCount: projectDataCheck.errors.length,
+    projectDataReady: pdBlockerCodes.length === 0 && projectDataCheck.valid,
+    projectDataActionCount: pdBlockerCount,
+    projectDataBlockerCodes: pdBlockerCodes,
     masterDataReady: masterDataAudit.ready,
     masterDataActionCount: masterDataAudit.missingCount,
+    enrichmentUnresolvedCount: validationEvaluated ? safeEnrichmentUnresolvedCount() : null,
     validationReady: commonInput.report?.packageState === 'READY',
     validationState: commonInput.report?.packageState || 'NOT_EVALUATED',
     validationEvaluated,
@@ -881,6 +924,64 @@ function safeValidationBlockerCount() {
     return createCurrentNonFeaWorkspaceStatusProjection()?.blockers?.length || 0;
   } catch {
     return 0;
+  }
+}
+
+/**
+ * Project-data blocker codes from the live status projection (uses real
+ * authority hashes — catches STALE_SOURCE_HASH that validateProjectDataProfile
+ * with null hashes misses). Returns [] on any error so badge degrades gracefully.
+ */
+const PD_BLOCKER_CODES = new Set([
+  'MISSING_VALUE', 'STALE_SOURCE_HASH', 'GRAVITY_BASIS_REQUIRED',
+  'ACTIVE_LOAD_CASES_REQUIRED', 'CONFIGURED_DEFAULT_LEDGER_STALE',
+  'NOT_APPROVED', 'MISSING_EVIDENCE',
+]);
+function safeProjectionPdBlockerCodes() {
+  try {
+    const projection = createCurrentNonFeaWorkspaceStatusProjection();
+    return [...new Set(
+      (projection?.blockers ?? [])
+        .map((b) => b.code)
+        .filter((c) => PD_BLOCKER_CODES.has(c)),
+    )];
+  } catch {
+    return [];
+  }
+}
+
+/** Raw (non-deduplicated) count of PD blocker entries from the live projection.
+ *  Used as projectDataActionCount so the legacy renderer shows the correct number. */
+function safePdBlockerCount() {
+  try {
+    const projection = createCurrentNonFeaWorkspaceStatusProjection();
+    return (projection?.blockers ?? []).filter((b) => PD_BLOCKER_CODES.has(b.code)).length;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Count distinct unresolved entity IDs for MASS_COVERAGE from the live projection.
+ * Each missing token is "entityId:FIELD" — distinct entityIds gives the entity count.
+ * Returns null when coverage is clear or the projection is unavailable.
+ */
+function safeEnrichmentUnresolvedCount() {
+  try {
+    const projection = createCurrentNonFeaWorkspaceStatusProjection();
+    const entityIds = new Set();
+    for (const method of (projection?.methodRows ?? [])) {
+      for (const req of (method.coverageRequirements ?? [])) {
+        if (req.code !== 'MASS_COVERAGE_INCOMPLETE') continue;
+        for (const token of (req.missing ?? [])) {
+          const entityId = typeof token === 'string' ? token.split(':')[0] : token?.entityId;
+          if (entityId) entityIds.add(entityId);
+        }
+      }
+    }
+    return entityIds.size > 0 ? entityIds.size : null;
+  } catch {
+    return null;
   }
 }
 

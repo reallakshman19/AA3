@@ -26,7 +26,7 @@ test.describe('LFEA pipeline continuity', () => {
       const [stepId, label] = expected[index];
       const step = page.locator(`[data-role="lfea-pipeline-step"][data-step-id="${stepId}"]`);
       await expect(step).toContainText(label);
-      await expect(step.locator('.lfea-pipeline-icon')).toHaveCount(1);
+      await expect(step.locator('.lfea-pipeline-shell__step-visual > .lfea-pipeline-icon')).toHaveCount(1);
       await expect(step.locator('[data-role="lfea-pipeline-step-index"]')).toHaveText(String(index + 1));
     }
 
@@ -59,7 +59,7 @@ test.describe('LFEA pipeline continuity', () => {
         .toHaveAttribute('data-step-status', 'BLOCKED');
     }
     await expect(page.locator('[data-role="lfea-pipeline-guidance"]')).toContainText('Next: Input');
-    await expect(page.locator('[data-role="lfea-common-error-check-panel"] h3')).toHaveText('Error check');
+    await expect(page.locator('[data-role="lfea-common-error-check-panel"] h3')).toHaveText('Engineering Error Check');
 
     expect(pageErrors).toEqual([]);
   });

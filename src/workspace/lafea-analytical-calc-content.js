@@ -68,6 +68,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
 
   const engineeringReview = options.handlers.getEmp1EngineeringReviewWorkspace?.() ?? null;
   shell.append(renderEmp1ProfessionalWorkflow(root, projection, options.onSelectRoute, {
+    runFailure: options.emp1RunFailure,
     reviewWorkspace: engineeringReview,
     onReview: options.handlers.onEmp1EngineeringReview,
   }));

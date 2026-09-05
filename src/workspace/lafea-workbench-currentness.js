@@ -86,8 +86,9 @@ export function projectLafeaWorkbenchCurrentness(stage) {
             : readyCurrent(stage, canonical)
               ? 'READY'
               : 'EDITED';
-  const currentAuthority = computationalState === 'CURRENT_RESULT'
-    && qualificationState === 'PASS';
+  // Currentness authority is deliberately qualification-orthogonal. The
+  // physical-probe gate checks current execution first, then acceptance.
+  const currentAuthority = computationalState === 'CURRENT_RESULT';
 
   return freeze({
     schema: LAFEA_WORKBENCH_CURRENTNESS_SCHEMA,

@@ -1,0 +1,137 @@
+{
+  "schema": "lafea-b02-expected-values/v1",
+  "baselineCommit": "b4eb0cea9a7a73ddaec86210373ed6f3acb714eb",
+  "authority": {
+    "class": "INDEPENDENT_CLOSED_FORM",
+    "productionImports": [],
+    "productionOutputUsed": false,
+    "productionOutputMayModifyExpectedValues": false,
+    "productionOutputMayModifyAcceptance": false
+  },
+  "cases": [
+    {
+      "caseId": "CONT-CYL-01",
+      "sourceClaimId": "LAFEA3-SRC-LAME-01",
+      "citation": {
+        "publisher": "CRC Press",
+        "author": "K. L. Richards",
+        "title": "Design Engineer's Handbook",
+        "edition": "1st",
+        "year": 2012,
+        "chapter": "Chapter 6 — Thick Cylinders",
+        "section": "6.3 internally pressurized cylinder boundary conditions",
+        "pages": [157,158],
+        "equationIdentifiers": ["6.3","6.4"],
+        "repositoryQualification": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md#LAFEA3-SRC-LAME-01"
+      },
+      "signConvention": "REPOSITORY_TENSION_POSITIVE: sigma_r=A-B/r^2, sigma_theta=A+B/r^2; internal pressure gives sigma_r(Ri)=-Pi",
+      "inputs": {
+        "innerRadiusMm": 50,
+        "outerRadiusMm": 100,
+        "internalPressureMPa": 10,
+        "externalPressureMPa": 0,
+        "elasticModulusMPa": 200000,
+        "poissonRatio": 0.3,
+        "thicknessMm": 10,
+        "formulation": "PLANE_STRESS"
+      },
+      "formulae": {
+        "A": "Pi*Ri^2/(Ro^2-Ri^2)",
+        "B": "Pi*Ri^2*Ro^2/(Ro^2-Ri^2)",
+        "sigmaRadial": "A-B/r^2",
+        "sigmaHoop": "A+B/r^2",
+        "radialDisplacementPlaneStress": "((1-nu)*A*r+(1+nu)*B/r)/E"
+      },
+      "derived": {
+        "A_MPa": 3.3333333333333335,
+        "B_MPa_mm2": 33333.333333333336,
+        "boundary": {
+          "sigmaRadialInnerMPa": -10,
+          "sigmaHoopInnerMPa": 16.666666666666668,
+          "sigmaRadialOuterMPa": 0,
+          "sigmaHoopOuterMPa": 6.666666666666667
+        },
+        "fixedProbe": {
+          "radiusMm": 73,
+          "thetaDegrees": 37,
+          "xMm": 58.30039223345238,
+          "yMm": 43.932496690099526,
+          "sigmaRadialMPa": -2.921748920998312,
+          "sigmaHoopMPa": 9.58841558766498,
+          "displacementMagnitudeMm": 0.003819703196347032
+        }
+      },
+      "acceptance": {
+        "policyOrigin": "PRE_EXISTING_CONT_CYL_01_SCRIPT_MOVED_WITHOUT_RELAXATION",
+        "requireMonotonicMaxNormalizedFieldError": true,
+        "finestMaxNormalizedFieldErrorLimit": 0.01,
+        "fixedProbeIsRichardsonGciAuthority": true,
+        "movingFieldMaximumIsRichardsonGciAuthority": false
+      }
+    },
+    {
+      "caseId": "CONT-HOLE-01",
+      "sourceClaimId": "LAFEA3-SRC-KIRSCH-01",
+      "citation": {
+        "publisher": "Wiley",
+        "author": "R. E. Goodman",
+        "title": "Introduction to Rock Mechanics",
+        "edition": "2nd",
+        "year": 1989,
+        "chapter": "Chapter 7 — Openings in Competent Rock",
+        "section": "7.2",
+        "pages": [228,229],
+        "equationIdentifiers": ["7.1a","7.1b","7.1c"],
+        "originalSource": "G. Kirsch, Zeitschrift des Vereines deutscher Ingenieure, Vol. 42, 1898, pp. 797-807",
+        "repositoryQualification": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md#LAFEA3-SRC-KIRSCH-01"
+      },
+      "signConvention": "REMOTE_TENSION_POSITIVE_GLOBAL_X; polar shear follows repository Kirsch equations and Cartesian-to-polar transformation",
+      "inputs": {
+        "holeRadiusMm": 10,
+        "outerTruncationRadiusMm": 100,
+        "remoteStressMPa": 50,
+        "elasticModulusMPa": 200000,
+        "poissonRatio": 0.3,
+        "thicknessMm": 5,
+        "formulation": "PLANE_STRESS"
+      },
+      "formulae": {
+        "sigmaRadial": "S/2*(1-a^2/r^2)+S/2*(1-4*a^2/r^2+3*a^4/r^4)*cos(2*theta)",
+        "sigmaHoop": "S/2*(1+a^2/r^2)-S/2*(1+3*a^4/r^4)*cos(2*theta)",
+        "sigmaShear": "-S/2*(1+2*a^2/r^2-3*a^4/r^4)*sin(2*theta)"
+      },
+      "derived": {
+        "holeEdge": {
+          "radiusMm": 10,
+          "thetaDegrees": 90,
+          "stressConcentrationFactor": 3,
+          "sigmaHoopMPa": 150
+        },
+        "fixedProbe": {
+          "radiusMm": 20,
+          "thetaDegrees": 45,
+          "xMm": 14.142135623730951,
+          "yMm": 14.14213562373095,
+          "sigmaRadialMPa": 18.75,
+          "sigmaHoopMPa": 31.25,
+          "sigmaShearMPa": -32.8125
+        },
+        "outerBoundaryChecks": {
+          "theta0SigmaRadialMPa": 48.7575,
+          "theta0SigmaShearMPa": 0,
+          "theta90SigmaRadialMPa": 0.7425,
+          "theta90SigmaShearMPa": 0
+        }
+      },
+      "acceptance": {
+        "policyOrigin": "PRE_EXISTING_CONT_HOLE_01_SCRIPT_MOVED_WITHOUT_RELAXATION",
+        "requireImprovingHoleEdgeFactor": true,
+        "finestHoleEdgeFactorRelativeErrorLimit": 0.05,
+        "requireMonotonicMaxNormalizedFieldError": true,
+        "finestMaxNormalizedFieldErrorLimit": 0.05,
+        "fixedProbeIsRichardsonGciAuthority": true,
+        "movingPeakOrFieldMaximumIsRichardsonGciAuthority": false
+      }
+    }
+  ]
+}

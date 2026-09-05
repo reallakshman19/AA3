@@ -4,13 +4,13 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0018
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0018.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0017.md
+ACTIVE_ENDPOINT: EP-0019
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0019.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0019.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-LAST_COMPLETED_MATERIAL_LEG: LEG-008
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-008.md
-MATERIAL_LEG_HEAD: 1273c409ffd39279cf73c3a280ff019cb275e120
+LAST_COMPLETED_MATERIAL_LEG: LEG-009
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-009.md
+MATERIAL_LEG_HEAD: 5ff8e9fbe9868f2d56036da0d1cb396f1a8c3fb6
 CURRENT_MATERIAL_LEG: NONE
 
 PREDECESSOR_PR: 1662
@@ -20,7 +20,7 @@ PR: 1663
 PR_STATUS: OPEN_DRAFT
 BRANCH: engineering/bm-mesh-1652-m2-data
 BASE_BRANCH: main
-PR_HEAD_AT_LAST_EXTERNAL_RECONCILIATION: 13993be2f1ff3da99bb4fe34014dcda78df93a10
+PR_HEAD_AT_LAST_EXTERNAL_RECONCILIATION: 5ff8e9fbe9868f2d56036da0d1cb396f1a8c3fb6
 ISSUE_BASIS_MAIN: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MAIN_HEAD: 2126f2c45e9a77debedf5ad0cabfafc426fca095
 POST_BASIS_DRIFT: DISJOINT_BM_S_1653_NO_MESH_OVERLAP_OBSERVED
@@ -31,7 +31,7 @@ REQUIRED_CHECKS: NONE_OBSERVED_AT_LAST_CHECK
 ACTIONS_RUNS: 0_AT_LAST_CHECK
 STATUS_CONTEXTS: 0_AT_LAST_CHECK
 
-ENGINEERING_STATE: TASK_004_PREWORK_READY_AFTER_SOURCE_CUSTODY_REPAIR
+ENGINEERING_STATE: TASK_004_PARTIAL_STATIC_M3_NON_THICKNESS_WIRING_REQUIRED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
 WRITE_AUTHORITY: READ_ONLY
@@ -39,15 +39,15 @@ AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-AUTHORITY_DOMAIN: BM-MESH issue #1652 through source-custody repair and TASK-004 staged-runner prework only. Production mesher/geometry kernels, mesh-quality/convergence thresholds, solver/compiler mechanics, B02, TECH-13, workflows, roadmaps, benchmark-program registration, M3 shell-thickness fixture authority, M4 physics, release/trust/temperature authority remain protected.
+AUTHORITY_DOMAIN: BM-MESH issue #1652 through bounded TASK-004 M3 non-thickness quality-distribution wiring only. Production mesher/geometry kernels, mesh-quality/convergence thresholds, solver/compiler mechanics, B02, TECH-13, workflows, roadmaps, benchmark-program registration, M3 shell-thickness fixture authority, M4 physics, release/trust/temperature authority remain protected.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
 AGENT_INSTANCE_ID: chatgpt:b4bb2925-1e01-4ba2-8693-1018b121c5ba
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 11
+CUSTODY_EPOCH: 12
 COORDINATION_STATE: SAFE_EXCLUSIVE_NO_COLLISION
-DEPENDENCIES: PR #1663 remains unmerged; PR #1654 is documentation/support only; older BM-MESH branches are predecessor/stale; issue #1535 production-route authority remains separate; B02 and TECH-13 remain separate; M3 LAFEA.4 shell thickness and M4 physics fixture authority unresolved
+DEPENDENCIES: PR #1663 remains unmerged; issue #1535 production-route authority remains separate; B02 and TECH-13 remain separate; M3 LAFEA.4 shell thickness and M4 physics fixture authority unresolved; benchmark-program registration remains protected
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
@@ -63,13 +63,13 @@ ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT_WITH_TASK_001_AND_M2_PREWORK_MERGED
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0018
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0019
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549970395
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549969638
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551802004
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: BRANCH_STATE_RECONCILED_LOCAL_COMMENTS_NOT_REFRESHED
 
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_BATCHES_UNTIL_REASONABLE_BLOCKER
 OWNER_DIRECTIVE: DO_NOT_CREATE_QUESTIONS_UNLESS_EXPLICITLY_ASKED
 EXISTING_QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0007
 QUESTION_PACK_ACTION: RETAINED_NOT_REFRESHED
@@ -80,16 +80,16 @@ OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: issue #1652 + governing roadmaps; no separate Owner Q-set baseline
 OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
-TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED; TASK-004 PREWORK_READY_WAIT_OWNER_PROGRESSION; TASK-005..TASK-006 OPEN_STAGED; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: LEG-006 geometry/oracle frozen; LEG-007 ladders/probes frozen; LEG-008 source pins repaired; M3 shell thickness and M4 physics unresolved
-BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-003 PASS_OWNER_EXACT_HEAD_MERGED; BM-004 FROZEN_NOT_RUN; BM-005 LADDER_DEFINITION_FROZEN_NOT_RUN; BM-006 PROBE_IDENTITIES_FROZEN_PHYSICS_UNRESOLVED_NOT_RUN; BM-002 NOT_RUN
+TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED; TASK-004 PARTIAL_STATIC_M3_NON_THICKNESS_WIRING_REQUIRED; TASK-005 OPEN_STAGED; TASK-006 OPEN_STAGED_PROTECTED_REGISTRATION; TASK-007 SATISFIED_CURRENTLY
+INPUT_STATUS: LEG-006 geometry/oracle frozen; LEG-007 ladders/probes frozen; LEG-008 source pins repaired; LEG-009 staged runner/manifest static wiring accepted; M3 shell thickness and M4 physics unresolved
+BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-002 IMPLEMENTED_STATIC_NOT_RUN; BM-003 IMPLEMENTED_STATIC_NOT_RUN; BM-004 IMPLEMENTED_STATIC_NOT_RUN_WITH_DECLARED_LAFEA4_SCOPE_BLOCKER; BM-005 PARTIAL_STATIC_WIRING_REQUIRED; BM-006 PROBE_IDENTITIES_FROZEN_PHYSICS_UNRESOLVED_NOT_RUN
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_LEG_008_STATIC_SOURCE_CUSTODY_REPAIR / TASK_004_RUNNER_NOT_RUN
+HANDOVER_VALIDATION_STATUS: PASS_LEG_009_STATIC_PARTIAL / LEG_010_NOT_STARTED
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-CURRENT_BLOCKER: none for TASK-004 prework. Full M3 LAFEA.4 h/t and M4 execution remain authority-blocked by missing governed shell thickness / physics fixture.
-LEG_DIAGNOSIS: LEG-008 restored truthful source custody with exactly two blob-pin corrections. TASK-004 can now proceed to staged-runner material on a future progression command, but BLOCKED stages must remain BLOCKED and must not be manufactured into PASS.
-EXACT_NEXT_ACTION: await the next Owner progression command. On `proceed next`, begin one bounded TASK-004 material leg for the staged runner contract/manifest and executable M0-M2/M3-non-thickness wiring while preserving explicit BLOCKED outcomes for unresolved M3 shell-thickness and M4 physics. Do not merge PR #1663 without explicit Owner merge authorization. Do not create or refresh qualification questions unless the Owner explicitly asks.
+CURRENT_BLOCKER: none for bounded LEG-010 M3 non-thickness quality-distribution wiring. Full LAFEA.4 M3 h/t acceptance and M4 remain authority-blocked; benchmark-program registration remains protected.
+LEG_DIAGNOSIS: LEG-009 added the staged runner and fail-closed manifest but M3 currently returns BLOCKED before retaining the non-thickness quality distributions required by EP-0018 / issue #1652. That bounded gap can be closed without changing production source or thresholds.
+EXACT_NEXT_ACTION: continue with bounded LEG-010 changing only `scripts/lafea-mesh-benchmark-run.mjs` and `validation/lafea-benchmark-data/MESH/bucket-manifest.json` as needed to retain M3 non-thickness quality observations across frozen L0/L1/L2 production ladders, verify genuine refinement, and preserve explicit BLOCKED outcome for missing shell thickness. Then reconcile TASK-004 before TASK-005. Do not merge PR #1663 without explicit Owner merge authorization. Do not create or refresh qualification questions unless the Owner explicitly asks.

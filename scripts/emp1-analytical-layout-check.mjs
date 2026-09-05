@@ -4,8 +4,11 @@ import {
   EMP1_ANALYTICAL_LAYOUT_SCHEMA,
   EMP1_ANALYTICAL_SURFACE_ORDER,
   EMP1_ANALYTICAL_SURFACE_PLACEMENT,
+  EMP1_SPLIT_CONSOLE_MODES,
+  EMP1_SPLIT_CONSOLE_SCHEMA,
   EMP1_TASK_SHELL_EVIDENCE_ORDER,
   EMP1_TASK_SHELL_INPUT_GROUPS,
+  EMP1_TASK_SHELL_INSPECTOR_ORDER,
   EMP1_TASK_SHELL_TASK_SURFACES,
   composeEmp1AnalyticalLayout,
   emp1AnalyticalLayoutPlacementManifest,
@@ -109,8 +112,10 @@ const inputGroupIds = [
 ];
 
 assert.equal(EMP1_ANALYTICAL_LAYOUT_SCHEMA, 'emp1-analytical-layout/v2');
+assert.equal(EMP1_SPLIT_CONSOLE_SCHEMA, 'emp1-split-console/v1');
+assert.deepEqual(EMP1_SPLIT_CONSOLE_MODES, ['WORK', 'BASIS', 'EVIDENCE']);
 assert.deepEqual(EMP1_ANALYTICAL_SURFACE_ORDER, expectedOrder,
-  'task-shell recovery must retain every analytical surface and formal benchmark evidence');
+  'split-console recovery must retain every analytical surface and formal benchmark evidence');
 assert.deepEqual(Object.keys(EMP1_ANALYTICAL_SURFACE_PLACEMENT).sort(), [...expectedOrder].sort(),
   'every retained surface must still have exactly one declared region');
 assert.deepEqual(EMP1_ANALYTICAL_LAYOUT_REGIONS, {
@@ -128,34 +133,35 @@ assert.equal(regionCounts.COMPACT_WORKFLOW_NAV.length, 1);
 assert.equal(regionCounts.ACTIVE_TASK.length, 3);
 assert.equal(regionCounts.BASIS_RAIL.length, 4);
 assert.equal(regionCounts.EVIDENCE_WORKSPACE.length, 7);
-assert.deepEqual(
-  regionCounts.ACTIVE_TASK.map((entry) => entry.surfaceId),
-  ['route', 'source', 'runConfiguration'],
-);
-assert.deepEqual(
-  regionCounts.BASIS_RAIL.map((entry) => entry.surfaceId),
-  ['engineeringEvidence', 'correlationAvailability', 'boundedCorrelation', 'settings'],
-);
-assert.deepEqual(
-  regionCounts.EVIDENCE_WORKSPACE.map((entry) => entry.surfaceId),
-  ['screeningCustody', 'transactionSummary', 'correlationResult', 'results', 'lineage', 'benchmarkEvidence', 'benchmark'],
-);
+assert.deepEqual(regionCounts.ACTIVE_TASK.map((entry) => entry.surfaceId),
+  ['route', 'source', 'runConfiguration']);
+assert.deepEqual(regionCounts.BASIS_RAIL.map((entry) => entry.surfaceId),
+  ['engineeringEvidence', 'correlationAvailability', 'boundedCorrelation', 'settings']);
+assert.deepEqual(regionCounts.EVIDENCE_WORKSPACE.map((entry) => entry.surfaceId),
+  ['screeningCustody', 'transactionSummary', 'correlationResult', 'results', 'lineage', 'benchmarkEvidence', 'benchmark']);
+assert.deepEqual(EMP1_TASK_SHELL_INSPECTOR_ORDER,
+  ['engineeringEvidence', 'boundedCorrelation', 'correlationAvailability', 'settings']);
+assert.deepEqual(EMP1_TASK_SHELL_EVIDENCE_ORDER,
+  ['results', 'transactionSummary', 'correlationResult', 'screeningCustody', 'lineage', 'benchmarkEvidence', 'benchmark']);
 assert.deepEqual(EMP1_TASK_SHELL_TASK_SURFACES.LOADS, ['source']);
 assert.deepEqual(EMP1_TASK_SHELL_TASK_SURFACES.GEOMETRY, ['source', 'runConfiguration']);
-assert.deepEqual(EMP1_TASK_SHELL_TASK_SURFACES.LOAD_TRANSFER, ['source']);
 assert.deepEqual(EMP1_TASK_SHELL_INPUT_GROUPS.GEOMETRY, ['PIPE_GEOMETRY', 'THICKNESS']);
 assert.deepEqual(EMP1_TASK_SHELL_INPUT_GROUPS.LOADS, ['PRESSURE', 'LOAD_CASES']);
 assert.deepEqual(EMP1_TASK_SHELL_INPUT_GROUPS.LOAD_TRANSFER, ['REFERENCE_POINTS']);
 assert.deepEqual(EMP1_TASK_SHELL_INPUT_GROUPS.SECTION_SCREENING, ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
-assert.deepEqual(EMP1_TASK_SHELL_EVIDENCE_ORDER,
-  ['results', 'transactionSummary', 'correlationResult', 'screeningCustody', 'lineage', 'benchmarkEvidence', 'benchmark']);
 
 const { documentRef, shell, surfaces, workflowSteps } = fixture('A');
 const layout = composeEmp1AnalyticalLayout(shell, surfaces, { selectionHost: documentRef });
 assert.equal(layout.schema, 'emp1-analytical-layout/v2');
+assert.equal(layout.splitConsoleSchema, 'emp1-split-console/v1');
 assert.equal(layout.presentSurfaceCount, expectedOrder.length);
-assert.equal(shell.children.length, 3, 'compact workflow, lanes and bounded evidence workspace are shell children');
-assert.equal(layout.lanes.children.length, 2, 'desktop lanes own active task and basis rail only');
+assert.equal(shell.dataset.emp1SplitConsole, 'emp1-split-console/v1');
+assert.equal(shell.children.length, 4,
+  'workflow, narrow mode tabs, split lanes and evidence console are shell children');
+assert.equal(layout.lanes.children.length, 2,
+  'desktop split owns active workspace and engineering inspector only');
+assert.equal(layout.modeTabs.children.length, 3, 'narrow console exposes Work/Basis/Evidence modes');
+assert.equal(layout.inspectorTabs.children.length, 4, 'inspector retains four supporting domains');
 
 for (const surfaceId of expectedOrder) {
   const surface = surfaces[surfaceId];
@@ -163,23 +169,32 @@ for (const surfaceId of expectedOrder) {
   assert.equal(surface.dataset.emp1LayoutSurface, surfaceId);
   assert.equal(surface.dataset.emp1LayoutRegion, regionId);
   assert.equal(surface.parentNode?.dataset.emp1LayoutRegion, regionId,
-    `${surfaceId} must be moved exactly once to its declared task-shell region`);
+    `${surfaceId} must be moved exactly once to its declared region`);
 }
 
-assert.equal(surfaces.route.hidden, false, 'Basis & Source keeps compact route context visible');
-assert.equal(surfaces.source.hidden, false, 'Basis & Source keeps source surface available');
-assert.equal(surfaces.runConfiguration.hidden, true, 'inactive Local Correlation configuration contributes no height');
-assert.equal(visibleEvidence(surfaces).length, 1, 'exactly one heavy evidence surface participates in layout');
-assert.equal(visibleEvidence(surfaces)[0], 'results', 'Basis & Source defaults to current result evidence');
+assert.equal(shell.dataset.emp1ConsoleMode, 'WORK');
+assert.equal(surfaces.route.hidden, false);
+assert.equal(surfaces.source.hidden, false);
+assert.equal(surfaces.runConfiguration.hidden, true);
+assert.deepEqual(visibleInspector(surfaces), ['engineeringEvidence'],
+  'Basis & Source defaults to one custody inspector surface');
+assert.deepEqual(selectedEvidence(surfaces), ['results']);
+assert.equal(layout.regions.EVIDENCE_WORKSPACE.dataset.emp1EvidenceOpen, 'false',
+  'evidence console is collapsed by default');
 assert.equal(workflowSteps.find((button) => button.dataset.emp1ProfessionalStep === 'BASIS_SOURCE').attributes['aria-current'], 'step');
-assert.equal(visibleInputGroups(surfaces.source).length, 0,
-  'Basis & Source does not dump every governed input group into the active task');
+assert.equal(visibleInputGroups(surfaces.source).length, 0);
+
+assert.equal(layout.selectInspector('boundedCorrelation'), true);
+assert.deepEqual(visibleInspector(surfaces), ['boundedCorrelation']);
+assert.equal(layout.selectInspector('not-an-inspector'), false);
 
 layout.selectTask('GEOMETRY');
 assert.equal(surfaces.source.hidden, false);
 assert.equal(surfaces.runConfiguration.hidden, false);
 assert.deepEqual(visibleInputGroups(surfaces.source), ['PIPE_GEOMETRY', 'THICKNESS']);
-assert.equal(visibleEvidence(surfaces).length, 1);
+assert.deepEqual(visibleInspector(surfaces), ['settings']);
+assert.deepEqual(selectedEvidence(surfaces), ['results']);
+assert.equal(layout.regions.EVIDENCE_WORKSPACE.dataset.emp1EvidenceOpen, 'false');
 
 layout.selectTask('LOADS');
 assert.equal(surfaces.route.hidden, true);
@@ -187,34 +202,42 @@ assert.equal(surfaces.source.hidden, false);
 assert.equal(surfaces.runConfiguration.hidden, true);
 assert.deepEqual(visibleInputGroups(surfaces.source), ['PRESSURE', 'LOAD_CASES']);
 assert.equal(surfaces.source.dataset.emp1TaskInputGroupCount, '2');
+assert.deepEqual(visibleInspector(surfaces), ['engineeringEvidence']);
 
 layout.selectTask('LOAD_TRANSFER');
 assert.deepEqual(visibleInputGroups(surfaces.source), ['REFERENCE_POINTS']);
 
 layout.selectTask('SECTION_SCREENING');
 assert.deepEqual(visibleInputGroups(surfaces.source), ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
-assert.equal(visibleEvidence(surfaces)[0], 'screeningCustody',
-  'Section Screening must foreground existing editable screening custody rather than hiding it');
+assert.equal(selectedEvidence(surfaces)[0], 'screeningCustody');
 
 layout.selectTask('LOCAL_CORRELATION');
 assert.equal(surfaces.source.hidden, true);
 assert.equal(surfaces.runConfiguration.hidden, false);
-assert.equal(visibleEvidence(surfaces)[0], 'correlationResult');
+assert.deepEqual(visibleInspector(surfaces), ['boundedCorrelation'],
+  'Local Correlation defaults to the bounded-route Authority inspector');
+assert.equal(selectedEvidence(surfaces)[0], 'correlationResult');
 
 layout.selectTask('REVIEW_EVIDENCE');
-assert.equal(visibleEvidence(surfaces)[0], 'transactionSummary');
+assert.equal(selectedEvidence(surfaces)[0], 'transactionSummary');
+assert.equal(shell.dataset.emp1ConsoleMode, 'EVIDENCE');
+assert.equal(layout.regions.EVIDENCE_WORKSPACE.dataset.emp1EvidenceOpen, 'true');
 assert.equal(workflowSteps.find((button) => button.dataset.emp1ProfessionalStep === 'REVIEW_EVIDENCE').attributes['aria-current'], 'step');
 
 assert.equal(layout.selectEvidence('benchmarkEvidence'), true);
-assert.deepEqual(visibleEvidence(surfaces), ['benchmarkEvidence'],
-  'benchmark selection must remove every other heavy evidence surface from layout without deleting it');
-assert.equal(surfaces.results.parentNode?.dataset.emp1LayoutRegion, 'EVIDENCE_WORKSPACE',
-  'hidden evidence remains in DOM custody');
+assert.deepEqual(selectedEvidence(surfaces), ['benchmarkEvidence']);
+assert.equal(surfaces.results.parentNode?.dataset.emp1LayoutRegion, 'EVIDENCE_WORKSPACE');
 assert.equal(layout.selectEvidence('not-a-view'), false);
+assert.equal(layout.setEvidenceOpen(false), true);
+assert.equal(layout.regions.EVIDENCE_WORKSPACE.dataset.emp1EvidenceOpen, 'false');
+assert.equal(layout.selectMode('BASIS'), true);
+assert.equal(shell.dataset.emp1ConsoleMode, 'BASIS');
+assert.equal(layout.selectMode('WORK'), true);
+assert.equal(shell.dataset.emp1ConsoleMode, 'WORK');
+assert.throws(() => layout.selectMode('STACK_ALL'), /EMP1_SPLIT_CONSOLE_MODE_UNSUPPORTED/u);
 assert.throws(() => layout.selectTask('UNSUPPORTED'), /EMP1_TASK_SHELL_STEP_UNSUPPORTED/u);
 
-// Legacy backing-stage A/B navigation does not emit a professional task event.
-// Reconcile only presentation state so existing A/B interactions remain visible.
+// Legacy backing-stage A/B navigation reconciles presentation state only.
 const legacySelectionHost = new FakeDocument();
 const aLegacy = fixture('A', legacySelectionHost);
 const aLegacyLayout = composeEmp1AnalyticalLayout(aLegacy.shell, aLegacy.surfaces,
@@ -225,13 +248,13 @@ composeEmp1AnalyticalLayout(bLegacy.shell, bLegacy.surfaces,
   { selectionHost: legacySelectionHost });
 assert.equal(bLegacy.shell.dataset.emp1ProfessionalTask, 'SECTION_SCREENING');
 assert.deepEqual(visibleInputGroups(bLegacy.surfaces.source), ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
-assert.deepEqual(visibleEvidence(bLegacy.surfaces), ['screeningCustody'],
-  'legacy entry to backing B must expose existing screening custody/edit surface');
+assert.deepEqual(selectedEvidence(bLegacy.surfaces), ['screeningCustody']);
+assert.equal(bLegacy.shell.dataset.emp1ConsoleMode, 'WORK');
 const aReturn = fixture('A', legacySelectionHost);
 composeEmp1AnalyticalLayout(aReturn.shell, aReturn.surfaces,
   { selectionHost: legacySelectionHost });
 assert.equal(aReturn.shell.dataset.emp1ProfessionalTask, 'BASIS_SOURCE');
-assert.deepEqual(visibleEvidence(aReturn.surfaces), ['results']);
+assert.deepEqual(selectedEvidence(aReturn.surfaces), ['results']);
 
 const optionalAbsent = Object.fromEntries(expectedOrder.map((surfaceId) => [
   surfaceId,
@@ -239,47 +262,38 @@ const optionalAbsent = Object.fromEntries(expectedOrder.map((surfaceId) => [
     ? null
     : documentRef.createElement('section'),
 ]));
-assert.equal(composeEmp1AnalyticalLayout(documentRef.createElement('div'), optionalAbsent).presentSurfaceCount, 13,
-  'conditional surfaces may be absent without inventing replacement content');
+assert.equal(composeEmp1AnalyticalLayout(documentRef.createElement('div'), optionalAbsent).presentSurfaceCount, 13);
 
 const duplicate = Object.fromEntries(expectedOrder.map((surfaceId) => [
   surfaceId,
   documentRef.createElement('section'),
 ]));
 duplicate.results = duplicate.source;
-assert.throws(
-  () => composeEmp1AnalyticalLayout(documentRef.createElement('div'), duplicate),
-  /EMP1_ANALYTICAL_LAYOUT_SURFACE_DUPLICATE/u,
-  'duplicate engineering surfaces must fail instead of rendering in two task-shell regions',
-);
+assert.throws(() => composeEmp1AnalyticalLayout(documentRef.createElement('div'), duplicate),
+  /EMP1_ANALYTICAL_LAYOUT_SURFACE_DUPLICATE/u);
 
 const duplicateBenchmark = Object.fromEntries(expectedOrder.map((surfaceId) => [
   surfaceId,
   documentRef.createElement('section'),
 ]));
 duplicateBenchmark.benchmark = duplicateBenchmark.benchmarkEvidence;
-assert.throws(
-  () => composeEmp1AnalyticalLayout(documentRef.createElement('div'), duplicateBenchmark),
-  /EMP1_ANALYTICAL_LAYOUT_SURFACE_DUPLICATE/u,
-  'formal benchmark evidence must not be duplicated through the optional benchmark host slot',
-);
+assert.throws(() => composeEmp1AnalyticalLayout(documentRef.createElement('div'), duplicateBenchmark),
+  /EMP1_ANALYTICAL_LAYOUT_SURFACE_DUPLICATE/u);
 
 const missing = { ...surfaces };
 delete missing.benchmarkEvidence;
-assert.throws(
-  () => composeEmp1AnalyticalLayout(documentRef.createElement('div'), missing),
-  /EMP1_ANALYTICAL_LAYOUT_SURFACE_KEYS_MISMATCH/u,
-  'omitting the formal benchmark surface key must fail the layout contract',
-);
+assert.throws(() => composeEmp1AnalyticalLayout(documentRef.createElement('div'), missing),
+  /EMP1_ANALYTICAL_LAYOUT_SURFACE_KEYS_MISMATCH/u);
 
 console.log(JSON.stringify({
-  schema: 'emp1-analytical-layout-check/v2',
-  status: 'EMP1_TASK_SHELL_LAYOUT_CHECK_PASS',
+  schema: 'emp1-analytical-layout-check/v3',
+  status: 'EMP1_SPLIT_CONSOLE_LAYOUT_CHECK_PASS',
   professionalTasks: Object.keys(EMP1_TASK_SHELL_TASK_SURFACES).length,
-  visibleHeavyEvidenceMaximum: 1,
+  inspectorVisibleMaximum: 1,
+  evidenceSelectedMaximum: 1,
+  narrowModes: EMP1_SPLIT_CONSOLE_MODES,
+  evidenceCollapsedByDefault: true,
   backingStageReconciliation: true,
-  sectionScreeningDefaultEvidence: 'screeningCustody',
-  inputTaskGroups: EMP1_TASK_SHELL_INPUT_GROUPS,
   presentationOnly: true,
 }, null, 2));
 
@@ -306,8 +320,12 @@ function fixture(backingStep, ownerDocument = new FakeDocument()) {
   return { documentRef: ownerDocument, shell, surfaces, workflowSteps };
 }
 
-function visibleEvidence(surfaceMap) {
+function selectedEvidence(surfaceMap) {
   return EMP1_TASK_SHELL_EVIDENCE_ORDER.filter((surfaceId) => surfaceMap[surfaceId] && !surfaceMap[surfaceId].hidden);
+}
+
+function visibleInspector(surfaceMap) {
+  return EMP1_TASK_SHELL_INSPECTOR_ORDER.filter((surfaceId) => surfaceMap[surfaceId] && !surfaceMap[surfaceId].hidden);
 }
 
 function visibleInputGroups(source) {

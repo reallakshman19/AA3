@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const ENGINEER_FACING_ROLES = [
   'emp1-workflow',
+  'emp1-benchmark-evidence-panel',
   'emp1-c-bounded-evidence',
   'emp1-c-result-evidence',
   'emp1-a-engineering-custody',

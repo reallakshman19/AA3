@@ -3,16 +3,17 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0013
 UPDATED_AT: 2026-09-05
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551850304
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551942376
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual giant waterfall with task-shell UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551851245
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5551943368
 POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-postmerge-reconciliation
+POST_MERGE_RECONCILIATION_PR: 1668
 PR: 1660
 PR_STATUS: MERGED
 PR_HEAD_AT_MERGE: d6a84eaae29d2c0d198f09981a51f9b885f3d200
@@ -118,5 +119,5 @@ HANDOVER_VALIDATION_EVIDENCE: LEG-008 source/diff inspection retained; recovered
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
-CURRENT_BLOCKER: no repository/source blocker; acceptance closure awaits external browser/human observation. Main protection requires this post-merge custody update to land through a separate pull request.
-EXACT_NEXT_ACTION: synchronize EP-0013 to #1651/#1664, open a control-plane-only reconciliation PR, then await Owner merge authorization for that new PR. In parallel, Owner may run the EP-0012 manual localhost validation; no progression command is required to record returned evidence. A new source-changing recovery leg is authorized only by a new governing progression command.
+CURRENT_BLOCKER: no product/source blocker. Branch protection requires post-merge custody reconciliation PR #1668 to merge before default-branch repository custody is current; human-factor acceptance also remains external and NOT_RUN.
+EXACT_NEXT_ACTION: Owner may merge control-plane-only PR #1668 when desired. Independently, run the EP-0012 manual localhost task-shell validation and return desktop/narrow JSON + keyboard observation + preferably full-page screenshots. No progression command is required to record returned evidence. A new source-changing recovery leg requires a new governing progression command.

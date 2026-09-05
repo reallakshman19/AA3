@@ -67,6 +67,8 @@ test('EMP.1 task shell keeps one active task and one heavy evidence view without
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
   await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'SECTION_SCREENING');
   await assertVisibleInputGroups(analytical, ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
+  await assertSingleVisibleEvidence(analytical, 'screeningCustody');
+  await expect(analytical.locator('[data-role="lafea-screening-load-custody"]')).toBeVisible();
 
   await professionalStep(workflow, 6, 'Local Correlation').click();
   await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'LOCAL_CORRELATION');

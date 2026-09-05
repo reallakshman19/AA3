@@ -106,6 +106,7 @@ export function renderDocumentTableEditor(
         documentValue,
         callbacks.onApplyJson,
       );
+      callbacks.onPresentationRefresh?.();
       return;
     }
     delete content.dataset.lafeaRawJson;
@@ -120,6 +121,7 @@ export function renderDocumentTableEditor(
       batchScalarEdits: GROUPED_ANALYTICAL_STAGES.has(stageId)
         && typeof callbacks.onSetScalarBatch === 'function',
     });
+    callbacks.onPresentationRefresh?.();
   }
 
   refresh();

@@ -1,20 +1,21 @@
 # Current Issue State — ADV-EMP1-BENCHMARK-UI-1645
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0006
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
 UPDATED_AT: 2026-09-05
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548798517
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548799269
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549073451
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549201337
 
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1645
 BRANCH: agent/emp1-benchmark-ui-1645-prework
 PR: 1648
-PR_STATUS: OPEN_DRAFT_STACKED_ON_1622
-STACK_BASE_PR: 1622
-STACK_BASE_BRANCH: agent/emp1-engineering-review-ui-v1
-STACK_BASE_HEAD: bed2d28d9cc85fcbecf6dbc9ed8f4afde00f80be
+PR_STATUS: OPEN_DRAFT_RETARGETED_TO_MAIN_MERGE_AUTHORIZED
+PR_BASE: main
+MAIN_HEAD_OBSERVED: 85cdce1f126c848e2ba0a4488ad5da703f5a8229
+DEPENDENCY_PR_1622: MERGED
+DEPENDENCY_MERGE_COMMIT: 85cdce1f126c848e2ba0a4488ad5da703f5a8229
 PREWORK_ENDPOINT: EP-0002
 COMPLETED_MATERIAL_LEG: LEG-001
 MATERIAL_HEAD: 31cd0188edf6915167c84fc8950e5d6ad2ca6d3e
@@ -31,10 +32,8 @@ MATERIAL_HEAD: 31cd0188edf6915167c84fc8950e5d6ad2ca6d3e
 ## Execution gate evidence
 
 - Historical stacked Draft PR #1624 received three EMP.1 `pull_request` workflow runs.
-- The EMP.1 workflow exists unchanged on #1622's base branch and declares `pull_request` plus `workflow_dispatch`.
-- Multiple #1648 synchronize commits produced zero Actions runs.
-- Owner-authorized close/reopen of the same Draft #1648 preserved head/base/Draft/merge authority and also produced zero Actions runs.
-- Recent main-target PR #1647 head `1fe1a891df60e7fb0c5da6d6c576f63c17d88207`, merged at 2026-09-05T02:32:48Z, likewise has zero pull-request workflow runs.
+- Multiple #1648 synchronize and reopen events produced zero Actions runs.
+- Recent main-target PR #1647 likewise had zero pull-request workflow runs.
 - Existing repository chain #1535 classifies the current runner condition as `REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE` with unresolved account Actions policy/billing/other provisioning state and no exposed dispatch connector.
 
 EXECUTION_GATE: REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE
@@ -47,6 +46,7 @@ LOCAL_REPOSITORY_COMMAND_RUNNER: NOT_EXPOSED
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
+OWNER_INSTRUCTION: merge,proceed next
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
 QUALIFICATION_PROFILE_VERSION: 2
 QUALIFICATION_SCOPE_ID: QSCOPE-1645-EMP-BENCHMARK-PRESENTATION
@@ -60,19 +60,19 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 
 ENGINEERING_STATE: SOURCE_IMPLEMENTED_EXTERNAL_EXECUTOR_BLOCKED
 CUSTODY_STATE: HELD
-WRITE_AUTHORITY: READ_ONLY_EXTERNAL_EXECUTOR_BLOCKED
+WRITE_AUTHORITY: READ_ONLY_MERGE_AUTHORIZED
 AUTO_STATE: PAUSED
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+MERGE_AUTHORITY: AUTHORIZED
+MERGE_AUTHORIZED: TRUE
+MERGE_AUTHORIZATION_SCOPE: PR_1648_CURRENT_CUSTODY_HEAD_AFTER_SYNC
 
 ## Validation
 
 PASS:
-- protocol/stack re-ground;
+- protocol/main/dependency re-ground;
 - source/effective-diff audit;
-- historical Actions control inspection;
-- #1648 synchronize/reopen trigger falsifiers;
-- recent #1647 no-run control;
+- dependency merge and #1648 retarget audit;
+- historical/current Actions control inspection;
 - read-only source/schema/import review.
 
 NOT_RUN:
@@ -83,7 +83,7 @@ NOT_RUN:
 - `npm run build`;
 - `git diff --check` in a faithful executable checkout.
 
-No executable PASS is inferred from static inspection.
+Owner merge authorization does not convert NOT_RUN to PASS.
 
-CURRENT_BLOCKER: REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE.
-EXACT_NEXT_ACTION: restore ordinary GitHub-hosted runner availability or provide a faithful clean executable checkout for the current #1648 stack. Re-ground exact SHAs, execute the focused validation ladder, then add EMP-only browser evidence if clean. Do not alter protected engineering/workflow authority to work around runner provisioning and do not merge without separate explicit Owner authorization.
+CURRENT_BLOCKER: REPOSITORY_OR_ACCOUNT_EXTERNAL_GATE_FOR_EXECUTABLE_VALIDATION_ONLY.
+EXACT_NEXT_ACTION: finalize ACTIVE sync to EP-0007, mark PR #1648 ready-for-review only if required by GitHub, merge the exact current head to main, then re-ground post-merge custody without claiming executable validation PASS.

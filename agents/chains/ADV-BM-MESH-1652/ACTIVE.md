@@ -4,13 +4,13 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0009
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0009.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0008.md
+ACTIVE_ENDPOINT: EP-0011
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0011.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0010.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-LAST_COMPLETED_MATERIAL_LEG: LEG-004
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-004.md
-MATERIAL_LEG_HEAD: 2e565089e54a7d1f97e5552349ae1a6980c4c1fc
+LAST_COMPLETED_MATERIAL_LEG: LEG-005
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-005.md
+MATERIAL_LEG_HEAD: 8c86e25a26df1987d0228bf629b6298104fc3b25
 CURRENT_MATERIAL_LEG: NONE
 
 PR: 1656
@@ -25,7 +25,7 @@ REVIEWS: 0_AT_LAST_CHECK
 UNRESOLVED_REVIEW_THREADS: 0_AT_LAST_CHECK
 REQUIRED_CHECKS: NONE_OBSERVED_AT_LAST_CHECK
 
-ENGINEERING_STATE: TASK_001_FOURTH_QUALIFIER_REPAIR_EXECUTION_PENDING
+ENGINEERING_STATE: TASK_001_FIFTH_REPAIR_EXECUTION_PENDING
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
 WRITE_AUTHORITY: READ_ONLY
@@ -33,15 +33,15 @@ AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-AUTHORITY_DOMAIN: BM-MESH issue #1652 implementation and qualification evidence only; source-authority verification, solver formulation/compiler authority, mesh-quality thresholds, benchmark/oracle authority, convergence tolerances, TECH-13 product-refinement authority, release/temperature authority and workflows remain protected.
+AUTHORITY_DOMAIN: BM-MESH issue #1652 implementation and qualification evidence only; source-authority verification, solver formulation/compiler authority, mesh-quality thresholds, B02 benchmark/response authority, benchmark/oracle authority, convergence tolerances, TECH-13 product-refinement authority, release/trust/temperature authority and workflows remain protected.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
 AGENT_INSTANCE_ID: chatgpt:b4bb2925-1e01-4ba2-8693-1018b121c5ba
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 6
+CUSTODY_EPOCH: 7
 COORDINATION_STATE: SAFE_EXCLUSIVE_NO_COLLISION
-DEPENDENCIES: docs-only PR #1654 supports design only; issue #1535 production-route authority remains separate; TECH-13 LAFEA.4 product-refinement authority remains separate
+DEPENDENCIES: docs-only PR #1654 supports design only; issue #1535 production-route authority remains separate; TECH-13 LAFEA.4 product-refinement authority remains separate; historical B02D benchmark authority remains separate
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
@@ -57,17 +57,17 @@ ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT_WITH_DISJOINT_POST_BASIS_MAIN_DRIFT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0009
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0011
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549970395
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549969638
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550342510
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550705046
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 QUALIFICATION_PROFILE: FEA
 QUALIFICATION_PROFILE_VERSION: 2
 QUALIFICATION_SCOPE_ID: QSCOPE-ADV-BM-MESH-1652-PRODUCER-MESH-QUALIFICATION
-QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0003
-QUESTION_SET_FILE: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0003-questions.md
+QUESTION_SET_ID: QS-ADV-BM-MESH-1652-0004
+QUESTION_SET_FILE: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0004-questions.md
 QUESTION_SET_STATUS: CURRENT
 QUESTION_SET_ADMISSION_STATUS: NOT_EVALUATED_ORIGINATING_CUSTODIAN
 QUESTION_PACK_ACTION: REFRESHED_FAILURE_BOUNDARY
@@ -80,15 +80,15 @@ OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
 OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
 
 TASK_STATUS: TASK-001 IMPLEMENTED_EXECUTION_PENDING; TASK-002..TASK-006 OPEN_STAGED_BEHIND_TASK_001; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: Owner runner available; panel PASS; source-authority/quality/refinement-dispatch qualifier boundaries isolated and patched; post-LEG-004 execution pending; M4 physics fixture authority unresolved
-BENCHMARK_STATUS: BM-001 PATCHED_NOT_RUN; BM-003 PARTIAL_FAILED_PREPATCH/PATCHED_NOT_RUN; BM-002/BM-004..BM-006 NOT_RUN
+INPUT_STATUS: Owner runner available; focused curved-shell qualifiers PASS; aggregate meshing determinism PASS; historical B02D-V1 T3/L1 quality BLOCK isolated inside producer-binding and LEG-005 replaces only that dependency with focused B02D-V2 binding qualifier; post-LEG-005 execution pending; M4 physics fixture authority unresolved
+BENCHMARK_STATUS: BM-001 PATCHED_NOT_RUN_FINAL_HEAD; BM-003 PASS_OWNER_PRE_LEG_005/FINAL_HEAD_NOT_RUN; BM-002/BM-004..BM-006 NOT_RUN
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_OWNER_EXECUTION_FAILURE_ISOLATION_AND_DIFF_INSPECTION / POST_LEG_004_EXECUTABLE_VALIDATION_NOT_RUN
+HANDOVER_VALIDATION_STATUS: PASS_OWNER_EXECUTION_FAILURE_ISOLATION_AND_NET_DIFF_INSPECTION / POST_LEG_005_EXECUTABLE_VALIDATION_NOT_RUN
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-CURRENT_BLOCKER: post-LEG-004 executable validation on the current PR branch.
-LEG_DIAGNOSIS: LAFEA.4 retained curved-shell refinement now belongs to a separate TECH-13 product route. These BM-MESH producer/determinism qualifiers already observe that product refinement is disabled and no longer invoke the disabled LAFEA.4 action merely to assert a historical generic rejection. LAFEA.5 retains the generic fail-closed assertion. The separate TECH-13 graded-refinement point-contract defect is not patched by this chain.
-EXACT_NEXT_ACTION: run `node scripts/lafea-shell-curved-cylinder-check.mjs`, `node scripts/lafea-shell-curved-hole-check.mjs`, `node scripts/lafea-shell-periodic-cylinder-check.mjs`, then `npm run check:lafea-meshing`. PASS through determinism and producer-binding closes TASK-001; any failure must be isolated before M2/oracle material work.
+CURRENT_BLOCKER: post-LEG-005 executable validation on the current PR branch.
+LEG_DIAGNOSIS: the declared meshing chain now clears all earlier qualifier boundaries and passes determinism. Producer-binding was blocked only by importing historical B02D-V1, whose T3 coarse quality BLOCK is explicitly documented by frozen B02D-V2. LEG-005 leaves historical B02D fail-closed and changes only the generic producer-binding check to invoke the focused current B02D-V2 binding qualifier.
+EXACT_NEXT_ACTION: run `node scripts/lafea-b02d-v2-producer-binding-check.mjs`, `node scripts/lafea-mesh-producer-binding-check.mjs`, then `npm run check:lafea-meshing`. PASS of all three closes TASK-001/BM-001; any failure must be isolated before M2/oracle material work.

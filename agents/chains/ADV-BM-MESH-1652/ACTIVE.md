@@ -4,8 +4,8 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0002.md
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0003.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0001.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 LAST_COMPLETED_MATERIAL_LEG: LEG-001
@@ -18,12 +18,15 @@ PR_STATUS: OPEN_DRAFT
 BRANCH: engineering/bm-mesh-1652
 BASE_BRANCH: main
 MAIN_HEAD: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
+PR_HEAD_EXECUTION_RECHECK: db0057f1d0a827b2e3c9c31de63bb74eccc2d87f
 MERGEABILITY: MERGEABLE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
+WORKFLOW_RUNS_AT_RECHECK: 0
+COMMIT_STATUS_CONTEXTS_AT_RECHECK: 0
 
-ENGINEERING_STATE: TASK_001_IMPLEMENTED_EXECUTION_PENDING
+ENGINEERING_STATE: BLOCKED_TASK_001_EXECUTION_EVIDENCE
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
 WRITE_AUTHORITY: READ_ONLY
@@ -37,7 +40,7 @@ AGENT_INSTANCE_ID: chatgpt:b4bb2925-1e01-4ba2-8693-1018b121c5ba
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 2
+CUSTODY_EPOCH: 3
 COORDINATION_STATE: SAFE_EXCLUSIVE_NO_COLLISION
 DEPENDENCIES: docs-only PR #1654 supports design only; issue #1535 production-route authority remains separate
 
@@ -55,12 +58,13 @@ ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549970395
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549969638
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549982903
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550046087
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 QUALIFICATION_PROFILE: FEA
 QUALIFICATION_PROFILE_VERSION: 2
 QUALIFICATION_SCOPE_ID: QSCOPE-ADV-BM-MESH-1652-PRODUCER-MESH-QUALIFICATION
@@ -77,7 +81,7 @@ OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
 OWNER_QUALIFICATION_BASELINE_SOURCE: NONE
 OWNER_QUALIFICATION_BASELINE_STATUS: NOT_APPLICABLE
 
-TASK_STATUS: TASK-001 IMPLEMENTED_EXECUTION_PENDING; TASK-002..TASK-006 OPEN; TASK-007 SATISFIED_CURRENTLY
+TASK_STATUS: TASK-001 IMPLEMENTED_EXECUTION_PENDING; TASK-002..TASK-006 OPEN_STAGED_BEHIND_TASK_001; TASK-007 SATISFIED_CURRENTLY
 INPUT_STATUS: stale assertion boundary resolved; executable command runner and M4 physics fixture authority remain unresolved
 BENCHMARK_STATUS: BM-001 PATCHED_NOT_RUN; BM-002..BM-006 NOT_RUN
 
@@ -87,6 +91,6 @@ CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-CURRENT_BLOCKER: executable evidence for TASK-001 acceptance is unavailable from the current connected surface; no PR-triggered workflow/status was observed.
-LEG_DIAGNOSIS: assertion-only repair complete; engineering policy unchanged.
-EXACT_NEXT_ACTION: execute `node scripts/lafea.10-mesh-quality-panel-check.mjs` and `npm run check:lafea-meshing` on the current PR head. PASS through steps 10–12 closes TASK-001; any new failure must be isolated before more material mutation. After TASK-001 validation, the next bounded implementation boundary is M2 geometry/oracle fixture freezing, followed by ladders/probes and M0–M4 runner work.
+CURRENT_BLOCKER: executable evidence for TASK-001 acceptance is unavailable from the current connected surface; recheck found zero PR-triggered Actions runs and zero commit-status contexts, leaving nothing that can be re-run.
+LEG_DIAGNOSIS: assertion-only repair complete; no production engineering policy changed; staged advancement is correctly blocked on missing execution evidence.
+EXACT_NEXT_ACTION: obtain an executable checkout/runner for PR #1656 and run `node scripts/lafea.10-mesh-quality-panel-check.mjs` then `npm run check:lafea-meshing`. Require the aggregate to execute smoothing, determinism, and producer-binding steps. PASS closes TASK-001; any failure must be isolated before any M2/oracle or later material mutation.

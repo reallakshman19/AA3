@@ -5,7 +5,10 @@ import {
 } from './emp1-professional-result-presentation.js';
 import { card, element } from './lafea-workbench-dom.js';
 import { renderEmp1GammaDomain } from './emp1-gamma-domain-view.js';
-import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
+import {
+  emp1PlainLanguageLabel,
+  emp1PlainLanguageLabelRequired,
+} from './emp1-plain-language-labels.js';
 
 const FORCE_NAMES = Object.freeze(['Fx', 'Fy', 'Fz']);
 const MOMENT_NAMES = Object.freeze(['Mx', 'My', 'Mz']);
@@ -34,46 +37,47 @@ export function renderEmp1BoundedCorrelationEvidence(root, projection) {
 
   for (const route of routes) {
     const status = element(root, 'strong', 'lafea-result-highlights__status',
-      route.engineeringUseAuthorized ? 'BOUNDED ROUTE QUALIFIED' : 'ROUTE NOT AUTHORIZED');
+      route.engineeringUseAuthorized
+        ? 'Bounded route · Engineering use authorized'
+        : 'Bounded route · Engineering use not authorized');
     status.dataset.role = 'emp1-c-bounded-route-status';
-    // A route that is not authorized must not read in the same affirmative green
-    // as one that is.
     status.dataset.authorized = String(route.engineeringUseAuthorized === true);
     status.dataset.routeId = String(route.routeId ?? 'UNRESOLVED');
     result.body.append(status);
     result.body.append(keyValueTable(root, [
-      ['Route', route.routeId],
-      ['Method', route.method?.identity],
-      ['Edition', route.method?.edition],
-      ['Shell / attachment', `${route.scope?.shellFamily ?? '—'} / ${route.scope?.attachmentShape ?? '—'}`],
-      ['Curve variant', route.scope?.variant],
+      ['Method', `WRC 537 (${route.method?.edition ?? 'edition unresolved'})`],
+      ['Shell / attachment', `${engineeringTerm(route.scope?.shellFamily)} / ${engineeringTerm(route.scope?.attachmentShape)}`],
+      ['Curve variant', engineeringTerm(route.scope?.variant)],
       ['γ', route.scope?.gamma],
       ['β domain', `${engineeringNumber(route.scope?.betaMinimum)} ≤ β ≤ ${engineeringNumber(route.scope?.betaMaximum)}`],
       ['Differential pressure', route.scope?.differentialPressure],
       ['WRC load-axis authority', human(route.scope?.cylindricalLoadAxisAuthority)],
       ['WRC +P rule', human(route.scope?.wrcPositivePRule)],
-      ['Runtime source-polarity evidence', route.scope?.runtimeSourcePolarityEvidenceRequired === true ? 'REQUIRED' : 'UNRESOLVED'],
-      ['Raw foundation eZ is WRC polarity authority', route.scope?.rawFoundationRadialHintIsPolarityAuthority === false ? 'NO' : 'UNRESOLVED'],
-      ['Axis source SHA-256', route.scope?.cylindricalLoadAxisSourceSha256],
+      ['Runtime source-polarity evidence', requiredHuman(
+        route.scope?.runtimeSourcePolarityEvidenceRequired === true ? 'REQUIRED' : 'UNRESOLVED',
+      )],
+      ['Raw foundation eZ is WRC polarity authority', yesNo(
+        route.scope?.rawFoundationRadialHintIsPolarityAuthority,
+      )],
       ['Kn / Kb', `${engineeringNumber(route.scope?.Kn)} / ${engineeringNumber(route.scope?.Kb)}`],
-      ['Interpolation', route.scope?.interpolationAllowed === false ? 'PROHIBITED' : 'UNRESOLVED'],
-      ['Cross-variant fallback', route.scope?.crossVariantFallbackAllowed === false ? 'PROHIBITED' : 'UNRESOLVED'],
-      ['Release qualified', route.releaseQualified === true ? 'YES' : 'NO'],
+      ['Interpolation', requiredHuman(
+        route.scope?.interpolationAllowed === false ? 'PROHIBITED' : 'UNRESOLVED',
+      )],
+      ['Cross-variant fallback', requiredHuman(
+        route.scope?.crossVariantFallbackAllowed === false ? 'PROHIBITED' : 'UNRESOLVED',
+      )],
+      ['Release qualified', yesNo(route.releaseQualified)],
     ]));
+    result.body.append(technicalRouteDetails(root, route));
+
     const blocked = element(root, 'div', 'lafea-workbench__authority');
     blocked.append(element(root, 'strong', null, 'Still blocked outside this bounded route'));
     const list = element(root, 'ul');
     (route.remainingBlocked ?? []).forEach((code) => list.append(element(root, 'li', null, human(code))));
     blocked.append(list);
     result.body.append(blocked);
-
   }
 
-  // The blocked list says a gamma other than the route's is refused, but never
-  // which shell parameters the dataset can actually evaluate or what happens
-  // between them. The grid and the selection policy are properties of the retained
-  // dataset rather than of any one route, so this is stated once, after the routes
-  // it qualifies, using the gamma of the route that is authorized for use.
   const authorized = routes.find((route) => route.engineeringUseAuthorized) ?? routes[0];
   result.body.append(renderEmp1GammaDomain(root, {
     routeGamma: authorized?.scope?.gamma ?? null,
@@ -322,6 +326,21 @@ function keyValueTable(root, rows) {
   });
   return table;
 }
+
+function technicalRouteDetails(root, route) {
+  const details = element(root, 'details', 'lafea-workbench__custody-details');
+  details.dataset.emp1RawTechnical = 'true';
+  details.append(
+    element(root, 'summary', null, 'Technical route identifiers'),
+    keyValueTable(root, [
+      ['Route ID', route.routeId],
+      ['Method ID', route.method?.identity],
+      ['Axis source SHA-256', route.scope?.cylindricalLoadAxisSourceSha256],
+    ]),
+  );
+  return details;
+}
+
 function appendHeader(root, table, labels) {
   const tr = element(root, 'tr');
   labels.forEach((label) => {
@@ -348,14 +367,28 @@ function vectorText(value) {
 function displayValue(value) {
   if (Array.isArray(value)) return value.join(', ');
   if (typeof value === 'number') return engineeringNumber(value);
-  if (value === true) return 'YES';
-  if (value === false) return 'NO';
+  if (value === true) return 'Yes';
+  if (value === false) return 'No';
   return value == null || value === '' ? '—' : String(value);
 }
 function engineeringNumber(value) {
   if (!Number.isFinite(value)) return '—';
   return Number(value.toPrecision(10)).toString();
 }
+function engineeringTerm(value) {
+  const terms = {
+    CYLINDRICAL: 'Cylindrical shell',
+    ROUND: 'Round attachment',
+    ORIGINAL: 'Original',
+  };
+  return terms[value] ?? human(value);
+}
+function yesNo(value) {
+  return value === true ? 'Yes' : value === false ? 'No' : 'Unresolved';
+}
 function human(value) {
   return emp1PlainLanguageLabel(value);
+}
+function requiredHuman(value) {
+  return emp1PlainLanguageLabelRequired(value);
 }

@@ -99,6 +99,7 @@ export function renderDocumentTableEditor(
   function refresh() {
     content.replaceChildren();
     if (mode === 'JSON') {
+      content.dataset.lafeaRawJson = 'true';
       renderLafeaJsonEditor(
         documentRef,
         content,
@@ -107,6 +108,7 @@ export function renderDocumentTableEditor(
       );
       return;
     }
+    delete content.dataset.lafeaRawJson;
     renderLafeaDescriptorForm({
       documentRef,
       container: content,

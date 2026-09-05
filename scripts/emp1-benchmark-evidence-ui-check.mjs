@@ -140,10 +140,14 @@ assert.ok(viewSource.includes(
 ));
 assert.ok(viewSource.includes("dataset.role = 'emp1-benchmark-evidence-panel'"));
 assert.ok(viewSource.includes("dataset.role = 'emp1-benchmark-comparison-table'"));
-assert.ok(viewSource.includes('REFERENCE NOT AVAILABLE'));
-assert.ok(viewSource.includes('ENGINEERING USE NOT AUTHORIZED'));
+assert.ok(viewSource.includes('PV Elite · Reference not available'));
+assert.ok(viewSource.includes('CAUx 2017 · Comparison qualified · Engineering use not authorized'));
+assert.ok(viewSource.includes('emp1PlainLanguageLabelRequired'));
+assert.ok(viewSource.includes("details.dataset.emp1RawTechnical = 'true'"));
+assert.equal(viewSource.includes('PV Elite · REFERENCE NOT AVAILABLE'), false);
+assert.equal(viewSource.includes('CAUx 2017 · COMPARISON QUALIFIED · ENGINEERING USE NOT AUTHORIZED'), false);
 
-assert.ok(workflowSource.includes("renderEmp1BenchmarkEvidencePanel"));
+assert.ok(workflowSource.includes('renderEmp1BenchmarkEvidencePanel'));
 assert.ok(workflowSource.includes('const benchmarkEvidence = options.benchmarkEvidence ?? null'));
 assert.ok(workflowSource.includes('renderEmp1BenchmarkEvidencePanel(root, benchmarkEvidence)'));
 assert.ok(workflowSource.includes("scrollToRole(root, 'emp1-benchmark-evidence-panel')"));

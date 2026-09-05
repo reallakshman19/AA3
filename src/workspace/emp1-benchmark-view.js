@@ -1,4 +1,5 @@
 import { card, element } from './lafea-workbench-dom.js';
+import { emp1PlainLanguageLabelRequired } from './emp1-plain-language-labels.js';
 
 const REQUIRED_AUTHORITY_STATEMENT =
   'Independent reference evidence — not WRC method authority. Does not establish code compliance, production authorization, or release qualification.';
@@ -37,7 +38,7 @@ function renderCauxEvidence(root, entry) {
   section.dataset.comparatorId = 'CAUX';
 
   const status = element(root, 'strong', 'lafea-workbench__authority',
-    'CAUx 2017 · COMPARISON QUALIFIED · ENGINEERING USE NOT AUTHORIZED');
+    'CAUx 2017 · Comparison qualified · Engineering use not authorized');
   status.dataset.role = 'emp1-benchmark-comparison-status';
   status.dataset.comparisonState = evidence.comparison.state;
   status.dataset.engineeringUseAuthorized = String(
@@ -48,28 +49,34 @@ function renderCauxEvidence(root, entry) {
   section.append(keyValueTable(root, [
     ['Comparator', `${evidence.comparator.name} · ${evidence.comparator.version ?? 'version unresolved'}`],
     ['Case', evidence.caseId],
-    ['Authority role', evidence.authorityRole],
-    ['Current source re-verification', entry.currentSourceQualification.directPdfPageReobservation],
-    ['Current source qualification', entry.currentSourceQualification.qualificationState],
+    ['Authority role', humanState(evidence.authorityRole)],
+    ['Current source re-verification', humanState(entry.currentSourceQualification.directPdfPageReobservation)],
+    ['Current source qualification', humanState(entry.currentSourceQualification.qualificationState)],
+    ['Benchmark-specific γ/radius basis', humanState(entry.currentSourceQualification.gammaRadiusBasisForThisBenchmark)],
+    ['Reference freeze', humanState(evidence.freezeEvidence.state)],
+    ['Retained comparison execution', humanState(entry.executionCustody.state)],
+    ['Comparison-time source observation (historical)',
+      humanState(entry.currentSourceQualification.historicalComparisonObservationState)],
+  ]));
+  section.append(technicalDetails(root, 'CAUx technical identifiers', [
     ['Source PDF SHA-256', entry.currentSourceQualification.rawPdfSha256],
-    ['Benchmark-specific γ/radius basis', entry.currentSourceQualification.gammaRadiusBasisForThisBenchmark],
-    ['Reference freeze', evidence.freezeEvidence.state],
-    ['Retained comparison execution', entry.executionCustody.state],
-    ['Comparison-time source-observation state (historical)',
-      entry.currentSourceQualification.historicalComparisonObservationState],
+    ['Qualification ID', entry.currentSourceQualification.qualificationId],
+    ['Retained execution repository commit', entry.executionCustody.repositoryCommit],
   ]));
 
   const route = evidence.routeRelationship;
   const routeBox = element(root, 'div', 'lafea-workbench__authority');
   routeBox.dataset.role = 'emp1-benchmark-route-state';
   routeBox.append(
-    element(root, 'strong', null, 'Comparison route'),
+    element(root, 'strong', null, 'Comparison route relationship'),
     keyValueTable(root, [
-      ['Route', route.routeId],
       ['Registered', yesNo(route.registered)],
       ['Comparison qualification available', yesNo(route.comparisonQualificationAvailable)],
       ['Engineering use authorized', yesNo(route.engineeringUseAuthorized)],
-      ['Route state', route.state],
+      ['Route state', humanState(route.state)],
+    ]),
+    technicalDetails(root, 'Comparison route technical identifier', [
+      ['Route ID', route.routeId],
     ]),
   );
   section.append(routeBox);
@@ -115,8 +122,8 @@ function comparisonTable(root, quantities) {
         : `${engineeringNumber(quantity.relativeDifferencePercent)} %`),
       element(root, 'td', null, toleranceText(quantity.tolerance)),
       element(root, 'td', null, quantity.status === 'WITHIN_TOLERANCE'
-        ? 'WITHIN FROZEN TOLERANCE'
-        : 'OUTSIDE FROZEN TOLERANCE'),
+        ? 'Within frozen tolerance'
+        : 'Outside frozen tolerance'),
     );
     table.append(row);
   });
@@ -151,7 +158,7 @@ function renderPvEliteEvidence(root, entry) {
   section.dataset.comparatorId = 'PV_ELITE';
 
   const status = element(root, 'strong', 'lafea-workbench__authority',
-    'PV Elite · REFERENCE NOT AVAILABLE');
+    'PV Elite · Reference not available');
   status.dataset.role = 'emp1-benchmark-reference-unavailable';
   status.dataset.referenceState = evidence.comparison.state;
   section.append(
@@ -160,11 +167,11 @@ function renderPvEliteEvidence(root, entry) {
       'Exact PV Elite WRC 107/537 report, input and version have not been retained and frozen. No reference values or tolerance are inferred.'),
     keyValueTable(root, [
       ['Comparator', evidence.comparator.name],
-      ['Reference state', entry.referenceProgramme.state],
-      ['Source custody', entry.referenceProgramme.sourceCustodyState],
-      ['Expected values', entry.referenceProgramme.expectedValuesState],
-      ['Version', entry.referenceProgramme.versionState],
-      ['Tolerance', entry.referenceProgramme.toleranceState],
+      ['Reference state', humanState(entry.referenceProgramme.state)],
+      ['Source custody', humanState(entry.referenceProgramme.sourceCustodyState)],
+      ['Expected values', humanState(entry.referenceProgramme.expectedValuesState)],
+      ['Version', humanState(entry.referenceProgramme.versionState)],
+      ['Tolerance', humanState(entry.referenceProgramme.toleranceState)],
       ['Comparison rows', evidence.comparison.quantities.length],
     ]),
   );
@@ -196,6 +203,17 @@ function keyValueTable(root, rows) {
   return table;
 }
 
+function technicalDetails(root, summary, rows) {
+  const details = element(root, 'details', 'lafea-workbench__custody-details');
+  details.dataset.emp1RawTechnical = 'true';
+  details.append(element(root, 'summary', null, summary), keyValueTable(root, rows));
+  return details;
+}
+
+function humanState(value) {
+  return emp1PlainLanguageLabelRequired(value);
+}
+
 function toleranceText(tolerance) {
   if (tolerance.kind === 'RELATIVE_PERCENT') return `${engineeringNumber(tolerance.value)} %`;
   return `${engineeringNumber(tolerance.value)} ${tolerance.unit ?? ''}`.trim();
@@ -208,7 +226,7 @@ function locationFromQuantityId(quantityId) {
 }
 
 function yesNo(value) {
-  return value === true ? 'YES' : value === false ? 'NO' : 'UNRESOLVED';
+  return value === true ? 'Yes' : value === false ? 'No' : 'Unresolved';
 }
 
 function engineeringNumber(value) {

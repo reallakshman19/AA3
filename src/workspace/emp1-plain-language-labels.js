@@ -1,24 +1,18 @@
 /**
- * Plain-language labels for the EMP.1 codes that reach the screen.
+ * Plain-language labels for EMP.1 states that reach engineer-facing UI.
  *
- * The rest of the LAFEA/LFEA workbench already routes its reason codes through
- * `lafea-workbench-reason-labels.js`, which returns sentences. The EMP.1 surfaces
- * instead used a helper that only replaced underscores with spaces, so an engineer
- * read `CANONICAL MODEL NOT CURRENT AND QUALIFIED` rather than a sentence. This
- * registry closes that gap for EMP.1's own vocabulary.
- *
- * Two shapes are covered because the presentation layer produces both:
- *   - underscore codes, e.g. `EMP1_WORKBENCH_A_DOCUMENT_REQUIRED`
- *   - already-spaced uppercase summary values, e.g. `LOCAL METHOD BLOCKED`
- *
- * Anything unmapped falls back to the previous underscore-stripping behaviour, so
- * a new code degrades to what it looked like before rather than to nothing.
+ * The normal helper retains the historical fallback for legacy call sites. New
+ * governed presentation surfaces should use `emp1PlainLanguageLabelRequired`,
+ * which fails closed when a machine state has no reviewed human label.
  */
 
-const COMPOSED_SEPARATOR = ' \u00b7 ';
+const COMPOSED_SEPARATOR = ' · ';
 
 const STATE_LABELS = Object.freeze({
-  // readiness dimensions
+  // generic presentation states
+  UNRESOLVED: 'Unresolved',
+  REQUIRED: 'Required',
+  PROHIBITED: 'Not permitted',
   INPUT_REQUIRED: 'Input required',
   NOT_ESTABLISHED: 'Not established',
   NOT_READY: 'Not ready',
@@ -26,6 +20,7 @@ const STATE_LABELS = Object.freeze({
   NOT_ASSESSED: 'Not assessed',
   NOT_QUALIFIED: 'Not qualified',
   NOT_RUN: 'Not run',
+  NOT_AVAILABLE: 'Not available',
   READY: 'Ready',
   READY_TO_RUN: 'Ready to run',
   READY_TO_CALCULATE: 'Ready to calculate',
@@ -51,6 +46,26 @@ const STATE_LABELS = Object.freeze({
   QUALIFIED_BY_CURRENT_EXECUTION_GATE: 'Qualified by the current execution gate',
   QUALIFIED_BY_EXISTING_RELEASE_BOUNDARY: 'Qualified by the existing release boundary',
   CURRENT_REPORTABLE_BOUNDED_C_EXECUTION: 'Current, reportable bounded step C execution',
+
+  // benchmark/reference presentation states
+  REFERENCE_NOT_AVAILABLE: 'Reference not available',
+  SOURCE_NOT_RETAINED: 'Source report has not been retained',
+  REQUIRED_FROM_RETAINED_SOURCE: 'Required from the retained source report',
+  UNRESOLVED_MUST_FREEZE_BEFORE_EMP_OBSERVATION:
+    'Tolerance has not been established; freeze its basis before observing EMP.1 results',
+  INDEPENDENT_BENCHMARK_REFERENCE_NOT_WRC_METHOD_AUTHORITY:
+    'Independent benchmark reference — not WRC method authority',
+  INDEPENDENT_COMMERCIAL_SOFTWARE_COMPARISON_NOT_WRC_METHOD_AUTHORITY:
+    'Independent commercial-software comparison — not WRC method authority',
+  COMPARISON_QUALIFIED: 'Comparison qualified',
+  REFERENCE_FROZEN: 'Reference values and tolerance frozen before EMP.1 observation',
+  RETAINED_ACTUAL_EXECUTION_COMPARISON: 'Retained actual EMP.1 comparison execution',
+  PASS: 'Verified',
+  PASS_RECONCILED: 'Reconciled for this benchmark',
+  PASS_FINAL_CAUX_SOURCE_QUALIFICATION_GAMMA_RADIUS_RECONCILED_REFERENCE_FREEZE_PRESERVED:
+    'Source qualified; gamma/radius basis reconciled for this benchmark and reference freeze preserved',
+  NOT_RUN_EXECUTION_ENVIRONMENT: 'Not run in the historical comparison environment',
+  OUTSIDE_AUTHORIZED_ENGINEERING_ROUTE: 'Outside the authorized engineering-use route',
 
   // blockers and route authority
   EMP1_READINESS_A_SOURCE_REQUIRED:
@@ -87,7 +102,6 @@ const STATE_LABELS = Object.freeze({
     'The bounded local-correlation route is not authorized for engineering use.',
   EMP1_C_BOUNDED_ROUTE_EXECUTOR_NOT_AUTHORIZED:
     'The bounded local-correlation route has no authorized executor.',
-  // conditions the bounded route still refuses, listed on the C evidence card
   NONZERO_DIFFERENTIAL_PRESSURE:
     'Differential pressure must be zero on this route.',
   NONUNITY_STRESS_CONCENTRATION:
@@ -111,14 +125,13 @@ const STATE_LABELS = Object.freeze({
   EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED:
     'The WRC 537 gamma=5 zero-pressure route is suspended pending requalification.',
 
-  // axis and sign-convention authority, shown on the C evidence card
+  // axis and sign-convention authority
   SOURCE_QUALIFIED_RUNTIME_POLARITY_REQUIRED:
     'The load-axis sign is not fixed by this route; it must be resolved at runtime from source-qualified evidence.',
   SOURCE_REFERENCE_TOWARD_ATTACHMENT_TARGET:
     'P is positive when directed from the source point toward the attachment target.',
 });
 
-/** Summary values the presentation layer already emits space-separated. */
 const SUMMARY_LABELS = Object.freeze({
   'SOURCE CURRENT': 'Source current',
   'SOURCE INCOMPLETE': 'Source incomplete',
@@ -141,17 +154,10 @@ const SUMMARY_LABELS = Object.freeze({
   'CODE COMPLIANCE NOT ASSESSED': 'Code compliance not assessed',
 });
 
-/**
- * Plain-language text for one EMP.1 code or summary value.
- * Unmapped values fall back to underscore stripping, the previous behaviour.
- */
 export function emp1PlainLanguageLabel(value) {
   const raw = String(value ?? 'UNRESOLVED');
   const direct = STATE_LABELS[raw] ?? SUMMARY_LABELS[raw];
   if (direct) return direct;
-  // The workflow steps compose two summary values, e.g.
-  // "LOCAL METHOD BLOCKED · LOCAL RESULT NOT CALCULATED". Map each half so a
-  // composed label is not left shouting just because the pair is not itself a key.
   if (raw.includes(COMPOSED_SEPARATOR)) {
     return raw.split(COMPOSED_SEPARATOR)
       .map((part) => emp1PlainLanguageLabel(part.trim()))
@@ -160,7 +166,23 @@ export function emp1PlainLanguageLabel(value) {
   return raw.replaceAll('_', ' ');
 }
 
-/** True when the value has a mapped label rather than a fallback. */
+/** Fail closed when a governed engineer-facing state has no reviewed label. */
+export function emp1PlainLanguageLabelRequired(value) {
+  const raw = String(value ?? 'UNRESOLVED');
+  if (raw.includes(COMPOSED_SEPARATOR)) {
+    return raw.split(COMPOSED_SEPARATOR)
+      .map((part) => emp1PlainLanguageLabelRequired(part.trim()))
+      .join(COMPOSED_SEPARATOR);
+  }
+  if (!emp1HasPlainLanguageLabel(raw)) {
+    const error = new TypeError(`EMP1_PRESENTATION_LABEL_REQUIRED:${raw}`);
+    error.code = 'EMP1_PRESENTATION_LABEL_REQUIRED';
+    error.value = raw;
+    throw error;
+  }
+  return STATE_LABELS[raw] ?? SUMMARY_LABELS[raw];
+}
+
 export function emp1HasPlainLanguageLabel(value) {
   const raw = String(value ?? '');
   return Object.hasOwn(STATE_LABELS, raw) || Object.hasOwn(SUMMARY_LABELS, raw);

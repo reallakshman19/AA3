@@ -17,18 +17,18 @@ CHAIN: ADV-EMP1-HUMAN-UI-1651
 ENDPOINT: EP-0005
 ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0005.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0004.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0005.md
 
 PREVIOUS_PR: 1658
 PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
 PREVIOUS_PR_MERGE_COMMIT: b39f7673737bd1f7f4a6d7dd9d1538f795874281
 PR: 1660
-PR_STATUS: OPEN_DRAFT_LEG004_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+PR_STATUS: OPEN_DRAFT_LEG005_IN_PROGRESS
 BRANCH: agent/emp1-human-ui-1651-leg003-anti-waterfall
 PR_BASE: main
-PR_HEAD_OBSERVED: a0e47177979942bad1c685fcff0625a39298fae5
+PR_HEAD_OBSERVED: 7d97a71ff275fff166de7e25115fd5dd16c88034
 MAIN_HEAD_OBSERVED: b39f7673737bd1f7f4a6d7dd9d1538f795874281
-MERGEABILITY: MERGEABLE_AT_MATERIAL_FREEZE
+MERGEABILITY: MERGEABLE_AT_LEG005_ADMISSION
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
@@ -36,20 +36,20 @@ STATUS_CONTEXTS_MATERIAL_HEAD: 0
 PULL_REQUEST_WORKFLOW_RUNS_MATERIAL_HEAD: 0
 LATEST_MATERIAL_HEAD: 2a0089188de5be7ce81f5b825f337d9b3f691af8
 LAST_COMPLETED_MATERIAL_LEG: LEG-004
-CURRENT_MATERIAL_LEG: NONE
+CURRENT_MATERIAL_LEG: LEG-005
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-004.md
 
-ENGINEERING_STATE: LEG_004_SOURCE_COMPLETE_EXECUTION_NOT_RUN
+ENGINEERING_STATE: LEG_005_IN_PROGRESS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
+WRITE_AUTHORITY: WRITE_ALLOWED_FOR_ONE_BOUNDED_LEG
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-AUTHORITY_DOMAIN: EMP.1 presentation/layout/benchmark-evidence hierarchy only; mechanics/source/tolerance/route/code/release authority protected.
+AUTHORITY_DOMAIN: EMP.1 test/evidence closure only; production mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 8
-COORDINATION_STATE: SAFE_POST_LEG004_FREEZE
+CUSTODY_EPOCH: 9
+COORDINATION_STATE: SAFE_PRE_LEG005_CLOSURE
 POST_BASIS_DRIFT: NONE
 DEPENDENCIES: #1633 benchmark context; #1645 / PR #1648 formal benchmark UI; LEG-001/#1655 and LEG-002/#1658 merged; LEG-003/LEG-004 source-complete on Draft #1660.
 
@@ -65,7 +65,7 @@ ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550705454
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 OWNER_TEXT_OBSERVED: `proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_004
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 OWNER_MERGE_COMMAND: NONE_FOR_PR_1660
 
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
@@ -75,26 +75,23 @@ ROADMAP_MUTATION_AUTHORITY: NONE
 
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
 QUALIFICATION_PROFILE_VERSION: 2
-QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-BENCHMARK-HIERARCHY
-QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0004
-QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0004-questions.md
-QUESTION_SET_STATUS: CURRENT_FOR_COMPLETED_LEG_004
+QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-EQUIVALENCE-CLOSURE
+QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0005
+QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0005-questions.md
+QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REFRESHED
 QUESTION_DISPLAY: SHOW
-
-NEXT_QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-EQUIVALENCE-CLOSURE
-NEXT_QUESTION_SET_STATUS: REFRESH_REQUIRED_BEFORE_MATERIAL
-PREWORK_QUALIFICATION_READY: FALSE
-TAKEOVER_QUALIFICATION_READY: FALSE
+PREWORK_QUALIFICATION_READY: TRUE
+TAKEOVER_QUALIFICATION_READY: TRUE
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: LEG-004 source/diff/custody inspection PASS; repository-integrated Node/Playwright/build/import validation unavailable in this session.
+HANDOVER_VALIDATION_EVIDENCE: Common/main/PR/Issue re-ground PASS; LEG-005 executable acceptance not yet run.
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
-VALIDATION: source/diff/custody inspection PASS; executable static/browser/build/import validation NOT_RUN. Zero status contexts/workflow runs on material head is not PASS.
-AUTHORITY_BOUNDARY: LEG-004 only changes benchmark evidence placement/hierarchy and tests. It does not change benchmark projection/core math, CAUx/PV Elite retained source/value/tolerance, WRC/Pressure mechanics, route authority, code/release/deployment authority, FEA/LAFEA.3+ or workflow YAML.
-CURRENT_BLOCKER: next scope requires refreshed closure qualification; executable acceptance remains NOT_RUN externally.
-LEG_DIAGNOSIS: TASK-001 through TASK-004 have source implementations; remaining work is equivalence/accessibility/acceptance closure and truthful execution qualification.
-EXACT_NEXT_ACTION: Owner invokes `proceed next`; refresh/show Q1–Q5 for `QSCOPE-1651-EMP-EQUIVALENCE-CLOSURE`, then execute one bounded LEG-005 closure progression only. Do not merge PR #1660 without a new explicit Owner merge command.
+VALIDATION: protocol/main/PR/source re-ground PASS; LEG-005 execution NOT_RUN.
+AUTHORITY_BOUNDARY: LEG-005 may change focused tests and existing test carrier only. No production/core/benchmark JSON/route/Pressure mechanics/roadmap/workflow YAML mutation is authorized.
+CURRENT_BLOCKER: none.
+LEG_DIAGNOSIS: after LEG-004 moved Benchmark Evidence out of the workflow, the live raw-token scan no longer covers that panel; benchmark disclosure keyboard/table semantics also lack explicit closure evidence.
+EXACT_NEXT_ACTION: patch focused acceptance tests only, add one static issue-1651 acceptance manifest, retain existing Stage-17 carrier, freeze LEG-005 material head, record receipt/EP-0006, sync Issue comments, then stop. Do not merge PR #1660 without a new explicit Owner merge command.

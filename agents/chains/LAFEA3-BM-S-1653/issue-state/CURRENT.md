@@ -6,8 +6,8 @@ UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551454446
-ISSUE_HANDOVER_SYNC_STATUS: AUTH_SYNC_IN_PROGRESS
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551714311
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
 
@@ -93,4 +93,4 @@ QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 CURRENT_BLOCKER: none for authorized merge; post-merge activation requires exact-clean-head retained executable PASS
-EXACT_NEXT_ACTION: synchronize Issue Active Handover, observe exact post-auth PR head, mark ready solely for merge mechanics, merge #1661 with expected-head protection, then re-ground on merged main. Use the one reserved bounded progression for post-merge execution/activation qualification. If faithful execution is unavailable or any required check is NOT_RUN/FAIL, keep B02 in futureQueue and leave program.json unchanged. Release authority remains false.
+EXACT_NEXT_ACTION: observe exact post-auth PR head, mark ready solely for merge mechanics, merge #1661 with expected-head protection, then re-ground on merged main. Use the one reserved bounded progression for post-merge execution/activation qualification. If faithful execution is unavailable or any required check is NOT_RUN/FAIL, keep B02 in futureQueue and leave program.json unchanged. Release authority remains false.

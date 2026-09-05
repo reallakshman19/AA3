@@ -39,10 +39,12 @@ runNodeScript('scripts/lafea1371-pr-b-merge-order-guard.mjs');
 // browser contract or workflow authority.
 runNodeScript('scripts/lafea1371-cross-stage-anti-drift-check.mjs');
 
-// The EMP.1 product contract and A-to-B evidence refresh are analytical
-// qualification prerequisites. They do not depend on the LAFEA.3 B01/B02 gate.
+// The EMP.1 product contract, A-to-B evidence refresh and presentation layout
+// contracts are analytical qualification prerequisites. They do not depend on
+// the LAFEA.3 B01/B02 gate.
 runNodeScript('scripts/emp1-public-product-check.mjs');
 runNodeScript('scripts/emp1-a-to-b-refresh-check.mjs');
+runNodeScript('scripts/emp1-analytical-layout-check.mjs');
 
 // Qualify both public EMP.1 surfaces and the user-driven A→B currentness refresh
 // independently before the inherited LAFEA.3 B01/B02 production gate. The FEM
@@ -60,6 +62,7 @@ runPlaywright([
 runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 runPlaywright(['e2e/emp1-human-presentation-tokens.spec.js']);
+runPlaywright(['e2e/emp1-analytical-layout.spec.js']);
 
 // Test-only UI08 execution carrier: this uses the same real Vite production
 // application and Chromium runtime as the authorized visible-workbench lane.
@@ -83,6 +86,7 @@ runPlaywright([
   'e2e/lafea-emp1-a-to-b-refresh.spec.js',
   'e2e/lafea-empirical-grouped-edit.spec.js',
   'e2e/emp1-human-presentation-tokens.spec.js',
+  'e2e/emp1-analytical-layout.spec.js',
   'e2e/lafea3-sample-mesh.spec.js',
   'e2e/lafea-shell-sample-mesh.spec.js',
   'e2e/lafea-b02-g3-custody.spec.js',

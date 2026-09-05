@@ -29,7 +29,8 @@ import {
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-mesh-producer.js';
-import { LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED } from '../src/workspace/lafea-domain-first-mesh-custody.js';
+import { issueLafeaSourceAuthority } from '../src/workspace/lafea-source-authority.js';
+import { normalizeLafeaStageDocument } from '../src/workspace/lafea-workbench-model.js';
 import { createLafeaWorkbenchOrchestratorStore } from '../src/workspace/lafea-workbench-orchestrator-store.js';
 import { buildLafeaDiscretizationViewModel } from '../src/workspace/lafea-discretization-view-model.js';
 
@@ -42,6 +43,10 @@ const RADIUS = 100;
 const HALF_SPAN = Math.PI * RADIUS / 4;
 const AXIAL_SPAN = 120;
 const fixtureByStage = { 'LAFEA.4': shellFixture, 'LAFEA.5': trunnionFixture };
+const expectedCompilerBlock = {
+  'LAFEA.4': 'LAFEA4_SHELL_SOLVER_CONSTRAINT_MAPPING_REQUIRED',
+  'LAFEA.5': 'LAFEA5_SHELL_SOLVER_SOURCE_MESH_PARENT_REQUIRED',
+};
 const rows = [];
 
 for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
@@ -120,7 +125,16 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     () => planLafeaShellAnalysisMesh({ midsurfaceEvidence: twoParent, meshProfile: tooCoarseTwo }),
     (error) => error?.code === 'LAFEA_SHELL_CURVED_HOLE_TARGET_TOO_COARSE_FOR_LIGAMENT',
   );
-  const twoProfile = shellProfile(stageId, 15, 'TWO-HOLE');
+  if (stageId === 'LAFEA.4') {
+    assert.throws(
+      () => produceLafeaShellAnalysisMesh({
+        midsurfaceEvidence: twoParent,
+        meshProfile: shellProfile(stageId, 15, 'TWO-HOLE-CURRENT-QUALITY-BLOCK'),
+      }),
+      (error) => error?.code === 'LAFEA_SHELL_MESH_QUALITY_BLOCKED',
+    );
+  }
+  const twoProfile = shellProfile(stageId, 8, 'TWO-HOLE-QUALIFIED');
   const two = produceLafeaShellAnalysisMesh({ midsurfaceEvidence: twoParent, meshProfile: twoProfile });
   assert.equal(two.plan.holeCount, 2);
   close(two.plan.minimumMaterialLigament, 40, 1e-10);
@@ -133,7 +147,7 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   );
   assertCylinderAndHole(two.evidence.mesh, twoParent.geometry, twoHolePolygons());
 
-  checkWorkbench(stageId, parent, acceptedProfile);
+  checkWorkbench(stageId, acceptedProfile);
 
   rows.push({
     stageId,
@@ -151,6 +165,7 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     repaired10ElementCount: repaired10.evidence.mesh.elements.length,
     fine8NodeCount: fine8.evidence.mesh.nodes.length,
     fine8ElementCount: fine8.evidence.mesh.elements.length,
+    twoHoleQualifiedTarget: two.plan.effectiveTargetElementLength,
     twoHoleNodeCount: two.evidence.mesh.nodes.length,
     twoHoleElementCount: two.evidence.mesh.elements.length,
     minimumFacetDirectorAlignment: plan.minimumFacetDirectorAlignment,
@@ -356,11 +371,16 @@ function qualifyHoleAdjacentFacetAgainstLocalShell(mesh, geometry, holePolygon) 
   assert.ok(evidence[0].qualification.rigidRotation.scaledQualification.accepted);
 }
 
-function checkWorkbench(stageId, parent, profile) {
+function checkWorkbench(stageId, profile) {
+  const document = normalizeLafeaStageDocument(stageId, fixtureByStage[stageId]());
+  const sourceAuthority = issueLafeaSourceAuthority(
+    stageId, document, `CURVED-HOLE-${stageId}-QUALIFIER-SOURCE-AUTHORITY`,
+  );
+  const parent = curvedHoleParent(stageId, sourceAuthority.sourceHash, oneHole());
   const workbench = createLafeaWorkbenchOrchestratorStore({
     initialStage: stageId,
-    initialDocument: fixtureByStage[stageId](),
-    initialSourceHash: SOURCE_HASH,
+    initialDocument: document,
+    initialSourceHash: sourceAuthority.sourceHash,
   });
   assert.equal(workbench.registerShellMidsurfaceEvidence(parent, stageId)?.changed, true);
   assert.equal(workbench.bindAnalysisMeshProfile(profile, stageId)?.changed, true);
@@ -372,8 +392,10 @@ function checkWorkbench(stageId, parent, profile) {
   let stage = workbench.getState().stages[stageId];
   assert.equal(stage.analysisMeshCustodyProjection.state, 'CURRENT_PASS');
   assert.equal(stage.analysisMeshCustodyProjection.usableForRun, false);
+  assert.equal(stage.shellSolverModelProjection.state, 'BLOCKED');
+  assert.deepEqual(stage.shellSolverModelProjection.reasons, [expectedCompilerBlock[stageId]]);
   assert.deepEqual(stage.analysisMeshCustodyProjection.runBlockingReasons, [
-    LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED,
+    expectedCompilerBlock[stageId],
   ]);
   const vm = buildLafeaDiscretizationViewModel(stage);
   assert.equal(vm.actions.canRun, false);

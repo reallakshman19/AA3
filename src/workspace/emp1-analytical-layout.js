@@ -128,7 +128,7 @@ const TASK_DEFAULT_EVIDENCE = Object.freeze({
   GEOMETRY: 'results',
   LOADS: 'results',
   LOAD_TRANSFER: 'results',
-  SECTION_SCREENING: 'results',
+  SECTION_SCREENING: 'screeningCustody',
   LOCAL_CORRELATION: 'correlationResult',
   REVIEW_EVIDENCE: 'transactionSummary',
 });
@@ -195,6 +195,7 @@ export function composeEmp1AnalyticalLayout(shell, surfaces, options = {}) {
   const initialTaskStep = options.initialTaskStep
     ?? (shell.dataset.emp1Step === 'B' ? 'SECTION_SCREENING' : 'BASIS_SOURCE');
   const state = mutableSelection(selectionHost, initialTaskStep);
+  reconcileSelectionWithBackingStage(state, shell.dataset.emp1Step);
   const regions = Object.fromEntries(Object.entries(REGION_DEFINITIONS).map(
     ([regionId, definition]) => [regionId, createRegion(shell.ownerDocument, regionId, definition)],
   ));
@@ -390,6 +391,19 @@ function applyEvidenceSelection(runtime) {
     button.setAttribute('aria-selected', String(selectedButton));
     button.tabIndex = selectedButton ? 0 : -1;
   });
+}
+
+function reconcileSelectionWithBackingStage(state, backingStep) {
+  if (backingStep === 'B'
+    && ['BASIS_SOURCE', 'LOADS', 'LOAD_TRANSFER'].includes(state.activeTaskStep)) {
+    state.activeTaskStep = 'SECTION_SCREENING';
+    state.evidenceView = TASK_DEFAULT_EVIDENCE.SECTION_SCREENING;
+    return;
+  }
+  if (backingStep === 'A' && state.activeTaskStep === 'SECTION_SCREENING') {
+    state.activeTaskStep = 'BASIS_SOURCE';
+    state.evidenceView = TASK_DEFAULT_EVIDENCE.BASIS_SOURCE;
+  }
 }
 
 function mutableSelection(selectionHost, initialTaskStep) {

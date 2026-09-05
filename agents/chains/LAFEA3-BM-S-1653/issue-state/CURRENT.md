@@ -1,12 +1,12 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1653
 CHAIN_ID: LAFEA3-BM-S-1653
 UPDATED_AT: 2026-09-05
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549976298
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975693
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550167206
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5550238919
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 # Current state — BM-S staged LAFEA.3 solver benchmark
@@ -16,9 +16,9 @@ ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 TASK-001 | Retain first audited B01 program record | NOT_RUN | faithful runtime unavailable; source runner inspected only
 TASK-002 | Create B02 benchmark-data package | IMPLEMENTED_NOT_EXECUTED | LEG-001 merged by PR #1657
 TASK-003 | Externalize cited Lamé/Kirsch oracle values and tolerances | IMPLEMENTED_NOT_EXECUTED | LEG-001 merged by PR #1657; no tolerance relaxation
-TASK-004 | Retain machine-readable S0-S5 evidence | PARTIAL | S1 + S2 retained schemas/executors merged; S3-S5 remain open
-TASK-005 | Freeze exact S4 rejection codes | DEFINITION_COMPLETE_EXECUTOR_OPEN | exact state/code contract merged
-TASK-006 | Implement staged BM-S runner | PARTIAL | generic gated runner merged; S0-S2 READY, S3-S5 PLANNED
+TASK-004 | Retain machine-readable S0-S5 evidence | PARTIAL | S1/S2 merged, S3 implemented in PR #1659; S4-S5 open
+TASK-005 | Freeze exact S4 rejection codes | DEFINITION_COMPLETE_EXECUTOR_NEXT | exact state/code contract merged; executor is next leg
+TASK-006 | Implement staged BM-S runner | PARTIAL | generic gated runner merged; S0-S3 READY on current branch, S4-S5 PLANNED
 TASK-007 | Activate B02 READY / remove from futureQueue | OPEN | intentionally blocked until all S0-S5 definitions/evidence contracts are READY
 TASK-008 | Preserve release authority false | PRESERVED | manifest/runner/evidence retain false
 
@@ -39,8 +39,8 @@ BM-001 | S0 B01 element/patch | READY_EXECUTOR_NOT_RUN
 BM-002 | S1 Lamé | IMPLEMENTED_NOT_RUN | cited oracle + retained evidence output merged
 BM-003 | S1 Kirsch | IMPLEMENTED_NOT_RUN | cited oracle + retained evidence output merged
 BM-004 | S2 five load paths | IMPLEMENTED_NOT_RUN | exact BVP retained executor merged
-BM-005 | S3 solver numerics | ACTIVE_LEG_003
-BM-006 | S4 fail-closed | DEFINITION_READY_EXECUTOR_PLANNED
+BM-005 | S3 solver numerics | IMPLEMENTED_NOT_RUN | LEG-003 / PR #1659; equilibrium-energy, scaling, superposition, conditioning, scaling reversibility
+BM-006 | S4 fail-closed | DEFINITION_READY_EXECUTOR_NEXT
 BM-007 | S5 determinism | PLANNED
 BM-008 | S5 performance | PLANNED_INFORMATIONAL_ONLY
 
@@ -80,24 +80,28 @@ AUTO_STATE: PAUSED
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 BRANCH: chatgpt/issue-1653-bm-s-s3-solver-numerics
-PR: NONE
-PR_STATUS: NOT_OPENED
-MERGEABILITY: NOT_APPLICABLE_NO_NEW_PR
+PR: #1659
+PR_STATUS: OPEN_DRAFT
+PR_MERGEABILITY_AT_CREATION: NOT_MERGEABLE
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NOT_RUN
-LAST_MATERIAL_LEG_ID: LEG-002
-LAST_MATERIAL_HEAD: fd53c332da954142c00c381e07a2d79170cceaa5
-NEXT_MATERIAL_LEG_ID: LEG-003
-NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0003.md
+LAST_MATERIAL_LEG_ID: LEG-003
+LAST_MATERIAL_LEG_RECEIPT: agents/chains/LAFEA3-BM-S-1653/material-legs/LEG-003.md
+LAST_MATERIAL_HEAD: 2520dd3340dbbda8f021e7576c2d1a2a586a8b52
+LAST_MATERIAL_LEG_STATUS: IMPLEMENTED_NOT_EXECUTED
+LAST_MATERIAL_HEAD_WORKFLOW_RUNS: 0
+LAST_MATERIAL_HEAD_STATUS_CHECKS: 0
+NEXT_MATERIAL_LEG_ID: LEG-004
+NEXT_MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/LAFEA3-BM-S-1653/endpoints/EP-0004.md
 VALIDATION_STATUS: NOT_RUN_EXECUTION
 SOURCE_DIFF_AUDIT: PASS
 INDEPENDENT_ANALYTICAL_REPRODUCTION: PASS
-CURRENT_BLOCKER: faithful executable validation remains unavailable; S3 implementation may proceed but must retain NOT_RUN until actually executed
+CURRENT_BLOCKER: faithful executable validation remains unavailable; S4 may proceed only under another Owner progression command
 QUALIFICATION_SCOPE_ID: QSCOPE-1653-BM-S-SOLVER-BENCHMARK
-QUESTION_SET_ID: QS-1653-BM-S-0003
+QUESTION_SET_ID: QS-1653-BM-S-0004
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REUSED
-QUESTION_DISPLAY: HIDE
+QUESTION_PACK_ACTION: REFRESHED_FOR_S4_FAIL_CLOSED_NEGATIVES
+QUESTION_DISPLAY: SHOW
 TAKEOVER_QUALIFICATION_READY: TRUE
-EXACT_NEXT_ACTION: implement only S3 retained solver-numerics evidence under EP-0003; do not change production solver/tolerances, begin S4/S5, activate B02, or infer release qualification.
+EXACT_NEXT_ACTION: await next Owner progression; then implement only the retained S4 exact-boundary/state/code executor under EP-0004. Do not merge #1659, begin S5, activate B02, or modify production validation/tolerances without separate authority.

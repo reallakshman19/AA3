@@ -18,12 +18,12 @@ ENDPOINT: EP-0001
 ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0001.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/endpoints/EP-0001.md
 
-PR: NONE
-PR_STATUS: NOT_OPENED
+PR: 1648
+PR_STATUS: OPEN_DRAFT
 BRANCH: agent/emp1-benchmark-ui-1645-prework
 MAIN: eabb93cd44c59ce182d73284cb707653917e07c8
 PREWORK_ENDPOINT_COMMIT: d8265d4fdcf7e4542a5b4b5ffd327513204ac1d6
-MERGEABILITY: NOT_APPLICABLE_NO_PR
+MERGEABILITY: UNKNOWN_PENDING_RECOMPUTE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -36,10 +36,10 @@ AUTO_STATE: NOT_APPLICABLE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-BENCHMARK-UI-1645/issue-state/CURRENT.md
-ISSUE_CHAIN_ROOT_COMMENT_ID: NOT_CREATED
-ISSUE_ACTIVE_HANDOVER_COMMENT_ID: NOT_CREATED
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: NOT_CREATED
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5548798517
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548799269
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5548799811
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 OWNER_PROGRESSION_COMMAND: proceed next
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
@@ -72,12 +72,12 @@ LAST_COMPLETED_MATERIAL_LEG: NONE
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-CHAIN_HANDOVER_READY: FALSE_PENDING_ISSUE_SYNC
+CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-VALIDATION: read-only grounding/prework PASS; all material #1645 executable checks NOT_RUN.
+VALIDATION: read-only grounding/prework/control-plane sync PASS; all material #1645 executable checks NOT_RUN.
 
 AUTHORITY_BOUNDARY: presentation/composition only; no WRC calculation/source/method/applicability, route authorization, benchmark expected-value/tolerance, code/release/deployment, cryptographic-signature or professional-seal authority.
 CURRENT_BLOCKER: exact Review & Evidence integration ownership remains unreconciled with #1622/#1624.
-EXACT_NEXT_ACTION: synchronize Issue #1645 CHAIN_ROOT/ACTIVE/ENDPOINT comments and repository comment IDs; optionally open Draft custody PR; do not author non-agents material files until #1622/#1624 ownership is deliberately reconciled.
+EXACT_NEXT_ACTION: on the next Owner progression command, re-ground main and #1622/#1624. If the seam is reconciled, begin the first bounded material #1645 leg from EP-0001; otherwise remain custody-only. Do not merge PR #1648 without separate explicit Owner authorization.

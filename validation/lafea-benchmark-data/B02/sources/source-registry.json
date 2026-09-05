@@ -19,6 +19,7 @@
     {"role":"recovery","path":"src/core/local-continuum/recovery.js","blobSha":"e21f635bc494387f435e81c95493fa5a7acc197b"},
     {"role":"sourceMeshValidation","path":"src/core/local-continuum/source-mesh.js","blobSha":"64ba46d3f3aa4e03481248e34f0ddab40c7863c1"},
     {"role":"sourceLoadValidation","path":"src/core/local-continuum/source-loads.js","blobSha":"fd4d61633614092d0b26c747ff09923db1450964"},
+    {"role":"loadAssemblyCoordinatorAndThermal","path":"src/core/local-continuum/loads.js","blobSha":"7f3178ba0a508f4f8f271886594391b8bb687aab"},
     {"role":"edgeTractionAssembly","path":"src/core/local-continuum/edge-traction-loads.js","blobSha":"889cd7ff79392247ae24c92f97d76fd4f8db8f5f"},
     {"role":"pressureAssembly","path":"src/core/local-continuum/pressure-loads.js","blobSha":"8c0ea676cc6420f12ca325c9e0d79f2fc72e7410"},
     {"role":"bodyForceAssembly","path":"src/core/local-continuum/body-force-loads.js","blobSha":"c7394b19c7623145834d641c7cb7a26516d4a010"},
@@ -26,6 +27,11 @@
     {"role":"resultHashes","path":"src/core/local-continuum/result-hashes.js","blobSha":"03dad85758d8b29a854711160e4921e44e9421dd"}
   ],
   "externalOracleCustody": [
+    {
+      "claimId": "LAFEA3-SRC-PATCH-01",
+      "registryPath": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md",
+      "authority": "QUALIFIED_METHOD_SOURCE_FOR_AFFINE_FIELD_EXPECTATIONS"
+    },
     {
       "claimId": "LAFEA3-SRC-LAME-01",
       "registryPath": "docs/local-continuum/LAFEA3_BENCHMARK_SOURCE_MATRIX.md",

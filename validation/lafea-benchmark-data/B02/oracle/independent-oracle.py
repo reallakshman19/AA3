@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Independent Lamé/Kirsch oracle for BM-S B02.
+"""Independent Lamé/Kirsch and S2 load-path oracle for BM-S B02.
 
-This module intentionally imports no production code.  It reconstructs the cited
-closed-form values from the frozen BVP and can verify the committed expected-value
-record without executing LAFEA.
+This module intentionally imports no production code. It reconstructs frozen
+closed-form/manufactured values and verifies the committed oracle records
+without executing LAFEA.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 EXPECTED = ROOT / "validation/lafea-benchmark-data/B02/oracle/expected-values.json"
+LOAD_EXPECTED = ROOT / "validation/lafea-benchmark-data/B02/oracle/load-path-expected-values.json"
 
 
 def lame_values() -> dict[str, object]:
@@ -94,6 +95,65 @@ def kirsch_values() -> dict[str, object]:
     }
 
 
+def load_path_values() -> dict[str, dict[str, object]]:
+    e, nu, width, height = 200000.0, 0.3, 100.0, 50.0
+    traction = 10.0
+    thermal = 0.001
+    delta = 0.005
+    a_quad = 1.0e-6
+    probe_x, probe_y = 50.0, 25.0
+    return {
+        "LOAD-EDGE-TRACTION-01": {
+            "sigmaXMPa": traction,
+            "sigmaYMPa": 0.0,
+            "tauXYMPa": 0.0,
+            "rightEdgeUxMm": traction * width / e,
+            "topEdgeUyMm": -nu * traction * height / e,
+        },
+        "LOAD-PRESSURE-01": {
+            "sigmaXMPa": -traction,
+            "sigmaYMPa": 0.0,
+            "tauXYMPa": 0.0,
+            "rightEdgeUxMm": -traction * width / e,
+            "topEdgeUyMm": nu * traction * height / e,
+        },
+        "LOAD-BODY-FORCE-01": {
+            "bodyForceX": -2 * e * a_quad,
+            "rightEdgeTractionXMPa": 2 * e * a_quad * width,
+            "fixedProbe": {
+                "xMm": probe_x,
+                "yMm": probe_y,
+                "uxMm": a_quad * (probe_x**2 + nu * probe_y**2),
+                "uyMm": -2 * nu * a_quad * probe_x * probe_y,
+                "sigmaXMPa": 2 * e * a_quad * probe_x,
+                "sigmaYMPa": 0.0,
+                "tauXYMPa": 0.0,
+            },
+            "rightTop": {
+                "uxMm": a_quad * (width**2 + nu * height**2),
+                "uyMm": -2 * nu * a_quad * width * height,
+                "sigmaXMPa": 2 * e * a_quad * width,
+            },
+        },
+        "LOAD-TEMPERATURE-01": {
+            "nodeB_UxMm": thermal * 100.0,
+            "nodeC_UyMm": thermal * 100.0,
+            "sigmaXMPa": 0.0,
+            "sigmaYMPa": 0.0,
+            "sigmaZMPa": 0.0,
+            "tauXYMPa": 0.0,
+            "strainEnergyNmm": 0.0,
+        },
+        "LOAD-IMPOSED-DISPLACEMENT-01": {
+            "sigmaXMPa": e * delta / width,
+            "sigmaYMPa": 0.0,
+            "tauXYMPa": 0.0,
+            "rightEdgeUxMm": delta,
+            "topEdgeUyMm": -nu * delta * height / width,
+        },
+    }
+
+
 def assert_close(actual: object, expected: object, path: str) -> None:
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
@@ -117,6 +177,11 @@ def check_expected_values() -> None:
     assert_close(lame_values(), cases["CONT-CYL-01"]["derived"], "CONT-CYL-01.derived")
     assert_close(kirsch_values(), cases["CONT-HOLE-01"]["derived"], "CONT-HOLE-01.derived")
 
+    load_record = json.loads(LOAD_EXPECTED.read_text(encoding="utf-8"))
+    load_cases = {row["caseId"]: row for row in load_record["cases"]}
+    for case_id, values in load_path_values().items():
+        assert_close(values, load_cases[case_id]["derived"], f"{case_id}.derived")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -128,6 +193,7 @@ def main() -> None:
         "productionOutputUsed": False,
         "CONT-CYL-01": lame_values(),
         "CONT-HOLE-01": kirsch_values(),
+        "S2-load-paths": load_path_values(),
     }
     if args.check:
         check_expected_values()

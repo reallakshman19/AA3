@@ -1,0 +1,62 @@
+HANDOVER_PROTOCOL_VERSION: 2
+COMMON_PROTOCOL: engineering-pr-delivery-v2
+COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
+COMMON_PROTOCOL_STATUS: CURRENT
+CHAIN_STATE_VERSION: 3
+CHAIN_ID: LAFEA3-B02-1646-TASK002
+MISSION: Root-cause and repair the B02C Kirsch general-mesher quality block without weakening frozen quality/oracle authority.
+AGENT_INSTANCE_ID: chatgpt:bb7305ea-6150-422c-a0c0-3e7aa7a86b37
+ACTIVE_CUSTODIAN: ChatGPT
+WORK_ITEM_SOURCE: GITHUB_ISSUE
+WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1646
+WORK_ITEM_MODE: EXCLUSIVE
+TASK: TASK-002
+AUTHORITY_DOMAIN: MESH_GENERATION
+ACTIVE_ENDPOINT: EP-0000
+ACTIVE_ENDPOINT_FILE: agents/chains/LAFEA3-B02-1646-TASK002/endpoints/EP-0000.md
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_TEXT_OBSERVED: merge,proceed next
+QUALIFICATION_SCOPE_ID: QSCOPE-1646-TASK002-MESH_GENERATION
+QUESTION_SET_ID: QS-1646-TASK002-0001
+QUESTION_SET_STATUS: CURRENT
+QUESTION_PACK_ACTION: REFRESHED
+QUESTION_DISPLAY: SHOW
+OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
+OWNER_QUALIFICATION_BASELINE_SOURCE: github:reallaksh19/Advanced_Analysis#1646/Appendix-A + comment-5548720232/Appendix-B/B2
+OWNER_QUALIFICATION_BASELINE_MANIFEST: agents/chains/LAFEA3-B02-1646-TASK002/qualification-baselines/QB-1646-TASK002.json
+OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
+QUALIFICATION_STATE: PENDING
+WRITE_AUTHORITY: READ_ONLY
+ENGINEERING_STATE: READY
+CUSTODY_STATE: HELD
+AUTO_STATE: PAUSED
+MERGE_AUTHORITY: OWNER_ONLY
+MERGE_AUTHORIZED: FALSE
+BRANCH: chatgpt/issue-1646-task-002-kirsch-mesh
+BASE_MAIN: 4fe1f11199629056c1cb4836fe820b353dd3bf58
+PR: NONE
+ROADMAPS: docs/IntegratedLAFEAroadmap.md; github:reallaksh19/Advanced_Analysis#1112; github:reallaksh19/Advanced_Analysis#1569; github:reallaksh19/Advanced_Analysis#1535 dependency
+ROADMAP_DRIFT: NO_DRIFT
+ROADMAP_MUTATION_AUTHORITY: NONE
+ISSUE_BASIS_ID: IB-0001
+ISSUE_BASIS_FILE: agents/chains/LAFEA3-B02-1646-TASK002/issue-basis/IB-0001.md
+ISSUE_CURRENT_STATE_FILE: agents/chains/LAFEA3-B02-1646-TASK002/issue-state/CURRENT.md
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5549219882
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549220801
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549220311
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+CHAIN_HANDOVER_READY: TRUE
+TAKEOVER_QUALIFICATION_READY: TRUE
+HANDOVER_READY: FALSE
+
+# Active handover — TASK-002 qualification
+
+TASK-001 is merged at `4fe1f11199629056c1cb4836fe820b353dd3bf58`; its validation remains `NOT_RUN`.
+
+TASK-002 is at qualification only. The frozen B02C failure remains T3/L1 `h=22.5`, 43 elements, 6 blocking, `minSJ=0.0938`, `minAngle=5.38°` against `0.20`. The live trace must establish whether frozen `curvatureToleranceDegrees` values `11.25`, `5.625`, `2.8125` reach the producer or fall back to `15` before any patch.
+
+Protected unchanged: frozen B02C definition/oracle, mesh-quality thresholds, solver/acceptance authority, workflows, B02D-V2 adoption, roadmaps, release/temperature/deployment authority.
+
+## Exact next action
+
+Owner qualification/adoption of `QS-1646-TASK002-0001`. No TASK-002 material coding before qualification PASS.

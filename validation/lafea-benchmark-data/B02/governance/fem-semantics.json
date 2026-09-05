@@ -13,11 +13,14 @@
     "productionOutputMayNotGenerateOracle": true,
     "benchmarkMeshAdapterDoesNotQualifyProductionMesher": true,
     "performanceMetricsAreInformational": true,
+    "conditioningMetricsAreDiagnosticOnly": true,
+    "conditioningMetricsMayNotCreatePhysicalApplicabilityLimit": true,
     "releaseAuthorityGranted": false
   },
   "solverNumerics": {
     "freeDofResidualMustRespectProductionFreeDofTolerance": true,
     "reactionEquilibriumMustRespectProductionReactionTolerance": true,
+    "energyReconstructionMustRespectProductionStrainEnergyTolerance": true,
     "zeroPrescribedDisplacementEnergyIdentity": "F^T*u = 2*U",
     "linearityIdentities": ["u(cF)=c*u(F)","sigma(cF)=c*sigma(F)","U(cF)=c^2*U(F)","u(F1+F2)=u(F1)+u(F2)"],
     "conditioningEvidenceByMethod": {

@@ -58,6 +58,17 @@ for (const file of [
     !source.includes('record.unit !== expectedUnit'),
     `${file} still compares declared and expected units with raw equality`,
   );
+  // Equivalence at the guard is only half of it: the emitted field must carry
+  // the common-enriched layer's ASCII spelling, because requireCommonEnrichedField
+  // rejects a typographic unit outright ("must be a non-empty ASCII identity").
+  assert.ok(
+    source.includes('unit: expectedUnit,'),
+    `${file} must emit the expected ASCII unit into the common-enriched field`,
+  );
+  assert.ok(
+    source.includes('unit: normalizeEngineeringUnit(record.unit),'),
+    `${file} must normalize units in the authority fingerprint`,
+  );
 }
 
 console.log(JSON.stringify({

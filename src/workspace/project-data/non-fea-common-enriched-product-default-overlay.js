@@ -22,7 +22,7 @@ import {
   createNonFeaProductEngineeringDefaultProvider,
   requireProductEngineeringDefaultProfile,
 } from './non-fea-product-engineering-default-profile.js';
-import { sameEngineeringUnit } from './non-fea-unit-equivalence.js';
+import { normalizeEngineeringUnit, sameEngineeringUnit } from './non-fea-unit-equivalence.js';
 
 export const NON_FEA_COMMON_ENRICHED_PRODUCT_DEFAULT_OVERLAY_SCHEMA =
   'non-fea-common-enriched-product-default-overlay/v1';
@@ -345,7 +345,10 @@ function productDefaultField(record, fieldName, expectedUnit, sourceKey, provide
       schema: COMMON_ENRICHED_FIELD_SCHEMA,
       field: fieldName,
       value: record.value,
-      unit: record.unit,
+      // The declared and expected units are equivalent by the guard above, so
+      // the record carries the common-enriched layer's own ASCII spelling:
+      // requireCommonEnrichedField rejects a typographic unit outright.
+      unit: expectedUnit,
       status: 'RESOLVED_DERIVED',
       sourceKind: 'PRODUCT_DEFAULT',
       sourceKey,
@@ -368,7 +371,9 @@ function productDefaultField(record, fieldName, expectedUnit, sourceKey, provide
 function productAuthorityFingerprint(record) {
   return semanticHash({
     value: record.value,
-    unit: record.unit,
+    // Normalized so two records spelling the same unit differently read as
+    // one authority rather than a conflict that cannot be resolved.
+    unit: normalizeEngineeringUnit(record.unit),
     defaultSemanticHash: record.evidence?.defaultSemanticHash || null,
     productDefaultProfileSemanticHash:
       record.evidence?.productDefaultProfileSemanticHash || null,

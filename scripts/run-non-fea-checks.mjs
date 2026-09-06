@@ -56,6 +56,7 @@ const checks = [
   ['Enrichment accept batching', 'scripts/non-fea-enrichment-accept-batch-check.mjs'],
   ['Engineering unit equivalence', 'scripts/non-fea-unit-equivalence-check.mjs'],
   ['Load-source governed length unit', 'scripts/non-fea-load-source-length-unit-check.mjs'],
+  ['Source attribute aliases', 'scripts/non-fea-source-attribute-alias-check.mjs'],
   ['Current Common Input empirical mass projection', 'scripts/current-common-input-empirical-mass-projection-check.mjs'],
   ['Issue 1321 hand-calculation mass/support parity', 'scripts/current-common-input-handcalc-mass-support-parity-check.mjs'],
   ['Current Common Input effective gravity/load basis', 'scripts/current-common-input-gravity-load-basis-check.mjs'],

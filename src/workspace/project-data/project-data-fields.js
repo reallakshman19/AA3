@@ -14,6 +14,7 @@ export const PROJECT_DATA_GROUPS = Object.freeze([
     field('lineListSource', 'Line-list source', 'source', 'Loads'),
     field('pipingClassSource', 'Piping-class source', 'source', 'Loads'),
     field('componentWeightSource', 'Component-weight source', 'source', 'Editing and loads'),
+    phase2Field('sourceAttributeAliases', 'Extra source attribute names', 'json', 'Normalization'),
   ]),
   group('topology', 'Topology', [
     field('portMatchToleranceMm', 'Port-match tolerance', 'number', 'mm'),

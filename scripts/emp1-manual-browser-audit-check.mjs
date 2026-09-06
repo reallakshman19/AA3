@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const auditPath = 'scripts/emp1-manual-browser-audit.js';
-const guidePath = 'agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0015.md';
+const guidePath = 'agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0023.md';
 const [audit, guide] = await Promise.all([
   readFile(resolve(root, auditPath), 'utf8'),
   readFile(resolve(root, guidePath), 'utf8'),
@@ -72,6 +72,9 @@ for (const required of [
 }
 
 for (const required of [
+  'node scripts/emp1-qualification-sample-orchestration-check.mjs',
+  '[SIMULATED] Load complete EMP.1 qualification sample',
+  'EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED',
   "await import('/scripts/emp1-manual-browser-audit.js?manual-audit=4')",
   'seedQualificationPressure: true',
   'PASS_CURRENT_VIEWPORT_DOM_OBSERVATION',
@@ -97,12 +100,13 @@ assert.equal(audit.includes('.github/workflows/'), false,
   'manual browser audit must not mutate workflow authority');
 
 console.log(JSON.stringify({
-  schema: 'emp1-manual-browser-audit-check/v4',
+  schema: 'emp1-manual-browser-audit-check/v5',
   status: 'PASS_STATIC_SPLIT_CONSOLE_MANUAL_BROWSER_AUDIT_CONTRACT',
   issue: 1651,
   recoveryIssue: 1664,
   auditPath,
   guidePath,
+  qualificationSamplePrerequisiteExplicit: true,
   outerShellOverflowTolerancePx: 1,
   outerShellMustFitViewport: true,
   workflowDetailOverlayNoGrowth: true,

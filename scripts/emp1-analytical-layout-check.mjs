@@ -34,6 +34,7 @@ class FakeNode {
     this.listeners = new Map();
     this.textContent = '';
     this.tabIndex = 0;
+    this.open = false;
   }
 
   append(...nodes) {
@@ -82,6 +83,7 @@ function matchesSelector(node, selector) {
     return String(node.className).split(/\s+/u).includes('lafea-doc-table-section')
       && typeof node.dataset.inputGroup === 'string';
   }
+  if (selector === 'details') return node.tagName === 'DETAILS';
   return false;
 }
 
@@ -106,6 +108,15 @@ const workflowStepIds = [
   'BASIS_SOURCE', 'GEOMETRY', 'LOADS', 'LOAD_TRANSFER', 'SECTION_SCREENING',
   'LOCAL_CORRELATION', 'REVIEW_EVIDENCE',
 ];
+const workflowLabels = {
+  BASIS_SOURCE: 'Basis & Source',
+  GEOMETRY: 'Geometry',
+  LOADS: 'Loads',
+  LOAD_TRANSFER: 'Load Transfer',
+  SECTION_SCREENING: 'Section Screening',
+  LOCAL_CORRELATION: 'Local Correlation',
+  REVIEW_EVIDENCE: 'Review & Evidence',
+};
 const inputGroupIds = [
   'PIPE_GEOMETRY', 'THICKNESS', 'PRESSURE', 'LOAD_CASES', 'REFERENCE_POINTS',
   'SCREENING_CASES', 'EVALUATION_LOCATIONS',
@@ -145,6 +156,8 @@ assert.deepEqual(EMP1_TASK_SHELL_EVIDENCE_ORDER,
   ['results', 'transactionSummary', 'correlationResult', 'screeningCustody', 'lineage', 'benchmarkEvidence', 'benchmark']);
 assert.deepEqual(EMP1_TASK_SHELL_TASK_SURFACES.LOADS, ['source']);
 assert.deepEqual(EMP1_TASK_SHELL_TASK_SURFACES.GEOMETRY, ['source', 'runConfiguration']);
+assert.deepEqual(EMP1_TASK_SHELL_TASK_SURFACES.REVIEW_EVIDENCE, [],
+  'Review & Evidence must not expose a backing-stage card as the active presentation task');
 assert.deepEqual(EMP1_TASK_SHELL_INPUT_GROUPS.GEOMETRY, ['PIPE_GEOMETRY', 'THICKNESS']);
 assert.deepEqual(EMP1_TASK_SHELL_INPUT_GROUPS.LOADS, ['PRESSURE', 'LOAD_CASES']);
 assert.deepEqual(EMP1_TASK_SHELL_INPUT_GROUPS.LOAD_TRANSFER, ['REFERENCE_POINTS']);
@@ -161,7 +174,7 @@ assert.equal(shell.children.length, 4,
 assert.equal(layout.lanes.children.length, 2,
   'desktop split owns active workspace and engineering inspector only');
 assert.equal(layout.modeTabs.children.length, 3, 'narrow console exposes Work/Basis/Evidence modes');
-assert.equal(layout.inspectorTabs.children.length, 4, 'inspector retains four supporting domains');
+assert.equal(layout.inspectorTabs.children.length, 4, 'inspector retains four governed supporting domains in DOM custody');
 
 for (const surfaceId of expectedOrder) {
   const surface = surfaces[surfaceId];
@@ -183,9 +196,12 @@ assert.equal(layout.regions.EVIDENCE_WORKSPACE.dataset.emp1EvidenceOpen, 'false'
   'evidence console is collapsed by default');
 assert.equal(workflowSteps.find((button) => button.dataset.emp1ProfessionalStep === 'BASIS_SOURCE').attributes['aria-current'], 'step');
 assert.equal(visibleInputGroups(surfaces.source).length, 0);
-
-assert.equal(layout.selectInspector('boundedCorrelation'), true);
-assert.deepEqual(visibleInspector(surfaces), ['boundedCorrelation']);
+assert.equal(layout.selectInspector('boundedCorrelation'), false,
+  'Basis & Source must refuse unrelated Local Correlation authority in its Inspector');
+assert.deepEqual(visibleInspector(surfaces), ['engineeringEvidence']);
+assert.equal(layout.selectInspector('settings'), true,
+  'Basis & Source may inspect supporting settings without exposing WRC authority');
+assert.deepEqual(visibleInspector(surfaces), ['settings']);
 assert.equal(layout.selectInspector('not-an-inspector'), false);
 
 layout.selectTask('GEOMETRY');
@@ -203,6 +219,8 @@ assert.equal(surfaces.runConfiguration.hidden, true);
 assert.deepEqual(visibleInputGroups(surfaces.source), ['PRESSURE', 'LOAD_CASES']);
 assert.equal(surfaces.source.dataset.emp1TaskInputGroupCount, '2');
 assert.deepEqual(visibleInspector(surfaces), ['engineeringEvidence']);
+assert.equal(layout.selectInspector('boundedCorrelation'), false,
+  'Loads must not permit EMP.1.C route authority as task-default context');
 
 layout.selectTask('LOAD_TRANSFER');
 assert.deepEqual(visibleInputGroups(surfaces.source), ['REFERENCE_POINTS']);
@@ -222,6 +240,10 @@ layout.selectTask('REVIEW_EVIDENCE');
 assert.equal(selectedEvidence(surfaces)[0], 'transactionSummary');
 assert.equal(shell.dataset.emp1ConsoleMode, 'EVIDENCE');
 assert.equal(layout.regions.EVIDENCE_WORKSPACE.dataset.emp1EvidenceOpen, 'true');
+assert.equal(surfaces.route.hidden, true,
+  'Review must not leave the backing A/B route card visible as an active task');
+assert.equal(surfaces.source.hidden, true);
+assert.equal(surfaces.runConfiguration.hidden, true);
 assert.equal(workflowSteps.find((button) => button.dataset.emp1ProfessionalStep === 'REVIEW_EVIDENCE').attributes['aria-current'], 'step');
 
 assert.equal(layout.selectEvidence('benchmarkEvidence'), true);
@@ -237,24 +259,33 @@ assert.equal(shell.dataset.emp1ConsoleMode, 'WORK');
 assert.throws(() => layout.selectMode('STACK_ALL'), /EMP1_SPLIT_CONSOLE_MODE_UNSUPPORTED/u);
 assert.throws(() => layout.selectTask('UNSUPPORTED'), /EMP1_TASK_SHELL_STEP_UNSUPPORTED/u);
 
-// Legacy backing-stage A/B navigation reconciles presentation state only.
-const legacySelectionHost = new FakeDocument();
-const aLegacy = fixture('A', legacySelectionHost);
-const aLegacyLayout = composeEmp1AnalyticalLayout(aLegacy.shell, aLegacy.surfaces,
-  { selectionHost: legacySelectionHost });
-aLegacyLayout.selectTask('LOADS');
-const bLegacy = fixture('B', legacySelectionHost);
-composeEmp1AnalyticalLayout(bLegacy.shell, bLegacy.surfaces,
-  { selectionHost: legacySelectionHost });
-assert.equal(bLegacy.shell.dataset.emp1ProfessionalTask, 'SECTION_SCREENING');
-assert.deepEqual(visibleInputGroups(bLegacy.surfaces.source), ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
-assert.deepEqual(selectedEvidence(bLegacy.surfaces), ['screeningCustody']);
-assert.equal(bLegacy.shell.dataset.emp1ConsoleMode, 'WORK');
-const aReturn = fixture('A', legacySelectionHost);
+// Backing stage may seed initial presentation only. Once a professional task is
+// explicit, subsequent A/B rerenders cannot replace that selection.
+const explicitSelectionHost = new FakeDocument();
+const aExplicit = fixture('A', explicitSelectionHost);
+const aExplicitLayout = composeEmp1AnalyticalLayout(aExplicit.shell, aExplicit.surfaces,
+  { selectionHost: explicitSelectionHost });
+aExplicitLayout.selectTask('LOADS');
+const bAfterExplicit = fixture('B', explicitSelectionHost);
+composeEmp1AnalyticalLayout(bAfterExplicit.shell, bAfterExplicit.surfaces,
+  { selectionHost: explicitSelectionHost });
+assert.equal(bAfterExplicit.shell.dataset.emp1ProfessionalTask, 'LOADS',
+  'backing B rerender must not replace an explicitly selected Loads presentation task');
+assert.deepEqual(visibleInputGroups(bAfterExplicit.surfaces.source), ['PRESSURE', 'LOAD_CASES']);
+const aReturn = fixture('A', explicitSelectionHost);
 composeEmp1AnalyticalLayout(aReturn.shell, aReturn.surfaces,
-  { selectionHost: legacySelectionHost });
-assert.equal(aReturn.shell.dataset.emp1ProfessionalTask, 'BASIS_SOURCE');
-assert.deepEqual(selectedEvidence(aReturn.surfaces), ['results']);
+  { selectionHost: explicitSelectionHost });
+assert.equal(aReturn.shell.dataset.emp1ProfessionalTask, 'LOADS');
+
+// With no explicit professional selection, backing B remains a valid bootstrap
+// hint so legacy A/B navigation still opens Section Screening coherently.
+const bootstrapSelectionHost = new FakeDocument();
+const bBootstrap = fixture('B', bootstrapSelectionHost);
+composeEmp1AnalyticalLayout(bBootstrap.shell, bBootstrap.surfaces,
+  { selectionHost: bootstrapSelectionHost });
+assert.equal(bBootstrap.shell.dataset.emp1ProfessionalTask, 'SECTION_SCREENING');
+assert.deepEqual(visibleInputGroups(bBootstrap.surfaces.source), ['SCREENING_CASES', 'EVALUATION_LOCATIONS']);
+assert.deepEqual(selectedEvidence(bBootstrap.surfaces), ['screeningCustody']);
 
 const optionalAbsent = Object.fromEntries(expectedOrder.map((surfaceId) => [
   surfaceId,
@@ -286,14 +317,16 @@ assert.throws(() => composeEmp1AnalyticalLayout(documentRef.createElement('div')
   /EMP1_ANALYTICAL_LAYOUT_SURFACE_KEYS_MISMATCH/u);
 
 console.log(JSON.stringify({
-  schema: 'emp1-analytical-layout-check/v3',
+  schema: 'emp1-analytical-layout-check/v4',
   status: 'EMP1_SPLIT_CONSOLE_LAYOUT_CHECK_PASS',
   professionalTasks: Object.keys(EMP1_TASK_SHELL_TASK_SURFACES).length,
   inspectorVisibleMaximum: 1,
   evidenceSelectedMaximum: 1,
   narrowModes: EMP1_SPLIT_CONSOLE_MODES,
   evidenceCollapsedByDefault: true,
-  backingStageReconciliation: true,
+  backingStageReconciliation: 'BOOTSTRAP_ONLY_AFTER_EXPLICIT_TASK_SELECTION',
+  unrelatedInspectorAuthorityRejected: true,
+  reviewBackingCardHidden: true,
   presentationOnly: true,
 }, null, 2));
 
@@ -304,10 +337,11 @@ function fixture(backingStep, ownerDocument = new FakeDocument()) {
     surfaceId,
     ownerDocument.createElement('section'),
   ]));
-  const workflowSteps = workflowStepIds.map((stepId) => {
+  const workflowSteps = workflowStepIds.map((stepId, index) => {
     const button = ownerDocument.createElement('button');
     button.dataset.role = 'emp1-professional-step';
     button.dataset.emp1ProfessionalStep = stepId;
+    button.textContent = `${index + 1} ${workflowLabels[stepId]} · SOURCE STATE`;
     surfaces.workflow.append(button);
     return button;
   });

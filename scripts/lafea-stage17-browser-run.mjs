@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
+import {
+  inspectProjectLocalChromium,
+  withProjectLocalPlaywrightEnv,
+} from './lib/project-local-playwright-browser.mjs';
 
 const root = process.cwd();
 const cli = path.join(root, 'node_modules', 'playwright', 'cli.js');
-if (!fs.existsSync(cli)) {
-  console.error('LAFEA_A17_BROWSER_PLAYWRIGHT_NOT_INSTALLED');
-  process.exit(2);
-}
+const browserPreflight = inspectProjectLocalChromium(root);
+console.log(JSON.stringify({
+  schema: 'lafea-stage17-browser-preflight/v1',
+  ...browserPreflight,
+}, null, 2));
+if (!browserPreflight.ok) process.exit(2);
 
 function runNodeScript(relativePath) {
   const result = spawnSync(process.execPath, [path.join(root, relativePath)], {
@@ -22,7 +27,7 @@ function runNodeScript(relativePath) {
 function runPlaywright(args) {
   const result = spawnSync(process.execPath, [cli, 'test', '--config=playwright.lafea-visible.config.js', ...args], {
     cwd: root,
-    env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: '0' },
+    env: withProjectLocalPlaywrightEnv(),
     stdio: 'inherit',
   });
   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
@@ -44,6 +49,7 @@ runNodeScript('scripts/lafea1371-cross-stage-anti-drift-check.mjs');
 // the LAFEA.3 B01/B02 gate.
 runNodeScript('scripts/emp1-public-product-check.mjs');
 runNodeScript('scripts/emp1-a-to-b-refresh-check.mjs');
+runNodeScript('scripts/emp1-qualification-sample-orchestration-check.mjs');
 runNodeScript('scripts/emp1-analytical-layout-check.mjs');
 runNodeScript('scripts/emp1-benchmark-evidence-ui-check.mjs');
 runNodeScript('scripts/emp1-issue1651-acceptance-check.mjs');
@@ -64,6 +70,7 @@ runPlaywright([
 runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 runPlaywright(['e2e/emp1-human-presentation-tokens.spec.js']);
+runPlaywright(['e2e/emp1-qualification-sample-orchestration.spec.js']);
 runPlaywright(['e2e/emp1-analytical-layout.spec.js']);
 runPlaywright(['e2e/emp1-presentation-coherence.spec.js']);
 runPlaywright(['e2e/emp1-benchmark-evidence.spec.js']);
@@ -90,6 +97,7 @@ runPlaywright([
   'e2e/lafea-emp1-a-to-b-refresh.spec.js',
   'e2e/lafea-empirical-grouped-edit.spec.js',
   'e2e/emp1-human-presentation-tokens.spec.js',
+  'e2e/emp1-qualification-sample-orchestration.spec.js',
   'e2e/emp1-analytical-layout.spec.js',
   'e2e/emp1-presentation-coherence.spec.js',
   'e2e/emp1-benchmark-evidence.spec.js',

@@ -231,3 +231,5 @@ export function runCorrelatedGaussianReferenceSampling({
   }
   return summaries;
 }
+
+export { createXorShift32, nextNormalPair };

@@ -100,3 +100,50 @@ console.log(JSON.stringify({
   unusableOverrideStillBlocks: true,
   massProjectionUsesGovernedBasis: true,
 }, null, 2));
+
+// PD-COMPONENT-COG-FALLBACK declares the geometric midpoint as the placement
+// for a component with no exact CoG authority, and the gravity method selector
+// already honours it. The load-source projection must honour the same policy,
+// or a fitting whose mass was derived from its adjacent pipe section blocks
+// with MISSING_COMPONENT_COG for want of a point to apply that mass at.
+const lumped = createSharedPipingModel({
+  project: { datasetId: 'COG-CHECK', name: 'COG-CHECK', sourceName: 'cog-check.json' },
+  units: { length: 'mm', force: 'unknown', mass: 'unknown' },
+  sourceSnapshotRef: {
+    schema: 'source-package-snapshot/v1', datasetId: 'COG-CHECK',
+    sourceSchema: 'synthetic/v1', sourceSemanticHash: semanticHash({ c: 1 }), sourceByteHash: null,
+  },
+  components: [{
+    componentKey: 'ELBO-1', sourceEntityId: 'E1', name: 'ELBO-1', type: 'ELBO',
+    identity: { lineId: 'L1', branchId: 'L1/B1', systemId: '', zoneId: '' },
+    geometry: {
+      start: { x: 0, y: 0, z: 0 }, end: { x: 200, y: 0, z: 0 }, center: null,
+      points: [], branchPoints: [], sources: {}, sourcePath: '/ELBO-1', ports: [],
+    },
+    engineeringProperties: {}, compatibilityEvidence: {},
+    sourceReferences: { sourceEntityId: 'E1' }, diagnostics: [],
+  }],
+  supports: [], sourceReferences: { nodes: [] }, diagnostics: [],
+});
+const lumpedGraph = buildPipingPortTopologyGraph(lumped);
+
+const withoutPolicy = projectEngineeringLoadSources(lumped, lumpedGraph);
+assert.equal(withoutPolicy.components[0].geometry.applicationPoint, null,
+  'no policy means no assumed placement');
+
+const withPolicy = projectEngineeringLoadSources(lumped, lumpedGraph, {
+  componentCogFallback: 'GEOMETRIC_MIDPOINT',
+});
+assert.deepEqual(withPolicy.components[0].geometry.applicationPoint, { x: 0.1, y: 0, z: 0 },
+  'the governed fallback places mass at the component geometric midpoint');
+assert.ok(
+  withPolicy.components[0].diagnostics.some((d) => d.code === 'COMPONENT_COG_GEOMETRIC_MIDPOINT_ASSUMED'),
+  'an assumed placement must be recorded, not silent',
+);
+
+// DISABLED is a policy too, and it must not place anything.
+assert.equal(
+  projectEngineeringLoadSources(lumped, lumpedGraph, { componentCogFallback: 'DISABLED' })
+    .components[0].geometry.applicationPoint,
+  null,
+);

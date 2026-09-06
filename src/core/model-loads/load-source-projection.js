@@ -25,7 +25,9 @@ export function projectEngineeringLoadSources(sharedModel, topologyGraph, option
   const declaredLengthUnit = stringValue(options.sourceLengthUnit) || sharedModel.units.length;
   const lengthUnit = normalizeLengthUnit(declaredLengthUnit);
   const factor = lengthFactorToM(lengthUnit);
-  const components = sharedModel.components.map((component) => projectComponent(component, lengthUnit, factor))
+  const midpointFallback = stringValue(options.componentCogFallback).toUpperCase() === 'GEOMETRIC_MIDPOINT';
+  const components = sharedModel.components
+    .map((component) => projectComponent(component, lengthUnit, factor, midpointFallback))
     .sort((left, right) => left.componentKey.localeCompare(right.componentKey));
   const diagnostics = components.flatMap((component) => component.diagnostics);
   const base = {
@@ -55,7 +57,7 @@ export function validateEngineeringLoadSourceProjection(value) {
   return deepFreeze({ ok: errors.length === 0, errors });
 }
 
-function projectComponent(component, lengthUnit, factor) {
+function projectComponent(component, lengthUnit, factor, midpointFallback) {
   const start = pointToMeters(component.geometry?.start, lengthUnit);
   const end = pointToMeters(component.geometry?.end, lengthUnit);
   const center = explicitCenter(component.geometry)
@@ -70,12 +72,22 @@ function projectComponent(component, lengthUnit, factor) {
   const sourceLengthM = distanceM(start, end);
   const declaredLengthM = lengthFromEvidence(component, factor);
   const diagnostics = projectionDiagnostics(component.componentKey, factor, start, end, sourceLengthM, declaredLengthM);
+  // Exact CoG always wins, then an explicitly stated centre. Only when both are
+  // absent does the governed geometric-midpoint policy apply, which is what
+  // PD-COMPONENT-COG-FALLBACK permits and what the gravity method selector
+  // already assumes: supplied or invalid CoG evidence is never overwritten.
+  const assumedCentre = (!cog && !center && midpointFallback)
+    ? pointToMeters(component.geometry?.center, lengthUnit) || midpointOf(start, end)
+    : null;
+  if (assumedCentre) {
+    diagnostics.push(diagnostic(AUDIT_CODES.COMPONENT_COG_GEOMETRIC_MIDPOINT_ASSUMED, component.componentKey));
+  }
   return deepFreeze({
     componentKey: component.componentKey,
     sourceEntityId: component.sourceEntityId ?? null,
     type: stringValue(component.type).toUpperCase() || 'UNKNOWN',
     identity: component.identity || {},
-    geometry: { start, end, center, ports, applicationPoint: cog || center, sourceLengthM, declaredLengthM },
+    geometry: { start, end, center, ports, applicationPoint: cog || center || assumedCentre, sourceLengthM, declaredLengthM },
     engineeringProperties: component.engineeringProperties || {},
     loadEvidence: component.loadEvidence || {},
     sourceReferences: component.sourceReferences || {},
@@ -91,6 +103,16 @@ function projectionDiagnostics(componentKey, factor, start, end, sourceLengthM, 
     diagnostics.push(diagnostic(AUDIT_CODES.GEOMETRY_LENGTH_CONFLICT, componentKey));
   }
   return diagnostics;
+}
+
+/** Geometric midpoint of a component's own endpoints, in metres. */
+function midpointOf(start, end) {
+  if (!start || !end) return null;
+  return deepFreeze({
+    x: (start.x + end.x) / 2,
+    y: (start.y + end.y) / 2,
+    z: (start.z + end.z) / 2,
+  });
 }
 
 function explicitCenter(geometry) {

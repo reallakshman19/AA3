@@ -6,6 +6,7 @@ import { createPipingLoadCompositionProfile } from '../../core/model-loads/compo
 import { resolveComponentCaseMass } from '../../core/model-loads/component-mass-resolver.js';
 import { derivePipeLikeFittingWeightEvidence } from '../../core/model-loads/elbow-derived-mass.js';
 import { optionalAuthorizedEmpiricalSourceLengthUnit } from './authorized-empirical-source-axis-binding.js';
+import { projectDataValue } from '../project-data/project-data-contract.js';
 import { projectEngineeringLoadSources } from '../../core/model-loads/load-source-projection.js';
 import { evidenceNumber } from '../../core/model-loads/units.js';
 import { buildPipingPortTopologyGraph } from '../../core/piping-topology/index.js';
@@ -209,10 +210,19 @@ function buildProjectionBasis(commonInput) {
   // distribution, so demanding it would fail closed on a profile that is
   // complete for this step.
   const governedLengthUnit = optionalAuthorizedEmpiricalSourceLengthUnit(commonInput.projectDataProfile);
+  // PD-COMPONENT-COG-FALLBACK declares what to do when a component has no exact
+  // CoG authority. The gravity method selector already honours it; passing it
+  // here is what stops a fitting whose mass was derived from its adjacent pipe
+  // section from blocking with MISSING_COMPONENT_COG for want of a point to
+  // apply that mass at.
+  const componentCogFallback = projectDataValue(
+    commonInput.projectDataProfile,
+    'loadCalculation.componentCogFallback',
+  );
   const effectiveLoadSourceProjection = projectEngineeringLoadSources(
     model,
     effectiveTopologyGraph,
-    { sourceLengthUnit: governedLengthUnit },
+    { sourceLengthUnit: governedLengthUnit, componentCogFallback },
   );
   const compositionProfile = createPipingLoadCompositionProfile();
 

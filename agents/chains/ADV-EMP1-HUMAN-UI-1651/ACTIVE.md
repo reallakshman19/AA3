@@ -18,10 +18,18 @@ MERGED_IMPLEMENTATION_PR: 1675
 PR_1675_STATUS: MERGED_BY_OWNER_COMMAND
 PR_1675_HEAD_AT_MERGE: 661b2b0c0eacb3243e037e5356b6f2188596a3d6
 PR_1675_MERGE_COMMIT: 11f655e71a81b0d7ebef42e99792482b434e60db
-MAIN_HEAD_OBSERVED: 11f655e71a81b0d7ebef42e99792482b434e60db
+VALIDATION_EVIDENCE_TESTED_HEAD: 11f655e71a81b0d7ebef42e99792482b434e60db
+MAIN_HEAD_OBSERVED: 8eefaf0d1b9effdcd395dbd54a0b027bc43f308c
+MAIN_DRIFT_FROM_TESTED_HEAD: AHEAD_39_BEHIND_0
+MAIN_DRIFT_SOURCE: UQ_REFERENCE_LIMIT_STATE_AND_SENSITIVITY_WORK
+MAIN_DRIFT_CLASSIFICATION: UNRELATED_NO_EMP1_OVERLAP
+MAIN_DRIFT_AFFECTS_DIAGNOSIS: FALSE
 POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-postmerge-reconciliation-0020
 POST_MERGE_RECONCILIATION_PR: 1690
 POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
+POST_MERGE_RECONCILIATION_PR_HEAD: 42ff7eade24ddad5d0f20fd657f6fbda1cc2447b
+POST_MERGE_RECONCILIATION_PR_STATUS_CONTEXTS: 0
+POST_MERGE_RECONCILIATION_PR_WORKFLOW_RUNS: 0
 SUPPORTING_VALIDATION_PR: 1681
 SUPPORTING_VALIDATION_PR_STATUS: CLOSED_UNMERGED_STALE_INVALID_STATE_EVIDENCE
 NONCANONICAL_HANDOVER_PR: 1684
@@ -75,7 +83,7 @@ HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: FAIL
 HANDOVER_READY: FALSE
 CHAIN_HANDOVER_READY: TRUE
-VALIDATION_PASS_OBSERVED: three post-merge static Node checks PASS; historical Review/LAFEA.2 coherence supporting PASS retained
+VALIDATION_PASS_OBSERVED: three static Node checks PASS at tested integrated head 11f655e71a81b0d7ebef42e99792482b434e60db; historical Review/LAFEA.2 coherence supporting PASS retained
 VALIDATION_LIVE_UX: CLEAN_RENDERED_UI_PREREQUISITE_FAIL_EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED
 VALIDATION_FAILED_OR_ERROR_LATEST: complete-sample action fails before structured audit; EMP.1.A remains empty/not retained; overall input required; local method blocked
 VALIDATION_NOT_RUN_LEG010: correctly loaded desktop+narrow audits; valid CAUx Enter/Space; valid passing screenshot set; focused Playwright in custodian environment; check:imports/build/git diff --check unless separately evidenced
@@ -83,5 +91,5 @@ DEFECT_CLASSIFICATION: QUALIFICATION_SAMPLE_ORCHESTRATION_SEQUENCE_DEFECT
 DEFECT_SOURCE_DIAGNOSIS: controller imports A/B documents and C run input then calls runEmp1Product without first executing/retaining LAFEA.1; sample factory internal A execution is intentionally not returned/injected
 DEFECT_ROADMAP_CONFIRMATION: EMP_TAB_UI_RECOMMENDATIONS.md section 4.1 documents the same clean-tab failure and recommends run/accept A before C
 AUTHORITY_BOUNDARY: no LEG-011 yet; no WRC/Pressure mechanics, retained benchmark authority, route/code/release authority, roadmap or workflow-YAML change
-CURRENT_BLOCKER: source repair is justified but not authorized under the evidence-only turn. PR #1690 remains control-plane-only and not merge-authorized.
-EXACT_NEXT_ACTION: await fresh Owner `proceed next`; then open one bounded material leg to repair complete-sample A->B->C sequencing through the normal controller/store execution path, add positive and fail-closed falsifiers, freeze material, record receipt/endpoint, sync Issues, and stop for external re-observation.
+CURRENT_BLOCKER: source repair is justified but not authorized under the evidence-only turn. Current main is 8eefaf0d... and its 39-commit drift from the tested head is unrelated UQ-only work with no EMP.1 overlap. PR #1690 remains control-plane-only and not merge-authorized.
+EXACT_NEXT_ACTION: await fresh Owner `proceed next`; then base one bounded material repair leg on current main 8eefaf0d1b9effdcd395dbd54a0b027bc43f308c, repair complete-sample A->B->C sequencing through the normal controller/store execution path, add positive and fail-closed falsifiers, freeze material, record receipt/endpoint, sync Issues, and stop for external re-observation.

@@ -2,8 +2,9 @@
   "schema": "lafea-uq-source-registry/v1",
   "issue": 1673,
   "stage": "U1",
-  "definitionState": "SOURCE_AUTHORITY_GAP_CONFIRMED",
+  "definitionState": "CANDIDATE_PRIOR_RETAINED_ACTIVE_AUTHORITY_BLOCKED",
   "numericStochasticSourceCount": 0,
+  "candidateReferencePriorCount": 1,
   "statisticalExecutionAuthorized": false,
   "sources": [
     {
@@ -40,12 +41,30 @@
       "repositoryRef": "scripts/lib/lafea-b02-production-route.mjs",
       "purpose": "identify current material, geometry, load and provenance semantics",
       "numericStochasticParameterAuthority": false
+    },
+    {
+      "sourceId": "SRC-UQ-PRIOR-JCSS-STRUCTURAL-STEEL-E",
+      "sourceClass": "CANDIDATE_REFERENCE_PRIOR_ONLY",
+      "authorityRef": "Joint Committee on Structural Safety, Risk Assessment in Engineering example using JCSS Probabilistic Model Code data",
+      "authorityUrl": "https://www.jcss-lc.org/publications/raie/10_robustness-example_jcss-document.pdf",
+      "citedQuantity": "modulus of elasticity of structural steel",
+      "distributionFamily": "LOGNORMAL",
+      "arithmeticMean": 200000,
+      "canonicalUnit": "MPa",
+      "coefficientOfVariation": 0.03,
+      "populationContext": "structural-steel building reliability example",
+      "numericStochasticParameterAuthority": false,
+      "candidateNumericDataRetained": true,
+      "applicabilityState": "BLOCKED_MATERIAL_IDENTITY_UNSPECIFIED",
+      "applicabilityReason": "B02A fixes E=200000 MPa but does not identify structural-steel grade/specification/product form/manufacturing population; matching the mean is not evidence of population applicability."
     }
   ],
   "authorityRules": [
     "A deterministic nominal value is not a stochastic population model.",
     "A sourceReference or source hash proves provenance identity, not probability distribution or scatter.",
     "Methodology standards may govern how uncertainty is treated without supplying numerical stochastic parameters for a specific material, geometry, load or boundary condition.",
+    "Candidate reference priors may retain numerical data but do not contribute to numericStochasticSourceCount until applicability to the governed engineering population is explicitly established.",
+    "Numerical agreement between a candidate prior mean and a benchmark nominal does not establish material identity or source applicability.",
     "No production FEA output may create or calibrate its own expected stochastic source model without separately retained independent evidence.",
     "If no source with numericStochasticParameterAuthority=true exists for an input, that input remains blocked for production uncertainty propagation."
   ]

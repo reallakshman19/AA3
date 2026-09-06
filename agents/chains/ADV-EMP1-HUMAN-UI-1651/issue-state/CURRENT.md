@@ -1,9 +1,9 @@
 # Current Issue State — ADV-EMP1-HUMAN-UI-1651
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0027
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0028
 UPDATED_AT: 2026-09-06
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0028_PUBLICATION
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560757230
@@ -19,15 +19,15 @@ PR_1675_MERGE_COMMIT: 11f655e71a81b0d7ebef42e99792482b434e60db
 PREDECESSOR_REPAIR_PR: 1696
 PREDECESSOR_REPAIR_PR_STATUS: CLOSED_UNMERGED_FAILED_EXECUTABLE_VALIDATION
 CURRENT_REPAIR_PR: 1701
-CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
+CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_OWNER_MERGE_AUTHORIZED
 CURRENT_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg012
-CURRENT_PR_RELAY_HEAD_AT_STATUS_CHECK: fa81fcbc27d145e06af546f3d8a3002925de0acf
-CURRENT_PR_MERGEABILITY_AT_STATUS_CHECK: MERGEABLE_CLEAN
+CURRENT_PR_RELAY_HEAD_AT_AUTHORIZATION: b554425f4cd9ec57d396260168d7171c37e182fc
+CURRENT_PR_MERGEABILITY_AT_AUTHORIZATION: MERGEABLE_CLEAN
 CURRENT_PR_REVIEWS_AT_STATUS_CHECK: 0
 CURRENT_PR_UNRESOLVED_REVIEW_THREADS_AT_STATUS_CHECK: 0
 CURRENT_PR_STATUS_CONTEXTS_AT_STATUS_CHECK: 0
 CURRENT_PR_WORKFLOW_RUNS_AT_STATUS_CHECK: 0
-ACTIVE_ENDPOINT: EP-0027
+ACTIVE_ENDPOINT: EP-0028
 LAST_COMPLETED_MATERIAL_LEG: LEG-013
 CURRENT_MATERIAL_LEG: NONE
 MATERIAL_HEAD: 7f81c19a236fc6075a26ed3fccfece808406c7a6
@@ -105,19 +105,26 @@ No source/static/isolated smoke is promoted to executable browser PASS.
 
 ## EP-0027 no-patch reconciliation
 
-The latest `proceed next` was consumed by EP-0027 as a bounded no-patch reconciliation. No LEG-014 was opened because no new exact-head executable/product failure exists.
+The previous `proceed next` was consumed by EP-0027 as a bounded no-patch reconciliation. No LEG-014 was opened because no new exact-head executable/product failure existed. Current `main` at that checkpoint was `8da6ae56f6f8632892ec532fbfe2534552355374`, 47 commits ahead of the material main basis, with drift confined to independent LAFEA-UQ reference chains and no EMP.1/WRC/Pressure/LEG-013 carrier/roadmap/workflow overlap.
 
-The normalized PR metadata briefly reported non-mergeable, but the raw GitHub PR response resolved current state as:
+## EP-0028 Owner merge authorization
+
+The Owner explicitly instructed:
 
 ```text
-mergeable=true
-rebaseable=true
-mergeable_state=clean
+merge, proceed next
 ```
 
-Current `main` is `8da6ae56f6f8632892ec532fbfe2534552355374`, 47 commits ahead of the material main basis. All changed paths are confined to three independent LAFEA-UQ reference chains: holdout #1699, calibration-uncertainty #1702, and model-discrepancy #1704. There is no EMP.1/WRC/Pressure/LEG-013 carrier/roadmap/workflow overlap, so the fixed LEG-013 validation target remains unchanged.
+This grants merge authority for PR #1701 and separately queues one bounded post-merge progression. The authorization does not convert any NOT_RUN validation gate into PASS.
 
-The custodian sandbox Chromium smoke from the preceding turn demonstrated only that Chromium can launch in that sandbox. Because the private exact-head repository was unavailable there, it is NON_ADMISSIBLE for LEG-013 Node/Playwright/Stage-17 qualification and does not change validation truth.
+At authorization:
+
+```text
+PR #1701 = open / draft / mergeable-clean
+relay head before durable authorization = b554425f4cd9ec57d396260168d7171c37e182fc
+fixed material head = 7f81c19a236fc6075a26ed3fccfece808406c7a6
+main = 8da6ae56f6f8632892ec532fbfe2534552355374
+```
 
 ## Benchmark / authority ledger
 
@@ -135,26 +142,26 @@ ROADMAP_MUTATION_AUTHORITY: NONE
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 3e21f0054ab8d80b7fe045e7c105a81643fcbbf7
 COMMON_PROTOCOL_STATUS: CURRENT
-OWNER_PROGRESSION_COMMAND: `proceed next` CONSUMED_BY_EP_0027_NO_PATCH_RECONCILIATION
+OWNER_PROGRESSION_COMMAND: `proceed next` PENDING_POST_MERGE_RECONCILIATION
 OWNER_CUSTODY_INSTRUCTION: CURRENT_CUSTODIAN_CONTINUES_NO_TAKEOVER
-OWNER_MERGE_COMMAND: NONE
+OWNER_MERGE_COMMAND: MERGE
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
 QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
-ENGINEERING_STATE: LEG_013_SOURCE_COMPLETE_EXECUTABLE_REOBSERVATION_PENDING
+ENGINEERING_STATE: OWNER_MERGE_AUTHORIZED_POST_MERGE_RECONCILIATION_PENDING
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
 AUTO_STATE: NOT_APPLICABLE
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+MERGE_AUTHORITY: AUTHORIZED
+MERGE_AUTHORIZED: TRUE
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-CURRENT_BLOCKER: full exact-head LEG-013 executable qualification is pending; browser/human PASS cannot be inferred from source inspection, isolated carrier smoke, or custodian Chromium smoke without the exact repository.
-EXACT_NEXT_ACTION: external verifier checks out `7f81c19a236fc6075a26ed3fccfece808406c7a6`, follows MANUAL-EP-0025, installs project-local Chromium if preflight requires it, runs `node scripts/emp1-issue1651-executable-validation.mjs`, stops on any nonzero result, and only after complete executable PASS proceeds to desktop/narrow/CAUx human-factor observations. Evidence intake is read-only and requires no new Owner progression command.
+CURRENT_BLOCKER: none to Owner-authorized merge. Exact-head executable/human validation debt remains open and truthful.
+EXACT_NEXT_ACTION: publish EP-0028 to the Issue control plane; if required transition PR #1701 from Draft to Ready; merge with expected-head guard; reconcile merged `main`; consume the queued `proceed next` as one bounded post-merge progression.

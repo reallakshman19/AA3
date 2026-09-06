@@ -60,6 +60,6 @@
     "calibratedResidualRmse": 3.49329715312053,
     "rmseReductionIsAcceptanceCriterion": false
   },
-  "negativeCaseCount": 23,
+  "negativeCaseCount": 24,
   "nextBoundary": "RECONCILE_REFERENCE_CALIBRATION_BIAS_PASS_TO_PARENT_1673_AND_PLAN_NEXT_REFERENCE_CASE"
 }

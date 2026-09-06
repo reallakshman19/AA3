@@ -25,6 +25,23 @@ const CATALOGUE_FITTING_TYPES = Object.freeze(['FLAN', 'FLANGE', 'VALV', 'VALVE'
 
 const DEFAULT_LENGTH_TOLERANCE_MM = 4;
 
+/**
+ * How many catalogue fittings still lack a component weight.
+ *
+ * Deliberately separate from buildFittingWeightReviewRows: the count needs only
+ * the component list, while the review ranks every fitting against the whole
+ * weights master. Status badges re-render often, and paying for a full ranking
+ * pass to display one integer made the Enrichment tab unusable on a real model.
+ */
+export function countFittingsAwaitingWeight({ dataset } = {}) {
+  const components = dataset?.sharedModel?.components || [];
+  return components.filter((component) => {
+    const type = String(component.type || '').trim().toUpperCase();
+    if (!CATALOGUE_FITTING_TYPES.includes(type)) return false;
+    return component.engineeringProperties?.componentWeightKg == null;
+  }).length;
+}
+
 export function buildFittingWeightReviewRows({ dataset, masters } = {}) {
   const sourceModel = dataset?.sharedModel;
   if (!sourceModel) throw new TypeError('Fitting weight review requires an active dataset shared model.');

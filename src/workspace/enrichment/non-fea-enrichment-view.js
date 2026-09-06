@@ -10,7 +10,7 @@ import {
   resolveNonFeaEnrichment,
 } from '../../core/non-fea-enrichment/index.js';
 import { openFittingWeightDialog } from '../load-calc-fitting-weight-dialog.js';
-import { buildFittingWeightReviewRows } from '../load-calc-fitting-weight-review.js';
+import { countFittingsAwaitingWeight } from '../load-calc-fitting-weight-review.js';
 import {
   NON_FEA_ZERO_MASS_WAIVER_PATH,
 } from '../engineering-loads/non-fea-zero-mass-waiver.js';
@@ -109,13 +109,11 @@ function markup(snapshot, derived, sourceModel) {
   let fittingWeightIssues = 0;
   if (dataset?.sharedModel) {
     try {
-      const review = buildFittingWeightReviewRows({
+      fittingWeightIssues = countFittingsAwaitingWeight({
         dataset: { ...dataset, sharedModel: derived.projection?.enrichedModel || sourceModel },
-        masters: masterDataController.getMasterData(),
       });
-      fittingWeightIssues = review.summary.fittingCount;
     } catch {
-      // Masters or projection not ready; leave the button unbadged.
+      // Projection not ready; leave the button unbadged.
     }
   }
   const mastersCompleted = snapshot.proposals.length > 0 || snapshot.acceptedRecords.length > 0;

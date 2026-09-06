@@ -9,6 +9,15 @@ const ENGINEER_FACING_ROLES = [
   'emp1-b-engineering-custody',
 ];
 
+const TASKS = [
+  'BASIS_SOURCE',
+  'GEOMETRY',
+  'LOADS',
+  'LOAD_TRANSFER',
+  'SECTION_SCREENING',
+  'LOCAL_CORRELATION',
+];
+
 const RAW_BOUNDARY_SELECTOR = [
   '[data-emp1-raw-technical="true"]',
   '[data-lafea-raw-json="true"]',
@@ -38,51 +47,73 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
   await expect(root.locator('[data-role="emp1-workflow"]')).toBeVisible();
   await expect(root.locator('[data-role="emp1-console-mode-tabs"]')).toHaveCount(1);
 
+  const scans = [];
   const workflowDetails = root.locator('[data-role="emp1-workflow-details"]');
   await expect(workflowDetails).toHaveCount(1);
   await expect(workflowDetails).not.toHaveAttribute('open', '');
   await workflowDetails.locator('summary').click();
   await expect(workflowDetails).toHaveAttribute('open', '');
+  scans.push({ view: 'workflow:readiness-review-custody', leaks: await scanVisibleLeaks(page) });
+  await workflowDetails.locator('summary').click();
 
-  await root.getByRole('button', { name: /^6 Local Correlation/u }).click();
-  const bounded = root.locator('[data-role="emp1-c-bounded-evidence"]');
-  await expect(bounded).toBeVisible();
-  await expect(bounded).toContainText('WRC 537 (2013)');
-  await expect(bounded).toContainText('Not permitted');
+  // Inspector availability is task-contextual. Visit every inspector tab that is
+  // actually selectable for every professional task rather than clicking hidden
+  // tabs from one unrelated task.
+  for (const taskId of TASKS) {
+    let analytical = root.locator('[data-role="lafea-analytical-calc"]');
+    await analytical.locator(
+      `[data-role="emp1-professional-step"][data-emp1-professional-step="${taskId}"]`,
+    ).click();
+    analytical = root.locator('[data-role="lafea-analytical-calc"]');
+    await expect(analytical).toHaveAttribute('data-emp1-professional-task', taskId);
 
-  const scans = [];
+    const inspectorTabs = analytical.locator('[data-role="emp1-inspector-tab"]:visible');
+    const inspectorCount = await inspectorTabs.count();
+    expect(inspectorCount).toBeGreaterThanOrEqual(1);
+    for (let index = 0; index < inspectorCount; index += 1) {
+      const tab = inspectorTabs.nth(index);
+      const inspectorView = await tab.getAttribute('data-emp1-inspector-view');
+      await tab.click();
+      await expect(tab).toHaveAttribute('aria-selected', 'true');
+      scans.push({ view: `task:${taskId}:inspector:${inspectorView}`, leaks: await scanVisibleLeaks(page) });
+    }
 
-  const inspectorTabs = root.locator('[data-role="emp1-inspector-tab"]');
-  const inspectorCount = await inspectorTabs.count();
-  expect(inspectorCount).toBeGreaterThanOrEqual(3);
-  for (let index = 0; index < inspectorCount; index += 1) {
-    const tab = inspectorTabs.nth(index);
-    const inspectorView = await tab.getAttribute('data-emp1-inspector-view');
-    await tab.click();
-    await expect(tab).toHaveAttribute('aria-selected', 'true');
-    scans.push({ view: `inspector:${inspectorView}`, leaks: await scanVisibleLeaks(page) });
+    if (taskId === 'LOCAL_CORRELATION') {
+      const authorityTab = analytical.locator(
+        '[data-role="emp1-inspector-tab"][data-emp1-inspector-view="boundedCorrelation"]',
+      );
+      await authorityTab.click();
+      const bounded = analytical.locator('[data-role="emp1-c-bounded-evidence"]');
+      await expect(bounded).toBeVisible();
+      await expect(bounded).toContainText('WRC 537 (2013)');
+      await expect(bounded).toContainText('Not permitted');
+      const routeTabs = bounded.locator('[data-role="emp1-c-route-capability-tab"]');
+      await expect(routeTabs).toHaveCount(2);
+      const routeCount = await routeTabs.count();
+      for (let index = 0; index < routeCount; index += 1) {
+        const tab = routeTabs.nth(index);
+        const routeId = await tab.getAttribute('data-route-id');
+        await tab.click();
+        await expect(tab).toHaveAttribute('aria-selected', 'true');
+        await expect(bounded.locator('[data-role="emp1-c-route-capability-panel"]:visible')).toHaveCount(1);
+        scans.push({ view: `route:${routeId}`, leaks: await scanVisibleLeaks(page) });
+      }
+    }
   }
 
-  const authorityTab = root.locator(
-    '[data-role="emp1-inspector-tab"][data-emp1-inspector-view="boundedCorrelation"]',
-  );
-  await authorityTab.click();
-  const routeTabs = bounded.locator('[data-role="emp1-c-route-capability-tab"]');
-  await expect(routeTabs).toHaveCount(2);
-  const routeCount = await routeTabs.count();
-  for (let index = 0; index < routeCount; index += 1) {
-    const tab = routeTabs.nth(index);
-    const routeId = await tab.getAttribute('data-route-id');
-    await tab.click();
-    await expect(tab).toHaveAttribute('aria-selected', 'true');
-    await expect(bounded.locator('[data-role="emp1-c-route-capability-panel"]:visible')).toHaveCount(1);
-    scans.push({ view: `route:${routeId}`, leaks: await scanVisibleLeaks(page) });
-  }
+  // Review & Evidence is an evidence-only presentation task on desktop. Visit
+  // every retained evidence view from that explicit context.
+  let analytical = root.locator('[data-role="lafea-analytical-calc"]');
+  await analytical.locator(
+    '[data-role="emp1-professional-step"][data-emp1-professional-step="REVIEW_EVIDENCE"]',
+  ).click();
+  analytical = root.locator('[data-role="lafea-analytical-calc"]');
+  await expect(analytical).toHaveAttribute('data-emp1-professional-task', 'REVIEW_EVIDENCE');
+  await expect(analytical).toHaveAttribute('data-emp1-console-mode', 'EVIDENCE');
 
-  const evidenceToggle = root.locator('[data-role="emp1-evidence-console-toggle"]');
-  await evidenceToggle.click();
+  const evidenceToggle = analytical.locator('[data-role="emp1-evidence-console-toggle"]');
   await expect(evidenceToggle).toHaveAttribute('aria-expanded', 'true');
-  const evidenceTabs = root.locator('[data-role="emp1-evidence-tab"]');
+  const evidenceTabs = analytical.locator('[data-role="emp1-evidence-tab"]');
   const evidenceCount = await evidenceTabs.count();
   expect(evidenceCount).toBeGreaterThanOrEqual(5);
   for (let index = 0; index < evidenceCount; index += 1) {
@@ -93,7 +124,7 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
     scans.push({ view: `evidence:${evidenceView}`, leaks: await scanVisibleLeaks(page) });
   }
 
-  const benchmarkTab = root.locator(
+  const benchmarkTab = analytical.locator(
     '[data-role="emp1-evidence-tab"][data-emp1-evidence-view="benchmarkEvidence"]',
   );
   await benchmarkTab.click();
@@ -113,10 +144,20 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
 
   // Technical identifiers remain reachable behind an explicit human-readable
   // route disclosure, and the raw machine IDs remain confined to the raw boundary.
+  analytical = root.locator('[data-role="lafea-analytical-calc"]');
+  await analytical.locator(
+    '[data-role="emp1-professional-step"][data-emp1-professional-step="LOCAL_CORRELATION"]',
+  ).click();
+  analytical = root.locator('[data-role="lafea-analytical-calc"]');
+  const authorityTab = analytical.locator(
+    '[data-role="emp1-inspector-tab"][data-emp1-inspector-view="boundedCorrelation"]',
+  );
   await authorityTab.click();
+  const bounded = analytical.locator('[data-role="emp1-c-bounded-evidence"]');
   await bounded.locator('[data-role="emp1-c-route-capability-tab"]').first().click();
   const routeDetail = bounded.locator('[data-role="emp1-c-route-detail"]:visible');
   await expect(routeDetail).toBeVisible();
+  await expect(routeDetail).not.toHaveAttribute('open', '');
   await routeDetail.locator('summary').first().click();
   await expect(routeDetail).toHaveAttribute('open', '');
   const technical = routeDetail.locator('[data-emp1-raw-technical="true"]').first();

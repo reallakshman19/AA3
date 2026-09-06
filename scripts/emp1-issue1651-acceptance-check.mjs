@@ -18,7 +18,7 @@ const paths = Object.freeze({
   carrier: 'scripts/lafea-stage17-browser-run.mjs',
   manualAudit: 'scripts/emp1-manual-browser-audit.js',
   manualAuditStatic: 'scripts/emp1-manual-browser-audit-check.mjs',
-  manualGuide: 'agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0014.md',
+  manualGuide: 'agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0015.md',
 });
 
 const source = Object.fromEntries(await Promise.all(Object.entries(paths).map(async ([key, path]) => [

@@ -25,11 +25,19 @@ CURRENT_REPAIR_PR: 1701
 CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
 CURRENT_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg012
 CURRENT_PR_FIXED_MATERIAL_HEAD: 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3
-CURRENT_PR_RELAY_HEAD_OBSERVED_PRE_FINAL_SYNC: e1a14e3f1554504582651ec0e57f10e03d31f248
+CURRENT_PR_RELAY_HEAD_AT_STATUS_CHECK: 8db56b1b0b8322182196b4235b8f6538f6b6d4cd
+CURRENT_PR_MERGEABLE_AT_STATUS_CHECK: TRUE
+CURRENT_PR_REVIEWS_AT_STATUS_CHECK: 0
+CURRENT_PR_UNRESOLVED_REVIEW_THREADS_AT_STATUS_CHECK: 0
+CURRENT_PR_STATUS_CONTEXTS_AT_STATUS_CHECK: 0
+CURRENT_PR_WORKFLOW_RUNS_AT_STATUS_CHECK: 0
 MATERIAL_BASE: 718d42810fd7e51307edf78373a9158eb20246bd
 MATERIAL_MAIN_BASIS: 687b9ff3b8884031e4776f031af7a739f29eb2c8
-MAIN_HEAD_OBSERVED: 687b9ff3b8884031e4776f031af7a739f29eb2c8
-MAIN_DRIFT_FROM_MATERIAL_BASIS: NONE_AT_LEG_012_FREEZE
+MAIN_HEAD_OBSERVED: f62abea09dfc1da1d6412525790bc73a2fa8f6e7
+MAIN_DRIFT_FROM_MATERIAL_BASIS: AHEAD_16_BEHIND_0
+MAIN_DRIFT_SOURCE: LAFEA_UQ_REF_HOLDOUT_1699
+MAIN_DRIFT_CLASSIFICATION: UNRELATED_NO_EMP1_OVERLAP
+MAIN_DRIFT_AFFECTS_LEG012_DIAGNOSIS_OR_MATERIAL: FALSE
 
 LAST_COMPLETED_MATERIAL_LEG: LEG-012
 LATEST_MATERIAL_HEAD: 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3
@@ -96,5 +104,5 @@ BENCHMARK_CAUX: retained 8/8 within frozen 3%; worst relative 2.0355862430856293
 BENCHMARK_PV_ELITE: REFERENCE_NOT_AVAILABLE / SOURCE_NOT_RETAINED / zero rows / no invented expected values, version or tolerance
 
 AUTHORITY_BOUNDARY: no WRC/Pressure mechanics, bounded-route registry or authority state, retained benchmark source/tolerance, roadmap, workflow YAML, code-compliance, production authorization or release authority change in LEG-012
-CURRENT_BLOCKER: exact-head executable validation of LEG-012 is pending. PR #1701 must not merge before explicit Owner authorization and is not validated until the five Node gates, focused Playwright and Stage-17 pass; human-factor acceptance follows only after those executable gates pass.
+CURRENT_BLOCKER: exact-head executable validation of LEG-012 is pending. Post-freeze main drift is an unrelated LAFEA-UQ holdout chain and does not alter the fixed material target. PR #1701 must not merge before explicit Owner authorization and is not validated until the five Node gates, focused Playwright and Stage-17 pass; human-factor acceptance follows only after those executable gates pass.
 EXACT_NEXT_ACTION: external runner checks out fixed material head 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3 and follows MANUAL-EP-0024. Return complete five Node outputs, focused Playwright output, Stage-17 output; only on executable PASS continue desktop/narrow structured audits, CAUx physical Enter/Space and three screenshots. Evidence intake is read-only and does not require another Owner progression command.

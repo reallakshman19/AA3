@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -41,10 +40,22 @@ import {
   produceLafeaShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-mesh-producer.js';
 import {
-  canonicalJson,
+  LAFEA_SHELL_MULTIPATCH_ANALYSIS_DOMAIN_SCHEMA,
+  LAFEA_SHELL_MULTIPATCH_MIDSURFACE_GEOMETRY_SCHEMA,
+  LAFEA_SHELL_MULTIPATCH_MIDSURFACE_INTAKE_SCHEMA,
+  LAFEA_SHELL_MULTIPATCH_ORIENTATION,
+  LAFEA_SHELL_MULTIPATCH_TOPOLOGY,
+  createLafeaMultiPatchShellAnalysisDomain,
+  createLafeaMultiPatchShellMidsurfaceEvidence,
+  createLafeaMultiPatchShellMidsurfaceGeometry,
+} from '../src/workspace/lafea-shell-multipatch-midsurface-contract.js';
+import {
+  LAFEA_SHELL_MULTIPATCH_ELEMENT,
+  produceLafeaMultiPatchShellAnalysisMesh,
+} from '../src/workspace/lafea-shell-multipatch-mesh-core.js';
+import {
   finalizeAuditRecord,
   sha256File,
-  sha256Text,
 } from './lib/lafea-benchmark-audit.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
@@ -108,7 +119,7 @@ for (const stageId of selectedStages) {
   const record = finalizeAuditRecord({
     schema: 'lafea-benchmark-audit-record/v1',
     programId: 'BM-MESH',
-    materialLeg: 'LEG-010',
+    materialLeg: 'LEG-011',
     runId,
     generatedAt: new Date().toISOString(),
     repository: 'reallaksh19/Advanced_Analysis',
@@ -161,7 +172,7 @@ const overallStatus = stageRecords.some((row) => row.caseStatus === 'FAIL')
 const summary = {
   schema: 'lafea-mesh-benchmark-program-run/v1',
   benchmarkId: 'BM-MESH',
-  materialLeg: 'LEG-010',
+  materialLeg: 'LEG-011',
   runId,
   generatedAt: new Date().toISOString(),
   exactHeadSha,
@@ -213,7 +224,7 @@ function runM0() {
     assert.equal(row.meshSchema, 'lafea-analysis-mesh/v1');
     assert.equal(row.resourceDisposition, 'WITHIN_LIMITS');
     assert.equal(row.estimatedDofs, row.nodeCount * 2);
-    assert.equal(row.qualityWorstStatus === 'BLOCK', false);
+    assert.notEqual(row.qualityWorstStatus, 'BLOCK');
     observations.push({ checkId: `M0-${ladderId}`, status: 'PASS', ...row });
   }
   const shell = executeWorkerRequest({ kind: 'SHELL_UNIT_SQUARE', levelId: 'L0', variant: 'NORMAL' });
@@ -221,8 +232,18 @@ function runM0() {
   assert.equal(shell.elementFamily, LAFEA_SHELL_ELEMENT);
   assert.equal(shell.resourceDisposition, 'WITHIN_LIMITS');
   assert.equal(shell.estimatedDofs, shell.nodeCount * 5);
-  assert.equal(shell.qualityWorstStatus === 'BLOCK', false);
+  assert.notEqual(shell.qualityWorstStatus, 'BLOCK');
   observations.push({ checkId: 'M0-LAFEA4-SINGLE-PATCH-PRODUCER', status: 'PASS', ...shell });
+
+  const multipatch = executeWorkerRequest({ kind: 'SHELL_MULTIPATCH', levelId: 'L0', variant: 'NORMAL' });
+  assert.equal(multipatch.meshSchema, 'lafea-analysis-mesh/v1');
+  assert.equal(multipatch.elementFamily, LAFEA_SHELL_MULTIPATCH_ELEMENT);
+  assert.equal(multipatch.resourceDisposition, 'WITHIN_LIMITS');
+  assert.equal(multipatch.estimatedDofs, multipatch.nodeCount * 5);
+  assert.equal(multipatch.seamConforming, true);
+  assert.notEqual(multipatch.qualityWorstStatus, 'BLOCK');
+  observations.push({ checkId: 'M0-LAFEA4-MULTIPATCH-PRODUCER', status: 'PASS', ...multipatch });
+
   return {
     schema: 'lafea-mesh-benchmark-stage-evidence/v1',
     status: 'PASS',
@@ -236,6 +257,7 @@ function runM1() {
     { fixtureId: 'L3-T6', request: { kind: 'LADDER_LEVEL', ladderId: 'L3-T6', levelId: 'L0' } },
     { fixtureId: 'L3-Q8', request: { kind: 'LADDER_LEVEL', ladderId: 'L3-Q8', levelId: 'L0' } },
     { fixtureId: 'L4-SINGLE-PATCH', request: { kind: 'SHELL_UNIT_SQUARE', levelId: 'L0' } },
+    { fixtureId: 'L4-MULTIPATCH', request: { kind: 'SHELL_MULTIPATCH', levelId: 'L0' } },
   ];
   const observations = fixtures.map(({ fixtureId, request }) => {
     const first = executeWorkerRequest({ ...request, variant: 'NORMAL' });
@@ -266,13 +288,17 @@ function runM2() {
 
   const unit = continuumObservation('M2-UNIT-SQUARE-01', 'Q8', l0.globalTargetSize, 'NORMAL');
   const unitArea = meshArea(unit.mesh);
-  observations.push(exactAreaObservation('M2-UNIT-SQUARE-01', unit, unitArea, expectedNumber('M2-UNIT-SQUARE-01', 'AREA')));
+  observations.push(exactAreaObservation(
+    'M2-UNIT-SQUARE-01', unit, unitArea, expectedNumber('M2-UNIT-SQUARE-01', 'AREA'),
+  ));
 
   for (const family of ['T3', 'T6']) {
     const lshape = continuumObservation('M2-L-SHAPE-01', family, l0.globalTargetSize, 'NORMAL');
     const area = meshArea(lshape.mesh);
     const overlap = maximumLShapeVoidOverlap(lshape.mesh);
-    const areaCheck = exactAreaObservation('M2-L-SHAPE-01', lshape, area, expectedNumber('M2-L-SHAPE-01', 'AREA'));
+    const areaCheck = exactAreaObservation(
+      'M2-L-SHAPE-01', lshape, area, expectedNumber('M2-L-SHAPE-01', 'AREA'),
+    );
     observations.push({
       ...areaCheck,
       checkId: `M2-L-SHAPE-01-${family}`,
@@ -321,71 +347,90 @@ function runM2() {
     codeSclMinimumApplied: false,
   });
 
+  const shellCase = requireCase('M2-TWO-PATCH-SHELL-01');
+  for (const patchDef of shellCase.topology.patches) {
+    const patch = shellPatchObservation(patchDef, l0.globalTargetSize, 'NORMAL');
+    const expectedArea = expectedPatchNumber('M2-TWO-PATCH-SHELL-01', 'PATCH_AREA', patchDef.patchId);
+    observations.push({
+      checkId: `M2-TWO-PATCH-SHELL-01-${patchDef.patchId}-AREA`,
+      status: Math.abs(meshArea(patch.mesh) - expectedArea) <= roundoffTolerance(expectedArea)
+        ? 'PASS' : 'FAIL',
+      patchId: patchDef.patchId,
+      meshHash: patch.meshHash,
+      nodeCount: patch.nodeCount,
+      elementCount: patch.elementCount,
+      expectedArea,
+      observedArea: meshArea(patch.mesh),
+      comparisonToleranceClass: 'FLOAT_ROUNDOFF_ONLY_NOT_ENGINEERING_ACCEPTANCE',
+    });
+  }
+
+  const multipatch = shellMultiPatchObservation(l0.globalTargetSize, 'NORMAL');
+  const expectedTotalArea = expectedNumber('M2-TWO-PATCH-SHELL-01', 'TOTAL_AREA');
+  const expectedSeamLength = expectedNumber('M2-TWO-PATCH-SHELL-01', 'SHARED_SEAM_LENGTH');
+  const seamPass = multipatch.seamConforming === true
+    && Math.abs(multipatch.authorityArea - expectedTotalArea) <= roundoffTolerance(expectedTotalArea)
+    && Math.abs(multipatch.meshedArea - expectedTotalArea) <= roundoffTolerance(expectedTotalArea)
+    && Math.abs(multipatch.seamLength - expectedSeamLength) <= roundoffTolerance(expectedSeamLength)
+    && multipatch.maximumSeamPairDistance <= roundoffTolerance(expectedSeamLength)
+    && multipatch.seamEdgeCount === multipatch.seamNodeCount - 1
+    && multipatch.seamDuplicateNodeEliminations === multipatch.seamNodeCount
+    && multipatch.maximumEdgeOwnerCount <= 2;
   observations.push({
     checkId: 'M2-TWO-PATCH-SHELL-01-CONFORMING-SHARED-SEAM',
-    status: 'BLOCKED',
+    status: seamPass ? 'PASS' : 'FAIL',
     caseId: 'M2-TWO-PATCH-SHELL-01',
     requiredIdentity: 'TOPOLOGICAL_IDENTITY_NOT_COORDINATE_PROXIMITY',
-    productionScope: 'PLANAR_SINGLE_PATCH_ONLY',
-    productionLimitation: 'NO_MULTI_PATCH_SEAMS',
+    productionScope: multipatch.productionScope,
+    meshHash: multipatch.meshHash,
+    nodeCount: multipatch.nodeCount,
+    elementCount: multipatch.elementCount,
+    expectedTotalArea,
+    observedAuthorityArea: multipatch.authorityArea,
+    observedMeshedArea: multipatch.meshedArea,
+    expectedSeamLength,
+    observedSeamLength: multipatch.seamLength,
+    seamNodeCount: multipatch.seamNodeCount,
+    seamEdgeCount: multipatch.seamEdgeCount,
+    seamDuplicateNodeEliminations: multipatch.seamDuplicateNodeEliminations,
+    maximumSeamPairDistance: multipatch.maximumSeamPairDistance,
+    maximumEdgeOwnerCount: multipatch.maximumEdgeOwnerCount,
+    seamConforming: multipatch.seamConforming,
     benchmarkSideNodeMergeUsed: false,
-    note: 'The production LAFEA.4 producer cannot currently instantiate the frozen two-patch topology; coordinate-coincident patch meshes are not accepted as a conforming seam.',
   });
 
-  const executableFailed = observations.some((row) => row.status === 'FAIL');
+  const failed = observations.some((row) => row.status === 'FAIL');
   return {
     schema: 'lafea-mesh-benchmark-stage-evidence/v1',
-    status: executableFailed ? 'FAIL' : 'BLOCKED',
+    status: failed ? 'FAIL' : 'PASS',
     observations,
-    blocker: executableFailed ? null : 'LAFEA4_MULTIPATCH_SHARED_NODE_IDENTITY_OUTSIDE_CURRENT_PRODUCTION_SCOPE',
   };
 }
 
 function runM3() {
-  const continuumLadders = ['L3-T3', 'L3-T6', 'L3-Q8'].map(runM3ContinuumLadder);
-  const shellLadder = requireLadder('L4-CST-DKT');
-  const executableFailed = continuumLadders.some((row) => row.status === 'FAIL');
-  const shellObservation = {
-    checkId: 'M3-L4-CST-DKT',
-    status: 'BLOCKED',
-    ladderId: shellLadder.ladderId,
-    geometryCaseId: shellLadder.geometryCaseId,
-    elementFamily: shellLadder.elementFamily,
-    levelIds: [...shellLadder.levelIds],
-    nonThicknessDistributionDisposition: 'NOT_EXECUTED_FROZEN_MULTIPATCH_GEOMETRY_OUTSIDE_QUALIFIED_PRODUCTION_SCOPE',
-    warpageDisposition: 'NOT_EVALUATED_TRI3_MULTIPATCH_PRODUCTION_SCOPE_BLOCKED',
-    sizeToThicknessDisposition: 'BLOCKED_GOVERNED_SHELL_THICKNESS_NOT_FROZEN',
-    benchmarkSideNodeMergeUsed: false,
-  };
+  const ladderObservations = ['L3-T3', 'L3-T6', 'L3-Q8', 'L4-CST-DKT'].map(runM3Ladder);
+  const executableFailed = ladderObservations.some((row) => row.status === 'FAIL');
   return {
     schema: 'lafea-mesh-benchmark-stage-evidence/v1',
     status: executableFailed ? 'FAIL' : 'BLOCKED',
-    blocker: executableFailed ? null : 'M3_LAFEA4_GOVERNED_ACCEPTANCE_BLOCKED',
-    blockers: [
-      {
-        blockerId: 'M3-LAFEA4-MULTIPATCH-PRODUCTION-SCOPE',
-        reason: 'The frozen L4 ladder uses M2-TWO-PATCH-SHELL-01, while the qualified production shell producer is single-patch and benchmark-side seam merging is forbidden.',
-      },
-      {
-        blockerId: 'M3-SHELL-THICKNESS-AUTHORITY',
-        reason: 'The required 0.5t-2t size-to-thickness qualification cannot run until governed shell thickness is frozen.',
-      },
-    ],
-    observations: [...continuumLadders, shellObservation],
+    blocker: executableFailed ? null : 'M3_SHELL_THICKNESS_AUTHORITY_NOT_FROZEN',
+    blockers: executableFailed ? [] : [{
+      blockerId: 'M3-SHELL-THICKNESS-AUTHORITY',
+      reason: 'The required 0.5t-2t size-to-thickness qualification cannot run until governed shell thickness is frozen.',
+    }],
+    observations: ladderObservations,
   };
 }
 
-function runM3ContinuumLadder(ladderId) {
+function runM3Ladder(ladderId) {
   const ladder = requireLadder(ladderId);
-  assert.equal(ladder.stageId, 'LAFEA.3');
   const levels = ladder.levelIds.map((levelId) => {
     const level = refinementLevel(levelId);
-    const produced = continuumObservation(
-      ladder.geometryCaseId,
-      ladder.elementFamily,
-      level.globalTargetSize,
-      'NORMAL',
-    );
+    const produced = ladder.stageId === 'LAFEA.3'
+      ? continuumObservation(
+        ladder.geometryCaseId, ladder.elementFamily, level.globalTargetSize, 'NORMAL',
+      )
+      : shellMultiPatchObservation(level.globalTargetSize, 'NORMAL');
     return {
       levelId,
       globalTargetSize: level.globalTargetSize,
@@ -396,6 +441,9 @@ function runM3ContinuumLadder(ladderId) {
       resourceDisposition: produced.resourceDisposition,
       qualityWorstStatus: produced.qualityWorstStatus,
       qualityDistributions: m3QualityDistributions(produced.quality),
+      adjacentSizeRatio: produced.quality?.adjacentSizeRatio ?? null,
+      seamConforming: produced.seamConforming ?? null,
+      maximumSeamPairDistance: produced.maximumSeamPairDistance ?? null,
     };
   });
   const refinementChecks = levels.slice(1).map((fine, index) => {
@@ -422,16 +470,27 @@ function runM3ContinuumLadder(ladderId) {
     m3WorstCaseTrend(levels, 'SCALED_JACOBIAN', false),
   ];
   const noBlock = levels.every((row) => row.qualityWorstStatus !== 'BLOCK');
-  const passed = noBlock
+  const seamPass = ladder.stageId !== 'LAFEA.4'
+    || levels.every((row) => row.seamConforming === true
+      && row.maximumSeamPairDistance <= roundoffTolerance(1));
+  const passed = noBlock && seamPass
     && refinementChecks.every((row) => row.status === 'PASS')
     && trendChecks.every((row) => row.status === 'PASS' || row.status === 'NOT_APPLICABLE');
   return {
     checkId: `M3-${ladderId}`,
     status: passed ? 'PASS' : 'FAIL',
     ladderId,
+    stageId: ladder.stageId,
     geometryCaseId: ladder.geometryCaseId,
     elementFamily: ladder.elementFamily,
     noProductionQualityBlock: noBlock,
+    seamConformingAcrossLevels: ladder.stageId === 'LAFEA.4' ? seamPass : null,
+    warpageDisposition: ladder.stageId === 'LAFEA.4'
+      ? 'NOT_APPLICABLE_CST_DKT_TRI3_HAS_NO_QUAD_WARPAGE_METRIC'
+      : 'NOT_APPLICABLE_CONTINUUM',
+    sizeToThicknessDisposition: ladder.stageId === 'LAFEA.4'
+      ? 'BLOCKED_GOVERNED_SHELL_THICKNESS_NOT_FROZEN'
+      : 'NOT_APPLICABLE_CONTINUUM',
     levels,
     refinementChecks,
     worstCaseTrendChecks: trendChecks,
@@ -508,6 +567,10 @@ function executeWorkerRequest(request) {
     const level = refinementLevel(request.levelId);
     return compactObservation(shellUnitSquareObservation(level.globalTargetSize, request.variant));
   }
+  if (request.kind === 'SHELL_MULTIPATCH') {
+    const level = refinementLevel(request.levelId);
+    return compactObservation(shellMultiPatchObservation(level.globalTargetSize, request.variant));
+  }
   throw new Error(`Unknown worker request kind ${request.kind}.`);
 }
 
@@ -533,9 +596,7 @@ function continuumObservation(caseId, family, h, variant = 'NORMAL') {
     },
   };
   const profile = meshProfile({
-    stageId: 'LAFEA.3',
-    family,
-    h,
+    stageId: 'LAFEA.3', family, h,
     identity: `BM-MESH-${caseId}-${family}-H${encodeNumber(h)}`,
   });
   const planned = planLafeaAnalysisMesh(stage, lafeaMeshGenerationConfiguration(profile));
@@ -563,12 +624,30 @@ function continuumObservation(caseId, family, h, variant = 'NORMAL') {
 
 function shellUnitSquareObservation(h, variant = 'NORMAL') {
   const caseDef = requireCase('M2-UNIT-SQUARE-01');
+  return shellObservationFromCoords(
+    'M2-UNIT-SQUARE-01',
+    caseDef.topology.outerLoop.vertices,
+    h,
+    variant,
+  );
+}
+
+function shellPatchObservation(patchDef, h, variant = 'NORMAL') {
+  return shellObservationFromCoords(
+    `M2-TWO-PATCH-SHELL-01:${patchDef.patchId}`,
+    patchDef.outerLoop.vertices,
+    h,
+    variant,
+  );
+}
+
+function shellObservationFromCoords(caseId, rawCoords, h, variant = 'NORMAL') {
   const sourceHash = sha256File(CASES_PATH);
-  const geometry = shellGeometryFromUnitSquare(caseDef, variant);
+  const geometry = shellGeometryFromCoords(caseId, rawCoords, variant);
   const domain = createLafeaShellAnalysisDomain({
     schema: LAFEA_SHELL_ANALYSIS_DOMAIN_SCHEMA,
     stageId: 'LAFEA.4',
-    domainId: 'BM-MESH-M0M1-UNIT-SQUARE-SINGLE-PATCH',
+    domainId: `BM-MESH-${caseId}-SINGLE-PATCH`,
     sourceHash,
     midsurfaceGeometryHash: geometry.semanticHash,
     lengthUnit: 'mm',
@@ -580,20 +659,18 @@ function shellUnitSquareObservation(h, variant = 'NORMAL') {
     sourceHash,
     analysisDomain: domain,
     geometry,
-    producerRef: 'BM-MESH:FROZEN-M2-UNIT-SQUARE:SINGLE-PATCH',
+    producerRef: `BM-MESH:FROZEN:${caseId}:SINGLE-PATCH`,
   });
   const profile = meshProfile({
-    stageId: 'LAFEA.4',
-    family: LAFEA_SHELL_ELEMENT,
-    h,
-    identity: `BM-MESH-LAFEA4-UNIT-SQUARE-H${encodeNumber(h)}`,
+    stageId: 'LAFEA.4', family: LAFEA_SHELL_ELEMENT, h,
+    identity: `BM-MESH-LAFEA4-${caseId}-H${encodeNumber(h)}`,
   });
   const produced = produceLafeaShellAnalysisMesh({ midsurfaceEvidence, meshProfile: profile });
   const mesh = canonicalLafeaAnalysisMesh(produced.evidence.mesh);
   return {
     schema: 'lafea-mesh-producer-observation/v1',
     stageId: 'LAFEA.4',
-    caseId: 'M2-UNIT-SQUARE-01',
+    caseId,
     meshSchema: mesh.schema,
     elementFamily: LAFEA_SHELL_ELEMENT,
     globalTargetSize: h,
@@ -610,12 +687,70 @@ function shellUnitSquareObservation(h, variant = 'NORMAL') {
   };
 }
 
+function shellMultiPatchObservation(h, variant = 'NORMAL') {
+  const caseDef = requireCase('M2-TWO-PATCH-SHELL-01');
+  const sourceHash = sha256File(CASES_PATH);
+  const geometry = multiPatchShellGeometry(caseDef, variant);
+  const domain = createLafeaMultiPatchShellAnalysisDomain({
+    schema: LAFEA_SHELL_MULTIPATCH_ANALYSIS_DOMAIN_SCHEMA,
+    stageId: 'LAFEA.4',
+    domainId: 'BM-MESH-M2-TWO-PATCH-SHELL-01',
+    sourceHash,
+    midsurfaceGeometryHash: geometry.semanticHash,
+    lengthUnit: 'mm',
+    topologyClass: LAFEA_SHELL_MULTIPATCH_TOPOLOGY,
+  });
+  const midsurfaceEvidence = createLafeaMultiPatchShellMidsurfaceEvidence({
+    schema: LAFEA_SHELL_MULTIPATCH_MIDSURFACE_INTAKE_SCHEMA,
+    stageId: 'LAFEA.4',
+    sourceHash,
+    analysisDomain: domain,
+    geometry,
+    producerRef: 'BM-MESH:FROZEN-M2-TWO-PATCH-SHELL-01:MULTIPATCH',
+  });
+  const profile = meshProfile({
+    stageId: 'LAFEA.4', family: LAFEA_SHELL_MULTIPATCH_ELEMENT, h,
+    identity: `BM-MESH-LAFEA4-MULTIPATCH-H${encodeNumber(h)}`,
+  });
+  const produced = produceLafeaMultiPatchShellAnalysisMesh({
+    midsurfaceEvidence,
+    meshProfile: profile,
+  });
+  const mesh = canonicalLafeaAnalysisMesh(produced.evidence.mesh);
+  return {
+    schema: 'lafea-mesh-producer-observation/v1',
+    stageId: 'LAFEA.4',
+    caseId: 'M2-TWO-PATCH-SHELL-01',
+    meshSchema: mesh.schema,
+    elementFamily: LAFEA_SHELL_MULTIPATCH_ELEMENT,
+    globalTargetSize: h,
+    profileHash: profile.semanticHash,
+    meshHash: lafeaAnalysisMeshContentHash(mesh),
+    nodeCount: mesh.nodes.length,
+    elementCount: mesh.elements.length,
+    estimatedDofs: produced.plan.estimatedDofs,
+    resourceDisposition: produced.plan.resourceDisposition,
+    qualityWorstStatus: produced.evidence.quality.worstStatus,
+    quality: produced.evidence.quality,
+    productionScope: produced.plan.scope,
+    seamConforming: produced.plan.seamConforming,
+    seamLength: produced.plan.seamLength,
+    seamNodeCount: produced.plan.seamNodeCount,
+    seamEdgeCount: produced.plan.seamEdgeCount,
+    seamDuplicateNodeEliminations: produced.plan.weldedNodeCount,
+    maximumSeamPairDistance: produced.plan.maximumSeamPairDistance,
+    maximumEdgeOwnerCount: produced.plan.maximumEdgeOwnerCount,
+    authorityArea: produced.plan.authorityArea,
+    meshedArea: produced.plan.meshedArea,
+    areaError: produced.plan.areaError,
+    domainProjectionClass: 'PRODUCTION_MULTIPATCH_SHELL_MIDSURFACE_GEOMETRY_ONLY',
+    mesh,
+  };
+}
+
 function compactObservation(value) {
   const { mesh: ignored, quality, ...rest } = value;
-  return {
-    ...rest,
-    quality: compactQuality(quality),
-  };
+  return { ...rest, quality: compactQuality(quality) };
 }
 
 function compactQuality(value) {
@@ -623,9 +758,8 @@ function compactQuality(value) {
   return {
     schema: value.schema ?? null,
     worstStatus: value.worstStatus ?? null,
-    maximumAspectRatio: value.maximumAspectRatio ?? null,
-    minimumScaledJacobian: value.minimumScaledJacobian ?? null,
     blockingElementIds: Array.isArray(value.blockingElementIds) ? value.blockingElementIds : [],
+    elementCount: value.elementCount ?? null,
   };
 }
 
@@ -640,7 +774,7 @@ function meshProfile({ stageId, family, h, identity }) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: identity,
-    sourceRevision: 'BM-MESH-LEG-009-FROZEN-LADDER-REQUEST',
+    sourceRevision: 'BM-MESH-LEG-011-FROZEN-LADDER-REQUEST',
     semanticHash: undefined,
     fields,
   });
@@ -701,8 +835,8 @@ function continuumGeometry(caseDef, variant) {
   });
 }
 
-function shellGeometryFromUnitSquare(caseDef, variant) {
-  const coords = caseDef.topology.outerLoop.vertices.map(([x, y]) => [Number(x), Number(y)]);
+function shellGeometryFromCoords(caseId, rawCoords, variant) {
+  const coords = rawCoords.map(([x, y]) => [Number(x), Number(y)]);
   const vertices = coords.map(([u, v], index) => ({ vertexId: `V${index}`, u, v }));
   const segments = coords.map((ignored, index) => ({
     segmentId: `S${index}`,
@@ -712,7 +846,7 @@ function shellGeometryFromUnitSquare(caseDef, variant) {
   return createLafeaShellMidsurfaceGeometry({
     schema: LAFEA_SHELL_MIDSURFACE_GEOMETRY_SCHEMA,
     stageId: 'LAFEA.4',
-    geometryId: 'BM-MESH-M2-UNIT-SQUARE-01-SINGLE-PATCH',
+    geometryId: `BM-MESH-${caseId}`,
     lengthUnit: 'mm',
     origin: { x: 0, y: 0, z: 0 },
     axisU: { x: 1, y: 0, z: 0 },
@@ -722,6 +856,75 @@ function shellGeometryFromUnitSquare(caseDef, variant) {
     segments: variant === 'SHUFFLED' ? [...segments].reverse() : segments,
     loops: [{ loopId: 'OUTER', role: 'OUTER', segmentIds: segments.map((row) => row.segmentId) }],
   });
+}
+
+function multiPatchShellGeometry(caseDef, variant) {
+  const patchRows = caseDef.topology.patches.map((patch) => {
+    const coords = patch.outerLoop.vertices.map(([u, v]) => [Number(u), Number(v)]);
+    const vertices = coords.map(([u, v], index) => ({
+      vertexId: `${patch.patchId}-V${index}`,
+      u,
+      v,
+    }));
+    const segments = coords.map((ignored, index) => ({
+      segmentId: `${patch.patchId}-S${index}`,
+      startVertexId: `${patch.patchId}-V${index}`,
+      endVertexId: `${patch.patchId}-V${(index + 1) % coords.length}`,
+    }));
+    return {
+      patchId: patch.patchId,
+      coords,
+      vertices,
+      segments,
+      loops: [{
+        loopId: `${patch.patchId}-OUTER`,
+        role: 'OUTER',
+        segmentIds: segments.map((row) => row.segmentId),
+      }],
+    };
+  });
+  const shared = caseDef.topology.sharedBoundaries[0];
+  const [patchAId, patchBId] = shared.owners;
+  const patchA = patchRows.find((row) => row.patchId === patchAId);
+  const patchB = patchRows.find((row) => row.patchId === patchBId);
+  const from = shared.geometry.from.map(Number);
+  const to = shared.geometry.to.map(Number);
+  const seam = {
+    seamId: shared.boundaryId,
+    patchAId,
+    segmentAId: segmentForEndpoints(patchA, from, to),
+    patchBId,
+    segmentBId: segmentForEndpoints(patchB, from, to),
+  };
+  const patches = patchRows.map(({ coords: ignored, ...row }) => ({
+    ...row,
+    vertices: variant === 'SHUFFLED' ? [...row.vertices].reverse() : row.vertices,
+    segments: variant === 'SHUFFLED' ? [...row.segments].reverse() : row.segments,
+  }));
+  return createLafeaMultiPatchShellMidsurfaceGeometry({
+    schema: LAFEA_SHELL_MULTIPATCH_MIDSURFACE_GEOMETRY_SCHEMA,
+    stageId: 'LAFEA.4',
+    geometryId: 'BM-MESH-M2-TWO-PATCH-SHELL-01',
+    lengthUnit: 'mm',
+    origin: { x: 0, y: 0, z: 0 },
+    axisU: { x: 1, y: 0, z: 0 },
+    axisV: { x: 0, y: 1, z: 0 },
+    orientationPolicy: LAFEA_SHELL_MULTIPATCH_ORIENTATION,
+    patches: variant === 'SHUFFLED' ? [...patches].reverse() : patches,
+    seams: [seam],
+  });
+}
+
+function segmentForEndpoints(patch, from, to) {
+  const vertexById = new Map(patch.vertices.map((row) => [row.vertexId, row]));
+  const same = (point, coords) => point.u === coords[0] && point.v === coords[1];
+  const segment = patch.segments.find((row) => {
+    const a = vertexById.get(row.startVertexId);
+    const b = vertexById.get(row.endVertexId);
+    return (same(a, from) && same(b, to)) || (same(a, to) && same(b, from));
+  });
+  if (!segment) throw new Error(`No frozen seam segment found on ${patch.patchId}.`);
+  return segment.segmentId;
 }
 
 function exactAreaObservation(caseId, producer, observed, expected) {
@@ -751,9 +954,9 @@ function meshArea(mesh) {
 
 function polygonArea(points) {
   let twice = 0;
-  for (let i = 0; i < points.length; i += 1) {
-    const a = points[i];
-    const b = points[(i + 1) % points.length];
+  for (let index = 0; index < points.length; index += 1) {
+    const a = points[index];
+    const b = points[(index + 1) % points.length];
     twice += a.x * b.y - b.x * a.y;
   }
   return twice / 2;
@@ -768,10 +971,10 @@ function maximumLShapeVoidOverlap(mesh) {
       const node = nodes.get(nodeId);
       return { x: node.x, y: node.y };
     });
-    polygon = clipPolygon(polygon, (p) => p.x >= 1, (a, b) => intersectVertical(a, b, 1));
-    polygon = clipPolygon(polygon, (p) => p.x <= 3, (a, b) => intersectVertical(a, b, 3));
-    polygon = clipPolygon(polygon, (p) => p.y >= 1, (a, b) => intersectHorizontal(a, b, 1));
-    polygon = clipPolygon(polygon, (p) => p.y <= 3, (a, b) => intersectHorizontal(a, b, 3));
+    polygon = clipPolygon(polygon, (point) => point.x >= 1, (a, b) => intersectVertical(a, b, 1));
+    polygon = clipPolygon(polygon, (point) => point.x <= 3, (a, b) => intersectVertical(a, b, 3));
+    polygon = clipPolygon(polygon, (point) => point.y >= 1, (a, b) => intersectHorizontal(a, b, 1));
+    polygon = clipPolygon(polygon, (point) => point.y <= 3, (a, b) => intersectHorizontal(a, b, 3));
     maximum = Math.max(maximum, polygon.length >= 3 ? Math.abs(polygonArea(polygon)) : 0);
   }
   return maximum;
@@ -845,9 +1048,18 @@ function expectedNumber(caseId, quantity) {
   return Number(row.decimalValue);
 }
 
+function expectedPatchNumber(caseId, quantity, patchId) {
+  const row = requireOracleCase(caseId).expectations.find((candidate) =>
+    candidate.quantity === quantity && candidate.patchId === patchId);
+  if (!row) throw new Error(`Missing oracle ${caseId}/${quantity}/${patchId}.`);
+  return Number(row.decimalValue);
+}
+
 function expectedInteger(caseId, quantity) {
   const row = requireOracleCase(caseId).expectations.find((candidate) => candidate.quantity === quantity);
-  if (!row || !Number.isInteger(row.integerValue)) throw new Error(`Missing integer oracle ${caseId}/${quantity}.`);
+  if (!row || !Number.isInteger(row.integerValue)) {
+    throw new Error(`Missing integer oracle ${caseId}/${quantity}.`);
+  }
   return row.integerValue;
 }
 
@@ -914,20 +1126,17 @@ function validateFrozenInputs() {
   assert.deepEqual(ladders.refinement.levels.map((row) => row.globalTargetSize), [1, 0.5, 0.25]);
   assert.equal(fixedProbes.schema, 'lafea-mesh-fixed-probes/v1');
   assert.equal(oracle.authority.productionOutputUsed, false);
-  for (const ladder of ladders.ladders) {
-    assert.equal(ladder.levelIds.at(-1), 'L2');
-  }
+  for (const ladder of ladders.ladders) assert.equal(ladder.levelIds.at(-1), 'L2');
   const ids = new Set(registry.sources.map((row) => row.sourceId));
-  assert.ok(ids.has('S-014'));
-  assert.ok(ids.has('S-015'));
+  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017']) assert.ok(ids.has(sourceId));
 }
 
 function stageComparisonPolicy(stageId) {
   return {
     M0: 'PRODUCTION_CONTRACT_CONFORMANCE',
     M1: 'BYTE_STABLE_CANONICAL_MESH_HASH_ACROSS_REPLAY_PROCESS_AND_INPUT_ORDER',
-    M2: 'FROZEN_CLOSED_FORM_AND_EXPLICIT_POLICY_COMPARISONS_ONLY',
-    M3: 'RETAIN_NON_THICKNESS_QUALITY_DISTRIBUTIONS_AND_BLOCK_IF_LAFEA4_SCOPE_OR_THICKNESS_AUTHORITY_IS_ABSENT',
+    M2: 'FROZEN_CLOSED_FORM_AND_EXPLICIT_POLICY_COMPARISONS_WITH_PRODUCTION_MULTIPATCH_SEAM_IDENTITY',
+    M3: 'RETAIN_PRODUCTION_QUALITY_DISTRIBUTIONS_FOR_ALL_FROZEN_LADDERS_AND_BLOCK_ONLY_MISSING_SHELL_THICKNESS_ACCEPTANCE',
     M4: 'BLOCK_IF_PHYSICS_RESPONSE_SOLVER_OR_CONVERGENCE_AUTHORITY_IS_ABSENT',
   }[stageId];
 }
